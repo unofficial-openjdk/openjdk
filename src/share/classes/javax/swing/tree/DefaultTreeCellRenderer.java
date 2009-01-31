@@ -40,10 +40,10 @@ import java.util.*;
  * <code>DefaultTreeCellRenderer</code> is not opaque and
  * unless you subclass paint you should not change this.
  * See <a
- href="http://java.sun.com/docs/books/tutorial/uiswing/components/tree.html">How to Use Trees</a> 
+ href="http://java.sun.com/docs/books/tutorial/uiswing/components/tree.html">How to Use Trees</a>
  * in <em>The Java Tutorial</em>
  * for examples of customizing node display using this class.
- * <p>                                                                        
+ * <p>
  *
  * <strong><a name="override">Implementation Note:</a></strong>
  * This class overrides
@@ -69,8 +69,7 @@ import java.util.*;
  * of all JavaBeans<sup><font size="-2">TM</font></sup>
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
- * 
- * @version %I% %G%
+ *
  * @author Rob Davis
  * @author Ray Ryan
  * @author Scott Violet
@@ -88,7 +87,7 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
     private boolean drawsFocusBorderAroundIcon;
     /** If true, a dashed line is drawn as the focus indicator. */
     private boolean drawDashedFocusIndicator;
-    
+
     // If drawDashedFocusIndicator is true, the following are used.
     /**
      * Background color of the tree.
@@ -144,12 +143,12 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
         setBackgroundSelectionColor(UIManager.getColor("Tree.selectionBackground"));
         setBackgroundNonSelectionColor(UIManager.getColor("Tree.textBackground"));
         setBorderSelectionColor(UIManager.getColor("Tree.selectionBorderColor"));
-	Object value = UIManager.get("Tree.drawsFocusBorderAroundIcon");
-	drawsFocusBorderAroundIcon = (value != null && ((Boolean)value).
-				      booleanValue());
-	value = UIManager.get("Tree.drawDashedFocusIndicator");
-	drawDashedFocusIndicator = (value != null && ((Boolean)value).
-				    booleanValue());
+        Object value = UIManager.get("Tree.drawsFocusBorderAroundIcon");
+        drawsFocusBorderAroundIcon = (value != null && ((Boolean)value).
+                                      booleanValue());
+        value = UIManager.get("Tree.drawDashedFocusIndicator");
+        drawDashedFocusIndicator = (value != null && ((Boolean)value).
+                                    booleanValue());
     }
 
 
@@ -158,7 +157,7 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * represent non-leaf nodes that are expanded.
       */
     public Icon getDefaultOpenIcon() {
-	return UIManager.getIcon("Tree.openIcon");
+        return UIManager.getIcon("Tree.openIcon");
     }
 
     /**
@@ -166,7 +165,7 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * represent non-leaf nodes that are not expanded.
       */
     public Icon getDefaultClosedIcon() {
-	return UIManager.getIcon("Tree.closedIcon");
+        return UIManager.getIcon("Tree.closedIcon");
     }
 
     /**
@@ -174,28 +173,28 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * represent leaf nodes.
       */
     public Icon getDefaultLeafIcon() {
-	return UIManager.getIcon("Tree.leafIcon");
+        return UIManager.getIcon("Tree.leafIcon");
     }
 
     /**
       * Sets the icon used to represent non-leaf nodes that are expanded.
       */
     public void setOpenIcon(Icon newIcon) {
-	openIcon = newIcon;
+        openIcon = newIcon;
     }
 
     /**
       * Returns the icon used to represent non-leaf nodes that are expanded.
       */
     public Icon getOpenIcon() {
-	return openIcon;
+        return openIcon;
     }
 
     /**
       * Sets the icon used to represent non-leaf nodes that are not expanded.
       */
     public void setClosedIcon(Icon newIcon) {
-	closedIcon = newIcon;
+        closedIcon = newIcon;
     }
 
     /**
@@ -203,56 +202,56 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * expanded.
       */
     public Icon getClosedIcon() {
-	return closedIcon;
+        return closedIcon;
     }
 
     /**
       * Sets the icon used to represent leaf nodes.
       */
     public void setLeafIcon(Icon newIcon) {
-	leafIcon = newIcon;
+        leafIcon = newIcon;
     }
 
     /**
       * Returns the icon used to represent leaf nodes.
       */
     public Icon getLeafIcon() {
-	return leafIcon;
+        return leafIcon;
     }
 
     /**
       * Sets the color the text is drawn with when the node is selected.
       */
     public void setTextSelectionColor(Color newColor) {
-	textSelectionColor = newColor;
+        textSelectionColor = newColor;
     }
 
     /**
       * Returns the color the text is drawn with when the node is selected.
       */
     public Color getTextSelectionColor() {
-	return textSelectionColor;
+        return textSelectionColor;
     }
 
     /**
       * Sets the color the text is drawn with when the node isn't selected.
       */
     public void setTextNonSelectionColor(Color newColor) {
-	textNonSelectionColor = newColor;
+        textNonSelectionColor = newColor;
     }
 
     /**
       * Returns the color the text is drawn with when the node isn't selected.
       */
     public Color getTextNonSelectionColor() {
-	return textNonSelectionColor;
+        return textNonSelectionColor;
     }
 
     /**
       * Sets the color to use for the background if node is selected.
       */
     public void setBackgroundSelectionColor(Color newColor) {
-	backgroundSelectionColor = newColor;
+        backgroundSelectionColor = newColor;
     }
 
 
@@ -260,48 +259,48 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * Returns the color to use for the background if node is selected.
       */
     public Color getBackgroundSelectionColor() {
-	return backgroundSelectionColor;
+        return backgroundSelectionColor;
     }
 
     /**
       * Sets the background color to be used for non selected nodes.
       */
     public void setBackgroundNonSelectionColor(Color newColor) {
-	backgroundNonSelectionColor = newColor;
+        backgroundNonSelectionColor = newColor;
     }
 
     /**
       * Returns the background color to be used for non selected nodes.
       */
     public Color getBackgroundNonSelectionColor() {
-	return backgroundNonSelectionColor;
+        return backgroundNonSelectionColor;
     }
 
     /**
       * Sets the color to use for the border.
       */
     public void setBorderSelectionColor(Color newColor) {
-	borderSelectionColor = newColor;
+        borderSelectionColor = newColor;
     }
 
     /**
       * Returns the color the border is drawn.
       */
     public Color getBorderSelectionColor() {
-	return borderSelectionColor;
+        return borderSelectionColor;
     }
 
     /**
-     * Subclassed to map <code>FontUIResource</code>s to null. If 
+     * Subclassed to map <code>FontUIResource</code>s to null. If
      * <code>font</code> is null, or a <code>FontUIResource</code>, this
      * has the effect of letting the font of the JTree show
      * through. On the other hand, if <code>font</code> is non-null, and not
      * a <code>FontUIResource</code>, the font becomes <code>font</code>.
      */
     public void setFont(Font font) {
-	if(font instanceof FontUIResource)
-	    font = null;
-	super.setFont(font);
+        if(font instanceof FontUIResource)
+            font = null;
+        super.setFont(font);
     }
 
     /**
@@ -321,7 +320,7 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
     }
 
     /**
-     * Subclassed to map <code>ColorUIResource</code>s to null. If 
+     * Subclassed to map <code>ColorUIResource</code>s to null. If
      * <code>color</code> is null, or a <code>ColorUIResource</code>, this
      * has the effect of letting the background color of the JTree show
      * through. On the other hand, if <code>color</code> is non-null, and not
@@ -329,9 +328,9 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
      * <code>color</code>.
      */
     public void setBackground(Color color) {
-	if(color instanceof ColorUIResource)
-	    color = null;
-	super.setBackground(color);
+        if(color instanceof ColorUIResource)
+            color = null;
+        super.setBackground(color);
     }
 
     /**
@@ -344,16 +343,16 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
       * parameters.
       */
     public Component getTreeCellRendererComponent(JTree tree, Object value,
-						  boolean sel,
-						  boolean expanded,
-						  boolean leaf, int row,
-						  boolean hasFocus) {
-	String         stringValue = tree.convertValueToText(value, sel,
-					  expanded, leaf, row, hasFocus);
+                                                  boolean sel,
+                                                  boolean expanded,
+                                                  boolean leaf, int row,
+                                                  boolean hasFocus) {
+        String         stringValue = tree.convertValueToText(value, sel,
+                                          expanded, leaf, row, hasFocus);
 
         this.tree = tree;
-	this.hasFocus = hasFocus;
-	setText(stringValue);
+        this.hasFocus = hasFocus;
+        setText(stringValue);
 
         Color fg = null;
         isDropCell = false;
@@ -379,39 +378,39 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
 
         setForeground(fg);
 
-	// There needs to be a way to specify disabled icons.
-	if (!tree.isEnabled()) {
-	    setEnabled(false);
-	    if (leaf) {
-		setDisabledIcon(getLeafIcon());
-	    } else if (expanded) {
-		setDisabledIcon(getOpenIcon());
-	    } else {
-		setDisabledIcon(getClosedIcon());
-	    }
-	}
-	else {
-	    setEnabled(true);
-	    if (leaf) {
-		setIcon(getLeafIcon());
-	    } else if (expanded) {
-		setIcon(getOpenIcon());
-	    } else {
-		setIcon(getClosedIcon());
-	    }
-	}
+        // There needs to be a way to specify disabled icons.
+        if (!tree.isEnabled()) {
+            setEnabled(false);
+            if (leaf) {
+                setDisabledIcon(getLeafIcon());
+            } else if (expanded) {
+                setDisabledIcon(getOpenIcon());
+            } else {
+                setDisabledIcon(getClosedIcon());
+            }
+        }
+        else {
+            setEnabled(true);
+            if (leaf) {
+                setIcon(getLeafIcon());
+            } else if (expanded) {
+                setIcon(getOpenIcon());
+            } else {
+                setIcon(getClosedIcon());
+            }
+        }
         setComponentOrientation(tree.getComponentOrientation());
-	    
-	selected = sel;
 
-	return this;
+        selected = sel;
+
+        return this;
     }
 
     /**
       * Paints the value.  The background is filled based on selected.
       */
     public void paint(Graphics g) {
-	Color bColor;
+        Color bColor;
 
         if (isDropCell) {
             bColor = UIManager.getColor("Tree.dropCellBackground");
@@ -420,68 +419,68 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
             }
         } else if (selected) {
             bColor = getBackgroundSelectionColor();
-	} else {
-	    bColor = getBackgroundNonSelectionColor();
+        } else {
+            bColor = getBackgroundNonSelectionColor();
             if (bColor == null) {
                 bColor = getBackground();
             }
-	}
+        }
 
-	int imageOffset = -1;
-	if(bColor != null) {
-	    Icon currentI = getIcon();
+        int imageOffset = -1;
+        if(bColor != null) {
+            Icon currentI = getIcon();
 
-	    imageOffset = getLabelStart();
-	    g.setColor(bColor);
-	    if(getComponentOrientation().isLeftToRight()) {
-	        g.fillRect(imageOffset, 0, getWidth() - imageOffset,
-			   getHeight());
-	    } else {
-	        g.fillRect(0, 0, getWidth() - imageOffset,
-			   getHeight());
-	    }
-	}
+            imageOffset = getLabelStart();
+            g.setColor(bColor);
+            if(getComponentOrientation().isLeftToRight()) {
+                g.fillRect(imageOffset, 0, getWidth() - imageOffset,
+                           getHeight());
+            } else {
+                g.fillRect(0, 0, getWidth() - imageOffset,
+                           getHeight());
+            }
+        }
 
-	if (hasFocus) {
-	    if (drawsFocusBorderAroundIcon) {
-		imageOffset = 0;
-	    }
-	    else if (imageOffset == -1) {
-		imageOffset = getLabelStart();
-	    }
-	    if(getComponentOrientation().isLeftToRight()) {
-		paintFocus(g, imageOffset, 0, getWidth() - imageOffset,
-			   getHeight(), bColor);
-	    } else {
-		paintFocus(g, 0, 0, getWidth() - imageOffset, getHeight(), bColor);
-	    }
-	}
-	super.paint(g);
+        if (hasFocus) {
+            if (drawsFocusBorderAroundIcon) {
+                imageOffset = 0;
+            }
+            else if (imageOffset == -1) {
+                imageOffset = getLabelStart();
+            }
+            if(getComponentOrientation().isLeftToRight()) {
+                paintFocus(g, imageOffset, 0, getWidth() - imageOffset,
+                           getHeight(), bColor);
+            } else {
+                paintFocus(g, 0, 0, getWidth() - imageOffset, getHeight(), bColor);
+            }
+        }
+        super.paint(g);
     }
 
     private void paintFocus(Graphics g, int x, int y, int w, int h, Color notColor) {
-	Color       bsColor = getBorderSelectionColor();
+        Color       bsColor = getBorderSelectionColor();
 
-	if (bsColor != null && (selected || !drawDashedFocusIndicator)) {
-	    g.setColor(bsColor);
-	    g.drawRect(x, y, w - 1, h - 1);
-	}
+        if (bsColor != null && (selected || !drawDashedFocusIndicator)) {
+            g.setColor(bsColor);
+            g.drawRect(x, y, w - 1, h - 1);
+        }
         if (drawDashedFocusIndicator && notColor != null) {
-	    if (treeBGColor != notColor) {
+            if (treeBGColor != notColor) {
                 treeBGColor = notColor;
                 focusBGColor = new Color(~notColor.getRGB());
-	    }
-	    g.setColor(focusBGColor);
-	    BasicGraphicsUtils.drawDashedRect(g, x, y, w, h);
-	}
+            }
+            g.setColor(focusBGColor);
+            BasicGraphicsUtils.drawDashedRect(g, x, y, w, h);
+        }
     }
 
     private int getLabelStart() {
-	Icon currentI = getIcon();
-	if(currentI != null && getText() != null) {
-	    return currentI.getIconWidth() + Math.max(0, getIconTextGap() - 1);
-	}
-	return 0;
+        Icon currentI = getIcon();
+        if(currentI != null && getText() != null) {
+            return currentI.getIconWidth() + Math.max(0, getIconTextGap() - 1);
+        }
+        return 0;
     }
 
     /**
@@ -489,12 +488,12 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
      * return slightly wider preferred size value.
      */
     public Dimension getPreferredSize() {
-	Dimension        retDimension = super.getPreferredSize();
+        Dimension        retDimension = super.getPreferredSize();
 
-	if(retDimension != null)
-	    retDimension = new Dimension(retDimension.width + 3,
-					 retDimension.height);
-	return retDimension;
+        if(retDimension != null)
+            retDimension = new Dimension(retDimension.width + 3,
+                                         retDimension.height);
+        return retDimension;
     }
 
    /**
@@ -548,14 +547,14 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
     * See the <a href="#override">Implementation Note</a>
     * for more information.
     */
-    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {	
-	// Strings get interned...
-	if (propertyName == "text"
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        // Strings get interned...
+        if (propertyName == "text"
                 || ((propertyName == "font" || propertyName == "foreground")
                     && oldValue != newValue
                     && getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey) != null)) {
 
-	    super.firePropertyChange(propertyName, oldValue, newValue);
+            super.firePropertyChange(propertyName, oldValue, newValue);
         }
     }
 

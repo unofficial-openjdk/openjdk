@@ -34,7 +34,7 @@ import java.nio.channels.*;
 public class MapAssertions {
     public static void main(String[] args) throws Exception {
         File blah = File.createTempFile("blah", null);
-	blah.deleteOnExit();
+        blah.deleteOnExit();
         RandomAccessFile raf = new RandomAccessFile(blah, "r");
         FileChannel fc = raf.getChannel();
         long fileSize = fc.size();

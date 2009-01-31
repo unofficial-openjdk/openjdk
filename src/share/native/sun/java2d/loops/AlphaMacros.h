@@ -35,9 +35,9 @@
 
 #define ExtractAlphaOperandsFor4ByteArgb(f, PREFIX) \
     do { \
-	PREFIX ## And = (f).andval; \
-	PREFIX ## Xor = (f).xorval; \
-	PREFIX ## Add = (jint) (f).addval - PREFIX ## Xor; \
+        PREFIX ## And = (f).andval; \
+        PREFIX ## Xor = (f).xorval; \
+        PREFIX ## Add = (jint) (f).addval - PREFIX ## Xor; \
     } while (0)
 
 #define ExtractAlphaOperandsFor1ByteGray(f, PREFIX) \
@@ -54,18 +54,18 @@
 #define ApplyAlphaOperands(PREFIX, a) \
     ((((a) & PREFIX ## And) ^ PREFIX ## Xor) + PREFIX ## Add)
 
-#define FuncNeedsAlpha(PREFIX)	(PREFIX ## And != 0)
-#define FuncIsZero(PREFIX)	((PREFIX ## And | PREFIX ## Add) == 0)
+#define FuncNeedsAlpha(PREFIX)  (PREFIX ## And != 0)
+#define FuncIsZero(PREFIX)      ((PREFIX ## And | PREFIX ## Add) == 0)
 
 typedef struct {
-    jubyte	addval;
-    jubyte	andval;
-    jshort	xorval;
+    jubyte      addval;
+    jubyte      andval;
+    jshort      xorval;
 } AlphaOperands;
 
 typedef struct {
-    AlphaOperands	srcOps;
-    AlphaOperands	dstOps;
+    AlphaOperands       srcOps;
+    AlphaOperands       dstOps;
 } AlphaFunc;
 
 extern AlphaFunc AlphaRules[];
@@ -108,58 +108,58 @@ void NAME_ALPHA_MASKBLIT(SRC, DST) \
     dstScan -= width * DST ## PixelStride; \
     maskScan -= width; \
     if (pMask) { \
-	pMask += maskOff; \
+        pMask += maskOff; \
     } \
  \
     Init ## DST ## StoreVarsY(DstWrite, pDstInfo); \
     do { \
-	jint w = width; \
-	Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-	do { \
+        jint w = width; \
+        Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+        do { \
             DeclareAlphaVarFor ## STRATEGY(resA) \
             DeclareCompVarsFor ## STRATEGY(res) \
             DeclareAlphaVarFor ## STRATEGY(srcF) \
             DeclareAlphaVarFor ## STRATEGY(dstF) \
  \
-	    if (pMask) { \
+            if (pMask) { \
                 pathA = *pMask++; \
-		if (!pathA) { \
-		    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		    Next ## DST ## StoreVarsX(DstWrite); \
-		    continue; \
-		} \
+                if (!pathA) { \
+                    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                    Next ## DST ## StoreVarsX(DstWrite); \
+                    continue; \
+                } \
                 PromoteByteAlphaFor ## STRATEGY(pathA); \
-	    } \
-	    if (loadsrc) { \
-		LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, src); \
-		srcA = MultiplyAlphaFor ## STRATEGY(extraA, srcA); \
-	    } \
-	    if (loaddst) { \
-		LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, DstPix, dst); \
-	    } \
-	    srcF = ApplyAlphaOperands(SrcOp, dstA); \
-	    dstF = ApplyAlphaOperands(DstOp, srcA); \
-	    if (pathA != MaxValFor ## STRATEGY) { \
-		srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
-		dstF = MaxValFor ## STRATEGY - pathA + \
+            } \
+            if (loadsrc) { \
+                LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, src); \
+                srcA = MultiplyAlphaFor ## STRATEGY(extraA, srcA); \
+            } \
+            if (loaddst) { \
+                LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, DstPix, dst); \
+            } \
+            srcF = ApplyAlphaOperands(SrcOp, dstA); \
+            dstF = ApplyAlphaOperands(DstOp, srcA); \
+            if (pathA != MaxValFor ## STRATEGY) { \
+                srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
+                dstF = MaxValFor ## STRATEGY - pathA + \
                            MultiplyAlphaFor ## STRATEGY(pathA, dstF); \
-	    } \
-	    if (srcF) { \
-		resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
-		if (!(SRC ## IsPremultiplied)) { \
-		    srcF = resA; \
-		} else { \
-		    srcF = MultiplyAlphaFor ## STRATEGY(srcF, extraA); \
-		} \
-		if (srcF) { \
-		    /* assert(loadsrc); */ \
+            } \
+            if (srcF) { \
+                resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
+                if (!(SRC ## IsPremultiplied)) { \
+                    srcF = resA; \
+                } else { \
+                    srcF = MultiplyAlphaFor ## STRATEGY(srcF, extraA); \
+                } \
+                if (srcF) { \
+                    /* assert(loadsrc); */ \
                     Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
-		    if (srcF != MaxValFor ## STRATEGY) { \
+                    if (srcF != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                               srcF, res); \
-		    } \
-		} else { \
+                    } \
+                } else { \
                     if (dstF == MaxValFor ## STRATEGY) { \
                         pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
                         pDst = PtrAddBytes(pDst, DST ## PixelStride); \
@@ -167,51 +167,51 @@ void NAME_ALPHA_MASKBLIT(SRC, DST) \
                         continue; \
                     } \
                     Set ## STRATEGY ## CompsToZero(res); \
-		} \
-	    } else { \
-		if (dstF == MaxValFor ## STRATEGY) { \
-		    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		    Next ## DST ## StoreVarsX(DstWrite); \
-		    continue; \
-		} \
+                } \
+            } else { \
+                if (dstF == MaxValFor ## STRATEGY) { \
+                    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                    Next ## DST ## StoreVarsX(DstWrite); \
+                    continue; \
+                } \
                 resA = 0; \
                 Set ## STRATEGY ## CompsToZero(res); \
-	    } \
-	    if (dstF) { \
-		dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-		if (!(DST ## IsPremultiplied)) { \
-		    dstF = dstA; \
-		} \
-		resA += dstA; \
-		if (dstF) { \
+            } \
+            if (dstF) { \
+                dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+                if (!(DST ## IsPremultiplied)) { \
+                    dstF = dstA; \
+                } \
+                resA += dstA; \
+                if (dstF) { \
                     DeclareCompVarsFor ## STRATEGY(tmp) \
-		    /* assert(loaddst); */ \
+                    /* assert(loaddst); */ \
                     Postload ## STRATEGY ## From ## DST(pDst, DstPix, tmp); \
-		    if (dstF != MaxValFor ## STRATEGY) { \
+                    if (dstF != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(tmp, \
                                                               dstF, tmp); \
-		    } \
+                    } \
                     Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
-		} \
-	    } \
-	    if (!(DST ## IsPremultiplied) && resA && \
+                } \
+            } \
+            if (!(DST ## IsPremultiplied) && resA && \
                 resA < MaxValFor ## STRATEGY) \
             { \
                 DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-	    } \
+            } \
             Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite, \
                                                       0, res); \
-	    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-	    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-	    Next ## DST ## StoreVarsX(DstWrite); \
-	} while (--w > 0); \
-	pSrc = PtrAddBytes(pSrc, srcScan); \
-	pDst = PtrAddBytes(pDst, dstScan); \
-	Next ## DST ## StoreVarsY(DstWrite); \
-	if (pMask) { \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} \
+            pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+            pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+            Next ## DST ## StoreVarsX(DstWrite); \
+        } while (--w > 0); \
+        pSrc = PtrAddBytes(pSrc, srcScan); \
+        pDst = PtrAddBytes(pDst, dstScan); \
+        Next ## DST ## StoreVarsY(DstWrite); \
+        if (pMask) { \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } \
     } while (--height > 0); \
 }
 
@@ -242,104 +242,104 @@ void NAME_SRC_MASKBLIT(SRC, DST) \
  \
     Init ## DST ## StoreVarsY(DstWrite, pDstInfo); \
     if (pMask) { \
-	maskScan -= width; \
-	pMask += maskOff; \
-	do { \
-	    jint w = width; \
-	    Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-	    do { \
+        maskScan -= width; \
+        pMask += maskOff; \
+        do { \
+            jint w = width; \
+            Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+            do { \
                 DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAlphaVarFor ## STRATEGY(srcF) \
                 DeclareAlphaVarFor ## STRATEGY(dstF) \
                 DeclareAndInitPathAlphaFor ## STRATEGY(pathA) \
  \
-		if (pathA) { \
-		    LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, \
+                if (pathA) { \
+                    LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, \
                                                             SrcPix, res); \
-		    resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
-		    if (SRC ## IsPremultiplied) { \
-			srcF = extraA; \
-		    } else { \
-			srcF = resA; \
-		    } \
-		    Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
-		    if (pathA < 0xff) { \
+                    resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
+                    if (SRC ## IsPremultiplied) { \
+                        srcF = extraA; \
+                    } else { \
+                        srcF = resA; \
+                    } \
+                    Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
+                    if (pathA < 0xff) { \
                         DeclareAlphaVarFor ## STRATEGY(dstA) \
                         DeclareCompVarsFor ## STRATEGY(dst) \
                         PromoteByteAlphaFor ## STRATEGY(pathA); \
-			srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
-			dstF = MaxValFor ## STRATEGY - pathA; \
-			LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
+                        srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
+                        dstF = MaxValFor ## STRATEGY - pathA; \
+                        LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
                                                                 DstPix, \
                                                                 dst); \
-			dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA) \
-			if (!(DST ## IsPremultiplied)) { \
-			    dstF = dstA; \
-			} \
-			Postload ## STRATEGY ## From ## DST(pDst, DstPix, \
+                        dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA) \
+                        if (!(DST ## IsPremultiplied)) { \
+                            dstF = dstA; \
+                        } \
+                        Postload ## STRATEGY ## From ## DST(pDst, DstPix, \
                                                             dst); \
-			resA = dstA + \
+                        resA = dstA + \
                                  MultiplyAlphaFor ## STRATEGY(pathA, resA); \
                         MultMultAddAndStore ## STRATEGY ## Comps(res, \
                                                                  dstF, dst, \
                                                                  srcF, res); \
-		    } else if (srcF < MaxValFor ## STRATEGY) { \
+                    } else if (srcF < MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                               srcF, src); \
-		    } \
-		    if (!(DST ## IsPremultiplied) && resA && \
+                    } \
+                    if (!(DST ## IsPremultiplied) && resA && \
                         resA < MaxValFor ## STRATEGY) \
                     { \
                         DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-		    } \
-		    Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite,\
+                    } \
+                    Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite,\
                                                               0, res);\
-		} \
-		pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		Next ## DST ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pSrc = PtrAddBytes(pSrc, srcScan); \
-	    pDst = PtrAddBytes(pDst, dstScan); \
-	    Next ## DST ## StoreVarsY(DstWrite); \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} while (--height > 0); \
+                } \
+                pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                Next ## DST ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pSrc = PtrAddBytes(pSrc, srcScan); \
+            pDst = PtrAddBytes(pDst, dstScan); \
+            Next ## DST ## StoreVarsY(DstWrite); \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } while (--height > 0); \
     } else /* pMask == 0 */ { \
-	do { \
-	    jint w = width; \
-	    Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-	    do { \
+        do { \
+            jint w = width; \
+            Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+            do { \
                 DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAlphaVarFor ## STRATEGY(srcF) \
  \
-		LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, res); \
-		resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
-		if (SRC ## IsPremultiplied) { \
-		    srcF = extraA; \
-		} else { \
-		    srcF = resA; \
-		} \
-		Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
-		if (srcF < MaxValFor ## STRATEGY) { \
+                LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, res); \
+                resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
+                if (SRC ## IsPremultiplied) { \
+                    srcF = extraA; \
+                } else { \
+                    srcF = resA; \
+                } \
+                Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
+                if (srcF < MaxValFor ## STRATEGY) { \
                     MultiplyAndStore ## STRATEGY ## Comps(res, srcF, src); \
-		} \
-		if (!(DST ## IsPremultiplied) && resA && \
+                } \
+                if (!(DST ## IsPremultiplied) && resA && \
                     resA < MaxValFor ## STRATEGY) \
                 { \
                     DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-		} \
-		Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite, \
+                } \
+                Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite, \
                                                           0, res); \
-		pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		Next ## DST ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pSrc = PtrAddBytes(pSrc, srcScan); \
-	    pDst = PtrAddBytes(pDst, dstScan); \
-	    Next ## DST ## StoreVarsY(DstWrite); \
-	} while (--height > 0); \
+                pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                Next ## DST ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pSrc = PtrAddBytes(pSrc, srcScan); \
+            pDst = PtrAddBytes(pDst, dstScan); \
+            Next ## DST ## StoreVarsY(DstWrite); \
+        } while (--height > 0); \
     } \
 }
 
@@ -369,128 +369,128 @@ void NAME_SRCOVER_MASKBLIT(SRC, DST) \
  \
     Init ## DST ## StoreVarsY(DstWrite, pDstInfo); \
     if (pMask) { \
-	pMask += maskOff; \
-	maskScan -= width; \
-	do { \
-	    jint w = width; \
-	    Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-	    do { \
+        pMask += maskOff; \
+        maskScan -= width; \
+        do { \
+            jint w = width; \
+            Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+            do { \
                 DeclareAndInitPathAlphaFor ## STRATEGY(pathA) \
  \
-		if (pathA) { \
+                if (pathA) { \
                     DeclareAlphaVarFor ## STRATEGY(resA) \
                     DeclareCompVarsFor ## STRATEGY(res) \
                     DeclareAlphaVarFor ## STRATEGY(srcF) \
                     PromoteByteAlphaFor ## STRATEGY(pathA); \
-		    pathA = MultiplyAlphaFor ## STRATEGY(pathA, extraA); \
-		    LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, \
+                    pathA = MultiplyAlphaFor ## STRATEGY(pathA, extraA); \
+                    LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, \
                                                             SrcPix, res); \
-		    resA = MultiplyAlphaFor ## STRATEGY(pathA, resA); \
-		    if (resA) { \
-			if (SRC ## IsPremultiplied) { \
-			    srcF = pathA; \
-			} else { \
-			    srcF = resA; \
-			} \
-			Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, \
+                    resA = MultiplyAlphaFor ## STRATEGY(pathA, resA); \
+                    if (resA) { \
+                        if (SRC ## IsPremultiplied) { \
+                            srcF = pathA; \
+                        } else { \
+                            srcF = resA; \
+                        } \
+                        Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, \
                                                             res); \
-			if (resA < MaxValFor ## STRATEGY) { \
+                        if (resA < MaxValFor ## STRATEGY) { \
                             DeclareAlphaVarFor ## STRATEGY(dstA) \
                             DeclareCompVarsFor ## STRATEGY(dst) \
                             DeclareAndInvertAlphaVarFor ## STRATEGY(dstF, \
                                                                     resA) \
-			    LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
+                            LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
                                                                     DstPix, \
                                                                     dst); \
-			    dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-			    if (!(DST ## IsPremultiplied)) { \
-				dstF = dstA; \
-			    } \
-			    Postload ## STRATEGY ## From ## DST(pDst, DstPix,\
+                            dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+                            if (!(DST ## IsPremultiplied)) { \
+                                dstF = dstA; \
+                            } \
+                            Postload ## STRATEGY ## From ## DST(pDst, DstPix,\
                                                                 dst); \
-			    resA += dstA; \
+                            resA += dstA; \
                             MultMultAddAndStore ## STRATEGY ## Comps(res, \
                                                                   dstF, dst, \
                                                                   srcF, res);\
-			} else if (srcF < MaxValFor ## STRATEGY) { \
+                        } else if (srcF < MaxValFor ## STRATEGY) { \
                             MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                                   srcF, res);\
-			} \
-			if (!(DST ## IsPremultiplied) && resA && \
+                        } \
+                        if (!(DST ## IsPremultiplied) && resA && \
                             resA < MaxValFor ## STRATEGY) \
                         { \
                             DivideAndStore ## STRATEGY ## Comps(res, \
                                                                 res, resA); \
-			} \
-			Store ## DST ## From ## STRATEGY ## Comps(pDst, \
+                        } \
+                        Store ## DST ## From ## STRATEGY ## Comps(pDst, \
                                                                   DstWrite, \
                                                                   0, res); \
-		    } \
-		} \
-		pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		Next ## DST ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pSrc = PtrAddBytes(pSrc, srcScan); \
-	    pDst = PtrAddBytes(pDst, dstScan); \
-	    Next ## DST ## StoreVarsY(DstWrite); \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} while (--height > 0); \
+                    } \
+                } \
+                pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                Next ## DST ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pSrc = PtrAddBytes(pSrc, srcScan); \
+            pDst = PtrAddBytes(pDst, dstScan); \
+            Next ## DST ## StoreVarsY(DstWrite); \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } while (--height > 0); \
     } else /* pMask == 0 */ { \
-	do { \
-	    jint w = width; \
-	    Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-	    do { \
+        do { \
+            jint w = width; \
+            Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+            do { \
                 DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAlphaVarFor ## STRATEGY(srcF) \
  \
-		LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, res); \
-		resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
-		if (resA) { \
-		    if (SRC ## IsPremultiplied) { \
-			srcF = extraA; \
-		    } else { \
-			srcF = resA; \
-		    } \
-		    Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
-		    if (resA < MaxValFor ## STRATEGY) { \
+                LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc, SrcPix, res); \
+                resA = MultiplyAlphaFor ## STRATEGY(extraA, resA); \
+                if (resA) { \
+                    if (SRC ## IsPremultiplied) { \
+                        srcF = extraA; \
+                    } else { \
+                        srcF = resA; \
+                    } \
+                    Postload ## STRATEGY ## From ## SRC(pSrc, SrcPix, res); \
+                    if (resA < MaxValFor ## STRATEGY) { \
                         DeclareAlphaVarFor ## STRATEGY(dstA) \
                         DeclareCompVarsFor ## STRATEGY(dst) \
                         DeclareAndInvertAlphaVarFor ## STRATEGY(dstF, resA) \
-			LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
+                        LoadAlphaFrom ## DST ## For ## STRATEGY(pDst, \
                                                                 DstPix, \
                                                                 dst); \
-			dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-			if (!(DST ## IsPremultiplied)) { \
-			    dstF = dstA; \
-			} \
-			Postload ## STRATEGY ## From ## DST(pDst, DstPix, \
+                        dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+                        if (!(DST ## IsPremultiplied)) { \
+                            dstF = dstA; \
+                        } \
+                        Postload ## STRATEGY ## From ## DST(pDst, DstPix, \
                                                             dst); \
-			resA += dstA; \
+                        resA += dstA; \
                         MultMultAddAndStore ## STRATEGY ## Comps(res, \
                                                                  dstF, dst, \
                                                                  srcF, res); \
-		    } else if (srcF < MaxValFor ## STRATEGY) { \
+                    } else if (srcF < MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                               srcF, res); \
-		    } \
-		    if (!(DST ## IsPremultiplied) && resA && \
+                    } \
+                    if (!(DST ## IsPremultiplied) && resA && \
                         resA < MaxValFor ## STRATEGY) \
                     { \
                         DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-		    } \
-		    Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite,\
+                    } \
+                    Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite,\
                                                               0, res); \
-		} \
-		pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-		pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-		Next ## DST ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pSrc = PtrAddBytes(pSrc, srcScan); \
-	    pDst = PtrAddBytes(pDst, dstScan); \
-	    Next ## DST ## StoreVarsY(DstWrite); \
-	} while (--height > 0); \
+                } \
+                pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+                pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+                Next ## DST ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pSrc = PtrAddBytes(pSrc, srcScan); \
+            pDst = PtrAddBytes(pDst, dstScan); \
+            Next ## DST ## StoreVarsY(DstWrite); \
+        } while (--height > 0); \
     } \
 }
 
@@ -535,86 +535,86 @@ void NAME_ALPHA_MASKFILL(TYPE) \
     rasScan -= width * TYPE ## PixelStride; \
     maskScan -= width; \
     if (pMask) { \
-	pMask += maskOff; \
+        pMask += maskOff; \
     } \
  \
     Init ## TYPE ## StoreVarsY(DstWrite, pRasInfo); \
     do { \
-	jint w = width; \
-	Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-	do { \
+        jint w = width; \
+        Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+        do { \
             DeclareAlphaVarFor ## STRATEGY(resA) \
             DeclareCompVarsFor ## STRATEGY(res) \
             DeclareAlphaVarFor ## STRATEGY(srcF) \
  \
-	    if (pMask) { \
-		pathA = *pMask++; \
-		if (!pathA) { \
-		    pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		    Next ## TYPE ## StoreVarsX(DstWrite); \
-		    continue; \
-		} \
+            if (pMask) { \
+                pathA = *pMask++; \
+                if (!pathA) { \
+                    pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                    Next ## TYPE ## StoreVarsX(DstWrite); \
+                    continue; \
+                } \
                 PromoteByteAlphaFor ## STRATEGY(pathA); \
-		dstF = dstFbase; \
-	    } \
-	    if (loaddst) { \
-		LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, DstPix, dst);\
-	    } \
-	    srcF = ApplyAlphaOperands(SrcOp, dstA); \
-	    if (pathA != MaxValFor ## STRATEGY) { \
-		srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
-		dstF = MaxValFor ## STRATEGY - pathA + \
+                dstF = dstFbase; \
+            } \
+            if (loaddst) { \
+                LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, DstPix, dst);\
+            } \
+            srcF = ApplyAlphaOperands(SrcOp, dstA); \
+            if (pathA != MaxValFor ## STRATEGY) { \
+                srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
+                dstF = MaxValFor ## STRATEGY - pathA + \
                            MultiplyAlphaFor ## STRATEGY(pathA, dstF); \
-	    } \
-	    if (srcF) { \
-		if (srcF == MaxValFor ## STRATEGY) { \
-		    resA = srcA; \
+            } \
+            if (srcF) { \
+                if (srcF == MaxValFor ## STRATEGY) { \
+                    resA = srcA; \
                     Store ## STRATEGY ## CompsUsingOp(res, =, src); \
-		} else { \
-		    resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
+                } else { \
+                    resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
                     MultiplyAndStore ## STRATEGY ## Comps(res, srcF, src); \
-		} \
-	    } else { \
-		if (dstF == MaxValFor ## STRATEGY) { \
-		    pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		    Next ## TYPE ## StoreVarsX(DstWrite); \
-		    continue; \
-		} \
-		resA = 0; \
+                } \
+            } else { \
+                if (dstF == MaxValFor ## STRATEGY) { \
+                    pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                    Next ## TYPE ## StoreVarsX(DstWrite); \
+                    continue; \
+                } \
+                resA = 0; \
                 Set ## STRATEGY ## CompsToZero(res); \
-	    } \
-	    if (dstF) { \
-		dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-		resA += dstA; \
-		if (TYPE ## IsPremultiplied) { \
-		    dstA = dstF; \
-		} \
-		if (dstA) { \
+            } \
+            if (dstF) { \
+                dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+                resA += dstA; \
+                if (TYPE ## IsPremultiplied) { \
+                    dstA = dstF; \
+                } \
+                if (dstA) { \
                     DeclareCompVarsFor ## STRATEGY(tmp) \
-		    /* assert(loaddst); */ \
-		    Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, tmp); \
-		    if (dstA != MaxValFor ## STRATEGY) { \
+                    /* assert(loaddst); */ \
+                    Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, tmp); \
+                    if (dstA != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(tmp, \
                                                               dstA, tmp); \
-		    } \
+                    } \
                     Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
-		} \
-	    } \
-	    if (!(TYPE ## IsPremultiplied) && resA && \
+                } \
+            } \
+            if (!(TYPE ## IsPremultiplied) && resA && \
                 resA < MaxValFor ## STRATEGY) \
             { \
                 DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-	    } \
-	    Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
+            } \
+            Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
                                                        0, res); \
-	    pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-	    Next ## TYPE ## StoreVarsX(DstWrite); \
-	} while (--w > 0); \
-	pRas = PtrAddBytes(pRas, rasScan); \
-	Next ## TYPE ## StoreVarsY(DstWrite); \
-	if (pMask) { \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} \
+            pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+            Next ## TYPE ## StoreVarsX(DstWrite); \
+        } while (--w > 0); \
+        pRas = PtrAddBytes(pRas, rasScan); \
+        Next ## TYPE ## StoreVarsY(DstWrite); \
+        if (pMask) { \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } \
     } while (--height > 0); \
 }
 
@@ -638,18 +638,18 @@ void NAME_SRC_MASKFILL(TYPE) \
  \
     Extract ## STRATEGY ## CompsAndAlphaFromArgb(fgColor, src); \
     if (srcA == 0) { \
-	Set ## STRATEGY ## CompsToZero(src); \
-	Clear ## TYPE ## BlendFillVars(DstFill, fgColor); \
+        Set ## STRATEGY ## CompsToZero(src); \
+        Clear ## TYPE ## BlendFillVars(DstFill, fgColor); \
     } else { \
-	if (!(TYPE ## IsPremultiplied)) { \
-	    Init ## TYPE ## BlendFillVarsNonPre(DstFill, fgColor, src); \
-	} \
-	if (srcA != MaxValFor ## STRATEGY) { \
-	    MultiplyAndStore ## STRATEGY ## Comps(src, srcA, src); \
-	} \
-	if (TYPE ## IsPremultiplied) { \
-	    Init ## TYPE ## BlendFillVarsPre(DstFill, fgColor, src); \
-	} \
+        if (!(TYPE ## IsPremultiplied)) { \
+            Init ## TYPE ## BlendFillVarsNonPre(DstFill, fgColor, src); \
+        } \
+        if (srcA != MaxValFor ## STRATEGY) { \
+            MultiplyAndStore ## STRATEGY ## Comps(src, srcA, src); \
+        } \
+        if (TYPE ## IsPremultiplied) { \
+            Init ## TYPE ## BlendFillVarsPre(DstFill, fgColor, src); \
+        } \
     } \
  \
     Init ## TYPE ## AlphaLoadData(DstPix, pRasInfo); \
@@ -657,68 +657,68 @@ void NAME_SRC_MASKFILL(TYPE) \
  \
     rasScan -= width * TYPE ## PixelStride; \
     if (pMask) { \
-	pMask += maskOff; \
-	maskScan -= width; \
-	do { \
-	    jint w = width; \
-	    Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-	    do { \
+        pMask += maskOff; \
+        maskScan -= width; \
+        do { \
+            jint w = width; \
+            Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+            do { \
                 DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAlphaVarFor ## STRATEGY(dstF) \
                 DeclareAndInitPathAlphaFor ## STRATEGY(pathA) \
  \
-		if (pathA > 0) { \
-		    if (pathA == 0xff) { \
+                if (pathA > 0) { \
+                    if (pathA == 0xff) { \
                         /* pathA ignored here, not promoted */ \
-			Store ## TYPE ## BlendFill(pRas, DstFill, 0, \
-						   fgColor, src); \
-		    } else { \
+                        Store ## TYPE ## BlendFill(pRas, DstFill, 0, \
+                                                   fgColor, src); \
+                    } else { \
                         PromoteByteAlphaFor ## STRATEGY(pathA); \
-			dstF = MaxValFor ## STRATEGY - pathA; \
-			LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, \
+                        dstF = MaxValFor ## STRATEGY - pathA; \
+                        LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, \
                                                                  DstPix, \
                                                                  res); \
-			resA = MultiplyAlphaFor ## STRATEGY(dstF, resA); \
-			if (!(TYPE ## IsPremultiplied)) { \
-			    dstF = resA; \
-			} \
-			resA += MultiplyAlphaFor ## STRATEGY(pathA, srcA); \
-			Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, \
-						             res); \
+                        resA = MultiplyAlphaFor ## STRATEGY(dstF, resA); \
+                        if (!(TYPE ## IsPremultiplied)) { \
+                            dstF = resA; \
+                        } \
+                        resA += MultiplyAlphaFor ## STRATEGY(pathA, srcA); \
+                        Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, \
+                                                             res); \
                         MultMultAddAndStore ## STRATEGY ## Comps(res, \
                                                                  dstF, res, \
                                                                  pathA, src);\
-			if (!(TYPE ## IsPremultiplied) && resA && \
+                        if (!(TYPE ## IsPremultiplied) && resA && \
                             resA < MaxValFor ## STRATEGY) \
                         { \
                             DivideAndStore ## STRATEGY ## Comps(res, \
                                                                 res, resA); \
-			} \
-			Store ## TYPE ## From ## STRATEGY ## Comps(pRas, \
+                        } \
+                        Store ## TYPE ## From ## STRATEGY ## Comps(pRas, \
                                                                    DstWrite, \
                                                                    0, res); \
-		    } \
-		} \
-		pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		Next ## TYPE ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pRas = PtrAddBytes(pRas, rasScan); \
-	    Next ## TYPE ## StoreVarsY(DstWrite); \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} while (--height > 0); \
+                    } \
+                } \
+                pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                Next ## TYPE ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pRas = PtrAddBytes(pRas, rasScan); \
+            Next ## TYPE ## StoreVarsY(DstWrite); \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } while (--height > 0); \
     } else /* pMask == 0 */ { \
-	do { \
-	    jint w = width; \
-	    Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-	    do { \
-		Store ## TYPE ## BlendFill(pRas, DstFill, 0, fgColor, src); \
-		pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		Next ## TYPE ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pRas = PtrAddBytes(pRas, rasScan); \
-	    Next ## TYPE ## StoreVarsY(DstWrite); \
-	} while (--height > 0); \
+        do { \
+            jint w = width; \
+            Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+            do { \
+                Store ## TYPE ## BlendFill(pRas, DstFill, 0, fgColor, src); \
+                pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                Next ## TYPE ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pRas = PtrAddBytes(pRas, rasScan); \
+            Next ## TYPE ## StoreVarsY(DstWrite); \
+        } while (--height > 0); \
     } \
 }
 
@@ -741,9 +741,9 @@ void NAME_SRCOVER_MASKFILL(TYPE) \
  \
     Extract ## STRATEGY ## CompsAndAlphaFromArgb(fgColor, src); \
     if (srcA != MaxValFor ## STRATEGY) { \
-	if (srcA == 0) { \
-	    return; \
-	} \
+        if (srcA == 0) { \
+            return; \
+        } \
         MultiplyAndStore ## STRATEGY ## Comps(src, srcA, src); \
     } \
  \
@@ -752,98 +752,98 @@ void NAME_SRCOVER_MASKFILL(TYPE) \
  \
     rasScan -= width * TYPE ## PixelStride; \
     if (pMask) { \
-	pMask += maskOff; \
-	maskScan -= width; \
-	do { \
-	    jint w = width; \
-	    Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-	    do { \
-		DeclareAlphaVarFor ## STRATEGY(resA) \
+        pMask += maskOff; \
+        maskScan -= width; \
+        do { \
+            jint w = width; \
+            Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+            do { \
+                DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAndInitPathAlphaFor ## STRATEGY(pathA) \
  \
-		if (pathA > 0) { \
-		    if (pathA != 0xff) { \
+                if (pathA > 0) { \
+                    if (pathA != 0xff) { \
                         PromoteByteAlphaFor ## STRATEGY(pathA); \
-			resA = MultiplyAlphaFor ## STRATEGY(pathA, srcA); \
+                        resA = MultiplyAlphaFor ## STRATEGY(pathA, srcA); \
                         MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                               pathA, src); \
-		    } else { \
+                    } else { \
                         /* pathA ignored here, not promoted */ \
-			resA = srcA; \
+                        resA = srcA; \
                         Store ## STRATEGY ## CompsUsingOp(res, =, src); \
-		    } \
-		    if (resA != MaxValFor ## STRATEGY) { \
+                    } \
+                    if (resA != MaxValFor ## STRATEGY) { \
                         DeclareAndInvertAlphaVarFor ## STRATEGY(dstF, resA) \
                         DeclareAndClearAlphaVarFor ## STRATEGY(dstA) \
-		        LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, \
+                        LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, \
                                                                  DstPix, \
                                                                  dst); \
-			dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-			if (!(TYPE ## IsPremultiplied)) { \
-			    dstF = dstA; \
-			} \
-			resA += dstA; \
-			if (dstF) { \
+                        dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+                        if (!(TYPE ## IsPremultiplied)) { \
+                            dstF = dstA; \
+                        } \
+                        resA += dstA; \
+                        if (dstF) { \
                             DeclareCompVarsFor ## STRATEGY(tmp) \
-			    Postload ## STRATEGY ## From ## TYPE(pRas, \
+                            Postload ## STRATEGY ## From ## TYPE(pRas, \
                                                                  DstPix, \
                                                                  tmp); \
-			    if (dstF != MaxValFor ## STRATEGY) { \
+                            if (dstF != MaxValFor ## STRATEGY) { \
                                 MultiplyAndStore ## STRATEGY ## Comps(tmp, \
                                                                       dstF, \
                                                                       tmp); \
-			    } \
+                            } \
                             Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
-			} \
-		    } \
-		    if (!(TYPE ## IsPremultiplied) && resA && \
+                        } \
+                    } \
+                    if (!(TYPE ## IsPremultiplied) && resA && \
                         resA < MaxValFor ## STRATEGY) \
                     { \
                         DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-		    } \
-		    Store ## TYPE ## From ## STRATEGY ## Comps(pRas, \
+                    } \
+                    Store ## TYPE ## From ## STRATEGY ## Comps(pRas, \
                                                                DstWrite, 0, \
-						               res); \
-		} \
-		pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		Next ## TYPE ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pRas = PtrAddBytes(pRas, rasScan); \
-	    Next ## TYPE ## StoreVarsY(DstWrite); \
-	    pMask = PtrAddBytes(pMask, maskScan); \
-	} while (--height > 0); \
+                                                               res); \
+                } \
+                pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                Next ## TYPE ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pRas = PtrAddBytes(pRas, rasScan); \
+            Next ## TYPE ## StoreVarsY(DstWrite); \
+            pMask = PtrAddBytes(pMask, maskScan); \
+        } while (--height > 0); \
     } else /* pMask == 0 */ { \
-	do { \
-	    jint w = width; \
-	    Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-	    do { \
-		DeclareAlphaVarFor ## STRATEGY(resA) \
+        do { \
+            jint w = width; \
+            Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+            do { \
+                DeclareAlphaVarFor ## STRATEGY(resA) \
                 DeclareCompVarsFor ## STRATEGY(res) \
                 DeclareAndInvertAlphaVarFor ## STRATEGY(dstF, srcA) \
 \
-		LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, DstPix, res);\
-		resA = MultiplyAlphaFor ## STRATEGY(dstF, resA); \
-		if (!(TYPE ## IsPremultiplied)) { \
-		    dstF = resA; \
-		} \
-		resA += srcA; \
-		Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, res); \
+                LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas, DstPix, res);\
+                resA = MultiplyAlphaFor ## STRATEGY(dstF, resA); \
+                if (!(TYPE ## IsPremultiplied)) { \
+                    dstF = resA; \
+                } \
+                resA += srcA; \
+                Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, res); \
                 MultiplyAddAndStore ## STRATEGY ## Comps(res, \
                                                          dstF, res, src); \
-		if (!(TYPE ## IsPremultiplied) && resA && \
+                if (!(TYPE ## IsPremultiplied) && resA && \
                     resA < MaxValFor ## STRATEGY) \
                 { \
                     DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-		} \
-		Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
+                } \
+                Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
                                                            0, res); \
-		pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
-		Next ## TYPE ## StoreVarsX(DstWrite); \
-	    } while (--w > 0); \
-	    pRas = PtrAddBytes(pRas, rasScan); \
-	    Next ## TYPE ## StoreVarsY(DstWrite); \
-	} while (--height > 0); \
+                pRas = PtrAddBytes(pRas, TYPE ## PixelStride); \
+                Next ## TYPE ## StoreVarsX(DstWrite); \
+            } while (--w > 0); \
+            pRas = PtrAddBytes(pRas, rasScan); \
+            Next ## TYPE ## StoreVarsY(DstWrite); \
+        } while (--height > 0); \
     } \
 }
 
@@ -861,13 +861,13 @@ void NAME_SRCOVER_MASKFILL(TYPE) \
  * CPP token concatenation operator "##".
  *
  * Declare<stype>AlphaLoadData       Declare the variables used when an alpha
- *                                   value is pre-fetched to see whether or 
- *                                   not blending needs to occur 
+ *                                   value is pre-fetched to see whether or
+ *                                   not blending needs to occur
  * Init<stype>AlphaLoadData          Initialize the aforementioned variables
  * LoadAlphaFrom<stype>For<strategy> Load the alpha value for the given pixel
  *                                   into a variable used later (the strategy
- *                                   type determines the bit depth of the 
- *                                   alpha value) 
+ *                                   type determines the bit depth of the
+ *                                   alpha value)
  * Postload<strategy>From<stype>     Load the pixel components from the given
  *                                   surface type into the form required by
  *                                   the given strategy.  Typically there will
@@ -876,24 +876,24 @@ void NAME_SRCOVER_MASKFILL(TYPE) \
  *                                   for 1ShortGray, etc.  Its code is only
  *                                   executed when blending needs to occur.
  *
- * <stype>IsPremultiplied            Constant specifying whether the pixel 
- *                                   components have been premultiplied with 
- *                                   the alpha value 
+ * <stype>IsPremultiplied            Constant specifying whether the pixel
+ *                                   components have been premultiplied with
+ *                                   the alpha value
  * Declare<stype>BlendFillVars       Declare the variables used when alpha
  *                                   blending need not occur (mask and source
  *                                   pixel are opaque)
  * Clear<stype>BlendFillVars         Clear the variables used in a no-blend
  *                                   situation (may modify argb argument)
- * Init<stype>BlendFillVarsNonPre    Initialize the variables used for a 
+ * Init<stype>BlendFillVarsNonPre    Initialize the variables used for a
  *                                   no-blending situation (this macro is for
  *                                   surfaces that do not have premultiplied
  *                                   components) (may modify argb argument)
- * Init<stype>BlendFillVarsPre       Initialize the variables used for a 
+ * Init<stype>BlendFillVarsPre       Initialize the variables used for a
  *                                   no-blending situation (this macro is for
  *                                   surfaces that have premultiplied
  *                                   components) (may modify argb argument)
- * Store<stype>BlendFill             Simply store the pixel for the given 
- *                                   surface (used when blending is 
+ * Store<stype>BlendFill             Simply store the pixel for the given
+ *                                   surface (used when blending is
  *                                   unnecessary)
  * Store<stype>From<strategy>Comps   Store the pixel for the given surface
  *                                   type after converting it from a pixel of

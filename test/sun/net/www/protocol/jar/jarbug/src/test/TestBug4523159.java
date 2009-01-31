@@ -33,14 +33,14 @@ import java.util.jar.*;
  *
  * 15 votes.
  *
- * Note: Execute "real" test in separate vm instance so that any locks 
- * held on files will be released when this separate vm exits and the 
+ * Note: Execute "real" test in separate vm instance so that any locks
+ * held on files will be released when this separate vm exits and the
  * invoking vm can clean up if necessary.
  */
-public class TestBug4523159 extends JarTest 
+public class TestBug4523159 extends JarTest
 {
     public void run(String[] args) throws Exception {
-	if (args.length == 0 ) {  // execute the test in another vm.
+        if (args.length == 0 ) {  // execute the test in another vm.
             System.out.println("Test: " + getClass().getName());
             Process process = Runtime.getRuntime().exec(javaCmd + " TestBug4523159 -test");
 
@@ -61,36 +61,36 @@ public class TestBug4523159 extends JarTest
             if (outRedirector.getHasReadData() || errRedirector.getHasReadData())
                 throw new RuntimeException("Failed: No output should have been received from the process");
 
-	} else { // run the test.
-	    File tmp = createTempDir();
-	    try {
-		File dir = new File(tmp, "dir!name");
-		dir.mkdir();
-		File testFile = copyResource(dir, "jar1.jar");
+        } else { // run the test.
+            File tmp = createTempDir();
+            try {
+                File dir = new File(tmp, "dir!name");
+                dir.mkdir();
+                File testFile = copyResource(dir, "jar1.jar");
 
-		// Case 1: direct access
-		URL url = new URL("jar:" + testFile.toURL() + "!/res1.txt");
-		JarURLConnection conn = (JarURLConnection) url.openConnection();
-		JarFile file = conn.getJarFile();
-		JarEntry entry = conn.getJarEntry();
-		byte[] buffer = readFully(file.getInputStream(entry));
-		String str = new String(buffer);
-		if (!str.equals("This is jar 1\n")) {
-		    throw(new Exception("resource content invalid"));
-		}
-			
-		// Case 2: indirect access
-		URL[] urls = new URL[1];
-		urls[0] = new URL("jar:" + testFile.toURL() + "!/");
-		URLClassLoader loader = new URLClassLoader(urls);
-		loader.loadClass("jar1.GetResource").newInstance();
-	    } finally {
-		deleteRecursively(tmp);
-	    }
-	}
+                // Case 1: direct access
+                URL url = new URL("jar:" + testFile.toURL() + "!/res1.txt");
+                JarURLConnection conn = (JarURLConnection) url.openConnection();
+                JarFile file = conn.getJarFile();
+                JarEntry entry = conn.getJarEntry();
+                byte[] buffer = readFully(file.getInputStream(entry));
+                String str = new String(buffer);
+                if (!str.equals("This is jar 1\n")) {
+                    throw(new Exception("resource content invalid"));
+                }
+
+                // Case 2: indirect access
+                URL[] urls = new URL[1];
+                urls[0] = new URL("jar:" + testFile.toURL() + "!/");
+                URLClassLoader loader = new URLClassLoader(urls);
+                loader.loadClass("jar1.GetResource").newInstance();
+            } finally {
+                deleteRecursively(tmp);
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {
-	new TestBug4523159().run(args);
+        new TestBug4523159().run(args);
     }
 }

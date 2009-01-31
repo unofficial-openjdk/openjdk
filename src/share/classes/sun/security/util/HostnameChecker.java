@@ -43,19 +43,18 @@ import sun.net.util.IPAddressUtil;
  * Class to check hostnames against the names specified in a certificate as
  * required for TLS and LDAP.
  *
- * @version %I%, %G%
  */
 public class HostnameChecker {
 
     // Constant for a HostnameChecker for TLS
     public final static byte TYPE_TLS = 1;
     private final static HostnameChecker INSTANCE_TLS =
-					new HostnameChecker(TYPE_TLS);
+                                        new HostnameChecker(TYPE_TLS);
 
     // Constant for a HostnameChecker for LDAP
     public final static byte TYPE_LDAP = 2;
     private final static HostnameChecker INSTANCE_LDAP =
-					new HostnameChecker(TYPE_LDAP);
+                                        new HostnameChecker(TYPE_LDAP);
 
     // constants for subject alt names of type DNS and IP
     private final static int ALTNAME_DNS = 2;
@@ -65,7 +64,7 @@ public class HostnameChecker {
     private final byte checkType;
 
     private HostnameChecker(byte checkType) {
-	this.checkType = checkType;
+        this.checkType = checkType;
     }
 
     /**
@@ -73,12 +72,12 @@ public class HostnameChecker {
      * TYPE_* constants defined in this class.
      */
     public static HostnameChecker getInstance(byte checkType) {
-	if (checkType == TYPE_TLS) {
-	    return INSTANCE_TLS;
-	} else if (checkType == TYPE_LDAP) {
+        if (checkType == TYPE_TLS) {
+            return INSTANCE_TLS;
+        } else if (checkType == TYPE_LDAP) {
             return INSTANCE_LDAP;
         }
-	throw new IllegalArgumentException("Unknown check type: " + checkType);
+        throw new IllegalArgumentException("Unknown check type: " + checkType);
     }
 
     /**
@@ -88,43 +87,43 @@ public class HostnameChecker {
      * the names specified in the certificate
      */
     public void match(String expectedName, X509Certificate cert)
-	    throws CertificateException {
-	if (isIpAddress(expectedName)) {
-	   matchIP(expectedName, cert);
-	} else {
-	   matchDNS(expectedName, cert);
-	}
+            throws CertificateException {
+        if (isIpAddress(expectedName)) {
+           matchIP(expectedName, cert);
+        } else {
+           matchDNS(expectedName, cert);
+        }
     }
 
     /**
      * Perform the check for Kerberos.
      */
     public static boolean match(String expectedName,
-			KerberosPrincipal principal) {
-	String hostName = getServerName(principal);
-	return (expectedName.equalsIgnoreCase(hostName));
+                        KerberosPrincipal principal) {
+        String hostName = getServerName(principal);
+        return (expectedName.equalsIgnoreCase(hostName));
     }
 
     /**
      * Return the Server name from Kerberos principal.
      */
     public static String getServerName(KerberosPrincipal principal) {
-	if (principal == null) {
-	   return null;
-	}
-	String hostName = null;
-	try {
-	    PrincipalName princName = 
-		new PrincipalName(principal.getName(), 
-			PrincipalName.KRB_NT_SRV_HST);
- 	    String[] nameParts = princName.getNameStrings();
-	    if (nameParts.length >= 2) {
-		hostName = nameParts[1];
-	    }
-	} catch (Exception e) {
-	    // ignore
-	}
-	return hostName;
+        if (principal == null) {
+           return null;
+        }
+        String hostName = null;
+        try {
+            PrincipalName princName =
+                new PrincipalName(principal.getName(),
+                        PrincipalName.KRB_NT_SRV_HST);
+            String[] nameParts = princName.getNameStrings();
+            if (nameParts.length >= 2) {
+                hostName = nameParts[1];
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return hostName;
     }
 
     /**
@@ -137,12 +136,12 @@ public class HostnameChecker {
      * Likewise for IP addresses when it returns false.
      */
     private static boolean isIpAddress(String name) {
-	if (IPAddressUtil.isIPv4LiteralAddress(name) ||
-	    IPAddressUtil.isIPv6LiteralAddress(name)) {
-	    return true;
-	} else {
-	    return false;
-	}
+        if (IPAddressUtil.isIPv4LiteralAddress(name) ||
+            IPAddressUtil.isIPv6LiteralAddress(name)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -154,24 +153,24 @@ public class HostnameChecker {
      * in the certificate and must exactly match the IP in the URI.
      */
     private static void matchIP(String expectedIP, X509Certificate cert)
-	    throws CertificateException {
-	Collection<List<?>> subjAltNames = cert.getSubjectAlternativeNames();
-	if (subjAltNames == null) {
-	    throw new CertificateException
-				("No subject alternative names present");
-	}
-	for (List<?> next : subjAltNames) {
-	    // For IP address, it needs to be exact match
-	    if (((Integer)next.get(0)).intValue() == ALTNAME_IP) {
-		String ipAddress = (String)next.get(1);
-		if (expectedIP.equalsIgnoreCase(ipAddress)) {
-		    return;
-		}
-	    }
-	}
-	throw new CertificateException("No subject alternative " +
-			"names matching " + "IP address " +
-			expectedIP + " found");
+            throws CertificateException {
+        Collection<List<?>> subjAltNames = cert.getSubjectAlternativeNames();
+        if (subjAltNames == null) {
+            throw new CertificateException
+                                ("No subject alternative names present");
+        }
+        for (List<?> next : subjAltNames) {
+            // For IP address, it needs to be exact match
+            if (((Integer)next.get(0)).intValue() == ALTNAME_IP) {
+                String ipAddress = (String)next.get(1);
+                if (expectedIP.equalsIgnoreCase(ipAddress)) {
+                    return;
+                }
+            }
+        }
+        throw new CertificateException("No subject alternative " +
+                        "names matching " + "IP address " +
+                        expectedIP + " found");
     }
 
     /**
@@ -190,40 +189,40 @@ public class HostnameChecker {
      * of the set is considered acceptable.)
      */
     private void matchDNS(String expectedName, X509Certificate cert)
-	    throws CertificateException {
-	Collection<List<?>> subjAltNames = cert.getSubjectAlternativeNames();
-	if (subjAltNames != null) {
-	    boolean foundDNS = false;
-	    for ( List<?> next : subjAltNames) {
-		if (((Integer)next.get(0)).intValue() == ALTNAME_DNS) {
-		    foundDNS = true;
-		    String dnsName = (String)next.get(1);
-		    if (isMatched(expectedName, dnsName)) {
-			return;
-		    }
-		}
-	    }
-	    if (foundDNS) {
-		// if certificate contains any subject alt names of type DNS
-		// but none match, reject
-		throw new CertificateException("No subject alternative DNS "
-			+ "name matching " + expectedName + " found.");
-	    }
-	}
-	X500Name subjectName = getSubjectX500Name(cert);
-	DerValue derValue = subjectName.findMostSpecificAttribute
-						    (X500Name.commonName_oid);
-	if (derValue != null) {
-	    try {
-		if (isMatched(expectedName, derValue.getAsString())) {
-		    return;
-		}
-	    } catch (IOException e) {
-		// ignore
-	    }
-	}
-	String msg = "No name matching " + expectedName + " found";
-	throw new CertificateException(msg);
+            throws CertificateException {
+        Collection<List<?>> subjAltNames = cert.getSubjectAlternativeNames();
+        if (subjAltNames != null) {
+            boolean foundDNS = false;
+            for ( List<?> next : subjAltNames) {
+                if (((Integer)next.get(0)).intValue() == ALTNAME_DNS) {
+                    foundDNS = true;
+                    String dnsName = (String)next.get(1);
+                    if (isMatched(expectedName, dnsName)) {
+                        return;
+                    }
+                }
+            }
+            if (foundDNS) {
+                // if certificate contains any subject alt names of type DNS
+                // but none match, reject
+                throw new CertificateException("No subject alternative DNS "
+                        + "name matching " + expectedName + " found.");
+            }
+        }
+        X500Name subjectName = getSubjectX500Name(cert);
+        DerValue derValue = subjectName.findMostSpecificAttribute
+                                                    (X500Name.commonName_oid);
+        if (derValue != null) {
+            try {
+                if (isMatched(expectedName, derValue.getAsString())) {
+                    return;
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        String msg = "No name matching " + expectedName + " found";
+        throw new CertificateException(msg);
     }
 
 
@@ -235,19 +234,19 @@ public class HostnameChecker {
      * This method is currently used from within JSSE, do not remove.
      */
     public static X500Name getSubjectX500Name(X509Certificate cert)
-	    throws CertificateParsingException {
-	try {
-	    Principal subjectDN = cert.getSubjectDN();
-	    if (subjectDN instanceof X500Name) {
-		return (X500Name)subjectDN;
-	    } else {
-		X500Principal subjectX500 = cert.getSubjectX500Principal();
-		return new X500Name(subjectX500.getEncoded());
-	    }
-	} catch (IOException e) {
-	    throw(CertificateParsingException)
-		new CertificateParsingException().initCause(e);
-	}
+            throws CertificateParsingException {
+        try {
+            Principal subjectDN = cert.getSubjectDN();
+            if (subjectDN instanceof X500Name) {
+                return (X500Name)subjectDN;
+            } else {
+                X500Principal subjectX500 = cert.getSubjectX500Principal();
+                return new X500Name(subjectX500.getEncoded());
+            }
+        } catch (IOException e) {
+            throw(CertificateParsingException)
+                new CertificateParsingException().initCause(e);
+        }
     }
 
 
@@ -283,23 +282,23 @@ public class HostnameChecker {
      * bar.foo.a.com. f*.com matches foo.com but not bar.com.
      */
     private static boolean matchAllWildcards(String name,
-	 String template) {
-	name = name.toLowerCase();
-	template = template.toLowerCase();
-	StringTokenizer nameSt = new StringTokenizer(name, ".");
-	StringTokenizer templateSt = new StringTokenizer(template, ".");
+         String template) {
+        name = name.toLowerCase();
+        template = template.toLowerCase();
+        StringTokenizer nameSt = new StringTokenizer(name, ".");
+        StringTokenizer templateSt = new StringTokenizer(template, ".");
 
-	if (nameSt.countTokens() != templateSt.countTokens()) {
-	    return false;
-	}
+        if (nameSt.countTokens() != templateSt.countTokens()) {
+            return false;
+        }
 
-	while (nameSt.hasMoreTokens()) {
-	    if (!matchWildCards(nameSt.nextToken(),
-			templateSt.nextToken())) {
-		return false;
-	    }
-	}
-	return true;
+        while (nameSt.hasMoreTokens()) {
+            if (!matchWildCards(nameSt.nextToken(),
+                        templateSt.nextToken())) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -313,28 +312,28 @@ public class HostnameChecker {
      * bar.com.
      */
     private static boolean matchLeftmostWildcard(String name,
-			 String template) {
-	name = name.toLowerCase();
-	template = template.toLowerCase();
+                         String template) {
+        name = name.toLowerCase();
+        template = template.toLowerCase();
 
-	// Retreive leftmost component
-	int templateIdx = template.indexOf(".");
-	int nameIdx = name.indexOf(".");
+        // Retreive leftmost component
+        int templateIdx = template.indexOf(".");
+        int nameIdx = name.indexOf(".");
 
-	if (templateIdx == -1)
-	    templateIdx = template.length();
-	if (nameIdx == -1)
-	    nameIdx = name.length();
+        if (templateIdx == -1)
+            templateIdx = template.length();
+        if (nameIdx == -1)
+            nameIdx = name.length();
 
-	if (matchWildCards(name.substring(0, nameIdx),
-	    template.substring(0, templateIdx))) {
+        if (matchWildCards(name.substring(0, nameIdx),
+            template.substring(0, templateIdx))) {
 
-	    // match rest of the name
-	    return template.substring(templateIdx).equals(
-			name.substring(nameIdx));
-	} else {
-	    return false;
-	}
+            // match rest of the name
+            return template.substring(templateIdx).equals(
+                        name.substring(nameIdx));
+        } else {
+            return false;
+        }
     }
 
 
@@ -354,18 +353,18 @@ public class HostnameChecker {
 
         while (wildcardIdx != -1) {
 
-	    // match in sequence the non-wildcard chars in the template.
+            // match in sequence the non-wildcard chars in the template.
             beforeWildcard = afterWildcard.substring(0, wildcardIdx);
             afterWildcard = afterWildcard.substring(wildcardIdx + 1);
 
             int beforeStartIdx = name.indexOf(beforeWildcard);
             if ((beforeStartIdx == -1) ||
-			(isBeginning && beforeStartIdx != 0)) {
+                        (isBeginning && beforeStartIdx != 0)) {
                 return false;
-	    }
+            }
             isBeginning = false;
 
-	    // update the match scope
+            // update the match scope
             name = name.substring(beforeStartIdx + beforeWildcard.length());
             wildcardIdx = afterWildcard.indexOf("*");
         }

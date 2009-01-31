@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)FontLineMetrics.java	1.2 03/08/04
  *
  * (C) Copyright IBM Corp. 2003, All Rights Reserved
  *
@@ -96,7 +95,7 @@ public final class FontLineMetrics extends LineMetrics implements Cloneable {
     }
 
     public final int hashCode() {
-	return cm.hashCode();
+        return cm.hashCode();
     }
 
     public final boolean equals(Object rhs) {
@@ -118,4 +117,3 @@ public final class FontLineMetrics extends LineMetrics implements Cloneable {
         }
     }
 }
-

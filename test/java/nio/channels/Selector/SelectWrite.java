@@ -22,8 +22,8 @@
  */
 
 /* @test
-   @bug 4645302 
-   @summary Socket with OP_WRITE would get selected only once 
+   @bug 4645302
+   @summary Socket with OP_WRITE would get selected only once
    @author kladko
  */
 
@@ -35,10 +35,10 @@ import java.nio.channels.*;
 public class SelectWrite {
 
     public static void main(String[] argv) throws Exception {
-        ByteServer server = new ByteServer(0); 
-        // server: accept connection and do nothing 
+        ByteServer server = new ByteServer(0);
+        // server: accept connection and do nothing
         server.start();
-	InetSocketAddress isa = new InetSocketAddress(
+        InetSocketAddress isa = new InetSocketAddress(
                 InetAddress.getByName(ByteServer.LOCALHOST), ByteServer.PORT);
         Selector sel = Selector.open();
         SocketChannel sc = SocketChannel.open();
@@ -49,12 +49,9 @@ public class SelectWrite {
         sel.selectedKeys().clear();
         if (sel.select() == 0) {
             throw new Exception("Select returned zero");
-        } 
+        }
         sc.close();
         sel.close();
     }
 
 }
-
-
-

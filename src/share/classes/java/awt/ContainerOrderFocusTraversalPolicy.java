@@ -51,7 +51,6 @@ import java.util.logging.*;
  * policy is used to perform the search operation.
  *
  * @author David Mendenhall
- * @version %I%, %G%
  *
  * @see Container#getComponents
  * @since 1.4
@@ -64,7 +63,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
     private static final Logger log = Logger.getLogger("java.awt.ContainerOrderFocusTraversalPolicy");
 
     /*
-     * JDK 1.4 serialVersionUID 
+     * JDK 1.4 serialVersionUID
      */
     private static final long serialVersionUID = 486933713763926351L;
 
@@ -125,8 +124,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                                         Component aComponent,
                                         MutableBoolean found) {
         if (!(aContainer.isVisible() && aContainer.isDisplayable())) {
-	    return null;
-	}
+            return null;
+        }
 
         if (found.value) {
             if (accept(aContainer)) {
@@ -150,7 +149,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                         retval = policy.getDefaultComponent(cont);
                         if (log.isLoggable(Level.FINE)) log.fine("Used FTP for getting default component: " + retval);
                     } else {
-                        found.value = cont.isAncestorOf(aComponent);                    
+                        found.value = cont.isAncestorOf(aComponent);
                         if (found.value)  {
                             if (aComponent == policy.getLastComponent(cont)) {
                             // Reached last component, going to wrap - should switch to next provider
@@ -177,18 +176,18 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                 found.value = true;
             }
 
-	    if (found.value &&
-		getImplicitDownCycleTraversal() &&
-		(comp instanceof Container) &&
-		((Container)comp).isFocusCycleRoot())
-	    {
-		Container cont = (Container)comp;
-		Component retval = cont.getFocusTraversalPolicy().
-		    getDefaultComponent(cont);
-		if (retval != null) {
-		    return retval;
-		}
-	    }
+            if (found.value &&
+                getImplicitDownCycleTraversal() &&
+                (comp instanceof Container) &&
+                ((Container)comp).isFocusCycleRoot())
+            {
+                Container cont = (Container)comp;
+                Component retval = cont.getFocusTraversalPolicy().
+                    getDefaultComponent(cont);
+                if (retval != null) {
+                    return retval;
+                }
+            }
         }
 
         return null;
@@ -198,7 +197,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
      * Returns the Component that should receive the focus before aComponent.
      * aContainer must be a focus cycle root of aComponent or a <a
      * href="doc-files/FocusSpec.html#FocusTraversalPolicyProviders">focus traversal policy
-     * provider</a>. 
+     * provider</a>.
      *
      * @param aContainer a focus cycle root of aComponent or focus traversal policy provider
      * @param aComponent a (possibly indirect) child of aContainer, or
@@ -240,14 +239,14 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                                          Component aComponent,
                                          MutableBoolean found) {
         if (!(aContainer.isVisible() && aContainer.isDisplayable())) {
-	    return null;
-	}
+            return null;
+        }
 
         for (int i = aContainer.ncomponents - 1; i >= 0; i--) {
             Component comp = aContainer.component[i];
-	    if (comp == aComponent) {
-		found.value = true;
-	    } else if ((comp instanceof Container) &&
+            if (comp == aComponent) {
+                found.value = true;
+            } else if ((comp instanceof Container) &&
                 !((Container)comp).isFocusCycleRoot()) {
                 Component retval = null;
                 if (((Container)comp).isFocusTraversalPolicyProvider()) {
@@ -259,7 +258,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                         retval = policy.getLastComponent(cont);
                         if (log.isLoggable(Level.FINE)) log.fine("Used FTP for getting last component: " + retval);
                     } else {
-                        found.value = cont.isAncestorOf(aComponent);                    
+                        found.value = cont.isAncestorOf(aComponent);
                         if (found.value) {
                             if (aComponent == policy.getFirstComponent(cont)) {
                                 retval = null;
@@ -314,7 +313,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
         synchronized(aContainer.getTreeLock()) {
             if (!(aContainer.isVisible() &&
                   aContainer.isDisplayable()))
-	    {
+            {
                 return null;
             }
 
@@ -324,9 +323,9 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
 
             for (int i = 0; i < aContainer.ncomponents; i++) {
                 Component comp = aContainer.component[i];
-		if (comp instanceof Container &&
-		    !((Container)comp).isFocusCycleRoot())
-		{
+                if (comp instanceof Container &&
+                    !((Container)comp).isFocusCycleRoot())
+                {
                     Component retval = null;
                     Container cont = (Container)comp;
                     if (cont.isFocusTraversalPolicyProvider()) {
@@ -335,12 +334,12 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                     } else {
                         retval = getFirstComponent((Container)comp);
                     }
-		    if (retval != null) {
-		        return retval;
-		    }
-		} else if (accept(comp)) {
-		    return comp;
-		}
+                    if (retval != null) {
+                        return retval;
+                    }
+                } else if (accept(comp)) {
+                    return comp;
+                }
             }
         }
 
@@ -367,15 +366,15 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
         synchronized(aContainer.getTreeLock()) {
             if (!(aContainer.isVisible() &&
                   aContainer.isDisplayable()))
-	    {
+            {
                 return null;
             }
 
             for (int i = aContainer.ncomponents - 1; i >= 0; i--) {
                 Component comp = aContainer.component[i];
-		if (comp instanceof Container &&
-		    !((Container)comp).isFocusCycleRoot())
-		{
+                if (comp instanceof Container &&
+                    !((Container)comp).isFocusCycleRoot())
+                {
                     Component retval = null;
                     Container cont = (Container)comp;
                     if (cont.isFocusTraversalPolicyProvider()) {
@@ -386,13 +385,13 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                         if (log.isLoggable(Level.FINE)) log.fine("\tEntering sub-container");
                         retval = getLastComponent((Container)comp);
                     }
-		    if (retval != null) {
+                    if (retval != null) {
                         if (log.isLoggable(Level.FINE)) log.fine("\tFound last component : " + retval);
-		        return retval;
-		    }
-		} else if (accept(comp)) {
-		    return comp;
-		}
+                        return retval;
+                    }
+                } else if (accept(comp)) {
+                    return comp;
+                }
             }
 
             if (accept(aContainer)) {
@@ -436,8 +435,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
      * @see #getFirstComponent
      */
     public void setImplicitDownCycleTraversal(boolean
-					      implicitDownCycleTraversal) {
-	this.implicitDownCycleTraversal = implicitDownCycleTraversal;
+                                              implicitDownCycleTraversal) {
+        this.implicitDownCycleTraversal = implicitDownCycleTraversal;
     }
 
     /**
@@ -454,7 +453,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
      * @see #getFirstComponent
      */
     public boolean getImplicitDownCycleTraversal() {
-	return implicitDownCycleTraversal;
+        return implicitDownCycleTraversal;
     }
 
     /**
@@ -468,34 +467,34 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
      *         enabled, and focusable; <code>false</code> otherwise
      */
     protected boolean accept(Component aComponent) {
-	if (!(aComponent.isVisible() && aComponent.isDisplayable() &&
-	      aComponent.isFocusable() && aComponent.isEnabled())) {
-	    return false;
-	}
+        if (!(aComponent.isVisible() && aComponent.isDisplayable() &&
+              aComponent.isFocusable() && aComponent.isEnabled())) {
+            return false;
+        }
 
-	// Verify that the Component is recursively enabled. Disabling a
-	// heavyweight Container disables its children, whereas disabling
-	// a lightweight Container does not.
-	if (!(aComponent instanceof Window)) {
-	    for (Container enableTest = aComponent.getParent();
-		 enableTest != null;
-		 enableTest = enableTest.getParent())
-	    {
-		if (!(enableTest.isEnabled() || enableTest.isLightweight())) {
-		    return false;
-		}
-		if (enableTest instanceof Window) {
-		    break;
-		}
-	    }
-	}
+        // Verify that the Component is recursively enabled. Disabling a
+        // heavyweight Container disables its children, whereas disabling
+        // a lightweight Container does not.
+        if (!(aComponent instanceof Window)) {
+            for (Container enableTest = aComponent.getParent();
+                 enableTest != null;
+                 enableTest = enableTest.getParent())
+            {
+                if (!(enableTest.isEnabled() || enableTest.isLightweight())) {
+                    return false;
+                }
+                if (enableTest instanceof Window) {
+                    break;
+                }
+            }
+        }
 
-	return true;
+        return true;
     }
 
 }
 
 
 class MutableBoolean {
-    boolean value = false;    
+    boolean value = false;
 }

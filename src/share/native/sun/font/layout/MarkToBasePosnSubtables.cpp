@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)MarkToBasePosnSubtables.cpp	1.8 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -71,7 +70,7 @@ le_int32 MarkToBasePositioningSubtable::process(GlyphIterator *glyphIterator, co
         return 0;
     }
 
-    // FIXME: We probably don't want to find a base glyph before a previous ligature... 
+    // FIXME: We probably don't want to find a base glyph before a previous ligature...
     GlyphIterator baseIterator(*glyphIterator, (le_uint16) (lfIgnoreMarks /*| lfIgnoreLigatures*/));
     LEGlyphID baseGlyph = findBaseGlyph(&baseIterator);
     le_int32 baseCoverage = getBaseCoverage((LEGlyphID) baseGlyph);
@@ -115,7 +114,7 @@ le_int32 MarkToBasePositioningSubtable::process(GlyphIterator *glyphIterator, co
         fontInstance->getGlyphAdvance(baseGlyph, pixels);
         fontInstance->pixelsToUnits(pixels, baseAdvance);
 
-	// flip advances to local coordinate system
+        // flip advances to local coordinate system
         glyphIterator->setCurrGlyphPositionAdjustment(anchorDiffX - baseAdvance.fX, anchorDiffY - baseAdvance.fY, -markAdvance.fX, -markAdvance.fY);
     }
 

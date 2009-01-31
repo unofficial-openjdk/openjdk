@@ -38,7 +38,7 @@ import java.security.PrivilegedAction;
 import javax.swing.SwingConstants;
 
 // NOTE: This class supersedes Win32ShellFolder, which was removed from
-//       distribution after version 1.4.2. 
+//       distribution after version 1.4.2.
 
 /**
  * Win32 Shell Folders
@@ -73,18 +73,18 @@ import javax.swing.SwingConstants;
  * @since 1.4 */
 
 final class Win32ShellFolder2 extends ShellFolder {
-    
+
     private static native void initIDs();
-    
+
     private static final boolean is98;
 
     static {
-	String osName = System.getProperty("os.name");
-	is98 = (osName != null && osName.startsWith("Windows 98"));
+        String osName = System.getProperty("os.name");
+        is98 = (osName != null && osName.startsWith("Windows 98"));
 
         initIDs();
     }
-        
+
     // Win32 Shell Folder Constants
     public static final int DESKTOP = 0x0000;
     public static final int INTERNET = 0x0001;
@@ -150,25 +150,25 @@ final class Win32ShellFolder2 extends ShellFolder {
 
     // Values for system call LoadIcon()
     public enum SystemIcon {
-	IDI_APPLICATION(32512),
-	IDI_HAND(32513),
-	IDI_ERROR(32513),
-	IDI_QUESTION(32514),
-	IDI_EXCLAMATION(32515),
-	IDI_WARNING(32515),
-	IDI_ASTERISK(32516),
-	IDI_INFORMATION(32516),
-	IDI_WINLOGO(32517);
+        IDI_APPLICATION(32512),
+        IDI_HAND(32513),
+        IDI_ERROR(32513),
+        IDI_QUESTION(32514),
+        IDI_EXCLAMATION(32515),
+        IDI_WARNING(32515),
+        IDI_ASTERISK(32516),
+        IDI_INFORMATION(32516),
+        IDI_WINLOGO(32517);
 
-	private final int iconID;
+        private final int iconID;
 
-	SystemIcon(int iconID) {
-	    this.iconID = iconID;
-	}
+        SystemIcon(int iconID) {
+            this.iconID = iconID;
+        }
 
-	public int getIconID() {
-	    return iconID;
-	}
+        public int getIconID() {
+            return iconID;
+        }
     }
 
     static class FolderDisposer implements sun.java2d.DisposerRecord {
@@ -239,8 +239,8 @@ final class Win32ShellFolder2 extends ShellFolder {
      * desktop or Network Neighborhood.
      */
     Win32ShellFolder2(final int csidl) throws IOException {
-	// Desktop is parent of DRIVES and NETWORK, not necessarily
-	// other special shell folders.
+        // Desktop is parent of DRIVES and NETWORK, not necessarily
+        // other special shell folders.
         super(null, composePathForCsidl(csidl));
         new ComTask<Void>() {
             public Void call() throws Exception {
@@ -289,12 +289,12 @@ final class Win32ShellFolder2 extends ShellFolder {
      * Create a system shell folder
      */
     Win32ShellFolder2(Win32ShellFolder2 parent, long pIShellFolder, long relativePIDL, String path) {
-	super(parent, (path != null) ? path : "ShellFolder: ");
+        super(parent, (path != null) ? path : "ShellFolder: ");
         this.disposer.pIShellFolder = pIShellFolder;
         this.disposer.relativePIDL = relativePIDL;
         sun.java2d.Disposer.addRecord(this, disposer);
     }
-    
+
 
     /**
      * Creates a shell folder with a parent and relative PIDL
@@ -322,7 +322,7 @@ final class Win32ShellFolder2 extends ShellFolder {
 
     /** Marks this folder as being the My Documents (Personal) folder */
     public void setIsPersonal() {
-	isPersonal = true;
+        isPersonal = true;
     }
 
     /**
@@ -395,12 +395,12 @@ final class Win32ShellFolder2 extends ShellFolder {
 
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native void releaseIShellFolder(long pIShellFolder);
-    
+
     /**
      * Accessor for IShellFolder
      */
     public long getIShellFolder() {
-	if (disposer.pIShellFolder == 0) {
+        if (disposer.pIShellFolder == 0) {
             disposer.pIShellFolder =
                 new ComTask<Long>() {
                     public Long call() throws Exception {
@@ -433,36 +433,36 @@ final class Win32ShellFolder2 extends ShellFolder {
     public long getParentIShellFolder() {
         Win32ShellFolder2 parent = (Win32ShellFolder2)getParentFile();
         if (parent == null) {
-	    // Parent should only be null if this is the desktop, whose
-	    // relativePIDL is relative to its own IShellFolder.
-	    return getIShellFolder();
+            // Parent should only be null if this is the desktop, whose
+            // relativePIDL is relative to its own IShellFolder.
+            return getIShellFolder();
         }
         return parent.getIShellFolder();
     }
-    
+
     /**
      * Accessor for relative PIDL
      */
     public long getRelativePIDL() {
         if (disposer.relativePIDL == 0) {
-	    throw new InternalError("Should always have a relative PIDL");
+            throw new InternalError("Should always have a relative PIDL");
         }
         return disposer.relativePIDL;
     }
-    
+
     private long getAbsolutePIDL() {
-	if (parent == null) {
-	    // This is the desktop
-	    return getRelativePIDL();
-	} else {
-	    if (disposer.absolutePIDL == 0) {
+        if (parent == null) {
+            // This is the desktop
+            return getRelativePIDL();
+        } else {
+            if (disposer.absolutePIDL == 0) {
                 disposer.absolutePIDL = combinePIDLs(
                         ((Win32ShellFolder2)parent).getAbsolutePIDL(),
                         getRelativePIDL());
-	    }
+            }
 
-	    return disposer.absolutePIDL;
-	}
+            return disposer.absolutePIDL;
+        }
     }
 
     /**
@@ -471,17 +471,17 @@ final class Win32ShellFolder2 extends ShellFolder {
     public Win32ShellFolder2 getDesktop() {
         return Win32ShellFolderManager2.getDesktop();
     }
-    
+
     /**
      * Helper function to return the desktop IShellFolder interface
      */
     public long getDesktopIShellFolder() {
         return getDesktop().getIShellFolder();
     }
-    
+
     private static boolean pathsEqual(String path1, String path2) {
-	// Same effective implementation as Win32FileSystem
-	return path1.equalsIgnoreCase(path2);
+        // Same effective implementation as Win32FileSystem
+        return path1.equalsIgnoreCase(path2);
     }
 
     /**
@@ -489,31 +489,31 @@ final class Win32ShellFolder2 extends ShellFolder {
      */
     public boolean equals(Object o) {
         if (o == null || !(o instanceof Win32ShellFolder2)) {
-	    // Short-circuit circuitous delegation path
-	    if (!(o instanceof File)) {
-		return super.equals(o);
-	    }
-	    return pathsEqual(getPath(), ((File) o).getPath());
+            // Short-circuit circuitous delegation path
+            if (!(o instanceof File)) {
+                return super.equals(o);
+            }
+            return pathsEqual(getPath(), ((File) o).getPath());
         }
         Win32ShellFolder2 rhs = (Win32ShellFolder2) o;
-	if ((parent == null && rhs.parent != null) ||
-	    (parent != null && rhs.parent == null)) {
-	    return false;
-	}
+        if ((parent == null && rhs.parent != null) ||
+            (parent != null && rhs.parent == null)) {
+            return false;
+        }
 
-	if (isFileSystem() && rhs.isFileSystem()) {
+        if (isFileSystem() && rhs.isFileSystem()) {
             // Only folders with identical parents can be equal
             return (pathsEqual(getPath(), rhs.getPath()) &&
                     (parent == rhs.parent || parent.equals(rhs.parent)));
         }
 
         if (parent == rhs.parent || parent.equals(rhs.parent)) {
-	    return pidlsEqual(getParentIShellFolder(), disposer.relativePIDL, rhs.disposer.relativePIDL);
-	}
+            return pidlsEqual(getParentIShellFolder(), disposer.relativePIDL, rhs.disposer.relativePIDL);
+        }
 
-	return false;
+        return false;
     }
-    
+
     private static boolean pidlsEqual(final long pIShellFolder, final long pidl1, final long pidl2) {
         return new ComTask<Boolean>() {
             public Boolean call() throws Exception {
@@ -528,7 +528,7 @@ final class Win32ShellFolder2 extends ShellFolder {
      * @return Whether this is a file system shell folder
      */
     public boolean isFileSystem() {
-	return hasAttribute(ATTRIB_FILESYSTEM);
+        return hasAttribute(ATTRIB_FILESYSTEM);
     }
 
     /**
@@ -584,38 +584,38 @@ final class Win32ShellFolder2 extends ShellFolder {
     }
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native String getFileSystemPath0(int csidl) throws IOException;
-    
+
     // Return whether the path is a network root.
     // Path is assumed to be non-null
     private static boolean isNetworkRoot(String path) {
         return (path.equals("\\\\") || path.equals("\\") || path.equals("//") || path.equals("/"));
     }
-    
+
     /**
      * @return The parent shell folder of this shell folder, null if
      * there is no parent
      */
     public File getParentFile() {
-	return parent;
+        return parent;
     }
 
     public boolean isDirectory() {
-	if (isDir == null) {
-	    // Folders with SFGAO_BROWSABLE have "shell extension" handlers and are
-	    // not traversable in JFileChooser. An exception is "My Documents" on
-	    // Windows 98.
-	    if ((hasAttribute(ATTRIB_HASSUBFOLDER) || hasAttribute(ATTRIB_FOLDER))
-		&& (!hasAttribute(ATTRIB_BROWSABLE) ||
-		    (is98 && equals(Win32ShellFolderManager2.getPersonal())))) {
-		isDir = Boolean.TRUE;
-	    } else if (isLink()) {
-		ShellFolder linkLocation = getLinkLocation(false);
-		isDir = Boolean.valueOf(linkLocation != null && linkLocation.isDirectory());
-	    } else {
-		isDir = Boolean.FALSE;
-	    }
-	}
-	return isDir.booleanValue();
+        if (isDir == null) {
+            // Folders with SFGAO_BROWSABLE have "shell extension" handlers and are
+            // not traversable in JFileChooser. An exception is "My Documents" on
+            // Windows 98.
+            if ((hasAttribute(ATTRIB_HASSUBFOLDER) || hasAttribute(ATTRIB_FOLDER))
+                && (!hasAttribute(ATTRIB_BROWSABLE) ||
+                    (is98 && equals(Win32ShellFolderManager2.getPersonal())))) {
+                isDir = Boolean.TRUE;
+            } else if (isLink()) {
+                ShellFolder linkLocation = getLinkLocation(false);
+                isDir = Boolean.valueOf(linkLocation != null && linkLocation.isDirectory());
+            } else {
+                isDir = Boolean.FALSE;
+            }
+        }
+        return isDir.booleanValue();
     }
 
     /*
@@ -635,7 +635,7 @@ final class Win32ShellFolder2 extends ShellFolder {
     // returned must be released using releaseEnumObjects().
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private native long getEnumObjects(long pIShellFolder, boolean isDesktop,
-				       boolean includeHiddenFiles);
+                                       boolean includeHiddenFiles);
     // Returns the next sequential child as a relative PIDL
     // from an IEnumIDList interface.  The value returned must
     // be released using releasePIDL().
@@ -644,7 +644,7 @@ final class Win32ShellFolder2 extends ShellFolder {
     // Releases the IEnumIDList interface
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private native void releaseEnumObjects(long pEnumObjects);
-    
+
     // Returns the IShellFolder of a child from a parent IShellFolder
     // and a relative PIDL.  The value returned must be released
     // using releaseIShellFolder().
@@ -712,8 +712,8 @@ final class Win32ShellFolder2 extends ShellFolder {
             }
         }.execute();
     }
-    
-    
+
+
     /**
      * Look for (possibly special) child folder by it's path
      *
@@ -753,26 +753,26 @@ final class Win32ShellFolder2 extends ShellFolder {
     public boolean isLink() {
         return hasAttribute(ATTRIB_LINK);
     }
-    
+
     /**
      * @return Whether this shell folder is marked as hidden
      */
     public boolean isHidden() {
-	return hasAttribute(ATTRIB_HIDDEN);
+        return hasAttribute(ATTRIB_HIDDEN);
     }
 
 
     // Return the link location of a shell folder
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native long getLinkLocation(long parentIShellFolder,
-					long relativePIDL, boolean resolve);
+                                        long relativePIDL, boolean resolve);
 
     /**
      * @return The shell folder linked to by this shell folder, or null
      * if this shell folder is not a link or is a broken or invalid link
      */
     public ShellFolder getLinkLocation()  {
-	return getLinkLocation(true);
+        return getLinkLocation(true);
     }
 
     private ShellFolder getLinkLocation(final boolean resolve)  {
@@ -822,14 +822,14 @@ final class Win32ShellFolder2 extends ShellFolder {
     // Return the display name of a shell folder
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native String getDisplayNameOf(long parentIShellFolder,
-						  long relativePIDL,
-						  int attrs);
+                                                  long relativePIDL,
+                                                  int attrs);
 
     /**
      * @return The name used to display this shell folder
      */
     public String getDisplayName() {
-	if (displayName == null) {
+        if (displayName == null) {
             displayName =
                 new ComTask<String>() {
                     public String call() throws Exception {
@@ -838,9 +838,9 @@ final class Win32ShellFolder2 extends ShellFolder {
                     }
                 }.execute();
         }
-	return displayName;
+        return displayName;
     }
-    
+
     // Return the folder type of a shell folder
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native String getFolderType(long pIDL);
@@ -849,7 +849,7 @@ final class Win32ShellFolder2 extends ShellFolder {
      * @return The type of shell folder as a string
      */
     public String getFolderType() {
-	if (folderType == null) {
+        if (folderType == null) {
             final long absolutePIDL = getAbsolutePIDL();
             folderType =
                 new ComTask<String>() {
@@ -858,9 +858,9 @@ final class Win32ShellFolder2 extends ShellFolder {
                     }
                 }.execute();
         }
-	return folderType;
+        return folderType;
     }
-    
+
     // Return the executable type of a file system shell folder
     private native String getExecutableType(String path);
 
@@ -873,7 +873,7 @@ final class Win32ShellFolder2 extends ShellFolder {
         }
         return getExecutableType(getAbsolutePath());
     }
-    
+
 
 
     // Icons
@@ -892,25 +892,25 @@ final class Win32ShellFolder2 extends ShellFolder {
     private static native long getIcon(String absolutePath, boolean getLargeIcon);
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native long extractIcon(long parentIShellFolder, long relativePIDL,
-					   boolean getLargeIcon);
+                                           boolean getLargeIcon);
 
     // Returns an icon from the Windows system icon list in the form of an HICON
     private static native long getSystemIcon(int iconID);
     private static native long getIconResource(String libName, int iconID,
-					       int cxDesired, int cyDesired,
-					       boolean useVGAColors);
-					       // Note: useVGAColors is ignored on XP and later
+                                               int cxDesired, int cyDesired,
+                                               boolean useVGAColors);
+                                               // Note: useVGAColors is ignored on XP and later
 
     // Return the bits from an HICON.  This has a side effect of setting
     // the imageHash variable for efficient caching / comparing.
     private static native int[] getIconBits(long hIcon, int iconSize);
     // Dispose the HICON
     private static native void disposeIcon(long hIcon);
-    
+
     public static native int[] getFileChooserBitmapBits();
 
     private long getIShellIcon() {
-	if (pIShellIcon == -1L) {
+        if (pIShellIcon == -1L) {
             pIShellIcon =
                 new ComTask<Long>() {
                     public Long call() throws Exception {
@@ -926,41 +926,41 @@ final class Win32ShellFolder2 extends ShellFolder {
     static Image[] fileChooserIcons = new Image[47];
 
     static Image getFileChooserIcon(int i) {
-	if (fileChooserIcons[i] != null) {
-	    return fileChooserIcons[i];
-	} else {
-	    if (fileChooserBitmapBits == null) {
-		fileChooserBitmapBits = getFileChooserBitmapBits();
-	    }
-	    if (fileChooserBitmapBits != null) {
-		int nImages = fileChooserBitmapBits.length / (16*16);
-		int[] bitmapBits = new int[16 * 16];
-		for (int y = 0; y < 16; y++) {
-		    for (int x = 0; x < 16; x++) {
-			bitmapBits[y * 16 + x] = fileChooserBitmapBits[y * (nImages * 16) + (i * 16) + x];
-		    }
-		}
-		BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-		img.setRGB(0, 0, 16, 16, bitmapBits, 0, 16);
-		fileChooserIcons[i] = img;
-	    }
-	}
-	return fileChooserIcons[i];
+        if (fileChooserIcons[i] != null) {
+            return fileChooserIcons[i];
+        } else {
+            if (fileChooserBitmapBits == null) {
+                fileChooserBitmapBits = getFileChooserBitmapBits();
+            }
+            if (fileChooserBitmapBits != null) {
+                int nImages = fileChooserBitmapBits.length / (16*16);
+                int[] bitmapBits = new int[16 * 16];
+                for (int y = 0; y < 16; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        bitmapBits[y * 16 + x] = fileChooserBitmapBits[y * (nImages * 16) + (i * 16) + x];
+                    }
+                }
+                BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+                img.setRGB(0, 0, 16, 16, bitmapBits, 0, 16);
+                fileChooserIcons[i] = img;
+            }
+        }
+        return fileChooserIcons[i];
     }
 
 
     private static Image makeIcon(long hIcon, boolean getLargeIcon) {
-	if (hIcon != 0L && hIcon != -1L) {
-	    // Get the bits.  This has the side effect of setting the imageHash value for this object.
-	    int size = getLargeIcon ? 32 : 16;
-	    int[] iconBits = getIconBits(hIcon, size);
-	    if (iconBits != null) {
-		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-		img.setRGB(0, 0, size, size, iconBits, 0, size);
-		return img;
-	    }
-	}
-	return null;
+        if (hIcon != 0L && hIcon != -1L) {
+            // Get the bits.  This has the side effect of setting the imageHash value for this object.
+            int size = getLargeIcon ? 32 : 16;
+            int[] iconBits = getIconBits(hIcon, size);
+            if (iconBits != null) {
+                BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+                img.setRGB(0, 0, size, size, iconBits, 0, size);
+                return img;
+            }
+        }
+        return null;
     }
 
 
@@ -1026,38 +1026,38 @@ final class Win32ShellFolder2 extends ShellFolder {
                 smallIcon = icon;
             }
         }
-	return icon;
+        return icon;
     }
-    
+
     /**
      * Gets an icon from the Windows system icon list as an <code>Image</code>
      */
     static Image getSystemIcon(SystemIcon iconType) {
-	long hIcon = getSystemIcon(iconType.getIconID());
-	Image icon = makeIcon(hIcon, true);
-	disposeIcon(hIcon);
-	return icon;
+        long hIcon = getSystemIcon(iconType.getIconID());
+        Image icon = makeIcon(hIcon, true);
+        disposeIcon(hIcon);
+        return icon;
     }
 
     /**
      * Gets an icon from the Windows system icon list as an <code>Image</code>
      */
     static Image getShell32Icon(int iconID) {
-	boolean useVGAColors = true; // Will be ignored on XP and later
+        boolean useVGAColors = true; // Will be ignored on XP and later
 
-	Toolkit toolkit = Toolkit.getDefaultToolkit();
-	String shellIconBPP = (String)toolkit.getDesktopProperty("win.icon.shellIconBPP");
-	if (shellIconBPP != null) {
-	    useVGAColors = shellIconBPP.equals("4");
-	}
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        String shellIconBPP = (String)toolkit.getDesktopProperty("win.icon.shellIconBPP");
+        if (shellIconBPP != null) {
+            useVGAColors = shellIconBPP.equals("4");
+        }
 
-	long hIcon = getIconResource("shell32.dll", iconID, 16, 16, useVGAColors);
-	if (hIcon != 0) {
-	    Image icon = makeIcon(hIcon, false);
-	    disposeIcon(hIcon);
-	    return icon;
-	}
-	return null;
+        long hIcon = getIconResource("shell32.dll", iconID, 16, 16, useVGAColors);
+        if (hIcon != 0) {
+            Image icon = makeIcon(hIcon, false);
+            disposeIcon(hIcon);
+            return icon;
+        }
+        return null;
     }
 
     /**
@@ -1067,14 +1067,14 @@ final class Win32ShellFolder2 extends ShellFolder {
      * @see java.io.File#getCanonicalFile
      */
     public File getCanonicalFile() throws IOException {
-	return this;
+        return this;
     }
 
     /*
      * Indicates whether this is a special folder (includes My Documents)
      */
     public boolean isSpecial() {
-	return isPersonal || !isFileSystem() || (this == getDesktop());
+        return isPersonal || !isFileSystem() || (this == getDesktop());
     }
 
     /**
@@ -1083,14 +1083,14 @@ final class Win32ShellFolder2 extends ShellFolder {
      * @see sun.awt.shell.ShellFolder#compareTo(File)
      */
     public int compareTo(File file2) {
-	if (!(file2 instanceof Win32ShellFolder2)) {
-	    if (isFileSystem() && !isSpecial()) {
-		return super.compareTo(file2);
-	    } else {
-		return -1; // Non-file shellfolders sort before files
-	    }
-	}
-	return Win32ShellFolderManager2.compareShellFolders(this, (Win32ShellFolder2) file2);
+        if (!(file2 instanceof Win32ShellFolder2)) {
+            if (isFileSystem() && !isSpecial()) {
+                return super.compareTo(file2);
+            } else {
+                return -1; // Non-file shellfolders sort before files
+            }
+        }
+        return Win32ShellFolderManager2.compareShellFolders(this, (Win32ShellFolder2) file2);
     }
 
     // native constants from commctrl.h
@@ -1182,20 +1182,20 @@ final class Win32ShellFolder2 extends ShellFolder {
             allowCoreThreadTimeOut(false);
             setThreadFactory(this);
 
-            final Runnable shutdownHook = new Runnable() { 
+            final Runnable shutdownHook = new Runnable() {
                 public void run() {
                     AccessController.doPrivileged(new PrivilegedAction<Void>() {
                         public Void run() {
                             shutdownNow();
                             return null;
                         }
-                    }); 
-                } 
-            }; 
-            AccessController.doPrivileged(new PrivilegedAction<Void>() { 
-                public Void run() { 
-                    Runtime.getRuntime().addShutdownHook( 
-                        new Thread(shutdownHook) 
+                    });
+                }
+            };
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
+                    Runtime.getRuntime().addShutdownHook(
+                        new Thread(shutdownHook)
                     );
                     return null;
                 }
@@ -1214,8 +1214,8 @@ final class Win32ShellFolder2 extends ShellFolder {
                 }
             };
             thread =
-                AccessController.doPrivileged( 
-                    new PrivilegedAction<Thread>() { 
+                AccessController.doPrivileged(
+                    new PrivilegedAction<Thread>() {
                         public Thread run() {
                             /* The thread must be a member of a thread group
                              * which will not get GCed before VM exit.
@@ -1225,9 +1225,9 @@ final class Win32ShellFolder2 extends ShellFolder {
                             for (ThreadGroup tgn = tg;
                                  tgn != null;
                                  tg = tgn, tgn = tg.getParent());
-                            Thread thread = new Thread(tg, comRun, "Swing-Shell"); 
-                            thread.setDaemon(true); 
-                            return thread; 
+                            Thread thread = new Thread(tg, comRun, "Swing-Shell");
+                            thread.setDaemon(true);
+                            return thread;
                         }
                     }
                 );

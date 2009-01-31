@@ -26,7 +26,7 @@ package java.beans;
 
 /**
  * An "IndexedPropertyChange" event gets delivered whenever a component that
- * conforms to the JavaBeans<TM> specification (a "bean") changes a bound 
+ * conforms to the JavaBeans<TM> specification (a "bean") changes a bound
  * indexed property. This class is an extension of <code>PropertyChangeEvent</code>
  * but contains the index of the property that has changed.
  * <P>
@@ -37,7 +37,6 @@ package java.beans;
  * arbitrary set of if its properties have changed.  In this case the
  * old and new values should also be null.
  *
- * @version %I% %G%
  * @since 1.5
  * @author Mark Davidson
  */
@@ -56,10 +55,10 @@ public class IndexedPropertyChangeEvent extends PropertyChangeEvent {
      * @param index index of the property element that was changed.
      */
     public IndexedPropertyChangeEvent(Object source, String propertyName,
-				      Object oldValue, Object newValue,
-				      int index) {
-	super (source, propertyName, oldValue, newValue);
-	this.index = index;
+                                      Object oldValue, Object newValue,
+                                      int index) {
+        super (source, propertyName, oldValue, newValue);
+        this.index = index;
     }
 
 
@@ -70,7 +69,6 @@ public class IndexedPropertyChangeEvent extends PropertyChangeEvent {
      *         changed.
      */
     public int getIndex() {
-	return index;
+        return index;
     }
 }
-

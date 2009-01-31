@@ -61,14 +61,14 @@ import sun.util.resources.OpenListResourceBundle;
 public final class Currency implements Serializable {
 
     private static final long serialVersionUID = -158308464356906721L;
-    
+
     /**
      * ISO 4217 currency code for this currency.
      *
      * @serial
      */
     private final String currencyCode;
-    
+
     /**
      * Default fraction digits for this currency.
      * Set from currency data tables.
@@ -87,7 +87,7 @@ public final class Currency implements Serializable {
     private static HashMap<String, Currency> instances = new HashMap<String, Currency>(7);
     private static HashSet<Currency> available;
 
-    
+
     // Class data: currency data obtained from currency.data file.
     // Purpose:
     // - determine valid country codes
@@ -105,7 +105,7 @@ public final class Currency implements Serializable {
     //   - 26*26 entries, corresponding to [A-Z]*[A-Z]
     //   - \u007F -> not valid country
     //   - bits 18-31: unused
-    //   - bits 8-17: numeric code (0 to 1023) 
+    //   - bits 8-17: numeric code (0 to 1023)
     //   - bit 7: 1 - special case, bits 0-4 indicate which one
     //            0 - simple country, bits 0-4 indicate final char of currency code
     //   - bits 5-6: fraction digits for simple countries, 0 for special cases
@@ -176,61 +176,61 @@ public final class Currency implements Serializable {
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-		String homeDir = System.getProperty("java.home");
+                String homeDir = System.getProperty("java.home");
                 try {
-		    String dataFile = homeDir + File.separator + 
-		            "lib" + File.separator + "currency.data";
-		    DataInputStream dis = new DataInputStream(
-		        new BufferedInputStream(
-			new FileInputStream(dataFile)));
-		    if (dis.readInt() != MAGIC_NUMBER) {
-		        throw new InternalError("Currency data is possibly corrupted");
-		    }
-		    formatVersion = dis.readInt();
-		    if (formatVersion != VALID_FORMAT_VERSION) {
-		        throw new InternalError("Currency data format is incorrect");
-		    }
-		    dataVersion = dis.readInt();
-		    mainTable = readIntArray(dis, A_TO_Z * A_TO_Z);
-		    int scCount = dis.readInt();
-		    scCutOverTimes = readLongArray(dis, scCount);
-		    scOldCurrencies = readStringArray(dis, scCount);
-		    scNewCurrencies = readStringArray(dis, scCount);
-		    scOldCurrenciesDFD = readIntArray(dis, scCount);
-		    scNewCurrenciesDFD = readIntArray(dis, scCount);
-		    scOldCurrenciesNumericCode = readIntArray(dis, scCount);
-		    scNewCurrenciesNumericCode = readIntArray(dis, scCount);
-		    int ocCount = dis.readInt();
-		    otherCurrencies = dis.readUTF();
-		    otherCurrenciesDFD = readIntArray(dis, ocCount);
-		    otherCurrenciesNumericCode = readIntArray(dis, ocCount);
-		    dis.close();
+                    String dataFile = homeDir + File.separator +
+                            "lib" + File.separator + "currency.data";
+                    DataInputStream dis = new DataInputStream(
+                        new BufferedInputStream(
+                        new FileInputStream(dataFile)));
+                    if (dis.readInt() != MAGIC_NUMBER) {
+                        throw new InternalError("Currency data is possibly corrupted");
+                    }
+                    formatVersion = dis.readInt();
+                    if (formatVersion != VALID_FORMAT_VERSION) {
+                        throw new InternalError("Currency data format is incorrect");
+                    }
+                    dataVersion = dis.readInt();
+                    mainTable = readIntArray(dis, A_TO_Z * A_TO_Z);
+                    int scCount = dis.readInt();
+                    scCutOverTimes = readLongArray(dis, scCount);
+                    scOldCurrencies = readStringArray(dis, scCount);
+                    scNewCurrencies = readStringArray(dis, scCount);
+                    scOldCurrenciesDFD = readIntArray(dis, scCount);
+                    scNewCurrenciesDFD = readIntArray(dis, scCount);
+                    scOldCurrenciesNumericCode = readIntArray(dis, scCount);
+                    scNewCurrenciesNumericCode = readIntArray(dis, scCount);
+                    int ocCount = dis.readInt();
+                    otherCurrencies = dis.readUTF();
+                    otherCurrenciesDFD = readIntArray(dis, ocCount);
+                    otherCurrenciesNumericCode = readIntArray(dis, ocCount);
+                    dis.close();
                 } catch (IOException e) {
                     InternalError ie = new InternalError();
-		    ie.initCause(e);
-		    throw ie;
+                    ie.initCause(e);
+                    throw ie;
                 }
 
                 if (false) {
-		// look for the properties file for overrides
-		try {
-		    File propFile = new File(homeDir + File.separator + 
-		                             "lib" + File.separator + 
-			                     "currency.properties");
-		    if (propFile.exists()) {
-		        Properties props = new Properties();
-			props.load(new FileReader(propFile));
-			Set<String> keys = props.stringPropertyNames();
-    			Pattern propertiesPattern = 
-			    Pattern.compile("([A-Z]{3})\\s*,\\s*(\\d{3})\\s*,\\s*([0-3])");
-			for (String key : keys) {
-			   replaceCurrencyData(propertiesPattern, 
-			       key.toUpperCase(Locale.ROOT),
-			       props.getProperty(key).toUpperCase(Locale.ROOT));
-			}
-		    }
+                // look for the properties file for overrides
+                try {
+                    File propFile = new File(homeDir + File.separator +
+                                             "lib" + File.separator +
+                                             "currency.properties");
+                    if (propFile.exists()) {
+                        Properties props = new Properties();
+                        props.load(new FileReader(propFile));
+                        Set<String> keys = props.stringPropertyNames();
+                        Pattern propertiesPattern =
+                            Pattern.compile("([A-Z]{3})\\s*,\\s*(\\d{3})\\s*,\\s*([0-3])");
+                        for (String key : keys) {
+                           replaceCurrencyData(propertiesPattern,
+                               key.toUpperCase(Locale.ROOT),
+                               props.getProperty(key).toUpperCase(Locale.ROOT));
+                        }
+                    }
                 } catch (IOException e) {
-	            log(Level.INFO, "currency.properties is ignored because of an IOException", e);
+                    log(Level.INFO, "currency.properties is ignored because of an IOException", e);
                 }
                 }
                 return null;
@@ -243,7 +243,7 @@ public final class Currency implements Serializable {
      */
     private static final int SYMBOL = 0;
     private static final int DISPLAYNAME = 1;
-    
+
 
     /**
      * Constructs a <code>Currency</code> instance. The constructor is private
@@ -253,9 +253,9 @@ public final class Currency implements Serializable {
     private Currency(String currencyCode, int defaultFractionDigits, int numericCode) {
         this.currencyCode = currencyCode;
         this.defaultFractionDigits = defaultFractionDigits;
-	this.numericCode = numericCode;
+        this.numericCode = numericCode;
     }
-    
+
     /**
      * Returns the <code>Currency</code> instance for the given currency code.
      *
@@ -268,7 +268,7 @@ public final class Currency implements Serializable {
     public static Currency getInstance(String currencyCode) {
         return getInstance(currencyCode, Integer.MIN_VALUE, 0);
     }
-    
+
     private static Currency getInstance(String currencyCode, int defaultFractionDigits,
         int numericCode) {
         synchronized (instances) {
@@ -279,7 +279,7 @@ public final class Currency implements Serializable {
             if (instance != null) {
                 return instance;
             }
-        
+
             if (defaultFractionDigits == Integer.MIN_VALUE) {
                 // Currency code not internally generated, need to verify first
                 // A currency code must have 3 characters and exist in the main table
@@ -308,13 +308,13 @@ public final class Currency implements Serializable {
                     numericCode = otherCurrenciesNumericCode[index / 4];
                 }
             }
-        
+
             instance = new Currency(currencyCode, defaultFractionDigits, numericCode);
             instances.put(currencyCode, instance);
             return instance;
         }
     }
-    
+
     /**
      * Returns the <code>Currency</code> instance for the country of the
      * given locale. The language and variant components of the locale
@@ -345,7 +345,7 @@ public final class Currency implements Serializable {
         if (country.length() != 2) {
             throw new IllegalArgumentException();
         }
-        
+
         char char1 = country.charAt(0);
         char char2 = country.charAt(1);
         int tableEntry = getMainTableEntry(char1, char2);
@@ -367,16 +367,16 @@ public final class Currency implements Serializable {
             } else {
                 int index = (tableEntry & SPECIAL_CASE_COUNTRY_INDEX_MASK) - SPECIAL_CASE_COUNTRY_INDEX_DELTA;
                 if (scCutOverTimes[index] == Long.MAX_VALUE || System.currentTimeMillis() < scCutOverTimes[index]) {
-                    return getInstance(scOldCurrencies[index], scOldCurrenciesDFD[index], 
-		        scOldCurrenciesNumericCode[index]);
+                    return getInstance(scOldCurrencies[index], scOldCurrenciesDFD[index],
+                        scOldCurrenciesNumericCode[index]);
                 } else {
                     return getInstance(scNewCurrencies[index], scNewCurrenciesDFD[index],
-		        scNewCurrenciesNumericCode[index]);
+                        scNewCurrenciesNumericCode[index]);
                 }
             }
         }
     }
-    
+
     /**
      * Gets the set of available currencies.  The returned set of currencies
      * contains all of the available currencies, which may include currencies
@@ -389,38 +389,38 @@ public final class Currency implements Serializable {
      */
     private static Set<Currency> getAvailableCurrencies() {
         synchronized(Currency.class) {
-	    if (available == null) {
-	        available = new HashSet<Currency>(256);
+            if (available == null) {
+                available = new HashSet<Currency>(256);
 
-		// Add simple currencies first
-		for (char c1 = 'A'; c1 <= 'Z'; c1 ++) {
-		    for (char c2 = 'A'; c2 <= 'Z'; c2 ++) {
-			int tableEntry = getMainTableEntry(c1, c2);
-			if ((tableEntry & COUNTRY_TYPE_MASK) == SIMPLE_CASE_COUNTRY_MASK
+                // Add simple currencies first
+                for (char c1 = 'A'; c1 <= 'Z'; c1 ++) {
+                    for (char c2 = 'A'; c2 <= 'Z'; c2 ++) {
+                        int tableEntry = getMainTableEntry(c1, c2);
+                        if ((tableEntry & COUNTRY_TYPE_MASK) == SIMPLE_CASE_COUNTRY_MASK
                              && tableEntry != INVALID_COUNTRY_ENTRY) {
-			    char finalChar = (char) ((tableEntry & SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK) + 'A');
-			    int defaultFractionDigits = (tableEntry & SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK) >> SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT;
-			    int numericCode = (tableEntry & NUMERIC_CODE_MASK) >> NUMERIC_CODE_SHIFT;
-			    StringBuilder sb = new StringBuilder();
-			    sb.append(c1);
-			    sb.append(c2);
-			    sb.append(finalChar);
-			    available.add(getInstance(sb.toString(), defaultFractionDigits, numericCode));
-            		}
-        	    }
-		}
+                            char finalChar = (char) ((tableEntry & SIMPLE_CASE_COUNTRY_FINAL_CHAR_MASK) + 'A');
+                            int defaultFractionDigits = (tableEntry & SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_MASK) >> SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT;
+                            int numericCode = (tableEntry & NUMERIC_CODE_MASK) >> NUMERIC_CODE_SHIFT;
+                            StringBuilder sb = new StringBuilder();
+                            sb.append(c1);
+                            sb.append(c2);
+                            sb.append(finalChar);
+                            available.add(getInstance(sb.toString(), defaultFractionDigits, numericCode));
+                        }
+                    }
+                }
 
-		// Now add other currencies
-		StringTokenizer st = new StringTokenizer(otherCurrencies, "-");
-		while (st.hasMoreElements()) {
-		    available.add(getInstance((String)st.nextElement()));
-		}
+                // Now add other currencies
+                StringTokenizer st = new StringTokenizer(otherCurrencies, "-");
+                while (st.hasMoreElements()) {
+                    available.add(getInstance((String)st.nextElement()));
+                }
             }
         }
 
-	return (Set<Currency>) available.clone();
+        return (Set<Currency>) available.clone();
     }
-    
+
     /**
      * Gets the ISO 4217 currency code of this currency.
      *
@@ -429,7 +429,7 @@ public final class Currency implements Serializable {
     public String getCurrencyCode() {
         return currencyCode;
     }
-    
+
     /**
      * Gets the symbol of this currency for the default locale.
      * For example, for the US Dollar, the symbol is "$" if the default
@@ -441,7 +441,7 @@ public final class Currency implements Serializable {
     public String getSymbol() {
         return getSymbol(Locale.getDefault());
     }
-    
+
     /**
      * Gets the symbol of this currency for the specified locale.
      * For example, for the US Dollar, the symbol is "$" if the specified
@@ -455,21 +455,21 @@ public final class Currency implements Serializable {
      */
     public String getSymbol(Locale locale) {
         try {
-            // Check whether a provider can provide an implementation that's closer 
+            // Check whether a provider can provide an implementation that's closer
             // to the requested locale than what the Java runtime itself can provide.
             LocaleServiceProviderPool pool =
                 LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
 
             if (pool.hasProviders()) {
-                // Assuming that all the country locales include necessary currency 
+                // Assuming that all the country locales include necessary currency
                 // symbols in the Java runtime's resources,  so there is no need to
-                // examine whether Java runtime's currency resource bundle is missing 
-                // names.  Therefore, no resource bundle is provided for calling this 
+                // examine whether Java runtime's currency resource bundle is missing
+                // names.  Therefore, no resource bundle is provided for calling this
                 // method.
                 String symbol = pool.getLocalizedObject(
                                     CurrencyNameGetter.INSTANCE,
-                                    locale, (OpenListResourceBundle)null, 
-				    currencyCode, SYMBOL);
+                                    locale, (OpenListResourceBundle)null,
+                                    currencyCode, SYMBOL);
                 if (symbol != null) {
                     return symbol;
                 }
@@ -482,7 +482,7 @@ public final class Currency implements Serializable {
             return currencyCode;
         }
     }
-    
+
     /**
      * Gets the default number of fraction digits used with this currency.
      * For example, the default number of fraction digits for the Euro is 2,
@@ -495,7 +495,7 @@ public final class Currency implements Serializable {
     public int getDefaultFractionDigits() {
         return defaultFractionDigits;
     }
-    
+
     /**
      * Returns the ISO 4217 numeric code of this currency.
      *
@@ -507,7 +507,7 @@ public final class Currency implements Serializable {
     }
 
     /**
-     * Gets the name that is suitable for displaying this currency for 
+     * Gets the name that is suitable for displaying this currency for
      * the default locale.  If there is no suitable display name found
      * for the default locale, the ISO 4217 currency code is returned.
      *
@@ -517,9 +517,9 @@ public final class Currency implements Serializable {
     private String getDisplayName() {
         return getDisplayName(Locale.getDefault());
     }
-    
+
     /**
-     * Gets the name that is suitable for displaying this currency for 
+     * Gets the name that is suitable for displaying this currency for
      * the specified locale.  If there is no suitable display name found
      * for the specified locale, the ISO 4217 currency code is returned.
      *
@@ -533,9 +533,9 @@ public final class Currency implements Serializable {
         try {
             OpenListResourceBundle bundle = LocaleData.getCurrencyNames(locale);
             String result = null;
-	    String bundleKey = currencyCode.toLowerCase(Locale.ROOT);
+            String bundleKey = currencyCode.toLowerCase(Locale.ROOT);
 
-	    // Check whether a provider can provide an implementation that's closer 
+            // Check whether a provider can provide an implementation that's closer
             // to the requested locale than what the Java runtime itself can provide.
             LocaleServiceProviderPool pool =
                 LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
@@ -553,13 +553,13 @@ public final class Currency implements Serializable {
                 return result;
             }
         } catch (MissingResourceException e) {
-	    // fall through
+            // fall through
         }
 
         // use currency code as symbol of last resort
         return currencyCode;
     }
-    
+
     /**
      * Returns the ISO 4217 currency code of this currency.
      *
@@ -575,7 +575,7 @@ public final class Currency implements Serializable {
     private Object readResolve() {
         return getInstance(currencyCode);
     }
-    
+
     /**
      * Gets the main table entry for the country whose country code consists
      * of char1 and char2.
@@ -602,13 +602,13 @@ public final class Currency implements Serializable {
      * Obtains a localized currency names from a CurrencyNameProvider
      * implementation.
      */
-    private static class CurrencyNameGetter 
+    private static class CurrencyNameGetter
         implements LocaleServiceProviderPool.LocalizedObjectGetter<CurrencyNameProvider,
                                                                    String> {
         private static final CurrencyNameGetter INSTANCE = new CurrencyNameGetter();
 
         public String getObject(CurrencyNameProvider currencyNameProvider,
-                                Locale locale, 
+                                Locale locale,
                                 String key,
                                 Object... params) {
             assert params.length == 1;
@@ -616,42 +616,42 @@ public final class Currency implements Serializable {
 
             switch(type) {
             case SYMBOL:
-	        return currencyNameProvider.getSymbol(key, locale);
+                return currencyNameProvider.getSymbol(key, locale);
 //          case DISPLAYNAME:
-//		return currencyNameProvider.getDisplayName(key, locale);
+//              return currencyNameProvider.getDisplayName(key, locale);
             default:
                 assert false; // shouldn't happen
             }
 
-	    return null;
+            return null;
         }
     }
 
     private static int[] readIntArray(DataInputStream dis, int count) throws IOException {
         int[] ret = new int[count];
-	for (int i = 0; i < count; i++) {
-	    ret[i] = dis.readInt();
-	}
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readInt();
+        }
 
-	return ret;
+        return ret;
     }
 
     private static long[] readLongArray(DataInputStream dis, int count) throws IOException {
         long[] ret = new long[count];
-	for (int i = 0; i < count; i++) {
-	    ret[i] = dis.readLong();
-	}
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readLong();
+        }
 
-	return ret;
+        return ret;
     }
 
     private static String[] readStringArray(DataInputStream dis, int count) throws IOException {
         String[] ret = new String[count];
-	for (int i = 0; i < count; i++) {
-	    ret[i] = dis.readUTF();
-	}
+        for (int i = 0; i < count; i++) {
+            ret[i] = dis.readUTF();
+        }
 
-	return ret;
+        return ret;
     }
 
     /**
@@ -660,67 +660,67 @@ public final class Currency implements Serializable {
      * @param pattern regex pattern for the properties
      * @param ctry country code
      * @param data currency data.  This is a comma separated string that
-     *    consists of "three-letter alphabet code", "three-digit numeric code", 
-     *    and "one-digit (0,1,2, or 3) default fraction digit". 
+     *    consists of "three-letter alphabet code", "three-digit numeric code",
+     *    and "one-digit (0,1,2, or 3) default fraction digit".
      *    For example, "JPZ,392,0".
-     * @throws 
+     * @throws
      */
     private static void replaceCurrencyData(Pattern pattern, String ctry, String curdata) {
 
         if (ctry.length() != 2) {
-	    // ignore invalid country code
-	    String message = new StringBuilder()
-	        .append("The entry in currency.properties for ")
-	        .append(ctry).append(" is ignored because of the invalid country code.")
-		.toString();
-	    log(Level.INFO, message, null);
-	    return;
-	}
+            // ignore invalid country code
+            String message = new StringBuilder()
+                .append("The entry in currency.properties for ")
+                .append(ctry).append(" is ignored because of the invalid country code.")
+                .toString();
+            log(Level.INFO, message, null);
+            return;
+        }
 
-	Matcher m = pattern.matcher(curdata);
-	if (!m.find()) {
-	    // format is not recognized.  ignore the data
-	    String message = new StringBuilder()
-	        .append("The entry in currency.properties for ")
-	        .append(ctry)
-		.append(" is ignored because the value format is not recognized.")
-		.toString();
-	    log(Level.INFO, message, null);
-	    return;
-	}
+        Matcher m = pattern.matcher(curdata);
+        if (!m.find()) {
+            // format is not recognized.  ignore the data
+            String message = new StringBuilder()
+                .append("The entry in currency.properties for ")
+                .append(ctry)
+                .append(" is ignored because the value format is not recognized.")
+                .toString();
+            log(Level.INFO, message, null);
+            return;
+        }
 
-	String code = m.group(1);
-	int numeric = Integer.parseInt(m.group(2));
-	int fraction = Integer.parseInt(m.group(3));
-	int entry = numeric << NUMERIC_CODE_SHIFT;
+        String code = m.group(1);
+        int numeric = Integer.parseInt(m.group(2));
+        int fraction = Integer.parseInt(m.group(3));
+        int entry = numeric << NUMERIC_CODE_SHIFT;
 
-	int index;
-	for (index = 0; index < scOldCurrencies.length; index++) {
-	    if (scOldCurrencies[index].equals(code)) {
-	        break;
-	    }
-	}
+        int index;
+        for (index = 0; index < scOldCurrencies.length; index++) {
+            if (scOldCurrencies[index].equals(code)) {
+                break;
+            }
+        }
 
-	if (index == scOldCurrencies.length) {
-	    // simple case
-	    entry |= (fraction << SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT) |
-	   	     (code.charAt(2) - 'A');
-	} else {
-	    // special case
-	    entry |= SPECIAL_CASE_COUNTRY_MASK | 
-		     (index + SPECIAL_CASE_COUNTRY_INDEX_DELTA);
-	}
-	setMainTableEntry(ctry.charAt(0), ctry.charAt(1), entry);
+        if (index == scOldCurrencies.length) {
+            // simple case
+            entry |= (fraction << SIMPLE_CASE_COUNTRY_DEFAULT_DIGITS_SHIFT) |
+                     (code.charAt(2) - 'A');
+        } else {
+            // special case
+            entry |= SPECIAL_CASE_COUNTRY_MASK |
+                     (index + SPECIAL_CASE_COUNTRY_INDEX_DELTA);
+        }
+        setMainTableEntry(ctry.charAt(0), ctry.charAt(1), entry);
     }
 
     private static void log(Level level, String message, Throwable t) {
         Logger logger = Logger.getLogger("java.util.Currency");
-	if (logger.isLoggable(level)) {
-	    if (t != null) {
-	        logger.log(level, message, t);
-	    } else {
-	        logger.log(level, message);
-	    }
-	}
+        if (logger.isLoggable(level)) {
+            if (t != null) {
+                logger.log(level, message, t);
+            } else {
+                logger.log(level, message);
+            }
+        }
     }
 }

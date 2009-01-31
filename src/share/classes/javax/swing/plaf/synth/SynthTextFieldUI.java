@@ -51,7 +51,6 @@ import sun.swing.plaf.synth.SynthUI;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Shannon Hickey
- * @version %I% %G%
  */
 class SynthTextFieldUI
     extends BasicTextFieldUI
@@ -99,14 +98,14 @@ class SynthTextFieldUI
             comp.setCaretColor(
                 (Color)style.get(context, prefix + ".caretForeground"));
         }
-        
+
         Color fg = comp.getForeground();
         if (fg == null || fg instanceof UIResource) {
             fg = style.getColorForState(context, ColorType.TEXT_FOREGROUND);
             if (fg != null) {
                 comp.setForeground(fg);
             }
-        }       
+        }
 
         Object ar = style.get(context, prefix + ".caretAspectRatio");
         if (ar instanceof Number) {
@@ -114,27 +113,27 @@ class SynthTextFieldUI
         }
 
         context.setComponentState(SELECTED | FOCUSED);
-        
+
         Color s = comp.getSelectionColor();
         if (s == null || s instanceof UIResource) {
             comp.setSelectionColor(
                 style.getColor(context, ColorType.TEXT_BACKGROUND));
         }
-        
+
         Color sfg = comp.getSelectedTextColor();
         if (sfg == null || sfg instanceof UIResource) {
             comp.setSelectedTextColor(
                 style.getColor(context, ColorType.TEXT_FOREGROUND));
         }
-            
+
         context.setComponentState(DISABLED);
-            
+
         Color dfg = comp.getDisabledTextColor();
         if (dfg == null || dfg instanceof UIResource) {
             comp.setDisabledTextColor(
                 style.getColor(context, ColorType.TEXT_FOREGROUND));
         }
-            
+
         Insets margin = comp.getMargin();
         if (margin == null || margin instanceof UIResource) {
             margin = (Insets)style.get(context, prefix + ".margin");
@@ -145,7 +144,7 @@ class SynthTextFieldUI
             }
             comp.setMargin(margin);
         }
-            
+
         Caret caret = comp.getCaret();
         if (caret instanceof UIResource) {
             Object o = style.get(context, prefix + ".caretBlinkRate");

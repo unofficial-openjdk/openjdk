@@ -32,7 +32,7 @@ import sun.security.util.*;
 
 /**
  * This object class represents the GeneralNames type required in
- * X509 certificates.  
+ * X509 certificates.
  * <p>The ASN.1 syntax for this is:
  * <pre>
  * GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
@@ -41,10 +41,9 @@ import sun.security.util.*;
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
  *
- * @version %I%, %G%
  */
 public class GeneralNames {
-    
+
     private final List<GeneralName> names;
 
     /**
@@ -54,7 +53,7 @@ public class GeneralNames {
      * @exception IOException on error.
      */
     public GeneralNames(DerValue derVal) throws IOException {
-	this();
+        this();
         if (derVal.tag != DerValue.tag_Sequence) {
             throw new IOException("Invalid encoding for GeneralNames.");
         }
@@ -75,35 +74,35 @@ public class GeneralNames {
      * The default constructor for this class.
      */
     public GeneralNames() {
-	names = new ArrayList<GeneralName>();
+        names = new ArrayList<GeneralName>();
     }
-    
+
     public GeneralNames add(GeneralName name) {
-	if (name == null) {
-	    throw new NullPointerException();
-	}
-	names.add(name);
-	return this;
+        if (name == null) {
+            throw new NullPointerException();
+        }
+        names.add(name);
+        return this;
     }
-    
+
     public GeneralName get(int index) {
-	return names.get(index);
+        return names.get(index);
     }
-    
+
     public boolean isEmpty() {
-	return names.isEmpty();
+        return names.isEmpty();
     }
-    
+
     public int size() {
-	return names.size();
+        return names.size();
     }
-    
+
     public Iterator<GeneralName> iterator() {
-	return names.iterator();
+        return names.iterator();
     }
-    
+
     public List<GeneralName> names() {
-	return names;
+        return names;
     }
 
     /**
@@ -114,11 +113,11 @@ public class GeneralNames {
      */
     public void encode(DerOutputStream out) throws IOException {
         if (isEmpty()) {
-	    return;
-	}
+            return;
+        }
 
         DerOutputStream temp = new DerOutputStream();
-	for (GeneralName gn : names) {
+        for (GeneralName gn : names) {
             gn.encode(temp);
         }
         out.write(DerValue.tag_Sequence, temp);
@@ -130,22 +129,22 @@ public class GeneralNames {
      * @returns true iff this equals other
      */
     public boolean equals(Object obj) {
-	if (this == obj) {
-	    return true;
-	}
-	if (obj instanceof GeneralNames == false) {
-	    return false;
-	}
-	GeneralNames other = (GeneralNames)obj;
-	return this.names.equals(other.names);
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof GeneralNames == false) {
+            return false;
+        }
+        GeneralNames other = (GeneralNames)obj;
+        return this.names.equals(other.names);
     }
-    
+
     public int hashCode() {
-	return names.hashCode();
+        return names.hashCode();
     }
-    
+
     public String toString() {
-	return names.toString();
+        return names.toString();
     }
 
 }

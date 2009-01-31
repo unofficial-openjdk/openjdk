@@ -45,7 +45,7 @@ import sun.security.util.SecurityConstants;
  * be supported, in this case {@link SystemTray#getSystemTray()}
  * throws {@link UnsupportedOperationException}.  To detect whether the
  * system tray is supported, use {@link SystemTray#isSupported}.
- * 
+ *
  * <p>The <code>SystemTray</code> may contain one or more {@link
  * TrayIcon TrayIcons}, which are added to the tray using the {@link
  * #add} method, and removed when no longer needed, using the
@@ -59,7 +59,7 @@ import sun.security.util.SecurityConstants;
  * instance can be obtained from the {@link #getSystemTray} method.
  * An application may not create its own instance of
  * <code>SystemTray</code>.
- * 
+ *
  * <p>The following code snippet demonstrates how to access
  * and customize the system tray:
  * <code>
@@ -189,14 +189,14 @@ public class SystemTray {
      * default action is always accessible, add the default action to
      * both the action listener and the popup menu.  See the {@link
      * SystemTray example} for an example of how to do this.
-     * 
+     *
      * <p><b>Note</b>: When implementing <code>SystemTray</code> and
      * <code>TrayIcon</code> it is <em>strongly recommended</em> that
      * you assign different gestures to the popup menu and an action
      * event.  Overloading a gesture for both purposes is confusing
      * and may prevent the user from accessing one or the other.
      *
-     * @see #getSystemTray         
+     * @see #getSystemTray
      * @return <code>false</code> if no system tray access is supported; this
      * method returns <code>true</code> if the minimal system tray access is
      * supported but does not guarantee that all system tray
@@ -247,7 +247,7 @@ public class SystemTray {
             if (icons == null) {
                 icons = new Vector<TrayIcon>(3);
                 AppContext.getAppContext().put(TrayIcon.class, icons);
-                
+
             } else if (icons.contains(trayIcon)) {
                 throw new IllegalArgumentException("adding TrayIcon that is already added");
             }
@@ -343,7 +343,7 @@ public class SystemTray {
     }
 
     /**
-     * Adds a {@code PropertyChangeListener} to the listener list for a 
+     * Adds a {@code PropertyChangeListener} to the listener list for a
      * specific property. Currently supported property:
      * <ul>
      *    <li>{@code trayIcons}<p>
@@ -367,7 +367,7 @@ public class SystemTray {
      * @see #removePropertyChangeListener
      * @see #getPropertyChangeListeners
      */
-    public synchronized void addPropertyChangeListener(String propertyName, 
+    public synchronized void addPropertyChangeListener(String propertyName,
                                                        PropertyChangeListener listener)
     {
         if (listener == null) {
@@ -401,10 +401,10 @@ public class SystemTray {
     }
 
     /**
-     * Returns an array of all the listeners that have been associated 
+     * Returns an array of all the listeners that have been associated
      * with the named property.
      * <p>
-     * Only the listeners in this context are returned. 
+     * Only the listeners in this context are returned.
      *
      * @param propertyName the specified property
      * @return all of the {@code PropertyChangeListener}s associated with
@@ -425,7 +425,7 @@ public class SystemTray {
 
 
     /**
-     * Support for reporting bound property changes for Object properties. 
+     * Support for reporting bound property changes for Object properties.
      * This method can be called when a bound property has changed and it will
      * send the appropriate PropertyChangeEvent to any registered
      * PropertyChangeListeners.

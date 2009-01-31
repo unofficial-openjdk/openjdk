@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -37,7 +35,6 @@ import sun.security.krb5.internal.KerberosTime;
  * The class represents the timestamp in authenticator.
  *
  * @author Yanni Zhang
- * @version 1.00 10 Jul 00
  */
 public class AuthTime {
     long kerberosTime;
@@ -60,7 +57,7 @@ public class AuthTime {
      */
     public boolean equals(Object o) {
         if (o instanceof AuthTime) {
-            if ((((AuthTime)o).kerberosTime == kerberosTime) 
+            if ((((AuthTime)o).kerberosTime == kerberosTime)
                 && (((AuthTime)o).cusec == cusec)) {
                 return true;
             }
@@ -74,10 +71,10 @@ public class AuthTime {
      * @return  a <code>hash code</code> value for this object.
      */
     public int hashCode() {
-	int result = 17;
+        int result = 17;
 
-	result = 37 * result + (int)(kerberosTime ^ (kerberosTime >>> 32));
-	result = 37 * result + cusec;
+        result = 37 * result + (int)(kerberosTime ^ (kerberosTime >>> 32));
+        result = 37 * result + cusec;
 
         return result;
     }

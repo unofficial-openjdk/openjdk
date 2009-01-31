@@ -30,9 +30,7 @@ import java.net.URL;
 /**
  *
  * @author  Zhengyu Gu
- * @version 1.0
  */
 public interface ProxyServiceProvider {
     public ProxyInfo[] getProxyInfo(URL url);
 }
-

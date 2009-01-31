@@ -92,7 +92,6 @@ import java.lang.SecurityManager;
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
- * @version 1.39 00/02/02
  *
  * @author Marianne Mueller
  * @author Roland Schemers
@@ -117,7 +116,7 @@ public final class SSLPermission extends BasicPermission {
 
     public SSLPermission(String name)
     {
-	super(name);
+        super(name);
     }
 
     /**
@@ -133,6 +132,6 @@ public final class SSLPermission extends BasicPermission {
 
     public SSLPermission(String name, String actions)
     {
-	super(name, actions);
+        super(name, actions);
     }
 }

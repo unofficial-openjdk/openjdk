@@ -25,7 +25,7 @@
 
 /*
  * Debug Memory Manager
- * 
+ *
  * - inits allocated memory to predefined byte to expose uninitialized variables
  * - fills freed memory with predefined byte to expose dangling pointers
  * - catches under/overwrites with 'guard' bytes around allocated blocks
@@ -58,18 +58,18 @@ typedef dbool_t (*DMEM_CHECKPTRFN)(void * ptr, size_t size);
 /* DO NOT REFERENCE this structure in code, it is only exported */
 /* to ease it's use inside a source level debugger */
 typedef struct DMemState {
-    DMEM_ALLOCFN	pfnAlloc;	/* block allocate callback */
-    DMEM_FREEFN		pfnFree;	/* block free callback */
-    DMEM_CHECKPTRFN	pfnCheckPtr;	/* pointer validation callback */
-    size_t		biggestBlock;	/* largest block allocated so far */
-    size_t		maxHeap;	/* maximum size of the debug heap */
-    size_t		totalHeapUsed;	/* total memory allocated so far */
-    dbool_t		failNextAlloc;	/* whether the next allocation fails (automatically resets)*/
-    int			totalAllocs;	/* total number of allocations so far */
+    DMEM_ALLOCFN        pfnAlloc;       /* block allocate callback */
+    DMEM_FREEFN         pfnFree;        /* block free callback */
+    DMEM_CHECKPTRFN     pfnCheckPtr;    /* pointer validation callback */
+    size_t              biggestBlock;   /* largest block allocated so far */
+    size_t              maxHeap;        /* maximum size of the debug heap */
+    size_t              totalHeapUsed;  /* total memory allocated so far */
+    dbool_t             failNextAlloc;  /* whether the next allocation fails (automatically resets)*/
+    int                 totalAllocs;    /* total number of allocations so far */
 } DMemState;
 
 /* Exported global var so you can view/change settings in the debugger */
-extern const DMemState	* DMemStatePtr;
+extern const DMemState  * DMemStatePtr;
 
 /* General memory manager functions */
 extern void DMem_Initialize();

@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,22 +31,22 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
@@ -91,8 +91,8 @@ int ComputeTables(LPGAMMATABLE Table[3], LPWORD Out[3], LPL16PARAMS p16)
 
         PtrW = (LPWORD) malloc(sizeof(WORD) * p16 -> nSamples);
 
-        if (PtrW == NULL) return -1;  // Signal error            
-              
+        if (PtrW == NULL) return -1;  // Signal error
+
         CopyMemory(PtrW, Table[i] -> GammaTable, sizeof(WORD) * Table[i] -> nEntries);
 
         Out[i] = PtrW;      // Set table pointer
@@ -103,9 +103,9 @@ int ComputeTables(LPGAMMATABLE Table[3], LPWORD Out[3], LPL16PARAMS p16)
        }
 
        // If is all linear, then supress table interpolation (this
-       // will speed greately some trivial operations. 
+       // will speed greately some trivial operations.
        // Return 1 if present, 0 if all linear
-       
+
 
        if (AllLinear != 3) return 1;
 
@@ -143,7 +143,7 @@ LPMATSHAPER cmsAllocMatShaper2(LPMAT3 Matrix, LPGAMMATABLE In[], LPGAMMATABLE Ou
                  cmsFreeMatShaper(NewMatShaper);
                  return NULL;
             }
-            if (rc == 1) NewMatShaper -> dwFlags |= MATSHAPER_HASSHAPER;        
+            if (rc == 1) NewMatShaper -> dwFlags |= MATSHAPER_HASSHAPER;
        }
 
 
@@ -154,10 +154,10 @@ LPMATSHAPER cmsAllocMatShaper2(LPMAT3 Matrix, LPGAMMATABLE In[], LPGAMMATABLE Ou
                 cmsFreeMatShaper(NewMatShaper);
                 return NULL;
             }
-            if (rc == 1) NewMatShaper -> dwFlags |= MATSHAPER_HASINPSHAPER;     
+            if (rc == 1) NewMatShaper -> dwFlags |= MATSHAPER_HASINPSHAPER;
        }
 
-       
+
        return NewMatShaper;
 
 }
@@ -267,8 +267,8 @@ void AllSmeltedBehaviour(LPMATSHAPER MatShaper, WORD In[], WORD Out[])
 
 
        if (MatShaper -> dwFlags & MATSHAPER_HASMATRIX)
-       {       
-                         
+       {
+
              MAT3evalW(&OutVect, &MatShaper -> Matrix, &InVect);
        }
        else {
@@ -278,13 +278,13 @@ void AllSmeltedBehaviour(LPMATSHAPER MatShaper, WORD In[], WORD Out[])
            OutVect.n[VZ] = InVect.n[VZ];
        }
 
-             
+
        tmp[0] = _cmsClampWord(FromFixedDomain(OutVect.n[VX]));
        tmp[1] = _cmsClampWord(FromFixedDomain(OutVect.n[VY]));
        tmp[2] = _cmsClampWord(FromFixedDomain(OutVect.n[VZ]));
 
-       
-           
+
+
        if (MatShaper -> dwFlags & MATSHAPER_HASSHAPER)
        {
        Out[0] = cmsLinearInterpLUT16(tmp[0], MatShaper -> L[0], &MatShaper -> p16);
@@ -297,7 +297,7 @@ void AllSmeltedBehaviour(LPMATSHAPER MatShaper, WORD In[], WORD Out[])
            Out[1] = tmp[1];
            Out[2] = tmp[2];
        }
-        
+
 }
 
 
@@ -306,7 +306,7 @@ void InputBehaviour(LPMATSHAPER MatShaper, WORD In[], WORD Out[])
 {
        WVEC3 InVect, OutVect;
 
-       
+
        if (MatShaper -> dwFlags & MATSHAPER_HASSHAPER)
        {
        InVect.n[VX] = cmsLinearInterpFixed(In[0], MatShaper -> L[0], &MatShaper -> p16);

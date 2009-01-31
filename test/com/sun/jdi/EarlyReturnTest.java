@@ -27,10 +27,10 @@
  *  @summary Allow early return from methods
  *
  *  @bug 6431720
- *  @summary Unexpected InvalidTypeException when call ThreadReference.forceEarlyReturn with VoidValue 
+ *  @summary Unexpected InvalidTypeException when call ThreadReference.forceEarlyReturn with VoidValue
  *
  *  @bug 6432855
- *  @summary Need a way to create JDI VoidValue for use in ThreadReference.forceEarlyReturn 
+ *  @summary Need a way to create JDI VoidValue for use in ThreadReference.forceEarlyReturn
  *
  *  @author Tim Bell (based on MethodExitReturnValuesTest by Jim Holmlund)
  *
@@ -50,12 +50,12 @@ import java.lang.reflect.Array;
  * This test has a debuggee which calls a static method
  * for each kind of JDI Value, and then an instance method
  * for each.
- * 
+ *
  * The debugger sets breakpoints in all methods.  When a breakpoint
  * is hit the debugger requests an early return and supplies a new
  * return value.  It then checks that the correct return values are
  * included in the MethodExitEvents.
- * 
+ *
  * Each value is stored in a static var in the debuggee.  The debugger
  * gets the values from these static vars to check for correct
  * return values in the MethodExitEvents.
@@ -93,7 +93,7 @@ class EarlyReturnTarg {
     public static String      stringValue = "abc";
     public static int[]       intArrayValue = new int[] {1, 2, 3};
 
-    public static EarlyReturnTarg  objectValue = 
+    public static EarlyReturnTarg  objectValue =
         new EarlyReturnTarg();
     public String ivar = stringValue;
 
@@ -177,7 +177,7 @@ class EarlyReturnTarg {
     public static ClassLoader s_classLoaderf()
                                       { return classLoaderValue; }
     public static Thread s_threadf()  { return threadValue; }
-    public static ThreadGroup s_threadGroupf()  
+    public static ThreadGroup s_threadGroupf()
                                       { return threadGroupValue; }
     public static int[] s_intArrayf() { return intArrayValue; }
     public static Object s_nullObjectf() { return null; }
@@ -198,7 +198,7 @@ class EarlyReturnTarg {
     public ClassLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
-    public ThreadGroup i_threadGroupf()  
+    public ThreadGroup i_threadGroupf()
                                      { return threadGroupValue; }
     public int[] i_intArrayf()       { return intArrayValue; }
     public Object i_nullObjectf()    { return null; }
@@ -268,9 +268,9 @@ class EarlyReturnTarg {
         // The debugger will stop at the start of main,
         // set breakpoints and then do a resume.
         System.err.println("debugee in main");
-        EarlyReturnTarg xx = 
+        EarlyReturnTarg xx =
             new EarlyReturnTarg();
-        
+
         doit(xx);
         if (debuggerWatching && failureCount > 0) {
             hang();
@@ -282,7 +282,7 @@ class EarlyReturnTarg {
 
 
 public class EarlyReturnTest extends TestScaffold {
-    
+
 
     /*
      * Class patterns for which we don't want events (copied
@@ -290,8 +290,8 @@ public class EarlyReturnTest extends TestScaffold {
      *     http://java.sun.com/javase/technologies/core/toolsapis/jpda/
      */
     private String[] excludes = {
-        "javax.*", 
-        "sun.*", 
+        "javax.*",
+        "sun.*",
         "com.sun.*"};
 
     static VirtualMachineManager vmm ;
@@ -301,13 +301,13 @@ public class EarlyReturnTest extends TestScaffold {
     static final int expectedEarlyReturns = 34; // determined by inspection :-)
 
     EarlyReturnTest(String args[]) {
-	super(args);
+        super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
-	EarlyReturnTest meee = new EarlyReturnTest(args);
+    public static void main(String[] args)      throws Exception {
+        EarlyReturnTest meee = new EarlyReturnTest(args);
         vmm = Bootstrap.virtualMachineManager();
-	meee.startTests();
+        meee.startTests();
     }
 
     // chkXXX methods lifted directly from MethodExitReturnValuesTest
@@ -315,7 +315,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckByteValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("ebyteValue");
         ByteValue theValue = (ByteValue)targetClass.getValue(theValueField);
-        
+
         byte vv = theValue.value();
         byte rv = ((ByteValue)retValue).value();
         if (vv != rv) {
@@ -329,7 +329,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckCharValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("echarValue");
         CharValue theValue = (CharValue)targetClass.getValue(theValueField);
-            
+
         char vv = theValue.value();
         char rv = ((CharValue)retValue).value();
         if (vv != rv) {
@@ -343,7 +343,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckDoubleValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("edoubleValue");
         DoubleValue theValue = (DoubleValue)targetClass.getValue(theValueField);
-            
+
         double vv = theValue.value();
         double rv = ((DoubleValue)retValue).value();
         if (vv != rv) {
@@ -357,7 +357,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckFloatValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("efloatValue");
         FloatValue theValue = (FloatValue)targetClass.getValue(theValueField);
-        
+
         float vv = theValue.value();
         float rv = ((FloatValue)retValue).value();
         if (vv != rv) {
@@ -371,7 +371,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckIntValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("eintValue");
         IntegerValue theValue = (IntegerValue)targetClass.getValue(theValueField);
-            
+
         int vv = theValue.value();
         int rv = ((IntegerValue)retValue).value();
         if (vv != rv) {
@@ -385,7 +385,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckLongValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("elongValue");
         LongValue theValue = (LongValue)targetClass.getValue(theValueField);
-            
+
         long vv = theValue.value();
         long rv = ((LongValue)retValue).value();
         if (vv != rv) {
@@ -399,7 +399,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckShortValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("eshortValue");
         ShortValue theValue = (ShortValue)targetClass.getValue(theValueField);
-            
+
         short vv = theValue.value();
         short rv = ((ShortValue)retValue).value();
         if (vv != rv) {
@@ -413,7 +413,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckBooleanValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("ebooleanValue");
         BooleanValue theValue = (BooleanValue)targetClass.getValue(theValueField);
-            
+
         boolean vv = theValue.value();
         boolean rv = ((BooleanValue)retValue).value();
         if (vv != rv) {
@@ -427,7 +427,7 @@ public class EarlyReturnTest extends TestScaffold {
     void ckStringValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("estringValue");
         StringReference theValue = (StringReference)targetClass.getValue(theValueField);
-            
+
         String vv = theValue.value();
         String rv = ((StringReference)retValue).value();
         if (vv != rv) {
@@ -442,7 +442,7 @@ public class EarlyReturnTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("eclassValue");
         ClassObjectReference vv = (ClassObjectReference)targetClass.
             getValue(theValueField);
-            
+
         ClassObjectReference rv = (ClassObjectReference)retValue;
         if (vv != rv) {
             failure("failure: Class: expected " + vv + ", got " + rv);
@@ -456,7 +456,7 @@ public class EarlyReturnTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("eclassLoaderValue");
         ClassLoaderReference vv = (ClassLoaderReference)targetClass.
             getValue(theValueField);
-            
+
         ClassLoaderReference rv = (ClassLoaderReference)retValue;
         if (vv != rv) {
             failure("failure: ClassLoader: expected " + vv + ", got " + rv);
@@ -470,7 +470,7 @@ public class EarlyReturnTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("ethreadValue");
         ThreadReference vv = (ThreadReference)targetClass.
             getValue(theValueField);
-            
+
         ThreadReference rv = (ThreadReference)retValue;
         if (vv != rv) {
             failure("failure: Thread: expected " + vv + ", got " + rv);
@@ -484,7 +484,7 @@ public class EarlyReturnTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("ethreadGroupValue");
         ThreadGroupReference vv = (ThreadGroupReference)targetClass.
             getValue(theValueField);
-            
+
         ThreadGroupReference rv = (ThreadGroupReference)retValue;
         if (vv != rv) {
             failure("failure: ThreadgGroup: expected " + vv + ", got " + rv);
@@ -527,7 +527,7 @@ public class EarlyReturnTest extends TestScaffold {
         ObjectReference theRetValField = (ObjectReference)targetClass.getValue(theIVarField);
 
         if (! theRetValue.equals(theRetValField)) {
-            failure("failure: Object: expected " + theIVarField + ", got " + theRetValField); 
+            failure("failure: Object: expected " + theIVarField + ", got " + theRetValField);
         } else {
             System.out.println("Passed: Object: " + theRetValField);
             earlyReturns++;
@@ -539,8 +539,8 @@ public class EarlyReturnTest extends TestScaffold {
         earlyReturns++;
     }
 
-    public BreakpointRequest setBreakpoint(String clsName, 
-                                           String methodName, 
+    public BreakpointRequest setBreakpoint(String clsName,
+                                           String methodName,
                                            String methodSignature) {
         ReferenceType rt = findReferenceType(clsName);
         if (rt == null) {
@@ -556,7 +556,7 @@ public class EarlyReturnTest extends TestScaffold {
         bpr.enable();
         return bpr;
     }
-    
+
     public void breakpointReached(BreakpointEvent event) {
         String origMethodName = event.location().method().name();
         String methodName = origMethodName.substring(2);
@@ -573,7 +573,7 @@ public class EarlyReturnTest extends TestScaffold {
                     ByteValue theValue = (ByteValue)targetClass.getValue(theValueField);
                     tr.forceEarlyReturn(theValue);
                     /*
-                     * See what happens if we access the stack after the force 
+                     * See what happens if we access the stack after the force
                      * and before the resume.  Disabling this since spec says
                      * the stack is undefined.  This type of code can be used to
                      * pursue just what that means.
@@ -658,7 +658,7 @@ public class EarlyReturnTest extends TestScaffold {
         }
     }
 
-    // This is the MethodExitEvent handler.  
+    // This is the MethodExitEvent handler.
     public void methodExited(MethodExitEvent event) {
         String origMethodName = event.method().name();
         if (vmm.majorInterfaceVersion() >= 1 &&
@@ -705,7 +705,7 @@ public class EarlyReturnTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
 
@@ -718,7 +718,7 @@ public class EarlyReturnTest extends TestScaffold {
          */
         MethodExitRequest exitRequest =
             eventRequestManager().createMethodExitRequest();
-        
+
         for (int i=0; i<excludes.length; ++i) {
             exitRequest.addClassExclusionFilter(excludes[i]);
         }
@@ -727,21 +727,21 @@ public class EarlyReturnTest extends TestScaffold {
         //sessionSuspendPolicy = EventRequest.SUSPEND_NONE;
         exitRequest.setSuspendPolicy(sessionSuspendPolicy);
         exitRequest.enable();
-        
+
         /*
          * Turn on the flag so debugee knows to check for early
          * return values instead of regular return values.
          */
         Field flagField = targetClass.fieldByName("debuggerWatching");
         targetClass.setValue(flagField, vm().mirrorOf(true));
-         
+
 
         /*
          * We set and enable breakpoints on all of the interesting
          * methods called by doit().  In the breakpointReached()
          * handler we force an early return with a different return
          * value.
-         * 
+         *
          * The MethodExitEvent handler will keep score.
          */
 
@@ -763,7 +763,7 @@ public class EarlyReturnTest extends TestScaffold {
         setBreakpoint("EarlyReturnTarg", "s_nullObjectf", "()Ljava/lang/Object;");
         setBreakpoint("EarlyReturnTarg", "s_objectf", "()Ljava/lang/Object;");
         setBreakpoint("EarlyReturnTarg", "s_voidf", "()V");
-        
+
         setBreakpoint("EarlyReturnTarg", "i_bytef", "(I)B");
         setBreakpoint("EarlyReturnTarg", "i_charf", "()C");
         setBreakpoint("EarlyReturnTarg", "i_doublef", "()D");
@@ -780,7 +780,7 @@ public class EarlyReturnTest extends TestScaffold {
         setBreakpoint("EarlyReturnTarg", "i_threadGroupf", "()Ljava/lang/ThreadGroup;");
         setBreakpoint("EarlyReturnTarg", "i_nullObjectf", "()Ljava/lang/Object;");
         setBreakpoint("EarlyReturnTarg", "i_objectf", "()Ljava/lang/Object;");
-        setBreakpoint("EarlyReturnTarg", "i_voidf", "()V");     
+        setBreakpoint("EarlyReturnTarg", "i_voidf", "()V");
 
         /* Here we go.  This adds 'this' as a listener so
          * that our handlers above will be called.
@@ -794,13 +794,13 @@ public class EarlyReturnTest extends TestScaffold {
         System.out.println("All done, " + earlyReturns + " passed");
 
 
-	if (!testFailed) { 
+        if (!testFailed) {
             System.out.println();
             System.out.println("EarlyReturnTest: passed");
         } else {
             System.out.println();
             System.out.println("EarlyReturnTest: failed");
             throw new Exception("EarlyReturnTest: failed");
-	}
+        }
     }
 }

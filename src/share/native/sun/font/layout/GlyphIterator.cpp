@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)GlyphIterator.cpp	1.24 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -40,8 +39,8 @@
 #include "LESwaps.h"
 
 
-GlyphIterator::GlyphIterator(LEGlyphStorage &theGlyphStorage, 
-    GlyphPositionAdjustments *theGlyphPositionAdjustments, 
+GlyphIterator::GlyphIterator(LEGlyphStorage &theGlyphStorage,
+    GlyphPositionAdjustments *theGlyphPositionAdjustments,
     le_bool rightToLeft, le_uint16 theLookupFlags, FeatureMask theFeatureMask,
     const GlyphDefinitionTableHeader *theGlyphDefinitionTableHeader)
   : direction(1), position(-1), nextLimit(-1), prevLimit(-1),
@@ -263,7 +262,7 @@ void GlyphIterator::setCurrGlyphBaseOffset(le_int32 baseOffset)
     glyphPositionAdjustments->setBaseOffset(position, baseOffset);
 }
 
-void GlyphIterator::adjustCurrGlyphPositionAdjustment(float xPlacementAdjust, 
+void GlyphIterator::adjustCurrGlyphPositionAdjustment(float xPlacementAdjust,
     float yPlacementAdjust, float xAdvanceAdjust, float yAdvanceAdjust)
 {
     if (direction < 0) {
@@ -492,4 +491,3 @@ le_bool GlyphIterator::findMark2Glyph()
 
     return position != prevLimit;
 }
-

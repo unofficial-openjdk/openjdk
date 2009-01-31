@@ -105,7 +105,7 @@ typedef struct {
     jmethodID           setProperty;
     jthreadGroup        systemThreadGroup;
     jobject             agent_properties;
-    
+
     jint                cachedJvmtiVersion;
     jvmtiCapabilities   cachedJvmtiCapabilities;
     jboolean            haveCachedJvmtiCapabilities;
@@ -146,7 +146,7 @@ extern BackendGlobalData * gdata;
 
 typedef enum {
         EI_min                  =  1,
-        
+
         EI_SINGLE_STEP          =  1,
         EI_BREAKPOINT           =  2,
         EI_FRAME_POP            =  3,
@@ -204,16 +204,16 @@ typedef enum {
 /* Combined event information */
 
 typedef struct {
-    
+
     EventIndex  ei;
     jthread     thread;
     jclass      clazz;
     jmethodID   method;
     jlocation   location;
     jobject     object; /* possibly an exception or user object */
-    
+
     union {
-    
+
         /* ei = EI_FIELD_ACCESS */
         struct {
             jclass      field_clazz;
@@ -239,7 +239,7 @@ typedef struct {
         struct {
             jvalue      return_value;
         } method_exit;
-        
+
         /* For monitor wait events */
         union {
             /* ei = EI_MONITOR_WAIT */
@@ -298,19 +298,19 @@ typedef struct ObjectBatch {
 /*
  * util funcs
  */
-void util_initialize(JNIEnv *env);   
+void util_initialize(JNIEnv *env);
 void util_reset(void);
 
 struct PacketInputStream;
 struct PacketOutputStream;
 
-jint uniqueID(void); 
+jint uniqueID(void);
 jbyte referenceTypeTag(jclass clazz);
 jbyte specificTypeKey(JNIEnv *env, jobject object);
 jboolean isObjectTag(jbyte tag);
 jvmtiError spawnNewThread(jvmtiStartFunction func, void *arg, char *name);
 void convertSignatureToClassname(char *convert);
-void writeCodeLocation(struct PacketOutputStream *out, jclass clazz, 
+void writeCodeLocation(struct PacketOutputStream *out, jclass clazz,
                        jmethodID method, jlocation location);
 
 jvmtiError classInstances(jclass klass, ObjectBatch *instances, int maxInstances);
@@ -323,8 +323,8 @@ jvmtiError objectReferrers(jobject obj, ObjectBatch *referrers, int maxObjects);
 int filterDebugThreads(jthread *threads, int count);
 
 
-void sharedGetFieldValues(struct PacketInputStream *in, 
-                          struct PacketOutputStream *out, 
+void sharedGetFieldValues(struct PacketInputStream *in,
+                          struct PacketOutputStream *out,
                           jboolean isStatic);
 jboolean sharedInvoke(struct PacketInputStream *in,
                       struct PacketOutputStream *out);
@@ -407,13 +407,13 @@ jdwpThreadStatus map2jdwpThreadStatus(jint state);
 jint             map2jdwpSuspendStatus(jint state);
 jint             map2jdwpClassStatus(jint);
 
-void log_debugee_location(const char *func, 
+void log_debugee_location(const char *func,
                 jthread thread, jmethodID method, jlocation location);
 
 /*
- * Local Reference management. The two macros below are used 
+ * Local Reference management. The two macros below are used
  * throughout the back end whenever space for JNI local references
- * is needed in the current frame. 
+ * is needed in the current frame.
  */
 
 void createLocalRefSpace(JNIEnv *env, jint capacity);
@@ -430,4 +430,3 @@ void saveGlobalRef(JNIEnv *env, jobject obj, jobject *pobj);
 void tossGlobalRef(JNIEnv *env, jobject *pobj);
 
 #endif
-

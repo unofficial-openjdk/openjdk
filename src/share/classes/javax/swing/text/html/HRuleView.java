@@ -36,7 +36,6 @@ import java.lang.Integer;
  *
  * @author  Timothy Prinzing
  * @author  Sara Swanson
- * @version %I% %G%
  */
 class HRuleView extends View  {
 
@@ -46,24 +45,24 @@ class HRuleView extends View  {
      * @param elem the element to create a view for
      */
     public HRuleView(Element elem) {
-	super(elem);
-	setPropertiesFromAttributes();
+        super(elem);
+        setPropertiesFromAttributes();
     }
 
     /**
      * Update any cached values that come from attributes.
      */
     protected void setPropertiesFromAttributes() {
-	StyleSheet sheet = ((HTMLDocument)getDocument()).getStyleSheet();
-	AttributeSet eAttr = getElement().getAttributes();
-	attr = sheet.getViewAttributes(this);
+        StyleSheet sheet = ((HTMLDocument)getDocument()).getStyleSheet();
+        AttributeSet eAttr = getElement().getAttributes();
+        attr = sheet.getViewAttributes(this);
 
-	alignment = StyleConstants.ALIGN_CENTER;
-	size = 0;
-	noshade = null;
-	widthValue = null;
+        alignment = StyleConstants.ALIGN_CENTER;
+        size = 0;
+        noshade = null;
+        widthValue = null;
 
-	if (attr != null) {
+        if (attr != null) {
             // getAlignment() returns ALIGN_LEFT by default, and HR should
             // use ALIGN_CENTER by default, so we check if the alignment
             // attribute is actually defined
@@ -71,31 +70,31 @@ class HRuleView extends View  {
             alignment = StyleConstants.getAlignment(attr);
             }
 
-	    noshade = (String)eAttr.getAttribute(HTML.Attribute.NOSHADE);
-	    Object value = eAttr.getAttribute(HTML.Attribute.SIZE);
-	    if (value != null && (value instanceof String))
-		size = Integer.parseInt((String)value);
-	    value = attr.getAttribute(CSS.Attribute.WIDTH);
-	    if (value != null && (value instanceof CSS.LengthValue)) {
-		widthValue = (CSS.LengthValue)value;
-	    }
-	    topMargin = getLength(CSS.Attribute.MARGIN_TOP, attr);
-	    bottomMargin = getLength(CSS.Attribute.MARGIN_BOTTOM, attr);
-	    leftMargin = getLength(CSS.Attribute.MARGIN_LEFT, attr);
-	    rightMargin = getLength(CSS.Attribute.MARGIN_RIGHT, attr);
-	}
-	else {
-	    topMargin = bottomMargin = leftMargin = rightMargin = 0;
-	}
+            noshade = (String)eAttr.getAttribute(HTML.Attribute.NOSHADE);
+            Object value = eAttr.getAttribute(HTML.Attribute.SIZE);
+            if (value != null && (value instanceof String))
+                size = Integer.parseInt((String)value);
+            value = attr.getAttribute(CSS.Attribute.WIDTH);
+            if (value != null && (value instanceof CSS.LengthValue)) {
+                widthValue = (CSS.LengthValue)value;
+            }
+            topMargin = getLength(CSS.Attribute.MARGIN_TOP, attr);
+            bottomMargin = getLength(CSS.Attribute.MARGIN_BOTTOM, attr);
+            leftMargin = getLength(CSS.Attribute.MARGIN_LEFT, attr);
+            rightMargin = getLength(CSS.Attribute.MARGIN_RIGHT, attr);
+        }
+        else {
+            topMargin = bottomMargin = leftMargin = rightMargin = 0;
+        }
         size = Math.max(2, size);
     }
 
     // This will be removed and centralized at some point, need to unify this
     // and avoid private classes.
     private float getLength(CSS.Attribute key, AttributeSet a) {
-	CSS.LengthValue lv = (CSS.LengthValue) a.getAttribute(key);
-	float len = (lv != null) ? lv.getValue() : 0;
-	return len;
+        CSS.LengthValue lv = (CSS.LengthValue) a.getAttribute(key);
+        float len = (lv != null) ? lv.getValue() : 0;
+        return len;
     }
 
     // --- View methods ---------------------------------------------
@@ -108,39 +107,39 @@ class HRuleView extends View  {
      * @see View#paint
      */
     public void paint(Graphics g, Shape a) {
-	Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a :
+        Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a :
                           a.getBounds();
-	int x = 0;
-	int y = alloc.y + SPACE_ABOVE + (int)topMargin;
-	int width = alloc.width - (int)(leftMargin + rightMargin);
-	if (widthValue != null) {
-	    width = (int)widthValue.getValue((float)width);
-	}
-	int height = alloc.height - (SPACE_ABOVE + SPACE_BELOW +
-				     (int)topMargin + (int)bottomMargin);
- 	if (size > 0)
-		height = size;
+        int x = 0;
+        int y = alloc.y + SPACE_ABOVE + (int)topMargin;
+        int width = alloc.width - (int)(leftMargin + rightMargin);
+        if (widthValue != null) {
+            width = (int)widthValue.getValue((float)width);
+        }
+        int height = alloc.height - (SPACE_ABOVE + SPACE_BELOW +
+                                     (int)topMargin + (int)bottomMargin);
+        if (size > 0)
+                height = size;
 
-	// Align the rule horizontally.
+        // Align the rule horizontally.
         switch (alignment) {
         case StyleConstants.ALIGN_CENTER:
             x = alloc.x + (alloc.width / 2) - (width / 2);
-	    break;
+            break;
         case StyleConstants.ALIGN_RIGHT:
             x = alloc.x + alloc.width - width - (int)rightMargin;
-	    break;
+            break;
         case StyleConstants.ALIGN_LEFT:
         default:
             x = alloc.x + (int)leftMargin;
-	    break;
+            break;
         }
 
-	// Paint either a shaded rule or a solid line.
-	if (noshade != null) {
+        // Paint either a shaded rule or a solid line.
+        if (noshade != null) {
             g.setColor(Color.black);
-	    g.fillRect(x, y, width, height);
+            g.fillRect(x, y, width, height);
         }
-	else {
+        else {
             Color bg = getContainer().getBackground();
             Color bottom, top;
             if (bg == null || bg.equals(Color.white)) {
@@ -171,24 +170,24 @@ class HRuleView extends View  {
      * @see View#getPreferredSpan
      */
     public float getPreferredSpan(int axis) {
-	switch (axis) {
-	case View.X_AXIS:
-	    return 1;
-	case View.Y_AXIS:
-	    if (size > 0) {
-	        return size + SPACE_ABOVE + SPACE_BELOW + topMargin +
-		    bottomMargin;
-	    } else {
-		if (noshade != null) {
-		    return 2 + SPACE_ABOVE + SPACE_BELOW + topMargin +
-			bottomMargin;
-		} else {
-		    return SPACE_ABOVE + SPACE_BELOW + topMargin +bottomMargin;
-		}
-	    }
-	default:
-	    throw new IllegalArgumentException("Invalid axis: " + axis);
-	}
+        switch (axis) {
+        case View.X_AXIS:
+            return 1;
+        case View.Y_AXIS:
+            if (size > 0) {
+                return size + SPACE_ABOVE + SPACE_BELOW + topMargin +
+                    bottomMargin;
+            } else {
+                if (noshade != null) {
+                    return 2 + SPACE_ABOVE + SPACE_BELOW + topMargin +
+                        bottomMargin;
+                } else {
+                    return SPACE_ABOVE + SPACE_BELOW + topMargin +bottomMargin;
+                }
+            }
+        default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
     }
 
     /**
@@ -199,21 +198,21 @@ class HRuleView extends View  {
      * @return the weight
      */
     public int getResizeWeight(int axis) {
-	if (axis == View.X_AXIS) {
-		return 1;
-	} else if (axis == View.Y_AXIS) {
-		return 0;
-	} else {
-	    return 0;
-	}
+        if (axis == View.X_AXIS) {
+                return 1;
+        } else if (axis == View.Y_AXIS) {
+                return 0;
+        } else {
+            return 0;
+        }
     }
 
     /**
-     * Determines how attractive a break opportunity in 
+     * Determines how attractive a break opportunity in
      * this view is.  This is implemented to request a forced break.
      *
      * @param axis may be either View.X_AXIS or View.Y_AXIS
-     * @param pos the potential location of the start of the 
+     * @param pos the potential location of the start of the
      *   broken view (greater than or equal to zero).
      *   This may be useful for calculating tab
      *   positions.
@@ -224,14 +223,14 @@ class HRuleView extends View  {
      *   ForcedBreakWeight and BadBreakWeight.
      */
     public int getBreakWeight(int axis, float pos, float len) {
-	if (axis == X_AXIS) {
-	    return ForcedBreakWeight;
-	}
-	return BadBreakWeight;
+        if (axis == X_AXIS) {
+            return ForcedBreakWeight;
+        }
+        return BadBreakWeight;
     }
 
     public View breakView(int axis, int offset, float pos, float len) {
-	return null;
+        return null;
     }
 
     /**
@@ -246,17 +245,17 @@ class HRuleView extends View  {
      * @see View#modelToView
      */
     public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-	int p0 = getStartOffset();
-	int p1 = getEndOffset();
-	if ((pos >= p0) && (pos <= p1)) {
-	    Rectangle r = a.getBounds();
-	    if (pos == p1) {
-		r.x += r.width;
-	    }
-	    r.width = 0;
-	    return r;
-	}
-	return null;
+        int p0 = getStartOffset();
+        int p1 = getEndOffset();
+        if ((pos >= p0) && (pos <= p1)) {
+            Rectangle r = a.getBounds();
+            if (pos == p1) {
+                r.x += r.width;
+            }
+            r.width = 0;
+            return r;
+        }
+        return null;
     }
 
     /**
@@ -271,13 +270,13 @@ class HRuleView extends View  {
      * @see View#viewToModel
      */
     public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-	Rectangle alloc = (Rectangle) a;
-	if (x < alloc.x + (alloc.width / 2)) {
-	    bias[0] = Position.Bias.Forward;
-	    return getStartOffset();
-	}
-	bias[0] = Position.Bias.Backward;
-	return getEndOffset();
+        Rectangle alloc = (Rectangle) a;
+        if (x < alloc.x + (alloc.width / 2)) {
+            bias[0] = Position.Bias.Forward;
+            return getStartOffset();
+        }
+        bias[0] = Position.Bias.Backward;
+        return getEndOffset();
     }
 
     /**
@@ -286,16 +285,16 @@ class HRuleView extends View  {
      * model with a StyleSheet.
      */
     public AttributeSet getAttributes() {
-	return attr;
+        return attr;
     }
 
     public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
-	super.changedUpdate(changes, a, f);
-	int pos = changes.getOffset();
-	if (pos <= getStartOffset() && (pos + changes.getLength()) >=
-	    getEndOffset()) {
-	    setPropertiesFromAttributes();
-	}
+        super.changedUpdate(changes, a, f);
+        int pos = changes.getOffset();
+        if (pos <= getStartOffset() && (pos + changes.getLength()) >=
+            getEndOffset()) {
+            setPropertiesFromAttributes();
+        }
     }
 
     // --- variables ------------------------------------------------
@@ -315,4 +314,3 @@ class HRuleView extends View  {
     /** View Attributes. */
     private AttributeSet attr;
 }
-

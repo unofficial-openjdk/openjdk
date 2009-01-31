@@ -42,7 +42,6 @@ import java.security.NoSuchAlgorithmException;
  * <P><em>The X.509 certificate chain is temporarily not associated with
  * the signer, but this omission will be resolved.</em>
  *
- * @version %I%
  *
  * @author David Brownell
  * @author Amit Kapoor
@@ -79,14 +78,14 @@ public final class X500Signer extends Signer
     /**
      * Returns the algorithm used to sign.
      */
-    public AlgorithmId 	getAlgorithmId() {
+    public AlgorithmId  getAlgorithmId() {
         return algid;
     }
 
     /**
      * Returns the name of the signing agent.
      */
-    public X500Name	getSigner() {
+    public X500Name     getSigner() {
         return agent;
     }
 
@@ -96,21 +95,21 @@ public final class X500Signer extends Signer
      */
     // package private  ----hmmmmm ?????
     public X500Signer(Signature sig, X500Name agent) {
-	if (sig == null || agent == null)
-	    throw new IllegalArgumentException ("null parameter");
+        if (sig == null || agent == null)
+            throw new IllegalArgumentException ("null parameter");
 
-	this.sig = sig;
-	this.agent = agent;
+        this.sig = sig;
+        this.agent = agent;
 
-	try {
-	  this.algid = AlgorithmId.getAlgorithmId(sig.getAlgorithm());
+        try {
+          this.algid = AlgorithmId.getAlgorithmId(sig.getAlgorithm());
 
-	} catch (NoSuchAlgorithmException e) {
-	    throw new RuntimeException("internal error! " + e.getMessage());
-	}
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("internal error! " + e.getMessage());
+        }
     }
-    
-    private Signature	sig;
-    private X500Name	agent;		// XXX should be X509CertChain
-    private AlgorithmId	algid;
+
+    private Signature   sig;
+    private X500Name    agent;          // XXX should be X509CertChain
+    private AlgorithmId algid;
 }

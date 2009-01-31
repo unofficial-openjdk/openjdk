@@ -46,56 +46,55 @@ public class Handler extends java.net.URLStreamHandler {
         return 70;
     }
 
-    public java.net.URLConnection openConnection(URL u) 
+    public java.net.URLConnection openConnection(URL u)
     throws IOException {
-	return openConnection(u, null);
+        return openConnection(u, null);
     }
 
-    public java.net.URLConnection openConnection(URL u, Proxy p) 
+    public java.net.URLConnection openConnection(URL u, Proxy p)
     throws IOException {
-	
 
-	/* if set for proxy usage then go through the http code to get */
-	/* the url connection. */
-	if (p == null && GopherClient.getUseGopherProxy()) {
-	    String host = GopherClient.getGopherProxyHost();
-	    if (host != null) {
-		InetSocketAddress saddr = InetSocketAddress.createUnresolved(host, GopherClient.getGopherProxyPort());
-		
-		p = new Proxy(Proxy.Type.HTTP, saddr);
-	    }
-	}
-	if (p != null) {
-	    return new HttpURLConnection(u, p);
-	}
-	
-	return new GopherURLConnection(u);
+
+        /* if set for proxy usage then go through the http code to get */
+        /* the url connection. */
+        if (p == null && GopherClient.getUseGopherProxy()) {
+            String host = GopherClient.getGopherProxyHost();
+            if (host != null) {
+                InetSocketAddress saddr = InetSocketAddress.createUnresolved(host, GopherClient.getGopherProxyPort());
+
+                p = new Proxy(Proxy.Type.HTTP, saddr);
+            }
+        }
+        if (p != null) {
+            return new HttpURLConnection(u, p);
+        }
+
+        return new GopherURLConnection(u);
     }
 }
 
 class GopherURLConnection extends sun.net.www.URLConnection {
 
     Permission permission;
-  
+
     GopherURLConnection(URL u) {
-	super(u);
+        super(u);
     }
 
     public void connect() throws IOException {
     }
 
     public InputStream getInputStream() throws IOException {
-	return new GopherClient(this).openStream(url);
+        return new GopherClient(this).openStream(url);
     }
 
     public Permission getPermission() {
-	if (permission == null) {
-	    int port = url.getPort();
-	    port = port < 0 ? 70 : port;
-	    String host = url.getHost() + ":" + url.getPort();
-	    permission = new SocketPermission(host, "connect");
-	}
-	return permission;
+        if (permission == null) {
+            int port = url.getPort();
+            port = port < 0 ? 70 : port;
+            String host = url.getHost() + ":" + url.getPort();
+            permission = new SocketPermission(host, "connect");
+        }
+        return permission;
     }
 }
-

@@ -35,7 +35,6 @@ package com.sun.java.swing.plaf.windows;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @since 1.5
  */
 public class WindowsClassicLookAndFeel extends WindowsLookAndFeel {

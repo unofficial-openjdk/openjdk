@@ -26,10 +26,10 @@
 package java.awt.print;
 
 /**
- * The <code>PrinterGraphics</code> interface is implemented by 
- * {@link java.awt.Graphics} objects that are passed to 
- * {@link Printable} objects to render a page. It allows an 
- * application to find the {@link PrinterJob} object that is 
+ * The <code>PrinterGraphics</code> interface is implemented by
+ * {@link java.awt.Graphics} objects that are passed to
+ * {@link Printable} objects to render a page. It allows an
+ * application to find the {@link PrinterJob} object that is
  * controlling the printing.
  */
 

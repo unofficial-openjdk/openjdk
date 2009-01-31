@@ -284,7 +284,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
         numCPEntries += (short) (2 * numNonPrimitiveParameterTypes());
 
         asm.emitShort(add(numCPEntries, S1));
-    
+
         final String generatedName = generateName(isConstructor, forSerialization);
         asm.emitConstantPoolUTF8(generatedName);
         asm.emitConstantPoolClass(asm.cpi());
@@ -365,13 +365,13 @@ class MethodAccessorGenerator extends AccessorGenerator {
 
         // This class
         asm.emitShort(thisClass);
-    
+
         // Superclass
         asm.emitShort(superClass);
 
         // Interfaces count and interfaces
         asm.emitShort(S0);
-    
+
         // Fields count and fields
         asm.emitShort(S0);
 
@@ -610,7 +610,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
                     throw new InternalError
                         ("Must have found at least identity conversion");
                 }
-      
+
                 // Fell through; given object is null or invalid. According to
                 // the spec, we can throw IllegalArgumentException for both of
                 // these cases.
@@ -686,7 +686,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
         cb.opc_swap();
         cb.opc_invokespecial(illegalArgumentStringCtorIdx, 1, 0);
         cb.opc_athrow();
-    
+
         short invocationTargetHandler = cb.getLength();
 
         // InvocationTargetException exception handler
@@ -750,7 +750,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
     private boolean isInterface() {
         return declaringClass.isInterface();
     }
-  
+
     private String buildInternalSignature() {
         StringBuffer buf = new StringBuffer();
         buf.append("(");

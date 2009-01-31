@@ -44,8 +44,8 @@ Java_java_lang_Shutdown_runAllFinalizers(JNIEnv *env, jclass ignored)
     jmethodID mid;
 
     if ((cl = (*env)->FindClass(env, "java/lang/ref/Finalizer"))
-	&& (mid = (*env)->GetStaticMethodID(env, cl,
-					    "runAllFinalizers", "()V"))) {
-	(*env)->CallStaticVoidMethod(env, cl, mid);
+        && (mid = (*env)->GetStaticMethodID(env, cl,
+                                            "runAllFinalizers", "()V"))) {
+        (*env)->CallStaticVoidMethod(env, cl, mid);
     }
 }

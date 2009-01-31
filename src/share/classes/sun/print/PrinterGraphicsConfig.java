@@ -45,18 +45,18 @@ public class PrinterGraphicsConfig extends GraphicsConfiguration {
     AffineTransform deviceTransform;
 
     public PrinterGraphicsConfig(String printerID, AffineTransform deviceTx,
-				 int pageWid, int pageHgt) {
-	this.pageWidth = pageWid;
-	this.pageHeight = pageHgt;
-	this.deviceTransform = deviceTx;
-	this.gd = new PrinterGraphicsDevice(this, printerID);
+                                 int pageWid, int pageHgt) {
+        this.pageWidth = pageWid;
+        this.pageHeight = pageHgt;
+        this.deviceTransform = deviceTx;
+        this.gd = new PrinterGraphicsDevice(this, printerID);
     }
 
     /**
      * Return the graphics device associated with this configuration.
      */
     public GraphicsDevice getDevice() {
-	return gd;
+        return gd;
     }
 
     public BufferedImage createCompatibleImage(int width, int height) {
@@ -85,15 +85,15 @@ public class PrinterGraphicsConfig extends GraphicsConfiguration {
      * supports the specified transparency.
      */
     public ColorModel getColorModel(int transparency) {
-	switch (transparency) {
-	case Transparency.OPAQUE:
+        switch (transparency) {
+        case Transparency.OPAQUE:
             return getColorModel();
-	case Transparency.BITMASK:
+        case Transparency.BITMASK:
             return new DirectColorModel(25, 0xff0000, 0xff00, 0xff, 0x1000000);
-	case Transparency.TRANSLUCENT:
+        case Transparency.TRANSLUCENT:
             return ColorModel.getRGBdefault();
-	default:
-	    return null;
+        default:
+            return null;
         }
     }
 
@@ -130,9 +130,9 @@ public class PrinterGraphicsConfig extends GraphicsConfiguration {
      * since there is no valid distance measurement.
      */
     public AffineTransform getNormalizingTransform() {
-	return new AffineTransform();
+        return new AffineTransform();
     }
-    
+
     public Rectangle getBounds() {
         return new Rectangle(0, 0, pageWidth, pageHeight);
     }

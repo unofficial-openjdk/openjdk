@@ -33,7 +33,6 @@ package javax.imageio.spi;
  *
  * @see ServiceRegistry
  *
- * @version 0.5
  */
 public interface RegisterableService {
 

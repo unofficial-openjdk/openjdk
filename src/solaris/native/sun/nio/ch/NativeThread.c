@@ -66,7 +66,7 @@ Java_sun_nio_ch_NativeThread_init(JNIEnv *env, jclass cl)
     sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
     if (sigaction(INTERRUPT_SIGNAL, &sa, &osa) < 0)
-	JNU_ThrowIOExceptionWithLastError(env, "sigaction");
+        JNU_ThrowIOExceptionWithLastError(env, "sigaction");
 
 #endif
 }
@@ -86,6 +86,6 @@ Java_sun_nio_ch_NativeThread_signal(JNIEnv *env, jclass cl, jlong thread)
 {
 #ifdef __linux__
     if (pthread_kill((pthread_t)thread, INTERRUPT_SIGNAL))
-	JNU_ThrowIOExceptionWithLastError(env, "Thread signal failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Thread signal failed");
 #endif
 }

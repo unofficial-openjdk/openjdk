@@ -56,8 +56,8 @@ string_init(void)
 StringIndex
 string_find_or_create(const char *str)
 {
-    return table_find_or_create_entry(gdata->string_table, 
-		(void*)str, (int)strlen(str)+1, NULL, NULL);
+    return table_find_or_create_entry(gdata->string_table,
+                (void*)str, (int)strlen(str)+1, NULL, NULL);
 }
 
 static void
@@ -69,7 +69,7 @@ list_item(TableIndex index, void *str, int len, void *info_ptr, void *arg)
 void
 string_list(void)
 {
-    debug_message( 
+    debug_message(
         "-------------------- String Table ------------------------\n");
     table_walk_items(gdata->string_table, &list_item, NULL);
     debug_message(
@@ -88,7 +88,7 @@ string_get(StringIndex index)
 {
     void *key;
     int   key_len;
-    
+
     table_get_key(gdata->string_table, index, &key, &key_len);
     HPROF_ASSERT(key_len>0);
     return (char*)key;
@@ -104,4 +104,3 @@ string_get_len(StringIndex index)
     HPROF_ASSERT(key_len>0);
     return key_len-1;
 }
-

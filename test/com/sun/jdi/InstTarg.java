@@ -42,13 +42,13 @@ public class InstTarg {
         two();
         three();
     }
-    
+
     void one() {
     }
-    
+
     void two() {
     }
-    
+
     void three() {
     }
 }

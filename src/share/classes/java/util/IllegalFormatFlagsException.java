@@ -32,7 +32,6 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class IllegalFormatFlagsException extends IllegalFormatException {
@@ -48,9 +47,9 @@ public class IllegalFormatFlagsException extends IllegalFormatException {
      *         The set of format flags which contain an illegal combination
      */
     public IllegalFormatFlagsException(String f) {
- 	if (f == null)
- 	    throw new NullPointerException();
-	this.flags = f;
+        if (f == null)
+            throw new NullPointerException();
+        this.flags = f;
     }
 
     /**
@@ -59,10 +58,10 @@ public class IllegalFormatFlagsException extends IllegalFormatException {
      * @return  The flags
      */
     public String getFlags() {
-	return flags;
+        return flags;
     }
 
     public String getMessage() {
-	return "Flags = '" + flags + "'";
+        return "Flags = '" + flags + "'";
     }
 }

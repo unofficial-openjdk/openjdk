@@ -31,7 +31,7 @@
 typedef jint HandlerID;
 
 /* structure is read-only for users */
-typedef struct HandlerNode_ {    
+typedef struct HandlerNode_ {
     HandlerID handlerID;
     EventIndex ei;
     jbyte suspendPolicy;
@@ -40,25 +40,25 @@ typedef struct HandlerNode_ {
 } HandlerNode;
 
 typedef void (*HandlerFunction)(JNIEnv *env,
-                                EventInfo *evinfo, 
-                                HandlerNode *node, 
+                                EventInfo *evinfo,
+                                HandlerNode *node,
                                 struct bag *eventBag);
 
 /***** HandlerNode create = alloc + install *****/
 
-HandlerNode *eventHandler_alloc(jint filterCount, EventIndex ei, 
+HandlerNode *eventHandler_alloc(jint filterCount, EventIndex ei,
                                 jbyte suspendPolicy);
 HandlerID eventHandler_allocHandlerID(void);
 jvmtiError eventHandler_installExternal(HandlerNode *node);
-HandlerNode *eventHandler_createPermanentInternal(EventIndex ei, 
+HandlerNode *eventHandler_createPermanentInternal(EventIndex ei,
                                                   HandlerFunction func);
-HandlerNode *eventHandler_createInternalThreadOnly(EventIndex ei, 
+HandlerNode *eventHandler_createInternalThreadOnly(EventIndex ei,
                                                    HandlerFunction func,
                                                    jthread thread);
 HandlerNode *eventHandler_createInternalBreakpoint(HandlerFunction func,
                                                    jthread thread,
-                                                   jclass clazz, 
-                                                   jmethodID method, 
+                                                   jclass clazz,
+                                                   jmethodID method,
                                                    jlocation location);
 
 /***** HandlerNode free *****/

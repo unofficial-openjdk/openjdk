@@ -85,7 +85,7 @@ import java.lang.SecurityManager;
  *   <td>setDefaultSSLContext</td>
  *   <td>The ability to set the default SSL context
  * </td>
- *   <td>Malicious code can set a context that monitors the opening of 
+ *   <td>Malicious code can set a context that monitors the opening of
  * connections or the plaintext data that is transmitted.
  * </td>
  * </tr>
@@ -99,7 +99,6 @@ import java.lang.SecurityManager;
  * @see java.lang.SecurityManager
  *
  * @since 1.4
- * @version %I%
  * @author Marianne Mueller
  * @author Roland Schemers
  */
@@ -123,13 +122,13 @@ public final class SSLPermission extends BasicPermission {
 
     public SSLPermission(String name)
     {
-	super(name);
+        super(name);
     }
 
     /**
      * Creates a new SSLPermission object with the specified name.
      * The name is the symbolic name of the SSLPermission, and the
-     * actions String is currently unused and should be null. 
+     * actions String is currently unused and should be null.
      *
      * @param name the name of the SSLPermission.
      * @param actions ignored.
@@ -140,8 +139,6 @@ public final class SSLPermission extends BasicPermission {
 
     public SSLPermission(String name, String actions)
     {
-	super(name, actions);
+        super(name, actions);
     }
 }
-
-

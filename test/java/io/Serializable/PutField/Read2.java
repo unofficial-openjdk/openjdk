@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @bug 4453723
  * @summary Verify that ObjectOutputStream.PutField.write() works for objects
- * 	    that do not define primitive serializable fields.
+ *          that do not define primitive serializable fields.
  */
 
 import java.io.*;
@@ -36,13 +36,13 @@ class Foo implements Serializable {
 
 public class Read2 {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	Foo foo = (Foo) oin.readObject();
-	oin.close();
-	
-	if (!(foo.s1.equals("qwerty") && foo.s2.equals("asdfg"))) {
-	    throw new Error();
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        Foo foo = (Foo) oin.readObject();
+        oin.close();
+
+        if (!(foo.s1.equals("qwerty") && foo.s2.equals("asdfg"))) {
+            throw new Error();
+        }
     }
 }

@@ -44,24 +44,24 @@ public class CharToByteCp834 extends CharToByteCp933
         if (theBytes == -1) {
             // Cp834 has 6 additional non-roundtrip char->bytes
             // mappings, see#6379808
-	    if (ch == '\u00b7') {
+            if (ch == '\u00b7') {
                 return 0x4143;
-	    } else if (ch == '\u00ad') {
+            } else if (ch == '\u00ad') {
                 return 0x4148;
-	    } else if (ch == '\u2015') {
+            } else if (ch == '\u2015') {
                 return 0x4149;
-	    } else if (ch == '\u223c') {
-                return 0x42a1;		  
-	    } else if (ch == '\uff5e') {
+            } else if (ch == '\u223c') {
+                return 0x42a1;
+            } else if (ch == '\uff5e') {
                 return 0x4954;
             } else if (ch == '\u2299') {
                 return 0x496f;
             }
-	} else if (((theBytes & 0xff00)>>8) == 0) {
-	    //SBCS, including 0
+        } else if (((theBytes & 0xff00)>>8) == 0) {
+            //SBCS, including 0
             return -1;
         }
-	return theBytes;
+        return theBytes;
     }
 
     public int getMaxBytesPerChar() {
@@ -72,5 +72,3 @@ public class CharToByteCp834 extends CharToByteCp933
        return "Cp834";
     }
 }
-
-

@@ -50,7 +50,7 @@ public final class ICUData {
 
     private static InputStream getStream(final Class root, final String resourceName, boolean required) {
         InputStream i = null;
-        
+
         if (System.getSecurityManager() != null) {
             i = (InputStream)AccessController.doPrivileged(new PrivilegedAction() {
                     public Object run() {
@@ -73,7 +73,7 @@ public final class ICUData {
     public static InputStream getStream(String resourceName) {
         return getStream(ICUData.class, resourceName, false);
     }
-        
+
     /*
      * Convenience method that calls getStream(ICUData.class, resourceName, true).
      */
@@ -81,4 +81,3 @@ public final class ICUData {
         return getStream(ICUData.class, resourceName, true);
     }
 }
-

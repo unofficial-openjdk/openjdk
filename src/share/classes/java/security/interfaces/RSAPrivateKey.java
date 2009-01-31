@@ -32,7 +32,6 @@ import java.math.BigInteger;
  *
  * @author Jan Luehe
  *
- * @version %I% %E%
  *
  * @see RSAPrivateCrtKey
  */

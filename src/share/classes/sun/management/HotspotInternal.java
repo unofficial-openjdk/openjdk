@@ -31,14 +31,14 @@ import javax.management.ObjectName;
 
 /**
  * Implementation class of HotspotInternalMBean interface.
- * 
+ *
  * <p> This is designed for internal customer use to create
  * this MBean dynamically from an agent which will then register
  * all internal MBeans to the platform MBeanServer.
  */
-public class HotspotInternal 
+public class HotspotInternal
     implements HotspotInternalMBean, MBeanRegistration {
-  
+
     private MBeanServer server = null;
 
     /**

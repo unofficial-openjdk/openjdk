@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)CanonShaping.h	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -43,11 +42,11 @@ public:
     static const le_uint8 glyphSubstitutionTable[];
     static const le_uint8 glyphDefinitionTable[];
 
-    static void reorderMarks(const LEUnicode *inChars, le_int32 charCount, 
+    static void reorderMarks(const LEUnicode *inChars, le_int32 charCount,
         le_bool rightToLeft, LEUnicode *outChars, LEGlyphStorage &glyphStorage);
 
 private:
-    static void sortMarks(le_int32 *indices, const le_int32 *combiningClasses, 
+    static void sortMarks(le_int32 *indices, const le_int32 *combiningClasses,
         le_int32 index, le_int32 limit);
 };
 

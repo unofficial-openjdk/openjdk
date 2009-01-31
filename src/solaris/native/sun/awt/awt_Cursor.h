@@ -26,9 +26,9 @@
 #include "jni_util.h"
 #include "awt_p.h"
 
-#define CACHE_UPDATE 0 		/* cache the component and update cursor */
-#define UPDATE_ONLY  1 		/* update cursor, but not cache component */
-#define CACHE_ONLY   2 		/* cache the component, no cursor update */
+#define CACHE_UPDATE 0          /* cache the component and update cursor */
+#define UPDATE_ONLY  1          /* update cursor, but not cache component */
+#define CACHE_ONLY   2          /* cache the component, no cursor update */
 
 /* fieldIDs for Cursor fields that may be accessed from C */
 struct CursorIDs {

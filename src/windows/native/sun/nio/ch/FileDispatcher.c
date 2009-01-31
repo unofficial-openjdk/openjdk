@@ -188,7 +188,7 @@ Java_sun_nio_ch_FileDispatcher_write0(JNIEnv *env, jclass clazz, jobject fdo,
     BOOL result = 0;
     DWORD written = 0;
     HANDLE h = (HANDLE)(handleval(env, fdo));
-    
+
     if (h != INVALID_HANDLE_VALUE) {
         result = WriteFile(h,           /* File handle to write */
                       (LPCVOID)address, /* pointers to the buffers */
@@ -272,7 +272,7 @@ Java_sun_nio_ch_FileDispatcher_pwrite0(JNIEnv *env, jclass clazz, jobject fdo,
             return IOS_THROWN;
         }
     }
-    
+
     result = WriteFile(h,               /* File handle to write */
                       (LPCVOID)address, /* pointers to the buffers */
                       len,              /* number of bytes to write */
@@ -312,7 +312,7 @@ Java_sun_nio_ch_FileDispatcher_close0(JNIEnv *env, jclass clazz, jobject fdo)
 }
 
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_FileDispatcher_closeByHandle(JNIEnv *env, jclass clazz, 
+Java_sun_nio_ch_FileDispatcher_closeByHandle(JNIEnv *env, jclass clazz,
                                              jlong fd)
 {
     closeFile(env, fd);

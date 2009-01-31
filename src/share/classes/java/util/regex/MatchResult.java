@@ -34,7 +34,6 @@ package java.util.regex;
  * a <code>MatchResult</code>.
  *
  * @author  Michael McCloskey
- * @version %I% %G%
  * @see Matcher
  * @since 1.5
  */
@@ -80,7 +79,7 @@ public interface MatchResult {
     /**
      * Returns the offset after the last character matched.  </p>
      *
-     * @return  @return  The offset after the last character matched 
+     * @return  @return  The offset after the last character matched
      *
      * @throws  IllegalStateException
      *          If no match has yet been attempted,
@@ -89,7 +88,7 @@ public interface MatchResult {
     public int end();
 
     /**
-     * Returns the offset after the last character of the subsequence 
+     * Returns the offset after the last character of the subsequence
      * captured by the given group during this match.
      *
      * <p> <a href="Pattern.html#cg">Capturing groups</a> are indexed from left
@@ -101,7 +100,7 @@ public interface MatchResult {
      *         The index of a capturing group in this matcher's pattern
      *
      * @return  The offset after the last character captured by the group,
-     *          or <tt>-1</tt> if the match was successful 
+     *          or <tt>-1</tt> if the match was successful
      *          but the group itself did not match anything
      *
      * @throws  IllegalStateException
@@ -117,7 +116,7 @@ public interface MatchResult {
     /**
      * Returns the input subsequence matched by the previous match.
      *
-     * <p> For a matcher <i>m</i> with input sequence <i>s</i>, 
+     * <p> For a matcher <i>m</i> with input sequence <i>s</i>,
      * the expressions <i>m.</i><tt>group()</tt> and
      * <i>s.</i><tt>substring(</tt><i>m.</i><tt>start(),</tt>&nbsp;<i>m.</i><tt>end())</tt>
      * are equivalent.  </p>
@@ -143,7 +142,7 @@ public interface MatchResult {
      * <i>g</i>, the expressions <i>m.</i><tt>group(</tt><i>g</i><tt>)</tt> and
      * <i>s.</i><tt>substring(</tt><i>m.</i><tt>start(</tt><i>g</i><tt>),</tt>&nbsp;<i>m.</i><tt>end(</tt><i>g</i><tt>))</tt>
      * are equivalent.  </p>
-     * 
+     *
      * <p> <a href="Pattern.html#cg">Capturing groups</a> are indexed from left
      * to right, starting at one.  Group zero denotes the entire pattern, so
      * the expression <tt>m.group(0)</tt> is equivalent to <tt>m.group()</tt>.

@@ -36,24 +36,23 @@ import java.awt.image.*;
  * @author      Jeff Dinkins
  * @author      Tom Ball
  * @author      Jim Graham
- * @version     %I% %G%
  */
 public class GrayFilter extends RGBImageFilter {
     private boolean brighter;
     private int percent;
-    
+
     /**
      * Creates a disabled image
      */
     public static Image createDisabledImage (Image i) {
-	GrayFilter filter = new GrayFilter(true, 50);
-	ImageProducer prod = new FilteredImageSource(i.getSource(), filter);
-	Image grayImage = Toolkit.getDefaultToolkit().createImage(prod);
-	return grayImage;
+        GrayFilter filter = new GrayFilter(true, 50);
+        ImageProducer prod = new FilteredImageSource(i.getSource(), filter);
+        Image grayImage = Toolkit.getDefaultToolkit().createImage(prod);
+        return grayImage;
     }
-    
+
     /**
-     * Constructs a GrayFilter object that filters a color image to a 
+     * Constructs a GrayFilter object that filters a color image to a
      * grayscale image. Used by buttons to create disabled ("grayed out")
      * button images.
      *
@@ -65,31 +64,30 @@ public class GrayFilter extends RGBImageFilter {
         brighter = b;
         percent = p;
 
-	// canFilterIndexColorModel indicates whether or not it is acceptable
-	// to apply the color filtering of the filterRGB method to the color
-	// table entries of an IndexColorModel object in lieu of pixel by pixel
-     	// filtering.
+        // canFilterIndexColorModel indicates whether or not it is acceptable
+        // to apply the color filtering of the filterRGB method to the color
+        // table entries of an IndexColorModel object in lieu of pixel by pixel
+        // filtering.
         canFilterIndexColorModel = true;
     }
-    
+
     /**
      * Overrides <code>RGBImageFilter.filterRGB</code>.
      */
     public int filterRGB(int x, int y, int rgb) {
         // Use NTSC conversion formula.
-	int gray = (int)((0.30 * ((rgb >> 16) & 0xff) + 
-                         0.59 * ((rgb >> 8) & 0xff) + 
+        int gray = (int)((0.30 * ((rgb >> 16) & 0xff) +
+                         0.59 * ((rgb >> 8) & 0xff) +
                          0.11 * (rgb & 0xff)) / 3);
-	
+
         if (brighter) {
             gray = (255 - ((255 - gray) * (100 - percent) / 100));
         } else {
             gray = (gray * (100 - percent) / 100);
         }
-	
+
         if (gray < 0) gray = 0;
         if (gray > 255) gray = 255;
         return (rgb & 0xff000000) | (gray << 16) | (gray << 8) | (gray << 0);
     }
 }
-

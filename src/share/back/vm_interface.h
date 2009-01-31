@@ -53,4 +53,3 @@
 #define JVMTI_FUNC_PTR(e,name) FUNC_PTR(JVMTI_ENV_PTR(e,name),name)
 
 #endif
-

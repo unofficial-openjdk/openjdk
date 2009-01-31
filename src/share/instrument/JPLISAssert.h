@@ -91,5 +91,3 @@ JPLISAssertConditionWithMessage(    jboolean        condition,
 
 
 #endif
-
-

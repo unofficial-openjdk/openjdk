@@ -26,7 +26,7 @@
  * @bug 4474914
  *
  * @summary getSubjectDN and getSubjectX500Principal are underspecified
- *		if subject is empty
+ *              if subject is empty
  */
 import java.io.*;
 import java.security.Principal;
@@ -39,33 +39,33 @@ public class EmptySubject {
 
     public static void main(String[] args) throws Exception {
 
-	try {
-	    File f = new File(System.getProperty("test.src", "."), 
-		"emptySubjectCert");
-	    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-	    
-	    try {
-	        X509Certificate cert = (X509Certificate)
-		    cf.generateCertificate(new FileInputStream(f));
-		throw new Exception("Test 1 Failed - parsed invalid cert");
-	    } catch (CertificateParsingException e) {
-	        System.out.println("Test 1 passed: " + e.toString());
-	    }
+        try {
+            File f = new File(System.getProperty("test.src", "."),
+                "emptySubjectCert");
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
-	    f = new File(System.getProperty("test.src", "."), 
-		"emptyIssuerCert");
+            try {
+                X509Certificate cert = (X509Certificate)
+                    cf.generateCertificate(new FileInputStream(f));
+                throw new Exception("Test 1 Failed - parsed invalid cert");
+            } catch (CertificateParsingException e) {
+                System.out.println("Test 1 passed: " + e.toString());
+            }
 
-	    try {
-		X509Certificate cert2 = (X509Certificate) 
-		    cf.generateCertificate(new FileInputStream(f));
-		throw new Exception("Test 2 Failed - parsed invalid cert");
-	    } catch (CertificateParsingException e) {
-		System.out.println("Test 2 passed: " + e.toString());
-	    }
-	} catch (Exception e) {
-	    SecurityException se = new SecurityException("Test Failed");
-	    se.initCause(e);
-	    throw se;
-	}
+            f = new File(System.getProperty("test.src", "."),
+                "emptyIssuerCert");
+
+            try {
+                X509Certificate cert2 = (X509Certificate)
+                    cf.generateCertificate(new FileInputStream(f));
+                throw new Exception("Test 2 Failed - parsed invalid cert");
+            } catch (CertificateParsingException e) {
+                System.out.println("Test 2 passed: " + e.toString());
+            }
+        } catch (Exception e) {
+            SecurityException se = new SecurityException("Test Failed");
+            se.initCause(e);
+            throw se;
+        }
     }
 }

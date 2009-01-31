@@ -42,7 +42,7 @@ public interface Field extends TypeComponent, Comparable<Field> {
 
     /**
      * Returns a text representation of the type
-     * of this field. 
+     * of this field.
      * Where the type is the type specified in the declaration
      * of this field.
      * <P>
@@ -77,9 +77,9 @@ public interface Field extends TypeComponent, Comparable<Field> {
      * <P>
      * Note: if the type of this field is a reference type (class,
      * interface, or array) and it has not been created or loaded
-     * by the declaring type's class loader - that is, 
+     * by the declaring type's class loader - that is,
      * {@link TypeComponent#declaringType <CODE>declaringType()</CODE>}
-     * <CODE>.classLoader()</CODE>, 
+     * <CODE>.classLoader()</CODE>,
      * then ClassNotLoadedException will be thrown.
      * Also, a reference type may have been loaded but not yet prepared,
      * in which case the type will be returned
@@ -92,7 +92,7 @@ public interface Field extends TypeComponent, Comparable<Field> {
      * @see Type
      * @return the {@link Type} of this field.
      * @throws ClassNotLoadedException if the type has not yet been loaded
-     * or created through the appropriate class loader. 
+     * or created through the appropriate class loader.
      */
     Type type() throws ClassNotLoadedException;
 
@@ -133,4 +133,3 @@ public interface Field extends TypeComponent, Comparable<Field> {
      */
     int hashCode();
 }
-

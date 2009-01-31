@@ -37,7 +37,7 @@ import javax.print.event.PrintServiceAttributeListener;
   * a printer's supported attributes.
   */
 public interface MultiDocPrintService extends PrintService {
-     
+
     /**
      * Create a job which can print a multiDoc.
      * @return a MultiDocPrintJob

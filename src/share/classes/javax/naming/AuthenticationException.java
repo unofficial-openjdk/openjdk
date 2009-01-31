@@ -44,7 +44,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   * @since 1.3
   */
 
@@ -53,12 +52,12 @@ public class AuthenticationException extends NamingSecurityException {
      * Constructs a new instance of AuthenticationException using the
      * explanation supplied. All other fields default to null.
      *
-     * @param	explanation	A possibly null string containing
-     * 				additional detail about this exception.
+     * @param   explanation     A possibly null string containing
+     *                          additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public AuthenticationException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -66,7 +65,7 @@ public class AuthenticationException extends NamingSecurityException {
       * All fields are set to null.
       */
     public AuthenticationException() {
-	super();
+        super();
     }
 
     /**

@@ -130,7 +130,6 @@ import sun.security.action.GetPropertyAction;
  * created, the abstract pathname represented by a <code>File</code> object
  * will never change.
  *
- * @version %I%, %G%
  * @author  unascribed
  * @since   JDK1.0
  */
@@ -164,7 +163,7 @@ public class File
      * For use by FileSystem classes.
      */
     int getPrefixLength() {
-	return prefixLength;
+        return prefixLength;
     }
 
     /**
@@ -203,15 +202,15 @@ public class File
      */
     public static final String pathSeparator = "" + pathSeparatorChar;
 
-
+
     /* -- Constructors -- */
 
     /**
      * Internal constructor for already-normalized pathname strings.
      */
     private File(String pathname, int prefixLength) {
-	this.path = pathname;
-	this.prefixLength = prefixLength;
+        this.path = pathname;
+        this.prefixLength = prefixLength;
     }
 
     /**
@@ -223,7 +222,7 @@ public class File
         assert parent.path != null;
         assert (!parent.path.equals(""));
         this.path = fs.resolve(parent.path, child);
-	this.prefixLength = parent.prefixLength;
+        this.prefixLength = parent.prefixLength;
     }
 
     /**
@@ -236,11 +235,11 @@ public class File
      *          If the <code>pathname</code> argument is <code>null</code>
      */
     public File(String pathname) {
-	if (pathname == null) {
-	    throw new NullPointerException();
-	}
-	this.path = fs.normalize(pathname);
-	this.prefixLength = fs.prefixLength(this.path);
+        if (pathname == null) {
+            throw new NullPointerException();
+        }
+        this.path = fs.normalize(pathname);
+        this.prefixLength = fs.prefixLength(this.path);
     }
 
     /* Note: The two-argument File constructors do not interpret an empty
@@ -276,21 +275,21 @@ public class File
      *          If <code>child</code> is <code>null</code>
      */
     public File(String parent, String child) {
-	if (child == null) {
-	    throw new NullPointerException();
-	}
-	if (parent != null) {
-	    if (parent.equals("")) {
-		this.path = fs.resolve(fs.getDefaultParent(),
-				       fs.normalize(child));
-	    } else {
-		this.path = fs.resolve(fs.normalize(parent),
-				       fs.normalize(child));
-	    }
-	} else {
-	    this.path = fs.normalize(child);
-	}
-	this.prefixLength = fs.prefixLength(this.path);
+        if (child == null) {
+            throw new NullPointerException();
+        }
+        if (parent != null) {
+            if (parent.equals("")) {
+                this.path = fs.resolve(fs.getDefaultParent(),
+                                       fs.normalize(child));
+            } else {
+                this.path = fs.resolve(fs.normalize(parent),
+                                       fs.normalize(child));
+            }
+        } else {
+            this.path = fs.normalize(child);
+        }
+        this.prefixLength = fs.prefixLength(this.path);
     }
 
     /**
@@ -319,21 +318,21 @@ public class File
      *          If <code>child</code> is <code>null</code>
      */
     public File(File parent, String child) {
-	if (child == null) {
-	    throw new NullPointerException();
-	}
-	if (parent != null) {
-	    if (parent.path.equals("")) {
-		this.path = fs.resolve(fs.getDefaultParent(),
-				       fs.normalize(child));
-	    } else {
-		this.path = fs.resolve(parent.path,
-				       fs.normalize(child));
-	    }
-	} else {
-	    this.path = fs.normalize(child);
-	}
-	this.prefixLength = fs.prefixLength(this.path);
+        if (child == null) {
+            throw new NullPointerException();
+        }
+        if (parent != null) {
+            if (parent.path.equals("")) {
+                this.path = fs.resolve(fs.getDefaultParent(),
+                                       fs.normalize(child));
+            } else {
+                this.path = fs.resolve(parent.path,
+                                       fs.normalize(child));
+            }
+        } else {
+            this.path = fs.normalize(child);
+        }
+        this.prefixLength = fs.prefixLength(this.path);
     }
 
     /**
@@ -374,33 +373,33 @@ public class File
      */
     public File(URI uri) {
 
-	// Check our many preconditions
-	if (!uri.isAbsolute())
-	    throw new IllegalArgumentException("URI is not absolute");
-	if (uri.isOpaque())
-	    throw new IllegalArgumentException("URI is not hierarchical");
-	String scheme = uri.getScheme();
-	if ((scheme == null) || !scheme.equalsIgnoreCase("file"))
-	    throw new IllegalArgumentException("URI scheme is not \"file\"");
-	if (uri.getAuthority() != null)
-	    throw new IllegalArgumentException("URI has an authority component");
-	if (uri.getFragment() != null)
-	    throw new IllegalArgumentException("URI has a fragment component");
-	if (uri.getQuery() != null)
-	    throw new IllegalArgumentException("URI has a query component");
-	String p = uri.getPath();
-	if (p.equals(""))
-	    throw new IllegalArgumentException("URI path component is empty");
+        // Check our many preconditions
+        if (!uri.isAbsolute())
+            throw new IllegalArgumentException("URI is not absolute");
+        if (uri.isOpaque())
+            throw new IllegalArgumentException("URI is not hierarchical");
+        String scheme = uri.getScheme();
+        if ((scheme == null) || !scheme.equalsIgnoreCase("file"))
+            throw new IllegalArgumentException("URI scheme is not \"file\"");
+        if (uri.getAuthority() != null)
+            throw new IllegalArgumentException("URI has an authority component");
+        if (uri.getFragment() != null)
+            throw new IllegalArgumentException("URI has a fragment component");
+        if (uri.getQuery() != null)
+            throw new IllegalArgumentException("URI has a query component");
+        String p = uri.getPath();
+        if (p.equals(""))
+            throw new IllegalArgumentException("URI path component is empty");
 
-	// Okay, now initialize
-	p = fs.fromURIPath(p);
-	if (File.separatorChar != '/')
-	    p = p.replace('/', File.separatorChar);
-	this.path = fs.normalize(p);
-	this.prefixLength = fs.prefixLength(this.path);
+        // Okay, now initialize
+        p = fs.fromURIPath(p);
+        if (File.separatorChar != '/')
+            p = p.replace('/', File.separatorChar);
+        this.path = fs.normalize(p);
+        this.prefixLength = fs.prefixLength(this.path);
     }
 
-
+
     /* -- Path-component accessors -- */
 
     /**
@@ -414,9 +413,9 @@ public class File
      *          is empty
      */
     public String getName() {
-	int index = path.lastIndexOf(separatorChar);
-	if (index < prefixLength) return path.substring(prefixLength);
-	return path.substring(index + 1);
+        int index = path.lastIndexOf(separatorChar);
+        if (index < prefixLength) return path.substring(prefixLength);
+        return path.substring(index + 1);
     }
 
     /**
@@ -433,13 +432,13 @@ public class File
      *          does not name a parent
      */
     public String getParent() {
-	int index = path.lastIndexOf(separatorChar);
-	if (index < prefixLength) {
-	    if ((prefixLength > 0) && (path.length() > prefixLength))
-		return path.substring(0, prefixLength);
-	    return null;
-	}
-	return path.substring(0, index);
+        int index = path.lastIndexOf(separatorChar);
+        if (index < prefixLength) {
+            if ((prefixLength > 0) && (path.length() > prefixLength))
+                return path.substring(0, prefixLength);
+            return null;
+        }
+        return path.substring(0, index);
     }
 
     /**
@@ -459,9 +458,9 @@ public class File
      * @since 1.2
      */
     public File getParentFile() {
-	String p = this.getParent();
-	if (p == null) return null;
-	return new File(p, this.prefixLength);
+        String p = this.getParent();
+        if (p == null) return null;
+        return new File(p, this.prefixLength);
     }
 
     /**
@@ -472,10 +471,10 @@ public class File
      * @return  The string form of this abstract pathname
      */
     public String getPath() {
-	return path;
+        return path;
     }
 
-
+
     /* -- Path operations -- */
 
     /**
@@ -489,7 +488,7 @@ public class File
      *          <code>false</code> otherwise
      */
     public boolean isAbsolute() {
-	return fs.isAbsolute(this);
+        return fs.isAbsolute(this);
     }
 
     /**
@@ -516,7 +515,7 @@ public class File
      * @see     java.io.File#isAbsolute()
      */
     public String getAbsolutePath() {
-	return fs.resolve(this);
+        return fs.resolve(this);
     }
 
     /**
@@ -533,7 +532,7 @@ public class File
      */
     public File getAbsoluteFile() {
         String absPath = getAbsolutePath();
-	return new File(absPath, fs.prefixLength(absPath));
+        return new File(absPath, fs.prefixLength(absPath));
     }
 
     /**
@@ -574,7 +573,7 @@ public class File
      * @since   JDK1.1
      */
     public String getCanonicalPath() throws IOException {
-	return fs.canonicalize(fs.resolve(this));
+        return fs.canonicalize(fs.resolve(this));
     }
 
     /**
@@ -599,18 +598,18 @@ public class File
      */
     public File getCanonicalFile() throws IOException {
         String canonPath = getCanonicalPath();
-	return new File(canonPath, fs.prefixLength(canonPath));
+        return new File(canonPath, fs.prefixLength(canonPath));
     }
 
     private static String slashify(String path, boolean isDirectory) {
-	String p = path;
-	if (File.separatorChar != '/')
-	    p = p.replace(File.separatorChar, '/');
-	if (!p.startsWith("/"))
-	    p = "/" + p;
-	if (!p.endsWith("/") && isDirectory)
-	    p = p + "/";
-	return p;
+        String p = path;
+        if (File.separatorChar != '/')
+            p = p.replace(File.separatorChar, '/');
+        if (!p.startsWith("/"))
+            p = "/" + p;
+        if (!p.endsWith("/") && isDirectory)
+            p = p + "/";
+        return p;
     }
 
     /**
@@ -638,7 +637,7 @@ public class File
      */
     @Deprecated
     public URL toURL() throws MalformedURLException {
-	return new URL("file", "", slashify(getAbsolutePath(), isDirectory()));
+        return new URL("file", "", slashify(getAbsolutePath(), isDirectory()));
     }
 
     /**
@@ -674,15 +673,15 @@ public class File
      * @since 1.4
      */
     public URI toURI() {
-	try {
-	    File f = getAbsoluteFile();
-	    String sp = slashify(f.getPath(), f.isDirectory());
-	    if (sp.startsWith("//"))
-		sp = "//" + sp;
-	    return new URI("file", null, sp, null);
-	} catch (URISyntaxException x) {
-	    throw new Error(x);		// Can't happen
-	}
+        try {
+            File f = getAbsoluteFile();
+            String sp = slashify(f.getPath(), f.isDirectory());
+            if (sp.startsWith("//"))
+                sp = "//" + sp;
+            return new URI("file", null, sp, null);
+        } catch (URISyntaxException x) {
+            throw new Error(x);         // Can't happen
+        }
     }
 
 
@@ -702,11 +701,11 @@ public class File
      *          method denies read access to the file
      */
     public boolean canRead() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return fs.checkAccess(this, FileSystem.ACCESS_READ);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return fs.checkAccess(this, FileSystem.ACCESS_READ);
     }
 
     /**
@@ -724,11 +723,11 @@ public class File
      *          method denies write access to the file
      */
     public boolean canWrite() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.checkAccess(this, FileSystem.ACCESS_WRITE);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.checkAccess(this, FileSystem.ACCESS_WRITE);
     }
 
     /**
@@ -744,11 +743,11 @@ public class File
      *          method denies read access to the file or directory
      */
     public boolean exists() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return ((fs.getBooleanAttributes(this) & FileSystem.BA_EXISTS) != 0);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return ((fs.getBooleanAttributes(this) & FileSystem.BA_EXISTS) != 0);
     }
 
     /**
@@ -765,12 +764,12 @@ public class File
      *          method denies read access to the file
      */
     public boolean isDirectory() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return ((fs.getBooleanAttributes(this) & FileSystem.BA_DIRECTORY)
-		!= 0);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return ((fs.getBooleanAttributes(this) & FileSystem.BA_DIRECTORY)
+                != 0);
     }
 
     /**
@@ -789,11 +788,11 @@ public class File
      *          method denies read access to the file
      */
     public boolean isFile() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return ((fs.getBooleanAttributes(this) & FileSystem.BA_REGULAR) != 0);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return ((fs.getBooleanAttributes(this) & FileSystem.BA_REGULAR) != 0);
     }
 
     /**
@@ -815,11 +814,11 @@ public class File
      * @since 1.2
      */
     public boolean isHidden() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return ((fs.getBooleanAttributes(this) & FileSystem.BA_HIDDEN) != 0);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return ((fs.getBooleanAttributes(this) & FileSystem.BA_HIDDEN) != 0);
     }
 
     /**
@@ -837,11 +836,11 @@ public class File
      *          method denies read access to the file
      */
     public long lastModified() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return fs.getLastModifiedTime(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return fs.getLastModifiedTime(this);
     }
 
     /**
@@ -859,11 +858,11 @@ public class File
      *          method denies read access to the file
      */
     public long length() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return fs.getLength(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return fs.getLength(this);
     }
 
 
@@ -877,9 +876,9 @@ public class File
      * filesystem activities that might affect the file.
      * <P>
      * Note: this method should <i>not</i> be used for file-locking, as
-     * the resulting protocol cannot be made to work reliably. The 
+     * the resulting protocol cannot be made to work reliably. The
      * {@link java.nio.channels.FileLock FileLock}
-     * facility should be used instead. 
+     * facility should be used instead.
      *
      * @return  <code>true</code> if the named file does not exist and was
      *          successfully created; <code>false</code> if the named file
@@ -896,9 +895,9 @@ public class File
      * @since 1.2
      */
     public boolean createNewFile() throws IOException {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) security.checkWrite(path);
-	return fs.createFileExclusively(path);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) security.checkWrite(path);
+        return fs.createFileExclusively(path);
     }
 
     /**
@@ -915,28 +914,28 @@ public class File
      *          delete access to the file
      */
     public boolean delete() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkDelete(path);
-	}
-	return fs.delete(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkDelete(path);
+        }
+        return fs.delete(this);
     }
 
     /**
-     * Requests that the file or directory denoted by this abstract 
-     * pathname be deleted when the virtual machine terminates.  
-     * Files (or directories) are deleted in the reverse order that 
-     * they are registered. Invoking this method to delete a file or 
-     * directory that is already registered for deletion has no effect. 
-     * Deletion will be attempted only for normal termination of the 
-     * virtual machine, as defined by the Java Language Specification. 
+     * Requests that the file or directory denoted by this abstract
+     * pathname be deleted when the virtual machine terminates.
+     * Files (or directories) are deleted in the reverse order that
+     * they are registered. Invoking this method to delete a file or
+     * directory that is already registered for deletion has no effect.
+     * Deletion will be attempted only for normal termination of the
+     * virtual machine, as defined by the Java Language Specification.
      *
      * <p> Once deletion has been requested, it is not possible to cancel the
      * request.  This method should therefore be used with care.
      *
      * <P>
-     * Note: this method should <i>not</i> be used for file-locking, as 
-     * the resulting protocol cannot be made to work reliably. The 
+     * Note: this method should <i>not</i> be used for file-locking, as
+     * the resulting protocol cannot be made to work reliably. The
      * {@link java.nio.channels.FileLock FileLock}
      * facility should be used instead.
      *
@@ -950,11 +949,11 @@ public class File
      * @since 1.2
      */
     public void deleteOnExit() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkDelete(path);
-	}
-	DeleteOnExitHook.add(path);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkDelete(path);
+        }
+        DeleteOnExitHook.add(path);
     }
 
     /**
@@ -981,14 +980,14 @@ public class File
      * @throws  SecurityException
      *          If a security manager exists and its {@link
      *          SecurityManager#checkRead(String)} method denies read access to
-     *          the directory  
+     *          the directory
      */
     public String[] list() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkRead(path);
-	}
-	return fs.list(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkRead(path);
+        }
+        return fs.list(this);
     }
 
     /**
@@ -1003,7 +1002,7 @@ public class File
      * of the filter is invoked on this abstract pathname and the name of a
      * file or directory in the directory that it denotes.
      *
-     * @param  filter  
+     * @param  filter
      *         A filename filter
      *
      * @return  An array of strings naming the files and directories in the
@@ -1011,7 +1010,7 @@ public class File
      *          by the given {@code filter}.  The array will be empty if the
      *          directory is empty or if no names were accepted by the filter.
      *          Returns {@code null} if this abstract pathname does not denote
-     *          a directory, or if an I/O error occurs. 
+     *          a directory, or if an I/O error occurs.
      *
      * @throws  SecurityException
      *          If a security manager exists and its {@link
@@ -1019,17 +1018,17 @@ public class File
      *          the directory
      */
     public String[] list(FilenameFilter filter) {
-	String names[] = list();
-	if ((names == null) || (filter == null)) {
-	    return names;
-	}
-	ArrayList v = new ArrayList();
-	for (int i = 0 ; i < names.length ; i++) {
-	    if (filter.accept(this, names[i])) {
-		v.add(names[i]);
-	    }
-	}
-	return (String[])(v.toArray(new String[v.size()]));
+        String names[] = list();
+        if ((names == null) || (filter == null)) {
+            return names;
+        }
+        ArrayList v = new ArrayList();
+        for (int i = 0 ; i < names.length ; i++) {
+            if (filter.accept(this, names[i])) {
+                v.add(names[i]);
+            }
+        }
+        return (String[])(v.toArray(new String[v.size()]));
     }
 
     /**
@@ -1055,24 +1054,24 @@ public class File
      *          directories in the directory denoted by this abstract pathname.
      *          The array will be empty if the directory is empty.  Returns
      *          {@code null} if this abstract pathname does not denote a
-     *          directory, or if an I/O error occurs. 
+     *          directory, or if an I/O error occurs.
      *
      * @throws  SecurityException
      *          If a security manager exists and its {@link
      *          SecurityManager#checkRead(String)} method denies read access to
-     *          the directory 
+     *          the directory
      *
      * @since  1.2
      */
     public File[] listFiles() {
-	String[] ss = list();
-	if (ss == null) return null;
-	int n = ss.length;
-	File[] fs = new File[n];
-	for (int i = 0; i < n; i++) {
-	    fs[i] = new File(ss[i], this);
-	}
-	return fs;
+        String[] ss = list();
+        if (ss == null) return null;
+        int n = ss.length;
+        File[] fs = new File[n];
+        for (int i = 0; i < n; i++) {
+            fs[i] = new File(ss[i], this);
+        }
+        return fs;
     }
 
     /**
@@ -1086,32 +1085,32 @@ public class File
      * the {@link FilenameFilter#accept
      * FilenameFilter.accept(File,&nbsp;String)} method of the filter is
      * invoked on this abstract pathname and the name of a file or directory in
-     * the directory that it denotes. 
+     * the directory that it denotes.
      *
-     * @param  filter  
+     * @param  filter
      *         A filename filter
      *
      * @return  An array of abstract pathnames denoting the files and
      *          directories in the directory denoted by this abstract pathname.
      *          The array will be empty if the directory is empty.  Returns
      *          {@code null} if this abstract pathname does not denote a
-     *          directory, or if an I/O error occurs. 
-     *          
+     *          directory, or if an I/O error occurs.
+     *
      * @throws  SecurityException
      *          If a security manager exists and its {@link
      *          SecurityManager#checkRead(String)} method denies read access to
-     *          the directory 
+     *          the directory
      *
      * @since  1.2
      */
     public File[] listFiles(FilenameFilter filter) {
-	String ss[] = list();
-	if (ss == null) return null;
-	ArrayList<File> files = new ArrayList<File>();
-	for (String s : ss) 
-	    if ((filter == null) || filter.accept(this, s))
-		files.add(new File(s, this));
-	return files.toArray(new File[files.size()]);
+        String ss[] = list();
+        if (ss == null) return null;
+        ArrayList<File> files = new ArrayList<File>();
+        for (String s : ss)
+            if ((filter == null) || filter.accept(this, s))
+                files.add(new File(s, this));
+        return files.toArray(new File[files.size()]);
     }
 
     /**
@@ -1123,34 +1122,34 @@ public class File
      * is {@code null} then all pathnames are accepted.  Otherwise, a pathname
      * satisfies the filter if and only if the value {@code true} results when
      * the {@link FileFilter#accept FileFilter.accept(File)} method of the
-     * filter is invoked on the pathname. 
+     * filter is invoked on the pathname.
      *
-     * @param  filter  
+     * @param  filter
      *         A file filter
      *
      * @return  An array of abstract pathnames denoting the files and
      *          directories in the directory denoted by this abstract pathname.
      *          The array will be empty if the directory is empty.  Returns
      *          {@code null} if this abstract pathname does not denote a
-     *          directory, or if an I/O error occurs. 
-     *          
+     *          directory, or if an I/O error occurs.
+     *
      * @throws  SecurityException
      *          If a security manager exists and its {@link
      *          SecurityManager#checkRead(String)} method denies read access to
-     *          the directory 
+     *          the directory
      *
      * @since  1.2
      */
     public File[] listFiles(FileFilter filter) {
-	String ss[] = list();
-	if (ss == null) return null;
-	ArrayList<File> files = new ArrayList<File>();
-	for (String s : ss) {
-	    File f = new File(s, this);
-	    if ((filter == null) || filter.accept(f))
-		files.add(f);
-	}
-	return files.toArray(new File[files.size()]);
+        String ss[] = list();
+        if (ss == null) return null;
+        ArrayList<File> files = new ArrayList<File>();
+        for (String s : ss) {
+            File f = new File(s, this);
+            if ((filter == null) || filter.accept(f))
+                files.add(f);
+        }
+        return files.toArray(new File[files.size()]);
     }
 
     /**
@@ -1165,11 +1164,11 @@ public class File
      *          method does not permit the named directory to be created
      */
     public boolean mkdir() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.createDirectory(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.createDirectory(this);
     }
 
     /**
@@ -1185,20 +1184,20 @@ public class File
      * @throws  SecurityException
      *          If a security manager exists and its <code>{@link
      *          java.lang.SecurityManager#checkRead(java.lang.String)}</code>
-     *          method does not permit verification of the existence of the 
+     *          method does not permit verification of the existence of the
      *          named directory and all necessary parent directories; or if
-     *          the <code>{@link 
+     *          the <code>{@link
      *          java.lang.SecurityManager#checkWrite(java.lang.String)}</code>
      *          method does not permit the named directory and all necessary
      *          parent directories to be created
      */
     public boolean mkdirs() {
-	if (exists()) {
-	    return false;
-	}
-	if (mkdir()) {
- 	    return true;
- 	}
+        if (exists()) {
+            return false;
+        }
+        if (mkdir()) {
+            return true;
+        }
         File canonFile = null;
         try {
             canonFile = getCanonicalFile();
@@ -1206,14 +1205,14 @@ public class File
             return false;
         }
 
-	File parent = canonFile.getParentFile();
-	return (parent != null && (parent.mkdirs() || parent.exists()) &&
-		canonFile.mkdir());
+        File parent = canonFile.getParentFile();
+        return (parent != null && (parent.mkdirs() || parent.exists()) &&
+                canonFile.mkdir());
     }
 
     /**
      * Renames the file denoted by this abstract pathname.
-     * 
+     *
      * <p> Many aspects of the behavior of this method are inherently
      * platform-dependent: The rename operation might not be able to move a
      * file from one filesystem to another, it might not be atomic, and it
@@ -1222,7 +1221,7 @@ public class File
      * that the rename operation was successful.
      *
      * @param  dest  The new abstract pathname for the named file
-     * 
+     *
      * @return  <code>true</code> if and only if the renaming succeeded;
      *          <code>false</code> otherwise
      *
@@ -1230,17 +1229,17 @@ public class File
      *          If a security manager exists and its <code>{@link
      *          java.lang.SecurityManager#checkWrite(java.lang.String)}</code>
      *          method denies write access to either the old or new pathnames
-     * 
-     * @throws  NullPointerException  
+     *
+     * @throws  NullPointerException
      *          If parameter <code>dest</code> is <code>null</code>
      */
     public boolean renameTo(File dest) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	    security.checkWrite(dest.path);
-	}
-	return fs.rename(this, dest);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+            security.checkWrite(dest.path);
+        }
+        return fs.rename(this, dest);
     }
 
     /**
@@ -1270,12 +1269,12 @@ public class File
      * @since 1.2
      */
     public boolean setLastModified(long time) {
-	if (time < 0) throw new IllegalArgumentException("Negative time");
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.setLastModifiedTime(this, time);
+        if (time < 0) throw new IllegalArgumentException("Negative time");
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.setLastModifiedTime(this, time);
     }
 
     /**
@@ -1296,11 +1295,11 @@ public class File
      * @since 1.2
      */
     public boolean setReadOnly() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.setReadOnly(this);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.setReadOnly(this);
     }
 
    /**
@@ -1330,11 +1329,11 @@ public class File
      * @since 1.6
      */
     public boolean setWritable(boolean writable, boolean ownerOnly) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.setPermission(this, FileSystem.ACCESS_WRITE, writable, ownerOnly);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.setPermission(this, FileSystem.ACCESS_WRITE, writable, ownerOnly);
     }
 
     /**
@@ -1363,7 +1362,7 @@ public class File
      * @since 1.6
      */
     public boolean setWritable(boolean writable) {
-	return setWritable(writable, true);
+        return setWritable(writable, true);
     }
 
     /**
@@ -1396,11 +1395,11 @@ public class File
      * @since 1.6
      */
     public boolean setReadable(boolean readable, boolean ownerOnly) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.setPermission(this, FileSystem.ACCESS_READ, readable, ownerOnly);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.setPermission(this, FileSystem.ACCESS_READ, readable, ownerOnly);
     }
 
     /**
@@ -1465,11 +1464,11 @@ public class File
      * @since 1.6
      */
     public boolean setExecutable(boolean executable, boolean ownerOnly) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkWrite(path);
-	}
-	return fs.setPermission(this, FileSystem.ACCESS_EXECUTE, executable, ownerOnly);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkWrite(path);
+        }
+        return fs.setPermission(this, FileSystem.ACCESS_EXECUTE, executable, ownerOnly);
     }
 
     /**
@@ -1519,14 +1518,14 @@ public class File
      * @since 1.6
      */
     public boolean canExecute() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkExec(path);
-	}
-	return fs.checkAccess(this, FileSystem.ACCESS_EXECUTE);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkExec(path);
+        }
+        return fs.checkAccess(this, FileSystem.ACCESS_EXECUTE);
     }
 
-
+
     /* -- Filesystem interface -- */
 
     /**
@@ -1540,7 +1539,7 @@ public class File
      * namely {@code "/"}.  The set of available filesystem roots is affected
      * by various system-level operations such as the insertion or ejection of
      * removable media and the disconnecting or unmounting of physical or
-     * virtual disk drives. 
+     * virtual disk drives.
      *
      * <p> This method returns an array of {@code File} objects that denote the
      * root directories of the available filesystem roots.  It is guaranteed
@@ -1555,28 +1554,28 @@ public class File
      * returned by this method.  Thus, for example, {@code File} objects
      * denoting the root directories of the mapped network drives of a Windows
      * platform will be returned by this method, while {@code File} objects
-     * containing UNC pathnames will not be returned by this method. 
+     * containing UNC pathnames will not be returned by this method.
      *
      * <p> Unlike most methods in this class, this method does not throw
      * security exceptions.  If a security manager exists and its {@link
      * SecurityManager#checkRead(String)} method denies read access to a
      * particular root directory, then that directory will not appear in the
-     * result. 
+     * result.
      *
      * @return  An array of {@code File} objects denoting the available
      *          filesystem roots, or {@code null} if the set of roots could not
      *          be determined.  The array will be empty if there are no
-     *          filesystem roots. 
+     *          filesystem roots.
      *
      * @since  1.2
      */
     public static File[] listRoots() {
-	return fs.listRoots();
+        return fs.listRoots();
     }
 
-
+
     /* -- Disk usage -- */
-    
+
     /**
      * Returns the size of the partition <a href="#partName">named</a> by this
      * abstract pathname.
@@ -1593,12 +1592,12 @@ public class File
      * @since  1.6
      */
     public long getTotalSpace() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
-	    sm.checkRead(path);
-	}
-	return fs.getSpace(this, FileSystem.SPACE_TOTAL);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
+            sm.checkRead(path);
+        }
+        return fs.getSpace(this, FileSystem.SPACE_TOTAL);
     }
 
     /**
@@ -1628,14 +1627,14 @@ public class File
      * @since  1.6
      */
     public long getFreeSpace() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
-	    sm.checkRead(path);
-	}
-	return fs.getSpace(this, FileSystem.SPACE_FREE);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
+            sm.checkRead(path);
+        }
+        return fs.getSpace(this, FileSystem.SPACE_FREE);
     }
-    
+
     /**
      * Returns the number of bytes available to this virtual machine on the
      * partition <a href="#partName">named</a> by this abstract pathname.  When
@@ -1666,15 +1665,15 @@ public class File
      * @since  1.6
      */
     public long getUsableSpace() {
-    	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
-	    sm.checkRead(path);
-	}
-	return fs.getSpace(this, FileSystem.SPACE_USABLE);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
+            sm.checkRead(path);
+        }
+        return fs.getSpace(this, FileSystem.SPACE_USABLE);
     }
-    
-    
+
+
     /* -- Temporary files -- */
 
     private static final Object tmpFileLock = new Object();
@@ -1682,39 +1681,39 @@ public class File
     private static int counter = -1; /* Protected by tmpFileLock */
 
     private static File generateFile(String prefix, String suffix, File dir)
-	throws IOException
+        throws IOException
     {
-	if (counter == -1) {
-	    counter = new Random().nextInt() & 0xffff;
-	}
-	counter++;
-	return new File(dir, prefix + Integer.toString(counter) + suffix);
+        if (counter == -1) {
+            counter = new Random().nextInt() & 0xffff;
+        }
+        counter++;
+        return new File(dir, prefix + Integer.toString(counter) + suffix);
     }
 
     private static String tmpdir; /* Protected by tmpFileLock */
 
     private static String getTempDir() {
-	if (tmpdir == null)
-	    tmpdir = fs.normalize(
-		AccessController.doPrivileged(
-		    new GetPropertyAction("java.io.tmpdir")));
-	return tmpdir;
+        if (tmpdir == null)
+            tmpdir = fs.normalize(
+                AccessController.doPrivileged(
+                    new GetPropertyAction("java.io.tmpdir")));
+        return tmpdir;
     }
 
     private static boolean checkAndCreate(String filename, SecurityManager sm)
-	throws IOException
+        throws IOException
     {
-	if (sm != null) {
-	    try {
-		sm.checkWrite(filename);
-	    } catch (AccessControlException x) {
-		/* Throwing the original AccessControlException could disclose
-		   the location of the default temporary directory, so we
-		   re-throw a more innocuous SecurityException */
-		throw new SecurityException("Unable to create temporary file");
-	    }
-	}
-	return fs.createFileExclusively(filename);
+        if (sm != null) {
+            try {
+                sm.checkWrite(filename);
+            } catch (AccessControlException x) {
+                /* Throwing the original AccessControlException could disclose
+                   the location of the default temporary directory, so we
+                   re-throw a more innocuous SecurityException */
+                throw new SecurityException("Unable to create temporary file");
+            }
+        }
+        return fs.createFileExclusively(filename);
     }
 
     /**
@@ -1787,25 +1786,25 @@ public class File
      * @since 1.2
      */
     public static File createTempFile(String prefix, String suffix,
-				      File directory)
+                                      File directory)
         throws IOException
     {
-	if (prefix == null) throw new NullPointerException();
-	if (prefix.length() < 3)
-	    throw new IllegalArgumentException("Prefix string too short");
-	String s = (suffix == null) ? ".tmp" : suffix;
-	synchronized (tmpFileLock) {
-	    if (directory == null) {
+        if (prefix == null) throw new NullPointerException();
+        if (prefix.length() < 3)
+            throw new IllegalArgumentException("Prefix string too short");
+        String s = (suffix == null) ? ".tmp" : suffix;
+        synchronized (tmpFileLock) {
+            if (directory == null) {
                 String tmpDir = getTempDir();
-		directory = new File(tmpDir, fs.prefixLength(tmpDir));
-	    }
-	    SecurityManager sm = System.getSecurityManager();
-	    File f;
-	    do {
-		f = generateFile(prefix, s, directory);
-	    } while (!checkAndCreate(f.getPath(), sm));
-	    return f;
-	}
+                directory = new File(tmpDir, fs.prefixLength(tmpDir));
+            }
+            SecurityManager sm = System.getSecurityManager();
+            File f;
+            do {
+                f = generateFile(prefix, s, directory);
+            } while (!checkAndCreate(f.getPath(), sm));
+            return f;
+        }
     }
 
     /**
@@ -1838,9 +1837,9 @@ public class File
      * @since 1.2
      */
     public static File createTempFile(String prefix, String suffix)
-	throws IOException
+        throws IOException
     {
-	return createTempFile(prefix, suffix, null);
+        return createTempFile(prefix, suffix, null);
     }
 
 
@@ -1854,17 +1853,17 @@ public class File
      *
      * @param   pathname  The abstract pathname to be compared to this abstract
      *                    pathname
-     * 
+     *
      * @return  Zero if the argument is equal to this abstract pathname, a
-     *		value less than zero if this abstract pathname is
-     *		lexicographically less than the argument, or a value greater
-     *		than zero if this abstract pathname is lexicographically
-     *		greater than the argument
+     *          value less than zero if this abstract pathname is
+     *          lexicographically less than the argument, or a value greater
+     *          than zero if this abstract pathname is lexicographically
+     *          greater than the argument
      *
      * @since   1.2
      */
     public int compareTo(File pathname) {
-	return fs.compare(this, pathname);
+        return fs.compare(this, pathname);
     }
 
     /**
@@ -1882,10 +1881,10 @@ public class File
      *          <code>false</code> otherwise
      */
     public boolean equals(Object obj) {
-	if ((obj != null) && (obj instanceof File)) {
-	    return compareTo((File)obj) == 0;
-	}
-	return false;
+        if ((obj != null) && (obj instanceof File)) {
+            return compareTo((File)obj) == 0;
+        }
+        return false;
     }
 
     /**
@@ -1903,7 +1902,7 @@ public class File
      * @return  A hash code for this abstract pathname
      */
     public int hashCode() {
-	return fs.hashCode(this);
+        return fs.hashCode(this);
     }
 
     /**
@@ -1913,7 +1912,7 @@ public class File
      * @return  The string form of this abstract pathname
      */
     public String toString() {
-	return getPath();
+        return getPath();
     }
 
     /**
@@ -1926,8 +1925,8 @@ public class File
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
-	s.defaultWriteObject();
-	s.writeChar(this.separatorChar); // Add the separator character
+        s.defaultWriteObject();
+        s.writeChar(this.separatorChar); // Add the separator character
     }
 
     /**
@@ -1939,12 +1938,12 @@ public class File
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-	s.defaultReadObject();
-	char sep = s.readChar(); // read the previous separator char
-	if (sep != separatorChar)
-	    this.path = this.path.replace(sep, separatorChar);
-	this.path = fs.normalize(this.path);
-	this.prefixLength = fs.prefixLength(this.path);
+        s.defaultReadObject();
+        char sep = s.readChar(); // read the previous separator char
+        if (sep != separatorChar)
+            this.path = this.path.replace(sep, separatorChar);
+        this.path = fs.normalize(this.path);
+        this.prefixLength = fs.prefixLength(this.path);
     }
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
@@ -1953,13 +1952,13 @@ public class File
     // Set up JavaIODeleteOnExitAccess in SharedSecrets
     // Added here as DeleteOnExitHook is package-private and SharedSecrets cannot easily access it.
     static {
-	sun.misc.SharedSecrets.setJavaIODeleteOnExitAccess(
+        sun.misc.SharedSecrets.setJavaIODeleteOnExitAccess(
             new sun.misc.JavaIODeleteOnExitAccess() {
                 public void run() {
                     DeleteOnExitHook.hook().run();
-		}
+                }
             }
-	);
+        );
     }
 
 

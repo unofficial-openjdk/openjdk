@@ -25,47 +25,47 @@
  * @test
  * @bug 4146462
  * @summary Priority inversion prevents call to the genSeed method from
- *	returning
+ *      returning
  *
  * if the test returns, then it passed.
  * if the test never returns (hangs forever), then it failed.
  */
 
 import java.security.SecureRandom;
- 
+
 public class Priority_Inversion {
     public static void main(String args[]) {
         int deltaPriority = 1;
- 
+
         if (args.length == 1) {
             try {
                 deltaPriority = Integer.parseInt(args[0]);
             }
             catch (NumberFormatException nfe) {
                 System.err.println
-			("Sorry, \"" + args[0] + "\" is not a number");
+                        ("Sorry, \"" + args[0] + "\" is not a number");
                 System.exit(1);
             }
         }
- 
+
         RandomTest rand = new RandomTest();
         InvertTest invert = new InvertTest(deltaPriority, rand);
         rand.start();
         invert.start();
     }
 }
- 
+
 class RandomTest extends Thread {
     public synchronized void run() {
         System.out.println("Start priority " + getPriority());
         // The following should take over a second
         SecureRandom rand = new SecureRandom();
-	rand.nextBytes(new byte[5]);
+        rand.nextBytes(new byte[5]);
     }
-    
+
     void invertPriority() {
         System.out.println("Waiting ..., priority " +
-		Thread.currentThread().getPriority());
+                Thread.currentThread().getPriority());
         synchronized(this) {
         }
         System.out.println("Released Lock");
@@ -74,12 +74,12 @@ class RandomTest extends Thread {
 class InvertTest extends Thread {
     private int delta;
     private RandomTest rand;
- 
+
     InvertTest(int delta, RandomTest rand) {
         this.delta = delta;
         this.rand = rand;
     }
- 
+
     public void run() {
         setPriority(getPriority() + delta);
         try {
@@ -89,4 +89,3 @@ class InvertTest extends Thread {
         rand.invertPriority();
     }
 }
-

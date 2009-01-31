@@ -38,33 +38,32 @@ import sun.security.action.*;
  * Collection of static utility methods related to KeyStores.
  *
  * @author Andreas Sterbenz
- * @version %I%, %G%
  */
 public class KeyStores {
 
     private KeyStores() {
         // empty
     }
-    
+
     // in the future, all accesses to the system cacerts keystore should
     // go through this class. but not right now.
 /*
-    private final static String javaHome = 
-    	(String)AccessController.doPrivileged(new GetPropertyAction("java.home"));
+    private final static String javaHome =
+        (String)AccessController.doPrivileged(new GetPropertyAction("java.home"));
 
     private final static char SEP = File.separatorChar;
 
     private static KeyStore caCerts;
 
-    private static KeyStore getKeyStore(String type, String name, 
-	    char[] password) throws IOException {
+    private static KeyStore getKeyStore(String type, String name,
+            char[] password) throws IOException {
         if (type == null) {
             type = "JKS";
         }
         try {
             KeyStore ks = KeyStore.getInstance(type);
             FileInputStream in = (FileInputStream)AccessController.doPrivileged
-	    				(new OpenFileInputStreamAction(name));
+                                        (new OpenFileInputStreamAction(name));
             ks.load(in, password);
             return ks;
         } catch (GeneralSecurityException e) {
@@ -92,7 +91,7 @@ public class KeyStores {
 
     /**
      * Return a Set with all trusted X509Certificates contained in
-     * this KeyStore. 
+     * this KeyStore.
      */
     public static Set<X509Certificate> getTrustedCerts(KeyStore ks) {
         Set<X509Certificate> set = new HashSet<X509Certificate>();

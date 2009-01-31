@@ -30,12 +30,12 @@ import java.security.*;
 
 /**
  * The permission for which the <code>SecurityManager</code> will check
- * when code that is running in an applet calls the 
+ * when code that is running in an applet calls the
  * <code>DriverManager.setLogWriter</code> method or the
  * <code>DriverManager.setLogStream</code> (deprecated) method.
  * If there is no <code>SQLPermission</code> object, these methods
  * throw a <code>java.lang.SecurityException</code> as a runtime exception.
- * <P> 
+ * <P>
  * A <code>SQLPermission</code> object contains
  * a name (also referred to as a "target name") but no actions
  * list; there is either a named permission or there is not.
@@ -67,7 +67,7 @@ import java.security.*;
  * The contents of the log may contain usernames and passwords,
  * SQL statements, and SQL data.</td>
  * </tr>
- * 
+ *
  * </table>
  *
  * The person running an applet decides what permissions to allow
@@ -92,7 +92,7 @@ public final class SQLPermission extends BasicPermission {
      * the only name allowed is "setLog".
      *
      * @param name the name of this <code>SQLPermission</code> object, which must
-	 *             be <code>setLog</code> 
+         *             be <code>setLog</code>
      * @throws NullPointerException if <code>name</code> is <code>null</code>.
      * @throws IllegalArgumentException if <code>name</code> is empty.
 
@@ -106,11 +106,11 @@ public final class SQLPermission extends BasicPermission {
      * Creates a new <code>SQLPermission</code> object with the specified name.
      * The name is the symbolic name of the <code>SQLPermission</code>; the
      * actions <code>String</code> is currently unused and should be
-	 * <code>null</code>.
+         * <code>null</code>.
      *
      * @param name the name of this <code>SQLPermission</code> object, which must
      *             be <code>setLog</code>
-     * @param actions should be <code>null</code> 
+     * @param actions should be <code>null</code>
      * @throws NullPointerException if <code>name</code> is <code>null</code>.
      * @throws IllegalArgumentException if <code>name</code> is empty.
 

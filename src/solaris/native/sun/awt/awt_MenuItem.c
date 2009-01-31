@@ -63,7 +63,7 @@ JNIEXPORT void JNICALL Java_java_awt_MenuItem_initIDs
 {
     menuItemIDs.label =
       (*env)->GetFieldID(env, cls, "label", "Ljava/lang/String;");
-    menuItemIDs.enabled = 
+    menuItemIDs.enabled =
       (*env)->GetFieldID(env, cls, "enabled", "Z");
     menuItemIDs.shortcut =
       (*env)->GetFieldID(env, cls, "shortcut", "Ljava/awt/MenuShortcut;");
@@ -109,7 +109,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MMenuItemPeer_getParent_1NoClientCo
 
     /* getParent is actually getParent_NoClientCode() */
     parent = (*env)->CallObjectMethod(
-			env,menuComponent,menuComponentIDs.getParent);
+                        env,menuComponent,menuComponentIDs.getParent);
     DASSERT(!((*env)->ExceptionOccurred(env)));
     return parent;
 }
@@ -131,15 +131,15 @@ MenuItem_selected(Widget w, XtPointer client_data, XmAnyCallbackStruct * s)
         struct MenuItemData *mdata;
 
         mdata = (struct MenuItemData *)
-	  JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+          JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
 
         if (mdata != NULL) {
             XtVaGetValues(mdata->comp.widget, XmNset, &state, NULL);
 
             JNU_CallMethodByName(env, NULL, this
-				 ,"action"
-				 ,"(JIZ)V"
-				 ,converted.when, converted.modifiers,
+                                 ,"action"
+                                 ,"(JIZ)V"
+                                 ,converted.when, converted.modifiers,
                                  state);
             if ((*env)->ExceptionOccurred(env)) {
                 (*env)->ExceptionDescribe(env);
@@ -148,7 +148,7 @@ MenuItem_selected(Widget w, XtPointer client_data, XmAnyCallbackStruct * s)
         }
     } else {
         JNU_CallMethodByName(env, NULL, this, "action", "(JI)V",
-			     converted.when, converted.modifiers);
+                             converted.when, converted.modifiers);
         if ((*env)->ExceptionOccurred(env)) {
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
@@ -195,7 +195,7 @@ JNIEnv *env, jobject this, jobject parent)
     DASSERT(!awt_currentThreadIsPrivileged(env));
 
     JNU_SetLongFieldFromPtr(env, this, mMenuItemPeerIDs.jniGlobalRef,
-			    globalRef);
+                            globalRef);
 
     fdata = NULL;
 
@@ -207,7 +207,7 @@ JNIEnv *env, jobject this, jobject parent)
         return;
     }
     font = JNU_CallMethodByName(env, NULL, target, "getFont_NoClientCode",
-				"()Ljava/awt/Font;").l;
+                                "()Ljava/awt/Font;").l;
 
     if (JNU_IsNull(env, parent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -257,13 +257,13 @@ JNIEnv *env, jobject this, jobject parent)
 
     /* check if the label is "-" but don't use strcmp(clabel, "-") because
      * the high-order bytes in the unicode characters are not present in
-     * the C string (bugid 4099695) 
+     * the C string (bugid 4099695)
      */
     if (!JNU_IsNull(env, label)) {
         unicodeLabel = (*env)->GetStringChars(env, label, &isCopy);
         unicodeLabelLen = (*env)->GetStringLength(env, label);
     }
-    if ((unicodeLabel != NULL) && (unicodeLabel[0] == '-') && 
+    if ((unicodeLabel != NULL) && (unicodeLabel[0] == '-') &&
         (unicodeLabelLen == 1)) {
         DASSERT(!(argc > MAX_ARGC));
         mdata->comp.widget = XmCreateSeparator(menuData->itemData.comp.widget,
@@ -272,25 +272,25 @@ JNIEnv *env, jobject this, jobject parent)
         if (IsMultiFont) {
             XtSetArg(args[argc], XmNlabelString, mfstr);
         } else {
- 	    str = XmStringCreate(clabel, XmSTRING_DEFAULT_CHARSET);
-	    XtSetArg(args[argc], XmNlabelString, str);
+            str = XmStringCreate(clabel, XmSTRING_DEFAULT_CHARSET);
+            XtSetArg(args[argc], XmNlabelString, str);
         }
         argc++;
 
         shortcut =
-	  (*env)->GetObjectField(env, target, menuItemIDs.shortcut);
+          (*env)->GetObjectField(env, target, menuItemIDs.shortcut);
         if (!JNU_IsNull(env, shortcut)) {
             jstring shortcutText;
             char *text = "";
 
             shortcutText = JNU_CallMethodByName(env, NULL, shortcut,
-						"toString",
-						"()Ljava/lang/String;").l;
+                                                "toString",
+                                                "()Ljava/lang/String;").l;
 
             if (!JNU_IsNull(env, shortcutText)) {
                 text = (char *) JNU_GetStringPlatformChars(env, shortcutText, NULL);
             }
-	    shortcut_str = XmStringCreate(text, XmSTRING_DEFAULT_CHARSET);
+            shortcut_str = XmStringCreate(text, XmSTRING_DEFAULT_CHARSET);
             XtSetArg(args[argc], XmNacceleratorText, shortcut_str);
 
             argc++;
@@ -314,9 +314,9 @@ JNIEnv *env, jobject this, jobject parent)
                 argc++;
             }
         }
-        
+
         isCheckbox =
-	  (*env)->GetBooleanField(env, this, mMenuItemPeerIDs.isCheckbox);
+          (*env)->GetBooleanField(env, this, mMenuItemPeerIDs.isCheckbox);
         if (isCheckbox) {
             /* Fix for 4090493 */
             if (IsMultiFont) {
@@ -339,7 +339,7 @@ JNIEnv *env, jobject this, jobject parent)
             argc++;
             XtSetArg(args[argc], XmNvisibleWhenOff, True);
             argc++;
-            
+
             DASSERT(!(argc > MAX_ARGC));
             mdata->comp.widget = XmCreateToggleButton(menuData->itemData.comp.widget,
                                                       clabel,
@@ -358,8 +358,8 @@ JNIEnv *env, jobject this, jobject parent)
                       (XtPointer) globalRef);
 
         XtSetSensitive(mdata->comp.widget,
-	  (*env)->GetBooleanField(env, target, menuItemIDs.enabled) ?
-		       True : False);
+          (*env)->GetBooleanField(env, target, menuItemIDs.enabled) ?
+                       True : False);
 
 
         if (!JNU_IsNull(env, targetFont)) {
@@ -408,7 +408,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pSetLabel
 
     AWT_LOCK();
     wdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
     if (wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -427,7 +427,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pSetLabel
             return;
         }
         font = JNU_CallMethodByName(env, NULL, target, "getFont_NoClientCode",
-				    "()Ljava/awt/Font;").l;
+                                    "()Ljava/awt/Font;").l;
 
         if (awtJNI_IsMultiFont(env, font)) {
             xim = awtJNI_MakeMultiFontString(env, label, font);
@@ -460,7 +460,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pSetShortcut
 
     AWT_LOCK();
     wdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
     if (wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -479,7 +479,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pSetShortcut
             return;
         }
         font = JNU_CallMethodByName(env, NULL, target, "getFont_NoClientCode",
-				    "()Ljava/awt/Font;").l;
+                                    "()Ljava/awt/Font;").l;
 
         if (awtJNI_IsMultiFont(env, font)) {
             xim = awtJNI_MakeMultiFontString(env, shortcut, font);
@@ -511,7 +511,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pEnable
     AWT_LOCK();
 
     mdata = (struct MenuItemData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
 
     if (mdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -535,7 +535,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pDisable
     AWT_LOCK();
 
     mdata = (struct MenuItemData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
 
     if (mdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -561,7 +561,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pDispose
     AWT_LOCK();
 
     mdata = (struct MenuItemData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
 
     if (mdata != NULL) {
         /* Fix for 4280561:Workspace freezes, does not respond to mouse clicks
@@ -575,9 +575,9 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pDispose
         ** may be still waiting on the java queue - which can cause them to be
         ** dispatched out of order (sometimes hanging system !)
         */
-       	/* note: should realy only take down if XtParent(mdata->comp.widget)
+        /* note: should realy only take down if XtParent(mdata->comp.widget)
         ** is the activePopup (in awt_PopupMenu.c) but ...
-        */ 
+        */
         {
             removePopupMenus();
         }
@@ -592,7 +592,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuItemPeer_pDispose
 
         XtDestroyWidget(mdata->comp.widget);
 
-        if (isParentManaged) {    
+        if (isParentManaged) {
             XtManageChild(parent);
         }
 
@@ -616,12 +616,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCheckboxMenuItemPeer_pSetState
     AWT_LOCK();
 
     mdata = (struct MenuItemData *)
-	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
 
     if (mdata == NULL) {
         JNU_ThrowNullPointerException(env, "menuitem data is null");
-	AWT_UNLOCK();
-	return;
+        AWT_UNLOCK();
+        return;
     }
     XtVaSetValues(mdata->comp.widget, XmNset, (Boolean)state, NULL);
     AWT_UNLOCK();
@@ -636,7 +636,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MCheckboxMenuItemPeer_getState
   (JNIEnv *env, jobject this)
 {
     struct MenuItemData *mdata;
-    Boolean		state;
+    Boolean             state;
 
     AWT_LOCK();
 
@@ -645,11 +645,10 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MCheckboxMenuItemPeer_getState
 
     if (mdata == NULL) {
         JNU_ThrowNullPointerException(env, "menuitem data is null");
-	AWT_UNLOCK();
-	return JNI_FALSE;
+        AWT_UNLOCK();
+        return JNI_FALSE;
     }
     XtVaGetValues(mdata->comp.widget, XmNset, &state, NULL);
     AWT_UNLOCK();
     return ((state) ? JNI_TRUE : JNI_FALSE);
 }
-

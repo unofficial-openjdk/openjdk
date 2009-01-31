@@ -43,11 +43,11 @@ public interface ColorTransform {
 
     public int getNumInComponents();
     public int getNumOutComponents();
-    public void colorConvert(BufferedImage src, BufferedImage dst); 
+    public void colorConvert(BufferedImage src, BufferedImage dst);
     public void colorConvert(Raster src, WritableRaster dst,
                              float[] srcMinVal, float[]srcMaxVal,
-                             float[] dstMinVal, float[]dstMaxVal); 
-    public void colorConvert(Raster src, WritableRaster dst); 
-    public short[] colorConvert(short[] src, short[] dest); 
-    public byte[] colorConvert (byte[] src, byte[] dest); 
+                             float[] dstMinVal, float[]dstMaxVal);
+    public void colorConvert(Raster src, WritableRaster dst);
+    public short[] colorConvert(short[] src, short[] dest);
+    public byte[] colorConvert (byte[] src, byte[] dest);
 }

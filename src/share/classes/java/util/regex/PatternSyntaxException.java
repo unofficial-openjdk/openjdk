@@ -33,7 +33,6 @@ import sun.security.action.GetPropertyAction;
  * regular-expression pattern.
  *
  * @author  unascribed
- * @version %I%, %E%
  * @since 1.4
  * @spec JSR-51
  */
@@ -60,9 +59,9 @@ public class PatternSyntaxException
      *         or <tt>-1</tt> if the index is not known
      */
     public PatternSyntaxException(String desc, String regex, int index) {
-	this.desc = desc;
-	this.pattern = regex;
-	this.index = index;
+        this.desc = desc;
+        this.pattern = regex;
+        this.index = index;
     }
 
     /**
@@ -72,7 +71,7 @@ public class PatternSyntaxException
      *         or <tt>-1</tt> if the index is not known
      */
     public int getIndex() {
-	return index;
+        return index;
     }
 
     /**
@@ -81,7 +80,7 @@ public class PatternSyntaxException
      * @return  The description of the error
      */
     public String getDescription() {
-	return desc;
+        return desc;
     }
 
     /**
@@ -90,12 +89,12 @@ public class PatternSyntaxException
      * @return  The erroneous pattern
      */
     public String getPattern() {
-	return pattern;
+        return pattern;
     }
 
     private static final String nl =
-	java.security.AccessController
-	    .doPrivileged(new GetPropertyAction("line.separator"));
+        java.security.AccessController
+            .doPrivileged(new GetPropertyAction("line.separator"));
 
     /**
      * Returns a multi-line string containing the description of the syntax
@@ -107,17 +106,17 @@ public class PatternSyntaxException
     public String getMessage() {
         StringBuffer sb = new StringBuffer();
         sb.append(desc);
-	if (index >= 0) {
-	    sb.append(" near index ");
-	    sb.append(index);
-	}
+        if (index >= 0) {
+            sb.append(" near index ");
+            sb.append(index);
+        }
         sb.append(nl);
         sb.append(pattern);
-	if (index >= 0) {
-	    sb.append(nl);
-	    for (int i = 0; i < index; i++) sb.append(' ');
-	    sb.append('^');
-	}
+        if (index >= 0) {
+            sb.append(nl);
+            for (int i = 0; i < index; i++) sb.append(' ');
+            sb.append('^');
+        }
         return sb.toString();
     }
 

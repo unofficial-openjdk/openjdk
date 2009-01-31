@@ -45,48 +45,48 @@ public class AAShapePipe implements ShapeDrawPipe {
     CompositePipe outpipe;
 
     public AAShapePipe(CompositePipe pipe) {
-	outpipe = pipe;
+        outpipe = pipe;
     }
 
     public void draw(SunGraphics2D sg, Shape s) {
-	BasicStroke bs;
+        BasicStroke bs;
 
-	if (sg.stroke instanceof BasicStroke) {
-	    bs = (BasicStroke) sg.stroke;
-	} else {
-	    s = sg.stroke.createStrokedShape(s);
-	    bs = null;
-	}
+        if (sg.stroke instanceof BasicStroke) {
+            bs = (BasicStroke) sg.stroke;
+        } else {
+            s = sg.stroke.createStrokedShape(s);
+            bs = null;
+        }
 
-	renderPath(sg, s, bs);
+        renderPath(sg, s, bs);
     }
 
     public void fill(SunGraphics2D sg, Shape s) {
-	renderPath(sg, s, null);
+        renderPath(sg, s, null);
     }
 
     private static byte[] theTile;
 
-    public synchronized static byte[] getAlphaTile(int len) {	
-	byte[] t = theTile;
-	if (t == null || t.length < len) {
-	    t = new byte[len];
-	} else {
-	    theTile = null;
-	}
-	return t;
+    public synchronized static byte[] getAlphaTile(int len) {
+        byte[] t = theTile;
+        if (t == null || t.length < len) {
+            t = new byte[len];
+        } else {
+            theTile = null;
+        }
+        return t;
     }
 
     public synchronized static void dropAlphaTile(byte[] t) {
-	theTile = t;
+        theTile = t;
     }
 
     public void renderPath(SunGraphics2D sg, Shape s, BasicStroke bs) {
-	boolean adjust = (bs != null &&
-			  sg.strokeHint != SunHints.INTVAL_STROKE_PURE);
-	boolean thin = (sg.strokeState <= sg.STROKE_THINDASHED);
-	Object context = null;
-	byte alpha[] = null;
+        boolean adjust = (bs != null &&
+                          sg.strokeHint != SunHints.INTVAL_STROKE_PURE);
+        boolean thin = (sg.strokeState <= sg.STROKE_THINDASHED);
+        Object context = null;
+        byte alpha[] = null;
 
         Region clip = sg.getCompClip();
         int abox[] = new int[4];
@@ -98,52 +98,52 @@ public class AAShapePipe implements ShapeDrawPipe {
             return;
         }
 
-	try {
-	    context = outpipe.startSequence(sg, s,
+        try {
+            context = outpipe.startSequence(sg, s,
                                             new Rectangle(abox[0], abox[1],
                                                           abox[2] - abox[0],
                                                           abox[3] - abox[1]),
                                             abox);
 
-	    int tw = aatg.getTileWidth();
-	    int th = aatg.getTileHeight();
-	    alpha = getAlphaTile(tw * th);
+            int tw = aatg.getTileWidth();
+            int th = aatg.getTileHeight();
+            alpha = getAlphaTile(tw * th);
 
-	    byte[] atile;
+            byte[] atile;
 
-	    for (int y = abox[1]; y < abox[3]; y += th) {
-		for (int x = abox[0]; x < abox[2]; x += tw) {
-		    int w = Math.min(tw, abox[2] - x);
-		    int h = Math.min(th, abox[3] - y);
+            for (int y = abox[1]; y < abox[3]; y += th) {
+                for (int x = abox[0]; x < abox[2]; x += tw) {
+                    int w = Math.min(tw, abox[2] - x);
+                    int h = Math.min(th, abox[3] - y);
 
-		    int a = aatg.getTypicalAlpha();
-		    if (a == 0x00 ||
-			outpipe.needTile(context, x, y, w, h) == false)
-		    {
-			aatg.nextTile();
-			outpipe.skipTile(context, x, y);
-			continue;
-		    }
+                    int a = aatg.getTypicalAlpha();
+                    if (a == 0x00 ||
+                        outpipe.needTile(context, x, y, w, h) == false)
+                    {
+                        aatg.nextTile();
+                        outpipe.skipTile(context, x, y);
+                        continue;
+                    }
                     if (a == 0xff) {
-			atile = null;
-			aatg.nextTile();
+                        atile = null;
+                        aatg.nextTile();
                     } else {
-			atile = alpha;
-			aatg.getAlpha(alpha, 0, tw);
-		    }
+                        atile = alpha;
+                        aatg.getAlpha(alpha, 0, tw);
+                    }
 
-		    outpipe.renderPathTile(context, atile, 0, tw,
-					   x, y, w, h);
-		}
-	    }
-	} finally {
+                    outpipe.renderPathTile(context, atile, 0, tw,
+                                           x, y, w, h);
+                }
+            }
+        } finally {
             aatg.dispose();
-	    if (context != null) {
-		outpipe.endSequence(context);
-	    }
-	    if (alpha != null) {
-		dropAlphaTile(alpha);
-	    }
-	}
+            if (context != null) {
+                outpipe.endSequence(context);
+            }
+            if (alpha != null) {
+                dropAlphaTile(alpha);
+            }
+        }
     }
 }

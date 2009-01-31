@@ -33,10 +33,10 @@ import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 
 /**
- * A JConsole plugin class.  JConsole uses the 
+ * A JConsole plugin class.  JConsole uses the
  * <a href="{@docRoot}/../../../../api/java/util/ServiceLoader.html">
  * service provider</a> mechanism to search the JConsole plugins.
- * Users can provide their JConsole plugins in a jar file 
+ * Users can provide their JConsole plugins in a jar file
  * containing a file named
  *
  * <blockquote><pre>
@@ -57,12 +57,12 @@ import javax.swing.SwingWorker;
  * <p> where <tt>&lt;plugin-path&gt;</tt> specifies the paths of JConsole
  * plugins to look up which can be a directory or a jar file. Multiple
  * paths are separated by the path separator character of the platform.
- * 
+ *
  * <p> When a new JConsole window is created for a connection,
- * an instance of each {@code JConsolePlugin} will be created. 
+ * an instance of each {@code JConsolePlugin} will be created.
  * The {@code JConsoleContext} object is not available at its
  * construction time.
- * JConsole will set the {@link JConsoleContext} object for 
+ * JConsole will set the {@link JConsoleContext} object for
  * a plugin after the plugin object is created.  It will then
  * call its {@link #getTabs getTabs} method and add the returned
  * tabs to the JConsole window.
@@ -83,7 +83,7 @@ public abstract class JConsolePlugin {
     }
 
     /**
-     * Sets the {@link JConsoleContext JConsoleContext} object representing 
+     * Sets the {@link JConsoleContext JConsoleContext} object representing
      * the connection to an application.  This method will be called
      * only once after the plugin is created and before the {@link #getTabs}
      * is called. The given {@code context} can be in any
@@ -101,7 +101,7 @@ public abstract class JConsolePlugin {
             // throw away the listener list
             listeners = null;
         }
-    } 
+    }
 
     /**
      * Returns the {@link JConsoleContext JConsoleContext} object representing
@@ -180,16 +180,16 @@ public abstract class JConsolePlugin {
 
     /**
      * Adds a {@link PropertyChangeListener PropertyChangeListener}
-     * to the {@link #getContext JConsoleContext} object for this plugin. 
-     * This method is a convenient method for this plugin to register 
+     * to the {@link #getContext JConsoleContext} object for this plugin.
+     * This method is a convenient method for this plugin to register
      * a listener when the {@code JConsoleContext} object may or
      * may not be available.
      *
-     * <p>For example, a plugin constructor can 
+     * <p>For example, a plugin constructor can
      * call this method to register a listener to listen to the
      * {@link JConsoleContext.ConnectionState connectionState}
      * property changes and the listener will be added to the
-     * {@link JConsoleContext#addPropertyChangeListener JConsoleContext} 
+     * {@link JConsoleContext#addPropertyChangeListener JConsoleContext}
      * object when it is available.
      *
      * @param listener  The {@code PropertyChangeListener} to be added
@@ -199,10 +199,10 @@ public abstract class JConsolePlugin {
     public final void addContextPropertyChangeListener(PropertyChangeListener listener) {
         if (listener == null) {
             throw new NullPointerException("listener is null");
-        } 
+        }
 
         if (context == null) {
-            // defer registration of the listener until setContext() is called 
+            // defer registration of the listener until setContext() is called
             synchronized (this) {
                 // check again if context is not set
                 if (context == null) {
@@ -220,7 +220,7 @@ public abstract class JConsolePlugin {
 
     /**
      * Removes a {@link PropertyChangeListener PropertyChangeListener}
-     * from the listener list of the {@link #getContext JConsoleContext} 
+     * from the listener list of the {@link #getContext JConsoleContext}
      * object for this plugin.
      * If {@code listener} was never added, no exception is
      * thrown and no action is taken.
@@ -232,10 +232,10 @@ public abstract class JConsolePlugin {
     public final void removeContextPropertyChangeListener(PropertyChangeListener listener) {
         if (listener == null) {
             throw new NullPointerException("listener is null");
-        } 
+        }
 
         if (context == null) {
-            // defer registration of the listener until setContext() is called 
+            // defer registration of the listener until setContext() is called
             synchronized (this) {
                 // check again if context is not set
                 if (context == null) {

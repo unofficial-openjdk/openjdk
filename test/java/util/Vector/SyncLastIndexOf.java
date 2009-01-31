@@ -24,27 +24,27 @@
 /*
  * @test
  * @bug 4334376
- * @summary Vector's lastIndexOf(Object) was lacking synchronization          
+ * @summary Vector's lastIndexOf(Object) was lacking synchronization
  * @author Konstantin Kladko
  */
 import java.util.*;
 
 public class SyncLastIndexOf {
- 
+
     static Vector v = new Vector();
-    
+
     static class RemovingThread extends Thread {
-            
+
         public void run() {
            synchronized(v) {
                 try {
                 sleep(200);
                 } catch (InterruptedException e) {
-                }             
+                }
                 v.removeElementAt(0);
            }
         }
-    }  
+    }
 
     public static void main(String args[]) {
         Integer x = new Integer(1);
@@ -54,7 +54,7 @@ public class SyncLastIndexOf {
             v.lastIndexOf(x);
         } catch (IndexOutOfBoundsException e) {
             throw new RuntimeException(
-	          "Vector.lastIndexOf() synchronization failed.");
-        }   
+                  "Vector.lastIndexOf() synchronization failed.");
+        }
     }
 }

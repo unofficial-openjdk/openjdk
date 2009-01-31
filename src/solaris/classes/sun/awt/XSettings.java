@@ -53,7 +53,7 @@ public class XSettings {
      * @return a <code>Map</code> of changed settings.
      */
     public Map update(byte[] data) {
-	return (new Update(data)).update();
+        return (new Update(data)).update();
     }
 
 
@@ -62,252 +62,252 @@ public class XSettings {
      */
     class Update {
 
-	/* byte order mark */
-	private static final int LITTLE_ENDIAN = 0;
-	private static final int BIG_ENDIAN    = 1;
+        /* byte order mark */
+        private static final int LITTLE_ENDIAN = 0;
+        private static final int BIG_ENDIAN    = 1;
 
-	/* setting type */
-	private static final int TYPE_INTEGER = 0;
-	private static final int TYPE_STRING  = 1;
-	private static final int TYPE_COLOR   = 2;
+        /* setting type */
+        private static final int TYPE_INTEGER = 0;
+        private static final int TYPE_STRING  = 1;
+        private static final int TYPE_COLOR   = 2;
 
-	private byte[] data;
-	private int dlen;
-	private int idx;
-	private boolean isLittle;
-	private long serial = -1;
-	private int nsettings = 0;
-	private boolean isValid;
+        private byte[] data;
+        private int dlen;
+        private int idx;
+        private boolean isLittle;
+        private long serial = -1;
+        private int nsettings = 0;
+        private boolean isValid;
 
-	private HashMap updatedSettings;
-
-
-	/**
-	 * Construct an Update object for the data read from
-	 * <code>_XSETTINGS_SETTINGS</code> property of the XSETTINGS
-	 * selection owner.
-	 *
-	 * @param data <code>_XSETTINGS_SETTINGS</code> contents.
-	 */
-	Update(byte[] data) {
-	    this.data = data;
-
-	    dlen = data.length;
-	    if (dlen < 12) {
-		// XXX: debug trace?
-		return;
-	    }
-
-	    // first byte gives endianness of the data
-	    // next 3 bytes are unused (pad to 32 bit)
-	    idx = 0;
-	    isLittle = (getCARD8() == LITTLE_ENDIAN);
-
-	    idx = 4;
-	    serial = getCARD32();
-
-	    // N_SETTINGS is actually CARD32 (i.e. unsigned), but
-	    // since java doesn't have an unsigned int type, and
-	    // N_SETTINGS cannot realistically exceed 2^31 (so we
-	    // gonna use int anyway), just read it as INT32.
-	    idx = 8;
-	    nsettings = getINT32();
-
-	    updatedSettings = new HashMap();
-
-	    isValid = true;
-	}
+        private HashMap updatedSettings;
 
 
-	private void needBytes(int n)
-	    throws IndexOutOfBoundsException
-	{
-	    if (idx + n <= dlen) {
-		return;
-	    }
+        /**
+         * Construct an Update object for the data read from
+         * <code>_XSETTINGS_SETTINGS</code> property of the XSETTINGS
+         * selection owner.
+         *
+         * @param data <code>_XSETTINGS_SETTINGS</code> contents.
+         */
+        Update(byte[] data) {
+            this.data = data;
 
-	    throw new IndexOutOfBoundsException("at " + idx
-						+ " need " + n
-						+ " length " + dlen);
-	}
+            dlen = data.length;
+            if (dlen < 12) {
+                // XXX: debug trace?
+                return;
+            }
 
+            // first byte gives endianness of the data
+            // next 3 bytes are unused (pad to 32 bit)
+            idx = 0;
+            isLittle = (getCARD8() == LITTLE_ENDIAN);
 
-	private int getCARD8()
-	    throws IndexOutOfBoundsException
-	{
-	    needBytes(1);
+            idx = 4;
+            serial = getCARD32();
 
-	    int val = data[idx] & 0xff;
+            // N_SETTINGS is actually CARD32 (i.e. unsigned), but
+            // since java doesn't have an unsigned int type, and
+            // N_SETTINGS cannot realistically exceed 2^31 (so we
+            // gonna use int anyway), just read it as INT32.
+            idx = 8;
+            nsettings = getINT32();
 
-	    ++idx;
-	    return val;
-	}
+            updatedSettings = new HashMap();
 
-
-	private int getCARD16()
-	    throws IndexOutOfBoundsException
-	{
-	    needBytes(2);
-
-	    int val;
-	    if (isLittle) {
-		val = ((data[idx + 0] & 0xff)      )
-		    | ((data[idx + 1] & 0xff) <<  8);
-	    } else {
-		val = ((data[idx + 0] & 0xff) <<  8)
-		    | ((data[idx + 1] & 0xff)      );
-	    }
-
-	    idx += 2;
-	    return val;
-	}
+            isValid = true;
+        }
 
 
-	private int getINT32()
-	    throws IndexOutOfBoundsException
-	{
-	    needBytes(4);
+        private void needBytes(int n)
+            throws IndexOutOfBoundsException
+        {
+            if (idx + n <= dlen) {
+                return;
+            }
 
-	    int val;
-	    if (isLittle) {
-		val = ((data[idx + 0] & 0xff)      )
-		    | ((data[idx + 1] & 0xff) <<  8)
-		    | ((data[idx + 2] & 0xff) << 16)
-		    | ((data[idx + 3] & 0xff) << 24);
-	    } else {
-		val = ((data[idx + 0] & 0xff) << 24)
-		    | ((data[idx + 1] & 0xff) << 16)
-		    | ((data[idx + 2] & 0xff) <<  8)
-		    | ((data[idx + 3] & 0xff) <<  0);
-	    }
-
-	    idx += 4;
-	    return val;
-	}
+            throw new IndexOutOfBoundsException("at " + idx
+                                                + " need " + n
+                                                + " length " + dlen);
+        }
 
 
-	private long getCARD32()
-	    throws IndexOutOfBoundsException
-	{
-	    return getINT32() & 0x00000000ffffffffL;
-	}
+        private int getCARD8()
+            throws IndexOutOfBoundsException
+        {
+            needBytes(1);
+
+            int val = data[idx] & 0xff;
+
+            ++idx;
+            return val;
+        }
 
 
-	private String getString(int len)
-	    throws IndexOutOfBoundsException
-	{
-	    needBytes(len);
+        private int getCARD16()
+            throws IndexOutOfBoundsException
+        {
+            needBytes(2);
 
-	    String str = null;
-	    try {
-		str = new String(data, idx, len, "UTF-8");
-	    } catch (UnsupportedEncodingException e) {
-		// XXX: cannot happen, "UTF-8" is always supported
-	    }
+            int val;
+            if (isLittle) {
+                val = ((data[idx + 0] & 0xff)      )
+                    | ((data[idx + 1] & 0xff) <<  8);
+            } else {
+                val = ((data[idx + 0] & 0xff) <<  8)
+                    | ((data[idx + 1] & 0xff)      );
+            }
 
-	    idx = (idx + len + 3) & ~0x3;
-	    return str;
-	}
-
-
-	/**
-	 * Update settings.
-	 */
-	public Map update() {
-	    if (!isValid) {
-		return null;
-	    }
-
-	    synchronized (XSettings.this) {
-		long currentSerial = XSettings.this.serial;
-
-		if (this.serial <= currentSerial) {
-		    return null;
-		}
-
-		for (int i = 0; i < nsettings && idx < dlen; ++i) {
-		    updateOne(currentSerial);
-		}
-
-		XSettings.this.serial = this.serial;
-	    }
-
-	    return updatedSettings;
-	}
+            idx += 2;
+            return val;
+        }
 
 
-	/**
-	 * Parses a particular x setting.
-	 *
-	 * @exception IndexOutOfBoundsException if there isn't enough
-	 *     data for a setting.
-	 */
-	private void updateOne(long currentSerial)
-	    throws IndexOutOfBoundsException,
-		   IllegalArgumentException
-	{
-	    int type = getCARD8();
-	    ++idx;		// pad to next CARD16
+        private int getINT32()
+            throws IndexOutOfBoundsException
+        {
+            needBytes(4);
 
-	    // save position of the property name, skip to serial
-	    int nameLen = getCARD16();
-	    int nameIdx = idx;
+            int val;
+            if (isLittle) {
+                val = ((data[idx + 0] & 0xff)      )
+                    | ((data[idx + 1] & 0xff) <<  8)
+                    | ((data[idx + 2] & 0xff) << 16)
+                    | ((data[idx + 3] & 0xff) << 24);
+            } else {
+                val = ((data[idx + 0] & 0xff) << 24)
+                    | ((data[idx + 1] & 0xff) << 16)
+                    | ((data[idx + 2] & 0xff) <<  8)
+                    | ((data[idx + 3] & 0xff) <<  0);
+            }
 
-	    // check if we should bother
-	    idx = (idx + nameLen + 3) & ~0x3; // pad to 32 bit
-	    long lastChanged = getCARD32();
+            idx += 4;
+            return val;
+        }
 
-	    // Avoid constructing garbage for properties that has not
-	    // changed, skip the data for this property.
-	    if (lastChanged <= currentSerial) {	// skip
-		if (type == TYPE_INTEGER) {
-		    idx += 4;
-		} else if (type == TYPE_STRING) {
-		    int len = getINT32();
-		    idx = (idx + len + 3) & ~0x3;
-		} else if (type == TYPE_COLOR) {
-		    idx += 8;	// 4 CARD16
-		} else {
-		    throw new IllegalArgumentException("Unknown type: "
-						       + type);
-		}
 
-		return;
-	    }
+        private long getCARD32()
+            throws IndexOutOfBoundsException
+        {
+            return getINT32() & 0x00000000ffffffffL;
+        }
 
-	    idx = nameIdx;
-	    String name = getString(nameLen);
-	    idx += 4;		// skip serial, parsed above
 
-	    Object value = null;
-	    if (type == TYPE_INTEGER) {
-		value = Integer.valueOf(getINT32());
-	    }
-	    else if (type == TYPE_STRING) {
-		value = getString(getINT32());
-	    }
-	    else if (type == TYPE_COLOR) {
-		int r = getCARD16();
-		int g = getCARD16();
-		int b = getCARD16();
-		int a = getCARD16();
+        private String getString(int len)
+            throws IndexOutOfBoundsException
+        {
+            needBytes(len);
 
-		value = new Color(r / 65535.0f,
-				  g / 65535.0f,
-				  b / 65535.0f,
-				  a / 65535.0f);
-	    }
-	    else {
-		throw new IllegalArgumentException("Unknown type: " + type);
-	    }
+            String str = null;
+            try {
+                str = new String(data, idx, len, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                // XXX: cannot happen, "UTF-8" is always supported
+            }
 
-	    if (name == null) {
-		// dtrace???
-		return;
-	    }
+            idx = (idx + len + 3) & ~0x3;
+            return str;
+        }
 
-	    updatedSettings.put(name, value);
-	}
+
+        /**
+         * Update settings.
+         */
+        public Map update() {
+            if (!isValid) {
+                return null;
+            }
+
+            synchronized (XSettings.this) {
+                long currentSerial = XSettings.this.serial;
+
+                if (this.serial <= currentSerial) {
+                    return null;
+                }
+
+                for (int i = 0; i < nsettings && idx < dlen; ++i) {
+                    updateOne(currentSerial);
+                }
+
+                XSettings.this.serial = this.serial;
+            }
+
+            return updatedSettings;
+        }
+
+
+        /**
+         * Parses a particular x setting.
+         *
+         * @exception IndexOutOfBoundsException if there isn't enough
+         *     data for a setting.
+         */
+        private void updateOne(long currentSerial)
+            throws IndexOutOfBoundsException,
+                   IllegalArgumentException
+        {
+            int type = getCARD8();
+            ++idx;              // pad to next CARD16
+
+            // save position of the property name, skip to serial
+            int nameLen = getCARD16();
+            int nameIdx = idx;
+
+            // check if we should bother
+            idx = (idx + nameLen + 3) & ~0x3; // pad to 32 bit
+            long lastChanged = getCARD32();
+
+            // Avoid constructing garbage for properties that has not
+            // changed, skip the data for this property.
+            if (lastChanged <= currentSerial) { // skip
+                if (type == TYPE_INTEGER) {
+                    idx += 4;
+                } else if (type == TYPE_STRING) {
+                    int len = getINT32();
+                    idx = (idx + len + 3) & ~0x3;
+                } else if (type == TYPE_COLOR) {
+                    idx += 8;   // 4 CARD16
+                } else {
+                    throw new IllegalArgumentException("Unknown type: "
+                                                       + type);
+                }
+
+                return;
+            }
+
+            idx = nameIdx;
+            String name = getString(nameLen);
+            idx += 4;           // skip serial, parsed above
+
+            Object value = null;
+            if (type == TYPE_INTEGER) {
+                value = Integer.valueOf(getINT32());
+            }
+            else if (type == TYPE_STRING) {
+                value = getString(getINT32());
+            }
+            else if (type == TYPE_COLOR) {
+                int r = getCARD16();
+                int g = getCARD16();
+                int b = getCARD16();
+                int a = getCARD16();
+
+                value = new Color(r / 65535.0f,
+                                  g / 65535.0f,
+                                  b / 65535.0f,
+                                  a / 65535.0f);
+            }
+            else {
+                throw new IllegalArgumentException("Unknown type: " + type);
+            }
+
+            if (name == null) {
+                // dtrace???
+                return;
+            }
+
+            updatedSettings.put(name, value);
+        }
 
     } // class XSettings.Update
 }

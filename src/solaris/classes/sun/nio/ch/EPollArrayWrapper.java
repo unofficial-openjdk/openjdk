@@ -40,9 +40,9 @@ import java.util.HashSet;
  *  } epoll_data_t;
  *
  * struct epoll_event {
- *     __uint32_t events;  
- *     epoll_data_t data; 
- * }; 
+ *     __uint32_t events;
+ *     epoll_data_t data;
+ * };
  *
  * The system call to wait for I/O events is epoll_wait(2). It populates an
  * array of epoll_event structures that are passed to the call. The data
@@ -55,7 +55,7 @@ import java.util.HashSet;
  * All file descriptors registered with epoll have the POLLHUP and POLLERR
  * events enabled even when registered with an event set of 0. To ensure
  * that epoll_wait doesn't poll an idle file descriptor when the underlying
- * connection is closed or reset then its registration is deleted from 
+ * connection is closed or reset then its registration is deleted from
  * epoll (it will be re-added again if the event set is changed)
  */
 
@@ -64,7 +64,7 @@ class EPollArrayWrapper {
     static final int EPOLLIN      = 0x001;
 
     // opcodes
-    static final int EPOLL_CTL_ADD	= 1;
+    static final int EPOLL_CTL_ADD      = 1;
     static final int EPOLL_CTL_DEL      = 2;
     static final int EPOLL_CTL_MOD      = 3;
 
@@ -95,8 +95,8 @@ class EPollArrayWrapper {
             putData(i, 0L);
         }
 
-	// create idle set
-	idleSet = new HashSet<Integer>();
+        // create idle set
+        idleSet = new HashSet<Integer>();
     }
 
     // Used to update file description registrations
@@ -168,33 +168,33 @@ class EPollArrayWrapper {
     void setInterest(int fd, int mask) {
         synchronized (updateList) {
 
-	    // if the interest events are 0 then add to idle set, and delete
+            // if the interest events are 0 then add to idle set, and delete
             // from epoll if registered (or pending)
-	    if (mask == 0) {
-		if (idleSet.add(fd)) {
-		    updateList.add(new Updator(EPOLL_CTL_DEL, fd, 0));
-		}
-		return;
+            if (mask == 0) {
+                if (idleSet.add(fd)) {
+                    updateList.add(new Updator(EPOLL_CTL_DEL, fd, 0));
+                }
+                return;
             }
 
-	    // if file descriptor is idle then add to epoll
-	    if (!idleSet.isEmpty() && idleSet.remove(fd)) {
-	        updateList.add(new Updator(EPOLL_CTL_ADD, fd, mask));
-		return;
-	    }
+            // if file descriptor is idle then add to epoll
+            if (!idleSet.isEmpty() && idleSet.remove(fd)) {
+                updateList.add(new Updator(EPOLL_CTL_ADD, fd, mask));
+                return;
+            }
 
-	    // if the previous pending operation is to add this file descriptor
+            // if the previous pending operation is to add this file descriptor
             // to epoll then update its event set
             if (updateList.size() > 0) {
-		Updator last = updateList.getLast();
-		if (last.fd == fd && last.opcode == EPOLL_CTL_ADD) {
-		    last.events = mask;
-		    return;
-		}
-	    }
+                Updator last = updateList.getLast();
+                if (last.fd == fd && last.opcode == EPOLL_CTL_ADD) {
+                    last.events = mask;
+                    return;
+                }
+            }
 
-	    // update existing registration
-	    updateList.add(new Updator(EPOLL_CTL_MOD, fd, mask));
+            // update existing registration
+            updateList.add(new Updator(EPOLL_CTL_MOD, fd, mask));
         }
     }
 
@@ -202,9 +202,9 @@ class EPollArrayWrapper {
      * Add a new file descriptor to epoll
      */
     void add(int fd) {
-	synchronized (updateList) {
-	    updateList.add(new Updator(EPOLL_CTL_ADD, fd, 0));
-	}
+        synchronized (updateList) {
+            updateList.add(new Updator(EPOLL_CTL_ADD, fd, 0));
+        }
     }
 
     /**
@@ -212,11 +212,11 @@ class EPollArrayWrapper {
      */
     void release(int fd) {
         synchronized (updateList) {
-	    // if file descriptor is idle then remove from idle set, otherwise
-	    // delete from epoll
-	    if (!idleSet.remove(fd)) {
+            // if file descriptor is idle then remove from idle set, otherwise
+            // delete from epoll
+            if (!idleSet.remove(fd)) {
                 updateList.add(new Updator(EPOLL_CTL_DEL, fd, 0));
-	    }
+            }
         }
     }
 
@@ -242,7 +242,7 @@ class EPollArrayWrapper {
     }
 
     /**
-     * Update the pending registrations. 
+     * Update the pending registrations.
      */
     void updateRegistrations() {
         synchronized (updateList) {
@@ -264,7 +264,7 @@ class EPollArrayWrapper {
         return interruptedIndex;
     }
 
-    boolean interrupted() { 
+    boolean interrupted() {
         return interrupted;
     }
 
@@ -274,7 +274,7 @@ class EPollArrayWrapper {
 
     static {
         init();
-    }    
+    }
 
     private native int epollCreate();
     private native void epollCtl(int epfd, int opcode, int fd, int events);

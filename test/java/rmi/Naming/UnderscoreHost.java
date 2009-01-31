@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,61 +54,61 @@ public class UnderscoreHost extends UnicastRemoteObject implements Remote {
      * then connects to the local host.
      */
     private static class HostVerifyingSocketFactory extends RMISocketFactory {
-	String host;
+        String host;
 
-	public synchronized Socket createSocket(String host, int port) 
-	    throws IOException  {
-	    if (this.host == null) {
-		// Only set it the first time, subsequent DGC dirty calls 
-		// will be local host
-		this.host = host;
-	    }
-	    return new Socket("localhost", port);
-	}
-	public ServerSocket createServerSocket(int port) throws IOException {
-	    return new ServerSocket(port);
-	}
+        public synchronized Socket createSocket(String host, int port)
+            throws IOException  {
+            if (this.host == null) {
+                // Only set it the first time, subsequent DGC dirty calls
+                // will be local host
+                this.host = host;
+            }
+            return new Socket("localhost", port);
+        }
+        public ServerSocket createServerSocket(int port) throws IOException {
+            return new ServerSocket(port);
+        }
     }
 
     public UnderscoreHost() throws RemoteException {};
 
     public static void main(String args[]) {
-	UnderscoreHost t = null;
-	try {
-	    HostVerifyingSocketFactory hvf = new HostVerifyingSocketFactory();
-	    RMISocketFactory.setSocketFactory(hvf);
-	    Registry r = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-	    t = new UnderscoreHost();
-	    r.rebind(NAME, t);
-	    Naming.lookup("rmi://" + HOSTNAME + 
-			  ":" + Registry.REGISTRY_PORT + "/" + NAME);
-	    /*
-	     * This test is coded to pass whether java.net.URI obeys
-	     * RFC 2396 or RFC 3986 (see 5085902, 6394131, etc.).
-	     *
-	     * If java.net.URI obeys RFC 3986, so host names may
-	     * contain underscores, then the Naming.lookup invocation
-	     * should succeed-- but the host actually connected to
-	     * must equal HOSTNAME.
-	     */
-	    if (!hvf.host.equals(HOSTNAME)) {
-		throw new RuntimeException(
-		    "java.rmi.Naming Parsing error:" +
-		    hvf.host + ":" + HOSTNAME);
-	    }
-	} catch (MalformedURLException e) {
-	    /*
-	     * If java.net.URI obeys RFC 2396, so host names must not
-	     * contain underscores, then the Naming.lookup invocation
-	     * should throw MalformedURLException-- so this is OK.
-	     */
-	} catch (IOException ioe) {
-	    TestLibrary.bomb(ioe);
-	} catch (java.rmi.NotBoundException nbe) {
-	    TestLibrary.bomb(nbe);
-	} finally {
-	    TestLibrary.unexport(t);
-	}
+        UnderscoreHost t = null;
+        try {
+            HostVerifyingSocketFactory hvf = new HostVerifyingSocketFactory();
+            RMISocketFactory.setSocketFactory(hvf);
+            Registry r = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+            t = new UnderscoreHost();
+            r.rebind(NAME, t);
+            Naming.lookup("rmi://" + HOSTNAME +
+                          ":" + Registry.REGISTRY_PORT + "/" + NAME);
+            /*
+             * This test is coded to pass whether java.net.URI obeys
+             * RFC 2396 or RFC 3986 (see 5085902, 6394131, etc.).
+             *
+             * If java.net.URI obeys RFC 3986, so host names may
+             * contain underscores, then the Naming.lookup invocation
+             * should succeed-- but the host actually connected to
+             * must equal HOSTNAME.
+             */
+            if (!hvf.host.equals(HOSTNAME)) {
+                throw new RuntimeException(
+                    "java.rmi.Naming Parsing error:" +
+                    hvf.host + ":" + HOSTNAME);
+            }
+        } catch (MalformedURLException e) {
+            /*
+             * If java.net.URI obeys RFC 2396, so host names must not
+             * contain underscores, then the Naming.lookup invocation
+             * should throw MalformedURLException-- so this is OK.
+             */
+        } catch (IOException ioe) {
+            TestLibrary.bomb(ioe);
+        } catch (java.rmi.NotBoundException nbe) {
+            TestLibrary.bomb(nbe);
+        } finally {
+            TestLibrary.unexport(t);
+        }
 
     }
 }

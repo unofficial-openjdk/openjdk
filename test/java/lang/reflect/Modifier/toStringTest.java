@@ -32,27 +32,27 @@ import java.lang.reflect.*;
 public class toStringTest {
 
     static void testString(int test, String expected) {
-	if(!Modifier.toString(test).equals(expected))
-	    throw new RuntimeException(test + 
-					  " yields incorrect toString result");
+        if(!Modifier.toString(test).equals(expected))
+            throw new RuntimeException(test +
+                                          " yields incorrect toString result");
     }
 
     public static void main(String [] argv) {
-	int allMods = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE |
-	    Modifier.ABSTRACT | Modifier.STATIC | Modifier.FINAL | 
-	    Modifier.TRANSIENT | Modifier.VOLATILE | Modifier.SYNCHRONIZED |
-	    Modifier.NATIVE | Modifier.STRICT | Modifier.INTERFACE;
+        int allMods = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE |
+            Modifier.ABSTRACT | Modifier.STATIC | Modifier.FINAL |
+            Modifier.TRANSIENT | Modifier.VOLATILE | Modifier.SYNCHRONIZED |
+            Modifier.NATIVE | Modifier.STRICT | Modifier.INTERFACE;
 
-	String allModsString = "public protected private abstract static " +
-	    "final transient volatile synchronized native strictfp interface";
+        String allModsString = "public protected private abstract static " +
+            "final transient volatile synchronized native strictfp interface";
 
-	/* zero should have an empty string */
-	testString(0, "");
-	
-	/* test to make sure all modifiers print out in the proper order */
-	testString(allMods, allModsString);
+        /* zero should have an empty string */
+        testString(0, "");
 
-	/* verify no extraneous modifiers are printed */
-	testString(~0, allModsString);
+        /* test to make sure all modifiers print out in the proper order */
+        testString(allMods, allModsString);
+
+        /* verify no extraneous modifiers are printed */
+        testString(~0, allModsString);
     }
 }

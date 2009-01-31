@@ -66,15 +66,15 @@ public abstract class PhysicalStrike extends FontStrike {
 
     protected boolean getImageWithAdvance;
     protected static final int complexTX =
-	AffineTransform.TYPE_FLIP |
-	AffineTransform.TYPE_GENERAL_SCALE |
-	AffineTransform.TYPE_GENERAL_ROTATION |
-	AffineTransform.TYPE_GENERAL_TRANSFORM |
-	AffineTransform.TYPE_QUADRANT_ROTATION;
+        AffineTransform.TYPE_FLIP |
+        AffineTransform.TYPE_GENERAL_SCALE |
+        AffineTransform.TYPE_GENERAL_ROTATION |
+        AffineTransform.TYPE_GENERAL_TRANSFORM |
+        AffineTransform.TYPE_QUADRANT_ROTATION;
 
     PhysicalStrike(PhysicalFont physicalFont, FontStrikeDesc desc) {
-	this.physicalFont = physicalFont;
-	this.desc = desc;
+        this.physicalFont = physicalFont;
+        this.desc = desc;
     }
 
     protected PhysicalStrike() {
@@ -84,30 +84,30 @@ public abstract class PhysicalStrike extends FontStrike {
      */
 
     public int getNumGlyphs() {
-	return physicalFont.getNumGlyphs();
+        return physicalFont.getNumGlyphs();
     }
 
     /* These 3 metrics methods below should be implemented to return
      * values in user space.
      */
     StrikeMetrics getFontMetrics() {
-	if (strikeMetrics == null) {
-	    strikeMetrics =
-		physicalFont.getFontMetrics(pScalerContext);
-	}
-	return strikeMetrics;
+        if (strikeMetrics == null) {
+            strikeMetrics =
+                physicalFont.getFontMetrics(pScalerContext);
+        }
+        return strikeMetrics;
     }
 
     float getCodePointAdvance(int cp) {
-	return getGlyphAdvance(physicalFont.getMapper().charToGlyph(cp));
+        return getGlyphAdvance(physicalFont.getMapper().charToGlyph(cp));
     }
 
    Point2D.Float getCharMetrics(char ch) {
-	return getGlyphMetrics(physicalFont.getMapper().charToGlyph(ch));
+        return getGlyphMetrics(physicalFont.getMapper().charToGlyph(ch));
     }
 
     int getSlot0GlyphImagePtrs(int[] glyphCodes, long[] images, int  len) {
-	return 0;
+        return 0;
     }
 
     /* Used by the OpenType engine for mark positioning.
@@ -115,23 +115,23 @@ public abstract class PhysicalStrike extends FontStrike {
     Point2D.Float getGlyphPoint(int glyphCode, int ptNumber) {
         Point2D.Float gp = null;
         Integer ptKey = new Integer(glyphCode<<16|ptNumber);
-	if (glyphPointMapCache == null) {
-	    synchronized (this) {
-		if (glyphPointMapCache == null) {
+        if (glyphPointMapCache == null) {
+            synchronized (this) {
+                if (glyphPointMapCache == null) {
                     glyphPointMapCache =
                         new ConcurrentHashMap<Integer, Point2D.Float>();
-		}
-	    }
-	} else {
+                }
+            }
+        } else {
             gp = glyphPointMapCache.get(ptKey);
-	}
-
-	if (gp == null) {
-	    gp = (physicalFont.getGlyphPoint(pScalerContext, glyphCode, ptNumber));
-	    adjustPoint(gp);
-	    glyphPointMapCache.put(ptKey, gp);
         }
-	return gp;
+
+        if (gp == null) {
+            gp = (physicalFont.getGlyphPoint(pScalerContext, glyphCode, ptNumber));
+            adjustPoint(gp);
+            glyphPointMapCache.put(ptKey, gp);
+        }
+        return gp;
     }
 
     protected void adjustPoint(Point2D.Float pt) {

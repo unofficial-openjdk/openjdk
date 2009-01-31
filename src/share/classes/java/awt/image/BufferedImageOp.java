@@ -57,7 +57,6 @@ import java.awt.RenderingHints;
  * @see ConvolveOp
  * @see LookupOp
  * @see RescaleOp
- * @version 10 Feb 1997
  */
 public interface BufferedImageOp {
     /**
@@ -89,9 +88,9 @@ public interface BufferedImageOp {
      * An <CODE>IllegalArgumentException</CODE> may be thrown if the source
      * image is incompatible with the types of images allowed
      * by the class implementing this filter.
-     * 
+     *
      * @param src The <CODE>BufferedImage</CODE> to be filtered
-     * 
+     *
      * @return The <CODE>Rectangle2D</CODE> representing the destination
      * image's bounding box.
      */
@@ -103,24 +102,24 @@ public interface BufferedImageOp {
      * An <CODE>IllegalArgumentException</CODE> may be thrown if the source
      * image is incompatible with the types of images allowed
      * by the class implementing this filter.
-     * 
+     *
      * @param src The <CODE>BufferedImage</CODE> to be filtered
      * @param destCM <CODE>ColorModel</CODE> of the destination.  If null,
      * the <CODE>ColorModel</CODE> of the source is used.
-     * 
+     *
      * @return The zeroed destination image.
      */
     public BufferedImage createCompatibleDestImage (BufferedImage src,
-						    ColorModel destCM);
+                                                    ColorModel destCM);
 
     /**
      * Returns the location of the corresponding destination point given a
-     * point in the source image.  If <CODE>dstPt</CODE> is specified, it  
+     * point in the source image.  If <CODE>dstPt</CODE> is specified, it
      * is used to hold the return value.
      * @param srcPt the <code>Point2D</code> that represents the point in
      * the source image
      * @param dstPt The <CODE>Point2D</CODE> in which to store the result
-     * 
+     *
      * @return The <CODE>Point2D</CODE> in the destination image that
      * corresponds to the specified point in the source image.
      */
@@ -128,10 +127,10 @@ public interface BufferedImageOp {
 
     /**
      * Returns the rendering hints for this operation.
-     * 
+     *
      * @return The <CODE>RenderingHints</CODE> object for this
      * <CODE>BufferedImageOp</CODE>.  Returns
-     * null if no hints have been set.  
+     * null if no hints have been set.
      */
     public RenderingHints getRenderingHints();
 }

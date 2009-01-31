@@ -46,13 +46,13 @@ public interface ContainerPeer extends ComponentPeer {
      * @since 1.5
      */
     void restack();
-    
+
     /**
      * Indicates availabiltity of restacking operation in this container.
      * @return Returns true if restack is supported, false otherwise
      * @since 1.5
      */
-    boolean isRestackSupported(); 
+    boolean isRestackSupported();
     /**
 
 

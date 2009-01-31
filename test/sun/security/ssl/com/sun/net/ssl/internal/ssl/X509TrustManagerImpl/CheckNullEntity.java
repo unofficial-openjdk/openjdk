@@ -62,27 +62,27 @@ public class CheckNullEntity {
     static String passwd = "passphrase";
 
     private void initialize() throws Exception {
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
-	char[] passphrase = "passphrase".toCharArray();
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
+        char[] passphrase = "passphrase".toCharArray();
 
-	KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(trustFilename), passphrase);
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(trustFilename), passphrase);
 
-	for (Enumeration e = ks.aliases() ; e.hasMoreElements() ;) {
-	    String alias = (String)e.nextElement();
-	    if (ks.isCertificateEntry(alias)) {
-		certChain[0] = (X509Certificate)ks.getCertificate(alias); 
-		break;
-	    }
-	}
+        for (Enumeration e = ks.aliases() ; e.hasMoreElements() ;) {
+            String alias = (String)e.nextElement();
+            if (ks.isCertificateEntry(alias)) {
+                certChain[0] = (X509Certificate)ks.getCertificate(alias);
+                break;
+            }
+        }
 
-	TrustManagerFactory tmf =
-	    TrustManagerFactory.getInstance("SunX509");
-	tmf.init(ks);
+        TrustManagerFactory tmf =
+            TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ks);
 
-	trustManager = (X509TrustManager)(tmf.getTrustManagers())[0];
+        trustManager = (X509TrustManager)(tmf.getTrustManagers())[0];
     }
 
     /*
@@ -90,10 +90,10 @@ public class CheckNullEntity {
      * The remainder is just support stuff
      */
     public static void main(String[] args) throws Exception {
-	/*
-	 * Start the tests.
-	 */
-	new CheckNullEntity();
+        /*
+         * Start the tests.
+         */
+        new CheckNullEntity();
     }
 
     X509Certificate[] certChain = {null, null};
@@ -105,115 +105,115 @@ public class CheckNullEntity {
      * Fork off the other side, then do your work.
      */
     CheckNullEntity() throws Exception {
-	String authType = "RSA";
-	int failed = 0x3F; // indicate six tests for normal TM
-	int extFailed = 0x3F; // indicate six tests for extended TM
+        String authType = "RSA";
+        int failed = 0x3F; // indicate six tests for normal TM
+        int extFailed = 0x3F; // indicate six tests for extended TM
 
-	initialize();
-	try {
-	    try {
-		trustManager.checkClientTrusted(certChain, (String)null);
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+        initialize();
+        try {
+            try {
+                trustManager.checkClientTrusted(certChain, (String)null);
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    try {
-		trustManager.checkServerTrusted(certChain, (String)null);
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+            try {
+                trustManager.checkServerTrusted(certChain, (String)null);
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    try {
-		trustManager.checkClientTrusted(certChain, "");
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+            try {
+                trustManager.checkClientTrusted(certChain, "");
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    try {
-		trustManager.checkServerTrusted(certChain, "");
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+            try {
+                trustManager.checkServerTrusted(certChain, "");
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    try {
-		trustManager.checkClientTrusted(null, authType);
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+            try {
+                trustManager.checkClientTrusted(null, authType);
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    try {
-		trustManager.checkServerTrusted(null, authType);
-	    } catch (IllegalArgumentException iae) {
-		// get the right exception
-		failed >>= 1;
-	    }
+            try {
+                trustManager.checkServerTrusted(null, authType);
+            } catch (IllegalArgumentException iae) {
+                // get the right exception
+                failed >>= 1;
+            }
 
-	    if (trustManager instanceof X509ExtendedTrustManager) {
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
-			certChain, (String)null, "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
+            if (trustManager instanceof X509ExtendedTrustManager) {
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
+                        certChain, (String)null, "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
 
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
-			certChain, (String)null, "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
+                        certChain, (String)null, "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
 
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
-			certChain, "", "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
+                        certChain, "", "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
 
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
-			certChain, "", "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
+                        certChain, "", "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
 
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
-			null, authType, "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkClientTrusted(
+                        null, authType, "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
 
-		try {
-		    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
-			null, authType, "localhost", null);
-		} catch (IllegalArgumentException iae) {
-		    // get the right exception
-		    extFailed >>= 1;
-		}
-	    } else {
-		extFailed = 0;
-	    }
-	} catch (NullPointerException npe) {
-	    // IllegalArgumentException should be thrown
-	    failed = 1;
-	} catch (Exception e) {
-	    // ignore
-	    System.out.println("Got another exception e" + e);
-	}
+                try {
+                    ((X509ExtendedTrustManager)trustManager).checkServerTrusted(
+                        null, authType, "localhost", null);
+                } catch (IllegalArgumentException iae) {
+                    // get the right exception
+                    extFailed >>= 1;
+                }
+            } else {
+                extFailed = 0;
+            }
+        } catch (NullPointerException npe) {
+            // IllegalArgumentException should be thrown
+            failed = 1;
+        } catch (Exception e) {
+            // ignore
+            System.out.println("Got another exception e" + e);
+        }
 
-	if (failed != 0 || extFailed != 0) {
-	    throw new Exception("Should throw IllegalArgumentException");
-	}
+        if (failed != 0 || extFailed != 0) {
+            throw new Exception("Should throw IllegalArgumentException");
+        }
     }
 }

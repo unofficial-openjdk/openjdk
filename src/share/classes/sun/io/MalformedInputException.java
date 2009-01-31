@@ -46,7 +46,7 @@ public class MalformedInputException
      * A detail message is a String that describes this particular exception.
      */
     public MalformedInputException() {
-	super();
+        super();
     }
 
     /**
@@ -55,6 +55,6 @@ public class MalformedInputException
      * @param s the String containing a detail message
      */
     public MalformedInputException(String s) {
-	super(s);
+        super(s);
     }
 }

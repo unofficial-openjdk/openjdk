@@ -65,7 +65,7 @@ public class TransformerManager
 
     /**
      * a given instance of this list is treated as immutable to simplify sync;
-     * we pay copying overhead whenever the list is changed rather than every time 
+     * we pay copying overhead whenever the list is changed rather than every time
      * the list is referenced.
      * The array is kept in the order the transformers are added via addTransformer
      * (first added is 0, last added is length-1)
@@ -75,9 +75,9 @@ public class TransformerManager
      * cannot be transformed by Java code.
      */
     private TransformerInfo[]  mTransformerList;
-    
+
     /***
-     * Is this TransformerManager for transformers capable of retransformation? 
+     * Is this TransformerManager for transformers capable of retransformation?
      */
     private boolean            mIsRetransformable;
 
@@ -85,11 +85,11 @@ public class TransformerManager
         mTransformerList    = new TransformerInfo[0];
         mIsRetransformable  = isRetransformable;
     }
-    
+
     boolean isRetransformable() {
         return mIsRetransformable;
     }
-    
+
     public synchronized void
     addTransformer( ClassFileTransformer    transformer) {
         TransformerInfo[] oldList = mTransformerList;
@@ -98,7 +98,7 @@ public class TransformerManager
                             0,
                             newList,
                             0,
-                            oldList.length);    
+                            oldList.length);
         newList[oldList.length] = new TransformerInfo(transformer);
         mTransformerList = newList;
     }
@@ -109,7 +109,7 @@ public class TransformerManager
         TransformerInfo[]       oldList         = mTransformerList;
         int                     oldLength       = oldList.length;
         int                     newLength       = oldLength - 1;
-            
+
         // look for it in the list, starting at the last added, and remember
         // where it was if we found it
         int matchingIndex   = 0;
@@ -120,11 +120,11 @@ public class TransformerManager
                 break;
             }
         }
-                
-        // make a copy of the array without the matching element    
+
+        // make a copy of the array without the matching element
         if ( found ) {
             TransformerInfo[]  newList = new TransformerInfo[newLength];
-                
+
             // copy up to but not including the match
             if ( matchingIndex > 0 ) {
                 System.arraycopy(   oldList,
@@ -133,7 +133,7 @@ public class TransformerManager
                                     0,
                                     matchingIndex);
             }
-            
+
             // if there is anything after the match, copy it as well
             if ( matchingIndex < (newLength) ) {
                 System.arraycopy(   oldList,
@@ -165,7 +165,7 @@ public class TransformerManager
     getSnapshotTransformerList() {
         return mTransformerList;
     }
-        
+
     public byte[]
     transform(  ClassLoader         loader,
                 String              classname,
@@ -175,15 +175,15 @@ public class TransformerManager
         boolean someoneTouchedTheBytecode = false;
 
         TransformerInfo[]  transformerList = getSnapshotTransformerList();
-        
+
         byte[]  bufferToUse = classfileBuffer;
-        
+
         // order matters, gotta run 'em in the order they were added
         for ( int x = 0; x < transformerList.length; x++ ) {
             TransformerInfo         transformerInfo = transformerList[x];
             ClassFileTransformer    transformer = transformerInfo.transformer();
             byte[]                  transformedBytes = null;
-            
+
             try {
                 transformedBytes = transformer.transform(   loader,
                                                             classname,
@@ -195,14 +195,14 @@ public class TransformerManager
                 // don't let any one transformer mess it up for the others.
                 // This is where we need to put some logging. What should go here? FIXME
             }
-            
+
             if ( transformedBytes != null ) {
                 someoneTouchedTheBytecode = true;
                 bufferToUse = transformedBytes;
             }
         }
-        
-        // if someone modified it, return the modified buffer. 
+
+        // if someone modified it, return the modified buffer.
         // otherwise return null to mean "no transforms occurred"
         byte [] result;
         if ( someoneTouchedTheBytecode ) {
@@ -214,22 +214,22 @@ public class TransformerManager
 
         return result;
     }
-    
+
 
     int
-    getTransformerCount() { 
+    getTransformerCount() {
         TransformerInfo[]  transformerList = getSnapshotTransformerList();
         return transformerList.length;
     }
 
     boolean
-    setNativeMethodPrefix(ClassFileTransformer transformer, String prefix) { 
+    setNativeMethodPrefix(ClassFileTransformer transformer, String prefix) {
         TransformerInfo[]  transformerList = getSnapshotTransformerList();
-        
+
         for ( int x = 0; x < transformerList.length; x++ ) {
             TransformerInfo         transformerInfo = transformerList[x];
             ClassFileTransformer    aTransformer = transformerInfo.transformer();
-      
+
             if ( aTransformer == transformer ) {
                 transformerInfo.setPrefix(prefix);
                 return true;
@@ -240,10 +240,10 @@ public class TransformerManager
 
 
     String[]
-    getNativeMethodPrefixes() { 
+    getNativeMethodPrefixes() {
         TransformerInfo[]  transformerList = getSnapshotTransformerList();
         String[] prefixes                  = new String[transformerList.length];
-        
+
         for ( int x = 0; x < transformerList.length; x++ ) {
             TransformerInfo         transformerInfo = transformerList[x];
             prefixes[x] = transformerInfo.getPrefix();

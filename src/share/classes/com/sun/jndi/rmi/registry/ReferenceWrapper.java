@@ -38,24 +38,23 @@ import javax.naming.*;
  * Reference accessible to clients.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 public class ReferenceWrapper
-	extends UnicastRemoteObject
-	implements RemoteReference
+        extends UnicastRemoteObject
+        implements RemoteReference
 {
-    protected Reference wrappee;	// reference being wrapped
+    protected Reference wrappee;        // reference being wrapped
 
     public ReferenceWrapper(Reference wrappee)
-	    throws NamingException, RemoteException
+            throws NamingException, RemoteException
     {
-	this.wrappee = wrappee;
+        this.wrappee = wrappee;
     }
 
     public Reference getReference() throws RemoteException {
-	return wrappee;
+        return wrappee;
     }
 
     private static final long serialVersionUID = 6078186197417641456L;

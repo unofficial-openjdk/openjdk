@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management.monitor; 
+package javax.management.monitor;
 
 // jmx imports
 //
@@ -35,11 +35,11 @@ import javax.management.ObjectName;
  *
  * @since 1.5
  */
-public interface StringMonitorMBean extends MonitorMBean { 
-    
+public interface StringMonitorMBean extends MonitorMBean {
+
     // GETTERS AND SETTERS
-    //--------------------    
-        
+    //--------------------
+
     /**
      * Gets the derived gauge.
      *
@@ -48,7 +48,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      */
     @Deprecated
     public String getDerivedGauge();
-    
+
     /**
      * Gets the derived gauge timestamp.
      *
@@ -56,8 +56,8 @@ public interface StringMonitorMBean extends MonitorMBean {
      * @deprecated As of JMX 1.2, replaced by {@link #getDerivedGaugeTimeStamp(ObjectName)}
      */
     @Deprecated
-    public long getDerivedGaugeTimeStamp();  
-    
+    public long getDerivedGaugeTimeStamp();
+
     /**
      * Gets the derived gauge for the specified MBean.
      *
@@ -67,7 +67,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      */
     public String getDerivedGauge(ObjectName object);
-    
+
     /**
      * Gets the derived gauge timestamp for the specified MBean.
      *
@@ -77,7 +77,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      */
     public long getDerivedGaugeTimeStamp(ObjectName object);
-    
+
     /**
      * Gets the string to compare with the observed attribute.
      *
@@ -85,7 +85,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #setStringToCompare
      */
-    public String getStringToCompare(); 
+    public String getStringToCompare();
 
     /**
      * Sets the string to compare with the observed attribute.
@@ -96,8 +96,8 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #getStringToCompare
      */
-    public void setStringToCompare(String value) throws java.lang.IllegalArgumentException; 
-    
+    public void setStringToCompare(String value) throws java.lang.IllegalArgumentException;
+
     /**
      * Gets the matching notification's on/off switch value.
      *
@@ -106,7 +106,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #setNotifyMatch
      */
-    public boolean getNotifyMatch(); 
+    public boolean getNotifyMatch();
 
     /**
      * Sets the matching notification's on/off switch value.
@@ -115,7 +115,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #getNotifyMatch
      */
-    public void setNotifyMatch(boolean value); 
+    public void setNotifyMatch(boolean value);
 
     /**
      * Gets the differing notification's on/off switch value.
@@ -125,7 +125,7 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #setNotifyDiffer
      */
-    public boolean getNotifyDiffer(); 
+    public boolean getNotifyDiffer();
 
     /**
      * Sets the differing notification's on/off switch value.
@@ -134,5 +134,5 @@ public interface StringMonitorMBean extends MonitorMBean {
      *
      * @see #getNotifyDiffer
      */
-    public void setNotifyDiffer(boolean value); 
+    public void setNotifyDiffer(boolean value);
 }

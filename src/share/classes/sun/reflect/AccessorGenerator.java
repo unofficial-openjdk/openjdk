@@ -378,7 +378,7 @@ class AccessorGenerator implements ClassFileConstants {
     protected boolean isStatic() {
         return Modifier.isStatic(modifiers);
     }
-  
+
     /** Returns class name in "internal" form (i.e., '/' separators
         instead of '.') */
     protected static String getClassName
@@ -467,7 +467,7 @@ class AccessorGenerator implements ClassFileConstants {
             // Code and Exceptions attributes
             asm.emitShort(S2);
         }
-        // Code attribute    
+        // Code attribute
         asm.emitShort(codeIdx);
         asm.emitInt(attrLen);
         asm.emitShort(code.getMaxStack());
@@ -706,7 +706,7 @@ class AccessorGenerator implements ClassFileConstants {
             illegalArgumentCodeBuffer.opc_invokespecial(illegalArgumentCtorIdx, 0, 0);
             illegalArgumentCodeBuffer.opc_athrow();
         }
-    
+
         return illegalArgumentCodeBuffer;
     }
 }

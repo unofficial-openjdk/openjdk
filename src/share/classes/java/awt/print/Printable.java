@@ -28,14 +28,14 @@ package java.awt.print;
 import java.awt.Graphics;
 
 /**
- * The <code>Printable</code> interface is implemented 
+ * The <code>Printable</code> interface is implemented
  * by the <code>print</code> methods of the current
  * page painter, which is called by the printing
- * system to render a page.  When building a 
+ * system to render a page.  When building a
  * {@link Pageable}, pairs of {@link PageFormat}
  * instances and instances that implement
- * this interface are used to describe each page. The 
- * instance implementing <code>Printable</code> is called to 
+ * this interface are used to describe each page. The
+ * instance implementing <code>Printable</code> is called to
  * print the page's graphics.
  * <p>
  * A <code>Printable(..)</code> may be set on a <code>PrinterJob</code>.
@@ -66,29 +66,29 @@ import java.awt.Graphics;
  * the <code>Printable</code> should expect multiple calls for a page index
  * and that page indexes may be skipped, when page ranges are specified
  * by the client, or by a user through a print dialog.
- *  
+ *
  * <li>If multiple collated copies of a document are requested, and the
  * printer cannot natively support this, then the document may be imaged
  * multiple times. Printing will start each copy from the lowest print
  * stream page index page.
- * 
+ *
  * <li>With the exception of re-imaging an entire document for multiple
  * collated copies, the increasing page index order means that when
  * page N is requested if a client needs to calculate page break position,
  * it may safely discard any state related to pages < N, and make current
  * that for page N. "State" usually is just the calculated position in the
  * document that corresponds to the start of the page.
- *  
+ *
  * <li>When called by the printing system the <code>Printable</code> must
  * inspect and honour the supplied PageFormat parameter as well as the
- * page index.  The format of the page to be drawn is specified by the 
- * supplied PageFormat. The size, orientation and imageable area of the page 
- * is therefore already determined and rendering must be within this 
+ * page index.  The format of the page to be drawn is specified by the
+ * supplied PageFormat. The size, orientation and imageable area of the page
+ * is therefore already determined and rendering must be within this
  * imageable area.
  * This is key to correct printing behaviour, and it has the
  * implication that the client has the responsibility of tracking
  * what content belongs on the specified page.
- *  
+ *
  * <li>When the <code>Printable</code> is obtained from a client-supplied
  * <code>Pageable</code> then the client may provide different PageFormats
  * for each page index. Calculations of page breaks must account for this.
@@ -101,7 +101,7 @@ import java.awt.Graphics;
 public interface Printable {
 
     /**
-     * Returned from {@link #print(Graphics, PageFormat, int)} 
+     * Returned from {@link #print(Graphics, PageFormat, int)}
      * to signify that the requested page was rendered.
      */
     int PAGE_EXISTS = 0;
@@ -114,30 +114,30 @@ public interface Printable {
     int NO_SUCH_PAGE = 1;
 
     /**
-     * Prints the page at the specified index into the specified 
+     * Prints the page at the specified index into the specified
      * {@link Graphics} context in the specified
-     * format.  A <code>PrinterJob</code> calls the 
+     * format.  A <code>PrinterJob</code> calls the
      * <code>Printable</code> interface to request that a page be
-     * rendered into the context specified by 
+     * rendered into the context specified by
      * <code>graphics</code>.  The format of the page to be drawn is
      * specified by <code>pageFormat</code>.  The zero based index
-     * of the requested page is specified by <code>pageIndex</code>. 
+     * of the requested page is specified by <code>pageIndex</code>.
      * If the requested page does not exist then this method returns
      * NO_SUCH_PAGE; otherwise PAGE_EXISTS is returned.
      * The <code>Graphics</code> class or subclass implements the
      * {@link PrinterGraphics} interface to provide additional
      * information.  If the <code>Printable</code> object
      * aborts the print job then it throws a {@link PrinterException}.
-     * @param graphics the context into which the page is drawn 
+     * @param graphics the context into which the page is drawn
      * @param pageFormat the size and orientation of the page being drawn
      * @param pageIndex the zero based index of the page to be drawn
      * @return PAGE_EXISTS if the page is rendered successfully
      *         or NO_SUCH_PAGE if <code>pageIndex</code> specifies a
-     *	       non-existent page.
+     *         non-existent page.
      * @exception java.awt.print.PrinterException
      *         thrown when the print job is terminated.
      */
     int print(Graphics graphics, PageFormat pageFormat, int pageIndex)
-	         throws PrinterException;
+                 throws PrinterException;
 
 }

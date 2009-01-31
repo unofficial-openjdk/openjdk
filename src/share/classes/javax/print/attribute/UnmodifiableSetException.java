@@ -46,6 +46,6 @@ public class UnmodifiableSetException extends RuntimeException {
      * @param message the detail message
      */
     public UnmodifiableSetException(String message) {
-	super(message);
+        super(message);
     }
 }

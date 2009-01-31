@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -49,7 +47,6 @@ import java.util.StringTokenizer;
  * and retrieving service keys for use in authentication exchanges.
  *
  * @author Yanni Zhang
- * @version 1.00  09 Mar 2000
  */
 public class KeyTab implements KeyTabConstants {
     int kt_vno;
@@ -59,173 +56,173 @@ public class KeyTab implements KeyTabConstants {
     private Vector<KeyTabEntry> entries = new Vector<KeyTabEntry> ();
 
     private KeyTab(String filename) throws IOException, RealmException {
-	init(filename);
+        init(filename);
     }
 
     public static KeyTab getInstance(String s) {
-	name = parse(s);
-	if (name == null) { 
-	    return getInstance();
-	}
-	return getInstance(new File(name));
+        name = parse(s);
+        if (name == null) {
+            return getInstance();
+        }
+        return getInstance(new File(name));
     }
 
     /**
      * Gets the single instance of KeyTab class.
      * @param file the key tab file.
-     * @return single instance of KeyTab; 
+     * @return single instance of KeyTab;
      *  return null if error occurs while reading data out of the file.
      */
     public static KeyTab getInstance(File file) {
-	try {
+        try {
             if (!(file.exists())) {
                 singleton = null;
             } else {
-		String fname = file.getAbsolutePath();
-		// Since this class deals with file I/O operations, 
-		// we want only one class instance existing.
-		if (singleton != null) {
-		    File kfile = new File(singleton.name);
-		    String kname = kfile.getAbsolutePath(); 
-		    if (kname.equalsIgnoreCase(fname)) {
-		       if (DEBUG) {
-		          System.out.println("KeyTab instance already exists");
-		       }
-		    }
-		} else {
-		    singleton = new KeyTab(fname);
-		}
-	    }
-	} catch (Exception e) {
-	    singleton = null;
-	    if (DEBUG) {
-		System.out.println("Could not obtain an instance of KeyTab" + 
-				   e.getMessage());
-	    }
-	}
-	return singleton;
-    }              
-
-    /**
-     * Gets the single instance of KeyTab class. 
-     * @return single instance of KeyTab; return null if default keytab file 
-     *  does not exist, or error occurs while reading data from the file. 
-     */
-    public static KeyTab getInstance() {
-	try {
-	    name = getDefaultKeyTab();
-	    if (name != null) {
-		singleton = getInstance(new File(name));
-	    }
-	} catch (Exception e) {
-	    singleton = null;
-	    if (DEBUG) {
-		System.out.println("Could not obtain an instance of KeyTab" + 
-				   e.getMessage());
-	    }
-	}
-	return singleton;
+                String fname = file.getAbsolutePath();
+                // Since this class deals with file I/O operations,
+                // we want only one class instance existing.
+                if (singleton != null) {
+                    File kfile = new File(singleton.name);
+                    String kname = kfile.getAbsolutePath();
+                    if (kname.equalsIgnoreCase(fname)) {
+                       if (DEBUG) {
+                          System.out.println("KeyTab instance already exists");
+                       }
+                    }
+                } else {
+                    singleton = new KeyTab(fname);
+                }
+            }
+        } catch (Exception e) {
+            singleton = null;
+            if (DEBUG) {
+                System.out.println("Could not obtain an instance of KeyTab" +
+                                   e.getMessage());
+            }
+        }
+        return singleton;
     }
 
-    /** 
+    /**
+     * Gets the single instance of KeyTab class.
+     * @return single instance of KeyTab; return null if default keytab file
+     *  does not exist, or error occurs while reading data from the file.
+     */
+    public static KeyTab getInstance() {
+        try {
+            name = getDefaultKeyTab();
+            if (name != null) {
+                singleton = getInstance(new File(name));
+            }
+        } catch (Exception e) {
+            singleton = null;
+            if (DEBUG) {
+                System.out.println("Could not obtain an instance of KeyTab" +
+                                   e.getMessage());
+            }
+        }
+        return singleton;
+    }
+
+    /**
      * The location of keytab file will be read from the configuration file
-     * If it is not specified, consider user.home as the keytab file's 
+     * If it is not specified, consider user.home as the keytab file's
      * default location.
      */
     private static String getDefaultKeyTab() {
-	if (name != null) {
-	    return name;
-	} else {
-	    String kname = null;
-	    try {
-		String keytab_names = Config.getInstance().getDefault
-		    ("default_keytab_name", "libdefaults");
-		if (keytab_names != null) {
-		    StringTokenizer st = new StringTokenizer(keytab_names, " ");
-		    while (st.hasMoreTokens()) {
-			kname = parse(st.nextToken());
-			if (kname != null) {
-			    break;
-			}
-		    }
-		}
-	    } catch (KrbException e) {
-		kname = null;
-	    }
+        if (name != null) {
+            return name;
+        } else {
+            String kname = null;
+            try {
+                String keytab_names = Config.getInstance().getDefault
+                    ("default_keytab_name", "libdefaults");
+                if (keytab_names != null) {
+                    StringTokenizer st = new StringTokenizer(keytab_names, " ");
+                    while (st.hasMoreTokens()) {
+                        kname = parse(st.nextToken());
+                        if (kname != null) {
+                            break;
+                        }
+                    }
+                }
+            } catch (KrbException e) {
+                kname = null;
+            }
 
-	    if (kname == null) {
-		String user_home = 
-			java.security.AccessController.doPrivileged(
-			new sun.security.action.GetPropertyAction("user.home"));
+            if (kname == null) {
+                String user_home =
+                        java.security.AccessController.doPrivileged(
+                        new sun.security.action.GetPropertyAction("user.home"));
 
-		if (user_home == null) {
-		    user_home = 
-			java.security.AccessController.doPrivileged(
-			new sun.security.action.GetPropertyAction("user.dir"));
-		}
+                if (user_home == null) {
+                    user_home =
+                        java.security.AccessController.doPrivileged(
+                        new sun.security.action.GetPropertyAction("user.dir"));
+                }
 
-		if (user_home != null) {
-		    kname = user_home + File.separator  + "krb5.keytab";
-		}
-	    }
-	    return kname;
-        } 
+                if (user_home != null) {
+                    kname = user_home + File.separator  + "krb5.keytab";
+                }
+            }
+            return kname;
+        }
     }
-    
+
     private static String parse(String name) {
-	String kname = null;
-	if (name == null) {
-	    return null;
-	}
-	if ((name.length() >= 5) && 
-	    (name.substring(0, 5).equalsIgnoreCase("FILE:"))) {
+        String kname = null;
+        if (name == null) {
+            return null;
+        }
+        if ((name.length() >= 5) &&
+            (name.substring(0, 5).equalsIgnoreCase("FILE:"))) {
             kname = name.substring(5);
-	} else if ((name.length() >= 9) && 
-		(name.substring(0, 9).equalsIgnoreCase("ANY:FILE:"))) { 
-	    // this format found in MIT's krb5.ini.
+        } else if ((name.length() >= 9) &&
+                (name.substring(0, 9).equalsIgnoreCase("ANY:FILE:"))) {
+            // this format found in MIT's krb5.ini.
             kname = name.substring(9);
-	} else if ((name.length() >= 7) && 
-		(name.substring(0, 7).equalsIgnoreCase("SRVTAB:"))) { 
-	    // this format found in MIT's krb5.ini.
+        } else if ((name.length() >= 7) &&
+                (name.substring(0, 7).equalsIgnoreCase("SRVTAB:"))) {
+            // this format found in MIT's krb5.ini.
             kname = name.substring(7);
-	} else
-	    kname = name;
+        } else
+            kname = name;
         return kname;
     }
 
-    private synchronized void init(String filename) 
-	throws IOException, RealmException {
+    private synchronized void init(String filename)
+        throws IOException, RealmException {
 
-	if (filename != null) {
-	    KeyTabInputStream kis = 
-		new KeyTabInputStream(new FileInputStream(filename));
-	    load(kis);
-	    kis.close();
-	    name = filename;
-	}
+        if (filename != null) {
+            KeyTabInputStream kis =
+                new KeyTabInputStream(new FileInputStream(filename));
+            load(kis);
+            kis.close();
+            name = filename;
+        }
     }
 
-    private void load(KeyTabInputStream kis) 
-	throws IOException, RealmException {
+    private void load(KeyTabInputStream kis)
+        throws IOException, RealmException {
 
-	entries.clear();
-	kt_vno = kis.readVersion();
+        entries.clear();
+        kt_vno = kis.readVersion();
         if (kt_vno == KRB5_KT_VNO_1) {
             kis.setNativeByteOrder();
         }
-	int entryLength = 0;
-	KeyTabEntry entry;
-	while (kis.available() > 0) {
-	    entryLength = kis.readEntryLength();
-	    entry = kis.readEntry(entryLength, kt_vno);
-	    if (DEBUG) {
-		System.out.println(">>> KeyTab: load() entry length: " + 
-			entryLength + "; type: " + 
-			(entry != null? entry.keyType : 0));
-	    }
-            if (entry != null) 
-		entries.addElement(entry);
-	}
+        int entryLength = 0;
+        KeyTabEntry entry;
+        while (kis.available() > 0) {
+            entryLength = kis.readEntryLength();
+            entry = kis.readEntry(entryLength, kt_vno);
+            if (DEBUG) {
+                System.out.println(">>> KeyTab: load() entry length: " +
+                        entryLength + "; type: " +
+                        (entry != null? entry.keyType : 0));
+            }
+            if (entry != null)
+                entries.addElement(entry);
+        }
     }
 
     /**
@@ -234,25 +231,25 @@ public class KeyTab implements KeyTabConstants {
      * @return the last service key in the keytab
      */
     public EncryptionKey readServiceKey(PrincipalName service) {
-	KeyTabEntry entry = null;
-	if (entries != null) {
-	    // Find latest entry for this service that has an etype
+        KeyTabEntry entry = null;
+        if (entries != null) {
+            // Find latest entry for this service that has an etype
             // that has been configured for use
-	    for (int i = entries.size()-1; i >= 0; i--) {
-		entry = entries.elementAt(i);
-		if (entry.service.match(service)) {
-    		    if (EType.isSupported(entry.keyType)) {
-    			return new EncryptionKey(entry.keyblock,
-					     entry.keyType,
-					     new Integer(entry.keyVersion));
-		    } else if (DEBUG) {
-    			System.out.println("Found unsupported keytype (" + 
-			    entry.keyType + ") for " + service);
-		    }
-		}
-	    }
-	}
-	return null;
+            for (int i = entries.size()-1; i >= 0; i--) {
+                entry = entries.elementAt(i);
+                if (entry.service.match(service)) {
+                    if (EType.isSupported(entry.keyType)) {
+                        return new EncryptionKey(entry.keyblock,
+                                             entry.keyType,
+                                             new Integer(entry.keyVersion));
+                    } else if (DEBUG) {
+                        System.out.println("Found unsupported keytype (" +
+                            entry.keyType + ") for " + service);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -262,78 +259,78 @@ public class KeyTab implements KeyTabConstants {
      * @return an array containing all the service keys
      */
     public EncryptionKey[] readServiceKeys(PrincipalName service) {
-	KeyTabEntry entry;
-	EncryptionKey key;
-	int size = entries.size();
-	ArrayList<EncryptionKey> keys = new ArrayList<EncryptionKey> (size);
-	if (entries != null) {
-	    for (int i = size-1; i >= 0; i--) {
-		entry = entries.elementAt(i);
-		if (entry.service.match(service)) {
-    		    if (EType.isSupported(entry.keyType)) {
-		        key = new EncryptionKey(entry.keyblock,
-					    entry.keyType,
-					    new Integer(entry.keyVersion));
-			keys.add(key);
-			if (DEBUG) {
-			    System.out.println("Added key: " + entry.keyType +
-				"version: " + entry.keyVersion);
-			}
-		    } else if (DEBUG) {
-    			System.out.println("Found unsupported keytype (" + 
-			    entry.keyType + ") for " + service);
-		    }
-		}
-	    }
-	}
+        KeyTabEntry entry;
+        EncryptionKey key;
+        int size = entries.size();
+        ArrayList<EncryptionKey> keys = new ArrayList<EncryptionKey> (size);
+        if (entries != null) {
+            for (int i = size-1; i >= 0; i--) {
+                entry = entries.elementAt(i);
+                if (entry.service.match(service)) {
+                    if (EType.isSupported(entry.keyType)) {
+                        key = new EncryptionKey(entry.keyblock,
+                                            entry.keyType,
+                                            new Integer(entry.keyVersion));
+                        keys.add(key);
+                        if (DEBUG) {
+                            System.out.println("Added key: " + entry.keyType +
+                                "version: " + entry.keyVersion);
+                        }
+                    } else if (DEBUG) {
+                        System.out.println("Found unsupported keytype (" +
+                            entry.keyType + ") for " + service);
+                    }
+                }
+            }
+        }
 
-	size = keys.size();
-	if (size == 0)
-	    return null;
-	EncryptionKey[] retVal = new EncryptionKey[size];
+        size = keys.size();
+        if (size == 0)
+            return null;
+        EncryptionKey[] retVal = new EncryptionKey[size];
 
-	// Sort keys according to default_tkt_enctypes
-	int pos = 0;
-	EncryptionKey k;
-	if (DEBUG) {
+        // Sort keys according to default_tkt_enctypes
+        int pos = 0;
+        EncryptionKey k;
+        if (DEBUG) {
             System.out.println("Ordering keys wrt default_tkt_enctypes list");
         }
-	int[] etypes = EType.getDefaults("default_tkt_enctypes");
-	if (etypes == null || etypes == EType.getBuiltInDefaults()) {
+        int[] etypes = EType.getDefaults("default_tkt_enctypes");
+        if (etypes == null || etypes == EType.getBuiltInDefaults()) {
             // Either no supported types specified in default_tkt_enctypes
-    	    // or no default_tkt_enctypes entry at all. For both cases,
-    	    // just return supported keys in the order retrieved
-    	    for (int i = 0; i < size; i++) {
-    		retVal[pos++] = keys.get(i);
-	    }
-	} else {
-	    for (int j = 0; j < etypes.length && pos < size; j++) {
+            // or no default_tkt_enctypes entry at all. For both cases,
+            // just return supported keys in the order retrieved
+            for (int i = 0; i < size; i++) {
+                retVal[pos++] = keys.get(i);
+            }
+        } else {
+            for (int j = 0; j < etypes.length && pos < size; j++) {
                 int target = etypes[j];
-	        for (int i = 0; i < size && pos < size; i++) {
-    		    k = keys.get(i);
-		    if (k != null && k.getEType() == target) {
- 		        if (DEBUG) {
-    			    System.out.println(pos + ": " + k);
-		        }
-		        retVal[pos++] = k;
-		        keys.set(i, null);  // Cleared from consideration
-		    }
-	        }
-	    }
-	    // copy the rest
-	    for (int i = 0; i < size && pos < size; i++) {
-    		k = keys.get(i);
-		if (k != null) {
-    		    retVal[pos++] = k;
-		}
-	    }
+                for (int i = 0; i < size && pos < size; i++) {
+                    k = keys.get(i);
+                    if (k != null && k.getEType() == target) {
+                        if (DEBUG) {
+                            System.out.println(pos + ": " + k);
+                        }
+                        retVal[pos++] = k;
+                        keys.set(i, null);  // Cleared from consideration
+                    }
+                }
+            }
+            // copy the rest
+            for (int i = 0; i < size && pos < size; i++) {
+                k = keys.get(i);
+                if (k != null) {
+                    retVal[pos++] = k;
+                }
+            }
         }
-	if (pos != size) {
+        if (pos != size) {
             throw new RuntimeException(
-    	        "Internal Error: did not copy all keys;expecting " + size + 
-		    "; got " + pos);
-	}    	
-	return retVal;
+                "Internal Error: did not copy all keys;expecting " + size +
+                    "; got " + pos);
+        }
+        return retVal;
     }
 
 
@@ -347,20 +344,20 @@ public class KeyTab implements KeyTabConstants {
      */
     public boolean findServiceEntry(PrincipalName service) {
         KeyTabEntry entry;
-	if (entries != null) {
-	    for (int i = 0; i < entries.size(); i++) {
-		entry = entries.elementAt(i);
-		if (entry.service.match(service)) {
-    		    if (EType.isSupported(entry.keyType)) {
-    			return true;
-		    } else if (DEBUG) {
-    			System.out.println("Found unsupported keytype (" + 
-			    entry.keyType + ") for " + service);
-		    }
-		}
-	    }
-	}
-	return false;
+        if (entries != null) {
+            for (int i = 0; i < entries.size(); i++) {
+                entry = entries.elementAt(i);
+                if (entry.service.match(service)) {
+                    if (EType.isSupported(entry.keyType)) {
+                        return true;
+                    } else if (DEBUG) {
+                        System.out.println("Found unsupported keytype (" +
+                            entry.keyType + ") for " + service);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static String tabName() {
@@ -368,59 +365,59 @@ public class KeyTab implements KeyTabConstants {
     }
 
     /**
-     * Adds a new entry in the key table. 
+     * Adds a new entry in the key table.
      * @param service the service which will have a new entry in the key table.
      * @param psswd the password which generates the key.
      */
-    public void addEntry(PrincipalName service, char[] psswd) 
-	 throws KrbException {
+    public void addEntry(PrincipalName service, char[] psswd)
+         throws KrbException {
 
-    	EncryptionKey[] encKeys = EncryptionKey.acquireSecretKeys(
-    	    psswd, service.getSalt());
+        EncryptionKey[] encKeys = EncryptionKey.acquireSecretKeys(
+            psswd, service.getSalt());
 
-	for (int i = 0; encKeys != null && i < encKeys.length; i++) {
+        for (int i = 0; encKeys != null && i < encKeys.length; i++) {
             int keyType = encKeys[i].getEType();
-	    byte[] keyValue = encKeys[i].getBytes();
-	    int result = retrieveEntry(service, keyType);
-	    int kvno = 1;
-	    if (result != -1) {
-	        KeyTabEntry oldEntry = entries.elementAt(result);
-	        kvno = oldEntry.keyVersion;
-	        entries.removeElementAt(result);
-	        kvno += 1;
-	    } else 
-		kvno = 1;
+            byte[] keyValue = encKeys[i].getBytes();
+            int result = retrieveEntry(service, keyType);
+            int kvno = 1;
+            if (result != -1) {
+                KeyTabEntry oldEntry = entries.elementAt(result);
+                kvno = oldEntry.keyVersion;
+                entries.removeElementAt(result);
+                kvno += 1;
+            } else
+                kvno = 1;
 
-	    KeyTabEntry newEntry = new KeyTabEntry(service, 
-			    service.getRealm(), 
-			    new KerberosTime(System.currentTimeMillis()),
-					       kvno, keyType, keyValue);
-	    if (entries == null) 
-	        entries = new Vector<KeyTabEntry> ();
-	    entries.addElement(newEntry);
-	}
+            KeyTabEntry newEntry = new KeyTabEntry(service,
+                            service.getRealm(),
+                            new KerberosTime(System.currentTimeMillis()),
+                                               kvno, keyType, keyValue);
+            if (entries == null)
+                entries = new Vector<KeyTabEntry> ();
+            entries.addElement(newEntry);
+        }
     }
 
 
     /**
      * Retrieves the key table entry with the specified service name.
      * @param service the service which may have an entry in the key table.
-     * @return -1 if the entry is not found, else return the entry index 
+     * @return -1 if the entry is not found, else return the entry index
      * in the list.
      */
     private int retrieveEntry(PrincipalName service, int keyType) {
-	int found = -1;
-	KeyTabEntry e;
-	if (entries != null) {
-	    for (int i = 0; i < entries.size(); i++) {
-    		e = entries.elementAt(i);
-		if (service.match(e.getService()) && 
-		    (keyType == -1 || e.keyType == keyType)) {
-		    return i;
-		}
-	    }
-	}
-	return found;
+        int found = -1;
+        KeyTabEntry e;
+        if (entries != null) {
+            for (int i = 0; i < entries.size(); i++) {
+                e = entries.elementAt(i);
+                if (service.match(e.getService()) &&
+                    (keyType == -1 || e.keyType == keyType)) {
+                    return i;
+                }
+            }
+        }
+        return found;
     }
 
     /**
@@ -428,62 +425,62 @@ public class KeyTab implements KeyTabConstants {
      * @return array of <code>KeyTabEntry</code>.
      */
     public KeyTabEntry[] getEntries() {
-	if (entries != null) {
-	    KeyTabEntry[] kentries = new KeyTabEntry[entries.size()];
-	    for (int i = 0; i < kentries.length; i++) {
-		kentries[i] = entries.elementAt(i);
-	    }
-	    return kentries;
-	} else {
-	    return null;
-	}
+        if (entries != null) {
+            KeyTabEntry[] kentries = new KeyTabEntry[entries.size()];
+            for (int i = 0; i < kentries.length; i++) {
+                kentries[i] = entries.elementAt(i);
+            }
+            return kentries;
+        } else {
+            return null;
+        }
     }
 
     /**
      * Creates a new default key table.
      */
-    public synchronized static KeyTab create() 
-	throws IOException, RealmException {
-	String dname = getDefaultKeyTab();
-	return create(dname);
+    public synchronized static KeyTab create()
+        throws IOException, RealmException {
+        String dname = getDefaultKeyTab();
+        return create(dname);
     }
 
     /**
      * Creates a new default key table.
      */
-    public synchronized static KeyTab create(String name) 
-	throws IOException, RealmException {
+    public synchronized static KeyTab create(String name)
+        throws IOException, RealmException {
 
-	KeyTabOutputStream kos = 
-		new KeyTabOutputStream(new FileOutputStream(name));
-	kos.writeVersion(KRB5_KT_VNO);
-	kos.close();
-	singleton = new KeyTab(name);
-	return singleton;
+        KeyTabOutputStream kos =
+                new KeyTabOutputStream(new FileOutputStream(name));
+        kos.writeVersion(KRB5_KT_VNO);
+        kos.close();
+        singleton = new KeyTab(name);
+        return singleton;
     }
 
     /**
      * Saves the file at the directory.
      */
     public synchronized void save() throws IOException {
-	KeyTabOutputStream kos = 
-		new KeyTabOutputStream(new FileOutputStream(name));
-	kos.writeVersion(kt_vno);
-	for (int i = 0; i < entries.size(); i++) {
-	    kos.writeEntry(entries.elementAt(i));
-	}
-	kos.close();
+        KeyTabOutputStream kos =
+                new KeyTabOutputStream(new FileOutputStream(name));
+        kos.writeVersion(kt_vno);
+        for (int i = 0; i < entries.size(); i++) {
+            kos.writeEntry(entries.elementAt(i));
+        }
+        kos.close();
     }
-    
+
     /**
      * Removes an entry from the key table.
      * @param service the service <code>PrincipalName</code>.
      */
     public void deleteEntry(PrincipalName service) {
-	int result = retrieveEntry(service, -1);
-	if (result != -1) {
-	    entries.removeElementAt(result);
-	}
+        int result = retrieveEntry(service, -1);
+        if (result != -1) {
+            entries.removeElementAt(result);
+        }
     }
 
     /**
@@ -492,18 +489,18 @@ public class KeyTab implements KeyTabConstants {
      * @exception IOException.
      */
     public synchronized void createVersion(File file) throws IOException {
-	KeyTabOutputStream kos = 
-		new KeyTabOutputStream(new FileOutputStream(file));
-	kos.write16(KRB5_KT_VNO);
-	kos.close();
+        KeyTabOutputStream kos =
+                new KeyTabOutputStream(new FileOutputStream(file));
+        kos.write16(KRB5_KT_VNO);
+        kos.close();
     }
 
     public static void refresh() {
-	if (singleton != null) {
-	    if (DEBUG) {
-		System.out.println("Refreshing Keytab");
-	    }
-	    singleton = null;
-	}
+        if (singleton != null) {
+            if (DEBUG) {
+                System.out.println("Refreshing Keytab");
+            }
+            singleton = null;
+        }
     }
 }

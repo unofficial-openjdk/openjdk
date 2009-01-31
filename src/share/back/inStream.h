@@ -46,7 +46,7 @@ jbyte inStream_command(PacketInputStream *stream);
 
 jboolean inStream_readBoolean(PacketInputStream *stream);
 jbyte inStream_readByte(PacketInputStream *stream);
-jbyte* inStream_readBytes(PacketInputStream *stream, 
+jbyte* inStream_readBytes(PacketInputStream *stream,
                           int length, jbyte *buf);
 jchar inStream_readChar(PacketInputStream *stream);
 jshort inStream_readShort(PacketInputStream *stream);

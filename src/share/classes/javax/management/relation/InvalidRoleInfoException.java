@@ -40,7 +40,7 @@ public class InvalidRoleInfoException extends RelationException {
      * Default constructor, no message put in exception.
      */
     public InvalidRoleInfoException() {
-	super();
+        super();
     }
 
     /**
@@ -49,6 +49,6 @@ public class InvalidRoleInfoException extends RelationException {
      * @param message the detail message.
      */
     public InvalidRoleInfoException(String message) {
-	super(message);
+        super(message);
     }
 }

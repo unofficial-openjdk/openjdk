@@ -42,35 +42,35 @@ public class PaddedBitString {
     // 1. the number of padding bits has to be in [0...7]
     // 2. value of the padding bits is ignored
 
-    // bit string (01011101 11000000) 
-    // With 6 padding bits (01011101 11001011) 
-    private final static byte[] DER_BITSTRING_PAD6 = { 3, 3, 6, 
-						   (byte)0x5d, (byte)0xcb };
-    
+    // bit string (01011101 11000000)
+    // With 6 padding bits (01011101 11001011)
+    private final static byte[] DER_BITSTRING_PAD6 = { 3, 3, 6,
+                                                   (byte)0x5d, (byte)0xcb };
+
     // With no padding bits
-    private final static byte[] DER_BITSTRING_NOPAD = { 3, 3, 0, 
-						   (byte)0x5d, (byte)0xc0 };
-    
+    private final static byte[] DER_BITSTRING_NOPAD = { 3, 3, 0,
+                                                   (byte)0x5d, (byte)0xc0 };
+
     public static void main(String args[]) throws Exception {
-	byte[] ba0, ba1;
-	try {
-	    DerInputStream derin = new DerInputStream(DER_BITSTRING_PAD6);
-	    ba1 = derin.getBitString();
-	} catch( IOException e ) {
-	    e.printStackTrace();
-	    throw new Exception("Unable to parse BitString with 6 padding bits");
-	}
-	
-	try {
-	    DerInputStream derin = new DerInputStream(DER_BITSTRING_NOPAD);
-	    ba0 = derin.getBitString();
-	} catch( IOException e ) {
-	    e.printStackTrace();
-	    throw new Exception("Unable to parse BitString with no padding");
-	}
-	
-	if (Arrays.equals(ba1, ba0) == false ) {
-	    throw new Exception("BitString comparison check failed");
-	}
+        byte[] ba0, ba1;
+        try {
+            DerInputStream derin = new DerInputStream(DER_BITSTRING_PAD6);
+            ba1 = derin.getBitString();
+        } catch( IOException e ) {
+            e.printStackTrace();
+            throw new Exception("Unable to parse BitString with 6 padding bits");
+        }
+
+        try {
+            DerInputStream derin = new DerInputStream(DER_BITSTRING_NOPAD);
+            ba0 = derin.getBitString();
+        } catch( IOException e ) {
+            e.printStackTrace();
+            throw new Exception("Unable to parse BitString with no padding");
+        }
+
+        if (Arrays.equals(ba1, ba0) == false ) {
+            throw new Exception("BitString comparison check failed");
+        }
     }
 }

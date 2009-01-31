@@ -22,14 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
+
 
 #ifndef MLIB_IMAGE_ROWTABLE_H
 #define MLIB_IMAGE_ROWTABLE_H
-
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageRowTable.h	1.2	02/02/22 SMI"
-#endif /* __SUNPRO_C */
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,4 +43,3 @@ static void *mlib_ImageGetRowTable(mlib_image *img)
 }
 #endif /* __cplusplus */
 #endif /* MLIB_IMAGE_ROWTABLE_H */
-

@@ -97,7 +97,7 @@ public interface ComponentPeer {
      * @param newContainer peer of the new parent container
      * @since 1.5
      */
-    void reparent(ContainerPeer newContainer);    
+    void reparent(ContainerPeer newContainer);
     /**
      * Returns whether this peer supports reparenting to another parent withour destroying the peer
      * @return true if appropriate reparent is supported, false otherwise

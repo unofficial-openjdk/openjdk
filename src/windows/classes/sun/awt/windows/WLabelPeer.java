@@ -32,11 +32,11 @@ class WLabelPeer extends WComponentPeer implements LabelPeer {
     // ComponentPeer overrides
 
     public Dimension getMinimumSize() {
-	FontMetrics fm = getFontMetrics(((Label)target).getFont());
-	String label = ((Label)target).getText();
-	if (label == null)
+        FontMetrics fm = getFontMetrics(((Label)target).getFont());
+        String label = ((Label)target).getText();
+        if (label == null)
             label = "";
-	return new Dimension(fm.stringWidth(label) + 14, fm.getHeight() + 8);
+        return new Dimension(fm.stringWidth(label) + 14, fm.getHeight() + 8);
     }
 
     native void lazyPaint();
@@ -50,44 +50,44 @@ class WLabelPeer extends WComponentPeer implements LabelPeer {
     public boolean shouldClearRectBeforePaint() {
         return false;
     }
-    
+
     public native void setText(String label);
     public native void setAlignment(int alignment);
 
     // Toolkit & peer internals
 
     WLabelPeer(Label target) {
-	super(target);
+        super(target);
     }
 
     native void create(WComponentPeer parent);
 
     void initialize() {
-	Label	l = (Label)target;
+        Label   l = (Label)target;
 
         String  txt = l.getText();
-	if (txt != null) {
-	    setText(txt);
-	}
+        if (txt != null) {
+            setText(txt);
+        }
 
         int align = l.getAlignment();
-	if (align != Label.LEFT) {
-	    setAlignment(align);
-	}
+        if (align != Label.LEFT) {
+            setAlignment(align);
+        }
 
-	Color bg = ((Component)target).getBackground();
-	if (bg != null) {
-	    setBackground(bg);
-	}
+        Color bg = ((Component)target).getBackground();
+        if (bg != null) {
+            setBackground(bg);
+        }
 
-	super.initialize();
+        super.initialize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	    return getMinimumSize();
+            return getMinimumSize();
     }
 
 }

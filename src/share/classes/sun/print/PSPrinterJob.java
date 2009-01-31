@@ -91,27 +91,26 @@ import java.nio.charset.*;
 import java.nio.CharBuffer;
 import java.nio.ByteBuffer;
 
-//REMIND: Remove use of this class when IPPPrintService is moved to share directory. 
+//REMIND: Remove use of this class when IPPPrintService is moved to share directory.
 import java.lang.reflect.Method;
 
-/** 
+/**
  * A class which initiates and executes a PostScript printer job.
  *
- * @version 1.0 01 Feb 1998
  * @author Richard Blanchard
  */
 public class PSPrinterJob extends RasterPrinterJob {
 
  /* Class Constants */
 
-    /** 
+    /**
      * Passed to the <code>setFillMode</code>
      * method this value forces fills to be
      * done using the even-odd fill rule.
      */
     protected static final int FILL_EVEN_ODD = 1;
 
-    /** 
+    /**
      * Passed to the <code>setFillMode</code>
      * method this value forces fills to be
      * done using the non-zero winding rule.
@@ -134,37 +133,37 @@ public class PSPrinterJob extends RasterPrinterJob {
     private static final int HINIBBLE_MASK =  0x000000f0;
     private static final int HINIBBLE_SHIFT = 4;
     private static final byte hexDigits[] = {
-	(byte)'0', (byte)'1', (byte)'2', (byte)'3',
-	(byte)'4', (byte)'5', (byte)'6', (byte)'7',
-	(byte)'8', (byte)'9', (byte)'A', (byte)'B',
-	(byte)'C', (byte)'D', (byte)'E', (byte)'F'
+        (byte)'0', (byte)'1', (byte)'2', (byte)'3',
+        (byte)'4', (byte)'5', (byte)'6', (byte)'7',
+        (byte)'8', (byte)'9', (byte)'A', (byte)'B',
+        (byte)'C', (byte)'D', (byte)'E', (byte)'F'
     };
 
     private static final int PS_XRES = 300;
     private static final int PS_YRES = 300;
 
-    private static final String ADOBE_PS_STR =	"%!PS-Adobe-3.0";
-    private static final String EOF_COMMENT =	"%%EOF";
-    private static final String PAGE_COMMENT =	"%%Page: ";
+    private static final String ADOBE_PS_STR =  "%!PS-Adobe-3.0";
+    private static final String EOF_COMMENT =   "%%EOF";
+    private static final String PAGE_COMMENT =  "%%Page: ";
 
     private static final String READIMAGEPROC = "/imStr 0 def /imageSrc " +
-	"{currentfile /ASCII85Decode filter /RunLengthDecode filter " +
-	" imStr readstring pop } def";
+        "{currentfile /ASCII85Decode filter /RunLengthDecode filter " +
+        " imStr readstring pop } def";
 
-    private static final String COPIES =	"/#copies exch def";
+    private static final String COPIES =        "/#copies exch def";
     private static final String PAGE_SAVE =     "/pgSave save def";
     private static final String PAGE_RESTORE =  "pgSave restore";
-    private static final String SHOWPAGE =	"showpage";
-    private static final String IMAGE_SAVE =	"/imSave save def";
-    private static final String IMAGE_STR =	" string /imStr exch def";
-    private static final String IMAGE_RESTORE =	"imSave restore";
+    private static final String SHOWPAGE =      "showpage";
+    private static final String IMAGE_SAVE =    "/imSave save def";
+    private static final String IMAGE_STR =     " string /imStr exch def";
+    private static final String IMAGE_RESTORE = "imSave restore";
 
-    private static final String COORD_PREP =	" 0 exch translate "
-					      + "1 -1 scale"
-					      + "[72 " + PS_XRES + " div "
-					      + "0 0 "
-					      + "72 " + PS_YRES + " div "
-					      + "0 0]concat";
+    private static final String COORD_PREP =    " 0 exch translate "
+                                              + "1 -1 scale"
+                                              + "[72 " + PS_XRES + " div "
+                                              + "0 0 "
+                                              + "72 " + PS_YRES + " div "
+                                              + "0 0]concat";
 
     private static final String SetFontName = "F";
 
@@ -249,7 +248,7 @@ public class PSPrinterJob extends RasterPrinterJob {
     private static final String SETGRAY_STR = " SG";
 
  /* Instance Variables */
-   
+
    private int mDestType;
 
    private String mDestination = "lp";
@@ -265,7 +264,7 @@ public class PSPrinterJob extends RasterPrinterJob {
    private Shape mLastClip;
 
    private AffineTransform mLastTransform;
- 
+
    /* non-null if printing EPS for Java Plugin */
    private EPSPrinter epsPrinter = null;
 
@@ -307,7 +306,7 @@ public class PSPrinterJob extends RasterPrinterJob {
     * The x coordinate of the current pen position.
     */
    private float mPenX;
-   
+
    /**
     * The y coordinate of the current pen position.
     */
@@ -318,7 +317,7 @@ public class PSPrinterJob extends RasterPrinterJob {
     * the current subpath.
     */
    private float mStartPathX;
- 
+
    /**
     * The y coordinate of the starting point of
     * the current subpath.
@@ -404,10 +403,10 @@ public class PSPrinterJob extends RasterPrinterJob {
     }
 
  /* Instance Methods */
- 
+
    /**
      * Presents the user a dialog for changing properties of the
-     * print job interactively. 
+     * print job interactively.
      * @returns false if the user cancels the dialog and
      *          true otherwise.
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
@@ -416,59 +415,59 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     public boolean printDialog() throws HeadlessException {
 
-	if (GraphicsEnvironment.isHeadless()) {
+        if (GraphicsEnvironment.isHeadless()) {
             throw new HeadlessException();
         }
 
-	if (attributes == null) {
-	    attributes = new HashPrintRequestAttributeSet();
-	}
-	attributes.add(new Copies(getCopies()));
-	attributes.add(new JobName(getJobName(), null));
+        if (attributes == null) {
+            attributes = new HashPrintRequestAttributeSet();
+        }
+        attributes.add(new Copies(getCopies()));
+        attributes.add(new JobName(getJobName(), null));
 
-	boolean doPrint = false;
-	DialogTypeSelection dts = 
-	    (DialogTypeSelection)attributes.get(DialogTypeSelection.class);
-	if (dts == DialogTypeSelection.NATIVE) {
-	    // Remove DialogTypeSelection.NATIVE to prevent infinite loop in 
-	    // RasterPrinterJob.
-	    attributes.remove(DialogTypeSelection.class); 
-	    doPrint = printDialog(attributes);
-	    // restore attribute
-	    attributes.add(DialogTypeSelection.NATIVE);
-	} else {
-	    doPrint = printDialog(attributes);
-	}
-	
-	if (doPrint) {
-	    JobName jobName = (JobName)attributes.get(JobName.class);
-	    if (jobName != null) {
-		setJobName(jobName.getValue());
-	    }
-	    Copies copies = (Copies)attributes.get(Copies.class);
-	    if (copies != null) {
-		setCopies(copies.getValue());
-	    } 
-	    
-	    Destination dest = (Destination)attributes.get(Destination.class);
+        boolean doPrint = false;
+        DialogTypeSelection dts =
+            (DialogTypeSelection)attributes.get(DialogTypeSelection.class);
+        if (dts == DialogTypeSelection.NATIVE) {
+            // Remove DialogTypeSelection.NATIVE to prevent infinite loop in
+            // RasterPrinterJob.
+            attributes.remove(DialogTypeSelection.class);
+            doPrint = printDialog(attributes);
+            // restore attribute
+            attributes.add(DialogTypeSelection.NATIVE);
+        } else {
+            doPrint = printDialog(attributes);
+        }
 
-	    if (dest != null) {
-		try {
-		    mDestType = RasterPrinterJob.FILE;
-		    mDestination = (new File(dest.getURI())).getPath();
-		} catch (Exception e) {
-		    mDestination = "out.ps";
-		}
-	    } else {
-		mDestType = RasterPrinterJob.PRINTER;
-		PrintService pServ = getPrintService();
-		if (pServ != null) {
-		    mDestination = pServ.getName();
-		}
-	    }
-	}
+        if (doPrint) {
+            JobName jobName = (JobName)attributes.get(JobName.class);
+            if (jobName != null) {
+                setJobName(jobName.getValue());
+            }
+            Copies copies = (Copies)attributes.get(Copies.class);
+            if (copies != null) {
+                setCopies(copies.getValue());
+            }
 
-	return doPrint;
+            Destination dest = (Destination)attributes.get(Destination.class);
+
+            if (dest != null) {
+                try {
+                    mDestType = RasterPrinterJob.FILE;
+                    mDestination = (new File(dest.getURI())).getPath();
+                } catch (Exception e) {
+                    mDestination = "out.ps";
+                }
+            } else {
+                mDestType = RasterPrinterJob.PRINTER;
+                PrintService pServ = getPrintService();
+                if (pServ != null) {
+                    mDestination = pServ.getName();
+                }
+            }
+        }
+
+        return doPrint;
     }
 
     /**
@@ -478,55 +477,55 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void startDoc() throws PrinterException {
 
-	// A security check has been performed in the
+        // A security check has been performed in the
         // java.awt.print.printerJob.getPrinterJob method.
-	// We use an inner class to execute the privilged open operations.
-	// Note that we only open a file if it has been nominated by
-	// the end-user in a dialog that we ouselves put up.
+        // We use an inner class to execute the privilged open operations.
+        // Note that we only open a file if it has been nominated by
+        // the end-user in a dialog that we ouselves put up.
 
-	OutputStream output;
+        OutputStream output;
 
-	if (epsPrinter == null) {
-	    if (getPrintService() instanceof PSStreamPrintService) {
-		StreamPrintService sps = (StreamPrintService)getPrintService();
-		mDestType = RasterPrinterJob.STREAM;
-		if (sps.isDisposed()) {
-		    throw new PrinterException("service is disposed");
-		}
-		output = sps.getOutputStream();
-		if (output == null) {
-		    throw new PrinterException("Null output stream");
-		}
-	    } else {
-		/* REMIND: This needs to be more maintainable */
-		mNoJobSheet = super.noJobSheet;
-		if (super.destinationAttr != null) {
-		    mDestType = RasterPrinterJob.FILE;
-		    mDestination = super.destinationAttr;
-		}
-		if (mDestType == RasterPrinterJob.FILE) {
-		    try {	     
-			spoolFile = new File(mDestination);	     	     
-			output =  new FileOutputStream(spoolFile);
-		    } catch (IOException ex) {
-			throw new PrinterIOException(ex);
-		    }
-		} else {
-		    PrinterOpener po = new PrinterOpener();
-		    java.security.AccessController.doPrivileged(po);
-		    if (po.pex != null) {
-			throw po.pex;
-		    }
-		    output = po.result;
-		}
-	    }
+        if (epsPrinter == null) {
+            if (getPrintService() instanceof PSStreamPrintService) {
+                StreamPrintService sps = (StreamPrintService)getPrintService();
+                mDestType = RasterPrinterJob.STREAM;
+                if (sps.isDisposed()) {
+                    throw new PrinterException("service is disposed");
+                }
+                output = sps.getOutputStream();
+                if (output == null) {
+                    throw new PrinterException("Null output stream");
+                }
+            } else {
+                /* REMIND: This needs to be more maintainable */
+                mNoJobSheet = super.noJobSheet;
+                if (super.destinationAttr != null) {
+                    mDestType = RasterPrinterJob.FILE;
+                    mDestination = super.destinationAttr;
+                }
+                if (mDestType == RasterPrinterJob.FILE) {
+                    try {
+                        spoolFile = new File(mDestination);
+                        output =  new FileOutputStream(spoolFile);
+                    } catch (IOException ex) {
+                        throw new PrinterIOException(ex);
+                    }
+                } else {
+                    PrinterOpener po = new PrinterOpener();
+                    java.security.AccessController.doPrivileged(po);
+                    if (po.pex != null) {
+                        throw po.pex;
+                    }
+                    output = po.result;
+                }
+            }
 
-	    mPSStream = new PrintStream(new BufferedOutputStream(output));
-	    mPSStream.println(ADOBE_PS_STR);
-	}
+            mPSStream = new PrintStream(new BufferedOutputStream(output));
+            mPSStream.println(ADOBE_PS_STR);
+        }
 
         mPSStream.println("%%BeginProlog");
-	mPSStream.println(READIMAGEPROC);
+        mPSStream.println(READIMAGEPROC);
         mPSStream.println("/BD {bind def} bind def");
         mPSStream.println("/D {def} BD");
         mPSStream.println("/C {curveto} BD");
@@ -549,14 +548,14 @@ public class PSPrinterJob extends RasterPrinterJob {
         mPSStream.println("     currentdict end definefont");
         mPSStream.println("} BD");
         mPSStream.println("/NZ {dup 1 lt {pop 1} if} BD");
-	/* The following procedure takes args: string, x, y, desiredWidth.
-	 * It calculates using stringwidth the width of the string in the
-	 * current font and subtracts it from the desiredWidth and divides
-	 * this by stringLen-1. This gives us a per-glyph adjustment in
-	 * the spacing needed (either +ve or -ve) to make the string
-	 * print at the desiredWidth. The ashow procedure call takes this
-	 * per-glyph adjustment as an argument. This is necessary for WYSIWYG
-	 */
+        /* The following procedure takes args: string, x, y, desiredWidth.
+         * It calculates using stringwidth the width of the string in the
+         * current font and subtracts it from the desiredWidth and divides
+         * this by stringLen-1. This gives us a per-glyph adjustment in
+         * the spacing needed (either +ve or -ve) to make the string
+         * print at the desiredWidth. The ashow procedure call takes this
+         * per-glyph adjustment as an argument. This is necessary for WYSIWYG
+         */
         mPSStream.println("/"+DrawStringName +" {");
         mPSStream.println("     moveto 1 index stringwidth pop NZ sub");
         mPSStream.println("     1 index length 1 sub NZ div 0");
@@ -593,13 +592,13 @@ public class PSPrinterJob extends RasterPrinterJob {
         mPSStream.println("%%BeginSetup");
         if (epsPrinter == null) {
             // Set Page Size using first page's format.
-            PageFormat pageFormat = getPageable().getPageFormat(0); 
+            PageFormat pageFormat = getPageable().getPageFormat(0);
             double paperHeight = pageFormat.getPaper().getHeight();
-            double paperWidth = pageFormat.getPaper().getWidth();         
+            double paperWidth = pageFormat.getPaper().getWidth();
 
             /* PostScript printers can always generate uncollated copies.
-             */ 
-            mPSStream.print("<< /PageSize [" +  
+             */
+            mPSStream.print("<< /PageSize [" +
                                            paperWidth + " "+ paperHeight+"]");
 
             final PrintService pservice = getPrintService();
@@ -608,61 +607,61 @@ public class PSPrinterJob extends RasterPrinterJob {
                     public Object run() {
                        try {
                            Class psClass = Class.forName("sun.print.IPPPrintService");
-                           if (psClass.isInstance(pservice)) { 
+                           if (psClass.isInstance(pservice)) {
                                Method isPSMethod = psClass.getMethod("isPostscript",
                                                                      (Class[])null);
                                return (Boolean)isPSMethod.invoke(pservice, (Object[])null);
                            }
                        } catch (Throwable t) {
-                       } 
+                       }
                        return Boolean.TRUE;
                     }
                 }
-            );   
+            );
             if (isPS) {
                 mPSStream.print(" /DeferredMediaSelection true");
             }
-                
-	    mPSStream.print(" /ImagingBBox null /ManualFeed false"); 
-	    mPSStream.print(isCollated() ? " /Collate true":"");
-	    mPSStream.print(" /NumCopies " +getCopiesInt()); 
 
-	    if (sidesAttr != Sides.ONE_SIDED) {
-		if (sidesAttr == Sides.TWO_SIDED_LONG_EDGE) {
-		    mPSStream.print(" /Duplex true ");
-		} else if (sidesAttr == Sides.TWO_SIDED_SHORT_EDGE) {
-		    mPSStream.print(" /Duplex true /Tumble true ");
-		}
-	    }
-	    mPSStream.println(" >> setpagedevice ");	 
-	}
-	mPSStream.println("%%EndSetup");
+            mPSStream.print(" /ImagingBBox null /ManualFeed false");
+            mPSStream.print(isCollated() ? " /Collate true":"");
+            mPSStream.print(" /NumCopies " +getCopiesInt());
+
+            if (sidesAttr != Sides.ONE_SIDED) {
+                if (sidesAttr == Sides.TWO_SIDED_LONG_EDGE) {
+                    mPSStream.print(" /Duplex true ");
+                } else if (sidesAttr == Sides.TWO_SIDED_SHORT_EDGE) {
+                    mPSStream.print(" /Duplex true /Tumble true ");
+                }
+            }
+            mPSStream.println(" >> setpagedevice ");
+        }
+        mPSStream.println("%%EndSetup");
     }
 
     // Inner class to run "privileged" to open the printer output stream.
 
     private class PrinterOpener implements java.security.PrivilegedAction {
-	PrinterException pex;
-	OutputStream result;
+        PrinterException pex;
+        OutputStream result;
 
-	public Object run() {
+        public Object run() {
             try {
-	       
-		    /* Write to a temporary file which will be spooled to 
+
+                    /* Write to a temporary file which will be spooled to
                      * the printer then deleted. In the case that the file
                      * is not removed for some reason, request that it is
                      * removed when the VM exits.
-		     */
+                     */
                     spoolFile = File.createTempFile("javaprint", ".ps", null);
                     spoolFile.deleteOnExit();
-	
+
                 result = new FileOutputStream(spoolFile);
                 return result;
-	    } catch (IOException ex) {
-	        // If there is an IOError we subvert it to a PrinterException.
+            } catch (IOException ex) {
+                // If there is an IOError we subvert it to a PrinterException.
                 pex = new PrinterIOException(ex);
-	    }
-	    return null;
+            }
+            return null;
         }
     }
 
@@ -683,7 +682,7 @@ public class PSPrinterJob extends RasterPrinterJob {
                 String fileName = spoolFile.getAbsolutePath();
                 String execCmd[] = printExecCmd(mDestination, mOptions,
                                mNoJobSheet, getJobNameInt(),
-						1, fileName);
+                                                1, fileName);
 
                 Process process = Runtime.getRuntime().exec(execCmd);
                 process.waitFor();
@@ -724,22 +723,22 @@ public class PSPrinterJob extends RasterPrinterJob {
      * has been imaged.
      */
     protected void endDoc() throws PrinterException {
-	if (mPSStream != null) {
-	    mPSStream.println(EOF_COMMENT);
-	    mPSStream.flush();
-	    if (mDestType != RasterPrinterJob.STREAM) {
-		mPSStream.close();
-	    }
-	}
+        if (mPSStream != null) {
+            mPSStream.println(EOF_COMMENT);
+            mPSStream.flush();
+            if (mDestType != RasterPrinterJob.STREAM) {
+                mPSStream.close();
+            }
+        }
         if (mDestType == RasterPrinterJob.PRINTER) {
-	    if (getPrintService() != null) {
-		mDestination = getPrintService().getName();
-	    }
-	    PrinterSpooler spooler = new PrinterSpooler();
-	    java.security.AccessController.doPrivileged(spooler);
-	    if (spooler.pex != null) {
-	        throw spooler.pex;
-	    }
+            if (getPrintService() != null) {
+                mDestination = getPrintService().getName();
+            }
+            PrinterSpooler spooler = new PrinterSpooler();
+            java.security.AccessController.doPrivileged(spooler);
+            if (spooler.pex != null) {
+                throw spooler.pex;
+            }
         }
     }
 
@@ -749,11 +748,11 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void startPage(PageFormat pageFormat, Printable painter,
                              int index, boolean paperChanged)
-	throws PrinterException
+        throws PrinterException
     {
-	double paperHeight = pageFormat.getPaper().getHeight();
-	double paperWidth = pageFormat.getPaper().getWidth();
-	int pageNumber = index + 1;
+        double paperHeight = pageFormat.getPaper().getHeight();
+        double paperWidth = pageFormat.getPaper().getWidth();
+        int pageNumber = index + 1;
 
         /* Place an initial gstate on to our gstate stack.
          * It will have the default PostScript gstate
@@ -762,10 +761,10 @@ public class PSPrinterJob extends RasterPrinterJob {
         mGStateStack = new ArrayList();
         mGStateStack.add(new GState());
 
-	mPSStream.println(PAGE_COMMENT + pageNumber + " " + pageNumber);
+        mPSStream.println(PAGE_COMMENT + pageNumber + " " + pageNumber);
 
-	/* Check current page's pageFormat against the previous pageFormat,
-	 */
+        /* Check current page's pageFormat against the previous pageFormat,
+         */
         if (index > 0 && paperChanged) {
 
             mPSStream.print("<< /PageSize [" +
@@ -792,12 +791,12 @@ public class PSPrinterJob extends RasterPrinterJob {
                         }
                         return Boolean.TRUE;
                     }
-                    } 
+                    }
                 );
-                                         
+
             if (isPS) {
                 mPSStream.print(" /DeferredMediaSelection true");
-            }            
+            }
             mPSStream.println(" >> setpagedevice");
         }
         mPSStream.println(PAGE_SAVE);
@@ -810,10 +809,10 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void endPage(PageFormat format, Printable painter,
                            int index)
-	throws PrinterException
+        throws PrinterException
     {
         mPSStream.println(PAGE_RESTORE);
-	mPSStream.println(SHOWPAGE);
+        mPSStream.println(SHOWPAGE);
     }
 
    /**
@@ -834,76 +833,76 @@ public class PSPrinterJob extends RasterPrinterJob {
                                    float srcWidth, float srcHeight,
                                    int srcBitMapWidth, int srcBitMapHeight) {
 
-	/* We draw images at device resolution so we probably need
-	 * to change the current PostScript transform.
-	 */
-	setTransform(new AffineTransform());
-	prepDrawing();
+        /* We draw images at device resolution so we probably need
+         * to change the current PostScript transform.
+         */
+        setTransform(new AffineTransform());
+        prepDrawing();
 
-	int intSrcWidth = (int) srcWidth;
-	int intSrcHeight = (int) srcHeight;
+        int intSrcWidth = (int) srcWidth;
+        int intSrcHeight = (int) srcHeight;
 
-	mPSStream.println(IMAGE_SAVE);
+        mPSStream.println(IMAGE_SAVE);
 
-	/* Create a PS string big enough to hold a row of pixels.
-	 */
-	int psBytesPerRow = 3 * (int) intSrcWidth;
-	while (psBytesPerRow > MAX_PSSTR) {
-	    psBytesPerRow /= 2;
-	}
+        /* Create a PS string big enough to hold a row of pixels.
+         */
+        int psBytesPerRow = 3 * (int) intSrcWidth;
+        while (psBytesPerRow > MAX_PSSTR) {
+            psBytesPerRow /= 2;
+        }
 
-	mPSStream.println(psBytesPerRow + IMAGE_STR);
+        mPSStream.println(psBytesPerRow + IMAGE_STR);
 
-	/* Scale and translate the unit image.
-	 */
-	mPSStream.println("[" + destWidth + " 0 "
-			  + "0 " + destHeight
-			  + " " + destX + " " + destY
-			  +"]concat");
+        /* Scale and translate the unit image.
+         */
+        mPSStream.println("[" + destWidth + " 0 "
+                          + "0 " + destHeight
+                          + " " + destX + " " + destY
+                          +"]concat");
 
-	/* Color Image invocation.
-	 */
-	mPSStream.println(intSrcWidth + " " + intSrcHeight + " " + 8 + "["
-			  + intSrcWidth + " 0 "
-			  + "0 " + intSrcHeight
-			  + " 0 " + 0 + "]"
-			  + "/imageSrc load false 3 colorimage");
+        /* Color Image invocation.
+         */
+        mPSStream.println(intSrcWidth + " " + intSrcHeight + " " + 8 + "["
+                          + intSrcWidth + " 0 "
+                          + "0 " + intSrcHeight
+                          + " 0 " + 0 + "]"
+                          + "/imageSrc load false 3 colorimage");
 
-	/* Image data.
-	 */
-	int index = 0;
-	byte[] rgbData = new byte[intSrcWidth * 3];
+        /* Image data.
+         */
+        int index = 0;
+        byte[] rgbData = new byte[intSrcWidth * 3];
 
         try {
-	    /* Skip the parts of the image that are not part
-	     * of the source rectangle.
-	     */
-	    index = (int) srcY * srcBitMapWidth;
+            /* Skip the parts of the image that are not part
+             * of the source rectangle.
+             */
+            index = (int) srcY * srcBitMapWidth;
 
-	    for(int i = 0; i < intSrcHeight; i++) {
+            for(int i = 0; i < intSrcHeight; i++) {
 
-		/* Skip the left part of the image that is not
-		 * part of the source rectangle.
-		 */
-		index += (int) srcX;
+                /* Skip the left part of the image that is not
+                 * part of the source rectangle.
+                 */
+                index += (int) srcX;
 
-	        index = swapBGRtoRGB(bgrData, index, rgbData);
-		byte[] encodedData = rlEncode(rgbData);
+                index = swapBGRtoRGB(bgrData, index, rgbData);
+                byte[] encodedData = rlEncode(rgbData);
                 byte[] asciiData = ascii85Encode(encodedData);
                 mPSStream.write(asciiData);
-		mPSStream.println("");
-	    }
+                mPSStream.println("");
+            }
 
-	    /*
-	     * If there is an IOError we subvert it to a PrinterException.
-	     * Fix: There has got to be a better way, maybe define
-	     * a PrinterIOException and then throw that? 
-	     */
+            /*
+             * If there is an IOError we subvert it to a PrinterException.
+             * Fix: There has got to be a better way, maybe define
+             * a PrinterIOException and then throw that?
+             */
         } catch (IOException e) {
             //throw new PrinterException(e.toString());
         }
 
-	mPSStream.println(IMAGE_RESTORE);
+        mPSStream.println(IMAGE_RESTORE);
     }
 
     /**
@@ -915,55 +914,55 @@ public class PSPrinterJob extends RasterPrinterJob {
      * is 24 bits per pixel in BGR format.
      */
     protected void printBand(byte[] bgrData, int x, int y,
-			     int width, int height)
-	throws PrinterException
+                             int width, int height)
+        throws PrinterException
     {
 
-	mPSStream.println(IMAGE_SAVE);
+        mPSStream.println(IMAGE_SAVE);
 
-	/* Create a PS string big enough to hold a row of pixels.
-	 */
-	int psBytesPerRow = 3 * width;
-	while (psBytesPerRow > MAX_PSSTR) {
-	    psBytesPerRow /= 2;
-	}
+        /* Create a PS string big enough to hold a row of pixels.
+         */
+        int psBytesPerRow = 3 * width;
+        while (psBytesPerRow > MAX_PSSTR) {
+            psBytesPerRow /= 2;
+        }
 
-	mPSStream.println(psBytesPerRow + IMAGE_STR);
+        mPSStream.println(psBytesPerRow + IMAGE_STR);
 
-	/* Scale and translate the unit image.
-	 */
-	mPSStream.println("[" + width + " 0 "
-			  + "0 " + height
-			  + " " + x + " " + y
-			  +"]concat");
+        /* Scale and translate the unit image.
+         */
+        mPSStream.println("[" + width + " 0 "
+                          + "0 " + height
+                          + " " + x + " " + y
+                          +"]concat");
 
-	/* Color Image invocation.
-	 */
-	mPSStream.println(width + " " + height + " " + 8 + "["
-			  + width + " 0 "
-			  + "0 " + -height
-			  + " 0 " + height + "]"
-			  + "/imageSrc load false 3 colorimage");
+        /* Color Image invocation.
+         */
+        mPSStream.println(width + " " + height + " " + 8 + "["
+                          + width + " 0 "
+                          + "0 " + -height
+                          + " 0 " + height + "]"
+                          + "/imageSrc load false 3 colorimage");
 
-	/* Image data.
-	 */
-	int index = 0;
-	byte[] rgbData = new byte[width*3];
+        /* Image data.
+         */
+        int index = 0;
+        byte[] rgbData = new byte[width*3];
 
         try {
-	    for(int i = 0; i < height; i++) {
-	        index = swapBGRtoRGB(bgrData, index, rgbData);
-		byte[] encodedData = rlEncode(rgbData);
+            for(int i = 0; i < height; i++) {
+                index = swapBGRtoRGB(bgrData, index, rgbData);
+                byte[] encodedData = rlEncode(rgbData);
                 byte[] asciiData = ascii85Encode(encodedData);
                 mPSStream.write(asciiData);
-		mPSStream.println("");
-	    }
+                mPSStream.println("");
+            }
 
         } catch (IOException e) {
             throw new PrinterIOException(e);
         }
 
-	mPSStream.println(IMAGE_RESTORE);
+        mPSStream.println(IMAGE_RESTORE);
     }
 
     /**
@@ -978,38 +977,38 @@ public class PSPrinterJob extends RasterPrinterJob {
      * <code>null</code>. Returning <code>null</code>
      * causes the print job to be rasterized.
      */
-    
+
     protected Graphics2D createPathGraphics(PeekGraphics peekGraphics,
-					    PrinterJob printerJob,
+                                            PrinterJob printerJob,
                                             Printable painter,
                                             PageFormat pageFormat,
                                             int pageIndex) {
 
-	PSPathGraphics pathGraphics;
-	PeekMetrics metrics = peekGraphics.getMetrics();
+        PSPathGraphics pathGraphics;
+        PeekMetrics metrics = peekGraphics.getMetrics();
 
-	/* If the application has drawn anything that
-	 * out PathGraphics class can not handle then
-	 * return a null PathGraphics.
-	 */
-        if (forcePDL == false && (forceRaster == true 
-	                || metrics.hasNonSolidColors()
-			|| metrics.hasCompositing())) {
+        /* If the application has drawn anything that
+         * out PathGraphics class can not handle then
+         * return a null PathGraphics.
+         */
+        if (forcePDL == false && (forceRaster == true
+                        || metrics.hasNonSolidColors()
+                        || metrics.hasCompositing())) {
 
-	    pathGraphics = null;
-	} else {
+            pathGraphics = null;
+        } else {
 
-	    BufferedImage bufferedImage = new BufferedImage(8, 8,
-					    BufferedImage.TYPE_INT_RGB);
-	    Graphics2D bufferedGraphics = bufferedImage.createGraphics();
-	    boolean canRedraw = peekGraphics.getAWTDrawingOnly() == false;
+            BufferedImage bufferedImage = new BufferedImage(8, 8,
+                                            BufferedImage.TYPE_INT_RGB);
+            Graphics2D bufferedGraphics = bufferedImage.createGraphics();
+            boolean canRedraw = peekGraphics.getAWTDrawingOnly() == false;
 
-	    pathGraphics =  new PSPathGraphics(bufferedGraphics, printerJob,
+            pathGraphics =  new PSPathGraphics(bufferedGraphics, printerJob,
                                                painter, pageFormat, pageIndex,
                                                canRedraw);
-	}
+        }
 
-	return pathGraphics;
+        return pathGraphics;
     }
 
     /**
@@ -1018,7 +1017,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void selectClipPath() {
 
-	mPSStream.println(mClipOpStr);
+        mPSStream.println(mClipOpStr);
     }
 
     protected void setClip(Shape clip) {
@@ -1047,20 +1046,20 @@ public class PSPrinterJob extends RasterPrinterJob {
      * font, then this routine will return a null array.
      */
      private int[] getPSFontIndexArray(Font font, CharsetString[] charSet) {
-	int[] psFont = null;
+        int[] psFont = null;
 
-	if (mFontProps != null) {
-	    psFont = new int[charSet.length];
-	}
+        if (mFontProps != null) {
+            psFont = new int[charSet.length];
+        }
 
-	for (int i = 0; i < charSet.length && psFont != null; i++){
+        for (int i = 0; i < charSet.length && psFont != null; i++){
 
-	    /* Get the encoding of the run of text.
-	     */
-	    CharsetString cs = charSet[i];
+            /* Get the encoding of the run of text.
+             */
+            CharsetString cs = charSet[i];
 
-	    CharsetEncoder fontCS = cs.fontDescriptor.encoder;
-	    String charsetName = cs.fontDescriptor.getFontCharsetName();
+            CharsetEncoder fontCS = cs.fontDescriptor.encoder;
+            String charsetName = cs.fontDescriptor.getFontCharsetName();
             /*
              * sun.awt.Symbol perhaps should return "symbol" for encoding.
              * Similarly X11Dingbats should return "dingbats"
@@ -1069,123 +1068,123 @@ public class PSPrinterJob extends RasterPrinterJob {
 
             if ("Symbol".equals(charsetName)) {
                 charsetName = "symbol";
-	    } else if ("WingDings".equals(charsetName) ||
-		       "X11Dingbats".equals(charsetName)) {
+            } else if ("WingDings".equals(charsetName) ||
+                       "X11Dingbats".equals(charsetName)) {
                 charsetName = "dingbats";
             } else {
-	        charsetName = makeCharsetName(charsetName, cs.charsetChars);
+                charsetName = makeCharsetName(charsetName, cs.charsetChars);
             }
 
-	    int styleMask = font.getStyle() |
-   	        sun.font.FontManager.getFont2D(font).getStyle();
-	    
-	    String style = FontConfiguration.getStyleString(styleMask);
+            int styleMask = font.getStyle() |
+                sun.font.FontManager.getFont2D(font).getStyle();
 
-	    /* First we map the font name through the properties file.
-	     * This mapping provides alias names for fonts, for example,
-	     * "timesroman" is mapped to "serif".
-	     */
+            String style = FontConfiguration.getStyleString(styleMask);
+
+            /* First we map the font name through the properties file.
+             * This mapping provides alias names for fonts, for example,
+             * "timesroman" is mapped to "serif".
+             */
             String fontName = font.getFamily().toLowerCase(Locale.ENGLISH);
             fontName = fontName.replace(' ', '_');
-	    String name = mFontProps.getProperty(fontName, "");
+            String name = mFontProps.getProperty(fontName, "");
 
-	    /* Now map the alias name, character set name, and style
-	     * to a PostScript name.
-	     */
-	    String psName =
-		mFontProps.getProperty(name + "." + charsetName + "." + style,
-				      null);
+            /* Now map the alias name, character set name, and style
+             * to a PostScript name.
+             */
+            String psName =
+                mFontProps.getProperty(name + "." + charsetName + "." + style,
+                                      null);
 
-	    if (psName != null) {
+            if (psName != null) {
 
-		/* Get the PostScript font index for the PostScript font.
-		 */
-		try {
-		    psFont[i] =
-			Integer.parseInt(mFontProps.getProperty(psName));
+                /* Get the PostScript font index for the PostScript font.
+                 */
+                try {
+                    psFont[i] =
+                        Integer.parseInt(mFontProps.getProperty(psName));
 
-		/* If there is no PostScript font for this font name,
-		 * then we want to termintate the loop and the method
-		 * indicating our failure. Setting the array to null
-		 * is used to indicate these failures.
-		 */
-		} catch(NumberFormatException e){
-		    psFont = null;
-		}
+                /* If there is no PostScript font for this font name,
+                 * then we want to termintate the loop and the method
+                 * indicating our failure. Setting the array to null
+                 * is used to indicate these failures.
+                 */
+                } catch(NumberFormatException e){
+                    psFont = null;
+                }
 
-	    /* There was no PostScript name for the font, character set,
-	     * and style so give up.
-	     */
-	    } else {
-		psFont = null;
-	    }
-	}
+            /* There was no PostScript name for the font, character set,
+             * and style so give up.
+             */
+            } else {
+                psFont = null;
+            }
+        }
 
-	 return psFont;
+         return psFont;
      }
 
 
     private static String escapeParens(String str) {
-	if (str.indexOf('(') == -1 && str.indexOf(')') == -1 ) {
-	    return str;
-	} else {
-	    int count = 0;
-	    int pos = 0;
-	    while ((pos = str.indexOf('(', pos)) != -1) {
-		count++;
-		pos++;
-	    }
-	    pos = 0;
-	    while ((pos = str.indexOf(')', pos)) != -1) {
-		count++;
-		pos++;
-	    }
-	    char []inArr = str.toCharArray();
-	    char []outArr = new char[inArr.length+count];
-	    pos = 0;
-	    for (int i=0;i<inArr.length;i++) {
-		if (inArr[i] == '(' || inArr[i] == ')') {
-		    outArr[pos++] = '\\';
-		}
-		outArr[pos++] = inArr[i];
-	    }
-	    return new String(outArr);
-	
-	}
+        if (str.indexOf('(') == -1 && str.indexOf(')') == -1 ) {
+            return str;
+        } else {
+            int count = 0;
+            int pos = 0;
+            while ((pos = str.indexOf('(', pos)) != -1) {
+                count++;
+                pos++;
+            }
+            pos = 0;
+            while ((pos = str.indexOf(')', pos)) != -1) {
+                count++;
+                pos++;
+            }
+            char []inArr = str.toCharArray();
+            char []outArr = new char[inArr.length+count];
+            pos = 0;
+            for (int i=0;i<inArr.length;i++) {
+                if (inArr[i] == '(' || inArr[i] == ')') {
+                    outArr[pos++] = '\\';
+                }
+                outArr[pos++] = inArr[i];
+            }
+            return new String(outArr);
+
+        }
     }
-    
+
     /* return of 0 means unsupported. Other return indicates the number
      * of distinct PS fonts needed to draw this text. This saves us
      * doing this processing one extra time.
      */
     protected int platformFontCount(Font font, String str) {
-	if (mFontProps == null) {
-	    return 0;
-	}
-	CharsetString[] acs =
-	    ((PlatformFont)(font.getPeer())).makeMultiCharsetString(str,false);
-	if (acs == null) {
-	    /* AWT can't convert all chars so use 2D path */
-	    return 0;
-	}
-	int[] psFonts = getPSFontIndexArray(font, acs);
-	return (psFonts == null) ? 0 : psFonts.length;
+        if (mFontProps == null) {
+            return 0;
+        }
+        CharsetString[] acs =
+            ((PlatformFont)(font.getPeer())).makeMultiCharsetString(str,false);
+        if (acs == null) {
+            /* AWT can't convert all chars so use 2D path */
+            return 0;
+        }
+        int[] psFonts = getPSFontIndexArray(font, acs);
+        return (psFonts == null) ? 0 : psFonts.length;
     }
 
      protected boolean textOut(Graphics g, String str, float x, float y,
-			       Font mLastFont, FontRenderContext frc,
-			       float width) {
-	boolean didText = true;
+                               Font mLastFont, FontRenderContext frc,
+                               float width) {
+        boolean didText = true;
 
-	if (mFontProps == null) {
-	    return false;
-	} else {
-	    prepDrawing();
+        if (mFontProps == null) {
+            return false;
+        } else {
+            prepDrawing();
 
             /* On-screen drawString renders most control chars as the missing
              * glyph and have the non-zero advance of that glyph.
              * Exceptions are \t, \n and \r which are considered zero-width.
-             * Postscript handles control chars mostly as a missing glyph. 
+             * Postscript handles control chars mostly as a missing glyph.
              * But we use 'ashow' specifying a width for the string which
              * assumes zero-width for those three exceptions, and Postscript
              * tries to squeeze the extra char in, with the result that the
@@ -1196,97 +1195,97 @@ public class PSPrinterJob extends RasterPrinterJob {
             if (str.length() == 0) {
                 return true;
             }
-	    CharsetString[] acs =
-		((PlatformFont)
-		 (mLastFont.getPeer())).makeMultiCharsetString(str, false);
-	    if (acs == null) {
-		/* AWT can't convert all chars so use 2D path */
-		return false;
-	    }
-	    /* Get an array of indices into our PostScript name
-	     * table. If all of the runs can not be converted
-	     * to PostScript fonts then null is returned and
-	     * we'll want to fall back to printing the text
-	     * as shapes.
-	     */
-	    int[] psFonts = getPSFontIndexArray(mLastFont, acs);
-	    if (psFonts != null) {
+            CharsetString[] acs =
+                ((PlatformFont)
+                 (mLastFont.getPeer())).makeMultiCharsetString(str, false);
+            if (acs == null) {
+                /* AWT can't convert all chars so use 2D path */
+                return false;
+            }
+            /* Get an array of indices into our PostScript name
+             * table. If all of the runs can not be converted
+             * to PostScript fonts then null is returned and
+             * we'll want to fall back to printing the text
+             * as shapes.
+             */
+            int[] psFonts = getPSFontIndexArray(mLastFont, acs);
+            if (psFonts != null) {
 
-		for (int i = 0; i < acs.length; i++){
-		    CharsetString cs = acs[i];
-		    CharsetEncoder fontCS = cs.fontDescriptor.encoder;
+                for (int i = 0; i < acs.length; i++){
+                    CharsetString cs = acs[i];
+                    CharsetEncoder fontCS = cs.fontDescriptor.encoder;
 
-		    StringBuffer nativeStr = new StringBuffer();
-		    byte[] strSeg = new byte[cs.length * 2];
-		    int len = 0;
-		    try {
+                    StringBuffer nativeStr = new StringBuffer();
+                    byte[] strSeg = new byte[cs.length * 2];
+                    int len = 0;
+                    try {
                         ByteBuffer bb = ByteBuffer.wrap(strSeg);
-			fontCS.encode(CharBuffer.wrap(cs.charsetChars, 
-						      cs.offset,
-						      cs.length),
-				      bb, true);
+                        fontCS.encode(CharBuffer.wrap(cs.charsetChars,
+                                                      cs.offset,
+                                                      cs.length),
+                                      bb, true);
                         bb.flip();
                         len = bb.limit();
-		    } catch(IllegalStateException xx){
-			continue;
-		    } catch(CoderMalfunctionError xx){
-			continue;
-		    }
-		    /* The width to fit to may either be specified,
-		     * or calculated. Specifying by the caller is only
-		     * valid if the text does not need to be decomposed
-		     * into multiple calls.
-		     */
-		    float desiredWidth;
-		    if (acs.length == 1 && width != 0f) {
-			desiredWidth = width;
-		    } else {
-			Rectangle2D r2d = 
-			    mLastFont.getStringBounds(cs.charsetChars,
-						      cs.offset,
-						      cs.offset+cs.length, 
-						      frc);
-			desiredWidth = (float)r2d.getWidth();	
-		    }
-		    /* unprintable chars had width of 0, causing a PS error
-		     */
-	 	    if (desiredWidth == 0) {
-			return didText;
-		    }
-		    nativeStr.append('<');
-		    for (int j = 0; j < len; j++){
-			byte b = strSeg[j];
-			// to avoid encoding conversion with println()
-			String hexS = Integer.toHexString(b);
-			int length = hexS.length();
-			if (length > 2) {
-			    hexS = hexS.substring(length - 2, length);
-			} else if (length == 1) {
-			    hexS = "0" + hexS;
-			} else if (length == 0) {
-			    hexS = "00";
-			}
-			nativeStr.append(hexS);
-		    }
-		    nativeStr.append('>');
-		    /* This comment costs too much in output file size */
-// 		    mPSStream.println("% Font[" + mLastFont.getName() + ", " +
-// 			       FontConfiguration.getStyleString(mLastFont.getStyle()) + ", "
-// 			       + mLastFont.getSize2D() + "]");
-		    getGState().emitPSFont(psFonts[i], mLastFont.getSize2D());
+                    } catch(IllegalStateException xx){
+                        continue;
+                    } catch(CoderMalfunctionError xx){
+                        continue;
+                    }
+                    /* The width to fit to may either be specified,
+                     * or calculated. Specifying by the caller is only
+                     * valid if the text does not need to be decomposed
+                     * into multiple calls.
+                     */
+                    float desiredWidth;
+                    if (acs.length == 1 && width != 0f) {
+                        desiredWidth = width;
+                    } else {
+                        Rectangle2D r2d =
+                            mLastFont.getStringBounds(cs.charsetChars,
+                                                      cs.offset,
+                                                      cs.offset+cs.length,
+                                                      frc);
+                        desiredWidth = (float)r2d.getWidth();
+                    }
+                    /* unprintable chars had width of 0, causing a PS error
+                     */
+                    if (desiredWidth == 0) {
+                        return didText;
+                    }
+                    nativeStr.append('<');
+                    for (int j = 0; j < len; j++){
+                        byte b = strSeg[j];
+                        // to avoid encoding conversion with println()
+                        String hexS = Integer.toHexString(b);
+                        int length = hexS.length();
+                        if (length > 2) {
+                            hexS = hexS.substring(length - 2, length);
+                        } else if (length == 1) {
+                            hexS = "0" + hexS;
+                        } else if (length == 0) {
+                            hexS = "00";
+                        }
+                        nativeStr.append(hexS);
+                    }
+                    nativeStr.append('>');
+                    /* This comment costs too much in output file size */
+//                  mPSStream.println("% Font[" + mLastFont.getName() + ", " +
+//                             FontConfiguration.getStyleString(mLastFont.getStyle()) + ", "
+//                             + mLastFont.getSize2D() + "]");
+                    getGState().emitPSFont(psFonts[i], mLastFont.getSize2D());
 
-		    // out String
-		    mPSStream.println(nativeStr.toString() + " " +
-				      desiredWidth + " " + x + " " + y + " " +
-				      DrawStringName);
-		    x += desiredWidth;
-		}
-	    } else {
-		didText = false;
-	    }
-	}
+                    // out String
+                    mPSStream.println(nativeStr.toString() + " " +
+                                      desiredWidth + " " + x + " " + y + " " +
+                                      DrawStringName);
+                    x += desiredWidth;
+                }
+            } else {
+                didText = false;
+            }
+        }
 
-	return didText;
+        return didText;
      }
     /**
      * Set the current path rule to be either
@@ -1296,21 +1295,21 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void setFillMode(int fillRule) {
 
-	switch (fillRule) {
-	 
-	 case FILL_EVEN_ODD:
-	    mFillOpStr = EVEN_ODD_FILL_STR;
-	    mClipOpStr = EVEN_ODD_CLIP_STR;
-	    break;
+        switch (fillRule) {
 
-	 case FILL_WINDING:
-	     mFillOpStr = WINDING_FILL_STR;
-	     mClipOpStr = WINDING_CLIP_STR;
-	     break;
-	 
-	 default:
-	     throw new IllegalArgumentException();
-	}
+         case FILL_EVEN_ODD:
+            mFillOpStr = EVEN_ODD_FILL_STR;
+            mClipOpStr = EVEN_ODD_CLIP_STR;
+            break;
+
+         case FILL_WINDING:
+             mFillOpStr = WINDING_FILL_STR;
+             mClipOpStr = WINDING_CLIP_STR;
+             break;
+
+         default:
+             throw new IllegalArgumentException();
+        }
 
     }
 
@@ -1328,7 +1327,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void fillPath() {
 
-	mPSStream.println(mFillOpStr);
+        mPSStream.println(mFillOpStr);
     }
 
     /**
@@ -1337,10 +1336,10 @@ public class PSPrinterJob extends RasterPrinterJob {
     protected void beginPath() {
 
         prepDrawing();
-	mPSStream.println(NEWPATH_STR);
+        mPSStream.println(NEWPATH_STR);
 
-	mPenX = 0;
-	mPenY = 0;
+        mPenX = 0;
+        mPenY = 0;
     }
 
     /**
@@ -1350,10 +1349,10 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void closeSubpath() {
 
-	mPSStream.println(CLOSEPATH_STR);
+        mPSStream.println(CLOSEPATH_STR);
 
-	mPenX = mStartPathX;
-	mPenY = mStartPathY;
+        mPenX = mStartPathX;
+        mPenY = mStartPathY;
     }
 
 
@@ -1363,18 +1362,18 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void moveTo(float x, float y) {
 
-	mPSStream.println(trunc(x) + " " + trunc(y) + MOVETO_STR);
+        mPSStream.println(trunc(x) + " " + trunc(y) + MOVETO_STR);
 
-	/* moveto marks the start of a new subpath
-	 * and we need to remember that starting
-	 * position so that we know where the
-	 * pen returns to with a close path.
-	 */
-	mStartPathX = x;
-	mStartPathY = y;
+        /* moveto marks the start of a new subpath
+         * and we need to remember that starting
+         * position so that we know where the
+         * pen returns to with a close path.
+         */
+        mStartPathX = x;
+        mStartPathY = y;
 
-	mPenX = x;
-	mPenY = y;
+        mPenX = x;
+        mPenY = y;
     }
     /**
      * Generate PostScript to draw a line from the
@@ -1382,10 +1381,10 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected void lineTo(float x, float y) {
 
-	mPSStream.println(trunc(x) + " " + trunc(y) + LINETO_STR);
+        mPSStream.println(trunc(x) + " " + trunc(y) + LINETO_STR);
 
-	mPenX = x;
-	mPenY = y;
+        mPenX = x;
+        mPenY = y;
     }
 
     /**
@@ -1395,38 +1394,38 @@ public class PSPrinterJob extends RasterPrinterJob {
      * point.
      */
     protected void bezierTo(float control1x, float control1y,
-			        float control2x, float control2y,
-				float endX, float endY) {
+                                float control2x, float control2y,
+                                float endX, float endY) {
 
-// 	mPSStream.println(control1x + " " + control1y
-// 			  + " " + control2x + " " + control2y
-// 			  + " " + endX + " " + endY
-// 			  + CURVETO_STR);
-	mPSStream.println(trunc(control1x) + " " + trunc(control1y)
-			  + " " + trunc(control2x) + " " + trunc(control2y)
-			  + " " + trunc(endX) + " " + trunc(endY)
-			  + CURVETO_STR);
+//      mPSStream.println(control1x + " " + control1y
+//                        + " " + control2x + " " + control2y
+//                        + " " + endX + " " + endY
+//                        + CURVETO_STR);
+        mPSStream.println(trunc(control1x) + " " + trunc(control1y)
+                          + " " + trunc(control2x) + " " + trunc(control2y)
+                          + " " + trunc(endX) + " " + trunc(endY)
+                          + CURVETO_STR);
 
-	
-	mPenX = endX;
-	mPenY = endY;
+
+        mPenX = endX;
+        mPenY = endY;
     }
 
     String trunc(float f) {
-	float af = Math.abs(f);
-	if (af >= 1f && af <=1000f) {
-	    f = Math.round(f*1000)/1000f;
-	}
-	return Float.toString(f);
+        float af = Math.abs(f);
+        if (af >= 1f && af <=1000f) {
+            f = Math.round(f*1000)/1000f;
+        }
+        return Float.toString(f);
     }
-    
+
     /**
      * Return the x coordinate of the pen in the
      * current path.
      */
     protected float getPenX() {
-	
-	return mPenX;
+
+        return mPenX;
     }
     /**
      * Return the y coordinate of the pen in the
@@ -1434,7 +1433,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     protected float getPenY() {
 
-	return mPenY;
+        return mPenY;
     }
 
     /**
@@ -1442,14 +1441,14 @@ public class PSPrinterJob extends RasterPrinterJob {
      * to be rendered.
      */
     protected double getXRes() {
-	return PS_XRES;
+        return PS_XRES;
     }
     /**
      * Return the y resolution of the coordinates
      * to be rendered.
      */
     protected double getYRes() {
-	return PS_YRES;
+        return PS_YRES;
     }
 
     /**
@@ -1492,42 +1491,42 @@ public class PSPrinterJob extends RasterPrinterJob {
      * method should return 1.
      */
     protected int getNoncollatedCopies() {
-	return 1;
+        return 1;
     }
 
     protected int getCollatedCopies() {
-	return 1;
+        return 1;
     }
 
     private String[] printExecCmd(String printer, String options,
                                   boolean noJobSheet,
-				  String banner, int copies, String spoolFile) {
-	int PRINTER = 0x1;
-	int OPTIONS = 0x2;
-	int BANNER  = 0x4;
-	int COPIES  = 0x8;
-	int NOSHEET = 0x10;
-	int pFlags = 0;
-	String execCmd[];
-	int ncomps = 2; // minimum number of print args
-	int n = 0;
+                                  String banner, int copies, String spoolFile) {
+        int PRINTER = 0x1;
+        int OPTIONS = 0x2;
+        int BANNER  = 0x4;
+        int COPIES  = 0x8;
+        int NOSHEET = 0x10;
+        int pFlags = 0;
+        String execCmd[];
+        int ncomps = 2; // minimum number of print args
+        int n = 0;
 
-	if (printer != null && !printer.equals("") && !printer.equals("lp")) {
-	    pFlags |= PRINTER;
-	    ncomps+=1;
-	}
-	if (options != null && !options.equals("")) {
-	    pFlags |= OPTIONS;
-	    ncomps+=1;
-	}
-	if (banner != null && !banner.equals("")) {
-	    pFlags |= BANNER;
-	    ncomps+=1;
-	}
-	if (copies > 1) {
-	    pFlags |= COPIES;
-	    ncomps+=1;
-	}
+        if (printer != null && !printer.equals("") && !printer.equals("lp")) {
+            pFlags |= PRINTER;
+            ncomps+=1;
+        }
+        if (options != null && !options.equals("")) {
+            pFlags |= OPTIONS;
+            ncomps+=1;
+        }
+        if (banner != null && !banner.equals("")) {
+            pFlags |= BANNER;
+            ncomps+=1;
+        }
+        if (copies > 1) {
+            pFlags |= COPIES;
+            ncomps+=1;
+        }
         if (noJobSheet) {
             pFlags |= NOSHEET;
             ncomps+=1;
@@ -1572,18 +1571,18 @@ public class PSPrinterJob extends RasterPrinterJob {
             }
         }
         execCmd[n++] = spoolFile;
-	return execCmd;
+        return execCmd;
     }
 
     private static int swapBGRtoRGB(byte[] image, int index, byte[] dest) {
-	int destIndex = 0;
-	while(index < image.length-2 && destIndex < dest.length-2) {
-	    dest[destIndex++] = image[index+2];
-	    dest[destIndex++] = image[index+1];
-	    dest[destIndex++] = image[index+0];
-	    index+=3;
-	}
-	return index;
+        int destIndex = 0;
+        while(index < image.length-2 && destIndex < dest.length-2) {
+            dest[destIndex++] = image[index+2];
+            dest[destIndex++] = image[index+1];
+            dest[destIndex++] = image[index+0];
+            index+=3;
+        }
+        return index;
     }
 
     /*
@@ -1593,66 +1592,66 @@ public class PSPrinterJob extends RasterPrinterJob {
      * be erased.
      */
     private String makeCharsetName(String name, char[] chs) {
-	if (name.equals("Cp1252") || name.equals("ISO8859_1")) {
-	    return "latin1";
-	} else if (name.equals("UTF8")) {
-	    // same as latin 1 if all chars < 256
-	    for (int i=0; i < chs.length; i++) {
-		if (chs[i] > 255) {
-		    return name.toLowerCase();
-		}
-	    }
-	    return "latin1";
-	} else if (name.startsWith("ISO8859")) {
-	    // same as latin 1 if all chars < 128
-	    for (int i=0; i < chs.length; i++) {
-		if (chs[i] > 127) {
-		    return name.toLowerCase();
-		}
-	    }
-	    return "latin1";
-	} else {
-	    return name.toLowerCase();
-	}	
-    } 
+        if (name.equals("Cp1252") || name.equals("ISO8859_1")) {
+            return "latin1";
+        } else if (name.equals("UTF8")) {
+            // same as latin 1 if all chars < 256
+            for (int i=0; i < chs.length; i++) {
+                if (chs[i] > 255) {
+                    return name.toLowerCase();
+                }
+            }
+            return "latin1";
+        } else if (name.startsWith("ISO8859")) {
+            // same as latin 1 if all chars < 128
+            for (int i=0; i < chs.length; i++) {
+                if (chs[i] > 127) {
+                    return name.toLowerCase();
+                }
+            }
+            return "latin1";
+        } else {
+            return name.toLowerCase();
+        }
+    }
 
     private void prepDrawing() {
 
-	/* Pop gstates until we can set the needed clip
-	 * and transform or until we are at the outer most
-	 * gstate.
-	 */
-	while (isOuterGState() == false
-	       && (getGState().canSetClip(mLastClip) == false
-		   || getGState().mTransform.equals(mLastTransform) == false)) {
+        /* Pop gstates until we can set the needed clip
+         * and transform or until we are at the outer most
+         * gstate.
+         */
+        while (isOuterGState() == false
+               && (getGState().canSetClip(mLastClip) == false
+                   || getGState().mTransform.equals(mLastTransform) == false)) {
 
 
-	    grestore();
-	}
+            grestore();
+        }
 
-	/* Set the color. This can push the color to the
-	 * outer most gsave which is often a good thing.
-	 */
-	getGState().emitPSColor(mLastColor);
+        /* Set the color. This can push the color to the
+         * outer most gsave which is often a good thing.
+         */
+        getGState().emitPSColor(mLastColor);
 
-	/* We do not want to change the outermost
-	 * transform or clip so if we are at the
-	 * outer clip the generate a gsave.
-	 */
-	if (isOuterGState()) {
-	    gsave();
-	    getGState().emitTransform(mLastTransform);
-	    getGState().emitPSClip(mLastClip);
-	}
+        /* We do not want to change the outermost
+         * transform or clip so if we are at the
+         * outer clip the generate a gsave.
+         */
+        if (isOuterGState()) {
+            gsave();
+            getGState().emitTransform(mLastTransform);
+            getGState().emitPSClip(mLastClip);
+        }
 
-	/* Set the font if we have been asked to. It is
-	 * important that the font is set after the
-	 * transform in order to get the font size
-	 * correct.
-	 */
-// 	if (g != null) {
-// 	    getGState().emitPSFont(g, mLastFont);
-// 	}
+        /* Set the font if we have been asked to. It is
+         * important that the font is set after the
+         * transform in order to get the font size
+         * correct.
+         */
+//      if (g != null) {
+//          getGState().emitPSFont(g, mLastFont);
+//      }
 
     }
 
@@ -1664,8 +1663,8 @@ public class PSPrinterJob extends RasterPrinterJob {
      * exception.
      */
     private GState getGState() {
-	int count = mGStateStack.size();
-	return (GState) mGStateStack.get(count - 1);
+        int count = mGStateStack.size();
+        return (GState) mGStateStack.get(count - 1);
     }
 
     /**
@@ -1674,9 +1673,9 @@ public class PSPrinterJob extends RasterPrinterJob {
      * the printer's gstate stack.
      */
     private void gsave() {
-	GState oldGState = getGState();
-	mGStateStack.add(new GState(oldGState));
-	mPSStream.println(GSAVE_STR);
+        GState oldGState = getGState();
+        mGStateStack.add(new GState(oldGState));
+        mPSStream.println(GSAVE_STR);
     }
 
     /**
@@ -1685,9 +1684,9 @@ public class PSPrinterJob extends RasterPrinterJob {
      * printer's gstate stack.
      */
     private void grestore() {
-	int count = mGStateStack.size();
-	mGStateStack.remove(count - 1);
-	mPSStream.println(GRESTORE_STR);
+        int count = mGStateStack.size();
+        mGStateStack.remove(count - 1);
+        mPSStream.println(GRESTORE_STR);
     }
 
     /**
@@ -1696,7 +1695,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      * be restored.
      */
     private boolean isOuterGState() {
-	return mGStateStack.size() == 1;
+        return mGStateStack.size() == 1;
     }
 
     /**
@@ -1705,156 +1704,156 @@ public class PSPrinterJob extends RasterPrinterJob {
      * the current graphics attributes.
      */
     private class GState{
-	Color mColor;
-	Shape mClip;
-	Font mFont;
-	AffineTransform mTransform;
+        Color mColor;
+        Shape mClip;
+        Font mFont;
+        AffineTransform mTransform;
 
-	GState() {
-	    mColor = Color.black;
-	    mClip = null;
-	    mFont = null;
-	    mTransform = new AffineTransform();
-	}
+        GState() {
+            mColor = Color.black;
+            mClip = null;
+            mFont = null;
+            mTransform = new AffineTransform();
+        }
 
-	GState(GState copyGState) {
-	    mColor = copyGState.mColor;
-	    mClip = copyGState.mClip;
-	    mFont = copyGState.mFont;
-	    mTransform = copyGState.mTransform;
-	}
+        GState(GState copyGState) {
+            mColor = copyGState.mColor;
+            mClip = copyGState.mClip;
+            mFont = copyGState.mFont;
+            mTransform = copyGState.mTransform;
+        }
 
-	boolean canSetClip(Shape clip) {
+        boolean canSetClip(Shape clip) {
 
-	    return mClip == null || mClip.equals(clip);
-	}
+            return mClip == null || mClip.equals(clip);
+        }
 
 
-	void emitPSClip(Shape clip) {
-	    if (clip != null
-		&& (mClip == null || mClip.equals(clip) == false)) {
-		String saveFillOp = mFillOpStr;
-		String saveClipOp = mClipOpStr;
-		convertToPSPath(clip.getPathIterator(new AffineTransform()));
-		selectClipPath();
-		mClip = clip;
-		/* The clip is a shape and has reset the winding rule state */
-		mClipOpStr = saveFillOp;
-		mFillOpStr = saveFillOp;
-	    }
-	}
+        void emitPSClip(Shape clip) {
+            if (clip != null
+                && (mClip == null || mClip.equals(clip) == false)) {
+                String saveFillOp = mFillOpStr;
+                String saveClipOp = mClipOpStr;
+                convertToPSPath(clip.getPathIterator(new AffineTransform()));
+                selectClipPath();
+                mClip = clip;
+                /* The clip is a shape and has reset the winding rule state */
+                mClipOpStr = saveFillOp;
+                mFillOpStr = saveFillOp;
+            }
+        }
 
-	void emitTransform(AffineTransform transform) {
+        void emitTransform(AffineTransform transform) {
 
-	    if (transform != null && transform.equals(mTransform) == false) {
-		double[] matrix = new double[6];
-		transform.getMatrix(matrix);
-		mPSStream.println("[" + (float)matrix[0]
-				  + " " + (float)matrix[1]
-				  + " " + (float)matrix[2]
-				  + " " + (float)matrix[3]
-				  + " " + (float)matrix[4]
-				  + " " + (float)matrix[5]
-				  + "] concat");
+            if (transform != null && transform.equals(mTransform) == false) {
+                double[] matrix = new double[6];
+                transform.getMatrix(matrix);
+                mPSStream.println("[" + (float)matrix[0]
+                                  + " " + (float)matrix[1]
+                                  + " " + (float)matrix[2]
+                                  + " " + (float)matrix[3]
+                                  + " " + (float)matrix[4]
+                                  + " " + (float)matrix[5]
+                                  + "] concat");
 
-		mTransform = transform;
-	    }
-	}
+                mTransform = transform;
+            }
+        }
 
-	void emitPSColor(Color color) {
-	    if (color != null && color.equals(mColor) == false) {
-		float[] rgb = color.getRGBColorComponents(null);
+        void emitPSColor(Color color) {
+            if (color != null && color.equals(mColor) == false) {
+                float[] rgb = color.getRGBColorComponents(null);
 
-		/* If the color is a gray value then use
-		 * setgray.
-		 */
-		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-		    mPSStream.println(rgb[0] + SETGRAY_STR);
-		
-		/* It's not gray so use setrgbcolor.
-		 */
-		} else {
-		    mPSStream.println(rgb[0] + " "
-				      + rgb[1] + " "
-				      + rgb[2] + " "
-				      + SETRGBCOLOR_STR);
-		}
+                /* If the color is a gray value then use
+                 * setgray.
+                 */
+                if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
+                    mPSStream.println(rgb[0] + SETGRAY_STR);
 
-		mColor = color;
+                /* It's not gray so use setrgbcolor.
+                 */
+                } else {
+                    mPSStream.println(rgb[0] + " "
+                                      + rgb[1] + " "
+                                      + rgb[2] + " "
+                                      + SETRGBCOLOR_STR);
+                }
 
-	    }
-	}
+                mColor = color;
 
-	void emitPSFont(int psFontIndex, float fontSize) {
-	    mPSStream.println(fontSize + " " +
-			      psFontIndex + " " + SetFontName);
-	}
+            }
+        }
+
+        void emitPSFont(int psFontIndex, float fontSize) {
+            mPSStream.println(fontSize + " " +
+                              psFontIndex + " " + SetFontName);
+        }
     }
 
        /**
-	* Given a Java2D <code>PathIterator</code> instance,
-	* this method translates that into a PostScript path..
-	*/
-	void convertToPSPath(PathIterator pathIter) {
+        * Given a Java2D <code>PathIterator</code> instance,
+        * this method translates that into a PostScript path..
+        */
+        void convertToPSPath(PathIterator pathIter) {
 
-	    float[] segment = new float[6];
-	    int segmentType;
+            float[] segment = new float[6];
+            int segmentType;
 
-	    /* Map the PathIterator's fill rule into the PostScript
-	     * fill rule.
-	     */
-	    int fillRule;
-	    if (pathIter.getWindingRule() == PathIterator.WIND_EVEN_ODD) {
-		fillRule = FILL_EVEN_ODD;
-	    } else {
-		fillRule = FILL_WINDING;
-	    }	
+            /* Map the PathIterator's fill rule into the PostScript
+             * fill rule.
+             */
+            int fillRule;
+            if (pathIter.getWindingRule() == PathIterator.WIND_EVEN_ODD) {
+                fillRule = FILL_EVEN_ODD;
+            } else {
+                fillRule = FILL_WINDING;
+            }
 
-	    beginPath();
+            beginPath();
 
-	    setFillMode(fillRule);
+            setFillMode(fillRule);
 
-	    while (pathIter.isDone() == false) {
-		segmentType = pathIter.currentSegment(segment);
+            while (pathIter.isDone() == false) {
+                segmentType = pathIter.currentSegment(segment);
 
-		switch (segmentType) {
-		 case PathIterator.SEG_MOVETO:
-		    moveTo(segment[0], segment[1]);
-		    break;
-		 
-		 case PathIterator.SEG_LINETO:
-		    lineTo(segment[0], segment[1]);
-		    break;
+                switch (segmentType) {
+                 case PathIterator.SEG_MOVETO:
+                    moveTo(segment[0], segment[1]);
+                    break;
 
-		/* Convert the quad path to a bezier.
-		 */
-		 case PathIterator.SEG_QUADTO:
-		    float lastX = getPenX();
-		    float lastY = getPenY();
-		    float c1x = lastX + (segment[0] - lastX) * 2 / 3;
-		    float c1y = lastY + (segment[1] - lastY) * 2 / 3;
-		    float c2x = segment[2] - (segment[2] - segment[0]) * 2/ 3;
-		    float c2y = segment[3] - (segment[3] - segment[1]) * 2/ 3;
-		    bezierTo(c1x, c1y,
-			     c2x, c2y,
-			     segment[2], segment[3]);
-		    break;
+                 case PathIterator.SEG_LINETO:
+                    lineTo(segment[0], segment[1]);
+                    break;
 
-		 case PathIterator.SEG_CUBICTO:
-		    bezierTo(segment[0], segment[1],
-			     segment[2], segment[3],
-			     segment[4], segment[5]);
-		    break;
+                /* Convert the quad path to a bezier.
+                 */
+                 case PathIterator.SEG_QUADTO:
+                    float lastX = getPenX();
+                    float lastY = getPenY();
+                    float c1x = lastX + (segment[0] - lastX) * 2 / 3;
+                    float c1y = lastY + (segment[1] - lastY) * 2 / 3;
+                    float c2x = segment[2] - (segment[2] - segment[0]) * 2/ 3;
+                    float c2y = segment[3] - (segment[3] - segment[1]) * 2/ 3;
+                    bezierTo(c1x, c1y,
+                             c2x, c2y,
+                             segment[2], segment[3]);
+                    break;
 
-		 case PathIterator.SEG_CLOSE:
-		    closeSubpath();
-		    break;
-		}
+                 case PathIterator.SEG_CUBICTO:
+                    bezierTo(segment[0], segment[1],
+                             segment[2], segment[3],
+                             segment[4], segment[5]);
+                    break;
+
+                 case PathIterator.SEG_CLOSE:
+                    closeSubpath();
+                    break;
+                }
 
 
-		pathIter.next();
-	    }
-	}
+                pathIter.next();
+            }
+        }
 
     /*
      * Fill the path defined by <code>pathIter</code>
@@ -1862,20 +1861,20 @@ public class PSPrinterJob extends RasterPrinterJob {
      * The path is provided in current user space.
      */
     protected void deviceFill(PathIterator pathIter, Color color,
-			      AffineTransform tx, Shape clip) {   
+                              AffineTransform tx, Shape clip) {
 
         setTransform(tx);
         setClip(clip);
-	setColor(color);
-	convertToPSPath(pathIter);
-	/* Specify the path to fill as the clip, this ensures that only
-	 * pixels which are inside the path will be filled, which is
-	 * what the Java 2D APIs specify
-	 */
-	mPSStream.println(GSAVE_STR);
-	selectClipPath();
-	fillPath();
-	mPSStream.println(GRESTORE_STR + " " + NEWPATH_STR);
+        setColor(color);
+        convertToPSPath(pathIter);
+        /* Specify the path to fill as the clip, this ensures that only
+         * pixels which are inside the path will be filled, which is
+         * what the Java 2D APIs specify
+         */
+        mPSStream.println(GSAVE_STR);
+        selectClipPath();
+        fillPath();
+        mPSStream.println(GRESTORE_STR + " " + NEWPATH_STR);
     }
 
     /*
@@ -1901,41 +1900,41 @@ public class PSPrinterJob extends RasterPrinterJob {
          int outIndex = 0;
          int startIndex = 0;
          int runLen = 0;
-	 byte[] outArr = new byte[(inArr.length * 2) +2];
+         byte[] outArr = new byte[(inArr.length * 2) +2];
          while (inIndex < inArr.length) {
-	     if (runLen == 0) {
-		 startIndex = inIndex++;
-		 runLen=1;
-	     }
+             if (runLen == 0) {
+                 startIndex = inIndex++;
+                 runLen=1;
+             }
 
-	     while (runLen < 128 && inIndex < inArr.length && 
-		    inArr[inIndex] == inArr[startIndex]) {
-		 runLen++; // count run of same value 
-		 inIndex++;
-	     }
+             while (runLen < 128 && inIndex < inArr.length &&
+                    inArr[inIndex] == inArr[startIndex]) {
+                 runLen++; // count run of same value
+                 inIndex++;
+             }
 
-	     if (runLen > 1) {
+             if (runLen > 1) {
                  outArr[outIndex++] = (byte)(257 - runLen);
-		 outArr[outIndex++] = inArr[startIndex];
-		 runLen = 0;
-		 continue; // back to top of while loop.
-	     }
+                 outArr[outIndex++] = inArr[startIndex];
+                 runLen = 0;
+                 continue; // back to top of while loop.
+             }
 
-	     // if reach here have a run of different values, or at the end.
-	     while (runLen < 128 && inIndex < inArr.length &&
-		    inArr[inIndex] != inArr[inIndex-1]) {
-		 runLen++; // count run of different values 
-		 inIndex++;
-	     }
-	     outArr[outIndex++] = (byte)(runLen - 1);
-	     for (int i = startIndex; i < startIndex+runLen; i++) {
-		 outArr[outIndex++] = inArr[i];
-	     }
-	     runLen = 0;
-	 }
-	 outArr[outIndex++] = (byte)128;
-	 byte[] encodedData = new byte[outIndex];
-	 System.arraycopy(outArr, 0, encodedData, 0, outIndex);
+             // if reach here have a run of different values, or at the end.
+             while (runLen < 128 && inIndex < inArr.length &&
+                    inArr[inIndex] != inArr[inIndex-1]) {
+                 runLen++; // count run of different values
+                 inIndex++;
+             }
+             outArr[outIndex++] = (byte)(runLen - 1);
+             for (int i = startIndex; i < startIndex+runLen; i++) {
+                 outArr[outIndex++] = inArr[i];
+             }
+             runLen = 0;
+         }
+         outArr[outIndex++] = (byte)128;
+         byte[] encodedData = new byte[outIndex];
+         System.arraycopy(outArr, 0, encodedData, 0, outIndex);
 
          return encodedData;
      }
@@ -1956,10 +1955,10 @@ public class PSPrinterJob extends RasterPrinterJob {
         long val, rem;
 
         while (i+3 < inArr.length) {
-	    val = ((long)((inArr[i++]&0xff))<<24) +
-	 	  ((long)((inArr[i++]&0xff))<<16) +
-		  ((long)((inArr[i++]&0xff))<< 8) +
-	 	  ((long)(inArr[i++]&0xff));
+            val = ((long)((inArr[i++]&0xff))<<24) +
+                  ((long)((inArr[i++]&0xff))<<16) +
+                  ((long)((inArr[i++]&0xff))<< 8) +
+                  ((long)(inArr[i++]&0xff));
             if (val == 0) {
                 outArr[olen++] = 'z';
             } else {
@@ -1985,7 +1984,7 @@ public class PSPrinterJob extends RasterPrinterJob {
                 val = val << 8;
             }
             byte []c = new byte[5];
-	    rem = val;
+            rem = val;
             c[0] = (byte)(rem / p4 + pling); rem = rem % p4;
             c[1] = (byte)(rem / p3 + pling); rem = rem % p3;
             c[2] = (byte)(rem / p2 + pling); rem = rem % p2;
@@ -2000,19 +1999,19 @@ public class PSPrinterJob extends RasterPrinterJob {
         // write EOD marker.
         outArr[olen++]='~'; outArr[olen++]='>';
 
-	/* The original intention was to insert a newline after every 78 bytes.
-	 * This was mainly intended for legibility but I decided against this
-	 * partially because of the (small) amount of extra space, and
-	 * partially because for line breaks either would have to hardwire
+        /* The original intention was to insert a newline after every 78 bytes.
+         * This was mainly intended for legibility but I decided against this
+         * partially because of the (small) amount of extra space, and
+         * partially because for line breaks either would have to hardwire
          * ascii 10 (newline) or calculate space in bytes to allocate for
-	 * the platform's newline byte sequence. Also need to be careful
-	 * about where its inserted: 
-	 * Ascii 85 decoder ignores white space except for one special case:
-	 * you must ensure you do not split the EOD marker across lines.
+         * the platform's newline byte sequence. Also need to be careful
+         * about where its inserted:
+         * Ascii 85 decoder ignores white space except for one special case:
+         * you must ensure you do not split the EOD marker across lines.
          */
-	byte[] retArr = new byte[olen];
-	System.arraycopy(outArr, 0, retArr, 0, olen);
-	return retArr;
+        byte[] retArr = new byte[olen];
+        System.arraycopy(outArr, 0, retArr, 0, olen);
+        return retArr;
 
     }
 
@@ -2026,7 +2025,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      * single page. This means white space is left at the bottom of the
      * previous page and its impossible to print these cases as they appear on
      * the web page. This is contrast to how the same browsers behave on
-     * Windows where it renders as on-screen. 
+     * Windows where it renders as on-screen.
      * Cases where the content fits on a single page do work fine, and they
      * are the majority of cases.
      * The scaling that the browser specifies to make the plugin content fit
@@ -2040,74 +2039,74 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     public static class PluginPrinter implements Printable {
 
-	private EPSPrinter epsPrinter;
-	private Component applet;
-	private PrintStream stream;
-	private String epsTitle;
+        private EPSPrinter epsPrinter;
+        private Component applet;
+        private PrintStream stream;
+        private String epsTitle;
         private int bx, by, bw, bh;
         private int width, height;
 
-	/**
-	 * This is called from the Java Plug-in to print an Applet's
-	 * contents as EPS to a postscript stream provided by the browser.
-	 * @param applet the applet component to print.
-	 * @param stream the print stream provided by the plug-in
-	 * @param x the x location of the applet panel in the browser window
-	 * @param y the y location of the applet panel in the browser window
-	 * @param w the width of the applet panel in the browser window
-	 * @param h the width of the applet panel in the browser window
-	 */
-	public PluginPrinter(Component applet,
-			     PrintStream stream,
-			     int x, int y, int w, int h) {
+        /**
+         * This is called from the Java Plug-in to print an Applet's
+         * contents as EPS to a postscript stream provided by the browser.
+         * @param applet the applet component to print.
+         * @param stream the print stream provided by the plug-in
+         * @param x the x location of the applet panel in the browser window
+         * @param y the y location of the applet panel in the browser window
+         * @param w the width of the applet panel in the browser window
+         * @param h the width of the applet panel in the browser window
+         */
+        public PluginPrinter(Component applet,
+                             PrintStream stream,
+                             int x, int y, int w, int h) {
 
-	    this.applet = applet;
-	    this.epsTitle = "Java Plugin Applet";
-	    this.stream = stream;
-	    bx = x;
-	    by = y;
-	    bw = w;
-	    bh = h;
+            this.applet = applet;
+            this.epsTitle = "Java Plugin Applet";
+            this.stream = stream;
+            bx = x;
+            by = y;
+            bw = w;
+            bh = h;
             width = applet.size().width;
-	    height = applet.size().height;
-	    epsPrinter = new EPSPrinter(this, epsTitle, stream,
-					0, 0, width, height);
-	}
-	
-	public void printPluginPSHeader() {
-	    stream.println("%%BeginDocument: JavaPluginApplet");
+            height = applet.size().height;
+            epsPrinter = new EPSPrinter(this, epsTitle, stream,
+                                        0, 0, width, height);
         }
 
-	public void printPluginApplet() {
-	    try {
-		epsPrinter.print();
-	    } catch (PrinterException e) {
-	    }
-	}
+        public void printPluginPSHeader() {
+            stream.println("%%BeginDocument: JavaPluginApplet");
+        }
+
+        public void printPluginApplet() {
+            try {
+                epsPrinter.print();
+            } catch (PrinterException e) {
+            }
+        }
 
         public void printPluginPSTrailer() {
-	    stream.println("%%EndDocument: JavaPluginApplet");
-	    stream.flush();
+            stream.println("%%EndDocument: JavaPluginApplet");
+            stream.flush();
         }
 
-	public void printAll() {
-	    printPluginPSHeader();
-	    printPluginApplet();
-	    printPluginPSTrailer();
-	}
+        public void printAll() {
+            printPluginPSHeader();
+            printPluginApplet();
+            printPluginPSTrailer();
+        }
 
-	public int print(Graphics g, PageFormat pf, int pgIndex) {
-	    if (pgIndex > 0) {
-		return Printable.NO_SUCH_PAGE;
-	    } else {
-		// "aware" client code can detect that its been passed a
-		// PrinterGraphics and could theoretically print
-		// differently. I think this is more likely useful than
-		// a problem.
-		applet.printAll(g);
-		return Printable.PAGE_EXISTS;
-	    }
-	}
+        public int print(Graphics g, PageFormat pf, int pgIndex) {
+            if (pgIndex > 0) {
+                return Printable.NO_SUCH_PAGE;
+            } else {
+                // "aware" client code can detect that its been passed a
+                // PrinterGraphics and could theoretically print
+                // differently. I think this is more likely useful than
+                // a problem.
+                applet.printAll(g);
+                return Printable.PAGE_EXISTS;
+            }
+        }
 
     }
 
@@ -2126,38 +2125,38 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     public static class EPSPrinter implements Pageable {
 
-	private PageFormat pf;
-	private PSPrinterJob job;
+        private PageFormat pf;
+        private PSPrinterJob job;
         private int llx, lly, urx, ury;
-	private Printable printable;
-	private PrintStream stream;
-	private String epsTitle;
+        private Printable printable;
+        private PrintStream stream;
+        private String epsTitle;
 
-	public EPSPrinter(Printable printable, String title,
- 	                  PrintStream stream,
-			  int x, int y, int wid, int hgt) {
+        public EPSPrinter(Printable printable, String title,
+                          PrintStream stream,
+                          int x, int y, int wid, int hgt) {
 
-	    this.printable = printable;
-	    this.epsTitle = title;
-	    this.stream = stream;
-	    llx = x;
-	    lly = y;
-	    urx = llx+wid;
-	    ury = lly+hgt;
-	    // construct a PageFormat with zero margins representing the
-	    // exact bounds of the applet. ie construct a theoretical
-	    // paper which happens to exactly match applet panel size.
-	    Paper p = new Paper();
-	    p.setSize((double)wid, (double)hgt);
-	    p.setImageableArea(0.0,0.0, (double)wid, (double)hgt);
-	    pf = new PageFormat();
-	    pf.setPaper(p); 
-	}
-	
-	public void print() throws PrinterException {
-	    stream.println("%!PS-Adobe-3.0 EPSF-3.0");
-	    stream.println("%%BoundingBox: " +
-			   llx + " " + lly + " " + urx + " " + ury);
+            this.printable = printable;
+            this.epsTitle = title;
+            this.stream = stream;
+            llx = x;
+            lly = y;
+            urx = llx+wid;
+            ury = lly+hgt;
+            // construct a PageFormat with zero margins representing the
+            // exact bounds of the applet. ie construct a theoretical
+            // paper which happens to exactly match applet panel size.
+            Paper p = new Paper();
+            p.setSize((double)wid, (double)hgt);
+            p.setImageableArea(0.0,0.0, (double)wid, (double)hgt);
+            pf = new PageFormat();
+            pf.setPaper(p);
+        }
+
+        public void print() throws PrinterException {
+            stream.println("%!PS-Adobe-3.0 EPSF-3.0");
+            stream.println("%%BoundingBox: " +
+                           llx + " " + lly + " " + urx + " " + ury);
             stream.println("%%Title: " + epsTitle);
             stream.println("%%Creator: Java Printing");
             stream.println("%%CreationDate: " + new java.util.Date());
@@ -2165,47 +2164,47 @@ public class PSPrinterJob extends RasterPrinterJob {
             stream.println("/pluginSave save def");
             stream.println("mark"); // for restoring stack state on return
 
-	    job = new PSPrinterJob();
-	    job.epsPrinter = this; // modifies the behaviour of PSPrinterJob
-	    job.mPSStream = stream;
-	    job.mDestType = RasterPrinterJob.STREAM; // prevents closure
+            job = new PSPrinterJob();
+            job.epsPrinter = this; // modifies the behaviour of PSPrinterJob
+            job.mPSStream = stream;
+            job.mDestType = RasterPrinterJob.STREAM; // prevents closure
 
-	    job.startDoc();
-	    try {
-		job.printPage(this, 0);
-	    } catch (Throwable t) {
-		if (t instanceof PrinterException) {
-		    throw (PrinterException)t;
-		} else {
-		    throw new PrinterException(t.toString());
-		}
-	    } finally {
+            job.startDoc();
+            try {
+                job.printPage(this, 0);
+            } catch (Throwable t) {
+                if (t instanceof PrinterException) {
+                    throw (PrinterException)t;
+                } else {
+                    throw new PrinterException(t.toString());
+                }
+            } finally {
                 stream.println("cleartomark"); // restore stack state
                 stream.println("pluginSave restore");
-		job.endDoc();
-	    }
-	    stream.flush();
-	}
+                job.endDoc();
+            }
+            stream.flush();
+        }
 
-	public int getNumberOfPages() {
-	    return 1;
-	}
-	
-	public PageFormat getPageFormat(int pgIndex) {
-	    if (pgIndex > 0) {
-		throw new IndexOutOfBoundsException("pgIndex");
-	    } else {
-		return pf;
-	    }
-	}
+        public int getNumberOfPages() {
+            return 1;
+        }
 
-	public Printable getPrintable(int pgIndex) {
-	    if (pgIndex > 0) {
-		throw new IndexOutOfBoundsException("pgIndex");
-	    } else {
-	    return printable;
-	    }
-	}
+        public PageFormat getPageFormat(int pgIndex) {
+            if (pgIndex > 0) {
+                throw new IndexOutOfBoundsException("pgIndex");
+            } else {
+                return pf;
+            }
+        }
+
+        public Printable getPrintable(int pgIndex) {
+            if (pgIndex > 0) {
+                throw new IndexOutOfBoundsException("pgIndex");
+            } else {
+            return printable;
+            }
+        }
 
     }
 }

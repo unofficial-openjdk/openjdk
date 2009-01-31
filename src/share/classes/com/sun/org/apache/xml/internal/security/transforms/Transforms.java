@@ -52,7 +52,7 @@ import org.w3c.dom.NodeList;
 public class Transforms extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(Transforms.class.getName());
    //J-
    /** Canonicalization - Required Canonical XML (omits comments) */
@@ -134,7 +134,7 @@ public class Transforms extends SignatureElementProxy {
 
       try {
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transformURI + ")");
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transformURI + ")");
 
          Transform transform = Transform.getInstance(this._doc, transformURI);
 
@@ -157,7 +157,7 @@ public class Transforms extends SignatureElementProxy {
 
       try {
          if (true)
-        	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transformURI + ")");
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transformURI + ")");
 
          Transform transform = Transform.getInstance(this._doc, transformURI,
                                                      contextElement);
@@ -196,7 +196,7 @@ public class Transforms extends SignatureElementProxy {
     */
    private void addTransform(Transform transform) {
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transform.getURI() + ")");
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Transforms.addTransform(" + transform.getURI() + ")");
 
       Element transformElement = transform.getElement();
 
@@ -213,9 +213,9 @@ public class Transforms extends SignatureElementProxy {
     */
    public XMLSignatureInput performTransforms(
            XMLSignatureInput xmlSignatureInput) throws TransformationException {
-   	     return performTransforms(xmlSignatureInput,null);
+             return performTransforms(xmlSignatureInput,null);
    }
-   
+
    /**
     * Applies all included <code>Transform</code>s to xmlSignatureInput and returns the result of these transformations.
     *
@@ -232,12 +232,12 @@ public class Transforms extends SignatureElementProxy {
          for (int i = 0; i < last; i++) {
             Transform t = this.item(i);
             if (true) {
-            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Preform the (" + i + ")th " + t.getURI() + " transform");
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Preform the (" + i + ")th " + t.getURI() + " transform");
             }
-			xmlSignatureInput = t.performTransform(xmlSignatureInput);
+                        xmlSignatureInput = t.performTransform(xmlSignatureInput);
          }
          if (last>=0) {
-			Transform t = this.item(last);
+                        Transform t = this.item(last);
             xmlSignatureInput = t.performTransform(xmlSignatureInput, os);
          }
 
@@ -261,17 +261,17 @@ public class Transforms extends SignatureElementProxy {
     */
    public int getLength()
    {
-		/*Element nscontext = XMLUtils.createDSctx(this._doc, "ds",
-	                                              Constants.SignatureSpecNS);
-	     NodeList transformElems =
-	        XPathAPI.selectNodeList(this._constructionElement,
-	                                "./ds:Transform", nscontext);
-	     return transformElems.getLength();*/
+                /*Element nscontext = XMLUtils.createDSctx(this._doc, "ds",
+                                                      Constants.SignatureSpecNS);
+             NodeList transformElems =
+                XPathAPI.selectNodeList(this._constructionElement,
+                                        "./ds:Transform", nscontext);
+             return transformElems.getLength();*/
        if (transforms==null) {
         transforms=XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
            "Transform");
        }
-       return transforms.length;       
+       return transforms.length;
   }
 
    /**
@@ -283,16 +283,16 @@ public class Transforms extends SignatureElementProxy {
     * @throws TransformationException
     */
    public Transform item(int i) throws TransformationException {
-   	
-	   	try {
-	   		if (transforms==null) {
-	   			transforms=XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
-	   			"Transform");
-	   		}
-	   		return new Transform(transforms[i], this._baseURI);
-	   	} catch (XMLSecurityException ex) {
-	   		throw new TransformationException("empty", ex);
-	   	}
+
+                try {
+                        if (transforms==null) {
+                                transforms=XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
+                                "Transform");
+                        }
+                        return new Transform(transforms[i], this._baseURI);
+                } catch (XMLSecurityException ex) {
+                        throw new TransformationException("empty", ex);
+                }
    }
 
    /** @inheritDoc */

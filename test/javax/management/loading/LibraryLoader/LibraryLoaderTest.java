@@ -66,7 +66,7 @@ public class LibraryLoaderTest {
             System.out.println("Bye! Bye!");
             return;
         }
-   
+
         String libPath = System.getProperty("java.library.path");
         System.out.println("java.library.path=" + libPath);
         String testSrc = System.getProperty("test.src");

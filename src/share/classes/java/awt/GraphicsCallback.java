@@ -80,67 +80,67 @@ abstract class GraphicsCallback extends SunGraphicsCallback {
 
         private PeerPaintCallback() {}
         public void run(Component comp, Graphics cg) {
-	    comp.validate();
-	    if (comp.peer instanceof LightweightPeer) {
-	        comp.lightweightPaint(cg);
-	    } else {
-	        comp.peer.paint(cg);
-	    }
-	}
+            comp.validate();
+            if (comp.peer instanceof LightweightPeer) {
+                comp.lightweightPaint(cg);
+            } else {
+                comp.peer.paint(cg);
+            }
+        }
         static PeerPaintCallback getInstance() {
-	    return instance;
-	}
+            return instance;
+        }
     }
     static final class PeerPrintCallback extends GraphicsCallback {
         private static PeerPrintCallback instance = new PeerPrintCallback();
 
         private PeerPrintCallback() {}
         public void run(Component comp, Graphics cg) {
-	    comp.validate();
-	    if (comp.peer instanceof LightweightPeer) {
-	        comp.lightweightPrint(cg);
-	    } else {
-	        comp.peer.print(cg);
-	    }
-	}
+            comp.validate();
+            if (comp.peer instanceof LightweightPeer) {
+                comp.lightweightPrint(cg);
+            } else {
+                comp.peer.print(cg);
+            }
+        }
         static PeerPrintCallback getInstance() {
-	    return instance;
-	}
+            return instance;
+        }
     }
     static final class PaintHeavyweightComponentsCallback
         extends GraphicsCallback
     {
         private static PaintHeavyweightComponentsCallback instance =
-	    new PaintHeavyweightComponentsCallback();
+            new PaintHeavyweightComponentsCallback();
 
         private PaintHeavyweightComponentsCallback() {}
         public void run(Component comp, Graphics cg) {
-	    if (comp.peer instanceof LightweightPeer) {
-	        comp.paintHeavyweightComponents(cg);
-	    } else {
-	        comp.paintAll(cg);
-	    }
-	}
+            if (comp.peer instanceof LightweightPeer) {
+                comp.paintHeavyweightComponents(cg);
+            } else {
+                comp.paintAll(cg);
+            }
+        }
         static PaintHeavyweightComponentsCallback getInstance() {
-	    return instance;
-	}
+            return instance;
+        }
     }
     static final class PrintHeavyweightComponentsCallback
         extends GraphicsCallback
     {
         private static PrintHeavyweightComponentsCallback instance =
-	    new PrintHeavyweightComponentsCallback();
+            new PrintHeavyweightComponentsCallback();
 
         private PrintHeavyweightComponentsCallback() {}
         public void run(Component comp, Graphics cg) {
-	    if (comp.peer instanceof LightweightPeer) {
-	        comp.printHeavyweightComponents(cg);
-	    } else {
-	        comp.printAll(cg);
-	    }
-	}
+            if (comp.peer instanceof LightweightPeer) {
+                comp.printHeavyweightComponents(cg);
+            } else {
+                comp.printAll(cg);
+            }
+        }
         static PrintHeavyweightComponentsCallback getInstance() {
-	    return instance;
-	}
+            return instance;
+        }
     }
 }

@@ -25,7 +25,6 @@
 
 
 /*
- * @(#)LETypes.h	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -609,4 +608,3 @@ typedef enum LEErrorCode LEErrorCode;
 
 #define U_LAYOUT_API
 #endif
-

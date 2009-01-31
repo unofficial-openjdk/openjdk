@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package com.sun.java.swing.plaf.motif;
 
 import javax.swing.*;
@@ -42,62 +42,61 @@ import javax.swing.plaf.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Rich Schiavi
  */
 public class MotifButtonUI extends BasicButtonUI {
 
     private final static MotifButtonUI motifButtonUI = new MotifButtonUI();
 
-    protected Color selectColor; 
+    protected Color selectColor;
 
     private boolean defaults_initialized = false;
-    
+
     // ********************************
     //          Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent c){
-	return motifButtonUI;
+        return motifButtonUI;
     }
-    
+
     // ********************************
     //         Create Listeners
     // ********************************
     protected BasicButtonListener createButtonListener(AbstractButton b){
-	return new MotifButtonListener(b);
+        return new MotifButtonListener(b);
     }
 
     // ********************************
     //          Install Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    selectColor = UIManager.getColor(getPropertyPrefix() + "select");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            selectColor = UIManager.getColor(getPropertyPrefix() + "select");
+            defaults_initialized = true;
+        }
         LookAndFeel.installProperty(b, "opaque", Boolean.FALSE);
     }
 
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
-    
+
     // ********************************
     //          Default Accessors
     // ********************************
 
     protected Color getSelectColor() {
-	return selectColor;
+        return selectColor;
     }
-    
+
     // ********************************
     //          Paint Methods
     // ********************************
     public void paint(Graphics g, JComponent c) {
-        fillContentArea( g, (AbstractButton)c , c.getBackground() );   
-	super.paint(g,c);
+        fillContentArea( g, (AbstractButton)c , c.getBackground() );
+        super.paint(g,c);
     }
 
     // Overridden to ensure we don't paint icon over button borders.
@@ -117,9 +116,9 @@ public class MotifButtonUI extends BasicButtonUI {
     }
 
     protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect){
-	// focus painting is handled by the border
+        // focus painting is handled by the border
     }
-    
+
     protected void paintButtonPressed(Graphics g, AbstractButton b) {
 
         fillContentArea( g, b , selectColor );
@@ -129,16 +128,14 @@ public class MotifButtonUI extends BasicButtonUI {
     protected void fillContentArea( Graphics g, AbstractButton b, Color fillColor) {
 
         if (b.isContentAreaFilled()) {
-	    Insets margin = b.getMargin();
-	    Insets insets = b.getInsets();
-	    Dimension size = b.getSize();
-	    g.setColor(fillColor);
-	    g.fillRect(insets.left - margin.left,
-		       insets.top - margin.top, 
-		       size.width - (insets.left-margin.left) - (insets.right - margin.right),
-		       size.height - (insets.top-margin.top) - (insets.bottom - margin.bottom));
-	}
+            Insets margin = b.getMargin();
+            Insets insets = b.getInsets();
+            Dimension size = b.getSize();
+            g.setColor(fillColor);
+            g.fillRect(insets.left - margin.left,
+                       insets.top - margin.top,
+                       size.width - (insets.left-margin.left) - (insets.right - margin.right),
+                       size.height - (insets.top-margin.top) - (insets.bottom - margin.bottom));
+        }
     }
 }
-
-

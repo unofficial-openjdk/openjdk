@@ -42,9 +42,9 @@ import org.w3c.dom.NodeList;
  *
  * @author Sean Mullan
  */
-public final class DOMSignatureProperty extends DOMStructure 
+public final class DOMSignatureProperty extends DOMStructure
     implements SignatureProperty {
- 
+
     private final String id;
     private final String target;
     private final List content;
@@ -60,16 +60,16 @@ public final class DOMSignatureProperty extends DOMStructure
      * @throws ClassCastException if <code>content</code> contains any
      *    entries that are not of type {@link XMLStructure}
      * @throws IllegalArgumentException if <code>content</code> is empty
-     * @throws NullPointerException if <code>content</code> or 
+     * @throws NullPointerException if <code>content</code> or
      *    <code>target</code> is <code>null</code>
      */
     public DOMSignatureProperty(List content, String target, String id) {
-	if (target == null) {
-	    throw new NullPointerException("target cannot be null");
-	} else if (content == null) {
-	    throw new NullPointerException("content cannot be null");
-	} else if (content.isEmpty()) {
-	    throw new IllegalArgumentException("content cannot be empty");
+        if (target == null) {
+            throw new NullPointerException("target cannot be null");
+        } else if (content == null) {
+            throw new NullPointerException("content cannot be null");
+        } else if (content.isEmpty()) {
+            throw new IllegalArgumentException("content cannot be empty");
         } else {
             List contentCopy = new ArrayList(content);
             for (int i = 0, size = contentCopy.size(); i < size; i++) {
@@ -80,8 +80,8 @@ public final class DOMSignatureProperty extends DOMStructure
             }
             this.content = Collections.unmodifiableList(contentCopy);
         }
-	this.target = target;
-	this.id = id;
+        this.target = target;
+        this.id = id;
     }
 
     /**
@@ -90,21 +90,21 @@ public final class DOMSignatureProperty extends DOMStructure
      * @param propElem a SignatureProperty element
      */
     public DOMSignatureProperty(Element propElem) throws MarshalException {
-	// unmarshal attributes
+        // unmarshal attributes
         target = DOMUtils.getAttributeValue(propElem, "Target");
-	if (target == null) {
-	    throw new MarshalException("target cannot be null");
-	}
+        if (target == null) {
+            throw new MarshalException("target cannot be null");
+        }
         id = DOMUtils.getAttributeValue(propElem, "Id");
 
-	NodeList nodes = propElem.getChildNodes();
-	int length = nodes.getLength();
-	List content = new ArrayList(length);
-	for (int i = 0; i < length; i++) {
-	    content.add(new javax.xml.crypto.dom.DOMStructure(nodes.item(i)));
-	}
+        NodeList nodes = propElem.getChildNodes();
+        int length = nodes.getLength();
+        List content = new ArrayList(length);
+        for (int i = 0; i < length; i++) {
+            content.add(new javax.xml.crypto.dom.DOMStructure(nodes.item(i)));
+        }
         if (content.isEmpty()) {
-	    throw new MarshalException("content cannot be empty");
+            throw new MarshalException("content cannot be empty");
         } else {
             this.content = Collections.unmodifiableList(content);
         }
@@ -123,69 +123,69 @@ public final class DOMSignatureProperty extends DOMStructure
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-	throws MarshalException {
+        throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element propElem = DOMUtils.createElement
             (ownerDoc, "SignatureProperty", XMLSignature.XMLNS, dsPrefix);
 
-	// set attributes
-	DOMUtils.setAttributeID(propElem, "Id", id);
+        // set attributes
+        DOMUtils.setAttributeID(propElem, "Id", id);
         DOMUtils.setAttribute(propElem, "Target", target);
 
         // create and append any elements and mixed content
-	for (int i = 0, size = content.size(); i < size; i++) {
-	    javax.xml.crypto.dom.DOMStructure property = 
-		(javax.xml.crypto.dom.DOMStructure) content.get(i);
-	    DOMUtils.appendChild(propElem, property.getNode());
+        for (int i = 0, size = content.size(); i < size; i++) {
+            javax.xml.crypto.dom.DOMStructure property =
+                (javax.xml.crypto.dom.DOMStructure) content.get(i);
+            DOMUtils.appendChild(propElem, property.getNode());
         }
-	    
-	parent.appendChild(propElem);
+
+        parent.appendChild(propElem);
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
-	if (!(o instanceof SignatureProperty)) {
+        if (!(o instanceof SignatureProperty)) {
             return false;
-	}
+        }
         SignatureProperty osp = (SignatureProperty) o;
 
-	boolean idsEqual = (id == null ? osp.getId() == null :
+        boolean idsEqual = (id == null ? osp.getId() == null :
             id.equals(osp.getId()));
 
-	return (equalsContent(osp.getContent()) && 
-	    target.equals(osp.getTarget()) && idsEqual);
+        return (equalsContent(osp.getContent()) &&
+            target.equals(osp.getTarget()) && idsEqual);
     }
 
     private boolean equalsContent(List otherContent) {
-	int osize = otherContent.size();
-	if (content.size() != osize) {
+        int osize = otherContent.size();
+        if (content.size() != osize) {
             return false;
-	}
+        }
         for (int i = 0; i < osize; i++) {
             XMLStructure oxs = (XMLStructure) otherContent.get(i);
             XMLStructure xs = (XMLStructure) content.get(i);
             if (oxs instanceof javax.xml.crypto.dom.DOMStructure) {
-		if (!(xs instanceof javax.xml.crypto.dom.DOMStructure)) {
+                if (!(xs instanceof javax.xml.crypto.dom.DOMStructure)) {
                     return false;
-		}
+                }
                 Node onode =
                     ((javax.xml.crypto.dom.DOMStructure) oxs).getNode();
-		Node node =
+                Node node =
                     ((javax.xml.crypto.dom.DOMStructure) xs).getNode();
-		if (!DOMUtils.nodesEqual(node, onode)) {
-		    return false;
-		}
-            } else {
-		if (!(xs.equals(oxs))) {
+                if (!DOMUtils.nodesEqual(node, onode)) {
                     return false;
-		}
+                }
+            } else {
+                if (!(xs.equals(oxs))) {
+                    return false;
+                }
             }
-	}
+        }
 
-	return true;
+        return true;
     }
 }

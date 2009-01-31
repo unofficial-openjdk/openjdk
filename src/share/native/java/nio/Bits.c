@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 #include "jni.h"
 #include "jni_util.h"
@@ -64,53 +62,53 @@
 
 #define SWAPSHORT(x) ((jshort)(((x) << 8) | (((x) >> 8) & 0xff)))
 #define SWAPINT(x)   ((jint)((SWAPSHORT((jshort)(x)) << 16) | \
-		            (SWAPSHORT((jshort)((x) >> 16)) & 0xffff)))
+                            (SWAPSHORT((jshort)((x) >> 16)) & 0xffff)))
 #define SWAPLONG(x)  ((jlong)(((jlong)SWAPINT((jint)(x)) << 32) | \
- 		              ((jlong)SWAPINT((jint)((x) >> 32)) & 0xffffffff)))
+                              ((jlong)SWAPINT((jint)((x) >> 32)) & 0xffffffff)))
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyFromByteArray(JNIEnv *env, jobject this, jobject src,
-				     jlong srcPos, jlong dstAddr, jlong length)
+                                     jlong srcPos, jlong dstAddr, jlong length)
 {
     jbyte *bytes;
     size_t size;
 
     while (length > 0) {
-	size = (length > MBYTE ? MBYTE : length);
+        size = (length > MBYTE ? MBYTE : length);
 
-	GETCRITICAL(bytes, env, src);
- 	memcpy((void *)dstAddr, bytes + srcPos, size);
-	RELEASECRITICAL(bytes, env, src, JNI_ABORT);
+        GETCRITICAL(bytes, env, src);
+        memcpy((void *)dstAddr, bytes + srcPos, size);
+        RELEASECRITICAL(bytes, env, src, JNI_ABORT);
 
-	length -= size;
-	dstAddr += size;
-	srcPos += size;
+        length -= size;
+        dstAddr += size;
+        srcPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyToByteArray(JNIEnv *env, jobject this, jlong srcAddr,
-				   jobject dst, jlong dstPos, jlong length)
+                                   jobject dst, jlong dstPos, jlong length)
 {
     jbyte *bytes;
     size_t size;
 
     while (length > 0) {
-	size = (length > MBYTE ? MBYTE : length);
+        size = (length > MBYTE ? MBYTE : length);
 
-	GETCRITICAL(bytes, env, dst);
- 	memcpy(bytes + dstPos, (void *)srcAddr, size);
-	RELEASECRITICAL(bytes, env, dst, 0);
+        GETCRITICAL(bytes, env, dst);
+        memcpy(bytes + dstPos, (void *)srcAddr, size);
+        RELEASECRITICAL(bytes, env, dst, 0);
 
-	length -= size;
-	srcAddr += size;
-	dstPos += size;
+        length -= size;
+        srcAddr += size;
+        dstPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyFromShortArray(JNIEnv *env, jobject this, jobject src,
-				      jlong srcPos, jlong dstAddr, jlong length)
+                                      jlong srcPos, jlong dstAddr, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -121,31 +119,31 @@ Java_java_nio_Bits_copyFromShortArray(JNIEnv *env, jobject this, jobject src,
 
     while (length > 0) {
         /* do not change this if-else statement, see WARNING above */
-	if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+        if (length > MBYTE)
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, src);
+        GETCRITICAL(bytes, env, src);
 
- 	srcShort = (jshort *)(bytes + srcPos);
-	endShort = srcShort + (size / sizeof(jshort));
-	while (srcShort < endShort) {
-	  tmpShort = *srcShort++;
-	  *dstShort++ = SWAPSHORT(tmpShort);
-	}
+        srcShort = (jshort *)(bytes + srcPos);
+        endShort = srcShort + (size / sizeof(jshort));
+        while (srcShort < endShort) {
+          tmpShort = *srcShort++;
+          *dstShort++ = SWAPSHORT(tmpShort);
+        }
 
-	RELEASECRITICAL(bytes, env, src, JNI_ABORT);
+        RELEASECRITICAL(bytes, env, src, JNI_ABORT);
 
-	length -= size;
-	dstAddr += size;
-	srcPos += size;
+        length -= size;
+        dstAddr += size;
+        srcPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyToShortArray(JNIEnv *env, jobject this, jlong srcAddr,
-				    jobject dst, jlong dstPos, jlong length)
+                                    jobject dst, jlong dstPos, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -157,30 +155,30 @@ Java_java_nio_Bits_copyToShortArray(JNIEnv *env, jobject this, jlong srcAddr,
     while (length > 0) {
         /* do not change this if-else statement, see WARNING above */
         if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, dst);
+        GETCRITICAL(bytes, env, dst);
 
-	dstShort = (jshort *)(bytes + dstPos);
-	endShort = srcShort + (size / sizeof(jshort));
-	while (srcShort < endShort) {
- 	    tmpShort = *srcShort++;
- 	    *dstShort++ = SWAPSHORT(tmpShort);
-	}
+        dstShort = (jshort *)(bytes + dstPos);
+        endShort = srcShort + (size / sizeof(jshort));
+        while (srcShort < endShort) {
+            tmpShort = *srcShort++;
+            *dstShort++ = SWAPSHORT(tmpShort);
+        }
 
-	RELEASECRITICAL(bytes, env, dst, 0);
+        RELEASECRITICAL(bytes, env, dst, 0);
 
-	length -= size;
-	srcAddr += size;
-	dstPos += size;
+        length -= size;
+        srcAddr += size;
+        dstPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyFromIntArray(JNIEnv *env, jobject this, jobject src,
-				    jlong srcPos, jlong dstAddr, jlong length)
+                                    jlong srcPos, jlong dstAddr, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -192,30 +190,30 @@ Java_java_nio_Bits_copyFromIntArray(JNIEnv *env, jobject this, jobject src,
     while (length > 0) {
         /* do not change this code, see WARNING above */
         if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, src);
+        GETCRITICAL(bytes, env, src);
 
- 	srcInt = (jint *)(bytes + srcPos);
-	endInt = srcInt + (size / sizeof(jint));
-	while (srcInt < endInt) {
- 	    tmpInt = *srcInt++;
-	    *dstInt++ = SWAPINT(tmpInt);
-	}
+        srcInt = (jint *)(bytes + srcPos);
+        endInt = srcInt + (size / sizeof(jint));
+        while (srcInt < endInt) {
+            tmpInt = *srcInt++;
+            *dstInt++ = SWAPINT(tmpInt);
+        }
 
-	RELEASECRITICAL(bytes, env, src, JNI_ABORT);
+        RELEASECRITICAL(bytes, env, src, JNI_ABORT);
 
-	length -= size;
-	dstAddr += size;
-	srcPos += size;
+        length -= size;
+        dstAddr += size;
+        srcPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyToIntArray(JNIEnv *env, jobject this, jlong srcAddr,
-				  jobject dst, jlong dstPos, jlong length)
+                                  jobject dst, jlong dstPos, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -226,31 +224,31 @@ Java_java_nio_Bits_copyToIntArray(JNIEnv *env, jobject this, jlong srcAddr,
 
     while (length > 0) {
         /* do not change this code, see WARNING above */
-	if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+        if (length > MBYTE)
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, dst);
+        GETCRITICAL(bytes, env, dst);
 
-	dstInt = (jint *)(bytes + dstPos);
-	endInt = srcInt + (size / sizeof(jint));
-	while (srcInt < endInt) {
- 	    tmpInt = *srcInt++;
-	    *dstInt++ = SWAPINT(tmpInt);
-	}
+        dstInt = (jint *)(bytes + dstPos);
+        endInt = srcInt + (size / sizeof(jint));
+        while (srcInt < endInt) {
+            tmpInt = *srcInt++;
+            *dstInt++ = SWAPINT(tmpInt);
+        }
 
-	RELEASECRITICAL(bytes, env, dst, 0);
+        RELEASECRITICAL(bytes, env, dst, 0);
 
-	length -= size;
-	srcAddr += size;
-	dstPos += size;
+        length -= size;
+        srcAddr += size;
+        dstPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyFromLongArray(JNIEnv *env, jobject this, jobject src,
-				     jlong srcPos, jlong dstAddr, jlong length)
+                                     jlong srcPos, jlong dstAddr, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -261,31 +259,31 @@ Java_java_nio_Bits_copyFromLongArray(JNIEnv *env, jobject this, jobject src,
 
     while (length > 0) {
         /* do not change this code, see WARNING above */
-	if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+        if (length > MBYTE)
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, src);
+        GETCRITICAL(bytes, env, src);
 
- 	srcLong = (jlong *)(bytes + srcPos);
-	endLong = srcLong + (size / sizeof(jlong));
-	while (srcLong < endLong) {
- 	    tmpLong = *srcLong++;
-	    *dstLong++ = SWAPLONG(tmpLong);
-	}
+        srcLong = (jlong *)(bytes + srcPos);
+        endLong = srcLong + (size / sizeof(jlong));
+        while (srcLong < endLong) {
+            tmpLong = *srcLong++;
+            *dstLong++ = SWAPLONG(tmpLong);
+        }
 
-	RELEASECRITICAL(bytes, env, src, JNI_ABORT);
+        RELEASECRITICAL(bytes, env, src, JNI_ABORT);
 
-	length -= size;
-	dstAddr += size;
-	srcPos += size;
+        length -= size;
+        dstAddr += size;
+        srcPos += size;
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_nio_Bits_copyToLongArray(JNIEnv *env, jobject this, jlong srcAddr,
-				   jobject dst, jlong dstPos, jlong length)
+                                   jobject dst, jlong dstPos, jlong length)
 {
     jbyte *bytes;
     size_t i, size;
@@ -296,24 +294,24 @@ Java_java_nio_Bits_copyToLongArray(JNIEnv *env, jobject this, jlong srcAddr,
 
     while (length > 0) {
         /* do not change this code, see WARNING above */
-	if (length > MBYTE)
-	    size = MBYTE;
-	else
-	    size = length;
+        if (length > MBYTE)
+            size = MBYTE;
+        else
+            size = length;
 
-	GETCRITICAL(bytes, env, dst);
+        GETCRITICAL(bytes, env, dst);
 
-	dstLong = (jlong *)(bytes + dstPos);
-	endLong = srcLong + (size / sizeof(jlong));
-	while (srcLong < endLong) {
- 	    tmpLong = *srcLong++;
-	    *dstLong++ = SWAPLONG(tmpLong);
-	}
+        dstLong = (jlong *)(bytes + dstPos);
+        endLong = srcLong + (size / sizeof(jlong));
+        while (srcLong < endLong) {
+            tmpLong = *srcLong++;
+            *dstLong++ = SWAPLONG(tmpLong);
+        }
 
-	RELEASECRITICAL(bytes, env, dst, 0);
+        RELEASECRITICAL(bytes, env, dst, 0);
 
-	length -= size;
-	srcAddr += size;
-	dstPos += size;
+        length -= size;
+        srcAddr += size;
+        dstPos += size;
     }
 }

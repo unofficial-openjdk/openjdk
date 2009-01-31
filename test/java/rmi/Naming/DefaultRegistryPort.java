@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,69 +50,65 @@ public class DefaultRegistryPort {
 
     public static void main(String args[]) {
 
-	Registry registry = null;
-	try {
+        Registry registry = null;
+        try {
 
             System.err.println(
-	        "Starting registry on default port REGISTRY_PORT=" +
-		Registry.REGISTRY_PORT);
+                "Starting registry on default port REGISTRY_PORT=" +
+                Registry.REGISTRY_PORT);
 
-	    registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+            registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
 
-	    System.err.println("Created registry=" + registry);
+            System.err.println("Created registry=" + registry);
 
-	} catch(java.rmi.RemoteException e) {
-	
-	    try {
+        } catch(java.rmi.RemoteException e) {
 
-		System.err.println(
+            try {
+
+                System.err.println(
                     "Failed to create a registry, try using existing one");
-		registry = LocateRegistry.getRegistry();
+                registry = LocateRegistry.getRegistry();
 
-		System.err.println("Found registry=" + registry);
+                System.err.println("Found registry=" + registry);
 
-	    } catch (Exception ge) {
+            } catch (Exception ge) {
 
-		TestLibrary.bomb(
-		    "Test Failed: cound not find or create a registry");
-	    }
+                TestLibrary.bomb(
+                    "Test Failed: cound not find or create a registry");
+            }
 
-	}
+        }
 
-	try {
+        try {
 
-	    if (registry != null) {
+            if (registry != null) {
 
-		registry.rebind("myself", registry);
+                registry.rebind("myself", registry);
 
-		Remote myself = Naming.lookup("rmi://localhost/myself");
+                Remote myself = Naming.lookup("rmi://localhost/myself");
 
-		System.err.println("Test PASSED");
+                System.err.println("Test PASSED");
 
-	    } else {
+            } else {
 
-		TestLibrary.bomb(
-		    "Test Failed: cound not find or create a registry");
+                TestLibrary.bomb(
+                    "Test Failed: cound not find or create a registry");
 
-	    }
+            }
 
-	} catch(java.rmi.NotBoundException e) {
-	     
-	    TestLibrary.bomb(
-		"Test Failed: could not find myself");
+        } catch(java.rmi.NotBoundException e) {
 
-	} catch(Exception e) {
+            TestLibrary.bomb(
+                "Test Failed: could not find myself");
 
-	    e.printStackTrace();
-	    TestLibrary.bomb(
-		"Test failed: unexpected exception");
+        } catch(Exception e) {
 
-	}
+            e.printStackTrace();
+            TestLibrary.bomb(
+                "Test failed: unexpected exception");
+
+        }
 
     }
 
 }
-
-
-
-

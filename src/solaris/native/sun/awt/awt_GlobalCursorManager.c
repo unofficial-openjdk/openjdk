@@ -35,7 +35,7 @@
 
 static jfieldID xID;
 static jfieldID yID;
- 
+
 extern struct MComponentPeerIDs mComponentPeerIDs;
 extern struct ComponentIDs componentIDs;
 extern struct ContainerIDs containerIDs;
@@ -65,7 +65,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MGlobalCursorManager_getCursorPos
     Window root, rw, cw;
     int32_t rx, ry, x, y;
     uint32_t kbs;
-    
+
     AWT_LOCK();
     root = RootWindow(awt_display, DefaultScreen(awt_display));
     XQueryPointer(awt_display, root, &rw, &cw, &rx, &ry, &x, &y, &kbs);
@@ -83,12 +83,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MGlobalCursorManager_getCursorPos
 JNIEXPORT jobject JNICALL Java_sun_awt_motif_MGlobalCursorManager_findHeavyweightUnderCursor
   (JNIEnv *env, jobject this)
 {
-	jobject target;
+        jobject target;
 
     AWT_LOCK();
-	target = getCurComponent();
+        target = getCurComponent();
     AWT_FLUSH_UNLOCK();
-	return target;		
+        return target;
 }
 
 /*
@@ -101,7 +101,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MGlobalCursorManager_getLocationOnS
 {
     jobject point =
         (*env)->CallObjectMethod(env, component,
-				 componentIDs.getLocationOnScreen);
+                                 componentIDs.getLocationOnScreen);
     return point;
 }
 
@@ -117,12 +117,11 @@ Java_sun_awt_motif_MGlobalCursorManager_findComponentAt
     /*
      * Call private version of Container.findComponentAt with the following
      * flag set: ignoreEnabled = false (i.e., don't return or recurse into
-     * disabled Components).  
+     * disabled Components).
      * NOTE: it may return a JRootPane's glass pane as the target Component.
      */
     jobject component =
         (*env)->CallObjectMethod(env, container, containerIDs.findComponentAt,
-				 x, y, JNI_FALSE);
+                                 x, y, JNI_FALSE);
     return component;
 }
-

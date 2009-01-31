@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)CoreMetrics.java	1.4 03/09/18
  *
  * (C) Copyright IBM Corp. 2003, All Rights Reserved
  *
@@ -36,7 +35,7 @@ import java.awt.font.LineMetrics;
 import java.awt.font.GraphicAttribute;
 
 public final class CoreMetrics {
-    
+
     public CoreMetrics(float ascent,
                        float descent,
                        float leading,
@@ -68,7 +67,7 @@ public final class CoreMetrics {
     }
 
     public final int hashCode() {
-	return Float.floatToIntBits(ascent + ssOffset);
+        return Float.floatToIntBits(ascent + ssOffset);
     }
 
     public final boolean equals(Object rhs) {
@@ -82,11 +81,11 @@ public final class CoreMetrics {
 
     public final boolean equals(CoreMetrics rhs) {
         if (rhs != null) {
-	    if (this == rhs) {
+            if (this == rhs) {
                 return true;
-	    }
+            }
 
-            return ascent == rhs.ascent 
+            return ascent == rhs.ascent
                 && descent == rhs.descent
                 && leading == rhs.leading
                 && baselineIndex == rhs.baselineIndex
@@ -107,14 +106,14 @@ public final class CoreMetrics {
     // roman, center, hanging, bottom, and top in that order
     // this does NOT add the ssOffset
     public final float effectiveBaselineOffset(float[] fullOffsets) {
-	switch (baselineIndex) {
-	case GraphicAttribute.TOP_ALIGNMENT:
-	    return fullOffsets[4] + ascent;
-	case GraphicAttribute.BOTTOM_ALIGNMENT:
-	    return fullOffsets[3] - descent;
-	default:
-	    return fullOffsets[baselineIndex];
-	}
+        switch (baselineIndex) {
+        case GraphicAttribute.TOP_ALIGNMENT:
+            return fullOffsets[4] + ascent;
+        case GraphicAttribute.BOTTOM_ALIGNMENT:
+            return fullOffsets[3] - descent;
+        default:
+            return fullOffsets[baselineIndex];
+        }
     }
 
     public final float   ascent;
@@ -130,4 +129,3 @@ public final class CoreMetrics {
     public final float   ssOffset;
     public final float   italicAngle;
 }
-

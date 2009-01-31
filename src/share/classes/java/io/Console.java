@@ -86,11 +86,10 @@ import sun.nio.cs.StreamEncoder;
  * </pre></blockquote>
  *
  * @author  Xueming Shen
- * @version %I%, %G%
  * @since   1.6
  */
 
-public final class Console implements Flushable 
+public final class Console implements Flushable
 {
    /**
     * Retrieves the unique {@link java.io.PrintWriter PrintWriter} object
@@ -133,7 +132,7 @@ public final class Console implements Flushable
     */
     public Reader reader() {
         return reader;
-    } 
+    }
 
    /**
     * Writes a formatted string to this console's output stream using
@@ -205,7 +204,7 @@ public final class Console implements Flushable
     * @return  This console
     */
     public Console printf(String format, Object ... args) {
-	return format(format, args);
+        return format(format, args);
     }
 
    /**
@@ -242,7 +241,7 @@ public final class Console implements Flushable
     */
     public String readLine(String fmt, Object ... args) {
         String line = null;
-        synchronized (writeLock) {  
+        synchronized (writeLock) {
             synchronized(readLock) {
                 if (fmt.length() != 0)
                     pw.format(fmt, args);
@@ -307,7 +306,7 @@ public final class Console implements Flushable
     */
     public char[] readPassword(String fmt, Object ... args) {
         char[] passwd = null;
-        synchronized (writeLock) {  
+        synchronized (writeLock) {
             synchronized(readLock) {
                 if (fmt.length() != 0)
                     pw.format(fmt, args);
@@ -317,13 +316,13 @@ public final class Console implements Flushable
                 } catch (IOException x) {
                     throw new IOError(x);
                 } finally {
-		    try {
+                    try {
                         echoOff = echo(true);
                     } catch (IOException xx) {}
                 }
                 pw.println();
-	    }
-	}
+            }
+        }
         return passwd;
     }
 
@@ -363,23 +362,23 @@ public final class Console implements Flushable
 
     private char[] readline(boolean zeroOut) throws IOException {
         int len = reader.read(rcb, 0, rcb.length);
-        if (len < 0) 
+        if (len < 0)
             return null;  //EOL
         if (rcb[len-1] == '\r')
             len--;        //remove CR at end;
-	else if (rcb[len-1] == '\n') {
+        else if (rcb[len-1] == '\n') {
             len--;        //remove LF at end;
-	    if (len > 0 && rcb[len-1] == '\r')
+            if (len > 0 && rcb[len-1] == '\r')
                 len--;    //remove the CR, if there is one
         }
-	char[] b = new char[len];
+        char[] b = new char[len];
         if (len > 0) {
-	    System.arraycopy(rcb, 0, b, 0, len);
+            System.arraycopy(rcb, 0, b, 0, len);
             if (zeroOut) {
                 Arrays.fill(rcb, 0, len, ' ');
             }
-	}
-	return b;
+        }
+        return b;
     }
 
     private char[] grow() {
@@ -403,12 +402,12 @@ public final class Console implements Flushable
         }
         public void close () {}
         public boolean ready() throws IOException {
-	    //in.ready synchronizes on readLock already
-            return in.ready(); 
+            //in.ready synchronizes on readLock already
+            return in.ready();
         }
 
         public int read(char cbuf[], int offset, int length)
-            throws IOException 
+            throws IOException
         {
             int off = offset;
             int end = offset + length;
@@ -416,90 +415,90 @@ public final class Console implements Flushable
                 end < 0 || end > cbuf.length) {
                 throw new IndexOutOfBoundsException();
             }
-	    synchronized(readLock) {
+            synchronized(readLock) {
                 boolean eof = false;
-		char c = 0;
-		for (;;) {
-                    if (nextChar >= nChars) {	//fill
-	                int n = 0;
-                	do {
-	                    n = in.read(cb, 0, cb.length);
-                	} while (n == 0);
-	                if (n > 0) {
-                      	    nChars = n;
-                      	    nextChar = 0;
-                            if (n < cb.length && 
-				cb[n-1] != '\n' && cb[n-1] != '\r') {
-			        /*
-			         * we're in canonical mode so each "fill" should 
-			         * come back with an eol. if there no lf or nl at
-			         * the end of returned bytes we reached an eof.
+                char c = 0;
+                for (;;) {
+                    if (nextChar >= nChars) {   //fill
+                        int n = 0;
+                        do {
+                            n = in.read(cb, 0, cb.length);
+                        } while (n == 0);
+                        if (n > 0) {
+                            nChars = n;
+                            nextChar = 0;
+                            if (n < cb.length &&
+                                cb[n-1] != '\n' && cb[n-1] != '\r') {
+                                /*
+                                 * we're in canonical mode so each "fill" should
+                                 * come back with an eol. if there no lf or nl at
+                                 * the end of returned bytes we reached an eof.
                                  */
-                                eof = true;  
-			    }
-	                } else { /*EOF*/
+                                eof = true;
+                            }
+                        } else { /*EOF*/
                             if (off - offset == 0)
                                 return -1;
                             return off - offset;
                         }
                     }
                     if (leftoverLF && cbuf == rcb && cb[nextChar] == '\n') {
-		        /*
-			 * if invoked by our readline, skip the leftover, otherwise
-		         * return the LF.
+                        /*
+                         * if invoked by our readline, skip the leftover, otherwise
+                         * return the LF.
                          */
                         nextChar++;
                     }
-                    leftoverLF = false; 
-		    while (nextChar < nChars) {
+                    leftoverLF = false;
+                    while (nextChar < nChars) {
                         c = cbuf[off++] = cb[nextChar];
                         cb[nextChar++] = 0;
-			if (c == '\n') {
+                        if (c == '\n') {
                             return off - offset;
                         } else if (c == '\r') {
                             if (off == end) {
-			        /* no space left even the next is LF, so return
-			         * whatever we have if the invoker is not our 
-			         * readLine()
+                                /* no space left even the next is LF, so return
+                                 * whatever we have if the invoker is not our
+                                 * readLine()
                                  */
-			        if (cbuf == rcb) {  
+                                if (cbuf == rcb) {
                                     cbuf = grow();
                                     end = cbuf.length;
                                 } else {
                                     leftoverLF = true;
-            			    return off - offset;
+                                    return off - offset;
                                 }
                             }
-			    if (nextChar == nChars && in.ready()) {
-			        /*
+                            if (nextChar == nChars && in.ready()) {
+                                /*
                                  * we have a CR and we reached the end of
                                  * the read in buffer, fill to make sure we
                                  * don't miss a LF, if there is one, it's possible
                                  * that it got cut off during last round reading
                                  * simply because the read in buffer was full.
                                  */
-	                        nChars = in.read(cb, 0, cb.length);
+                                nChars = in.read(cb, 0, cb.length);
                                 nextChar = 0;
-			    }
+                            }
                             if (nextChar < nChars && cb[nextChar] == '\n') {
                                 cbuf[off++] = '\n';
                                 nextChar++;
                             }
-			    return off - offset;
-			} else if (off == end) {
-			   if (cbuf == rcb) {
+                            return off - offset;
+                        } else if (off == end) {
+                           if (cbuf == rcb) {
                                 cbuf = grow();
                                 end = cbuf.length;
-			   } else {
+                           } else {
                                return off - offset;
                            }
-			}
-		    }
+                        }
+                    }
                     if (eof)
-                        return off - offset;   
-		}
-	    }
-	}
+                        return off - offset;
+                }
+            }
+        }
     }
 
     // Set up JavaIOAccess in SharedSecrets
@@ -510,24 +509,24 @@ public final class Console implements Flushable
                     if (cons == null)
                         cons = new Console();
                     return cons;
-		}
-		return null;
+                }
+                return null;
             }
 
             // Add a shutdown hook to restore console's echo state should
             // it be necessary.
             public Runnable consoleRestoreHook() {
                 return new Runnable() {
-	            public void run() {
-	                try {
-		            if (echoOff) {
+                    public void run() {
+                        try {
+                            if (echoOff) {
                                 echo(true);
-			    }
-			} catch (IOException x) {}
-		    }
+                            }
+                        } catch (IOException x) {}
+                    }
                 };
-	    }
-            
+            }
+
             public Charset charset() {
                 // This method is called in sun.security.util.Password,
                 // cons already exists when this method is called
@@ -539,7 +538,7 @@ public final class Console implements Flushable
     private native static boolean istty();
     private Console() {
         readLock = new Object();
-        writeLock = new Object();    
+        writeLock = new Object();
         String csname = encoding();
         if (csname != null) {
             try {
@@ -550,15 +549,14 @@ public final class Console implements Flushable
             cs = Charset.defaultCharset();
         out = StreamEncoder.forOutputStreamWriter(
                   new FileOutputStream(FileDescriptor.out),
-		  writeLock, 
-		  cs);
+                  writeLock,
+                  cs);
         pw = new PrintWriter(out, true) { public void close() {} };
         formatter = new Formatter(out);
         reader = new LineReader(StreamDecoder.forInputStreamReader(
-		     new FileInputStream(FileDescriptor.in),
-		     readLock, 
-		     cs));
-	rcb = new char[1024];
+                     new FileInputStream(FileDescriptor.in),
+                     readLock,
+                     cs));
+        rcb = new char[1024];
     }
 }
-

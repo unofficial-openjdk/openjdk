@@ -31,8 +31,7 @@ import java.util.*;
  * A utility class to iterate over the path segments of a cubic curve
  * segment through the PathIterator interface.
  *
- * @version 10 Feb 1997
- * @author	Jim Graham
+ * @author      Jim Graham
  */
 class CubicIterator implements PathIterator {
     CubicCurve2D cubic;
@@ -40,8 +39,8 @@ class CubicIterator implements PathIterator {
     int index;
 
     CubicIterator(CubicCurve2D q, AffineTransform at) {
-	this.cubic = q;
-	this.affine = at;
+        this.cubic = q;
+        this.affine = at;
     }
 
     /**
@@ -51,7 +50,7 @@ class CubicIterator implements PathIterator {
      * @see #WIND_NON_ZERO
      */
     public int getWindingRule() {
-	return WIND_NON_ZERO;
+        return WIND_NON_ZERO;
     }
 
     /**
@@ -59,7 +58,7 @@ class CubicIterator implements PathIterator {
      * @return true if there are more points to read
      */
     public boolean isDone() {
-	return (index > 1);
+        return (index > 1);
     }
 
     /**
@@ -68,7 +67,7 @@ class CubicIterator implements PathIterator {
      * more points in that direction.
      */
     public void next() {
-	index++;
+        index++;
     }
 
     /**
@@ -90,27 +89,27 @@ class CubicIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(float[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("cubic iterator iterator out of bounds");
-	}
-	int type;
-	if (index == 0) {
-	    coords[0] = (float) cubic.getX1();
-	    coords[1] = (float) cubic.getY1();
-	    type = SEG_MOVETO;
-	} else {
-	    coords[0] = (float) cubic.getCtrlX1();
-	    coords[1] = (float) cubic.getCtrlY1();
-	    coords[2] = (float) cubic.getCtrlX2();
-	    coords[3] = (float) cubic.getCtrlY2();
-	    coords[4] = (float) cubic.getX2();
-	    coords[5] = (float) cubic.getY2();
-	    type = SEG_CUBICTO;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 3);
-	}
-	return type;
+        if (isDone()) {
+            throw new NoSuchElementException("cubic iterator iterator out of bounds");
+        }
+        int type;
+        if (index == 0) {
+            coords[0] = (float) cubic.getX1();
+            coords[1] = (float) cubic.getY1();
+            type = SEG_MOVETO;
+        } else {
+            coords[0] = (float) cubic.getCtrlX1();
+            coords[1] = (float) cubic.getCtrlY1();
+            coords[2] = (float) cubic.getCtrlX2();
+            coords[3] = (float) cubic.getCtrlY2();
+            coords[4] = (float) cubic.getX2();
+            coords[5] = (float) cubic.getY2();
+            type = SEG_CUBICTO;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 3);
+        }
+        return type;
     }
 
     /**
@@ -132,26 +131,26 @@ class CubicIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(double[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("cubic iterator iterator out of bounds");
-	}
-	int type;
-	if (index == 0) {
-	    coords[0] = cubic.getX1();
-	    coords[1] = cubic.getY1();
-	    type = SEG_MOVETO;
-	} else {
-	    coords[0] = cubic.getCtrlX1();
-	    coords[1] = cubic.getCtrlY1();
-	    coords[2] = cubic.getCtrlX2();
-	    coords[3] = cubic.getCtrlY2();
-	    coords[4] = cubic.getX2();
-	    coords[5] = cubic.getY2();
-	    type = SEG_CUBICTO;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 3);
-	}
-	return type;
+        if (isDone()) {
+            throw new NoSuchElementException("cubic iterator iterator out of bounds");
+        }
+        int type;
+        if (index == 0) {
+            coords[0] = cubic.getX1();
+            coords[1] = cubic.getY1();
+            type = SEG_MOVETO;
+        } else {
+            coords[0] = cubic.getCtrlX1();
+            coords[1] = cubic.getCtrlY1();
+            coords[2] = cubic.getCtrlX2();
+            coords[3] = cubic.getCtrlY2();
+            coords[4] = cubic.getX2();
+            coords[5] = cubic.getY2();
+            type = SEG_CUBICTO;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 3);
+        }
+        return type;
     }
 }

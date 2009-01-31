@@ -52,15 +52,15 @@ final public class ManageReferralControl extends BasicControl {
      * Constructs a manage referral critical control.
      */
     public ManageReferralControl() {
-	super(OID, true, null);
+        super(OID, true, null);
     }
 
     /**
      * Constructs a manage referral control.
      *
-     * @param	criticality The control's criticality setting.
+     * @param   criticality The control's criticality setting.
      */
     public ManageReferralControl(boolean criticality) {
-	super(OID, criticality, null);
+        super(OID, criticality, null);
     }
 }

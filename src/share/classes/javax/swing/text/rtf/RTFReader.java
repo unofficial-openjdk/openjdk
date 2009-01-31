@@ -84,7 +84,7 @@ class RTFReader extends RTFParser
   /** The parameter of the most recently parsed \\ucN keyword,
    *  used for skipping alternative representations after a
    *  Unicode character. */
-  int skippingCharacters;  
+  int skippingCharacters;
 
   static private Dictionary straightforwardAttributes;
   static {
@@ -119,16 +119,16 @@ class RTFReader extends RTFParser
       textKeywords.put("tab",        "\u0009");
       textKeywords.put("zwj",        "\u200D");
       textKeywords.put("zwnj",       "\u200C");
-      
+
       /* There is no Unicode equivalent to an optional hyphen, as far as
-	 I can tell. */
+         I can tell. */
       textKeywords.put("-",          "\u2027");  /* TODO: optional hyphen */
   }
 
   /* some entries in parserState */
   static final String TabAlignmentKey = "tab_alignment";
   static final String TabLeaderKey = "tab_leader";
-	
+
   static Dictionary characterSets;
   static boolean useNeXTForAnsi = false;
   static {
@@ -165,9 +165,9 @@ public RTFReader(StyledDocument destination)
 public void handleBinaryBlob(byte[] data)
 {
     if (skippingCharacters > 0) {
-	/* a blob only counts as one character for skipping purposes */
-	skippingCharacters --;
-	return;
+        /* a blob only counts as one character for skipping purposes */
+        skippingCharacters --;
+        return;
     }
 
     /* someday, someone will want to do something with blobs */
@@ -180,18 +180,18 @@ public void handleBinaryBlob(byte[] data)
 public void handleText(String text)
 {
     if (skippingCharacters > 0) {
-	if (skippingCharacters >= text.length()) {
-	    skippingCharacters -= text.length();
-	    return;
-	} else {
-	    text = text.substring(skippingCharacters);
-	    skippingCharacters = 0;
-	}
+        if (skippingCharacters >= text.length()) {
+            skippingCharacters -= text.length();
+            return;
+        } else {
+            text = text.substring(skippingCharacters);
+            skippingCharacters = 0;
+        }
     }
 
     if (rtfDestination != null) {
-	rtfDestination.handleText(text);
-	return;
+        rtfDestination.handleText(text);
+        return;
     }
 
     warning("Text with no destination. oops.");
@@ -211,22 +211,22 @@ Color defaultColor()
 public void begingroup()
 {
     if (skippingCharacters > 0) {
-	/* TODO this indicates an error in the RTF. Log it? */
-	skippingCharacters = 0;
+        /* TODO this indicates an error in the RTF. Log it? */
+        skippingCharacters = 0;
     }
 
     /* we do this little dance to avoid cloning the entire state stack and
        immediately throwing it away. */
     Object oldSaveState = parserState.get("_savedState");
     if (oldSaveState != null)
-	parserState.remove("_savedState");
+        parserState.remove("_savedState");
     Dictionary saveState = (Dictionary)((Hashtable)parserState).clone();
     if (oldSaveState != null)
-	saveState.put("_savedState", oldSaveState);
+        saveState.put("_savedState", oldSaveState);
     parserState.put("_savedState", saveState);
 
     if (rtfDestination != null)
-	rtfDestination.begingroup();
+        rtfDestination.begingroup();
 }
 
 /** Called by the superclass when the current RTF group is closed.
@@ -238,20 +238,20 @@ public void begingroup()
 public void endgroup()
 {
     if (skippingCharacters > 0) {
-	/* NB this indicates an error in the RTF. Log it? */
-	skippingCharacters = 0;
+        /* NB this indicates an error in the RTF. Log it? */
+        skippingCharacters = 0;
     }
 
     Dictionary restoredState = (Dictionary)parserState.get("_savedState");
     Destination restoredDestination = (Destination)restoredState.get("dst");
     if (restoredDestination != rtfDestination) {
-	rtfDestination.close(); /* allow the destination to clean up */
-	rtfDestination = restoredDestination;
+        rtfDestination.close(); /* allow the destination to clean up */
+        rtfDestination = restoredDestination;
     }
     Dictionary oldParserState = parserState;
     parserState = restoredState;
     if (rtfDestination != null)
-	rtfDestination.endgroup(oldParserState);
+        rtfDestination.endgroup(oldParserState);
 }
 
 protected void setRTFDestination(Destination newDestination)
@@ -260,10 +260,10 @@ protected void setRTFDestination(Destination newDestination)
        current destination (should never happen) */
     Dictionary previousState = (Dictionary)parserState.get("_savedState");
     if (previousState != null) {
-	if (rtfDestination != previousState.get("dst")) {
-	    warning("Warning, RTF destination overridden, invalid RTF.");
-	    rtfDestination.close();
-	}
+        if (rtfDestination != previousState.get("dst")) {
+            warning("Warning, RTF destination overridden, invalid RTF.");
+            rtfDestination.close();
+        }
     }
     rtfDestination = newDestination;
     parserState.put("dst", rtfDestination);
@@ -280,8 +280,8 @@ public void close()
     Enumeration docProps = documentAttributes.getAttributeNames();
     while(docProps.hasMoreElements()) {
         Object propName = docProps.nextElement();
-	target.putProperty(propName,
-			   documentAttributes.getAttribute((String)propName));
+        target.putProperty(propName,
+                           documentAttributes.getAttribute((String)propName));
     }
 
     /* RTFParser should have ensured that all our groups are closed */
@@ -305,62 +305,62 @@ public boolean handleKeyword(String keyword)
     boolean ignoreGroupIfUnknownKeywordSave = ignoreGroupIfUnknownKeyword;
 
     if (skippingCharacters > 0) {
-	skippingCharacters --;
-	return true;
+        skippingCharacters --;
+        return true;
     }
 
     ignoreGroupIfUnknownKeyword = false;
-    
+
     if ((item = textKeywords.get(keyword)) != null) {
-	handleText((String)item);
-	return true;
+        handleText((String)item);
+        return true;
     }
-    
+
     if (keyword.equals("fonttbl")) {
-	setRTFDestination(new FonttblDestination());
+        setRTFDestination(new FonttblDestination());
         return true;
     }
 
     if (keyword.equals("colortbl")) {
-	setRTFDestination(new ColortblDestination());
+        setRTFDestination(new ColortblDestination());
         return true;
     }
 
     if (keyword.equals("stylesheet")) {
-	setRTFDestination(new StylesheetDestination());
+        setRTFDestination(new StylesheetDestination());
         return true;
     }
 
     if (keyword.equals("info")) {
-	setRTFDestination(new InfoDestination());
-	return false; 
+        setRTFDestination(new InfoDestination());
+        return false;
     }
 
     if (keyword.equals("mac")) {
-	setCharacterSet("mac");
+        setCharacterSet("mac");
         return true;
     }
 
     if (keyword.equals("ansi")) {
-	if (useNeXTForAnsi)
-	    setCharacterSet("NeXT");
-	else
-	    setCharacterSet("ansi");
+        if (useNeXTForAnsi)
+            setCharacterSet("NeXT");
+        else
+            setCharacterSet("ansi");
         return true;
     }
 
     if (keyword.equals("next")) {
-	setCharacterSet("NeXT");
-	return true;
+        setCharacterSet("NeXT");
+        return true;
     }
 
     if (keyword.equals("pc")) {
-	setCharacterSet("cpg437"); /* IBM Code Page 437 */
+        setCharacterSet("cpg437"); /* IBM Code Page 437 */
         return true;
     }
 
     if (keyword.equals("pca")) {
-	setCharacterSet("cpg850"); /* IBM Code Page 850 */
+        setCharacterSet("cpg850"); /* IBM Code Page 850 */
         return true;
     }
 
@@ -370,74 +370,74 @@ public boolean handleKeyword(String keyword)
     }
 
     if (rtfDestination != null) {
-	if(rtfDestination.handleKeyword(keyword))
-	    return true;
+        if(rtfDestination.handleKeyword(keyword))
+            return true;
     }
 
     /* this point is reached only if the keyword is unrecognized */
 
     /* other destinations we don't understand and therefore ignore */
     if (keyword.equals("aftncn") ||
-	keyword.equals("aftnsep") ||
-	keyword.equals("aftnsepc") ||
-	keyword.equals("annotation") ||
-	keyword.equals("atnauthor") ||
-	keyword.equals("atnicn") ||
-	keyword.equals("atnid") ||
-	keyword.equals("atnref") ||
-	keyword.equals("atntime") ||
-	keyword.equals("atrfend") ||
-	keyword.equals("atrfstart") ||
-	keyword.equals("bkmkend") ||
-	keyword.equals("bkmkstart") ||
-	keyword.equals("datafield") ||
-	keyword.equals("do") ||
-	keyword.equals("dptxbxtext") ||
-	keyword.equals("falt") ||
-	keyword.equals("field") ||
-	keyword.equals("file") ||
-	keyword.equals("filetbl") ||
-	keyword.equals("fname") ||
-	keyword.equals("fontemb") ||
-	keyword.equals("fontfile") ||
-	keyword.equals("footer") ||
-	keyword.equals("footerf") ||
-	keyword.equals("footerl") ||
-	keyword.equals("footerr") ||
-	keyword.equals("footnote") ||
-	keyword.equals("ftncn") ||
-	keyword.equals("ftnsep") ||
-	keyword.equals("ftnsepc") ||
-	keyword.equals("header") ||
-	keyword.equals("headerf") ||
-	keyword.equals("headerl") ||
-	keyword.equals("headerr") ||
-	keyword.equals("keycode") ||
-	keyword.equals("nextfile") ||
-	keyword.equals("object") ||
-	keyword.equals("pict") ||
-	keyword.equals("pn") ||
-	keyword.equals("pnseclvl") ||
-	keyword.equals("pntxtb") ||
-	keyword.equals("pntxta") ||
-	keyword.equals("revtbl") ||
-	keyword.equals("rxe") ||
-	keyword.equals("tc") ||
-	keyword.equals("template") ||
-	keyword.equals("txe") ||
-	keyword.equals("xe")) {
-	ignoreGroupIfUnknownKeywordSave = true;
+        keyword.equals("aftnsep") ||
+        keyword.equals("aftnsepc") ||
+        keyword.equals("annotation") ||
+        keyword.equals("atnauthor") ||
+        keyword.equals("atnicn") ||
+        keyword.equals("atnid") ||
+        keyword.equals("atnref") ||
+        keyword.equals("atntime") ||
+        keyword.equals("atrfend") ||
+        keyword.equals("atrfstart") ||
+        keyword.equals("bkmkend") ||
+        keyword.equals("bkmkstart") ||
+        keyword.equals("datafield") ||
+        keyword.equals("do") ||
+        keyword.equals("dptxbxtext") ||
+        keyword.equals("falt") ||
+        keyword.equals("field") ||
+        keyword.equals("file") ||
+        keyword.equals("filetbl") ||
+        keyword.equals("fname") ||
+        keyword.equals("fontemb") ||
+        keyword.equals("fontfile") ||
+        keyword.equals("footer") ||
+        keyword.equals("footerf") ||
+        keyword.equals("footerl") ||
+        keyword.equals("footerr") ||
+        keyword.equals("footnote") ||
+        keyword.equals("ftncn") ||
+        keyword.equals("ftnsep") ||
+        keyword.equals("ftnsepc") ||
+        keyword.equals("header") ||
+        keyword.equals("headerf") ||
+        keyword.equals("headerl") ||
+        keyword.equals("headerr") ||
+        keyword.equals("keycode") ||
+        keyword.equals("nextfile") ||
+        keyword.equals("object") ||
+        keyword.equals("pict") ||
+        keyword.equals("pn") ||
+        keyword.equals("pnseclvl") ||
+        keyword.equals("pntxtb") ||
+        keyword.equals("pntxta") ||
+        keyword.equals("revtbl") ||
+        keyword.equals("rxe") ||
+        keyword.equals("tc") ||
+        keyword.equals("template") ||
+        keyword.equals("txe") ||
+        keyword.equals("xe")) {
+        ignoreGroupIfUnknownKeywordSave = true;
     }
 
     if (ignoreGroupIfUnknownKeywordSave) {
-	setRTFDestination(new DiscardingDestination());
+        setRTFDestination(new DiscardingDestination());
     }
 
     return false;
 }
 
 /**
- * Handles an RTF keyword and its integer parameter. 
+ * Handles an RTF keyword and its integer parameter.
  * This is called by the superclass
  * (RTFParser) when a keyword is found in the input stream.
  *
@@ -450,49 +450,49 @@ public boolean handleKeyword(String keyword, int parameter)
     boolean ignoreGroupIfUnknownKeywordSave = ignoreGroupIfUnknownKeyword;
 
     if (skippingCharacters > 0) {
-	skippingCharacters --;
-	return true;
+        skippingCharacters --;
+        return true;
     }
 
     ignoreGroupIfUnknownKeyword = false;
 
     if (keyword.equals("uc")) {
-	/* count of characters to skip after a unicode character */
-	parserState.put("UnicodeSkip", Integer.valueOf(parameter));
-	return true;
+        /* count of characters to skip after a unicode character */
+        parserState.put("UnicodeSkip", Integer.valueOf(parameter));
+        return true;
     }
     if (keyword.equals("u")) {
-	if (parameter < 0)
-	    parameter = parameter + 65536;
-	handleText((char)parameter);
-	Number skip = (Number)(parserState.get("UnicodeSkip"));
-	if (skip != null) {
-	    skippingCharacters = skip.intValue();
-	} else {
-	    skippingCharacters = 1;
-	}
-	return true;
+        if (parameter < 0)
+            parameter = parameter + 65536;
+        handleText((char)parameter);
+        Number skip = (Number)(parserState.get("UnicodeSkip"));
+        if (skip != null) {
+            skippingCharacters = skip.intValue();
+        } else {
+            skippingCharacters = 1;
+        }
+        return true;
     }
 
     if (keyword.equals("rtf")) {
         rtfversion = parameter;
-	setRTFDestination(new DocumentDestination());
+        setRTFDestination(new DocumentDestination());
         return true;
     }
 
     if (keyword.startsWith("NeXT") ||
-	keyword.equals("private"))
-	ignoreGroupIfUnknownKeywordSave = true;
+        keyword.equals("private"))
+        ignoreGroupIfUnknownKeywordSave = true;
 
     if (rtfDestination != null) {
-	if(rtfDestination.handleKeyword(keyword, parameter))
-	    return true;
+        if(rtfDestination.handleKeyword(keyword, parameter))
+            return true;
     }
 
     /* this point is reached only if the keyword is unrecognized */
 
     if (ignoreGroupIfUnknownKeywordSave) {
-	setRTFDestination(new DiscardingDestination());
+        setRTFDestination(new DiscardingDestination());
     }
 
     return false;
@@ -516,21 +516,21 @@ public void setCharacterSet(String name)
     try {
         set = getCharacterSet(name);
     } catch (Exception e) {
-	warning("Exception loading RTF character set \"" + name + "\": " + e);
-	set = null;
+        warning("Exception loading RTF character set \"" + name + "\": " + e);
+        set = null;
     }
 
     if (set != null) {
-	translationTable = (char[])set;
+        translationTable = (char[])set;
     } else {
-	warning("Unknown RTF character set \"" + name + "\"");
-	if (!name.equals("ansi")) {
-	    try {
-		translationTable = (char[])getCharacterSet("ansi");
-	    } catch (IOException e) {
-		throw new InternalError("RTFReader: Unable to find character set resources (" + e + ")");
-	    }
-	}
+        warning("Unknown RTF character set \"" + name + "\"");
+        if (!name.equals("ansi")) {
+            try {
+                translationTable = (char[])getCharacterSet("ansi");
+            } catch (IOException e) {
+                throw new InternalError("RTFReader: Unable to find character set resources (" + e + ")");
+            }
+        }
     }
 
     setTargetAttribute(Constants.RTFCharacterSet, name);
@@ -538,11 +538,11 @@ public void setCharacterSet(String name)
 
 /** Adds a character set to the RTFReader's list
  *  of known character sets */
-public static void 
+public static void
 defineCharacterSet(String name, char[] table)
 {
     if (table.length < 256)
-	throw new IllegalArgumentException("Translation table must have 256 entries.");
+        throw new IllegalArgumentException("Translation table must have 256 entries.");
     characterSets.put(name, table);
 }
 
@@ -562,11 +562,11 @@ getCharacterSet(final String name)
     if (set == null) {
       InputStream charsetStream;
       charsetStream = (InputStream)java.security.AccessController.
-	              doPrivileged(new java.security.PrivilegedAction() {
-	  public Object run() {
-	      return RTFReader.class.getResourceAsStream
-		                     ("charsets/" + name + ".txt");
-	  }
+                      doPrivileged(new java.security.PrivilegedAction() {
+          public Object run() {
+              return RTFReader.class.getResourceAsStream
+                                     ("charsets/" + name + ".txt");
+          }
       });
       set = readCharset(charsetStream);
       defineCharacterSet(name, set);
@@ -595,19 +595,19 @@ static char[] readCharset(InputStream strm)
 
     i = 0;
     while (i < 256) {
-	int ttype;
-	try {
-	    ttype = in.nextToken();
-	} catch (Exception e) {
-	    throw new IOException("Unable to read from character set file (" + e + ")");
-	}
-	if (ttype != in.TT_NUMBER) {
-//	    System.out.println("Bad token: type=" + ttype + " tok=" + in.sval);
-	    throw new IOException("Unexpected token in character set file");
-//	    continue;
-	}
-	values[i] = (char)(in.nval);
-	i++;
+        int ttype;
+        try {
+            ttype = in.nextToken();
+        } catch (Exception e) {
+            throw new IOException("Unable to read from character set file (" + e + ")");
+        }
+        if (ttype != in.TT_NUMBER) {
+//          System.out.println("Bad token: type=" + ttype + " tok=" + in.sval);
+            throw new IOException("Unexpected token in character set file");
+//          continue;
+        }
+        values[i] = (char)(in.nval);
+        i++;
     }
 
     return values;
@@ -621,7 +621,7 @@ static char[] readCharset(java.net.URL href)
 
 /** An interface (could be an entirely abstract class) describing
  *  a destination. The RTF reader always has a current destination
- *  which is where text is sent. 
+ *  which is where text is sent.
  *
  *  @see RTFReader
  */
@@ -644,40 +644,40 @@ class DiscardingDestination implements Destination
 {
     public void handleBinaryBlob(byte[] data)
     {
-	/* Discard binary blobs. */
+        /* Discard binary blobs. */
     }
 
     public void handleText(String text)
     {
-	/* Discard text. */
+        /* Discard text. */
     }
 
     public boolean handleKeyword(String text)
     {
-	/* Accept and discard keywords. */
-	return true;
+        /* Accept and discard keywords. */
+        return true;
     }
 
     public boolean handleKeyword(String text, int parameter)
     {
-	/* Accept and discard parameterized keywords. */
-	return true;
+        /* Accept and discard parameterized keywords. */
+        return true;
     }
 
     public void begingroup()
     {
-	/* Ignore groups --- the RTFReader will keep track of the
-	   current group level as necessary */
+        /* Ignore groups --- the RTFReader will keep track of the
+           current group level as necessary */
     }
 
     public void endgroup(Dictionary oldState)
     {
-	/* Ignore groups */
+        /* Ignore groups */
     }
 
     public void close()
     {
-	/* No end-of-destination cleanup needed */
+        /* No end-of-destination cleanup needed */
     }
 }
 
@@ -688,7 +688,7 @@ class FonttblDestination implements Destination
     int nextFontNumber;
     Object fontNumberKey = null;
     String nextFontFamily;
-    
+
     public void handleBinaryBlob(byte[] data)
     { /* Discard binary blobs. */ }
 
@@ -701,11 +701,11 @@ class FonttblDestination implements Destination
             fontName = text.substring(0, semicolon);
         else
             fontName = text;
-        
-        
+
+
         /* TODO: do something with the font family. */
 
-        if (nextFontNumber == -1 
+        if (nextFontNumber == -1
             && fontNumberKey != null) {
             //font name might be broken across multiple calls
             fontName = fontTable.get(fontNumberKey) + fontName;
@@ -714,29 +714,29 @@ class FonttblDestination implements Destination
         }
         fontTable.put(fontNumberKey, fontName);
 
-	nextFontNumber = -1;
-	nextFontFamily = null;
+        nextFontNumber = -1;
+        nextFontFamily = null;
         return;
     }
 
     public boolean handleKeyword(String keyword)
     {
-	if (keyword.charAt(0) == 'f') {
-	    nextFontFamily = keyword.substring(1);
-	    return true;
-	}
-	
-	return false;
+        if (keyword.charAt(0) == 'f') {
+            nextFontFamily = keyword.substring(1);
+            return true;
+        }
+
+        return false;
     }
 
     public boolean handleKeyword(String keyword, int parameter)
     {
-	if (keyword.equals("f")) {
-	    nextFontNumber = parameter;
-	    return true;
-	}
+        if (keyword.equals("f")) {
+            nextFontNumber = parameter;
+            return true;
+        }
 
-	return false;
+        return false;
     }
 
     /* Groups are irrelevant. */
@@ -765,10 +765,10 @@ class ColortblDestination implements Destination
 
     public ColortblDestination()
     {
-	red = 0;
-	green = 0;
-	blue = 0;
-	proTemTable = new Vector();
+        red = 0;
+        green = 0;
+        blue = 0;
+        proTemTable = new Vector();
     }
 
     public void handleText(String text)
@@ -778,32 +778,32 @@ class ColortblDestination implements Destination
         for (index = 0; index < text.length(); index ++) {
             if (text.charAt(index) == ';') {
                 Color newColor;
-		newColor = new Color(red, green, blue);
-		proTemTable.addElement(newColor);
+                newColor = new Color(red, green, blue);
+                proTemTable.addElement(newColor);
             }
         }
     }
 
     public void close()
     {
-	int count = proTemTable.size();
+        int count = proTemTable.size();
         warning("Done reading color table, " + count + " entries.");
-	colorTable = new Color[count];
-	proTemTable.copyInto(colorTable);
+        colorTable = new Color[count];
+        proTemTable.copyInto(colorTable);
     }
 
     public boolean handleKeyword(String keyword, int parameter)
     {
         if (keyword.equals("red"))
-	    red = parameter;
-	else if (keyword.equals("green"))
-	    green = parameter;
-	else if (keyword.equals("blue"))
-	    blue = parameter;
-	else
-	    return false;
-	
-	return true;
+            red = parameter;
+        else if (keyword.equals("green"))
+            green = parameter;
+        else if (keyword.equals("blue"))
+            blue = parameter;
+        else
+            return false;
+
+        return true;
     }
 
     /* Colortbls don't understand any parameterless keywords */
@@ -827,210 +827,210 @@ class StylesheetDestination
 
     public StylesheetDestination()
     {
-	definedStyles = new Hashtable();
+        definedStyles = new Hashtable();
     }
 
     public void begingroup()
     {
-	setRTFDestination(new StyleDefiningDestination());
+        setRTFDestination(new StyleDefiningDestination());
     }
 
-    public void close() 
+    public void close()
     {
         Vector chrStyles, pgfStyles, secStyles;
-	chrStyles = new Vector();
-	pgfStyles = new Vector();
-	secStyles = new Vector();
-	Enumeration styles = definedStyles.elements();
-	while(styles.hasMoreElements()) {
-	    StyleDefiningDestination style;
-	    Style defined;
-	    style = (StyleDefiningDestination)styles.nextElement();
-	    defined = style.realize();
-	    warning("Style "+style.number+" ("+style.styleName+"): "+defined);
-	    String stype = (String)defined.getAttribute(Constants.StyleType);
-	    Vector toSet;
-	    if (stype.equals(Constants.STSection)) {
-	        toSet = secStyles;
-	    } else if (stype.equals(Constants.STCharacter)) {
-	        toSet = chrStyles;
-	    } else {
-	        toSet = pgfStyles;
-	    }
-	    if (toSet.size() <= style.number)
-	        toSet.setSize(style.number + 1);
-	    toSet.setElementAt(defined, style.number);
-	}
-	if (!(chrStyles.isEmpty())) {
-	    Style[] styleArray = new Style[chrStyles.size()];
-	    chrStyles.copyInto(styleArray);
-	    characterStyles = styleArray;
-	}
-	if (!(pgfStyles.isEmpty())) {
-	    Style[] styleArray = new Style[pgfStyles.size()];
-	    pgfStyles.copyInto(styleArray);
-	    paragraphStyles = styleArray;
-	}
-	if (!(secStyles.isEmpty())) {
-	    Style[] styleArray = new Style[secStyles.size()];
-	    secStyles.copyInto(styleArray);
-	    sectionStyles = styleArray;
-	}
+        chrStyles = new Vector();
+        pgfStyles = new Vector();
+        secStyles = new Vector();
+        Enumeration styles = definedStyles.elements();
+        while(styles.hasMoreElements()) {
+            StyleDefiningDestination style;
+            Style defined;
+            style = (StyleDefiningDestination)styles.nextElement();
+            defined = style.realize();
+            warning("Style "+style.number+" ("+style.styleName+"): "+defined);
+            String stype = (String)defined.getAttribute(Constants.StyleType);
+            Vector toSet;
+            if (stype.equals(Constants.STSection)) {
+                toSet = secStyles;
+            } else if (stype.equals(Constants.STCharacter)) {
+                toSet = chrStyles;
+            } else {
+                toSet = pgfStyles;
+            }
+            if (toSet.size() <= style.number)
+                toSet.setSize(style.number + 1);
+            toSet.setElementAt(defined, style.number);
+        }
+        if (!(chrStyles.isEmpty())) {
+            Style[] styleArray = new Style[chrStyles.size()];
+            chrStyles.copyInto(styleArray);
+            characterStyles = styleArray;
+        }
+        if (!(pgfStyles.isEmpty())) {
+            Style[] styleArray = new Style[pgfStyles.size()];
+            pgfStyles.copyInto(styleArray);
+            paragraphStyles = styleArray;
+        }
+        if (!(secStyles.isEmpty())) {
+            Style[] styleArray = new Style[secStyles.size()];
+            secStyles.copyInto(styleArray);
+            sectionStyles = styleArray;
+        }
 
 /* (old debugging code)
-	int i, m;
-	if (characterStyles != null) {
-	  m = characterStyles.length;
-	  for(i=0;i<m;i++) 
-	    warnings.println("chrStyle["+i+"]="+characterStyles[i]);
-	} else warnings.println("No character styles.");
-	if (paragraphStyles != null) {
-	  m = paragraphStyles.length;
-	  for(i=0;i<m;i++) 
-	    warnings.println("pgfStyle["+i+"]="+paragraphStyles[i]);
-	} else warnings.println("No paragraph styles.");
-	if (sectionStyles != null) {
-	  m = characterStyles.length;
-	  for(i=0;i<m;i++) 
-	    warnings.println("secStyle["+i+"]="+sectionStyles[i]);
-	} else warnings.println("No section styles.");
+        int i, m;
+        if (characterStyles != null) {
+          m = characterStyles.length;
+          for(i=0;i<m;i++)
+            warnings.println("chrStyle["+i+"]="+characterStyles[i]);
+        } else warnings.println("No character styles.");
+        if (paragraphStyles != null) {
+          m = paragraphStyles.length;
+          for(i=0;i<m;i++)
+            warnings.println("pgfStyle["+i+"]="+paragraphStyles[i]);
+        } else warnings.println("No paragraph styles.");
+        if (sectionStyles != null) {
+          m = characterStyles.length;
+          for(i=0;i<m;i++)
+            warnings.println("secStyle["+i+"]="+sectionStyles[i]);
+        } else warnings.println("No section styles.");
 */
     }
 
     /** This subclass handles an individual style */
     class StyleDefiningDestination
-	extends AttributeTrackingDestination
-	implements Destination
+        extends AttributeTrackingDestination
+        implements Destination
     {
-	final int STYLENUMBER_NONE = 222; 
-	boolean additive;
-	boolean characterStyle;
-	boolean sectionStyle;
-	public String styleName;
-	public int number;
-	int basedOn;
-	int nextStyle;
-	boolean hidden;
+        final int STYLENUMBER_NONE = 222;
+        boolean additive;
+        boolean characterStyle;
+        boolean sectionStyle;
+        public String styleName;
+        public int number;
+        int basedOn;
+        int nextStyle;
+        boolean hidden;
 
-	Style realizedStyle;
+        Style realizedStyle;
 
-	public StyleDefiningDestination()
-	{
-	    additive = false;
-	    characterStyle = false;
-	    sectionStyle = false;
-	    styleName = null;
-	    number = 0;
-	    basedOn = STYLENUMBER_NONE;
-	    nextStyle = STYLENUMBER_NONE;
-	    hidden = false;
-	}
-	
-	public void handleText(String text)
-	{
-	    if (styleName != null)
-		styleName = styleName + text;
-	    else
-		styleName = text;
-	}
+        public StyleDefiningDestination()
+        {
+            additive = false;
+            characterStyle = false;
+            sectionStyle = false;
+            styleName = null;
+            number = 0;
+            basedOn = STYLENUMBER_NONE;
+            nextStyle = STYLENUMBER_NONE;
+            hidden = false;
+        }
 
-	public void close() {
+        public void handleText(String text)
+        {
+            if (styleName != null)
+                styleName = styleName + text;
+            else
+                styleName = text;
+        }
+
+        public void close() {
             int semicolon = (styleName == null) ? 0 : styleName.indexOf(';');
-	    if (semicolon > 0)
-		styleName = styleName.substring(0, semicolon);
-	    definedStyles.put(Integer.valueOf(number), this);
-	    super.close();
-	}
+            if (semicolon > 0)
+                styleName = styleName.substring(0, semicolon);
+            definedStyles.put(Integer.valueOf(number), this);
+            super.close();
+        }
 
-	public boolean handleKeyword(String keyword)
-	{
-	    if (keyword.equals("additive")) {
-		additive = true;
-		return true;
-	    }
-	    if (keyword.equals("shidden")) {
-		hidden = true;
-		return true;
-	    }
-	    return super.handleKeyword(keyword);
-	}
+        public boolean handleKeyword(String keyword)
+        {
+            if (keyword.equals("additive")) {
+                additive = true;
+                return true;
+            }
+            if (keyword.equals("shidden")) {
+                hidden = true;
+                return true;
+            }
+            return super.handleKeyword(keyword);
+        }
 
-	public boolean handleKeyword(String keyword, int parameter)
-	{
-	    if (keyword.equals("s")) {
-		characterStyle = false;
-		sectionStyle = false;
-		number = parameter;
-	    } else if (keyword.equals("cs")) {
-		characterStyle = true;
-		sectionStyle = false;
-		number = parameter;
-	    } else if (keyword.equals("ds")) {
-		characterStyle = false;
-		sectionStyle = true;
-		number = parameter;
-	    } else if (keyword.equals("sbasedon")) {
-		basedOn = parameter;
-	    } else if (keyword.equals("snext")) {
-		nextStyle = parameter;
-	    } else {
-		return super.handleKeyword(keyword, parameter);
-	    }
-	    return true;
-	}
+        public boolean handleKeyword(String keyword, int parameter)
+        {
+            if (keyword.equals("s")) {
+                characterStyle = false;
+                sectionStyle = false;
+                number = parameter;
+            } else if (keyword.equals("cs")) {
+                characterStyle = true;
+                sectionStyle = false;
+                number = parameter;
+            } else if (keyword.equals("ds")) {
+                characterStyle = false;
+                sectionStyle = true;
+                number = parameter;
+            } else if (keyword.equals("sbasedon")) {
+                basedOn = parameter;
+            } else if (keyword.equals("snext")) {
+                nextStyle = parameter;
+            } else {
+                return super.handleKeyword(keyword, parameter);
+            }
+            return true;
+        }
 
-	public Style realize()
-	{
-	    Style basis = null;
-	    Style next = null;
-	    
-	    if (realizedStyle != null)
-		return realizedStyle;
+        public Style realize()
+        {
+            Style basis = null;
+            Style next = null;
 
-	    if (basedOn != STYLENUMBER_NONE) {
-		StyleDefiningDestination styleDest;
-		styleDest = (StyleDefiningDestination)definedStyles.get(Integer.valueOf(basedOn));
-		if (styleDest != null && styleDest != this) {
-		    basis = styleDest.realize();
-		}
-	    }
+            if (realizedStyle != null)
+                return realizedStyle;
 
-	    /* NB: Swing StyleContext doesn't allow distinct styles with
-	       the same name; RTF apparently does. This may confuse the
-	       user. */
-	    realizedStyle = target.addStyle(styleName, basis);
+            if (basedOn != STYLENUMBER_NONE) {
+                StyleDefiningDestination styleDest;
+                styleDest = (StyleDefiningDestination)definedStyles.get(Integer.valueOf(basedOn));
+                if (styleDest != null && styleDest != this) {
+                    basis = styleDest.realize();
+                }
+            }
 
-	    if (characterStyle) {
-		realizedStyle.addAttributes(currentTextAttributes());
-		realizedStyle.addAttribute(Constants.StyleType,
-					   Constants.STCharacter);
-	    } else if (sectionStyle) {
-		realizedStyle.addAttributes(currentSectionAttributes());
-	        realizedStyle.addAttribute(Constants.StyleType,
-					   Constants.STSection);
-	    } else { /* must be a paragraph style */
-		realizedStyle.addAttributes(currentParagraphAttributes());
-	        realizedStyle.addAttribute(Constants.StyleType,
-					   Constants.STParagraph);
-	    }
+            /* NB: Swing StyleContext doesn't allow distinct styles with
+               the same name; RTF apparently does. This may confuse the
+               user. */
+            realizedStyle = target.addStyle(styleName, basis);
 
-	    if (nextStyle != STYLENUMBER_NONE) {
-		StyleDefiningDestination styleDest;
-		styleDest = (StyleDefiningDestination)definedStyles.get(Integer.valueOf(nextStyle));
-		if (styleDest != null) {
-		    next = styleDest.realize();
-		}
-	    }
+            if (characterStyle) {
+                realizedStyle.addAttributes(currentTextAttributes());
+                realizedStyle.addAttribute(Constants.StyleType,
+                                           Constants.STCharacter);
+            } else if (sectionStyle) {
+                realizedStyle.addAttributes(currentSectionAttributes());
+                realizedStyle.addAttribute(Constants.StyleType,
+                                           Constants.STSection);
+            } else { /* must be a paragraph style */
+                realizedStyle.addAttributes(currentParagraphAttributes());
+                realizedStyle.addAttribute(Constants.StyleType,
+                                           Constants.STParagraph);
+            }
 
-	    if (next != null)
-		realizedStyle.addAttribute(Constants.StyleNext, next);
-	    realizedStyle.addAttribute(Constants.StyleAdditive,
-				       Boolean.valueOf(additive));
-	    realizedStyle.addAttribute(Constants.StyleHidden,
-				       Boolean.valueOf(hidden));
+            if (nextStyle != STYLENUMBER_NONE) {
+                StyleDefiningDestination styleDest;
+                styleDest = (StyleDefiningDestination)definedStyles.get(Integer.valueOf(nextStyle));
+                if (styleDest != null) {
+                    next = styleDest.realize();
+                }
+            }
 
-	    return realizedStyle;
-	}
+            if (next != null)
+                realizedStyle.addAttribute(Constants.StyleNext, next);
+            realizedStyle.addAttribute(Constants.StyleAdditive,
+                                       Boolean.valueOf(additive));
+            realizedStyle.addAttribute(Constants.StyleHidden,
+                                       Boolean.valueOf(hidden));
+
+            return realizedStyle;
+        }
     }
 }
 
@@ -1058,15 +1058,15 @@ abstract class AttributeTrackingDestination implements Destination
     /** This is the "sec" element of parserState, cached for
      *  more efficient use */
     MutableAttributeSet sectionAttributes;
-    
+
     public AttributeTrackingDestination()
     {
-	characterAttributes = rootCharacterAttributes();
-	parserState.put("chr", characterAttributes);
-	paragraphAttributes = rootParagraphAttributes();
-	parserState.put("pgf", paragraphAttributes);
-	sectionAttributes = rootSectionAttributes();
-	parserState.put("sec", sectionAttributes);
+        characterAttributes = rootCharacterAttributes();
+        parserState.put("chr", characterAttributes);
+        paragraphAttributes = rootParagraphAttributes();
+        parserState.put("pgf", paragraphAttributes);
+        sectionAttributes = rootSectionAttributes();
+        parserState.put("sec", sectionAttributes);
     }
 
     abstract public void handleText(String text);
@@ -1074,41 +1074,41 @@ abstract class AttributeTrackingDestination implements Destination
     public void handleBinaryBlob(byte[] data)
     {
         /* This should really be in TextHandlingDestination, but
-	 * since *nobody* does anything with binary blobs, this
-	 * is more convenient. */
-	warning("Unexpected binary data in RTF file.");
+         * since *nobody* does anything with binary blobs, this
+         * is more convenient. */
+        warning("Unexpected binary data in RTF file.");
     }
 
     public void begingroup()
     {
-	AttributeSet characterParent = currentTextAttributes();
-	AttributeSet paragraphParent = currentParagraphAttributes();
-	AttributeSet sectionParent = currentSectionAttributes();
+        AttributeSet characterParent = currentTextAttributes();
+        AttributeSet paragraphParent = currentParagraphAttributes();
+        AttributeSet sectionParent = currentSectionAttributes();
 
-	/* It would probably be more efficient to use the 
-	 * resolver property of the attributes set for
-	 * implementing rtf groups,
-	 * but that's needed for styles. */
+        /* It would probably be more efficient to use the
+         * resolver property of the attributes set for
+         * implementing rtf groups,
+         * but that's needed for styles. */
 
-	/* update the cached attribute dictionaries */
-	characterAttributes = new SimpleAttributeSet();
-	characterAttributes.addAttributes(characterParent);
-	parserState.put("chr", characterAttributes);
+        /* update the cached attribute dictionaries */
+        characterAttributes = new SimpleAttributeSet();
+        characterAttributes.addAttributes(characterParent);
+        parserState.put("chr", characterAttributes);
 
-	paragraphAttributes = new SimpleAttributeSet();
-	paragraphAttributes.addAttributes(paragraphParent);
-	parserState.put("pgf", paragraphAttributes);
+        paragraphAttributes = new SimpleAttributeSet();
+        paragraphAttributes.addAttributes(paragraphParent);
+        parserState.put("pgf", paragraphAttributes);
 
-	sectionAttributes = new SimpleAttributeSet();
-	sectionAttributes.addAttributes(sectionParent);
-	parserState.put("sec", sectionAttributes);
+        sectionAttributes = new SimpleAttributeSet();
+        sectionAttributes.addAttributes(sectionParent);
+        parserState.put("sec", sectionAttributes);
     }
 
     public void endgroup(Dictionary oldState)
     {
-	characterAttributes = (MutableAttributeSet)parserState.get("chr");
-	paragraphAttributes = (MutableAttributeSet)parserState.get("pgf");
-	sectionAttributes   = (MutableAttributeSet)parserState.get("sec");
+        characterAttributes = (MutableAttributeSet)parserState.get("chr");
+        paragraphAttributes = (MutableAttributeSet)parserState.get("pgf");
+        sectionAttributes   = (MutableAttributeSet)parserState.get("sec");
     }
 
     public void close()
@@ -1117,226 +1117,226 @@ abstract class AttributeTrackingDestination implements Destination
 
     public boolean handleKeyword(String keyword)
     {
-	if (keyword.equals("ulnone")) {
-	    return handleKeyword("ul", 0);
-	}
-	
-	{
-	    Object item = straightforwardAttributes.get(keyword);
-	    if (item != null) {
-	        RTFAttribute attr = (RTFAttribute)item;
-		boolean ok;
-		
-		switch(attr.domain()) {
-		  case RTFAttribute.D_CHARACTER:
-		    ok = attr.set(characterAttributes);
-		    break;
-		  case RTFAttribute.D_PARAGRAPH:
-		    ok = attr.set(paragraphAttributes);
-		    break;
-		  case RTFAttribute.D_SECTION:
-		    ok = attr.set(sectionAttributes);
-		    break;
-		  case RTFAttribute.D_META:
-		    mockery.backing = parserState;
-		    ok = attr.set(mockery);
-		    mockery.backing = null;
-		    break;
-		  case RTFAttribute.D_DOCUMENT:
-		    ok = attr.set(documentAttributes);
-		    break;
-		  default:
-		    /* should never happen */
-		    ok = false;
-		    break;
-		}
-		if (ok)
-		    return true;
-	    }
-	}
+        if (keyword.equals("ulnone")) {
+            return handleKeyword("ul", 0);
+        }
 
-	
-	if (keyword.equals("plain")) {
-	    resetCharacterAttributes();
-	    return true;
-	}
-	
-	if (keyword.equals("pard")) {
-	    resetParagraphAttributes();
-	    return true;
-	}
+        {
+            Object item = straightforwardAttributes.get(keyword);
+            if (item != null) {
+                RTFAttribute attr = (RTFAttribute)item;
+                boolean ok;
 
-	if (keyword.equals("sectd")) {
-	    resetSectionAttributes();
-	    return true;
-	}
+                switch(attr.domain()) {
+                  case RTFAttribute.D_CHARACTER:
+                    ok = attr.set(characterAttributes);
+                    break;
+                  case RTFAttribute.D_PARAGRAPH:
+                    ok = attr.set(paragraphAttributes);
+                    break;
+                  case RTFAttribute.D_SECTION:
+                    ok = attr.set(sectionAttributes);
+                    break;
+                  case RTFAttribute.D_META:
+                    mockery.backing = parserState;
+                    ok = attr.set(mockery);
+                    mockery.backing = null;
+                    break;
+                  case RTFAttribute.D_DOCUMENT:
+                    ok = attr.set(documentAttributes);
+                    break;
+                  default:
+                    /* should never happen */
+                    ok = false;
+                    break;
+                }
+                if (ok)
+                    return true;
+            }
+        }
 
-	return false;
+
+        if (keyword.equals("plain")) {
+            resetCharacterAttributes();
+            return true;
+        }
+
+        if (keyword.equals("pard")) {
+            resetParagraphAttributes();
+            return true;
+        }
+
+        if (keyword.equals("sectd")) {
+            resetSectionAttributes();
+            return true;
+        }
+
+        return false;
     }
 
     public boolean handleKeyword(String keyword, int parameter)
     {
-	boolean booleanParameter = (parameter != 0);
-	
-	if (keyword.equals("fc"))
-	    keyword = "cf"; /* whatEVER, dude. */
-	
-	if (keyword.equals("f")) {
-	    parserState.put(keyword, Integer.valueOf(parameter));
-	    return true;
-	}
-	if (keyword.equals("cf")) {
-	    parserState.put(keyword, Integer.valueOf(parameter));
-	    return true;
-	}
+        boolean booleanParameter = (parameter != 0);
 
-	{
-	    Object item = straightforwardAttributes.get(keyword);
-	    if (item != null) {
-	        RTFAttribute attr = (RTFAttribute)item;
-		boolean ok;
-		
-		switch(attr.domain()) {
-		  case RTFAttribute.D_CHARACTER:
-		    ok = attr.set(characterAttributes, parameter);
-		    break;
-		  case RTFAttribute.D_PARAGRAPH:
-		    ok = attr.set(paragraphAttributes, parameter);
-		    break;
-		  case RTFAttribute.D_SECTION:
-		    ok = attr.set(sectionAttributes, parameter);
-		    break;
-		  case RTFAttribute.D_META:
-		    mockery.backing = parserState;
-		    ok = attr.set(mockery, parameter);
-		    mockery.backing = null;
-		    break;
-		  case RTFAttribute.D_DOCUMENT:
-		    ok = attr.set(documentAttributes, parameter);
-		    break;
-		  default:
-		    /* should never happen */
-		    ok = false;
-		    break;
-		}
-		if (ok)
-		    return true;
-	    }
-	}
+        if (keyword.equals("fc"))
+            keyword = "cf"; /* whatEVER, dude. */
 
-	if (keyword.equals("fs")) {
-	    StyleConstants.setFontSize(characterAttributes, (parameter / 2));
-	    return true;
-	}
+        if (keyword.equals("f")) {
+            parserState.put(keyword, Integer.valueOf(parameter));
+            return true;
+        }
+        if (keyword.equals("cf")) {
+            parserState.put(keyword, Integer.valueOf(parameter));
+            return true;
+        }
 
-	/* TODO: superscript/subscript */
-	
-	if (keyword.equals("sl")) {
-	    if (parameter == 1000) {  /* magic value! */
-		characterAttributes.removeAttribute(StyleConstants.LineSpacing);
-	    } else {
-		/* TODO: The RTF sl attribute has special meaning if it's
-		   negative. Make sure that SwingText has the same special
-		   meaning, or find a way to imitate that. When SwingText
-		   handles this, also recognize the slmult keyword. */
-		StyleConstants.setLineSpacing(characterAttributes,
-					      parameter / 20f);
-	    }
-	    return true;
-	}
-	
-	/* TODO: Other kinds of underlining */
-	
-	if (keyword.equals("tx") || keyword.equals("tb")) {
-	    float tabPosition = parameter / 20f;
-	    int tabAlignment, tabLeader;
-	    Number item;
-	    
-	    tabAlignment = TabStop.ALIGN_LEFT;
-	    item = (Number)(parserState.get("tab_alignment"));
-	    if (item != null)
-		tabAlignment = item.intValue();
-	    tabLeader = TabStop.LEAD_NONE;
-	    item = (Number)(parserState.get("tab_leader"));
-	    if (item != null)
-		tabLeader = item.intValue();
-	    if (keyword.equals("tb"))
-		tabAlignment = TabStop.ALIGN_BAR;
-	    
-	    parserState.remove("tab_alignment");
-	    parserState.remove("tab_leader");
-	    
-	    TabStop newStop = new TabStop(tabPosition, tabAlignment, tabLeader);
-	    Dictionary tabs;
-	    Integer stopCount;
-	    
-	    tabs = (Dictionary)parserState.get("_tabs");
-	    if (tabs == null) {
-		tabs = new Hashtable();
-		parserState.put("_tabs", tabs);
-		stopCount = Integer.valueOf(1);
-	    } else {
-		stopCount = (Integer)tabs.get("stop count");
-		stopCount = Integer.valueOf(1 + stopCount.intValue());
-	    }
-	    tabs.put(stopCount, newStop);
-	    tabs.put("stop count", stopCount);
-	    parserState.remove("_tabs_immutable");
-	    
-	    return true;
-	}
+        {
+            Object item = straightforwardAttributes.get(keyword);
+            if (item != null) {
+                RTFAttribute attr = (RTFAttribute)item;
+                boolean ok;
 
-	if (keyword.equals("s") &&
-	    paragraphStyles != null) {
-	    parserState.put("paragraphStyle", paragraphStyles[parameter]);
-	    return true;
-	}
+                switch(attr.domain()) {
+                  case RTFAttribute.D_CHARACTER:
+                    ok = attr.set(characterAttributes, parameter);
+                    break;
+                  case RTFAttribute.D_PARAGRAPH:
+                    ok = attr.set(paragraphAttributes, parameter);
+                    break;
+                  case RTFAttribute.D_SECTION:
+                    ok = attr.set(sectionAttributes, parameter);
+                    break;
+                  case RTFAttribute.D_META:
+                    mockery.backing = parserState;
+                    ok = attr.set(mockery, parameter);
+                    mockery.backing = null;
+                    break;
+                  case RTFAttribute.D_DOCUMENT:
+                    ok = attr.set(documentAttributes, parameter);
+                    break;
+                  default:
+                    /* should never happen */
+                    ok = false;
+                    break;
+                }
+                if (ok)
+                    return true;
+            }
+        }
 
-	if (keyword.equals("cs") &&
-	    characterStyles != null) {
-	    parserState.put("characterStyle", characterStyles[parameter]);
-	    return true;
-	}
+        if (keyword.equals("fs")) {
+            StyleConstants.setFontSize(characterAttributes, (parameter / 2));
+            return true;
+        }
 
-	if (keyword.equals("ds") &&
-	    sectionStyles != null) {
-	    parserState.put("sectionStyle", sectionStyles[parameter]);
-	    return true;
-	}
+        /* TODO: superscript/subscript */
 
-	return false;
+        if (keyword.equals("sl")) {
+            if (parameter == 1000) {  /* magic value! */
+                characterAttributes.removeAttribute(StyleConstants.LineSpacing);
+            } else {
+                /* TODO: The RTF sl attribute has special meaning if it's
+                   negative. Make sure that SwingText has the same special
+                   meaning, or find a way to imitate that. When SwingText
+                   handles this, also recognize the slmult keyword. */
+                StyleConstants.setLineSpacing(characterAttributes,
+                                              parameter / 20f);
+            }
+            return true;
+        }
+
+        /* TODO: Other kinds of underlining */
+
+        if (keyword.equals("tx") || keyword.equals("tb")) {
+            float tabPosition = parameter / 20f;
+            int tabAlignment, tabLeader;
+            Number item;
+
+            tabAlignment = TabStop.ALIGN_LEFT;
+            item = (Number)(parserState.get("tab_alignment"));
+            if (item != null)
+                tabAlignment = item.intValue();
+            tabLeader = TabStop.LEAD_NONE;
+            item = (Number)(parserState.get("tab_leader"));
+            if (item != null)
+                tabLeader = item.intValue();
+            if (keyword.equals("tb"))
+                tabAlignment = TabStop.ALIGN_BAR;
+
+            parserState.remove("tab_alignment");
+            parserState.remove("tab_leader");
+
+            TabStop newStop = new TabStop(tabPosition, tabAlignment, tabLeader);
+            Dictionary tabs;
+            Integer stopCount;
+
+            tabs = (Dictionary)parserState.get("_tabs");
+            if (tabs == null) {
+                tabs = new Hashtable();
+                parserState.put("_tabs", tabs);
+                stopCount = Integer.valueOf(1);
+            } else {
+                stopCount = (Integer)tabs.get("stop count");
+                stopCount = Integer.valueOf(1 + stopCount.intValue());
+            }
+            tabs.put(stopCount, newStop);
+            tabs.put("stop count", stopCount);
+            parserState.remove("_tabs_immutable");
+
+            return true;
+        }
+
+        if (keyword.equals("s") &&
+            paragraphStyles != null) {
+            parserState.put("paragraphStyle", paragraphStyles[parameter]);
+            return true;
+        }
+
+        if (keyword.equals("cs") &&
+            characterStyles != null) {
+            parserState.put("characterStyle", characterStyles[parameter]);
+            return true;
+        }
+
+        if (keyword.equals("ds") &&
+            sectionStyles != null) {
+            parserState.put("sectionStyle", sectionStyles[parameter]);
+            return true;
+        }
+
+        return false;
     }
 
     /** Returns a new MutableAttributeSet containing the
      *  default character attributes */
     protected MutableAttributeSet rootCharacterAttributes()
     {
-	MutableAttributeSet set = new SimpleAttributeSet();
-	
-	/* TODO: default font */
-	
-	StyleConstants.setItalic(set, false);
-	StyleConstants.setBold(set, false);
-	StyleConstants.setUnderline(set, false);
-	StyleConstants.setForeground(set, defaultColor());
+        MutableAttributeSet set = new SimpleAttributeSet();
 
-	return set;
+        /* TODO: default font */
+
+        StyleConstants.setItalic(set, false);
+        StyleConstants.setBold(set, false);
+        StyleConstants.setUnderline(set, false);
+        StyleConstants.setForeground(set, defaultColor());
+
+        return set;
     }
 
     /** Returns a new MutableAttributeSet containing the
      *  default paragraph attributes */
     protected MutableAttributeSet rootParagraphAttributes()
     {
-	MutableAttributeSet set = new SimpleAttributeSet();
-	
-	StyleConstants.setLeftIndent(set, 0f);
-	StyleConstants.setRightIndent(set, 0f);
-	StyleConstants.setFirstLineIndent(set, 0f);
-	
-	/* TODO: what should this be, really? */
-	set.setResolveParent(target.getStyle(StyleContext.DEFAULT_STYLE));
-	
-	return set;
+        MutableAttributeSet set = new SimpleAttributeSet();
+
+        StyleConstants.setLeftIndent(set, 0f);
+        StyleConstants.setRightIndent(set, 0f);
+        StyleConstants.setFirstLineIndent(set, 0f);
+
+        /* TODO: what should this be, really? */
+        set.setResolveParent(target.getStyle(StyleContext.DEFAULT_STYLE));
+
+        return set;
     }
 
     /** Returns a new MutableAttributeSet containing the
@@ -1345,7 +1345,7 @@ abstract class AttributeTrackingDestination implements Destination
     {
         MutableAttributeSet set = new SimpleAttributeSet();
 
-	return set;
+        return set;
     }
 
     /**
@@ -1356,112 +1356,112 @@ abstract class AttributeTrackingDestination implements Destination
      */
     MutableAttributeSet currentTextAttributes()
     {
-	MutableAttributeSet attributes =
-	    new SimpleAttributeSet(characterAttributes);
-	Integer fontnum;
-	Integer stateItem;
+        MutableAttributeSet attributes =
+            new SimpleAttributeSet(characterAttributes);
+        Integer fontnum;
+        Integer stateItem;
 
-	/* figure out the font name */
-	/* TODO: catch exceptions for undefined attributes,
-	   bad font indices, etc.? (as it stands, it is the caller's
-	   job to clean up after corrupt RTF) */
-	fontnum = (Integer)parserState.get("f");
-	/* note setFontFamily() can not handle a null font */
-	String fontFamily;
-	if (fontnum != null)
-	    fontFamily = (String)fontTable.get(fontnum);
-	else
-	    fontFamily = null;
-	if (fontFamily != null)
-	    StyleConstants.setFontFamily(attributes, fontFamily);
-	else
-	    attributes.removeAttribute(StyleConstants.FontFamily);
-    
-	if (colorTable != null) {
-	    stateItem = (Integer)parserState.get("cf");
-	    if (stateItem != null) {
-		Color fg = colorTable[stateItem.intValue()];
-		StyleConstants.setForeground(attributes, fg);
-	    } else {
-		/* AttributeSet dies if you set a value to null */
-		attributes.removeAttribute(StyleConstants.Foreground);
-	    }
-	}
-	
-	if (colorTable != null) {
-	    stateItem = (Integer)parserState.get("cb");
-	    if (stateItem != null) {
-		Color bg = colorTable[stateItem.intValue()];
-		attributes.addAttribute(StyleConstants.Background,
-					bg);
-	    } else {
-		/* AttributeSet dies if you set a value to null */
-		attributes.removeAttribute(StyleConstants.Background);
-	    }
-	}
-	
-	Style characterStyle = (Style)parserState.get("characterStyle");
-	if (characterStyle != null)
-	    attributes.setResolveParent(characterStyle);
+        /* figure out the font name */
+        /* TODO: catch exceptions for undefined attributes,
+           bad font indices, etc.? (as it stands, it is the caller's
+           job to clean up after corrupt RTF) */
+        fontnum = (Integer)parserState.get("f");
+        /* note setFontFamily() can not handle a null font */
+        String fontFamily;
+        if (fontnum != null)
+            fontFamily = (String)fontTable.get(fontnum);
+        else
+            fontFamily = null;
+        if (fontFamily != null)
+            StyleConstants.setFontFamily(attributes, fontFamily);
+        else
+            attributes.removeAttribute(StyleConstants.FontFamily);
 
-	/* Other attributes are maintained directly in "attributes" */
-	
-	return attributes;
+        if (colorTable != null) {
+            stateItem = (Integer)parserState.get("cf");
+            if (stateItem != null) {
+                Color fg = colorTable[stateItem.intValue()];
+                StyleConstants.setForeground(attributes, fg);
+            } else {
+                /* AttributeSet dies if you set a value to null */
+                attributes.removeAttribute(StyleConstants.Foreground);
+            }
+        }
+
+        if (colorTable != null) {
+            stateItem = (Integer)parserState.get("cb");
+            if (stateItem != null) {
+                Color bg = colorTable[stateItem.intValue()];
+                attributes.addAttribute(StyleConstants.Background,
+                                        bg);
+            } else {
+                /* AttributeSet dies if you set a value to null */
+                attributes.removeAttribute(StyleConstants.Background);
+            }
+        }
+
+        Style characterStyle = (Style)parserState.get("characterStyle");
+        if (characterStyle != null)
+            attributes.setResolveParent(characterStyle);
+
+        /* Other attributes are maintained directly in "attributes" */
+
+        return attributes;
     }
 
     /**
      * Calculates the current paragraph attributes (with keys
      * as given in StyleConstants) from the current parser state.
      *
-     * @returns a newly created MutableAttributeSet. 
+     * @returns a newly created MutableAttributeSet.
      * @see StyleConstants
      */
     MutableAttributeSet currentParagraphAttributes()
     {
-	/* NB if there were a mutableCopy() method we should use it */
-	MutableAttributeSet bld = new SimpleAttributeSet(paragraphAttributes);
-	
-	Integer stateItem;
-	
-	/*** Tab stops ***/
-	TabStop tabs[];
-	
-	tabs = (TabStop[])parserState.get("_tabs_immutable");
-	if (tabs == null) {
-	    Dictionary workingTabs = (Dictionary)parserState.get("_tabs");
-	    if (workingTabs != null) {
-		int count = ((Integer)workingTabs.get("stop count")).intValue();
-		tabs = new TabStop[count];
-		for (int ix = 1; ix <= count; ix ++)
-		    tabs[ix-1] = (TabStop)workingTabs.get(Integer.valueOf(ix));
-		parserState.put("_tabs_immutable", tabs);
-	    }
-	}
-	if (tabs != null)
-	    bld.addAttribute(Constants.Tabs, tabs);
+        /* NB if there were a mutableCopy() method we should use it */
+        MutableAttributeSet bld = new SimpleAttributeSet(paragraphAttributes);
 
-	Style paragraphStyle = (Style)parserState.get("paragraphStyle");
-	if (paragraphStyle != null)
-	    bld.setResolveParent(paragraphStyle);
-	
-	return bld;
+        Integer stateItem;
+
+        /*** Tab stops ***/
+        TabStop tabs[];
+
+        tabs = (TabStop[])parserState.get("_tabs_immutable");
+        if (tabs == null) {
+            Dictionary workingTabs = (Dictionary)parserState.get("_tabs");
+            if (workingTabs != null) {
+                int count = ((Integer)workingTabs.get("stop count")).intValue();
+                tabs = new TabStop[count];
+                for (int ix = 1; ix <= count; ix ++)
+                    tabs[ix-1] = (TabStop)workingTabs.get(Integer.valueOf(ix));
+                parserState.put("_tabs_immutable", tabs);
+            }
+        }
+        if (tabs != null)
+            bld.addAttribute(Constants.Tabs, tabs);
+
+        Style paragraphStyle = (Style)parserState.get("paragraphStyle");
+        if (paragraphStyle != null)
+            bld.setResolveParent(paragraphStyle);
+
+        return bld;
     }
-    
+
     /**
      * Calculates the current section attributes
      * from the current parser state.
      *
-     * @returns a newly created MutableAttributeSet. 
+     * @returns a newly created MutableAttributeSet.
      */
     public AttributeSet currentSectionAttributes()
     {
-	MutableAttributeSet attributes = new SimpleAttributeSet(sectionAttributes);
+        MutableAttributeSet attributes = new SimpleAttributeSet(sectionAttributes);
 
-	Style sectionStyle = (Style)parserState.get("sectionStyle");
-	if (sectionStyle != null)
-	    attributes.setResolveParent(sectionStyle);
+        Style sectionStyle = (Style)parserState.get("sectionStyle");
+        if (sectionStyle != null)
+            attributes.setResolveParent(sectionStyle);
 
-	return attributes;
+        return attributes;
     }
 
     /** Resets the filter's internal notion of the current character
@@ -1469,21 +1469,21 @@ abstract class AttributeTrackingDestination implements Destination
      *  \plain keyword. */
     protected void resetCharacterAttributes()
     {
-	handleKeyword("f", 0);
-	handleKeyword("cf", 0);
-	
-	handleKeyword("fs", 24);  /* 12 pt. */
-	
-	Enumeration attributes = straightforwardAttributes.elements();
-	while(attributes.hasMoreElements()) {
-	    RTFAttribute attr = (RTFAttribute)attributes.nextElement();
-	    if (attr.domain() == RTFAttribute.D_CHARACTER) 
-	        attr.setDefault(characterAttributes);
-	}
-	
-	handleKeyword("sl", 1000);
+        handleKeyword("f", 0);
+        handleKeyword("cf", 0);
 
-	parserState.remove("characterStyle");
+        handleKeyword("fs", 24);  /* 12 pt. */
+
+        Enumeration attributes = straightforwardAttributes.elements();
+        while(attributes.hasMoreElements()) {
+            RTFAttribute attr = (RTFAttribute)attributes.nextElement();
+            if (attr.domain() == RTFAttribute.D_CHARACTER)
+                attr.setDefault(characterAttributes);
+        }
+
+        handleKeyword("sl", 1000);
+
+        parserState.remove("characterStyle");
     }
 
     /** Resets the filter's internal notion of the current paragraph's
@@ -1491,34 +1491,34 @@ abstract class AttributeTrackingDestination implements Destination
      *  \pard keyword. */
     protected void resetParagraphAttributes()
     {
-	parserState.remove("_tabs");
-	parserState.remove("_tabs_immutable");
-	parserState.remove("paragraphStyle");
-	
-	StyleConstants.setAlignment(paragraphAttributes, 
-				    StyleConstants.ALIGN_LEFT);
+        parserState.remove("_tabs");
+        parserState.remove("_tabs_immutable");
+        parserState.remove("paragraphStyle");
 
-	Enumeration attributes = straightforwardAttributes.elements();
-	while(attributes.hasMoreElements()) {
-	    RTFAttribute attr = (RTFAttribute)attributes.nextElement();
-	    if (attr.domain() == RTFAttribute.D_PARAGRAPH) 
-	        attr.setDefault(characterAttributes);
-	}
+        StyleConstants.setAlignment(paragraphAttributes,
+                                    StyleConstants.ALIGN_LEFT);
+
+        Enumeration attributes = straightforwardAttributes.elements();
+        while(attributes.hasMoreElements()) {
+            RTFAttribute attr = (RTFAttribute)attributes.nextElement();
+            if (attr.domain() == RTFAttribute.D_PARAGRAPH)
+                attr.setDefault(characterAttributes);
+        }
     }
-    
+
     /** Resets the filter's internal notion of the current section's
      *  attributes to their default values. Invoked to handle the
      *  \sectd keyword. */
     protected void resetSectionAttributes()
     {
-	Enumeration attributes = straightforwardAttributes.elements();
-	while(attributes.hasMoreElements()) {
-	    RTFAttribute attr = (RTFAttribute)attributes.nextElement();
-	    if (attr.domain() == RTFAttribute.D_SECTION) 
-	        attr.setDefault(characterAttributes);
-	}
+        Enumeration attributes = straightforwardAttributes.elements();
+        while(attributes.hasMoreElements()) {
+            RTFAttribute attr = (RTFAttribute)attributes.nextElement();
+            if (attr.domain() == RTFAttribute.D_SECTION)
+                attr.setDefault(characterAttributes);
+        }
 
-	parserState.remove("sectionStyle");
+        parserState.remove("sectionStyle");
     }
 }
 
@@ -1538,63 +1538,63 @@ abstract class TextHandlingDestination
     /** <code>true</code> if the reader has not just finished
      *  a paragraph; false upon startup */
     boolean inParagraph;
-    
+
     public TextHandlingDestination()
     {
         super();
-	inParagraph = false;
+        inParagraph = false;
     }
 
     public void handleText(String text)
     {
-	if (! inParagraph)
-	    beginParagraph();
-	
-	deliverText(text, currentTextAttributes());
+        if (! inParagraph)
+            beginParagraph();
+
+        deliverText(text, currentTextAttributes());
     }
 
     abstract void deliverText(String text, AttributeSet characterAttributes);
 
     public void close()
     {
-	if (inParagraph)
-	    endParagraph();
+        if (inParagraph)
+            endParagraph();
 
-	super.close();
+        super.close();
     }
 
     public boolean handleKeyword(String keyword)
     {
-	if (keyword.equals("\r") || keyword.equals("\n")) {
-	    keyword = "par";
-	}
-	
-	if (keyword.equals("par")) {
-//	    warnings.println("Ending paragraph.");
-	    endParagraph();
-	    return true;
-	}
+        if (keyword.equals("\r") || keyword.equals("\n")) {
+            keyword = "par";
+        }
 
-	if (keyword.equals("sect")) {
-//	    warnings.println("Ending section.");
-	    endSection();
-	    return true;
-	}
-	
-	return super.handleKeyword(keyword);
+        if (keyword.equals("par")) {
+//          warnings.println("Ending paragraph.");
+            endParagraph();
+            return true;
+        }
+
+        if (keyword.equals("sect")) {
+//          warnings.println("Ending section.");
+            endSection();
+            return true;
+        }
+
+        return super.handleKeyword(keyword);
     }
 
     protected void beginParagraph()
     {
-	inParagraph = true;
+        inParagraph = true;
     }
-    
+
     protected void endParagraph()
     {
-	AttributeSet pgfAttributes = currentParagraphAttributes();
-	AttributeSet chrAttributes = currentTextAttributes();
-	finishParagraph(pgfAttributes, chrAttributes);
-	inParagraph = false;
+        AttributeSet pgfAttributes = currentParagraphAttributes();
+        AttributeSet chrAttributes = currentTextAttributes();
+        finishParagraph(pgfAttributes, chrAttributes);
+        inParagraph = false;
     }
 
     abstract void finishParagraph(AttributeSet pgfA, AttributeSet chrA);
@@ -1613,37 +1613,35 @@ class DocumentDestination
 {
     public void deliverText(String text, AttributeSet characterAttributes)
     {
-	try {
-	    target.insertString(target.getLength(),
-				text,
-				currentTextAttributes());
-	} catch (BadLocationException ble) {
-	    /* This shouldn't be able to happen, of course */
-	    /* TODO is InternalError the correct error to throw? */
-	    throw new InternalError(ble.getMessage());
-	}
+        try {
+            target.insertString(target.getLength(),
+                                text,
+                                currentTextAttributes());
+        } catch (BadLocationException ble) {
+            /* This shouldn't be able to happen, of course */
+            /* TODO is InternalError the correct error to throw? */
+            throw new InternalError(ble.getMessage());
+        }
     }
 
     public void finishParagraph(AttributeSet pgfAttributes,
-				AttributeSet chrAttributes)
+                                AttributeSet chrAttributes)
     {
-	int pgfEndPosition = target.getLength();
-	try {
-	    target.insertString(pgfEndPosition, "\n", chrAttributes);
-	    target.setParagraphAttributes(pgfEndPosition, 1, pgfAttributes, true);
-	} catch (BadLocationException ble) {
-	    /* This shouldn't be able to happen, of course */
-	    /* TODO is InternalError the correct error to throw? */
-	    throw new InternalError(ble.getMessage());
-	}
+        int pgfEndPosition = target.getLength();
+        try {
+            target.insertString(pgfEndPosition, "\n", chrAttributes);
+            target.setParagraphAttributes(pgfEndPosition, 1, pgfAttributes, true);
+        } catch (BadLocationException ble) {
+            /* This shouldn't be able to happen, of course */
+            /* TODO is InternalError the correct error to throw? */
+            throw new InternalError(ble.getMessage());
+        }
     }
 
     public void endSection()
     {
         /* If we implemented sections, we'd end 'em here */
     }
-}    
-
 }
 
-
+}

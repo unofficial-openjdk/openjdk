@@ -28,7 +28,7 @@ package sun.awt.windows;
 public class WPageDialogPeer extends WPrintDialogPeer {
 
     WPageDialogPeer(WPageDialog target) {
-	super(target);
+        super(target);
     }
 
     /**
@@ -38,10 +38,10 @@ public class WPageDialogPeer extends WPrintDialogPeer {
     private native boolean _show();
 
     public void show() {
-	new Thread(new Runnable() {
-		public void run() {			    	    
-		    // Call pageSetup even with no printer installed, this
-		    // will display Windows error dialog and return false.
+        new Thread(new Runnable() {
+                public void run() {
+                    // Call pageSetup even with no printer installed, this
+                    // will display Windows error dialog and return false.
                     try {
                         ((WPrintDialog)target).setRetVal(_show());
                     } catch (Exception e) {
@@ -49,8 +49,8 @@ public class WPageDialogPeer extends WPrintDialogPeer {
                      // but if it is we need to trap it so the thread does
                      // not hide is called and the thread doesn't hang.
                     }
-		    ((WPrintDialog)target).hide();
-		}
-	    }).start();
-    }   
+                    ((WPrintDialog)target).hide();
+                }
+            }).start();
+    }
 }

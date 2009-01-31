@@ -25,7 +25,7 @@
 
 /*
   What is the dead simplest thing to do?
-  Extend AbstractMap and don't optimize for anything.  
+  Extend AbstractMap and don't optimize for anything.
 
   The only new api is 'getValues()' which returns the values struct as
   long as no map api has been called.  If any map api is called,
@@ -33,7 +33,7 @@
   possibility that the map has been changed.  This is easier than
   trying to create a map that only clears values if the map has been
   changed, or implementing the map API directly on top of the values
-  struct.  We can always do that later if need be.  
+  struct.  We can always do that later if need be.
 */
 
 package sun.font;
@@ -65,7 +65,7 @@ public final class AttributeMap extends AbstractMap<TextAttribute, Object> {
     public Set<Entry<TextAttribute, Object>> entrySet() {
         return delegate().entrySet();
     }
-    
+
     public Object put(TextAttribute key, Object value) {
         return delegate().put(key, value);
     }

@@ -40,7 +40,6 @@ import sun.misc.HexDumpEncoder;
  * but handshake data (alert/change_cipher_spec/handshake) will
  * be kept internally in the ByteArrayInputStream.
  *
- * @version %I%, %G%
  * @author Brad Wetmore
  */
 final class EngineInputRecord extends InputRecord {
@@ -61,16 +60,16 @@ final class EngineInputRecord extends InputRecord {
     private boolean internalData;
 
     EngineInputRecord(SSLEngineImpl engine) {
-	super();
-	this.engine = engine;
+        super();
+        this.engine = engine;
     }
 
     byte contentType() {
-	if (internalData) {
-	    return super.contentType();
-	} else {
-	    return ct_application_data;
-	}
+        if (internalData) {
+            return super.contentType();
+        } else {
+            return ct_application_data;
+        }
     }
 
     /*
@@ -81,100 +80,100 @@ final class EngineInputRecord extends InputRecord {
      */
     int bytesInCompletePacket(ByteBuffer buf) throws SSLException {
 
-	/*
-	 * SSLv2 length field is in bytes 0/1
-	 * SSLv3/TLS length field is in bytes 3/4
-	 */
-	if (buf.remaining() < 5) {
-	    return -1;
-	}
+        /*
+         * SSLv2 length field is in bytes 0/1
+         * SSLv3/TLS length field is in bytes 3/4
+         */
+        if (buf.remaining() < 5) {
+            return -1;
+        }
 
-	int pos = buf.position();
-	byte byteZero = buf.get(pos);
+        int pos = buf.position();
+        byte byteZero = buf.get(pos);
 
-	int len = 0;
+        int len = 0;
 
-	/*
-	 * If we have already verified previous packets, we can
-	 * ignore the verifications steps, and jump right to the
-	 * determination.  Otherwise, try one last hueristic to
-	 * see if it's SSL/TLS.
-	 */
-	if (formatVerified ||
-		(byteZero == ct_handshake) ||
-		(byteZero == ct_alert)) {
-	    /*
-	     * Last sanity check that it's not a wild record
-	     */
-	    ProtocolVersion recordVersion =
-		ProtocolVersion.valueOf(buf.get(pos + 1), buf.get(pos + 2));
+        /*
+         * If we have already verified previous packets, we can
+         * ignore the verifications steps, and jump right to the
+         * determination.  Otherwise, try one last hueristic to
+         * see if it's SSL/TLS.
+         */
+        if (formatVerified ||
+                (byteZero == ct_handshake) ||
+                (byteZero == ct_alert)) {
+            /*
+             * Last sanity check that it's not a wild record
+             */
+            ProtocolVersion recordVersion =
+                ProtocolVersion.valueOf(buf.get(pos + 1), buf.get(pos + 2));
 
-	    // Check if too old (currently not possible)
-	    // or if the major version does not match.
-	    // The actual version negotiation is in the handshaker classes
-	    if ((recordVersion.v < ProtocolVersion.MIN.v)
-		    || (recordVersion.major > ProtocolVersion.MAX.major)) {
-		throw new SSLException(
-		    "Unsupported record version " + recordVersion);
-	    }
+            // Check if too old (currently not possible)
+            // or if the major version does not match.
+            // The actual version negotiation is in the handshaker classes
+            if ((recordVersion.v < ProtocolVersion.MIN.v)
+                    || (recordVersion.major > ProtocolVersion.MAX.major)) {
+                throw new SSLException(
+                    "Unsupported record version " + recordVersion);
+            }
 
-	    /*
-	     * Reasonably sure this is a V3, disable further checks.
-	     * We can't do the same in the v2 check below, because
-	     * read still needs to parse/handle the v2 clientHello.
-	     */
-	    formatVerified = true;
+            /*
+             * Reasonably sure this is a V3, disable further checks.
+             * We can't do the same in the v2 check below, because
+             * read still needs to parse/handle the v2 clientHello.
+             */
+            formatVerified = true;
 
-	    /*
-	     * One of the SSLv3/TLS message types.
-	     */
-	    len = ((buf.get(pos + 3) & 0xff) << 8) +
-		(buf.get(pos + 4) & 0xff) + headerSize;
+            /*
+             * One of the SSLv3/TLS message types.
+             */
+            len = ((buf.get(pos + 3) & 0xff) << 8) +
+                (buf.get(pos + 4) & 0xff) + headerSize;
 
-	} else {
-	    /*
-	     * Must be SSLv2 or something unknown.
-	     * Check if it's short (2 bytes) or
-	     * long (3) header.
-	     *
-	     * Internals can warn about unsupported SSLv2
-	     */
-	    boolean isShort = ((byteZero & 0x80) != 0);
+        } else {
+            /*
+             * Must be SSLv2 or something unknown.
+             * Check if it's short (2 bytes) or
+             * long (3) header.
+             *
+             * Internals can warn about unsupported SSLv2
+             */
+            boolean isShort = ((byteZero & 0x80) != 0);
 
-	    if (isShort &&
-		    ((buf.get(pos + 2) == 1) || buf.get(pos + 2) == 4)) {
+            if (isShort &&
+                    ((buf.get(pos + 2) == 1) || buf.get(pos + 2) == 4)) {
 
-		ProtocolVersion recordVersion =
-		    ProtocolVersion.valueOf(buf.get(pos + 3), buf.get(pos + 4));
+                ProtocolVersion recordVersion =
+                    ProtocolVersion.valueOf(buf.get(pos + 3), buf.get(pos + 4));
 
-		// Check if too old (currently not possible)
-		// or if the major version does not match.
-		// The actual version negotiation is in the handshaker classes
-		if ((recordVersion.v < ProtocolVersion.MIN.v)
-			|| (recordVersion.major > ProtocolVersion.MAX.major)) {
+                // Check if too old (currently not possible)
+                // or if the major version does not match.
+                // The actual version negotiation is in the handshaker classes
+                if ((recordVersion.v < ProtocolVersion.MIN.v)
+                        || (recordVersion.major > ProtocolVersion.MAX.major)) {
 
-		    // if it's not SSLv2, we're out of here.
-		    if (recordVersion.v != ProtocolVersion.SSL20Hello.v) {
-			throw new SSLException(
-			    "Unsupported record version " + recordVersion);
-		    }
-		}
+                    // if it's not SSLv2, we're out of here.
+                    if (recordVersion.v != ProtocolVersion.SSL20Hello.v) {
+                        throw new SSLException(
+                            "Unsupported record version " + recordVersion);
+                    }
+                }
 
-		/*
-		 * Client or Server Hello
-		 */
-		int mask = (isShort ? 0x7f : 0x3f);
-		len = ((byteZero & mask) << 8) + (buf.get(pos + 1) & 0xff) +
-		    (isShort ? 2 : 3);
+                /*
+                 * Client or Server Hello
+                 */
+                int mask = (isShort ? 0x7f : 0x3f);
+                len = ((byteZero & mask) << 8) + (buf.get(pos + 1) & 0xff) +
+                    (isShort ? 2 : 3);
 
-	    } else {
-		// Gobblygook!
-		throw new SSLException(
-		    "Unrecognized SSL message, plaintext connection?");
-	    }
-	}
+            } else {
+                // Gobblygook!
+                throw new SSLException(
+                    "Unrecognized SSL message, plaintext connection?");
+            }
+        }
 
-	return len;
+        return len;
     }
 
     /*
@@ -190,56 +189,56 @@ final class EngineInputRecord extends InputRecord {
      *     limit = end of app data
      */
     boolean checkMAC(MAC signer, ByteBuffer bb) {
-	if (internalData) {
-	    return checkMAC(signer);
-	}
+        if (internalData) {
+            return checkMAC(signer);
+        }
 
-	int len = signer.MAClen();
-	if (len == 0) { // no mac
-	    return true;
-	}
+        int len = signer.MAClen();
+        if (len == 0) { // no mac
+            return true;
+        }
 
-	/*
-	 * Grab the original limit
-	 */
-	int lim = bb.limit();
+        /*
+         * Grab the original limit
+         */
+        int lim = bb.limit();
 
-	/*
-	 * Delineate the area to apply a MAC on.
-	 */
-	int macData = lim - len;
-	bb.limit(macData);
+        /*
+         * Delineate the area to apply a MAC on.
+         */
+        int macData = lim - len;
+        bb.limit(macData);
 
-	byte[] mac = signer.compute(contentType(), bb);
+        byte[] mac = signer.compute(contentType(), bb);
 
-	if (len != mac.length) {
-	    throw new RuntimeException("Internal MAC error");
-	}
+        if (len != mac.length) {
+            throw new RuntimeException("Internal MAC error");
+        }
 
-	/*
-	 * Delineate the MAC values, position was already set
-	 * by doing the compute above.
-	 *
-	 * We could zero the MAC area, but not much useful information
-	 * there anyway.
-	 */
-	bb.position(macData);
-	bb.limit(lim);
+        /*
+         * Delineate the MAC values, position was already set
+         * by doing the compute above.
+         *
+         * We could zero the MAC area, but not much useful information
+         * there anyway.
+         */
+        bb.position(macData);
+        bb.limit(lim);
 
-	try {
-	    for (int i = 0; i < len; i++) {
-		if (bb.get() != mac[i]) {  // No BB.equals(byte []); !
-		    return false;
-		}
-	    }
-	    return true;
-	} finally {
-	    /*
-	     * Position to the data.
-	     */
-	    bb.rewind();
-	    bb.limit(macData);
-	}
+        try {
+            for (int i = 0; i < len; i++) {
+                if (bb.get() != mac[i]) {  // No BB.equals(byte []); !
+                    return false;
+                }
+            }
+            return true;
+        } finally {
+            /*
+             * Position to the data.
+             */
+            bb.rewind();
+            bb.limit(macData);
+        }
     }
 
     /*
@@ -252,17 +251,17 @@ final class EngineInputRecord extends InputRecord {
      * process.
      */
     ByteBuffer decrypt(CipherBox box, ByteBuffer bb)
-	    throws BadPaddingException {
+            throws BadPaddingException {
 
-	if (internalData) {
-	    decrypt(box);
-	    return tmpBB;
-	}
+        if (internalData) {
+            decrypt(box);
+            return tmpBB;
+        }
 
-	box.decrypt(bb);
-	bb.rewind();
+        box.decrypt(bb);
+        bb.rewind();
 
-	return bb.slice();
+        return bb.slice();
     }
 
     /*
@@ -273,13 +272,13 @@ final class EngineInputRecord extends InputRecord {
      * generated.
      */
     void writeBuffer(OutputStream s, byte [] buf, int off, int len)
-	    throws IOException {
-	/*
-	 * Copy data out of buffer, it's ready to go.
-	 */
-	ByteBuffer netBB = (ByteBuffer)
-	    (ByteBuffer.allocate(len).put(buf, 0, len).flip());
-	engine.writer.putOutboundDataSync(netBB);
+            throws IOException {
+        /*
+         * Copy data out of buffer, it's ready to go.
+         */
+        ByteBuffer netBB = (ByteBuffer)
+            (ByteBuffer.allocate(len).put(buf, 0, len).flip());
+        engine.writer.putOutboundDataSync(netBB);
     }
 
     /*
@@ -292,70 +291,70 @@ final class EngineInputRecord extends InputRecord {
      * to the data to process.
      */
     ByteBuffer read(ByteBuffer srcBB) throws IOException {
-	/*
-	 * Could have a src == null/dst == null check here,
-	 * but that was already checked by SSLEngine.unwrap before
-	 * ever attempting to read.
-	 */
+        /*
+         * Could have a src == null/dst == null check here,
+         * but that was already checked by SSLEngine.unwrap before
+         * ever attempting to read.
+         */
 
-	/*
-	 * If we have anything besides application data,
-	 * or if we haven't even done the initial v2 verification,
-	 * we send this down to be processed by the underlying
-	 * internal cache.
-	 */
-	if (!formatVerified ||
-		(srcBB.get(srcBB.position()) != ct_application_data)) {
-	    internalData = true;
-	    read(new ByteBufferInputStream(srcBB), (OutputStream) null);
-	    return tmpBB;
-	}
+        /*
+         * If we have anything besides application data,
+         * or if we haven't even done the initial v2 verification,
+         * we send this down to be processed by the underlying
+         * internal cache.
+         */
+        if (!formatVerified ||
+                (srcBB.get(srcBB.position()) != ct_application_data)) {
+            internalData = true;
+            read(new ByteBufferInputStream(srcBB), (OutputStream) null);
+            return tmpBB;
+        }
 
-	internalData = false;
+        internalData = false;
 
-	int srcPos = srcBB.position();
-	int srcLim = srcBB.limit();
+        int srcPos = srcBB.position();
+        int srcLim = srcBB.limit();
 
-	ProtocolVersion recordVersion = ProtocolVersion.valueOf(
-		srcBB.get(srcPos + 1), srcBB.get(srcPos + 2));
-	// Check if too old (currently not possible)
-	// or if the major version does not match.
-	// The actual version negotiation is in the handshaker classes
-	if ((recordVersion.v < ProtocolVersion.MIN.v)
-		|| (recordVersion.major > ProtocolVersion.MAX.major)) {
-	    throw new SSLException(
-		"Unsupported record version " + recordVersion);
-	}
+        ProtocolVersion recordVersion = ProtocolVersion.valueOf(
+                srcBB.get(srcPos + 1), srcBB.get(srcPos + 2));
+        // Check if too old (currently not possible)
+        // or if the major version does not match.
+        // The actual version negotiation is in the handshaker classes
+        if ((recordVersion.v < ProtocolVersion.MIN.v)
+                || (recordVersion.major > ProtocolVersion.MAX.major)) {
+            throw new SSLException(
+                "Unsupported record version " + recordVersion);
+        }
 
-	/*
-	 * It's really application data.  How much to consume?
-	 * Jump over the header.
-	 */
-	int len = bytesInCompletePacket(srcBB);
-	assert(len > 0);
+        /*
+         * It's really application data.  How much to consume?
+         * Jump over the header.
+         */
+        int len = bytesInCompletePacket(srcBB);
+        assert(len > 0);
 
-	if (debug != null && Debug.isOn("packet")) {
-	    try {
-		HexDumpEncoder hd = new HexDumpEncoder();
-		srcBB.limit(srcPos + len);
-		ByteBuffer bb = srcBB.duplicate();  // Use copy of BB
+        if (debug != null && Debug.isOn("packet")) {
+            try {
+                HexDumpEncoder hd = new HexDumpEncoder();
+                srcBB.limit(srcPos + len);
+                ByteBuffer bb = srcBB.duplicate();  // Use copy of BB
 
-		System.out.println("[Raw read (bb)]: length = " + len);
-		hd.encodeBuffer(bb, System.out);
-	    } catch (IOException e) { }
-	}
+                System.out.println("[Raw read (bb)]: length = " + len);
+                hd.encodeBuffer(bb, System.out);
+            } catch (IOException e) { }
+        }
 
-	// Demarcate past header to end of packet.
-	srcBB.position(srcPos + headerSize);
-	srcBB.limit(srcPos + len);
+        // Demarcate past header to end of packet.
+        srcBB.position(srcPos + headerSize);
+        srcBB.limit(srcPos + len);
 
-	// Protect remainder of buffer, create slice to actually
-	// operate on.
-	ByteBuffer bb = srcBB.slice();
+        // Protect remainder of buffer, create slice to actually
+        // operate on.
+        ByteBuffer bb = srcBB.slice();
 
-	srcBB.position(srcBB.limit());
-	srcBB.limit(srcLim);
+        srcBB.position(srcBB.limit());
+        srcBB.limit(srcLim);
 
-	return bb;
+        return bb;
     }
 }

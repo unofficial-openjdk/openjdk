@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>For example, the class below generates unique identifiers local to each
  * thread.
- * A thread's id is assigned the first time it invokes <tt>ThreadId.get()</tt> 
+ * A thread's id is assigned the first time it invokes <tt>ThreadId.get()</tt>
  * and remains unchanged on subsequent calls.
  * <pre>
  * import java.util.concurrent.atomic.AtomicInteger;
@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *                 return nextId.getAndIncrement();
  *         }
  *     };
- * 
+ *
  *     // Returns the current thread's unique ID, assigning it if necessary
  *     public static int get() {
  *         return threadId.get();
@@ -64,10 +64,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * variable as long as the thread is alive and the <tt>ThreadLocal</tt>
  * instance is accessible; after a thread goes away, all of its copies of
  * thread-local instances are subject to garbage collection (unless other
- * references to these copies exist). 
+ * references to these copies exist).
  *
  * @author  Josh Bloch and Doug Lea
- * @version %I%, %G%
  * @since   1.2
  */
 public class ThreadLocal<T> {
@@ -87,8 +86,8 @@ public class ThreadLocal<T> {
      * The next hash code to be given out. Updated atomically. Starts at
      * zero.
      */
-    private static AtomicInteger nextHashCode = 
-	new AtomicInteger();
+    private static AtomicInteger nextHashCode =
+        new AtomicInteger();
 
     /**
      * The difference between successively generated hash codes - turns
@@ -101,7 +100,7 @@ public class ThreadLocal<T> {
      * Returns the next hash code.
      */
     private static int nextHashCode() {
-	return nextHashCode.getAndAdd(HASH_INCREMENT); 
+        return nextHashCode.getAndAdd(HASH_INCREMENT);
     }
 
     /**
@@ -170,7 +169,7 @@ public class ThreadLocal<T> {
 
     /**
      * Sets the current thread's copy of this thread-local variable
-     * to the specified value.  Most subclasses will have no need to 
+     * to the specified value.  Most subclasses will have no need to
      * override this method, relying solely on the {@link #initialValue}
      * method to set the values of thread-locals.
      *
@@ -426,8 +425,8 @@ public class ThreadLocal<T> {
             int i = key.threadLocalHashCode & (len-1);
 
             for (Entry e = tab[i];
-		 e != null;
-		 e = tab[i = nextIndex(i, len)]) {
+                 e != null;
+                 e = tab[i = nextIndex(i, len)]) {
                 ThreadLocal k = e.get();
 
                 if (k == key) {
@@ -455,8 +454,8 @@ public class ThreadLocal<T> {
             int len = tab.length;
             int i = key.threadLocalHashCode & (len-1);
             for (Entry e = tab[i];
-		 e != null;
-		 e = tab[i = nextIndex(i, len)]) {
+                 e != null;
+                 e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
                     e.clear();
                     expungeStaleEntry(i);
@@ -492,7 +491,7 @@ public class ThreadLocal<T> {
             // up refs in bunches (i.e., whenever the collector runs).
             int slotToExpunge = staleSlot;
             for (int i = prevIndex(staleSlot, len);
-		 (e = tab[i]) != null;
+                 (e = tab[i]) != null;
                  i = prevIndex(i, len))
                 if (e.get() == null)
                     slotToExpunge = i;
@@ -500,7 +499,7 @@ public class ThreadLocal<T> {
             // Find either the key or trailing null slot of run, whichever
             // occurs first
             for (int i = nextIndex(staleSlot, len);
-		 (e = tab[i]) != null;
+                 (e = tab[i]) != null;
                  i = nextIndex(i, len)) {
                 ThreadLocal k = e.get();
 
@@ -530,7 +529,7 @@ public class ThreadLocal<T> {
             }
 
             // If key not found, put new entry in stale slot
-            tab[staleSlot].value = null;   
+            tab[staleSlot].value = null;
             tab[staleSlot] = new Entry(key, value);
 
             // If there are any other stale entries in run, expunge them
@@ -554,7 +553,7 @@ public class ThreadLocal<T> {
             int len = tab.length;
 
             // expunge entry at staleSlot
-            tab[staleSlot].value = null;   
+            tab[staleSlot].value = null;
             tab[staleSlot] = null;
             size--;
 
@@ -562,7 +561,7 @@ public class ThreadLocal<T> {
             Entry e;
             int i;
             for (i = nextIndex(staleSlot, len);
-		 (e = tab[i]) != null;
+                 (e = tab[i]) != null;
                  i = nextIndex(i, len)) {
                 ThreadLocal k = e.get();
                 if (k == null) {

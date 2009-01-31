@@ -32,7 +32,7 @@
  */
 
 /*
- * NOTE: This expected result is hardcoded in this test and this test 
+ * NOTE: This expected result is hardcoded in this test and this test
  *       will be affected if the heap memory layout is changed in
  *       the future implementation.
  */
@@ -49,8 +49,8 @@ public class MemoryTest {
 
     // WARNING: if the number of pools changes in the future,
     // this test needs to be modified to handle different version of VMs.
-    
-    // Hotspot VM 1.5 expected to have 
+
+    // Hotspot VM 1.5 expected to have
     //   heap memory pools     = 3 (Eden, Survivor spaces, Old gen)
     //   non-heap memory pools = 2 (Perm gen, Code cache)
     //                           or 4 if Class Sharing is enabled.
@@ -106,10 +106,10 @@ public class MemoryTest {
 
     private static void checkMemoryManagers() throws Exception {
         List mgrs = ManagementFactory.getMemoryManagerMXBeans();
-        
+
         int numGCMgr = 0;
 
-        // Check the number of Memory Managers 
+        // Check the number of Memory Managers
         for (ListIterator iter = mgrs.listIterator(); iter.hasNext();) {
             MemoryManagerMXBean mgr = (MemoryManagerMXBean) iter.next();
             String[] poolNames = mgr.getMemoryPoolNames();
@@ -122,15 +122,15 @@ public class MemoryTest {
             if (mgr instanceof GarbageCollectorMXBean) {
                 numGCMgr++;
             } else {
-                for (int i = 0; i < poolNames.length; i++) {   
-                    checkPoolType(poolNames[i], MemoryType.NON_HEAP); 
+                for (int i = 0; i < poolNames.length; i++) {
+                    checkPoolType(poolNames[i], MemoryType.NON_HEAP);
                 }
             }
         }
 
         if (mgrs.size() != expectedNumMgrs) {
             throw new RuntimeException("TEST FAILED: " +
-                "Number of memory managers = " + mgrs.size() + 
+                "Number of memory managers = " + mgrs.size() +
                 " but expected = " + expectedNumMgrs);
         }
         if (numGCMgr != expectedNumGCMgrs) {
@@ -140,7 +140,7 @@ public class MemoryTest {
         }
     }
     private static List pools = ManagementFactory.getMemoryPoolMXBeans();
-    private static void checkPoolType(String name, MemoryType type) 
+    private static void checkPoolType(String name, MemoryType type)
         throws Exception {
         for (ListIterator iter = pools.listIterator(); iter.hasNext(); ) {
             MemoryPoolMXBean pool = (MemoryPoolMXBean) iter.next();

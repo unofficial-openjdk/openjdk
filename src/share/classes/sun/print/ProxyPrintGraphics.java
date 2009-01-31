@@ -36,36 +36,36 @@ import java.awt.PrintJob;
  */
 
 public class ProxyPrintGraphics extends ProxyGraphics
-			        implements PrintGraphics {
+                                implements PrintGraphics {
 
     private PrintJob printJob;
 
     public ProxyPrintGraphics(Graphics graphics, PrintJob thePrintJob) {
-	super(graphics);
-	printJob = thePrintJob;
+        super(graphics);
+        printJob = thePrintJob;
     }
 
     /**
-     * Returns the PrintJob object from which this PrintGraphics 
+     * Returns the PrintJob object from which this PrintGraphics
      * object originated.
      */
     public PrintJob getPrintJob() {
-	return printJob;
+        return printJob;
     }
 
    /**
-     * Creates a new <code>Graphics</code> object that is 
+     * Creates a new <code>Graphics</code> object that is
      * a copy of this <code>Graphics</code> object.
-     * @return     a new graphics context that is a copy of 
+     * @return     a new graphics context that is a copy of
      *                       this graphics context.
      */
     public Graphics create() {
-	return new ProxyPrintGraphics(getGraphics().create(), printJob);
+        return new ProxyPrintGraphics(getGraphics().create(), printJob);
     }
 
 
     /**
-     * Creates a new <code>Graphics</code> object based on this 
+     * Creates a new <code>Graphics</code> object based on this
      * <code>Graphics</code> object, but with a new translation and
      * clip area.
      * Refer to
@@ -99,5 +99,5 @@ public class ProxyPrintGraphics extends ProxyGraphics
     public void dispose() {
      super.dispose();
     }
-            
+
 }

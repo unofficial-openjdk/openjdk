@@ -63,7 +63,7 @@ public class Test {
 
    private static void deleteFile (String BASE_DIR, int pIndex, String pArchiveName) {
          java.io.File file = new java.io.File (BASE_DIR, pIndex + pArchiveName );
-     	 file.delete ();
+         file.delete ();
    }
 
    private static void copyFile( String pBaseDir, String pArchiveName, int pIndex) {

@@ -38,7 +38,7 @@ import com.sun.management.GcInfo;
 
 public class GcInfoCompositeType {
     private static int tested = 0;
-    
+
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         final ObjectName gcMXBeanPattern =
@@ -50,11 +50,11 @@ public class GcInfoCompositeType {
         System.gc();
         for (ObjectName n : names)
             tested += test(mbs, n);
-	if (tested == 0)
-	    throw new Exception("No MXBeans were tested");
+        if (tested == 0)
+            throw new Exception("No MXBeans were tested");
         System.out.println("Test passed");
     }
-    
+
     private static int test(MBeanServer mbs, ObjectName n) throws Exception {
         System.out.println("Testing " + n);
         MBeanInfo mbi = mbs.getMBeanInfo(n);
@@ -74,11 +74,11 @@ public class GcInfoCompositeType {
                 (CompositeData) mbs.getAttribute(n, "LastGcInfo");
         if (cd == null) {
             System.out.println("Value of attribute null");
-	    return 0;
+            return 0;
         } else
             return checkType(cd.getCompositeType());
     }
-    
+
     private static int checkType(CompositeType ct) throws Exception {
         Method[] methods = GcInfo.class.getMethods();
         Set<String> getters = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -86,7 +86,7 @@ public class GcInfoCompositeType {
             if (m.getName().startsWith("get") && m.getParameterTypes().length == 0)
                 getters.add(m.getName().substring(3));
         }
-	Set<String> items = new HashSet<String>(ct.keySet());
+        Set<String> items = new HashSet<String>(ct.keySet());
         System.out.println("Items at start: " + items);
 
         // Now check that all the getters have a corresponding item in the
@@ -94,24 +94,23 @@ public class GcInfoCompositeType {
         // getClass() inherited from Object should not be an item;
         // getCompositeType() inherited from CompositeData is not useful so
         // our hack removes it too.
-	// Also track which items had corresponding getters, to make sure
-	// there is at least one item which does not (GcThreadCount or
-	// another gc-type-specific item).
+        // Also track which items had corresponding getters, to make sure
+        // there is at least one item which does not (GcThreadCount or
+        // another gc-type-specific item).
         final String[] surplus = {"Class", "CompositeType"};
         for (String key : ct.keySet()) {
             if (getters.remove(key))
-		items.remove(key);
-	}
+                items.remove(key);
+        }
         if (!getters.equals(new HashSet<String>(Arrays.asList(surplus)))) {
             throw new Exception("Wrong getters: " + getters);
         }
-	if (items.isEmpty()) {
-	    System.out.println("No type-specific items");
-	    return 0;
-	} else {
-	    System.out.println("Type-specific items: " + items);
-	    return 1;
-	}
+        if (items.isEmpty()) {
+            System.out.println("No type-specific items");
+            return 0;
+        } else {
+            System.out.println("Type-specific items: " + items);
+            return 1;
+        }
     }
 }
-

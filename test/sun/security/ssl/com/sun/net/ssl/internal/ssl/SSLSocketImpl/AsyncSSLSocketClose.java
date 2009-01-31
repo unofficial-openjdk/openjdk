@@ -22,7 +22,7 @@
  */
 
 /*
- * @test %I% %E%
+ * @test
  * @bug 6447412
  * @summary Issue with socket.close() for ssl sockets when poweroff on
  *          other system
@@ -55,59 +55,59 @@ public class AsyncSSLSocketClose implements Runnable
         System.setProperty("javax.net.ssl.trustStore", trustFilename);
         System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	new AsyncSSLSocketClose();
+        new AsyncSSLSocketClose();
     }
 
     public AsyncSSLSocketClose() {
-	try {
-	    SSLServerSocketFactory sslssf =
-		(SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
-	    ss = (SSLServerSocket) sslssf.createServerSocket(0);
+        try {
+            SSLServerSocketFactory sslssf =
+                (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+            ss = (SSLServerSocket) sslssf.createServerSocket(0);
 
-	    SSLSocketFactory sslsf =
-		(SSLSocketFactory)SSLSocketFactory.getDefault();
+            SSLSocketFactory sslsf =
+                (SSLSocketFactory)SSLSocketFactory.getDefault();
             socket = (SSLSocket)sslsf.createSocket("localhost",
-							ss.getLocalPort());
-	    SSLSocket serverSoc = (SSLSocket) ss.accept();
-	    ss.close();
+                                                        ss.getLocalPort());
+            SSLSocket serverSoc = (SSLSocket) ss.accept();
+            ss.close();
 
-	    (new Thread(this)).start();
-	    serverSoc.startHandshake();
+            (new Thread(this)).start();
+            serverSoc.startHandshake();
 
-	    try {
-		Thread.sleep(5000);
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-	
-	    socket.setSoLinger(true, 10);
-	    System.out.println("Calling Socket.close");
-	    socket.close();
-	    System.out.println("ssl socket get closed");
-	    System.out.flush();
+            try {
+                Thread.sleep(5000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-	
+            socket.setSoLinger(true, 10);
+            System.out.println("Calling Socket.close");
+            socket.close();
+            System.out.println("ssl socket get closed");
+            System.out.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     // block in write
     public void run() {
-	try {
-	    byte[] ba = new byte[1024];
-	    for (int i=0; i<ba.length; i++)
-		ba[i] = 0x7A;
+        try {
+            byte[] ba = new byte[1024];
+            for (int i=0; i<ba.length; i++)
+                ba[i] = 0x7A;
 
-	    OutputStream os = socket.getOutputStream();
-	    int count = 0;
-	    while (true) {
-		count += ba.length;
-		System.out.println(count + " bytes to be written");
-	  	os.write(ba);
-		System.out.println(count + " bytes written");
-	    }
-	} catch (IOException e) {
+            OutputStream os = socket.getOutputStream();
+            int count = 0;
+            while (true) {
+                count += ba.length;
+                System.out.println(count + " bytes to be written");
+                os.write(ba);
+                System.out.println(count + " bytes written");
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

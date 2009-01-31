@@ -29,9 +29,8 @@ import java.util.*;
 
 /**
  * <code>LogStream</code> provides a mechanism for logging errors that are
- * of possible interest to those monitoring a system.  
+ * of possible interest to those monitoring a system.
  *
- * @version %I%, %G%
  * @author  Ann Wollrath (lots of code stolen from Ken Arnold)
  * @since   JDK1.1
  * @deprecated no replacement
@@ -40,9 +39,9 @@ import java.util.*;
 public class LogStream extends PrintStream {
 
     /** table mapping known log names to log stream objects */
-    private static Hashtable	known = new Hashtable(5);
+    private static Hashtable    known = new Hashtable(5);
     /** default output stream for new logs */
-    private static PrintStream	defaultStream = System.err;
+    private static PrintStream  defaultStream = System.err;
 
     /** log name for this log */
     private String name;
@@ -71,11 +70,11 @@ public class LogStream extends PrintStream {
     @Deprecated
     private LogStream(String name, OutputStream out)
     {
-	super(new ByteArrayOutputStream());
-	bufOut = (ByteArrayOutputStream) super.out;
+        super(new ByteArrayOutputStream());
+        bufOut = (ByteArrayOutputStream) super.out;
 
-	this.name = name;
-	setOutputStream(out);
+        this.name = name;
+        setOutputStream(out);
     }
 
     /**
@@ -89,15 +88,15 @@ public class LogStream extends PrintStream {
      */
     @Deprecated
     public static LogStream log(String name) {
-	LogStream stream;
-	synchronized (known) {
-	    stream = (LogStream)known.get(name);
-	    if (stream == null) {
-		stream = new LogStream(name, defaultStream);
-	    }
-	    known.put(name, stream);
-	}
-	return stream;
+        LogStream stream;
+        synchronized (known) {
+            stream = (LogStream)known.get(name);
+            if (stream == null) {
+                stream = new LogStream(name, defaultStream);
+            }
+            known.put(name, stream);
+        }
+        return stream;
     }
 
     /**
@@ -109,7 +108,7 @@ public class LogStream extends PrintStream {
      */
     @Deprecated
     public static synchronized PrintStream getDefaultStream() {
-	return defaultStream;
+        return defaultStream;
     }
 
     /**
@@ -121,7 +120,7 @@ public class LogStream extends PrintStream {
      */
     @Deprecated
     public static synchronized void setDefaultStream(PrintStream newDefault) {
-	defaultStream = newDefault;
+        defaultStream = newDefault;
     }
 
     /**
@@ -134,9 +133,9 @@ public class LogStream extends PrintStream {
     @Deprecated
     public synchronized OutputStream getOutputStream()
     {
-	return logOut;
+        return logOut;
     }
-    
+
     /**
      * Set the stream to which output from this log is sent.
      * @param out new output stream for this log
@@ -147,12 +146,12 @@ public class LogStream extends PrintStream {
     @Deprecated
     public synchronized void setOutputStream(OutputStream out)
     {
-	logOut = out;
-	// Maintain an OutputStreamWriter with default CharToByteConvertor
-	// (just like new PrintStream) for writing log message prefixes.
-	logWriter = new OutputStreamWriter(logOut);
+        logOut = out;
+        // Maintain an OutputStreamWriter with default CharToByteConvertor
+        // (just like new PrintStream) for writing log message prefixes.
+        logWriter = new OutputStreamWriter(logOut);
     }
-    
+
     /**
      * Write a byte of data to the stream.  If it is not a newline, then
      * the byte is appended to the internal buffer.  If it is a newline,
@@ -164,40 +163,40 @@ public class LogStream extends PrintStream {
     @Deprecated
     public void write(int b)
     {
-	if (b == '\n') {
-	    // synchronize on "this" first to avoid potential deadlock
-	    synchronized (this) {
-		synchronized (logOut) {
-		    // construct prefix for log messages:
-		    buffer.setLength(0);;
-		    buffer.append(		// date/time stamp...
-			(new Date()).toString());
-		    buffer.append(':');
-		    buffer.append(name);	// ...log name...
-		    buffer.append(':');
-		    buffer.append(Thread.currentThread().getName());
-		    buffer.append(':');	// ...and thread name
+        if (b == '\n') {
+            // synchronize on "this" first to avoid potential deadlock
+            synchronized (this) {
+                synchronized (logOut) {
+                    // construct prefix for log messages:
+                    buffer.setLength(0);;
+                    buffer.append(              // date/time stamp...
+                        (new Date()).toString());
+                    buffer.append(':');
+                    buffer.append(name);        // ...log name...
+                    buffer.append(':');
+                    buffer.append(Thread.currentThread().getName());
+                    buffer.append(':'); // ...and thread name
 
-		    try {
-			// write prefix through to underlying byte stream
-			logWriter.write(buffer.toString());
-			logWriter.flush();
+                    try {
+                        // write prefix through to underlying byte stream
+                        logWriter.write(buffer.toString());
+                        logWriter.flush();
 
-			// finally, write the already converted bytes of
-			// the log message
-			bufOut.writeTo(logOut);
-			logOut.write(b);
-			logOut.flush();
-		    } catch (IOException e) {
-			setError();
-		    } finally {
-			bufOut.reset();
-		    }
-		}
-	    }
-	}
-	else
-	    super.write(b);
+                        // finally, write the already converted bytes of
+                        // the log message
+                        bufOut.writeTo(logOut);
+                        logOut.write(b);
+                        logOut.flush();
+                    } catch (IOException e) {
+                        setError();
+                    } finally {
+                        bufOut.reset();
+                    }
+                }
+            }
+        }
+        else
+            super.write(b);
     }
 
     /**
@@ -208,10 +207,10 @@ public class LogStream extends PrintStream {
     @Deprecated
     public void write(byte b[], int off, int len)
     {
-	if (len < 0)
-	    throw new ArrayIndexOutOfBoundsException(len);
-	for (int i = 0; i < len; ++ i)
-	    write(b[off + i]);
+        if (len < 0)
+            throw new ArrayIndexOutOfBoundsException(len);
+        for (int i = 0; i < len; ++ i)
+            write(b[off + i]);
     }
 
     /**
@@ -223,7 +222,7 @@ public class LogStream extends PrintStream {
     @Deprecated
     public String toString()
     {
-	return name;
+        return name;
     }
 
     /** log level constant (no logging). */
@@ -244,23 +243,23 @@ public class LogStream extends PrintStream {
     @Deprecated
     public static int parseLevel(String s)
     {
-	if ((s == null) || (s.length() < 1))
-	    return -1;
+        if ((s == null) || (s.length() < 1))
+            return -1;
 
-	try {
-	    return Integer.parseInt(s);
-	} catch (NumberFormatException e) {
-	}
-	if (s.length() < 1)
-	    return -1;
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+        }
+        if (s.length() < 1)
+            return -1;
 
-	if ("SILENT".startsWith(s.toUpperCase()))
-	    return SILENT;
-	else if ("BRIEF".startsWith(s.toUpperCase()))
-	    return BRIEF;
-	else if ("VERBOSE".startsWith(s.toUpperCase()))
-	    return VERBOSE;
+        if ("SILENT".startsWith(s.toUpperCase()))
+            return SILENT;
+        else if ("BRIEF".startsWith(s.toUpperCase()))
+            return BRIEF;
+        else if ("VERBOSE".startsWith(s.toUpperCase()))
+            return VERBOSE;
 
-	return -1;
+        return -1;
     }
 }

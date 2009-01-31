@@ -68,18 +68,18 @@ public class MXBeanSupport extends MBeanSupport<ConvertingMethod> {
 
     @Override
     MBeanIntrospector<ConvertingMethod> getMBeanIntrospector() {
-	return MXBeanIntrospector.getInstance();
+        return MXBeanIntrospector.getInstance();
     }
 
     @Override
     Object getCookie() {
-	return mxbeanLookup;
+        return mxbeanLookup;
     }
 
-    static Class<?> findMXBeanInterface(Class<?> resourceClass) 
+    static Class<?> findMXBeanInterface(Class<?> resourceClass)
         throws IllegalArgumentException {
-	if (resourceClass == null)
-	    throw new IllegalArgumentException("Null resource class");
+        if (resourceClass == null)
+            throw new IllegalArgumentException("Null resource class");
         final Set<Class<?>> intfs = transitiveInterfaces(resourceClass);
         final Set<Class<?>> candidates = newSet();
         for (Class<?> intf : intfs) {
@@ -155,7 +155,7 @@ public class MXBeanSupport extends MBeanSupport<ConvertingMethod> {
         if (name == null)
             throw new IllegalArgumentException("Null object name");
         // eventually we could have some logic to supply a default name
-        
+
         synchronized (lock) {
             if (this.objectName != null) {
                 final String msg =

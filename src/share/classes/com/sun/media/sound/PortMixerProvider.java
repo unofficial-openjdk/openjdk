@@ -34,7 +34,6 @@ import javax.sound.sampled.spi.MixerProvider;
 /**
  * Port provider.
  *
- * @version %I% %E%
  * @author Florian Bomers
  */
 public class PortMixerProvider extends MixerProvider {
@@ -55,8 +54,8 @@ public class PortMixerProvider extends MixerProvider {
     // STATIC
 
     static {
-	// initialize
-	Platform.initialize();
+        // initialize
+        Platform.initialize();
     }
 
 
@@ -67,57 +66,57 @@ public class PortMixerProvider extends MixerProvider {
      * Required public no-arg constructor.
      */
     public PortMixerProvider() {
-	//if (Printer.trace) Printer.trace("PortMixerProvider: constructor");
-	if (Platform.isPortsEnabled()) {
-	    init();
-	} else {
-	    infos = new PortMixerInfo[0];
-	    devices = new PortMixer[0];
-	}
+        //if (Printer.trace) Printer.trace("PortMixerProvider: constructor");
+        if (Platform.isPortsEnabled()) {
+            init();
+        } else {
+            infos = new PortMixerInfo[0];
+            devices = new PortMixer[0];
+        }
     }
 
     private static synchronized void init() {
-	// get the number of input devices
-	int numDevices = nGetNumDevices();
+        // get the number of input devices
+        int numDevices = nGetNumDevices();
 
-	if (infos == null || infos.length != numDevices) {
-	    if (Printer.trace) Printer.trace("PortMixerProvider: init()");
-	    // initialize the arrays
-	    infos = new PortMixerInfo[numDevices];
-	    devices = new PortMixer[numDevices];
+        if (infos == null || infos.length != numDevices) {
+            if (Printer.trace) Printer.trace("PortMixerProvider: init()");
+            // initialize the arrays
+            infos = new PortMixerInfo[numDevices];
+            devices = new PortMixer[numDevices];
 
-	    // fill in the info objects now.
-	    // we'll fill in the device objects as they're requested.
-	    for (int i = 0; i < infos.length; i++) {
-		infos[i] = nNewPortMixerInfo(i);
-	    }
-	    if (Printer.trace) Printer.trace("PortMixerProvider: init(): found numDevices: " + numDevices);
-	}
+            // fill in the info objects now.
+            // we'll fill in the device objects as they're requested.
+            for (int i = 0; i < infos.length; i++) {
+                infos[i] = nNewPortMixerInfo(i);
+            }
+            if (Printer.trace) Printer.trace("PortMixerProvider: init(): found numDevices: " + numDevices);
+        }
     }
 
     public Mixer.Info[] getMixerInfo() {
-	Mixer.Info[] localArray = new Mixer.Info[infos.length];
-	System.arraycopy(infos, 0, localArray, 0, infos.length);
-	return localArray;
+        Mixer.Info[] localArray = new Mixer.Info[infos.length];
+        System.arraycopy(infos, 0, localArray, 0, infos.length);
+        return localArray;
     }
 
 
     public Mixer getMixer(Mixer.Info info) {
-	for (int i = 0; i < infos.length; i++) {
-	    if (infos[i].equals(info)) {
-		return getDevice(infos[i]);
-	    }
-	}
-	throw new IllegalArgumentException("Mixer " + info.toString() + " not supported by this provider.");
+        for (int i = 0; i < infos.length; i++) {
+            if (infos[i].equals(info)) {
+                return getDevice(infos[i]);
+            }
+        }
+        throw new IllegalArgumentException("Mixer " + info.toString() + " not supported by this provider.");
     }
 
 
     private Mixer getDevice(PortMixerInfo info) {
-	int index = info.getIndex();
-	if (devices[index] == null) {
-	    devices[index] = new PortMixer(info);
-	}
-	return devices[index];
+        int index = info.getIndex();
+        if (devices[index] == null) {
+            devices[index] = new PortMixer(info);
+        }
+        return devices[index];
     }
 
     // INNER CLASSES
@@ -129,16 +128,16 @@ public class PortMixerProvider extends MixerProvider {
      * This constructor is called from native.
      */
     static class PortMixerInfo extends Mixer.Info {
-	private int index;
+        private int index;
 
-	private PortMixerInfo(int index, String name, String vendor, String description, String version) {
-	    super("Port " + name, vendor, description, version);
-	    this.index = index;
-	}
+        private PortMixerInfo(int index, String name, String vendor, String description, String version) {
+            super("Port " + name, vendor, description, version);
+            this.index = index;
+        }
 
-	int getIndex() {
-	    return index;
-	}
+        int getIndex() {
+            return index;
+        }
 
     } // class PortMixerInfo
 

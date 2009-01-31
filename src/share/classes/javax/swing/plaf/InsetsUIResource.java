@@ -42,11 +42,10 @@ import javax.swing.plaf.UIResource;
  * of all JavaBeans<sup><font size="-2">TM</font></sup>
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
- * 
+ *
  * @see javax.swing.plaf.UIResource
- * @version %I% %G%
  * @author Amy Fowler
- * 
+ *
  */
 public class InsetsUIResource extends Insets implements UIResource
 {

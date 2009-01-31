@@ -29,7 +29,6 @@ package sun.jvmstat.monitor;
  * Interface for Monitoring LongInstrument objects.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  * @see sun.jvmstat.instrument.LongInstrument
  */

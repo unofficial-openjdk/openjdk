@@ -28,10 +28,9 @@ import java.io.*;
 
 /**
  * OutputStream that sends the output to the underlying stream using chunked
- * encoding as specified in RFC 2068. 
+ * encoding as specified in RFC 2068.
  *
  * @author  Alan Bateman
- * @version %I% %G%
  */
 public class ChunkedOutputStream extends PrintStream {
 
@@ -63,14 +62,14 @@ public class ChunkedOutputStream extends PrintStream {
     }
 
     public ChunkedOutputStream(PrintStream o, int size) {
-	super(o);
+        super(o);
 
         out = o;
 
-	if (size <= 0) {
-	    size = DEFAULT_CHUNK_SIZE;
-	}
-        /* Adjust the size to cater for the chunk header - eg: if the 
+        if (size <= 0) {
+            size = DEFAULT_CHUNK_SIZE;
+        }
+        /* Adjust the size to cater for the chunk header - eg: if the
          * preferred chunk size is 1k this means the chunk size should
          * be 1019 bytes (differs by 5 from preferred size because of
          * 3 bytes for chunk size in hex and CRLF).
@@ -102,7 +101,7 @@ public class ChunkedOutputStream extends PrintStream {
      * then the method returns.
      */
     private void flush(byte[] buf, boolean flushAll) {
-	flush (buf, flushAll, 0);
+        flush (buf, flushAll, 0);
     }
 
     private void flush(byte[] buf, boolean flushAll, int offset) {
@@ -113,48 +112,48 @@ public class ChunkedOutputStream extends PrintStream {
                 if (!flushAll) {
                     break;
                 }
-                chunkSize = count; 
+                chunkSize = count;
             } else {
                 chunkSize = preferredChunkSize;
             }
-	
-	    byte[] bytes = null;
-	    try {	
-	        bytes = (Integer.toHexString(chunkSize)).getBytes("US-ASCII");
-	    } catch (java.io.UnsupportedEncodingException e) {
-		//This should never happen.
-		throw new InternalError(e.getMessage());
-	    }
+
+            byte[] bytes = null;
+            try {
+                bytes = (Integer.toHexString(chunkSize)).getBytes("US-ASCII");
+            } catch (java.io.UnsupportedEncodingException e) {
+                //This should never happen.
+                throw new InternalError(e.getMessage());
+            }
 
             out.write(bytes, 0, bytes.length);
             out.write((byte)'\r');
-            out.write((byte)'\n');          
+            out.write((byte)'\n');
             if (chunkSize > 0) {
                 out.write(buf, offset, chunkSize);
                 out.write((byte)'\r');
                 out.write((byte)'\n');
             }
             out.flush();
-	    if (checkError()) {
-		break;
-	    }
+            if (checkError()) {
+                break;
+            }
             if (chunkSize > 0) {
                 count -= chunkSize;
-		offset += chunkSize;
+                offset += chunkSize;
             }
         } while (count > 0);
-	
-	if (!checkError() && count > 0) {
-	    System.arraycopy(buf, offset, this.buf, 0, count);
-	}
+
+        if (!checkError() && count > 0) {
+            System.arraycopy(buf, offset, this.buf, 0, count);
+        }
     }
 
     public boolean checkError() {
-	return out.checkError();
+        return out.checkError();
     }
 
-    /* 
-     * Check if we have enough data for a chunk and if so flush to the 
+    /*
+     * Check if we have enough data for a chunk and if so flush to the
      * underlying output stream.
      */
     private void checkFlush() {
@@ -178,18 +177,18 @@ public class ChunkedOutputStream extends PrintStream {
             return;
         }
 
-	if (len > MAX_BUF_SIZE) {
-	    /* first finish the current chunk */
-	    int l = preferredChunkSize - count;
-	    if (l > 0) {
+        if (len > MAX_BUF_SIZE) {
+            /* first finish the current chunk */
+            int l = preferredChunkSize - count;
+            if (l > 0) {
                 System.arraycopy(b, off, buf, count, l);
-	        count = preferredChunkSize;
-	        flush(buf, false); 
-	    }
-	    count = len - l;
-	    /* Now write the rest of the data */
-	    flush (b, false, l+off);
-	} else {
+                count = preferredChunkSize;
+                flush(buf, false);
+            }
+            count = len - l;
+            /* Now write the rest of the data */
+            flush (b, false, l+off);
+        } else {
             int newcount = count + len;
 
             if (newcount > buf.length) {
@@ -200,7 +199,7 @@ public class ChunkedOutputStream extends PrintStream {
             System.arraycopy(b, off, buf, count, len);
             count = newcount;
             checkFlush();
-	}
+        }
     }
 
     public synchronized void write(int b) {

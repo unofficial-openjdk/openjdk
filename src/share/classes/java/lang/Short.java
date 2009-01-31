@@ -37,7 +37,6 @@ package java.lang;
  *
  * @author  Nakul Saraiya
  * @author  Joseph D. Darcy
- * @version %I%, %G%
  * @see     java.lang.Number
  * @since   JDK1.1
  */
@@ -59,7 +58,7 @@ public final class Short extends Number implements Comparable<Short> {
      * The {@code Class} instance representing the primitive type
      * {@code short}.
      */
-    public static final Class<Short>	TYPE = (Class<Short>) Class.getPrimitiveClass("short");
+    public static final Class<Short>    TYPE = (Class<Short>) Class.getPrimitiveClass("short");
 
     /**
      * Returns a new {@code String} object representing the
@@ -70,7 +69,7 @@ public final class Short extends Number implements Comparable<Short> {
      * @see java.lang.Integer#toString(int)
      */
     public static String toString(short s) {
-	return Integer.toString((int)s, 10);
+        return Integer.toString((int)s, 10);
     }
 
     /**
@@ -82,7 +81,7 @@ public final class Short extends Number implements Comparable<Short> {
      * character may be an ASCII minus sign {@code '-'}
      * (<code>'&#92;u002D'</code>) to indicate a negative value.  The
      * resulting {@code short} value is returned.
-     * 
+     *
      * <p>An exception of type {@code NumberFormatException} is
      * thrown if any of the following situations occurs:
      * <ul>
@@ -102,21 +101,21 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code short}.
      * </ul>
      *
-     * @param s		the {@code String} containing the 
-     *			{@code short} representation to be parsed
-     * @param radix	the radix to be used while parsing {@code s}
-     * @return     	the {@code short} represented by the string 
-     *             	argument in the specified radix.
-     * @throws	        NumberFormatException If the {@code String} 
-     *			does not contain a parsable {@code short}.
+     * @param s         the {@code String} containing the
+     *                  {@code short} representation to be parsed
+     * @param radix     the radix to be used while parsing {@code s}
+     * @return          the {@code short} represented by the string
+     *                  argument in the specified radix.
+     * @throws          NumberFormatException If the {@code String}
+     *                  does not contain a parsable {@code short}.
      */
     public static short parseShort(String s, int radix)
-	throws NumberFormatException {
-	int i = Integer.parseInt(s, radix);
-	if (i < MIN_VALUE || i > MAX_VALUE)
-	    throw new NumberFormatException(
+        throws NumberFormatException {
+        int i = Integer.parseInt(s, radix);
+        if (i < MIN_VALUE || i > MAX_VALUE)
+            throw new NumberFormatException(
                 "Value out of range. Value:\"" + s + "\" Radix:" + radix);
-	return (short)i;
+        return (short)i;
     }
 
     /**
@@ -129,15 +128,15 @@ public final class Short extends Number implements Comparable<Short> {
      * arguments to the {@link #parseShort(java.lang.String, int)}
      * method.
      *
-     * @param s	a {@code String} containing the {@code short}
+     * @param s a {@code String} containing the {@code short}
      *          representation to be parsed
-     * @return  the {@code short} value represented by the 
+     * @return  the {@code short} value represented by the
      *          argument in decimal.
-     * @throws	NumberFormatException If the string does not
-     *		contain a parsable {@code short}.
+     * @throws  NumberFormatException If the string does not
+     *          contain a parsable {@code short}.
      */
     public static short parseShort(String s) throws NumberFormatException {
-	return parseShort(s, 10);
+        return parseShort(s, 10);
     }
 
     /**
@@ -157,17 +156,17 @@ public final class Short extends Number implements Comparable<Short> {
      *  {@code new Short(Short.parseShort(s, radix))}
      * </blockquote>
      *
-     * @param s		the string to be parsed
-     * @param radix 	the radix to be used in interpreting {@code s}
-     * @return          a {@code Short} object holding the value 
-     *			represented by the string argument in the 
-     *			specified radix.
-     * @throws	        NumberFormatException If the {@code String} does
-     *			not contain a parsable {@code short}.
+     * @param s         the string to be parsed
+     * @param radix     the radix to be used in interpreting {@code s}
+     * @return          a {@code Short} object holding the value
+     *                  represented by the string argument in the
+     *                  specified radix.
+     * @throws          NumberFormatException If the {@code String} does
+     *                  not contain a parsable {@code short}.
      */
     public static Short valueOf(String s, int radix)
-	throws NumberFormatException {
-	return new Short(parseShort(s, radix));
+        throws NumberFormatException {
+        return new Short(parseShort(s, radix));
     }
 
     /**
@@ -177,7 +176,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code short}, exactly as if the argument were given to
      * the {@link #parseShort(java.lang.String)} method. The result is
      * a {@code Short} object that represents the
-     * {@code short} value specified by the string.  
+     * {@code short} value specified by the string.
      *
      * <p>In other words, this method returns a {@code Short} object
      * equal to the value of:
@@ -186,25 +185,25 @@ public final class Short extends Number implements Comparable<Short> {
      *  {@code new Short(Short.parseShort(s))}
      * </blockquote>
      *
-     * @param s	the string to be parsed
+     * @param s the string to be parsed
      * @return  a {@code Short} object holding the value
-     * 		represented by the string argument
-     * @throws	NumberFormatException If the {@code String} does
-     *		not contain a parsable {@code short}.
+     *          represented by the string argument
+     * @throws  NumberFormatException If the {@code String} does
+     *          not contain a parsable {@code short}.
      */
     public static Short valueOf(String s) throws NumberFormatException {
-	return valueOf(s, 10);
+        return valueOf(s, 10);
     }
 
     private static class ShortCache {
-	private ShortCache(){}
+        private ShortCache(){}
 
-	static final Short cache[] = new Short[-(-128) + 127 + 1];
+        static final Short cache[] = new Short[-(-128) + 127 + 1];
 
-	static {
-	    for(int i = 0; i < cache.length; i++)
-		cache[i] = new Short((short)(i - 128));
-	}
+        static {
+            for(int i = 0; i < cache.length; i++)
+                cache[i] = new Short((short)(i - 128));
+        }
     }
 
     /**
@@ -221,11 +220,11 @@ public final class Short extends Number implements Comparable<Short> {
      * @since  1.5
      */
     public static Short valueOf(short s) {
-	final int offset = 128;
-	int sAsInt = s;
-	if (sAsInt >= -128 && sAsInt <= 127) { // must cache 
-	    return ShortCache.cache[sAsInt + offset];
-	}
+        final int offset = 128;
+        int sAsInt = s;
+        if (sAsInt >= -128 && sAsInt <= 127) { // must cache
+            return ShortCache.cache[sAsInt + offset];
+        }
         return new Short(s);
     }
 
@@ -249,10 +248,10 @@ public final class Short extends Number implements Comparable<Short> {
      * </blockquote>
      *
      * <i>DecimalNumeral</i>, <i>HexDigits</i>, and <i>OctalDigits</i>
-     * are defined in <a href="http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#48282">&sect;3.10.1</a> 
-     * of the <a href="http://java.sun.com/docs/books/jls/html/">Java 
+     * are defined in <a href="http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#48282">&sect;3.10.1</a>
+     * of the <a href="http://java.sun.com/docs/books/jls/html/">Java
      * Language Specification</a>.
-     * 
+     *
      * <p>The sequence of characters following an (optional) negative
      * sign and/or radix specifier ("{@code 0x}", "{@code 0X}",
      * "{@code #}", or leading zero) is parsed as by the {@code
@@ -264,18 +263,18 @@ public final class Short extends Number implements Comparable<Short> {
      * permitted in the {@code String}.
      *
      * @param     nm the {@code String} to decode.
-     * @return	  a {@code Short} object holding the {@code short}
-     * 		  value represented by {@code nm}
+     * @return    a {@code Short} object holding the {@code short}
+     *            value represented by {@code nm}
      * @throws    NumberFormatException  if the {@code String} does not
      *            contain a parsable {@code short}.
      * @see java.lang.Short#parseShort(java.lang.String, int)
      */
     public static Short decode(String nm) throws NumberFormatException {
-	int i = Integer.decode(nm);
-	if (i < MIN_VALUE || i > MAX_VALUE)
-	    throw new NumberFormatException(
-		    "Value " + i + " out of range from input " + nm);
-	return (short)i;
+        int i = Integer.decode(nm);
+        if (i < MIN_VALUE || i > MAX_VALUE)
+            throw new NumberFormatException(
+                    "Value " + i + " out of range from input " + nm);
+        return (short)i;
     }
 
     /**
@@ -289,11 +288,11 @@ public final class Short extends Number implements Comparable<Short> {
      * Constructs a newly allocated {@code Short} object that
      * represents the specified {@code short} value.
      *
-     * @param value	the value to be represented by the 
-     *			{@code Short}.
+     * @param value     the value to be represented by the
+     *                  {@code Short}.
      */
     public Short(short value) {
-	this.value = value;
+        this.value = value;
     }
 
     /**
@@ -303,14 +302,14 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code short} value in exactly the manner used by the
      * {@code parseShort} method for radix 10.
      *
-     * @param s	the {@code String} to be converted to a 
-     *		{@code Short}
-     * @throws	NumberFormatException If the {@code String} 
-     *		does not contain a parsable {@code short}.
+     * @param s the {@code String} to be converted to a
+     *          {@code Short}
+     * @throws  NumberFormatException If the {@code String}
+     *          does not contain a parsable {@code short}.
      * @see     java.lang.Short#parseShort(java.lang.String, int)
      */
     public Short(String s) throws NumberFormatException {
-	this.value = parseShort(s, 10);
+        this.value = parseShort(s, 10);
     }
 
     /**
@@ -318,7 +317,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code byte}.
      */
     public byte byteValue() {
-	return (byte)value;
+        return (byte)value;
     }
 
     /**
@@ -326,7 +325,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code short}.
      */
     public short shortValue() {
-	return value;
+        return value;
     }
 
     /**
@@ -334,7 +333,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code int}.
      */
     public int intValue() {
-	return (int)value;
+        return (int)value;
     }
 
     /**
@@ -342,7 +341,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code long}.
      */
     public long longValue() {
-	return (long)value;
+        return (long)value;
     }
 
     /**
@@ -350,7 +349,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code float}.
      */
     public float floatValue() {
-	return (float)value;
+        return (float)value;
     }
 
     /**
@@ -358,7 +357,7 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code double}.
      */
     public double doubleValue() {
-	return (double)value;
+        return (double)value;
     }
 
     /**
@@ -372,14 +371,14 @@ public final class Short extends Number implements Comparable<Short> {
      *          base&nbsp;10.
      */
     public String toString() {
-	return String.valueOf((int)value);
+        return String.valueOf((int)value);
     }
 
     /**
      * Returns a hash code for this {@code Short}.
      */
     public int hashCode() {
-	return (int)value;
+        return (int)value;
     }
 
     /**
@@ -388,32 +387,32 @@ public final class Short extends Number implements Comparable<Short> {
      * {@code null} and is a {@code Short} object that
      * contains the same {@code short} value as this object.
      *
-     * @param obj	the object to compare with
-     * @return 		{@code true} if the objects are the same;
-     *			{@code false} otherwise.
+     * @param obj       the object to compare with
+     * @return          {@code true} if the objects are the same;
+     *                  {@code false} otherwise.
      */
     public boolean equals(Object obj) {
-	if (obj instanceof Short) {
-	    return value == ((Short)obj).shortValue();
-	}
-	return false;
+        if (obj instanceof Short) {
+            return value == ((Short)obj).shortValue();
+        }
+        return false;
     }
 
     /**
      * Compares two {@code Short} objects numerically.
      *
      * @param   anotherShort   the {@code Short} to be compared.
-     * @return	the value {@code 0} if this {@code Short} is
-     * 		equal to the argument {@code Short}; a value less than
-     * 		{@code 0} if this {@code Short} is numerically less
-     * 		than the argument {@code Short}; and a value greater than
-     * 		 {@code 0} if this {@code Short} is numerically
-     * 		 greater than the argument {@code Short} (signed
-     * 		 comparison).
+     * @return  the value {@code 0} if this {@code Short} is
+     *          equal to the argument {@code Short}; a value less than
+     *          {@code 0} if this {@code Short} is numerically less
+     *          than the argument {@code Short}; and a value greater than
+     *           {@code 0} if this {@code Short} is numerically
+     *           greater than the argument {@code Short} (signed
+     *           comparison).
      * @since   1.2
      */
     public int compareTo(Short anotherShort) {
-	return this.value - anotherShort.value;
+        return this.value - anotherShort.value;
     }
 
     /**
@@ -422,7 +421,7 @@ public final class Short extends Number implements Comparable<Short> {
      * @since 1.5
      */
     public static final int SIZE = 16;
- 
+
     /**
      * Returns the value obtained by reversing the order of the bytes in the
      * two's complement representation of the specified {@code short} value.

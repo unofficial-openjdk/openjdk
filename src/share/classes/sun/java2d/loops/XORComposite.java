@@ -46,10 +46,10 @@ public final class XORComposite implements Composite {
     public XORComposite(Color xorColor, SurfaceData sd) {
         this.xorColor = xorColor;
 
-	SurfaceType sType = sd.getSurfaceType();
+        SurfaceType sType = sd.getSurfaceType();
 
-	this.xorPixel = sd.pixelFor(xorColor.getRGB());
-	this.alphaMask = sType.getAlphaMask();
+        this.xorPixel = sd.pixelFor(xorColor.getRGB());
+        this.alphaMask = sType.getAlphaMask();
     }
 
     public Color getXorColor() {
@@ -65,7 +65,7 @@ public final class XORComposite implements Composite {
     }
 
     public CompositeContext createContext(ColorModel srcColorModel,
-					  ColorModel dstColorModel,
+                                          ColorModel dstColorModel,
                                           RenderingHints hints) {
         return new SunCompositeContext(this, srcColorModel, dstColorModel);
     }

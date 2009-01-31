@@ -43,7 +43,6 @@ import javax.swing.JFrame;
  *
  * @since 1.3
  *
- * @version 	%I%, %G%
  * @author JavaSoft International
  */
 
@@ -76,14 +75,14 @@ public interface InputMethodContext extends InputMethodRequests {
      * Also, when the window is opened using setVisible(true), the input context will prevent
      * deactivate and activate calls to the input method that might otherwise be caused.
      * <p>
-     * Input methods must call {@link java.awt.Window#dispose() Window.dispose} on the 
+     * Input methods must call {@link java.awt.Window#dispose() Window.dispose} on the
      * returned input method window when it is no longer needed.
      * <p>
      * @param title the title to be displayed in the window's title bar,
      *              if there is such a title bar.
      *              A <code>null</code> value is treated as an empty string, "".
      * @param attachToInputContext whether this window should share the input context
-     *              that corresponds to this input method context 
+     *              that corresponds to this input method context
      * @return a window with special characteristics for use by input methods
      * @exception HeadlessException if <code>GraphicsEnvironment.isHeadless
      *              </code> returns <code>true</code>
@@ -108,14 +107,14 @@ public interface InputMethodContext extends InputMethodRequests {
      * Also, when the window is opened using setVisible(true), the input context will prevent
      * deactivate and activate calls to the input method that might otherwise be caused.
      * <p>
-     * Input methods must call {@link java.awt.Window#dispose() Window.dispose} on the 
+     * Input methods must call {@link java.awt.Window#dispose() Window.dispose} on the
      * returned input method window when it is no longer needed.
      * <p>
      * @param title the title to be displayed in the window's title bar,
      *              if there is such a title bar.
      *              A <code>null</code> value is treated as an empty string, "".
      * @param attachToInputContext whether this window should share the input context
-     *              that corresponds to this input method context 
+     *              that corresponds to this input method context
      * @return a JFrame with special characteristics for use by input methods
      * @exception HeadlessException if <code>GraphicsEnvironment.isHeadless
      *              </code> returns <code>true</code>

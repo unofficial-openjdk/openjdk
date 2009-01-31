@@ -30,23 +30,23 @@ package java.awt.event;
  * The methods in this class are empty. This class exists as
  * convenience for creating listener objects.
  * <P>
- * Mouse events let you track when a mouse is pressed, released, clicked, 
- * moved, dragged, when it enters a component, when it exits and 
+ * Mouse events let you track when a mouse is pressed, released, clicked,
+ * moved, dragged, when it enters a component, when it exits and
  * when a mouse wheel is moved.
  * <P>
  * Extend this class to create a {@code MouseEvent}
- * (including drag and motion events) or/and {@code MouseWheelEvent} 
- * listener and override the methods for the events of interest. (If you implement the 
+ * (including drag and motion events) or/and {@code MouseWheelEvent}
+ * listener and override the methods for the events of interest. (If you implement the
  * {@code MouseListener},
- * {@code MouseMotionListener} 
+ * {@code MouseMotionListener}
  * interface, you have to define all of
  * the methods in it. This abstract class defines null methods for them
  * all, so you can only have to define methods for events you care about.)
  * <P>
- * Create a listener object using the extended class and then register it with 
- * a component using the component's {@code addMouseListener} 
+ * Create a listener object using the extended class and then register it with
+ * a component using the component's {@code addMouseListener}
  * {@code addMouseMotionListener}, {@code addMouseWheelListener}
- * methods. 
+ * methods.
  * The relevant method in the listener object is invoked  and the {@code MouseEvent}
  * or {@code MouseWheelEvent}  is passed to it in following cases:
  * <p><ul>
@@ -57,10 +57,9 @@ package java.awt.event;
  *
  * @author Carl Quinn
  * @author Andrei Dmitriev
- * @version 1.8 08/02/97
  *
- * @see MouseEvent 
- * @see MouseWheelEvent 
+ * @see MouseEvent
+ * @see MouseWheelEvent
  * @see MouseListener
  * @see MouseMotionListener
  * @see MouseWheelListener

@@ -23,7 +23,7 @@
 
 /* @test
    @bug 4090992
-   @summary Make sure StreamTokenizer.nextToken works correctly when 
+   @summary Make sure StreamTokenizer.nextToken works correctly when
             the underlying stream is reset after the end of stream has
             reached.
    */
@@ -33,9 +33,9 @@ import java.io.*;
 public class Reset {
 
     public static void main (String argv[]) throws Exception {
-        
-	StringBufferInputStream in = new StringBufferInputStream("[ #");
-	StreamTokenizer scan = new StreamTokenizer(in);
+
+        StringBufferInputStream in = new StringBufferInputStream("[ #");
+        StreamTokenizer scan = new StreamTokenizer(in);
 
         scan.nextToken();
         scan.nextToken();

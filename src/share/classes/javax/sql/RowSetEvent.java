@@ -26,7 +26,7 @@
 package javax.sql;
 
 /**
- * An <code>Event</code> object generated when an event occurs to a 
+ * An <code>Event</code> object generated when an event occurs to a
  * <code>RowSet</code> object.  A <code>RowSetEvent</code> object is
  * generated when a single row in a rowset is changed, the whole rowset
  * is changed, or the rowset cursor moves.
@@ -35,10 +35,10 @@ package javax.sql;
  * <code>RowSetListener</code> methods will be sent to all registered
  * listeners to notify them of the event.  An <code>Event</code> object
  * is supplied to the <code>RowSetListener</code> method so that the
- * listener can use it to find out which <code>RowSet</code> object is 
+ * listener can use it to find out which <code>RowSet</code> object is
  * the source of the event.
- * 
- * @since 1.4 
+ *
+ * @since 1.4
  */
 
 public class RowSetEvent extends java.util.EventObject {
@@ -51,16 +51,12 @@ public class RowSetEvent extends java.util.EventObject {
    *        whose cursor has moved
    * @throws IllegalArgumentException if <code>source</code> is null.
    */
-  public RowSetEvent(RowSet source) 
+  public RowSetEvent(RowSet source)
     { super(source); }
 
   /**
    * Private serial version unique ID to ensure serialization
    * compatibility.
    */
-  static final long serialVersionUID = -1875450876546332005L;  
+  static final long serialVersionUID = -1875450876546332005L;
 }
-
-
-
-

@@ -34,37 +34,37 @@ import java.util.Enumeration;
 
 public class VerifySignedJar {
     private static void Unreached (Object o)
-	throws Exception
+        throws Exception
     {
-	// Should never get here
-	throw new Exception ("Expected exception was not thrown");
+        // Should never get here
+        throw new Exception ("Expected exception was not thrown");
     }
 
     public static void main(String[] args) throws Exception {
         File f = new File(System.getProperty("test.src", "."), "thawjar.jar");
         JarFile jf = new JarFile(f);
-	try {
-	    // Read entries via Enumeration
-	    for (Enumeration e = jf.entries(); e.hasMoreElements();)
-	        jf.getInputStream((ZipEntry) e.nextElement());
+        try {
+            // Read entries via Enumeration
+            for (Enumeration e = jf.entries(); e.hasMoreElements();)
+                jf.getInputStream((ZipEntry) e.nextElement());
 
-	    // Read entry by name
-	    ZipEntry ze = jf.getEntry("getprop.class");
-	    JarEntry je = jf.getJarEntry("getprop.class");
+            // Read entry by name
+            ZipEntry ze = jf.getEntry("getprop.class");
+            JarEntry je = jf.getJarEntry("getprop.class");
 
-	    // Make sure we throw NPE on null objects
-	    try { Unreached (jf.getEntry(null)); }
-	    catch (NullPointerException e) {}
+            // Make sure we throw NPE on null objects
+            try { Unreached (jf.getEntry(null)); }
+            catch (NullPointerException e) {}
 
-	    try { Unreached (jf.getJarEntry(null)); }
-	    catch (NullPointerException e) {}
+            try { Unreached (jf.getJarEntry(null)); }
+            catch (NullPointerException e) {}
 
-	    try { Unreached (jf.getInputStream(null)); }
-	    catch (NullPointerException e) {}
+            try { Unreached (jf.getInputStream(null)); }
+            catch (NullPointerException e) {}
 
-	} catch (SecurityException se) {
-	    throw new Exception("Got SecurityException when verifying signed " +
-		"jar:" + se);
-	}
+        } catch (SecurityException se) {
+            throw new Exception("Got SecurityException when verifying signed " +
+                "jar:" + se);
+        }
     }
 }

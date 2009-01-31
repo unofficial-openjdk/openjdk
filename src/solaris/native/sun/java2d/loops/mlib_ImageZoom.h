@@ -27,7 +27,6 @@
 #define __MLIB_IMAGEZOOM_H
 
 #ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageZoom.h	1.56	03/02/05 SMI"
 #endif /* __SUNPRO_C */
 
 #include <mlib_types.h>

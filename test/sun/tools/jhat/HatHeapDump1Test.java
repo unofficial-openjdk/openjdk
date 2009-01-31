@@ -34,19 +34,18 @@
 public class HatHeapDump1Test {
 
     public static void main(String args[]) throws Exception {
-	HatRun run;
+        HatRun run;
 
-	/* Run hprof and jhat */
-	run = new HatRun("heap=dump", "");
-	run.runit(args[0]);
+        /* Run hprof and jhat */
+        run = new HatRun("heap=dump", "");
+        run.runit(args[0]);
 
-	/* Make sure patterns in output look ok */
-	if (run.output_contains("ERROR")) {
-	    throw new RuntimeException("Test failed - ERROR seen in output");
-	}
+        /* Make sure patterns in output look ok */
+        if (run.output_contains("ERROR")) {
+            throw new RuntimeException("Test failed - ERROR seen in output");
+        }
 
-	/* Must be a pass. */
-	System.out.println("Test passed - cleanly terminated");
+        /* Must be a pass. */
+        System.out.println("Test passed - cleanly terminated");
     }
 }
-

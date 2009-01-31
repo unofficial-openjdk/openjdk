@@ -50,11 +50,11 @@ class JDIEventSource extends Thread {
      */
     JDIEventSource(Session session) {
         super("JDI Event Set Dispatcher");
-	this.session = session;
+        this.session = session;
         this.runtime = session.runtime;
         this.queue = session.vm.eventQueue();
     }
-    
+
     public void run() {
         try {
             runLoop();
@@ -70,8 +70,8 @@ class JDIEventSource extends Thread {
         do {
             EventSet jdiEventSet = queue.remove();
             es = AbstractEventSet.toSpecificEventSet(jdiEventSet);
-	    session.interrupted = es.suspendedAll();
-	    dispatchEventSet(es);
+            session.interrupted = es.suspendedAll();
+            dispatchEventSet(es);
         } while(!(es instanceof VMDisconnectEventSet));
     }
 
@@ -82,7 +82,7 @@ class JDIEventSource extends Thread {
                 boolean interrupted = es.suspendedAll();
                 es.notify(firstListener);
                 boolean wantInterrupt = JDIEventSource.this.wantInterrupt;
-                for (Iterator it = session.runtime.jdiListeners.iterator(); 
+                for (Iterator it = session.runtime.jdiListeners.iterator();
                      it.hasNext(); ) {
                     JDIListener jl = (JDIListener)it.next();
                     es.notify(jl);

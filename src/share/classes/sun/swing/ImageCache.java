@@ -38,20 +38,20 @@ public class ImageCache {
     private int maxCount;
     // The entries.
     final private LinkedList<SoftReference<Entry>> entries;
-    
+
     public ImageCache(int maxCount) {
         this.maxCount = maxCount;
         entries = new LinkedList<SoftReference<Entry>>();
     }
-    
+
     void setMaxCount(int maxCount) {
         this.maxCount = maxCount;
     }
-    
+
     public void flush() {
         entries.clear();
     }
-    
+
     private Entry getEntry(Object key, GraphicsConfiguration config,
                            int w, int h, Object[] args) {
         Entry entry;
@@ -78,7 +78,7 @@ public class ImageCache {
         entries.addFirst(new SoftReference<Entry>(entry));
         return entry;
     }
-    
+
     /**
      * Returns the cached Image, or null, for the specified arguments.
      */
@@ -87,7 +87,7 @@ public class ImageCache {
         Entry entry = getEntry(key, config, w, h, args);
         return entry.getImage();
     }
-    
+
     /**
      * Sets the cached image for the specified constraints.
      */
@@ -96,8 +96,8 @@ public class ImageCache {
         Entry entry = getEntry(key, config, w, h, args);
         entry.setImage(image);
     }
-    
-    
+
+
     /**
      * Caches set of arguments and Image.
      */
@@ -107,22 +107,22 @@ public class ImageCache {
         final private int h;
         final private Object[] args;
         private Image image;
-        
+
         Entry(GraphicsConfiguration config, int w, int h, Object[] args) {
             this.config = config;
             this.args = args;
             this.w = w;
             this.h = h;
         }
-        
+
         public void setImage(Image image) {
             this.image = image;
         }
-        
+
         public Image getImage() {
             return image;
         }
-        
+
         public String toString() {
             String value = super.toString() +
                     "[ graphicsConfig=" + config +
@@ -136,7 +136,7 @@ public class ImageCache {
             value += "]";
             return value;
         }
-        
+
         public boolean equals(GraphicsConfiguration config,
                  int w, int h, Object[] args) {
             if (this.w == w && this.h == h &&

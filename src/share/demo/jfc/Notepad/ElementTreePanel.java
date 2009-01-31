@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -49,7 +47,6 @@ import java.util.*;
  * in the text to update the selected item in the tree.
  *
  * @author Scott Violet
- * @version %I% %G%
  */
 public class ElementTreePanel extends JPanel implements CaretListener, DocumentListener, PropertyChangeListener, TreeSelectionListener {
     /** Tree showing the documents element structure. */
@@ -62,91 +59,91 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
     protected boolean           updatingSelection;
 
     public ElementTreePanel(JTextComponent editor) {
-	this.editor = editor;
+        this.editor = editor;
 
-	Document document = editor.getDocument();
+        Document document = editor.getDocument();
 
-	// Create the tree.
-	treeModel = new ElementTreeModel(document);
-	tree = new JTree(treeModel) {
-	    public String convertValueToText(Object value, boolean selected,
-					     boolean expanded, boolean leaf,
-					     int row, boolean hasFocus) {
-		// Should only happen for the root
-		if(!(value instanceof Element))
-		    return value.toString();
+        // Create the tree.
+        treeModel = new ElementTreeModel(document);
+        tree = new JTree(treeModel) {
+            public String convertValueToText(Object value, boolean selected,
+                                             boolean expanded, boolean leaf,
+                                             int row, boolean hasFocus) {
+                // Should only happen for the root
+                if(!(value instanceof Element))
+                    return value.toString();
 
-		Element        e = (Element)value;
-		AttributeSet   as = e.getAttributes().copyAttributes();
-		String         asString;
+                Element        e = (Element)value;
+                AttributeSet   as = e.getAttributes().copyAttributes();
+                String         asString;
 
-		if(as != null) {
-		    StringBuffer       retBuffer = new StringBuffer("[");
-		    Enumeration        names = as.getAttributeNames();
+                if(as != null) {
+                    StringBuffer       retBuffer = new StringBuffer("[");
+                    Enumeration        names = as.getAttributeNames();
 
-		    while(names.hasMoreElements()) {
-			Object        nextName = names.nextElement();
+                    while(names.hasMoreElements()) {
+                        Object        nextName = names.nextElement();
 
-			if(nextName != StyleConstants.ResolveAttribute) {
-			    retBuffer.append(" ");
-			    retBuffer.append(nextName);
-			    retBuffer.append("=");
-			    retBuffer.append(as.getAttribute(nextName));
-			}
-		    }
-		    retBuffer.append(" ]");
-		    asString = retBuffer.toString();
-		}
-		else
-		    asString = "[ ]";
+                        if(nextName != StyleConstants.ResolveAttribute) {
+                            retBuffer.append(" ");
+                            retBuffer.append(nextName);
+                            retBuffer.append("=");
+                            retBuffer.append(as.getAttribute(nextName));
+                        }
+                    }
+                    retBuffer.append(" ]");
+                    asString = retBuffer.toString();
+                }
+                else
+                    asString = "[ ]";
 
-		if(e.isLeaf())
-		    return e.getName() + " [" + e.getStartOffset() +
-			", " + e.getEndOffset() +"] Attributes: " + asString;
-		return e.getName() + " [" + e.getStartOffset() +
-		    ", " + e.getEndOffset() + "] Attributes: " +
- 		        asString;
-	    }
-	};
-	tree.addTreeSelectionListener(this);
-	tree.setDragEnabled(true);
-	// Don't show the root, it is fake.
-	tree.setRootVisible(false);
-	// Since the display value of every node after the insertion point
-	// changes every time the text changes and we don't generate a change
-	// event for all those nodes the display value can become off.
-	// This can be seen as '...' instead of the complete string value.
-	// This is a temporary workaround, increase the needed size by 15,
-	// hoping that will be enough.
-	tree.setCellRenderer(new DefaultTreeCellRenderer() {
-	    public Dimension getPreferredSize() {
-		Dimension retValue = super.getPreferredSize();
-		if(retValue != null)
-		    retValue.width += 15;
-		return retValue;
-	    }
-	});
-	// become a listener on the document to update the tree.
-	document.addDocumentListener(this);
+                if(e.isLeaf())
+                    return e.getName() + " [" + e.getStartOffset() +
+                        ", " + e.getEndOffset() +"] Attributes: " + asString;
+                return e.getName() + " [" + e.getStartOffset() +
+                    ", " + e.getEndOffset() + "] Attributes: " +
+                        asString;
+            }
+        };
+        tree.addTreeSelectionListener(this);
+        tree.setDragEnabled(true);
+        // Don't show the root, it is fake.
+        tree.setRootVisible(false);
+        // Since the display value of every node after the insertion point
+        // changes every time the text changes and we don't generate a change
+        // event for all those nodes the display value can become off.
+        // This can be seen as '...' instead of the complete string value.
+        // This is a temporary workaround, increase the needed size by 15,
+        // hoping that will be enough.
+        tree.setCellRenderer(new DefaultTreeCellRenderer() {
+            public Dimension getPreferredSize() {
+                Dimension retValue = super.getPreferredSize();
+                if(retValue != null)
+                    retValue.width += 15;
+                return retValue;
+            }
+        });
+        // become a listener on the document to update the tree.
+        document.addDocumentListener(this);
 
-	// become a PropertyChangeListener to know when the Document has
-	// changed.
-	editor.addPropertyChangeListener(this);
+        // become a PropertyChangeListener to know when the Document has
+        // changed.
+        editor.addPropertyChangeListener(this);
 
-	// Become a CaretListener
-	editor.addCaretListener(this);
+        // Become a CaretListener
+        editor.addCaretListener(this);
 
-	// configure the panel and frame containing it.
-	setLayout(new BorderLayout());
-	add(new JScrollPane(tree), BorderLayout.CENTER);
+        // configure the panel and frame containing it.
+        setLayout(new BorderLayout());
+        add(new JScrollPane(tree), BorderLayout.CENTER);
 
-	// Add a label above tree to describe what is being shown
-	JLabel     label = new JLabel("Elements that make up the current document", SwingConstants.CENTER);
+        // Add a label above tree to describe what is being shown
+        JLabel     label = new JLabel("Elements that make up the current document", SwingConstants.CENTER);
 
-	label.setFont(new Font("Dialog", Font.BOLD, 14));
-	add(label, BorderLayout.NORTH);
+        label.setFont(new Font("Dialog", Font.BOLD, 14));
+        add(label, BorderLayout.NORTH);
 
-	setPreferredSize(new Dimension(400, 400));
+        setPreferredSize(new Dimension(400, 400));
     }
 
     /**
@@ -154,31 +151,31 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * the tree accordingly.
      */
     public void setEditor(JTextComponent editor) {
-	if (this.editor == editor) {
-	    return;
-	}
+        if (this.editor == editor) {
+            return;
+        }
 
-	if (this.editor != null) {
-	    Document      oldDoc = this.editor.getDocument();
+        if (this.editor != null) {
+            Document      oldDoc = this.editor.getDocument();
 
-	    oldDoc.removeDocumentListener(this);
-	    this.editor.removePropertyChangeListener(this);
-	    this.editor.removeCaretListener(this);
-	}
-	this.editor = editor;
-	if (editor == null) {
-	    treeModel = null;
-	    tree.setModel(null);
-	}
-	else {
-	    Document   newDoc = editor.getDocument();
+            oldDoc.removeDocumentListener(this);
+            this.editor.removePropertyChangeListener(this);
+            this.editor.removeCaretListener(this);
+        }
+        this.editor = editor;
+        if (editor == null) {
+            treeModel = null;
+            tree.setModel(null);
+        }
+        else {
+            Document   newDoc = editor.getDocument();
 
-	    newDoc.addDocumentListener(this);
-	    editor.addPropertyChangeListener(this);
-	    editor.addCaretListener(this);
-	    treeModel = new ElementTreeModel(newDoc);
-	    tree.setModel(treeModel);
-	}
+            newDoc.addDocumentListener(this);
+            editor.addPropertyChangeListener(this);
+            editor.addCaretListener(this);
+            treeModel = new ElementTreeModel(newDoc);
+            tree.setModel(treeModel);
+        }
     }
 
     // PropertyChangeListener
@@ -188,20 +185,20 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * Document changes to reset the DocumentListener.
      */
     public void propertyChange(PropertyChangeEvent e) {
-	if (e.getSource() == getEditor() &&
-	    e.getPropertyName().equals("document")) {
-	    JTextComponent      editor = getEditor();
-	    Document            oldDoc = (Document)e.getOldValue();
-	    Document            newDoc = (Document)e.getNewValue();
+        if (e.getSource() == getEditor() &&
+            e.getPropertyName().equals("document")) {
+            JTextComponent      editor = getEditor();
+            Document            oldDoc = (Document)e.getOldValue();
+            Document            newDoc = (Document)e.getNewValue();
 
-	    // Reset the DocumentListener
-	    oldDoc.removeDocumentListener(this);
-	    newDoc.addDocumentListener(this);
+            // Reset the DocumentListener
+            oldDoc.removeDocumentListener(this);
+            newDoc.addDocumentListener(this);
 
-	    // Recreate the TreeModel.
-	    treeModel = new ElementTreeModel(newDoc);
-	    tree.setModel(treeModel);
-	}
+            // Recreate the TreeModel.
+            treeModel = new ElementTreeModel(newDoc);
+            tree.setModel(treeModel);
+        }
     }
 
 
@@ -214,7 +211,7 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * @param e the document event
      */
     public void insertUpdate(DocumentEvent e) {
-	updateTree(e);
+        updateTree(e);
     }
 
     /**
@@ -225,7 +222,7 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * @param e the document event
      */
     public void removeUpdate(DocumentEvent e) {
-	updateTree(e);
+        updateTree(e);
     }
 
     /**
@@ -234,7 +231,7 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * @param e the document event
      */
     public void changedUpdate(DocumentEvent e) {
-	updateTree(e);
+        updateTree(e);
     }
 
     // CaretListener
@@ -244,51 +241,51 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * the selection in the tree.
      */
     public void caretUpdate(CaretEvent e) {
-	if(!updatingSelection) {
-	    JTextComponent     editor = getEditor();
-	    int                selBegin = Math.min(e.getDot(), e.getMark());
-	    int                end = Math.max(e.getDot(), e.getMark());
-	    Vector             paths = new Vector();
-	    TreeModel          model = getTreeModel();
-	    Object             root = model.getRoot();
-	    int                rootCount = model.getChildCount(root);
+        if(!updatingSelection) {
+            JTextComponent     editor = getEditor();
+            int                selBegin = Math.min(e.getDot(), e.getMark());
+            int                end = Math.max(e.getDot(), e.getMark());
+            Vector             paths = new Vector();
+            TreeModel          model = getTreeModel();
+            Object             root = model.getRoot();
+            int                rootCount = model.getChildCount(root);
 
-	    // Build an array of all the paths to all the character elements
-	    // in the selection.
-	    for(int counter = 0; counter < rootCount; counter++) {
-		int            start = selBegin;
+            // Build an array of all the paths to all the character elements
+            // in the selection.
+            for(int counter = 0; counter < rootCount; counter++) {
+                int            start = selBegin;
 
-		while(start <= end) {
-		    TreePath    path = getPathForIndex(start, root,
-				       (Element)model.getChild(root, counter));
-		    Element     charElement = (Element)path.
-			                       getLastPathComponent();
+                while(start <= end) {
+                    TreePath    path = getPathForIndex(start, root,
+                                       (Element)model.getChild(root, counter));
+                    Element     charElement = (Element)path.
+                                               getLastPathComponent();
 
-		    paths.addElement(path);
-		    if(start >= charElement.getEndOffset())
-			start++;
-		    else
-			start = charElement.getEndOffset();
-		}
-	    }
+                    paths.addElement(path);
+                    if(start >= charElement.getEndOffset())
+                        start++;
+                    else
+                        start = charElement.getEndOffset();
+                }
+            }
 
-	    // If a path was found, select it (them).
-	    int               numPaths = paths.size();
+            // If a path was found, select it (them).
+            int               numPaths = paths.size();
 
-	    if(numPaths > 0) {
-		TreePath[]    pathArray = new TreePath[numPaths];
+            if(numPaths > 0) {
+                TreePath[]    pathArray = new TreePath[numPaths];
 
-		paths.copyInto(pathArray);
-		updatingSelection = true;
-		try {
-		    getTree().setSelectionPaths(pathArray);
-		    getTree().scrollPathToVisible(pathArray[0]);
-		}
-		finally {
-		    updatingSelection = false;
-		}
-	    }
-	}
+                paths.copyInto(pathArray);
+                updatingSelection = true;
+                try {
+                    getTree().setSelectionPaths(pathArray);
+                    getTree().scrollPathToVisible(pathArray[0]);
+                }
+                finally {
+                    updatingSelection = false;
+                }
+            }
+        }
     }
 
     // TreeSelectionListener
@@ -298,25 +295,25 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
       * @param e the event that characterizes the change.
       */
     public void valueChanged(TreeSelectionEvent e) {
-	JTree       tree = getTree();
+        JTree       tree = getTree();
 
-	if(!updatingSelection && tree.getSelectionCount() == 1) {
-	    TreePath      selPath = tree.getSelectionPath();
-	    Object        lastPathComponent = selPath.getLastPathComponent();
+        if(!updatingSelection && tree.getSelectionCount() == 1) {
+            TreePath      selPath = tree.getSelectionPath();
+            Object        lastPathComponent = selPath.getLastPathComponent();
 
-	    if(!(lastPathComponent instanceof DefaultMutableTreeNode)) {
-		Element       selElement = (Element)lastPathComponent;
+            if(!(lastPathComponent instanceof DefaultMutableTreeNode)) {
+                Element       selElement = (Element)lastPathComponent;
 
-		updatingSelection = true;
-		try {
-		    getEditor().select(selElement.getStartOffset(),
-				       selElement.getEndOffset());
-		}
-		finally {
-		    updatingSelection = false;
-		}
-	    }
-	}
+                updatingSelection = true;
+                try {
+                    getEditor().select(selElement.getStartOffset(),
+                                       selElement.getEndOffset());
+                }
+                finally {
+                    updatingSelection = false;
+                }
+            }
+        }
     }
 
     // Local methods
@@ -325,21 +322,21 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * @return tree showing elements.
      */
     protected JTree getTree() {
-	return tree;
+        return tree;
     }
 
     /**
      * @return JTextComponent showing elements for.
      */
     protected JTextComponent getEditor() {
-	return editor;
+        return editor;
     }
 
     /**
      * @return TreeModel implementation used to represent the elements.
      */
     public DefaultTreeModel getTreeModel() {
-	return treeModel;
+        return treeModel;
     }
 
     /**
@@ -347,19 +344,19 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * updateTree with the root element, or handleChange.
      */
     protected void updateTree(DocumentEvent event) {
-	updatingSelection = true;
-	try {
-	    TreeModel        model = getTreeModel();
-	    Object           root = model.getRoot();
+        updatingSelection = true;
+        try {
+            TreeModel        model = getTreeModel();
+            Object           root = model.getRoot();
 
-	    for(int counter = model.getChildCount(root) - 1; counter >= 0;
-		counter--) {
-		updateTree(event, (Element)model.getChild(root, counter));
-	    }
-	}
-	finally {
-	    updatingSelection = false;
-	}
+            for(int counter = model.getChildCount(root) - 1; counter >= 0;
+                counter--) {
+                updateTree(event, (Element)model.getChild(root, counter));
+            }
+        }
+        finally {
+            updatingSelection = false;
+        }
     }
 
     /**
@@ -374,72 +371,72 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
         DocumentEvent.ElementChange ec = event.getChange(element);
 
         if (ec != null) {
-	    Element[]       removed = ec.getChildrenRemoved();
-	    Element[]       added = ec.getChildrenAdded();
-	    int             startIndex = ec.getIndex();
+            Element[]       removed = ec.getChildrenRemoved();
+            Element[]       added = ec.getChildrenAdded();
+            int             startIndex = ec.getIndex();
 
-	    // Check for removed.
-	    if(removed != null && removed.length > 0) {
-		int[]            indices = new int[removed.length];
+            // Check for removed.
+            if(removed != null && removed.length > 0) {
+                int[]            indices = new int[removed.length];
 
-		for(int counter = 0; counter < removed.length; counter++) {
-		    indices[counter] = startIndex + counter;
-		}
-		getTreeModel().nodesWereRemoved((TreeNode)element, indices,
-						removed);
-	    }
-	    // check for added
-	    if(added != null && added.length > 0) {
-		int[]            indices = new int[added.length];
+                for(int counter = 0; counter < removed.length; counter++) {
+                    indices[counter] = startIndex + counter;
+                }
+                getTreeModel().nodesWereRemoved((TreeNode)element, indices,
+                                                removed);
+            }
+            // check for added
+            if(added != null && added.length > 0) {
+                int[]            indices = new int[added.length];
 
-		for(int counter = 0; counter < added.length; counter++) {
-		    indices[counter] = startIndex + counter;
-		}
-		getTreeModel().nodesWereInserted((TreeNode)element, indices);
-	    }
+                for(int counter = 0; counter < added.length; counter++) {
+                    indices[counter] = startIndex + counter;
+                }
+                getTreeModel().nodesWereInserted((TreeNode)element, indices);
+            }
         }
-	if(!element.isLeaf()) {
-	    int        startIndex = element.getElementIndex
-		                       (event.getOffset());
-	    int        elementCount = element.getElementCount();
-	    int        endIndex = Math.min(elementCount - 1,
-					   element.getElementIndex
-				     (event.getOffset() + event.getLength()));
+        if(!element.isLeaf()) {
+            int        startIndex = element.getElementIndex
+                                       (event.getOffset());
+            int        elementCount = element.getElementCount();
+            int        endIndex = Math.min(elementCount - 1,
+                                           element.getElementIndex
+                                     (event.getOffset() + event.getLength()));
 
-	    if(startIndex > 0 && startIndex < elementCount &&
-	       element.getElement(startIndex).getStartOffset() ==
-	       event.getOffset()) {
-		// Force checking the previous element.
-		startIndex--;
-	    }
-	    if(startIndex != -1 && endIndex != -1) {
-		for(int counter = startIndex; counter <= endIndex; counter++) {
-		    updateTree(event, element.getElement(counter));
-		}
-	    }
-	}
-	else {
-	    // Element is a leaf, assume it changed
-	    getTreeModel().nodeChanged((TreeNode)element);
-	}
+            if(startIndex > 0 && startIndex < elementCount &&
+               element.getElement(startIndex).getStartOffset() ==
+               event.getOffset()) {
+                // Force checking the previous element.
+                startIndex--;
+            }
+            if(startIndex != -1 && endIndex != -1) {
+                for(int counter = startIndex; counter <= endIndex; counter++) {
+                    updateTree(event, element.getElement(counter));
+                }
+            }
+        }
+        else {
+            // Element is a leaf, assume it changed
+            getTreeModel().nodeChanged((TreeNode)element);
+        }
     }
 
     /**
      * Returns a TreePath to the element at <code>position</code>.
      */
     protected TreePath getPathForIndex(int position, Object root,
-				       Element rootElement) {
-	TreePath         path = new TreePath(root);
-	Element          child = rootElement.getElement
-	                            (rootElement.getElementIndex(position));
+                                       Element rootElement) {
+        TreePath         path = new TreePath(root);
+        Element          child = rootElement.getElement
+                                    (rootElement.getElementIndex(position));
 
-	path = path.pathByAddingChild(rootElement);
-	path = path.pathByAddingChild(child);
-	while(!child.isLeaf()) {
-	    child = child.getElement(child.getElementIndex(position));
-	    path = path.pathByAddingChild(child);
-	}
-	return path;
+        path = path.pathByAddingChild(rootElement);
+        path = path.pathByAddingChild(child);
+        while(!child.isLeaf()) {
+            child = child.getElement(child.getElementIndex(position));
+            path = path.pathByAddingChild(child);
+        }
+        return path;
     }
 
 
@@ -458,130 +455,130 @@ public class ElementTreePanel extends JPanel implements CaretListener, DocumentL
      * methods have been subclassed, primarily to special case the root.
      */
     public static class ElementTreeModel extends DefaultTreeModel {
-	protected Element[]         rootElements;
+        protected Element[]         rootElements;
 
-	public ElementTreeModel(Document document) {
-	    super(new DefaultMutableTreeNode("root"), false);
-	    rootElements = document.getRootElements();
-	}
-
-	/**
-	 * Returns the child of <I>parent</I> at index <I>index</I> in
-	 * the parent's child array.  <I>parent</I> must be a node
-	 * previously obtained from this data source. This should
-	 * not return null if <i>index</i> is a valid index for
-	 * <i>parent</i> (that is <i>index</i> >= 0 && <i>index</i>
-	 * < getChildCount(<i>parent</i>)).
-	 *
-	 * @param   parent  a node in the tree, obtained from this data source
-	 * @return  the child of <I>parent</I> at index <I>index</I>
-	 */
-	public Object getChild(Object parent, int index) {
-	    if(parent == root)
-		return rootElements[index];
-	    return super.getChild(parent, index);
-	}
-
-
-	/**
-	 * Returns the number of children of <I>parent</I>.  Returns 0
-	 * if the node is a leaf or if it has no children.
-	 * <I>parent</I> must be a node previously obtained from this
-	 * data source.
-	 *
-	 * @param   parent  a node in the tree, obtained from this data source
-	 * @return  the number of children of the node <I>parent</I>
-	 */
-	public int getChildCount(Object parent) {
-	    if(parent == root)
-		return rootElements.length;
-	    return super.getChildCount(parent);
-	}
-
-
-	/**
-	 * Returns true if <I>node</I> is a leaf.  It is possible for
-	 * this method to return false even if <I>node</I> has no
-	 * children.  A directory in a filesystem, for example, may
-	 * contain no files; the node representing the directory is
-	 * not a leaf, but it also has no children.
-	 *
-	 * @param   node    a node in the tree, obtained from this data source
-	 * @return  true if <I>node</I> is a leaf
-	 */
-	public boolean isLeaf(Object node) {
-	    if(node == root)
-		return false;
-	    return super.isLeaf(node);
-	}
-
-	/**
-	 * Returns the index of child in parent.
-	 */
-	public int getIndexOfChild(Object parent, Object child) {
-	    if(parent == root) {
-		for(int counter = rootElements.length - 1; counter >= 0;
-		    counter--) {
-		    if(rootElements[counter] == child)
-			return counter;
-		}
-		return -1;
-	    }
-	    return super.getIndexOfChild(parent, child);
-	}
-
-	/**
-	 * Invoke this method after you've changed how node is to be
-	 * represented in the tree.
-	 */
-	public void nodeChanged(TreeNode node) {
-	    if(listenerList != null && node != null) {
-		TreeNode         parent = node.getParent();
-
-		if(parent == null && node != root) {
-		    parent = root;
-		}
-		if(parent != null) {
-		    int        anIndex = getIndexOfChild(parent, node);
-
-		    if(anIndex != -1) {
-			int[]        cIndexs = new int[1];
-
-			cIndexs[0] = anIndex;
-			nodesChanged(parent, cIndexs);
-		    }
-		}
-	    }
+        public ElementTreeModel(Document document) {
+            super(new DefaultMutableTreeNode("root"), false);
+            rootElements = document.getRootElements();
         }
 
-	/**
-	 * Returns the path to a particluar node. This is recursive.
-	 */
-	protected TreeNode[] getPathToRoot(TreeNode aNode, int depth) {
-	    TreeNode[]              retNodes;
+        /**
+         * Returns the child of <I>parent</I> at index <I>index</I> in
+         * the parent's child array.  <I>parent</I> must be a node
+         * previously obtained from this data source. This should
+         * not return null if <i>index</i> is a valid index for
+         * <i>parent</i> (that is <i>index</i> >= 0 && <i>index</i>
+         * < getChildCount(<i>parent</i>)).
+         *
+         * @param   parent  a node in the tree, obtained from this data source
+         * @return  the child of <I>parent</I> at index <I>index</I>
+         */
+        public Object getChild(Object parent, int index) {
+            if(parent == root)
+                return rootElements[index];
+            return super.getChild(parent, index);
+        }
 
-	    /* Check for null, in case someone passed in a null node, or
-	       they passed in an element that isn't rooted at root. */
-	    if(aNode == null) {
-		if(depth == 0)
-		    return null;
-		else
-		    retNodes = new TreeNode[depth];
-	    }
-	    else {
-		depth++;
-		if(aNode == root)
-		    retNodes = new TreeNode[depth];
-		else {
-		    TreeNode parent = aNode.getParent();
 
-		    if(parent == null)
-			parent = root;
-		    retNodes = getPathToRoot(parent, depth);
-		}
-		retNodes[retNodes.length - depth] = aNode;
-	    }
-	    return retNodes;
-	}
+        /**
+         * Returns the number of children of <I>parent</I>.  Returns 0
+         * if the node is a leaf or if it has no children.
+         * <I>parent</I> must be a node previously obtained from this
+         * data source.
+         *
+         * @param   parent  a node in the tree, obtained from this data source
+         * @return  the number of children of the node <I>parent</I>
+         */
+        public int getChildCount(Object parent) {
+            if(parent == root)
+                return rootElements.length;
+            return super.getChildCount(parent);
+        }
+
+
+        /**
+         * Returns true if <I>node</I> is a leaf.  It is possible for
+         * this method to return false even if <I>node</I> has no
+         * children.  A directory in a filesystem, for example, may
+         * contain no files; the node representing the directory is
+         * not a leaf, but it also has no children.
+         *
+         * @param   node    a node in the tree, obtained from this data source
+         * @return  true if <I>node</I> is a leaf
+         */
+        public boolean isLeaf(Object node) {
+            if(node == root)
+                return false;
+            return super.isLeaf(node);
+        }
+
+        /**
+         * Returns the index of child in parent.
+         */
+        public int getIndexOfChild(Object parent, Object child) {
+            if(parent == root) {
+                for(int counter = rootElements.length - 1; counter >= 0;
+                    counter--) {
+                    if(rootElements[counter] == child)
+                        return counter;
+                }
+                return -1;
+            }
+            return super.getIndexOfChild(parent, child);
+        }
+
+        /**
+         * Invoke this method after you've changed how node is to be
+         * represented in the tree.
+         */
+        public void nodeChanged(TreeNode node) {
+            if(listenerList != null && node != null) {
+                TreeNode         parent = node.getParent();
+
+                if(parent == null && node != root) {
+                    parent = root;
+                }
+                if(parent != null) {
+                    int        anIndex = getIndexOfChild(parent, node);
+
+                    if(anIndex != -1) {
+                        int[]        cIndexs = new int[1];
+
+                        cIndexs[0] = anIndex;
+                        nodesChanged(parent, cIndexs);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns the path to a particluar node. This is recursive.
+         */
+        protected TreeNode[] getPathToRoot(TreeNode aNode, int depth) {
+            TreeNode[]              retNodes;
+
+            /* Check for null, in case someone passed in a null node, or
+               they passed in an element that isn't rooted at root. */
+            if(aNode == null) {
+                if(depth == 0)
+                    return null;
+                else
+                    retNodes = new TreeNode[depth];
+            }
+            else {
+                depth++;
+                if(aNode == root)
+                    retNodes = new TreeNode[depth];
+                else {
+                    TreeNode parent = aNode.getParent();
+
+                    if(parent == null)
+                        parent = root;
+                    retNodes = getPathToRoot(parent, depth);
+                }
+                retNodes[retNodes.length - depth] = aNode;
+            }
+            return retNodes;
+        }
     }
 }

@@ -47,7 +47,7 @@ import com.sun.org.apache.xml.internal.security.utils.Constants;
 public class SignatureDSA extends SignatureAlgorithmSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(SignatureDSA.class.getName());
 
    /** Field _URI */
@@ -74,7 +74,7 @@ public class SignatureDSA extends SignatureAlgorithmSpi {
 
       String algorithmID = JCEMapper.translateURItoJCEID(SignatureDSA._URI);
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created SignatureDSA using " + algorithmID);
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created SignatureDSA using " + algorithmID);
 
       try {
          this._signatureAlgorithm = Signature.getInstance(algorithmID);
@@ -107,7 +107,7 @@ public class SignatureDSA extends SignatureAlgorithmSpi {
 
       try {
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Called DSA.verify() on " + Base64.encode(signature));
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Called DSA.verify() on " + Base64.encode(signature));
 
          byte[] jcebytes = SignatureDSA.convertXMLDSIGtoASN1(signature);
 
@@ -286,7 +286,7 @@ public class SignatureDSA extends SignatureAlgorithmSpi {
               || (asn1Bytes[2] != 2) || (i > 20)
               || (asn1Bytes[4 + rLength] != 2) || (j > 20)) {
          throw new IOException("Invalid ASN.1 format of DSA signature");
-      } 
+      }
       byte xmldsigBytes[] = new byte[40];
 
       System.arraycopy(asn1Bytes, (4 + rLength) - i, xmldsigBytes, 20 - i,
@@ -294,7 +294,7 @@ public class SignatureDSA extends SignatureAlgorithmSpi {
       System.arraycopy(asn1Bytes, (6 + rLength + sLength) - j, xmldsigBytes,
                           40 - j, j);
 
-       return xmldsigBytes;      
+       return xmldsigBytes;
    }
 
    /**

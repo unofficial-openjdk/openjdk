@@ -45,7 +45,6 @@ import java.beans.PropertyChangeEvent;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class WindowsToggleButtonUI extends BasicToggleButtonUI
@@ -56,13 +55,13 @@ public class WindowsToggleButtonUI extends BasicToggleButtonUI
     protected static int dashedRectGapHeight;
 
     protected Color focusColor;
-    
+
     private final static WindowsToggleButtonUI windowsToggleButtonUI = new WindowsToggleButtonUI();
 
     private boolean defaults_initialized = false;
-    
+
     public static ComponentUI createUI(JComponent b) {
-	return windowsToggleButtonUI;
+        return windowsToggleButtonUI;
     }
 
 
@@ -70,36 +69,36 @@ public class WindowsToggleButtonUI extends BasicToggleButtonUI
     //            Defaults
     // ********************************
     protected void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    String pp = getPropertyPrefix();
-	    dashedRectGapX = ((Integer)UIManager.get("Button.dashedRectGapX")).intValue();
-	    dashedRectGapY = ((Integer)UIManager.get("Button.dashedRectGapY")).intValue();
-	    dashedRectGapWidth = ((Integer)UIManager.get("Button.dashedRectGapWidth")).intValue();
-	    dashedRectGapHeight = ((Integer)UIManager.get("Button.dashedRectGapHeight")).intValue();
-	    focusColor = UIManager.getColor(pp + "focus");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            String pp = getPropertyPrefix();
+            dashedRectGapX = ((Integer)UIManager.get("Button.dashedRectGapX")).intValue();
+            dashedRectGapY = ((Integer)UIManager.get("Button.dashedRectGapY")).intValue();
+            dashedRectGapWidth = ((Integer)UIManager.get("Button.dashedRectGapWidth")).intValue();
+            dashedRectGapHeight = ((Integer)UIManager.get("Button.dashedRectGapHeight")).intValue();
+            focusColor = UIManager.getColor(pp + "focus");
+            defaults_initialized = true;
+        }
 
-	XPStyle xp = XPStyle.getXP();
-	if (xp != null) {
-	    b.setBorder(xp.getBorder(b, WindowsButtonUI.getXPButtonType(b)));
-	    LookAndFeel.installProperty(b, "opaque", Boolean.FALSE);
-	    LookAndFeel.installProperty(b, "rolloverEnabled", Boolean.TRUE);
-	}
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            b.setBorder(xp.getBorder(b, WindowsButtonUI.getXPButtonType(b)));
+            LookAndFeel.installProperty(b, "opaque", Boolean.FALSE);
+            LookAndFeel.installProperty(b, "rolloverEnabled", Boolean.TRUE);
+        }
     }
 
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
-    
+
 
     protected Color getFocusColor() {
-	return focusColor;
+        return focusColor;
     }
-    
-    
+
+
     // ********************************
     //         Paint Methods
     // ********************************
@@ -107,7 +106,7 @@ public class WindowsToggleButtonUI extends BasicToggleButtonUI
     private transient Color cachedSelectedColor = null;
     private transient Color cachedBackgroundColor = null;
     private transient Color cachedHighlightColor = null;
-    
+
     protected void paintButtonPressed(Graphics g, AbstractButton b) {
         if (XPStyle.getXP() == null && b.isContentAreaFilled()) {
             Color oldColor = g.getColor();
@@ -128,14 +127,14 @@ public class WindowsToggleButtonUI extends BasicToggleButtonUI
             g.setColor(cachedSelectedColor);
             g.fillRect(0, 0, b.getWidth(), b.getHeight());
             g.setColor(oldColor);
-	}
+        }
     }
-    
+
     public void paint(Graphics g, JComponent c) {
-	if (XPStyle.getXP() != null) {
-	    WindowsButtonUI.paintXPButtonBackground(g, c);
-	}
-	super.paint(g, c);
+        if (XPStyle.getXP() != null) {
+            WindowsButtonUI.paintXPButtonBackground(g, c);
+        }
+        super.paint(g, c);
     }
 
 
@@ -143,32 +142,31 @@ public class WindowsToggleButtonUI extends BasicToggleButtonUI
      * Overridden method to render the text without the mnemonic
      */
     protected void paintText(Graphics g, AbstractButton b, Rectangle textRect, String text) {
-	WindowsGraphicsUtils.paintText(g, b, textRect, text, getTextShiftOffset());
-    } 
+        WindowsGraphicsUtils.paintText(g, b, textRect, text, getTextShiftOffset());
+    }
 
     protected void paintFocus(Graphics g, AbstractButton b,
-			      Rectangle viewRect, Rectangle textRect, Rectangle iconRect) {
-	g.setColor(getFocusColor());
-	BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
-					  b.getWidth() - dashedRectGapWidth,
-					  b.getHeight() - dashedRectGapHeight);
+                              Rectangle viewRect, Rectangle textRect, Rectangle iconRect) {
+        g.setColor(getFocusColor());
+        BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
+                                          b.getWidth() - dashedRectGapWidth,
+                                          b.getHeight() - dashedRectGapHeight);
     }
 
     // ********************************
     //          Layout Methods
     // ********************************
     public Dimension getPreferredSize(JComponent c) {
-	Dimension d = super.getPreferredSize(c);
+        Dimension d = super.getPreferredSize(c);
 
-	/* Ensure that the width and height of the button is odd,
-	 * to allow for the focus line if focus is painted
-	 */
+        /* Ensure that the width and height of the button is odd,
+         * to allow for the focus line if focus is painted
+         */
         AbstractButton b = (AbstractButton)c;
-	if (d != null && b.isFocusPainted()) {
-	    if(d.width % 2 == 0) { d.width += 1; }
-	    if(d.height % 2 == 0) { d.height += 1; }
-	}
-	return d;
+        if (d != null && b.isFocusPainted()) {
+            if(d.width % 2 == 0) { d.width += 1; }
+            if(d.height % 2 == 0) { d.height += 1; }
+        }
+        return d;
     }
 }
-

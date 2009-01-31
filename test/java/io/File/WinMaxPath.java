@@ -35,12 +35,12 @@ public class WinMaxPath {
             return;
         }
         try {
-	    char[] as = new char[65000];
-	    java.util.Arrays.fill(as, 'a');
-	    FileOutputStream out = new FileOutputStream(new String(as));
-	    out.close();
-	} catch (FileNotFoundException x) {
-	    //expected
-	}
+            char[] as = new char[65000];
+            java.util.Arrays.fill(as, 'a');
+            FileOutputStream out = new FileOutputStream(new String(as));
+            out.close();
+        } catch (FileNotFoundException x) {
+            //expected
+        }
     }
 }

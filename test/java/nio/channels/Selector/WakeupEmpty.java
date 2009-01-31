@@ -22,8 +22,8 @@
  */
 
 /* @test
- * @bug 4531740 
- * @summary Checks that wakeup works for an empty Selector 
+ * @bug 4531740
+ * @summary Checks that wakeup works for an empty Selector
  * @author kladko
  */
 
@@ -45,12 +45,9 @@ public class WakeupEmpty {
                 }
                 sel.wakeup();
             }
-        }; 
+        };
         thread.start();
-        if (sel.select() != 0) 
-             throw new Exception("Zero expected"); 
+        if (sel.select() != 0)
+             throw new Exception("Zero expected");
     }
 }
-
-
-

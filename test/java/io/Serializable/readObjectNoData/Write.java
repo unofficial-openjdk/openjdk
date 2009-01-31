@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,14 +23,14 @@
 
 /* @test
  * @bug 4363844
- * 
+ *
  * @clean Write Read A B C D E F
  * @compile Write.java
  * @run main Write
  * @clean Write Read A B C D E F
  * @compile Read.java
  * @run main Read
- * 
+ *
  * @summary Verify that a custom readObjectNoData method, if defined properly
  *          by a serializable superclass, gets invoked during deserialization
  *          of a subclass instance whose serialized form omits a class
@@ -49,9 +49,9 @@ class F extends D {
 
 public class Write {
     public static void main(String[] args) throws Exception {
-	ObjectOutputStream oout = 
-	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-	oout.writeObject(new F());
-	oout.close();
+        ObjectOutputStream oout =
+            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+        oout.writeObject(new F());
+        oout.close();
     }
 }

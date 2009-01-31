@@ -35,14 +35,14 @@ import java.io.*;
 public class DeadReader {
 
     public static void main(String[] argv) throws Exception {
-        PipedOutputStream os = new PipedOutputStream(); 
+        PipedOutputStream os = new PipedOutputStream();
         PipedInputStream is = new PipedInputStream();
-        is.connect(os); 
+        is.connect(os);
 
-        // create reader thread 
+        // create reader thread
         LazyReader lr = new LazyReader(is);
 
-        os.write(new byte[1000]); 
+        os.write(new byte[1000]);
 
         lr.start();
         while (lr.isAlive()) {
@@ -66,10 +66,10 @@ class LazyReader extends Thread {
     public LazyReader(PipedInputStream snk) {
         this.snk = snk;
     }
-  
+
     public void run() {
         try {
-            snk.read(); 
+            snk.read();
         } catch (Exception e) {
             System.err.println("Test failed: unexpected exception");
         }

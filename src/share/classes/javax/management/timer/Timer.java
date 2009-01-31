@@ -78,7 +78,7 @@ import javax.management.ObjectName;
  * @since 1.5
  */
 public class Timer extends NotificationBroadcasterSupport
-	implements TimerMBean, MBeanRegistration {
+        implements TimerMBean, MBeanRegistration {
 
 
     /*
@@ -128,7 +128,7 @@ public class Timer extends NotificationBroadcasterSupport
      * with the associated date, period and number of occurrences.
      */
     private Map<Integer,Object[]> timerTable =
-	new Hashtable<Integer,Object[]>();
+        new Hashtable<Integer,Object[]>();
 
     /**
      * Past notifications sending on/off flag value.
@@ -247,20 +247,20 @@ public class Timer extends NotificationBroadcasterSupport
      * that were given to addNotification.
      */
     public synchronized MBeanNotificationInfo[] getNotificationInfo() {
-	Set<String> notifTypes = new TreeSet<String>();
-	for (Iterator it = timerTable.values().iterator(); it.hasNext(); ) {
-	    Object[] entry = (Object[]) it.next();
-	    TimerNotification notif = (TimerNotification)
-		entry[TIMER_NOTIF_INDEX];
-	    notifTypes.add(notif.getType());
-	}
-	String[] notifTypesArray =
-	    notifTypes.toArray(new String[0]);
-	return new MBeanNotificationInfo[] {
-	    new MBeanNotificationInfo(notifTypesArray,
-				      TimerNotification.class.getName(),
-				      "Notification sent by Timer MBean")
-	};
+        Set<String> notifTypes = new TreeSet<String>();
+        for (Iterator it = timerTable.values().iterator(); it.hasNext(); ) {
+            Object[] entry = (Object[]) it.next();
+            TimerNotification notif = (TimerNotification)
+                entry[TIMER_NOTIF_INDEX];
+            notifTypes.add(notif.getType());
+        }
+        String[] notifTypesArray =
+            notifTypes.toArray(new String[0]);
+        return new MBeanNotificationInfo[] {
+            new MBeanNotificationInfo(notifTypesArray,
+                                      TimerNotification.class.getName(),
+                                      "Notification sent by Timer MBean")
+        };
     }
 
     /**
@@ -281,7 +281,7 @@ public class Timer extends NotificationBroadcasterSupport
         //
         if (isActive == false) {
 
-	    timer = new java.util.Timer();
+            timer = new java.util.Timer();
 
             TimerAlarmClock alarmClock;
             Date date;
@@ -297,7 +297,7 @@ public class Timer extends NotificationBroadcasterSupport
             // Update and start all the TimerAlarmClocks.
             // Here, all the notifications in the timer table are later than the current date.
             //
-	    for (Object[] obj : timerTable.values()) {
+            for (Object[] obj : timerTable.values()) {
 
                 // Retrieve the date notification and the TimerAlarmClock.
                 //
@@ -346,7 +346,7 @@ public class Timer extends NotificationBroadcasterSupport
 
             TimerAlarmClock alarmClock;
 
-	    for (Object[] obj : timerTable.values()) {
+            for (Object[] obj : timerTable.values()) {
 
                 // Stop all the TimerAlarmClock.
                 //
@@ -363,7 +363,7 @@ public class Timer extends NotificationBroadcasterSupport
 //                     // Remove the reference on the TimerAlarmClock.
 //                     //
 
-		    alarmClock.cancel();
+                    alarmClock.cancel();
                     alarmClock = null;
                 }
             }
@@ -446,7 +446,7 @@ public class Timer extends NotificationBroadcasterSupport
         // Update the date if it is before the current date.
         //
         if (currentDate.after(date)) {
-            
+
             date.setTime(currentDate.getTime());
             if (TIMER_LOGGER.isLoggable(Level.FINER)) {
                 TIMER_LOGGER.logp(Level.FINER, Timer.class.getName(),
@@ -519,7 +519,7 @@ public class Timer extends NotificationBroadcasterSupport
         if (isActive == true) {
           if (fixedRate)
           {
-	    timer.schedule(alarmClock, alarmClock.next);
+            timer.schedule(alarmClock, alarmClock.next);
           }
           else
           {
@@ -677,7 +677,7 @@ public class Timer extends NotificationBroadcasterSupport
 //             }
 //             // Remove the reference on the TimerAlarmClock.
 //             //
-	    alarmClock.cancel();
+            alarmClock.cancel();
             alarmClock = null;
         }
 
@@ -737,7 +737,7 @@ public class Timer extends NotificationBroadcasterSupport
 
         TimerAlarmClock alarmClock;
 
-	for (Object[] obj : timerTable.values()) {
+        for (Object[] obj : timerTable.values()) {
 
             // Stop the TimerAlarmClock.
             //
@@ -751,9 +751,9 @@ public class Timer extends NotificationBroadcasterSupport
 //                 } catch (InterruptedException ex) {
 //                     // Ignore...
 //                 }
-	          // Remove the reference on the TimerAlarmClock.
+                  // Remove the reference on the TimerAlarmClock.
                   //
-// 	       }
+//             }
             alarmClock.cancel();
             alarmClock = null;
         }
@@ -793,7 +793,7 @@ public class Timer extends NotificationBroadcasterSupport
      * <BR>The vector is empty if there is no timer notification registered for this timer MBean.
      */
     public synchronized Vector<Integer> getAllNotificationIDs() {
-	return new Vector<Integer>(timerTable.keySet());
+        return new Vector<Integer>(timerTable.keySet());
     }
 
     /**
@@ -812,12 +812,12 @@ public class Timer extends NotificationBroadcasterSupport
 
         Vector<Integer> v = new Vector<Integer>();
 
-	for (Map.Entry<Integer,Object[]> entry : timerTable.entrySet()) {
-	    Object[] obj = entry.getValue();
-	    s = ((TimerNotification)obj[TIMER_NOTIF_INDEX]).getType();
-	    if ((type == null) ? s == null : type.equals(s))
-		v.addElement(entry.getKey());
-	}
+        for (Map.Entry<Integer,Object[]> entry : timerTable.entrySet()) {
+            Object[] obj = entry.getValue();
+            s = ((TimerNotification)obj[TIMER_NOTIF_INDEX]).getType();
+            if ((type == null) ? s == null : type.equals(s))
+                v.addElement(entry.getKey());
+        }
         return v;
     }
     // 5089997: return is Vector<Integer> not Vector<TimerNotification>
@@ -1012,7 +1012,7 @@ public class Timer extends NotificationBroadcasterSupport
         Integer notifID;
         Date date;
 
-	for (Object[] obj : timerTable.values()) {
+        for (Object[] obj : timerTable.values()) {
 
             // Retrieve the timer notification and the date notification.
             //
@@ -1104,13 +1104,13 @@ public class Timer extends NotificationBroadcasterSupport
                   {
                     alarmClock = new TimerAlarmClock(this, date);
                     obj[ALARM_CLOCK_INDEX] = (Object)alarmClock;
-		    timer.schedule(alarmClock, alarmClock.next);
+                    timer.schedule(alarmClock, alarmClock.next);
                   }
                   else
                   {
                     alarmClock = new TimerAlarmClock(this, period.longValue());
                     obj[ALARM_CLOCK_INDEX] = (Object)alarmClock;
-		    timer.schedule(alarmClock, alarmClock.timeout);
+                    timer.schedule(alarmClock, alarmClock.timeout);
                   }
                 }
                 if (TIMER_LOGGER.isLoggable(Level.FINER)) {
@@ -1145,7 +1145,7 @@ public class Timer extends NotificationBroadcasterSupport
 //                     } catch (InterruptedException e) {
 //                         // Ignore...
 //                     }
-		    alarmClock.cancel();
+                    alarmClock.cancel();
                     // Remove the reference on the TimerAlarmClock.
                     //
                     alarmClock = null;
@@ -1164,7 +1164,7 @@ public class Timer extends NotificationBroadcasterSupport
 //                     // Ignore...
 //                 }
 
-		   alarmClock.cancel();
+                   alarmClock.cancel();
 
                 // Remove the reference on the TimerAlarmClock.
                 //
@@ -1196,7 +1196,7 @@ public class Timer extends NotificationBroadcasterSupport
         //
         TimerAlarmClock alarmClock = (TimerAlarmClock)notification.getSource();
 
-	for (Object[] obj : timerTable.values()) {
+        for (Object[] obj : timerTable.values()) {
             if (obj[ALARM_CLOCK_INDEX] == alarmClock) {
                 timerNotification = (TimerNotification)obj[TIMER_NOTIF_INDEX];
                 timerDate = (Date)obj[TIMER_DATE_INDEX];
@@ -1239,7 +1239,7 @@ public class Timer extends NotificationBroadcasterSupport
         long curSeqNumber;
         synchronized(this) {
             sequenceNumber = sequenceNumber + 1;
-	    curSeqNumber = sequenceNumber;
+            curSeqNumber = sequenceNumber;
         }
         synchronized (notification) {
             notification.setTimeStamp(timeStamp.getTime());

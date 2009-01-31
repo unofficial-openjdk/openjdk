@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -30,7 +30,7 @@
  *
  * trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -59,7 +59,6 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id$ */
 
 /* #define GEN_TREES_H */
 
@@ -365,42 +364,42 @@ void gen_trees_header()
 
     Assert (header != NULL, "Can't open trees.h");
     fprintf(header,
-	    "/* header created automatically with -DGEN_TREES_H */\n\n");
+            "/* header created automatically with -DGEN_TREES_H */\n\n");
 
     fprintf(header, "local const ct_data static_ltree[L_CODES+2] = {\n");
     for (i = 0; i < L_CODES+2; i++) {
-	fprintf(header, "{{%3u},{%3u}}%s", static_ltree[i].Code,
-		static_ltree[i].Len, SEPARATOR(i, L_CODES+1, 5));
+        fprintf(header, "{{%3u},{%3u}}%s", static_ltree[i].Code,
+                static_ltree[i].Len, SEPARATOR(i, L_CODES+1, 5));
     }
 
     fprintf(header, "local const ct_data static_dtree[D_CODES] = {\n");
     for (i = 0; i < D_CODES; i++) {
-	fprintf(header, "{{%2u},{%2u}}%s", static_dtree[i].Code,
-		static_dtree[i].Len, SEPARATOR(i, D_CODES-1, 5));
+        fprintf(header, "{{%2u},{%2u}}%s", static_dtree[i].Code,
+                static_dtree[i].Len, SEPARATOR(i, D_CODES-1, 5));
     }
 
     fprintf(header, "const uch _dist_code[DIST_CODE_LEN] = {\n");
     for (i = 0; i < DIST_CODE_LEN; i++) {
-	fprintf(header, "%2u%s", _dist_code[i],
-		SEPARATOR(i, DIST_CODE_LEN-1, 20));
+        fprintf(header, "%2u%s", _dist_code[i],
+                SEPARATOR(i, DIST_CODE_LEN-1, 20));
     }
 
     fprintf(header, "const uch _length_code[MAX_MATCH-MIN_MATCH+1]= {\n");
     for (i = 0; i < MAX_MATCH-MIN_MATCH+1; i++) {
-	fprintf(header, "%2u%s", _length_code[i],
-		SEPARATOR(i, MAX_MATCH-MIN_MATCH, 20));
+        fprintf(header, "%2u%s", _length_code[i],
+                SEPARATOR(i, MAX_MATCH-MIN_MATCH, 20));
     }
 
     fprintf(header, "local const int base_length[LENGTH_CODES] = {\n");
     for (i = 0; i < LENGTH_CODES; i++) {
-	fprintf(header, "%1u%s", base_length[i],
-		SEPARATOR(i, LENGTH_CODES-1, 20));
+        fprintf(header, "%1u%s", base_length[i],
+                SEPARATOR(i, LENGTH_CODES-1, 20));
     }
 
     fprintf(header, "local const int base_dist[D_CODES] = {\n");
     for (i = 0; i < D_CODES; i++) {
-	fprintf(header, "%5u%s", base_dist[i],
-		SEPARATOR(i, D_CODES-1, 10));
+        fprintf(header, "%5u%s", base_dist[i],
+                SEPARATOR(i, D_CODES-1, 10));
     }
 
     fclose(header);
@@ -960,39 +959,39 @@ void _tr_flush_block(s, buf, stored_len, eof)
     /* Build the Huffman trees unless a stored block is forced */
     if (s->level > 0) {
 
-	 /* Check if the file is ascii or binary */
-	if (s->data_type == Z_UNKNOWN) set_data_type(s);
+         /* Check if the file is ascii or binary */
+        if (s->data_type == Z_UNKNOWN) set_data_type(s);
 
-	/* Construct the literal and distance trees */
-	build_tree(s, (tree_desc *)(&(s->l_desc)));
-	Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
-		s->static_len));
+        /* Construct the literal and distance trees */
+        build_tree(s, (tree_desc *)(&(s->l_desc)));
+        Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
+                s->static_len));
 
-	build_tree(s, (tree_desc *)(&(s->d_desc)));
-	Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
-		s->static_len));
-	/* At this point, opt_len and static_len are the total bit lengths of
-	 * the compressed block data, excluding the tree representations.
-	 */
+        build_tree(s, (tree_desc *)(&(s->d_desc)));
+        Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
+                s->static_len));
+        /* At this point, opt_len and static_len are the total bit lengths of
+         * the compressed block data, excluding the tree representations.
+         */
 
-	/* Build the bit length tree for the above two trees, and get the index
-	 * in bl_order of the last bit length code to send.
-	 */
-	max_blindex = build_bl_tree(s);
+        /* Build the bit length tree for the above two trees, and get the index
+         * in bl_order of the last bit length code to send.
+         */
+        max_blindex = build_bl_tree(s);
 
-	/* Determine the best encoding. Compute first the block length in bytes*/
-	opt_lenb = (s->opt_len+3+7)>>3;
-	static_lenb = (s->static_len+3+7)>>3;
+        /* Determine the best encoding. Compute first the block length in bytes*/
+        opt_lenb = (s->opt_len+3+7)>>3;
+        static_lenb = (s->static_len+3+7)>>3;
 
-	Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
-		opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
-		s->last_lit));
+        Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
+                opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
+                s->last_lit));
 
-	if (static_lenb <= opt_lenb) opt_lenb = static_lenb;
+        if (static_lenb <= opt_lenb) opt_lenb = static_lenb;
 
     } else {
         Assert(buf != (char*)0, "lost buf");
-	opt_lenb = static_lenb = stored_len + 5; /* force a stored block */
+        opt_lenb = static_lenb = stored_len + 5; /* force a stored block */
     }
 
 #ifdef FORCE_STORED
@@ -1229,7 +1228,7 @@ local void copy_block(s, buf, len, header)
     s->last_eob_len = 8; /* enough lookahead for inflate */
 
     if (header) {
-        put_short(s, (ush)len);   
+        put_short(s, (ush)len);
         put_short(s, (ush)~len);
 #ifdef DEBUG
         s->bits_sent += 2*16;

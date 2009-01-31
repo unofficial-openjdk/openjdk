@@ -22,31 +22,31 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security;
 
 import java.io.Serializable;
 import java.util.Enumeration;
 import java.util.Properties;
 
-/** 
- * <p>This class represents a scope for identities. It is an Identity 
- * itself, and therefore has a name and can have a scope. It can also 
+/**
+ * <p>This class represents a scope for identities. It is an Identity
+ * itself, and therefore has a name and can have a scope. It can also
  * optionally have a public key and associated certificates.
  *
  * <p>An IdentityScope can contain Identity objects of all kinds, including
- * Signers. All types of Identity objects can be retrieved, added, and 
+ * Signers. All types of Identity objects can be retrieved, added, and
  * removed using the same methods. Note that it is possible, and in fact
  * expected, that different types of identity scopes will
  * apply different policies for their various operations on the
  * various types of Identities.
  *
- * <p>There is a one-to-one mapping between keys and identities, and 
+ * <p>There is a one-to-one mapping between keys and identities, and
  * there can only be one copy of one key per scope. For example, suppose
  * <b>Acme Software, Inc</b> is a software publisher known to a user.
  * Suppose it is an Identity, that is, it has a public key, and a set of
- * associated certificates. It is named in the scope using the name 
- * "Acme Software". No other named Identity in the scope has the same 
+ * associated certificates. It is named in the scope using the name
+ * "Acme Software". No other named Identity in the scope has the same
  * public  key. Of course, none has the same name as well.
  *
  * @see Identity
@@ -54,7 +54,6 @@ import java.util.Properties;
  * @see Principal
  * @see Key
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  *
  * @deprecated This class is no longer used. Its functionality has been
@@ -63,7 +62,7 @@ import java.util.Properties;
  * <code>java.security.Principal</code>.
  */
 @Deprecated
-public abstract 
+public abstract
 class IdentityScope extends Identity {
 
     private static final long serialVersionUID = -2337346281189773310L;
@@ -74,26 +73,26 @@ class IdentityScope extends Identity {
     // initialize the system scope
     private static void initializeSystemScope() {
 
-	String classname = AccessController.doPrivileged(
-				new PrivilegedAction<String>() {
-	    public String run() {
-		return Security.getProperty("system.scope");
-	    }
-	});
+        String classname = AccessController.doPrivileged(
+                                new PrivilegedAction<String>() {
+            public String run() {
+                return Security.getProperty("system.scope");
+            }
+        });
 
-	if (classname == null) {
-	    return;
+        if (classname == null) {
+            return;
 
         } else {
 
-	    try {
-		Class.forName(classname);
-	    } catch (ClassNotFoundException e) {
-		//Security.error("unable to establish a system scope from " +
-		//	       classname);
-		e.printStackTrace();
-	    }
-	}
+            try {
+                Class.forName(classname);
+            } catch (ClassNotFoundException e) {
+                //Security.error("unable to establish a system scope from " +
+                //             classname);
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -101,7 +100,7 @@ class IdentityScope extends Identity {
      * be used by subclasses.
      */
     protected IdentityScope() {
-	this("restoring...");
+        this("restoring...");
     }
 
     /**
@@ -110,90 +109,90 @@ class IdentityScope extends Identity {
      * @param name the scope name.
      */
     public IdentityScope(String name) {
-	super(name);
+        super(name);
     }
 
     /**
      * Constructs a new identity scope with the specified name and scope.
-     * 
+     *
      * @param name the scope name.
      * @param scope the scope for the new identity scope.
-     * 
-     * @exception KeyManagementException if there is already an identity 
+     *
+     * @exception KeyManagementException if there is already an identity
      * with the same name in the scope.
      */
-    public IdentityScope(String name, IdentityScope scope) 
+    public IdentityScope(String name, IdentityScope scope)
     throws KeyManagementException {
-	super(name, scope);
+        super(name, scope);
     }
 
     /**
      * Returns the system's identity scope.
-     * 
+     *
      * @return the system's identity scope.
-     * 
+     *
      * @see #setSystemScope
      */
     public static IdentityScope getSystemScope() {
-	if (scope == null) {
-	    initializeSystemScope();
-	}
-	return scope;
+        if (scope == null) {
+            initializeSystemScope();
+        }
+        return scope;
     }
 
 
     /**
      * Sets the system's identity scope.
      *
-     * <p>First, if there is a security manager, its 
-     * <code>checkSecurityAccess</code> 
-     * method is called with <code>"setSystemScope"</code> 
-     * as its argument to see if it's ok to set the identity scope. 
-     * 
+     * <p>First, if there is a security manager, its
+     * <code>checkSecurityAccess</code>
+     * method is called with <code>"setSystemScope"</code>
+     * as its argument to see if it's ok to set the identity scope.
+     *
      * @param scope the scope to set.
-     * 
-     * @exception  SecurityException  if a security manager exists and its  
-     * <code>checkSecurityAccess</code> method doesn't allow 
+     *
+     * @exception  SecurityException  if a security manager exists and its
+     * <code>checkSecurityAccess</code> method doesn't allow
      * setting the identity scope.
-     * 
+     *
      * @see #getSystemScope
      * @see SecurityManager#checkSecurityAccess
      */
     protected static void setSystemScope(IdentityScope scope) {
-	check("setSystemScope");
-	IdentityScope.scope = scope;
+        check("setSystemScope");
+        IdentityScope.scope = scope;
     }
 
     /**
      * Returns the number of identities within this identity scope.
-     * 
+     *
      * @return the number of identities within this identity scope.
      */
     public abstract int size();
 
     /**
      * Returns the identity in this scope with the specified name (if any).
-     * 
+     *
      * @param name the name of the identity to be retrieved.
-     * 
+     *
      * @return the identity named <code>name</code>, or null if there are
      * no identities named <code>name</code> in this scope.
      */
     public abstract Identity getIdentity(String name);
 
     /**
-     * Retrieves the identity whose name is the same as that of the 
+     * Retrieves the identity whose name is the same as that of the
      * specified principal. (Note: Identity implements Principal.)
      *
      * @param principal the principal corresponding to the identity
      * to be retrieved.
-     * 
-     * @return the identity whose name is the same as that of the 
-     * principal, or null if there are no identities of the same name 
+     *
+     * @return the identity whose name is the same as that of the
+     * principal, or null if there are no identities of the same name
      * in this scope.
      */
     public Identity getIdentity(Principal principal) {
-	return getIdentity(principal.getName());
+        return getIdentity(principal.getName());
     }
 
     /**
@@ -215,7 +214,7 @@ class IdentityScope extends Identity {
      * valid, a name conflict occurs, another identity has the same
      * public key as the identity being added, or another exception
      * occurs. */
-    public abstract void addIdentity(Identity identity) 
+    public abstract void addIdentity(Identity identity)
     throws KeyManagementException;
 
     /**
@@ -226,12 +225,12 @@ class IdentityScope extends Identity {
      * @exception KeyManagementException if the identity is missing,
      * or another exception occurs.
      */
-    public abstract void removeIdentity(Identity identity) 
+    public abstract void removeIdentity(Identity identity)
     throws KeyManagementException;
 
     /**
      * Returns an enumeration of all identities in this identity scope.
-     * 
+     *
      * @return an enumeration of all identities in this identity scope.
      */
     public abstract Enumeration<Identity> identities();
@@ -244,14 +243,14 @@ class IdentityScope extends Identity {
      * @return a string representation of this identity scope.
      */
     public String toString() {
-	return super.toString() + "[" + size() + "]";
+        return super.toString() + "[" + size() + "]";
     }
 
     private static void check(String directive) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkSecurityAccess(directive);
-	}
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkSecurityAccess(directive);
+        }
     }
 
 }

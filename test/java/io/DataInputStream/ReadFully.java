@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 4214513
- * @summary Passing a negative length argument for readFully must throw 
+ * @summary Passing a negative length argument for readFully must throw
  *          IndexOutOfBoundsException.
  */
 
@@ -31,20 +31,20 @@
 import java.io.*;
 public class ReadFully {
     public static final void main(String[] args) throws Exception {
-	byte[] buffer = new byte[100];
-	File file = new File(System.getProperty("test.src"),
-		"ReadFully.java");
-	FileInputStream in = new FileInputStream(file);
-	DataInputStream dis = new DataInputStream(in);
+        byte[] buffer = new byte[100];
+        File file = new File(System.getProperty("test.src"),
+                "ReadFully.java");
+        FileInputStream in = new FileInputStream(file);
+        DataInputStream dis = new DataInputStream(in);
 
-	boolean caughtException = false;
-	try {
-	    dis.readFully(buffer, 0, -20);
-	} catch (IndexOutOfBoundsException ie) {
-	    caughtException = true;
-	} finally {
-	    if (!caughtException)
-		throw new RuntimeException("Test failed");
-	}
+        boolean caughtException = false;
+        try {
+            dis.readFully(buffer, 0, -20);
+        } catch (IndexOutOfBoundsException ie) {
+            caughtException = true;
+        } finally {
+            if (!caughtException)
+                throw new RuntimeException("Test failed");
+        }
     }
 }

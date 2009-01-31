@@ -43,61 +43,61 @@ public class GetMBeansFromURLTest {
 
     public static void main(String[] args) throws Exception {
 
-	boolean error = false;
+        boolean error = false;
 
-	// Instantiate the MBean server
-	//
-	System.out.println("Create the MBean server");
-	MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+        // Instantiate the MBean server
+        //
+        System.out.println("Create the MBean server");
+        MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-	// Instantiate an MLet
-	//
-	System.out.println("Create the MLet");
-	MLet mlet = new MLet();
+        // Instantiate an MLet
+        //
+        System.out.println("Create the MLet");
+        MLet mlet = new MLet();
 
-	// Register the MLet MBean with the MBeanServer
-	//
-	System.out.println("Register the MLet MBean");
-	ObjectName mletObjectName = new ObjectName("Test:type=MLet");
-	mbs.registerMBean(mlet, mletObjectName);
+        // Register the MLet MBean with the MBeanServer
+        //
+        System.out.println("Register the MLet MBean");
+        ObjectName mletObjectName = new ObjectName("Test:type=MLet");
+        mbs.registerMBean(mlet, mletObjectName);
 
-	// Call getMBeansFromURL
-	//
-	System.out.println("Call mlet.getMBeansFromURL(<url>)");
-	try {
-	    mlet.getMBeansFromURL("bogus://whatever");
-	    System.out.println("TEST FAILED: Expected " +
-			       ServiceNotFoundException.class +
-			       " exception not thrown.");
-	    error = true;
-	} catch (ServiceNotFoundException e) {
-	    if (e.getCause() == null) {
-		System.out.println("TEST FAILED: Got null cause in " +
-				   ServiceNotFoundException.class +
-				   " exception.");
-		error = true;
-	    } else {
-		System.out.println("TEST PASSED: Got non-null cause in " +
-				   ServiceNotFoundException.class +
-				   " exception.");
-		error = false;
-	    }
-	    e.printStackTrace(System.out);
-	}
+        // Call getMBeansFromURL
+        //
+        System.out.println("Call mlet.getMBeansFromURL(<url>)");
+        try {
+            mlet.getMBeansFromURL("bogus://whatever");
+            System.out.println("TEST FAILED: Expected " +
+                               ServiceNotFoundException.class +
+                               " exception not thrown.");
+            error = true;
+        } catch (ServiceNotFoundException e) {
+            if (e.getCause() == null) {
+                System.out.println("TEST FAILED: Got null cause in " +
+                                   ServiceNotFoundException.class +
+                                   " exception.");
+                error = true;
+            } else {
+                System.out.println("TEST PASSED: Got non-null cause in " +
+                                   ServiceNotFoundException.class +
+                                   " exception.");
+                error = false;
+            }
+            e.printStackTrace(System.out);
+        }
 
-	// Unregister the MLet MBean
-	//
-	System.out.println("Unregister the MLet MBean");
-	mbs.unregisterMBean(mletObjectName);
+        // Unregister the MLet MBean
+        //
+        System.out.println("Unregister the MLet MBean");
+        mbs.unregisterMBean(mletObjectName);
 
-	// Release MBean server
-	//
-	System.out.println("Release the MBean server");
-	MBeanServerFactory.releaseMBeanServer(mbs);
-	
-	// End Test
-	//
-	System.out.println("Bye! Bye!");
-	if (error) System.exit(1);
+        // Release MBean server
+        //
+        System.out.println("Release the MBean server");
+        MBeanServerFactory.releaseMBeanServer(mbs);
+
+        // End Test
+        //
+        System.out.println("Bye! Bye!");
+        if (error) System.exit(1);
     }
 }

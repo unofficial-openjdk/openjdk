@@ -44,15 +44,14 @@ import com.sun.java.swing.plaf.windows.XPStyle.*;
  * for short term storage or RMI between applications running the same
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
- * 
- * @version %I% %G%
+ *
  * @author Igor Kushnirskiy
  */
 
 public class WindowsMenuItemUI extends BasicMenuItemUI {
-    final WindowsMenuItemUIAccessor accessor = 
+    final WindowsMenuItemUIAccessor accessor =
         new  WindowsMenuItemUIAccessor() {
-        
+
             public JMenuItem getMenuItem() {
                 return menuItem;
             }
@@ -66,7 +65,7 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
             }
     };
     public static ComponentUI createUI(JComponent c) {
-	return new WindowsMenuItemUI();
+        return new WindowsMenuItemUI();
     }
 
     /**
@@ -83,7 +82,7 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
             WindowsMenuItemUI.paintText(accessor, g, menuItem, textRect, text);
             return;
         }
-	ButtonModel model = menuItem.getModel();
+        ButtonModel model = menuItem.getModel();
         Color oldColor = g.getColor();
 
         if(model.isEnabled() &&
@@ -96,9 +95,9 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
 
         g.setColor(oldColor);
     }
-    
+
     @Override
-    protected void paintBackground(Graphics g, JMenuItem menuItem, 
+    protected void paintBackground(Graphics g, JMenuItem menuItem,
             Color bgColor) {
         if (WindowsMenuItemUI.isVistaPainting()) {
             WindowsMenuItemUI.paintBackground(accessor, g, menuItem, bgColor);
@@ -106,8 +105,8 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
         }
         super.paintBackground(g, menuItem, bgColor);
     }
-    
-    static void paintBackground(WindowsMenuItemUIAccessor menuItemUI, 
+
+    static void paintBackground(WindowsMenuItemUIAccessor menuItemUI,
             Graphics g, JMenuItem menuItem, Color bgColor) {
         assert isVistaPainting();
         if (isVistaPainting()) {
@@ -122,20 +121,20 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
             XPStyle xp = XPStyle.getXP();
             Part part = menuItemUI.getPart(menuItem);
             Skin skin = xp.getSkin(menuItem, part);
-            skin.paintSkin(g, 0 , 0, 
-                menuWidth, 
+            skin.paintSkin(g, 0 , 0,
+                menuWidth,
                 menuHeight,
                 menuItemUI.getState(menuItem));
         }
     }
 
     static void paintText(WindowsMenuItemUIAccessor menuItemUI, Graphics g,
-                                JMenuItem menuItem, Rectangle textRect, 
+                                JMenuItem menuItem, Rectangle textRect,
                                 String text) {
         assert isVistaPainting();
         if (isVistaPainting()) {
             State state = menuItemUI.getState(menuItem);
-       
+
             /* part of it copied from WindowsGraphicsUtils.java */
             FontMetrics fm = SwingUtilities2.getFontMetrics(menuItem, g);
             int mnemIndex = menuItem.getDisplayedMnemonicIndex();
@@ -143,14 +142,14 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
             if (WindowsLookAndFeel.isMnemonicHidden() == true) {
                 mnemIndex = -1;
             }
-            WindowsGraphicsUtils.paintXPText(menuItem, 
+            WindowsGraphicsUtils.paintXPText(menuItem,
                 menuItemUI.getPart(menuItem), state,
-                g, textRect.x, 
+                g, textRect.x,
                 textRect.y + fm.getAscent(),
                 text, mnemIndex);
         }
     }
-    
+
     static State getState(WindowsMenuItemUIAccessor menuItemUI, JMenuItem menuItem) {
         State state;
         ButtonModel model = menuItem.getModel();
@@ -161,14 +160,14 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
         }
         return state;
     }
-    
+
     static Part getPart(WindowsMenuItemUIAccessor menuItemUI, JMenuItem menuItem) {
         return Part.MP_POPUPITEM;
     }
-    
+
     /*
      * TODO idk can we use XPStyle.isVista?
-     * is it possible that in some theme some Vista parts are not defined while 
+     * is it possible that in some theme some Vista parts are not defined while
      * others are?
      */
     static boolean isVistaPainting() {
@@ -176,4 +175,3 @@ public class WindowsMenuItemUI extends BasicMenuItemUI {
         return xp != null && xp.isSkinDefined(null, Part.MP_POPUPITEM);
     }
 }
-

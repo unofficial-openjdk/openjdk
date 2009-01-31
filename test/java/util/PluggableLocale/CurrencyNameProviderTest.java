@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -79,23 +79,23 @@ public class CurrencyNameProviderTest extends ProviderTest {
                 // JRE's name (if any)
                 String jrescurrency = null;
                 String jresname = null;
-		String key = c.getCurrencyCode();
-		String nameKey = key.toLowerCase(Locale.ROOT);
+                String key = c.getCurrencyCode();
+                String nameKey = key.toLowerCase(Locale.ROOT);
                 if (jreHasBundle) {
-		    try {
+                    try {
                         jrescurrency = rb.getString(key);
-		    } catch (MissingResourceException mre) {
-		        // JRE does not have any resource, "jrescurrency" should remain null
-		    }
-		    try {
+                    } catch (MissingResourceException mre) {
+                        // JRE does not have any resource, "jrescurrency" should remain null
+                    }
+                    try {
                         jresname = rb.getString(nameKey);
-		    } catch (MissingResourceException mre) {
-		        // JRE does not have any resource, "jresname" should remain null
-		    }
+                    } catch (MissingResourceException mre) {
+                        // JRE does not have any resource, "jresname" should remain null
+                    }
                 }
 
                 checkValidity(target, jrescurrency, providerscurrency, currencyresult, jrescurrency!=null);
-                checkValidity(target, jresname, providersname, nameresult, 
+                checkValidity(target, jresname, providersname, nameresult,
                               jreHasBundle && rb.handleGetKeys().contains(nameKey));
             }
         }
@@ -113,18 +113,18 @@ public class CurrencyNameProviderTest extends ProviderTest {
 
     void test2() {
         try {
-            df = new DecimalFormat(pattern, DecimalFormatSymbols.getInstance(OSAKA)); 
+            df = new DecimalFormat(pattern, DecimalFormatSymbols.getInstance(OSAKA));
             System.out.println(formatted = df.format(i));
             if(!formatted.equals(YEN_IN_OSAKA)) {
                 throw new RuntimeException("formatted zone names mismatch. " +
                     "Should match with " + YEN_IN_OSAKA);
             }
-            
+
             df.parse(YEN_IN_OSAKA);
 
             Locale.setDefault(KYOTO);
             df = new DecimalFormat(pattern, DecimalFormatSymbols.getInstance());
-            System.out.println(formatted = df.format(i));                        
+            System.out.println(formatted = df.format(i));
             if(!formatted.equals(YEN_IN_KYOTO)) {
                 throw new RuntimeException("formatted zone names mismatch. " +
                     "Should match with " + YEN_IN_KYOTO);

@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -64,7 +62,6 @@ import javax.swing.tree.*;
   * For an example of subclassing JTreeModel for editing refer to
   *     SampleTreeModel.
   *
-  * @version %I% %G%
   * @author Scott Violet
   */
 
@@ -81,191 +78,191 @@ public class SampleTree
       * Constructs a new instance of SampleTree.
       */
     public SampleTree() {
-	// Force SampleTree to come up in the Cross Platform L&F
-	try {
-	    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-	    // If you want the System L&F instead, comment out the above line and
-	    // uncomment the following:
-	    // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-	} catch (Exception exc) {
-	    System.err.println("Error loading L&F: " + exc);
-	}
+        // Force SampleTree to come up in the Cross Platform L&F
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            // If you want the System L&F instead, comment out the above line and
+            // uncomment the following:
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception exc) {
+            System.err.println("Error loading L&F: " + exc);
+        }
 
 
-	JMenuBar         menuBar = constructMenuBar();
-	JPanel           panel = new JPanel(true);
+        JMenuBar         menuBar = constructMenuBar();
+        JPanel           panel = new JPanel(true);
 
-	frame = new JFrame("SampleTree");
-	frame.getContentPane().add("Center", panel);
-	frame.setJMenuBar(menuBar);
-	frame.setBackground(Color.lightGray);
+        frame = new JFrame("SampleTree");
+        frame.getContentPane().add("Center", panel);
+        frame.setJMenuBar(menuBar);
+        frame.setBackground(Color.lightGray);
 
-	/* Create the JTreeModel. */
-	DefaultMutableTreeNode root = createNewNode("Root");
-	treeModel = new SampleTreeModel(root);
+        /* Create the JTreeModel. */
+        DefaultMutableTreeNode root = createNewNode("Root");
+        treeModel = new SampleTreeModel(root);
 
-	/* Create the tree. */
-	tree = new JTree(treeModel);
+        /* Create the tree. */
+        tree = new JTree(treeModel);
 
-	/* Enable tool tips for the tree, without this tool tips will not
-	   be picked up. */
-	ToolTipManager.sharedInstance().registerComponent(tree);
+        /* Enable tool tips for the tree, without this tool tips will not
+           be picked up. */
+        ToolTipManager.sharedInstance().registerComponent(tree);
 
-	/* Make the tree use an instance of SampleTreeCellRenderer for
-	   drawing. */
-	tree.setCellRenderer(new SampleTreeCellRenderer());
+        /* Make the tree use an instance of SampleTreeCellRenderer for
+           drawing. */
+        tree.setCellRenderer(new SampleTreeCellRenderer());
 
-	/* Make tree ask for the height of each row. */
-	tree.setRowHeight(-1);
+        /* Make tree ask for the height of each row. */
+        tree.setRowHeight(-1);
 
-	/* Put the Tree in a scroller. */
-	JScrollPane        sp = new JScrollPane();
-	sp.setPreferredSize(new Dimension(300, 300));
-	sp.getViewport().add(tree);
+        /* Put the Tree in a scroller. */
+        JScrollPane        sp = new JScrollPane();
+        sp.setPreferredSize(new Dimension(300, 300));
+        sp.getViewport().add(tree);
 
-	/* And show it. */
-	panel.setLayout(new BorderLayout());
-	panel.add("Center", sp);
-	panel.add("South", constructOptionsPanel());
+        /* And show it. */
+        panel.setLayout(new BorderLayout());
+        panel.add("Center", sp);
+        panel.add("South", constructOptionsPanel());
 
-	frame.addWindowListener( new WindowAdapter() {
-	    public void windowClosing(WindowEvent e) {System.exit(0);}});
+        frame.addWindowListener( new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {System.exit(0);}});
 
-	frame.pack();
-	frame.show();
+        frame.pack();
+        frame.show();
     }
 
     /** Constructs a JPanel containing check boxes for the different
       * options that tree supports. */
     private JPanel constructOptionsPanel() {
-	JCheckBox               aCheckbox;
-	JPanel           retPanel = new JPanel(false);
-	JPanel           borderPane = new JPanel(false);
+        JCheckBox               aCheckbox;
+        JPanel           retPanel = new JPanel(false);
+        JPanel           borderPane = new JPanel(false);
 
-	borderPane.setLayout(new BorderLayout());
-	retPanel.setLayout(new FlowLayout());
+        borderPane.setLayout(new BorderLayout());
+        retPanel.setLayout(new FlowLayout());
 
-	aCheckbox = new JCheckBox("show top level handles");
-	aCheckbox.setSelected(tree.getShowsRootHandles());
-	aCheckbox.addChangeListener(new ShowHandlesChangeListener());
-	retPanel.add(aCheckbox);
+        aCheckbox = new JCheckBox("show top level handles");
+        aCheckbox.setSelected(tree.getShowsRootHandles());
+        aCheckbox.addChangeListener(new ShowHandlesChangeListener());
+        retPanel.add(aCheckbox);
 
-	aCheckbox = new JCheckBox("show root");
-	aCheckbox.setSelected(tree.isRootVisible());
-	aCheckbox.addChangeListener(new ShowRootChangeListener());
-	retPanel.add(aCheckbox);
+        aCheckbox = new JCheckBox("show root");
+        aCheckbox.setSelected(tree.isRootVisible());
+        aCheckbox.addChangeListener(new ShowRootChangeListener());
+        retPanel.add(aCheckbox);
 
-	aCheckbox = new JCheckBox("editable");
-	aCheckbox.setSelected(tree.isEditable());
-	aCheckbox.addChangeListener(new TreeEditableChangeListener());
-	aCheckbox.setToolTipText("Triple click to edit");
-	retPanel.add(aCheckbox);
+        aCheckbox = new JCheckBox("editable");
+        aCheckbox.setSelected(tree.isEditable());
+        aCheckbox.addChangeListener(new TreeEditableChangeListener());
+        aCheckbox.setToolTipText("Triple click to edit");
+        retPanel.add(aCheckbox);
 
-	borderPane.add(retPanel, BorderLayout.CENTER);
+        borderPane.add(retPanel, BorderLayout.CENTER);
 
-	/* Create a set of radio buttons that dictate what selection should
-	   be allowed in the tree. */
-	ButtonGroup           group = new ButtonGroup();
-	JPanel         buttonPane = new JPanel(false);
-	JRadioButton          button;
+        /* Create a set of radio buttons that dictate what selection should
+           be allowed in the tree. */
+        ButtonGroup           group = new ButtonGroup();
+        JPanel         buttonPane = new JPanel(false);
+        JRadioButton          button;
 
-	buttonPane.setLayout(new FlowLayout());
-	buttonPane.setBorder(new TitledBorder("Selection Mode"));
-	button = new JRadioButton("Single");
-	button.addActionListener(new AbstractAction() {
-	    public boolean isEnabled() { return true; }
-	    public void actionPerformed(ActionEvent e) {
-		tree.getSelectionModel().setSelectionMode
-		    (TreeSelectionModel.SINGLE_TREE_SELECTION);
-	    }
-	});
-	group.add(button);
-	buttonPane.add(button);
-	button = new JRadioButton("Contiguous");
-	button.addActionListener(new AbstractAction() {
-	    public boolean isEnabled() { return true; }
-	    public void actionPerformed(ActionEvent e) {
-		tree.getSelectionModel().setSelectionMode
-		    (TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
-	    }
-	});
-	group.add(button);
-	buttonPane.add(button);
-	button = new JRadioButton("Discontiguous");
-	button.addActionListener(new AbstractAction() {
-	    public boolean isEnabled() { return true; }
-	    public void actionPerformed(ActionEvent e) {
-		tree.getSelectionModel().setSelectionMode
-		    (TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-	    }
-	});
-	button.setSelected(true);
-	group.add(button);
-	buttonPane.add(button);
+        buttonPane.setLayout(new FlowLayout());
+        buttonPane.setBorder(new TitledBorder("Selection Mode"));
+        button = new JRadioButton("Single");
+        button.addActionListener(new AbstractAction() {
+            public boolean isEnabled() { return true; }
+            public void actionPerformed(ActionEvent e) {
+                tree.getSelectionModel().setSelectionMode
+                    (TreeSelectionModel.SINGLE_TREE_SELECTION);
+            }
+        });
+        group.add(button);
+        buttonPane.add(button);
+        button = new JRadioButton("Contiguous");
+        button.addActionListener(new AbstractAction() {
+            public boolean isEnabled() { return true; }
+            public void actionPerformed(ActionEvent e) {
+                tree.getSelectionModel().setSelectionMode
+                    (TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
+            }
+        });
+        group.add(button);
+        buttonPane.add(button);
+        button = new JRadioButton("Discontiguous");
+        button.addActionListener(new AbstractAction() {
+            public boolean isEnabled() { return true; }
+            public void actionPerformed(ActionEvent e) {
+                tree.getSelectionModel().setSelectionMode
+                    (TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+            }
+        });
+        button.setSelected(true);
+        group.add(button);
+        buttonPane.add(button);
 
-	borderPane.add(buttonPane, BorderLayout.SOUTH);
+        borderPane.add(buttonPane, BorderLayout.SOUTH);
 
-	// NOTE: This will be enabled in a future release.
-	// Create a label and combobox to determine how many clicks are
-	// needed to expand.
+        // NOTE: This will be enabled in a future release.
+        // Create a label and combobox to determine how many clicks are
+        // needed to expand.
 /*
-	JPanel               clickPanel = new JPanel();
-	Object[]             values = { "Never", new Integer(1),
-					new Integer(2), new Integer(3) };
-	final JComboBox      clickCBox = new JComboBox(values);
+        JPanel               clickPanel = new JPanel();
+        Object[]             values = { "Never", new Integer(1),
+                                        new Integer(2), new Integer(3) };
+        final JComboBox      clickCBox = new JComboBox(values);
 
-	clickPanel.setLayout(new FlowLayout());
-	clickPanel.add(new JLabel("Click count to expand:"));
-	clickCBox.setSelectedIndex(2);
-	clickCBox.addActionListener(new ActionListener() {
-	    public void actionPerformed(ActionEvent ae) {
-		Object       selItem = clickCBox.getSelectedItem();
+        clickPanel.setLayout(new FlowLayout());
+        clickPanel.add(new JLabel("Click count to expand:"));
+        clickCBox.setSelectedIndex(2);
+        clickCBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                Object       selItem = clickCBox.getSelectedItem();
 
-		if(selItem instanceof Integer)
-		    tree.setToggleClickCount(((Integer)selItem).intValue());
-		else // Don't toggle
-		    tree.setToggleClickCount(0);
-	    }
-	});
-	clickPanel.add(clickCBox);
-	borderPane.add(clickPanel, BorderLayout.NORTH);
+                if(selItem instanceof Integer)
+                    tree.setToggleClickCount(((Integer)selItem).intValue());
+                else // Don't toggle
+                    tree.setToggleClickCount(0);
+            }
+        });
+        clickPanel.add(clickCBox);
+        borderPane.add(clickPanel, BorderLayout.NORTH);
 */
-	return borderPane;
+        return borderPane;
     }
 
     /** Construct a menu. */
     private JMenuBar constructMenuBar() {
-	JMenu            menu;
-	JMenuBar         menuBar = new JMenuBar();
-	JMenuItem        menuItem;
+        JMenu            menu;
+        JMenuBar         menuBar = new JMenuBar();
+        JMenuItem        menuItem;
 
-	/* Good ol exit. */
-	menu = new JMenu("File");
-	menuBar.add(menu);
+        /* Good ol exit. */
+        menu = new JMenu("File");
+        menuBar.add(menu);
 
-	menuItem = menu.add(new JMenuItem("Exit"));
-	menuItem.addActionListener(new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		System.exit(0);
-	    }});
+        menuItem = menu.add(new JMenuItem("Exit"));
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }});
 
-	/* Tree related stuff. */
-	menu = new JMenu("Tree");
-	menuBar.add(menu);
+        /* Tree related stuff. */
+        menu = new JMenu("Tree");
+        menuBar.add(menu);
 
-	menuItem = menu.add(new JMenuItem("Add"));
-	menuItem.addActionListener(new AddAction());
+        menuItem = menu.add(new JMenuItem("Add"));
+        menuItem.addActionListener(new AddAction());
 
-	menuItem = menu.add(new JMenuItem("Insert"));
-	menuItem.addActionListener(new InsertAction());
+        menuItem = menu.add(new JMenuItem("Insert"));
+        menuItem.addActionListener(new InsertAction());
 
-	menuItem = menu.add(new JMenuItem("Reload"));
-	menuItem.addActionListener(new ReloadAction());
+        menuItem = menu.add(new JMenuItem("Reload"));
+        menuItem.addActionListener(new ReloadAction());
 
-	menuItem = menu.add(new JMenuItem("Remove"));
-	menuItem.addActionListener(new RemoveAction());
+        menuItem = menu.add(new JMenuItem("Remove"));
+        menuItem.addActionListener(new RemoveAction());
 
-	return menuBar;
+        return menuBar;
     }
 
     /**
@@ -273,11 +270,11 @@ public class SampleTree
       * If nothing is selected, null is returned.
       */
     protected DefaultMutableTreeNode getSelectedNode() {
-	TreePath   selPath = tree.getSelectionPath();
+        TreePath   selPath = tree.getSelectionPath();
 
-	if(selPath != null)
-	    return (DefaultMutableTreeNode)selPath.getLastPathComponent();
-	return null;
+        if(selPath != null)
+            return (DefaultMutableTreeNode)selPath.getLastPathComponent();
+        return null;
     }
 
     /**
@@ -289,7 +286,7 @@ public class SampleTree
     }
 
     protected DefaultMutableTreeNode createNewNode(String name) {
-	return new DynamicTreeNode(new SampleData(null, Color.black, name));
+        return new DynamicTreeNode(new SampleData(null, Color.black, name));
     }
 
     /**
@@ -297,29 +294,29 @@ public class SampleTree
       */
     class AddAction extends Object implements ActionListener
     {
-	/** Number of nodes that have been added. */
-	public int               addCount;
+        /** Number of nodes that have been added. */
+        public int               addCount;
 
-	/**
-	  * Messaged when the user clicks on the Add menu item.
-	  * Determines the selection from the Tree and adds an item
-	  * after that.  If nothing is selected, an item is added to
-	  * the root.
-	  */
-	public void actionPerformed(ActionEvent e) {
-	    DefaultMutableTreeNode          lastItem = getSelectedNode();
-	    DefaultMutableTreeNode          parent;
+        /**
+          * Messaged when the user clicks on the Add menu item.
+          * Determines the selection from the Tree and adds an item
+          * after that.  If nothing is selected, an item is added to
+          * the root.
+          */
+        public void actionPerformed(ActionEvent e) {
+            DefaultMutableTreeNode          lastItem = getSelectedNode();
+            DefaultMutableTreeNode          parent;
 
-	    /* Determine where to create the new node. */
-	    if(lastItem != null) {
-		parent = (DefaultMutableTreeNode)lastItem.getParent();
-		if(parent == null) {
-		    parent = (DefaultMutableTreeNode)treeModel.getRoot();
-		    lastItem = null;
-		}
-	    }
-	    else
-		parent = (DefaultMutableTreeNode)treeModel.getRoot();
+            /* Determine where to create the new node. */
+            if(lastItem != null) {
+                parent = (DefaultMutableTreeNode)lastItem.getParent();
+                if(parent == null) {
+                    parent = (DefaultMutableTreeNode)treeModel.getRoot();
+                    lastItem = null;
+                }
+            }
+            else
+                parent = (DefaultMutableTreeNode)treeModel.getRoot();
             if (parent == null) {
                 // new root
                 treeModel.setRoot(createNewNode("Added " +
@@ -335,9 +332,9 @@ public class SampleTree
                 /* Let the treemodel know. */
                 treeModel.insertNodeInto(createNewNode("Added " +
                                     Integer.toString(addCount++)),
-				    parent, newIndex);
+                                    parent, newIndex);
             }
-	}
+        }
     } // End of SampleTree.AddAction
 
 
@@ -346,29 +343,29 @@ public class SampleTree
       */
     class InsertAction extends Object implements ActionListener
     {
-	/** Number of nodes that have been added. */
-	public int               insertCount;
+        /** Number of nodes that have been added. */
+        public int               insertCount;
 
-	/**
-	  * Messaged when the user clicks on the Insert menu item.
-	  * Determines the selection from the Tree and inserts an item
-	  * after that.  If nothing is selected, an item is added to
-	  * the root.
-	  */
-	public void actionPerformed(ActionEvent e) {
-	    DefaultMutableTreeNode          lastItem = getSelectedNode();
-	    DefaultMutableTreeNode          parent;
+        /**
+          * Messaged when the user clicks on the Insert menu item.
+          * Determines the selection from the Tree and inserts an item
+          * after that.  If nothing is selected, an item is added to
+          * the root.
+          */
+        public void actionPerformed(ActionEvent e) {
+            DefaultMutableTreeNode          lastItem = getSelectedNode();
+            DefaultMutableTreeNode          parent;
 
-	    /* Determine where to create the new node. */
-	    if(lastItem != null) {
-		parent = (DefaultMutableTreeNode)lastItem.getParent();
-		if(parent == null) {
-		    parent = (DefaultMutableTreeNode)treeModel.getRoot();
-		    lastItem = null;
-		}
-	    }
-	    else
-		parent = (DefaultMutableTreeNode)treeModel.getRoot();
+            /* Determine where to create the new node. */
+            if(lastItem != null) {
+                parent = (DefaultMutableTreeNode)lastItem.getParent();
+                if(parent == null) {
+                    parent = (DefaultMutableTreeNode)treeModel.getRoot();
+                    lastItem = null;
+                }
+            }
+            else
+                parent = (DefaultMutableTreeNode)treeModel.getRoot();
             if (parent == null) {
                 // new root
                 treeModel.setRoot(createNewNode("Inserted " +
@@ -384,10 +381,10 @@ public class SampleTree
 
                 /* Let the treemodel know. */
                 treeModel.insertNodeInto(createNewNode("Inserted " +
-					 Integer.toString(insertCount++)),
+                                         Integer.toString(insertCount++)),
                                          parent, newIndex);
             }
-	}
+        }
     } // End of SampleTree.InsertAction
 
 
@@ -397,17 +394,17 @@ public class SampleTree
       */
     class ReloadAction extends Object implements ActionListener
     {
-	/**
-	  * Messaged when the user clicks on the Reload menu item.
-	  * Determines the selection from the Tree and asks the treemodel
-	  * to reload from that node.
-	  */
-	public void actionPerformed(ActionEvent e) {
-	    DefaultMutableTreeNode          lastItem = getSelectedNode();
+        /**
+          * Messaged when the user clicks on the Reload menu item.
+          * Determines the selection from the Tree and asks the treemodel
+          * to reload from that node.
+          */
+        public void actionPerformed(ActionEvent e) {
+            DefaultMutableTreeNode          lastItem = getSelectedNode();
 
-	    if(lastItem != null)
-		treeModel.reload(lastItem);
-	}
+            if(lastItem != null)
+                treeModel.reload(lastItem);
+        }
     } // End of SampleTree.ReloadAction
 
     /**
@@ -416,10 +413,10 @@ public class SampleTree
       */
     class RemoveAction extends Object implements ActionListener
     {
-	/**
-	  * Removes the selected item as long as it isn't root.
-	  */
-	public void actionPerformed(ActionEvent e) {
+        /**
+          * Removes the selected item as long as it isn't root.
+          */
+        public void actionPerformed(ActionEvent e) {
             TreePath[] selected = getSelectedPaths();
 
             if (selected != null && selected.length > 0) {
@@ -439,7 +436,7 @@ public class SampleTree
                     removeSiblings(shallowest, selected);
                 }
             }
-	}
+        }
 
         /**
          * Removes the sibling TreePaths of <code>path</code>, that are
@@ -567,9 +564,9 @@ public class SampleTree
       */
     class ShowHandlesChangeListener extends Object implements ChangeListener
     {
-	public void stateChanged(ChangeEvent e) {
-	    tree.setShowsRootHandles(((JCheckBox)e.getSource()).isSelected());
-	}
+        public void stateChanged(ChangeEvent e) {
+            tree.setShowsRootHandles(((JCheckBox)e.getSource()).isSelected());
+        }
 
     } // End of class SampleTree.ShowHandlesChangeListener
 
@@ -580,9 +577,9 @@ public class SampleTree
       */
     class ShowRootChangeListener extends Object implements ChangeListener
     {
-	public void stateChanged(ChangeEvent e) {
-	    tree.setRootVisible(((JCheckBox)e.getSource()).isSelected());
-	}
+        public void stateChanged(ChangeEvent e) {
+            tree.setRootVisible(((JCheckBox)e.getSource()).isSelected());
+        }
 
     } // End of class SampleTree.ShowRootChangeListener
 
@@ -594,15 +591,15 @@ public class SampleTree
       */
     class TreeEditableChangeListener extends Object implements ChangeListener
     {
-	public void stateChanged(ChangeEvent e) {
-	    tree.setEditable(((JCheckBox)e.getSource()).isSelected());
-	}
+        public void stateChanged(ChangeEvent e) {
+            tree.setEditable(((JCheckBox)e.getSource()).isSelected());
+        }
 
     } // End of class SampleTree.TreeEditableChangeListener
 
 
     static public void main(String args[]) {
-	new SampleTree();
+        new SampleTree();
     }
 
 }

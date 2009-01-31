@@ -55,7 +55,7 @@ public class FileFontStrike extends PhysicalStrike {
     private static final int LONGARRAY     = 2;
     private static final int SEGINTARRAY   = 3;
     private static final int SEGLONGARRAY  = 4;
- 
+
     private int glyphCacheFormat = UNINITIALISED;
 
     /* segmented arrays are blocks of 256 */
@@ -106,44 +106,44 @@ public class FileFontStrike extends PhysicalStrike {
     NativeStrike[] nativeStrikes;
 
     FileFontStrike(FileFont fileFont, FontStrikeDesc desc) {
-	super(fileFont, desc);
-	this.fileFont = fileFont;
+        super(fileFont, desc);
+        this.fileFont = fileFont;
 
-	if (desc.style != fileFont.style) {
-	  /* If using algorithmic styling, the base values are
-	   * boldness = 1.0, italic = 0.0. The superclass constructor
-	   * initialises these.
-	   */
-	    if ((desc.style & Font.ITALIC) == Font.ITALIC &&
-		(fileFont.style & Font.ITALIC) == 0) {
-		algoStyle = true;
-		italic = 0.7f;
-	    }
-	    if ((desc.style & Font.BOLD) == Font.BOLD &&
-		((fileFont.style & Font.BOLD) == 0)) {
-		algoStyle = true;
-		boldness = 1.33f;
-	    }
-	}
-	double[] matrix = new double[4];
-	AffineTransform at = desc.glyphTx;
-	at.getMatrix(matrix);
-	if (!desc.devTx.isIdentity() &&
-	    desc.devTx.getType() != AffineTransform.TYPE_TRANSLATION) {
-	    try {
-		invertDevTx = desc.devTx.createInverse();
-	    } catch (NoninvertibleTransformException e) {
-	    }
-	}
+        if (desc.style != fileFont.style) {
+          /* If using algorithmic styling, the base values are
+           * boldness = 1.0, italic = 0.0. The superclass constructor
+           * initialises these.
+           */
+            if ((desc.style & Font.ITALIC) == Font.ITALIC &&
+                (fileFont.style & Font.ITALIC) == 0) {
+                algoStyle = true;
+                italic = 0.7f;
+            }
+            if ((desc.style & Font.BOLD) == Font.BOLD &&
+                ((fileFont.style & Font.BOLD) == 0)) {
+                algoStyle = true;
+                boldness = 1.33f;
+            }
+        }
+        double[] matrix = new double[4];
+        AffineTransform at = desc.glyphTx;
+        at.getMatrix(matrix);
+        if (!desc.devTx.isIdentity() &&
+            desc.devTx.getType() != AffineTransform.TYPE_TRANSLATION) {
+            try {
+                invertDevTx = desc.devTx.createInverse();
+            } catch (NoninvertibleTransformException e) {
+            }
+        }
 
         /* If any of the values is NaN then substitute the null scaler context.
          * This will return null images, zero advance, and empty outlines
          * as no rendering need take place in this case.
          * We pass in the null scaler as the singleton null context
-         * requires it. However 
+         * requires it. However
          */
         if (Double.isNaN(matrix[0]) || Double.isNaN(matrix[1]) ||
-            Double.isNaN(matrix[2]) || Double.isNaN(matrix[3]) || 
+            Double.isNaN(matrix[2]) || Double.isNaN(matrix[3]) ||
             fileFont.getScaler() == null) {
             pScalerContext = NullFontScaler.getNullScalerContext();
         } else {
@@ -153,8 +153,8 @@ public class FileFontStrike extends PhysicalStrike {
                                     boldness, italic);
         }
 
-	mapper = fileFont.getMapper();
-	int numGlyphs = mapper.getNumGlyphs();
+        mapper = fileFont.getMapper();
+        int numGlyphs = mapper.getNumGlyphs();
 
         /* Always segment for fonts with > 2K glyphs, but also for smaller
          * fonts with non-typical sizes and transforms.
@@ -174,29 +174,29 @@ public class FileFontStrike extends PhysicalStrike {
 
         /* This can only happen if we failed to allocate memory for context.
          * NB: in such case we may still have some memory in java heap
-         *     but subsequent attempt to allocate null scaler context 
+         *     but subsequent attempt to allocate null scaler context
          *     may fail too (cause it is allocate in the native heap).
-         *     It is not clear how to make this more robust but on the 
+         *     It is not clear how to make this more robust but on the
          *     other hand getting NULL here seems to be extremely unlikely.
          */
-	if (pScalerContext == 0L) {
+        if (pScalerContext == 0L) {
             /* REMIND: when the code is updated to install cache objects
              * rather than using a switch this will be more efficient.
              */
             this.disposer = new FontStrikeDisposer(fileFont, desc);
             initGlyphCache();
             pScalerContext = NullFontScaler.getNullScalerContext();
-	    FontManager.deRegisterBadFont(fileFont);
-	    return;
-	}
+            FontManager.deRegisterBadFont(fileFont);
+            return;
+        }
 
         if (fileFont.checkUseNatives() && desc.aaHint==0 && !algoStyle) {
             /* Check its a simple scale of a pt size in the range
-	     * where native bitmaps typically exist (6-36 pts) */
+             * where native bitmaps typically exist (6-36 pts) */
             if (matrix[1] == 0.0 && matrix[2] == 0.0 &&
                 matrix[0] >= 6.0 && matrix[0] <= 36.0 &&
-		matrix[0] == matrix[3]) {
-		useNatives = true;
+                matrix[0] == matrix[3]) {
+                useNatives = true;
                 int numNatives = fileFont.nativeFonts.length;
                 nativeStrikes = new NativeStrike[numNatives];
                 /* Maybe initialise these strikes lazily?. But we
@@ -204,19 +204,19 @@ public class FileFontStrike extends PhysicalStrike {
                  */
                 for (int i=0; i<numNatives; i++) {
                     nativeStrikes[i] =
-			new NativeStrike(fileFont.nativeFonts[i], desc, false);
+                        new NativeStrike(fileFont.nativeFonts[i], desc, false);
                 }
             }
         }
 
-	this.disposer = new FontStrikeDisposer(fileFont, desc, pScalerContext);
+        this.disposer = new FontStrikeDisposer(fileFont, desc, pScalerContext);
 
         /* Always get the image and the advance together for smaller sizes
          * that are likely to be important to rendering performance.
          * The pixel size of 48.0 can be thought of as
          * "maximumSizeForGetImageWithAdvance".
          * This should be no greater than OutlineTextRender.THRESHOLD.
-	 */
+         */
         getImageWithAdvance = at.getScaleY() <= 48.0;
 
         /* Some applications request advance frequently during layout.
@@ -239,7 +239,7 @@ public class FileFontStrike extends PhysicalStrike {
                 int numSegments = (numGlyphs + SEGSIZE-1)/SEGSIZE;
                 segHorizontalAdvances = new float[numSegments][];
             }
-	}
+        }
     }
 
     /* A number of methods are delegated by the strike to the scaler
@@ -247,31 +247,31 @@ public class FileFontStrike extends PhysicalStrike {
      */
 
     public int getNumGlyphs() {
-	return fileFont.getNumGlyphs();
+        return fileFont.getNumGlyphs();
     }
 
     /* Try the native strikes first, then try the fileFont strike */
     long getGlyphImageFromNative(int glyphCode) {
-	long glyphPtr;
-	char charCode = fileFont.glyphToCharMap[glyphCode];
-	for (int i=0;i<nativeStrikes.length;i++) {
-	    CharToGlyphMapper mapper = fileFont.nativeFonts[i].getMapper();
-	    int gc = mapper.charToGlyph(charCode)&0xffff;
-	    if (gc != mapper.getMissingGlyphCode()) {
-		glyphPtr = nativeStrikes[i].getGlyphImagePtrNoCache(gc);
-		if (glyphPtr != 0L) {
-		    return glyphPtr;
-		}
-	    }
-	}
+        long glyphPtr;
+        char charCode = fileFont.glyphToCharMap[glyphCode];
+        for (int i=0;i<nativeStrikes.length;i++) {
+            CharToGlyphMapper mapper = fileFont.nativeFonts[i].getMapper();
+            int gc = mapper.charToGlyph(charCode)&0xffff;
+            if (gc != mapper.getMissingGlyphCode()) {
+                glyphPtr = nativeStrikes[i].getGlyphImagePtrNoCache(gc);
+                if (glyphPtr != 0L) {
+                    return glyphPtr;
+                }
+            }
+        }
         return fileFont.getGlyphImage(pScalerContext, glyphCode);
     }
 
     long getGlyphImagePtr(int glyphCode) {
-	if (glyphCode >= INVISIBLE_GLYPHS) {
+        if (glyphCode >= INVISIBLE_GLYPHS) {
             return StrikeCache.invisibleGlyphPtr;
-	}
-	long glyphPtr;
+        }
+        long glyphPtr;
         if ((glyphPtr = getCachedGlyphPtr(glyphCode)) != 0L) {
             return glyphPtr;
         } else {
@@ -312,7 +312,7 @@ public class FileFontStrike extends PhysicalStrike {
     private static final int SLOTZEROMAX = 0xffffff;
     int getSlot0GlyphImagePtrs(int[] glyphCodes, long[] images, int len) {
 
-	int convertedCnt = 0;
+        int convertedCnt = 0;
 
         for (int i=0; i<len; i++) {
             int glyphCode = glyphCodes[i];
@@ -336,8 +336,8 @@ public class FileFontStrike extends PhysicalStrike {
                 }
                 images[i] = setCachedGlyphPtr(glyphCode, glyphPtr);
             }
-	}
-	return convertedCnt;
+        }
+        return convertedCnt;
     }
 
     /* Only look in the cache */
@@ -379,7 +379,7 @@ public class FileFontStrike extends PhysicalStrike {
                     return intGlyphImages[glyphCode] & INTMASK;
                 }
 
-            case SEGINTARRAY: 
+            case SEGINTARRAY:
                 int segIndex = glyphCode >> SEGSHIFT;
                 int subIndex = glyphCode % SEGSIZE;
                 if (segIntGlyphImages[segIndex] == null) {
@@ -402,7 +402,7 @@ public class FileFontStrike extends PhysicalStrike {
                     return longGlyphImages[glyphCode];
                 }
 
-           case SEGLONGARRAY: 
+           case SEGLONGARRAY:
                 segIndex = glyphCode >> SEGSHIFT;
                 subIndex = glyphCode % SEGSIZE;
                 if (segLongGlyphImages[segIndex] == null) {
@@ -427,7 +427,7 @@ public class FileFontStrike extends PhysicalStrike {
 
     /* Called only from synchronized code or constructor */
     private void initGlyphCache() {
-        
+
         int numGlyphs = mapper.getNumGlyphs();
 
         if (segmentedCache) {
@@ -459,16 +459,16 @@ public class FileFontStrike extends PhysicalStrike {
      * This is in user space coordinates.
      */
     float getGlyphAdvance(int glyphCode) {
-	float advance;
+        float advance;
 
-	if (glyphCode >= INVISIBLE_GLYPHS) {
-	    return 0f;
-	}
-	if (horizontalAdvances != null) {
-	    advance = horizontalAdvances[glyphCode];
-	    if (advance != Float.MAX_VALUE) {
-		return advance;
-	    }
+        if (glyphCode >= INVISIBLE_GLYPHS) {
+            return 0f;
+        }
+        if (horizontalAdvances != null) {
+            advance = horizontalAdvances[glyphCode];
+            if (advance != Float.MAX_VALUE) {
+                return advance;
+            }
         } else if (segmentedCache && segHorizontalAdvances != null) {
             int segIndex = glyphCode >> SEGSHIFT;
             float[] subArray = segHorizontalAdvances[segIndex];
@@ -480,34 +480,34 @@ public class FileFontStrike extends PhysicalStrike {
             }
         }
 
-	if (invertDevTx != null) {
-	    /* If there is a device transform need x & y advance to
-	     * transform back into user space.
-	     */
-	    advance = getGlyphMetrics(glyphCode).x;
-	} else {
-	    long glyphPtr;
-	    if (getImageWithAdvance) {
+        if (invertDevTx != null) {
+            /* If there is a device transform need x & y advance to
+             * transform back into user space.
+             */
+            advance = getGlyphMetrics(glyphCode).x;
+        } else {
+            long glyphPtr;
+            if (getImageWithAdvance) {
                 /* A heuristic optimisation says that for most cases its
-		 * worthwhile retrieving the image at the same time as the
-		 * advance. So here we get the image data even if its not
-		 * already cached.
-		 */	    
-		glyphPtr = getGlyphImagePtr(glyphCode);
-	    } else {
-		glyphPtr = getCachedGlyphPtr(glyphCode);
-	    }
-	    if (glyphPtr != 0L) {
-		advance = StrikeCache.unsafe.getFloat
-		    (glyphPtr + StrikeCache.xAdvanceOffset);
+                 * worthwhile retrieving the image at the same time as the
+                 * advance. So here we get the image data even if its not
+                 * already cached.
+                 */
+                glyphPtr = getGlyphImagePtr(glyphCode);
+            } else {
+                glyphPtr = getCachedGlyphPtr(glyphCode);
+            }
+            if (glyphPtr != 0L) {
+                advance = StrikeCache.unsafe.getFloat
+                    (glyphPtr + StrikeCache.xAdvanceOffset);
 
-	    } else {
-		advance = fileFont.getGlyphAdvance(pScalerContext, glyphCode);
-	    }
-	}
+            } else {
+                advance = fileFont.getGlyphAdvance(pScalerContext, glyphCode);
+            }
+        }
 
-	if (horizontalAdvances != null) {
-	    horizontalAdvances[glyphCode] = advance;
+        if (horizontalAdvances != null) {
+            horizontalAdvances[glyphCode] = advance;
         } else if (segmentedCache && segHorizontalAdvances != null) {
             int segIndex = glyphCode >> SEGSHIFT;
             int subIndex = glyphCode % SEGSIZE;
@@ -519,18 +519,18 @@ public class FileFontStrike extends PhysicalStrike {
             }
             segHorizontalAdvances[segIndex][subIndex] = advance;
         }
-	return advance;
+        return advance;
     }
 
     float getCodePointAdvance(int cp) {
-	return getGlyphAdvance(mapper.charToGlyph(cp));
+        return getGlyphAdvance(mapper.charToGlyph(cp));
     }
 
     /**
      * Result and pt are both in device space.
      */
     void getGlyphImageBounds(int glyphCode, Point2D.Float pt,
-			     Rectangle result) {
+                             Rectangle result) {
 
         long ptr = getGlyphImagePtr(glyphCode);
         float topLeftX, topLeftY;
@@ -544,16 +544,16 @@ public class FileFontStrike extends PhysicalStrike {
             result.width = result.height = 0;
             return;
         }
-        
+
         topLeftX = StrikeCache.unsafe.getFloat(ptr+StrikeCache.topLeftXOffset);
         topLeftY = StrikeCache.unsafe.getFloat(ptr+StrikeCache.topLeftYOffset);
 
-	result.x = (int)Math.floor(pt.x + topLeftX);
-	result.y = (int)Math.floor(pt.y + topLeftY);
+        result.x = (int)Math.floor(pt.x + topLeftX);
+        result.y = (int)Math.floor(pt.y + topLeftY);
         result.width =
-	    StrikeCache.unsafe.getShort(ptr+StrikeCache.widthOffset)  &0x0ffff;
+            StrikeCache.unsafe.getShort(ptr+StrikeCache.widthOffset)  &0x0ffff;
         result.height =
-	    StrikeCache.unsafe.getShort(ptr+StrikeCache.heightOffset) &0x0ffff;
+            StrikeCache.unsafe.getShort(ptr+StrikeCache.heightOffset) &0x0ffff;
 
         /* HRGB LCD text may have padding that is empty. This is almost always
          * going to be when topLeftX is -2 or less.
@@ -609,78 +609,78 @@ public class FileFontStrike extends PhysicalStrike {
      * values in user space.
      */
     StrikeMetrics getFontMetrics() {
-	if (strikeMetrics == null) {
-	    strikeMetrics =
-		fileFont.getFontMetrics(pScalerContext);
-	    if (invertDevTx != null) {
-		strikeMetrics.convertToUserSpace(invertDevTx);
-	    }
-	}
-	return strikeMetrics;
+        if (strikeMetrics == null) {
+            strikeMetrics =
+                fileFont.getFontMetrics(pScalerContext);
+            if (invertDevTx != null) {
+                strikeMetrics.convertToUserSpace(invertDevTx);
+            }
+        }
+        return strikeMetrics;
     }
 
     Point2D.Float getGlyphMetrics(int glyphCode) {
-	Point2D.Float metrics = new Point2D.Float();
+        Point2D.Float metrics = new Point2D.Float();
 
-	// !!! or do we force sgv user glyphs?
-	if (glyphCode >= INVISIBLE_GLYPHS) {
-	    return metrics;
+        // !!! or do we force sgv user glyphs?
+        if (glyphCode >= INVISIBLE_GLYPHS) {
+            return metrics;
         }
-	long glyphPtr;
-	if (getImageWithAdvance) {
+        long glyphPtr;
+        if (getImageWithAdvance) {
             /* A heuristic optimisation says that for most cases its
-	     * worthwhile retrieving the image at the same time as the
-	     * metrics. So here we get the image data even if its not
-	     * already cached.
-	     */
-	    glyphPtr = getGlyphImagePtr(glyphCode);
-	} else {
-	     glyphPtr = getCachedGlyphPtr(glyphCode);
-	}
-	if (glyphPtr != 0L) {
-	    metrics = new Point2D.Float();
-	    metrics.x = StrikeCache.unsafe.getFloat
-		(glyphPtr + StrikeCache.xAdvanceOffset);
-	    metrics.y = StrikeCache.unsafe.getFloat
-		(glyphPtr + StrikeCache.yAdvanceOffset);
-	    /* advance is currently in device space, need to convert back
-	     * into user space.
-	     * This must not include the translation component. */
-	    if (invertDevTx != null) {
-		invertDevTx.deltaTransform(metrics, metrics);
-	    }
-	} else {
-	    /* We sometimes cache these metrics as they are expensive to 
-	     * generate for large glyphs.
-	     * We never reach this path if we obtain images with advances.
-	     * But if we do not obtain images with advances its possible that
-	     * we first obtain this information, then the image, and never
-	     * will access this value again.
-	     */
-	    Integer key = new Integer(glyphCode);
-	    Point2D.Float value = null;
+             * worthwhile retrieving the image at the same time as the
+             * metrics. So here we get the image data even if its not
+             * already cached.
+             */
+            glyphPtr = getGlyphImagePtr(glyphCode);
+        } else {
+             glyphPtr = getCachedGlyphPtr(glyphCode);
+        }
+        if (glyphPtr != 0L) {
+            metrics = new Point2D.Float();
+            metrics.x = StrikeCache.unsafe.getFloat
+                (glyphPtr + StrikeCache.xAdvanceOffset);
+            metrics.y = StrikeCache.unsafe.getFloat
+                (glyphPtr + StrikeCache.yAdvanceOffset);
+            /* advance is currently in device space, need to convert back
+             * into user space.
+             * This must not include the translation component. */
+            if (invertDevTx != null) {
+                invertDevTx.deltaTransform(metrics, metrics);
+            }
+        } else {
+            /* We sometimes cache these metrics as they are expensive to
+             * generate for large glyphs.
+             * We never reach this path if we obtain images with advances.
+             * But if we do not obtain images with advances its possible that
+             * we first obtain this information, then the image, and never
+             * will access this value again.
+             */
+            Integer key = new Integer(glyphCode);
+            Point2D.Float value = null;
             ConcurrentHashMap<Integer, Point2D.Float> glyphMetricsMap = null;
-	    if (glyphMetricsMapRef != null) {
+            if (glyphMetricsMapRef != null) {
                 glyphMetricsMap = glyphMetricsMapRef.get();
-	    }
-	    if (glyphMetricsMap != null) {
+            }
+            if (glyphMetricsMap != null) {
                 value = glyphMetricsMap.get(key);
                 if (value != null) {
                     metrics.x = value.x;
                     metrics.y = value.y;
                     /* already in user space */
                     return metrics;
-		}
-	    }
-	    if (value == null) {
-		fileFont.getGlyphMetrics(pScalerContext, glyphCode, metrics);
-		/* advance is currently in device space, need to convert back
-		 * into user space.
-		 */
-		if (invertDevTx != null) {
-		    invertDevTx.deltaTransform(metrics, metrics);
-		}		
-	        value = new Point2D.Float(metrics.x, metrics.y);
+                }
+            }
+            if (value == null) {
+                fileFont.getGlyphMetrics(pScalerContext, glyphCode, metrics);
+                /* advance is currently in device space, need to convert back
+                 * into user space.
+                 */
+                if (invertDevTx != null) {
+                    invertDevTx.deltaTransform(metrics, metrics);
+                }
+                value = new Point2D.Float(metrics.x, metrics.y);
                 /* We aren't synchronizing here so it is possible to
                  * overwrite the map with another one but this is harmless.
                  */
@@ -692,13 +692,13 @@ public class FileFontStrike extends PhysicalStrike {
                         Point2D.Float>>(glyphMetricsMap);
                 }
                 glyphMetricsMap.put(key, value);
-	    }
-	}
-	return metrics;
+            }
+        }
+        return metrics;
     }
 
     Point2D.Float getCharMetrics(char ch) {
-	return getGlyphMetrics(mapper.charToGlyph(ch));
+        return getGlyphMetrics(mapper.charToGlyph(ch));
     }
 
     /* The caller of this can be trusted to return a copy of this
@@ -727,29 +727,29 @@ public class FileFontStrike extends PhysicalStrike {
         Integer key = new Integer(glyphCode);
         Rectangle2D.Float bounds = boundsMap.get(key);
 
-	if (bounds == null) {
-	    bounds = fileFont.getGlyphOutlineBounds(pScalerContext, glyphCode);
+        if (bounds == null) {
+            bounds = fileFont.getGlyphOutlineBounds(pScalerContext, glyphCode);
             boundsMap.put(key, bounds);
-	}
-	return bounds;
+        }
+        return bounds;
     }
 
     public Rectangle2D getOutlineBounds(int glyphCode) {
-	return fileFont.getGlyphOutlineBounds(pScalerContext, glyphCode);
+        return fileFont.getGlyphOutlineBounds(pScalerContext, glyphCode);
     }
 
     GeneralPath getGlyphOutline(int glyphCode, float x, float y) {
-	return fileFont.getGlyphOutline(pScalerContext,	glyphCode, x, y);
+        return fileFont.getGlyphOutline(pScalerContext, glyphCode, x, y);
     }
 
     GeneralPath getGlyphVectorOutline(int[] glyphs, float x, float y) {
-	return fileFont.getGlyphVectorOutline(pScalerContext,
-					      glyphs, glyphs.length, x, y);
+        return fileFont.getGlyphVectorOutline(pScalerContext,
+                                              glyphs, glyphs.length, x, y);
     }
 
     protected void adjustPoint(Point2D.Float pt) {
-	if (invertDevTx != null) {
-      	    invertDevTx.deltaTransform(pt, pt);
-	}
+        if (invertDevTx != null) {
+            invertDevTx.deltaTransform(pt, pt);
+        }
     }
 }

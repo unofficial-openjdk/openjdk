@@ -40,7 +40,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's ScrollBarUI.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthScrollBarUI extends BasicScrollBarUI implements
@@ -59,7 +58,7 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
     }
 
     protected void installDefaults() {
-	trackHighlight = NO_HIGHLIGHT;
+        trackHighlight = NO_HIGHLIGHT;
         if (scrollbar.getLayout() == null ||
                      (scrollbar.getLayout() instanceof UIResource)) {
             scrollbar.setLayout(this);
@@ -177,10 +176,10 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
 
     public boolean getSupportsAbsolutePositioning() {
         SynthContext context = getContext(scrollbar);
-        boolean value = style.getBoolean(context, 
+        boolean value = style.getBoolean(context,
                       "ScrollBar.allowsAbsolutePositioning", false);
         context.dispose();
-	return value;
+        return value;
     }
 
     public void update(Graphics g, JComponent c) {
@@ -204,11 +203,11 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
     protected void paint(SynthContext context, Graphics g) {
         SynthContext subcontext = getContext(scrollbar,
                                              Region.SCROLL_BAR_TRACK);
-	paintTrack(subcontext, g, getTrackBounds());
+        paintTrack(subcontext, g, getTrackBounds());
         subcontext.dispose();
 
         subcontext = getContext(scrollbar, Region.SCROLL_BAR_THUMB);
-	paintThumb(subcontext, g, getThumbBounds());
+        paintThumb(subcontext, g, getThumbBounds());
         subcontext.dispose();
     }
 
@@ -242,16 +241,16 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
     }
 
     /**
-     * A vertical scrollbar's preferred width is the maximum of 
+     * A vertical scrollbar's preferred width is the maximum of
      * preferred widths of the (non <code>null</code>)
      * increment/decrement buttons,
-     * and the minimum width of the thumb. The preferred height is the 
-     * sum of the preferred heights of the same parts.  The basis for 
-     * the preferred size of a horizontal scrollbar is similar. 
+     * and the minimum width of the thumb. The preferred height is the
+     * sum of the preferred heights of the same parts.  The basis for
+     * the preferred size of a horizontal scrollbar is similar.
      * <p>
      * The <code>preferredSize</code> is only computed once, subsequent
      * calls to this method just return a cached size.
-     * 
+     *
      * @param c the <code>JScrollBar</code> that's delegating this method to us
      * @return the preferred size of a Basic JScrollBar
      * @see #getMaximumSize
@@ -259,9 +258,9 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
      */
     public Dimension getPreferredSize(JComponent c) {
         Insets insets = c.getInsets();
-	return (scrollbar.getOrientation() == JScrollBar.VERTICAL)
-	    ? new Dimension(scrollBarWidth + insets.left + insets.right, 48)
-	    : new Dimension(48, scrollBarWidth + insets.top + insets.bottom);
+        return (scrollbar.getOrientation() == JScrollBar.VERTICAL)
+            ? new Dimension(scrollBarWidth + insets.left + insets.right, 48)
+            : new Dimension(48, scrollBarWidth + insets.top + insets.bottom);
     }
 
     protected Dimension getMinimumThumbSize() {
@@ -274,7 +273,7 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
                 minimumThumbSize.height = scrollBarWidth;
             }
         }
-	return minimumThumbSize;
+        return minimumThumbSize;
 
     }
 
@@ -300,7 +299,7 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
 
     private void updateButtonDirections() {
         int orient = scrollbar.getOrientation();
-        if (scrollbar.getComponentOrientation().isLeftToRight()) { 
+        if (scrollbar.getComponentOrientation().isLeftToRight()) {
             ((SynthArrowButton)incrButton).setDirection(
                         orient == HORIZONTAL? EAST : SOUTH);
             ((SynthArrowButton)decrButton).setDirection(
@@ -329,6 +328,6 @@ class SynthScrollBarUI extends BasicScrollBarUI implements
         }
         else if ("componentOrientation" == propertyName) {
             updateButtonDirections();
-	}
+        }
     }
 }

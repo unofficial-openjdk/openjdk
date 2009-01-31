@@ -837,7 +837,7 @@ public class GaugeMonitor extends Monitor implements GaugeMonitorMBean {
             (GaugeMonitorObservedObject) getObservedObject(object);
         if (o == null)
             return null;
-        
+
         // Notify the listeners if the updated derived
         // gauge value is valid.
         //

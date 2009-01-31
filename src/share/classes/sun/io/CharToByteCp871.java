@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM871;
  * Tables and data to convert Unicode to Cp871
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp871 extends CharToByteSingleByte {

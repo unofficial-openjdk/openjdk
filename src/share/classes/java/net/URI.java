@@ -40,14 +40,14 @@ import java.nio.charset.CharacterCodingException;
 import java.text.Normalizer;
 import sun.nio.cs.ThreadLocalCoders;
 
-import java.lang.Character;		// for javadoc
-import java.lang.NullPointerException;	// for javadoc
+import java.lang.Character;             // for javadoc
+import java.lang.NullPointerException;  // for javadoc
 
 
 /**
  * Represents a Uniform Resource Identifier (URI) reference.
  *
- * <p> Aside from some minor deviations noted below, an instance of this 
+ * <p> Aside from some minor deviations noted below, an instance of this
  * class represents a URI reference as defined by
  * <a href="http://www.ietf.org/rfc/rfc2396.txt""><i>RFC&nbsp;2396: Uniform
  * Resource Identifiers (URI): Generic Syntax</i></a>, amended by <a
@@ -247,8 +247,8 @@ import java.lang.NullPointerException;	// for javadoc
  * <blockquote><table cellspacing=2 summary="Describes categories alpha,digit,alphanum,unreserved,punct,reserved,escaped,and other">
  *   <tr><th valign=top><i>alpha</i></th>
  *       <td>The US-ASCII alphabetic characters,
- * 	  <tt>'A'</tt>&nbsp;through&nbsp;<tt>'Z'</tt>
- * 	  and <tt>'a'</tt>&nbsp;through&nbsp;<tt>'z'</tt></td></tr>
+ *        <tt>'A'</tt>&nbsp;through&nbsp;<tt>'Z'</tt>
+ *        and <tt>'a'</tt>&nbsp;through&nbsp;<tt>'z'</tt></td></tr>
  *   <tr><th valign=top><i>digit</i></th>
  *       <td>The US-ASCII decimal digit characters,
  *       <tt>'0'</tt>&nbsp;through&nbsp;<tt>'9'</tt></td></tr>
@@ -256,12 +256,12 @@ import java.lang.NullPointerException;	// for javadoc
  *       <td>All <i>alpha</i> and <i>digit</i> characters</td></tr>
  *   <tr><th valign=top><i>unreserved</i>&nbsp;&nbsp;&nbsp;&nbsp;</th>
  *       <td>All <i>alphanum</i> characters together with those in the string
- * 	  <tt>"_-!.~'()*"</tt></td></tr>
+ *        <tt>"_-!.~'()*"</tt></td></tr>
  *   <tr><th valign=top><i>punct</i></th>
  *       <td>The characters in the string <tt>",;:$&+="</tt></td></tr>
  *   <tr><th valign=top><i>reserved</i></th>
  *       <td>All <i>punct</i> characters together with those in the string
- * 	  <tt>"?/[]@"</tt></td></tr>
+ *        <tt>"?/[]@"</tt></td></tr>
  *   <tr><th valign=top><i>escaped</i></th>
  *       <td>Escaped octets, that is, triplets consisting of the percent
  *           character (<tt>'%'</tt>) followed by two hexadecimal digits
@@ -271,10 +271,10 @@ import java.lang.NullPointerException;	// for javadoc
  *       <td>The Unicode characters that are not in the US-ASCII character set,
  *           are not control characters (according to the {@link
  *           java.lang.Character#isISOControl(char) Character.isISOControl}
- * 	     method), and are not space characters (according to the {@link
- * 	     java.lang.Character#isSpaceChar(char) Character.isSpaceChar}
- * 	     method)&nbsp;&nbsp;<i>(<b>Deviation from RFC 2396</b>, which is
- * 	     limited to US-ASCII)</i></td></tr>
+ *           method), and are not space characters (according to the {@link
+ *           java.lang.Character#isSpaceChar(char) Character.isSpaceChar}
+ *           method)&nbsp;&nbsp;<i>(<b>Deviation from RFC 2396</b>, which is
+ *           limited to US-ASCII)</i></td></tr>
  * </table></blockquote>
  *
  * <p><a name="legal-chars"></a> The set of all legal URI characters consists of
@@ -454,7 +454,6 @@ import java.lang.NullPointerException;	// for javadoc
  * opening a connection to the specified resource.
  *
  *
- * @version %I%, %E%
  * @author Mark Reinhold
  * @since 1.4
  *
@@ -483,25 +482,25 @@ public final class URI
     // -- Properties and components of this instance --
 
     // Components of all URIs: [<scheme>:]<scheme-specific-part>[#<fragment>]
-    private transient String scheme;		// null ==> relative URI
+    private transient String scheme;            // null ==> relative URI
     private transient String fragment;
 
     // Hierarchical URI components: [//<authority>]<path>[?<query>]
-    private transient String authority;		// Registry or server
+    private transient String authority;         // Registry or server
 
     // Server-based authority: [<userInfo>@]<host>[:<port>]
     private transient String userInfo;
-    private transient String host;		// null ==> registry-based
-    private transient int port = -1;		// -1 ==> undefined
+    private transient String host;              // null ==> registry-based
+    private transient int port = -1;            // -1 ==> undefined
 
     // Remaining components of hierarchical URIs
-    private transient String path;		// null ==> opaque
+    private transient String path;              // null ==> opaque
     private transient String query;
 
     // The remaining fields may be computed on demand
 
     private volatile transient String schemeSpecificPart;
-    private volatile transient int hash;	// Zero ==> undefined
+    private volatile transient int hash;        // Zero ==> undefined
 
     private volatile transient String decodedUserInfo = null;
     private volatile transient String decodedAuthority = null;
@@ -515,13 +514,13 @@ public final class URI
      *
      * @serial
      */
-    private volatile String string;		// The only serializable field
+    private volatile String string;             // The only serializable field
 
 
-
+
     // -- Constructors and factories --
 
-    private URI() { }				// Used internally
+    private URI() { }                           // Used internally
 
     /**
      * Constructs a URI by parsing the given string.
@@ -556,12 +555,12 @@ public final class URI
      *   no greater than 255. </p></li>
      *
      *   <li> <p> Hostnames in host components that comprise only a single
-     *   domain label are permitted to start with an <i>alphanum</i> 
+     *   domain label are permitted to start with an <i>alphanum</i>
      *   character. This seems to be the intent of <a
      *   href="http://www.ietf.org/rfc/rfc2396.txt">RFC&nbsp;2396</a>
      *   section&nbsp;3.2.2 although the grammar does not permit it. The
      *   consequence of this deviation is that the authority component of a
-     *   hierarchical URI such as <tt>s://123</tt>, will parse as a server-based 
+     *   hierarchical URI such as <tt>s://123</tt>, will parse as a server-based
      *   authority. </p></li>
      *
      *   <li><p> IPv6 addresses are permitted for the host component.  An IPv6
@@ -593,7 +592,7 @@ public final class URI
      *          by the above deviations
      */
     public URI(String str) throws URISyntaxException {
-	new Parser(str).parse(false);
+        new Parser(str).parse(false);
     }
 
     /**
@@ -672,13 +671,13 @@ public final class URI
     public URI(String scheme,
                String userInfo, String host, int port,
                String path, String query, String fragment)
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	String s = toString(scheme, null,
-			    null, userInfo, host, port,
-			    path, query, fragment);
-	checkPath(s, scheme, path);
-	new Parser(s).parse(true);
+        String s = toString(scheme, null,
+                            null, userInfo, host, port,
+                            path, query, fragment);
+        checkPath(s, scheme, path);
+        new Parser(s).parse(true);
     }
 
     /**
@@ -743,15 +742,15 @@ public final class URI
      *         present but cannot be parsed as a server-based authority
      */
     public URI(String scheme,
-	       String authority,
-	       String path, String query, String fragment)
-	throws URISyntaxException
+               String authority,
+               String path, String query, String fragment)
+        throws URISyntaxException
     {
-	String s = toString(scheme, null,
-			    authority, null, null, -1,
-			    path, query, fragment);
-	checkPath(s, scheme, path);
-	new Parser(s).parse(false);
+        String s = toString(scheme, null,
+                            authority, null, null, -1,
+                            path, query, fragment);
+        checkPath(s, scheme, path);
+        new Parser(s).parse(false);
     }
 
     /**
@@ -777,9 +776,9 @@ public final class URI
      *          violates RFC&nbsp;2396
      */
     public URI(String scheme, String host, String path, String fragment)
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	this(scheme, null, host, -1, path, null, fragment);
+        this(scheme, null, host, -1, path, null, fragment);
     }
 
     /**
@@ -820,12 +819,12 @@ public final class URI
      *          violates RFC&nbsp;2396
      */
     public URI(String scheme, String ssp, String fragment)
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	new Parser(toString(scheme, ssp,
-			    null, null, null, -1,
-			    null, null, fragment))
-	    .parse(false);
+        new Parser(toString(scheme, ssp,
+                            null, null, null, -1,
+                            null, null, fragment))
+            .parse(false);
     }
 
     /**
@@ -854,16 +853,16 @@ public final class URI
      *          If the given string violates RFC&nbsp;2396
      */
     public static URI create(String str) {
-	try {
-	    return new URI(str);
-	} catch (URISyntaxException x) {
-	    IllegalArgumentException y = new IllegalArgumentException();
-	    y.initCause(x);
-	    throw y;
-	}
+        try {
+            return new URI(str);
+        } catch (URISyntaxException x) {
+            IllegalArgumentException y = new IllegalArgumentException();
+            y.initCause(x);
+            throw y;
+        }
     }
 
-
+
     // -- Operations --
 
     /**
@@ -914,16 +913,16 @@ public final class URI
      *          according to RFC&nbsp;2396
      */
     public URI parseServerAuthority()
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	// We could be clever and cache the error message and index from the
-	// exception thrown during the original parse, but that would require
-	// either more fields or a more-obscure representation.
-	if ((host != null) || (authority == null))
-	    return this;
-	defineString();
-	new Parser(string).parse(true);
-	return this;
+        // We could be clever and cache the error message and index from the
+        // exception thrown during the original parse, but that would require
+        // either more fields or a more-obscure representation.
+        if ((host != null) || (authority == null))
+            return this;
+        defineString();
+        new Parser(string).parse(true);
+        return this;
     }
 
     /**
@@ -964,7 +963,7 @@ public final class URI
      *          but whose path is in normal form
      */
     public URI normalize() {
-	return normalize(this);
+        return normalize(this);
     }
 
     /**
@@ -1022,7 +1021,7 @@ public final class URI
      *          If <tt>uri</tt> is <tt>null</tt>
      */
     public URI resolve(URI uri) {
-	return resolve(this, uri);
+        return resolve(this, uri);
     }
 
     /**
@@ -1043,7 +1042,7 @@ public final class URI
      *          If the given string violates RFC&nbsp;2396
      */
     public URI resolve(String str) {
-	return resolve(URI.create(str));
+        return resolve(URI.create(str));
     }
 
     /**
@@ -1073,7 +1072,7 @@ public final class URI
      *          If <tt>uri</tt> is <tt>null</tt>
      */
     public URI relativize(URI uri) {
-	return relativize(this, uri);
+        return relativize(this, uri);
     }
 
     /**
@@ -1093,10 +1092,10 @@ public final class URI
      *          or if some other error occurred while constructing the URL
      */
     public URL toURL()
-	throws MalformedURLException {
-	if (!isAbsolute())
-	    throw new IllegalArgumentException("URI is not absolute");
-	return new URL(toString());
+        throws MalformedURLException {
+        if (!isAbsolute())
+            throw new IllegalArgumentException("URI is not absolute");
+        return new URL(toString());
     }
 
     // -- Component access methods --
@@ -1115,7 +1114,7 @@ public final class URI
      *          or <tt>null</tt> if the scheme is undefined
      */
     public String getScheme() {
-	return scheme;
+        return scheme;
     }
 
     /**
@@ -1126,7 +1125,7 @@ public final class URI
      * @return  <tt>true</tt> if, and only if, this URI is absolute
      */
     public boolean isAbsolute() {
-	return scheme != null;
+        return scheme != null;
     }
 
     /**
@@ -1154,8 +1153,8 @@ public final class URI
      *          (never <tt>null</tt>)
      */
     public String getRawSchemeSpecificPart() {
-	defineSchemeSpecificPart();
-	return schemeSpecificPart;
+        defineSchemeSpecificPart();
+        return schemeSpecificPart;
     }
 
     /**
@@ -1170,9 +1169,9 @@ public final class URI
      *          (never <tt>null</tt>)
      */
     public String getSchemeSpecificPart() {
-	if (decodedSchemeSpecificPart == null)
-	    decodedSchemeSpecificPart = decode(getRawSchemeSpecificPart());
-	return decodedSchemeSpecificPart;
+        if (decodedSchemeSpecificPart == null)
+            decodedSchemeSpecificPart = decode(getRawSchemeSpecificPart());
+        return decodedSchemeSpecificPart;
     }
 
     /**
@@ -1189,7 +1188,7 @@ public final class URI
      *          or <tt>null</tt> if the authority is undefined
      */
     public String getRawAuthority() {
-	return authority;
+        return authority;
     }
 
     /**
@@ -1203,9 +1202,9 @@ public final class URI
      *          or <tt>null</tt> if the authority is undefined
      */
     public String getAuthority() {
-	if (decodedAuthority == null)
-	    decodedAuthority = decode(authority);
-	return decodedAuthority;
+        if (decodedAuthority == null)
+            decodedAuthority = decode(authority);
+        return decodedAuthority;
     }
 
     /**
@@ -1219,7 +1218,7 @@ public final class URI
      *          or <tt>null</tt> if the user information is undefined
      */
     public String getRawUserInfo() {
-	return userInfo;
+        return userInfo;
     }
 
     /**
@@ -1233,9 +1232,9 @@ public final class URI
      *          or <tt>null</tt> if the user information is undefined
      */
     public String getUserInfo() {
-	if ((decodedUserInfo == null) && (userInfo != null))
-	    decodedUserInfo = decode(userInfo);
-	return decodedUserInfo;
+        if ((decodedUserInfo == null) && (userInfo != null))
+            decodedUserInfo = decode(userInfo);
+        return decodedUserInfo;
     }
 
     /**
@@ -1275,7 +1274,7 @@ public final class URI
      *          or <tt>null</tt> if the host is undefined
      */
     public String getHost() {
-	return host;
+        return host;
     }
 
     /**
@@ -1288,7 +1287,7 @@ public final class URI
      *          or <tt>-1</tt> if the port is undefined
      */
     public int getPort() {
-	return port;
+        return port;
     }
 
     /**
@@ -1303,7 +1302,7 @@ public final class URI
      *          or <tt>null</tt> if the path is undefined
      */
     public String getRawPath() {
-	return path;
+        return path;
     }
 
     /**
@@ -1317,9 +1316,9 @@ public final class URI
      *          or <tt>null</tt> if the path is undefined
      */
     public String getPath() {
-	if ((decodedPath == null) && (path != null))
-	    decodedPath = decode(path);
-	return decodedPath;
+        if ((decodedPath == null) && (path != null))
+            decodedPath = decode(path);
+        return decodedPath;
     }
 
     /**
@@ -1332,7 +1331,7 @@ public final class URI
      *          or <tt>null</tt> if the query is undefined
      */
     public String getRawQuery() {
-	return query;
+        return query;
     }
 
     /**
@@ -1346,9 +1345,9 @@ public final class URI
      *          or <tt>null</tt> if the query is undefined
      */
     public String getQuery() {
-	if ((decodedQuery == null) && (query != null))
-	    decodedQuery = decode(query);
-	return decodedQuery;
+        if ((decodedQuery == null) && (query != null))
+            decodedQuery = decode(query);
+        return decodedQuery;
     }
 
     /**
@@ -1361,7 +1360,7 @@ public final class URI
      *          or <tt>null</tt> if the fragment is undefined
      */
     public String getRawFragment() {
-	return fragment;
+        return fragment;
     }
 
     /**
@@ -1375,12 +1374,12 @@ public final class URI
      *          or <tt>null</tt> if the fragment is undefined
      */
     public String getFragment() {
-	if ((decodedFragment == null) && (fragment != null))
-	    decodedFragment = decode(fragment);
-	return decodedFragment;
+        if ((decodedFragment == null) && (fragment != null))
+            decodedFragment = decode(fragment);
+        return decodedFragment;
     }
 
-
+
     // -- Equality, comparison, hash code, toString, and serialization --
 
     /**
@@ -1421,38 +1420,38 @@ public final class URI
      *          is identical to this URI
      */
     public boolean equals(Object ob) {
-	if (ob == this)
-	    return true;
-	if (!(ob instanceof URI))
-	    return false;
-	URI that = (URI)ob;
-	if (this.isOpaque() != that.isOpaque()) return false;
-	if (!equalIgnoringCase(this.scheme, that.scheme)) return false;
-	if (!equal(this.fragment, that.fragment)) return false;
+        if (ob == this)
+            return true;
+        if (!(ob instanceof URI))
+            return false;
+        URI that = (URI)ob;
+        if (this.isOpaque() != that.isOpaque()) return false;
+        if (!equalIgnoringCase(this.scheme, that.scheme)) return false;
+        if (!equal(this.fragment, that.fragment)) return false;
 
-	// Opaque
-	if (this.isOpaque())
-	    return equal(this.schemeSpecificPart, that.schemeSpecificPart);
+        // Opaque
+        if (this.isOpaque())
+            return equal(this.schemeSpecificPart, that.schemeSpecificPart);
 
-	// Hierarchical
-	if (!equal(this.path, that.path)) return false;
-	if (!equal(this.query, that.query)) return false;
+        // Hierarchical
+        if (!equal(this.path, that.path)) return false;
+        if (!equal(this.query, that.query)) return false;
 
-	// Authorities
-	if (this.authority == that.authority) return true;
-	if (this.host != null) {
-	    // Server-based
-	    if (!equal(this.userInfo, that.userInfo)) return false;
-	    if (!equalIgnoringCase(this.host, that.host)) return false;
-	    if (this.port != that.port) return false;
-	} else if (this.authority != null) {
-	    // Registry-based
-	    if (!equal(this.authority, that.authority)) return false;
-	} else if (this.authority != that.authority) {
-	    return false;
-	}
+        // Authorities
+        if (this.authority == that.authority) return true;
+        if (this.host != null) {
+            // Server-based
+            if (!equal(this.userInfo, that.userInfo)) return false;
+            if (!equalIgnoringCase(this.host, that.host)) return false;
+            if (this.port != that.port) return false;
+        } else if (this.authority != null) {
+            // Registry-based
+            if (!equal(this.authority, that.authority)) return false;
+        } else if (this.authority != that.authority) {
+            return false;
+        }
 
-	return true;
+        return true;
     }
 
     /**
@@ -1463,25 +1462,25 @@ public final class URI
      * @return  A hash-code value for this URI
      */
     public int hashCode() {
-	if (hash != 0)
-	    return hash;
-	int h = hashIgnoringCase(0, scheme);
-	h = hash(h, fragment);
-	if (isOpaque()) {
-	    h = hash(h, schemeSpecificPart);
-	} else {
-	    h = hash(h, path);
-	    h = hash(h, query);
-	    if (host != null) {
-		h = hash(h, userInfo);
-		h = hashIgnoringCase(h, host);
-		h += 1949 * port;
-	    } else {
-		h = hash(h, authority);
-	    }
-	}
-	hash = h;
-	return h;
+        if (hash != 0)
+            return hash;
+        int h = hashIgnoringCase(0, scheme);
+        h = hash(h, fragment);
+        if (isOpaque()) {
+            h = hash(h, schemeSpecificPart);
+        } else {
+            h = hash(h, path);
+            h = hash(h, query);
+            if (host != null) {
+                h = hash(h, userInfo);
+                h = hashIgnoringCase(h, host);
+                h += 1949 * port;
+            } else {
+                h = hash(h, authority);
+            }
+        }
+        hash = h;
+        return h;
     }
 
     /**
@@ -1553,46 +1552,46 @@ public final class URI
      *          If the given object is not a URI
      */
     public int compareTo(URI that) {
-	int c;
+        int c;
 
-	if ((c = compareIgnoringCase(this.scheme, that.scheme)) != 0)
-	    return c;
+        if ((c = compareIgnoringCase(this.scheme, that.scheme)) != 0)
+            return c;
 
-	if (this.isOpaque()) {
-	    if (that.isOpaque()) {
-		// Both opaque
-		if ((c = compare(this.schemeSpecificPart,
-				 that.schemeSpecificPart)) != 0)
-		    return c;
-		return compare(this.fragment, that.fragment);
-	    }
-	    return +1;			// Opaque > hierarchical
-	} else if (that.isOpaque()) {
-	    return -1;			// Hierarchical < opaque
-	}
+        if (this.isOpaque()) {
+            if (that.isOpaque()) {
+                // Both opaque
+                if ((c = compare(this.schemeSpecificPart,
+                                 that.schemeSpecificPart)) != 0)
+                    return c;
+                return compare(this.fragment, that.fragment);
+            }
+            return +1;                  // Opaque > hierarchical
+        } else if (that.isOpaque()) {
+            return -1;                  // Hierarchical < opaque
+        }
 
-	// Hierarchical
-	if ((this.host != null) && (that.host != null)) {
-	    // Both server-based
-	    if ((c = compare(this.userInfo, that.userInfo)) != 0)
-		return c;
-	    if ((c = compareIgnoringCase(this.host, that.host)) != 0)
-		return c;
-	    if ((c = this.port - that.port) != 0)
-		return c;
-	} else {
-	    // If one or both authorities are registry-based then we simply
-	    // compare them in the usual, case-sensitive way.  If one is
-	    // registry-based and one is server-based then the strings are
-	    // guaranteed to be unequal, hence the comparison will never return
-	    // zero and the compareTo and equals methods will remain
-	    // consistent.
-	    if ((c = compare(this.authority, that.authority)) != 0) return c;
-	}
+        // Hierarchical
+        if ((this.host != null) && (that.host != null)) {
+            // Both server-based
+            if ((c = compare(this.userInfo, that.userInfo)) != 0)
+                return c;
+            if ((c = compareIgnoringCase(this.host, that.host)) != 0)
+                return c;
+            if ((c = this.port - that.port) != 0)
+                return c;
+        } else {
+            // If one or both authorities are registry-based then we simply
+            // compare them in the usual, case-sensitive way.  If one is
+            // registry-based and one is server-based then the strings are
+            // guaranteed to be unequal, hence the comparison will never return
+            // zero and the compareTo and equals methods will remain
+            // consistent.
+            if ((c = compare(this.authority, that.authority)) != 0) return c;
+        }
 
-	if ((c = compare(this.path, that.path)) != 0) return c;
-	if ((c = compare(this.query, that.query)) != 0) return c;
-	return compare(this.fragment, that.fragment);
+        if ((c = compare(this.path, that.path)) != 0) return c;
+        if ((c = compare(this.query, that.query)) != 0) return c;
+        return compare(this.fragment, that.fragment);
     }
 
     /**
@@ -1610,8 +1609,8 @@ public final class URI
      * @return  The string form of this URI
      */
     public String toString() {
-	defineString();
-	return string;
+        defineString();
+        return string;
     }
 
     /**
@@ -1628,8 +1627,8 @@ public final class URI
      *          charset
      */
     public String toASCIIString() {
-	defineString();
-	return encode(string);
+        defineString();
+        return encode(string);
     }
 
 
@@ -1647,10 +1646,10 @@ public final class URI
      *             is to be written
      */
     private void writeObject(ObjectOutputStream os)
-	throws IOException
+        throws IOException
     {
-	defineString();
-	os.defaultWriteObject();	// Writes the string field only
+        defineString();
+        os.defaultWriteObject();        // Writes the string field only
     }
 
     /**
@@ -1664,23 +1663,23 @@ public final class URI
      *             is being read
      */
     private void readObject(ObjectInputStream is)
-	throws ClassNotFoundException, IOException
+        throws ClassNotFoundException, IOException
     {
-	port = -1;			// Argh
-	is.defaultReadObject();
-	try {
-	    new Parser(string).parse(false);
-	} catch (URISyntaxException x) {
-	    IOException y = new InvalidObjectException("Invalid URI");
-	    y.initCause(x);
-	    throw y;
-	}
+        port = -1;                      // Argh
+        is.defaultReadObject();
+        try {
+            new Parser(string).parse(false);
+        } catch (URISyntaxException x) {
+            IOException y = new InvalidObjectException("Invalid URI");
+            y.initCause(x);
+            throw y;
+        }
     }
 
 
     // -- End of public methods --
 
-
+
     // -- Utility methods for string-field comparison and hashing --
 
     // These methods return appropriate values for null string arguments,
@@ -1692,260 +1691,260 @@ public final class URI
 
     // US-ASCII only
     private static int toLower(char c) {
-	if ((c >= 'A') && (c <= 'Z'))
-	    return c + ('a' - 'A');
-	return c;
+        if ((c >= 'A') && (c <= 'Z'))
+            return c + ('a' - 'A');
+        return c;
     }
 
     private static boolean equal(String s, String t) {
-	if (s == t) return true;
-	if ((s != null) && (t != null)) {
-	    if (s.length() != t.length())
-		return false;
-	    if (s.indexOf('%') < 0)
-		return s.equals(t);
-	    int n = s.length();
-	    for (int i = 0; i < n;) {
-		char c = s.charAt(i);
-		char d = t.charAt(i);
-		if (c != '%') {
-		    if (c != d)
-			return false;
-		    i++;
-		    continue;
-		}
-		i++;
-		if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
-		    return false;
-		i++;
-		if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
-		    return false;
-		i++;
-	    }
-	    return true;
-	}
-	return false;
+        if (s == t) return true;
+        if ((s != null) && (t != null)) {
+            if (s.length() != t.length())
+                return false;
+            if (s.indexOf('%') < 0)
+                return s.equals(t);
+            int n = s.length();
+            for (int i = 0; i < n;) {
+                char c = s.charAt(i);
+                char d = t.charAt(i);
+                if (c != '%') {
+                    if (c != d)
+                        return false;
+                    i++;
+                    continue;
+                }
+                i++;
+                if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
+                    return false;
+                i++;
+                if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
+                    return false;
+                i++;
+            }
+            return true;
+        }
+        return false;
     }
 
     // US-ASCII only
     private static boolean equalIgnoringCase(String s, String t) {
-	if (s == t) return true;
-	if ((s != null) && (t != null)) {
-	    int n = s.length();
-	    if (t.length() != n)
-		return false;
-	    for (int i = 0; i < n; i++) {
-		if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
-		    return false;
-	    }
-	    return true;
-	}
-	return false;
+        if (s == t) return true;
+        if ((s != null) && (t != null)) {
+            int n = s.length();
+            if (t.length() != n)
+                return false;
+            for (int i = 0; i < n; i++) {
+                if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
+                    return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     private static int hash(int hash, String s) {
-	if (s == null) return hash;
-	return hash * 127 + s.hashCode();
+        if (s == null) return hash;
+        return hash * 127 + s.hashCode();
     }
 
     // US-ASCII only
     private static int hashIgnoringCase(int hash, String s) {
-	if (s == null) return hash;
-	int h = hash;
-	int n = s.length();
-	for (int i = 0; i < n; i++)
-	    h = 31 * h + toLower(s.charAt(i));
-	return h;
+        if (s == null) return hash;
+        int h = hash;
+        int n = s.length();
+        for (int i = 0; i < n; i++)
+            h = 31 * h + toLower(s.charAt(i));
+        return h;
     }
 
     private static int compare(String s, String t) {
-	if (s == t) return 0;
-	if (s != null) {
-	    if (t != null)
-		return s.compareTo(t);
-	    else
-		return +1;
-	} else {
-	    return -1;
-	}
+        if (s == t) return 0;
+        if (s != null) {
+            if (t != null)
+                return s.compareTo(t);
+            else
+                return +1;
+        } else {
+            return -1;
+        }
     }
 
     // US-ASCII only
     private static int compareIgnoringCase(String s, String t) {
-	if (s == t) return 0;
-	if (s != null) {
-	    if (t != null) {
-		int sn = s.length();
-		int tn = t.length();
-		int n = sn < tn ? sn : tn;
-		for (int i = 0; i < n; i++) {
-		    int c = toLower(s.charAt(i)) - toLower(t.charAt(i));
-		    if (c != 0)
-			return c;
-		}
-		return sn - tn;
-	    }
-	    return +1;
-	} else {
-	    return -1;
-	}
+        if (s == t) return 0;
+        if (s != null) {
+            if (t != null) {
+                int sn = s.length();
+                int tn = t.length();
+                int n = sn < tn ? sn : tn;
+                for (int i = 0; i < n; i++) {
+                    int c = toLower(s.charAt(i)) - toLower(t.charAt(i));
+                    if (c != 0)
+                        return c;
+                }
+                return sn - tn;
+            }
+            return +1;
+        } else {
+            return -1;
+        }
     }
 
-
+
     // -- String construction --
 
     // If a scheme is given then the path, if given, must be absolute
     //
     private static void checkPath(String s, String scheme, String path)
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	if (scheme != null) {
-	    if ((path != null)
-		&& ((path.length() > 0) && (path.charAt(0) != '/')))
-		throw new URISyntaxException(s,
-					     "Relative path in absolute URI");
-	}
+        if (scheme != null) {
+            if ((path != null)
+                && ((path.length() > 0) && (path.charAt(0) != '/')))
+                throw new URISyntaxException(s,
+                                             "Relative path in absolute URI");
+        }
     }
 
     private void appendAuthority(StringBuffer sb,
-				 String authority,
-				 String userInfo,
-				 String host,
-				 int port)
+                                 String authority,
+                                 String userInfo,
+                                 String host,
+                                 int port)
     {
-	if (host != null) {
-	    sb.append("//");
-	    if (userInfo != null) {
-		sb.append(quote(userInfo, L_USERINFO, H_USERINFO));
-		sb.append('@');
-	    }
-	    boolean needBrackets = ((host.indexOf(':') >= 0)
-				    && !host.startsWith("[")
-				    && !host.endsWith("]"));
-	    if (needBrackets) sb.append('[');
-	    sb.append(host);
-	    if (needBrackets) sb.append(']');
-	    if (port != -1) {
-		sb.append(':');
-		sb.append(port);
-	    }
-	} else if (authority != null) {
-	    sb.append("//");
-	    if (authority.startsWith("[")) {
-		int end = authority.indexOf("]");
-		if (end != -1 && authority.indexOf(":")!=-1) {
-		    String doquote, dontquote;
-		    if (end == authority.length()) {
-			dontquote = authority;
-			doquote = "";
-		    } else {
-		    	dontquote = authority.substring(0,end+1);
-			doquote = authority.substring(end+1);
-		    }
-		    sb.append (dontquote);
-	    	    sb.append(quote(doquote, 
-			    L_REG_NAME | L_SERVER,
-			    H_REG_NAME | H_SERVER));
-		}
-	    } else {
-	    	sb.append(quote(authority,
-			    L_REG_NAME | L_SERVER,
-			    H_REG_NAME | H_SERVER));
-	    }
-	}
+        if (host != null) {
+            sb.append("//");
+            if (userInfo != null) {
+                sb.append(quote(userInfo, L_USERINFO, H_USERINFO));
+                sb.append('@');
+            }
+            boolean needBrackets = ((host.indexOf(':') >= 0)
+                                    && !host.startsWith("[")
+                                    && !host.endsWith("]"));
+            if (needBrackets) sb.append('[');
+            sb.append(host);
+            if (needBrackets) sb.append(']');
+            if (port != -1) {
+                sb.append(':');
+                sb.append(port);
+            }
+        } else if (authority != null) {
+            sb.append("//");
+            if (authority.startsWith("[")) {
+                int end = authority.indexOf("]");
+                if (end != -1 && authority.indexOf(":")!=-1) {
+                    String doquote, dontquote;
+                    if (end == authority.length()) {
+                        dontquote = authority;
+                        doquote = "";
+                    } else {
+                        dontquote = authority.substring(0,end+1);
+                        doquote = authority.substring(end+1);
+                    }
+                    sb.append (dontquote);
+                    sb.append(quote(doquote,
+                            L_REG_NAME | L_SERVER,
+                            H_REG_NAME | H_SERVER));
+                }
+            } else {
+                sb.append(quote(authority,
+                            L_REG_NAME | L_SERVER,
+                            H_REG_NAME | H_SERVER));
+            }
+        }
     }
 
     private void appendSchemeSpecificPart(StringBuffer sb,
-					  String opaquePart,
-					  String authority,
-					  String userInfo,
-					  String host,
-					  int port,
-					  String path,
-					  String query)
+                                          String opaquePart,
+                                          String authority,
+                                          String userInfo,
+                                          String host,
+                                          int port,
+                                          String path,
+                                          String query)
     {
-	if (opaquePart != null) {
-	    /* check if SSP begins with an IPv6 address
-	     * because we must not quote a literal IPv6 address
-	     */
-	    if (opaquePart.startsWith("//[")) {
-		int end =  opaquePart.indexOf("]");
-		if (end != -1 && opaquePart.indexOf(":")!=-1) {
-		    String doquote, dontquote;
-		    if (end == opaquePart.length()) {
-			dontquote = opaquePart;
-			doquote = "";
-		    } else {
-		    	dontquote = opaquePart.substring(0,end+1);
-			doquote = opaquePart.substring(end+1);
-		    }
-		    sb.append (dontquote);
-	    	    sb.append(quote(doquote, L_URIC, H_URIC));
-		}
-	    } else {
-	    	sb.append(quote(opaquePart, L_URIC, H_URIC));
-	    }
-	} else {
-	    appendAuthority(sb, authority, userInfo, host, port);
-	    if (path != null) 
-		sb.append(quote(path, L_PATH, H_PATH));
-	    if (query != null) {
-		sb.append('?');
-		sb.append(quote(query, L_URIC, H_URIC));
-	    }
-	}
+        if (opaquePart != null) {
+            /* check if SSP begins with an IPv6 address
+             * because we must not quote a literal IPv6 address
+             */
+            if (opaquePart.startsWith("//[")) {
+                int end =  opaquePart.indexOf("]");
+                if (end != -1 && opaquePart.indexOf(":")!=-1) {
+                    String doquote, dontquote;
+                    if (end == opaquePart.length()) {
+                        dontquote = opaquePart;
+                        doquote = "";
+                    } else {
+                        dontquote = opaquePart.substring(0,end+1);
+                        doquote = opaquePart.substring(end+1);
+                    }
+                    sb.append (dontquote);
+                    sb.append(quote(doquote, L_URIC, H_URIC));
+                }
+            } else {
+                sb.append(quote(opaquePart, L_URIC, H_URIC));
+            }
+        } else {
+            appendAuthority(sb, authority, userInfo, host, port);
+            if (path != null)
+                sb.append(quote(path, L_PATH, H_PATH));
+            if (query != null) {
+                sb.append('?');
+                sb.append(quote(query, L_URIC, H_URIC));
+            }
+        }
     }
 
     private void appendFragment(StringBuffer sb, String fragment) {
-	if (fragment != null) {
-	    sb.append('#');
-	    sb.append(quote(fragment, L_URIC, H_URIC));
-	}
+        if (fragment != null) {
+            sb.append('#');
+            sb.append(quote(fragment, L_URIC, H_URIC));
+        }
     }
 
     private String toString(String scheme,
-			    String opaquePart,
-			    String authority,
-			    String userInfo,
-			    String host,
-			    int port,
-			    String path,
-			    String query,
-			    String fragment)
+                            String opaquePart,
+                            String authority,
+                            String userInfo,
+                            String host,
+                            int port,
+                            String path,
+                            String query,
+                            String fragment)
     {
-	StringBuffer sb = new StringBuffer();
-	if (scheme != null) {
-	    sb.append(scheme);
-	    sb.append(':');
-	}
-	appendSchemeSpecificPart(sb, opaquePart,
-				 authority, userInfo, host, port,
-				 path, query);
-	appendFragment(sb, fragment);
-	return sb.toString();
-    }
-
-    private void defineSchemeSpecificPart() {
-	if (schemeSpecificPart != null) return;
-	StringBuffer sb = new StringBuffer();
-	appendSchemeSpecificPart(sb, null, getAuthority(), getUserInfo(),
-				 host, port, getPath(), getQuery());
-	if (sb.length() == 0) return;
-	schemeSpecificPart = sb.toString();
-    }
-
-    private void defineString() {
-	if (string != null) return;
-
-	StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
         if (scheme != null) {
             sb.append(scheme);
             sb.append(':');
         }
-	if (isOpaque()) {
+        appendSchemeSpecificPart(sb, opaquePart,
+                                 authority, userInfo, host, port,
+                                 path, query);
+        appendFragment(sb, fragment);
+        return sb.toString();
+    }
+
+    private void defineSchemeSpecificPart() {
+        if (schemeSpecificPart != null) return;
+        StringBuffer sb = new StringBuffer();
+        appendSchemeSpecificPart(sb, null, getAuthority(), getUserInfo(),
+                                 host, port, getPath(), getQuery());
+        if (sb.length() == 0) return;
+        schemeSpecificPart = sb.toString();
+    }
+
+    private void defineString() {
+        if (string != null) return;
+
+        StringBuffer sb = new StringBuffer();
+        if (scheme != null) {
+            sb.append(scheme);
+            sb.append(':');
+        }
+        if (isOpaque()) {
             sb.append(schemeSpecificPart);
         } else {
-	    if (host != null) {
+            if (host != null) {
                 sb.append("//");
                 if (userInfo != null) {
                     sb.append(userInfo);
@@ -1964,7 +1963,7 @@ public final class URI
             } else if (authority != null) {
                 sb.append("//");
                 sb.append(authority);
-	    }
+            }
             if (path != null)
                 sb.append(path);
             if (query != null) {
@@ -1972,132 +1971,132 @@ public final class URI
                 sb.append(query);
             }
         }
-	if (fragment != null) {
+        if (fragment != null) {
             sb.append('#');
             sb.append(fragment);
-	}
-	string = sb.toString();
+        }
+        string = sb.toString();
     }
 
-
+
     // -- Normalization, resolution, and relativization --
 
     // RFC2396 5.2 (6)
     private static String resolvePath(String base, String child,
-				      boolean absolute)
+                                      boolean absolute)
     {
         int i = base.lastIndexOf('/');
-	int cn = child.length();
-	String path = "";
+        int cn = child.length();
+        String path = "";
 
-	if (cn == 0) {
-	    // 5.2 (6a)
-	    if (i >= 0)
-		path = base.substring(0, i + 1);
-	} else {
-	    StringBuffer sb = new StringBuffer(base.length() + cn);
-	    // 5.2 (6a)
-	    if (i >= 0)
-		sb.append(base.substring(0, i + 1));
-	    // 5.2 (6b)
-	    sb.append(child);
-	    path = sb.toString();
-	}
+        if (cn == 0) {
+            // 5.2 (6a)
+            if (i >= 0)
+                path = base.substring(0, i + 1);
+        } else {
+            StringBuffer sb = new StringBuffer(base.length() + cn);
+            // 5.2 (6a)
+            if (i >= 0)
+                sb.append(base.substring(0, i + 1));
+            // 5.2 (6b)
+            sb.append(child);
+            path = sb.toString();
+        }
 
-	// 5.2 (6c-f)
-	String np = normalize(path);
+        // 5.2 (6c-f)
+        String np = normalize(path);
 
-	// 5.2 (6g): If the result is absolute but the path begins with "../",
-	// then we simply leave the path as-is
+        // 5.2 (6g): If the result is absolute but the path begins with "../",
+        // then we simply leave the path as-is
 
-	return np;
+        return np;
     }
 
     // RFC2396 5.2
     private static URI resolve(URI base, URI child) {
-	// check if child if opaque first so that NPE is thrown 
-	// if child is null.
-	if (child.isOpaque() || base.isOpaque())
-	    return child;
+        // check if child if opaque first so that NPE is thrown
+        // if child is null.
+        if (child.isOpaque() || base.isOpaque())
+            return child;
 
-	// 5.2 (2): Reference to current document (lone fragment)
-	if ((child.scheme == null) && (child.authority == null)
-	    && child.path.equals("") && (child.fragment != null)
-	    && (child.query == null)) {
-	    if ((base.fragment != null)
-		&& child.fragment.equals(base.fragment)) {
-		return base;
-	    }
-	    URI ru = new URI();
-	    ru.scheme = base.scheme;
-	    ru.authority = base.authority;
-	    ru.userInfo = base.userInfo;
-	    ru.host = base.host;
-	    ru.port = base.port;
-	    ru.path = base.path;
-	    ru.fragment = child.fragment;
-	    ru.query = base.query;
-	    return ru;
-	}
+        // 5.2 (2): Reference to current document (lone fragment)
+        if ((child.scheme == null) && (child.authority == null)
+            && child.path.equals("") && (child.fragment != null)
+            && (child.query == null)) {
+            if ((base.fragment != null)
+                && child.fragment.equals(base.fragment)) {
+                return base;
+            }
+            URI ru = new URI();
+            ru.scheme = base.scheme;
+            ru.authority = base.authority;
+            ru.userInfo = base.userInfo;
+            ru.host = base.host;
+            ru.port = base.port;
+            ru.path = base.path;
+            ru.fragment = child.fragment;
+            ru.query = base.query;
+            return ru;
+        }
 
-	// 5.2 (3): Child is absolute
-	if (child.scheme != null)
-	    return child;
+        // 5.2 (3): Child is absolute
+        if (child.scheme != null)
+            return child;
 
-	URI ru = new URI();		// Resolved URI
-	ru.scheme = base.scheme;
-	ru.query = child.query;
-	ru.fragment = child.fragment;
+        URI ru = new URI();             // Resolved URI
+        ru.scheme = base.scheme;
+        ru.query = child.query;
+        ru.fragment = child.fragment;
 
-	// 5.2 (4): Authority
-	if (child.authority == null) {
-	    ru.authority = base.authority;
-	    ru.host = base.host;
-	    ru.userInfo = base.userInfo;
-	    ru.port = base.port;
+        // 5.2 (4): Authority
+        if (child.authority == null) {
+            ru.authority = base.authority;
+            ru.host = base.host;
+            ru.userInfo = base.userInfo;
+            ru.port = base.port;
 
-	    String cp = (child.path == null) ? "" : child.path;
-	    if ((cp.length() > 0) && (cp.charAt(0) == '/')) {
-		// 5.2 (5): Child path is absolute
-		ru.path = child.path;
-	    } else {
-		// 5.2 (6): Resolve relative path
-		ru.path = resolvePath(base.path, cp, base.isAbsolute());
-	    }
-	} else {
-	    ru.authority = child.authority;
-	    ru.host = child.host;
-	    ru.userInfo = child.userInfo;
-	    ru.host = child.host;
-	    ru.port = child.port;
-	    ru.path = child.path;
-	}
+            String cp = (child.path == null) ? "" : child.path;
+            if ((cp.length() > 0) && (cp.charAt(0) == '/')) {
+                // 5.2 (5): Child path is absolute
+                ru.path = child.path;
+            } else {
+                // 5.2 (6): Resolve relative path
+                ru.path = resolvePath(base.path, cp, base.isAbsolute());
+            }
+        } else {
+            ru.authority = child.authority;
+            ru.host = child.host;
+            ru.userInfo = child.userInfo;
+            ru.host = child.host;
+            ru.port = child.port;
+            ru.path = child.path;
+        }
 
-	// 5.2 (7): Recombine (nothing to do here)
-	return ru;
+        // 5.2 (7): Recombine (nothing to do here)
+        return ru;
     }
 
     // If the given URI's path is normal then return the URI;
     // o.w., return a new URI containing the normalized path.
     //
     private static URI normalize(URI u) {
-	if (u.isOpaque() || (u.path == null) || (u.path.length() == 0))
-	    return u;
+        if (u.isOpaque() || (u.path == null) || (u.path.length() == 0))
+            return u;
 
-	String np = normalize(u.path);
-	if (np == u.path)
-	    return u;
+        String np = normalize(u.path);
+        if (np == u.path)
+            return u;
 
-	URI v = new URI();
-	v.scheme = u.scheme;
-	v.fragment = u.fragment;
-	v.authority = u.authority;
-	v.userInfo = u.userInfo;
-	v.host = u.host;
-	v.port = u.port;
-	v.path = np;
-	v.query = u.query;
-	return v;
+        URI v = new URI();
+        v.scheme = u.scheme;
+        v.fragment = u.fragment;
+        v.authority = u.authority;
+        v.userInfo = u.userInfo;
+        v.host = u.host;
+        v.port = u.port;
+        v.path = np;
+        v.query = u.query;
+        return v;
     }
 
     // If both URIs are hierarchical, their scheme and authority components are
@@ -2106,32 +2105,32 @@ public final class URI
     // child; otherwise, return the child.
     //
     private static URI relativize(URI base, URI child) {
-	// check if child if opaque first so that NPE is thrown 
+        // check if child if opaque first so that NPE is thrown
         // if child is null.
-	if (child.isOpaque() || base.isOpaque())
-	    return child;
-	if (!equalIgnoringCase(base.scheme, child.scheme)
-	    || !equal(base.authority, child.authority))
-	    return child;
+        if (child.isOpaque() || base.isOpaque())
+            return child;
+        if (!equalIgnoringCase(base.scheme, child.scheme)
+            || !equal(base.authority, child.authority))
+            return child;
 
-	String bp = normalize(base.path);
-	String cp = normalize(child.path);
-	if (!bp.equals(cp)) {
-	    if (!bp.endsWith("/"))
-		bp = bp + "/";
-	    if (!cp.startsWith(bp))
-		return child;
-	}
+        String bp = normalize(base.path);
+        String cp = normalize(child.path);
+        if (!bp.equals(cp)) {
+            if (!bp.endsWith("/"))
+                bp = bp + "/";
+            if (!cp.startsWith(bp))
+                return child;
+        }
 
-	URI v = new URI();
-	v.path = cp.substring(bp.length());
-	v.query = child.query;
-	v.fragment = child.fragment;
-	return v;
+        URI v = new URI();
+        v.path = cp.substring(bp.length());
+        v.query = child.query;
+        v.fragment = child.fragment;
+        return v;
     }
 
 
-
+
     // -- Path normalization --
 
     // The following algorithm for path normalization avoids the creation of a
@@ -2156,49 +2155,49 @@ public final class URI
     // this test can be performed without invoking path.toCharArray().
     //
     static private int needsNormalization(String path) {
-	boolean normal = true;
-	int ns = 0;			// Number of segments
-	int end = path.length() - 1;	// Index of last char in path
-	int p = 0;			// Index of next char in path
+        boolean normal = true;
+        int ns = 0;                     // Number of segments
+        int end = path.length() - 1;    // Index of last char in path
+        int p = 0;                      // Index of next char in path
 
-	// Skip initial slashes
-	while (p <= end) {
-	    if (path.charAt(p) != '/') break;
-	    p++;
-	}
-	if (p > 1) normal = false;
+        // Skip initial slashes
+        while (p <= end) {
+            if (path.charAt(p) != '/') break;
+            p++;
+        }
+        if (p > 1) normal = false;
 
-	// Scan segments
-	while (p <= end) {
+        // Scan segments
+        while (p <= end) {
 
-	    // Looking at "." or ".." ?
-	    if ((path.charAt(p) == '.')
-		&& ((p == end)
-		    || ((path.charAt(p + 1) == '/')
-			|| ((path.charAt(p + 1) == '.')
-			    && ((p + 1 == end)
-				|| (path.charAt(p + 2) == '/')))))) {
-		normal = false;
-	    }
-	    ns++;
+            // Looking at "." or ".." ?
+            if ((path.charAt(p) == '.')
+                && ((p == end)
+                    || ((path.charAt(p + 1) == '/')
+                        || ((path.charAt(p + 1) == '.')
+                            && ((p + 1 == end)
+                                || (path.charAt(p + 2) == '/')))))) {
+                normal = false;
+            }
+            ns++;
 
-	    // Find beginning of next segment
-	    while (p <= end) {
-		if (path.charAt(p++) != '/')
-		    continue;
+            // Find beginning of next segment
+            while (p <= end) {
+                if (path.charAt(p++) != '/')
+                    continue;
 
-		// Skip redundant slashes
-		while (p <= end) {
-		    if (path.charAt(p) != '/') break;
-		    normal = false;
-		    p++;
-		}
+                // Skip redundant slashes
+                while (p <= end) {
+                    if (path.charAt(p) != '/') break;
+                    normal = false;
+                    p++;
+                }
 
-		break;
-	    }
-	}
+                break;
+            }
+        }
 
-	return normal ? -1 : ns;
+        return normal ? -1 : ns;
     }
 
 
@@ -2213,39 +2212,39 @@ public final class URI
     //   segs[i] == Index of first char in segment i (0 <= i < segs.length)
     //
     static private void split(char[] path, int[] segs) {
-	int end = path.length - 1;	// Index of last char in path
-	int p = 0;			// Index of next char in path
-	int i = 0;			// Index of current segment
+        int end = path.length - 1;      // Index of last char in path
+        int p = 0;                      // Index of next char in path
+        int i = 0;                      // Index of current segment
 
-	// Skip initial slashes
-	while (p <= end) {
-	    if (path[p] != '/') break;
-	    path[p] = '\0';
-	    p++;
-	}
+        // Skip initial slashes
+        while (p <= end) {
+            if (path[p] != '/') break;
+            path[p] = '\0';
+            p++;
+        }
 
-	while (p <= end) {
+        while (p <= end) {
 
-	    // Note start of segment
-	    segs[i++] = p++;
+            // Note start of segment
+            segs[i++] = p++;
 
-	    // Find beginning of next segment
-	    while (p <= end) {
-		if (path[p++] != '/')
-		    continue;
-		path[p - 1] = '\0';
+            // Find beginning of next segment
+            while (p <= end) {
+                if (path[p++] != '/')
+                    continue;
+                path[p - 1] = '\0';
 
-		// Skip redundant slashes
-		while (p <= end) {
-		    if (path[p] != '/') break;
-		    path[p++] = '\0';
-		}
-		break;
-	    }
-	}
+                // Skip redundant slashes
+                while (p <= end) {
+                    if (path[p] != '/') break;
+                    path[p++] = '\0';
+                }
+                break;
+            }
+        }
 
-	if (i != segs.length)
-	    throw new InternalError();	// ASSERT
+        if (i != segs.length)
+            throw new InternalError();  // ASSERT
     }
 
 
@@ -2262,42 +2261,42 @@ public final class URI
     //   path[0] .. path[return value] == Resulting path
     //
     static private int join(char[] path, int[] segs) {
-	int ns = segs.length;		// Number of segments
-	int end = path.length - 1;	// Index of last char in path
-	int p = 0;			// Index of next path char to write
+        int ns = segs.length;           // Number of segments
+        int end = path.length - 1;      // Index of last char in path
+        int p = 0;                      // Index of next path char to write
 
-	if (path[p] == '\0') {
-	    // Restore initial slash for absolute paths
-	    path[p++] = '/';
-	}
+        if (path[p] == '\0') {
+            // Restore initial slash for absolute paths
+            path[p++] = '/';
+        }
 
-	for (int i = 0; i < ns; i++) {
-	    int q = segs[i];		// Current segment
-	    if (q == -1)
-		// Ignore this segment
-		continue;
+        for (int i = 0; i < ns; i++) {
+            int q = segs[i];            // Current segment
+            if (q == -1)
+                // Ignore this segment
+                continue;
 
-	    if (p == q) {
-		// We're already at this segment, so just skip to its end
-		while ((p <= end) && (path[p] != '\0'))
-		    p++;
-		if (p <= end) {
-		    // Preserve trailing slash
-		    path[p++] = '/';
-		}
-	    } else if (p < q) {
-		// Copy q down to p
-		while ((q <= end) && (path[q] != '\0'))
-		    path[p++] = path[q++];
-		if (q <= end) {
-		    // Preserve trailing slash
-		    path[p++] = '/';
-		}
-	    } else
-		throw new InternalError(); // ASSERT false
-	}
+            if (p == q) {
+                // We're already at this segment, so just skip to its end
+                while ((p <= end) && (path[p] != '\0'))
+                    p++;
+                if (p <= end) {
+                    // Preserve trailing slash
+                    path[p++] = '/';
+                }
+            } else if (p < q) {
+                // Copy q down to p
+                while ((q <= end) && (path[q] != '\0'))
+                    path[p++] = path[q++];
+                if (q <= end) {
+                    // Preserve trailing slash
+                    path[p++] = '/';
+                }
+            } else
+                throw new InternalError(); // ASSERT false
+        }
 
-	return p;
+        return p;
     }
 
 
@@ -2305,56 +2304,56 @@ public final class URI
     // consisting of a non-".." segment followed by a ".." segment.
     //
     private static void removeDots(char[] path, int[] segs) {
-	int ns = segs.length;
-	int end = path.length - 1;
+        int ns = segs.length;
+        int end = path.length - 1;
 
-	for (int i = 0; i < ns; i++) {
-	    int dots = 0;		// Number of dots found (0, 1, or 2)
+        for (int i = 0; i < ns; i++) {
+            int dots = 0;               // Number of dots found (0, 1, or 2)
 
-	    // Find next occurrence of "." or ".."
-	    do {
-		int p = segs[i];
-		if (path[p] == '.') {
-		    if (p == end) {
-			dots = 1;
-			break;
-		    } else if (path[p + 1] == '\0') {
-			dots = 1;
-			break;
-		    } else if ((path[p + 1] == '.')
-			       && ((p + 1 == end)
-				   || (path[p + 2] == '\0'))) {
-			dots = 2;
-			break;
-		    }
-		}
-		i++;
-	    } while (i < ns);
-	    if ((i > ns) || (dots == 0))
-		break;
+            // Find next occurrence of "." or ".."
+            do {
+                int p = segs[i];
+                if (path[p] == '.') {
+                    if (p == end) {
+                        dots = 1;
+                        break;
+                    } else if (path[p + 1] == '\0') {
+                        dots = 1;
+                        break;
+                    } else if ((path[p + 1] == '.')
+                               && ((p + 1 == end)
+                                   || (path[p + 2] == '\0'))) {
+                        dots = 2;
+                        break;
+                    }
+                }
+                i++;
+            } while (i < ns);
+            if ((i > ns) || (dots == 0))
+                break;
 
-	    if (dots == 1) {
-		// Remove this occurrence of "."
-		segs[i] = -1;
-	    } else {
-		// If there is a preceding non-".." segment, remove both that
-		// segment and this occurrence of ".."; otherwise, leave this
-		// ".." segment as-is.
-		int j;
-		for (j = i - 1; j >= 0; j--) {
-		    if (segs[j] != -1) break;
-		}
-		if (j >= 0) {
-		    int q = segs[j];
-		    if (!((path[q] == '.')
-			  && (path[q + 1] == '.')
-			  && (path[q + 2] == '\0'))) {
-			segs[i] = -1;
-			segs[j] = -1;
-		    }
-		}
-	    }
-	}
+            if (dots == 1) {
+                // Remove this occurrence of "."
+                segs[i] = -1;
+            } else {
+                // If there is a preceding non-".." segment, remove both that
+                // segment and this occurrence of ".."; otherwise, leave this
+                // ".." segment as-is.
+                int j;
+                for (j = i - 1; j >= 0; j--) {
+                    if (segs[j] != -1) break;
+                }
+                if (j >= 0) {
+                    int q = segs[j];
+                    if (!((path[q] == '.')
+                          && (path[q + 1] == '.')
+                          && (path[q + 2] == '\0'))) {
+                        segs[i] = -1;
+                        segs[j] = -1;
+                    }
+                }
+            }
+        }
     }
 
 
@@ -2363,33 +2362,33 @@ public final class URI
     //
     private static void maybeAddLeadingDot(char[] path, int[] segs) {
 
-	if (path[0] == '\0')
-	    // The path is absolute
-	    return;
+        if (path[0] == '\0')
+            // The path is absolute
+            return;
 
-	int ns = segs.length;
-	int f = 0;			// Index of first segment
-	while (f < ns) {
-	    if (segs[f] >= 0)
-		break;
-	    f++;
-	}
-	if ((f >= ns) || (f == 0))
-	    // The path is empty, or else the original first segment survived,
-	    // in which case we already know that no leading "." is needed
-	    return;
+        int ns = segs.length;
+        int f = 0;                      // Index of first segment
+        while (f < ns) {
+            if (segs[f] >= 0)
+                break;
+            f++;
+        }
+        if ((f >= ns) || (f == 0))
+            // The path is empty, or else the original first segment survived,
+            // in which case we already know that no leading "." is needed
+            return;
 
-	int p = segs[f];
-	while ((p < path.length) && (path[p] != ':') && (path[p] != '\0')) p++;
-	if (p >= path.length || path[p] == '\0')
-	    // No colon in first segment, so no "." needed
-	    return;
+        int p = segs[f];
+        while ((p < path.length) && (path[p] != ':') && (path[p] != '\0')) p++;
+        if (p >= path.length || path[p] == '\0')
+            // No colon in first segment, so no "." needed
+            return;
 
-	// At this point we know that the first segment is unused,
-	// hence we can insert a "." segment at that position
-	path[0] = '.';
-	path[1] = '\0';
-	segs[0] = 0;
+        // At this point we know that the first segment is unused,
+        // hence we can insert a "." segment at that position
+        path[0] = '.';
+        path[1] = '\0';
+        segs[0] = 0;
     }
 
 
@@ -2401,35 +2400,35 @@ public final class URI
     //
     private static String normalize(String ps) {
 
-	// Does this path need normalization?
-	int ns = needsNormalization(ps);	// Number of segments
-	if (ns < 0)
-	    // Nope -- just return it
-	    return ps;
+        // Does this path need normalization?
+        int ns = needsNormalization(ps);        // Number of segments
+        if (ns < 0)
+            // Nope -- just return it
+            return ps;
 
-	char[] path = ps.toCharArray();		// Path in char-array form
+        char[] path = ps.toCharArray();         // Path in char-array form
 
-	// Split path into segments
-	int[] segs = new int[ns];		// Segment-index array
-	split(path, segs);
+        // Split path into segments
+        int[] segs = new int[ns];               // Segment-index array
+        split(path, segs);
 
-	// Remove dots
-	removeDots(path, segs);
+        // Remove dots
+        removeDots(path, segs);
 
-	// Prevent scheme-name confusion
-	maybeAddLeadingDot(path, segs);
+        // Prevent scheme-name confusion
+        maybeAddLeadingDot(path, segs);
 
-	// Join the remaining segments and return the result
-	String s = new String(path, 0, join(path, segs));
-	if (s.equals(ps)) {
-	    // string was already normalized
-	    return ps;
-	}
-	return s;
+        // Join the remaining segments and return the result
+        String s = new String(path, 0, join(path, segs));
+        if (s.equals(ps)) {
+            // string was already normalized
+            return ps;
+        }
+        return s;
     }
 
 
-
+
     // -- Character classes for parsing --
 
     // RFC2396 precisely specifies which characters in the US-ASCII charset are
@@ -2446,57 +2445,57 @@ public final class URI
 
     // Compute the low-order mask for the characters in the given string
     private static long lowMask(String chars) {
-	int n = chars.length();
-	long m = 0;
-	for (int i = 0; i < n; i++) {
-	    char c = chars.charAt(i);
-	    if (c < 64)
-		m |= (1L << c);
-	}
-	return m;
+        int n = chars.length();
+        long m = 0;
+        for (int i = 0; i < n; i++) {
+            char c = chars.charAt(i);
+            if (c < 64)
+                m |= (1L << c);
+        }
+        return m;
     }
 
     // Compute the high-order mask for the characters in the given string
     private static long highMask(String chars) {
-	int n = chars.length();
-	long m = 0;
-	for (int i = 0; i < n; i++) {
-	    char c = chars.charAt(i);
-	    if ((c >= 64) && (c < 128))
-		m |= (1L << (c - 64));
-	}
-	return m;
+        int n = chars.length();
+        long m = 0;
+        for (int i = 0; i < n; i++) {
+            char c = chars.charAt(i);
+            if ((c >= 64) && (c < 128))
+                m |= (1L << (c - 64));
+        }
+        return m;
     }
 
     // Compute a low-order mask for the characters
     // between first and last, inclusive
     private static long lowMask(char first, char last) {
-	long m = 0;
-	int f = Math.max(Math.min(first, 63), 0);
-	int l = Math.max(Math.min(last, 63), 0);
-	for (int i = f; i <= l; i++)
-	    m |= 1L << i;
-	return m;
+        long m = 0;
+        int f = Math.max(Math.min(first, 63), 0);
+        int l = Math.max(Math.min(last, 63), 0);
+        for (int i = f; i <= l; i++)
+            m |= 1L << i;
+        return m;
     }
 
     // Compute a high-order mask for the characters
     // between first and last, inclusive
     private static long highMask(char first, char last) {
-	long m = 0;
-	int f = Math.max(Math.min(first, 127), 64) - 64;
-	int l = Math.max(Math.min(last, 127), 64) - 64;
-	for (int i = f; i <= l; i++)
-	    m |= 1L << i;
-	return m;
+        long m = 0;
+        int f = Math.max(Math.min(first, 127), 64) - 64;
+        int l = Math.max(Math.min(last, 127), 64) - 64;
+        for (int i = f; i <= l; i++)
+            m |= 1L << i;
+        return m;
     }
 
     // Tell whether the given character is permitted by the given mask pair
     private static boolean match(char c, long lowMask, long highMask) {
-	if (c < 64)
-	    return ((1L << c) & lowMask) != 0;
-	if (c < 128)
-	    return ((1L << (c - 64)) & highMask) != 0;
-	return false;
+        if (c < 64)
+            return ((1L << c) & lowMask) != 0;
+        if (c < 128)
+            return ((1L << (c - 64)) & highMask) != 0;
+        return false;
     }
 
     // Character-class masks, in reverse order from RFC2396 because
@@ -2559,9 +2558,9 @@ public final class URI
     // pchar         = unreserved | escaped |
     //                 ":" | "@" | "&" | "=" | "+" | "$" | ","
     private static final long L_PCHAR
-	= L_UNRESERVED | L_ESCAPED | lowMask(":@&=+$,");
+        = L_UNRESERVED | L_ESCAPED | lowMask(":@&=+$,");
     private static final long H_PCHAR
-	= H_UNRESERVED | H_ESCAPED | highMask(":@&=+$,");
+        = H_UNRESERVED | H_ESCAPED | highMask(":@&=+$,");
 
     // All valid path characters
     private static final long L_PATH = L_PCHAR | lowMask(";/");
@@ -2578,29 +2577,29 @@ public final class URI
     // userinfo      = *( unreserved | escaped |
     //                    ";" | ":" | "&" | "=" | "+" | "$" | "," )
     private static final long L_USERINFO
-	= L_UNRESERVED | L_ESCAPED | lowMask(";:&=+$,");
+        = L_UNRESERVED | L_ESCAPED | lowMask(";:&=+$,");
     private static final long H_USERINFO
-	= H_UNRESERVED | H_ESCAPED | highMask(";:&=+$,");
+        = H_UNRESERVED | H_ESCAPED | highMask(";:&=+$,");
 
     // reg_name      = 1*( unreserved | escaped | "$" | "," |
     //                     ";" | ":" | "@" | "&" | "=" | "+" )
     private static final long L_REG_NAME
-	= L_UNRESERVED | L_ESCAPED | lowMask("$,;:@&=+");
+        = L_UNRESERVED | L_ESCAPED | lowMask("$,;:@&=+");
     private static final long H_REG_NAME
-	= H_UNRESERVED | H_ESCAPED | highMask("$,;:@&=+");
+        = H_UNRESERVED | H_ESCAPED | highMask("$,;:@&=+");
 
     // All valid characters for server-based authorities
     private static final long L_SERVER
-	= L_USERINFO | L_ALPHANUM | L_DASH | lowMask(".:@[]");
+        = L_USERINFO | L_ALPHANUM | L_DASH | lowMask(".:@[]");
     private static final long H_SERVER
-	= H_USERINFO | H_ALPHANUM | H_DASH | highMask(".:@[]");
+        = H_USERINFO | H_ALPHANUM | H_DASH | highMask(".:@[]");
 
     // Special case of server authority that represents an IPv6 address
     // In this case, a % does not signify an escape sequence
     private static final long L_SERVER_PERCENT
-	= L_SERVER | lowMask("%");
+        = L_SERVER | lowMask("%");
     private static final long H_SERVER_PERCENT
-	= H_SERVER | highMask("%");
+        = H_SERVER | highMask("%");
     private static final long L_LEFT_BRACKET = lowMask("[");
     private static final long H_LEFT_BRACKET = highMask("[");
 
@@ -2611,127 +2610,127 @@ public final class URI
     // uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
     //                 "&" | "=" | "+" | "$" | ","
     private static final long L_URIC_NO_SLASH
-	= L_UNRESERVED | L_ESCAPED | lowMask(";?:@&=+$,");
+        = L_UNRESERVED | L_ESCAPED | lowMask(";?:@&=+$,");
     private static final long H_URIC_NO_SLASH
-	= H_UNRESERVED | H_ESCAPED | highMask(";?:@&=+$,");
+        = H_UNRESERVED | H_ESCAPED | highMask(";?:@&=+$,");
 
-
+
     // -- Escaping and encoding --
 
     private final static char[] hexDigits = {
-	'0', '1', '2', '3', '4', '5', '6', '7',
-	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
 
     private static void appendEscape(StringBuffer sb, byte b) {
-	sb.append('%');
-	sb.append(hexDigits[(b >> 4) & 0x0f]);
-	sb.append(hexDigits[(b >> 0) & 0x0f]);
+        sb.append('%');
+        sb.append(hexDigits[(b >> 4) & 0x0f]);
+        sb.append(hexDigits[(b >> 0) & 0x0f]);
     }
 
     private static void appendEncoded(StringBuffer sb, char c) {
-	ByteBuffer bb = null;
-	try {
-	    bb = ThreadLocalCoders.encoderFor("UTF-8")
-		.encode(CharBuffer.wrap("" + c));
-	} catch (CharacterCodingException x) {
-	    assert false;
-	}
-	while (bb.hasRemaining()) {
-	    int b = bb.get() & 0xff;
-	    if (b >= 0x80)
-		appendEscape(sb, (byte)b);
-	    else
-		sb.append((char)b);
-	}
+        ByteBuffer bb = null;
+        try {
+            bb = ThreadLocalCoders.encoderFor("UTF-8")
+                .encode(CharBuffer.wrap("" + c));
+        } catch (CharacterCodingException x) {
+            assert false;
+        }
+        while (bb.hasRemaining()) {
+            int b = bb.get() & 0xff;
+            if (b >= 0x80)
+                appendEscape(sb, (byte)b);
+            else
+                sb.append((char)b);
+        }
     }
 
     // Quote any characters in s that are not permitted
     // by the given mask pair
     //
     private static String quote(String s, long lowMask, long highMask) {
-	int n = s.length();
-	StringBuffer sb = null;
-	boolean allowNonASCII = ((lowMask & L_ESCAPED) != 0);
-	for (int i = 0; i < s.length(); i++) {
-	    char c = s.charAt(i);
-	    if (c < '\u0080') {
-		if (!match(c, lowMask, highMask)) {
-		    if (sb == null) {
-			sb = new StringBuffer();
-			sb.append(s.substring(0, i));
-		    }
-		    appendEscape(sb, (byte)c);
-		} else {
-		    if (sb != null)
-			sb.append(c);
-		}
-	    } else if (allowNonASCII
-		       && (Character.isSpaceChar(c)
-			   || Character.isISOControl(c))) {
-		if (sb == null) {
-		    sb = new StringBuffer();
-		    sb.append(s.substring(0, i));
-		}
-		appendEncoded(sb, c);
-	    } else {
-		if (sb != null)
-		    sb.append(c);
-	    }
-	}
-	return (sb == null) ? s : sb.toString();
+        int n = s.length();
+        StringBuffer sb = null;
+        boolean allowNonASCII = ((lowMask & L_ESCAPED) != 0);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c < '\u0080') {
+                if (!match(c, lowMask, highMask)) {
+                    if (sb == null) {
+                        sb = new StringBuffer();
+                        sb.append(s.substring(0, i));
+                    }
+                    appendEscape(sb, (byte)c);
+                } else {
+                    if (sb != null)
+                        sb.append(c);
+                }
+            } else if (allowNonASCII
+                       && (Character.isSpaceChar(c)
+                           || Character.isISOControl(c))) {
+                if (sb == null) {
+                    sb = new StringBuffer();
+                    sb.append(s.substring(0, i));
+                }
+                appendEncoded(sb, c);
+            } else {
+                if (sb != null)
+                    sb.append(c);
+            }
+        }
+        return (sb == null) ? s : sb.toString();
     }
 
     // Encodes all characters >= \u0080 into escaped, normalized UTF-8 octets,
     // assuming that s is otherwise legal
     //
     private static String encode(String s) {
-	int n = s.length();
-	if (n == 0)
-	    return s;
+        int n = s.length();
+        if (n == 0)
+            return s;
 
-	// First check whether we actually need to encode
-	for (int i = 0;;) {
-	    if (s.charAt(i) >= '\u0080')
-		break;
-	    if (++i >= n)
-		return s;
-	}
+        // First check whether we actually need to encode
+        for (int i = 0;;) {
+            if (s.charAt(i) >= '\u0080')
+                break;
+            if (++i >= n)
+                return s;
+        }
 
-	String ns = Normalizer.normalize(s, Normalizer.Form.NFC);
-	ByteBuffer bb = null;
-	try {
-	    bb = ThreadLocalCoders.encoderFor("UTF-8")
-		.encode(CharBuffer.wrap(ns));
-	} catch (CharacterCodingException x) {
-	    assert false;
-	}
+        String ns = Normalizer.normalize(s, Normalizer.Form.NFC);
+        ByteBuffer bb = null;
+        try {
+            bb = ThreadLocalCoders.encoderFor("UTF-8")
+                .encode(CharBuffer.wrap(ns));
+        } catch (CharacterCodingException x) {
+            assert false;
+        }
 
-	StringBuffer sb = new StringBuffer();
-	while (bb.hasRemaining()) {
-	    int b = bb.get() & 0xff;
-	    if (b >= 0x80)
-		appendEscape(sb, (byte)b);
-	    else
-		sb.append((char)b);
-	}
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        while (bb.hasRemaining()) {
+            int b = bb.get() & 0xff;
+            if (b >= 0x80)
+                appendEscape(sb, (byte)b);
+            else
+                sb.append((char)b);
+        }
+        return sb.toString();
     }
 
     private static int decode(char c) {
-	if ((c >= '0') && (c <= '9'))
-	    return c - '0';
-	if ((c >= 'a') && (c <= 'f'))
-	    return c - 'a' + 10;
-	if ((c >= 'A') && (c <= 'F'))
-	    return c - 'A' + 10;
-	assert false;
-	return -1;
+        if ((c >= '0') && (c <= '9'))
+            return c - '0';
+        if ((c >= 'a') && (c <= 'f'))
+            return c - 'a' + 10;
+        if ((c >= 'A') && (c <= 'F'))
+            return c - 'A' + 10;
+        assert false;
+        return -1;
     }
 
     private static byte decode(char c1, char c2) {
-	return (byte)(  ((decode(c1) & 0xf) << 4)
-		      | ((decode(c2) & 0xf) << 0));
+        return (byte)(  ((decode(c1) & 0xf) << 4)
+                      | ((decode(c2) & 0xf) << 0));
     }
 
     // Evaluates all escapes in s, applying UTF-8 decoding if needed.  Assumes
@@ -2742,64 +2741,64 @@ public final class URI
     //            with a scope_id
     //
     private static String decode(String s) {
-	if (s == null)
-	    return s;
-	int n = s.length();
-	if (n == 0)
-	    return s;
-	if (s.indexOf('%') < 0)
-	    return s;
+        if (s == null)
+            return s;
+        int n = s.length();
+        if (n == 0)
+            return s;
+        if (s.indexOf('%') < 0)
+            return s;
 
-	StringBuffer sb = new StringBuffer(n);
-	ByteBuffer bb = ByteBuffer.allocate(n);
-	CharBuffer cb = CharBuffer.allocate(n);
-	CharsetDecoder dec = ThreadLocalCoders.decoderFor("UTF-8")
-	    .onMalformedInput(CodingErrorAction.REPLACE)
-	    .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        StringBuffer sb = new StringBuffer(n);
+        ByteBuffer bb = ByteBuffer.allocate(n);
+        CharBuffer cb = CharBuffer.allocate(n);
+        CharsetDecoder dec = ThreadLocalCoders.decoderFor("UTF-8")
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
 
-	// This is not horribly efficient, but it will do for now
-	char c = s.charAt(0);
-    	boolean betweenBrackets = false;
+        // This is not horribly efficient, but it will do for now
+        char c = s.charAt(0);
+        boolean betweenBrackets = false;
 
-	for (int i = 0; i < n;) {
-	    assert c == s.charAt(i);	// Loop invariant
-	    if (c == '[') {
-		betweenBrackets = true;
-	    } else if (betweenBrackets && c == ']') {
-		betweenBrackets = false;
-	    }
-	    if (c != '%' || betweenBrackets) {
-		sb.append(c);
-		if (++i >= n)
-		    break;
-		c = s.charAt(i);
-		continue;
-	    }
-	    bb.clear();
-	    int ui = i;
-	    for (;;) {
-		assert (n - i >= 2);
-		bb.put(decode(s.charAt(++i), s.charAt(++i)));
-		if (++i >= n)
-		    break;
-		c = s.charAt(i);
-		if (c != '%')
-		    break;
-	    }
-	    bb.flip();
-	    cb.clear();
-	    dec.reset();
-	    CoderResult cr = dec.decode(bb, cb, true);
-	    assert cr.isUnderflow();
-	    cr = dec.flush(cb);
-	    assert cr.isUnderflow();
-	    sb.append(cb.flip().toString());
-	}
+        for (int i = 0; i < n;) {
+            assert c == s.charAt(i);    // Loop invariant
+            if (c == '[') {
+                betweenBrackets = true;
+            } else if (betweenBrackets && c == ']') {
+                betweenBrackets = false;
+            }
+            if (c != '%' || betweenBrackets) {
+                sb.append(c);
+                if (++i >= n)
+                    break;
+                c = s.charAt(i);
+                continue;
+            }
+            bb.clear();
+            int ui = i;
+            for (;;) {
+                assert (n - i >= 2);
+                bb.put(decode(s.charAt(++i), s.charAt(++i)));
+                if (++i >= n)
+                    break;
+                c = s.charAt(i);
+                if (c != '%')
+                    break;
+            }
+            bb.flip();
+            cb.clear();
+            dec.reset();
+            CoderResult cr = dec.decode(bb, cb, true);
+            assert cr.isUnderflow();
+            cr = dec.flush(cb);
+            assert cr.isUnderflow();
+            sb.append(cb.flip().toString());
+        }
 
-	return sb.toString();
+        return sb.toString();
     }
 
-
+
     // -- Parsing --
 
     // For convenience we wrap the input URI string in a new instance of the
@@ -2808,715 +2807,715 @@ public final class URI
 
     private class Parser {
 
-	private String input;		// URI input string
-	private boolean requireServerAuthority = false;
+        private String input;           // URI input string
+        private boolean requireServerAuthority = false;
 
-	Parser(String s) {
-	    input = s;
-	    string = s;
-	}
+        Parser(String s) {
+            input = s;
+            string = s;
+        }
 
-	// -- Methods for throwing URISyntaxException in various ways --
+        // -- Methods for throwing URISyntaxException in various ways --
 
-	private void fail(String reason) throws URISyntaxException {
-	    throw new URISyntaxException(input, reason);
-	}
+        private void fail(String reason) throws URISyntaxException {
+            throw new URISyntaxException(input, reason);
+        }
 
-	private void fail(String reason, int p) throws URISyntaxException {
-	    throw new URISyntaxException(input, reason, p);
-	}
+        private void fail(String reason, int p) throws URISyntaxException {
+            throw new URISyntaxException(input, reason, p);
+        }
 
-	private void failExpecting(String expected, int p)
-	    throws URISyntaxException
-	{
-	    fail("Expected " + expected, p);
-	}
+        private void failExpecting(String expected, int p)
+            throws URISyntaxException
+        {
+            fail("Expected " + expected, p);
+        }
 
-	private void failExpecting(String expected, String prior, int p)
-	    throws URISyntaxException
-	{
-	    fail("Expected " + expected + " following " + prior, p);
-	}
-
-
-	// -- Simple access to the input string --
-
-	// Return a substring of the input string
-	//
-	private String substring(int start, int end) {
-	    return input.substring(start, end);
-	}
-
-	// Return the char at position p,
-	// assuming that p < input.length()
-	//
-	private char charAt(int p) {
-	    return input.charAt(p);
-	}
-
-	// Tells whether start < end and, if so, whether charAt(start) == c
-	//
-	private boolean at(int start, int end, char c) {
-	    return (start < end) && (charAt(start) == c);
-	}
-
-	// Tells whether start + s.length() < end and, if so,
-	// whether the chars at the start position match s exactly
-	//
-	private boolean at(int start, int end, String s) {
-	    int p = start;
-	    int sn = s.length();
-	    if (sn > end - p)
-		return false;
-	    int i = 0;
-	    while (i < sn) {
-		if (charAt(p++) != s.charAt(i)) {
-		    break;
-		}
-		i++;
-	    }
-	    return (i == sn);
-	}
-
-
-	// -- Scanning --
-
-	// The various scan and parse methods that follow use a uniform
-	// convention of taking the current start position and end index as
-	// their first two arguments.  The start is inclusive while the end is
-	// exclusive, just as in the String class, i.e., a start/end pair
-	// denotes the left-open interval [start, end) of the input string.
-	//
-	// These methods never proceed past the end position.  They may return
-	// -1 to indicate outright failure, but more often they simply return
-	// the position of the first char after the last char scanned.  Thus
-	// a typical idiom is
-	//
-	//     int p = start;
-	//     int q = scan(p, end, ...);
-	//     if (q > p)
-	//         // We scanned something
-	//         ...;
-	//     else if (q == p)
-	//         // We scanned nothing
-	//         ...;
-	//     else if (q == -1)
-	//         // Something went wrong
-	//         ...;
+        private void failExpecting(String expected, String prior, int p)
+            throws URISyntaxException
+        {
+            fail("Expected " + expected + " following " + prior, p);
+        }
 
 
-	// Scan a specific char: If the char at the given start position is
-	// equal to c, return the index of the next char; otherwise, return the
-	// start position.
-	//
-	private int scan(int start, int end, char c) {
-	    if ((start < end) && (charAt(start) == c))
-		return start + 1;
-	    return start;
-	}
+        // -- Simple access to the input string --
 
-	// Scan forward from the given start position.  Stop at the first char
-	// in the err string (in which case -1 is returned), or the first char
-	// in the stop string (in which case the index of the preceding char is
-	// returned), or the end of the input string (in which case the length
-	// of the input string is returned).  May return the start position if
-	// nothing matches.
-	//
-	private int scan(int start, int end, String err, String stop) {
-	    int p = start;
-	    while (p < end) {
-		char c = charAt(p);
-		if (err.indexOf(c) >= 0)
-		    return -1;
-		if (stop.indexOf(c) >= 0)
-		    break;
-		p++;
-	    }
-	    return p;
-	}
+        // Return a substring of the input string
+        //
+        private String substring(int start, int end) {
+            return input.substring(start, end);
+        }
 
-	// Scan a potential escape sequence, starting at the given position,
-	// with the given first char (i.e., charAt(start) == c).
-	//
-	// This method assumes that if escapes are allowed then visible
-	// non-US-ASCII chars are also allowed.
-	//
-	private int scanEscape(int start, int n, char first)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    char c = first;
-	    if (c == '%') {
-		// Process escape pair
-		if ((p + 3 <= n)
-		    && match(charAt(p + 1), L_HEX, H_HEX)
-		    && match(charAt(p + 2), L_HEX, H_HEX)) {
-		    return p + 3;
-		}
-		fail("Malformed escape pair", p);
-	    } else if ((c > 128)
-		       && !Character.isSpaceChar(c)
-		       && !Character.isISOControl(c)) {
-		// Allow unescaped but visible non-US-ASCII chars
-		return p + 1;
-	    }
-	    return p;
-	}
+        // Return the char at position p,
+        // assuming that p < input.length()
+        //
+        private char charAt(int p) {
+            return input.charAt(p);
+        }
 
-	// Scan chars that match the given mask pair
-	//
-	private int scan(int start, int n, long lowMask, long highMask)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    while (p < n) {
-		char c = charAt(p);
-		if (match(c, lowMask, highMask)) {
-		    p++;
-		    continue;
-		}
-		if ((lowMask & L_ESCAPED) != 0) {
-		    int q = scanEscape(p, n, c);
-		    if (q > p) {
-			p = q;
-			continue;
-		    }
-		}
-		break;
-	    }
-	    return p;
-	}
+        // Tells whether start < end and, if so, whether charAt(start) == c
+        //
+        private boolean at(int start, int end, char c) {
+            return (start < end) && (charAt(start) == c);
+        }
 
-	// Check that each of the chars in [start, end) matches the given mask
-	//
-	private void checkChars(int start, int end,
-				long lowMask, long highMask,
-				String what)
-	    throws URISyntaxException
-	{
-	    int p = scan(start, end, lowMask, highMask);
-	    if (p < end)
-		fail("Illegal character in " + what, p);
-	}
-
-	// Check that the char at position p matches the given mask
-	//
-	private void checkChar(int p,
-			       long lowMask, long highMask,
-			       String what)
-	    throws URISyntaxException
-	{
-	    checkChars(p, p + 1, lowMask, highMask, what);
-	}
-
-
-	// -- Parsing --
-
-	// [<scheme>:]<scheme-specific-part>[#<fragment>]
-	//
-	void parse(boolean rsa) throws URISyntaxException {
-	    requireServerAuthority = rsa;
-	    int ssp;			// Start of scheme-specific part
-	    int n = input.length();
-	    int p = scan(0, n, "/?#", ":");
-	    if ((p >= 0) && at(p, n, ':')) {
-		if (p == 0)
-		    failExpecting("scheme name", 0);
-		checkChar(0, L_ALPHA, H_ALPHA, "scheme name");
-		checkChars(1, p, L_SCHEME, H_SCHEME, "scheme name");
-		scheme = substring(0, p);
-		p++;			// Skip ':'
-		ssp = p;
-		if (at(p, n, '/')) {
-		    p = parseHierarchical(p, n);
-		} else {
-		    int q = scan(p, n, "", "#");
-		    if (q <= p)
-			failExpecting("scheme-specific part", p);
-		    checkChars(p, q, L_URIC, H_URIC, "opaque part");
-		    p = q;
-		}
-	    } else {
-		ssp = 0;
-		p = parseHierarchical(0, n);
-	    }
-	    schemeSpecificPart = substring(ssp, p);
-	    if (at(p, n, '#')) {
-		checkChars(p + 1, n, L_URIC, H_URIC, "fragment");
-		fragment = substring(p + 1, n);
-		p = n;
-	    }
-	    if (p < n)
-		fail("end of URI", p);
-	}
-
-	// [//authority]<path>[?<query>]
-	//
-	// DEVIATION from RFC2396: We allow an empty authority component as
-	// long as it's followed by a non-empty path, query component, or
-	// fragment component.  This is so that URIs such as "file:///foo/bar"
-	// will parse.  This seems to be the intent of RFC2396, though the
-	// grammar does not permit it.  If the authority is empty then the
-	// userInfo, host, and port components are undefined.
-	//
-	// DEVIATION from RFC2396: We allow empty relative paths.  This seems
-	// to be the intent of RFC2396, but the grammar does not permit it.
-	// The primary consequence of this deviation is that "#f" parses as a
-	// relative URI with an empty path.
-	//
-	private int parseHierarchical(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    if (at(p, n, '/') && at(p + 1, n, '/')) {
-		p += 2;
-		int q = scan(p, n, "", "/?#");
-		if (q > p) {
-		    p = parseAuthority(p, q);
-		} else if (q < n) {
-		    // DEVIATION: Allow empty authority prior to non-empty 
-		    // path, query component or fragment identifier
-		} else
-		    failExpecting("authority", p);
-	    }
-	    int q = scan(p, n, "", "?#"); // DEVIATION: May be empty
-	    checkChars(p, q, L_PATH, H_PATH, "path");
-	    path = substring(p, q);
-	    p = q;
-	    if (at(p, n, '?')) {
-		p++;
-		q = scan(p, n, "", "#");
-		checkChars(p, q, L_URIC, H_URIC, "query");
-		query = substring(p, q);
-		p = q;
-	    }
-	    return p;
-	}
-
-	// authority     = server | reg_name
-	//
-	// Ambiguity: An authority that is a registry name rather than a server
-	// might have a prefix that parses as a server.  We use the fact that
-	// the authority component is always followed by '/' or the end of the
-	// input string to resolve this: If the complete authority did not
-	// parse as a server then we try to parse it as a registry name.
-	//
-	private int parseAuthority(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q = p;
-	    URISyntaxException ex = null;
-
-	    boolean serverChars;
-	    boolean regChars;
-
-	    if (scan(p, n, "", "]") > p) {
-		// contains a literal IPv6 address, therefore % is allowed
-	    	serverChars = (scan(p, n, L_SERVER_PERCENT, H_SERVER_PERCENT) == n);
-	    } else {
-	    	serverChars = (scan(p, n, L_SERVER, H_SERVER) == n);
-	    }
-	    regChars = (scan(p, n, L_REG_NAME, H_REG_NAME) == n);
-
-	    if (regChars && !serverChars) {
-		// Must be a registry-based authority
-		authority = substring(p, n);
-		return n;
-	    }
-
-	    if (serverChars) {
-		// Might be (probably is) a server-based authority, so attempt
-		// to parse it as such.  If the attempt fails, try to treat it
-		// as a registry-based authority.
-		try {
-		    q = parseServer(p, n);
-		    if (q < n)
-			failExpecting("end of authority", q);
-		    authority = substring(p, n);
-		} catch (URISyntaxException x) {
-		    // Undo results of failed parse
-		    userInfo = null;
-		    host = null;
-		    port = -1;
-		    if (requireServerAuthority) {
-			// If we're insisting upon a server-based authority,
-			// then just re-throw the exception
-			throw x;
-		    } else {
-			// Save the exception in case it doesn't parse as a
-			// registry either
-			ex = x;
-			q = p;
-		    }
-		}
-	    }
-
-	    if (q < n) {
-		if (regChars) {
-		    // Registry-based authority
-		    authority = substring(p, n);
-		} else if (ex != null) {
-		    // Re-throw exception; it was probably due to
-		    // a malformed IPv6 address
-		    throw ex;
-		} else {
-		    fail("Illegal character in authority", q);
-		}
-	    }
-
-	    return n;
-	}
+        // Tells whether start + s.length() < end and, if so,
+        // whether the chars at the start position match s exactly
+        //
+        private boolean at(int start, int end, String s) {
+            int p = start;
+            int sn = s.length();
+            if (sn > end - p)
+                return false;
+            int i = 0;
+            while (i < sn) {
+                if (charAt(p++) != s.charAt(i)) {
+                    break;
+                }
+                i++;
+            }
+            return (i == sn);
+        }
 
 
-	// [<userinfo>@]<host>[:<port>]
-	//
-	private int parseServer(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
+        // -- Scanning --
 
-	    // userinfo
-	    q = scan(p, n, "/?#", "@");
-	    if ((q >= p) && at(q, n, '@')) {
-		checkChars(p, q, L_USERINFO, H_USERINFO, "user info");
-		userInfo = substring(p, q);
-		p = q + 1;		// Skip '@'
-	    }
+        // The various scan and parse methods that follow use a uniform
+        // convention of taking the current start position and end index as
+        // their first two arguments.  The start is inclusive while the end is
+        // exclusive, just as in the String class, i.e., a start/end pair
+        // denotes the left-open interval [start, end) of the input string.
+        //
+        // These methods never proceed past the end position.  They may return
+        // -1 to indicate outright failure, but more often they simply return
+        // the position of the first char after the last char scanned.  Thus
+        // a typical idiom is
+        //
+        //     int p = start;
+        //     int q = scan(p, end, ...);
+        //     if (q > p)
+        //         // We scanned something
+        //         ...;
+        //     else if (q == p)
+        //         // We scanned nothing
+        //         ...;
+        //     else if (q == -1)
+        //         // Something went wrong
+        //         ...;
 
-	    // hostname, IPv4 address, or IPv6 address
-	    if (at(p, n, '[')) {
-		// DEVIATION from RFC2396: Support IPv6 addresses, per RFC2732
-		p++;
-		q = scan(p, n, "/?#", "]");
-		if ((q > p) && at(q, n, ']')) {
-		    // look for a "%" scope id
-		    int r = scan (p, q, "", "%");
-		    if (r > p) {
-		    	parseIPv6Reference(p, r);
-			if (r+1 == q) {
-			    fail ("scope id expected");
-			}
-			checkChars (r+1, q, L_ALPHANUM, H_ALPHANUM, 
-						"scope id");
-		    } else {
-		    	parseIPv6Reference(p, q);
-		    }
-	    	    host = substring(p-1, q+1);
-		    p = q + 1;
-		} else {
-		    failExpecting("closing bracket for IPv6 address", q);
-		}
-	    } else {
-		q = parseIPv4Address(p, n);
-		if (q <= p)
-		    q = parseHostname(p, n);
-		p = q;
-	    }
 
-	    // port
-	    if (at(p, n, ':')) {
-		p++;
-		q = scan(p, n, "", "/");
-		if (q > p) {
-		    checkChars(p, q, L_DIGIT, H_DIGIT, "port number");
-		    try {
-			port = Integer.parseInt(substring(p, q));
-		    } catch (NumberFormatException x) {
-			fail("Malformed port number", p);
-		    }
-		    p = q;
-		}
-	    }
-	    if (p < n)
-		failExpecting("port number", p);
+        // Scan a specific char: If the char at the given start position is
+        // equal to c, return the index of the next char; otherwise, return the
+        // start position.
+        //
+        private int scan(int start, int end, char c) {
+            if ((start < end) && (charAt(start) == c))
+                return start + 1;
+            return start;
+        }
 
-	    return p;
-	}
+        // Scan forward from the given start position.  Stop at the first char
+        // in the err string (in which case -1 is returned), or the first char
+        // in the stop string (in which case the index of the preceding char is
+        // returned), or the end of the input string (in which case the length
+        // of the input string is returned).  May return the start position if
+        // nothing matches.
+        //
+        private int scan(int start, int end, String err, String stop) {
+            int p = start;
+            while (p < end) {
+                char c = charAt(p);
+                if (err.indexOf(c) >= 0)
+                    return -1;
+                if (stop.indexOf(c) >= 0)
+                    break;
+                p++;
+            }
+            return p;
+        }
 
-	// Scan a string of decimal digits whose value fits in a byte
-	//
-	private int scanByte(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q = scan(p, n, L_DIGIT, H_DIGIT);
-	    if (q <= p) return q;
-	    if (Integer.parseInt(substring(p, q)) > 255) return p;
-	    return q;
-	}
+        // Scan a potential escape sequence, starting at the given position,
+        // with the given first char (i.e., charAt(start) == c).
+        //
+        // This method assumes that if escapes are allowed then visible
+        // non-US-ASCII chars are also allowed.
+        //
+        private int scanEscape(int start, int n, char first)
+            throws URISyntaxException
+        {
+            int p = start;
+            char c = first;
+            if (c == '%') {
+                // Process escape pair
+                if ((p + 3 <= n)
+                    && match(charAt(p + 1), L_HEX, H_HEX)
+                    && match(charAt(p + 2), L_HEX, H_HEX)) {
+                    return p + 3;
+                }
+                fail("Malformed escape pair", p);
+            } else if ((c > 128)
+                       && !Character.isSpaceChar(c)
+                       && !Character.isISOControl(c)) {
+                // Allow unescaped but visible non-US-ASCII chars
+                return p + 1;
+            }
+            return p;
+        }
 
-	// Scan an IPv4 address.
-	//
-	// If the strict argument is true then we require that the given
-	// interval contain nothing besides an IPv4 address; if it is false
-	// then we only require that it start with an IPv4 address.
-	//
-	// If the interval does not contain or start with (depending upon the
-	// strict argument) a legal IPv4 address characters then we return -1
-	// immediately; otherwise we insist that these characters parse as a
-	// legal IPv4 address and throw an exception on failure.
-	//
-	// We assume that any string of decimal digits and dots must be an IPv4
-	// address.  It won't parse as a hostname anyway, so making that
-	// assumption here allows more meaningful exceptions to be thrown.
-	//
-	private int scanIPv4Address(int start, int n, boolean strict)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
-	    int m = scan(p, n, L_DIGIT | L_DOT, H_DIGIT | H_DOT);
-	    if ((m <= p) || (strict && (m != n)))
-		return -1;
-	    for (;;) {
-		// Per RFC2732: At most three digits per byte
-		// Further constraint: Each element fits in a byte
-		if ((q = scanByte(p, m)) <= p) break;   p = q;
-		if ((q = scan(p, m, '.')) <= p) break;  p = q;
-		if ((q = scanByte(p, m)) <= p) break;   p = q;
-		if ((q = scan(p, m, '.')) <= p) break;  p = q;
-		if ((q = scanByte(p, m)) <= p) break;   p = q;
-		if ((q = scan(p, m, '.')) <= p) break;  p = q;
-		if ((q = scanByte(p, m)) <= p) break;   p = q;
-		if (q < m) break;
-		return q;
-	    }
-	    fail("Malformed IPv4 address", q);
-	    return -1;
-	}
+        // Scan chars that match the given mask pair
+        //
+        private int scan(int start, int n, long lowMask, long highMask)
+            throws URISyntaxException
+        {
+            int p = start;
+            while (p < n) {
+                char c = charAt(p);
+                if (match(c, lowMask, highMask)) {
+                    p++;
+                    continue;
+                }
+                if ((lowMask & L_ESCAPED) != 0) {
+                    int q = scanEscape(p, n, c);
+                    if (q > p) {
+                        p = q;
+                        continue;
+                    }
+                }
+                break;
+            }
+            return p;
+        }
 
-	// Take an IPv4 address: Throw an exception if the given interval
-	// contains anything except an IPv4 address
-	//
-	private int takeIPv4Address(int start, int n, String expected)
-	    throws URISyntaxException
-	{
-	    int p = scanIPv4Address(start, n, true);
-	    if (p <= start)
-		failExpecting(expected, start);
-	    return p;
-	}
+        // Check that each of the chars in [start, end) matches the given mask
+        //
+        private void checkChars(int start, int end,
+                                long lowMask, long highMask,
+                                String what)
+            throws URISyntaxException
+        {
+            int p = scan(start, end, lowMask, highMask);
+            if (p < end)
+                fail("Illegal character in " + what, p);
+        }
 
-	// Attempt to parse an IPv4 address, returning -1 on failure but
-	// allowing the given interval to contain [:<characters>] after
-	// the IPv4 address.
-	//
-	private int parseIPv4Address(int start, int n) {
-	    int p;
+        // Check that the char at position p matches the given mask
+        //
+        private void checkChar(int p,
+                               long lowMask, long highMask,
+                               String what)
+            throws URISyntaxException
+        {
+            checkChars(p, p + 1, lowMask, highMask, what);
+        }
 
-	    try {
-	        p = scanIPv4Address(start, n, false);
-	    } catch (URISyntaxException x) {
-		return -1;
-            } catch (NumberFormatException nfe) {
-		return -1;
+
+        // -- Parsing --
+
+        // [<scheme>:]<scheme-specific-part>[#<fragment>]
+        //
+        void parse(boolean rsa) throws URISyntaxException {
+            requireServerAuthority = rsa;
+            int ssp;                    // Start of scheme-specific part
+            int n = input.length();
+            int p = scan(0, n, "/?#", ":");
+            if ((p >= 0) && at(p, n, ':')) {
+                if (p == 0)
+                    failExpecting("scheme name", 0);
+                checkChar(0, L_ALPHA, H_ALPHA, "scheme name");
+                checkChars(1, p, L_SCHEME, H_SCHEME, "scheme name");
+                scheme = substring(0, p);
+                p++;                    // Skip ':'
+                ssp = p;
+                if (at(p, n, '/')) {
+                    p = parseHierarchical(p, n);
+                } else {
+                    int q = scan(p, n, "", "#");
+                    if (q <= p)
+                        failExpecting("scheme-specific part", p);
+                    checkChars(p, q, L_URIC, H_URIC, "opaque part");
+                    p = q;
+                }
+            } else {
+                ssp = 0;
+                p = parseHierarchical(0, n);
+            }
+            schemeSpecificPart = substring(ssp, p);
+            if (at(p, n, '#')) {
+                checkChars(p + 1, n, L_URIC, H_URIC, "fragment");
+                fragment = substring(p + 1, n);
+                p = n;
+            }
+            if (p < n)
+                fail("end of URI", p);
+        }
+
+        // [//authority]<path>[?<query>]
+        //
+        // DEVIATION from RFC2396: We allow an empty authority component as
+        // long as it's followed by a non-empty path, query component, or
+        // fragment component.  This is so that URIs such as "file:///foo/bar"
+        // will parse.  This seems to be the intent of RFC2396, though the
+        // grammar does not permit it.  If the authority is empty then the
+        // userInfo, host, and port components are undefined.
+        //
+        // DEVIATION from RFC2396: We allow empty relative paths.  This seems
+        // to be the intent of RFC2396, but the grammar does not permit it.
+        // The primary consequence of this deviation is that "#f" parses as a
+        // relative URI with an empty path.
+        //
+        private int parseHierarchical(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            if (at(p, n, '/') && at(p + 1, n, '/')) {
+                p += 2;
+                int q = scan(p, n, "", "/?#");
+                if (q > p) {
+                    p = parseAuthority(p, q);
+                } else if (q < n) {
+                    // DEVIATION: Allow empty authority prior to non-empty
+                    // path, query component or fragment identifier
+                } else
+                    failExpecting("authority", p);
+            }
+            int q = scan(p, n, "", "?#"); // DEVIATION: May be empty
+            checkChars(p, q, L_PATH, H_PATH, "path");
+            path = substring(p, q);
+            p = q;
+            if (at(p, n, '?')) {
+                p++;
+                q = scan(p, n, "", "#");
+                checkChars(p, q, L_URIC, H_URIC, "query");
+                query = substring(p, q);
+                p = q;
+            }
+            return p;
+        }
+
+        // authority     = server | reg_name
+        //
+        // Ambiguity: An authority that is a registry name rather than a server
+        // might have a prefix that parses as a server.  We use the fact that
+        // the authority component is always followed by '/' or the end of the
+        // input string to resolve this: If the complete authority did not
+        // parse as a server then we try to parse it as a registry name.
+        //
+        private int parseAuthority(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q = p;
+            URISyntaxException ex = null;
+
+            boolean serverChars;
+            boolean regChars;
+
+            if (scan(p, n, "", "]") > p) {
+                // contains a literal IPv6 address, therefore % is allowed
+                serverChars = (scan(p, n, L_SERVER_PERCENT, H_SERVER_PERCENT) == n);
+            } else {
+                serverChars = (scan(p, n, L_SERVER, H_SERVER) == n);
+            }
+            regChars = (scan(p, n, L_REG_NAME, H_REG_NAME) == n);
+
+            if (regChars && !serverChars) {
+                // Must be a registry-based authority
+                authority = substring(p, n);
+                return n;
             }
 
-	    if (p > start && p < n) {
-	        // IPv4 address is followed by something - check that
-		// it's a ":" as this is the only valid character to
-		// follow an address.
-		if (charAt(p) != ':') {
-		    p = -1;
-		}
-	    }
+            if (serverChars) {
+                // Might be (probably is) a server-based authority, so attempt
+                // to parse it as such.  If the attempt fails, try to treat it
+                // as a registry-based authority.
+                try {
+                    q = parseServer(p, n);
+                    if (q < n)
+                        failExpecting("end of authority", q);
+                    authority = substring(p, n);
+                } catch (URISyntaxException x) {
+                    // Undo results of failed parse
+                    userInfo = null;
+                    host = null;
+                    port = -1;
+                    if (requireServerAuthority) {
+                        // If we're insisting upon a server-based authority,
+                        // then just re-throw the exception
+                        throw x;
+                    } else {
+                        // Save the exception in case it doesn't parse as a
+                        // registry either
+                        ex = x;
+                        q = p;
+                    }
+                }
+            }
 
-	    if (p > start)
-		host = substring(start, p);
+            if (q < n) {
+                if (regChars) {
+                    // Registry-based authority
+                    authority = substring(p, n);
+                } else if (ex != null) {
+                    // Re-throw exception; it was probably due to
+                    // a malformed IPv6 address
+                    throw ex;
+                } else {
+                    fail("Illegal character in authority", q);
+                }
+            }
 
-	    return p;
-	}
+            return n;
+        }
 
-	// hostname      = domainlabel [ "." ] | 1*( domainlabel "." ) toplabel [ "." ] 
-	// domainlabel   = alphanum | alphanum *( alphanum | "-" ) alphanum
+
+        // [<userinfo>@]<host>[:<port>]
+        //
+        private int parseServer(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
+
+            // userinfo
+            q = scan(p, n, "/?#", "@");
+            if ((q >= p) && at(q, n, '@')) {
+                checkChars(p, q, L_USERINFO, H_USERINFO, "user info");
+                userInfo = substring(p, q);
+                p = q + 1;              // Skip '@'
+            }
+
+            // hostname, IPv4 address, or IPv6 address
+            if (at(p, n, '[')) {
+                // DEVIATION from RFC2396: Support IPv6 addresses, per RFC2732
+                p++;
+                q = scan(p, n, "/?#", "]");
+                if ((q > p) && at(q, n, ']')) {
+                    // look for a "%" scope id
+                    int r = scan (p, q, "", "%");
+                    if (r > p) {
+                        parseIPv6Reference(p, r);
+                        if (r+1 == q) {
+                            fail ("scope id expected");
+                        }
+                        checkChars (r+1, q, L_ALPHANUM, H_ALPHANUM,
+                                                "scope id");
+                    } else {
+                        parseIPv6Reference(p, q);
+                    }
+                    host = substring(p-1, q+1);
+                    p = q + 1;
+                } else {
+                    failExpecting("closing bracket for IPv6 address", q);
+                }
+            } else {
+                q = parseIPv4Address(p, n);
+                if (q <= p)
+                    q = parseHostname(p, n);
+                p = q;
+            }
+
+            // port
+            if (at(p, n, ':')) {
+                p++;
+                q = scan(p, n, "", "/");
+                if (q > p) {
+                    checkChars(p, q, L_DIGIT, H_DIGIT, "port number");
+                    try {
+                        port = Integer.parseInt(substring(p, q));
+                    } catch (NumberFormatException x) {
+                        fail("Malformed port number", p);
+                    }
+                    p = q;
+                }
+            }
+            if (p < n)
+                failExpecting("port number", p);
+
+            return p;
+        }
+
+        // Scan a string of decimal digits whose value fits in a byte
+        //
+        private int scanByte(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q = scan(p, n, L_DIGIT, H_DIGIT);
+            if (q <= p) return q;
+            if (Integer.parseInt(substring(p, q)) > 255) return p;
+            return q;
+        }
+
+        // Scan an IPv4 address.
+        //
+        // If the strict argument is true then we require that the given
+        // interval contain nothing besides an IPv4 address; if it is false
+        // then we only require that it start with an IPv4 address.
+        //
+        // If the interval does not contain or start with (depending upon the
+        // strict argument) a legal IPv4 address characters then we return -1
+        // immediately; otherwise we insist that these characters parse as a
+        // legal IPv4 address and throw an exception on failure.
+        //
+        // We assume that any string of decimal digits and dots must be an IPv4
+        // address.  It won't parse as a hostname anyway, so making that
+        // assumption here allows more meaningful exceptions to be thrown.
+        //
+        private int scanIPv4Address(int start, int n, boolean strict)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
+            int m = scan(p, n, L_DIGIT | L_DOT, H_DIGIT | H_DOT);
+            if ((m <= p) || (strict && (m != n)))
+                return -1;
+            for (;;) {
+                // Per RFC2732: At most three digits per byte
+                // Further constraint: Each element fits in a byte
+                if ((q = scanByte(p, m)) <= p) break;   p = q;
+                if ((q = scan(p, m, '.')) <= p) break;  p = q;
+                if ((q = scanByte(p, m)) <= p) break;   p = q;
+                if ((q = scan(p, m, '.')) <= p) break;  p = q;
+                if ((q = scanByte(p, m)) <= p) break;   p = q;
+                if ((q = scan(p, m, '.')) <= p) break;  p = q;
+                if ((q = scanByte(p, m)) <= p) break;   p = q;
+                if (q < m) break;
+                return q;
+            }
+            fail("Malformed IPv4 address", q);
+            return -1;
+        }
+
+        // Take an IPv4 address: Throw an exception if the given interval
+        // contains anything except an IPv4 address
+        //
+        private int takeIPv4Address(int start, int n, String expected)
+            throws URISyntaxException
+        {
+            int p = scanIPv4Address(start, n, true);
+            if (p <= start)
+                failExpecting(expected, start);
+            return p;
+        }
+
+        // Attempt to parse an IPv4 address, returning -1 on failure but
+        // allowing the given interval to contain [:<characters>] after
+        // the IPv4 address.
+        //
+        private int parseIPv4Address(int start, int n) {
+            int p;
+
+            try {
+                p = scanIPv4Address(start, n, false);
+            } catch (URISyntaxException x) {
+                return -1;
+            } catch (NumberFormatException nfe) {
+                return -1;
+            }
+
+            if (p > start && p < n) {
+                // IPv4 address is followed by something - check that
+                // it's a ":" as this is the only valid character to
+                // follow an address.
+                if (charAt(p) != ':') {
+                    p = -1;
+                }
+            }
+
+            if (p > start)
+                host = substring(start, p);
+
+            return p;
+        }
+
+        // hostname      = domainlabel [ "." ] | 1*( domainlabel "." ) toplabel [ "." ]
+        // domainlabel   = alphanum | alphanum *( alphanum | "-" ) alphanum
         // toplabel      = alpha | alpha *( alphanum | "-" ) alphanum
-	//
-	private int parseHostname(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
-	    int l = -1;			// Start of last parsed label
+        //
+        private int parseHostname(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
+            int l = -1;                 // Start of last parsed label
 
-	    do {
-		// domainlabel = alphanum [ *( alphanum | "-" ) alphanum ]
-		q = scan(p, n, L_ALPHANUM, H_ALPHANUM);
-		if (q <= p)
-		    break;
-		l = p;
-		if (q > p) {
-		    p = q;
-		    q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
-		    if (q > p) {
-			if (charAt(q - 1) == '-')
-			    fail("Illegal character in hostname", q - 1);
-			p = q;
-		    }
-		}
-		q = scan(p, n, '.');
-		if (q <= p)
-		    break;
-		p = q;
-	    } while (p < n);
+            do {
+                // domainlabel = alphanum [ *( alphanum | "-" ) alphanum ]
+                q = scan(p, n, L_ALPHANUM, H_ALPHANUM);
+                if (q <= p)
+                    break;
+                l = p;
+                if (q > p) {
+                    p = q;
+                    q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
+                    if (q > p) {
+                        if (charAt(q - 1) == '-')
+                            fail("Illegal character in hostname", q - 1);
+                        p = q;
+                    }
+                }
+                q = scan(p, n, '.');
+                if (q <= p)
+                    break;
+                p = q;
+            } while (p < n);
 
-	    if ((p < n) && !at(p, n, ':'))
-		fail("Illegal character in hostname", p);
+            if ((p < n) && !at(p, n, ':'))
+                fail("Illegal character in hostname", p);
 
-	    if (l < 0)
-		failExpecting("hostname", start);
+            if (l < 0)
+                failExpecting("hostname", start);
 
-	    // for a fully qualified hostname check that the rightmost
-	    // label starts with an alpha character.
-	    if (l > start && !match(charAt(l), L_ALPHA, H_ALPHA)) {
-		fail("Illegal character in hostname", l);
-	    }
+            // for a fully qualified hostname check that the rightmost
+            // label starts with an alpha character.
+            if (l > start && !match(charAt(l), L_ALPHA, H_ALPHA)) {
+                fail("Illegal character in hostname", l);
+            }
 
-	    host = substring(start, p);
-	    return p;
-	}
+            host = substring(start, p);
+            return p;
+        }
 
 
-	// IPv6 address parsing, from RFC2373: IPv6 Addressing Architecture
-	//
-	// Bug: The grammar in RFC2373 Appendix B does not allow addresses of
-	// the form ::12.34.56.78, which are clearly shown in the examples
-	// earlier in the document.  Here is the original grammar:
-	//
-	//   IPv6address = hexpart [ ":" IPv4address ]
-	//   hexpart     = hexseq | hexseq "::" [ hexseq ] | "::" [ hexseq ]
-	//   hexseq      = hex4 *( ":" hex4)
-	//   hex4        = 1*4HEXDIG
-	//
-	// We therefore use the following revised grammar:
-	//
-	//   IPv6address = hexseq [ ":" IPv4address ]
-	//                 | hexseq [ "::" [ hexpost ] ]
-	//                 | "::" [ hexpost ]
-	//   hexpost     = hexseq | hexseq ":" IPv4address | IPv4address
-	//   hexseq      = hex4 *( ":" hex4)
-	//   hex4        = 1*4HEXDIG
-	//
-	// This covers all and only the following cases:
-	//
-	//   hexseq
-	//   hexseq : IPv4address
-	//   hexseq ::
-	//   hexseq :: hexseq
-	//   hexseq :: hexseq : IPv4address
-	//   hexseq :: IPv4address
-	//   :: hexseq
-	//   :: hexseq : IPv4address
-	//   :: IPv4address
-	//   ::
-	//
-	// Additionally we constrain the IPv6 address as follows :-
-	//
-	//  i.  IPv6 addresses without compressed zeros should contain
-	//      exactly 16 bytes.
-	//
-	//  ii. IPv6 addresses with compressed zeros should contain
-	//      less than 16 bytes.
+        // IPv6 address parsing, from RFC2373: IPv6 Addressing Architecture
+        //
+        // Bug: The grammar in RFC2373 Appendix B does not allow addresses of
+        // the form ::12.34.56.78, which are clearly shown in the examples
+        // earlier in the document.  Here is the original grammar:
+        //
+        //   IPv6address = hexpart [ ":" IPv4address ]
+        //   hexpart     = hexseq | hexseq "::" [ hexseq ] | "::" [ hexseq ]
+        //   hexseq      = hex4 *( ":" hex4)
+        //   hex4        = 1*4HEXDIG
+        //
+        // We therefore use the following revised grammar:
+        //
+        //   IPv6address = hexseq [ ":" IPv4address ]
+        //                 | hexseq [ "::" [ hexpost ] ]
+        //                 | "::" [ hexpost ]
+        //   hexpost     = hexseq | hexseq ":" IPv4address | IPv4address
+        //   hexseq      = hex4 *( ":" hex4)
+        //   hex4        = 1*4HEXDIG
+        //
+        // This covers all and only the following cases:
+        //
+        //   hexseq
+        //   hexseq : IPv4address
+        //   hexseq ::
+        //   hexseq :: hexseq
+        //   hexseq :: hexseq : IPv4address
+        //   hexseq :: IPv4address
+        //   :: hexseq
+        //   :: hexseq : IPv4address
+        //   :: IPv4address
+        //   ::
+        //
+        // Additionally we constrain the IPv6 address as follows :-
+        //
+        //  i.  IPv6 addresses without compressed zeros should contain
+        //      exactly 16 bytes.
+        //
+        //  ii. IPv6 addresses with compressed zeros should contain
+        //      less than 16 bytes.
 
-	private int ipv6byteCount = 0;
+        private int ipv6byteCount = 0;
 
-	private int parseIPv6Reference(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
-	    boolean compressedZeros = false;
+        private int parseIPv6Reference(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
+            boolean compressedZeros = false;
 
-	    q = scanHexSeq(p, n);
+            q = scanHexSeq(p, n);
 
-	    if (q > p) {
-		p = q;
-		if (at(p, n, "::")) {
-		    compressedZeros = true;
-		    p = scanHexPost(p + 2, n);
-		} else if (at(p, n, ':')) {
-		    p = takeIPv4Address(p + 1,  n, "IPv4 address");
-		    ipv6byteCount += 4;
-		}
-	    } else if (at(p, n, "::")) {
-		compressedZeros = true;
-		p = scanHexPost(p + 2, n);
-	    }
-	    if (p < n)
-		fail("Malformed IPv6 address", start);
-	    if (ipv6byteCount > 16)
-		fail("IPv6 address too long", start);
-	    if (!compressedZeros && ipv6byteCount < 16) 
-		fail("IPv6 address too short", start);
-	    if (compressedZeros && ipv6byteCount == 16)
-		fail("Malformed IPv6 address", start);
+            if (q > p) {
+                p = q;
+                if (at(p, n, "::")) {
+                    compressedZeros = true;
+                    p = scanHexPost(p + 2, n);
+                } else if (at(p, n, ':')) {
+                    p = takeIPv4Address(p + 1,  n, "IPv4 address");
+                    ipv6byteCount += 4;
+                }
+            } else if (at(p, n, "::")) {
+                compressedZeros = true;
+                p = scanHexPost(p + 2, n);
+            }
+            if (p < n)
+                fail("Malformed IPv6 address", start);
+            if (ipv6byteCount > 16)
+                fail("IPv6 address too long", start);
+            if (!compressedZeros && ipv6byteCount < 16)
+                fail("IPv6 address too short", start);
+            if (compressedZeros && ipv6byteCount == 16)
+                fail("Malformed IPv6 address", start);
 
-	    return p;
-	}
+            return p;
+        }
 
-	private int scanHexPost(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
+        private int scanHexPost(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
 
-	    if (p == n)
-		return p;
+            if (p == n)
+                return p;
 
-	    q = scanHexSeq(p, n);
-	    if (q > p) {
-		p = q;
-		if (at(p, n, ':')) {
-		    p++;
-		    p = takeIPv4Address(p, n, "hex digits or IPv4 address");
-		    ipv6byteCount += 4;
-		}
-	    } else {
-		p = takeIPv4Address(p, n, "hex digits or IPv4 address");
-		ipv6byteCount += 4;
-	    }
-	    return p;
-	}
+            q = scanHexSeq(p, n);
+            if (q > p) {
+                p = q;
+                if (at(p, n, ':')) {
+                    p++;
+                    p = takeIPv4Address(p, n, "hex digits or IPv4 address");
+                    ipv6byteCount += 4;
+                }
+            } else {
+                p = takeIPv4Address(p, n, "hex digits or IPv4 address");
+                ipv6byteCount += 4;
+            }
+            return p;
+        }
 
-	// Scan a hex sequence; return -1 if one could not be scanned
-	//
-	private int scanHexSeq(int start, int n)
-	    throws URISyntaxException
-	{
-	    int p = start;
-	    int q;
+        // Scan a hex sequence; return -1 if one could not be scanned
+        //
+        private int scanHexSeq(int start, int n)
+            throws URISyntaxException
+        {
+            int p = start;
+            int q;
 
-	    q = scan(p, n, L_HEX, H_HEX);
-	    if (q <= p)
-		return -1;
-	    if (at(q, n, '.'))		// Beginning of IPv4 address
-		return -1;
-	    if (q > p + 4)
+            q = scan(p, n, L_HEX, H_HEX);
+            if (q <= p)
+                return -1;
+            if (at(q, n, '.'))          // Beginning of IPv4 address
+                return -1;
+            if (q > p + 4)
                 fail("IPv6 hexadecimal digit sequence too long", p);
-	    ipv6byteCount += 2;
-	    p = q;
-	    while (p < n) {
-		if (!at(p, n, ':'))
-		    break;
-		if (at(p + 1, n, ':'))
-		    break;		// "::"
-		p++;
-		q = scan(p, n, L_HEX, H_HEX);
-		if (q <= p)
-		    failExpecting("digits for an IPv6 address", p);
-		if (at(q, n, '.')) {	// Beginning of IPv4 address
-		    p--;
-		    break;
-		}
-		if (q > p + 4)
-		    fail("IPv6 hexadecimal digit sequence too long", p);
-		ipv6byteCount += 2;
-		p = q;
-	    }
+            ipv6byteCount += 2;
+            p = q;
+            while (p < n) {
+                if (!at(p, n, ':'))
+                    break;
+                if (at(p + 1, n, ':'))
+                    break;              // "::"
+                p++;
+                q = scan(p, n, L_HEX, H_HEX);
+                if (q <= p)
+                    failExpecting("digits for an IPv6 address", p);
+                if (at(q, n, '.')) {    // Beginning of IPv4 address
+                    p--;
+                    break;
+                }
+                if (q > p + 4)
+                    fail("IPv6 hexadecimal digit sequence too long", p);
+                ipv6byteCount += 2;
+                p = q;
+            }
 
-	    return p;
-	}
+            return p;
+        }
 
     }
 

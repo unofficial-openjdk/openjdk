@@ -101,7 +101,7 @@ public interface StackFrame extends Mirror, Locatable
      * no longer valid.
      */
     ObjectReference thisObject();
-    
+
     /**
      * Returns a list containing each {@link LocalVariable}
      * that can be accessed from this frame's location.
@@ -237,4 +237,3 @@ public interface StackFrame extends Mirror, Locatable
     List<Value> getArgumentValues();
 
 }
-

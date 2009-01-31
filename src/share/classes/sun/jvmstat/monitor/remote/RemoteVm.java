@@ -33,7 +33,6 @@ import java.rmi.RemoteException;
  * Java Virtual Machine running on a remote host.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public interface RemoteVm extends Remote {

@@ -26,7 +26,6 @@
 #ifndef __MLIB_V_IMAGECONSTLOGIC_H
 #define __MLIB_V_IMAGECONSTLOGIC_H
 
-#pragma ident	"@(#)mlib_v_ImageConstLogic.h	1.11	03/01/31 SMI"
 
 #if defined ( VIS )
 #if VIS >= 0x200

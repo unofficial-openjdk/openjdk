@@ -45,7 +45,7 @@ static jfieldID pr_no_proxyID;
 static jfieldID ptype_httpID;
 static jfieldID ptype_socksID;
 
-#define CHECK_NULL(X) { if ((X) == NULL) fprintf (stderr,"JNI errror at line %d\n", __LINE__); } 
+#define CHECK_NULL(X) { if ((X) == NULL) fprintf (stderr,"JNI errror at line %d\n", __LINE__); }
 
 
 /*
@@ -53,7 +53,7 @@ static jfieldID ptype_socksID;
  * Method:    init
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_sun_net_spi_DefaultProxySelector_init(JNIEnv *env, jclass clazz) {
   HKEY hKey;
   LONG ret;
@@ -77,9 +77,9 @@ Java_sun_net_spi_DefaultProxySelector_init(JNIEnv *env, jclass clazz) {
   /**
    * Let's see if we can find the proper Registry entry.
    */
-  ret = RegOpenKeyEx(HKEY_CURRENT_USER, 
-		     "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-		     0, KEY_READ, (PHKEY)&hKey);
+  ret = RegOpenKeyEx(HKEY_CURRENT_USER,
+                     "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                     0, KEY_READ, (PHKEY)&hKey);
   if (ret == ERROR_SUCCESS) {
     RegCloseKey(hKey);
     /**
@@ -98,11 +98,11 @@ Java_sun_net_spi_DefaultProxySelector_init(JNIEnv *env, jclass clazz) {
  * Method:    getSystemProxy
  * Signature: ([Ljava/lang/String;Ljava/lang/String;)Ljava/net/Proxy;
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 Java_sun_net_spi_DefaultProxySelector_getSystemProxy(JNIEnv *env,
-						     jobject this,
-						     jstring proto,
-						     jstring host)
+                                                     jobject this,
+                                                     jstring proto,
+                                                     jstring host)
 {
   jobject isa = NULL;
   jobject proxy = NULL;
@@ -126,15 +126,15 @@ Java_sun_net_spi_DefaultProxySelector_getSystemProxy(JNIEnv *env,
    *
    * - ProxyEnable: 0 means no proxy, 1 means use the proxy
    * - ProxyServer: a string that can take 2 forms:
-   *	"server[:port]"
-   *	or
-   *	"protocol1=server[:port][;protocol2=server[:port]]..."
+   *    "server[:port]"
+   *    or
+   *    "protocol1=server[:port][;protocol2=server[:port]]..."
    * - ProxyOverride: a string containing a list of prefixes for hostnames.
    *   e.g.: hoth;localhost;<local>
    */
-  ret = RegOpenKeyEx(HKEY_CURRENT_USER, 
-		     "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-		     0, KEY_READ, (PHKEY)&hKey);
+  ret = RegOpenKeyEx(HKEY_CURRENT_USER,
+                     "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                     0, KEY_READ, (PHKEY)&hKey);
   if (ret == ERROR_SUCCESS) {
     DWORD dwLen;
     DWORD dwProxyEnabled;
@@ -145,7 +145,7 @@ Java_sun_net_spi_DefaultProxySelector_getSystemProxy(JNIEnv *env,
      * Let's see if the proxy settings are to be used.
      */
     ret = RegQueryValueEx(hKey, "ProxyEnable",  NULL, &ulType,
-			  (LPBYTE)&dwProxyEnabled, &dwLen);
+                          (LPBYTE)&dwProxyEnabled, &dwLen);
     if ((ret == ERROR_SUCCESS) && (dwProxyEnabled > 0)) {
       /*
        * Yes, ProxyEnable == 1
@@ -153,102 +153,102 @@ Java_sun_net_spi_DefaultProxySelector_getSystemProxy(JNIEnv *env,
       dwLen = sizeof(override);
       override[0] = 0;
       ret = RegQueryValueEx(hKey, "ProxyOverride", NULL, &ulType,
-			    (LPBYTE)&override, &dwLen);
+                            (LPBYTE)&override, &dwLen);
       dwLen = sizeof(regserver);
       regserver[0] = 0;
       ret = RegQueryValueEx(hKey, "ProxyServer",  NULL, &ulType,
-			    (LPBYTE)&regserver, &dwLen);
+                            (LPBYTE)&regserver, &dwLen);
       RegCloseKey(hKey);
       if (ret == ERROR_SUCCESS) {
-	if (strlen(override) > 0) {
-	  /**
-	   * we did get ProxyServer and may have an override.
-	   * So let's check the override list first, by walking down the list
-	   * The semicolons (;) separated entries have to be matched with the
-	   * the beginning of the hostname.
-	   */
-	  s = strtok(override, "; ");
-	  urlhost = (*env)->GetStringUTFChars(env, host, &isCopy);
-	  while (s != NULL) {
-	    if (strncmp(s, urlhost, strlen(s)) == 0) {
-	      /**
-	       * the URL host name matches with one of the prefixes,
-	       * therefore we have to use a direct connection.
-	       */
-	      if (isCopy == JNI_TRUE)
-		(*env)->ReleaseStringUTFChars(env, host, urlhost);
-	      goto noproxy;
-	    }
-	    s = strtok(NULL, "; ");
-	  }
-	  if (isCopy == JNI_TRUE)
-	    (*env)->ReleaseStringUTFChars(env, host, urlhost);
-	}
+        if (strlen(override) > 0) {
+          /**
+           * we did get ProxyServer and may have an override.
+           * So let's check the override list first, by walking down the list
+           * The semicolons (;) separated entries have to be matched with the
+           * the beginning of the hostname.
+           */
+          s = strtok(override, "; ");
+          urlhost = (*env)->GetStringUTFChars(env, host, &isCopy);
+          while (s != NULL) {
+            if (strncmp(s, urlhost, strlen(s)) == 0) {
+              /**
+               * the URL host name matches with one of the prefixes,
+               * therefore we have to use a direct connection.
+               */
+              if (isCopy == JNI_TRUE)
+                (*env)->ReleaseStringUTFChars(env, host, urlhost);
+              goto noproxy;
+            }
+            s = strtok(NULL, "; ");
+          }
+          if (isCopy == JNI_TRUE)
+            (*env)->ReleaseStringUTFChars(env, host, urlhost);
+        }
 
-	cproto = (*env)->GetStringUTFChars(env, proto, &isCopy);
-	if (cproto == NULL)
-	  goto noproxy;
+        cproto = (*env)->GetStringUTFChars(env, proto, &isCopy);
+        if (cproto == NULL)
+          goto noproxy;
 
-	/*
-	 * Set default port value & proxy type from protocol.
-	 */
-	if ((strcmp(cproto, "http") == 0) ||
-	    (strcmp(cproto, "ftp") == 0) ||
-	    (strcmp(cproto, "gopher") == 0))
-	  defport = 80;
-	if (strcmp(cproto, "https") == 0)
-	  defport = 443;
-	if (strcmp(cproto, "socks") == 0) {
-	  defport = 1080;
-	  type_proxy = (*env)->GetStaticObjectField(env, ptype_class, ptype_socksID);
-	} else {
-	  type_proxy = (*env)->GetStaticObjectField(env, ptype_class, ptype_httpID);
-	}
+        /*
+         * Set default port value & proxy type from protocol.
+         */
+        if ((strcmp(cproto, "http") == 0) ||
+            (strcmp(cproto, "ftp") == 0) ||
+            (strcmp(cproto, "gopher") == 0))
+          defport = 80;
+        if (strcmp(cproto, "https") == 0)
+          defport = 443;
+        if (strcmp(cproto, "socks") == 0) {
+          defport = 1080;
+          type_proxy = (*env)->GetStaticObjectField(env, ptype_class, ptype_socksID);
+        } else {
+          type_proxy = (*env)->GetStaticObjectField(env, ptype_class, ptype_httpID);
+        }
 
-	sprintf(pproto,"%s=", cproto);
-	if (isCopy == JNI_TRUE)
-	  (*env)->ReleaseStringUTFChars(env, proto, cproto);
-	/**
-	 * Let's check the protocol specific form first.
-	 */
-	if ((s = strstr(regserver, pproto)) != NULL) {
-	  s += strlen(pproto);
-	} else {
-	  /**
-	   * If we couldn't find *this* protocol but the string is in the
-	   * protocol specific format, then don't use proxy
-	   */
-	  if (strchr(regserver, '=') != NULL)
-	    goto noproxy;
-	  s = regserver;
-	}
-	s2 = strchr(s, ';');
-	if (s2 != NULL)
-	  *s2 = 0;
+        sprintf(pproto,"%s=", cproto);
+        if (isCopy == JNI_TRUE)
+          (*env)->ReleaseStringUTFChars(env, proto, cproto);
+        /**
+         * Let's check the protocol specific form first.
+         */
+        if ((s = strstr(regserver, pproto)) != NULL) {
+          s += strlen(pproto);
+        } else {
+          /**
+           * If we couldn't find *this* protocol but the string is in the
+           * protocol specific format, then don't use proxy
+           */
+          if (strchr(regserver, '=') != NULL)
+            goto noproxy;
+          s = regserver;
+        }
+        s2 = strchr(s, ';');
+        if (s2 != NULL)
+          *s2 = 0;
 
-	/**
-	 * Is there a port specified?
-	 */
-	s2 = strchr(s, ':');
-	if (s2 != NULL) {
-	  *s2 = 0;
-	  s2++;
-	  sscanf(s2, "%d", &pport);
-	}
-	phost = s;
+        /**
+         * Is there a port specified?
+         */
+        s2 = strchr(s, ':');
+        if (s2 != NULL) {
+          *s2 = 0;
+          s2++;
+          sscanf(s2, "%d", &pport);
+        }
+        phost = s;
 
-	if (phost != NULL) {
-	  /**
-	   * Let's create the appropriate Proxy object then.
-	   */
-	  jstring jhost;
-	  if (pport == 0)
-	    pport = defport;
-	  jhost = (*env)->NewStringUTF(env, phost);
-	  isa = (*env)->CallStaticObjectMethod(env, isaddr_class, isaddr_createUnresolvedID, jhost, pport);
-	  proxy = (*env)->NewObject(env, proxy_class, proxy_ctrID, type_proxy, isa);
-	  return proxy;
-	}
+        if (phost != NULL) {
+          /**
+           * Let's create the appropriate Proxy object then.
+           */
+          jstring jhost;
+          if (pport == 0)
+            pport = defport;
+          jhost = (*env)->NewStringUTF(env, phost);
+          isa = (*env)->CallStaticObjectMethod(env, isaddr_class, isaddr_createUnresolvedID, jhost, pport);
+          proxy = (*env)->NewObject(env, proxy_class, proxy_ctrID, type_proxy, isa);
+          return proxy;
+        }
       }
     }
   }

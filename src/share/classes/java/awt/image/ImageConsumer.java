@@ -35,8 +35,7 @@ import java.util.Hashtable;
  *
  * @see ImageProducer
  *
- * @version	%I% %G%
- * @author 	Jim Graham
+ * @author      Jim Graham
  */
 public interface ImageConsumer {
     /**
@@ -67,7 +66,7 @@ public interface ImageConsumer {
      * pixels can be sent on untouched, using the original ColorModel,
      * or whether the pixels should be modified (filtered) and passed
      * on using a ColorModel more convenient for the filtering process.
-     * @param model the specified <code>ColorModel</code> 
+     * @param model the specified <code>ColorModel</code>
      * @see ColorModel
      */
     void setColorModel(ColorModel model);
@@ -144,9 +143,9 @@ public interface ImageConsumer {
      * and alpha components.  Pixel (m,n) is stored in the pixels array
      * at index (n * scansize + m + off).  The pixels delivered using
      * this method are all stored as bytes.
-     * @param x the X coordinate of the upper-left corner of the 
+     * @param x the X coordinate of the upper-left corner of the
      *        area of pixels to be set
-     * @param y the Y coordinate of the upper-left corner of the 
+     * @param y the Y coordinate of the upper-left corner of the
      *        area of pixels to be set
      * @param w the width of the area of pixels
      * @param h the height of the area of pixels
@@ -158,7 +157,7 @@ public interface ImageConsumer {
      * @see ColorModel
      */
     void setPixels(int x, int y, int w, int h,
-		   ColorModel model, byte pixels[], int off, int scansize);
+                   ColorModel model, byte pixels[], int off, int scansize);
 
     /**
      * The pixels of the image are delivered using one or more calls
@@ -170,9 +169,9 @@ public interface ImageConsumer {
      * at index (n * scansize + m + off).  The pixels delivered using
      * this method are all stored as ints.
      * this method are all stored as ints.
-     * @param x the X coordinate of the upper-left corner of the 
+     * @param x the X coordinate of the upper-left corner of the
      *        area of pixels to be set
-     * @param y the Y coordinate of the upper-left corner of the 
+     * @param y the Y coordinate of the upper-left corner of the
      *        area of pixels to be set
      * @param w the width of the area of pixels
      * @param h the height of the area of pixels
@@ -184,7 +183,7 @@ public interface ImageConsumer {
      * @see ColorModel
      */
     void setPixels(int x, int y, int w, int h,
-		   ColorModel model, int pixels[], int off, int scansize);
+                   ColorModel model, int pixels[], int off, int scansize);
 
     /**
      * The imageComplete method is called when the ImageProducer is

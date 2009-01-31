@@ -54,14 +54,14 @@ public class DHPrivateKeySpec implements java.security.spec.KeySpec {
     /**
      * Constructor that takes a private value <code>x</code>, a prime
      * modulus <code>p</code>, and a base generator <code>g</code>.
-     * @param x private value x 
+     * @param x private value x
      * @param p prime modulus p
      * @param g base generator g
      */
     public DHPrivateKeySpec(BigInteger x, BigInteger p, BigInteger g) {
-	this.x = x;
-	this.p = p;
-	this.g = g;
+        this.x = x;
+        this.p = p;
+        this.g = g;
     }
 
     /**
@@ -70,7 +70,7 @@ public class DHPrivateKeySpec implements java.security.spec.KeySpec {
      * @return the private value <code>x</code>
      */
     public BigInteger getX() {
-	return this.x;
+        return this.x;
     }
 
     /**
@@ -79,7 +79,7 @@ public class DHPrivateKeySpec implements java.security.spec.KeySpec {
      * @return the prime modulus <code>p</code>
      */
     public BigInteger getP() {
-	return this.p;
+        return this.p;
     }
 
     /**
@@ -88,6 +88,6 @@ public class DHPrivateKeySpec implements java.security.spec.KeySpec {
      * @return the base generator <code>g</code>
      */
     public BigInteger getG() {
-	return this.g;
+        return this.g;
     }
 }

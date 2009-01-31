@@ -95,7 +95,6 @@ import sun.awt.CausedFocusEvent;
  * for more information.
  *
  * @author David Mendenhall
- * @version %I%, %G% 
  *
  * @see Window
  * @see Frame
@@ -106,7 +105,7 @@ import sun.awt.CausedFocusEvent;
  * @since 1.4
  */
 public abstract class KeyboardFocusManager
-    implements KeyEventDispatcher, KeyEventPostProcessor 
+    implements KeyEventDispatcher, KeyEventPostProcessor
 {
 
     // Shared focus engine logger
@@ -179,11 +178,11 @@ public abstract class KeyboardFocusManager
      * @see #setCurrentKeyboardFocusManager
      */
     public static KeyboardFocusManager getCurrentKeyboardFocusManager() {
-	return getCurrentKeyboardFocusManager(AppContext.getAppContext());
+        return getCurrentKeyboardFocusManager(AppContext.getAppContext());
     }
 
     synchronized static KeyboardFocusManager
-	getCurrentKeyboardFocusManager(AppContext appcontext)
+        getCurrentKeyboardFocusManager(AppContext appcontext)
     {
         KeyboardFocusManager manager = (KeyboardFocusManager)
             appcontext.get(KeyboardFocusManager.class);
@@ -240,13 +239,13 @@ public abstract class KeyboardFocusManager
         }
 
         if (oldManager != null) {
-            oldManager.firePropertyChange("managingFocus", 
-                                          Boolean.TRUE, 
+            oldManager.firePropertyChange("managingFocus",
+                                          Boolean.TRUE,
                                           Boolean.FALSE);
         }
         if (newManager != null) {
-            newManager.firePropertyChange("managingFocus", 
-                                          Boolean.FALSE, 
+            newManager.firePropertyChange("managingFocus",
+                                          Boolean.FALSE,
                                           Boolean.TRUE);
         }
     }
@@ -308,7 +307,7 @@ public abstract class KeyboardFocusManager
         },
         {
             AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK, false),
-            AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_TAB, 
+            AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_TAB,
                                          InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.CTRL_MASK,
                                          false),
         },
@@ -353,10 +352,10 @@ public abstract class KeyboardFocusManager
     private java.util.LinkedList keyEventDispatchers;
 
     /**
-     * This KeyboardFocusManager's KeyEventPostProcessor chain. The List does 
-     * not include this KeyboardFocusManager unless it was explicitly 
-     * re-registered via a call to <code>addKeyEventPostProcessor</code>. 
-     * If no other KeyEventPostProcessors are registered, this field may be 
+     * This KeyboardFocusManager's KeyEventPostProcessor chain. The List does
+     * not include this KeyboardFocusManager unless it was explicitly
+     * re-registered via a call to <code>addKeyEventPostProcessor</code>.
+     * If no other KeyEventPostProcessors are registered, this field may be
      * null or refer to a List of length 0.
      */
     private java.util.LinkedList keyEventPostProcessors;
@@ -396,13 +395,13 @@ public abstract class KeyboardFocusManager
     }
 
     static Set initFocusTraversalKeysSet(String value, Set targetSet) {
-	StringTokenizer tokens = new StringTokenizer(value, ",");
-	while (tokens.hasMoreTokens()) {
-	    targetSet.add(AWTKeyStroke.getAWTKeyStroke(tokens.nextToken()));
-	}
-	return (targetSet.isEmpty())
-	    ? Collections.EMPTY_SET
-	    : Collections.unmodifiableSet(targetSet);
+        StringTokenizer tokens = new StringTokenizer(value, ",");
+        while (tokens.hasMoreTokens()) {
+            targetSet.add(AWTKeyStroke.getAWTKeyStroke(tokens.nextToken()));
+        }
+        return (targetSet.isEmpty())
+            ? Collections.EMPTY_SET
+            : Collections.unmodifiableSet(targetSet);
     }
 
     /**
@@ -425,8 +424,8 @@ public abstract class KeyboardFocusManager
         if (Toolkit.getDefaultToolkit() instanceof HeadlessToolkit){
             peer = ((HeadlessToolkit)Toolkit.getDefaultToolkit()).createKeyboardFocusManagerPeer(this);
         }
-        if (Toolkit.getDefaultToolkit() instanceof SunToolkit){        
-            peer = ((SunToolkit)Toolkit.getDefaultToolkit()).createKeyboardFocusManagerPeer(this);                  
+        if (Toolkit.getDefaultToolkit() instanceof SunToolkit){
+            peer = ((SunToolkit)Toolkit.getDefaultToolkit()).createKeyboardFocusManagerPeer(this);
         }
     }
 
@@ -446,14 +445,14 @@ public abstract class KeyboardFocusManager
      */
     public Component getFocusOwner() {
         synchronized (KeyboardFocusManager.class) {
-	    if (focusOwner == null) {
-	        return null;
-	    }
+            if (focusOwner == null) {
+                return null;
+            }
 
-	    return (focusOwner.appContext == AppContext.getAppContext())
-	        ? focusOwner
-	        : null;
-	}
+            return (focusOwner.appContext == AppContext.getAppContext())
+                ? focusOwner
+                : null;
+        }
     }
 
     /**
@@ -477,15 +476,15 @@ public abstract class KeyboardFocusManager
      */
     protected Component getGlobalFocusOwner() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-	    if (this == getCurrentKeyboardFocusManager()) {
-	        return focusOwner;
-	    } else {
+            if (this == getCurrentKeyboardFocusManager()) {
+                return focusOwner;
+            } else {
                 if (focusLog.isLoggable(Level.FINER)) {
                     focusLog.log(Level.FINER, "This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
                 }
-	        throw new SecurityException(notPrivileged);
-	    }
-	}
+                throw new SecurityException(notPrivileged);
+            }
+        }
     }
 
     /**
@@ -495,7 +494,7 @@ public abstract class KeyboardFocusManager
      * user. KeyEvents which map to the focus owner's focus traversal keys will
      * not be delivered if focus traversal keys are enabled for the focus
      * owner. In addition, KeyEventDispatchers may retarget or consume
-     * KeyEvents before they reach the focus owner. 
+     * KeyEvents before they reach the focus owner.
      * <p>
      * This method does not actually set the focus to the specified Component.
      * It merely stores the value to be subsequently returned by
@@ -514,44 +513,44 @@ public abstract class KeyboardFocusManager
      */
     protected void setGlobalFocusOwner(Component focusOwner) {
         Component oldFocusOwner = null;
-	boolean shouldFire = false;
+        boolean shouldFire = false;
 
-	if (focusOwner == null || focusOwner.isFocusable()) {
-	    synchronized (KeyboardFocusManager.class) {
-	        oldFocusOwner = getFocusOwner();
+        if (focusOwner == null || focusOwner.isFocusable()) {
+            synchronized (KeyboardFocusManager.class) {
+                oldFocusOwner = getFocusOwner();
 
-		try {
-		    fireVetoableChange("focusOwner", oldFocusOwner,
-				       focusOwner);
-		} catch (PropertyVetoException e) {
-		    // rejected
-		    return;
-		}
-
-		KeyboardFocusManager.focusOwner = focusOwner;
-
-		if (focusOwner != null && 
-                    (getCurrentFocusCycleRoot() == null ||
-		     !focusOwner.isFocusCycleRoot(getCurrentFocusCycleRoot())))
-		{
-		    Container rootAncestor =
-		        focusOwner.getFocusCycleRootAncestor();
-		    if (rootAncestor == null && (focusOwner instanceof Window))
-		    {
-		        rootAncestor = (Container)focusOwner;
-		    }
-                    if (rootAncestor != null) {
-		        setGlobalCurrentFocusCycleRoot(rootAncestor);
-		    }
+                try {
+                    fireVetoableChange("focusOwner", oldFocusOwner,
+                                       focusOwner);
+                } catch (PropertyVetoException e) {
+                    // rejected
+                    return;
                 }
 
-		shouldFire = true;
-	    }
-	}
+                KeyboardFocusManager.focusOwner = focusOwner;
 
-	if (shouldFire) {
-	    firePropertyChange("focusOwner", oldFocusOwner, focusOwner);
-	}
+                if (focusOwner != null &&
+                    (getCurrentFocusCycleRoot() == null ||
+                     !focusOwner.isFocusCycleRoot(getCurrentFocusCycleRoot())))
+                {
+                    Container rootAncestor =
+                        focusOwner.getFocusCycleRootAncestor();
+                    if (rootAncestor == null && (focusOwner instanceof Window))
+                    {
+                        rootAncestor = (Container)focusOwner;
+                    }
+                    if (rootAncestor != null) {
+                        setGlobalCurrentFocusCycleRoot(rootAncestor);
+                    }
+                }
+
+                shouldFire = true;
+            }
+        }
+
+        if (shouldFire) {
+            firePropertyChange("focusOwner", oldFocusOwner, focusOwner);
+        }
     }
 
     /**
@@ -591,7 +590,7 @@ public abstract class KeyboardFocusManager
         }
         peer.setCurrentFocusOwner(comp);
     }
-      
+
     Window getNativeFocusedWindow() {
         return peer.getCurrentFocusedWindow();
     }
@@ -611,16 +610,16 @@ public abstract class KeyboardFocusManager
      * @see #setGlobalPermanentFocusOwner
      */
     public Component getPermanentFocusOwner() {
-	synchronized (KeyboardFocusManager.class) {
-	    if (permanentFocusOwner == null) {
-		return null;
-	    }
+        synchronized (KeyboardFocusManager.class) {
+            if (permanentFocusOwner == null) {
+                return null;
+            }
 
-	    return (permanentFocusOwner.appContext ==
-		    AppContext.getAppContext())
-		? permanentFocusOwner
-		: null;
-	}
+            return (permanentFocusOwner.appContext ==
+                    AppContext.getAppContext())
+                ? permanentFocusOwner
+                : null;
+        }
     }
 
     /**
@@ -643,18 +642,18 @@ public abstract class KeyboardFocusManager
      *         current KeyboardFocusManager for the calling thread's context
      */
     protected Component getGlobalPermanentFocusOwner()
-	throws SecurityException
+        throws SecurityException
     {
-	synchronized (KeyboardFocusManager.class) {
-	    if (this == getCurrentKeyboardFocusManager()) {
-		return permanentFocusOwner;
-	    } else {
+        synchronized (KeyboardFocusManager.class) {
+            if (this == getCurrentKeyboardFocusManager()) {
+                return permanentFocusOwner;
+            } else {
                 if (focusLog.isLoggable(Level.FINER)) {
                     focusLog.log(Level.FINER, "This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
                 }
-		throw new SecurityException(notPrivileged);
-	    }
-	}
+                throw new SecurityException(notPrivileged);
+            }
+        }
     }
 
     /**
@@ -685,34 +684,34 @@ public abstract class KeyboardFocusManager
     protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner)
     {
         Component oldPermanentFocusOwner = null;
-	boolean shouldFire = false;
+        boolean shouldFire = false;
 
-	if (permanentFocusOwner == null || permanentFocusOwner.isFocusable()) {
-	    synchronized (KeyboardFocusManager.class) {
-	        oldPermanentFocusOwner = getPermanentFocusOwner();
+        if (permanentFocusOwner == null || permanentFocusOwner.isFocusable()) {
+            synchronized (KeyboardFocusManager.class) {
+                oldPermanentFocusOwner = getPermanentFocusOwner();
 
-		try {
-		    fireVetoableChange("permanentFocusOwner",
-				       oldPermanentFocusOwner,
-				       permanentFocusOwner);
-		} catch (PropertyVetoException e) {
-		    // rejected
-		    return;
-		}
+                try {
+                    fireVetoableChange("permanentFocusOwner",
+                                       oldPermanentFocusOwner,
+                                       permanentFocusOwner);
+                } catch (PropertyVetoException e) {
+                    // rejected
+                    return;
+                }
 
-		KeyboardFocusManager.permanentFocusOwner = permanentFocusOwner;
+                KeyboardFocusManager.permanentFocusOwner = permanentFocusOwner;
 
-		KeyboardFocusManager.
-		    setMostRecentFocusOwner(permanentFocusOwner);
+                KeyboardFocusManager.
+                    setMostRecentFocusOwner(permanentFocusOwner);
 
-		shouldFire = true;
-	    }
-	}
+                shouldFire = true;
+            }
+        }
 
-	if (shouldFire) {
-	    firePropertyChange("permanentFocusOwner", oldPermanentFocusOwner,
-			       permanentFocusOwner);
-	}
+        if (shouldFire) {
+            firePropertyChange("permanentFocusOwner", oldPermanentFocusOwner,
+                               permanentFocusOwner);
+        }
     }
 
     /**
@@ -727,14 +726,14 @@ public abstract class KeyboardFocusManager
      */
     public Window getFocusedWindow() {
         synchronized (KeyboardFocusManager.class) {
-	    if (focusedWindow == null) {
-	        return null;
-	    }
+            if (focusedWindow == null) {
+                return null;
+            }
 
-	    return (focusedWindow.appContext == AppContext.getAppContext())
-	        ? focusedWindow
-	        : null;
-	}
+            return (focusedWindow.appContext == AppContext.getAppContext())
+                ? focusedWindow
+                : null;
+        }
     }
 
     /**
@@ -754,15 +753,15 @@ public abstract class KeyboardFocusManager
      */
     protected Window getGlobalFocusedWindow() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-	    if (this == getCurrentKeyboardFocusManager()) {
-	       return focusedWindow;
-	    } else {
+            if (this == getCurrentKeyboardFocusManager()) {
+               return focusedWindow;
+            } else {
                 if (focusLog.isLoggable(Level.FINER)) {
                     focusLog.log(Level.FINER, "This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
                 }
-	        throw new SecurityException(notPrivileged);
-	    }
-	}
+                throw new SecurityException(notPrivileged);
+            }
+        }
     }
 
     /**
@@ -788,29 +787,29 @@ public abstract class KeyboardFocusManager
      */
     protected void setGlobalFocusedWindow(Window focusedWindow) {
         Window oldFocusedWindow = null;
-	boolean shouldFire = false;
+        boolean shouldFire = false;
 
-	if (focusedWindow == null || focusedWindow.isFocusableWindow()) {
-	    synchronized (KeyboardFocusManager.class) {
-	        oldFocusedWindow = getFocusedWindow();
+        if (focusedWindow == null || focusedWindow.isFocusableWindow()) {
+            synchronized (KeyboardFocusManager.class) {
+                oldFocusedWindow = getFocusedWindow();
 
-		try {
-		    fireVetoableChange("focusedWindow", oldFocusedWindow,
-				       focusedWindow);
-		} catch (PropertyVetoException e) {
-		    // rejected
-		    return;
-		}
+                try {
+                    fireVetoableChange("focusedWindow", oldFocusedWindow,
+                                       focusedWindow);
+                } catch (PropertyVetoException e) {
+                    // rejected
+                    return;
+                }
 
-		KeyboardFocusManager.focusedWindow = focusedWindow;
-		shouldFire = true;
-	    }
-	}
+                KeyboardFocusManager.focusedWindow = focusedWindow;
+                shouldFire = true;
+            }
+        }
 
-	if (shouldFire) {
-	    firePropertyChange("focusedWindow", oldFocusedWindow,
-			       focusedWindow);
-	}
+        if (shouldFire) {
+            firePropertyChange("focusedWindow", oldFocusedWindow,
+                               focusedWindow);
+        }
     }
 
     /**
@@ -828,14 +827,14 @@ public abstract class KeyboardFocusManager
      */
     public Window getActiveWindow() {
         synchronized (KeyboardFocusManager.class) {
-	    if (activeWindow == null) {
-	        return null;
-	    }
+            if (activeWindow == null) {
+                return null;
+            }
 
-	    return (activeWindow.appContext == AppContext.getAppContext())
-	        ? activeWindow
-	        : null;
-	}
+            return (activeWindow.appContext == AppContext.getAppContext())
+                ? activeWindow
+                : null;
+        }
     }
 
     /**
@@ -858,15 +857,15 @@ public abstract class KeyboardFocusManager
      */
     protected Window getGlobalActiveWindow() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-	    if (this == getCurrentKeyboardFocusManager()) {
-	       return activeWindow;
-	    } else {
+            if (this == getCurrentKeyboardFocusManager()) {
+               return activeWindow;
+            } else {
                 if (focusLog.isLoggable(Level.FINER)) {
                     focusLog.log(Level.FINER, "This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
                 }
-		throw new SecurityException(notPrivileged);
-	    }
-	}
+                throw new SecurityException(notPrivileged);
+            }
+        }
     }
 
     /**
@@ -893,28 +892,28 @@ public abstract class KeyboardFocusManager
      */
     protected void setGlobalActiveWindow(Window activeWindow) {
         Window oldActiveWindow;
-	synchronized (KeyboardFocusManager.class) {
-	    oldActiveWindow = getActiveWindow();
+        synchronized (KeyboardFocusManager.class) {
+            oldActiveWindow = getActiveWindow();
             if (focusLog.isLoggable(Level.FINER)) {
                 focusLog.log(Level.FINER, "Setting global active window to " + activeWindow + ", old active " + oldActiveWindow);
             }
 
-	    try {
-		fireVetoableChange("activeWindow", oldActiveWindow,
-				   activeWindow);
-	    } catch (PropertyVetoException e) {
-		// rejected
-		return;
-	    }
+            try {
+                fireVetoableChange("activeWindow", oldActiveWindow,
+                                   activeWindow);
+            } catch (PropertyVetoException e) {
+                // rejected
+                return;
+            }
 
-	    KeyboardFocusManager.activeWindow = activeWindow;
-	}
+            KeyboardFocusManager.activeWindow = activeWindow;
+        }
 
-	firePropertyChange("activeWindow", oldActiveWindow, activeWindow);
+        firePropertyChange("activeWindow", oldActiveWindow, activeWindow);
     }
 
     /**
-     * Returns the default FocusTraversalPolicy. Top-level components 
+     * Returns the default FocusTraversalPolicy. Top-level components
      * use this value on their creation to initialize their own focus traversal
      * policy by explicit call to Container.setFocusTraversalPolicy.
      *
@@ -928,10 +927,10 @@ public abstract class KeyboardFocusManager
     }
 
     /**
-     * Sets the default FocusTraversalPolicy. Top-level components 
+     * Sets the default FocusTraversalPolicy. Top-level components
      * use this value on their creation to initialize their own focus traversal
      * policy by explicit call to Container.setFocusTraversalPolicy.
-     * Note: this call doesn't affect already created components as they have 
+     * Note: this call doesn't affect already created components as they have
      * their policy initialized. Only new components will use this policy as
      * their default policy.
      *
@@ -944,17 +943,17 @@ public abstract class KeyboardFocusManager
      *       bound: true
      */
     public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy
-					       defaultPolicy) {
+                                               defaultPolicy) {
         if (defaultPolicy == null) {
             throw new IllegalArgumentException("default focus traversal policy cannot be null");
         }
 
         FocusTraversalPolicy oldPolicy;
 
-	synchronized (this) {
-	    oldPolicy = this.defaultPolicy;
-	    this.defaultPolicy = defaultPolicy;
-	}
+        synchronized (this) {
+            oldPolicy = this.defaultPolicy;
+            this.defaultPolicy = defaultPolicy;
+        }
 
         firePropertyChange("defaultFocusTraversalPolicy", oldPolicy,
                            defaultPolicy);
@@ -1048,8 +1047,8 @@ public abstract class KeyboardFocusManager
      *       bound: true
      */
     public void
-	setDefaultFocusTraversalKeys(int id,
-				     Set<? extends AWTKeyStroke> keystrokes)
+        setDefaultFocusTraversalKeys(int id,
+                                     Set<? extends AWTKeyStroke> keystrokes)
     {
         if (id < 0 || id >= TRAVERSAL_KEY_LENGTH) {
             throw new IllegalArgumentException("invalid focus traversal key identifier");
@@ -1058,44 +1057,44 @@ public abstract class KeyboardFocusManager
             throw new IllegalArgumentException("cannot set null Set of default focus traversal keys");
         }
 
-	Set oldKeys;
+        Set oldKeys;
 
-	synchronized (this) {
-	    for (Iterator iter = keystrokes.iterator(); iter.hasNext(); ) {
-		Object obj = iter.next();
+        synchronized (this) {
+            for (Iterator iter = keystrokes.iterator(); iter.hasNext(); ) {
+                Object obj = iter.next();
 
-		if (obj == null) {
-		    throw new IllegalArgumentException("cannot set null focus traversal key");
-		}
+                if (obj == null) {
+                    throw new IllegalArgumentException("cannot set null focus traversal key");
+                }
 
                 // Fix for 6195831:
                 //According to javadoc this method should throw IAE instead of ClassCastException
                 if (!(obj instanceof AWTKeyStroke)) {
                     throw new IllegalArgumentException("object is expected to be AWTKeyStroke");
                 }
-		AWTKeyStroke keystroke = (AWTKeyStroke)obj;
+                AWTKeyStroke keystroke = (AWTKeyStroke)obj;
 
-		if (keystroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
-		    throw new IllegalArgumentException("focus traversal keys cannot map to KEY_TYPED events");
-		}
-	    
-		// Check to see if key already maps to another traversal
-		// operation
-		for (int i = 0; i < TRAVERSAL_KEY_LENGTH; i++) {
-		    if (i == id) {
-			continue;
-		    }
+                if (keystroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+                    throw new IllegalArgumentException("focus traversal keys cannot map to KEY_TYPED events");
+                }
 
-		    if (defaultFocusTraversalKeys[i].contains(keystroke)) {
-			throw new IllegalArgumentException("focus traversal keys must be unique for a Component");
-		    }
-		}
-	    }
+                // Check to see if key already maps to another traversal
+                // operation
+                for (int i = 0; i < TRAVERSAL_KEY_LENGTH; i++) {
+                    if (i == id) {
+                        continue;
+                    }
 
-	    oldKeys = defaultFocusTraversalKeys[id];
-	    defaultFocusTraversalKeys[id] =
-		Collections.unmodifiableSet(new HashSet(keystrokes));
-	}
+                    if (defaultFocusTraversalKeys[i].contains(keystroke)) {
+                        throw new IllegalArgumentException("focus traversal keys must be unique for a Component");
+                    }
+                }
+            }
+
+            oldKeys = defaultFocusTraversalKeys[id];
+            defaultFocusTraversalKeys[id] =
+                Collections.unmodifiableSet(new HashSet(keystrokes));
+        }
 
         firePropertyChange(defaultFocusTraversalKeyPropertyNames[id],
                            oldKeys, keystrokes);
@@ -1131,9 +1130,9 @@ public abstract class KeyboardFocusManager
         if (id < 0 || id >= TRAVERSAL_KEY_LENGTH) {
             throw new IllegalArgumentException("invalid focus traversal key identifier");
         }
-            
-	// Okay to return Set directly because it is an unmodifiable view
-	return defaultFocusTraversalKeys[id];
+
+        // Okay to return Set directly because it is an unmodifiable view
+        return defaultFocusTraversalKeys[id];
     }
 
     /**
@@ -1154,15 +1153,15 @@ public abstract class KeyboardFocusManager
      */
     public Container getCurrentFocusCycleRoot() {
         synchronized (KeyboardFocusManager.class) {
-	    if (currentFocusCycleRoot == null) {
-	        return null;
-	    }
+            if (currentFocusCycleRoot == null) {
+                return null;
+            }
 
-	    return (currentFocusCycleRoot.appContext ==
-		    AppContext.getAppContext())
-	        ? currentFocusCycleRoot
-	        : null;
-	}
+            return (currentFocusCycleRoot.appContext ==
+                    AppContext.getAppContext())
+                ? currentFocusCycleRoot
+                : null;
+        }
     }
 
     /**
@@ -1188,15 +1187,15 @@ public abstract class KeyboardFocusManager
         throws SecurityException
     {
         synchronized (KeyboardFocusManager.class) {
-	    if (this == getCurrentKeyboardFocusManager()) {
-	        return currentFocusCycleRoot;
-	    } else {
+            if (this == getCurrentKeyboardFocusManager()) {
+                return currentFocusCycleRoot;
+            } else {
                 if (focusLog.isLoggable(Level.FINER)) {
                     focusLog.log(Level.FINER, "This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
                 }
-	        throw new SecurityException(notPrivileged);
-	    }
-	}
+                throw new SecurityException(notPrivileged);
+            }
+        }
     }
 
     /**
@@ -1218,10 +1217,10 @@ public abstract class KeyboardFocusManager
     public void setGlobalCurrentFocusCycleRoot(Container newFocusCycleRoot) {
         Container oldFocusCycleRoot;
 
-	synchronized (KeyboardFocusManager.class) {
-	    oldFocusCycleRoot  = getCurrentFocusCycleRoot();
-	    currentFocusCycleRoot = newFocusCycleRoot;
-	}
+        synchronized (KeyboardFocusManager.class) {
+            oldFocusCycleRoot  = getCurrentFocusCycleRoot();
+            currentFocusCycleRoot = newFocusCycleRoot;
+        }
 
         firePropertyChange("currentFocusCycleRoot", oldFocusCycleRoot,
                            newFocusCycleRoot);
@@ -1232,9 +1231,9 @@ public abstract class KeyboardFocusManager
      * registered for all bound properties of this class, including the
      * following:
      * <ul>
-     *    <li>whether the KeyboardFocusManager is currently managing focus 
-     *        for this application or applet's browser context 
-     *        ("managingFocus")</li> 
+     *    <li>whether the KeyboardFocusManager is currently managing focus
+     *        for this application or applet's browser context
+     *        ("managingFocus")</li>
      *    <li>the focus owner ("focusOwner")</li>
      *    <li>the permanent focus owner ("permanentFocusOwner")</li>
      *    <li>the focused Window ("focusedWindow")</li>
@@ -1260,13 +1259,13 @@ public abstract class KeyboardFocusManager
      */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (changeSupport == null) {
-		    changeSupport = new PropertyChangeSupport(this);
-		}
-		changeSupport.addPropertyChangeListener(listener);
-	    }
-	}
+            synchronized (this) {
+                if (changeSupport == null) {
+                    changeSupport = new PropertyChangeSupport(this);
+                }
+                changeSupport.addPropertyChangeListener(listener);
+            }
+        }
     }
 
     /**
@@ -1283,12 +1282,12 @@ public abstract class KeyboardFocusManager
      */
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (changeSupport != null) {
-		    changeSupport.removePropertyChangeListener(listener);
-		}
-	    }
-	}
+            synchronized (this) {
+                if (changeSupport != null) {
+                    changeSupport.removePropertyChangeListener(listener);
+                }
+            }
+        }
     }
 
     /**
@@ -1297,7 +1296,7 @@ public abstract class KeyboardFocusManager
      *
      * @return all of this keyboard focus manager's
      *         <code>PropertyChangeListener</code>s
-     *         or an empty array if no property change 
+     *         or an empty array if no property change
      *         listeners are currently registered
      *
      * @see #addPropertyChangeListener
@@ -1317,9 +1316,9 @@ public abstract class KeyboardFocusManager
      * property. The specified property may be user-defined, or one of the
      * following:
      * <ul>
-     *    <li>whether the KeyboardFocusManager is currently managing focus 
-     *        for this application or applet's browser context 
-     *        ("managingFocus")</li> 
+     *    <li>whether the KeyboardFocusManager is currently managing focus
+     *        for this application or applet's browser context
+     *        ("managingFocus")</li>
      *    <li>the focus owner ("focusOwner")</li>
      *    <li>the permanent focus owner ("permanentFocusOwner")</li>
      *    <li>the focused Window ("focusedWindow")</li>
@@ -1345,16 +1344,16 @@ public abstract class KeyboardFocusManager
      * @see #getPropertyChangeListeners(java.lang.String)
      */
     public void addPropertyChangeListener(String propertyName,
-					  PropertyChangeListener listener) {
+                                          PropertyChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (changeSupport == null) {
-		    changeSupport = new PropertyChangeSupport(this);
-		}
-		changeSupport.addPropertyChangeListener(propertyName,
-							listener);
-	    }
-	}
+            synchronized (this) {
+                if (changeSupport == null) {
+                    changeSupport = new PropertyChangeSupport(this);
+                }
+                changeSupport.addPropertyChangeListener(propertyName,
+                                                        listener);
+            }
+        }
     }
 
     /**
@@ -1371,15 +1370,15 @@ public abstract class KeyboardFocusManager
      * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
      */
     public void removePropertyChangeListener(String propertyName,
-					     PropertyChangeListener listener) {
+                                             PropertyChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (changeSupport != null) {
-		    changeSupport.removePropertyChangeListener(propertyName,
-							       listener);
-		}
-	    }
-	}
+            synchronized (this) {
+                if (changeSupport != null) {
+                    changeSupport.removePropertyChangeListener(propertyName,
+                                                               listener);
+                }
+            }
+        }
     }
 
     /**
@@ -1389,7 +1388,7 @@ public abstract class KeyboardFocusManager
      * @return all of the <code>PropertyChangeListener</code>s associated with
      *         the named property or an empty array if no such listeners have
      *         been added.
-     *         
+     *
      * @see #addPropertyChangeListener(java.lang.String,java.beans.PropertyChangeListener)
      * @see #removePropertyChangeListener(java.lang.String,java.beans.PropertyChangeListener)
      * @since 1.4
@@ -1418,8 +1417,8 @@ public abstract class KeyboardFocusManager
         }
         PropertyChangeSupport changeSupport = this.changeSupport;
         if (changeSupport != null) {
-	    changeSupport.firePropertyChange(propertyName, oldValue, newValue);
-	}
+            changeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
     }
 
     /**
@@ -1441,14 +1440,14 @@ public abstract class KeyboardFocusManager
      */
     public void addVetoableChangeListener(VetoableChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (vetoableSupport == null) {
-		    vetoableSupport =
-			new VetoableChangeSupport(this);
-		}
-		vetoableSupport.addVetoableChangeListener(listener);
-	    }
-	}
+            synchronized (this) {
+                if (vetoableSupport == null) {
+                    vetoableSupport =
+                        new VetoableChangeSupport(this);
+                }
+                vetoableSupport.addVetoableChangeListener(listener);
+            }
+        }
     }
 
     /**
@@ -1465,12 +1464,12 @@ public abstract class KeyboardFocusManager
      */
     public void removeVetoableChangeListener(VetoableChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (vetoableSupport != null) {
-		    vetoableSupport.removeVetoableChangeListener(listener);
-		}
-	    }
-	}
+            synchronized (this) {
+                if (vetoableSupport != null) {
+                    vetoableSupport.removeVetoableChangeListener(listener);
+                }
+            }
+        }
     }
 
     /**
@@ -1479,7 +1478,7 @@ public abstract class KeyboardFocusManager
      *
      * @return all of this keyboard focus manager's
      *         <code>VetoableChangeListener</code>s
-     *         or an empty array if no vetoable change 
+     *         or an empty array if no vetoable change
      *         listeners are currently registered
      *
      * @see #addVetoableChangeListener
@@ -1513,17 +1512,17 @@ public abstract class KeyboardFocusManager
      * @see #getVetoableChangeListeners
      */
     public void addVetoableChangeListener(String propertyName,
-					  VetoableChangeListener listener) {
+                                          VetoableChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (vetoableSupport == null) {
-		    vetoableSupport =
-			new VetoableChangeSupport(this);
-		}
-		vetoableSupport.addVetoableChangeListener(propertyName,
-							  listener);
-	    }
-	}
+            synchronized (this) {
+                if (vetoableSupport == null) {
+                    vetoableSupport =
+                        new VetoableChangeSupport(this);
+                }
+                vetoableSupport.addVetoableChangeListener(propertyName,
+                                                          listener);
+            }
+        }
     }
 
     /**
@@ -1540,15 +1539,15 @@ public abstract class KeyboardFocusManager
      * @see #removeVetoableChangeListener(java.beans.VetoableChangeListener)
      */
     public void removeVetoableChangeListener(String propertyName,
-					     VetoableChangeListener listener) {
+                                             VetoableChangeListener listener) {
         if (listener != null) {
-	    synchronized (this) {
-	        if (vetoableSupport != null) {
-		    vetoableSupport.removeVetoableChangeListener(propertyName,
-								 listener);
-		}
-	    }
-	}
+            synchronized (this) {
+                if (vetoableSupport != null) {
+                    vetoableSupport.removeVetoableChangeListener(propertyName,
+                                                                 listener);
+                }
+            }
+        }
     }
 
     /**
@@ -1589,17 +1588,17 @@ public abstract class KeyboardFocusManager
      */
     protected void fireVetoableChange(String propertyName, Object oldValue,
                                       Object newValue)
-	throws PropertyVetoException
+        throws PropertyVetoException
     {
         if (oldValue == newValue) {
             return;
         }
         VetoableChangeSupport vetoableSupport =
-	    this.vetoableSupport;
+            this.vetoableSupport;
         if (vetoableSupport != null) {
-	    vetoableSupport.fireVetoableChange(propertyName, oldValue,
-					       newValue);
-	}
+            vetoableSupport.fireVetoableChange(propertyName, oldValue,
+                                               newValue);
+        }
     }
 
     /**
@@ -1626,13 +1625,13 @@ public abstract class KeyboardFocusManager
      */
     public void addKeyEventDispatcher(KeyEventDispatcher dispatcher) {
         if (dispatcher != null) {
-	    synchronized (this) {
-	        if (keyEventDispatchers == null) {
-		    keyEventDispatchers = new java.util.LinkedList();
-		}
-		keyEventDispatchers.add(dispatcher);
-	    }
-	}
+            synchronized (this) {
+                if (keyEventDispatchers == null) {
+                    keyEventDispatchers = new java.util.LinkedList();
+                }
+                keyEventDispatchers.add(dispatcher);
+            }
+        }
     }
 
     /**
@@ -1657,12 +1656,12 @@ public abstract class KeyboardFocusManager
      */
     public void removeKeyEventDispatcher(KeyEventDispatcher dispatcher) {
         if (dispatcher != null) {
-	    synchronized (this) {
-	        if (keyEventDispatchers != null) {
-		    keyEventDispatchers.remove(dispatcher);
-		}
-	    }
-	}
+            synchronized (this) {
+                if (keyEventDispatchers != null) {
+                    keyEventDispatchers.remove(dispatcher);
+                }
+            }
+        }
     }
 
     /**
@@ -1679,11 +1678,11 @@ public abstract class KeyboardFocusManager
      * @see #removeKeyEventDispatcher
      */
     protected synchronized java.util.List<KeyEventDispatcher>
-	getKeyEventDispatchers()
+        getKeyEventDispatchers()
     {
         return (keyEventDispatchers != null)
-	    ? (java.util.List)keyEventDispatchers.clone()
-	    : null;
+            ? (java.util.List)keyEventDispatchers.clone()
+            : null;
     }
 
     /**
@@ -1770,7 +1769,7 @@ public abstract class KeyboardFocusManager
      * @see #removeKeyEventPostProcessor
      */
     protected java.util.List<KeyEventPostProcessor>
-	getKeyEventPostProcessors()
+        getKeyEventPostProcessors()
     {
         return (keyEventPostProcessors != null)
             ? (java.util.List)keyEventPostProcessors.clone()
@@ -1781,12 +1780,12 @@ public abstract class KeyboardFocusManager
 
     static void setMostRecentFocusOwner(Component component) {
         Component window = component;
-	while (window != null && !(window instanceof Window)) {
-	    window = window.parent;
-	}
-	if (window != null) {
-	    setMostRecentFocusOwner((Window)window, component);
-	}
+        while (window != null && !(window instanceof Window)) {
+            window = window.parent;
+        }
+        if (window != null) {
+            setMostRecentFocusOwner((Window)window, component);
+        }
     }
     static synchronized void setMostRecentFocusOwner(Window window,
                                                      Component component) {
@@ -1815,8 +1814,8 @@ public abstract class KeyboardFocusManager
         }
 
         synchronized (KeyboardFocusManager.class) {
-            if ((window != null) 
-                && (getMostRecentFocusOwner((Window)window) == comp)) 
+            if ((window != null)
+                && (getMostRecentFocusOwner((Window)window) == comp))
             {
                 setMostRecentFocusOwner((Window)window, null);
             }
@@ -1879,7 +1878,7 @@ public abstract class KeyboardFocusManager
      */
     public final void redispatchEvent(Component target, AWTEvent e) {
         e.focusManagerIsDispatching = true;
-	target.dispatchEvent(e);
+        target.dispatchEvent(e);
         e.focusManagerIsDispatching = false;
     }
 
@@ -1951,8 +1950,8 @@ public abstract class KeyboardFocusManager
      * @see #discardKeyEvents
      */
     protected abstract void enqueueKeyEvents(long after,
-					     Component untilFocused);
- 
+                                             Component untilFocused);
+
     /**
      * Called by the AWT to notify the KeyboardFocusManager that it should
      * cancel delayed dispatching of KeyEvents. All KeyEvents which were
@@ -1970,7 +1969,7 @@ public abstract class KeyboardFocusManager
      * @see #discardKeyEvents
      */
     protected abstract void dequeueKeyEvents(long after,
-					     Component untilFocused);
+                                             Component untilFocused);
 
     /**
      * Called by the AWT to notify the KeyboardFocusManager that it should
@@ -2077,9 +2076,9 @@ public abstract class KeyboardFocusManager
      */
     public final void downFocusCycle() {
         Component focusOwner = getFocusOwner();
-	if (focusOwner instanceof Container) {
-	    downFocusCycle((Container)focusOwner);
-	}
+        if (focusOwner instanceof Container) {
+            downFocusCycle((Container)focusOwner);
+        }
     }
 
     /**
@@ -2191,8 +2190,8 @@ public abstract class KeyboardFocusManager
     }
 
     /*
-     * heavyweightRequests is used as a monitor for synchronized changes of 
-     * currentLightweightRequests, clearingCurrentLightweightRequests and 
+     * heavyweightRequests is used as a monitor for synchronized changes of
+     * currentLightweightRequests, clearingCurrentLightweightRequests and
      * newFocusOwner.
      */
     private static LinkedList<HeavyweightFocusRequest> heavyweightRequests =
@@ -2278,7 +2277,7 @@ public abstract class KeyboardFocusManager
 
                 if (newFocusOwnerEvent != null && descendant != null) {
                     ((AWTEvent) newFocusOwnerEvent).isPosted = true;
-                    caughtEx = dispatchAndCatchException(caughtEx, descendant, newFocusOwnerEvent);                           
+                    caughtEx = dispatchAndCatchException(caughtEx, descendant, newFocusOwnerEvent);
                     result = true;
                 }
             }
@@ -2303,7 +2302,7 @@ public abstract class KeyboardFocusManager
      * will be approved and the focus request list will be updated so that,
      * if necessary, the proper descendant will be focused when the
      * corresponding FOCUS_GAINED event on the heavyweight is received.
-     * 
+     *
      * An implementation must ensure that calls to this method and native
      * focus changes are atomic. If this is not guaranteed, then the ordering
      * of the focus request list may be incorrect, leading to errors in the
@@ -2331,22 +2330,22 @@ public abstract class KeyboardFocusManager
             descendant = heavyweight;
         }
 
-        KeyboardFocusManager manager = 
+        KeyboardFocusManager manager =
             getCurrentKeyboardFocusManager(SunToolkit.targetToAppContext(descendant));
         KeyboardFocusManager thisManager = getCurrentKeyboardFocusManager();
         Component currentFocusOwner = thisManager.getGlobalFocusOwner();
         Component nativeFocusOwner = thisManager.getNativeFocusOwner();
         Window nativeFocusedWindow = thisManager.getNativeFocusedWindow();
         if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "SNFH for {0} in {1}", 
+            focusLog.log(Level.FINER, "SNFH for {0} in {1}",
                          new Object[] {descendant, heavyweight});
         }
         if (focusLog.isLoggable(Level.FINEST)) {
-            focusLog.log(Level.FINEST, "0. Current focus owner {0}", 
+            focusLog.log(Level.FINEST, "0. Current focus owner {0}",
                          currentFocusOwner);
-            focusLog.log(Level.FINEST, "0. Native focus owner {0}", 
+            focusLog.log(Level.FINEST, "0. Native focus owner {0}",
                          nativeFocusOwner);
-            focusLog.log(Level.FINEST, "0. Native focused window {0}", 
+            focusLog.log(Level.FINEST, "0. Native focused window {0}",
                          nativeFocusedWindow);
         }
         synchronized (heavyweightRequests) {
@@ -2359,8 +2358,8 @@ public abstract class KeyboardFocusManager
             {
                 if (descendant == currentFocusOwner) {
                     // Redundant request.
-                    if (focusLog.isLoggable(Level.FINEST)) 
-                        focusLog.log(Level.FINEST, "1. SNFH_FAILURE for {0}", 
+                    if (focusLog.isLoggable(Level.FINEST))
+                        focusLog.log(Level.FINEST, "1. SNFH_FAILURE for {0}",
                                      descendant);
                     return SNFH_FAILURE;
                 }
@@ -2393,7 +2392,7 @@ public abstract class KeyboardFocusManager
                 // SunToolkit.postPriorityEvent(newFocusOwnerEvent);
                 SunToolkit.postEvent(descendant.appContext, newFocusOwnerEvent);
 
-                if (focusLog.isLoggable(Level.FINEST)) 
+                if (focusLog.isLoggable(Level.FINEST))
                     focusLog.log(Level.FINEST, "2. SNFH_HANDLED for {0}", descendant);
                 return SNFH_SUCCESS_HANDLED;
             } else if (hwFocusRequest != null &&
@@ -2407,7 +2406,7 @@ public abstract class KeyboardFocusManager
                     manager.enqueueKeyEvents(time, descendant);
                 }
 
-                if (focusLog.isLoggable(Level.FINEST)) 
+                if (focusLog.isLoggable(Level.FINEST))
                     focusLog.finest("3. SNFH_HANDLED for lightweight" +
                                     descendant + " in " + heavyweight);
                 return SNFH_SUCCESS_HANDLED;
@@ -2419,7 +2418,7 @@ public abstract class KeyboardFocusManager
                     // there is no second to last HeavyweightFocusRequest, null is an
                     // acceptable value.
                     if (hwFocusRequest ==
-                        HeavyweightFocusRequest.CLEAR_GLOBAL_FOCUS_OWNER) 
+                        HeavyweightFocusRequest.CLEAR_GLOBAL_FOCUS_OWNER)
                     {
                         int size = heavyweightRequests.size();
                         hwFocusRequest = (HeavyweightFocusRequest)((size >= 2)
@@ -2430,7 +2429,7 @@ public abstract class KeyboardFocusManager
                                              (hwFocusRequest != null)
                                              ? hwFocusRequest.heavyweight
                                              : nativeFocusedWindow)) {
-                        if (focusLog.isLoggable(Level.FINEST)) 
+                        if (focusLog.isLoggable(Level.FINEST))
                             focusLog.finest("4. SNFH_FAILURE for " + descendant);
                         return SNFH_FAILURE;
                     }
@@ -2440,7 +2439,7 @@ public abstract class KeyboardFocusManager
                 heavyweightRequests.add
                     (new HeavyweightFocusRequest(heavyweight, descendant,
                                                  temporary, cause));
-                if (focusLog.isLoggable(Level.FINEST)) 
+                if (focusLog.isLoggable(Level.FINEST))
                     focusLog.finest("5. SNFH_PROCEED for " + descendant);
                 return SNFH_SUCCESS_PROCEED;
             }
@@ -2608,7 +2607,7 @@ public abstract class KeyboardFocusManager
     static private void handleException(Throwable ex) {
         ex.printStackTrace();
     }
-    
+
     static void processCurrentLightweightRequests() {
         KeyboardFocusManager manager = getCurrentKeyboardFocusManager();
         LinkedList<LightweightFocusRequest> localLightweightRequests = null;
@@ -2695,7 +2694,7 @@ public abstract class KeyboardFocusManager
             }
         } finally {
             clearingCurrentLightweightRequests = false;
-            disableRestoreFocus = false; 
+            disableRestoreFocus = false;
             localLightweightRequests = null;
             allowSyncFocusRequests = true;
         }
@@ -2724,7 +2723,7 @@ public abstract class KeyboardFocusManager
             {
                 temporary = true;
             }
-            return new CausedFocusEvent(source, fe.getID(), temporary, opposite, 
+            return new CausedFocusEvent(source, fe.getID(), temporary, opposite,
                                         CausedFocusEvent.Cause.NATIVE_SYSTEM);
         }
     }
@@ -2747,10 +2746,10 @@ public abstract class KeyboardFocusManager
             }
 
             if (source != null && nativeSource == null && hwFocusRequest != null) {
-                // if source w/o peer and 
+                // if source w/o peer and
                 // if source is equal to first lightweight
                 // then we should correct source and nativeSource
-                if (source == hwFocusRequest.getFirstLightweightRequest().component) 
+                if (source == hwFocusRequest.getFirstLightweightRequest().component)
                 {
                     source = hwFocusRequest.heavyweight;
                     nativeSource = source; // source is heavuweight itself
@@ -2770,14 +2769,14 @@ public abstract class KeyboardFocusManager
                 Component newSource = lwFocusRequest.component;
                 if (currentFocusOwner != null) {
                     /*
-                     * Since we receive FOCUS_GAINED when current focus 
+                     * Since we receive FOCUS_GAINED when current focus
                      * owner is not null, correcponding FOCUS_LOST is supposed
-                     * to be lost.  And so,  we keep new focus owner 
-                     * to determine synthetic FOCUS_LOST event which will be 
+                     * to be lost.  And so,  we keep new focus owner
+                     * to determine synthetic FOCUS_LOST event which will be
                      * generated by KeyboardFocusManager for this FOCUS_GAINED.
                      *
-                     * This code based on knowledge of 
-                     * DefaultKeyboardFocusManager's implementation and might 
+                     * This code based on knowledge of
+                     * DefaultKeyboardFocusManager's implementation and might
                      * be not applicable for another KeyboardFocusManager.
                      */
                     newFocusOwner = newSource;
@@ -2807,13 +2806,13 @@ public abstract class KeyboardFocusManager
 
             if (currentFocusOwner != null
                 && currentFocusOwner.getContainingWindow() == source
-                && (hwFocusRequest == null || source != hwFocusRequest.heavyweight)) 
+                && (hwFocusRequest == null || source != hwFocusRequest.heavyweight))
             {
                 // Special case for FOCUS_GAINED in top-levels
                 // If it arrives as the result of activation we should skip it
                 // This event will not have appropriate request record and
                 // on arrival there will be already some focus owner set.
-                return new CausedFocusEvent(currentFocusOwner, FocusEvent.FOCUS_GAINED, false, 
+                return new CausedFocusEvent(currentFocusOwner, FocusEvent.FOCUS_GAINED, false,
                                             null, CausedFocusEvent.Cause.ACTIVATION);
             }
 
@@ -2838,7 +2837,7 @@ public abstract class KeyboardFocusManager
                     // Call to KeyboardFocusManager.clearGlobalFocusOwner()
                     heavyweightRequests.removeFirst();
                     return new CausedFocusEvent(currentFocusOwner,
-                                                FocusEvent.FOCUS_LOST, false, null, 
+                                                FocusEvent.FOCUS_LOST, false, null,
                                                 CausedFocusEvent.Cause.CLEAR_GLOBAL_FOCUS_OWNER);
                 }
 
@@ -2848,15 +2847,15 @@ public abstract class KeyboardFocusManager
             {
                 // Focus leaving application
                 if (currentFocusOwner != null) {
-                    return new CausedFocusEvent(currentFocusOwner, 
+                    return new CausedFocusEvent(currentFocusOwner,
                                                 FocusEvent.FOCUS_LOST,
                                                 true, null, CausedFocusEvent.Cause.ACTIVATION);
                 } else {
                     return fe;
                 }
             } else if (hwFocusRequest != null &&
-                       (nativeOpposite == hwFocusRequest.heavyweight || 
-                        nativeOpposite == null && 
+                       (nativeOpposite == hwFocusRequest.heavyweight ||
+                        nativeOpposite == null &&
                         opposite == hwFocusRequest.getFirstLightweightRequest().component))
             {
                 if (currentFocusOwner == null) {
@@ -2911,22 +2910,22 @@ public abstract class KeyboardFocusManager
 
         synchronized(heavyweightRequests) {
             /*
-             * This code handles FOCUS_LOST event which is generated by 
+             * This code handles FOCUS_LOST event which is generated by
              * DefaultKeyboardFocusManager for FOCUS_GAINED.
              *
              * This code based on knowledge of DefaultKeyboardFocusManager's
-             * implementation and might be not applicable for another 
+             * implementation and might be not applicable for another
              * KeyboardFocusManager.
-             * 
+             *
              * Fix for 4472032
              */
             if (newFocusOwner != null &&
-                event.getID() == FocusEvent.FOCUS_LOST) 
+                event.getID() == FocusEvent.FOCUS_LOST)
             {
                 FocusEvent fe = (FocusEvent)event;
 
                 if (manager.getGlobalFocusOwner() == fe.getComponent() &&
-                    fe.getOppositeComponent() == newFocusOwner) 
+                    fe.getOppositeComponent() == newFocusOwner)
                 {
                     newFocusOwner = null;
                     return event;
@@ -2953,7 +2952,7 @@ public abstract class KeyboardFocusManager
 
     /**
      * Clears markers queue
-     * This method is not intended to be overridden by KFM's. 
+     * This method is not intended to be overridden by KFM's.
      * Only DefaultKeyboardFocusManager can implement it.
      * @since 1.5
      */
@@ -2981,7 +2980,7 @@ public abstract class KeyboardFocusManager
                 }
             }
             // Fix for 4799136 - clear type-ahead markers if requests queue is empty
-            // We do it here because this method is called only when problems happen 
+            // We do it here because this method is called only when problems happen
             if (heavyweightRequests.size() == 0) {
                 manager.clearMarkers();
             }
@@ -2999,12 +2998,12 @@ public abstract class KeyboardFocusManager
             KeyboardFocusManager.getCurrentKeyboardFocusManager();
         synchronized(heavyweightRequests) {
             HeavyweightFocusRequest hwFocusRequest = getLastHWRequest();
-            if (hwFocusRequest != null && 
+            if (hwFocusRequest != null &&
                 hwFocusRequest.heavyweight == heavyweight) {
                 heavyweightRequests.removeLast();
             }
             // Fix for 4799136 - clear type-ahead markers if requests queue is empty
-            // We do it here because this method is called only when problems happen 
+            // We do it here because this method is called only when problems happen
             if (heavyweightRequests.size() == 0) {
                 manager.clearMarkers();
             }
@@ -3052,7 +3051,7 @@ public abstract class KeyboardFocusManager
     }
 
     static Field proxyActive;
-    // Accessor to private field isProxyActive of KeyEvent 
+    // Accessor to private field isProxyActive of KeyEvent
     private static boolean isProxyActiveImpl(KeyEvent e) {
         if (proxyActive == null) {
             proxyActive = (Field) AccessController.doPrivileged(new PrivilegedAction() {

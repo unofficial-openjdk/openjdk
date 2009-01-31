@@ -51,7 +51,7 @@ public class StreamIOAfterClose {
         } catch (IOException e) {
         }
     }
-    
+
     private static void testWrite(ZipOutputStream out) throws Exception {
         out.close();
         try {
@@ -60,7 +60,7 @@ public class StreamIOAfterClose {
         } catch (IOException e) {
         }
     }
-        
+
     public static void main(String argv[]) throws Exception {
         ZipOutputStream zos = new ZipOutputStream(new ByteArrayOutputStream());
         zos.putNextEntry(new ZipEntry("1"));
@@ -69,10 +69,10 @@ public class StreamIOAfterClose {
         JarOutputStream jos = new JarOutputStream(new ByteArrayOutputStream());
         jos.putNextEntry(new ZipEntry("1"));
         testWrite(jos);
-        
+
         InputStream bis = new ByteArrayInputStream(new byte[10]);
         InputStream bis1 = new ByteArrayInputStream(compressed);
         testRead(new ZipInputStream(bis));
         testRead(new GZIPInputStream(bis1));
-    }      
+    }
 }

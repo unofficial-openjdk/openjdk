@@ -58,7 +58,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * SynthTableUI implementation
  *
- * @version %I%, %G%
  * @author Philip Milne
  */
 class SynthTableUI extends BasicTableUI implements SynthUI,
@@ -188,9 +187,9 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         table.setDefaultRenderer(Boolean.class, booleanRenderer);
         table.setDefaultRenderer(Object.class, objectRenderer);
 
-	if (table.getTransferHandler() instanceof UIResource) {
-	    table.setTransferHandler(null);
-	}
+        if (table.getTransferHandler() instanceof UIResource) {
+            table.setTransferHandler(null);
+        }
         SynthContext context = getContext(table, ENABLED);
         style.uninstallDefaults(context);
         context.dispose();
@@ -262,8 +261,8 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                 !bounds.intersects(clip)) {
 
             paintDropLines(context, g);
-	    return;
-	}
+            return;
+        }
 
         boolean ltr = table.getComponentOrientation().isLeftToRight();
 
@@ -277,33 +276,33 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         // This should never happen (as long as our bounds intersect the clip,
         // which is why we bail above if that is the case).
         if (rMin == -1) {
-	    rMin = 0;
+            rMin = 0;
         }
         // If the table does not have enough rows to fill the view we'll get -1.
         // (We could also get -1 if our bounds don't intersect the clip,
         // which is why we bail above if that is the case).
         // Replace this with the index of the last row.
         if (rMax == -1) {
-	    rMax = table.getRowCount()-1;
+            rMax = table.getRowCount()-1;
         }
 
-        int cMin = table.columnAtPoint(ltr ? upperLeft : lowerRight); 
-        int cMax = table.columnAtPoint(ltr ? lowerRight : upperLeft);        
+        int cMin = table.columnAtPoint(ltr ? upperLeft : lowerRight);
+        int cMax = table.columnAtPoint(ltr ? lowerRight : upperLeft);
         // This should never happen.
         if (cMin == -1) {
-	    cMin = 0;
+            cMin = 0;
         }
-	// If the table does not have enough columns to fill the view we'll get -1.
+        // If the table does not have enough columns to fill the view we'll get -1.
         // Replace this with the index of the last column.
         if (cMax == -1) {
-	    cMax = table.getColumnCount()-1;
+            cMax = table.getColumnCount()-1;
         }
 
         // Paint the grid.
         paintGrid(context, g, rMin, rMax, cMin, cMax);
 
         // Paint the cells.
-	paintCells(context, g, rMin, rMax, cMin, cMax);
+        paintCells(context, g, rMin, rMax, cMin, cMax);
 
         paintDropLines(context, g);
     }
@@ -407,7 +406,7 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
         } else {
             rect.x -= 2;
         }
-        
+
         rect.width = 3;
 
         return rect;
@@ -446,34 +445,34 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                            int rMax, int cMin, int cMax) {
         g.setColor(table.getGridColor());
 
-	Rectangle minCell = table.getCellRect(rMin, cMin, true);
-	Rectangle maxCell = table.getCellRect(rMax, cMax, true);
+        Rectangle minCell = table.getCellRect(rMin, cMin, true);
+        Rectangle maxCell = table.getCellRect(rMax, cMax, true);
         Rectangle damagedArea = minCell.union( maxCell );
         SynthGraphicsUtils synthG = context.getStyle().getGraphicsUtils(
                      context);
 
         if (table.getShowHorizontalLines()) {
-	    int tableWidth = damagedArea.x + damagedArea.width;
-	    int y = damagedArea.y;
-	    for (int row = rMin; row <= rMax; row++) {
-		y += table.getRowHeight(row);
+            int tableWidth = damagedArea.x + damagedArea.width;
+            int y = damagedArea.y;
+            for (int row = rMin; row <= rMax; row++) {
+                y += table.getRowHeight(row);
                 synthG.drawLine(context, "Table.grid",
                                 g, damagedArea.x, y - 1, tableWidth - 1,y - 1);
-	    }
-	}
+            }
+        }
         if (table.getShowVerticalLines()) {
-	    TableColumnModel cm = table.getColumnModel();
-	    int tableHeight = damagedArea.y + damagedArea.height;
-	    int x;
-	    if (table.getComponentOrientation().isLeftToRight()) {
-		x = damagedArea.x;
-		for (int column = cMin; column <= cMax; column++) {
-		    int w = cm.getColumn(column).getWidth();
-		    x += w;
+            TableColumnModel cm = table.getColumnModel();
+            int tableHeight = damagedArea.y + damagedArea.height;
+            int x;
+            if (table.getComponentOrientation().isLeftToRight()) {
+                x = damagedArea.x;
+                for (int column = cMin; column <= cMax; column++) {
+                    int w = cm.getColumn(column).getWidth();
+                    x += w;
                     synthG.drawLine(context, "Table.grid", g, x - 1, 0,
                                     x - 1, tableHeight - 1);
-		}
-	    } else {
+                }
+            } else {
                 x = damagedArea.x;
                 for (int column = cMax; column >= cMin; column--) {
                     int w = cm.getColumn(column).getWidth();
@@ -481,8 +480,8 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                     synthG.drawLine(context, "Table.grid", g, x - 1, 0, x - 1,
                                     tableHeight - 1);
                 }
-	    }
-	}
+            }
+        }
     }
 
     private int viewIndexForColumn(TableColumn aColumn) {
@@ -497,18 +496,18 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
 
     private void paintCells(SynthContext context, Graphics g, int rMin,
                             int rMax, int cMin, int cMax) {
-	JTableHeader header = table.getTableHeader();
-	TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
+        JTableHeader header = table.getTableHeader();
+        TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
 
-	TableColumnModel cm = table.getColumnModel();
-	int columnMargin = cm.getColumnMargin();
+        TableColumnModel cm = table.getColumnModel();
+        int columnMargin = cm.getColumnMargin();
 
         Rectangle cellRect;
-	TableColumn aColumn;
-	int columnWidth;
-	if (table.getComponentOrientation().isLeftToRight()) {
-	    for(int row = rMin; row <= rMax; row++) {
-		cellRect = table.getCellRect(row, cMin, false);
+        TableColumn aColumn;
+        int columnWidth;
+        if (table.getComponentOrientation().isLeftToRight()) {
+            for(int row = rMin; row <= rMax; row++) {
+                cellRect = table.getCellRect(row, cMin, false);
                 for(int column = cMin; column <= cMax; column++) {
                     aColumn = cm.getColumn(column);
                     columnWidth = aColumn.getWidth();
@@ -517,10 +516,10 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                         paintCell(context, g, cellRect, row, column);
                     }
                     cellRect.x += columnWidth;
-        	}
-	    }
-	} else {
-	    for(int row = rMin; row <= rMax; row++) {
+                }
+            }
+        } else {
+            for(int row = rMin; row <= rMax; row++) {
                 cellRect = table.getCellRect(row, cMin, false);
                 aColumn = cm.getColumn(cMin);
                 if (aColumn != draggedColumn) {
@@ -536,75 +535,75 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                     if (aColumn != draggedColumn) {
                         paintCell(context, g, cellRect, row, column);
                     }
-        	}
-	    }
-	}
+                }
+            }
+        }
 
         // Paint the dragged column if we are dragging.
         if (draggedColumn != null) {
-	    paintDraggedArea(context, g, rMin, rMax, draggedColumn, header.getDraggedDistance());
-	}
+            paintDraggedArea(context, g, rMin, rMax, draggedColumn, header.getDraggedDistance());
+        }
 
-	// Remove any renderers that may be left in the rendererPane.
-	rendererPane.removeAll();
+        // Remove any renderers that may be left in the rendererPane.
+        rendererPane.removeAll();
     }
 
     private void paintDraggedArea(SynthContext context, Graphics g, int rMin, int rMax, TableColumn draggedColumn, int distance) {
         int draggedColumnIndex = viewIndexForColumn(draggedColumn);
 
         Rectangle minCell = table.getCellRect(rMin, draggedColumnIndex, true);
-	Rectangle maxCell = table.getCellRect(rMax, draggedColumnIndex, true);
+        Rectangle maxCell = table.getCellRect(rMax, draggedColumnIndex, true);
 
-	Rectangle vacatedColumnRect = minCell.union(maxCell);
+        Rectangle vacatedColumnRect = minCell.union(maxCell);
 
-	// Paint a gray well in place of the moving column.
-	g.setColor(table.getParent().getBackground());
-	g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
-		   vacatedColumnRect.width, vacatedColumnRect.height);
+        // Paint a gray well in place of the moving column.
+        g.setColor(table.getParent().getBackground());
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
 
-	// Move to the where the cell has been dragged.
-	vacatedColumnRect.x += distance;
+        // Move to the where the cell has been dragged.
+        vacatedColumnRect.x += distance;
 
-	// Fill the background.
-	g.setColor(context.getStyle().getColor(context, ColorType.BACKGROUND));
-	g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
-		   vacatedColumnRect.width, vacatedColumnRect.height);
+        // Fill the background.
+        g.setColor(context.getStyle().getColor(context, ColorType.BACKGROUND));
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
 
         SynthGraphicsUtils synthG = context.getStyle().getGraphicsUtils(
                                             context);
-        
 
-	// Paint the vertical grid lines if necessary.
-	if (table.getShowVerticalLines()) {
-	    g.setColor(table.getGridColor());
-	    int x1 = vacatedColumnRect.x;
-	    int y1 = vacatedColumnRect.y;
-	    int x2 = x1 + vacatedColumnRect.width - 1;
-	    int y2 = y1 + vacatedColumnRect.height - 1;
-	    // Left
+
+        // Paint the vertical grid lines if necessary.
+        if (table.getShowVerticalLines()) {
+            g.setColor(table.getGridColor());
+            int x1 = vacatedColumnRect.x;
+            int y1 = vacatedColumnRect.y;
+            int x2 = x1 + vacatedColumnRect.width - 1;
+            int y2 = y1 + vacatedColumnRect.height - 1;
+            // Left
             synthG.drawLine(context, "Table.grid", g, x1-1, y1, x1-1, y2);
-	    // Right
-	    synthG.drawLine(context, "Table.grid", g, x2, y1, x2, y2);
-	}
+            // Right
+            synthG.drawLine(context, "Table.grid", g, x2, y1, x2, y2);
+        }
 
-	for(int row = rMin; row <= rMax; row++) {
-	    // Render the cell value
-	    Rectangle r = table.getCellRect(row, draggedColumnIndex, false);
-	    r.x += distance;
-	    paintCell(context, g, r, row, draggedColumnIndex);
+        for(int row = rMin; row <= rMax; row++) {
+            // Render the cell value
+            Rectangle r = table.getCellRect(row, draggedColumnIndex, false);
+            r.x += distance;
+            paintCell(context, g, r, row, draggedColumnIndex);
 
-	    // Paint the (lower) horizontal grid line if necessary.
-	    if (table.getShowHorizontalLines()) {
-		g.setColor(table.getGridColor());
-		Rectangle rcr = table.getCellRect(row, draggedColumnIndex, true);
-		rcr.x += distance;
-		int x1 = rcr.x;
-		int y1 = rcr.y;
-		int x2 = x1 + rcr.width - 1;
-		int y2 = y1 + rcr.height - 1;
-		synthG.drawLine(context, "Table.grid", g, x1, y2, x2, y2);
-	    }
-	}
+            // Paint the (lower) horizontal grid line if necessary.
+            if (table.getShowHorizontalLines()) {
+                g.setColor(table.getGridColor());
+                Rectangle rcr = table.getCellRect(row, draggedColumnIndex, true);
+                rcr.x += distance;
+                int x1 = rcr.x;
+                int y1 = rcr.y;
+                int x2 = x1 + rcr.width - 1;
+                int y2 = y1 + rcr.height - 1;
+                synthG.drawLine(context, "Table.grid", g, x1, y2, x2, y2);
+            }
+        }
     }
 
     private void paintCell(SynthContext context, Graphics g,
@@ -632,8 +631,8 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
 
     private class SynthBooleanTableCellRenderer extends JCheckBox implements
                       TableCellRenderer {
-        private boolean isRowSelected;              
-        
+        private boolean isRowSelected;
+
         public SynthBooleanTableCellRenderer() {
             super();
             setHorizontalAlignment(JLabel.CENTER);
@@ -651,7 +650,7 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                             JTable table, Object value, boolean isSelected,
                             boolean hasFocus, int row, int column) {
             isRowSelected = isSelected;
-            
+
             if (isSelected) {
                 setForeground(table.getSelectionForeground());
                 setBackground(table.getSelectionBackground());
@@ -659,11 +658,11 @@ class SynthTableUI extends BasicTableUI implements SynthUI,
                 setForeground(table.getForeground());
                 setBackground(table.getBackground());
             }
-            
+
             setSelected((value != null && ((Boolean)value).booleanValue()));
             return this;
         }
-        
+
         public boolean isOpaque() {
             return isRowSelected ? true : super.isOpaque();
         }

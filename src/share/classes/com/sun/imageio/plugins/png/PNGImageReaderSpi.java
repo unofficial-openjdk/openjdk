@@ -35,7 +35,6 @@ import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.stream.ImageInputStream;
 
 /**
- * @version 0.5
  */
 public class PNGImageReaderSpi extends ImageReaderSpi {
 
@@ -46,7 +45,7 @@ public class PNGImageReaderSpi extends ImageReaderSpi {
     private static final String[] names = { "png", "PNG" };
 
     private static final String[] suffixes = { "png" };
-    
+
     private static final String[] MIMETypes = { "image/png", "image/x-png" };
 
     private static final String readerClassName =
@@ -89,7 +88,7 @@ public class PNGImageReaderSpi extends ImageReaderSpi {
         stream.mark();
         stream.readFully(b);
         stream.reset();
-        
+
         return (b[0] == (byte)137 &&
                 b[1] == (byte)80 &&
                 b[2] == (byte)78 &&

@@ -32,7 +32,6 @@ import java.awt.Frame;
  * functionality as specified in
  * {@link java.awt.im.spi.InputMethodContext#createInputMethodWindow}.
  *
- * @version %I% %G%
  */
 public class SimpleInputMethodWindow
         extends Frame
@@ -48,9 +47,9 @@ public class SimpleInputMethodWindow
         if (context != null) {
             this.inputContext = context;
         }
-	setFocusableWindowState(false);
+        setFocusableWindowState(false);
     }
-    
+
     public void setInputContext(InputContext inputContext) {
         this.inputContext = inputContext;
     }

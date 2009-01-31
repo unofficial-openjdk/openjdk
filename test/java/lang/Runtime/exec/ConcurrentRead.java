@@ -23,8 +23,8 @@
 
 /**
  * @test
- * @bug 4619744  
- * @summary Test that Process input/out can be concurrently read/written 
+ * @bug 4619744
+ * @summary Test that Process input/out can be concurrently read/written
  * @author kladko
  */
 
@@ -35,13 +35,13 @@ import java.io.IOException;
 
 public class ConcurrentRead {
 
-    static volatile Exception savedException; 
+    static volatile Exception savedException;
     static final String TEE = "/usr/bin/tee";
 
     public static void main(String[] args) throws Exception {
 
         if (File.separatorChar == '\\' ||                // Windows
-                                !new File(TEE).exists()) // no tee 
+                                !new File(TEE).exists()) // no tee
             return;
 
         Process p = Runtime.getRuntime().exec(TEE);
@@ -53,7 +53,7 @@ public class ConcurrentRead {
         t2.start();
         t1.join();
         t2.join();
-        if (savedException != null) 
+        if (savedException != null)
             throw savedException;
     }
 
@@ -71,8 +71,8 @@ public class ConcurrentRead {
                 if (in.read() == -1) // got end-of-stream
                     throw new Exception("End of stream in writer thread");
             } catch (Exception e) {
-                savedException = e; 
+                savedException = e;
             }
-        } 
+        }
     }
 }

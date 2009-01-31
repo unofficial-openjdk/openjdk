@@ -98,19 +98,18 @@ import sun.util.resources.LocaleData;
  * @see          DateFormat
  * @see          SimpleDateFormat
  * @see          java.util.SimpleTimeZone
- * @version      %I% %G%
  * @author       Chen-Lieh Huang
  */
 public class DateFormatSymbols implements Serializable, Cloneable {
 
     /**
      * Construct a DateFormatSymbols object by loading format data from
-     * resources for the default locale. This constructor can only 
-     * construct instances for the locales supported by the Java 
-     * runtime environment, not for those supported by installed 
+     * resources for the default locale. This constructor can only
+     * construct instances for the locales supported by the Java
+     * runtime environment, not for those supported by installed
      * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider}
-     * implementations. For full locale coverage, use the 
-     * {@link #getInstance(Locale) getInstance} method. 
+     * implementations. For full locale coverage, use the
+     * {@link #getInstance(Locale) getInstance} method.
      *
      * @see #getInstance()
      * @exception  java.util.MissingResourceException
@@ -124,12 +123,12 @@ public class DateFormatSymbols implements Serializable, Cloneable {
 
     /**
      * Construct a DateFormatSymbols object by loading format data from
-     * resources for the given locale. This constructor can only 
-     * construct instances for the locales supported by the Java 
-     * runtime environment, not for those supported by installed 
+     * resources for the given locale. This constructor can only
+     * construct instances for the locales supported by the Java
+     * runtime environment, not for those supported by installed
      * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider}
-     * implementations. For full locale coverage, use the 
-     * {@link #getInstance(Locale) getInstance} method. 
+     * implementations. For full locale coverage, use the
+     * {@link #getInstance(Locale) getInstance} method.
      *
      * @see #getInstance(Locale)
      * @exception  java.util.MissingResourceException
@@ -209,10 +208,10 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * <li><code>zoneStrings[i][4]</code> - short name of zone in daylight
      * saving time</li>
      * </ul>
-     * The zone ID is <em>not</em> localized; it's one of the valid IDs of  
-     * the {@link java.util.TimeZone TimeZone} class that are not  
-     * <a href="../java/util/TimeZone.html#CustomID">custom IDs</a>. 
-     * All other entries are localized names. 
+     * The zone ID is <em>not</em> localized; it's one of the valid IDs of
+     * the {@link java.util.TimeZone TimeZone} class that are not
+     * <a href="../java/util/TimeZone.html#CustomID">custom IDs</a>.
+     * All other entries are localized names.
      * @see java.util.TimeZone
      * @serial
      */
@@ -256,8 +255,8 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * Returns an array of all locales for which the
      * <code>getInstance</code> methods of this class can return
      * localized instances.
-     * The returned array represents the union of locales supported by the 
-     * Java runtime and by installed 
+     * The returned array represents the union of locales supported by the
+     * Java runtime and by installed
      * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider}
      * implementations.  It must contain at least a <code>Locale</code>
      * instance equal to {@link java.util.Locale#US Locale.US}.
@@ -269,29 +268,29 @@ public class DateFormatSymbols implements Serializable, Cloneable {
     public static Locale[] getAvailableLocales() {
         LocaleServiceProviderPool pool=
             LocaleServiceProviderPool.getPool(DateFormatSymbolsProvider.class);
-	return pool.getAvailableLocales();
+        return pool.getAvailableLocales();
     }
 
     /**
-     * Gets the <code>DateFormatSymbols</code> instance for the default 
+     * Gets the <code>DateFormatSymbols</code> instance for the default
      * locale.  This method provides access to <code>DateFormatSymbols</code>
-     * instances for locales supported by the Java runtime itself as well 
-     * as for those supported by installed 
-     * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider} 
+     * instances for locales supported by the Java runtime itself as well
+     * as for those supported by installed
+     * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider}
      * implementations.
      * @return a <code>DateFormatSymbols</code> instance.
      * @since 1.6
      */
     public static final DateFormatSymbols getInstance() {
-	return getInstance(Locale.getDefault());
+        return getInstance(Locale.getDefault());
     }
 
     /**
-     * Gets the <code>DateFormatSymbols</code> instance for the specified 
+     * Gets the <code>DateFormatSymbols</code> instance for the specified
      * locale.  This method provides access to <code>DateFormatSymbols</code>
-     * instances for locales supported by the Java runtime itself as well 
-     * as for those supported by installed 
-     * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider} 
+     * instances for locales supported by the Java runtime itself as well
+     * as for those supported by installed
+     * {@link java.text.spi.DateFormatSymbolsProvider DateFormatSymbolsProvider}
      * implementations.
      * @param locale the given locale.
      * @return a <code>DateFormatSymbols</code> instance.
@@ -300,7 +299,7 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      */
     public static final DateFormatSymbols getInstance(Locale locale) {
 
-        // Check whether a provider can provide an implementation that's closer 
+        // Check whether a provider can provide an implementation that's closer
         // to the requested locale than what the Java runtime itself can provide.
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(DateFormatSymbolsProvider.class);
@@ -418,8 +417,8 @@ public class DateFormatSymbols implements Serializable, Cloneable {
     }
 
     /**
-     * Gets time zone strings.  Use of this method is discouraged; use 
-     * {@link java.util.TimeZone#getDisplayName() TimeZone.getDisplayName()} 
+     * Gets time zone strings.  Use of this method is discouraged; use
+     * {@link java.util.TimeZone#getDisplayName() TimeZone.getDisplayName()}
      * instead.
      * <p>
      * The value returned is a
@@ -439,24 +438,24 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * <li><code>zoneStrings[i][4]</code> - short name of zone in daylight
      * saving time</li>
      * </ul>
-     * The zone ID is <em>not</em> localized; it's one of the valid IDs of 
-     * the {@link java.util.TimeZone TimeZone} class that are not 
+     * The zone ID is <em>not</em> localized; it's one of the valid IDs of
+     * the {@link java.util.TimeZone TimeZone} class that are not
      * <a href="../util/TimeZone.html#CustomID">custom IDs</a>.
-     * All other entries are localized names.  If a zone does not implement 
+     * All other entries are localized names.  If a zone does not implement
      * daylight saving time, the daylight saving time names should not be used.
      * <p>
-     * If {@link #setZoneStrings(String[][]) setZoneStrings} has been called 
-     * on this <code>DateFormatSymbols</code> instance, then the strings 
-     * provided by that call are returned. Otherwise, the returned array 
-     * contains names provided by the Java runtime and by installed 
-     * {@link java.util.spi.TimeZoneNameProvider TimeZoneNameProvider} 
-     * implementations.      
-     * 
+     * If {@link #setZoneStrings(String[][]) setZoneStrings} has been called
+     * on this <code>DateFormatSymbols</code> instance, then the strings
+     * provided by that call are returned. Otherwise, the returned array
+     * contains names provided by the Java runtime and by installed
+     * {@link java.util.spi.TimeZoneNameProvider TimeZoneNameProvider}
+     * implementations.
+     *
      * @return the time zone strings.
      * @see #setZoneStrings(String[][])
      */
     public String[][] getZoneStrings() {
-	return getZoneStringsImpl(true);
+        return getZoneStringsImpl(true);
     }
 
     /**
@@ -477,8 +476,8 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * <li><code>zoneStrings[i][4]</code> - short name of zone in daylight
      * saving time</li>
      * </ul>
-     * The zone ID is <em>not</em> localized; it's one of the valid IDs of 
-     * the {@link java.util.TimeZone TimeZone} class that are not 
+     * The zone ID is <em>not</em> localized; it's one of the valid IDs of
+     * the {@link java.util.TimeZone TimeZone} class that are not
      * <a href="../util/TimeZone.html#CustomID">custom IDs</a>.
      * All other entries are localized names.
      *
@@ -491,13 +490,13 @@ public class DateFormatSymbols implements Serializable, Cloneable {
     public void setZoneStrings(String[][] newZoneStrings) {
         String[][] aCopy = new String[newZoneStrings.length][];
         for (int i = 0; i < newZoneStrings.length; ++i) {
-	    if (newZoneStrings[i].length < 5) {
-	        throw new IllegalArgumentException();
-	    }
+            if (newZoneStrings[i].length < 5) {
+                throw new IllegalArgumentException();
+            }
             aCopy[i] = duplicate(newZoneStrings[i]);
-	}
+        }
         zoneStrings = aCopy;
-	isZoneStringsSet = true;
+        isZoneStringsSet = true;
     }
 
     /**
@@ -622,7 +621,7 @@ public class DateFormatSymbols implements Serializable, Cloneable {
         ampms = resource.getStringArray("AmPmMarkers");
         localPatternChars = resource.getString("DateTimePatternChars");
 
-	locale = desiredLocale;
+        locale = desiredLocale;
     }
 
     /**
@@ -749,17 +748,17 @@ public class DateFormatSymbols implements Serializable, Cloneable {
     }
 
     /**
-     * Obtains a DateFormatSymbols instance from a DateFormatSymbolsProvider 
+     * Obtains a DateFormatSymbols instance from a DateFormatSymbolsProvider
      * implementation.
      */
-    private static class DateFormatSymbolsGetter 
-        implements LocaleServiceProviderPool.LocalizedObjectGetter<DateFormatSymbolsProvider, 
+    private static class DateFormatSymbolsGetter
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<DateFormatSymbolsProvider,
                                                                    DateFormatSymbols> {
         private static final DateFormatSymbolsGetter INSTANCE =
             new DateFormatSymbolsGetter();
 
-        public DateFormatSymbols getObject(DateFormatSymbolsProvider dateFormatSymbolsProvider, 
-                                Locale locale, 
+        public DateFormatSymbols getObject(DateFormatSymbolsProvider dateFormatSymbolsProvider,
+                                Locale locale,
                                 String key,
                                 Object... params) {
             assert params.length == 0;

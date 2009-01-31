@@ -29,16 +29,15 @@ import java.awt.*;
 import java.awt.image.*;
 
 /**
- * A class to encapsulate a custom image-based cursor.  
+ * A class to encapsulate a custom image-based cursor.
  *
- * @version 	%I%, %G%
- * @author 	ThomasBall
+ * @author      ThomasBall
  */
 public abstract class CustomCursor extends Cursor {
 
     protected Image image;
 
-    public CustomCursor(Image cursor, Point hotSpot, String name) 
+    public CustomCursor(Image cursor, Point hotSpot, String name)
             throws IndexOutOfBoundsException {
         super(name);
         image = cursor;
@@ -55,9 +54,9 @@ public abstract class CustomCursor extends Cursor {
         int width = cursor.getWidth(c);
         int height = cursor.getHeight(c);
 
-        // Fix for bug 4212593 The Toolkit.createCustomCursor does not 
-        //                     check absence of the image of cursor 
-        // If the image is invalid, the cursor will be hidden (made completely 
+        // Fix for bug 4212593 The Toolkit.createCustomCursor does not
+        //                     check absence of the image of cursor
+        // If the image is invalid, the cursor will be hidden (made completely
         // transparent). In this case, getBestCursorSize() will adjust negative w and h,
         // but we need to set the hotspot inside the image here.
         if (tracker.isErrorAny() || width < 0 || height < 0) {
@@ -67,13 +66,13 @@ public abstract class CustomCursor extends Cursor {
         // Scale image to nearest supported size.
         Dimension nativeSize = toolkit.getBestCursorSize(width, height);
         if (nativeSize.width != width || nativeSize.height != height) {
-            cursor = cursor.getScaledInstance(nativeSize.width, 
+            cursor = cursor.getScaledInstance(nativeSize.width,
                                               nativeSize.height,
                                               Image.SCALE_DEFAULT);
             width = nativeSize.width;
             height = nativeSize.height;
         }
-        
+
         // Verify that the hotspot is within cursor bounds.
         if (hotSpot.x >= width || hotSpot.y >= height || hotSpot.x < 0 || hotSpot.y < 0) {
             throw new IndexOutOfBoundsException("invalid hotSpot");
@@ -97,7 +96,7 @@ public abstract class CustomCursor extends Cursor {
 
         createNativeCursor(image, pixels, width, height, hotSpot.x, hotSpot.y);
     }
-    
+
     protected abstract void createNativeCursor(Image im,  int[] pixels,
                                                int width, int height,
                                                int xHotSpot, int yHotSpot);

@@ -58,7 +58,6 @@ package sun.text;
  *
  * @see                CompactIntArray
  * @see                CompactShortArray
- * @version            %I% %G%
  * @author             Helena Shih
  */
 public final class CompactByteArray implements Cloneable {

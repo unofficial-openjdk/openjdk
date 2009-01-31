@@ -54,7 +54,6 @@ import java.util.logging.*;
  * policy is used to perform the search operation.
  *
  * @author David Mendenhall
- * @version %I%, %G%
  *
  * @see java.util.Comparator
  * @since 1.4
@@ -85,7 +84,7 @@ public class SortingFocusTraversalPolicy
     // Delegate our fitness test to ContainerOrder so that we only have to
     // code the algorithm once.
     private static final SwingContainerOrderFocusTraversalPolicy
-	fitnessTestPolicy = new SwingContainerOrderFocusTraversalPolicy();
+        fitnessTestPolicy = new SwingContainerOrderFocusTraversalPolicy();
 
     /**
      * Constructs a SortingFocusTraversalPolicy without a Comparator.
@@ -100,93 +99,93 @@ public class SortingFocusTraversalPolicy
      * Constructs a SortingFocusTraversalPolicy with the specified Comparator.
      */
     public SortingFocusTraversalPolicy(Comparator<? super Component> comparator) {
-	this.comparator = comparator;
+        this.comparator = comparator;
     }
 
     private void enumerateAndSortCycle(Container focusCycleRoot,
-				       List cycle, Map defaults) {
-	List defaultRoots = null;
+                                       List cycle, Map defaults) {
+        List defaultRoots = null;
 
-	if (!focusCycleRoot.isShowing()) {
-	    return;
-	}
+        if (!focusCycleRoot.isShowing()) {
+            return;
+        }
 
-	enumerateCycle(focusCycleRoot, cycle);
+        enumerateCycle(focusCycleRoot, cycle);
 
-	boolean addDefaultComponents =
-	    (defaults != null && getImplicitDownCycleTraversal());
+        boolean addDefaultComponents =
+            (defaults != null && getImplicitDownCycleTraversal());
 
         if (log.isLoggable(Level.FINE)) log.fine("### Will add defaults: " + addDefaultComponents);
 
-	// Create a list of all default Components which should be added
-	// to the list
-	if (addDefaultComponents) {
-	    defaultRoots = new ArrayList();
-	    for (Iterator iter = cycle.iterator(); iter.hasNext(); ) {
-		Component comp = (Component)iter.next();
-		if ((comp instanceof Container) &&
-		    ((Container)comp).isFocusCycleRoot())
-		{
-		    defaultRoots.add(comp);
-		}
-	    }
-	    Collections.sort(defaultRoots, comparator);
-	}
+        // Create a list of all default Components which should be added
+        // to the list
+        if (addDefaultComponents) {
+            defaultRoots = new ArrayList();
+            for (Iterator iter = cycle.iterator(); iter.hasNext(); ) {
+                Component comp = (Component)iter.next();
+                if ((comp instanceof Container) &&
+                    ((Container)comp).isFocusCycleRoot())
+                {
+                    defaultRoots.add(comp);
+                }
+            }
+            Collections.sort(defaultRoots, comparator);
+        }
 
-	// Sort the Components in the cycle
-	Collections.sort(cycle, comparator);
+        // Sort the Components in the cycle
+        Collections.sort(cycle, comparator);
 
-	// Find all of the roots in the cycle and place their default
-	// Components after them. Note that the roots may have been removed
-	// from the list because they were unfit. In that case, insert the
-	// default Components as though the roots were still in the list.
-	if (addDefaultComponents) {
-	    for (ListIterator defaultRootsIter = 
-		     defaultRoots.listIterator(defaultRoots.size());
-		 defaultRootsIter.hasPrevious(); )
-	    {
-		Container root = (Container)defaultRootsIter.previous();
-		Component defComp =
-		    root.getFocusTraversalPolicy().getDefaultComponent(root);
+        // Find all of the roots in the cycle and place their default
+        // Components after them. Note that the roots may have been removed
+        // from the list because they were unfit. In that case, insert the
+        // default Components as though the roots were still in the list.
+        if (addDefaultComponents) {
+            for (ListIterator defaultRootsIter =
+                     defaultRoots.listIterator(defaultRoots.size());
+                 defaultRootsIter.hasPrevious(); )
+            {
+                Container root = (Container)defaultRootsIter.previous();
+                Component defComp =
+                    root.getFocusTraversalPolicy().getDefaultComponent(root);
 
-		if (defComp != null && defComp.isShowing()) {
-		    int index = Collections.binarySearch(cycle, root,
-							 comparator);
-		    if (index < 0) {
-			// If root is not in the list, then binarySearch
-			// returns (-(insertion point) - 1). defComp follows
-			// the index one less than the insertion point.
-			
-			index = -index - 2;
-		    }
-		    
-		    defaults.put(new Integer(index), defComp);
-		}
-	    }
-	}
+                if (defComp != null && defComp.isShowing()) {
+                    int index = Collections.binarySearch(cycle, root,
+                                                         comparator);
+                    if (index < 0) {
+                        // If root is not in the list, then binarySearch
+                        // returns (-(insertion point) - 1). defComp follows
+                        // the index one less than the insertion point.
+
+                        index = -index - 2;
+                    }
+
+                    defaults.put(new Integer(index), defComp);
+                }
+            }
+        }
     }
 
     private void enumerateCycle(Container container, List cycle) {
-	if (!(container.isVisible() && container.isDisplayable())) {
-	    return;
-	}
+        if (!(container.isVisible() && container.isDisplayable())) {
+            return;
+        }
 
-	cycle.add(container);
+        cycle.add(container);
 
-	Component[] components = container.getComponents();
-	for (int i = 0; i < components.length; i++) {
-	    Component comp = components[i];
-	    if ((comp instanceof Container)
+        Component[] components = container.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            Component comp = components[i];
+            if ((comp instanceof Container)
                 && !((Container)comp).isFocusTraversalPolicyProvider()
                 && !((Container)comp).isFocusCycleRoot()
-                && !((comp instanceof JComponent) 
-                     && ((JComponent)comp).isManagingFocus())) 
+                && !((comp instanceof JComponent)
+                     && ((JComponent)comp).isManagingFocus()))
             {
-		enumerateCycle((Container)comp, cycle);
-	    } else {
-		cycle.add(comp);
-	    }
-	}
+                enumerateCycle((Container)comp, cycle);
+            } else {
+                cycle.add(comp);
+            }
+        }
     }
 
     Container getTopmostProvider(Container focusCycleRoot, Component aComponent) {
@@ -227,7 +226,7 @@ public class SortingFocusTraversalPolicy
      *         aComponent is null
      */
     public Component getComponentAfter(Container aContainer,
-				       Component aComponent) {
+                                       Component aComponent) {
         if (log.isLoggable(Level.FINE)) log.fine("### Searching in " + aContainer.getName() + " for component after " + aComponent.getName());
 
         if (aContainer == null || aComponent == null) {
@@ -249,7 +248,7 @@ public class SortingFocusTraversalPolicy
             if (retval == policy.getFirstComponent(ftp)) {
                 retval = null;
             }
-            
+
             if (retval != null) {
                 if (log.isLoggable(Level.FINE)) log.fine("### FTP returned " + retval.getName());
                 return retval;
@@ -257,19 +256,19 @@ public class SortingFocusTraversalPolicy
             aComponent = ftp;
         }
 
-	List cycle = new ArrayList();
-	Map defaults = new HashMap();
+        List cycle = new ArrayList();
+        Map defaults = new HashMap();
         enumerateAndSortCycle(aContainer, cycle, defaults);
 
-	int index;
-	try {
-	    index = Collections.binarySearch(cycle, aComponent, comparator);
-	} catch (ClassCastException e) {
+        int index;
+        try {
+            index = Collections.binarySearch(cycle, aComponent, comparator);
+        } catch (ClassCastException e) {
             if (log.isLoggable(Level.FINE)) log.fine("### Didn't find component " + aComponent.getName() + " in a cycle " + aContainer.getName());
             return getFirstComponent(aContainer);
-	}
+        }
 
-	if (index < 0) {
+        if (index < 0) {
             // Fix for 5070991.
             // A workaround for a transitivity problem caused by ROW_TOLERANCE,
             // because of that the component may be missed in the binary search.
@@ -284,28 +283,28 @@ public class SortingFocusTraversalPolicy
 
                 index = -index - 2;
             }
-	}
+        }
 
-	Component defComp = (Component)defaults.get(new Integer(index));
-	if (defComp != null) {
-	    return defComp;
-	}
+        Component defComp = (Component)defaults.get(new Integer(index));
+        if (defComp != null) {
+            return defComp;
+        }
 
         do {
-	index++;
+        index++;
 
-	if (index >= cycle.size()) {
+        if (index >= cycle.size()) {
                 if (aContainer.isFocusCycleRoot()) {
                     this.cachedRoot = aContainer;
-	    this.cachedCycle = cycle;
+            this.cachedCycle = cycle;
 
                     Component retval = getFirstComponent(aContainer);
 
-	    this.cachedRoot = null;
-	    this.cachedCycle = null;
+            this.cachedRoot = null;
+            this.cachedCycle = null;
 
-	    return retval;
-	} else {
+            return retval;
+        } else {
                     return null;
                 }
             } else {
@@ -315,7 +314,7 @@ public class SortingFocusTraversalPolicy
                 } else if (comp instanceof Container && ((Container)comp).isFocusTraversalPolicyProvider()) {
                     return ((Container)comp).getFocusTraversalPolicy().getDefaultComponent((Container)comp);
                 }
-	}
+        }
         } while (true);
     }
 
@@ -342,7 +341,7 @@ public class SortingFocusTraversalPolicy
      *         aComponent is null
      */
     public Component getComponentBefore(Container aContainer,
-					Component aComponent) {
+                                        Component aComponent) {
         if (aContainer == null || aComponent == null) {
             throw new IllegalArgumentException("aContainer and aComponent cannot be null");
         }
@@ -370,33 +369,33 @@ public class SortingFocusTraversalPolicy
         }
 
 
-	List cycle = new ArrayList();
-	Map defaults = new HashMap();
+        List cycle = new ArrayList();
+        Map defaults = new HashMap();
         enumerateAndSortCycle(aContainer, cycle, defaults);
 
         if (log.isLoggable(Level.FINE)) log.fine("### Cycle is " + cycle + ", component is " + aComponent);
 
-	int index;
-	try {
-	    index = Collections.binarySearch(cycle, aComponent, comparator);
-	} catch (ClassCastException e) {
+        int index;
+        try {
+            index = Collections.binarySearch(cycle, aComponent, comparator);
+        } catch (ClassCastException e) {
             return getLastComponent(aContainer);
-	}
+        }
 
-	if (index < 0) {
-	    // If we're not in the cycle, then binarySearch returns
-	    // (-(insertion point) - 1). The previous element is our insertion
-	    // point - 1.
-	    
+        if (index < 0) {
+            // If we're not in the cycle, then binarySearch returns
+            // (-(insertion point) - 1). The previous element is our insertion
+            // point - 1.
+
             index = -index - 2;
-	} else {
+        } else {
             index--;
         }
 
         if (log.isLoggable(Level.FINE)) log.fine("### Index is " + index);
 
         if (index >= 0) {
-            Component defComp = (Component)defaults.get(new Integer(index));            
+            Component defComp = (Component)defaults.get(new Integer(index));
             if (defComp != null && cycle.get(index) != aContainer) {
                 if (log.isLoggable(Level.FINE)) log.fine("### Returning default " + defComp.getName() + " at " + index);
                 return defComp;
@@ -404,24 +403,24 @@ public class SortingFocusTraversalPolicy
         }
 
         do {
-	if (index < 0) {
+        if (index < 0) {
                 this.cachedRoot = aContainer;
-	    this.cachedCycle = cycle;
+            this.cachedCycle = cycle;
 
                 Component retval = getLastComponent(aContainer);
 
-	    this.cachedRoot = null;
-	    this.cachedCycle = null;
+            this.cachedRoot = null;
+            this.cachedCycle = null;
 
-	    return retval;
-	} else {
+            return retval;
+        } else {
                 Component comp = (Component)cycle.get(index);
                 if (accept(comp)) {
                     return comp;
                 } else if (comp instanceof Container && ((Container)comp).isFocusTraversalPolicyProvider()) {
                     return ((Container)comp).getFocusTraversalPolicy().getLastComponent((Container)comp);
-	    }
-	}
+            }
+        }
             index--;
         } while (true);
     }
@@ -438,24 +437,24 @@ public class SortingFocusTraversalPolicy
      * @throws IllegalArgumentException if aContainer is null
      */
     public Component getFirstComponent(Container aContainer) {
-	List cycle;
+        List cycle;
 
         if (log.isLoggable(Level.FINE)) log.fine("### Getting first component in " + aContainer.getName());
         if (aContainer == null) {
             throw new IllegalArgumentException("aContainer cannot be null");
-	}
+        }
 
         if (this.cachedRoot == aContainer) {
-	    cycle = this.cachedCycle;
-	} else {
-	    cycle = new ArrayList();
+            cycle = this.cachedCycle;
+        } else {
+            cycle = new ArrayList();
             enumerateAndSortCycle(aContainer, cycle, null);
-	}
+        }
 
-	int size = cycle.size();
-	if (size == 0) {
-	    return null;
-	}
+        int size = cycle.size();
+        if (size == 0) {
+            return null;
+        }
 
         for (int i= 0; i < cycle.size(); i++) {
             Component comp = (Component)cycle.get(i);
@@ -463,7 +462,7 @@ public class SortingFocusTraversalPolicy
                 return comp;
             } else if (comp instanceof Container && !(comp == aContainer) && ((Container)comp).isFocusTraversalPolicyProvider()) {
                 return ((Container)comp).getFocusTraversalPolicy().getDefaultComponent((Container)comp);
-            }            
+            }
         }
         return null;
     }
@@ -480,25 +479,25 @@ public class SortingFocusTraversalPolicy
      * @throws IllegalArgumentException if aContainer is null
      */
     public Component getLastComponent(Container aContainer) {
-	List cycle;
+        List cycle;
         if (log.isLoggable(Level.FINE)) log.fine("### Getting last component in " + aContainer.getName());
 
         if (aContainer == null) {
             throw new IllegalArgumentException("aContainer cannot be null");
-	}
+        }
 
         if (this.cachedRoot == aContainer) {
-	    cycle = this.cachedCycle;
-	} else {
-	    cycle = new ArrayList();
+            cycle = this.cachedCycle;
+        } else {
+            cycle = new ArrayList();
             enumerateAndSortCycle(aContainer, cycle, null);
-	}
+        }
 
-	int size = cycle.size();
-	if (size == 0) {
+        int size = cycle.size();
+        if (size == 0) {
             if (log.isLoggable(Level.FINE)) log.fine("### Cycle is empty");
-	    return null;
-	}
+            return null;
+        }
         if (log.isLoggable(Level.FINE)) log.fine("### Cycle is " + cycle);
 
         for (int i= cycle.size()-1; i >= 0; i--) {
@@ -507,7 +506,7 @@ public class SortingFocusTraversalPolicy
                 return comp;
             } else if (comp instanceof Container && !(comp == aContainer) && ((Container)comp).isFocusTraversalPolicyProvider()) {
                 return ((Container)comp).getFocusTraversalPolicy().getLastComponent((Container)comp);
-            }            
+            }
         }
         return null;
     }
@@ -544,8 +543,8 @@ public class SortingFocusTraversalPolicy
      * @see #getFirstComponent
      */
     public void setImplicitDownCycleTraversal(boolean
-					      implicitDownCycleTraversal) {
-	this.implicitDownCycleTraversal = implicitDownCycleTraversal;
+                                              implicitDownCycleTraversal) {
+        this.implicitDownCycleTraversal = implicitDownCycleTraversal;
     }
 
     /**
@@ -562,7 +561,7 @@ public class SortingFocusTraversalPolicy
      * @see #getFirstComponent
      */
     public boolean getImplicitDownCycleTraversal() {
-	return implicitDownCycleTraversal;
+        return implicitDownCycleTraversal;
     }
 
     /**
@@ -572,7 +571,7 @@ public class SortingFocusTraversalPolicy
      * @param comparator the Comparator which will be used for sorting
      */
     protected void setComparator(Comparator<? super Component> comparator) {
-	this.comparator = comparator;
+        this.comparator = comparator;
     }
 
     /**
@@ -582,7 +581,7 @@ public class SortingFocusTraversalPolicy
      * @return the Comparator which will be used for sorting
      */
     protected Comparator<? super Component> getComparator() {
-	return comparator;
+        return comparator;
     }
 
     /**
@@ -596,7 +595,7 @@ public class SortingFocusTraversalPolicy
      *         enabled, and focusable; <code>false</code> otherwise
      */
     protected boolean accept(Component aComponent) {
-	return fitnessTestPolicy.accept(aComponent);
+        return fitnessTestPolicy.accept(aComponent);
     }
 }
 
@@ -606,6 +605,6 @@ class SwingContainerOrderFocusTraversalPolicy
     extends java.awt.ContainerOrderFocusTraversalPolicy
 {
     public boolean accept(Component aComponent) {
-	return super.accept(aComponent);
+        return super.accept(aComponent);
     }
 }

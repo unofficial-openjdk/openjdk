@@ -42,7 +42,6 @@ import java.io.UnsupportedEncodingException;
  * <tt>Handler</tt> class.
  *
  *
- * @version %I%, %G%
  * @since 1.4
  */
 
@@ -61,7 +60,7 @@ public abstract class Handler {
 
     /**
      * Default constructor.  The resulting <tt>Handler</tt> has a log
-     * level of <tt>Level.ALL</tt>, no <tt>Formatter</tt>, and no 
+     * level of <tt>Level.ALL</tt>, no <tt>Formatter</tt>, and no
      * <tt>Filter</tt>.  A default <tt>ErrorManager</tt> instance is installed
      * as the <tt>ErrorManager</tt>.
      */
@@ -101,10 +100,10 @@ public abstract class Handler {
     public abstract void close() throws SecurityException;
 
     /**
-     * Set a <tt>Formatter</tt>.  This <tt>Formatter</tt> will be used 
+     * Set a <tt>Formatter</tt>.  This <tt>Formatter</tt> will be used
      * to format <tt>LogRecords</tt> for this <tt>Handler</tt>.
      * <p>
-     * Some <tt>Handlers</tt> may not use <tt>Formatters</tt>, in 
+     * Some <tt>Handlers</tt> may not use <tt>Formatters</tt>, in
      * which case the <tt>Formatter</tt> will be remembered, but not used.
      * <p>
      * @param newFormatter the <tt>Formatter</tt> to use (may not be null)
@@ -112,10 +111,10 @@ public abstract class Handler {
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      */
     public void setFormatter(Formatter newFormatter) throws SecurityException {
-	checkAccess();
-	// Check for a null pointer:
-	newFormatter.getClass();
-	formatter = newFormatter;
+        checkAccess();
+        // Check for a null pointer:
+        newFormatter.getClass();
+        formatter = newFormatter;
     }
 
     /**
@@ -123,7 +122,7 @@ public abstract class Handler {
      * @return the <tt>Formatter</tt> (may be null).
      */
     public Formatter getFormatter() {
-	return formatter;
+        return formatter;
     }
 
     /**
@@ -133,35 +132,35 @@ public abstract class Handler {
      * to the <tt>Handler</tt>.
      *
      * @param encoding  The name of a supported character encoding.
-     *	      May be null, to indicate the default platform encoding.
+     *        May be null, to indicate the default platform encoding.
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      * @exception  UnsupportedEncodingException if the named encoding is
-     *		not supported.
+     *          not supported.
      */
-    public void setEncoding(String encoding) 
-			throws SecurityException, java.io.UnsupportedEncodingException {
-	checkAccess();
-	if (encoding != null) {
-	    try {
-	        if(!java.nio.charset.Charset.isSupported(encoding)) {
-	            throw new UnsupportedEncodingException(encoding);
-	        }	 	
-	    } catch (java.nio.charset.IllegalCharsetNameException e) {
-	        throw new UnsupportedEncodingException(encoding);
-	    }
-	}
-	this.encoding = encoding;
+    public void setEncoding(String encoding)
+                        throws SecurityException, java.io.UnsupportedEncodingException {
+        checkAccess();
+        if (encoding != null) {
+            try {
+                if(!java.nio.charset.Charset.isSupported(encoding)) {
+                    throw new UnsupportedEncodingException(encoding);
+                }
+            } catch (java.nio.charset.IllegalCharsetNameException e) {
+                throw new UnsupportedEncodingException(encoding);
+            }
+        }
+        this.encoding = encoding;
     }
 
     /**
      * Return the character encoding for this <tt>Handler</tt>.
      *
      * @return  The encoding name.  May be null, which indicates the
-     *	    	default encoding should be used.
+     *          default encoding should be used.
      */
     public String getEncoding() {
-	return encoding;
+        return encoding;
     }
 
     /**
@@ -176,8 +175,8 @@ public abstract class Handler {
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      */
     public void setFilter(Filter newFilter) throws SecurityException {
-	checkAccess();
-	filter = newFilter;
+        checkAccess();
+        filter = newFilter;
     }
 
     /**
@@ -186,7 +185,7 @@ public abstract class Handler {
      * @return  a <tt>Filter</tt> object (may be null)
      */
     public Filter getFilter() {
-	return filter;
+        return filter;
     }
 
     /**
@@ -200,13 +199,13 @@ public abstract class Handler {
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      */
     public void setErrorManager(ErrorManager em) {
-	checkAccess();
-	if (em == null) {
-	   throw new NullPointerException();
-	}
-	errorManager = em;
+        checkAccess();
+        if (em == null) {
+           throw new NullPointerException();
+        }
+        errorManager = em;
     }
- 
+
     /**
      * Retrieves the ErrorManager for this Handler.
      *
@@ -214,8 +213,8 @@ public abstract class Handler {
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      */
     public ErrorManager getErrorManager() {
-	checkAccess();
-	return errorManager;
+        checkAccess();
+        return errorManager;
     }
 
    /**
@@ -229,52 +228,52 @@ public abstract class Handler {
      * @param code   an error code defined in ErrorManager
      */
     protected void reportError(String msg, Exception ex, int code) {
-	try {
-	    errorManager.error(msg, ex, code);
-	} catch (Exception ex2) {
-	    System.err.println("Handler.reportError caught:");	
-	    ex2.printStackTrace();
-	}
+        try {
+            errorManager.error(msg, ex, code);
+        } catch (Exception ex2) {
+            System.err.println("Handler.reportError caught:");
+            ex2.printStackTrace();
+        }
     }
 
     /**
      * Set the log level specifying which message levels will be
      * logged by this <tt>Handler</tt>.  Message levels lower than this
-     * value will be discarded. 
+     * value will be discarded.
      * <p>
      * The intention is to allow developers to turn on voluminous
      * logging, but to limit the messages that are sent to certain
      * <tt>Handlers</tt>.
-     * 
+     *
      * @param newLevel   the new value for the log level
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have <tt>LoggingPermission("control")</tt>.
      */
     public synchronized void setLevel(Level newLevel) throws SecurityException {
-	if (newLevel == null) {
-	    throw new NullPointerException();
-	}
-	checkAccess();
-	logLevel = newLevel;
+        if (newLevel == null) {
+            throw new NullPointerException();
+        }
+        checkAccess();
+        logLevel = newLevel;
     }
 
     /**
      * Get the log level specifying which messages will be
      * logged by this <tt>Handler</tt>.  Message levels lower
      * than this level will be discarded.
-     * @return	the level of messages being logged.
+     * @return  the level of messages being logged.
      */
     public synchronized Level getLevel() {
-	return logLevel;
+        return logLevel;
     }
 
     /**
      * Check if this <tt>Handler</tt> would actually log a given <tt>LogRecord</tt>.
      * <p>
-     * This method checks if the <tt>LogRecord</tt> has an appropriate 
+     * This method checks if the <tt>LogRecord</tt> has an appropriate
      * <tt>Level</tt> and  whether it satisfies any <tt>Filter</tt>.  It also
      * may make other <tt>Handler</tt> specific checks that might prevent a
-     * handler from logging the <tt>LogRecord</tt>. It will return false if 
+     * handler from logging the <tt>LogRecord</tt>. It will return false if
      * the <tt>LogRecord</tt> is Null.
      * <p>
      * @param record  a <tt>LogRecord</tt>
@@ -282,15 +281,15 @@ public abstract class Handler {
      *
      */
     public boolean isLoggable(LogRecord record) {
-	int levelValue = getLevel().intValue();
-	if (record.getLevel().intValue() < levelValue || levelValue == offValue) {
-	    return false;
-	}
-	Filter filter = getFilter();
-	if (filter == null) {	
-	    return true;
-	}
-	return filter.isLoggable(record);
+        int levelValue = getLevel().intValue();
+        if (record.getLevel().intValue() < levelValue || levelValue == offValue) {
+            return false;
+        }
+        Filter filter = getFilter();
+        if (filter == null) {
+            return true;
+        }
+        return filter.isLoggable(record);
     }
 
     // Package-private support method for security checks.
@@ -298,8 +297,8 @@ public abstract class Handler {
     // appropriate security privileges to update Handler
     // state and if not throw a SecurityException.
     void checkAccess() throws SecurityException {
-	if (sealed) {
-	    manager.checkAccess();
-	}
+        if (sealed) {
+            manager.checkAccess();
+        }
     }
 }

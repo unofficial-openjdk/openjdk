@@ -28,8 +28,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 /* does not work on Solaris 2.7 */
-#include <sys/audio.h> 
-#include <sys/mixer.h> 
+#include <sys/audio.h>
+#include <sys/mixer.h>
 #include <sys/types.h>
 #include <stropts.h>
 #include <sys/conf.h>
@@ -93,4 +93,3 @@ int getAudioDeviceDescriptionByIndex(int index, AudioDeviceDescription* adDesc, 
 
 
 #endif // PLATFORM_API_SOLARISOS_UTILS_H_INCLUDED
-

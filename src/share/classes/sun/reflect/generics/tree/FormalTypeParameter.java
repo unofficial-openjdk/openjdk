@@ -34,7 +34,7 @@ public class FormalTypeParameter implements TypeTree {
 
     private FormalTypeParameter(String n, FieldTypeSignature[] bs) {
         name = n;
-	bounds = bs;
+        bounds = bs;
     }
 
     /**
@@ -45,7 +45,7 @@ public class FormalTypeParameter implements TypeTree {
      * @return a formal type parameter with the requested name and bounds
      */
     public static FormalTypeParameter make(String n, FieldTypeSignature[] bs){
-	return new FormalTypeParameter(n,bs);
+        return new FormalTypeParameter(n,bs);
     }
 
     public FieldTypeSignature[] getBounds(){return bounds;}

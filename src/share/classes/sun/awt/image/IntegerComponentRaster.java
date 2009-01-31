@@ -49,7 +49,6 @@ import java.awt.Point;
  * bands with a PackedColorModel (including a DirectColorModel) for
  * color interpretation.
  *
- * @version 10 Feb 1997
  */
 public class IntegerComponentRaster extends SunWritableRaster {
 
@@ -95,7 +94,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
     static private native void initIDs();
     static {
         /* ensure that the necessary native libraries are loaded */
-	NativeLibLoader.loadLibraries();
+        NativeLibLoader.loadLibraries();
         initIDs();
     }
 
@@ -181,7 +180,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
         }
         this.data = stealData(dbi, 0);
 
-	if (sampleModel instanceof SinglePixelPackedSampleModel) {
+        if (sampleModel instanceof SinglePixelPackedSampleModel) {
             SinglePixelPackedSampleModel sppsm =
                     (SinglePixelPackedSampleModel)sampleModel;
             int[] boffsets = sppsm.getBitOffsets();
@@ -206,7 +205,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
             this.numDataElems = sppsm.getNumDataElements();
         } else {
             throw new RasterFormatException("IntegerComponentRasters must have"+
-					    " SinglePixelPackedSampleModel");
+                                            " SinglePixelPackedSampleModel");
         }
 
         verify(false);
@@ -257,7 +256,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
 
     /**
      * Returns the data elements for all bands at the specified
-     * location.  
+     * location.
      * An ArrayIndexOutOfBounds exception will be thrown at runtime
      * if the pixel coordinate is out of bounds.
      * A ClassCastException will be thrown if the input object is non null
@@ -423,7 +422,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
         if (width <= 0 || height <= 0) {
             return;
         }
-            
+
         // Write inRaster (minX, minY) to (dstX, dstY)
 
         int srcOffX = inRaster.getMinX();
@@ -460,7 +459,7 @@ public class IntegerComponentRaster extends SunWritableRaster {
                     dstOffset += scanlineStride;
                 }
                 markDirty();
-		return;
+                return;
             }
         }
 
@@ -546,17 +545,17 @@ public class IntegerComponentRaster extends SunWritableRaster {
                                                int width, int height,
                                                int x0, int y0,
                                                int bandList[]) {
-	if (x < this.minX) {
-	    throw new RasterFormatException("x lies outside raster");
-	}
-	if (y < this.minY) {
-	    throw new RasterFormatException("y lies outside raster");
-	}
+        if (x < this.minX) {
+            throw new RasterFormatException("x lies outside raster");
+        }
+        if (y < this.minY) {
+            throw new RasterFormatException("y lies outside raster");
+        }
         if ((x+width < x) || (x+width > this.minX + this.width)) {
-	    throw new RasterFormatException("(x + width) is outside raster");
+            throw new RasterFormatException("(x + width) is outside raster");
         }
         if ((y+height < y) || (y+height > this.minY + this.height)) {
-	    throw new RasterFormatException("(y + height) is outside raster");
+            throw new RasterFormatException("(y + height) is outside raster");
         }
 
         SampleModel sm;
@@ -610,8 +609,8 @@ public class IntegerComponentRaster extends SunWritableRaster {
      */
     public WritableRaster createCompatibleWritableRaster(int w, int h) {
         if (w <= 0 || h <=0) {
-	    throw new RasterFormatException("negative "+
-					  ((w <= 0) ? "width" : "height"));
+            throw new RasterFormatException("negative "+
+                                          ((w <= 0) ? "width" : "height"));
         }
 
         SampleModel sm = sampleModel.createCompatibleSampleModel(w,h);
@@ -691,5 +690,3 @@ public class IntegerComponentRaster extends SunWritableRaster {
 //    }
 
 }
-
-

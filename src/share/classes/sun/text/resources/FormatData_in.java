@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_in extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "MonthNames", 
+            { "MonthNames",
                 new String[] {
                     "Januari",
                     "Februari",
@@ -64,7 +64,7 @@ public class FormatData_in extends ListResourceBundle {
                     "",
                 }
             },
-            { "MonthAbbreviations", 
+            { "MonthAbbreviations",
                 new String[] {
                     "Jan",
                     "Feb",
@@ -81,7 +81,7 @@ public class FormatData_in extends ListResourceBundle {
                     "",
                 }
             },
-            { "DayNames", 
+            { "DayNames",
                 new String[] {
                     "Minggu",
                     "Senin",
@@ -92,7 +92,7 @@ public class FormatData_in extends ListResourceBundle {
                     "Sabtu",
                 }
             },
-            { "DayAbbreviations", 
+            { "DayAbbreviations",
                 new String[] {
                     "Min",
                     "Sen",
@@ -103,20 +103,20 @@ public class FormatData_in extends ListResourceBundle {
                     "Sab",
                 }
             },
-            { "Eras", 
+            { "Eras",
                 new String[] {
                     "BCE",
                     "CE",
                 }
             },
-            { "NumberPatterns", 
+            { "NumberPatterns",
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00",
                     "#,##0%",
                 }
             },
-            { "NumberElements", 
+            { "NumberElements",
                 new String[] {
                     ",",
                     ".",
@@ -131,7 +131,7 @@ public class FormatData_in extends ListResourceBundle {
                     "NaN",
                 }
             },
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "HH:mm:ss z",
                     "HH:mm:ss z",

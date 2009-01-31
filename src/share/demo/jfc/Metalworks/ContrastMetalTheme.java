@@ -29,10 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
- 
+
+
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.plaf.metal.*;
@@ -43,7 +41,6 @@ import java.awt.*;
 /**
  * This class describes a higher-contrast Metal Theme.
  *
- * @version %I% %G%
  * @author Michael C. Albers
  */
 
@@ -60,7 +57,7 @@ public class ContrastMetalTheme extends DefaultMetalTheme {
     private final ColorUIResource secondary3 = new ColorUIResource(255, 255, 255);
     private final ColorUIResource controlHighlight = new ColorUIResource(102,102,102);
 
-    protected ColorUIResource getPrimary1() { return primary1; } 
+    protected ColorUIResource getPrimary1() { return primary1; }
     protected ColorUIResource getPrimary2() { return primary2; }
     protected ColorUIResource getPrimary3() { return primary3; }
     public ColorUIResource getPrimaryControlHighlight() { return primaryHighlight;}
@@ -73,7 +70,7 @@ public class ContrastMetalTheme extends DefaultMetalTheme {
 
     public ColorUIResource getTextHighlightColor() { return getBlack(); }
     public ColorUIResource getHighlightedTextColor() { return getWhite(); }
-  
+
     public ColorUIResource getMenuSelectedBackground() { return getBlack(); }
     public ColorUIResource getMenuSelectedForeground() { return getWhite(); }
     public ColorUIResource getAcceleratorForeground() { return getBlack(); }
@@ -85,12 +82,12 @@ public class ContrastMetalTheme extends DefaultMetalTheme {
         Border blackLineBorder = new BorderUIResource(new LineBorder( getBlack() ));
         Border whiteLineBorder = new BorderUIResource(new LineBorder( getWhite() ));
 
-	Object textBorder = new BorderUIResource( new CompoundBorder(
-						       blackLineBorder,
-					               new BasicBorders.MarginBorder()));
+        Object textBorder = new BorderUIResource( new CompoundBorder(
+                                                       blackLineBorder,
+                                                       new BasicBorders.MarginBorder()));
 
         table.put( "ToolTip.border", blackLineBorder);
-	table.put( "TitledBorder.border", blackLineBorder);
+        table.put( "TitledBorder.border", blackLineBorder);
         table.put( "Table.focusCellHighlightBorder", whiteLineBorder);
         table.put( "Table.focusCellForeground", getWhite());
 

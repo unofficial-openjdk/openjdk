@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ArabicShaping.h	1.13 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -75,7 +74,7 @@ public:
 
     typedef le_int32 ShapeType;
 
-    static void shape(const LEUnicode *chars, le_int32 offset, le_int32 charCount, 
+    static void shape(const LEUnicode *chars, le_int32 offset, le_int32 charCount,
         le_int32 charMax, le_bool rightToLeft, LEGlyphStorage &glyphStorage);
 
     static const FeatureMap *getFeatureMap(le_int32 &count);
@@ -89,8 +88,8 @@ private:
     static const le_uint8 shapingTypeTable[];
     static const ShapeType shapeTypes[];
 
-    static void adjustTags(le_int32 outIndex, le_int32 shapeOffset, 
-        LEGlyphStorage &glyphStorage); 
+    static void adjustTags(le_int32 outIndex, le_int32 shapeOffset,
+        LEGlyphStorage &glyphStorage);
 };
 
 #endif

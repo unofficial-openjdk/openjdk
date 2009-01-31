@@ -58,25 +58,24 @@ import sun.security.action.GetLongAction;
  * part of the result, and the acknowledgment is a transport-level
  * "DGCAck" message containing that UID.
  *
- * @author	Ann Wollrath
- * @author	Peter Jones
- * @version	%I%, %E%
+ * @author      Ann Wollrath
+ * @author      Peter Jones
  **/
 public class DGCAckHandler {
 
     /** timeout for holding references without receiving an acknowledgment */
-    private static final long dgcAckTimeout =		// default 5 minutes
-	AccessController.doPrivileged(
-	    new GetLongAction("sun.rmi.dgc.ackTimeout", 300000));
+    private static final long dgcAckTimeout =           // default 5 minutes
+        AccessController.doPrivileged(
+            new GetLongAction("sun.rmi.dgc.ackTimeout", 300000));
 
     /** thread pool for scheduling delayed tasks */
     private static final ScheduledExecutorService scheduler =
-	AccessController.doPrivileged(
-	    new RuntimeUtil.GetInstanceAction()).getScheduler();
+        AccessController.doPrivileged(
+            new RuntimeUtil.GetInstanceAction()).getScheduler();
 
     /** table mapping ack ID to handler */
     private static final Map<UID,DGCAckHandler> idTable =
-	Collections.synchronizedMap(new HashMap<UID,DGCAckHandler>());
+        Collections.synchronizedMap(new HashMap<UID,DGCAckHandler>());
 
     private final UID id;
     private List<Object> objList = new ArrayList<Object>(); // null if released
@@ -94,20 +93,20 @@ public class DGCAckHandler {
      * invoking this instance's "release" method.
      **/
     DGCAckHandler(UID id) {
-	this.id = id;
-	if (id != null) {
-	    assert !idTable.containsKey(id);
-	    idTable.put(id, this);
-	}
+        this.id = id;
+        if (id != null) {
+            assert !idTable.containsKey(id);
+            idTable.put(id, this);
+        }
     }
 
     /**
      * Adds the specified reference to this DGCAckHandler.
      **/
     synchronized void add(Object obj) {
-	if (objList != null) {
-	    objList.add(obj);
-	}
+        if (objList != null) {
+            objList.add(obj);
+        }
     }
 
     /**
@@ -116,24 +115,24 @@ public class DGCAckHandler {
      * has not been received.
      **/
     synchronized void startTimer() {
-	if (objList != null && task == null) {
-	    task = scheduler.schedule(new Runnable() {
-		public void run() {
-		    release();
-		}
-	    }, dgcAckTimeout, TimeUnit.MILLISECONDS);
-	}
+        if (objList != null && task == null) {
+            task = scheduler.schedule(new Runnable() {
+                public void run() {
+                    release();
+                }
+            }, dgcAckTimeout, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
      * Releases the references held by this DGCAckHandler.
      **/
     synchronized void release() {
-	if (task != null) {
-	    task.cancel(false);
-	    task = null;
-	}
-	objList = null;
+        if (task != null) {
+            task.cancel(false);
+            task = null;
+        }
+        objList = null;
     }
 
     /**
@@ -141,9 +140,9 @@ public class DGCAckHandler {
      * release its references.
      **/
     public static void received(UID id) {
-	DGCAckHandler h = idTable.remove(id);
-	if (h != null) {
-	    h.release();
-	}
+        DGCAckHandler h = idTable.remove(id);
+        if (h != null) {
+            h.release();
+        }
     }
 }

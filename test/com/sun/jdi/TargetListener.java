@@ -51,4 +51,3 @@ public interface TargetListener {
     void vmDied(VMDeathEvent event);
     void vmDisconnected(VMDisconnectEvent event);
 }
-

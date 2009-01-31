@@ -53,7 +53,7 @@ NativePrimitive Ushort4444ArgbPrimitives[] = {
 jboolean RegisterUshort4444Argb(JNIEnv *env)
 {
     return RegisterPrimitives(env, Ushort4444ArgbPrimitives,
-			      ArraySize(Ushort4444ArgbPrimitives));
+                              ArraySize(Ushort4444ArgbPrimitives));
 }
 
 jint PixelForUshort4444Argb(SurfaceDataRasInfo *pRasInfo, jint rgb)

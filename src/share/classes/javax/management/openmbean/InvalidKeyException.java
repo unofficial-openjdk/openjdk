@@ -26,7 +26,7 @@
 package javax.management.openmbean;
 
 /**
- * This runtime exception is thrown to indicate that a method parameter which was expected to be 
+ * This runtime exception is thrown to indicate that a method parameter which was expected to be
  * an item name of a <i>composite data</i> or a row index of a <i>tabular data</i> is not valid.
  *
  *
@@ -40,7 +40,7 @@ public class InvalidKeyException extends IllegalArgumentException {
      * An InvalidKeyException with no detail message.
      */
     public InvalidKeyException() {
-	super();
+        super();
     }
 
     /**
@@ -49,7 +49,7 @@ public class InvalidKeyException extends IllegalArgumentException {
      * @param msg the detail message.
      */
     public InvalidKeyException(String msg) {
-	super(msg);
+        super(msg);
     }
 
 }

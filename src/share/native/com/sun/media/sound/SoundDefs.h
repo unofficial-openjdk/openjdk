@@ -130,5 +130,3 @@ typedef char            SBYTE;
 
 
 #endif  // __SOUNDDEFS_INCLUDED__
-
-

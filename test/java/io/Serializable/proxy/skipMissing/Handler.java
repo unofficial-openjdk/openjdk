@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,8 +31,8 @@ import java.lang.reflect.*;
 
 class Handler implements InvocationHandler, Serializable {
     public Object invoke(Object proxy, Method method, Object[] args)
-	throws Throwable
+        throws Throwable
     {
-	return null;
+        return null;
     }
 }

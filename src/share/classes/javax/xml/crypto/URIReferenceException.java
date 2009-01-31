@@ -32,11 +32,11 @@ import java.io.PrintWriter;
 import javax.xml.crypto.dsig.keyinfo.RetrievalMethod;
 
 /**
- * Indicates an exceptional condition thrown while dereferencing a 
+ * Indicates an exceptional condition thrown while dereferencing a
  * {@link URIReference}.
  *
- * <p>A <code>URIReferenceException</code> can contain a cause: another 
- * throwable that caused this <code>URIReferenceException</code> to get thrown. 
+ * <p>A <code>URIReferenceException</code> can contain a cause: another
+ * throwable that caused this <code>URIReferenceException</code> to get thrown.
  *
  * @author Sean Mullan
  * @author JSR 105 Expert Group
@@ -51,7 +51,7 @@ public class URIReferenceException extends Exception {
     /**
      * The throwable that caused this exception to get thrown, or null if this
      * exception was not caused by another throwable or if the causative
-     * throwable is unknown. 
+     * throwable is unknown.
      *
      * @serial
      */
@@ -60,7 +60,7 @@ public class URIReferenceException extends Exception {
     private URIReference uriReference;
 
     /**
-     * Constructs a new <code>URIReferenceException</code> with 
+     * Constructs a new <code>URIReferenceException</code> with
      * <code>null</code> as its detail message.
      */
     public URIReferenceException() {
@@ -68,8 +68,8 @@ public class URIReferenceException extends Exception {
     }
 
     /**
-     * Constructs a new <code>URIReferenceException</code> with the specified 
-     * detail message. 
+     * Constructs a new <code>URIReferenceException</code> with the specified
+     * detail message.
      *
      * @param message the detail message
      */
@@ -78,15 +78,15 @@ public class URIReferenceException extends Exception {
     }
 
     /**
-     * Constructs a new <code>URIReferenceException</code> with the 
-     * specified detail message and cause.  
+     * Constructs a new <code>URIReferenceException</code> with the
+     * specified detail message and cause.
      * <p>Note that the detail message associated with
      * <code>cause</code> is <i>not</i> automatically incorporated in
      * this exception's detail message.
      *
-     * @param message the detail message 
-     * @param cause the cause (A <tt>null</tt> value is permitted, and 
-     *	      indicates that the cause is nonexistent or unknown.)
+     * @param message the detail message
+     * @param cause the cause (A <tt>null</tt> value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
      */
     public URIReferenceException(String message, Throwable cause) {
         super(message);
@@ -94,36 +94,36 @@ public class URIReferenceException extends Exception {
     }
 
     /**
-     * Constructs a new <code>URIReferenceException</code> with the 
+     * Constructs a new <code>URIReferenceException</code> with the
      * specified detail message, cause and <code>URIReference</code>.
      * <p>Note that the detail message associated with
      * <code>cause</code> is <i>not</i> automatically incorporated in
      * this exception's detail message.
      *
-     * @param message the detail message 
-     * @param cause the cause (A <tt>null</tt> value is permitted, and 
-     *	      indicates that the cause is nonexistent or unknown.)
+     * @param message the detail message
+     * @param cause the cause (A <tt>null</tt> value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
      * @param uriReference the <code>URIReference</code> that was being
      *    dereferenced when the error was encountered
      * @throws NullPointerException if <code>uriReference</code> is
      *    <code>null</code>
      */
-    public URIReferenceException(String message, Throwable cause, 
-	URIReference uriReference) {
-	this(message, cause);
-	if (uriReference == null) {
-	    throw new NullPointerException("uriReference cannot be null");
-	}
-	this.uriReference = uriReference;
+    public URIReferenceException(String message, Throwable cause,
+        URIReference uriReference) {
+        this(message, cause);
+        if (uriReference == null) {
+            throw new NullPointerException("uriReference cannot be null");
+        }
+        this.uriReference = uriReference;
     }
 
     /**
-     * Constructs a new <code>URIReferenceException</code> with the specified 
-     * cause and a detail message of <code>(cause==null ? null : 
-     * cause.toString())</code> (which typically contains the class and detail 
+     * Constructs a new <code>URIReferenceException</code> with the specified
+     * cause and a detail message of <code>(cause==null ? null :
+     * cause.toString())</code> (which typically contains the class and detail
      * message of <code>cause</code>).
      *
-     * @param cause the cause (A <tt>null</tt> value is permitted, and 
+     * @param cause the cause (A <tt>null</tt> value is permitted, and
      *        indicates that the cause is nonexistent or unknown.)
      */
     public URIReferenceException(Throwable cause) {
@@ -139,16 +139,16 @@ public class URIReferenceException extends Exception {
      * when the exception was thrown, or <code>null</code> if not specified
      */
     public URIReference getURIReference() {
-	return uriReference;
+        return uriReference;
     }
 
     /**
-     * Returns the cause of this <code>URIReferenceException</code> or 
-     * <code>null</code> if the cause is nonexistent or unknown.  (The 
-     * cause is the throwable that caused this 
+     * Returns the cause of this <code>URIReferenceException</code> or
+     * <code>null</code> if the cause is nonexistent or unknown.  (The
+     * cause is the throwable that caused this
      * <code>URIReferenceException</code> to get thrown.)
      *
-     * @return the cause of this <code>URIReferenceException</code> or 
+     * @return the cause of this <code>URIReferenceException</code> or
      *    <code>null</code> if the cause is nonexistent or unknown.
      */
     public Throwable getCause() {
@@ -160,8 +160,8 @@ public class URIReferenceException extends Exception {
      * the cause's backtrace to the standard error stream.
      */
     public void printStackTrace() {
-	super.printStackTrace();
-	//XXX print backtrace of cause
+        super.printStackTrace();
+        //XXX print backtrace of cause
     }
 
     /**
@@ -171,8 +171,8 @@ public class URIReferenceException extends Exception {
      * @param s <code>PrintStream</code> to use for output
      */
     public void printStackTrace(PrintStream s) {
-	super.printStackTrace(s);
-	//XXX print backtrace of cause
+        super.printStackTrace(s);
+        //XXX print backtrace of cause
     }
 
     /**
@@ -183,6 +183,6 @@ public class URIReferenceException extends Exception {
      */
     public void printStackTrace(PrintWriter s) {
         super.printStackTrace(s);
-	//XXX print backtrace of cause
+        //XXX print backtrace of cause
     }
 }

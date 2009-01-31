@@ -42,7 +42,7 @@ import org.w3c.dom.Document;
 public class MessageDigestAlgorithm extends Algorithm {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                     MessageDigestAlgorithm.class.getName());
 
@@ -89,30 +89,30 @@ public class MessageDigestAlgorithm extends Algorithm {
 
       String algorithmID = JCEMapper.translateURItoJCEID(algorithmURI);
 
-	  if (algorithmID == null) {
-		  Object[] exArgs = { algorithmURI };
-		  throw new XMLSignatureException("algorithms.NoSuchMap", exArgs);
-	  }
+          if (algorithmID == null) {
+                  Object[] exArgs = { algorithmURI };
+                  throw new XMLSignatureException("algorithms.NoSuchMap", exArgs);
+          }
 
       MessageDigest md;
       String provider=JCEMapper.getProviderId();
-      try {      	
-      	 if (provider==null) {
-      	 	md = MessageDigest.getInstance(algorithmID);
-      	 } else {
-      	 	md = MessageDigest.getInstance(algorithmID,provider);
-      	 }
+      try {
+         if (provider==null) {
+                md = MessageDigest.getInstance(algorithmID);
+         } else {
+                md = MessageDigest.getInstance(algorithmID,provider);
+         }
       } catch (java.security.NoSuchAlgorithmException ex) {
          Object[] exArgs = { algorithmID,
                              ex.getLocalizedMessage() };
 
          throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
       } catch (NoSuchProviderException ex) {
-      	Object[] exArgs = { algorithmID,
-      						ex.getLocalizedMessage() };
-      	
-      	throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
-	}
+        Object[] exArgs = { algorithmID,
+                                                ex.getLocalizedMessage() };
+
+        throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
+        }
       return new MessageDigestAlgorithm(doc, md, algorithmURI);
    }
 

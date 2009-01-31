@@ -92,7 +92,7 @@ public interface NotificationEmitter extends NotificationBroadcaster {
      * given filter and handback.
      */
     public void removeNotificationListener(NotificationListener listener,
-					   NotificationFilter filter,
-					   Object handback)
-	    throws ListenerNotFoundException;
+                                           NotificationFilter filter,
+                                           Object handback)
+            throws ListenerNotFoundException;
 }

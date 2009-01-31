@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,6 +35,6 @@ import java.rmi.MarshalledObject;
 
 public class HashCode {
     public static void main(String[] args) throws Throwable {
-	Compare.compareHashCodes(args);
+        Compare.compareHashCodes(args);
     }
 }

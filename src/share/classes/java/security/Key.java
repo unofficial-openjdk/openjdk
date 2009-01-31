@@ -46,10 +46,10 @@ package java.security;
  * <P>This is an external encoded form for the key used when a standard
  * representation of the key is needed outside the Java Virtual Machine,
  * as when transmitting the key to some other party. The key
- * is encoded according to a standard format (such as 
+ * is encoded according to a standard format (such as
  * X.509 <code>SubjectPublicKeyInfo</code> or PKCS#8), and
  * is returned using the {@link #getEncoded() getEncoded} method.
- * Note: The syntax of the ASN.1 type <code>SubjectPublicKeyInfo</code> 
+ * Note: The syntax of the ASN.1 type <code>SubjectPublicKeyInfo</code>
  * is defined as follows:
  *
  * <pre>
@@ -61,9 +61,9 @@ package java.security;
  *   algorithm OBJECT IDENTIFIER,
  *   parameters ANY DEFINED BY algorithm OPTIONAL }
  * </pre>
- * 
- * For more information, see 
- * <a href="http://www.ietf.org/rfc/rfc3280.txt">RFC 3280: 
+ *
+ * For more information, see
+ * <a href="http://www.ietf.org/rfc/rfc3280.txt">RFC 3280:
  * Internet X.509 Public Key Infrastructure Certificate and CRL Profile</a>.
  * <P>
  *
@@ -97,7 +97,6 @@ package java.security;
  * @see Identity
  * @see Signer
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  */
 
@@ -106,8 +105,8 @@ public interface Key extends java.io.Serializable {
     // Declare serialVersionUID to be compatible with JDK1.1
 
    /**
-    * The class fingerprint that is set to indicate 
-    * serialization compatibility with a previous 
+    * The class fingerprint that is set to indicate
+    * serialization compatibility with a previous
     * version of the class.
     */
     static final long serialVersionUID = 6603384152749567654L;

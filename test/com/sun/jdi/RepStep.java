@@ -22,10 +22,10 @@
  */
 
 /**
- *  @test  @(#)RepStep.java	1.1 00/04/27
+ *  @test
  *  @bug 4334008
  *  @author Robert Field
- *  
+ *
  *  @run compile -g RepStepTarg.java
  *  @run build VMConnection RepStep
  *
@@ -69,9 +69,9 @@ public class RepStep {
     }
 
     private void createStep(ThreadReference thread) {
-        final StepRequest sr = 
-                  requestManager.createStepRequest(thread, 
-                                                   GRANULARITY, 
+        final StepRequest sr =
+                  requestManager.createStepRequest(thread,
+                                                   GRANULARITY,
                                                    DEPTH);
 
         sr.addClassExclusionFilter("java.*");
@@ -113,7 +113,7 @@ public class RepStep {
                 } else {
                     throw new Exception("Unexpected event: " + event);
                 }
-            } 
+            }
             set.resume();
        }
     }
@@ -132,7 +132,7 @@ public class RepStep {
                 } else {
                     throw new Exception("Unexpected event: " + event);
                 }
-            } 
+            }
             set.resume();
        }
     }
@@ -151,13 +151,13 @@ public class RepStep {
 
     /* launch child target vm */
     private void launchTarget() throws Exception {
-        LaunchingConnector launcher = 
+        LaunchingConnector launcher =
           (LaunchingConnector)findConnector("com.sun.jdi.CommandLineLaunch");
         Map connectorArgs = launcher.defaultArguments();
-        Connector.Argument mainArg = 
+        Connector.Argument mainArg =
             (Connector.Argument)connectorArgs.get("main");
         mainArg.setValue(TARGET);
-        Connector.Argument optionsArg = 
+        Connector.Argument optionsArg =
             (Connector.Argument)connectorArgs.get("options");
         optionsArg.setValue(VMConnection.getDebuggeeVMOptions());
 
@@ -166,10 +166,10 @@ public class RepStep {
     }
 
     private void attachTarget(String portNum) throws Exception {
-        AttachingConnector conn = 
+        AttachingConnector conn =
             (AttachingConnector)findConnector("com.sun.jdi.SocketAttach");
         Map connectorArgs = conn.defaultArguments();
-        Connector.Argument portArg = 
+        Connector.Argument portArg =
             (Connector.Argument)connectorArgs.get("port");
         portArg.setValue(portNum);
         vm = conn.attach(connectorArgs);

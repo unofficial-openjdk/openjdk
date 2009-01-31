@@ -29,10 +29,10 @@ package java.lang.reflect;
  * Member is an interface that reflects identifying information about
  * a single member (a field or a method) or a constructor.
  *
- * @see	java.lang.Class
- * @see	Field
- * @see	Method
- * @see	Constructor
+ * @see java.lang.Class
+ * @see Field
+ * @see Method
+ * @see Constructor
  *
  * @author Nakul Saraiya
  */
@@ -65,7 +65,7 @@ interface Member {
     /**
      * Returns the simple name of the underlying member or constructor
      * represented by this Member.
-     * 
+     *
      * @return the simple name of the underlying member
      */
     public String getName();
@@ -75,7 +75,7 @@ interface Member {
      * constructor represented by this Member, as an integer.  The
      * Modifier class should be used to decode the modifiers in
      * the integer.
-     * 
+     *
      * @return the Java language modifiers for the underlying member
      * @see Modifier
      */

@@ -32,27 +32,27 @@
  * (srcOff + srcY * srcScan + srcX) in the array.
  */
 
-#define DeclareInputVars					\
+#define DeclareInputVars                                        \
     pixptr srcP;
 
-#define InitInput(srcBPP)						\
+#define InitInput(srcBPP)                                               \
     img_check(srcBPP == 8)
 
-#define SetInputRow(pixels, srcOff, srcScan, srcY, srcOY)		\
-    srcP.vp = pixels;							\
+#define SetInputRow(pixels, srcOff, srcScan, srcY, srcOY)               \
+    srcP.vp = pixels;                                                   \
     srcP.bp += srcOff + ((srcY-srcOY) * srcScan)
 
-#define GetPixelInc()							\
+#define GetPixelInc()                                                   \
     ((int) *srcP.bp++)
 
-#define GetPixel(srcX)							\
+#define GetPixel(srcX)                                                  \
     ((int) srcP.bp[srcX])
 
-#define InputPixelInc(X)						\
+#define InputPixelInc(X)                                                \
     srcP.bp += X
 
-#define VerifyPixelRange(pixel, mapsize)				\
-    do {								\
-	img_check(((unsigned int) pixel) <= 255);			\
-	img_check(mapsize >= 256);					\
+#define VerifyPixelRange(pixel, mapsize)                                \
+    do {                                                                \
+        img_check(((unsigned int) pixel) <= 255);                       \
+        img_check(mapsize >= 256);                                      \
     } while (0)

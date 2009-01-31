@@ -36,11 +36,11 @@ import java.util.Hashtable;
  * function raises an <code>IllegalArgumentException</code> if such an attempt
  * is made.
  * <li>
- * When <code>Signal.handle</code> is called, the VM internally registers a 
- * special C signal handler. There is no way to force the Java signal handler 
- * to run synchronously before the C signal handler returns. Instead, when the 
+ * When <code>Signal.handle</code> is called, the VM internally registers a
+ * special C signal handler. There is no way to force the Java signal handler
+ * to run synchronously before the C signal handler returns. Instead, when the
  * VM receives a signal, the special C signal handler creates a new thread
- * (at priority <code>Thread.MAX_PRIORITY</code>) to 
+ * (at priority <code>Thread.MAX_PRIORITY</code>) to
  * run the registered Java signal handler. The C signal handler immediately
  * returns. Note that because the Java signal handler runs in a newly created
  * thread, it may not actually be executed until some time after the C signal
@@ -68,7 +68,6 @@ import java.util.Hashtable;
  *
  * @author   Sheng Liang
  * @author   Bill Shannon
- * @version  %W% %E%
  * @see      sun.misc.SignalHandler
  * @since    1.2
  */
@@ -86,7 +85,7 @@ public final class Signal {
 
     /**
      * Returns the signal name.
-     * 
+     *
      * @return the name of the signal.
      * @see sun.misc.Signal#Signal(String name)
      */
@@ -101,14 +100,14 @@ public final class Signal {
      * @return whether two <code>Signal</code> objects are equal.
      */
     public boolean equals(Object other) {
-	if (this == other) {
+        if (this == other) {
             return true;
-        } 
+        }
         if (other == null || !(other instanceof Signal)) {
-	    return false;
-	}
-	Signal other1 = (Signal)other;
-	return name.equals(other1.name) && (number == other1.number);
+            return false;
+        }
+        Signal other1 = (Signal)other;
+        return name.equals(other1.name) && (number == other1.number);
     }
 
     /**
@@ -127,7 +126,7 @@ public final class Signal {
      * @return a string representation of the signal
      */
     public String toString() {
-	return "SIG" + name;
+        return "SIG" + name;
     }
 
     /**
@@ -139,10 +138,10 @@ public final class Signal {
      */
     public Signal(String name) {
         number = findSignal(name);
-	this.name = name;
-	if (number < 0) {
-	    throw new IllegalArgumentException("Unknown signal: " + name);
-	}
+        this.name = name;
+        if (number < 0) {
+            throw new IllegalArgumentException("Unknown signal: " + name);
+        }
     }
 
     /**
@@ -157,33 +156,33 @@ public final class Signal {
      * @see sun.misc.SignalHandler#SIG_DFL
      * @see sun.misc.SignalHandler#SIG_IGN
      */
-    public static synchronized SignalHandler handle(Signal sig, 
-						    SignalHandler handler) 
-	throws IllegalArgumentException {
-	long newH = (handler instanceof NativeSignalHandler) ? 
-	              ((NativeSignalHandler)handler).getHandler() : 2;
-	long oldH = handle0(sig.number, newH);
-	if (oldH == -1) {
-	    throw new IllegalArgumentException
-		("Signal already used by VM or OS: " + sig);
-	}
-	signals.put(new Integer(sig.number), sig);
-	synchronized (handlers) {
-	    SignalHandler oldHandler = (SignalHandler)handlers.get(sig);
-	    handlers.remove(sig);
-	    if (newH == 2) {
-	        handlers.put(sig, handler);	        
-	    }
-	    if (oldH == 0) {
-	        return SignalHandler.SIG_DFL;
-	    } else if (oldH == 1) {
-	        return SignalHandler.SIG_IGN;
-	    } else if (oldH == 2) {
-	        return oldHandler;
-	    } else {
-	        return new NativeSignalHandler(oldH);
-	    }
-	}
+    public static synchronized SignalHandler handle(Signal sig,
+                                                    SignalHandler handler)
+        throws IllegalArgumentException {
+        long newH = (handler instanceof NativeSignalHandler) ?
+                      ((NativeSignalHandler)handler).getHandler() : 2;
+        long oldH = handle0(sig.number, newH);
+        if (oldH == -1) {
+            throw new IllegalArgumentException
+                ("Signal already used by VM or OS: " + sig);
+        }
+        signals.put(new Integer(sig.number), sig);
+        synchronized (handlers) {
+            SignalHandler oldHandler = (SignalHandler)handlers.get(sig);
+            handlers.remove(sig);
+            if (newH == 2) {
+                handlers.put(sig, handler);
+            }
+            if (oldH == 0) {
+                return SignalHandler.SIG_DFL;
+            } else if (oldH == 1) {
+                return SignalHandler.SIG_IGN;
+            } else if (oldH == 2) {
+                return oldHandler;
+            } else {
+                return new NativeSignalHandler(oldH);
+            }
+        }
     }
 
     /**
@@ -193,29 +192,29 @@ public final class Signal {
      * @see sun.misc.Signal#handle(Signal sig, SignalHandler handler)
      */
     public static void raise(Signal sig) throws IllegalArgumentException {
-	if (handlers.get(sig) == null) {
-	    throw new IllegalArgumentException("Unhandled signal: " + sig);
-	}
-	raise0(sig.number);
+        if (handlers.get(sig) == null) {
+            throw new IllegalArgumentException("Unhandled signal: " + sig);
+        }
+        raise0(sig.number);
     }
 
-    /* Called by the VM to execute Java signal handlers. */ 
+    /* Called by the VM to execute Java signal handlers. */
     private static void dispatch(final int number) {
         final Signal sig = (Signal)signals.get(new Integer(number));
-	final SignalHandler handler = (SignalHandler)handlers.get(sig);
+        final SignalHandler handler = (SignalHandler)handlers.get(sig);
 
-	Runnable runnable = new Runnable () {
-	    public void run() {
-	      // Don't bother to reset the priority. Signal handler will
-	      // run at maximum priority inherited from the VM signal
-	      // dispatch thread.
-	      // Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-	        handler.handle(sig);
-	    }
-	};
-	if (handler != null) {
-	    new Thread(runnable, sig + " handler").start();
-	}
+        Runnable runnable = new Runnable () {
+            public void run() {
+              // Don't bother to reset the priority. Signal handler will
+              // run at maximum priority inherited from the VM signal
+              // dispatch thread.
+              // Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+                handler.handle(sig);
+            }
+        };
+        if (handler != null) {
+            new Thread(runnable, sig + " handler").start();
+        }
     }
 
     /* Find the signal number, given a name. Returns -1 for unknown signals. */

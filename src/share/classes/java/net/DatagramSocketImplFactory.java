@@ -31,7 +31,6 @@ package java.net;
  * implementations.
  *
  * @author  Yingxian Wang
- * @version %I %E
  * @see     java.net.DatagramSocket
  * @since   1.3
  */

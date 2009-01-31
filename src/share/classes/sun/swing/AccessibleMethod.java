@@ -31,7 +31,6 @@ import java.lang.reflect.*;
  * A utility for accessing and invoking methods, via reflection,
  * that would otherwise be unaccessible.
  *
- * @version %I% %G%
  * @author Shannon Hickey
  */
 public class AccessibleMethod {

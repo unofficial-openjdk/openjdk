@@ -88,8 +88,8 @@ class SleeperListener implements HostListener {
 
     public SleeperListener(MonitoredHost host, String sleeperPattern) {
         this.host = host;
-	Pattern pattern = Pattern.compile(sleeperPattern);
-	patternMatcher = pattern.matcher("");
+        Pattern pattern = Pattern.compile(sleeperPattern);
+        patternMatcher = pattern.matcher("");
         targets = new ArrayList();
     }
 

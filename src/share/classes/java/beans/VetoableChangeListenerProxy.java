@@ -28,14 +28,14 @@ package java.beans;
 import java.util.EventListenerProxy;
 
 /**
- * A class which extends the <code>EventListenerProxy</code> specifically 
+ * A class which extends the <code>EventListenerProxy</code> specifically
  * for associating a <code>VetoableChangeListener</code> with a "constrained"
- * property. Instances of this class can be added as a 
+ * property. Instances of this class can be added as a
  * <code>VetoableChangeListener</code> to a bean which supports firing
  * VetoableChange events.
  * <p>
  * If the object has a <code>getVetoableChangeListeners()</code>
- * method then the array returned could be a mixture of 
+ * method then the array returned could be a mixture of
  * <code>VetoableChangeListener</code> and
  * <code>VetoableChangeListenerProxy</code> objects.
  * <p>
@@ -46,13 +46,13 @@ import java.util.EventListenerProxy;
  */
 public class VetoableChangeListenerProxy extends EventListenerProxy
         implements VetoableChangeListener {
-    
+
     private String propertyName;
 
     /**
     * @param propertyName The name of the property to listen on.
     * @param listener The listener object
-    */ 
+    */
     public VetoableChangeListenerProxy(String propertyName,
             VetoableChangeListener listener) {
         super(listener);

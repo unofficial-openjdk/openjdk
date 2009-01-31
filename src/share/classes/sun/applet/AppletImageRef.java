@@ -37,18 +37,18 @@ class AppletImageRef extends sun.misc.Ref {
      * Create the Ref
      */
     AppletImageRef(URL url) {
-	this.url = url;
+        this.url = url;
     }
 
     public void flush() {
-	super.flush();
+        super.flush();
     }
 
     /**
      * Reconsitute the image.  Only called when the ref has been flushed.
      */
     public Object reconstitute() {
-	Image img = Toolkit.getDefaultToolkit().createImage(new URLImageSource(url));
-	return img;
+        Image img = Toolkit.getDefaultToolkit().createImage(new URLImageSource(url));
+        return img;
     }
 }

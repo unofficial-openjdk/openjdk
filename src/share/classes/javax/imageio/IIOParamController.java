@@ -95,7 +95,6 @@ package javax.imageio;
  * @see IIOParam#hasController
  * @see IIOParam#activateController
  *
- * @version 0.5
  */
 public interface IIOParamController {
 
@@ -111,7 +110,7 @@ public interface IIOParamController {
      *
      * @return <code>true</code> if the <code>IIOParam</code> has been
      * modified, <code>false</code> otherwise.
-     * 
+     *
      * @exception IllegalArgumentException if <code>param</code> is
      * <code>null</code> or is not an instance of the correct class.
      */

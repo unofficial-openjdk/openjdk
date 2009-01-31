@@ -25,26 +25,26 @@
  * @test
  * @bug 4215035
  * @summary standard extensions path is hard-coded in default
- *	system policy file
+ *      system policy file
  * @ignore run this by hand
  *
- *	java	-Djava.security.manager \
- *		-Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
- *		-Djava.security.policy==./ExtDirs.policy \
- *		-Djava.security.debug=parser \
- *		ExtDirs
+ *      java    -Djava.security.manager \
+ *              -Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
+ *              -Djava.security.policy==./ExtDirs.policy \
+ *              -Djava.security.debug=parser \
+ *              ExtDirs
  */
 
 public class ExtDirs {
     public static void main(String args[]) throws Exception {
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    System.out.println("Test Succeeded");
-	} catch (SecurityException se) {
-	    se.printStackTrace();
-	    System.out.println("Test Failed");
-	    throw se;
-	}
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            System.out.println("Test Succeeded");
+        } catch (SecurityException se) {
+            se.printStackTrace();
+            System.out.println("Test Failed");
+            throw se;
+        }
     }
 }

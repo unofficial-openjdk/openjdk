@@ -130,8 +130,8 @@ typedef enum _Setting
 /* GTK types, here to eliminate need for GTK headers at compile time */
 
 #ifndef FALSE
-#define	FALSE           (0)
-#define	TRUE            (!FALSE)
+#define FALSE           (0)
+#define TRUE            (!FALSE)
 #endif
 
 #define GTK_HAS_FOCUS   (1 << 12)
@@ -245,10 +245,10 @@ typedef enum
 {
   G_PARAM_READABLE            = 1 << 0,
   G_PARAM_WRITABLE            = 1 << 1,
-  G_PARAM_CONSTRUCT	      = 1 << 2,
+  G_PARAM_CONSTRUCT           = 1 << 2,
   G_PARAM_CONSTRUCT_ONLY      = 1 << 3,
   G_PARAM_LAX_VALIDATION      = 1 << 4,
-  G_PARAM_PRIVATE	      = 1 << 5
+  G_PARAM_PRIVATE             = 1 << 5
 } GParamFlags;
 
 /* We define all structure pointers to be void* */
@@ -325,29 +325,29 @@ typedef gulong         GType;
 
 typedef struct
 {
-  GType		g_type;
+  GType         g_type;
 
   union {
-    gint	v_int;
-    guint	v_uint;
-    glong	v_long;
-    gulong	v_ulong;
+    gint        v_int;
+    guint       v_uint;
+    glong       v_long;
+    gulong      v_ulong;
     gint64      v_int64;
     guint64     v_uint64;
-    gfloat	v_float;
-    gdouble	v_double;
-    gpointer	v_pointer;
+    gfloat      v_float;
+    gdouble     v_double;
+    gpointer    v_pointer;
   } data[2];
 } GValue;
 
-typedef struct 
+typedef struct
 {
   GTypeInstance  g_type_instance;
 
   gchar         *name;
   GParamFlags    flags;
-  GType		 value_type;
-  GType		 owner_type;
+  GType          value_type;
+  GType          owner_type;
 } GParamSpec;
 
 typedef struct {
@@ -372,15 +372,15 @@ typedef struct
   GdkColor mid[5];
   GdkColor text[5];
   GdkColor base[5];
-  GdkColor text_aa[5];		/* Halfway between text/base */
-  
+  GdkColor text_aa[5];          /* Halfway between text/base */
+
   GdkColor black;
   GdkColor white;
   PangoFontDescription *font_desc;
-  
+
   gint xthickness;
   gint ythickness;
-  
+
   GdkGC *fg_gc[5];
   GdkGC *bg_gc[5];
   GdkGC *light_gc[5];
@@ -391,7 +391,7 @@ typedef struct
   GdkGC *text_aa_gc[5];
   GdkGC *black_gc;
   GdkGC *white_gc;
-  
+
   GdkPixmap *bg_pixmap[5];
 } GtkStyle;
 
@@ -413,10 +413,10 @@ struct _GtkWidget
 typedef struct
 {
   GtkWidget widget;
-  
+
   gfloat xalign;
   gfloat yalign;
-  
+
   guint16 xpad;
   guint16 ypad;
 } GtkMisc;
@@ -463,7 +463,7 @@ typedef struct _GtkAdjustment GtkAdjustment;
 struct _GtkAdjustment
 {
   GtkObject parent_instance;
-  
+
   gdouble lower;
   gdouble upper;
   gdouble value;
@@ -585,7 +585,7 @@ gboolean gtk2_unload();
 
 void gtk2_paint_arrow(WidgetType widget_type, GtkStateType state_type,
         GtkShadowType shadow_type, const gchar *detail,
-        gint x, gint y, gint width, gint height, 
+        gint x, gint y, gint width, gint height,
         GtkArrowType arrow_type, gboolean fill);
 void gtk2_paint_box(WidgetType widget_type, GtkStateType state_type,
         GtkShadowType shadow_type, const gchar *detail,
@@ -593,7 +593,7 @@ void gtk2_paint_box(WidgetType widget_type, GtkStateType state_type,
         gint synth_state, GtkTextDirection dir);
 void gtk2_paint_box_gap(WidgetType widget_type, GtkStateType state_type,
         GtkShadowType shadow_type, const gchar *detail,
-        gint x, gint y, gint width, gint height, 
+        gint x, gint y, gint width, gint height,
         GtkPositionType gap_side, gint gap_x, gint gap_width);
 void gtk2_paint_check(WidgetType widget_type, gint synth_state,
         const gchar *detail, gint x, gint y, gint width, gint height);
@@ -659,6 +659,6 @@ int (*fp_gdk_pixbuf_get_height)(const GdkPixbuf *pixbuf);
 int (*fp_gdk_pixbuf_get_n_channels)(const GdkPixbuf *pixbuf);
 int (*fp_gdk_pixbuf_get_rowstride)(const GdkPixbuf *pixbuf);
 int (*fp_gdk_pixbuf_get_width)(const GdkPixbuf *pixbuf);
-GdkPixbuf *(*fp_gdk_pixbuf_new_from_file)(const char *filename, GError **error); 
+GdkPixbuf *(*fp_gdk_pixbuf_new_from_file)(const char *filename, GError **error);
 
 #endif /* !_GTK2_INTERFACE_H */

@@ -90,24 +90,24 @@ Java_sun_nio_ch_SocketChannelImpl_checkConnect(JNIEnv *env, jobject this,
     if (result == 0) {  /* timeout */
         return block ? 0 : IOS_UNAVAILABLE;
     } else {
-        if (result == SOCKET_ERROR)	{ /* select failed */
+        if (result == SOCKET_ERROR)     { /* select failed */
             handleSocketError(env, lastError);
             return IOS_THROWN;
         }
     }
 
-    /*  
-     * Socket is writable or error occured. On some Windows editions  
-     * the socket will appear writable when the connect fails so we 
-     * check for error rather than writable. 
-     */ 
-    if (!FD_ISSET(fd, &ex)) { 
-        return 1;		/* connection established */
+    /*
+     * Socket is writable or error occured. On some Windows editions
+     * the socket will appear writable when the connect fails so we
+     * check for error rather than writable.
+     */
+    if (!FD_ISSET(fd, &ex)) {
+        return 1;               /* connection established */
     }
 
-    /* 
+    /*
      * A getsockopt( SO_ERROR ) may indicate success on NT4 even
-     * though the connection has failed. The workaround is to allow 
+     * though the connection has failed. The workaround is to allow
      * winsock to be scheduled and this is done via by yielding.
      * As the yield approach is problematic in heavy load situations
      * we attempt up to 3 times to get the failure reason.
@@ -142,10 +142,9 @@ Java_sun_nio_ch_SocketChannelImpl_checkConnect(JNIEnv *env, jobject this,
 
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_SocketChannelImpl_shutdown(JNIEnv *env, jclass cl,
-					   jobject fdo, jint how)
+                                           jobject fdo, jint how)
 {
     if (shutdown(fdval(env, fdo), how) == SOCKET_ERROR) {
-	NET_ThrowNew(env, WSAGetLastError(), "shutdown");
+        NET_ThrowNew(env, WSAGetLastError(), "shutdown");
     }
 }
-

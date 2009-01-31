@@ -34,7 +34,7 @@ public interface XStateProtocol {
      * as a bit mask of state defined in java.awt.Frame
      */
     boolean supportsState(int state);
-    
+
     /**
      * Moves window into the state.
      */

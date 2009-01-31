@@ -52,8 +52,8 @@ commonInit(PacketOutputStream *stream)
     }
 }
 
-void 
-outStream_initCommand(PacketOutputStream *stream, jint id, 
+void
+outStream_initCommand(PacketOutputStream *stream, jint id,
                       jbyte flags, jbyte commandSet, jbyte command)
 {
     commonInit(stream);
@@ -68,7 +68,7 @@ outStream_initCommand(PacketOutputStream *stream, jint id,
     stream->packet.type.cmd.flags = flags;
 }
 
-void 
+void
 outStream_initReply(PacketOutputStream *stream, jint id)
 {
     commonInit(stream);
@@ -81,13 +81,13 @@ outStream_initReply(PacketOutputStream *stream, jint id)
     stream->packet.type.cmd.flags = (jbyte)JDWPTRANSPORT_FLAGS_REPLY;
 }
 
-jint 
+jint
 outStream_id(PacketOutputStream *stream)
 {
     return stream->packet.type.cmd.id;
 }
 
-jbyte 
+jbyte
 outStream_command(PacketOutputStream *stream)
 {
     /* Only makes sense for commands */
@@ -95,7 +95,7 @@ outStream_command(PacketOutputStream *stream)
     return stream->packet.type.cmd.cmd;
 }
 
-static jdwpError 
+static jdwpError
 writeBytes(PacketOutputStream *stream, void *source, int size)
 {
     jbyte *bytes = (jbyte *)source;
@@ -134,68 +134,68 @@ writeBytes(PacketOutputStream *stream, void *source, int size)
     return JDWP_ERROR(NONE);
 }
 
-jdwpError 
+jdwpError
 outStream_writeBoolean(PacketOutputStream *stream, jboolean val)
 {
     jbyte byte = (val != 0) ? 1 : 0;
     return writeBytes(stream, &byte, sizeof(byte));
 }
 
-jdwpError 
+jdwpError
 outStream_writeByte(PacketOutputStream *stream, jbyte val)
 {
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeChar(PacketOutputStream *stream, jchar val)
 {
     val = HOST_TO_JAVA_CHAR(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeShort(PacketOutputStream *stream, jshort val)
 {
     val = HOST_TO_JAVA_SHORT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeInt(PacketOutputStream *stream, jint val)
 {
     val = HOST_TO_JAVA_INT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeLong(PacketOutputStream *stream, jlong val)
 {
     val = HOST_TO_JAVA_LONG(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeFloat(PacketOutputStream *stream, jfloat val)
 {
     val = HOST_TO_JAVA_FLOAT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeDouble(PacketOutputStream *stream, jdouble val)
 {
     val = HOST_TO_JAVA_DOUBLE(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeObjectTag(JNIEnv *env, PacketOutputStream *stream, jobject val)
 {
     return outStream_writeByte(stream, specificTypeKey(env, val));
 }
 
-jdwpError 
+jdwpError
 outStream_writeObjectRef(JNIEnv *env, PacketOutputStream *stream, jobject val)
 {
     jlong id;
@@ -232,7 +232,7 @@ outStream_writeObjectRef(JNIEnv *env, PacketOutputStream *stream, jobject val)
     return writeBytes(stream, &id, sizeof(id));
 }
 
-jdwpError 
+jdwpError
 outStream_writeFrameID(PacketOutputStream *stream, FrameID val)
 {
     /*
@@ -245,10 +245,10 @@ outStream_writeFrameID(PacketOutputStream *stream, FrameID val)
     } else {
         /*LINTED*/
         return outStream_writeInt(stream, (jint)val);
-    } 
+    }
 }
 
-jdwpError 
+jdwpError
 outStream_writeMethodID(PacketOutputStream *stream, jmethodID val)
 {
     /*
@@ -264,7 +264,7 @@ outStream_writeMethodID(PacketOutputStream *stream, jmethodID val)
     }
 }
 
-jdwpError 
+jdwpError
 outStream_writeFieldID(PacketOutputStream *stream, jfieldID val)
 {
     /*
@@ -280,26 +280,26 @@ outStream_writeFieldID(PacketOutputStream *stream, jfieldID val)
     }
 }
 
-jdwpError 
+jdwpError
 outStream_writeLocation(PacketOutputStream *stream, jlocation val)
 {
     return outStream_writeLong(stream, (jlong)val);
 }
 
-jdwpError 
-outStream_writeByteArray(PacketOutputStream*stream, jint length, 
+jdwpError
+outStream_writeByteArray(PacketOutputStream*stream, jint length,
                          jbyte *bytes)
 {
     (void)outStream_writeInt(stream, length);
     return writeBytes(stream, bytes, length);
 }
 
-jdwpError 
+jdwpError
 outStream_writeString(PacketOutputStream *stream, char *string)
 {
     jdwpError error;
     jint      length;
-   
+
     /* Options utf8=y/n controls if we want Standard UTF-8 or Modified */
     if ( gdata->modifiedUtf8 ) {
         length = (int)strlen(string);
@@ -307,7 +307,7 @@ outStream_writeString(PacketOutputStream *stream, char *string)
         error = writeBytes(stream, (jbyte *)string, length);
     } else {
         jint      new_length;
-        
+
         length = (int)strlen(string);
         new_length = (gdata->npt->utf8mToUtf8sLength)
                             (gdata->npt->utf, (jbyte*)string, length);
@@ -316,10 +316,10 @@ outStream_writeString(PacketOutputStream *stream, char *string)
             error = writeBytes(stream, (jbyte *)string, length);
         } else {
             char *new_string;
-            
+
             new_string = jvmtiAllocate(new_length+1);
             (gdata->npt->utf8mToUtf8s)
-                            (gdata->npt->utf, (jbyte*)string, length, 
+                            (gdata->npt->utf, (jbyte*)string, length,
                              (jbyte*)new_string, new_length);
             (void)outStream_writeInt(stream, new_length);
             error = writeBytes(stream, (jbyte *)new_string, new_length);
@@ -329,8 +329,8 @@ outStream_writeString(PacketOutputStream *stream, char *string)
     return error;
 }
 
-jdwpError 
-outStream_writeValue(JNIEnv *env, PacketOutputStream *out, 
+jdwpError
+outStream_writeValue(JNIEnv *env, PacketOutputStream *out,
                      jbyte typeKey, jvalue value)
 {
     if (typeKey == JDWP_TAG(OBJECT)) {
@@ -344,29 +344,29 @@ outStream_writeValue(JNIEnv *env, PacketOutputStream *out,
         switch (typeKey) {
             case JDWP_TAG(BYTE):
                 return outStream_writeByte(out, value.b);
-    
+
             case JDWP_TAG(CHAR):
                 return outStream_writeChar(out, value.c);
-    
+
             case JDWP_TAG(FLOAT):
                 return outStream_writeFloat(out, value.f);
-    
+
             case JDWP_TAG(DOUBLE):
                 return outStream_writeDouble(out, value.d);
-    
+
             case JDWP_TAG(INT):
                 return outStream_writeInt(out, value.i);
-    
+
             case JDWP_TAG(LONG):
                 return outStream_writeLong(out, value.j);
-    
+
             case JDWP_TAG(SHORT):
                 return outStream_writeShort(out, value.s);
-    
+
             case JDWP_TAG(BOOLEAN):
                 return outStream_writeBoolean(out, value.z);
-    
-            case JDWP_TAG(VOID):  /* happens with function return values */   
+
+            case JDWP_TAG(VOID):  /* happens with function return values */
                 /* write nothing */
                 return JDWP_ERROR(NONE);
 
@@ -378,7 +378,7 @@ outStream_writeValue(JNIEnv *env, PacketOutputStream *out,
     return JDWP_ERROR(NONE);
 }
 
-jdwpError 
+jdwpError
 outStream_skipBytes(PacketOutputStream *stream, jint count)
 {
     int i;
@@ -388,13 +388,13 @@ outStream_skipBytes(PacketOutputStream *stream, jint count)
     return stream->error;
 }
 
-jdwpError 
+jdwpError
 outStream_error(PacketOutputStream *stream)
 {
     return stream->error;
 }
 
-void 
+void
 outStream_setError(PacketOutputStream *stream, jdwpError error)
 {
     if (stream->error == JDWP_ERROR(NONE)) {
@@ -412,8 +412,8 @@ outStream_send(PacketOutputStream *stream) {
     jbyte *data, *posP;
 
     /*
-     * If there's only 1 segment then we just send the 
-     * packet. 
+     * If there's only 1 segment then we just send the
+     * packet.
      */
     if (stream->firstSegment.next == NULL) {
         stream->packet.type.cmd.len = 11 + stream->firstSegment.length;
@@ -425,12 +425,12 @@ outStream_send(PacketOutputStream *stream) {
     /*
      * Multiple segments
      */
-    len = 0; 
+    len = 0;
     segment = (PacketData *)&(stream->firstSegment);
     do {
         len += segment->length;
         segment = segment->next;
-    } while (segment != NULL); 
+    } while (segment != NULL);
 
     data = jvmtiAllocate(len);
     if (data == NULL) {
@@ -449,12 +449,12 @@ outStream_send(PacketOutputStream *stream) {
     stream->packet.type.cmd.data = data;
     rc = transport_sendPacket(&stream->packet);
     stream->packet.type.cmd.data = NULL;
-    jvmtiDeallocate(data); 
+    jvmtiDeallocate(data);
 
     return rc;
 }
 
-void 
+void
 outStream_sendReply(PacketOutputStream *stream)
 {
     jint rc;
@@ -464,14 +464,14 @@ outStream_sendReply(PacketOutputStream *stream)
          */
         stream->packet.type.reply.len = 0;
         stream->packet.type.reply.errorCode = (jshort)stream->error;
-    } 
+    }
     rc = outStream_send(stream);
     if (rc == 0) {
         stream->sent = JNI_TRUE;
     }
 }
 
-void 
+void
 outStream_sendCommand(PacketOutputStream *stream)
 {
     jint rc;
@@ -480,19 +480,19 @@ outStream_sendCommand(PacketOutputStream *stream)
         if (rc == 0) {
             stream->sent = JNI_TRUE;
         }
-    } 
+    }
 }
 
 
-static jboolean 
-releaseID(void *elementPtr, void *arg) 
+static jboolean
+releaseID(void *elementPtr, void *arg)
 {
     jlong *idPtr = elementPtr;
     commonRef_release(getEnv(), *idPtr);
     return JNI_TRUE;
 }
 
-void 
+void
 outStream_destroy(PacketOutputStream *stream)
 {
     struct PacketData *next;
@@ -510,4 +510,3 @@ outStream_destroy(PacketOutputStream *stream)
     }
     bagDestroyBag(stream->ids);
 }
-

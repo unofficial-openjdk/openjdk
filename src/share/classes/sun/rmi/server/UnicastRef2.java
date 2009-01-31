@@ -42,12 +42,12 @@ public class UnicastRef2 extends UnicastRef {
      */
     public UnicastRef2()
     {}
-    
-    /** 
+
+    /**
      * Create a new Unicast RemoteRef.
      */
     public UnicastRef2(LiveRef liveRef) {
-	super(liveRef);
+        super(liveRef);
     }
 
     /**
@@ -55,15 +55,15 @@ public class UnicastRef2 extends UnicastRef {
      */
     public String getRefClass(ObjectOutput out)
     {
-	return "UnicastRef2";
+        return "UnicastRef2";
     }
 
     /**
      * Write out external representation for remote ref.
      */
-    public void writeExternal(ObjectOutput out) throws IOException 
+    public void writeExternal(ObjectOutput out) throws IOException
     {
-	ref.write(out, true);
+        ref.write(out, true);
     }
 
     /**
@@ -72,8 +72,8 @@ public class UnicastRef2 extends UnicastRef {
      * being restored cannot be found.
      */
     public void readExternal(ObjectInput in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	ref = LiveRef.read(in, true);
+        ref = LiveRef.read(in, true);
     }
 }

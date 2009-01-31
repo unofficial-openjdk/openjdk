@@ -38,21 +38,21 @@ import com.sun.jmx.snmp.SnmpUnknownSubSystemException;
 public abstract class SnmpLcd {
 
     class SubSysLcdManager {
-	private Hashtable<Integer, SnmpModelLcd> models =
+        private Hashtable<Integer, SnmpModelLcd> models =
                 new Hashtable<Integer, SnmpModelLcd>();
 
-	public void addModelLcd(int id,
-				SnmpModelLcd usmlcd) {
-	    models.put(new Integer(id), usmlcd);
-	}
+        public void addModelLcd(int id,
+                                SnmpModelLcd usmlcd) {
+            models.put(new Integer(id), usmlcd);
+        }
 
-	public SnmpModelLcd getModelLcd(int id) {
-	    return models.get(new Integer(id));
-	}
+        public SnmpModelLcd getModelLcd(int id) {
+            return models.get(new Integer(id));
+        }
 
-	public SnmpModelLcd removeModelLcd(int id) {
-	    return models.remove(new Integer(id));
-	}
+        public SnmpModelLcd removeModelLcd(int id) {
+            return models.remove(new Integer(id));
+        }
     }
 
 
@@ -88,16 +88,16 @@ public abstract class SnmpLcd {
      * @param lcd The Lcd model.
      */
     public void addModelLcd(SnmpSubSystem sys,
-			    int id,
-			    SnmpModelLcd lcd) {
+                            int id,
+                            SnmpModelLcd lcd) {
 
-	SubSysLcdManager subsys = subs.get(sys);
-	if( subsys == null ) {
-	    subsys = new SubSysLcdManager();
-	    subs.put(sys, subsys);
-	}
+        SubSysLcdManager subsys = subs.get(sys);
+        if( subsys == null ) {
+            subsys = new SubSysLcdManager();
+            subs.put(sys, subsys);
+        }
 
-	subsys.addModelLcd(id, lcd);
+        subsys.addModelLcd(id, lcd);
     }
      /**
      * Removes an Lcd model.
@@ -105,18 +105,18 @@ public abstract class SnmpLcd {
      * @param id The model Id.
      */
     public void removeModelLcd(SnmpSubSystem sys,
-				int id)
-	throws SnmpUnknownModelLcdException, SnmpUnknownSubSystemException {
+                                int id)
+        throws SnmpUnknownModelLcdException, SnmpUnknownSubSystemException {
 
-	SubSysLcdManager subsys = subs.get(sys);
-	if( subsys != null ) {
-	    SnmpModelLcd lcd = subsys.removeModelLcd(id);
-	    if(lcd == null) {
-		throw new SnmpUnknownModelLcdException("Model : " + id);
-	    }
-	}
-	else
-	    throw new SnmpUnknownSubSystemException(sys.toString());
+        SubSysLcdManager subsys = subs.get(sys);
+        if( subsys != null ) {
+            SnmpModelLcd lcd = subsys.removeModelLcd(id);
+            if(lcd == null) {
+                throw new SnmpUnknownModelLcdException("Model : " + id);
+            }
+        }
+        else
+            throw new SnmpUnknownSubSystemException(sys.toString());
     }
 
     /**
@@ -126,11 +126,11 @@ public abstract class SnmpLcd {
      * @return The Lcd model or null if no Lcd model were found.
      */
     public SnmpModelLcd getModelLcd(SnmpSubSystem sys,
-				    int id) {
-	SubSysLcdManager subsys = subs.get(sys);
+                                    int id) {
+        SubSysLcdManager subsys = subs.get(sys);
 
-	if(subsys == null) return null;
+        if(subsys == null) return null;
 
-	return subsys.getModelLcd(id);
+        return subsys.getModelLcd(id);
     }
 }

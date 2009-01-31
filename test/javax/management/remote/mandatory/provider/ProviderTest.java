@@ -21,13 +21,13 @@
  * have any questions.
  */
 
-/* 
+/*
  * @test ProviderTest.java
  * @summary Tests jar services provider are called
  * @run clean ProviderTest provider.JMXConnectorProviderImpl provider.JMXConnectorServerProviderImpl
  * @run build ProviderTest provider.JMXConnectorProviderImpl provider.JMXConnectorServerProviderImpl
  * @run main ProviderTest
- */ 
+ */
 
 import java.net.MalformedURLException;
 
@@ -48,133 +48,132 @@ import javax.management.MBeanServer;
  */
 public class ProviderTest {
     public static void main(String[] args) throws Exception {
-	System.out.println("Starting ProviderTest");
-	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-	//First do the test with a protocol handled by Service providers
-	JMXServiceURL url = 
-	    new JMXServiceURL("service:jmx:rmi://");
-	
-	dotest(url, mbs);
-	
-	if(!provider.JMXConnectorProviderImpl.called() ||
-	   !provider.JMXConnectorServerProviderImpl.called()) {
-	    System.out.println("Test Failed");
-	    System.exit(1);
-	}
-	
-	//The Service Provider doesn't handle IIOP. Default providers MUST
-	//be called.
-	url = 
-	    new JMXServiceURL("service:jmx:iiop://");
+        System.out.println("Starting ProviderTest");
+        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+        //First do the test with a protocol handled by Service providers
+        JMXServiceURL url =
+            new JMXServiceURL("service:jmx:rmi://");
 
-	dotest(url, mbs);
-	
-	// Unsupported protocol.
-	JMXConnectorServer server = null;
-	JMXConnector client = null;
-	url = 
-	    new JMXServiceURL("service:jmx:unknown-protocol://");
-	try {
-	    server = 
-		JMXConnectorServerFactory.newJMXConnectorServer(url, 
-								null, 
-								mbs);
-	    System.out.println("Exception not thrown.");
-	    System.exit(1);
-	}catch(MalformedURLException e) {
-	    System.out.println("Expected MalformedURLException thrown.");
-	}
-	catch(Exception e) {
-	    e.printStackTrace();
-	    System.out.println("Exception thrown : " + e);
-	    System.exit(1);
-	}
+        dotest(url, mbs);
 
-	try {
-	    client = 
-		JMXConnectorFactory.newJMXConnector(url, 
-						    null);
-	    System.out.println("Exception not thrown.");
-	    System.exit(1);
-	}catch(MalformedURLException e) {
-	    System.out.println("Expected MalformedURLException thrown.");
-	}
-	catch(Exception e) {
-	    e.printStackTrace();
-	    System.out.println("Exception thrown : " + e);
-	    System.exit(1);
-	}
-	
-	//JMXConnectorProviderException
-	url = 
-	    new JMXServiceURL("service:jmx:throw-provider-exception://");
-		try {
-	    server = 
-		JMXConnectorServerFactory.newJMXConnectorServer(url, 
-								null, 
-								mbs);
-	    System.out.println("Exception not thrown.");
-	    System.exit(1);
-	}catch(JMXProviderException e) {
-	    System.out.println("Expected JMXProviderException thrown.");
-	}
-	catch(Exception e) {
-	    e.printStackTrace();
-	    System.out.println("Exception thrown : " + e);
-	    System.exit(1);
-	}
+        if(!provider.JMXConnectorProviderImpl.called() ||
+           !provider.JMXConnectorServerProviderImpl.called()) {
+            System.out.println("Test Failed");
+            System.exit(1);
+        }
 
-	try {
-	    client = 
-		JMXConnectorFactory.newJMXConnector(url, 
-						    null);
-	    System.out.println("Exception not thrown.");
-	    System.exit(1);
-	}catch(JMXProviderException e) {
-	    System.out.println("Expected JMXProviderException thrown.");
-	}
-	catch(Exception e) {
-	    e.printStackTrace();
-	    System.out.println("Exception thrown : " + e);
-	    System.exit(1);
-	}
-	
-	System.out.println("Test OK");
-	return;
+        //The Service Provider doesn't handle IIOP. Default providers MUST
+        //be called.
+        url =
+            new JMXServiceURL("service:jmx:iiop://");
+
+        dotest(url, mbs);
+
+        // Unsupported protocol.
+        JMXConnectorServer server = null;
+        JMXConnector client = null;
+        url =
+            new JMXServiceURL("service:jmx:unknown-protocol://");
+        try {
+            server =
+                JMXConnectorServerFactory.newJMXConnectorServer(url,
+                                                                null,
+                                                                mbs);
+            System.out.println("Exception not thrown.");
+            System.exit(1);
+        }catch(MalformedURLException e) {
+            System.out.println("Expected MalformedURLException thrown.");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Exception thrown : " + e);
+            System.exit(1);
+        }
+
+        try {
+            client =
+                JMXConnectorFactory.newJMXConnector(url,
+                                                    null);
+            System.out.println("Exception not thrown.");
+            System.exit(1);
+        }catch(MalformedURLException e) {
+            System.out.println("Expected MalformedURLException thrown.");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Exception thrown : " + e);
+            System.exit(1);
+        }
+
+        //JMXConnectorProviderException
+        url =
+            new JMXServiceURL("service:jmx:throw-provider-exception://");
+                try {
+            server =
+                JMXConnectorServerFactory.newJMXConnectorServer(url,
+                                                                null,
+                                                                mbs);
+            System.out.println("Exception not thrown.");
+            System.exit(1);
+        }catch(JMXProviderException e) {
+            System.out.println("Expected JMXProviderException thrown.");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Exception thrown : " + e);
+            System.exit(1);
+        }
+
+        try {
+            client =
+                JMXConnectorFactory.newJMXConnector(url,
+                                                    null);
+            System.out.println("Exception not thrown.");
+            System.exit(1);
+        }catch(JMXProviderException e) {
+            System.out.println("Expected JMXProviderException thrown.");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Exception thrown : " + e);
+            System.exit(1);
+        }
+
+        System.out.println("Test OK");
+        return;
     }
-    
-    private static void dotest(JMXServiceURL url, MBeanServer mbs) 
-	throws Exception {
-	JMXConnectorServer server = null;
-	JMXConnector client = null;
-	try {
-	    server = 
-		JMXConnectorServerFactory.newJMXConnectorServer(url, 
-								null, 
-								mbs);
-	}catch(IllegalArgumentException e) {
-	    e.printStackTrace();
-	    System.exit(1);
-	}
-	server.start();
-	JMXServiceURL outputAddr = server.getAddress();
-	System.out.println("Server started ["+ outputAddr+ "]");
-	
-	try {
-	    client = 
-		JMXConnectorFactory.newJMXConnector(outputAddr, null);
-	}catch(IllegalArgumentException e) {
-	    e.printStackTrace();
-	    System.exit(1);
-	}
-	
-	client.connect();
-	System.out.println("Client connected");
-	
-	MBeanServerConnection connection 
-	    = client.getMBeanServerConnection();
-	
-	System.out.println(connection.getDefaultDomain());
+
+    private static void dotest(JMXServiceURL url, MBeanServer mbs)
+        throws Exception {
+        JMXConnectorServer server = null;
+        JMXConnector client = null;
+        try {
+            server =
+                JMXConnectorServerFactory.newJMXConnectorServer(url,
+                                                                null,
+                                                                mbs);
+        }catch(IllegalArgumentException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        server.start();
+        JMXServiceURL outputAddr = server.getAddress();
+        System.out.println("Server started ["+ outputAddr+ "]");
+
+        try {
+            client =
+                JMXConnectorFactory.newJMXConnector(outputAddr, null);
+        }catch(IllegalArgumentException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        client.connect();
+        System.out.println("Client connected");
+
+        MBeanServerConnection connection
+            = client.getMBeanServerConnection();
+
+        System.out.println(connection.getDefaultDomain());
     }
 }
-

@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)MPreFixups.cpp	1.4 06/12/13
  *
  * (C) Copyright IBM Corp. 2002-2004 - All Rights Reserved
  *
@@ -108,9 +107,8 @@ void MPreFixups::apply(LEGlyphStorage &glyphStorage)
             glyphStorage[mpreDest + i] = mpreSave[i];
             glyphStorage.setCharIndex(mpreDest, indexSave[i], success);
         }
-        
+
         LE_DELETE_ARRAY(indexSave);
         LE_DELETE_ARRAY(mpreSave);
     }
 }
-

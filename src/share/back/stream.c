@@ -26,8 +26,8 @@
 #include "util.h" /* Needed for linux, do not remove */
 #include "stream.h"
 
-jfloat 
-stream_encodeFloat(jfloat theFloat) 
+jfloat
+stream_encodeFloat(jfloat theFloat)
 {
     union {
         jfloat f;
@@ -41,7 +41,7 @@ stream_encodeFloat(jfloat theFloat)
     return sF.f;
 }
 
-jdouble 
+jdouble
 stream_encodeDouble(jdouble d)
 {
     union {
@@ -55,5 +55,3 @@ stream_encodeDouble(jdouble d)
 
     return sD.d;
 }
-
-

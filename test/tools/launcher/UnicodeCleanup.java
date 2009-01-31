@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -42,16 +42,16 @@ import java.io.File;
 public class UnicodeCleanup {
 
     public static void main(String[] args) {
-        
+
         for (int i = 0; i < args.length; i++) {
             delete(new File(args[i]));
         }
     }
-    
+
     private static void delete(File file) {
         // paranoia is healthy in rm -rf
         String name = file.toString();
-        if (name.equals(".") || name.equals("..") || 
+        if (name.equals(".") || name.equals("..") ||
                 name.endsWith(File.separator + ".") ||
                 name.endsWith(File.separator + "..")) {
             throw new RuntimeException("too risky to process: " + name);

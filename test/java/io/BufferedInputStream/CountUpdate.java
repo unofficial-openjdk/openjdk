@@ -25,7 +25,7 @@
  * @test
  * @bug 4054043
  * @summary Test bufferedinputstream when stream is interrupted
- * 
+ *
  */
 
 import java.io.*;
@@ -38,7 +38,7 @@ import java.io.*;
  */
 
 public class CountUpdate {
-  
+
     public static void main(String[] args) throws Exception {
         BufferBreaker breaker = new BufferBreaker();
         BufferedInputStream in = new BufferedInputStream(breaker, 1000);
@@ -74,7 +74,7 @@ class BufferBreaker extends InputStream {
         return 'x';
     }
 
-    public static final byte[] buffer = {(byte)'a', 
+    public static final byte[] buffer = {(byte)'a',
                                          (byte)'b',
                                          (byte)'c',
                                          (byte)'d',
@@ -92,7 +92,7 @@ class BufferBreaker extends InputStream {
         System.arraycopy(buffer, 0, b, off, len);
         return len;
     }
-    
+
     public long skip(long n) {
         return 0;
     }
@@ -102,6 +102,3 @@ class BufferBreaker extends InputStream {
     }
 
 }
-
-   
-

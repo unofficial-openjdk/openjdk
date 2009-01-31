@@ -34,12 +34,12 @@ import javax.management.ObjectName;
 
 /**
  * Used to represent the object name of an MBean and its class name.
- * If the MBean is a Dynamic MBean the class name should be retrieved from 
+ * If the MBean is a Dynamic MBean the class name should be retrieved from
  * the <CODE>MBeanInfo</CODE> it provides.
  *
  * @since 1.5
  */
-public class ObjectInstance implements Serializable   { 
+public class ObjectInstance implements Serializable   {
 
 
     /* Serial version */
@@ -49,12 +49,12 @@ public class ObjectInstance implements Serializable   {
      * @serial Object name.
      */
     private ObjectName name;
-    
+
     /**
      * @serial Class name.
      */
     private String className;
-    
+
     /**
      * Allows an object instance to be created given a string representation of
      * an object name and the full class name, including the package name.
@@ -69,38 +69,38 @@ public class ObjectInstance implements Serializable   {
      * @exception MalformedObjectNameException The string passed as a
      * parameter does not have the right format.
      *
-     */        
+     */
     public ObjectInstance(String objectName, String className)
-	    throws MalformedObjectNameException { 	
-	this(new ObjectName(objectName), className);
-    } 
+            throws MalformedObjectNameException {
+        this(new ObjectName(objectName), className);
+    }
 
     /**
      * Allows an object instance to be created given an object name and
      * the full class name, including the package name.
      *
-     * @param objectName  The object name.     
+     * @param objectName  The object name.
      * @param className  The full class name, including the package
      * name, of the object instance.  If the MBean is a Dynamic MBean
      * the class name corresponds to its {@link
      * DynamicMBean#getMBeanInfo()
      * getMBeanInfo()}<code>.getClassName()</code>.
-     * If the MBean is a Dynamic MBean the class name should be retrieved 
+     * If the MBean is a Dynamic MBean the class name should be retrieved
      * from the <CODE>MBeanInfo</CODE> it provides.
      *
      */
-    public ObjectInstance(ObjectName objectName, String className) { 
-	if (objectName.isPattern()) {
-	    final IllegalArgumentException iae =
-		new IllegalArgumentException("Invalid name->"+
-					     objectName.toString());
-	    throw new RuntimeOperationsException(iae);
-	}   
-	this.name= objectName;
-	this.className= className;
-    } 
+    public ObjectInstance(ObjectName objectName, String className) {
+        if (objectName.isPattern()) {
+            final IllegalArgumentException iae =
+                new IllegalArgumentException("Invalid name->"+
+                                             objectName.toString());
+            throw new RuntimeOperationsException(iae);
+        }
+        this.name= objectName;
+        this.className= className;
+    }
 
-    
+
     /**
      * Compares the current object instance with another object instance.
      *
@@ -109,20 +109,20 @@ public class ObjectInstance implements Serializable   {
      *
      * @return  True if the two object instances are equal, otherwise false.
      */
-    public boolean equals(Object object)  { 
-	if (!(object instanceof ObjectInstance)) {
-	    return false;
-	}    
-	ObjectInstance val = (ObjectInstance) object;
-	if (! name.equals(val.getObjectName())) return false;
-	if (className == null) 
-	    return (val.getClassName() == null);
-	return className.equals(val.getClassName());
-    } 
+    public boolean equals(Object object)  {
+        if (!(object instanceof ObjectInstance)) {
+            return false;
+        }
+        ObjectInstance val = (ObjectInstance) object;
+        if (! name.equals(val.getObjectName())) return false;
+        if (className == null)
+            return (val.getClassName() == null);
+        return className.equals(val.getClassName());
+    }
 
     public int hashCode() {
-	final int classHash = ((className==null)?0:className.hashCode());
-	return name.hashCode() ^ classHash;
+        final int classHash = ((className==null)?0:className.hashCode());
+        return name.hashCode() ^ classHash;
     }
 
     /**
@@ -130,18 +130,18 @@ public class ObjectInstance implements Serializable   {
      *
      * @return the object name.
      */
-    public ObjectName getObjectName()  { 
-	return name;
-    } 
-    
+    public ObjectName getObjectName()  {
+        return name;
+    }
+
     /**
      * Returns the class part.
      *
      * @return the class name.
      */
-    public String getClassName()  { 
-	return className;
-    } 
+    public String getClassName()  {
+        return className;
+    }
 
     /**
      * Returns a string representing this ObjectInstance object. The format of this string
@@ -149,6 +149,6 @@ public class ObjectInstance implements Serializable   {
      * string if and only if they are equal.
      */
     public String toString() {
-	return getClassName() + "[" + getObjectName() + "]";
+        return getClassName() + "[" + getObjectName() + "]";
     }
  }

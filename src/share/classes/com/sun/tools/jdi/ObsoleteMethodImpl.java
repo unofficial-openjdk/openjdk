@@ -37,7 +37,7 @@ public class ObsoleteMethodImpl extends NonConcreteMethodImpl {
 
     private Location location = null;
 
-    ObsoleteMethodImpl(VirtualMachine vm, 
+    ObsoleteMethodImpl(VirtualMachine vm,
                           ReferenceTypeImpl declaringType) {
         super(vm, declaringType, 0, "<obsolete>", "", null, 0);
     }

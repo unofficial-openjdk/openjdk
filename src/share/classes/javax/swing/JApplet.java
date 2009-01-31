@@ -34,11 +34,11 @@ import java.io.Serializable;
 import javax.accessibility.*;
 
 /**
- * An extended version of <code>java.applet.Applet</code> that adds support for 
+ * An extended version of <code>java.applet.Applet</code> that adds support for
  * the JFC/Swing component architecture.
  * You can find task-oriented documentation about using <code>JApplet</code>
  * in <em>The Java Tutorial</em>,
- * in the section 
+ * in the section
  * <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/applet.html">How to Make Applets</a>.
  * <p>
@@ -58,7 +58,7 @@ import javax.accessibility.*;
  * Attempting to set it to <code>null</code> will cause the
  * <code>JApplet</code> to throw an exception. The default
  * <code>contentPane</code> will have a <code>BorderLayout</code>
- * manager set on it. 
+ * manager set on it.
  * Refer to {@link javax.swing.RootPaneContainer}
  * for details on adding, removing and setting the <code>LayoutManager</code>
  * of a <code>JApplet</code>.
@@ -87,7 +87,6 @@ import javax.accessibility.*;
  *      attribute: containerDelegate getContentPane
  *    description: Swing's Applet subclass.
  *
- * @version %I% %G%
  * @author Arnaud Weber
  */
 public class JApplet extends Applet implements Accessible,
@@ -120,7 +119,7 @@ public class JApplet extends Applet implements Accessible,
      * Creates a swing applet instance.
      * <p>
      * This constructor sets the component's locale property to the value
-     * returned by <code>JComponent.getDefaultLocale</code>. 
+     * returned by <code>JComponent.getDefaultLocale</code>.
      *
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
@@ -129,32 +128,32 @@ public class JApplet extends Applet implements Accessible,
      */
     public JApplet() throws HeadlessException {
         super();
-	// Check the timerQ and restart if necessary.
-	TimerQueue q = TimerQueue.sharedInstance();
-	if(q != null) {
-	    synchronized(q) {
-		if(!q.running)
-		    q.start();
-	    }
-	}
+        // Check the timerQ and restart if necessary.
+        TimerQueue q = TimerQueue.sharedInstance();
+        if(q != null) {
+            synchronized(q) {
+                if(!q.running)
+                    q.start();
+            }
+        }
 
-	/* Workaround for bug 4155072.  The shared double buffer image
-	 * may hang on to a reference to this applet; unfortunately 
-	 * Image.getGraphics() will continue to call JApplet.getForeground()
-	 * and getBackground() even after this applet has been destroyed.
-	 * So we ensure that these properties are non-null here.
-	 */
-	setForeground(Color.black);
-	setBackground(Color.white);
+        /* Workaround for bug 4155072.  The shared double buffer image
+         * may hang on to a reference to this applet; unfortunately
+         * Image.getGraphics() will continue to call JApplet.getForeground()
+         * and getBackground() even after this applet has been destroyed.
+         * So we ensure that these properties are non-null here.
+         */
+        setForeground(Color.black);
+        setBackground(Color.white);
 
         setLocale( JComponent.getDefaultLocale() );
         setLayout(new BorderLayout());
         setRootPane(createRootPane());
         setRootPaneCheckingEnabled(true);
-	
-  	setFocusTraversalPolicyProvider(true);
+
+        setFocusTraversalPolicyProvider(true);
         sun.awt.SunToolkit.checkAndSetPolicy(this, true);
-	
+
         enableEvents(AWTEvent.KEY_EVENT_MASK);
     }
 
@@ -190,7 +189,7 @@ public class JApplet extends Applet implements Accessible,
      * <a href="http://java.sun.com/docs/books/tutorial/uiswing/misc/dnd.html">
      * How to Use Drag and Drop and Data Transfer</a>, a section in
      * <em>The Java Tutorial</em>, for more information.
-     * 
+     *
      * @param newHandler the new {@code TransferHandler}
      *
      * @see TransferHandler
@@ -223,8 +222,8 @@ public class JApplet extends Applet implements Accessible,
         return transferHandler;
     }
 
-    /** 
-     * Just calls <code>paint(g)</code>.  This method was overridden to 
+    /**
+     * Just calls <code>paint(g)</code>.  This method was overridden to
      * prevent an unnecessary call to clear the background.
      */
     public void update(Graphics g) {
@@ -256,10 +255,10 @@ public class JApplet extends Applet implements Accessible,
 
 
     /**
-     * Returns whether calls to <code>add</code> and 
+     * Returns whether calls to <code>add</code> and
      * <code>setLayout</code> are forwarded to the <code>contentPane</code>.
      *
-     * @return true if <code>add</code> and <code>setLayout</code> 
+     * @return true if <code>add</code> and <code>setLayout</code>
      *         are fowarded; false otherwise
      *
      * @see #addImpl
@@ -273,9 +272,9 @@ public class JApplet extends Applet implements Accessible,
 
 
     /**
-     * Sets whether calls to <code>add</code> and 
+     * Sets whether calls to <code>add</code> and
      * <code>setLayout</code> are forwarded to the <code>contentPane</code>.
-     * 
+     *
      * @param enabled  true if <code>add</code> and <code>setLayout</code>
      *        are forwarded, false if they should operate directly on the
      *        <code>JApplet</code>.
@@ -300,19 +299,19 @@ public class JApplet extends Applet implements Accessible,
      * By default, children are added to the <code>contentPane</code> instead
      * of the frame, refer to {@link javax.swing.RootPaneContainer} for
      * details.
-     * 
+     *
      * @param comp the component to be enhanced
      * @param constraints the constraints to be respected
      * @param index the index
      * @exception IllegalArgumentException if <code>index</code> is invalid
      * @exception IllegalArgumentException if adding the container's parent
-     *			to itself
+     *                  to itself
      * @exception IllegalArgumentException if adding a window to a container
-     * 
+     *
      * @see #setRootPaneCheckingEnabled
      * @see javax.swing.RootPaneContainer
      */
-    protected void addImpl(Component comp, Object constraints, int index) 
+    protected void addImpl(Component comp, Object constraints, int index)
     {
         if(isRootPaneCheckingEnabled()) {
             getContentPane().add(comp, constraints, index);
@@ -322,7 +321,7 @@ public class JApplet extends Applet implements Accessible,
         }
     }
 
-    /** 
+    /**
      * Removes the specified component from the container. If
      * <code>comp</code> is not the <code>rootPane</code>, this will forward
      * the call to the <code>contentPane</code>. This will do nothing if
@@ -335,11 +334,11 @@ public class JApplet extends Applet implements Accessible,
      * @see javax.swing.RootPaneContainer
      */
     public void remove(Component comp) {
-	if (comp == rootPane) {
-	    super.remove(comp);
-	} else {
-	    getContentPane().remove(comp);
-	}
+        if (comp == rootPane) {
+            super.remove(comp);
+        } else {
+            getContentPane().remove(comp);
+        }
     }
 
 
@@ -370,8 +369,8 @@ public class JApplet extends Applet implements Accessible,
      * @see #setRootPane
      * @see RootPaneContainer#getRootPane
      */
-    public JRootPane getRootPane() { 
-        return rootPane; 
+    public JRootPane getRootPane() {
+        return rootPane;
     }
 
 
@@ -409,8 +408,8 @@ public class JApplet extends Applet implements Accessible,
      * @see #setContentPane
      * @see RootPaneContainer#getContentPane
      */
-    public Container getContentPane() { 
-        return getRootPane().getContentPane(); 
+    public Container getContentPane() {
+        return getRootPane().getContentPane();
     }
 
    /**
@@ -424,7 +423,7 @@ public class JApplet extends Applet implements Accessible,
      *
      * @beaninfo
      *     hidden: true
-     *     description: The client area of the applet where child 
+     *     description: The client area of the applet where child
      *                  components are normally inserted.
      */
     public void setContentPane(Container contentPane) {
@@ -439,8 +438,8 @@ public class JApplet extends Applet implements Accessible,
      * @see #setLayeredPane
      * @see RootPaneContainer#getLayeredPane
      */
-    public JLayeredPane getLayeredPane() { 
-        return getRootPane().getLayeredPane(); 
+    public JLayeredPane getLayeredPane() {
+        return getRootPane().getLayeredPane();
     }
 
     /**
@@ -464,12 +463,12 @@ public class JApplet extends Applet implements Accessible,
      * @see #setGlassPane
      * @see RootPaneContainer#getGlassPane
      */
-    public Component getGlassPane() { 
-        return getRootPane().getGlassPane(); 
+    public Component getGlassPane() {
+        return getRootPane().getGlassPane();
     }
 
     /**
-     * Sets the glassPane property. 
+     * Sets the glassPane property.
      * This method is called by the constructor.
      * @param glassPane the glassPane object for this applet
      *
@@ -498,7 +497,7 @@ public class JApplet extends Applet implements Accessible,
      * Repaints the specified rectangle of this component within
      * <code>time</code> milliseconds.  Refer to <code>RepaintManager</code>
      * for details on how the repaint is handled.
-     * 
+     *
      * @param     time   maximum time in milliseconds before update
      * @param     x    the <i>x</i> coordinate
      * @param     y    the <i>y</i> coordinate
@@ -518,23 +517,23 @@ public class JApplet extends Applet implements Accessible,
     }
 
     /**
-     * Returns a string representation of this JApplet. This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * Returns a string representation of this JApplet. This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this JApplet.
      */
     protected String paramString() {
-	String rootPaneString = (rootPane != null ?
-				 rootPane.toString() : "");
-	String rootPaneCheckingEnabledString = (rootPaneCheckingEnabled ?
-						"true" : "false");
+        String rootPaneString = (rootPane != null ?
+                                 rootPane.toString() : "");
+        String rootPaneCheckingEnabledString = (rootPaneCheckingEnabled ?
+                                                "true" : "false");
 
-	return super.paramString() +
-	",rootPane=" + rootPaneString +
-	",rootPaneCheckingEnabled=" + rootPaneCheckingEnabledString;
+        return super.paramString() +
+        ",rootPane=" + rootPaneString +
+        ",rootPaneCheckingEnabled=" + rootPaneCheckingEnabledString;
     }
 
 
@@ -546,12 +545,12 @@ public class JApplet extends Applet implements Accessible,
     protected AccessibleContext accessibleContext = null;
 
     /**
-     * Gets the AccessibleContext associated with this JApplet. 
-     * For JApplets, the AccessibleContext takes the form of an 
-     * AccessibleJApplet. 
+     * Gets the AccessibleContext associated with this JApplet.
+     * For JApplets, the AccessibleContext takes the form of an
+     * AccessibleJApplet.
      * A new AccessibleJApplet instance is created if necessary.
      *
-     * @return an AccessibleJApplet that serves as the 
+     * @return an AccessibleJApplet that serves as the
      *         AccessibleContext of this JApplet
      */
     public AccessibleContext getAccessibleContext() {
@@ -562,11 +561,10 @@ public class JApplet extends Applet implements Accessible,
     }
 
     /**
-     * This class implements accessibility support for the 
+     * This class implements accessibility support for the
      * <code>JApplet</code> class.
      */
     protected class AccessibleJApplet extends AccessibleApplet {
         // everything moved to new parent, AccessibleApplet
     }
 }
-

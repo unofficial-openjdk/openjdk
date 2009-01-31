@@ -46,25 +46,25 @@ import static sun.java2d.d3d.D3DContext.*;
 import sun.java2d.windows.DDRenderer;
 
 public class D3DRenderer extends DDRenderer {
-    
+
     native boolean doDrawLineD3D(long pData, long pCtx,
                                  int x1, int y1, int x2, int y2);
     native boolean doDrawRectD3D(long pData, long pCtx,
                                  int x, int y, int w, int h);
-    native boolean doFillRectD3D(long pData, long pCtx, int x, int y, 
+    native boolean doFillRectD3D(long pData, long pCtx, int x, int y,
                                  int width, int height);
     native void doDrawPoly(long pData, long pCtx, int transx, int transy,
                            int[] xpoints, int[] ypoints,
                            int npoints, boolean isclosed);
-    native void devFillSpans(long pData, long pCtx, SpanIterator si, 
+    native void devFillSpans(long pData, long pCtx, SpanIterator si,
                              long iterator, int transx, int transy);
-       
-    
+
+
     private long getContext(SunGraphics2D sg2d) {
-        AffineTransform at = 
+        AffineTransform at =
             sg2d.transformState < sg2d.TRANSFORM_TRANSLATESCALE ?
             null : sg2d.transform;
-        int ctxflags = (sg2d.eargb >>> 24) == 0xff ? 
+        int ctxflags = (sg2d.eargb >>> 24) == 0xff ?
             SRC_IS_OPAQUE : NO_CONTEXT_FLAGS;
         return D3DContext.getContext(null, sg2d.surfaceData,
                                      sg2d.getCompClip(),
@@ -76,30 +76,30 @@ public class D3DRenderer extends DDRenderer {
 
     @Override
     public void drawLine(SunGraphics2D sg2d,
-                         int x1, int y1, int x2, int y2) 
+                         int x1, int y1, int x2, int y2)
     {
         synchronized (D3DContext.LOCK) {
             doDrawLineD3D(sg2d.surfaceData.getNativeOps(),
                           getContext(sg2d),
-                          x1 + sg2d.transX, y1 + sg2d.transY, 
+                          x1 + sg2d.transX, y1 + sg2d.transY,
                           x2 + sg2d.transX, y2 + sg2d.transY);
         }
     }
-    
+
     @Override
     public void fillRect(SunGraphics2D sg2d,
-                         int x, int y, int width, int height) 
+                         int x, int y, int width, int height)
     {
         synchronized (D3DContext.LOCK) {
             doFillRectD3D(sg2d.surfaceData.getNativeOps(),
-                          getContext(sg2d), 
+                          getContext(sg2d),
                           sg2d.transX + x, sg2d.transY + y, width, height);
         }
     }
 
     @Override
     public void drawRect(SunGraphics2D sg2d,
-                         int x, int y, int width, int height) 
+                         int x, int y, int width, int height)
     {
         synchronized (D3DContext.LOCK) {
             doDrawRectD3D(sg2d.surfaceData.getNativeOps(),
@@ -107,13 +107,13 @@ public class D3DRenderer extends DDRenderer {
                           x + sg2d.transX, sg2d.transY + y, width, height);
         }
     }
-    
+
     @Override
     public void drawPolyline(SunGraphics2D sg2d,
-                             int xpoints[], int ypoints[], int npoints) 
+                             int xpoints[], int ypoints[], int npoints)
     {
         synchronized (D3DContext.LOCK) {
-            doDrawPoly(sg2d.surfaceData.getNativeOps(), 
+            doDrawPoly(sg2d.surfaceData.getNativeOps(),
                        getContext(sg2d),
                        sg2d.transX, sg2d.transY,
                        xpoints, ypoints, npoints, false);
@@ -122,11 +122,11 @@ public class D3DRenderer extends DDRenderer {
 
     @Override
     public void drawPolygon(SunGraphics2D sg2d,
-                            int xpoints[], int ypoints[], int npoints) 
+                            int xpoints[], int ypoints[], int npoints)
     {
         synchronized (D3DContext.LOCK) {
-            doDrawPoly(sg2d.surfaceData.getNativeOps(), 
-                       getContext(sg2d), 
+            doDrawPoly(sg2d.surfaceData.getNativeOps(),
+                       getContext(sg2d),
                        sg2d.transX, sg2d.transY,
                        xpoints, ypoints, npoints, true);
         }
@@ -157,42 +157,42 @@ public class D3DRenderer extends DDRenderer {
                                    startAngle, arcAngle,
                                    Arc2D.OPEN));
     }
-    
+
     @Override
     public void fillRoundRect(SunGraphics2D sg2d,
                               int x, int y, int width, int height,
-                              int arcWidth, int arcHeight) 
+                              int arcWidth, int arcHeight)
     {
         fill(sg2d, new RoundRectangle2D.Float(x, y, width, height,
              arcWidth, arcHeight));
     }
-    
+
     @Override
     public void fillOval(SunGraphics2D sg2d,
-                         int x, int y, int width, int height) 
+                         int x, int y, int width, int height)
     {
         fill(sg2d, new Ellipse2D.Float(x, y, width, height));
     }
-    
+
     @Override
     public void fillArc(SunGraphics2D sg2d,
                         int x, int y, int width, int height,
-                        int startAngle, int arcAngle) 
+                        int startAngle, int arcAngle)
     {
         fill(sg2d, new Arc2D.Float(x, y, width, height,
              startAngle, arcAngle, Arc2D.PIE));
     }
-    
+
     @Override
     public void fillPolygon(SunGraphics2D sg2d,
                             int xpoints[], int ypoints[],
-                            int npoints) 
+                            int npoints)
     {
         fill(sg2d, new Polygon(xpoints, ypoints, npoints));
     }
-    
+
     @Override
-    public void draw(SunGraphics2D sg2d, Shape s) 
+    public void draw(SunGraphics2D sg2d, Shape s)
     {
         if (sg2d.strokeState == sg2d.STROKE_THIN) {
             Polygon p;
@@ -229,7 +229,7 @@ public class D3DRenderer extends DDRenderer {
                         }
                         break;
                     default:
-                        throw new 
+                        throw new
                             IllegalPathStateException("path not flattened");
                 }
                 pi.next();
@@ -246,12 +246,12 @@ public class D3DRenderer extends DDRenderer {
                     // in this case the spans will be pre-transformed, so we
                     // pass null transform to getContext
                     long pCtx = D3DContext.getContext(null, sg2d.surfaceData,
-                                                      sg2d.getCompClip(), 
+                                                      sg2d.getCompClip(),
                                                       sg2d.getComposite(),
                                                       null /*transform*/,
                                                       sg2d.eargb/*pixel*/,
                                                       ctxflags);
-                    devFillSpans(sg2d.surfaceData.getNativeOps(), pCtx, si, 
+                    devFillSpans(sg2d.surfaceData.getNativeOps(), pCtx, si,
                                  si.getNativeIterator(), 0, 0);
                 }
             } finally {
@@ -261,12 +261,12 @@ public class D3DRenderer extends DDRenderer {
             fill(sg2d, sg2d.stroke.createStrokedShape(s));
         }
     }
-    
+
     @Override
     public void fill(SunGraphics2D sg2d, Shape s) {
         AffineTransform at;
         int transx, transy;
-        
+
         if ( sg2d.transformState < sg2d.TRANSFORM_TRANSLATESCALE) {
             // Transform (translation) will be done by devFillSpans
             at = null;
@@ -277,7 +277,7 @@ public class D3DRenderer extends DDRenderer {
             at = sg2d.transform;
             transx = transy = 0;
         }
-        
+
         ShapeSpanIterator ssi = LoopPipe.getFillSSI(sg2d);
         try {
             // Subtract transx/y from the SSI clip to match the
@@ -292,12 +292,12 @@ public class D3DRenderer extends DDRenderer {
                 int ctxflags = (sg2d.eargb >>> 24) == 0xff ?
                     SRC_IS_OPAQUE : NO_CONTEXT_FLAGS;
                 long pCtx = D3DContext.getContext(null, sg2d.surfaceData,
-                                                  sg2d.getCompClip(), 
+                                                  sg2d.getCompClip(),
                                                   sg2d.getComposite(),
                                                   null/*transform*/,
                                                   sg2d.eargb/*pixel*/,
                                                   ctxflags);
-                devFillSpans(sg2d.surfaceData.getNativeOps(), pCtx, ssi, 
+                devFillSpans(sg2d.surfaceData.getNativeOps(), pCtx, ssi,
                              ssi.getNativeIterator(),
                              transx, transy);
             }
@@ -305,15 +305,15 @@ public class D3DRenderer extends DDRenderer {
             ssi.dispose();
         }
     }
-    
+
     D3DRenderer traceWrapD3D() {
         return new Tracer();
     }
-    
+
     private class Tracer extends D3DRenderer {
         @Override
         public void drawLine(SunGraphics2D sg2d,
-                             int x1, int y1, int x2, int y2) 
+                             int x1, int y1, int x2, int y2)
         {
             GraphicsPrimitive.tracePrimitive("D3DDrawLine");
             super.drawLine(sg2d, x1, y1, x2, y2);
@@ -337,13 +337,13 @@ public class D3DRenderer extends DDRenderer {
                                 int nPoints)
         {
             GraphicsPrimitive.tracePrimitive("D3DDrawPolygon");
-	    super.drawPolygon(sg2d, xPoints, yPoints, nPoints);
-	}
+            super.drawPolygon(sg2d, xPoints, yPoints, nPoints);
+        }
         @Override
         public void fillRect(SunGraphics2D sg2d, int x, int y, int w, int h) {
             GraphicsPrimitive.tracePrimitive("D3DFillRect");
-	    super.fillRect(sg2d, x, y, w, h);
-	}
+            super.fillRect(sg2d, x, y, w, h);
+        }
         @Override
         void devFillSpans(long pData, long pCtx, SpanIterator si, long iterator,
                           int transx, int transy)
@@ -351,15 +351,15 @@ public class D3DRenderer extends DDRenderer {
             GraphicsPrimitive.tracePrimitive("D3DFillSpans");
             super.devFillSpans(pData, pCtx, si, iterator, transx, transy);
         }
-        @Override 
+        @Override
         public void devCopyArea(SurfaceData sData,
                                 int srcx, int srcy,
                                 int dx, int dy,
-                                int w, int h) 
+                                int w, int h)
         {
             GraphicsPrimitive.tracePrimitive("DXCopyArea");
             super.devCopyArea(sData, srcx, srcy, dx, dy, w, h);
         }
-            
+
     }
 }

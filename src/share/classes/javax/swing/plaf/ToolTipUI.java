@@ -28,7 +28,6 @@ package javax.swing.plaf;
 /**
  * Pluggable look and feel interface for JToolTip.
  *
- * @version %I% %G%
  * @author Dave Moore
  */
 public abstract class ToolTipUI extends ComponentUI {

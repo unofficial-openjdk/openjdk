@@ -31,36 +31,35 @@ import javax.swing.tree.*;
 public class SingleLeafTreeSelectionModel extends DefaultTreeSelectionModel {
 
     SingleLeafTreeSelectionModel() {
-	super();
-	selectionMode = SINGLE_TREE_SELECTION;
+        super();
+        selectionMode = SINGLE_TREE_SELECTION;
     }
 
     public void setSelectionPath(TreePath path) {
-	if(((TreeNode)(path.getLastPathComponent())).isLeaf()) {
-	    super.setSelectionPath(path);
-	}
+        if(((TreeNode)(path.getLastPathComponent())).isLeaf()) {
+            super.setSelectionPath(path);
+        }
     }
 
     public void setSelectionPaths(TreePath[] paths) {
-	// Only look at first path, as all others will be
-	// ignored anyway in single tree selection mode.
-	if(((TreeNode)(paths[0].getLastPathComponent())).isLeaf()) {
-	    super.setSelectionPaths(paths);
-	}
+        // Only look at first path, as all others will be
+        // ignored anyway in single tree selection mode.
+        if(((TreeNode)(paths[0].getLastPathComponent())).isLeaf()) {
+            super.setSelectionPaths(paths);
+        }
     }
 
     public void addSelectionPath(TreePath path) {
-	if(((TreeNode)(path.getLastPathComponent())).isLeaf()) {
-	    super.setSelectionPath(path);
-	}
+        if(((TreeNode)(path.getLastPathComponent())).isLeaf()) {
+            super.setSelectionPath(path);
+        }
     }
 
     public void addSelectionPaths(TreePath[] paths) {
-	// Only look at first path, as all others will be
-	// ignored anyway in single tree selection mode.
-	if(((TreeNode)(paths[0].getLastPathComponent())).isLeaf()) {
-	    super.addSelectionPaths(paths);
-	}
+        // Only look at first path, as all others will be
+        // ignored anyway in single tree selection mode.
+        if(((TreeNode)(paths[0].getLastPathComponent())).isLeaf()) {
+            super.addSelectionPaths(paths);
+        }
     }
 }
-

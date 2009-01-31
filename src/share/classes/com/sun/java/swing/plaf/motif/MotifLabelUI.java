@@ -40,7 +40,6 @@ import javax.swing.plaf.ComponentUI;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Amy Fowler
  */
 public class MotifLabelUI extends BasicLabelUI

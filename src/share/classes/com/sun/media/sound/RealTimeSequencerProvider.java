@@ -32,7 +32,6 @@ import javax.sound.midi.spi.MidiDeviceProvider;
 /**
  * Provider for RealTimeSequencer objects.
  *
- * @version %I%, %E%
  * @author Florian Bomers
  */
 public class RealTimeSequencerProvider extends MidiDeviceProvider {
@@ -40,20 +39,20 @@ public class RealTimeSequencerProvider extends MidiDeviceProvider {
 
     public MidiDevice.Info[] getDeviceInfo() {
 
-	MidiDevice.Info[] localArray = { RealTimeSequencer.info };
-	return localArray;
+        MidiDevice.Info[] localArray = { RealTimeSequencer.info };
+        return localArray;
     }
 
 
     public MidiDevice getDevice(MidiDevice.Info info) {
-	if ((info != null) && (!info.equals(RealTimeSequencer.info))) {
-	    return null;
-	}
+        if ((info != null) && (!info.equals(RealTimeSequencer.info))) {
+            return null;
+        }
 
-	try {
-	    return new RealTimeSequencer();
-	} catch (MidiUnavailableException e) {
-	    return null;
-	}
+        try {
+            return new RealTimeSequencer();
+        } catch (MidiUnavailableException e) {
+            return null;
+        }
     }
 }

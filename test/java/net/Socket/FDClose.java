@@ -44,9 +44,9 @@ public class FDClose {
         readerThread.start();
 
         // wait for the server socket to be ready
-	while (!isServerReady) {
+        while (!isServerReady) {
             me.sleep(100);
-	}
+        }
 
         // Interrupt the waiting thread
         readerThread.interrupt();
@@ -62,10 +62,10 @@ public class FDClose {
         public void run() {
             try {
                 ServerSocket sock = new ServerSocket(0);
-		isServerReady = true;
+                isServerReady = true;
                 sock.accept();
             } catch (Exception e) {
-	    }
+            }
         }
     }
 }

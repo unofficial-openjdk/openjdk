@@ -42,30 +42,30 @@ import java.security.spec.AlgorithmParameterSpec;
  */
 
 public final class DESedeKeyGenerator extends KeyGeneratorSpi {
-    
+
     private SecureRandom random = null;
     private int keysize = 168;
 
     /**
      * Verify the SunJCE provider in the constructor.
-     * 
+     *
      * @exception SecurityException if fails to verify
      * its own integrity
      */
     public DESedeKeyGenerator() {
-	if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-	    throw new SecurityException("The SunJCE provider may have been " +
-					"tampered.");
-	}
+        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
+            throw new SecurityException("The SunJCE provider may have been " +
+                                        "tampered.");
+        }
     }
 
     /**
      * Initializes this key generator.
-     * 
+     *
      * @param random the source of randomness for this generator
      */
     protected void engineInit(SecureRandom random) {
-	this.random = random;
+        this.random = random;
     }
 
     /**
@@ -79,10 +79,10 @@ public final class DESedeKeyGenerator extends KeyGeneratorSpi {
      * inappropriate for this key generator
      */
     protected void engineInit(AlgorithmParameterSpec params,
-			      SecureRandom random)
-	throws InvalidAlgorithmParameterException {
-	    throw new InvalidAlgorithmParameterException
-		("Triple DES key generation does not take any parameters");
+                              SecureRandom random)
+        throws InvalidAlgorithmParameterException {
+            throw new InvalidAlgorithmParameterException
+                ("Triple DES key generation does not take any parameters");
     }
 
     /**
@@ -97,12 +97,12 @@ public final class DESedeKeyGenerator extends KeyGeneratorSpi {
      * @param random the source of randomness for this key generator
      */
     protected void engineInit(int keysize, SecureRandom random) {
-	if ((keysize != 112) && (keysize != 168)) {
-	    throw new InvalidParameterException("Wrong keysize: must be "
-						+ "equal to 112 or 168");
-	}
-	this.keysize = keysize;
-	this.engineInit(random);
+        if ((keysize != 112) && (keysize != 168)) {
+            throw new InvalidParameterException("Wrong keysize: must be "
+                                                + "equal to 112 or 168");
+        }
+        this.keysize = keysize;
+        this.engineInit(random);
     }
 
     /**
@@ -110,43 +110,43 @@ public final class DESedeKeyGenerator extends KeyGeneratorSpi {
      *
      * @return the new Triple DES key
      */
-    protected SecretKey engineGenerateKey() {	
-	if (this.random == null) {
-	    this.random = SunJCE.RANDOM;
-	}
+    protected SecretKey engineGenerateKey() {
+        if (this.random == null) {
+            this.random = SunJCE.RANDOM;
+        }
 
-	byte[] rawkey = new byte[DESedeKeySpec.DES_EDE_KEY_LEN];
+        byte[] rawkey = new byte[DESedeKeySpec.DES_EDE_KEY_LEN];
 
-	if (keysize == 168) {
-	    // 3 intermediate keys
-	    this.random.nextBytes(rawkey);
+        if (keysize == 168) {
+            // 3 intermediate keys
+            this.random.nextBytes(rawkey);
 
-	    // Do parity adjustment for each intermediate key
-	    DESKeyGenerator.setParityBit(rawkey, 0);
-	    DESKeyGenerator.setParityBit(rawkey, 8);
-	    DESKeyGenerator.setParityBit(rawkey, 16);
-	} else {
-	    // 2 intermediate keys
-	    byte[] tmpkey = new byte[16];
-	    this.random.nextBytes(tmpkey);
-	    DESKeyGenerator.setParityBit(tmpkey, 0);
-	    DESKeyGenerator.setParityBit(tmpkey, 8);
-	    System.arraycopy(tmpkey, 0, rawkey, 0, tmpkey.length);
-	    // Copy the first 8 bytes into the last
-	    System.arraycopy(tmpkey, 0, rawkey, 16, 8);
-	    java.util.Arrays.fill(tmpkey, (byte)0x00);
-	}
+            // Do parity adjustment for each intermediate key
+            DESKeyGenerator.setParityBit(rawkey, 0);
+            DESKeyGenerator.setParityBit(rawkey, 8);
+            DESKeyGenerator.setParityBit(rawkey, 16);
+        } else {
+            // 2 intermediate keys
+            byte[] tmpkey = new byte[16];
+            this.random.nextBytes(tmpkey);
+            DESKeyGenerator.setParityBit(tmpkey, 0);
+            DESKeyGenerator.setParityBit(tmpkey, 8);
+            System.arraycopy(tmpkey, 0, rawkey, 0, tmpkey.length);
+            // Copy the first 8 bytes into the last
+            System.arraycopy(tmpkey, 0, rawkey, 16, 8);
+            java.util.Arrays.fill(tmpkey, (byte)0x00);
+        }
 
-	DESedeKey desEdeKey = null;
-	try {
-	    desEdeKey = new DESedeKey(rawkey);
-	} catch (InvalidKeyException ike) {
-	    // this never happens
-	    throw new RuntimeException(ike.getMessage());
-	}
+        DESedeKey desEdeKey = null;
+        try {
+            desEdeKey = new DESedeKey(rawkey);
+        } catch (InvalidKeyException ike) {
+            // this never happens
+            throw new RuntimeException(ike.getMessage());
+        }
 
-	java.util.Arrays.fill(rawkey, (byte)0x00);
+        java.util.Arrays.fill(rawkey, (byte)0x00);
 
-	return desEdeKey;
+        return desEdeKey;
     }
 }

@@ -64,7 +64,7 @@ public final class GraphicComponent implements TextLineComponent,
 
     private CoreMetrics cm;
     private Decoration decorator;
-    
+
 
     /**
      * Create a new GraphicComponent.  start and limit are indices
@@ -91,7 +91,7 @@ public final class GraphicComponent implements TextLineComponent,
     }
 
     private GraphicComponent(GraphicComponent parent, int start, int limit, int dir) {
-        
+
         this.graphic = parent.graphic;
         this.graphicAdvance = parent.graphicAdvance;
         this.decorator = parent.decorator;
@@ -170,7 +170,7 @@ public final class GraphicComponent implements TextLineComponent,
                                      width,
                                      (float) bounds.getHeight());
     }
-    
+
     public CoreMetrics getCoreMetrics() {
         return cm;
     }
@@ -196,7 +196,7 @@ public final class GraphicComponent implements TextLineComponent,
     }
 
     public Rectangle2D getVisualBounds() {
-        
+
         if (visualBounds == null) {
             visualBounds = decorator.getVisualBounds(this);
         }
@@ -228,7 +228,7 @@ public final class GraphicComponent implements TextLineComponent,
     }
 
     public Shape getOutline(float x, float y) {
-        
+
         return decorator.getOutline(this, x, y);
     }
 
@@ -240,17 +240,17 @@ public final class GraphicComponent implements TextLineComponent,
             x += graphicAdvance;
         }
     }
-    
+
     public void draw(Graphics2D g2d, float x, float y) {
-        
+
         decorator.drawTextAndDecorations(this, g2d, x, y);
     }
 
     public Rectangle2D getCharVisualBounds(int index) {
-        
+
         return decorator.getCharVisualBounds(this, index);
     }
-    
+
     public int getNumCharacters() {
 
         return graphicCount;
@@ -341,8 +341,8 @@ public final class GraphicComponent implements TextLineComponent,
 
         return "[graphic=" + graphic + ":count=" + getNumCharacters() + "]";
     }
-    
-  /** 
+
+  /**
    * Return the number of justification records this uses.
    */
   public int getNumJustificationInfos() {
@@ -360,14 +360,14 @@ public final class GraphicComponent implements TextLineComponent,
   }
 
   /**
-   * Apply deltas to the data in this component, starting at offset 
+   * Apply deltas to the data in this component, starting at offset
    * deltaStart, and return the new component.  There are two floats
    * for each justification info, for a total of 2 * getNumJustificationInfos.
-   * The first delta is the left adjustment, the second is the right 
+   * The first delta is the left adjustment, the second is the right
    * adjustment.
    * <p>
    * If flags[0] is true on entry, rejustification is allowed.  If
-   * the new component requires rejustification (ligatures were 
+   * the new component requires rejustification (ligatures were
    * formed or split), flags[0] will be set on exit.
    */
   public TextLineComponent applyJustificationDeltas(float[] deltas, int deltaStart, boolean[] flags) {

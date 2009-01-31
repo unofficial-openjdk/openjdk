@@ -45,9 +45,9 @@ jfieldID fos_append;
  * static methods to store field ID's in initializers
  */
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_io_FileOutputStream_initIDs(JNIEnv *env, jclass fosClass) {
-    fos_fd = 
+    fos_fd =
         (*env)->GetFieldID(env, fosClass, "fd", "Ljava/io/FileDescriptor;");
     fos_append = (*env)->GetFieldID(env, fosClass, "append", "Z");
 }
@@ -71,8 +71,8 @@ Java_java_io_FileOutputStream_write(JNIEnv *env, jobject this, jint byte) {
     jboolean append = (*env)->GetBooleanField(env, this, fos_append);
     FD fd = GET_FD(this, fos_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return;
+        JNU_ThrowIOException(env, "Stream Closed");
+        return;
     }
     if (append == JNI_TRUE) {
         if (IO_Lseek(fd, 0L, SEEK_END) == -1) {
@@ -88,8 +88,8 @@ Java_java_io_FileOutputStream_writeBytes(JNIEnv *env,
     jboolean append = (*env)->GetBooleanField(env, this, fos_append);
     FD fd = GET_FD(this, fos_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return;
+        JNU_ThrowIOException(env, "Stream Closed");
+        return;
     }
     if (append == JNI_TRUE) {
         if (IO_Lseek(fd, 0L, SEEK_END) == -1) {
@@ -98,7 +98,7 @@ Java_java_io_FileOutputStream_writeBytes(JNIEnv *env,
     }
     writeBytes(env, this, bytes, off, len, fos_fd);
 }
-    
+
 JNIEXPORT void JNICALL
 Java_java_io_FileOutputStream_close0(JNIEnv *env, jobject this) {
         handleClose(env, this, fos_fd);

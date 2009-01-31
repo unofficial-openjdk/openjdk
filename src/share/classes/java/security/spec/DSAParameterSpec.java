@@ -29,10 +29,9 @@ import java.math.BigInteger;
 
 /**
  * This class specifies the set of parameters used with the DSA algorithm.
- * 
+ *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see AlgorithmParameterSpec
  *
@@ -48,17 +47,17 @@ java.security.interfaces.DSAParams {
 
     /**
      * Creates a new DSAParameterSpec with the specified parameter values.
-     * 
+     *
      * @param p the prime.
-     * 
+     *
      * @param q the sub-prime.
-     * 
+     *
      * @param g the base.
      */
     public DSAParameterSpec(BigInteger p, BigInteger q, BigInteger g) {
-	this.p = p;
-	this.q = q;
-	this.g = g;
+        this.p = p;
+        this.q = q;
+        this.g = g;
     }
 
     /**
@@ -67,7 +66,7 @@ java.security.interfaces.DSAParams {
      * @return the prime <code>p</code>.
      */
     public BigInteger getP() {
-	return this.p;
+        return this.p;
     }
 
     /**
@@ -76,7 +75,7 @@ java.security.interfaces.DSAParams {
      * @return the sub-prime <code>q</code>.
      */
     public BigInteger getQ() {
-	return this.q;
+        return this.q;
     }
 
     /**
@@ -85,6 +84,6 @@ java.security.interfaces.DSAParams {
      * @return the base <code>g</code>.
      */
     public BigInteger getG() {
-	return this.g;
-    }    
+        return this.g;
+    }
 }

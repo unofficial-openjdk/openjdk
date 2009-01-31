@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,23 +38,23 @@ public class Foo implements Runnable {
     static class Adapter extends MouseAdapter implements Serializable {}
 
     public void run() {
-	try {
-	    Button button = new Button();
-	    button.addMouseListener(new Adapter());
+        try {
+            Button button = new Button();
+            button.addMouseListener(new Adapter());
 
-	    // iterate to trigger java.lang.reflect code generation
-	    for (int i = 0; i < 100; i++) {
-		ByteArrayOutputStream bout = new ByteArrayOutputStream();
-		ObjectOutputStream oout = new ObjectOutputStream(bout);
-		oout.writeObject(button);
-		oout.close();
-		ObjectInputStream oin = new ObjectInputStream(
-		    new ByteArrayInputStream(bout.toByteArray()));
-		oin.readObject();
-	    }
-	} catch (Exception ex) {
-	    throw new Error(
-		"Error occured while (de)serializing Button: " + ex);
-	}
+            // iterate to trigger java.lang.reflect code generation
+            for (int i = 0; i < 100; i++) {
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                ObjectOutputStream oout = new ObjectOutputStream(bout);
+                oout.writeObject(button);
+                oout.close();
+                ObjectInputStream oin = new ObjectInputStream(
+                    new ByteArrayInputStream(bout.toByteArray()));
+                oin.readObject();
+            }
+        } catch (Exception ex) {
+            throw new Error(
+                "Error occured while (de)serializing Button: " + ex);
+        }
     }
 }

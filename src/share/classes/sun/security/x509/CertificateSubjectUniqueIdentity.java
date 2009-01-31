@@ -37,14 +37,13 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see CertAttrSet
  */
 public class CertificateSubjectUniqueIdentity implements CertAttrSet<String> {
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */  
+     */
     public static final String IDENT = "x509.info.subjectID";
     /**
      * Sub attributes name for this CertAttrSet.
@@ -52,7 +51,7 @@ public class CertificateSubjectUniqueIdentity implements CertAttrSet<String> {
     public static final String NAME = "subjectID";
     public static final String ID = "id";
 
-    private UniqueIdentity	id;
+    private UniqueIdentity      id;
 
     /**
      * Default constructor for the certificate attribute.
@@ -164,10 +163,10 @@ public class CertificateSubjectUniqueIdentity implements CertAttrSet<String> {
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(ID);
-  
+
         return (elements.elements());
     }
-  
+
     /**
      * Return the name of this attribute.
      */

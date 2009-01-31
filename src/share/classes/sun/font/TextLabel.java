@@ -23,8 +23,6 @@
  * have any questions.
  */
 /*
- * %W% %E%
- *
  * (C) Copyright IBM Corp. 1998-2003 All Rights Reserved
  */
 
@@ -36,7 +34,7 @@ import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 
 /**
- * A label.  
+ * A label.
  * Visual bounds is a rect that encompasses the entire rendered area.
  * Logical bounds is a rect that defines how to position this next
  * to other objects.
@@ -45,14 +43,14 @@ import java.awt.geom.Rectangle2D;
  */
 public abstract class TextLabel {
 
-  /** 
+  /**
    * Return a rectangle that surrounds the text outline when this label is rendered at x, y.
    */
   public abstract Rectangle2D getVisualBounds(float x, float y);
 
   /**
-   * Return a rectangle that corresponds to the logical bounds of the text 
-   * when this label is rendered at x, y. 
+   * Return a rectangle that corresponds to the logical bounds of the text
+   * when this label is rendered at x, y.
    * This rectangle is used when positioning text next to other text.
    */
   public abstract Rectangle2D getLogicalBounds(float x, float y);

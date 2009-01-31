@@ -43,17 +43,17 @@ public class MacOutputStream extends ByteArrayOutputStream {
     public byte[] toByteArray() {
         return none;
     }
-    
+
     /** @inheritDoc */
     public void write(byte[] arg0)  {
         mac.update(arg0);
     }
-    
+
     /** @inheritDoc */
     public void write(int arg0) {
         mac.update((byte)arg0);
     }
-    
+
     /** @inheritDoc */
     public void write(byte[] arg0, int arg1, int arg2) {
         mac.update(arg0,arg1,arg2);

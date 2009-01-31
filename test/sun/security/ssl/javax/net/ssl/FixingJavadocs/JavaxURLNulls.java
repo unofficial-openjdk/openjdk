@@ -25,7 +25,7 @@
  * @test
  * @bug 4387882
  * @summary Need to revisit the javadocs for JSSE, especially the
- *	promoted classes
+ *      promoted classes
  * @author Brad Wetmore
  */
 
@@ -42,63 +42,63 @@ public class JavaxURLNulls {
 
     public static void main(String[] args) throws Exception {
 
-	/**
-	 * This test does not establish any connection to the specified
-	 * URL, hence a dummy URL is used.
-	 */ 
-	URL foobar = new URL("https://example.com/");
+        /**
+         * This test does not establish any connection to the specified
+         * URL, hence a dummy URL is used.
+         */
+        URL foobar = new URL("https://example.com/");
 
-	HttpsURLConnection urlc =
-	    (HttpsURLConnection) foobar.openConnection();
+        HttpsURLConnection urlc =
+            (HttpsURLConnection) foobar.openConnection();
 
-	try {
-	    urlc.getCipherSuite();
-	} catch (IllegalStateException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.getCipherSuite();
+        } catch (IllegalStateException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.getLocalCertificates();
-	} catch (IllegalStateException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.getLocalCertificates();
+        } catch (IllegalStateException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.getServerCertificates();
-	} catch (IllegalStateException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.getServerCertificates();
+        } catch (IllegalStateException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.setDefaultHostnameVerifier(null);
-	} catch (IllegalArgumentException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.setDefaultHostnameVerifier(null);
+        } catch (IllegalArgumentException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.setHostnameVerifier(null);
-	} catch (IllegalArgumentException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.setHostnameVerifier(null);
+        } catch (IllegalArgumentException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.setDefaultSSLSocketFactory(null);
-	} catch (IllegalArgumentException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
+        try {
+            urlc.setDefaultSSLSocketFactory(null);
+        } catch (IllegalArgumentException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
 
-	try {
-	    urlc.setSSLSocketFactory(null);
-	} catch (IllegalArgumentException e) {
-	    System.out.print("Caught proper exception: ");
-	    System.out.println(e.getMessage());
-	}
-	System.out.println("TESTS PASSED");
+        try {
+            urlc.setSSLSocketFactory(null);
+        } catch (IllegalArgumentException e) {
+            System.out.print("Caught proper exception: ");
+            System.out.println(e.getMessage());
+        }
+        System.out.println("TESTS PASSED");
     }
 }

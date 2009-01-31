@@ -34,8 +34,7 @@ import javax.sound.midi.Transmitter;
 /** MidiDevice that can use reference counting for open/close.
  * This interface is intended to be used by MidiSystem.getTransmitter() and
  * MidiSystem.getReceiver().
- * 
- * @version %I%, %E%
+ *
  * @author Matthias Pfisterer
  */
 public interface ReferenceCountingDevice {

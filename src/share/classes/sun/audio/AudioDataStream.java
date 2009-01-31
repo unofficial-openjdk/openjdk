@@ -36,22 +36,21 @@ import javax.sound.midi.*;
  * @see AudioData
  * @author Arthur van Hoff
  * @author Kara Kytle
- * @version %I% %E%
  */
 public class AudioDataStream extends ByteArrayInputStream {
-    
+
     AudioData ad;
-    
+
     /**
      * Constructor
      */
     public AudioDataStream(AudioData data) {
-	
-	super(data.buffer);
-	this.ad = data;
+
+        super(data.buffer);
+        this.ad = data;
     }
-    
+
     AudioData getAudioData() {
-	return ad;
+        return ad;
     }
 }

@@ -36,7 +36,7 @@
 /**
  * This module contains utility routines for manipulating Java throwables
  * and JNIEnv throwable state from native code.
- */ 
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,7 +48,7 @@ extern "C" {
  */
 extern jboolean
 initializeFallbackError(JNIEnv* jnienv);
- 
+
 /*
  *  Mapping support. Allows different clients to map checked exceptions in different ways.
  */
@@ -56,7 +56,7 @@ typedef jthrowable (*CheckedExceptionMapper)
     (   JNIEnv *    jnienv,
         jthrowable  throwableToMap);
 
-/* Default mapper. Map everything checked to InternalError; can return null if error */ 
+/* Default mapper. Map everything checked to InternalError; can return null if error */
 extern jthrowable
 mapAllCheckedToInternalErrorMapper( JNIEnv *    jnienv,
                                     jthrowable  throwableToMap);
@@ -78,29 +78,29 @@ createThrowable(    JNIEnv*     jnienv,
 extern jthrowable
 createInternalError(JNIEnv * jnienv, jstring message);
 
-/* creates the appropriate java Throwable based on the error code; can return null if error */      
+/* creates the appropriate java Throwable based on the error code; can return null if error */
 extern jthrowable
 createThrowableFromJVMTIErrorCode(JNIEnv * jnienv, jvmtiError errorCode);
 
-/* fetches the message string out of the supplied throwable, null if there is none, null if error   */      
+/* fetches the message string out of the supplied throwable, null if there is none, null if error   */
 extern jstring
 getMessageFromThrowable(    JNIEnv*     jnienv,
                             jthrowable  exception);
 
-/* true if the supplied throwable is unchecked. null will return true.  */      
+/* true if the supplied throwable is unchecked. null will return true.  */
 extern jboolean
 isUnchecked(    JNIEnv*     jnienv,
                 jthrowable  exception);
 
-/* true if the env contains a thrown exception */       
+/* true if the env contains a thrown exception */
 extern jboolean
 checkForThrowable(  JNIEnv*     jnienv);
 
-/* true if the env is clean for JNI calls */        
+/* true if the env is clean for JNI calls */
 extern jboolean
 isSafeForJNICalls(  JNIEnv * jnienv);
 
-/* 
+/*
  * Logs the outstanding throwable, if one exists.
  * This call assumes an outstanding exception, but does not
  * modify the JNIEnv outstanding Throwable state.
@@ -126,20 +126,20 @@ preserveThrowable(JNIEnv * jnienv);
 extern void
 restoreThrowable(   JNIEnv *    jnienv,
                     jthrowable  preservedException);
-                    
+
 /* always clears the JNIEnv throwable. returns true if an exception was pending on entry. */
 extern jboolean
 checkForAndClearThrowable(  JNIEnv *    jnienv);
 
-/* creates the appropriate java Throwable based on the error code   
- * does the very best it can to make sure an exception ends up installed; uses fallback if necessary            
+/* creates the appropriate java Throwable based on the error code
+ * does the very best it can to make sure an exception ends up installed; uses fallback if necessary
  * always sets the JNIEnv exception
- */     
+ */
 extern void
 createAndThrowThrowableFromJVMTIErrorCode(JNIEnv * jnienv, jvmtiError errorCode);
 
 /* creates a java.lang.InternalError and installs it into the JNIEnv.
- * does the very best it can to make sure an exception ends up installed; uses fallback if necessary            
+ * does the very best it can to make sure an exception ends up installed; uses fallback if necessary
  * always sets the JNIEnv exception
  */
 extern void
@@ -148,7 +148,7 @@ createAndThrowInternalError(JNIEnv * jnienv);
 /* If no throwable is outstanding, do nothing.
  * If a throwable is outstanding, make sure it is of a legal type according to the supplied
  * mapping function.
- * Leaves the "thrown" state the same (none on exit if none on entry, thrown on exit if 
+ * Leaves the "thrown" state the same (none on exit if none on entry, thrown on exit if
  * thrown on entry); may change the type of the thrown exception.
  */
 extern void
@@ -160,4 +160,3 @@ mapThrownThrowableIfNecessary(JNIEnv * jnienv, CheckedExceptionMapper mapper);
 
 
 #endif
-

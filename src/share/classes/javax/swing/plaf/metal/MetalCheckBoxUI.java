@@ -46,12 +46,11 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Michael C. Albers
  *
  */
 public class MetalCheckBoxUI extends MetalRadioButtonUI {
-    
+
     // NOTE: MetalCheckBoxUI inherts from MetalRadioButtonUI instead
     // of BasicCheckBoxUI because we want to pick up all the
     // painting changes made in MetalRadioButtonUI.
@@ -70,23 +69,23 @@ public class MetalCheckBoxUI extends MetalRadioButtonUI {
     }
 
     public String getPropertyPrefix() {
-	return propertyPrefix;
+        return propertyPrefix;
     }
 
     // ********************************
     //          Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+            defaults_initialized = true;
+        }
     }
-    
+
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
 
 }

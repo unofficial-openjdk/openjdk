@@ -99,7 +99,7 @@ public class MBeanInfoInteropTest {
         for (Serializable s : objects) {
             Object o = ois.readObject();
             if (!o.equals(s)) {
-		showMismatch(o, s);
+                showMismatch(o, s);
                 matched = false;
             }
         }
@@ -110,20 +110,20 @@ public class MBeanInfoInteropTest {
 
     private static void showMismatch(Object read, Serializable expected)
     throws Exception {
-	String name = "<unknown>";
-	Field[] fs = MBeanInfoInteropTest.class.getDeclaredFields();
-	for (Field f : fs) {
-	    if (!Modifier.isStatic(f.getModifiers()))
-		continue;
-	    Object x = f.get(null);
-	    if (x == expected) {
-		name = f.getName();
-		break;
-	    }
-	}
-	System.out.println("Read object mismatch for field " + name);
-	System.out.println("...read:     " + read);
-	System.out.println("...expected: " + expected);
+        String name = "<unknown>";
+        Field[] fs = MBeanInfoInteropTest.class.getDeclaredFields();
+        for (Field f : fs) {
+            if (!Modifier.isStatic(f.getModifiers()))
+                continue;
+            Object x = f.get(null);
+            if (x == expected) {
+                name = f.getName();
+                break;
+            }
+        }
+        System.out.println("Read object mismatch for field " + name);
+        System.out.println("...read:     " + read);
+        System.out.println("...expected: " + expected);
     }
 
     private static void generate(String className) throws Exception {

@@ -46,7 +46,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's MenuBarUI.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthMenuBarUI extends BasicMenuBarUI implements PropertyChangeListener,
@@ -54,12 +53,12 @@ class SynthMenuBarUI extends BasicMenuBarUI implements PropertyChangeListener,
     private SynthStyle style;
 
     public static ComponentUI createUI(JComponent x) {
-	return new SynthMenuBarUI();
+        return new SynthMenuBarUI();
     }
 
     protected void installDefaults() {
-	if (menuBar.getLayout() == null ||
-	    menuBar.getLayout() instanceof UIResource) {
+        if (menuBar.getLayout() == null ||
+            menuBar.getLayout() instanceof UIResource) {
             menuBar.setLayout(new DefaultMenuLayout(menuBar,BoxLayout.LINE_AXIS));
         }
         updateStyle(menuBar);

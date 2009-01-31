@@ -44,7 +44,7 @@ import com.sun.management.GcInfo;
 
 /**
  * A CompositeData for GcInfo for the local management support.
- * This class avoids the performance penalty paid to the 
+ * This class avoids the performance penalty paid to the
  * construction of a CompositeData use in the local case.
  */
 public class GcInfoCompositeData extends LazyCompositeData {
@@ -52,22 +52,22 @@ public class GcInfoCompositeData extends LazyCompositeData {
     private final GcInfoBuilder builder;
     private final Object[] gcExtItemValues;
 
-    public GcInfoCompositeData(GcInfo info, 
+    public GcInfoCompositeData(GcInfo info,
                         GcInfoBuilder builder,
                         Object[] gcExtItemValues) {
-	this.info = info;
-	this.builder = builder;
-	this.gcExtItemValues = gcExtItemValues;
+        this.info = info;
+        this.builder = builder;
+        this.gcExtItemValues = gcExtItemValues;
     }
 
     public GcInfo getGcInfo() {
-	return info;
+        return info;
     }
 
     protected CompositeData getCompositeData() {
-	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-	// baseGcInfoItemNames!
-	final Object[] baseGcInfoItemValues;
+        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+        // baseGcInfoItemNames!
+        final Object[] baseGcInfoItemValues;
 
         try {
             baseGcInfoItemValues = new Object[] {
@@ -84,35 +84,35 @@ public class GcInfoCompositeData extends LazyCompositeData {
         }
 
         // Get the item values for the extension attributes
-        final int gcExtItemCount = builder.getGcExtItemCount(); 
-        if (gcExtItemCount == 0 && 
+        final int gcExtItemCount = builder.getGcExtItemCount();
+        if (gcExtItemCount == 0 &&
             gcExtItemValues != null && gcExtItemValues.length != 0) {
             throw new InternalError("Unexpected Gc Extension Item Values");
         }
 
-        if (gcExtItemCount > 0 && (gcExtItemValues == null || 
+        if (gcExtItemCount > 0 && (gcExtItemValues == null ||
              gcExtItemCount != gcExtItemValues.length)) {
             throw new InternalError("Unmatched Gc Extension Item Values");
         }
 
         Object[] values = new Object[baseGcInfoItemValues.length +
-                                     gcExtItemCount]; 
-        System.arraycopy(baseGcInfoItemValues, 0, values, 0, 
+                                     gcExtItemCount];
+        System.arraycopy(baseGcInfoItemValues, 0, values, 0,
                          baseGcInfoItemValues.length);
 
         if (gcExtItemCount > 0) {
-            System.arraycopy(gcExtItemValues, 0, values, 
+            System.arraycopy(gcExtItemValues, 0, values,
                              baseGcInfoItemValues.length, gcExtItemCount);
-        } 
-	
-	try {
-	    return new CompositeDataSupport(builder.getGcInfoCompositeType(),
-					    builder.getItemNames(),
-					    values);
-	} catch (OpenDataException e) {
+        }
+
+        try {
+            return new CompositeDataSupport(builder.getGcInfoCompositeType(),
+                                            builder.getItemNames(),
+                                            values);
+        } catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-	}
+        }
     }
 
 
@@ -124,12 +124,12 @@ public class GcInfoCompositeData extends LazyCompositeData {
     private static final String MEMORY_USAGE_AFTER_GC  = "memoryUsageAfterGc";
 
     private static final String[] baseGcInfoItemNames = {
-	ID,
-	START_TIME,
-	END_TIME,
+        ID,
+        START_TIME,
+        END_TIME,
         DURATION,
-	MEMORY_USAGE_BEFORE_GC,
-	MEMORY_USAGE_AFTER_GC,
+        MEMORY_USAGE_BEFORE_GC,
+        MEMORY_USAGE_AFTER_GC,
     };
 
 
@@ -137,7 +137,7 @@ public class GcInfoCompositeData extends LazyCompositeData {
     static {
         try {
             Method m = GcInfo.class.getMethod("getMemoryUsageBeforeGc");
-            memoryUsageMapType = 
+            memoryUsageMapType =
                 MappedMXBeanType.getMappedType(m.getGenericReturnType());
         } catch (NoSuchMethodException e) {
             // Should never reach here
@@ -161,14 +161,14 @@ public class GcInfoCompositeData extends LazyCompositeData {
                 SimpleType.LONG,
                 SimpleType.LONG,
                 SimpleType.LONG,
-    
+
                 memoryUsageOpenType,
                 memoryUsageOpenType,
             };
         }
         return baseGcInfoItemTypes;
     }
- 
+
     public static long getId(CompositeData cd) {
         return getLong(cd, ID);
     }
@@ -179,7 +179,7 @@ public class GcInfoCompositeData extends LazyCompositeData {
         return getLong(cd, END_TIME);
     }
 
-    public static Map<String, MemoryUsage> 
+    public static Map<String, MemoryUsage>
             getMemoryUsageBeforeGc(CompositeData cd) {
         try {
             TabularData td = (TabularData) cd.get(MEMORY_USAGE_BEFORE_GC);
@@ -193,11 +193,11 @@ public class GcInfoCompositeData extends LazyCompositeData {
         }
     }
 
-    @SuppressWarnings("unchecked") 
+    @SuppressWarnings("unchecked")
     public static Map<String, MemoryUsage> cast(Object x) {
-	return (Map<String, MemoryUsage>) x;
+        return (Map<String, MemoryUsage>) x;
     }
-    public static Map<String, MemoryUsage> 
+    public static Map<String, MemoryUsage>
             getMemoryUsageAfterGc(CompositeData cd) {
         try {
             TabularData td = (TabularData) cd.get(MEMORY_USAGE_AFTER_GC);
@@ -222,7 +222,7 @@ public class GcInfoCompositeData extends LazyCompositeData {
             throw new NullPointerException("Null CompositeData");
         }
 
-        if (!isTypeMatched(getBaseGcInfoCompositeType(), 
+        if (!isTypeMatched(getBaseGcInfoCompositeType(),
                            cd.getCompositeType())) {
            throw new IllegalArgumentException(
                 "Unexpected composite type for GcInfo");
@@ -234,7 +234,7 @@ public class GcInfoCompositeData extends LazyCompositeData {
     private static synchronized CompositeType getBaseGcInfoCompositeType() {
         if (baseGcInfoCompositeType == null) {
             try {
-                baseGcInfoCompositeType = 
+                baseGcInfoCompositeType =
                     new CompositeType("sun.management.BaseGcInfoCompositeType",
                                       "CompositeType for Base GcInfo",
                                       getBaseGcInfoItemNames(),

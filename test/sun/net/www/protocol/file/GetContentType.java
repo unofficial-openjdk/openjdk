@@ -35,7 +35,7 @@ public class GetContentType {
         URLConnection urlc = url.openConnection();
         urlc.connect();
         String type = urlc.getContentType();
-	if (! "text/plain".equalsIgnoreCase(type))
-	    throw new RuntimeException("getContentType() returned the wrong type");
+        if (! "text/plain".equalsIgnoreCase(type))
+            throw new RuntimeException("getContentType() returned the wrong type");
     }
 }

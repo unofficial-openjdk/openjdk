@@ -35,7 +35,6 @@ import javax.swing.UIDefaults;
  * should never be used in a place where the developer could supply the
  * arguments.
  *
- * @version %I% %G%
  */
 public class SwingLazyValue implements UIDefaults.LazyValue {
     private String className;
@@ -88,15 +87,15 @@ public class SwingLazyValue implements UIDefaults.LazyValue {
         if (args!=null) {
             types = new Class[args.length];
             for (int i = 0; i< args.length; i++) {
-                /* PENDING(ges): At present only the primitive types 
+                /* PENDING(ges): At present only the primitive types
                    used are handled correctly; this should eventually
                    handle all primitive types */
                 if (args[i] instanceof java.lang.Integer) {
                     types[i]=Integer.TYPE;
                 } else if (args[i] instanceof java.lang.Boolean) {
-                    types[i]=Boolean.TYPE;			
+                    types[i]=Boolean.TYPE;
                 } else if (args[i] instanceof javax.swing.plaf.ColorUIResource) {
-                    /* PENDING(ges) Currently the Reflection APIs do not 
+                    /* PENDING(ges) Currently the Reflection APIs do not
                        search superclasses of parameters supplied for
                        constructor/method lookup.  Since we only have
                        one case where this is needed, we substitute

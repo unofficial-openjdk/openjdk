@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -48,9 +46,9 @@ import java.util.*;
 
 /**
  * Demo code which plots the memory usage by all memory pools.
- * The memory usage is sampled at some time interval using 
+ * The memory usage is sampled at some time interval using
  * java.lang.management API. This demo code is modified based
- * java2d MemoryMonitor demo. 
+ * java2d MemoryMonitor demo.
  */
 public class MemoryMonitor extends JPanel {
 
@@ -60,7 +58,7 @@ public class MemoryMonitor extends JPanel {
     boolean doControls;
     JTextField tf;
     // Get memory pools.
-    static java.util.List<MemoryPoolMXBean> mpools = 
+    static java.util.List<MemoryPoolMXBean> mpools =
         ManagementFactory.getMemoryPoolMXBeans();
     // Total number of memory pools.
     static int numPools = mpools.size();
@@ -91,7 +89,7 @@ public class MemoryMonitor extends JPanel {
                    surf.stop();
                    add(controls);
                } else {
-                   try { 
+                   try {
                        surf.sleepAmount = Long.parseLong(tf.getText().trim());
                    } catch (Exception ex) {}
                    surf.start();
@@ -108,7 +106,7 @@ public class MemoryMonitor extends JPanel {
 
         public Thread thread;
         public long sleepAmount = 1000;
-	public int  usageHistCount = 20000;
+        public int  usageHistCount = 20000;
         private int w, h;
         private BufferedImage bimg;
         private Graphics2D big;
@@ -124,7 +122,7 @@ public class MemoryMonitor extends JPanel {
         private Color graphColor = new Color(46, 139, 87);
         private Color mfColor = new Color(0, 100, 0);
         private String usedStr;
-      
+
 
         public Surface() {
             setBackground(Color.black);
@@ -133,9 +131,9 @@ public class MemoryMonitor extends JPanel {
                     if (thread == null) start(); else stop();
                 }
             });
-	    int i = 0;
-	    usedMem = new float[numPools][];
-	    ptNum = new int[numPools];
+            int i = 0;
+            usedMem = new float[numPools][];
+            ptNum = new int[numPools];
         }
 
         public Dimension getMinimumSize() {
@@ -150,7 +148,7 @@ public class MemoryMonitor extends JPanel {
             return new Dimension(135,80);
         }
 
-            
+
         public void paint(Graphics g) {
 
             if (big == null) {
@@ -161,41 +159,41 @@ public class MemoryMonitor extends JPanel {
             big.clearRect(0,0,w,h);
 
 
-	    h = h / ((numPools + numPools%2) / 2); 
-	    w = w / 2;
+            h = h / ((numPools + numPools%2) / 2);
+            w = w / 2;
 
-	    int k=0; // index of memory pool.
-	    for (int i=0; i < 2;i++) {
-	       for (int j=0; j < (numPools + numPools%2)/ 2; j++) {
-	         plotMemoryUsage(w*i,h*j,w,h,k);
-		 if (++k >= numPools) {
-		    i = 3;
-		    j = (numPools + numPools%2)/ 2;
-		    break;
-		 }
-	       }
-	    }
+            int k=0; // index of memory pool.
+            for (int i=0; i < 2;i++) {
+               for (int j=0; j < (numPools + numPools%2)/ 2; j++) {
+                 plotMemoryUsage(w*i,h*j,w,h,k);
+                 if (++k >= numPools) {
+                    i = 3;
+                    j = (numPools + numPools%2)/ 2;
+                    break;
+                 }
+               }
+            }
             g.drawImage(bimg, 0, 0, this);
         }
 
-	public void plotMemoryUsage(int x1, int y1, int x2, int y2, int npool) {
+        public void plotMemoryUsage(int x1, int y1, int x2, int y2, int npool) {
 
-	    MemoryPoolMXBean mp = mpools.get(npool); 
-	    float usedMemory =  mp.getUsage().getUsed();
+            MemoryPoolMXBean mp = mpools.get(npool);
+            float usedMemory =  mp.getUsage().getUsed();
             float totalMemory =  mp.getUsage().getMax();
 
             // .. Draw allocated and used strings ..
             big.setColor(Color.green);
 
-	    // Print Max memory allocated for this memory pool.
+            // Print Max memory allocated for this memory pool.
             big.drawString(String.valueOf((int)totalMemory/1024) + "K Max ", x1+4.0f, (float) y1 + ascent+0.5f);
             big.setColor(Color.yellow);
 
-	    // Print the memory pool name.
+            // Print the memory pool name.
             big.drawString(mp.getName(),  x1+x2/2, (float) y1 + ascent+0.5f);
 
-	    // Print the memory used by this memory pool.
-            usedStr = String.valueOf((int)usedMemory/1024) 
+            // Print the memory used by this memory pool.
+            usedStr = String.valueOf((int)usedMemory/1024)
                 + "K used";
             big.setColor(Color.green);
             big.drawString(usedStr, x1+4, y1+y2-descent);
@@ -211,7 +209,7 @@ public class MemoryMonitor extends JPanel {
             big.setColor(mfColor);
             int MemUsage = (int) (((totalMemory - usedMemory) / totalMemory) * 10);
             int i = 0;
-            for ( ; i < MemUsage ; i++) { 
+            for ( ; i < MemUsage ; i++) {
                 mfRect.setRect(x1+5,(float) y1+ssH+i*blockHeight,
                                 blockWidth,(float) blockHeight-1);
                 big.fill(mfRect);
@@ -226,8 +224,8 @@ public class MemoryMonitor extends JPanel {
             }
 
             // .. Draw History Graph ..
-	    if (remainingWidth <= 30) remainingWidth = (float)30;
-	    if (remainingHeight <= ssH) remainingHeight = (float)ssH;
+            if (remainingWidth <= 30) remainingWidth = (float)30;
+            if (remainingHeight <= ssH) remainingHeight = (float)ssH;
             big.setColor(graphColor);
             int graphX = x1+30;
             int graphY = y1 + (int) ssH;
@@ -244,7 +242,7 @@ public class MemoryMonitor extends JPanel {
                 graphLine.setLine(graphX,j,graphX+graphW,j);
                 big.draw(graphLine);
             }
-        
+
             // .. Draw animated column movement ..
             int graphColumn = graphW/15;
 
@@ -259,34 +257,34 @@ public class MemoryMonitor extends JPanel {
 
             --columnInc;
 
-            // Plot memory usage by this memory pool.	
+            // Plot memory usage by this memory pool.
             if (usedMem[npool] == null) {
-		usedMem[npool] = new float[usageHistCount];
+                usedMem[npool] = new float[usageHistCount];
                 ptNum[npool] = 0;
-            } 
+            }
 
-	    // save memory usage history.
-	    usedMem[npool][ptNum[npool]] = usedMemory;
+            // save memory usage history.
+            usedMem[npool][ptNum[npool]] = usedMemory;
 
             big.setColor(Color.yellow);
 
-	    int w1; // width of memory usage history.
-	    if (ptNum[npool] > graphW) {
-	        w1 = graphW;
-	    } else {
-		w1 = ptNum[npool]; 
+            int w1; // width of memory usage history.
+            if (ptNum[npool] > graphW) {
+                w1 = graphW;
+            } else {
+                w1 = ptNum[npool];
             }
 
 
-            for (int j=graphX+graphW-w1, k=ptNum[npool]-w1; k < ptNum[npool]; 
-								k++, j++) {
+            for (int j=graphX+graphW-w1, k=ptNum[npool]-w1; k < ptNum[npool];
+                                                                k++, j++) {
                  if (k != 0) {
                      if (usedMem[npool][k] != usedMem[npool][k-1]) {
-		         int h1 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k-1])/totalMemory));
-		         int h2 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k])/totalMemory));
+                         int h1 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k-1])/totalMemory));
+                         int h2 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k])/totalMemory));
                          big.drawLine(j-1, h1, j, h2);
                      } else {
-		         int h1 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k])/totalMemory));
+                         int h1 = (int)(graphY + graphH * ((totalMemory -usedMem[npool][k])/totalMemory));
                          big.fillRect(j, h1, 1, 1);
                      }
                  }
@@ -325,7 +323,7 @@ public class MemoryMonitor extends JPanel {
                     thread.sleep(500);
                 } catch (InterruptedException e) { return; }
             }
-	
+
             while (thread == me && isShowing()) {
                 Dimension d = getSize();
                 if (d.width != w || d.height != h) {
@@ -353,33 +351,33 @@ public class MemoryMonitor extends JPanel {
 
     // Test thread to consume memory
     static class Memeater extends ClassLoader implements Runnable {
-	Object y[];
-	public Memeater() {}
-	public void run() {
-	    y = new Object[10000000];
-	    int k =0;
-	    while(true) {
-	         if (k == 5000000) k=0;
-	         y[k++] = new Object();
-	         try {
-		     Thread.sleep(20);
-	         } catch (Exception x){}
+        Object y[];
+        public Memeater() {}
+        public void run() {
+            y = new Object[10000000];
+            int k =0;
+            while(true) {
+                 if (k == 5000000) k=0;
+                 y[k++] = new Object();
+                 try {
+                     Thread.sleep(20);
+                 } catch (Exception x){}
 
-		 // to consume perm gen storage
-	         try {
+                 // to consume perm gen storage
+                 try {
                      // the classes are small so we load 10 at a time
                      for (int i=0; i<10; i++) {
                         loadNext();
                      }
                  } catch (ClassNotFoundException x) {
-		   // ignore exception
+                   // ignore exception
                  }
 
-	   }
+           }
 
-	}
+        }
 
-	Class loadNext() throws ClassNotFoundException {
+        Class loadNext() throws ClassNotFoundException {
 
             // public class TestNNNNNN extends java.lang.Object{
             // public TestNNNNNN();
@@ -438,11 +436,11 @@ public class MemoryMonitor extends JPanel {
 
             return defineClass(name, b, 0, b.length);
 
-	}
-	static int count = 100000;
-	
+        }
+        static int count = 100000;
+
     }
-	
+
     public static void main(String s[]) {
         final MemoryMonitor demo = new MemoryMonitor();
         WindowListener l = new WindowAdapter() {
@@ -457,9 +455,8 @@ public class MemoryMonitor extends JPanel {
         f.setSize(new Dimension(400,500));
         f.setVisible(true);
         demo.surf.start();
-	Thread thr = new Thread(new Memeater());
-	thr.start();
+        Thread thr = new Thread(new Memeater());
+        thr.start();
     }
 
 }
-

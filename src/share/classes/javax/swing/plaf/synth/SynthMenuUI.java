@@ -40,7 +40,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's MenuUI.
  *
- * @version %I%, %G%
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
@@ -53,7 +52,7 @@ class SynthMenuUI extends BasicMenuUI implements PropertyChangeListener,
     private String acceleratorDelimiter;
 
     public static ComponentUI createUI(JComponent x) {
-	return new SynthMenuUI();
+        return new SynthMenuUI();
     }
 
     protected void installDefaults() {
@@ -74,7 +73,7 @@ class SynthMenuUI extends BasicMenuUI implements PropertyChangeListener,
             String prefix = getPropertyPrefix();
             defaultTextIconGap = style.getInt(
                            context, prefix + ".textIconGap", 4);
-            if (menuItem.getMargin() == null || 
+            if (menuItem.getMargin() == null ||
                          (menuItem.getMargin() instanceof UIResource)) {
                 Insets insets = (Insets)style.get(context, prefix + ".margin");
 
@@ -128,7 +127,7 @@ class SynthMenuUI extends BasicMenuUI implements PropertyChangeListener,
     }
 
     protected void uninstallListeners() {
-	super.uninstallListeners();
+        super.uninstallListeners();
         menuItem.removePropertyChangeListener(this);
     }
 

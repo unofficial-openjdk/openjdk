@@ -34,19 +34,18 @@
 public class HeapDumpTest {
 
     public static void main(String args[]) throws Exception {
-	DemoRun hprof;
+        DemoRun hprof;
 
-	/* Run JVMTI hprof agent with heap=dump */
-	hprof = new DemoRun("hprof", "heap=dump");
-	hprof.runit(args[0]);
+        /* Run JVMTI hprof agent with heap=dump */
+        hprof = new DemoRun("hprof", "heap=dump");
+        hprof.runit(args[0]);
 
-	/* Make sure patterns in output look ok */
-	if (hprof.output_contains("ERROR")) {
-	    throw new RuntimeException("Test failed - ERROR seen in output");
-	}
+        /* Make sure patterns in output look ok */
+        if (hprof.output_contains("ERROR")) {
+            throw new RuntimeException("Test failed - ERROR seen in output");
+        }
 
-	/* Must be a pass. */
-	System.out.println("Test passed - cleanly terminated");
+        /* Must be a pass. */
+        System.out.println("Test passed - cleanly terminated");
     }
 }
-

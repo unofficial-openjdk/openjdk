@@ -30,19 +30,19 @@ import java.awt.Component;
 
 /**
  * A small fixed size picture, typically used to decorate components.
- * 
+ *
  * @see ImageIcon
  */
 
-public interface Icon 
+public interface Icon
 {
     /**
      * Draw the icon at the specified location.  Icon implementations
-     * may use the Component argument to get properties useful for 
+     * may use the Component argument to get properties useful for
      * painting, e.g. the foreground or background color.
      */
     void paintIcon(Component c, Graphics g, int x, int y);
-    
+
     /**
      * Returns the icon's width.
      *

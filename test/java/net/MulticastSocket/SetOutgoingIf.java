@@ -34,13 +34,13 @@ import java.util.*;
 public class SetOutgoingIf {
     private static int PORT = 9001;
     private static String osname;
-    
+
     static boolean isWindows() {
         if (osname == null)
             osname = System.getProperty("os.name");
-	return osname.contains("Windows");
+        return osname.contains("Windows");
     }
-    
+
     private static boolean hasIPv6() throws Exception {
         List<NetworkInterface> nics = Collections.list(
                                         NetworkInterface.getNetworkInterfaces());
@@ -51,10 +51,10 @@ public class SetOutgoingIf {
                     return true;
             }
         }
-        
+
         return false;
     }
-    
+
     public static void main(String[] args) throws Exception {
         if (isWindows()) {
             System.out.println("The test only run on non-Windows OS. Bye.");
@@ -65,7 +65,7 @@ public class SetOutgoingIf {
             System.out.println("No IPv6 available. Bye.");
             return;
         }
-        
+
         // We need 2 or more network interfaces to run the test
         //
         List<NetworkInterface> nics = new ArrayList<NetworkInterface>();
@@ -96,13 +96,13 @@ public class SetOutgoingIf {
             groups.add(groupv4);
             groups.add(groupv4mapped);
             groups.add(groupv6);
-            
+
             // use a separated thread to send to those 3 groups
             Thread sender = new Thread(new Sender(nics.get(i), groupv4, groupv4mapped, groupv6, PORT));
             sender.setDaemon(true); // we want sender to stop when main thread exits
             sender.start();
         }
-        
+
         // try to receive on each group, then check if the packet comes
         // from the expected network interface
         //
@@ -111,16 +111,16 @@ public class SetOutgoingIf {
         MulticastSocket mcastsock = new MulticastSocket(PORT);
         mcastsock.setSoTimeout(5000);   // 5 second
             DatagramPacket packet = new DatagramPacket(buf, 0, buf.length);
-            
+
             mcastsock.joinGroup(new InetSocketAddress(group, PORT), nics.get(groups.indexOf(group) / 3));
-            
+
             try {
                 mcastsock.receive(packet);
             } catch (Exception e) {
                 // test failed if any exception
                 throw new RuntimeException(e);
             }
-            
+
             // now check which network interface this packet comes from
             NetworkInterface from = NetworkInterface.getByInetAddress(packet.getAddress());
             NetworkInterface shouldbe = nics.get(groups.indexOf(group) / 3);
@@ -131,7 +131,7 @@ public class SetOutgoingIf {
                                     + from.getName());
                 //throw new RuntimeException("Test failed.");
             }
-            
+
             mcastsock.leaveGroup(new InetSocketAddress(group, PORT), nics.get(groups.indexOf(group) / 3));
         }
     }
@@ -143,7 +143,7 @@ class Sender implements Runnable {
     private InetAddress group2;
     private InetAddress group3;
     private int port;
-    
+
     public Sender(NetworkInterface nic,
                     InetAddress groupv4, InetAddress groupv4mapped, InetAddress groupv6,
                     int port) {
@@ -153,12 +153,12 @@ class Sender implements Runnable {
         group3 = groupv6;
         this.port = port;
     }
-    
+
     public void run() {
         try {
             MulticastSocket mcastsock = new MulticastSocket();
             mcastsock.setNetworkInterface(nic);
-            
+
             byte[] buf = "hello world".getBytes();
             DatagramPacket packet1 = new DatagramPacket(buf, buf.length,
                                         new InetSocketAddress(group1, port));
@@ -166,12 +166,12 @@ class Sender implements Runnable {
                                         new InetSocketAddress(group2, port));
             DatagramPacket packet3 = new DatagramPacket(buf, buf.length,
                                         new InetSocketAddress(group3, port));
-            
+
             for (;;) {
                 mcastsock.send(packet1);
                 mcastsock.send(packet2);
                 mcastsock.send(packet3);
-                
+
                 Thread.currentThread().sleep(1000);   // sleep 1 second
             }
         } catch (Exception e) {

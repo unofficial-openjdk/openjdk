@@ -64,7 +64,7 @@ import sun.security.jca.GetInstance.Instance;
 public class KeyAgreement {
 
     private static final Debug debug =
-			Debug.getInstance("jca", "KeyAgreement");
+                        Debug.getInstance("jca", "KeyAgreement");
 
     // The provider
     private Provider provider;
@@ -93,18 +93,18 @@ public class KeyAgreement {
      * @param algorithm the algorithm
      */
     protected KeyAgreement(KeyAgreementSpi keyAgreeSpi, Provider provider,
-			   String algorithm) {
-	this.spi = keyAgreeSpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
-	lock = null;
+                           String algorithm) {
+        this.spi = keyAgreeSpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
+        lock = null;
     }
 
     private KeyAgreement(Service s, Iterator t, String algorithm) {
-	firstService = s;
-	serviceIterator = t;
-	this.algorithm = algorithm;
-	lock = new Object();
+        firstService = s;
+        serviceIterator = t;
+        this.algorithm = algorithm;
+        lock = new Object();
     }
 
     /**
@@ -117,7 +117,7 @@ public class KeyAgreement {
      * @return the algorithm name of this <code>KeyAgreement</code> object.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -144,28 +144,28 @@ public class KeyAgreement {
      * @return the new <code>KeyAgreement</code> object.
      *
      * @exception NullPointerException if the specified algorithm
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if no Provider supports a
-     *		KeyAgreementSpi implementation for the
-     *		specified algorithm.
+     *          KeyAgreementSpi implementation for the
+     *          specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final KeyAgreement getInstance(String algorithm)
-	    throws NoSuchAlgorithmException {
-	List services = GetInstance.getServices("KeyAgreement", algorithm);
-	// make sure there is at least one service from a signed provider
-	Iterator t = services.iterator();
-	while (t.hasNext()) {
-	    Service s = (Service)t.next();
-	    if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		continue;
-	    }
-	    return new KeyAgreement(s, t, algorithm);
-	}
-	throw new NoSuchAlgorithmException
-				("Algorithm " + algorithm + " not available");
+            throws NoSuchAlgorithmException {
+        List services = GetInstance.getServices("KeyAgreement", algorithm);
+        // make sure there is at least one service from a signed provider
+        Iterator t = services.iterator();
+        while (t.hasNext()) {
+            Service s = (Service)t.next();
+            if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                continue;
+            }
+            return new KeyAgreement(s, t, algorithm);
+        }
+        throw new NoSuchAlgorithmException
+                                ("Algorithm " + algorithm + " not available");
     }
 
     /**
@@ -193,27 +193,27 @@ public class KeyAgreement {
      * @return the new <code>KeyAgreement</code> object.
      *
      * @exception NullPointerException if the specified algorithm
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if a KeyAgreementSpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @exception NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null or empty.
+     *          is null or empty.
      *
      * @see java.security.Provider
      */
     public static final KeyAgreement getInstance(String algorithm,
-	    String provider) throws NoSuchAlgorithmException,
-	    NoSuchProviderException {
-	Instance instance = JceSecurity.getInstance
-		("KeyAgreement", KeyAgreementSpi.class, algorithm, provider);
-	return new KeyAgreement((KeyAgreementSpi)instance.impl,
-		instance.provider, algorithm);
+            String provider) throws NoSuchAlgorithmException,
+            NoSuchProviderException {
+        Instance instance = JceSecurity.getInstance
+                ("KeyAgreement", KeyAgreementSpi.class, algorithm, provider);
+        return new KeyAgreement((KeyAgreementSpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -238,23 +238,23 @@ public class KeyAgreement {
      * @return the new <code>KeyAgreement</code> object.
      *
      * @exception NullPointerException if the specified algorithm
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if a KeyAgreementSpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null.
+     *          is null.
      *
      * @see java.security.Provider
      */
     public static final KeyAgreement getInstance(String algorithm,
-	    Provider provider) throws NoSuchAlgorithmException {
-	Instance instance = JceSecurity.getInstance
-		("KeyAgreement", KeyAgreementSpi.class, algorithm, provider);
-	return new KeyAgreement((KeyAgreementSpi)instance.impl,
-		instance.provider, algorithm);
+            Provider provider) throws NoSuchAlgorithmException {
+        Instance instance = JceSecurity.getInstance
+                ("KeyAgreement", KeyAgreementSpi.class, algorithm, provider);
+        return new KeyAgreement((KeyAgreementSpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     // max number of debug warnings to print from chooseFirstProvider()
@@ -266,130 +266,130 @@ public class KeyAgreement {
      * is not the first method called.
      */
     void chooseFirstProvider() {
-	if (spi != null) {
-	    return;
-	}
-	synchronized (lock) {
-	    if (spi != null) {
-		return;
-	    }
-	    if (debug != null) {
-		int w = --warnCount;
-		if (w >= 0) {
-		    debug.println("KeyAgreement.init() not first method "
-			+ "called, disabling delayed provider selection");
-		    if (w == 0) {
-			debug.println("Further warnings of this type will "
-			    + "be suppressed");
-		    }
-		    new Exception("Call trace").printStackTrace();
-		}
-	    }
-	    Exception lastException = null;
-	    while ((firstService != null) || serviceIterator.hasNext()) {
-		Service s;
-		if (firstService != null) {
-		    s = firstService;
-		    firstService = null;
-		} else {
-		    s = (Service)serviceIterator.next();
-		}
-		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		    continue;
-		}
-		try {
-		    Object obj = s.newInstance(null);
-		    if (obj instanceof KeyAgreementSpi == false) {
-			continue;
-		    }
-		    spi = (KeyAgreementSpi)obj;
-		    provider = s.getProvider();
-		    // not needed any more
-		    firstService = null;
-		    serviceIterator = null;
-		    return;
-		} catch (Exception e) {
-		    lastException = e;
-		}
-	    }
-	    ProviderException e = new ProviderException
-		    ("Could not construct KeyAgreementSpi instance");
-	    if (lastException != null) {
-		e.initCause(lastException);
-	    }
-	    throw e;
-	}
+        if (spi != null) {
+            return;
+        }
+        synchronized (lock) {
+            if (spi != null) {
+                return;
+            }
+            if (debug != null) {
+                int w = --warnCount;
+                if (w >= 0) {
+                    debug.println("KeyAgreement.init() not first method "
+                        + "called, disabling delayed provider selection");
+                    if (w == 0) {
+                        debug.println("Further warnings of this type will "
+                            + "be suppressed");
+                    }
+                    new Exception("Call trace").printStackTrace();
+                }
+            }
+            Exception lastException = null;
+            while ((firstService != null) || serviceIterator.hasNext()) {
+                Service s;
+                if (firstService != null) {
+                    s = firstService;
+                    firstService = null;
+                } else {
+                    s = (Service)serviceIterator.next();
+                }
+                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                    continue;
+                }
+                try {
+                    Object obj = s.newInstance(null);
+                    if (obj instanceof KeyAgreementSpi == false) {
+                        continue;
+                    }
+                    spi = (KeyAgreementSpi)obj;
+                    provider = s.getProvider();
+                    // not needed any more
+                    firstService = null;
+                    serviceIterator = null;
+                    return;
+                } catch (Exception e) {
+                    lastException = e;
+                }
+            }
+            ProviderException e = new ProviderException
+                    ("Could not construct KeyAgreementSpi instance");
+            if (lastException != null) {
+                e.initCause(lastException);
+            }
+            throw e;
+        }
     }
 
     private final static int I_NO_PARAMS = 1;
     private final static int I_PARAMS    = 2;
 
     private void implInit(KeyAgreementSpi spi, int type, Key key,
-	    AlgorithmParameterSpec params, SecureRandom random)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException {
-	if (type == I_NO_PARAMS) {
-	    spi.engineInit(key, random);
-	} else { // I_PARAMS
-	    spi.engineInit(key, params, random);
-	}
+            AlgorithmParameterSpec params, SecureRandom random)
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
+        if (type == I_NO_PARAMS) {
+            spi.engineInit(key, random);
+        } else { // I_PARAMS
+            spi.engineInit(key, params, random);
+        }
     }
 
     private void chooseProvider(int initType, Key key,
-	    AlgorithmParameterSpec params, SecureRandom random)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException {
-	synchronized (lock) {
-	    if (spi != null) {
-		implInit(spi, initType, key, params, random);
-		return;
-	    }
-	    Exception lastException = null;
-	    while ((firstService != null) || serviceIterator.hasNext()) {
-		Service s;
-		if (firstService != null) {
-		    s = firstService;
-		    firstService = null;
-		} else {
-		    s = (Service)serviceIterator.next();
-		}
-		// if provider says it does not support this key, ignore it
-		if (s.supportsParameter(key) == false) {
-		    continue;
-		}
-		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		    continue;
-		}
-		try {
-		    KeyAgreementSpi spi = (KeyAgreementSpi)s.newInstance(null);
-		    implInit(spi, initType, key, params, random);
-		    provider = s.getProvider();
-		    this.spi = spi;
-		    firstService = null;
-		    serviceIterator = null;
-		    return;
-		} catch (Exception e) {
-		    // NoSuchAlgorithmException from newInstance()
-		    // InvalidKeyException from init()
-		    // RuntimeException (ProviderException) from init()
-		    if (lastException == null) {
-			lastException = e;
-		    }
-		}
-	    }
-	    // no working provider found, fail
-	    if (lastException instanceof InvalidKeyException) {
-		throw (InvalidKeyException)lastException;
-	    }
-	    if (lastException instanceof InvalidAlgorithmParameterException) {
-		throw (InvalidAlgorithmParameterException)lastException;
-	    }
-	    if (lastException instanceof RuntimeException) {
-		throw (RuntimeException)lastException;
-	    }
-	    String kName = (key != null) ? key.getClass().getName() : "(null)";
-	    throw new InvalidKeyException
-		("No installed provider supports this key: "
-		+ kName, lastException);
-	}
+            AlgorithmParameterSpec params, SecureRandom random)
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
+        synchronized (lock) {
+            if (spi != null) {
+                implInit(spi, initType, key, params, random);
+                return;
+            }
+            Exception lastException = null;
+            while ((firstService != null) || serviceIterator.hasNext()) {
+                Service s;
+                if (firstService != null) {
+                    s = firstService;
+                    firstService = null;
+                } else {
+                    s = (Service)serviceIterator.next();
+                }
+                // if provider says it does not support this key, ignore it
+                if (s.supportsParameter(key) == false) {
+                    continue;
+                }
+                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                    continue;
+                }
+                try {
+                    KeyAgreementSpi spi = (KeyAgreementSpi)s.newInstance(null);
+                    implInit(spi, initType, key, params, random);
+                    provider = s.getProvider();
+                    this.spi = spi;
+                    firstService = null;
+                    serviceIterator = null;
+                    return;
+                } catch (Exception e) {
+                    // NoSuchAlgorithmException from newInstance()
+                    // InvalidKeyException from init()
+                    // RuntimeException (ProviderException) from init()
+                    if (lastException == null) {
+                        lastException = e;
+                    }
+                }
+            }
+            // no working provider found, fail
+            if (lastException instanceof InvalidKeyException) {
+                throw (InvalidKeyException)lastException;
+            }
+            if (lastException instanceof InvalidAlgorithmParameterException) {
+                throw (InvalidAlgorithmParameterException)lastException;
+            }
+            if (lastException instanceof RuntimeException) {
+                throw (RuntimeException)lastException;
+            }
+            String kName = (key != null) ? key.getClass().getName() : "(null)";
+            throw new InvalidKeyException
+                ("No installed provider supports this key: "
+                + kName, lastException);
+        }
     }
 
     /**
@@ -398,8 +398,8 @@ public class KeyAgreement {
      * @return the provider of this <code>KeyAgreement</code> object
      */
     public final Provider getProvider() {
-	chooseFirstProvider();
-	return this.provider;
+        chooseFirstProvider();
+        return this.provider;
     }
 
     /**
@@ -423,7 +423,7 @@ public class KeyAgreement {
      * has an incompatible algorithm type.
      */
     public final void init(Key key) throws InvalidKeyException {
-	init(key, JceSecurity.RANDOM);
+        init(key, JceSecurity.RANDOM);
     }
 
     /**
@@ -447,17 +447,17 @@ public class KeyAgreement {
      * has an incompatible algorithm type.
      */
     public final void init(Key key, SecureRandom random)
-	    throws InvalidKeyException {
-	if (spi != null) {
-	    spi.engineInit(key, random);
-	} else {
-	    try {
-		chooseProvider(I_NO_PARAMS, key, null, random);
-	    } catch (InvalidAlgorithmParameterException e) {
-		// should never occur
-		throw new InvalidKeyException(e);
-	    }
-	}
+            throws InvalidKeyException {
+        if (spi != null) {
+            spi.engineInit(key, random);
+        } else {
+            try {
+                chooseProvider(I_NO_PARAMS, key, null, random);
+            } catch (InvalidAlgorithmParameterException e) {
+                // should never occur
+                throw new InvalidKeyException(e);
+            }
+        }
     }
 
     /**
@@ -484,9 +484,9 @@ public class KeyAgreement {
      * are inappropriate for this key agreement.
      */
     public final void init(Key key, AlgorithmParameterSpec params)
-	throws InvalidKeyException, InvalidAlgorithmParameterException
+        throws InvalidKeyException, InvalidAlgorithmParameterException
     {
-	init(key, params, JceSecurity.RANDOM);
+        init(key, params, JceSecurity.RANDOM);
     }
 
     /**
@@ -506,14 +506,14 @@ public class KeyAgreement {
      * are inappropriate for this key agreement.
      */
     public final void init(Key key, AlgorithmParameterSpec params,
-			   SecureRandom random)
-	throws InvalidKeyException, InvalidAlgorithmParameterException
+                           SecureRandom random)
+        throws InvalidKeyException, InvalidAlgorithmParameterException
     {
-	if (spi != null) {
-	    spi.engineInit(key, params, random);
-	} else {
-	    chooseProvider(I_PARAMS, key, params, random);
-	}
+        if (spi != null) {
+            spi.engineInit(key, params, random);
+        } else {
+            chooseProvider(I_PARAMS, key, params, random);
+        }
     }
 
     /**
@@ -536,10 +536,10 @@ public class KeyAgreement {
      * initialized.
      */
     public final Key doPhase(Key key, boolean lastPhase)
-	throws InvalidKeyException, IllegalStateException
+        throws InvalidKeyException, IllegalStateException
     {
-	chooseFirstProvider();
-	return spi.engineDoPhase(key, lastPhase);
+        chooseFirstProvider();
+        return spi.engineDoPhase(key, lastPhase);
     }
 
     /**
@@ -557,8 +557,8 @@ public class KeyAgreement {
      * completed yet
      */
     public final byte[] generateSecret() throws IllegalStateException {
-	chooseFirstProvider();
-	return spi.engineGenerateSecret();
+        chooseFirstProvider();
+        return spi.engineGenerateSecret();
     }
 
     /**
@@ -587,10 +587,10 @@ public class KeyAgreement {
      * to hold the secret
      */
     public final int generateSecret(byte[] sharedSecret, int offset)
-	throws IllegalStateException, ShortBufferException
+        throws IllegalStateException, ShortBufferException
     {
-	chooseFirstProvider();
-	return spi.engineGenerateSecret(sharedSecret, offset);
+        chooseFirstProvider();
+        return spi.engineGenerateSecret(sharedSecret, offset);
     }
 
     /**
@@ -616,10 +616,10 @@ public class KeyAgreement {
      * the key material is too short)
      */
     public final SecretKey generateSecret(String algorithm)
-	throws IllegalStateException, NoSuchAlgorithmException,
-	    InvalidKeyException
+        throws IllegalStateException, NoSuchAlgorithmException,
+            InvalidKeyException
     {
-	chooseFirstProvider();
-	return spi.engineGenerateSecret(algorithm);
+        chooseFirstProvider();
+        return spi.engineGenerateSecret(algorithm);
     }
 }

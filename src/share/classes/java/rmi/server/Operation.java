@@ -32,14 +32,13 @@ package java.rmi.server;
  * stubs (stubs generated with <code>rmic -v1.2</code>); hence, this class
  * is deprecated.
  *
- * @version %I%, %G%
  * @since JDK1.1
  * @deprecated no replacement
  */
 @Deprecated
 public class Operation {
     private String operation;
-    
+
     /**
      * Creates a new Operation object.
      * @param op method name
@@ -48,9 +47,9 @@ public class Operation {
      */
     @Deprecated
     public Operation(String op) {
-	operation = op;
+        operation = op;
     }
-    
+
     /**
      * Returns the name of the method.
      * @return method name
@@ -59,7 +58,7 @@ public class Operation {
      */
     @Deprecated
     public String getOperation() {
-	return operation;
+        return operation;
     }
 
     /**
@@ -69,6 +68,6 @@ public class Operation {
      */
     @Deprecated
     public String toString() {
-	return operation;
+        return operation;
     }
 }

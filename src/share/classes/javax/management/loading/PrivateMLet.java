@@ -52,9 +52,9 @@ public class PrivateMLet extends MLet implements PrivateClassLoader {
       * either the parent ClassLoader or the URLs, the MLet should delegate
       * to its containing MBeanServer's {@link ClassLoaderRepository}.
       *
-      */     
+      */
     public PrivateMLet(URL[] urls, boolean delegateToCLR) {
-	super(urls, delegateToCLR);
+        super(urls, delegateToCLR);
     }
 
     /**
@@ -70,9 +70,9 @@ public class PrivateMLet extends MLet implements PrivateClassLoader {
       * either the parent ClassLoader or the URLs, the MLet should delegate
       * to its containing MBeanServer's {@link ClassLoaderRepository}.
       *
-      */     
+      */
     public PrivateMLet(URL[] urls, ClassLoader parent, boolean delegateToCLR) {
-	super(urls, parent, delegateToCLR);
+        super(urls, parent, delegateToCLR);
     }
 
     /**
@@ -89,11 +89,11 @@ public class PrivateMLet extends MLet implements PrivateClassLoader {
       * either the parent ClassLoader or the URLs, the MLet should delegate
       * to its containing MBeanServer's {@link ClassLoaderRepository}.
       *
-      */     
+      */
     public PrivateMLet(URL[] urls,
-		       ClassLoader parent,
-		       URLStreamHandlerFactory factory,
-		       boolean delegateToCLR) {
-	super(urls, parent, factory, delegateToCLR);
+                       ClassLoader parent,
+                       URLStreamHandlerFactory factory,
+                       boolean delegateToCLR) {
+        super(urls, parent, factory, delegateToCLR);
     }
 }

@@ -36,7 +36,7 @@
 /*
  * Copyright 2003 Wily Technology, Inc.
  */
- 
+
 /**
  * This module contains the native method implementations to back the
  * sun.instrument.InstrumentationImpl class.
@@ -44,7 +44,7 @@
  * pointer to the JPLISAgent data structure in a 64 bit scalar field
  * in the InstrumentationImpl instance which is passed to each method.
  */
- 
+
 
 /*
  * Native methods
@@ -55,7 +55,7 @@
  * Method:    isModifiableClass0
  * Signature: (Ljava/lang/Class;)Z
  */
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_sun_instrument_InstrumentationImpl_isModifiableClass0
   (JNIEnv * jnienv, jobject implThis, jlong agent, jclass clazz) {
     return isModifiableClass(jnienv, (JPLISAgent*)(intptr_t)agent, clazz);
@@ -66,7 +66,7 @@ Java_sun_instrument_InstrumentationImpl_isModifiableClass0
  * Method:    isRetransformClassesSupported0
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_sun_instrument_InstrumentationImpl_isRetransformClassesSupported0
   (JNIEnv * jnienv, jobject implThis, jlong agent) {
     return isRetransformClassesSupported(jnienv, (JPLISAgent*)(intptr_t)agent);
@@ -77,7 +77,7 @@ Java_sun_instrument_InstrumentationImpl_isRetransformClassesSupported0
  * Method:    setHasRetransformableTransformers
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_instrument_InstrumentationImpl_setHasRetransformableTransformers
   (JNIEnv * jnienv, jobject implThis, jlong agent, jboolean has) {
     setHasRetransformableTransformers(jnienv, (JPLISAgent*)(intptr_t)agent, has);
@@ -88,7 +88,7 @@ Java_sun_instrument_InstrumentationImpl_setHasRetransformableTransformers
  * Method:    retransformClasses0
  * Signature: ([Ljava/lang/Class;)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_instrument_InstrumentationImpl_retransformClasses0
   (JNIEnv * jnienv, jobject implThis, jlong agent, jobjectArray classes) {
     retransformClasses(jnienv, (JPLISAgent*)(intptr_t)agent, classes);
@@ -155,4 +155,3 @@ JNIEXPORT void JNICALL Java_sun_instrument_InstrumentationImpl_setNativeMethodPr
   (JNIEnv * jnienv, jobject implThis, jlong agent, jobjectArray prefixArray, jboolean isRetransformable) {
     setNativeMethodPrefixes(jnienv, (JPLISAgent*)(intptr_t)agent, prefixArray, isRetransformable);
 }
-

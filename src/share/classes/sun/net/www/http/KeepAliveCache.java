@@ -35,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A class that implements a cache of idle Http connections for keep-alive
  *
- * @version %I%, %G%
  * @author Stephen R. Pietrowicz (NCSA)
  * @author Dave Brown
  */
@@ -52,14 +51,14 @@ public class KeepAliveCache extends ConcurrentHashMap implements Runnable {
     static int result = -1;
     static int getMaxConnections() {
         if (result == -1) {
-	    result = java.security.AccessController.doPrivileged(
-	        new sun.security.action.GetIntegerAction("http.maxConnections",
-							 MAX_CONNECTIONS))
-		.intValue();
-	    if (result <= 0)
-		result = MAX_CONNECTIONS;
-	}
-	    return result;
+            result = java.security.AccessController.doPrivileged(
+                new sun.security.action.GetIntegerAction("http.maxConnections",
+                                                         MAX_CONNECTIONS))
+                .intValue();
+            if (result <= 0)
+                result = MAX_CONNECTIONS;
+        }
+            return result;
     }
 
     static final int LIFETIME = 5000;
@@ -77,72 +76,72 @@ public class KeepAliveCache extends ConcurrentHashMap implements Runnable {
      * @param http The HttpClient to be cached
      */
     public synchronized void put(final URL url, Object obj, HttpClient http) {
-	boolean startThread = (keepAliveTimer == null);
-	if (!startThread) {
-	    if (!keepAliveTimer.isAlive()) {
-		startThread = true;
-	    }
-	}
-	if (startThread) {
-	    clear();
-	    /* Unfortunately, we can't always believe the keep-alive timeout we got
-	     * back from the server.  If I'm connected through a Netscape proxy
-	     * to a server that sent me a keep-alive
-	     * time of 15 sec, the proxy unilaterally terminates my connection
-	     * The robustness to to get around this is in HttpClient.parseHTTP()
-	     */
-	    final KeepAliveCache cache = this;
-	    java.security.AccessController.doPrivileged(
-		new java.security.PrivilegedAction() {
-		public Object run() {
+        boolean startThread = (keepAliveTimer == null);
+        if (!startThread) {
+            if (!keepAliveTimer.isAlive()) {
+                startThread = true;
+            }
+        }
+        if (startThread) {
+            clear();
+            /* Unfortunately, we can't always believe the keep-alive timeout we got
+             * back from the server.  If I'm connected through a Netscape proxy
+             * to a server that sent me a keep-alive
+             * time of 15 sec, the proxy unilaterally terminates my connection
+             * The robustness to to get around this is in HttpClient.parseHTTP()
+             */
+            final KeepAliveCache cache = this;
+            java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction() {
+                public Object run() {
                    // We want to create the Keep-Alive-Timer in the
-		    // system threadgroup
-		    ThreadGroup grp = Thread.currentThread().getThreadGroup();
-		    ThreadGroup parent = null;
-		    while ((parent = grp.getParent()) != null) {
-			grp = parent;
-		    }
+                    // system threadgroup
+                    ThreadGroup grp = Thread.currentThread().getThreadGroup();
+                    ThreadGroup parent = null;
+                    while ((parent = grp.getParent()) != null) {
+                        grp = parent;
+                    }
 
-		    keepAliveTimer = new Thread(grp, cache, "Keep-Alive-Timer");
-		    keepAliveTimer.setDaemon(true);
-		    keepAliveTimer.setPriority(Thread.MAX_PRIORITY - 2);
-		    keepAliveTimer.start();
-		    return null;
-		}
-	    });
-	}
+                    keepAliveTimer = new Thread(grp, cache, "Keep-Alive-Timer");
+                    keepAliveTimer.setDaemon(true);
+                    keepAliveTimer.setPriority(Thread.MAX_PRIORITY - 2);
+                    keepAliveTimer.start();
+                    return null;
+                }
+            });
+        }
 
-	KeepAliveKey key = new KeepAliveKey(url, obj);
-	ClientVector v = (ClientVector)super.get(key);
+        KeepAliveKey key = new KeepAliveKey(url, obj);
+        ClientVector v = (ClientVector)super.get(key);
 
-	if (v == null) {
-	    int keepAliveTimeout = http.getKeepAliveTimeout();
-	    v = new ClientVector(keepAliveTimeout > 0?
-				 keepAliveTimeout*1000 : LIFETIME);
-	    v.put(http);
-	    super.put(key, v);
-	} else {
-	    v.put(http);
-	}
+        if (v == null) {
+            int keepAliveTimeout = http.getKeepAliveTimeout();
+            v = new ClientVector(keepAliveTimeout > 0?
+                                 keepAliveTimeout*1000 : LIFETIME);
+            v.put(http);
+            super.put(key, v);
+        } else {
+            v.put(http);
+        }
     }
 
     /* remove an obsolete HttpClient from it's VectorCache */
     public synchronized void remove (HttpClient h, Object obj) {
- 	KeepAliveKey key = new KeepAliveKey(h.url, obj);
-  	ClientVector v = (ClientVector)super.get(key);
- 	if (v != null) {
- 	    v.remove(h);
- 	    if (v.empty()) {
- 		removeVector(key);
- 	    }
-  	}
+        KeepAliveKey key = new KeepAliveKey(h.url, obj);
+        ClientVector v = (ClientVector)super.get(key);
+        if (v != null) {
+            v.remove(h);
+            if (v.empty()) {
+                removeVector(key);
+            }
+        }
     }
 
     /* called by a clientVector thread when all it's connections have timed out
      * and that vector of connections should be removed.
      */
     synchronized void removeVector(KeepAliveKey k) {
-	super.remove(k);
+        super.remove(k);
     }
 
     /**
@@ -150,12 +149,12 @@ public class KeepAliveCache extends ConcurrentHashMap implements Runnable {
      */
     public synchronized Object get(URL url, Object obj) {
 
-	KeepAliveKey key = new KeepAliveKey(url, obj);
-	ClientVector v = (ClientVector)super.get(key);
-	if (v == null) { // nothing in cache yet
-	    return null;
-	}
-	return v.get();
+        KeepAliveKey key = new KeepAliveKey(url, obj);
+        ClientVector v = (ClientVector)super.get(key);
+        if (v == null) { // nothing in cache yet
+            return null;
+        }
+        return v.get();
     }
 
     /* Sleeps for an alloted timeout, then checks for timed out connections.
@@ -163,57 +162,57 @@ public class KeepAliveCache extends ConcurrentHashMap implements Runnable {
      * short time).
      */
     public void run() {
-	int total_cache;
-	do {
-	    try {
-		Thread.sleep(LIFETIME);
-	    } catch (InterruptedException e) {}
-	    synchronized (this) {
-		/* Remove all unused HttpClients.  Starting from the
-		 * bottom of the stack (the least-recently used first).
-		 * REMIND: It'd be nice to not remove *all* connections
-		 * that aren't presently in use.  One could have been added
-		 * a second ago that's still perfectly valid, and we're
-		 * needlessly axing it.  But it's not clear how to do this
-		 * cleanly, and doing it right may be more trouble than it's
-		 * worth.
-		 */
-		
-		long currentTime = System.currentTimeMillis(); 
+        int total_cache;
+        do {
+            try {
+                Thread.sleep(LIFETIME);
+            } catch (InterruptedException e) {}
+            synchronized (this) {
+                /* Remove all unused HttpClients.  Starting from the
+                 * bottom of the stack (the least-recently used first).
+                 * REMIND: It'd be nice to not remove *all* connections
+                 * that aren't presently in use.  One could have been added
+                 * a second ago that's still perfectly valid, and we're
+                 * needlessly axing it.  But it's not clear how to do this
+                 * cleanly, and doing it right may be more trouble than it's
+                 * worth.
+                 */
 
-		Iterator itr = keySet().iterator();
-		ArrayList keysToRemove = new ArrayList();
-		
-		while (itr.hasNext()) {
-		    KeepAliveKey key = (KeepAliveKey)itr.next();
-		    ClientVector v = (ClientVector)get(key);
-		    synchronized (v) {
-			int i; 
+                long currentTime = System.currentTimeMillis();
 
-			for (i = 0; i < v.size(); i++) { 
-			    KeepAliveEntry e = (KeepAliveEntry)v.elementAt(i);
-			    if ((currentTime - e.idleStartTime) > v.nap) { 
-				HttpClient h = e.hc; 
-				h.closeServer();
-			    } else {
-				break;
-			    }
-			} 
-			v.subList(0, i).clear(); 
-			
-			if (v.size() == 0) { 
-			    keysToRemove.add(key);
-			}
-		    }
-		}
-		itr = keysToRemove.iterator();
-		while (itr.hasNext()) {
-		    removeVector((KeepAliveKey)itr.next());
-		}
-	    }
-	} while (size() > 0); 
-	
-	return;
+                Iterator itr = keySet().iterator();
+                ArrayList keysToRemove = new ArrayList();
+
+                while (itr.hasNext()) {
+                    KeepAliveKey key = (KeepAliveKey)itr.next();
+                    ClientVector v = (ClientVector)get(key);
+                    synchronized (v) {
+                        int i;
+
+                        for (i = 0; i < v.size(); i++) {
+                            KeepAliveEntry e = (KeepAliveEntry)v.elementAt(i);
+                            if ((currentTime - e.idleStartTime) > v.nap) {
+                                HttpClient h = e.hc;
+                                h.closeServer();
+                            } else {
+                                break;
+                            }
+                        }
+                        v.subList(0, i).clear();
+
+                        if (v.size() == 0) {
+                            keysToRemove.add(key);
+                        }
+                    }
+                }
+                itr = keysToRemove.iterator();
+                while (itr.hasNext()) {
+                    removeVector((KeepAliveKey)itr.next());
+                }
+            }
+        } while (size() > 0);
+
+        return;
     }
 
     /*
@@ -221,12 +220,12 @@ public class KeepAliveCache extends ConcurrentHashMap implements Runnable {
      */
     private void writeObject(java.io.ObjectOutputStream stream)
     throws IOException {
-	throw new NotSerializableException();
+        throw new NotSerializableException();
     }
 
     private void readObject(java.io.ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
-	throw new NotSerializableException();
+        throw new NotSerializableException();
     }
 }
 
@@ -241,38 +240,38 @@ class ClientVector extends java.util.Stack {
     // sleep time in milliseconds, before cache clear
     int nap;
 
-    
+
 
     ClientVector (int nap) {
-	this.nap = nap;
+        this.nap = nap;
     }
 
     synchronized HttpClient get() {
-	if (empty()) {
-	    return null;
-	} else {
-	    // Loop until we find a connection that has not timed out
-	    HttpClient hc = null;
-	    long currentTime = System.currentTimeMillis();
-	    do {
-		KeepAliveEntry e = (KeepAliveEntry)pop();
-		if ((currentTime - e.idleStartTime) > nap) {
-		    e.hc.closeServer();
-		} else {
-		    hc = e.hc;
-		}
-	    } while ((hc== null) && (!empty()));
-	    return hc;
-	}
+        if (empty()) {
+            return null;
+        } else {
+            // Loop until we find a connection that has not timed out
+            HttpClient hc = null;
+            long currentTime = System.currentTimeMillis();
+            do {
+                KeepAliveEntry e = (KeepAliveEntry)pop();
+                if ((currentTime - e.idleStartTime) > nap) {
+                    e.hc.closeServer();
+                } else {
+                    hc = e.hc;
+                }
+            } while ((hc== null) && (!empty()));
+            return hc;
+        }
     }
 
     /* return a still valid, unused HttpClient */
     synchronized void put(HttpClient h) {
-	if (size() > KeepAliveCache.getMaxConnections()) { 
-	    h.closeServer(); // otherwise the connection remains in limbo
-	} else {
-	    push(new KeepAliveEntry(h, System.currentTimeMillis()));
-	}
+        if (size() > KeepAliveCache.getMaxConnections()) {
+            h.closeServer(); // otherwise the connection remains in limbo
+        } else {
+            push(new KeepAliveEntry(h, System.currentTimeMillis()));
+        }
     }
 
     /*
@@ -280,20 +279,20 @@ class ClientVector extends java.util.Stack {
      */
     private void writeObject(java.io.ObjectOutputStream stream)
     throws IOException {
-	throw new NotSerializableException();
+        throw new NotSerializableException();
     }
 
     private void readObject(java.io.ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
-	throw new NotSerializableException();
+        throw new NotSerializableException();
     }
 }
 
 
 class KeepAliveKey {
-    private String	protocol = null;
-    private String	host = null;
-    private int		port = 0;
+    private String      protocol = null;
+    private String      host = null;
+    private int         port = 0;
     private Object      obj = null; // additional key, such as socketfactory
 
     /**
@@ -302,23 +301,23 @@ class KeepAliveKey {
      * @param url the URL containing the protocol, host and port information
      */
     public KeepAliveKey(URL url, Object obj) {
-	this.protocol = url.getProtocol();
-	this.host = url.getHost();
-	this.port = url.getPort();
-	this.obj = obj;
+        this.protocol = url.getProtocol();
+        this.host = url.getHost();
+        this.port = url.getPort();
+        this.obj = obj;
     }
 
     /**
      * Determine whether or not two objects of this type are equal
      */
     public boolean equals(Object obj) {
-	if ((obj instanceof KeepAliveKey) == false)
-	    return false;
-	KeepAliveKey kae = (KeepAliveKey)obj;
-	return host.equals(kae.host)
-	    && (port == kae.port)
-	    && protocol.equals(kae.protocol)
-	    && this.obj == kae.obj;
+        if ((obj instanceof KeepAliveKey) == false)
+            return false;
+        KeepAliveKey kae = (KeepAliveKey)obj;
+        return host.equals(kae.host)
+            && (port == kae.port)
+            && protocol.equals(kae.protocol)
+            && this.obj == kae.obj;
     }
 
     /**
@@ -326,18 +325,18 @@ class KeepAliveKey {
      * concatenation of the protocol, host name and port.
      */
     public int hashCode() {
-	String str = protocol+host+port;
-	return this.obj == null? str.hashCode() :
-	    str.hashCode() + this.obj.hashCode();
+        String str = protocol+host+port;
+        return this.obj == null? str.hashCode() :
+            str.hashCode() + this.obj.hashCode();
     }
 }
 
 class KeepAliveEntry {
     HttpClient hc;
     long idleStartTime;
-    
+
     KeepAliveEntry(HttpClient hc, long idleStartTime) {
-	this.hc = hc;
-	this.idleStartTime = idleStartTime;
+        this.hc = hc;
+        this.idleStartTime = idleStartTime;
     }
 }

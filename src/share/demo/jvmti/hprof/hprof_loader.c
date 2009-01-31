@@ -31,7 +31,7 @@
 
 /* The Class Loader table. */
 
-/* 
+/*
  * The Class Loader objects show up so early in the VM process that a
  *   separate table was designated for Class Loaders.
  *
@@ -65,38 +65,38 @@ static void
 delete_globalref(JNIEnv *env, LoaderInfo *info)
 {
     jobject     ref;
-    
+
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(info!=NULL);
     ref = info->globalref;
     info->globalref = NULL;
     if ( ref != NULL ) {
-	deleteWeakGlobalReference(env, ref);
+        deleteWeakGlobalReference(env, ref);
     }
     info->object_index = 0;
 }
 
 static void
-cleanup_item(TableIndex index, void *key_ptr, int key_len, 
-			void *info_ptr, void *arg)
+cleanup_item(TableIndex index, void *key_ptr, int key_len,
+                        void *info_ptr, void *arg)
 {
 }
 
 static void
-delete_ref_item(TableIndex index, void *key_ptr, int key_len, 
-			void *info_ptr, void *arg)
+delete_ref_item(TableIndex index, void *key_ptr, int key_len,
+                        void *info_ptr, void *arg)
 {
     delete_globalref((JNIEnv*)arg, (LoaderInfo*)info_ptr);
 }
 
 static void
-list_item(TableIndex index, void *key_ptr, int key_len, 
-			void *info_ptr, void *arg)
+list_item(TableIndex index, void *key_ptr, int key_len,
+                        void *info_ptr, void *arg)
 {
     LoaderInfo     *info;
-    
+
     HPROF_ASSERT(info_ptr!=NULL);
-    
+
     info        = (LoaderInfo*)info_ptr;
     debug_message( "Loader 0x%08x: globalref=%p, object_index=%d\n",
                 index, (void*)info->globalref, info->object_index);
@@ -106,7 +106,7 @@ static void
 free_entry(JNIEnv *env, LoaderIndex index)
 {
     LoaderInfo *info;
-    
+
     info = get_info(index);
     delete_globalref(env, info);
     table_free_entry(gdata->loader_table, index);
@@ -123,30 +123,30 @@ search_item(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *
 {
     LoaderInfo  *info;
     SearchData  *data;
-    
+
     HPROF_ASSERT(info_ptr!=NULL);
     HPROF_ASSERT(arg!=NULL);
     info        = (LoaderInfo*)info_ptr;
-    data	= (SearchData*)arg;
+    data        = (SearchData*)arg;
     if ( data->loader == info->globalref ) {
-	/* Covers when looking for NULL too. */
-	HPROF_ASSERT(data->found==0); /* Did we find more than one? */
-	data->found = index;
+        /* Covers when looking for NULL too. */
+        HPROF_ASSERT(data->found==0); /* Did we find more than one? */
+        data->found = index;
     } else if ( data->env != NULL && data->loader != NULL &&
-		info->globalref != NULL ) {
-	jobject lref;
-	
-	lref = newLocalReference(data->env, info->globalref);
-	if ( lref == NULL ) {
-	    /* Object went away, free reference and entry */
-            free_entry(data->env, index); 
-	} else if ( isSameObject(data->env, data->loader, lref) ) {
-	    HPROF_ASSERT(data->found==0); /* Did we find more than one? */
-	    data->found = index;
-	}
-	if ( lref != NULL ) {
-	    deleteLocalReference(data->env, lref);
-	}
+                info->globalref != NULL ) {
+        jobject lref;
+
+        lref = newLocalReference(data->env, info->globalref);
+        if ( lref == NULL ) {
+            /* Object went away, free reference and entry */
+            free_entry(data->env, index);
+        } else if ( isSameObject(data->env, data->loader, lref) ) {
+            HPROF_ASSERT(data->found==0); /* Did we find more than one? */
+            data->found = index;
+        }
+        if ( lref != NULL ) {
+            deleteLocalReference(data->env, lref);
+        }
     }
 
 }
@@ -167,31 +167,31 @@ LoaderIndex
 loader_find_or_create(JNIEnv *env, jobject loader)
 {
     LoaderIndex index;
-    
+
     /* See if we remembered the system loader */
     if ( loader==NULL && gdata->system_loader != 0 ) {
-	return gdata->system_loader;
+        return gdata->system_loader;
     }
     if ( loader==NULL ) {
-	env = NULL;
+        env = NULL;
     }
     index = search(env, loader);
     if ( index == 0 ) {
-	static LoaderInfo  empty_info;
-	LoaderInfo  info;
-	
-	info = empty_info;
-	if ( loader != NULL ) {
-	    HPROF_ASSERT(env!=NULL);
-	    info.globalref = newWeakGlobalReference(env, loader);
-	    info.object_index = 0;
-	}
-	index = table_create_entry(gdata->loader_table, NULL, 0, (void*)&info);
+        static LoaderInfo  empty_info;
+        LoaderInfo  info;
+
+        info = empty_info;
+        if ( loader != NULL ) {
+            HPROF_ASSERT(env!=NULL);
+            info.globalref = newWeakGlobalReference(env, loader);
+            info.object_index = 0;
+        }
+        index = table_create_entry(gdata->loader_table, NULL, 0, (void*)&info);
     }
     HPROF_ASSERT(search(env,loader)==index);
     /* Remember the system loader */
     if ( loader==NULL && gdata->system_loader == 0 ) {
-	gdata->system_loader = index;
+        gdata->system_loader = index;
     }
     return index;
 }
@@ -206,7 +206,7 @@ loader_init(void)
 void
 loader_list(void)
 {
-    debug_message( 
+    debug_message(
         "--------------------- Loader Table ------------------------\n");
     table_walk_items(gdata->loader_table, &list_item, NULL);
     debug_message(
@@ -233,30 +233,29 @@ loader_object_index(JNIEnv *env, LoaderIndex index)
     LoaderInfo *info;
     ObjectIndex object_index;
     jobject     wref;
-   
+
     /* Assume no object index at first (default class loader) */
     info = get_info(index);
     object_index = info->object_index;
     wref = info->globalref;
     if ( wref != NULL && object_index == 0 ) {
         jobject lref;
-	
-	object_index = 0;
-	lref = newLocalReference(env, wref);
-	if ( lref != NULL && !isSameObject(env, lref, NULL) ) {
-	    jlong tag;
-	   
-	    /* Get the tag on the object and extract the object_index */
-	    tag = getTag(lref);
-	    if ( tag != (jlong)0 ) {
-		object_index = tag_extract(tag);
-	    }
-	}
-	if ( lref != NULL ) {
-	    deleteLocalReference(env, lref);
-	}
-	info->object_index = object_index;
+
+        object_index = 0;
+        lref = newLocalReference(env, wref);
+        if ( lref != NULL && !isSameObject(env, lref, NULL) ) {
+            jlong tag;
+
+            /* Get the tag on the object and extract the object_index */
+            tag = getTag(lref);
+            if ( tag != (jlong)0 ) {
+                object_index = tag_extract(tag);
+            }
+        }
+        if ( lref != NULL ) {
+            deleteLocalReference(env, lref);
+        }
+        info->object_index = object_index;
     }
     return object_index;
 }
-

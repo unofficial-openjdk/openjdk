@@ -31,12 +31,11 @@ import java.security.cert.CertPathBuilderException;
 /**
  * This is a subclass of the generic <code>CertPathBuilderException</code>.
  * It contains an adjacency list with information regarding the unsuccessful
- * paths that the SunCertPathBuilder tried. 
+ * paths that the SunCertPathBuilder tried.
  *
- * @version 	%I% %G%
- * @since	1.4
- * @author 	Sean Mullan
- * @see		CertPathBuilderException
+ * @since       1.4
+ * @author      Sean Mullan
+ * @see         CertPathBuilderException
  */
 public class SunCertPathBuilderException extends CertPathBuilderException {
 
@@ -48,28 +47,28 @@ public class SunCertPathBuilderException extends CertPathBuilderException {
     private transient AdjacencyList adjList;
 
     /**
-     * Constructs a <code>SunCertPathBuilderException</code> with 
+     * Constructs a <code>SunCertPathBuilderException</code> with
      * <code>null</code> as its detail message.
      */
     public SunCertPathBuilderException() {
-	super();
+        super();
     }
 
     /**
-     * Constructs a <code>SunCertPathBuilderException</code> with the specified 
-     * detail message. A detail message is a <code>String</code> that 
+     * Constructs a <code>SunCertPathBuilderException</code> with the specified
+     * detail message. A detail message is a <code>String</code> that
      * describes this particular exception.
      *
      * @param msg the detail message
      */
     public SunCertPathBuilderException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**
-     * Constructs a <code>SunCertPathBuilderException</code> that wraps the 
+     * Constructs a <code>SunCertPathBuilderException</code> that wraps the
      * specified throwable. This allows any exception to be converted into a
-     * <code>SunCertPathBuilderException</code>, while retaining information 
+     * <code>SunCertPathBuilderException</code>, while retaining information
      * about the cause, which may be useful for debugging. The detail message is
      * set to (<code>cause==null ? null : cause.toString()</code>) (which
      * typically contains the class and detail message of cause).
@@ -80,7 +79,7 @@ public class SunCertPathBuilderException extends CertPathBuilderException {
      * root cause.
      */
     public SunCertPathBuilderException(Throwable cause) {
-	super(cause);
+        super(cause);
     }
 
     /**
@@ -99,11 +98,11 @@ public class SunCertPathBuilderException extends CertPathBuilderException {
      * detail message and adjacency list.
      *
      * @param msg the detail message
-     * @param adjList the adjacency list 
+     * @param adjList the adjacency list
      */
     SunCertPathBuilderException(String msg, AdjacencyList adjList) {
-	this(msg);
-	this.adjList = adjList;
+        this(msg);
+        this.adjList = adjList;
     }
 
     /**
@@ -114,11 +113,11 @@ public class SunCertPathBuilderException extends CertPathBuilderException {
      * @param cause the throwable that occurred
      * @param adjList Adjacency list
      */
-    SunCertPathBuilderException(String msg, Throwable cause, 
-	AdjacencyList adjList) 
+    SunCertPathBuilderException(String msg, Throwable cause,
+        AdjacencyList adjList)
     {
-	this(msg, cause);
-	this.adjList = adjList;
+        this(msg, cause);
+        this.adjList = adjList;
     }
 
     /**
@@ -127,6 +126,6 @@ public class SunCertPathBuilderException extends CertPathBuilderException {
      * @return the adjacency list containing information about the build
      */
     public AdjacencyList getAdjacencyList() {
-	return adjList;
+        return adjList;
     }
 }

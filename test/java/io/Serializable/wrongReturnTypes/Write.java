@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,7 +20,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 /* @test
  * @bug 4337857
  *
@@ -32,40 +32,40 @@
  * @run main Read
  *
  * @summary Verify that custom serialization methods declared with incorrect
- * 	    return types are not invoked.
+ *          return types are not invoked.
  */
 
 import java.io.*;
 
 class B implements Serializable {
     private static final long serialVersionUID = 0L;
-    
+
     static boolean writeObjectCalled;
     static boolean writeReplaceCalled;
 
     private Object writeObject(ObjectOutputStream out) throws IOException {
-	writeObjectCalled = true;
-	out.defaultWriteObject();
-	return null;
+        writeObjectCalled = true;
+        out.defaultWriteObject();
+        return null;
     }
 
     private B writeReplace() throws ObjectStreamException {
-	writeReplaceCalled = true;
-	return this;
+        writeReplaceCalled = true;
+        return this;
     }
 }
 
 public class Write {
     public static void main(String[] args) throws Exception {
-	ObjectOutputStream oout = 
-	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-	oout.writeObject(new B());
-	oout.close();
+        ObjectOutputStream oout =
+            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+        oout.writeObject(new B());
+        oout.close();
 
-	if (B.writeObjectCalled) {
-	    throw new Error("writeObject with wrong return type called");
-	} else if (B.writeReplaceCalled) {
-	    throw new Error("writeReplace with wrong return type called");
-	}
+        if (B.writeObjectCalled) {
+            throw new Error("writeObject with wrong return type called");
+        } else if (B.writeReplaceCalled) {
+            throw new Error("writeReplace with wrong return type called");
+        }
     }
 }

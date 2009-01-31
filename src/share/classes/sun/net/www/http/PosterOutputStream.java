@@ -32,12 +32,11 @@ import java.net.*;
  * Instances of this class are returned to applications for the purpose of
  * sending user data for a HTTP POST or PUT request. This class is used
  * when the content-length will be specified in the header of the request.
- * The semantics of ByteArrayOutputStream are extended so that 
- * when close() is called, it is no longer possible to write 
- * additional data to the stream. From this point the content length of 
+ * The semantics of ByteArrayOutputStream are extended so that
+ * when close() is called, it is no longer possible to write
+ * additional data to the stream. From this point the content length of
  * the request is fixed and cannot change.
  *
- * @version %I%, %G%
  * @author Michael McMahon
  */
 
@@ -49,7 +48,7 @@ public class PosterOutputStream extends ByteArrayOutputStream {
      * Creates a new output stream for POST user data
      */
     public PosterOutputStream () {
-	super (256);
+        super (256);
     }
 
     /**
@@ -58,10 +57,10 @@ public class PosterOutputStream extends ByteArrayOutputStream {
      * @param   b   the byte to be written.
      */
     public synchronized void write(int b) {
-	if (closed) {
-	    return;
-	}
-	super.write (b);
+        if (closed) {
+            return;
+        }
+        super.write (b);
     }
 
     /**
@@ -73,10 +72,10 @@ public class PosterOutputStream extends ByteArrayOutputStream {
      * @param   len   the number of bytes to write.
      */
     public synchronized void write(byte b[], int off, int len) {
-	if (closed) {
-	    return;
-	}
-	super.write (b, off, len);
+        if (closed) {
+            return;
+        }
+        super.write (b, off, len);
     }
 
     /**
@@ -89,10 +88,10 @@ public class PosterOutputStream extends ByteArrayOutputStream {
      * @see     java.io.ByteArrayInputStream#count
      */
     public synchronized void reset() {
-	if (closed) {
-	    return;
-	}
-	super.reset ();
+        if (closed) {
+            return;
+        }
+        super.reset ();
     }
 
     /**
@@ -100,7 +99,7 @@ public class PosterOutputStream extends ByteArrayOutputStream {
      * to this stream. Further calls to write will have no effect.
      */
     public synchronized void close() throws IOException {
-	closed = true;
-	super.close ();
+        closed = true;
+        super.close ();
     }
 }

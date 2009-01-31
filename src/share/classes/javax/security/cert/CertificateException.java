@@ -36,7 +36,6 @@ package javax.security.cert;
  * <code>java.security.cert</code>.</em></p>
  *
  * @author Hemma Prafullchandra
- * @version %I%
  * @since 1.4
  * @see Certificate
  */
@@ -44,7 +43,7 @@ public class CertificateException extends Exception {
 
     /**
      * Constructs a certificate exception with no detail message. A detail
-     * message is a String that describes this particular exception. 
+     * message is a String that describes this particular exception.
      */
     public CertificateException() {
         super();
@@ -55,7 +54,7 @@ public class CertificateException extends Exception {
      * message. A detail message is a String that describes this
      * particular exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public CertificateException(String msg) {
         super(msg);

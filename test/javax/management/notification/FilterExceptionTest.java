@@ -37,36 +37,36 @@ public class FilterExceptionTest {
     public static Exception listenerException;
 
     public static void main(String[] args) throws Exception {
-	System.out.println(
+        System.out.println(
          ">>> FilterExceptionTest-main: test on an exception thrown by NotificationFilter.");
 
-	FilterExceptionTest.listenerException = null;
+        FilterExceptionTest.listenerException = null;
 
-	NotificationFilter filter = new NotificationFilter() {
-		public boolean isNotificationEnabled(Notification notification) {
+        NotificationFilter filter = new NotificationFilter() {
+                public boolean isNotificationEnabled(Notification notification) {
 
-		    System.out.println(">>> FilterExceptionTest-filter: throws exception.");
+                    System.out.println(">>> FilterExceptionTest-filter: throws exception.");
 
-		    throw new RuntimeException("For test");
-		}
-	    };
+                    throw new RuntimeException("For test");
+                }
+            };
 
-	NotificationListener listener = new NotificationListener() {
-		public void handleNotification(Notification n, Object hb) {
-		    FilterExceptionTest.listenerException =
-			new Exception("The listener received unexpected notif.");
-		}
-	    };
+        NotificationListener listener = new NotificationListener() {
+                public void handleNotification(Notification n, Object hb) {
+                    FilterExceptionTest.listenerException =
+                        new Exception("The listener received unexpected notif.");
+                }
+            };
 
-	NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
-	broadcaster.addNotificationListener(listener, filter, null);
-	
-	broadcaster.sendNotification(new Notification("", "", 1L));
+        NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
+        broadcaster.addNotificationListener(listener, filter, null);
 
-	if (FilterExceptionTest.listenerException != null) {
-	    throw FilterExceptionTest.listenerException;
-	}
+        broadcaster.sendNotification(new Notification("", "", 1L));
 
-	System.out.println(">>> FilterExceptionTest-main: Done.");
+        if (FilterExceptionTest.listenerException != null) {
+            throw FilterExceptionTest.listenerException;
+        }
+
+        System.out.println(">>> FilterExceptionTest-main: Done.");
     }
 }

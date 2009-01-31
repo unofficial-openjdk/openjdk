@@ -51,21 +51,21 @@ typedef struct {
     jint y2;
 } SurfaceDataBounds;
 
-#define SD_RASINFO_PRIVATE_SIZE		64
+#define SD_RASINFO_PRIVATE_SIZE         64
 
 /*
  * The SurfaceDataRasInfo structure is used to pass in and return various
  * pieces of information about the destination drawable.  In particular:
  *
- *	SurfaceDataBounds bounds;
+ *      SurfaceDataBounds bounds;
  * [Needed for SD_LOCK_READ or SD_LOCK_WRITE]
  * The 2 dimensional bounds of the raster array that is needed.  Valid
  * memory locations are required at:
- *	*(pixeltype *) (((char *)rasBase) + y * scanStride + x * pixelStride)
+ *      *(pixeltype *) (((char *)rasBase) + y * scanStride + x * pixelStride)
  * for each x, y pair such that (bounds.x1 <= x < bounds.x2) and
  * (bounds.y1 <= y < bounds.y2).
  *
- *	void *rasBase;
+ *      void *rasBase;
  * [Requires SD_LOCK_READ or SD_LOCK_WRITE]
  * A pointer to the device space origin (0, 0) of the indicated raster
  * data.  This pointer may point to a location that is outside of the
@@ -84,7 +84,7 @@ typedef struct {
  * image types which use whole bytes (or shorts or ints) to store
  * their pixels, this field will always be 0.
  *
- *	jint pixelStride;
+ *      jint pixelStride;
  * [Requires SD_LOCK_READ or SD_LOCK_WRITE]
  * The pixel stride is the distance in bytes from the data for one pixel
  * to the data for the pixel at the next x coordinate (x, y) => (x+1, y).
@@ -99,7 +99,7 @@ typedef struct {
  * to always be a positive 32-bit quantity - causing problems on
  * 64-bit architectures.
  *
- *	jint scanStride;
+ *      jint scanStride;
  * [Requires SD_LOCK_READ or SD_LOCK_WRITE]
  * The scan stride is the distance in bytes from the data for one pixel
  * to the data for the pixel at the next y coordinate (x, y) => (x, y+1).
@@ -109,12 +109,12 @@ typedef struct {
  * to always be a positive 32-bit quantity - causing problems on
  * 64-bit architectures.
  *
- *	unsigned int lutSize;
+ *      unsigned int lutSize;
  * [Requires SD_LOCK_LUT]
  * The number of entries in the color lookup table.  The data beyond the
  * end of the map will be undefined.
  *
- *	jint *lutBase;
+ *      jint *lutBase;
  * [Requires SD_LOCK_LUT]
  * A pointer to the beginning of the color lookup table for the colormap.
  * The color lookup table is formatted as an array of jint values each
@@ -122,47 +122,47 @@ typedef struct {
  * corresponding index.  The table is guaranteed to contain at least 256
  * valid memory locations even if the size of the map is smaller than 256.
  *
- *	unsigned char *invColorTable;
+ *      unsigned char *invColorTable;
  * [Requires SD_LOCK_INVCOLOR]
  * A pointer to the beginning of the inverse color lookup table for the
  * colormap.  The inverse color lookup table is formatted as a 32x32x32
  * array of bytes indexed by RxGxB where each component is reduced to 5
  * bits of precision before indexing.
  *
- *	char *redErrTable;
- *	char *grnErrTable;
- *	char *bluErrTable;
+ *      char *redErrTable;
+ *      char *grnErrTable;
+ *      char *bluErrTable;
  * [Requires SD_LOCK_INVCOLOR]
  * Pointers to the beginning of the ordered dither color error tables
  * for the colormap.  The error tables are formatted as an 8x8 array
  * of bytes indexed by coordinates using the formula [y & 7][x & 7].
  *
- *	int *invGrayTable;
+ *      int *invGrayTable;
  * [Requires SD_LOCK_INVGRAY]
  * A pointer to the beginning of the inverse gray lookup table for the
  * colormap.  The inverse color lookup table is formatted as an array
  * of 256 integers indexed by a byte gray level and storing an index
  * into the colormap of the closest matching gray pixel.
  *
- *	union priv {};
+ *      union priv {};
  * A buffer of private data for the SurfaceData implementation.
  * This field is a union of a data block of the desired default
  * size (SD_RASINFO_PRIVATE_SIZE) and a (void *) pointer that
  * ensures proper "strictest" alignment on all platforms.
  */
 typedef struct {
-    SurfaceDataBounds	bounds;			/* bounds of raster array */
-    void		*rasBase;		/* Pointer to (0, 0) pixel */
+    SurfaceDataBounds   bounds;                 /* bounds of raster array */
+    void                *rasBase;               /* Pointer to (0, 0) pixel */
     jint                pixelBitOffset;         /* bit offset to (0, *) pixel */
-    jint	        pixelStride;		/* bytes to next X pixel */
-    jint	        scanStride;		/* bytes to next Y pixel */
-    unsigned int	lutSize;		/* # colors in colormap */
-    jint		*lutBase;		/* Pointer to colormap[0] */
-    unsigned char	*invColorTable;		/* Inverse color table */
-    char		*redErrTable;		/* Red ordered dither table */
-    char		*grnErrTable;		/* Green ordered dither table */
-    char		*bluErrTable;		/* Blue ordered dither table */
-    int			*invGrayTable;		/* Inverse gray table */
+    jint                pixelStride;            /* bytes to next X pixel */
+    jint                scanStride;             /* bytes to next Y pixel */
+    unsigned int        lutSize;                /* # colors in colormap */
+    jint                *lutBase;               /* Pointer to colormap[0] */
+    unsigned char       *invColorTable;         /* Inverse color table */
+    char                *redErrTable;           /* Red ordered dither table */
+    char                *grnErrTable;           /* Green ordered dither table */
+    char                *bluErrTable;           /* Blue ordered dither table */
+    int                 *invGrayTable;          /* Inverse gray table */
     union {
         void            *align;                 /* ensures strict alignment */
         char            data[SD_RASINFO_PRIVATE_SIZE];
@@ -189,13 +189,13 @@ typedef struct _SurfaceDataOps SurfaceDataOps;
  * The lockflags parameter should indicate which information will be
  * needed by the caller.  The various flags which may be OR'd together
  * may consist of any of the following:
- *	SD_LOCK_READ		The caller needs to read pixels from the dest
- *	SD_LOCK_WRITE		The caller needs to write pixels to the dest
- *	SD_LOCK_RD_WR		A combination of (SD_LOCK_READ | SD_LOCK_WRITE)
- *	SD_LOCK_LUT		The caller needs the colormap (Lut)
- *	SD_LOCK_INVCOLOR	The caller needs the inverse color table
- *	SD_LOCK_INVGRAY		The caller needs the inverse gray table
- *	SD_LOCK_FASTEST		The caller only wants direct pixel access
+ *      SD_LOCK_READ            The caller needs to read pixels from the dest
+ *      SD_LOCK_WRITE           The caller needs to write pixels to the dest
+ *      SD_LOCK_RD_WR           A combination of (SD_LOCK_READ | SD_LOCK_WRITE)
+ *      SD_LOCK_LUT             The caller needs the colormap (Lut)
+ *      SD_LOCK_INVCOLOR        The caller needs the inverse color table
+ *      SD_LOCK_INVGRAY         The caller needs the inverse gray table
+ *      SD_LOCK_FASTEST         The caller only wants direct pixel access
  * Note that the SD_LOCK_LUT, SD_LOCK_INVCOLOR, and SD_LOCK_INVGRAY flags
  * are only valid for destinations with IndexColorModels.
  * Also note that SD_LOCK_FASTEST will only succeed if the access to the
@@ -238,20 +238,20 @@ typedef struct _SurfaceDataOps SurfaceDataOps;
  * still smaller bounds.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
  * Note to implementers:
- *	The caller may also continue to use JNI methods after this method
- *	is called so it is important that implementations of SurfaceData
- *	not return from this function with any outstanding JNI Critical
- *	locks that have not been released.
+ *      The caller may also continue to use JNI methods after this method
+ *      is called so it is important that implementations of SurfaceData
+ *      not return from this function with any outstanding JNI Critical
+ *      locks that have not been released.
  */
 typedef jint LockFunc(JNIEnv *env,
-		      SurfaceDataOps *ops,
-		      SurfaceDataRasInfo *rasInfo,
-		      jint lockflags);
+                      SurfaceDataOps *ops,
+                      SurfaceDataRasInfo *rasInfo,
+                      jint lockflags);
 
 /*
  * This function returns information about the raster data for the drawable.
@@ -287,13 +287,13 @@ typedef jint LockFunc(JNIEnv *env,
  * information.
  *
  * Note to callers:
- *	This function may use JNI Critical methods so it is important
- *	that the caller not call any other JNI methods after this function
- *	returns until the Release function is called.
+ *      This function may use JNI Critical methods so it is important
+ *      that the caller not call any other JNI methods after this function
+ *      returns until the Release function is called.
  */
 typedef void GetRasInfoFunc(JNIEnv *env,
-			    SurfaceDataOps *ops,
-			    SurfaceDataRasInfo *pRasInfo);
+                            SurfaceDataOps *ops,
+                            SurfaceDataRasInfo *pRasInfo);
 
 /*
  * This function releases all of the Critical data for the specified
@@ -319,21 +319,21 @@ typedef void GetRasInfoFunc(JNIEnv *env,
  * The bounds should be unchanged since that call.
  *
  * Note to callers:
- *	This function will release any outstanding JNI Critical locks so
- *	it will once again be safe to use arbitrary JNI calls or return
- *	to the enclosing JNI native context.
+ *      This function will release any outstanding JNI Critical locks so
+ *      it will once again be safe to use arbitrary JNI calls or return
+ *      to the enclosing JNI native context.
  *
  * Note to implementers:
- *	This function may not use any JNI methods other than to release
- *	outstanding JNI Critical array locks since there may be other
- *	nested SurfacData objects holding locks with their own outstanding
- *	JNI Critical locks.  This restriction includes the use of the
- *	JNI monitor calls so that all MonitorExit invocations must be
- *	done in the Unlock function.
+ *      This function may not use any JNI methods other than to release
+ *      outstanding JNI Critical array locks since there may be other
+ *      nested SurfacData objects holding locks with their own outstanding
+ *      JNI Critical locks.  This restriction includes the use of the
+ *      JNI monitor calls so that all MonitorExit invocations must be
+ *      done in the Unlock function.
  */
 typedef void ReleaseFunc(JNIEnv *env,
-			 SurfaceDataOps *ops,
-			 SurfaceDataRasInfo *pRasInfo);
+                         SurfaceDataOps *ops,
+                         SurfaceDataRasInfo *pRasInfo);
 
 /*
  * This function unlocks the specified drawable.
@@ -353,25 +353,25 @@ typedef void ReleaseFunc(JNIEnv *env,
  * The bounds should be unchanged since that call.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
  * Note to implementers:
- *	This function may be used to release any JNI monitors used to
- *	prevent the destination from being modified.  It may also be
- *	used to perform operations which may require blocking (such as
- *	executing X11 operations which may need to flush data).
+ *      This function may be used to release any JNI monitors used to
+ *      prevent the destination from being modified.  It may also be
+ *      used to perform operations which may require blocking (such as
+ *      executing X11 operations which may need to flush data).
  */
 typedef void UnlockFunc(JNIEnv *env,
-			SurfaceDataOps *ops,
-			SurfaceDataRasInfo *pRasInfo);
+                        SurfaceDataOps *ops,
+                        SurfaceDataRasInfo *pRasInfo);
 
 /*
  * This function sets up the specified drawable.  Some surfaces may
  * need to perform certain operations during Setup that cannot be
  * done after later operations such as Lock.  For example, on
- * win9x systems, when any surface is locked we cannot make a call to 
+ * win9x systems, when any surface is locked we cannot make a call to
  * the message-handling thread.
  *
  * This function vector is allowed to be NULL if a given SurfaceData
@@ -383,20 +383,20 @@ typedef void UnlockFunc(JNIEnv *env,
  * this function is being invoked.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  */
 typedef void SetupFunc(JNIEnv *env,
-		       SurfaceDataOps *ops);
+                       SurfaceDataOps *ops);
 
 /*
  * This function disposes the specified SurfaceDataOps structure
  * and associated native resources.
  * The implementation is SurfaceData-type specific.
  */
-typedef void DisposeFunc(JNIEnv *env, 
-			 SurfaceDataOps *ops);
+typedef void DisposeFunc(JNIEnv *env,
+                         SurfaceDataOps *ops);
 
 /*
  * Constants used for return values.  Constants less than 0 are
@@ -405,23 +405,23 @@ typedef void DisposeFunc(JNIEnv *env,
  * successes which warn the caller that various optional features
  * were not available so that workarounds can be used.
  */
-#define SD_FAILURE		-1
-#define SD_SUCCESS		0
-#define SD_SLOWLOCK		1
+#define SD_FAILURE              -1
+#define SD_SUCCESS              0
+#define SD_SLOWLOCK             1
 
 /*
  * Constants for the flags used in the Lock function.
  */
-#define SD_LOCK_READ		(1 << 0)
-#define SD_LOCK_WRITE		(1 << 1)
-#define SD_LOCK_RD_WR		(SD_LOCK_READ | SD_LOCK_WRITE)
-#define SD_LOCK_LUT		(1 << 2)
-#define SD_LOCK_INVCOLOR	(1 << 3)
-#define SD_LOCK_INVGRAY		(1 << 4)
-#define SD_LOCK_FASTEST		(1 << 5)
-#define SD_LOCK_PARTIAL		(1 << 6)
-#define SD_LOCK_PARTIAL_WRITE	(SD_LOCK_WRITE | SD_LOCK_PARTIAL)
-#define SD_LOCK_NEED_PIXELS	(SD_LOCK_READ | SD_LOCK_PARTIAL)
+#define SD_LOCK_READ            (1 << 0)
+#define SD_LOCK_WRITE           (1 << 1)
+#define SD_LOCK_RD_WR           (SD_LOCK_READ | SD_LOCK_WRITE)
+#define SD_LOCK_LUT             (1 << 2)
+#define SD_LOCK_INVCOLOR        (1 << 3)
+#define SD_LOCK_INVGRAY         (1 << 4)
+#define SD_LOCK_FASTEST         (1 << 5)
+#define SD_LOCK_PARTIAL         (1 << 6)
+#define SD_LOCK_PARTIAL_WRITE   (SD_LOCK_WRITE | SD_LOCK_PARTIAL)
+#define SD_LOCK_NEED_PIXELS     (SD_LOCK_READ | SD_LOCK_PARTIAL)
 
 /*
  * This structure provides the function vectors for manipulating
@@ -434,16 +434,16 @@ typedef void DisposeFunc(JNIEnv *env,
  * (such as fields that we need to set from native code).
  */
 struct _SurfaceDataOps {
-    LockFunc		*Lock;
-    GetRasInfoFunc	*GetRasInfo;
-    ReleaseFunc		*Release;
-    UnlockFunc		*Unlock;
-    SetupFunc		*Setup;
-    DisposeFunc		*Dispose;
-    jobject		sdObject;
+    LockFunc            *Lock;
+    GetRasInfoFunc      *GetRasInfo;
+    ReleaseFunc         *Release;
+    UnlockFunc          *Unlock;
+    SetupFunc           *Setup;
+    DisposeFunc         *Dispose;
+    jobject             sdObject;
 };
 
-#define _ClrReduce(c)	(((unsigned char) c) >> 3)
+#define _ClrReduce(c)   (((unsigned char) c) >> 3)
 
 /*
  * This macro performs a lookup in an inverse color table given 3 8-bit
@@ -458,22 +458,22 @@ struct _SurfaceDataOps {
  * This macro invokes the SurfaceData Release function only if the
  * function vector is not NULL.
  */
-#define SurfaceData_InvokeRelease(env, ops, pRI)	\
-    do {						\
-	if ((ops)->Release != NULL) {			\
-	    (ops)->Release(env, ops, pRI);		\
-	}						\
+#define SurfaceData_InvokeRelease(env, ops, pRI)        \
+    do {                                                \
+        if ((ops)->Release != NULL) {                   \
+            (ops)->Release(env, ops, pRI);              \
+        }                                               \
     } while(0)
 
 /*
  * This macro invokes the SurfaceData Unlock function only if the
  * function vector is not NULL.
  */
-#define SurfaceData_InvokeUnlock(env, ops, pRI)		\
-    do {						\
-	if ((ops)->Unlock != NULL) {			\
-	    (ops)->Unlock(env, ops, pRI);		\
-	}						\
+#define SurfaceData_InvokeUnlock(env, ops, pRI)         \
+    do {                                                \
+        if ((ops)->Unlock != NULL) {                    \
+            (ops)->Unlock(env, ops, pRI);               \
+        }                                               \
     } while(0)
 
 /*
@@ -483,14 +483,14 @@ struct _SurfaceDataOps {
  * Critical locks (which would need to be released after Release and
  * before Unlock) are held by the calling function.
  */
-#define SurfaceData_InvokeReleaseUnlock(env, ops, pRI)	\
-    do {						\
-	if ((ops)->Release != NULL) {			\
-	    (ops)->Release(env, ops, pRI);		\
-	}						\
-	if ((ops)->Unlock != NULL) {			\
-	    (ops)->Unlock(env, ops, pRI);	       	\
-	}						\
+#define SurfaceData_InvokeReleaseUnlock(env, ops, pRI)  \
+    do {                                                \
+        if ((ops)->Release != NULL) {                   \
+            (ops)->Release(env, ops, pRI);              \
+        }                                               \
+        if ((ops)->Unlock != NULL) {                    \
+            (ops)->Unlock(env, ops, pRI);               \
+        }                                               \
     } while(0)
 
 /*
@@ -502,34 +502,34 @@ struct _SurfaceDataOps {
  * two ops vectors should be specified in the same order that they were
  * locked.  Both surfaces will be released and then both unlocked.
  */
-#define SurfaceData_InvokeReleaseUnlock2(env, ops1, pRI1, ops2, pRI2)	\
-    do {							\
-	if ((ops2)->Release != NULL) {				\
-	    (ops2)->Release(env, ops2, pRI2);			\
-	}							\
-	if ((ops1)->Release != NULL) {				\
-	    (ops1)->Release(env, ops1, pRI1);			\
-	}							\
-	if ((ops2)->Unlock != NULL) {				\
-	    (ops2)->Unlock(env, ops2, pRI2);			\
-	}							\
-	if ((ops1)->Unlock != NULL) {				\
-	    (ops1)->Unlock(env, ops1, pRI1);			\
-	}							\
+#define SurfaceData_InvokeReleaseUnlock2(env, ops1, pRI1, ops2, pRI2)   \
+    do {                                                        \
+        if ((ops2)->Release != NULL) {                          \
+            (ops2)->Release(env, ops2, pRI2);                   \
+        }                                                       \
+        if ((ops1)->Release != NULL) {                          \
+            (ops1)->Release(env, ops1, pRI1);                   \
+        }                                                       \
+        if ((ops2)->Unlock != NULL) {                           \
+            (ops2)->Unlock(env, ops2, pRI2);                    \
+        }                                                       \
+        if ((ops1)->Unlock != NULL) {                           \
+            (ops1)->Unlock(env, ops1, pRI1);                    \
+        }                                                       \
     } while(0)
 
-#define SurfaceData_InvokeDispose(env, ops)			\
-    do {						        \
-	if ((ops)->Dispose != NULL) {			        \
-	    (ops)->Dispose(env, ops);			        \
-	}						        \
+#define SurfaceData_InvokeDispose(env, ops)                     \
+    do {                                                        \
+        if ((ops)->Dispose != NULL) {                           \
+            (ops)->Dispose(env, ops);                           \
+        }                                                       \
     } while(0)
 
-#define SurfaceData_InvokeSetup(env, ops)			\
-    do {							\
-	if ((ops)->Setup != NULL) {				\
-	    (ops)->Setup(env, ops);				\
-	}							\
+#define SurfaceData_InvokeSetup(env, ops)                       \
+    do {                                                        \
+        if ((ops)->Setup != NULL) {                             \
+            (ops)->Setup(env, ops);                             \
+        }                                                       \
     } while(0)
 
 /*
@@ -537,13 +537,13 @@ struct _SurfaceDataOps {
  * structure for accessing the indicated SurfaceData Java object.
  *
  * Note to callers:
- *	This function uses JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function uses JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
- *	The caller may continue to use JNI methods after this method
- *	is called since this function will not leave any outstanding
- *	JNI Critical locks unreleased.
+ *      The caller may continue to use JNI methods after this method
+ *      is called since this function will not leave any outstanding
+ *      JNI Critical locks unreleased.
  */
 JNIEXPORT SurfaceDataOps * JNICALL
 SurfaceData_GetOps(JNIEnv *env, jobject sData);
@@ -560,13 +560,13 @@ SurfaceData_GetOpsNoSetup(JNIEnv *env, jobject sData);
  * structure into the indicated Java SurfaceData object.
  *
  * Note to callers:
- *	This function uses JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function uses JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
- *	The caller may continue to use JNI methods after this method
- *	is called since this function will not leave any outstanding
- *	JNI Critical locks unreleased.
+ *      The caller may continue to use JNI methods after this method
+ *      is called since this function will not leave any outstanding
+ *      JNI Critical locks unreleased.
  */
 JNIEXPORT void JNICALL
 SurfaceData_SetOps(JNIEnv *env, jobject sData, SurfaceDataOps *ops);
@@ -578,18 +578,18 @@ SurfaceData_SetOps(JNIEnv *env, jobject sData, SurfaceDataOps *ops);
  * native Lock routine when some attribute of the surface has changed
  * that requires pipeline revalidation, including:
  *
- *	The bit depth or pixel format of the surface.
- *	The surface (window) has been disposed.
- *	The device clip of the surface has been changed (resize, visibility, etc.)
+ *      The bit depth or pixel format of the surface.
+ *      The surface (window) has been disposed.
+ *      The device clip of the surface has been changed (resize, visibility, etc.)
  *
  * Note to callers:
- *	This function uses JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function uses JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
- *	The caller may continue to use JNI methods after this method
- *	is called since this function will not leave any outstanding
- *	JNI Critical locks unreleased.
+ *      The caller may continue to use JNI methods after this method
+ *      is called since this function will not leave any outstanding
+ *      JNI Critical locks unreleased.
  */
 JNIEXPORT void JNICALL
 SurfaceData_ThrowInvalidPipeException(JNIEnv *env, const char *msg);
@@ -611,7 +611,7 @@ SurfaceData_IntersectBounds(SurfaceDataBounds *dst, SurfaceDataBounds *src);
  */
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBoundsXYXY(SurfaceDataBounds *bounds,
-				jint lox, jint loy, jint hix, jint hiy);
+                                jint lox, jint loy, jint hix, jint hiy);
 
 /*
  * This function intersects a bounds object with a rectangle specified
@@ -621,7 +621,7 @@ SurfaceData_IntersectBoundsXYXY(SurfaceDataBounds *bounds,
  */
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBoundsXYWH(SurfaceDataBounds *bounds,
-				jint x, jint y, jint w, jint h);
+                                jint x, jint y, jint w, jint h);
 
 /*
  * This function intersects two bounds objects which exist in different
@@ -634,8 +634,8 @@ SurfaceData_IntersectBoundsXYWH(SurfaceDataBounds *bounds,
  */
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBlitBounds(SurfaceDataBounds *Abounds,
-				SurfaceDataBounds *Bbounds,
-				jint BXminusAX, jint BYminusAY);
+                                SurfaceDataBounds *Bbounds,
+                                jint BXminusAX, jint BYminusAY);
 
 
 /*

@@ -31,10 +31,10 @@
  * LoopMacros.h to manipulate a surface of type "Ushort4444Argb".
  */
 
-typedef jushort	Ushort4444ArgbPixelType;
-typedef jushort	Ushort4444ArgbDataType;
+typedef jushort Ushort4444ArgbPixelType;
+typedef jushort Ushort4444ArgbDataType;
 
-#define Ushort4444ArgbPixelStride		2
+#define Ushort4444ArgbPixelStride               2
 
 #define DeclareUshort4444ArgbLoadVars(PREFIX)
 #define DeclareUshort4444ArgbStoreVars(PREFIX)
@@ -48,18 +48,18 @@ typedef jushort	Ushort4444ArgbDataType;
 #define DeclareUshort4444ArgbPixelData(PREFIX)
 #define ExtractUshort4444ArgbPixelData(PIXEL, PREFIX)
 
-#define Ushort4444ArgbXparLutEntry		-1
-#define Ushort4444ArgbIsXparLutEntry(pix)		(pix < 0)
-#define StoreUshort4444ArgbNonXparFromArgb	StoreUshort4444ArgbFrom1IntArgb
+#define Ushort4444ArgbXparLutEntry              -1
+#define Ushort4444ArgbIsXparLutEntry(pix)               (pix < 0)
+#define StoreUshort4444ArgbNonXparFromArgb      StoreUshort4444ArgbFrom1IntArgb
 
 
 #define ComposeUshort4444ArgbFrom3ByteRgb(r, g, b)
 
 #define IntArgbToUshort4444Argb(rgb) \
     (Ushort4444ArgbPixelType)((((rgb) << 8) & 0xf000) | \
-			      (((rgb) << 4) & 0x0f00) | \
-			      (((rgb) << 0) & 0x00f0) | \
-			      (((rgb) >> 4) & 0x000f))
+                              (((rgb) << 4) & 0x0f00) | \
+                              (((rgb) << 0) & 0x00f0) | \
+                              (((rgb) >> 4) & 0x000f))
 
 #define Ushort4444ArgbPixelFromArgb(pixel, rgb, pRasInfo) \
     (pixel) = IntArgbToUshort4444Argb(rgb)
@@ -71,34 +71,34 @@ typedef jushort	Ushort4444ArgbDataType;
 
 #define LoadUshort4444ArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-	jushort pixel = (pRas)[x]; \
-	(r) = ((pixel) >> 8) & 0xf; \
-	(r) = ((r) << 4) | (r); \
-	(g) = ((pixel) >>  4) & 0xf; \
-	(g) = ((g) << 4) | (g); \
-	(b) = ((pixel) >>  0) & 0xf; \
-	(b) = ((b) << 4) | (b); \
+        jushort pixel = (pRas)[x]; \
+        (r) = ((pixel) >> 8) & 0xf; \
+        (r) = ((r) << 4) | (r); \
+        (g) = ((pixel) >>  4) & 0xf; \
+        (g) = ((g) << 4) | (g); \
+        (b) = ((pixel) >>  0) & 0xf; \
+        (b) = ((b) << 4) | (b); \
     } while (0)
 
 #define LoadUshort4444ArgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-	jushort pixel = (pRas)[x]; \
-	LoadUshort4444ArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-	(a) = ((pixel) >>  12) & 0xf; \
-	(a) = ((a) << 4) | (a); \
+        jushort pixel = (pRas)[x]; \
+        LoadUshort4444ArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+        (a) = ((pixel) >>  12) & 0xf; \
+        (a) = ((a) << 4) | (a); \
     } while (0)
 
 #define LoadUshort4444ArgbTo1IntArgb(pRas, PREFIX, x, argb) \
     do { \
         jint a, r, g, b; \
-	LoadUshort4444ArgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b); \
+        LoadUshort4444ArgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b); \
         (argb) = (a << 24) | (r << 16) | (g << 8) | (b << 0); \
     } while (0)
 
 #define LoadUshort4444ArgbTo1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
         jint r, g, b; \
-	LoadUshort4444ArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+        LoadUshort4444ArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
         (rgb) = 0xff000000 | (r << 16) | (g << 8) | (b << 0); \
     } while (0)
 
@@ -108,10 +108,10 @@ typedef jushort	Ushort4444ArgbDataType;
 
 #define StoreUshort4444ArgbFrom4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-	(pRas)[x] = (jushort)((((a) <<	8) & 0xf000) | \
-			      (((r) <<	4) & 0x0f00) | \
-			      (((g) <<	0) & 0x00f0) | \
-			      (((b) >>	4) & 0x000f)); \
+        (pRas)[x] = (jushort)((((a) <<  8) & 0xf000) | \
+                              (((r) <<  4) & 0x0f00) | \
+                              (((g) <<  0) & 0x00f0) | \
+                              (((b) >>  4) & 0x000f)); \
     } while (0)
 
 
@@ -122,20 +122,20 @@ typedef jushort	Ushort4444ArgbDataType;
 
 #define LoadAlphaFromUshort4444ArgbFor4ByteArgb(pRas, PREFIX, COMP_PREFIX) \
     do { \
-	PREFIX = (pRas)[0]; \
-	COMP_PREFIX ## A = (((jushort) PREFIX) >> 12) & 0xf; \
-	COMP_PREFIX ## A = ((COMP_PREFIX ## A) << 4) | (COMP_PREFIX ## A); \
+        PREFIX = (pRas)[0]; \
+        COMP_PREFIX ## A = (((jushort) PREFIX) >> 12) & 0xf; \
+        COMP_PREFIX ## A = ((COMP_PREFIX ## A) << 4) | (COMP_PREFIX ## A); \
     } while (0)
 
 #define Postload4ByteArgbFromUshort4444Argb(pRas, PREFIX, COMP_PREFIX) \
     LoadUshort4444ArgbTo4ByteArgb(pRas, PREFIX, 0, COMP_PREFIX ## A, COMP_PREFIX ## R, \
                                   COMP_PREFIX ## G, COMP_PREFIX ## B)
 
-#define Ushort4444ArgbIsPremultiplied	0
+#define Ushort4444ArgbIsPremultiplied   0
 
 #define StoreUshort4444ArgbFrom4ByteArgbComps(pRas, PREFIX, x, COMP_PREFIX) \
     StoreUshort4444ArgbFrom4ByteArgb(pRas, PREFIX, x, \
-				     COMP_PREFIX ## A, COMP_PREFIX ## R, \
-				     COMP_PREFIX ## G, COMP_PREFIX ## B)
+                                     COMP_PREFIX ## A, COMP_PREFIX ## R, \
+                                     COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 #endif /* Ushort4444Argb_h_Included */

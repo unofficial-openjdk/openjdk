@@ -34,10 +34,10 @@ package com.sun.jdi;
  */
 public class VMCannotBeModifiedException extends UnsupportedOperationException {
     public VMCannotBeModifiedException() {
-	super();
+        super();
     }
 
     public VMCannotBeModifiedException(String s) {
-	super(s);
+        super(s);
     }
 }

@@ -35,7 +35,6 @@ import java.io.IOException;
  * monitorable Java Virtual Machines.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public interface RemoteHost extends Remote {

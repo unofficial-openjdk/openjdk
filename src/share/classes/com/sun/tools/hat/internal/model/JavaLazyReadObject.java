@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- * 
+ *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- * 
+ *
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- * 
+ *
  */
 
 package com.sun.tools.hat.internal.model;
@@ -48,7 +48,7 @@ import com.sun.tools.hat.internal.parser.ReadBuffer;
 
 /*
  * Base class for lazily read Java heap objects.
- */ 
+ */
 public abstract class JavaLazyReadObject extends JavaHeapObject {
 
     // file offset from which this object data starts
@@ -179,9 +179,9 @@ public abstract class JavaLazyReadObject extends JavaHeapObject {
         int val = intAt(index, value);
         return Float.intBitsToFloat(val);
     }
-    
+
     protected static double doubleAt(int index, byte[] value) {
         long val = longAt(index, value);
         return Double.longBitsToDouble(val);
-    }    
+    }
 }

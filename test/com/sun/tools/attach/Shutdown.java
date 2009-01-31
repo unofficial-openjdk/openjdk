@@ -33,13 +33,13 @@ import java.io.IOException;
 
 public class Shutdown {
     public static void main(String args[]) throws IOException {
-	int port = Integer.parseInt(args[0]);
+        int port = Integer.parseInt(args[0]);
 
-	System.out.println("Connecting to port " + port + 
-	    " to shutdown Application ...");
+        System.out.println("Connecting to port " + port +
+            " to shutdown Application ...");
 
         Socket s = new Socket();
-	s.connect( new InetSocketAddress(port) );
+        s.connect( new InetSocketAddress(port) );
         s.close();
     }
 }

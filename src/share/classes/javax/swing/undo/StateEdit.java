@@ -32,33 +32,32 @@ import java.util.Vector;
 /**
  * <P>StateEdit is a general edit for objects that change state.
  * Objects being edited must conform to the StateEditable interface.</P>
- * 
+ *
  * <P>This edit class works by asking an object to store it's state in
  * Hashtables before and after editing occurs.  Upon undo or redo the
  * object is told to restore it's state from these Hashtables.</P>
- * 
+ *
  * A state edit is used as follows:
  * <PRE>
- *	// Create the edit during the "before" state of the object
- *	StateEdit newEdit = new StateEdit(myObject);
- *	// Modify the object
- *	myObject.someStateModifyingMethod();
- *	// "end" the edit when you are done modifying the object
- *	newEdit.end();
+ *      // Create the edit during the "before" state of the object
+ *      StateEdit newEdit = new StateEdit(myObject);
+ *      // Modify the object
+ *      myObject.someStateModifyingMethod();
+ *      // "end" the edit when you are done modifying the object
+ *      newEdit.end();
  * </PRE>
- * 
+ *
  * <P><EM>Note that when a StateEdit ends, it removes redundant state from
  * the Hashtables - A state Hashtable is not guaranteed to contain all
  * keys/values placed into it when the state is stored!</EM></P>
  *
  * @see StateEditable
  *
- * @version %I% %G%
  * @author Ray Ryan
  */
 
 public class StateEdit
-	extends AbstractUndoableEdit {
+        extends AbstractUndoableEdit {
 
     protected static final String RCSID = "$Id: StateEdit.java,v 1.6 1997/10/01 20:05:51 sandipc Exp $";
 
@@ -89,7 +88,7 @@ public class StateEdit
     //
     // Constructors
     //
-    
+
     /**
      * Create and return a new StateEdit.
      *
@@ -99,7 +98,7 @@ public class StateEdit
      */
     public StateEdit(StateEditable anObject) {
         super();
-	init (anObject,null);
+        init (anObject,null);
     }
 
     /**
@@ -111,16 +110,16 @@ public class StateEdit
      * @see StateEdit
      */
     public StateEdit(StateEditable anObject, String name) {
-	super();
-	init (anObject,name);
+        super();
+        init (anObject,name);
     }
 
     protected void init (StateEditable anObject, String name) {
-	this.object = anObject;
-	this.preState = new Hashtable(11);
-	this.object.storeState(this.preState);
-	this.postState = null;
-	this.undoRedoName = name;
+        this.object = anObject;
+        this.preState = new Hashtable(11);
+        this.object.storeState(this.preState);
+        this.postState = null;
+        this.undoRedoName = name;
     }
 
 
@@ -134,32 +133,32 @@ public class StateEdit
      * ends the edit.
      */
     public void end() {
-	this.postState = new Hashtable(11);
-	this.object.storeState(this.postState);
-	this.removeRedundantState();
+        this.postState = new Hashtable(11);
+        this.object.storeState(this.postState);
+        this.removeRedundantState();
     }
 
     /**
      * Tells the edited object to apply the state prior to the edit
      */
     public void undo() {
-	super.undo();
-	this.object.restoreState(preState);
+        super.undo();
+        this.object.restoreState(preState);
     }
 
     /**
      * Tells the edited object to apply the state after the edit
      */
     public void redo() {
-	super.redo();
-	this.object.restoreState(postState);
+        super.redo();
+        this.object.restoreState(postState);
     }
 
     /**
      * Gets the presentation name for this edit
      */
     public String getPresentationName() {
-	return this.undoRedoName;
+        return this.undoRedoName;
     }
 
 
@@ -171,24 +170,24 @@ public class StateEdit
      * Remove redundant key/values in state hashtables.
      */
     protected void removeRedundantState() {
-	Vector uselessKeys = new Vector();
-	Enumeration myKeys = preState.keys();
+        Vector uselessKeys = new Vector();
+        Enumeration myKeys = preState.keys();
 
-	// Locate redundant state
-	while (myKeys.hasMoreElements()) {
-	    Object myKey = myKeys.nextElement();
-	    if (postState.containsKey(myKey) &&
-		postState.get(myKey).equals(preState.get(myKey))) {
-		uselessKeys.addElement(myKey);
-	    }
-	}
+        // Locate redundant state
+        while (myKeys.hasMoreElements()) {
+            Object myKey = myKeys.nextElement();
+            if (postState.containsKey(myKey) &&
+                postState.get(myKey).equals(preState.get(myKey))) {
+                uselessKeys.addElement(myKey);
+            }
+        }
 
-	// Remove redundant state
-	for (int i = uselessKeys.size()-1; i >= 0; i--) {
-	    Object myKey = uselessKeys.elementAt(i);
-	    preState.remove(myKey);
-	    postState.remove(myKey);
-	}
+        // Remove redundant state
+        for (int i = uselessKeys.size()-1; i >= 0; i--) {
+            Object myKey = uselessKeys.elementAt(i);
+            preState.remove(myKey);
+            postState.remove(myKey);
+        }
     }
 
 } // End of class StateEdit

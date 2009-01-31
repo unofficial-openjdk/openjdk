@@ -30,72 +30,72 @@ import com.sun.net.httpserver.*;
 
 class UnmodifiableHeaders extends Headers {
 
-	Headers map;
+        Headers map;
 
-	UnmodifiableHeaders(Headers map) {
-	    this.map = map;
-	}
+        UnmodifiableHeaders(Headers map) {
+            this.map = map;
+        }
 
-    	public int size() {return map.size();}
+        public int size() {return map.size();}
 
-    	public boolean isEmpty() {return map.isEmpty();}
+        public boolean isEmpty() {return map.isEmpty();}
 
-    	public boolean containsKey(Object key) {
-	    return map.containsKey (key);
-	}
+        public boolean containsKey(Object key) {
+            return map.containsKey (key);
+        }
 
-    	public boolean containsValue(Object value) {
-	    return map.containsValue(value);
- 	}
+        public boolean containsValue(Object value) {
+            return map.containsValue(value);
+        }
 
-    	public List<String> get(Object key) {
-	    return map.get(key);
-	}
+        public List<String> get(Object key) {
+            return map.get(key);
+        }
 
-    	public String getFirst (String key) {
-	    return map.getFirst(key);
-	}
+        public String getFirst (String key) {
+            return map.getFirst(key);
+        }
 
 
-    	public List<String> put(String key, List<String> value) {
-	    return map.put (key, value);
-	}
+        public List<String> put(String key, List<String> value) {
+            return map.put (key, value);
+        }
 
-    	public void add (String key, String value) {
-	    throw new UnsupportedOperationException ("unsupported operation");
-	}
+        public void add (String key, String value) {
+            throw new UnsupportedOperationException ("unsupported operation");
+        }
 
-    	public void set (String key, String value) {
-	    throw new UnsupportedOperationException ("unsupported operation");
-	}
+        public void set (String key, String value) {
+            throw new UnsupportedOperationException ("unsupported operation");
+        }
 
-    	public List<String> remove(Object key) {
-	    throw new UnsupportedOperationException ("unsupported operation");
-	}
+        public List<String> remove(Object key) {
+            throw new UnsupportedOperationException ("unsupported operation");
+        }
 
-    	public void putAll(Map<? extends String,? extends List<String>> t)  {
-	    throw new UnsupportedOperationException ("unsupported operation");
-	}
+        public void putAll(Map<? extends String,? extends List<String>> t)  {
+            throw new UnsupportedOperationException ("unsupported operation");
+        }
 
-    	public void clear() {
-	    throw new UnsupportedOperationException ("unsupported operation");
-	}
-    
-    	public Set<String> keySet() {
-	    return Collections.unmodifiableSet (map.keySet());
-	}
+        public void clear() {
+            throw new UnsupportedOperationException ("unsupported operation");
+        }
 
-    	public Collection<List<String>> values() {
-	    return Collections.unmodifiableCollection(map.values());
-	}
+        public Set<String> keySet() {
+            return Collections.unmodifiableSet (map.keySet());
+        }
 
- 	/* TODO check that contents of set are not modifable : security */
+        public Collection<List<String>> values() {
+            return Collections.unmodifiableCollection(map.values());
+        }
 
-    	public Set<Map.Entry<String, List<String>>> entrySet() {
-	    return Collections.unmodifiableSet (map.entrySet());
-	}
+        /* TODO check that contents of set are not modifable : security */
 
-    	public boolean equals(Object o) {return map.equals(o);}
+        public Set<Map.Entry<String, List<String>>> entrySet() {
+            return Collections.unmodifiableSet (map.entrySet());
+        }
 
-    	public int hashCode() {return map.hashCode();}
+        public boolean equals(Object o) {return map.equals(o);}
+
+        public int hashCode() {return map.hashCode();}
     }

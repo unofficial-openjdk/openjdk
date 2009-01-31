@@ -33,7 +33,6 @@ import sun.jvmstat.monitor.MonitoredVm;
  * exported by the MonitoredVm.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitorStatusChangeEvent extends VmEvent {

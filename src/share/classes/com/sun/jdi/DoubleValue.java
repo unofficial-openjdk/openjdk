@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>double</code> value in 
+ * Provides access to a primitive <code>double</code> value in
  * the target VM.
  *
  * @author Robert Field
@@ -38,7 +38,7 @@ public interface DoubleValue extends PrimitiveValue, Comparable<DoubleValue>
 {
     /**
      * Returns this DoubleValue as a <code>double</code>.
-     * 
+     *
      * @return the <code>double</code> mirrored by this object.
      */
     double value();
@@ -59,4 +59,3 @@ public interface DoubleValue extends PrimitiveValue, Comparable<DoubleValue>
      */
     int hashCode();
 }
-

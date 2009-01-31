@@ -87,34 +87,34 @@ public class ClientServer {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf = getDefaultServer();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf = getDefaultServer();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+        serverPort = sslServerSocket.getLocalPort();
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
-	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-	sslSocket.setNeedClientAuth(true);
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+        sslSocket.setNeedClientAuth(true);
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	sslIS.read();
-	sslOS.write(85);
-	sslOS.flush();
+        sslIS.read();
+        sslOS.write(85);
+        sslOS.flush();
 
-	sslSocket.close();
+        sslSocket.close();
 
-	if (!serverTM.wasServerChecked() && serverTM.wasClientChecked()) {
-	    System.out.println("SERVER TEST PASSED!");
-	} else {
-	    throw new Exception("SERVER TEST FAILED!  " +
-		!serverTM.wasServerChecked() + " " +
-		serverTM.wasClientChecked());
-	}
+        if (!serverTM.wasServerChecked() && serverTM.wasClientChecked()) {
+            System.out.println("SERVER TEST PASSED!");
+        } else {
+            throw new Exception("SERVER TEST FAILED!  " +
+                !serverTM.wasServerChecked() + " " +
+                serverTM.wasClientChecked());
+        }
     }
 
     /*
@@ -125,126 +125,126 @@ public class ClientServer {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
-	SSLSocketFactory sslsf = getDefaultClient();
-	SSLSocket sslSocket = (SSLSocket)
-	    sslsf.createSocket("localhost", serverPort);
+        SSLSocketFactory sslsf = getDefaultClient();
+        SSLSocket sslSocket = (SSLSocket)
+            sslsf.createSocket("localhost", serverPort);
 
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	sslOS.write(280);
-	sslOS.flush();
-	sslIS.read();
+        sslOS.write(280);
+        sslOS.flush();
+        sslIS.read();
 
-	sslSocket.close();
+        sslSocket.close();
 
-	if (clientTM.wasServerChecked() && !clientTM.wasClientChecked()) {
-	    System.out.println("CLIENT TEST PASSED!");
-	} else {
-	    throw new Exception("CLIENT TEST FAILED!  " +
-		clientTM.wasServerChecked() + " " +
-		!clientTM.wasClientChecked());
-	}
+        if (clientTM.wasServerChecked() && !clientTM.wasClientChecked()) {
+            System.out.println("CLIENT TEST PASSED!");
+        } else {
+            throw new Exception("CLIENT TEST FAILED!  " +
+                clientTM.wasServerChecked() + " " +
+                !clientTM.wasClientChecked());
+        }
     }
 
     private com.sun.net.ssl.SSLContext getDefault(MyX509TM tm)
-	    throws Exception {
+            throws Exception {
 
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	char[] passphrase = "passphrase".toCharArray();
-	KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(keyFilename), passphrase);
+        char[] passphrase = "passphrase".toCharArray();
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(keyFilename), passphrase);
 
-	com.sun.net.ssl.KeyManagerFactory kmf =
-	    com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509");
-	kmf.init(ks, passphrase);
+        com.sun.net.ssl.KeyManagerFactory kmf =
+            com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509");
+        kmf.init(ks, passphrase);
 
-	ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(trustFilename), passphrase);
+        ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(trustFilename), passphrase);
 
-	com.sun.net.ssl.TrustManagerFactory tmf =
-	    com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509");
-	tmf.init(ks);
+        com.sun.net.ssl.TrustManagerFactory tmf =
+            com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ks);
 
-	com.sun.net.ssl.TrustManager [] tms = tmf.getTrustManagers();
+        com.sun.net.ssl.TrustManager [] tms = tmf.getTrustManagers();
 
-	int i;
-	for (i = 0; i < tms.length; i++) {
-	    if (tms[i] instanceof com.sun.net.ssl.X509TrustManager) {
-		break;
-	    }
-	}
+        int i;
+        for (i = 0; i < tms.length; i++) {
+            if (tms[i] instanceof com.sun.net.ssl.X509TrustManager) {
+                break;
+            }
+        }
 
-	if (i >= tms.length) {
-	    throw new Exception("Couldn't find X509TM");
-	}
+        if (i >= tms.length) {
+            throw new Exception("Couldn't find X509TM");
+        }
 
-	tm.init((com.sun.net.ssl.X509TrustManager)tms[i]);
-	tms = new MyX509TM [] { tm };
+        tm.init((com.sun.net.ssl.X509TrustManager)tms[i]);
+        tms = new MyX509TM [] { tm };
 
-	com.sun.net.ssl.SSLContext ctx =
-	    com.sun.net.ssl.SSLContext.getInstance("TLS");
-	ctx.init(kmf.getKeyManagers(), tms, null);
-	return ctx;
+        com.sun.net.ssl.SSLContext ctx =
+            com.sun.net.ssl.SSLContext.getInstance("TLS");
+        ctx.init(kmf.getKeyManagers(), tms, null);
+        return ctx;
     }
 
     MyX509TM serverTM;
     MyX509TM clientTM;
 
     private SSLServerSocketFactory getDefaultServer() throws Exception {
-	serverTM = new MyX509TM();
-	return getDefault(serverTM).getServerSocketFactory();
+        serverTM = new MyX509TM();
+        return getDefault(serverTM).getServerSocketFactory();
     }
 
     private SSLSocketFactory getDefaultClient() throws Exception {
-	clientTM = new MyX509TM();
-	return getDefault(clientTM).getSocketFactory();
+        clientTM = new MyX509TM();
+        return getDefault(clientTM).getSocketFactory();
     }
 
     static class MyX509TM implements com.sun.net.ssl.X509TrustManager {
 
-	com.sun.net.ssl.X509TrustManager tm;
-	boolean clientChecked;
-	boolean serverChecked;
+        com.sun.net.ssl.X509TrustManager tm;
+        boolean clientChecked;
+        boolean serverChecked;
 
-	void init(com.sun.net.ssl.X509TrustManager x509TM) {
-	    tm = x509TM;
-	}
+        void init(com.sun.net.ssl.X509TrustManager x509TM) {
+            tm = x509TM;
+        }
 
-	public boolean wasClientChecked() {
-	    return clientChecked;
-	}
+        public boolean wasClientChecked() {
+            return clientChecked;
+        }
 
-	public boolean wasServerChecked() {
-	    return serverChecked;
-	}
+        public boolean wasServerChecked() {
+            return serverChecked;
+        }
 
-	public boolean isClientTrusted(X509Certificate[] chain) {
-	    clientChecked = true;
-	    return true;
-	}
+        public boolean isClientTrusted(X509Certificate[] chain) {
+            clientChecked = true;
+            return true;
+        }
 
-	public boolean isServerTrusted(X509Certificate[] chain) {
-	    serverChecked = true;
-	    return true;
-	}
+        public boolean isServerTrusted(X509Certificate[] chain) {
+            serverChecked = true;
+            return true;
+        }
 
-	public X509Certificate[] getAcceptedIssuers() {
-	    return tm.getAcceptedIssuers();
-	}
+        public X509Certificate[] getAcceptedIssuers() {
+            return tm.getAcceptedIssuers();
+        }
     }
 
     /*
@@ -260,13 +260,13 @@ public class ClientServer {
 
     public static void main(String[] args) throws Exception {
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
-	new ClientServer();
+        /*
+         * Start the tests.
+         */
+        new ClientServer();
     }
 
     Thread clientThread = null;
@@ -278,78 +278,78 @@ public class ClientServer {
      * Fork off the other side, then do your work.
      */
     ClientServer() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null)
-	    throw serverException;
-	if (clientException != null)
-	    throw clientException;
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null)
+            throw serverException;
+        if (clientException != null)
+            throw clientException;
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

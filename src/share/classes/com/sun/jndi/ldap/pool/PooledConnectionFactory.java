@@ -42,6 +42,6 @@ public interface PooledConnectionFactory {
      * @param pcb callback responsible for removing and releasing the pooled
      * connection from the pool.
      */
-    public abstract PooledConnection createPooledConnection(PoolCallback pcb) 
-	throws NamingException;
+    public abstract PooledConnection createPooledConnection(PoolCallback pcb)
+        throws NamingException;
 };

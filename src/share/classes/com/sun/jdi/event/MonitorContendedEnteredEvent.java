@@ -42,10 +42,10 @@ import com.sun.jdi.*;
 public interface MonitorContendedEnteredEvent extends LocatableEvent {
 
     /**
-     * Returns the thread in which this event has occurred. 
+     * Returns the thread in which this event has occurred.
      * <p>
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in 
+     * @return a {@link ThreadReference} which mirrors the event's thread in
      * the target VM.
      */
     public ThreadReference thread();
@@ -56,6 +56,5 @@ public interface MonitorContendedEnteredEvent extends LocatableEvent {
      * @return an {@link ObjectReference} for the monitor.
      */
     public ObjectReference  monitor();
-    
-}
 
+}

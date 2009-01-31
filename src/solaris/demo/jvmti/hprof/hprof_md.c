@@ -55,19 +55,19 @@
 #include "jni.h"
 #include "hprof.h"
 
-int 
+int
 md_getpid(void)
 {
     static int pid = -1;
-    
+
     if ( pid >= 0 ) {
-	return pid;
+        return pid;
     }
     pid = getpid();
     return pid;
 }
 
-void 
+void
 md_sleep(unsigned seconds)
 {
     sleep(seconds);
@@ -80,22 +80,22 @@ md_init(void)
     /* No Hi-Res timer option? */
 #else
     if ( gdata->micro_state_accounting ) {
-	char proc_ctl_fn[48];
-	int  procfd;
+        char proc_ctl_fn[48];
+        int  procfd;
 
-	/* Turn on micro state accounting, once per process */
-	(void)md_snprintf(proc_ctl_fn, sizeof(proc_ctl_fn),
-		"/proc/%d/ctl", md_getpid());
-     
-	procfd = open(proc_ctl_fn, O_WRONLY);
-	if (procfd >= 0) {
-	    long ctl_op[2];
-	    
-	    ctl_op[0] = PCSET;
-	    ctl_op[1] = PR_MSACCT;
-	    (void)write(procfd, ctl_op, sizeof(ctl_op));
-	    (void)close(procfd);
-	}
+        /* Turn on micro state accounting, once per process */
+        (void)md_snprintf(proc_ctl_fn, sizeof(proc_ctl_fn),
+                "/proc/%d/ctl", md_getpid());
+
+        procfd = open(proc_ctl_fn, O_WRONLY);
+        if (procfd >= 0) {
+            long ctl_op[2];
+
+            ctl_op[0] = PCSET;
+            ctl_op[1] = PR_MSACCT;
+            (void)write(procfd, ctl_op, sizeof(ctl_op));
+            (void)close(procfd);
+        }
     }
 #endif
 }
@@ -112,19 +112,19 @@ md_connect(char *hostname, unsigned short port)
 
     /* find remote host's addr from name */
     if ((hentry = gethostbyname(hostname)) == NULL) {
-	return -1;
+        return -1;
     }
     (void)memset((char *)&s, 0, sizeof(s));
     /* set remote host's addr; its already in network byte order */
     (void)memcpy(&s.sin_addr.s_addr, *(hentry->h_addr_list),
-	   (int)sizeof(s.sin_addr.s_addr));
+           (int)sizeof(s.sin_addr.s_addr));
     /* set remote host's port */
     s.sin_port = htons(port);
     s.sin_family = AF_INET;
 
     /* now try connecting */
     if (-1 == connect(fd, (struct sockaddr*)&s, sizeof(s))) {
-	return 0;
+        return 0;
     }
     return fd;
 }
@@ -157,7 +157,7 @@ int
 md_creat(const char *filename)
 {
     return open(filename, O_WRONLY | O_CREAT | O_TRUNC,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 }
 
 int
@@ -185,23 +185,23 @@ md_close(int filedes)
     (void)close(filedes);
 }
 
-int 
+int
 md_send(int s, const char *msg, int len, int flags)
 {
     int res;
-    
+
     do {
         res = send(s, msg, len, flags);
     } while ((res < 0) && (errno == EINTR));
-    
+
     return res;
 }
 
-int 
+int
 md_write(int filedes, const void *buf, int nbyte)
 {
     int res;
-    
+
     do {
         res = write(filedes, buf, nbyte);
     } while ((res < 0) && (errno == EINTR));
@@ -213,7 +213,7 @@ int
 md_read(int filedes, void *buf, int nbyte)
 {
     int res;
-    
+
     do {
         res = read(filedes, buf, nbyte);
     } while ((res < 0) && (errno == EINTR));
@@ -226,16 +226,16 @@ static jlong
 md_timeofday(void)
 {
     struct timeval tv;
- 
+
     if ( gettimeofday(&tv, (void *)0) != 0 ) {
-	return (jlong)0; /* EOVERFLOW ? */
+        return (jlong)0; /* EOVERFLOW ? */
     }
     /*LINTED*/
     return ((jlong)tv.tv_sec * (jlong)1000) + (jlong)(tv.tv_usec / 1000);
 }
 
 /* Hi-res timer in micro-seconds */
-jlong 
+jlong
 md_get_microsecs(void)
 {
 #ifdef LINUX
@@ -246,7 +246,7 @@ md_get_microsecs(void)
 }
 
 /* Time of day in milli-seconds */
-jlong 
+jlong
 md_get_timemillis(void)
 {
     return md_timeofday();
@@ -263,7 +263,7 @@ md_get_thread_cpu_timemillis(void)
 #endif
 }
 
-void 
+void
 md_get_prelude_path(char *path, int path_len, char *filename)
 {
     void *addr;
@@ -281,7 +281,7 @@ md_get_prelude_path(char *path, int path_len, char *filename)
     addr = dlsym(RTLD_SELF, "Agent_OnLoad");
     /* Just in case the above didn't work (missing linker patch?). */
     if ( addr == NULL ) {
-	addr = (void*)&Agent_OnLoad;
+        addr = (void*)&Agent_OnLoad;
     }
 #endif
 
@@ -291,30 +291,30 @@ md_get_prelude_path(char *path, int path_len, char *filename)
     dlinfo.dli_fname = NULL;
     (void)dladdr(addr, &dlinfo);
     if ( dlinfo.dli_fname != NULL ) {
-	char * lastSlash;
+        char * lastSlash;
 
-	/* Full path to library name, need to move up one directory to 'lib' */
-	(void)strcpy(libdir, (char *)dlinfo.dli_fname);
-	lastSlash = strrchr(libdir, '/');
-	if ( lastSlash != NULL ) {
-	    *lastSlash = '\0';
-	}
-	lastSlash = strrchr(libdir, '/');
-	if ( lastSlash != NULL ) {
-	    *lastSlash = '\0';
-	}
+        /* Full path to library name, need to move up one directory to 'lib' */
+        (void)strcpy(libdir, (char *)dlinfo.dli_fname);
+        lastSlash = strrchr(libdir, '/');
+        if ( lastSlash != NULL ) {
+            *lastSlash = '\0';
+        }
+        lastSlash = strrchr(libdir, '/');
+        if ( lastSlash != NULL ) {
+            *lastSlash = '\0';
+        }
     }
     (void)snprintf(path, path_len, "%s/%s", libdir, filename);
 }
 
 
-int     
+int
 md_vsnprintf(char *s, int n, const char *format, va_list ap)
 {
     return vsnprintf(s, n, format, ap);
 }
 
-int     
+int
 md_snprintf(char *s, int n, const char *format, ...)
 {
     int ret;
@@ -330,11 +330,11 @@ void
 md_system_error(char *buf, int len)
 {
     char *p;
-    
+
     buf[0] = 0;
     p = strerror(errno);
     if ( p != NULL ) {
-	(void)strcpy(buf, p);
+        (void)strcpy(buf, p);
     }
 }
 
@@ -350,7 +350,7 @@ md_htonl(unsigned l)
     return htonl(l);
 }
 
-unsigned	
+unsigned
 md_ntohs(unsigned short s)
 {
     return ntohs(s);
@@ -390,29 +390,28 @@ void *
 md_load_library(const char *name, char *err_buf, int err_buflen)
 {
     void * result;
-    
+
     result = dlopen(name, RTLD_LAZY);
     if (result == NULL) {
-	(void)strncpy(err_buf, dlerror(), err_buflen-2);
-	err_buf[err_buflen-1] = '\0';
+        (void)strncpy(err_buf, dlerror(), err_buflen-2);
+        err_buf[err_buflen-1] = '\0';
     }
     return result;
 }
 
 /* Unload this library */
-void 
+void
 md_unload_library(void *handle)
 {
     (void)dlclose(handle);
 }
 
 /* Find an entry point inside this library (return NULL if not found) */
-void * 
+void *
 md_find_library_entry(void *handle, const char *name)
 {
     void * sym;
-    
+
     sym =  dlsym(handle, name);
     return sym;
 }
-

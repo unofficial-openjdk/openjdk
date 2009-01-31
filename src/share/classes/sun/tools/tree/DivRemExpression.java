@@ -40,33 +40,33 @@ class DivRemExpression extends BinaryArithmeticExpression {
      * constructor
      */
     public DivRemExpression(int op, long where, Expression left, Expression right) {
-	super(op, where, left, right);
+        super(op, where, left, right);
     }
-  
+
     /**
      * Inline
      */
     public Expression inline(Environment env, Context ctx) {
-        // Do not toss out integer divisions or remainders since they 
+        // Do not toss out integer divisions or remainders since they
         // can cause a division by zero.
-        if (type.inMask(TM_INTEGER)) { 
-	    right = right.inlineValue(env, ctx);
-	    if (right.isConstant() && !right.equals(0)) { 
-	        // We know the division can be elided
-	        left = left.inline(env, ctx);
-		return left;
-	    } else { 
-	        left = left.inlineValue(env, ctx);
-		try {
-		    return eval().simplify();
-		} catch (ArithmeticException e) {
-		    env.error(where, "arithmetic.exception");
-		    return this;
-		}
-	    }
-	} else { 
-   	    // float & double divisions don't cause arithmetic errors
-	    return super.inline(env, ctx);
-	}
+        if (type.inMask(TM_INTEGER)) {
+            right = right.inlineValue(env, ctx);
+            if (right.isConstant() && !right.equals(0)) {
+                // We know the division can be elided
+                left = left.inline(env, ctx);
+                return left;
+            } else {
+                left = left.inlineValue(env, ctx);
+                try {
+                    return eval().simplify();
+                } catch (ArithmeticException e) {
+                    env.error(where, "arithmetic.exception");
+                    return this;
+                }
+            }
+        } else {
+            // float & double divisions don't cause arithmetic errors
+            return super.inline(env, ctx);
+        }
     }
 }

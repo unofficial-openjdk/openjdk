@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug     6547241
- * @summary Test verifies that concurrent usage of jpeg reader instance 
+ * @summary Test verifies that concurrent usage of jpeg reader instance
  *          by number of threads does not cause crash in jpeg library.
  * @run     main ConcurrentReadingTest
  */
@@ -57,7 +57,7 @@ public class ConcurrentReadingTest extends Thread {
         ImageInputStream iis = ImageIO.createImageInputStream(file);
         r = ImageIO.getImageReaders(iis).next();
         iis.close();
-        
+
         for (int i = 0; i < MAX_THREADS; i++) {
             (new ConcurrentReadingTest()).start();
         }
@@ -69,10 +69,10 @@ public class ConcurrentReadingTest extends Thread {
             synchronized(lock) {
                 needWait = completeCount < MAX_THREADS;
             }
-        } 
+        }
         System.out.println("Test PASSED.");
     }
-    
+
     public void run() {
         try {
             ImageInputStream iis = ImageIO.createImageInputStream(file);
@@ -106,7 +106,7 @@ public class ConcurrentReadingTest extends Thread {
         Color[] colors = { Color.red, Color.green, Color.blue };
         float[] dist = {0.0f, 0.5f, 1.0f };
         Point2D center = new Point2D.Float(0.5f * w, 0.5f * h);
-        
+
         RadialGradientPaint p =
             new RadialGradientPaint(center, 0.5f * w, dist, colors);
         g.setPaint(p);

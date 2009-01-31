@@ -30,7 +30,7 @@ import com.sun.jdi.*;
 abstract class WatchpointSpec extends EventRequestSpec {
     final String fieldId;
 
-    WatchpointSpec(ReferenceTypeSpec refSpec, String fieldId) 
+    WatchpointSpec(ReferenceTypeSpec refSpec, String fieldId)
                                        throws MalformedMemberNameException {
         super(refSpec);
         this.fieldId = fieldId;
@@ -40,7 +40,7 @@ abstract class WatchpointSpec extends EventRequestSpec {
     }
 
     public int hashCode() {
-        return refSpec.hashCode() + fieldId.hashCode() + 
+        return refSpec.hashCode() + fieldId.hashCode() +
             getClass().hashCode();
     }
 
@@ -56,14 +56,12 @@ abstract class WatchpointSpec extends EventRequestSpec {
         }
     }
 
-    String errorMessageFor(Exception e) { 
+    String errorMessageFor(Exception e) {
         if (e instanceof NoSuchFieldException) {
             return (MessageOutput.format("No field in",
                                          new Object [] {fieldId, refSpec.toString()}));
         } else {
             return super.errorMessageFor(e);
-        } 
+        }
     }
 }
-
-

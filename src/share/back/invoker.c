@@ -31,13 +31,13 @@
 
 static jrawMonitorID invokerLock;
 
-void 
+void
 invoker_initialize(void)
 {
     invokerLock = debugMonitorCreate("JDWP Invocation Lock");
 }
 
-void 
+void
 invoker_reset(void)
 {
 }
@@ -96,10 +96,10 @@ firstArgumentTypeTag(char *signature, void **cursor)
 
 
 /*
- * Note: argument refs may be destroyed on out-of-memory error 
+ * Note: argument refs may be destroyed on out-of-memory error
  */
 static jvmtiError
-createGlobalRefs(JNIEnv *env, InvokeRequest *request) 
+createGlobalRefs(JNIEnv *env, InvokeRequest *request)
 {
     jvmtiError error;
     jclass clazz = NULL;
@@ -111,7 +111,7 @@ createGlobalRefs(JNIEnv *env, InvokeRequest *request)
     jobject *argRefs = NULL;
 
     error = JVMTI_ERROR_NONE;
-    
+
     if ( request->argumentCount > 0 ) {
         /*LINTED*/
         argRefs = jvmtiAllocate((jint)(request->argumentCount*sizeof(jobject)));
@@ -122,7 +122,7 @@ createGlobalRefs(JNIEnv *env, InvokeRequest *request)
             (void)memset(argRefs, 0, request->argumentCount*sizeof(jobject));
         }
     }
-    
+
     if ( error == JVMTI_ERROR_NONE ) {
         saveGlobalRef(env, request->clazz, &clazz);
         if (clazz == NULL) {
@@ -189,7 +189,7 @@ createGlobalRefs(JNIEnv *env, InvokeRequest *request)
             jvmtiDeallocate(argRefs);
         }
         return JVMTI_ERROR_NONE;
-    
+
     } else {
         /* Delete global references */
         if ( clazz != NULL ) {
@@ -207,15 +207,15 @@ createGlobalRefs(JNIEnv *env, InvokeRequest *request)
             jvmtiDeallocate(argRefs);
         }
     }
-    
+
     return error;
 }
 
 static jvmtiError
 fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
                   jbyte invokeType, jbyte options, jint id,
-                  jthread thread, jclass clazz, jmethodID method, 
-                  jobject instance, 
+                  jthread thread, jclass clazz, jmethodID method,
+                  jobject instance,
                   jvalue *arguments, jint argumentCount)
 {
     jvmtiError error;
@@ -271,10 +271,10 @@ fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
 }
 
 void
-invoker_enableInvokeRequests(jthread thread) 
+invoker_enableInvokeRequests(jthread thread)
 {
     InvokeRequest *request;
-     
+
     JDI_ASSERT(thread);
 
     request = threadControl_getInvokeRequest(thread);
@@ -285,10 +285,10 @@ invoker_enableInvokeRequests(jthread thread)
     request->available = JNI_TRUE;
 }
 
-jvmtiError 
+jvmtiError
 invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
-                      jthread thread, jclass clazz, jmethodID method, 
-                      jobject instance, 
+                      jthread thread, jclass clazz, jmethodID method,
+                      jobject instance,
                       jvalue *arguments, jint argumentCount)
 {
     JNIEnv *env = getEnv();
@@ -299,8 +299,8 @@ invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
     request = threadControl_getInvokeRequest(thread);
     if (request != NULL) {
         error = fillInvokeRequest(env, request, invokeType, options, id,
-                                  thread, clazz, method, instance, 
-                                  arguments, argumentCount); 
+                                  thread, clazz, method, instance,
+                                  arguments, argumentCount);
     }
     debugMonitorExit(invokerLock);
 
@@ -321,7 +321,7 @@ invokeConstructor(JNIEnv *env, InvokeRequest *request)
 {
     jobject object;
     object = JNI_FUNC_PTR(env,NewObjectA)(env, request->clazz,
-                                     request->method, 
+                                     request->method,
                                      request->arguments);
     request->returnValue.l = NULL;
     if (object != NULL) {
@@ -329,7 +329,7 @@ invokeConstructor(JNIEnv *env, InvokeRequest *request)
     }
 }
 
-static void 
+static void
 invokeStatic(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
@@ -417,7 +417,7 @@ invokeStatic(JNIEnv *env, InvokeRequest *request)
     }
 }
 
-static void 
+static void
 invokeVirtual(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
@@ -504,7 +504,7 @@ invokeVirtual(JNIEnv *env, InvokeRequest *request)
     }
 }
 
-static void 
+static void
 invokeNonvirtual(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
@@ -607,7 +607,7 @@ invoker_doInvoke(jthread thread)
     JNIEnv *env;
     jboolean startNow;
     InvokeRequest *request;
-     
+
     JDI_ASSERT(thread);
 
     debugMonitorEnter(invokerLock);
@@ -629,12 +629,12 @@ invoker_doInvoke(jthread thread)
         return JNI_FALSE;
     }
 
-    env = getEnv(); 
+    env = getEnv();
 
     WITH_LOCAL_REFS(env, 2) {  /* 1 for obj return values, 1 for exception */
 
         jobject exception;
-        
+
         JNI_FUNC_PTR(env,ExceptionClear)(env);
 
         switch (request->invokeType) {
@@ -662,12 +662,12 @@ invoker_doInvoke(jthread thread)
         }
 
     } END_WITH_LOCAL_REFS(env);
-    
+
     return JNI_TRUE;
 }
 
 void
-invoker_completeInvokeRequest(jthread thread) 
+invoker_completeInvokeRequest(jthread thread)
 {
     JNIEnv *env = getEnv();
     PacketOutputStream out;
@@ -677,14 +677,14 @@ invoker_completeInvokeRequest(jthread thread)
     jint id;
     InvokeRequest *request;
     jboolean detached;
-     
+
     JDI_ASSERT(thread);
 
     /* Prevent gcc errors on uninitialized variables. */
     tag = 0;
     exc = NULL;
     id  = 0;
-    
+
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(invokerLock);
 
@@ -710,7 +710,7 @@ invoker_completeInvokeRequest(jthread thread)
 
         if (request->invokeType == INVOKE_CONSTRUCTOR) {
             /*
-             * Although constructors technically have a return type of 
+             * Although constructors technically have a return type of
              * void, we return the object created.
              */
             tag = specificTypeKey(env, request->returnValue.l);
@@ -738,7 +738,7 @@ invoker_completeInvokeRequest(jthread thread)
     }
 }
 
-jboolean 
+jboolean
 invoker_isPending(jthread thread)
 {
     InvokeRequest *request;
@@ -751,7 +751,7 @@ invoker_isPending(jthread thread)
     return request->pending;
 }
 
-jboolean 
+jboolean
 invoker_isEnabled(jthread thread)
 {
     InvokeRequest *request;
@@ -764,7 +764,7 @@ invoker_isEnabled(jthread thread)
     return request->available;
 }
 
-void 
+void
 invoker_detach(InvokeRequest *request)
 {
     JDI_ASSERT(request);
@@ -772,4 +772,3 @@ invoker_detach(InvokeRequest *request)
     request->detached = JNI_TRUE;
     debugMonitorExit(invokerLock);
 }
-

@@ -33,11 +33,11 @@
 #include <stdio.h>
 
 unsigned char *DBN_GetPixelPointer(JNIEnv *env, jint x, int y,
-				   SurfaceDataRasInfo *lockInfo, 
-				   SurfaceDataOps *ops, int lockFlag) 
+                                   SurfaceDataRasInfo *lockInfo,
+                                   SurfaceDataOps *ops, int lockFlag)
 {
     if (ops == NULL) {
-	return NULL;
+        return NULL;
     }
 
     lockInfo->bounds.x1 = x;
@@ -45,14 +45,14 @@ unsigned char *DBN_GetPixelPointer(JNIEnv *env, jint x, int y,
     lockInfo->bounds.x2 = x + 1;
     lockInfo->bounds.y2 = y + 1;
     if (ops->Lock(env, ops, lockInfo, lockFlag) != SD_SUCCESS) {
-	return NULL;
+        return NULL;
     }
     ops->GetRasInfo(env, ops, lockInfo);
     if (lockInfo->rasBase) {
-	unsigned char *pixelPtr = (
-	    (unsigned char*)lockInfo->rasBase + 
-	    (x * lockInfo->pixelStride + y * lockInfo->scanStride));
-	return pixelPtr;
+        unsigned char *pixelPtr = (
+            (unsigned char*)lockInfo->rasBase +
+            (x * lockInfo->pixelStride + y * lockInfo->scanStride));
+        return pixelPtr;
     }
     SurfaceData_InvokeRelease(env, ops, lockInfo);
     SurfaceData_InvokeUnlock(env, ops, lockInfo);
@@ -62,11 +62,11 @@ unsigned char *DBN_GetPixelPointer(JNIEnv *env, jint x, int y,
 /*
  * Class:     sun_awt_image_DataBufferNative
  * Method:    getElem
- * Signature: 
+ * Signature:
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_image_DataBufferNative_getElem(JNIEnv *env, jobject dbn,
-					    jint x, jint y, jobject sd)
+                                            jint x, jint y, jobject sd)
 {
     jint returnVal = -1;
     unsigned char *pixelPtr;
@@ -75,24 +75,24 @@ Java_sun_awt_image_DataBufferNative_getElem(JNIEnv *env, jobject dbn,
 
     ops = SurfaceData_GetOps(env, sd);
 
-    if (!(pixelPtr = DBN_GetPixelPointer(env, x, y, &lockInfo, 
-					 ops, SD_LOCK_READ))) 
+    if (!(pixelPtr = DBN_GetPixelPointer(env, x, y, &lockInfo,
+                                         ops, SD_LOCK_READ)))
     {
-	return returnVal;
+        return returnVal;
     }
     switch (lockInfo.pixelStride) {
     case 4:
-	returnVal = *(int *)pixelPtr;
-	break;
+        returnVal = *(int *)pixelPtr;
+        break;
     /* REMIND: do we need a 3-byte case (for 24-bit) here? */
     case 2:
-	returnVal = *(unsigned short *)pixelPtr;
-	break;
+        returnVal = *(unsigned short *)pixelPtr;
+        break;
     case 1:
-	returnVal = *pixelPtr;
-	break;
+        returnVal = *pixelPtr;
+        break;
     default:
-	break;
+        break;
     }
     SurfaceData_InvokeRelease(env, ops, &lockInfo);
     SurfaceData_InvokeUnlock(env, ops, &lockInfo);
@@ -103,11 +103,11 @@ Java_sun_awt_image_DataBufferNative_getElem(JNIEnv *env, jobject dbn,
 /*
  * Class:     sun_awt_image_DataBufferNative
  * Method:    setElem
- * Signature: 
+ * Signature:
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_image_DataBufferNative_setElem(JNIEnv *env, jobject dbn,
-					    jint x, jint y, jint val, jobject sd)
+                                            jint x, jint y, jint val, jobject sd)
 {
     SurfaceDataRasInfo lockInfo;
     SurfaceDataOps *ops;
@@ -116,25 +116,25 @@ Java_sun_awt_image_DataBufferNative_setElem(JNIEnv *env, jobject dbn,
 
     ops = SurfaceData_GetOps(env, sd);
 
-    if (!(pixelPtr = DBN_GetPixelPointer(env, x, y, &lockInfo, 
-					 ops, SD_LOCK_WRITE))) 
+    if (!(pixelPtr = DBN_GetPixelPointer(env, x, y, &lockInfo,
+                                         ops, SD_LOCK_WRITE)))
     {
-	return;
+        return;
     }
 
     switch (lockInfo.pixelStride) {
     case 4:
-	*(int *)pixelPtr = val;
-	break;
+        *(int *)pixelPtr = val;
+        break;
     /* REMIND: do we need a 3-byte case (for 24-bit) here? */
     case 2:
-	*(unsigned short *)pixelPtr = (unsigned short)val;
-	break;
+        *(unsigned short *)pixelPtr = (unsigned short)val;
+        break;
     case 1:
-	*pixelPtr = (unsigned char)val;
-	break;
+        *pixelPtr = (unsigned char)val;
+        break;
     default:
-	break;
+        break;
     }
     SurfaceData_InvokeRelease(env, ops, &lockInfo);
     SurfaceData_InvokeUnlock(env, ops, &lockInfo);

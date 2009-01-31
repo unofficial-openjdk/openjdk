@@ -48,7 +48,7 @@ void awt_util_enable(Widget w);
 void awt_util_disable(Widget w);
 void awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht);
 void awt_util_mapChildren(Widget w, void (*func)(Widget,void *),
-			  int32_t applyToSelf, void *data);
+                          int32_t applyToSelf, void *data);
 int32_t awt_util_setCursor(Widget w, Cursor c);
 void awt_util_convertEventTimeAndModifiers
     (XEvent *event, ConvertEventTimeAndModifiers *output);
@@ -79,28 +79,28 @@ void awt_util_addEmbeddedFrame(Widget embeddedFrame, jobject javaRef);
 void awt_util_delEmbeddedFrame(Widget embeddedFrame);
 Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev);
 
-#define WITH_XERROR_HANDLER(f) do {		\
-    XSync(awt_display, False);			\
-    xerror_code = Success;			\
-    xerror_saved_handler = XSetErrorHandler(f);	\
+#define WITH_XERROR_HANDLER(f) do {             \
+    XSync(awt_display, False);                  \
+    xerror_code = Success;                      \
+    xerror_saved_handler = XSetErrorHandler(f); \
 } while (0)
 
 /* Convenience macro for handlers to use */
-#define XERROR_SAVE(err) do {			\
-    xerror_code = (err)->error_code;		\
+#define XERROR_SAVE(err) do {                   \
+    xerror_code = (err)->error_code;            \
 } while (0)
 
-#define RESTORE_XERROR_HANDLER do {		\
-    XSync(awt_display, False);			\
-    XSetErrorHandler(xerror_saved_handler);	\
+#define RESTORE_XERROR_HANDLER do {             \
+    XSync(awt_display, False);                  \
+    XSetErrorHandler(xerror_saved_handler);     \
 } while (0)
 
-#define EXEC_WITH_XERROR_HANDLER(f, code) do {	\
-    WITH_XERROR_HANDLER(f);			\
-    do {					\
-	code;					\
-    } while (0);				\
-    RESTORE_XERROR_HANDLER;			\
+#define EXEC_WITH_XERROR_HANDLER(f, code) do {  \
+    WITH_XERROR_HANDLER(f);                     \
+    do {                                        \
+        code;                                   \
+    } while (0);                                \
+    RESTORE_XERROR_HANDLER;                     \
 } while (0)
 
 /*
@@ -156,11 +156,11 @@ extern Widget prevWidget;
 
 JNIEXPORT jobject JNICALL
 JNU_GetObjectField(JNIEnv *env, jobject self, const char *name,
-		   const char *sig);
+                   const char *sig);
 
 JNIEXPORT jboolean JNICALL
 JNU_SetObjectField(JNIEnv *env, jobject self, const char *name,
-		   const char *sig, jobject val);
+                   const char *sig, jobject val);
 
 JNIEXPORT jlong JNICALL
 JNU_GetLongField(JNIEnv *env, jobject self, const char *name);
@@ -249,4 +249,3 @@ typedef struct {
 #endif
 #endif /* !HEADLESS */
 #endif           /* _AWT_UTIL_H_ */
-

@@ -33,4 +33,4 @@ void *JLI_MemRealloc(void *ptr, size_t size);
 char *JLI_StringDup(const char *s1);
 void  JLI_MemFree(void *ptr);
 
-#endif	/* _JLI_UTIL_H */
+#endif  /* _JLI_UTIL_H */

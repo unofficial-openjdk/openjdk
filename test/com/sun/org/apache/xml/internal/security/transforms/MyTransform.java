@@ -30,28 +30,28 @@ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
 import com.sun.org.apache.xml.internal.security.transforms.*;
 
 public class MyTransform extends TransformSpi {
-  
+
     public static final String URI =
-	"http://com.sun.org.apache.xml.internal.security.transforms.MyTransform";
+        "http://com.sun.org.apache.xml.internal.security.transforms.MyTransform";
 
     public MyTransform() {
-	try {
-	    System.out.println("Registering Transform");
-	    Transform.init();
-	    Transform.register(URI, "MyTransform");
-	} catch (AlgorithmAlreadyRegisteredException e) { 
-	    // should not occur, so ignore 
-	}
+        try {
+            System.out.println("Registering Transform");
+            Transform.init();
+            Transform.register(URI, "MyTransform");
+        } catch (AlgorithmAlreadyRegisteredException e) {
+            // should not occur, so ignore
+        }
     }
 
     protected String engineGetURI() {
-	return URI;
+        return URI;
     }
 
     protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
-	throws IOException, CanonicalizationException, 
-	       InvalidCanonicalizerException, TransformationException,
-	       ParserConfigurationException, SAXException {
-	throw new TransformationException("Unsupported Operation");
-    } 
+        throws IOException, CanonicalizationException,
+               InvalidCanonicalizerException, TransformationException,
+               ParserConfigurationException, SAXException {
+        throw new TransformationException("Unsupported Operation");
+    }
 }

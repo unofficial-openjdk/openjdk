@@ -43,11 +43,11 @@ import org.w3c.dom.Node;
  *
  * @author Sean Mullan
  */
-public abstract class DOMDigestMethod extends DOMStructure 
+public abstract class DOMDigestMethod extends DOMStructure
     implements DigestMethod {
 
-    final static String SHA384 = 
-	"http://www.w3.org/2001/04/xmldsig-more#sha384"; // see RFC 4051
+    final static String SHA384 =
+        "http://www.w3.org/2001/04/xmldsig-more#sha384"; // see RFC 4051
     private DigestMethodParameterSpec params;
 
     /**
@@ -58,13 +58,13 @@ public abstract class DOMDigestMethod extends DOMStructure
      *    appropriate for this digest method
      */
     DOMDigestMethod(AlgorithmParameterSpec params)
-	throws InvalidAlgorithmParameterException {
-	if (params != null && !(params instanceof DigestMethodParameterSpec)) {
-	    throw new InvalidAlgorithmParameterException
-		("params must be of type DigestMethodParameterSpec");
-	}
-	checkParams((DigestMethodParameterSpec) params);
-	this.params = (DigestMethodParameterSpec) params;
+        throws InvalidAlgorithmParameterException {
+        if (params != null && !(params instanceof DigestMethodParameterSpec)) {
+            throw new InvalidAlgorithmParameterException
+                ("params must be of type DigestMethodParameterSpec");
+        }
+        checkParams((DigestMethodParameterSpec) params);
+        this.params = (DigestMethodParameterSpec) params;
     }
 
     /**
@@ -75,15 +75,15 @@ public abstract class DOMDigestMethod extends DOMStructure
      * @param dmElem a DigestMethod element
      */
     DOMDigestMethod(Element dmElem) throws MarshalException {
-	Element paramsElem = DOMUtils.getFirstChildElement(dmElem);
-	if (paramsElem != null) {
-	    params = unmarshalParams(paramsElem);
-	}
-	try {
-	    checkParams(params);
-	} catch (InvalidAlgorithmParameterException iape) {
-	    throw new MarshalException(iape);
-	}
+        Element paramsElem = DOMUtils.getFirstChildElement(dmElem);
+        if (paramsElem != null) {
+            params = unmarshalParams(paramsElem);
+        }
+        try {
+            checkParams(params);
+        } catch (InvalidAlgorithmParameterException iape) {
+            throw new MarshalException(iape);
+        }
     }
 
     static DigestMethod unmarshal(Element dmElem) throws MarshalException {
@@ -98,22 +98,22 @@ public abstract class DOMDigestMethod extends DOMStructure
             return new SHA512(dmElem);
         } else {
             throw new MarshalException
-		("unsupported DigestMethod algorithm: " + alg);
+                ("unsupported DigestMethod algorithm: " + alg);
         }
     }
 
     /**
      * Checks if the specified parameters are valid for this algorithm. By
-     * default, this method throws an exception if parameters are specified 
-     * since most DigestMethod algorithms do not have parameters. Subclasses 
+     * default, this method throws an exception if parameters are specified
+     * since most DigestMethod algorithms do not have parameters. Subclasses
      * should override it if they have parameters.
      *
      * @param params the algorithm-specific params (may be <code>null</code>)
      * @throws InvalidAlgorithmParameterException if the parameters are not
      *    appropriate for this digest method
      */
-    void checkParams(DigestMethodParameterSpec params) 
-	throws InvalidAlgorithmParameterException {
+    void checkParams(DigestMethodParameterSpec params)
+        throws InvalidAlgorithmParameterException {
         if (params != null) {
             throw new InvalidAlgorithmParameterException("no parameters " +
                 "should be specified for the " + getMessageDigestAlgorithm()
@@ -122,65 +122,65 @@ public abstract class DOMDigestMethod extends DOMStructure
     }
 
     public final AlgorithmParameterSpec getParameterSpec() {
-	return params;
+        return params;
     }
 
     /**
-     * Unmarshals <code>DigestMethodParameterSpec</code> from the specified 
+     * Unmarshals <code>DigestMethodParameterSpec</code> from the specified
      * <code>Element</code>. By default, this method throws an exception since
-     * most DigestMethod algorithms do not have parameters. Subclasses should 
+     * most DigestMethod algorithms do not have parameters. Subclasses should
      * override it if they have parameters.
      *
      * @param paramsElem the <code>Element</code> holding the input params
      * @return the algorithm-specific <code>DigestMethodParameterSpec</code>
      * @throws MarshalException if the parameters cannot be unmarshalled
      */
-    DigestMethodParameterSpec 
-	unmarshalParams(Element paramsElem) throws MarshalException {
+    DigestMethodParameterSpec
+        unmarshalParams(Element paramsElem) throws MarshalException {
         throw new MarshalException("no parameters should " +
-            "be specified for the " + getMessageDigestAlgorithm() + 
-	    " DigestMethod algorithm");
+            "be specified for the " + getMessageDigestAlgorithm() +
+            " DigestMethod algorithm");
     }
 
     /**
-     * This method invokes the abstract {@link #marshalParams marshalParams} 
+     * This method invokes the abstract {@link #marshalParams marshalParams}
      * method to marshal any algorithm-specific parameters.
      */
-    public void marshal(Node parent, String prefix, DOMCryptoContext context) 
-	throws MarshalException {
+    public void marshal(Node parent, String prefix, DOMCryptoContext context)
+        throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element dmElem = DOMUtils.createElement
-	    (ownerDoc, "DigestMethod", XMLSignature.XMLNS, prefix);
+            (ownerDoc, "DigestMethod", XMLSignature.XMLNS, prefix);
         DOMUtils.setAttribute(dmElem, "Algorithm", getAlgorithm());
 
         if (params != null) {
-	    marshalParams(dmElem, prefix);
+            marshalParams(dmElem, prefix);
         }
 
         parent.appendChild(dmElem);
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof DigestMethod)) {
             return false;
-	}
+        }
         DigestMethod odm = (DigestMethod) o;
 
-	boolean paramsEqual = (params == null ? odm.getParameterSpec() == null :
-	    params.equals(odm.getParameterSpec()));
+        boolean paramsEqual = (params == null ? odm.getParameterSpec() == null :
+            params.equals(odm.getParameterSpec()));
 
-	return (getAlgorithm().equals(odm.getAlgorithm()) && paramsEqual);
+        return (getAlgorithm().equals(odm.getAlgorithm()) && paramsEqual);
     }
 
     /**
      * Marshals the algorithm-specific parameters to an Element and
-     * appends it to the specified parent element. By default, this method 
-     * throws an exception since most DigestMethod algorithms do not have 
+     * appends it to the specified parent element. By default, this method
+     * throws an exception since most DigestMethod algorithms do not have
      * parameters. Subclasses should override it if they have parameters.
      *
      * @param parent the parent element to append the parameters to
@@ -188,10 +188,10 @@ public abstract class DOMDigestMethod extends DOMStructure
      * @throws MarshalException if the parameters cannot be marshalled
      */
     void marshalParams(Element parent, String prefix)
-	throws MarshalException {
+        throws MarshalException {
         throw new MarshalException("no parameters should " +
-            "be specified for the " + getMessageDigestAlgorithm() + 
-	    " DigestMethod algorithm");
+            "be specified for the " + getMessageDigestAlgorithm() +
+            " DigestMethod algorithm");
     }
 
     /**
@@ -215,8 +215,8 @@ public abstract class DOMDigestMethod extends DOMStructure
         }
     }
 
-    static final class SHA256 extends DOMDigestMethod {        
-	SHA256(AlgorithmParameterSpec params)
+    static final class SHA256 extends DOMDigestMethod {
+        SHA256(AlgorithmParameterSpec params)
             throws InvalidAlgorithmParameterException {
             super(params);
         }
@@ -231,8 +231,8 @@ public abstract class DOMDigestMethod extends DOMStructure
         }
     }
 
-    static final class SHA384 extends DOMDigestMethod {        
-	SHA384(AlgorithmParameterSpec params)
+    static final class SHA384 extends DOMDigestMethod {
+        SHA384(AlgorithmParameterSpec params)
             throws InvalidAlgorithmParameterException {
             super(params);
         }
@@ -247,8 +247,8 @@ public abstract class DOMDigestMethod extends DOMStructure
         }
     }
 
-    static final class SHA512 extends DOMDigestMethod {        
-	SHA512(AlgorithmParameterSpec params)
+    static final class SHA512 extends DOMDigestMethod {
+        SHA512(AlgorithmParameterSpec params)
             throws InvalidAlgorithmParameterException {
             super(params);
         }

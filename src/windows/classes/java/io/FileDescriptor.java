@@ -38,13 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Applications should not create their own file descriptors.
  *
  * @author  Pavani Diwanji
- * @version %I%, %G%
- * @see	    java.io.FileInputStream
- * @see	    java.io.FileOutputStream
+ * @see     java.io.FileInputStream
+ * @see     java.io.FileOutputStream
  * @since   JDK1.0
  */
 public final class FileDescriptor {
- 
+
     private int fd;
 
     private long handle;
@@ -62,9 +61,9 @@ public final class FileDescriptor {
      * object.
      */
     public /**/ FileDescriptor() {
-	fd = -1;
-	handle = -1;
-	useCount = new AtomicInteger();
+        fd = -1;
+        handle = -1;
+        useCount = new AtomicInteger();
     }
 
     static {
@@ -73,17 +72,17 @@ public final class FileDescriptor {
 
     // Set up JavaIOFileDescriptorAccess in SharedSecrets
     static {
-	sun.misc.SharedSecrets.setJavaIOFileDescriptorAccess(
-	    new sun.misc.JavaIOFileDescriptorAccess() {
-		public void set(FileDescriptor obj, int fd) {
-		    obj.fd = fd;
-		}
+        sun.misc.SharedSecrets.setJavaIOFileDescriptorAccess(
+            new sun.misc.JavaIOFileDescriptorAccess() {
+                public void set(FileDescriptor obj, int fd) {
+                    obj.fd = fd;
+                }
 
-		public int get(FileDescriptor obj) {
-		    return obj.fd;
-		}
-	    }
-	);
+                public int get(FileDescriptor obj) {
+                    return obj.fd;
+                }
+            }
+        );
     }
 
     /**
@@ -120,7 +119,7 @@ public final class FileDescriptor {
      *          <code>false</code> otherwise.
      */
     public boolean valid() {
-	return ((handle != -1) || (fd != -1));
+        return ((handle != -1) || (fd != -1));
     }
 
     /**
@@ -146,9 +145,9 @@ public final class FileDescriptor {
      * OutputStream.flush) before that data will be affected by sync.
      *
      * @exception SyncFailedException
-     *	      Thrown when the buffers cannot be flushed,
-     *	      or because the system cannot guarantee that all the
-     *	      buffers have been synchronized with physical media.
+     *        Thrown when the buffers cannot be flushed,
+     *        or because the system cannot guarantee that all the
+     *        buffers have been synchronized with physical media.
      * @since     JDK1.1
      */
     public native void sync() throws SyncFailedException;
@@ -164,13 +163,13 @@ public final class FileDescriptor {
         return desc;
     }
 
-    // package private methods used by FIS, FOS and RAF. 
+    // package private methods used by FIS, FOS and RAF.
 
     int incrementAndGetUseCount() {
-	return useCount.incrementAndGet();
+        return useCount.incrementAndGet();
     }
- 
+
     int decrementAndGetUseCount() {
-	return useCount.decrementAndGet();
+        return useCount.decrementAndGet();
     }
 }

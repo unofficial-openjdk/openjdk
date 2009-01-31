@@ -44,9 +44,9 @@ import sun.security.x509.X500Name;
  * <p>
  * When first constructed, an <code>X509CRLSelector</code> has no criteria
  * enabled and each of the <code>get</code> methods return a default
- * value (<code>null</code>). Therefore, the {@link #match match} method 
- * would return <code>true</code> for any <code>X509CRL</code>. Typically, 
- * several criteria are enabled (by calling {@link #setIssuers setIssuers} 
+ * value (<code>null</code>). Therefore, the {@link #match match} method
+ * would return <code>true</code> for any <code>X509CRL</code>. Typically,
+ * several criteria are enabled (by calling {@link #setIssuers setIssuers}
  * or {@link #setDateAndTime setDateAndTime}, for instance) and then the
  * <code>X509CRLSelector</code> is passed to
  * {@link CertStore#getCRLs CertStore.getCRLs} or some similar
@@ -67,9 +67,8 @@ import sun.security.x509.X500Name;
  * @see CRLSelector
  * @see X509CRL
  *
- * @version 	%I% %G%
- * @since	1.4
- * @author	Steve Hanna
+ * @since       1.4
+ * @author      Steve Hanna
  */
 public class X509CRLSelector implements CRLSelector {
 
@@ -102,14 +101,14 @@ public class X509CRLSelector implements CRLSelector {
      * <code>Collection</code> of <code>X500Principal</code>s.
      * <p>
      * Note that the <code>names</code> parameter can contain duplicate
-     * distinguished names, but they may be removed from the 
+     * distinguished names, but they may be removed from the
      * <code>Collection</code> of names returned by the
      * {@link #getIssuers getIssuers} method.
      * <p>
      * Note that a copy is performed on the <code>Collection</code> to
      * protect against subsequent modifications.
      *
-     * @param issuers a <code>Collection</code> of X500Principals 
+     * @param issuers a <code>Collection</code> of X500Principals
      *   (or <code>null</code>)
      * @see #getIssuers
      * @since 1.5
@@ -119,12 +118,12 @@ public class X509CRLSelector implements CRLSelector {
             issuerNames = null;
             issuerX500Principals = null;
         } else {
-	    // clone
-	    issuerX500Principals = new HashSet<X500Principal>(issuers);
-	    issuerNames = new HashSet<Object>();
-	    for (X500Principal p : issuerX500Principals) {
-		issuerNames.add(p.getEncoded());
-	    }
+            // clone
+            issuerX500Principals = new HashSet<X500Principal>(issuers);
+            issuerNames = new HashSet<Object>();
+            for (X500Principal p : issuerX500Principals) {
+                issuerNames.add(p.getEncoded());
+            }
         }
     }
 
@@ -145,13 +144,13 @@ public class X509CRLSelector implements CRLSelector {
      * <p>
      * The <code>names</code> parameter (if not <code>null</code>) is a
      * <code>Collection</code> of names. Each name is a <code>String</code>
-     * or a byte array representing a distinguished name (in 
+     * or a byte array representing a distinguished name (in
      * <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a> or
      * ASN.1 DER encoded form, respectively). If <code>null</code> is supplied
      * as the value for this argument, no issuerNames check will be performed.
      * <p>
      * Note that the <code>names</code> parameter can contain duplicate
-     * distinguished names, but they may be removed from the 
+     * distinguished names, but they may be removed from the
      * <code>Collection</code> of names returned by the
      * {@link #getIssuerNames getIssuerNames} method.
      * <p>
@@ -216,15 +215,15 @@ public class X509CRLSelector implements CRLSelector {
      * @since 1.5
      */
     public void addIssuer(X500Principal issuer) {
-	addIssuerNameInternal(issuer.getEncoded(), issuer);
+        addIssuerNameInternal(issuer.getEncoded(), issuer);
     }
 
     /**
-     * <strong>Denigrated</strong>, use 
-     * {@linkplain #addIssuer(X500Principal)} or 
-     * {@linkplain #addIssuerName(byte[])} instead. This method should not be 
-     * relied on as it can fail to match some CRLs because of a loss of 
-     * encoding information in the RFC 2253 String form of some distinguished 
+     * <strong>Denigrated</strong>, use
+     * {@linkplain #addIssuer(X500Principal)} or
+     * {@linkplain #addIssuerName(byte[])} instead. This method should not be
+     * relied on as it can fail to match some CRLs because of a loss of
+     * encoding information in the RFC 2253 String form of some distinguished
      * names.
      * <p>
      * Adds a name to the issuerNames criterion. The issuer distinguished
@@ -271,7 +270,7 @@ public class X509CRLSelector implements CRLSelector {
         // clone because byte arrays are modifiable
         addIssuerNameInternal(name.clone(), new X500Name(name).asX500Principal());
     }
-    
+
     /**
      * A private method that adds a name (String or byte array) to the
      * issuerNames criterion. The issuer distinguished
@@ -285,10 +284,10 @@ public class X509CRLSelector implements CRLSelector {
     private void addIssuerNameInternal(Object name, X500Principal principal) {
         if (issuerNames == null) {
             issuerNames = new HashSet<Object>();
-	}
+        }
         if (issuerX500Principals == null) {
             issuerX500Principals = new HashSet<X500Principal>();
-	}
+        }
         issuerNames.add(name);
         issuerX500Principals.add(principal);
     }
@@ -305,19 +304,19 @@ public class X509CRLSelector implements CRLSelector {
      * @throws IOException if a parsing error occurs
      */
     private static HashSet<Object> cloneAndCheckIssuerNames(Collection<?> names)
-        throws IOException 
+        throws IOException
     {
         HashSet<Object> namesCopy = new HashSet<Object>();
         Iterator<?> i = names.iterator();
         while (i.hasNext()) {
             Object nameObject = i.next();
             if (!(nameObject instanceof byte []) &&
-	        !(nameObject instanceof String))
-	        throw new IOException("name not byte array or String");
+                !(nameObject instanceof String))
+                throw new IOException("name not byte array or String");
             if (nameObject instanceof byte [])
-	        namesCopy.add(((byte []) nameObject).clone());
+                namesCopy.add(((byte []) nameObject).clone());
             else
-	        namesCopy.add(nameObject);
+                namesCopy.add(nameObject);
         }
         return(namesCopy);
     }
@@ -326,7 +325,7 @@ public class X509CRLSelector implements CRLSelector {
      * Clone an argument of the form passed to setIssuerNames.
      * Throw a RuntimeException if the argument is malformed.
      * <p>
-     * This method wraps cloneAndCheckIssuerNames, changing any IOException 
+     * This method wraps cloneAndCheckIssuerNames, changing any IOException
      * into a RuntimeException. This method should be used when the object being
      * cloned has already been checked, so there should never be any exceptions.
      *
@@ -341,7 +340,7 @@ public class X509CRLSelector implements CRLSelector {
         try {
             return cloneAndCheckIssuerNames(names);
         } catch (IOException ioe) {
-	    throw new RuntimeException(ioe);
+            throw new RuntimeException(ioe);
         }
     }
 
@@ -357,28 +356,28 @@ public class X509CRLSelector implements CRLSelector {
      * @return a HashSet of issuerX500Principals
      * @throws IOException if a parsing error occurs
      */
-    private static HashSet<X500Principal> parseIssuerNames(Collection<Object> names) 
+    private static HashSet<X500Principal> parseIssuerNames(Collection<Object> names)
     throws IOException {
         HashSet<X500Principal> x500Principals = new HashSet<X500Principal>();
-	for (Iterator<Object> t = names.iterator(); t.hasNext(); ) {
-	    Object nameObject = t.next();
-	    if (nameObject instanceof String) {
-		x500Principals.add(new X500Name((String)nameObject).asX500Principal());
-	    } else {
-		try {
-		    x500Principals.add(new X500Principal((byte[])nameObject));
-		} catch (IllegalArgumentException e) {
-		    throw (IOException)new IOException("Invalid name").initCause(e);
-		}
-	    }
-	}
+        for (Iterator<Object> t = names.iterator(); t.hasNext(); ) {
+            Object nameObject = t.next();
+            if (nameObject instanceof String) {
+                x500Principals.add(new X500Name((String)nameObject).asX500Principal());
+            } else {
+                try {
+                    x500Principals.add(new X500Principal((byte[])nameObject));
+                } catch (IllegalArgumentException e) {
+                    throw (IOException)new IOException("Invalid name").initCause(e);
+                }
+            }
+        }
         return x500Principals;
     }
 
     /**
      * Sets the minCRLNumber criterion. The <code>X509CRL</code> must have a
      * CRL number extension whose value is greater than or equal to the
-     * specified value. If <code>null</code>, no minCRLNumber check will be 
+     * specified value. If <code>null</code>, no minCRLNumber check will be
      * done.
      *
      * @param minCRL the minimum CRL number accepted (or <code>null</code>)
@@ -390,7 +389,7 @@ public class X509CRLSelector implements CRLSelector {
     /**
      * Sets the maxCRLNumber criterion. The <code>X509CRL</code> must have a
      * CRL number extension whose value is less than or equal to the
-     * specified value. If <code>null</code>, no maxCRLNumber check will be 
+     * specified value. If <code>null</code>, no maxCRLNumber check will be
      * done.
      *
      * @param maxCRL the maximum CRL number accepted (or <code>null</code>)
@@ -407,7 +406,7 @@ public class X509CRLSelector implements CRLSelector {
      * does not contain a nextUpdate component.
      * If <code>null</code>, no dateAndTime check will be done.
      * <p>
-     * Note that the <code>Date</code> supplied here is cloned to protect 
+     * Note that the <code>Date</code> supplied here is cloned to protect
      * against subsequent modifications.
      *
      * @param dateAndTime the <code>Date</code> to match against
@@ -445,16 +444,16 @@ public class X509CRLSelector implements CRLSelector {
      * If the value returned is not <code>null</code>, it is a
      * unmodifiable <code>Collection</code> of <code>X500Principal</code>s.
      *
-     * @return an unmodifiable <code>Collection</code> of names 
+     * @return an unmodifiable <code>Collection</code> of names
      *   (or <code>null</code>)
      * @see #setIssuers
      * @since 1.5
      */
     public Collection<X500Principal> getIssuers() {
-	if (issuerX500Principals == null) {
-	    return null;
-	}
-	return Collections.unmodifiableCollection(issuerX500Principals);
+        if (issuerX500Principals == null) {
+            return null;
+        }
+        return Collections.unmodifiableCollection(issuerX500Principals);
     }
 
     /**
@@ -466,7 +465,7 @@ public class X509CRLSelector implements CRLSelector {
      * If the value returned is not <code>null</code>, it is a
      * <code>Collection</code> of names. Each name is a <code>String</code>
      * or a byte array representing a distinguished name (in RFC 2253 or
-     * ASN.1 DER encoded form, respectively).  Note that the 
+     * ASN.1 DER encoded form, respectively).  Note that the
      * <code>Collection</code> returned may contain duplicate names.
      * <p>
      * If a name is specified as a byte array, it should contain a single DER
@@ -483,7 +482,7 @@ public class X509CRLSelector implements CRLSelector {
     public Collection<Object> getIssuerNames() {
         if (issuerNames == null) {
             return null;
-	}
+        }
         return cloneIssuerNames(issuerNames);
     }
 
@@ -501,7 +500,7 @@ public class X509CRLSelector implements CRLSelector {
     /**
      * Returns the maxCRLNumber criterion. The <code>X509CRL</code> must have a
      * CRL number extension whose value is less than or equal to the
-     * specified value. If <code>null</code>, no maxCRLNumber check will be 
+     * specified value. If <code>null</code>, no maxCRLNumber check will be
      * done.
      *
      * @return the maximum CRL number accepted (or <code>null</code>)
@@ -534,7 +533,7 @@ public class X509CRLSelector implements CRLSelector {
      * Returns the certificate being checked. This is not a criterion. Rather,
      * it is optional information that may help a <code>CertStore</code>
      * find CRLs that would be relevant when checking revocation for the
-     * specified certificate. If the value returned is <code>null</code>, then 
+     * specified certificate. If the value returned is <code>null</code>, then
      * no such optional information is provided.
      *
      * @return the certificate being checked (or <code>null</code>)
@@ -557,7 +556,7 @@ public class X509CRLSelector implements CRLSelector {
             sb.append("  IssuerNames:\n");
             Iterator<Object> i = issuerNames.iterator();
             while (i.hasNext())
-	        sb.append("    " + i.next() + "\n");
+                sb.append("    " + i.next() + "\n");
         }
         if (minCRL != null)
             sb.append("  minCRLNumber: " + minCRL + "\n");
@@ -581,7 +580,7 @@ public class X509CRLSelector implements CRLSelector {
     public boolean match(CRL crl) {
         if (!(crl instanceof X509CRL)) {
             return false;
-	}
+        }
         X509CRL xcrl = (X509CRL)crl;
 
         /* match on issuer name */
@@ -590,80 +589,80 @@ public class X509CRLSelector implements CRLSelector {
             Iterator<X500Principal> i = issuerX500Principals.iterator();
             boolean found = false;
             while (!found && i.hasNext()) {
-	        if (i.next().equals(issuer)) {
-	            found = true;
-		}
-	    }
+                if (i.next().equals(issuer)) {
+                    found = true;
+                }
+            }
             if (!found) {
-	        if (debug != null) {
-	    	    debug.println("X509CRLSelector.match: issuer DNs "
-			+ "don't match");
-		}
-	        return false;
+                if (debug != null) {
+                    debug.println("X509CRLSelector.match: issuer DNs "
+                        + "don't match");
+                }
+                return false;
             }
         }
-	
-	if ((minCRL != null) || (maxCRL != null)) {
-	    /* Get CRL number extension from CRL */
-	    byte[] crlNumExtVal = xcrl.getExtensionValue("2.5.29.20");
-	    if (crlNumExtVal == null) {
-		if (debug != null) {
-		    debug.println("X509CRLSelector.match: no CRLNumber");
-		}
-	    }
-	    BigInteger crlNum;
-	    try {
-		DerInputStream in = new DerInputStream(crlNumExtVal);
-		byte[] encoded = in.getOctetString();
-		CRLNumberExtension crlNumExt = 
-		    new CRLNumberExtension(Boolean.FALSE, encoded);
-		crlNum = (BigInteger)crlNumExt.get(CRLNumberExtension.NUMBER);
-	    } catch (IOException ex) {
-		if (debug != null) {
-		    debug.println("X509CRLSelector.match: exception in "
-			+ "decoding CRL number");
-		}
-		return false;
-	    }
-    
-	    /* match on minCRLNumber */
-	    if (minCRL != null) {
-		if (crlNum.compareTo(minCRL) < 0) {
-		    if (debug != null) {
-			debug.println("X509CRLSelector.match: CRLNumber too small");
-		    }
-		    return false;
-		}
-	    }
 
-	    /* match on maxCRLNumber */
-	    if (maxCRL != null) {
-		if (crlNum.compareTo(maxCRL) > 0) {
-		    if (debug != null) {
-			debug.println("X509CRLSelector.match: CRLNumber too large");
-		    }
-		    return false;
-		}
-	    }
-	}
+        if ((minCRL != null) || (maxCRL != null)) {
+            /* Get CRL number extension from CRL */
+            byte[] crlNumExtVal = xcrl.getExtensionValue("2.5.29.20");
+            if (crlNumExtVal == null) {
+                if (debug != null) {
+                    debug.println("X509CRLSelector.match: no CRLNumber");
+                }
+            }
+            BigInteger crlNum;
+            try {
+                DerInputStream in = new DerInputStream(crlNumExtVal);
+                byte[] encoded = in.getOctetString();
+                CRLNumberExtension crlNumExt =
+                    new CRLNumberExtension(Boolean.FALSE, encoded);
+                crlNum = (BigInteger)crlNumExt.get(CRLNumberExtension.NUMBER);
+            } catch (IOException ex) {
+                if (debug != null) {
+                    debug.println("X509CRLSelector.match: exception in "
+                        + "decoding CRL number");
+                }
+                return false;
+            }
+
+            /* match on minCRLNumber */
+            if (minCRL != null) {
+                if (crlNum.compareTo(minCRL) < 0) {
+                    if (debug != null) {
+                        debug.println("X509CRLSelector.match: CRLNumber too small");
+                    }
+                    return false;
+                }
+            }
+
+            /* match on maxCRLNumber */
+            if (maxCRL != null) {
+                if (crlNum.compareTo(maxCRL) > 0) {
+                    if (debug != null) {
+                        debug.println("X509CRLSelector.match: CRLNumber too large");
+                    }
+                    return false;
+                }
+            }
+        }
 
 
         /* match on dateAndTime */
         if (dateAndTime != null) {
-	    Date crlThisUpdate = xcrl.getThisUpdate();
+            Date crlThisUpdate = xcrl.getThisUpdate();
             Date nextUpdate = xcrl.getNextUpdate();
             if (nextUpdate == null) {
-	        if (debug != null) {
-		    debug.println("X509CRLSelector.match: nextUpdate null");
-		}
-	        return false;
+                if (debug != null) {
+                    debug.println("X509CRLSelector.match: nextUpdate null");
+                }
+                return false;
             }
-            if (crlThisUpdate.after(dateAndTime) 
-	          || nextUpdate.before(dateAndTime)) {
-	        if (debug != null) {
-		    debug.println("X509CRLSelector.match: update out of range");
-		}
-	        return false;
+            if (crlThisUpdate.after(dateAndTime)
+                  || nextUpdate.before(dateAndTime)) {
+                if (debug != null) {
+                    debug.println("X509CRLSelector.match: update out of range");
+                }
+                return false;
             }
         }
 
@@ -679,10 +678,10 @@ public class X509CRLSelector implements CRLSelector {
         try {
             X509CRLSelector copy = (X509CRLSelector)super.clone();
             if (issuerNames != null) {
-                copy.issuerNames = 
-			new HashSet<Object>(issuerNames);
-                copy.issuerX500Principals = 
-			new HashSet<X500Principal>(issuerX500Principals);
+                copy.issuerNames =
+                        new HashSet<Object>(issuerNames);
+                copy.issuerX500Principals =
+                        new HashSet<X500Principal>(issuerX500Principals);
             }
             return copy;
         } catch (CloneNotSupportedException e) {

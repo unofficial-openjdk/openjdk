@@ -26,11 +26,11 @@ public class SourceDebugExtensionTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         testSetUp();
         new SourceDebugExtensionTest(args).startTests();
     }
-    
+
     /********** test set-up **********/
 
     static void testSetUp() throws Exception {
@@ -39,12 +39,12 @@ public class SourceDebugExtensionTest extends TestScaffold {
                            new File(System.getProperty("test.src", "."),
                                     "testString"));
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass
          */
         BreakpointEvent bpe = startToMain("SourceDebugExtensionTarg");
@@ -59,7 +59,7 @@ public class SourceDebugExtensionTest extends TestScaffold {
         String expected = "An expected attribute string";
         String sde = targetClass.sourceDebugExtension();
         if (!sde.equals(expected)) {
-            failure("FAIL: got '" + sde + 
+            failure("FAIL: got '" + sde +
                     "' expected: '" + expected + "'");
         }
 
@@ -67,7 +67,7 @@ public class SourceDebugExtensionTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -79,4 +79,3 @@ public class SourceDebugExtensionTest extends TestScaffold {
         }
     }
 }
-

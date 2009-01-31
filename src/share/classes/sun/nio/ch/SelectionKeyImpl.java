@@ -38,8 +38,8 @@ class SelectionKeyImpl
     extends AbstractSelectionKey
 {
 
-    final SelChImpl channel;				// package-private
-    final SelectorImpl selector;			// package-private
+    final SelChImpl channel;                            // package-private
+    final SelectorImpl selector;                        // package-private
 
     // Index for a pollfd array in Selector that this key is registered with
     private int index;
@@ -48,23 +48,23 @@ class SelectionKeyImpl
     private int readyOps;
 
     SelectionKeyImpl(SelChImpl ch, SelectorImpl sel) {
-	channel = ch;
-	selector = sel;
+        channel = ch;
+        selector = sel;
     }
 
     public SelectableChannel channel() {
-	return (SelectableChannel)channel;
+        return (SelectableChannel)channel;
     }
 
     public Selector selector() {
-	return selector;
+        return selector;
     }
 
-    int getIndex() {					// package-private
+    int getIndex() {                                    // package-private
         return index;
     }
 
-    void setIndex(int i) {				// package-private
+    void setIndex(int i) {                              // package-private
         index = i;
     }
 
@@ -84,30 +84,30 @@ class SelectionKeyImpl
     }
 
     public int readyOps() {
-	ensureValid();
+        ensureValid();
         return readyOps;
     }
 
     // The nio versions of these operations do not care if a key
     // has been invalidated. They are for internal use by nio code.
 
-    void nioReadyOps(int ops) {			// package-private
+    void nioReadyOps(int ops) {                 // package-private
         readyOps = ops;
     }
 
-    int nioReadyOps() {			        // package-private
+    int nioReadyOps() {                         // package-private
         return readyOps;
     }
 
-    SelectionKey nioInterestOps(int ops) {	// package-private
+    SelectionKey nioInterestOps(int ops) {      // package-private
         if ((ops & ~channel().validOps()) != 0)
             throw new IllegalArgumentException();
         channel.translateAndSetInterestOps(ops, this);
         interestOps = ops;
-	return this;
+        return this;
     }
 
-    int nioInterestOps() {			 // package-private
+    int nioInterestOps() {                       // package-private
         return interestOps;
     }
 

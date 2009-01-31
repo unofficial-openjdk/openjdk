@@ -46,7 +46,7 @@ public interface HotspotRuntimeMBean {
 
     /**
      * Returns the accumulated time spent at safepoints in milliseconds.
-     * This is the accumulated elapsed time that the application has 
+     * This is the accumulated elapsed time that the application has
      * been stopped for safepoint operations.
      *
      * @return the accumulated time spent at safepoints in milliseconds.

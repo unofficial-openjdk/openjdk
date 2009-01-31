@@ -121,7 +121,7 @@ public class SignedInfo extends Manifest {
          XMLUtils.addReturnToElement(this._constructionElement);
       }
    }
-   
+
    /**
     * @param doc
     * @param SignatureMethodElem
@@ -165,10 +165,10 @@ public class SignedInfo extends Manifest {
        */
       String c14nMethodURI=this.getCanonicalizationMethodURI();
      if (!(c14nMethodURI.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315") ||
-      		c14nMethodURI.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments") ||
-			c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#") ||
-			c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#WithComments"))) {
-      	//The c14n is not a secure one and can rewrite the URIs or like that reparse the SignedInfo to be sure    
+                c14nMethodURI.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments") ||
+                        c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#") ||
+                        c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#WithComments"))) {
+        //The c14n is not a secure one and can rewrite the URIs or like that reparse the SignedInfo to be sure
       try {
          Canonicalizer c14nizer =
             Canonicalizer.getInstance(this.getCanonicalizationMethodURI());
@@ -180,7 +180,7 @@ public class SignedInfo extends Manifest {
 
          dbf.setNamespaceAware(true);
 
-         javax.xml.parsers.DocumentBuilder db = dbf.newDocumentBuilder();        
+         javax.xml.parsers.DocumentBuilder db = dbf.newDocumentBuilder();
          org.w3c.dom.Document newdoc =
             db.parse(new ByteArrayInputStream(this._c14nizedBytes));
          Node imported = this._doc.importNode(newdoc.getDocumentElement(),
@@ -256,7 +256,7 @@ public class SignedInfo extends Manifest {
 
       return output;
    }
-   
+
    /**
     *  Output the C14n stream to the give outputstream.
     * @param os
@@ -264,11 +264,11 @@ public class SignedInfo extends Manifest {
     * @throws InvalidCanonicalizerException
     * @throws XMLSecurityException
     */
-   public void signInOctectStream(OutputStream os)            
+   public void signInOctectStream(OutputStream os)
        throws CanonicalizationException, InvalidCanonicalizerException,
-	   XMLSecurityException {
+           XMLSecurityException {
 
-   	if ((this._c14nizedBytes == null)) {
+        if ((this._c14nizedBytes == null)) {
        Canonicalizer c14nizer =
           Canonicalizer.getInstance(this.getCanonicalizationMethodURI());
        c14nizer.setWriter(os);
@@ -280,11 +280,11 @@ public class SignedInfo extends Manifest {
         c14nizer.canonicalizeSubtree(this._constructionElement, inclusiveNamespaces);
     } else {
         try {
-			os.write(this._c14nizedBytes);
-		} catch (IOException e) {
-			throw new RuntimeException(""+e);
-		}  
-    }    
+                        os.write(this._c14nizedBytes);
+                } catch (IOException e) {
+                        throw new RuntimeException(""+e);
+                }
+    }
    }
 
    /**
@@ -297,9 +297,9 @@ public class SignedInfo extends Manifest {
     Element el= XMLUtils.selectDsNode(this._constructionElement.getFirstChild(),
      Constants._TAG_CANONICALIZATIONMETHOD,0);
      if (el==null) {
-     	return null;
+        return null;
      }
-     return el.getAttributeNS(null, Constants._ATT_ALGORITHM);    
+     return el.getAttributeNS(null, Constants._ATT_ALGORITHM);
    }
 
    /**
@@ -320,7 +320,7 @@ public class SignedInfo extends Manifest {
 
    /**
     * Method getSignatureMethodElement
-    * @return gets The SignatureMethod Node.   
+    * @return gets The SignatureMethod Node.
     *
     */
    public Element getSignatureMethodElement() {
@@ -357,12 +357,12 @@ public class SignedInfo extends Manifest {
     Element el= XMLUtils.selectDsNode(this._constructionElement.getFirstChild(),
      Constants._TAG_CANONICALIZATIONMETHOD,0);
      if (el==null) {
-     	return null;
+        return null;
      }
 
      String c14nMethodURI = el.getAttributeNS(null, Constants._ATT_ALGORITHM);
      if(!(c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#") ||
-			c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#WithComments"))) {
+                        c14nMethodURI.equals("http://www.w3.org/2001/10/xml-exc-c14n#WithComments"))) {
                 return null;
             }
 

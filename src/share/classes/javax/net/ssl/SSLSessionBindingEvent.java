@@ -44,7 +44,6 @@ import java.util.EventObject;
  * @since 1.4
  * @author Nathan Abramson
  * @author David Brownell
- * @version %I%
  */
 public
 class SSLSessionBindingEvent
@@ -66,8 +65,8 @@ extends EventObject
      */
     public SSLSessionBindingEvent(SSLSession session, String name)
     {
-	super(session);
-	this.name = name;
+        super(session);
+        this.name = name;
     }
 
     /**
@@ -78,7 +77,7 @@ extends EventObject
      */
     public String getName()
     {
-	return name;
+        return name;
     }
 
     /**
@@ -89,6 +88,6 @@ extends EventObject
      */
     public SSLSession getSession()
     {
-	return (SSLSession) getSource();
+        return (SSLSession) getSource();
     }
 }

@@ -77,11 +77,10 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
- * @version %I%, %G%
- * @see	    Collection
- * @see	    Set
- * @see	    TreeSet
- * @see	    HashMap
+ * @see     Collection
+ * @see     Set
+ * @see     TreeSet
+ * @see     HashMap
  * @since   1.2
  */
 
@@ -101,7 +100,7 @@ public class HashSet<E>
      * default initial capacity (16) and load factor (0.75).
      */
     public HashSet() {
-	map = new HashMap<E,Object>();
+        map = new HashMap<E,Object>();
     }
 
     /**
@@ -114,8 +113,8 @@ public class HashSet<E>
      * @throws NullPointerException if the specified collection is null
      */
     public HashSet(Collection<? extends E> c) {
-	map = new HashMap<E,Object>(Math.max((int) (c.size()/.75f) + 1, 16));
-	addAll(c);
+        map = new HashMap<E,Object>(Math.max((int) (c.size()/.75f) + 1, 16));
+        addAll(c);
     }
 
     /**
@@ -128,7 +127,7 @@ public class HashSet<E>
      *             than zero, or if the load factor is nonpositive
      */
     public HashSet(int initialCapacity, float loadFactor) {
-	map = new HashMap<E,Object>(initialCapacity, loadFactor);
+        map = new HashMap<E,Object>(initialCapacity, loadFactor);
     }
 
     /**
@@ -140,7 +139,7 @@ public class HashSet<E>
      *             than zero
      */
     public HashSet(int initialCapacity) {
-	map = new HashMap<E,Object>(initialCapacity);
+        map = new HashMap<E,Object>(initialCapacity);
     }
 
     /**
@@ -157,7 +156,7 @@ public class HashSet<E>
      *             than zero, or if the load factor is nonpositive
      */
     HashSet(int initialCapacity, float loadFactor, boolean dummy) {
-	map = new LinkedHashMap<E,Object>(initialCapacity, loadFactor);
+        map = new LinkedHashMap<E,Object>(initialCapacity, loadFactor);
     }
 
     /**
@@ -168,7 +167,7 @@ public class HashSet<E>
      * @see ConcurrentModificationException
      */
     public Iterator<E> iterator() {
-	return map.keySet().iterator();
+        return map.keySet().iterator();
     }
 
     /**
@@ -177,7 +176,7 @@ public class HashSet<E>
      * @return the number of elements in this set (its cardinality)
      */
     public int size() {
-	return map.size();
+        return map.size();
     }
 
     /**
@@ -186,7 +185,7 @@ public class HashSet<E>
      * @return <tt>true</tt> if this set contains no elements
      */
     public boolean isEmpty() {
-	return map.isEmpty();
+        return map.isEmpty();
     }
 
     /**
@@ -199,7 +198,7 @@ public class HashSet<E>
      * @return <tt>true</tt> if this set contains the specified element
      */
     public boolean contains(Object o) {
-	return map.containsKey(o);
+        return map.containsKey(o);
     }
 
     /**
@@ -215,7 +214,7 @@ public class HashSet<E>
      * element
      */
     public boolean add(E e) {
-	return map.put(e, PRESENT)==null;
+        return map.put(e, PRESENT)==null;
     }
 
     /**
@@ -231,7 +230,7 @@ public class HashSet<E>
      * @return <tt>true</tt> if the set contained the specified element
      */
     public boolean remove(Object o) {
-	return map.remove(o)==PRESENT;
+        return map.remove(o)==PRESENT;
     }
 
     /**
@@ -239,7 +238,7 @@ public class HashSet<E>
      * The set will be empty after this call returns.
      */
     public void clear() {
-	map.clear();
+        map.clear();
     }
 
     /**
@@ -249,13 +248,13 @@ public class HashSet<E>
      * @return a shallow copy of this set
      */
     public Object clone() {
-	try {
-	    HashSet<E> newSet = (HashSet<E>) super.clone();
-	    newSet.map = (HashMap<E, Object>) map.clone();
-	    return newSet;
-	} catch (CloneNotSupportedException e) {
-	    throw new InternalError();
-	}
+        try {
+            HashSet<E> newSet = (HashSet<E>) super.clone();
+            newSet.map = (HashMap<E, Object>) map.clone();
+            return newSet;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError();
+        }
     }
 
     /**
@@ -263,15 +262,15 @@ public class HashSet<E>
      * serialize it).
      *
      * @serialData The capacity of the backing <tt>HashMap</tt> instance
-     *		   (int), and its load factor (float) are emitted, followed by
-     *		   the size of the set (the number of elements it contains)
-     *		   (int), followed by all of its elements (each an Object) in
+     *             (int), and its load factor (float) are emitted, followed by
+     *             the size of the set (the number of elements it contains)
+     *             (int), followed by all of its elements (each an Object) in
      *             no particular order.
      */
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException {
-	// Write out any hidden serialization magic
-	s.defaultWriteObject();
+        // Write out any hidden serialization magic
+        s.defaultWriteObject();
 
         // Write out HashMap capacity and load factor
         s.writeInt(map.capacity());
@@ -280,8 +279,8 @@ public class HashSet<E>
         // Write out size
         s.writeInt(map.size());
 
-	// Write out all elements in the proper order.
-	for (Iterator i=map.keySet().iterator(); i.hasNext(); )
+        // Write out all elements in the proper order.
+        for (Iterator i=map.keySet().iterator(); i.hasNext(); )
             s.writeObject(i.next());
     }
 
@@ -291,8 +290,8 @@ public class HashSet<E>
      */
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
-	// Read in any hidden serialization magic
-	s.defaultReadObject();
+        // Read in any hidden serialization magic
+        s.defaultReadObject();
 
         // Read in HashMap capacity and load factor and create backing HashMap
         int capacity = s.readInt();
@@ -304,8 +303,8 @@ public class HashSet<E>
         // Read in size
         int size = s.readInt();
 
-	// Read in all elements in the proper order.
-	for (int i=0; i<size; i++) {
+        // Read in all elements in the proper order.
+        for (int i=0; i<size; i++) {
             E e = (E) s.readObject();
             map.put(e, PRESENT);
         }

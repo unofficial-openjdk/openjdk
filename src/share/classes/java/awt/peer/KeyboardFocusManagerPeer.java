@@ -30,7 +30,7 @@ import java.awt.Window;
 
 public interface KeyboardFocusManagerPeer {
     Window getCurrentFocusedWindow();
-    
+
     void setCurrentFocusOwner(Component comp);
     Component getCurrentFocusOwner();
 

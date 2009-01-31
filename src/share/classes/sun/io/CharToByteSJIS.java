@@ -38,24 +38,24 @@ public class CharToByteSJIS extends CharToByteJIS0208 {
     }
 
     protected int convSingleByte(char inputChar, byte[] outputByte) {
-	byte b;
+        byte b;
 
-	// \u0000 - \u007F map straight through
-	if ((inputChar & 0xFF80) == 0) {
-	    outputByte[0] = (byte)inputChar;
-	    return 1;
-	}
+        // \u0000 - \u007F map straight through
+        if ((inputChar & 0xFF80) == 0) {
+            outputByte[0] = (byte)inputChar;
+            return 1;
+        }
 
-	if ((b = cbJIS0201.getNative(inputChar)) == 0)
-	    return 0;
+        if ((b = cbJIS0201.getNative(inputChar)) == 0)
+            return 0;
 
-	outputByte[0] = b;
-	return 1;
+        outputByte[0] = b;
+        return 1;
     }
 
     protected int getNative(char ch) {
-	int offset = index1[ch >> 8] << 8;
-	int pos = index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
+        int offset = index1[ch >> 8] << 8;
+        int pos = index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
         if (pos == 0) {
             /* Zero value indicates this Unicode has no mapping to JIS0208.
              * We bail here because the JIS -> SJIS algorithm produces

@@ -64,7 +64,7 @@ public:
     MsgRouting PreProcessMsg(MSG& msg);
 
     LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK EditProc(HWND hWnd, UINT message, 
+    static LRESULT CALLBACK EditProc(HWND hWnd, UINT message,
                                      WPARAM wParam, LPARAM lParam);
 
     MsgRouting WmEnable(BOOL fEnabled);
@@ -100,26 +100,26 @@ protected:
     // TRUE if the rich edit version is 2.0
     static BOOL    sm_RichEdit20;
 
-    // RichEdit 1.0 control generates EN_CHANGE notifications not only  
+    // RichEdit 1.0 control generates EN_CHANGE notifications not only
     // on text changes, but also on any character formatting change.
     // This flag is true when the latter case is detected.
     BOOL    m_bIgnoreEnChange;
 
     // RichEdit 1.0 control undoes a character formatting change
-    // if it is the latest. We don't create our own undo buffer, 
-    // but just prohibit undo in case if the latest operation 
+    // if it is the latest. We don't create our own undo buffer,
+    // but just prohibit undo in case if the latest operation
     // is a formatting change.
     BOOL    m_bCanUndo;
 
     HWND    m_hEditCtrl;
     static WNDPROC sm_pDefWindowProc;
-  
+
     LONG    m_lHDeltaAccum;
     LONG    m_lVDeltaAccum;
 
 
     static OleCallback sm_oleCallback;
-    
+
     /*****************************************************************
      * Inner class OleCallback declaration.
      */
@@ -127,28 +127,28 @@ protected:
     class AwtTextArea::OleCallback : public IRichEditOleCallback {
     public:
         OleCallback();
-        
-        STDMETHODIMP QueryInterface(REFIID riid, LPVOID * ppvObj); 
+
+        STDMETHODIMP QueryInterface(REFIID riid, LPVOID * ppvObj);
         STDMETHODIMP_(ULONG) AddRef();
-        STDMETHODIMP_(ULONG) Release(); 
-        STDMETHODIMP GetNewStorage(LPSTORAGE FAR * ppstg); 
-        STDMETHODIMP GetInPlaceContext(LPOLEINPLACEFRAME FAR * ppipframe, 
-                                       LPOLEINPLACEUIWINDOW FAR* ppipuiDoc, 
-                                       LPOLEINPLACEFRAMEINFO pipfinfo); 
-        STDMETHODIMP ShowContainerUI(BOOL fShow); 
-        STDMETHODIMP QueryInsertObject(LPCLSID pclsid, LPSTORAGE pstg, LONG cp); 
-        STDMETHODIMP DeleteObject(LPOLEOBJECT poleobj); 
+        STDMETHODIMP_(ULONG) Release();
+        STDMETHODIMP GetNewStorage(LPSTORAGE FAR * ppstg);
+        STDMETHODIMP GetInPlaceContext(LPOLEINPLACEFRAME FAR * ppipframe,
+                                       LPOLEINPLACEUIWINDOW FAR* ppipuiDoc,
+                                       LPOLEINPLACEFRAMEINFO pipfinfo);
+        STDMETHODIMP ShowContainerUI(BOOL fShow);
+        STDMETHODIMP QueryInsertObject(LPCLSID pclsid, LPSTORAGE pstg, LONG cp);
+        STDMETHODIMP DeleteObject(LPOLEOBJECT poleobj);
         STDMETHODIMP QueryAcceptData(LPDATAOBJECT pdataobj, CLIPFORMAT *pcfFormat,
                                      DWORD reco, BOOL fReally, HGLOBAL hMetaPict);
-        STDMETHODIMP ContextSensitiveHelp(BOOL fEnterMode); 
-        STDMETHODIMP GetClipboardData(CHARRANGE *pchrg, DWORD reco, 
-                                      LPDATAOBJECT *ppdataobj); 
-        STDMETHODIMP GetDragDropEffect(BOOL fDrag, DWORD grfKeyState, 
-                                       LPDWORD pdwEffect); 
-        STDMETHODIMP GetContextMenu(WORD seltype, LPOLEOBJECT poleobj, 
-                                    CHARRANGE FAR * pchrg, HMENU FAR * phmenu); 
+        STDMETHODIMP ContextSensitiveHelp(BOOL fEnterMode);
+        STDMETHODIMP GetClipboardData(CHARRANGE *pchrg, DWORD reco,
+                                      LPDATAOBJECT *ppdataobj);
+        STDMETHODIMP GetDragDropEffect(BOOL fDrag, DWORD grfKeyState,
+                                       LPDWORD pdwEffect);
+        STDMETHODIMP GetContextMenu(WORD seltype, LPOLEOBJECT poleobj,
+                                    CHARRANGE FAR * pchrg, HMENU FAR * phmenu);
     private:
-        ULONG             m_refs; // Reference count 
+        ULONG             m_refs; // Reference count
     };
 
 };

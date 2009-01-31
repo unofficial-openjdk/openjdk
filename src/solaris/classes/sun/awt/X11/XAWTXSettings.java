@@ -23,11 +23,11 @@
  * have any questions.
  */
 
- /* 
-   * This code is ported to XAWT from MAWT based on awt_mgrsel.c 
-   * and XSettings.java code written originally by Valeriy Ushakov 
-   * Author : Bino George 
-   */ 
+ /*
+   * This code is ported to XAWT from MAWT based on awt_mgrsel.c
+   * and XSettings.java code written originally by Valeriy Ushakov
+   * Author : Bino George
+   */
 
 
 package sun.awt.X11;
@@ -38,7 +38,7 @@ import sun.awt.XSettings;
 import java.util.logging.*;
 
 
- 
+
 class XAWTXSettings extends XSettings implements XMSelectionListener {
 
     private final XAtom xSettingsPropertyAtom = XAtom.get("_XSETTINGS_SETTINGS");
@@ -66,8 +66,8 @@ class XAWTXSettings extends XSettings implements XMSelectionListener {
         if (log.isLoggable(Level.FINE)) log.fine("Owner " + deadOwner + " died for selection " + sel + " screen "+ screen);
     }
 
- 
-    public void ownerChanged(int screen, XMSelection sel, long newOwner, long data, long timestamp) { 
+
+    public void ownerChanged(int screen, XMSelection sel, long newOwner, long data, long timestamp) {
         if (log.isLoggable(Level.FINE)) log.fine("New Owner "+ newOwner + " for selection = " + sel + " screen " +screen );
     }
 
@@ -88,7 +88,7 @@ class XAWTXSettings extends XSettings implements XMSelectionListener {
         Map updatedSettings = null;
         XToolkit.awtLock();
         try {
-            long display = XToolkit.getDisplay();    
+            long display = XToolkit.getDisplay();
             int screen = (int) XlibWrapper.DefaultScreen(display);
             updatedSettings = getUpdatedSettings(settings.getOwner(screen));
         } finally {
@@ -118,7 +118,7 @@ class XAWTXSettings extends XSettings implements XMSelectionListener {
 
         Map settings = null;
         try {
-            WindowPropertyGetter getter = 
+            WindowPropertyGetter getter =
                 new WindowPropertyGetter(owner, xSettingsPropertyAtom, 0, MAX_LENGTH,
                         false, xSettingsPropertyAtom.getAtom() );
             try {
@@ -146,6 +146,6 @@ class XAWTXSettings extends XSettings implements XMSelectionListener {
         return settings;
     }
 
-    
+
 
 }

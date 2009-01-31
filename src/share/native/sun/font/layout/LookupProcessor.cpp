@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)LookupProcessor.cpp	1.19 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -67,7 +66,7 @@ le_uint32 LookupProcessor::applyLookupTable(const LookupTable *lookupTable, Glyp
 }
 
 le_int32 LookupProcessor::process(LEGlyphStorage &glyphStorage,
-    GlyphPositionAdjustments *glyphPositionAdjustments, 
+    GlyphPositionAdjustments *glyphPositionAdjustments,
     le_bool rightToLeft, const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
     const LEFontInstance *fontInstance) const
 {
@@ -88,7 +87,7 @@ le_int32 LookupProcessor::process(LEGlyphStorage &glyphStorage,
         if (selectMask != 0) {
             const LookupTable *lookupTable = lookupListTable->getLookupTable(lookup);
             le_uint16 lookupFlags = SWAPW(lookupTable->lookupFlags);
-            
+
             glyphIterator.reset(lookupFlags, selectMask);
 
             while (glyphIterator.findFeatureTag()) {
@@ -99,7 +98,7 @@ le_int32 LookupProcessor::process(LEGlyphStorage &glyphStorage,
                 }
             }
 
-	    newGlyphCount = glyphIterator.applyInsertions();
+            newGlyphCount = glyphIterator.applyInsertions();
         }
     }
 
@@ -134,7 +133,7 @@ le_int32 LookupProcessor::selectLookups(const FeatureTable *featureTable, Featur
 
 LookupProcessor::LookupProcessor(const char *baseAddress,
         Offset scriptListOffset, Offset featureListOffset, Offset lookupListOffset,
-        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap, 
+        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap,
         le_int32 featureMapCount, le_bool orderFeatures)
     : lookupListTable(NULL), featureListTable(NULL), lookupSelectArray(NULL),
       lookupOrderArray(NULL), lookupOrderCount(0)
@@ -162,12 +161,12 @@ LookupProcessor::LookupProcessor(const char *baseAddress,
         lookupListTable = (const LookupListTable *) (baseAddress + lookupListOffset);
         lookupListCount = SWAPW(lookupListTable->lookupCount);
     }
-    
+
     if (langSysTable == NULL || featureListTable == NULL || lookupListTable == NULL ||
         featureCount == 0 || lookupListCount == 0) {
         return;
     }
- 
+
     requiredFeatureIndex = SWAPW(langSysTable->reqFeatureIndex);
 
     lookupSelectArray = LE_NEW_ARRAY(FeatureMask, lookupListCount);
@@ -219,7 +218,7 @@ LookupProcessor::LookupProcessor(const char *baseAddress,
 
             for (le_uint16 feature = 0; feature < featureCount; feature += 1) {
                 le_uint16 featureIndex = SWAPW(langSysTable->featureIndexArray[feature]);
- 
+
                 // don't add the required feature to the list more than once...
                 // TODO: Do we need this check? (Spec. says required feature won't be in feature list...)
                 if (featureIndex == requiredFeatureIndex) {
@@ -241,7 +240,7 @@ LookupProcessor::LookupProcessor(const char *baseAddress,
         } else {
             for (le_uint16 feature = 0; feature < featureCount; feature += 1) {
                 le_uint16 featureIndex = SWAPW(langSysTable->featureIndexArray[feature]);
- 
+
                 // don't add the required feature to the list more than once...
                 // NOTE: This check is commented out because the spec. says that
                 // the required feature won't be in the feature list, and because
@@ -297,4 +296,3 @@ LookupProcessor::~LookupProcessor()
     LE_DELETE_ARRAY(lookupOrderArray);
     LE_DELETE_ARRAY(lookupSelectArray);
 }
-

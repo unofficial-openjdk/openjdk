@@ -53,7 +53,6 @@ import sun.reflect.misc.*;
  *
  * @since 1.4
  *
- * @version %I% %G%
  * @author Philip Milne
  */
 
@@ -227,17 +226,17 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
             Expression newGetExp = new Expression(newInstance, getter.getName(), new Object[]{});
             Object oldValue = oldGetExp.getValue();
             Object newValue = newGetExp.getValue();
-            out.writeExpression(oldGetExp); 
-            if (!equals(newValue, out.get(oldValue))) { 
-                // Search for a static constant with this value; 
-                Object e = (Object[])pd.getValue("enumerationValues"); 
-                if (e instanceof Object[] && Array.getLength(e) % 3 == 0) { 
-                    Object[] a = (Object[])e; 
-                    for(int i = 0; i < a.length; i = i + 3) { 
-                        try { 
-                           Field f = type.getField((String)a[i]); 
-                           if (f.get(null).equals(oldValue)) { 
-                               out.remove(oldValue); 
+            out.writeExpression(oldGetExp);
+            if (!equals(newValue, out.get(oldValue))) {
+                // Search for a static constant with this value;
+                Object e = (Object[])pd.getValue("enumerationValues");
+                if (e instanceof Object[] && Array.getLength(e) % 3 == 0) {
+                    Object[] a = (Object[])e;
+                    for(int i = 0; i < a.length; i = i + 3) {
+                        try {
+                           Field f = type.getField((String)a[i]);
+                           if (f.get(null).equals(oldValue)) {
+                               out.remove(oldValue);
                                out.writeExpression(new Expression(oldValue, f, "get", new Object[]{null}));
                            }
                         }
@@ -280,13 +279,13 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
         TableModelListener (the JTable itself in this case) to the supplied
         table model.
 
-        We do not need to explictly add these listeners to the model in an 
-        archive as they will be added automatically by, in the above case, 
-        the JTable's "setModel" method. In some cases, we must specifically 
+        We do not need to explictly add these listeners to the model in an
+        archive as they will be added automatically by, in the above case,
+        the JTable's "setModel" method. In some cases, we must specifically
         avoid trying to do this since the listener may be an inner class
-	that cannot be instantiated using public API. 
-	
-	No general mechanism currently
+        that cannot be instantiated using public API.
+
+        No general mechanism currently
         exists for differentiating between these kind of listeners and
         those which were added explicitly by the user. A mechanism must
         be created to provide a general means to differentiate these
@@ -400,8 +399,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
      * @see java.beans.PropertyDescriptor
      */
     protected void initialize(Class<?> type,
-			      Object oldInstance, Object newInstance,
-			      Encoder out)
+                              Object oldInstance, Object newInstance,
+                              Encoder out)
     {
         // System.out.println("DefulatPD:initialize" + type);
         super.initialize(type, oldInstance, newInstance, out);

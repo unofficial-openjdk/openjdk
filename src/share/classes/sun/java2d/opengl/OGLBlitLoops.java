@@ -168,8 +168,8 @@ class OGLBlitLoops {
             new OGLGeneralBlit(OGLSurfaceData.OpenGLTexture,
                                CompositeType.SrcNoEa,
                                blitIntArgbPreToTexture),
-	};
-	GraphicsPrimitiveMgr.register(primitives);
+        };
+        GraphicsPrimitiveMgr.register(primitives);
     }
 
     /**
@@ -363,7 +363,7 @@ class OGLSurfaceToSurfaceBlit extends Blit {
               OGLSurfaceData.OpenGLSurface);
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy, int w, int h)
     {
@@ -378,19 +378,19 @@ class OGLSurfaceToSurfaceBlit extends Blit {
 }
 
 class OGLSurfaceToSurfaceScale extends ScaledBlit {
-    
+
     OGLSurfaceToSurfaceScale() {
         super(OGLSurfaceData.OpenGLSurface,
               CompositeType.AnyAlpha,
               OGLSurfaceData.OpenGLSurface);
     }
-    
+
     public void Scale(SurfaceData src, SurfaceData dst,
                       Composite comp, Region clip,
-		      int sx1, int sy1,
-		      int sx2, int sy2,
-		      double dx1, double dy1,
-		      double dx2, double dy2)
+                      int sx1, int sy1,
+                      int sx2, int sy2,
+                      double dx1, double dy1,
+                      double dx2, double dy2)
     {
         OGLBlitLoops.IsoBlit(src, dst,
                              null, null,
@@ -410,7 +410,7 @@ class OGLSurfaceToSurfaceTransform extends TransformBlit {
               OGLSurfaceData.OpenGLSurface);
     }
 
-    public void Transform(SurfaceData src, SurfaceData dst, 
+    public void Transform(SurfaceData src, SurfaceData dst,
                           Composite comp, Region clip,
                           AffineTransform at, int hint,
                           int sx, int sy, int dx, int dy,
@@ -433,7 +433,7 @@ class OGLRTTSurfaceToSurfaceBlit extends Blit {
               OGLSurfaceData.OpenGLSurface);
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy, int w, int h)
     {
@@ -457,10 +457,10 @@ class OGLRTTSurfaceToSurfaceScale extends ScaledBlit {
 
     public void Scale(SurfaceData src, SurfaceData dst,
                       Composite comp, Region clip,
-		      int sx1, int sy1,
-		      int sx2, int sy2,
-		      double dx1, double dy1,
-		      double dx2, double dy2)
+                      int sx1, int sy1,
+                      int sx2, int sy2,
+                      double dx1, double dy1,
+                      double dx2, double dy2)
     {
         OGLBlitLoops.IsoBlit(src, dst,
                              null, null,
@@ -506,7 +506,7 @@ class OGLSurfaceToSwBlit extends Blit {
         this.typeval = typeval;
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy,
                      int w, int h)
@@ -550,7 +550,7 @@ class OGLSwToSurfaceBlit extends Blit {
         this.typeval = typeval;
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy, int w, int h)
     {
@@ -564,7 +564,7 @@ class OGLSwToSurfaceBlit extends Blit {
 }
 
 class OGLSwToSurfaceScale extends ScaledBlit {
-    
+
     private int typeval;
 
     OGLSwToSurfaceScale(SurfaceType srcType, int typeval) {
@@ -576,10 +576,10 @@ class OGLSwToSurfaceScale extends ScaledBlit {
 
     public void Scale(SurfaceData src, SurfaceData dst,
                       Composite comp, Region clip,
-		      int sx1, int sy1,
-		      int sx2, int sy2,
-		      double dx1, double dy1,
-		      double dx2, double dy2)
+                      int sx1, int sy1,
+                      int sx2, int sy2,
+                      double dx1, double dy1,
+                      double dx2, double dy2)
     {
         OGLBlitLoops.Blit(src, dst,
                           comp, clip, null,
@@ -625,7 +625,7 @@ class OGLSwToTextureBlit extends Blit {
         this.typeval = typeval;
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy, int w, int h)
     {
@@ -646,7 +646,7 @@ class OGLTextureToSurfaceBlit extends Blit {
               OGLSurfaceData.OpenGLSurface);
     }
 
-    public void Blit(SurfaceData src, SurfaceData dst, 
+    public void Blit(SurfaceData src, SurfaceData dst,
                      Composite comp, Region clip,
                      int sx, int sy, int dx, int dy, int w, int h)
     {
@@ -670,10 +670,10 @@ class OGLTextureToSurfaceScale extends ScaledBlit {
 
     public void Scale(SurfaceData src, SurfaceData dst,
                       Composite comp, Region clip,
-		      int sx1, int sy1,
-		      int sx2, int sy2,
-		      double dx1, double dy1,
-		      double dx2, double dy2)
+                      int sx1, int sy1,
+                      int sx2, int sy2,
+                      double dx1, double dy1,
+                      double dx2, double dy2)
     {
         OGLBlitLoops.IsoBlit(src, dst,
                              null, null,
@@ -693,7 +693,7 @@ class OGLTextureToSurfaceTransform extends TransformBlit {
               OGLSurfaceData.OpenGLSurface);
     }
 
-    public void Transform(SurfaceData src, SurfaceData dst, 
+    public void Transform(SurfaceData src, SurfaceData dst,
                           Composite comp, Region clip,
                           AffineTransform at, int hint,
                           int sx, int sy, int dx, int dy,

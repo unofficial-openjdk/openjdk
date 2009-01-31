@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class ThreadDeathEventSet extends AbstractEventSet {
-    
+
     ThreadDeathEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -37,7 +37,7 @@ public class ThreadDeathEventSet extends AbstractEventSet {
     /**
      * Returns the thread which is terminating.
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in 
+     * @return a {@link ThreadReference} which mirrors the event's thread in
      * the target VM.
      */
     public ThreadReference getThread() {
@@ -48,4 +48,3 @@ public class ThreadDeathEventSet extends AbstractEventSet {
         listener.threadDeath(this);
     }
 }
-

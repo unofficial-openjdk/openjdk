@@ -34,9 +34,8 @@ import javax.security.auth.Destroyable;
  * It associates an X.509 certificate, corresponding private key and the
  * KeyStore alias used to reference that exact key pair in the KeyStore.
  * This enables looking up the private credentials for an X.500 principal
- * in a subject. 
+ * in a subject.
  *
- * @version %I%, %G%
  */
 public final class X500PrivateCredential implements Destroyable {
     private X509Certificate cert;
@@ -49,17 +48,17 @@ public final class X500PrivateCredential implements Destroyable {
      * <p>
      * @param cert X509Certificate
      * @param key  PrivateKey for the certificate
-     * @exception IllegalArgumentException if either <code>cert</code> or 
+     * @exception IllegalArgumentException if either <code>cert</code> or
      * <code>key</code> is null
      *
      */
-    
+
     public X500PrivateCredential(X509Certificate cert, PrivateKey key) {
-	if (cert == null || key == null )
-	    throw new IllegalArgumentException();
-	this.cert = cert;
-	this.key = key;
-	this.alias=null;
+        if (cert == null || key == null )
+            throw new IllegalArgumentException();
+        this.cert = cert;
+        this.key = key;
+        this.alias=null;
     }
 
     /**
@@ -69,17 +68,17 @@ public final class X500PrivateCredential implements Destroyable {
      * @param cert X509Certificate
      * @param key  PrivateKey for the certificate
      * @param alias KeyStore alias
-     * @exception IllegalArgumentException if either <code>cert</code>, 
+     * @exception IllegalArgumentException if either <code>cert</code>,
      * <code>key</code> or <code>alias</code> is null
      *
      */
     public X500PrivateCredential(X509Certificate cert, PrivateKey key,
-				 String alias) {
-	if (cert == null || key == null|| alias == null )
-	    throw new IllegalArgumentException();
-	this.cert = cert;
-	this.key = key;
-	this.alias=alias;
+                                 String alias) {
+        if (cert == null || key == null|| alias == null )
+            throw new IllegalArgumentException();
+        this.cert = cert;
+        this.key = key;
+        this.alias=alias;
     }
 
     /**
@@ -89,7 +88,7 @@ public final class X500PrivateCredential implements Destroyable {
      */
 
     public X509Certificate getCertificate() {
-	return cert;
+        return cert;
     }
 
     /**
@@ -98,7 +97,7 @@ public final class X500PrivateCredential implements Destroyable {
      * @return the PrivateKey
      */
     public PrivateKey getPrivateKey() {
-	return key;
+        return key;
     }
 
     /**
@@ -108,7 +107,7 @@ public final class X500PrivateCredential implements Destroyable {
      */
 
     public String getAlias() {
-	return alias;
+        return alias;
     }
 
     /**
@@ -117,9 +116,9 @@ public final class X500PrivateCredential implements Destroyable {
      */
 
     public void destroy() {
-	cert = null;
-	key = null;
-	alias =null;
+        cert = null;
+        key = null;
+        alias =null;
     }
 
     /**
@@ -130,6 +129,6 @@ public final class X500PrivateCredential implements Destroyable {
 
      */
     public boolean isDestroyed() {
-	return cert == null && key == null && alias==null;
+        return cert == null && key == null && alias==null;
     }
 }

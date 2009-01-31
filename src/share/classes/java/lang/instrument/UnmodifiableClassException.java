@@ -35,8 +35,8 @@ package java.lang.instrument;
  */
 public class UnmodifiableClassException extends Exception {
     /**
-     * Constructs an <code>UnmodifiableClassException</code> with no 
-     * detail message. 
+     * Constructs an <code>UnmodifiableClassException</code> with no
+     * detail message.
      */
     public
     UnmodifiableClassException() {
@@ -44,8 +44,8 @@ public class UnmodifiableClassException extends Exception {
     }
 
     /**
-     * Constructs an <code>UnmodifiableClassException</code> with the 
-     * specified detail message. 
+     * Constructs an <code>UnmodifiableClassException</code> with the
+     * specified detail message.
      *
      * @param   s   the detail message.
      */

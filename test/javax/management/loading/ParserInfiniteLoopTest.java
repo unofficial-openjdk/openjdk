@@ -112,7 +112,7 @@ public class ParserInfiniteLoopTest {
         //
         System.out.println("Release the MBean server");
         MBeanServerFactory.releaseMBeanServer(mbs);
-        
+
         // End Test
         //
         System.out.println("Bye! Bye!");

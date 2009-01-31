@@ -221,7 +221,7 @@ abstract public class JDIScaffold {
             } while (connected);
         }
     }
-  
+
     /**
      * Constructor
      */
@@ -292,7 +292,7 @@ abstract public class JDIScaffold {
         ArgInfo argInfo = parseArgs(args);
 
         argInfo.targetVMArgs += VMConnection.getDebuggeeVMOptions();
-        connection = new VMConnection(argInfo.connectorSpec, 
+        connection = new VMConnection(argInfo.connectorSpec,
                                       argInfo.traceFlags);
         if (!connection.isLaunch()) {
             throw new UnsupportedOperationException(
@@ -300,7 +300,7 @@ abstract public class JDIScaffold {
         }
 
         /*
-         * Add a listener to track VM start/death/disconnection and 
+         * Add a listener to track VM start/death/disconnection and
          * to update status fields accordingly.
          */
         addListener(new TargetAdapter() {
@@ -393,7 +393,7 @@ abstract public class JDIScaffold {
             }
         }
         traceln("JDI: waitForVMDeath:  done waiting");
-        
+
         if (!vmDied) {
             throw new VMDisconnectedException();
         }
@@ -446,7 +446,7 @@ abstract public class JDIScaffold {
     }
 
     private StepEvent doStep(ThreadReference thread, int gran, int depth) {
-        final StepRequest sr = 
+        final StepRequest sr =
                   requestManager.createStepRequest(thread, gran, depth);
 
         sr.addClassExclusionFilter("java.*");
@@ -480,7 +480,7 @@ abstract public class JDIScaffold {
     }
 
     public BreakpointEvent resumeTo(Location loc) {
-        final BreakpointRequest request = 
+        final BreakpointRequest request =
             requestManager.createBreakpointRequest(loc);
         request.addCountFilter(1);
         request.enable();
@@ -512,19 +512,19 @@ abstract public class JDIScaffold {
         return null;
     }
 
-    public Location findLocation(ReferenceType rt, int lineNumber) 
+    public Location findLocation(ReferenceType rt, int lineNumber)
                          throws AbsentInformationException {
         List locs = rt.locationsOfLine(lineNumber);
         if (locs.size() == 0) {
             throw new IllegalArgumentException("Bad line number");
         } else if (locs.size() > 1) {
             throw new IllegalArgumentException("Line number has multiple locations");
-        } 
+        }
 
         return (Location)locs.get(0);
     }
 
-    public BreakpointEvent resumeTo(String clsName, String methodName, 
+    public BreakpointEvent resumeTo(String clsName, String methodName,
                                          String methodSignature) {
         ReferenceType rt = findReferenceType(clsName);
         if (rt == null) {
@@ -549,7 +549,7 @@ abstract public class JDIScaffold {
     }
 
     public ClassPrepareEvent resumeToPrepareOf(String className) {
-        final ClassPrepareRequest request = 
+        final ClassPrepareRequest request =
             requestManager.createClassPrepareRequest();
         request.addClassFilter(className);
         request.addCountFilter(1);
@@ -560,7 +560,7 @@ abstract public class JDIScaffold {
     public void resumeToVMDeath() {
         // If we are very close to VM death, we might get a VM disconnect
         // before resume is complete. In that case ignore any VMDisconnectException
-        // and let the waitForVMDeath to clean up. 
+        // and let the waitForVMDeath to clean up.
         try {
             traceln("JDI: resumeToVMDeath:  resuming");
             vm.resume();
@@ -581,7 +581,7 @@ abstract public class JDIScaffold {
                 connection.disposeVM();
             } catch (VMDisconnectedException e) {
                 // Shutting down after the VM has gone away. This is
-                // not an error, and we just ignore it. 
+                // not an error, and we just ignore it.
             }
         }
         if (message != null) {

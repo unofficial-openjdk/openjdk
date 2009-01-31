@@ -28,7 +28,7 @@ package java.lang;
 /**
  * A collection of assertion status directives (such as "enable assertions
  * in package p" or "disable assertions in class c").  This class is used by
- * the JVM to communicate the assertion status directives implied by 
+ * the JVM to communicate the assertion status directives implied by
  * the <tt>java</tt> command line flags <tt>-enableassertions</tt>
  * (<tt>-ea</tt>) and <tt>-disableassertions</tt> (<tt>-da</tt>).
  *

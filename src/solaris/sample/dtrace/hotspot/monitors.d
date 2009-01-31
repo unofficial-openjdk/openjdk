@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *   1. monitors.d -c "java ..."
  *   2. monitors.d -p JAVA_PID

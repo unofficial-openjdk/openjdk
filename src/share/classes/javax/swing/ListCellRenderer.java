@@ -80,7 +80,6 @@ import java.awt.Component;
  * @see JList
  * @see DefaultListCellRenderer
  *
- * @version %I% %G%
  * @author Hans Muller
  */
 public interface ListCellRenderer

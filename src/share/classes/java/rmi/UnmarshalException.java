@@ -42,8 +42,7 @@ package java.rmi;
  * <li> if there is a failure to create a remote reference object for
  * a remote object's stub when it is unmarshalled.
  * </ul>
- * 
- * @version %I%, %G%
+ *
  * @author  Ann Wollrath
  * @since   JDK1.1
  */
@@ -60,7 +59,7 @@ public class UnmarshalException extends RemoteException {
      * @since JDK1.1
      */
     public UnmarshalException(String s) {
-	super(s);
+        super(s);
     }
 
     /**
@@ -72,6 +71,6 @@ public class UnmarshalException extends RemoteException {
      * @since JDK1.1
      */
     public UnmarshalException(String s, Exception ex) {
-	super(s, ex);
+        super(s, ex);
     }
 }

@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -29,14 +29,14 @@
 #include <errno.h>
 
 #ifdef __STDC__
-	double ldexp(double value, int exp)
+        double ldexp(double value, int exp)
 #else
-	double ldexp(value, exp)
-	double value; int exp;
+        double ldexp(value, exp)
+        double value; int exp;
 #endif
 {
-	if(!finite(value)||value==0.0) return value;
-	value = scalbn(value,exp);
-	if(!finite(value)||value==0.0) errno = ERANGE;
-	return value;
+        if(!finite(value)||value==0.0) return value;
+        value = scalbn(value,exp);
+        if(!finite(value)||value==0.0) errno = ERANGE;
+        return value;
 }

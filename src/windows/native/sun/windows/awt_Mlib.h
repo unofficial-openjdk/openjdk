@@ -30,7 +30,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif    
+#endif
 typedef void (*mlib_start_timer)(int);
 typedef void (*mlib_stop_timer)(int, int);
 
@@ -42,7 +42,7 @@ JNIEXPORT void awt_getBIColorOrder(int type, int *colorOrder);
 
 #ifdef __cplusplus
 }; /* end of extern "C" */
-#endif    
+#endif
 
 
 

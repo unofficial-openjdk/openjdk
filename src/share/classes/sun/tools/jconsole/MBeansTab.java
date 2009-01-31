@@ -43,42 +43,42 @@ import com.sun.tools.jconsole.JConsoleContext;
 @SuppressWarnings("serial")
 public class MBeansTab extends Tab implements
         NotificationListener, PropertyChangeListener, TreeSelectionListener {
-    
+
     private XTree tree;
     private XSheet sheet;
     private XDataViewer viewer;
-    
+
     public static String getTabName() {
         return Resources.getText("MBeans");
     }
-    
+
     public MBeansTab(final VMPanel vmPanel) {
         super(vmPanel, getTabName());
         addPropertyChangeListener(this);
         setupTab();
     }
-    
+
     public XDataViewer getDataViewer() {
         return viewer;
     }
-    
+
     public XTree getTree() {
         return tree;
     }
-    
+
     public XSheet getSheet() {
         return sheet;
     }
-    
+
     public void dispose() {
         super.dispose();
         sheet.dispose();
     }
-    
+
     public int getUpdateInterval() {
         return vmPanel.getUpdateInterval();
     }
-    
+
     void synchroniseMBeanServerView() {
         // Register listener for MBean registration/unregistration
         //
@@ -129,11 +129,11 @@ public class MBeansTab extends Tab implements
         //
         tree.setVisible(true);
     }
-    
+
     public MBeanServerConnection getMBeanServerConnection() {
         return vmPanel.getProxyClient().getMBeanServerConnection();
     }
-    
+
     public void update() {
         // Ping the connection to see if it is still alive. At
         // some point the ProxyClient class should centralize
@@ -146,14 +146,14 @@ public class MBeansTab extends Tab implements
             vmPanel.getProxyClient().markAsDead();
         }
     }
-    
+
     private void setupTab() {
         // set up the split pane with the MBean tree and MBean sheet panels
         setLayout(new BorderLayout());
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setDividerLocation(160);
         mainSplit.setBorder(BorderFactory.createEmptyBorder());
-        
+
         // set up the MBean tree panel (left pane)
         tree = new XTree(this);
         tree.setCellRenderer(new XTreeRenderer());
@@ -168,15 +168,15 @@ public class MBeansTab extends Tab implements
         JPanel treePanel = new JPanel(new BorderLayout());
         treePanel.add(theScrollPane, BorderLayout.CENTER);
         mainSplit.add(treePanel, JSplitPane.LEFT, 0);
-        
+
         // set up the MBean sheet panel (right pane)
         viewer = new XDataViewer(this);
         sheet = new XSheet(this);
         mainSplit.add(sheet, JSplitPane.RIGHT, 0);
-        
+
         add(mainSplit);
     }
-    
+
     /* notification listener */
     public void handleNotification(Notification notification, Object handback) {
         if (notification instanceof MBeanServerNotification) {
@@ -191,7 +191,7 @@ public class MBeansTab extends Tab implements
             }
         }
     }
-    
+
     /* property change listener */
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName() == JConsoleContext.CONNECTION_STATE_PROPERTY) {
@@ -206,16 +206,16 @@ public class MBeansTab extends Tab implements
                 sheet.dispose();
             }
         }
-        
+
     }
-    
+
     /* tree selection listener */
     public void valueChanged(TreeSelectionEvent e) {
         DefaultMutableTreeNode node =
                 (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
         sheet.displayNode(node);
     }
-    
+
     /* tree mouse listener */
     private MouseListener ml = new MouseAdapter() {
         public void mousePressed(MouseEvent e) {

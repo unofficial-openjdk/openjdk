@@ -39,11 +39,10 @@ import javax.swing.UIManager;
  * This is the set of things needed by a text component
  * to be a reasonably functioning editor for some <em>type</em>
  * of text document.  This implementation provides a default
- * implementation which treats text as styled text and 
+ * implementation which treats text as styled text and
  * provides a minimal set of actions for editing styled text.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class StyledEditorKit extends DefaultEditorKit {
 
@@ -58,16 +57,16 @@ public class StyledEditorKit extends DefaultEditorKit {
     /**
      * Gets the input attributes for the pane.  When
      * the caret moves and there is no selection, the
-     * input attributes are automatically mutated to 
+     * input attributes are automatically mutated to
      * reflect the character attributes of the current
-     * caret location.  The styled editing actions 
-     * use the input attributes to carry out their 
+     * caret location.  The styled editing actions
+     * use the input attributes to carry out their
      * actions.
      *
      * @return the attribute set
      */
     public MutableAttributeSet getInputAttributes() {
-	return inputAttributes;
+        return inputAttributes;
     }
 
     /**
@@ -77,7 +76,7 @@ public class StyledEditorKit extends DefaultEditorKit {
      * @return the element
      */
     public Element getCharacterAttributeRun() {
-	return currentRun;
+        return currentRun;
     }
 
     // --- EditorKit methods ---------------------------
@@ -91,9 +90,9 @@ public class StyledEditorKit extends DefaultEditorKit {
      * @return the command list
      */
     public Action[] getActions() {
-	return TextAction.augmentList(super.getActions(), this.defaultActions);
+        return TextAction.augmentList(super.getActions(), this.defaultActions);
     }
-   
+
     /**
      * Creates an uninitialized text storage model
      * that is appropriate for this type of editor.
@@ -101,43 +100,43 @@ public class StyledEditorKit extends DefaultEditorKit {
      * @return the model
      */
     public Document createDefaultDocument() {
-	return new DefaultStyledDocument();
+        return new DefaultStyledDocument();
     }
 
     /**
      * Called when the kit is being installed into
-     * a JEditorPane. 
+     * a JEditorPane.
      *
      * @param c the JEditorPane
      */
     public void install(JEditorPane c) {
-	c.addCaretListener(inputAttributeUpdater);
-	c.addPropertyChangeListener(inputAttributeUpdater);
-	Caret caret = c.getCaret();
-	if (caret != null) {
-	    inputAttributeUpdater.updateInputAttributes
-		                  (caret.getDot(), caret.getMark(), c);
-	}
+        c.addCaretListener(inputAttributeUpdater);
+        c.addPropertyChangeListener(inputAttributeUpdater);
+        Caret caret = c.getCaret();
+        if (caret != null) {
+            inputAttributeUpdater.updateInputAttributes
+                                  (caret.getDot(), caret.getMark(), c);
+        }
     }
 
     /**
      * Called when the kit is being removed from the
-     * JEditorPane.  This is used to unregister any 
+     * JEditorPane.  This is used to unregister any
      * listeners that were attached.
      *
      * @param c the JEditorPane
      */
     public void deinstall(JEditorPane c) {
-	c.removeCaretListener(inputAttributeUpdater);
-	c.removePropertyChangeListener(inputAttributeUpdater);
+        c.removeCaretListener(inputAttributeUpdater);
+        c.removePropertyChangeListener(inputAttributeUpdater);
 
-	// remove references to current document so it can be collected.
-	currentRun = null;
-	currentParagraph = null;
+        // remove references to current document so it can be collected.
+        currentRun = null;
+        currentParagraph = null;
     }
 
    /**
-     * Fetches a factory that is suitable for producing 
+     * Fetches a factory that is suitable for producing
      * views of any models that are produced by this
      * kit.  This is implemented to return View implementations
      * for the following kinds of elements:
@@ -152,7 +151,7 @@ public class StyledEditorKit extends DefaultEditorKit {
      * @return the factory
      */
     public ViewFactory getViewFactory() {
-	return defaultFactory;
+        return defaultFactory;
     }
 
     /**
@@ -161,11 +160,11 @@ public class StyledEditorKit extends DefaultEditorKit {
      * @return the copy
      */
     public Object clone() {
-	StyledEditorKit o = (StyledEditorKit)super.clone();
+        StyledEditorKit o = (StyledEditorKit)super.clone();
         o.currentRun = o.currentParagraph = null;
         o.createInputAttributeUpdated();
         o.createInputAttributes();
-	return o;
+        return o;
     }
 
     /**
@@ -199,12 +198,12 @@ public class StyledEditorKit extends DefaultEditorKit {
 
     /**
      * This is the set of attributes used to store the
-     * input attributes.  
-     */  
+     * input attributes.
+     */
     MutableAttributeSet inputAttributes;
 
     /**
-     * This listener will be attached to the caret of 
+     * This listener will be attached to the caret of
      * the text component that the EditorKit gets installed
      * into.  This should keep the input attributes updated
      * for use by the styled actions.
@@ -212,70 +211,70 @@ public class StyledEditorKit extends DefaultEditorKit {
     private AttributeTracker inputAttributeUpdater;
 
     /**
-     * Tracks caret movement and keeps the input attributes set 
-     * to reflect the current set of attribute definitions at the 
-     * caret position. 
+     * Tracks caret movement and keeps the input attributes set
+     * to reflect the current set of attribute definitions at the
+     * caret position.
      * <p>This implements PropertyChangeListener to update the
      * input attributes when the Document changes, as if the Document
      * changes the attributes will almost certainly change.
      */
     class AttributeTracker implements CaretListener, PropertyChangeListener, Serializable {
 
-	/**
-	 * Updates the attributes. <code>dot</code> and <code>mark</code>
-	 * mark give the positions of the selection in <code>c</code>.
-	 */
-	void updateInputAttributes(int dot, int mark, JTextComponent c) {
-	    // EditorKit might not have installed the StyledDocument yet.
-	    Document aDoc = c.getDocument();
-	    if (!(aDoc instanceof StyledDocument)) {
-		return ;
-	    }
-	    int start = Math.min(dot, mark);
-	    // record current character attributes.
-	    StyledDocument doc = (StyledDocument)aDoc;
-	    // If nothing is selected, get the attributes from the character
-	    // before the start of the selection, otherwise get the attributes
-	    // from the character element at the start of the selection.
-	    Element run;
-	    currentParagraph = doc.getParagraphElement(start);
-	    if (currentParagraph.getStartOffset() == start || dot != mark) {
-		// Get the attributes from the character at the selection
-		// if in a different paragrah!
-		run = doc.getCharacterElement(start);
-	    }
-	    else {
-		run = doc.getCharacterElement(Math.max(start-1, 0));
-	    }
-	    if (run != currentRun) {
-		    /*
-		     * PENDING(prinz) All attributes that represent a single
-		     * glyph position and can't be inserted into should be 
-		     * removed from the input attributes... this requires 
-		     * mixing in an interface to indicate that condition.  
-		     * When we can add things again this logic needs to be
-		     * improved!!
-		     */ 
-		currentRun = run;
-		createInputAttributes(currentRun, getInputAttributes());
-	    }
-	}
+        /**
+         * Updates the attributes. <code>dot</code> and <code>mark</code>
+         * mark give the positions of the selection in <code>c</code>.
+         */
+        void updateInputAttributes(int dot, int mark, JTextComponent c) {
+            // EditorKit might not have installed the StyledDocument yet.
+            Document aDoc = c.getDocument();
+            if (!(aDoc instanceof StyledDocument)) {
+                return ;
+            }
+            int start = Math.min(dot, mark);
+            // record current character attributes.
+            StyledDocument doc = (StyledDocument)aDoc;
+            // If nothing is selected, get the attributes from the character
+            // before the start of the selection, otherwise get the attributes
+            // from the character element at the start of the selection.
+            Element run;
+            currentParagraph = doc.getParagraphElement(start);
+            if (currentParagraph.getStartOffset() == start || dot != mark) {
+                // Get the attributes from the character at the selection
+                // if in a different paragrah!
+                run = doc.getCharacterElement(start);
+            }
+            else {
+                run = doc.getCharacterElement(Math.max(start-1, 0));
+            }
+            if (run != currentRun) {
+                    /*
+                     * PENDING(prinz) All attributes that represent a single
+                     * glyph position and can't be inserted into should be
+                     * removed from the input attributes... this requires
+                     * mixing in an interface to indicate that condition.
+                     * When we can add things again this logic needs to be
+                     * improved!!
+                     */
+                currentRun = run;
+                createInputAttributes(currentRun, getInputAttributes());
+            }
+        }
 
         public void propertyChange(PropertyChangeEvent evt) {
-	    Object newValue = evt.getNewValue();
-	    Object source = evt.getSource();
+            Object newValue = evt.getNewValue();
+            Object source = evt.getSource();
 
-	    if ((source instanceof JTextComponent) &&
-		(newValue instanceof Document)) {
-		// New document will have changed selection to 0,0.
-		updateInputAttributes(0, 0, (JTextComponent)source);
-	    }
-	}
+            if ((source instanceof JTextComponent) &&
+                (newValue instanceof Document)) {
+                // New document will have changed selection to 0,0.
+                updateInputAttributes(0, 0, (JTextComponent)source);
+            }
+        }
 
-	public void caretUpdate(CaretEvent e) {
-	    updateInputAttributes(e.getDot(), e.getMark(),
-				  (JTextComponent)e.getSource());
-	}
+        public void caretUpdate(CaretEvent e) {
+            updateInputAttributes(e.getDot(), e.getMark(),
+                                  (JTextComponent)e.getSource());
+        }
     }
 
     /**
@@ -288,17 +287,17 @@ public class StyledEditorKit extends DefaultEditorKit {
      *
      */
     protected void createInputAttributes(Element element,
-					 MutableAttributeSet set) {
+                                         MutableAttributeSet set) {
         if (element.getAttributes().getAttributeCount() > 0
             || element.getEndOffset() - element.getStartOffset() > 1
             || element.getEndOffset() < element.getDocument().getLength()) {
-	    set.removeAttributes(set);
-	    set.addAttributes(element.getAttributes());
-	    set.removeAttribute(StyleConstants.ComponentAttribute);
-	    set.removeAttribute(StyleConstants.IconAttribute);
-	    set.removeAttribute(AbstractDocument.ElementNameAttribute);
-	    set.removeAttribute(StyleConstants.ComposedTextAttribute);
-	}
+            set.removeAttributes(set);
+            set.addAttributes(element.getAttributes());
+            set.removeAttribute(StyleConstants.ComponentAttribute);
+            set.removeAttribute(StyleConstants.IconAttribute);
+            set.removeAttribute(AbstractDocument.ElementNameAttribute);
+            set.removeAttribute(StyleConstants.ComposedTextAttribute);
+        }
     }
 
     // ---- default ViewFactory implementation ---------------------
@@ -306,64 +305,64 @@ public class StyledEditorKit extends DefaultEditorKit {
     static class StyledViewFactory implements ViewFactory {
 
         public View create(Element elem) {
-	    String kind = elem.getName();
-	    if (kind != null) {
-		if (kind.equals(AbstractDocument.ContentElementName)) {
+            String kind = elem.getName();
+            if (kind != null) {
+                if (kind.equals(AbstractDocument.ContentElementName)) {
                     return new LabelView(elem);
-		} else if (kind.equals(AbstractDocument.ParagraphElementName)) {
-		    return new ParagraphView(elem);
-		} else if (kind.equals(AbstractDocument.SectionElementName)) {
-		    return new BoxView(elem, View.Y_AXIS);
-		} else if (kind.equals(StyleConstants.ComponentElementName)) {
-		    return new ComponentView(elem);
-		} else if (kind.equals(StyleConstants.IconElementName)) {
-		    return new IconView(elem);
-		}
-	    }
-	
-	    // default to text display
+                } else if (kind.equals(AbstractDocument.ParagraphElementName)) {
+                    return new ParagraphView(elem);
+                } else if (kind.equals(AbstractDocument.SectionElementName)) {
+                    return new BoxView(elem, View.Y_AXIS);
+                } else if (kind.equals(StyleConstants.ComponentElementName)) {
+                    return new ComponentView(elem);
+                } else if (kind.equals(StyleConstants.IconElementName)) {
+                    return new IconView(elem);
+                }
+            }
+
+            // default to text display
             return new LabelView(elem);
-	}
+        }
 
     }
 
     // --- Action implementations ---------------------------------
 
     private static final Action[] defaultActions = {
-	new FontFamilyAction("font-family-SansSerif", "SansSerif"),
-	new FontFamilyAction("font-family-Monospaced", "Monospaced"),
-	new FontFamilyAction("font-family-Serif", "Serif"),
-	new FontSizeAction("font-size-8", 8),
-	new FontSizeAction("font-size-10", 10),
-	new FontSizeAction("font-size-12", 12),
-	new FontSizeAction("font-size-14", 14),
-	new FontSizeAction("font-size-16", 16),
-	new FontSizeAction("font-size-18", 18),
-	new FontSizeAction("font-size-24", 24),
-	new FontSizeAction("font-size-36", 36),
-	new FontSizeAction("font-size-48", 48),
-	new AlignmentAction("left-justify", StyleConstants.ALIGN_LEFT),
-	new AlignmentAction("center-justify", StyleConstants.ALIGN_CENTER),
-	new AlignmentAction("right-justify", StyleConstants.ALIGN_RIGHT),
-	new BoldAction(),
-	new ItalicAction(),
+        new FontFamilyAction("font-family-SansSerif", "SansSerif"),
+        new FontFamilyAction("font-family-Monospaced", "Monospaced"),
+        new FontFamilyAction("font-family-Serif", "Serif"),
+        new FontSizeAction("font-size-8", 8),
+        new FontSizeAction("font-size-10", 10),
+        new FontSizeAction("font-size-12", 12),
+        new FontSizeAction("font-size-14", 14),
+        new FontSizeAction("font-size-16", 16),
+        new FontSizeAction("font-size-18", 18),
+        new FontSizeAction("font-size-24", 24),
+        new FontSizeAction("font-size-36", 36),
+        new FontSizeAction("font-size-48", 48),
+        new AlignmentAction("left-justify", StyleConstants.ALIGN_LEFT),
+        new AlignmentAction("center-justify", StyleConstants.ALIGN_CENTER),
+        new AlignmentAction("right-justify", StyleConstants.ALIGN_RIGHT),
+        new BoldAction(),
+        new ItalicAction(),
         new StyledInsertBreakAction(),
-	new UnderlineAction()
+        new UnderlineAction()
     };
 
     /**
      * An action that assumes it's being fired on a JEditorPane
      * with a StyledEditorKit (or subclass) installed.  This has
      * some convenience methods for causing character or paragraph
-     * level attribute changes.  The convenience methods will 
+     * level attribute changes.  The convenience methods will
      * throw an IllegalArgumentException if the assumption of
      * a StyledDocument, a JEditorPane, or a StyledEditorKit
      * fail to be true.
      * <p>
-     * The component that gets acted upon by the action 
+     * The component that gets acted upon by the action
      * will be the source of the ActionEvent if the source
      * can be narrowed to a JEditorPane type.  If the source
-     * can't be narrowed, the most recently focused text 
+     * can't be narrowed, the most recently focused text
      * component is changed.  If neither of these are the
      * case, the action cannot be performed.
      * <p>
@@ -384,8 +383,8 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param nm the name of the action
          */
         public StyledTextAction(String nm) {
-	    super(nm);
-	}
+            super(nm);
+        }
 
         /**
          * Gets the target editor for an action.
@@ -394,12 +393,12 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @return the editor
          */
         protected final JEditorPane getEditor(ActionEvent e) {
-	    JTextComponent tcomp = getTextComponent(e);
-	    if (tcomp instanceof JEditorPane) {
-		return (JEditorPane) tcomp;
-	    }
-	    return null;
-	}
+            JTextComponent tcomp = getTextComponent(e);
+            if (tcomp instanceof JEditorPane) {
+                return (JEditorPane) tcomp;
+            }
+            return null;
+        }
 
         /**
          * Gets the document associated with an editor pane.
@@ -409,12 +408,12 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @exception IllegalArgumentException for the wrong document type
          */
         protected final StyledDocument getStyledDocument(JEditorPane e) {
-	    Document d = e.getDocument();
-	    if (d instanceof StyledDocument) {
-		return (StyledDocument) d;
-	    }
-	    throw new IllegalArgumentException("document must be StyledDocument");
-	}
+            Document d = e.getDocument();
+            if (d instanceof StyledDocument) {
+                return (StyledDocument) d;
+            }
+            throw new IllegalArgumentException("document must be StyledDocument");
+        }
 
         /**
          * Gets the editor kit associated with an editor pane.
@@ -424,59 +423,59 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @exception IllegalArgumentException for the wrong document type
          */
         protected final StyledEditorKit getStyledEditorKit(JEditorPane e) {
-	    EditorKit k = e.getEditorKit();
-	    if (k instanceof StyledEditorKit) {
-		return (StyledEditorKit) k;
-	    }
-	    throw new IllegalArgumentException("EditorKit must be StyledEditorKit");
-	}
+            EditorKit k = e.getEditorKit();
+            if (k instanceof StyledEditorKit) {
+                return (StyledEditorKit) k;
+            }
+            throw new IllegalArgumentException("EditorKit must be StyledEditorKit");
+        }
 
-	/**
-	 * Applies the given attributes to character 
-	 * content.  If there is a selection, the attributes
-	 * are applied to the selection range.  If there
-	 * is no selection, the attributes are applied to
-	 * the input attribute set which defines the attributes
-	 * for any new text that gets inserted.
-	 *
+        /**
+         * Applies the given attributes to character
+         * content.  If there is a selection, the attributes
+         * are applied to the selection range.  If there
+         * is no selection, the attributes are applied to
+         * the input attribute set which defines the attributes
+         * for any new text that gets inserted.
+         *
          * @param editor the editor
-	 * @param attr the attributes
-	 * @param replace   if true, then replace the existing attributes first
-	 */
-        protected final void setCharacterAttributes(JEditorPane editor, 
-					      AttributeSet attr, boolean replace) {
-	    int p0 = editor.getSelectionStart();
-	    int p1 = editor.getSelectionEnd();
-	    if (p0 != p1) {
-		StyledDocument doc = getStyledDocument(editor);
-		doc.setCharacterAttributes(p0, p1 - p0, attr, replace);
-	    }
-	    StyledEditorKit k = getStyledEditorKit(editor);
-	    MutableAttributeSet inputAttributes = k.getInputAttributes();
-	    if (replace) {
-		inputAttributes.removeAttributes(inputAttributes);
-	    }
-	    inputAttributes.addAttributes(attr);
-	}
+         * @param attr the attributes
+         * @param replace   if true, then replace the existing attributes first
+         */
+        protected final void setCharacterAttributes(JEditorPane editor,
+                                              AttributeSet attr, boolean replace) {
+            int p0 = editor.getSelectionStart();
+            int p1 = editor.getSelectionEnd();
+            if (p0 != p1) {
+                StyledDocument doc = getStyledDocument(editor);
+                doc.setCharacterAttributes(p0, p1 - p0, attr, replace);
+            }
+            StyledEditorKit k = getStyledEditorKit(editor);
+            MutableAttributeSet inputAttributes = k.getInputAttributes();
+            if (replace) {
+                inputAttributes.removeAttributes(inputAttributes);
+            }
+            inputAttributes.addAttributes(attr);
+        }
 
-	/**
-	 * Applies the given attributes to paragraphs.  If
-	 * there is a selection, the attributes are applied
-	 * to the paragraphs that intersect the selection.
-	 * if there is no selection, the attributes are applied
-	 * to the paragraph at the current caret position.
-	 *
+        /**
+         * Applies the given attributes to paragraphs.  If
+         * there is a selection, the attributes are applied
+         * to the paragraphs that intersect the selection.
+         * if there is no selection, the attributes are applied
+         * to the paragraph at the current caret position.
+         *
          * @param editor the editor
-	 * @param attr the attributes
-	 * @param replace   if true, replace the existing attributes first
-	 */
-        protected final void setParagraphAttributes(JEditorPane editor, 
-					   AttributeSet attr, boolean replace) {
-	    int p0 = editor.getSelectionStart();
-	    int p1 = editor.getSelectionEnd();
-	    StyledDocument doc = getStyledDocument(editor);
-	    doc.setParagraphAttributes(p0, p1 - p0, attr, replace);
-	}
+         * @param attr the attributes
+         * @param replace   if true, replace the existing attributes first
+         */
+        protected final void setParagraphAttributes(JEditorPane editor,
+                                           AttributeSet attr, boolean replace) {
+            int p0 = editor.getSelectionStart();
+            int p1 = editor.getSelectionEnd();
+            StyledDocument doc = getStyledDocument(editor);
+            doc.setParagraphAttributes(p0, p1 - p0, attr, replace);
+        }
 
     }
 
@@ -503,10 +502,10 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param nm the action name
          * @param family the font family
          */
-	public FontFamilyAction(String nm, String family) {
-	    super(nm);
-	    this.family = family;
-	}
+        public FontFamilyAction(String nm, String family) {
+            super(nm);
+            this.family = family;
+        }
 
         /**
          * Sets the font family.
@@ -514,26 +513,26 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		String family = this.family;
-		if ((e != null) && (e.getSource() == editor)) {
-		    String s = e.getActionCommand();
-		    if (s != null) {
-			family = s;
-		    }
-		}
-		if (family != null) {
-		    MutableAttributeSet attr = new SimpleAttributeSet();
-		    StyleConstants.setFontFamily(attr, family);
-		    setCharacterAttributes(editor, attr, false);
-		} else {
-		    UIManager.getLookAndFeel().provideErrorFeedback(editor);
-		}
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                String family = this.family;
+                if ((e != null) && (e.getSource() == editor)) {
+                    String s = e.getActionCommand();
+                    if (s != null) {
+                        family = s;
+                    }
+                }
+                if (family != null) {
+                    MutableAttributeSet attr = new SimpleAttributeSet();
+                    StyleConstants.setFontFamily(attr, family);
+                    setCharacterAttributes(editor, attr, false);
+                } else {
+                    UIManager.getLookAndFeel().provideErrorFeedback(editor);
+                }
+            }
+        }
 
-	private String family;
+        private String family;
     }
 
     /**
@@ -559,10 +558,10 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param nm the action name
          * @param size the font size
          */
-	public FontSizeAction(String nm, int size) {
-	    super(nm);
-	    this.size = size;
-	}
+        public FontSizeAction(String nm, int size) {
+            super(nm);
+            this.size = size;
+        }
 
         /**
          * Sets the font size.
@@ -570,34 +569,34 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		int size = this.size;
-		if ((e != null) && (e.getSource() == editor)) {
-		    String s = e.getActionCommand();
-		    try {
-			size = Integer.parseInt(s, 10);
-		    } catch (NumberFormatException nfe) {
-		    }
-		}
-		if (size != 0) {
-		    MutableAttributeSet attr = new SimpleAttributeSet();
-		    StyleConstants.setFontSize(attr, size);
-		    setCharacterAttributes(editor, attr, false);
-		} else {
-		    UIManager.getLookAndFeel().provideErrorFeedback(editor);
-		}
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                int size = this.size;
+                if ((e != null) && (e.getSource() == editor)) {
+                    String s = e.getActionCommand();
+                    try {
+                        size = Integer.parseInt(s, 10);
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+                if (size != 0) {
+                    MutableAttributeSet attr = new SimpleAttributeSet();
+                    StyleConstants.setFontSize(attr, size);
+                    setCharacterAttributes(editor, attr, false);
+                } else {
+                    UIManager.getLookAndFeel().provideErrorFeedback(editor);
+                }
+            }
+        }
 
-	private int size;
+        private int size;
     }
 
     /**
-     * An action to set foreground color.  This sets the 
+     * An action to set foreground color.  This sets the
      * <code>StyleConstants.Foreground</code> attribute for the
      * currently selected range of the target JEditorPane.
-     * This is done by calling 
+     * This is done by calling
      * <code>StyledDocument.setCharacterAttributes</code>
      * on the styled document associated with the target
      * JEditorPane.
@@ -605,7 +604,7 @@ public class StyledEditorKit extends DefaultEditorKit {
      * If the target text component is specified as the
      * source of the ActionEvent and there is a command string,
      * the command string will be interpreted as the foreground
-     * color.  It will be interpreted by called 
+     * color.  It will be interpreted by called
      * <code>Color.decode</code>, and should therefore be
      * legal input for that method.
      * <p>
@@ -626,10 +625,10 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param nm the action name
          * @param fg the foreground color
          */
-	public ForegroundAction(String nm, Color fg) {
-	    super(nm);
-	    this.fg = fg;
-	}
+        public ForegroundAction(String nm, Color fg) {
+            super(nm);
+            this.fg = fg;
+        }
 
         /**
          * Sets the foreground color.
@@ -637,34 +636,34 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		Color fg = this.fg;
-		if ((e != null) && (e.getSource() == editor)) {
-		    String s = e.getActionCommand();
-		    try {
-			fg = Color.decode(s);
-		    } catch (NumberFormatException nfe) {
-		    }
-		}
-		if (fg != null) {
-		    MutableAttributeSet attr = new SimpleAttributeSet();
-		    StyleConstants.setForeground(attr, fg);
-		    setCharacterAttributes(editor, attr, false);
-		} else {
-		    UIManager.getLookAndFeel().provideErrorFeedback(editor);
-		}
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                Color fg = this.fg;
+                if ((e != null) && (e.getSource() == editor)) {
+                    String s = e.getActionCommand();
+                    try {
+                        fg = Color.decode(s);
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+                if (fg != null) {
+                    MutableAttributeSet attr = new SimpleAttributeSet();
+                    StyleConstants.setForeground(attr, fg);
+                    setCharacterAttributes(editor, attr, false);
+                } else {
+                    UIManager.getLookAndFeel().provideErrorFeedback(editor);
+                }
+            }
+        }
 
-	private Color fg;
+        private Color fg;
     }
 
     /**
-     * An action to set paragraph alignment.  This sets the 
+     * An action to set paragraph alignment.  This sets the
      * <code>StyleConstants.Alignment</code> attribute for the
      * currently selected range of the target JEditorPane.
-     * This is done by calling 
+     * This is done by calling
      * <code>StyledDocument.setParagraphAttributes</code>
      * on the styled document associated with the target
      * JEditorPane.
@@ -692,10 +691,10 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param nm the action name
          * @param a the alignment >= 0
          */
-	public AlignmentAction(String nm, int a) {
-	    super(nm);
-	    this.a = a;
-	}
+        public AlignmentAction(String nm, int a) {
+            super(nm);
+            this.a = a;
+        }
 
         /**
          * Sets the alignment.
@@ -703,23 +702,23 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		int a = this.a;
-		if ((e != null) && (e.getSource() == editor)) {
-		    String s = e.getActionCommand();
-		    try {
-			a = Integer.parseInt(s, 10);
-		    } catch (NumberFormatException nfe) {
-		    }
-		}
-		MutableAttributeSet attr = new SimpleAttributeSet();
-		StyleConstants.setAlignment(attr, a);
-		setParagraphAttributes(editor, attr, false);
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                int a = this.a;
+                if ((e != null) && (e.getSource() == editor)) {
+                    String s = e.getActionCommand();
+                    try {
+                        a = Integer.parseInt(s, 10);
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+                MutableAttributeSet attr = new SimpleAttributeSet();
+                StyleConstants.setAlignment(attr, a);
+                setParagraphAttributes(editor, attr, false);
+            }
+        }
 
-	private int a;
+        private int a;
     }
 
     /**
@@ -739,9 +738,9 @@ public class StyledEditorKit extends DefaultEditorKit {
         /**
          * Constructs a new BoldAction.
          */
-	public BoldAction() {
-	    super("font-bold");
-	}
+        public BoldAction() {
+            super("font-bold");
+        }
 
         /**
          * Toggles the bold attribute.
@@ -749,16 +748,16 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		StyledEditorKit kit = getStyledEditorKit(editor);
-		MutableAttributeSet attr = kit.getInputAttributes();
-		boolean bold = (StyleConstants.isBold(attr)) ? false : true;
-		SimpleAttributeSet sas = new SimpleAttributeSet();
-		StyleConstants.setBold(sas, bold);
-		setCharacterAttributes(editor, sas, false);
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                StyledEditorKit kit = getStyledEditorKit(editor);
+                MutableAttributeSet attr = kit.getInputAttributes();
+                boolean bold = (StyleConstants.isBold(attr)) ? false : true;
+                SimpleAttributeSet sas = new SimpleAttributeSet();
+                StyleConstants.setBold(sas, bold);
+                setCharacterAttributes(editor, sas, false);
+            }
+        }
     }
 
     /**
@@ -778,9 +777,9 @@ public class StyledEditorKit extends DefaultEditorKit {
         /**
          * Constructs a new ItalicAction.
          */
-	public ItalicAction() {
-	    super("font-italic");
-	}
+        public ItalicAction() {
+            super("font-italic");
+        }
 
         /**
          * Toggles the italic attribute.
@@ -788,16 +787,16 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		StyledEditorKit kit = getStyledEditorKit(editor);
-		MutableAttributeSet attr = kit.getInputAttributes();
-		boolean italic = (StyleConstants.isItalic(attr)) ? false : true;
-		SimpleAttributeSet sas = new SimpleAttributeSet();
-		StyleConstants.setItalic(sas, italic);
-		setCharacterAttributes(editor, sas, false);
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                StyledEditorKit kit = getStyledEditorKit(editor);
+                MutableAttributeSet attr = kit.getInputAttributes();
+                boolean italic = (StyleConstants.isItalic(attr)) ? false : true;
+                SimpleAttributeSet sas = new SimpleAttributeSet();
+                StyleConstants.setItalic(sas, italic);
+                setCharacterAttributes(editor, sas, false);
+            }
+        }
     }
 
     /**
@@ -817,9 +816,9 @@ public class StyledEditorKit extends DefaultEditorKit {
         /**
          * Constructs a new UnderlineAction.
          */
-	public UnderlineAction() {
-	    super("font-underline");
-	}
+        public UnderlineAction() {
+            super("font-underline");
+        }
 
         /**
          * Toggles the Underline attribute.
@@ -827,16 +826,16 @@ public class StyledEditorKit extends DefaultEditorKit {
          * @param e the action event
          */
         public void actionPerformed(ActionEvent e) {
-	    JEditorPane editor = getEditor(e);
-	    if (editor != null) {
-		StyledEditorKit kit = getStyledEditorKit(editor);
-		MutableAttributeSet attr = kit.getInputAttributes();
-		boolean underline = (StyleConstants.isUnderline(attr)) ? false : true;
-		SimpleAttributeSet sas = new SimpleAttributeSet();
-		StyleConstants.setUnderline(sas, underline);
-		setCharacterAttributes(editor, sas, false);
-	    }
-	}
+            JEditorPane editor = getEditor(e);
+            if (editor != null) {
+                StyledEditorKit kit = getStyledEditorKit(editor);
+                MutableAttributeSet attr = kit.getInputAttributes();
+                boolean underline = (StyleConstants.isUnderline(attr)) ? false : true;
+                SimpleAttributeSet sas = new SimpleAttributeSet();
+                StyleConstants.setUnderline(sas, underline);
+                setCharacterAttributes(editor, sas, false);
+            }
+        }
     }
 
 
@@ -858,10 +857,10 @@ public class StyledEditorKit extends DefaultEditorKit {
             JEditorPane target = getEditor(e);
 
             if (target != null) {
-		if ((!target.isEditable()) || (!target.isEnabled())) {
-		    UIManager.getLookAndFeel().provideErrorFeedback(target);
-		    return;
-		}
+                if ((!target.isEditable()) || (!target.isEnabled())) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(target);
+                    return;
+                }
                 StyledEditorKit sek = getStyledEditorKit(target);
 
                 if (tempSet != null) {
@@ -885,7 +884,7 @@ public class StyledEditorKit extends DefaultEditorKit {
 
                 if (text != null) {
                     if ((!text.isEditable()) || (!text.isEnabled())) {
-		        UIManager.getLookAndFeel().provideErrorFeedback(target);
+                        UIManager.getLookAndFeel().provideErrorFeedback(target);
                         return;
                     }
                     text.replaceSelection("\n");

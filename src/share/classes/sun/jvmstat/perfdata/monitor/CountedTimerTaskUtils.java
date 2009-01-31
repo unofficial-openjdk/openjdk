@@ -31,7 +31,6 @@ import java.util.*;
  * Utility methods for use with {@link CountedTimerTask} instances.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class CountedTimerTaskUtils {

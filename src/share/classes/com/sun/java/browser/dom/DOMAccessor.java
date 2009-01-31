@@ -25,7 +25,7 @@
 
 package com.sun.java.browser.dom;
 
- 
+
 public interface DOMAccessor
 {
     /**
@@ -37,4 +37,4 @@ public interface DOMAccessor
      * Returns a DOMImplementation object.
      */
     public org.w3c.dom.DOMImplementation getDOMImplementation();
-}            
+}

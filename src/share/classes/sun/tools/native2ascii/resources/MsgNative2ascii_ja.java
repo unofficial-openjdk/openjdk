@@ -35,7 +35,7 @@ public class MsgNative2ascii_ja extends ListResourceBundle {
         {"err.cannot.read",  "{0} \u3092\u8aad\u307f\u8fbc\u3080\u3053\u3068\u304c\u3067\u304d\u307e\u305b\u3093\u3002"},
         {"err.cannot.write", "{0} \u306b\u66f8\u304d\u8fbc\u3080\u3053\u3068\u304c\u3067\u304d\u307e\u305b\u3093\u3002"},
         {"usage", "\u4f7f\u3044\u65b9: native2ascii" +
-	 " [-reverse] [-encoding encoding] [inputfile [outputfile]]"},
+         " [-reverse] [-encoding encoding] [inputfile [outputfile]]"},
         };
     }
 }

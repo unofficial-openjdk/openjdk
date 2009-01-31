@@ -67,11 +67,11 @@ class RedirServer extends Thread {
             String reply = reply1 + port + reply2;
             os.write (reply.getBytes());
             /* wait for redirected connection */
-	    s.setSoTimeout (5000);
+            s.setSoTimeout (5000);
             s1 = s.accept ();
             os = s1.getOutputStream ();
             os.write (reply3.getBytes());
-        } 
+        }
         catch (Exception e) {
             /* Just need thread to terminate */
         }
@@ -94,7 +94,7 @@ public class Redirect307Test {
         try {
             sock = new ServerSocket (0);
             port = sock.getLocalPort ();
-        } 
+        }
         catch (Exception e) {
             System.out.println ("Exception: " + e);
             return;
@@ -115,11 +115,11 @@ public class Redirect307Test {
 
             InputStream in = conURL.getInputStream();
             if ((in.read() != (int)'W') || (in.read()!=(int)'o')) {
-		throw new RuntimeException ("Unexpected string read");
-	    }
-        } 
+                throw new RuntimeException ("Unexpected string read");
+            }
+        }
         catch(IOException e) {
-	    throw new RuntimeException ("Exception caught");
+            throw new RuntimeException ("Exception caught");
         }
     }
 }

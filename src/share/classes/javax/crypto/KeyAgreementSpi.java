@@ -83,7 +83,7 @@ public abstract class KeyAgreementSpi {
      * has an incompatible algorithm type.
      */
     protected abstract void engineInit(Key key, SecureRandom random)
-	throws InvalidKeyException;
+        throws InvalidKeyException;
 
     /**
      * Initializes this key agreement with the given key, set of
@@ -102,8 +102,8 @@ public abstract class KeyAgreementSpi {
      * are inappropriate for this key agreement.
      */
     protected abstract void engineInit(Key key, AlgorithmParameterSpec params,
-				       SecureRandom random)
-	throws InvalidKeyException, InvalidAlgorithmParameterException;
+                                       SecureRandom random)
+        throws InvalidKeyException, InvalidAlgorithmParameterException;
 
     /**
      * Executes the next phase of this key agreement with the given
@@ -125,7 +125,7 @@ public abstract class KeyAgreementSpi {
      * initialized.
      */
     protected abstract Key engineDoPhase(Key key, boolean lastPhase)
-	throws InvalidKeyException, IllegalStateException;
+        throws InvalidKeyException, IllegalStateException;
 
     /**
      * Generates the shared secret and returns it in a new buffer.
@@ -143,7 +143,7 @@ public abstract class KeyAgreementSpi {
      * completed yet
      */
     protected abstract byte[] engineGenerateSecret()
-	throws IllegalStateException;
+        throws IllegalStateException;
 
     /**
      * Generates the shared secret, and places it into the buffer
@@ -172,8 +172,8 @@ public abstract class KeyAgreementSpi {
      * to hold the secret
      */
     protected abstract int engineGenerateSecret(byte[] sharedSecret,
-						int offset)
-	throws IllegalStateException, ShortBufferException;
+                                                int offset)
+        throws IllegalStateException, ShortBufferException;
 
     /**
      * Creates the shared secret and returns it as a secret key object
@@ -199,6 +199,6 @@ public abstract class KeyAgreementSpi {
      * the key material is too short)
      */
     protected abstract SecretKey engineGenerateSecret(String algorithm)
-	throws IllegalStateException, NoSuchAlgorithmException,
-	    InvalidKeyException;
+        throws IllegalStateException, NoSuchAlgorithmException,
+            InvalidKeyException;
 }

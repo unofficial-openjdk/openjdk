@@ -57,15 +57,15 @@ public class SDENullTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new SDENullTest(args).startTests();
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("SDENullTarg");
@@ -80,4 +80,3 @@ public class SDENullTest extends TestScaffold {
         }
     }
 }
-

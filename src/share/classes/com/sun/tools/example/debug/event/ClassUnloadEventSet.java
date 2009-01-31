@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class ClassUnloadEventSet extends AbstractEventSet {
-    
+
     ClassUnloadEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -52,4 +52,3 @@ public class ClassUnloadEventSet extends AbstractEventSet {
         listener.classUnload(this);
     }
 }
-

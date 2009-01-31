@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,8 +27,8 @@
  * @build GetField
  * @run main GetField
  *
- * @summary Make sure that getField() of ObjectStreamClass works correctly for 
- *	    object types. 
+ * @summary Make sure that getField() of ObjectStreamClass works correctly for
+ *          object types.
  */
 import java.io.*;
 
@@ -37,16 +37,16 @@ public class GetField implements Serializable{
     int i;
 
     public static void main(String[] args) throws Exception {
-	ObjectStreamClass cl = ObjectStreamClass.lookup(GetField.class);
-	if (cl == null)
-	    throw new RuntimeException("Cannot resolve class : GetField");
+        ObjectStreamClass cl = ObjectStreamClass.lookup(GetField.class);
+        if (cl == null)
+            throw new RuntimeException("Cannot resolve class : GetField");
 
-	if (cl.getField("str") == null)
-	    throw new RuntimeException(
-	    	"ObjectStreamClass.getField() failed for object type");
+        if (cl.getField("str") == null)
+            throw new RuntimeException(
+                "ObjectStreamClass.getField() failed for object type");
 
-	if (cl.getField("i") == null)
-	    throw new RuntimeException(
-	    	"ObjectStreamClass.getField() failed for primitive type");
+        if (cl.getField("i") == null)
+            throw new RuntimeException(
+                "ObjectStreamClass.getField() failed for primitive type");
     }
 }

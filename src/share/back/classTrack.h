@@ -26,8 +26,8 @@
 #ifndef JDWP_CLASSTRACK_H
 #define JDWP_CLASSTRACK_H
 
-/* 
- * Called after class unloads have occurred.  
+/*
+ * Called after class unloads have occurred.
  * The signatures of classes which were unloaded are returned.
  */
 struct bag *
@@ -52,4 +52,3 @@ void
 classTrack_reset(void);
 
 #endif
-

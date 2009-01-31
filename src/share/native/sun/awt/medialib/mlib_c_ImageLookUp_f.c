@@ -22,11 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_c_ImageLookUp_f.c	1.5	02/10/23 SMI"
-#endif /* __SUNPRO_C */
 
 #include "mlib_image.h"
 #include "mlib_ImageLookUp.h"

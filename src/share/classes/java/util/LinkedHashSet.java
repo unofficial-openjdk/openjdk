@@ -106,7 +106,6 @@ package java.util;
  * @param <E> the type of elements maintained by this set
  *
  * @author  Josh Bloch
- * @version %I% %E%
  * @see     Object#hashCode()
  * @see     Collection
  * @see     Set

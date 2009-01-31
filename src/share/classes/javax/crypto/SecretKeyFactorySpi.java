@@ -65,7 +65,7 @@ public abstract class SecretKeyFactorySpi {
      * is inappropriate for this secret-key factory to produce a secret key.
      */
     protected abstract SecretKey engineGenerateSecret(KeySpec keySpec)
-	throws InvalidKeySpecException;
+        throws InvalidKeySpecException;
 
     /**
      * Returns a specification (key material) of the given key
@@ -89,7 +89,7 @@ public abstract class SecretKeyFactorySpi {
      * secret-key factory).
      */
     protected abstract KeySpec engineGetKeySpec(SecretKey key, Class keySpec)
-	throws InvalidKeySpecException;
+        throws InvalidKeySpecException;
 
     /**
      * Translates a key object, whose provider may be unknown or
@@ -104,5 +104,5 @@ public abstract class SecretKeyFactorySpi {
      * by this secret-key factory.
      */
     protected abstract SecretKey engineTranslateKey(SecretKey key)
-	throws InvalidKeyException;
+        throws InvalidKeyException;
 }

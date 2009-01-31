@@ -38,7 +38,6 @@ import sun.security.util.*;
  * </pre>
  *
  * @author Hemma Prafullchandra
- * @version %I%
  * @see GeneralName
  * @see GeneralNames
  * @see GeneralNameInterface
@@ -76,10 +75,10 @@ public class EDIPartyName implements GeneralNameInterface {
 
     /**
      * Create the EDIPartyName object from the passed encoded Der value.
-     *   
+     *
      * @param derValue the encoded DER EDIPartyName.
      * @exception IOException on error.
-     */  
+     */
     public EDIPartyName(DerValue derValue) throws IOException {
         DerInputStream in = new DerInputStream(derValue.toByteArray());
         DerValue[] seq = in.getSequence(2);
@@ -95,7 +94,7 @@ public class EDIPartyName implements GeneralNameInterface {
                 if (assigner != null)
                     throw new IOException("Duplicate nameAssigner found in"
                                           + " EDIPartyName");
-                opt = opt.data.getDerValue(); 
+                opt = opt.data.getDerValue();
                 assigner = opt.getAsString();
             }
             if (opt.isContextSpecific(TAG_PARTYNAME) &&
@@ -103,7 +102,7 @@ public class EDIPartyName implements GeneralNameInterface {
                 if (party != null)
                     throw new IOException("Duplicate partyName found in"
                                           + " EDIPartyName");
-                opt = opt.data.getDerValue(); 
+                opt = opt.data.getDerValue();
                 party = opt.getAsString();
             }
         }
@@ -118,7 +117,7 @@ public class EDIPartyName implements GeneralNameInterface {
 
     /**
      * Encode the EDI party name into the DerOutputStream.
-     *   
+     *
      * @param out the DER stream to encode the EDIPartyName to.
      * @exception IOException on encoding errors.
      */
@@ -150,7 +149,7 @@ public class EDIPartyName implements GeneralNameInterface {
      * @returns String assignerName
      */
     public String getAssignerName() {
-	return assigner;
+        return assigner;
     }
 
     /**
@@ -159,7 +158,7 @@ public class EDIPartyName implements GeneralNameInterface {
      * @returns String partyName
      */
     public String getPartyName() {
-	return party;
+        return party;
     }
 
     /**
@@ -170,25 +169,25 @@ public class EDIPartyName implements GeneralNameInterface {
      * @returns true if the two names match
      */
     public boolean equals(Object other) {
-	if (!(other instanceof EDIPartyName))
-	    return false;
-	String otherAssigner = ((EDIPartyName)other).assigner;
-	if (this.assigner == null) {
-	    if (otherAssigner != null)
-		return false;
-	} else {
-	    if (!(this.assigner.equals(otherAssigner)))
-		return false;
-	}
-	String otherParty = ((EDIPartyName)other).party;
-	if (this.party == null) {
-	    if (otherParty != null)
-		return false;
-	} else {
-	    if (!(this.party.equals(otherParty)))
-		return false;
-	}
-	return true;
+        if (!(other instanceof EDIPartyName))
+            return false;
+        String otherAssigner = ((EDIPartyName)other).assigner;
+        if (this.assigner == null) {
+            if (otherAssigner != null)
+                return false;
+        } else {
+            if (!(this.assigner.equals(otherAssigner)))
+                return false;
+        }
+        String otherParty = ((EDIPartyName)other).party;
+        if (this.party == null) {
+            if (otherParty != null)
+                return false;
+        } else {
+            if (!(this.party.equals(otherParty)))
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -197,20 +196,20 @@ public class EDIPartyName implements GeneralNameInterface {
      * @return a hash code value.
      */
     public int hashCode() {
-	if (myhash == -1) {
-	    myhash = 37 + party.hashCode();
-	    if (assigner != null) {
-		myhash = 37 * myhash + assigner.hashCode();
-	    }
-	}
-	return myhash;
+        if (myhash == -1) {
+            myhash = 37 + party.hashCode();
+            if (assigner != null) {
+                myhash = 37 * myhash + assigner.hashCode();
+            }
+        }
+        return myhash;
     }
 
     /**
      * Return the printable string.
      */
     public String toString() {
-        return ("EDIPartyName: " + 
+        return ("EDIPartyName: " +
                  ((assigner == null) ? "" :
                    ("  nameAssigner = " + assigner + ","))
                  + "  partyName = " + party);
@@ -232,15 +231,15 @@ public class EDIPartyName implements GeneralNameInterface {
      *          not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) throws UnsupportedOperationException {
-	int constraintType;
-	if (inputName == null)
-	    constraintType = NAME_DIFF_TYPE;
-	else if (inputName.getType() != NAME_EDI)
-	    constraintType = NAME_DIFF_TYPE;
-	else {
-	    throw new UnsupportedOperationException("Narrowing, widening, and matching of names not supported for EDIPartyName");
-	}
-	return constraintType;
+        int constraintType;
+        if (inputName == null)
+            constraintType = NAME_DIFF_TYPE;
+        else if (inputName.getType() != NAME_EDI)
+            constraintType = NAME_DIFF_TYPE;
+        else {
+            throw new UnsupportedOperationException("Narrowing, widening, and matching of names not supported for EDIPartyName");
+        }
+        return constraintType;
     }
 
     /**
@@ -252,7 +251,7 @@ public class EDIPartyName implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-	throw new UnsupportedOperationException("subtreeDepth() not supported for EDIPartyName");
+        throw new UnsupportedOperationException("subtreeDepth() not supported for EDIPartyName");
     }
 
 }

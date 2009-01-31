@@ -39,8 +39,8 @@ class WTextComponentPeer extends WComponentPeer implements TextComponentPeer {
     // TextComponentPeer implementation
 
     public void setEditable(boolean editable) {
-	enableEditing(editable);
-	setBackground(((TextComponent)target).getBackground());
+        enableEditing(editable);
+        setBackground(((TextComponent)target).getBackground());
     }
     public native String getText();
     public native void setText(String txt);
@@ -51,29 +51,29 @@ class WTextComponentPeer extends WComponentPeer implements TextComponentPeer {
     // Toolkit & peer internals
 
     WTextComponentPeer(TextComponent target) {
-	super(target);
+        super(target);
     }
 
     void initialize() {
-	TextComponent tc = (TextComponent)target;
-	String text = tc.getText();
+        TextComponent tc = (TextComponent)target;
+        String text = tc.getText();
 
-	if (text != null) {
-	    setText(text);
-	}
-	select(tc.getSelectionStart(), tc.getSelectionEnd());
-	setEditable(tc.isEditable());
+        if (text != null) {
+            setText(text);
+        }
+        select(tc.getSelectionStart(), tc.getSelectionEnd());
+        setEditable(tc.isEditable());
 
-//	oldSelectionStart = -1; // accessibility support
-//	oldSelectionEnd = -1;	// accessibility support
+//      oldSelectionStart = -1; // accessibility support
+//      oldSelectionEnd = -1;   // accessibility support
 
-	super.initialize();
+        super.initialize();
     }
 
     native void enableEditing(boolean e);
 
     public boolean isFocusable() {
-	return true;
+        return true;
     }
 
     /*
@@ -113,12 +113,12 @@ class WTextComponentPeer extends WComponentPeer implements TextComponentPeer {
     public boolean shouldClearRectBeforePaint() {
         return false;
     }
-    
+
 //
 // Accessibility support
 //
 
-/*  To be fully implemented in a future release 
+/*  To be fully implemented in a future release
 
     int oldSelectionStart;
     int oldSelectionEnd;
@@ -132,7 +132,7 @@ class WTextComponentPeer extends WComponentPeer implements TextComponentPeer {
      * (Note: could be simply a change in the caret location)
      *
     public void selectionValuesChanged(int start, int end) {
-        return;  // Need to write implementation of this.  
+        return;  // Need to write implementation of this.
     }
 */
 }

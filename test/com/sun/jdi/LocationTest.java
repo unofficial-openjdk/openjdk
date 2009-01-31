@@ -63,7 +63,7 @@ public class LocationTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new LocationTest(args).startTests();
     }
 
@@ -102,38 +102,38 @@ public class LocationTest extends TestScaffold {
          */
         loc = getLocation("AbstractLocationTarg", "foo");
         if (loc != null) {
-            failure("location of AbstractLocationTarg.foo() should have " + 
+            failure("location of AbstractLocationTarg.foo() should have " +
                     "been null, but was: " + loc);
         }
 
         loc = getLocation("java.util.List", "clear");
         if (loc != null) {
-            failure("location of java.util.List.clear() " + 
+            failure("location of java.util.List.clear() " +
                     "should have been null, but was: " + loc);
         }
 
         loc = getLocation("java.lang.Object", "getClass");
         if (loc == null) {
-            failure("location of Object.getClass() " + 
+            failure("location of Object.getClass() " +
                     "should have been non-null, but was: " + loc);
         } else {
             if (!loc.declaringType().name().equals("java.lang.Object")) {
-                failure("location.declaringType() of Object.getClass() " + 
+                failure("location.declaringType() of Object.getClass() " +
                         "should have been java.lang.Object, but was: " +
                         loc.declaringType());
             }
             if (!loc.method().name().equals("getClass")) {
-                failure("location.method() of Object.getClass() " + 
+                failure("location.method() of Object.getClass() " +
                         "should have been getClass, but was: " +
                         loc.method());
             }
             if (loc.codeIndex() != -1) {
-                failure("location.codeIndex() of Object.getClass() " + 
+                failure("location.codeIndex() of Object.getClass() " +
                         "should have been -1, but was: " +
                         loc.codeIndex());
             }
             if (loc.lineNumber() != -1) {
-                failure("location.lineNumber() of Object.getClass() " + 
+                failure("location.lineNumber() of Object.getClass() " +
                         "should have been -1, but was: " +
                         loc.lineNumber());
             }
@@ -141,27 +141,27 @@ public class LocationTest extends TestScaffold {
         Location mainLoc = getLocation("LocationTarg", "main");
         loc = getLocation("LocationTarg", "foo");
         if (loc == null) {
-            failure("location of LocationTarg.foo() " + 
+            failure("location of LocationTarg.foo() " +
                     "should have been non-null, but was: " + loc);
         } else {
             if (!loc.declaringType().name().equals("LocationTarg")) {
-                failure("location.declaringType() of LocationTarg.foo() " + 
+                failure("location.declaringType() of LocationTarg.foo() " +
                         "should have been LocationTarg, but was: " +
                         loc.declaringType());
             }
             if (!loc.method().name().equals("foo")) {
-                failure("location.method() of LocationTarg.foo() " + 
+                failure("location.method() of LocationTarg.foo() " +
                         "should have been foo, but was: " +
                         loc.method());
             }
             if (loc.codeIndex() != 0) {  // implementation dependent!!!
-                failure("location.codeIndex() of LocationTarg.foo() " + 
+                failure("location.codeIndex() of LocationTarg.foo() " +
                         "should have been 0, but was: " +
                         loc.codeIndex());
             }
             if (loc.lineNumber() != (mainLoc.lineNumber() + 3)) {
-                failure("location.lineNumber() of LocationTarg.foo() " + 
-                        "should have been " + (mainLoc.lineNumber() + 3) + 
+                failure("location.lineNumber() of LocationTarg.foo() " +
+                        "should have been " + (mainLoc.lineNumber() + 3) +
                         ", but was: " + loc.lineNumber());
             }
         }
@@ -183,4 +183,3 @@ public class LocationTest extends TestScaffold {
         }
     }
 }
-

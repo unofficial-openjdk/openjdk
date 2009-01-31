@@ -39,7 +39,7 @@ import java.util.Set;
  * An <code>ActionMap</code> is usually used with an <code>InputMap</code>
  * to locate a particular action
  * when a key is pressed. As with <code>InputMap</code>,
- * an <code>ActionMap</code> can have a parent 
+ * an <code>ActionMap</code> can have a parent
  * that is searched for keys not defined in the <code>ActionMap</code>.
  * <p>As with <code>InputMap</code> if you create a cycle, eg:
  * <pre>
@@ -52,7 +52,6 @@ import java.util.Set;
  *
  * @see InputMap
  *
- * @version %I% %G%
  * @author Scott Violet
  * @since 1.3
  */
@@ -71,21 +70,21 @@ public class ActionMap implements Serializable {
 
     /**
      * Sets this <code>ActionMap</code>'s parent.
-     * 
+     *
      * @param map  the <code>ActionMap</code> that is the parent of this one
      */
     public void setParent(ActionMap map) {
-	this.parent = map;
+        this.parent = map;
     }
 
     /**
      * Returns this <code>ActionMap</code>'s parent.
-     * 
+     *
      * @return the <code>ActionMap</code> that is the parent of this one,
-     * 	       or null if this <code>ActionMap</code> has no parent
+     *         or null if this <code>ActionMap</code> has no parent
      */
     public ActionMap getParent() {
-	return parent;
+        return parent;
     }
 
     /**
@@ -96,64 +95,64 @@ public class ActionMap implements Serializable {
      * <code>action.getValue(NAME)</code>.
      */
     public void put(Object key, Action action) {
-	if (key == null) {
-	    return;
-	}
-	if (action == null) {
-	    remove(key);
-	}
-	else {
-	    if (arrayTable == null) {
-		arrayTable = new ArrayTable();
-	    }
-	    arrayTable.put(key, action);
-	}
+        if (key == null) {
+            return;
+        }
+        if (action == null) {
+            remove(key);
+        }
+        else {
+            if (arrayTable == null) {
+                arrayTable = new ArrayTable();
+            }
+            arrayTable.put(key, action);
+        }
     }
 
     /**
-     * Returns the binding for <code>key</code>, messaging the 
+     * Returns the binding for <code>key</code>, messaging the
      * parent <code>ActionMap</code> if the binding is not locally defined.
      */
     public Action get(Object key) {
-	Action value = (arrayTable == null) ? null :
-	               (Action)arrayTable.get(key);
+        Action value = (arrayTable == null) ? null :
+                       (Action)arrayTable.get(key);
 
-	if (value == null) {
-	    ActionMap    parent = getParent();
+        if (value == null) {
+            ActionMap    parent = getParent();
 
-	    if (parent != null) {
-		return parent.get(key);
-	    }
-	}
-	return value;
+            if (parent != null) {
+                return parent.get(key);
+            }
+        }
+        return value;
     }
 
     /**
      * Removes the binding for <code>key</code> from this <code>ActionMap</code>.
      */
     public void remove(Object key) {
-	if (arrayTable != null) {
-	    arrayTable.remove(key);
-	}
+        if (arrayTable != null) {
+            arrayTable.remove(key);
+        }
     }
 
     /**
      * Removes all the mappings from this <code>ActionMap</code>.
      */
     public void clear() {
-	if (arrayTable != null) {
-	    arrayTable.clear();
-	}
+        if (arrayTable != null) {
+            arrayTable.clear();
+        }
     }
 
     /**
      * Returns the <code>Action</code> names that are bound in this <code>ActionMap</code>.
      */
     public Object[] keys() {
-	if (arrayTable == null) {
-	    return null;
-	}
-	return arrayTable.getKeys(null);
+        if (arrayTable == null) {
+            return null;
+        }
+        return arrayTable.getKeys(null);
     }
 
     /**
@@ -162,10 +161,10 @@ public class ActionMap implements Serializable {
      * @return the number of bindings in this {@code ActionMap}
      */
     public int size() {
-	if (arrayTable == null) {
-	    return 0;
-	}
-	return arrayTable.size();
+        if (arrayTable == null) {
+            return 0;
+        }
+        return arrayTable.size();
     }
 
     /**
@@ -174,40 +173,40 @@ public class ActionMap implements Serializable {
      * this method includes the keys defined in the parent.
      */
     public Object[] allKeys() {
-	int           count = size();
-	ActionMap     parent = getParent();
+        int           count = size();
+        ActionMap     parent = getParent();
 
-	if (count == 0) {
-	    if (parent != null) {
-		return parent.allKeys();
-	    }
-	    return keys();
-	}
-	if (parent == null) {
-	    return keys();
-	}
-	Object[]    keys = keys();
-	Object[]    pKeys =  parent.allKeys();
+        if (count == 0) {
+            if (parent != null) {
+                return parent.allKeys();
+            }
+            return keys();
+        }
+        if (parent == null) {
+            return keys();
+        }
+        Object[]    keys = keys();
+        Object[]    pKeys =  parent.allKeys();
 
-	if (pKeys == null) {
-	    return keys;
-	}
-	if (keys == null) {
-	    // Should only happen if size() != keys.length, which should only
-	    // happen if mutated from multiple threads (or a bogus subclass).
-	    return pKeys;
-	}
+        if (pKeys == null) {
+            return keys;
+        }
+        if (keys == null) {
+            // Should only happen if size() != keys.length, which should only
+            // happen if mutated from multiple threads (or a bogus subclass).
+            return pKeys;
+        }
 
-	HashMap        keyMap = new HashMap();
-	int            counter;
+        HashMap        keyMap = new HashMap();
+        int            counter;
 
-	for (counter = keys.length - 1; counter >= 0; counter--) {
-	    keyMap.put(keys[counter], keys[counter]);
-	}
-	for (counter = pKeys.length - 1; counter >= 0; counter--) {
-	    keyMap.put(pKeys[counter], pKeys[counter]);
-	}
-	return keyMap.keySet().toArray();
+        for (counter = keys.length - 1; counter >= 0; counter--) {
+            keyMap.put(keys[counter], keys[counter]);
+        }
+        for (counter = pKeys.length - 1; counter >= 0; counter--) {
+            keyMap.put(pKeys[counter], pKeys[counter]);
+        }
+        return keyMap.keySet().toArray();
     }
 
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -217,10 +216,10 @@ public class ActionMap implements Serializable {
     }
 
     private void readObject(ObjectInputStream s) throws ClassNotFoundException,
-	                                         IOException {
+                                                 IOException {
         s.defaultReadObject();
-	for (int counter = s.readInt() - 1; counter >= 0; counter--) {
-	    put(s.readObject(), (Action)s.readObject());
-	}
+        for (int counter = s.readInt() - 1; counter >= 0; counter--) {
+            put(s.readObject(), (Action)s.readObject());
+        }
     }
 }

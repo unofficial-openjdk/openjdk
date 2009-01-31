@@ -49,7 +49,7 @@
 
 extern "C" {
 
-#define POLYTEMPSIZE	(512 / sizeof(POINT))
+#define POLYTEMPSIZE    (512 / sizeof(POINT))
 
 static void AngleToCoord(jint angle, jint w, jint h, jint *x, jint *y)
 {
@@ -61,9 +61,9 @@ static void AngleToCoord(jint angle, jint w, jint h, jint *x, jint *y)
 }
 
 static POINT *TransformPoly(jint *xpoints, jint *ypoints,
-			    jint transx, jint transy,
-			    POINT *pPoints, jint *pNpoints,
-			    BOOL close, BOOL fixend)
+                            jint transx, jint transy,
+                            POINT *pPoints, jint *pNpoints,
+                            BOOL close, BOOL fixend)
 {
     int npoints = *pNpoints;
     int outpoints = npoints;
@@ -83,22 +83,22 @@ static POINT *TransformPoly(jint *xpoints, jint *ypoints,
     jint my = ypoints[0];
     BOOL isclosed = (xpoints[npoints-1] == mx && ypoints[npoints-1] == my);
     if ((close && !isclosed) || fixend) {
-	outpoints++;
-	*pNpoints = outpoints;
+        outpoints++;
+        *pNpoints = outpoints;
     }
     if (outpoints > POLYTEMPSIZE) {
-	pPoints = (POINT *) safe_Malloc(sizeof(POINT) * outpoints);
+        pPoints = (POINT *) safe_Malloc(sizeof(POINT) * outpoints);
     }
     BOOL isempty = fixend;
     for (int i = 0; i < npoints; i++) {
-	x = xpoints[i];
-	y = ypoints[i];
-	isempty = isempty && (x == mx && y == my);
+        x = xpoints[i];
+        y = ypoints[i];
+        isempty = isempty && (x == mx && y == my);
         pPoints[i].x = CLAMP(x + transx);
         pPoints[i].y = CLAMP(y + transy);
     }
     if (close && !isclosed) {
-	pPoints[npoints] = pPoints[0];
+        pPoints[npoints] = pPoints[0];
     } else if (fixend) {
         if (!close || isempty) {
             // Fix for 4298688 - draw(Line) and Polygon omit last pixel
@@ -135,31 +135,31 @@ Java_sun_java2d_windows_GDIRenderer_doDrawLine
                 color, x1, y1, x2, y2);
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     HDC hdc;
     jint patrop;
     if (x1 == x2 || y1 == y2) {
-	if (x1 > x2) {
-	    jint t = x1; x1 = x2; x2 = t;
-	}
-	if (y1 > y2) {
-	    jint t = y1; y1 = y2; y2 = t;
-	}
-	hdc = wsdo->GetDC(env, wsdo, BRUSH, &patrop, clip, comp, color);
+        if (x1 > x2) {
+            jint t = x1; x1 = x2; x2 = t;
+        }
+        if (y1 > y2) {
+            jint t = y1; y1 = y2; y2 = t;
+        }
+        hdc = wsdo->GetDC(env, wsdo, BRUSH, &patrop, clip, comp, color);
         if (hdc == NULL) {
             return;
         }
-	::PatBlt(hdc, x1, y1, x2-x1+1, y2-y1+1, patrop);
+        ::PatBlt(hdc, x1, y1, x2-x1+1, y2-y1+1, patrop);
     } else {
-	hdc = wsdo->GetDC(env, wsdo, PENBRUSH, &patrop, clip, comp, color);
+        hdc = wsdo->GetDC(env, wsdo, PENBRUSH, &patrop, clip, comp, color);
         if (hdc == NULL) {
             return;
         }
-	::MoveToEx(hdc, x1, y1, NULL);
-	::LineTo(hdc, x2, y2);
-	::PatBlt(hdc, x2, y2, 1, 1, patrop);
+        ::MoveToEx(hdc, x1, y1, NULL);
+        ::LineTo(hdc, x2, y2);
+        ::PatBlt(hdc, x2, y2, 1, 1, patrop);
     }
     wsdo->ReleaseDC(env, wsdo, hdc);
 }
@@ -181,12 +181,12 @@ Java_sun_java2d_windows_GDIRenderer_doDrawRect
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
     if (w < 0 || h < 0) {
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     jint patrop;
     HDC hdc = wsdo->GetDC(env, wsdo, BRUSH, &patrop, clip, comp, color);
@@ -194,17 +194,17 @@ Java_sun_java2d_windows_GDIRenderer_doDrawRect
         return;
     }
     if (w < 2 || h < 2) {
-	// If one dimension is less than 2 then there is no
-	// gap in the middle - draw a solid filled rectangle.
-	::PatBlt(hdc, x, y, w+1, h+1, patrop);
+        // If one dimension is less than 2 then there is no
+        // gap in the middle - draw a solid filled rectangle.
+        ::PatBlt(hdc, x, y, w+1, h+1, patrop);
     } else {
-	// Avoid drawing the endpoints twice.
-	// Also prefer including the endpoints in the
-	// horizontal sections which draw pixels faster.
-	::PatBlt(hdc,  x,   y,  w+1,  1,  patrop);
-	::PatBlt(hdc,  x,  y+1,  1,  h-1, patrop);
-	::PatBlt(hdc, x+w, y+1,  1,  h-1, patrop);
-	::PatBlt(hdc,  x,  y+h, w+1,  1,  patrop);
+        // Avoid drawing the endpoints twice.
+        // Also prefer including the endpoints in the
+        // horizontal sections which draw pixels faster.
+        ::PatBlt(hdc,  x,   y,  w+1,  1,  patrop);
+        ::PatBlt(hdc,  x,  y+1,  1,  h-1, patrop);
+        ::PatBlt(hdc, x+w, y+1,  1,  h-1, patrop);
+        ::PatBlt(hdc,  x,  y+h, w+1,  1,  patrop);
     }
     wsdo->ReleaseDC(env, wsdo, hdc);
 }
@@ -228,22 +228,22 @@ Java_sun_java2d_windows_GDIRenderer_doDrawRoundRect
     J2dTraceLn2(J2D_TRACE_VERBOSE, "  arcW=%-4d arcH=%-4d",
                 arcW, arcH);
     if (w < 2 || h < 2 || arcW <= 0 || arcH <= 0) {
-	// Fix for 4524760 - drawRoundRect0 test case fails on Windows 98
-	// Thin round rects degenerate into regular rectangles
-	// because there is no room for the arc sections.  Also
-	// if there is no arc dimension then the roundrect must
-	// be a simple rectangle.  Defer to the DrawRect function
-	// which handles degenerate sizes better.
-	Java_sun_java2d_windows_GDIRenderer_doDrawRect(env, wr,
+        // Fix for 4524760 - drawRoundRect0 test case fails on Windows 98
+        // Thin round rects degenerate into regular rectangles
+        // because there is no room for the arc sections.  Also
+        // if there is no arc dimension then the roundrect must
+        // be a simple rectangle.  Defer to the DrawRect function
+        // which handles degenerate sizes better.
+        Java_sun_java2d_windows_GDIRenderer_doDrawRect(env, wr,
                                                        sData, clip,
                                                        comp, color,
                                                        x, y, w, h);
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     HDC hdc = wsdo->GetDC(env, wsdo, PENONLY, NULL, clip, comp, color);
     if (hdc == NULL) {
@@ -270,18 +270,18 @@ Java_sun_java2d_windows_GDIRenderer_doDrawOval
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
     if (w < 2 || h < 2) {
-	// Thin enough ovals have no room for curvature.  Defer to
-	// the DrawRect method which handles degenerate sizes better.
-	Java_sun_java2d_windows_GDIRenderer_doDrawRect(env, wr,
+        // Thin enough ovals have no room for curvature.  Defer to
+        // the DrawRect method which handles degenerate sizes better.
+        Java_sun_java2d_windows_GDIRenderer_doDrawRect(env, wr,
                                                        sData, clip,
                                                        comp, color,
                                                        x, y, w, h);
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     HDC hdc = wsdo->GetDC(env, wsdo, PENONLY, NULL, clip, comp, color);
     if (hdc == NULL) {
@@ -308,36 +308,36 @@ Java_sun_java2d_windows_GDIRenderer_doDrawArc
     J2dTraceLn5(J2D_TRACE_VERBOSE,
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
-    J2dTraceLn2(J2D_TRACE_VERBOSE, 
+    J2dTraceLn2(J2D_TRACE_VERBOSE,
                 "  angleStart=%-4d angleExtent=%-4d",
                 angleStart, angleExtent);
     if (w < 0 || h < 0 || angleExtent == 0) {
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     long sx, sy, ex, ey;
     if (angleExtent >= 360 || angleExtent <= -360) {
-	sx = ex = x + w;
-	sy = ey = y + h/2;
+        sx = ex = x + w;
+        sy = ey = y + h/2;
     } else {
-	int angleEnd;
-	if (angleExtent < 0) {
-	    angleEnd = angleStart;
-	    angleStart += angleExtent;
-	} else {
-	    angleEnd = angleStart + angleExtent;
-	}
-	AngleToCoord(angleStart, w, h, &sx, &sy);
-	sx += x + w/2;
-	sy += y + h/2;
-	AngleToCoord(angleEnd, w, h, &ex, &ey);
-	ex += x + w/2;
-	ey += y + h/2;
+        int angleEnd;
+        if (angleExtent < 0) {
+            angleEnd = angleStart;
+            angleStart += angleExtent;
+        } else {
+            angleEnd = angleStart + angleExtent;
+        }
+        AngleToCoord(angleStart, w, h, &sx, &sy);
+        sx += x + w/2;
+        sy += y + h/2;
+        AngleToCoord(angleEnd, w, h, &ex, &ey);
+        ex += x + w/2;
+        ey += y + h/2;
     }
     HDC hdc = wsdo->GetDC(env, wsdo, PEN, NULL, clip, comp, color);
     if (hdc == NULL) {
@@ -371,34 +371,34 @@ Java_sun_java2d_windows_GDIRenderer_doDrawPoly
         return;
     }
     if (env->GetArrayLength(xpointsarray) < npoints ||
-	env->GetArrayLength(ypointsarray) < npoints)
+        env->GetArrayLength(ypointsarray) < npoints)
     {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
-	return;
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
+        return;
     }
     if (npoints < 2) {
-	// Fix for 4067534 - assertion failure in 1.3.1 for degenerate polys
-	// Not enough points for a line.
-	// Note that this would be ignored later anyway, but returning
-	// here saves us from mistakes in TransformPoly and seeing bad
-	// return values from the Windows Polyline function.
-	return;
+        // Fix for 4067534 - assertion failure in 1.3.1 for degenerate polys
+        // Not enough points for a line.
+        // Note that this would be ignored later anyway, but returning
+        // here saves us from mistakes in TransformPoly and seeing bad
+        // return values from the Windows Polyline function.
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     POINT tmpPts[POLYTEMPSIZE], *pPoints;
     jint *xpoints = (jint *) env->GetPrimitiveArrayCritical(xpointsarray, NULL);
     jint *ypoints = (jint *) env->GetPrimitiveArrayCritical(ypointsarray, NULL);
     pPoints = TransformPoly(xpoints, ypoints, transx, transy,
-			    tmpPts, &npoints, isclosed, TRUE);
+                            tmpPts, &npoints, isclosed, TRUE);
     env->ReleasePrimitiveArrayCritical(xpointsarray, xpoints, JNI_ABORT);
     env->ReleasePrimitiveArrayCritical(ypointsarray, ypoints, JNI_ABORT);
     if (pPoints == NULL) {
-	return;
+        return;
     }
 
     HDC hdc = wsdo->GetDC(env, wsdo, PEN, NULL, clip, comp, color);
@@ -408,7 +408,7 @@ Java_sun_java2d_windows_GDIRenderer_doDrawPoly
     ::Polyline(hdc, pPoints, npoints);
     wsdo->ReleaseDC(env, wsdo, hdc);
     if (pPoints != tmpPts) {
-	free(pPoints);
+        free(pPoints);
     }
 }
 
@@ -429,12 +429,12 @@ Java_sun_java2d_windows_GDIRenderer_doFillRect
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
     if (w <= 0 || h <= 0) {
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     jint patrop;
     HDC hdc = wsdo->GetDC(env, wsdo, BRUSH, &patrop, clip, comp, color);
@@ -464,21 +464,21 @@ Java_sun_java2d_windows_GDIRenderer_doFillRoundRect
     J2dTraceLn2(J2D_TRACE_VERBOSE, "  arcW=%-4d arcH=%-4d",
                 arcW, arcH);
     if (w < 2 || h < 2 || arcW <= 0 || arcH <= 0) {
-	// Fix related to 4524760 - drawRoundRect0 fails on Windows 98
-	// Thin round rects have no room for curvature.  Also, if
-	// the curvature is empty then the primitive has degenerated
-	// into a simple rectangle.  Defer to the FillRect method
-	// which deals with degenerate sizes better.
-	Java_sun_java2d_windows_GDIRenderer_doFillRect(env, wr,
+        // Fix related to 4524760 - drawRoundRect0 fails on Windows 98
+        // Thin round rects have no room for curvature.  Also, if
+        // the curvature is empty then the primitive has degenerated
+        // into a simple rectangle.  Defer to the FillRect method
+        // which deals with degenerate sizes better.
+        Java_sun_java2d_windows_GDIRenderer_doFillRect(env, wr,
                                                        sData, clip,
                                                        comp, color,
                                                        x, y, w, h);
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     HDC hdc = wsdo->GetDC(env, wsdo, BRUSHONLY, NULL, clip, comp, color);
     if (hdc == NULL) {
@@ -505,47 +505,47 @@ Java_sun_java2d_windows_GDIRenderer_doFillOval
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
     if (w < 3 || h < 3) {
-	// Fix for 4411814 - small ovals do not draw anything
-	// (related to 4205762 on Solaris platform)
-	// Most platform graphics packages have poor rendering
-	// for thin ellipses and the rendering is most strikingly
-	// different from our theoretical arcs.  Ideally we should
-	// trap all ovals less than some fairly large size and
-	// try to draw aesthetically pleasing ellipses, but that
-	// would require considerably more work to get the corresponding
-	// drawArc variants to match pixel for pixel.
-	// Thin ovals of girth 1 pixel are simple rectangles.
-	// Thin ovals of girth 2 pixels are simple rectangles with
-	// potentially smaller lengths.  Determine the correct length
-	// by calculating .5*.5 + scaledlen*scaledlen == 1.0 which
-	// means that scaledlen is the sqrt(0.75).  Scaledlen is
-	// relative to the true length (w or h) and needs to be
-	// adjusted by half a pixel in different ways for odd or
-	// even lengths.
+        // Fix for 4411814 - small ovals do not draw anything
+        // (related to 4205762 on Solaris platform)
+        // Most platform graphics packages have poor rendering
+        // for thin ellipses and the rendering is most strikingly
+        // different from our theoretical arcs.  Ideally we should
+        // trap all ovals less than some fairly large size and
+        // try to draw aesthetically pleasing ellipses, but that
+        // would require considerably more work to get the corresponding
+        // drawArc variants to match pixel for pixel.
+        // Thin ovals of girth 1 pixel are simple rectangles.
+        // Thin ovals of girth 2 pixels are simple rectangles with
+        // potentially smaller lengths.  Determine the correct length
+        // by calculating .5*.5 + scaledlen*scaledlen == 1.0 which
+        // means that scaledlen is the sqrt(0.75).  Scaledlen is
+        // relative to the true length (w or h) and needs to be
+        // adjusted by half a pixel in different ways for odd or
+        // even lengths.
 #define SQRT_3_4 0.86602540378443864676
-	if (w > 2 && h > 1) {
-	    int adjw = (int) ((SQRT_3_4 * w - ((w&1)-1)) * 0.5);
-	    adjw = adjw * 2 + (w&1);
-	    x += (w-adjw)/2;
-	    w = adjw;
-	} else if (h > 2 && w > 1) {
-	    int adjh = (int) ((SQRT_3_4 * h - ((h&1)-1)) * 0.5);
-	    adjh = adjh * 2 + (h&1);
-	    y += (h-adjh)/2;
-	    h = adjh;
-	}
+        if (w > 2 && h > 1) {
+            int adjw = (int) ((SQRT_3_4 * w - ((w&1)-1)) * 0.5);
+            adjw = adjw * 2 + (w&1);
+            x += (w-adjw)/2;
+            w = adjw;
+        } else if (h > 2 && w > 1) {
+            int adjh = (int) ((SQRT_3_4 * h - ((h&1)-1)) * 0.5);
+            adjh = adjh * 2 + (h&1);
+            y += (h-adjh)/2;
+            h = adjh;
+        }
 #undef SQRT_3_4
-	if (w > 0 && h > 0) {
-	    Java_sun_java2d_windows_GDIRenderer_doFillRect(env, wr, sData,
+        if (w > 0 && h > 0) {
+            Java_sun_java2d_windows_GDIRenderer_doFillRect(env, wr, sData,
                                                            clip, comp, color,
                                                            x, y, w, h);
-	}
-	return;
+        }
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     HDC hdc = wsdo->GetDC(env, wsdo, BRUSHONLY, NULL, clip, comp, color);
     if (hdc == NULL) {
@@ -572,34 +572,34 @@ Java_sun_java2d_windows_GDIRenderer_doFillArc
     J2dTraceLn5(J2D_TRACE_VERBOSE,
                 "  color=0x%x x=%-4d y=%-4d w=%-4d h=%-4d",
                 color, x, y, w, h);
-    J2dTraceLn2(J2D_TRACE_VERBOSE, 
+    J2dTraceLn2(J2D_TRACE_VERBOSE,
                 "  angleStart=%-4d angleExtent=%-4d",
                 angleStart, angleExtent);
     if (w <= 0 || h <= 0 || angleExtent == 0) {
-	return;
+        return;
     }
     if (angleExtent >= 360 || angleExtent <= -360) {
-	// Fix related to 4411814 - small ovals (and arcs) do not draw
-	// If the arc is a full circle, let the Oval method handle it
-	// since that method can deal with degenerate sizes better.
-	Java_sun_java2d_windows_GDIRenderer_doFillOval(env, wr,
+        // Fix related to 4411814 - small ovals (and arcs) do not draw
+        // If the arc is a full circle, let the Oval method handle it
+        // since that method can deal with degenerate sizes better.
+        Java_sun_java2d_windows_GDIRenderer_doFillOval(env, wr,
                                                        sData, clip,
                                                        comp, color,
                                                        x, y, w, h);
-	return;
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     long sx, sy, ex, ey;
     int angleEnd;
     if (angleExtent < 0) {
-	angleEnd = angleStart;
-	angleStart += angleExtent;
+        angleEnd = angleStart;
+        angleStart += angleExtent;
     } else {
-	angleEnd = angleStart + angleExtent;
+        angleEnd = angleStart + angleExtent;
     }
     AngleToCoord(angleStart, w, h, &sx, &sy);
     sx += x + w/2;
@@ -638,34 +638,34 @@ Java_sun_java2d_windows_GDIRenderer_doFillPoly
         return;
     }
     if (env->GetArrayLength(xpointsarray) < npoints ||
-	env->GetArrayLength(ypointsarray) < npoints)
+        env->GetArrayLength(ypointsarray) < npoints)
     {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
-	return;
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
+        return;
     }
     if (npoints < 3) {
-	// Fix for 4067534 - assertion failure in 1.3.1 for degenerate polys
-	// Not enough points for a triangle.
-	// Note that this would be ignored later anyway, but returning
-	// here saves us from mistakes in TransformPoly and seeing bad
-	// return values from the Windows Polyline function.
-	return;
+        // Fix for 4067534 - assertion failure in 1.3.1 for degenerate polys
+        // Not enough points for a triangle.
+        // Note that this would be ignored later anyway, but returning
+        // here saves us from mistakes in TransformPoly and seeing bad
+        // return values from the Windows Polyline function.
+        return;
     }
 
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     POINT tmpPts[POLYTEMPSIZE], *pPoints;
     jint *xpoints = (jint *) env->GetPrimitiveArrayCritical(xpointsarray, NULL);
     jint *ypoints = (jint *) env->GetPrimitiveArrayCritical(ypointsarray, NULL);
     pPoints = TransformPoly(xpoints, ypoints, transx, transy,
-			    tmpPts, &npoints, FALSE, FALSE);
+                            tmpPts, &npoints, FALSE, FALSE);
     env->ReleasePrimitiveArrayCritical(xpointsarray, xpoints, JNI_ABORT);
     env->ReleasePrimitiveArrayCritical(ypointsarray, ypoints, JNI_ABORT);
     if (pPoints == NULL) {
-	return;
+        return;
     }
 
     HDC hdc = wsdo->GetDC(env, wsdo, BRUSHONLY, NULL, clip, comp, color);
@@ -676,7 +676,7 @@ Java_sun_java2d_windows_GDIRenderer_doFillPoly
     ::Polygon(hdc, pPoints, npoints);
     wsdo->ReleaseDC(env, wsdo, hdc);
     if (pPoints != tmpPts) {
-	free(pPoints);
+        free(pPoints);
     }
 }
 
@@ -700,7 +700,7 @@ Java_sun_java2d_windows_GDIRenderer_doShape
                 color, transX, transY, isfill);
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, sData);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     jarray typesarray = (jarray) env->GetObjectField(p2df, path2DTypesID);
@@ -712,8 +712,8 @@ Java_sun_java2d_windows_GDIRenderer_doShape
     }
     jint numtypes = env->GetIntField(p2df, path2DNumTypesID);
     if (env->GetArrayLength(typesarray) < numtypes) {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "types array");
-	return;
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "types array");
+        return;
     }
     jint maxcoords = env->GetArrayLength(coordsarray);
     jint rule = env->GetIntField(p2df, path2DWindingRuleID);
@@ -724,12 +724,12 @@ Java_sun_java2d_windows_GDIRenderer_doShape
         return;
     }
     ::SetPolyFillMode(hdc, (rule == java_awt_geom_PathIterator_WIND_NON_ZERO
-			    ? WINDING : ALTERNATE));
+                            ? WINDING : ALTERNATE));
     ::BeginPath(hdc);
     jbyte *types = (jbyte *) env->GetPrimitiveArrayCritical(typesarray,
-							    NULL);
+                                                            NULL);
     jfloat *coords = (jfloat *) env->GetPrimitiveArrayCritical(coordsarray,
-							       NULL);
+                                                               NULL);
     int index = 0;
     BOOL ok = TRUE;
     BOOL isempty = TRUE;
@@ -737,112 +737,112 @@ Java_sun_java2d_windows_GDIRenderer_doShape
     int mx = 0, my = 0, x1 = 0, y1 = 0;
     POINT ctrlpts[3];
     for (int i = 0; ok && i < numtypes; i++) {
-	switch (types[i]) {
-	case java_awt_geom_PathIterator_SEG_MOVETO:
-	    if (!isfill && !isempty) {
-		// Fix for 4298688 - draw(Line) omits last pixel
-		// Windows omits the last pixel of a path when stroking.
-		// Fix up the last segment of the previous subpath by
-		// adding another segment after it that is only 1 pixel
-		// long.  The first pixel of that segment will be drawn,
-		// but the second pixel is the one that Windows omits.
-		::LineTo(hdc, x1+1, y1);
-	    }
-	    if (index + 2 <= maxcoords) {
-		mx = x1 = transX + (int) floor(coords[index++]);
-		my = y1 = transY + (int) floor(coords[index++]);
-		::MoveToEx(hdc, x1, y1, NULL);
-		isempty = TRUE;
-		isapoint = TRUE;
-	    } else {
-		ok = FALSE;
-	    }
-	    break;
-	case java_awt_geom_PathIterator_SEG_LINETO:
-	    if (index + 2 <= maxcoords) {
-		x1 = transX + (int) floor(coords[index++]);
-		y1 = transY + (int) floor(coords[index++]);
-		::LineTo(hdc, x1, y1);
-		isapoint = isapoint && (x1 == mx && y1 == my);
-		isempty = FALSE;
-	    } else {
-		ok = FALSE;
-	    }
-	    break;
-	case java_awt_geom_PathIterator_SEG_QUADTO:
-	    if (index + 4 <= maxcoords) {
-		ctrlpts[0].x = transX + (int) floor(coords[index++]);
-		ctrlpts[0].y = transY + (int) floor(coords[index++]);
-		ctrlpts[2].x = transX + (int) floor(coords[index++]);
-		ctrlpts[2].y = transY + (int) floor(coords[index++]);
-		ctrlpts[1].x = (ctrlpts[0].x * 2 + ctrlpts[2].x) / 3;
-		ctrlpts[1].y = (ctrlpts[0].y * 2 + ctrlpts[2].y) / 3;
-		ctrlpts[0].x = (ctrlpts[0].x * 2 + x1) / 3;
-		ctrlpts[0].y = (ctrlpts[0].y * 2 + y1) / 3;
-		x1 = ctrlpts[2].x;
-		y1 = ctrlpts[2].y;
-		::PolyBezierTo(hdc, ctrlpts, 3);
-		isapoint = isapoint && (x1 == mx && y1 == my);
-		isempty = FALSE;
-	    } else {
-		ok = FALSE;
-	    }
-	    break;
-	case java_awt_geom_PathIterator_SEG_CUBICTO:
-	    if (index + 6 <= maxcoords) {
-		ctrlpts[0].x = transX + (int) floor(coords[index++]);
-		ctrlpts[0].y = transY + (int) floor(coords[index++]);
-		ctrlpts[1].x = transX + (int) floor(coords[index++]);
-		ctrlpts[1].y = transY + (int) floor(coords[index++]);
-		ctrlpts[2].x = transX + (int) floor(coords[index++]);
-		ctrlpts[2].y = transY + (int) floor(coords[index++]);
-		x1 = ctrlpts[2].x;
-		y1 = ctrlpts[2].y;
-		::PolyBezierTo(hdc, ctrlpts, 3);
-		isapoint = isapoint && (x1 == mx && y1 == my);
-		isempty = FALSE;
-	    } else {
-		ok = FALSE;
-	    }
-	    break;
-	case java_awt_geom_PathIterator_SEG_CLOSE:
-	    ::CloseFigure(hdc);
-	    if (x1 != mx || y1 != my) {
-		x1 = mx;
-		y1 = my;
-		::MoveToEx(hdc, x1, y1, NULL);
-		isempty = TRUE;
-		isapoint = TRUE;
-	    } else if (!isfill && !isempty && isapoint) {
-		::LineTo(hdc, x1+1, y1);
-		::MoveToEx(hdc, x1, y1, NULL);
-		isempty = TRUE;
-		isapoint = TRUE;
-	    }
-	    break;
-	}
+        switch (types[i]) {
+        case java_awt_geom_PathIterator_SEG_MOVETO:
+            if (!isfill && !isempty) {
+                // Fix for 4298688 - draw(Line) omits last pixel
+                // Windows omits the last pixel of a path when stroking.
+                // Fix up the last segment of the previous subpath by
+                // adding another segment after it that is only 1 pixel
+                // long.  The first pixel of that segment will be drawn,
+                // but the second pixel is the one that Windows omits.
+                ::LineTo(hdc, x1+1, y1);
+            }
+            if (index + 2 <= maxcoords) {
+                mx = x1 = transX + (int) floor(coords[index++]);
+                my = y1 = transY + (int) floor(coords[index++]);
+                ::MoveToEx(hdc, x1, y1, NULL);
+                isempty = TRUE;
+                isapoint = TRUE;
+            } else {
+                ok = FALSE;
+            }
+            break;
+        case java_awt_geom_PathIterator_SEG_LINETO:
+            if (index + 2 <= maxcoords) {
+                x1 = transX + (int) floor(coords[index++]);
+                y1 = transY + (int) floor(coords[index++]);
+                ::LineTo(hdc, x1, y1);
+                isapoint = isapoint && (x1 == mx && y1 == my);
+                isempty = FALSE;
+            } else {
+                ok = FALSE;
+            }
+            break;
+        case java_awt_geom_PathIterator_SEG_QUADTO:
+            if (index + 4 <= maxcoords) {
+                ctrlpts[0].x = transX + (int) floor(coords[index++]);
+                ctrlpts[0].y = transY + (int) floor(coords[index++]);
+                ctrlpts[2].x = transX + (int) floor(coords[index++]);
+                ctrlpts[2].y = transY + (int) floor(coords[index++]);
+                ctrlpts[1].x = (ctrlpts[0].x * 2 + ctrlpts[2].x) / 3;
+                ctrlpts[1].y = (ctrlpts[0].y * 2 + ctrlpts[2].y) / 3;
+                ctrlpts[0].x = (ctrlpts[0].x * 2 + x1) / 3;
+                ctrlpts[0].y = (ctrlpts[0].y * 2 + y1) / 3;
+                x1 = ctrlpts[2].x;
+                y1 = ctrlpts[2].y;
+                ::PolyBezierTo(hdc, ctrlpts, 3);
+                isapoint = isapoint && (x1 == mx && y1 == my);
+                isempty = FALSE;
+            } else {
+                ok = FALSE;
+            }
+            break;
+        case java_awt_geom_PathIterator_SEG_CUBICTO:
+            if (index + 6 <= maxcoords) {
+                ctrlpts[0].x = transX + (int) floor(coords[index++]);
+                ctrlpts[0].y = transY + (int) floor(coords[index++]);
+                ctrlpts[1].x = transX + (int) floor(coords[index++]);
+                ctrlpts[1].y = transY + (int) floor(coords[index++]);
+                ctrlpts[2].x = transX + (int) floor(coords[index++]);
+                ctrlpts[2].y = transY + (int) floor(coords[index++]);
+                x1 = ctrlpts[2].x;
+                y1 = ctrlpts[2].y;
+                ::PolyBezierTo(hdc, ctrlpts, 3);
+                isapoint = isapoint && (x1 == mx && y1 == my);
+                isempty = FALSE;
+            } else {
+                ok = FALSE;
+            }
+            break;
+        case java_awt_geom_PathIterator_SEG_CLOSE:
+            ::CloseFigure(hdc);
+            if (x1 != mx || y1 != my) {
+                x1 = mx;
+                y1 = my;
+                ::MoveToEx(hdc, x1, y1, NULL);
+                isempty = TRUE;
+                isapoint = TRUE;
+            } else if (!isfill && !isempty && isapoint) {
+                ::LineTo(hdc, x1+1, y1);
+                ::MoveToEx(hdc, x1, y1, NULL);
+                isempty = TRUE;
+                isapoint = TRUE;
+            }
+            break;
+        }
     }
     env->ReleasePrimitiveArrayCritical(typesarray, types, JNI_ABORT);
     env->ReleasePrimitiveArrayCritical(coordsarray, coords, JNI_ABORT);
     if (ok) {
-	if (!isfill && !isempty) {
-	    // Fix for 4298688 - draw(Line) omits last pixel
-	    // Windows omits the last pixel of a path when stroking.
-	    // Fix up the last segment of the previous subpath by
-	    // adding another segment after it that is only 1 pixel
-	    // long.  The first pixel of that segment will be drawn,
-	    // but the second pixel is the one that Windows omits.
-	    ::LineTo(hdc, x1+1, y1);
-	}
-	::EndPath(hdc);
-	if (isfill) {
-	    ::FillPath(hdc);
-	} else {
-	    ::StrokePath(hdc);
-	}
+        if (!isfill && !isempty) {
+            // Fix for 4298688 - draw(Line) omits last pixel
+            // Windows omits the last pixel of a path when stroking.
+            // Fix up the last segment of the previous subpath by
+            // adding another segment after it that is only 1 pixel
+            // long.  The first pixel of that segment will be drawn,
+            // but the second pixel is the one that Windows omits.
+            ::LineTo(hdc, x1+1, y1);
+        }
+        ::EndPath(hdc);
+        if (isfill) {
+            ::FillPath(hdc);
+        } else {
+            ::StrokePath(hdc);
+        }
     } else {
-	::AbortPath(hdc);
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "coords array");
+        ::AbortPath(hdc);
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "coords array");
     }
     wsdo->ReleaseDC(env, wsdo, hdc);
 }
@@ -855,13 +855,13 @@ INLINE BOOL RectInMonitorRect(RECT *rCheck, RECT *rContainer)
 {
     // Assumption: left <= right, top <= bottom
     if (rCheck->left >= rContainer->left &&
-	rCheck->right <= rContainer->right &&
-	rCheck->top >= rContainer->top &&
-	rCheck->bottom <= rContainer->bottom)
+        rCheck->right <= rContainer->right &&
+        rCheck->top >= rContainer->top &&
+        rCheck->bottom <= rContainer->bottom)
     {
-	return TRUE;
+        return TRUE;
     } else {
-	return FALSE;
+        return FALSE;
     }
 }
 
@@ -880,76 +880,76 @@ Java_sun_java2d_windows_GDIRenderer_devCopyArea
 {
     Win32SDOps *wsdo = Win32SurfaceData_GetOps(env, wsd);
     J2dTraceLn(J2D_TRACE_INFO, "Win32SurfaceData_devCopyArea");
-    J2dTraceLn4(J2D_TRACE_VERBOSE, "   srcx=%-4d srcy=%-4d dx=%-4d dy=%-4d", 
+    J2dTraceLn4(J2D_TRACE_VERBOSE, "   srcx=%-4d srcy=%-4d dx=%-4d dy=%-4d",
                 srcx, srcy, dx, dy);
     J2dTraceLn2(J2D_TRACE_VERBOSE, "     w=%-4d h=%-4d", width, height);
     if (wsdo == NULL) {
-	return;
+        return;
     }
     if (wsdo->invalid) {
-        SurfaceData_ThrowInvalidPipeException(env, 
+        SurfaceData_ThrowInvalidPipeException(env,
             "GDIRenderer_devCopyArea: invalid surface data");
         return;
     }
 
     if (DDCanBlt(wsdo)) {
-	// We try to use ddraw for this copy because it tends to be faster
-	// than GDI.  We punt if:
-	//	- the source rect is clipped (GDI does a better job of
-	//	validating the clipped area)
-	//	- there is only one monitor 
-	//	 OR
-	//	- the src and dest rectangles are both wholly within the device
-	//	associated with this surfaceData
-	// REMIND: There may be a bug looming out here where the user
-	// moves an overlapping window between the time that we check the
-	// clip and the time that the Blt is executed, then we may not be
-	// invalidating the src region the way we should.
+        // We try to use ddraw for this copy because it tends to be faster
+        // than GDI.  We punt if:
+        //      - the source rect is clipped (GDI does a better job of
+        //      validating the clipped area)
+        //      - there is only one monitor
+        //       OR
+        //      - the src and dest rectangles are both wholly within the device
+        //      associated with this surfaceData
+        // REMIND: There may be a bug looming out here where the user
+        // moves an overlapping window between the time that we check the
+        // clip and the time that the Blt is executed, then we may not be
+        // invalidating the src region the way we should.
 
-	// Here, rSrc, rDst are the src/dst rectangles in screen coordinates.
-	// r[Src|Dst]Absolute are the src/dst rectangles in virtual
-	// screen space (where all monitors occupy the same coords).
-	RECT rSrc = {srcx, srcy, srcx + width, srcy + height};
-	RECT rDst, rSrcAbsolute, rDstAbsolute;
-	POINT clientOrigin = {0, 0};
-	MONITOR_INFO *mi = wsdo->device->GetMonitorInfo();
-	::ScreenToClient(wsdo->window, &clientOrigin);
-	::OffsetRect(&rSrc, 
-	    (-clientOrigin.x - wsdo->insets.left), 
-	    (-clientOrigin.y - wsdo->insets.top));
-	rSrcAbsolute = rSrc;
-	::OffsetRect(&rSrc, (-mi->rMonitor.left), (-mi->rMonitor.top));
-	rDst = rSrc;
-	::OffsetRect(&rDst, dx, dy);
-	rDstAbsolute = rSrcAbsolute;
-	::OffsetRect(&rDstAbsolute, dx, dy);
+        // Here, rSrc, rDst are the src/dst rectangles in screen coordinates.
+        // r[Src|Dst]Absolute are the src/dst rectangles in virtual
+        // screen space (where all monitors occupy the same coords).
+        RECT rSrc = {srcx, srcy, srcx + width, srcy + height};
+        RECT rDst, rSrcAbsolute, rDstAbsolute;
+        POINT clientOrigin = {0, 0};
+        MONITOR_INFO *mi = wsdo->device->GetMonitorInfo();
+        ::ScreenToClient(wsdo->window, &clientOrigin);
+        ::OffsetRect(&rSrc,
+            (-clientOrigin.x - wsdo->insets.left),
+            (-clientOrigin.y - wsdo->insets.top));
+        rSrcAbsolute = rSrc;
+        ::OffsetRect(&rSrc, (-mi->rMonitor.left), (-mi->rMonitor.top));
+        rDst = rSrc;
+        ::OffsetRect(&rDst, dx, dy);
+        rDstAbsolute = rSrcAbsolute;
+        ::OffsetRect(&rDstAbsolute, dx, dy);
 
-	if (DDClipCheck(wsdo, &rSrc) &&
-	    (currNumDevices <= 1 ||
-    	     (RectInMonitorRect(&rSrcAbsolute, &mi->rMonitor) &&
-	      RectInMonitorRect(&rDstAbsolute, &mi->rMonitor))))
-	{
-	    AwtComponent *comp = NULL;
+        if (DDClipCheck(wsdo, &rSrc) &&
+            (currNumDevices <= 1 ||
+             (RectInMonitorRect(&rSrcAbsolute, &mi->rMonitor) &&
+              RectInMonitorRect(&rDstAbsolute, &mi->rMonitor))))
+        {
+            AwtComponent *comp = NULL;
 
-	    // Bug 4362500: Win2k pointer garbage on screen->screen DD blts
-	    if (IS_WIN2000) {
-		comp = Win32SurfaceData_GetComp(env, wsdo);
-		if (comp != NULL) {
-		    comp->SendMessage(WM_AWT_HIDECURSOR, NULL);
-		}
-	    }
+            // Bug 4362500: Win2k pointer garbage on screen->screen DD blts
+            if (IS_WIN2000) {
+                comp = Win32SurfaceData_GetComp(env, wsdo);
+                if (comp != NULL) {
+                    comp->SendMessage(WM_AWT_HIDECURSOR, NULL);
+                }
+            }
 
-	    DDBlt(env,wsdo, wsdo, &rDst, &rSrc);
+            DDBlt(env,wsdo, wsdo, &rDst, &rSrc);
 
-	    if (comp != NULL) {
-		comp->SendMessage(WM_AWT_SHOWCURSOR, NULL);
-	    }
-	    return;
-	}
+            if (comp != NULL) {
+                comp->SendMessage(WM_AWT_SHOWCURSOR, NULL);
+            }
+            return;
+        }
     }
     HDC hDC = wsdo->GetDC(env, wsdo, 0, NULL, NULL, NULL, 0);
     if (hDC == NULL) {
-	return;
+        return;
     }
 
     RECT r;
@@ -974,7 +974,7 @@ Java_sun_java2d_windows_GDIRenderer_devCopyArea
 
     // Invalidate the exposed area.
     if (result != NULLREGION) {
-	::InvalidateRgn(wsdo->window, rgnUpdate, TRUE);
+        ::InvalidateRgn(wsdo->window, rgnUpdate, TRUE);
     }
     ::DeleteObject(rgnUpdate);
     ::DeleteObject(rgnDst);

@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.nio.ch;
 
@@ -36,7 +34,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.*;
 
 
-/** 
+/**
  * Pipe.SinkChannel implementation based on socket connection.
  */
 
@@ -48,29 +46,29 @@ class SinkChannelImpl
     SocketChannel sc;
 
     public FileDescriptor getFD() {
-	return ((SocketChannelImpl)sc).getFD();
+        return ((SocketChannelImpl)sc).getFD();
     }
 
     public int getFDVal() {
-	return ((SocketChannelImpl)sc).getFDVal();
+        return ((SocketChannelImpl)sc).getFDVal();
     }
 
     SinkChannelImpl(SelectorProvider sp, SocketChannel sc) {
-	super(sp);
-	this.sc = sc;
+        super(sp);
+        this.sc = sc;
     }
 
     protected void implCloseSelectableChannel() throws IOException {
-	if (!isRegistered())
-	    kill();
+        if (!isRegistered())
+            kill();
     }
 
     public void kill() throws IOException {
-	sc.close();
+        sc.close();
     }
 
     protected void implConfigureBlocking(boolean block) throws IOException {
-	sc.configureBlocking(block);
+        sc.configureBlocking(block);
     }
 
     public boolean translateReadyOps(int ops, int initialOps,
@@ -112,33 +110,33 @@ class SinkChannelImpl
     }
 
     public int write(ByteBuffer src) throws IOException {
-	try {
-	    return sc.write(src);
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return sc.write(src);
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 
     public long write(ByteBuffer[] srcs) throws IOException {
-	try {
-	    return sc.write(srcs);
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return sc.write(srcs);
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 
     public long write(ByteBuffer[] srcs, int offset, int length)
-	throws IOException
+        throws IOException
     {
         if ((offset < 0) || (length < 0) || (offset > srcs.length - length))
            throw new IndexOutOfBoundsException();
-	try {
-	    return write(Util.subsequence(srcs, offset, length));
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return write(Util.subsequence(srcs, offset, length));
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 }

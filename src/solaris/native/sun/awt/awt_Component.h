@@ -69,4 +69,3 @@ extern void processTree(Widget from, Widget to, Boolean action);
 struct CanvasIDs {
     jmethodID setGCFromPeerMID;
 };
-

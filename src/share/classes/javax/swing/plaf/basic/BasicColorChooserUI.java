@@ -44,7 +44,6 @@ import sun.swing.UIAction;
 /**
  * Provides the basic look and feel for a JColorChooser.
  * <p>
- * @version %I% %G%
  * @author Tom Santos
  * @author Steve Wilson
  */
@@ -73,19 +72,19 @@ public class BasicColorChooserUI extends ColorChooserUI
     private Handler handler;
 
     public static ComponentUI createUI(JComponent c) {
-	return new BasicColorChooserUI();
+        return new BasicColorChooserUI();
     }
 
     protected AbstractColorChooserPanel[] createDefaultChoosers() {
         AbstractColorChooserPanel[] panels = ColorChooserComponentFactory.getDefaultChooserPanels();
-	return panels;
+        return panels;
     }
 
     protected void uninstallDefaultChoosers() {
         AbstractColorChooserPanel[] choosers = chooser.getChooserPanels();
         for( int i = 0 ; i < choosers.length; i++) {
-       	    chooser.removeChooserPanel( choosers[i] );
-	}
+            chooser.removeChooserPanel( choosers[i] );
+        }
     }
 
     public void installUI( JComponent c ) {
@@ -93,22 +92,22 @@ public class BasicColorChooserUI extends ColorChooserUI
 
         super.installUI( c );
 
-	installDefaults();
-	installListeners();
+        installDefaults();
+        installListeners();
 
-	tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         tabbedPane.setName("ColorChooser.tabPane");
         tabbedPane.setInheritsPopupMenu(true);
-	singlePanel = new JPanel(new CenterLayout());
+        singlePanel = new JPanel(new CenterLayout());
         singlePanel.setName("ColorChooser.panel");
         singlePanel.setInheritsPopupMenu(true);
 
-	chooser.setLayout( new BorderLayout() );
+        chooser.setLayout( new BorderLayout() );
 
-	defaultChoosers = createDefaultChoosers();
-	chooser.setChooserPanels(defaultChoosers);
+        defaultChoosers = createDefaultChoosers();
+        chooser.setChooserPanels(defaultChoosers);
 
-	previewPanelHolder = new JPanel(new CenterLayout());
+        previewPanelHolder = new JPanel(new CenterLayout());
         previewPanelHolder.setName("ColorChooser.previewPanelHolder");
 
         if (DefaultLookup.getBoolean(chooser, this,
@@ -118,42 +117,42 @@ public class BasicColorChooserUI extends ColorChooserUI
             previewPanelHolder.setBorder(new TitledBorder(previewString));
         }
         previewPanelHolder.setInheritsPopupMenu(true);
-	chooser.add(previewPanelHolder, BorderLayout.SOUTH);
+        chooser.add(previewPanelHolder, BorderLayout.SOUTH);
 
-	installPreviewPanel();
-	chooser.applyComponentOrientation(c.getComponentOrientation());
+        installPreviewPanel();
+        chooser.applyComponentOrientation(c.getComponentOrientation());
     }
 
     public void uninstallUI( JComponent c ) {
-	chooser.remove(tabbedPane);
-	chooser.remove(singlePanel);
-	chooser.remove(previewPanelHolder);
+        chooser.remove(tabbedPane);
+        chooser.remove(singlePanel);
+        chooser.remove(previewPanelHolder);
 
         uninstallDefaultChoosers();
-	uninstallListeners();
-	uninstallDefaults();
+        uninstallListeners();
+        uninstallDefaults();
 
-	previewPanelHolder.remove(previewPanel);
-	if (previewPanel instanceof UIResource) {
-	    chooser.setPreviewPanel(null);
-	}
+        previewPanelHolder.remove(previewPanel);
+        if (previewPanel instanceof UIResource) {
+            chooser.setPreviewPanel(null);
+        }
 
-	previewPanelHolder = null;
-	previewPanel = null;
-	defaultChoosers = null;
-	chooser = null;
-	tabbedPane = null;
+        previewPanelHolder = null;
+        previewPanel = null;
+        defaultChoosers = null;
+        chooser = null;
+        tabbedPane = null;
 
         handler = null;
     }
 
     protected void installPreviewPanel() {
-	if (previewPanel != null) {
-	    previewPanelHolder.remove(previewPanel);
-	    previewPanel.removeMouseListener(getHandler());
-	}
+        if (previewPanel != null) {
+            previewPanelHolder.remove(previewPanel);
+            previewPanel.removeMouseListener(getHandler());
+        }
 
-	previewPanel = chooser.getPreviewPanel();
+        previewPanel = chooser.getPreviewPanel();
         Dimension layoutSize = new Dimension(); // fix for bug 4759306
         if (previewPanel != null) {
             layoutSize = new BorderLayout().minimumLayoutSize(previewPanel);
@@ -163,40 +162,40 @@ public class BasicColorChooserUI extends ColorChooserUI
               return;
             }
         }
-	if (previewPanel == null || previewPanel instanceof UIResource) { 
-	  previewPanel = ColorChooserComponentFactory.getPreviewPanel(); // get from table?
-	    chooser.setPreviewPanel(previewPanel);
-	}
-	previewPanel.setForeground(chooser.getColor());
-	previewPanelHolder.add(previewPanel);
-	previewPanel.addMouseListener(getHandler());
+        if (previewPanel == null || previewPanel instanceof UIResource) {
+          previewPanel = ColorChooserComponentFactory.getPreviewPanel(); // get from table?
+            chooser.setPreviewPanel(previewPanel);
+        }
+        previewPanel.setForeground(chooser.getColor());
+        previewPanelHolder.add(previewPanel);
+        previewPanel.addMouseListener(getHandler());
         previewPanel.setInheritsPopupMenu(true);
     }
 
     protected void installDefaults() {
-        LookAndFeel.installColorsAndFont(chooser, "ColorChooser.background", 
+        LookAndFeel.installColorsAndFont(chooser, "ColorChooser.background",
                                               "ColorChooser.foreground",
                                               "ColorChooser.font");
         LookAndFeel.installProperty(chooser, "opaque", Boolean.TRUE);
-	TransferHandler th = chooser.getTransferHandler();
-	if (th == null || th instanceof UIResource) {
-	    chooser.setTransferHandler(defaultTransferHandler);
-	}
+        TransferHandler th = chooser.getTransferHandler();
+        if (th == null || th instanceof UIResource) {
+            chooser.setTransferHandler(defaultTransferHandler);
+        }
     }
 
     protected void uninstallDefaults() {
-	if (chooser.getTransferHandler() instanceof UIResource) {
-	    chooser.setTransferHandler(null);
-	}
+        if (chooser.getTransferHandler() instanceof UIResource) {
+            chooser.setTransferHandler(null);
+        }
     }
 
-    
+
     protected void installListeners() {
         propertyChangeListener = createPropertyChangeListener();
-	chooser.addPropertyChangeListener( propertyChangeListener );
+        chooser.addPropertyChangeListener( propertyChangeListener );
 
-	previewListener = getHandler();
-	chooser.getSelectionModel().addChangeListener(previewListener);
+        previewListener = getHandler();
+        chooser.getSelectionModel().addChangeListener(previewListener);
     }
 
     private Handler getHandler() {
@@ -209,11 +208,11 @@ public class BasicColorChooserUI extends ColorChooserUI
     protected PropertyChangeListener createPropertyChangeListener() {
         return getHandler();
     }
-  
+
     protected void uninstallListeners() {
-	chooser.removePropertyChangeListener( propertyChangeListener );
-	chooser.getSelectionModel().removeChangeListener(previewListener);
-	previewPanel.removeMouseListener(getHandler());
+        chooser.removePropertyChangeListener( propertyChangeListener );
+        chooser.getSelectionModel().removeChangeListener(previewListener);
+        previewPanel.removeMouseListener(getHandler());
     }
 
 
@@ -255,7 +254,7 @@ public class BasicColorChooserUI extends ColorChooserUI
                 AbstractColorChooserPanel[] newPanels =
                     (AbstractColorChooserPanel[])evt.getNewValue();
 
-                for (int i = 0; i < oldPanels.length; i++) {  // remove old panels                  
+                for (int i = 0; i < oldPanels.length; i++) {  // remove old panels
                    Container wrapper = oldPanels[i].getParent();
                     if (wrapper != null) {
                       Container parent = wrapper.getParent();
@@ -269,7 +268,7 @@ public class BasicColorChooserUI extends ColorChooserUI
                 if (numNewPanels == 0) {  // removed all panels and added none
                     chooser.remove(tabbedPane);
                     return;
-                } 
+                }
                 else if (numNewPanels == 1) {  // one panel case
                     chooser.remove(tabbedPane);
                     JPanel centerWrapper = new JPanel( new CenterLayout() );
@@ -284,7 +283,7 @@ public class BasicColorChooserUI extends ColorChooserUI
                         chooser.add(tabbedPane, BorderLayout.CENTER);
                     }
 
-                    for (int i = 0; i < newPanels.length; i++) {            
+                    for (int i = 0; i < newPanels.length; i++) {
                         JPanel centerWrapper = new JPanel( new CenterLayout() );
                         centerWrapper.setInheritsPopupMenu(true);
                         String name = newPanels[i].getDisplayName();
@@ -334,12 +333,9 @@ public class BasicColorChooserUI extends ColorChooserUI
 
     static class ColorTransferHandler extends TransferHandler implements UIResource {
 
-	ColorTransferHandler() {
-	    super("color");
-	}
+        ColorTransferHandler() {
+            super("color");
+        }
     }
-    
+
 }
-
-
-

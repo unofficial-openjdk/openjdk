@@ -272,4 +272,3 @@ PALETTEENTRY AwtPalette::customPalette[] = {
 };
 
 #endif _AWT_CUSTOMPALETTEDEF_H
-

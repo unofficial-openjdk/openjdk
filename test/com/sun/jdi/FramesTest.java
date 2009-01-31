@@ -68,10 +68,10 @@ public class FramesTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new FramesTest(args).startTests();
     }
-    
+
     /********** test assist **********/
 
     void exceptionTest(int start, int length) {
@@ -82,7 +82,7 @@ public class FramesTest extends TestScaffold {
             gotException = true;
         } catch (Exception exc) {
             failure("unexpected exception thrown for: " +
-                    "start = " + start + ", length = " + length + 
+                    "start = " + start + ", length = " + length +
                     " - " + exc);
             gotException = true;
         }
@@ -92,7 +92,7 @@ public class FramesTest extends TestScaffold {
                     "start = " + start + ", length = " + length);
         }
     }
-    
+
     void nameTest(int start, int length) {
         try {
             List fs = mainThread.frames(start, length);
@@ -103,7 +103,7 @@ public class FramesTest extends TestScaffold {
             for (int i = 0; i < length; ++i) {
                 StackFrame sf = (StackFrame)(fs.get(i));
                 String name = sf.location().method().name();
-                String expected = expectedNames[start+i]; 
+                String expected = expectedNames[start+i];
                 if (!name.equals(expected)) {
                     failure("bad frame entry (" + start + "," + length +
                             ") - expected " + expected +
@@ -112,16 +112,16 @@ public class FramesTest extends TestScaffold {
             }
         } catch (Exception exc) {
             failure("unexpected exception thrown for: " +
-                    "start = " + start + ", length = " + length + 
+                    "start = " + start + ", length = " + length +
                     " - " + exc);
         }
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("FramesTarg");
@@ -129,7 +129,7 @@ public class FramesTest extends TestScaffold {
         mainThread = bpe.thread();
 
         int initialSize = mainThread.frames().size();
-        
+
         resumeTo("FramesTarg", "foo3", "()V");
 
         if (!mainThread.frame(0).location().method().name()
@@ -156,12 +156,12 @@ public class FramesTest extends TestScaffold {
         nameTest(0, 4);
         nameTest(2, 2);
         nameTest(1, 1);
-            
+
         /*
          * resume until end
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -173,4 +173,3 @@ public class FramesTest extends TestScaffold {
         }
     }
 }
-

@@ -32,13 +32,12 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 /**
- * A view implementation to display an unwrapped 
+ * A view implementation to display an unwrapped
  * preformatted line.<p>
  * This subclasses ParagraphView, but this really only contains one
  * Row of text.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 class LineView extends ParagraphView {
     /** Last place painted at. */
@@ -50,29 +49,29 @@ class LineView extends ParagraphView {
      * @param elem the element to wrap in a view
      */
     public LineView(Element elem) {
-	super(elem);
+        super(elem);
     }
 
     /**
-     * Preformatted lines are not suppressed if they 
+     * Preformatted lines are not suppressed if they
      * have only whitespace, so they are always visible.
      */
     public boolean isVisible() {
-	return true;
+        return true;
     }
 
     /**
      * Determines the minimum span for this view along an
-     * axis.  The preformatted line should refuse to be 
+     * axis.  The preformatted line should refuse to be
      * sized less than the preferred size.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or 
-     *	<code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *  <code>View.Y_AXIS</code>
      * @return  the minimum span the view can be rendered into
      * @see View#getPreferredSpan
      */
     public float getMinimumSpan(int axis) {
-	return getPreferredSpan(axis);
+        return getPreferredSpan(axis);
     }
 
     /**
@@ -82,14 +81,14 @@ class LineView extends ParagraphView {
      * @return the weight
      */
     public int getResizeWeight(int axis) {
-	switch (axis) {
-	case View.X_AXIS:
-	    return 1;
-	case View.Y_AXIS:
-	    return 0;
-	default:
-	    throw new IllegalArgumentException("Invalid axis: " + axis);
-	}
+        switch (axis) {
+        case View.X_AXIS:
+            return 1;
+        case View.Y_AXIS:
+            return 0;
+        default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
     }
 
     /**
@@ -99,19 +98,19 @@ class LineView extends ParagraphView {
      * @return the alignment
      */
     public float getAlignment(int axis) {
-	if (axis == View.X_AXIS) {
-	    return 0;
-	}
-	return super.getAlignment(axis);
+        if (axis == View.X_AXIS) {
+            return 0;
+        }
+        return super.getAlignment(axis);
     }
 
     /**
      * Lays out the children.  If the layout span has changed,
      * the rows are rebuilt.  The superclass functionality
      * is called after checking and possibly rebuilding the
-     * rows.  If the height has changed, the 
+     * rows.  If the height has changed, the
      * <code>preferenceChanged</code> method is called
-     * on the parent since the vertical preference is 
+     * on the parent since the vertical preference is
      * rigid.
      *
      * @param width  the width to lay out against >= 0.  This is
@@ -121,16 +120,16 @@ class LineView extends ParagraphView {
      *   is the height inside of the inset area.
      */
     protected void layout(int width, int height) {
-	super.layout(Integer.MAX_VALUE - 1, height);
+        super.layout(Integer.MAX_VALUE - 1, height);
     }
 
     /**
      * Returns the next tab stop position given a reference position.
      * This view implements the tab coordinate system, and calls
-     * <code>getTabbedSpan</code> on the logical children in the process 
+     * <code>getTabbedSpan</code> on the logical children in the process
      * of layout to determine the desired span of the children.  The
      * logical children can delegate their tab expansion upward to
-     * the paragraph which knows how to expand tabs. 
+     * the paragraph which knows how to expand tabs.
      * <code>LabelView</code> is an example of a view that delegates
      * its tab expansion needs upward to the paragraph.
      * <p>
@@ -150,38 +149,38 @@ class LineView extends ParagraphView {
      * @see LabelView
      */
     public float nextTabStop(float x, int tabOffset) {
-	// If the text isn't left justified, offset by 10 pixels!
-	if (getTabSet() == null &&
-	    StyleConstants.getAlignment(getAttributes()) ==
-	    StyleConstants.ALIGN_LEFT) {
-	    return getPreTab(x, tabOffset);
-	}
-	return super.nextTabStop(x, tabOffset);
+        // If the text isn't left justified, offset by 10 pixels!
+        if (getTabSet() == null &&
+            StyleConstants.getAlignment(getAttributes()) ==
+            StyleConstants.ALIGN_LEFT) {
+            return getPreTab(x, tabOffset);
+        }
+        return super.nextTabStop(x, tabOffset);
     }
 
     /**
      * Returns the location for the tab.
      */
     protected float getPreTab(float x, int tabOffset) {
-	Document d = getDocument();
-	View v = getViewAtPosition(tabOffset, null);
-	if ((d instanceof StyledDocument) && v != null) {
-	    // Assume f is fixed point.
-	    Font f = ((StyledDocument)d).getFont(v.getAttributes());
+        Document d = getDocument();
+        View v = getViewAtPosition(tabOffset, null);
+        if ((d instanceof StyledDocument) && v != null) {
+            // Assume f is fixed point.
+            Font f = ((StyledDocument)d).getFont(v.getAttributes());
             Container c = getContainer();
-	    FontMetrics fm = (c != null) ? c.getFontMetrics(f) :
+            FontMetrics fm = (c != null) ? c.getFontMetrics(f) :
                 Toolkit.getDefaultToolkit().getFontMetrics(f);
-	    int width = getCharactersPerTab() * fm.charWidth('W');
-	    int tb = (int)getTabBase();
-	    return (float)((((int)x - tb) / width + 1) * width + tb);
-	}
-	return 10.0f + x;
+            int width = getCharactersPerTab() * fm.charWidth('W');
+            int tb = (int)getTabBase();
+            return (float)((((int)x - tb) / width + 1) * width + tb);
+        }
+        return 10.0f + x;
     }
 
     /**
      * @return number of characters per tab, 8.
      */
     protected int getCharactersPerTab() {
-	return 8;
+        return 8;
     }
 }

@@ -25,17 +25,17 @@
  * @test
  * @bug 4993819
  * @summary standard extensions path is hard-coded in default
- *	system policy file
+ *      system policy file
  * @ignore run this by hand
  *
  *      javac ExtDirChange
  *      rm ExtDirsA*.class ExtDirsB*.class
- *	java	-Djava.security.manager \
+ *      java    -Djava.security.manager \
  *              -Dtest.src=. \
  *              -Djava.security.policy=ExtDirsChange.policy \
- *		-Djava.security.debug=parser \
+ *              -Djava.security.debug=parser \
  *              -cp ExtDirsA/a.jar:ExtDirsB/b.jar:. \
- *		ExtDirsChange
+ *              ExtDirsChange
  */
 
 import java.io.File;
@@ -43,78 +43,78 @@ import java.security.*;
 
 public class ExtDirsChange {
     public static void main(String args[]) throws Exception {
-	System.out.println("java.ext.dirs: " + 
-	    System.getProperty("java.ext.dirs"));
+        System.out.println("java.ext.dirs: " +
+            System.getProperty("java.ext.dirs"));
 
-	// Uses default security policy and java.ext.dirs
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    throw new Exception("Test Failed (Setup problem)");
-	} catch (SecurityException se) {
-	    System.out.println("Setup OK");
-	}
+        // Uses default security policy and java.ext.dirs
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            throw new Exception("Test Failed (Setup problem)");
+        } catch (SecurityException se) {
+            System.out.println("Setup OK");
+        }
 
-	// Change java.ext.dirs and refresh policy
-	AccessController.doPrivileged(new PrivilegedAction() {
-	    public Object run() {
-		// Change java.ext.dirs
-		System.setProperty("java.ext.dirs", 
-		    "ExtDirsA" + File.pathSeparator + "ExtDirsB");
-		System.out.println("java.ext.dirs: " + 
-		    System.getProperty("java.ext.dirs"));
-		return null;
-	    }
-	});
+        // Change java.ext.dirs and refresh policy
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                // Change java.ext.dirs
+                System.setProperty("java.ext.dirs",
+                    "ExtDirsA" + File.pathSeparator + "ExtDirsB");
+                System.out.println("java.ext.dirs: " +
+                    System.getProperty("java.ext.dirs"));
+                return null;
+            }
+        });
 
-	// Continue to use default security policy
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    throw new Exception("Test Failed (Setup before refresh problem)");
-	} catch (SecurityException se) {
-	    System.out.println("Setup before refresh OK");
-	}
+        // Continue to use default security policy
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            throw new Exception("Test Failed (Setup before refresh problem)");
+        } catch (SecurityException se) {
+            System.out.println("Setup before refresh OK");
+        }
 
-	// Refresh policy using updated java.ext.dirs
-	AccessController.doPrivileged(new PrivilegedAction() {
-	    public Object run() {
-		Policy.getPolicy().refresh();
-		return null;
-	    }
-	});
+        // Refresh policy using updated java.ext.dirs
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                Policy.getPolicy().refresh();
+                return null;
+            }
+        });
 
-	// Test should now succeed
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    System.out.println("Test Succeeded");
-	} catch (SecurityException se) {
-	    se.printStackTrace();
-	    System.out.println("Test Failed");
-	    throw se;
-	}
+        // Test should now succeed
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            System.out.println("Test Succeeded");
+        } catch (SecurityException se) {
+            se.printStackTrace();
+            System.out.println("Test Failed");
+            throw se;
+        }
 
-	// Test with blank java.ext.dir
-	// Change java.ext.dirs and refresh policy
-	AccessController.doPrivileged(new PrivilegedAction() {
-	    public Object run() {
-		// Change java.ext.dirs
-		System.setProperty("java.ext.dirs", " ");
-		System.out.println("java.ext.dirs: " + 
-		    System.getProperty("java.ext.dirs"));
-		Policy.getPolicy().refresh();
-		return null;
-	    }
-	});
+        // Test with blank java.ext.dir
+        // Change java.ext.dirs and refresh policy
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                // Change java.ext.dirs
+                System.setProperty("java.ext.dirs", " ");
+                System.out.println("java.ext.dirs: " +
+                    System.getProperty("java.ext.dirs"));
+                Policy.getPolicy().refresh();
+                return null;
+            }
+        });
 
-	// Test with blank java.ext.dir
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    throw new Exception("Blank Test Failed");
-	} catch (SecurityException se) {
-	    System.out.println("Blank Test OK");
-	}
+        // Test with blank java.ext.dir
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            throw new Exception("Blank Test Failed");
+        } catch (SecurityException se) {
+            System.out.println("Blank Test OK");
+        }
     }
 }

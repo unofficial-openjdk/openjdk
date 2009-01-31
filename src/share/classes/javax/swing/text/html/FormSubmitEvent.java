@@ -31,7 +31,6 @@ import java.net.URL;
  * FormSubmitEvent is used to notify interested
  * parties that a form was submited.
  *
- * @version %I% %G%
  * @since 1.5
  * @author    Denis Sharypov
  */
@@ -60,7 +59,7 @@ public class FormSubmitEvent extends HTMLFrameHyperlinkEvent {
      * @param method the form method type
      * @param data the form submission data
      */
-    FormSubmitEvent(Object source, EventType type, URL targetURL, 
+    FormSubmitEvent(Object source, EventType type, URL targetURL,
                    Element sourceElement, String targetFrame,
                     MethodType method, String data) {
         super(source, type, targetURL, sourceElement, targetFrame);

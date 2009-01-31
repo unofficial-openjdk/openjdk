@@ -65,8 +65,8 @@ public class PrintServiceAttributeEvent extends PrintEvent {
      * @return  Print Service object.
      */
     public PrintService getPrintService() {
- 
-    	return (PrintService) getSource();
+
+        return (PrintService) getSource();
     }
 
 
@@ -79,7 +79,7 @@ public class PrintServiceAttributeEvent extends PrintEvent {
      */
     public PrintServiceAttributeSet getAttributes() {
 
-	return attributes;
+        return attributes;
     }
 
 }

@@ -74,21 +74,20 @@ import sun.security.util.ObjectIdentifier;
  * <p>
  * @author Anne Anderson
  * @author Andreas Sterbenz
- * @version %I%, %G%
  * @since 1.4.2
  * @see DistributionPoint
  * @see Extension
  * @see CertAttrSet
  */
 public class CRLDistributionPointsExtension extends Extension
-	implements CertAttrSet<String> {
+        implements CertAttrSet<String> {
 
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
      */
-    public static final String IDENT = 
-    				"x509.info.extensions.CRLDistributionPoints";
+    public static final String IDENT =
+                                "x509.info.extensions.CRLDistributionPoints";
 
     /**
      * Attribute name.
@@ -111,9 +110,9 @@ public class CRLDistributionPointsExtension extends Extension
      * @throws IOException on error
      */
     public CRLDistributionPointsExtension(
-	List<DistributionPoint> distributionPoints) throws IOException {
+        List<DistributionPoint> distributionPoints) throws IOException {
 
-	this(false, distributionPoints);
+        this(false, distributionPoints);
     }
 
     /**
@@ -124,25 +123,25 @@ public class CRLDistributionPointsExtension extends Extension
      * @param distributionPoints the list of distribution points
      * @throws IOException on error
      */
-    public CRLDistributionPointsExtension(boolean isCritical, 
-	List<DistributionPoint> distributionPoints) throws IOException {
+    public CRLDistributionPointsExtension(boolean isCritical,
+        List<DistributionPoint> distributionPoints) throws IOException {
 
-        this(PKIXExtensions.CRLDistributionPoints_Id, isCritical, 
-	    distributionPoints, NAME);
+        this(PKIXExtensions.CRLDistributionPoints_Id, isCritical,
+            distributionPoints, NAME);
     }
 
     /**
      * Creates the extension (also called by the subclass).
      */
     protected CRLDistributionPointsExtension(ObjectIdentifier extensionId,
-	boolean isCritical, List<DistributionPoint> distributionPoints,
-	    String extensionName) throws IOException {
+        boolean isCritical, List<DistributionPoint> distributionPoints,
+            String extensionName) throws IOException {
 
         this.extensionId = extensionId;
         this.critical = isCritical;
         this.distributionPoints = distributionPoints;
         encodeThis();
-	this.extensionName = extensionName;
+        this.extensionName = extensionName;
     }
 
     /**
@@ -153,37 +152,37 @@ public class CRLDistributionPointsExtension extends Extension
      * @exception IOException on error.
      */
     public CRLDistributionPointsExtension(Boolean critical, Object value)
-	    throws IOException {
-	this(PKIXExtensions.CRLDistributionPoints_Id, critical, value, NAME);
+            throws IOException {
+        this(PKIXExtensions.CRLDistributionPoints_Id, critical, value, NAME);
     }
 
     /**
      * Creates the extension (also called by the subclass).
      */
     protected CRLDistributionPointsExtension(ObjectIdentifier extensionId,
-	Boolean critical, Object value, String extensionName)
-	    throws IOException {
+        Boolean critical, Object value, String extensionName)
+            throws IOException {
 
         this.extensionId = extensionId;
         this.critical = critical.booleanValue();
 
-	if (!(value instanceof byte[])) {
-	    throw new IOException("Illegal argument type");
-	}
-	
-	extensionValue = (byte[])value;
+        if (!(value instanceof byte[])) {
+            throw new IOException("Illegal argument type");
+        }
+
+        extensionValue = (byte[])value;
         DerValue val = new DerValue(extensionValue);
-	if (val.tag != DerValue.tag_Sequence) {
-	    throw new IOException("Invalid encoding for " + extensionName +
-				  " extension.");
-	}
-	distributionPoints = new ArrayList<DistributionPoint>();
-	while (val.data.available() != 0) {
-	    DerValue seq = val.data.getDerValue();
-	    DistributionPoint point = new DistributionPoint(seq);
-	    distributionPoints.add(point);
-	}
-	this.extensionName = extensionName;
+        if (val.tag != DerValue.tag_Sequence) {
+            throw new IOException("Invalid encoding for " + extensionName +
+                                  " extension.");
+        }
+        distributionPoints = new ArrayList<DistributionPoint>();
+        while (val.data.available() != 0) {
+            DerValue seq = val.data.getDerValue();
+            DistributionPoint point = new DistributionPoint(seq);
+            distributionPoints.add(point);
+        }
+        this.extensionName = extensionName;
     }
 
     /**
@@ -200,7 +199,7 @@ public class CRLDistributionPointsExtension extends Extension
      * @exception IOException on encoding errors.
      */
     public void encode(OutputStream out) throws IOException {
-	encode(out, PKIXExtensions.CRLDistributionPoints_Id, false);
+        encode(out, PKIXExtensions.CRLDistributionPoints_Id, false);
     }
 
     /**
@@ -208,32 +207,32 @@ public class CRLDistributionPointsExtension extends Extension
      * (Also called by the subclass)
      */
     protected void encode(OutputStream out, ObjectIdentifier extensionId,
-	boolean isCritical) throws IOException {
+        boolean isCritical) throws IOException {
 
         DerOutputStream tmp = new DerOutputStream();
         if (this.extensionValue == null) {
-	    this.extensionId = extensionId;
-	    this.critical = isCritical;
-	    encodeThis();
-	}
-	super.encode(tmp);
-	out.write(tmp.toByteArray());
+            this.extensionId = extensionId;
+            this.critical = isCritical;
+            encodeThis();
+        }
+        super.encode(tmp);
+        out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-	if (name.equalsIgnoreCase(POINTS)) {
-	    if (!(obj instanceof List)) {
-	        throw new IOException("Attribute value should be of type List.");
-	    }
-	    distributionPoints = (List<DistributionPoint>)obj;
-	} else {
-	    throw new IOException("Attribute name [" + name + 
+        if (name.equalsIgnoreCase(POINTS)) {
+            if (!(obj instanceof List)) {
+                throw new IOException("Attribute value should be of type List.");
+            }
+            distributionPoints = (List<DistributionPoint>)obj;
+        } else {
+            throw new IOException("Attribute name [" + name +
                                 "] not recognized by " +
-				"CertAttrSet:" + extensionName + ".");
-	}
+                                "CertAttrSet:" + extensionName + ".");
+        }
         encodeThis();
     }
 
@@ -241,26 +240,26 @@ public class CRLDistributionPointsExtension extends Extension
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-	if (name.equalsIgnoreCase(POINTS)) {
-	    return distributionPoints;
-	} else {
-	    throw new IOException("Attribute name [" + name + 
-				"] not recognized by " +
-				"CertAttrSet:" + extensionName + ".");
-	}
+        if (name.equalsIgnoreCase(POINTS)) {
+            return distributionPoints;
+        } else {
+            throw new IOException("Attribute name [" + name +
+                                "] not recognized by " +
+                                "CertAttrSet:" + extensionName + ".");
+        }
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-	if (name.equalsIgnoreCase(POINTS)) {
-	    distributionPoints = new ArrayList<DistributionPoint>();
-	} else {
-	    throw new IOException("Attribute name [" + name + 
-			        "] not recognized by " +
-				"CertAttrSet:" + extensionName + ".");
-	}
+        if (name.equalsIgnoreCase(POINTS)) {
+            distributionPoints = new ArrayList<DistributionPoint>();
+        } else {
+            throw new IOException("Attribute name [" + name +
+                                "] not recognized by " +
+                                "CertAttrSet:" + extensionName + ".");
+        }
         encodeThis();
     }
 
@@ -271,7 +270,7 @@ public class CRLDistributionPointsExtension extends Extension
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(POINTS);
-	return elements.elements();
+        return elements.elements();
     }
 
      // Encode this extension value
@@ -279,14 +278,14 @@ public class CRLDistributionPointsExtension extends Extension
         if (distributionPoints.isEmpty()) {
             this.extensionValue = null;
         } else {
-	    DerOutputStream pnts = new DerOutputStream();
-	    for (DistributionPoint point : distributionPoints) {
-		point.encode(pnts);
-	    }
-	    DerOutputStream seq = new DerOutputStream();
-	    seq.write(DerValue.tag_Sequence, pnts);
-	    this.extensionValue = seq.toByteArray();
-	}
+            DerOutputStream pnts = new DerOutputStream();
+            for (DistributionPoint point : distributionPoints) {
+                point.encode(pnts);
+            }
+            DerOutputStream seq = new DerOutputStream();
+            seq.write(DerValue.tag_Sequence, pnts);
+            this.extensionValue = seq.toByteArray();
+        }
     }
 
     /**
@@ -294,7 +293,7 @@ public class CRLDistributionPointsExtension extends Extension
      */
     public String toString() {
         return super.toString() + extensionName + " [\n  "
-	       + distributionPoints + "]\n";
+               + distributionPoints + "]\n";
     }
 
 }

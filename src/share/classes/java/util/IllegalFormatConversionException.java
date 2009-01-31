@@ -33,7 +33,6 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class IllegalFormatConversionException extends IllegalFormatException {
@@ -54,10 +53,10 @@ public class IllegalFormatConversionException extends IllegalFormatException {
      *         Class of the mismatched argument
      */
     public IllegalFormatConversionException(char c, Class<?> arg) {
-	if (arg == null)
-	    throw new NullPointerException();
-	this.c = c;
-	this.arg = arg;
+        if (arg == null)
+            throw new NullPointerException();
+        this.c = c;
+        this.arg = arg;
     }
 
     /**
@@ -66,7 +65,7 @@ public class IllegalFormatConversionException extends IllegalFormatException {
      * @return  The inapplicable conversion
      */
     public char getConversion() {
-	return c;
+        return c;
     }
 
     /**
@@ -75,11 +74,11 @@ public class IllegalFormatConversionException extends IllegalFormatException {
      * @return   The class of the mismatched argument
      */
     public Class<?> getArgumentClass() {
-	return arg;
+        return arg;
     }
 
     // javadoc inherited from Throwable.java
     public String getMessage() {
-	return String.format("%c != %s", c, arg.getName());
+        return String.format("%c != %s", c, arg.getName());
     }
 }

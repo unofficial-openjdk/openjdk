@@ -41,7 +41,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
             stem = stem.substring(1);
         } else if (classId.endsWith("*")) {
             stem = stem.substring(0, classId.length() - 1);
-        } 
+        }
         checkClassName(stem);
     }
 
@@ -50,7 +50,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
      */
     public boolean isUnique() {
         return classId.equals(stem);
-    } 
+    }
 
     /**
      * Does the specified ReferenceType match this spec.
@@ -66,7 +66,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
     }
 
     public ClassPrepareRequest createPrepareRequest() {
-        ClassPrepareRequest request = 
+        ClassPrepareRequest request =
             Env.vm().eventRequestManager().createClassPrepareRequest();
         request.addClassFilter(classId);
         request.addCountFilter(1);
@@ -96,7 +96,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             // Each dot-separated piece must be a valid identifier
-            // and the first token can also be "*". (Note that 
+            // and the first token can also be "*". (Note that
             // numeric class ids are not permitted. They must
             // match a loaded class.)
             if (!isJavaIdentifier(token)) {
@@ -106,7 +106,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
     }
 
     private boolean isJavaIdentifier(String s) {
-        if (s.length() == 0) {                              
+        if (s.length() == 0) {
             return false;
         }
 
@@ -129,5 +129,3 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
         return classId;
     }
 }
-
-

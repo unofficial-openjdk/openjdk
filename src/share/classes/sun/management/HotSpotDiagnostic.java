@@ -22,15 +22,15 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-                                                                                  
+
 package sun.management;
-                                                                                  
+
 import java.util.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import com.sun.management.VMOption;
-                                                                                  
+
 /**
  * Implementation of the diagnostic MBean for Hotspot VM.
  */
@@ -58,7 +58,7 @@ public class HotSpotDiagnostic implements HotSpotDiagnosticMXBean {
 
         Flag f = Flag.getFlag(name);
         if (f == null) {
-            throw new IllegalArgumentException("VM option \"" + 
+            throw new IllegalArgumentException("VM option \"" +
                 name + "\" does not exist");
         }
         return f.getVMOption();
@@ -75,14 +75,14 @@ public class HotSpotDiagnostic implements HotSpotDiagnosticMXBean {
         ManagementFactory.checkControlAccess();
         Flag flag = Flag.getFlag(name);
         if (flag == null) {
-            throw new IllegalArgumentException("VM option \"" + 
+            throw new IllegalArgumentException("VM option \"" +
                 name + "\" does not exist");
         }
         if (!flag.isWriteable()){
-            throw new IllegalArgumentException("VM Option \"" + 
+            throw new IllegalArgumentException("VM Option \"" +
                 name + "\" is not writeable");
         }
-    
+
         // Check the type of the value
         Object v = flag.getValue();
         if (v instanceof Long) {
@@ -90,7 +90,7 @@ public class HotSpotDiagnostic implements HotSpotDiagnosticMXBean {
                 long l = Long.parseLong(value);
                 Flag.setLongValue(name, l);
             } catch (NumberFormatException e) {
-                IllegalArgumentException iae = 
+                IllegalArgumentException iae =
                     new IllegalArgumentException("Invalid value:" +
                         " VM Option \"" + name + "\"" +
                         " expects numeric value");
@@ -103,14 +103,14 @@ public class HotSpotDiagnostic implements HotSpotDiagnosticMXBean {
                 throw new IllegalArgumentException("Invalid value:" +
                     " VM Option \"" + name + "\"" +
                     " expects \"true\" or \"false\".");
-            } 
+            }
             Flag.setBooleanValue(name, Boolean.parseBoolean(value));
         } else if (v instanceof String) {
             Flag.setStringValue(name, value);
         } else {
-            throw new IllegalArgumentException("VM Option \"" + 
+            throw new IllegalArgumentException("VM Option \"" +
                 name + "\" is of an unsupported type: " +
                 v.getClass().getName());
-        } 
+        }
     }
 }

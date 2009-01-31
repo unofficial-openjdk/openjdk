@@ -49,7 +49,7 @@
  * pkcs11wrapper.c
  * 18.05.2001
  *
- * This module contains the native functions of the Java to PKCS#11 interface 
+ * This module contains the native functions of the Java to PKCS#11 interface
  * which are platform dependent. This includes loading a dynamic link libary,
  * retrieving the function list and unloading the dynamic link library.
  *
@@ -95,25 +95,25 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
    */
     hModule = LoadLibrary(libraryNameStr);
     if (hModule == NULL) {
-	FormatMessage(
-	    FORMAT_MESSAGE_ALLOCATE_BUFFER |
-	    FORMAT_MESSAGE_FROM_SYSTEM |
-	    FORMAT_MESSAGE_IGNORE_INSERTS,
-	    NULL,
-	    GetLastError(),
-	    0, /* Default language */
-	    (LPTSTR) &lpMsgBuf,
-	    0,
-	    NULL
-	);
-	exceptionMessage = (char *) malloc(sizeof(char) * (strlen((LPTSTR) lpMsgBuf) + strlen(libraryNameStr) + 1));
-	strcpy(exceptionMessage, (LPTSTR) lpMsgBuf);
-	strcat(exceptionMessage, libraryNameStr);
-	throwIOException(env, (LPTSTR) exceptionMessage);
-	/* Free the buffer. */
-	free(exceptionMessage);
-	LocalFree(lpMsgBuf);
-	return;
+        FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            GetLastError(),
+            0, /* Default language */
+            (LPTSTR) &lpMsgBuf,
+            0,
+            NULL
+        );
+        exceptionMessage = (char *) malloc(sizeof(char) * (strlen((LPTSTR) lpMsgBuf) + strlen(libraryNameStr) + 1));
+        strcpy(exceptionMessage, (LPTSTR) lpMsgBuf);
+        strcat(exceptionMessage, libraryNameStr);
+        throwIOException(env, (LPTSTR) exceptionMessage);
+        /* Free the buffer. */
+        free(exceptionMessage);
+        LocalFree(lpMsgBuf);
+        return;
     }
 
     /*
@@ -123,21 +123,21 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
     C_GetFunctionList = (CK_C_GetFunctionList) GetProcAddress(hModule, getFunctionListStr);
     (*env)->ReleaseStringUTFChars(env, jGetFunctionList, getFunctionListStr);
     if (C_GetFunctionList == NULL) {
-	FormatMessage(
-	    FORMAT_MESSAGE_ALLOCATE_BUFFER |
-	    FORMAT_MESSAGE_FROM_SYSTEM |
-	    FORMAT_MESSAGE_IGNORE_INSERTS,
-	    NULL,
-	    GetLastError(),
-	    0, /* Default language */
-	    (LPTSTR) &lpMsgBuf,
-	    0,
-	    NULL
-	);
-	throwIOException(env, (LPTSTR) lpMsgBuf);
-	/* Free the buffer. */
-	LocalFree( lpMsgBuf );
-	return;
+        FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            GetLastError(),
+            0, /* Default language */
+            (LPTSTR) &lpMsgBuf,
+            0,
+            NULL
+        );
+        throwIOException(env, (LPTSTR) lpMsgBuf);
+        /* Free the buffer. */
+        LocalFree( lpMsgBuf );
+        return;
     }
 
     /*
@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_disconnect
     moduleData = removeModuleEntry(env, obj);
 
     if (moduleData != NULL) {
-	FreeLibrary(moduleData->hModule);
+        FreeLibrary(moduleData->hModule);
     }
 
     free(moduleData);

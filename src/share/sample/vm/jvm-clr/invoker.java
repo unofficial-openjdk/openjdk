@@ -50,9 +50,9 @@ public class invoker {
 
             // Invoke CLR assembly
             int nResult = invokeCLR(sApplication);
-      
+
             System.exit(nResult);
-    
+
         }else
             System.out.println("Usage: java invoker <application>");
     }

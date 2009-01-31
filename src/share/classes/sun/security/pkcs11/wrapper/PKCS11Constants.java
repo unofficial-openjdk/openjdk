@@ -94,7 +94,6 @@ package sun.security.pkcs11.wrapper;
  * </pre>
  *
  * @author <a href="mailto:Karl.Scheibelhofer@iaik.at"> Karl Scheibelhofer </a>
- * @version 1.0
  * @invariants
  */
 public interface PKCS11Constants {

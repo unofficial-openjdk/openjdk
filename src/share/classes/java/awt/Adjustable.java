@@ -31,7 +31,6 @@ import java.awt.event.*;
  * The interface for objects which have an adjustable numeric value
  * contained within a bounded range of values.
  *
- * @version %I% %G%
  * @author Amy Fowler
  * @author Tim Prinzing
  */
@@ -39,19 +38,19 @@ import java.awt.event.*;
 public interface Adjustable {
 
     /**
-     * Indicates that the <code>Adjustable</code> has horizontal orientation.  
+     * Indicates that the <code>Adjustable</code> has horizontal orientation.
      */
-    public static final int HORIZONTAL = 0; 
+    public static final int HORIZONTAL = 0;
 
     /**
-     * Indicates that the <code>Adjustable</code> has vertical orientation.  
+     * Indicates that the <code>Adjustable</code> has vertical orientation.
      */
-    public static final int VERTICAL = 1;    
+    public static final int VERTICAL = 1;
 
     /**
-     * Indicates that the <code>Adjustable</code> has no orientation.  
+     * Indicates that the <code>Adjustable</code> has no orientation.
      */
-    public static final int NO_ORIENTATION = 2;    
+    public static final int NO_ORIENTATION = 2;
 
     /**
      * Gets the orientation of the adjustable object.
@@ -129,7 +128,7 @@ public interface Adjustable {
      * then one of those values is substituted, as appropriate.
      * <p>
      * Calling this method does not fire an
-     * <code>AdjustmentEvent</code>. 
+     * <code>AdjustmentEvent</code>.
      *
      * @param v the current value, between <code>minimum</code>
      *    and <code>maximum</code> - <code>visibleAmount</code>
@@ -147,14 +146,14 @@ public interface Adjustable {
      * the adjustable object changes.
      * @param l the listener to receive events
      * @see AdjustmentEvent
-     */    
+     */
     void addAdjustmentListener(AdjustmentListener l);
 
     /**
      * Removes an adjustment listener.
      * @param l the listener being removed
      * @see AdjustmentEvent
-     */ 
+     */
     void removeAdjustmentListener(AdjustmentListener l);
 
-}    
+}

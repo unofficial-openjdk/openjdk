@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package sun.security.util;
 
 import java.security.CodeSigner;
@@ -51,8 +51,8 @@ public class SignatureFileVerifier {
     private ArrayList<CodeSigner[]> signerCache;
 
     private static final String ATTR_DIGEST =
-	("-DIGEST-" + ManifestDigester.MF_MAIN_ATTRS).toUpperCase
-	(Locale.ENGLISH);
+        ("-DIGEST-" + ManifestDigester.MF_MAIN_ATTRS).toUpperCase
+        (Locale.ENGLISH);
 
     /** the PKCS7 block for this .DSA/.RSA file */
     private PKCS7 block;
@@ -61,7 +61,7 @@ public class SignatureFileVerifier {
     private byte sfBytes[];
 
     /** the name of the signature block file, uppercased and without
-     *  the extension (.DSA/.RSA) 
+     *  the extension (.DSA/.RSA)
      */
     private String name;
 
@@ -85,26 +85,26 @@ public class SignatureFileVerifier {
      * @param rawBytes the raw bytes of the signature block file
      */
     public SignatureFileVerifier(ArrayList<CodeSigner[]> signerCache,
-				 ManifestDigester md,
-				 String name,
-				 byte rawBytes[])
-	throws IOException, CertificateException
+                                 ManifestDigester md,
+                                 String name,
+                                 byte rawBytes[])
+        throws IOException, CertificateException
     {
-	// new PKCS7() calls CertificateFactory.getInstance()
-	// need to use local providers here, see Providers class
-	Object obj = null;
-	try {
-	    obj = Providers.startJarVerification();
-	    block = new PKCS7(rawBytes);
-	    sfBytes = block.getContentInfo().getData();
-	    certificateFactory = CertificateFactory.getInstance("X509");
-	} finally {
-	    Providers.stopJarVerification(obj);
-	}
-	this.name = name.substring(0, name.lastIndexOf("."))
+        // new PKCS7() calls CertificateFactory.getInstance()
+        // need to use local providers here, see Providers class
+        Object obj = null;
+        try {
+            obj = Providers.startJarVerification();
+            block = new PKCS7(rawBytes);
+            sfBytes = block.getContentInfo().getData();
+            certificateFactory = CertificateFactory.getInstance("X509");
+        } finally {
+            Providers.stopJarVerification(obj);
+        }
+        this.name = name.substring(0, name.lastIndexOf("."))
                                                    .toUpperCase(Locale.ENGLISH);
-	this.md = md;
-	this.signerCache = signerCache;
+        this.md = md;
+        this.signerCache = signerCache;
     }
 
     /**
@@ -113,7 +113,7 @@ public class SignatureFileVerifier {
     public boolean needSignatureFileBytes()
     {
 
-	return sfBytes == null;
+        return sfBytes == null;
     }
 
 
@@ -125,16 +125,16 @@ public class SignatureFileVerifier {
      */
     public boolean needSignatureFile(String name)
     {
-	return this.name.equalsIgnoreCase(name);
+        return this.name.equalsIgnoreCase(name);
     }
 
     /**
-     * used to set the raw bytes of the .SF file when it 
+     * used to set the raw bytes of the .SF file when it
      * is external to the signature block file.
      */
     public void setSignatureFile(byte sfBytes[])
     {
-	this.sfBytes = sfBytes;
+        this.sfBytes = sfBytes;
     }
 
     /**
@@ -147,31 +147,31 @@ public class SignatureFileVerifier {
      *          Signature File or PKCS7 block file name
      */
     public static boolean isBlockOrSF(String s) {
-	// we currently only support DSA and RSA PKCS7 blocks
-	if (s.endsWith(".SF") || s.endsWith(".DSA") || s.endsWith(".RSA")) {
-	    return true;
-	}
-	return false;
+        // we currently only support DSA and RSA PKCS7 blocks
+        if (s.endsWith(".SF") || s.endsWith(".DSA") || s.endsWith(".RSA")) {
+            return true;
+        }
+        return false;
     }
 
     /** get digest from cache */
 
     private MessageDigest getDigest(String algorithm)
     {
-	if (createdDigests == null)
-	    createdDigests = new HashMap<String, MessageDigest>();
+        if (createdDigests == null)
+            createdDigests = new HashMap<String, MessageDigest>();
 
-	MessageDigest digest = createdDigests.get(algorithm);
+        MessageDigest digest = createdDigests.get(algorithm);
 
-	if (digest == null) {
-	    try {
-		digest = MessageDigest.getInstance(algorithm);
-		createdDigests.put(algorithm, digest);
-	    } catch (NoSuchAlgorithmException nsae) {
-		// ignore
-	    }
-	}
-	return digest;
+        if (digest == null) {
+            try {
+                digest = MessageDigest.getInstance(algorithm);
+                createdDigests.put(algorithm, digest);
+            } catch (NoSuchAlgorithmException nsae) {
+                // ignore
+            }
+        }
+        return digest;
     }
 
     /**
@@ -182,192 +182,192 @@ public class SignatureFileVerifier {
      *
      */
     public void process(Hashtable<String, CodeSigner[]> signers)
-	throws IOException, SignatureException, NoSuchAlgorithmException,
-	    JarException, CertificateException
+        throws IOException, SignatureException, NoSuchAlgorithmException,
+            JarException, CertificateException
     {
-	// calls Signature.getInstance() and MessageDigest.getInstance()
-	// need to use local providers here, see Providers class
-	Object obj = null;
-	try {
-	    obj = Providers.startJarVerification();
-	    processImpl(signers);
-	} finally {
-	    Providers.stopJarVerification(obj);
-	}
+        // calls Signature.getInstance() and MessageDigest.getInstance()
+        // need to use local providers here, see Providers class
+        Object obj = null;
+        try {
+            obj = Providers.startJarVerification();
+            processImpl(signers);
+        } finally {
+            Providers.stopJarVerification(obj);
+        }
 
     }
 
     private void processImpl(Hashtable<String, CodeSigner[]> signers)
-	throws IOException, SignatureException, NoSuchAlgorithmException,
-	    JarException, CertificateException
+        throws IOException, SignatureException, NoSuchAlgorithmException,
+            JarException, CertificateException
     {
-	Manifest sf = new Manifest();
-	sf.read(new ByteArrayInputStream(sfBytes));
+        Manifest sf = new Manifest();
+        sf.read(new ByteArrayInputStream(sfBytes));
 
-	String version = 
-	    sf.getMainAttributes().getValue(Attributes.Name.SIGNATURE_VERSION);
+        String version =
+            sf.getMainAttributes().getValue(Attributes.Name.SIGNATURE_VERSION);
 
-	if ((version == null) || !(version.equalsIgnoreCase("1.0"))) {
-	    // XXX: should this be an exception?
-	    // for now we just ignore this signature file
-	    return;
-	}
+        if ((version == null) || !(version.equalsIgnoreCase("1.0"))) {
+            // XXX: should this be an exception?
+            // for now we just ignore this signature file
+            return;
+        }
 
-	SignerInfo[] infos = block.verify(sfBytes);
+        SignerInfo[] infos = block.verify(sfBytes);
 
-	if (infos == null) {
-	    throw new SecurityException("cannot verify signature block file " +
-					name);
-	}
+        if (infos == null) {
+            throw new SecurityException("cannot verify signature block file " +
+                                        name);
+        }
 
-	BASE64Decoder decoder = new BASE64Decoder();
+        BASE64Decoder decoder = new BASE64Decoder();
 
-	CodeSigner[] newSigners = getSigners(infos, block);
+        CodeSigner[] newSigners = getSigners(infos, block);
 
-	// make sure we have something to do all this work for...
-	if (newSigners == null)
-	    return;
+        // make sure we have something to do all this work for...
+        if (newSigners == null)
+            return;
 
-	Iterator<Map.Entry<String,Attributes>> entries =
-				sf.getEntries().entrySet().iterator();
+        Iterator<Map.Entry<String,Attributes>> entries =
+                                sf.getEntries().entrySet().iterator();
 
-	// see if we can verify the whole manifest first
-	boolean manifestSigned = verifyManifestHash(sf, md, decoder);
+        // see if we can verify the whole manifest first
+        boolean manifestSigned = verifyManifestHash(sf, md, decoder);
 
-	// verify manifest main attributes
-	if (!manifestSigned && !verifyManifestMainAttrs(sf, md, decoder)) {
-	    throw new SecurityException
-		("Invalid signature file digest for Manifest main attributes");
-	}
+        // verify manifest main attributes
+        if (!manifestSigned && !verifyManifestMainAttrs(sf, md, decoder)) {
+            throw new SecurityException
+                ("Invalid signature file digest for Manifest main attributes");
+        }
 
         // go through each section in the signature file
-	while(entries.hasNext()) {
+        while(entries.hasNext()) {
 
-	    Map.Entry<String,Attributes> e = entries.next();
-	    String name = e.getKey();
+            Map.Entry<String,Attributes> e = entries.next();
+            String name = e.getKey();
 
-	    if (manifestSigned ||
-		(verifySection(e.getValue(), name, md, decoder))) {
+            if (manifestSigned ||
+                (verifySection(e.getValue(), name, md, decoder))) {
 
-		if (name.startsWith("./"))
-		    name = name.substring(2);
+                if (name.startsWith("./"))
+                    name = name.substring(2);
 
-		if (name.startsWith("/"))
-		    name = name.substring(1);
+                if (name.startsWith("/"))
+                    name = name.substring(1);
 
-		updateSigners(newSigners, signers, name);
+                updateSigners(newSigners, signers, name);
 
-		if (debug != null) {
-		    debug.println("processSignature signed name = "+name);
-		}
+                if (debug != null) {
+                    debug.println("processSignature signed name = "+name);
+                }
 
-	    } else if (debug != null) {
-		debug.println("processSignature unsigned name = "+name);
-	    }
-	}
+            } else if (debug != null) {
+                debug.println("processSignature unsigned name = "+name);
+            }
+        }
     }
 
     /**
      * See if the whole manifest was signed.
      */
     private boolean verifyManifestHash(Manifest sf,
-				       ManifestDigester md,
-				       BASE64Decoder decoder)
-	 throws IOException
+                                       ManifestDigester md,
+                                       BASE64Decoder decoder)
+         throws IOException
     {
-	Attributes mattr = sf.getMainAttributes();
-	boolean manifestSigned = false;
+        Attributes mattr = sf.getMainAttributes();
+        boolean manifestSigned = false;
 
-	// go through all the attributes and process *-Digest-Manifest entries
-	for (Map.Entry<Object,Object> se : mattr.entrySet()) {
+        // go through all the attributes and process *-Digest-Manifest entries
+        for (Map.Entry<Object,Object> se : mattr.entrySet()) {
 
-	    String key = se.getKey().toString();
+            String key = se.getKey().toString();
 
-	    if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST-MANIFEST")) {
-		// 16 is length of "-Digest-Manifest"
-		String algorithm = key.substring(0, key.length()-16);
+            if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST-MANIFEST")) {
+                // 16 is length of "-Digest-Manifest"
+                String algorithm = key.substring(0, key.length()-16);
 
-		MessageDigest digest = getDigest(algorithm);
-		if (digest != null) {
-		    byte[] computedHash = md.manifestDigest(digest);
-		    byte[] expectedHash = 
-			decoder.decodeBuffer((String)se.getValue());
+                MessageDigest digest = getDigest(algorithm);
+                if (digest != null) {
+                    byte[] computedHash = md.manifestDigest(digest);
+                    byte[] expectedHash =
+                        decoder.decodeBuffer((String)se.getValue());
 
-		    if (debug != null) {
-		     debug.println("Signature File: Manifest digest " +
-					  digest.getAlgorithm());
-		     debug.println( "  sigfile  " + toHex(expectedHash));
-		     debug.println( "  computed " + toHex(computedHash));
-		     debug.println();
-		    }
+                    if (debug != null) {
+                     debug.println("Signature File: Manifest digest " +
+                                          digest.getAlgorithm());
+                     debug.println( "  sigfile  " + toHex(expectedHash));
+                     debug.println( "  computed " + toHex(computedHash));
+                     debug.println();
+                    }
 
-		    if (MessageDigest.isEqual(computedHash,
-					      expectedHash)) {
-			manifestSigned = true;
-		    } else {
-			//XXX: we will continue and verify each section
-		    }
-		}
-	    }
-	}
-	return manifestSigned;
+                    if (MessageDigest.isEqual(computedHash,
+                                              expectedHash)) {
+                        manifestSigned = true;
+                    } else {
+                        //XXX: we will continue and verify each section
+                    }
+                }
+            }
+        }
+        return manifestSigned;
     }
 
     private boolean verifyManifestMainAttrs(Manifest sf,
-					ManifestDigester md,
-					BASE64Decoder decoder)
-	 throws IOException
+                                        ManifestDigester md,
+                                        BASE64Decoder decoder)
+         throws IOException
     {
-	Attributes mattr = sf.getMainAttributes();
-	boolean attrsVerified = true;
+        Attributes mattr = sf.getMainAttributes();
+        boolean attrsVerified = true;
 
-	// go through all the attributes and process
-	// digest entries for the manifest main attributes
-	for (Map.Entry<Object,Object> se : mattr.entrySet()) {
-	    String key = se.getKey().toString();
+        // go through all the attributes and process
+        // digest entries for the manifest main attributes
+        for (Map.Entry<Object,Object> se : mattr.entrySet()) {
+            String key = se.getKey().toString();
 
-	    if (key.toUpperCase(Locale.ENGLISH).endsWith(ATTR_DIGEST)) {
-		String algorithm =
-			key.substring(0, key.length() - ATTR_DIGEST.length());
+            if (key.toUpperCase(Locale.ENGLISH).endsWith(ATTR_DIGEST)) {
+                String algorithm =
+                        key.substring(0, key.length() - ATTR_DIGEST.length());
 
-		MessageDigest digest = getDigest(algorithm);
-		if (digest != null) {
-		    ManifestDigester.Entry mde =
-			md.get(ManifestDigester.MF_MAIN_ATTRS, false);
-		    byte[] computedHash = mde.digest(digest);
-		    byte[] expectedHash =
-			decoder.decodeBuffer((String)se.getValue());
+                MessageDigest digest = getDigest(algorithm);
+                if (digest != null) {
+                    ManifestDigester.Entry mde =
+                        md.get(ManifestDigester.MF_MAIN_ATTRS, false);
+                    byte[] computedHash = mde.digest(digest);
+                    byte[] expectedHash =
+                        decoder.decodeBuffer((String)se.getValue());
 
-		    if (debug != null) {
-		     debug.println("Signature File: " +
-					"Manifest Main Attributes digest " +
-					digest.getAlgorithm());
-		     debug.println( "  sigfile  " + toHex(expectedHash));
-		     debug.println( "  computed " + toHex(computedHash));
-		     debug.println();
-		    }
+                    if (debug != null) {
+                     debug.println("Signature File: " +
+                                        "Manifest Main Attributes digest " +
+                                        digest.getAlgorithm());
+                     debug.println( "  sigfile  " + toHex(expectedHash));
+                     debug.println( "  computed " + toHex(computedHash));
+                     debug.println();
+                    }
 
-		    if (MessageDigest.isEqual(computedHash,
-					      expectedHash)) {
-			// good
-		    } else {
-			// we will *not* continue and verify each section
-			attrsVerified = false;
-			if (debug != null) {
-			    debug.println("Verification of " +
-					"Manifest main attributes failed");
-			    debug.println();
-			}
-			break;
-		    }
-		}
-	    }
-	}
+                    if (MessageDigest.isEqual(computedHash,
+                                              expectedHash)) {
+                        // good
+                    } else {
+                        // we will *not* continue and verify each section
+                        attrsVerified = false;
+                        if (debug != null) {
+                            debug.println("Verification of " +
+                                        "Manifest main attributes failed");
+                            debug.println();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
 
-	// this method returns 'true' if either:
-	//	. manifest main attributes were not signed, or
-	//	. manifest main attributes were signed and verified
-	return attrsVerified;
+        // this method returns 'true' if either:
+        //      . manifest main attributes were not signed, or
+        //      . manifest main attributes were signed and verified
+        return attrsVerified;
     }
 
     /**
@@ -380,117 +380,117 @@ public class SignatureFileVerifier {
      */
 
     private boolean verifySection(Attributes sfAttr,
-				  String name,
-				  ManifestDigester md,
-				  BASE64Decoder decoder)
-	 throws IOException
+                                  String name,
+                                  ManifestDigester md,
+                                  BASE64Decoder decoder)
+         throws IOException
     {
-	boolean oneDigestVerified = false;
-	ManifestDigester.Entry mde = md.get(name,block.isOldStyle());
+        boolean oneDigestVerified = false;
+        ManifestDigester.Entry mde = md.get(name,block.isOldStyle());
 
-	if (mde == null) {
-	    throw new SecurityException(
-		  "no manifiest section for signature file entry "+name);
-	}
+        if (mde == null) {
+            throw new SecurityException(
+                  "no manifiest section for signature file entry "+name);
+        }
 
-	if (sfAttr != null) {
+        if (sfAttr != null) {
 
-	    //sun.misc.HexDumpEncoder hex = new sun.misc.HexDumpEncoder();
-	    //hex.encodeBuffer(data, System.out);
+            //sun.misc.HexDumpEncoder hex = new sun.misc.HexDumpEncoder();
+            //hex.encodeBuffer(data, System.out);
 
-	    // go through all the attributes and process *-Digest entries
-	    for (Map.Entry<Object,Object> se : sfAttr.entrySet()) {
-		String key = se.getKey().toString();
-		
-		if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST")) {
-		    // 7 is length of "-Digest"
-		    String algorithm = key.substring(0, key.length()-7);
+            // go through all the attributes and process *-Digest entries
+            for (Map.Entry<Object,Object> se : sfAttr.entrySet()) {
+                String key = se.getKey().toString();
 
-		    MessageDigest digest = getDigest(algorithm);
+                if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST")) {
+                    // 7 is length of "-Digest"
+                    String algorithm = key.substring(0, key.length()-7);
 
-		    if (digest != null) {
-			boolean ok = false;
+                    MessageDigest digest = getDigest(algorithm);
 
-			byte[] expected = 
-			    decoder.decodeBuffer((String)se.getValue());
-			byte[] computed;
-			if (workaround) {
-			    computed = mde.digestWorkaround(digest);
-			} else {
-			    computed = mde.digest(digest);
-			}
+                    if (digest != null) {
+                        boolean ok = false;
 
-			if (debug != null) {
-			  debug.println("Signature Block File: " +
-				   name + " digest=" + digest.getAlgorithm());
-			  debug.println("  expected " + toHex(expected));
-			  debug.println("  computed " + toHex(computed));
-			  debug.println();
-			}
+                        byte[] expected =
+                            decoder.decodeBuffer((String)se.getValue());
+                        byte[] computed;
+                        if (workaround) {
+                            computed = mde.digestWorkaround(digest);
+                        } else {
+                            computed = mde.digest(digest);
+                        }
 
-			if (MessageDigest.isEqual(computed, expected)) {
-			    oneDigestVerified = true;
-			    ok = true;
-			} else {
-			    // attempt to fallback to the workaround
-			    if (!workaround) {
-			       computed = mde.digestWorkaround(digest);
-			       if (MessageDigest.isEqual(computed, expected)) {
-				   if (debug != null) {
-				       debug.println("  re-computed " + toHex(computed));
-				       debug.println();
-				   }
-				   workaround = true;
-				   oneDigestVerified = true;
-				   ok = true;
-			       }
-			    }
-			}
-			if (!ok){
-			    throw new SecurityException("invalid " + 
-				       digest.getAlgorithm() + 
-				       " signature file digest for " + name);
-			}
-		    }
-		}
-	    }
-	}
-	return oneDigestVerified;
+                        if (debug != null) {
+                          debug.println("Signature Block File: " +
+                                   name + " digest=" + digest.getAlgorithm());
+                          debug.println("  expected " + toHex(expected));
+                          debug.println("  computed " + toHex(computed));
+                          debug.println();
+                        }
+
+                        if (MessageDigest.isEqual(computed, expected)) {
+                            oneDigestVerified = true;
+                            ok = true;
+                        } else {
+                            // attempt to fallback to the workaround
+                            if (!workaround) {
+                               computed = mde.digestWorkaround(digest);
+                               if (MessageDigest.isEqual(computed, expected)) {
+                                   if (debug != null) {
+                                       debug.println("  re-computed " + toHex(computed));
+                                       debug.println();
+                                   }
+                                   workaround = true;
+                                   oneDigestVerified = true;
+                                   ok = true;
+                               }
+                            }
+                        }
+                        if (!ok){
+                            throw new SecurityException("invalid " +
+                                       digest.getAlgorithm() +
+                                       " signature file digest for " + name);
+                        }
+                    }
+                }
+            }
+        }
+        return oneDigestVerified;
     }
 
     /**
-     * Given the PKCS7 block and SignerInfo[], create an array of 
+     * Given the PKCS7 block and SignerInfo[], create an array of
      * CodeSigner objects. We do this only *once* for a given
      * signature block file.
      */
-    private CodeSigner[] getSigners(SignerInfo infos[], PKCS7 block) 
-	throws IOException, NoSuchAlgorithmException, SignatureException,
-	    CertificateException {
+    private CodeSigner[] getSigners(SignerInfo infos[], PKCS7 block)
+        throws IOException, NoSuchAlgorithmException, SignatureException,
+            CertificateException {
 
-	ArrayList<CodeSigner> signers = null;
+        ArrayList<CodeSigner> signers = null;
 
-	for (int i = 0; i < infos.length; i++) {
+        for (int i = 0; i < infos.length; i++) {
 
-	    SignerInfo info = infos[i];
-	    ArrayList<X509Certificate> chain = info.getCertificateChain(block);
-	    CertPath certChain = certificateFactory.generateCertPath(chain);
-	    if (signers == null) {
-		signers = new ArrayList<CodeSigner>();
-	    }
-	    // Append the new code signer
-	    signers.add(new CodeSigner(certChain, getTimestamp(info)));
+            SignerInfo info = infos[i];
+            ArrayList<X509Certificate> chain = info.getCertificateChain(block);
+            CertPath certChain = certificateFactory.generateCertPath(chain);
+            if (signers == null) {
+                signers = new ArrayList<CodeSigner>();
+            }
+            // Append the new code signer
+            signers.add(new CodeSigner(certChain, getTimestamp(info)));
 
-	    if (debug != null) {
-		debug.println("Signature Block Certificate: " +
-		    chain.get(0));
-	    }
-	}
+            if (debug != null) {
+                debug.println("Signature Block Certificate: " +
+                    chain.get(0));
+            }
+        }
 
-	if (signers != null) {
-	    return signers.toArray(new CodeSigner[signers.size()]);
-	} else {
-	    return null;
-	}
+        if (signers != null) {
+            return signers.toArray(new CodeSigner[signers.size()]);
+        } else {
+            return null;
+        }
     }
 
     /*
@@ -506,47 +506,47 @@ public class SignatureFileVerifier {
      * @return A timestamp token or null if none is present.
      * @throws IOException if an error is encountered while parsing the
      *         PKCS7 data.
-     * @throws NoSuchAlgorithmException if an error is encountered while 
+     * @throws NoSuchAlgorithmException if an error is encountered while
      *         verifying the PKCS7 object.
-     * @throws SignatureException if an error is encountered while 
+     * @throws SignatureException if an error is encountered while
      *         verifying the PKCS7 object.
      * @throws CertificateException if an error is encountered while generating
      *         the TSA's certpath.
      */
-    private Timestamp getTimestamp(SignerInfo info) 
-	throws IOException, NoSuchAlgorithmException, SignatureException,
-	    CertificateException {
+    private Timestamp getTimestamp(SignerInfo info)
+        throws IOException, NoSuchAlgorithmException, SignatureException,
+            CertificateException {
 
-	Timestamp timestamp = null;
+        Timestamp timestamp = null;
 
-	// Extract the signer's unsigned attributes
-	PKCS9Attributes unsignedAttrs = info.getUnauthenticatedAttributes();
-	if (unsignedAttrs != null) {
-	    PKCS9Attribute timestampTokenAttr =
-	        unsignedAttrs.getAttribute("signatureTimestampToken");
-	    if (timestampTokenAttr != null) {
-		PKCS7 timestampToken =
-		    new PKCS7((byte[])timestampTokenAttr.getValue());
-		// Extract the content (an encoded timestamp token info)
-		byte[] encodedTimestampTokenInfo =
-		    timestampToken.getContentInfo().getData();
-		// Extract the signer (the Timestamping Authority)
-		// while verifying the content
-		SignerInfo[] tsa =
-		    timestampToken.verify(encodedTimestampTokenInfo);
-		// Expect only one signer
-		ArrayList<X509Certificate> chain =
-				tsa[0].getCertificateChain(timestampToken);
-		CertPath tsaChain = certificateFactory.generateCertPath(chain);
-		// Create a timestamp token info object
-		TimestampToken timestampTokenInfo =
-		    new TimestampToken(encodedTimestampTokenInfo);
-		// Create a timestamp object
-		timestamp =
-		    new Timestamp(timestampTokenInfo.getDate(), tsaChain);
-	    }
-	}
-	return timestamp;
+        // Extract the signer's unsigned attributes
+        PKCS9Attributes unsignedAttrs = info.getUnauthenticatedAttributes();
+        if (unsignedAttrs != null) {
+            PKCS9Attribute timestampTokenAttr =
+                unsignedAttrs.getAttribute("signatureTimestampToken");
+            if (timestampTokenAttr != null) {
+                PKCS7 timestampToken =
+                    new PKCS7((byte[])timestampTokenAttr.getValue());
+                // Extract the content (an encoded timestamp token info)
+                byte[] encodedTimestampTokenInfo =
+                    timestampToken.getContentInfo().getData();
+                // Extract the signer (the Timestamping Authority)
+                // while verifying the content
+                SignerInfo[] tsa =
+                    timestampToken.verify(encodedTimestampTokenInfo);
+                // Expect only one signer
+                ArrayList<X509Certificate> chain =
+                                tsa[0].getCertificateChain(timestampToken);
+                CertPath tsaChain = certificateFactory.generateCertPath(chain);
+                // Create a timestamp token info object
+                TimestampToken timestampTokenInfo =
+                    new TimestampToken(encodedTimestampTokenInfo);
+                // Create a timestamp object
+                timestamp =
+                    new Timestamp(timestampTokenInfo.getDate(), tsaChain);
+            }
+        }
+        return timestamp;
     }
 
     // for the toHex function
@@ -560,106 +560,105 @@ public class SignatureFileVerifier {
 
     static String toHex(byte[] data) {
 
-	StringBuffer sb = new StringBuffer(data.length*2);
+        StringBuffer sb = new StringBuffer(data.length*2);
 
-	for (int i=0; i<data.length; i++) {
-	    sb.append(hexc[(data[i] >>4) & 0x0f]);
-	    sb.append(hexc[data[i] & 0x0f]);
-	}
-	return sb.toString();
+        for (int i=0; i<data.length; i++) {
+            sb.append(hexc[(data[i] >>4) & 0x0f]);
+            sb.append(hexc[data[i] & 0x0f]);
+        }
+        return sb.toString();
     }
 
     // returns true if set contains signer
     static boolean contains(CodeSigner[] set, CodeSigner signer)
     {
-	for (int i = 0; i < set.length; i++) {
-	    if (set[i].equals(signer))
-		return true;
-	}
-	return false;
+        for (int i = 0; i < set.length; i++) {
+            if (set[i].equals(signer))
+                return true;
+        }
+        return false;
     }
 
     // returns true if subset is a subset of set
     static boolean isSubSet(CodeSigner[] subset, CodeSigner[] set)
     {
-	// check for the same object
-	if (set == subset) 
-	    return true;
+        // check for the same object
+        if (set == subset)
+            return true;
 
-	boolean match;
-	for (int i = 0; i < subset.length; i++) {
-	    if (!contains(set, subset[i]))
-		return false;
-	}
-	return true;
+        boolean match;
+        for (int i = 0; i < subset.length; i++) {
+            if (!contains(set, subset[i]))
+                return false;
+        }
+        return true;
     }
 
     /**
      * returns true if signer contains exactly the same code signers as
-     * oldSigner and newSigner, false otherwise. oldSigner 
+     * oldSigner and newSigner, false otherwise. oldSigner
      * is allowed to be null.
      */
     static boolean matches(CodeSigner[] signers, CodeSigner[] oldSigners,
-	CodeSigner[] newSigners) {
+        CodeSigner[] newSigners) {
 
-	// special case 
-	if ((oldSigners == null) && (signers == newSigners))
-	    return true;
+        // special case
+        if ((oldSigners == null) && (signers == newSigners))
+            return true;
 
-	boolean match;
+        boolean match;
 
-	// make sure all oldSigners are in signers
-	if ((oldSigners != null) && !isSubSet(oldSigners, signers))
-	    return false;
-	
-	// make sure all newSigners are in signers
-	if (!isSubSet(newSigners, signers)) {
-	    return false;
-	}
+        // make sure all oldSigners are in signers
+        if ((oldSigners != null) && !isSubSet(oldSigners, signers))
+            return false;
 
-	// now make sure all the code signers in signers are
-	// also in oldSigners or newSigners
+        // make sure all newSigners are in signers
+        if (!isSubSet(newSigners, signers)) {
+            return false;
+        }
 
-	for (int i = 0; i < signers.length; i++) {
-	    boolean found = 
-		((oldSigners != null) && contains(oldSigners, signers[i])) ||
-		contains(newSigners, signers[i]);
-	    if (!found)
-		return false;
-	}
-	return true;
+        // now make sure all the code signers in signers are
+        // also in oldSigners or newSigners
+
+        for (int i = 0; i < signers.length; i++) {
+            boolean found =
+                ((oldSigners != null) && contains(oldSigners, signers[i])) ||
+                contains(newSigners, signers[i]);
+            if (!found)
+                return false;
+        }
+        return true;
     }
 
     void updateSigners(CodeSigner[] newSigners,
-	Hashtable<String, CodeSigner[]> signers, String name) {
+        Hashtable<String, CodeSigner[]> signers, String name) {
 
-	CodeSigner[] oldSigners = signers.get(name);
+        CodeSigner[] oldSigners = signers.get(name);
 
-	// search through the cache for a match, go in reverse order
-	// as we are more likely to find a match with the last one
-	// added to the cache
+        // search through the cache for a match, go in reverse order
+        // as we are more likely to find a match with the last one
+        // added to the cache
 
-	CodeSigner[] cachedSigners;
-	for (int i = signerCache.size() - 1; i != -1; i--) {
-	    cachedSigners = signerCache.get(i);
-	    if (matches(cachedSigners, oldSigners, newSigners)) {
-		signers.put(name, cachedSigners);
-		return;
-	    }
-	}
+        CodeSigner[] cachedSigners;
+        for (int i = signerCache.size() - 1; i != -1; i--) {
+            cachedSigners = signerCache.get(i);
+            if (matches(cachedSigners, oldSigners, newSigners)) {
+                signers.put(name, cachedSigners);
+                return;
+            }
+        }
 
-	if (oldSigners == null) {
-	    cachedSigners = newSigners;
-	} else {
-	    cachedSigners = 
-		new CodeSigner[oldSigners.length + newSigners.length];
-	    System.arraycopy(oldSigners, 0, cachedSigners, 0,
-		oldSigners.length);
-	    System.arraycopy(newSigners, 0, cachedSigners, oldSigners.length,
-		newSigners.length);
-	}
-	signerCache.add(cachedSigners);
-	signers.put(name, cachedSigners);
+        if (oldSigners == null) {
+            cachedSigners = newSigners;
+        } else {
+            cachedSigners =
+                new CodeSigner[oldSigners.length + newSigners.length];
+            System.arraycopy(oldSigners, 0, cachedSigners, 0,
+                oldSigners.length);
+            System.arraycopy(newSigners, 0, cachedSigners, oldSigners.length,
+                newSigners.length);
+        }
+        signerCache.add(cachedSigners);
+        signers.put(name, cachedSigners);
     }
 }
-

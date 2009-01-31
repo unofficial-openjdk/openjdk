@@ -50,7 +50,6 @@ import java.io.ByteArrayOutputStream;
  * @see MessageDigest
  * @see DigestInputStream
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  */
 public class DigestOutputStream extends FilterOutputStream {
@@ -71,8 +70,8 @@ public class DigestOutputStream extends FilterOutputStream {
      * @param digest the message digest to associate with this stream.
      */
     public DigestOutputStream(OutputStream stream, MessageDigest digest) {
-	super(stream);
-	setMessageDigest(digest);
+        super(stream);
+        setMessageDigest(digest);
     }
 
     /**
@@ -82,7 +81,7 @@ public class DigestOutputStream extends FilterOutputStream {
      * @see #setMessageDigest(java.security.MessageDigest)
      */
     public MessageDigest getMessageDigest() {
-	return digest;
+        return digest;
     }
 
     /**
@@ -92,7 +91,7 @@ public class DigestOutputStream extends FilterOutputStream {
      * @see #getMessageDigest()
      */
     public void setMessageDigest(MessageDigest digest) {
-	this.digest = digest;
+        this.digest = digest;
     }
 
     /**
@@ -113,10 +112,10 @@ public class DigestOutputStream extends FilterOutputStream {
      * @see MessageDigest#update(byte)
      */
     public void write(int b) throws IOException {
-	if (on) {
-	    digest.update((byte)b);
-	}
-	out.write(b);
+        if (on) {
+            digest.update((byte)b);
+        }
+        out.write(b);
     }
 
     /**
@@ -143,10 +142,10 @@ public class DigestOutputStream extends FilterOutputStream {
      * @see MessageDigest#update(byte[], int, int)
      */
     public void write(byte[] b, int off, int len) throws IOException {
-	if (on) {
-	    digest.update(b, off, len);
-	}
-	out.write(b, off, len);
+        if (on) {
+            digest.update(b, off, len);
+        }
+        out.write(b, off, len);
     }
 
     /**
@@ -159,7 +158,7 @@ public class DigestOutputStream extends FilterOutputStream {
      * off.
      */
     public void on(boolean on) {
-	this.on = on;
+        this.on = on;
     }
 
     /**
@@ -167,10 +166,6 @@ public class DigestOutputStream extends FilterOutputStream {
      * its associated message digest object.
      */
      public String toString() {
-	 return "[Digest Output Stream] " + digest.toString();
+         return "[Digest Output Stream] " + digest.toString();
      }
 }
-
-
-
-

@@ -34,22 +34,21 @@ import java.util.Set;
 import java.util.Collection;
 import java.util.AbstractSet;
 import java.util.Iterator;
-import java.util.logging.Logger; 
+import java.util.logging.Logger;
 import java.util.Comparator;
 import sun.misc.ASCIICaseInsensitiveComparator;
 
 /**
  * The Attributes class maps Manifest attribute names to associated string
- * values. Valid attribute names are case-insensitive, are restricted to 
- * the ASCII characters in the set [0-9a-zA-Z_-], and cannot exceed 70 
- * characters in length. Attribute values can contain any characters and 
- * will be UTF8-encoded when written to the output stream.  See the 
- * <a href="../../../../technotes/guides/jar/jar.html">JAR File Specification</a> 
+ * values. Valid attribute names are case-insensitive, are restricted to
+ * the ASCII characters in the set [0-9a-zA-Z_-], and cannot exceed 70
+ * characters in length. Attribute values can contain any characters and
+ * will be UTF8-encoded when written to the output stream.  See the
+ * <a href="../../../../technotes/guides/jar/jar.html">JAR File Specification</a>
  * for more information about valid attribute names and values.
  *
  * @author  David Connelly
- * @version %I%, %G%
- * @see	    Manifest
+ * @see     Manifest
  * @since   1.2
  */
 public class Attributes implements Map<Object,Object>, Cloneable {
@@ -62,7 +61,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * Constructs a new, empty Attributes object with default size.
      */
     public Attributes() {
-	this(11);
+        this(11);
     }
 
     /**
@@ -72,7 +71,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @param size the initial number of attributes
      */
     public Attributes(int size) {
-	map = new HashMap(size);
+        map = new HashMap(size);
     }
 
     /**
@@ -82,7 +81,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @param attr the specified Attributes
      */
     public Attributes(Attributes attr) {
-	map = new HashMap(attr);
+        map = new HashMap(attr);
     }
 
 
@@ -95,7 +94,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      *         not found.
      */
     public Object get(Object name) {
-	return map.get(name);
+        return map.get(name);
     }
 
     /**
@@ -105,7 +104,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * <p>
      * This method is defined as:
      * <pre>
-     *	    return (String)get(new Attributes.Name((String)name));
+     *      return (String)get(new Attributes.Name((String)name));
      * </pre>
      *
      * @param name the attribute name as a string
@@ -131,7 +130,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      *         not found.
      */
     public String getValue(Name name) {
-	return (String)get(name);
+        return (String)get(name);
     }
 
     /**
@@ -157,7 +156,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * <p>
      * This method is defined as:
      * <pre>
-     *	    return (String)put(new Attributes.Name(name), value);
+     *      return (String)put(new Attributes.Name(name), value);
      * </pre>
      *
      * @param name the attribute name as a string
@@ -166,7 +165,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @exception IllegalArgumentException if the attribute name is invalid
      */
     public String putValue(String name, String value) {
-	return (String)put(new Name(name), value);
+        return (String)put(new Name(name), value);
     }
 
     /**
@@ -177,7 +176,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @return the previous value of the attribute, or null if none
      */
     public Object remove(Object name) {
-	return map.remove(name);
+        return map.remove(name);
     }
 
     /**
@@ -189,7 +188,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      *         the specified value
      */
     public boolean containsValue(Object value) {
-	return map.containsValue(value);
+        return map.containsValue(value);
     }
 
     /**
@@ -199,7 +198,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @return true if this Map contains the specified attribute name
      */
     public boolean containsKey(Object name) {
-	return map.containsKey(name);
+        return map.containsKey(name);
     }
 
     /**
@@ -210,46 +209,46 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @exception ClassCastException if attr is not an Attributes
      */
     public void putAll(Map<?,?> attr) {
-	// ## javac bug?
-	if (!Attributes.class.isInstance(attr))
-	    throw new ClassCastException();
-	for (Map.Entry<?,?> me : (attr).entrySet())
-	    put(me.getKey(), me.getValue());
+        // ## javac bug?
+        if (!Attributes.class.isInstance(attr))
+            throw new ClassCastException();
+        for (Map.Entry<?,?> me : (attr).entrySet())
+            put(me.getKey(), me.getValue());
     }
 
     /**
      * Removes all attributes from this Map.
      */
     public void clear() {
-	map.clear();
+        map.clear();
     }
 
     /**
      * Returns the number of attributes in this Map.
      */
     public int size() {
-	return map.size();
+        return map.size();
     }
 
     /**
      * Returns true if this Map contains no attributes.
      */
     public boolean isEmpty() {
-	return map.isEmpty();
+        return map.isEmpty();
     }
 
     /**
      * Returns a Set view of the attribute names (keys) contained in this Map.
      */
     public Set<Object> keySet() {
-	return map.keySet();
+        return map.keySet();
     }
 
     /**
      * Returns a Collection view of the attribute values contained in this Map.
      */
     public Collection<Object> values() {
-	return map.values();
+        return map.values();
     }
 
     /**
@@ -257,7 +256,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * contained in this Map.
      */
     public Set<Map.Entry<Object,Object>> entrySet() {
-	return map.entrySet();
+        return map.entrySet();
     }
 
     /**
@@ -269,14 +268,14 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * @return true if the specified Object is equal to this Map
      */
     public boolean equals(Object o) {
-	return map.equals(o);
+        return map.equals(o);
     }
 
     /**
      * Returns the hash code value for this Map.
      */
     public int hashCode() {
-	return map.hashCode();
+        return map.hashCode();
     }
 
     /**
@@ -289,7 +288,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * the original.
      */
     public Object clone() {
-	return new Attributes(this);
+        return new Attributes(this);
     }
 
     /*
@@ -297,12 +296,12 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * XXX Need to handle UTF8 values and break up lines longer than 72 bytes
      */
      void write(DataOutputStream os) throws IOException {
-	Iterator it = entrySet().iterator();
-	while (it.hasNext()) {
-	    Map.Entry e = (Map.Entry)it.next();
+        Iterator it = entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry e = (Map.Entry)it.next();
             StringBuffer buffer = new StringBuffer(
                                         ((Name)e.getKey()).toString());
-	    buffer.append(": ");
+            buffer.append(": ");
 
             String value = (String)e.getValue();
             if (value != null) {
@@ -311,11 +310,11 @@ public class Attributes implements Map<Object,Object>, Cloneable {
             }
             buffer.append(value);
 
-	    buffer.append("\r\n");
+            buffer.append("\r\n");
             Manifest.make72Safe(buffer);
             os.writeBytes(buffer.toString());
-	}
-	os.writeBytes("\r\n");
+        }
+        os.writeBytes("\r\n");
     }
 
     /*
@@ -325,30 +324,30 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      *
      * XXX Need to handle UTF8 values and break up lines longer than 72 bytes
      */
-    void writeMain(DataOutputStream out) throws IOException 
+    void writeMain(DataOutputStream out) throws IOException
     {
-	// write out the *-Version header first, if it exists
-	String vername = Name.MANIFEST_VERSION.toString();
-	String version = getValue(vername);
-	if (version == null) {
-	    vername = Name.SIGNATURE_VERSION.toString();
-	    version = getValue(vername);
-	}
+        // write out the *-Version header first, if it exists
+        String vername = Name.MANIFEST_VERSION.toString();
+        String version = getValue(vername);
+        if (version == null) {
+            vername = Name.SIGNATURE_VERSION.toString();
+            version = getValue(vername);
+        }
 
-	if (version != null) {
-	    out.writeBytes(vername+": "+version+"\r\n");
-	}
+        if (version != null) {
+            out.writeBytes(vername+": "+version+"\r\n");
+        }
 
-	// write out all attributes except for the version
-	// we wrote out earlier
-	Iterator it = entrySet().iterator();
-	while (it.hasNext()) {
-	    Map.Entry e = (Map.Entry)it.next();
-	    String name = ((Name)e.getKey()).toString();
-	    if ((version != null) && ! (name.equalsIgnoreCase(vername))) {
+        // write out all attributes except for the version
+        // we wrote out earlier
+        Iterator it = entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry e = (Map.Entry)it.next();
+            String name = ((Name)e.getKey()).toString();
+            if ((version != null) && ! (name.equalsIgnoreCase(vername))) {
 
                 StringBuffer buffer = new StringBuffer(name);
-		buffer.append(": ");
+                buffer.append(": ");
 
                 String value = (String)e.getValue();
                 if (value != null) {
@@ -357,12 +356,12 @@ public class Attributes implements Map<Object,Object>, Cloneable {
                 }
                 buffer.append(value);
 
-		buffer.append("\r\n");
+                buffer.append("\r\n");
                 Manifest.make72Safe(buffer);
                 out.writeBytes(buffer.toString());
-	    }
-	}
-	out.writeBytes("\r\n");
+            }
+        }
+        out.writeBytes("\r\n");
     }
 
     /*
@@ -370,27 +369,27 @@ public class Attributes implements Map<Object,Object>, Cloneable {
      * XXX Need to handle UTF8 values.
      */
     void read(Manifest.FastInputStream is, byte[] lbuf) throws IOException {
-	String name = null, value = null;
+        String name = null, value = null;
         byte[] lastline = null;
 
-	int len;
-	while ((len = is.readLine(lbuf)) != -1) {
+        int len;
+        while ((len = is.readLine(lbuf)) != -1) {
             boolean lineContinued = false;
-	    if (lbuf[--len] != '\n') {
-		throw new IOException("line too long");
-	    }
-	    if (len > 0 && lbuf[len-1] == '\r') {
-		--len;
-	    }
-	    if (len == 0) {
-		break;
-	    }
-	    int i = 0;
-	    if (lbuf[0] == ' ') {
-		// continuation of previous line
-		if (name == null) {
-		    throw new IOException("misplaced continuation line");
-		}
+            if (lbuf[--len] != '\n') {
+                throw new IOException("line too long");
+            }
+            if (len > 0 && lbuf[len-1] == '\r') {
+                --len;
+            }
+            if (len == 0) {
+                break;
+            }
+            int i = 0;
+            if (lbuf[0] == ' ') {
+                // continuation of previous line
+                if (name == null) {
+                    throw new IOException("misplaced continuation line");
+                }
                 lineContinued = true;
                 byte[] buf = new byte[lastline.length + len - 1];
                 System.arraycopy(lastline, 0, buf, 0, lastline.length);
@@ -399,16 +398,16 @@ public class Attributes implements Map<Object,Object>, Cloneable {
                     lastline = buf;
                     continue;
                 }
-		value = new String(buf, 0, buf.length, "UTF8");
+                value = new String(buf, 0, buf.length, "UTF8");
                 lastline = null;
-	    } else {
+            } else {
                 while (lbuf[i++] != ':') {
                     if (i >= len) {
-			throw new IOException("invalid header field");
+                        throw new IOException("invalid header field");
                     }
                 }
                 if (lbuf[i++] != ' ') {
-		    throw new IOException("invalid header field");
+                    throw new IOException("invalid header field");
                 }
                 name = new String(lbuf, 0, 0, i - 2);
                 if (is.peek() == ' ') {
@@ -418,8 +417,8 @@ public class Attributes implements Map<Object,Object>, Cloneable {
                 }
                 value = new String(lbuf, i, len - i, "UTF8");
             }
-	    try {
-		if ((putValue(name, value) != null) && (!lineContinued)) {
+            try {
+                if ((putValue(name, value) != null) && (!lineContinued)) {
                     Logger.getLogger("java.util.jar").warning(
                                      "Duplicate name in Manifest: " + name
                                      + ".\n"
@@ -429,176 +428,176 @@ public class Attributes implements Map<Object,Object>, Cloneable {
                                      + "individual sections in both your\n"
                                      + "manifest and in the META-INF/MANIFEST.MF "
                                      + "entry in the jar file.");
-                } 
-	    } catch (IllegalArgumentException e) {
-		throw new IOException("invalid header field name: " + name);
-	    }
-	}
+                }
+            } catch (IllegalArgumentException e) {
+                throw new IOException("invalid header field name: " + name);
+            }
+        }
     }
 
     /**
      * The Attributes.Name class represents an attribute name stored in
-     * this Map. Valid attribute names are case-insensitive, are restricted 
-     * to the ASCII characters in the set [0-9a-zA-Z_-], and cannot exceed 
-     * 70 characters in length. Attribute values can contain any characters 
-     * and will be UTF8-encoded when written to the output stream.  See the 
-     * <a href="../../../../technotes/guides/jar/jar.html">JAR File Specification</a> 
+     * this Map. Valid attribute names are case-insensitive, are restricted
+     * to the ASCII characters in the set [0-9a-zA-Z_-], and cannot exceed
+     * 70 characters in length. Attribute values can contain any characters
+     * and will be UTF8-encoded when written to the output stream.  See the
+     * <a href="../../../../technotes/guides/jar/jar.html">JAR File Specification</a>
      * for more information about valid attribute names and values.
      */
     public static class Name {
-	private String name;
-	private int hashCode = -1;
-
-	/**
-	 * Constructs a new attribute name using the given string name.
-	 *
-	 * @param name the attribute string name
-	 * @exception IllegalArgumentException if the attribute name was
-	 *            invalid
-	 * @exception NullPointerException if the attribute name was null
-	 */
-	public Name(String name) {
-	    if (name == null) {
-		throw new NullPointerException("name");
-	    }
-	    if (!isValid(name)) {
-		throw new IllegalArgumentException(name);
-	    }
-	    this.name = name.intern();
-	}
-
-	private static boolean isValid(String name) {
-	    int len = name.length();
-	    if (len > 70 || len == 0) {
-		return false;
-	    }
-	    for (int i = 0; i < len; i++) {
-		if (!isValid(name.charAt(i))) {
-		    return false;
-		}
-	    }
-	    return true;
-	}
-
-	private static boolean isValid(char c) {
-	    return isAlpha(c) || isDigit(c) || c == '_' || c == '-';
-	}
-
-	private static boolean isAlpha(char c) {
-	    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-	}
-
-	private static boolean isDigit(char c) {
-	    return c >= '0' && c <= '9';
-	}
-
-	/**
-	 * Compares this attribute name to another for equality.
-	 * @param o the object to compare
-         * @return true if this attribute name is equal to the
-         *         specified attribute object
-	 */
-	public boolean equals(Object o) {
-	    if (o instanceof Name) {
-		Comparator c = ASCIICaseInsensitiveComparator.CASE_INSENSITIVE_ORDER;
-		return c.compare(name, ((Name)o).name) == 0;
-	    } else {
-		return false;
-	    }
-	}
-      
-	/**
-	 * Computes the hash value for this attribute name.
-	 */
-        public int hashCode() {
-	    if (hashCode == -1) {
-		hashCode = ASCIICaseInsensitiveComparator.lowerCaseHashCode(name);
-	    }
-	    return hashCode;
-	}
-
-	/**
-	 * Returns the attribute name as a String.
-	 */
-	public String toString() {
-	    return name;
-	}
+        private String name;
+        private int hashCode = -1;
 
         /**
-         * <code>Name</code> object for <code>Manifest-Version</code> 
-         * manifest attribute. This attribute indicates the version number 
+         * Constructs a new attribute name using the given string name.
+         *
+         * @param name the attribute string name
+         * @exception IllegalArgumentException if the attribute name was
+         *            invalid
+         * @exception NullPointerException if the attribute name was null
+         */
+        public Name(String name) {
+            if (name == null) {
+                throw new NullPointerException("name");
+            }
+            if (!isValid(name)) {
+                throw new IllegalArgumentException(name);
+            }
+            this.name = name.intern();
+        }
+
+        private static boolean isValid(String name) {
+            int len = name.length();
+            if (len > 70 || len == 0) {
+                return false;
+            }
+            for (int i = 0; i < len; i++) {
+                if (!isValid(name.charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean isValid(char c) {
+            return isAlpha(c) || isDigit(c) || c == '_' || c == '-';
+        }
+
+        private static boolean isAlpha(char c) {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        }
+
+        private static boolean isDigit(char c) {
+            return c >= '0' && c <= '9';
+        }
+
+        /**
+         * Compares this attribute name to another for equality.
+         * @param o the object to compare
+         * @return true if this attribute name is equal to the
+         *         specified attribute object
+         */
+        public boolean equals(Object o) {
+            if (o instanceof Name) {
+                Comparator c = ASCIICaseInsensitiveComparator.CASE_INSENSITIVE_ORDER;
+                return c.compare(name, ((Name)o).name) == 0;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Computes the hash value for this attribute name.
+         */
+        public int hashCode() {
+            if (hashCode == -1) {
+                hashCode = ASCIICaseInsensitiveComparator.lowerCaseHashCode(name);
+            }
+            return hashCode;
+        }
+
+        /**
+         * Returns the attribute name as a String.
+         */
+        public String toString() {
+            return name;
+        }
+
+        /**
+         * <code>Name</code> object for <code>Manifest-Version</code>
+         * manifest attribute. This attribute indicates the version number
          * of the manifest standard to which a JAR file's manifest conforms.
          * @see <a href="../../../../technotes/guides/jar/jar.html#JAR Manifest">
          *      Manifest and Signature Specification</a>
-         */ 
+         */
         public static final Name MANIFEST_VERSION = new Name("Manifest-Version");
 
         /**
-         * <code>Name</code> object for <code>Signature-Version</code> 
+         * <code>Name</code> object for <code>Signature-Version</code>
          * manifest attribute used when signing JAR files.
          * @see <a href="../../../../technotes/guides/jar/jar.html#JAR Manifest">
          *      Manifest and Signature Specification</a>
-         */             
+         */
         public static final Name SIGNATURE_VERSION = new Name("Signature-Version");
 
         /**
-         * <code>Name</code> object for <code>Content-Type</code> 
+         * <code>Name</code> object for <code>Content-Type</code>
          * manifest attribute.
-         */               
+         */
         public static final Name CONTENT_TYPE = new Name("Content-Type");
 
         /**
-         * <code>Name</code> object for <code>Class-Path</code> 
-         * manifest attribute. Bundled extensions can use this attribute 
+         * <code>Name</code> object for <code>Class-Path</code>
+         * manifest attribute. Bundled extensions can use this attribute
          * to find other JAR files containing needed classes.
          * @see <a href="../../../../technotes/guides/extensions/spec.html#bundled">
          *      Extensions Specification</a>
-         */   
+         */
         public static final Name CLASS_PATH = new Name("Class-Path");
 
         /**
-         * <code>Name</code> object for <code>Main-Class</code> manifest 
-         * attribute used for launching applications packaged in JAR files. 
-         * The <code>Main-Class</code> attribute is used in conjunction 
-         * with the <code>-jar</code> command-line option of the 
+         * <code>Name</code> object for <code>Main-Class</code> manifest
+         * attribute used for launching applications packaged in JAR files.
+         * The <code>Main-Class</code> attribute is used in conjunction
+         * with the <code>-jar</code> command-line option of the
          * <tt>java</tt> application launcher.
-         */ 
+         */
         public static final Name MAIN_CLASS = new Name("Main-Class");
 
         /**
-         * <code>Name</code> object for <code>Sealed</code> manifest attribute 
+         * <code>Name</code> object for <code>Sealed</code> manifest attribute
          * used for sealing.
          * @see <a href="../../../../technotes/guides/extensions/spec.html#sealing">
          *      Extension Sealing</a>
-         */ 
+         */
         public static final Name SEALED = new Name("Sealed");
 
        /**
-         * <code>Name</code> object for <code>Extension-List</code> manifest attribute 
+         * <code>Name</code> object for <code>Extension-List</code> manifest attribute
          * used for declaring dependencies on installed extensions.
          * @see <a href="../../../../technotes/guides/extensions/spec.html#dependency">
          *      Installed extension dependency</a>
-         */ 
+         */
         public static final Name EXTENSION_LIST = new Name("Extension-List");
 
         /**
-         * <code>Name</code> object for <code>Extension-Name</code> manifest attribute 
+         * <code>Name</code> object for <code>Extension-Name</code> manifest attribute
          * used for declaring dependencies on installed extensions.
          * @see <a href="../../../../technotes/guides/extensions/spec.html#dependency">
          *      Installed extension dependency</a>
-         */ 
+         */
         public static final Name EXTENSION_NAME = new Name("Extension-Name");
 
         /**
-         * <code>Name</code> object for <code>Extension-Name</code> manifest attribute 
+         * <code>Name</code> object for <code>Extension-Name</code> manifest attribute
          * used for declaring dependencies on installed extensions.
          * @see <a href="../../../../technotes/guides/extensions/spec.html#dependency">
          *      Installed extension dependency</a>
-         */ 
+         */
         public static final Name EXTENSION_INSTALLATION = new Name("Extension-Installation");
 
         /**
-         * <code>Name</code> object for <code>Implementation-Title</code> 
+         * <code>Name</code> object for <code>Implementation-Title</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -606,7 +605,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name IMPLEMENTATION_TITLE = new Name("Implementation-Title");
 
         /**
-         * <code>Name</code> object for <code>Implementation-Version</code> 
+         * <code>Name</code> object for <code>Implementation-Version</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -614,15 +613,15 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name IMPLEMENTATION_VERSION = new Name("Implementation-Version");
 
         /**
-         * <code>Name</code> object for <code>Implementation-Vendor</code> 
+         * <code>Name</code> object for <code>Implementation-Vendor</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
          */
         public static final Name IMPLEMENTATION_VENDOR = new Name("Implementation-Vendor");
 
-	/**
-         * <code>Name</code> object for <code>Implementation-Vendor-Id</code> 
+        /**
+         * <code>Name</code> object for <code>Implementation-Vendor-Id</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -630,7 +629,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name IMPLEMENTATION_VENDOR_ID = new Name("Implementation-Vendor-Id");
 
        /**
-         * <code>Name</code> object for <code>Implementation-Vendor-URL</code> 
+         * <code>Name</code> object for <code>Implementation-Vendor-URL</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -638,7 +637,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name IMPLEMENTATION_URL = new Name("Implementation-URL");
 
         /**
-         * <code>Name</code> object for <code>Specification-Title</code> 
+         * <code>Name</code> object for <code>Specification-Title</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -646,7 +645,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name SPECIFICATION_TITLE = new Name("Specification-Title");
 
         /**
-         * <code>Name</code> object for <code>Specification-Version</code> 
+         * <code>Name</code> object for <code>Specification-Version</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>
@@ -654,7 +653,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         public static final Name SPECIFICATION_VERSION = new Name("Specification-Version");
 
         /**
-         * <code>Name</code> object for <code>Specification-Vendor</code> 
+         * <code>Name</code> object for <code>Specification-Vendor</code>
          * manifest attribute used for package versioning.
          * @see <a href="../../../../technotes/guides/versioning/spec/versioning2.html#wp90779">
          *      Java Product Versioning Specification</a>

@@ -68,176 +68,176 @@ public class Checksum {
 
     // draft-brezak-win2k-krb-rc4-hmac-04.txt
     public static final int CKSUMTYPE_HMAC_MD5_ARCFOUR = -138;
-    
+
     static int CKSUMTYPE_DEFAULT;
     static int SAFECKSUMTYPE_DEFAULT;
-    
-    private static boolean DEBUG = Krb5.DEBUG; 
+
+    private static boolean DEBUG = Krb5.DEBUG;
     static {
-	String temp = null;
-	Config cfg = null;
-	try {
-	    cfg = Config.getInstance();
-	    temp = cfg.getDefault("default_checksum", "libdefaults");
-	    if (temp != null)
+        String temp = null;
+        Config cfg = null;
+        try {
+            cfg = Config.getInstance();
+            temp = cfg.getDefault("default_checksum", "libdefaults");
+            if (temp != null)
                 {
                     CKSUMTYPE_DEFAULT = cfg.getType(temp);
                 } else {
-		    /*
-		     * If the default checksum is not
-		     * specified in the configuration we 
-		     * set it to RSA_MD5. We follow the MIT and
-		     * SEAM implementation.
-		     */
+                    /*
+                     * If the default checksum is not
+                     * specified in the configuration we
+                     * set it to RSA_MD5. We follow the MIT and
+                     * SEAM implementation.
+                     */
                     CKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5;
                 }
-	} catch (Exception exc) {
-	    if (DEBUG) {
-		System.out.println("Exception in getting default checksum "+
-				   "value from the configuration " + 
-				   "Setting default checksum to be RSA-MD5");
-		exc.printStackTrace();
-	    }
-	    CKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5;
-	}
-	
-	
-	try {
-	    temp = cfg.getDefault("safe_checksum_type", "libdefaults");
-	    if (temp != null)
+        } catch (Exception exc) {
+            if (DEBUG) {
+                System.out.println("Exception in getting default checksum "+
+                                   "value from the configuration " +
+                                   "Setting default checksum to be RSA-MD5");
+                exc.printStackTrace();
+            }
+            CKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5;
+        }
+
+
+        try {
+            temp = cfg.getDefault("safe_checksum_type", "libdefaults");
+            if (temp != null)
                 {
                     SAFECKSUMTYPE_DEFAULT = cfg.getType(temp);
                 } else {
                     SAFECKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5_DES;
                 }
-	} catch (Exception exc) {
-	    if (DEBUG) {
-		System.out.println("Exception in getting safe default " +
-				   "checksum value " +
-				   "from the configuration Setting  " + 
-				   "safe default checksum to be RSA-MD5");
-		exc.printStackTrace();
-	    }
-	    SAFECKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5_DES;
-	}
+        } catch (Exception exc) {
+            if (DEBUG) {
+                System.out.println("Exception in getting safe default " +
+                                   "checksum value " +
+                                   "from the configuration Setting  " +
+                                   "safe default checksum to be RSA-MD5");
+                exc.printStackTrace();
+            }
+            SAFECKSUMTYPE_DEFAULT = CKSUMTYPE_RSA_MD5_DES;
+        }
     }
-    
+
     /**
      * Constructs a new Checksum using the raw data and type.
      * @data the byte array of checksum.
      * @new_cksumType the type of checksum.
-     * 
+     *
      */
-	 // used in InitialToken
+         // used in InitialToken
     public Checksum(byte[] data, int new_cksumType) {
-	cksumType = new_cksumType;
-	checksum = data;
+        cksumType = new_cksumType;
+        checksum = data;
     }
-    
+
     /**
      * Constructs a new Checksum by calculating the checksum over the data
      * using specified checksum type.
      * @new_cksumType the type of checksum.
      * @data the data that needs to be performed a checksum calculation on.
      */
-    public Checksum(int new_cksumType, byte[] data)	   
-	throws KdcErrException, KrbCryptoException {
-	
-	cksumType = new_cksumType;
-	CksumType cksumEngine = CksumType.getInstance(cksumType);
-	if (!cksumEngine.isSafe()) {
-	    checksum = cksumEngine.calculateChecksum(data, data.length);
-	} else {
-	    throw new KdcErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
-	}
+    public Checksum(int new_cksumType, byte[] data)
+        throws KdcErrException, KrbCryptoException {
+
+        cksumType = new_cksumType;
+        CksumType cksumEngine = CksumType.getInstance(cksumType);
+        if (!cksumEngine.isSafe()) {
+            checksum = cksumEngine.calculateChecksum(data, data.length);
+        } else {
+            throw new KdcErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
+        }
     }
-    
+
     /**
      * Constructs a new Checksum by calculating the keyed checksum
      * over the data using specified checksum type.
      * @new_cksumType the type of checksum.
      * @data the data that needs to be performed a checksum calculation on.
      */
-	 // KrbSafe, KrbTgsReq
-    public Checksum(int new_cksumType, byte[] data, 
-			EncryptionKey key, int usage) 
-	throws KdcErrException, KrbApErrException, KrbCryptoException {
-	cksumType = new_cksumType;
-	CksumType cksumEngine = CksumType.getInstance(cksumType);
-	if (!cksumEngine.isSafe())
-	    throw new KrbApErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
-	checksum =
-	    cksumEngine.calculateKeyedChecksum(data,
-		data.length,
-		key.getBytes(), 
-		usage);
+         // KrbSafe, KrbTgsReq
+    public Checksum(int new_cksumType, byte[] data,
+                        EncryptionKey key, int usage)
+        throws KdcErrException, KrbApErrException, KrbCryptoException {
+        cksumType = new_cksumType;
+        CksumType cksumEngine = CksumType.getInstance(cksumType);
+        if (!cksumEngine.isSafe())
+            throw new KrbApErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
+        checksum =
+            cksumEngine.calculateKeyedChecksum(data,
+                data.length,
+                key.getBytes(),
+                usage);
     }
-    
+
     /**
      * Verifies the keyed checksum over the data passed in.
      */
-    public boolean verifyKeyedChecksum(byte[] data, EncryptionKey key, 
-					int usage)
-	throws KdcErrException, KrbApErrException, KrbCryptoException {
-	CksumType cksumEngine = CksumType.getInstance(cksumType);
-	if (!cksumEngine.isSafe())
-	    throw new KrbApErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
-	return cksumEngine.verifyKeyedChecksum(data,
-					       data.length,
-					       key.getBytes(),
-					       checksum,
-	    usage);
+    public boolean verifyKeyedChecksum(byte[] data, EncryptionKey key,
+                                        int usage)
+        throws KdcErrException, KrbApErrException, KrbCryptoException {
+        CksumType cksumEngine = CksumType.getInstance(cksumType);
+        if (!cksumEngine.isSafe())
+            throw new KrbApErrException(Krb5.KRB_AP_ERR_INAPP_CKSUM);
+        return cksumEngine.verifyKeyedChecksum(data,
+                                               data.length,
+                                               key.getBytes(),
+                                               checksum,
+            usage);
     }
-	
+
     /*
     public Checksum(byte[] data) throws KdcErrException, KrbCryptoException {
-	this(Checksum.CKSUMTYPE_DEFAULT, data);
+        this(Checksum.CKSUMTYPE_DEFAULT, data);
     }
     */
-    
+
     boolean isEqual(Checksum cksum) throws KdcErrException {
-	if (cksumType != cksum.cksumType)
-	    return false;
-	CksumType cksumEngine = CksumType.getInstance(cksumType);
-	return cksumEngine.isChecksumEqual(checksum, cksum.checksum);
+        if (cksumType != cksum.cksumType)
+            return false;
+        CksumType cksumEngine = CksumType.getInstance(cksumType);
+        return cksumEngine.isChecksumEqual(checksum, cksum.checksum);
     }
-    
+
     /**
      * Constructs an instance of Checksum from an ASN.1 encoded representation.
      * @param encoding a single DER-encoded value.
-     * @exception Asn1Exception if an error occurs while decoding an ASN1 
+     * @exception Asn1Exception if an error occurs while decoding an ASN1
      * encoded data.
      * @exception IOException if an I/O error occurs while reading encoded data.
      *
      */
-    private Checksum(DerValue encoding) throws Asn1Exception, IOException { 
-	DerValue der;
-	if (encoding.getTag() != DerValue.tag_Sequence) {
+    private Checksum(DerValue encoding) throws Asn1Exception, IOException {
+        DerValue der;
+        if (encoding.getTag() != DerValue.tag_Sequence) {
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	}
-	der = encoding.getData().getDerValue();
-	if ((der.getTag() & (byte)0x1F) == (byte)0x00) {
-	    cksumType = der.getData().getBigInteger().intValue();
-	}
-	else
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	der = encoding.getData().getDerValue();
-	if ((der.getTag() & (byte)0x1F) == (byte)0x01) {
-	    checksum = der.getData().getOctetString();
-	}
-	else
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	if (encoding.getData().available() > 0) {
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	}
+        }
+        der = encoding.getData().getDerValue();
+        if ((der.getTag() & (byte)0x1F) == (byte)0x00) {
+            cksumType = der.getData().getBigInteger().intValue();
+        }
+        else
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        der = encoding.getData().getDerValue();
+        if ((der.getTag() & (byte)0x1F) == (byte)0x01) {
+            checksum = der.getData().getOctetString();
+        }
+        else
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        if (encoding.getData().available() > 0) {
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        }
     }
 
     /**
      * Encodes a Checksum object.
      * <xmp>
-     * Checksum	   ::= SEQUENCE {
-     *	       cksumtype   [0] Int32,
-     *	       checksum	   [1] OCTET STRING
+     * Checksum    ::= SEQUENCE {
+     *         cksumtype   [0] Int32,
+     *         checksum    [1] OCTET STRING
      * }
      * </xmp>
      *
@@ -255,20 +255,20 @@ public class Checksum {
      */
     public byte[] asn1Encode() throws Asn1Exception, IOException {
         DerOutputStream bytes = new DerOutputStream();
-	DerOutputStream temp = new DerOutputStream();
-	temp.putInteger(BigInteger.valueOf(cksumType));
-	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-				       true, (byte)0x00), temp);
-	temp = new DerOutputStream();
-	temp.putOctetString(checksum);
-	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-				       true, (byte)0x01), temp);
-	temp = new DerOutputStream();
-	temp.write(DerValue.tag_Sequence, bytes);
-	return temp.toByteArray();
+        DerOutputStream temp = new DerOutputStream();
+        temp.putInteger(BigInteger.valueOf(cksumType));
+        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+                                       true, (byte)0x00), temp);
+        temp = new DerOutputStream();
+        temp.putOctetString(checksum);
+        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+                                       true, (byte)0x01), temp);
+        temp = new DerOutputStream();
+        temp.write(DerValue.tag_Sequence, bytes);
+        return temp.toByteArray();
     }
-    
-    
+
+
     /**
      * Parse (unmarshal) a checksum object from a DER input stream.  This form
      * parsing might be used when expanding a value which is part of
@@ -278,41 +278,41 @@ public class Checksum {
      * ASN1 encoded data.
      * @exception IOException if an I/O error occurs while reading
      * encoded data.
-     * @param data the Der input stream value, which contains one or more 
+     * @param data the Der input stream value, which contains one or more
      * marshaled value.
      * @param explicitTag tag number.
      * @param optional indicates if this data field is optional
      * @return an instance of Checksum.
      *
      */
-    public static Checksum parse(DerInputStream data, 
-				 byte explicitTag, boolean optional)
-	throws Asn1Exception, IOException { 
+    public static Checksum parse(DerInputStream data,
+                                 byte explicitTag, boolean optional)
+        throws Asn1Exception, IOException {
 
-	if ((optional) &&
-	    (((byte)data.peekByte() & (byte)0x1F) != explicitTag)) { 
-	    return null;
-	}
-	DerValue der = data.getDerValue();
-	if (explicitTag != (der.getTag() & (byte)0x1F))  {	
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	} else {
-	    DerValue subDer = der.getData().getDerValue();
-	    return new Checksum(subDer);
-	}
+        if ((optional) &&
+            (((byte)data.peekByte() & (byte)0x1F) != explicitTag)) {
+            return null;
+        }
+        DerValue der = data.getDerValue();
+        if (explicitTag != (der.getTag() & (byte)0x1F))  {
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        } else {
+            DerValue subDer = der.getData().getDerValue();
+            return new Checksum(subDer);
+        }
     }
 
     /**
      * Returns the raw bytes of the checksum, not in ASN.1 encoded form.
      */
     public final byte[] getBytes() {
-	return checksum;
+        return checksum;
     }
 
     public final int getType() {
         return cksumType;
     }
-    
+
     @Override public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -320,14 +320,14 @@ public class Checksum {
         if (!(obj instanceof Checksum)) {
             return false;
         }
-        
+
         try {
             return isEqual((Checksum)obj);
         } catch (KdcErrException kee) {
             return false;
         }
     }
-    
+
     @Override public int hashCode() {
         int result = 17;
         result = 37 * result + cksumType;

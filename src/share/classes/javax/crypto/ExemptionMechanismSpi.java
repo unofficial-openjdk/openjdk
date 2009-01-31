@@ -140,7 +140,7 @@ public abstract class ExemptionMechanismSpi {
      * process of generating.
      */
     protected abstract byte[] engineGenExemptionBlob()
-	throws ExemptionMechanismException;
+        throws ExemptionMechanismException;
 
     /**
      * Generates the exemption mechanism key blob, and stores the result in
@@ -166,6 +166,5 @@ public abstract class ExemptionMechanismSpi {
      */
     protected abstract int engineGenExemptionBlob
     (byte[] output, int outputOffset)
-	throws ShortBufferException, ExemptionMechanismException;
+        throws ShortBufferException, ExemptionMechanismException;
 }
-

@@ -22,10 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageColorTrue2Index.c	1.6	02/11/26 SMI"
-#endif /* __SUNPRO_C */
 
 /*
  * FUNCTION
@@ -2691,7 +2687,7 @@ mlib_status mlib_ImageColorTrue2Index(mlib_image       *dst,
       return MLIB_FAILURE;
   }
 
-  /* we need to return something to make Microsoft VC happy. 
+  /* we need to return something to make Microsoft VC happy.
      Return FAILURE because on success we likely to return earlier. */
   return MLIB_FAILURE;
 }

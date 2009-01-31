@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-* %W% %E%
-*/
+
 
 using System;
 using System.Runtime.InteropServices;

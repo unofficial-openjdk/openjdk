@@ -32,13 +32,13 @@ import com.sun.tools.attach.spi.AttachProvider;
 
 public class ProviderTest {
     public static void main(String args[]) throws Exception {
-	// deal with internal builds where classes are loaded from the 
-	// 'classes' directory rather than rt.jar
-	ClassLoader cl = AttachProvider.class.getClassLoader();
-	if (cl != ClassLoader.getSystemClassLoader()) {
-	    System.out.println("Attach API not loaded by system class loader - test skipped");
-	    return;
-	}
-	VirtualMachine.attach("simple:1234").detach();
+        // deal with internal builds where classes are loaded from the
+        // 'classes' directory rather than rt.jar
+        ClassLoader cl = AttachProvider.class.getClassLoader();
+        if (cl != ClassLoader.getSystemClassLoader()) {
+            System.out.println("Attach API not loaded by system class loader - test skipped");
+            return;
+        }
+        VirtualMachine.attach("simple:1234").detach();
     }
 }

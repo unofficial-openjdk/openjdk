@@ -61,19 +61,19 @@ public class BadIPv6Addresses {
             "::ffff:192.168.0",         // with compressed ipv4, not enough .
             "::ffff:192.168..0.1"       // with compressed ipv4, adjacent .
         };
-        
+
         List<String> failedAddrs = new ArrayList<String>();
         for (String addrStr : badAddresses) {
             try {
                 InetAddress addr = InetAddress.getByName(addrStr);
-                
+
                 // it is an error if no exception
                 failedAddrs.add(addrStr);
             } catch (UnknownHostException e) {
                 // expected
             }
         }
-        
+
         if (failedAddrs.size() > 0) {
             System.out.println("We should reject following ipv6 addresses, but we didn't:");
             for (String addr : failedAddrs) {

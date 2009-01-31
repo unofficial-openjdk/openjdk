@@ -105,30 +105,30 @@ public final class StateTrackableDelegate implements StateTrackable {
      * @since 1.7
      */
     public synchronized StateTracker getStateTracker() {
-	StateTracker st = theTracker;
-	if (st == null) {
-	    switch (theState) {
-	    case IMMUTABLE:
-		st = StateTracker.ALWAYS_CURRENT;
-		break;
-	    case STABLE:
-		st = new StateTracker() {
+        StateTracker st = theTracker;
+        if (st == null) {
+            switch (theState) {
+            case IMMUTABLE:
+                st = StateTracker.ALWAYS_CURRENT;
+                break;
+            case STABLE:
+                st = new StateTracker() {
                     public boolean isCurrent() {
                         return (theTracker == this);
                     }
                 };
-		break;
-	    case DYNAMIC:
-		// We return the NEVER_CURRENT tracker, but that is
-		// just temporary while we are in the DYNAMIC state.
-		// NO BREAK
-	    case UNTRACKABLE:
-		st = StateTracker.NEVER_CURRENT;
-		break;
-	    }
-	    theTracker = st;
-	}
-	return st;
+                break;
+            case DYNAMIC:
+                // We return the NEVER_CURRENT tracker, but that is
+                // just temporary while we are in the DYNAMIC state.
+                // NO BREAK
+            case UNTRACKABLE:
+                st = StateTracker.NEVER_CURRENT;
+                break;
+            }
+            theTracker = st;
+        }
+        return st;
     }
 
     /**
@@ -141,12 +141,12 @@ public final class StateTrackableDelegate implements StateTrackable {
      * @since 1.7
      */
     public synchronized void setImmutable() {
-	if (theState == UNTRACKABLE || theState == DYNAMIC) {
-	    throw new IllegalStateException("UNTRACKABLE or DYNAMIC "+
+        if (theState == UNTRACKABLE || theState == DYNAMIC) {
+            throw new IllegalStateException("UNTRACKABLE or DYNAMIC "+
                                             "objects cannot become IMMUTABLE");
-	}
-	theState = IMMUTABLE;
-	theTracker = null;
+        }
+        theState = IMMUTABLE;
+        theTracker = null;
     }
 
     /**
@@ -161,12 +161,12 @@ public final class StateTrackableDelegate implements StateTrackable {
      * @since 1.7
      */
     public synchronized void setUntrackable() {
-	if (theState == IMMUTABLE) {
-	    throw new IllegalStateException("IMMUTABLE objects cannot "+
+        if (theState == IMMUTABLE) {
+            throw new IllegalStateException("IMMUTABLE objects cannot "+
                                             "become UNTRACKABLE");
-	}
-	theState = UNTRACKABLE;
-	theTracker = null;
+        }
+        theState = UNTRACKABLE;
+        theTracker = null;
     }
 
     /**
@@ -193,14 +193,14 @@ public final class StateTrackableDelegate implements StateTrackable {
      */
     public synchronized void addDynamicAgent() {
         if (theState == IMMUTABLE) {
-	    throw new IllegalStateException("Cannot change state from "+
-					    "IMMUTABLE");
+            throw new IllegalStateException("Cannot change state from "+
+                                            "IMMUTABLE");
         }
-	++numDynamicAgents;
-	if (theState == STABLE) {
-	    theState = DYNAMIC;
-	    theTracker = null;
-	}
+        ++numDynamicAgents;
+        if (theState == STABLE) {
+            theState = DYNAMIC;
+            theTracker = null;
+        }
     }
 
     /**
@@ -227,10 +227,10 @@ public final class StateTrackableDelegate implements StateTrackable {
      * @since 1.7
      */
     protected synchronized void removeDynamicAgent() {
-	if (--numDynamicAgents == 0 && theState == DYNAMIC) {
-	    theState = STABLE;
-	    theTracker = null;
-	}
+        if (--numDynamicAgents == 0 && theState == DYNAMIC) {
+            theState = STABLE;
+            theTracker = null;
+        }
     }
 
     /**
@@ -251,6 +251,6 @@ public final class StateTrackableDelegate implements StateTrackable {
      * @since 1.7
      */
     public final void markDirty() {
-	theTracker = null;
+        theTracker = null;
     }
 }

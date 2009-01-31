@@ -50,19 +50,19 @@ Java_sun_java2d_loops_Blit_Blit
 
     pPrim = GetNativePrim(env, self);
     if (pPrim == NULL) {
-	return;
+        return;
     }
     if (pPrim->pCompType->getCompInfo != NULL) {
-	(*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
+        (*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
     }
     if (Region_GetInfo(env, clip, &clipInfo)) {
-	return;
+        return;
     }
 
     srcOps = SurfaceData_GetOps(env, srcData);
     dstOps = SurfaceData_GetOps(env, dstData);
     if (srcOps == 0 || dstOps == 0) {
-	return;
+        return;
     }
 
     srcInfo.bounds.x1 = srcx;
@@ -77,55 +77,55 @@ Java_sun_java2d_loops_Blit_Blit
     srcy -= dsty;
     SurfaceData_IntersectBounds(&dstInfo.bounds, &clipInfo.bounds);
     if (srcOps->Lock(env, srcOps, &srcInfo, pPrim->srcflags) != SD_SUCCESS) {
-	return;
+        return;
     }
 
     dstFlags = pPrim->dstflags;
     if (!Region_IsRectangular(&clipInfo)) {
-	dstFlags |= SD_LOCK_PARTIAL_WRITE;
+        dstFlags |= SD_LOCK_PARTIAL_WRITE;
     }
     if (dstOps->Lock(env, dstOps, &dstInfo, dstFlags) != SD_SUCCESS) {
-	SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
-	return;
+        SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
+        return;
     }
     SurfaceData_IntersectBlitBounds(&dstInfo.bounds, &srcInfo.bounds,
-				    srcx, srcy);
+                                    srcx, srcy);
     Region_IntersectBounds(&clipInfo, &dstInfo.bounds);
 
     if (!Region_IsEmpty(&clipInfo)) {
-	srcOps->GetRasInfo(env, srcOps, &srcInfo);
-	dstOps->GetRasInfo(env, dstOps, &dstInfo);
-	if (srcInfo.rasBase && dstInfo.rasBase) {
-	    SurfaceDataBounds span;
-	    jint savesx = srcInfo.bounds.x1;
-	    jint savedx = dstInfo.bounds.x1;
-	    Region_StartIteration(env, &clipInfo);
-	    while (Region_NextIteration(&clipInfo, &span)) {
-		void *pSrc = PtrCoord(srcInfo.rasBase,
-				      srcx + span.x1, srcInfo.pixelStride,
-				      srcy + span.y1, srcInfo.scanStride);
-		void *pDst = PtrCoord(dstInfo.rasBase,
-				      span.x1, dstInfo.pixelStride,
-				      span.y1, dstInfo.scanStride);
-		/*
-		 * Fix for 4804375
-		 * REMIND: There should probably be a better
-		 * way to give the span coordinates to the
-		 * inner loop.  This is only really needed
-		 * for the 1, 2, and 4 bit loops.
-		 */
-		srcInfo.bounds.x1 = srcx + span.x1;
-		dstInfo.bounds.x1 = span.x1;
-		(*pPrim->funcs.blit)(pSrc, pDst,
-				     span.x2 - span.x1, span.y2 - span.y1,
-				     &srcInfo, &dstInfo, pPrim, &compInfo);
-	    }
-	    Region_EndIteration(env, &clipInfo);
-	    srcInfo.bounds.x1 = savesx;
-	    dstInfo.bounds.x1 = savedx;
-	}
-	SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
-	SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
+        srcOps->GetRasInfo(env, srcOps, &srcInfo);
+        dstOps->GetRasInfo(env, dstOps, &dstInfo);
+        if (srcInfo.rasBase && dstInfo.rasBase) {
+            SurfaceDataBounds span;
+            jint savesx = srcInfo.bounds.x1;
+            jint savedx = dstInfo.bounds.x1;
+            Region_StartIteration(env, &clipInfo);
+            while (Region_NextIteration(&clipInfo, &span)) {
+                void *pSrc = PtrCoord(srcInfo.rasBase,
+                                      srcx + span.x1, srcInfo.pixelStride,
+                                      srcy + span.y1, srcInfo.scanStride);
+                void *pDst = PtrCoord(dstInfo.rasBase,
+                                      span.x1, dstInfo.pixelStride,
+                                      span.y1, dstInfo.scanStride);
+                /*
+                 * Fix for 4804375
+                 * REMIND: There should probably be a better
+                 * way to give the span coordinates to the
+                 * inner loop.  This is only really needed
+                 * for the 1, 2, and 4 bit loops.
+                 */
+                srcInfo.bounds.x1 = srcx + span.x1;
+                dstInfo.bounds.x1 = span.x1;
+                (*pPrim->funcs.blit)(pSrc, pDst,
+                                     span.x2 - span.x1, span.y2 - span.y1,
+                                     &srcInfo, &dstInfo, pPrim, &compInfo);
+            }
+            Region_EndIteration(env, &clipInfo);
+            srcInfo.bounds.x1 = savesx;
+            dstInfo.bounds.x1 = savedx;
+        }
+        SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
+        SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
     }
     SurfaceData_InvokeUnlock(env, dstOps, &dstInfo);
     SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);

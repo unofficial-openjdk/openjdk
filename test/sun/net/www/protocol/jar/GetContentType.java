@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
  * @test
  * @bug 4274624
  * @summary  Test JarURLConnection.getContentType would

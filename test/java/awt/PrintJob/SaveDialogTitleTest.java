@@ -33,7 +33,7 @@ import java.awt.*;
 public class SaveDialogTitleTest {
 
     public static void main(String args[]) {
-    
+
         System.out.print("Once the dialog appears, press OK and the ");
         System.out.print("Save to File dialog should appear and it ");
         System.out.println("must have a window title else the test fails.");

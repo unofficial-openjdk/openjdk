@@ -82,7 +82,7 @@ public class PageFormat implements Cloneable
      */
     public PageFormat()
     {
-	mPaper = new Paper();
+        mPaper = new Paper();
     }
 
  /* Instance Methods */
@@ -93,18 +93,18 @@ public class PageFormat implements Cloneable
      * @return a copy of this <code>PageFormat</code>.
      */
     public Object clone() {
-	PageFormat newPage;
+        PageFormat newPage;
 
-	try {
-	    newPage = (PageFormat) super.clone();
-	    newPage.mPaper = (Paper)mPaper.clone();
+        try {
+            newPage = (PageFormat) super.clone();
+            newPage.mPaper = (Paper)mPaper.clone();
 
-	} catch (CloneNotSupportedException e) {
-	    e.printStackTrace();
-	    newPage = null;	// should never happen.
-	}
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            newPage = null;     // should never happen.
+        }
 
-	return newPage;
+        return newPage;
     }
 
 
@@ -115,8 +115,8 @@ public class PageFormat implements Cloneable
      * @return the width of the page.
      */
     public double getWidth() {
-	double width;
-	int orientation = getOrientation();
+        double width;
+        int orientation = getOrientation();
 
         if (orientation == PORTRAIT) {
             width = mPaper.getWidth();
@@ -135,7 +135,7 @@ public class PageFormat implements Cloneable
      */
     public double getHeight() {
         double height;
-	int orientation = getOrientation();
+        int orientation = getOrientation();
 
         if (orientation == PORTRAIT) {
             height = mPaper.getHeight();
@@ -148,8 +148,8 @@ public class PageFormat implements Cloneable
 
     /**
      * Returns the x coordinate of the upper left point of the
-     * imageable area of the <code>Paper</code> object 
-     * associated with this <code>PageFormat</code>. 
+     * imageable area of the <code>Paper</code> object
+     * associated with this <code>PageFormat</code>.
      * This method takes into account the
      * orientation of the page.
      * @return the x coordinate of the upper left point of the
@@ -159,28 +159,28 @@ public class PageFormat implements Cloneable
     public double getImageableX() {
         double x;
 
-	switch (getOrientation()) {
+        switch (getOrientation()) {
 
-	case LANDSCAPE:
-	    x = mPaper.getHeight()
-		- (mPaper.getImageableY() + mPaper.getImageableHeight());
-	    break;
+        case LANDSCAPE:
+            x = mPaper.getHeight()
+                - (mPaper.getImageableY() + mPaper.getImageableHeight());
+            break;
 
-	case PORTRAIT:
-	    x = mPaper.getImageableX();
-	    break;
+        case PORTRAIT:
+            x = mPaper.getImageableX();
+            break;
 
-	case REVERSE_LANDSCAPE:
-	    x = mPaper.getImageableY();
-	    break;
+        case REVERSE_LANDSCAPE:
+            x = mPaper.getImageableY();
+            break;
 
-	default:
-	    /* This should never happen since it signifies that the
-	     * PageFormat is in an invalid orientation.
-	     */
-	    throw new InternalError("unrecognized orientation");
+        default:
+            /* This should never happen since it signifies that the
+             * PageFormat is in an invalid orientation.
+             */
+            throw new InternalError("unrecognized orientation");
 
-	}
+        }
 
         return x;
     }
@@ -190,36 +190,36 @@ public class PageFormat implements Cloneable
      * imageable area of the <code>Paper</code> object
      * associated with this <code>PageFormat</code>.
      * This method takes into account the
-     * orientation of the page.   
+     * orientation of the page.
      * @return the y coordinate of the upper left point of the
-     * imageable area of the <code>Paper</code> object    
+     * imageable area of the <code>Paper</code> object
      * associated with this <code>PageFormat</code>.
      */
     public double getImageableY() {
         double y;
 
-	switch (getOrientation()) {
+        switch (getOrientation()) {
 
-	case LANDSCAPE:
-	    y = mPaper.getImageableX();
-	    break;
+        case LANDSCAPE:
+            y = mPaper.getImageableX();
+            break;
 
-	case PORTRAIT:
-	    y = mPaper.getImageableY();
-	    break;
+        case PORTRAIT:
+            y = mPaper.getImageableY();
+            break;
 
-	case REVERSE_LANDSCAPE:
-	    y = mPaper.getWidth()
-		- (mPaper.getImageableX() + mPaper.getImageableWidth());
-	    break;
+        case REVERSE_LANDSCAPE:
+            y = mPaper.getWidth()
+                - (mPaper.getImageableX() + mPaper.getImageableWidth());
+            break;
 
-	default:
-	    /* This should never happen since it signifies that the
-	     * PageFormat is in an invalid orientation.
-	     */
-	    throw new InternalError("unrecognized orientation");
+        default:
+            /* This should never happen since it signifies that the
+             * PageFormat is in an invalid orientation.
+             */
+            throw new InternalError("unrecognized orientation");
 
-	}
+        }
 
         return y;
     }
@@ -265,27 +265,27 @@ public class PageFormat implements Cloneable
      * Returns a copy of the {@link Paper} object associated
      * with this <code>PageFormat</code>.  Changes made to the
      * <code>Paper</code> object returned from this method do not
-     * affect the <code>Paper</code> object of this 
+     * affect the <code>Paper</code> object of this
      * <code>PageFormat</code>.  To update the <code>Paper</code>
      * object of this <code>PageFormat</code>, create a new
-     * <code>Paper</code> object and set it into this 
-     * <code>PageFormat</code> by using the {@link #setPaper(Paper)} 
+     * <code>Paper</code> object and set it into this
+     * <code>PageFormat</code> by using the {@link #setPaper(Paper)}
      * method.
      * @return a copy of the <code>Paper</code> object associated
-     *		with this <code>PageFormat</code>.
+     *          with this <code>PageFormat</code>.
      * @see #setPaper
      */
     public Paper getPaper() {
-	return (Paper)mPaper.clone();
+        return (Paper)mPaper.clone();
     }
 
     /**
-     * Sets the <code>Paper</code> object for this 
+     * Sets the <code>Paper</code> object for this
      * <code>PageFormat</code>.
      * @param paper the <code>Paper</code> object to which to set
      * the <code>Paper</code> object for this <code>PageFormat</code>.
      * @exception <code>NullPointerException</code>
-     *		    a null paper instance was passed as a parameter.
+     *              a null paper instance was passed as a parameter.
      * @see #getPaper
      */
      public void setPaper(Paper paper) {
@@ -297,17 +297,17 @@ public class PageFormat implements Cloneable
      * one of the constants: PORTRAIT, LANDSCAPE,
      * or REVERSE_LANDSCAPE.
      * @param orientation the new orientation for the page
-     * @throws IllegalArgumentException if 
-     *		an unknown orientation was requested
+     * @throws IllegalArgumentException if
+     *          an unknown orientation was requested
      * @see #getOrientation
      */
     public void setOrientation(int orientation) throws IllegalArgumentException
     {
-	if (0 <= orientation && orientation <= REVERSE_LANDSCAPE) {
-	    mOrientation = orientation;
-	} else {
-	    throw new IllegalArgumentException();
-	}
+        if (0 <= orientation && orientation <= REVERSE_LANDSCAPE) {
+            mOrientation = orientation;
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -316,7 +316,7 @@ public class PageFormat implements Cloneable
      * @see #setOrientation
      */
     public int getOrientation() {
-	return mOrientation;
+        return mOrientation;
     }
 
     /**
@@ -334,30 +334,30 @@ public class PageFormat implements Cloneable
     public double[] getMatrix() {
         double[] matrix = new double[6];
 
-	switch (mOrientation) {
+        switch (mOrientation) {
 
-	case LANDSCAPE:
+        case LANDSCAPE:
             matrix[0] =  0;     matrix[1] = -1;
             matrix[2] =  1;     matrix[3] =  0;
             matrix[4] =  0;     matrix[5] =  mPaper.getHeight();
-	    break;
+            break;
 
-	case PORTRAIT:
+        case PORTRAIT:
             matrix[0] =  1;     matrix[1] =  0;
             matrix[2] =  0;     matrix[3] =  1;
             matrix[4] =  0;     matrix[5] =  0;
-	    break;
+            break;
 
-	case REVERSE_LANDSCAPE:
-            matrix[0] =  0;			matrix[1] =  1;
-            matrix[2] = -1;			matrix[3] =  0;
+        case REVERSE_LANDSCAPE:
+            matrix[0] =  0;                     matrix[1] =  1;
+            matrix[2] = -1;                     matrix[3] =  0;
             matrix[4] =  mPaper.getWidth();     matrix[5] =  0;
-	    break;
+            break;
 
-	default:
-	    throw new IllegalArgumentException();
-	}
+        default:
+            throw new IllegalArgumentException();
+        }
 
-	return matrix;
+        return matrix;
     }
 }

@@ -60,10 +60,10 @@ public class BufImgSurfaceManager extends SurfaceManager {
     }
 
     /**
-     * Called from platform-specific SurfaceData objects to attempt to 
+     * Called from platform-specific SurfaceData objects to attempt to
      * auto-restore the contents of an accelerated surface that has been lost.
      */
     public SurfaceData restoreContents() {
-	return sdDefault;
+        return sdDefault;
     }
 }

@@ -96,8 +96,8 @@ public:
 
     /* Subtract inset values from a window origin. */
     INLINE void SubtractInsetPoint(int& x, int& y) {
-	x -= m_insets.left;
-	y -= m_insets.top;
+        x -= m_insets.left;
+        y -= m_insets.top;
     }
 
     virtual void GetInsets(RECT* rect) {
@@ -137,7 +137,7 @@ public:
     virtual void Grab();
     virtual void Ungrab();
     virtual void Ungrab(BOOL doPost);
-    virtual void SetIconData(JNIEnv* env, jintArray iconData, jint w, jint h, 
+    virtual void SetIconData(JNIEnv* env, jintArray iconData, jint w, jint h,
                              jintArray smallIconData, jint smw, jint smh);
     virtual void DoUpdateIcon();
     INLINE HICON GetHIcon() {return m_hIcon;};
@@ -147,7 +147,7 @@ public:
     /* Post events to the EventQueue */
     void SendComponentEvent(jint eventId);
     void SendWindowEvent(jint id, HWND opposite = NULL,
-			 jint oldState = 0, jint newState = 0);
+                         jint oldState = 0, jint newState = 0);
 
     BOOL IsFocusableWindow();
 
@@ -176,7 +176,7 @@ public:
     virtual MsgRouting WmPaint(HDC hDC);
     virtual MsgRouting WmSettingChange(UINT wFlag, LPCTSTR pszSection);
     virtual MsgRouting WmNcCalcSize(BOOL fCalcValidRects,
-				    LPNCCALCSIZE_PARAMS lpncsp, LRESULT& retVal);
+                                    LPNCCALCSIZE_PARAMS lpncsp, LRESULT& retVal);
     virtual MsgRouting WmNcPaint(HRGN hrgn);
     virtual MsgRouting WmNcHitTest(UINT x, UINT y, LRESULT& retVal);
     virtual MsgRouting WmNcMouseDown(WPARAM hitTest, int x, int y, int button);

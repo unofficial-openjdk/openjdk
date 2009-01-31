@@ -47,7 +47,7 @@ import java.security.spec.KeySpec;
  * take all 16 bits of each character.
  *
  * <p>Also note that this class stores passwords as char arrays instead of
- * <code>String</code> objects (which would seem more logical), because the 
+ * <code>String</code> objects (which would seem more logical), because the
  * String class is immutable and there is no way to overwrite its
  * internal value when the password stored in it is no longer needed. Hence,
  * this class requests the password as a char array, so it can be overwritten
@@ -77,21 +77,21 @@ public class PBEKeySpec implements KeySpec {
      * @param password the password.
      */
     public PBEKeySpec(char[] password) {
-	if ((password == null) || (password.length == 0)) {
-	    this.password = new char[0];
-	} else {
-	    this.password = (char[])password.clone();
-	}
+        if ((password == null) || (password.length == 0)) {
+            this.password = new char[0];
+        } else {
+            this.password = (char[])password.clone();
+        }
     }
 
-    
+
     /**
      * Constructor that takes a password, salt, iteration count, and
      * to-be-derived key length for generating PBEKey of variable-key-size
-     * PBE ciphers.  An empty char[] is used if null is specified for 
+     * PBE ciphers.  An empty char[] is used if null is specified for
      * <code>password</code>.
      *
-     * <p> Note: the <code>password</code> and <code>salt</code> 
+     * <p> Note: the <code>password</code> and <code>salt</code>
      * are cloned before they are stored in
      * the new <code>PBEKeySpec</code> object.
      *
@@ -104,40 +104,40 @@ public class PBEKeySpec implements KeySpec {
      * i.e. 0-length, <code>iterationCount</code> or
      * <code>keyLength</code> is not positive.
      */
-    public PBEKeySpec(char[] password, byte[] salt, int iterationCount, 
-	int keyLength) {
+    public PBEKeySpec(char[] password, byte[] salt, int iterationCount,
+        int keyLength) {
         if ((password == null) || (password.length == 0)) {
             this.password = new char[0];
         } else {
             this.password = (char[])password.clone();
         }
-	if (salt == null) {
-	    throw new NullPointerException("the salt parameter " +
-					    "must be non-null");
-	} else if (salt.length == 0) {
-	    throw new IllegalArgumentException("the salt parameter " + 
-						"must not be empty");
-	} else {
-	    this.salt = (byte[]) salt.clone();		
-	}
-	if (iterationCount<=0) {
-	    throw new IllegalArgumentException("invalid iterationCount value");
-	}
-	if (keyLength<=0) {
-	    throw new IllegalArgumentException("invalid keyLength value");
-	}	
-	this.iterationCount = iterationCount;
-	this.keyLength = keyLength;
+        if (salt == null) {
+            throw new NullPointerException("the salt parameter " +
+                                            "must be non-null");
+        } else if (salt.length == 0) {
+            throw new IllegalArgumentException("the salt parameter " +
+                                                "must not be empty");
+        } else {
+            this.salt = (byte[]) salt.clone();
+        }
+        if (iterationCount<=0) {
+            throw new IllegalArgumentException("invalid iterationCount value");
+        }
+        if (keyLength<=0) {
+            throw new IllegalArgumentException("invalid keyLength value");
+        }
+        this.iterationCount = iterationCount;
+        this.keyLength = keyLength;
     }
-                      
+
 
     /**
      * Constructor that takes a password, salt, iteration count for
-     * generating PBEKey of fixed-key-size PBE ciphers. An empty 
+     * generating PBEKey of fixed-key-size PBE ciphers. An empty
      * char[] is used if null is specified for <code>password</code>.
      *
      * <p> Note: the <code>password</code> and <code>salt</code>
-     * are cloned before they are stored in the new 
+     * are cloned before they are stored in the new
      * <code>PBEKeySpec</code> object.
      *
      * @param password the password.
@@ -153,31 +153,31 @@ public class PBEKeySpec implements KeySpec {
         } else {
             this.password = (char[])password.clone();
         }
-	if (salt == null) {
-	    throw new NullPointerException("the salt parameter " +
-					    "must be non-null");
-	} else if (salt.length == 0) {
-	    throw new IllegalArgumentException("the salt parameter " + 
-						"must not be empty");
-	} else {
-	    this.salt = (byte[]) salt.clone();		
-	}
-	if (iterationCount<=0) {
-	    throw new IllegalArgumentException("invalid iterationCount value");
-	}
-	this.iterationCount = iterationCount;
-    }              
-                                                   
+        if (salt == null) {
+            throw new NullPointerException("the salt parameter " +
+                                            "must be non-null");
+        } else if (salt.length == 0) {
+            throw new IllegalArgumentException("the salt parameter " +
+                                                "must not be empty");
+        } else {
+            this.salt = (byte[]) salt.clone();
+        }
+        if (iterationCount<=0) {
+            throw new IllegalArgumentException("invalid iterationCount value");
+        }
+        this.iterationCount = iterationCount;
+    }
+
     /**
      * Clears the internal copy of the password.
      *
      */
     public final void clearPassword() {
-	if (password != null) {
+        if (password != null) {
             for (int i = 0; i < password.length; i++) {
                 password[i] = ' ';
-	    }
-	    password = null;
+            }
+            password = null;
         }
     }
 
@@ -188,16 +188,16 @@ public class PBEKeySpec implements KeySpec {
      * the caller's responsibility to zero out the password information after
      * it is no longer needed.
      *
-     * @exception IllegalStateException if password has been cleared by 
+     * @exception IllegalStateException if password has been cleared by
      * calling <code>clearPassword</code> method.
      * @return the password.
      */
     public final char[] getPassword() {
-	if (password == null) {
-	    throw new IllegalStateException("password has been cleared");
-	}
-	return (char[]) password.clone();
-    } 
+        if (password == null) {
+            throw new IllegalStateException("password has been cleared");
+        }
+        return (char[]) password.clone();
+    }
 
     /**
      * Returns a copy of the salt or null if not specified.
@@ -207,22 +207,22 @@ public class PBEKeySpec implements KeySpec {
      * it is no longer needed.
      *
      * @return the salt.
-     */       
+     */
     public final byte[] getSalt() {
-	if (salt != null) {
-	    return (byte[]) salt.clone();
-	} else {
-	    return null;
-	}
+        if (salt != null) {
+            return (byte[]) salt.clone();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Returns the iteration count or 0 if not specified.
      *
      * @return the iteration count.
-     */        
+     */
     public final int getIterationCount() {
-	return iterationCount;
+        return iterationCount;
     }
 
     /**
@@ -233,8 +233,8 @@ public class PBEKeySpec implements KeySpec {
      * each provider's implementation.
      *
      * @return the to-be-derived key length.
-     */        
+     */
     public final int getKeyLength() {
-	return keyLength;
+        return keyLength;
     }
 }

@@ -22,12 +22,12 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package com.sun.crypto.provider;
 
 /**
  * This class defines the constants used by the DES implementation.
- * 
+ *
  * @author Gigi Ankeny
  *
  * @see DESCipher
@@ -35,6 +35,5 @@ package com.sun.crypto.provider;
 
 interface DESConstants {
 
-    int DES_BLOCK_SIZE = 8;    
+    int DES_BLOCK_SIZE = 8;
 }
-    

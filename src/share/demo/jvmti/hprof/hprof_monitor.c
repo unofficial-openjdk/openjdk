@@ -98,18 +98,18 @@ find_or_create_entry(JNIEnv *env, TraceIndex trace_index, jobject object)
 
     HPROF_ASSERT(object!=NULL);
     WITH_LOCAL_REFS(env, 1) {
-	jclass clazz;
-	
-	clazz = getObjectClass(env, object);
-	getClassSignature(clazz, &sig, NULL);
+        jclass clazz;
+
+        clazz = getObjectClass(env, object);
+        getClassSignature(clazz, &sig, NULL);
     } END_WITH_LOCAL_REFS;
-    
+
     key                    = empty_key;
     key.trace_index        = trace_index;
     key.sig_index = string_find_or_create(sig);
     jvmtiDeallocate(sig);
-    index = table_find_or_create_entry(gdata->monitor_table, &key, 
-			(int)sizeof(key), NULL, NULL);
+    index = table_find_or_create_entry(gdata->monitor_table, &key,
+                        (int)sizeof(key), NULL, NULL);
     return index;
 }
 
@@ -129,12 +129,12 @@ list_item(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *ar
     HPROF_ASSERT(info_ptr!=NULL);
     pkey = (MonitorKey*)key_ptr;
     info = (MonitorInfo *)info_ptr;
-    debug_message( 
+    debug_message(
                 "Monitor 0x%08x: trace=0x%08x, sig=0x%08x, "
-		"num_hits=%d, contended_time=(%d,%d)\n",
-                 index, 
-                 pkey->trace_index, 
-                 pkey->sig_index, 
+                "num_hits=%d, contended_time=(%d,%d)\n",
+                 index,
+                 pkey->trace_index,
+                 pkey->sig_index,
                  info->num_hits,
                  jlong_high(info->contended_time),
                  jlong_low(info->contended_time));
@@ -155,7 +155,7 @@ collect_iterator(MonitorIndex index, void *key_ptr, int key_len, void *info_ptr,
     iterate->total_contended_time += info->contended_time;
 }
 
-static int 
+static int
 qsort_compare(const void *p_monitor1, const void *p_monitor2)
 {
     MonitorInfo * info1;
@@ -163,7 +163,7 @@ qsort_compare(const void *p_monitor1, const void *p_monitor2)
     MonitorIndex  monitor1;
     MonitorIndex  monitor2;
     jlong         result;
-    
+
     HPROF_ASSERT(p_monitor1!=NULL);
     HPROF_ASSERT(p_monitor2!=NULL);
     monitor1 = *(MonitorIndex *)p_monitor1;
@@ -195,7 +195,7 @@ static TraceIndex
 get_trace(TlsIndex tls_index, JNIEnv *env)
 {
     TraceIndex trace_index;
-    
+
     trace_index = tls_get_trace(tls_index, env, gdata->max_trace_depth, JNI_FALSE);
     return trace_index;
 }
@@ -212,7 +212,7 @@ monitor_init(void)
 void
 monitor_list(void)
 {
-    debug_message( 
+    debug_message(
         "------------------- Monitor Table ------------------------\n");
     table_walk_items(gdata->monitor_table, &list_item, NULL);
     debug_message(
@@ -226,103 +226,103 @@ monitor_cleanup(void)
     gdata->monitor_table = NULL;
 }
 
-void 
+void
 monitor_clear(void)
 {
     table_walk_items(gdata->monitor_table, &clear_item, NULL);
 }
 
 /* Contended monitor output */
-void 
+void
 monitor_write_contended_time(JNIEnv *env, double cutoff)
 {
     int n_entries;
 
     n_entries = table_element_count(gdata->monitor_table);
     if ( n_entries == 0 ) {
-	return;
+        return;
     }
 
     rawMonitorEnter(gdata->data_access_lock); {
-	IterateInfo iterate;
-	int i;
-	int n_items;
+        IterateInfo iterate;
+        int i;
+        int n_items;
         jlong total_contended_time;
-	
-	/* First write all trace we might refer to. */
-	trace_output_unmarked(env);
 
-	/* Looking for an array of monitor index values of interest */
-	iterate.monitors = HPROF_MALLOC(n_entries*(int)sizeof(MonitorIndex));
-	(void)memset(iterate.monitors, 0, n_entries*(int)sizeof(MonitorIndex));
+        /* First write all trace we might refer to. */
+        trace_output_unmarked(env);
 
-	/* Get a combined total and an array of monitor index numbers */
-	iterate.total_contended_time = 0;
-	iterate.count = 0;
-	table_walk_items(gdata->monitor_table, &collect_iterator, &iterate);
+        /* Looking for an array of monitor index values of interest */
+        iterate.monitors = HPROF_MALLOC(n_entries*(int)sizeof(MonitorIndex));
+        (void)memset(iterate.monitors, 0, n_entries*(int)sizeof(MonitorIndex));
 
-	/* Sort that list */
-	n_entries = iterate.count;
-	if ( n_entries > 0 ) {
-	    qsort(iterate.monitors, n_entries, sizeof(MonitorIndex), 
-			&qsort_compare);
+        /* Get a combined total and an array of monitor index numbers */
+        iterate.total_contended_time = 0;
+        iterate.count = 0;
+        table_walk_items(gdata->monitor_table, &collect_iterator, &iterate);
+
+        /* Sort that list */
+        n_entries = iterate.count;
+        if ( n_entries > 0 ) {
+            qsort(iterate.monitors, n_entries, sizeof(MonitorIndex),
+                        &qsort_compare);
         }
 
-	/* Apply the cutoff */
-	n_items = 0;
-	for (i = 0; i < n_entries; i++) {
-	    MonitorIndex index;
-	    MonitorInfo *info;
-	    double percent;
+        /* Apply the cutoff */
+        n_items = 0;
+        for (i = 0; i < n_entries; i++) {
+            MonitorIndex index;
+            MonitorInfo *info;
+            double percent;
 
-	    index = iterate.monitors[i];
-	    info = get_info(index);
-	    percent = (double)info->contended_time / 
-		      (double)iterate.total_contended_time;
-	    if (percent < cutoff) {
-		break;
-	    }
-	    iterate.monitors[n_items++] = index;
-	}
+            index = iterate.monitors[i];
+            info = get_info(index);
+            percent = (double)info->contended_time /
+                      (double)iterate.total_contended_time;
+            if (percent < cutoff) {
+                break;
+            }
+            iterate.monitors[n_items++] = index;
+        }
 
-	/* Output the items that make sense */
-	total_contended_time = iterate.total_contended_time / 1000000;
-        
-	if ( n_items > 0 && total_contended_time > 0 ) {
+        /* Output the items that make sense */
+        total_contended_time = iterate.total_contended_time / 1000000;
+
+        if ( n_items > 0 && total_contended_time > 0 ) {
             double accum;
-	    
-	    /* Output the info on this monitor enter site */
-	    io_write_monitor_header(total_contended_time);
-	    
-	    accum = 0.0;
-	    for (i = 0; i < n_items; i++) {
-		MonitorIndex index;
-		MonitorInfo *info;
-		MonitorKey *pkey;
-	        double percent;
-		char *sig;
 
-		index = iterate.monitors[i];
-		pkey = get_pkey(index);
-		info = get_info(index);
-                
-		sig = string_get(pkey->sig_index);
+            /* Output the info on this monitor enter site */
+            io_write_monitor_header(total_contended_time);
 
-		percent = (double)info->contended_time / 
-			  (double)iterate.total_contended_time * 100.0;
-		accum += percent;
-		io_write_monitor_elem(i + 1, percent, accum, 
-			            info->num_hits,
-				    trace_get_serial_number(pkey->trace_index), 
-				    sig);
-	    }
-	    io_write_monitor_footer();
-	}
-	HPROF_FREE(iterate.monitors);
+            accum = 0.0;
+            for (i = 0; i < n_items; i++) {
+                MonitorIndex index;
+                MonitorInfo *info;
+                MonitorKey *pkey;
+                double percent;
+                char *sig;
+
+                index = iterate.monitors[i];
+                pkey = get_pkey(index);
+                info = get_info(index);
+
+                sig = string_get(pkey->sig_index);
+
+                percent = (double)info->contended_time /
+                          (double)iterate.total_contended_time * 100.0;
+                accum += percent;
+                io_write_monitor_elem(i + 1, percent, accum,
+                                    info->num_hits,
+                                    trace_get_serial_number(pkey->trace_index),
+                                    sig);
+            }
+            io_write_monitor_footer();
+        }
+        HPROF_FREE(iterate.monitors);
     } rawMonitorExit(gdata->data_access_lock);
 }
 
-void 
+void
 monitor_contended_enter_event(JNIEnv *env, jthread thread, jobject object)
 {
     TlsIndex     tls_index;
@@ -332,7 +332,7 @@ monitor_contended_enter_event(JNIEnv *env, jthread thread, jobject object)
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(thread!=NULL);
     HPROF_ASSERT(object!=NULL);
-    
+
     tls_index =  tls_find_or_create(env, thread);
     HPROF_ASSERT(tls_get_monitor(tls_index)==0);
     trace_index = get_trace(tls_index, env);
@@ -341,7 +341,7 @@ monitor_contended_enter_event(JNIEnv *env, jthread thread, jobject object)
     tls_set_monitor(tls_index, index);
 }
 
-void 
+void
 monitor_contended_entered_event(JNIEnv* env, jthread thread, jobject object)
 {
     TlsIndex     tls_index;
@@ -351,7 +351,7 @@ monitor_contended_entered_event(JNIEnv* env, jthread thread, jobject object)
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(object!=NULL);
     HPROF_ASSERT(thread!=NULL);
-    
+
     tls_index = tls_find_or_create(env, thread);
     HPROF_ASSERT(tls_index!=0);
     index     = tls_get_monitor(tls_index);
@@ -361,7 +361,7 @@ monitor_contended_entered_event(JNIEnv* env, jthread thread, jobject object)
     info->num_hits++;
     tls_set_monitor(tls_index, 0);
 }
-    
+
 void
 monitor_wait_event(JNIEnv *env, jthread thread, jobject object, jlong timeout)
 {
@@ -373,7 +373,7 @@ monitor_wait_event(JNIEnv *env, jthread thread, jobject object, jlong timeout)
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(object!=NULL);
     HPROF_ASSERT(thread!=NULL);
-    
+
     tls_index =  tls_find_or_create(env, thread);
     HPROF_ASSERT(tls_index!=0);
     HPROF_ASSERT(tls_get_monitor(tls_index)==0);
@@ -384,13 +384,13 @@ monitor_wait_event(JNIEnv *env, jthread thread, jobject object, jlong timeout)
     tls_set_monitor(tls_index, index);
 
     rawMonitorEnter(gdata->data_access_lock); {
-        io_write_monitor_wait(string_get(pkey->sig_index), timeout, 
-			    tls_get_thread_serial_number(tls_index));
+        io_write_monitor_wait(string_get(pkey->sig_index), timeout,
+                            tls_get_thread_serial_number(tls_index));
     } rawMonitorExit(gdata->data_access_lock);
 }
 
 void
-monitor_waited_event(JNIEnv *env, jthread thread, 
+monitor_waited_event(JNIEnv *env, jthread thread,
                                 jobject object, jboolean timed_out)
 {
     TlsIndex     tls_index;
@@ -403,32 +403,31 @@ monitor_waited_event(JNIEnv *env, jthread thread,
     index = tls_get_monitor(tls_index);
 
     if ( index ==0 ) {
-	/* As best as I can tell, on Solaris X86 (not SPARC) I sometimes
-	 *    get a "waited" event on a thread that I have never seen before
-	 *    at all, so how did I get a WAITED event? Perhaps when I
-	 *    did the VM_INIT handling, a thread I've never seen had already
-	 *    done the WAIT (which I never saw?), and now I see this thread
-	 *    for the first time, and also as it finishes it's WAIT?
-	 *    Only happening on faster processors?
-	 */
+        /* As best as I can tell, on Solaris X86 (not SPARC) I sometimes
+         *    get a "waited" event on a thread that I have never seen before
+         *    at all, so how did I get a WAITED event? Perhaps when I
+         *    did the VM_INIT handling, a thread I've never seen had already
+         *    done the WAIT (which I never saw?), and now I see this thread
+         *    for the first time, and also as it finishes it's WAIT?
+         *    Only happening on faster processors?
+         */
         tls_set_monitor(tls_index, 0);
-	return;
+        return;
     }
     HPROF_ASSERT(index!=0);
     tls_set_monitor(tls_index, 0);
     if (object == NULL) {
-	rawMonitorEnter(gdata->data_access_lock); {
-	    io_write_monitor_sleep(time_waited, 
-			tls_get_thread_serial_number(tls_index));
-	} rawMonitorExit(gdata->data_access_lock);
+        rawMonitorEnter(gdata->data_access_lock); {
+            io_write_monitor_sleep(time_waited,
+                        tls_get_thread_serial_number(tls_index));
+        } rawMonitorExit(gdata->data_access_lock);
     } else {
-	MonitorKey *pkey;
-	
-	pkey = get_pkey(index);
-	rawMonitorEnter(gdata->data_access_lock); {
-	    io_write_monitor_waited(string_get(pkey->sig_index), time_waited, 
-		tls_get_thread_serial_number(tls_index));
-	} rawMonitorExit(gdata->data_access_lock);
+        MonitorKey *pkey;
+
+        pkey = get_pkey(index);
+        rawMonitorEnter(gdata->data_access_lock); {
+            io_write_monitor_waited(string_get(pkey->sig_index), time_waited,
+                tls_get_thread_serial_number(tls_index));
+        } rawMonitorExit(gdata->data_access_lock);
     }
 }
-

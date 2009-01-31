@@ -32,7 +32,6 @@ import java.security.GeneralSecurityException;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see java.security.AlgorithmParameters
  * @see AlgorithmParameterSpec
@@ -51,17 +50,17 @@ public class InvalidParameterSpecException extends GeneralSecurityException {
      * exception.
      */
     public InvalidParameterSpecException() {
-	super();
+        super();
     }
 
     /**
      * Constructs an InvalidParameterSpecException with the specified detail
      * message. A detail message is a String that describes this
-     * particular exception.  
+     * particular exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public InvalidParameterSpecException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

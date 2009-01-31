@@ -30,12 +30,12 @@ package com.sun.jmx.snmp;
  * The <CODE>SnmpSocpedPduBulk</CODE> extends {@link com.sun.jmx.snmp.SnmpScopedPduPacket SnmpScopedPduPacket}
  * and defines attributes specific to the <CODE>get-bulk</CODE> PDU (see RFC 1448).
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */
 
-public class SnmpScopedPduBulk extends SnmpScopedPduPacket 
+public class SnmpScopedPduBulk extends SnmpScopedPduPacket
     implements SnmpPduBulkType {
     private static final long serialVersionUID = -1648623646227038885L;
 
@@ -44,7 +44,7 @@ public class SnmpScopedPduBulk extends SnmpScopedPduPacket
      * @serial
      */
     int            nonRepeaters;
-  
+
 
     /**
      * The <CODE>max-repetitions</CODE> value.
@@ -53,16 +53,16 @@ public class SnmpScopedPduBulk extends SnmpScopedPduPacket
     int            maxRepetitions;
 
     public SnmpScopedPduBulk() {
-  	type = pduGetBulkRequestPdu;
-	version = snmpVersionThree;
+        type = pduGetBulkRequestPdu;
+        version = snmpVersionThree;
     }
 
     /**
      * The <CODE>max-repetitions</CODE> setter.
      * @param max Maximum repetition.
      */
-    public void setMaxRepetitions(int max) { 
-	maxRepetitions = max;
+    public void setMaxRepetitions(int max) {
+        maxRepetitions = max;
     }
 
     /**
@@ -70,7 +70,7 @@ public class SnmpScopedPduBulk extends SnmpScopedPduPacket
      * @param nr Non repeaters.
      */
     public void setNonRepeaters(int nr) {
-	nonRepeaters = nr;
+        nonRepeaters = nr;
     }
 
     /**
@@ -84,27 +84,27 @@ public class SnmpScopedPduBulk extends SnmpScopedPduPacket
      * @return Non repeaters.
      */
     public int getNonRepeaters() { return nonRepeaters; }
-    
+
     /**
      * Generates the pdu to use for response.
      * @return Response pdu.
      */
     public SnmpPdu getResponsePdu() {
- 	SnmpScopedPduRequest result = new SnmpScopedPduRequest();
-	result.address = address ;
-	result.port = port ;
-	result.version = version ;
- 	result.requestId = requestId;
-	result.msgId = msgId;
- 	result.msgMaxSize = msgMaxSize;
- 	result.msgFlags = msgFlags;
- 	result.msgSecurityModel = msgSecurityModel;
- 	result.contextEngineId = contextEngineId;
- 	result.contextName = contextName;
- 	result.securityParameters = securityParameters;
-	result.type = pduGetResponsePdu ;
-	result.errorStatus = SnmpDefinitions.snmpRspNoError ;
-	result.errorIndex = 0 ;
- 	return result;
+        SnmpScopedPduRequest result = new SnmpScopedPduRequest();
+        result.address = address ;
+        result.port = port ;
+        result.version = version ;
+        result.requestId = requestId;
+        result.msgId = msgId;
+        result.msgMaxSize = msgMaxSize;
+        result.msgFlags = msgFlags;
+        result.msgSecurityModel = msgSecurityModel;
+        result.contextEngineId = contextEngineId;
+        result.contextName = contextName;
+        result.securityParameters = securityParameters;
+        result.type = pduGetResponsePdu ;
+        result.errorStatus = SnmpDefinitions.snmpRspNoError ;
+        result.errorIndex = 0 ;
+        return result;
     }
 }

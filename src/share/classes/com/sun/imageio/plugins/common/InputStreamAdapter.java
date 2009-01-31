@@ -30,10 +30,9 @@ import java.io.InputStream;
 import javax.imageio.stream.ImageInputStream;
 
 /**
- * @version 0.5
  */
 public class InputStreamAdapter extends InputStream {
-    
+
     ImageInputStream stream;
 
     public InputStreamAdapter(ImageInputStream stream) {

@@ -22,8 +22,8 @@
  */
 
 /* @test
-   @bug 1265548 
-   @summary PrintStream should not accept a null output stream in its 
+   @bug 1265548
+   @summary PrintStream should not accept a null output stream in its
    constructor
 */
 
@@ -32,11 +32,11 @@ import java.io.*;
 public class NullConstructor {
 
     public static void main(String args[]) throws Exception {
-	try {
-	    PrintStream ps = new PrintStream((OutputStream) null);
-	} catch (Exception e) {
-	    return;
-	}
-	throw new Exception("PrintStream does not catch null constructor");
+        try {
+            PrintStream ps = new PrintStream((OutputStream) null);
+        } catch (Exception e) {
+            return;
+        }
+        throw new Exception("PrintStream does not catch null constructor");
     }
 }

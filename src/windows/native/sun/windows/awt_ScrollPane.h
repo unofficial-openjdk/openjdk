@@ -55,12 +55,12 @@ public:
     AwtScrollPane();
 
     virtual LPCTSTR GetClassName();
-    
+
     static AwtScrollPane* Create(jobject self, jobject hParent);
 
     void SetInsets(JNIEnv *env);
-    void RecalcSizes(int parentWidth, int parentHeight, 
-		     int childWidth, int childHeight);
+    void RecalcSizes(int parentWidth, int parentHeight,
+                     int childWidth, int childHeight);
     virtual void Show(JNIEnv *env);
     virtual void Reshape(int x, int y, int w, int h);
     virtual void BeginValidate() {}
@@ -72,7 +72,7 @@ public:
      * Returns scroll position for the appropriate scrollbar.
      */
     int GetScrollPos(int orient);
-  
+
     /*
      * Windows message handler functions
      */

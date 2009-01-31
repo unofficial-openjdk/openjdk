@@ -34,10 +34,10 @@ import com.sun.net.httpserver.*;
 
 /**
  * Part 1: 6488669
- * 1) Http server that responds with an error code (>=400) 
- *    and a chunked response body. It also indicates that 
+ * 1) Http server that responds with an error code (>=400)
+ *    and a chunked response body. It also indicates that
  *    the connection will be closed.
- * 2) Client sends request to server and tries to 
+ * 2) Client sends request to server and tries to
  *    getErrorStream(). Some data must be able to be read
  *    from the errorStream.
  *
@@ -46,7 +46,7 @@ import com.sun.net.httpserver.*;
  *    and a chunked response body greater than
  *    sun.net.http.errorstream.bufferSize, 4K + 10 bytes.
  * 2) Client sends request to server and tries to
- *    getErrorStream(). 4K + 10 bytes must be read from 
+ *    getErrorStream(). 4K + 10 bytes must be read from
  *    the errorStream.
  */
 
@@ -55,19 +55,19 @@ public class ChunkedErrorStream
     com.sun.net.httpserver.HttpServer httpServer;
 
     static {
-	// Enable ErrorStream buffering
-	System.getProperties().setProperty("sun.net.http.errorstream.enableBuffering", "true");
+        // Enable ErrorStream buffering
+        System.getProperties().setProperty("sun.net.http.errorstream.enableBuffering", "true");
 
-	// No need to set this as 4K is the default
-	// System.getProperties().setProperty("sun.net.http.errorstream.bufferSize", "4096");
+        // No need to set this as 4K is the default
+        // System.getProperties().setProperty("sun.net.http.errorstream.bufferSize", "4096");
     }
 
     public static void main(String[] args) {
-	new ChunkedErrorStream();
+        new ChunkedErrorStream();
     }
 
     public ChunkedErrorStream() {
-	try {
+        try {
             startHttpServer();
             doClient();
         } catch (IOException ioe) {
@@ -79,46 +79,46 @@ public class ChunkedErrorStream
     }
 
     void doClient() {
-	for (int times=0; times<2; times++) {
-	    HttpURLConnection uc = null;
+        for (int times=0; times<2; times++) {
+            HttpURLConnection uc = null;
             try {
-	        InetSocketAddress address = httpServer.getAddress();
-		String URLStr = "http://localhost:" + address.getPort() + "/test/";
-		if (times == 0) {
-		    URLStr += 6488669;
-		} else {
-		    URLStr += 6595324;
-		}
+                InetSocketAddress address = httpServer.getAddress();
+                String URLStr = "http://localhost:" + address.getPort() + "/test/";
+                if (times == 0) {
+                    URLStr += 6488669;
+                } else {
+                    URLStr += 6595324;
+                }
 
-		System.out.println("Trying " + URLStr);
-   		URL url = new URL(URLStr); 
+                System.out.println("Trying " + URLStr);
+                URL url = new URL(URLStr);
                 uc = (HttpURLConnection)url.openConnection();
                 uc.getInputStream();
-    
-	        throw new RuntimeException("Failed: getInputStream should throw and IOException");
-	    }  catch (IOException e) {
-	        // This is what we expect to happen.
-	        InputStream es = uc.getErrorStream();
-	        byte[] ba = new byte[1024];
-	        int count = 0, ret;
-	        try {
-		    while ((ret = es.read(ba)) != -1)
-		        count += ret;
-	    	    es.close();
-	        } catch  (IOException ioe) {
-		    ioe.printStackTrace();
-	        }
-    
-	        if (count == 0)
-	 	    throw new RuntimeException("Failed: ErrorStream returning 0 bytes");
 
-	 	if (times == 1 && count != (4096+10))
-		    throw new RuntimeException("Failed: ErrorStream returning " + count +
-						 " bytes. Expecting " + (4096+10));
-    
-	        System.out.println("Read " + count + " bytes from the errorStream");
+                throw new RuntimeException("Failed: getInputStream should throw and IOException");
+            }  catch (IOException e) {
+                // This is what we expect to happen.
+                InputStream es = uc.getErrorStream();
+                byte[] ba = new byte[1024];
+                int count = 0, ret;
+                try {
+                    while ((ret = es.read(ba)) != -1)
+                        count += ret;
+                    es.close();
+                } catch  (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+
+                if (count == 0)
+                    throw new RuntimeException("Failed: ErrorStream returning 0 bytes");
+
+                if (times == 1 && count != (4096+10))
+                    throw new RuntimeException("Failed: ErrorStream returning " + count +
+                                                 " bytes. Expecting " + (4096+10));
+
+                System.out.println("Read " + count + " bytes from the errorStream");
             }
-	}
+        }
     }
 
     /**
@@ -136,22 +136,22 @@ public class ChunkedErrorStream
 
     class Handler6488669 implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {
-	    InputStream is = t.getRequestBody();
-	    byte[] ba = new byte[1024];
-	    while (is.read(ba) != -1);
-	    is.close();
+            InputStream is = t.getRequestBody();
+            byte[] ba = new byte[1024];
+            while (is.read(ba) != -1);
+            is.close();
 
-	    Headers resHeaders = t.getResponseHeaders();
-	    resHeaders.add("Connection", "close");
+            Headers resHeaders = t.getResponseHeaders();
+            resHeaders.add("Connection", "close");
             t.sendResponseHeaders(404, 0);
-	    OutputStream os = t.getResponseBody();
+            OutputStream os = t.getResponseBody();
 
-	    // actual data doesn't matter. Just send 2K worth.
-	    byte b = 'a';
-	    for (int i=0; i<2048; i++)
-		os.write(b);
+            // actual data doesn't matter. Just send 2K worth.
+            byte b = 'a';
+            for (int i=0; i<2048; i++)
+                os.write(b);
 
-	    os.close();
+            os.close();
             t.close();
         }
     }

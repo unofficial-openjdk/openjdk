@@ -39,11 +39,10 @@ import sun.swing.plaf.synth.*;
 
 
 /**
- * A Synth L&F implementation of ToolBarUI.  This implementation 
+ * A Synth L&F implementation of ToolBarUI.  This implementation
  * is a "combined" view/controller.
  * <p>
  *
- * @version %I%, %G%
  */
 class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
            SynthUI {
@@ -55,7 +54,7 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
     private SynthStyle dragWindowStyle;
 
     public static ComponentUI createUI(JComponent c) {
-	return new SynthToolBarUI();
+        return new SynthToolBarUI();
     }
 
     protected void installDefaults() {
@@ -382,7 +381,7 @@ class SynthToolBarUI extends BasicToolBarUI implements PropertyChangeListener,
                         // Center component horizontally in the available space
                         x = baseX + (baseW / 2) - (d.width / 2);
                         w = d.width;
-                    }                    
+                    }
                     c.setBounds(x, y, w, d.height);
                     y += d.height;
                 }

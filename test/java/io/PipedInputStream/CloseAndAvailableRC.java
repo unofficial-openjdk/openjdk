@@ -80,7 +80,7 @@ public class CloseAndAvailableRC {
         inPipe = new PipedInputStream();
         outPipe = new PipedOutputStream(inPipe);
 
-        // Put stuff in pipe so that available() > 0 
+        // Put stuff in pipe so that available() > 0
         for (byte b = 0; b < 10; b++)
             outPipe.write(b);
 

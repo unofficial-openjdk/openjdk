@@ -192,7 +192,7 @@ import java.nio.charset.UnsupportedCharsetException;
  * </ul>
  *
  *<p>
- * For more information you might also want to check out 
+ * For more information you might also want to check out
  * <a
  href="http://java.sun.com/products/jfc/tsc/articles/persistence4">Using XMLEncoder</a>,
  * an article in <em>The Swing Connection.</em>
@@ -201,7 +201,6 @@ import java.nio.charset.UnsupportedCharsetException;
  *
  * @since 1.4
  *
- * @version %I% %G%
  * @author Philip Milne
  */
 public class XMLEncoder extends Encoder {
@@ -237,7 +236,7 @@ public class XMLEncoder extends Encoder {
         this.out = out;
         valueToExpression = new IdentityHashMap();
         targetToStatementList = new IdentityHashMap();
-	nameGenerator = new NameGenerator();
+        nameGenerator = new NameGenerator();
     }
 
     /**
@@ -260,7 +259,7 @@ public class XMLEncoder extends Encoder {
      * @see #setOwner
      */
     public Object getOwner() {
-	return owner;
+        return owner;
     }
 
     /**
@@ -289,19 +288,19 @@ public class XMLEncoder extends Encoder {
         return list;
     }
 
-    
+
     private void mark(Object o, boolean isArgument) {
         if (o == null || o == this) {
             return;
         }
         ValueData d = getValueData(o);
-        Expression exp = d.exp; 
-        // Do not mark liternal strings. Other strings, which might,  
-        // for example, come from resource bundles should still be marked. 
-        if (o.getClass() == String.class && exp == null) { 
-            return; 
-        } 
-        
+        Expression exp = d.exp;
+        // Do not mark liternal strings. Other strings, which might,
+        // for example, come from resource bundles should still be marked.
+        if (o.getClass() == String.class && exp == null) {
+            return;
+        }
+
         // Bump the reference counts of all arguments
         if (isArgument) {
             d.refs++;
@@ -313,13 +312,13 @@ public class XMLEncoder extends Encoder {
         Object target = exp.getTarget();
         if (!(target instanceof Class)) {
             statementList(target).add(exp);
-	    // Pending: Why does the reference count need to
-	    // be incremented here?
+            // Pending: Why does the reference count need to
+            // be incremented here?
             d.refs++;
         }
         mark(exp);
     }
-    
+
     private void mark(Statement stm) {
         Object[] args = stm.getArguments();
         for (int i = 0; i < args.length; i++) {
@@ -342,20 +341,20 @@ public class XMLEncoder extends Encoder {
      * @see java.beans.PersistenceDelegate#initialize
      */
     public void writeStatement(Statement oldStm) {
-    	// System.out.println("XMLEncoder::writeStatement: " + oldStm);
+        // System.out.println("XMLEncoder::writeStatement: " + oldStm);
         boolean internal = this.internal;
         this.internal = true;
         try {
             super.writeStatement(oldStm);
-	    /*
-	       Note we must do the mark first as we may
-	       require the results of previous values in
-	       this context for this statement.
-	       Test case is:
-	           os.setOwner(this);
-	           os.writeObject(this);
+            /*
+               Note we must do the mark first as we may
+               require the results of previous values in
+               this context for this statement.
+               Test case is:
+                   os.setOwner(this);
+                   os.writeObject(this);
             */
-	    mark(oldStm);
+            mark(oldStm);
             statementList(oldStm.getTarget()).add(oldStm);
         }
         catch (Exception e) {
@@ -374,7 +373,7 @@ public class XMLEncoder extends Encoder {
      * read from a resource bundle.
      * <P>
      * For more information about using resource bundles with the
-     * XMLEncoder, see 
+     * XMLEncoder, see
      * http://java.sun.com/products/jfc/tsc/articles/persistence4/#i18n
      *
      * @param oldExp The expression that will be written
@@ -401,42 +400,42 @@ public class XMLEncoder extends Encoder {
      * values that were written to this stream are cleared.
      */
     public void flush() {
-	if (!preambleWritten) { // Don't do this in constructor - it throws ... pending.
+        if (!preambleWritten) { // Don't do this in constructor - it throws ... pending.
             writeln("<?xml version=" + quote("1.0") +
                         " encoding=" + quote(encoding) + "?>");
-	    writeln("<java version=" + quote(System.getProperty("java.version")) +
-	                   " class=" + quote(XMLDecoder.class.getName()) + ">");
-	    preambleWritten = true;
-	}
-	indentation++;
-	Vector roots = statementList(this);
-	for(int i = 0; i < roots.size(); i++) {
-	    Statement s = (Statement)roots.get(i);
-	    if ("writeObject".equals(s.getMethodName())) {
-	        outputValue(s.getArguments()[0], this, true);
+            writeln("<java version=" + quote(System.getProperty("java.version")) +
+                           " class=" + quote(XMLDecoder.class.getName()) + ">");
+            preambleWritten = true;
+        }
+        indentation++;
+        Vector roots = statementList(this);
+        for(int i = 0; i < roots.size(); i++) {
+            Statement s = (Statement)roots.get(i);
+            if ("writeObject".equals(s.getMethodName())) {
+                outputValue(s.getArguments()[0], this, true);
             }
-	    else {
-	        outputStatement(s, this, false);
-	    }
-	}
-	indentation--;
+            else {
+                outputStatement(s, this, false);
+            }
+        }
+        indentation--;
 
-	try {
-	    out.flush();
-	}
+        try {
+            out.flush();
+        }
         catch (IOException e) {
-	    getExceptionListener().exceptionThrown(e);
-	}
-	clear();
+            getExceptionListener().exceptionThrown(e);
+        }
+        clear();
     }
 
     void clear() {
-	super.clear();
-	nameGenerator.clear();
-	valueToExpression.clear();
-	targetToStatementList.clear();
+        super.clear();
+        nameGenerator.clear();
+        valueToExpression.clear();
+        targetToStatementList.clear();
     }
-	
+
 
     /**
      * This method calls <code>flush</code>, writes the closing
@@ -521,29 +520,29 @@ public class XMLEncoder extends Encoder {
             return;
         }
 
-        ValueData d = getValueData(value);         
+        ValueData d = getValueData(value);
         if (d.exp != null) {
-	    Object target = d.exp.getTarget();
-	    String methodName = d.exp.getMethodName();
+            Object target = d.exp.getTarget();
+            String methodName = d.exp.getMethodName();
 
-	    if (target == null || methodName == null) {
-		throw new NullPointerException((target == null ? "target" : 
-						"methodName") + " should not be null");
-	    }
+            if (target == null || methodName == null) {
+                throw new NullPointerException((target == null ? "target" :
+                                                "methodName") + " should not be null");
+            }
 
-	    if (target instanceof Field && methodName.equals("get")) {
-		Field f = (Field)target; 
-		writeln("<object class=" + quote(f.getDeclaringClass().getName()) + 
-			" field=" + quote(f.getName()) + "/>");
-		return;
-	    }
-        
-	    Class primitiveType = ReflectionUtils.primitiveTypeFor(value.getClass());
-	    if (primitiveType != null && target == value.getClass() && 
-		methodName.equals("new")) {
-		String primitiveTypeName = primitiveType.getName();
-		// Make sure that character types are quoted correctly.
-		if (primitiveType == Character.TYPE) {
+            if (target instanceof Field && methodName.equals("get")) {
+                Field f = (Field)target;
+                writeln("<object class=" + quote(f.getDeclaringClass().getName()) +
+                        " field=" + quote(f.getName()) + "/>");
+                return;
+            }
+
+            Class primitiveType = ReflectionUtils.primitiveTypeFor(value.getClass());
+            if (primitiveType != null && target == value.getClass() &&
+                methodName.equals("new")) {
+                String primitiveTypeName = primitiveType.getName();
+                // Make sure that character types are quoted correctly.
+                if (primitiveType == Character.TYPE) {
                     char code = ((Character) value).charValue();
                     if (!isValidCharCode(code)) {
                         writeln(createString(code));
@@ -553,13 +552,13 @@ public class XMLEncoder extends Encoder {
                     if (value == null) {
                         value = Character.valueOf(code);
                     }
-		}
-		writeln("<" + primitiveTypeName + ">" + value + "</" + 
-			primitiveTypeName + ">");
-		return;
-	    }
+                }
+                writeln("<" + primitiveTypeName + ">" + value + "</" +
+                        primitiveTypeName + ">");
+                return;
+            }
 
-	} else if (value instanceof String) {
+        } else if (value instanceof String) {
             writeln(createString((String) value));
             return;
         }
@@ -631,10 +630,10 @@ public class XMLEncoder extends Encoder {
         Object target = exp.getTarget();
         String methodName = exp.getMethodName();
 
-	if (target == null || methodName == null) {
-	    throw new NullPointerException((target == null ? "target" : 
-					    "methodName") + " should not be null");
-	}
+        if (target == null || methodName == null) {
+            throw new NullPointerException((target == null ? "target" :
+                                            "methodName") + " should not be null");
+        }
 
         Object[] args = exp.getArguments();
         boolean expression = exp.getClass() == Expression.class;
@@ -675,17 +674,17 @@ public class XMLEncoder extends Encoder {
 
 
         // Special cases for methods.
-        if ((!expression && methodName.equals("set") && args.length == 2 && 
-	     args[0] instanceof Integer) ||
-             (expression && methodName.equals("get") && args.length == 1 && 
-	      args[0] instanceof Integer)) {
+        if ((!expression && methodName.equals("set") && args.length == 2 &&
+             args[0] instanceof Integer) ||
+             (expression && methodName.equals("get") && args.length == 1 &&
+              args[0] instanceof Integer)) {
             attributes = attributes + " index=" + quote(args[0].toString());
             args = (args.length == 1) ? new Object[]{} : new Object[]{args[1]};
         }
         else if ((!expression && methodName.startsWith("set") && args.length == 1) ||
-		 (expression && methodName.startsWith("get") && args.length == 0)) {
-	    attributes = attributes + " property=" + 
-		quote(Introspector.decapitalize(methodName.substring(3)));
+                 (expression && methodName.startsWith("get") && args.length == 0)) {
+            attributes = attributes + " property=" +
+                quote(Introspector.decapitalize(methodName.substring(3)));
         }
         else if (!methodName.equals("new") && !methodName.equals("newInstance")) {
             attributes = attributes + " method=" + quote(methodName);

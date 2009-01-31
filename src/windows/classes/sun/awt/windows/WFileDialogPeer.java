@@ -83,8 +83,8 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
 
     private native void _dispose();
     protected void disposeImpl() {
-	WToolkit.targetDisposedPeer(target, this);
-	_dispose();
+        WToolkit.targetDisposedPeer(target, this);
+        _dispose();
     }
 
     private native void _show();
@@ -121,35 +121,35 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     void handleSelected(final String file) {
         final FileDialog fileDialog = (FileDialog)target;
-	WToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
-	    public void run() {
+        WToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
+            public void run() {
                 int index = file.lastIndexOf(java.io.File.separatorChar);/*2509*//*ibm*/
-		String dir;
+                String dir;
 
-		if (index == -1) {
+                if (index == -1) {
                     dir = "."+java.io.File.separator;
-		    fileDialog.setFile(file);
-		}
-		else {
-		    dir = file.substring(0, index + 1);
-		    fileDialog.setFile(file.substring(index + 1));
-		}
-		fileDialog.setDirectory(dir);
-		fileDialog.hide();
-	    }
-	});
+                    fileDialog.setFile(file);
+                }
+                else {
+                    dir = file.substring(0, index + 1);
+                    fileDialog.setFile(file.substring(index + 1));
+                }
+                fileDialog.setDirectory(dir);
+                fileDialog.hide();
+            }
+        });
     } // handleSelected()
 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     void handleCancel() {
         final FileDialog fileDialog = (FileDialog)target;
-	WToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
-	    public void run() {
-	        fileDialog.setFile(null);
-		fileDialog.hide();
-	    }
-	});
+        WToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
+            public void run() {
+                fileDialog.setFile(null);
+                fileDialog.hide();
+            }
+        });
     } // handleCancel()
 
     //This whole static block is a part of 4152317 fix
@@ -215,8 +215,8 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
     public void updateMinimumSize() {}
     public void updateIconImages() {}
     public boolean requestFocus(boolean temporary,
-				boolean focusedWindowChangeAllowed) {
-	return false;
+                                boolean focusedWindowChangeAllowed) {
+        return false;
     }
     void start() {}
     public void beginValidate() {}
@@ -236,7 +236,7 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
      * @see java.awt.peer.ContainerPeer#restack
      */
     public void restack() {
-    }    
+    }
 
     /**
      * @see java.awt.peer.ContainerPeer#isRestackSupported

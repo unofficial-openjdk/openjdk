@@ -38,7 +38,7 @@ import java.util.*;
 
 /**
  * <p>
- * 
+ *
  * @author Dr. Harold Carr
  * </p>
  */
@@ -51,7 +51,7 @@ public interface EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a MessageDispatcher with ...
  * </p><p>
  * @param messageInfo ...
@@ -62,7 +62,7 @@ public interface EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a Encoder with ...
  * </p><p>
  * @param messageInfo ...
@@ -73,7 +73,7 @@ public interface EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a Decoder with ...
  * </p><p>
  * @param messageInfo ...
@@ -84,7 +84,7 @@ public interface EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a Interceptors with ...
  * </p><p>
  * @param x ...
@@ -95,7 +95,7 @@ public interface EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a TargetFinder with ...
  * </p><p>
  * @param x ...
@@ -104,10 +104,3 @@ public interface EPTFactory {
     public TargetFinder getTargetFinder(MessageInfo x);
 
 } // end EPTFactory
-
-
-
-
-
-
-

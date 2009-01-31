@@ -36,14 +36,14 @@ public class Encode implements Runnable {
     }
 
     Encode() throws Exception {
-	ss = new ServerSocket(0);
-	(new Thread(this)).start();
+        ss = new ServerSocket(0);
+        (new Thread(this)).start();
         String toEncode = "\uD800\uDC00 \uD801\uDC01 ";
         String enc1 = URLEncoder.encode(toEncode, "UTF-8");
         byte bytes[] = {};
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         InputStreamReader reader = new InputStreamReader( bais, "8859_1");
-        String url = "http://localhost:" + Integer.toString(ss.getLocalPort()) + 
+        String url = "http://localhost:" + Integer.toString(ss.getLocalPort()) +
             "/missing.nothtml";
         HttpURLConnection uc =  (HttpURLConnection)new URL(url).openConnection();
         uc.connect();
@@ -56,20 +56,20 @@ public class Encode implements Runnable {
     ServerSocket ss;
 
     public void run() {
-	try {
-	    Socket s = ss.accept();
-	    BufferedReader in = new BufferedReader(
-		new InputStreamReader(s.getInputStream()));
-	    String req = in.readLine();
-	    PrintStream out = new PrintStream(new BufferedOutputStream(
+        try {
+            Socket s = ss.accept();
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(s.getInputStream()));
+            String req = in.readLine();
+            PrintStream out = new PrintStream(new BufferedOutputStream(
                 s.getOutputStream()));
-	    out.print("HTTP/1.1 403 Forbidden\r\n");
-	    out.print("\r\n");
-	    out.flush();
-	    s.close();
-	    ss.close();
-	} catch (Exception e) { 
-	    e.printStackTrace();
-	}
+            out.print("HTTP/1.1 403 Forbidden\r\n");
+            out.print("\r\n");
+            out.flush();
+            s.close();
+            ss.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

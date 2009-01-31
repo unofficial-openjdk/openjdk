@@ -48,7 +48,7 @@ GeneralDisposeFunc SurfaceData_DisposeOps;
 do { \
     var = (*env)->FindClass(env, name); \
     if (var == NULL) { \
-	return; \
+        return; \
     } \
 } while (0)
 
@@ -56,7 +56,7 @@ do { \
 do { \
     var = (*env)->GetFieldID(env, jcl, name, type); \
     if (var == NULL) { \
-	return; \
+        return; \
     } \
 } while (0)
 
@@ -66,7 +66,7 @@ do { \
     InitClass(jtmp, env, name); \
     var = (*env)->NewGlobalRef(env, jtmp); \
     if (var == NULL) { \
-	return; \
+        return; \
     } \
 } while (0)
 
@@ -81,10 +81,10 @@ Java_sun_java2d_SurfaceData_initIDs(JNIEnv *env, jclass sd)
     jclass pICMClass;
 
     InitGlobalClassRef(pInvalidPipeClass, env,
-		       "sun/java2d/InvalidPipeException");
+                       "sun/java2d/InvalidPipeException");
 
     InitGlobalClassRef(pNullSurfaceDataClass, env,
-		       "sun/java2d/NullSurfaceData");
+                       "sun/java2d/NullSurfaceData");
 
     InitField(pDataID, env, sd, "pData", "J");
     InitField(validID, env, sd, "valid", "Z");
@@ -99,36 +99,36 @@ Java_sun_java2d_SurfaceData_initIDs(JNIEnv *env, jclass sd)
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL
-Java_sun_java2d_SurfaceData_isOpaqueGray(JNIEnv *env, jclass sdClass, 
-					 jobject icm)
+Java_sun_java2d_SurfaceData_isOpaqueGray(JNIEnv *env, jclass sdClass,
+                                         jobject icm)
 {
     if (icm == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
     return (*env)->GetBooleanField(env, icm, allGrayID);
 }
 
 static SurfaceDataOps *
-GetSDOps(JNIEnv *env, jobject sData, jboolean callSetup) 
+GetSDOps(JNIEnv *env, jobject sData, jboolean callSetup)
 {
     SurfaceDataOps *ops;
     if (JNU_IsNull(env, sData)) {
-	JNU_ThrowNullPointerException(env, "surfaceData");
-	return NULL;
+        JNU_ThrowNullPointerException(env, "surfaceData");
+        return NULL;
     }
     ops = (SurfaceDataOps *)JNU_GetLongFieldAsPtr(env, sData, pDataID);
     if (ops == NULL) {
-	if (!(*env)->ExceptionOccurred(env) &&
-	    !(*env)->IsInstanceOf(env, sData, pNullSurfaceDataClass))
-	{
-	    if (!(*env)->GetBooleanField(env, sData, validID)) {
-		SurfaceData_ThrowInvalidPipeException(env, "invalid data");
-	    } else {
-		JNU_ThrowNullPointerException(env, "native ops missing");
-	    }
-	}
+        if (!(*env)->ExceptionOccurred(env) &&
+            !(*env)->IsInstanceOf(env, sData, pNullSurfaceDataClass))
+        {
+            if (!(*env)->GetBooleanField(env, sData, validID)) {
+                SurfaceData_ThrowInvalidPipeException(env, "invalid data");
+            } else {
+                JNU_ThrowNullPointerException(env, "native ops missing");
+            }
+        }
     } else if (callSetup) {
-	SurfaceData_InvokeSetup(env, ops);
+        SurfaceData_InvokeSetup(env, ops);
     }
     return ops;
 }
@@ -149,13 +149,13 @@ JNIEXPORT void JNICALL
 SurfaceData_SetOps(JNIEnv *env, jobject sData, SurfaceDataOps *ops)
 {
     if (JNU_GetLongFieldAsPtr(env, sData, pDataID) == NULL) {
-	JNU_SetLongFieldFromPtr(env, sData, pDataID, ops);
-	/* Register the data for disposal */
-	Disposer_AddRecord(env, sData, 
-			   SurfaceData_DisposeOps,
-			   ptr_to_jlong(ops));
+        JNU_SetLongFieldFromPtr(env, sData, pDataID, ops);
+        /* Register the data for disposal */
+        Disposer_AddRecord(env, sData,
+                           SurfaceData_DisposeOps,
+                           ptr_to_jlong(ops));
     } else {
-	JNU_ThrowInternalError(env, "Attempting to set SurfaceData ops twice");
+        JNU_ThrowInternalError(env, "Attempting to set SurfaceData ops twice");
     }
 }
 
@@ -165,8 +165,8 @@ SurfaceData_ThrowInvalidPipeException(JNIEnv *env, const char *msg)
     (*env)->ThrowNew(env, pInvalidPipeClass, msg);
 }
 
-#define GETMIN(v1, v2)		(((v1) > (t=(v2))) && ((v1) = t))
-#define GETMAX(v1, v2)		(((v1) < (t=(v2))) && ((v1) = t))
+#define GETMIN(v1, v2)          (((v1) > (t=(v2))) && ((v1) = t))
+#define GETMAX(v1, v2)          (((v1) < (t=(v2))) && ((v1) = t))
 
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBounds(SurfaceDataBounds *dst, SurfaceDataBounds *src)
@@ -180,7 +180,7 @@ SurfaceData_IntersectBounds(SurfaceDataBounds *dst, SurfaceDataBounds *src)
 
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBoundsXYXY(SurfaceDataBounds *bounds,
-				jint x1, jint y1, jint x2, jint y2)
+                                jint x1, jint y1, jint x2, jint y2)
 {
     int t;
     GETMAX(bounds->x1, x1);
@@ -191,34 +191,34 @@ SurfaceData_IntersectBoundsXYXY(SurfaceDataBounds *bounds,
 
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBoundsXYWH(SurfaceDataBounds *bounds,
-				jint x, jint y, jint w, jint h)
+                                jint x, jint y, jint w, jint h)
 {
     w = (w <= 0) ? x : x+w;
     if (w < x) {
-	w = 0x7fffffff;
+        w = 0x7fffffff;
     }
     if (bounds->x1 < x) {
-	bounds->x1 = x;
+        bounds->x1 = x;
     }
     if (bounds->x2 > w) {
-	bounds->x2 = w;
+        bounds->x2 = w;
     }
     h = (h <= 0) ? y : y+h;
     if (h < y) {
-	h = 0x7fffffff;
+        h = 0x7fffffff;
     }
     if (bounds->y1 < y) {
-	bounds->y1 = y;
+        bounds->y1 = y;
     }
     if (bounds->y2 > h) {
-	bounds->y2 = h;
+        bounds->y2 = h;
     }
 }
 
 JNIEXPORT void JNICALL
 SurfaceData_IntersectBlitBounds(SurfaceDataBounds *src,
-				SurfaceDataBounds *dst,
-				jint dx, jint dy)
+                                SurfaceDataBounds *dst,
+                                jint dx, jint dy)
 {
     int t;
     GETMAX(dst->x1, src->x1 + dx);
@@ -236,19 +236,19 @@ SurfaceDataOps *SurfaceData_InitOps(JNIEnv *env, jobject sData, int opsSize)
     SurfaceDataOps *ops = malloc(opsSize);
     SurfaceData_SetOps(env, sData, ops);
     if (ops != NULL) {
-	memset(ops, 0, opsSize);
-	ops->sdObject = (*env)->NewWeakGlobalRef(env, sData);
+        memset(ops, 0, opsSize);
+        ops->sdObject = (*env)->NewWeakGlobalRef(env, sData);
     }
     return ops;
 }
 
-void SurfaceData_DisposeOps(JNIEnv *env, jlong ops) 
+void SurfaceData_DisposeOps(JNIEnv *env, jlong ops)
 {
     if (ops != 0) {
-	SurfaceDataOps *sdops = (SurfaceDataOps*)jlong_to_ptr(ops);
-	/* Invoke the ops-specific disposal function */
-	SurfaceData_InvokeDispose(env, sdops);
-	(*env)->DeleteWeakGlobalRef(env, sdops->sdObject);
-	free(sdops);
+        SurfaceDataOps *sdops = (SurfaceDataOps*)jlong_to_ptr(ops);
+        /* Invoke the ops-specific disposal function */
+        SurfaceData_InvokeDispose(env, sdops);
+        (*env)->DeleteWeakGlobalRef(env, sdops->sdObject);
+        free(sdops);
     }
 }

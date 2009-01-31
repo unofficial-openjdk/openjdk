@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_mt extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "MonthNames", 
+            { "MonthNames",
                 new String[] {
                     "Jannar",
                     "Frar",
@@ -64,7 +64,7 @@ public class FormatData_mt extends ListResourceBundle {
                     "",
                 }
             },
-            { "MonthAbbreviations", 
+            { "MonthAbbreviations",
                 new String[] {
                     "Jan",
                     "Fra",
@@ -81,7 +81,7 @@ public class FormatData_mt extends ListResourceBundle {
                     "",
                 }
             },
-            { "DayNames", 
+            { "DayNames",
                 new String[] {
                     "Il-\u0126add",
                     "It-Tnejn",
@@ -92,7 +92,7 @@ public class FormatData_mt extends ListResourceBundle {
                     "Is-Sibt",
                 }
             },
-            { "DayAbbreviations", 
+            { "DayAbbreviations",
                 new String[] {
                     "\u0126ad",
                     "Tne",
@@ -103,26 +103,26 @@ public class FormatData_mt extends ListResourceBundle {
                     "Sib",
                 }
             },
-            { "AmPmMarkers", 
+            { "AmPmMarkers",
                 new String[] {
                     "QN",
                     "WN",
                 }
             },
-            { "Eras", 
+            { "Eras",
                 new String[] {
                     "QK",
                     "WK",
                 }
             },
-            { "NumberPatterns", 
+            { "NumberPatterns",
                 new String[] {
                     "#,##0.###",
                     "\u00a4 #,##0.00",
                     "#,##0%",
                 }
             },
-            { "NumberElements", 
+            { "NumberElements",
                 new String[] {
                     ".",
                     ",",
@@ -137,7 +137,7 @@ public class FormatData_mt extends ListResourceBundle {
                     "NaN",
                 }
             },
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "HH:mm:ss z",
                     "HH:mm:ss z",

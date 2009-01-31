@@ -42,8 +42,8 @@ Java_sun_java2d_windows_DDRenderer_doDrawLineDD
      jint color,
      jint x1, jint y1, jint x2, jint y2)
 {
-    Win32SDOps	    *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
-    RECT	    fillRect;
+    Win32SDOps      *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
+    RECT            fillRect;
 
     J2dTraceLn(J2D_TRACE_INFO, "DDRenderer_doDrawLineDD");
 
@@ -69,9 +69,9 @@ Java_sun_java2d_windows_DDRenderer_doFillRectDD
      jint color,
      jint left, jint top, jint right, jint bottom)
 {
-    Win32SDOps	    *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
-    RECT	    fillRect;
-    
+    Win32SDOps      *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
+    RECT            fillRect;
+
     J2dTraceLn(J2D_TRACE_INFO, "DDRenderer_doFillRectDD");
 
     fillRect.left = left;
@@ -94,41 +94,41 @@ Java_sun_java2d_windows_DDRenderer_doDrawRectDD
      jint color,
      jint x, jint y, jint w, jint h)
 {
-    Win32SDOps	    *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
-    RECT	    fillRect;
+    Win32SDOps      *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
+    RECT            fillRect;
 
     J2dTraceLn(J2D_TRACE_INFO, "DDRenderer_doDrawRectDD");
 
     if (w == 0 || h == 0) {
-	fillRect.left = x;
-	fillRect.top = y;
-	fillRect.right = w + 1;
-	fillRect.bottom = h + 1;
-	DDColorFill(env, sData, wsdo, &fillRect, color);
+        fillRect.left = x;
+        fillRect.top = y;
+        fillRect.right = w + 1;
+        fillRect.bottom = h + 1;
+        DDColorFill(env, sData, wsdo, &fillRect, color);
     }
     else {
-	fillRect.left = x;
-	fillRect.top = y;
-	fillRect.right = x + w + 1;
-	fillRect.bottom = y + 1;
-	if (!DDColorFill(env, sData, wsdo, &fillRect, color))
-	    return;
-	fillRect.top = y + 1;
-	fillRect.right = x + 1;
-	fillRect.bottom = y + h + 1;
-	if (!DDColorFill(env, sData, wsdo, &fillRect, color))
-	    return;
-	fillRect.left = x + 1;
-	fillRect.top = y + h;
-	fillRect.right = x + w + 1;
-	fillRect.bottom = y + h + 1;
-	if (!DDColorFill(env, sData, wsdo, &fillRect, color))
-	    return;
-	fillRect.left = x + w;
-	fillRect.top = y + 1;
-	fillRect.bottom = y + h;
-	if (!DDColorFill(env, sData, wsdo, &fillRect, color))
-	    return;
+        fillRect.left = x;
+        fillRect.top = y;
+        fillRect.right = x + w + 1;
+        fillRect.bottom = y + 1;
+        if (!DDColorFill(env, sData, wsdo, &fillRect, color))
+            return;
+        fillRect.top = y + 1;
+        fillRect.right = x + 1;
+        fillRect.bottom = y + h + 1;
+        if (!DDColorFill(env, sData, wsdo, &fillRect, color))
+            return;
+        fillRect.left = x + 1;
+        fillRect.top = y + h;
+        fillRect.right = x + w + 1;
+        fillRect.bottom = y + h + 1;
+        if (!DDColorFill(env, sData, wsdo, &fillRect, color))
+            return;
+        fillRect.left = x + w;
+        fillRect.top = y + 1;
+        fillRect.bottom = y + h;
+        if (!DDColorFill(env, sData, wsdo, &fillRect, color))
+            return;
     }
 }
 
@@ -147,24 +147,24 @@ Java_sun_java2d_windows_DDRenderer_devCopyArea
 {
     Win32SDOps *wsdo = Win32SurfaceData_GetOpsNoSetup(env, sData);
     J2dTraceLn(J2D_TRACE_INFO, "DDRenderer_devCopyArea");
-    J2dTrace4(J2D_TRACE_VERBOSE, "  sx=%-4d sy=%-4d dx=%-4d dy=%-4d", 
+    J2dTrace4(J2D_TRACE_VERBOSE, "  sx=%-4d sy=%-4d dx=%-4d dy=%-4d",
                 srcx, srcy, dx, dy);
     J2dTraceLn2(J2D_TRACE_VERBOSE, "  w=%-4d h=%-4d", width, height);
     if (wsdo == NULL) {
-	return;
+        return;
     }
 
     RECT rSrc = {srcx, srcy, srcx + width, srcy + height};
     if (DDCanBlt(wsdo)) {
         RECT rDst = rSrc;
-	::OffsetRect(&rDst, dx, dy);
-        
+        ::OffsetRect(&rDst, dx, dy);
+
         DDBlt(env,wsdo, wsdo, &rDst, &rSrc);
         return;
     }
     HDC hDC = wsdo->GetDC(env, wsdo, 0, NULL, NULL, NULL, 0);
     if (hDC == NULL) {
-	return;
+        return;
     }
 
     VERIFY(::ScrollDC(hDC, dx, dy, &rSrc, NULL, NULL, NULL));

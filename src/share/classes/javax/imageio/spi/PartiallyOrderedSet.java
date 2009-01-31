@@ -50,7 +50,6 @@ import java.util.Set;
  * user to set a preference order for service provider objects
  * supplied by a trusted vendor over those supplied by another.
  *
- * @version 0.5
  */
 class PartiallyOrderedSet extends AbstractSet {
 
@@ -94,7 +93,7 @@ class PartiallyOrderedSet extends AbstractSet {
         if (nodes.contains(o)) {
             return false;
         }
-        
+
         DigraphNode node = new DigraphNode(o);
         poNodes.put(o, node);
         return true;
@@ -133,7 +132,7 @@ class PartiallyOrderedSet extends AbstractSet {
             (DigraphNode)poNodes.get(first);
         DigraphNode secondPONode =
             (DigraphNode)poNodes.get(second);
-        
+
         secondPONode.removeEdge(firstPONode);
         return firstPONode.addEdge(secondPONode);
     }
@@ -208,7 +207,7 @@ class PartialOrderIterator implements Iterator {
 
         return first.getData();
     }
-    
+
     public void remove() {
         throw new UnsupportedOperationException();
     }

@@ -78,8 +78,8 @@ public class AnnotationType {
     public static synchronized AnnotationType getInstance(
         Class annotationClass)
     {
-        AnnotationType result = sun.misc.SharedSecrets.getJavaLangAccess(). 
-            getAnnotationType(annotationClass); 
+        AnnotationType result = sun.misc.SharedSecrets.getJavaLangAccess().
+            getAnnotationType(annotationClass);
         if (result == null)
             result = new AnnotationType((Class<?>) annotationClass);
 
@@ -97,32 +97,32 @@ public class AnnotationType {
         if (!annotationClass.isAnnotation())
             throw new IllegalArgumentException("Not an annotation type");
 
-	Method[] methods = 	
-	    AccessController.doPrivileged(new PrivilegedAction<Method[]>() {
-		public Method[] run() {
-		    // Initialize memberTypes and defaultValues
-		    return annotationClass.getDeclaredMethods();
-		}
-	    });
+        Method[] methods =
+            AccessController.doPrivileged(new PrivilegedAction<Method[]>() {
+                public Method[] run() {
+                    // Initialize memberTypes and defaultValues
+                    return annotationClass.getDeclaredMethods();
+                }
+            });
 
 
-	for (Method method :  methods) {
-	    if (method.getParameterTypes().length != 0)
-		throw new IllegalArgumentException(method + " has params");
-	    String name = method.getName();
-	    Class type = method.getReturnType();
-	    memberTypes.put(name, invocationHandlerReturnType(type));
-	    members.put(name, method);
-		    
-	    Object defaultValue = method.getDefaultValue();
-	    if (defaultValue != null)
-		memberDefaults.put(name, defaultValue);
+        for (Method method :  methods) {
+            if (method.getParameterTypes().length != 0)
+                throw new IllegalArgumentException(method + " has params");
+            String name = method.getName();
+            Class type = method.getReturnType();
+            memberTypes.put(name, invocationHandlerReturnType(type));
+            members.put(name, method);
 
-	    members.put(name, method);
-	}
+            Object defaultValue = method.getDefaultValue();
+            if (defaultValue != null)
+                memberDefaults.put(name, defaultValue);
 
-        sun.misc.SharedSecrets.getJavaLangAccess(). 
-            setAnnotationType(annotationClass, this); 
+            members.put(name, method);
+        }
+
+        sun.misc.SharedSecrets.getJavaLangAccess().
+            setAnnotationType(annotationClass, this);
 
         // Initialize retention, & inherited fields.  Special treatment
         // of the corresponding annotation types breaks infinite recursion.

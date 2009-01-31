@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @summary it is a new version of an old test which was 
+ * @summary it is a new version of an old test which was
  *          /src/share/test/serialization/piotest.java
  *          Test of serialization when there is
  *          exceptions on the I/O stream
@@ -39,66 +39,66 @@ public class SerializeWithException {
             "serialization when there is exceptions on the I/O stream \n");
 
        try {
-	   int i = 123456;
-	   byte b = 12;
-	   short s = 45;
-	   char c = 'A';
-	   long l = 1234567890000L;
-	   float f = 3.14159f;
-	   double d = f*2;
-	   boolean z = true;
-	   String string = "The String";
-	   PrimitivesTest prim = new PrimitivesTest();
+           int i = 123456;
+           byte b = 12;
+           short s = 45;
+           char c = 'A';
+           long l = 1234567890000L;
+           float f = 3.14159f;
+           double d = f*2;
+           boolean z = true;
+           String string = "The String";
+           PrimitivesTest prim = new PrimitivesTest();
 
-	   /* For each of the byte offsets from 0 to 100,
-	      do the pickling but expect an exception */
-	   for (int offset = 0; offset < 200; offset++) {
-	       ExceptionOutputStream ostream;
-	       boolean expect_exception = false;
-	       IOException exception = null;
-	       
-	       try {
-		   expect_exception = true;
-		   exception = null;
-		   
-		   ostream = new ExceptionOutputStream();
-		   ostream.setExceptionOffset(offset);
-		   ObjectOutputStream p = new ObjectOutputStream(ostream);
+           /* For each of the byte offsets from 0 to 100,
+              do the pickling but expect an exception */
+           for (int offset = 0; offset < 200; offset++) {
+               ExceptionOutputStream ostream;
+               boolean expect_exception = false;
+               IOException exception = null;
 
-		   p.writeInt(i);
-		   p.writeByte(b);
-		   p.writeShort(s);
-		   p.writeChar(c);
-		   p.writeLong(l);
-		   p.writeFloat(f);
-		   p.writeDouble(d);
-		   p.writeBoolean(z);
-		   p.writeUTF(string);
-		   p.writeObject(string);
+               try {
+                   expect_exception = true;
+                   exception = null;
 
-		   p.writeObject(prim);
-		   p.flush();
-		   expect_exception = false;
-	       } catch (IOException ee) {
-		   exception = ee;
-	       }
-	       
-	       if (expect_exception && exception == null) {
-		   System.err.println("\nIOException did not occur at " +
+                   ostream = new ExceptionOutputStream();
+                   ostream.setExceptionOffset(offset);
+                   ObjectOutputStream p = new ObjectOutputStream(ostream);
+
+                   p.writeInt(i);
+                   p.writeByte(b);
+                   p.writeShort(s);
+                   p.writeChar(c);
+                   p.writeLong(l);
+                   p.writeFloat(f);
+                   p.writeDouble(d);
+                   p.writeBoolean(z);
+                   p.writeUTF(string);
+                   p.writeObject(string);
+
+                   p.writeObject(prim);
+                   p.flush();
+                   expect_exception = false;
+               } catch (IOException ee) {
+                   exception = ee;
+               }
+
+               if (expect_exception && exception == null) {
+                   System.err.println("\nIOException did not occur at " +
                         "offset " + offset);
-		   throw new Error();
-	       }
-	       if (!expect_exception && exception != null) {
-		   System.err.println("\n " + exception.toString() +
-		       " not expected at offset " + offset);
-		   throw new Error();
-	       }
-	   }
-	   System.err.println("\nTEST PASSED");
+                   throw new Error();
+               }
+               if (!expect_exception && exception != null) {
+                   System.err.println("\n " + exception.toString() +
+                       " not expected at offset " + offset);
+                   throw new Error();
+               }
+           }
+           System.err.println("\nTEST PASSED");
        } catch (Exception e) {
-	   System.err.print("TEST FAILED: ");
-	   e.printStackTrace();
-	   throw new Error();            
+           System.err.print("TEST FAILED: ");
+           e.printStackTrace();
+           throw new Error();
        }
     }
 }
@@ -109,13 +109,13 @@ class ExceptionOutputStream extends OutputStream {
 
     /**
      * Writes a byte to the buffer.
-     * @param b	the byte
+     * @param b the byte
      */
     public void write(int b) throws IOException {
-	if (currentOffset >= exceptionOffset) {
-	    throw new IOException("Debug exception");
-	}
-	currentOffset++;
+        if (currentOffset >= exceptionOffset) {
+            throw new IOException("Debug exception");
+        }
+        currentOffset++;
     }
 
 
@@ -124,4 +124,3 @@ class ExceptionOutputStream extends OutputStream {
         currentOffset = 0;
     }
 }
-

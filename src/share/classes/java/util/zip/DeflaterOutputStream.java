@@ -35,9 +35,8 @@ import java.io.IOException;
  * the "deflate" compression format. It is also used as the basis for other
  * types of compression filters, such as GZIPOutputStream.
  *
- * @see		Deflater
- * @version 	%I%, %G%
- * @author 	David Connelly
+ * @see         Deflater
+ * @author      David Connelly
  */
 public
 class DeflaterOutputStream extends FilterOutputStream {
@@ -50,7 +49,7 @@ class DeflaterOutputStream extends FilterOutputStream {
      * Output buffer for writing compressed data.
      */
     protected byte[] buf;
-   
+
     /**
      * Indicates that the stream has been closed.
      */
@@ -83,7 +82,7 @@ class DeflaterOutputStream extends FilterOutputStream {
      * @param def the compressor ("deflater")
      */
     public DeflaterOutputStream(OutputStream out, Deflater def) {
-	this(out, def, 512);
+        this(out, def, 512);
     }
 
     boolean usesDefaultDeflater = false;
@@ -93,7 +92,7 @@ class DeflaterOutputStream extends FilterOutputStream {
      * @param out the output stream
      */
     public DeflaterOutputStream(OutputStream out) {
-	this(out, new Deflater());
+        this(out, new Deflater());
         usesDefaultDeflater = true;
     }
 
@@ -105,8 +104,8 @@ class DeflaterOutputStream extends FilterOutputStream {
      */
     public void write(int b) throws IOException {
         byte[] buf = new byte[1];
-	buf[0] = (byte)(b & 0xff);
-	write(buf, 0, 1);
+        buf[0] = (byte)(b & 0xff);
+        write(buf, 0, 1);
     }
 
     /**
@@ -118,15 +117,15 @@ class DeflaterOutputStream extends FilterOutputStream {
      * @exception IOException if an I/O error has occurred
      */
     public void write(byte[] b, int off, int len) throws IOException {
-	if (def.finished()) {
-	    throw new IOException("write beyond end of stream");
-	}
+        if (def.finished()) {
+            throw new IOException("write beyond end of stream");
+        }
         if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-	    throw new IndexOutOfBoundsException();
-	} else if (len == 0) {
-	    return;
-	}
-	if (!def.finished()) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return;
+        }
+        if (!def.finished()) {
             // Deflate no more than stride bytes at a time.  This avoids
             // excess copying in deflateBytes (see Deflater.c)
             int stride = buf.length;
@@ -136,7 +135,7 @@ class DeflaterOutputStream extends FilterOutputStream {
                     deflate();
                 }
             }
-	}
+        }
     }
 
     /**
@@ -146,12 +145,12 @@ class DeflaterOutputStream extends FilterOutputStream {
      * @exception IOException if an I/O error has occurred
      */
     public void finish() throws IOException {
-	if (!def.finished()) {
-	    def.finish();
-	    while (!def.finished()) {
-		deflate();
-	    }
-	}
+        if (!def.finished()) {
+            def.finish();
+            while (!def.finished()) {
+                deflate();
+            }
+        }
     }
 
     /**
@@ -174,9 +173,9 @@ class DeflaterOutputStream extends FilterOutputStream {
      * @throws IOException if an I/O error has occurred
      */
     protected void deflate() throws IOException {
-	int len = def.deflate(buf, 0, buf.length);
-	if (len > 0) {
-	    out.write(buf, 0, len);
-	}
+        int len = def.deflate(buf, 0, buf.length);
+        if (len > 0) {
+            out.write(buf, 0, len);
+        }
     }
 }

@@ -34,8 +34,8 @@ import java.net.URL;
 public class ProgressSource
 {
     public enum State { NEW, CONNECTED, UPDATE, DELETE };
-        
-    // URL 
+
+    // URL
     private URL url;
     // URL method
     private String method;
@@ -43,7 +43,7 @@ public class ProgressSource
     private String contentType;
     // bytes read
     private int progress = 0;
-    // last bytes read    
+    // last bytes read
     private int lastProgress = 0;
     //bytes expected
     private int expected = -1;
@@ -60,154 +60,151 @@ public class ProgressSource
      * Construct progress source object.
      */
     public ProgressSource(URL url, String method) {
-	this(url, method, -1);
+        this(url, method, -1);
     }
 
     /**
      * Construct progress source object.
      */
     public ProgressSource(URL url, String method, int expected)  {
-	this.url = url;
-	this.method = method;
-	this.contentType = "content/unknown";
-	this.progress = 0;
-	this.lastProgress = 0;
-	this.expected = expected;
-	this.state = State.NEW;
-	this.progressMonitor = ProgressMonitor.getDefault();
-	this.threshold = progressMonitor.getProgressUpdateThreshold();
+        this.url = url;
+        this.method = method;
+        this.contentType = "content/unknown";
+        this.progress = 0;
+        this.lastProgress = 0;
+        this.expected = expected;
+        this.state = State.NEW;
+        this.progressMonitor = ProgressMonitor.getDefault();
+        this.threshold = progressMonitor.getProgressUpdateThreshold();
     }
 
     public boolean connected() {
-	if (!connected) {
-	    connected = true;    
-	    state = State.CONNECTED;
-	    return false;
-	} 
-	return true;
+        if (!connected) {
+            connected = true;
+            state = State.CONNECTED;
+            return false;
+        }
+        return true;
     }
-    
+
     /**
      * Close progress source.
      */
-    public void close()	{
-	state = State.DELETE;
+    public void close() {
+        state = State.DELETE;
     }
 
     /**
      * Return URL of progress source.
      */
-    public URL getURL()	{
-	return url;
+    public URL getURL() {
+        return url;
     }
-    
+
     /**
      * Return method of URL.
      */
     public String getMethod()  {
-	return method;
+        return method;
     }
-    
+
     /**
      * Return content type of URL.
      */
     public String getContentType()  {
-	return contentType;
+        return contentType;
     }
-    
+
     // Change content type
     public void setContentType(String ct)  {
-	contentType = ct;
+        contentType = ct;
     }
- 
+
     /**
      * Return current progress.
      */
     public int getProgress()  {
-	return progress;
+        return progress;
     }
-    
+
     /**
      * Return expected maximum progress; -1 if expected is unknown.
      */
     public int getExpected() {
-	return expected;
+        return expected;
     }
-    
+
     /**
      * Return state.
      */
     public State getState() {
-	return state;
+        return state;
     }
 
     /**
      * Begin progress tracking.
      */
-    public void beginTracking()	{
-	progressMonitor.registerSource(this);
+    public void beginTracking() {
+        progressMonitor.registerSource(this);
     }
 
     /**
      * Finish progress tracking.
      */
     public void finishTracking() {
-	progressMonitor.unregisterSource(this);
+        progressMonitor.unregisterSource(this);
     }
 
     /**
      * Update progress.
      */
     public void updateProgress(int latestProgress, int expectedProgress) {
-	lastProgress = progress;
-	progress = latestProgress;
-	expected = expectedProgress;
+        lastProgress = progress;
+        progress = latestProgress;
+        expected = expectedProgress;
 
-	if (connected() == false)
-	    state = State.CONNECTED;
-	else
-	    state = State.UPDATE;
+        if (connected() == false)
+            state = State.CONNECTED;
+        else
+            state = State.UPDATE;
 
-	// The threshold effectively divides the progress into 
-	// different set of ranges: 
-	//
-	//	Range 0: 0..threshold-1, 
-	//	Range 1: threshold .. 2*threshold-1
-	//	....
-	//	Range n: n*threshold .. (n+1)*threshold-1
-	// 
-	// To determine which range the progress belongs to, it
-	// would be calculated as follow:
-	//
-	//	range number = progress / threshold
-	//
-	// Notification should only be triggered when the current
-	// progress and the last progress are in different ranges,
-	// i.e. they have different range numbers.
-	//
-	// Using this range scheme, notification will be generated 
-	// only once when the progress reaches each range.
-	//
-	if (lastProgress / threshold != progress / threshold)	{
-	    progressMonitor.updateProgress(this);
-	}
+        // The threshold effectively divides the progress into
+        // different set of ranges:
+        //
+        //      Range 0: 0..threshold-1,
+        //      Range 1: threshold .. 2*threshold-1
+        //      ....
+        //      Range n: n*threshold .. (n+1)*threshold-1
+        //
+        // To determine which range the progress belongs to, it
+        // would be calculated as follow:
+        //
+        //      range number = progress / threshold
+        //
+        // Notification should only be triggered when the current
+        // progress and the last progress are in different ranges,
+        // i.e. they have different range numbers.
+        //
+        // Using this range scheme, notification will be generated
+        // only once when the progress reaches each range.
+        //
+        if (lastProgress / threshold != progress / threshold)   {
+            progressMonitor.updateProgress(this);
+        }
 
-	// Detect read overrun
-	if (expected != -1) {
-	    if (progress >= expected && progress != 0)
-		close();
-	}
+        // Detect read overrun
+        if (expected != -1) {
+            if (progress >= expected && progress != 0)
+                close();
+        }
     }
-    
+
     public Object clone() throws CloneNotSupportedException {
-	return super.clone();
+        return super.clone();
     }
 
-    public String toString()	{
-	return getClass().getName() + "[url=" + url + ", method=" + method + ", state=" + state 
-	    + ", content-type=" + contentType + ", progress=" + progress + ", expected=" + expected + "]";
+    public String toString()    {
+        return getClass().getName() + "[url=" + url + ", method=" + method + ", state=" + state
+            + ", content-type=" + contentType + ", progress=" + progress + ", expected=" + expected + "]";
     }
 }
-
-
-

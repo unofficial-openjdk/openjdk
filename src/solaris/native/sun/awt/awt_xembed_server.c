@@ -75,21 +75,21 @@
 /**************************** XEmbed server DnD support ***********************/
 extern Atom XA_XdndAware;
 extern Boolean
-register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server, 
+register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
                           Window serverHandle, Window clientHandle);
 extern Boolean
-unregister_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server, 
+unregister_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
                             Window serverHandle, Window clientHandle);
 extern void
 forward_event_to_embedded(Window embedded, jlong ctxt, jint eventID);
 
 extern const char * msg_to_str(int msg);
 
-void 
+void
 set_xembed_drop_target(JNIEnv* env, jobject server);
-void 
+void
 remove_xembed_drop_target(JNIEnv* env, jobject server);
-Boolean 
+Boolean
 is_xembed_client(Window window);
 /******************************************************************************/
 extern struct MComponentPeerIDs mComponentPeerIDs;
@@ -143,7 +143,7 @@ getDataByEmbedder(jobject server) {
 }
 
 static pxembed_server_data
-getDataByServerHandle(Window serverHandle) {    
+getDataByServerHandle(Window serverHandle) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     pxembed_server_data temp = xembed_list;
     Widget serverWidget = NULL;
@@ -161,7 +161,7 @@ getDataByServerHandle(Window serverHandle) {
     return NULL;
 }
 
-static pxembed_server_data 
+static pxembed_server_data
 addData(jobject server) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     struct ComponentData *cdata;
@@ -179,14 +179,14 @@ addData(jobject server) {
     return data;
 }
 
-static void 
+static void
 removeData(jobject server) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     pxembed_server_data * temp = &xembed_list;
     DASSERT(server != NULL);
     while (*temp != NULL) {
         if ((*env)->IsSameObject(env, (*temp)->server, server)) {
-            xembed_server_data * data = *temp;            
+            xembed_server_data * data = *temp;
             *temp = (*temp)->next;
             DASSERT(data->server != NULL);
             (*env)->DeleteGlobalRef(env, data->server);
@@ -194,17 +194,17 @@ removeData(jobject server) {
             return;
         }
         temp = &(*temp)->next;
-    }    
+    }
 }
 
-void 
+void
 initXEmbedServerData() {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jclass clazz;
     MTRACE("initXEmbedServerData\n");
     XA_XEmbedInfo = XInternAtom(awt_display, "_XEMBED_INFO", False);
     XA_XEmbed = XInternAtom(awt_display, "_XEMBED", False);
-    
+
     clazz = (*env)->FindClass(env, "sun/awt/motif/MEmbedCanvasPeer");
     DASSERT(clazz != NULL);
     requestXEmbedFocusMID = (*env)->GetMethodID(env, clazz, "requestXEmbedFocus", "()V");
@@ -219,14 +219,14 @@ initXEmbedServerData() {
     DASSERT(unregisterAcceleratorMID != NULL);
     grabKeyMID = (*env)->GetMethodID(env, clazz, "grabKey", "(JJ)V");
     DASSERT(grabKeyMID != NULL);
-    ungrabKeyMID = (*env)->GetMethodID(env, clazz, "ungrabKey", "(JJ)V");    
+    ungrabKeyMID = (*env)->GetMethodID(env, clazz, "ungrabKey", "(JJ)V");
     DASSERT(ungrabKeyMID != NULL);
     childResizedMID = (*env)->GetMethodID(env, clazz, "childResized", "()V");
     DASSERT(childResizedMID != NULL);
-    setXEmbedDropTargetMID = 
+    setXEmbedDropTargetMID =
         (*env)->GetMethodID(env, clazz, "setXEmbedDropTarget", "()V");
     DASSERT(setXEmbedDropTargetMID != NULL);
-    removeXEmbedDropTargetMID = 
+    removeXEmbedDropTargetMID =
         (*env)->GetMethodID(env, clazz, "removeXEmbedDropTarget", "()V");
     DASSERT(removeXEmbedDropTargetMID != NULL);
 
@@ -240,7 +240,7 @@ initXEmbedServerData() {
     DASSERT(keysymFID != NULL);
     modifiersFID = (*env)->GetFieldID(env, clazz, "modifiers", "J");
     DASSERT(modifiersFID != NULL);
-    (*env)->DeleteLocalRef(env, clazz);    
+    (*env)->DeleteLocalRef(env, clazz);
 }
 
 /*
@@ -248,7 +248,7 @@ initXEmbedServerData() {
  * Method:    initXEmbedServer
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_initXEmbedServer(JNIEnv *env, jobject this) {
     struct ComponentData *cdata;
     AWT_LOCK();
@@ -271,7 +271,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_initXEmbedServer(JNIEnv *env, jobject this) 
  * Method:    destroyXEmbedServer
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_destroyXEmbedServer(JNIEnv *env, jobject this) {
     AWT_LOCK();
     MTRACE("destroyXEmbedServer\n");
@@ -284,12 +284,12 @@ Java_sun_awt_motif_MEmbedCanvasPeer_destroyXEmbedServer(JNIEnv *env, jobject thi
  * Method:    isXEmbedActive
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_isXEmbedActive(JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     jboolean res = JNI_FALSE;
     AWT_LOCK();
-    sdata = getDataByEmbedder(this);    
+    sdata = getDataByEmbedder(this);
     if (sdata != NULL) {
         res = (sdata->handle != None)?JNI_TRUE:JNI_FALSE;
     }
@@ -302,7 +302,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_isXEmbedActive(JNIEnv *env, jobject this) {
  * Method:    initDispatching
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_initDispatching (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -311,7 +311,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_initDispatching (JNIEnv *env, jobject this) 
     if (sdata != NULL) {
         XSelectInput(awt_display, sdata->handle, StructureNotifyMask | PropertyChangeMask);
         sdata->dispatching = True;
-        register_xembed_drop_site(env, awt_display, sdata->server, 
+        register_xembed_drop_site(env, awt_display, sdata->server,
                                   sdata->serverHandle, sdata->handle);
     }
     processXEmbedInfo(env, this);
@@ -324,14 +324,14 @@ Java_sun_awt_motif_MEmbedCanvasPeer_initDispatching (JNIEnv *env, jobject this) 
  * Method:    endDispatching
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_endDispatching (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     AWT_LOCK();
     MTRACE("endDispatching\n");
     sdata = getDataByEmbedder(this);
     if (sdata != NULL) {
-        unregister_xembed_drop_site(env, awt_display, sdata->server, 
+        unregister_xembed_drop_site(env, awt_display, sdata->server,
                                     sdata->serverHandle, sdata->handle);
         sdata->dispatching = False;
     }
@@ -343,7 +343,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_endDispatching (JNIEnv *env, jobject this) {
  * Method:    embedChild
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_embedChild (JNIEnv * env, jobject this, jlong handle) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -364,7 +364,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_embedChild (JNIEnv * env, jobject this, jlon
  * Method:    childDestroyed
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_childDestroyed (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -382,7 +382,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_childDestroyed (JNIEnv *env, jobject this) {
  * Method:    getEmbedPreferredSize
  * Signature: ()Ljava/awt/Dimension;
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_getEmbedPreferredSize (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     jobject res = NULL;
@@ -409,7 +409,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_getEmbedPreferredSize (JNIEnv *env, jobject 
  * Method:    getEmbedMinimumSize
  * Signature: ()Ljava/awt/Dimension;
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_getEmbedMinimumSize (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     jobject res = NULL;
@@ -436,7 +436,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_getEmbedMinimumSize (JNIEnv *env, jobject th
  * Method:    getClientBounds
  * Signature: ()Ljava/awt/Rectangle;
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_getClientBounds (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     jobject res = NULL;
@@ -451,10 +451,10 @@ Java_sun_awt_motif_MEmbedCanvasPeer_getClientBounds (JNIEnv *env, jobject this) 
         }
     }
     AWT_UNLOCK();
-    return res;    
+    return res;
 }
 
-Boolean 
+Boolean
 isApplicationActive(JNIEnv * env, jobject this) {
     return (*env)->GetBooleanField(env, this, applicationActiveFID);
 }
@@ -464,7 +464,7 @@ isApplicationActive(JNIEnv * env, jobject this) {
  * Method:    notifyChildEmbedded
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_notifyChildEmbedded (JNIEnv *env, jobject this) {
     struct ComponentData *cdata;
     pxembed_server_data sdata;
@@ -490,7 +490,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_notifyChildEmbedded (JNIEnv *env, jobject th
  * Method:    detachChild
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_detachChild (JNIEnv *env, jobject this) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -519,7 +519,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_detachChild (JNIEnv *env, jobject this) {
  * Method:    forwardKeyEvent
  * Signature: (Ljava/awt/event/KeyEvent;)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_forwardKeyEvent (JNIEnv *env, jobject this, jobject event) {
     pxembed_server_data sdata;
     jbyteArray array;
@@ -555,13 +555,13 @@ Java_sun_awt_motif_MEmbedCanvasPeer_forwardKeyEvent (JNIEnv *env, jobject this, 
  * Method:    getAWTKeyCodeForKeySym
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_getAWTKeyCodeForKeySym (JNIEnv *env, jobject this, jint keysym) {
     jint keycode = java_awt_event_KeyEvent_VK_UNDEFINED;
     Boolean mapsToUnicodeChar;
     jint keyLocation;
-    keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);    
-    return keycode;    
+    keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);
+    return keycode;
 }
 
 /*
@@ -569,7 +569,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_getAWTKeyCodeForKeySym (JNIEnv *env, jobject
  * Method:    sendMessage
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_sendMessage__I (JNIEnv *env, jobject this, jint msg) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -587,7 +587,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_sendMessage__I (JNIEnv *env, jobject this, j
  * Method:    sendMessage
  * Signature: (IJJJ)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_sendMessage__IJJJ (JNIEnv *env, jobject this, jint msg, jlong detail, jlong data1, jlong data2) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -600,7 +600,7 @@ Java_sun_awt_motif_MEmbedCanvasPeer_sendMessage__IJJJ (JNIEnv *env, jobject this
     AWT_UNLOCK();
 }
 
-static jobject 
+static jobject
 createRectangle(JNIEnv* env, int x, int y, int width, int height) {
     static jclass clazz;
     static jmethodID mid;
@@ -622,7 +622,7 @@ createRectangle(JNIEnv* env, int x, int y, int width, int height) {
     return rect;
 }
 
-static jobject 
+static jobject
 createDimension(JNIEnv* env, int width, int height) {
     static jclass clazz;
     static jmethodID mid;
@@ -656,7 +656,7 @@ Boolean isMapped(Window w) {
     return !(attr.map_state == IsUnmapped);
 }
 
-static void 
+static void
 processXEmbedInfo(JNIEnv * env, jobject this) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -672,13 +672,13 @@ processXEmbedInfo(JNIEnv * env, jobject this) {
         if (XGetWindowProperty(awt_display, sdata->handle, XA_XEmbedInfo,
                            0, 2, False, XA_XEmbedInfo, &actual_type,
                            &actual_format, &nitems, &bytes_after,
-                               (unsigned char**)&data) != Success) 
+                               (unsigned char**)&data) != Success)
         {
             AWT_UNLOCK();
             return;
         }
-        if (actual_type == XA_XEmbedInfo && actual_format == 32 
-            && nitems == 2) 
+        if (actual_type == XA_XEmbedInfo && actual_format == 32
+            && nitems == 2)
         {
             CARD32 flags;
             Boolean new_mapped, currently_mapped;
@@ -693,10 +693,10 @@ processXEmbedInfo(JNIEnv * env, jobject this) {
                     XUnmapWindow(awt_display, sdata->handle);
                 }
             }
-        }    
+        }
         if (data != NULL) {
             XFree(data);
-        }        
+        }
     }
     AWT_UNLOCK();
 }
@@ -704,7 +704,7 @@ processXEmbedInfo(JNIEnv * env, jobject this) {
 /**
  * Handles client message on embedder
  */
-static void 
+static void
 handleClientMessage(JNIEnv* env, jobject this, XClientMessageEvent * ev) {
     pxembed_server_data sdata;
     AWT_LOCK();
@@ -750,9 +750,9 @@ handleClientMessage(JNIEnv* env, jobject this, XClientMessageEvent * ev) {
                                      (jlong)ev->data.l[4]);
           case _SUN_XEMBED_START:
               MTRACE("XEMBED_START\n");
-              processXEmbedInfo(env, this);             
+              processXEmbedInfo(env, this);
               Java_sun_awt_motif_MEmbedCanvasPeer_notifyChildEmbedded(env, this);
-              break;                                     
+              break;
         }
     }
     AWT_UNLOCK();
@@ -761,7 +761,7 @@ handleClientMessage(JNIEnv* env, jobject this, XClientMessageEvent * ev) {
 /**
  * Handles property changes on xembed client
  */
-static void 
+static void
 handlePropertyNotify(XPropertyEvent * ev) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     pxembed_server_data sdata;
@@ -771,13 +771,13 @@ handlePropertyNotify(XPropertyEvent * ev) {
     if (sdata != NULL) {
         if (ev->atom == XA_WM_NORMAL_HINTS) {
             DASSERT(sdata->server != NULL);
-            (*env)->CallVoidMethod(env, sdata->server, childResizedMID);            
+            (*env)->CallVoidMethod(env, sdata->server, childResizedMID);
             MTRACE("NORMAL_HINTS have changed\n");
         } else if (ev->atom == XA_XdndAware) {
-            unregister_xembed_drop_site(env, awt_display, sdata->server, 
+            unregister_xembed_drop_site(env, awt_display, sdata->server,
                                         sdata->serverHandle, sdata->handle);
             if (ev->state == PropertyNewValue) {
-                register_xembed_drop_site(env, awt_display, sdata->server, 
+                register_xembed_drop_site(env, awt_display, sdata->server,
                                           sdata->serverHandle, sdata->handle);
             }
         } else if (ev->atom == XA_XEmbedInfo) {
@@ -789,7 +789,7 @@ handlePropertyNotify(XPropertyEvent * ev) {
     AWT_UNLOCK();
 }
 
-static void 
+static void
 handleConfigureNotify(XConfigureEvent * ev) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     pxembed_server_data sdata;
@@ -798,7 +798,7 @@ handleConfigureNotify(XConfigureEvent * ev) {
     sdata = getData(ev->window);
     if (sdata != NULL) {
         DASSERT(sdata->server != NULL);
-        (*env)->CallVoidMethod(env, sdata->server, childResizedMID);                    
+        (*env)->CallVoidMethod(env, sdata->server, childResizedMID);
     }
     AWT_UNLOCK();
 }
@@ -808,7 +808,7 @@ handleConfigureNotify(XConfigureEvent * ev) {
  * Method:    sendMessage
  * Signature: (IJJJ)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_GrabbedKey_initKeySymAndModifiers (JNIEnv *env, jobject this, jobject keyevent) {
     jbyteArray array;
     XEvent *xevent;
@@ -868,7 +868,7 @@ dispatchEmbedderEvent(jobject server, XEvent * ev) {
     AWT_LOCK();
 /*     MTRACE("dispatchEmebddedEvent\n"); */
     switch (ev->type) {
-      case CreateNotify:          
+      case CreateNotify:
 
           MTRACEP3("CreateNotify for %x, serial %d, num events %d\n", (ev->xcreatewindow.window), (ev->xany.serial), (numEventsHandled));
           Java_sun_awt_motif_MEmbedCanvasPeer_embedChild(env, server, ev->xcreatewindow.window);
@@ -877,7 +877,7 @@ dispatchEmbedderEvent(jobject server, XEvent * ev) {
           MTRACE("DestroyNotify\n");
           Java_sun_awt_motif_MEmbedCanvasPeer_childDestroyed(env, server);
           break;
-      case ReparentNotify:          
+      case ReparentNotify:
           MTRACEP2("ReparentNotify for %x, parent %x\n", (ev->xreparent.window), (ev->xreparent.parent));
           Java_sun_awt_motif_MEmbedCanvasPeer_embedChild(env, server, ev->xreparent.window);
           break;
@@ -903,7 +903,7 @@ dispatchEmbeddingClientEvent(XEvent * ev) {
     }
 }
 
-void 
+void
 xembed_serverEventHandler(XEvent * ev) {
     pxembed_server_data sdata;
     sdata = getData(ev->xany.window);
@@ -919,18 +919,18 @@ xembed_serverEventHandler(XEvent * ev) {
 }
 
 /**************************** XEmbed server DnD support ***********************/
-void 
+void
 set_xembed_drop_target(JNIEnv* env, jobject server) {
-    
+
     (*env)->CallVoidMethod(env, server, setXEmbedDropTargetMID);
 }
 
-void 
+void
 remove_xembed_drop_target(JNIEnv* env, jobject server) {
     (*env)->CallVoidMethod(env, server, removeXEmbedDropTargetMID);
 }
 
-Boolean 
+Boolean
 is_xembed_client(Window window) {
     return getData(window) != NULL;
 }
@@ -941,7 +941,7 @@ is_xembed_client(Window window) {
  * Method:    getWindow
  * Signature: ()V
  */
-JNIEXPORT jlong JNICALL 
+JNIEXPORT jlong JNICALL
 Java_sun_awt_motif_MEmbedCanvasPeer_getWindow(JNIEnv *env, jobject this) {
     struct ComponentData *cdata;
     Window res = None;
@@ -954,14 +954,14 @@ Java_sun_awt_motif_MEmbedCanvasPeer_getWindow(JNIEnv *env, jobject this) {
     return (jlong)res;
 }
 
-JNIEXPORT void JNICALL 
-Java_sun_awt_motif_MEmbedCanvasPeer_forwardEventToEmbedded(JNIEnv *env, 
+JNIEXPORT void JNICALL
+Java_sun_awt_motif_MEmbedCanvasPeer_forwardEventToEmbedded(JNIEnv *env,
                                                            jobject this,
-                                                           jlong ctxt, 
+                                                           jlong ctxt,
                                                            jint eventID){
     pxembed_server_data sdata;
     AWT_LOCK();
-    sdata = getDataByEmbedder(this);    
+    sdata = getDataByEmbedder(this);
     if (sdata != NULL) {
         forward_event_to_embedded(sdata->handle, ctxt, eventID);
     }

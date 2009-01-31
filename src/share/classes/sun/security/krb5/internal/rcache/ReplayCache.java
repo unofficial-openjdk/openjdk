@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -44,7 +42,6 @@ import sun.security.krb5.internal.KerberosTime;
  * The cache minimizes the memory usage by doing self-cleanup of expired items in the cache.
  *
  * @author Yanni Zhang
- * @version 1.00 10 Jul 00
  */
 public class ReplayCache extends LinkedList<AuthTime> {
 
@@ -53,8 +50,8 @@ public class ReplayCache extends LinkedList<AuthTime> {
     private String principal;
     private CacheTable table;
     private int nap = 10 * 60 * 1000; //10 minutes break
-    private boolean DEBUG = Krb5.DEBUG; 
-    /** 
+    private boolean DEBUG = Krb5.DEBUG;
+    /**
      * Constructs a ReplayCache for a client principal in specified <code>CacheTable</code>.
      * @param p client principal name.
      * @param ct CacheTable.
@@ -69,15 +66,15 @@ public class ReplayCache extends LinkedList<AuthTime> {
      * @param t <code>AuthTime</code>
      */
     public synchronized void put(AuthTime t, long currentTime) {
-        
+
         if (this.size() == 0) {
             addFirst(t);
         }
         else {
             AuthTime temp = getFirst();
-            if (temp.kerberosTime < t.kerberosTime) { 
-		// in most cases, newly received authenticator has 
-		// larger timestamp.
+            if (temp.kerberosTime < t.kerberosTime) {
+                // in most cases, newly received authenticator has
+                // larger timestamp.
                 addFirst(t);
             }
             else if (temp.kerberosTime == t.kerberosTime) {
@@ -85,15 +82,15 @@ public class ReplayCache extends LinkedList<AuthTime> {
                     addFirst(t);
                 }
             }
-            else { 
-		//unless client clock being re-adjusted.
-                ListIterator<AuthTime> it = listIterator(1);               
+            else {
+                //unless client clock being re-adjusted.
+                ListIterator<AuthTime> it = listIterator(1);
                 while (it.hasNext()) {
                     temp = it.next();
                     if (temp.kerberosTime < t.kerberosTime) {
                         add(indexOf(temp), t);
-                        break;                                   
-			//we always put the bigger timestamp at the front.
+                        break;
+                        //we always put the bigger timestamp at the front.
                     }
                     else if (temp.kerberosTime == t.kerberosTime) {
                         if (temp.cusec < t.cusec) {
@@ -105,34 +102,34 @@ public class ReplayCache extends LinkedList<AuthTime> {
             }
         }
 
-	// let us cleanup while we are here
-	long timeLimit = currentTime - KerberosTime.getDefaultSkew() * 1000L;
-	ListIterator<AuthTime> it = listIterator(0);
-	AuthTime temp = null;
-	int index = -1;
-	while (it.hasNext()) {        
-	    //search expired timestamps.
-	    temp = it.next();
-	    if (temp.kerberosTime < timeLimit) {
-		index = indexOf(temp);
-		break;
-	    }
-	}
-	if (index > -1) {
-	    do {
-		//remove expired timestamps from the list.
-		removeLast();                         
-	    } while(size() > index);
-	}
-	if (DEBUG) {
-	    printList();
-	}
-	
-	// if there are no entries in the replay cache, 
-	// remove the replay cache from the table.
-	if (this.size() == 0) {
-	    table.remove(principal); 
-	}
+        // let us cleanup while we are here
+        long timeLimit = currentTime - KerberosTime.getDefaultSkew() * 1000L;
+        ListIterator<AuthTime> it = listIterator(0);
+        AuthTime temp = null;
+        int index = -1;
+        while (it.hasNext()) {
+            //search expired timestamps.
+            temp = it.next();
+            if (temp.kerberosTime < timeLimit) {
+                index = indexOf(temp);
+                break;
+            }
+        }
+        if (index > -1) {
+            do {
+                //remove expired timestamps from the list.
+                removeLast();
+            } while(size() > index);
+        }
+        if (DEBUG) {
+            printList();
+        }
+
+        // if there are no entries in the replay cache,
+        // remove the replay cache from the table.
+        if (this.size() == 0) {
+            table.remove(principal);
+        }
         if (DEBUG) {
             printList();
         }
@@ -145,10 +142,9 @@ public class ReplayCache extends LinkedList<AuthTime> {
     private void printList() {
         Object[] total = toArray();
         for (int i = 0; i < total.length; i++) {
-	    System.out.println("object " + i + ": " + ((AuthTime)total[i]).kerberosTime + "/" 
-			       + ((AuthTime)total[i]).cusec);
+            System.out.println("object " + i + ": " + ((AuthTime)total[i]).kerberosTime + "/"
+                               + ((AuthTime)total[i]).cusec);
         }
     }
 
 }
-

@@ -32,11 +32,10 @@ import java.security.PrivilegedExceptionAction;
 /**
  * A convenience class for opening a FileInputStream as a privileged action.
  *
- * @version %I%, %G%
  * @author Andreas Sterbenz
  */
 public class OpenFileInputStreamAction
-	implements PrivilegedExceptionAction<FileInputStream> {
+        implements PrivilegedExceptionAction<FileInputStream> {
 
     private final File file;
 

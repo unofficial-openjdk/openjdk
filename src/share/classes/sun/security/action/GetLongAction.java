@@ -54,11 +54,10 @@ package sun.security.action;
  *
  * <pre>
  * long l = java.security.AccessController.doPrivileged
- *	(new GetLongAction("prop")).longValue();
+ *      (new GetLongAction("prop")).longValue();
  * </pre>
  *
  * @author Roland Schemers
- * @version %I%, %G%
  * @see java.security.PrivilegedAction
  * @see java.security.AccessController
  * @since 1.2
@@ -76,7 +75,7 @@ public class GetLongAction implements java.security.PrivilegedAction<Long> {
      * @param theProp the name of the system property.
      */
     public GetLongAction(String theProp) {
-	this.theProp = theProp;
+        this.theProp = theProp;
     }
 
     /**
@@ -89,7 +88,7 @@ public class GetLongAction implements java.security.PrivilegedAction<Long> {
     public GetLongAction(String theProp, long defaultVal) {
         this.theProp = theProp;
         this.defaultVal = defaultVal;
-	this.defaultSet = true;
+        this.defaultSet = true;
     }
 
     /**
@@ -107,7 +106,7 @@ public class GetLongAction implements java.security.PrivilegedAction<Long> {
     public Long run() {
         Long value = Long.getLong(theProp);
         if ((value == null) && defaultSet)
-	    return new Long(defaultVal);
-	return value;
+            return new Long(defaultVal);
+        return value;
     }
 }

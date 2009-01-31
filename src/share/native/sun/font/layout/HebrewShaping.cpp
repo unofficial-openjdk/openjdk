@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)HebrewShaping.cpp	1.5 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
  *
@@ -54,6 +53,6 @@ void HebrewShaping::shape(const LEUnicode * /*chars*/, le_int32 /*offset*/, le_i
     }
 
     for (count = 0; count < charCount; count += 1, out += dir) {
-		tags[out] = hebrewTags;
-	}
+                tags[out] = hebrewTags;
+        }
 }

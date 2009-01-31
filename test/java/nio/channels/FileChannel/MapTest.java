@@ -48,15 +48,15 @@ public class MapTest {
 
     public static void main(String[] args) throws Exception {
         blah = File.createTempFile("blah", null);
-	blah.deleteOnExit();
+        blah.deleteOnExit();
         initTestFile(blah);
-	err.println("Test file " + blah + " initialized");
+        err.println("Test file " + blah + " initialized");
         testZero();
         err.println("Zero size: OK");
         testRead();
-	err.println("Read: OK");
+        err.println("Read: OK");
         testWrite();
-	err.println("Write: OK");
+        err.println("Write: OK");
         testHighOffset();
         err.println("High offset: OK");
     }
@@ -78,7 +78,7 @@ public class MapTest {
     private static void initTestFile(File blah) throws Exception {
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<4000; i++) {
             String number = new Integer(i).toString();
@@ -119,8 +119,8 @@ public class MapTest {
             offset = expectedResult * CHARS_PER_LINE;
 
             MappedByteBuffer b = c.map(FileChannel.MapMode.READ_ONLY,
-				       offset, 100);
-         
+                                       offset, 100);
+
             for (int i=0; i<4; i++) {
                 byte aByte = b.get(i);
                 sb.setCharAt(i, (char)aByte);
@@ -130,7 +130,7 @@ public class MapTest {
             if (result != expectedResult) {
                 err.println("I expected "+expectedResult);
                 err.println("I got "+result);
-		throw new Exception("Read test failed");
+                throw new Exception("Read test failed");
             }
             c.close();
             fis.close();
@@ -151,18 +151,18 @@ public class MapTest {
 
             long offset = generator.nextInt(1000);
             MappedByteBuffer b = c.map(FileChannel.MapMode.READ_WRITE,
-				       offset, 100);
+                                       offset, 100);
 
             for (int i=0; i<4; i++) {
                 b.put(i, (byte)('0' + i));
             }
-            
+
             for (int i=0; i<4; i++) {
                 byte aByte = b.get(i);
                 sb.setCharAt(i, (char)aByte);
             }
             if (!sb.toString().equals("0123"))
-		throw new Exception("Write test failed");
+                throw new Exception("Write test failed");
             c.close();
             raf.close();
         }
@@ -177,7 +177,7 @@ public class MapTest {
             FileChannel fc = raf.getChannel();
             long offset = 66000;
             MappedByteBuffer b = fc.map(FileChannel.MapMode.READ_WRITE,
-					offset, 100);
+                                        offset, 100);
 
             fc.close();
             raf.close();

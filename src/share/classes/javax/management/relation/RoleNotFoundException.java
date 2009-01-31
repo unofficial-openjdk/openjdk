@@ -40,7 +40,7 @@ public class RoleNotFoundException extends RelationException {
      * Default constructor, no message put in exception.
      */
     public RoleNotFoundException() {
-	super();
+        super();
     }
 
     /**
@@ -49,6 +49,6 @@ public class RoleNotFoundException extends RelationException {
      * @param message the detail message.
      */
     public RoleNotFoundException(String message) {
-	super(message);
+        super(message);
     }
 }

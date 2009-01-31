@@ -82,7 +82,6 @@ import java.util.List;
  * @see sun.security.provider.certpath.Vertex
  * <p>
  * @author  seth proctor
- * @version %I% %G%
  * @since   1.4
  */
 public class AdjacencyList {
@@ -123,21 +122,21 @@ public class AdjacencyList {
      * that we followed to get here, and if it's null, it means that we're
      * at the start.
      */
-    private boolean buildList(List<List<Vertex>> theList, int index, 
-	BuildStep follow) {
+    private boolean buildList(List<List<Vertex>> theList, int index,
+        BuildStep follow) {
 
         // Each time this method is called, we're examining a new list
         // from the global list. So, we have to start by getting the list
         // that contains the set of Vertexes we're considering.
         List<Vertex> l = theList.get(index);
-        
+
         try {
             // we're interested in the case where all indexes are -1...
             boolean allNegOne = true;
             // ...and in the case where every entry has a Throwable
             boolean allXcps = true;
-            
-	    for (Vertex v : l) {
+
+            for (Vertex v : l) {
                 if (v.getIndex() != -1) {
                     // count an empty list the same as an index of -1...this
                     // is to patch a bug somewhere in the builder
@@ -173,7 +172,7 @@ public class AdjacencyList {
                     // a throwable, then that's the successful step. Otherwise,
                     // we'll have to make some guesses...
                     List<Vertex> possibles = new ArrayList<Vertex>();
-		    for (Vertex v : l) {
+                    for (Vertex v : l) {
                         if (v.getThrowable() == null)
                             possibles.add(v);
                     }
@@ -204,13 +203,13 @@ public class AdjacencyList {
                 // have to back out ourselves.
                 boolean success = false;
 
-		for (Vertex v : l) {
-                    
+                for (Vertex v : l) {
+
                     // Note that we'll only find a SUCCEED case when we're
                     // looking at the last possible path, so we don't need to
                     // consider success in the while loop
 
-                    if (v.getIndex() != -1) {                        
+                    if (v.getIndex() != -1) {
                         if (theList.get(v.getIndex()).size() != 0) {
                             // If the entry we're looking at doesn't have an
                             // index of -1, and doesn't lead to an empty list,
@@ -251,12 +250,12 @@ public class AdjacencyList {
      */
     public String toString() {
         String out = "[\n";
-        
+
         int i = 0;
-	for (List<Vertex> l : mOrigList) {
+        for (List<Vertex> l : mOrigList) {
             out = out + "LinkedList[" + i++ + "]:\n";
 
-	    for (Vertex step : l) {
+            for (Vertex step : l) {
                 try {
                     out = out + step.toString();
                     out = out + "\n";

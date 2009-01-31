@@ -37,27 +37,27 @@ import com.sun.security.auth.LdapPrincipal;
 /*
  * Create principals using string distinguished names containing non-standard
  * attribute names.  A non-standard attribute name is one that is not listed in
- * Section 2.3 of RFC 2253. Typically, such distinguished names are valid in 
- * LDAP but are not valid in X.500 as they cannot be encoded using ASN.1 BER 
- * (because the object identifier corresponding to the attribute name is 
+ * Section 2.3 of RFC 2253. Typically, such distinguished names are valid in
+ * LDAP but are not valid in X.500 as they cannot be encoded using ASN.1 BER
+ * (because the object identifier corresponding to the attribute name is
  * unknown).
  */
 public class CreateLdapPrincipals {
 
     public static void main(String[] args) throws Exception {
 
-	Set<Principal> principals = new Subject().getPrincipals();
+        Set<Principal> principals = new Subject().getPrincipals();
 
-	principals.add(new LdapPrincipal("x=y"));
-	principals.add(new LdapPrincipal("x=#04024869"));
-	principals.add(new LdapPrincipal("1.2.3=x"));
-	principals.add(new LdapPrincipal("A=B"));
-	principals.add(new LdapPrincipal("a=b+c=d"));
-	principals.add(new LdapPrincipal("a=b,c=d,e=f"));
-	principals.add(new LdapPrincipal("f=g, h=i, j=k"));
+        principals.add(new LdapPrincipal("x=y"));
+        principals.add(new LdapPrincipal("x=#04024869"));
+        principals.add(new LdapPrincipal("1.2.3=x"));
+        principals.add(new LdapPrincipal("A=B"));
+        principals.add(new LdapPrincipal("a=b+c=d"));
+        principals.add(new LdapPrincipal("a=b,c=d,e=f"));
+        principals.add(new LdapPrincipal("f=g, h=i, j=k"));
 
-	System.out.println("Successfully created " + principals.size() + 
-	    " LDAP principals:");
-	System.out.println(principals);
+        System.out.println("Successfully created " + principals.size() +
+            " LDAP principals:");
+        System.out.println(principals);
     }
 }

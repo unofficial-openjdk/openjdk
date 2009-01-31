@@ -37,39 +37,39 @@ import com.sun.management.jmx.*;
 
 public class LegacyIntrospectorTest {
     public static interface TestMBean {
-	public int getWhatever();
+        public int getWhatever();
     }
     public static class Test implements TestMBean {
-	public int getWhatever() {return 0;}
+        public int getWhatever() {return 0;}
     }
 
     @SuppressWarnings("deprecation")
     public static void main(String[] args) throws Exception {
-	MBeanInfo mbi = Introspector.testCompliance(Test.class);
-	MBeanAttributeInfo mbai = mbi.getAttributes()[0];
-	if (!mbai.getName().equals("Whatever"))
-	    throw new Exception("Wrong attribute name: " + mbai.getName());
-	Class c = Introspector.getMBeanInterface(Test.class);
-	if (c != TestMBean.class)
-	    throw new Exception("Wrong interface: " + c);
+        MBeanInfo mbi = Introspector.testCompliance(Test.class);
+        MBeanAttributeInfo mbai = mbi.getAttributes()[0];
+        if (!mbai.getName().equals("Whatever"))
+            throw new Exception("Wrong attribute name: " + mbai.getName());
+        Class c = Introspector.getMBeanInterface(Test.class);
+        if (c != TestMBean.class)
+            throw new Exception("Wrong interface: " + c);
 
-	MBeanServer mbs1 = new MBeanServerImpl();
-	if (!mbs1.getDefaultDomain().equals("DefaultDomain"))
-	    throw new Exception("Wrong default domain: " + mbs1.getDefaultDomain());
+        MBeanServer mbs1 = new MBeanServerImpl();
+        if (!mbs1.getDefaultDomain().equals("DefaultDomain"))
+            throw new Exception("Wrong default domain: " + mbs1.getDefaultDomain());
 
-	MBeanServer mbs2 = new MBeanServerImpl("Foo");
-	if (!mbs2.getDefaultDomain().equals("Foo"))
-	    throw new Exception("Wrong default domain: " + mbs2.getDefaultDomain());
+        MBeanServer mbs2 = new MBeanServerImpl("Foo");
+        if (!mbs2.getDefaultDomain().equals("Foo"))
+            throw new Exception("Wrong default domain: " + mbs2.getDefaultDomain());
 
-	ObjectName delegateName =
-	    new ObjectName("JMImplementation:type=MBeanServerDelegate");
-	MBeanInfo delegateInfo = mbs2.getMBeanInfo(delegateName);
-	MBeanInfo refDelegateInfo =
-	    MBeanServerFactory.newMBeanServer().getMBeanInfo(delegateName);
-	if (!delegateInfo.equals(refDelegateInfo))
-	    throw new Exception("Wrong delegate info from MBeanServerImpl: " +
-				delegateInfo);
+        ObjectName delegateName =
+            new ObjectName("JMImplementation:type=MBeanServerDelegate");
+        MBeanInfo delegateInfo = mbs2.getMBeanInfo(delegateName);
+        MBeanInfo refDelegateInfo =
+            MBeanServerFactory.newMBeanServer().getMBeanInfo(delegateName);
+        if (!delegateInfo.equals(refDelegateInfo))
+            throw new Exception("Wrong delegate info from MBeanServerImpl: " +
+                                delegateInfo);
 
-	System.out.println("TEST PASSED");
+        System.out.println("TEST PASSED");
     }
 }

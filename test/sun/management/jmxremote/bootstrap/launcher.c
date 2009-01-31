@@ -30,7 +30,7 @@
 #include <dlfcn.h>
 
 #include "jni.h"
- 
+
 typedef jint (*create_vm_func)(JavaVM **, void**, void*);
 
 void *JNU_FindCreateJavaVM(char *vmlibpath) {
@@ -42,7 +42,7 @@ void *JNU_FindCreateJavaVM(char *vmlibpath) {
 }
 
 #define CP_PROP  "-Djava.class.path="
- 
+
 int main(int argc, char**argv) {
      JNIEnv *env;
      JavaVM *jvm;
@@ -58,7 +58,7 @@ int main(int argc, char**argv) {
      JavaVMOption options[1];
 
      if (argc < 4) {
-	fprintf(stderr, "Usage: %s jvm-path classpath class\n", argv[0]);
+        fprintf(stderr, "Usage: %s jvm-path classpath class\n", argv[0]);
         return -1;
      }
      cp_prop = (char*)malloc(strlen(CP_PROP)+strlen(argv[2]) +1);
@@ -72,20 +72,20 @@ int main(int argc, char**argv) {
 
      create_vm = (create_vm_func)JNU_FindCreateJavaVM(argv[1]);
      if (create_vm == NULL) {
-	fprintf(stderr, "can't get address of JNI_CreateJavaVM\n");
-	return -1;
+        fprintf(stderr, "can't get address of JNI_CreateJavaVM\n");
+        return -1;
      }
 
      res = (*create_vm)(&jvm, (void**)&env, &vm_args);
      if (res < 0) {
          fprintf(stderr, "Can't create Java VM\n");
-	 return -1;
+         return -1;
      }
      cls = (*env)->FindClass(env, argv[3]);
      if (cls == NULL) {
          goto destroy;
      }
- 
+
      mid = (*env)->GetStaticMethodID(env, cls, "main",
                                      "([Ljava/lang/String;)V");
      if (mid == NULL) {
@@ -101,7 +101,7 @@ int main(int argc, char**argv) {
          goto destroy;
      }
      (*env)->CallStaticVoidMethod(env, cls, mid, args);
- 
+
  destroy:
      if ((*env)->ExceptionOccurred(env)) {
          (*env)->ExceptionDescribe(env);

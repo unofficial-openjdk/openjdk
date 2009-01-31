@@ -55,40 +55,40 @@ public class TestEnvironment implements Node.Visitor {
     static Option.Int testTime;
 
     public static void init() {
-	globaloptroot = new Group("global", "Global Options");
-	envroot = new Group(globaloptroot, "env", "Test Environment Options");
+        globaloptroot = new Group("global", "Global Options");
+        envroot = new Group(globaloptroot, "env", "Test Environment Options");
 
-	outputWidth =
-	    new Option.Int(envroot, "outputwidth",
-			   "Width of Output Window or Image",
-			   1, Integer.MAX_VALUE, 640);
-	outputHeight =
-	    new Option.Int(envroot, "outputheight",
-			   "Height of Output Window or Image",
-			   1, Integer.MAX_VALUE, 480);
+        outputWidth =
+            new Option.Int(envroot, "outputwidth",
+                           "Width of Output Window or Image",
+                           1, Integer.MAX_VALUE, 640);
+        outputHeight =
+            new Option.Int(envroot, "outputheight",
+                           "Height of Output Window or Image",
+                           1, Integer.MAX_VALUE, 480);
 
-	runCount =
-	    new Option.Int(envroot, "runcount",
-			   "Fixed Number of Test Runs per Benchmark",
-			   1, Integer.MAX_VALUE, 5);
-	repCount =
-	    new Option.Int(envroot, "repcount",
-			   "Fixed Number of Reps (0 means calibrate)",
-			   0, Integer.MAX_VALUE, 0);
-	testTime =
-	    new Option.Int(envroot, "testtime",
-			   "Target test time to calibrate for",
-			   1, Integer.MAX_VALUE, 2500);
+        runCount =
+            new Option.Int(envroot, "runcount",
+                           "Fixed Number of Test Runs per Benchmark",
+                           1, Integer.MAX_VALUE, 5);
+        repCount =
+            new Option.Int(envroot, "repcount",
+                           "Fixed Number of Reps (0 means calibrate)",
+                           0, Integer.MAX_VALUE, 0);
+        testTime =
+            new Option.Int(envroot, "testtime",
+                           "Target test time to calibrate for",
+                           1, Integer.MAX_VALUE, 2500);
     }
 
     public void visit(Node node) {
-	if (node instanceof Test) {
-	    ((Test) node).runTest(this);
-	}
+        if (node instanceof Test) {
+            ((Test) node).runTest(this);
+        }
     }
 
     public void runAllTests() {
-	Group.root.traverse(this);
+        Group.root.traverse(this);
     }
 
     Canvas comp;
@@ -100,8 +100,8 @@ public class TestEnvironment implements Node.Visitor {
     Timer timer;
 
     public TestEnvironment() {
-	results = new ResultSet();
-	modifiers = new Hashtable();
+        results = new ResultSet();
+        modifiers = new Hashtable();
         timer = Timer.getImpl();
     }
 
@@ -122,40 +122,40 @@ public class TestEnvironment implements Node.Visitor {
     }
 
     public Canvas getCanvas() {
-	if (comp == null) {
-	    final int w = getWidth();
-	    final int h = getHeight();
-	    comp = new Canvas() {
-		public Dimension getPreferredSize() {
-		    return new Dimension(w, h);
-		}
-	    };
-	}
-	return comp;
+        if (comp == null) {
+            final int w = getWidth();
+            final int h = getHeight();
+            comp = new Canvas() {
+                public Dimension getPreferredSize() {
+                    return new Dimension(w, h);
+                }
+            };
+        }
+        return comp;
     }
 
     public Image getSrcImage() {
-	return srcImage;
+        return srcImage;
     }
 
     public void stop() {
-	stopped = true;
+        stopped = true;
     }
 
     public boolean isStopped() {
-	return stopped;
+        return stopped;
     }
-    
+
     public void setTestImage(Image img) {
-	this.testImage = img;
+        this.testImage = img;
     }
 
     public void setSrcImage(Image img) {
-	this.srcImage = img;
+        this.srcImage = img;
     }
 
     public void erase() {
-	Graphics g = getGraphics();
+        Graphics g = getGraphics();
         if (g != null) {
             g.setColor(Color.white);
             g.fillRect(0, 0, getWidth(), getHeight());
@@ -174,90 +174,90 @@ public class TestEnvironment implements Node.Visitor {
     }
 
     public int getWidth() {
-	return outputWidth.getIntValue();
+        return outputWidth.getIntValue();
     }
 
     public int getHeight() {
-	return outputHeight.getIntValue();
+        return outputHeight.getIntValue();
     }
 
     public int getRunCount() {
-	return runCount.getIntValue();
+        return runCount.getIntValue();
     }
 
     public int getRepCount() {
-	return repCount.getIntValue();
+        return repCount.getIntValue();
     }
 
     public long getTestTime() {
-	return testTime.getIntValue();
+        return testTime.getIntValue();
     }
 
     public void sync() {
-	if (comp == null) {
-	    Toolkit.getDefaultToolkit().sync();
-	} else {
-	    comp.getToolkit().sync();
-	}
+        if (comp == null) {
+            Toolkit.getDefaultToolkit().sync();
+        } else {
+            comp.getToolkit().sync();
+        }
     }
 
     public boolean idle() {
-	if (!stopped) {
-	    sync();
-	    System.gc();
-	    System.runFinalization();
-	    System.gc();
-	    sync();
-	    try {
-		Thread.sleep(50);
-	    } catch (InterruptedException e) {
-		stop();
-	    }
-	}
-	return stopped;
+        if (!stopped) {
+            sync();
+            System.gc();
+            System.runFinalization();
+            System.gc();
+            sync();
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                stop();
+            }
+        }
+        return stopped;
     }
 
     public void setModifier(Modifier o, Object v) {
-	modifiers.put(o, v);
+        modifiers.put(o, v);
     }
 
     public Object getModifier(Modifier o) {
-	return modifiers.get(o);
+        return modifiers.get(o);
     }
 
     public boolean isEnabled(Modifier o) {
-	return ((Boolean) modifiers.get(o)).booleanValue();
+        return ((Boolean) modifiers.get(o)).booleanValue();
     }
 
     public int getIntValue(Modifier o) {
-	return ((Integer) modifiers.get(o)).intValue();
+        return ((Integer) modifiers.get(o)).intValue();
     }
 
     public void removeModifier(Modifier o) {
-	modifiers.remove(o);
+        modifiers.remove(o);
     }
 
     public Hashtable getModifiers() {
-	return (Hashtable) modifiers.clone();
+        return (Hashtable) modifiers.clone();
     }
 
     public void record(Result result) {
-	results.record(result);
+        results.record(result);
     }
 
     public void flushToScreen() {
-	if (testImage != null && comp != null) {
-	    Graphics g = comp.getGraphics();
-	    if (GraphicsTests.hasGraphics2D) {
-		((Graphics2D) g).setComposite(AlphaComposite.Src);
-	    }
-	    g.drawImage(testImage, 0, 0, null);
-	    g.dispose();
-	}
+        if (testImage != null && comp != null) {
+            Graphics g = comp.getGraphics();
+            if (GraphicsTests.hasGraphics2D) {
+                ((Graphics2D) g).setComposite(AlphaComposite.Src);
+            }
+            g.drawImage(testImage, 0, 0, null);
+            g.dispose();
+        }
     }
 
     public void summarize() {
-	results.summarize();
+        results.summarize();
     }
 
     private abstract static class Timer {

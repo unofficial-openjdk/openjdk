@@ -34,8 +34,8 @@ package javax.management;
  *
  * @since 1.5
  */
-class MatchQueryExp extends QueryEval implements QueryExp { 
-    
+class MatchQueryExp extends QueryEval implements QueryExp {
+
     /* Serial version */
     private static final long serialVersionUID = -7156603696948215014L;
 
@@ -53,69 +53,69 @@ class MatchQueryExp extends QueryEval implements QueryExp {
     /**
      * Basic Constructor.
      */
-    public MatchQueryExp() { 
-    } 
+    public MatchQueryExp() {
+    }
 
     /**
      * Creates a new MatchQueryExp where the specified AttributeValueExp matches
      * the specified pattern StringValueExp.
      */
-    public MatchQueryExp(AttributeValueExp a, StringValueExp s) { 
-	exp     = a;
-	pattern = s.getValue();
-    } 
-    
+    public MatchQueryExp(AttributeValueExp a, StringValueExp s) {
+        exp     = a;
+        pattern = s.getValue();
+    }
+
 
     /**
      * Returns the attribute of the query.
-     */    
-    public AttributeValueExp getAttribute()  { 
-	return exp;
-    } 
+     */
+    public AttributeValueExp getAttribute()  {
+        return exp;
+    }
 
     /**
      * Returns the pattern of the query.
      */
-    public String getPattern()  { 
-	return pattern;
-    } 
+    public String getPattern()  {
+        return pattern;
+    }
 
     /**
      * Applies the MatchQueryExp on a MBean.
      *
      * @param name The name of the MBean on which the MatchQueryExp will be applied.
      *
-     * @return  True if the query was successfully applied to the MBean, false otherwise.     
+     * @return  True if the query was successfully applied to the MBean, false otherwise.
      *
      * @exception BadStringOperationException
      * @exception BadBinaryOpValueExpException
-     * @exception BadAttributeValueExpException 
+     * @exception BadAttributeValueExpException
      * @exception InvalidApplicationException
      */
     public boolean apply(ObjectName name) throws
         BadStringOperationException,
         BadBinaryOpValueExpException,
-	BadAttributeValueExpException,
+        BadAttributeValueExpException,
         InvalidApplicationException {
 
-	ValueExp val = exp.apply(name);	
-	if (!(val instanceof StringValueExp)) {
-	    return false;
-	}	
-	return wildmatch(((StringValueExp)val).getValue(), pattern);
-    } 
+        ValueExp val = exp.apply(name);
+        if (!(val instanceof StringValueExp)) {
+            return false;
+        }
+        return wildmatch(((StringValueExp)val).getValue(), pattern);
+    }
 
     /**
      * Returns the string representing the object
      */
-    public String toString()  { 
-	return exp + " like " + new StringValueExp(likeTranslate(pattern));
-    } 
+    public String toString()  {
+        return exp + " like " + new StringValueExp(likeTranslate(pattern));
+    }
 
     private static String likeTranslate(String s) {
-	return s.replace('?', '_').replace('*', '%');
+        return s.replace('?', '_').replace('*', '%');
     }
-    
+
     /*
      * Tests whether string s is matched by pattern p.
      * Supports "?", "*", "[", each of which may be escaped with "\";
@@ -150,12 +150,12 @@ class MatchQueryExp extends QueryEval implements QueryExp {
                         if (s.charAt(si) >= p.charAt(pi-1) &&
                             s.charAt(si) <= p.charAt(pi+1)) {
                             seenit = true;
-			}
-			++pi;
+                        }
+                        ++pi;
                     } else {
                         if (c == s.charAt(si)) {
                             seenit = true;
-			}
+                        }
                     }
                 }
                 if ((pi >= plen) || (wantit != seenit)) {

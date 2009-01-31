@@ -25,7 +25,7 @@
 
 // random definitions
 
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 #include <windows.h>
 #include <winuser.h>
 #else
@@ -68,11 +68,11 @@ extern void assert_failed(const char*);
 #endif
 
 // Error messages that we have
-#define ERROR_ENOMEM	"Native allocation failed"
-#define ERROR_FORMAT	"Corrupted pack file"
-#define ERROR_RESOURCE	"Cannot extract resource file"
+#define ERROR_ENOMEM    "Native allocation failed"
+#define ERROR_FORMAT    "Corrupted pack file"
+#define ERROR_RESOURCE  "Cannot extract resource file"
 #define ERROR_OVERFLOW  "Internal buffer overflow"
-#define ERROR_INTERNAL	"Internal error"
+#define ERROR_INTERNAL  "Internal error"
 
 #define LOGFILE_STDOUT "-"
 #define LOGFILE_STDERR ""
@@ -92,15 +92,15 @@ typedef unsigned int uLong; // Historical zlib, should be 32-bit.
 #else
 typedef unsigned long uLong;
 #endif
-#ifdef _MSC_VER 
-typedef LONGLONG 	jlong;
-typedef DWORDLONG 	julong;
-#define MKDIR(dir) 	mkdir(dir)
-#define getpid() 	_getpid()
-#define PATH_MAX 	MAX_PATH
-#define dup2(a,b)	_dup2(a,b)
+#ifdef _MSC_VER
+typedef LONGLONG        jlong;
+typedef DWORDLONG       julong;
+#define MKDIR(dir)      mkdir(dir)
+#define getpid()        _getpid()
+#define PATH_MAX        MAX_PATH
+#define dup2(a,b)       _dup2(a,b)
 #define strcasecmp(s1, s2) _stricmp(s1,s2)
-#define tempname	_tempname
+#define tempname        _tempname
 #define sleep Sleep
 #else
 typedef signed char byte;
@@ -121,7 +121,7 @@ enum { false, true };
 
 #define null (0)
 
-#ifndef __sparc 
+#ifndef __sparc
 #define intptr_t jlong
 #endif
 
@@ -129,29 +129,29 @@ enum { false, true };
 
 
 // Keys used by Java:
-#define UNPACK_DEFLATE_HINT		"unpack.deflate.hint"
+#define UNPACK_DEFLATE_HINT             "unpack.deflate.hint"
 
-#define COM_PREFIX			"com.sun.java.util.jar.pack."
-#define UNPACK_MODIFICATION_TIME	COM_PREFIX"unpack.modification.time"
-#define DEBUG_VERBOSE			COM_PREFIX"verbose"
+#define COM_PREFIX                      "com.sun.java.util.jar.pack."
+#define UNPACK_MODIFICATION_TIME        COM_PREFIX"unpack.modification.time"
+#define DEBUG_VERBOSE                   COM_PREFIX"verbose"
 
-#define ZIP_ARCHIVE_MARKER_COMMENT	"PACK200"
+#define ZIP_ARCHIVE_MARKER_COMMENT      "PACK200"
 
 // The following are not known to the Java classes:
-#define UNPACK_LOG_FILE			COM_PREFIX"unpack.log.file"
-#define UNPACK_REMOVE_PACKFILE		COM_PREFIX"unpack.remove.packfile"
+#define UNPACK_LOG_FILE                 COM_PREFIX"unpack.log.file"
+#define UNPACK_REMOVE_PACKFILE          COM_PREFIX"unpack.remove.packfile"
 
 
 // Called from unpacker layers
-#define _CHECK_DO(t,x)	 	{ if (t) {x;} }
+#define _CHECK_DO(t,x)          { if (t) {x;} }
 
-#define CHECK			_CHECK_DO(aborting(), return)
-#define CHECK_(y)		_CHECK_DO(aborting(), return y)
-#define CHECK_0			_CHECK_DO(aborting(), return 0)
+#define CHECK                   _CHECK_DO(aborting(), return)
+#define CHECK_(y)               _CHECK_DO(aborting(), return y)
+#define CHECK_0                 _CHECK_DO(aborting(), return 0)
 
-#define CHECK_NULL(p)		_CHECK_DO((p)==null, return)
-#define CHECK_NULL_(y,p)	_CHECK_DO((p)==null, return y)
-#define CHECK_NULL_0(p)		_CHECK_DO((p)==null, return 0)
+#define CHECK_NULL(p)           _CHECK_DO((p)==null, return)
+#define CHECK_NULL_(y,p)        _CHECK_DO((p)==null, return y)
+#define CHECK_NULL_0(p)         _CHECK_DO((p)==null, return 0)
 
 #define STR_TRUE   "true"
 #define STR_FALSE  "false"

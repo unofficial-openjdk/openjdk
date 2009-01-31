@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 /*
  * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
@@ -136,23 +134,23 @@ public class FormatData extends ListResourceBundle {
                 new String[] { // Japanese imperial calendar era strings
                     "",
                     "Meiji",
-		    "Taisho",
-		    "Showa",
-		    "Heisei",
+                    "Taisho",
+                    "Showa",
+                    "Heisei",
                 }
             },
             { "java.util.JapaneseImperialCalendar.short.Eras",
                 new String[] { // Japanese imperial calendar era abbreviations
                     "",
                     "M",
-		    "T",
-		    "S",
-		    "H",
+                    "T",
+                    "S",
+                    "H",
                 }
             },
             { "java.util.JapaneseImperialCalendar.FirstYear",
                 new String[] { // Japanese imperial calendar year name
-		    // empty in English
+                    // empty in English
                 }
             },
             { "NumberPatterns",

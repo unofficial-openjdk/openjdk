@@ -35,7 +35,6 @@ package sun.io;
 *
 * @author Lloyd Honomichl
 * @author Asmus Freytag
-* @version 8/28/96
 */
 
 public abstract class CharToByteSingleByte extends CharToByteConverter {
@@ -66,24 +65,24 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
     protected int   shift;
 
     private char highHalfZoneCode;
-    
+
     public short[] getIndex1() {
-	return index1;
+        return index1;
     }
 
     public String getIndex2() {
-	return index2;
+        return index2;
     }
     public int flush(byte[] output, int outStart, int outEnd)
-	throws MalformedInputException
+        throws MalformedInputException
     {
-	if (highHalfZoneCode != 0) {
-	    highHalfZoneCode = 0;
-	    badInputLength = 0;
-	    throw new MalformedInputException();
-	}
-	byteOff = charOff = 0;
-	return 0;
+        if (highHalfZoneCode != 0) {
+            highHalfZoneCode = 0;
+            badInputLength = 0;
+            throw new MalformedInputException();
+        }
+        byteOff = charOff = 0;
+        return 0;
     }
 
     /**
@@ -105,7 +104,7 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
      * that cannot be converted to the external character set.
      */
     public int convert(char[] input, int inOff, int inEnd,
-		       byte[] output, int outOff, int outEnd)
+                       byte[] output, int outOff, int outEnd)
         throws MalformedInputException,
                UnknownCharacterException,
                ConversionBufferFullException
@@ -113,38 +112,38 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
         char    inputChar;          // Input character to be converted
         byte[]  outputByte;         // Output byte written to output
         int     inputSize;          // Size of input
-	int	outputSize;	    // Size of output
+        int     outputSize;         // Size of output
 
-	byte[]  tmpArray = new byte[1];
+        byte[]  tmpArray = new byte[1];
 
         // Record beginning offsets
         charOff = inOff;
         byteOff = outOff;
 
-	if (highHalfZoneCode != 0) {
-	    inputChar = highHalfZoneCode;
-	    highHalfZoneCode = 0;
-	    if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
-		// This is legal UTF16 sequence.
-		badInputLength = 1;
-		throw new UnknownCharacterException();
-	    } else {
-		// This is illegal UTF16 sequence.
-		badInputLength = 0;
-		throw new MalformedInputException();
-	    }
-	}
+        if (highHalfZoneCode != 0) {
+            inputChar = highHalfZoneCode;
+            highHalfZoneCode = 0;
+            if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
+                // This is legal UTF16 sequence.
+                badInputLength = 1;
+                throw new UnknownCharacterException();
+            } else {
+                // This is illegal UTF16 sequence.
+                badInputLength = 0;
+                throw new MalformedInputException();
+            }
+        }
 
         // Loop until we hit the end of the input
         while(charOff < inEnd) {
 
-	    outputByte = tmpArray;
+            outputByte = tmpArray;
 
             // Get the input character
-	    inputChar = input[charOff];
+            inputChar = input[charOff];
 
-	    // Default output size
-	    outputSize = 1;
+            // Default output size
+            outputSize = 1;
 
             // Assume this is a simple character
             inputSize = 1;
@@ -153,8 +152,8 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
             if(inputChar >= '\uD800' && inputChar <= '\uDBFF') {
                 // Is this the last character in the input?
                 if (charOff + 1 >= inEnd) {
-		    highHalfZoneCode = inputChar;
-		    break;
+                    highHalfZoneCode = inputChar;
+                    break;
                 }
 
                 // Is there a low surrogate following?
@@ -164,7 +163,7 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
                     //  surrogates.  Is substitution enabled?
                     if (subMode) {
                         outputByte = subBytes;
-			outputSize = subBytes.length;
+                        outputSize = subBytes.length;
                         inputSize = 2;
                     } else {
                         badInputLength = 2;
@@ -197,24 +196,24 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
                         // Is substitution enabled?
                         if (subMode) {
                             outputByte = subBytes;
-			    outputSize = subBytes.length;
-			} else {
+                            outputSize = subBytes.length;
+                        } else {
                             badInputLength = 1;
                             throw new UnknownCharacterException();
                         }
                     }
                 }
-       	    }
+            }
 
-	    // If we don't have room for the output, throw an exception
-	    if (byteOff + outputSize > outEnd)
-		throw new ConversionBufferFullException();
+            // If we don't have room for the output, throw an exception
+            if (byteOff + outputSize > outEnd)
+                throw new ConversionBufferFullException();
 
-	    // Put the byte in the output buffer
-	    for (int i = 0; i < outputSize; i++) {
-		output[byteOff++] = outputByte[i];
-	    }
-	    charOff += inputSize;
+            // Put the byte in the output buffer
+            for (int i = 0; i < outputSize; i++) {
+                output[byteOff++] = outputByte[i];
+            }
+            charOff += inputSize;
 
         }
 
@@ -231,8 +230,8 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
     }
 
     public byte getNative(char inputChar) {
-	return (byte)index2.charAt(index1[(inputChar & mask1) >> shift] 
-		+ (inputChar & mask2));
+        return (byte)index2.charAt(index1[(inputChar & mask1) >> shift]
+                + (inputChar & mask2));
     }
 
     /**
@@ -240,8 +239,8 @@ public abstract class CharToByteSingleByte extends CharToByteConverter {
      * Call this method to reset the converter to its initial state
      */
     public void reset() {
-	byteOff = charOff = 0;
-	highHalfZoneCode = 0;
+        byteOff = charOff = 0;
+        highHalfZoneCode = 0;
     }
 
     /**

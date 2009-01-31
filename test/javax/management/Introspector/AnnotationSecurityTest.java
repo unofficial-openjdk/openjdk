@@ -27,9 +27,9 @@
  * @summary Test that having a security manager doesn't trigger a
  *          NotCompliantMBeanException
  * @author Daniel Fuchs, Yves Joan
- * @run clean AnnotationSecurityTest Described UnDescribed DescribedMBean 
+ * @run clean AnnotationSecurityTest Described UnDescribed DescribedMBean
  *            UnDescribedMBean SqeDescriptorKey DescribedMX DescribedMXBean
- * @run build AnnotationSecurityTest Described UnDescribed DescribedMBean 
+ * @run build AnnotationSecurityTest Described UnDescribed DescribedMBean
  *            UnDescribedMBean SqeDescriptorKey DescribedMX DescribedMXBean
  * @run main/othervm  AnnotationSecurityTest
  */
@@ -53,16 +53,16 @@ import javax.management.ObjectName;
  */
 
 public class AnnotationSecurityTest {
-    
+
     /** Creates a new instance of AnnotationSecurityTest */
     public AnnotationSecurityTest() {
     }
-    
+
     public static void main(String[] argv) {
         AnnotationSecurityTest test = new AnnotationSecurityTest();
         test.run();
     }
-    
+
 
     public void run() {
         try {
@@ -72,21 +72,21 @@ public class AnnotationSecurityTest {
                     "AnnotationSecurityTest.policy";
             final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             final File pf = new File(policy);
-            if (!pf.exists()) 
+            if (!pf.exists())
                 throw new IOException("policy file not found: " + policy);
             if (!pf.canRead())
                 throw new IOException("policy file not readable: " + policy);
-            
+
             System.out.println("Policy="+policy);
             System.setProperty("java.security.policy",policy);
             System.setSecurityManager(new SecurityManager());
-            
+
             // We check that 6370080 is fixed.
             //
             try {
-                final Method m1 = 
+                final Method m1 =
                         DescribedMBean.class.getMethod("getStringProp");
-                final Method m2 = 
+                final Method m2 =
                         DescribedMBean.class.getMethod("setStringProp",
                             String.class);
                 m1.getAnnotations();
@@ -100,8 +100,8 @@ public class AnnotationSecurityTest {
             // We now test that the behaviour described in 6366543 does no
             // longer appears now that 6370080 is fixed.
             //
-            
-            final ObjectName name1 = 
+
+            final ObjectName name1 =
                     new ObjectName("defaultDomain:class=UnDescribed");
             UnDescribed unDescribedMBean = new UnDescribed();
             System.out.println("\nWe register an MBean where DescriptorKey is " +
@@ -109,33 +109,33 @@ public class AnnotationSecurityTest {
             mbs.registerMBean(unDescribedMBean, name1);
             System.out.println("\n\tOK - The MBean "
                     + name1 + " is registered = " + mbs.isRegistered(name1));
-            
-            final ObjectName name2 = 
+
+            final ObjectName name2 =
                     new ObjectName("defaultDomain:class=Described");
             final Described describedMBean = new Described();
-            
+
             System.out.println("\nWe register an MBean with exactly the " +
                     "same management"
                     + " interface as above and where DescriptorKey is used.");
             mbs.registerMBean(describedMBean, name2);
             System.out.println("\n\tOK - The MBean "
                     + name2 + " is registered = " + mbs.isRegistered(name2));
-            
-            final ObjectName name3 = 
+
+            final ObjectName name3 =
                     new ObjectName("defaultDomain:class=DescribedMX");
             final DescribedMX describedMXBean = new DescribedMX();
-            
+
             System.out.println("\nWe register an MXBean with exactly the " +
                     "same management"
                     + " interface as above and where DescriptorKey is used.");
             mbs.registerMBean(describedMXBean, name3);
             System.out.println("\n\tOK - The MXBean "
                     + name3 + " is registered = " + mbs.isRegistered(name3));
-            
+
             System.out.println("\nAll three MBeans correctly registered...");
-            
-            
-            // We check that we don't have getAttribute() permission - as 
+
+
+            // We check that we don't have getAttribute() permission - as
             // it's been voluntarily omitted from our policy file.
             // If we don't get the Security Exception there is probably
             // a security configuration pb...
@@ -153,14 +153,13 @@ public class AnnotationSecurityTest {
                 // OK!
                 System.err.println("getStringProp() - failed");
             }
-                       
+
          } catch (Exception t) {
             t.printStackTrace();
             if (t instanceof RuntimeException)
                 throw (RuntimeException)t;
             else throw new RuntimeException(t);
-        } 
+        }
     }
-    
-}
 
+}

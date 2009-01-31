@@ -71,7 +71,7 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer {
      * Contains all the AppContexts where activeWindowListener is added to.
      */
     private static Set<AppContext> trackedAppContexts = new HashSet<AppContext>();
-    
+
     /**
      * Initialize JNI field IDs
      */
@@ -79,7 +79,7 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer {
     static {
         initIDs();
     }
-    
+
     // WComponentPeer overrides
 
     protected void disposeImpl() {
@@ -216,7 +216,7 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer {
      * Note that raster data format was changed to provide support
      * for XP icons with alpha-channel
      */
-    native void setIconImagesData(int[] iconRaster, int w, int h, 
+    native void setIconImagesData(int[] iconRaster, int w, int h,
                                   int[] smallIconRaster, int smw, int smh);
 
     synchronized native void reshapeFrame(int x, int y, int width, int height);
@@ -271,7 +271,7 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer {
             DataBufferInt iconSmData = SunToolkit.getScaledIconData(imageList,
                                                                     smw, smh);
             if (iconData != null && iconSmData != null) {
-                setIconImagesData(iconData.getData(), w, h, 
+                setIconImagesData(iconData.getData(), w, h,
                                   iconSmData.getData(), smw, smh);
             } else {
                 setIconImagesData(null, 0, 0, null, 0, 0);
@@ -356,14 +356,14 @@ public class WWindowPeer extends WPanelPeer implements WindowPeer {
      * Called from native code when we have been dragged onto another screen.
      */
     void draggedToNewScreen() {
-        SunToolkit.executeOnEventHandlerThread((Component)target,new Runnable() 
+        SunToolkit.executeOnEventHandlerThread((Component)target,new Runnable()
         {
             public void run() {
                 displayChanged();
             }
         });
     }
-	
+
 
     /*
      * Called from WCanvasPeer.displayChanged().

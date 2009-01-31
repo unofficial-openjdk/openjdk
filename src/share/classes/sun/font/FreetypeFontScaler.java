@@ -31,9 +31,9 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.WeakReference;
 
 /* This is Freetype based implementation of FontScaler.
- * 
- * Note that in case of runtime error it is expected that 
- * native code will release all native resources and 
+ *
+ * Note that in case of runtime error it is expected that
+ * native code will release all native resources and
  * call invalidateScaler() (that will throw FontScalerException).
  *
  * Note that callee is responsible for releasing native scaler context.
@@ -42,10 +42,10 @@ class FreetypeFontScaler extends FontScaler {
     /* constants aligned with native code */
     private static final int TRUETYPE_FONT = 1;
     private static final int TYPE1_FONT = 2;
-   
+
     static {
         /* At the moment fontmanager library depends on freetype library
-           and therefore no need to load it explicitly here */ 
+           and therefore no need to load it explicitly here */
         FontManagerNativeLibrary.load();
         initIDs(FreetypeFontScaler.class);
     }
@@ -57,84 +57,84 @@ class FreetypeFontScaler extends FontScaler {
         font = null;
         throw new FontScalerException();
     }
- 
-    public FreetypeFontScaler(Font2D font, int indexInCollection, 
-                     boolean supportsCJK, int filesize) {   
+
+    public FreetypeFontScaler(Font2D font, int indexInCollection,
+                     boolean supportsCJK, int filesize) {
         int fonttype = TRUETYPE_FONT;
         if (font instanceof Type1Font) {
             fonttype = TYPE1_FONT;
         }
-        nativeScaler = initNativeScaler(font, 
+        nativeScaler = initNativeScaler(font,
                                         fonttype,
-                                        indexInCollection, 
-                                        supportsCJK, 
+                                        indexInCollection,
+                                        supportsCJK,
                                         filesize);
         this.font = new WeakReference(font);
     }
-    
-    synchronized StrikeMetrics getFontMetrics(long pScalerContext) 
+
+    synchronized StrikeMetrics getFontMetrics(long pScalerContext)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-                return getFontMetricsNative(font.get(), 
+                return getFontMetricsNative(font.get(),
                                             pScalerContext,
                                             nativeScaler);
         }
         return FontManager.getNullScaler().getFontMetrics(0L);
     }
-    
-    synchronized float getGlyphAdvance(long pScalerContext, int glyphCode) 
+
+    synchronized float getGlyphAdvance(long pScalerContext, int glyphCode)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphAdvanceNative(font.get(), 
+            return getGlyphAdvanceNative(font.get(),
                                          pScalerContext,
                                          nativeScaler,
                                          glyphCode);
         }
         return FontManager.getNullScaler().getGlyphAdvance(0L, glyphCode);
     }
-    
-    synchronized void getGlyphMetrics(long pScalerContext, 
-                     int glyphCode, Point2D.Float metrics) 
+
+    synchronized void getGlyphMetrics(long pScalerContext,
+                     int glyphCode, Point2D.Float metrics)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-            getGlyphMetricsNative(font.get(), 
+            getGlyphMetricsNative(font.get(),
                                   pScalerContext,
-                                  nativeScaler,  
-                                  glyphCode, 
+                                  nativeScaler,
+                                  glyphCode,
                                   metrics);
             return;
         }
         FontManager.getNullScaler().getGlyphMetrics(0L, glyphCode, metrics);
     }
-    
-    synchronized long getGlyphImage(long pScalerContext, int glyphCode) 
+
+    synchronized long getGlyphImage(long pScalerContext, int glyphCode)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphImageNative(font.get(), 
+            return getGlyphImageNative(font.get(),
                                        pScalerContext,
-                                       nativeScaler, 
+                                       nativeScaler,
                                        glyphCode);
         }
         return FontManager.getNullScaler().getGlyphImage(0L, glyphCode);
     }
-    
+
     synchronized Rectangle2D.Float getGlyphOutlineBounds(
-                     long pScalerContext, int glyphCode) 
+                     long pScalerContext, int glyphCode)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphOutlineBoundsNative(font.get(), 
-                                               pScalerContext, 
+            return getGlyphOutlineBoundsNative(font.get(),
+                                               pScalerContext,
                                                nativeScaler,
                                                glyphCode);
         }
         return FontManager.getNullScaler().getGlyphOutlineBounds(0L,glyphCode);
     }
-    
+
     synchronized GeneralPath getGlyphOutline(
-                     long pScalerContext, int glyphCode, float x, float y) 
+                     long pScalerContext, int glyphCode, float x, float y)
                      throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphOutlineNative(font.get(), 
+            return getGlyphOutlineNative(font.get(),
                                          pScalerContext,
                                          nativeScaler,
                                          glyphCode,
@@ -142,26 +142,26 @@ class FreetypeFontScaler extends FontScaler {
         }
         return FontManager.getNullScaler().getGlyphOutline(0L, glyphCode, x,y);
     }
-    
+
     synchronized GeneralPath getGlyphVectorOutline(
-                     long pScalerContext, int[] glyphs, int numGlyphs, 
+                     long pScalerContext, int[] glyphs, int numGlyphs,
                      float x, float y) throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphVectorOutlineNative(font.get(), 
+            return getGlyphVectorOutlineNative(font.get(),
                                                pScalerContext,
-                                               nativeScaler, 
-                                               glyphs, 
-                                               numGlyphs, 
+                                               nativeScaler,
+                                               glyphs,
+                                               numGlyphs,
                                                x, y);
         }
         return FontManager.getNullScaler().getGlyphVectorOutline(
                    0L, glyphs, numGlyphs, x, y);
     }
-    
+
     synchronized long getLayoutTableCache() throws FontScalerException {
         return getLayoutTableCacheNative(nativeScaler);
     }
-    
+
     public synchronized void dispose() {
         if (nativeScaler != 0L) {
             disposeNativeScaler(nativeScaler);
@@ -175,26 +175,26 @@ class FreetypeFontScaler extends FontScaler {
         }
         return FontManager.getNullScaler().getNumGlyphs();
     }
-    
+
     synchronized int getMissingGlyphCode()  throws FontScalerException {
         if (nativeScaler != 0L) {
             return getMissingGlyphCodeNative(nativeScaler);
         }
-        return FontManager.getNullScaler().getMissingGlyphCode();        
+        return FontManager.getNullScaler().getMissingGlyphCode();
     }
-    
+
     synchronized int getGlyphCode(char charCode) throws FontScalerException {
         if (nativeScaler != 0L) {
             return getGlyphCodeNative(nativeScaler, charCode);
         }
         return FontManager.getNullScaler().getGlyphCode(charCode);
-    }    
+    }
 
-    synchronized Point2D.Float getGlyphPoint(long pScalerContext, 
-                                       int glyphCode, int ptNumber) 
+    synchronized Point2D.Float getGlyphPoint(long pScalerContext,
+                                       int glyphCode, int ptNumber)
                                throws FontScalerException {
         if (nativeScaler != 0L) {
-            return getGlyphPointNative(font.get(), pScalerContext, 
+            return getGlyphPointNative(font.get(), pScalerContext,
                                       nativeScaler, glyphCode, ptNumber);
         }
         return FontManager.getNullScaler().getGlyphPoint(
@@ -204,8 +204,8 @@ class FreetypeFontScaler extends FontScaler {
     synchronized long getUnitsPerEm() {
         return getUnitsPerEMNative(nativeScaler);
     }
-    
-    long createScalerContext(double[] matrix, boolean fontType, 
+
+    long createScalerContext(double[] matrix, boolean fontType,
             int aa, int fm, float boldness, float italic) {
         if (nativeScaler != 0L) {
             return createScalerContextNative(nativeScaler, matrix,
@@ -213,44 +213,44 @@ class FreetypeFontScaler extends FontScaler {
         }
         return NullFontScaler.getNullScalerContext();
     }
-    
+
     //Note: native methods can throw RuntimeException if processing fails
-    private native long initNativeScaler(Font2D font, int type, 
+    private native long initNativeScaler(Font2D font, int type,
             int indexInCollection, boolean supportsCJK, int filesize);
-    private native StrikeMetrics getFontMetricsNative(Font2D font, 
+    private native StrikeMetrics getFontMetricsNative(Font2D font,
             long pScalerContext, long pScaler);
-    private native float getGlyphAdvanceNative(Font2D font, 
+    private native float getGlyphAdvanceNative(Font2D font,
             long pScalerContext, long pScaler, int glyphCode);
-    private native void getGlyphMetricsNative(Font2D font, 
-            long pScalerContext, long pScaler, 
+    private native void getGlyphMetricsNative(Font2D font,
+            long pScalerContext, long pScaler,
             int glyphCode, Point2D.Float metrics);
-    private native long getGlyphImageNative(Font2D font, 
+    private native long getGlyphImageNative(Font2D font,
             long pScalerContext, long pScaler, int glyphCode);
-    private native Rectangle2D.Float getGlyphOutlineBoundsNative(Font2D font, 
+    private native Rectangle2D.Float getGlyphOutlineBoundsNative(Font2D font,
             long pScalerContext, long pScaler, int glyphCode);
-    private native GeneralPath getGlyphOutlineNative(Font2D font, 
-            long pScalerContext, long pScaler, 
+    private native GeneralPath getGlyphOutlineNative(Font2D font,
+            long pScalerContext, long pScaler,
             int glyphCode, float x, float y);
-    private native GeneralPath getGlyphVectorOutlineNative(Font2D font, 
-            long pScalerContext, long pScaler, 
+    private native GeneralPath getGlyphVectorOutlineNative(Font2D font,
+            long pScalerContext, long pScaler,
             int[] glyphs, int numGlyphs, float x, float y);
-    native Point2D.Float getGlyphPointNative(Font2D font, 
+    native Point2D.Float getGlyphPointNative(Font2D font,
             long pScalerContext, long pScaler, int glyphCode, int ptNumber);
-    
+
     private native long getLayoutTableCacheNative(long pScaler);
-    
+
     private native void disposeNativeScaler(long pScaler);
-    
-    private native int getGlyphCodeNative(long pScaler, char charCode);   
-    private native int getNumGlyphsNative(long pScaler);    
-    private native int getMissingGlyphCodeNative(long pScaler);    
-    
+
+    private native int getGlyphCodeNative(long pScaler, char charCode);
+    private native int getNumGlyphsNative(long pScaler);
+    private native int getMissingGlyphCodeNative(long pScaler);
+
     private native long getUnitsPerEMNative(long pScaler);
 
     native long createScalerContextNative(long pScaler, double[] matrix,
-            boolean fontType, int aa, int fm, float boldness, float italic);    
+            boolean fontType, int aa, int fm, float boldness, float italic);
 
-    /* Freetype scaler context does not contain any pointers that 
+    /* Freetype scaler context does not contain any pointers that
        has to be invalidated if native scaler is bad */
     void invalidateScalerContext(long pScalerContext) {}
 }

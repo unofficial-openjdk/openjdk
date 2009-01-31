@@ -157,12 +157,12 @@ public final class ScriptRun
         if (scriptLimit >= textLimit) {
             return false;
         }
-    
+
         scriptCode  = Script.COMMON;
         scriptStart = scriptLimit;
-        
+
         int ch;
-        
+
         while ((ch = nextCodePoint()) != DONE) {
             int sc = ScriptRunData.getScript(ch);
             int pairIndex = sc == Script.COMMON ? getPairIndex(ch) : -1;
@@ -214,7 +214,7 @@ public final class ScriptRun
                 }
 
                 // if this character is a close paired character,
-		// pop it from the stack
+                // pop it from the stack
                 if (pairIndex > 0 && (pairIndex & 1) != 0 && parenSP > 0) {
                     parenSP -= 2;
                 }
@@ -225,7 +225,7 @@ public final class ScriptRun
                 pushback(ch);
 
                 // we're outta here
-                break; 
+                break;
             }
         }
 
@@ -378,4 +378,3 @@ public final class ScriptRun
     private static final int pairedCharExtra = pairedChars.length - pairedCharPower;
 
 }
-

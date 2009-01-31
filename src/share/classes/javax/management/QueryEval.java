@@ -38,14 +38,14 @@ import javax.management.MBeanServer;
  *
  * @since 1.5
  */
-public abstract class QueryEval implements Serializable   { 
-    
+public abstract class QueryEval implements Serializable   {
+
     /* Serial version */
     private static final long serialVersionUID = 2675899265640874796L;
 
     private static ThreadLocal<MBeanServer> server =
-	new InheritableThreadLocal<MBeanServer>();
-    
+        new InheritableThreadLocal<MBeanServer>();
+
     /**
      * <p>Sets the MBean server on which the query is to be performed.
      * The setting is valid for the thread performing the set.
@@ -61,7 +61,7 @@ public abstract class QueryEval implements Serializable   {
      * @see #getMBeanServer
      */
     public void setMBeanServer(MBeanServer s) {
-	server.set(s);
+        server.set(s);
     }
 
     /**
@@ -78,6 +78,6 @@ public abstract class QueryEval implements Serializable   {
      *
      */
     public static MBeanServer getMBeanServer() {
-	return server.get();
+        return server.get();
     }
 }

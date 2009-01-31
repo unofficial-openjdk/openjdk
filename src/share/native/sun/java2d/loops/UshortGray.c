@@ -77,14 +77,14 @@ NativePrimitive UshortGrayPrimitives[] = {
     REGISTER_CONVERT_BLIT(UshortGray, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, UshortGray),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, UshortGray,
-				NAME_CONVERT_BLIT(IntArgb, UshortGray)),
+                                NAME_CONVERT_BLIT(IntArgb, UshortGray)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, UshortGray),
     REGISTER_CONVERT_BLIT(ByteGray, UshortGray),
     REGISTER_CONVERT_BLIT(ByteIndexed, UshortGray),
     REGISTER_SCALE_BLIT(UshortGray, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, UshortGray),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, UshortGray,
-			      NAME_SCALE_BLIT(IntArgb, UshortGray)),
+                              NAME_SCALE_BLIT(IntArgb, UshortGray)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, UshortGray),
     REGISTER_SCALE_BLIT(ByteGray, UshortGray),
     REGISTER_SCALE_BLIT(ByteIndexed, UshortGray),
@@ -108,7 +108,7 @@ NativePrimitive UshortGrayPrimitives[] = {
 jboolean RegisterUshortGray(JNIEnv *env)
 {
     return RegisterPrimitives(env, UshortGrayPrimitives,
-			      ArraySize(UshortGrayPrimitives));
+                              ArraySize(UshortGrayPrimitives));
 }
 
 jint PixelForUshortGray(SurfaceDataRasInfo *pRasInfo, jint rgb)

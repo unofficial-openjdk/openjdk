@@ -45,12 +45,11 @@ import java.awt.Event;
  * is therefore spared the details of processing individual mouse movements
  * and mouse clicks, and can instead process a "meaningful" (semantic)
  * event like "button pressed".
- *  
+ *
  * @see ActionListener
  * @see <a href="http://java.sun.com/docs/books/tutorial/post1.0/ui/eventmodel.html">Tutorial: Java 1.1 Event Model</a>
  *
  * @author Carl Quinn
- * @version %I% %G%
  * @since 1.1
  */
 public class ActionEvent extends AWTEvent {
@@ -59,41 +58,41 @@ public class ActionEvent extends AWTEvent {
      * The shift modifier. An indicator that the shift key was held
      * down during the event.
      */
-    public static final int SHIFT_MASK		= Event.SHIFT_MASK;
+    public static final int SHIFT_MASK          = Event.SHIFT_MASK;
 
     /**
      * The control modifier. An indicator that the control key was held
      * down during the event.
      */
-    public static final int CTRL_MASK		= Event.CTRL_MASK;
+    public static final int CTRL_MASK           = Event.CTRL_MASK;
 
-    /** 
+    /**
      * The meta modifier. An indicator that the meta key was held
      * down during the event.
      */
-    public static final int META_MASK		= Event.META_MASK;
+    public static final int META_MASK           = Event.META_MASK;
 
-    /** 
+    /**
      * The alt modifier. An indicator that the alt key was held
      * down during the event.
      */
-    public static final int ALT_MASK		= Event.ALT_MASK;
+    public static final int ALT_MASK            = Event.ALT_MASK;
 
 
     /**
      * The first number in the range of ids used for action events.
      */
-    public static final int ACTION_FIRST		= 1001;
+    public static final int ACTION_FIRST                = 1001;
 
     /**
      * The last number in the range of ids used for action events.
      */
-    public static final int ACTION_LAST		        = 1001;
+    public static final int ACTION_LAST                 = 1001;
 
     /**
      * This event id indicates that a meaningful action occured.
      */
-    public static final int ACTION_PERFORMED	= ACTION_FIRST; //Event.ACTION_EVENT
+    public static final int ACTION_PERFORMED    = ACTION_FIRST; //Event.ACTION_EVENT
 
     /**
      * The nonlocalized string that gives more details
@@ -128,7 +127,7 @@ public class ActionEvent extends AWTEvent {
     int modifiers;
 
     /*
-     * JDK 1.1 serialVersionUID 
+     * JDK 1.1 serialVersionUID
      */
     private static final long serialVersionUID = -7671078796273832149L;
 
@@ -144,7 +143,7 @@ public class ActionEvent extends AWTEvent {
      *
      * @param source  the object that originated the event
      * @param id      an integer that identifies the event
-     * @param command a string that may specify a command (possibly one 
+     * @param command a string that may specify a command (possibly one
      *                of several) associated with the event
      * @throws IllegalArgumentException if <code>source</code> is null
      */
@@ -164,7 +163,7 @@ public class ActionEvent extends AWTEvent {
      *
      * @param source    the object that originated the event
      * @param id        an integer that identifies the event
-     * @param command   a string that may specify a command (possibly one 
+     * @param command   a string that may specify a command (possibly one
      *                  of several) associated with the event
      * @param modifiers the modifier keys held down during this action
      * @throws IllegalArgumentException if <code>source</code> is null
@@ -186,7 +185,7 @@ public class ActionEvent extends AWTEvent {
      *
      * @param source    the object that originated the event
      * @param id        an integer that identifies the event
-     * @param command   a string that may specify a command (possibly one 
+     * @param command   a string that may specify a command (possibly one
      *                  of several) associated with the event
      * @param when      the time the event occurred
      * @param modifiers the modifier keys held down during this action
@@ -201,10 +200,10 @@ public class ActionEvent extends AWTEvent {
         this.when = when;
         this.modifiers = modifiers;
     }
-        
+
     /**
      * Returns the command string associated with this action.
-     * This string allows a "modal" component to specify one of several 
+     * This string allows a "modal" component to specify one of several
      * commands, depending on its state. For example, a single button might
      * toggle between "show details" and "hide details". The source object
      * and the event would be the same in each case, but the command string
@@ -234,7 +233,7 @@ public class ActionEvent extends AWTEvent {
 
     /**
      * Returns the modifier keys held down during this action event.
-     * 
+     *
      * @return the bitwise-or of the modifier constants
      */
     public int getModifiers() {
@@ -244,8 +243,8 @@ public class ActionEvent extends AWTEvent {
     /**
      * Returns a parameter string identifying this action event.
      * This method is useful for event-logging and for debugging.
-     * 
-     * @return a string identifying the event and its associated command 
+     *
+     * @return a string identifying the event and its associated command
      */
     public String paramString() {
         String typeStr;

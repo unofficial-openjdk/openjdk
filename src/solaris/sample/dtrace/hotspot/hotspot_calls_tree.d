@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *   1. hotspot_calls_tree.d -c "java ..."
  *   2. hotspot_calls_tree.d -p JAVA_PID

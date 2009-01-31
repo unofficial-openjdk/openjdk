@@ -28,24 +28,24 @@
 
 
 /*
- * Convert UTF-8 to a platform string 
+ * Convert UTF-8 to a platform string
  */
-int 
+int
 convertUft8ToPlatformString(char* utf8_str, int utf8_len, char* platform_str, int platform_len) {
     LANGID langID;
     LCID localeID;
-    TCHAR strCodePage[7];	// ANSI code page id
+    TCHAR strCodePage[7];       // ANSI code page id
     UINT codePage;
     int wlen, plen;
     WCHAR* wstr;
-        
+
     /*
      * Get the code page for this locale
      */
-    langID = LANGIDFROMLCID(GetUserDefaultLCID());  
+    langID = LANGIDFROMLCID(GetUserDefaultLCID());
     localeID = MAKELCID(langID, SORT_DEFAULT);
-    if (GetLocaleInfo(localeID, LOCALE_IDEFAULTANSICODEPAGE, 
-		      strCodePage, sizeof(strCodePage)/sizeof(TCHAR)) > 0 ) {
+    if (GetLocaleInfo(localeID, LOCALE_IDEFAULTANSICODEPAGE,
+                      strCodePage, sizeof(strCodePage)/sizeof(TCHAR)) > 0 ) {
         codePage = atoi(strCodePage);
     } else {
         codePage = GetACP();
@@ -59,26 +59,26 @@ convertUft8ToPlatformString(char* utf8_str, int utf8_len, char* platform_str, in
     wlen = MultiByteToWideChar(CP_UTF8, 0, utf8_str, utf8_len, NULL, 0);
     if (wlen > 0) {
         wstr = (WCHAR*)malloc(wlen * sizeof(WCHAR));
-	if (wstr != NULL) {
-    	    if (MultiByteToWideChar(CP_UTF8, 
-                                    0, 
-                                    utf8_str, 
-                                    utf8_len, 
+        if (wstr != NULL) {
+            if (MultiByteToWideChar(CP_UTF8,
+                                    0,
+                                    utf8_str,
+                                    utf8_len,
                                     wstr, wlen) > 0) {
-     	        plen = WideCharToMultiByte(codePage, 
-                                           0, 
-                                           wstr, 
-                                           wlen, 
-                                           platform_str, 
-                                           platform_len, 
-                                           NULL, 
-                                           NULL);   
-	  	if (plen >= 0) {	
-    	 	    platform_str[plen] = '\0';
-		}
-		free(wstr);
-	    }
-	}
+                plen = WideCharToMultiByte(codePage,
+                                           0,
+                                           wstr,
+                                           wlen,
+                                           platform_str,
+                                           platform_len,
+                                           NULL,
+                                           NULL);
+                if (plen >= 0) {
+                    platform_str[plen] = '\0';
+                }
+                free(wstr);
+            }
+        }
     }
     return plen;
 }

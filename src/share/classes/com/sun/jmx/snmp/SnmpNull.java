@@ -30,7 +30,7 @@ package com.sun.jmx.snmp;
 
 /**
  * Represents an SNMP null value.
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 
@@ -45,7 +45,7 @@ public class SnmpNull extends SnmpValue {
     public SnmpNull() {
         tag = NullTag ;
     }
-  
+
     /**
      * Constructs a new <CODE>SnmpNull</CODE>.
      * <BR>For mibgen private use only.
@@ -53,7 +53,7 @@ public class SnmpNull extends SnmpValue {
     public SnmpNull(String dummy) {
         this();
     }
-   
+
     /**
      * Constructs a new <CODE>SnmpNull</CODE> from the specified tag value.
      * @param t The initialization value.
@@ -61,7 +61,7 @@ public class SnmpNull extends SnmpValue {
     public SnmpNull(int t) {
         tag = t ;
     }
-  
+
     // PUBLIC METHODS
     //---------------
     /**
@@ -71,7 +71,7 @@ public class SnmpNull extends SnmpValue {
     public int getTag() {
         return tag ;
     }
-  
+
     /**
      * Converts the <CODE>NULL</CODE> value to its ASN.1 <CODE>String</CODE> form.
      * When the tag is not the universal one, it is preprended
@@ -85,15 +85,15 @@ public class SnmpNull extends SnmpValue {
         }
         result += "NULL" ;
         switch(tag) {
-    	case errNoSuchObjectTag :
+        case errNoSuchObjectTag :
             result += " (noSuchObject)" ;
             break ;
-        
-    	case errNoSuchInstanceTag :
+
+        case errNoSuchInstanceTag :
             result += " (noSuchInstance)" ;
             break ;
-        
-    	case errEndOfMibViewTag :
+
+        case errEndOfMibViewTag :
             result += " (endOfMibView)" ;
             break ;
         }
@@ -109,7 +109,7 @@ public class SnmpNull extends SnmpValue {
     public SnmpOid toOid() {
         throw new IllegalArgumentException() ;
     }
-  
+
     /**
      * Performs a clone action. This provides a workaround for the
      * <CODE>SnmpValue</CODE> interface.
@@ -143,7 +143,7 @@ public class SnmpNull extends SnmpValue {
     }
 
     /**
-     * Checks if this <CODE>SnmpNull</CODE> object corresponds to a <CODE>noSuchObject</CODE> value. 
+     * Checks if this <CODE>SnmpNull</CODE> object corresponds to a <CODE>noSuchObject</CODE> value.
      * @return <CODE>true</CODE> if the tag equals {@link com.sun.jmx.snmp.SnmpDataTypeEnums#errNoSuchObjectTag},
      * <CODE>false</CODE> otherwise.
      */
@@ -152,7 +152,7 @@ public class SnmpNull extends SnmpValue {
     }
 
     /**
-     * Checks if this <CODE>SnmpNull</CODE> object corresponds to a <CODE>noSuchInstance</CODE> value. 
+     * Checks if this <CODE>SnmpNull</CODE> object corresponds to a <CODE>noSuchInstance</CODE> value.
      * @return <CODE>true</CODE> if the tag equals {@link com.sun.jmx.snmp.SnmpDataTypeEnums#errNoSuchInstanceTag},
      * <CODE>false</CODE> otherwise.
      */
@@ -161,14 +161,14 @@ public class SnmpNull extends SnmpValue {
     }
 
     /**
-     * Checks if this <CODE>SnmpNull</CODE> object corresponds to an <CODE>endOfMibView</CODE> value. 
+     * Checks if this <CODE>SnmpNull</CODE> object corresponds to an <CODE>endOfMibView</CODE> value.
      * @return <CODE>true</CODE> if the tag equals {@link com.sun.jmx.snmp.SnmpDataTypeEnums#errEndOfMibViewTag},
      * <CODE>false</CODE> otherwise.
      */
     public boolean isEndOfMibViewValue() {
         return (tag == SnmpDataTypeEnums.errEndOfMibViewTag);
     }
-    
+
     // VARIABLES
     //----------
     /**

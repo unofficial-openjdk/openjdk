@@ -42,7 +42,7 @@ public class Reifier implements TypeTreeVisitor<Type> {
     private GenericsFactory factory;
 
     private Reifier(GenericsFactory f){
-	factory = f;
+        factory = f;
     }
 
     private GenericsFactory getFactory(){ return factory;}
@@ -53,22 +53,22 @@ public class Reifier implements TypeTreeVisitor<Type> {
      * objects, using the provided factory, <tt>f</tt>.
      * @param f - a factory that can be used to manufacture reflective
      * objects returned by this visitor
-     * @return A visitor that can be used to reify ASTs representing 
+     * @return A visitor that can be used to reify ASTs representing
      * generic type information into reflective objects
      */
     public static Reifier make(GenericsFactory f){
-	return new Reifier(f);
+        return new Reifier(f);
     }
 
     // Helper method. Visits an array of TypeArgument and produces
     // reified Type array.
     private Type[] reifyTypeArguments(TypeArgument[] tas) {
-	Type[] ts = new Type[tas.length];
-	for (int i = 0; i < tas.length; i++) {
-	    tas[i].accept(this);
-	    ts[i] = resultType;
-	}
-	return ts;
+        Type[] ts = new Type[tas.length];
+        for (int i = 0; i < tas.length; i++) {
+            tas[i].accept(this);
+            ts[i] = resultType;
+        }
+        return ts;
     }
 
 
@@ -80,98 +80,98 @@ public class Reifier implements TypeTreeVisitor<Type> {
     public Type getResult() { assert resultType != null;return resultType;}
 
     public void visitFormalTypeParameter(FormalTypeParameter ftp){
-	resultType = getFactory().makeTypeVariable(ftp.getName(), 
-						   ftp.getBounds());
+        resultType = getFactory().makeTypeVariable(ftp.getName(),
+                                                   ftp.getBounds());
     }
 
 
     public void visitClassTypeSignature(ClassTypeSignature ct){
-	// This method examines the pathname stored in ct, which has the form
-	// n1.n2...nk<targs>....
-	// where n1 ... nk-1 might not exist OR
-	// nk might not exist (but not both). It may be that k equals 1.
-	// The idea is that nk is the simple class type name that has
-	// any type parameters associated with it.
-	//  We process this path in two phases.
-	//  First, we scan until we reach nk (if it exists). 
-	//  If nk does not exist, this identifies a raw class n1 ... nk-1
-	// which we can return.
-	// if nk does exist, we begin the 2nd phase.
-	// Here nk defines a parameterized type. Every further step nj (j > k)
-	// down the path must also be represented as a parameterized type,
-	// whose owner is the representation of the previous step in the path,
-	// n{j-1}.
+        // This method examines the pathname stored in ct, which has the form
+        // n1.n2...nk<targs>....
+        // where n1 ... nk-1 might not exist OR
+        // nk might not exist (but not both). It may be that k equals 1.
+        // The idea is that nk is the simple class type name that has
+        // any type parameters associated with it.
+        //  We process this path in two phases.
+        //  First, we scan until we reach nk (if it exists).
+        //  If nk does not exist, this identifies a raw class n1 ... nk-1
+        // which we can return.
+        // if nk does exist, we begin the 2nd phase.
+        // Here nk defines a parameterized type. Every further step nj (j > k)
+        // down the path must also be represented as a parameterized type,
+        // whose owner is the representation of the previous step in the path,
+        // n{j-1}.
 
-	// extract iterator on list of simple class type sigs
-	List<SimpleClassTypeSignature> scts = ct.getPath();
-	assert(!scts.isEmpty());
-	Iterator<SimpleClassTypeSignature> iter = scts.iterator();
-	SimpleClassTypeSignature sc = iter.next();
-	StringBuilder n = new StringBuilder(sc.getName());
-	boolean dollar = sc.getDollar();
+        // extract iterator on list of simple class type sigs
+        List<SimpleClassTypeSignature> scts = ct.getPath();
+        assert(!scts.isEmpty());
+        Iterator<SimpleClassTypeSignature> iter = scts.iterator();
+        SimpleClassTypeSignature sc = iter.next();
+        StringBuilder n = new StringBuilder(sc.getName());
+        boolean dollar = sc.getDollar();
 
-	// phase 1: iterate over simple class types until
-	// we are either done or we hit one with non-empty type parameters
-	while (iter.hasNext() && sc.getTypeArguments().length == 0) {
-	    sc = iter.next();
-	    dollar = sc.getDollar();
-	    n.append(dollar?"$":".").append(sc.getName());
-	}
+        // phase 1: iterate over simple class types until
+        // we are either done or we hit one with non-empty type parameters
+        while (iter.hasNext() && sc.getTypeArguments().length == 0) {
+            sc = iter.next();
+            dollar = sc.getDollar();
+            n.append(dollar?"$":".").append(sc.getName());
+        }
 
-	// Now, either sc is the last element of the list, or
-	// it has type arguments (or both)
-	assert(!(iter.hasNext()) || (sc.getTypeArguments().length > 0));
-        // Create the raw type  
-	Type c = getFactory().makeNamedType(n.toString());
+        // Now, either sc is the last element of the list, or
+        // it has type arguments (or both)
+        assert(!(iter.hasNext()) || (sc.getTypeArguments().length > 0));
+        // Create the raw type
+        Type c = getFactory().makeNamedType(n.toString());
         // if there are no type arguments
         if (sc.getTypeArguments().length == 0) {
-	    //we have surely reached the end of the path
-	    assert(!iter.hasNext()); 
-	    resultType = c; // the result is the raw type
-	} else {
-	    assert(sc.getTypeArguments().length > 0);
-	    // otherwise, we have type arguments, so we create a parameterized
-	    // type, whose declaration is the raw type c, and whose owner is
-	    // the declaring class of c (if any). This latter fact is indicated
-	    // by passing null as the owner.
-	    // First, we reify the type arguments
-	    Type[] pts = reifyTypeArguments(sc.getTypeArguments());
-	
-	    Type owner = getFactory().makeParameterizedType(c, pts, null);
-	    // phase 2: iterate over remaining simple class types
-	    dollar =false;
-	    while (iter.hasNext()) {
-		sc = iter.next();
-		dollar = sc.getDollar();
-		n.append(dollar?"$":".").append(sc.getName()); // build up raw class name
-		c = getFactory().makeNamedType(n.toString()); // obtain raw class
-		pts = reifyTypeArguments(sc.getTypeArguments());// reify params
-		// Create a parameterized type, based on type args, raw type
-		// and previous owner
-		owner = getFactory().makeParameterizedType(c, pts, owner);
-	    }
-	    resultType = owner;
-	}
+            //we have surely reached the end of the path
+            assert(!iter.hasNext());
+            resultType = c; // the result is the raw type
+        } else {
+            assert(sc.getTypeArguments().length > 0);
+            // otherwise, we have type arguments, so we create a parameterized
+            // type, whose declaration is the raw type c, and whose owner is
+            // the declaring class of c (if any). This latter fact is indicated
+            // by passing null as the owner.
+            // First, we reify the type arguments
+            Type[] pts = reifyTypeArguments(sc.getTypeArguments());
+
+            Type owner = getFactory().makeParameterizedType(c, pts, null);
+            // phase 2: iterate over remaining simple class types
+            dollar =false;
+            while (iter.hasNext()) {
+                sc = iter.next();
+                dollar = sc.getDollar();
+                n.append(dollar?"$":".").append(sc.getName()); // build up raw class name
+                c = getFactory().makeNamedType(n.toString()); // obtain raw class
+                pts = reifyTypeArguments(sc.getTypeArguments());// reify params
+                // Create a parameterized type, based on type args, raw type
+                // and previous owner
+                owner = getFactory().makeParameterizedType(c, pts, owner);
+            }
+            resultType = owner;
+        }
     }
 
     public void visitArrayTypeSignature(ArrayTypeSignature a){
-	// extract and reify component type
-	a.getComponentType().accept(this);
-	Type ct = resultType;
-	resultType = getFactory().makeArrayType(ct);
+        // extract and reify component type
+        a.getComponentType().accept(this);
+        Type ct = resultType;
+        resultType = getFactory().makeArrayType(ct);
     }
 
     public void visitTypeVariableSignature(TypeVariableSignature tv){
-	resultType = getFactory().findTypeVariable(tv.getIdentifier());
+        resultType = getFactory().findTypeVariable(tv.getIdentifier());
     }
 
     public void visitWildcard(Wildcard w){
-	resultType = getFactory().makeWildcard(w.getUpperBounds(),
-					       w.getLowerBounds());
+        resultType = getFactory().makeWildcard(w.getUpperBounds(),
+                                               w.getLowerBounds());
     }
 
     public void visitSimpleClassTypeSignature(SimpleClassTypeSignature sct){
-	resultType = getFactory().makeNamedType(sct.getName());
+        resultType = getFactory().makeNamedType(sct.getName());
     }
 
     public void visitBottomSignature(BottomSignature b){
@@ -179,40 +179,40 @@ public class Reifier implements TypeTreeVisitor<Type> {
     }
 
     public void visitByteSignature(ByteSignature b){
-	resultType = getFactory().makeByte();
+        resultType = getFactory().makeByte();
     }
 
     public void visitBooleanSignature(BooleanSignature b){
-	resultType = getFactory().makeBool();
+        resultType = getFactory().makeBool();
     }
 
     public void visitShortSignature(ShortSignature s){
-	resultType = getFactory().makeShort();
+        resultType = getFactory().makeShort();
     }
 
     public void visitCharSignature(CharSignature c){
-	resultType = getFactory().makeChar();
+        resultType = getFactory().makeChar();
     }
 
     public void visitIntSignature(IntSignature i){
-	resultType = getFactory().makeInt();
+        resultType = getFactory().makeInt();
     }
 
     public void visitLongSignature(LongSignature l){
-	resultType = getFactory().makeLong();
+        resultType = getFactory().makeLong();
     }
 
     public void visitFloatSignature(FloatSignature f){
-	resultType = getFactory().makeFloat();
+        resultType = getFactory().makeFloat();
     }
-    
+
     public void visitDoubleSignature(DoubleSignature d){
-	resultType = getFactory().makeDouble();
+        resultType = getFactory().makeDouble();
     }
 
     public void visitVoidDescriptor(VoidDescriptor v){
-	resultType = getFactory().makeVoid();
-    } 
+        resultType = getFactory().makeVoid();
+    }
 
 
 }

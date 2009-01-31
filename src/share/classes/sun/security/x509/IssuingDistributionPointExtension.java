@@ -43,7 +43,7 @@ import sun.security.util.DerValue;
  * and it indicates whether the CRL covers revocation for end entity
  * certificates only, CA certificates only, attribute certificates only,
  * or a limited set of reason codes.
- * 
+ *
  * <p>
  * The extension is defined in Section 5.2.5 of
  * <a href="http://www.ietf.org/rfc/rfc3280.txt">Internet X.509 PKI Certific
@@ -67,14 +67,14 @@ ate and Certificate Revocation List (CRL) Profile</a>.
  * @since 1.6
  */
 public class IssuingDistributionPointExtension extends Extension
-	implements CertAttrSet<String> {
+        implements CertAttrSet<String> {
 
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
      */
-    public static final String IDENT = 
-    				"x509.info.extensions.IssuingDistributionPoint";
+    public static final String IDENT =
+                                "x509.info.extensions.IssuingDistributionPoint";
 
     /**
      * Attribute names.
@@ -114,46 +114,46 @@ public class IssuingDistributionPointExtension extends Extension
     /**
      * Creates a critical IssuingDistributionPointExtension.
      *
-     * @param distributionPoint the name of the distribution point, or null for 
+     * @param distributionPoint the name of the distribution point, or null for
      *        none.
-     * @param revocationReasons the revocation reasons associated with the 
+     * @param revocationReasons the revocation reasons associated with the
      *        distribution point, or null for none.
-     * @param hasOnlyUserCerts if <code>true</code> then scope of the CRL 
+     * @param hasOnlyUserCerts if <code>true</code> then scope of the CRL
      *        includes only user certificates.
-     * @param hasOnlyCACerts if <code>true</code> then scope of the CRL 
+     * @param hasOnlyCACerts if <code>true</code> then scope of the CRL
      *        includes only CA certificates.
-     * @param hasOnlyAttributeCerts if <code>true</code> then scope of the CRL 
+     * @param hasOnlyAttributeCerts if <code>true</code> then scope of the CRL
      *        includes only attribute certificates.
      * @param isIndirectCRL if <code>true</code> then the scope of the CRL
-     *        includes certificates issued by authorities other than the CRL 
+     *        includes certificates issued by authorities other than the CRL
      *        issuer. The responsible authority is indicated by a certificate
      *        issuer CRL entry extension.
-     * @throws IllegalArgumentException if more than one of 
+     * @throws IllegalArgumentException if more than one of
      *        <code>hasOnlyUserCerts</code>, <code>hasOnlyCACerts</code>,
      *        <code>hasOnlyAttributeCerts</code> is set to <code>true</code>.
      * @throws IOException on encoding error.
      */
     public IssuingDistributionPointExtension(
-	DistributionPointName distributionPoint, ReasonFlags revocationReasons,
-	boolean hasOnlyUserCerts, boolean hasOnlyCACerts, 
-	boolean hasOnlyAttributeCerts, boolean isIndirectCRL) 
-	    throws IOException {
+        DistributionPointName distributionPoint, ReasonFlags revocationReasons,
+        boolean hasOnlyUserCerts, boolean hasOnlyCACerts,
+        boolean hasOnlyAttributeCerts, boolean isIndirectCRL)
+            throws IOException {
 
-	if ((hasOnlyUserCerts && (hasOnlyCACerts || hasOnlyAttributeCerts)) ||
-	    (hasOnlyCACerts && (hasOnlyUserCerts || hasOnlyAttributeCerts)) ||
-	    (hasOnlyAttributeCerts && (hasOnlyUserCerts || hasOnlyCACerts))) {
-	    throw new IllegalArgumentException(
-		"Only one of hasOnlyUserCerts, hasOnlyCACerts, " +
-		"hasOnlyAttributeCerts may be set to true");
-	}
+        if ((hasOnlyUserCerts && (hasOnlyCACerts || hasOnlyAttributeCerts)) ||
+            (hasOnlyCACerts && (hasOnlyUserCerts || hasOnlyAttributeCerts)) ||
+            (hasOnlyAttributeCerts && (hasOnlyUserCerts || hasOnlyCACerts))) {
+            throw new IllegalArgumentException(
+                "Only one of hasOnlyUserCerts, hasOnlyCACerts, " +
+                "hasOnlyAttributeCerts may be set to true");
+        }
         this.extensionId = PKIXExtensions.IssuingDistributionPoint_Id;
         this.critical = true;
         this.distributionPoint = distributionPoint;
         this.revocationReasons = revocationReasons;
-	this.hasOnlyUserCerts = hasOnlyUserCerts;
-	this.hasOnlyCACerts = hasOnlyCACerts;
-	this.hasOnlyAttributeCerts = hasOnlyAttributeCerts;
-	this.isIndirectCRL = isIndirectCRL;
+        this.hasOnlyUserCerts = hasOnlyUserCerts;
+        this.hasOnlyCACerts = hasOnlyCACerts;
+        this.hasOnlyAttributeCerts = hasOnlyAttributeCerts;
+        this.isIndirectCRL = isIndirectCRL;
         encodeThis();
     }
 
@@ -166,58 +166,58 @@ public class IssuingDistributionPointExtension extends Extension
      * @exception IOException on decoding error.
      */
     public IssuingDistributionPointExtension(Boolean critical, Object value)
-	    throws IOException {
+            throws IOException {
         this.extensionId = PKIXExtensions.IssuingDistributionPoint_Id;
         this.critical = critical.booleanValue();
 
-	if (!(value instanceof byte[])) {
-	    throw new IOException("Illegal argument type");
-	}
-	
-	extensionValue = (byte[])value;
+        if (!(value instanceof byte[])) {
+            throw new IOException("Illegal argument type");
+        }
+
+        extensionValue = (byte[])value;
         DerValue val = new DerValue(extensionValue);
-	if (val.tag != DerValue.tag_Sequence) {
-	    throw new IOException("Invalid encoding for " +
-				  "IssuingDistributionPointExtension.");
-	}
+        if (val.tag != DerValue.tag_Sequence) {
+            throw new IOException("Invalid encoding for " +
+                                  "IssuingDistributionPointExtension.");
+        }
 
-	// All the elements in issuingDistributionPoint are optional
-	if ((val.data == null) || (val.data.available() == 0)) {
-	    return;
-	}
+        // All the elements in issuingDistributionPoint are optional
+        if ((val.data == null) || (val.data.available() == 0)) {
+            return;
+        }
 
-	DerInputStream in = val.data;
-	while (in != null && in.available() != 0) {
-	    DerValue opt = in.getDerValue();
+        DerInputStream in = val.data;
+        while (in != null && in.available() != 0) {
+            DerValue opt = in.getDerValue();
 
-	    if (opt.isContextSpecific(TAG_DISTRIBUTION_POINT) &&
-	        opt.isConstructed()) {
-	        distributionPoint = 
-		    new DistributionPointName(opt.data.getDerValue());
-	    } else if (opt.isContextSpecific(TAG_ONLY_USER_CERTS) &&
-	               !opt.isConstructed()) {
-	        opt.resetTag(DerValue.tag_Boolean);
-	        hasOnlyUserCerts = opt.getBoolean();
-	    } else if (opt.isContextSpecific(TAG_ONLY_CA_CERTS) &&
-	          !opt.isConstructed()) {
-	        opt.resetTag(DerValue.tag_Boolean);
-	        hasOnlyCACerts = opt.getBoolean();
-	    } else if (opt.isContextSpecific(TAG_ONLY_SOME_REASONS) &&
-	               !opt.isConstructed()) {
-	        revocationReasons = new ReasonFlags(opt); // expects tag implicit
-	    } else if (opt.isContextSpecific(TAG_INDIRECT_CRL) &&
-	               !opt.isConstructed()) {
-	        opt.resetTag(DerValue.tag_Boolean);
-	        isIndirectCRL = opt.getBoolean();
-	    } else if (opt.isContextSpecific(TAG_ONLY_ATTRIBUTE_CERTS) && 
-	               !opt.isConstructed()) {
-	        opt.resetTag(DerValue.tag_Boolean);
-	        hasOnlyAttributeCerts = opt.getBoolean();
-	    } else {
-		throw new IOException
-		    ("Invalid encoding of IssuingDistributionPoint");
-	    }
-	}
+            if (opt.isContextSpecific(TAG_DISTRIBUTION_POINT) &&
+                opt.isConstructed()) {
+                distributionPoint =
+                    new DistributionPointName(opt.data.getDerValue());
+            } else if (opt.isContextSpecific(TAG_ONLY_USER_CERTS) &&
+                       !opt.isConstructed()) {
+                opt.resetTag(DerValue.tag_Boolean);
+                hasOnlyUserCerts = opt.getBoolean();
+            } else if (opt.isContextSpecific(TAG_ONLY_CA_CERTS) &&
+                  !opt.isConstructed()) {
+                opt.resetTag(DerValue.tag_Boolean);
+                hasOnlyCACerts = opt.getBoolean();
+            } else if (opt.isContextSpecific(TAG_ONLY_SOME_REASONS) &&
+                       !opt.isConstructed()) {
+                revocationReasons = new ReasonFlags(opt); // expects tag implicit
+            } else if (opt.isContextSpecific(TAG_INDIRECT_CRL) &&
+                       !opt.isConstructed()) {
+                opt.resetTag(DerValue.tag_Boolean);
+                isIndirectCRL = opt.getBoolean();
+            } else if (opt.isContextSpecific(TAG_ONLY_ATTRIBUTE_CERTS) &&
+                       !opt.isConstructed()) {
+                opt.resetTag(DerValue.tag_Boolean);
+                hasOnlyAttributeCerts = opt.getBoolean();
+            } else {
+                throw new IOException
+                    ("Invalid encoding of IssuingDistributionPoint");
+            }
+        }
     }
 
     /**
@@ -237,65 +237,65 @@ public class IssuingDistributionPointExtension extends Extension
     public void encode(OutputStream out) throws IOException {
         DerOutputStream tmp = new DerOutputStream();
         if (this.extensionValue == null) {
-	    this.extensionId = PKIXExtensions.IssuingDistributionPoint_Id;
-	    this.critical = false;
-	    encodeThis();
-	}
-	super.encode(tmp);
-	out.write(tmp.toByteArray());
+            this.extensionId = PKIXExtensions.IssuingDistributionPoint_Id;
+            this.critical = false;
+            encodeThis();
+        }
+        super.encode(tmp);
+        out.write(tmp.toByteArray());
     }
 
     /**
      * Sets the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-	if (name.equalsIgnoreCase(POINT)) {
-	    if (!(obj instanceof DistributionPointName)) {
-	        throw new IOException(
-		    "Attribute value should be of type DistributionPointName.");
-	    }
-	    distributionPoint = (DistributionPointName)obj;
+        if (name.equalsIgnoreCase(POINT)) {
+            if (!(obj instanceof DistributionPointName)) {
+                throw new IOException(
+                    "Attribute value should be of type DistributionPointName.");
+            }
+            distributionPoint = (DistributionPointName)obj;
 
-	} else if (name.equalsIgnoreCase(REASONS)) {
-	    if (!(obj instanceof ReasonFlags)) {
-	        throw new IOException(
-		    "Attribute value should be of type ReasonFlags.");
-	    }
+        } else if (name.equalsIgnoreCase(REASONS)) {
+            if (!(obj instanceof ReasonFlags)) {
+                throw new IOException(
+                    "Attribute value should be of type ReasonFlags.");
+            }
 
-	} else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
-	    if (!(obj instanceof Boolean)) {
-	        throw new IOException(
-		    "Attribute value should be of type Boolean.");
-	    }
-	    isIndirectCRL = ((Boolean)obj).booleanValue();
+        } else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
+            if (!(obj instanceof Boolean)) {
+                throw new IOException(
+                    "Attribute value should be of type Boolean.");
+            }
+            isIndirectCRL = ((Boolean)obj).booleanValue();
 
-	} else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
-	    if (!(obj instanceof Boolean)) {
-	        throw new IOException(
-		    "Attribute value should be of type Boolean.");
-	    }
-	    hasOnlyUserCerts = ((Boolean)obj).booleanValue();
+        } else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
+            if (!(obj instanceof Boolean)) {
+                throw new IOException(
+                    "Attribute value should be of type Boolean.");
+            }
+            hasOnlyUserCerts = ((Boolean)obj).booleanValue();
 
-	} else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
-	    if (!(obj instanceof Boolean)) {
-	        throw new IOException(
-		    "Attribute value should be of type Boolean.");
-	    }
-	    hasOnlyCACerts = ((Boolean)obj).booleanValue();
+        } else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
+            if (!(obj instanceof Boolean)) {
+                throw new IOException(
+                    "Attribute value should be of type Boolean.");
+            }
+            hasOnlyCACerts = ((Boolean)obj).booleanValue();
 
-	} else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
-	    if (!(obj instanceof Boolean)) {
-	        throw new IOException(
-		    "Attribute value should be of type Boolean.");
-	    }
-	    hasOnlyAttributeCerts = ((Boolean)obj).booleanValue();
+        } else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
+            if (!(obj instanceof Boolean)) {
+                throw new IOException(
+                    "Attribute value should be of type Boolean.");
+            }
+            hasOnlyAttributeCerts = ((Boolean)obj).booleanValue();
 
 
-	} else {
-	    throw new IOException("Attribute name [" + name + 
-		"] not recognized by " +
-		"CertAttrSet:IssuingDistributionPointExtension.");
-	}
+        } else {
+            throw new IOException("Attribute name [" + name +
+                "] not recognized by " +
+                "CertAttrSet:IssuingDistributionPointExtension.");
+        }
         encodeThis();
     }
 
@@ -303,58 +303,58 @@ public class IssuingDistributionPointExtension extends Extension
      * Gets the attribute value.
      */
     public Object get(String name) throws IOException {
-	if (name.equalsIgnoreCase(POINT)) {
-	    return distributionPoint;
+        if (name.equalsIgnoreCase(POINT)) {
+            return distributionPoint;
 
-	} else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
-	    return Boolean.valueOf(isIndirectCRL);
+        } else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
+            return Boolean.valueOf(isIndirectCRL);
 
-	} else if (name.equalsIgnoreCase(REASONS)) {
-	    return revocationReasons;
+        } else if (name.equalsIgnoreCase(REASONS)) {
+            return revocationReasons;
 
-	} else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
-	    return Boolean.valueOf(hasOnlyUserCerts);
+        } else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
+            return Boolean.valueOf(hasOnlyUserCerts);
 
-	} else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
-	    return Boolean.valueOf(hasOnlyCACerts);
+        } else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
+            return Boolean.valueOf(hasOnlyCACerts);
 
-	} else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
-	    return Boolean.valueOf(hasOnlyAttributeCerts);
+        } else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
+            return Boolean.valueOf(hasOnlyAttributeCerts);
 
-	} else {
-	    throw new IOException("Attribute name [" + name + 
-		"] not recognized by " +
-		"CertAttrSet:IssuingDistributionPointExtension.");
-	}
+        } else {
+            throw new IOException("Attribute name [" + name +
+                "] not recognized by " +
+                "CertAttrSet:IssuingDistributionPointExtension.");
+        }
     }
 
     /**
      * Deletes the attribute value.
      */
     public void delete(String name) throws IOException {
-	if (name.equalsIgnoreCase(POINT)) {
-	    distributionPoint = null;
+        if (name.equalsIgnoreCase(POINT)) {
+            distributionPoint = null;
 
-	} else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
-	    isIndirectCRL = false;
+        } else if (name.equalsIgnoreCase(INDIRECT_CRL)) {
+            isIndirectCRL = false;
 
-	} else if (name.equalsIgnoreCase(REASONS)) {
-	    revocationReasons = null;
+        } else if (name.equalsIgnoreCase(REASONS)) {
+            revocationReasons = null;
 
-	} else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
-	    hasOnlyUserCerts = false;
+        } else if (name.equalsIgnoreCase(ONLY_USER_CERTS)) {
+            hasOnlyUserCerts = false;
 
-	} else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
-	    hasOnlyCACerts = false;
+        } else if (name.equalsIgnoreCase(ONLY_CA_CERTS)) {
+            hasOnlyCACerts = false;
 
-	} else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
-	    hasOnlyAttributeCerts = false;
+        } else if (name.equalsIgnoreCase(ONLY_ATTRIBUTE_CERTS)) {
+            hasOnlyAttributeCerts = false;
 
-	} else {
-	    throw new IOException("Attribute name [" + name + 
-		"] not recognized by " +
-		"CertAttrSet:IssuingDistributionPointExtension.");
-	}
+        } else {
+            throw new IOException("Attribute name [" + name +
+                "] not recognized by " +
+                "CertAttrSet:IssuingDistributionPointExtension.");
+        }
         encodeThis();
     }
 
@@ -370,71 +370,71 @@ public class IssuingDistributionPointExtension extends Extension
         elements.addElement(ONLY_CA_CERTS);
         elements.addElement(ONLY_ATTRIBUTE_CERTS);
         elements.addElement(INDIRECT_CRL);
-	return elements.elements();
+        return elements.elements();
     }
 
      // Encodes this extension value
     private void encodeThis() throws IOException {
 
         if (distributionPoint == null &&
-	    revocationReasons == null &&
-	    !hasOnlyUserCerts &&
-	    !hasOnlyCACerts &&
-	    !hasOnlyAttributeCerts &&
-	    !isIndirectCRL) {
+            revocationReasons == null &&
+            !hasOnlyUserCerts &&
+            !hasOnlyCACerts &&
+            !hasOnlyAttributeCerts &&
+            !isIndirectCRL) {
 
             this.extensionValue = null;
-	    return;
+            return;
 
         }
 
-	DerOutputStream tagged = new DerOutputStream();
+        DerOutputStream tagged = new DerOutputStream();
 
-	if (distributionPoint != null) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    distributionPoint.encode(tmp);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, true,
-		TAG_DISTRIBUTION_POINT), tmp);
-	}
+        if (distributionPoint != null) {
+            DerOutputStream tmp = new DerOutputStream();
+            distributionPoint.encode(tmp);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, true,
+                TAG_DISTRIBUTION_POINT), tmp);
+        }
 
-	if (hasOnlyUserCerts) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    tmp.putBoolean(hasOnlyUserCerts);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
-		TAG_ONLY_USER_CERTS), tmp);
-	}
+        if (hasOnlyUserCerts) {
+            DerOutputStream tmp = new DerOutputStream();
+            tmp.putBoolean(hasOnlyUserCerts);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
+                TAG_ONLY_USER_CERTS), tmp);
+        }
 
-	if (hasOnlyCACerts) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    tmp.putBoolean(hasOnlyCACerts);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
-		TAG_ONLY_CA_CERTS), tmp);
-	}
+        if (hasOnlyCACerts) {
+            DerOutputStream tmp = new DerOutputStream();
+            tmp.putBoolean(hasOnlyCACerts);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
+                TAG_ONLY_CA_CERTS), tmp);
+        }
 
-	if (revocationReasons != null) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    revocationReasons.encode(tmp);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
-		TAG_ONLY_SOME_REASONS), tmp);
-	}
+        if (revocationReasons != null) {
+            DerOutputStream tmp = new DerOutputStream();
+            revocationReasons.encode(tmp);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
+                TAG_ONLY_SOME_REASONS), tmp);
+        }
 
-	if (isIndirectCRL) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    tmp.putBoolean(isIndirectCRL);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
-		TAG_INDIRECT_CRL), tmp);
-	}
+        if (isIndirectCRL) {
+            DerOutputStream tmp = new DerOutputStream();
+            tmp.putBoolean(isIndirectCRL);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
+                TAG_INDIRECT_CRL), tmp);
+        }
 
-	if (hasOnlyAttributeCerts) {
-	    DerOutputStream tmp = new DerOutputStream();
-	    tmp.putBoolean(hasOnlyAttributeCerts);
-	    tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
-		TAG_ONLY_ATTRIBUTE_CERTS), tmp);
-	}
+        if (hasOnlyAttributeCerts) {
+            DerOutputStream tmp = new DerOutputStream();
+            tmp.putBoolean(hasOnlyAttributeCerts);
+            tagged.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT, false,
+                TAG_ONLY_ATTRIBUTE_CERTS), tmp);
+        }
 
-	DerOutputStream seq = new DerOutputStream();
-	seq.write(DerValue.tag_Sequence, tagged);
-	this.extensionValue = seq.toByteArray();
+        DerOutputStream seq = new DerOutputStream();
+        seq.write(DerValue.tag_Sequence, tagged);
+        this.extensionValue = seq.toByteArray();
     }
 
     /**
@@ -442,36 +442,36 @@ public class IssuingDistributionPointExtension extends Extension
      */
     public String toString() {
 
-	StringBuilder sb = new StringBuilder(super.toString());
-	sb.append("IssuingDistributionPoint [\n  ");
+        StringBuilder sb = new StringBuilder(super.toString());
+        sb.append("IssuingDistributionPoint [\n  ");
 
-	if (distributionPoint != null) {
-	    sb.append(distributionPoint);
-	}
+        if (distributionPoint != null) {
+            sb.append(distributionPoint);
+        }
 
-	if (revocationReasons != null) {
-	    sb.append(revocationReasons);
-	}
+        if (revocationReasons != null) {
+            sb.append(revocationReasons);
+        }
 
-	sb.append((hasOnlyUserCerts) 
-		? ("  Only contains user certs: true") 
-		: ("  Only contains user certs: false")).append("\n");
+        sb.append((hasOnlyUserCerts)
+                ? ("  Only contains user certs: true")
+                : ("  Only contains user certs: false")).append("\n");
 
-	sb.append((hasOnlyCACerts) 
-		? ("  Only contains CA certs: true") 
-		: ("  Only contains CA certs: false")).append("\n");
+        sb.append((hasOnlyCACerts)
+                ? ("  Only contains CA certs: true")
+                : ("  Only contains CA certs: false")).append("\n");
 
-	sb.append((hasOnlyAttributeCerts) 
-		? ("  Only contains attribute certs: true") 
-		: ("  Only contains attribute certs: false")).append("\n");
+        sb.append((hasOnlyAttributeCerts)
+                ? ("  Only contains attribute certs: true")
+                : ("  Only contains attribute certs: false")).append("\n");
 
-	sb.append((isIndirectCRL) 
-		? ("  Indirect CRL: true") 
-		: ("  Indirect CRL: false")).append("\n");
+        sb.append((isIndirectCRL)
+                ? ("  Indirect CRL: true")
+                : ("  Indirect CRL: false")).append("\n");
 
-	sb.append("]\n");
+        sb.append("]\n");
 
-	return sb.toString();
+        return sb.toString();
     }
 
 }

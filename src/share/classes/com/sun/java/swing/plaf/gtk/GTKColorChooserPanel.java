@@ -36,7 +36,6 @@ import javax.swing.plaf.*;
  * A color chooser panel mimicking that of GTK's: a color wheel showing
  * hue and a triangle that varies saturation and brightness.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class GTKColorChooserPanel extends AbstractColorChooserPanel implements
@@ -72,22 +71,22 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
      */
     // PENDING: remove this when a variant of this is added to awt.
     static void compositeRequestFocus(Component component, boolean direction) {
- 	if (component instanceof Container) {
- 	    Container container = (Container)component;
- 	    if (container.isFocusCycleRoot()) {
- 		FocusTraversalPolicy policy = container.
+        if (component instanceof Container) {
+            Container container = (Container)component;
+            if (container.isFocusCycleRoot()) {
+                FocusTraversalPolicy policy = container.
                                               getFocusTraversalPolicy();
- 		Component comp = policy.getDefaultComponent(container);
- 		if (comp!=null) {
- 		    comp.requestFocus();
- 		    return;
- 		}
- 	    }
- 	    Container rootAncestor = container.getFocusCycleRootAncestor();
- 	    if (rootAncestor!=null) {
- 		FocusTraversalPolicy policy = rootAncestor.
+                Component comp = policy.getDefaultComponent(container);
+                if (comp!=null) {
+                    comp.requestFocus();
+                    return;
+                }
+            }
+            Container rootAncestor = container.getFocusCycleRootAncestor();
+            if (rootAncestor!=null) {
+                FocusTraversalPolicy policy = rootAncestor.
                                                   getFocusTraversalPolicy();
- 		Component comp;
+                Component comp;
 
                 if (direction) {
                     comp = policy.getComponentAfter(rootAncestor, container);
@@ -96,12 +95,12 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
                     comp = policy.getComponentBefore(rootAncestor, container);
                 }
                 if (comp != null) {
- 		    comp.requestFocus();
- 		    return;
- 		}
- 	    }
- 	}
- 	component.requestFocus();
+                    comp.requestFocus();
+                    return;
+                }
+            }
+        }
+        component.requestFocus();
     }
 
 
@@ -416,7 +415,7 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
         settingColor = false;
     }
 
-    
+
     /**
      * Rests the color.
      *
@@ -602,7 +601,7 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
                 map.put("down", new ColorAction("down", 1));
                 map.put("focusNext", new ColorAction("focusNext", 4));
                 map.put("focusLast", new ColorAction("focusLast", 5));
-		UIManager.getLookAndFeelDefaults().put(
+                UIManager.getLookAndFeelDefaults().put(
                              "GTKColorChooserPanel.actionMap", map);
             }
             SwingUtilities.replaceUIActionMap(this, map);
@@ -973,7 +972,7 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
             setSaturationAndBrightness(s, b, newCircleX, newCircleY);
         }
 
-            
+
         /**
          * Sets the saturation and brightness.
          */
@@ -1163,12 +1162,12 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
             if (angle < PI_3) {
                 if (y < 0) {
                     // FFFF00 - FF0000
-                    rgb = 0xFF0000 | (int)Math.min(255, 
+                    rgb = 0xFF0000 | (int)Math.min(255,
                                            (int)(255 * angle / PI_3)) << 8;
                 }
                 else {
                     // FF0000 - FF00FF
-                    rgb = 0xFF0000 | (int)Math.min(255, 
+                    rgb = 0xFF0000 | (int)Math.min(255,
                                            (int)(255 * angle / PI_3));
                 }
             }
@@ -1194,7 +1193,7 @@ class GTKColorChooserPanel extends AbstractColorChooserPanel implements
                 }
                 else {
                     // 0000FF - 00FFFF
-                    rgb = 0x0000FF | (int)Math.min(255, 
+                    rgb = 0x0000FF | (int)Math.min(255,
                                            (int)(255 * angle / PI_3)) << 8;
                 }
             }

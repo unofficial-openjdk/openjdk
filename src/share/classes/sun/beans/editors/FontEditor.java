@@ -31,130 +31,130 @@ import java.beans.*;
 public class FontEditor extends Panel implements java.beans.PropertyEditor {
 
     public FontEditor() {
-	setLayout(null);
+        setLayout(null);
 
-	toolkit = Toolkit.getDefaultToolkit();
-	fonts = toolkit.getFontList();
+        toolkit = Toolkit.getDefaultToolkit();
+        fonts = toolkit.getFontList();
 
-	familyChoser = new Choice();
-	for (int i = 0; i < fonts.length; i++) {
-	    familyChoser.addItem(fonts[i]);
-	}
-	add(familyChoser);
-	familyChoser.reshape(20, 5, 100, 30);
+        familyChoser = new Choice();
+        for (int i = 0; i < fonts.length; i++) {
+            familyChoser.addItem(fonts[i]);
+        }
+        add(familyChoser);
+        familyChoser.reshape(20, 5, 100, 30);
 
-	styleChoser = new Choice();
-	for (int i = 0; i < styleNames.length; i++) {
-	    styleChoser.addItem(styleNames[i]);
-	}
-	add(styleChoser);
-	styleChoser.reshape(145, 5, 70, 30);
+        styleChoser = new Choice();
+        for (int i = 0; i < styleNames.length; i++) {
+            styleChoser.addItem(styleNames[i]);
+        }
+        add(styleChoser);
+        styleChoser.reshape(145, 5, 70, 30);
 
-	sizeChoser = new Choice();
-	for (int i = 0; i < pointSizes.length; i++) {
-	    sizeChoser.addItem("" + pointSizes[i]);
-	}
-	add(sizeChoser);
-	sizeChoser.reshape(220, 5, 70, 30);
+        sizeChoser = new Choice();
+        for (int i = 0; i < pointSizes.length; i++) {
+            sizeChoser.addItem("" + pointSizes[i]);
+        }
+        add(sizeChoser);
+        sizeChoser.reshape(220, 5, 70, 30);
 
-	resize(300,40);
+        resize(300,40);
     }
 
 
     public Dimension preferredSize() {
-	return new Dimension(300, 40);
+        return new Dimension(300, 40);
     }
 
     public void setValue(Object o) {
-	font = (Font) o;
+        font = (Font) o;
         if (this.font == null)
             return;
 
-	changeFont(font);
+        changeFont(font);
         // Update the current GUI choices.
-	for (int i = 0; i < fonts.length; i++) {
-	    if (fonts[i].equals(font.getFamily())) {
-		familyChoser.select(i);
-	        break;
-	    }
-	}
-	for (int i = 0; i < styleNames.length; i++) {
-	    if (font.getStyle() == styles[i]) {
-		styleChoser.select(i);
-	        break;
-	    }
-	}
-	for (int i = 0; i < pointSizes.length; i++) {
-	    if (font.getSize() <= pointSizes[i]) {
-		sizeChoser.select(i);
-	        break;
-	    }
-	}
+        for (int i = 0; i < fonts.length; i++) {
+            if (fonts[i].equals(font.getFamily())) {
+                familyChoser.select(i);
+                break;
+            }
+        }
+        for (int i = 0; i < styleNames.length; i++) {
+            if (font.getStyle() == styles[i]) {
+                styleChoser.select(i);
+                break;
+            }
+        }
+        for (int i = 0; i < pointSizes.length; i++) {
+            if (font.getSize() <= pointSizes[i]) {
+                sizeChoser.select(i);
+                break;
+            }
+        }
     }
 
     private void changeFont(Font f) {
-	font = f;
-	if (sample != null) {
-	    remove(sample);
-	}
-	sample = new Label(sampleText);
-	sample.setFont(font);
-	add(sample);
-	Component p = getParent();
-	if (p != null) {
-	    p.invalidate();
-	    p.layout();
-	}
-	invalidate();
-	layout();
-	repaint();
-	support.firePropertyChange("", null, null);
+        font = f;
+        if (sample != null) {
+            remove(sample);
+        }
+        sample = new Label(sampleText);
+        sample.setFont(font);
+        add(sample);
+        Component p = getParent();
+        if (p != null) {
+            p.invalidate();
+            p.layout();
+        }
+        invalidate();
+        layout();
+        repaint();
+        support.firePropertyChange("", null, null);
     }
 
     public Object getValue() {
-	return (font);
+        return (font);
     }
 
     public String getJavaInitializationString() {
         if (this.font == null)
             return "null";
 
-	return "new java.awt.Font(\"" + font.getName() + "\", " +
-  	           font.getStyle() + ", " + font.getSize() + ")";
+        return "new java.awt.Font(\"" + font.getName() + "\", " +
+                   font.getStyle() + ", " + font.getSize() + ")";
     }
 
     public boolean action(Event e, Object arg) {
-	String family = familyChoser.getSelectedItem();
-	int style = styles[styleChoser.getSelectedIndex()];
-	int size = pointSizes[sizeChoser.getSelectedIndex()];
-	try {
-	    Font f = new Font(family, style, size);
-	    changeFont(f);
-	} catch (Exception ex) {
-	    System.err.println("Couldn't create font " + family + "-" +
-			styleNames[style] + "-" + size);
-	}
-	return (false);
+        String family = familyChoser.getSelectedItem();
+        int style = styles[styleChoser.getSelectedIndex()];
+        int size = pointSizes[sizeChoser.getSelectedIndex()];
+        try {
+            Font f = new Font(family, style, size);
+            changeFont(f);
+        } catch (Exception ex) {
+            System.err.println("Couldn't create font " + family + "-" +
+                        styleNames[style] + "-" + size);
+        }
+        return (false);
     }
 
 
     public boolean isPaintable() {
-	return true;
+        return true;
     }
 
     public void paintValue(java.awt.Graphics gfx, java.awt.Rectangle box) {
-	// Silent noop.
-	Font oldFont = gfx.getFont();
-	gfx.setFont(font);
-	FontMetrics fm = gfx.getFontMetrics();
-	int vpad = (box.height - fm.getAscent())/2;
-	gfx.drawString(sampleText, 0, box.height-vpad);
-	gfx.setFont(oldFont);
+        // Silent noop.
+        Font oldFont = gfx.getFont();
+        gfx.setFont(font);
+        FontMetrics fm = gfx.getFontMetrics();
+        int vpad = (box.height - fm.getAscent())/2;
+        gfx.drawString(sampleText, 0, box.height-vpad);
+        gfx.setFont(oldFont);
     }
 
     public String getAsText() {
         if (this.font == null) {
-            return null;
+            return "null";
         }
         StringBuilder sb = new StringBuilder();
         sb.append(this.font.getName());
@@ -180,23 +180,23 @@ public class FontEditor extends Panel implements java.beans.PropertyEditor {
     }
 
     public String[] getTags() {
-	return null;
+        return null;
     }
 
     public java.awt.Component getCustomEditor() {
-	return this;
+        return this;
     }
 
     public boolean supportsCustomEditor() {
-	return true;
+        return true;
     }
 
     public void addPropertyChangeListener(PropertyChangeListener l) {
-	support.addPropertyChangeListener(l);
+        support.addPropertyChangeListener(l);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener l) {
-	support.removePropertyChangeListener(l);
+        support.removePropertyChangeListener(l);
     }
 
     private Font font;
@@ -216,4 +216,3 @@ public class FontEditor extends Panel implements java.beans.PropertyEditor {
     private PropertyChangeSupport support = new PropertyChangeSupport(this);
 
 }
-

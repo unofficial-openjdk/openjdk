@@ -41,7 +41,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see Context
   * @see javax.naming.directory.DirContext
@@ -55,11 +54,11 @@ public class InterruptedNamingException extends NamingException {
       * Constructs an instance of InterruptedNamingException using an
       * explanation of the problem.
       * All name resolution-related fields are initialized to null.
-      * @param explanation	A possibly null message explaining the problem.
+      * @param explanation      A possibly null message explaining the problem.
       * @see java.lang.Throwable#getMessage
       */
     public InterruptedNamingException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -67,7 +66,7 @@ public class InterruptedNamingException extends NamingException {
       * all name resolution fields and explanation initialized to null.
       */
     public InterruptedNamingException() {
-	super();
+        super();
     }
 
     /**

@@ -32,10 +32,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. CriticalSection.d -c "java ..."
  *    2. CriticalSection.d -p JAVA_PID

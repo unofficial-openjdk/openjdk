@@ -35,7 +35,7 @@ class DelegatingMethodAccessorImpl extends MethodAccessorImpl {
 
     DelegatingMethodAccessorImpl(MethodAccessorImpl delegate) {
         setDelegate(delegate);
-    }    
+    }
 
     public Object invoke(Object obj, Object[] args)
         throws IllegalArgumentException, InvocationTargetException

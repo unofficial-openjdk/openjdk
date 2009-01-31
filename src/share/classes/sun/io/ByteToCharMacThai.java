@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MacThai;
  * A table to convert to MacThai to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacThai extends ByteToCharSingleByte {

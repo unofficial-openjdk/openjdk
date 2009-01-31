@@ -23,11 +23,11 @@
  * have any questions.
  */
 
-package	sun.io;
+package sun.io;
 
 /**
  * @author Limin Shi
- *	   Sean Jiang
+ *         Sean Jiang
  */
 
 public abstract class ByteToCharDoubleByte extends ByteToCharConverter {
@@ -53,29 +53,29 @@ public abstract class ByteToCharDoubleByte extends ByteToCharConverter {
     protected int     badInputLength;
 
     public ByteToCharDoubleByte() {
-    	super();
-    	savedByte = 0;
+        super();
+        savedByte = 0;
     }
 
 
     public short[] getIndex1() {
-	return(index1);
+        return(index1);
     }
 
     public String[] getIndex2() {
-	return(index2);
+        return(index2);
     }
 
     public int flush(char[] output, int outStart, int outEnd)
-	throws MalformedInputException
+        throws MalformedInputException
     {
         if (savedByte != 0) {
             reset();
             badInputLength = 0;
             throw new MalformedInputException();
         }
-	reset();
-	return 0;
+        reset();
+        return 0;
     }
 
     /**
@@ -93,65 +93,65 @@ public abstract class ByteToCharDoubleByte extends ByteToCharConverter {
      * that cannot be converted to the external character set.
      */
     public int convert(byte[] input, int inOff, int inEnd,
-		       char[] output, int outOff, int outEnd)
+                       char[] output, int outOff, int outEnd)
         throws UnknownCharacterException, MalformedInputException,
                ConversionBufferFullException
     {
-	char	outputChar = REPLACE_CHAR;
-	int     inputSize = 0;          // Size of input
+        char    outputChar = REPLACE_CHAR;
+        int     inputSize = 0;          // Size of input
 
-   	// Record beginning offsets
-   	charOff = outOff;
-   	byteOff = inOff;
+        // Record beginning offsets
+        charOff = outOff;
+        byteOff = inOff;
 
-   	// Loop until we hit the end of the input
-   	while (byteOff < inEnd) {
-	    int byte1, byte2;
+        // Loop until we hit the end of the input
+        while (byteOff < inEnd) {
+            int byte1, byte2;
 
-	    if (savedByte == 0) {
-		byte1 = input[byteOff];
-		inputSize = 1;
-	    } else {
-		byte1 = savedByte;
-		savedByte = 0;
-		inputSize = 0;
-	    }
+            if (savedByte == 0) {
+                byte1 = input[byteOff];
+                inputSize = 1;
+            } else {
+                byte1 = savedByte;
+                savedByte = 0;
+                inputSize = 0;
+            }
 
-	    outputChar = convSingleByte(byte1);
+            outputChar = convSingleByte(byte1);
 
-	    if (outputChar == REPLACE_CHAR) {	// DoubleByte char
-		if (byteOff + inputSize >= inEnd) {
+            if (outputChar == REPLACE_CHAR) {   // DoubleByte char
+                if (byteOff + inputSize >= inEnd) {
                     // split in the middle of a character
                     // save the first byte for next time around
-		    savedByte = (byte) byte1;
-		    byteOff += inputSize;
-		    break;
-		}
+                    savedByte = (byte) byte1;
+                    byteOff += inputSize;
+                    break;
+                }
 
-		byte1 &= 0xff;
-		byte2 = input[byteOff + inputSize] & 0xff;
+                byte1 &= 0xff;
+                byte2 = input[byteOff + inputSize] & 0xff;
 
-		inputSize++;
-		outputChar = getUnicode(byte1, byte2);
-	    }
+                inputSize++;
+                outputChar = getUnicode(byte1, byte2);
+            }
 
-	    if (outputChar == REPLACE_CHAR) {
-		if (subMode)
-		    outputChar = subChars[0];
-		else {
-		    badInputLength = inputSize;
-		    throw new UnknownCharacterException();
-		}
-	    }
+            if (outputChar == REPLACE_CHAR) {
+                if (subMode)
+                    outputChar = subChars[0];
+                else {
+                    badInputLength = inputSize;
+                    throw new UnknownCharacterException();
+                }
+            }
 
-	    if (charOff >= outEnd)
-		throw new ConversionBufferFullException();
+            if (charOff >= outEnd)
+                throw new ConversionBufferFullException();
 
-	    output[charOff++] = outputChar;
-	    byteOff += inputSize;
-	}
+            output[charOff++] = outputChar;
+            byteOff += inputSize;
+        }
 
-	return charOff - outOff;
+        return charOff - outOff;
     }
 
     /**
@@ -159,8 +159,8 @@ public abstract class ByteToCharDoubleByte extends ByteToCharConverter {
      * Call this method to reset the converter to its initial state
      */
     public void reset() {
-	byteOff = charOff = 0;
-	savedByte = 0;
+        byteOff = charOff = 0;
+        savedByte = 0;
     }
 
 
@@ -168,23 +168,23 @@ public abstract class ByteToCharDoubleByte extends ByteToCharConverter {
      * Can be changed by subclass
      */
     protected char convSingleByte(int b) {
-	if (b >= 0)
-	    return (char) b;
-	return REPLACE_CHAR;
+        if (b >= 0)
+            return (char) b;
+        return REPLACE_CHAR;
     }
 
     /*
      * Can be changed by subclass
      */
     protected char getUnicode(int byte1, int byte2) {
-	// Fix for bug 4117820 - similar fix for bug 4121358 put
-	// into ByteToCharEUC_JP.getUnicode()
-	if (((byte1 < 0) || (byte1 > index1.length))
-	    || ((byte2 < start) || (byte2 > end)))
-	    return REPLACE_CHAR;
+        // Fix for bug 4117820 - similar fix for bug 4121358 put
+        // into ByteToCharEUC_JP.getUnicode()
+        if (((byte1 < 0) || (byte1 > index1.length))
+            || ((byte2 < start) || (byte2 > end)))
+            return REPLACE_CHAR;
 
-	int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
-	return index2[index1[byte1] >> 4].charAt(n);
+        int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
+        return index2[index1[byte1] >> 4].charAt(n);
     }
 
     protected final static char REPLACE_CHAR = '\uFFFD';

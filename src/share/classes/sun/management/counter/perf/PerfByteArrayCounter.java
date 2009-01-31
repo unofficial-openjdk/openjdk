@@ -32,8 +32,8 @@ public class PerfByteArrayCounter extends AbstractCounter
        implements ByteArrayCounter {
 
     ByteBuffer bb;
-    
-    PerfByteArrayCounter(String name, Units u, Variability v, 
+
+    PerfByteArrayCounter(String name, Units u, Variability v,
                          int flags, int vectorLength,
                          ByteBuffer bb) {
 

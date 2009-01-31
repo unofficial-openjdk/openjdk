@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 /**
  * A quick sort demonstration algorithm
@@ -39,7 +37,6 @@
  *
  * @author James Gosling
  * @author Kevin A. Smith
- * @version 	@(#)QSortAlgorithm.java	1.3, 29 Feb 1996
  */
 public class QSortAlgorithm extends SortAlgorithm
 {
@@ -49,8 +46,8 @@ public class QSortAlgorithm extends SortAlgorithm
      * exactly the right number of times.
      */
     private boolean pauseTrue(int lo, int hi) throws Exception {
-	super.pause(lo, hi);
-	return true;
+        super.pause(lo, hi);
+        return true;
     }
 
    /** This is a generic version of C.A.R Hoare's Quick Sort
@@ -87,14 +84,14 @@ public class QSortAlgorithm extends SortAlgorithm
             /* find the first element that is greater than or equal to
              * the partition element starting from the left Index.
              */
-	     while( ( lo < hi0 ) && pauseTrue(lo0, hi0) && ( a[lo] < mid ))
-		 ++lo;
+             while( ( lo < hi0 ) && pauseTrue(lo0, hi0) && ( a[lo] < mid ))
+                 ++lo;
 
             /* find an element that is smaller than or equal to
              * the partition element starting from the right Index.
              */
-	     while( ( hi > lo0 ) && pauseTrue(lo0, hi0) && ( a[hi] > mid ))
-		 --hi;
+             while( ( hi > lo0 ) && pauseTrue(lo0, hi0) && ( a[hi] > mid ))
+                 --hi;
 
             // if the indexes have not crossed, swap
             if( lo <= hi )

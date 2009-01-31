@@ -39,7 +39,6 @@ import org.w3c.dom.Element;
  * Class TransformC14NExclusive
  *
  * @author $Author: raul $
- * @version $Revision: 1.11 $
  */
 public class TransformC14NExclusive extends TransformSpi {
 
@@ -51,7 +50,7 @@ public class TransformC14NExclusive extends TransformSpi {
    /**
     * Method engineGetURI
     *
-    * @inheritDoc 
+    * @inheritDoc
     */
    protected String engineGetURI() {
       return implementedTransformURI;
@@ -66,7 +65,7 @@ public class TransformC14NExclusive extends TransformSpi {
     */
    protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
            throws CanonicalizationException {
-   	    return enginePerformTransform(input,null);
+            return enginePerformTransform(input,null);
    }
     protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input,OutputStream os)
     throws CanonicalizationException {
@@ -95,14 +94,14 @@ public class TransformC14NExclusive extends TransformSpi {
          byte []result;
          input.setNeedsToBeExpanded(true);
          result =c14n.engineCanonicalize(input, inclusiveNamespaces);
-              
+
          XMLSignatureInput output=new XMLSignatureInput(result);
          if (os!=null) {
             output.setOutputStream(os);
          }
-         return output;      
+         return output;
       } catch (XMLSecurityException ex) {
          throw new CanonicalizationException("empty", ex);
-      } 
+      }
    }
 }

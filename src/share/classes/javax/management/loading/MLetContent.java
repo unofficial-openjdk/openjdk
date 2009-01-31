@@ -43,13 +43,13 @@ import java.util.Map;
  */
 public class MLetContent {
 
-  
+
     /**
-     * A map of the attributes of the <CODE>MLET</CODE> tag 
+     * A map of the attributes of the <CODE>MLET</CODE> tag
      * and their values.
      */
     private Map<String,String> attributes;
-  
+
     /**
      * An ordered list of the TYPE attributes that appeared in nested
      * &lt;PARAM&gt; tags.
@@ -88,41 +88,41 @@ public class MLetContent {
      * &lt;PARAM&gt; tags.
      */
     public MLetContent(URL url, Map<String,String> attributes,
-		       List<String> types, List<String> values) {
-	this.documentURL = url;
-	this.attributes = Collections.unmodifiableMap(attributes);
-	this.types = Collections.unmodifiableList(types);
-	this.values = Collections.unmodifiableList(values);
+                       List<String> types, List<String> values) {
+        this.documentURL = url;
+        this.attributes = Collections.unmodifiableMap(attributes);
+        this.types = Collections.unmodifiableList(types);
+        this.values = Collections.unmodifiableList(values);
 
-	// Initialize baseURL
-	//
-	String att = getParameter("codebase");
-	if (att != null) {
-	    if (!att.endsWith("/")) {
-		att += "/";
-	    }
-	    try {
-		baseURL = new URL(documentURL, att);
-	    } catch (MalformedURLException e) {
-		// OK : Move to next block as baseURL could not be initialized.
-	    }
-	}
-	if (baseURL == null) {
-	    String file = documentURL.getFile();
-	    int i = file.lastIndexOf('/');
-	    if (i >= 0 && i < file.length() - 1) {
-		try {
-		    baseURL = new URL(documentURL, file.substring(0, i + 1));
-		} catch (MalformedURLException e) {
-		    // OK : Move to next block as baseURL could not be initialized.
-		}
-	    }
-	}
-	if (baseURL == null)
-	    baseURL = documentURL;
+        // Initialize baseURL
+        //
+        String att = getParameter("codebase");
+        if (att != null) {
+            if (!att.endsWith("/")) {
+                att += "/";
+            }
+            try {
+                baseURL = new URL(documentURL, att);
+            } catch (MalformedURLException e) {
+                // OK : Move to next block as baseURL could not be initialized.
+            }
+        }
+        if (baseURL == null) {
+            String file = documentURL.getFile();
+            int i = file.lastIndexOf('/');
+            if (i >= 0 && i < file.length() - 1) {
+                try {
+                    baseURL = new URL(documentURL, file.substring(0, i + 1));
+                } catch (MalformedURLException e) {
+                    // OK : Move to next block as baseURL could not be initialized.
+                }
+            }
+        }
+        if (baseURL == null)
+            baseURL = documentURL;
 
     }
-    
+
     // GETTERS AND SETTERS
     //--------------------
 
@@ -131,19 +131,19 @@ public class MLetContent {
      * the returned map are the attribute names in lowercase, for
      * example <code>codebase</code>.  The values are the associated
      * attribute values.
-     * @return A map of the attributes of the <CODE>MLET</CODE> tag 
+     * @return A map of the attributes of the <CODE>MLET</CODE> tag
      * and their values.
      */
     public Map<String,String> getAttributes() {
-	return attributes;
+        return attributes;
     }
-  
+
     /**
      * Gets the MLet text file's base URL.
      * @return The MLet text file's base URL.
      */
     public URL getDocumentBase() {
-	return documentURL;
+        return documentURL;
     }
 
     /**
@@ -151,36 +151,36 @@ public class MLetContent {
      * @return The code base URL.
      */
     public URL getCodeBase() {
-	return baseURL;
+        return baseURL;
     }
-  
+
     /**
-     * Gets the list of <CODE>.jar</CODE> files specified by the <CODE>ARCHIVE</CODE> 
+     * Gets the list of <CODE>.jar</CODE> files specified by the <CODE>ARCHIVE</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
      * @return A comma-separated list of <CODE>.jar</CODE> file names.
      */
     public String getJarFiles() {
-	return getParameter("archive");
+        return getParameter("archive");
     }
 
     /**
-     * Gets the value of the <CODE>CODE</CODE> 
+     * Gets the value of the <CODE>CODE</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
-     * @return The value of the <CODE>CODE</CODE> 
+     * @return The value of the <CODE>CODE</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
      */
     public String getCode() {
-	return getParameter("code");
+        return getParameter("code");
     }
 
     /**
      * Gets the value of the <CODE>OBJECT</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
-     * @return The value of the <CODE>OBJECT</CODE> 
+     * @return The value of the <CODE>OBJECT</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
      */
     public String getSerializedObject() {
-	return getParameter("object");
+        return getParameter("object");
     }
 
     /**
@@ -190,10 +190,10 @@ public class MLetContent {
      * attribute of the <CODE>MLET</CODE> tag.
      */
     public String getName() {
-	return getParameter("name");
+        return getParameter("name");
     }
 
- 
+
     /**
      * Gets the value of the <CODE>VERSION</CODE>
      * attribute of the <CODE>MLET</CODE> tag.
@@ -201,7 +201,7 @@ public class MLetContent {
      * attribute of the <CODE>MLET</CODE> tag.
      */
     public String getVersion() {
-	return getParameter("version");
+        return getParameter("version");
     }
 
     /**
@@ -211,7 +211,7 @@ public class MLetContent {
      * @return the list of types.
      */
     public List<String> getParameterTypes() {
-	return types;
+        return types;
     }
 
     /**
@@ -221,19 +221,19 @@ public class MLetContent {
      * @return the list of values.
      */
     public List<String> getParameterValues() {
-	return values;
+        return values;
     }
 
     /**
-     * Gets the value of the specified    
+     * Gets the value of the specified
      * attribute of the <CODE>MLET</CODE> tag.
      *
      * @param name A string representing the name of the attribute.
-     * @return The value of the specified    
+     * @return The value of the specified
      * attribute of the <CODE>MLET</CODE> tag.
      */
     private String getParameter(String name) {
-	return attributes.get(name.toLowerCase());
+        return attributes.get(name.toLowerCase());
     }
-  
+
 }

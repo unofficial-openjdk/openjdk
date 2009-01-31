@@ -37,12 +37,12 @@ import org.ietf.jgss.Oid;
  * @since 1.6
  */
 public class LoginConfigImpl extends Configuration {
-    
+
     private final Configuration config;
     private final int caller;
     private final String mechName;
     private static final sun.security.util.Debug debug =
-	sun.security.util.Debug.getInstance("gssloginconfig", "\t[GSS LoginConfigImpl]");
+        sun.security.util.Debug.getInstance("gssloginconfig", "\t[GSS LoginConfigImpl]");
 
     /**
      * A new instance of LoginConfigImpl must be created for each login request
@@ -51,9 +51,9 @@ public class LoginConfigImpl extends Configuration {
      * @param oid defined in GSSUtil as XXX_MECH_OID final fields
      */
     public LoginConfigImpl(int caller, Oid mech) {
-        
+
         this.caller = caller;
-        
+
         if (mech.equals(GSSUtil.GSS_KRB5_MECH_OID)) {
             mechName = "krb5";
         } else {
@@ -66,7 +66,7 @@ public class LoginConfigImpl extends Configuration {
             }
         });
     }
-    
+
     /**
      * @param name Almost useless, since the (caller, mech) is already passed
      *             into constructor. The only use will be detecting OTHER which
@@ -75,18 +75,18 @@ public class LoginConfigImpl extends Configuration {
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
 
         AppConfigurationEntry[] entries = null;
-        
+
         // This is the second call from LoginContext, which we will just ignore
         if ("OTHER".equalsIgnoreCase(name)) {
             return null;
         }
-        
+
         String[] alts = null;
-        
+
         // Compatibility:
         // For the 4 old callers, old entry names will be used if the new
         // entry name is not provided.
-        
+
         if ("krb5".equals(mechName)) {
             switch (caller) {
             case GSSUtil.CALLER_INITIATE:
@@ -148,19 +148,19 @@ public class LoginConfigImpl extends Configuration {
             default:
                 throw new AssertionError("caller not defined");
             }
-             */            
+             */
         }
         for (String alt: alts) {
             entries = config.getAppConfigurationEntry(alt);
             if (debug != null) {
-                debug.println("Trying " + alt + 
+                debug.println("Trying " + alt +
                         ((entries == null)?": does not exist.":": Found!"));
             }
             if (entries != null) {
                 break;
             }
         }
-        
+
         if (entries == null) {
             if (debug != null) {
                 debug.println("Cannot read JGSS entry, use default values instead.");
@@ -169,17 +169,17 @@ public class LoginConfigImpl extends Configuration {
         }
         return entries;
     }
-    
+
     /**
      * Default value for a caller-mech pair when no entry is defined in
      * the system-wide Configuration object.
      */
     private AppConfigurationEntry[] getDefaultConfigurationEntry() {
         HashMap <String, String> options = new HashMap <String, String> (2);
-        
+
         if (mechName == null || mechName.equals("krb5")) {
             if (isServerSide(caller)) {
-                // Assuming the keytab file can be found through 
+                // Assuming the keytab file can be found through
                 // krb5 config file or under user home directory
                 options.put("useKeyTab", "true");
                 options.put("storeKey", "true");
@@ -198,7 +198,7 @@ public class LoginConfigImpl extends Configuration {
         }
         return null;
     }
-    
+
     private static boolean isServerSide (int caller) {
         return GSSUtil.CALLER_ACCEPT == caller ||
                GSSUtil.CALLER_SSL_SERVER == caller;

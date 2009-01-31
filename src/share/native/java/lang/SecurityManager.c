@@ -43,28 +43,28 @@ check(JNIEnv *env, jobject this)
 
     if (initField == 0) {
         jclass clazz = (*env)->FindClass(env, "java/lang/SecurityManager");
-	if (clazz == 0) {
-	    (*env)->ExceptionClear(env);
-	    return JNI_FALSE;
-	}
-	initField = (*env)->GetFieldID(env, clazz, "initialized", "Z");
-	if (initField == 0) {
-	    (*env)->ExceptionClear(env);
-	    return JNI_FALSE;
-	}	    
+        if (clazz == 0) {
+            (*env)->ExceptionClear(env);
+            return JNI_FALSE;
+        }
+        initField = (*env)->GetFieldID(env, clazz, "initialized", "Z");
+        if (initField == 0) {
+            (*env)->ExceptionClear(env);
+            return JNI_FALSE;
+        }
     }
     initialized = (*env)->GetBooleanField(env, this, initField);
-    
+
     if (initialized == JNI_TRUE) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     } else {
-	jclass securityException =
-	    (*env)->FindClass(env, "java/lang/SecurityException");
-	if (securityException != 0) {
-	    (*env)->ThrowNew(env, securityException, 
-			     "security manager not initialized.");
-	}
-	return JNI_FALSE;
+        jclass securityException =
+            (*env)->FindClass(env, "java/lang/SecurityException");
+        if (securityException != 0) {
+            (*env)->ThrowNew(env, securityException,
+                             "security manager not initialized.");
+        }
+        return JNI_FALSE;
     }
 }
 
@@ -72,7 +72,7 @@ JNIEXPORT jobjectArray JNICALL
 Java_java_lang_SecurityManager_getClassContext(JNIEnv *env, jobject this)
 {
     if (!check(env, this)) {
-	return NULL;		/* exception */
+        return NULL;            /* exception */
     }
 
     return JVM_GetClassContext(env);
@@ -83,7 +83,7 @@ Java_java_lang_SecurityManager_currentLoadedClass0(JNIEnv *env, jobject this)
 {
     /* Make sure the security manager instance is initialized */
     if (!check(env, this)) {
-	return NULL;		/* exception */
+        return NULL;            /* exception */
     }
 
     return JVM_CurrentLoadedClass(env);
@@ -94,7 +94,7 @@ Java_java_lang_SecurityManager_currentClassLoader0(JNIEnv *env, jobject this)
 {
     /* Make sure the security manager instance is initialized */
     if (!check(env, this)) {
-	return NULL;		/* exception */
+        return NULL;            /* exception */
     }
 
     return JVM_CurrentClassLoader(env);
@@ -102,11 +102,11 @@ Java_java_lang_SecurityManager_currentClassLoader0(JNIEnv *env, jobject this)
 
 JNIEXPORT jint JNICALL
 Java_java_lang_SecurityManager_classDepth(JNIEnv *env, jobject this,
-					  jstring name)
+                                          jstring name)
 {
     /* Make sure the security manager instance is initialized */
     if (!check(env, this)) {
-	return -1;		/* exception */
+        return -1;              /* exception */
     }
 
     if (name == NULL) {
@@ -122,7 +122,7 @@ Java_java_lang_SecurityManager_classLoaderDepth0(JNIEnv *env, jobject this)
 {
     /* Make sure the security manager instance is initialized */
     if (!check(env, this)) {
-	return -1;		/* exception */
+        return -1;              /* exception */
     }
 
     return JVM_ClassLoaderDepth(env);

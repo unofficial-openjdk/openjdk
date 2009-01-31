@@ -35,7 +35,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see GeneralName
  * @see GeneralNames
  * @see GeneralNameInterface
@@ -52,7 +51,7 @@ public class RFC822Name implements GeneralNameInterface
      */
     public RFC822Name(DerValue derValue) throws IOException {
         name = derValue.getIA5String();
-	parseName(name);
+        parseName(name);
     }
 
     /**
@@ -62,7 +61,7 @@ public class RFC822Name implements GeneralNameInterface
      * @throws IOException on invalid input name
      */
     public RFC822Name(String name) throws IOException {
-	parseName(name);
+        parseName(name);
         this.name = name;
     }
 
@@ -79,21 +78,21 @@ public class RFC822Name implements GeneralNameInterface
      * @throws IOException if name is not valid
      */
     public void parseName(String name) throws IOException {
-	if (name == null || name.length() == 0) {
-	    throw new IOException("RFC822Name may not be null or empty");
-	}
+        if (name == null || name.length() == 0) {
+            throw new IOException("RFC822Name may not be null or empty");
+        }
         // See if domain is a valid domain name
         String domain = name.substring(name.indexOf('@')+1);
         if (domain.length() == 0) {
             throw new IOException("RFC822Name may not end with @");
-	} else {
-	    //An RFC822 NameConstraint could start with a ., although
-	    //a DNSName may not
-	    if (domain.startsWith(".")) {
-		if (domain.length() == 1)
-		    throw new IOException("RFC822Name domain may not be just .");
-	    }
-	}
+        } else {
+            //An RFC822 NameConstraint could start with a ., although
+            //a DNSName may not
+            if (domain.startsWith(".")) {
+                if (domain.length() == 1)
+                    throw new IOException("RFC822Name domain may not be just .");
+            }
+        }
     }
 
     /**
@@ -134,26 +133,26 @@ public class RFC822Name implements GeneralNameInterface
      * according to RFC2459.
      */
     public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
+        if (this == obj)
+            return true;
 
-	if (!(obj instanceof RFC822Name))
-	    return false;
+        if (!(obj instanceof RFC822Name))
+            return false;
 
-	RFC822Name other = (RFC822Name)obj;
+        RFC822Name other = (RFC822Name)obj;
 
-	// RFC2459 mandates that these names are
-	// not case-sensitive
-	return name.equalsIgnoreCase(other.name);
+        // RFC2459 mandates that these names are
+        // not case-sensitive
+        return name.equalsIgnoreCase(other.name);
     }
 
     /**
      * Returns the hash code value for this object.
-     * 
+     *
      * @return a hash code value for this object.
      */
     public int hashCode() {
-	return name.toUpperCase().hashCode();
+        return name.toUpperCase().hashCode();
     }
 
     /**
@@ -181,50 +180,50 @@ public class RFC822Name implements GeneralNameInterface
      *          not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) throws UnsupportedOperationException {
-	int constraintType;
-	if (inputName == null)
-	    constraintType = NAME_DIFF_TYPE;
-	else if (inputName.getType() != (GeneralNameInterface.NAME_RFC822)) {
-	    constraintType = NAME_DIFF_TYPE;
-	} else {
-	    //RFC2459 specifies that case is not significant in RFC822Names
-	    String inName = (((RFC822Name)inputName).getName()).toLowerCase();
-	    String thisName = name.toLowerCase();
-	    if (inName.equals(thisName)) {
-		constraintType = NAME_MATCH;
-	    } else if (thisName.endsWith(inName)) {
-		/* if both names contain @, then they had to match exactly */
-		if (inName.indexOf('@') != -1) {
-		    constraintType = NAME_SAME_TYPE;
-		} else if (inName.startsWith(".")) {
-		    constraintType = NAME_WIDENS;
-		} else {
-		    int inNdx = thisName.lastIndexOf(inName);
-		    if (thisName.charAt(inNdx-1) == '@' ) {
-			constraintType = NAME_WIDENS;
-		    } else {
-			constraintType = NAME_SAME_TYPE;
-		    }
-		}
-	    } else if (inName.endsWith(thisName)) {
-		/* if thisName contains @, then they had to match exactly */
-		if (thisName.indexOf('@') != -1) {
-		    constraintType = NAME_SAME_TYPE;
-		} else if (thisName.startsWith(".")) {
-		    constraintType = NAME_NARROWS;
-		} else {
-		    int ndx = inName.lastIndexOf(thisName);
-		    if (inName.charAt(ndx-1) == '@') {
-			constraintType = NAME_NARROWS;
-		    } else {
-			constraintType = NAME_SAME_TYPE;
-		    }
-		}
-	    } else {
-		constraintType = NAME_SAME_TYPE;
-	    }
-	}
-	return constraintType;
+        int constraintType;
+        if (inputName == null)
+            constraintType = NAME_DIFF_TYPE;
+        else if (inputName.getType() != (GeneralNameInterface.NAME_RFC822)) {
+            constraintType = NAME_DIFF_TYPE;
+        } else {
+            //RFC2459 specifies that case is not significant in RFC822Names
+            String inName = (((RFC822Name)inputName).getName()).toLowerCase();
+            String thisName = name.toLowerCase();
+            if (inName.equals(thisName)) {
+                constraintType = NAME_MATCH;
+            } else if (thisName.endsWith(inName)) {
+                /* if both names contain @, then they had to match exactly */
+                if (inName.indexOf('@') != -1) {
+                    constraintType = NAME_SAME_TYPE;
+                } else if (inName.startsWith(".")) {
+                    constraintType = NAME_WIDENS;
+                } else {
+                    int inNdx = thisName.lastIndexOf(inName);
+                    if (thisName.charAt(inNdx-1) == '@' ) {
+                        constraintType = NAME_WIDENS;
+                    } else {
+                        constraintType = NAME_SAME_TYPE;
+                    }
+                }
+            } else if (inName.endsWith(thisName)) {
+                /* if thisName contains @, then they had to match exactly */
+                if (thisName.indexOf('@') != -1) {
+                    constraintType = NAME_SAME_TYPE;
+                } else if (thisName.startsWith(".")) {
+                    constraintType = NAME_NARROWS;
+                } else {
+                    int ndx = inName.lastIndexOf(thisName);
+                    if (inName.charAt(ndx-1) == '@') {
+                        constraintType = NAME_NARROWS;
+                    } else {
+                        constraintType = NAME_SAME_TYPE;
+                    }
+                }
+            } else {
+                constraintType = NAME_SAME_TYPE;
+            }
+        }
+        return constraintType;
     }
 
     /**
@@ -235,21 +234,21 @@ public class RFC822Name implements GeneralNameInterface
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-	String subtree=name;
-	int i=1;
+        String subtree=name;
+        int i=1;
 
-	/* strip off name@ portion */
-	int atNdx = subtree.lastIndexOf('@');
-	if (atNdx >= 0) {
-	    i++;
-	    subtree=subtree.substring(atNdx+1);
-	}
+        /* strip off name@ portion */
+        int atNdx = subtree.lastIndexOf('@');
+        if (atNdx >= 0) {
+            i++;
+            subtree=subtree.substring(atNdx+1);
+        }
 
-	/* count dots in dnsname, adding one if dnsname preceded by @ */
-	for (; subtree.lastIndexOf('.') >= 0; i++) {
-	    subtree=subtree.substring(0,subtree.lastIndexOf('.'));
-	}
+        /* count dots in dnsname, adding one if dnsname preceded by @ */
+        for (; subtree.lastIndexOf('.') >= 0; i++) {
+            subtree=subtree.substring(0,subtree.lastIndexOf('.'));
+        }
 
-	return i;
+        return i;
     }
 }

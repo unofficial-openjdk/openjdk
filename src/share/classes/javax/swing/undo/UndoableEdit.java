@@ -31,7 +31,7 @@ import javax.swing.event.*;
  * An <code>UndoableEdit</code> represents an edit.  The edit may
  * be undone, or if already undone the edit may be redone.
  * <p>
- * <code>UndoableEdit</code> is designed to be used with the 
+ * <code>UndoableEdit</code> is designed to be used with the
  * <code>UndoManager</code>.  As <code>UndoableEdit</code>s are generated
  * by an <code>UndoableEditListener</code> they are typically added to
  * the <code>UndoManager</code>.  When an <code>UndoableEdit</code>
@@ -54,7 +54,7 @@ import javax.swing.event.*;
  * The <code>UndoManager</code> makes use of
  * <code>isSignificant</code> to determine how many edits should be
  * undone or redone.  The <code>UndoManager</code> will undo or redo
- * all insignificant edits (<code>isSignificant</code> returns false) 
+ * all insignificant edits (<code>isSignificant</code> returns false)
  * between the current edit and the last or
  * next significant edit.   <code>addEdit</code> and
  * <code>replaceEdit</code> can be used to treat multiple edits as
@@ -63,7 +63,6 @@ import javax.swing.event.*;
  * have many smaller edits undone or redone at once.  Similar functionality
  * can also be done using the <code>addEdit</code> method.
  *
- * @version %I%, %G%
  * @author Ray Ryan
  */
 public interface UndoableEdit {
@@ -192,7 +191,7 @@ public interface UndoableEdit {
     public String getUndoPresentationName();
 
     /**
-     * Returns a localized, human-readable description of the redoable form of 
+     * Returns a localized, human-readable description of the redoable form of
      * this edit, suitable for use as a Redo menu item, for example. This is
      * typically derived from <code>getPresentationName</code>.
      *

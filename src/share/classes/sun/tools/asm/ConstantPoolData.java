@@ -50,13 +50,13 @@ abstract class  ConstantPoolData implements RuntimeConstants {
      * Return the order of the constant
      */
     int order() {
-	return 0;
+        return 0;
     }
 
     /**
      * Return the number of entries that it takes up in the constant pool
      */
     int width() {
-	return 1;
+        return 1;
     }
 }

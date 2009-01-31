@@ -33,7 +33,7 @@ import javax.swing.text.Caret;
 
 
 /**
- * Windows rendition of the component. 
+ * Windows rendition of the component.
  * <p>
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -66,4 +66,3 @@ public class WindowsTextAreaUI extends BasicTextAreaUI {
     }
 
 }
-

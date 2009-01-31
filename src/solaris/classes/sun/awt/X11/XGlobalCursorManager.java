@@ -43,13 +43,13 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
     private static Class  cursorClass;
     private static Method method_setPData;
     static {
-        cursorClass = java.awt.Cursor.class;   
+        cursorClass = java.awt.Cursor.class;
         field_pData = SunToolkit.getField(cursorClass, "pData");
         field_type  = SunToolkit.getField(cursorClass, "type");
         method_setPData = SunToolkit.getMethod(cursorClass, "setPData", new Class[] {long.class});
         if (field_pData == null || field_type == null || method_setPData == null) {
             System.out.println("Unable to initialize XGlobalCursorManager: ");
-            Thread.dumpStack(); 
+            Thread.dumpStack();
 
         }
     }
@@ -147,9 +147,9 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
             try {
                 long display = XToolkit.getDisplay();
                 long root_window = XlibWrapper.RootWindow(display,
-                                                          XlibWrapper.DefaultScreen(display)); 
+                                                          XlibWrapper.DefaultScreen(display));
 
-                XlibWrapper.XQueryPointer(display, root_window, 
+                XlibWrapper.XQueryPointer(display, root_window,
                                           XlibWrapper.larg1,
                                           XlibWrapper.larg2,
                                           XlibWrapper.larg3,
@@ -174,34 +174,34 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
      * Component
      */
     protected  Component findComponentAt(Container con, int x, int y) {
-        return con.findComponentAt(x,y);   
+        return con.findComponentAt(x,y);
     }
-   
+
     protected  Point getLocationOnScreen(Component c) {
         return c.getLocationOnScreen();
     }
- 
-    protected Component findHeavyweightUnderCursor(boolean useCache) {  
+
+    protected Component findHeavyweightUnderCursor(boolean useCache) {
         return findHeavyweightUnderCursor();
     }
 
     private Cursor getCapableCursor(Component comp) {
-        Component c = comp; 
+        Component c = comp;
         while ((c != null) && !(c instanceof Window)
                && ComponentAccessor.isEnabledImpl(c)
                && ComponentAccessor.getVisible(c)
                && ComponentAccessor.getPeer(c) != null)
         {
             c = ComponentAccessor.getParent_NoClientCode(c);
-        } 
+        }
         if (c instanceof Window) {
             return (ComponentAccessor.isEnabledImpl(c)
                     && ComponentAccessor.getVisible(c)
                     && (ComponentAccessor.getPeer(c) != null)
                     && ComponentAccessor.isEnabledImpl(comp))
-                   ? 
+                   ?
                     ComponentAccessor.getCursor_NoClientCode(comp)
-                   : 
+                   :
                     Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         } else if (c == null) {
             return null;
@@ -225,7 +225,7 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
         }
 
         if (pData != 0) return pData;
-        
+
         int cursorType = 0;
         switch (type) {
           case Cursor.DEFAULT_CURSOR:
@@ -271,7 +271,7 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
               cursorType = XlibWrapper.XC_fleur;
               break;
         }
-        
+
         XToolkit.awtLock();
         try {
             pData =(long) XlibWrapper.XCreateFontCursor(XToolkit.getDisplay(), cursorType);
@@ -293,6 +293,6 @@ public final class XGlobalCursorManager extends GlobalCursorManager {
         {
             e.printStackTrace();
         }
- 
+
     }
 }

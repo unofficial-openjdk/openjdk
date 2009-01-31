@@ -71,11 +71,11 @@ HBITMAP BitmapUtil::CreateTransparencyMaskFromARGB(int width, int height, int* i
     }
     HBITMAP bmp = CreateBitmap(width, height, 1, 1, buf);
     delete[] buf;
-    
+
     return bmp;
 }
 
-//BITMAPINFO extended with 
+//BITMAPINFO extended with
 typedef struct tagBITMAPINFOEX  {
     BITMAPINFOHEADER bmiHeader;
     DWORD            dwMasks[256];
@@ -107,7 +107,7 @@ HBITMAP BitmapUtil::CreateV4BitmapFromARGB(int width, int height, int* imageData
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
-    
+
     hTempBitmap = ::CreateDIBSection(hDC, (BITMAPINFO*)&(bitmapInfo),
                                     DIB_RGB_COLORS,
                                     (void**)&(bitmapData),
@@ -136,7 +136,7 @@ HBITMAP BitmapUtil::CreateV4BitmapFromARGB(int width, int height, int* imageData
         }
     }
 
-    hBitmap = CreateDIBitmap(hDC, 
+    hBitmap = CreateDIBitmap(hDC,
                              (BITMAPINFOHEADER*)&bitmapInfo,
                              CBM_INIT,
                              (void *)bitmapData,
@@ -148,5 +148,3 @@ HBITMAP BitmapUtil::CreateV4BitmapFromARGB(int width, int height, int* imageData
     ::GdiFlush();
     return hBitmap;
 }
-
-

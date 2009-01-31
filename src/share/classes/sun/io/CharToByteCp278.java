@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM278;
  * Tables and data to convert Unicode to Cp278
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp278 extends CharToByteSingleByte {

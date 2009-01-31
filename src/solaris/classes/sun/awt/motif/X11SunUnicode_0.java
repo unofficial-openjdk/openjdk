@@ -33,30 +33,30 @@ import sun.nio.cs.ext.DoubleByteEncoder;
 
 public class X11SunUnicode_0 extends Charset {
     public X11SunUnicode_0 () {
-	super("X11SunUnicode_0", null);
+        super("X11SunUnicode_0", null);
     }
 
-    public CharsetEncoder newEncoder() { 
-        return new Encoder(this); 
+    public CharsetEncoder newEncoder() {
+        return new Encoder(this);
     }
 
     /* Seems like supporting a decoder is required, but we aren't going
      * to be publically exposing this class, so no need to waste work
      */
-    public CharsetDecoder newDecoder() { 
+    public CharsetDecoder newDecoder() {
         throw new Error("Decoder is not implemented for X11SunUnicode_0 Charset");
     }
 
-    public boolean contains(Charset cs) { 
+    public boolean contains(Charset cs) {
         return cs instanceof X11SunUnicode_0;
     }
 
     private static class Encoder extends DoubleByteEncoder {
         public Encoder(Charset cs) {
-	    super(cs, index1, index2);
-	}
+            super(cs, index1, index2);
+        }
 
-	private final static String innerIndex0= 
+        private final static String innerIndex0=
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -123,32 +123,31 @@ public class X11SunUnicode_0 extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
 
         private final static short index1[] = {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-    
-	private final static String index2[] = {
-	    innerIndex0
-	};
-    
+        };
+
+        private final static String index2[] = {
+            innerIndex0
+        };
+
         /* The default implementation creates a decoder and we don't have one */
         public boolean isLegalReplacement(byte[] repl) {
             return true;
         }
     }
 }
-    

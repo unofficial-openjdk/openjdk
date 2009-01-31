@@ -74,61 +74,61 @@ public class CookieHandlerTest {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+        serverPort = sslServerSocket.getLocalPort();
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
-	SSLSocket sslSocket = null;
-	try {
-	    sslSocket = (SSLSocket) sslServerSocket.accept();
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
+        SSLSocket sslSocket = null;
+        try {
+            sslSocket = (SSLSocket) sslServerSocket.accept();
 
-	    // check request contains "Cookie"
-	    InputStream is = sslSocket.getInputStream ();
-	    BufferedReader r = new BufferedReader(new InputStreamReader(is));
-	    boolean flag = false;
-	    String x;
-	    while ((x=r.readLine()) != null) {
-		if (x.length() ==0) {
-		    break;
-		}
-		String header = "Cookie: ";
-		if (x.startsWith(header)) {
-		    if (x.equals("Cookie: "+((String)cookies.get("Cookie")))) {
-			flag = true;
-		    }
-		}
-	    }
-	    if (!flag) {
-		throw new RuntimeException("server should see cookie in request");
-	    }
+            // check request contains "Cookie"
+            InputStream is = sslSocket.getInputStream ();
+            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+            boolean flag = false;
+            String x;
+            while ((x=r.readLine()) != null) {
+                if (x.length() ==0) {
+                    break;
+                }
+                String header = "Cookie: ";
+                if (x.startsWith(header)) {
+                    if (x.equals("Cookie: "+((String)cookies.get("Cookie")))) {
+                        flag = true;
+                    }
+                }
+            }
+            if (!flag) {
+                throw new RuntimeException("server should see cookie in request");
+            }
 
-	    PrintStream out = new PrintStream( 
-				 new BufferedOutputStream(
-				    sslSocket.getOutputStream() ));
-	    
-	    /* send the header */
-	    out.print("HTTP/1.1 200 OK\r\n");
-	    out.print("Set-Cookie2: "+((String)cookies.get("Set-Cookie2")+"\r\n"));
-	    out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
-	    out.print("Connection: close\r\n");
-	    out.print("\r\n");
-	    out.print("<HTML>");
-	    out.print("<HEAD><TITLE>Testing cookie</TITLE></HEAD>");
-	    out.print("<BODY>OK.</BODY>");
-	    out.print("</HTML>");
-	    out.flush();
+            PrintStream out = new PrintStream(
+                                 new BufferedOutputStream(
+                                    sslSocket.getOutputStream() ));
 
-	    sslSocket.close();
-	    sslServerSocket.close();
-	} catch (Exception e) { 
-	    e.printStackTrace();
-	}
+            /* send the header */
+            out.print("HTTP/1.1 200 OK\r\n");
+            out.print("Set-Cookie2: "+((String)cookies.get("Set-Cookie2")+"\r\n"));
+            out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
+            out.print("Connection: close\r\n");
+            out.print("\r\n");
+            out.print("<HTML>");
+            out.print("<HEAD><TITLE>Testing cookie</TITLE></HEAD>");
+            out.print("<BODY>OK.</BODY>");
+            out.print("</HTML>");
+            out.flush();
+
+            sslSocket.close();
+            sslServerSocket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -139,21 +139,21 @@ public class CookieHandlerTest {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
-	HttpsURLConnection http = null;
-	/* establish http connection to server */
-	String uri = "https://localhost:" + +serverPort ;
-	URL url = new URL(uri);
-	HttpsURLConnection.setDefaultHostnameVerifier(new NameVerifier());
-	http = (HttpsURLConnection)url.openConnection();
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
+        HttpsURLConnection http = null;
+        /* establish http connection to server */
+        String uri = "https://localhost:" + +serverPort ;
+        URL url = new URL(uri);
+        HttpsURLConnection.setDefaultHostnameVerifier(new NameVerifier());
+        http = (HttpsURLConnection)url.openConnection();
 
-	int respCode = http.getResponseCode();
-	http.disconnect();
+        int respCode = http.getResponseCode();
+        http.disconnect();
 
     }
 
@@ -175,33 +175,33 @@ public class CookieHandlerTest {
     volatile Exception clientException = null;
 
     public static void main(String args[]) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
-	cookies = new HashMap<String, String>();
-	cookies.put("Cookie",
-	      "$Version=\"1\"; Customer=\"WILE_E_COYOTE\"; $Path=\"/acme\"");
-	cookies.put("Set-Cookie2",
+        /*
+         * Start the tests.
+         */
+        cookies = new HashMap<String, String>();
+        cookies.put("Cookie",
+              "$Version=\"1\"; Customer=\"WILE_E_COYOTE\"; $Path=\"/acme\"");
+        cookies.put("Set-Cookie2",
           "$Version=\"1\"; Part_Number=\"Riding_Rocket_0023\"; " +
-	  "$Path=\"/acme/ammo\"; Part_Number=\"Rocket_Launcher_0001\"; "+
+          "$Path=\"/acme/ammo\"; Part_Number=\"Rocket_Launcher_0001\"; "+
           "$Path=\"/acme\"");
-	CookieHandler.setDefault(new MyCookieHandler());
-	new CookieHandlerTest();
+        CookieHandler.setDefault(new MyCookieHandler());
+        new CookieHandlerTest();
     }
 
     Thread clientThread = null;
@@ -212,112 +212,112 @@ public class CookieHandlerTest {
      * Fork off the other side, then do your work.
      */
     CookieHandlerTest() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null)
-	    throw serverException;
-	if (clientException != null)
-	    throw clientException;
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null)
+            throw serverException;
+        if (clientException != null)
+            throw clientException;
 
-	if (!getCalled || !putCalled) {
-	    throw new RuntimeException ("Either get or put method is not called");
-	}
+        if (!getCalled || !putCalled) {
+            throw new RuntimeException ("Either get or put method is not called");
+        }
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 
     static boolean getCalled = false, putCalled = false;
 
     static class MyCookieHandler extends CookieHandler {
-	public Map<String,List<String>>
-	    get(URI uri, Map<String,List<String>> requestHeaders)
-	    throws IOException {
-	    getCalled = true;
-	    // returns cookies[0]
-	    // they will be include in request
-	    Map<String,List<String>> map = new HashMap<String,List<String>>();
-	    List<String> l = new ArrayList<String>();
-	    l.add(cookies.get("Cookie"));
-	    map.put("Cookie",l);
-	    return Collections.unmodifiableMap(map);
-	}
+        public Map<String,List<String>>
+            get(URI uri, Map<String,List<String>> requestHeaders)
+            throws IOException {
+            getCalled = true;
+            // returns cookies[0]
+            // they will be include in request
+            Map<String,List<String>> map = new HashMap<String,List<String>>();
+            List<String> l = new ArrayList<String>();
+            l.add(cookies.get("Cookie"));
+            map.put("Cookie",l);
+            return Collections.unmodifiableMap(map);
+        }
 
-	public void
-	    put(URI uri, Map<String,List<String>> responseHeaders)
-	    throws IOException {
-	    putCalled = true;
-	    // check response has cookies[1]
-	    List<String> l = responseHeaders.get("Set-Cookie2");
-	    String value = l.get(0);
-	    if (!value.equals((String)cookies.get("Set-Cookie2"))) {
-		throw new RuntimeException("cookie should be available for handle to put into cache");
-	       } 
-	}
+        public void
+            put(URI uri, Map<String,List<String>> responseHeaders)
+            throws IOException {
+            putCalled = true;
+            // check response has cookies[1]
+            List<String> l = responseHeaders.get("Set-Cookie2");
+            String value = l.get(0);
+            if (!value.equals((String)cookies.get("Set-Cookie2"))) {
+                throw new RuntimeException("cookie should be available for handle to put into cache");
+               }
+        }
     }
-    
+
 }

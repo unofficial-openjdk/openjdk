@@ -27,11 +27,11 @@ package sun.awt.X11;
 
 import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
 
-final class XToolkitThreadBlockedHandler implements 
+final class XToolkitThreadBlockedHandler implements
                                  ToolkitThreadBlockedHandler {
     private static final ToolkitThreadBlockedHandler priveleged_lock;
     static {
-        priveleged_lock = new XToolkitThreadBlockedHandler();    
+        priveleged_lock = new XToolkitThreadBlockedHandler();
     }
     private static final XToolkit tk = (XToolkit)java.awt.Toolkit.getDefaultToolkit();
 
@@ -52,4 +52,3 @@ final class XToolkitThreadBlockedHandler implements
         XlibWrapper.ExitSecondaryLoop();
     }
 }
-

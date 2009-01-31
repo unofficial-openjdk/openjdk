@@ -35,68 +35,68 @@ import java.nio.*;
 import java.security.*;
 
 public class ByteBuffers extends PKCS11Test {
-    
+
     public static void main(String[] args) throws Exception {
-	main(new ByteBuffers());
+        main(new ByteBuffers());
     }
-    
+
     public void main(Provider p) throws Exception {
-	if (p.getService("MessageDigest", "MD5") == null) {
-	    System.out.println("Provider does not support MD5, skipping");
-	    return;
-	}
-	
-	Random random = new Random();
-	int n = 10 * 1024;
-	byte[] t = new byte[n];
-	random.nextBytes(t);
-	
-	MessageDigest md = MessageDigest.getInstance("MD5", p);
-	byte[] d1 = md.digest(t);
-	
-	// test 1: ByteBuffer with an accessible backing array
-	ByteBuffer b1 = ByteBuffer.allocate(n + 256);
-	b1.position(random.nextInt(256));
-	b1.limit(b1.position() + n);
-	ByteBuffer b2 = b1.slice();
-	b2.put(t);
-	b2.clear();
-	byte[] d2 = digest(md, b2, random);
-	if (Arrays.equals(d1, d2) == false) {
-	    throw new Exception("Test 1 failed");
-	}
-	
-	// test 2: direct ByteBuffer
-	ByteBuffer b3 = ByteBuffer.allocateDirect(t.length);
-	b3.put(t);
-	b3.clear();
-	byte[] d3 = digest(md, b3, random);
-	if (Arrays.equals(d1, d2) == false) {
-	    throw new Exception("Test 2 failed");
-	}
-	
-	// test 3: ByteBuffer without an accessible backing array
-	b2.clear();
-	ByteBuffer b4 = b2.asReadOnlyBuffer();
-	byte[] d4 = digest(md, b4, random);
-	if (Arrays.equals(d1, d2) == false) {
-	    throw new Exception("Test 3 failed");
-	}
-	System.out.println("All tests passed");
+        if (p.getService("MessageDigest", "MD5") == null) {
+            System.out.println("Provider does not support MD5, skipping");
+            return;
+        }
+
+        Random random = new Random();
+        int n = 10 * 1024;
+        byte[] t = new byte[n];
+        random.nextBytes(t);
+
+        MessageDigest md = MessageDigest.getInstance("MD5", p);
+        byte[] d1 = md.digest(t);
+
+        // test 1: ByteBuffer with an accessible backing array
+        ByteBuffer b1 = ByteBuffer.allocate(n + 256);
+        b1.position(random.nextInt(256));
+        b1.limit(b1.position() + n);
+        ByteBuffer b2 = b1.slice();
+        b2.put(t);
+        b2.clear();
+        byte[] d2 = digest(md, b2, random);
+        if (Arrays.equals(d1, d2) == false) {
+            throw new Exception("Test 1 failed");
+        }
+
+        // test 2: direct ByteBuffer
+        ByteBuffer b3 = ByteBuffer.allocateDirect(t.length);
+        b3.put(t);
+        b3.clear();
+        byte[] d3 = digest(md, b3, random);
+        if (Arrays.equals(d1, d2) == false) {
+            throw new Exception("Test 2 failed");
+        }
+
+        // test 3: ByteBuffer without an accessible backing array
+        b2.clear();
+        ByteBuffer b4 = b2.asReadOnlyBuffer();
+        byte[] d4 = digest(md, b4, random);
+        if (Arrays.equals(d1, d2) == false) {
+            throw new Exception("Test 3 failed");
+        }
+        System.out.println("All tests passed");
     }
-    
+
     private static byte[] digest(MessageDigest md, ByteBuffer b, Random random) throws Exception {
-	int lim = b.limit();
-	b.limit(random.nextInt(lim));
-	md.update(b);
-	if (b.hasRemaining()) {
-	    throw new Exception("Buffer not consumed");
-	}
-	b.limit(lim);
-	md.update(b);
-	if (b.hasRemaining()) {
-	    throw new Exception("Buffer not consumed");
-	}
-	return md.digest();
+        int lim = b.limit();
+        b.limit(random.nextInt(lim));
+        md.update(b);
+        if (b.hasRemaining()) {
+            throw new Exception("Buffer not consumed");
+        }
+        b.limit(lim);
+        md.update(b);
+        if (b.hasRemaining()) {
+            throw new Exception("Buffer not consumed");
+        }
+        return md.digest();
     }
 }

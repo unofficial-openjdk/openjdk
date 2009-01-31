@@ -30,7 +30,7 @@ import java.util.Properties;
 
 /**
  * This class represents a compound name -- a name from
- * a hierarchical name space.  
+ * a hierarchical name space.
  * Each component in a compound name is an atomic name.
  * <p>
  * The components of a compound name are numbered.  The indexes of a
@@ -38,61 +38,61 @@ import java.util.Properties;
  * This range may be written as [0,N).
  * The most significant component is at index 0.
  * An empty compound name has no components.
- *<p> 
+ *<p>
  * <h4>Compound Name Syntax</h4>
  * The syntax of a compound name is specified using a set of properties:
  *<dl>
  *  <dt>jndi.syntax.direction
- *  <dd>Direction for parsing ("right_to_left", "left_to_right", "flat"). 
+ *  <dd>Direction for parsing ("right_to_left", "left_to_right", "flat").
  *      If unspecified, defaults to "flat", which means the namespace is flat
  *      with no hierarchical structure.
- * 
+ *
  *  <dt>jndi.syntax.separator
- *  <dd>Separator between atomic name components.  
+ *  <dd>Separator between atomic name components.
  *      Required unless direction is "flat".
  *
  *  <dt>jndi.syntax.ignorecase
- *  <dd>If present, "true" means ignore the case when comparing name 
+ *  <dd>If present, "true" means ignore the case when comparing name
  *      components. If its value is not "true", or if the property is not
  *      present, case is considered when comparing name components.
  *
  *  <dt>jndi.syntax.escape
- *  <dd>If present, specifies the escape string for overriding separator, 
+ *  <dd>If present, specifies the escape string for overriding separator,
  *      escapes and quotes.
  *
  *  <dt>jndi.syntax.beginquote
  *  <dd>If present, specifies the string delimiting start of a quoted string.
- * 
+ *
  *  <dt>jndi.syntax.endquote
  *  <dd>String delimiting end of quoted string.
  *      If present, specifies the string delimiting the end of a quoted string.
- *	If not present, use syntax.beginquote as end quote.
+ *      If not present, use syntax.beginquote as end quote.
  *  <dt>jndi.syntax.beginquote2
  *  <dd>Alternative set of begin/end quotes.
- * 
+ *
  *  <dt>jndi.syntax.endquote2
  *  <dd>Alternative set of begin/end quotes.
  *
  *  <dt>jndi.syntax.trimblanks
- *  <dd>If present, "true" means trim any leading and trailing whitespaces 
+ *  <dd>If present, "true" means trim any leading and trailing whitespaces
  *      in a name component for comparison purposes. If its value is not
  *      "true", or if the property is not present, blanks are significant.
  *  <dt>jndi.syntax.separator.ava
- *  <dd>If present, specifies the string that separates 
+ *  <dd>If present, specifies the string that separates
  *      attribute-value-assertions when specifying multiple attribute/value
  *      pairs. (e.g. ","  in age=65,gender=male).
  *  <dt>jndi.syntax.separator.typeval
  *  <dd>If present, specifies the string that separators attribute
- *		from value (e.g. "=" in "age=65")
+ *              from value (e.g. "=" in "age=65")
  *</dl>
  * These properties are interpreted according to the following rules:
  *<ol>
  *<li>
- * In a string without quotes or escapes, any instance of the 
+ * In a string without quotes or escapes, any instance of the
  * separator delimits two atomic names. Each atomic name is referred
  * to as a <em>component</em>.
  *<li>
- * A separator, quote or escape is escaped if preceded immediately 
+ * A separator, quote or escape is escaped if preceded immediately
  * (on the left) by the escape.
  *<li>
  * If there are two sets of quotes, a specific begin-quote must be matched
@@ -100,7 +100,7 @@ import java.util.Properties;
  *<li>
  * A non-escaped begin-quote which precedes a component must be
  * matched by a non-escaped end-quote at the end of the component.
- * A component thus quoted is referred to as a 
+ * A component thus quoted is referred to as a
  * <em>quoted component</em>. It is parsed by
  * removing the being- and end- quotes, and by treating the intervening
  * characters as ordinary characters unless one of the rules involving
@@ -109,7 +109,7 @@ import java.util.Properties;
  * Quotes embedded in non-quoted components are treated as ordinary strings
  * and need not be matched.
  *<li>
- * A separator that is escaped or appears between non-escaped 
+ * A separator that is escaped or appears between non-escaped
  * quotes is treated as an ordinary string and not a separator.
  *<li>
  * An escape string within a quoted component acts as an escape only when
@@ -143,7 +143,6 @@ import java.util.Properties;
  *
  * @author Rosanna Lee
  * @author Scott Seligman
- * @version %I% %E%
  * @since 1.3
  */
 
@@ -173,36 +172,36 @@ public class CompoundName implements Name {
       * @param comps  A non-null enumeration of the components to add.
       *   Each element of the enumeration is of class String.
       *               The enumeration will be consumed to extract its
-      *               elements. 
-      * @param syntax	A non-null properties that specify the syntax of
-      *			this compound name. See class description for
-      *			contents of properties.
+      *               elements.
+      * @param syntax   A non-null properties that specify the syntax of
+      *                 this compound name. See class description for
+      *                 contents of properties.
       */
     protected CompoundName(Enumeration<String> comps, Properties syntax) {
-	if (syntax == null) {
-	    throw new NullPointerException();
-	}
-	mySyntax = syntax;
-	impl = new NameImpl(syntax, comps);
+        if (syntax == null) {
+            throw new NullPointerException();
+        }
+        mySyntax = syntax;
+        impl = new NameImpl(syntax, comps);
     }
 
     /**
       * Constructs a new compound name instance by parsing the string n
       * using the syntax specified by the syntax properties supplied.
       *
-      * @param	n	The non-null string to parse.
-      * @param syntax	A non-null list of properties that specify the syntax of
-      *			this compound name.  See class description for
-      *			contents of properties.
-      * @exception	InvalidNameException If 'n' violates the syntax specified
-      *			by <code>syntax</code>.
+      * @param  n       The non-null string to parse.
+      * @param syntax   A non-null list of properties that specify the syntax of
+      *                 this compound name.  See class description for
+      *                 contents of properties.
+      * @exception      InvalidNameException If 'n' violates the syntax specified
+      *                 by <code>syntax</code>.
       */
     public CompoundName(String n, Properties syntax) throws InvalidNameException {
-	if (syntax == null) {
-	    throw new NullPointerException();
-	}
-	mySyntax = syntax;
-	impl = new NameImpl(syntax, n);
+        if (syntax == null) {
+            throw new NullPointerException();
+        }
+        mySyntax = syntax;
+        impl = new NameImpl(syntax, n);
     }
 
     /**
@@ -218,14 +217,14 @@ public class CompoundName implements Name {
       * @return A non-null string representation of this compound name.
       */
     public String toString() {
-	return (impl.toString());
+        return (impl.toString());
     }
 
     /**
       * Determines whether obj is syntactically equal to this compound name.
       * If obj is null or not a CompoundName, false is returned.
       * Two compound names are equal if each component in one is "equal"
-      * to the corresponding component in the other. 
+      * to the corresponding component in the other.
       *<p>
       * Equality is also defined in terms of the syntax of this compound name.
       * The default implementation of CompoundName uses the syntax properties
@@ -240,30 +239,30 @@ public class CompoundName implements Name {
       * Implementation note: Currently the syntax properties of the two compound
       * names are not compared for equality. They might be in the future.
       *
-      * @param	obj	The possibly null object to compare against.
-      * @return	true if obj is equal to this compound name, false otherwise.
+      * @param  obj     The possibly null object to compare against.
+      * @return true if obj is equal to this compound name, false otherwise.
       * @see #compareTo(java.lang.Object obj)
       */
     public boolean equals(Object obj) {
-	// %%% check syntax too?
-	return (obj != null &&
-		obj instanceof CompoundName &&
-		impl.equals(((CompoundName)obj).impl));
+        // %%% check syntax too?
+        return (obj != null &&
+                obj instanceof CompoundName &&
+                impl.equals(((CompoundName)obj).impl));
     }
 
     /**
       * Computes the hash code of this compound name.
-      * The hash code is the sum of the hash codes of the "canonicalized" 
+      * The hash code is the sum of the hash codes of the "canonicalized"
       * forms of individual components of this compound name.
-      * Each component is "canonicalized" according to the 
+      * Each component is "canonicalized" according to the
       * compound name's syntax before its hash code is computed.
-      * For a case-insensitive name, for example, the uppercased form of 
+      * For a case-insensitive name, for example, the uppercased form of
       * a name has the same hash code as its lowercased equivalent.
-      * 
+      *
       * @return An int representing the hash code of this name.
       */
     public int hashCode() {
-	return impl.hashCode();
+        return impl.hashCode();
     }
 
     /**
@@ -272,17 +271,17 @@ public class CompoundName implements Name {
       * affect the new copy and vice versa.
       * The clone and this compound name share the same syntax.
       *
-      * @return	A non-null copy of this compound name.
+      * @return A non-null copy of this compound name.
       */
     public Object clone() {
-	return (new CompoundName(getAll(), mySyntax));
+        return (new CompoundName(getAll(), mySyntax));
     }
 
     /**
-     * Compares this CompoundName with the specified Object for order.  
+     * Compares this CompoundName with the specified Object for order.
      * Returns a
      * negative integer, zero, or a positive integer as this Name is less
-     * than, equal to, or greater than the given Object. 
+     * than, equal to, or greater than the given Object.
      * <p>
      * If obj is null or not an instance of CompoundName, ClassCastException
      * is thrown.
@@ -303,17 +302,17 @@ public class CompoundName implements Name {
      *<p>
      * Implementation note: Currently the syntax properties of the two compound
      * names are not compared when checking order. They might be in the future.
-     * @param	obj	The non-null object to compare against.
+     * @param   obj     The non-null object to compare against.
      * @return  a negative integer, zero, or a positive integer as this Name
-     *		is less than, equal to, or greater than the given Object.
+     *          is less than, equal to, or greater than the given Object.
      * @exception ClassCastException if obj is not a CompoundName.
      * @see #equals(java.lang.Object)
      */
     public int compareTo(Object obj) {
-	if (!(obj instanceof CompoundName)) {
-	    throw new ClassCastException("Not a CompoundName");
-	}
-	return impl.compareTo(((CompoundName)obj).impl);
+        if (!(obj instanceof CompoundName)) {
+            throw new ClassCastException("Not a CompoundName");
+        }
+        return impl.compareTo(((CompoundName)obj).impl);
     }
 
     /**
@@ -322,7 +321,7 @@ public class CompoundName implements Name {
       * @return The nonnegative number of components in this compound name.
       */
     public int size() {
-	return (impl.size());
+        return (impl.size());
     }
 
     /**
@@ -332,7 +331,7 @@ public class CompoundName implements Name {
       * @return true if this compound name is empty, false otherwise.
       */
     public boolean isEmpty() {
-	return (impl.isEmpty());
+        return (impl.isEmpty());
     }
 
     /**
@@ -341,24 +340,24 @@ public class CompoundName implements Name {
       * The effects of updates to this compound name on this enumeration
       * is undefined.
       *
-      * @return	A non-null enumeration of the components of this
+      * @return A non-null enumeration of the components of this
       * compound name. Each element of the enumeration is of class String.
       */
     public Enumeration<String> getAll() {
-	return (impl.getAll());
+        return (impl.getAll());
     }
 
     /**
       * Retrieves a component of this compound name.
       *
-      * @param	posn	The 0-based index of the component to retrieve.
-      *			Must be in the range [0,size()).
+      * @param  posn    The 0-based index of the component to retrieve.
+      *                 Must be in the range [0,size()).
       * @return The component at index posn.
       * @exception ArrayIndexOutOfBoundsException if posn is outside the
-      * 	specified range.
+      *         specified range.
       */
     public String get(int posn) {
-	return (impl.get(posn));
+        return (impl.get(posn));
     }
 
     /**
@@ -369,16 +368,16 @@ public class CompoundName implements Name {
       * this compound name does not affect the name that is returned and
       * vice versa.
       *
-      * @param	posn	The 0-based index of the component at which to stop.
-      *			Must be in the range [0,size()].
-      * @return	A compound name consisting of the components at indexes in
-      *		the range [0,posn).
+      * @param  posn    The 0-based index of the component at which to stop.
+      *                 Must be in the range [0,size()].
+      * @return A compound name consisting of the components at indexes in
+      *         the range [0,posn).
       * @exception ArrayIndexOutOfBoundsException
-      *		If posn is outside the specified range.
+      *         If posn is outside the specified range.
       */
     public Name getPrefix(int posn) {
-	Enumeration comps = impl.getPrefix(posn);
-	return (new CompoundName(comps, mySyntax));
+        Enumeration comps = impl.getPrefix(posn);
+        return (new CompoundName(comps, mySyntax));
     }
 
     /**
@@ -388,38 +387,38 @@ public class CompoundName implements Name {
       * Subsequent changes to
       * this compound name does not affect the name that is returned.
       *
-      * @param	posn	The 0-based index of the component at which to start.
-      *			Must be in the range [0,size()].
-      * @return	A compound name consisting of the components at indexes in
-      *		the range [posn,size()).  If posn is equal to 
-      * 	size(), an empty compound name is returned.
+      * @param  posn    The 0-based index of the component at which to start.
+      *                 Must be in the range [0,size()].
+      * @return A compound name consisting of the components at indexes in
+      *         the range [posn,size()).  If posn is equal to
+      *         size(), an empty compound name is returned.
       * @exception ArrayIndexOutOfBoundsException
-      *		If posn is outside the specified range.
+      *         If posn is outside the specified range.
       */
     public Name getSuffix(int posn) {
-	Enumeration comps = impl.getSuffix(posn);
-	return (new CompoundName(comps, mySyntax));
+        Enumeration comps = impl.getSuffix(posn);
+        return (new CompoundName(comps, mySyntax));
     }
 
     /**
       * Determines whether a compound name is a prefix of this compound name.
-      * A compound name 'n' is a prefix if it is equal to 
+      * A compound name 'n' is a prefix if it is equal to
       * getPrefix(n.size())--in other words, this compound name
       * starts with 'n'.
       * If n is null or not a compound name, false is returned.
       *<p>
       * Implementation note: Currently the syntax properties of n
       *  are not used when doing the comparison. They might be in the future.
-      * @param	n	The possibly null compound name to check.
-      * @return	true if n is a CompoundName and
-      * 		is a prefix of this compound name, false otherwise.
+      * @param  n       The possibly null compound name to check.
+      * @return true if n is a CompoundName and
+      *                 is a prefix of this compound name, false otherwise.
       */
     public boolean startsWith(Name n) {
-	if (n instanceof CompoundName) {
-	    return (impl.startsWith(n.size(), n.getAll()));
-	} else {
-	    return false;
-	}
+        if (n instanceof CompoundName) {
+            return (impl.startsWith(n.size(), n.getAll()));
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -431,16 +430,16 @@ public class CompoundName implements Name {
       *<p>
       * Implementation note: Currently the syntax properties of n
       *  are not used when doing the comparison. They might be in the future.
-      * @param	n	The possibly null compound name to check.
-      * @return	true if n is a CompoundName and
-      * 	is a suffix of this compound name, false otherwise.
+      * @param  n       The possibly null compound name to check.
+      * @return true if n is a CompoundName and
+      *         is a suffix of this compound name, false otherwise.
       */
     public boolean endsWith(Name n) {
-	if (n instanceof CompoundName) {
-	    return (impl.endsWith(n.size(), n.getAll()));
-	} else {
-	    return false;
-	}
+        if (n instanceof CompoundName) {
+            return (impl.endsWith(n.size(), n.getAll()));
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -449,20 +448,20 @@ public class CompoundName implements Name {
       *<p>
       * Implementation note: Currently the syntax properties of suffix
       *  is not used or checked. They might be in the future.
-      * @param suffix	The non-null components to add.
+      * @param suffix   The non-null components to add.
       * @return The updated CompoundName, not a new one. Cannot be null.
       * @exception InvalidNameException If suffix is not a compound name,
-      *		   or if the addition of the components violates the syntax
-      *		   of this compound name (e.g. exceeding number of components).
+      *            or if the addition of the components violates the syntax
+      *            of this compound name (e.g. exceeding number of components).
       */
     public Name addAll(Name suffix) throws InvalidNameException {
-	if (suffix instanceof CompoundName) {
-	    impl.addAll(suffix.getAll());
-	    return this;
-	} else {
-	    throw new InvalidNameException("Not a compound name: " +
-		suffix.toString());
-	}
+        if (suffix instanceof CompoundName) {
+            impl.addAll(suffix.getAll());
+            return this;
+        } else {
+            throw new InvalidNameException("Not a compound name: " +
+                suffix.toString());
+        }
     }
 
     /**
@@ -475,37 +474,37 @@ public class CompoundName implements Name {
       * Implementation note: Currently the syntax properties of suffix
       *  is not used or checked. They might be in the future.
       *
-      * @param n 	The non-null components to add.
-      * @param posn	The index in this name at which to add the new
-      *			components.  Must be in the range [0,size()].
+      * @param n        The non-null components to add.
+      * @param posn     The index in this name at which to add the new
+      *                 components.  Must be in the range [0,size()].
       * @return The updated CompoundName, not a new one. Cannot be null.
       * @exception ArrayIndexOutOfBoundsException
-      *		If posn is outside the specified range.
+      *         If posn is outside the specified range.
       * @exception InvalidNameException If n is not a compound name,
-      *		   or if the addition of the components violates the syntax
-      *		   of this compound name (e.g. exceeding number of components).
+      *            or if the addition of the components violates the syntax
+      *            of this compound name (e.g. exceeding number of components).
       */
     public Name addAll(int posn, Name n) throws InvalidNameException {
-	if (n instanceof CompoundName) {
-	    impl.addAll(posn, n.getAll());
-	    return this;
-	} else {
-	    throw new InvalidNameException("Not a compound name: " +
-		n.toString());
-	}
+        if (n instanceof CompoundName) {
+            impl.addAll(posn, n.getAll());
+            return this;
+        } else {
+            throw new InvalidNameException("Not a compound name: " +
+                n.toString());
+        }
     }
 
     /**
       * Adds a single component to the end of this compound name.
       *
-      * @param comp	The non-null component to add.
+      * @param comp     The non-null component to add.
       * @return The updated CompoundName, not a new one. Cannot be null.
       * @exception InvalidNameException If adding comp at end of the name
-      *				would violate the compound name's syntax.
+      *                         would violate the compound name's syntax.
       */
     public Name add(String comp) throws InvalidNameException{
-	impl.add(comp);
-	return this;
+        impl.add(comp);
+        return this;
     }
 
     /**
@@ -515,18 +514,18 @@ public class CompoundName implements Name {
       * component are shifted up by one (away from index 0)
       * to accommodate the new component.
       *
-      * @param 	comp	The non-null component to add.
-      * @param	posn	The index at which to add the new component.
-      *			Must be in the range [0,size()].
+      * @param  comp    The non-null component to add.
+      * @param  posn    The index at which to add the new component.
+      *                 Must be in the range [0,size()].
       * @exception ArrayIndexOutOfBoundsException
-      *		If posn is outside the specified range.
+      *         If posn is outside the specified range.
       * @return The updated CompoundName, not a new one. Cannot be null.
       * @exception InvalidNameException If adding comp at the specified position
-      *				would violate the compound name's syntax.
+      *                         would violate the compound name's syntax.
       */
     public Name add(int posn, String comp) throws InvalidNameException{
-	impl.add(posn, comp);
-	return this;
+        impl.add(posn, comp);
+        return this;
     }
 
     /**
@@ -535,17 +534,17 @@ public class CompoundName implements Name {
       * and components at indices greater than 'posn'
       * are shifted down (towards index 0) by one.
       *
-      * @param	posn	The index of the component to delete.
-      *			Must be in the range [0,size()).
+      * @param  posn    The index of the component to delete.
+      *                 Must be in the range [0,size()).
       * @return The component removed (a String).
       * @exception ArrayIndexOutOfBoundsException
-      *		If posn is outside the specified range (includes case where
-      *		compound name is empty).
+      *         If posn is outside the specified range (includes case where
+      *         compound name is empty).
       * @exception InvalidNameException If deleting the component
-      *				would violate the compound name's syntax.
+      *                         would violate the compound name's syntax.
       */
     public Object remove(int posn) throws InvalidNameException {
-	return impl.remove(posn);
+        return impl.remove(posn);
     }
 
     /**
@@ -555,30 +554,30 @@ public class CompoundName implements Name {
      * components (each a <tt>String</tt>).
      */
     private void writeObject(java.io.ObjectOutputStream s)
-	    throws java.io.IOException {
-	s.writeObject(mySyntax);
-	s.writeInt(size());
-	Enumeration comps = getAll();
-	while (comps.hasMoreElements()) {
-	    s.writeObject(comps.nextElement());
-	}
+            throws java.io.IOException {
+        s.writeObject(mySyntax);
+        s.writeInt(size());
+        Enumeration comps = getAll();
+        while (comps.hasMoreElements()) {
+            s.writeObject(comps.nextElement());
+        }
     }
 
     /**
      * Overridden to avoid implementation dependency.
      */
     private void readObject(java.io.ObjectInputStream s)
-	    throws java.io.IOException, ClassNotFoundException {
-	mySyntax = (Properties)s.readObject();
-	impl = new NameImpl(mySyntax);
-	int n = s.readInt();	// number of components
-	try {
-	    while (--n >= 0) {
-		add((String)s.readObject());
-	    }
-	} catch (InvalidNameException e) {
-	    throw (new java.io.StreamCorruptedException("Invalid name"));
-	}
+            throws java.io.IOException, ClassNotFoundException {
+        mySyntax = (Properties)s.readObject();
+        impl = new NameImpl(mySyntax);
+        int n = s.readInt();    // number of components
+        try {
+            while (--n >= 0) {
+                add((String)s.readObject());
+            }
+        } catch (InvalidNameException e) {
+            throw (new java.io.StreamCorruptedException("Invalid name"));
+        }
     }
 
     /**
@@ -590,37 +589,36 @@ public class CompoundName implements Name {
 //   For testing
 
     public static void main(String[] args) {
-	Properties dotSyntax = new Properties();
-	dotSyntax.put("jndi.syntax.direction", "right_to_left");
-	dotSyntax.put("jndi.syntax.separator", ".");
-	dotSyntax.put("jndi.syntax.ignorecase", "true");
-	dotSyntax.put("jndi.syntax.escape", "\\");
-//	dotSyntax.put("jndi.syntax.beginquote", "\"");
-//	dotSyntax.put("jndi.syntax.beginquote2", "'");
+        Properties dotSyntax = new Properties();
+        dotSyntax.put("jndi.syntax.direction", "right_to_left");
+        dotSyntax.put("jndi.syntax.separator", ".");
+        dotSyntax.put("jndi.syntax.ignorecase", "true");
+        dotSyntax.put("jndi.syntax.escape", "\\");
+//      dotSyntax.put("jndi.syntax.beginquote", "\"");
+//      dotSyntax.put("jndi.syntax.beginquote2", "'");
 
         Name first = null;
-	try {
-	    for (int i = 0; i < args.length; i++) {
-		Name name;
-		Enumeration e;
-		System.out.println("Given name: " + args[i]);
-		name = new CompoundName(args[i], dotSyntax);
-		if (first == null) {
-		    first = name;
-		}
-		e = name.getComponents();
-		while (e.hasMoreElements()) {
-		    System.out.println("Element: " + e.nextElement());
-		}
-		System.out.println("Constructed name: " + name.toString());
+        try {
+            for (int i = 0; i < args.length; i++) {
+                Name name;
+                Enumeration e;
+                System.out.println("Given name: " + args[i]);
+                name = new CompoundName(args[i], dotSyntax);
+                if (first == null) {
+                    first = name;
+                }
+                e = name.getComponents();
+                while (e.hasMoreElements()) {
+                    System.out.println("Element: " + e.nextElement());
+                }
+                System.out.println("Constructed name: " + name.toString());
 
-		System.out.println("Compare " + first.toString() + " with "
-		    + name.toString() + " = " + first.compareTo(name));
-	    }
-	} catch (Exception ne) {
-	    ne.printStackTrace();
-	}
+                System.out.println("Compare " + first.toString() + " with "
+                    + name.toString() + " = " + first.compareTo(name));
+            }
+        } catch (Exception ne) {
+            ne.printStackTrace();
+        }
     }
 */
 }
-

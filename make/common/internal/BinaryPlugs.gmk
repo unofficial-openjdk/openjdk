@@ -213,6 +213,11 @@ ifdef OPENJDK
 
 PLUG_IMPORT_DIR=$(BINARY_PLUGS_PATH)
 PLUG_IMPORT_JARFILE=$(BINARY_PLUGS_JARFILE)
+PLUG_IMPORT_JSOUND_LIBRARY=\
+    $(PLUG_IMPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_JSOUND_LIBRARY)
+
+# Whether the import does anything:
+ifeq ($(IMPORT_BINARY_PLUGS),true)
 
 # Import file command
 
@@ -228,6 +233,27 @@ define import-binary-plug-classes
 @$(CAT) $1 | $(SED) -e 's/^/PLUG IMPORT: /'
 ($(CD) $(CLASSDESTDIR) && $(BOOT_JAR_CMD) xf $(PLUG_IMPORT_JARFILE) @$1)
 endef # import-binary-plug-classes
+
+else # IMPORT_BINARY_PLUGS
+
+PLUG_IMPORT_JARFILE=
+PLUG_IMPORT_JSOUND_LIBRARY=
+PLUG_JSOUND_LIBRARY=
+PLUG_LIBRARY_NAMES=
+
+# Import file command
+
+define import-binary-plug-file
+@$(ECHO) "Not importing $(@F)"
+endef # import-binary-plug-file
+
+# Import classes command
+
+define import-binary-plug-classes
+@$(ECHO) "Not importing classes in $1"
+endef # import-binary-plug-classes
+
+endif # IMPORT_BINARY_PLUGS
 
 # Import specific area classes (the classes are always created)
 
@@ -247,8 +273,7 @@ import-binary-plug-jar: \
 
 # Import native libraries
 
-$(LIB_LOCATION)/$(PLUG_JSOUND_LIBRARY): \
-    $(PLUG_IMPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_JSOUND_LIBRARY)
+$(LIB_LOCATION)/$(PLUG_JSOUND_LIBRARY): $(PLUG_IMPORT_JSOUND_LIBRARY)
 	$(import-binary-plug-file)
 
 # Rules only used by lower level makefiles

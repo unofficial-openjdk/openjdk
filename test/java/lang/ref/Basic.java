@@ -40,14 +40,14 @@ public class Basic {
     static boolean finalized = false;
 
     public static class ClearFinalizerThread {
-	protected void finalize() {
-	    System.err.println("Cleared finalizer thread");
-	}
+        protected void finalize() {
+            System.err.println("Cleared finalizer thread");
+        }
     };
 
     protected void finalize() {
-	Basic.finalized = true;
-	System.err.println("Finalized " + this);
+        Basic.finalized = true;
+        System.err.println("Finalized " + this);
     }
 
     public static class Sub { };
@@ -55,93 +55,93 @@ public class Basic {
     Object sub = new Sub();
 
     static void fork(Runnable proc) throws InterruptedException {
-	Thread t = new Thread(proc);
-	t.start();
-	t.join();
+        Thread t = new Thread(proc);
+        t.start();
+        t.join();
     }
 
     static void showReferences() throws InterruptedException {
-	fork(new Runnable() {
-	    public void run() {
-		System.err.println("References: W " + rw.get()
-				   + ", W2 " + rw2.get()
-				   + ", P " + rp.get()
-				   + ", P2 " + rp2.get());
-	    }
-	});
+        fork(new Runnable() {
+            public void run() {
+                System.err.println("References: W " + rw.get()
+                                   + ", W2 " + rw2.get()
+                                   + ", P " + rp.get()
+                                   + ", P2 " + rp2.get());
+            }
+        });
     }
 
     static void createNoise() throws InterruptedException {
-	fork(new Runnable() {
-	    public void run() {
-		keep.addElement(new PhantomReference(new Object(), q2));
-	    }
-	});
+        fork(new Runnable() {
+            public void run() {
+                keep.addElement(new PhantomReference(new Object(), q2));
+            }
+        });
     }
 
 
     public static void main(String[] args) throws Exception {
 
-	fork(new Runnable() {
-	    public void run() {
-		Basic s = new Basic();
-		rw = new WeakReference(s, q);
-		rw2 = new WeakReference(s);
-		rp = new PhantomReference(s, q);
-		rp2 = new PhantomReference(s.sub, q);
-		s = null;
-	    }
-	});
+        fork(new Runnable() {
+            public void run() {
+                Basic s = new Basic();
+                rw = new WeakReference(s, q);
+                rw2 = new WeakReference(s);
+                rp = new PhantomReference(s, q);
+                rp2 = new PhantomReference(s.sub, q);
+                s = null;
+            }
+        });
 
-	showReferences();
+        showReferences();
 
-	int ndq = 0;
-	boolean prevFinalized = false;
+        int ndq = 0;
+        boolean prevFinalized = false;
     outer:
-	for (int i = 1;; i++) {
-	    Reference r;
+        for (int i = 1;; i++) {
+            Reference r;
 
-	    createNoise();
-	    System.err.println("GC " + i);
-	    Thread.sleep(10);
-	    System.gc();
+            createNoise();
+            System.err.println("GC " + i);
+            Thread.sleep(10);
+            System.gc();
 
-	    showReferences();
-	    while ((r = q2.poll()) != null) {
-		System.err.println("Noise " + r);
-	    }
+            showReferences();
+            while ((r = q2.poll()) != null) {
+                System.err.println("Noise " + r);
+            }
 
-	    /* Cause a dummy object to be finalized, since the finalizer thread
-	       might retain a reference to the Basic instance after it's been
-	       finalized (this happens with java_g) */
-	    if (Basic.finalized && !prevFinalized) {
-		fork(new Runnable() {
-		    public void run() {
-			new ClearFinalizerThread();
-		    }});
-		prevFinalized = true;
-	    }
+            /* Cause a dummy object to be finalized, since the finalizer thread
+               might retain a reference to the Basic instance after it's been
+               finalized (this happens with java_g) */
+            if (Basic.finalized && !prevFinalized) {
+                fork(new Runnable() {
+                    public void run() {
+                        new ClearFinalizerThread();
+                    }});
+                prevFinalized = true;
+            }
 
-	    while ((r = q.poll()) != null) {
-		ndq++;
-		if (r != null) {
-		    System.err.println("Dequeued " + r);
-		    if (ndq == 3) break outer;
-		}
-	    }
+            while ((r = q.poll()) != null) {
+                ndq++;
+                if (r != null) {
+                    System.err.println("Dequeued " + r);
+                    if (ndq == 3) break outer;
+                }
+            }
 
-	    if (i >= 10) break;
+            if (i >= 10) break;
 
-	}
-	
-	if (ndq != 3) {
-	    throw new Exception("Expected to dequeue 3 reference objects,"
-				+ " but only got " + ndq);
-	}
+        }
 
-	if (! Basic.finalized) {
-	    throw new Exception("Test object not finalized");
-	}
+        if (ndq != 3) {
+            throw new Exception("Expected to dequeue 3 reference objects,"
+                                + " but only got " + ndq);
+        }
+
+        if (! Basic.finalized) {
+            throw new Exception("Test object not finalized");
+        }
 
     }
 

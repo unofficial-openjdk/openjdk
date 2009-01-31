@@ -40,7 +40,7 @@
  *       JVMTI (which both return modified UTF-8 strings).
  *       (It's possible that the platform encoding IS UTF-8, but we
  *       assume not, just to be safe).
- *      
+ *
  */
 
 #include <stdarg.h>
@@ -53,12 +53,12 @@
 /* Maximim length of a message */
 #define MAX_MESSAGE_LEN MAXPATHLEN*2+512
 
-/* Print message in platform encoding (assume all input is UTF-8 safe) 
+/* Print message in platform encoding (assume all input is UTF-8 safe)
  *    NOTE: This function is at the lowest level of the call tree.
  *          Do not use the ERROR* macros here.
  */
 static void
-vprint_message(FILE *fp, const char *prefix, const char *suffix, 
+vprint_message(FILE *fp, const char *prefix, const char *suffix,
                const char *format, va_list ap)
 {
     jbyte  utf8buf[MAX_MESSAGE_LEN+1];
@@ -85,7 +85,7 @@ print_message(FILE *fp, const char *prefix,  const char *suffix,
               const char *format, ...)
 {
     va_list ap;
-    
+
     va_start(ap, format);
     vprint_message(fp, prefix, suffix, format, ap);
     va_end(ap);
@@ -96,7 +96,7 @@ void
 error_message(const char *format, ...)
 {
     va_list ap;
-    
+
     va_start(ap, format);
     vprint_message(stderr, "ERROR: ", "\n", format, ap);
     va_end(ap);
@@ -110,7 +110,7 @@ void
 tty_message(const char *format, ...)
 {
     va_list ap;
-    
+
     va_start(ap, format);
     vprint_message(stdout, "", "\n", format, ap);
     va_end(ap);
@@ -118,7 +118,7 @@ tty_message(const char *format, ...)
 }
 
 /* Print assertion error message to stderr. */
-void 
+void
 jdiAssertionFailed(char *fileName, int lineNumber, char *msg)
 {
     LOG_MISC(("ASSERT FAILED: %s : %d - %s\n", fileName, lineNumber, msg));
@@ -317,7 +317,7 @@ do_pause(void)
     int interval = 10;  /* 10 second message check */
 
     /*LINTED*/
-    tty_message("DEBUGGING: JDWP pause for PID %d, THREAD %d (0x%x)", 
+    tty_message("DEBUGGING: JDWP pause for PID %d, THREAD %d (0x%x)",
                     /*LINTED*/
                     (int)(intptr_t)pid, (int)(intptr_t)tid, (int)(intptr_t)tid);
     while ( p && timeleft > 0 ) {
@@ -328,5 +328,3 @@ do_pause(void)
         tty_message("DEBUGGING: JDWP pause got tired of waiting and gave up.");
     }
 }
-
-

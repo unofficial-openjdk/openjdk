@@ -68,7 +68,7 @@ Java_java_io_FileInputStream_read(JNIEnv *env, jobject this) {
 
 JNIEXPORT jint JNICALL
 Java_java_io_FileInputStream_readBytes(JNIEnv *env, jobject this,
-	jbyteArray bytes, jint off, jint len) {
+        jbyteArray bytes, jint off, jint len) {
     return readBytes(env, this, bytes, off, len, fis_fd);
 }
 
@@ -84,7 +84,7 @@ Java_java_io_FileInputStream_skip(JNIEnv *env, jobject this, jlong toSkip) {
     if ((cur = IO_Lseek(fd, (jlong)0, (jint)SEEK_CUR)) == -1) {
         JNU_ThrowIOExceptionWithLastError(env, "Seek error");
     } else if ((end = IO_Lseek(fd, toSkip, (jint)SEEK_CUR)) == -1) {
-	JNU_ThrowIOExceptionWithLastError(env, "Seek error");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek error");
     }
     return (end - cur);
 }
@@ -93,15 +93,15 @@ JNIEXPORT jint JNICALL
 Java_java_io_FileInputStream_available(JNIEnv *env, jobject this) {
     jlong ret;
     FD fd = GET_FD(this, fis_fd);
-    if (fd == -1) { 
+    if (fd == -1) {
         JNU_ThrowIOException (env, "Stream Closed");
         return 0;
     }
     if (IO_Available(fd, &ret)) {
         if (ret > INT_MAX) {
-	    ret = (jlong) INT_MAX;
-	}
-	return jlong_to_jint(ret);
+            ret = (jlong) INT_MAX;
+        }
+        return jlong_to_jint(ret);
     }
     JNU_ThrowIOExceptionWithLastError(env, NULL);
     return 0;

@@ -37,12 +37,12 @@ import javax.crypto.SealedObject;
 import javax.crypto.spec.*;
 
 /**
- * This class is introduced to workaround a problem in 
+ * This class is introduced to workaround a problem in
  * the SunJCE provider shipped in JCE 1.2.1: the class
  * SealedObjectForKeyProtector was obfuscated due to a mistake.
- * 
- * In order to retrieve secret keys in a JCEKS KeyStore written 
- * by the SunJCE provider in JCE 1.2.1, this class will be used. 
+ *
+ * In order to retrieve secret keys in a JCEKS KeyStore written
+ * by the SunJCE provider in JCE 1.2.1, this class will be used.
  *
  * @author Valerie Peng
  *
@@ -55,10 +55,10 @@ final class ai extends javax.crypto.SealedObject {
     static final long serialVersionUID = -7051502576727967444L;
 
     ai(SealedObject so) {
-	super(so);
+        super(so);
     }
 
     Object readResolve() throws ObjectStreamException {
-	return new SealedObjectForKeyProtector(this);
+        return new SealedObjectForKeyProtector(this);
     }
 }

@@ -60,11 +60,10 @@ import java.security.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Terry Kellerman
  * @since 1.4
  */
-public class MetalRootPaneUI extends BasicRootPaneUI 
+public class MetalRootPaneUI extends BasicRootPaneUI
 {
     /**
      * Keys to lookup borders in defaults table.
@@ -121,7 +120,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
     private JRootPane root;
 
     /**
-     * <code>Cursor</code> used to track the cursor set by the user.  
+     * <code>Cursor</code> used to track the cursor set by the user.
      * This is initially <code>Cursor.DEFAULT_CURSOR</code>.
      */
     private Cursor lastCursor =
@@ -151,7 +150,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
      *
      * @param c the JRootPane to install state onto
      */
-    public void installUI(JComponent c) { 
+    public void installUI(JComponent c) {
         super.installUI(c);
         root = (JRootPane)c;
         int style = root.getWindowDecorationStyle();
@@ -293,16 +292,16 @@ public class MetalRootPaneUI extends BasicRootPaneUI
         uninstallWindowListeners(root);
         setTitlePane(root, null);
         uninstallLayout(root);
-	// We have to revalidate/repaint root if the style is JRootPane.NONE
-	// only. When we needs to call revalidate/repaint with other styles
-	// the installClientDecorations is always called after this method
-	// imediatly and it will cause the revalidate/repaint at the proper
-	// time.
+        // We have to revalidate/repaint root if the style is JRootPane.NONE
+        // only. When we needs to call revalidate/repaint with other styles
+        // the installClientDecorations is always called after this method
+        // imediatly and it will cause the revalidate/repaint at the proper
+        // time.
         int style = root.getWindowDecorationStyle();
         if (style == JRootPane.NONE) {
-	    root.repaint();
-	    root.revalidate();
-	}
+            root.repaint();
+            root.revalidate();
+        }
         // Reset the cursor, as we may have changed it to a resize cursor
         if (window != null) {
             window.setCursor(Cursor.getPredefinedCursor
@@ -335,13 +334,13 @@ public class MetalRootPaneUI extends BasicRootPaneUI
         return new MetalRootLayout();
     }
 
-    /** 
+    /**
      * Sets the window title pane -- the JComponent used to provide a plaf a
      * way to override the native operating system's window title pane with
-     * one whose look and feel are controlled by the plaf.  The plaf creates 
+     * one whose look and feel are controlled by the plaf.  The plaf creates
      * and sets this value; the default is null, implying a native operating
      * system window title pane.
-     *  
+     *
      * @param content the <code>JComponent</code> to use for the window title pane.
      */
     private void setTitlePane(JRootPane root, JComponent titlePane) {
@@ -382,7 +381,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
      * Invoked when a property changes. <code>MetalRootPaneUI</code> is
      * primarily interested in events originating from the
      * <code>JRootPane</code> it has been installed on identifying the
-     * property <code>windowDecorationStyle</code>. If the 
+     * property <code>windowDecorationStyle</code>. If the
      * <code>windowDecorationStyle</code> has changed to a value other
      * than <code>JRootPane.NONE</code>, this will add a <code>Component</code>
      * to the <code>JRootPane</code> to render the window decorations, as well
@@ -393,17 +392,17 @@ public class MetalRootPaneUI extends BasicRootPaneUI
      * as well resetting the Border to what it was before
      * <code>installUI</code> was invoked.
      *
-     * @param e A PropertyChangeEvent object describing the event source 
+     * @param e A PropertyChangeEvent object describing the event source
      *          and the property that has changed.
      */
     public void propertyChange(PropertyChangeEvent e) {
         super.propertyChange(e);
-        
+
         String propertyName = e.getPropertyName();
         if(propertyName == null) {
             return;
         }
-    
+
         if(propertyName.equals("windowDecorationStyle")) {
             JRootPane root = (JRootPane) e.getSource();
             int style = root.getWindowDecorationStyle();
@@ -425,10 +424,10 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             }
         }
         return;
-    } 
+    }
 
-    /** 
-     * A custom layout manager that is responsible for the layout of 
+    /**
+     * A custom layout manager that is responsible for the layout of
      * layeredPane, glassPane, menuBar and titlePane, if one has been
      * installed.
      */
@@ -440,7 +439,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
          *
          * @param the Container for which this layout manager is being used
          * @return a Dimension object containing the layout's preferred size
-         */ 
+         */
         public Dimension preferredLayoutSize(Container parent) {
             Dimension cpd, mbd, tpd;
             int cpWidth = 0;
@@ -451,7 +450,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             int tpHeight = 0;
             Insets i = parent.getInsets();
             JRootPane root = (JRootPane) parent;
-    
+
             if(root.getContentPane() != null) {
                 cpd = root.getContentPane().getPreferredSize();
             } else {
@@ -468,7 +467,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                     mbWidth = mbd.width;
                     mbHeight = mbd.height;
                 }
-            } 
+            }
 
             if (root.getWindowDecorationStyle() != JRootPane.NONE &&
                      (root.getUI() instanceof MetalRootPaneUI)) {
@@ -483,7 +482,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                 }
             }
 
-            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right, 
+            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right,
                                  cpHeight + mbHeight + tpWidth + i.top + i.bottom);
         }
 
@@ -492,7 +491,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
          *
          * @param the Container for which this layout manager is being used
          * @return a Dimension object containing the layout's minimum size
-         */ 
+         */
         public Dimension minimumLayoutSize(Container parent) {
             Dimension cpd, mbd, tpd;
             int cpWidth = 0;
@@ -503,7 +502,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             int tpHeight = 0;
             Insets i = parent.getInsets();
             JRootPane root = (JRootPane) parent;
-        
+
             if(root.getContentPane() != null) {
                 cpd = root.getContentPane().getMinimumSize();
             } else {
@@ -520,7 +519,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                     mbWidth = mbd.width;
                     mbHeight = mbd.height;
                 }
-            }            
+            }
             if (root.getWindowDecorationStyle() != JRootPane.NONE &&
                      (root.getUI() instanceof MetalRootPaneUI)) {
                 JComponent titlePane = ((MetalRootPaneUI)root.getUI()).
@@ -534,7 +533,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                 }
             }
 
-            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right, 
+            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right,
                                  cpHeight + mbHeight + tpWidth + i.top + i.bottom);
         }
 
@@ -543,7 +542,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
          *
          * @param the Container for which this layout manager is being used
          * @return a Dimension object containing the layout's maximum size
-         */ 
+         */
         public Dimension maximumLayoutSize(Container target) {
             Dimension cpd, mbd, tpd;
             int cpWidth = Integer.MAX_VALUE;
@@ -554,7 +553,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             int tpHeight = Integer.MAX_VALUE;
             Insets i = target.getInsets();
             JRootPane root = (JRootPane) target;
-        
+
             if(root.getContentPane() != null) {
                 cpd = root.getContentPane().getMaximumSize();
                 if (cpd != null) {
@@ -591,7 +590,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             if (maxHeight != Integer.MAX_VALUE) {
                 maxHeight = cpHeight + mbHeight + tpHeight + i.top + i.bottom;
             }
-    
+
             int maxWidth = Math.max(Math.max(cpWidth, mbWidth), tpWidth);
             // Similar overflow comment as above
             if (maxWidth != Integer.MAX_VALUE) {
@@ -600,13 +599,13 @@ public class MetalRootPaneUI extends BasicRootPaneUI
 
             return new Dimension(maxWidth, maxHeight);
         }
-    
+
         /**
          * Instructs the layout manager to perform the layout for the specified
          * container.
          *
          * @param the Container for which this layout manager is being used
-         */ 
+         */
         public void layoutContainer(Container parent) {
             JRootPane root = (JRootPane) parent;
             Rectangle b = root.getBounds();
@@ -614,7 +613,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             int nextY = 0;
             int w = b.width - i.right - i.left;
             int h = b.height - i.top - i.bottom;
-    
+
             if(root.getLayeredPane() != null) {
                 root.getLayeredPane().setBounds(i.left, i.top, w, h);
             }
@@ -633,7 +632,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                         int tpHeight = tpd.height;
                         titlePane.setBounds(0, 0, w, tpHeight);
                         nextY += tpHeight;
-                    }                    
+                    }
                 }
             }
             if(root.getMenuBar() != null) {
@@ -643,11 +642,11 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             }
             if(root.getContentPane() != null) {
                 Dimension cpd = root.getContentPane().getPreferredSize();
-                root.getContentPane().setBounds(0, nextY, w, 
+                root.getContentPane().setBounds(0, nextY, w,
                 h < nextY ? 0 : h - nextY);
             }
         }
-    
+
         public void addLayoutComponent(String name, Component comp) {}
         public void removeLayoutComponent(Component comp) {}
         public void addLayoutComponent(Component comp, Object constraints) {}
@@ -830,7 +829,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
             if (isMovingWindow) {
                 Point eventLocationOnScreen = ev.getLocationOnScreen();
                 w.setLocation(eventLocationOnScreen.x - dragOffsetX,
-                              eventLocationOnScreen.y - dragOffsetY); 
+                              eventLocationOnScreen.y - dragOffsetY);
             }
             else if (dragCursor != 0) {
                 Rectangle r = w.getBounds();
@@ -860,7 +859,7 @@ public class MetalRootPaneUI extends BasicRootPaneUI
                            -(pt.y - dragOffsetY));
                     break;
                 case Cursor.SE_RESIZE_CURSOR:
-                    adjust(r, min, 0, 0, 
+                    adjust(r, min, 0, 0,
                            pt.x + (dragWidth - dragOffsetX) - r.width,
                            pt.y + (dragHeight - dragOffsetY) -
                            r.height);

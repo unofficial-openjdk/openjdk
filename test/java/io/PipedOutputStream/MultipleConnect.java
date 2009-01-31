@@ -39,8 +39,8 @@ public class MultipleConnect {
         os.connect(is);
         try {
             is.connect(os2);
-            throw new Exception("Test failed: IOException expected"); 
+            throw new Exception("Test failed: IOException expected");
         } catch(IOException e) {
-        } 
+        }
     }
 }

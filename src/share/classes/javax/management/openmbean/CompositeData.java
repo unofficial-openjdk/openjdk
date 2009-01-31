@@ -79,8 +79,8 @@ public interface CompositeData {
     public Object[] getAll(String[] keys) ;
 
     /**
-     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance contains 
-     * an item whose name is <tt>key</tt>. 
+     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance contains
+     * an item whose name is <tt>key</tt>.
      * If <tt>key</tt> is a null or empty String, this method simply returns false.
      *
      * @param key the key to be tested.
@@ -90,7 +90,7 @@ public interface CompositeData {
     public boolean containsKey(String key) ;
 
     /**
-     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance contains an item 
+     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance contains an item
      * whose value is <tt>value</tt>.
      *
      * @param value the value to be tested.
@@ -101,8 +101,8 @@ public interface CompositeData {
 
     /**
      * Returns an unmodifiable Collection view of the item values contained in this <tt>CompositeData</tt> instance.
-     * The returned collection's iterator will return the values in the ascending lexicographic order of the corresponding 
-     * item names. 
+     * The returned collection's iterator will return the values in the ascending lexicographic order of the corresponding
+     * item names.
      *
      * @return the values.
      */
@@ -110,7 +110,7 @@ public interface CompositeData {
 
     /**
      * Compares the specified <var>obj</var> parameter with this
-     * <code>CompositeData</code> instance for equality. 
+     * <code>CompositeData</code> instance for equality.
      * <p>
      * Returns <tt>true</tt> if and only if all of the following statements are true:
      * <ul>
@@ -126,8 +126,8 @@ public interface CompositeData {
      * <p>
      * This ensures that this <tt>equals</tt> method works properly for
      * <var>obj</var> parameters which are different implementations of the
-     * <code>CompositeData</code> interface, with the restrictions mentioned in the 
-     * {@link java.util.Collection#equals(Object) equals} 
+     * <code>CompositeData</code> interface, with the restrictions mentioned in the
+     * {@link java.util.Collection#equals(Object) equals}
      * method of the <tt>java.util.Collection</tt> interface.
      *
      * @param  obj  the object to be compared for equality with this
@@ -138,11 +138,11 @@ public interface CompositeData {
     public boolean equals(Object obj) ;
 
     /**
-     * Returns the hash code value for this <code>CompositeData</code> instance. 
+     * Returns the hash code value for this <code>CompositeData</code> instance.
      * <p>
-     * The hash code of a <code>CompositeData</code> instance is the sum of the hash codes 
+     * The hash code of a <code>CompositeData</code> instance is the sum of the hash codes
      * of all elements of information used in <code>equals</code> comparisons
-     * (ie: its <i>composite type</i> and all the item values). 
+     * (ie: its <i>composite type</i> and all the item values).
      * <p>
      * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code>
      * for any two <code>CompositeData</code> instances <code>t1</code> and <code>t2</code>,
@@ -161,14 +161,14 @@ public interface CompositeData {
     public int hashCode() ;
 
     /**
-     * Returns a string representation of this <code>CompositeData</code> instance. 
+     * Returns a string representation of this <code>CompositeData</code> instance.
      * <p>
-     * The string representation consists of the name of the implementing class, 
+     * The string representation consists of the name of the implementing class,
      * the string representation of the composite type of this instance, and the string representation of the contents
      * (ie list the itemName=itemValue mappings).
-     * 
+     *
      * @return  a string representation of this <code>CompositeData</code> instance
      */
     public String toString() ;
 
-} 
+}

@@ -51,7 +51,6 @@ import sun.swing.UIAction;
 /**
  * BasicTableUI implementation
  *
- * @version %I% %G%
  * @author Philip Milne
  * @author Shannon Hickey (drag and drop)
  */
@@ -79,7 +78,7 @@ public class BasicTableUI extends TableUI
      * Local cache of Table's client property "Table.isFileList"
      */
     private boolean isFileList = false;
-    
+
 //
 //  Helper class for keyboard actions
 //
@@ -92,27 +91,27 @@ public class BasicTableUI extends TableUI
 
         private static final String NEXT_ROW = "selectNextRow";
         private static final String NEXT_ROW_CELL = "selectNextRowCell";
-	private static final String NEXT_ROW_EXTEND_SELECTION =
+        private static final String NEXT_ROW_EXTEND_SELECTION =
                 "selectNextRowExtendSelection";
         private static final String NEXT_ROW_CHANGE_LEAD =
                 "selectNextRowChangeLead";
         private static final String PREVIOUS_ROW = "selectPreviousRow";
         private static final String PREVIOUS_ROW_CELL = "selectPreviousRowCell";
-	private static final String PREVIOUS_ROW_EXTEND_SELECTION =
+        private static final String PREVIOUS_ROW_EXTEND_SELECTION =
                 "selectPreviousRowExtendSelection";
         private static final String PREVIOUS_ROW_CHANGE_LEAD =
                 "selectPreviousRowChangeLead";
 
         private static final String NEXT_COLUMN = "selectNextColumn";
         private static final String NEXT_COLUMN_CELL = "selectNextColumnCell";
-	private static final String NEXT_COLUMN_EXTEND_SELECTION =
+        private static final String NEXT_COLUMN_EXTEND_SELECTION =
                 "selectNextColumnExtendSelection";
         private static final String NEXT_COLUMN_CHANGE_LEAD =
                 "selectNextColumnChangeLead";
         private static final String PREVIOUS_COLUMN = "selectPreviousColumn";
         private static final String PREVIOUS_COLUMN_CELL =
                 "selectPreviousColumnCell";
-	private static final String PREVIOUS_COLUMN_EXTEND_SELECTION =
+        private static final String PREVIOUS_COLUMN_EXTEND_SELECTION =
                 "selectPreviousColumnExtendSelection";
         private static final String PREVIOUS_COLUMN_CHANGE_LEAD =
                 "selectPreviousColumnChangeLead";
@@ -126,7 +125,7 @@ public class BasicTableUI extends TableUI
         private static final String SCROLL_RIGHT_EXTEND_SELECTION =
                 "scrollRightExtendSelection";
 
-	private static final String SCROLL_UP_CHANGE_SELECTION =
+        private static final String SCROLL_UP_CHANGE_SELECTION =
                 "scrollUpChangeSelection";
         private static final String SCROLL_UP_EXTEND_SELECTION =
                 "scrollUpExtendSelection";
@@ -167,20 +166,20 @@ public class BasicTableUI extends TableUI
 
         // give focus to the JTableHeader, if one exists
         private static final String FOCUS_HEADER = "focusHeader";
-        
+
         protected int dx;
         protected int dy;
-	protected boolean extend;
-	protected boolean inSelection;
-        
+        protected boolean extend;
+        protected boolean inSelection;
+
         // horizontally, forwards always means right,
         // regardless of component orientation
         protected boolean forwards;
         protected boolean vertically;
         protected boolean toLimit;
 
-	protected int leadRow;
-	protected int leadColumn;
+        protected int leadRow;
+        protected int leadColumn;
 
         Actions(String name) {
             super(name);
@@ -220,14 +219,14 @@ public class BasicTableUI extends TableUI
             this.toLimit = toLimit;
         }
 
-	private static int clipToRange(int i, int a, int b) {
-	    return Math.min(Math.max(i, a), b-1);
-	}
+        private static int clipToRange(int i, int a, int b) {
+            return Math.min(Math.max(i, a), b-1);
+        }
 
-	private void moveWithinTableRange(JTable table, int dx, int dy) {
+        private void moveWithinTableRange(JTable table, int dx, int dy) {
             leadRow = clipToRange(leadRow+dy, 0, table.getRowCount());
             leadColumn = clipToRange(leadColumn+dx, 0, table.getColumnCount());
-	}
+        }
 
         private static int sign(int num) {
             return (num < 0) ? -1 : ((num == 0) ? 0 : 1);
@@ -245,7 +244,7 @@ public class BasicTableUI extends TableUI
          * the intent of this method, especially when deciding whether to
          * query the selection models or interact with JTable directly.
          */
-	private boolean moveWithinSelectedRange(JTable table, int dx, int dy,
+        private boolean moveWithinSelectedRange(JTable table, int dx, int dy,
                 ListSelectionModel rsm, ListSelectionModel csm) {
 
             // Note: The Actions constructor ensures that only one of
@@ -339,7 +338,7 @@ public class BasicTableUI extends TableUI
             } while (stayInSelection && !table.isCellSelected(leadRow, leadColumn));
 
             return stayInSelection;
-	}
+        }
 
         /**
          * Find the next lead row and column based on the given
@@ -395,7 +394,7 @@ public class BasicTableUI extends TableUI
                     key == SCROLL_LEFT_EXTEND_SELECTION ||
                     key == SCROLL_RIGHT_CHANGE_SELECTION ||
                     key == SCROLL_RIGHT_EXTEND_SELECTION ||
-	            key == SCROLL_UP_CHANGE_SELECTION ||
+                    key == SCROLL_UP_CHANGE_SELECTION ||
                     key == SCROLL_UP_EXTEND_SELECTION ||
                     key == SCROLL_DOWN_CHANGE_SELECTION ||
                     key == SCROLL_DOWN_EXTEND_SELECTION ||
@@ -424,7 +423,7 @@ public class BasicTableUI extends TableUI
                             JScrollPane)) {
                         return;
                     }
-    
+
                     Dimension delta = table.getParent().getSize();
 
                     if (vertically) {
@@ -452,7 +451,7 @@ public class BasicTableUI extends TableUI
                         } else {
                             r.x -= delta.width;
                         }
-                        
+
                         int newColumn = table.columnAtPoint(r.getLocation());
                         if (newColumn == -1) {
                             boolean ltr = table.getComponentOrientation().isLeftToRight();
@@ -487,7 +486,7 @@ public class BasicTableUI extends TableUI
                     key == SCROLL_LEFT_EXTEND_SELECTION ||
                     key == SCROLL_RIGHT_CHANGE_SELECTION ||
                     key == SCROLL_RIGHT_EXTEND_SELECTION ||
-	            key == SCROLL_UP_CHANGE_SELECTION ||
+                    key == SCROLL_UP_CHANGE_SELECTION ||
                     key == SCROLL_UP_EXTEND_SELECTION ||
                     key == SCROLL_DOWN_CHANGE_SELECTION ||
                     key == SCROLL_DOWN_EXTEND_SELECTION ||
@@ -504,7 +503,7 @@ public class BasicTableUI extends TableUI
                         !table.getCellEditor().stopCellEditing()) {
                     return;
                 }
-    
+
                 // Unfortunately, this strategy introduces bugs because
                 // of the asynchronous nature of requestFocus() call below.
                 // Introducing a delay with invokeLater() makes this work
@@ -516,7 +515,7 @@ public class BasicTableUI extends TableUI
                 // to ignore the call to requestFocus() when the component
                 // already has focus may ligitimately be made as the
                 // request focus event is dequeued, not before.
-    
+
                 // boolean wasEditingWithFocus = table.isEditing() &&
                 // table.getEditorComponent().isFocusOwner();
 
@@ -590,7 +589,7 @@ public class BasicTableUI extends TableUI
                                 false, false);
                     }
                 }
-    
+
                 /*
                 if (wasEditingWithFocus) {
                     table.editCellAt(leadRow, leadColumn);
@@ -653,7 +652,7 @@ public class BasicTableUI extends TableUI
                             ((BasicTableHeaderUI)thUI).selectColumn(col);
                         }
                     }
-                    
+
                     //Then give the header the focus.
                     th.requestFocusInWindow();
                 }
@@ -742,7 +741,7 @@ public class BasicTableUI extends TableUI
      public class KeyHandler implements KeyListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this      
+        // new functionality add it to the Handler, but make sure this
         // class calls into the Handler.
         public void keyPressed(KeyEvent e) {
             getHandler().keyPressed(e);
@@ -769,7 +768,7 @@ public class BasicTableUI extends TableUI
     public class FocusHandler implements FocusListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this      
+        // new functionality add it to the Handler, but make sure this
         // class calls into the Handler.
         public void focusGained(FocusEvent e) {
             getHandler().focusGained(e);
@@ -792,7 +791,7 @@ public class BasicTableUI extends TableUI
     public class MouseInputHandler implements MouseInputListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this      
+        // new functionality add it to the Handler, but make sure this
         // class calls into the Handler.
         public void mouseClicked(MouseEvent e) {
             getHandler().mouseClicked(e);
@@ -800,7 +799,7 @@ public class BasicTableUI extends TableUI
 
         public void mousePressed(MouseEvent e) {
             getHandler().mousePressed(e);
-	}
+        }
 
         public void mouseReleased(MouseEvent e) {
             getHandler().mouseReleased(e);
@@ -832,9 +831,9 @@ public class BasicTableUI extends TableUI
             int lr = getAdjustedLead(table, true);
             int lc = getAdjustedLead(table, false);
 
-	    if (lr < 0 || lc < 0) {
-		return;
-	    }
+            if (lr < 0 || lc < 0) {
+                return;
+            }
 
             Rectangle dirtyRect = table.getCellRect(lr, lc, false);
             table.repaint(dirtyRect);
@@ -863,17 +862,17 @@ public class BasicTableUI extends TableUI
             // in the table and then forward it to the editor if the editor
             // had focus. Make sure this doesn't happen by checking our
             // InputMaps.
-	    InputMap map = table.getInputMap(JComponent.WHEN_FOCUSED);
-	    if (map != null && map.get(keyStroke) != null) {
-		return;
-	    }
-	    map = table.getInputMap(JComponent.
-				  WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-	    if (map != null && map.get(keyStroke) != null) {
-		return;
-	    }
+            InputMap map = table.getInputMap(JComponent.WHEN_FOCUSED);
+            if (map != null && map.get(keyStroke) != null) {
+                return;
+            }
+            map = table.getInputMap(JComponent.
+                                  WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            if (map != null && map.get(keyStroke) != null) {
+                return;
+            }
 
-	    keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+            keyStroke = KeyStroke.getKeyStrokeForEvent(e);
 
             // The AWT seems to generate an unconsumed \r event when
             // ENTER (\n) is pressed.
@@ -901,22 +900,22 @@ public class BasicTableUI extends TableUI
             if (table.isEditing() && editorComp != null) {
                 if (editorComp instanceof JComponent) {
                     JComponent component = (JComponent)editorComp;
-		    map = component.getInputMap(JComponent.WHEN_FOCUSED);
-		    Object binding = (map != null) ? map.get(keyStroke) : null;
-		    if (binding == null) {
-			map = component.getInputMap(JComponent.
-					 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-			binding = (map != null) ? map.get(keyStroke) : null;
-		    }
-		    if (binding != null) {
-			ActionMap am = component.getActionMap();
-			Action action = (am != null) ? am.get(binding) : null;
-			if (action != null && SwingUtilities.
-			    notifyAction(action, keyStroke, e, component,
-					 e.getModifiers())) {
-			    e.consume();
-			}
-		    }
+                    map = component.getInputMap(JComponent.WHEN_FOCUSED);
+                    Object binding = (map != null) ? map.get(keyStroke) : null;
+                    if (binding == null) {
+                        map = component.getInputMap(JComponent.
+                                         WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                        binding = (map != null) ? map.get(keyStroke) : null;
+                    }
+                    if (binding != null) {
+                        ActionMap am = component.getActionMap();
+                        Action action = (am != null) ? am.get(binding) : null;
+                        if (action != null && SwingUtilities.
+                            notifyAction(action, keyStroke, e, component,
+                                         e.getModifiers())) {
+                            e.consume();
+                        }
+                    }
                 }
             }
         }
@@ -942,8 +941,8 @@ public class BasicTableUI extends TableUI
         }
 
         private boolean repostEvent(MouseEvent e) {
-	    // Check for isEditing() in case another event has
-	    // caused the editor to be removed. See bug #4306499.
+            // Check for isEditing() in case another event has
+            // caused the editor to be removed. See bug #4306499.
             if (dispatchComponent == null || !table.isEditing()) {
                 return false;
             }
@@ -969,7 +968,7 @@ public class BasicTableUI extends TableUI
         // of a drag sequence) also caused the selection change to be fully
         // processed.
         private boolean dragPressDidSelection;
-        
+
         // Set to true when a drag gesture has been fully recognized and DnD
         // begins. Use this to ignore further mouse events which could be
         // delivered if DnD is cancelled (via ESCAPE for example)
@@ -1082,7 +1081,7 @@ public class BasicTableUI extends TableUI
             }
 
             adjustSelection(e);
-	}
+        }
 
         private void adjustSelection(MouseEvent e) {
             // Fix for 4835633
@@ -1101,7 +1100,7 @@ public class BasicTableUI extends TableUI
                 }
                 return;
             }
-	    // The autoscroller can generate drag events outside the
+            // The autoscroller can generate drag events outside the
             // table's range.
             if ((pressedCol == -1) || (pressedRow == -1)) {
                 return;
@@ -1182,7 +1181,7 @@ public class BasicTableUI extends TableUI
                     maybeStartTimer();
                     return;
                 }
-                
+
                 Point p = e.getPoint();
 
                 if (pressedEvent != null &&
@@ -1257,10 +1256,10 @@ public class BasicTableUI extends TableUI
 
 
         // PropertyChangeListener
-	public void propertyChange(PropertyChangeEvent event) {
-	    String changeName = event.getPropertyName();
+        public void propertyChange(PropertyChangeEvent event) {
+            String changeName = event.getPropertyName();
 
-	    if ("componentOrientation" == changeName) {
+            if ("componentOrientation" == changeName) {
                 InputMap inputMap = getInputMap(
                     JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
@@ -1268,11 +1267,11 @@ public class BasicTableUI extends TableUI
                     JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
                     inputMap);
 
-		JTableHeader header = table.getTableHeader();
-		if (header != null) {
-		    header.setComponentOrientation(
+                JTableHeader header = table.getTableHeader();
+                if (header != null) {
+                    header.setComponentOrientation(
                             (ComponentOrientation)event.getNewValue());
-		}
+                }
             } else if ("dropLocation" == changeName) {
                 JTable.DropLocation oldValue = (JTable.DropLocation)event.getOldValue();
                 repaintDropLocation(oldValue);
@@ -1294,7 +1293,7 @@ public class BasicTableUI extends TableUI
                     table.getSelectionModel().addListSelectionListener(getHandler());
                 }
             }
-	}
+        }
 
         private void repaintDropLocation(JTable.DropLocation loc) {
             if (loc == null) {
@@ -1335,7 +1334,7 @@ public class BasicTableUI extends TableUI
         if (!isFileList) {
             return false;
         }
-        
+
         return SwingUtilities2.pointOutsidePrefSize(table, row, column, p);
     }
 
@@ -1354,7 +1353,7 @@ public class BasicTableUI extends TableUI
      * Creates the key listener for handling keyboard navigation in the JTable.
      */
     protected KeyListener createKeyListener() {
-	return null;
+        return null;
     }
 
     /**
@@ -1441,15 +1440,15 @@ public class BasicTableUI extends TableUI
     }
 
     private void installDefaults2() {
-	TransferHandler th = table.getTransferHandler();
-	if (th == null || th instanceof UIResource) {
-	    table.setTransferHandler(defaultTransferHandler);
+        TransferHandler th = table.getTransferHandler();
+        if (th == null || th instanceof UIResource) {
+            table.setTransferHandler(defaultTransferHandler);
             // default TransferHandler doesn't support drop
             // so we don't want drop handling
             if (table.getDropTarget() instanceof UIResource) {
                 table.setDropTarget(null);
             }
-	}
+        }
     }
 
     /**
@@ -1477,11 +1476,11 @@ public class BasicTableUI extends TableUI
         LazyActionMap.installLazyActionMap(table, BasicTableUI.class,
                 "Table.actionMap");
 
-	InputMap inputMap = getInputMap(JComponent.
-					WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-	SwingUtilities.replaceUIInputMap(table,
-				JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
-				inputMap);
+        InputMap inputMap = getInputMap(JComponent.
+                                        WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        SwingUtilities.replaceUIInputMap(table,
+                                JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
+                                inputMap);
     }
 
     InputMap getInputMap(int condition) {
@@ -1515,7 +1514,7 @@ public class BasicTableUI extends TableUI
         // that you should be very careful about making sure a particular
         // combination of parameters is supported before changing or
         // adding anything here.
-        
+
         map.put(new Actions(Actions.NEXT_COLUMN, 1, 0,
                 false, false));
         map.put(new Actions(Actions.NEXT_COLUMN_CHANGE_LEAD, 1, 0,
@@ -1541,16 +1540,16 @@ public class BasicTableUI extends TableUI
         map.put(new Actions(Actions.PREVIOUS_ROW_EXTEND_SELECTION,
                 0, -1, true, false));
         map.put(new Actions(Actions.SCROLL_UP_CHANGE_SELECTION,
-	        false, false, true, false));
+                false, false, true, false));
         map.put(new Actions(Actions.SCROLL_DOWN_CHANGE_SELECTION,
-	        false, true, true, false));
+                false, true, true, false));
         map.put(new Actions(Actions.FIRST_COLUMN,
-	        false, false, false, true));
+                false, false, false, true));
         map.put(new Actions(Actions.LAST_COLUMN,
-	        false, true, false, true));
+                false, true, false, true));
 
         map.put(new Actions(Actions.SCROLL_UP_EXTEND_SELECTION,
-		true, false, true, false));
+                true, false, true, false));
         map.put(new Actions(Actions.SCROLL_DOWN_EXTEND_SELECTION,
                 true, true, true, false));
         map.put(new Actions(Actions.FIRST_COLUMN_EXTEND_SELECTION,
@@ -1558,26 +1557,26 @@ public class BasicTableUI extends TableUI
         map.put(new Actions(Actions.LAST_COLUMN_EXTEND_SELECTION,
                 true, true, false, true));
 
-	map.put(new Actions(Actions.FIRST_ROW, false, false, true, true));
-	map.put(new Actions(Actions.LAST_ROW, false, true, true, true));
+        map.put(new Actions(Actions.FIRST_ROW, false, false, true, true));
+        map.put(new Actions(Actions.LAST_ROW, false, true, true, true));
 
-	map.put(new Actions(Actions.FIRST_ROW_EXTEND_SELECTION,
+        map.put(new Actions(Actions.FIRST_ROW_EXTEND_SELECTION,
                 true, false, true, true));
-	map.put(new Actions(Actions.LAST_ROW_EXTEND_SELECTION,
+        map.put(new Actions(Actions.LAST_ROW_EXTEND_SELECTION,
                 true, true, true, true));
 
-	map.put(new Actions(Actions.NEXT_COLUMN_CELL,
+        map.put(new Actions(Actions.NEXT_COLUMN_CELL,
                 1, 0, false, true));
-	map.put(new Actions(Actions.PREVIOUS_COLUMN_CELL,
+        map.put(new Actions(Actions.PREVIOUS_COLUMN_CELL,
                 -1, 0, false, true));
-	map.put(new Actions(Actions.NEXT_ROW_CELL, 0, 1, false, true));
-	map.put(new Actions(Actions.PREVIOUS_ROW_CELL,
+        map.put(new Actions(Actions.NEXT_ROW_CELL, 0, 1, false, true));
+        map.put(new Actions(Actions.PREVIOUS_ROW_CELL,
                 0, -1, false, true));
 
-	map.put(new Actions(Actions.SELECT_ALL));
+        map.put(new Actions(Actions.SELECT_ALL));
         map.put(new Actions(Actions.CLEAR_SELECTION));
-	map.put(new Actions(Actions.CANCEL_EDITING));
-	map.put(new Actions(Actions.START_EDITING));
+        map.put(new Actions(Actions.CANCEL_EDITING));
+        map.put(new Actions(Actions.START_EDITING));
 
         map.put(TransferHandler.getCutAction().getValue(Action.NAME),
                 TransferHandler.getCutAction());
@@ -1586,13 +1585,13 @@ public class BasicTableUI extends TableUI
         map.put(TransferHandler.getPasteAction().getValue(Action.NAME),
                 TransferHandler.getPasteAction());
 
-	map.put(new Actions(Actions.SCROLL_LEFT_CHANGE_SELECTION,
+        map.put(new Actions(Actions.SCROLL_LEFT_CHANGE_SELECTION,
                 false, false, false, false));
-	map.put(new Actions(Actions.SCROLL_RIGHT_CHANGE_SELECTION,
+        map.put(new Actions(Actions.SCROLL_RIGHT_CHANGE_SELECTION,
                 false, true, false, false));
-	map.put(new Actions(Actions.SCROLL_LEFT_EXTEND_SELECTION,
+        map.put(new Actions(Actions.SCROLL_LEFT_EXTEND_SELECTION,
                 true, false, false, false));
-	map.put(new Actions(Actions.SCROLL_RIGHT_EXTEND_SELECTION,
+        map.put(new Actions(Actions.SCROLL_RIGHT_EXTEND_SELECTION,
                 true, true, false, false));
 
         map.put(new Actions(Actions.ADD_TO_SELECTION));
@@ -1615,9 +1614,9 @@ public class BasicTableUI extends TableUI
     }
 
     protected void uninstallDefaults() {
-	if (table.getTransferHandler() instanceof UIResource) {
-	    table.setTransferHandler(null);
-	}
+        if (table.getTransferHandler() instanceof UIResource) {
+            table.setTransferHandler(null);
+        }
     }
 
     protected void uninstallListeners() {
@@ -1637,8 +1636,8 @@ public class BasicTableUI extends TableUI
     }
 
     protected void uninstallKeyboardActions() {
-	SwingUtilities.replaceUIInputMap(table, JComponent.
-				   WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
+        SwingUtilities.replaceUIInputMap(table, JComponent.
+                                   WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
         SwingUtilities.replaceUIActionMap(table, null);
     }
 
@@ -1686,19 +1685,19 @@ public class BasicTableUI extends TableUI
 //
 
     private Dimension createTableSize(long width) {
-	int height = 0;
-	int rowCount = table.getRowCount();
-	if (rowCount > 0 && table.getColumnCount() > 0) {
-	    Rectangle r = table.getCellRect(rowCount-1, 0, true);
-	    height = r.y + r.height;
-	}
-	// Width is always positive. The call to abs() is a workaround for
-	// a bug in the 1.1.6 JIT on Windows.
-	long tmp = Math.abs(width);
+        int height = 0;
+        int rowCount = table.getRowCount();
+        if (rowCount > 0 && table.getColumnCount() > 0) {
+            Rectangle r = table.getCellRect(rowCount-1, 0, true);
+            height = r.y + r.height;
+        }
+        // Width is always positive. The call to abs() is a workaround for
+        // a bug in the 1.1.6 JIT on Windows.
+        long tmp = Math.abs(width);
         if (tmp > Integer.MAX_VALUE) {
             tmp = Integer.MAX_VALUE;
         }
-	return new Dimension((int)tmp, height);
+        return new Dimension((int)tmp, height);
     }
 
     /**
@@ -1761,19 +1760,19 @@ public class BasicTableUI extends TableUI
         // into the table's bounds
         bounds.x = bounds.y = 0;
 
-	if (table.getRowCount() <= 0 || table.getColumnCount() <= 0 ||
+        if (table.getRowCount() <= 0 || table.getColumnCount() <= 0 ||
                 // this check prevents us from painting the entire table
                 // when the clip doesn't intersect our bounds at all
                 !bounds.intersects(clip)) {
 
             paintDropLines(g);
-	    return;
-	}
+            return;
+        }
 
         boolean ltr = table.getComponentOrientation().isLeftToRight();
 
-	Point upperLeft = clip.getLocation();
-	Point lowerRight = new Point(clip.x + clip.width - 1,
+        Point upperLeft = clip.getLocation();
+        Point lowerRight = new Point(clip.x + clip.width - 1,
                                      clip.y + clip.height - 1);
 
         int rMin = table.rowAtPoint(upperLeft);
@@ -1781,33 +1780,33 @@ public class BasicTableUI extends TableUI
         // This should never happen (as long as our bounds intersect the clip,
         // which is why we bail above if that is the case).
         if (rMin == -1) {
-	    rMin = 0;
+            rMin = 0;
         }
         // If the table does not have enough rows to fill the view we'll get -1.
         // (We could also get -1 if our bounds don't intersect the clip,
         // which is why we bail above if that is the case).
         // Replace this with the index of the last row.
         if (rMax == -1) {
-	    rMax = table.getRowCount()-1;
+            rMax = table.getRowCount()-1;
         }
 
-        int cMin = table.columnAtPoint(ltr ? upperLeft : lowerRight); 
-        int cMax = table.columnAtPoint(ltr ? lowerRight : upperLeft);        
+        int cMin = table.columnAtPoint(ltr ? upperLeft : lowerRight);
+        int cMax = table.columnAtPoint(ltr ? lowerRight : upperLeft);
         // This should never happen.
         if (cMin == -1) {
-	    cMin = 0;
+            cMin = 0;
         }
-	// If the table does not have enough columns to fill the view we'll get -1.
+        // If the table does not have enough columns to fill the view we'll get -1.
         // Replace this with the index of the last column.
         if (cMax == -1) {
-	    cMax = table.getColumnCount()-1;
+            cMax = table.getColumnCount()-1;
         }
 
         // Paint the grid.
         paintGrid(g, rMin, rMax, cMin, cMax);
 
         // Paint the cells.
-	paintCells(g, rMin, rMax, cMin, cMax);
+        paintCells(g, rMin, rMax, cMin, cMax);
 
         paintDropLines(g);
     }
@@ -1911,7 +1910,7 @@ public class BasicTableUI extends TableUI
         } else {
             rect.x -= 2;
         }
-        
+
         rect.width = 3;
 
         return rect;
@@ -1949,38 +1948,38 @@ public class BasicTableUI extends TableUI
     private void paintGrid(Graphics g, int rMin, int rMax, int cMin, int cMax) {
         g.setColor(table.getGridColor());
 
-	Rectangle minCell = table.getCellRect(rMin, cMin, true);
-	Rectangle maxCell = table.getCellRect(rMax, cMax, true);
+        Rectangle minCell = table.getCellRect(rMin, cMin, true);
+        Rectangle maxCell = table.getCellRect(rMax, cMax, true);
         Rectangle damagedArea = minCell.union( maxCell );
 
         if (table.getShowHorizontalLines()) {
-	    int tableWidth = damagedArea.x + damagedArea.width;
-	    int y = damagedArea.y;
-	    for (int row = rMin; row <= rMax; row++) {
-		y += table.getRowHeight(row);
-		g.drawLine(damagedArea.x, y - 1, tableWidth - 1, y - 1);
-	    }
-	}
+            int tableWidth = damagedArea.x + damagedArea.width;
+            int y = damagedArea.y;
+            for (int row = rMin; row <= rMax; row++) {
+                y += table.getRowHeight(row);
+                g.drawLine(damagedArea.x, y - 1, tableWidth - 1, y - 1);
+            }
+        }
         if (table.getShowVerticalLines()) {
-	    TableColumnModel cm = table.getColumnModel();
-	    int tableHeight = damagedArea.y + damagedArea.height;
-	    int x;
-	    if (table.getComponentOrientation().isLeftToRight()) {
-		x = damagedArea.x;
-		for (int column = cMin; column <= cMax; column++) {
-		    int w = cm.getColumn(column).getWidth();
-		    x += w;
-		    g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
-		}
-	    } else {
-		x = damagedArea.x;
-		for (int column = cMax; column >= cMin; column--) {
-		    int w = cm.getColumn(column).getWidth();
-		    x += w;
-		    g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
-		}
-	    }
-	}
+            TableColumnModel cm = table.getColumnModel();
+            int tableHeight = damagedArea.y + damagedArea.height;
+            int x;
+            if (table.getComponentOrientation().isLeftToRight()) {
+                x = damagedArea.x;
+                for (int column = cMin; column <= cMax; column++) {
+                    int w = cm.getColumn(column).getWidth();
+                    x += w;
+                    g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
+                }
+            } else {
+                x = damagedArea.x;
+                for (int column = cMax; column >= cMin; column--) {
+                    int w = cm.getColumn(column).getWidth();
+                    x += w;
+                    g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
+                }
+            }
+        }
     }
 
     private int viewIndexForColumn(TableColumn aColumn) {
@@ -1994,18 +1993,18 @@ public class BasicTableUI extends TableUI
     }
 
     private void paintCells(Graphics g, int rMin, int rMax, int cMin, int cMax) {
-	JTableHeader header = table.getTableHeader();
-	TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
+        JTableHeader header = table.getTableHeader();
+        TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
 
-	TableColumnModel cm = table.getColumnModel();
-	int columnMargin = cm.getColumnMargin();
+        TableColumnModel cm = table.getColumnModel();
+        int columnMargin = cm.getColumnMargin();
 
         Rectangle cellRect;
-	TableColumn aColumn;
-	int columnWidth;
-	if (table.getComponentOrientation().isLeftToRight()) {
-	    for(int row = rMin; row <= rMax; row++) {
-		cellRect = table.getCellRect(row, cMin, false);
+        TableColumn aColumn;
+        int columnWidth;
+        if (table.getComponentOrientation().isLeftToRight()) {
+            for(int row = rMin; row <= rMax; row++) {
+                cellRect = table.getCellRect(row, cMin, false);
                 for(int column = cMin; column <= cMax; column++) {
                     aColumn = cm.getColumn(column);
                     columnWidth = aColumn.getWidth();
@@ -2014,10 +2013,10 @@ public class BasicTableUI extends TableUI
                         paintCell(g, cellRect, row, column);
                     }
                     cellRect.x += columnWidth;
-        	}
-	    }
-	} else {
-	    for(int row = rMin; row <= rMax; row++) {
+                }
+            }
+        } else {
+            for(int row = rMin; row <= rMax; row++) {
                 cellRect = table.getCellRect(row, cMin, false);
                 aColumn = cm.getColumn(cMin);
                 if (aColumn != draggedColumn) {
@@ -2033,78 +2032,78 @@ public class BasicTableUI extends TableUI
                     if (aColumn != draggedColumn) {
                         paintCell(g, cellRect, row, column);
                     }
-        	}
-	    }
-	}
+                }
+            }
+        }
 
         // Paint the dragged column if we are dragging.
         if (draggedColumn != null) {
-	    paintDraggedArea(g, rMin, rMax, draggedColumn, header.getDraggedDistance());
-	}
+            paintDraggedArea(g, rMin, rMax, draggedColumn, header.getDraggedDistance());
+        }
 
-	// Remove any renderers that may be left in the rendererPane.
-	rendererPane.removeAll();
+        // Remove any renderers that may be left in the rendererPane.
+        rendererPane.removeAll();
     }
 
     private void paintDraggedArea(Graphics g, int rMin, int rMax, TableColumn draggedColumn, int distance) {
         int draggedColumnIndex = viewIndexForColumn(draggedColumn);
 
         Rectangle minCell = table.getCellRect(rMin, draggedColumnIndex, true);
-	Rectangle maxCell = table.getCellRect(rMax, draggedColumnIndex, true);
+        Rectangle maxCell = table.getCellRect(rMax, draggedColumnIndex, true);
 
-	Rectangle vacatedColumnRect = minCell.union(maxCell);
+        Rectangle vacatedColumnRect = minCell.union(maxCell);
 
-	// Paint a gray well in place of the moving column.
-	g.setColor(table.getParent().getBackground());
-	g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
-		   vacatedColumnRect.width, vacatedColumnRect.height);
+        // Paint a gray well in place of the moving column.
+        g.setColor(table.getParent().getBackground());
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
 
-	// Move to the where the cell has been dragged.
-	vacatedColumnRect.x += distance;
+        // Move to the where the cell has been dragged.
+        vacatedColumnRect.x += distance;
 
-	// Fill the background.
-	g.setColor(table.getBackground());
-	g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
-		   vacatedColumnRect.width, vacatedColumnRect.height);
+        // Fill the background.
+        g.setColor(table.getBackground());
+        g.fillRect(vacatedColumnRect.x, vacatedColumnRect.y,
+                   vacatedColumnRect.width, vacatedColumnRect.height);
 
-	// Paint the vertical grid lines if necessary.
-	if (table.getShowVerticalLines()) {
-	    g.setColor(table.getGridColor());
-	    int x1 = vacatedColumnRect.x;
-	    int y1 = vacatedColumnRect.y;
-	    int x2 = x1 + vacatedColumnRect.width - 1;
-	    int y2 = y1 + vacatedColumnRect.height - 1;
-	    // Left
-	    g.drawLine(x1-1, y1, x1-1, y2);
-	    // Right
-	    g.drawLine(x2, y1, x2, y2);
-	}
+        // Paint the vertical grid lines if necessary.
+        if (table.getShowVerticalLines()) {
+            g.setColor(table.getGridColor());
+            int x1 = vacatedColumnRect.x;
+            int y1 = vacatedColumnRect.y;
+            int x2 = x1 + vacatedColumnRect.width - 1;
+            int y2 = y1 + vacatedColumnRect.height - 1;
+            // Left
+            g.drawLine(x1-1, y1, x1-1, y2);
+            // Right
+            g.drawLine(x2, y1, x2, y2);
+        }
 
-	for(int row = rMin; row <= rMax; row++) {
-	    // Render the cell value
-	    Rectangle r = table.getCellRect(row, draggedColumnIndex, false);
-	    r.x += distance;
-	    paintCell(g, r, row, draggedColumnIndex);
+        for(int row = rMin; row <= rMax; row++) {
+            // Render the cell value
+            Rectangle r = table.getCellRect(row, draggedColumnIndex, false);
+            r.x += distance;
+            paintCell(g, r, row, draggedColumnIndex);
 
-	    // Paint the (lower) horizontal grid line if necessary.
-	    if (table.getShowHorizontalLines()) {
-		g.setColor(table.getGridColor());
-		Rectangle rcr = table.getCellRect(row, draggedColumnIndex, true);
-		rcr.x += distance;
-		int x1 = rcr.x;
-		int y1 = rcr.y;
-		int x2 = x1 + rcr.width - 1;
-		int y2 = y1 + rcr.height - 1;
-		g.drawLine(x1, y2, x2, y2);
-	    }
-	}
+            // Paint the (lower) horizontal grid line if necessary.
+            if (table.getShowHorizontalLines()) {
+                g.setColor(table.getGridColor());
+                Rectangle rcr = table.getCellRect(row, draggedColumnIndex, true);
+                rcr.x += distance;
+                int x1 = rcr.x;
+                int y1 = rcr.y;
+                int x2 = x1 + rcr.width - 1;
+                int y2 = y1 + rcr.height - 1;
+                g.drawLine(x1, y2, x2, y2);
+            }
+        }
     }
 
     private void paintCell(Graphics g, Rectangle cellRect, int row, int column) {
         if (table.isEditing() && table.getEditingRow()==row &&
                                  table.getEditingColumn()==column) {
             Component component = table.getEditorComponent();
-	    component.setBounds(cellRect);
+            component.setBounds(cellRect);
             component.validate();
         }
         else {
@@ -2134,25 +2133,25 @@ public class BasicTableUI extends TableUI
 
     static class TableTransferHandler extends TransferHandler implements UIResource {
 
-	/**
-	 * Create a Transferable to use as the source for a data transfer.
-	 *
-	 * @param c  The component holding the data to be transfered.  This
-	 *  argument is provided to enable sharing of TransferHandlers by
-	 *  multiple components.
-	 * @return  The representation of the data to be transfered.
-	 *
-	 */
+        /**
+         * Create a Transferable to use as the source for a data transfer.
+         *
+         * @param c  The component holding the data to be transfered.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @return  The representation of the data to be transfered.
+         *
+         */
         protected Transferable createTransferable(JComponent c) {
-	    if (c instanceof JTable) {
-		JTable table = (JTable) c;
-		int[] rows;
-		int[] cols;
-		
-		if (!table.getRowSelectionAllowed() && !table.getColumnSelectionAllowed()) {
-		    return null;
-		}
-		
+            if (c instanceof JTable) {
+                JTable table = (JTable) c;
+                int[] rows;
+                int[] cols;
+
+                if (!table.getRowSelectionAllowed() && !table.getColumnSelectionAllowed()) {
+                    return null;
+                }
+
                 if (!table.getRowSelectionAllowed()) {
                     int rowCount = table.getRowCount();
 
@@ -2161,9 +2160,9 @@ public class BasicTableUI extends TableUI
                         rows[counter] = counter;
                     }
                 } else {
-		    rows = table.getSelectedRows();
-		}
-		
+                    rows = table.getSelectedRows();
+                }
+
                 if (!table.getColumnSelectionAllowed()) {
                     int colCount = table.getColumnCount();
 
@@ -2172,18 +2171,18 @@ public class BasicTableUI extends TableUI
                         cols[counter] = counter;
                     }
                 } else {
-		    cols = table.getSelectedColumns();
-		}
-                
-		if (rows == null || cols == null || rows.length == 0 || cols.length == 0) {
-		    return null;
-		}
-                
+                    cols = table.getSelectedColumns();
+                }
+
+                if (rows == null || cols == null || rows.length == 0 || cols.length == 0) {
+                    return null;
+                }
+
                 StringBuffer plainBuf = new StringBuffer();
                 StringBuffer htmlBuf = new StringBuffer();
-                
+
                 htmlBuf.append("<html>\n<body>\n<table>\n");
-                
+
                 for (int row = 0; row < rows.length; row++) {
                     htmlBuf.append("<tr>\n");
                     for (int col = 0; col < cols.length; col++) {
@@ -2200,16 +2199,16 @@ public class BasicTableUI extends TableUI
                 // remove the last newline
                 plainBuf.deleteCharAt(plainBuf.length() - 1);
                 htmlBuf.append("</table>\n</body>\n</html>");
-                
-                return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
-	    }
 
-	    return null;
-	}
+                return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
+            }
+
+            return null;
+        }
 
         public int getSourceActions(JComponent c) {
-	    return COPY;
-	}
+            return COPY;
+        }
 
     }
 }  // End of Class BasicTableUI

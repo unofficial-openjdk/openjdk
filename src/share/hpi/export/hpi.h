@@ -65,7 +65,7 @@ typedef struct {
     /*
      * Free must allow ptr == NULL to be a no-op.
      */
-  void	  (*Free)(void *ptr);
+  void    (*Free)(void *ptr);
     /*
      * Calloc must return a unique pointer for if
      * n_item == 0 || item_size == 0.
@@ -88,7 +88,7 @@ typedef struct {
    */
   void *  (*DecommitMem)(void *ptr, size_t size, size_t *actual);
 
-#define HPI_PAGE_ALIGNMENT	    (64 * 1024)
+#define HPI_PAGE_ALIGNMENT          (64 * 1024)
 
   void *  (*AllocBlock)(size_t size, void **headP);
   void    (*FreeBlock)(void *head);
@@ -98,7 +98,7 @@ typedef struct {
  * dynamic linking libraries
  */
 typedef struct {
-  void	 (*BuildLibName)(char *buf, int buf_len, char *path, char *name);
+  void   (*BuildLibName)(char *buf, int buf_len, char *path, char *name);
   int    (*BuildFunName)(char *name, int name_len, int arg_size, int en_idx);
 
   void * (*LoadLibrary)(const char *name, char *err_buf, int err_buflen);
@@ -119,7 +119,7 @@ typedef struct {
 
 typedef struct {
   HPI_SysInfo *    (*GetSysInfo)(void);
-  long 	           (*GetMilliTicks)(void);
+  long             (*GetMilliTicks)(void);
   jlong            (*TimeMillis)(void);
 
   signal_handler_t (*Signal)(int sig, signal_handler_t handler);
@@ -130,7 +130,7 @@ typedef struct {
   int              (*Shutdown)(void);
 
   int              (*SetLoggingLevel)(int level);
-  bool_t           (*SetMonitoringOn)(bool_t on);  
+  bool_t           (*SetMonitoringOn)(bool_t on);
   int              (*GetLastErrorString)(char *buf, int len);
 } HPI_SystemInterface;
 
@@ -140,16 +140,16 @@ typedef struct {
 typedef struct  sys_thread sys_thread_t;
 typedef struct  sys_mon sys_mon_t;
 
-#define HPI_OK	        0
-#define HPI_ERR	       -1
+#define HPI_OK          0
+#define HPI_ERR        -1
 #define HPI_INTRPT     -2    /* Operation was interrupted */
 #define HPI_TIMEOUT    -3    /* A timer ran out */
 #define HPI_NOMEM      -5    /* Ran out of memory */
 #define HPI_NORESOURCE -6    /* Ran out of some system resource */
 
 /* There are three basic states: RUNNABLE, MONITOR_WAIT, and CONDVAR_WAIT.
- * When the thread is suspended in any of these states, the 
- * HPI_THREAD_SUSPENDED bit will be set 
+ * When the thread is suspended in any of these states, the
+ * HPI_THREAD_SUSPENDED bit will be set
  */
 enum {
     HPI_THREAD_RUNNABLE = 1,
@@ -157,9 +157,9 @@ enum {
     HPI_THREAD_CONDVAR_WAIT
 };
 
-#define HPI_MINIMUM_PRIORITY	    1
-#define HPI_MAXIMUM_PRIORITY	    10
-#define HPI_NORMAL_PRIORITY	    5
+#define HPI_MINIMUM_PRIORITY        1
+#define HPI_MAXIMUM_PRIORITY        10
+#define HPI_NORMAL_PRIORITY         5
 
 #define HPI_THREAD_SUSPENDED        0x8000
 #define HPI_THREAD_INTERRUPTED      0x4000
@@ -176,28 +176,28 @@ typedef struct {
 } sys_mon_info;
 
 typedef struct {
-  int 	         (*ThreadBootstrap)(sys_thread_t **tidP,
-				    sys_mon_t **qlockP,
-				    int nReservedBytes);
-  int 	         (*ThreadCreate)(sys_thread_t **tidP,
-				 long stk_size,
-				 void (*func)(void *),
-				 void *arg);
+  int            (*ThreadBootstrap)(sys_thread_t **tidP,
+                                    sys_mon_t **qlockP,
+                                    int nReservedBytes);
+  int            (*ThreadCreate)(sys_thread_t **tidP,
+                                 long stk_size,
+                                 void (*func)(void *),
+                                 void *arg);
   sys_thread_t * (*ThreadSelf)(void);
   void           (*ThreadYield)(void);
-  int	         (*ThreadSuspend)(sys_thread_t *tid);
-  int	         (*ThreadResume)(sys_thread_t *tid);
-  int	         (*ThreadSetPriority)(sys_thread_t *tid, int prio);
-  int	         (*ThreadGetPriority)(sys_thread_t *tid, int *prio);
-  void *         (*ThreadStackPointer)(sys_thread_t *tid); 
-  void *	 (*ThreadStackTop)(sys_thread_t *tid);
+  int            (*ThreadSuspend)(sys_thread_t *tid);
+  int            (*ThreadResume)(sys_thread_t *tid);
+  int            (*ThreadSetPriority)(sys_thread_t *tid, int prio);
+  int            (*ThreadGetPriority)(sys_thread_t *tid, int *prio);
+  void *         (*ThreadStackPointer)(sys_thread_t *tid);
+  void *         (*ThreadStackTop)(sys_thread_t *tid);
   long *         (*ThreadRegs)(sys_thread_t *tid, int *regs);
-  int	         (*ThreadSingle)(void);
-  void	         (*ThreadMulti)(void);
+  int            (*ThreadSingle)(void);
+  void           (*ThreadMulti)(void);
   int            (*ThreadEnumerateOver)(int (*func)(sys_thread_t *, void *),
-					void *arg);
+                                        void *arg);
   int            (*ThreadCheckStack)(void);
-  void	         (*ThreadPostException)(sys_thread_t *tid, void *arg);
+  void           (*ThreadPostException)(sys_thread_t *tid, void *arg);
   void           (*ThreadInterrupt)(sys_thread_t *tid);
   int            (*ThreadIsInterrupted)(sys_thread_t *tid, int clear);
   int            (*ThreadAlloc)(sys_thread_t **tidP);
@@ -206,18 +206,18 @@ typedef struct {
   int            (*ThreadGetStatus)(sys_thread_t *tid, sys_mon_t **monitor);
   void *         (*ThreadInterruptEvent)(void);
   void *         (*ThreadNativeID)(sys_thread_t *tid);
-  
+
   /* These three functions are used by the CPU time profiler.
-   * sysThreadIsRunning determines whether the thread is running (not just 
+   * sysThreadIsRunning determines whether the thread is running (not just
    * runnable). It is only safe to call this function after calling
    * sysThreadProfSuspend.
    */
   bool_t         (*ThreadIsRunning)(sys_thread_t *tid);
   void           (*ThreadProfSuspend)(sys_thread_t *tid);
   void           (*ThreadProfResume)(sys_thread_t *tid);
-  
+
   int            (*AdjustTimeSlice)(int ms);
-  
+
   size_t         (*MonitorSizeof)(void);
   int            (*MonitorInit)(sys_mon_t *mid);
   int            (*MonitorDestroy)(sys_mon_t *mid);
@@ -226,11 +226,11 @@ typedef struct {
   int            (*MonitorExit)(sys_thread_t *self, sys_mon_t *mid);
   int            (*MonitorNotify)(sys_thread_t *self, sys_mon_t *mid);
   int            (*MonitorNotifyAll)(sys_thread_t *self, sys_mon_t *mid);
-  int 	         (*MonitorWait)(sys_thread_t *self, sys_mon_t *mid, jlong ms);
+  int            (*MonitorWait)(sys_thread_t *self, sys_mon_t *mid, jlong ms);
   bool_t         (*MonitorInUse)(sys_mon_t *mid);
   sys_thread_t * (*MonitorOwner)(sys_mon_t *mid);
   int            (*MonitorGetInfo)(sys_mon_t *mid, sys_mon_info *info);
-  
+
 } HPI_ThreadInterface;
 
 /*
@@ -267,13 +267,13 @@ typedef struct {
   int              (*Connect)(int fd, struct sockaddr *him, int len);
   int              (*Accept)(int fd, struct sockaddr *him, int *len);
   SSIZE_T          (*SendTo)(int fd, char *buf, int len, int flags,
-			     struct sockaddr *to, int tolen);
+                             struct sockaddr *to, int tolen);
   SSIZE_T          (*RecvFrom)(int fd, char *buf, int nbytes, int flags,
-			       struct sockaddr *from, int *fromlen);
+                               struct sockaddr *from, int *fromlen);
   int              (*Listen)(int fd, int count);
   SSIZE_T          (*Recv)(int fd, char *buf, int nBytes, int flags);
   SSIZE_T          (*Send)(int fd, char *buf, int nBytes, int flags);
-  int              (*Timeout)(int fd, long timeout); 
+  int              (*Timeout)(int fd, long timeout);
   struct hostent * (*GetHostByName)(char *hostname);
   int              (*Socket)(int domain, int type, int protocol);
   int              (*SocketShutdown)(int fd, int howto);

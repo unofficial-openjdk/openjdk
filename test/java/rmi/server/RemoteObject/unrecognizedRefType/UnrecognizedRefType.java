@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -53,85 +53,85 @@ import java.rmi.server.RemoteRef;
 
 public class UnrecognizedRefType {
     public static void main(String[] args) throws Exception {
-	System.err.println("\nRegression test for bug 4460983\n");
+        System.err.println("\nRegression test for bug 4460983\n");
 
-	test(new FakeRemoteObject("ActivatableServerRef"));
-	test(new FakeRemoteObject("MarshalInputStream"));
-	test(new FakeRemoteObject("XXX"));
+        test(new FakeRemoteObject("ActivatableServerRef"));
+        test(new FakeRemoteObject("MarshalInputStream"));
+        test(new FakeRemoteObject("XXX"));
 
-	System.err.println("TEST PASSED");
+        System.err.println("TEST PASSED");
     }
 
     private static void test(RemoteObject obj) throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream out = new ObjectOutputStream(bout);
-	out.writeObject(obj);
-	ByteArrayInputStream bin =
-	    new ByteArrayInputStream(bout.toByteArray());
-	ObjectInputStream in = new ObjectInputStream(bin);
-	try {
-	    Object obj2 = in.readObject();
-	    System.err.println(
-		"Object unexpectedly deserialized successfully: " + obj2);
-	    throw new RuntimeException(
-		"TEST FAILED: object successfully deserialized");
-	} catch (ClassNotFoundException e) {
-	    System.err.println("ClassNotFoundException as expected:");
-	    e.printStackTrace();
-	} // other exceptions cause test failure
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(bout);
+        out.writeObject(obj);
+        ByteArrayInputStream bin =
+            new ByteArrayInputStream(bout.toByteArray());
+        ObjectInputStream in = new ObjectInputStream(bin);
+        try {
+            Object obj2 = in.readObject();
+            System.err.println(
+                "Object unexpectedly deserialized successfully: " + obj2);
+            throw new RuntimeException(
+                "TEST FAILED: object successfully deserialized");
+        } catch (ClassNotFoundException e) {
+            System.err.println("ClassNotFoundException as expected:");
+            e.printStackTrace();
+        } // other exceptions cause test failure
     }
 
     private static class FakeRemoteObject extends RemoteObject {
-	FakeRemoteObject(String refType) {
-	    super(new FakeRemoteRef(refType));
-	}
+        FakeRemoteObject(String refType) {
+            super(new FakeRemoteRef(refType));
+        }
     }
 
     private static class FakeRemoteRef implements RemoteRef {
-	private final String refType;
+        private final String refType;
 
-	FakeRemoteRef(String refType) {
-	    this.refType = refType;
-	}
+        FakeRemoteRef(String refType) {
+            this.refType = refType;
+        }
 
-	public Object invoke(Remote obj,
-			     Method method,
-			     Object[] params,
-			     long opnum)
-	{
-	    throw new UnsupportedOperationException();
-	}
+        public Object invoke(Remote obj,
+                             Method method,
+                             Object[] params,
+                             long opnum)
+        {
+            throw new UnsupportedOperationException();
+        }
 
-	public RemoteCall newCall(RemoteObject obj,
-				  Operation[] op,
-				  int opnum,
-				  long hash) 
-	{
-	    throw new UnsupportedOperationException();
-	}
+        public RemoteCall newCall(RemoteObject obj,
+                                  Operation[] op,
+                                  int opnum,
+                                  long hash)
+        {
+            throw new UnsupportedOperationException();
+        }
 
-	public void invoke(RemoteCall call) {
-	    throw new UnsupportedOperationException();
-	}
+        public void invoke(RemoteCall call) {
+            throw new UnsupportedOperationException();
+        }
 
-	public void done(RemoteCall call) {
-	    throw new UnsupportedOperationException();
-	}
+        public void done(RemoteCall call) {
+            throw new UnsupportedOperationException();
+        }
 
-	public String getRefClass(java.io.ObjectOutput out) {
-	    return refType;
-	}
+        public String getRefClass(java.io.ObjectOutput out) {
+            return refType;
+        }
 
-	public int remoteHashCode() { return hashCode(); }
-	public boolean remoteEquals(RemoteRef obj) { return equals(obj); }
-	public String remoteToString() { return toString(); }
+        public int remoteHashCode() { return hashCode(); }
+        public boolean remoteEquals(RemoteRef obj) { return equals(obj); }
+        public String remoteToString() { return toString(); }
 
-	public void readExternal(ObjectInput in) {
-	    throw new UnsupportedOperationException();
-	}
+        public void readExternal(ObjectInput in) {
+            throw new UnsupportedOperationException();
+        }
 
-	public void writeExternal(ObjectOutput out) {
-	    // no data to write
-	}
+        public void writeExternal(ObjectOutput out) {
+            // no data to write
+        }
     }
 }

@@ -28,7 +28,7 @@ package java.awt.event;
 import java.util.EventListener;
 
 /**
- * The listener interface for receiving "interesting" mouse events 
+ * The listener interface for receiving "interesting" mouse events
  * (press, release, click, enter, and exit) on a component.
  * (To track mouse moves and mouse drags, use the
  * <code>MouseMotionListener</code>.)
@@ -39,15 +39,14 @@ import java.util.EventListener;
  * (overriding only the methods of interest).
  * <P>
  * The listener object created from that class is then registered with a
- * component using the component's <code>addMouseListener</code> 
+ * component using the component's <code>addMouseListener</code>
  * method. A mouse event is generated when the mouse is pressed, released
  * clicked (pressed and released). A mouse event is also generated when
  * the mouse cursor enters or leaves a component. When a mouse event
- * occurs, the relevant method in the listener object is invoked, and 
+ * occurs, the relevant method in the listener object is invoked, and
  * the <code>MouseEvent</code> is passed to it.
  *
  * @author Carl Quinn
- * @version %I%, %G%
  *
  * @see MouseAdapter
  * @see MouseEvent

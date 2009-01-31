@@ -38,7 +38,6 @@ import javax.swing.plaf.basic.BasicDesktopIconUI;
 /**
  * Metal desktop icon.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public class MetalDesktopIconUI extends BasicDesktopIconUI
@@ -61,42 +60,42 @@ public class MetalDesktopIconUI extends BasicDesktopIconUI
         LookAndFeel.installColorsAndFont(desktopIcon, "DesktopIcon.background", "DesktopIcon.foreground", "DesktopIcon.font");
         width = UIManager.getInt("DesktopIcon.width");
     }
-   
+
     protected void installComponents() {
-	frame = desktopIcon.getInternalFrame();
-	Icon icon = frame.getFrameIcon();
-	String title = frame.getTitle();
+        frame = desktopIcon.getInternalFrame();
+        Icon icon = frame.getFrameIcon();
+        String title = frame.getTitle();
 
-	button = new JButton (title, icon);
-	button.addActionListener( new ActionListener() {
-	                          public void actionPerformed(ActionEvent e) {
+        button = new JButton (title, icon);
+        button.addActionListener( new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
              deiconize(); }} );
-	button.setFont(desktopIcon.getFont());
-	button.setBackground(desktopIcon.getBackground());
-	button.setForeground(desktopIcon.getForeground());
+        button.setFont(desktopIcon.getFont());
+        button.setBackground(desktopIcon.getBackground());
+        button.setForeground(desktopIcon.getForeground());
 
-	int buttonH = button.getPreferredSize().height;
+        int buttonH = button.getPreferredSize().height;
 
-	Icon drag = new MetalBumps((buttonH/3), buttonH,
-				   MetalLookAndFeel.getControlHighlight(),
-				   MetalLookAndFeel.getControlDarkShadow(),
-				   MetalLookAndFeel.getControl());
-	label = new JLabel(drag);
+        Icon drag = new MetalBumps((buttonH/3), buttonH,
+                                   MetalLookAndFeel.getControlHighlight(),
+                                   MetalLookAndFeel.getControlDarkShadow(),
+                                   MetalLookAndFeel.getControl());
+        label = new JLabel(drag);
 
-	label.setBorder( new MatteBorder( 0, 2, 0, 1, desktopIcon.getBackground()) );
-	desktopIcon.setLayout(new BorderLayout(2, 0));
-	desktopIcon.add(button, BorderLayout.CENTER);
-	desktopIcon.add(label, BorderLayout.WEST);
+        label.setBorder( new MatteBorder( 0, 2, 0, 1, desktopIcon.getBackground()) );
+        desktopIcon.setLayout(new BorderLayout(2, 0));
+        desktopIcon.add(button, BorderLayout.CENTER);
+        desktopIcon.add(label, BorderLayout.WEST);
     }
 
     protected void uninstallComponents() {
-	desktopIcon.setLayout(null);
-	desktopIcon.remove(label);
-	desktopIcon.remove(button);
+        desktopIcon.setLayout(null);
+        desktopIcon.remove(label);
+        desktopIcon.remove(button);
         button = null;
         frame = null;
     }
- 
+
     protected void installListeners() {
         super.installListeners();
         desktopIcon.getInternalFrame().addPropertyChangeListener(
@@ -105,19 +104,19 @@ public class MetalDesktopIconUI extends BasicDesktopIconUI
 
     protected void uninstallListeners() {
         desktopIcon.getInternalFrame().removePropertyChangeListener(
-                titleListener);	
+                titleListener);
         titleListener = null;
         super.uninstallListeners();
     }
-        
+
 
     public Dimension getPreferredSize(JComponent c) {
         // Metal desktop icons can not be resized.  Their dimensions should
         // always be the minimum size.  See getMinimumSize(JComponent c).
         return getMinimumSize(c);
     }
-  
-    public Dimension getMinimumSize(JComponent c) { 
+
+    public Dimension getMinimumSize(JComponent c) {
         // For the metal desktop icon we will use the layout maanger to
         // determine the correct height of the component, but we want to keep
         // the width consistent according to the jlf spec.
@@ -125,7 +124,7 @@ public class MetalDesktopIconUI extends BasicDesktopIconUI
                 desktopIcon.getLayout().minimumLayoutSize(desktopIcon).height);
     }
 
-    public Dimension getMaximumSize(JComponent c) { 
+    public Dimension getMaximumSize(JComponent c) {
         // Metal desktop icons can not be resized.  Their dimensions should
         // always be the minimum size.  See getMinimumSize(JComponent c).
         return getMinimumSize(c);
@@ -133,13 +132,13 @@ public class MetalDesktopIconUI extends BasicDesktopIconUI
 
     class TitleListener implements PropertyChangeListener {
         public void propertyChange (PropertyChangeEvent e) {
-  	  if (e.getPropertyName().equals("title")) {
-	    button.setText((String)e.getNewValue());
-	  }
+          if (e.getPropertyName().equals("title")) {
+            button.setText((String)e.getNewValue());
+          }
 
-  	  if (e.getPropertyName().equals("frameIcon")) {
-	    button.setIcon((Icon)e.getNewValue());
-	  }
-	}
+          if (e.getPropertyName().equals("frameIcon")) {
+            button.setIcon((Icon)e.getNewValue());
+          }
+        }
     }
 }

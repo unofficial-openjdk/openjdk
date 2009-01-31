@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -47,20 +45,20 @@ import java.util.Arrays;
  * Implements the ASN.1 KRBError type.
  *
  * <xmp>
- * KRB-ERROR	   ::= [APPLICATION 30] SEQUENCE {
- *	   pvno		   [0] INTEGER (5),
- *	   msg-type	   [1] INTEGER (30),
- *	   ctime	   [2] KerberosTime OPTIONAL,
- *	   cusec	   [3] Microseconds OPTIONAL,
- *	   stime	   [4] KerberosTime,
- *	   susec	   [5] Microseconds,
- *	   error-code	   [6] Int32,
- *	   crealm	   [7] Realm OPTIONAL,
- *	   cname	   [8] PrincipalName OPTIONAL,
- *	   realm	   [9] Realm -- service realm --,
- *	   sname	   [10] PrincipalName -- service name --,
- *	   e-text	   [11] KerberosString OPTIONAL,
- *	   e-data	   [12] OCTET STRING OPTIONAL
+ * KRB-ERROR       ::= [APPLICATION 30] SEQUENCE {
+ *         pvno            [0] INTEGER (5),
+ *         msg-type        [1] INTEGER (30),
+ *         ctime           [2] KerberosTime OPTIONAL,
+ *         cusec           [3] Microseconds OPTIONAL,
+ *         stime           [4] KerberosTime,
+ *         susec           [5] Microseconds,
+ *         error-code      [6] Int32,
+ *         crealm          [7] Realm OPTIONAL,
+ *         cname           [8] PrincipalName OPTIONAL,
+ *         realm           [9] Realm -- service realm --,
+ *         sname           [10] PrincipalName -- service name --,
+ *         e-text          [11] KerberosString OPTIONAL,
+ *         e-data          [12] OCTET STRING OPTIONAL
  * }
  *
  * METHOD-DATA     ::= SEQUENCE OF PA-DATA
@@ -80,7 +78,7 @@ import java.util.Arrays;
 
 public class KRBError implements java.io.Serializable {
     static final long serialVersionUID = 3643809337475284503L;
-    
+
     private int pvno;
     private int msgType;
     private KerberosTime cTime; //optional
@@ -102,99 +100,99 @@ public class KRBError implements java.io.Serializable {
     private byte[] s2kparams = null;
 
     private static boolean DEBUG = Krb5.DEBUG;
-    
-    private void readObject(ObjectInputStream is) 
+
+    private void readObject(ObjectInputStream is)
             throws IOException, ClassNotFoundException {
-	try {
-	    init(new DerValue((byte[])is.readObject())); 
+        try {
+            init(new DerValue((byte[])is.readObject()));
             parseEData(eData);
         } catch (Exception e) {
-	    throw new IOException(e);
-	}
+            throw new IOException(e);
+        }
     }
-    
+
     private void writeObject(ObjectOutputStream os)
             throws IOException {
         try {
-            os.writeObject(asn1Encode()); 
+            os.writeObject(asn1Encode());
         } catch (Exception e) {
             throw new IOException(e);
         }
     }
 
     public KRBError(
-		    APOptions new_apOptions,
-		    KerberosTime new_cTime,
-		    Integer new_cuSec,
-		    KerberosTime new_sTime,
-		    Integer new_suSec,
-		    int new_errorCode,
-		    Realm new_crealm,
-		    PrincipalName new_cname,
-		    Realm new_realm,
-		    PrincipalName new_sname,
-		    String new_eText,
-		    byte[] new_eData
-			) throws IOException, Asn1Exception {
-	pvno = Krb5.PVNO;
-	msgType = Krb5.KRB_ERROR;
-	cTime = new_cTime;
-	cuSec = new_cuSec;
-	sTime = new_sTime;
-	suSec = new_suSec;
-	errorCode = new_errorCode;
-	crealm =  new_crealm;
-	cname = new_cname;
-	realm = new_realm;
-	sname = new_sname;
-	eText = new_eText;
-	eData = new_eData;
-        
+                    APOptions new_apOptions,
+                    KerberosTime new_cTime,
+                    Integer new_cuSec,
+                    KerberosTime new_sTime,
+                    Integer new_suSec,
+                    int new_errorCode,
+                    Realm new_crealm,
+                    PrincipalName new_cname,
+                    Realm new_realm,
+                    PrincipalName new_sname,
+                    String new_eText,
+                    byte[] new_eData
+                        ) throws IOException, Asn1Exception {
+        pvno = Krb5.PVNO;
+        msgType = Krb5.KRB_ERROR;
+        cTime = new_cTime;
+        cuSec = new_cuSec;
+        sTime = new_sTime;
+        suSec = new_suSec;
+        errorCode = new_errorCode;
+        crealm =  new_crealm;
+        cname = new_cname;
+        realm = new_realm;
+        sname = new_sname;
+        eText = new_eText;
+        eData = new_eData;
+
         parseEData(eData);
     }
 
     public KRBError(
-		    APOptions new_apOptions,
-		    KerberosTime new_cTime,
-		    Integer new_cuSec,
-		    KerberosTime new_sTime,
-		    Integer new_suSec,
-		    int new_errorCode,
-		    Realm new_crealm,
-		    PrincipalName new_cname,
-		    Realm new_realm,
-		    PrincipalName new_sname,
-		    String new_eText,
-		    byte[] new_eData,
-		    Checksum new_eCksum
-			) throws IOException, Asn1Exception {
-	pvno = Krb5.PVNO;
-	msgType = Krb5.KRB_ERROR;
-	cTime = new_cTime;
-	cuSec = new_cuSec;
-	sTime = new_sTime;
-	suSec = new_suSec;
-	errorCode = new_errorCode;
-	crealm =  new_crealm;
-	cname = new_cname;
-	realm = new_realm;
-	sname = new_sname;
-	eText = new_eText;
-	eData = new_eData;
-	eCksum = new_eCksum;
-        
+                    APOptions new_apOptions,
+                    KerberosTime new_cTime,
+                    Integer new_cuSec,
+                    KerberosTime new_sTime,
+                    Integer new_suSec,
+                    int new_errorCode,
+                    Realm new_crealm,
+                    PrincipalName new_cname,
+                    Realm new_realm,
+                    PrincipalName new_sname,
+                    String new_eText,
+                    byte[] new_eData,
+                    Checksum new_eCksum
+                        ) throws IOException, Asn1Exception {
+        pvno = Krb5.PVNO;
+        msgType = Krb5.KRB_ERROR;
+        cTime = new_cTime;
+        cuSec = new_cuSec;
+        sTime = new_sTime;
+        suSec = new_suSec;
+        errorCode = new_errorCode;
+        crealm =  new_crealm;
+        cname = new_cname;
+        realm = new_realm;
+        sname = new_sname;
+        eText = new_eText;
+        eData = new_eData;
+        eCksum = new_eCksum;
+
         parseEData(eData);
     }
 
     public KRBError(byte[] data) throws Asn1Exception,
             RealmException, KrbApErrException, IOException {
-	init(new DerValue(data));
+        init(new DerValue(data));
         parseEData(eData);
     }
 
     public KRBError(DerValue encoding) throws Asn1Exception,
             RealmException, KrbApErrException, IOException {
-	init(encoding);
+        init(encoding);
         showDebug();
         parseEData(eData);
     }
@@ -217,7 +215,7 @@ public class KRBError implements java.io.Serializable {
      *
      * Unfortunately, we know that some implementations also use the
      * METHOD-DATA format for errorcode KDC_ERR_PREAUTH_FAILED, and
-     * do not use the TYPED-DATA for other errorcodes (say, 
+     * do not use the TYPED-DATA for other errorcodes (say,
      * KDC_ERR_CLIENT_REVOKED).
      */
 
@@ -256,8 +254,8 @@ public class KRBError implements java.io.Serializable {
     /**
      * Try parsing the data as a sequence of PA-DATA.
      * @param data the data block
-     */ 
-    private void parsePAData(byte[] data) 
+     */
+    private void parsePAData(byte[] data)
             throws IOException, Asn1Exception {
         DerValue derPA = new DerValue(data);
         while (derPA.data.available() > 0) {
@@ -310,42 +308,42 @@ public class KRBError implements java.io.Serializable {
     }
 
     public final KerberosTime getServerTime() {
-	return sTime;
+        return sTime;
     }
 
     public final KerberosTime getClientTime() {
-	return cTime;
+        return cTime;
     }
 
     public final Integer getServerMicroSeconds() {
-	return suSec;
+        return suSec;
     }
 
     public final Integer getClientMicroSeconds() {
-	return cuSec;
+        return cuSec;
     }
 
     public final int getErrorCode() {
-	return errorCode;
+        return errorCode;
     }
 
     // access pre-auth info
     public final int getEType() {
-	return etype;
+        return etype;
     }
 
     // access pre-auth info
     public final byte[] getSalt() {
-	return ((salt == null) ? null : salt.clone());
+        return ((salt == null) ? null : salt.clone());
     }
 
     // access pre-auth info
     public final byte[] getParams() {
-	return ((s2kparams == null) ? null : s2kparams.clone());
+        return ((s2kparams == null) ? null : s2kparams.clone());
     }
 
     public final String getErrorString() {
-	return eText;
+        return eText;
     }
 
     /**
@@ -353,13 +351,13 @@ public class KRBError implements java.io.Serializable {
      * @param encoding a DER-encoded data.
      * @exception Asn1Exception if an error occurs while decoding an ASN1 encoded data.
      * @exception IOException if an I/O error occurs while reading encoded data.
-     * @exception KrbApErrException if the value read from the DER-encoded data 
+     * @exception KrbApErrException if the value read from the DER-encoded data
      *  stream does not match the pre-defined value.
      * @exception RealmException if an error occurs while parsing a Realm object.
      */
     private void init(DerValue encoding) throws Asn1Exception,
             RealmException, KrbApErrException, IOException {
-        DerValue der, subDer;		
+        DerValue der, subDer;
         if (((encoding.getTag() & (byte)0x1F) != (byte)0x1E)
                 || (encoding.isApplication() != true)
                 || (encoding.isConstructed() != true)) {
@@ -370,66 +368,66 @@ public class KRBError implements java.io.Serializable {
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
         }
         subDer = der.getData().getDerValue();
-	if ((subDer.getTag() & (byte)0x1F) == (byte)0x00) {
-            
-	    pvno = subDer.getData().getBigInteger().intValue();
+        if ((subDer.getTag() & (byte)0x1F) == (byte)0x00) {
+
+            pvno = subDer.getData().getBigInteger().intValue();
             if (pvno != Krb5.PVNO)
-		throw new KrbApErrException(Krb5.KRB_AP_ERR_BADVERSION);
-	} else {
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+                throw new KrbApErrException(Krb5.KRB_AP_ERR_BADVERSION);
+        } else {
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
         }
-        
+
         subDer = der.getData().getDerValue();
-	if ((subDer.getTag() & (byte)0x1F) == (byte)0x01) {
-	    msgType = subDer.getData().getBigInteger().intValue();
-	    if (msgType != Krb5.KRB_ERROR) {
+        if ((subDer.getTag() & (byte)0x1F) == (byte)0x01) {
+            msgType = subDer.getData().getBigInteger().intValue();
+            if (msgType != Krb5.KRB_ERROR) {
                 throw new KrbApErrException(Krb5.KRB_AP_ERR_MSG_TYPE);
             }
-	} else {
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        } else {
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
         }
-        
-	cTime = KerberosTime.parse(der.getData(), (byte)0x02, true);
+
+        cTime = KerberosTime.parse(der.getData(), (byte)0x02, true);
         if ((der.getData().peekByte() & 0x1F) == 0x03) {
-	    subDer = der.getData().getDerValue();
-	    cuSec = new Integer(subDer.getData().getBigInteger().intValue());
-	}
-	else cuSec = null;
-	sTime = KerberosTime.parse(der.getData(), (byte)0x04, false);
+            subDer = der.getData().getDerValue();
+            cuSec = new Integer(subDer.getData().getBigInteger().intValue());
+        }
+        else cuSec = null;
+        sTime = KerberosTime.parse(der.getData(), (byte)0x04, false);
         subDer = der.getData().getDerValue();
-	if ((subDer.getTag() & (byte)0x1F) == (byte)0x05) {
-	    suSec = new Integer (subDer.getData().getBigInteger().intValue());
-	}
-	else  throw new Asn1Exception(Krb5.ASN1_BAD_ID); 
+        if ((subDer.getTag() & (byte)0x1F) == (byte)0x05) {
+            suSec = new Integer (subDer.getData().getBigInteger().intValue());
+        }
+        else  throw new Asn1Exception(Krb5.ASN1_BAD_ID);
         subDer = der.getData().getDerValue();
-	if ((subDer.getTag() & (byte)0x1F) == (byte)0x06) {
-	    errorCode = subDer.getData().getBigInteger().intValue();
-	}
-	else  throw new Asn1Exception(Krb5.ASN1_BAD_ID); 
-	crealm = Realm.parse(der.getData(), (byte)0x07, true);
-	cname = PrincipalName.parse(der.getData(), (byte)0x08, true);
-	realm = Realm.parse(der.getData(), (byte)0x09, false);
-	sname = PrincipalName.parse(der.getData(), (byte)0x0A, false);
-	eText = null;
-	eData = null;
-	eCksum = null;
-	if (der.getData().available() >0) {
-	    if ((der.getData().peekByte() & 0x1F) == 0x0B) {
-                subDer = der.getData().getDerValue();
-		eText = subDer.getData().getGeneralString();
-	    }
-	}
+        if ((subDer.getTag() & (byte)0x1F) == (byte)0x06) {
+            errorCode = subDer.getData().getBigInteger().intValue();
+        }
+        else  throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        crealm = Realm.parse(der.getData(), (byte)0x07, true);
+        cname = PrincipalName.parse(der.getData(), (byte)0x08, true);
+        realm = Realm.parse(der.getData(), (byte)0x09, false);
+        sname = PrincipalName.parse(der.getData(), (byte)0x0A, false);
+        eText = null;
+        eData = null;
+        eCksum = null;
         if (der.getData().available() >0) {
-	    if ((der.getData().peekByte() & 0x1F) == 0x0C) {
+            if ((der.getData().peekByte() & 0x1F) == 0x0B) {
                 subDer = der.getData().getDerValue();
-		eData = subDer.getData().getOctetString();				
-	    }
-	}
+                eText = subDer.getData().getGeneralString();
+            }
+        }
         if (der.getData().available() >0) {
-	    eCksum = Checksum.parse(der.getData(), (byte)0x0D, true);		
-	}
+            if ((der.getData().peekByte() & 0x1F) == 0x0C) {
+                subDer = der.getData().getDerValue();
+                eData = subDer.getData().getOctetString();
+            }
+        }
+        if (der.getData().available() >0) {
+            eCksum = Checksum.parse(der.getData(), (byte)0x0D, true);
+        }
         if (der.getData().available() >0)
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
     }
 
     /**
@@ -481,60 +479,60 @@ public class KRBError implements java.io.Serializable {
         DerOutputStream temp = new DerOutputStream();
         DerOutputStream bytes = new DerOutputStream();
 
-	temp.putInteger(BigInteger.valueOf(pvno));
+        temp.putInteger(BigInteger.valueOf(pvno));
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x00), temp);
         temp = new DerOutputStream();
         temp.putInteger(BigInteger.valueOf(msgType));
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x01), temp);
-        
-	if (cTime != null) {
+
+        if (cTime != null) {
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x02), cTime.asn1Encode());
-        }			
-	if (cuSec != null) {
+        }
+        if (cuSec != null) {
             temp = new DerOutputStream();
-	    temp.putInteger(BigInteger.valueOf(cuSec.intValue()));
+            temp.putInteger(BigInteger.valueOf(cuSec.intValue()));
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x03), temp);
-	}
-        
+        }
+
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x04), sTime.asn1Encode());
         temp = new DerOutputStream();
         temp.putInteger(BigInteger.valueOf(suSec.intValue()));
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x05), temp);
-	temp = new DerOutputStream();
-	temp.putInteger(BigInteger.valueOf(errorCode));		
-	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x06), temp);
-		
-	if (crealm != null) {
+        temp = new DerOutputStream();
+        temp.putInteger(BigInteger.valueOf(errorCode));
+        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x06), temp);
+
+        if (crealm != null) {
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x07), crealm.asn1Encode());
         }
-	if (cname != null) {
+        if (cname != null) {
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x08), cname.asn1Encode());
         }
-        
+
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x09), realm.asn1Encode());
         bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x0A), sname.asn1Encode());
-        
-	if (eText != null) {
+
+        if (eText != null) {
             temp = new DerOutputStream();
-	    temp.putGeneralString(eText);
+            temp.putGeneralString(eText);
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x0B), temp);
-	}
-	if (eData != null) {
+        }
+        if (eData != null) {
             temp = new DerOutputStream();
-	    temp.putOctetString(eData);
+            temp.putOctetString(eData);
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x0C), temp);
-	}
-	if (eCksum != null) {
+        }
+        if (eCksum != null) {
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x0D), eCksum.asn1Encode());
         }
-        
+
         temp = new DerOutputStream();
-	temp.write(DerValue.tag_Sequence, bytes);
+        temp.write(DerValue.tag_Sequence, bytes);
         bytes = new DerOutputStream();
-	bytes.write(DerValue.createTag(DerValue.TAG_APPLICATION, true, (byte)0x1E), temp);
-	return bytes.toByteArray();
+        bytes.write(DerValue.createTag(DerValue.TAG_APPLICATION, true, (byte)0x1E), temp);
+        return bytes.toByteArray();
     }
-    
+
     @Override public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -544,7 +542,7 @@ public class KRBError implements java.io.Serializable {
             return false;
         }
 
-	KRBError other = (KRBError)obj;
+        KRBError other = (KRBError)obj;
         return  pvno == other.pvno &&
                 msgType == other.msgType &&
                 isEqual(cTime, other.cTime) &&
@@ -560,11 +558,11 @@ public class KRBError implements java.io.Serializable {
                 java.util.Arrays.equals(eData, other.eData) &&
                 isEqual(eCksum, other.eCksum);
     }
-    
+
     private static boolean isEqual(Object a, Object b) {
         return (a == null)?(b == null):(a.equals(b));
     }
-    
+
     @Override public int hashCode() {
         int result = 17;
         result = 37 * result + pvno;

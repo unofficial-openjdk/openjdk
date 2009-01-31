@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * Thrown to indicate an invalid argument or 
+ * Thrown to indicate an invalid argument or
  * inconsistent passed to a {@link Connector}.
  *
  * @author Gordon Hirsch
@@ -46,7 +46,7 @@ public class IllegalConnectorArgumentsException extends Exception
      * which is invalid or inconsistent.
      * @param s the detailed message.
      * @param name the name of the invalid or inconsistent argument.
-     */    
+     */
     public IllegalConnectorArgumentsException(String s,
                                               String name) {
         super(s);

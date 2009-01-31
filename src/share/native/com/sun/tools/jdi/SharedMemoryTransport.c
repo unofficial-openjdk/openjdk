@@ -28,20 +28,20 @@
 #include "com_sun_tools_jdi_SharedMemoryTransportService.h"
 #include "jdwpTransport.h"
 #include "shmemBase.h"
-#include "sys.h" 
+#include "sys.h"
 
 /*
- * JNI interface to the shared memory transport. These JNI methods 
+ * JNI interface to the shared memory transport. These JNI methods
  * call the base shared memory support to do the real work.
  *
  * That is, this is the front-ends interface to our shared memory
  * transport establishment code.
  */
- 
+
 /*
  * When initializing the transport from the front end, we use
  * standard malloc and free for allocation.
- */                                                 
+ */
 static void *allocateWrapper(jint size) {
     return malloc(size);
 }
@@ -64,9 +64,9 @@ throwShmemException(JNIEnv *env, char *message, jint errorCode)
     char buf[255];
 
     if (shmemBase_getlasterror(msg, sizeof(msg)) == SYS_OK) {
-	sprintf(buf, "%s: %s\n", message, msg);
+        sprintf(buf, "%s: %s\n", message, msg);
     } else {
-	sprintf(buf, "%s, error code = %d", message, errorCode);      
+        sprintf(buf, "%s, error code = %d", message, errorCode);
     }
     throwException(env, "java/io/IOException", buf);
 }
@@ -85,13 +85,13 @@ JNIEXPORT jlong JNICALL Java_com_sun_tools_jdi_SharedMemoryTransportService_acce
 
     rc = shmemBase_accept(transport, (long)timeout, &connection);
     if (rc != SYS_OK) {
-	if (rc == SYS_TIMEOUT) {
-	    throwException(env, "com/sun/jdi/connect/TransportTimeoutException", 
-		"Timed out waiting for target VM to connect");
-	} else {
-	    throwShmemException(env, "shmemBase_accept failed", rc);
-	}
-	return -1;
+        if (rc == SYS_TIMEOUT) {
+            throwException(env, "com/sun/jdi/connect/TransportTimeoutException",
+                "Timed out waiting for target VM to connect");
+        } else {
+            throwShmemException(env, "shmemBase_accept failed", rc);
+        }
+        return -1;
     }
     return CONNECTION_TO_ID(connection);
 }
@@ -119,7 +119,7 @@ JNIEXPORT jlong JNICALL Java_com_sun_tools_jdi_SharedMemoryTransportService_atta
     rc = shmemBase_attach(addrChars, (long)timeout, &connection);
     if (rc != SYS_OK) {
         throwShmemException(env, "shmemBase_attach failed", rc);
-    } 
+    }
 
     (*env)->ReleaseStringUTFChars(env, address, addrChars);
 
@@ -202,8 +202,8 @@ JNIEXPORT jlong JNICALL Java_com_sun_tools_jdi_SharedMemoryTransportService_star
     rc = shmemBase_listen(addrChars, &transport);
     if (rc != SYS_OK) {
         throwShmemException(env, "shmemBase_listen failed", rc);
-    } 
-        
+    }
+
     if (addrChars != NULL) {
         (*env)->ReleaseStringUTFChars(env, address, addrChars);
     }
@@ -222,4 +222,3 @@ JNIEXPORT void JNICALL Java_com_sun_tools_jdi_SharedMemoryTransportService_stopL
     SharedMemoryTransport *transport = ID_TO_TRANSPORT(id);
     shmemBase_closeTransport(transport);
 }
-

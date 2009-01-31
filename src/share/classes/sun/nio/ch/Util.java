@@ -108,13 +108,13 @@ class Util {
             private Closer (Selector sel) {
                 this.sel = sel;
             }
-	    public void run () {
-                try { 
-		    sel.close();
-		} catch (Throwable th) { 
-		    throw new Error(th);
-		}
-	    }
+            public void run () {
+                try {
+                    sel.close();
+                } catch (Throwable th) {
+                    throw new Error(th);
+                }
+            }
         }
         public Selector get() { return sel;}
     }
@@ -129,137 +129,137 @@ class Util {
     // by cancelling any related keys and explicitly releasing
     // the selector by invoking releaseTemporarySelector()
     static Selector getTemporarySelector(SelectableChannel sc)
-	throws IOException
+        throws IOException
     {
         SoftReference ref = (SoftReference)localSelector.get();
-	SelectorWrapper selWrapper = null;
-	Selector sel = null;
-	if (ref == null 
-	    || ((selWrapper = (SelectorWrapper) ref.get()) == null) 
-	    || ((sel = selWrapper.get()) == null)
-	    || (sel.provider() != sc.provider())) {
-	    sel = sc.provider().openSelector();
-	    localSelector.set(new SoftReference(new SelectorWrapper(sel)));
-	} else {
+        SelectorWrapper selWrapper = null;
+        Selector sel = null;
+        if (ref == null
+            || ((selWrapper = (SelectorWrapper) ref.get()) == null)
+            || ((sel = selWrapper.get()) == null)
+            || (sel.provider() != sc.provider())) {
+            sel = sc.provider().openSelector();
+            localSelector.set(new SoftReference(new SelectorWrapper(sel)));
+        } else {
             localSelectorWrapper.set(selWrapper);
-	}
-	return sel;
+        }
+        return sel;
     }
 
-    static void releaseTemporarySelector(Selector sel)    
+    static void releaseTemporarySelector(Selector sel)
         throws IOException
-    { 
-	// Selector should be empty
-	sel.selectNow();		// Flush cancelled keys
-	assert sel.keys().isEmpty() : "Temporary selector not empty";
-	localSelectorWrapper.set(null); 
+    {
+        // Selector should be empty
+        sel.selectNow();                // Flush cancelled keys
+        assert sel.keys().isEmpty() : "Temporary selector not empty";
+        localSelectorWrapper.set(null);
     }
 
-
+
     // -- Random stuff --
 
     static ByteBuffer[] subsequence(ByteBuffer[] bs, int offset, int length) {
-	if ((offset == 0) && (length == bs.length))
-	    return bs;
-	int n = length;
-	ByteBuffer[] bs2 = new ByteBuffer[n];
-	for (int i = 0; i < n; i++)
-	    bs2[i] = bs[offset + i];
-	return bs2;
+        if ((offset == 0) && (length == bs.length))
+            return bs;
+        int n = length;
+        ByteBuffer[] bs2 = new ByteBuffer[n];
+        for (int i = 0; i < n; i++)
+            bs2[i] = bs[offset + i];
+        return bs2;
     }
 
     static <E> Set<E> ungrowableSet(final Set<E> s) {
-	return new Set<E>() {
+        return new Set<E>() {
 
-		public int size() 		  { return s.size(); }
-		public boolean isEmpty() 	  { return s.isEmpty(); }
-		public boolean contains(Object o) { return s.contains(o); }
-		public Object[] toArray()         { return s.toArray(); }
-		public <T> T[] toArray(T[] a)     { return s.toArray(a); }
-		public String toString()          { return s.toString(); }
-		public Iterator<E> iterator()     { return s.iterator(); }
-		public boolean equals(Object o)   { return s.equals(o); }
-		public int hashCode()             { return s.hashCode(); }
-		public void clear()               { s.clear(); }
-		public boolean remove(Object o)   { return s.remove(o); }
+                public int size()                 { return s.size(); }
+                public boolean isEmpty()          { return s.isEmpty(); }
+                public boolean contains(Object o) { return s.contains(o); }
+                public Object[] toArray()         { return s.toArray(); }
+                public <T> T[] toArray(T[] a)     { return s.toArray(a); }
+                public String toString()          { return s.toString(); }
+                public Iterator<E> iterator()     { return s.iterator(); }
+                public boolean equals(Object o)   { return s.equals(o); }
+                public int hashCode()             { return s.hashCode(); }
+                public void clear()               { s.clear(); }
+                public boolean remove(Object o)   { return s.remove(o); }
 
-		public boolean containsAll(Collection<?> coll) {
-		    return s.containsAll(coll);
-		}
-		public boolean removeAll(Collection<?> coll) {
-		    return s.removeAll(coll);
-		}
-		public boolean retainAll(Collection<?> coll) {
-		    return s.retainAll(coll);
-		}
+                public boolean containsAll(Collection<?> coll) {
+                    return s.containsAll(coll);
+                }
+                public boolean removeAll(Collection<?> coll) {
+                    return s.removeAll(coll);
+                }
+                public boolean retainAll(Collection<?> coll) {
+                    return s.retainAll(coll);
+                }
 
-		public boolean add(E o){
-		    throw new UnsupportedOperationException();
-		}
-		public boolean addAll(Collection<? extends E> coll) {
-		    throw new UnsupportedOperationException();
-		}
+                public boolean add(E o){
+                    throw new UnsupportedOperationException();
+                }
+                public boolean addAll(Collection<? extends E> coll) {
+                    throw new UnsupportedOperationException();
+                }
 
-	};
+        };
     }
 
-
+
     // -- Unsafe access --
 
     private static Unsafe unsafe = Unsafe.getUnsafe();
 
     private static byte _get(long a) {
-	return unsafe.getByte(a);
+        return unsafe.getByte(a);
     }
 
     private static void _put(long a, byte b) {
-	unsafe.putByte(a, b);
+        unsafe.putByte(a, b);
     }
 
     static void erase(ByteBuffer bb) {
-	unsafe.setMemory(((DirectBuffer)bb).address(), bb.capacity(), (byte)0);
+        unsafe.setMemory(((DirectBuffer)bb).address(), bb.capacity(), (byte)0);
     }
 
     static Unsafe unsafe() {
-	return unsafe;
+        return unsafe;
     }
 
     private static int pageSize = -1;
 
     static int pageSize() {
-	if (pageSize == -1)
-	    pageSize = unsafe().pageSize();
-	return pageSize;
+        if (pageSize == -1)
+            pageSize = unsafe().pageSize();
+        return pageSize;
     }
 
     private static volatile Constructor directByteBufferConstructor = null;
 
     private static void initDBBConstructor() {
-	AccessController.doPrivileged(new PrivilegedAction() {
-		public Object run() {
-		    try {
-			Class cl = Class.forName("java.nio.DirectByteBuffer");
+        AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    try {
+                        Class cl = Class.forName("java.nio.DirectByteBuffer");
                         Constructor ctor = cl.getDeclaredConstructor(
-			    new Class[] { int.class,
+                            new Class[] { int.class,
                                           long.class,
-				          Runnable.class });
+                                          Runnable.class });
                         ctor.setAccessible(true);
-			directByteBufferConstructor = ctor;
-		    } catch (ClassNotFoundException x) {
-			throw new InternalError();
-		    } catch (NoSuchMethodException x) {
-			throw new InternalError();
-		    } catch (IllegalArgumentException x) {
-			throw new InternalError();
-		    } catch (ClassCastException x) {
-			throw new InternalError();
-		    }
+                        directByteBufferConstructor = ctor;
+                    } catch (ClassNotFoundException x) {
+                        throw new InternalError();
+                    } catch (NoSuchMethodException x) {
+                        throw new InternalError();
+                    } catch (IllegalArgumentException x) {
+                        throw new InternalError();
+                    } catch (ClassCastException x) {
+                        throw new InternalError();
+                    }
                     return null;
-		}});
+                }});
     }
 
     static MappedByteBuffer newMappedByteBuffer(int size, long addr,
-						Runnable unmapper)
+                                                Runnable unmapper)
     {
         MappedByteBuffer dbb;
         if (directByteBufferConstructor == null)
@@ -268,7 +268,7 @@ class Util {
             dbb = (MappedByteBuffer)directByteBufferConstructor.newInstance(
               new Object[] { new Integer(size),
                              new Long(addr),
-			     unmapper });
+                             unmapper });
         } catch (InstantiationException e) {
             throw new InternalError();
         } catch (IllegalAccessException e) {
@@ -282,31 +282,31 @@ class Util {
     private static volatile Constructor directByteBufferRConstructor = null;
 
     private static void initDBBRConstructor() {
-	AccessController.doPrivileged(new PrivilegedAction() {
-		public Object run() {
-		    try {
-			Class cl = Class.forName("java.nio.DirectByteBufferR");
-			Constructor ctor = cl.getDeclaredConstructor(
-			    new Class[] { int.class,
+        AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    try {
+                        Class cl = Class.forName("java.nio.DirectByteBufferR");
+                        Constructor ctor = cl.getDeclaredConstructor(
+                            new Class[] { int.class,
                                           long.class,
-					  Runnable.class });
-			ctor.setAccessible(true);
-			directByteBufferRConstructor = ctor;
-		    } catch (ClassNotFoundException x) {
-			throw new InternalError();
-		    } catch (NoSuchMethodException x) {
-			throw new InternalError();
-		    } catch (IllegalArgumentException x) {
-			throw new InternalError();
-		    } catch (ClassCastException x) {
-			throw new InternalError();
-		    }
+                                          Runnable.class });
+                        ctor.setAccessible(true);
+                        directByteBufferRConstructor = ctor;
+                    } catch (ClassNotFoundException x) {
+                        throw new InternalError();
+                    } catch (NoSuchMethodException x) {
+                        throw new InternalError();
+                    } catch (IllegalArgumentException x) {
+                        throw new InternalError();
+                    } catch (ClassCastException x) {
+                        throw new InternalError();
+                    }
                     return null;
-		}});
+                }});
     }
 
     static MappedByteBuffer newMappedByteBufferR(int size, long addr,
-						 Runnable unmapper)
+                                                 Runnable unmapper)
     {
         MappedByteBuffer dbb;
         if (directByteBufferRConstructor == null)
@@ -315,7 +315,7 @@ class Util {
             dbb = (MappedByteBuffer)directByteBufferRConstructor.newInstance(
               new Object[] { new Integer(size),
                              new Long(addr),
-			     unmapper });
+                             unmapper });
         } catch (InstantiationException e) {
             throw new InternalError();
         } catch (IllegalAccessException e) {
@@ -326,41 +326,41 @@ class Util {
         return dbb;
     }
 
-
+
     // -- Bug compatibility --
 
     private static volatile String bugLevel = null;
 
-    static boolean atBugLevel(String bl) {		// package-private
-	if (bugLevel == null) {
-	    if (!sun.misc.VM.isBooted())
-		return false;
-	    String value = AccessController.doPrivileged(
-		new GetPropertyAction("sun.nio.ch.bugLevel"));
- 	    bugLevel = (value != null) ? value : "";
-	}
-	return bugLevel.equals(bl);
+    static boolean atBugLevel(String bl) {              // package-private
+        if (bugLevel == null) {
+            if (!sun.misc.VM.isBooted())
+                return false;
+            String value = AccessController.doPrivileged(
+                new GetPropertyAction("sun.nio.ch.bugLevel"));
+            bugLevel = (value != null) ? value : "";
+        }
+        return bugLevel.equals(bl);
     }
 
 
-
+
     // -- Initialization --
 
     private static boolean loaded = false;
 
     static void load() {
-	synchronized (Util.class) {
-	    if (loaded)
-		return;
+        synchronized (Util.class) {
+            if (loaded)
+                return;
             loaded = true;
-	    java.security.AccessController
-		.doPrivileged(new sun.security.action.LoadLibraryAction("net"));
-	    java.security.AccessController
-		.doPrivileged(new sun.security.action.LoadLibraryAction("nio"));
+            java.security.AccessController
+                .doPrivileged(new sun.security.action.LoadLibraryAction("net"));
+            java.security.AccessController
+                .doPrivileged(new sun.security.action.LoadLibraryAction("nio"));
             // IOUtil must be initialized; Its native methods are called from
             // other places in native nio code so they must be set up.
             IOUtil.initIDs();
-	}
+        }
     }
 
 }

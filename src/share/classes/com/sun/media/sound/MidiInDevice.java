@@ -35,7 +35,6 @@ import javax.sound.midi.*;
 /**
  * MidiInDevice class representing functionality of MidiIn devices.
  *
- * @version %I%, %E%
  * @author David Rivas
  * @author Kara Kytle
  * @author Florian Bomers
@@ -47,8 +46,8 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
     // CONSTRUCTOR
 
     MidiInDevice(AbstractMidiDeviceProvider.Info info) {
-	super(info);
-	if(Printer.trace) Printer.trace("MidiInDevice CONSTRUCTOR");
+        super(info);
+        if(Printer.trace) Printer.trace("MidiInDevice CONSTRUCTOR");
     }
 
 
@@ -57,58 +56,58 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
     // $$kk: 06.24.99: i have this both opening and starting the midi in device.
     // may want to separate these??
     protected synchronized void implOpen() throws MidiUnavailableException {
-	if (Printer.trace) Printer.trace("> MidiInDevice: implOpen()");
+        if (Printer.trace) Printer.trace("> MidiInDevice: implOpen()");
 
-	int index = ((MidiInDeviceProvider.MidiInDeviceInfo)getDeviceInfo()).getIndex();
-	id = nOpen(index); // can throw MidiUnavailableException
+        int index = ((MidiInDeviceProvider.MidiInDeviceInfo)getDeviceInfo()).getIndex();
+        id = nOpen(index); // can throw MidiUnavailableException
 
-	if (id == 0) {
-	    throw new MidiUnavailableException("Unable to open native device");
-	}
+        if (id == 0) {
+            throw new MidiUnavailableException("Unable to open native device");
+        }
 
-	// create / start a thread to get messages
-	if (midiInThread == null) {
-	    midiInThread = JSSecurityManager.createThread(this,
-						    "Java Sound MidiInDevice Thread",   // name
-						    false,  // daemon
-						    -1,    // priority
-						    true); // doStart
-	}
+        // create / start a thread to get messages
+        if (midiInThread == null) {
+            midiInThread = JSSecurityManager.createThread(this,
+                                                    "Java Sound MidiInDevice Thread",   // name
+                                                    false,  // daemon
+                                                    -1,    // priority
+                                                    true); // doStart
+        }
 
-	nStart(id); // can throw MidiUnavailableException
-	if (Printer.trace) Printer.trace("< MidiInDevice: implOpen() completed");
+        nStart(id); // can throw MidiUnavailableException
+        if (Printer.trace) Printer.trace("< MidiInDevice: implOpen() completed");
     }
 
 
     // $$kk: 06.24.99: i have this both stopping and closing the midi in device.
     // may want to separate these??
     protected synchronized void implClose() {
-	if (Printer.trace) Printer.trace("> MidiInDevice: implClose()");
-	long oldId = id;
-	id = 0;
+        if (Printer.trace) Printer.trace("> MidiInDevice: implClose()");
+        long oldId = id;
+        id = 0;
 
-	super.implClose();
+        super.implClose();
 
-	// close the device
-	nStop(oldId);
-	if (midiInThread != null) {
-	    try {
-		midiInThread.join(1000);
-	    } catch (InterruptedException e) {
-		// IGNORE EXCEPTION
-	    }
-	}
-	nClose(oldId);
-	if (Printer.trace) Printer.trace("< MidiInDevice: implClose() completed");
+        // close the device
+        nStop(oldId);
+        if (midiInThread != null) {
+            try {
+                midiInThread.join(1000);
+            } catch (InterruptedException e) {
+                // IGNORE EXCEPTION
+            }
+        }
+        nClose(oldId);
+        if (Printer.trace) Printer.trace("< MidiInDevice: implClose() completed");
     }
 
 
     public long getMicrosecondPosition() {
-	long timestamp = -1;
-	if (isOpen()) {
-	    timestamp = nGetTimeStamp(id);
-	}
-	return timestamp;
+        long timestamp = -1;
+        if (isOpen()) {
+            timestamp = nGetTimeStamp(id);
+        }
+        return timestamp;
     }
 
 
@@ -116,12 +115,12 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
 
 
     protected boolean hasTransmitters() {
-	return true;
+        return true;
     }
 
 
     protected Transmitter createTransmitter() {
-	return new MidiInTransmitter();
+        return new MidiInTransmitter();
     }
 
     /**
@@ -130,27 +129,27 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
       */
     private class MidiInTransmitter extends BasicTransmitter {
         private MidiInTransmitter() {
-	    super();
-	}
+            super();
+        }
     }
 
     // RUNNABLE METHOD
 
     public void run() {
-	// while the device is started, keep trying to get messages.
-	// this thread returns from native code whenever stop() or close() is called
-	while (id!=0) {
-	    // go into native code and retrieve messages
-	    nGetMessages(id);
-	    if (id!=0) {
-		try {
-		    Thread.sleep(1);
-		} catch (InterruptedException e) {}
-	    }
-	}
-	if(Printer.verbose) Printer.verbose("MidiInDevice Thread exit");
-	// let the thread exit
-	midiInThread = null;
+        // while the device is started, keep trying to get messages.
+        // this thread returns from native code whenever stop() or close() is called
+        while (id!=0) {
+            // go into native code and retrieve messages
+            nGetMessages(id);
+            if (id!=0) {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {}
+            }
+        }
+        if(Printer.verbose) Printer.verbose("MidiInDevice Thread exit");
+        // let the thread exit
+        midiInThread = null;
     }
 
 
@@ -162,25 +161,25 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
      * @param timeStamp time-stamp in microseconds
      */
     void callbackShortMessage(int packedMsg, long timeStamp) {
-	if (packedMsg == 0 || id == 0) {
-	    return;
-	}
+        if (packedMsg == 0 || id == 0) {
+            return;
+        }
 
-	/*if(Printer.verbose) {
-	  int status = packedMsg & 0xFF;
-	  int data1 = (packedMsg & 0xFF00)>>8;
-	  int data2 = (packedMsg & 0xFF0000)>>16;
-	  Printer.verbose(">> MidiInDevice callbackShortMessage: status: " + status + " data1: " + data1 + " data2: " + data2 + " timeStamp: " + timeStamp);
-	  }*/
+        /*if(Printer.verbose) {
+          int status = packedMsg & 0xFF;
+          int data1 = (packedMsg & 0xFF00)>>8;
+          int data2 = (packedMsg & 0xFF0000)>>16;
+          Printer.verbose(">> MidiInDevice callbackShortMessage: status: " + status + " data1: " + data1 + " data2: " + data2 + " timeStamp: " + timeStamp);
+          }*/
 
-	getTransmitterList().sendMessage(packedMsg, timeStamp);
+        getTransmitterList().sendMessage(packedMsg, timeStamp);
     }
 
     void callbackLongMessage(byte[] data, long timeStamp) {
-	if (id == 0 || data == null) {
-	    return;
-	}
-	getTransmitterList().sendMessage(data, timeStamp);
+        if (id == 0 || data == null) {
+            return;
+        }
+        getTransmitterList().sendMessage(data, timeStamp);
     }
 
     // NATIVE METHODS
@@ -197,4 +196,3 @@ class MidiInDevice extends AbstractMidiDevice implements Runnable {
 
 
 }
-

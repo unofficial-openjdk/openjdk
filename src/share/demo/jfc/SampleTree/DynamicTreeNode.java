@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.Color;
@@ -63,7 +61,6 @@ import java.util.Random;
   *       a problem, but if you do support true leaf nodes you may want
   *       to check for loading in getAllowsChildren too.
   *
-  * @version %I% %G%
   * @author Scott Violet
   */
 
@@ -86,44 +83,44 @@ public class DynamicTreeNode extends DefaultMutableTreeNode
     static protected final int                DefaultChildrenCount = 7;
 
     static {
-	String[]            fontNames;
+        String[]            fontNames;
 
-	try {
-	    fontNames = Toolkit.getDefaultToolkit().getFontList();
-	} catch (Exception e) {
-	    fontNames = null;
-	}
-	if(fontNames == null || fontNames.length == 0) {
-	    names = new String[] {"Mark Andrews", "Tom Ball", "Alan Chung",
-				      "Rob Davis", "Jeff Dinkins",
-				      "Amy Fowler", "James Gosling",
-				      "David Karlton", "Dave Kloba", 
-				      "Dave Moore", "Hans Muller",
-				      "Rick Levenson", "Tim Prinzing",
-				      "Chester Rose", "Ray Ryan",
-				      "Georges Saab", "Scott Violet",
-				      "Kathy Walrath", "Arnaud Weber" };
-	}
-	else {
-	    /* Create the Fonts, creating fonts is slow, much better to
-	       do it once. */
-	    int              fontSize = 12;
+        try {
+            fontNames = Toolkit.getDefaultToolkit().getFontList();
+        } catch (Exception e) {
+            fontNames = null;
+        }
+        if(fontNames == null || fontNames.length == 0) {
+            names = new String[] {"Mark Andrews", "Tom Ball", "Alan Chung",
+                                      "Rob Davis", "Jeff Dinkins",
+                                      "Amy Fowler", "James Gosling",
+                                      "David Karlton", "Dave Kloba",
+                                      "Dave Moore", "Hans Muller",
+                                      "Rick Levenson", "Tim Prinzing",
+                                      "Chester Rose", "Ray Ryan",
+                                      "Georges Saab", "Scott Violet",
+                                      "Kathy Walrath", "Arnaud Weber" };
+        }
+        else {
+            /* Create the Fonts, creating fonts is slow, much better to
+               do it once. */
+            int              fontSize = 12;
 
-	    names = fontNames;
-	    fonts = new Font[names.length];
-	    for(int counter = 0, maxCounter = names.length;
-		counter < maxCounter; counter++) {
-		try {
-		    fonts[counter] = new Font(fontNames[counter], 0, fontSize);
-		}
-		catch (Exception e) {
-		    fonts[counter] = null;
-		}
-		fontSize = ((fontSize + 2 - 12) % 12) + 12;
-	    }
-	}
-	nameCount = (float)names.length;
-	nameGen = new Random(System.currentTimeMillis());
+            names = fontNames;
+            fonts = new Font[names.length];
+            for(int counter = 0, maxCounter = names.length;
+                counter < maxCounter; counter++) {
+                try {
+                    fonts[counter] = new Font(fontNames[counter], 0, fontSize);
+                }
+                catch (Exception e) {
+                    fonts[counter] = null;
+                }
+                fontSize = ((fontSize + 2 - 12) % 12) + 12;
+            }
+        }
+        nameCount = (float)names.length;
+        nameGen = new Random(System.currentTimeMillis());
     }
 
 
@@ -135,11 +132,11 @@ public class DynamicTreeNode extends DefaultMutableTreeNode
       * object.
       */
     public DynamicTreeNode(Object o) {
-	super(o);
+        super(o);
     }
 
     public boolean isLeaf() {
-	return false;
+        return false;
     }
 
     /**
@@ -148,10 +145,10 @@ public class DynamicTreeNode extends DefaultMutableTreeNode
       * the return value.
       */
     public int getChildCount() {
-	if(!hasLoaded) {
-	    loadChildren();
-	}
-	return super.getChildCount();
+        if(!hasLoaded) {
+            loadChildren();
+        }
+        return super.getChildCount();
     }
 
     /**
@@ -159,29 +156,29 @@ public class DynamicTreeNode extends DefaultMutableTreeNode
       * children with random names from names.
       */
     protected void loadChildren() {
-	DynamicTreeNode             newNode;
-	Font                        font;
-	int                         randomIndex;
-	SampleData                  data;
+        DynamicTreeNode             newNode;
+        Font                        font;
+        int                         randomIndex;
+        SampleData                  data;
 
-	for(int counter = 0; counter < DynamicTreeNode.DefaultChildrenCount;
-	    counter++) {
-	    randomIndex = (int)(nameGen.nextFloat() * nameCount);
-	    if(fonts != null)
-		font = fonts[randomIndex];
-	    else
-		font = null;
-	    if(counter % 2 == 0)
-		data = new SampleData(font, Color.red, names[randomIndex]);
-	    else
-		data = new SampleData(font, Color.blue, names[randomIndex]);
-	    newNode = new DynamicTreeNode(data);
-	    /* Don't use add() here, add calls insert(newNode, getChildCount())
-	       so if you want to use add, just be sure to set hasLoaded = true
-	       first. */
-	    insert(newNode, counter);
-	}
-	/* This node has now been loaded, mark it so. */
-	hasLoaded = true;
+        for(int counter = 0; counter < DynamicTreeNode.DefaultChildrenCount;
+            counter++) {
+            randomIndex = (int)(nameGen.nextFloat() * nameCount);
+            if(fonts != null)
+                font = fonts[randomIndex];
+            else
+                font = null;
+            if(counter % 2 == 0)
+                data = new SampleData(font, Color.red, names[randomIndex]);
+            else
+                data = new SampleData(font, Color.blue, names[randomIndex]);
+            newNode = new DynamicTreeNode(data);
+            /* Don't use add() here, add calls insert(newNode, getChildCount())
+               so if you want to use add, just be sure to set hasLoaded = true
+               first. */
+            insert(newNode, counter);
+        }
+        /* This node has now been loaded, mark it so. */
+        hasLoaded = true;
     }
 }

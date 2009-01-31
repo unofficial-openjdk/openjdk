@@ -38,7 +38,7 @@
 
 #include "hpi_impl.h"
 
-#undef DEBUG_PATH		/* Define this to debug path code */
+#undef DEBUG_PATH               /* Define this to debug path code */
 
 #define isfilesep(c) ((c) == '/' || (c) == '\\')
 #define islb(c)      (IsDBCSLeadByte((BYTE)(c)))
@@ -59,9 +59,9 @@ char *
 sysNativePath(char *path)
 {
     char *src = path, *dst = path, *end = path;
-    char *colon = NULL;		/* If a drive specifier is found, this will
-				   point to the colon following the drive
-				   letter */
+    char *colon = NULL;         /* If a drive specifier is found, this will
+                                   point to the colon following the drive
+                                   letter */
 
     /* Assumption: '/', '\\', ':', and drive letters are never lead bytes */
     sysAssert(!islb('/') && !islb('\\') && !islb(':'));
@@ -69,23 +69,23 @@ sysNativePath(char *path)
     /* Check for leading separators */
     while (isfilesep(*src)) src++;
     if (isalpha(*src) && !islb(*src) && src[1] == ':') {
-	/* Remove leading separators if followed by drive specifier.  This
-	   hack is necessary to support file URLs containing drive
-	   specifiers (e.g., "file://c:/path").  As a side effect,
-	   "/c:/path" can be used as an alternative to "c:/path". */
-	*dst++ = *src++;
-	colon = dst;
-	*dst++ = ':'; src++;
+        /* Remove leading separators if followed by drive specifier.  This
+           hack is necessary to support file URLs containing drive
+           specifiers (e.g., "file://c:/path").  As a side effect,
+           "/c:/path" can be used as an alternative to "c:/path". */
+        *dst++ = *src++;
+        colon = dst;
+        *dst++ = ':'; src++;
     } else {
-	src = path;
-	if (isfilesep(src[0]) && isfilesep(src[1])) {
-	    /* UNC pathname: Retain first separator; leave src pointed at
-	       second separator so that further separators will be collapsed
-	       into the second separator.  The result will be a pathname
-	       beginning with "\\\\" followed (most likely) by a host name. */
-	    src = dst = path + 1;
-	    path[0] = '\\';	/* Force first separator to '\\' */
-	}
+        src = path;
+        if (isfilesep(src[0]) && isfilesep(src[1])) {
+            /* UNC pathname: Retain first separator; leave src pointed at
+               second separator so that further separators will be collapsed
+               into the second separator.  The result will be a pathname
+               beginning with "\\\\" followed (most likely) by a host name. */
+            src = dst = path + 1;
+            path[0] = '\\';     /* Force first separator to '\\' */
+        }
     }
 
     end = dst;
@@ -96,51 +96,51 @@ sysNativePath(char *path)
        are not legal ending characters on this operating system.
     */
     while (*src != '\0') {
-	if (isfilesep(*src)) {
-	    *dst++ = '\\'; src++;
-	    while (isfilesep(*src)) src++;
-	    if (*src == '\0') {	/* Check for trailing separator */
+        if (isfilesep(*src)) {
+            *dst++ = '\\'; src++;
+            while (isfilesep(*src)) src++;
+            if (*src == '\0') { /* Check for trailing separator */
                 end = dst;
-		if (colon == dst - 2) break;                      /* "z:\\" */
-		if (dst == path + 1) break;                       /* "\\" */
-		if (dst == path + 2 && isfilesep(path[0])) {
-		    /* "\\\\" is not collapsed to "\\" because "\\\\" marks the
-		       beginning of a UNC pathname.  Even though it is not, by
-		       itself, a valid UNC pathname, we leave it as is in order
-		       to be consistent with the path canonicalizer as well 
-		       as the win32 APIs, which treat this case as an invalid
-		       UNC pathname rather than as an alias for the root
-		       directory of the current drive. */
-		    break;
-		}
-		end = --dst;	/* Path does not denote a root directory, so
-				   remove trailing separator */
-		break;
-	    }
+                if (colon == dst - 2) break;                      /* "z:\\" */
+                if (dst == path + 1) break;                       /* "\\" */
+                if (dst == path + 2 && isfilesep(path[0])) {
+                    /* "\\\\" is not collapsed to "\\" because "\\\\" marks the
+                       beginning of a UNC pathname.  Even though it is not, by
+                       itself, a valid UNC pathname, we leave it as is in order
+                       to be consistent with the path canonicalizer as well
+                       as the win32 APIs, which treat this case as an invalid
+                       UNC pathname rather than as an alias for the root
+                       directory of the current drive. */
+                    break;
+                }
+                end = --dst;    /* Path does not denote a root directory, so
+                                   remove trailing separator */
+                break;
+            }
             end = dst;
-	} else {
-	    if (islb(*src)) {	/* Copy a double-byte character */
-		*dst++ = *src++;
-		if (*src) {
-		    *dst++ = *src++;
-		}
+        } else {
+            if (islb(*src)) {   /* Copy a double-byte character */
+                *dst++ = *src++;
+                if (*src) {
+                    *dst++ = *src++;
+                }
                 end = dst;
-	    } else {		/* Copy a single-byte character */
+            } else {            /* Copy a single-byte character */
                 char c = *src++;
-		*dst++ = c;
+                *dst++ = c;
                 /* Space is not a legal ending character */
                 if (c != ' ')
                     end = dst;
-	    }
-	}
+            }
+        }
     }
 
     *end = '\0';
 
     /* For "z:", add "." to work around a bug in the C runtime library */
     if (colon == dst - 1) {
-	path[2] = '.';
-	path[3] = '\0';
+        path[2] = '.';
+        path[3] = '\0';
     }
 
 #ifdef DEBUG_PATH

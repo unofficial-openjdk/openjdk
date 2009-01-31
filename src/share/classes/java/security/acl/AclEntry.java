@@ -49,7 +49,7 @@ import java.security.Principal;
  *
  * @see java.security.acl.Acl
  *
- * @author 	Satish Dharmaraj
+ * @author      Satish Dharmaraj
  */
 public interface AclEntry extends Cloneable {
 
@@ -152,5 +152,3 @@ public interface AclEntry extends Cloneable {
      */
     public Object clone();
 }
-
-

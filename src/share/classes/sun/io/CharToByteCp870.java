@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM870;
  * Tables and data to convert Unicode to Cp870
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp870 extends CharToByteSingleByte {

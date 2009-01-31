@@ -34,24 +34,24 @@ import java.io.FileOutputStream;
 
 public class SimpleApplication {
     public static void main(String args[]) throws Exception {
-	// bind to a random port
+        // bind to a random port
         ServerSocket ss = new ServerSocket(0);
         int port = ss.getLocalPort();
 
-	// Write the port number to the given file
-	File f = new File(args[0]);
-	FileOutputStream fos = new FileOutputStream(f);
-	fos.write( Integer.toString(port).getBytes("UTF-8") );
-	fos.close();
+        // Write the port number to the given file
+        File f = new File(args[0]);
+        FileOutputStream fos = new FileOutputStream(f);
+        fos.write( Integer.toString(port).getBytes("UTF-8") );
+        fos.close();
 
-	System.out.println("Application waiting on port: " + port);
-	System.out.flush();
+        System.out.println("Application waiting on port: " + port);
+        System.out.flush();
 
         // wait for test harness to connect
         Socket s = ss.accept();
         s.close();
         ss.close();
 
-	System.out.println("Application shutdown.");
+        System.out.println("Application shutdown.");
     }
 }

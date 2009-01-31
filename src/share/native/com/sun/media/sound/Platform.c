@@ -67,36 +67,36 @@ JNIEXPORT jstring JNICALL Java_com_sun_media_sound_Platform_nGetExtraLibraries(J
  */
 JNIEXPORT jint JNICALL Java_com_sun_media_sound_Platform_nGetLibraryForFeature
   (JNIEnv *env, jclass clazz, jint feature) {
-  	
+
 // for every OS
 #if X_PLATFORM == X_WINDOWS
     switch (feature) {
-    case com_sun_media_sound_Platform_FEATURE_MIDIIO:       
-	return com_sun_media_sound_Platform_LIB_MAIN;
+    case com_sun_media_sound_Platform_FEATURE_MIDIIO:
+        return com_sun_media_sound_Platform_LIB_MAIN;
     case com_sun_media_sound_Platform_FEATURE_PORTS:
-	return com_sun_media_sound_Platform_LIB_MAIN;
+        return com_sun_media_sound_Platform_LIB_MAIN;
     case com_sun_media_sound_Platform_FEATURE_DIRECT_AUDIO:
-	return com_sun_media_sound_Platform_LIB_DSOUND;
+        return com_sun_media_sound_Platform_LIB_DSOUND;
     }
 #endif
 #if (X_PLATFORM == X_SOLARIS)
     switch (feature) {
     case com_sun_media_sound_Platform_FEATURE_MIDIIO:
-	return com_sun_media_sound_Platform_LIB_MAIN;
+        return com_sun_media_sound_Platform_LIB_MAIN;
     case com_sun_media_sound_Platform_FEATURE_PORTS:
-	return com_sun_media_sound_Platform_LIB_MAIN;
+        return com_sun_media_sound_Platform_LIB_MAIN;
     case com_sun_media_sound_Platform_FEATURE_DIRECT_AUDIO:
-	return com_sun_media_sound_Platform_LIB_MAIN;
+        return com_sun_media_sound_Platform_LIB_MAIN;
     }
 #endif
 #if (X_PLATFORM == X_LINUX)
     switch (feature) {
     case com_sun_media_sound_Platform_FEATURE_MIDIIO:
-	return com_sun_media_sound_Platform_LIB_ALSA;
+        return com_sun_media_sound_Platform_LIB_ALSA;
     case com_sun_media_sound_Platform_FEATURE_PORTS:
-	return com_sun_media_sound_Platform_LIB_ALSA;
+        return com_sun_media_sound_Platform_LIB_ALSA;
     case com_sun_media_sound_Platform_FEATURE_DIRECT_AUDIO:
-	return com_sun_media_sound_Platform_LIB_ALSA;
+        return com_sun_media_sound_Platform_LIB_ALSA;
     }
 #endif
     return 0;

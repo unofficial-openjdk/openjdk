@@ -40,7 +40,6 @@ import java.util.List;
  *
  * @since 1.7
  *
- * @version %I% %G%
  * @author Sergey A. Malenkov
  */
 public final class EnumEditor implements PropertyEditor {
@@ -95,7 +94,7 @@ public final class EnumEditor implements PropertyEditor {
     public String getAsText() {
         return ( this.value != null )
                 ? ( ( Enum )this.value ).name()
-                : null;
+                : "null";
     }
 
     public void setAsText( String text ) {
@@ -109,9 +108,8 @@ public final class EnumEditor implements PropertyEditor {
     }
 
     public String getJavaInitializationString() {
-        String name = getAsText();
-        return ( name != null )
-                ? this.type.getName() + '.' + name
+        return ( this.value != null )
+                ? this.type.getName() + '.' + ( ( Enum )this.value ).name()
                 : "null";
     }
 

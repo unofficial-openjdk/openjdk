@@ -35,7 +35,7 @@
  */
 
 /* This tests the patternMatch function in JDK file:
- *    .../src/share/back/eventHandler.c 
+ *    .../src/share/back/eventHandler.c
  *
  * This test verifies that patterns that do not match really don't.
  * See also testcase FilterMatch.java.
@@ -97,21 +97,21 @@ public class FilterNoMatch extends JDIScaffold {
         EventRequestManager requestManager = vm().eventRequestManager();
         ReferenceType referenceType = resumeToPrepareOf("HelloWorld").referenceType();
 
-        // The debuggee is stopped 
+        // The debuggee is stopped
         // I don't think we really have to set a bkpt and then do a step,
         // we should just be able to do a step.  Problem is the
         // createStepRequest call needs a thread and I don't know
         // yet where to get one other than from the bkpt handling :-(
         Location location = findLocation(referenceType, 3);
-        BreakpointRequest request 
+        BreakpointRequest request
             = requestManager.createBreakpointRequest(location);
 
-        request.enable();            
+        request.enable();
 
         // This does a resume, so we shouldn't come back to it until
         // the debuggee has run and hit the bkpt.
         BreakpointEvent event = (BreakpointEvent)waitForRequestedEvent(request);
-        
+
         // The bkpt was hit; remove it.
         requestManager.deleteEventRequest(request);
 
@@ -119,7 +119,7 @@ public class FilterNoMatch extends JDIScaffold {
                                   StepRequest.STEP_LINE,StepRequest.STEP_OVER);
 
 
-        // We have to filter out all these so that they don't cause the 
+        // We have to filter out all these so that they don't cause the
         // listener to be called.
         request1.addClassExclusionFilter( "java.*");
         request1.addClassExclusionFilter( "com.*");
@@ -143,9 +143,9 @@ public class FilterNoMatch extends JDIScaffold {
 
         // As a test, uncomment this line and this test should fail.
         //request1.addClassExclusionFilter("*elloWorld");
-        
 
-        request1.enable();            
+
+        request1.enable();
         listen();
 
         vm().resume();

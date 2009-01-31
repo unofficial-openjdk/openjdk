@@ -33,7 +33,6 @@ import java.io.*;
  * It uses an InputRecord as internal buffer that is refilled on demand
  * whenever it runs out of data.
  *
- * @version %I% %G%
  * @author David Brownell
  */
 class AppInputStream extends InputStream {
@@ -48,8 +47,8 @@ class AppInputStream extends InputStream {
     private final byte[] oneByte = new byte[1];
 
     AppInputStream(SSLSocketImpl conn) {
-	r = new InputRecord();
-	c = conn;
+        r = new InputRecord();
+        c = conn;
     }
 
     /**
@@ -57,21 +56,21 @@ class AppInputStream extends InputStream {
      * Currently not synchronized.
      */
     public int available() throws IOException {
-	if (c.checkEOF() || (r.isAppDataValid() == false)) {
-	    return 0;
-	}
-	return r.available();
+        if (c.checkEOF() || (r.isAppDataValid() == false)) {
+            return 0;
+        }
+        return r.available();
     }
 
     /**
      * Read a single byte, returning -1 on non-fault EOF status.
      */
     public synchronized int read() throws IOException {
-	int n = read(oneByte, 0, 1);
-	if (n <= 0) { // EOF
-	    return -1;
-	}
-	return oneByte[0] & 0xff;
+        int n = read(oneByte, 0, 1);
+        if (n <= 0) { // EOF
+            return -1;
+        }
+        return oneByte[0] & 0xff;
     }
 
     /**
@@ -81,32 +80,32 @@ class AppInputStream extends InputStream {
      * and returning "-1" on non-fault EOF status.
      */
     public synchronized int read(byte b[], int off, int len)
-	    throws IOException {
-	if (c.checkEOF()) {
-	    return -1;
-	}
-	try {
-	    /*
-	     * Read data if needed ... notice that the connection guarantees
-	     * that handshake, alert, and change cipher spec data streams are
-	     * handled as they arrive, so we never see them here.
-	     */
-	    while (r.available() == 0) {
-		c.readDataRecord(r);
-		if (c.checkEOF()) {
-		    return -1;
-		}
-	    }
+            throws IOException {
+        if (c.checkEOF()) {
+            return -1;
+        }
+        try {
+            /*
+             * Read data if needed ... notice that the connection guarantees
+             * that handshake, alert, and change cipher spec data streams are
+             * handled as they arrive, so we never see them here.
+             */
+            while (r.available() == 0) {
+                c.readDataRecord(r);
+                if (c.checkEOF()) {
+                    return -1;
+                }
+            }
 
-	    int howmany = Math.min(len, r.available());
-	    howmany = r.read(b, off, howmany);
-	    return howmany;
-	} catch (Exception e) {
-	    // shutdown and rethrow (wrapped) exception as appropriate
-	    c.handleException(e);
-	    // dummy for compiler
-	    return -1;
-	}
+            int howmany = Math.min(len, r.available());
+            howmany = r.read(b, off, howmany);
+            return howmany;
+        } catch (Exception e) {
+            // shutdown and rethrow (wrapped) exception as appropriate
+            c.handleException(e);
+            // dummy for compiler
+            return -1;
+        }
     }
 
 
@@ -118,24 +117,24 @@ class AppInputStream extends InputStream {
      * in the data anyway.
      */
     public synchronized long skip(long n) throws IOException {
-	long skipped = 0;
-	while (n > 0) {
-	    int len = (int)Math.min(n, SKIP_ARRAY.length);
-	    int r = read(SKIP_ARRAY, 0, len);
-	    if (r <= 0) {
-		break;
-	    }
-	    n -= r;
-	    skipped += r;
-	}
-	return skipped;
+        long skipped = 0;
+        while (n > 0) {
+            int len = (int)Math.min(n, SKIP_ARRAY.length);
+            int r = read(SKIP_ARRAY, 0, len);
+            if (r <= 0) {
+                break;
+            }
+            n -= r;
+            skipped += r;
+        }
+        return skipped;
     }
 
     /*
      * Socket close is already synchronized, no need to block here.
      */
     public void close() throws IOException {
-	c.close();
+        c.close();
     }
 
     // inherit default mark/reset behavior (throw Exceptions) from InputStream

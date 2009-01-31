@@ -36,55 +36,55 @@ import java.util.*;
 
 public class GenericStringTest {
     public static void main(String argv[]) throws Exception {
-	int failures = 0;
-	List<Class<?>> classList = new LinkedList<Class<?>>();
-	classList.add(TestClass1.class);
-	classList.add(TestClass2.class);
-	classList.add(Roebling.class);
-	
+        int failures = 0;
+        List<Class<?>> classList = new LinkedList<Class<?>>();
+        classList.add(TestClass1.class);
+        classList.add(TestClass2.class);
+        classList.add(Roebling.class);
 
-	for(Class<?> clazz: classList)
-	    for(Method method: clazz.getDeclaredMethods()) {
-		ExpectedGenericString egs = method.getAnnotation(ExpectedGenericString.class);
-		if (egs != null) {
-		    String actual = method.toGenericString();
-		    System.out.println(actual);
-		    if (! egs.value().equals(actual)) {
-			failures++;
-			System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
-					  egs.value(), actual);
-		    }
-		}
 
-		if (method.isAnnotationPresent(ExpectedString.class)) {
-		    ExpectedString es = method.getAnnotation(ExpectedString.class);
-		    String actual = method.toString();
-		    if (! es.value().equals(actual)) {
-			failures++;
-			System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
-					  es.value(), actual);
-		    }
-		}
+        for(Class<?> clazz: classList)
+            for(Method method: clazz.getDeclaredMethods()) {
+                ExpectedGenericString egs = method.getAnnotation(ExpectedGenericString.class);
+                if (egs != null) {
+                    String actual = method.toGenericString();
+                    System.out.println(actual);
+                    if (! egs.value().equals(actual)) {
+                        failures++;
+                        System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+                                          egs.value(), actual);
+                    }
+                }
 
-	    }
+                if (method.isAnnotationPresent(ExpectedString.class)) {
+                    ExpectedString es = method.getAnnotation(ExpectedString.class);
+                    String actual = method.toString();
+                    if (! es.value().equals(actual)) {
+                        failures++;
+                        System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+                                          es.value(), actual);
+                    }
+                }
 
-	// Bridge Test; no "volatile" methods
-	for(Method method: Roebling.class.getDeclaredMethods()) {
-	    String s1 = method.toGenericString();
-	    String s2 = method.toString();
-	    System.out.println("Generic: " + s1);
-	    System.out.println("Regular: " + s2);
-	    if (s1.indexOf("volatile") != -1 || 
-		s2.indexOf("volatile") != -1) {
-		failures++;
-		System.err.println("ERROR: Bad string; unexpected  ``volatile''");
-	    } 
-	}
-	
-	if (failures > 0) {
-	    System.err.println("Test failed.");
-	    throw new RuntimeException();
-	}
+            }
+
+        // Bridge Test; no "volatile" methods
+        for(Method method: Roebling.class.getDeclaredMethods()) {
+            String s1 = method.toGenericString();
+            String s2 = method.toString();
+            System.out.println("Generic: " + s1);
+            System.out.println("Regular: " + s2);
+            if (s1.indexOf("volatile") != -1 ||
+                s2.indexOf("volatile") != -1) {
+                failures++;
+                System.err.println("ERROR: Bad string; unexpected  ``volatile''");
+            }
+        }
+
+        if (failures > 0) {
+            System.err.println("Test failed.");
+            throw new RuntimeException();
+        }
     }
 }
 
@@ -120,7 +120,7 @@ class Roebling implements Comparable<Roebling> {
     @ExpectedGenericString(
    "public int Roebling.compareTo(Roebling)")
     public int compareTo(Roebling r) {
-	throw new IllegalArgumentException();
+        throw new IllegalArgumentException();
     }
 
     // Not a transient method, (transient var-arg overlap)

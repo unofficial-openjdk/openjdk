@@ -40,7 +40,7 @@
 
 jfieldID raf_fd; /* id for jobject 'fd' in java.io.RandomAccessFile */
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_initIDs(JNIEnv *env, jclass fdClass) {
     raf_fd = (*env)->GetFieldID(env, fdClass, "fd", "Ljava/io/FileDescriptor;");
 }
@@ -48,17 +48,17 @@ Java_java_io_RandomAccessFile_initIDs(JNIEnv *env, jclass fdClass) {
 
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_open(JNIEnv *env,
-				   jobject this, jstring path, jint mode)
+                                   jobject this, jstring path, jint mode)
 {
     int flags = 0;
     if (mode & java_io_RandomAccessFile_O_RDONLY)
-	flags = O_RDONLY;
+        flags = O_RDONLY;
     else if (mode & java_io_RandomAccessFile_O_RDWR) {
-	flags = O_RDWR | O_CREAT;
-	if (mode & java_io_RandomAccessFile_O_SYNC)
-	    flags |= O_SYNC;
-	else if (mode & java_io_RandomAccessFile_O_DSYNC)
-	    flags |= O_DSYNC;
+        flags = O_RDWR | O_CREAT;
+        if (mode & java_io_RandomAccessFile_O_SYNC)
+            flags |= O_SYNC;
+        else if (mode & java_io_RandomAccessFile_O_DSYNC)
+            flags |= O_DSYNC;
     }
     fileOpen(env, this, path, raf_fd, flags);
 }
@@ -71,7 +71,7 @@ Java_java_io_RandomAccessFile_read(JNIEnv *env, jobject this) {
 JNIEXPORT jint JNICALL
 Java_java_io_RandomAccessFile_readBytes(JNIEnv *env,
     jobject this, jbyteArray bytes, jint off, jint len) {
-    return readBytes(env, this, bytes, off, len, raf_fd); 
+    return readBytes(env, this, bytes, off, len, raf_fd);
 }
 
 JNIEXPORT void JNICALL
@@ -82,7 +82,7 @@ Java_java_io_RandomAccessFile_write(JNIEnv *env, jobject this, jint byte) {
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_writeBytes(JNIEnv *env,
     jobject this, jbyteArray bytes, jint off, jint len) {
-    writeBytes(env, this, bytes, off, len, raf_fd); 
+    writeBytes(env, this, bytes, off, len, raf_fd);
 }
 
 JNIEXPORT jlong JNICALL
@@ -92,11 +92,11 @@ Java_java_io_RandomAccessFile_getFilePointer(JNIEnv *env, jobject this) {
 
     fd = GET_FD(this, raf_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return -1;
+        JNU_ThrowIOException(env, "Stream Closed");
+        return -1;
     }
     if ((ret = IO_Lseek(fd, 0L, SEEK_CUR)) == -1) {
-      	JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
     }
     return ret;
 }
@@ -109,55 +109,55 @@ Java_java_io_RandomAccessFile_length(JNIEnv *env, jobject this) {
 
     fd = GET_FD(this, raf_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return -1;
+        JNU_ThrowIOException(env, "Stream Closed");
+        return -1;
     }
     if ((cur = IO_Lseek(fd, 0L, SEEK_CUR)) == -1) {
-      	JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
     } else if ((end = IO_Lseek(fd, 0L, SEEK_END)) == -1) {
-      	JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
     } else if (IO_Lseek(fd, cur, SEEK_SET) == -1) {
-      	JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
     }
     return end;
 }
 
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_seek(JNIEnv *env,
-		    jobject this, jlong pos) {
+                    jobject this, jlong pos) {
 
     FD fd;
 
     fd = GET_FD(this, raf_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return; 
+        JNU_ThrowIOException(env, "Stream Closed");
+        return;
     }
     if (pos < jlong_zero) {
         JNU_ThrowIOException(env, "Negative seek offset");
     } else if (IO_Lseek(fd, pos, SEEK_SET) == -1) {
-      	JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+        JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_setLength(JNIEnv *env, jobject this,
-					jlong newLength)
+                                        jlong newLength)
 {
     FD fd;
     jlong cur;
 
     fd = GET_FD(this, raf_fd);
     if (fd == -1) {
-	JNU_ThrowIOException(env, "Stream Closed");
-	return;
+        JNU_ThrowIOException(env, "Stream Closed");
+        return;
     }
     if ((cur = IO_Lseek(fd, 0L, SEEK_CUR)) == -1) goto fail;
     if (IO_SetLength(fd, newLength) == -1) goto fail;
     if (cur > newLength) {
-	if (IO_Lseek(fd, 0L, SEEK_END) == -1) goto fail;
+        if (IO_Lseek(fd, 0L, SEEK_END) == -1) goto fail;
     } else {
-	if (IO_Lseek(fd, cur, SEEK_SET) == -1) goto fail;
+        if (IO_Lseek(fd, cur, SEEK_SET) == -1) goto fail;
     }
     return;
 

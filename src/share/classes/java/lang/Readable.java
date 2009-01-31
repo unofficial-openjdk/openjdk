@@ -32,7 +32,6 @@ import java.io.IOException;
  * a <tt>Readable</tt> are made available to callers of the read
  * method via a {@link java.nio.CharBuffer CharBuffer}.
  *
- * @version %I% %E%
  * @since 1.5
  */
 

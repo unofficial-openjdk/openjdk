@@ -38,7 +38,6 @@ import sun.security.jca.GetInstance;
  *
  * @since 1.4
  * @see KeyManager
- * @version %I%, %G%
  */
 public class KeyManagerFactory {
     // The provider
@@ -61,23 +60,23 @@ public class KeyManagerFactory {
      * to the desired algorithm name.
      *
      * @see java.security.Security#setProperty(java.lang.String,
-     *		java.lang.String)
+     *          java.lang.String)
      * @return the default algorithm name as specified in the
-     *		Java security properties, or an implementation-specific
-     *		default if no such property exists.
+     *          Java security properties, or an implementation-specific
+     *          default if no such property exists.
      */
     public final static String getDefaultAlgorithm() {
-	String type;
-	type = AccessController.doPrivileged(new PrivilegedAction<String>() {
-	    public String run() {
-		return Security.getProperty(
-		    "ssl.KeyManagerFactory.algorithm");
-	    }
-	});
-	if (type == null) {
-	    type = "SunX509";
-	}
-	return type;
+        String type;
+        type = AccessController.doPrivileged(new PrivilegedAction<String>() {
+            public String run() {
+                return Security.getProperty(
+                    "ssl.KeyManagerFactory.algorithm");
+            }
+        });
+        if (type == null) {
+            type = "SunX509";
+        }
+        return type;
     }
 
     /**
@@ -88,10 +87,10 @@ public class KeyManagerFactory {
      * @param algorithm the algorithm
      */
     protected KeyManagerFactory(KeyManagerFactorySpi factorySpi,
-				Provider provider, String algorithm) {
-	this.factorySpi = factorySpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
+                                Provider provider, String algorithm) {
+        this.factorySpi = factorySpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
     }
 
     /**
@@ -104,7 +103,7 @@ public class KeyManagerFactory {
      * @return the algorithm name of this <code>KeyManagerFactory</code> object.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -121,26 +120,26 @@ public class KeyManagerFactory {
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @param algorithm the standard name of the requested algorithm.
-     *		See the <a href=
-     *	"{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
-     *		Java Secure Socket Extension Reference Guide </a>
-     *		for information about standard algorithm names.
+     *          See the <a href=
+     *  "{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
+     *          Java Secure Socket Extension Reference Guide </a>
+     *          for information about standard algorithm names.
      *
      * @return the new <code>KeyManagerFactory</code> object.
      *
      * @exception NoSuchAlgorithmException if no Provider supports a
-     *		KeyManagerFactorySpi implementation for the
-     *		specified algorithm.
+     *          KeyManagerFactorySpi implementation for the
+     *          specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final KeyManagerFactory getInstance(String algorithm)
-	    throws NoSuchAlgorithmException {
-	GetInstance.Instance instance = GetInstance.getInstance
-		("KeyManagerFactory", KeyManagerFactorySpi.class,
-		algorithm);
-	return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
-		instance.provider, algorithm);
+            throws NoSuchAlgorithmException {
+        GetInstance.Instance instance = GetInstance.getInstance
+                ("KeyManagerFactory", KeyManagerFactorySpi.class,
+                algorithm);
+        return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -156,34 +155,34 @@ public class KeyManagerFactory {
      * the {@link Security#getProviders() Security.getProviders()} method.
 
      * @param algorithm the standard name of the requested algorithm.
-     *		See the <a href=
-     *	"{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
-     *		Java Secure Socket Extension Reference Guide </a>
-     *		for information about standard algorithm names.
+     *          See the <a href=
+     *  "{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
+     *          Java Secure Socket Extension Reference Guide </a>
+     *          for information about standard algorithm names.
      *
      * @param provider the name of the provider.
      *
      * @return the new <code>KeyManagerFactory</code> object.
      *
      * @throws NoSuchAlgorithmException if a KeyManagerFactorySpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @throws NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @throws IllegalArgumentException if the provider name is null or empty.
      *
      * @see java.security.Provider
      */
     public static final KeyManagerFactory getInstance(String algorithm,
-	    String provider) throws NoSuchAlgorithmException,
-	    NoSuchProviderException {
-	GetInstance.Instance instance = GetInstance.getInstance
-		("KeyManagerFactory", KeyManagerFactorySpi.class,
-		algorithm, provider);
-	return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
-		instance.provider, algorithm);
+            String provider) throws NoSuchAlgorithmException,
+            NoSuchProviderException {
+        GetInstance.Instance instance = GetInstance.getInstance
+                ("KeyManagerFactory", KeyManagerFactorySpi.class,
+                algorithm, provider);
+        return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -196,30 +195,30 @@ public class KeyManagerFactory {
      * does not have to be registered in the provider list.
      *
      * @param algorithm the standard name of the requested algorithm.
-     *		See the <a href=
-     *	"{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
-     *		Java Secure Socket Extension Reference Guide </a>
-     *		for information about standard algorithm names.
+     *          See the <a href=
+     *  "{@docRoot}/../technotes/guides/security/jsse/JSSERefGuide.html">
+     *          Java Secure Socket Extension Reference Guide </a>
+     *          for information about standard algorithm names.
      *
      * @param provider an instance of the provider.
      *
      * @return the new <code>KeyManagerFactory</code> object.
      *
      * @throws NoSuchAlgorithmException if a KeyManagerFactorySpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @throws IllegalArgumentException if provider is null.
      *
      * @see java.security.Provider
      */
     public static final KeyManagerFactory getInstance(String algorithm,
-	    Provider provider) throws NoSuchAlgorithmException {
-	GetInstance.Instance instance = GetInstance.getInstance
-		("KeyManagerFactory", KeyManagerFactorySpi.class,
-		algorithm, provider);
-	return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
-		instance.provider, algorithm);
+            Provider provider) throws NoSuchAlgorithmException {
+        GetInstance.Instance instance = GetInstance.getInstance
+                ("KeyManagerFactory", KeyManagerFactorySpi.class,
+                algorithm, provider);
+        return new KeyManagerFactory((KeyManagerFactorySpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -228,7 +227,7 @@ public class KeyManagerFactory {
      * @return the provider of this <code>KeyManagerFactory</code> object
      */
     public final Provider getProvider() {
-	return this.provider;
+        return this.provider;
     }
 
 
@@ -247,14 +246,14 @@ public class KeyManagerFactory {
      * @param password the password for recovering keys in the KeyStore
      * @throws KeyStoreException if this operation fails
      * @throws NoSuchAlgorithmException if the specified algorithm is not
-     *		available from the specified provider.
+     *          available from the specified provider.
      * @throws UnrecoverableKeyException if the key cannot be recovered
-     *		(e.g. the given password is wrong).
+     *          (e.g. the given password is wrong).
      */
     public final void init(KeyStore ks, char[] password) throws
-	    KeyStoreException, NoSuchAlgorithmException,
-	    UnrecoverableKeyException {
-	factorySpi.engineInit(ks, password);
+            KeyStoreException, NoSuchAlgorithmException,
+            UnrecoverableKeyException {
+        factorySpi.engineInit(ks, password);
     }
 
 
@@ -271,12 +270,12 @@ public class KeyManagerFactory {
      * implementation to obtain the needed information.
      *
      * @param spec an implementation of a provider-specific parameter
-     *		specification
+     *          specification
      * @throws InvalidAlgorithmParameterException if an error is encountered
      */
     public final void init(ManagerFactoryParameters spec) throws
-	    InvalidAlgorithmParameterException {
-	factorySpi.engineInit(spec);
+            InvalidAlgorithmParameterException {
+        factorySpi.engineInit(spec);
     }
 
 
@@ -287,6 +286,6 @@ public class KeyManagerFactory {
      * @throws IllegalStateException if the KeyManagerFactory is not initialized
      */
     public final KeyManager[] getKeyManagers() {
-	return factorySpi.engineGetKeyManagers();
+        return factorySpi.engineGetKeyManagers();
     }
 }

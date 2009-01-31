@@ -34,14 +34,13 @@ import java.util.EventListener;
  * contains) or extends the abstract <code>WindowAdapter</code> class
  * (overriding only the methods of interest).
  * The listener object created from that class is then registered with a
- * Window using the window's <code>addWindowListener</code> 
+ * Window using the window's <code>addWindowListener</code>
  * method. When the window's status changes by virtue of being opened,
- * closed, activated or deactivated, iconified or deiconified, 
- * the relevant method in the listener object is invoked, and the 
+ * closed, activated or deactivated, iconified or deiconified,
+ * the relevant method in the listener object is invoked, and the
  * <code>WindowEvent</code> is passed to it.
  *
  * @author Carl Quinn
- * @version %I%, %G%
  *
  * @see WindowAdapter
  * @see WindowEvent
@@ -69,8 +68,8 @@ public interface WindowListener extends EventListener {
 
     /**
      * Invoked when a window is changed from a normal to a
-     * minimized state. For many platforms, a minimized window 
-     * is displayed as the icon specified in the window's 
+     * minimized state. For many platforms, a minimized window
+     * is displayed as the icon specified in the window's
      * iconImage property.
      * @see java.awt.Frame#setIconImage
      */

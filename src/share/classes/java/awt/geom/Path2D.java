@@ -63,15 +63,14 @@ import java.util.Arrays;
  * of the types of segments that make up a path and the winding rules
  * that control how to determine which regions are inside or outside
  * the path.
- * 
- * @version %I%, %G%
+ *
  * @author Jim Graham
  * @since 1.6
  */
 public abstract class Path2D implements Shape, Cloneable {
     /**
      * An even-odd winding rule for determining the interior of
-     * a path.  
+     * a path.
      *
      * @see PathIterator#WIND_EVEN_ODD
      * @since 1.6
@@ -80,13 +79,13 @@ public abstract class Path2D implements Shape, Cloneable {
 
     /**
      * A non-zero winding rule for determining the interior of a
-     * path.  
+     * path.
      *
      * @see PathIterator#WIND_NON_ZERO
      * @since 1.6
      */
     public static final int WIND_NON_ZERO = PathIterator.WIND_NON_ZERO;
-    
+
     // For code simplicity, copy these constants to our namespace
     // and cast them to byte constants for easy storage.
     private static final byte SEG_MOVETO  = (byte) PathIterator.SEG_MOVETO;
@@ -131,7 +130,7 @@ public abstract class Path2D implements Shape, Cloneable {
         setWindingRule(rule);
         this.pointTypes = new byte[initialTypes];
     }
- 
+
     abstract float[] cloneCoordsFloat(AffineTransform at);
     abstract double[] cloneCoordsDouble(AffineTransform at);
     abstract void append(float x, float y);
@@ -1456,7 +1455,7 @@ public abstract class Path2D implements Shape, Cloneable {
          * {@code Path2D} object do not affect any iterations of
          * that geometry that are already in process.
          *
-         * @param at an {@code AffineTransform} 
+         * @param at an {@code AffineTransform}
          * @return a new {@code PathIterator} that iterates along the boundary
          *         of this {@code Shape} and provides access to the geometry
          *         of this {@code Shape}'s outline
@@ -1766,17 +1765,17 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final synchronized void closePath() {
-	if (numTypes == 0 || pointTypes[numTypes - 1] != SEG_CLOSE) {
-	    needRoom(true, 0);
-	    pointTypes[numTypes++] = SEG_CLOSE;
-	}
+        if (numTypes == 0 || pointTypes[numTypes - 1] != SEG_CLOSE) {
+            needRoom(true, 0);
+            pointTypes[numTypes++] = SEG_CLOSE;
+        }
     }
 
     /**
      * Appends the geometry of the specified {@code Shape} object to the
      * path, possibly connecting the new geometry to the existing path
      * segments with a line segment.
-     * If the {@code connect} parameter is {@code true} and the 
+     * If the {@code connect} parameter is {@code true} and the
      * path is not empty then any initial {@code moveTo} in the
      * geometry of the appended {@code Shape}
      * is turned into a {@code lineTo} segment.
@@ -1787,7 +1786,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * and the appended geometry is governed by the winding
      * rule specified for this path.
      *
-     * @param s the {@code Shape} whose geometry is appended 
+     * @param s the {@code Shape} whose geometry is appended
      *          to this path
      * @param connect a boolean to control whether or not to turn an initial
      *                {@code moveTo} segment into a {@code lineTo} segment
@@ -1800,10 +1799,10 @@ public abstract class Path2D implements Shape, Cloneable {
 
     /**
      * Appends the geometry of the specified
-     * {@link PathIterator} object 
+     * {@link PathIterator} object
      * to the path, possibly connecting the new geometry to the existing
      * path segments with a line segment.
-     * If the {@code connect} parameter is {@code true} and the 
+     * If the {@code connect} parameter is {@code true} and the
      * path is not empty then any initial {@code moveTo} in the
      * geometry of the appended {@code Shape} is turned into a
      * {@code lineTo} segment.
@@ -1814,7 +1813,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * and the appended geometry is governed by the winding
      * rule specified for this path.
      *
-     * @param pi the {@code PathIterator} whose geometry is appended to 
+     * @param pi the {@code PathIterator} whose geometry is appended to
      *           this path
      * @param connect a boolean to control whether or not to turn an initial
      *                {@code moveTo} segment into a {@code lineTo} segment
@@ -1827,7 +1826,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * Returns the fill style winding rule.
      *
      * @return an integer representing the current winding rule.
-     * @see #WIND_EVEN_ODD  
+     * @see #WIND_EVEN_ODD
      * @see #WIND_NON_ZERO
      * @see #setWindingRule
      * @since 1.6
@@ -1839,22 +1838,22 @@ public abstract class Path2D implements Shape, Cloneable {
     /**
      * Sets the winding rule for this path to the specified value.
      *
-     * @param rule an integer representing the specified 
+     * @param rule an integer representing the specified
      *             winding rule
-     * @exception IllegalArgumentException if 
-     *		{@code rule} is not either 
-     *		{@link #WIND_EVEN_ODD} or
-     *		{@link #WIND_NON_ZERO}
+     * @exception IllegalArgumentException if
+     *          {@code rule} is not either
+     *          {@link #WIND_EVEN_ODD} or
+     *          {@link #WIND_NON_ZERO}
      * @see #getWindingRule
      * @since 1.6
      */
     public final void setWindingRule(int rule) {
-	if (rule != WIND_EVEN_ODD && rule != WIND_NON_ZERO) {
-	    throw new IllegalArgumentException("winding rule must be "+
-					       "WIND_EVEN_ODD or "+
-					       "WIND_NON_ZERO");
-	}
-	windingRule = rule;
+        if (rule != WIND_EVEN_ODD && rule != WIND_NON_ZERO) {
+            throw new IllegalArgumentException("winding rule must be "+
+                                               "WIND_EVEN_ODD or "+
+                                               "WIND_NON_ZERO");
+        }
+        windingRule = rule;
     }
 
     /**
@@ -1866,31 +1865,31 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final synchronized Point2D getCurrentPoint() {
-	int index = numCoords;
-	if (numTypes < 1 || index < 1) {
-	    return null;
-	}
-	if (pointTypes[numTypes - 1] == SEG_CLOSE) {
-	loop:
-	    for (int i = numTypes - 2; i > 0; i--) {
-		switch (pointTypes[i]) {
-		case SEG_MOVETO:
-		    break loop;
-		case SEG_LINETO:
-		    index -= 2;
-		    break;
-		case SEG_QUADTO:
-		    index -= 4;
-		    break;
-		case SEG_CUBICTO:
-		    index -= 6;
-		    break;
-		case SEG_CLOSE:
-		    break;
-		}
-	    }
-	}
-	return getPoint(index - 2);
+        int index = numCoords;
+        if (numTypes < 1 || index < 1) {
+            return null;
+        }
+        if (pointTypes[numTypes - 1] == SEG_CLOSE) {
+        loop:
+            for (int i = numTypes - 2; i > 0; i--) {
+                switch (pointTypes[i]) {
+                case SEG_MOVETO:
+                    break loop;
+                case SEG_LINETO:
+                    index -= 2;
+                    break;
+                case SEG_QUADTO:
+                    index -= 4;
+                    break;
+                case SEG_CUBICTO:
+                    index -= 6;
+                    break;
+                case SEG_CLOSE:
+                    break;
+                }
+            }
+        }
+        return getPoint(index - 2);
     }
 
     /**
@@ -1901,11 +1900,11 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final synchronized void reset() {
-	numTypes = numCoords = 0;
+        numTypes = numCoords = 0;
     }
 
     /**
-     * Transforms the geometry of this path using the specified 
+     * Transforms the geometry of this path using the specified
      * {@link AffineTransform}.
      * The geometry is transformed in place, which permanently changes the
      * boundary defined by this object.
@@ -1930,9 +1929,9 @@ public abstract class Path2D implements Shape, Cloneable {
      * {@link Path2D.Double#Path2D.Double(Shape, AffineTransform) Path2D.Double}
      * subclasses should be used to make the choice explicit.
      *
-     * @param at the {@code AffineTransform} used to transform a 
+     * @param at the {@code AffineTransform} used to transform a
      *           new {@code Shape}.
-     * @return a new {@code Shape}, transformed with the specified 
+     * @return a new {@code Shape}, transformed with the specified
      *         {@code AffineTransform}.
      * @since 1.6
      */
@@ -1949,7 +1948,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final Rectangle getBounds() {
-	return getBounds2D().getBounds();
+        return getBounds2D().getBounds();
     }
 
     /**
@@ -2032,7 +2031,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final boolean contains(Point2D p) {
-	return contains(p.getX(), p.getY());
+        return contains(p.getX(), p.getY());
     }
 
     /**
@@ -2084,8 +2083,8 @@ public abstract class Path2D implements Shape, Cloneable {
             return false;
         }
         int mask = (pi.getWindingRule() == WIND_NON_ZERO ? -1 : 2);
-	int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
-	return (crossings != Curve.RECT_INTERSECTS &&
+        int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
+        return (crossings != Curve.RECT_INTERSECTS &&
                 (crossings & mask) != 0);
     }
 
@@ -2156,8 +2155,8 @@ public abstract class Path2D implements Shape, Cloneable {
             return false;
         }
         int mask = (windingRule == WIND_NON_ZERO ? -1 : 2);
-	int crossings = rectCrossings(x, y, x+w, y+h);
-	return (crossings != Curve.RECT_INTERSECTS &&
+        int crossings = rectCrossings(x, y, x+w, y+h);
+        return (crossings != Curve.RECT_INTERSECTS &&
                 (crossings & mask) != 0);
     }
 
@@ -2181,7 +2180,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final boolean contains(Rectangle2D r) {
-	return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+        return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
 
     /**
@@ -2234,8 +2233,8 @@ public abstract class Path2D implements Shape, Cloneable {
             return false;
         }
         int mask = (pi.getWindingRule() == WIND_NON_ZERO ? -1 : 2);
-	int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
-	return (crossings == Curve.RECT_INTERSECTS ||
+        int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
+        return (crossings == Curve.RECT_INTERSECTS ||
                 (crossings & mask) != 0);
     }
 
@@ -2305,8 +2304,8 @@ public abstract class Path2D implements Shape, Cloneable {
             return false;
         }
         int mask = (windingRule == WIND_NON_ZERO ? -1 : 2);
-	int crossings = rectCrossings(x, y, x+w, y+h);
-	return (crossings == Curve.RECT_INTERSECTS ||
+        int crossings = rectCrossings(x, y, x+w, y+h);
+        return (crossings == Curve.RECT_INTERSECTS ||
                 (crossings & mask) != 0);
     }
 
@@ -2329,7 +2328,7 @@ public abstract class Path2D implements Shape, Cloneable {
      * @since 1.6
      */
     public final boolean intersects(Rectangle2D r) {
-	return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+        return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
 
     /**
@@ -2339,14 +2338,14 @@ public abstract class Path2D implements Shape, Cloneable {
      * which means that this {@code Path2D} class does not
      * guarantee that modifications to the geometry of this
      * {@code Path2D} object do not affect any iterations of
-     * that geometry that are already in process. 
+     * that geometry that are already in process.
      *
      * @since 1.6
      */
     public PathIterator getPathIterator(AffineTransform at,
                                         double flatness)
     {
-	return new FlatteningPathIterator(getPathIterator(at), flatness);
+        return new FlatteningPathIterator(getPathIterator(at), flatness);
     }
 
     /**

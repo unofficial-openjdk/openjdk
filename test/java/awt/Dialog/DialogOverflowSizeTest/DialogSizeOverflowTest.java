@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
    @test
    @bug 4904961
    @summary Test that Dialog with zero sizes won't be created with negative sizes due to overflow in peer code

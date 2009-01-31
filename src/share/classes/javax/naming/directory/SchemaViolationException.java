@@ -32,8 +32,8 @@ import javax.naming.NamingException;
   * This exception is thrown when a method
   * in some ways violates the schema. An example of schema violation
   * is modifying attributes of an object that violates the object's
-  * schema definition. Another example is renaming or moving an object 
-  * to a part of the namespace that violates the namespace's 
+  * schema definition. Another example is renaming or moving an object
+  * to a part of the namespace that violates the namespace's
   * schema definition.
   * <p>
   * Synchronization and serialization issues that apply to NamingException
@@ -41,8 +41,7 @@ import javax.naming.NamingException;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
-  * 
+  *
   * @see javax.naming.Context#bind
   * @see DirContext#bind
   * @see javax.naming.Context#rebind
@@ -58,17 +57,17 @@ public class SchemaViolationException extends NamingException {
      * All fields are set to null.
      */
     public SchemaViolationException() {
-	super();
+        super();
     }
 
     /**
      * Constructs a new instance of SchemaViolationException
-     * using the explanation supplied. All other fields are set to null. 
+     * using the explanation supplied. All other fields are set to null.
      * @param explanation Detail about this exception. Can be null.
      * @see java.lang.Throwable#getMessage
      */
     public SchemaViolationException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**

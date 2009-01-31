@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>char</code> value in 
+ * Provides access to a primitive <code>char</code> value in
  * the target VM.
  *
  * @author Robert Field
@@ -38,11 +38,11 @@ public interface CharValue extends PrimitiveValue, Comparable<CharValue>
 {
     /**
      * Returns this CharValue as a <code>char</code>.
-     * 
+     *
      * @return the <code>char</code> mirrored by this object.
      */
     char value();
-    
+
     /**
      * Compares the specified Object with this CharValue for equality.
      *
@@ -59,4 +59,3 @@ public interface CharValue extends PrimitiveValue, Comparable<CharValue>
      */
     int hashCode();
 }
-

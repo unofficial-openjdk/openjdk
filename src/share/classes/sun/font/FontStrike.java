@@ -39,8 +39,8 @@ public abstract class FontStrike {
     protected boolean algoStyle = false;
     protected float boldness = 1f;
     protected float italic = 0f;
-    /* 
-     * lastLookupTime is updated by Font2D.getStrike and can be used to 
+    /*
+     * lastLookupTime is updated by Font2D.getStrike and can be used to
      * choose strikes that have not been newly referenced for purging when
      * memory usage gets too high. Active strikes will never be purged
      * because purging is via GC of WeakReferences.
@@ -57,8 +57,8 @@ public abstract class FontStrike {
 
     // pt, result in device space
     abstract void getGlyphImageBounds(int glyphcode,
-				      Point2D.Float pt,
-				      Rectangle result);
+                                      Point2D.Float pt,
+                                      Rectangle result);
 
     abstract Point2D.Float getGlyphMetrics(int glyphcode);
 
@@ -71,10 +71,10 @@ public abstract class FontStrike {
     abstract Rectangle2D.Float getGlyphOutlineBounds(int glyphCode);
 
     abstract GeneralPath
-	getGlyphOutline(int glyphCode, float x, float y);
-    
-    abstract GeneralPath
-	getGlyphVectorOutline(int[] glyphs, float x, float y);
+        getGlyphOutline(int glyphCode, float x, float y);
 
-    
+    abstract GeneralPath
+        getGlyphVectorOutline(int[] glyphs, float x, float y);
+
+
 }

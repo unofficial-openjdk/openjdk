@@ -44,24 +44,23 @@ import javax.swing.event.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Tom Santos
  * @author Steve Wilson
  */
 public abstract class AbstractColorChooserPanel extends JPanel {
 
     /**
-     * 
+     *
      */
     private JColorChooser chooser;
 
     /**
-     * 
+     *
      */
     private ChangeListener colorListener;
 
     /**
-     * 
+     *
      */
     private boolean dirty  = true;
 
@@ -149,17 +148,17 @@ public abstract class AbstractColorChooserPanel extends JPanel {
      * If you override this, be sure to call <code>super</code>.
      * @param enclosingChooser  the panel to be added
      * @exception RuntimeException  if the chooser panel has already been
-     *				installed
+     *                          installed
      */
     public void installChooserPanel(JColorChooser enclosingChooser) {
         if (chooser != null) {
-	    throw new RuntimeException ("This chooser panel is already installed");
+            throw new RuntimeException ("This chooser panel is already installed");
         }
         chooser = enclosingChooser;
-	buildChooser();
-	updateChooser();
-	colorListener = new ModelListener();
-	getColorSelectionModel().addChangeListener(colorListener);
+        buildChooser();
+        updateChooser();
+        colorListener = new ModelListener();
+        getColorSelectionModel().addChangeListener(colorListener);
     }
 
     /**
@@ -174,7 +173,7 @@ public abstract class AbstractColorChooserPanel extends JPanel {
     /**
       * Returns the model that the chooser panel is editing.
       * @return the <code>ColorSelectionModel</code> model this panel
-      *		is editing
+      *         is editing
       */
     public ColorSelectionModel getColorSelectionModel() {
         return chooser.getSelectionModel();
@@ -189,14 +188,14 @@ public abstract class AbstractColorChooserPanel extends JPanel {
     }
 
     /**
-     * Draws the panel. 
+     * Draws the panel.
      * @param g  the <code>Graphics</code> object
      */
     public void paint(Graphics g) {
-	if (dirty) {
-	    updateChooser();
-	    dirty = false;
-	}
+        if (dirty) {
+            updateChooser();
+            dirty = false;
+        }
         super.paint(g);
     }
 
@@ -225,16 +224,16 @@ public abstract class AbstractColorChooserPanel extends JPanel {
     }
 
     /**
-     * 
+     *
      */
     class ModelListener implements ChangeListener, Serializable {
         public void stateChanged(ChangeEvent e) {
-	  if (isShowing()) {  // isVisible
-	        updateChooser();
-		dirty = false;
-	    } else {
-	        dirty = true;
-	    }
-	}
+          if (isShowing()) {  // isVisible
+                updateChooser();
+                dirty = false;
+            } else {
+                dirty = true;
+            }
+        }
     }
 }

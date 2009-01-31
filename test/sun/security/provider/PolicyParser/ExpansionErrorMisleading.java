@@ -25,8 +25,8 @@
  * @test
  * @bug 4308389
  * @summary Misleading (non-useful) error message while parsing
- *		security policy file if property expansion fails
- *		for an undefined property
+ *              security policy file if property expansion fails
+ *              for an undefined property
  *
  * This test needs to be verified by reading the debug output.
  * It should output that the PolicyParser could not expand
@@ -38,17 +38,17 @@
 public class ExpansionErrorMisleading {
 
     public static void main(String[] args) {
-	// trigger a security check
-	try {
-	    java.io.FileInputStream fis = new java.io.FileInputStream
-		("/tmp/hello");
-	} catch (java.io.FileNotFoundException fnfe) {
-	    // bad
-	    System.out.println("Test Failed");
-	    throw new SecurityException(fnfe.getMessage());
-	} catch (SecurityException se) {
-	    // good
-	    System.out.println("Test Succeeded");
-	}
+        // trigger a security check
+        try {
+            java.io.FileInputStream fis = new java.io.FileInputStream
+                ("/tmp/hello");
+        } catch (java.io.FileNotFoundException fnfe) {
+            // bad
+            System.out.println("Test Failed");
+            throw new SecurityException(fnfe.getMessage());
+        } catch (SecurityException se) {
+            // good
+            System.out.println("Test Succeeded");
+        }
     }
 }

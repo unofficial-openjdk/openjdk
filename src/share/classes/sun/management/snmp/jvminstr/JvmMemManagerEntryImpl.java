@@ -44,10 +44,10 @@ import sun.management.snmp.jvmmib.EnumJvmMemManagerState;
 
 /**
  * The class is used for implementing the "JvmMemManagerEntry" group.
- * The group is defined with the following 
+ * The group is defined with the following
  */
 public class JvmMemManagerEntryImpl implements JvmMemManagerEntryMBean {
-    
+
     /**
      * Variable for storing the value of "JvmMemManagerIndex".
      *
@@ -56,23 +56,23 @@ public class JvmMemManagerEntryImpl implements JvmMemManagerEntryMBean {
      *
      */
     protected final int JvmMemManagerIndex;
-    
+
     protected MemoryManagerMXBean manager;
-    
+
     /**
      * Constructor for the "JvmMemManagerEntry" group.
      */
     public JvmMemManagerEntryImpl(MemoryManagerMXBean m, int myindex) {
-	manager = m;
-	JvmMemManagerIndex = myindex;
+        manager = m;
+        JvmMemManagerIndex = myindex;
     }
-    
+
     /**
      * Getter for the "JvmMemManagerName" variable.
      */
     public String getJvmMemManagerName() throws SnmpStatusException {
         return JVM_MANAGEMENT_MIB_IMPL.
-	    validJavaObjectNameTC(manager.getName());
+            validJavaObjectNameTC(manager.getName());
     }
 
     /**
@@ -85,18 +85,17 @@ public class JvmMemManagerEntryImpl implements JvmMemManagerEntryMBean {
     /**
      * Getter for the "JvmMemManagerState" variable.
      */
-    public EnumJvmMemManagerState getJvmMemManagerState() 
-	throws SnmpStatusException {
-	if (manager.isValid()) 
-	    return JvmMemManagerStateValid;
-	else
-	    return JvmMemManagerStateInvalid;
+    public EnumJvmMemManagerState getJvmMemManagerState()
+        throws SnmpStatusException {
+        if (manager.isValid())
+            return JvmMemManagerStateValid;
+        else
+            return JvmMemManagerStateInvalid;
     }
 
-    private final static EnumJvmMemManagerState JvmMemManagerStateValid = 
-	new EnumJvmMemManagerState("valid");
-    private final static EnumJvmMemManagerState JvmMemManagerStateInvalid = 
-	new EnumJvmMemManagerState("invalid");
+    private final static EnumJvmMemManagerState JvmMemManagerStateValid =
+        new EnumJvmMemManagerState("valid");
+    private final static EnumJvmMemManagerState JvmMemManagerStateInvalid =
+        new EnumJvmMemManagerState("invalid");
 
 }
-

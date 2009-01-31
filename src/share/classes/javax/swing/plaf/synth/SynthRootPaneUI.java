@@ -37,7 +37,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's RootPaneUI.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthRootPaneUI extends BasicRootPaneUI implements SynthUI {

@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   @test
   @bug 6418028
   @summary java/awt/Focus/RequestOnCompWithNullParent/RequestOnCompWithNullParent_Barrier.java fails
@@ -93,7 +93,7 @@ public class RequestOnCompWithNullParent1
 
     /*****************************************************
      * Standard Test Machinery Section
-     * DO NOT modify anything in this section -- it's a 
+     * DO NOT modify anything in this section -- it's a
      * standard chunk of code which has all of the
      * synchronisation necessary for the test harness.
      * By keeping it the same in all tests, it is easier
@@ -134,13 +134,13 @@ public class RequestOnCompWithNullParent1
 
         //Test involves other threads, so sleep and wait for them to
         // called pass() or fail()
-        try 
+        try
         {
             Thread.sleep( sleepTime );
             //Timed out, so fail the test
             throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
-        } 
-        catch (InterruptedException e) 
+        }
+        catch (InterruptedException e)
         {
             //The test harness may have interrupted the test.  If so, rethrow the exception
             // so that the harness gets it and deals with it.
@@ -154,14 +154,14 @@ public class RequestOnCompWithNullParent1
                 throw new RuntimeException( failureMessage );
             }
         }
-      
+
     }//main
 
     public static synchronized void setTimeoutTo( int seconds )
     {
         sleepTime = seconds * 1000;
     }
-   
+
     public static synchronized void pass()
     {
         Sysout.println( "The test passed." );
@@ -213,7 +213,7 @@ class TestPassedException extends RuntimeException
 
 //*********** End Standard Test Machinery Section **********
 
- 
+
 //************ Begin classes defined for the test ****************
 
 class TestButton extends Button {
@@ -276,14 +276,14 @@ class TestButton extends Button {
     }
 }
 //************** End classes defined for the test *******************
-  
+
 
 
 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -296,12 +296,12 @@ class TestButton extends Button {
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
-{ 
+class Sysout
+{
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -311,7 +311,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
+
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -320,8 +320,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -350,20 +350,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-   
+
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name ) 
+    public TestDialog( Frame frame, String name )
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-      
+
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-      
+
         pack();
-      
+
         setVisible(true);
     }// TestDialog()
 
@@ -377,7 +377,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        { 
+        {
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -388,25 +388,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-               
+
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-               
+
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else 
-                { 
+                else
+                {
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-            
+
                 instructionsText.append( printStr + "\n" );
-            
+
             }// while
-         
+
         }// for
-      
+
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -414,8 +414,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }  
-   
-}// TestDialog  class    
-  
+    }
 
+}// TestDialog  class

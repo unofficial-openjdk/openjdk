@@ -54,6 +54,7 @@
                 <include name="sun/tools/jconsole/resources/*.png"/>
             </fileset>
         </jar>
+        <copy file="${dist.dir}/lib/jconsole.jar" todir="${build.dir}/lib"/>
     </target>
     
     <target name="run" depends="-init,build">

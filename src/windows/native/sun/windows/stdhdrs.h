@@ -27,7 +27,7 @@
 #define _STDHDRS_H_
 
 // standard Windows and C headers
-#define VC_EXTRALEAN	/* speeds compilation */
+#define VC_EXTRALEAN    /* speeds compilation */
 #ifndef STRICT
 #define STRICT /* forces explicit typedef's for windows.h */
 #endif

@@ -40,9 +40,9 @@ import javax.xml.crypto.dsig.XMLSignature;
  * <code>DOMStructure</code> is the first node of the sequence and successive
  * nodes can be accessed by invoking {@link Node#getNextSibling}.
  *
- * <p>If the owner document of the <code>DOMStructure</code> is different than 
- * the target document of an <code>XMLSignature</code>, the   
- * {@link XMLSignature#sign(XMLSignContext)} method imports the node into the 
+ * <p>If the owner document of the <code>DOMStructure</code> is different than
+ * the target document of an <code>XMLSignature</code>, the
+ * {@link XMLSignature#sign(XMLSignContext)} method imports the node into the
  * target document before generating the signature.
  *
  * @author Sean Mullan
@@ -61,9 +61,9 @@ public class DOMStructure implements XMLStructure {
      */
     public DOMStructure(Node node) {
         if (node == null) {
-	    throw new NullPointerException("node cannot be null");
-	}
-	this.node = node;
+            throw new NullPointerException("node cannot be null");
+        }
+        this.node = node;
     }
 
     /**
@@ -72,7 +72,7 @@ public class DOMStructure implements XMLStructure {
      * @return the node
      */
     public Node getNode() {
-	return node;
+        return node;
     }
 
     /**

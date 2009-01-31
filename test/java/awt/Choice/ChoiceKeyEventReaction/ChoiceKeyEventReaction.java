@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   test
   @bug 6252982
   @summary PIT: Keyboard FocusTraversal not working when choice's drop-down is visible, on XToolkit
@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
-public class ChoiceKeyEventReaction extends Applet 
+public class ChoiceKeyEventReaction extends Applet
 {
     Robot robot;
     Choice choice1 = new Choice();
@@ -45,7 +45,7 @@ public class ChoiceKeyEventReaction extends Applet
     boolean itemChanged = false;
     String toolkit;
 
-    public void init() 
+    public void init()
     {
         toolkit = Toolkit.getDefaultToolkit().getClass().getName();
         System.out.println("Current toolkit is :" +toolkit);
@@ -58,7 +58,7 @@ public class ChoiceKeyEventReaction extends Applet
                     System.out.println(ke);
                 }
             });
-        
+
 
         choice1.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
@@ -101,14 +101,14 @@ public class ChoiceKeyEventReaction extends Applet
         robot.keyRelease(key);
 
         Util.waitForIdle(robot);
-        
+
         System.out.println("keyTypedOnTextField = "+keyTypedOnTextField +": itemChanged = " + itemChanged);
 
         if (itemChanged){
                 throw new RuntimeException("Test failed. ItemChanged event occur on Choice.");
         }
 
-        // We may just write 
+        // We may just write
         // if (toolkit.equals("sun.awt.windows.WToolkit") == keyTypedOnTextField) {fail;}
         // but  must report differently in these cases so put two separate if statements for simplicity.
         if (toolkit.equals("sun.awt.windows.WToolkit") &&

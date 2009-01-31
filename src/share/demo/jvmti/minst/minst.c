@@ -33,12 +33,12 @@
 
 #include "minst.h"
 #include "java_crw_demo.h"
-	    
-	   
+
+
 /* ------------------------------------------------------------------- */
 /* Some constant maximum sizes */
 
-#define MAX_TOKEN_LENGTH	80
+#define MAX_TOKEN_LENGTH        80
 #define MAX_METHOD_NAME_LENGTH  256
 
 /* Some constant names that tie to Java class/method names.
@@ -46,17 +46,17 @@
  *    looks like:
  *
  * public class Minst {
- *     private static int engaged; 
+ *     private static int engaged;
  *     private static native void _method_entry(Object thr, int cnum, int mnum);
  *     public static void method_entry(int cnum, int mnum)
  *     {
- *   	   ...
+ *         ...
  *     }
  * }
  *
  */
 
-#define MINST_class	   Minst	    /* Name of class we are using */
+#define MINST_class        Minst            /* Name of class we are using */
 #define MINST_entry        method_entry    /* Name of java entry method */
 #define MINST_engaged      engaged         /* Name of java static field */
 
@@ -89,7 +89,7 @@ static void
 enter_critical_section(jvmtiEnv *jvmti)
 {
     jvmtiError error;
-    
+
     error = (*jvmti)->RawMonitorEnter(jvmti, gdata->lock);
     check_jvmti_error(jvmti, error, "Cannot enter with raw monitor");
 }
@@ -99,7 +99,7 @@ static void
 exit_critical_section(jvmtiEnv *jvmti)
 {
     jvmtiError error;
-    
+
     error = (*jvmti)->RawMonitorExit(jvmti, gdata->lock);
     check_jvmti_error(jvmti, error, "Cannot exit with raw monitor");
 }
@@ -120,22 +120,22 @@ cbVMInit(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 {
     enter_critical_section(jvmti); {
         jclass   klass;
-	jfieldID field;
+        jfieldID field;
 
-	/* Register Natives for class whose methods we use */
-	klass = (*env)->FindClass(env, STRING(MINST_class));
-	if ( klass == NULL ) {
-	    fatal_error("ERROR: JNI: Cannot find %s with FindClass\n", 
-			STRING(MINST_class));
-	}
-	
-	/* Engage calls. */
-	field = (*env)->GetStaticFieldID(env, klass, STRING(MINST_engaged), "I");
-	if ( field == NULL ) {
-	    fatal_error("ERROR: JNI: Cannot get field from %s\n", 
-			STRING(MINST_class));
-	}
-	(*env)->SetStaticIntField(env, klass, field, 1);
+        /* Register Natives for class whose methods we use */
+        klass = (*env)->FindClass(env, STRING(MINST_class));
+        if ( klass == NULL ) {
+            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n",
+                        STRING(MINST_class));
+        }
+
+        /* Engage calls. */
+        field = (*env)->GetStaticFieldID(env, klass, STRING(MINST_engaged), "I");
+        if ( field == NULL ) {
+            fatal_error("ERROR: JNI: Cannot get field from %s\n",
+                        STRING(MINST_class));
+        }
+        (*env)->SetStaticIntField(env, klass, field, 1);
     } exit_critical_section(jvmti);
 }
 
@@ -145,40 +145,40 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
 {
     enter_critical_section(jvmti); {
         jclass   klass;
-	jfieldID field;
+        jfieldID field;
 
-	/* The VM has died. */
-	stdout_message("VMDeath\n");
+        /* The VM has died. */
+        stdout_message("VMDeath\n");
 
-	/* Disengage calls in MINST_class. */
-	klass = (*env)->FindClass(env, STRING(MINST_class));
-	if ( klass == NULL ) {
-	    fatal_error("ERROR: JNI: Cannot find %s with FindClass\n", 
-			STRING(MINST_class));
-	}
-	field = (*env)->GetStaticFieldID(env, klass, STRING(MINST_engaged), "I");
-	if ( field == NULL ) {
-	    fatal_error("ERROR: JNI: Cannot get field from %s\n", 
-			STRING(MINST_class));
-	}
-	(*env)->SetStaticIntField(env, klass, field, -1);
+        /* Disengage calls in MINST_class. */
+        klass = (*env)->FindClass(env, STRING(MINST_class));
+        if ( klass == NULL ) {
+            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n",
+                        STRING(MINST_class));
+        }
+        field = (*env)->GetStaticFieldID(env, klass, STRING(MINST_engaged), "I");
+        if ( field == NULL ) {
+            fatal_error("ERROR: JNI: Cannot get field from %s\n",
+                        STRING(MINST_class));
+        }
+        (*env)->SetStaticIntField(env, klass, field, -1);
 
-	/* The critical section here is important to hold back the VM death
-	 *    until all other callbacks have completed.
-	 */
+        /* The critical section here is important to hold back the VM death
+         *    until all other callbacks have completed.
+         */
 
-	/* Since this critical section could be holding up other threads
-	 *   in other event callbacks, we need to indicate that the VM is
-	 *   dead so that the other callbacks can short circuit their work.
-	 *   We don't expect any further events after VmDeath but we do need
-	 *   to be careful that existing threads might be in our own agent
-	 *   callback code.
-	 */
-	gdata->vm_is_dead = JNI_TRUE;
+        /* Since this critical section could be holding up other threads
+         *   in other event callbacks, we need to indicate that the VM is
+         *   dead so that the other callbacks can short circuit their work.
+         *   We don't expect any further events after VmDeath but we do need
+         *   to be careful that existing threads might be in our own agent
+         *   callback code.
+         */
+        gdata->vm_is_dead = JNI_TRUE;
 
     } exit_critical_section(jvmti);
-	
-}  
+
+}
 
 /* Callback for JVMTI_EVENT_CLASS_FILE_LOAD_HOOK */
 static void JNICALL
@@ -189,31 +189,31 @@ cbClassFileLoadHook(jvmtiEnv *jvmti, JNIEnv* env,
                 jint* new_class_data_len, unsigned char** new_class_data)
 {
     enter_critical_section(jvmti); {
-	/* It's possible we get here right after VmDeath event, be careful */
-	if ( !gdata->vm_is_dead ) {
+        /* It's possible we get here right after VmDeath event, be careful */
+        if ( !gdata->vm_is_dead ) {
 
-	    const char *classname;
+            const char *classname;
 
             /* Name could be NULL */
-	    if ( name == NULL ) {
-		classname = java_crw_demo_classname(class_data, class_data_len,
-			NULL);
-		if ( classname == NULL ) {
-		    fatal_error("ERROR: No classname inside classfile\n");
-		}
-	    } else {
-		classname = strdup(name);
-		if ( classname == NULL ) {
-		    fatal_error("ERROR: Out of malloc memory\n");
-		}
-	    }
-	    
-	    *new_class_data_len = 0;
+            if ( name == NULL ) {
+                classname = java_crw_demo_classname(class_data, class_data_len,
+                        NULL);
+                if ( classname == NULL ) {
+                    fatal_error("ERROR: No classname inside classfile\n");
+                }
+            } else {
+                classname = strdup(name);
+                if ( classname == NULL ) {
+                    fatal_error("ERROR: Out of malloc memory\n");
+                }
+            }
+
+            *new_class_data_len = 0;
             *new_class_data     = NULL;
 
             /* The tracker class itself? */
-            if ( interested((char*)classname, "", gdata->include, gdata->exclude) 
-		  &&  strcmp(classname, STRING(MINST_class)) != 0 ) {
+            if ( interested((char*)classname, "", gdata->include, gdata->exclude)
+                  &&  strcmp(classname, STRING(MINST_class)) != 0 ) {
                 jint           cnum;
                 int            system_class;
                 unsigned char *new_image;
@@ -223,9 +223,9 @@ cbClassFileLoadHook(jvmtiEnv *jvmti, JNIEnv* env,
                 cnum = gdata->ccount++;
 
                 /* Is it a system class? If the class load is before VmStart
-		 *   then we will consider it a system class that should
-		 *   be treated carefully. (See java_crw_demo)
-		 */
+                 *   then we will consider it a system class that should
+                 *   be treated carefully. (See java_crw_demo)
+                 */
                 system_class = 0;
                 if ( !gdata->vm_is_started ) {
                     system_class = 1;
@@ -250,9 +250,9 @@ cbClassFileLoadHook(jvmtiEnv *jvmti, JNIEnv* env,
                     NULL,
                     NULL);
 
-		/* If we got back a new class image, return it back as "the"
-		 *   new class image. This must be JVMTI Allocate space.
-		 */
+                /* If we got back a new class image, return it back as "the"
+                 *   new class image. This must be JVMTI Allocate space.
+                 */
                 if ( new_length > 0 ) {
                     unsigned char *jvmti_space;
 
@@ -262,13 +262,13 @@ cbClassFileLoadHook(jvmtiEnv *jvmti, JNIEnv* env,
                     *new_class_data     = jvmti_space; /* VM will deallocate */
                 }
 
-		/* Always free up the space we get from java_crw_demo() */
+                /* Always free up the space we get from java_crw_demo() */
                 if ( new_image != NULL ) {
                     (void)free((void*)new_image); /* Free malloc() space with free() */
                 }
             }
-	    (void)free((void*)classname);
-	}
+            (void)free((void*)classname);
+        }
     } exit_critical_section(jvmti);
 }
 
@@ -281,89 +281,89 @@ parse_agent_options(char *options)
 
     /* Parse options and set flags in gdata */
     if ( options==NULL ) {
-	return;
+        return;
     }
-   
+
     /* Get the first token from the options string. */
     next = get_token(options, ",=", token, sizeof(token));
 
     /* While not at the end of the options string, process this option. */
     while ( next != NULL ) {
-	if ( strcmp(token,"help")==0 ) {
-	    stdout_message("The minst JVMTI demo agent\n");
-	    stdout_message("\n");
-	    stdout_message(" java -agent:minst[=options] ...\n");
-	    stdout_message("\n");
-	    stdout_message("The options are comma separated:\n");
-	    stdout_message("\t help\t\t\t Print help information\n");
-	    stdout_message("\t include=item\t\t Only these classes/methods\n");
-	    stdout_message("\t exclude=item\t\t Exclude these classes/methods\n");
-	    stdout_message("\n");
-	    stdout_message("item\t Qualified class and/or method names\n");
-	    stdout_message("\t\t e.g. (*.<init>;Foobar.method;sun.*)\n");
-	    stdout_message("\n");
-	    exit(0);
-	} else if ( strcmp(token,"include")==0 ) {
-	    int   used;
-	    int   maxlen;
+        if ( strcmp(token,"help")==0 ) {
+            stdout_message("The minst JVMTI demo agent\n");
+            stdout_message("\n");
+            stdout_message(" java -agent:minst[=options] ...\n");
+            stdout_message("\n");
+            stdout_message("The options are comma separated:\n");
+            stdout_message("\t help\t\t\t Print help information\n");
+            stdout_message("\t include=item\t\t Only these classes/methods\n");
+            stdout_message("\t exclude=item\t\t Exclude these classes/methods\n");
+            stdout_message("\n");
+            stdout_message("item\t Qualified class and/or method names\n");
+            stdout_message("\t\t e.g. (*.<init>;Foobar.method;sun.*)\n");
+            stdout_message("\n");
+            exit(0);
+        } else if ( strcmp(token,"include")==0 ) {
+            int   used;
+            int   maxlen;
 
-	    maxlen = MAX_METHOD_NAME_LENGTH;
-	    if ( gdata->include == NULL ) {
-		gdata->include = (char*)calloc(maxlen+1, 1);
-		used = 0;
-	    } else {
-		used  = (int)strlen(gdata->include);
-		gdata->include[used++] = ',';
-		gdata->include[used] = 0;
-		gdata->include = (char*)
-			     realloc((void*)gdata->include, used+maxlen+1);
-	    }
-	    if ( gdata->include == NULL ) {
-		fatal_error("ERROR: Out of malloc memory\n");
-	    }
-	    /* Add this item to the list */
-	    next = get_token(next, ",=", gdata->include+used, maxlen);
-	    /* Check for token scan error */
-	    if ( next==NULL ) {
-		fatal_error("ERROR: include option error\n");
-	    }
-	} else if ( strcmp(token,"exclude")==0 ) {
-	    int   used;
-	    int   maxlen;
+            maxlen = MAX_METHOD_NAME_LENGTH;
+            if ( gdata->include == NULL ) {
+                gdata->include = (char*)calloc(maxlen+1, 1);
+                used = 0;
+            } else {
+                used  = (int)strlen(gdata->include);
+                gdata->include[used++] = ',';
+                gdata->include[used] = 0;
+                gdata->include = (char*)
+                             realloc((void*)gdata->include, used+maxlen+1);
+            }
+            if ( gdata->include == NULL ) {
+                fatal_error("ERROR: Out of malloc memory\n");
+            }
+            /* Add this item to the list */
+            next = get_token(next, ",=", gdata->include+used, maxlen);
+            /* Check for token scan error */
+            if ( next==NULL ) {
+                fatal_error("ERROR: include option error\n");
+            }
+        } else if ( strcmp(token,"exclude")==0 ) {
+            int   used;
+            int   maxlen;
 
-	    maxlen = MAX_METHOD_NAME_LENGTH;
-	    if ( gdata->exclude == NULL ) {
-		gdata->exclude = (char*)calloc(maxlen+1, 1);
-		used = 0;
-	    } else {
-		used  = (int)strlen(gdata->exclude);
-		gdata->exclude[used++] = ',';
-		gdata->exclude[used] = 0;
-		gdata->exclude = (char*)
-			     realloc((void*)gdata->exclude, used+maxlen+1);
-	    }
-	    if ( gdata->exclude == NULL ) {
-		fatal_error("ERROR: Out of malloc memory\n");
-	    }
-	    /* Add this item to the list */
-	    next = get_token(next, ",=", gdata->exclude+used, maxlen);
-	    /* Check for token scan error */
-	    if ( next==NULL ) {
-		fatal_error("ERROR: exclude option error\n");
-	    }
-	} else if ( token[0]!=0 ) {
-	    /* We got a non-empty token and we don't know what it is. */
-	    fatal_error("ERROR: Unknown option: %s\n", token);
-	}
-	/* Get the next token (returns NULL if there are no more) */
+            maxlen = MAX_METHOD_NAME_LENGTH;
+            if ( gdata->exclude == NULL ) {
+                gdata->exclude = (char*)calloc(maxlen+1, 1);
+                used = 0;
+            } else {
+                used  = (int)strlen(gdata->exclude);
+                gdata->exclude[used++] = ',';
+                gdata->exclude[used] = 0;
+                gdata->exclude = (char*)
+                             realloc((void*)gdata->exclude, used+maxlen+1);
+            }
+            if ( gdata->exclude == NULL ) {
+                fatal_error("ERROR: Out of malloc memory\n");
+            }
+            /* Add this item to the list */
+            next = get_token(next, ",=", gdata->exclude+used, maxlen);
+            /* Check for token scan error */
+            if ( next==NULL ) {
+                fatal_error("ERROR: exclude option error\n");
+            }
+        } else if ( token[0]!=0 ) {
+            /* We got a non-empty token and we don't know what it is. */
+            fatal_error("ERROR: Unknown option: %s\n", token);
+        }
+        /* Get the next token (returns NULL if there are no more) */
         next = get_token(next, ",=", token, sizeof(token));
     }
 }
 
-/* Agent_OnLoad: This is called immediately after the shared library is 
+/* Agent_OnLoad: This is called immediately after the shared library is
  *   loaded. This is the first code executed.
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
     static GlobalAgentData data;
@@ -372,8 +372,8 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     jint                   res;
     jvmtiCapabilities      capabilities;
     jvmtiEventCallbacks    callbacks;
-    
-    /* Setup initial global agent data area 
+
+    /* Setup initial global agent data area
      *   Use of static/extern data should be handled carefully here.
      *   We need to make sure that we are able to cleanup after ourselves
      *     so anything allocated in this library needs to be freed in
@@ -381,14 +381,14 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
      */
     (void)memset((void*)&data, 0, sizeof(data));
     gdata = &data;
-   
+
     /* First thing we need to do is get the jvmtiEnv* or JVMTI environment */
     res = (*vm)->GetEnv(vm, (void **)&jvmti, JVMTI_VERSION_1);
     if (res != JNI_OK) {
-	/* This means that the VM was unable to obtain this version of the
-	 *   JVMTI interface, this is a fatal error.
-	 */
-	fatal_error("ERROR: Unable to access JVMTI Version 1 (0x%x),"
+        /* This means that the VM was unable to obtain this version of the
+         *   JVMTI interface, this is a fatal error.
+         */
+        fatal_error("ERROR: Unable to access JVMTI Version 1 (0x%x),"
                 " is your JDK a 5.0 or newer version?"
                 " JNIEnv's GetEnv() returned %d\n",
                JVMTI_VERSION_1, res);
@@ -396,10 +396,10 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
     /* Here we save the jvmtiEnv* for Agent_OnUnload(). */
     gdata->jvmti = jvmti;
-   
+
     /* Parse any options supplied on java command line */
     parse_agent_options(options);
-   
+
     /* Immediately after getting the jvmtiEnv* we need to ask for the
      *   capabilities this agent will need. In this case we need to make
      *   sure that we can get all class load hooks.
@@ -408,39 +408,39 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     capabilities.can_generate_all_class_hook_events  = 1;
     error = (*jvmti)->AddCapabilities(jvmti, &capabilities);
     check_jvmti_error(jvmti, error, "Unable to get necessary JVMTI capabilities.");
-    
+
     /* Next we need to provide the pointers to the callback functions to
      *   to this jvmtiEnv*
      */
     (void)memset(&callbacks,0, sizeof(callbacks));
     /* JVMTI_EVENT_VM_START */
-    callbacks.VMStart           = &cbVMStart;      
+    callbacks.VMStart           = &cbVMStart;
     /* JVMTI_EVENT_VM_INIT */
-    callbacks.VMInit           = &cbVMInit;      
+    callbacks.VMInit           = &cbVMInit;
     /* JVMTI_EVENT_VM_DEATH */
-    callbacks.VMDeath           = &cbVMDeath;     
+    callbacks.VMDeath           = &cbVMDeath;
     /* JVMTI_EVENT_CLASS_FILE_LOAD_HOOK */
-    callbacks.ClassFileLoadHook = &cbClassFileLoadHook; 
+    callbacks.ClassFileLoadHook = &cbClassFileLoadHook;
     error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, (jint)sizeof(callbacks));
     check_jvmti_error(jvmti, error, "Cannot set jvmti callbacks");
-   
+
     /* At first the only initial events we are interested in are VM
-     *   initialization, VM death, and Class File Loads. 
+     *   initialization, VM death, and Class File Loads.
      *   Once the VM is initialized we will request more events.
      */
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			  JVMTI_EVENT_VM_START, (jthread)NULL);
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                          JVMTI_EVENT_VM_START, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			  JVMTI_EVENT_VM_INIT, (jthread)NULL);
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                          JVMTI_EVENT_VM_INIT, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			  JVMTI_EVENT_VM_DEATH, (jthread)NULL);
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                          JVMTI_EVENT_VM_DEATH, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			  JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, (jthread)NULL);
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                          JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-   
+
     /* Here we create a raw monitor for our use in this agent to
      *   protect critical sections of code.
      */
@@ -454,20 +454,19 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     return JNI_OK;
 }
 
-/* Agent_OnUnload: This is called immediately before the shared library is 
+/* Agent_OnUnload: This is called immediately before the shared library is
  *   unloaded. This is the last code executed.
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *vm)
 {
     /* Make sure all malloc/calloc/strdup space is freed */
     if ( gdata->include != NULL ) {
-	(void)free((void*)gdata->include);
-	gdata->include = NULL;
+        (void)free((void*)gdata->include);
+        gdata->include = NULL;
     }
     if ( gdata->exclude != NULL ) {
-	(void)free((void*)gdata->exclude);
-	gdata->exclude = NULL;
+        (void)free((void*)gdata->exclude);
+        gdata->exclude = NULL;
     }
 }
-

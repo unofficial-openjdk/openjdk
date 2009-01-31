@@ -39,8 +39,7 @@ import javax.accessibility.*;
  * (e.g., you add it to a <code>MenuBar</code>), then you <b>cannot</b>
  * call <code>show</code> on that <code>PopupMenu</code>.
  *
- * @version	%I% %G%
- * @author 	Amy Fowler
+ * @author      Amy Fowler
  */
 public class PopupMenu extends Menu {
 
@@ -61,20 +60,20 @@ public class PopupMenu extends Menu {
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public PopupMenu() throws HeadlessException {
-	this("");
+        this("");
     }
 
     /**
      * Creates a new popup menu with the specified name.
      *
      * @param label a non-<code>null</code> string specifying
-     *                the popup menu's label 
+     *                the popup menu's label
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public PopupMenu(String label) throws HeadlessException {
-	super(label);
+        super(label);
     }
 
     /**
@@ -104,35 +103,35 @@ public class PopupMenu extends Menu {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-	    // If our parent is not a Component, then this PopupMenu is
-	    // really just a plain, old Menu.
-	    if (parent != null && !(parent instanceof Component)) {
-	        super.addNotify();
-	    }
-	    else {
-	        if (peer == null)
-		    peer = Toolkit.getDefaultToolkit().createPopupMenu(this);
-		int nitems = getItemCount();
-		for (int i = 0 ; i < nitems ; i++) {
-		    MenuItem mi = getItem(i);
-		    mi.parent = this;
-		    mi.addNotify();
-		}
-	    }
-	}
+            // If our parent is not a Component, then this PopupMenu is
+            // really just a plain, old Menu.
+            if (parent != null && !(parent instanceof Component)) {
+                super.addNotify();
+            }
+            else {
+                if (peer == null)
+                    peer = Toolkit.getDefaultToolkit().createPopupMenu(this);
+                int nitems = getItemCount();
+                for (int i = 0 ; i < nitems ; i++) {
+                    MenuItem mi = getItem(i);
+                    mi.parent = this;
+                    mi.addNotify();
+                }
+            }
+        }
     }
 
    /**
      * Shows the popup menu at the x, y position relative to an origin
      * component.
      * The origin component must be contained within the component
-     * hierarchy of the popup menu's parent.  Both the origin and the parent 
+     * hierarchy of the popup menu's parent.  Both the origin and the parent
      * must be showing on the screen for this method to be valid.
      * <p>
      * If this <code>PopupMenu</code> is being used as a <code>Menu</code>
      * (i.e., it has a non-<code>Component</code> parent),
      * then you cannot call this method on the <code>PopupMenu</code>.
-     * 
+     *
      * @param origin the component which defines the coordinate space
      * @param x the x coordinate position to popup the menu
      * @param y the y coordinate position to popup the menu
@@ -146,15 +145,15 @@ public class PopupMenu extends Menu {
     public void show(Component origin, int x, int y) {
         // Use localParent for thread safety.
         MenuContainer localParent = parent;
-	if (localParent == null) {
-	    throw new NullPointerException("parent is null");
-	}
+        if (localParent == null) {
+            throw new NullPointerException("parent is null");
+        }
         if (!(localParent instanceof Component)) {
-	    throw new IllegalArgumentException(
-	        "PopupMenus with non-Component parents cannot be shown");
-	}
+            throw new IllegalArgumentException(
+                "PopupMenus with non-Component parents cannot be shown");
+        }
         Component compParent = (Component)localParent;
-        //Fixed 6278745: Incorrect exception throwing in PopupMenu.show() method  
+        //Fixed 6278745: Incorrect exception throwing in PopupMenu.show() method
         //Exception was not thrown if compParent was not equal to origin and
         //was not Container
         if (compParent != origin) {
@@ -165,19 +164,19 @@ public class PopupMenu extends Menu {
             } else {
                 throw new IllegalArgumentException("origin not in parent's hierarchy");
             }
-	}
-	if (compParent.getPeer() == null || !compParent.isShowing()) {
-	    throw new RuntimeException("parent not showing on screen");
-	}
-	if (peer == null) {
-	    addNotify();
-	}
-	synchronized (getTreeLock()) {
-	    if (peer != null) {
-	        ((PopupMenuPeer)peer).show(
-		    new Event(origin, 0, Event.MOUSE_DOWN, x, y, 0, 0));
-	    }
-	}
+        }
+        if (compParent.getPeer() == null || !compParent.isShowing()) {
+            throw new RuntimeException("parent not showing on screen");
+        }
+        if (peer == null) {
+            addNotify();
+        }
+        synchronized (getTreeLock()) {
+            if (peer != null) {
+                ((PopupMenuPeer)peer).show(
+                    new Event(origin, 0, Event.MOUSE_DOWN, x, y, 0, 0));
+            }
+        }
     }
 
 
@@ -219,7 +218,7 @@ public class PopupMenu extends Menu {
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          */
         public AccessibleRole getAccessibleRole() {

@@ -33,8 +33,8 @@
 #include "D3DUtils.h"
 
 #ifdef DEBUG
-void TestRasterOutput(byte *rasPtr, int x, int y, int w, int h, 
-		      int scanStride, int pixelStride, 
+void TestRasterOutput(byte *rasPtr, int x, int y, int w, int h,
+                      int scanStride, int pixelStride,
                       TIntTestRaster goldenArray = NULL);
 #endif // DEBUG
 void PrintD3DCaps(int caps);
@@ -53,9 +53,9 @@ void PrintD3DCaps(int caps);
  * by different rendering algorithms used by our software
  * renderer and the driver or hardware on this device.  For example,
  * some Intel cards (e.g., i815) are known to use polygon renderers
- * for their lines, which sometimes result in wide lines.  
+ * for their lines, which sometimes result in wide lines.
  * The test pattern is stored in d3dTestRaster.h, which is generated
- * by a Java test program 
+ * by a Java test program
  * (src/share/test/java2d/VolatileImage/D3DTestPattern/D3DTestPattern.java).
  */
 
@@ -86,9 +86,9 @@ int TestForBadHardware(DxCapabilities *dxCaps)
             // the single bad device (Trident) that triggers this error
             // is generally found on laptops, where multiple graphics
             // devices are not even possible, so disabling d3d for all
-            // devices is equivalent to disabling d3d for this single 
+            // devices is equivalent to disabling d3d for this single
             // device.
-            J2dRlsTraceLn1(J2D_TRACE_ERROR, 
+            J2dRlsTraceLn1(J2D_TRACE_ERROR,
                            "TestForBadHardware: Found match: %S. Test FAILED",
                            badDeviceStrings[i]);
             return J2D_D3D_FAILURE;
@@ -97,7 +97,7 @@ int TestForBadHardware(DxCapabilities *dxCaps)
     return J2D_D3D_HW_OK;
 }
 
-int TestTextureFormats(D3DContext *d3dContext) 
+int TestTextureFormats(D3DContext *d3dContext)
 {
     int testRes = J2D_D3D_FAILURE;
 
@@ -115,7 +115,7 @@ int TestTextureFormats(D3DContext *d3dContext)
         }
         if (pfExists == FALSE) {
             // couldn't find a pixel formap for this transparency type
-            J2dRlsTraceLn1(J2D_TRACE_ERROR, 
+            J2dRlsTraceLn1(J2D_TRACE_ERROR,
                            "D3DTest::TestTextureFormats no texture formats"\
                            " for %d transparency", t);
             break;
@@ -123,34 +123,34 @@ int TestTextureFormats(D3DContext *d3dContext)
     }
 
     // we must have ARGB texture format (may be used for text rendering)
-    if (pfExists == TRUE && 
-        table[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pfType == PF_INT_ARGB) 
+    if (pfExists == TRUE &&
+        table[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pfType == PF_INT_ARGB)
     {
         testRes |= J2D_D3D_PIXEL_FORMATS_OK;
     } else {
-        J2dRlsTraceLn1(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn1(J2D_TRACE_ERROR,
                        "D3DTest::TestTextureFormats: FAILED pfType=%d",
                        table[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pfType);
     }
     return testRes;
 }
 
-int TestSetClip(JNIEnv *env, D3DContext *d3dContext, 
+int TestSetClip(JNIEnv *env, D3DContext *d3dContext,
                 DDrawSurface *lpPlainSurface)
 {
     int testRes = J2D_D3D_FAILURE;
 
     if (SUCCEEDED(d3dContext->SetRenderTarget(lpPlainSurface))) {
-        jobject clip = 
-            JNU_CallStaticMethodByName(env, NULL, 
+        jobject clip =
+            JNU_CallStaticMethodByName(env, NULL,
                                        "sun/java2d/pipe/Region",
                                        "getInstanceXYWH",
                                        "(IIII)Lsun/java2d/pipe/Region;",
                                        0, 0, D3D_TEST_RASTER_W, D3D_TEST_RASTER_H).l;
         if (!JNU_IsNull(env, clip)) {
-            if (SUCCEEDED(d3dContext->SetClip(env, clip, JNI_TRUE, 
-                                              0, 0, 
-                                              D3D_TEST_RASTER_W, 
+            if (SUCCEEDED(d3dContext->SetClip(env, clip, JNI_TRUE,
+                                              0, 0,
+                                              D3D_TEST_RASTER_W,
                                               D3D_TEST_RASTER_H)))
             {
                 testRes |= J2D_D3D_DEPTH_SURFACE_OK;
@@ -161,7 +161,7 @@ int TestSetClip(JNIEnv *env, D3DContext *d3dContext,
     return testRes;
 }
 
-int TestRenderingResults(DDrawSurface *lpPlainSurface, 
+int TestRenderingResults(DDrawSurface *lpPlainSurface,
                          TIntTestRaster goldenArray)
 {
     // Now, check the results of the test raster against our d3d drawing
@@ -174,61 +174,61 @@ int TestRenderingResults(DDrawSurface *lpPlainSurface,
     int pixelStride = rasInfo.pixelStride;
     int scanStride = rasInfo.scanStride;
     for (int row = 0; row < D3D_TEST_RASTER_H; ++row) {
-	byte *tmpRasPtr = rasPtr + row * scanStride;
-	for (int col = 0; col < D3D_TEST_RASTER_W; ++col) {
-	    DWORD pixelVal;
-	    switch (pixelStride) {
-	    case 1:
-		pixelVal = *tmpRasPtr;
-		break;
-	    case 2: 
-		pixelVal = *((unsigned short*)tmpRasPtr);
-		break;
-	    default: 
-		pixelVal = *((unsigned int*)tmpRasPtr);
-		break;
-	    }
-	    tmpRasPtr += pixelStride;
-	    // The test is simple: if the test raster pixel has value 0, then
-	    // we expect 0 in the d3d surface.  If the test raster has a nonzero
-	    // value, then we expect the d3d surface to also have non-zero value.
-	    // All other results represent failure.
+        byte *tmpRasPtr = rasPtr + row * scanStride;
+        for (int col = 0; col < D3D_TEST_RASTER_W; ++col) {
+            DWORD pixelVal;
+            switch (pixelStride) {
+            case 1:
+                pixelVal = *tmpRasPtr;
+                break;
+            case 2:
+                pixelVal = *((unsigned short*)tmpRasPtr);
+                break;
+            default:
+                pixelVal = *((unsigned int*)tmpRasPtr);
+                break;
+            }
+            tmpRasPtr += pixelStride;
+            // The test is simple: if the test raster pixel has value 0, then
+            // we expect 0 in the d3d surface.  If the test raster has a nonzero
+            // value, then we expect the d3d surface to also have non-zero value.
+            // All other results represent failure.
             int goldenValue = (goldenArray[row][col] & 0x00ffffff);
-	    if ((goldenValue == 0 && pixelVal != 0) ||
-		(goldenValue != 0 && pixelVal == 0))
-	    {
-                J2dRlsTraceLn3(J2D_TRACE_WARNING, 
+            if ((goldenValue == 0 && pixelVal != 0) ||
+                (goldenValue != 0 && pixelVal == 0))
+            {
+                J2dRlsTraceLn3(J2D_TRACE_WARNING,
                                "TestRenderingResults: Quality test failed due "\
                                "to value %x at (%d, %d)", pixelVal, col, row);
 #ifdef DEBUG
-		// This section is not necessary, but it might be
-		// nice to know why we are failing D3DTest on some
-		// systems.  If tracing is enabled, this section will
-		// produce an ascii representation of the test pattern,
-		// the result on this device, and the pixels that were
-		// in error.
-		J2dTraceLn(J2D_TRACE_VERBOSE, "TestRaster:");
-		TestRasterOutput((byte*)goldenArray, 0, 0, D3D_TEST_RASTER_W, 
-				 D3D_TEST_RASTER_H, D3D_TEST_RASTER_W*4, 4);
-		J2dTraceLn(J2D_TRACE_VERBOSE, "D3D Raster:");
-		TestRasterOutput(rasPtr, 0, 0, D3D_TEST_RASTER_W, 
-				 D3D_TEST_RASTER_H, scanStride, pixelStride);
-		J2dTraceLn(J2D_TRACE_VERBOSE, "Deltas (x indicates problem pixel):");
-		TestRasterOutput(rasPtr, 0, 0, D3D_TEST_RASTER_W, 
-				 D3D_TEST_RASTER_H, scanStride, pixelStride,
+                // This section is not necessary, but it might be
+                // nice to know why we are failing D3DTest on some
+                // systems.  If tracing is enabled, this section will
+                // produce an ascii representation of the test pattern,
+                // the result on this device, and the pixels that were
+                // in error.
+                J2dTraceLn(J2D_TRACE_VERBOSE, "TestRaster:");
+                TestRasterOutput((byte*)goldenArray, 0, 0, D3D_TEST_RASTER_W,
+                                 D3D_TEST_RASTER_H, D3D_TEST_RASTER_W*4, 4);
+                J2dTraceLn(J2D_TRACE_VERBOSE, "D3D Raster:");
+                TestRasterOutput(rasPtr, 0, 0, D3D_TEST_RASTER_W,
+                                 D3D_TEST_RASTER_H, scanStride, pixelStride);
+                J2dTraceLn(J2D_TRACE_VERBOSE, "Deltas (x indicates problem pixel):");
+                TestRasterOutput(rasPtr, 0, 0, D3D_TEST_RASTER_W,
+                                 D3D_TEST_RASTER_H, scanStride, pixelStride,
                                  goldenArray);
 #endif // DEBUG
-		lpPlainSurface->Unlock(NULL);
-		return  J2D_D3D_FAILURE;
-	    }
-	}
+                lpPlainSurface->Unlock(NULL);
+                return  J2D_D3D_FAILURE;
+            }
+        }
     }
-    
+
     lpPlainSurface->Unlock(NULL);
     return (J2D_D3D_LINES_OK | J2D_D3D_LINE_CLIPPING_OK);
 }
 
-int TestLineRenderingQuality(JNIEnv *env, D3DContext *d3dContext, 
+int TestLineRenderingQuality(JNIEnv *env, D3DContext *d3dContext,
                              DDrawSurface *lpPlainSurface)
 {
     static J2D_XY_C_VERTEX lineVerts[] = {
@@ -256,15 +256,15 @@ int TestLineRenderingQuality(JNIEnv *env, D3DContext *d3dContext,
     }
 
     int i;
-    
+
     for (i = 0; i < d3dNumTestLines * 4; i += 4) {
-	lineVerts[0].x = d3dTestLines[i + 0];
-	lineVerts[0].y = d3dTestLines[i + 1];
-	lineVerts[1].x = d3dTestLines[i + 2];
-	lineVerts[1].y = d3dTestLines[i + 3];
-        if (FAILED(res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP, 
+        lineVerts[0].x = d3dTestLines[i + 0];
+        lineVerts[0].y = d3dTestLines[i + 1];
+        lineVerts[1].x = d3dTestLines[i + 2];
+        lineVerts[1].y = d3dTestLines[i + 3];
+        if (FAILED(res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP,
                                                   D3DFVF_J2D_XY_C,
-                                                  lineVerts, 2, 0))) 
+                                                  lineVerts, 2, 0)))
         {
             d3dContext->ForceEndScene();
             return J2D_D3D_FAILURE;
@@ -275,28 +275,28 @@ int TestLineRenderingQuality(JNIEnv *env, D3DContext *d3dContext,
     }
 
     for (i = 0; i < d3dNumTestRects * 4; i += 4) {
-	float x1 = d3dTestRects[i + 0];
-	float y1 = d3dTestRects[i + 1];
-	float x2 = d3dTestRects[i + 2];
-	float y2 = d3dTestRects[i + 3];
+        float x1 = d3dTestRects[i + 0];
+        float y1 = d3dTestRects[i + 1];
+        float x2 = d3dTestRects[i + 2];
+        float y2 = d3dTestRects[i + 3];
         D3DU_INIT_VERTEX_PENT_XY(lineVerts, x1, y1, x2, y2);
-        if (FAILED(res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP, 
+        if (FAILED(res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP,
                                                   D3DFVF_J2D_XY_C,
-                                                  lineVerts, 5, 0))) 
+                                                  lineVerts, 5, 0)))
         {
             d3dContext->ForceEndScene();
             return J2D_D3D_FAILURE;
         }
     }
     d3dContext->ForceEndScene();
-    
+
     // REMIND: add rendering of clipped lines
 
     return TestRenderingResults(lpPlainSurface, d3dTestRaster);
 }
 
-int TestTextureMappingQuality(JNIEnv *env, DDraw *ddObject, 
-                              D3DContext *d3dContext, 
+int TestTextureMappingQuality(JNIEnv *env, DDraw *ddObject,
+                              D3DContext *d3dContext,
                               DDrawSurface *lpPlainSurface)
 {
     static J2DLVERTEX quadVerts[4] = {
@@ -310,25 +310,25 @@ int TestTextureMappingQuality(JNIEnv *env, DDraw *ddObject,
 
     if (testRes & J2D_D3D_PIXEL_FORMATS_OK) {
 
-        DDrawSurface *lpTexture = 
+        DDrawSurface *lpTexture =
             D3DUtils_CreateTexture(env, ddObject, d3dContext, TR_TRANSLUCENT,
                                    D3D_TEXTURE_RASTER_W, D3D_TEXTURE_RASTER_H);
         if (lpTexture) {
-            D3DUtils_UploadIntImageToXRGBTexture(lpTexture, 
+            D3DUtils_UploadIntImageToXRGBTexture(lpTexture,
                                                  (int *)srcImageArray,
-                                                 D3D_TEXTURE_RASTER_W, 
+                                                 D3D_TEXTURE_RASTER_W,
                                                  D3D_TEXTURE_RASTER_H);
 
-            float u2 = ((float)D3D_TEXTURE_RASTER_W) / 
+            float u2 = ((float)D3D_TEXTURE_RASTER_W) /
                        (float)lpTexture->GetDXSurface()->GetWidth();
-            float v2 = ((float)D3D_TEXTURE_RASTER_H) / 
+            float v2 = ((float)D3D_TEXTURE_RASTER_H) /
                        (float)lpTexture->GetDXSurface()->GetHeight();
             D3DU_INIT_VERTEX_QUAD_UV(quadVerts, 0.0f, 0.0f, u2, v2);
 
             IDirect3DDevice7 *d3dDevice = d3dContext->Get3DDevice();
             d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0, 0);
 
-            d3dContext->SetAlphaComposite(3/*SrcOver*/, 
+            d3dContext->SetAlphaComposite(3/*SrcOver*/,
                                           1.0f, D3DC_NO_CONTEXT_FLAGS);
             d3dDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTFG_POINT);
             d3dDevice->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTFG_POINT);
@@ -356,16 +356,16 @@ int TestTextureMappingQuality(JNIEnv *env, DDraw *ddObject,
             TestRenderingResults(lpPlainSurface, linInterpArray);
             if (SUCCEEDED(res)) {
                 testRes |= (J2D_D3D_TR_TEXTURE_SURFACE_OK |
-                            J2D_D3D_TEXTURE_BLIT_OK       | 
+                            J2D_D3D_TEXTURE_BLIT_OK       |
                             J2D_D3D_TEXTURE_TRANSFORM_OK);
 
                 // REMIND: add tests for opaque and bitmask textures
-                testRes |= (J2D_D3D_OP_TEXTURE_SURFACE_OK | 
+                testRes |= (J2D_D3D_OP_TEXTURE_SURFACE_OK |
                             J2D_D3D_BM_TEXTURE_SURFACE_OK);
             }
             delete lpTexture;
         } else {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "TestTextureMappingQuality: "\
                           "CreateTexture(TRANSLUCENT) FAILED");
         }
@@ -373,7 +373,7 @@ int TestTextureMappingQuality(JNIEnv *env, DDraw *ddObject,
     return testRes;
 }
 
-int TestD3DDevice(DDraw *ddObject, 
+int TestD3DDevice(DDraw *ddObject,
                   D3DContext *d3dContext,
                   DxCapabilities *dxCaps)
 {
@@ -384,22 +384,22 @@ int TestD3DDevice(DDraw *ddObject,
 
     D3DDEVICEDESC7 d3dDevDesc;
     IDirect3DDevice7 *d3dDevice = d3dContext->Get3DDevice();
-    if (d3dDevice == NULL  || 
+    if (d3dDevice == NULL  ||
         FAILED(d3dDevice->GetCaps(&d3dDevDesc)) ||
-        FAILED(D3DUtils_CheckDeviceCaps(&d3dDevDesc))) 
+        FAILED(D3DUtils_CheckDeviceCaps(&d3dDevDesc)))
     {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "TestD3DDevice: device caps testing FAILED");
         return testRes;
     }
     testRes |= J2D_D3D_DEVICE_OK;
 
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    DDrawSurface *lpPlainSurface = 
-        D3DUtils_CreatePlainSurface(env, ddObject, d3dContext, 
+    DDrawSurface *lpPlainSurface =
+        D3DUtils_CreatePlainSurface(env, ddObject, d3dContext,
                                     D3D_TEST_RASTER_W, D3D_TEST_RASTER_H);
     if (!lpPlainSurface) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "TestD3DDevice: CreatePlainSurface FAILED");
         return testRes;
     }
@@ -407,7 +407,7 @@ int TestD3DDevice(DDraw *ddObject,
 
     // Set identity transform
     if (FAILED(d3dContext->SetTransform(NULL, 0, 0, 0, 0, 0, 0))) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "TestD3DDevice: SetTransform FAILED");
         delete lpPlainSurface;
         return testRes;
@@ -427,9 +427,9 @@ int TestD3DDevice(DDraw *ddObject,
     testRes |= TestLineRenderingQuality(env, d3dContext, lpPlainSurface);
 
     // Test texture mapping
-    testRes |= TestTextureMappingQuality(env, ddObject, d3dContext, 
+    testRes |= TestTextureMappingQuality(env, ddObject, d3dContext,
                                          lpPlainSurface);
-    
+
     d3dContext->SetRenderTarget(NULL);
 
     delete lpPlainSurface;
@@ -443,27 +443,27 @@ int TestD3DDevice(DDraw *ddObject,
  * prior to running application with debug java.  The output from this will
  * be seen only if D3DTest fails.
  */
-void TestRasterOutput(byte *rasPtr, int x, int y, int w, int h, 
-		      int scanStride, int pixelStride,
+void TestRasterOutput(byte *rasPtr, int x, int y, int w, int h,
+                      int scanStride, int pixelStride,
                       TIntTestRaster goldenArray)
 {
     int goldenValue;
     for (int traceRow = y; traceRow < h; ++traceRow) {
-	byte *tmpRasPtr = rasPtr + traceRow * scanStride;
-	for (int traceCol = x; traceCol < w; ++traceCol) {
-	    DWORD pixelVal;
-	    switch (pixelStride) {
-	    case 1:
-		pixelVal = *tmpRasPtr;
-		break;
-	    case 2: 
-		pixelVal = *((unsigned short*)tmpRasPtr);
-		break;
-	    default: 
-		pixelVal = *((unsigned int*)tmpRasPtr) & 0x00ffffff;
-		break;
-	    }
-	    tmpRasPtr += pixelStride;
+        byte *tmpRasPtr = rasPtr + traceRow * scanStride;
+        for (int traceCol = x; traceCol < w; ++traceCol) {
+            DWORD pixelVal;
+            switch (pixelStride) {
+            case 1:
+                pixelVal = *tmpRasPtr;
+                break;
+            case 2:
+                pixelVal = *((unsigned short*)tmpRasPtr);
+                break;
+            default:
+                pixelVal = *((unsigned int*)tmpRasPtr) & 0x00ffffff;
+                break;
+            }
+            tmpRasPtr += pixelStride;
             if (goldenArray == NULL) {
                 if (pixelVal) {
                     J2dTrace(J2D_TRACE_VERBOSE, "1");
@@ -480,14 +480,14 @@ void TestRasterOutput(byte *rasPtr, int x, int y, int w, int h,
                     J2dTrace(J2D_TRACE_VERBOSE, "-");
                 }
             }
-            
-	}
-	J2dTrace(J2D_TRACE_VERBOSE, "\n");
+
+        }
+        J2dTrace(J2D_TRACE_VERBOSE, "\n");
     }
 }
 #endif // DEBUG
 
-void PrintD3DCaps(int caps) 
+void PrintD3DCaps(int caps)
 {
     J2dTraceLn(J2D_TRACE_VERBOSE, "{")
     if (caps == J2D_D3D_FAILURE) {

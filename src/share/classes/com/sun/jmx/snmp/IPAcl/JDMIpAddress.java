@@ -51,13 +51,13 @@ class JDMIpAddress extends Host {
   public static Node jjtCreate(Parser p, int id) {
       return new JDMIpAddress(p, id);
   }
-  
-  protected String getHname() { 
-	  return address.toString();
+
+  protected String getHname() {
+          return address.toString();
   }
-  
-  protected PrincipalImpl createAssociatedPrincipal() 
-    throws UnknownHostException { 
+
+  protected PrincipalImpl createAssociatedPrincipal()
+    throws UnknownHostException {
       return new PrincipalImpl(address.toString());
   }
 }

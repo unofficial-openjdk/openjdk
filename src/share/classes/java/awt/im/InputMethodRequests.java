@@ -57,7 +57,6 @@ import java.text.AttributedCharacterIterator.Attribute;
  * @see java.awt.Component#getInputMethodRequests
  * @see java.awt.event.InputMethodListener
  *
- * @version 	%I%, %G%
  * @author JavaSoft Asia/Pacific
  * @since 1.2
  */
@@ -123,7 +122,7 @@ public interface InputMethodRequests {
      * entered through an input method are inserted. This information is used
      * by an input method, for example, to examine the text surrounding the
      * insert position.
-     * 
+     *
      * @return the offset of the insert position
      */
     int getInsertPositionOffset();

@@ -38,11 +38,11 @@ extern vm_calls_t *vm_calls;
 #undef sysAssert
 
 #ifdef DEBUG
-#define sysAssert(expression) {		\
-    if (!(expression)) {		\
-	vm_calls->panic \
+#define sysAssert(expression) {         \
+    if (!(expression)) {                \
+        vm_calls->panic \
             ("\"%s\", line %d: assertion failure\n", __FILE__, __LINE__); \
-    }					\
+    }                                   \
 }
 #else
 #define sysAssert(expression) ((void) 0)
@@ -50,38 +50,38 @@ extern vm_calls_t *vm_calls;
 
 #ifdef LOGGING
 
-#define Log(level, message) {						\
-    if (vm_calls && level <= logging_level)			\
-	vm_calls->jio_fprintf(stderr, message);				\
+#define Log(level, message) {                                           \
+    if (vm_calls && level <= logging_level)                     \
+        vm_calls->jio_fprintf(stderr, message);                         \
 }
 
-#define Log1(level, message, x1) {					\
-    if (vm_calls && level <= logging_level)			\
-	vm_calls->jio_fprintf(stderr, message, (x1));			\
+#define Log1(level, message, x1) {                                      \
+    if (vm_calls && level <= logging_level)                     \
+        vm_calls->jio_fprintf(stderr, message, (x1));                   \
 }
 
-#define Log2(level, message, x1, x2) {					\
-    if (vm_calls && level <= logging_level)			\
-	vm_calls->jio_fprintf(stderr, message, (x1), (x2));		\
+#define Log2(level, message, x1, x2) {                                  \
+    if (vm_calls && level <= logging_level)                     \
+        vm_calls->jio_fprintf(stderr, message, (x1), (x2));             \
 }
 
-#define Log3(level, message, x1, x2, x3) {				\
-    if (vm_calls && level <= logging_level)			\
-	vm_calls->jio_fprintf(stderr, message, (x1), (x2), (x3));	\
+#define Log3(level, message, x1, x2, x3) {                              \
+    if (vm_calls && level <= logging_level)                     \
+        vm_calls->jio_fprintf(stderr, message, (x1), (x2), (x3));       \
 }
 
-#define Log4(level, message, x1, x2, x3, x4) {				\
-    if (vm_calls && level <= logging_level)			\
-	vm_calls->jio_fprintf(stderr, message, (x1), (x2), (x3), (x4)); \
+#define Log4(level, message, x1, x2, x3, x4) {                          \
+    if (vm_calls && level <= logging_level)                     \
+        vm_calls->jio_fprintf(stderr, message, (x1), (x2), (x3), (x4)); \
 }
 
 #else
 
-#define Log(level, message)			((void) 0)
-#define Log1(level, message, x1)		((void) 0)
-#define Log2(level, message, x1, x2)		((void) 0)
-#define Log3(level, message, x1, x2, x3)	((void) 0)
-#define Log4(level, message, x1, x2, x3, x4)	((void) 0)
+#define Log(level, message)                     ((void) 0)
+#define Log1(level, message, x1)                ((void) 0)
+#define Log2(level, message, x1, x2)            ((void) 0)
+#define Log3(level, message, x1, x2, x3)        ((void) 0)
+#define Log4(level, message, x1, x2, x3, x4)    ((void) 0)
 
 #endif /* LOGGING */
 

@@ -44,25 +44,25 @@ public class B6216082 {
     // even if proxy related properties are set. so we need to bind
     // our simple http proxy and http server to a non-loopback address
     static InetAddress firstNonLoAddress = null;
-    
+
     public static void main(String[] args) throws Exception {
-	// XXX workaround for CNFE
-	Class.forName("java.nio.channels.ClosedByInterruptException");
+        // XXX workaround for CNFE
+        Class.forName("java.nio.channels.ClosedByInterruptException");
         setupEnv();
-        
+
         startHttpServer();
 
-	// https.proxyPort can only be set after the TunnelProxy has been
-	// created as it will use an ephemeral port.
-	System.setProperty( "https.proxyPort", (new Integer(proxy.getLocalPort())).toString() );
+        // https.proxyPort can only be set after the TunnelProxy has been
+        // created as it will use an ephemeral port.
+        System.setProperty( "https.proxyPort", (new Integer(proxy.getLocalPort())).toString() );
 
         makeHttpCall();
-            
+
         if (httpTrans.hasBadRequest) {
             throw new RuntimeException("Test failed : bad http request");
         }
     }
-    
+
     /*
      * Where do we find the keystores for ssl?
      */
@@ -73,7 +73,7 @@ public class B6216082 {
     public static void setupEnv() {
         try {
             firstNonLoAddress = getNonLoAddress();
-            
+
             if (firstNonLoAddress == null) {
                 System.out.println("The test needs at least one non-loopback address to run. Quit now.");
                 System.exit(0);
@@ -84,20 +84,20 @@ public class B6216082 {
         }
         // will use proxy
         System.setProperty( "https.proxyHost", firstNonLoAddress.getHostAddress());
-        
+
         // setup properties to do ssl
         String keyFilename = System.getProperty("test.src", "./") + "/" +
                              pathToStores + "/" + keyStoreFile;
         String trustFilename = System.getProperty("test.src", "./") + "/" +
                                pathToStores + "/" + trustStoreFile;
-    
+
         System.setProperty("javax.net.ssl.keyStore", keyFilename);
         System.setProperty("javax.net.ssl.keyStorePassword", passwd);
         System.setProperty("javax.net.ssl.trustStore", trustFilename);
         System.setProperty("javax.net.ssl.trustStorePassword", passwd);
         HttpsURLConnection.setDefaultHostnameVerifier(new NameVerifier());
     }
-    
+
     public static InetAddress getNonLoAddress() throws Exception {
         NetworkInterface loNIC = NetworkInterface.getByInetAddress(InetAddress.getByName("localhost"));
         Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
@@ -112,14 +112,14 @@ public class B6216082 {
                 }
             }
         }
-        
+
         return null;
     }
-    
+
     public static void startHttpServer() {
         try {
-	    // Both the https server and the proxy let the 
-	    // system pick up an ephemeral port.
+            // Both the https server and the proxy let the
+            // system pick up an ephemeral port.
             httpTrans = new SimpleHttpTransaction();
             server = new HttpServer(httpTrans, 1, 10, 0);
             proxy = new TunnelProxy(1, 10, 0);
@@ -127,7 +127,7 @@ public class B6216082 {
             e.printStackTrace();
         }
     }
-    
+
     public static void makeHttpCall() {
         try {
             System.out.println("https server listen on: " + server.getLocalPort());
@@ -153,7 +153,7 @@ public class B6216082 {
 
 class SimpleHttpTransaction implements HttpCallback {
     public boolean hasBadRequest = false;
-    
+
     /*
      * Our http server which simply redirect first call
      */
@@ -182,5 +182,3 @@ class SimpleHttpTransaction implements HttpCallback {
         }
     }
 }
-
-

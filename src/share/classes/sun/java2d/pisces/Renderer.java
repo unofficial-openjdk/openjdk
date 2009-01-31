@@ -28,7 +28,7 @@ package sun.java2d.pisces;
 public class Renderer extends LineSink {
     public static final int WIND_EVEN_ODD = 0;
     public static final int WIND_NON_ZERO = 1;
-    
+
     // Initial edge list size
     // IMPL_NOTE - restore size after growth
     public static final int INITIAL_EDGES = 1000;
@@ -73,7 +73,7 @@ public class Renderer extends LineSink {
     private int windingRule;
 
     // Current drawing position, i.e., final point of last segment
-    private int x0, y0; 
+    private int x0, y0;
 
     // Position of most recent 'moveTo' command
     private int sx0, sy0;
@@ -127,24 +127,24 @@ public class Renderer extends LineSink {
     }
 
     public void setWindingRule(int windingRule) {
-	this.windingRule = windingRule;
+        this.windingRule = windingRule;
     }
 
     public int getWindingRule() {
-	return windingRule;
+        return windingRule;
     }
 
     public void beginRendering(int boundsX, int boundsY,
-			       int boundsWidth, int boundsHeight) {
+                               int boundsWidth, int boundsHeight) {
         lastOrientation = 0;
         flips = 0;
 
         resetEdges();
 
-	this.boundsMinX = boundsX << 16; 
-	this.boundsMinY = boundsY << 16;
-	this.boundsMaxX = (boundsX + boundsWidth) << 16;
-	this.boundsMaxY = (boundsY + boundsHeight) << 16;
+        this.boundsMinX = boundsX << 16;
+        this.boundsMinY = boundsY << 16;
+        this.boundsMaxX = (boundsX + boundsWidth) << 16;
+        this.boundsMaxY = (boundsY + boundsHeight) << 16;
 
         this.bboxX0 = boundsX;
         this.bboxY0 = boundsY;
@@ -155,8 +155,8 @@ public class Renderer extends LineSink {
     public void moveTo(int x0, int y0) {
         // System.out.println("Renderer: moveTo " + x0/65536.0 + " " + y0/65536.0);
         close();
-	this.sx0 = this.x0 = x0;
-	this.sy0 = this.y0 = y0;
+        this.sx0 = this.x0 = x0;
+        this.sy0 = this.y0 = y0;
         this.lastOrientation = 0;
     }
 
@@ -186,8 +186,8 @@ public class Renderer extends LineSink {
         // Bias Y by 1 ULP so endpoints never lie on a scanline
         addEdge(x0, y0 | 0x1, x1, y1 | 0x1);
 
-	this.x0 = x1;
-	this.y0 = y1;
+        this.x0 = x1;
+        this.y0 = y1;
     }
 
     public void close() {
@@ -200,7 +200,7 @@ public class Renderer extends LineSink {
         if (orientation != firstOrientation) {
             ++flips;
         }
-	lineTo(sx0, sy0);
+        lineTo(sx0, sy0);
     }
 
     public void end() {
@@ -215,12 +215,12 @@ public class Renderer extends LineSink {
         int iy0 = edges[index + 1];
         int iy1 = edges[index + 3];
 
-  	// Clip to valid Y range
-  	int clipy0 = (iy0 > boundsMinY) ? iy0 : boundsMinY;
-  	int clipy1 = (iy1 < boundsMaxY) ? iy1 : boundsMaxY;
+        // Clip to valid Y range
+        int clipy0 = (iy0 > boundsMinY) ? iy0 : boundsMinY;
+        int clipy1 = (iy1 < boundsMaxY) ? iy1 : boundsMaxY;
 
-	int minY = ((clipy0 + HYSTEP) & YMASK) + HYSTEP;
-	int maxY = ((clipy1 - HYSTEP) & YMASK) + HYSTEP;
+        int minY = ((clipy0 + HYSTEP) & YMASK) + HYSTEP;
+        int maxY = ((clipy1 - HYSTEP) & YMASK) + HYSTEP;
 
         // IMPL_NOTE - If line falls outside the valid X range, could
         // draw a vertical line instead
@@ -240,7 +240,7 @@ public class Renderer extends LineSink {
         // Compute first crossing point at y = minY
         int orientation = edges[index + 4];
         int y = minY;
-  	long lx = (((long) y) - iy0)*dx/dy + ix0;
+        long lx = (((long) y) - iy0)*dx/dy + ix0;
         addCrossing(y >> YSHIFT, (int)(lx >> XSHIFT), orientation);
 
         // Advance y to next scanline, exit if past endpoint
@@ -252,11 +252,11 @@ public class Renderer extends LineSink {
         // Compute xstep only if additional scanlines are crossed
         // For each scanline, add xstep to lx and YSTEP to y and
         // emit the new crossing
-    	long xstep = ((long)YSTEP*dx)/dy;
-	for (; y <= maxY; y += YSTEP) {
-   	    lx += xstep;
-	    addCrossing(y >> YSHIFT, (int)(lx >> XSHIFT), orientation);
-	}
+        long xstep = ((long)YSTEP*dx)/dy;
+        for (; y <= maxY; y += YSTEP) {
+            lx += xstep;
+            addCrossing(y >> YSHIFT, (int)(lx >> XSHIFT), orientation);
+        }
     }
 
     private void computeBounds() {
@@ -264,30 +264,30 @@ public class Renderer extends LineSink {
         rasterMaxX = crossingMaxX | SUBPIXEL_MASK_X;
         rasterMinY = crossingMinY & ~SUBPIXEL_MASK_Y;
         rasterMaxY = crossingMaxY | SUBPIXEL_MASK_Y;
-        
-	// If nothing was drawn, we have:
-	// minX = Integer.MAX_VALUE and maxX = Integer.MIN_VALUE
-	// so nothing to render
-	if (rasterMinX > rasterMaxX || rasterMinY > rasterMaxY) {
-	    rasterMinX = 0;
-	    rasterMaxX = -1;
-	    rasterMinY = 0;
-	    rasterMaxY = -1;
-	    return;
-	}
 
-	if (rasterMinX < boundsMinX >> XSHIFT) {
-	    rasterMinX = boundsMinX >> XSHIFT;
-	}
-	if (rasterMinY < boundsMinY >> YSHIFT) {
-	    rasterMinY = boundsMinY >> YSHIFT;
-	}
-	if (rasterMaxX > boundsMaxX >> XSHIFT) {
-	    rasterMaxX = boundsMaxX >> XSHIFT;
-	}
-	if (rasterMaxY > boundsMaxY >> YSHIFT) {
-	    rasterMaxY = boundsMaxY >> YSHIFT;
-	}
+        // If nothing was drawn, we have:
+        // minX = Integer.MAX_VALUE and maxX = Integer.MIN_VALUE
+        // so nothing to render
+        if (rasterMinX > rasterMaxX || rasterMinY > rasterMaxY) {
+            rasterMinX = 0;
+            rasterMaxX = -1;
+            rasterMinY = 0;
+            rasterMaxY = -1;
+            return;
+        }
+
+        if (rasterMinX < boundsMinX >> XSHIFT) {
+            rasterMinX = boundsMinX >> XSHIFT;
+        }
+        if (rasterMinY < boundsMinY >> YSHIFT) {
+            rasterMinY = boundsMinY >> YSHIFT;
+        }
+        if (rasterMaxX > boundsMaxX >> XSHIFT) {
+            rasterMaxX = boundsMaxX >> XSHIFT;
+        }
+        if (rasterMaxY > boundsMaxY >> YSHIFT) {
+            rasterMaxY = boundsMaxY >> YSHIFT;
+        }
     }
 
     private int clamp(int x, int min, int max) {
@@ -323,7 +323,7 @@ public class Renderer extends LineSink {
             int y0 = edges[1] >> YSHIFT;
             int x1 = edges[5] >> XSHIFT;
             int y1 = edges[3] >> YSHIFT;
-            
+
             if (x0 > x1) {
                 int tmp = x0;
                 x0 = x1;
@@ -382,7 +382,7 @@ public class Renderer extends LineSink {
         int imaxY = (maxY >> YSHIFT) | SUBPIXEL_MASK_Y;
         int yextent = (imaxY - iminY) + 1;
 
-        // Maximum number of crossings 
+        // Maximum number of crossings
         int size = flips*yextent;
 
         int bmax = (boundsMaxY >> YSHIFT) - 1;
@@ -493,32 +493,32 @@ public class Renderer extends LineSink {
         // Allocate one extra entry in rowAA to avoid a conditional in
         // the rendering loop
         int bufLen = width + 1;
-	if (this.rowAA == null || this.rowAA.length < bufLen) {
+        if (this.rowAA == null || this.rowAA.length < bufLen) {
             this.rowAA = new byte[bufLen];
-	}
+        }
 
-	// Mask to determine the relevant bit of the crossing sum
-	// 0x1 if EVEN_ODD, all bits if NON_ZERO
-	int mask = (windingRule == WIND_EVEN_ODD) ? 0x1 : ~0x0;
-	
-	int y = 0;
-	int prevY = rasterMinY - 1;
+        // Mask to determine the relevant bit of the crossing sum
+        // 0x1 if EVEN_ODD, all bits if NON_ZERO
+        int mask = (windingRule == WIND_EVEN_ODD) ? 0x1 : ~0x0;
+
+        int y = 0;
+        int prevY = rasterMinY - 1;
 
         int minX = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
 
-	iterateCrossings();
-	while (hasMoreCrossingRows()) {
+        iterateCrossings();
+        while (hasMoreCrossingRows()) {
             y = crossingY;
 
-	    // Emit any skipped rows
-	    for (int j = prevY + 1; j < y; j++) {
-		if (((j & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
-		    (j == rasterMaxY)) {
+            // Emit any skipped rows
+            for (int j = prevY + 1; j < y; j++) {
+                if (((j & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
+                    (j == rasterMaxY)) {
                     emitRow(j >> SUBPIXEL_LG_POSITIONS_Y, 0, -1);
-		}
-	    }
-	    prevY = y;
+                }
+            }
+            prevY = y;
 
             if (crossingRowIndex < crossingRowCount) {
                 int lx = crossings[crossingRowOffset + crossingRowIndex];
@@ -534,22 +534,22 @@ public class Renderer extends LineSink {
                 maxX = Math.max(maxX, x1 >> SUBPIXEL_LG_POSITIONS_X);
             }
 
-	    int sum = 0;
-	    int prev = rasterMinX;
+            int sum = 0;
+            int prev = rasterMinX;
             while (crossingRowIndex < crossingRowCount) {
                 int crxo = crossings[crossingRowOffset + crossingRowIndex];
                 crossingRowIndex++;
 
-		int crx = crxo >> 1;
-		int crorientation = ((crxo & 0x1) == 0x1) ? 1 : -1;	
+                int crx = crxo >> 1;
+                int crorientation = ((crxo & 0x1) == 0x1) ? 1 : -1;
 
-		if ((sum & mask) != 0) {
-		    // Clip to active X range, if x1 < x0 loop will
-		    // have no effect
+                if ((sum & mask) != 0) {
+                    // Clip to active X range, if x1 < x0 loop will
+                    // have no effect
                     int x0 = prev > rasterMinX ? prev : rasterMinX;
-		    int x1 =  crx < rasterMaxX ?  crx : rasterMaxX;
+                    int x1 =  crx < rasterMaxX ?  crx : rasterMaxX;
 
-		    // Empty spans
+                    // Empty spans
                     if (x1 > x0) {
                         x0 -= rasterMinX;
                         x1 -= rasterMinX;
@@ -562,7 +562,7 @@ public class Renderer extends LineSink {
                         // In the middle of the span, we can update a full
                         // pixel at a time (i.e., SUBPIXEL_POSITIONS_X
                         // subpixels)
-                        
+
                         int x = x0 >> SUBPIXEL_LG_POSITIONS_X;
                         int xmaxm1 = (x1 - 1) >> SUBPIXEL_LG_POSITIONS_X;
                         if (x == xmaxm1) {
@@ -586,29 +586,29 @@ public class Renderer extends LineSink {
                             rowAA[x] += x1 & SUBPIXEL_MASK_X;
                         }
                     }
-		}
-		sum += crorientation;
-		prev = crx;
-	    }
+                }
+                sum += crorientation;
+                prev = crx;
+            }
 
-	    // Every SUBPIXEL_POSITIONS rows, output an antialiased row
-	    if (((y & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
-		(y == rasterMaxY)) {
+            // Every SUBPIXEL_POSITIONS rows, output an antialiased row
+            if (((y & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
+                (y == rasterMaxY)) {
                 emitRow(y >> SUBPIXEL_LG_POSITIONS_Y, minX, maxX);
                 minX = Integer.MAX_VALUE;
                 maxX = Integer.MIN_VALUE;
-	    }
-	}
+            }
+        }
 
         // Emit final row
-	for (int j = prevY + 1; j <= rasterMaxY; j++) {
-	    if (((j & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
-		(j == rasterMaxY)) {
+        for (int j = prevY + 1; j <= rasterMaxY; j++) {
+            if (((j & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) ||
+                (j == rasterMaxY)) {
                 emitRow(j >> SUBPIXEL_LG_POSITIONS_Y, minX, maxX);
                 minX = Integer.MAX_VALUE;
                 maxX = Integer.MIN_VALUE;
-	    }
-	}
+            }
+        }
     }
 
     private void clearAlpha(byte[] alpha,
@@ -650,7 +650,7 @@ public class Renderer extends LineSink {
 
                         runLen = 1;
                         startVal = nextVal;
-                    }                    
+                    }
                 }
                 cache.addRLERun(startVal, runLen);
                 cache.addRLERun((byte)0, 0);
@@ -682,7 +682,7 @@ public class Renderer extends LineSink {
         }
 
         int orientation = 1;
- 	if (y0 > y1) {
+        if (y0 > y1) {
             int tmp = y0;
             y0 = y1;
             y1 = tmp;
@@ -691,8 +691,8 @@ public class Renderer extends LineSink {
         }
 
         // Skip edges that don't cross a subsampled scanline
- 	int eminY = ((y0 + HYSTEP) & YMASK);
-	int emaxY = ((y1 - HYSTEP) & YMASK);
+        int eminY = ((y0 + HYSTEP) & YMASK);
+        int emaxY = ((y1 - HYSTEP) & YMASK);
         if (eminY > emaxY) {
             return;
         }
@@ -708,18 +708,18 @@ public class Renderer extends LineSink {
         edges[edgeIdx++] = x1;
         edges[edgeIdx++] = y1;
         edges[edgeIdx++] = orientation;
-        
+
         // Update Y bounds of primitive
         if (y0 < edgeMinY) {
             edgeMinY = y0;
         }
-	if (y1 > edgeMaxY) {
+        if (y1 > edgeMaxY) {
             edgeMaxY = y1;
         }
     }
 
     private void resetEdges() {
-	this.edgeIdx = 0;
+        this.edgeIdx = 0;
         this.edgeMinY = Integer.MAX_VALUE;
         this.edgeMaxY = Integer.MIN_VALUE;
     }
@@ -791,7 +791,7 @@ public class Renderer extends LineSink {
 
             while (j > off && (xjm1 = x[j - 1]) > xj) {
                 x[j] = xjm1;
-                x[j - 1] = xj;                    
+                x[j - 1] = xj;
                 j--;
             }
         }
@@ -808,7 +808,7 @@ public class Renderer extends LineSink {
     private void addCrossing(int y, int x, int orientation) {
         if (x < crossingMinX) {
             crossingMinX = x;
-	}
+        }
         if (x > crossingMaxX) {
             crossingMaxX = x;
         }

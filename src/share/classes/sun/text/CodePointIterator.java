@@ -61,7 +61,7 @@ public abstract class CodePointIterator {
     }
 
     public static CodePointIterator create(CharacterIterator iter) {
-	return new CharacterIteratorCodePointIterator(iter);
+        return new CharacterIteratorCodePointIterator(iter);
     }
 }
 
@@ -96,29 +96,29 @@ final class CharArrayCodePointIterator extends CodePointIterator {
 
     public int next() {
         if (index < limit) {
-	    char cp1 = text[index++];
-	    if (Character.isHighSurrogate(cp1) && index < limit) {
-		char cp2 = text[index];
-		if (Character.isLowSurrogate(cp2)) {
-		    ++index;
-		    return Character.toCodePoint(cp1, cp2);
-		}
-	    }
-	    return cp1;
+            char cp1 = text[index++];
+            if (Character.isHighSurrogate(cp1) && index < limit) {
+                char cp2 = text[index];
+                if (Character.isLowSurrogate(cp2)) {
+                    ++index;
+                    return Character.toCodePoint(cp1, cp2);
+                }
+            }
+            return cp1;
         }
         return DONE;
     }
 
     public int prev() {
         if (index > start) {
-	    char cp2 = text[--index];
-	    if (Character.isLowSurrogate(cp2) && index > start) {
-		char cp1 = text[index - 1];
-		if (Character.isHighSurrogate(cp1)) {
-		    --index;
-		    return Character.toCodePoint(cp1, cp2);
-		}
-	    }
+            char cp2 = text[--index];
+            if (Character.isLowSurrogate(cp2) && index > start) {
+                char cp1 = text[index - 1];
+                if (Character.isHighSurrogate(cp1)) {
+                    --index;
+                    return Character.toCodePoint(cp1, cp2);
+                }
+            }
             return cp2;
         }
         return DONE;
@@ -147,29 +147,29 @@ final class CharSequenceCodePointIterator extends CodePointIterator {
 
     public int next() {
         if (index < text.length()) {
-	    char cp1 = text.charAt(index++);
-	    if (Character.isHighSurrogate(cp1) && index < text.length()) {
-		char cp2 = text.charAt(index+1);
-		if (Character.isLowSurrogate(cp2)) {
-		    ++index;
-		    return Character.toCodePoint(cp1, cp2);
-		}
-	    }
-	    return cp1;
+            char cp1 = text.charAt(index++);
+            if (Character.isHighSurrogate(cp1) && index < text.length()) {
+                char cp2 = text.charAt(index+1);
+                if (Character.isLowSurrogate(cp2)) {
+                    ++index;
+                    return Character.toCodePoint(cp1, cp2);
+                }
+            }
+            return cp1;
         }
         return DONE;
     }
 
     public int prev() {
         if (index > 0) {
-	    char cp2 = text.charAt(--index);
-	    if (Character.isLowSurrogate(cp2) && index > 0) {
-		char cp1 = text.charAt(index - 1);
-		if (Character.isHighSurrogate(cp1)) {
-		    --index;
-		    return Character.toCodePoint(cp1, cp2);
-		}
-	    }
+            char cp2 = text.charAt(--index);
+            if (Character.isLowSurrogate(cp2) && index > 0) {
+                char cp1 = text.charAt(index - 1);
+                if (Character.isHighSurrogate(cp1)) {
+                    --index;
+                    return Character.toCodePoint(cp1, cp2);
+                }
+            }
             return cp2;
         }
         return DONE;
@@ -189,38 +189,38 @@ final class CharacterIteratorCodePointIterator extends CodePointIterator {
     }
 
     public void setToStart() {
-	iter.setIndex(iter.getBeginIndex());
+        iter.setIndex(iter.getBeginIndex());
     }
 
     public void setToLimit() {
-	iter.setIndex(iter.getEndIndex());
+        iter.setIndex(iter.getEndIndex());
     }
 
     public int next() {
-	char cp1 = iter.current();
-	if (cp1 != CharacterIterator.DONE) {
-	    char cp2 = iter.next();
-	    if (Character.isHighSurrogate(cp1) && cp2 != CharacterIterator.DONE) {
-		if (Character.isLowSurrogate(cp2)) {
-		    iter.next();
-		    return Character.toCodePoint(cp1, cp2);
-		}
-	    }
-	    return cp1;
+        char cp1 = iter.current();
+        if (cp1 != CharacterIterator.DONE) {
+            char cp2 = iter.next();
+            if (Character.isHighSurrogate(cp1) && cp2 != CharacterIterator.DONE) {
+                if (Character.isLowSurrogate(cp2)) {
+                    iter.next();
+                    return Character.toCodePoint(cp1, cp2);
+                }
+            }
+            return cp1;
         }
         return DONE;
     }
 
     public int prev() {
-	char cp2 = iter.previous();
-	if (cp2 != CharacterIterator.DONE) {
-	    if (Character.isLowSurrogate(cp2)) {
-		char cp1 = iter.previous();
-		if (Character.isHighSurrogate(cp1)) {
-		    return Character.toCodePoint(cp1, cp2);
-		}
-		iter.next();
-	    }
+        char cp2 = iter.previous();
+        if (cp2 != CharacterIterator.DONE) {
+            if (Character.isLowSurrogate(cp2)) {
+                char cp1 = iter.previous();
+                if (Character.isHighSurrogate(cp1)) {
+                    return Character.toCodePoint(cp1, cp2);
+                }
+                iter.next();
+            }
             return cp2;
         }
         return DONE;

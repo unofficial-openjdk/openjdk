@@ -79,10 +79,10 @@ void throwPCSCException(JNIEnv* env, LONG code) {
 
 jboolean handleRV(JNIEnv* env, LONG code) {
     if (code == SCARD_S_SUCCESS) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     } else {
-	throwPCSCException(env, code);
-	return JNI_TRUE;
+        throwPCSCException(env, code);
+        return JNI_TRUE;
     }
 }
 
@@ -98,7 +98,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_smartcardio_PCSC_SCardEstablishContext
     dprintf("-establishContext\n");
     rv = CALL_SCardEstablishContext(dwScope, NULL, NULL, &context);
     if (handleRV(env, rv)) {
-	return 0;
+        return 0;
     }
     // note: SCARDCONTEXT is typedef'd as long, so this works
     return (jlong)context;
@@ -116,8 +116,8 @@ jobjectArray pcsc_multi2jstring(JNIEnv *env, char *spec) {
 
     cp = spec;
     while (*cp != 0) {
-	cp += (strlen(cp) + 1);
-	++cnt;
+        cp += (strlen(cp) + 1);
+        ++cnt;
     }
 
     tab = (char **)malloc(cnt * sizeof(char *));
@@ -125,8 +125,8 @@ jobjectArray pcsc_multi2jstring(JNIEnv *env, char *spec) {
     cnt = 0;
     cp = spec;
     while (*cp != 0) {
-	tab[cnt++] = cp;
-	cp += (strlen(cp) + 1);
+        tab[cnt++] = cp;
+        cp += (strlen(cp) + 1);
     }
 
     stringClass = (*env)->FindClass(env, "java/lang/String");
@@ -134,8 +134,8 @@ jobjectArray pcsc_multi2jstring(JNIEnv *env, char *spec) {
 
     result = (*env)->NewObjectArray(env, cnt, stringClass, NULL);
     while (cnt-- > 0) {
-	js = (*env)->NewStringUTF(env, tab[cnt]);
-	(*env)->SetObjectArrayElement(env, result, cnt, js);
+        js = (*env)->NewStringUTF(env, tab[cnt]);
+        (*env)->SetObjectArrayElement(env, result, cnt, js);
     }
     free(tab);
     return result;
@@ -153,15 +153,15 @@ JNIEXPORT jobjectArray JNICALL Java_sun_security_smartcardio_PCSC_SCardListReade
     dprintf1("-context: %x\n", context);
     rv = CALL_SCardListReaders(context, NULL, NULL, &size);
     if (handleRV(env, rv)) {
-	return NULL;
+        return NULL;
     }
     dprintf1("-size: %d\n", size);
 
     mszReaders = malloc(size);
     rv = CALL_SCardListReaders(context, NULL, mszReaders, &size);
     if (handleRV(env, rv)) {
-	free(mszReaders);
-	return NULL;
+        free(mszReaders);
+        return NULL;
     }
     dprintf1("-String: %s\n", mszReaders);
 
@@ -186,7 +186,7 @@ JNIEXPORT jlong JNICALL Java_sun_security_smartcardio_PCSC_SCardConnect
     dprintf1("-cardhandle: %x\n", card);
     dprintf1("-protocol: %d\n", proto);
     if (handleRV(env, rv)) {
-	return 0;
+        return 0;
     }
 
     return (jlong)card;
@@ -214,7 +214,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_smartcardio_PCSC_SCardTransmit
     (*env)->ReleaseByteArrayElements(env, jBuf, (jbyte *)sbuf, JNI_ABORT);
 
     if (handleRV(env, rv)) {
-	return NULL;
+        return NULL;
     }
 
     jOut = (*env)->NewByteArray(env, rlen);
@@ -238,7 +238,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_smartcardio_PCSC_SCardStatus
 
     rv = CALL_SCardStatus(card, readerName, &readerLen, &state, &protocol, atr, &atrLen);
     if (handleRV(env, rv)) {
-	return NULL;
+        return NULL;
     }
     dprintf1("-reader: %s\n", readerName);
     dprintf1("-status: %d\n", state);
@@ -260,7 +260,7 @@ JNIEXPORT void JNICALL Java_sun_security_smartcardio_PCSC_SCardDisconnect
 {
     SCARDHANDLE card = (SCARDHANDLE)jCard;
     LONG rv;
-    
+
     rv = CALL_SCardDisconnect(card, jDisposition);
     dprintf1("-disconnect: 0x%X\n", rv);
     handleRV(env, rv);
@@ -268,7 +268,7 @@ JNIEXPORT void JNICALL Java_sun_security_smartcardio_PCSC_SCardDisconnect
 }
 
 JNIEXPORT jintArray JNICALL Java_sun_security_smartcardio_PCSC_SCardGetStatusChange
-    (JNIEnv *env, jclass thisClass, jlong jContext, jlong jTimeout, 
+    (JNIEnv *env, jclass thisClass, jlong jContext, jlong jTimeout,
     jintArray jCurrentState, jobjectArray jReaderNames)
 {
     SCARDCONTEXT context = (SCARDCONTEXT)jContext;
@@ -278,31 +278,31 @@ JNIEXPORT jintArray JNICALL Java_sun_security_smartcardio_PCSC_SCardGetStatusCha
     int i;
     jintArray jEventState;
     int *currentState = (*env)->GetIntArrayElements(env, jCurrentState, NULL);
-    
+
     for (i = 0; i < readers; i++) {
-	jobject jReaderName = (*env)->GetObjectArrayElement(env, jReaderNames, i);
-	readerState[i].szReader = (*env)->GetStringUTFChars(env, jReaderName, NULL);
-	readerState[i].pvUserData = NULL;
-	readerState[i].dwCurrentState = currentState[i];
-	readerState[i].dwEventState = SCARD_STATE_UNAWARE;
-	readerState[i].cbAtr = 0;
+        jobject jReaderName = (*env)->GetObjectArrayElement(env, jReaderNames, i);
+        readerState[i].szReader = (*env)->GetStringUTFChars(env, jReaderName, NULL);
+        readerState[i].pvUserData = NULL;
+        readerState[i].dwCurrentState = currentState[i];
+        readerState[i].dwEventState = SCARD_STATE_UNAWARE;
+        readerState[i].cbAtr = 0;
     }
     (*env)->ReleaseIntArrayElements(env, jCurrentState, currentState, JNI_ABORT);
-    
+
     rv = CALL_SCardGetStatusChange(context, (DWORD)jTimeout, readerState, readers);
-    
+
     jEventState = (*env)->NewIntArray(env, readers);
     for (i = 0; i < readers; i++) {
-	jint eventStateTmp;
-	jobject jReaderName = (*env)->GetObjectArrayElement(env, jReaderNames, i);
-	dprintf3("-reader status %s: 0x%X, 0x%X\n", readerState[i].szReader,
-	    readerState[i].dwCurrentState, readerState[i].dwEventState);
-	(*env)->ReleaseStringUTFChars(env, jReaderName, readerState[i].szReader);
-	eventStateTmp = (jint)readerState[i].dwEventState;
-	(*env)->SetIntArrayRegion(env, jEventState, i, 1, &eventStateTmp);
+        jint eventStateTmp;
+        jobject jReaderName = (*env)->GetObjectArrayElement(env, jReaderNames, i);
+        dprintf3("-reader status %s: 0x%X, 0x%X\n", readerState[i].szReader,
+            readerState[i].dwCurrentState, readerState[i].dwEventState);
+        (*env)->ReleaseStringUTFChars(env, jReaderName, readerState[i].szReader);
+        eventStateTmp = (jint)readerState[i].dwEventState;
+        (*env)->SetIntArrayRegion(env, jEventState, i, 1, &eventStateTmp);
     }
     free(readerState);
-    
+
     handleRV(env, rv);
     return jEventState;
 }
@@ -312,7 +312,7 @@ JNIEXPORT void JNICALL Java_sun_security_smartcardio_PCSC_SCardBeginTransaction
 {
     SCARDHANDLE card = (SCARDHANDLE)jCard;
     LONG rv;
-    
+
     rv = CALL_SCardBeginTransaction(card);
     dprintf1("-beginTransaction: 0x%X\n", rv);
     handleRV(env, rv);
@@ -324,7 +324,7 @@ JNIEXPORT void JNICALL Java_sun_security_smartcardio_PCSC_SCardEndTransaction
 {
     SCARDHANDLE card = (SCARDHANDLE)jCard;
     LONG rv;
-    
+
     rv = CALL_SCardEndTransaction(card, jDisposition);
     dprintf1("-endTransaction: 0x%X\n", rv);
     handleRV(env, rv);
@@ -349,18 +349,18 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_smartcardio_PCSC_SCardControl
     printf("-control: 0x%X\n", jControlCode);
     printf("-send: ");
     for (k = 0; k < sendBufferLength; k++) {
-	printf("%02x ", sendBuffer[k]);
+        printf("%02x ", sendBuffer[k]);
     }
     printf("\n");
 }
 #endif
 
-    rv = CALL_SCardControl(card, jControlCode, sendBuffer, sendBufferLength, 
-	receiveBuffer, receiveBufferLength, &returnedLength);
+    rv = CALL_SCardControl(card, jControlCode, sendBuffer, sendBufferLength,
+        receiveBuffer, receiveBufferLength, &returnedLength);
 
     (*env)->ReleaseByteArrayElements(env, jSendBuffer, sendBuffer, JNI_ABORT);
     if (handleRV(env, rv)) {
-	return NULL;
+        return NULL;
     }
 
 #ifdef J2PCSC_DEBUG
@@ -368,7 +368,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_smartcardio_PCSC_SCardControl
     int k;
     printf("-recv:  ");
     for (k = 0; k < returnedLength; k++) {
-	printf("%02x ", receiveBuffer[k]);
+        printf("%02x ", receiveBuffer[k]);
     }
     printf("\n");
 }
@@ -376,6 +376,6 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_smartcardio_PCSC_SCardControl
 
     jReceiveBuffer = (*env)->NewByteArray(env, returnedLength);
     (*env)->SetByteArrayRegion(env, jReceiveBuffer, 0, returnedLength, receiveBuffer);
-    
+
     return jReceiveBuffer;
 }

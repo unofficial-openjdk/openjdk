@@ -34,22 +34,22 @@ public final class InetAddressCachePolicy {
     // Controls the cache policy for successful lookups only
     private static final String cachePolicyProp = "networkaddress.cache.ttl";
     private static final String cachePolicyPropFallback =
-	"sun.net.inetaddr.ttl";
+        "sun.net.inetaddr.ttl";
 
     // Controls the cache policy for negative lookups only
-    private static final String negativeCachePolicyProp = 
-	"networkaddress.cache.negative.ttl";
-    private static final String negativeCachePolicyPropFallback = 
-	"sun.net.inetaddr.negative.ttl";
+    private static final String negativeCachePolicyProp =
+        "networkaddress.cache.negative.ttl";
+    private static final String negativeCachePolicyPropFallback =
+        "sun.net.inetaddr.negative.ttl";
 
     public static final int FOREVER = -1;
     public static final int NEVER = 0;
-    
+
     /* default value for positive lookups */
-    public static final int DEFAULT_POSITIVE = 30; 
+    public static final int DEFAULT_POSITIVE = 30;
 
     /* The Java-level namelookup cache policy for successful lookups:
-     * 
+     *
      * -1: caching forever
      * any positive value: the number of seconds to cache an address for
      *
@@ -58,9 +58,9 @@ public final class InetAddressCachePolicy {
      * a security manager is set.
      */
     private static int cachePolicy;
-    
+
     /* The Java-level namelookup cache policy for negative lookups:
-     * 
+     *
      * -1: caching forever
      * any positive value: the number of seconds to cache an address for
      *
@@ -69,13 +69,13 @@ public final class InetAddressCachePolicy {
      */
     private static int negativeCachePolicy;
 
-    /* 
+    /*
      * Whether or not the cache policy for successful lookups was set
      * using a property (cmd line).
      */
     private static boolean set = false;
 
-    /* 
+    /*
      * Whether or not the cache policy for negative lookups was set
      * using a property (cmd line).
      */
@@ -86,84 +86,84 @@ public final class InetAddressCachePolicy {
      */
     static {
 
-	set = false;
-	negativeSet = false;
+        set = false;
+        negativeSet = false;
 
-	cachePolicy = FOREVER;
-	negativeCachePolicy =  0;
+        cachePolicy = FOREVER;
+        negativeCachePolicy =  0;
 
-	Integer tmp = null;
+        Integer tmp = null;
 
-	try {
-	    tmp = new Integer(
+        try {
+            tmp = new Integer(
               java.security.AccessController.doPrivileged (
-		new PrivilegedAction<String>() {
-		  public String run() {
-		      return Security.getProperty(cachePolicyProp);
-		  }
-	      }));
-	} catch (NumberFormatException e) {
-	    // ignore
-	}
-	if (tmp != null) {
-	    cachePolicy = tmp.intValue();
-	    if (cachePolicy < 0) {
-		cachePolicy = FOREVER;
-	    }
-	    set = true;
-	} else {
-	    tmp = java.security.AccessController.doPrivileged
-		(new sun.security.action.GetIntegerAction(cachePolicyPropFallback));
-	    if (tmp != null) {
-		cachePolicy = tmp.intValue();
-		if (cachePolicy < 0) {
-		    cachePolicy = FOREVER;
-		}
-		set = true;
-	    }
-	}
+                new PrivilegedAction<String>() {
+                  public String run() {
+                      return Security.getProperty(cachePolicyProp);
+                  }
+              }));
+        } catch (NumberFormatException e) {
+            // ignore
+        }
+        if (tmp != null) {
+            cachePolicy = tmp.intValue();
+            if (cachePolicy < 0) {
+                cachePolicy = FOREVER;
+            }
+            set = true;
+        } else {
+            tmp = java.security.AccessController.doPrivileged
+                (new sun.security.action.GetIntegerAction(cachePolicyPropFallback));
+            if (tmp != null) {
+                cachePolicy = tmp.intValue();
+                if (cachePolicy < 0) {
+                    cachePolicy = FOREVER;
+                }
+                set = true;
+            }
+        }
 
-	try {
-	    tmp = new Integer(
+        try {
+            tmp = new Integer(
               java.security.AccessController.doPrivileged (
-		new PrivilegedAction<String>() {
-		  public String run() {
-		      return Security.getProperty(negativeCachePolicyProp);
-		  }
-	      }));
-	} catch (NumberFormatException e) {
-	    // ignore
-	}
+                new PrivilegedAction<String>() {
+                  public String run() {
+                      return Security.getProperty(negativeCachePolicyProp);
+                  }
+              }));
+        } catch (NumberFormatException e) {
+            // ignore
+        }
 
-	if (tmp != null) {
-	    negativeCachePolicy = tmp.intValue();
-	    if (negativeCachePolicy < 0) {
-		negativeCachePolicy = FOREVER;
-	    }
-	    negativeSet = true;
-	} else {
-	    tmp = java.security.AccessController.doPrivileged
-		(new sun.security.action.GetIntegerAction(negativeCachePolicyPropFallback));
-	    if (tmp != null) {
-		negativeCachePolicy = tmp.intValue();
-		if (negativeCachePolicy < 0) {
-		    negativeCachePolicy = FOREVER;
-		}
-		negativeSet = true;
-	    }
-	}
+        if (tmp != null) {
+            negativeCachePolicy = tmp.intValue();
+            if (negativeCachePolicy < 0) {
+                negativeCachePolicy = FOREVER;
+            }
+            negativeSet = true;
+        } else {
+            tmp = java.security.AccessController.doPrivileged
+                (new sun.security.action.GetIntegerAction(negativeCachePolicyPropFallback));
+            if (tmp != null) {
+                negativeCachePolicy = tmp.intValue();
+                if (negativeCachePolicy < 0) {
+                    negativeCachePolicy = FOREVER;
+                }
+                negativeSet = true;
+            }
+        }
     }
 
     public static synchronized int get() {
-	if (!set && System.getSecurityManager() == null) {
-	    return DEFAULT_POSITIVE;
-	} else {
-	    return cachePolicy;
-	}
+        if (!set && System.getSecurityManager() == null) {
+            return DEFAULT_POSITIVE;
+        } else {
+            return cachePolicy;
+        }
     }
 
     public static synchronized int getNegative() {
-	return negativeCachePolicy;
+        return negativeCachePolicy;
     }
 
     /**
@@ -174,18 +174,18 @@ public final class InetAddressCachePolicy {
      * should be cached
      */
     public static synchronized void setIfNotSet(int newPolicy) {
-	
-	/* 
-	 * When setting the new value we may want to signal that the
-	 * cache should be flushed, though this doesn't seem strictly
-	 * necessary.
-	 */
-	
-	if (!set) {
-	    checkValue(newPolicy, cachePolicy);
-	    cachePolicy = newPolicy;
-	}
-	
+
+        /*
+         * When setting the new value we may want to signal that the
+         * cache should be flushed, though this doesn't seem strictly
+         * necessary.
+         */
+
+        if (!set) {
+            checkValue(newPolicy, cachePolicy);
+            cachePolicy = newPolicy;
+        }
+
     }
 
 
@@ -197,43 +197,39 @@ public final class InetAddressCachePolicy {
      * should be cached
      */
     public static synchronized void setNegativeIfNotSet(int newPolicy) {
-	
-	/* 
-	 * When setting the new value we may want to signal that the
-	 * cache should be flushed, though this doesn't seem strictly
-	 * necessary.
-	 */
-	
-	if (!negativeSet) {
-	    // Negative caching does not seem to have any security
-	    // implications.
- 	    // checkValue(newPolicy, negativeCachePolicy);
-	    negativeCachePolicy = newPolicy;
-	}
+
+        /*
+         * When setting the new value we may want to signal that the
+         * cache should be flushed, though this doesn't seem strictly
+         * necessary.
+         */
+
+        if (!negativeSet) {
+            // Negative caching does not seem to have any security
+            // implications.
+            // checkValue(newPolicy, negativeCachePolicy);
+            negativeCachePolicy = newPolicy;
+        }
     }
 
     private static void checkValue(int newPolicy, int oldPolicy) {
 
-	/*
-	 * If malicious code gets a hold of this method, prevent
-	 * setting the cache policy to something laxer or some
-	 * invalid negative value.
-	 */
+        /*
+         * If malicious code gets a hold of this method, prevent
+         * setting the cache policy to something laxer or some
+         * invalid negative value.
+         */
 
-	if (newPolicy == FOREVER)
-	    return;
+        if (newPolicy == FOREVER)
+            return;
 
-	if ((oldPolicy == FOREVER) ||
-	    (newPolicy < oldPolicy) ||
-	    (newPolicy < FOREVER)) {
-	    
-	    throw new 
-		SecurityException("can't make InetAddress cache more lax");
-	    
-	}
+        if ((oldPolicy == FOREVER) ||
+            (newPolicy < oldPolicy) ||
+            (newPolicy < FOREVER)) {
+
+            throw new
+                SecurityException("can't make InetAddress cache more lax");
+
+        }
     }
 }
-	
-
-
-

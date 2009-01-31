@@ -34,13 +34,13 @@ import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 
 class XArrayDataViewer {
-    
+
     private XArrayDataViewer() {}
-    
+
     public static boolean isViewableValue(Object value) {
         return Utils.canBeRenderedAsArray(value);
     }
-    
+
     public static Component loadArray(Object value) {
         Component comp = null;
         if (isViewableValue(value)) {
@@ -75,9 +75,9 @@ class XArrayDataViewer {
                     "rgb(" + oddRowColor.getRed() + "," +
                     oddRowColor.getGreen() + "," +
                     oddRowColor.getBlue() + ")";
-	    Color foreground = arrayEditor.getForeground();
-	    String textColor = String.format("%06x",
-					     foreground.getRGB() & 0xFFFFFF);
+            Color foreground = arrayEditor.getForeground();
+            String textColor = String.format("%06x",
+                                             foreground.getRGB() & 0xFFFFFF);
             StringBuilder sb = new StringBuilder();
             sb.append("<html><body text=#"+textColor+"><table width=\"100%\">");
             for (int i = 0; i < arr.length; i++) {
@@ -106,7 +106,7 @@ class XArrayDataViewer {
         }
         return comp;
     }
-    
+
     private static String htmlize(String value) {
         return value.replace("&", "&amp;").replace("<", "&lt;");
     }

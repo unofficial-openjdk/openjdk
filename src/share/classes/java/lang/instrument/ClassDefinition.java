@@ -41,7 +41,7 @@ public final class ClassDefinition {
      *  The class to redefine
      */
     private final   Class   mClass;
-    
+
     /**
      *  The replacement class file bytes
      */

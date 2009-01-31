@@ -74,7 +74,7 @@ public class WToolkit extends SunToolkit implements Runnable {
     private Hashtable cacheFontPeer;
 
     // Windows properties
-    private WDesktopProperties	wprops;
+    private WDesktopProperties  wprops;
 
     // Dynamic Layout Resize client code setting
     protected boolean dynamicLayoutSetting = false;
@@ -85,38 +85,38 @@ public class WToolkit extends SunToolkit implements Runnable {
     private static native void initIDs();
     private static boolean loaded = false;
     public static void loadLibraries() {
-	if (!loaded) {
-	    java.security.AccessController.doPrivileged(
-			  new sun.security.action.LoadLibraryAction("awt"));
-	    loaded = true;
+        if (!loaded) {
+            java.security.AccessController.doPrivileged(
+                          new sun.security.action.LoadLibraryAction("awt"));
+            loaded = true;
         }
     }
 
     private static native String getWindowsVersion();
 
     static {
-	loadLibraries();
-	// Force Win32GE to load if it is not already loaded; this loads
-	// various other classes that are required for basic awt functionality
-	Win32GraphicsEnvironment.init();
-	initIDs();
+        loadLibraries();
+        // Force Win32GE to load if it is not already loaded; this loads
+        // various other classes that are required for basic awt functionality
+        Win32GraphicsEnvironment.init();
+        initIDs();
 
         // Print out which version of Windows is running
         if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "Win version: " + getWindowsVersion());
         }
 
-	java.security.AccessController.doPrivileged(
-	    new java.security.PrivilegedAction()
-	{
-	    public Object run() {
-		String browserProp = System.getProperty("browser");
-		if (browserProp != null && browserProp.equals("sun.plugin")) {
-		    disableCustomPalette();
-		}
-		return null;
-	    }
-	});
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction()
+        {
+            public Object run() {
+                String browserProp = System.getProperty("browser");
+                if (browserProp != null && browserProp.equals("sun.plugin")) {
+                    disableCustomPalette();
+                }
+                return null;
+            }
+        });
     }
 
     private static native void disableCustomPalette();
@@ -130,15 +130,15 @@ public class WToolkit extends SunToolkit implements Runnable {
             config = null;
         } else {
           config = (GraphicsEnvironment
-		  .getLocalGraphicsEnvironment()
+                  .getLocalGraphicsEnvironment()
           .getDefaultScreenDevice()
           .getDefaultConfiguration());
         }
     }
 
     /*
-     * NOTE: The following embedded*() methods are non-public API intended 
-     * for internal use only.  The methods are unsupported and could go 
+     * NOTE: The following embedded*() methods are non-public API intended
+     * for internal use only.  The methods are unsupported and could go
      * away in future releases.
      *
      * New hook functions for using the AWT as an embedded service. These
@@ -213,17 +213,17 @@ public class WToolkit extends SunToolkit implements Runnable {
 
     public WToolkit() {
         // Startup toolkit threads
-	if (PerformanceLogger.loggingEnabled()) {
-	    PerformanceLogger.setTime("WToolkit construction");
-	}
+        if (PerformanceLogger.loggingEnabled()) {
+            PerformanceLogger.setTime("WToolkit construction");
+        }
 
         sun.java2d.Disposer.addRecord(anchor, new ToolkitDisposer());
 
         synchronized (this) {
-	    // Fix for bug #4046430 -- Race condition
-	    // where notifyAll can be called before
-	    // the "AWT-Windows" thread's parent thread is 
-	    // waiting, resulting in a deadlock on startup.
+            // Fix for bug #4046430 -- Race condition
+            // where notifyAll can be called before
+            // the "AWT-Windows" thread's parent thread is
+            // waiting, resulting in a deadlock on startup.
             Thread toolkitThread = new Thread(this, "AWT-Windows");
             toolkitThread.setDaemon(true);
             toolkitThread.setPriority(Thread.NORM_PRIORITY+1);
@@ -237,11 +237,11 @@ public class WToolkit extends SunToolkit implements Runnable {
 
             toolkitThread.start();
 
-	    try {
-	        wait();
-	    }
-	    catch (InterruptedException x) {
-	    }
+            try {
+                wait();
+            }
+            catch (InterruptedException x) {
+            }
         }
         SunToolkit.setDataTransfererClassName(DATA_TRANSFERER_CLASS_NAME);
 
@@ -253,40 +253,40 @@ public class WToolkit extends SunToolkit implements Runnable {
     public void run() {
         boolean startPump = init();
 
-	if (startPump) {
-	    ThreadGroup mainTG = (ThreadGroup)AccessController.doPrivileged(
-	        new PrivilegedAction() {
-	            public Object run() {
-		        ThreadGroup currentTG =
-		            Thread.currentThread().getThreadGroup();
-			ThreadGroup parentTG = currentTG.getParent();
-			while (parentTG != null) {
-			    currentTG = parentTG;
-			    parentTG = currentTG.getParent();
-			}
-			return currentTG;
-		    }
-	    });
+        if (startPump) {
+            ThreadGroup mainTG = (ThreadGroup)AccessController.doPrivileged(
+                new PrivilegedAction() {
+                    public Object run() {
+                        ThreadGroup currentTG =
+                            Thread.currentThread().getThreadGroup();
+                        ThreadGroup parentTG = currentTG.getParent();
+                        while (parentTG != null) {
+                            currentTG = parentTG;
+                            parentTG = currentTG.getParent();
+                        }
+                        return currentTG;
+                    }
+            });
 
-	    Runtime.getRuntime().addShutdownHook(
-	        new Thread(mainTG, new Runnable() {
-	            public void run() {
-		        shutdown();
-		    }
-		})
-	    );
-	}
+            Runtime.getRuntime().addShutdownHook(
+                new Thread(mainTG, new Runnable() {
+                    public void run() {
+                        shutdown();
+                    }
+                })
+            );
+        }
 
         synchronized(this) {
             notifyAll();
         }
 
-	if (startPump) {
-	    eventLoop(); // will Dispose Toolkit when shutdown hook executes
-	}
+        if (startPump) {
+            eventLoop(); // will Dispose Toolkit when shutdown hook executes
+        }
     }
 
-    /* 
+    /*
      * eventLoop() begins the native message pump which retrieves and processes
      * native events.
      *
@@ -318,69 +318,69 @@ public class WToolkit extends SunToolkit implements Runnable {
      */
 
     public ButtonPeer createButton(Button target) {
-	ButtonPeer peer = new WButtonPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ButtonPeer peer = new WButtonPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public TextFieldPeer createTextField(TextField target) {
-	TextFieldPeer peer = new WTextFieldPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        TextFieldPeer peer = new WTextFieldPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public LabelPeer createLabel(Label target) {
-	LabelPeer peer = new WLabelPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        LabelPeer peer = new WLabelPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ListPeer createList(List target) {
-	ListPeer peer = new WListPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ListPeer peer = new WListPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CheckboxPeer createCheckbox(Checkbox target) {
-	CheckboxPeer peer = new WCheckboxPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        CheckboxPeer peer = new WCheckboxPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ScrollbarPeer createScrollbar(Scrollbar target) {
-	ScrollbarPeer peer = new WScrollbarPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ScrollbarPeer peer = new WScrollbarPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ScrollPanePeer createScrollPane(ScrollPane target) {
-	ScrollPanePeer peer = new WScrollPanePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ScrollPanePeer peer = new WScrollPanePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public TextAreaPeer createTextArea(TextArea target) {
-	TextAreaPeer peer = new WTextAreaPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        TextAreaPeer peer = new WTextAreaPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ChoicePeer createChoice(Choice target) {
-	ChoicePeer peer = new WChoicePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ChoicePeer peer = new WChoicePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public FramePeer  createFrame(Frame target) {
-	FramePeer peer = new WFramePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        FramePeer peer = new WFramePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CanvasPeer createCanvas(Canvas target) {
-	CanvasPeer peer = new WCanvasPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        CanvasPeer peer = new WCanvasPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public void disableBackgroundErase(Canvas canvas) {
@@ -392,70 +392,70 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     public PanelPeer createPanel(Panel target) {
-	PanelPeer peer = new WPanelPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        PanelPeer peer = new WPanelPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public WindowPeer createWindow(Window target) {
-	WindowPeer peer = new WWindowPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        WindowPeer peer = new WWindowPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public DialogPeer createDialog(Dialog target) {
-	DialogPeer peer = new WDialogPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        DialogPeer peer = new WDialogPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public FileDialogPeer createFileDialog(FileDialog target) {
-	FileDialogPeer peer = new WFileDialogPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        FileDialogPeer peer = new WFileDialogPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuBarPeer createMenuBar(MenuBar target) {
-	MenuBarPeer peer = new WMenuBarPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuBarPeer peer = new WMenuBarPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuPeer createMenu(Menu target) {
-	MenuPeer peer = new WMenuPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuPeer peer = new WMenuPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public PopupMenuPeer createPopupMenu(PopupMenu target) {
-	PopupMenuPeer peer = new WPopupMenuPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        PopupMenuPeer peer = new WPopupMenuPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuItemPeer createMenuItem(MenuItem target) {
-	MenuItemPeer peer = new WMenuItemPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuItemPeer peer = new WMenuItemPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CheckboxMenuItemPeer createCheckboxMenuItem(CheckboxMenuItem target) {
-	CheckboxMenuItemPeer peer = new WCheckboxMenuItemPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        CheckboxMenuItemPeer peer = new WCheckboxMenuItemPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public RobotPeer createRobot(Robot target, GraphicsDevice screen) {
-	// (target is unused for now)
-	// Robot's don't need to go in the peer map since
-	// they're not Component's
+        // (target is unused for now)
+        // Robot's don't need to go in the peer map since
+        // they're not Component's
         return new WRobotPeer(screen);
     }
 
     public WEmbeddedFramePeer createEmbeddedFrame(WEmbeddedFrame target) {
-	WEmbeddedFramePeer peer = new WEmbeddedFramePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        WEmbeddedFramePeer peer = new WEmbeddedFramePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     WPrintDialogPeer createWPrintDialog(WPrintDialog target) {
@@ -517,31 +517,31 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Returns <code>true</code> if this frame state is supported.
      */
     public boolean isFrameStateSupported(int state) {
-	switch (state) {
-	  case Frame.NORMAL:
-	  case Frame.ICONIFIED:
-	  case Frame.MAXIMIZED_BOTH:
-	      return true;
-	  default:
-	      return false;
-	}
+        switch (state) {
+          case Frame.NORMAL:
+          case Frame.ICONIFIED:
+          case Frame.MAXIMIZED_BOTH:
+              return true;
+          default:
+              return false;
+        }
     }
 
     static native ColorModel makeColorModel();
     static ColorModel screenmodel;
 
     static ColorModel getStaticColorModel() {
-	if (GraphicsEnvironment.isHeadless()) {
+        if (GraphicsEnvironment.isHeadless()) {
             throw new IllegalArgumentException();
         }
-	if (config == null) {
-	    resetGC();
-	}
+        if (config == null) {
+            resetGC();
+        }
         return config.getColorModel();
     }
 
     public ColorModel getColorModel() {
-	return getStaticColorModel();
+        return getStaticColorModel();
     }
 
     public Insets getScreenInsets(GraphicsConfiguration gc)
@@ -560,13 +560,13 @@ public class WToolkit extends SunToolkit implements Runnable {
 
 
     public FontMetrics getFontMetrics(Font font) {
-	// REMIND: platform font flag should be removed post-merlin.
+        // REMIND: platform font flag should be removed post-merlin.
         if (sun.font.FontManager.usePlatformFontMetrics()) {
             return WFontMetrics.getFontMetrics(font);
         }
-	return super.getFontMetrics(font);
+        return super.getFontMetrics(font);
     }
-    
+
     public FontPeer getFontPeer(String name, int style) {
         FontPeer retval = null;
         String lcName = name.toLowerCase();
@@ -598,15 +598,15 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     public PrintJob getPrintJob(Frame frame, String doctitle,
-				Properties props) {
+                                Properties props) {
         return getPrintJob(frame, doctitle, null, null);
     }
 
     public PrintJob getPrintJob(Frame frame, String doctitle,
-				JobAttributes jobAttributes,
-				PageAttributes pageAttributes) {
+                                JobAttributes jobAttributes,
+                                PageAttributes pageAttributes) {
 
-	if (GraphicsEnvironment.isHeadless()) {
+        if (GraphicsEnvironment.isHeadless()) {
             throw new IllegalArgumentException();
         }
 
@@ -645,14 +645,14 @@ public class WToolkit extends SunToolkit implements Runnable {
     public Clipboard getSystemClipboard() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-	  security.checkSystemClipboardAccess();
-	}
+          security.checkSystemClipboardAccess();
+        }
         synchronized (this) {
             if (clipboard == null) {
                 clipboard = new WClipboard();
             }
         }
-	return clipboard;
+        return clipboard;
     }
 
     protected native void loadSystemColors(int[] systemColors);
@@ -676,7 +676,7 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Returns a style map for the input method highlight.
      */
     public Map mapInputMethodHighlight(InputMethodHighlight highlight) {
-	return WInputMethod.mapInputMethodHighlight(highlight);
+        return WInputMethod.mapInputMethodHighlight(highlight);
     }
 
     /**
@@ -691,13 +691,13 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Returns the default keyboard locale of the underlying operating system
      */
     public Locale getDefaultKeyboardLocale() {
-	Locale locale = WInputMethod.getNativeLocale();
+        Locale locale = WInputMethod.getNativeLocale();
 
-	if (locale == null) {
-	    return super.getDefaultKeyboardLocale();
-	} else {
-	    return locale;
-	}
+        if (locale == null) {
+            return super.getDefaultKeyboardLocale();
+        } else {
+            return locale;
+        }
     }
 
     /**
@@ -712,16 +712,16 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Returns the supported cursor size (Win32 only has one).
      */
     public Dimension getBestCursorSize(int preferredWidth, int preferredHeight) {
-        return new Dimension(WCustomCursor.getCursorWidth(), 
+        return new Dimension(WCustomCursor.getCursorWidth(),
                              WCustomCursor.getCursorHeight());
     }
 
     public native int getMaximumCursorColors();
 
     static void paletteChanged() {
-	((Win32GraphicsEnvironment)GraphicsEnvironment
-	.getLocalGraphicsEnvironment())
-	.paletteChanged();
+        ((Win32GraphicsEnvironment)GraphicsEnvironment
+        .getLocalGraphicsEnvironment())
+        .paletteChanged();
     }
 
     /*
@@ -742,15 +742,15 @@ public class WToolkit extends SunToolkit implements Runnable {
     /**
      * create the peer for a DragSourceContext
      */
- 
+
     public DragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge) throws InvalidDnDOperationException {
         return WDragSourceContextPeer.createDragSourceContextPeer(dge);
     }
 
     public <T extends DragGestureRecognizer> T
-	createDragGestureRecognizer(Class<T> abstractRecognizerClass,
-				    DragSource ds, Component c, int srcActions,
-				    DragGestureListener dgl)
+        createDragGestureRecognizer(Class<T> abstractRecognizerClass,
+                                    DragSource ds, Component c, int srcActions,
+                                    DragGestureListener dgl)
     {
         if (MouseDragGestureRecognizer.class.equals(abstractRecognizerClass))
             return (T)new WMouseDragGestureRecognizer(ds, c, srcActions, dgl);
@@ -910,8 +910,8 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     public static WToolkit getWToolkit() {
-	WToolkit toolkit = (WToolkit)Toolkit.getDefaultToolkit();
-	return toolkit;
+        WToolkit toolkit = (WToolkit)Toolkit.getDefaultToolkit();
+        return toolkit;
     }
 
     public boolean useBufferPerWindow() {

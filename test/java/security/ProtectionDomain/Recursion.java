@@ -36,50 +36,50 @@ public class Recursion {
 
     public static void main(String[] args) throws Exception {
 
-	// trigger security check to make sure policy is set
-	try {
-	    System.getProperty("foo.bar");
-	} catch (Exception e) {
-	    // fall thru
-	}
+        // trigger security check to make sure policy is set
+        try {
+            System.getProperty("foo.bar");
+        } catch (Exception e) {
+            // fall thru
+        }
 
-	// static perms
-	Permissions staticPerms = new Permissions();
-	staticPerms.add(new java.util.PropertyPermission("static.foo", "read"));
+        // static perms
+        Permissions staticPerms = new Permissions();
+        staticPerms.add(new java.util.PropertyPermission("static.foo", "read"));
 
-	ProtectionDomain pd = new ProtectionDomain
-			(new CodeSource
-				(new URL("http://foo"),
-				(java.security.cert.Certificate[])null),
-			staticPerms,
-			null,
-			null);
+        ProtectionDomain pd = new ProtectionDomain
+                        (new CodeSource
+                                (new URL("http://foo"),
+                                (java.security.cert.Certificate[])null),
+                        staticPerms,
+                        null,
+                        null);
 
-	// test with no SecurityManager
-	//
-	// merging should have occured - check for policy merged.foo permission
+        // test with no SecurityManager
+        //
+        // merging should have occured - check for policy merged.foo permission
 
-	System.setSecurityManager(null);
-	if (pd.toString().indexOf("merged.foo") < 0) {
-	    throw new Exception("Test without SecurityManager failed");
-	}
+        System.setSecurityManager(null);
+        if (pd.toString().indexOf("merged.foo") < 0) {
+            throw new Exception("Test without SecurityManager failed");
+        }
 
-	// test with SecurityManager on the bootclasspath, debug turned off,
-	// getPolicyPermission granted
-	//
-	// merging should have occured - check for policy merged.foo permission
+        // test with SecurityManager on the bootclasspath, debug turned off,
+        // getPolicyPermission granted
+        //
+        // merging should have occured - check for policy merged.foo permission
 
-	ProtectionDomain pd2 = new ProtectionDomain
-			(new CodeSource
-				(new URL("http://bar"),
-				(java.security.cert.Certificate[])null),
-			staticPerms,
-			null,
-			null);
+        ProtectionDomain pd2 = new ProtectionDomain
+                        (new CodeSource
+                                (new URL("http://bar"),
+                                (java.security.cert.Certificate[])null),
+                        staticPerms,
+                        null,
+                        null);
 
-	System.setSecurityManager(new SecurityManager());
-	if (pd2.toString().indexOf("merged.foo") < 0) {
-	    throw new Exception("Test with bootclass SecurityManager failed");
-	}
+        System.setSecurityManager(new SecurityManager());
+        if (pd2.toString().indexOf("merged.foo") < 0) {
+            throw new Exception("Test with bootclass SecurityManager failed");
+        }
     }
 }

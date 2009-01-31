@@ -33,21 +33,21 @@ public abstract class AsyncCloseTest {
 
 
     protected synchronized void failed(String reason) {
-	this.reason = reason;
+        this.reason = reason;
     }
 
     public synchronized String failureReason() {
-	return reason;
+        return reason;
     }
 
     protected synchronized void closed() {
-	closed = true;
+        closed = true;
     }
 
     protected synchronized boolean isClosed() {
-	return closed;
+        return closed;
     }
-   
+
     private String reason;
     private boolean closed;
 

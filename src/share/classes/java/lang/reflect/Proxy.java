@@ -214,10 +214,9 @@ import sun.misc.ProxyGenerator;
  * passed to the {@code invoke} method can necessarily be thrown
  * successfully by the {@code invoke} method.
  *
- * @author	Peter Jones
- * @version	%I%, %E%
- * @see		InvocationHandler
- * @since	1.3
+ * @author      Peter Jones
+ * @see         InvocationHandler
+ * @since       1.3
  */
 public class Proxy implements java.io.Serializable {
 
@@ -228,7 +227,7 @@ public class Proxy implements java.io.Serializable {
 
     /** parameter types of a proxy class constructor */
     private final static Class[] constructorParams =
-	{ InvocationHandler.class };
+        { InvocationHandler.class };
 
     /** maps a class loader to the proxy class cache for that loader */
     private static Map loaderToCache = new WeakHashMap();
@@ -242,7 +241,7 @@ public class Proxy implements java.io.Serializable {
 
     /** set of all generated proxy classes, for isProxyClass implementation */
     private static Map proxyClasses =
-	Collections.synchronizedMap(new WeakHashMap());
+        Collections.synchronizedMap(new WeakHashMap());
 
     /**
      * the invocation handler for this proxy instance.
@@ -264,7 +263,7 @@ public class Proxy implements java.io.Serializable {
      * @param   h the invocation handler for this proxy instance
      */
     protected Proxy(InvocationHandler h) {
-	this.h = h;
+        this.h = h;
     }
 
     /**
@@ -330,229 +329,229 @@ public class Proxy implements java.io.Serializable {
      * of interfaces but in a different order will result in two distinct
      * proxy classes.
      *
-     * @param	loader the class loader to define the proxy class
-     * @param	interfaces the list of interfaces for the proxy class
-     *		to implement
-     * @return	a proxy class that is defined in the specified class loader
-     *		and that implements the specified interfaces
-     * @throws	IllegalArgumentException if any of the restrictions on the
-     *		parameters that may be passed to {@code getProxyClass}
-     *		are violated
-     * @throws	NullPointerException if the {@code interfaces} array
-     *		argument or any of its elements are {@code null}
+     * @param   loader the class loader to define the proxy class
+     * @param   interfaces the list of interfaces for the proxy class
+     *          to implement
+     * @return  a proxy class that is defined in the specified class loader
+     *          and that implements the specified interfaces
+     * @throws  IllegalArgumentException if any of the restrictions on the
+     *          parameters that may be passed to {@code getProxyClass}
+     *          are violated
+     * @throws  NullPointerException if the {@code interfaces} array
+     *          argument or any of its elements are {@code null}
      */
-    public static Class<?> getProxyClass(ClassLoader loader, 
+    public static Class<?> getProxyClass(ClassLoader loader,
                                          Class<?>... interfaces)
-	throws IllegalArgumentException
+        throws IllegalArgumentException
     {
-	if (interfaces.length > 65535) {
-	    throw new IllegalArgumentException("interface limit exceeded");
-	}
+        if (interfaces.length > 65535) {
+            throw new IllegalArgumentException("interface limit exceeded");
+        }
 
-	Class proxyClass = null;
+        Class proxyClass = null;
 
-	/* collect interface names to use as key for proxy class cache */
-	String[] interfaceNames = new String[interfaces.length];
+        /* collect interface names to use as key for proxy class cache */
+        String[] interfaceNames = new String[interfaces.length];
 
-	Set interfaceSet = new HashSet();	// for detecting duplicates
+        Set interfaceSet = new HashSet();       // for detecting duplicates
 
-	for (int i = 0; i < interfaces.length; i++) {
-	    /*
-	     * Verify that the class loader resolves the name of this
-	     * interface to the same Class object.
-	     */
-	    String interfaceName = interfaces[i].getName();
-	    Class interfaceClass = null;
-	    try {
-		interfaceClass = Class.forName(interfaceName, false, loader);
-	    } catch (ClassNotFoundException e) {
-	    }
-	    if (interfaceClass != interfaces[i]) {
-		throw new IllegalArgumentException(
-		    interfaces[i] + " is not visible from class loader");
-	    }
+        for (int i = 0; i < interfaces.length; i++) {
+            /*
+             * Verify that the class loader resolves the name of this
+             * interface to the same Class object.
+             */
+            String interfaceName = interfaces[i].getName();
+            Class interfaceClass = null;
+            try {
+                interfaceClass = Class.forName(interfaceName, false, loader);
+            } catch (ClassNotFoundException e) {
+            }
+            if (interfaceClass != interfaces[i]) {
+                throw new IllegalArgumentException(
+                    interfaces[i] + " is not visible from class loader");
+            }
 
-	    /*
-	     * Verify that the Class object actually represents an
-	     * interface.
-	     */
-	    if (!interfaceClass.isInterface()) {
-		throw new IllegalArgumentException(
-		    interfaceClass.getName() + " is not an interface");
-	    }
+            /*
+             * Verify that the Class object actually represents an
+             * interface.
+             */
+            if (!interfaceClass.isInterface()) {
+                throw new IllegalArgumentException(
+                    interfaceClass.getName() + " is not an interface");
+            }
 
-	    /*
-	     * Verify that this interface is not a duplicate.
-	     */
-	    if (interfaceSet.contains(interfaceClass)) {
-		throw new IllegalArgumentException(
-		    "repeated interface: " + interfaceClass.getName());
-	    }
-	    interfaceSet.add(interfaceClass);
+            /*
+             * Verify that this interface is not a duplicate.
+             */
+            if (interfaceSet.contains(interfaceClass)) {
+                throw new IllegalArgumentException(
+                    "repeated interface: " + interfaceClass.getName());
+            }
+            interfaceSet.add(interfaceClass);
 
-	    interfaceNames[i] = interfaceName;
-	}
+            interfaceNames[i] = interfaceName;
+        }
 
-	/*
-	 * Using string representations of the proxy interfaces as
-	 * keys in the proxy class cache (instead of their Class
-	 * objects) is sufficient because we require the proxy
-	 * interfaces to be resolvable by name through the supplied
-	 * class loader, and it has the advantage that using a string
-	 * representation of a class makes for an implicit weak
-	 * reference to the class.
-	 */
-	Object key = Arrays.asList(interfaceNames);
+        /*
+         * Using string representations of the proxy interfaces as
+         * keys in the proxy class cache (instead of their Class
+         * objects) is sufficient because we require the proxy
+         * interfaces to be resolvable by name through the supplied
+         * class loader, and it has the advantage that using a string
+         * representation of a class makes for an implicit weak
+         * reference to the class.
+         */
+        Object key = Arrays.asList(interfaceNames);
 
-	/*
-	 * Find or create the proxy class cache for the class loader.
-	 */
-	Map cache;
-	synchronized (loaderToCache) {
-	    cache = (Map) loaderToCache.get(loader);
-	    if (cache == null) {
-		cache = new HashMap();
-		loaderToCache.put(loader, cache);
-	    }
-	    /*
-	     * This mapping will remain valid for the duration of this
-	     * method, without further synchronization, because the mapping
-	     * will only be removed if the class loader becomes unreachable.
-	     */
-	}
+        /*
+         * Find or create the proxy class cache for the class loader.
+         */
+        Map cache;
+        synchronized (loaderToCache) {
+            cache = (Map) loaderToCache.get(loader);
+            if (cache == null) {
+                cache = new HashMap();
+                loaderToCache.put(loader, cache);
+            }
+            /*
+             * This mapping will remain valid for the duration of this
+             * method, without further synchronization, because the mapping
+             * will only be removed if the class loader becomes unreachable.
+             */
+        }
 
-	/*
-	 * Look up the list of interfaces in the proxy class cache using
-	 * the key.  This lookup will result in one of three possible
-	 * kinds of values:
-	 *     null, if there is currently no proxy class for the list of
-	 *         interfaces in the class loader,
-	 *     the pendingGenerationMarker object, if a proxy class for the
-	 *         list of interfaces is currently being generated,
-	 *     or a weak reference to a Class object, if a proxy class for
-	 *         the list of interfaces has already been generated.
-	 */
-	synchronized (cache) {
-	    /*
-	     * Note that we need not worry about reaping the cache for
-	     * entries with cleared weak references because if a proxy class
-	     * has been garbage collected, its class loader will have been
-	     * garbage collected as well, so the entire cache will be reaped
-	     * from the loaderToCache map.
-	     */
-	    do {
-		Object value = cache.get(key);
-		if (value instanceof Reference) {
-		    proxyClass = (Class) ((Reference) value).get();
-		}
-		if (proxyClass != null) {
-		    // proxy class already generated: return it
-		    return proxyClass;
-		} else if (value == pendingGenerationMarker) {
-		    // proxy class being generated: wait for it
-		    try {
-			cache.wait();
-		    } catch (InterruptedException e) {
-			/*
-			 * The class generation that we are waiting for should
-			 * take a small, bounded time, so we can safely ignore
-			 * thread interrupts here.
-			 */
-		    }
-		    continue;
-		} else {
-		    /*
-		     * No proxy class for this list of interfaces has been
-		     * generated or is being generated, so we will go and
-		     * generate it now.  Mark it as pending generation.
-		     */
-		    cache.put(key, pendingGenerationMarker);
-		    break;
-		}
-	    } while (true);
-	}
+        /*
+         * Look up the list of interfaces in the proxy class cache using
+         * the key.  This lookup will result in one of three possible
+         * kinds of values:
+         *     null, if there is currently no proxy class for the list of
+         *         interfaces in the class loader,
+         *     the pendingGenerationMarker object, if a proxy class for the
+         *         list of interfaces is currently being generated,
+         *     or a weak reference to a Class object, if a proxy class for
+         *         the list of interfaces has already been generated.
+         */
+        synchronized (cache) {
+            /*
+             * Note that we need not worry about reaping the cache for
+             * entries with cleared weak references because if a proxy class
+             * has been garbage collected, its class loader will have been
+             * garbage collected as well, so the entire cache will be reaped
+             * from the loaderToCache map.
+             */
+            do {
+                Object value = cache.get(key);
+                if (value instanceof Reference) {
+                    proxyClass = (Class) ((Reference) value).get();
+                }
+                if (proxyClass != null) {
+                    // proxy class already generated: return it
+                    return proxyClass;
+                } else if (value == pendingGenerationMarker) {
+                    // proxy class being generated: wait for it
+                    try {
+                        cache.wait();
+                    } catch (InterruptedException e) {
+                        /*
+                         * The class generation that we are waiting for should
+                         * take a small, bounded time, so we can safely ignore
+                         * thread interrupts here.
+                         */
+                    }
+                    continue;
+                } else {
+                    /*
+                     * No proxy class for this list of interfaces has been
+                     * generated or is being generated, so we will go and
+                     * generate it now.  Mark it as pending generation.
+                     */
+                    cache.put(key, pendingGenerationMarker);
+                    break;
+                }
+            } while (true);
+        }
 
-	try {
-	    String proxyPkg = null;	// package to define proxy class in
+        try {
+            String proxyPkg = null;     // package to define proxy class in
 
-	    /*
-	     * Record the package of a non-public proxy interface so that the
-	     * proxy class will be defined in the same package.  Verify that
-	     * all non-public proxy interfaces are in the same package.
-	     */
-	    for (int i = 0; i < interfaces.length; i++) {
-		int flags = interfaces[i].getModifiers();
-		if (!Modifier.isPublic(flags)) {
-		    String name = interfaces[i].getName();
-		    int n = name.lastIndexOf('.');
-		    String pkg = ((n == -1) ? "" : name.substring(0, n + 1));
-		    if (proxyPkg == null) {
-			proxyPkg = pkg;
-		    } else if (!pkg.equals(proxyPkg)) {
-			throw new IllegalArgumentException(
-			    "non-public interfaces from different packages");
-		    }
-		}
-	    }
+            /*
+             * Record the package of a non-public proxy interface so that the
+             * proxy class will be defined in the same package.  Verify that
+             * all non-public proxy interfaces are in the same package.
+             */
+            for (int i = 0; i < interfaces.length; i++) {
+                int flags = interfaces[i].getModifiers();
+                if (!Modifier.isPublic(flags)) {
+                    String name = interfaces[i].getName();
+                    int n = name.lastIndexOf('.');
+                    String pkg = ((n == -1) ? "" : name.substring(0, n + 1));
+                    if (proxyPkg == null) {
+                        proxyPkg = pkg;
+                    } else if (!pkg.equals(proxyPkg)) {
+                        throw new IllegalArgumentException(
+                            "non-public interfaces from different packages");
+                    }
+                }
+            }
 
-	    if (proxyPkg == null) {	// if no non-public proxy interfaces,
-		proxyPkg = "";		// use the unnamed package
-	    }
+            if (proxyPkg == null) {     // if no non-public proxy interfaces,
+                proxyPkg = "";          // use the unnamed package
+            }
 
-	    {
-		/*
-		 * Choose a name for the proxy class to generate.
-		 */
-		long num;
-		synchronized (nextUniqueNumberLock) {
-		    num = nextUniqueNumber++;
-		}
-		String proxyName = proxyPkg + proxyClassNamePrefix + num;
-		/*
-		 * Verify that the class loader hasn't already
-		 * defined a class with the chosen name.
-		 */
+            {
+                /*
+                 * Choose a name for the proxy class to generate.
+                 */
+                long num;
+                synchronized (nextUniqueNumberLock) {
+                    num = nextUniqueNumber++;
+                }
+                String proxyName = proxyPkg + proxyClassNamePrefix + num;
+                /*
+                 * Verify that the class loader hasn't already
+                 * defined a class with the chosen name.
+                 */
 
-		/*
-		 * Generate the specified proxy class.
-		 */
-		byte[] proxyClassFile =	ProxyGenerator.generateProxyClass(
-		    proxyName, interfaces);
-		try {
-		    proxyClass = defineClass0(loader, proxyName,
-			proxyClassFile, 0, proxyClassFile.length);
-		} catch (ClassFormatError e) {
-		    /*
-		     * A ClassFormatError here means that (barring bugs in the
-		     * proxy class generation code) there was some other
-		     * invalid aspect of the arguments supplied to the proxy
-		     * class creation (such as virtual machine limitations
-		     * exceeded).
-		     */
-		    throw new IllegalArgumentException(e.toString());
-		}
-	    }
-	    // add to set of all generated proxy classes, for isProxyClass
-	    proxyClasses.put(proxyClass, null);
+                /*
+                 * Generate the specified proxy class.
+                 */
+                byte[] proxyClassFile = ProxyGenerator.generateProxyClass(
+                    proxyName, interfaces);
+                try {
+                    proxyClass = defineClass0(loader, proxyName,
+                        proxyClassFile, 0, proxyClassFile.length);
+                } catch (ClassFormatError e) {
+                    /*
+                     * A ClassFormatError here means that (barring bugs in the
+                     * proxy class generation code) there was some other
+                     * invalid aspect of the arguments supplied to the proxy
+                     * class creation (such as virtual machine limitations
+                     * exceeded).
+                     */
+                    throw new IllegalArgumentException(e.toString());
+                }
+            }
+            // add to set of all generated proxy classes, for isProxyClass
+            proxyClasses.put(proxyClass, null);
 
-	} finally {
-	    /*
-	     * We must clean up the "pending generation" state of the proxy
-	     * class cache entry somehow.  If a proxy class was successfully
-	     * generated, store it in the cache (with a weak reference);
-	     * otherwise, remove the reserved entry.  In all cases, notify
-	     * all waiters on reserved entries in this cache.
-	     */
-	    synchronized (cache) {
-		if (proxyClass != null) {
-		    cache.put(key, new WeakReference(proxyClass));
-		} else {
-		    cache.remove(key);
-		}
-		cache.notifyAll();
-	    }
-	}
-	return proxyClass;
+        } finally {
+            /*
+             * We must clean up the "pending generation" state of the proxy
+             * class cache entry somehow.  If a proxy class was successfully
+             * generated, store it in the cache (with a weak reference);
+             * otherwise, remove the reserved entry.  In all cases, notify
+             * all waiters on reserved entries in this cache.
+             */
+            synchronized (cache) {
+                if (proxyClass != null) {
+                    cache.put(key, new WeakReference(proxyClass));
+                } else {
+                    cache.remove(key);
+                }
+                cache.notifyAll();
+            }
+        }
+        return proxyClass;
     }
 
     /**
@@ -569,50 +568,50 @@ public class Proxy implements java.io.Serializable {
      * {@code IllegalArgumentException} for the same reasons that
      * {@code Proxy.getProxyClass} does.
      *
-     * @param	loader the class loader to define the proxy class
-     * @param	interfaces the list of interfaces for the proxy class
-     *		to implement
+     * @param   loader the class loader to define the proxy class
+     * @param   interfaces the list of interfaces for the proxy class
+     *          to implement
      * @param   h the invocation handler to dispatch method invocations to
-     * @return	a proxy instance with the specified invocation handler of a
-     *		proxy class that is defined by the specified class loader
-     *		and that implements the specified interfaces
-     * @throws	IllegalArgumentException if any of the restrictions on the
-     *		parameters that may be passed to {@code getProxyClass}
-     *		are violated
-     * @throws	NullPointerException if the {@code interfaces} array
-     *		argument or any of its elements are {@code null}, or
-     *		if the invocation handler, {@code h}, is
-     *		{@code null}
+     * @return  a proxy instance with the specified invocation handler of a
+     *          proxy class that is defined by the specified class loader
+     *          and that implements the specified interfaces
+     * @throws  IllegalArgumentException if any of the restrictions on the
+     *          parameters that may be passed to {@code getProxyClass}
+     *          are violated
+     * @throws  NullPointerException if the {@code interfaces} array
+     *          argument or any of its elements are {@code null}, or
+     *          if the invocation handler, {@code h}, is
+     *          {@code null}
      */
     public static Object newProxyInstance(ClassLoader loader,
-					  Class<?>[] interfaces,
-					  InvocationHandler h)
-	throws IllegalArgumentException
+                                          Class<?>[] interfaces,
+                                          InvocationHandler h)
+        throws IllegalArgumentException
     {
-	if (h == null) {
-	    throw new NullPointerException();
-	}
+        if (h == null) {
+            throw new NullPointerException();
+        }
 
-	/*
-	 * Look up or generate the designated proxy class.
-	 */
-	Class cl = getProxyClass(loader, interfaces);
+        /*
+         * Look up or generate the designated proxy class.
+         */
+        Class cl = getProxyClass(loader, interfaces);
 
-	/*
-	 * Invoke its constructor with the designated invocation handler.
-	 */
-	try {
-	    Constructor cons = cl.getConstructor(constructorParams);
-	    return (Object) cons.newInstance(new Object[] { h });
-	} catch (NoSuchMethodException e) {
-	    throw new InternalError(e.toString());
-	} catch (IllegalAccessException e) {
-	    throw new InternalError(e.toString());
-	} catch (InstantiationException e) {
-	    throw new InternalError(e.toString());
-	} catch (InvocationTargetException e) {
-	    throw new InternalError(e.toString());
-	}
+        /*
+         * Invoke its constructor with the designated invocation handler.
+         */
+        try {
+            Constructor cons = cl.getConstructor(constructorParams);
+            return (Object) cons.newInstance(new Object[] { h });
+        } catch (NoSuchMethodException e) {
+            throw new InternalError(e.toString());
+        } catch (IllegalAccessException e) {
+            throw new InternalError(e.toString());
+        } catch (InstantiationException e) {
+            throw new InternalError(e.toString());
+        } catch (InvocationTargetException e) {
+            throw new InternalError(e.toString());
+        }
     }
 
     /**
@@ -624,41 +623,41 @@ public class Proxy implements java.io.Serializable {
      * to use it to make security decisions, so its implementation should
      * not just test if the class in question extends {@code Proxy}.
      *
-     * @param	cl the class to test
+     * @param   cl the class to test
      * @return  {@code true} if the class is a proxy class and
-     *		{@code false} otherwise
-     * @throws	NullPointerException if {@code cl} is {@code null}
+     *          {@code false} otherwise
+     * @throws  NullPointerException if {@code cl} is {@code null}
      */
     public static boolean isProxyClass(Class<?> cl) {
-	if (cl == null) {
-	    throw new NullPointerException();
-	}
+        if (cl == null) {
+            throw new NullPointerException();
+        }
 
-	return proxyClasses.containsKey(cl);
+        return proxyClasses.containsKey(cl);
     }
 
     /**
      * Returns the invocation handler for the specified proxy instance.
      *
-     * @param	proxy the proxy instance to return the invocation handler for
-     * @return	the invocation handler for the proxy instance
-     * @throws	IllegalArgumentException if the argument is not a
-     *		proxy instance
+     * @param   proxy the proxy instance to return the invocation handler for
+     * @return  the invocation handler for the proxy instance
+     * @throws  IllegalArgumentException if the argument is not a
+     *          proxy instance
      */
     public static InvocationHandler getInvocationHandler(Object proxy)
-	throws IllegalArgumentException
+        throws IllegalArgumentException
     {
-	/*
-	 * Verify that the object is actually a proxy instance.
-	 */
-	if (!isProxyClass(proxy.getClass())) {
-	    throw new IllegalArgumentException("not a proxy instance");
-	}
+        /*
+         * Verify that the object is actually a proxy instance.
+         */
+        if (!isProxyClass(proxy.getClass())) {
+            throw new IllegalArgumentException("not a proxy instance");
+        }
 
-	Proxy p = (Proxy) proxy;
-	return p.h;
+        Proxy p = (Proxy) proxy;
+        return p.h;
     }
 
     private static native Class defineClass0(ClassLoader loader, String name,
-					     byte[] b, int off, int len);
+                                             byte[] b, int off, int len);
 }

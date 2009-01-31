@@ -56,15 +56,15 @@ public class UnicastRef implements RemoteRef {
      * Client-side transport log.
      */
     public static final Log clientRefLog =
-	Log.getLog("sun.rmi.client.ref", "transport",  Util.logLevel);
+        Log.getLog("sun.rmi.client.ref", "transport",  Util.logLevel);
 
     /**
      * Client-side call log.
      */
     public static final Log clientCallLog =
-	Log.getLog("sun.rmi.client.call", "RMI",
-		   AccessController.doPrivileged(
-		       new GetBooleanAction("sun.rmi.client.logCalls")));
+        Log.getLog("sun.rmi.client.call", "RMI",
+                   AccessController.doPrivileged(
+                       new GetBooleanAction("sun.rmi.client.logCalls")));
 
     protected LiveRef ref;
 
@@ -73,12 +73,12 @@ public class UnicastRef implements RemoteRef {
      */
     public UnicastRef() {
     }
-    
-    /** 
+
+    /**
      * Create a new Unicast RemoteRef.
      */
     public UnicastRef(LiveRef liveRef) {
-	ref = liveRef;
+        ref = liveRef;
     }
 
     /**
@@ -90,7 +90,7 @@ public class UnicastRef implements RemoteRef {
      * implementation of javax.management.remote.rmi.RMIConnector.
      **/
     public LiveRef getLiveRef() {
-	return ref;
+        return ref;
     }
 
     /**
@@ -104,7 +104,7 @@ public class UnicastRef implements RemoteRef {
      * throws a RemoteException if the call failed or an
      * application-level exception if the remote invocation throws
      * an exception.
-     *    
+     *
      * @param obj the proxy for the remote object
      * @param method the method to be invoked
      * @param params the parameter list
@@ -112,185 +112,185 @@ public class UnicastRef implements RemoteRef {
      * @since 1.2
      */
     public Object invoke(Remote obj,
-			 Method method,
-			 Object[] params,
-			 long opnum)
-	throws Exception
+                         Method method,
+                         Object[] params,
+                         long opnum)
+        throws Exception
     {
-	if (clientRefLog.isLoggable(Log.VERBOSE)) {
-	    clientRefLog.log(Log.VERBOSE, "method: " + method);
-	}
+        if (clientRefLog.isLoggable(Log.VERBOSE)) {
+            clientRefLog.log(Log.VERBOSE, "method: " + method);
+        }
 
-	if (clientCallLog.isLoggable(Log.VERBOSE)) {
-	    logClientCall(obj, method);
-	}
-	
-	Connection conn = ref.getChannel().newConnection();
-	RemoteCall call = null;
-	boolean reuse = true;
+        if (clientCallLog.isLoggable(Log.VERBOSE)) {
+            logClientCall(obj, method);
+        }
 
-	/* If the call connection is "reused" early, remember not to
-	 * reuse again.
-	 */
-	boolean alreadyFreed = false;
+        Connection conn = ref.getChannel().newConnection();
+        RemoteCall call = null;
+        boolean reuse = true;
 
-	try {
-	    if (clientRefLog.isLoggable(Log.VERBOSE)) {
-		clientRefLog.log(Log.VERBOSE, "opnum = " + opnum);
-	    }
+        /* If the call connection is "reused" early, remember not to
+         * reuse again.
+         */
+        boolean alreadyFreed = false;
 
-	    // create call context
-	    call = new StreamRemoteCall(conn, ref.getObjID(), -1, opnum);
+        try {
+            if (clientRefLog.isLoggable(Log.VERBOSE)) {
+                clientRefLog.log(Log.VERBOSE, "opnum = " + opnum);
+            }
 
-	    // marshal parameters
-	    try {
-		ObjectOutput out = call.getOutputStream();
-		marshalCustomCallData(out);
-		Class<?>[] types = method.getParameterTypes();
-		for (int i = 0; i < types.length; i++) {	
-		    marshalValue(types[i], params[i], out);
-		}
-	    } catch (IOException e) {
-		clientRefLog.log(Log.BRIEF,
-		    "IOException marshalling arguments: ", e);
-		throw new MarshalException("error marshalling arguments", e);
-	    }
+            // create call context
+            call = new StreamRemoteCall(conn, ref.getObjID(), -1, opnum);
 
-	    // unmarshal return
-	    call.executeCall();
+            // marshal parameters
+            try {
+                ObjectOutput out = call.getOutputStream();
+                marshalCustomCallData(out);
+                Class<?>[] types = method.getParameterTypes();
+                for (int i = 0; i < types.length; i++) {
+                    marshalValue(types[i], params[i], out);
+                }
+            } catch (IOException e) {
+                clientRefLog.log(Log.BRIEF,
+                    "IOException marshalling arguments: ", e);
+                throw new MarshalException("error marshalling arguments", e);
+            }
 
-	    try {
-		Class<?> rtype = method.getReturnType();
-		if (rtype == void.class)
-		    return null;
-		ObjectInput in = call.getInputStream();
-		
-		/* StreamRemoteCall.done() does not actually make use
-		 * of conn, therefore it is safe to reuse this
-		 * connection before the dirty call is sent for
-		 * registered refs.  
-		 */
-		Object returnValue = unmarshalValue(rtype, in);
+            // unmarshal return
+            call.executeCall();
 
-		/* we are freeing the connection now, do not free
-		 * again or reuse.
-		 */
-		alreadyFreed = true;
+            try {
+                Class<?> rtype = method.getReturnType();
+                if (rtype == void.class)
+                    return null;
+                ObjectInput in = call.getInputStream();
 
-		/* if we got to this point, reuse must have been true. */
-		clientRefLog.log(Log.BRIEF, "free connection (reuse = true)");
+                /* StreamRemoteCall.done() does not actually make use
+                 * of conn, therefore it is safe to reuse this
+                 * connection before the dirty call is sent for
+                 * registered refs.
+                 */
+                Object returnValue = unmarshalValue(rtype, in);
 
-		/* Free the call's connection early. */
-		ref.getChannel().free(conn, true);
+                /* we are freeing the connection now, do not free
+                 * again or reuse.
+                 */
+                alreadyFreed = true;
 
-		return returnValue;
-		
-	    } catch (IOException e) {
-		clientRefLog.log(Log.BRIEF,
-				 "IOException unmarshalling return: ", e);
-		throw new UnmarshalException("error unmarshalling return", e);
-	    } catch (ClassNotFoundException e) {
-		clientRefLog.log(Log.BRIEF,
-		    "ClassNotFoundException unmarshalling return: ", e);
+                /* if we got to this point, reuse must have been true. */
+                clientRefLog.log(Log.BRIEF, "free connection (reuse = true)");
 
-		throw new UnmarshalException("error unmarshalling return", e);
-	    } finally {
-		try {
-		    call.done();
-		} catch (IOException e) {
-		    /* WARNING: If the conn has been reused early,
-		     * then it is too late to recover from thrown
-		     * IOExceptions caught here. This code is relying
-		     * on StreamRemoteCall.done() not actually
-		     * throwing IOExceptions.  
-		     */
-		    reuse = false;
-		}
-	    }
+                /* Free the call's connection early. */
+                ref.getChannel().free(conn, true);
 
-	} catch (RuntimeException e) {
-	    /*
-	     * Need to distinguish between client (generated by the
-	     * invoke method itself) and server RuntimeExceptions.
-	     * Client side RuntimeExceptions are likely to have
-	     * corrupted the call connection and those from the server
-	     * are not likely to have done so.  If the exception came
-	     * from the server the call connection should be reused.
-	     */
-	    if ((call == null) || 
-		(((StreamRemoteCall) call).getServerException() != e))
+                return returnValue;
+
+            } catch (IOException e) {
+                clientRefLog.log(Log.BRIEF,
+                                 "IOException unmarshalling return: ", e);
+                throw new UnmarshalException("error unmarshalling return", e);
+            } catch (ClassNotFoundException e) {
+                clientRefLog.log(Log.BRIEF,
+                    "ClassNotFoundException unmarshalling return: ", e);
+
+                throw new UnmarshalException("error unmarshalling return", e);
+            } finally {
+                try {
+                    call.done();
+                } catch (IOException e) {
+                    /* WARNING: If the conn has been reused early,
+                     * then it is too late to recover from thrown
+                     * IOExceptions caught here. This code is relying
+                     * on StreamRemoteCall.done() not actually
+                     * throwing IOExceptions.
+                     */
+                    reuse = false;
+                }
+            }
+
+        } catch (RuntimeException e) {
+            /*
+             * Need to distinguish between client (generated by the
+             * invoke method itself) and server RuntimeExceptions.
+             * Client side RuntimeExceptions are likely to have
+             * corrupted the call connection and those from the server
+             * are not likely to have done so.  If the exception came
+             * from the server the call connection should be reused.
+             */
+            if ((call == null) ||
+                (((StreamRemoteCall) call).getServerException() != e))
             {
-		reuse = false;
-	    }
-	    throw e;
+                reuse = false;
+            }
+            throw e;
 
-	} catch (RemoteException e) {
-	    /*
-	     * Some failure during call; assume connection cannot
-	     * be reused.  Must assume failure even if ServerException
-	     * or ServerError occurs since these failures can happen
-	     * during parameter deserialization which would leave
-	     * the connection in a corrupted state.
-	     */
-	    reuse = false;
-	    throw e;
+        } catch (RemoteException e) {
+            /*
+             * Some failure during call; assume connection cannot
+             * be reused.  Must assume failure even if ServerException
+             * or ServerError occurs since these failures can happen
+             * during parameter deserialization which would leave
+             * the connection in a corrupted state.
+             */
+            reuse = false;
+            throw e;
 
-	} catch (Error e) {
-	    /* If errors occurred, the connection is most likely not
-             *  reusable. 
-	     */
-	    reuse = false;
-	    throw e;
+        } catch (Error e) {
+            /* If errors occurred, the connection is most likely not
+             *  reusable.
+             */
+            reuse = false;
+            throw e;
 
-	} finally {
+        } finally {
 
-	    /* alreadyFreed ensures that we do not log a reuse that
-	     * may have already happened.
-	     */
-	    if (!alreadyFreed) {
-		if (clientRefLog.isLoggable(Log.BRIEF)) {
-		    clientRefLog.log(Log.BRIEF, "free connection (reuse = " +
-					   reuse + ")");
-		}
-		ref.getChannel().free(conn, reuse);
-	    }
-	}
+            /* alreadyFreed ensures that we do not log a reuse that
+             * may have already happened.
+             */
+            if (!alreadyFreed) {
+                if (clientRefLog.isLoggable(Log.BRIEF)) {
+                    clientRefLog.log(Log.BRIEF, "free connection (reuse = " +
+                                           reuse + ")");
+                }
+                ref.getChannel().free(conn, reuse);
+            }
+        }
     }
 
     protected void marshalCustomCallData(ObjectOutput out) throws IOException
     {}
-    
+
     /**
      * Marshal value to an ObjectOutput sink using RMI's serialization
      * format for parameters or return values.
      */
     protected static void marshalValue(Class<?> type, Object value,
-				       ObjectOutput out)
-	throws IOException
+                                       ObjectOutput out)
+        throws IOException
     {
-	if (type.isPrimitive()) {
-	    if (type == int.class) {
-		out.writeInt(((Integer) value).intValue());
-	    } else if (type == boolean.class) {
-		out.writeBoolean(((Boolean) value).booleanValue());
-	    } else if (type == byte.class) {
-		out.writeByte(((Byte) value).byteValue());
-	    } else if (type == char.class) {
-		out.writeChar(((Character) value).charValue());
-	    } else if (type == short.class) {
-		out.writeShort(((Short) value).shortValue());
-	    } else if (type == long.class) {
-		out.writeLong(((Long) value).longValue());
-	    } else if (type == float.class) {
-		out.writeFloat(((Float) value).floatValue());
-	    } else if (type == double.class) {
-		out.writeDouble(((Double) value).doubleValue());
-	    } else {
-		throw new Error("Unrecognized primitive type: " + type);
-	    }
-	} else {
-	    out.writeObject(value);
-	}
+        if (type.isPrimitive()) {
+            if (type == int.class) {
+                out.writeInt(((Integer) value).intValue());
+            } else if (type == boolean.class) {
+                out.writeBoolean(((Boolean) value).booleanValue());
+            } else if (type == byte.class) {
+                out.writeByte(((Byte) value).byteValue());
+            } else if (type == char.class) {
+                out.writeChar(((Character) value).charValue());
+            } else if (type == short.class) {
+                out.writeShort(((Short) value).shortValue());
+            } else if (type == long.class) {
+                out.writeLong(((Long) value).longValue());
+            } else if (type == float.class) {
+                out.writeFloat(((Float) value).floatValue());
+            } else if (type == double.class) {
+                out.writeDouble(((Double) value).doubleValue());
+            } else {
+                throw new Error("Unrecognized primitive type: " + type);
+            }
+        } else {
+            out.writeObject(value);
+        }
     }
 
     /**
@@ -298,31 +298,31 @@ public class UnicastRef implements RemoteRef {
      * format for parameters or return values.
      */
     protected static Object unmarshalValue(Class<?> type, ObjectInput in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	if (type.isPrimitive()) {
-	    if (type == int.class) {
-		return Integer.valueOf(in.readInt());
-	    } else if (type == boolean.class) {
-		return Boolean.valueOf(in.readBoolean());
-	    } else if (type == byte.class) {
-		return Byte.valueOf(in.readByte());
-	    } else if (type == char.class) {
-		return Character.valueOf(in.readChar());
-	    } else if (type == short.class) {
-		return Short.valueOf(in.readShort());
-	    } else if (type == long.class) {
-		return Long.valueOf(in.readLong());
-	    } else if (type == float.class) {
-		return Float.valueOf(in.readFloat());
-	    } else if (type == double.class) {
-		return Double.valueOf(in.readDouble());
-	    } else {
-		throw new Error("Unrecognized primitive type: " + type);
-	    }
-	} else {
-	    return in.readObject();
-	}
+        if (type.isPrimitive()) {
+            if (type == int.class) {
+                return Integer.valueOf(in.readInt());
+            } else if (type == boolean.class) {
+                return Boolean.valueOf(in.readBoolean());
+            } else if (type == byte.class) {
+                return Byte.valueOf(in.readByte());
+            } else if (type == char.class) {
+                return Character.valueOf(in.readChar());
+            } else if (type == short.class) {
+                return Short.valueOf(in.readShort());
+            } else if (type == long.class) {
+                return Long.valueOf(in.readLong());
+            } else if (type == float.class) {
+                return Float.valueOf(in.readFloat());
+            } else if (type == double.class) {
+                return Double.valueOf(in.readDouble());
+            } else {
+                throw new Error("Unrecognized primitive type: " + type);
+            }
+        } else {
+            return in.readObject();
+        }
     }
 
     /**
@@ -332,38 +332,38 @@ public class UnicastRef implements RemoteRef {
      * may need the operation to encode in for the call.
      */
     public RemoteCall newCall(RemoteObject obj, Operation[] ops, int opnum,
-			      long hash)
-	throws RemoteException
+                              long hash)
+        throws RemoteException
     {
-	clientRefLog.log(Log.BRIEF, "get connection");
+        clientRefLog.log(Log.BRIEF, "get connection");
 
-	Connection conn = ref.getChannel().newConnection();
-	try {
-	    clientRefLog.log(Log.VERBOSE, "create call context");
+        Connection conn = ref.getChannel().newConnection();
+        try {
+            clientRefLog.log(Log.VERBOSE, "create call context");
 
-	    /* log information about the outgoing call */
-	    if (clientCallLog.isLoggable(Log.VERBOSE)) {
-		logClientCall(obj, ops[opnum]);
-	    }
-	    
-	    RemoteCall call =
-		new StreamRemoteCall(conn, ref.getObjID(), opnum, hash);
-	    try {
-		marshalCustomCallData(call.getOutputStream());
-	    } catch (IOException e) {
-		throw new MarshalException("error marshaling " +
-					   "custom call data");
-	    }
-	    return call;
-	} catch (RemoteException e) {
-	    ref.getChannel().free(conn, false);
-	    throw e;
-	}
+            /* log information about the outgoing call */
+            if (clientCallLog.isLoggable(Log.VERBOSE)) {
+                logClientCall(obj, ops[opnum]);
+            }
+
+            RemoteCall call =
+                new StreamRemoteCall(conn, ref.getObjID(), opnum, hash);
+            try {
+                marshalCustomCallData(call.getOutputStream());
+            } catch (IOException e) {
+                throw new MarshalException("error marshaling " +
+                                           "custom call data");
+            }
+            return call;
+        } catch (RemoteException e) {
+            ref.getChannel().free(conn, false);
+            throw e;
+        }
     }
-  
+
     /**
      * Invoke makes the remote call present in the RemoteCall object.
-     * 
+     *
      * Invoke will raise any "user" exceptions which
      * should pass through and not be caught by the stub.  If any
      * exception is raised during the remote invocation, invoke should
@@ -371,62 +371,62 @@ public class UnicastRef implements RemoteRef {
      * "user" or remote exception.
      */
     public void invoke(RemoteCall call) throws Exception {
-	try {
-	    clientRefLog.log(Log.VERBOSE, "execute call");
+        try {
+            clientRefLog.log(Log.VERBOSE, "execute call");
 
-	    call.executeCall();
+            call.executeCall();
 
-	} catch (RemoteException e) {
-	    /*
-	     * Call did not complete; connection can't be reused.
-	     */
-	    clientRefLog.log(Log.BRIEF, "exception: ", e);
-	    free(call, false);
-	    throw e;
+        } catch (RemoteException e) {
+            /*
+             * Call did not complete; connection can't be reused.
+             */
+            clientRefLog.log(Log.BRIEF, "exception: ", e);
+            free(call, false);
+            throw e;
 
-	} catch (Error e) {
-	    /* If errors occurred, the connection is most likely not
-             *  reusable. 
-	     */
-	    clientRefLog.log(Log.BRIEF, "error: ", e);
-	    free(call, false);
-	    throw e;
+        } catch (Error e) {
+            /* If errors occurred, the connection is most likely not
+             *  reusable.
+             */
+            clientRefLog.log(Log.BRIEF, "error: ", e);
+            free(call, false);
+            throw e;
 
-	} catch (RuntimeException e) {
-	    /*
-	     * REMIND: Since runtime exceptions are no longer wrapped,
-	     * we can't assue that the connection was left in
-	     * a reusable state. Is this okay?
-	     */
-	    clientRefLog.log(Log.BRIEF, "exception: ", e);
-	    free(call, false);
-	    throw e;
+        } catch (RuntimeException e) {
+            /*
+             * REMIND: Since runtime exceptions are no longer wrapped,
+             * we can't assue that the connection was left in
+             * a reusable state. Is this okay?
+             */
+            clientRefLog.log(Log.BRIEF, "exception: ", e);
+            free(call, false);
+            throw e;
 
-	} catch (Exception e) {
-	    /*
-	     * Assume that these other exceptions are user exceptions
-	     * and leave the connection in a reusable state.
-	     */
-	    clientRefLog.log(Log.BRIEF, "exception: ", e);
-	    free(call, true);
-	    /* reraise user (and unknown) exceptions. */
-	    throw e;
-	}
+        } catch (Exception e) {
+            /*
+             * Assume that these other exceptions are user exceptions
+             * and leave the connection in a reusable state.
+             */
+            clientRefLog.log(Log.BRIEF, "exception: ", e);
+            free(call, true);
+            /* reraise user (and unknown) exceptions. */
+            throw e;
+        }
 
-	/*
-	 * Don't free the connection if an exception did not
-	 * occur because the stub needs to unmarshal the
-	 * return value. The connection will be freed
-	 * by a call to the "done" method.
-	 */
+        /*
+         * Don't free the connection if an exception did not
+         * occur because the stub needs to unmarshal the
+         * return value. The connection will be freed
+         * by a call to the "done" method.
+         */
     }
 
     /**
      * Private method to free a connection.
      */
     private void free(RemoteCall call, boolean reuse) throws RemoteException {
-	Connection conn = ((StreamRemoteCall)call).getConnection();
-	ref.getChannel().free(conn, reuse);
+        Connection conn = ((StreamRemoteCall)call).getConnection();
+        ref.getChannel().free(conn, reuse);
     }
 
     /**
@@ -436,24 +436,24 @@ public class UnicastRef implements RemoteRef {
      */
     public void done(RemoteCall call) throws RemoteException {
 
-	/* Done only uses the connection inside the call to obtain the
-	 * channel the connection uses.  Once all information is read
-	 * from the connection, the connection may be freed.  
-	 */
-	clientRefLog.log(Log.BRIEF, "free connection (reuse = true)");
+        /* Done only uses the connection inside the call to obtain the
+         * channel the connection uses.  Once all information is read
+         * from the connection, the connection may be freed.
+         */
+        clientRefLog.log(Log.BRIEF, "free connection (reuse = true)");
 
-	/* Free the call connection early. */
-	free(call, true);
+        /* Free the call connection early. */
+        free(call, true);
 
-	try {
-	    call.done();
-	} catch (IOException e) {
-	    /* WARNING: If the conn has been reused early, then it is
-	     * too late to recover from thrown IOExceptions caught
-	     * here. This code is relying on StreamRemoteCall.done()
-	     * not actually throwing IOExceptions.  
-	     */
-	}
+        try {
+            call.done();
+        } catch (IOException e) {
+            /* WARNING: If the conn has been reused early, then it is
+             * too late to recover from thrown IOExceptions caught
+             * here. This code is relying on StreamRemoteCall.done()
+             * not actually throwing IOExceptions.
+             */
+        }
     }
 
     /**
@@ -461,23 +461,23 @@ public class UnicastRef implements RemoteRef {
      * type java.lang.reflect.Method or java.rmi.server.Operation.
      */
     void logClientCall(Object obj, Object method) {
-	clientCallLog.log(Log.VERBOSE, "outbound call: " +
-	    ref + " : " + obj.getClass().getName() +
-	    ref.getObjID().toString() + ": " + method);
+        clientCallLog.log(Log.VERBOSE, "outbound call: " +
+            ref + " : " + obj.getClass().getName() +
+            ref.getObjID().toString() + ": " + method);
     }
 
     /**
      * Returns the class of the ref type to be serialized
      */
     public String getRefClass(ObjectOutput out) {
-	return "UnicastRef";
+        return "UnicastRef";
     }
 
     /**
      * Write out external representation for remote ref.
      */
     public void writeExternal(ObjectOutput out) throws IOException {
-	ref.write(out, false);
+        ref.write(out, false);
     }
 
     /**
@@ -486,31 +486,31 @@ public class UnicastRef implements RemoteRef {
      * being restored cannot be found.
      */
     public void readExternal(ObjectInput in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	ref = LiveRef.read(in, false);
+        ref = LiveRef.read(in, false);
     }
-    
+
     //----------------------------------------------------------------------;
     /**
      * Method from object, forward from RemoteObject
      */
     public String remoteToString() {
-	return Util.getUnqualifiedName(getClass()) + " [liveRef: " + ref + "]";
+        return Util.getUnqualifiedName(getClass()) + " [liveRef: " + ref + "]";
     }
 
     /**
      * default implementation of hashCode for remote objects
      */
     public int remoteHashCode() {
-	return ref.hashCode();
+        return ref.hashCode();
     }
 
     /** default implementation of equals for remote objects
      */
     public boolean remoteEquals(RemoteRef sub) {
-	if (sub instanceof UnicastRef)
-	    return ref.remoteEquals(((UnicastRef)sub).ref);
-	return false;
+        if (sub instanceof UnicastRef)
+            return ref.remoteEquals(((UnicastRef)sub).ref);
+        return false;
     }
 }

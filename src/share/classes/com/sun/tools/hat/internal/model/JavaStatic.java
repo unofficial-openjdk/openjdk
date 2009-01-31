@@ -30,22 +30,21 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- * 
+ *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- * 
+ *
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- * 
+ *
  */
 
 package com.sun.tools.hat.internal.model;
 
 /**
  *
- * @version     1.7, 10/08/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -59,8 +58,8 @@ public class JavaStatic {
     private JavaThing value;
 
     public JavaStatic(JavaField field, JavaThing value) {
-	this.field = field;
-	this.value = value;
+        this.field = field;
+        this.value = value;
     }
 
     public void resolve(JavaClass clazz, Snapshot snapshot) {
@@ -68,21 +67,21 @@ public class JavaStatic {
         if (value instanceof JavaObjectRef) {
             id = ((JavaObjectRef)value).getId();
         }
-	value = value.dereference(snapshot, field);
-	if (value.isHeapAllocated()) {
-	    JavaHeapObject ho = (JavaHeapObject) value;
-	    String s = "Static reference from " + clazz.getName()
-		       + "." + field.getName();
-	    snapshot.addRoot(new Root(id, clazz.getId(), 
-				      Root.JAVA_STATIC, s));
-	}
+        value = value.dereference(snapshot, field);
+        if (value.isHeapAllocated()) {
+            JavaHeapObject ho = (JavaHeapObject) value;
+            String s = "Static reference from " + clazz.getName()
+                       + "." + field.getName();
+            snapshot.addRoot(new Root(id, clazz.getId(),
+                                      Root.JAVA_STATIC, s));
+        }
     }
 
     public JavaField getField() {
-	return field;
+        return field;
     }
 
     public JavaThing getValue() {
-	return value;
+        return value;
     }
 }

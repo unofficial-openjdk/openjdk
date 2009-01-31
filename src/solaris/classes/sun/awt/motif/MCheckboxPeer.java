@@ -42,37 +42,37 @@ public class MCheckboxPeer extends MComponentPeer implements CheckboxPeer {
 
 
     void initialize() {
-	Checkbox t = (Checkbox)target;
-	inInit=true;
+        Checkbox t = (Checkbox)target;
+        inInit=true;
 
-	setState(t.getState());
-	setCheckboxGroup(t.getCheckboxGroup());
-	super.initialize();
-	inInit=false;
+        setState(t.getState());
+        setCheckboxGroup(t.getCheckboxGroup());
+        super.initialize();
+        inInit=false;
     }
 
     public MCheckboxPeer(Checkbox target) {
-	super(target);
+        super(target);
     }
 
     public boolean isFocusable() {
-	return true;
+        return true;
     }
 
     public void setState(boolean state) {
-	if (inInit) {
-		pSetState(state);
-	} else if (!inUpCall && (state != pGetState())) {
-		pSetState(state);
-	    	// 4135725 : do not notify on programatic changes
-		// notifyStateChanged(state);
-	}
+        if (inInit) {
+                pSetState(state);
+        } else if (!inUpCall && (state != pGetState())) {
+                pSetState(state);
+                // 4135725 : do not notify on programatic changes
+                // notifyStateChanged(state);
+        }
     }
     private native int getIndicatorSize();
     private native int getSpacing();
 
     public Dimension getMinimumSize() {
-	String lbl = ((Checkbox)target).getLabel();
+        String lbl = ((Checkbox)target).getLabel();
         if (lbl == null) {
             lbl = "";
         }
@@ -86,43 +86,43 @@ public class MCheckboxPeer extends MComponentPeer implements CheckboxPeer {
          */
         int wdth = fm.stringWidth(lbl) + getIndicatorSize() + getSpacing() + 8;
         int hght = Math.max(fm.getHeight() + 8, 15);
-        return new Dimension(wdth, hght); 
+        return new Dimension(wdth, hght);
     }
 
 
     void notifyStateChanged(boolean state) {
-	Checkbox cb = (Checkbox) target;
-	ItemEvent e = new ItemEvent(cb,
-			  ItemEvent.ITEM_STATE_CHANGED,
-			  cb.getLabel(),
-			  state ? ItemEvent.SELECTED : ItemEvent.DESELECTED);
-	postEvent(e);
+        Checkbox cb = (Checkbox) target;
+        ItemEvent e = new ItemEvent(cb,
+                          ItemEvent.ITEM_STATE_CHANGED,
+                          cb.getLabel(),
+                          state ? ItemEvent.SELECTED : ItemEvent.DESELECTED);
+        postEvent(e);
     }
 
 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     void action(boolean state) {
-	final Checkbox cb = (Checkbox)target;
-	final boolean newState = state;
-	MToolkit.executeOnEventHandlerThread(cb, new Runnable() {
-	    public void run() {
+        final Checkbox cb = (Checkbox)target;
+        final boolean newState = state;
+        MToolkit.executeOnEventHandlerThread(cb, new Runnable() {
+            public void run() {
                 CheckboxGroup cbg = cb.getCheckboxGroup();
-                /* Bugid 4039594. If this is the current Checkbox in 
-		 * a CheckboxGroup, then return to prevent deselection. 
-		 * Otherwise, it's logical state will be turned off, 
-		 * but it will appear on.
+                /* Bugid 4039594. If this is the current Checkbox in
+                 * a CheckboxGroup, then return to prevent deselection.
+                 * Otherwise, it's logical state will be turned off,
+                 * but it will appear on.
                  */
                 if ((cbg != null) && (cbg.getSelectedCheckbox() == cb) &&
                     cb.getState()) {
                   inUpCall = false;
-		  cb.setState(true);
+                  cb.setState(true);
                   return;
                 }
-		// All clear - set the new state
-	        cb.setState(newState);
-		notifyStateChanged(newState);
-	    } // run()
+                // All clear - set the new state
+                cb.setState(newState);
+                notifyStateChanged(newState);
+            } // run()
         });
     } // action()
 
@@ -139,49 +139,49 @@ public class MCheckboxPeer extends MComponentPeer implements CheckboxPeer {
      */
     public void print(Graphics g) {
         Checkbox cb = (Checkbox)target;
-	Dimension d = cb.size();
-	Color bg = cb.getBackground();
-	Color fg = cb.getForeground();
-	Color shadow = bg.darker();
-	int x = BORDER;
-	int y = ((d.height - SIZE) / 2) + BORDER;
+        Dimension d = cb.size();
+        Color bg = cb.getBackground();
+        Color fg = cb.getForeground();
+        Color shadow = bg.darker();
+        int x = BORDER;
+        int y = ((d.height - SIZE) / 2) + BORDER;
 
-	g.setColor(cb.getState()? shadow : bg);
+        g.setColor(cb.getState()? shadow : bg);
 
-	if (cb.getCheckboxGroup() != null) {
-	    g.fillOval(x, y, SIZ, SIZ);
-	    draw3DOval(g, bg, x, y, SIZ, SIZ, !(cb.getState()));
-	    if (cb.getState()) {
-		g.setColor(fg);
-		g.fillOval(x + 3, y + 3, SIZ - 6, SIZ - 6);
-	    }
-	} else {
-	    g.fillRect(x, y, SIZ, SIZ);
-	    draw3DRect(g, bg, x, y, SIZ, SIZ, !(cb.getState()));
-	    if (cb.getState()) {
-		g.setColor(fg);
-		g.drawLine(x+1, y+1, x+SIZ-1, y+SIZ-1);
-		g.drawLine(x+1, y+SIZ-1, x+SIZ-1, y+1);
-	    }
-	}
-	g.setColor(fg);
-	String lbl = cb.getLabel();
-	if (lbl != null) {
-	    // REMIND: align
-	    g.setFont(cb.getFont());
-	    FontMetrics fm = g.getFontMetrics();
-	    g.drawString(lbl, SIZE,
-			 (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
-	}
+        if (cb.getCheckboxGroup() != null) {
+            g.fillOval(x, y, SIZ, SIZ);
+            draw3DOval(g, bg, x, y, SIZ, SIZ, !(cb.getState()));
+            if (cb.getState()) {
+                g.setColor(fg);
+                g.fillOval(x + 3, y + 3, SIZ - 6, SIZ - 6);
+            }
+        } else {
+            g.fillRect(x, y, SIZ, SIZ);
+            draw3DRect(g, bg, x, y, SIZ, SIZ, !(cb.getState()));
+            if (cb.getState()) {
+                g.setColor(fg);
+                g.drawLine(x+1, y+1, x+SIZ-1, y+SIZ-1);
+                g.drawLine(x+1, y+SIZ-1, x+SIZ-1, y+1);
+            }
+        }
+        g.setColor(fg);
+        String lbl = cb.getLabel();
+        if (lbl != null) {
+            // REMIND: align
+            g.setFont(cb.getFont());
+            FontMetrics fm = g.getFontMetrics();
+            g.drawString(lbl, SIZE,
+                         (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
+        }
 
-	target.print(g);
+        target.print(g);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	    return getMinimumSize();
+            return getMinimumSize();
     }
 
 }

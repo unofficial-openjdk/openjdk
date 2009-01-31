@@ -37,14 +37,14 @@ public class SelectAndCancel {
     static InetSocketAddress isa;
     public static int TEST_PORT = 40170;
 
-    /* 
+    /*
      * CancelledKeyException is the failure symptom of 4729342
      * NOTE: The failure is timing dependent and is not always
      * seen immediately when the bug is present.
      */
     public static void main(String[] args) throws Exception {
         InetAddress lh = InetAddress.getLocalHost();
-	isa = new InetSocketAddress(lh, TEST_PORT);
+        isa = new InetSocketAddress(lh, TEST_PORT);
         selector = Selector.open();
         ssc = ServerSocketChannel.open();
 
@@ -81,7 +81,7 @@ public class SelectAndCancel {
                     }
                 }
             }).start();
-    
+
         // Wait for select() to be awakened, which should be done by close.
         Thread.sleep(3000);
 

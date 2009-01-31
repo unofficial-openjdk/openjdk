@@ -37,10 +37,10 @@ public class OutputSink extends PrintWriter {
     // so 'show' is a no-op.
 
     OutputSink(Writer writer) {
-	super(writer);
+        super(writer);
     }
 
     public void show() {
-	// ignore
+        // ignore
     }
 }

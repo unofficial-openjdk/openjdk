@@ -118,7 +118,6 @@ import sun.java2d.DisposerTarget;
 /**
  * A class which initiates and executes a Win32 printer job.
  *
- * @version 1.0 07 Nov 1997
  * @author Richard Blanchard
  */
 public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
@@ -150,7 +149,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * and even-numbered polygon sides on each scan line).
      * It must match the value in <WINGDI.h> It can be passed
      * to setPolyFillMode().
-     */ 
+     */
     protected static final int POLYFILL_ALTERNATE = 1;
 
     /**
@@ -159,7 +158,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * with a nonzero winding value). It must match
      * the value in <WINGDI.h> It can be passed
      * to setPolyFillMode().
-     */ 
+     */
     protected static final int POLYFILL_WINDING = 2;
 
     /**
@@ -197,10 +196,10 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * Pageable MAX pages
      */
     private static final int MAX_UNKNOWN_PAGES = 9999;
-   
+
 
     /* Collation and copy flags.
-     * The Windows PRINTDLG struct has a nCopies field which on return 
+     * The Windows PRINTDLG struct has a nCopies field which on return
      * indicates how many copies of a print job an application must render.
      * There is also a PD_COLLATE member of the flags field which if
      * set on return indicates the application generated copies should be
@@ -245,7 +244,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * These fields are changed by native code which detects the driver's
      * capabilities and the user's choices.
      */
-    
+
     //initialize to false because the Flags that we initialized in PRINTDLG
     // tells GDI that we can handle our own collation and multiple copies
      private boolean driverDoesMultipleCopies = false;
@@ -257,22 +256,22 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * when this WPrinterJob is GC'd.
      */
     static class HandleRecord implements DisposerRecord {
-	/**
-	 * The Windows device context we will print into.
-	 * This variable is set after the Print dialog
-	 * is okayed by the user. If the user cancels
-	 * the print dialog, then this variable is 0.
-	 * Much of the configuration information for a printer is
-	 * obtained through printer device specific handles.
-	 * We need to associate these with, and free with, the mPrintDC.
-	 */
-	private long mPrintDC;
-	private long mPrintHDevMode;
-	private long mPrintHDevNames;
+        /**
+         * The Windows device context we will print into.
+         * This variable is set after the Print dialog
+         * is okayed by the user. If the user cancels
+         * the print dialog, then this variable is 0.
+         * Much of the configuration information for a printer is
+         * obtained through printer device specific handles.
+         * We need to associate these with, and free with, the mPrintDC.
+         */
+        private long mPrintDC;
+        private long mPrintHDevMode;
+        private long mPrintHDevNames;
 
-	public void dispose() {
-	    WPrinterJob.deleteDC(mPrintDC, mPrintHDevMode, mPrintHDevNames);
-	}
+        public void dispose() {
+            WPrinterJob.deleteDC(mPrintDC, mPrintHDevMode, mPrintHDevNames);
+        }
     }
 
     private HandleRecord handleRecord = new HandleRecord();
@@ -296,7 +295,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
     private int mPageWidth;   // width in pixels of entire page
 
-    private int mPageHeight;  // height in pixels of entire page  
+    private int mPageHeight;  // height in pixels of entire page
 
     /* The values of the following variables are pulled directly
      * into native code (even bypassing getter methods) when starting a doc.
@@ -322,7 +321,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     private int mAttMediaSizeName;
     private int mAttMediaTray;
 
-    private String mDestination = null;  
+    private String mDestination = null;
 
     /**
      * The last color set into the print device context or
@@ -346,7 +345,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     private int mLastFontStyle;
     private int mLastRotation;
     private float mLastAwScale;
-    
+
     // for AwtPrintControl::InitPrintDialog
     private PrinterJob pjob;
 
@@ -360,16 +359,16 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
         initIDs();
 
-	Win32GraphicsEnvironment.registerJREFontsForPrinting();
+        Win32GraphicsEnvironment.registerJREFontsForPrinting();
     }
 
     /* Constructors */
 
     public WPrinterJob()
     {
-	Disposer.addRecord(disposerReferent,
-			   handleRecord = new HandleRecord());
-	initAttributeMembers();
+        Disposer.addRecord(disposerReferent,
+                           handleRecord = new HandleRecord());
+        initAttributeMembers();
     }
 
     /* Implement DisposerTarget. Weak references to an Object can delay
@@ -383,7 +382,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     private Object disposerReferent = new Object();
 
     public Object getDisposerReferent() {
-	return disposerReferent;
+        return disposerReferent;
     }
 
 /* Instance Methods */
@@ -415,70 +414,70 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
             throw new HeadlessException();
         }
 
-	if (getPrintService() instanceof StreamPrintService) {
-	    return super.pageDialog(page);
-	}
+        if (getPrintService() instanceof StreamPrintService) {
+            return super.pageDialog(page);
+        }
 
-	PageFormat pageClone = (PageFormat) page.clone();
-	boolean result = false;
+        PageFormat pageClone = (PageFormat) page.clone();
+        boolean result = false;
 
-	/*
-	 * Fix for 4507585: show the native modal dialog the same way printDialog() does so
-	 * that it won't block event dispatching when called on EventDispatchThread.
-	 */    
-	WPageDialog dialog = new WPageDialog((Frame)null, this,
-				     pageClone, null);
-	dialog.setRetVal(false);
-	dialog.setVisible(true);
-	result = dialog.getRetVal();
-	dialog.dispose();
+        /*
+         * Fix for 4507585: show the native modal dialog the same way printDialog() does so
+         * that it won't block event dispatching when called on EventDispatchThread.
+         */
+        WPageDialog dialog = new WPageDialog((Frame)null, this,
+                                     pageClone, null);
+        dialog.setRetVal(false);
+        dialog.setVisible(true);
+        result = dialog.getRetVal();
+        dialog.dispose();
 
-	// myService => current PrintService 
-	if (result && (myService != null)) {
-	    // It's possible that current printer is changed through
-	    // the "Printer..." button so we query again from native.
-	    String printerName = getNativePrintService();
-	    if (!myService.getName().equals(printerName)) {
-		// native printer is different !
-		// we update the current PrintService 
-		try {
-		    setPrintService(Win32PrintServiceLookup.
-				    getWin32PrintLUS().
-				    getPrintServiceByName(printerName));
-		} catch (PrinterException e) {
-		}
-	    }
-	    // Update attributes, this will preserve the page settings.
-	    //  - same code as in RasterPrinterJob.java
-	    updatePageAttributes(myService, pageClone);
+        // myService => current PrintService
+        if (result && (myService != null)) {
+            // It's possible that current printer is changed through
+            // the "Printer..." button so we query again from native.
+            String printerName = getNativePrintService();
+            if (!myService.getName().equals(printerName)) {
+                // native printer is different !
+                // we update the current PrintService
+                try {
+                    setPrintService(Win32PrintServiceLookup.
+                                    getWin32PrintLUS().
+                                    getPrintServiceByName(printerName));
+                } catch (PrinterException e) {
+                }
+            }
+            // Update attributes, this will preserve the page settings.
+            //  - same code as in RasterPrinterJob.java
+            updatePageAttributes(myService, pageClone);
 
-	    return pageClone;
-	} else {
-	    return page;
-	}	 
+            return pageClone;
+        } else {
+            return page;
+        }
     }
 
 
     private boolean displayNativeDialog() {
-	// "attributes" is required for getting the updated attributes
-	if (attributes == null) {
-	    return false;
-	}
+        // "attributes" is required for getting the updated attributes
+        if (attributes == null) {
+            return false;
+        }
 
-	DialogOwner dlgOwner = (DialogOwner)attributes.get(DialogOwner.class); 
-	Frame ownerFrame = (dlgOwner != null) ? dlgOwner.getOwner() : null; 
+        DialogOwner dlgOwner = (DialogOwner)attributes.get(DialogOwner.class);
+        Frame ownerFrame = (dlgOwner != null) ? dlgOwner.getOwner() : null;
 
-	WPrintDialog dialog = new WPrintDialog(ownerFrame, this);
-	dialog.setRetVal(false);
+        WPrintDialog dialog = new WPrintDialog(ownerFrame, this);
+        dialog.setRetVal(false);
         dialog.setVisible(true);
-	boolean prv = dialog.getRetVal();
-	dialog.dispose();
+        boolean prv = dialog.getRetVal();
+        dialog.dispose();
 
-	Destination dest = 
-		(Destination)attributes.get(Destination.class);
-	if ((dest == null) || !prv){
-		return prv;
-	} else {
+        Destination dest =
+                (Destination)attributes.get(Destination.class);
+        if ((dest == null) || !prv){
+                return prv;
+        } else {
             String title = null;
             String strBundle = "sun.print.resources.serviceui";
             ResourceBundle rb = ResourceBundle.getBundle(strBundle);
@@ -486,14 +485,14 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                 title = rb.getString("dialog.printtofile");
             } catch (MissingResourceException e) {
             }
-            FileDialog fileDialog = new FileDialog(ownerFrame, title, 
+            FileDialog fileDialog = new FileDialog(ownerFrame, title,
                                                    FileDialog.SAVE);
 
-	    URI destURI = dest.getURI();
-	    // Old code destURI.getPath() would return null for "file:out.prn" 
-	    // so we use getSchemeSpecificPart instead.
-	    String pathName = (destURI != null) ? 
-		destURI.getSchemeSpecificPart() : null;
+            URI destURI = dest.getURI();
+            // Old code destURI.getPath() would return null for "file:out.prn"
+            // so we use getSchemeSpecificPart instead.
+            String pathName = (destURI != null) ?
+                destURI.getSchemeSpecificPart() : null;
             if (pathName != null) {
                File file = new File(pathName);
                fileDialog.setFile(file.getName());
@@ -501,44 +500,44 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                if (parent != null) {
                    fileDialog.setDirectory(parent.getPath());
                }
-            } else {  
-	        fileDialog.setFile("out.prn");
+            } else {
+                fileDialog.setFile("out.prn");
             }
-	    
-	    fileDialog.setVisible(true);
-	    String fileName = fileDialog.getFile();
-	    if (fileName == null) {
-		fileDialog.dispose();
-		return false;
-	    }
-	    String fullName = fileDialog.getDirectory() + fileName;
-	    File f = new File(fullName);
-	    File pFile = f.getParentFile();
-	    while ((f.exists() && 
-		      (!f.isFile() || !f.canWrite())) ||
-		   ((pFile != null) && 
-		      (!pFile.exists() || (pFile.exists() && !pFile.canWrite())))) {
 
-		(new PrintToFileErrorDialog(ownerFrame,
-				ServiceDialog.getMsg("dialog.owtitle"),
-				ServiceDialog.getMsg("dialog.writeerror")+" "+fullName,
-			        ServiceDialog.getMsg("button.ok"))).setVisible(true);
-			
-		fileDialog.setVisible(true);
-		fileName = fileDialog.getFile();
-		if (fileName == null) {
-		    fileDialog.dispose();
-		    return false;
-		}
-		fullName = fileDialog.getDirectory() + fileName;
-		f = new File(fullName);
-		pFile = f.getParentFile();
-	    }
-	    fileDialog.dispose();
-	    attributes.add(new Destination(f.toURI()));
-	    return true;	    
-	}
-	
+            fileDialog.setVisible(true);
+            String fileName = fileDialog.getFile();
+            if (fileName == null) {
+                fileDialog.dispose();
+                return false;
+            }
+            String fullName = fileDialog.getDirectory() + fileName;
+            File f = new File(fullName);
+            File pFile = f.getParentFile();
+            while ((f.exists() &&
+                      (!f.isFile() || !f.canWrite())) ||
+                   ((pFile != null) &&
+                      (!pFile.exists() || (pFile.exists() && !pFile.canWrite())))) {
+
+                (new PrintToFileErrorDialog(ownerFrame,
+                                ServiceDialog.getMsg("dialog.owtitle"),
+                                ServiceDialog.getMsg("dialog.writeerror")+" "+fullName,
+                                ServiceDialog.getMsg("button.ok"))).setVisible(true);
+
+                fileDialog.setVisible(true);
+                fileName = fileDialog.getFile();
+                if (fileName == null) {
+                    fileDialog.dispose();
+                    return false;
+                }
+                fullName = fileDialog.getDirectory() + fileName;
+                f = new File(fullName);
+                pFile = f.getParentFile();
+            }
+            fileDialog.dispose();
+            attributes.add(new Destination(f.toURI()));
+            return true;
+        }
+
     }
 
     /**
@@ -555,21 +554,21 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
         if (GraphicsEnvironment.isHeadless()) {
             throw new HeadlessException();
         }
-	// current request attribute set should be reflected to the print dialog.
-	// If null, create new instance of HashPrintRequestAttributeSet.
-	if (attributes == null) {
-	    attributes = new HashPrintRequestAttributeSet();
-	}
+        // current request attribute set should be reflected to the print dialog.
+        // If null, create new instance of HashPrintRequestAttributeSet.
+        if (attributes == null) {
+            attributes = new HashPrintRequestAttributeSet();
+        }
 
-	if (getPrintService() instanceof StreamPrintService) {
-	    return super.printDialog(attributes);
-	}	
-	
-	if (noDefaultPrinter == true) {
-	    return false;
-	} else {	 
-	    return displayNativeDialog();
-	}
+        if (getPrintService() instanceof StreamPrintService) {
+            return super.printDialog(attributes);
+        }
+
+        if (noDefaultPrinter == true) {
+            return false;
+        } else {
+            return displayNativeDialog();
+        }
     }
 
      /**
@@ -586,11 +585,11 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     public void setPrintService(PrintService service)
         throws PrinterException {
         super.setPrintService(service);
-	if (service instanceof StreamPrintService) {
-	    return;
-	}
-	driverDoesMultipleCopies = false;
-	driverDoesCollation = false;
+        if (service instanceof StreamPrintService) {
+            return;
+        }
+        driverDoesMultipleCopies = false;
+        driverDoesCollation = false;
         setNativePrintService(service.getName());
     }
 
@@ -599,45 +598,45 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
         throws PrinterException;
 
     public PrintService getPrintService() {
-	if (myService == null) {
-	    String printerName = getNativePrintService();
+        if (myService == null) {
+            String printerName = getNativePrintService();
 
-	    if (printerName != null) {	
-		myService = Win32PrintServiceLookup.getWin32PrintLUS().
-		    getPrintServiceByName(printerName);
-		// no need to call setNativePrintService as this name is
-		// currently set in native
-		if (myService != null) {
-		    return myService;
-		} 
-	    }
+            if (printerName != null) {
+                myService = Win32PrintServiceLookup.getWin32PrintLUS().
+                    getPrintServiceByName(printerName);
+                // no need to call setNativePrintService as this name is
+                // currently set in native
+                if (myService != null) {
+                    return myService;
+                }
+            }
 
-	    myService = PrintServiceLookup.lookupDefaultPrintService();
-	    if (myService != null) {
+            myService = PrintServiceLookup.lookupDefaultPrintService();
+            if (myService != null) {
                 try {
                     setNativePrintService(myService.getName());
                 } catch (Exception e) {
                     myService = null;
                 }
-	    }
-	    
-	  }
-	  return myService;	
+            }
+
+          }
+          return myService;
     }
-    
+
     private native String getNativePrintService();
 
     private void initAttributeMembers() {
-	    mAttSides = 0;
-	    mAttChromaticity = 0;
-	    mAttXRes = 0;
-	    mAttYRes = 0;
-	    mAttQuality = 0;
-	    mAttCollate = -1;
-	    mAttCopies = 0;
-	    mAttMediaTray = 0;
-	    mAttMediaSizeName = 0;
-	    mDestination = null;
+            mAttSides = 0;
+            mAttChromaticity = 0;
+            mAttXRes = 0;
+            mAttYRes = 0;
+            mAttQuality = 0;
+            mAttCollate = -1;
+            mAttCopies = 0;
+            mAttMediaTray = 0;
+            mAttMediaSizeName = 0;
+            mDestination = null;
 
     }
 
@@ -651,8 +650,8 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * In the event that the user changes the printer using the
       dialog, then it is up to GDI to report back all changed values.
      */
-    protected void setAttributes(PrintRequestAttributeSet attributes) 
-	throws PrinterException {
+    protected void setAttributes(PrintRequestAttributeSet attributes)
+        throws PrinterException {
 
         // initialize attribute values
         initAttributeMembers();
@@ -670,13 +669,13 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
             try {
                  if (attr.getCategory() == Sides.class) {
                     setSidesAttrib(attr);
-                } 
+                }
                 else if (attr.getCategory() == Chromaticity.class) {
                     setColorAttrib(attr);
                 }
                 else if (attr.getCategory() == PrinterResolution.class) {
                     setResolutionAttrib(attr);
-                } 
+                }
                 else if (attr.getCategory() == PrintQuality.class) {
                     setQualityAttrib(attr);
                 }
@@ -701,7 +700,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                         setMediaTrayAttrib(attr);
                     }
                 }
-                
+
             } catch (ClassCastException e) {
             }
         }
@@ -722,7 +721,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      */
     public PageFormat defaultPage(PageFormat page) {
         PageFormat newPage = (PageFormat)page.clone();
-        getDefaultPage(newPage); 
+        getDefaultPage(newPage);
         return newPage;
     }
 
@@ -743,57 +742,57 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * <code>null</code>. Returning <code>null</code>
      * causes the print job to be rasterized.
      */
-    
+
     protected Graphics2D createPathGraphics(PeekGraphics peekGraphics,
-					    PrinterJob printerJob,
+                                            PrinterJob printerJob,
                                             Printable painter,
                                             PageFormat pageFormat,
                                             int pageIndex) {
 
-	WPathGraphics pathGraphics;
-	PeekMetrics metrics = peekGraphics.getMetrics();
+        WPathGraphics pathGraphics;
+        PeekMetrics metrics = peekGraphics.getMetrics();
 
-	/* If the application has drawn anything that
-	 * out PathGraphics class can not handle then
-	 * return a null PathGraphics. If the property
+        /* If the application has drawn anything that
+         * out PathGraphics class can not handle then
+         * return a null PathGraphics. If the property
          * to force the raster pipeline has been set then
          * we also want to avoid the path (pdl) pipeline
          * and return null.
-	 */
+         */
        if (forcePDL == false && (forceRaster == true
                                   || metrics.hasNonSolidColors()
                                   || metrics.hasCompositing()
                                   )) {
-	    pathGraphics = null;
-	} else {
-	    BufferedImage bufferedImage = new BufferedImage(8, 8,
-					    BufferedImage.TYPE_INT_RGB);
-	    Graphics2D bufferedGraphics = bufferedImage.createGraphics();
+            pathGraphics = null;
+        } else {
+            BufferedImage bufferedImage = new BufferedImage(8, 8,
+                                            BufferedImage.TYPE_INT_RGB);
+            Graphics2D bufferedGraphics = bufferedImage.createGraphics();
 
             boolean canRedraw = peekGraphics.getAWTDrawingOnly() == false;
-	    pathGraphics =  new WPathGraphics(bufferedGraphics, printerJob,
+            pathGraphics =  new WPathGraphics(bufferedGraphics, printerJob,
                                               painter, pageFormat, pageIndex,
                                               canRedraw);
-	}
+        }
 
-	return pathGraphics;
+        return pathGraphics;
     }
-    
+
 
     protected double getXRes() {
-	if (mAttXRes != 0) {
-	    return mAttXRes;
-	} else {
-	    return mPrintXRes;
-	}
+        if (mAttXRes != 0) {
+            return mAttXRes;
+        } else {
+            return mPrintXRes;
+        }
     }
 
     protected double getYRes() {
-	if (mAttYRes != 0) {
-	    return mAttYRes;
-	} else {
-	    return mPrintYRes;
-	}
+        if (mAttYRes != 0) {
+            return mAttYRes;
+        } else {
+            return mPrintYRes;
+        }
     }
 
     protected double getPhysicalPrintableX(Paper p) {
@@ -828,7 +827,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * REMIND: check if this can be deleted already.
      */
     protected boolean isCollated() {
-        return userRequestedCollation; 
+        return userRequestedCollation;
     }
 
     /**
@@ -840,17 +839,17 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * will be collated and made in the printer.
      */
     protected int getCollatedCopies() {
-	debug_println("driverDoesMultipleCopies="+driverDoesMultipleCopies
-		      +" driverDoesCollation="+driverDoesCollation);
-	if  (super.isCollated() && !driverDoesCollation) {
-	    // we will do our own collation so we need to
-	    // tell the printer to not collate 
-	    mAttCollate = 0;	   
-	    mAttCopies = 1;	    
-	    return getCopies();		
-	}
+        debug_println("driverDoesMultipleCopies="+driverDoesMultipleCopies
+                      +" driverDoesCollation="+driverDoesCollation);
+        if  (super.isCollated() && !driverDoesCollation) {
+            // we will do our own collation so we need to
+            // tell the printer to not collate
+            mAttCollate = 0;
+            mAttCopies = 1;
+            return getCopies();
+        }
 
-	return 1;       
+        return 1;
     }
 
     /**
@@ -863,7 +862,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      */
     protected int getNoncollatedCopies() {
         if (driverDoesMultipleCopies || super.isCollated()) {
-	    return 1;
+            return 1;
         } else {
             return getCopies();
         }
@@ -873,22 +872,22 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
     /**
      * Return the Window's device context that we are printing
-     * into. 
+     * into.
      */
     private long getPrintDC() {
-	return handleRecord.mPrintDC;
+        return handleRecord.mPrintDC;
     }
 
     private void setPrintDC(long mPrintDC) {
-	handleRecord.mPrintDC = mPrintDC;
+        handleRecord.mPrintDC = mPrintDC;
     }
 
     private long getDevMode() {
-	return handleRecord.mPrintHDevMode;
+        return handleRecord.mPrintHDevMode;
     }
 
     private void setDevMode(long mPrintHDevMode) {
-	handleRecord.mPrintHDevMode = mPrintHDevMode;
+        handleRecord.mPrintHDevMode = mPrintHDevMode;
     }
 
     private long getDevNames() {
@@ -900,36 +899,36 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     }
 
     protected void beginPath() {
-	beginPath(getPrintDC());
+        beginPath(getPrintDC());
     }
 
     protected void endPath() {
-	endPath(getPrintDC());
+        endPath(getPrintDC());
     }
 
     protected void closeFigure() {
-	closeFigure(getPrintDC());
+        closeFigure(getPrintDC());
     }
 
     protected void fillPath() {
-	fillPath(getPrintDC());
+        fillPath(getPrintDC());
     }
 
     protected void moveTo(float x, float y) {
-	moveTo(getPrintDC(), x, y);
+        moveTo(getPrintDC(), x, y);
     }
 
     protected void lineTo(float x, float y) {
-	lineTo(getPrintDC(), x, y);
+        lineTo(getPrintDC(), x, y);
     }
 
     protected void polyBezierTo(float control1x, float control1y,
-			        float control2x, float control2y,
-				float endX, float endY) {
+                                float control2x, float control2y,
+                                float endX, float endY) {
 
-	polyBezierTo(getPrintDC(), control1x, control1y,
-			       control2x, control2y,
-			       endX, endY);
+        polyBezierTo(getPrintDC(), control1x, control1y,
+                               control2x, control2y,
+                               endX, endY);
     }
 
     /**
@@ -939,7 +938,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * <code>ALTERNATE</code> or <code>WINDING</code>.
      */
     protected void setPolyFillMode(int fillRule) {
-	setPolyFillMode(getPrintDC(), fillRule);
+        setPolyFillMode(getPrintDC(), fillRule);
     }
 
     /*
@@ -949,18 +948,18 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * context and free the old brush.
      */
     protected void selectSolidBrush(Color color) {
-	
-	/* We only need to select a brush if the color has changed.
-	*/
-	if (color.equals(mLastColor) == false) {
-	    mLastColor = color;
-	    float[] rgb = color.getRGBColorComponents(null);
 
-	    selectSolidBrush(getPrintDC(),
-			     (int) (rgb[0] * MAX_WCOLOR),
-			     (int) (rgb[1] * MAX_WCOLOR),
-			     (int) (rgb[2] * MAX_WCOLOR));
-	}
+        /* We only need to select a brush if the color has changed.
+        */
+        if (color.equals(mLastColor) == false) {
+            mLastColor = color;
+            float[] rgb = color.getRGBColorComponents(null);
+
+            selectSolidBrush(getPrintDC(),
+                             (int) (rgb[0] * MAX_WCOLOR),
+                             (int) (rgb[1] * MAX_WCOLOR),
+                             (int) (rgb[2] * MAX_WCOLOR));
+        }
     }
 
     /**
@@ -969,7 +968,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      */
     protected int getPenX() {
 
-	return getPenX(getPrintDC());
+        return getPenX(getPrintDC());
     }
 
 
@@ -979,7 +978,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      */
     protected int getPenY() {
 
-	return getPenY(getPrintDC());
+        return getPenY(getPrintDC());
     }
 
     /**
@@ -987,62 +986,62 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * context to be clipping path.
      */
     protected void selectClipPath() {
-	selectClipPath(getPrintDC());
+        selectClipPath(getPrintDC());
     }
 
-	
+
     protected void frameRect(float x, float y, float width, float height) {
-	frameRect(getPrintDC(), x, y, width, height);
+        frameRect(getPrintDC(), x, y, width, height);
     }
 
     protected void fillRect(float x, float y, float width, float height,
-			    Color color) {
-	float[] rgb = color.getRGBColorComponents(null);
- 
-	fillRect(getPrintDC(), x, y, width, height,
-		 (int) (rgb[0] * MAX_WCOLOR),
-		 (int) (rgb[1] * MAX_WCOLOR),
-		 (int) (rgb[2] * MAX_WCOLOR));
+                            Color color) {
+        float[] rgb = color.getRGBColorComponents(null);
+
+        fillRect(getPrintDC(), x, y, width, height,
+                 (int) (rgb[0] * MAX_WCOLOR),
+                 (int) (rgb[1] * MAX_WCOLOR),
+                 (int) (rgb[2] * MAX_WCOLOR));
     }
 
 
     protected void selectPen(float width, Color color) {
 
-	float[] rgb = color.getRGBColorComponents(null);
- 
-	selectPen(getPrintDC(), width,
-		  (int) (rgb[0] * MAX_WCOLOR),
-		  (int) (rgb[1] * MAX_WCOLOR),
-		  (int) (rgb[2] * MAX_WCOLOR));
+        float[] rgb = color.getRGBColorComponents(null);
+
+        selectPen(getPrintDC(), width,
+                  (int) (rgb[0] * MAX_WCOLOR),
+                  (int) (rgb[1] * MAX_WCOLOR),
+                  (int) (rgb[2] * MAX_WCOLOR));
     }
-    
 
-    protected boolean selectStylePen(int cap, int join, float width, 
-				     Color color) {
-  		
-	long endCap;
-	long lineJoin;
 
-	float[] rgb = color.getRGBColorComponents(null);
+    protected boolean selectStylePen(int cap, int join, float width,
+                                     Color color) {
 
-	switch(cap) {
-	case BasicStroke.CAP_BUTT: endCap = PS_ENDCAP_FLAT; break;
-	case BasicStroke.CAP_ROUND: endCap = PS_ENDCAP_ROUND; break;
-	default:
-	case BasicStroke.CAP_SQUARE: endCap = PS_ENDCAP_SQUARE; break;
-	}
+        long endCap;
+        long lineJoin;
 
-	switch(join) {
-	case BasicStroke.JOIN_BEVEL:lineJoin = PS_JOIN_BEVEL; break;
-	default:
-	case BasicStroke.JOIN_MITER:lineJoin = PS_JOIN_MITER; break;
-	case BasicStroke.JOIN_ROUND:lineJoin = PS_JOIN_ROUND; break;
-	}
+        float[] rgb = color.getRGBColorComponents(null);
 
-	return (selectStylePen(getPrintDC(), endCap, lineJoin, width,
-			       (int) (rgb[0] * MAX_WCOLOR),
-			       (int) (rgb[1] * MAX_WCOLOR),
-			       (int) (rgb[2] * MAX_WCOLOR)));
+        switch(cap) {
+        case BasicStroke.CAP_BUTT: endCap = PS_ENDCAP_FLAT; break;
+        case BasicStroke.CAP_ROUND: endCap = PS_ENDCAP_ROUND; break;
+        default:
+        case BasicStroke.CAP_SQUARE: endCap = PS_ENDCAP_SQUARE; break;
+        }
+
+        switch(join) {
+        case BasicStroke.JOIN_BEVEL:lineJoin = PS_JOIN_BEVEL; break;
+        default:
+        case BasicStroke.JOIN_MITER:lineJoin = PS_JOIN_MITER; break;
+        case BasicStroke.JOIN_ROUND:lineJoin = PS_JOIN_ROUND; break;
+        }
+
+        return (selectStylePen(getPrintDC(), endCap, lineJoin, width,
+                               (int) (rgb[0] * MAX_WCOLOR),
+                               (int) (rgb[1] * MAX_WCOLOR),
+                               (int) (rgb[2] * MAX_WCOLOR)));
     }
 
     /**
@@ -1074,7 +1073,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                 mLastAwScale      = awScale;
             }
         }
-        return didSetFont;        
+        return didSetFont;
     }
 
     /**
@@ -1089,9 +1088,9 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
             float[] rgb = color.getRGBColorComponents(null);
 
             setTextColor(getPrintDC(),
-			 (int) (rgb[0] * MAX_WCOLOR),
-			 (int) (rgb[1] * MAX_WCOLOR),
-			 (int) (rgb[2] * MAX_WCOLOR));
+                         (int) (rgb[0] * MAX_WCOLOR),
+                         (int) (rgb[1] * MAX_WCOLOR),
+                         (int) (rgb[2] * MAX_WCOLOR));
         }
     }
 
@@ -1158,7 +1157,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
         /* Don't leave handling of control chars to GDI. */
         text = removeControlChars(text);
         if (text.length() == 0) {
-            return 0; 
+            return 0;
         }
         return getGDIAdvance(getPrintDC(), text);
     }
@@ -1176,10 +1175,10 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * <code>srcWidth</code>, and srcHeight.
      */
     protected void drawImage3ByteBGR(byte[] image,
-				     float destX, float destY,
-				     float destWidth, float destHeight,
-				     float srcX, float srcY,
-				     float srcWidth, float srcHeight) {
+                                     float destX, float destY,
+                                     float destWidth, float destHeight,
+                                     float srcX, float srcY,
+                                     float srcWidth, float srcHeight) {
 
 
         drawDIBImage(getPrintDC(), image,
@@ -1188,7 +1187,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                      srcX, srcY,
                      srcWidth, srcHeight,
                      24, null);
-                       
+
     }
 
     /* If 'icm' is null we expect its 24 bit (ie 3BYTE_BGR).
@@ -1198,11 +1197,11 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * format required by GDI which is an array of 'RGBQUAD'
      * RGBQUAD looks like :
      * typedef struct tagRGBQUAD {
-     *    BYTE    rgbBlue; 
-     *    BYTE    rgbGreen; 
-     *    BYTE    rgbRed; 
+     *    BYTE    rgbBlue;
+     *    BYTE    rgbGreen;
+     *    BYTE    rgbRed;
      *    BYTE    rgbReserved; // must be zero.
-     * } RGBQUAD; 
+     * } RGBQUAD;
      * There's no alignment problem as GDI expects this to be packed
      * and each struct will start on a 4 byte boundary anyway.
      */
@@ -1211,7 +1210,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                                 float destWidth, float destHeight,
                                 float srcX, float srcY,
                                 float srcWidth, float srcHeight,
-                                IndexColorModel icm) {   
+                                IndexColorModel icm) {
         int bitCount = 24;
         byte[] bmiColors = null;
 
@@ -1271,9 +1270,9 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * Set the number of copies to be printed.
      */
     public void setCopies(int copies) {
-	super.setCopies(copies);
+        super.setCopies(copies);
         mAttCopies = copies;
-	setNativeCopies(copies);
+        setNativeCopies(copies);
     }
 
 
@@ -1282,7 +1281,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     /**
      * Set copies in device.
      */
-    public native void setNativeCopies(int copies);   
+    public native void setNativeCopies(int copies);
 
     /**
      * Displays the print dialog and records the user's settings
@@ -1354,7 +1353,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * specified by the caller.
      */
     protected native void printBand(byte[] data, int x, int y,
-				    int width, int height);
+                                    int width, int height);
 
     /**
      * Begin a Window's rendering path in the device
@@ -1391,11 +1390,11 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * <code>(x,y)</code> in the device context <code>printDC</code>.
      */
     protected native void lineTo(long printDC, float x, float y);
-    
+
     protected native void polyBezierTo(long printDC,
-				       float control1x, float control1y,
-			               float control2x, float control2y,
-				       float endX, float endY);
+                                       float control1x, float control1y,
+                                       float control2x, float control2y,
+                                       float endX, float endY);
 
     /**
      * Set the current polgon fill rule into the device context
@@ -1412,7 +1411,7 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      * context <code>printDC</code> and free the old brush.
      */
     protected native void selectSolidBrush(long printDC,
-					   int red, int green, int blue);
+                                           int red, int green, int blue);
 
     /**
      * Return the x coordinate of the current pen
@@ -1454,12 +1453,12 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
      */
     protected native void selectPen(long printDC, float width,
                                     int red, int green, int blue);
-		
+
     /**
      * Create a solid brush using the RG & B colors and specified
      * pen styles.  Select this created brush and delete the old one.
      */
-    protected native boolean selectStylePen(long printDC, long cap, 
+    protected native boolean selectStylePen(long printDC, long cap,
                                             long join, float width,
                                             int red, int green, int blue);
 
@@ -1520,22 +1519,22 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     //** BEGIN Functions called by native code for querying/updating attributes
 
     private final String getPrinterAttrib() {
-	// getPrintService will get current print service or default if none
-        PrintService service = this.getPrintService();  
-	String name = (service != null) ? service.getName() : null;
-	return name;
+        // getPrintService will get current print service or default if none
+        PrintService service = this.getPrintService();
+        String name = (service != null) ? service.getName() : null;
+        return name;
     }
 
     /* SheetCollate */
     private final boolean getCollateAttrib() {
-	return (mAttCollate == 1);
+        return (mAttCollate == 1);
     }
 
     private void setCollateAttrib(Attribute attr) {
         if (attr == SheetCollate.COLLATED) {
-            mAttCollate = 1; // DMCOLLATE_TRUE 
+            mAttCollate = 1; // DMCOLLATE_TRUE
         } else {
-            mAttCollate = 0; // DMCOLLATE_FALSE  
+            mAttCollate = 0; // DMCOLLATE_FALSE
         }
     }
 
@@ -1546,20 +1545,20 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     }
 
     /* Orientation */
-    
+
     private final int getOrientAttrib() {
-	int orient = PageFormat.PORTRAIT;
-	OrientationRequested orientReq = (attributes == null) ? null :
-	    (OrientationRequested)attributes.get(OrientationRequested.class);
-	if (orientReq != null) {
+        int orient = PageFormat.PORTRAIT;
+        OrientationRequested orientReq = (attributes == null) ? null :
+            (OrientationRequested)attributes.get(OrientationRequested.class);
+        if (orientReq != null) {
             if (orientReq == OrientationRequested.REVERSE_LANDSCAPE) {
-		orient = PageFormat.REVERSE_LANDSCAPE;
+                orient = PageFormat.REVERSE_LANDSCAPE;
             } else if (orientReq == OrientationRequested.LANDSCAPE) {
-		orient = PageFormat.LANDSCAPE;
-	    }
-	}
-	
-	return orient;
+                orient = PageFormat.LANDSCAPE;
+            }
+        }
+
+        return orient;
     }
 
     private void setOrientAttrib(Attribute attr,
@@ -1567,14 +1566,14 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
         if (set != null) {
             set.add(attr);
         }
-    }    
+    }
 
     /* Copies and Page Range. */
     private final int getCopiesAttrib() {
         return getCopiesInt();
      }
 
-    private final void setRangeCopiesAttribute(int from, int to, 
+    private final void setRangeCopiesAttribute(int from, int to,
                                                boolean isRangeSet,
                                                int copies) {
         if (attributes != null) {
@@ -1594,78 +1593,78 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
     //returns 1-based index for "From" page
     private final int getFromPageAttrib() {
-	if (attributes != null) {
-	    PageRanges pageRangesAttr =  
-		(PageRanges)attributes.get(PageRanges.class);	
-	    if (pageRangesAttr != null) {
-		int[][] range = pageRangesAttr.getMembers();
-		return range[0][0];
-	    }
-	}
-	return getMinPageAttrib();
+        if (attributes != null) {
+            PageRanges pageRangesAttr =
+                (PageRanges)attributes.get(PageRanges.class);
+            if (pageRangesAttr != null) {
+                int[][] range = pageRangesAttr.getMembers();
+                return range[0][0];
+            }
+        }
+        return getMinPageAttrib();
     }
 
     //returns 1-based index for "To" page
     private final int getToPageAttrib() {
-	if (attributes != null) {
-	    PageRanges pageRangesAttr =  
-		(PageRanges)attributes.get(PageRanges.class);
-	    if (pageRangesAttr != null) {
-		int[][] range = pageRangesAttr.getMembers();
-		return range[range.length-1][1];
-	    }
-	}
-	return getMaxPageAttrib();
+        if (attributes != null) {
+            PageRanges pageRangesAttr =
+                (PageRanges)attributes.get(PageRanges.class);
+            if (pageRangesAttr != null) {
+                int[][] range = pageRangesAttr.getMembers();
+                return range[range.length-1][1];
+            }
+        }
+        return getMaxPageAttrib();
     }
 
     private final int getMinPageAttrib() {
-	if (attributes != null) {	
-	    SunMinMaxPage s = 
-		(SunMinMaxPage)attributes.get(SunMinMaxPage.class);
-	    if (s != null) {
-		return s.getMin();
-	    }
-	}
-	return 1;
+        if (attributes != null) {
+            SunMinMaxPage s =
+                (SunMinMaxPage)attributes.get(SunMinMaxPage.class);
+            if (s != null) {
+                return s.getMin();
+            }
+        }
+        return 1;
     }
 
     private final int getMaxPageAttrib() {
-	if (attributes != null) {
-	    SunMinMaxPage s = 
-		(SunMinMaxPage)attributes.get(SunMinMaxPage.class);
-	    if (s != null) {
-		return s.getMax();
-	    }
-	}
+        if (attributes != null) {
+            SunMinMaxPage s =
+                (SunMinMaxPage)attributes.get(SunMinMaxPage.class);
+            if (s != null) {
+                return s.getMax();
+            }
+        }
 
-	Pageable pageable = getPageable();
-	if (pageable != null) {
-	    int numPages = pageable.getNumberOfPages();
-	    if (numPages <= Pageable.UNKNOWN_NUMBER_OF_PAGES) {
-		numPages = MAX_UNKNOWN_PAGES;
-	    }
-	    return  ((numPages == 0) ? 1 : numPages); 
-	}
+        Pageable pageable = getPageable();
+        if (pageable != null) {
+            int numPages = pageable.getNumberOfPages();
+            if (numPages <= Pageable.UNKNOWN_NUMBER_OF_PAGES) {
+                numPages = MAX_UNKNOWN_PAGES;
+            }
+            return  ((numPages == 0) ? 1 : numPages);
+        }
 
         return Integer.MAX_VALUE;
     }
 
     private final boolean getDestAttrib() {
-	return (mDestination != null);
+        return (mDestination != null);
     }
 
     /* Quality */
     private final int getQualityAttrib() {
-	return mAttQuality;
+        return mAttQuality;
     }
 
     private void setQualityAttrib(Attribute attr) {
         if (attr == PrintQuality.HIGH) {
-            mAttQuality = -4; // DMRES_HIGH 
+            mAttQuality = -4; // DMRES_HIGH
         } else if (attr == PrintQuality.NORMAL) {
-            mAttQuality = -3; // DMRES_MEDIUM 
+            mAttQuality = -3; // DMRES_MEDIUM
         } else {
-            mAttQuality = -2; // DMRES_LOW 
+            mAttQuality = -2; // DMRES_LOW
         }
     }
 
@@ -1677,14 +1676,14 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
     /* Color/Chromaticity */
     private final int getColorAttrib() {
-	return mAttChromaticity;
+        return mAttChromaticity;
     }
 
     private void setColorAttrib(Attribute attr) {
         if (attr == Chromaticity.COLOR) {
-            mAttChromaticity = 2; // DMCOLOR_COLOR 
+            mAttChromaticity = 2; // DMCOLOR_COLOR
         } else {
-            mAttChromaticity = 1; // DMCOLOR_MONOCHROME 
+            mAttChromaticity = 1; // DMCOLOR_MONOCHROME
         }
     }
 
@@ -1694,16 +1693,16 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
         set.add(attr);
     }
 
-    /* Sides */ 
+    /* Sides */
     private final int getSidesAttrib() {
-	return mAttSides;
+        return mAttSides;
     }
 
     private void setSidesAttrib(Attribute attr) {
         if (attr == Sides.TWO_SIDED_LONG_EDGE) {
-            mAttSides = 2; // DMDUP_VERTICAL 
+            mAttSides = 2; // DMDUP_VERTICAL
         } else if (attr == Sides.TWO_SIDED_SHORT_EDGE) {
-            mAttSides = 3; // DMDUP_HORIZONTAL 
+            mAttSides = 3; // DMDUP_HORIZONTAL
         } else { // Sides.ONE_SIDED
             mAttSides = 1;
         }
@@ -1717,19 +1716,19 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
 
     /** MediaSizeName / dmPaper */
     private final int[] getWin32MediaAttrib() {
-	int wid_ht[] = {0, 0};
-	if (attributes != null) {	    
-	    Media media = (Media)attributes.get(Media.class);
-	    if (media instanceof MediaSizeName) {
-		MediaSizeName msn = (MediaSizeName)media;
-		MediaSize ms = MediaSize.getMediaSizeForName(msn);
-		if (ms != null) {
-		    wid_ht[0] = (int)(ms.getX(MediaSize.INCH) * 72.0);
-		    wid_ht[1] = (int)(ms.getY(MediaSize.INCH) * 72.0);
-		}
-	    }
-	}
-	return wid_ht;		
+        int wid_ht[] = {0, 0};
+        if (attributes != null) {
+            Media media = (Media)attributes.get(Media.class);
+            if (media instanceof MediaSizeName) {
+                MediaSizeName msn = (MediaSizeName)media;
+                MediaSize ms = MediaSize.getMediaSizeForName(msn);
+                if (ms != null) {
+                    wid_ht[0] = (int)(ms.getX(MediaSize.INCH) * 72.0);
+                    wid_ht[1] = (int)(ms.getY(MediaSize.INCH) * 72.0);
+                }
+            }
+        }
+        return wid_ht;
     }
 
     private void setWin32MediaAttrib(Attribute attr) {
@@ -1770,9 +1769,9 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
             mAttMediaTray = 4;              // DMBIN_MANUAL
         } else if (attr == MediaTray.MIDDLE) {
             mAttMediaTray = 3;              // DMBIN_MIDDLE
-        } else if (attr == MediaTray.SIDE) { 
+        } else if (attr == MediaTray.SIDE) {
             // no equivalent predefined value
-            mAttMediaTray = 7;              // DMBIN_AUTO 
+            mAttMediaTray = 7;              // DMBIN_AUTO
         } else if (attr == MediaTray.TOP) {
             mAttMediaTray =1;               // DMBIN_UPPER
         } else {
@@ -1794,100 +1793,100 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     }
 
     private final int getSelectAttrib() {
-	if (attributes != null) {
-	    SunPageSelection pages =
-		(SunPageSelection)attributes.get(SunPageSelection.class);
-	    if (pages == SunPageSelection.RANGE) {
-		return PD_PAGENUMS;
-	    } else if (pages == SunPageSelection.SELECTION) {
-		return PD_SELECTION;
-	    } else if (pages ==  SunPageSelection.ALL) {
-		return PD_ALLPAGES;
-	    }
-	}
-	return PD_NOSELECTION;
+        if (attributes != null) {
+            SunPageSelection pages =
+                (SunPageSelection)attributes.get(SunPageSelection.class);
+            if (pages == SunPageSelection.RANGE) {
+                return PD_PAGENUMS;
+            } else if (pages == SunPageSelection.SELECTION) {
+                return PD_SELECTION;
+            } else if (pages ==  SunPageSelection.ALL) {
+                return PD_ALLPAGES;
+            }
+        }
+        return PD_NOSELECTION;
     }
 
     private final boolean getPrintToFileEnabled() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    FilePermission printToFilePermission =
-		new FilePermission("<<ALL FILES>>", "read,write");	    
-	    try {
-		security.checkPermission(printToFilePermission);
-	    } catch (SecurityException e) {	
-		return false;
-	    }
-	}	
-	return true;	
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            FilePermission printToFilePermission =
+                new FilePermission("<<ALL FILES>>", "read,write");
+            try {
+                security.checkPermission(printToFilePermission);
+            } catch (SecurityException e) {
+                return false;
+            }
+        }
+        return true;
     }
- 
+
     private final void setNativeAttributes(int flags, int fields, int values) {
-	if (attributes == null) {
-	    return;
-	}
-	if ((flags & PD_PRINTTOFILE) != 0) {
-	    Destination destPrn = (Destination)attributes.get(
-						 Destination.class);
-	    if (destPrn == null) {
-		try {
-		    attributes.add(new Destination(
+        if (attributes == null) {
+            return;
+        }
+        if ((flags & PD_PRINTTOFILE) != 0) {
+            Destination destPrn = (Destination)attributes.get(
+                                                 Destination.class);
+            if (destPrn == null) {
+                try {
+                    attributes.add(new Destination(
                                                new File("./out.prn").toURI()));
-		} catch (SecurityException se) {
-		    try {
-			attributes.add(new Destination(
-						new URI("file:out.prn")));
-		    } catch (URISyntaxException e) {
-		    }
-		}
-	    }
-	} else {
-	    attributes.remove(Destination.class);
-	}
+                } catch (SecurityException se) {
+                    try {
+                        attributes.add(new Destination(
+                                                new URI("file:out.prn")));
+                    } catch (URISyntaxException e) {
+                    }
+                }
+            }
+        } else {
+            attributes.remove(Destination.class);
+        }
 
         if ((flags & PD_COLLATE) != 0) {
             setCollateAttrib(SheetCollate.COLLATED, attributes);
-	} else {
+        } else {
             setCollateAttrib(SheetCollate.UNCOLLATED, attributes);
-	}
-	
-	if ((flags & PD_PAGENUMS) != 0) {
-	    attributes.add(SunPageSelection.RANGE);
-	} else if ((flags & PD_SELECTION) != 0) {
-	    attributes.add(SunPageSelection.SELECTION);
-	} else {
-	    attributes.add(SunPageSelection.ALL);
-	}
+        }
 
-	if ((fields & DM_ORIENTATION) != 0) {
+        if ((flags & PD_PAGENUMS) != 0) {
+            attributes.add(SunPageSelection.RANGE);
+        } else if ((flags & PD_SELECTION) != 0) {
+            attributes.add(SunPageSelection.SELECTION);
+        } else {
+            attributes.add(SunPageSelection.ALL);
+        }
+
+        if ((fields & DM_ORIENTATION) != 0) {
             if ((values & SET_ORIENTATION) != 0) {
                 setOrientAttrib(OrientationRequested.LANDSCAPE, attributes);
-	    } else {
+            } else {
                 setOrientAttrib(OrientationRequested.PORTRAIT, attributes);
-	    }
-	}
+            }
+        }
 
-	if ((fields & DM_COLOR) != 0) {
+        if ((fields & DM_COLOR) != 0) {
             if ((values & SET_COLOR) != 0) {
                 setColorAttrib(Chromaticity.COLOR, attributes);
-	    } else {
+            } else {
                 setColorAttrib(Chromaticity.MONOCHROME, attributes);
-	    }
-	}
-	
+            }
+        }
+
         if ((fields & DM_PRINTQUALITY) != 0) {
             PrintQuality quality;
             if ((values & SET_RES_LOW) != 0) {
                 quality = PrintQuality.DRAFT;
             } else if ((fields & SET_RES_HIGH) != 0) {
-                quality = PrintQuality.HIGH;    
+                quality = PrintQuality.HIGH;
             } else {
                 quality = PrintQuality.NORMAL;
             }
             setQualityAttrib(quality, attributes);
         }
 
-	if ((fields & DM_DUPLEX) != 0) {
+        if ((fields & DM_DUPLEX) != 0) {
             Sides sides;
             if ((values & SET_DUP_VERTICAL) != 0) {
                 sides = Sides.TWO_SIDED_LONG_EDGE;
@@ -1895,19 +1894,19 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
                 sides = Sides.TWO_SIDED_SHORT_EDGE;
             } else {
                 sides = Sides.ONE_SIDED;
-	    }
+            }
             setSidesAttrib(sides, attributes);
-	}
+        }
     }
 
 
     /* Printer Resolution. See also getXRes() and getYRes() */
     private final void setResolutionDPI(int xres, int yres) {
-	if (attributes != null) {
+        if (attributes != null) {
             PrinterResolution res =
                 new PrinterResolution(xres, yres, PrinterResolution.DPI);
-            attributes.add(res); 
-	}
+            attributes.add(res);
+        }
         mAttXRes = xres;
         mAttYRes = yres;
     }
@@ -1919,60 +1918,60 @@ public class WPrinterJob extends RasterPrinterJob implements DisposerTarget {
     }
 
     private void setPrinterNameAttrib(String printerName) {
-	PrintService service = this.getPrintService();	
+        PrintService service = this.getPrintService();
 
-	if (printerName == null) {
-	    return;
-	}
+        if (printerName == null) {
+            return;
+        }
 
-	if (service != null && printerName.equals(service.getName())) {
-	    return;
-	} else {
-	    PrintService []services = PrinterJob.lookupPrintServices();
-	    for (int i=0; i<services.length; i++) {
-		if (printerName.equals(services[i].getName())) {
-		   
-		    try {
-			this.setPrintService(services[i]);
-		    } catch (PrinterException e) {
-		    }
-		    return;
-		}
-	    }
-	}
+        if (service != null && printerName.equals(service.getName())) {
+            return;
+        } else {
+            PrintService []services = PrinterJob.lookupPrintServices();
+            for (int i=0; i<services.length; i++) {
+                if (printerName.equals(services[i].getName())) {
+
+                    try {
+                        this.setPrintService(services[i]);
+                    } catch (PrinterException e) {
+                    }
+                    return;
+                }
+            }
+        }
     //** END Functions called by native code for querying/updating attributes
 
-   }   
+   }
 
 class PrintToFileErrorDialog extends Dialog implements ActionListener{
     public PrintToFileErrorDialog(Frame parent, String title, String message,
-			   String buttonText) {
+                           String buttonText) {
         super(parent, title, true);
-	init (parent, title, message, buttonText);
+        init (parent, title, message, buttonText);
     }
 
     public PrintToFileErrorDialog(Dialog parent, String title, String message,
-			   String buttonText) {
+                           String buttonText) {
         super(parent, title, true);
-	init (parent, title, message, buttonText);
+        init (parent, title, message, buttonText);
     }
 
     private void init(Component parent, String  title, String message,
-		      String buttonText) {
+                      String buttonText) {
         Panel p = new Panel();
         add("Center", new Label(message));
-	Button btn = new Button(buttonText);
-	btn.addActionListener(this);
+        Button btn = new Button(buttonText);
+        btn.addActionListener(this);
         p.add(btn);
         add("South", p);
         pack();
 
         Dimension dDim = getSize();
-	if (parent != null) {
-	    Rectangle fRect = parent.getBounds();
-	    setLocation(fRect.x + ((fRect.width - dDim.width) / 2),
-			fRect.y + ((fRect.height - dDim.height) / 2));
-	}
+        if (parent != null) {
+            Rectangle fRect = parent.getBounds();
+            setLocation(fRect.x + ((fRect.width - dDim.width) / 2),
+                        fRect.y + ((fRect.height - dDim.height) / 2));
+        }
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -1989,7 +1988,5 @@ class PrintToFileErrorDialog extends Dialog implements ActionListener{
      * Initialize JNI field and method ids
      */
     private static native void initIDs();
-   
+
 }
-
-

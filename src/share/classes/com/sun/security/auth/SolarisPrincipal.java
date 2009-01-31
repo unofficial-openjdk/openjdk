@@ -35,13 +35,12 @@ import java.security.Principal;
  * may be associated with a particular <code>Subject</code>
  * to augment that <code>Subject</code> with an additional
  * identity.  Refer to the <code>Subject</code> class for more information
- * on how to achieve this.  Authorization decisions can then be based upon 
+ * on how to achieve this.  Authorization decisions can then be based upon
  * the Principals associated with a <code>Subject</code>.
- * 
- * @deprecated As of JDK&nbsp;1.4, replaced by 
+ *
+ * @deprecated As of JDK&nbsp;1.4, replaced by
  *             {@link UnixPrincipal}.
  *             This class is entirely deprecated.
- * @version %I%, %G%
  * @see java.security.Principal
  * @see javax.security.auth.Subject
  */
@@ -73,13 +72,13 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * @param name the Unix username for this user.
      *
      * @exception NullPointerException if the <code>name</code>
-     *			is <code>null</code>.
+     *                  is <code>null</code>.
      */
     public SolarisPrincipal(String name) {
-	if (name == null)
-	    throw new NullPointerException(rb.getString("provided null name"));
+        if (name == null)
+            throw new NullPointerException(rb.getString("provided null name"));
 
-	this.name = name;
+        this.name = name;
     }
 
     /**
@@ -90,7 +89,7 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * @return the Unix username for this <code>SolarisPrincipal</code>
      */
     public String getName() {
-	return name;
+        return name;
     }
 
     /**
@@ -101,7 +100,7 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * @return a string representation of this <code>SolarisPrincipal</code>.
      */
     public String toString() {
-	return(rb.getString("SolarisPrincipal: ") + name);
+        return(rb.getString("SolarisPrincipal: ") + name);
     }
 
     /**
@@ -113,27 +112,27 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * <p>
      *
      * @param o Object to be compared for equality with this
-     *		<code>SolarisPrincipal</code>.
+     *          <code>SolarisPrincipal</code>.
      *
      * @return true if the specified Object is equal equal to this
-     *		<code>SolarisPrincipal</code>.
+     *          <code>SolarisPrincipal</code>.
      */
     public boolean equals(Object o) {
-	if (o == null)
-	    return false;
+        if (o == null)
+            return false;
 
         if (this == o)
             return true;
- 
+
         if (!(o instanceof SolarisPrincipal))
             return false;
         SolarisPrincipal that = (SolarisPrincipal)o;
 
-	if (this.getName().equals(that.getName()))
-	    return true;
-	return false;
+        if (this.getName().equals(that.getName()))
+            return true;
+        return false;
     }
- 
+
     /**
      * Return a hash code for this <code>SolarisPrincipal</code>.
      *
@@ -142,6 +141,6 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * @return a hash code for this <code>SolarisPrincipal</code>.
      */
     public int hashCode() {
-	return name.hashCode();
+        return name.hashCode();
     }
 }

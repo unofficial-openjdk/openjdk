@@ -43,11 +43,11 @@ public class HttpPrincipal implements Principal {
      * @throws NullPointerException if either username or realm are null
      */
     public HttpPrincipal (String username, String realm) {
-	if (username == null || realm == null) {
-	    throw new NullPointerException();
-	}
-	this.username = username;
-	this.realm = realm;
+        if (username == null || realm == null) {
+            throw new NullPointerException();
+        }
+        this.username = username;
+        this.realm = realm;
     }
 
     /**
@@ -57,12 +57,12 @@ public class HttpPrincipal implements Principal {
      * and realm. Returns <code>false</code> otherwise.
      */
     public boolean equals (Object another) {
-	if (!(another instanceof HttpPrincipal)) {
-	    return false;
-	}
-	HttpPrincipal theother = (HttpPrincipal)another;
-	return (username.equals(theother.username) &&
-		realm.equals(theother.realm));
+        if (!(another instanceof HttpPrincipal)) {
+            return false;
+        }
+        HttpPrincipal theother = (HttpPrincipal)another;
+        return (username.equals(theother.username) &&
+                realm.equals(theother.realm));
     }
 
     /**
@@ -70,21 +70,21 @@ public class HttpPrincipal implements Principal {
      * <i>realm:username</i>
      */
     public String getName() {
-	return username;
+        return username;
     }
 
     /**
      * returns the username this object was created with.
      */
     public String getUsername() {
-	return username;
+        return username;
     }
 
     /**
      * returns the realm this object was created with.
      */
     public String getRealm() {
-	return realm;
+        return realm;
     }
 
     /**
@@ -92,14 +92,13 @@ public class HttpPrincipal implements Principal {
      * as <code>(getUsername()+getRealm().hashCode()</code>
      */
     public int hashCode() {
-	return (username+realm).hashCode();
+        return (username+realm).hashCode();
     }
 
     /**
      * returns the same string as getName()
      */
     public String toString() {
-	return getName();
+        return getName();
     }
 }
-

@@ -56,7 +56,7 @@ class ComCtl32Util
         // unloads comctl32.dll
         // called from AwtToolkit::Dispose()
         void FreeLibraries();
-        
+
         //-- comctl32.dll version 6 subclassing API --//
 
         INLINE BOOL IsNewSubclassing() {
@@ -76,7 +76,7 @@ class ComCtl32Util
         ~ComCtl32Util();
 
         HMODULE hModComCtl32;
-        
+
         PFNSETWINDOWSUBCLASS m_lpfnSetWindowSubclass;
         PFNREMOVEWINDOWSUBCLASS m_lpfnRemoveWindowSubclass;
         PFNDEFSUBCLASSPROC m_lpfnDefSubclassProc;

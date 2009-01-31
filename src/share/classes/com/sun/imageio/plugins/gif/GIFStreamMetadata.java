@@ -36,7 +36,6 @@ import org.w3c.dom.Node;
 // TODO - document elimination of globalColorTableFlag
 
 /**
- * @version 0.5
  */
 public class GIFStreamMetadata extends GIFMetadata {
 
@@ -74,9 +73,9 @@ public class GIFStreamMetadata extends GIFMetadata {
               extraMetadataFormatNames,
               extraMetadataFormatClassNames);
     }
-    
+
     public GIFStreamMetadata() {
-        this(true, 
+        this(true,
               nativeMetadataFormatName,
               "com.sun.imageio.plugins.gif.GIFStreamMetadataFormat",
               null, null);
@@ -86,7 +85,7 @@ public class GIFStreamMetadata extends GIFMetadata {
     public boolean isReadOnly() {
         return true;
     }
-    
+
     public Node getAsTree(String formatName) {
         if (formatName.equals(nativeMetadataFormatName)) {
             return getNativeTree();
@@ -102,17 +101,17 @@ public class GIFStreamMetadata extends GIFMetadata {
         IIOMetadataNode node; // scratch node
         IIOMetadataNode root =
             new IIOMetadataNode(nativeMetadataFormatName);
-            
+
         node = new IIOMetadataNode("Version");
         node.setAttribute("value", version);
         root.appendChild(node);
-        
+
         // Image descriptor
         node = new IIOMetadataNode("LogicalScreenDescriptor");
-        /* NB: At the moment we use empty strings to support undefined 
-         * integer values in tree representation. 
+        /* NB: At the moment we use empty strings to support undefined
+         * integer values in tree representation.
          * We need to add better support for undefined/default values later.
-         */  
+         */
         node.setAttribute("logicalScreenWidth",
                           logicalScreenWidth == UNDEFINED_INTEGER_VALUE ?
                           "" : Integer.toString(logicalScreenWidth));
@@ -229,10 +228,10 @@ public class GIFStreamMetadata extends GIFMetadata {
                           colorResolution == UNDEFINED_INTEGER_VALUE ?
                           "" : Integer.toString(colorResolution));
         data_node.appendChild(node);
-        
+
         // SignificantBitsPerSample
         // SampleMSB
-        
+
         return data_node;
     }
 
@@ -262,17 +261,17 @@ public class GIFStreamMetadata extends GIFMetadata {
         // VerticalPixelOffset not in stream
 
         node = new IIOMetadataNode("HorizontalScreenSize");
-        node.setAttribute("value", 
+        node.setAttribute("value",
                           logicalScreenWidth == UNDEFINED_INTEGER_VALUE ?
                           "" : Integer.toString(logicalScreenWidth));
         dimension_node.appendChild(node);
-        
+
         node = new IIOMetadataNode("VerticalScreenSize");
         node.setAttribute("value",
                           logicalScreenHeight == UNDEFINED_INTEGER_VALUE ?
                           "" : Integer.toString(logicalScreenHeight));
         dimension_node.appendChild(node);
-        
+
         return dimension_node;
     }
 

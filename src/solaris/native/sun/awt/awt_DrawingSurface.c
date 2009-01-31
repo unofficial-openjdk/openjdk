@@ -89,10 +89,10 @@ JNIEXPORT jint JNICALL awt_DrawingSurface_Lock(JAWT_DrawingSurface* ds)
     componentClass = (*env)->FindClass(env, "java/awt/Component");
     if (!(*env)->IsInstanceOf(env, target, componentClass)) {
 #ifdef DEBUG
-	    fprintf(stderr, "Target is not a component\n");
+            fprintf(stderr, "Target is not a component\n");
 #endif
         return (jint)JAWT_LOCK_ERROR;
-	}
+        }
 
     if (!awtLockInited) {
         return (jint)JAWT_LOCK_ERROR;
@@ -105,7 +105,7 @@ JNIEXPORT jint JNICALL awt_DrawingSurface_Lock(JAWT_DrawingSurface* ds)
 #ifdef DEBUG
         fprintf(stderr, "Component peer is NULL\n");
 #endif
-		AWT_FLUSH_UNLOCK();
+                AWT_FLUSH_UNLOCK();
         return (jint)JAWT_LOCK_ERROR;
     }
 
@@ -115,7 +115,7 @@ JNIEXPORT jint JNICALL awt_DrawingSurface_Lock(JAWT_DrawingSurface* ds)
 #else
    drawState = (*env)->GetIntField(env, peer, drawStateID);
     (*env)->SetIntField(env, peer, drawStateID, 0);
-#endif    
+#endif
     return drawState;
 }
 
@@ -170,9 +170,9 @@ JNIEXPORT int32_t JNICALL
      /* GraphicsConfiguration object of MComponentPeer */
     gc_object = (*env)->GetObjectField(env, peer, graphicsConfigID);
 
-    if (gc_object != NULL) { 
+    if (gc_object != NULL) {
         adata = (AwtGraphicsConfigDataPtr)
-            JNU_GetLongFieldAsPtr(env, gc_object, 
+            JNU_GetLongFieldAsPtr(env, gc_object,
                                   x11GraphicsConfigIDs.aData);
     } else {
         adata = getDefaultConfig(DefaultScreen(awt_display));
@@ -180,8 +180,8 @@ JNIEXPORT int32_t JNICALL
 #endif
 
     result = adata->AwtColorMatch(r, g, b, adata);
-	AWT_UNLOCK();
-	return result;
+        AWT_UNLOCK();
+        return result;
 }
 
 /*
@@ -201,7 +201,7 @@ awt_DrawingSurface_GetDrawingSurfaceInfo(JAWT_DrawingSurface* ds)
     jclass componentClass;
     JAWT_X11DrawingSurfaceInfo* px;
     JAWT_DrawingSurfaceInfo* p;
-#ifndef XAWT    
+#ifndef XAWT
     struct ComponentData *cdata;
 #endif
     XWindowAttributes attrs;
@@ -223,7 +223,7 @@ awt_DrawingSurface_GetDrawingSurfaceInfo(JAWT_DrawingSurface* ds)
         fprintf(stderr, "DrawingSurface target must be a component\n");
 #endif
         return NULL;
-	}
+        }
 
     if (!awtLockInited) {
         return NULL;
@@ -237,7 +237,7 @@ awt_DrawingSurface_GetDrawingSurfaceInfo(JAWT_DrawingSurface* ds)
 #ifdef DEBUG
         fprintf(stderr, "Component peer is NULL\n");
 #endif
-		AWT_UNLOCK();
+                AWT_UNLOCK();
         return NULL;
     }
 
@@ -249,23 +249,23 @@ awt_DrawingSurface_GetDrawingSurfaceInfo(JAWT_DrawingSurface* ds)
 #ifdef DEBUG
         fprintf(stderr, "Component data is NULL\n");
 #endif
-		AWT_UNLOCK();
+                AWT_UNLOCK();
         return NULL;
     }
 #endif
 
-	AWT_UNLOCK();
+        AWT_UNLOCK();
 
     /* Allocate platform-specific data */
     px = (JAWT_X11DrawingSurfaceInfo*)
         malloc(sizeof(JAWT_X11DrawingSurfaceInfo));
 
     /* Set drawable and display */
-#ifndef XAWT    
+#ifndef XAWT
     px->drawable = XtWindow(cdata->widget);
 #else
     px->drawable = JNU_GetLongFieldAsPtr(env, peer, windowID);
-#endif    
+#endif
     px->display = awt_display;
 
     /* Get window attributes to set other values */
@@ -307,7 +307,7 @@ awt_DrawingSurface_FreeDrawingSurfaceInfo(JAWT_DrawingSurfaceInfo* dsi)
     free(dsi);
 }
 
-/* 
+/*
  * Unlock the drawing surface of the target component for native rendering.
  */
 JNIEXPORT void JNICALL awt_DrawingSurface_Unlock(JAWT_DrawingSurface* ds)
@@ -333,12 +333,12 @@ JNIEXPORT JAWT_DrawingSurface* JNICALL
     componentClass = (*env)->FindClass(env, "java/awt/Component");
     if (!(*env)->IsInstanceOf(env, target, componentClass)) {
 #ifdef DEBUG
-        fprintf(stderr, 
+        fprintf(stderr,
             "GetDrawingSurface target must be a java.awt.Component\n");
 #endif
         return NULL;
     }
-    
+
     p = (JAWT_DrawingSurface*)malloc(sizeof(JAWT_DrawingSurface));
     p->env = env;
     p->target = (*env)->NewGlobalRef(env, target);
@@ -413,9 +413,8 @@ JNIEXPORT jobject JNICALL
         return (jobject)NULL;
     }
 
-    
+
     AWT_UNLOCK();
 
     return target;
 }
-

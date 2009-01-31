@@ -60,7 +60,7 @@ public class MapLoops {
     static final ExecutorService pool = Executors.newCachedThreadPool();
 
     static final List<Throwable> throwables
-	= new CopyOnWriteArrayList<Throwable>();
+        = new CopyOnWriteArrayList<Throwable>();
 
     public static void main(String[] args) throws Exception {
 
@@ -121,12 +121,12 @@ public class MapLoops {
                 i = k;
         }
         pool.shutdown();
-	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-	    throw new Error();
+        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+            throw new Error();
 
-	if (! throwables.isEmpty())
-	    throw new Error
-		(throwables.size() + " thread(s) terminated abruptly.");
+        if (! throwables.isEmpty())
+            throw new Error
+                (throwables.size() + " thread(s) terminated abruptly.");
     }
 
     static Integer[] makeKeys(int n) {
@@ -225,11 +225,11 @@ public class MapLoops {
                 barrier.await();
             }
             catch (Throwable throwable) {
-		synchronized(System.err) {
-		    System.err.println("--------------------------------");
-		    throwable.printStackTrace();
-		}
-		throwables.add(throwable);
+                synchronized(System.err) {
+                    System.err.println("--------------------------------");
+                    throwable.printStackTrace();
+                }
+                throwables.add(throwable);
             }
         }
     }

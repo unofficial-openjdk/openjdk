@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. gc_time_stat.d -c "java ..." INTERVAL_SECS
  *    2. gc_time_stat.d -p JAVA_PID INTERVAL_SECS

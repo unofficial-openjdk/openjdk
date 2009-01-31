@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,22 +31,22 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Vector & Matrix stuff
@@ -101,14 +101,14 @@ void   cdecl MAT3scaleAndCut(LPWMAT3 r, LPMAT3 v, double d);
 Fixed32 FixedMul(Fixed32 a, Fixed32 b)
 {
        ASM {
-              
+
               mov    eax, ss:a
               mov    edx, ss:b
               imul   edx
               add    eax, 0x8000
               adc    edx, 0
               shrd   eax, edx, 16
-              
+
        }
 
        RET(_EAX);
@@ -214,8 +214,8 @@ Fixed32 FixedLERP(Fixed32 a, Fixed32 l, Fixed32 h)
 {
 #ifdef USE_INT64
 
-       LCMSULONGLONG dif = (LCMSULONGLONG) (h - l) * a + 0x8000;           
-       dif = (dif >> 16) + l;        
+       LCMSULONGLONG dif = (LCMSULONGLONG) (h - l) * a + 0x8000;
+       dif = (dif >> 16) + l;
        return (Fixed32) (dif);
 #else
        double dif = h - l;
@@ -226,7 +226,7 @@ Fixed32 FixedLERP(Fixed32 a, Fixed32 l, Fixed32 h)
 
        return (Fixed32) (dif + 0.5);
 #endif
-     
+
 }
 
 
@@ -248,7 +248,7 @@ Fixed32 ToFixedDomain(int a)
 
 int FromFixedDomain(Fixed32 a)
 {
-    return a - ((a + 0x7fff) >> 16); 
+    return a - ((a + 0x7fff) >> 16);
 }
 
 #endif
@@ -407,7 +407,7 @@ void VEC3cross(LPVEC3 r, LPVEC3 u, LPVEC3 v)
     r ->n[VY] = u->n[VZ] * v->n[VX] - v->n[VZ] * u->n[VX];
     r ->n[VZ] = u->n[VX] * v->n[VY] - v->n[VX] * u->n[VY];
 }
-    
+
 
 
 // The vector size
@@ -547,14 +547,14 @@ int MAT3inverse(LPMAT3 a, LPMAT3 b)
 
 BOOL MAT3solve(LPVEC3 x, LPMAT3 a, LPVEC3 b)
 {
-	MAT3 m, a_1;
+        MAT3 m, a_1;
 
-	CopyMemory(&m, a, sizeof(MAT3));
+        CopyMemory(&m, a, sizeof(MAT3));
 
-	if (!MAT3inverse(&m, &a_1)) return FALSE;  // Singular matrix
+        if (!MAT3inverse(&m, &a_1)) return FALSE;  // Singular matrix
 
-	MAT3eval(x, &a_1, b);
-	return TRUE;
+        MAT3eval(x, &a_1, b);
+        return TRUE;
 }
 
 
@@ -573,7 +573,7 @@ double MAT3det(LPMAT3 m)
     double c2 = m ->v[VZ].n[VY];
     double c3 = m ->v[VZ].n[VZ];
 
-    
+
     return a1*b2*c3 - a1*b3*c2 + a2*b3*c1 - a2*b1*c3 - a3*b1*c2 - a3*b2*c1;
 }
 
@@ -750,36 +750,36 @@ void MAT3evalW(LPWVEC3 r, LPWMAT3 a, LPWVEC3 v)
 
 #ifdef USE_INT64
 
-    LCMSULONGLONG l1 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[0] * 
+    LCMSULONGLONG l1 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[0] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[0] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[1] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[1] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[1] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[2] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[0].n[2] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[2] + (LCMSULONGLONG) 0x8000;
 
-    LCMSULONGLONG l2 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[0] * 
+    LCMSULONGLONG l2 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[0] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[0] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[1] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[1] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[1] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[2] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[1].n[2] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[2] + (LCMSULONGLONG) 0x8000;
 
-    LCMSULONGLONG l3 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[0] * 
+    LCMSULONGLONG l3 = (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[0] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[0] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[1] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[1] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[1] +
-                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[2] * 
+                       (LCMSULONGLONG) (LCMSSLONGLONG) a->v[2].n[2] *
                        (LCMSULONGLONG) (LCMSSLONGLONG) v->n[2] + (LCMSULONGLONG) 0x8000;
     l1 >>= 16;
     l2 >>= 16;
     l3 >>= 16;
 
-    r->n[VX] = (Fixed32) l1;               
+    r->n[VX] = (Fixed32) l1;
     r->n[VY] = (Fixed32) l2;
     r->n[VZ] = (Fixed32) l3;
 
 #else
-    
+
     // FIXME: Rounding should be done at very last stage. There is 1-Contone rounding error!
 
     r->n[VX] = FixedMul(a->v[0].n[0], v->n[0]) +
@@ -839,7 +839,3 @@ void MAT3scaleAndCut(LPWMAT3 r, LPMAT3 v, double d)
        VEC3scaleAndCut(&r -> v[1], &v -> v[1], d);
        VEC3scaleAndCut(&r -> v[2], &v -> v[2], d);
 }
-
-
-
-

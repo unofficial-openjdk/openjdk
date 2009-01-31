@@ -29,7 +29,7 @@ package java.util.zip;
  * This class provides support for general purpose decompression using the
  * popular ZLIB compression library. The ZLIB compression library was
  * initially developed as part of the PNG graphics standard and is not
- * protected by patents. It is fully described in the specifications at 
+ * protected by patents. It is fully described in the specifications at
  * the <a href="package-summary.html#package_description">java.util.zip
  * package description</a>.
  *
@@ -66,9 +66,8 @@ package java.util.zip;
  * }
  * </pre></blockquote>
  *
- * @see		Deflater
- * @version 	%I%, %G%
- * @author 	David Connelly
+ * @see         Deflater
+ * @author      David Connelly
  *
  */
 public
@@ -80,8 +79,8 @@ class Inflater {
     private boolean needDict;
 
     static {
-	/* Zip library is loaded from System.initializeSystemClass */
-	initIDs();
+        /* Zip library is loaded from System.initializeSystemClass */
+        initIDs();
     }
 
     /**
@@ -96,14 +95,14 @@ class Inflater {
      * @param nowrap if true then support GZIP compatible compression
      */
     public Inflater(boolean nowrap) {
-	strm = init(nowrap);
+        strm = init(nowrap);
     }
 
     /**
      * Creates a new decompressor.
      */
     public Inflater() {
-	this(false);
+        this(false);
     }
 
     /**
@@ -116,15 +115,15 @@ class Inflater {
      * @see Inflater#needsInput
      */
     public synchronized void setInput(byte[] b, int off, int len) {
-	if (b == null) {
-	    throw new NullPointerException();
-	}
-	if (off < 0 || len < 0 || off > b.length - len) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
-	this.buf = b;
-	this.off = off;
-	this.len = len;
+        if (b == null) {
+            throw new NullPointerException();
+        }
+        if (off < 0 || len < 0 || off > b.length - len) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        this.buf = b;
+        this.off = off;
+        this.len = len;
     }
 
     /**
@@ -135,7 +134,7 @@ class Inflater {
      * @see Inflater#needsInput
      */
     public void setInput(byte[] b) {
-	setInput(b, 0, b.length);
+        setInput(b, 0, b.length);
     }
 
     /**
@@ -150,14 +149,14 @@ class Inflater {
      * @see Inflater#getAdler
      */
     public synchronized void setDictionary(byte[] b, int off, int len) {
-	if (strm == 0 || b == null) {
-	    throw new NullPointerException();
-	}
-	if (off < 0 || len < 0 || off > b.length - len) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
-	setDictionary(strm, b, off, len);
-	needDict = false;
+        if (strm == 0 || b == null) {
+            throw new NullPointerException();
+        }
+        if (off < 0 || len < 0 || off > b.length - len) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        setDictionary(strm, b, off, len);
+        needDict = false;
     }
 
     /**
@@ -170,7 +169,7 @@ class Inflater {
      * @see Inflater#getAdler
      */
     public void setDictionary(byte[] b) {
-	setDictionary(b, 0, b.length);
+        setDictionary(b, 0, b.length);
     }
 
     /**
@@ -180,7 +179,7 @@ class Inflater {
      * @return the total number of bytes remaining in the input buffer
      */
     public synchronized int getRemaining() {
-	return len;
+        return len;
     }
 
     /**
@@ -190,7 +189,7 @@ class Inflater {
      * @return true if no data remains in the input buffer
      */
     public synchronized boolean needsInput() {
-	return len <= 0;
+        return len <= 0;
     }
 
     /**
@@ -199,7 +198,7 @@ class Inflater {
      * @see Inflater#setDictionary
      */
     public synchronized boolean needsDictionary() {
-	return needDict;
+        return needDict;
     }
 
     /**
@@ -209,7 +208,7 @@ class Inflater {
      * reached
      */
     public synchronized boolean finished() {
-	return finished;
+        return finished;
     }
 
     /**
@@ -228,15 +227,15 @@ class Inflater {
      * @see Inflater#needsDictionary
      */
     public synchronized int inflate(byte[] b, int off, int len)
-	throws DataFormatException
+        throws DataFormatException
     {
-	if (b == null) {
-	    throw new NullPointerException();
-	}
-	if (off < 0 || len < 0 || off > b.length - len) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
-	return inflateBytes(b, off, len);
+        if (b == null) {
+            throw new NullPointerException();
+        }
+        if (off < 0 || len < 0 || off > b.length - len) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        return inflateBytes(b, off, len);
     }
 
     /**
@@ -253,7 +252,7 @@ class Inflater {
      * @see Inflater#needsDictionary
      */
     public int inflate(byte[] b) throws DataFormatException {
-	return inflate(b, 0, b.length);
+        return inflate(b, 0, b.length);
     }
 
     /**
@@ -261,8 +260,8 @@ class Inflater {
      * @return the ADLER-32 value of the uncompressed data
      */
     public synchronized int getAdler() {
-	ensureOpen();
-	return getAdler(strm);
+        ensureOpen();
+        return getAdler(strm);
     }
 
     /**
@@ -275,7 +274,7 @@ class Inflater {
      * @return the total number of compressed bytes input so far
      */
     public int getTotalIn() {
-	return (int) getBytesRead();
+        return (int) getBytesRead();
     }
 
     /**
@@ -285,8 +284,8 @@ class Inflater {
      * @since 1.5
      */
     public synchronized long getBytesRead() {
-	ensureOpen();
-	return getBytesRead(strm);
+        ensureOpen();
+        return getBytesRead(strm);
     }
 
     /**
@@ -299,7 +298,7 @@ class Inflater {
      * @return the total number of uncompressed bytes output so far
      */
     public int getTotalOut() {
-	return (int) getBytesWritten();
+        return (int) getBytesWritten();
     }
 
     /**
@@ -309,19 +308,19 @@ class Inflater {
      * @since 1.5
      */
     public synchronized long getBytesWritten() {
-	ensureOpen();
-	return getBytesWritten(strm);
+        ensureOpen();
+        return getBytesWritten(strm);
     }
 
     /**
      * Resets inflater so that a new set of input data can be processed.
      */
     public synchronized void reset() {
-	ensureOpen();
-	reset(strm);
-	finished = false;
-	needDict = false;
-	off = len = 0;
+        ensureOpen();
+        reset(strm);
+        finished = false;
+        needDict = false;
+        off = len = 0;
     }
 
     /**
@@ -332,31 +331,31 @@ class Inflater {
      * object is undefined.
      */
     public synchronized void end() {
-	if (strm != 0) {
-	    end(strm);
-	    strm = 0;
-	    buf = null;
-	}
+        if (strm != 0) {
+            end(strm);
+            strm = 0;
+            buf = null;
+        }
     }
 
     /**
      * Closes the decompressor when garbage is collected.
      */
     protected void finalize() {
-	end();
+        end();
     }
 
     private void ensureOpen () {
-	if (strm == 0)
-	    throw new NullPointerException();
+        if (strm == 0)
+            throw new NullPointerException();
     }
 
     private native static void initIDs();
     private native static long init(boolean nowrap);
     private native static void setDictionary(long strm, byte[] b, int off,
-					     int len);
+                                             int len);
     private native int inflateBytes(byte[] b, int off, int len)
-	    throws DataFormatException;
+            throws DataFormatException;
     private native static int getAdler(long strm);
     private native static long getBytesRead(long strm);
     private native static long getBytesWritten(long strm);

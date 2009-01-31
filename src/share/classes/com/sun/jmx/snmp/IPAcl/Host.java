@@ -39,13 +39,13 @@ import java.util.Vector;
 import java.security.acl.NotOwnerException;
 
 import static com.sun.jmx.defaults.JmxProperties.SNMP_LOGGER;
-  
+
 /**
  * The class defines an abstract representation of a host.
  *
  */
 abstract class Host extends SimpleNode implements Serializable {
-    
+
     public Host(int id) {
         super(id);
     }
@@ -53,10 +53,10 @@ abstract class Host extends SimpleNode implements Serializable {
     public Host(Parser p, int id) {
         super(p, id);
     }
-  
+
     protected abstract PrincipalImpl createAssociatedPrincipal()
         throws UnknownHostException;
-  
+
     protected abstract String getHname();
 
     public void buildAclEntries(PrincipalImpl owner, AclImpl acl) {
@@ -71,7 +71,7 @@ abstract class Host extends SimpleNode implements Serializable {
                         "buildAclEntries",
                         "Cannot create ACL entry; got exception", e);
             }
-	    throw new IllegalArgumentException("Cannot create ACL entry for " + e.getMessage());
+            throw new IllegalArgumentException("Cannot create ACL entry for " + e.getMessage());
         }
 
         // Create an AclEntry
@@ -99,25 +99,25 @@ abstract class Host extends SimpleNode implements Serializable {
             return;
         }
     }
-    
+
     private void registerPermission(AclEntryImpl entry) {
-        JDMHost host= (JDMHost) jjtGetParent(); 
+        JDMHost host= (JDMHost) jjtGetParent();
         JDMManagers manager= (JDMManagers) host.jjtGetParent();
         JDMAclItem acl= (JDMAclItem) manager.jjtGetParent();
         JDMAccess access= acl.getAccess();
         access.putPermission(entry);
         JDMCommunities comm= acl.getCommunities();
         comm.buildCommunities(entry);
-    } 
+    }
 
     public void buildTrapEntries(Hashtable<InetAddress, Vector<String>> dest) {
-        
-        JDMHostTrap host= (JDMHostTrap) jjtGetParent(); 
+
+        JDMHostTrap host= (JDMHostTrap) jjtGetParent();
         JDMTrapInterestedHost hosts= (JDMTrapInterestedHost) host.jjtGetParent();
         JDMTrapItem trap = (JDMTrapItem) hosts.jjtGetParent();
         JDMTrapCommunity community = trap.getCommunity();
         String comm = community.getCommunity();
-	
+
         InetAddress add = null;
         try {
             add = java.net.InetAddress.getByName(getHname());
@@ -129,7 +129,7 @@ abstract class Host extends SimpleNode implements Serializable {
             }
             return;
         }
-	
+
         Vector<String> list = null;
         if (dest.containsKey(add)){
             list = dest.get(add);
@@ -142,15 +142,15 @@ abstract class Host extends SimpleNode implements Serializable {
             dest.put(add,list);
         }
     }
-    
+
     public void buildInformEntries(Hashtable<InetAddress, Vector<String>> dest) {
-    
-        JDMHostInform host= (JDMHostInform) jjtGetParent(); 
+
+        JDMHostInform host= (JDMHostInform) jjtGetParent();
         JDMInformInterestedHost hosts= (JDMInformInterestedHost) host.jjtGetParent();
         JDMInformItem inform = (JDMInformItem) hosts.jjtGetParent();
         JDMInformCommunity community = inform.getCommunity();
         String comm = community.getCommunity();
-	
+
         InetAddress add = null;
         try {
             add = java.net.InetAddress.getByName(getHname());
@@ -162,7 +162,7 @@ abstract class Host extends SimpleNode implements Serializable {
             }
             return;
         }
-	
+
         Vector<String> list = null;
         if (dest.containsKey(add)){
             list = dest.get(add);
@@ -175,7 +175,7 @@ abstract class Host extends SimpleNode implements Serializable {
             dest.put(add,list);
         }
     }
-    
-    
-    
+
+
+
 }

@@ -34,16 +34,16 @@ public class CloseAfterConnect {
     public static void main(String[] args) throws Exception {
         ServerSocketChannel ssc = ServerSocketChannel.open();
         ssc.socket().bind(new InetSocketAddress(0));
-        
+
         InetAddress lh = InetAddress.getLocalHost();
-        final SocketChannel sc = SocketChannel.open();        
-        final InetSocketAddress isa = 
+        final SocketChannel sc = SocketChannel.open();
+        final InetSocketAddress isa =
             new InetSocketAddress(lh, ssc.socket().getLocalPort());
 
         // establish connection in another thread
         Runnable connector =
             new Runnable() {
-                public void run() { 
+                public void run() {
                     try {
                         sc.connect(isa);
                     } catch (IOException ioe) {
@@ -70,7 +70,7 @@ public class CloseAfterConnect {
         // close channel - this triggered the bug as it attempted to signal
         // a thread that no longer exists
         sc.close();
-            
+
         // clean-up
         ssc.accept().close();
         ssc.close();

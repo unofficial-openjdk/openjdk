@@ -36,20 +36,20 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 public class WebGet {
-    
+
     static String user = System.getProperty("user");
     static String pass = System.getProperty("pass");
     static String kuser = System.getProperty("kuser");
     static String kpass = System.getProperty("kpass");
     static String showhint = System.getProperty("showhint");
-    
-    static class MyAuthenticator extends Authenticator {
-	public MyAuthenticator () {
-	    super ();
-	}
 
-	public PasswordAuthentication getPasswordAuthentication ()
-	{
+    static class MyAuthenticator extends Authenticator {
+        public MyAuthenticator () {
+            super ();
+        }
+
+        public PasswordAuthentication getPasswordAuthentication ()
+        {
             // scheme is the only key for Negotiate
             if(getRequestingScheme().equalsIgnoreCase("negotiate") ||
                     getRequestingScheme().equalsIgnoreCase("kerberos")) {
@@ -61,11 +61,11 @@ public class WebGet {
                     System.out.println("::::: PROVIDING PASSWORD AND USERNAME " + user +":"+pass+" :::::");
                 return (new PasswordAuthentication (user, pass.toCharArray()));
             }
-	}
+        }
     }
-    
+
     /**
-     * Creates a new instance of WebGet 
+     * Creates a new instance of WebGet
      */
     static void url(String urls) throws Exception {
         Authenticator.setDefault (new MyAuthenticator ());
@@ -86,4 +86,3 @@ public class WebGet {
         url(args[0]);
     }
 }
-

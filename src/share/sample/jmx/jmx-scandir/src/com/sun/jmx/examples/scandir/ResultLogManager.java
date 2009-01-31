@@ -55,73 +55,73 @@ import javax.xml.bind.JAXBException;
  * The <code>ResultLogManager</code> is in charge of managing result logs.
  * {@link DirectoryScanner DirectoryScanners} can be configured to log a
  * {@link ResultRecord} whenever they take action upon a file that
- * matches their set of matching criteria. 
- * The <code>ResultLogManagerMXBean</code> is responsible for storing these 
+ * matches their set of matching criteria.
+ * The <code>ResultLogManagerMXBean</code> is responsible for storing these
  * results in its result logs.
  * <p>The <code>ResultLogManagerMXBean</code> can be configured to log
- * these records to a flat file, or into a log held in memory, or both. 
- * Both logs (file and memory) can be configured with a maximum capacity. 
- * <br>When the maximum capacity of the memory log is reached - its first 
- * entry (i.e. its eldest entry) is removed to make place for the latest. 
+ * these records to a flat file, or into a log held in memory, or both.
+ * Both logs (file and memory) can be configured with a maximum capacity.
+ * <br>When the maximum capacity of the memory log is reached - its first
+ * entry (i.e. its eldest entry) is removed to make place for the latest.
  * <br>When the maximum capacity of the file log is reached, the file is
  * renamed by appending a tilde '~' to its name and a new result log is created.
- * 
- * 
+ *
+ *
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 public class ResultLogManager extends NotificationBroadcasterSupport
         implements ResultLogManagerMXBean, MBeanRegistration {
-    
+
     /**
      * The default singleton name of the {@link ResultLogManagerMXBean}.
      **/
     public static final ObjectName RESULT_LOG_MANAGER_NAME =
             ScanManager.makeSingletonName(ResultLogManagerMXBean.class);
-    
+
     /**
      * A logger for this class.
      **/
     private static final Logger LOG =
             Logger.getLogger(ResultLogManager.class.getName());
-    
+
     // The memory log
     //
     private final List<ResultRecord> memoryLog;
-    
+
     // Whether the memory log capacity was reached. In that case every
     // new entry triggers the deletion of the eldest one.
     //
     private volatile boolean memCapacityReached = false;
-    
+
     // The maximum number of record that the memory log can
     // contain.
     //
     private volatile int memCapacity;
-    
+
     // The maximum number of record that the ResultLogManager can
     // log in the log file before creating a new file.
     //
     private volatile long fileCapacity;
-    
+
     // The current log file.
     //
     private volatile File logFile;
-    
+
     // The OutputStream of the current log file.
     //
     private volatile OutputStream logStream = null;
-    
+
     // number of record that this object has logged in the log file
     // since the log file was created. Creating a new file or clearing
     // the log file reset this value to '0'
     //
     private volatile long logCount = 0;
-    
+
     // The ResultLogManager config - modified whenever
     // ScanManager.applyConfiguration is called.
     //
     private volatile ResultLogConfig config;
-    
+
     /**
      * Create a new ResultLogManagerMXBean. This constructor is package
      * protected: only the {@link ScanManager} can create a
@@ -148,16 +148,16 @@ public class ResultLogManager extends NotificationBroadcasterSupport
                 return super.add(e);
             }
         });
-        
+
         // default memory capacity
         memCapacity = 2048;
-        
+
         // default file capacity: 0 means infinite ;-)
         fileCapacity = 0;
-        
+
         // by default logging to file is disabled.
         logFile = null;
-        
+
         // Until the ScanManager apply a new configuration, we're going to
         // work with a default ResultLogConfig object.
         config = new ResultLogConfig();
@@ -165,11 +165,11 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         config.setLogFileName(getLogFileName(false));
         config.setLogFileMaxRecords(fileCapacity);
     }
-    
-    
+
+
     /**
      * Allows the MBean to perform any operations it needs before being
-     * registered in the MBean server. 
+     * registered in the MBean server.
      * <p>If the name of the MBean is not
      * specified, the MBean can provide a name for its registration. If
      * any exception is raised, the MBean will not be registered in the
@@ -195,7 +195,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         mbeanServer = server;
         return name;
     }
-    
+
     /**
      * Allows the MBean to perform any operations needed after having
      * been registered in the MBean server or after the registration has
@@ -208,7 +208,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
     public void postRegister(Boolean registrationDone) {
         // Don't need to do anything here.
     }
-    
+
     /**
      * Allows the MBean to perform any operations it needs before being
      * unregistered by the MBean server.
@@ -219,7 +219,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
     public void preDeregister() throws Exception {
         // Don't need to do anything here.
     }
-    
+
     /**
      * Allows the MBean to perform any operations needed after having been
      * unregistered in the MBean server.
@@ -239,15 +239,15 @@ public class ResultLogManager extends NotificationBroadcasterSupport
             LOG.finest("Failed to close log properly: "+x);
         }
     }
-    
+
     /**
      * Create a new empty log file from the given basename, renaming
-     * previously existing file by appending '~' to its name. 
+     * previously existing file by appending '~' to its name.
      **/
     private File createNewLogFile(String basename) throws IOException {
         return XmlConfigUtils.createNewXmlFile(basename);
     }
-    
+
     /**
      * Check whether a new log file should be created.
      * If a new file needs to be created, creates it, renaming
@@ -257,15 +257,15 @@ public class ResultLogManager extends NotificationBroadcasterSupport
      * Returns the new log stream;
      * Creation of a new file can be forced by passing force=true.
      **/
-    private OutputStream checkLogFile(String basename, long maxRecords, 
+    private OutputStream checkLogFile(String basename, long maxRecords,
                                       boolean force)
     throws IOException {
         final OutputStream newStream;
         synchronized(this) {
-            if ((force==false) && (logCount < maxRecords)) 
+            if ((force==false) && (logCount < maxRecords))
                 return logStream;
             final OutputStream oldStream = logStream;
-            
+
             // First close the stream. On some platforms you cannot rename
             // a file that has open streams...
             //
@@ -293,17 +293,17 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         if (memCapacity > 0) logToMemory(record);
         if (logFile != null) logToFile(record);
     }
-    
+
     // see ResultLogManagerMXBean
     public ResultRecord[] getMemoryLog() {
         return memoryLog.toArray(new ResultRecord[0]);
     }
-    
+
     // see ResultLogManagerMXBean
     public int getMemoryLogCapacity() {
         return memCapacity;
     }
-    
+
     // see ResultLogManagerMXBean
     public void setMemoryLogCapacity(int maxRecords)  {
         synchronized(this) {
@@ -313,7 +313,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
             config.setMemoryMaxRecords(maxRecords);
         }
     }
-    
+
     // see ResultLogManagerMXBean
     public void setLogFileCapacity(long maxRecords)
     throws IOException {
@@ -323,17 +323,17 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         }
         checkLogFile(getLogFileName(),fileCapacity,false);
     }
-    
+
     // see ResultLogManagerMXBean
     public long getLogFileCapacity()  {
         return fileCapacity;
     }
-    
+
     // see ResultLogManagerMXBean
     public long getLoggedCount() {
         return logCount;
     }
-    
+
     // see ResultLogManagerMXBean
     public void newLogFile(String logname, long maxRecord)
     throws IOException {
@@ -341,7 +341,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         config.setLogFileName(getLogFileName(false));
         config.setLogFileMaxRecords(getLogFileCapacity());
     }
-    
+
     // see ResultLogManagerMXBean
     public String getLogFileName() {
         return getLogFileName(true);
@@ -365,19 +365,19 @@ public class ResultLogManager extends NotificationBroadcasterSupport
                 objectName,
                 getNextSeqNumber(),"memory log cleared"));
     }
-    
+
     // Clears the log file.
     //
     private void clearLogFile() throws IOException {
         // simply force the creation of a new log file.
         checkLogFile(getLogFileName(),fileCapacity,true);
     }
-    
-    // Log a record to the memory log. Send a notification if the 
+
+    // Log a record to the memory log. Send a notification if the
     // maximum capacity of the memory log is reached.
     //
     private void logToMemory(ResultRecord record) {
-        
+
         final boolean before = memCapacityReached;
         final boolean after;
         synchronized(this) {
@@ -389,9 +389,9 @@ public class ResultLogManager extends NotificationBroadcasterSupport
                     objectName,
                     getNextSeqNumber(),"memory log capacity reached"));
     }
-    
-    
-    // Log a record to the memory log. Send a notification if the 
+
+
+    // Log a record to the memory log. Send a notification if the
     // maximum capacity of the memory log is reached.
     //
     private void logToFile(ResultRecord record) throws IOException {
@@ -402,14 +402,14 @@ public class ResultLogManager extends NotificationBroadcasterSupport
             basename = getLogFileName(false);
             maxRecords = fileCapacity;
         }
-        
+
         // Get the stream into which we should log.
-        final OutputStream stream = 
+        final OutputStream stream =
                 checkLogFile(basename,maxRecords,false);
-        
+
         // logging to file now disabled - too bad.
         if (stream == null) return;
-        
+
         synchronized (this) {
             try {
                 XmlConfigUtils.write(record,stream,true);
@@ -477,7 +477,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
         };
     }
 
-    // Return the name of the log file, or null if logging to file is 
+    // Return the name of the log file, or null if logging to file is
     // disabled.
     private String getLogFileName(boolean absolute) {
         synchronized (this) {
@@ -486,7 +486,7 @@ public class ResultLogManager extends NotificationBroadcasterSupport
             return logFile.getPath();
         }
     }
-    
+
     // This method is be called by the ScanManagerMXBean when a configuration
     // is applied.
     //
@@ -507,21 +507,19 @@ public class ResultLogManager extends NotificationBroadcasterSupport
             setLogFileCapacity(config.getLogFileMaxRecords());
         }
     }
-    
-    // This method is called by the ScanManagerMXBean when 
+
+    // This method is called by the ScanManagerMXBean when
     // applyCurrentResultLogConfig() is called.
     //
     ResultLogConfig getConfig() {
         return config;
     }
-    
-    
+
+
     // Set by preRegister().
     private MBeanServer mbeanServer;
     private ObjectName objectName;
-    
-    
-    
+
+
+
 }
-
-

@@ -23,8 +23,6 @@
 # have any questions.
 #
 
-# @(#)ADatagramSocket.sh
-
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in

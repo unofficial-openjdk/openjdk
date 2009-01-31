@@ -55,116 +55,116 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
 
     public static VirtualMachineManager virtualMachineManager() {
         SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    JDIPermission vmmPermission =
-		new JDIPermission("virtualMachineManager");
-	    sm.checkPermission(vmmPermission);
+        if (sm != null) {
+            JDIPermission vmmPermission =
+                new JDIPermission("virtualMachineManager");
+            sm.checkPermission(vmmPermission);
         }
-	synchronized (lock) {
+        synchronized (lock) {
             if (vmm == null) {
-		vmm = new VirtualMachineManagerImpl();
+                vmm = new VirtualMachineManagerImpl();
             }
-	}
+        }
         return vmm;
     }
 
     protected VirtualMachineManagerImpl() {
 
-	/* 
-	 * Create a top-level thread group
+        /*
+         * Create a top-level thread group
          */
-	ThreadGroup top = Thread.currentThread().getThreadGroup();
-	ThreadGroup parent = null;
+        ThreadGroup top = Thread.currentThread().getThreadGroup();
+        ThreadGroup parent = null;
         while ((parent = top.getParent()) != null) {
-	    top = parent;
+            top = parent;
         }
         mainGroupForJDI = new ThreadGroup(top, "JDI main");
 
-   	/*
-	 * Load the connectors
-	 */
-        ServiceLoader<Connector> connectorLoader = 
+        /*
+         * Load the connectors
+         */
+        ServiceLoader<Connector> connectorLoader =
             ServiceLoader.load(Connector.class, Connector.class.getClassLoader());
-        
-	Iterator<Connector> connectors = connectorLoader.iterator();
 
-	while (connectors.hasNext()) {
-	    Connector connector;
+        Iterator<Connector> connectors = connectorLoader.iterator();
 
-	    try {
-		connector = (Connector)connectors.next();
-	    } catch (ThreadDeath x) {
-		throw x;
-	    } catch (Exception x) {
-		System.err.println(x);
-		continue;
-	    } catch (Error x) {
-		System.err.println(x);
-		continue;
-	    }
+        while (connectors.hasNext()) {
+            Connector connector;
 
-	    addConnector(connector);
-	}
+            try {
+                connector = (Connector)connectors.next();
+            } catch (ThreadDeath x) {
+                throw x;
+            } catch (Exception x) {
+                System.err.println(x);
+                continue;
+            } catch (Error x) {
+                System.err.println(x);
+                continue;
+            }
 
-	/*
-	 * Load any transport services and encapsulate them with 
-  	 * an attaching and listening connector.
-	 */
-        ServiceLoader<TransportService> transportLoader = 
-            ServiceLoader.load(TransportService.class, 
+            addConnector(connector);
+        }
+
+        /*
+         * Load any transport services and encapsulate them with
+         * an attaching and listening connector.
+         */
+        ServiceLoader<TransportService> transportLoader =
+            ServiceLoader.load(TransportService.class,
                                TransportService.class.getClassLoader());
-        
-	Iterator<TransportService> transportServices = 
+
+        Iterator<TransportService> transportServices =
             transportLoader.iterator();
 
-	while (transportServices.hasNext()) {
-	    TransportService transportService;
+        while (transportServices.hasNext()) {
+            TransportService transportService;
 
-	    try {
-		transportService = (TransportService)transportServices.next();
-	    } catch (ThreadDeath x) {
-		throw x;
-	    } catch (Exception x) {
-		System.err.println(x);
-		continue;
-	    } catch (Error x) {
-		System.err.println(x);
-		continue;
-	    }
-	
-	    addConnector(GenericAttachingConnector.create(transportService));
-	    addConnector(GenericListeningConnector.create(transportService));
-	}
+            try {
+                transportService = (TransportService)transportServices.next();
+            } catch (ThreadDeath x) {
+                throw x;
+            } catch (Exception x) {
+                System.err.println(x);
+                continue;
+            } catch (Error x) {
+                System.err.println(x);
+                continue;
+            }
 
-	// no connectors found
-	if (allConnectors().size() == 0) {
-	    throw new Error("no Connectors loaded");
-	}
+            addConnector(GenericAttachingConnector.create(transportService));
+            addConnector(GenericListeningConnector.create(transportService));
+        }
 
-	// Set the default launcher. In order to be compatible
-	// 1.2/1.3/1.4 we try to make the default launcher
-	// "com.sun.jdi.CommandLineLaunch". If this connector
-	// isn't found then we arbitarly pick the first connector.
-	//
-	boolean found = false;
-	List<LaunchingConnector> launchers = launchingConnectors();
-	for (LaunchingConnector lc: launchers) {
-	    if (lc.name().equals("com.sun.jdi.CommandLineLaunch")) {
-		setDefaultConnector(lc);
-		found = true;
-		break;
-	    }
-	}
-	if (!found && launchers.size() > 0) {
-	    setDefaultConnector(launchers.get(0));
-	}
+        // no connectors found
+        if (allConnectors().size() == 0) {
+            throw new Error("no Connectors loaded");
+        }
+
+        // Set the default launcher. In order to be compatible
+        // 1.2/1.3/1.4 we try to make the default launcher
+        // "com.sun.jdi.CommandLineLaunch". If this connector
+        // isn't found then we arbitarly pick the first connector.
+        //
+        boolean found = false;
+        List<LaunchingConnector> launchers = launchingConnectors();
+        for (LaunchingConnector lc: launchers) {
+            if (lc.name().equals("com.sun.jdi.CommandLineLaunch")) {
+                setDefaultConnector(lc);
+                found = true;
+                break;
+            }
+        }
+        if (!found && launchers.size() > 0) {
+            setDefaultConnector(launchers.get(0));
+        }
 
     }
 
     public LaunchingConnector defaultConnector() {
-	if (defaultConnector == null) {
-	    throw new Error("no default LaunchingConnector");
-	}
+        if (defaultConnector == null) {
+            throw new Error("no default LaunchingConnector");
+        }
         return defaultConnector;
     }
 
@@ -174,7 +174,7 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
 
     public List<LaunchingConnector> launchingConnectors() {
         List<LaunchingConnector> launchingConnectors = new ArrayList<LaunchingConnector>(connectors.size());
-	for (Connector connector: connectors) {
+        for (Connector connector: connectors) {
             if (connector instanceof LaunchingConnector) {
                 launchingConnectors.add((LaunchingConnector)connector);
             }
@@ -184,7 +184,7 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
 
     public List<AttachingConnector> attachingConnectors() {
         List<AttachingConnector> attachingConnectors = new ArrayList<AttachingConnector>(connectors.size());
-	for (Connector connector: connectors) {
+        for (Connector connector: connectors) {
             if (connector instanceof AttachingConnector) {
                 attachingConnectors.add((AttachingConnector)connector);
             }
@@ -194,7 +194,7 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
 
     public List<ListeningConnector> listeningConnectors() {
         List<ListeningConnector> listeningConnectors = new ArrayList<ListeningConnector>(connectors.size());
-	for (Connector connector: connectors) {
+        for (Connector connector: connectors) {
             if (connector instanceof ListeningConnector) {
                 listeningConnectors.add((ListeningConnector)connector);
             }
@@ -222,18 +222,18 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
                                         Connection connection,
                                         Process process) throws IOException {
 
-	if (!connection.isOpen()) {
-	    throw new IllegalStateException("connection is not open");
-	}
+        if (!connection.isOpen()) {
+            throw new IllegalStateException("connection is not open");
+        }
 
         VirtualMachine vm;
-	try {
-	    vm = new VirtualMachineImpl(this, connection, process,
+        try {
+            vm = new VirtualMachineImpl(this, connection, process,
                                                    ++vmSequenceNumber);
-	} catch (VMDisconnectedException e) {
-	    throw new IOException(e.getMessage());
-	}
-   	targets.add(vm);
+        } catch (VMDisconnectedException e) {
+            throw new IOException(e.getMessage());
+        }
+        targets.add(vm);
         return vm;
     }
 
@@ -258,11 +258,11 @@ public class VirtualMachineManagerImpl implements VirtualMachineManagerService {
     }
 
     ThreadGroup mainGroupForJDI() {
-	return mainGroupForJDI;
+        return mainGroupForJDI;
     }
 
     String getString(String key) {
-        if (messages == null) { 
+        if (messages == null) {
             messages = ResourceBundle.getBundle("com.sun.tools.jdi.resources.jdi");
         }
         return messages.getString(key);

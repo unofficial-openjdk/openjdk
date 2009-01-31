@@ -43,7 +43,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
      * cannot be used for actual encoding because they are shared across all
      * COMPOUND_TEXT encoders and may be stateful.
      */
-    private static final Map encodingToEncoderMap = 
+    private static final Map encodingToEncoderMap =
         Collections.synchronizedMap(new HashMap(21, 1.0f));
     private static final CharsetEncoder latin1Encoder;
     private static final CharsetEncoder defaultEncoder;
@@ -62,7 +62,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
                     Charset.forName("ISO8859_1").newEncoder();
             } catch (IllegalArgumentException e) {
                 throw new ExceptionInInitializerError
-                    ("ISO8859_1 unsupported");           
+                    ("ISO8859_1 unsupported");
             }
             defaultEncoder = encoder;
             defaultEncodingSupported = CompoundTextSupport.getEncodings().
@@ -79,9 +79,9 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
     private int numNonStandardChars, nonStandardEncodingLen;
 
     public COMPOUND_TEXT_Encoder(Charset cs) {
-	super(cs, 
-	      (float)(CompoundTextSupport.MAX_CONTROL_SEQUENCE_LEN + 2),
-	      (float)(CompoundTextSupport.MAX_CONTROL_SEQUENCE_LEN + 2));
+        super(cs,
+              (float)(CompoundTextSupport.MAX_CONTROL_SEQUENCE_LEN + 2),
+              (float)(CompoundTextSupport.MAX_CONTROL_SEQUENCE_LEN + 2));
         try {
             encoder = Charset.forName("ISO8859_1").newEncoder();
         } catch (IllegalArgumentException cannotHappen) {}
@@ -89,7 +89,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
     }
 
     protected CoderResult encodeLoop(CharBuffer src, ByteBuffer des) {
-	CoderResult cr = CoderResult.UNDERFLOW;
+        CoderResult cr = CoderResult.UNDERFLOW;
         char[] input = src.array();
         int inOff = src.arrayOffset() + src.position();
         int inEnd = src.arrayOffset() + src.limit();
@@ -97,76 +97,76 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
         try {
             while (inOff < inEnd && cr.isUnderflow()) {
                 charBuf[0] = input[inOff];
-		if (charBuf[0] <= '\u0008' ||
-		    (charBuf[0] >= '\u000B' && charBuf[0] <= '\u001F') ||
-		    (charBuf[0] >= '\u0080' && charBuf[0] <= '\u009F')) {
-		    // The compound text specification only permits the octets
-		    // 0x09, 0x0A, 0x1B, and 0x9B in C0 and C1. Of these, 1B and
-		    // 9B must also be removed because they initiate control
-		    // sequences.
-		    charBuf[0] = '?';
-		}
+                if (charBuf[0] <= '\u0008' ||
+                    (charBuf[0] >= '\u000B' && charBuf[0] <= '\u001F') ||
+                    (charBuf[0] >= '\u0080' && charBuf[0] <= '\u009F')) {
+                    // The compound text specification only permits the octets
+                    // 0x09, 0x0A, 0x1B, and 0x9B in C0 and C1. Of these, 1B and
+                    // 9B must also be removed because they initiate control
+                    // sequences.
+                    charBuf[0] = '?';
+                }
 
-		CharsetEncoder enc = getEncoder(charBuf[0]);
-		//System.out.println("char=" + charBuf[0] + ", enc=" + enc);
-		if (enc == null) {
-		    if (unmappableCharacterAction() 
-			== CodingErrorAction.REPORT) {  
-			charBuf[0] = '?';
-			enc = latin1Encoder;
-		    } else {
-			return CoderResult.unmappableForLength(1);
-		    }
-		}
-		if (enc != encoder) {
-		    if (nonStandardCharsetBuffer != null) {
-			cr = flushNonStandardCharsetBuffer(des);
-		    } else {
-			//cr= encoder.flush(des);
-			flushEncoder(encoder, des);
-		    }
+                CharsetEncoder enc = getEncoder(charBuf[0]);
+                //System.out.println("char=" + charBuf[0] + ", enc=" + enc);
+                if (enc == null) {
+                    if (unmappableCharacterAction()
+                        == CodingErrorAction.REPORT) {
+                        charBuf[0] = '?';
+                        enc = latin1Encoder;
+                    } else {
+                        return CoderResult.unmappableForLength(1);
+                    }
+                }
+                if (enc != encoder) {
+                    if (nonStandardCharsetBuffer != null) {
+                        cr = flushNonStandardCharsetBuffer(des);
+                    } else {
+                        //cr= encoder.flush(des);
+                        flushEncoder(encoder, des);
+                    }
                     if (!cr.isUnderflow())
-			return cr;
-		    byte[] escSequence = CompoundTextSupport.
-			getEscapeSequence(enc.charset().name());
-		    if (escSequence == null) {
-			throw new InternalError("Unknown encoding: " + 
-						enc.charset().name());
-		    } else if (escSequence[1] == (byte)0x25 &&
-			       escSequence[2] == (byte)0x2F) {
-			initNonStandardCharsetBuffer(enc, escSequence);
-		    } else if (des.remaining() >= escSequence.length) {
-			des.put(escSequence, 0, escSequence.length);
-		    } else {
-			return CoderResult.OVERFLOW;
-		    }
-		    encoder = enc;
-		    continue;
-		}
-		charbuf.rewind();
-		if (nonStandardCharsetBuffer == null) {
-		    cr = encoder.encode(charbuf, des, false);
-		} else {
-		    bytebuf.clear();
-		    cr = encoder.encode(charbuf, bytebuf, false);
+                        return cr;
+                    byte[] escSequence = CompoundTextSupport.
+                        getEscapeSequence(enc.charset().name());
+                    if (escSequence == null) {
+                        throw new InternalError("Unknown encoding: " +
+                                                enc.charset().name());
+                    } else if (escSequence[1] == (byte)0x25 &&
+                               escSequence[2] == (byte)0x2F) {
+                        initNonStandardCharsetBuffer(enc, escSequence);
+                    } else if (des.remaining() >= escSequence.length) {
+                        des.put(escSequence, 0, escSequence.length);
+                    } else {
+                        return CoderResult.OVERFLOW;
+                    }
+                    encoder = enc;
+                    continue;
+                }
+                charbuf.rewind();
+                if (nonStandardCharsetBuffer == null) {
+                    cr = encoder.encode(charbuf, des, false);
+                } else {
+                    bytebuf.clear();
+                    cr = encoder.encode(charbuf, bytebuf, false);
                     bytebuf.flip();
-		    nonStandardCharsetBuffer.write(byteBuf, 
-						   0, bytebuf.limit());
-		    numNonStandardChars++;
-		}
-		inOff++;
-	    }
-	    return cr;
-	} finally {
-	    src.position(inOff - src.arrayOffset());
-	}
+                    nonStandardCharsetBuffer.write(byteBuf,
+                                                   0, bytebuf.limit());
+                    numNonStandardChars++;
+                }
+                inOff++;
+            }
+            return cr;
+        } finally {
+            src.position(inOff - src.arrayOffset());
+        }
     }
 
     protected CoderResult implFlush(ByteBuffer out) {
         CoderResult cr = (nonStandardCharsetBuffer != null)
-	    ? flushNonStandardCharsetBuffer(out)
-	    //: encoder.flush(out);
-	    : flushEncoder(encoder, out);
+            ? flushNonStandardCharsetBuffer(out)
+            //: encoder.flush(out);
+            : flushEncoder(encoder, out);
         reset();
         return cr;
     }
@@ -202,7 +202,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
             numNonStandardChars = 0;
         }
 
-        int numBytes = nonStandardCharsetBuffer.size(); 
+        int numBytes = nonStandardCharsetBuffer.size();
         int nonStandardBytesOff = 6 + nonStandardEncodingLen;
 
         if (out.remaining() < (numBytes - nonStandardBytesOff) +
@@ -238,7 +238,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
         nonStandardCharsetBuffer = null;
         byteBuf = null;
         nonStandardEncodingLen = 0;
-	return CoderResult.UNDERFLOW;
+        return CoderResult.UNDERFLOW;
     }
 
     /**
@@ -264,7 +264,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
         return getEncoder(ch) != null;
     }
 
-    protected void implOnMalformedInput(CodingErrorAction newAction) { 
+    protected void implOnMalformedInput(CodingErrorAction newAction) {
         encoder.onUnmappableCharacter(newAction);
     }
 
@@ -278,11 +278,11 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
     }
 
     /**
-     * Try to figure out which CharsetEncoder to use for conversion 
-     * of the specified Unicode character. The target character encoding 
+     * Try to figure out which CharsetEncoder to use for conversion
+     * of the specified Unicode character. The target character encoding
      * of the returned encoder is approved to be used with Compound Text.
      *
-     * @param ch Unicode character 
+     * @param ch Unicode character
      * @return CharsetEncoder to convert the given character
      */
     private CharsetEncoder getEncoder(char ch) {
@@ -317,7 +317,7 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
              iter.hasNext();)
         {
             String encoding = (String)iter.next();
-            CharsetEncoder enc = 
+            CharsetEncoder enc =
                 (CharsetEncoder)encodingToEncoderMap.get(encoding);
             if (enc == null) {
                 enc = CompoundTextSupport.getEncoder(encoding);
@@ -338,13 +338,13 @@ public class COMPOUND_TEXT_Encoder extends CharsetEncoder {
     }
 
     private void initEncoder(CharsetEncoder enc) {
-	try {
-	    enc.onUnmappableCharacter(CodingErrorAction.REPLACE)
-		.replaceWith(replacement());
-	} catch (IllegalArgumentException x) {}
+        try {
+            enc.onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .replaceWith(replacement());
+        } catch (IllegalArgumentException x) {}
     }
 
-    private CharBuffer fcb= CharBuffer.allocate(0);    
+    private CharBuffer fcb= CharBuffer.allocate(0);
     private CoderResult flushEncoder(CharsetEncoder enc, ByteBuffer bb) {
         enc.encode(fcb, bb, true);
         return enc.flush(bb);

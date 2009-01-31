@@ -40,37 +40,37 @@ class GetPeerHostClient extends Thread
 
     public GetPeerHostClient ()
     {
-	try {
-	    SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory
-					.getDefault();
-	    server = InetAddress.getLocalHost().getHostName();
-	    s = (SSLSocket) factory.createSocket(server, 9999);
-	    System.out.println("CLIENT: connected to the server- " + server);
-	} catch (Exception e) {
-		System.err.println("Unexpected exceptions: " + e);
-		e.printStackTrace();
-	  }
+        try {
+            SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory
+                                        .getDefault();
+            server = InetAddress.getLocalHost().getHostName();
+            s = (SSLSocket) factory.createSocket(server, 9999);
+            System.out.println("CLIENT: connected to the server- " + server);
+        } catch (Exception e) {
+                System.err.println("Unexpected exceptions: " + e);
+                e.printStackTrace();
+          }
     }
 
     public void run ()
     {
-	try {
-	    // send http request
-	    // before any application data gets sent or received,
-	    // ssl socket will do ssl handshaking first to set up
-	    // the security associates
-	    s.startHandshake(); // Asynchronous call
-	    PrintWriter out = new PrintWriter(
-			      new BufferedWriter(
-			      new OutputStreamWriter(
-			      s.getOutputStream())));
-	    out.println("GET http://" + server +":9999/index.html HTTP/1.1");
-	    out.println();
-	    out.flush();
-	} catch (Exception e) {
-		System.err.println("Unexpected exceptions: " + e);
-		e.printStackTrace();
-		return;
-	  }
+        try {
+            // send http request
+            // before any application data gets sent or received,
+            // ssl socket will do ssl handshaking first to set up
+            // the security associates
+            s.startHandshake(); // Asynchronous call
+            PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                              new OutputStreamWriter(
+                              s.getOutputStream())));
+            out.println("GET http://" + server +":9999/index.html HTTP/1.1");
+            out.println();
+            out.flush();
+        } catch (Exception e) {
+                System.err.println("Unexpected exceptions: " + e);
+                e.printStackTrace();
+                return;
+          }
      }
 }

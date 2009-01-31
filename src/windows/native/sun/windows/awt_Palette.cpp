@@ -42,40 +42,40 @@ BOOL AwtPalette::m_useCustomPalette = TRUE;
  * allow operations using this HDC to access the palette
  * colors/indices.
  */
-HPALETTE AwtPalette::Select(HDC hDC) 
+HPALETTE AwtPalette::Select(HDC hDC)
 {
     HPALETTE prevPalette = NULL;
     if (logicalPalette) {
-	BOOL background = !(m_useCustomPalette);
-	prevPalette = ::SelectPalette(hDC, logicalPalette, background);
+        BOOL background = !(m_useCustomPalette);
+        prevPalette = ::SelectPalette(hDC, logicalPalette, background);
     }
     return prevPalette;
 }
 
 /**
- * Realize the palette of the given HDC.  This will attempt to 
+ * Realize the palette of the given HDC.  This will attempt to
  * install the palette of the HDC onto the device associated with
  * that HDC.
  */
-void AwtPalette::Realize(HDC hDC) 
+void AwtPalette::Realize(HDC hDC)
 {
-    if (logicalPalette) { 
-	if (!m_useCustomPalette ||
-	    AwtComponent::QueryNewPaletteCalled() ||
-	    AwtToolkit::GetInstance().HasDisplayChanged()) {
-	    // Fix for bug 4178909, workaround for Windows bug.  Shouldn't
-	    // do a RealizePalette until the first QueryNewPalette message
-	    // has been processed.
-	    // But if we are switching the primary monitor from non-8bpp
-	    // to 8bpp mode, we may not get any palette messages during
-	    // the display change event.  Go ahead and realize the palette
-	    // now anyway in this situation.  This was especially noticeable
-	    // on win2k in multimon.  Note that there still seems to be some
-	    // problem with actually setting the palette on the primary
-	    // screen until after QNP is called, but at least the 
-	    // secondary devices can correctly realize the palette.
-	    ::RealizePalette(hDC);
-	}
+    if (logicalPalette) {
+        if (!m_useCustomPalette ||
+            AwtComponent::QueryNewPaletteCalled() ||
+            AwtToolkit::GetInstance().HasDisplayChanged()) {
+            // Fix for bug 4178909, workaround for Windows bug.  Shouldn't
+            // do a RealizePalette until the first QueryNewPalette message
+            // has been processed.
+            // But if we are switching the primary monitor from non-8bpp
+            // to 8bpp mode, we may not get any palette messages during
+            // the display change event.  Go ahead and realize the palette
+            // now anyway in this situation.  This was especially noticeable
+            // on win2k in multimon.  Note that there still seems to be some
+            // problem with actually setting the palette on the primary
+            // screen until after QNP is called, but at least the
+            // secondary devices can correctly realize the palette.
+            ::RealizePalette(hDC);
+        }
     }
 }
 
@@ -85,7 +85,7 @@ void AwtPalette::Realize(HDC hDC)
  * the plugin; we do not want to clobber our parent application's
  * palette with our own in that situation.
  */
-void AwtPalette::DisableCustomPalette() 
+void AwtPalette::DisableCustomPalette()
 {
     m_useCustomPalette = FALSE;
 }
@@ -95,7 +95,7 @@ void AwtPalette::DisableCustomPalette()
  * by AwtWin32GraphicsDevice when creating the colorModel of the
  * device.
  */
-BOOL AwtPalette::UseCustomPalette() 
+BOOL AwtPalette::UseCustomPalette()
 {
     return m_useCustomPalette;
 }
@@ -105,7 +105,7 @@ BOOL AwtPalette::UseCustomPalette()
  * Constructor.  Initialize the system and logical palettes.
  * used by this object.
  */
-AwtPalette::AwtPalette(AwtWin32GraphicsDevice *device) 
+AwtPalette::AwtPalette(AwtWin32GraphicsDevice *device)
 {
     this->device = device;
     Update();
@@ -113,8 +113,8 @@ AwtPalette::AwtPalette(AwtWin32GraphicsDevice *device)
 }
 
 /**
- * Retrieves system palette entries. Includes a workaround for for some 
- * video drivers which may not support the GSPE call but may return 
+ * Retrieves system palette entries. Includes a workaround for for some
+ * video drivers which may not support the GSPE call but may return
  * valid values from this procedure.
  */
 int AwtPalette::FetchPaletteEntries(HDC hDC, PALETTEENTRY* pPalEntries)
@@ -125,16 +125,16 @@ int AwtPalette::FetchPaletteEntries(HDC hDC, PALETTEENTRY* pPalEntries)
     int numEntries;
 
     numEntries = ::GetSystemPaletteEntries(hDC, 0, 256, pPalEntries);
-    
+
     if (numEntries > 0) {
-	return numEntries;
+        return numEntries;
     }
     // Workaround: some drivers do not support GetSysPalEntries
 
-    pLogPal = (LOGPALETTE*) new char[sizeof(LOGPALETTE) 
-				    + 256*sizeof(PALETTEENTRY)];
+    pLogPal = (LOGPALETTE*) new char[sizeof(LOGPALETTE)
+                                    + 256*sizeof(PALETTEENTRY)];
     if (pLogPal == NULL) {
-	return 0;
+        return 0;
     }
 
     pLogPal->palVersion = 0x300;
@@ -142,30 +142,30 @@ int AwtPalette::FetchPaletteEntries(HDC hDC, PALETTEENTRY* pPalEntries)
     int iEntry;
     PALETTEENTRY* pEntry;
     for (iEntry = 0; iEntry < 256; iEntry++) {
-	pEntry = pLogPal->palPalEntry + iEntry;
-	pEntry->peRed = iEntry;
-	pEntry->peGreen = pEntry->peBlue = 0;
-	pEntry->peFlags = PC_EXPLICIT;
+        pEntry = pLogPal->palPalEntry + iEntry;
+        pEntry->peRed = iEntry;
+        pEntry->peGreen = pEntry->peBlue = 0;
+        pEntry->peFlags = PC_EXPLICIT;
     }
     hPal = ::CreatePalette(pLogPal);
     delete pLogPal;
     if ( hPal == 0 ) {
-	return 0;
+        return 0;
     }
 
     hPalOld = ::SelectPalette(hDC, hPal, 1);
     if (hPalOld == 0) {
-	::DeleteObject(hPal);
-	return 0;
+        ::DeleteObject(hPal);
+        return 0;
     }
     ::RealizePalette(hDC);
 
     COLORREF rgb;
     for (iEntry = 0; iEntry < 256; iEntry++) {
-    	rgb = ::GetNearestColor(hDC, PALETTEINDEX(iEntry));
-	pPalEntries[iEntry].peRed = GetRValue(rgb);
-	pPalEntries[iEntry].peGreen = GetGValue(rgb);
-	pPalEntries[iEntry].peBlue = GetBValue(rgb);
+        rgb = ::GetNearestColor(hDC, PALETTEINDEX(iEntry));
+        pPalEntries[iEntry].peRed = GetRValue(rgb);
+        pPalEntries[iEntry].peGreen = GetGValue(rgb);
+        pPalEntries[iEntry].peBlue = GetBValue(rgb);
     }
 
     ::SelectPalette(hDC, hPalOld, 0 );
@@ -186,53 +186,53 @@ int AwtPalette::GetGSType(PALETTEENTRY* pPalEntries)
 
     memset(bUsed, 0, sizeof(bUsed));
     for (iEntry = 0; iEntry < 256; iEntry++) {
-	r = pPalEntries[iEntry].peRed;
-	g = pPalEntries[iEntry].peGreen;
-	b = pPalEntries[iEntry].peBlue;
-	if (r != g || r != b) {
-	    isGray = 0;
-	    break;
-	} else {
-	    // the values are gray
-	    if (r != iEntry) {
-		// it's not linear
-		// but it could be non-linear static gray
-		isLinearStaticGray = 0;
-	    }
-	    bUsed[r] = 1;
-	}
+        r = pPalEntries[iEntry].peRed;
+        g = pPalEntries[iEntry].peGreen;
+        b = pPalEntries[iEntry].peBlue;
+        if (r != g || r != b) {
+            isGray = 0;
+            break;
+        } else {
+            // the values are gray
+            if (r != iEntry) {
+                // it's not linear
+                // but it could be non-linear static gray
+                isLinearStaticGray = 0;
+            }
+            bUsed[r] = 1;
+        }
     }
 
     if (isGray && !isLinearStaticGray) {
-	// check if all 256 grays are there
-	// if that's the case, it's non-linear static gray
-	for (iEntry = 0; iEntry < 256; iEntry++ ) {
-	    if (!bUsed[iEntry]) {
-		// not non-linear (not all 256 colors are used)
-		isNonLinearStaticGray = 0;
-		break;
-	    }
-	}
+        // check if all 256 grays are there
+        // if that's the case, it's non-linear static gray
+        for (iEntry = 0; iEntry < 256; iEntry++ ) {
+            if (!bUsed[iEntry]) {
+                // not non-linear (not all 256 colors are used)
+                isNonLinearStaticGray = 0;
+                break;
+            }
+        }
     }
 
-    if (!isGray) { 
-	J2dTraceLn(J2D_TRACE_INFO,
-		   "Detected palette: NON_GRAY/USER-MODIFIABLE");
-	return NON_GRAY; 
+    if (!isGray) {
+        J2dTraceLn(J2D_TRACE_INFO,
+                   "Detected palette: NON_GRAY/USER-MODIFIABLE");
+        return NON_GRAY;
     }
-    if (isLinearStaticGray) { 
-	J2dTraceLn(J2D_TRACE_INFO,
-		   "Detected palette: LINEAR_STATIC_GRAY");
-	return LINEAR_STATIC_GRAY; 
+    if (isLinearStaticGray) {
+        J2dTraceLn(J2D_TRACE_INFO,
+                   "Detected palette: LINEAR_STATIC_GRAY");
+        return LINEAR_STATIC_GRAY;
     }
-    if (isNonLinearStaticGray) { 
-	J2dTraceLn(J2D_TRACE_INFO,
-		   "Detected palette: NON_LINEAR_STATIC_GRAY");
-	return NON_LINEAR_STATIC_GRAY; 
+    if (isNonLinearStaticGray) {
+        J2dTraceLn(J2D_TRACE_INFO,
+                   "Detected palette: NON_LINEAR_STATIC_GRAY");
+        return NON_LINEAR_STATIC_GRAY;
     }
-    
+
     J2dTraceLn(J2D_TRACE_ERROR,
-	       "Unable to detect palette type, non-gray is assumed");
+               "Unable to detect palette type, non-gray is assumed");
     // not supposed to be here, error
     return ERROR_GRAY;
 }
@@ -244,22 +244,22 @@ int AwtPalette::GetGSType(PALETTEENTRY* pPalEntries)
  * Return whether there were any palette changes from the previous
  * system palette.
  */
-BOOL AwtPalette::Update() 
+BOOL AwtPalette::Update()
 {
     PALETTEENTRY pe[256];
     int numEntries = 0;
     int bitsPerPixel;
     int i;
     HDC hDC;
- 
-    hDC = device->GetDC();    
+
+    hDC = device->GetDC();
     if (!hDC) {
-	return FALSE;
+        return FALSE;
     }
     bitsPerPixel = ::GetDeviceCaps(hDC, BITSPIXEL);
     device->ReleaseDC(hDC);
-    if (8 != bitsPerPixel) {	
-	return FALSE;
+    if (8 != bitsPerPixel) {
+        return FALSE;
     }
 
     hDC = device->GetDC();
@@ -268,9 +268,9 @@ BOOL AwtPalette::Update()
     device->ReleaseDC(hDC);
 
     if ((numEntries == numSystemEntries) &&
-	(0 == memcmp(pe, systemEntriesWin32, numEntries * sizeof(PALETTEENTRY)))) 
+        (0 == memcmp(pe, systemEntriesWin32, numEntries * sizeof(PALETTEENTRY))))
     {
-	return FALSE;
+        return FALSE;
     }
 
     // make this system palette the new cached win32 palette
@@ -283,47 +283,47 @@ BOOL AwtPalette::Update()
     int staticGrayType = GetGSType(systemEntriesWin32);
 
     if (staticGrayType == LINEAR_STATIC_GRAY) {
-	device->SetGrayness(GS_STATICGRAY);
+        device->SetGrayness(GS_STATICGRAY);
     } else if (staticGrayType == NON_LINEAR_STATIC_GRAY) {
-	device->SetGrayness(GS_NONLINGRAY);
+        device->SetGrayness(GS_NONLINGRAY);
     } else if (getenv("FORCEGRAY")) {
-	J2dTraceLn(J2D_TRACE_INFO, 
-		    "Gray Palette Forced via FORCEGRAY");
-	// Need to zero first and last ten
-	// palette entries. Otherwise in UpdateDynamicColorModel
-	// we could set non-gray values to the palette.
-	for (i = 0; i < 10; i++) {
-	    systemEntries[i] = 0x00000000;
-	    systemEntries[i+246] = 0x00000000;
-	}
-	numEntries -= 20;
-	startIndex = 10;
-	endIndex -= 10;
-	device->SetGrayness(GS_INDEXGRAY);
+        J2dTraceLn(J2D_TRACE_INFO,
+                    "Gray Palette Forced via FORCEGRAY");
+        // Need to zero first and last ten
+        // palette entries. Otherwise in UpdateDynamicColorModel
+        // we could set non-gray values to the palette.
+        for (i = 0; i < 10; i++) {
+            systemEntries[i] = 0x00000000;
+            systemEntries[i+246] = 0x00000000;
+        }
+        numEntries -= 20;
+        startIndex = 10;
+        endIndex -= 10;
+        device->SetGrayness(GS_INDEXGRAY);
     } else {
-	device->SetGrayness(GS_NOTGRAY);
+        device->SetGrayness(GS_NOTGRAY);
     }
 
     for (i = startIndex; i <= endIndex; i++) {
-	systemEntries[i] =  0xff000000
-			| (pe[i].peRed << 16)
-			| (pe[i].peGreen << 8)
-			| (pe[i].peBlue);
+        systemEntries[i] =  0xff000000
+                        | (pe[i].peRed << 16)
+                        | (pe[i].peGreen << 8)
+                        | (pe[i].peBlue);
     }
 
     systemInverseLUT =
-	initCubemap((int *)systemEntries, numEntries, 32);
+        initCubemap((int *)systemEntries, numEntries, 32);
 
     ColorData *cData = device->GetColorData();
-    if ((device->GetGrayness() == GS_NONLINGRAY || 
-	 device->GetGrayness() == GS_INDEXGRAY) && 
-	cData != NULL) {
+    if ((device->GetGrayness() == GS_NONLINGRAY ||
+         device->GetGrayness() == GS_INDEXGRAY) &&
+        cData != NULL) {
 
-	if (cData->pGrayInverseLutData != NULL) {
-	    free(cData->pGrayInverseLutData);
-	    cData->pGrayInverseLutData = NULL;
-	}
-	initInverseGrayLut((int*)systemEntries, 256, device->GetColorData());
+        if (cData->pGrayInverseLutData != NULL) {
+            free(cData->pGrayInverseLutData);
+            cData->pGrayInverseLutData = NULL;
+        }
+        initInverseGrayLut((int*)systemEntries, 256, device->GetColorData());
     }
 
     return TRUE;
@@ -331,7 +331,7 @@ BOOL AwtPalette::Update()
 
 
 /**
- * Creates our custom palette based on: the current system palette, 
+ * Creates our custom palette based on: the current system palette,
  * the grayscale-ness of the system palette, and the state of the
  * primary device.
  */
@@ -341,42 +341,40 @@ void AwtPalette::UpdateLogical()
     int nEntries = 256;
     char *buf = NULL;
     buf = new char[sizeof(LOGPALETTE) + nEntries *
-	sizeof(PALETTEENTRY)];
-    
+        sizeof(PALETTEENTRY)];
+
     LOGPALETTE *pLogPal = (LOGPALETTE*)buf;
-    PALETTEENTRY *pPalEntries = (PALETTEENTRY *)(&(pLogPal->palPalEntry[0])); 
-    
+    PALETTEENTRY *pPalEntries = (PALETTEENTRY *)(&(pLogPal->palPalEntry[0]));
+
     memcpy(pPalEntries, systemEntriesWin32, 256 * sizeof(PALETTEENTRY));
 
     PALETTEENTRY *pPal = pPalEntries;
     int i;
     int staticGrayType = device->GetGrayness();
     if (staticGrayType == GS_INDEXGRAY) {
-	float m = 255.0f / 235.0f;
-	float g = 0.5f;
-	pPal = &pPalEntries[10];
-	for (i = 10; i < 246; i++, pPal++) {
-	    pPal->peRed = pPal->peGreen = pPal->peBlue =
-		(int)g;
-	    g += m;
-	    pPal->peFlags = PC_NOCOLLAPSE;
-	}
+        float m = 255.0f / 235.0f;
+        float g = 0.5f;
+        pPal = &pPalEntries[10];
+        for (i = 10; i < 246; i++, pPal++) {
+            pPal->peRed = pPal->peGreen = pPal->peBlue =
+                (int)g;
+            g += m;
+            pPal->peFlags = PC_NOCOLLAPSE;
+        }
     } else if (staticGrayType == GS_NOTGRAY) {
-	for (i = 10; i < 246; i++) {
-	    pPalEntries[i] = customPalette[i-10];
-	}
+        for (i = 10; i < 246; i++) {
+            pPalEntries[i] = customPalette[i-10];
+        }
     }
     pLogPal->palNumEntries = 256;
     pLogPal->palVersion = 0x300;
     logicalPalette = ::CreatePalette(pLogPal);
-    
+
     for (i = 0; i < nEntries; i++) {
-	logicalEntries[i] =  0xff000000
-			| (pPalEntries[i].peRed << 16)
-			| (pPalEntries[i].peGreen << 8)
-			| (pPalEntries[i].peBlue);
+        logicalEntries[i] =  0xff000000
+                        | (pPalEntries[i].peRed << 16)
+                        | (pPalEntries[i].peGreen << 8)
+                        | (pPalEntries[i].peBlue);
     }
-    delete [] buf;    
+    delete [] buf;
 }
-
-

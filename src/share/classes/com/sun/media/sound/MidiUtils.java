@@ -34,7 +34,6 @@ import java.util.ArrayList;
 /**
  * Some utilities for MIDI (some stuff is used from javax.sound.midi)
  *
- * @version %I%, %E%
  * @author Florian Bomers
  */
 public class MidiUtils {
@@ -46,28 +45,28 @@ public class MidiUtils {
 
     /** return true if the passed message is Meta End Of Track */
     public static boolean isMetaEndOfTrack(MidiMessage midiMsg) {
-	// first check if it is a META message at all
-	if (midiMsg.getLength() != 3
-	    || midiMsg.getStatus() != MetaMessage.META) {
-	    return false;
-	}
-	// now get message and check for end of track
-	byte[] msg = midiMsg.getMessage();
-	return ((msg[1] & 0xFF) == META_END_OF_TRACK_TYPE) && (msg[2] == 0);
+        // first check if it is a META message at all
+        if (midiMsg.getLength() != 3
+            || midiMsg.getStatus() != MetaMessage.META) {
+            return false;
+        }
+        // now get message and check for end of track
+        byte[] msg = midiMsg.getMessage();
+        return ((msg[1] & 0xFF) == META_END_OF_TRACK_TYPE) && (msg[2] == 0);
     }
 
 
     /** return if the given message is a meta tempo message */
     public static boolean isMetaTempo(MidiMessage midiMsg) {
-	// first check if it is a META message at all
-	if (midiMsg.getLength() != 6
-	    || midiMsg.getStatus() != MetaMessage.META) {
-	    return false;
-	}
-	// now get message and check for tempo
-	byte[] msg = midiMsg.getMessage();
-	// meta type must be 0x51, and data length must be 3
-	return ((msg[1] & 0xFF) == META_TEMPO_TYPE) && (msg[2] == 3);
+        // first check if it is a META message at all
+        if (midiMsg.getLength() != 6
+            || midiMsg.getStatus() != MetaMessage.META) {
+            return false;
+        }
+        // now get message and check for tempo
+        byte[] msg = midiMsg.getMessage();
+        // meta type must be 0x51, and data length must be 3
+        return ((msg[1] & 0xFF) == META_TEMPO_TYPE) && (msg[2] == 3);
     }
 
 
@@ -75,19 +74,19 @@ public class MidiUtils {
      * the tempo in MPQ, or -1 if this isn't a tempo message
      */
     public static int getTempoMPQ(MidiMessage midiMsg) {
-	// first check if it is a META message at all
-	if (midiMsg.getLength() != 6
-	    || midiMsg.getStatus() != MetaMessage.META) {
-	    return -1;
-	}
-	byte[] msg = midiMsg.getMessage();
-	if (((msg[1] & 0xFF) != META_TEMPO_TYPE) || (msg[2] != 3)) {
-	    return -1;
-	}
-	int tempo =    (msg[5] & 0xFF)
-	            | ((msg[4] & 0xFF) << 8)
-	            | ((msg[3] & 0xFF) << 16);
-	return tempo;
+        // first check if it is a META message at all
+        if (midiMsg.getLength() != 6
+            || midiMsg.getStatus() != MetaMessage.META) {
+            return -1;
+        }
+        byte[] msg = midiMsg.getMessage();
+        if (((msg[1] & 0xFF) != META_TEMPO_TYPE) || (msg[2] != 3)) {
+            return -1;
+        }
+        int tempo =    (msg[5] & 0xFF)
+                    | ((msg[4] & 0xFF) << 8)
+                    | ((msg[3] & 0xFF) << 16);
+        return tempo;
     }
 
 
@@ -97,10 +96,10 @@ public class MidiUtils {
      * 2 - BPM tempo to MPQ tempo<br>
      */
     public static double convertTempo(double tempo) {
-	if (tempo <= 0) {
-	    tempo = 1;
-	}
-	return ((double) 60000000l) / tempo;
+        if (tempo <= 0) {
+            tempo = 1;
+        }
+        return ((double) 60000000l) / tempo;
     }
 
 
@@ -110,7 +109,7 @@ public class MidiUtils {
      * Does not work for SMPTE timing!
      */
     public static long ticks2microsec(long tick, double tempoMPQ, int resolution) {
-	return (long) (((double) tick) * tempoMPQ / resolution);
+        return (long) (((double) tick) * tempoMPQ / resolution);
     }
 
     /**
@@ -119,9 +118,9 @@ public class MidiUtils {
      * Does not work for SMPTE timing!
      */
     public static long microsec2ticks(long us, double tempoMPQ, int resolution) {
-	// do not round to nearest tick
-	//return (long) Math.round((((double)us) * resolution) / tempoMPQ);
-	return (long) ((((double)us) * resolution) / tempoMPQ);
+        // do not round to nearest tick
+        //return (long) Math.round((((double)us) * resolution) / tempoMPQ);
+        return (long) ((((double)us) * resolution) / tempoMPQ);
     }
 
 
@@ -130,50 +129,50 @@ public class MidiUtils {
      * @param cache tempo info and current tempo
      */
     public static long tick2microsecond(Sequence seq, long tick, TempoCache cache) {
-	if (seq.getDivisionType() != Sequence.PPQ ) {
-	    double seconds = ((double)tick / (double)(seq.getDivisionType() * seq.getResolution()));
-	    return (long) (1000000 * seconds);
-	}
+        if (seq.getDivisionType() != Sequence.PPQ ) {
+            double seconds = ((double)tick / (double)(seq.getDivisionType() * seq.getResolution()));
+            return (long) (1000000 * seconds);
+        }
 
-	if (cache == null) {
-	    cache = new TempoCache(seq);
-	}
+        if (cache == null) {
+            cache = new TempoCache(seq);
+        }
 
-	int resolution = seq.getResolution();
+        int resolution = seq.getResolution();
 
-    	long[] ticks = cache.ticks;
-	int[] tempos = cache.tempos; // in MPQ
-	int cacheCount = tempos.length;
+        long[] ticks = cache.ticks;
+        int[] tempos = cache.tempos; // in MPQ
+        int cacheCount = tempos.length;
 
-	// optimization to not always go through entire list of tempo events
-	int snapshotIndex = cache.snapshotIndex;
-	int snapshotMicro = cache.snapshotMicro;
+        // optimization to not always go through entire list of tempo events
+        int snapshotIndex = cache.snapshotIndex;
+        int snapshotMicro = cache.snapshotMicro;
 
-	// walk through all tempo changes and add time for the respective blocks
-	long us = 0; // microsecond
+        // walk through all tempo changes and add time for the respective blocks
+        long us = 0; // microsecond
 
-	if (snapshotIndex <= 0
-	    || snapshotIndex >= cacheCount
-	    || ticks[snapshotIndex] > tick) {
-	    snapshotMicro = 0;
-	    snapshotIndex = 0;
-	}
-	if (cacheCount > 0) {
-	    // this implementation needs a tempo event at tick 0!
-	    int i = snapshotIndex + 1;
-	    while (i < cacheCount && ticks[i] <= tick) {
-		snapshotMicro += ticks2microsec(ticks[i] - ticks[i - 1], tempos[i - 1], resolution);
-		snapshotIndex = i;
-		i++;
-	    }
-	    us = snapshotMicro
-		+ ticks2microsec(tick - ticks[snapshotIndex],
-				 tempos[snapshotIndex],
-				 resolution);
-	}
-	cache.snapshotIndex = snapshotIndex;
-	cache.snapshotMicro = snapshotMicro;
-	return us;
+        if (snapshotIndex <= 0
+            || snapshotIndex >= cacheCount
+            || ticks[snapshotIndex] > tick) {
+            snapshotMicro = 0;
+            snapshotIndex = 0;
+        }
+        if (cacheCount > 0) {
+            // this implementation needs a tempo event at tick 0!
+            int i = snapshotIndex + 1;
+            while (i < cacheCount && ticks[i] <= tick) {
+                snapshotMicro += ticks2microsec(ticks[i] - ticks[i - 1], tempos[i - 1], resolution);
+                snapshotIndex = i;
+                i++;
+            }
+            us = snapshotMicro
+                + ticks2microsec(tick - ticks[snapshotIndex],
+                                 tempos[snapshotIndex],
+                                 resolution);
+        }
+        cache.snapshotIndex = snapshotIndex;
+        cache.snapshotMicro = snapshotMicro;
+        return us;
     }
 
     /**
@@ -181,48 +180,48 @@ public class MidiUtils {
      * returns tempo at the given time in cache.getCurrTempoMPQ
      */
     public static long microsecond2tick(Sequence seq, long micros, TempoCache cache) {
-	if (seq.getDivisionType() != Sequence.PPQ ) {
-	    double dTick = ( ((double) micros)
-	                   * ((double) seq.getDivisionType())
-	                   * ((double) seq.getResolution()))
-	                   / ((double) 1000000);
-	    long tick = (long) dTick;
-	    if (cache != null) {
-		cache.currTempo = (int) cache.getTempoMPQAt(tick);
-	    }
-	    return tick;
-	}
+        if (seq.getDivisionType() != Sequence.PPQ ) {
+            double dTick = ( ((double) micros)
+                           * ((double) seq.getDivisionType())
+                           * ((double) seq.getResolution()))
+                           / ((double) 1000000);
+            long tick = (long) dTick;
+            if (cache != null) {
+                cache.currTempo = (int) cache.getTempoMPQAt(tick);
+            }
+            return tick;
+        }
 
-	if (cache == null) {
-	    cache = new TempoCache(seq);
-	}
-    	long[] ticks = cache.ticks;
-	int[] tempos = cache.tempos; // in MPQ
-	int cacheCount = tempos.length;
+        if (cache == null) {
+            cache = new TempoCache(seq);
+        }
+        long[] ticks = cache.ticks;
+        int[] tempos = cache.tempos; // in MPQ
+        int cacheCount = tempos.length;
 
-	int resolution = seq.getResolution();
+        int resolution = seq.getResolution();
 
-	long us = 0; long tick = 0; int newReadPos = 0; int i = 1;
+        long us = 0; long tick = 0; int newReadPos = 0; int i = 1;
 
-	// walk through all tempo changes and add time for the respective blocks
-	// to find the right tick
-	if (micros > 0 && cacheCount > 0) {
-	    // this loop requires that the first tempo Event is at time 0
-	    while (i < cacheCount) {
-		long nextTime = us + ticks2microsec(ticks[i] - ticks[i - 1],
-						    tempos[i - 1], resolution);
-		if (nextTime > micros) {
-		    break;
-		}
-		us = nextTime;
-		i++;
-	    }
-	    tick = ticks[i - 1] + microsec2ticks(micros - us, tempos[i - 1], resolution);
-	    if (Printer.debug) Printer.debug("microsecond2tick(" + (micros / 1000)+") = "+tick+" ticks.");
-	    //if (Printer.debug) Printer.debug("   -> convert back = " + (tick2microsecond(seq, tick, null) / 1000)+" microseconds");
-	}
-	cache.currTempo = tempos[i - 1];
-	return tick;
+        // walk through all tempo changes and add time for the respective blocks
+        // to find the right tick
+        if (micros > 0 && cacheCount > 0) {
+            // this loop requires that the first tempo Event is at time 0
+            while (i < cacheCount) {
+                long nextTime = us + ticks2microsec(ticks[i] - ticks[i - 1],
+                                                    tempos[i - 1], resolution);
+                if (nextTime > micros) {
+                    break;
+                }
+                us = nextTime;
+                i++;
+            }
+            tick = ticks[i - 1] + microsec2ticks(micros - us, tempos[i - 1], resolution);
+            if (Printer.debug) Printer.debug("microsecond2tick(" + (micros / 1000)+") = "+tick+" ticks.");
+            //if (Printer.debug) Printer.debug("   -> convert back = " + (tick2microsecond(seq, tick, null) / 1000)+" microseconds");
+        }
+        cache.currTempo = tempos[i - 1];
+        return tick;
     }
 
 
@@ -234,124 +233,124 @@ public class MidiUtils {
      *   if no entries are found that follow after tick, track.size() is returned
      */
     public static int tick2index(Track track, long tick) {
-	int ret = 0;
-	if (tick > 0) {
-	    int low = 0;
-	    int high = track.size() - 1;
-	    while (low < high) {
-		// take the middle event as estimate
-		ret = (low + high) >> 1;
-		// tick of estimate
-		long t = track.get(ret).getTick();
-		if (t == tick) {
-		    break;
-		} else if (t < tick) {
-		    // estimate too low
-		    if (low == high - 1) {
-			// "or after tick"
-			ret++;
-			break;
-		    }
-		    low = ret;
-		} else { // if (t>tick)
-		    // estimate too high
-		    high = ret;
-		}
-	    }
-	}
-	return ret;
+        int ret = 0;
+        if (tick > 0) {
+            int low = 0;
+            int high = track.size() - 1;
+            while (low < high) {
+                // take the middle event as estimate
+                ret = (low + high) >> 1;
+                // tick of estimate
+                long t = track.get(ret).getTick();
+                if (t == tick) {
+                    break;
+                } else if (t < tick) {
+                    // estimate too low
+                    if (low == high - 1) {
+                        // "or after tick"
+                        ret++;
+                        break;
+                    }
+                    low = ret;
+                } else { // if (t>tick)
+                    // estimate too high
+                    high = ret;
+                }
+            }
+        }
+        return ret;
     }
 
 
     public static class TempoCache {
-    	long[] ticks;
-	int[] tempos; // in MPQ
-	// index in ticks/tempos at the snapshot
-	int snapshotIndex = 0;
-	// microsecond at the snapshot
-	int snapshotMicro = 0;
+        long[] ticks;
+        int[] tempos; // in MPQ
+        // index in ticks/tempos at the snapshot
+        int snapshotIndex = 0;
+        // microsecond at the snapshot
+        int snapshotMicro = 0;
 
-	int currTempo; // MPQ, used as return value for microsecond2tick
+        int currTempo; // MPQ, used as return value for microsecond2tick
 
-	private boolean firstTempoIsFake = false;
+        private boolean firstTempoIsFake = false;
 
-	public TempoCache() {
-	    // just some defaults, to prevents weird stuff
-	    ticks = new long[1];
-	    tempos = new int[1];
-	    tempos[0] = DEFAULT_TEMPO_MPQ;
-	    snapshotIndex = 0;
-	    snapshotMicro = 0;
-	}
+        public TempoCache() {
+            // just some defaults, to prevents weird stuff
+            ticks = new long[1];
+            tempos = new int[1];
+            tempos[0] = DEFAULT_TEMPO_MPQ;
+            snapshotIndex = 0;
+            snapshotMicro = 0;
+        }
 
-	public TempoCache(Sequence seq) {
-	    this();
-	    refresh(seq);
-	}
+        public TempoCache(Sequence seq) {
+            this();
+            refresh(seq);
+        }
 
 
-	public synchronized void refresh(Sequence seq) {
-	    ArrayList list = new ArrayList();
-	    Track[] tracks = seq.getTracks();
-	    if (tracks.length > 0) {
-	    	// tempo events only occur in track 0
-	    	Track track = tracks[0];
-	    	int c = track.size();
-		for (int i = 0; i < c; i++) {
-		    MidiEvent ev = track.get(i);
-		    MidiMessage msg = ev.getMessage();
-		    if (isMetaTempo(msg)) {
-			// found a tempo event. Add it to the list
-			list.add(ev);
-		    }
-		}
-	    }
-	    int size = list.size() + 1;
-	    firstTempoIsFake = true;
-	    if ((size > 1)
-		&& (((MidiEvent) list.get(0)).getTick() == 0)) {
-		// do not need to add an initial tempo event at the beginning
-		size--;
-		firstTempoIsFake = false;
-	    }
-	    ticks  = new long[size];
-	    tempos = new int[size];
-	    int e = 0;
-	    if (firstTempoIsFake) {
-		// add tempo 120 at beginning
-		ticks[0] = 0;
-		tempos[0] = DEFAULT_TEMPO_MPQ;
-		e++;
-	    }
-	    for (int i = 0; i < list.size(); i++, e++) {
-	    	MidiEvent evt = (MidiEvent) list.get(i);
-		ticks[e] = evt.getTick();
-		tempos[e] = getTempoMPQ(evt.getMessage());
-	    }
-	    snapshotIndex = 0;
-	    snapshotMicro = 0;
-	}
+        public synchronized void refresh(Sequence seq) {
+            ArrayList list = new ArrayList();
+            Track[] tracks = seq.getTracks();
+            if (tracks.length > 0) {
+                // tempo events only occur in track 0
+                Track track = tracks[0];
+                int c = track.size();
+                for (int i = 0; i < c; i++) {
+                    MidiEvent ev = track.get(i);
+                    MidiMessage msg = ev.getMessage();
+                    if (isMetaTempo(msg)) {
+                        // found a tempo event. Add it to the list
+                        list.add(ev);
+                    }
+                }
+            }
+            int size = list.size() + 1;
+            firstTempoIsFake = true;
+            if ((size > 1)
+                && (((MidiEvent) list.get(0)).getTick() == 0)) {
+                // do not need to add an initial tempo event at the beginning
+                size--;
+                firstTempoIsFake = false;
+            }
+            ticks  = new long[size];
+            tempos = new int[size];
+            int e = 0;
+            if (firstTempoIsFake) {
+                // add tempo 120 at beginning
+                ticks[0] = 0;
+                tempos[0] = DEFAULT_TEMPO_MPQ;
+                e++;
+            }
+            for (int i = 0; i < list.size(); i++, e++) {
+                MidiEvent evt = (MidiEvent) list.get(i);
+                ticks[e] = evt.getTick();
+                tempos[e] = getTempoMPQ(evt.getMessage());
+            }
+            snapshotIndex = 0;
+            snapshotMicro = 0;
+        }
 
-	public int getCurrTempoMPQ() {
-	    return currTempo;
-	}
+        public int getCurrTempoMPQ() {
+            return currTempo;
+        }
 
-	float getTempoMPQAt(long tick) {
-	    return getTempoMPQAt(tick, -1.0f);
-	}
+        float getTempoMPQAt(long tick) {
+            return getTempoMPQAt(tick, -1.0f);
+        }
 
-	synchronized float getTempoMPQAt(long tick, float startTempoMPQ) {
-	    for (int i = 0; i < ticks.length; i++) {
-		if (ticks[i] > tick) {
-		    if (i > 0) i--;
-		    if (startTempoMPQ > 0 && i == 0 && firstTempoIsFake) {
-			return startTempoMPQ;
-		    }
-		    return (float) tempos[i];
-		}
-	    }
-	    return tempos[tempos.length - 1];
-	}
+        synchronized float getTempoMPQAt(long tick, float startTempoMPQ) {
+            for (int i = 0; i < ticks.length; i++) {
+                if (ticks[i] > tick) {
+                    if (i > 0) i--;
+                    if (startTempoMPQ > 0 && i == 0 && firstTempoIsFake) {
+                        return startTempoMPQ;
+                    }
+                    return (float) tempos[i];
+                }
+            }
+            return tempos[tempos.length - 1];
+        }
 
     }
 }

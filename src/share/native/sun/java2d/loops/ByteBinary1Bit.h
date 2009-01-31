@@ -33,8 +33,8 @@
  * LoopMacros.h to manipulate a surface of type "ByteBinary1Bit".
  */
 
-typedef jubyte	ByteBinary1BitPixelType;
-typedef jubyte	ByteBinary1BitDataType;
+typedef jubyte  ByteBinary1BitPixelType;
+typedef jubyte  ByteBinary1BitDataType;
 
 #define ByteBinary1BitPixelStride      0
 #define ByteBinary1BitPixelsPerByte    8
@@ -53,7 +53,7 @@ typedef jubyte	ByteBinary1BitDataType;
 #define NextByteBinary1BitStoreVarsX      NextByteBinaryStoreVarsX
 
 #define DeclareByteBinary1BitInitialLoadVars(pRasInfo, pRas, PREFIX, x) \
-    DeclareByteBinaryInitialLoadVars(ByteBinary1Bit, pRasInfo, pRas, PREFIX, x) 
+    DeclareByteBinaryInitialLoadVars(ByteBinary1Bit, pRasInfo, pRas, PREFIX, x)
 
 #define InitialLoadByteBinary1Bit(pRas, PREFIX) \
     InitialLoadByteBinary(ByteBinary1Bit, pRas, PREFIX)

@@ -25,13 +25,12 @@
 
 package sun.io;
 
-import sun.nio.cs.ext.JIS_X_0212_Decoder; 
+import sun.nio.cs.ext.JIS_X_0212_Decoder;
 
 /**
  * Tables and data to convert JIS0212 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 
@@ -43,7 +42,7 @@ public class ByteToCharJIS0212 extends ByteToCharDoubleByte {
 
     protected char convSingleByte(int b) {
         //Fix bug#4179800 - JIS0212 is 7bit,double-byte encoding
-	return REPLACE_CHAR;
+        return REPLACE_CHAR;
     }
 
     public ByteToCharJIS0212() {

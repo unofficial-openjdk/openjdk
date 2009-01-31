@@ -33,18 +33,18 @@ public class ImmutableLocal
      * {@link ThreadLocal} guaranteed to always return the same reference.
      */
     abstract public static class ImmutableThreadLocal extends ThreadLocal {
-	public void set(final Object value) {
-	    throw new RuntimeException("ImmutableThreadLocal set called");
-	}
+        public void set(final Object value) {
+            throw new RuntimeException("ImmutableThreadLocal set called");
+        }
 
-	// force override
-	abstract protected Object initialValue();
+        // force override
+        abstract protected Object initialValue();
     }
 
     private static final ThreadLocal cache = new ImmutableThreadLocal() {
-	public Object initialValue() {
-	    return Thread.currentThread().getName();
-	}
+        public Object initialValue() {
+            return Thread.currentThread().getName();
+        }
     };
 
     public static void main(final String[] args) {

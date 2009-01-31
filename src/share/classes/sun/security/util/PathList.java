@@ -36,7 +36,6 @@ import java.net.MalformedURLException;
 /**
  * A utility class for handle path list
  *
- * @version %I%, %G%
  */
 public class PathList {
     /**

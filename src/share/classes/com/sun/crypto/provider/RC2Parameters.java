@@ -58,7 +58,7 @@ import sun.security.util.*;
 
 public final class RC2Parameters extends AlgorithmParametersSpi {
 
-    // TABLE[EKB] from section 6 of RFC 2268, used to convert effective key 
+    // TABLE[EKB] from section 6 of RFC 2268, used to convert effective key
     // size to/from encoded version number
     private final static int[] EKB_TABLE = new int[] {
         0xbd, 0x56, 0xea, 0xf2, 0xa2, 0xf1, 0xac, 0x2a,
@@ -106,124 +106,124 @@ public final class RC2Parameters extends AlgorithmParametersSpi {
 
     public RC2Parameters() {}
 
-    protected void engineInit(AlgorithmParameterSpec paramSpec) 
+    protected void engineInit(AlgorithmParameterSpec paramSpec)
         throws InvalidParameterSpecException {
 
         if (!(paramSpec instanceof RC2ParameterSpec)) {
-	    throw new InvalidParameterSpecException
-	        ("Inappropriate parameter specification");
+            throw new InvalidParameterSpecException
+                ("Inappropriate parameter specification");
         }
-	RC2ParameterSpec rps = (RC2ParameterSpec) paramSpec;
+        RC2ParameterSpec rps = (RC2ParameterSpec) paramSpec;
 
-	// check effective key size (a value of 0 means it is unspecified)
+        // check effective key size (a value of 0 means it is unspecified)
         effectiveKeySize = rps.getEffectiveKeyBits();
-	if (effectiveKeySize != 0) {
-	    if (effectiveKeySize < 1 || effectiveKeySize > 1024) {
-	        throw new InvalidParameterSpecException("RC2 effective key " +
-		    "size must be between 1 and 1024 bits");
-	    } 
-	    if (effectiveKeySize < 256) {
-	        version = EKB_TABLE[effectiveKeySize];
-	    } else {
-	        version = effectiveKeySize;
-	    }
-	}
-	this.iv = rps.getIV();
+        if (effectiveKeySize != 0) {
+            if (effectiveKeySize < 1 || effectiveKeySize > 1024) {
+                throw new InvalidParameterSpecException("RC2 effective key " +
+                    "size must be between 1 and 1024 bits");
+            }
+            if (effectiveKeySize < 256) {
+                version = EKB_TABLE[effectiveKeySize];
+            } else {
+                version = effectiveKeySize;
+            }
+        }
+        this.iv = rps.getIV();
     }
 
     protected void engineInit(byte[] encoded) throws IOException {
         DerValue val = new DerValue(encoded);
-	// check if IV or params
-	if (val.tag == DerValue.tag_Sequence) {
-	    val.data.reset();
+        // check if IV or params
+        if (val.tag == DerValue.tag_Sequence) {
+            val.data.reset();
 
-	    version = val.data.getInteger();
-	    if (version < 0 || version > 1024) {
-		throw new IOException("RC2 parameter parsing error: " +
-		    "version number out of legal range (0-1024): " + version);
-	    }
-	    if (version > 255) {
-	        effectiveKeySize = version;
-	    } else {
-		// search table for index containing version
-		for (int i = 0; i < EKB_TABLE.length; i++) {
-		    if (version == EKB_TABLE[i]) {
-			effectiveKeySize = i;
-			break;
-		    }
-		}
-	    }
-		
-	    iv = val.data.getOctetString();
-	} else {
-	    val.data.reset();
-	    iv = val.getOctetString();
-	    version = 0;
-	    effectiveKeySize = 0;
-	}
+            version = val.data.getInteger();
+            if (version < 0 || version > 1024) {
+                throw new IOException("RC2 parameter parsing error: " +
+                    "version number out of legal range (0-1024): " + version);
+            }
+            if (version > 255) {
+                effectiveKeySize = version;
+            } else {
+                // search table for index containing version
+                for (int i = 0; i < EKB_TABLE.length; i++) {
+                    if (version == EKB_TABLE[i]) {
+                        effectiveKeySize = i;
+                        break;
+                    }
+                }
+            }
 
-	if (iv.length != 8) {
-	    throw new IOException("RC2 parameter parsing error: iv length " +
-		"must be 8 bits, actual: " + iv.length);
-	}
+            iv = val.data.getOctetString();
+        } else {
+            val.data.reset();
+            iv = val.getOctetString();
+            version = 0;
+            effectiveKeySize = 0;
+        }
+
+        if (iv.length != 8) {
+            throw new IOException("RC2 parameter parsing error: iv length " +
+                "must be 8 bits, actual: " + iv.length);
+        }
 
         if (val.data.available() != 0) {
-	    throw new IOException("RC2 parameter parsing error: extra data");
+            throw new IOException("RC2 parameter parsing error: extra data");
         }
     }
 
     protected void engineInit(byte[] encoded, String decodingMethod)
         throws IOException {
-	engineInit(encoded);
+        engineInit(encoded);
     }
 
     protected AlgorithmParameterSpec engineGetParameterSpec(Class paramSpec)
-	throws InvalidParameterSpecException {    
+        throws InvalidParameterSpecException {
 
-	if (RC2ParameterSpec.class.isAssignableFrom(paramSpec)) {
-	    return (iv == null ?
-		    new RC2ParameterSpec(effectiveKeySize) :
-		    new RC2ParameterSpec(effectiveKeySize, iv));
-	} else {
-	    throw new InvalidParameterSpecException
-	        ("Inappropriate parameter specification");
-	}
+        if (RC2ParameterSpec.class.isAssignableFrom(paramSpec)) {
+            return (iv == null ?
+                    new RC2ParameterSpec(effectiveKeySize) :
+                    new RC2ParameterSpec(effectiveKeySize, iv));
+        } else {
+            throw new InvalidParameterSpecException
+                ("Inappropriate parameter specification");
+        }
     }
 
     protected byte[] engineGetEncoded() throws IOException {
-	DerOutputStream	out = new DerOutputStream();
-	DerOutputStream	bytes = new DerOutputStream();
+        DerOutputStream out = new DerOutputStream();
+        DerOutputStream bytes = new DerOutputStream();
 
-	if (this.effectiveKeySize != 0) {
-	    bytes.putInteger(version);
-	    bytes.putOctetString(iv);
-	    out.write(DerValue.tag_Sequence, bytes);
-	} else {
-	    out.putOctetString(iv);
-	}
+        if (this.effectiveKeySize != 0) {
+            bytes.putInteger(version);
+            bytes.putOctetString(iv);
+            out.write(DerValue.tag_Sequence, bytes);
+        } else {
+            out.putOctetString(iv);
+        }
 
-	return out.toByteArray();
+        return out.toByteArray();
     }
 
     protected byte[] engineGetEncoded(String encodingMethod)
-	throws IOException {
-	return engineGetEncoded();
+        throws IOException {
+        return engineGetEncoded();
     }
 
     /*
      * Returns a formatted string describing the parameters.
      */
     protected String engineToString() {
-	String LINE_SEP = System.getProperty("line.separator");
+        String LINE_SEP = System.getProperty("line.separator");
         HexDumpEncoder encoder = new HexDumpEncoder();
         StringBuilder sb
-	    = new StringBuilder(LINE_SEP + "    iv:" + LINE_SEP + "["
-        	+ encoder.encodeBuffer(iv) + "]");
+            = new StringBuilder(LINE_SEP + "    iv:" + LINE_SEP + "["
+                + encoder.encodeBuffer(iv) + "]");
 
         if (version != 0) {
-            sb.append(LINE_SEP + "version:" + LINE_SEP 
-		+ version + LINE_SEP);
-	}
-	return sb.toString();
+            sb.append(LINE_SEP + "version:" + LINE_SEP
+                + version + LINE_SEP);
+        }
+        return sb.toString();
     }
 }

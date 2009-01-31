@@ -23,7 +23,7 @@
 
 
 /**
- * @test @(#)VerifyProtectedConstructor.java	1.6 07/05/10 21:21:49
+ * @test
  * @bug 6490436
  * @summary Verify that protected constructor calls are not allowed for classfile version >= 50 (but that they are allowed for lesser versions).
  * @author Keith McGuigan
@@ -35,7 +35,7 @@ public class VerifyProtectedConstructor extends ClassLoader {
 
     t.loadSuperClass();
 
-    try { 
+    try {
       t.checkClassVersion(49); // should not throw VerifyError
     }
     catch(VerifyError e) {
@@ -52,7 +52,7 @@ public class VerifyProtectedConstructor extends ClassLoader {
   }
 
   private void loadSuperClass() {
-    /* -- code for super class A.A -- 
+    /* -- code for super class A.A --
        package A;
        public class A {
          protected A() {}
@@ -77,7 +77,7 @@ public class VerifyProtectedConstructor extends ClassLoader {
   private static String classNames[] = { "B.B", "C.C" };
 
   private void checkClassVersion(int version) throws VerifyError {
-    // This class is in violation of the spec since it accesses 
+    // This class is in violation of the spec since it accesses
     // a protected constructor of a superclass while not being in the
     // same package.
     /* -- code for test class --
@@ -98,13 +98,13 @@ public class VerifyProtectedConstructor extends ClassLoader {
       0x09bb000259b70001L, 0x57b1000000000000L // no extra bytes
     };
     final int EXTRA = 0;
-    
+
     byte cf_bytes[] = toByteArray(cls_data);
 
     // set version
     cf_bytes[7] = (byte)version;
 
-    // Change B.B to C.C, D.D, ... for subsequent calls so we can call this 
+    // Change B.B to C.C, D.D, ... for subsequent calls so we can call this
     // multiple times and define different classes.
     cf_bytes[61] += num_calls;
     cf_bytes[63] += num_calls;

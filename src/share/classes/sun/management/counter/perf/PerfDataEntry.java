@@ -29,7 +29,7 @@ import sun.management.counter.*;
 import java.nio.*;
 import java.io.UnsupportedEncodingException;
 
-class PerfDataEntry {  
+class PerfDataEntry {
     private class EntryFieldOffset {
         private final static int SIZEOF_BYTE = 1;
         private final static int SIZEOF_INT  = 4;
@@ -48,7 +48,7 @@ class PerfDataEntry {
         final static int NAME_OFFSET   = ENTRY_LENGTH + ENTRY_LENGTH_SIZE;
         final static int VECTOR_LENGTH = NAME_OFFSET + NAME_OFFSET_SIZE;;
         final static int DATA_TYPE     = VECTOR_LENGTH + VECTOR_LENGTH_SIZE;
-        final static int FLAGS         = DATA_TYPE + DATA_TYPE_SIZE; 
+        final static int FLAGS         = DATA_TYPE + DATA_TYPE_SIZE;
         final static int DATA_UNIT     = FLAGS + FLAGS_SIZE;
         final static int DATA_VAR      = DATA_UNIT + DATA_UNIT_SIZE;
         final static int DATA_OFFSET   = DATA_VAR + DATA_VAR_SIZE;
@@ -82,7 +82,7 @@ class PerfDataEntry {
                                                " entryLength = " + entryLength +
                                                " buffer limit = " + b.limit());
         }
-  
+
         b.position(entryStart + EntryFieldOffset.NAME_OFFSET);
         int nameOffset = b.getInt();
 
@@ -92,7 +92,7 @@ class PerfDataEntry {
                                                " nameOffset = " + nameOffset +
                                                " buffer limit = " + b.limit());
         }
-  
+
 
         b.position(entryStart + EntryFieldOffset.VECTOR_LENGTH);
         vectorLength = b.getInt();
@@ -117,7 +117,7 @@ class PerfDataEntry {
         b.position(entryStart + nameOffset);
         // calculate the length of the name
         int nameLength = 0;
-        byte c; 
+        byte c;
         for (; (c = b.get()) != (byte)0; nameLength++);
 
         byte[] symbolBytes = new byte[nameLength];
@@ -189,7 +189,7 @@ class PerfDataEntry {
 
     /**
      * Returns the number of elements in the data.
-     */ 
+     */
     public int vectorLength() {
         return vectorLength;
     }

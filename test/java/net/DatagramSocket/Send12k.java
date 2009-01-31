@@ -25,54 +25,52 @@
  * @test
  * @bug 4094894
  * @summary On W95/W98 it's not possible to send a datagram >12k
- *          via the loopback address. 
+ *          via the loopback address.
  */
 
 import java.net.*;
 import java.io.*;
 
 public class Send12k {
- 
+
     static final int SEND_SIZE = 16 * 1024;
 
     public static void main(String args[]) throws Exception {
 
-	DatagramSocket s1 = new DatagramSocket();
-	DatagramSocket s2 = new DatagramSocket();
+        DatagramSocket s1 = new DatagramSocket();
+        DatagramSocket s2 = new DatagramSocket();
 
-	byte b1[] = new byte[ SEND_SIZE ];
-	DatagramPacket p1 = new DatagramPacket(b1, 0, b1.length, 
-					       InetAddress.getLocalHost(),
-					       s2.getLocalPort());
-	boolean sendOkay = true;
-	try {
-	    s1.send(p1);
-	} catch (SocketException e) {
-	    /*
-	     * Prior to merlin a send of > 12k to loopback address
- 	     * would fail silently.
-	     */
-	    sendOkay = false;
-	}
+        byte b1[] = new byte[ SEND_SIZE ];
+        DatagramPacket p1 = new DatagramPacket(b1, 0, b1.length,
+                                               InetAddress.getLocalHost(),
+                                               s2.getLocalPort());
+        boolean sendOkay = true;
+        try {
+            s1.send(p1);
+        } catch (SocketException e) {
+            /*
+             * Prior to merlin a send of > 12k to loopback address
+             * would fail silently.
+             */
+            sendOkay = false;
+        }
 
-	if (sendOkay) {
-	    byte b2[] = new byte[ SEND_SIZE * 2];
-	    DatagramPacket p2 = new DatagramPacket( b2, SEND_SIZE * 2 );
-	    s2.setSoTimeout(2000);
+        if (sendOkay) {
+            byte b2[] = new byte[ SEND_SIZE * 2];
+            DatagramPacket p2 = new DatagramPacket( b2, SEND_SIZE * 2 );
+            s2.setSoTimeout(2000);
 
-	    try {
-	        s2.receive(p1);
-	    } catch (InterruptedIOException ioe) {
-		throw new Exception("Datagram not received within timeout");
-	    }
+            try {
+                s2.receive(p1);
+            } catch (InterruptedIOException ioe) {
+                throw new Exception("Datagram not received within timeout");
+            }
 
-	    if (p1.getLength() != SEND_SIZE) {
-		throw new Exception("Received datagram incorrect size");
-	    }
-	}
+            if (p1.getLength() != SEND_SIZE) {
+                throw new Exception("Received datagram incorrect size");
+            }
+        }
 
     }
 
 }
-
-

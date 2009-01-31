@@ -39,7 +39,7 @@ import java.security.interfaces.ECPublicKey;
 import javax.crypto.*;
 
 public class TestECDH extends PKCS11Test {
-    
+
     private final static String pub192a  = "30:49:30:13:06:07:2a:86:48:ce:3d:02:01:06:08:2a:86:48:ce:3d:03:01:01:03:32:00:04:bc:49:85:81:4d:d0:a4:ef:67:09:f1:9f:f5:ee:ff:4c:2f:0e:74:2c:a0:98:a8:69:79:9c:0c:3c:e8:99:f2:f2:3c:6f:48:bf:2a:ea:45:e9:76:be:1b:4a:45:0c:a2:99";
     private final static String priv192a = "30:39:02:01:00:30:13:06:07:2a:86:48:ce:3d:02:01:06:08:2a:86:48:ce:3d:03:01:01:04:1f:30:1d:02:01:01:04:18:50:9a:f1:fb:14:91:08:91:18:b9:46:7f:c3:ff:84:db:be:4c:70:89:41:5e:5a:f5";
     private final static String pub192b  = "30:49:30:13:06:07:2a:86:48:ce:3d:02:01:06:08:2a:86:48:ce:3d:03:01:01:03:32:00:04:41:f3:1d:09:19:6e:dc:bf:6e:14:3a:b8:1a:40:44:ef:7b:51:fc:e1:9a:64:ac:46:47:ab:31:e2:1b:d3:76:d9:85:7a:b8:e6:95:f5:75:3f:13:7a:3a:88:02:57:de:8f";
@@ -53,66 +53,66 @@ public class TestECDH extends PKCS11Test {
     private final static String priv163b = "30:33:02:01:00:30:10:06:07:2a:86:48:ce:3d:02:01:06:05:2b:81:04:00:0f:04:1c:30:1a:02:01:01:04:15:02:4e:49:b1:8b:36:d8:71:22:81:06:8d:14:a9:4c:5c:7c:61:8b:e2:95";
 
     private final static String secret163 = "04:ae:71:c1:c6:4d:f4:34:4d:72:70:a4:64:65:7f:2d:88:2d:3f:50:be";
-    
+
     public void main(Provider p) throws Exception {
-	if (p.getService("KeyAgreement", "ECDH") == null) {
-	    System.out.println("Provider does not support ECDH, skipping");
-	    return;
-	}
-	Security.insertProviderAt(p, 1);
+        if (p.getService("KeyAgreement", "ECDH") == null) {
+            System.out.println("Provider does not support ECDH, skipping");
+            return;
+        }
+        Security.insertProviderAt(p, 1);
 
-	if (false) {
-	    KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", p);
-	    kpg.initialize(163);
-	    KeyPair kp = kpg.generateKeyPair();
-	    System.out.println(toString(kp.getPublic().getEncoded()));
-	    System.out.println(toString(kp.getPrivate().getEncoded()));
-	    kp = kpg.generateKeyPair();
-	    System.out.println(toString(kp.getPublic().getEncoded()));
-	    System.out.println(toString(kp.getPrivate().getEncoded()));
-	    return;
-	}
-	
-	test(p, pub192a, priv192a, pub192b, priv192b, secret192);
-	test(p, pub163a, priv163a, pub163b, priv163b, secret163);
+        if (false) {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", p);
+            kpg.initialize(163);
+            KeyPair kp = kpg.generateKeyPair();
+            System.out.println(toString(kp.getPublic().getEncoded()));
+            System.out.println(toString(kp.getPrivate().getEncoded()));
+            kp = kpg.generateKeyPair();
+            System.out.println(toString(kp.getPublic().getEncoded()));
+            System.out.println(toString(kp.getPrivate().getEncoded()));
+            return;
+        }
 
-	Security.removeProvider(p.getName());
-	System.out.println("OK");
+        test(p, pub192a, priv192a, pub192b, priv192b, secret192);
+        test(p, pub163a, priv163a, pub163b, priv163b, secret163);
+
+        Security.removeProvider(p.getName());
+        System.out.println("OK");
     }
-    
+
     private final static void test(Provider p, String pub1s, String priv1s, String pub2s, String priv2s, String secrets) throws Exception {
-	KeyFactory kf = KeyFactory.getInstance("EC", p);
-	PublicKey pub1 = kf.generatePublic(new X509EncodedKeySpec(parse(pub1s)));
-	System.out.println("Testing using parameters " + ((ECPublicKey)pub1).getParams() + "...");
-	
-	PrivateKey priv1 = kf.generatePrivate(new PKCS8EncodedKeySpec(parse(priv1s)));
-	PublicKey pub2 = kf.generatePublic(new X509EncodedKeySpec(parse(pub2s)));
-	PrivateKey priv2 = kf.generatePrivate(new PKCS8EncodedKeySpec(parse(priv2s)));
-	byte[] secret = parse(secrets);
-	
-	KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", p);
-	ka1.init(priv1);
-	ka1.doPhase(pub2, true);
-	byte[] s1 = ka1.generateSecret();
-	if (Arrays.equals(secret, s1) == false) {
-	    System.out.println("expected: " + toString(secret));
-	    System.out.println("actual:   " + toString(s1));
-	    throw new Exception("Secret 1 does not match");
-	}
+        KeyFactory kf = KeyFactory.getInstance("EC", p);
+        PublicKey pub1 = kf.generatePublic(new X509EncodedKeySpec(parse(pub1s)));
+        System.out.println("Testing using parameters " + ((ECPublicKey)pub1).getParams() + "...");
 
-	KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", p);
-	ka2.init(priv2);
-	ka2.doPhase(pub1, true);
-	byte[] s2 = ka2.generateSecret();
-	if (Arrays.equals(secret, s2) == false) {
-	    System.out.println("expected: " + toString(secret));
-	    System.out.println("actual:   " + toString(s2));
-	    throw new Exception("Secret 2 does not match");
-	}
+        PrivateKey priv1 = kf.generatePrivate(new PKCS8EncodedKeySpec(parse(priv1s)));
+        PublicKey pub2 = kf.generatePublic(new X509EncodedKeySpec(parse(pub2s)));
+        PrivateKey priv2 = kf.generatePrivate(new PKCS8EncodedKeySpec(parse(priv2s)));
+        byte[] secret = parse(secrets);
+
+        KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", p);
+        ka1.init(priv1);
+        ka1.doPhase(pub2, true);
+        byte[] s1 = ka1.generateSecret();
+        if (Arrays.equals(secret, s1) == false) {
+            System.out.println("expected: " + toString(secret));
+            System.out.println("actual:   " + toString(s1));
+            throw new Exception("Secret 1 does not match");
+        }
+
+        KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", p);
+        ka2.init(priv2);
+        ka2.doPhase(pub1, true);
+        byte[] s2 = ka2.generateSecret();
+        if (Arrays.equals(secret, s2) == false) {
+            System.out.println("expected: " + toString(secret));
+            System.out.println("actual:   " + toString(s2));
+            throw new Exception("Secret 2 does not match");
+        }
     }
-    
+
     public static void main(String[] args) throws Exception {
-	main(new TestECDH());
+        main(new TestECDH());
     }
-    
+
 }

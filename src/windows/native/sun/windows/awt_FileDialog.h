@@ -45,27 +45,27 @@
 
 // 4859390
 // For the Places Bar to show up, we need the "full" OPENFILENAME struct
-typedef struct tagAWTOFN { 
-  DWORD         lStructSize; 
-  HWND          hwndOwner; 
-  HINSTANCE     hInstance; 
-  LPCTSTR       lpstrFilter; 
-  LPTSTR        lpstrCustomFilter; 
-  DWORD         nMaxCustFilter; 
-  DWORD         nFilterIndex; 
-  LPTSTR        lpstrFile; 
-  DWORD         nMaxFile; 
-  LPTSTR        lpstrFileTitle; 
-  DWORD         nMaxFileTitle; 
-  LPCTSTR       lpstrInitialDir; 
-  LPCTSTR       lpstrTitle; 
-  DWORD         Flags; 
-  WORD          nFileOffset; 
-  WORD          nFileExtension; 
-  LPCTSTR       lpstrDefExt; 
-  LPARAM        lCustData; 
-  LPOFNHOOKPROC lpfnHook; 
-  LPCTSTR       lpTemplateName; 
+typedef struct tagAWTOFN {
+  DWORD         lStructSize;
+  HWND          hwndOwner;
+  HINSTANCE     hInstance;
+  LPCTSTR       lpstrFilter;
+  LPTSTR        lpstrCustomFilter;
+  DWORD         nMaxCustFilter;
+  DWORD         nFilterIndex;
+  LPTSTR        lpstrFile;
+  DWORD         nMaxFile;
+  LPTSTR        lpstrFileTitle;
+  DWORD         nMaxFileTitle;
+  LPCTSTR       lpstrInitialDir;
+  LPCTSTR       lpstrTitle;
+  DWORD         Flags;
+  WORD          nFileOffset;
+  WORD          nFileExtension;
+  LPCTSTR       lpstrDefExt;
+  LPARAM        lCustData;
+  LPOFNHOOKPROC lpfnHook;
+  LPCTSTR       lpTemplateName;
 //#if (_WIN32_WINNT >= 0x0500)
   void *        pvReserved;
   DWORD         dwReserved;

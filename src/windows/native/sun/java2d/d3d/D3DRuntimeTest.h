@@ -30,12 +30,12 @@
 #include "dxCapabilities.h"
 #include "D3DContext.h"
 
-/* 
+/*
  * This is a minimum set of capabilities required for
  * enabling D3D pipeline. If any of these is
  * missing, d3d will be disabled completely.
  *
- * This set is used if the use of d3d pipeline is 
+ * This set is used if the use of d3d pipeline is
  * forced via flag or env. variable.
  */
 #define J2D_D3D_REQUIRED_RESULTS ( \
@@ -47,8 +47,8 @@
    J2D_D3D_OP_TEXTURE_SURFACE_OK | \
    J2D_D3D_TR_TEXTURE_SURFACE_OK | \
    J2D_D3D_SET_TRANSFORM_OK)
-                                              
-/* 
+
+/*
  * This is a set of capabilities desired for
  * enabling D3D pipeline. It includes the set
  * of required caps, plus a number of rendering
@@ -66,13 +66,13 @@
    J2D_D3D_LINE_CLIPPING_OK)
 
 
-/* 
+/*
  * This function tests the direct3d device associated
  * with the passed ddraw object.
- * 
+ *
  * The function returns the capabilities of the tested device, and the
  * results of the quality testing.
- * Enabling the d3d pipeline for this particular device is based on the 
+ * Enabling the d3d pipeline for this particular device is based on the
  * result of this function.
  */
 int TestD3DDevice(DDraw *ddObject, D3DContext *d3dContext, DxCapabilities *dxCaps);

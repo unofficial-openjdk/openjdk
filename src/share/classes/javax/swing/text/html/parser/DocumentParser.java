@@ -98,7 +98,6 @@ import java.net.*;
  * \n, \r or \r\n, which ever is encountered the most in parsing the
  * stream.
  *
- * @version 	%I% %G%
  * @author      Sunita Mani
  */
 public class DocumentParser extends javax.swing.text.html.parser.Parser {
@@ -114,15 +113,15 @@ public class DocumentParser extends javax.swing.text.html.parser.Parser {
     private static final boolean debugFlag = false;
 
     public DocumentParser(DTD dtd) {
-	super(dtd);
+        super(dtd);
     }
- 
+
     public void parse(Reader in,  HTMLEditorKit.ParserCallback callback, boolean ignoreCharSet) throws IOException {
-	this.ignoreCharSet = ignoreCharSet;
-	this.callback = callback;
-	parse(in);
-	// end of line
-	callback.handleEndOfLineString(getEndOfLineString());
+        this.ignoreCharSet = ignoreCharSet;
+        this.callback = callback;
+        parse(in);
+        // end of line
+        callback.handleEndOfLineString(getEndOfLineString());
     }
 
     /**
@@ -130,47 +129,47 @@ public class DocumentParser extends javax.swing.text.html.parser.Parser {
      */
     protected void handleStartTag(TagElement tag) {
 
-	Element elem = tag.getElement();
-	if (elem == dtd.body) {
-	    inbody++;
-	} else if (elem == dtd.html) {
-	} else if (elem == dtd.head) {
-	    inhead++;
-	} else if (elem == dtd.title) {
-	    intitle++;
-	} else if (elem == dtd.style) {
-	    instyle++;
-	} else if (elem == dtd.script) {
+        Element elem = tag.getElement();
+        if (elem == dtd.body) {
+            inbody++;
+        } else if (elem == dtd.html) {
+        } else if (elem == dtd.head) {
+            inhead++;
+        } else if (elem == dtd.title) {
+            intitle++;
+        } else if (elem == dtd.style) {
+            instyle++;
+        } else if (elem == dtd.script) {
             inscript++;
-	}	
-	if (debugFlag) {
-	    if (tag.fictional()) {
-		debug("Start Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
-	    } else {
-		debug("Start Tag: " + tag.getHTMLTag() + " attributes: " + 
-		      getAttributes() + " pos: " + getCurrentPos());
-	    }
-	}
-	if (tag.fictional()) {
-	    SimpleAttributeSet attrs = new SimpleAttributeSet();
-	    attrs.addAttribute(HTMLEditorKit.ParserCallback.IMPLIED,
-			       Boolean.TRUE);
-	    callback.handleStartTag(tag.getHTMLTag(), attrs,
-				    getBlockStartPosition());
-	} else {
-	    callback.handleStartTag(tag.getHTMLTag(), getAttributes(),
-				    getBlockStartPosition());
-	    flushAttributes();
-	}
+        }
+        if (debugFlag) {
+            if (tag.fictional()) {
+                debug("Start Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
+            } else {
+                debug("Start Tag: " + tag.getHTMLTag() + " attributes: " +
+                      getAttributes() + " pos: " + getCurrentPos());
+            }
+        }
+        if (tag.fictional()) {
+            SimpleAttributeSet attrs = new SimpleAttributeSet();
+            attrs.addAttribute(HTMLEditorKit.ParserCallback.IMPLIED,
+                               Boolean.TRUE);
+            callback.handleStartTag(tag.getHTMLTag(), attrs,
+                                    getBlockStartPosition());
+        } else {
+            callback.handleStartTag(tag.getHTMLTag(), getAttributes(),
+                                    getBlockStartPosition());
+            flushAttributes();
+        }
     }
 
 
     protected void handleComment(char text[]) {
-	if (debugFlag) {
-	    debug("comment: ->" + new String(text) + "<-"
-		  + " pos: " + getCurrentPos());
-	}
-	callback.handleComment(text, getBlockStartPosition());
+        if (debugFlag) {
+            debug("comment: ->" + new String(text) + "<-"
+                  + " pos: " + getCurrentPos());
+        }
+        callback.handleComment(text, getBlockStartPosition());
     }
 
     /**
@@ -178,67 +177,67 @@ public class DocumentParser extends javax.swing.text.html.parser.Parser {
      */
     protected void handleEmptyTag(TagElement tag) throws ChangedCharSetException {
 
-	Element elem = tag.getElement();
-	if (elem == dtd.meta && !ignoreCharSet) {
-	    SimpleAttributeSet atts = getAttributes();
-	    if (atts != null) {
-		String content = (String)atts.getAttribute(HTML.Attribute.CONTENT);
-		if (content != null) {
-		    if ("content-type".equalsIgnoreCase((String)atts.getAttribute(HTML.Attribute.HTTPEQUIV))) {
-			if (!content.equalsIgnoreCase("text/html") && 
-				!content.equalsIgnoreCase("text/plain")) {
-			    throw new ChangedCharSetException(content, false);
-			}
-		    } else if ("charset" .equalsIgnoreCase((String)atts.getAttribute(HTML.Attribute.HTTPEQUIV))) {
-			throw new ChangedCharSetException(content, true);
-		    }
-		}
-	    }
-	}
-	if (inbody != 0 || elem == dtd.meta || elem == dtd.base || elem == dtd.isindex || elem == dtd.style || elem == dtd.link) {
-	    if (debugFlag) {
-		if (tag.fictional()) {
-		    debug("Empty Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
-		} else {
-		    debug("Empty Tag: " + tag.getHTMLTag() + " attributes: " 
-			  + getAttributes() + " pos: " + getCurrentPos());
-		}
-	    }
-	    if (tag.fictional()) {
-		SimpleAttributeSet attrs = new SimpleAttributeSet();
-		attrs.addAttribute(HTMLEditorKit.ParserCallback.IMPLIED,
-				   Boolean.TRUE);
-		callback.handleSimpleTag(tag.getHTMLTag(), attrs,
-					 getBlockStartPosition());
-	    } else {
-		callback.handleSimpleTag(tag.getHTMLTag(), getAttributes(),
-					 getBlockStartPosition());
-		flushAttributes();
-	    }
-	}
+        Element elem = tag.getElement();
+        if (elem == dtd.meta && !ignoreCharSet) {
+            SimpleAttributeSet atts = getAttributes();
+            if (atts != null) {
+                String content = (String)atts.getAttribute(HTML.Attribute.CONTENT);
+                if (content != null) {
+                    if ("content-type".equalsIgnoreCase((String)atts.getAttribute(HTML.Attribute.HTTPEQUIV))) {
+                        if (!content.equalsIgnoreCase("text/html") &&
+                                !content.equalsIgnoreCase("text/plain")) {
+                            throw new ChangedCharSetException(content, false);
+                        }
+                    } else if ("charset" .equalsIgnoreCase((String)atts.getAttribute(HTML.Attribute.HTTPEQUIV))) {
+                        throw new ChangedCharSetException(content, true);
+                    }
+                }
+            }
+        }
+        if (inbody != 0 || elem == dtd.meta || elem == dtd.base || elem == dtd.isindex || elem == dtd.style || elem == dtd.link) {
+            if (debugFlag) {
+                if (tag.fictional()) {
+                    debug("Empty Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
+                } else {
+                    debug("Empty Tag: " + tag.getHTMLTag() + " attributes: "
+                          + getAttributes() + " pos: " + getCurrentPos());
+                }
+            }
+            if (tag.fictional()) {
+                SimpleAttributeSet attrs = new SimpleAttributeSet();
+                attrs.addAttribute(HTMLEditorKit.ParserCallback.IMPLIED,
+                                   Boolean.TRUE);
+                callback.handleSimpleTag(tag.getHTMLTag(), attrs,
+                                         getBlockStartPosition());
+            } else {
+                callback.handleSimpleTag(tag.getHTMLTag(), getAttributes(),
+                                         getBlockStartPosition());
+                flushAttributes();
+            }
+        }
     }
 
     /**
      * Handle End Tag.
      */
     protected void handleEndTag(TagElement tag) {
-	Element elem = tag.getElement();
-	if (elem == dtd.body) {
-	    inbody--;
-	} else if (elem == dtd.title) {
-	    intitle--;
-	    seentitle = true;
-	} else if (elem == dtd.head) {
+        Element elem = tag.getElement();
+        if (elem == dtd.body) {
+            inbody--;
+        } else if (elem == dtd.title) {
+            intitle--;
+            seentitle = true;
+        } else if (elem == dtd.head) {
             inhead--;
-	} else if (elem == dtd.style) {
+        } else if (elem == dtd.style) {
             instyle--;
-	} else if (elem == dtd.script) {
+        } else if (elem == dtd.script) {
             inscript--;
-	}
-	if (debugFlag) {
-	    debug("End Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
-	}
-	callback.handleEndTag(tag.getHTMLTag(), getBlockStartPosition());
+        }
+        if (debugFlag) {
+            debug("End Tag: " + tag.getHTMLTag() + " pos: " + getCurrentPos());
+        }
+        callback.handleEndTag(tag.getHTMLTag(), getBlockStartPosition());
 
     }
 
@@ -246,30 +245,30 @@ public class DocumentParser extends javax.swing.text.html.parser.Parser {
      * Handle Text.
      */
     protected void handleText(char data[]) {
-	if (data != null) {
-	    if (inscript != 0) {
-		callback.handleComment(data, getBlockStartPosition());
-		return;
-	    }
-	    if (inbody != 0 || ((instyle != 0) ||
-				((intitle != 0) && !seentitle))) {
-		if (debugFlag) {
-		    debug("text:  ->" + new String(data) + "<-" + " pos: " + getCurrentPos());
-		}
-		callback.handleText(data, getBlockStartPosition());
-	    }
-	}
+        if (data != null) {
+            if (inscript != 0) {
+                callback.handleComment(data, getBlockStartPosition());
+                return;
+            }
+            if (inbody != 0 || ((instyle != 0) ||
+                                ((intitle != 0) && !seentitle))) {
+                if (debugFlag) {
+                    debug("text:  ->" + new String(data) + "<-" + " pos: " + getCurrentPos());
+                }
+                callback.handleText(data, getBlockStartPosition());
+            }
+        }
     }
 
     /*
      * Error handling.
      */
     protected void handleError(int ln, String errorMsg) {
-	if (debugFlag) {
-	    debug("Error: ->" + errorMsg + "<-" + " pos: " + getCurrentPos());
-	}
-	/* PENDING: need to improve the error string. */
-	callback.handleError(errorMsg, getCurrentPos());
+        if (debugFlag) {
+            debug("Error: ->" + errorMsg + "<-" + " pos: " + getCurrentPos());
+        }
+        /* PENDING: need to improve the error string. */
+        callback.handleError(errorMsg, getCurrentPos());
     }
 
 
@@ -277,6 +276,6 @@ public class DocumentParser extends javax.swing.text.html.parser.Parser {
      * debug messages
      */
     private void debug(String msg) {
-	System.out.println(msg);
+        System.out.println(msg);
     }
 }

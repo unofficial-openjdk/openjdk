@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -32,7 +32,7 @@
  *
  * inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"
@@ -76,7 +76,7 @@ struct internal_state {
   /* mode independent information */
   int  nowrap;          /* flag for no wrapper */
   uInt wbits;           /* log2(window size)  (8..15, defaults to 15) */
-  inflate_blocks_statef 
+  inflate_blocks_statef
     *blocks;            /* current inflate_blocks state */
 
 };
@@ -265,7 +265,7 @@ int f;
       inflate_blocks_reset(z->state->blocks, z, &z->state->sub.check.was);
 
       /* zlib.h inflate() doc states that z->adler contains a checksum
-	 of all uncompressed output even when returning Z_STREAM_END. */
+         of all uncompressed output even when returning Z_STREAM_END. */
       z->adler = z->state->sub.check.was;
 
       if (z->state->nowrap)

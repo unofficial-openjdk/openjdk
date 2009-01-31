@@ -109,20 +109,20 @@ class WPathGraphics extends PathGraphics {
     WPathGraphics(Graphics2D graphics, PrinterJob printerJob,
                   Printable painter, PageFormat pageFormat, int pageIndex,
                   boolean canRedraw) {
-	super(graphics, printerJob, painter, pageFormat, pageIndex, canRedraw);
+        super(graphics, printerJob, painter, pageFormat, pageIndex, canRedraw);
     }
 
     /**
-     * Creates a new <code>Graphics</code> object that is 
+     * Creates a new <code>Graphics</code> object that is
      * a copy of this <code>Graphics</code> object.
-     * @return     a new graphics context that is a copy of 
+     * @return     a new graphics context that is a copy of
      *                       this graphics context.
      * @since      JDK1.0
      */
     public Graphics create() {
 
-	return new WPathGraphics((Graphics2D) getDelegate().create(),
-				 getPrinterJob(),
+        return new WPathGraphics((Graphics2D) getDelegate().create(),
+                                 getPrinterJob(),
                                  getPrintable(),
                                  getPageFormat(),
                                  getPageIndex(),
@@ -145,97 +145,97 @@ class WPathGraphics extends PathGraphics {
      */
     public void draw(Shape s) {
 
-	Stroke stroke = getStroke();
+        Stroke stroke = getStroke();
 
-	/* If the line being drawn is thinner than can be
-	 * rendered, then change the line width, stroke
-	 * the shape, and then set the line width back.
-	 * We can only do this for BasicStroke's.
-	 */
-	if (stroke instanceof BasicStroke) {
-	    BasicStroke lineStroke;
-	    BasicStroke minLineStroke = null;
-	    float deviceLineWidth;
-	    float lineWidth;
-	    AffineTransform deviceTransform;
-	    Point2D.Float penSize;
+        /* If the line being drawn is thinner than can be
+         * rendered, then change the line width, stroke
+         * the shape, and then set the line width back.
+         * We can only do this for BasicStroke's.
+         */
+        if (stroke instanceof BasicStroke) {
+            BasicStroke lineStroke;
+            BasicStroke minLineStroke = null;
+            float deviceLineWidth;
+            float lineWidth;
+            AffineTransform deviceTransform;
+            Point2D.Float penSize;
 
-	    /* Get the requested line width in user space.
-	     */
-	    lineStroke = (BasicStroke) stroke;
-	    lineWidth = lineStroke.getLineWidth();
-	    penSize = new Point2D.Float(lineWidth, lineWidth);
+            /* Get the requested line width in user space.
+             */
+            lineStroke = (BasicStroke) stroke;
+            lineWidth = lineStroke.getLineWidth();
+            penSize = new Point2D.Float(lineWidth, lineWidth);
 
-	    /* Compute the line width in device coordinates.
-	     * Work on a point in case there is asymetric scaling
-	     * between user and device space.
-	     * Take the absolute value in case there is negative
-	     * scaling in effect.
-	     */
-	    deviceTransform = getTransform();
-	    deviceTransform.deltaTransform(penSize, penSize);
-	    deviceLineWidth = Math.min(Math.abs(penSize.x),
-				       Math.abs(penSize.y));
+            /* Compute the line width in device coordinates.
+             * Work on a point in case there is asymetric scaling
+             * between user and device space.
+             * Take the absolute value in case there is negative
+             * scaling in effect.
+             */
+            deviceTransform = getTransform();
+            deviceTransform.deltaTransform(penSize, penSize);
+            deviceLineWidth = Math.min(Math.abs(penSize.x),
+                                       Math.abs(penSize.y));
 
-	    /* If the requested line is too thin then map our
-	     * minimum line width back to user space and set
-	     * a new BasicStroke.
-	     */
-	    if (deviceLineWidth < MIN_DEVICE_LINEWIDTH) {
+            /* If the requested line is too thin then map our
+             * minimum line width back to user space and set
+             * a new BasicStroke.
+             */
+            if (deviceLineWidth < MIN_DEVICE_LINEWIDTH) {
 
-		Point2D.Float minPenSize = new Point2D.Float(
-						MIN_DEVICE_LINEWIDTH,
-						MIN_DEVICE_LINEWIDTH);
+                Point2D.Float minPenSize = new Point2D.Float(
+                                                MIN_DEVICE_LINEWIDTH,
+                                                MIN_DEVICE_LINEWIDTH);
 
-		try {
-		    AffineTransform inverse;
-		    float minLineWidth;
+                try {
+                    AffineTransform inverse;
+                    float minLineWidth;
 
-		    /* Convert the minimum line width from device
-		     * space to user space.
-		     */
-		    inverse = deviceTransform.createInverse();
-		    inverse.deltaTransform(minPenSize, minPenSize);
+                    /* Convert the minimum line width from device
+                     * space to user space.
+                     */
+                    inverse = deviceTransform.createInverse();
+                    inverse.deltaTransform(minPenSize, minPenSize);
 
-		    minLineWidth = Math.max(Math.abs(minPenSize.x),
-					    Math.abs(minPenSize.y));
+                    minLineWidth = Math.max(Math.abs(minPenSize.x),
+                                            Math.abs(minPenSize.y));
 
-		    /* Use all of the parameters from the current
-		     * stroke but change the line width to our
-		     * calculated minimum.
-		     */
-		    minLineStroke = new BasicStroke(minLineWidth,
-						    lineStroke.getEndCap(),
-						    lineStroke.getLineJoin(),
-						    lineStroke.getMiterLimit(),
-						    lineStroke.getDashArray(),
-						    lineStroke.getDashPhase());
-		    setStroke(minLineStroke);
+                    /* Use all of the parameters from the current
+                     * stroke but change the line width to our
+                     * calculated minimum.
+                     */
+                    minLineStroke = new BasicStroke(minLineWidth,
+                                                    lineStroke.getEndCap(),
+                                                    lineStroke.getLineJoin(),
+                                                    lineStroke.getMiterLimit(),
+                                                    lineStroke.getDashArray(),
+                                                    lineStroke.getDashPhase());
+                    setStroke(minLineStroke);
 
-    		} catch (NoninvertibleTransformException e) {
-		    /* If we can't invert the matrix there is something
-		     * very wrong so don't worry about the minor matter
-		     * of a minimum line width.
-		     */
-		}
-	    }
+                } catch (NoninvertibleTransformException e) {
+                    /* If we can't invert the matrix there is something
+                     * very wrong so don't worry about the minor matter
+                     * of a minimum line width.
+                     */
+                }
+            }
 
-	    super.draw(s);
+            super.draw(s);
 
-	    /* If we changed the stroke, put back the old
-	     * stroke in order to maintain a minimum line
-	     * width.
-	     */
-	    if (minLineStroke != null) {
-		setStroke(lineStroke);
-	    }
+            /* If we changed the stroke, put back the old
+             * stroke in order to maintain a minimum line
+             * width.
+             */
+            if (minLineStroke != null) {
+                setStroke(lineStroke);
+            }
 
-	/* The stroke in effect was not a BasicStroke so we
-	 * will not try to enforce a minimum line width.
-	 */
-	} else {
-	    super.draw(s);
-	}
+        /* The stroke in effect was not a BasicStroke so we
+         * will not try to enforce a minimum line width.
+         */
+        } else {
+            super.draw(s);
+        }
     }
 
     /**
@@ -273,19 +273,19 @@ class WPathGraphics extends PathGraphics {
     protected int platformFontCount(Font font, String str) {
 
         AffineTransform deviceTransform = getTransform();
-	AffineTransform fontTransform = new AffineTransform(deviceTransform);
-	fontTransform.concatenate(getFont().getTransform());
+        AffineTransform fontTransform = new AffineTransform(deviceTransform);
+        fontTransform.concatenate(getFont().getTransform());
         int transformType = fontTransform.getType();
 
-	/* Test if GDI can handle the transform */
-	boolean directToGDI = ((transformType !=
-			       AffineTransform.TYPE_GENERAL_TRANSFORM)
-			       && ((transformType & AffineTransform.TYPE_FLIP)
-				   == 0));
+        /* Test if GDI can handle the transform */
+        boolean directToGDI = ((transformType !=
+                               AffineTransform.TYPE_GENERAL_TRANSFORM)
+                               && ((transformType & AffineTransform.TYPE_FLIP)
+                                   == 0));
 
-	if (!directToGDI) {
-	    return 0;
-	}
+        if (!directToGDI) {
+            return 0;
+        }
 
         /* Since all windows fonts are available, and the JRE fonts
          * are also registered. Only the Font.createFont() case is presently
@@ -422,19 +422,19 @@ class WPathGraphics extends PathGraphics {
         }
 
         AffineTransform deviceTransform = getTransform();
-	AffineTransform fontTransform = new AffineTransform(deviceTransform);
+        AffineTransform fontTransform = new AffineTransform(deviceTransform);
         fontTransform.concatenate(font.getTransform());
         int transformType = fontTransform.getType();
 
-	/* Use GDI for the text if the graphics transform is something
+        /* Use GDI for the text if the graphics transform is something
          * for which we can obtain a suitable GDI font.
          * A flip or shearing transform on the graphics or a transform
          * on the font force us to decompose the text into a shape.
          */
-	boolean directToGDI = ((transformType !=
-			       AffineTransform.TYPE_GENERAL_TRANSFORM)
-			       && ((transformType & AffineTransform.TYPE_FLIP)
-				   == 0));
+        boolean directToGDI = ((transformType !=
+                               AffineTransform.TYPE_GENERAL_TRANSFORM)
+                               && ((transformType & AffineTransform.TYPE_FLIP)
+                                   == 0));
 
         WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
         try {
@@ -500,7 +500,7 @@ class WPathGraphics extends PathGraphics {
 
         Font2D font2D = FontManager.getFont2D(font);
         if (font2D instanceof TrueTypeFont) {
-            textOut(str, font, (TrueTypeFont)font2D, frc, 
+            textOut(str, font, (TrueTypeFont)font2D, frc,
                     scaledFontSizeY, iangle, awScale,
                     deviceTransform, scaleFactorX,
                     x, y, devpos.x, devpos.y, targetW);
@@ -522,7 +522,7 @@ class WPathGraphics extends PathGraphics {
 
             int startChar = 0, endChar = 0, slot = 0;
             while (endChar < len) {
-             
+
                 startChar = endChar;
                 slot = glyphs[startChar] >>> 24;
 
@@ -531,7 +531,7 @@ class WPathGraphics extends PathGraphics {
                 }
                 String substr = new String(chars, startChar,endChar-startChar);
                 PhysicalFont slotFont = compFont.getSlotFont(slot);
-                textOut(substr, font, slotFont, frc, 
+                textOut(substr, font, slotFont, frc,
                         scaledFontSizeY, iangle, awScale,
                         deviceTransform, scaleFactorX,
                         userx, usery, devx, devy, 0f);
@@ -605,7 +605,7 @@ class WPathGraphics extends PathGraphics {
         if (getClip() != null) {
             deviceClip(getClip().getPathIterator(deviceTransform));
         }
-   
+
         /* Get the font size in device coordinates.
          * The size needed is the font height scaled to device space.
          * Although we have already tested that there is no shear,
@@ -688,7 +688,7 @@ class WPathGraphics extends PathGraphics {
             new AffineTransform(deviceTransform);
         advanceTransform.rotate(iangle*Math.PI/1800.0);
         float[] glyphAdvPos = new float[glyphPos.length];
-        
+
         advanceTransform.transform(glyphPos, 0,         //source
                                    glyphAdvPos, 0,      //destination
                                    glyphPos.length/2);  //num points
@@ -717,7 +717,7 @@ class WPathGraphics extends PathGraphics {
 
             int start = 0, end = 0, slot = 0;
             while (end < numGlyphs) {
-             
+
                 start = end;
                 slot = glyphCodes[start] >>> 24;
 
@@ -728,7 +728,7 @@ class WPathGraphics extends PathGraphics {
                  * But we should always be able to get all fonts for
                  * Composites, so this is unlikely, so any overstriking
                  * if only one slot is unavailable is not worth worrying
-                 * about. 
+                 * about.
                  */
                 PhysicalFont slotFont = compFont.getSlotFont(slot);
                 if (!(slotFont instanceof TrueTypeFont)) {
@@ -809,7 +809,7 @@ class WPathGraphics extends PathGraphics {
                new AffineTransform(deviceTransform);
              advanceTransform.rotate(rotation*Math.PI/1800.0);
              float[] glyphAdvPos = new float[glyphPos.length];
-        
+
              advanceTransform.transform(glyphPos, 0,         //source
                                         glyphAdvPos, 0,      //destination
                                         glyphPos.length/2);  //num points
@@ -830,7 +830,7 @@ class WPathGraphics extends PathGraphics {
       * be scaled to device space for comparison with GDI.
       * scaleX is the scale from user space to device space needed for this.
       */
-     private boolean okGDIMetrics(String str, Font font, 
+     private boolean okGDIMetrics(String str, Font font,
                                   FontRenderContext frc, double scaleX) {
 
          Rectangle2D bds = font.getStringBounds(str, frc);
@@ -856,38 +856,38 @@ class WPathGraphics extends PathGraphics {
      * <code>srcX, srcY, srcWidth, and srcHeight</code>
      * is transformed by the supplied AffineTransform and
      * drawn using GDI to the printer context.
-     * 
-     * @param	img	The image to be drawn.
-     * @param	xform	Used to tranform the image before drawing.
-     *			This can be null.
-     * @param	bgcolor	This color is drawn where the image has transparent
-     *			pixels. If this parameter is null then the
-     *			pixels already in the destination should show
-     *			through.
-     * @param	srcX	With srcY this defines the upper-left corner
-     *			of the portion of the image to be drawn.
      *
-     * @param	srcY	With srcX this defines the upper-left corner
-     *			of the portion of the image to be drawn.
-     * @param	srcWidth    The width of the portion of the image to
-     *			    be drawn.
-     * @param	srcHeight   The height of the portion of the image to
-     *			    be drawn.
+     * @param   img     The image to be drawn.
+     * @param   xform   Used to tranform the image before drawing.
+     *                  This can be null.
+     * @param   bgcolor This color is drawn where the image has transparent
+     *                  pixels. If this parameter is null then the
+     *                  pixels already in the destination should show
+     *                  through.
+     * @param   srcX    With srcY this defines the upper-left corner
+     *                  of the portion of the image to be drawn.
+     *
+     * @param   srcY    With srcX this defines the upper-left corner
+     *                  of the portion of the image to be drawn.
+     * @param   srcWidth    The width of the portion of the image to
+     *                      be drawn.
+     * @param   srcHeight   The height of the portion of the image to
+     *                      be drawn.
      * @param   handlingTransparency if being recursively called to
      *                    print opaque region of transparent image
      */
     protected boolean drawImageToPlatform(Image image, AffineTransform xform,
-					  Color bgcolor,
-					  int srcX, int srcY,
-					  int srcWidth, int srcHeight,
-					  boolean handlingTransparency) {
+                                          Color bgcolor,
+                                          int srcX, int srcY,
+                                          int srcWidth, int srcHeight,
+                                          boolean handlingTransparency) {
 
-	BufferedImage img = getBufferedImage(image);
-	if (img == null) {
-	    return true;
-	}
+        BufferedImage img = getBufferedImage(image);
+        if (img == null) {
+            return true;
+        }
 
-	WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+        WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
         /* The full transform to be applied to the image is the
          * caller's transform concatenated on to the transform
@@ -987,12 +987,12 @@ class WPathGraphics extends PathGraphics {
 
             Shape rotShape = rotTransform.createTransformedShape(srcRect);
             Rectangle2D rotBounds = rotShape.getBounds2D();
-	    
-	    /* add a fudge factor as some fp precision problems have
+
+            /* add a fudge factor as some fp precision problems have
              * been observed which caused pixels to be rounded down and
              * out of the image.
              */
-	    rotBounds.setRect(rotBounds.getX(), rotBounds.getY(),
+            rotBounds.setRect(rotBounds.getX(), rotBounds.getY(),
                               rotBounds.getWidth()+0.001,
                               rotBounds.getHeight()+0.001);
 
@@ -1009,7 +1009,7 @@ class WPathGraphics extends PathGraphics {
                  * of a page all compositing is done by Java2D into
                  * the BufferedImage and then that image is copied to
                  * GDI.
- 		 * However several special cases can be handled otherwise:
+                 * However several special cases can be handled otherwise:
                  * - bitmask transparency with a solid background colour
                  * - images which have transparency color models but no
                  * transparent pixels
@@ -1023,7 +1023,7 @@ class WPathGraphics extends PathGraphics {
                     if (isBitmaskTransparency(img)) {
                         if (bgcolor == null) {
                             if (drawBitmaskImage(img, xform, bgcolor,
-						 srcX, srcY,
+                                                 srcX, srcY,
                                                  srcWidth, srcHeight)) {
                                 // image drawn, just return.
                                 return true;
@@ -1033,22 +1033,22 @@ class WPathGraphics extends PathGraphics {
                             drawOpaque = true;
                         }
                     }
-		    if (!canDoRedraws()) {
+                    if (!canDoRedraws()) {
                         drawOpaque = true;
                     }
-		} else {
-		    // if there's no transparent pixels there's no need
-		    // for a background colour. This can avoid edge artifacts
-		    // in rotation cases.
-		    bgcolor = null;
-		}
-		// if src region extends beyond the image, the "opaque" path
-		// may blit b/g colour (including white) where it shoudn't.
-		if ((srcX+srcWidth > img.getWidth(null) ||
-		     srcY+srcHeight > img.getHeight(null))
-		    && canDoRedraws()) {
-		    drawOpaque = false;
-		}
+                } else {
+                    // if there's no transparent pixels there's no need
+                    // for a background colour. This can avoid edge artifacts
+                    // in rotation cases.
+                    bgcolor = null;
+                }
+                // if src region extends beyond the image, the "opaque" path
+                // may blit b/g colour (including white) where it shoudn't.
+                if ((srcX+srcWidth > img.getWidth(null) ||
+                     srcY+srcHeight > img.getHeight(null))
+                    && canDoRedraws()) {
+                    drawOpaque = false;
+                }
                 if (drawOpaque == false) {
 
                     fullTransform.getMatrix(fullMatrix);
@@ -1068,12 +1068,12 @@ class WPathGraphics extends PathGraphics {
                     // Region isn't user space because its potentially
                     // been rotated for landscape.
                     Rectangle2D region = shape.getBounds2D();
-    
+
                     region.setRect(region.getX(), region.getY(),
                                    region.getWidth()+0.001,
                                    region.getHeight()+0.001);
 
-                    // Try to limit the amount of memory used to 8Mb, so 
+                    // Try to limit the amount of memory used to 8Mb, so
                     // if at device resolution this exceeds a certain
                     // image size then scale down the region to fit in
                     // that memory, but never to less than 72 dpi.
@@ -1114,10 +1114,10 @@ class WPathGraphics extends PathGraphics {
                      * The clip is described in user space, so we need to
                      * save the current graphics transform anyway so just
                      * save these two.
-                     */       
+                     */
                     wPrinterJob.saveState(getTransform(), getClip(),
                                           region, scaleFactor, scaleFactor);
-		    return true;
+                    return true;
                 /* The image can be rendered directly by GDI so we
                  * copy it into a BufferedImage (this takes care of
                  * ColorSpace and BufferedImageOp issues) and then
@@ -1146,7 +1146,7 @@ class WPathGraphics extends PathGraphics {
                          */
                         if (imgType == BufferedImage.TYPE_BYTE_BINARY &&
                             cm.getPixelSize() == 2) {
-     
+
                             int[] rgbs = new int[16];
                             icm.getRGBs(rgbs);
                             boolean transparent =
@@ -1159,7 +1159,7 @@ class WPathGraphics extends PathGraphics {
                                                       DataBuffer.TYPE_BYTE);
                         }
                     }
-                    
+
                     int iw = (int)rotBounds.getWidth();
                     int ih = (int)rotBounds.getHeight();
                     BufferedImage deepImage = null;
@@ -1210,7 +1210,7 @@ class WPathGraphics extends PathGraphics {
                                                 -rotBounds.getY());
                         imageGraphics.transform(rotTransform);
 
-                        /* Fill the BufferedImage either with the caller 
+                        /* Fill the BufferedImage either with the caller
                          * supplied color, 'bgColor' or, if null, with white.
                          */
                         if (bgcolor == null) {
@@ -1389,11 +1389,11 @@ class WPathGraphics extends PathGraphics {
      */
     protected void deviceFill(PathIterator pathIter, Color color) {
 
-	WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+        WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
-	convertToWPath(pathIter);
-	wPrinterJob.selectSolidBrush(color);
-	wPrinterJob.fillPath();
+        convertToWPath(pathIter);
+        wPrinterJob.selectSolidBrush(color);
+        wPrinterJob.fillPath();
     }
 
     /*
@@ -1403,133 +1403,133 @@ class WPathGraphics extends PathGraphics {
      */
     protected void deviceClip(PathIterator pathIter) {
 
-	WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+        WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
-	convertToWPath(pathIter);
-	wPrinterJob.selectClipPath();
+        convertToWPath(pathIter);
+        wPrinterJob.selectClipPath();
     }
 
     /**
      * Draw the bounding rectangle using transformed coordinates.
      */
      protected void deviceFrameRect(int x, int y, int width, int height,
-     			             Color color) {
-		
-	AffineTransform deviceTransform = getTransform();
-	
-	/* check if rotated or sheared */
-	int transformType = deviceTransform.getType();
-	boolean usePath = ((transformType & 
-			   (AffineTransform.TYPE_GENERAL_ROTATION |
-			    AffineTransform.TYPE_GENERAL_TRANSFORM)) != 0);
-			  
-	if (usePath) {
-	    draw(new Rectangle2D.Float(x, y, width, height));
-	    return;
-	}          	
-       
-	Stroke stroke = getStroke();
+                                     Color color) {
 
-       	if (stroke instanceof BasicStroke) {
-	    BasicStroke lineStroke = (BasicStroke) stroke;
+        AffineTransform deviceTransform = getTransform();
 
-	    int endCap = lineStroke.getEndCap();
-      	    int lineJoin = lineStroke.getLineJoin();
-      	    
+        /* check if rotated or sheared */
+        int transformType = deviceTransform.getType();
+        boolean usePath = ((transformType &
+                           (AffineTransform.TYPE_GENERAL_ROTATION |
+                            AffineTransform.TYPE_GENERAL_TRANSFORM)) != 0);
 
-	    /* check for default style and try to optimize it by 
-	     * calling the frameRect native function instead of using paths.
-	     */
-      	    if ((endCap == BasicStroke.CAP_SQUARE) &&
-               	(lineJoin == BasicStroke.JOIN_MITER) &&
-               	(lineStroke.getMiterLimit() ==10.0f)) {
-		
-		float lineWidth = lineStroke.getLineWidth();      	    
-		Point2D.Float penSize = new Point2D.Float(lineWidth,
-							  lineWidth);
+        if (usePath) {
+            draw(new Rectangle2D.Float(x, y, width, height));
+            return;
+        }
 
-		deviceTransform.deltaTransform(penSize, penSize);
-		float deviceLineWidth = Math.min(Math.abs(penSize.x),
-						 Math.abs(penSize.y));
+        Stroke stroke = getStroke();
 
-		/* transform upper left coordinate */
-		Point2D.Float ul_pos = new Point2D.Float(x, y);
-		deviceTransform.transform(ul_pos, ul_pos);
+        if (stroke instanceof BasicStroke) {
+            BasicStroke lineStroke = (BasicStroke) stroke;
 
-		/* transform lower right coordinate */
-		Point2D.Float lr_pos = new Point2D.Float(x + width, 
-							 y + height);
-		deviceTransform.transform(lr_pos, lr_pos);
+            int endCap = lineStroke.getEndCap();
+            int lineJoin = lineStroke.getLineJoin();
 
-		float w = (float) (lr_pos.getX() - ul_pos.getX());
-		float h = (float)(lr_pos.getY() - ul_pos.getY());
-		
-		WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
-		/* use selectStylePen, if supported */
-               	if (wPrinterJob.selectStylePen(endCap, lineJoin,
-					   deviceLineWidth, color) == true)  {
-		    wPrinterJob.frameRect((float)ul_pos.getX(), 
-					  (float)ul_pos.getY(), w, h);
-		}
-		/* not supported, must be a Win 9x */
-               	else {
-	
-		    double lowerRes = Math.min(wPrinterJob.getXRes(),
-					       wPrinterJob.getYRes());
+            /* check for default style and try to optimize it by
+             * calling the frameRect native function instead of using paths.
+             */
+            if ((endCap == BasicStroke.CAP_SQUARE) &&
+                (lineJoin == BasicStroke.JOIN_MITER) &&
+                (lineStroke.getMiterLimit() ==10.0f)) {
 
-		    if ((deviceLineWidth/lowerRes) < MAX_THINLINE_INCHES) {
-			/* use the default pen styles for thin pens. */
-            	       	wPrinterJob.selectPen(deviceLineWidth, color);
-            	       	wPrinterJob.frameRect((float)ul_pos.getX(),
-					      (float)ul_pos.getY(), w, h);
-          	    }
-          	    else {
-			draw(new Rectangle2D.Float(x, y, width, height));
-          	    }
-        	}
-	    }
-      	    else {
-               	draw(new Rectangle2D.Float(x, y, width, height));
-      	    }
-	}
+                float lineWidth = lineStroke.getLineWidth();
+                Point2D.Float penSize = new Point2D.Float(lineWidth,
+                                                          lineWidth);
+
+                deviceTransform.deltaTransform(penSize, penSize);
+                float deviceLineWidth = Math.min(Math.abs(penSize.x),
+                                                 Math.abs(penSize.y));
+
+                /* transform upper left coordinate */
+                Point2D.Float ul_pos = new Point2D.Float(x, y);
+                deviceTransform.transform(ul_pos, ul_pos);
+
+                /* transform lower right coordinate */
+                Point2D.Float lr_pos = new Point2D.Float(x + width,
+                                                         y + height);
+                deviceTransform.transform(lr_pos, lr_pos);
+
+                float w = (float) (lr_pos.getX() - ul_pos.getX());
+                float h = (float)(lr_pos.getY() - ul_pos.getY());
+
+                WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+
+                /* use selectStylePen, if supported */
+                if (wPrinterJob.selectStylePen(endCap, lineJoin,
+                                           deviceLineWidth, color) == true)  {
+                    wPrinterJob.frameRect((float)ul_pos.getX(),
+                                          (float)ul_pos.getY(), w, h);
+                }
+                /* not supported, must be a Win 9x */
+                else {
+
+                    double lowerRes = Math.min(wPrinterJob.getXRes(),
+                                               wPrinterJob.getYRes());
+
+                    if ((deviceLineWidth/lowerRes) < MAX_THINLINE_INCHES) {
+                        /* use the default pen styles for thin pens. */
+                        wPrinterJob.selectPen(deviceLineWidth, color);
+                        wPrinterJob.frameRect((float)ul_pos.getX(),
+                                              (float)ul_pos.getY(), w, h);
+                    }
+                    else {
+                        draw(new Rectangle2D.Float(x, y, width, height));
+                    }
+                }
+            }
+            else {
+                draw(new Rectangle2D.Float(x, y, width, height));
+            }
+        }
      }
 
 
-     /*    
+     /*
       * Fill the rectangle with specified color and using Windows'
       * GDI fillRect function.
       * Boundaries are determined by the given coordinates.
       */
     protected void deviceFillRect(int x, int y, int width, int height,
-				  Color color) {
-	/*
-      	 * Transform to device coordinates
-   	 */
-       	AffineTransform deviceTransform = getTransform();
+                                  Color color) {
+        /*
+         * Transform to device coordinates
+         */
+        AffineTransform deviceTransform = getTransform();
 
-	/* check if rotated or sheared */
-	int transformType = deviceTransform.getType();
-	boolean usePath =  ((transformType & 
-			       (AffineTransform.TYPE_GENERAL_ROTATION |
-				AffineTransform.TYPE_GENERAL_TRANSFORM)) != 0);
-	if (usePath) {
-	    fill(new Rectangle2D.Float(x, y, width, height));
-	    return;
-	}
+        /* check if rotated or sheared */
+        int transformType = deviceTransform.getType();
+        boolean usePath =  ((transformType &
+                               (AffineTransform.TYPE_GENERAL_ROTATION |
+                                AffineTransform.TYPE_GENERAL_TRANSFORM)) != 0);
+        if (usePath) {
+            fill(new Rectangle2D.Float(x, y, width, height));
+            return;
+        }
 
-       	Point2D.Float tlc_pos = new Point2D.Float(x, y);
-    	deviceTransform.transform(tlc_pos, tlc_pos);
+        Point2D.Float tlc_pos = new Point2D.Float(x, y);
+        deviceTransform.transform(tlc_pos, tlc_pos);
 
-       	Point2D.Float brc_pos = new Point2D.Float(x+width, y+height);
-    	deviceTransform.transform(brc_pos, brc_pos);
+        Point2D.Float brc_pos = new Point2D.Float(x+width, y+height);
+        deviceTransform.transform(brc_pos, brc_pos);
 
-       	float deviceWidth = (float) (brc_pos.getX() - tlc_pos.getX());
-       	float deviceHeight = (float)(brc_pos.getY() - tlc_pos.getY());
+        float deviceWidth = (float) (brc_pos.getX() - tlc_pos.getX());
+        float deviceHeight = (float)(brc_pos.getY() - tlc_pos.getY());
 
-       	WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
-       	wPrinterJob.fillRect((float)tlc_pos.getX(), (float)tlc_pos.getY(),
-			     deviceWidth, deviceHeight, color);
+        WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+        wPrinterJob.fillRect((float)tlc_pos.getX(), (float)tlc_pos.getY(),
+                             deviceWidth, deviceHeight, color);
     }
 
 
@@ -1538,82 +1538,82 @@ class WPathGraphics extends PathGraphics {
      * and current stroke properties.
      */
     protected void deviceDrawLine(int xBegin, int yBegin, int xEnd, int yEnd,
-  				  Color color) {	    
-    	Stroke stroke = getStroke();
-       
-    	if (stroke instanceof BasicStroke) {
-	    BasicStroke lineStroke = (BasicStroke) stroke;
-	    
-	    if (lineStroke.getDashArray() != null) {
-		draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
-		return;
-	    }
+                                  Color color) {
+        Stroke stroke = getStroke();
 
-	    float lineWidth = lineStroke.getLineWidth();	    
-	    Point2D.Float penSize = new Point2D.Float(lineWidth, lineWidth);
+        if (stroke instanceof BasicStroke) {
+            BasicStroke lineStroke = (BasicStroke) stroke;
 
-	    AffineTransform deviceTransform = getTransform();
-	    deviceTransform.deltaTransform(penSize, penSize);
+            if (lineStroke.getDashArray() != null) {
+                draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
+                return;
+            }
 
-	    float deviceLineWidth = Math.min(Math.abs(penSize.x),
-					     Math.abs(penSize.y));
+            float lineWidth = lineStroke.getLineWidth();
+            Point2D.Float penSize = new Point2D.Float(lineWidth, lineWidth);
 
-	    Point2D.Float begin_pos = new Point2D.Float(xBegin, yBegin);
-	    deviceTransform.transform(begin_pos, begin_pos);
+            AffineTransform deviceTransform = getTransform();
+            deviceTransform.deltaTransform(penSize, penSize);
 
-	    Point2D.Float end_pos = new Point2D.Float(xEnd, yEnd);
-	    deviceTransform.transform(end_pos, end_pos);
-  
-	    int endCap = lineStroke.getEndCap();
-	    int lineJoin = lineStroke.getLineJoin();
+            float deviceLineWidth = Math.min(Math.abs(penSize.x),
+                                             Math.abs(penSize.y));
 
-	    /* check if it's a one-pixel line */
-	    if ((end_pos.getX() == begin_pos.getX())
-		&& (end_pos.getY() == begin_pos.getY())) {
+            Point2D.Float begin_pos = new Point2D.Float(xBegin, yBegin);
+            deviceTransform.transform(begin_pos, begin_pos);
 
-		/* endCap other than Round will not print!
-		 * due to Windows GDI limitation, force it to CAP_ROUND
-		 */
-		endCap = BasicStroke.CAP_ROUND;
-	    }
+            Point2D.Float end_pos = new Point2D.Float(xEnd, yEnd);
+            deviceTransform.transform(end_pos, end_pos);
+
+            int endCap = lineStroke.getEndCap();
+            int lineJoin = lineStroke.getLineJoin();
+
+            /* check if it's a one-pixel line */
+            if ((end_pos.getX() == begin_pos.getX())
+                && (end_pos.getY() == begin_pos.getY())) {
+
+                /* endCap other than Round will not print!
+                 * due to Windows GDI limitation, force it to CAP_ROUND
+                 */
+                endCap = BasicStroke.CAP_ROUND;
+            }
 
 
-	    WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+            WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
-	    /* call native function that creates pen with style */
-	    if (wPrinterJob.selectStylePen(endCap, lineJoin, 
-					   deviceLineWidth, color)) {
-		wPrinterJob.moveTo((float)begin_pos.getX(), 
-				   (float)begin_pos.getY());
-		wPrinterJob.lineTo((float)end_pos.getX(), 
-				   (float)end_pos.getY());
-	    }
-	    /* selectStylePen is not supported, must be Win 9X */
-	    else {
+            /* call native function that creates pen with style */
+            if (wPrinterJob.selectStylePen(endCap, lineJoin,
+                                           deviceLineWidth, color)) {
+                wPrinterJob.moveTo((float)begin_pos.getX(),
+                                   (float)begin_pos.getY());
+                wPrinterJob.lineTo((float)end_pos.getX(),
+                                   (float)end_pos.getY());
+            }
+            /* selectStylePen is not supported, must be Win 9X */
+            else {
 
-		/* let's see if we can use a a default pen
-		 *  if it's round end (Windows' default style)
-		 *  or it's vertical/horizontal
-		 *  or stroke is too thin.
-		 */
-		double lowerRes = Math.min(wPrinterJob.getXRes(),
-					   wPrinterJob.getYRes());
+                /* let's see if we can use a a default pen
+                 *  if it's round end (Windows' default style)
+                 *  or it's vertical/horizontal
+                 *  or stroke is too thin.
+                 */
+                double lowerRes = Math.min(wPrinterJob.getXRes(),
+                                           wPrinterJob.getYRes());
 
-		if ((endCap == BasicStroke.CAP_ROUND) ||
-	         (((xBegin == xEnd) || (yBegin == yEnd)) &&
-		 (deviceLineWidth/lowerRes < MAX_THINLINE_INCHES))) {
+                if ((endCap == BasicStroke.CAP_ROUND) ||
+                 (((xBegin == xEnd) || (yBegin == yEnd)) &&
+                 (deviceLineWidth/lowerRes < MAX_THINLINE_INCHES))) {
 
-		    wPrinterJob.selectPen(deviceLineWidth, color);
-		    wPrinterJob.moveTo((float)begin_pos.getX(),
-				       (float)begin_pos.getY());
-		    wPrinterJob.lineTo((float)end_pos.getX(), 
-				       (float)end_pos.getY());
-        	}
-        	else {
-		    draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
-        	}
-	    }
-    	}
+                    wPrinterJob.selectPen(deviceLineWidth, color);
+                    wPrinterJob.moveTo((float)begin_pos.getX(),
+                                       (float)begin_pos.getY());
+                    wPrinterJob.lineTo((float)end_pos.getX(),
+                                       (float)end_pos.getY());
+                }
+                else {
+                    draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
+                }
+            }
+        }
     }
 
 
@@ -1624,66 +1624,66 @@ class WPathGraphics extends PathGraphics {
      */
     private void convertToWPath(PathIterator pathIter) {
 
-	float[] segment = new float[6];
-	int segmentType;
+        float[] segment = new float[6];
+        int segmentType;
 
-	WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
+        WPrinterJob wPrinterJob = (WPrinterJob) getPrinterJob();
 
-	/* Map the PathIterator's fill rule into the Window's
-	 * polygon fill rule.
-	 */
-	int polyFillRule;
-	if (pathIter.getWindingRule() == PathIterator.WIND_EVEN_ODD) {
-	    polyFillRule = WPrinterJob.POLYFILL_ALTERNATE;
-	} else {
-	    polyFillRule = WPrinterJob.POLYFILL_WINDING;
-	}
-	wPrinterJob.setPolyFillMode(polyFillRule);
+        /* Map the PathIterator's fill rule into the Window's
+         * polygon fill rule.
+         */
+        int polyFillRule;
+        if (pathIter.getWindingRule() == PathIterator.WIND_EVEN_ODD) {
+            polyFillRule = WPrinterJob.POLYFILL_ALTERNATE;
+        } else {
+            polyFillRule = WPrinterJob.POLYFILL_WINDING;
+        }
+        wPrinterJob.setPolyFillMode(polyFillRule);
 
-	wPrinterJob.beginPath();
+        wPrinterJob.beginPath();
 
-	while (pathIter.isDone() == false) {
-	    segmentType = pathIter.currentSegment(segment);
+        while (pathIter.isDone() == false) {
+            segmentType = pathIter.currentSegment(segment);
 
-	    switch (segmentType) {
-	     case PathIterator.SEG_MOVETO:
-		wPrinterJob.moveTo(segment[0], segment[1]);
-		break;
-	     
-	     case PathIterator.SEG_LINETO:
-		wPrinterJob.lineTo(segment[0], segment[1]);
-		break;
+            switch (segmentType) {
+             case PathIterator.SEG_MOVETO:
+                wPrinterJob.moveTo(segment[0], segment[1]);
+                break;
 
-	    /* Convert the quad path to a bezier.
-	     */
-	     case PathIterator.SEG_QUADTO:
-		int lastX = wPrinterJob.getPenX();
-		int lastY = wPrinterJob.getPenY();
-		float c1x = lastX + (segment[0] - lastX) * 2 / 3;
-		float c1y = lastY + (segment[1] - lastY) * 2 / 3;
-		float c2x = segment[2] - (segment[2] - segment[0]) * 2/ 3;
-		float c2y = segment[3] - (segment[3] - segment[1]) * 2/ 3;
-		wPrinterJob.polyBezierTo(c1x, c1y,
-				         c2x, c2y,
-				         segment[2], segment[3]);
-		break;
+             case PathIterator.SEG_LINETO:
+                wPrinterJob.lineTo(segment[0], segment[1]);
+                break;
 
-	     case PathIterator.SEG_CUBICTO:
-		wPrinterJob.polyBezierTo(segment[0], segment[1],
-				         segment[2], segment[3],
-				         segment[4], segment[5]);
-		break;
+            /* Convert the quad path to a bezier.
+             */
+             case PathIterator.SEG_QUADTO:
+                int lastX = wPrinterJob.getPenX();
+                int lastY = wPrinterJob.getPenY();
+                float c1x = lastX + (segment[0] - lastX) * 2 / 3;
+                float c1y = lastY + (segment[1] - lastY) * 2 / 3;
+                float c2x = segment[2] - (segment[2] - segment[0]) * 2/ 3;
+                float c2y = segment[3] - (segment[3] - segment[1]) * 2/ 3;
+                wPrinterJob.polyBezierTo(c1x, c1y,
+                                         c2x, c2y,
+                                         segment[2], segment[3]);
+                break;
 
-	     case PathIterator.SEG_CLOSE:
-		wPrinterJob.closeFigure();
-		break;
-	    }
+             case PathIterator.SEG_CUBICTO:
+                wPrinterJob.polyBezierTo(segment[0], segment[1],
+                                         segment[2], segment[3],
+                                         segment[4], segment[5]);
+                break;
+
+             case PathIterator.SEG_CLOSE:
+                wPrinterJob.closeFigure();
+                break;
+            }
 
 
-	    pathIter.next();
-	}
+            pathIter.next();
+        }
 
-	wPrinterJob.endPath();
+        wPrinterJob.endPath();
 
     }
 

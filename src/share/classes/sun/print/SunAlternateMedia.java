@@ -31,7 +31,7 @@ import javax.print.attribute.standard.Media;
 /*
  * An implementation class used by services which can distinguish media
  * by size and media by source. Values are expected to be MediaTray
- * instances, but this is not enforced by API. 
+ * instances, but this is not enforced by API.
  */
 public class SunAlternateMedia implements PrintRequestAttribute {
 
@@ -54,7 +54,7 @@ public class SunAlternateMedia implements PrintRequestAttribute {
     public final String getName() {
         return "sun-alternate-media";
     }
- 
+
     public String toString() {
        return "alternate-media: " + media.toString();
     }

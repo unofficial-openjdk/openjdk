@@ -52,7 +52,7 @@ public class FormatData_zh_HK extends ListResourceBundle {
         ResourceBundle bundle = LocaleData.getDateFormatData(Locale.TAIWAN);
         setParent(bundle);
     }
-    
+
     /**
      * Overrides ListResourceBundle
      */

@@ -49,7 +49,7 @@ public class BufferedImageDevice extends GraphicsDevice
     }
 
     /**
-     * Returns the identification string associated with this 
+     * Returns the identification string associated with this
      * <code>GraphicsDevice</code>.
      * @return a <code>String</code> that is the identification
      * of this <code>GraphicsDevice</code>.
@@ -57,12 +57,12 @@ public class BufferedImageDevice extends GraphicsDevice
     public String getIDstring() {
         return ("BufferedImage");
     }
-    
+
     /**
      * Returns all of the <code>GraphicsConfiguration</code>
      * objects associated with this <code>GraphicsDevice</code>.
      * @return an array of <code>GraphicsConfiguration</code>
-     * objects that are associated with this 
+     * objects that are associated with this
      * <code>GraphicsDevice</code>.
      */
     public GraphicsConfiguration[] getConfigurations() {

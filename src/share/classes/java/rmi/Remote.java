@@ -25,7 +25,7 @@
 
 package java.rmi;
 
-/** 
+/**
  * The <code>Remote</code> interface serves to identify interfaces whose
  * methods may be invoked from a non-local virtual machine.  Any object that
  * is a remote object must directly or indirectly implement this interface.
@@ -42,10 +42,9 @@ package java.rmi;
  * <p>For complete details on RMI, see the <a
  href=../../../platform/rmi/spec/rmiTOC.html>RMI Specification</a> which describes the RMI API and system.
  *
- * @version %I%, %G%
  * @since   JDK1.1
  * @author  Ann Wollrath
- * @see	    java.rmi.server.UnicastRemoteObject
+ * @see     java.rmi.server.UnicastRemoteObject
  * @see     java.rmi.activation.Activatable
  */
 public interface Remote {}

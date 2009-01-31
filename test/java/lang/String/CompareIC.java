@@ -25,7 +25,7 @@
  * @test
  * @bug 4124769
  * @summary Test ignore-case comparison
- * 
+ *
  */
 
 import java.net.*;
@@ -39,7 +39,7 @@ public class CompareIC {
         String test2 = "Test";
         String test3 = "Tesu";
         CompareIC comparer = new CompareIC();
-        
+
         comparer.testTriplet(test1, test2, test3);
         test2 = test2.toUpperCase();
         comparer.testTriplet(test1, test2, test3);
@@ -58,4 +58,3 @@ public class CompareIC {
     }
 
 }
-

@@ -28,23 +28,23 @@ package sun.awt.windows;
 import sun.awt.PlatformFont;
 
 public class WFontPeer extends PlatformFont {
-    
+
     private String textComponentFontName;
 
     public WFontPeer(String name, int style){
-	super(name, style);
+        super(name, style);
         if (fontConfig != null) {
             textComponentFontName = ((WFontConfiguration) fontConfig).getTextComponentFontName(familyName, style);
         }
     }
-    
+
     protected char getMissingGlyphCharacter() {
         return '\u2751';
     }
 
     static {
         /* NB Headless printing uses AWT Fonts */
-	initIDs();
+        initIDs();
     }
 
     /**
@@ -52,4 +52,3 @@ public class WFontPeer extends PlatformFont {
      */
     private static native void initIDs();
 }
-

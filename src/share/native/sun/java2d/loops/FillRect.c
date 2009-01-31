@@ -45,45 +45,45 @@ Java_sun_java2d_loops_FillRect_FillRect
     jint pixel = GrPrim_Sg2dGetPixel(env, sg2d);
 
     if (w <= 0 || h <= 0) {
-	return;
+        return;
     }
 
     pPrim = GetNativePrim(env, self);
     if (pPrim == NULL) {
-	return;
+        return;
     }
-    if (pPrim->pCompType->getCompInfo != NULL) { 
-        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo); 
+    if (pPrim->pCompType->getCompInfo != NULL) {
+        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo);
     }
 
     sdOps = SurfaceData_GetOps(env, sData);
     if (sdOps == 0) {
-	return;
+        return;
     }
 
     GrPrim_Sg2dGetClip(env, sg2d, &rasInfo.bounds);
     SurfaceData_IntersectBoundsXYWH(&rasInfo.bounds, x, y, w, h);
     if (rasInfo.bounds.y2 <= rasInfo.bounds.y1 ||
-	rasInfo.bounds.x2 <= rasInfo.bounds.x1)
+        rasInfo.bounds.x2 <= rasInfo.bounds.x1)
     {
-	return;
+        return;
     }
 
     if (sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags) != SD_SUCCESS) {
-	return;
+        return;
     }
 
     if (rasInfo.bounds.x2 > rasInfo.bounds.x1 &&
-	rasInfo.bounds.y2 > rasInfo.bounds.y1)
+        rasInfo.bounds.y2 > rasInfo.bounds.y1)
     {
-	sdOps->GetRasInfo(env, sdOps, &rasInfo);
-	if (rasInfo.rasBase) {
-	    (*pPrim->funcs.fillrect)(&rasInfo,
-				     rasInfo.bounds.x1, rasInfo.bounds.y1,
-				     rasInfo.bounds.x2, rasInfo.bounds.y2,
-				     pixel, pPrim, &compInfo);
-	}
-	SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
+        sdOps->GetRasInfo(env, sdOps, &rasInfo);
+        if (rasInfo.rasBase) {
+            (*pPrim->funcs.fillrect)(&rasInfo,
+                                     rasInfo.bounds.x1, rasInfo.bounds.y1,
+                                     rasInfo.bounds.x2, rasInfo.bounds.y2,
+                                     pixel, pPrim, &compInfo);
+        }
+        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
     }
     SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
 }

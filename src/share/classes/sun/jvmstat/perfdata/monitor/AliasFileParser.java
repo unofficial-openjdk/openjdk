@@ -38,7 +38,6 @@ import java.util.regex.*;
  *
  * Java style comments can occur anywhere within the file.
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class AliasFileParser {

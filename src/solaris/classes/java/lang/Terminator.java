@@ -34,7 +34,6 @@ import sun.misc.SignalHandler;
  * platform-specific support for termination-triggered shutdowns.
  *
  * @author   Mark Reinhold
- * @version  %I%, %E%
  * @since    1.3
  */
 
@@ -47,14 +46,14 @@ class Terminator {
      */
 
     static void setup() {
-	if (handler != null) return;
-	SignalHandler sh = new SignalHandler() {
-	    public void handle(Signal sig) {
-		Shutdown.exit(sig.getNumber() + 0200);
-	    }
-	};
-	handler = sh;
-	try {
+        if (handler != null) return;
+        SignalHandler sh = new SignalHandler() {
+            public void handle(Signal sig) {
+                Shutdown.exit(sig.getNumber() + 0200);
+            }
+        };
+        handler = sh;
+        try {
             Signal.handle(new Signal("HUP"), sh);
             Signal.handle(new Signal("INT"), sh);
             Signal.handle(new Signal("TERM"), sh);
@@ -66,9 +65,9 @@ class Terminator {
     }
 
     static void teardown() {
-	/* The current sun.misc.Signal class does not support
-	 * the cancellation of handlers
-	 */
+        /* The current sun.misc.Signal class does not support
+         * the cancellation of handlers
+         */
     }
 
 }

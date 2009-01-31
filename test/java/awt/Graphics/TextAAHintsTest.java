@@ -42,7 +42,7 @@ public class TextAAHintsTest extends Component {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(Color.white);
         g2d.fillRect(0,0,getSize().width, getSize().height);
-         
+
         drawText(g.create(0, 0, 500, 100));
         bufferedImageText(g.create(0, 100, 500, 100));
         volatileImageText(g.create(0, 200, 500, 100));
@@ -75,7 +75,7 @@ public class TextAAHintsTest extends Component {
                              RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2d.drawString(gray, 10, 65);
 
-        /* For visual comparison, render grayscale with graphics AA off */ 
+        /* For visual comparison, render grayscale with graphics AA off */
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                              RenderingHints.VALUE_ANTIALIAS_OFF);
         g2d.drawString(gray, 10, 80);
@@ -108,7 +108,7 @@ public class TextAAHintsTest extends Component {
                                             new ImageCapabilities(false));
             } catch (AWTException e1) {
                 System.out.println("Skipping volatile image test.");
-                image = null; 
+                image = null;
             }
         }
         return image;
@@ -140,7 +140,7 @@ public class TextAAHintsTest extends Component {
     }
 
     public static void main(String[] args) throws Exception {
-   
+
         Frame f = new Frame("Composite and Text Test");
         f.add(new TextAAHintsTest(), BorderLayout.CENTER);
         f.pack();

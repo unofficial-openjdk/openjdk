@@ -27,7 +27,7 @@
  * @summary Sanity Test for GarbageCollectorMXBean.getLastGcInfo().
  * @author  Mandy Chung
  *
- * @run main LastGCInfo 
+ * @run main LastGCInfo
  */
 
 import java.lang.management.ManagementFactory;
@@ -43,7 +43,7 @@ public class LastGCInfo {
 
         System.gc();
         List mgrs = ManagementFactory.getGarbageCollectorMXBeans();
-        for (ListIterator iter = mgrs.listIterator(); iter.hasNext(); ) { 
+        for (ListIterator iter = mgrs.listIterator(); iter.hasNext(); ) {
             Object mgr = iter.next();
             if (mgr instanceof GarbageCollectorMXBean) {
                 GarbageCollectorMXBean gc = (GarbageCollectorMXBean) mgr;
@@ -93,6 +93,6 @@ public class LastGCInfo {
                 throw new RuntimeException("GcInfo does not contain " +
                     "memory usage for pool " + p.getName());
             }
-        } 
+        }
     }
 }

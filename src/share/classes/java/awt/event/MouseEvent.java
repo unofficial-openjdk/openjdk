@@ -78,20 +78,20 @@ import java.awt.IllegalComponentStateException;
  * <P>
  * A <code>MouseEvent</code> object is passed to every
  * <code>MouseListener</code>
- * or <code>MouseAdapter</code> object which is registered to receive 
- * the "interesting" mouse events using the component's 
+ * or <code>MouseAdapter</code> object which is registered to receive
+ * the "interesting" mouse events using the component's
  * <code>addMouseListener</code> method.
- * (<code>MouseAdapter</code> objects implement the 
- * <code>MouseListener</code> interface.) Each such listener object 
+ * (<code>MouseAdapter</code> objects implement the
+ * <code>MouseListener</code> interface.) Each such listener object
  * gets a <code>MouseEvent</code> containing the mouse event.
  * <P>
  * A <code>MouseEvent</code> object is also passed to every
  * <code>MouseMotionListener</code> or
- * <code>MouseMotionAdapter</code> object which is registered to receive 
+ * <code>MouseMotionAdapter</code> object which is registered to receive
  * mouse motion events using the component's
  * <code>addMouseMotionListener</code>
- * method. (<code>MouseMotionAdapter</code> objects implement the 
- * <code>MouseMotionListener</code> interface.) Each such listener object 
+ * method. (<code>MouseMotionAdapter</code> objects implement the
+ * <code>MouseMotionListener</code> interface.) Each such listener object
  * gets a <code>MouseEvent</code> containing the mouse motion event.
  * <P>
  * When a mouse button is clicked, events are generated and sent to the
@@ -106,23 +106,23 @@ import java.awt.IllegalComponentStateException;
  * To get the state of all buttons and modifier keys, use
  * {@link InputEvent#getModifiersEx}.
  * The button which has changed state is returned by {@link MouseEvent#getButton}
- * <P> 
+ * <P>
  * For example, if the first mouse button is pressed, events are sent in the
  * following order:
  * <PRE>
- *    <b   >id           </b   >   <b   >modifiers   </b   > <b   >button </b   >          
+ *    <b   >id           </b   >   <b   >modifiers   </b   > <b   >button </b   >
  *    <code>MOUSE_PRESSED</code>:  <code>BUTTON1_MASK</code> <code>BUTTON1</code>
  *    <code>MOUSE_RELEASED</code>: <code>BUTTON1_MASK</code> <code>BUTTON1</code>
  *    <code>MOUSE_CLICKED</code>:  <code>BUTTON1_MASK</code> <code>BUTTON1</code>
  * </PRE>
  * When multiple mouse buttons are pressed, each press, release, and click
- * results in a separate event. 
- * <P> 
+ * results in a separate event.
+ * <P>
  * For example, if the user presses <b>button 1</b> followed by
  * <b>button 2</b>, and then releases them in the same order,
  * the following sequence of events is generated:
  * <PRE>
- *    <b   >id           </b   >   <b   >modifiers   </b   > <b   >button </b   >          
+ *    <b   >id           </b   >   <b   >modifiers   </b   > <b   >button </b   >
  *    <code>MOUSE_PRESSED</code>:  <code>BUTTON1_MASK</code> <code>BUTTON1</code>
  *    <code>MOUSE_PRESSED</code>:  <code>BUTTON2_MASK</code> <code>BUTTON2</code>
  *    <code>MOUSE_RELEASED</code>: <code>BUTTON1_MASK</code> <code>BUTTON1</code>
@@ -136,33 +136,31 @@ import java.awt.IllegalComponentStateException;
  * followed by the pair for <code>BUTTON1_MASK</code>.
  * <p>
  *
- * <code>MOUSE_DRAGGED</code> events are delivered to the <code>Component</code> 
- * in which the mouse button was pressed until the mouse button is released 
- * (regardless of whether the mouse position is within the bounds of the 
- * <code>Component</code>).  Due to platform-dependent Drag&Drop implementations, 
- * <code>MOUSE_DRAGGED</code> events may not be delivered during a native 
- * Drag&Drop operation.  
- * 
+ * <code>MOUSE_DRAGGED</code> events are delivered to the <code>Component</code>
+ * in which the mouse button was pressed until the mouse button is released
+ * (regardless of whether the mouse position is within the bounds of the
+ * <code>Component</code>).  Due to platform-dependent Drag&Drop implementations,
+ * <code>MOUSE_DRAGGED</code> events may not be delivered during a native
+ * Drag&Drop operation.
+ *
  * In a multi-screen environment mouse drag events are delivered to the
  * <code>Component</code> even if the mouse position is outside the bounds of the
- * <code>GraphicsConfiguration</code> associated with that 
+ * <code>GraphicsConfiguration</code> associated with that
  * <code>Component</code>. However, the reported position for mouse drag events
- * in this case may differ from the actual mouse position: 
+ * in this case may differ from the actual mouse position:
  * <ul>
  * <li>In a multi-screen environment without a virtual device:
  * <br>
  * The reported coordinates for mouse drag events are clipped to fit within the
- * bounds of the <code>GraphicsConfiguration</code> associated with 
+ * bounds of the <code>GraphicsConfiguration</code> associated with
  * the <code>Component</code>.
  * <li>In a multi-screen environment with a virtual device:
  * <br>
  * The reported coordinates for mouse drag events are clipped to fit within the
- * bounds of the virtual device associated with the <code>Component</code>.   
+ * bounds of the virtual device associated with the <code>Component</code>.
  * </ul>
  *
  * @author Carl Quinn
- * %I%, %G%
- *   
  * @see MouseAdapter
  * @see MouseListener
  * @see MouseMotionAdapter
@@ -178,7 +176,7 @@ public class MouseEvent extends InputEvent {
     /**
      * The first number in the range of ids used for mouse events.
      */
-    public static final int MOUSE_FIRST 	= 500;
+    public static final int MOUSE_FIRST         = 500;
 
     /**
      * The last number in the range of ids used for mouse events.
@@ -212,7 +210,7 @@ public class MouseEvent extends InputEvent {
     /**
      * The "mouse entered" event. This <code>MouseEvent</code>
      * occurs when the mouse cursor enters the unobscured part of component's
-     * geometry. 
+     * geometry.
      */
     public static final int MOUSE_ENTERED = 4 + MOUSE_FIRST; //Event.MOUSE_ENTER
 
@@ -234,30 +232,30 @@ public class MouseEvent extends InputEvent {
      * It occurs when a mouse equipped with a wheel has its wheel rotated.
      * @since 1.4
      */
-    public static final int MOUSE_WHEEL = 7 + MOUSE_FIRST; 
+    public static final int MOUSE_WHEEL = 7 + MOUSE_FIRST;
 
     /**
-     * Indicates no mouse buttons; used by {@link #getButton}. 
+     * Indicates no mouse buttons; used by {@link #getButton}.
      * @since 1.4
-     */ 
+     */
     public static final int NOBUTTON = 0;
 
     /**
      * Indicates mouse button #1; used by {@link #getButton}.
      * @since 1.4
-     */ 
+     */
     public static final int BUTTON1 = 1;
 
     /**
      * Indicates mouse button #2; used by {@link #getButton}.
      * @since 1.4
-     */ 
+     */
     public static final int BUTTON2 = 2;
 
     /**
      * Indicates mouse button #3; used by {@link #getButton}.
      * @since 1.4
-     */ 
+     */
     public static final int BUTTON3 = 3;
 
     /**
@@ -301,7 +299,7 @@ public class MouseEvent extends InputEvent {
      * @serial
      */
     private int yAbs;
-  
+
     /**
      * Indicates the number of quick consecutive clicks of
      * a mouse button.
@@ -309,7 +307,7 @@ public class MouseEvent extends InputEvent {
      * <code>MOUSE_CLICKED</code>,
      * <code>MOUSE_PRESSED</code> and
      * <code>MOUSE_RELEASED</code>.
-     * For the above, the <code>clickCount</code> will be at least 1. 
+     * For the above, the <code>clickCount</code> will be at least 1.
      * For all other events the count will be 0.
      *
      * @serial
@@ -344,13 +342,13 @@ public class MouseEvent extends InputEvent {
     boolean popupTrigger = false;
 
     /*
-     * JDK 1.1 serialVersionUID 
+     * JDK 1.1 serialVersionUID
      */
     private static final long serialVersionUID = -991214153494842848L;
 
     static {
         /* ensure that the necessary native libraries are loaded */
-	NativeLibLoader.loadLibraries();
+        NativeLibLoader.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -361,7 +359,7 @@ public class MouseEvent extends InputEvent {
        accessed from C.
      */
     private static native void initIDs();
-  
+
     /**
      * Returns the absolute x, y position of the event.
      * In a virtual device multi-screen environment in which the
@@ -413,7 +411,7 @@ public class MouseEvent extends InputEvent {
     public int getYOnScreen() {
         return yAbs;
     }
-  
+
     /**
      * Constructs a <code>MouseEvent</code> object with the
      * specified source component,
@@ -449,20 +447,20 @@ public class MouseEvent extends InputEvent {
      * @param y            the vertical y coordinate for the mouse location
      * @param clickCount   the number of mouse clicks associated with event
      * @param popupTrigger a boolean, true if this event is a trigger for a
-     *                     popup menu 
+     *                     popup menu
      * @param button       which of the mouse buttons has changed state.
      *                      <code>NOBUTTON</code>,
      *                      <code>BUTTON1</code>,
      *                      <code>BUTTON2</code> or
      *                      <code>BUTTON3</code>.
-     * @throws IllegalArgumentException if an invalid <code>button</code> 
+     * @throws IllegalArgumentException if an invalid <code>button</code>
      *            value is passed in
      * @throws IllegalArgumentException if <code>source</code> is null
      * @since 1.4
      */
     public MouseEvent(Component source, int id, long when, int modifiers,
                       int x, int y, int clickCount, boolean popupTrigger,
-                      int button) 
+                      int button)
     {
         this(source, id, when, modifiers, x, y, 0, 0, clickCount, popupTrigger, button);
         Point eventLocationOnScreen = new Point(0, 0);
@@ -475,7 +473,7 @@ public class MouseEvent extends InputEvent {
           this.yAbs = 0;
         }
     }
-    
+
     /**
      * Constructs a <code>MouseEvent</code> object with the
      * specified source component,
@@ -507,7 +505,7 @@ public class MouseEvent extends InputEvent {
      * @param y            the vertical y coordinate for the mouse location
      * @param clickCount   the number of mouse clicks associated with event
      * @param popupTrigger a boolean, true if this event is a trigger for a
-     *                     popup menu 
+     *                     popup menu
      * @throws IllegalArgumentException if <code>source</code> is null
      */
      public MouseEvent(Component source, int id, long when, int modifiers,
@@ -527,7 +525,7 @@ public class MouseEvent extends InputEvent {
      * values which don't match) results in unspecified behavior.
      * Even if inconsistent values for relative and absolute coordinates are
      * passed to the constructor, the mouse event instance is still
-     * created and no exception is thrown. 
+     * created and no exception is thrown.
      * This method throws an
      * <code>IllegalArgumentException</code> if <code>source</code>
      * is <code>null</code>.
@@ -547,20 +545,20 @@ public class MouseEvent extends InputEvent {
      * @param yAbs         the absolute vertical y coordinate for the mouse location
      * @param clickCount   the number of mouse clicks associated with event
      * @param popupTrigger a boolean, true if this event is a trigger for a
-     *                     popup menu 
+     *                     popup menu
      * @param button       which of the mouse buttons has changed state.
      *                      <code>NOBUTTON</code>,
      *                      <code>BUTTON1</code>,
      *                      <code>BUTTON2</code> or
      *                      <code>BUTTON3</code>.
-     * @throws IllegalArgumentException if an invalid <code>button</code> 
+     * @throws IllegalArgumentException if an invalid <code>button</code>
      *            value is passed in
      * @throws IllegalArgumentException if <code>source</code> is null
      * @since 1.6
      */
     public MouseEvent(Component source, int id, long when, int modifiers,
                       int x, int y, int xAbs, int yAbs,
-                      int clickCount, boolean popupTrigger, int button) 
+                      int clickCount, boolean popupTrigger, int button)
     {
         super(source, id, when, modifiers);
         this.x = x;
@@ -574,16 +572,16 @@ public class MouseEvent extends InputEvent {
         }
         this.button = button;
         if ((getModifiers() != 0) && (getModifiersEx() == 0)) {
-	    setNewModifiers();    
-	} else if ((getModifiers() == 0) && 
-                   (getModifiersEx() != 0 || button != NOBUTTON)) 
+            setNewModifiers();
+        } else if ((getModifiers() == 0) &&
+                   (getModifiersEx() != 0 || button != NOBUTTON))
         {
             setOldModifiers();
         }
     }
 
     /**
-     * Returns the horizontal x position of the event relative to the 
+     * Returns the horizontal x position of the event relative to the
      * source component.
      *
      * @return x  an integer indicating horizontal position relative to
@@ -607,17 +605,17 @@ public class MouseEvent extends InputEvent {
     /**
      * Returns the x,y position of the event relative to the source component.
      *
-     * @return a <code>Point</code> object containing the x and y coordinates 
-     *         relative to the source component 
+     * @return a <code>Point</code> object containing the x and y coordinates
+     *         relative to the source component
      *
      */
     public Point getPoint() {
-	int x;
-	int y;
-	synchronized (this) {
-	    x = this.x;
-	    y = this.y;
-	}
+        int x;
+        int y;
+        synchronized (this) {
+            x = this.x;
+            y = this.y;
+        }
         return new Point(x, y);
     }
 
@@ -656,7 +654,7 @@ public class MouseEvent extends InputEvent {
      * @since 1.4
      */
     public int getButton() {
-	return button;
+        return button;
     }
 
     /**
@@ -688,7 +686,7 @@ public class MouseEvent extends InputEvent {
      * <code>InputEvent.BUTTON3_MASK</code> have the same value,
      * so the string "Meta" is returned for both modifiers.
      *
-     * @param modifiers a modifier mask describing the modifier keys and 
+     * @param modifiers a modifier mask describing the modifier keys and
      *                  mouse buttons that were down during the event
      * @return string   a text description of the combination of modifier
      *                  keys and mouse buttons that were down during the event
@@ -774,8 +772,8 @@ public class MouseEvent extends InputEvent {
         }
 
         // (x,y) coordinates
-        str.append(",(").append(x).append(",").append(y).append(")"); 
-        str.append(",absolute(").append(xAbs).append(",").append(yAbs).append(")"); 
+        str.append(",(").append(x).append(",").append(y).append(")");
+        str.append(",absolute(").append(xAbs).append(",").append(yAbs).append(")");
 
         str.append(",button=").append(getButton());
 
@@ -789,109 +787,109 @@ public class MouseEvent extends InputEvent {
 
         str.append(",clickCount=").append(clickCount);
 
-        return str.toString(); 
+        return str.toString();
     }
 
     /**
-     * Sets new modifiers by the old ones. 
+     * Sets new modifiers by the old ones.
      * Also sets button.
      */
     private void setNewModifiers() {
-    	if ((modifiers & BUTTON1_MASK) != 0) {
-	    modifiers |= BUTTON1_DOWN_MASK;
-	}
-	if ((modifiers & BUTTON2_MASK) != 0) {
-	    modifiers |= BUTTON2_DOWN_MASK;
-	}
-	if ((modifiers & BUTTON3_MASK) != 0) {
-	    modifiers |= BUTTON3_DOWN_MASK;
-	}	
-	if (id == MOUSE_PRESSED 
+        if ((modifiers & BUTTON1_MASK) != 0) {
+            modifiers |= BUTTON1_DOWN_MASK;
+        }
+        if ((modifiers & BUTTON2_MASK) != 0) {
+            modifiers |= BUTTON2_DOWN_MASK;
+        }
+        if ((modifiers & BUTTON3_MASK) != 0) {
+            modifiers |= BUTTON3_DOWN_MASK;
+        }
+        if (id == MOUSE_PRESSED
             || id == MOUSE_RELEASED
-	    || id == MOUSE_CLICKED) 
-	{
-	    if ((modifiers & BUTTON1_MASK) != 0) {
-		button = BUTTON1;
-		modifiers &= ~BUTTON2_MASK & ~BUTTON3_MASK;
-		if (id != MOUSE_PRESSED) {
-		    modifiers &= ~BUTTON1_DOWN_MASK;
-		}
-	    } else if ((modifiers & BUTTON2_MASK) != 0) {
-		button = BUTTON2;
-		modifiers &= ~BUTTON1_MASK & ~BUTTON3_MASK;
-		if (id != MOUSE_PRESSED) {
-		    modifiers &= ~BUTTON2_DOWN_MASK;
-		}
-	    } else if ((modifiers & BUTTON3_MASK) != 0) {
-		button = BUTTON3;
-		modifiers &= ~BUTTON1_MASK & ~BUTTON2_MASK;
-		if (id != MOUSE_PRESSED) {
-		    modifiers &= ~BUTTON3_DOWN_MASK;
-		}
-	    }
-	}
-	if ((modifiers & InputEvent.ALT_MASK) != 0) {
-	    modifiers |= InputEvent.ALT_DOWN_MASK;
-	}
-	if ((modifiers & InputEvent.META_MASK) != 0) {
-	    modifiers |= InputEvent.META_DOWN_MASK;
-	}
-	if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
-	    modifiers |= InputEvent.SHIFT_DOWN_MASK;
-	}
-	if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-	    modifiers |= InputEvent.CTRL_DOWN_MASK;
-	}
-	if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-	    modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
-	}
-    }	
+            || id == MOUSE_CLICKED)
+        {
+            if ((modifiers & BUTTON1_MASK) != 0) {
+                button = BUTTON1;
+                modifiers &= ~BUTTON2_MASK & ~BUTTON3_MASK;
+                if (id != MOUSE_PRESSED) {
+                    modifiers &= ~BUTTON1_DOWN_MASK;
+                }
+            } else if ((modifiers & BUTTON2_MASK) != 0) {
+                button = BUTTON2;
+                modifiers &= ~BUTTON1_MASK & ~BUTTON3_MASK;
+                if (id != MOUSE_PRESSED) {
+                    modifiers &= ~BUTTON2_DOWN_MASK;
+                }
+            } else if ((modifiers & BUTTON3_MASK) != 0) {
+                button = BUTTON3;
+                modifiers &= ~BUTTON1_MASK & ~BUTTON2_MASK;
+                if (id != MOUSE_PRESSED) {
+                    modifiers &= ~BUTTON3_DOWN_MASK;
+                }
+            }
+        }
+        if ((modifiers & InputEvent.ALT_MASK) != 0) {
+            modifiers |= InputEvent.ALT_DOWN_MASK;
+        }
+        if ((modifiers & InputEvent.META_MASK) != 0) {
+            modifiers |= InputEvent.META_DOWN_MASK;
+        }
+        if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+            modifiers |= InputEvent.SHIFT_DOWN_MASK;
+        }
+        if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+            modifiers |= InputEvent.CTRL_DOWN_MASK;
+        }
+        if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+            modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
+        }
+    }
 
     /**
-     * Sets old modifiers by the new ones. 
+     * Sets old modifiers by the new ones.
      */
     private void setOldModifiers() {
-	if (id == MOUSE_PRESSED 
+        if (id == MOUSE_PRESSED
             || id == MOUSE_RELEASED
-	    || id == MOUSE_CLICKED) 
-	{	    
-	    switch(button) {
-	    case BUTTON1:
-		modifiers |= BUTTON1_MASK;
-		break;
-	    case BUTTON2:
-		modifiers |= BUTTON2_MASK;
-		break;
-	    case BUTTON3:
-		modifiers |= BUTTON3_MASK;
-		break;
-	    }
-	} else {
-	    if ((modifiers & BUTTON1_DOWN_MASK) != 0) {
-		modifiers |= BUTTON1_MASK;
-	    }
-	    if ((modifiers & BUTTON2_DOWN_MASK) != 0) {
-		modifiers |= BUTTON2_MASK;
-	    }
-	    if ((modifiers & BUTTON3_DOWN_MASK) != 0) {
-		modifiers |= BUTTON3_MASK;
-	    }
-	}
-	if ((modifiers & ALT_DOWN_MASK) != 0) {
-	    modifiers |= ALT_MASK;
-	}
-	if ((modifiers & META_DOWN_MASK) != 0) {
-	    modifiers |= META_MASK;
-	}
-	if ((modifiers & SHIFT_DOWN_MASK) != 0) {
-	    modifiers |= SHIFT_MASK;
-	}
-	if ((modifiers & CTRL_DOWN_MASK) != 0) {
-	    modifiers |= CTRL_MASK;
-	}
-	if ((modifiers & ALT_GRAPH_DOWN_MASK) != 0) {
-	    modifiers |= ALT_GRAPH_MASK;
-	}
+            || id == MOUSE_CLICKED)
+        {
+            switch(button) {
+            case BUTTON1:
+                modifiers |= BUTTON1_MASK;
+                break;
+            case BUTTON2:
+                modifiers |= BUTTON2_MASK;
+                break;
+            case BUTTON3:
+                modifiers |= BUTTON3_MASK;
+                break;
+            }
+        } else {
+            if ((modifiers & BUTTON1_DOWN_MASK) != 0) {
+                modifiers |= BUTTON1_MASK;
+            }
+            if ((modifiers & BUTTON2_DOWN_MASK) != 0) {
+                modifiers |= BUTTON2_MASK;
+            }
+            if ((modifiers & BUTTON3_DOWN_MASK) != 0) {
+                modifiers |= BUTTON3_MASK;
+            }
+        }
+        if ((modifiers & ALT_DOWN_MASK) != 0) {
+            modifiers |= ALT_MASK;
+        }
+        if ((modifiers & META_DOWN_MASK) != 0) {
+            modifiers |= META_MASK;
+        }
+        if ((modifiers & SHIFT_DOWN_MASK) != 0) {
+            modifiers |= SHIFT_MASK;
+        }
+        if ((modifiers & CTRL_DOWN_MASK) != 0) {
+            modifiers |= CTRL_MASK;
+        }
+        if ((modifiers & ALT_GRAPH_DOWN_MASK) != 0) {
+            modifiers |= ALT_GRAPH_MASK;
+        }
     }
 
     /**
@@ -900,10 +898,9 @@ public class MouseEvent extends InputEvent {
      */
     private void readObject(ObjectInputStream s)
       throws IOException, ClassNotFoundException {
-	s.defaultReadObject();
-	if (getModifiers() != 0 && getModifiersEx() == 0) {
-	    setNewModifiers();    
-	}
+        s.defaultReadObject();
+        if (getModifiers() != 0 && getModifiersEx() == 0) {
+            setNewModifiers();
+        }
     }
 }
-

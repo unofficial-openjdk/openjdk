@@ -32,4 +32,3 @@ struct UtfInst {
 };
 
 #endif
-

@@ -92,9 +92,9 @@ public class CK_MECHANISM_INFO {
 
     public CK_MECHANISM_INFO(long minKeySize, long maxKeySize,
                              long flags) {
-	this.ulMinKeySize = minKeySize;
-	this.ulMaxKeySize = maxKeySize;
-	this.flags = flags;
+        this.ulMinKeySize = minKeySize;
+        this.ulMaxKeySize = maxKeySize;
+        this.flags = flags;
     }
 
     /**
@@ -103,25 +103,25 @@ public class CK_MECHANISM_INFO {
      * @return the string representation of CK_MECHANISM_INFO
      */
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer();
 
-	buffer.append(Constants.INDENT);
-	buffer.append("ulMinKeySize: ");
-	buffer.append(String.valueOf(ulMinKeySize));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("ulMinKeySize: ");
+        buffer.append(String.valueOf(ulMinKeySize));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("ulMaxKeySize: ");
-	buffer.append(String.valueOf(ulMaxKeySize));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("ulMaxKeySize: ");
+        buffer.append(String.valueOf(ulMaxKeySize));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("flags: ");
-	buffer.append(String.valueOf(flags));
-	buffer.append(" = ");
-	buffer.append(Functions.mechanismInfoFlagsToString(flags));
-	//buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("flags: ");
+        buffer.append(String.valueOf(flags));
+        buffer.append(" = ");
+        buffer.append(Functions.mechanismInfoFlagsToString(flags));
+        //buffer.append(Constants.NEWLINE);
 
-	return buffer.toString() ;
+        return buffer.toString() ;
     }
 }

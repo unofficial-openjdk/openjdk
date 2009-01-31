@@ -64,14 +64,14 @@ final class Obj {
 
     // LDAP attributes used to support Java objects.
     static final String[] JAVA_ATTRIBUTES = {
-	"objectClass",
-	"javaSerializedData",
-	"javaClassName",
-	"javaFactory",
-	"javaCodeBase",
-	"javaReferenceAddress",
-	"javaClassNames",
-	"javaRemoteLocation"     // Deprecated
+        "objectClass",
+        "javaSerializedData",
+        "javaClassName",
+        "javaFactory",
+        "javaCodeBase",
+        "javaReferenceAddress",
+        "javaClassNames",
+        "javaRemoteLocation"     // Deprecated
     };
 
     static final int OBJECT_CLASS = 0;
@@ -88,19 +88,19 @@ final class Obj {
 
     // LDAP object classes to support Java objects
     static final String[] JAVA_OBJECT_CLASSES = {
-	"javaContainer",
-	"javaObject",
-	"javaNamingReference",
-	"javaSerializedObject",
-	"javaMarshalledObject",
+        "javaContainer",
+        "javaObject",
+        "javaNamingReference",
+        "javaSerializedObject",
+        "javaMarshalledObject",
     };
 
     static final String[] JAVA_OBJECT_CLASSES_LOWER = {
-	"javacontainer",
-	"javaobject",
-	"javanamingreference",
-	"javaserializedobject",
-	"javamarshalledobject",
+        "javacontainer",
+        "javaobject",
+        "javanamingreference",
+        "javaserializedobject",
+        "javamarshalledobject",
     };
 
     static final int STRUCTURAL = 0;    // structural object class
@@ -125,72 +125,72 @@ final class Obj {
      * javaTypeName
      *   value: getTypeNames(Object.getClass());
      */
-    private static Attributes encodeObject(char separator, 
-	Object obj, Attributes attrs,
-	Attribute objectClass, boolean cloned)
-	throws NamingException {
-	    boolean structural = 
-		(objectClass.size() == 0 ||
-		    (objectClass.size() == 1 && objectClass.contains("top")));
+    private static Attributes encodeObject(char separator,
+        Object obj, Attributes attrs,
+        Attribute objectClass, boolean cloned)
+        throws NamingException {
+            boolean structural =
+                (objectClass.size() == 0 ||
+                    (objectClass.size() == 1 && objectClass.contains("top")));
 
-	    if (structural) {
-		objectClass.add(JAVA_OBJECT_CLASSES[STRUCTURAL]);
-	    }
+            if (structural) {
+                objectClass.add(JAVA_OBJECT_CLASSES[STRUCTURAL]);
+            }
 
     // References
-	    if (obj instanceof Referenceable) {
-		objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
-		objectClass.add(JAVA_OBJECT_CLASSES[REF_OBJECT]);
-		if (!cloned) {
-		    attrs = (Attributes)attrs.clone();
-		}
-		attrs.put(objectClass);
-		return (encodeReference(separator,
-		    ((Referenceable)obj).getReference(),
-		    attrs, obj));
+            if (obj instanceof Referenceable) {
+                objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
+                objectClass.add(JAVA_OBJECT_CLASSES[REF_OBJECT]);
+                if (!cloned) {
+                    attrs = (Attributes)attrs.clone();
+                }
+                attrs.put(objectClass);
+                return (encodeReference(separator,
+                    ((Referenceable)obj).getReference(),
+                    attrs, obj));
 
-	    } else if (obj instanceof Reference) {
-		objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
-		objectClass.add(JAVA_OBJECT_CLASSES[REF_OBJECT]);
-		if (!cloned) {
-		    attrs = (Attributes)attrs.clone();
-		}
-		attrs.put(objectClass);
-		return (encodeReference(separator, (Reference)obj, attrs, null));
+            } else if (obj instanceof Reference) {
+                objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
+                objectClass.add(JAVA_OBJECT_CLASSES[REF_OBJECT]);
+                if (!cloned) {
+                    attrs = (Attributes)attrs.clone();
+                }
+                attrs.put(objectClass);
+                return (encodeReference(separator, (Reference)obj, attrs, null));
 
     // Serializable Object
-	    } else if (obj instanceof java.io.Serializable) {
-		objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
-		if (!(objectClass.contains(JAVA_OBJECT_CLASSES[MAR_OBJECT]) ||
-		    objectClass.contains(JAVA_OBJECT_CLASSES_LOWER[MAR_OBJECT]))) {
-		    objectClass.add(JAVA_OBJECT_CLASSES[SER_OBJECT]);
-		}
-		if (!cloned) {
-		    attrs = (Attributes)attrs.clone();
-		}
-		attrs.put(objectClass);
-		attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[SERIALIZED_DATA],
-		    serializeObject(obj)));
-		if (attrs.get(JAVA_ATTRIBUTES[CLASSNAME]) == null) {
-		    attrs.put(JAVA_ATTRIBUTES[CLASSNAME],
-			obj.getClass().getName());
-		}
-		if (attrs.get(JAVA_ATTRIBUTES[TYPENAME]) == null) {
-		    Attribute tAttr = 
-			LdapCtxFactory.createTypeNameAttr(obj.getClass());
-		    if (tAttr != null) {
-			attrs.put(tAttr);
-		    }
-		}
+            } else if (obj instanceof java.io.Serializable) {
+                objectClass.add(JAVA_OBJECT_CLASSES[BASE_OBJECT]);
+                if (!(objectClass.contains(JAVA_OBJECT_CLASSES[MAR_OBJECT]) ||
+                    objectClass.contains(JAVA_OBJECT_CLASSES_LOWER[MAR_OBJECT]))) {
+                    objectClass.add(JAVA_OBJECT_CLASSES[SER_OBJECT]);
+                }
+                if (!cloned) {
+                    attrs = (Attributes)attrs.clone();
+                }
+                attrs.put(objectClass);
+                attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[SERIALIZED_DATA],
+                    serializeObject(obj)));
+                if (attrs.get(JAVA_ATTRIBUTES[CLASSNAME]) == null) {
+                    attrs.put(JAVA_ATTRIBUTES[CLASSNAME],
+                        obj.getClass().getName());
+                }
+                if (attrs.get(JAVA_ATTRIBUTES[TYPENAME]) == null) {
+                    Attribute tAttr =
+                        LdapCtxFactory.createTypeNameAttr(obj.getClass());
+                    if (tAttr != null) {
+                        attrs.put(tAttr);
+                    }
+                }
     // DirContext Object
-	    } else if (obj instanceof DirContext) {
-		// do nothing
-	    } else {
-		throw new IllegalArgumentException(
-	    "can only bind Referenceable, Serializable, DirContext");
-	    }
-	    //	    System.err.println(attrs);
-	    return attrs;
+            } else if (obj instanceof DirContext) {
+                // do nothing
+            } else {
+                throw new IllegalArgumentException(
+            "can only bind Referenceable, Serializable, DirContext");
+            }
+            //      System.err.println(attrs);
+            return attrs;
     }
 
     /**
@@ -199,23 +199,23 @@ final class Obj {
      * so we just use the first one.
      * @return an array of URL strings for the codebase
      */
-    private static String[] getCodebases(Attribute codebaseAttr) throws 
-	NamingException {
-	if (codebaseAttr == null) {
-	    return null;
-	} else {
-	    StringTokenizer parser = 
-		new StringTokenizer((String)codebaseAttr.get());
-	    Vector vec = new Vector(10);
-	    while (parser.hasMoreTokens()) {
-		vec.addElement(parser.nextToken());
-	    }
-	    String[] answer = new String[vec.size()];
-	    for (int i = 0; i < answer.length; i++) {
-		answer[i] = (String)vec.elementAt(i);
-	    }
-	    return answer;
-	}
+    private static String[] getCodebases(Attribute codebaseAttr) throws
+        NamingException {
+        if (codebaseAttr == null) {
+            return null;
+        } else {
+            StringTokenizer parser =
+                new StringTokenizer((String)codebaseAttr.get());
+            Vector vec = new Vector(10);
+            while (parser.hasMoreTokens()) {
+                vec.addElement(parser.nextToken());
+            }
+            String[] answer = new String[vec.size()];
+            for (int i = 0; i < answer.length; i++) {
+                answer[i] = (String)vec.elementAt(i);
+            }
+            return answer;
+        }
     }
 
     /*
@@ -225,41 +225,41 @@ final class Obj {
      * See encodeObject() and encodeReference() for details on formats
      * expected.
      */
-    static Object decodeObject(Attributes attrs) 
-	throws NamingException {
+    static Object decodeObject(Attributes attrs)
+        throws NamingException {
 
-	Attribute attr;
-	
-	// Get codebase, which is used in all 3 cases.
-	String[] codebases = getCodebases(attrs.get(JAVA_ATTRIBUTES[CODEBASE]));
-	try {
-	    if ((attr = attrs.get(JAVA_ATTRIBUTES[SERIALIZED_DATA])) != null) {
-		ClassLoader cl = helper.getURLClassLoader(codebases);
-		return deserializeObject((byte[])attr.get(), cl);
-	    } else if ((attr = attrs.get(JAVA_ATTRIBUTES[REMOTE_LOC])) != null) {
-		// For backward compatibility only
-		return decodeRmiObject(
-		    (String)attrs.get(JAVA_ATTRIBUTES[CLASSNAME]).get(),
-		    (String)attr.get(), codebases);
-	    } 
+        Attribute attr;
 
-	    attr = attrs.get(JAVA_ATTRIBUTES[OBJECT_CLASS]);
-	    if (attr != null && 
-		(attr.contains(JAVA_OBJECT_CLASSES[REF_OBJECT]) ||
-		    attr.contains(JAVA_OBJECT_CLASSES_LOWER[REF_OBJECT]))) {
-		return decodeReference(attrs, codebases);
-	    }
-	    return null;
-	} catch (IOException e) {
-	    NamingException ne = new NamingException();
-	    ne.setRootCause(e);
-	    throw ne;
-	}
+        // Get codebase, which is used in all 3 cases.
+        String[] codebases = getCodebases(attrs.get(JAVA_ATTRIBUTES[CODEBASE]));
+        try {
+            if ((attr = attrs.get(JAVA_ATTRIBUTES[SERIALIZED_DATA])) != null) {
+                ClassLoader cl = helper.getURLClassLoader(codebases);
+                return deserializeObject((byte[])attr.get(), cl);
+            } else if ((attr = attrs.get(JAVA_ATTRIBUTES[REMOTE_LOC])) != null) {
+                // For backward compatibility only
+                return decodeRmiObject(
+                    (String)attrs.get(JAVA_ATTRIBUTES[CLASSNAME]).get(),
+                    (String)attr.get(), codebases);
+            }
+
+            attr = attrs.get(JAVA_ATTRIBUTES[OBJECT_CLASS]);
+            if (attr != null &&
+                (attr.contains(JAVA_OBJECT_CLASSES[REF_OBJECT]) ||
+                    attr.contains(JAVA_OBJECT_CLASSES_LOWER[REF_OBJECT]))) {
+                return decodeReference(attrs, codebases);
+            }
+            return null;
+        } catch (IOException e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
     }
 
     /**
      * Convert a Reference object into several LDAP attributes.
-     * 
+     *
      * A Reference is stored as into the following attributes:
      * javaClassName
      *   value: Reference.getClassName();
@@ -273,13 +273,13 @@ final class Obj {
      *   value: #2#typeC##[serialized RefAddr C]
      *   value: #3#typeD#valD
      *
-     * where 
+     * where
      * -  the first character denotes the separator
      * -  the number following the first separator denotes the position
      *    of the RefAddr within the Reference
      * -  "typeA" is RefAddr.getType()
      * -  ## denotes that the Base64-encoded form of the non-StringRefAddr
-     *    is to follow; otherwise the value that follows is 
+     *    is to follow; otherwise the value that follows is
      *    StringRefAddr.getContents()
      *
      * The default separator is the hash character (#).
@@ -287,64 +287,64 @@ final class Obj {
      */
 
     private static Attributes encodeReference(char separator,
-	Reference ref, Attributes attrs, Object orig) 
-	throws NamingException {
+        Reference ref, Attributes attrs, Object orig)
+        throws NamingException {
 
-	if (ref == null)
-	    return attrs;
+        if (ref == null)
+            return attrs;
 
-	String s;
+        String s;
 
-	if ((s = ref.getClassName()) != null) {
-	    attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[CLASSNAME], s));
-	}
+        if ((s = ref.getClassName()) != null) {
+            attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[CLASSNAME], s));
+        }
 
-	if ((s = ref.getFactoryClassName()) != null) {
-	    attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[FACTORY], s));
-	}
+        if ((s = ref.getFactoryClassName()) != null) {
+            attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[FACTORY], s));
+        }
 
-	if ((s = ref.getFactoryClassLocation()) != null) {
-	    attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[CODEBASE], s));
-	}
+        if ((s = ref.getFactoryClassLocation()) != null) {
+            attrs.put(new BasicAttribute(JAVA_ATTRIBUTES[CODEBASE], s));
+        }
 
-	// Get original object's types if caller has not explicitly
-	// specified other type names
-	if (orig != null && attrs.get(JAVA_ATTRIBUTES[TYPENAME]) != null) {
-	    Attribute tAttr = 
-		LdapCtxFactory.createTypeNameAttr(orig.getClass());
-	    if (tAttr != null) {
-		attrs.put(tAttr);
-	    }
-	}
+        // Get original object's types if caller has not explicitly
+        // specified other type names
+        if (orig != null && attrs.get(JAVA_ATTRIBUTES[TYPENAME]) != null) {
+            Attribute tAttr =
+                LdapCtxFactory.createTypeNameAttr(orig.getClass());
+            if (tAttr != null) {
+                attrs.put(tAttr);
+            }
+        }
 
-	int count = ref.size();
+        int count = ref.size();
 
-	if (count > 0) {
+        if (count > 0) {
 
-	    Attribute refAttr = new BasicAttribute(JAVA_ATTRIBUTES[REF_ADDR]);
-	    RefAddr refAddr;
-	    BASE64Encoder encoder = null;
+            Attribute refAttr = new BasicAttribute(JAVA_ATTRIBUTES[REF_ADDR]);
+            RefAddr refAddr;
+            BASE64Encoder encoder = null;
 
-	    for (int i = 0; i < count; i++) {
-		refAddr = ref.get(i);
+            for (int i = 0; i < count; i++) {
+                refAddr = ref.get(i);
 
-		if (refAddr instanceof StringRefAddr) {
-		    refAttr.add(""+ separator + i + 
-			separator +	refAddr.getType() + 
-			separator + refAddr.getContent());
-		} else {
-		    if (encoder == null)
-			encoder = new BASE64Encoder();
+                if (refAddr instanceof StringRefAddr) {
+                    refAttr.add(""+ separator + i +
+                        separator +     refAddr.getType() +
+                        separator + refAddr.getContent());
+                } else {
+                    if (encoder == null)
+                        encoder = new BASE64Encoder();
 
-		    refAttr.add(""+ separator + i + 
-			separator + refAddr.getType() + 
-			separator + separator +
-			encoder.encodeBuffer(serializeObject(refAddr)));
-		}
-	    }
-	    attrs.put(refAttr);
-	}
-	return attrs;
+                    refAttr.add(""+ separator + i +
+                        separator + refAddr.getType() +
+                        separator + separator +
+                        encoder.encodeBuffer(serializeObject(refAddr)));
+                }
+            }
+            attrs.put(refAttr);
+        }
+        return attrs;
     }
 
     /*
@@ -362,127 +362,127 @@ final class Obj {
      * @deprecated For backward compatibility only
      */
     private static Object decodeRmiObject(String className,
-	String rmiName, String[] codebases) throws NamingException {
-	    return new Reference(className, new StringRefAddr("URL", rmiName));
+        String rmiName, String[] codebases) throws NamingException {
+            return new Reference(className, new StringRefAddr("URL", rmiName));
     }
 
     /*
      * Restore a Reference object from several LDAP attributes
      */
     private static Reference decodeReference(Attributes attrs,
-	String[] codebases) throws NamingException, IOException {
+        String[] codebases) throws NamingException, IOException {
 
-	Attribute attr;
-	String className;
-	String factory = null;
+        Attribute attr;
+        String className;
+        String factory = null;
 
-	if ((attr = attrs.get(JAVA_ATTRIBUTES[CLASSNAME])) != null) {
-	    className = (String)attr.get();
-	} else {
-	    throw new InvalidAttributesException(JAVA_ATTRIBUTES[CLASSNAME] +
-			" attribute is required");
-	}
+        if ((attr = attrs.get(JAVA_ATTRIBUTES[CLASSNAME])) != null) {
+            className = (String)attr.get();
+        } else {
+            throw new InvalidAttributesException(JAVA_ATTRIBUTES[CLASSNAME] +
+                        " attribute is required");
+        }
 
-	if ((attr = attrs.get(JAVA_ATTRIBUTES[FACTORY])) != null) {
-	    factory = (String)attr.get();
-	}
+        if ((attr = attrs.get(JAVA_ATTRIBUTES[FACTORY])) != null) {
+            factory = (String)attr.get();
+        }
 
-	Reference ref =	new Reference(className, factory,
-	    (codebases != null? codebases[0] : null));
+        Reference ref = new Reference(className, factory,
+            (codebases != null? codebases[0] : null));
 
-	/*
-	 * string encoding of a RefAddr is either:
-	 *
-	 *	#posn#<type>#<address>
-	 * or
-	 *	#posn#<type>##<base64-encoded address>
-	 */
-	if ((attr = attrs.get(JAVA_ATTRIBUTES[REF_ADDR])) != null) {
+        /*
+         * string encoding of a RefAddr is either:
+         *
+         *      #posn#<type>#<address>
+         * or
+         *      #posn#<type>##<base64-encoded address>
+         */
+        if ((attr = attrs.get(JAVA_ATTRIBUTES[REF_ADDR])) != null) {
 
-	    String val, posnStr, type;
-	    char separator;
-	    int start, sep, posn;
-	    BASE64Decoder decoder = null;
+            String val, posnStr, type;
+            char separator;
+            int start, sep, posn;
+            BASE64Decoder decoder = null;
 
-	    ClassLoader cl = helper.getURLClassLoader(codebases);
+            ClassLoader cl = helper.getURLClassLoader(codebases);
 
             /*
              * Temporary Vector for decoded RefAddr addresses - used to ensure
              * unordered addresses are correctly re-ordered.
              */
-	    Vector refAddrList = new Vector();
-	    refAddrList.setSize(attr.size());
+            Vector refAddrList = new Vector();
+            refAddrList.setSize(attr.size());
 
-	    for (NamingEnumeration vals = attr.getAll(); vals.hasMore(); ) {
+            for (NamingEnumeration vals = attr.getAll(); vals.hasMore(); ) {
 
-		val = (String)vals.next();
+                val = (String)vals.next();
 
-		if (val.length() == 0) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - "+
-			"empty attribute value");
-		}
-		// first character denotes encoding separator
-		separator = val.charAt(0);
-		start = 1;  // skip over separator
+                if (val.length() == 0) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - "+
+                        "empty attribute value");
+                }
+                // first character denotes encoding separator
+                separator = val.charAt(0);
+                start = 1;  // skip over separator
 
-		// extract position within Reference
-		if ((sep = val.indexOf(separator, start)) < 0) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
-			"separator '" + separator + "'" + "not found");
-		}
-		if ((posnStr = val.substring(start, sep)) == null) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
-			"empty RefAddr position");
-		}
-		try {
-		    posn = Integer.parseInt(posnStr);
-		} catch (NumberFormatException nfe) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
-			"RefAddr position not an integer");
-		}
-		start = sep + 1; // skip over position and trailing separator
+                // extract position within Reference
+                if ((sep = val.indexOf(separator, start)) < 0) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
+                        "separator '" + separator + "'" + "not found");
+                }
+                if ((posnStr = val.substring(start, sep)) == null) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
+                        "empty RefAddr position");
+                }
+                try {
+                    posn = Integer.parseInt(posnStr);
+                } catch (NumberFormatException nfe) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
+                        "RefAddr position not an integer");
+                }
+                start = sep + 1; // skip over position and trailing separator
 
-		// extract type
-		if ((sep = val.indexOf(separator, start)) < 0) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
-			"RefAddr type not found");
-		}
-		if ((type = val.substring(start, sep)) == null) {
-		    throw new InvalidAttributeValueException(
-			"malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
-			"empty RefAddr type");
-		}
-		start = sep + 1; // skip over type and trailing separator
+                // extract type
+                if ((sep = val.indexOf(separator, start)) < 0) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
+                        "RefAddr type not found");
+                }
+                if ((type = val.substring(start, sep)) == null) {
+                    throw new InvalidAttributeValueException(
+                        "malformed " + JAVA_ATTRIBUTES[REF_ADDR] + " attribute - " +
+                        "empty RefAddr type");
+                }
+                start = sep + 1; // skip over type and trailing separator
 
-		// extract content
-		if (start == val.length()) {
-		    // Empty content
-		    refAddrList.setElementAt(new StringRefAddr(type, null), posn);
-		} else if (val.charAt(start) == separator) {
-		    // Double separators indicate a non-StringRefAddr
-		    // Content is a Base64-encoded serialized RefAddr
+                // extract content
+                if (start == val.length()) {
+                    // Empty content
+                    refAddrList.setElementAt(new StringRefAddr(type, null), posn);
+                } else if (val.charAt(start) == separator) {
+                    // Double separators indicate a non-StringRefAddr
+                    // Content is a Base64-encoded serialized RefAddr
 
-		    ++start;  // skip over consecutive separator
-		    // %%% RL: exception if empty after double separator
+                    ++start;  // skip over consecutive separator
+                    // %%% RL: exception if empty after double separator
 
-		    if (decoder == null)
-			decoder = new BASE64Decoder();
+                    if (decoder == null)
+                        decoder = new BASE64Decoder();
 
-		    RefAddr ra = (RefAddr)
-			deserializeObject(
-			    decoder.decodeBuffer(val.substring(start)),
-			    cl);
+                    RefAddr ra = (RefAddr)
+                        deserializeObject(
+                            decoder.decodeBuffer(val.substring(start)),
+                            cl);
 
-		    refAddrList.setElementAt(ra, posn);
-		} else {
-		    // Single separator indicates a StringRefAddr
-		    refAddrList.setElementAt(new StringRefAddr(type, 
-			val.substring(start)), posn);
+                    refAddrList.setElementAt(ra, posn);
+                } else {
+                    // Single separator indicates a StringRefAddr
+                    refAddrList.setElementAt(new StringRefAddr(type,
+                        val.substring(start)), posn);
                 }
             }
 
@@ -493,140 +493,140 @@ final class Obj {
         }
 
         return (ref);
-    } 
+    }
 
     /*
      * Serialize an object into a byte array
      */
     private static byte[] serializeObject(Object obj) throws NamingException {
 
-	try {
-	    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-	    ObjectOutputStream serial = new ObjectOutputStream(bytes);
-	    serial.writeObject(obj);
-	    serial.close();
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            ObjectOutputStream serial = new ObjectOutputStream(bytes);
+            serial.writeObject(obj);
+            serial.close();
 
-	    return (bytes.toByteArray());
+            return (bytes.toByteArray());
 
-	} catch (IOException e) {
-	    NamingException ne = new NamingException();
-	    ne.setRootCause(e);
-	    throw ne;
-	}
+        } catch (IOException e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
     }
 
     /*
      * Deserializes a byte array into an object.
      */
-    private static Object deserializeObject(byte[] obj, ClassLoader cl) 
-	throws NamingException {
+    private static Object deserializeObject(byte[] obj, ClassLoader cl)
+        throws NamingException {
 
-	try {
-	    // Create ObjectInputStream for deserialization
-	    ByteArrayInputStream bytes = new ByteArrayInputStream(obj);
-	    ObjectInputStream deserial = (cl == null ? 
-		new ObjectInputStream(bytes) : 
-		new LoaderInputStream(bytes, cl));
+        try {
+            // Create ObjectInputStream for deserialization
+            ByteArrayInputStream bytes = new ByteArrayInputStream(obj);
+            ObjectInputStream deserial = (cl == null ?
+                new ObjectInputStream(bytes) :
+                new LoaderInputStream(bytes, cl));
 
-	    try {
-		return deserial.readObject();
-	    } catch (ClassNotFoundException e) {
-		NamingException ne = new NamingException();
-		ne.setRootCause(e);
-		throw ne;
-	    } finally {
-		deserial.close();
-	    }
-	} catch (IOException e) {
-	    NamingException ne = new NamingException();
-	    ne.setRootCause(e);
-	    throw ne;
-	}
+            try {
+                return deserial.readObject();
+            } catch (ClassNotFoundException e) {
+                NamingException ne = new NamingException();
+                ne.setRootCause(e);
+                throw ne;
+            } finally {
+                deserial.close();
+            }
+        } catch (IOException e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
     }
 
     /**
       * Returns the attributes to bind given an object and its attributes.
       */
     static Attributes determineBindAttrs(
-	char separator, Object obj, Attributes attrs, boolean cloned,
-	Name name, Context ctx, Hashtable env) 
-	throws NamingException {
+        char separator, Object obj, Attributes attrs, boolean cloned,
+        Name name, Context ctx, Hashtable env)
+        throws NamingException {
 
-	// Call state factories to convert object and attrs
-	DirStateFactory.Result res =
-	    DirectoryManager.getStateToBind(obj, name, ctx, env, attrs);
-	obj = res.getObject();
-	attrs = res.getAttributes();
+        // Call state factories to convert object and attrs
+        DirStateFactory.Result res =
+            DirectoryManager.getStateToBind(obj, name, ctx, env, attrs);
+        obj = res.getObject();
+        attrs = res.getAttributes();
 
-	// We're only storing attributes; no further processing required
-	if (obj == null) {
-	    return attrs;
-	}
+        // We're only storing attributes; no further processing required
+        if (obj == null) {
+            return attrs;
+        }
 
-	//if object to be bound is a DirContext extract its attributes
-	if ((attrs == null) && (obj instanceof DirContext)) {
-	    cloned = true;
-	    attrs = ((DirContext)obj).getAttributes("");
-	}
+        //if object to be bound is a DirContext extract its attributes
+        if ((attrs == null) && (obj instanceof DirContext)) {
+            cloned = true;
+            attrs = ((DirContext)obj).getAttributes("");
+        }
 
-	boolean ocNeedsCloning = false;
+        boolean ocNeedsCloning = false;
 
-	// Create "objectClass" attribute
-	Attribute objectClass;
-	if (attrs == null || attrs.size() == 0) {
-	    attrs = new BasicAttributes(LdapClient.caseIgnore);
-	    cloned = true;
+        // Create "objectClass" attribute
+        Attribute objectClass;
+        if (attrs == null || attrs.size() == 0) {
+            attrs = new BasicAttributes(LdapClient.caseIgnore);
+            cloned = true;
 
-	    // No objectclasses supplied, use "top" to start
-	    objectClass = new BasicAttribute("objectClass", "top");
+            // No objectclasses supplied, use "top" to start
+            objectClass = new BasicAttribute("objectClass", "top");
 
-	} else {
-	    // Get existing objectclass attribute
-	    objectClass = (Attribute)attrs.get("objectClass");
-	    if (objectClass == null && !attrs.isCaseIgnored()) {
-		// %%% workaround 
-		objectClass = (Attribute)attrs.get("objectclass");
-	    }
+        } else {
+            // Get existing objectclass attribute
+            objectClass = (Attribute)attrs.get("objectClass");
+            if (objectClass == null && !attrs.isCaseIgnored()) {
+                // %%% workaround
+                objectClass = (Attribute)attrs.get("objectclass");
+            }
 
-	    // No objectclasses supplied, use "top" to start
-	    if (objectClass == null) {
-		objectClass =  new BasicAttribute("objectClass", "top");
-	    } else if (ocNeedsCloning || !cloned) {
-		objectClass = (Attribute)objectClass.clone();
-	    }
-	}
+            // No objectclasses supplied, use "top" to start
+            if (objectClass == null) {
+                objectClass =  new BasicAttribute("objectClass", "top");
+            } else if (ocNeedsCloning || !cloned) {
+                objectClass = (Attribute)objectClass.clone();
+            }
+        }
 
-	// convert the supplied object into LDAP attributes
-	attrs = encodeObject(separator, obj, attrs, objectClass, cloned);
+        // convert the supplied object into LDAP attributes
+        attrs = encodeObject(separator, obj, attrs, objectClass, cloned);
 
-	// System.err.println("Determined: " + attrs);
-	return attrs;
+        // System.err.println("Determined: " + attrs);
+        return attrs;
     }
 
     /**
      * An ObjectInputStream that uses a class loader to find classes.
      */
     private static final class LoaderInputStream extends ObjectInputStream {
-	private ClassLoader classLoader;
-	
-	LoaderInputStream(InputStream in, ClassLoader cl) throws IOException {
-	    super(in);
-	    classLoader = cl;
-	}
+        private ClassLoader classLoader;
 
-	protected Class resolveClass(ObjectStreamClass desc) throws IOException,
-	    ClassNotFoundException {
-	    try {
-		// %%% Should use Class.forName(desc.getName(), false, classLoader);
-		// except we can't because that is only available on JDK1.2
-		return classLoader.loadClass(desc.getName());
-	    } catch (ClassNotFoundException e) {
-		return super.resolveClass(desc);
-	    }
-	}
+        LoaderInputStream(InputStream in, ClassLoader cl) throws IOException {
+            super(in);
+            classLoader = cl;
+        }
 
-	 protected Class resolveProxyClass(String[] interfaces) throws 
-		IOException, ClassNotFoundException {
+        protected Class resolveClass(ObjectStreamClass desc) throws IOException,
+            ClassNotFoundException {
+            try {
+                // %%% Should use Class.forName(desc.getName(), false, classLoader);
+                // except we can't because that is only available on JDK1.2
+                return classLoader.loadClass(desc.getName());
+            } catch (ClassNotFoundException e) {
+                return super.resolveClass(desc);
+            }
+        }
+
+         protected Class resolveProxyClass(String[] interfaces) throws
+                IOException, ClassNotFoundException {
              ClassLoader nonPublicLoader = null;
              boolean hasNonPublicInterface = false;
 
@@ -638,7 +638,7 @@ final class Obj {
                      if (hasNonPublicInterface) {
                          if (nonPublicLoader != cl.getClassLoader()) {
                              throw new IllegalAccessError(
-				"conflicting non-public interface class loaders");
+                                "conflicting non-public interface class loaders");
                          }
                      } else {
                          nonPublicLoader = cl.getClassLoader();
@@ -649,7 +649,7 @@ final class Obj {
              }
              try {
                  return Proxy.getProxyClass(hasNonPublicInterface ?
-			nonPublicLoader : classLoader, classObjs);
+                        nonPublicLoader : classLoader, classObjs);
              } catch (IllegalArgumentException e) {
                  throw new ClassNotFoundException(null, e);
              }

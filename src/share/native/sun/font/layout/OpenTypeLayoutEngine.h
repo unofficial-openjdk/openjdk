@@ -25,7 +25,6 @@
 
 
 /*
- * @(#)OpenTypeLayoutEngine.h	1.13 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -87,8 +86,8 @@ public:
      *
      * @internal
      */
-    OpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, le_int32 languageCode, 
-			 le_int32 typoFlags, const GlyphSubstitutionTableHeader *gsubTable);
+    OpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, le_int32 languageCode,
+                         le_int32 typoFlags, const GlyphSubstitutionTableHeader *gsubTable);
 
     /**
      * This constructor is used when the font requires a "canned" GSUB table which can't be known
@@ -255,7 +254,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 characterProcessing(const LEUnicode /*chars*/[], le_int32 offset, 
+    virtual le_int32 characterProcessing(const LEUnicode /*chars*/[], le_int32 offset,
         le_int32 count, le_int32 max, le_bool /*rightToLeft*/,
         LEUnicode *&/*outChars*/, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
@@ -288,7 +287,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 glyphProcessing(const LEUnicode chars[], le_int32 offset, 
+    virtual le_int32 glyphProcessing(const LEUnicode chars[], le_int32 offset,
         le_int32 count, le_int32 max, le_bool rightToLeft,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
@@ -317,7 +316,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 glyphPostProcessing(LEGlyphStorage &tempGlyphStorage, 
+    virtual le_int32 glyphPostProcessing(LEGlyphStorage &tempGlyphStorage,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -342,7 +341,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count, 
+    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count,
         le_int32 max, le_bool rightToLeft, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -360,7 +359,7 @@ protected:
      *
      * @internal
      */
-    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset, le_int32 count, 
+    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset, le_int32 count,
         le_bool reverse, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -374,4 +373,3 @@ protected:
 };
 
 #endif
-

@@ -93,4 +93,3 @@ public interface ClassLoaderReference extends ObjectReference {
      */
     List<ReferenceType> visibleClasses();
 }
-

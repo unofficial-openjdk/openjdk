@@ -74,7 +74,7 @@ DisplayChangedListener {
     native void registerX11DropTarget(Component target);
     native void unregisterX11DropTarget(Component target);
     native void updateAlwaysOnTop(boolean isAlwaysOnTop);
- 
+
     private static native void initIDs();
 
     static {
@@ -87,14 +87,14 @@ DisplayChangedListener {
             new sun.security.action.GetIntegerAction(name, def));
         return tmp.intValue();
     }
- 
+
     MWindowPeer() {
         insets = new Insets(0,0,0,0);
         winAttr = new MWindowAttributes();
     }
 
     MWindowPeer(Window target) {
- 
+
         this();
         init(target);
 
@@ -128,7 +128,7 @@ DisplayChangedListener {
         }
         pSetTitle(winAttr.title);
 
-        /* 
+        /*
          * For Windows and undecorated Frames and Dialogs this just
          * disables/enables resizing functions in the system menu.
          */
@@ -194,14 +194,14 @@ DisplayChangedListener {
         setFocusableWindow(((Window)target).isFocusableWindow());
     }
     native void setFocusableWindow(boolean value);
- 
+
     public void setVisible( boolean b ) {
         if (b) {
             updateFocusableWindowState();
         }
         super.setVisible(b);
         updateAlwaysOnTop(alwaysOnTop);
-    }    
+    }
 
     public Insets getInsets() {
         return insets;
@@ -262,7 +262,7 @@ DisplayChangedListener {
             int i;
             for (i = 0; i < imList.size(); i++){
                 ((MInputMethod)imList.elementAt(i)).configureStatus();
-            }       
+            }
         }
         validateSurface(width, height);
         postEvent(new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED));
@@ -496,7 +496,7 @@ DisplayChangedListener {
         if (!(comp instanceof Window)) {
             return false;
         }
-        
+
         while (comp != null && !(comp == target) && !(comp instanceof Dialog)) {
             comp = getParent_NoClientCode(comp);
         }
@@ -514,7 +514,7 @@ DisplayChangedListener {
                   return true;
               }
         }
-        return false;              
+        return false;
     }
 
     private final boolean hasWarningWindow() {
@@ -600,4 +600,3 @@ DisplayChangedListener {
     }
 
 }
-

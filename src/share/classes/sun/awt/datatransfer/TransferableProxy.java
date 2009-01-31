@@ -53,7 +53,6 @@ import java.util.Set;
  *
  * @author Lawrence P.G. Cable
  * @author David Mendenhall
- * @version %I%, %G%
  *
  * @since 1.4
  */
@@ -66,37 +65,37 @@ public class TransferableProxy implements Transferable {
         return transferable.getTransferDataFlavors();
     }
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-	return transferable.isDataFlavorSupported(flavor);
+        return transferable.isDataFlavorSupported(flavor);
     }
     public Object getTransferData(DataFlavor df)
         throws UnsupportedFlavorException, IOException
     {
-	Object data = transferable.getTransferData(df);
+        Object data = transferable.getTransferData(df);
 
-	// If the data is a Serializable object, then create a new instance
-	// before returning it. This insulates applications sharing DnD and
-	// Clipboard data from each other.
-	if (data != null && isLocal && df.isFlavorSerializedObjectType()) {
-	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // If the data is a Serializable object, then create a new instance
+        // before returning it. This insulates applications sharing DnD and
+        // Clipboard data from each other.
+        if (data != null && isLocal && df.isFlavorSerializedObjectType()) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-            ClassLoaderObjectOutputStream oos = 
+            ClassLoaderObjectOutputStream oos =
                 new ClassLoaderObjectOutputStream(baos);
             oos.writeObject(data);
-                
-	    ByteArrayInputStream bais =
-		new ByteArrayInputStream(baos.toByteArray());
-                
-	    try {
-                ClassLoaderObjectInputStream ois = 
-                    new ClassLoaderObjectInputStream(bais, 
+
+            ByteArrayInputStream bais =
+                new ByteArrayInputStream(baos.toByteArray());
+
+            try {
+                ClassLoaderObjectInputStream ois =
+                    new ClassLoaderObjectInputStream(bais,
                                                      oos.getClassLoaderMap());
                 data = ois.readObject();
-	    } catch (ClassNotFoundException cnfe) {
+            } catch (ClassNotFoundException cnfe) {
                 throw (IOException)new IOException().initCause(cnfe);
-	    }
-	}
-        
-	return data;
+            }
+        }
+
+        return data;
     }
 
     protected final Transferable transferable;
@@ -104,7 +103,7 @@ public class TransferableProxy implements Transferable {
 }
 
 class ClassLoaderObjectOutputStream extends ObjectOutputStream {
-    private final Map<Set<String>, ClassLoader> map = 
+    private final Map<Set<String>, ClassLoader> map =
         new HashMap<Set<String>, ClassLoader>();
 
     public ClassLoaderObjectOutputStream(OutputStream os) throws IOException {
@@ -112,7 +111,7 @@ class ClassLoaderObjectOutputStream extends ObjectOutputStream {
     }
 
     protected void annotateClass(final Class<?> cl) throws IOException {
-        ClassLoader classLoader = 
+        ClassLoader classLoader =
             (ClassLoader)AccessController.doPrivileged(new PrivilegedAction() {
                 public Object run() {
                     return cl.getClassLoader();
@@ -125,7 +124,7 @@ class ClassLoaderObjectOutputStream extends ObjectOutputStream {
         map.put(s, classLoader);
     }
     protected void annotateProxyClass(final Class<?> cl) throws IOException {
-        ClassLoader classLoader = 
+        ClassLoader classLoader =
             (ClassLoader)AccessController.doPrivileged(new PrivilegedAction() {
                 public Object run() {
                     return cl.getClassLoader();
@@ -150,7 +149,7 @@ class ClassLoaderObjectInputStream extends ObjectInputStream {
     private final Map<Set<String>, ClassLoader> map;
 
     public ClassLoaderObjectInputStream(InputStream is,
-                                        Map<Set<String>, ClassLoader> map) 
+                                        Map<Set<String>, ClassLoader> map)
       throws IOException {
         super(is);
         if (map == null) {
@@ -204,11 +203,10 @@ class ClassLoaderObjectInputStream extends ObjectInputStream {
         }
         try {
             return Proxy.getProxyClass(hasNonPublicInterface ?
-                                       nonPublicLoader : classLoader, 
+                                       nonPublicLoader : classLoader,
                                        classObjs);
         } catch (IllegalArgumentException e) {
             throw new ClassNotFoundException(null, e);
         }
     }
 }
-

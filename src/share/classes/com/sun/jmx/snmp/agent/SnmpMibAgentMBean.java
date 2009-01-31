@@ -44,8 +44,8 @@ import com.sun.jmx.snmp.SnmpStatusException;
 
 /**
  * Exposes the remote management interface of the <CODE>SnmpMibAgent</CODE> MBean.
- * 
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 
@@ -57,107 +57,107 @@ public interface SnmpMibAgentMBean {
     /**
      * Processes a <CODE>get</CODE> operation.
      * This method must not be called from remote.
-     * 
+     *
      * @param req The SnmpMibRequest object holding the list of variables to
-     *            be retrieved. This list is composed of 
+     *            be retrieved. This list is composed of
      *            <CODE>SnmpVarBind</CODE> objects.
      *
      * @exception SnmpStatusException An error occured during the operation.
      * @see SnmpMibAgent#get(SnmpMibRequest)
      */
-    public void get(SnmpMibRequest req)	throws SnmpStatusException;
-  
+    public void get(SnmpMibRequest req) throws SnmpStatusException;
+
     /**
      * Processes a <CODE>getNext</CODE> operation.
      * This method must not be called from remote.
-     * 
+     *
      * @param req The SnmpMibRequest object holding the list of variables to
-     *            be retrieved. This list is composed of 
+     *            be retrieved. This list is composed of
      *            <CODE>SnmpVarBind</CODE> objects.
      *
      * @exception SnmpStatusException An error occured during the operation.
      * @see SnmpMibAgent#getNext(SnmpMibRequest)
      */
     public void getNext(SnmpMibRequest req) throws SnmpStatusException;
-    
+
     /**
      * Processes a <CODE>getBulk</CODE> operation.
      * This method must not be called from remote.
-     * 
+     *
      * @param req The SnmpMibRequest object holding the list of variables to
-     *            be retrieved. This list is composed of 
+     *            be retrieved. This list is composed of
      *            <CODE>SnmpVarBind</CODE> objects.
      *
-     * @param nonRepeat The number of variables, starting with the first 
-     *    variable in the variable-bindings, for which a single 
+     * @param nonRepeat The number of variables, starting with the first
+     *    variable in the variable-bindings, for which a single
      *    lexicographic successor is requested.
      *
-     * @param maxRepeat The number of lexicographic successors requested 
-     *    for each of the last R variables. R is the number of variables 
-     *    following the first <CODE>nonRepeat</CODE> variables for which 
+     * @param maxRepeat The number of lexicographic successors requested
+     *    for each of the last R variables. R is the number of variables
+     *    following the first <CODE>nonRepeat</CODE> variables for which
      *    multiple lexicographic successors are requested.
      *
      * @exception SnmpStatusException An error occured during the operation.
      * @see SnmpMibAgent#getBulk(SnmpMibRequest,int,int)
      */
     public void getBulk(SnmpMibRequest req, int nonRepeat, int maxRepeat)
-	throws SnmpStatusException;
+        throws SnmpStatusException;
 
     /**
      * Processes a <CODE>set</CODE> operation.
      * This method must not be called from remote.
-     * 
+     *
      * @param req The SnmpMibRequest object holding the list of variables to
-     *            be set. This list is composed of 
+     *            be set. This list is composed of
      *            <CODE>SnmpVarBind</CODE> objects.
      *
      * @exception SnmpStatusException An error occured during the operation.
      * @see SnmpMibAgent#set(SnmpMibRequest)
      */
-    public void set(SnmpMibRequest req)	throws SnmpStatusException;
+    public void set(SnmpMibRequest req) throws SnmpStatusException;
 
     /**
      * Checks if a <CODE>set</CODE> operation can be performed.
      * If the operation cannot be performed, the method should emit a
      * <CODE>SnmpStatusException</CODE>.
-     * 
+     *
      * @param req The SnmpMibRequest object holding the list of variables to
-     *            be set. This list is composed of 
+     *            be set. This list is composed of
      *            <CODE>SnmpVarBind</CODE> objects.
      *
-     * @exception SnmpStatusException The <CODE>set</CODE> operation 
+     * @exception SnmpStatusException The <CODE>set</CODE> operation
      *    cannot be performed.
      * @see SnmpMibAgent#check(SnmpMibRequest)
      */
     public void check(SnmpMibRequest req) throws SnmpStatusException;
-        
+
     // GETTERS AND SETTERS
     //--------------------
 
     /**
-     * Gets the reference to the MBean server in which the SNMP MIB is 
+     * Gets the reference to the MBean server in which the SNMP MIB is
      * registered.
      *
-     * @return The MBean server or null if the MIB is not registered in any 
+     * @return The MBean server or null if the MIB is not registered in any
      *         MBean server.
      */
     public MBeanServer getMBeanServer();
-  
+
     /**
-     * Gets the reference to the SNMP protocol adaptor to which the MIB is 
+     * Gets the reference to the SNMP protocol adaptor to which the MIB is
      * bound.
-     * <BR>This method is used for accessing the SNMP MIB handler property 
+     * <BR>This method is used for accessing the SNMP MIB handler property
      * of the SNMP MIB agent in case of a standalone agent.
      *
      * @return The SNMP MIB handler.
      */
     public SnmpMibHandler getSnmpAdaptor();
-    
+
     /**
-     * Sets the reference to the SNMP protocol adaptor through which the 
-     * MIB will be SNMP accessible and add this new MIB in the SNMP MIB 
+     * Sets the reference to the SNMP protocol adaptor through which the
+     * MIB will be SNMP accessible and add this new MIB in the SNMP MIB
      * handler.
-     * <BR>This method is used for setting the SNMP MIB handler property of 
+     * <BR>This method is used for setting the SNMP MIB handler property of
      * the SNMP MIB agent in case of a standalone agent.
      *
      * @param stack The SNMP MIB handler.
@@ -165,10 +165,10 @@ public interface SnmpMibAgentMBean {
     public void setSnmpAdaptor(SnmpMibHandler stack);
 
     /**
-     * Sets the reference to the SNMP protocol adaptor through which the MIB 
+     * Sets the reference to the SNMP protocol adaptor through which the MIB
      * will be SNMP accessible and add this new MIB in the SNMP MIB handler.
      * This method is to be called to set a specific agent to a specific OID.
-     * This can be useful when dealing with MIB overlapping. 
+     * This can be useful when dealing with MIB overlapping.
      * Some OID can be implemented in more than one MIB. In this case, the
      * OID nearer agent will be used on SNMP operations.
      * @param stack The SNMP MIB handler.
@@ -177,14 +177,14 @@ public interface SnmpMibAgentMBean {
      * @since 1.5
      */
     public void setSnmpAdaptor(SnmpMibHandler stack, SnmpOid[] oids);
-    
+
     /**
-     * Sets the reference to the SNMP protocol adaptor through which the MIB 
+     * Sets the reference to the SNMP protocol adaptor through which the MIB
      * will be SNMP accessible and add this new MIB in the SNMP MIB handler.
      * Adds a new contextualized MIB in the SNMP MIB handler.
-     * 
+     *
      * @param stack The SNMP MIB handler.
-     * @param contextName The MIB context name. If null is passed, will be 
+     * @param contextName The MIB context name. If null is passed, will be
      *        registered in the default context.
      *
      * @exception IllegalArgumentException If the parameter is null.
@@ -194,115 +194,115 @@ public interface SnmpMibAgentMBean {
     public void setSnmpAdaptor(SnmpMibHandler stack, String contextName);
 
     /**
-     * Sets the reference to the SNMP protocol adaptor through which the MIB 
+     * Sets the reference to the SNMP protocol adaptor through which the MIB
      * will be SNMP accessible and adds this new MIB in the SNMP MIB handler.
      * Adds a new contextualized MIB in the SNMP MIB handler.
-     * 
+     *
      * @param stack The SNMP MIB handler.
-     * @param contextName The MIB context name. If null is passed, will be 
+     * @param contextName The MIB context name. If null is passed, will be
      *        registered in the default context.
      * @param oids The set of OIDs this agent implements.
      * @exception IllegalArgumentException If the parameter is null.
      *
      * @since 1.5
      */
-    public void setSnmpAdaptor(SnmpMibHandler stack, 
-			       String contextName,
-			       SnmpOid[] oids);
-    
+    public void setSnmpAdaptor(SnmpMibHandler stack,
+                               String contextName,
+                               SnmpOid[] oids);
+
     /**
-     * Gets the object name of the SNMP protocol adaptor to which the MIB is 
+     * Gets the object name of the SNMP protocol adaptor to which the MIB is
      * bound.
      *
      * @return The name of the SNMP protocol adaptor.
      */
     public ObjectName getSnmpAdaptorName();
-    
+
     /**
-     * Sets the reference to the SNMP protocol adaptor through which the MIB 
-     * will be SNMP accessible and add this new MIB in the SNMP MIB handler 
+     * Sets the reference to the SNMP protocol adaptor through which the MIB
+     * will be SNMP accessible and add this new MIB in the SNMP MIB handler
      * associated to the specified <CODE>name</CODE>.
      *
      * @param name The object name of the SNMP MIB handler.
      *
      * @exception InstanceNotFoundException The MBean does not exist in the
      *        MBean server.
-     * @exception ServiceNotFoundException This SNMP MIB is not registered 
+     * @exception ServiceNotFoundException This SNMP MIB is not registered
      *        in the MBean server or the requested service is not supported.
      */
-    public void setSnmpAdaptorName(ObjectName name) 
-	throws InstanceNotFoundException, ServiceNotFoundException;
-    
+    public void setSnmpAdaptorName(ObjectName name)
+        throws InstanceNotFoundException, ServiceNotFoundException;
+
 
     /**
      * Sets the reference to the SNMP protocol adaptor through which the MIB
-     * will be SNMP accessible and add this new MIB in the SNMP MIB handler 
+     * will be SNMP accessible and add this new MIB in the SNMP MIB handler
      * associated to the specified <CODE>name</CODE>.
      * This method is to be called to set a specific agent to a specific OID.
-     * This can be useful when dealing with MIB overlapping. 
-     * Some OID can be implemented in more than one MIB. In this case, the 
+     * This can be useful when dealing with MIB overlapping.
+     * Some OID can be implemented in more than one MIB. In this case, the
      * OID nearer agent will be used on SNMP operations.
      * @param name The name of the SNMP protocol adaptor.
      * @param oids The set of OIDs this agent implements.
      * @exception InstanceNotFoundException The SNMP protocol adaptor does
      *     not exist in the MBean server.
      *
-     * @exception ServiceNotFoundException This SNMP MIB is not registered 
+     * @exception ServiceNotFoundException This SNMP MIB is not registered
      *     in the MBean server or the requested service is not supported.
      *
      * @since 1.5
      */
-    public void setSnmpAdaptorName(ObjectName name, SnmpOid[] oids) 
-	throws InstanceNotFoundException, ServiceNotFoundException;
+    public void setSnmpAdaptorName(ObjectName name, SnmpOid[] oids)
+        throws InstanceNotFoundException, ServiceNotFoundException;
 
     /**
      * Sets the reference to the SNMP protocol adaptor through which the MIB
-     * will be SNMP accessible and add this new MIB in the SNMP MIB handler 
+     * will be SNMP accessible and add this new MIB in the SNMP MIB handler
      * associated to the specified <CODE>name</CODE>.
      *
      * @param name The name of the SNMP protocol adaptor.
-     * @param contextName The MIB context name. If null is passed, will be 
+     * @param contextName The MIB context name. If null is passed, will be
      *     registered in the default context.
      * @exception InstanceNotFoundException The SNMP protocol adaptor does
      *     not exist in the MBean server.
      *
-     * @exception ServiceNotFoundException This SNMP MIB is not registered 
+     * @exception ServiceNotFoundException This SNMP MIB is not registered
      *     in the MBean server or the requested service is not supported.
      *
      * @since 1.5
      */
-    public void setSnmpAdaptorName(ObjectName name, String contextName) 
-	throws InstanceNotFoundException, ServiceNotFoundException;
+    public void setSnmpAdaptorName(ObjectName name, String contextName)
+        throws InstanceNotFoundException, ServiceNotFoundException;
 
      /**
      * Sets the reference to the SNMP protocol adaptor through which the MIB
-     * will be SNMP accessible and add this new MIB in the SNMP MIB handler 
+     * will be SNMP accessible and add this new MIB in the SNMP MIB handler
      * associated to the specified <CODE>name</CODE>.
      *
      * @param name The name of the SNMP protocol adaptor.
-     * @param contextName The MIB context name. If null is passed, will be 
+     * @param contextName The MIB context name. If null is passed, will be
      *        registered in the default context.
      * @param oids The set of OIDs this agent implements.
      * @exception InstanceNotFoundException The SNMP protocol adaptor does
      *     not exist in the MBean server.
      *
-     * @exception ServiceNotFoundException This SNMP MIB is not registered 
+     * @exception ServiceNotFoundException This SNMP MIB is not registered
      *     in the MBean server or the requested service is not supported.
      *
      * @since 1.5
      */
-    public void setSnmpAdaptorName(ObjectName name, 
-				   String contextName, 
-				   SnmpOid[] oids) 
-	throws InstanceNotFoundException, ServiceNotFoundException;
-    
+    public void setSnmpAdaptorName(ObjectName name,
+                                   String contextName,
+                                   SnmpOid[] oids)
+        throws InstanceNotFoundException, ServiceNotFoundException;
+
     /**
-     * Indicates whether or not the MIB module is bound to a SNMP protocol 
+     * Indicates whether or not the MIB module is bound to a SNMP protocol
      * adaptor.
-     * As a reminder, only bound MIBs can be accessed through SNMP protocol 
+     * As a reminder, only bound MIBs can be accessed through SNMP protocol
      * adaptor.
      *
-     * @return <CODE>true</CODE> if the MIB module is bound, 
+     * @return <CODE>true</CODE> if the MIB module is bound,
      *         <CODE>false</CODE> otherwise.
      */
     public boolean getBindingState();
@@ -314,4 +314,3 @@ public interface SnmpMibAgentMBean {
      */
     public String getMibName();
 }
-					

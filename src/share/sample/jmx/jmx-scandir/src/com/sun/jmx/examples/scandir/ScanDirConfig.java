@@ -48,11 +48,11 @@ import javax.management.*;
 import javax.xml.bind.JAXBException;
 
 /**
- * <p>The <code>ScanDirConfig</code> MBean is in charge of the 
+ * <p>The <code>ScanDirConfig</code> MBean is in charge of the
  * <i>scandir</i> application configuration.
  * </p>
  * <p>The <code>ScanDirConfig</code> MBean is able to
- * load and save the <i>scandir</i> application configuration to and from an 
+ * load and save the <i>scandir</i> application configuration to and from an
  * XML file.
  * </p>
  * <p>
@@ -63,20 +63,20 @@ import javax.xml.bind.JAXBException;
  * <p>
  * There can be as many <code>ScanDirConfigMXBean</code> registered
  * in the MBeanServer as you like, but only one of them will be identified as
- * the current configuration of the {@link ScanManagerMXBean}. 
- * You can switch to another configuration by calling {@link 
- * ScanManagerMXBean#setConfigurationMBean 
+ * the current configuration of the {@link ScanManagerMXBean}.
+ * You can switch to another configuration by calling {@link
+ * ScanManagerMXBean#setConfigurationMBean
  * ScanManagerMXBean.setConfigurationMBean}.
  * </p>
  * <p>
  * Once the current configuration has been loaded (by calling {@link #load})
- * or modified (by calling one of {@link #addDirectoryScanner 
- * addDirectoryScanner}, {@link #removeDirectoryScanner removeDirectoryScanner} 
+ * or modified (by calling one of {@link #addDirectoryScanner
+ * addDirectoryScanner}, {@link #removeDirectoryScanner removeDirectoryScanner}
  * or {@link #setConfiguration setConfiguration}) it can be pushed
- * to the {@link ScanManagerMXBean} by calling {@link 
- * ScanManagerMXBean#applyConfiguration 
- * ScanManagerMXBean.applyConfiguration(true)} - 
- * <code>true</code> means that we apply the configuration from memory, 
+ * to the {@link ScanManagerMXBean} by calling {@link
+ * ScanManagerMXBean#applyConfiguration
+ * ScanManagerMXBean.applyConfiguration(true)} -
+ * <code>true</code> means that we apply the configuration from memory,
  * without first reloading the file.
  * </p>
  * <p>
@@ -84,7 +84,7 @@ import javax.xml.bind.JAXBException;
  * in the {@link com.sun.jmx.examples.scandir.config} package.
  * </p>
  * <p>
- * <u>Note:</u> The <code>ScanDirConfig</code> should probably use 
+ * <u>Note:</u> The <code>ScanDirConfig</code> should probably use
  * {@code java.nio.channels.FileLock} and lock its configuration file so that
  * two <code>ScanDirConfig</code> object do not share the same file, but it
  * doesn't. Feel free to improve the application in that way.
@@ -93,16 +93,16 @@ import javax.xml.bind.JAXBException;
  */
 public class ScanDirConfig extends NotificationBroadcasterSupport
         implements ScanDirConfigMXBean, MBeanRegistration {
-    
+
     /**
      * A logger for this class.
      **/
     private static final Logger LOG =
             Logger.getLogger(ScanDirConfig.class.getName());
-    
-    // We will emit a notification when the save state of this object 
-    // chenges. We use directly the base notification class, with a 
-    // notification type that indicates the new state at which the 
+
+    // We will emit a notification when the save state of this object
+    // chenges. We use directly the base notification class, with a
+    // notification type that indicates the new state at which the
     // object has arrived.
     //
     // All these notification types will have the same prefix, which is
@@ -110,7 +110,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
     //
     private final static String NOTIFICATION_PREFIX =
             ScanManagerConfig.class.getPackage().getName();
-    
+
     /**
      * The <i>com.sun.jmx.examples.scandir.config.saved</i> notification
      * indicates that the configuration data was saved.
@@ -123,14 +123,14 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
      **/
     public final static String NOTIFICATION_LOADED =
             NOTIFICATION_PREFIX+".loaded";
-    
+
     /**
      * The <i>com.sun.jmx.examples.scandir.config.modified</i> notification
      * indicates that the configuration data was modified.
      **/
     public final static String NOTIFICATION_MODIFIED =
             NOTIFICATION_PREFIX+".modified";
-    
+
     // The array of MBeanNotificationInfo that will be exposed in the
     // ScanDirConfigMXBean MBeanInfo.
     // We will pass this array to the NotificationBroadcasterSupport
@@ -153,27 +153,27 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
 
      // The ScanDirConfigMXBean configuration data.
     private volatile ScanManagerConfig config;
-    
+
     // The name of the configuration file
     private String filename = null;
-    
+
     // The name of this configuration. This is usually both equal to
     // config.getName() and objectName.getKeyProperty(name).
     private volatile String configname = null;
-    
+
     // This object save state. CREATED is the initial state.
     //
     private volatile SaveState status = CREATED;
-    
+
     /**
-     * Creates a new {@link ScanDirConfigMXBean}. 
-     * <p>{@code ScanDirConfigMXBean} can be created by the {@link 
+     * Creates a new {@link ScanDirConfigMXBean}.
+     * <p>{@code ScanDirConfigMXBean} can be created by the {@link
      * ScanManagerMXBean}, or directly by a remote client, using
      * {@code createMBean} or {@code registerMBean}.
      * </p>
-     * <p>{@code ScanDirConfigMXBean} created by the {@link 
-     * ScanManagerMXBean} will be unregistered by the 
-     * {@code ScanManagerMXBean}. {@code ScanDirConfigMXBean} created 
+     * <p>{@code ScanDirConfigMXBean} created by the {@link
+     * ScanManagerMXBean} will be unregistered by the
+     * {@code ScanManagerMXBean}. {@code ScanDirConfigMXBean} created
      * directly by a remote client will not be unregistered by the
      * {@code ScanManagerMXBean} - this will remain to the responsibility of
      * the code/client that created them.
@@ -184,7 +184,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
      * @param  filename The configuration file used by this MBean.
      *         Can be null (in which case load() and save() will fail).
      *         Can point to a file that does not exists yet (in which case
-     *         load() will fail if called before save(), and save() will 
+     *         load() will fail if called before save(), and save() will
      *         attempt to create that file). Can point to an existing file,
      *         in which case load() will load that file and save() will save
      *         to that file.
@@ -205,22 +205,22 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
         this.config = initialConfig;
     }
 
-    
+
     // see ScanDirConfigMXBean
     public void load() throws IOException {
         if (filename == null)
             throw new UnsupportedOperationException("load");
-         
+
         synchronized(this) {
             config = new XmlConfigUtils(filename).readFromFile();
             if (configname != null) config = config.copy(configname);
             else configname = config.getName();
-        
+
             status=LOADED;
         }
         sendNotification(NOTIFICATION_LOADED);
     }
-    
+
     // see ScanDirConfigMXBean
     public void save() throws IOException {
         if (filename == null)
@@ -231,7 +231,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
         }
         sendNotification(NOTIFICATION_SAVED);
     }
-        
+
     // see ScanDirConfigMXBean
     public ScanManagerConfig getConfiguration() {
         synchronized (this) {
@@ -239,7 +239,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
         }
     }
 
-   
+
     // sends a notification indicating the new save state.
     private void sendNotification(String type) {
         final Object source = (objectName==null)?this:objectName;
@@ -249,7 +249,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
                 type.substring(type.lastIndexOf('.')+1));
         sendNotification(n);
     }
-    
+
 
     /**
      * Allows the MBean to perform any operations it needs before being
@@ -262,21 +262,21 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
      * name parameter to one of the createMBean or registerMBean methods in
      * the MBeanServer interface is null. In that case, this method will
      * try to guess its MBean name by examining its configuration data.
-     * If its configuration data is null (nothing was provided in the 
+     * If its configuration data is null (nothing was provided in the
      * constructor) or doesn't contain a name, this method returns {@code null},
      * and registration will fail.
-     * <p> 
+     * <p>
      * Otherwise, if {@code name} wasn't {@code null} or if a default name could
      * be constructed, the name of the configuration will be set to
-     * the value of the ObjectName's {@code name=} key, and the configuration 
+     * the value of the ObjectName's {@code name=} key, and the configuration
      * data will always be renamed to reflect this change.
      * </p>
-     * 
-     * @return The name under which the MBean is to be registered. 
+     *
+     * @return The name under which the MBean is to be registered.
      * @throws Exception This exception will be caught by the MBean server and
      * re-thrown as an MBeanRegistrationException.
      */
-    public ObjectName preRegister(MBeanServer server, ObjectName name) 
+    public ObjectName preRegister(MBeanServer server, ObjectName name)
         throws Exception {
         if (name == null) {
             if (config == null) return null;
@@ -336,24 +336,24 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
     public void setConfiguration(ScanManagerConfig config) {
         synchronized (this) {
             if (config == null) {
-                this.config = null; 
+                this.config = null;
                 return;
             }
-        
-            if (configname == null) 
+
+            if (configname == null)
                 configname = config.getName();
-        
+
             this.config = config.copy(configname);
             status = MODIFIED;
         }
         sendNotification(NOTIFICATION_MODIFIED);
     }
-    
+
     // see ScanDirConfigMXBean
-    public DirectoryScannerConfig 
-            addDirectoryScanner(String name, String dir, String filePattern, 
+    public DirectoryScannerConfig
+            addDirectoryScanner(String name, String dir, String filePattern,
                                 long sizeExceedsMaxBytes, long sinceLastModified) {
-         final DirectoryScannerConfig scanner = 
+         final DirectoryScannerConfig scanner =
                  new DirectoryScannerConfig(name);
          scanner.setRootDirectory(dir);
          if (filePattern!=null||sizeExceedsMaxBytes>0||sinceLastModified>0) {
@@ -375,7 +375,7 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
     }
 
     // see ScanDirConfigMXBean
-    public DirectoryScannerConfig removeDirectoryScanner(String name) 
+    public DirectoryScannerConfig removeDirectoryScanner(String name)
         throws IOException, InstanceNotFoundException {
         final DirectoryScannerConfig scanner;
         synchronized (this) {
@@ -392,19 +392,19 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
     public SaveState getSaveState() {
         return status;
     }
-    
+
     // These methods are used by ScanManager to guess a configuration name from
     // a configuration filename.
     //
     static String DEFAULT = "DEFAULT";
-    
+
     private static String getBasename(String name) {
         final int dot = name.indexOf('.');
         if (dot<0)  return name;
         if (dot==0) return getBasename(name.substring(1));
         return name.substring(0,dot);
     }
-    
+
     static String guessConfigName(String configFileName,String defaultFile) {
         try {
             if (configFileName == null) return DEFAULT;
@@ -423,11 +423,9 @@ public class ScanDirConfig extends NotificationBroadcasterSupport
             return DEFAULT;
         }
     }
-    
+
     // Set by preRegister()
     private volatile MBeanServer mbeanServer;
     private volatile ObjectName objectName;
-    
+
 }
-
-

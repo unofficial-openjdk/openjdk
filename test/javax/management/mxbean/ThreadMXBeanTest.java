@@ -45,12 +45,12 @@ public class ThreadMXBeanTest {
         ThreadMXBean proxy = JMX.newMXBeanProxy(mbs, on, ThreadMXBean.class);
         long[] ids1 = proxy.getAllThreadIds();
 
-	// Add some random ids to the list so we'll get back null ThreadInfo
+        // Add some random ids to the list so we'll get back null ThreadInfo
         long[] ids2 = Arrays.copyOf(ids1, ids1.length + 10);
         Random r = new Random();
         for (int i = ids1.length; i < ids2.length; i++)
             ids2[i] = Math.abs(r.nextLong());
-	// Following line produces an exception if null values not handled
+        // Following line produces an exception if null values not handled
         ThreadInfo[] info = proxy.getThreadInfo(ids2);
         boolean sawNull = false;
         for (ThreadInfo ti : info) {

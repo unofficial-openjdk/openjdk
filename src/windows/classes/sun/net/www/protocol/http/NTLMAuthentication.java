@@ -38,13 +38,13 @@ import java.security.*;
 import java.net.*;
 
 /**
- * NTLMAuthentication: 
+ * NTLMAuthentication:
  *
  * @author Michael McMahon
  */
 
 class NTLMAuthentication extends AuthenticationInfo {
- 
+
     private static final long serialVersionUID = 100L;
 
     static final char NTLM_AUTH = 'N';
@@ -53,27 +53,27 @@ class NTLMAuthentication extends AuthenticationInfo {
 
     static {
         defaultDomain = java.security.AccessController.doPrivileged(
-	    new sun.security.action.GetPropertyAction("http.auth.ntlm.domain",
-						      "domain"));
+            new sun.security.action.GetPropertyAction("http.auth.ntlm.domain",
+                                                      "domain"));
     };
 
     private void init0() {
 
-        hostname = java.security.AccessController.doPrivileged( 
-	    new java.security.PrivilegedAction<String>() {
-	    public String run() {
-	        String localhost;
-	        try {
-		    localhost = InetAddress.getLocalHost().getHostName().toUpperCase(); 
-	        } catch (UnknownHostException e) {
-		     localhost = "localhost";
-	        }
-	        return localhost;
-	    }
+        hostname = java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<String>() {
+            public String run() {
+                String localhost;
+                try {
+                    localhost = InetAddress.getLocalHost().getHostName().toUpperCase();
+                } catch (UnknownHostException e) {
+                     localhost = "localhost";
+                }
+                return localhost;
+            }
         });
         int x = hostname.indexOf ('.');
         if (x != -1) {
-	    hostname = hostname.substring (0, x);
+            hostname = hostname.substring (0, x);
         }
     }
 
@@ -83,76 +83,76 @@ class NTLMAuthentication extends AuthenticationInfo {
 
     /**
      * Create a NTLMAuthentication:
-     * Username may be specified as domain<BACKSLASH>username in the application Authenticator. 
-     * If this notation is not used, then the domain will be taken 
+     * Username may be specified as domain<BACKSLASH>username in the application Authenticator.
+     * If this notation is not used, then the domain will be taken
      * from a system property: "http.auth.ntlm.domain".
      */
     public NTLMAuthentication(boolean isProxy, URL url, PasswordAuthentication pw) {
-	super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, NTLM_AUTH, url, "");
-	init (pw);
+        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, NTLM_AUTH, url, "");
+        init (pw);
     }
 
     private void init (PasswordAuthentication pw) {
-	this.pw = pw;
-	if (pw != null) {
-	    String s = pw.getUserName();
-	    int i = s.indexOf ('\\');
-	    if (i == -1) {
-	        username = s;
-	        ntdomain = defaultDomain;
-	    } else {
-	        ntdomain = s.substring (0, i).toUpperCase();
-	        username = s.substring (i+1);
-	    }
-	    password = new String (pw.getPassword());
-	} else {
-	    /* credentials will be acquired from OS */
-	    username = null;
-	    ntdomain = null;
-	    password = null;
-	}
-	init0();
+        this.pw = pw;
+        if (pw != null) {
+            String s = pw.getUserName();
+            int i = s.indexOf ('\\');
+            if (i == -1) {
+                username = s;
+                ntdomain = defaultDomain;
+            } else {
+                ntdomain = s.substring (0, i).toUpperCase();
+                username = s.substring (i+1);
+            }
+            password = new String (pw.getPassword());
+        } else {
+            /* credentials will be acquired from OS */
+            username = null;
+            ntdomain = null;
+            password = null;
+        }
+        init0();
     }
 
-   /** 
+   /**
     * Constructor used for proxy entries
     */
-    public NTLMAuthentication(boolean isProxy, String host, int port, 
-				PasswordAuthentication pw) {
-	super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, NTLM_AUTH,host, port, "");
-	init (pw);
+    public NTLMAuthentication(boolean isProxy, String host, int port,
+                                PasswordAuthentication pw) {
+        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, NTLM_AUTH,host, port, "");
+        init (pw);
     }
 
     /**
      * @return true if this authentication supports preemptive authorization
      */
     boolean supportsPreemptiveAuthorization() {
-	return false;
+        return false;
     }
 
     /**
      * @return true if NTLM supported transparently (no password needed, SSO)
      */
     static boolean supportsTransparentAuth() {
-	return true;
+        return true;
     }
 
     /**
      * @return the name of the HTTP header this authentication wants set
      */
     String getHeaderName() {
-	if (type == SERVER_AUTHENTICATION) {
-	    return "Authorization";
-	} else {
-	    return "Proxy-authorization";
-	}
+        if (type == SERVER_AUTHENTICATION) {
+            return "Authorization";
+        } else {
+            return "Proxy-authorization";
+        }
     }
 
     /**
      * Not supported. Must use the setHeaders() method
      */
     String getHeaderValue(URL url, String method) {
-	throw new RuntimeException ("getHeaderValue not supported");
+        throw new RuntimeException ("getHeaderValue not supported");
     }
 
     /**
@@ -164,36 +164,36 @@ class NTLMAuthentication extends AuthenticationInfo {
      * username password.
      */
     boolean isAuthorizationStale (String header) {
-	return false; /* should not be called for ntlm */
+        return false; /* should not be called for ntlm */
     }
-	
+
     /**
      * Set header(s) on the given connection.
      * @param conn The connection to apply the header(s) to
      * @param p A source of header values for this connection, not used because
-     * 		HeaderParser converts the fields to lower case, use raw instead
+     *          HeaderParser converts the fields to lower case, use raw instead
      * @param raw The raw header field.
      * @return true if all goes well, false if no headers were set.
      */
     synchronized boolean setHeaders(HttpURLConnection conn, HeaderParser p, String raw) {
 
-	try {
-	    NTLMAuthSequence seq = (NTLMAuthSequence)conn.authObj;
-	    if (seq == null) {
-		seq = new NTLMAuthSequence (username, password, ntdomain);
-		conn.authObj = seq;
-	    }
-	    String response = "NTLM " + seq.getAuthHeader (raw.length()>6?raw.substring(5):null);
-    	    conn.setAuthenticationProperty(getHeaderName(), response);
-    	    return true;
-	} catch (IOException e) {
-	    return false;
-	} 
+        try {
+            NTLMAuthSequence seq = (NTLMAuthSequence)conn.authObj;
+            if (seq == null) {
+                seq = new NTLMAuthSequence (username, password, ntdomain);
+                conn.authObj = seq;
+            }
+            String response = "NTLM " + seq.getAuthHeader (raw.length()>6?raw.substring(5):null);
+            conn.setAuthenticationProperty(getHeaderName(), response);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /* This is a no-op for NTLM, because there is no authentication information
      * provided by the server to the client
      */
-    public void checkResponse (String header, String method, URL url) throws IOException { 
+    public void checkResponse (String header, String method, URL url) throws IOException {
     }
 }

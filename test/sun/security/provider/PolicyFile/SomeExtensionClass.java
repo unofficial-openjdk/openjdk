@@ -27,12 +27,12 @@ public class SomeExtensionClass {
 
     public String getUserName() {
         String user = (String) AccessController.doPrivileged(
-	        new PrivilegedAction() {
+                new PrivilegedAction() {
             public Object run() {
                 return System.getProperty("user.name");
             }
-	}
+        }
         );
-	return user;
+        return user;
     }
 }

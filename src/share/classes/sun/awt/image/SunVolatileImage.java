@@ -67,21 +67,21 @@ public class SunVolatileImage extends VolatileImage {
     {
         this.comp = comp;
         this.graphicsConfig = graphicsConfig;
-	this.width = width;
-	this.height = height;
+        this.width = width;
+        this.height = height;
         if (!(transparency == Transparency.OPAQUE ||
             transparency == Transparency.BITMASK ||
-            transparency == Transparency.TRANSLUCENT)) 
+            transparency == Transparency.TRANSLUCENT))
         {
             throw new IllegalArgumentException("Unknown transparency type:" +
                                                transparency);
         }
-	this.transparency = transparency;
+        this.transparency = transparency;
         this.volSurfaceManager = createSurfaceManager(context, caps);
-	SurfaceManager.setManager(this, volSurfaceManager);
+        SurfaceManager.setManager(this, volSurfaceManager);
 
-	// post-construction initialization of the surface manager
-	volSurfaceManager.initialize();
+        // post-construction initialization of the surface manager
+        volSurfaceManager.initialize();
         // clear the background
         volSurfaceManager.initContents();
     }
@@ -91,7 +91,7 @@ public class SunVolatileImage extends VolatileImage {
                              int width, int height, Object context,
                              ImageCapabilities caps)
     {
-	this(comp, graphicsConfig,
+        this(comp, graphicsConfig,
              width, height, context, Transparency.OPAQUE, caps);
     }
 
@@ -102,23 +102,23 @@ public class SunVolatileImage extends VolatileImage {
     public SunVolatileImage(Component comp,
                             int width, int height, Object context)
     {
-	this(comp, comp.getGraphicsConfiguration(),
+        this(comp, comp.getGraphicsConfiguration(),
              width, height, context, null);
     }
 
     public SunVolatileImage(GraphicsConfiguration graphicsConfig,
-                            int width, int height, int transparency, 
+                            int width, int height, int transparency,
                             ImageCapabilities caps)
     {
         this(null, graphicsConfig, width, height, null, transparency, caps);
     }
-    
+
     public int getWidth() {
-	return width;
+        return width;
     }
 
     public int getHeight() {
-	return height;
+        return height;
     }
 
     public GraphicsConfiguration getGraphicsConfig() {
@@ -126,96 +126,96 @@ public class SunVolatileImage extends VolatileImage {
     }
 
     public void updateGraphicsConfig() {
-	// If this VImage is associated with a Component, get an updated
-	// graphicsConfig from that component.  Otherwise, keep the one
-	// that we were created with
-	if (comp != null) {
-	    GraphicsConfiguration gc = comp.getGraphicsConfiguration();
-	    if (gc != null) {
-		// Could potentially be null in some failure situations;
-		// better to keep the old non-null value around than to
-		// set graphicsConfig to null
-		graphicsConfig = gc;
-	    }
-	}
+        // If this VImage is associated with a Component, get an updated
+        // graphicsConfig from that component.  Otherwise, keep the one
+        // that we were created with
+        if (comp != null) {
+            GraphicsConfiguration gc = comp.getGraphicsConfiguration();
+            if (gc != null) {
+                // Could potentially be null in some failure situations;
+                // better to keep the old non-null value around than to
+                // set graphicsConfig to null
+                graphicsConfig = gc;
+            }
+        }
     }
-    
+
     public Component getComponent() {
         return comp;
     }
 
-    protected VolatileSurfaceManager createSurfaceManager(Object context, 
-                                                          ImageCapabilities caps) 
+    protected VolatileSurfaceManager createSurfaceManager(Object context,
+                                                          ImageCapabilities caps)
     {
-	/**
-	 * Platform-specific SurfaceManagerFactories will return a
-	 * manager suited to acceleration on each platform.  But if
-	 * the user is asking for a VolatileImage from a BufferedImageGC,
-	 * then we need to return the appropriate unaccelerated manager.
-	 * Note: this could change in the future; if some platform would
-	 * like to accelerate BIGC volatile images, then this special-casing
-	 * of the BIGC graphicsConfig should live in platform-specific
-	 * code instead.
-	 * We do the same for a Printer Device, and if user requested an 
+        /**
+         * Platform-specific SurfaceManagerFactories will return a
+         * manager suited to acceleration on each platform.  But if
+         * the user is asking for a VolatileImage from a BufferedImageGC,
+         * then we need to return the appropriate unaccelerated manager.
+         * Note: this could change in the future; if some platform would
+         * like to accelerate BIGC volatile images, then this special-casing
+         * of the BIGC graphicsConfig should live in platform-specific
+         * code instead.
+         * We do the same for a Printer Device, and if user requested an
          * unaccelerated VolatileImage by passing the capabilities object.
-	 */
-	if (graphicsConfig instanceof BufferedImageGraphicsConfig ||
+         */
+        if (graphicsConfig instanceof BufferedImageGraphicsConfig ||
             graphicsConfig instanceof sun.print.PrinterGraphicsConfig ||
-            (caps != null && !caps.isAccelerated())) 
+            (caps != null && !caps.isAccelerated()))
         {
-	    return new BufImgVolatileSurfaceManager(this, context);
-	}
+            return new BufImgVolatileSurfaceManager(this, context);
+        }
         return SurfaceManagerFactory.createVolatileManager(this, context);
     }
 
     private Color getForeground() {
-	if (comp != null) {
-	    return comp.getForeground();
-	} else {
-	    return Color.black;
-	}
+        if (comp != null) {
+            return comp.getForeground();
+        } else {
+            return Color.black;
+        }
     }
 
     private Color getBackground() {
-	if (comp != null) {
-	    return comp.getBackground();
-	} else {
-	    return Color.white;
-	}
+        if (comp != null) {
+            return comp.getBackground();
+        } else {
+            return Color.white;
+        }
     }
 
     private Font getFont() {
-	if (comp != null) {
-	    return comp.getFont();
-	} else {
-	    if (defaultFont == null) {
-		defaultFont = new Font("Dialog", Font.PLAIN, 12);
-	    }
-	    return defaultFont;
-	}
+        if (comp != null) {
+            return comp.getFont();
+        } else {
+            if (defaultFont == null) {
+                defaultFont = new Font("Dialog", Font.PLAIN, 12);
+            }
+            return defaultFont;
+        }
     }
 
     public Graphics2D createGraphics() {
-	return new SunGraphics2D(volSurfaceManager.getPrimarySurfaceData(),
-				 getForeground(),
-				 getBackground(),
-				 getFont());
+        return new SunGraphics2D(volSurfaceManager.getPrimarySurfaceData(),
+                                 getForeground(),
+                                 getBackground(),
+                                 getFont());
     }
 
     // Image method implementations
     public Object getProperty(String name, ImageObserver observer) {
-	if (name == null) {
-	    throw new NullPointerException("null property name is not allowed");
-	}
-	return java.awt.Image.UndefinedProperty;
+        if (name == null) {
+            throw new NullPointerException("null property name is not allowed");
+        }
+        return java.awt.Image.UndefinedProperty;
     }
 
     public int getWidth(ImageObserver observer) {
-	return getWidth();
+        return getWidth();
     }
 
     public int getHeight(ImageObserver observer) {
-	return getHeight();
+        return getHeight();
     }
 
     /**
@@ -239,9 +239,9 @@ public class SunVolatileImage extends VolatileImage {
     public int validate(GraphicsConfiguration gc) {
         return volSurfaceManager.validate(gc);
     }
-        
+
     public boolean contentsLost() {
-	return volSurfaceManager.contentsLost();
+        return volSurfaceManager.contentsLost();
     }
 
     public ImageCapabilities getCapabilities() {

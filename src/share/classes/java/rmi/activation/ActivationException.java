@@ -39,9 +39,8 @@ package java.rmi.activation;
  * instance of <code>ActivationException</code> always throws {@link
  * IllegalStateException}.
  *
- * @author 	Ann Wollrath
- * @version	%I%, %G%
- * @since 	1.2
+ * @author      Ann Wollrath
+ * @since       1.2
  */
 public class ActivationException extends Exception {
 
@@ -52,7 +51,7 @@ public class ActivationException extends Exception {
      * The {@link Throwable#getCause()} method is now the preferred means of
      * obtaining this information.
      *
-     * @serial 
+     * @serial
      */
     public Throwable detail;
 
@@ -73,7 +72,7 @@ public class ActivationException extends Exception {
      * @param s the detail message
      */
     public ActivationException(String s) {
-	super(s);
+        super(s);
         initCause(null);  // Disallow subsequent initCause
     }
 
@@ -86,24 +85,24 @@ public class ActivationException extends Exception {
      * @param cause the cause
      */
     public ActivationException(String s, Throwable cause) {
-	super(s);
+        super(s);
         initCause(null);  // Disallow subsequent initCause
-	detail = cause;
+        detail = cause;
     }
 
     /**
      * Returns the detail message, including the message from the cause, if
      * any, of this exception.
      *
-     * @return	the detail message
+     * @return  the detail message
      */
     public String getMessage() {
-	if (detail == null) 
-	    return super.getMessage();
-	else
-	    return super.getMessage() + 
-		"; nested exception is: \n\t" +
-		detail.toString();
+        if (detail == null)
+            return super.getMessage();
+        else
+            return super.getMessage() +
+                "; nested exception is: \n\t" +
+                detail.toString();
     }
 
     /**

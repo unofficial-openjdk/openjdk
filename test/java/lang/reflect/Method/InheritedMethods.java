@@ -35,12 +35,12 @@ import javax.swing.JLabel;
 public class InheritedMethods extends JPanel {
     public static void main(String[] args) throws Exception { new InheritedMethods(); }
     InheritedMethods() throws Exception {
-	Class c = Foo.class;
-	Method m = c.getMethod("removeAll", new Class[] { Collection.class });
+        Class c = Foo.class;
+        Method m = c.getMethod("removeAll", new Class[] { Collection.class });
         if (m.getDeclaringClass() != java.util.List.class) {
           throw new RuntimeException("TEST FAILED");
         }
-	add(new JLabel("Test"));
+        add(new JLabel("Test"));
     }
     interface Foo extends List { }
 }

@@ -41,7 +41,7 @@ import java.net.NetworkInterface;
 //
 
 
-public interface SocketOpts {	// SocketOptions already used in java.net
+public interface SocketOpts {   // SocketOptions already used in java.net
 
     // Options that apply to all kinds of sockets
 
@@ -77,38 +77,38 @@ public interface SocketOpts {	// SocketOptions already used in java.net
     // IP-specific options
 
     public static interface IP
-	extends SocketOpts
+        extends SocketOpts
     {
 
-	// IP_MULTICAST_IF2
-	public abstract NetworkInterface multicastInterface()
-	    throws IOException;
-	public abstract IP multicastInterface(NetworkInterface ni)
-	    throws IOException;
+        // IP_MULTICAST_IF2
+        public abstract NetworkInterface multicastInterface()
+            throws IOException;
+        public abstract IP multicastInterface(NetworkInterface ni)
+            throws IOException;
 
-	// IP_MULTICAST_LOOP
-	public abstract boolean multicastLoop() throws IOException;
-	public abstract IP multicastLoop(boolean b) throws IOException;
+        // IP_MULTICAST_LOOP
+        public abstract boolean multicastLoop() throws IOException;
+        public abstract IP multicastLoop(boolean b) throws IOException;
 
-	// IP_TOS
-	public static final int TOS_LOWDELAY = 0x10;
-	public static final int TOS_THROUGHPUT = 0x08;
-	public static final int TOS_RELIABILITY = 0x04;
-	public static final int TOS_MINCOST = 0x02;
-	public abstract int typeOfService() throws IOException;
-	public abstract IP typeOfService(int tos) throws IOException;
+        // IP_TOS
+        public static final int TOS_LOWDELAY = 0x10;
+        public static final int TOS_THROUGHPUT = 0x08;
+        public static final int TOS_RELIABILITY = 0x04;
+        public static final int TOS_MINCOST = 0x02;
+        public abstract int typeOfService() throws IOException;
+        public abstract IP typeOfService(int tos) throws IOException;
 
 
-	// TCP-specific options
+        // TCP-specific options
 
-	public static interface TCP
-	    extends IP
-	{
-	    // TCP_NODELAY
-	    public abstract boolean noDelay() throws IOException;
-	    public abstract TCP noDelay(boolean b) throws IOException;
+        public static interface TCP
+            extends IP
+        {
+            // TCP_NODELAY
+            public abstract boolean noDelay() throws IOException;
+            public abstract TCP noDelay(boolean b) throws IOException;
 
-	}
+        }
 
     }
 

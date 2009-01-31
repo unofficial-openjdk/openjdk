@@ -36,11 +36,10 @@ import javax.net.ssl.SSLSession;
  *
  * The default implementation will deny such connections.
  *
- * @version %I%, %G%
  * @author Xuelei Fan
  */
 final public class DefaultHostnameVerifier implements HostnameVerifier {
     public boolean verify(String hostname, SSLSession session) {
-	return false;
+        return false;
     }
 }

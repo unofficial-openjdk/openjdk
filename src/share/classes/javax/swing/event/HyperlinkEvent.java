@@ -30,7 +30,7 @@ import javax.swing.text.Element;
 
 
 /**
- * HyperlinkEvent is used to notify interested parties that 
+ * HyperlinkEvent is used to notify interested parties that
  * something has happened with respect to a hypertext link.
  * <p>
  * <strong>Warning:</strong>
@@ -42,7 +42,6 @@ import javax.swing.text.Element;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author  Timothy Prinzing
  */
 public class HyperlinkEvent extends EventObject {
@@ -95,9 +94,9 @@ public class HyperlinkEvent extends EventObject {
     public HyperlinkEvent(Object source, EventType type, URL u, String desc,
                           Element sourceElement) {
         super(source);
-	this.type = type;
-	this.u = u;
-	this.desc = desc;
+        this.type = type;
+        this.u = u;
+        this.desc = desc;
         this.sourceElement = sourceElement;
     }
 
@@ -107,7 +106,7 @@ public class HyperlinkEvent extends EventObject {
      * @return the type
      */
     public EventType getEventType() {
-	return type;
+        return type;
     }
 
     /**
@@ -117,16 +116,16 @@ public class HyperlinkEvent extends EventObject {
      * URL would be null.
      */
     public String getDescription() {
-	return desc;
+        return desc;
     }
-	
+
     /**
      * Gets the URL that the link refers to.
      *
      * @return the URL
      */
     public URL getURL() {
-	return u;
+        return u;
     }
 
     /**
@@ -140,15 +139,15 @@ public class HyperlinkEvent extends EventObject {
      * @since 1.4
      */
     public Element getSourceElement() {
-	return sourceElement;
+        return sourceElement;
     }
-    
+
     private EventType type;
     private URL u;
     private String desc;
     private Element sourceElement;
 
-	
+
     /**
      * Defines the ENTERED, EXITED, and ACTIVATED event types, along
      * with their string representations, returned by toString().
@@ -156,23 +155,23 @@ public class HyperlinkEvent extends EventObject {
     public static final class EventType {
 
         private EventType(String s) {
-	    typeString = s;
-	}
+            typeString = s;
+        }
 
         /**
          * Entered type.
          */
-	public static final EventType ENTERED = new EventType("ENTERED");
+        public static final EventType ENTERED = new EventType("ENTERED");
 
         /**
          * Exited type.
          */
-	public static final EventType EXITED = new EventType("EXITED");
+        public static final EventType EXITED = new EventType("EXITED");
 
         /**
          * Activated type.
          */
-	public static final EventType ACTIVATED = new EventType("ACTIVATED");
+        public static final EventType ACTIVATED = new EventType("ACTIVATED");
 
         /**
          * Converts the type to a string.
@@ -180,10 +179,9 @@ public class HyperlinkEvent extends EventObject {
          * @return the string
          */
         public String toString() {
-	    return typeString;
-	}
+            return typeString;
+        }
 
-	private String typeString;
+        private String typeString;
     }
 }
-

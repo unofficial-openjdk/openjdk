@@ -28,7 +28,7 @@ package com.sun.beans;
 import com.sun.beans.finder.ClassFinder;
 
 import java.beans.*;
-import java.util.*; 
+import java.util.*;
 
 import org.xml.sax.*;
 
@@ -44,8 +44,7 @@ import static java.util.Locale.ENGLISH;
  * @see java.io.ObjectInputStream
  *
  * @since 1.4
- * 
- * @version 1.5 11/20/00
+ *
  * @author Philip Milne
  */
 public class ObjectHandler extends HandlerBase {
@@ -114,30 +113,30 @@ public class ObjectHandler extends HandlerBase {
      *             {@link ClassFinder#resolveClass(String,ClassLoader)}.
      */
     @Deprecated
-    public static Class classForName(String name, ClassLoader cl) 
-	throws ClassNotFoundException {
+    public static Class classForName(String name, ClassLoader cl)
+        throws ClassNotFoundException {
         return ClassFinder.resolveClass(name, cl);
     }
 
-    private Hashtable environment; 
-    private Vector expStack; 
-    private StringBuffer chars; 
-    private XMLDecoder is; 
+    private Hashtable environment;
+    private Vector expStack;
+    private StringBuffer chars;
+    private XMLDecoder is;
     private ClassLoader ldr;
-    private int itemsRead = 0; 
+    private int itemsRead = 0;
     private boolean isString;
 
-    public ObjectHandler() { 
+    public ObjectHandler() {
         environment = new Hashtable();
-        expStack = new Vector(); 
-        chars = new StringBuffer(); 
+        expStack = new Vector();
+        chars = new StringBuffer();
     }
 
-    public ObjectHandler(XMLDecoder is) { 
+    public ObjectHandler(XMLDecoder is) {
         this();
-        this.is = is; 
-    } 
-    
+        this.is = is;
+    }
+
     /* loader can be null */
     public ObjectHandler(XMLDecoder is, ClassLoader loader) {
         this(is);
@@ -147,116 +146,116 @@ public class ObjectHandler extends HandlerBase {
 
     public void reset() {
         expStack.clear();
-        chars.setLength(0); 
+        chars.setLength(0);
         MutableExpression e = new MutableExpression();
         e.setTarget(classForName2("java.lang.Object"));
         e.setMethodName("null");
-        expStack.add(e); 
+        expStack.add(e);
     }
 
-    private Object getValue(Expression exp) { 
-        try { 
-            return exp.getValue(); 
+    private Object getValue(Expression exp) {
+        try {
+            return exp.getValue();
         }
-        catch (Exception e) { 
-            if (is != null) {
-                is.getExceptionListener().exceptionThrown(e); 
-            }
-            return null; 
-        }
-    }
-    
-    private void addArg(Object arg) { 
-        lastExp().addArg(arg); 
-    } 
-    
-    private Object pop(Vector v) { 
-        int last = v.size()-1; 
-        Object result = v.get(last); 
-        v.remove(last); 
-        return result; 
-    }
-    
-    private Object eval() { 
-        return getValue(lastExp()); 
-    }
-    
-    private MutableExpression lastExp() { 
-        return (MutableExpression)expStack.lastElement(); 
-    } 
-    
-    public Object dequeueResult() { 
-        Object[] results = lastExp().getArguments(); 
-        return results[itemsRead++]; 
-    }
-    
-    private boolean isPrimitive(String name) { 
-        return name != "void" && typeNameToClass(name) != null;
-    }
-    
-    private void simulateException(String message) { 
-        Exception e = new Exception(message); 
-    	e.fillInStackTrace(); 
-        if (is != null) {
-            is.getExceptionListener().exceptionThrown(e); 
-        }
-    } 
-	
-    private Class classForName2(String name) {
-        try { 
-            return ClassFinder.resolveClass(name, this.ldr);
-        }
-        catch (ClassNotFoundException e) { 
+        catch (Exception e) {
             if (is != null) {
                 is.getExceptionListener().exceptionThrown(e);
             }
-        } 
-        return null; 
-    } 
-    
-    private HashMap getAttributes(AttributeList attrs) { 
-        HashMap attributes = new HashMap(); 
-        if (attrs != null && attrs.getLength() > 0) {
-            for(int i = 0; i < attrs.getLength(); i++) { 
-                attributes.put(attrs.getName(i), attrs.getValue(i)); 
-            }
-        } 
-        return attributes; 
+            return null;
+        }
     }
-    
-    public void startElement(String name, AttributeList attrs) throws SAXException { 
+
+    private void addArg(Object arg) {
+        lastExp().addArg(arg);
+    }
+
+    private Object pop(Vector v) {
+        int last = v.size()-1;
+        Object result = v.get(last);
+        v.remove(last);
+        return result;
+    }
+
+    private Object eval() {
+        return getValue(lastExp());
+    }
+
+    private MutableExpression lastExp() {
+        return (MutableExpression)expStack.lastElement();
+    }
+
+    public Object dequeueResult() {
+        Object[] results = lastExp().getArguments();
+        return results[itemsRead++];
+    }
+
+    private boolean isPrimitive(String name) {
+        return name != "void" && typeNameToClass(name) != null;
+    }
+
+    private void simulateException(String message) {
+        Exception e = new Exception(message);
+        e.fillInStackTrace();
+        if (is != null) {
+            is.getExceptionListener().exceptionThrown(e);
+        }
+    }
+
+    private Class classForName2(String name) {
+        try {
+            return ClassFinder.resolveClass(name, this.ldr);
+        }
+        catch (ClassNotFoundException e) {
+            if (is != null) {
+                is.getExceptionListener().exceptionThrown(e);
+            }
+        }
+        return null;
+    }
+
+    private HashMap getAttributes(AttributeList attrs) {
+        HashMap attributes = new HashMap();
+        if (attrs != null && attrs.getLength() > 0) {
+            for(int i = 0; i < attrs.getLength(); i++) {
+                attributes.put(attrs.getName(i), attrs.getValue(i));
+            }
+        }
+        return attributes;
+    }
+
+    public void startElement(String name, AttributeList attrs) throws SAXException {
         name = name.intern(); // Xerces parser does not supply unique tag names.
         if (this.isString) {
             parseCharCode(name, getAttributes(attrs));
             return;
         }
-        chars.setLength(0); 
+        chars.setLength(0);
 
-        HashMap attributes = getAttributes(attrs);  
-        MutableExpression e = new MutableExpression(); 
-        
+        HashMap attributes = getAttributes(attrs);
+        MutableExpression e = new MutableExpression();
+
         // Target
-        String className = (String)attributes.get("class"); 
+        String className = (String)attributes.get("class");
         if (className != null) {
             e.setTarget(classForName2(className));
-        } 
-        
+        }
+
         // Property
-        Object property = attributes.get("property"); 
-        String index = (String)attributes.get("index"); 
-        if (index != null) { 
-            property = new Integer(index); 
-            e.addArg(property); 
-        } 
-        e.setProperty(property); 
-        
+        Object property = attributes.get("property");
+        String index = (String)attributes.get("index");
+        if (index != null) {
+            property = new Integer(index);
+            e.addArg(property);
+        }
+        e.setProperty(property);
+
         // Method
-        String methodName = (String)attributes.get("method"); 
+        String methodName = (String)attributes.get("method");
         if (methodName == null && property == null) {
-            methodName = "new"; 
-        } 
-        e.setMethodName(methodName); 
-        
+            methodName = "new";
+        }
+        e.setMethodName(methodName);
+
         // Tags
         if (name == "string") {
             e.setTarget(String.class);
@@ -280,36 +279,36 @@ public class ObjectHandler extends HandlerBase {
             e.setMethodName("getSuperclass");
             e.setValue(null);
         }
-        else if (name == "void") { 
-            if (e.getTarget() == null) { // this check is for "void class="foo" method= ..." 
-	        e.setTarget(eval()); 
-	    }
-        }
-    	else if (name == "array") { 
-            // The class attribute means sub-type for arrays. 
-            String subtypeName = (String)attributes.get("class"); 
-            Class subtype = (subtypeName == null) ? Object.class : classForName2(subtypeName); 
-            String length = (String)attributes.get("length"); 
-            if (length != null) { 
-                e.setTarget(java.lang.reflect.Array.class); 
-                e.addArg(subtype); 
-                e.addArg(new Integer(length)); 
+        else if (name == "void") {
+            if (e.getTarget() == null) { // this check is for "void class="foo" method= ..."
+                e.setTarget(eval());
             }
-            else { 
-                Class arrayClass = java.lang.reflect.Array.newInstance(subtype, 0).getClass(); 
-                e.setTarget(arrayClass); 
-            }
-        } 
-        else if (name == "java") { 
-            e.setValue(is); // The outermost scope is the stream itself. 
         }
-	else if (name == "object") { 
-	}
-	else { 
-            simulateException("Unrecognized opening tag: " + name + " " + attrsToString(attrs)); 
-	    return; 
-        } 
-		
+        else if (name == "array") {
+            // The class attribute means sub-type for arrays.
+            String subtypeName = (String)attributes.get("class");
+            Class subtype = (subtypeName == null) ? Object.class : classForName2(subtypeName);
+            String length = (String)attributes.get("length");
+            if (length != null) {
+                e.setTarget(java.lang.reflect.Array.class);
+                e.addArg(subtype);
+                e.addArg(new Integer(length));
+            }
+            else {
+                Class arrayClass = java.lang.reflect.Array.newInstance(subtype, 0).getClass();
+                e.setTarget(arrayClass);
+            }
+        }
+        else if (name == "java") {
+            e.setValue(is); // The outermost scope is the stream itself.
+        }
+        else if (name == "object") {
+        }
+        else {
+            simulateException("Unrecognized opening tag: " + name + " " + attrsToString(attrs));
+            return;
+        }
+
         // ids
         String idName = (String)attributes.get("id");
         if (idName != null) {
@@ -323,38 +322,38 @@ public class ObjectHandler extends HandlerBase {
         }
 
         // fields
-        String fieldName = (String)attributes.get("field"); 
-        if (fieldName != null) { 
-            e.setValue(getFieldValue(e.getTarget(), fieldName)); 
+        String fieldName = (String)attributes.get("field");
+        if (fieldName != null) {
+            e.setValue(getFieldValue(e.getTarget(), fieldName));
         }
-        expStack.add(e); 
+        expStack.add(e);
     }
-    
-    private Object getFieldValue(Object target, String fieldName) { 
-        try { 
-            Class type = target.getClass(); 
-            if (type == Class.class) { 
-                type = (Class)target; 
-            } 
-            java.lang.reflect.Field f = sun.reflect.misc.FieldUtil.getField(type, fieldName); 
-            return f.get(target); 
-        }
-        catch (Exception e) { 
-            if (is != null) {
-                is.getExceptionListener().exceptionThrown(e); 
+
+    private Object getFieldValue(Object target, String fieldName) {
+        try {
+            Class type = target.getClass();
+            if (type == Class.class) {
+                type = (Class)target;
             }
-            return null; 
+            java.lang.reflect.Field f = sun.reflect.misc.FieldUtil.getField(type, fieldName);
+            return f.get(target);
         }
-    }            
-            
-    private String attrsToString(AttributeList attrs) { 
-        StringBuffer b = new StringBuffer(); 
+        catch (Exception e) {
+            if (is != null) {
+                is.getExceptionListener().exceptionThrown(e);
+            }
+            return null;
+        }
+    }
+
+    private String attrsToString(AttributeList attrs) {
+        StringBuffer b = new StringBuffer();
         for (int i = 0; i < attrs.getLength (); i++) {
             b.append(attrs.getName(i)+"=\""+attrs.getValue(i)+"\" ");
         }
-        return b.toString(); 
-    }            
-            
+        return b.toString();
+    }
+
     public void characters(char buf [], int offset, int len) throws SAXException {
         chars.append(new String(buf, offset, len));
     }
@@ -385,12 +384,12 @@ public class ObjectHandler extends HandlerBase {
         }
     }
 
-    public Object lookup(String s) { 
-        Expression e = (Expression)environment.get(s); 
-        if (e == null) { 
-            simulateException("Unbound variable: " + s); 
+    public Object lookup(String s) {
+        Expression e = (Expression)environment.get(s);
+        if (e == null) {
+            simulateException("Unbound variable: " + s);
         }
-        return getValue(e); 
+        return getValue(e);
     }
 
     public void register(String id, Object value) {
@@ -406,8 +405,8 @@ public class ObjectHandler extends HandlerBase {
         } else if (this.isString) {
             return;
         }
-        if (name == "java") { 
-            return; 
+        if (name == "java") {
+            return;
         }
         if (isPrimitive(name) || name == "string" || name == "class") {
             addArg(chars.toString());
@@ -415,80 +414,80 @@ public class ObjectHandler extends HandlerBase {
         if (name == "object" || name == "array" || name == "void" ||
                 isPrimitive(name) || name == "string" || name == "class" ||
                 name == "null") {
-            Expression e = (Expression)pop(expStack); 
-            Object value = getValue(e); 
+            Expression e = (Expression)pop(expStack);
+            Object value = getValue(e);
             if (name != "void") {
-                addArg(value); 
+                addArg(value);
             }
         }
-        else { 
+        else {
             simulateException("Unrecognized closing tag: " + name);
         }
     }
 }
 
 
-class MutableExpression extends Expression { 
+class MutableExpression extends Expression {
     private Object target;
     private String methodName;
 
-    private Object property; 
-    private Vector argV = new Vector();  
+    private Object property;
+    private Vector argV = new Vector();
 
-    private String capitalize(String propertyName) { 
-        if (propertyName.length() == 0) { 
-            return propertyName; 
+    private String capitalize(String propertyName) {
+        if (propertyName.length() == 0) {
+            return propertyName;
         }
         return propertyName.substring(0, 1).toUpperCase(ENGLISH) + propertyName.substring(1);
-    } 
-    
-    public MutableExpression() { 
-        super(null, null, null); 
-    } 
-    
-    public Object[] getArguments() { 
-    	return argV.toArray(); 
     }
-    
-    public String getMethodName() { 
-    	if (property == null) { 
+
+    public MutableExpression() {
+        super(null, null, null);
+    }
+
+    public Object[] getArguments() {
+        return argV.toArray();
+    }
+
+    public String getMethodName() {
+        if (property == null) {
             return methodName;
-    	} 
-        int setterArgs = (property instanceof String) ? 1 : 2; 
-        String methodName = (argV.size() == setterArgs) ? "set" : "get"; 
-        if (property instanceof String) { 
-            return methodName + capitalize((String)property); 
         }
-        else { 
-            return methodName; 
+        int setterArgs = (property instanceof String) ? 1 : 2;
+        String methodName = (argV.size() == setterArgs) ? "set" : "get";
+        if (property instanceof String) {
+            return methodName + capitalize((String)property);
+        }
+        else {
+            return methodName;
         }
     }
-    
-    public void addArg(Object arg) { 
-    	argV.add(arg); 
-    } 
-    
-    public void setTarget(Object target) { 
-    	this.target = target; 
-    } 
-    
+
+    public void addArg(Object arg) {
+        argV.add(arg);
+    }
+
+    public void setTarget(Object target) {
+        this.target = target;
+    }
+
     public Object getTarget() {
         return target;
     }
 
-    public void setMethodName(String methodName) { 
-    	this.methodName = methodName; 
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
-    public void setProperty(Object property) { 
-    	this.property = property; 
+    public void setProperty(Object property) {
+        this.property = property;
     }
 
-    public void setValue(Object value) { 
+    public void setValue(Object value) {
         super.setValue(value);
     }
 
-    public Object getValue() throws Exception { 
+    public Object getValue() throws Exception {
         return super.getValue();
     }
 }

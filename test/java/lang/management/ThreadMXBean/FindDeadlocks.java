@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-                                                                               
+
 /*
  * @test
  * @bug     5086470
@@ -32,13 +32,13 @@
  *
  * @build MonitorDeadlock
  * @build SynchronizerDeadlock
- * @build ThreadDump 
+ * @build ThreadDump
  * @run main FindDeadlocks
  */
-                                                                                
+
 import java.lang.management.*;
 import java.util.*;
-                                                                                
+
 public class FindDeadlocks {
     static ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
     public static void main(String[] argv) {
@@ -55,7 +55,7 @@ public class FindDeadlocks {
         md.goDeadlock();
         // wait until the deadlock is ready
         md.waitUntilDeadlock();
-                                                                                
+
         long[] mthreads = findDeadlocks();
         if (mthreads == null) {
             ThreadDump.dumpStacks();
@@ -65,12 +65,12 @@ public class FindDeadlocks {
 
         // create deadlocked threads on synchronizers
         SynchronizerDeadlock sd = new SynchronizerDeadlock();
-  
+
         // Let the threads to proceed
         sd.goDeadlock();
         // wait until the deadlock is ready
         sd.waitUntilDeadlock();
-                                                                                
+
         // Find Deadlock
         long[] threads = findDeadlocks();
         if (threads == null) {
@@ -83,7 +83,7 @@ public class FindDeadlocks {
         int count = 0;
         for (int i = 0; i < threads.length; i++) {
             long id = threads[i];
-            boolean isNew = true; 
+            boolean isNew = true;
             for (int j = 0; j < mthreads.length; j++) {
                 if (mthreads[j] == id) {
                     isNew = false;
@@ -103,14 +103,14 @@ public class FindDeadlocks {
                 throw new RuntimeException("TEST FAILED: NewList should be empty.");
             }
         }
- 
+
         // Print Deadlock stack trace
         System.out.println("Found threads that are in deadlock:-");
         ThreadInfo[] infos = mbean.getThreadInfo(threads, Integer.MAX_VALUE);
         for (int i = 0; i < infos.length; i++) {
             ThreadDump.printThreadInfo(infos[i]);
         }
-                                                                                
+
         System.out.println("Test passed");
     }
     static long[] findDeadlocks() {

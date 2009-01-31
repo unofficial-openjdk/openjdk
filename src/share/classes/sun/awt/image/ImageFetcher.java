@@ -33,14 +33,13 @@ import sun.awt.AppContext;
   * Once an ImageFetchable object has been fetched, the ImageFetcher
   * thread may also be used to animate it if necessary, via the
   * startingAnimation() / stoppingAnimation() methods.
-  * 
+  *
   * There can be up to FetcherInfo.MAX_NUM_FETCHERS_PER_APPCONTEXT
   * ImageFetcher threads for each AppContext.  A per-AppContext queue
   * of ImageFetchables is used to track objects to fetch.
-  * 
+  *
   * @author Jim Graham
   * @author Fred Ecks
-  * @version %I% %G%
   */
 class ImageFetcher extends Thread {
     static final int HIGH_PRIORITY = 8;
@@ -48,15 +47,15 @@ class ImageFetcher extends Thread {
     static final int ANIM_PRIORITY = 2;
 
     static final int TIMEOUT = 5000; // Time in milliseconds to wait for an
-				     // ImageFetchable to be added to the
-				     // queue before an ImageFetcher dies
+                                     // ImageFetchable to be added to the
+                                     // queue before an ImageFetcher dies
 
     /**
       * Constructor for ImageFetcher -- only called by add() below.
       */
     private ImageFetcher(ThreadGroup threadGroup, int index) {
-	super(threadGroup, "Image Fetcher " + index);
-	setDaemon(true);
+        super(threadGroup, "Image Fetcher " + index);
+        setDaemon(true);
     }
 
     /**
@@ -81,34 +80,34 @@ class ImageFetcher extends Thread {
       * Removes an ImageFetchable from the queue of items to fetch.
       */
     public static void remove(ImageFetchable src) {
-	final FetcherInfo info = FetcherInfo.getFetcherInfo();
-	synchronized(info.waitList) {
-	    if (info.waitList.contains(src)) {
-		info.waitList.removeElement(src);
-	    }
-	}
+        final FetcherInfo info = FetcherInfo.getFetcherInfo();
+        synchronized(info.waitList) {
+            if (info.waitList.contains(src)) {
+                info.waitList.removeElement(src);
+            }
+        }
     }
 
     /**
       * Checks to see if the given thread is one of the ImageFetchers.
       */
     public static boolean isFetcher(Thread t) {
-	final FetcherInfo info = FetcherInfo.getFetcherInfo();
-	synchronized(info.waitList) {
-	    for (int i = 0; i < info.fetchers.length; i++) {
-		if (info.fetchers[i] == t) {
-		    return true;
-		}
-	    }
-	}
-	return false;
+        final FetcherInfo info = FetcherInfo.getFetcherInfo();
+        synchronized(info.waitList) {
+            for (int i = 0; i < info.fetchers.length; i++) {
+                if (info.fetchers[i] == t) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
       * Checks to see if the current thread is one of the ImageFetchers.
       */
     public static boolean amFetcher() {
-	return isFetcher(Thread.currentThread());
+        return isFetcher(Thread.currentThread());
     }
 
     /**
@@ -117,31 +116,31 @@ class ImageFetcher extends Thread {
       * null is returned.
       */
     private static ImageFetchable nextImage() {
-	final FetcherInfo info = FetcherInfo.getFetcherInfo();
-	synchronized(info.waitList) {
-	    ImageFetchable src = null;
-	    long end = System.currentTimeMillis() + TIMEOUT;
-	    while (src == null) {
-		while (info.waitList.size() == 0) {
-		    long now = System.currentTimeMillis();
-		    if (now >= end) {
-			return null;
-		    }
-		    try {
-			info.numWaiting++;
-			info.waitList.wait(end - now);
-		    } catch (InterruptedException e) {
-			// A normal occurrence as an AppContext is disposed
-			return null;
-		    } finally {
-			info.numWaiting--;
-		    }
-		}
-		src = (ImageFetchable) info.waitList.elementAt(0);
-		info.waitList.removeElement(src);
-	    }
-	    return src;
-	}
+        final FetcherInfo info = FetcherInfo.getFetcherInfo();
+        synchronized(info.waitList) {
+            ImageFetchable src = null;
+            long end = System.currentTimeMillis() + TIMEOUT;
+            while (src == null) {
+                while (info.waitList.size() == 0) {
+                    long now = System.currentTimeMillis();
+                    if (now >= end) {
+                        return null;
+                    }
+                    try {
+                        info.numWaiting++;
+                        info.waitList.wait(end - now);
+                    } catch (InterruptedException e) {
+                        // A normal occurrence as an AppContext is disposed
+                        return null;
+                    } finally {
+                        info.numWaiting--;
+                    }
+                }
+                src = (ImageFetchable) info.waitList.elementAt(0);
+                info.waitList.removeElement(src);
+            }
+            return src;
+        }
     }
 
     /**
@@ -149,22 +148,22 @@ class ImageFetcher extends Thread {
       * to do the work, then removes itself from the array of ImageFetchers.
       */
     public void run() {
-	final FetcherInfo info = FetcherInfo.getFetcherInfo();
-	try {
-	    fetchloop();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	} finally {
-	    synchronized(info.waitList) {
-		Thread me = Thread.currentThread();
-		for (int i = 0; i < info.fetchers.length; i++) {
-		    if (info.fetchers[i] == me) {
-			info.fetchers[i] = null;
-			info.numFetchers--;
-		    }
-		}
-	    }
-	}
+        final FetcherInfo info = FetcherInfo.getFetcherInfo();
+        try {
+            fetchloop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            synchronized(info.waitList) {
+                Thread me = Thread.currentThread();
+                for (int i = 0; i < info.fetchers.length; i++) {
+                    if (info.fetchers[i] == me) {
+                        info.fetchers[i] = null;
+                        info.numFetchers--;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -173,27 +172,27 @@ class ImageFetcher extends Thread {
       * returns null.
       */
     private void fetchloop() {
-	Thread me = Thread.currentThread();
-	while (isFetcher(me)) {
-	    // we're ignoring the return value and just clearing
-	    // the interrupted flag, instead of bailing out if
-	    // the fetcher was interrupted, as we used to, 
-	    // because there may be other images waiting
-	    // to be fetched (see 4789067)
-	    me.interrupted();
-	    me.setPriority(HIGH_PRIORITY);
-	    ImageFetchable src = nextImage();
-	    if (src == null) {
-		return;
-	    }
-	    try {
-		src.doFetch();
-	    } catch (Exception e) {
-		System.err.println("Uncaught error fetching image:");
-		e.printStackTrace();
-	    }
-	    stoppingAnimation(me);
-	}
+        Thread me = Thread.currentThread();
+        while (isFetcher(me)) {
+            // we're ignoring the return value and just clearing
+            // the interrupted flag, instead of bailing out if
+            // the fetcher was interrupted, as we used to,
+            // because there may be other images waiting
+            // to be fetched (see 4789067)
+            me.interrupted();
+            me.setPriority(HIGH_PRIORITY);
+            ImageFetchable src = nextImage();
+            if (src == null) {
+                return;
+            }
+            try {
+                src.doFetch();
+            } catch (Exception e) {
+                System.err.println("Uncaught error fetching image:");
+                e.printStackTrace();
+            }
+            stoppingAnimation(me);
+        }
     }
 
 
@@ -231,24 +230,24 @@ class ImageFetcher extends Thread {
       * the ImageFetchers, and this thread will die.
       */
     private static void stoppingAnimation(Thread me) {
-	final FetcherInfo info = FetcherInfo.getFetcherInfo();
-	synchronized(info.waitList) {
-	    int index = -1;
-	    for (int i = 0; i < info.fetchers.length; i++) {
-		if (info.fetchers[i] == me) {
-		    return;
-		}
-		if (info.fetchers[i] == null) {
-		    index = i;
-		}
-	    }
-	    if (index >= 0) {
-		info.fetchers[index] = me;
-		info.numFetchers++;
-		me.setName("Image Fetcher " + index);
-		return;
-	    }
-	}
+        final FetcherInfo info = FetcherInfo.getFetcherInfo();
+        synchronized(info.waitList) {
+            int index = -1;
+            for (int i = 0; i < info.fetchers.length; i++) {
+                if (info.fetchers[i] == me) {
+                    return;
+                }
+                if (info.fetchers[i] == null) {
+                    index = i;
+                }
+            }
+            if (index >= 0) {
+                info.fetchers[index] = me;
+                info.numFetchers++;
+                me.setName("Image Fetcher " + index);
+                return;
+            }
+        }
     }
 
     /**
@@ -321,25 +320,25 @@ class FetcherInfo {
     Vector waitList;
 
     private FetcherInfo() {
-	fetchers = new Thread[MAX_NUM_FETCHERS_PER_APPCONTEXT];
-	numFetchers = 0;
-	numWaiting = 0;
-	waitList = new Vector();
+        fetchers = new Thread[MAX_NUM_FETCHERS_PER_APPCONTEXT];
+        numFetchers = 0;
+        numWaiting = 0;
+        waitList = new Vector();
     }
 
     /* The key to put()/get() the FetcherInfo into/from the AppContext. */
     private static final Object FETCHER_INFO_KEY =
-					new StringBuffer("FetcherInfo");
+                                        new StringBuffer("FetcherInfo");
 
     static FetcherInfo getFetcherInfo() {
-	AppContext appContext = AppContext.getAppContext();
-	synchronized(appContext) {
-	    FetcherInfo info = (FetcherInfo)appContext.get(FETCHER_INFO_KEY);
-	    if (info == null) {
-		info = new FetcherInfo();
-		appContext.put(FETCHER_INFO_KEY, info);
-	    }
-	    return info;
-	}
+        AppContext appContext = AppContext.getAppContext();
+        synchronized(appContext) {
+            FetcherInfo info = (FetcherInfo)appContext.get(FETCHER_INFO_KEY);
+            if (info == null) {
+                info = new FetcherInfo();
+                appContext.put(FETCHER_INFO_KEY, info);
+            }
+            return info;
+        }
     }
 }

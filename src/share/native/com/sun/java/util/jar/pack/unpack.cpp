@@ -38,7 +38,7 @@
 #include <time.h>
 
 
- 
+
 
 #include "defines.h"
 #include "bytes.h"
@@ -185,9 +185,9 @@ struct entry {
       || (tag2 == CONSTANT_Utf8 && tag == CONSTANT_Signature)
       #ifndef PRODUCT
       || (tag2 == CONSTANT_Literal
-	  && tag >= CONSTANT_Integer && tag <= CONSTANT_String && tag != CONSTANT_Class)
+          && tag >= CONSTANT_Integer && tag <= CONSTANT_String && tag != CONSTANT_Class)
       || (tag2 == CONSTANT_Member
-	  && tag >= CONSTANT_Fieldref && tag <= CONSTANT_InterfaceMethodref)
+          && tag >= CONSTANT_Fieldref && tag <= CONSTANT_InterfaceMethodref)
       #endif
       ;
   }
@@ -238,9 +238,9 @@ int entry::typeSize() {
       // else fall through
     case 'L':
       sigp = strchr(sigp, ';');
-      if (sigp == null) {  
-	  unpack_abort("bad data");
-	  return 0;
+      if (sigp == null) {
+          unpack_abort("bad data");
+          return 0;
       }
       sigp += 1;
       break;
@@ -510,7 +510,7 @@ void unpacker::read_file_header() {
     AH_CP_NUMBER_LEN = 4,  // int/float/long/double
     AH_SPECIAL_FORMAT_LEN = 2, // layouts/band-headers
     AH_LENGTH_MIN = AH_LENGTH
-	-(AH_FILE_HEADER_LEN+AH_SPECIAL_FORMAT_LEN+AH_CP_NUMBER_LEN),
+        -(AH_FILE_HEADER_LEN+AH_SPECIAL_FORMAT_LEN+AH_CP_NUMBER_LEN),
     FIRST_READ  = MAGIC_BYTES + AH_LENGTH_MIN
   };
   bool foreign_buf = (read_input_fn == null);
@@ -555,15 +555,15 @@ void unpacker::read_file_header() {
     for (;;) {
       jarout->write_data(rp, input_remaining());
       if (foreign_buf)
-	break;  // one-time use of a passed in buffer
+        break;  // one-time use of a passed in buffer
       if (input.size() < CHUNK) {
-	// Get some breathing room.
-	input.set(U_NEW(byte, (size_t) CHUNK + C_SLOP), (size_t) CHUNK);
-	CHECK;
+        // Get some breathing room.
+        input.set(U_NEW(byte, (size_t) CHUNK + C_SLOP), (size_t) CHUNK);
+        CHECK;
       }
       rp = rplimit = input.base();
       if (!ensure_input(1))
-	break;
+        break;
     }
     jarout->closeJarFile(false);
 #endif
@@ -587,16 +587,16 @@ void unpacker::read_file_header() {
   hdrVals += 2;
 
   if (magic != JAVA_PACKAGE_MAGIC ||
-      (majver != JAVA5_PACKAGE_MAJOR_VERSION  && 
-       majver != JAVA6_PACKAGE_MAJOR_VERSION) || 
-      (minver != JAVA5_PACKAGE_MINOR_VERSION  && 
+      (majver != JAVA5_PACKAGE_MAJOR_VERSION  &&
+       majver != JAVA6_PACKAGE_MAJOR_VERSION) ||
+      (minver != JAVA5_PACKAGE_MINOR_VERSION  &&
        minver != JAVA6_PACKAGE_MINOR_VERSION)) {
     char message[200];
     sprintf(message, "@" ERROR_FORMAT ": magic/ver = "
-	    "%08X/%d.%d should be %08X/%d.%d OR %08X/%d.%d\n",
-	    magic, majver, minver, 
-	    JAVA_PACKAGE_MAGIC, JAVA5_PACKAGE_MAJOR_VERSION, JAVA5_PACKAGE_MINOR_VERSION,
-	    JAVA_PACKAGE_MAGIC, JAVA6_PACKAGE_MAJOR_VERSION, JAVA6_PACKAGE_MINOR_VERSION);
+            "%08X/%d.%d should be %08X/%d.%d OR %08X/%d.%d\n",
+            magic, majver, minver,
+            JAVA_PACKAGE_MAGIC, JAVA5_PACKAGE_MAJOR_VERSION, JAVA5_PACKAGE_MINOR_VERSION,
+            JAVA_PACKAGE_MAGIC, JAVA6_PACKAGE_MAJOR_VERSION, JAVA6_PACKAGE_MINOR_VERSION);
     abort(message);
   }
   CHECK;
@@ -610,7 +610,7 @@ void unpacker::read_file_header() {
 #undef ORBIT
   if ((archive_options & ~OPTION_LIMIT) != 0) {
     fprintf(errstrm, "Warning: Illegal archive options 0x%x\n",
-	    archive_options);
+            archive_options);
     // Do not abort.  If the format really changes, version numbers will bump.
     //abort("illegal archive options");
   }
@@ -645,7 +645,7 @@ void unpacker::read_file_header() {
     }
   } else if (archive_size > 0) {
     input.set(U_NEW(byte, (size_t) header_size_0 + archive_size + C_SLOP),
-	      (size_t) header_size_0 + archive_size);
+              (size_t) header_size_0 + archive_size);
     assert(input.limit()[0] == 0);
     // Move all the bytes we read initially into the real buffer.
     input.b.copyFrom(initbuf, header_size);
@@ -719,9 +719,9 @@ void unpacker::read_file_header() {
       case CONSTANT_Float:
       case CONSTANT_Long:
       case CONSTANT_Double:
-	cp_counts[k] = 0;
-	hdrValsSkipped += 1;
-	continue;
+        cp_counts[k] = 0;
+        hdrValsSkipped += 1;
+        continue;
       }
     }
     cp_counts[k] = hdr.getInt();
@@ -773,7 +773,7 @@ void unpacker::read_file_header() {
   bytes band_headers;
   // The "1+" allows an initial byte to be pushed on the front.
   band_headers.set(1+U_NEW(byte, 1+band_headers_size+C_SLOP),
-		   band_headers_size);
+                   band_headers_size);
   CHECK;
   // Start scanning band headers here:
   band_headers.copyFrom(rp, band_headers.len);
@@ -835,7 +835,7 @@ void cpool::init(unpacker* u_, int counts[NUM_COUNTS]) {
       IMPLICIT_ENTRY_COUNT = 1  // empty Utf8 string
     };
     if (len >= (1<<29) || len < 0
-	|| next_entry >= CP_SIZE_LIMIT+IMPLICIT_ENTRY_COUNT) {
+        || next_entry >= CP_SIZE_LIMIT+IMPLICIT_ENTRY_COUNT) {
       abort("archive too large:  constant pool limit exceeded");
       return;
     }
@@ -894,9 +894,9 @@ static byte* skip_Utf8_chars(byte* cp, int len) {
     int ch = *cp & 0xFF;
     if ((ch & 0xC0) != 0x80) {
       if (len-- == 0)
-	return cp;
+        return cp;
       if (ch < 0x80 && len == 0)
-	return cp+1;
+        return cp+1;
     }
   }
 }
@@ -922,9 +922,9 @@ static int compare_Utf8_chars(bytes& b1, bytes& b2) {
       if (c1 == 0xC0 && (p1[i+1] & 0xFF) == 0x80)  c1 = 0;
       if (c2 == 0xC0 && (p2[i+1] & 0xFF) == 0x80)  c2 = 0;
       if (c0 == 0xC0) {
-	assert(((c1|c2) & 0xC0) == 0x80);  // c1 & c2 are extension chars
-	if (c1 == 0x80)  c1 = 0;  // will sort below c2
-	if (c2 == 0x80)  c2 = 0;  // will sort below c1
+        assert(((c1|c2) & 0xC0) == 0x80);  // c1 & c2 are extension chars
+        if (c1 == 0x80)  c1 = 0;  // will sort below c2
+        if (c2 == 0x80)  c2 = 0;  // will sort below c1
       }
       return c1 - c2;
     }
@@ -981,9 +981,9 @@ void unpacker::read_Utf8_values(entry* cpMap, int len) {
       chars.malloc(size3);
     } else {
       if (!charbuf.canAppend(size3+1)) {
-	assert(charbuf.allocated == 0 || tmallocs.contains(charbuf.base()));
-	charbuf.init(CHUNK);  // Reset to new buffer.
-	tmallocs.add(charbuf.base());
+        assert(charbuf.allocated == 0 || tmallocs.contains(charbuf.base()));
+        charbuf.init(CHUNK);  // Reset to new buffer.
+        tmallocs.add(charbuf.base());
       }
       chars.set(charbuf.grow(size3+1), size3);
     }
@@ -1143,9 +1143,9 @@ void unpacker::read_single_refs(band& cp_band, byte refTag, entry* cpMap, int le
       // Maintain cross-reference:
       entry* &htref = cp.hashTabRef(indexTag, e.value.b);
       if (htref == null) {
-	// Note that if two identical classes are transmitted,
-	// the first is taken to be the canonical one.
-	htref = &e;
+        // Note that if two identical classes are transmitted,
+        // the first is taken to be the canonical one.
+        htref = &e;
       }
     }
   }
@@ -1154,7 +1154,7 @@ void unpacker::read_single_refs(band& cp_band, byte refTag, entry* cpMap, int le
 
 maybe_inline
 void unpacker::read_double_refs(band& cp_band, byte ref1Tag, byte ref2Tag,
-				entry* cpMap, int len) {
+                                entry* cpMap, int len) {
   band& cp_band1 = cp_band;
   band& cp_band2 = cp_band.nextBand();
   cp_band1.setIndexByTag(ref1Tag);
@@ -1254,23 +1254,23 @@ void unpacker::read_cp() {
       break;
     case CONSTANT_NameandType:
       read_double_refs(cp_Descr_name /*& cp_Descr_type*/,
-		       CONSTANT_Utf8, CONSTANT_Signature,
-		       cpMap, len);
+                       CONSTANT_Utf8, CONSTANT_Signature,
+                       cpMap, len);
       break;
     case CONSTANT_Fieldref:
       read_double_refs(cp_Field_class /*& cp_Field_desc*/,
-		       CONSTANT_Class, CONSTANT_NameandType,
-		       cpMap, len);
+                       CONSTANT_Class, CONSTANT_NameandType,
+                       cpMap, len);
       break;
     case CONSTANT_Methodref:
       read_double_refs(cp_Method_class /*& cp_Method_desc*/,
-		       CONSTANT_Class, CONSTANT_NameandType,
-		       cpMap, len);
+                       CONSTANT_Class, CONSTANT_NameandType,
+                       cpMap, len);
       break;
     case CONSTANT_InterfaceMethodref:
       read_double_refs(cp_Imethod_class /*& cp_Imethod_desc*/,
-		       CONSTANT_Class, CONSTANT_NameandType,
-		       cpMap, len);
+                       CONSTANT_Class, CONSTANT_NameandType,
+                       cpMap, len);
       break;
     default:
       assert(false);
@@ -1336,8 +1336,8 @@ inline band& unpacker::attr_definitions::xxx_attr_calls()
 inline
 unpacker::layout_definition*
 unpacker::attr_definitions::defineLayout(int idx,
-					 entry* nameEntry,
-					 const char* layout) {
+                                         entry* nameEntry,
+                                         const char* layout) {
   const char* name = nameEntry->value.b.strval();
   layout_definition* lo = defineLayout(idx, name, layout);
   CHECK_0;
@@ -1347,8 +1347,8 @@ unpacker::attr_definitions::defineLayout(int idx,
 
 unpacker::layout_definition*
 unpacker::attr_definitions::defineLayout(int idx,
-					 const char* name,
-					 const char* layout) {
+                                         const char* name,
+                                         const char* layout) {
   assert(flag_limit != 0);  // must be set up already
   if (idx >= 0) {
     // Fixed attr.
@@ -1371,12 +1371,12 @@ unpacker::attr_definitions::defineLayout(int idx,
   }
   CHECK_0;
   layouts.get(idx) = lo;
-  return lo; 
+  return lo;
 }
 
 band**
 unpacker::attr_definitions::buildBands(unpacker::layout_definition* lo) {
-  int i; 
+  int i;
   if (lo->elems != null)
     return lo->bands();
   if (lo->layout[0] == '\0') {
@@ -1400,11 +1400,11 @@ unpacker::attr_definitions::buildBands(unpacker::layout_definition* lo) {
     int num_callables = 0;
     if (hasCallables) {
       while (bands[num_callables] != null) {
-	if (bands[num_callables]->le_kind != EK_CBLE) {
-	  abort("garbage mixed with callables");
-	  break;
-	}
-	num_callables += 1;
+        if (bands[num_callables]->le_kind != EK_CBLE) {
+          abort("garbage mixed with callables");
+          break;
+        }
+        num_callables += 1;
       }
     }
     for (i = 0; i < calls_to_link.length(); i++) {
@@ -1413,8 +1413,8 @@ unpacker::attr_definitions::buildBands(unpacker::layout_definition* lo) {
       // Determine the callee.
       int call_num = call.le_len;
       if (call_num < 0 || call_num >= num_callables) {
-	abort("bad call in layout");
-	break;
+        abort("bad call in layout");
+        break;
       }
       band& cble = *bands[call_num];
       // Link the call to it.
@@ -1492,7 +1492,7 @@ unpacker::attr_definitions::buildBands(unpacker::layout_definition* lo) {
 
 const char*
 unpacker::attr_definitions::parseIntLayout(const char* lp, band* &res,
-					   byte le_kind, bool can_be_signed) {
+                                           byte le_kind, bool can_be_signed) {
   const char* lp0 = lp;
   band* b = U_NEW(band, 1);
   CHECK_(lp);
@@ -1571,7 +1571,7 @@ unpacker::attr_definitions::popBody(int bs_base) {
 
 const char*
 unpacker::attr_definitions::parseLayout(const char* lp, band** &res,
-					int curCble) {
+                                        int curCble) {
   const char* lp0 = lp;
   int bs_base = band_stack.length();
   bool top_level = (bs_base == 0);
@@ -1588,18 +1588,18 @@ unpacker::attr_definitions::parseLayout(const char* lp, band** &res,
       break;
     case 'P':
       {
-	int le_bci = EK_BCI;
-	if (*lp == 'O') {
-	  ++lp;
-	  le_bci = EK_BCID;
-	}
-	assert(*lp != 'S');  // no PSH, etc.
-	lp = parseIntLayout(lp, b, EK_INT);
-	b->le_bci = le_bci;
-	if (le_bci == EK_BCI)
-	  b->defc = coding::findBySpec(BCI5_spec);
-	else
-	  b->defc = coding::findBySpec(BRANCH5_spec);
+        int le_bci = EK_BCI;
+        if (*lp == 'O') {
+          ++lp;
+          le_bci = EK_BCID;
+        }
+        assert(*lp != 'S');  // no PSH, etc.
+        lp = parseIntLayout(lp, b, EK_INT);
+        b->le_bci = le_bci;
+        if (le_bci == EK_BCI)
+          b->defc = coding::findBySpec(BCI5_spec);
+        else
+          b->defc = coding::findBySpec(BRANCH5_spec);
       }
       break;
     case 'O':
@@ -1617,25 +1617,25 @@ unpacker::attr_definitions::parseLayout(const char* lp, band** &res,
     case 'T': // union: 'T' any_int union_case* '(' ')' '[' body ']'
       lp = parseIntLayout(lp, b, EK_UN, can_be_signed);
       {
-	int union_base = band_stack.length();
-	for (;;) {   // for each case
-	  band& k_case = *U_NEW(band, 1);
-	  CHECK_(lp);
-	  band_stack.add(&k_case);
-	  k_case.le_kind = EK_CASE;
-	  k_case.bn = bands_made++;
-	  if (*lp++ != '(') {
-	    abort("bad union case");
-            return ""; 
-	  }
-	  if (*lp++ != ')') {
-	    --lp;  // reparse
-	    // Read some case values.  (Use band_stack for temp. storage.)
-	    int case_base = band_stack.length();
-	    for (;;) {
-	      int caseval = 0;
-	      lp = parseNumeral(lp, caseval);
-	      band_stack.add((void*)caseval);
+        int union_base = band_stack.length();
+        for (;;) {   // for each case
+          band& k_case = *U_NEW(band, 1);
+          CHECK_(lp);
+          band_stack.add(&k_case);
+          k_case.le_kind = EK_CASE;
+          k_case.bn = bands_made++;
+          if (*lp++ != '(') {
+            abort("bad union case");
+            return "";
+          }
+          if (*lp++ != ')') {
+            --lp;  // reparse
+            // Read some case values.  (Use band_stack for temp. storage.)
+            int case_base = band_stack.length();
+            for (;;) {
+              int caseval = 0;
+              lp = parseNumeral(lp, caseval);
+              band_stack.add((void*)caseval);
               if (*lp == '-') {
                 // new in version 160, allow (1-5) for (1,2,3,4,5)
                 if (u->majver < JAVA6_PACKAGE_MAJOR_VERSION) {
@@ -1658,111 +1658,111 @@ unpacker::attr_definitions::parseLayout(const char* lp, band** &res,
                   if (caseval == caselimit)  break;
                 }
               }
-	      if (*lp != ',')  break;
-	      lp++;
-	    }
-	    if (*lp++ != ')') {
-	      abort("bad case label");
-              return ""; 
-	    }
-	    // save away the case labels
-	    int ntags = band_stack.length() - case_base;
-	    int* tags = U_NEW(int, 1+ntags);
-	    CHECK_(lp);
-	    k_case.le_casetags = tags;
-	    *tags++ = ntags;
-	    for (int i = 0; i < ntags; i++) {
-	      *tags++ = ptrlowbits(band_stack.get(case_base+i));
-	    }
-	    band_stack.popTo(case_base);
-	    CHECK_(lp);
-	  }
-	  // Got le_casetags.  Now grab the body.
-	  assert(*lp == '[');
-	  ++lp;
-	  lp = parseLayout(lp, k_case.le_body, curCble);
-	  CHECK_(lp);
-	  if (k_case.le_casetags == null)  break;  // done
-	}
-	b->le_body = popBody(union_base);
+              if (*lp != ',')  break;
+              lp++;
+            }
+            if (*lp++ != ')') {
+              abort("bad case label");
+              return "";
+            }
+            // save away the case labels
+            int ntags = band_stack.length() - case_base;
+            int* tags = U_NEW(int, 1+ntags);
+            CHECK_(lp);
+            k_case.le_casetags = tags;
+            *tags++ = ntags;
+            for (int i = 0; i < ntags; i++) {
+              *tags++ = ptrlowbits(band_stack.get(case_base+i));
+            }
+            band_stack.popTo(case_base);
+            CHECK_(lp);
+          }
+          // Got le_casetags.  Now grab the body.
+          assert(*lp == '[');
+          ++lp;
+          lp = parseLayout(lp, k_case.le_body, curCble);
+          CHECK_(lp);
+          if (k_case.le_casetags == null)  break;  // done
+        }
+        b->le_body = popBody(union_base);
       }
       break;
     case '(': // call: '(' -?NN* ')'
       {
-	band& call = *U_NEW(band, 1);
-	CHECK_(lp);
-	band_stack.add(&call);
-	call.le_kind = EK_CALL;
-	call.bn = bands_made++;
-	call.le_body = U_NEW(band*, 2); // fill in later
-	int call_num = 0;
-	lp = parseNumeral(lp, call_num);
-	call.le_back = (call_num <= 0);
-	call_num += curCble;  // numeral is self-relative offset
-	call.le_len = call_num;  //use le_len as scratch
-	calls_to_link.add(&call);
-	CHECK_(lp);
-	if (*lp++ != ')') {
-	  abort("bad call label");
-          return ""; 
+        band& call = *U_NEW(band, 1);
+        CHECK_(lp);
+        band_stack.add(&call);
+        call.le_kind = EK_CALL;
+        call.bn = bands_made++;
+        call.le_body = U_NEW(band*, 2); // fill in later
+        int call_num = 0;
+        lp = parseNumeral(lp, call_num);
+        call.le_back = (call_num <= 0);
+        call_num += curCble;  // numeral is self-relative offset
+        call.le_len = call_num;  //use le_len as scratch
+        calls_to_link.add(&call);
+        CHECK_(lp);
+        if (*lp++ != ')') {
+          abort("bad call label");
+          return "";
         }
       }
       break;
     case 'K': // reference_type: constant_ref
     case 'R': // reference_type: schema_ref
       {
-	int ixTag = CONSTANT_None;
-	if (lp[-1] == 'K') {
-	  switch (*lp++) {
-	  case 'I': ixTag = CONSTANT_Integer; break;
-	  case 'J': ixTag = CONSTANT_Long; break;
-	  case 'F': ixTag = CONSTANT_Float; break;
-	  case 'D': ixTag = CONSTANT_Double; break;
-	  case 'S': ixTag = CONSTANT_String; break;
-	  case 'Q': ixTag = CONSTANT_Literal; break;
-	  }
-	} else {
-	  switch (*lp++) {
-	  case 'C': ixTag = CONSTANT_Class; break;
-	  case 'S': ixTag = CONSTANT_Signature; break;
-	  case 'D': ixTag = CONSTANT_NameandType; break;
-	  case 'F': ixTag = CONSTANT_Fieldref; break;
-	  case 'M': ixTag = CONSTANT_Methodref; break;
-	  case 'I': ixTag = CONSTANT_InterfaceMethodref; break;
-	  case 'U': ixTag = CONSTANT_Utf8; break; //utf8_ref
-	  case 'Q': ixTag = CONSTANT_All; break; //untyped_ref
-	  }
-	}
-	if (ixTag == CONSTANT_None) {
-	  abort("bad reference layout");
-	  break;
-	}
-	bool nullOK = false;
-	if (*lp == 'N') {
-	  nullOK = true;
-	  lp++;
-	}
-	lp = parseIntLayout(lp, b, EK_REF);
-	b->defc = coding::findBySpec(UNSIGNED5_spec);
-	b->initRef(ixTag, nullOK);
+        int ixTag = CONSTANT_None;
+        if (lp[-1] == 'K') {
+          switch (*lp++) {
+          case 'I': ixTag = CONSTANT_Integer; break;
+          case 'J': ixTag = CONSTANT_Long; break;
+          case 'F': ixTag = CONSTANT_Float; break;
+          case 'D': ixTag = CONSTANT_Double; break;
+          case 'S': ixTag = CONSTANT_String; break;
+          case 'Q': ixTag = CONSTANT_Literal; break;
+          }
+        } else {
+          switch (*lp++) {
+          case 'C': ixTag = CONSTANT_Class; break;
+          case 'S': ixTag = CONSTANT_Signature; break;
+          case 'D': ixTag = CONSTANT_NameandType; break;
+          case 'F': ixTag = CONSTANT_Fieldref; break;
+          case 'M': ixTag = CONSTANT_Methodref; break;
+          case 'I': ixTag = CONSTANT_InterfaceMethodref; break;
+          case 'U': ixTag = CONSTANT_Utf8; break; //utf8_ref
+          case 'Q': ixTag = CONSTANT_All; break; //untyped_ref
+          }
+        }
+        if (ixTag == CONSTANT_None) {
+          abort("bad reference layout");
+          break;
+        }
+        bool nullOK = false;
+        if (*lp == 'N') {
+          nullOK = true;
+          lp++;
+        }
+        lp = parseIntLayout(lp, b, EK_REF);
+        b->defc = coding::findBySpec(UNSIGNED5_spec);
+        b->initRef(ixTag, nullOK);
       }
       break;
     case '[':
       {
-	// [callable1][callable2]...
-	if (!top_level) {
-	  abort("bad nested callable");
-	  break;
-	}
-	curCble += 1;
-	NOT_PRODUCT(int call_num = band_stack.length() - bs_base);
-	band& cble = *U_NEW(band, 1);
-	CHECK_(lp);
-	band_stack.add(&cble);
-	cble.le_kind = EK_CBLE;
-	NOT_PRODUCT(cble.le_len = call_num);
-	cble.bn = bands_made++;
-	lp = parseLayout(lp, cble.le_body, curCble);
+        // [callable1][callable2]...
+        if (!top_level) {
+          abort("bad nested callable");
+          break;
+        }
+        curCble += 1;
+        NOT_PRODUCT(int call_num = band_stack.length() - bs_base);
+        band& cble = *U_NEW(band, 1);
+        CHECK_(lp);
+        band_stack.add(&cble);
+        cble.le_kind = EK_CBLE;
+        NOT_PRODUCT(cble.le_len = call_num);
+        cble.bn = bands_made++;
+        lp = parseLayout(lp, cble.le_body, curCble);
       }
       break;
     case ']':
@@ -1832,10 +1832,10 @@ void unpacker::read_attr_defs() {
       "(115)[RUH]"
       "(91)[NH[(0)]]"
       "(64)["
-	// nested annotation:
-	"RSH"
-	"NH[RUH(0)]"
-	"]"
+        // nested annotation:
+        "RSH"
+        "NH[RUH(0)]"
+        "]"
       "()[]"
     "]"
     );
@@ -1849,16 +1849,16 @@ void unpacker::read_attr_defs() {
   for (i = 0; i < ATTR_CONTEXT_LIMIT; i++) {
     attr_definitions& ad = attr_defs[i];
     ad.defineLayout(X_ATTR_RuntimeVisibleAnnotations,
-		    "RuntimeVisibleAnnotations", md_layout_A);
+                    "RuntimeVisibleAnnotations", md_layout_A);
     ad.defineLayout(X_ATTR_RuntimeInvisibleAnnotations,
-		    "RuntimeInvisibleAnnotations", md_layout_A);
+                    "RuntimeInvisibleAnnotations", md_layout_A);
     if (i != ATTR_CONTEXT_METHOD)  continue;
     ad.defineLayout(METHOD_ATTR_RuntimeVisibleParameterAnnotations,
-		    "RuntimeVisibleParameterAnnotations", md_layout_P);
+                    "RuntimeVisibleParameterAnnotations", md_layout_P);
     ad.defineLayout(METHOD_ATTR_RuntimeInvisibleParameterAnnotations,
-		    "RuntimeInvisibleParameterAnnotations", md_layout_P);
+                    "RuntimeInvisibleParameterAnnotations", md_layout_P);
     ad.defineLayout(METHOD_ATTR_AnnotationDefault,
-		    "AnnotationDefault", md_layout_V);
+                    "AnnotationDefault", md_layout_V);
   }
 
   attr_definition_headers.readData(attr_definition_count);
@@ -2010,48 +2010,48 @@ void unpacker::read_ics() {
       int pkglen = lastIndexOf(SLASH_MIN,  SLASH_MAX,  n, nlen) + 1;
       dollar2    = lastIndexOf(DOLLAR_MIN, DOLLAR_MAX, n, nlen);
       if (dollar2 < 0) {
-	 abort();
-	 return;
+         abort();
+         return;
       }
       assert(dollar2 >= pkglen);
       if (isDigitString(n, dollar2+1, nlen)) {
-	// n = (<pkg>/)*<outer>$<number>
-	number = n.slice(dollar2+1, nlen);
-	name.set(null,0);
-	dollar1 = dollar2;
+        // n = (<pkg>/)*<outer>$<number>
+        number = n.slice(dollar2+1, nlen);
+        name.set(null,0);
+        dollar1 = dollar2;
       } else if (pkglen < (dollar1
-			   = lastIndexOf(DOLLAR_MIN, DOLLAR_MAX, n, dollar2-1))
-		 && isDigitString(n, dollar1+1, dollar2)) {
-	// n = (<pkg>/)*<outer>$<number>$<name>
-	number = n.slice(dollar1+1, dollar2);
-	name = n.slice(dollar2+1, nlen);
+                           = lastIndexOf(DOLLAR_MIN, DOLLAR_MAX, n, dollar2-1))
+                 && isDigitString(n, dollar1+1, dollar2)) {
+        // n = (<pkg>/)*<outer>$<number>$<name>
+        number = n.slice(dollar1+1, dollar2);
+        name = n.slice(dollar2+1, nlen);
       } else {
-	// n = (<pkg>/)*<outer>$<name>
-	dollar1 = dollar2;
-	number.set(null,0);
-	name = n.slice(dollar2+1, nlen);
+        // n = (<pkg>/)*<outer>$<name>
+        dollar1 = dollar2;
+        number.set(null,0);
+        name = n.slice(dollar2+1, nlen);
       }
       if (number.ptr == null)
-	pkgOuter = n.slice(0, dollar1);
+        pkgOuter = n.slice(0, dollar1);
       else
-	pkgOuter.set(null,0);
+        pkgOuter.set(null,0);
       printcr(5,"=> %s$ 0%s $%s",
-	      pkgOuter.string(), number.string(), name.string());
+              pkgOuter.string(), number.string(), name.string());
 
       if (pkgOuter.ptr != null)
-	ics[i].outer = cp.ensureClass(pkgOuter);
+        ics[i].outer = cp.ensureClass(pkgOuter);
 
       if (name.ptr != null)
-	ics[i].name = cp.ensureUtf8(name);
+        ics[i].name = cp.ensureUtf8(name);
     }
 
     // update child/sibling list
     if (ics[i].outer != null) {
       uint outord = ics[i].outer->inord;
       if (outord != NO_INORD) {
-	assert(outord < cp.tag_count[CONSTANT_Class]);
-	ics[i].next_sibling = ic_child_index[outord];
-	ic_child_index[outord] = &ics[i];
+        assert(outord < cp.tag_count[CONSTANT_Class]);
+        ics[i].next_sibling = ic_child_index[outord];
+        ic_child_index[outord] = &ics[i];
       }
     }
   }
@@ -2100,7 +2100,7 @@ void unpacker::read_classes() {
   read_code_headers();
 
   printcr(1,"scanned %d classes, %d fields, %d methods, %d code headers",
-	  class_count, field_count, method_count, code_count);
+          class_count, field_count, method_count, code_count);
 }
 
 maybe_inline
@@ -2173,11 +2173,11 @@ void unpacker::read_attrs(int attrc, int obj_count) {
       band** bands = ad.buildBands(lo);
       CHECK;
       if (lo->hasCallables()) {
-	for (i = 0; bands[i] != null; i++) {
-	  if (bands[i]->le_back) {
-	    assert(bands[i]->le_kind == EK_CBLE);
-	    backwardCounts += 1;
-	  }
+        for (i = 0; bands[i] != null; i++) {
+          if (bands[i]->le_back) {
+            assert(bands[i]->le_kind == EK_CBLE);
+            backwardCounts += 1;
+          }
         }
       }
     }
@@ -2352,7 +2352,7 @@ void unpacker::attr_definitions::readBandData(int idx) {
   layout_definition* lo = getLayout(idx);
   if (lo != null) {
     printcr(1, "counted %d [redefined = %d predefined = %d] attributes of type %s.%s",
-	    count, isRedefined(idx), isPredefined(idx), 
+            count, isRedefined(idx), isPredefined(idx),
             ATTR_CONTEXT_NAME[attrc], lo->name);
   }
   bool hasCallables = lo->hasCallables();
@@ -2369,10 +2369,10 @@ void unpacker::attr_definitions::readBandData(int idx) {
       band& j_cble = *bands[j];
       assert(j_cble.le_kind == EK_CBLE);
       if (j_cble.le_back) {
-	// Add in the predicted effects of backward calls, too.
-	int back_calls = xxx_attr_calls().getInt();
-	j_cble.expectMoreLength(back_calls);
-	// In a moment, more forward calls may increment j_cble.length.
+        // Add in the predicted effects of backward calls, too.
+        int back_calls = xxx_attr_calls().getInt();
+        j_cble.expectMoreLength(back_calls);
+        // In a moment, more forward calls may increment j_cble.length.
       }
     }
     // Now consult whichever callables have non-zero entry counts.
@@ -2392,38 +2392,38 @@ void unpacker::attr_definitions::readBandData(band** body, uint count) {
     switch (b.le_kind) {
     case EK_REPL:
       {
-	int reps = b.getIntTotal();
-	readBandData(b.le_body, reps);
+        int reps = b.getIntTotal();
+        readBandData(b.le_body, reps);
       }
       break;
     case EK_UN:
       {
-	int remaining = count;
-	for (k = 0; b.le_body[k] != null; k++) {
-	  band& k_case = *b.le_body[k];
-	  int   k_count = 0;
-	  if (k_case.le_casetags == null) {
-	    k_count = remaining;  // last (empty) case
-	  } else {
-	    int* tags = k_case.le_casetags;
-	    int ntags = *tags++;  // 1st element is length (why not?)
-	    while (ntags-- > 0) {
-	      int tag = *tags++;
-	      k_count += b.getIntCount(tag);
-	    }
-	  }
-	  readBandData(k_case.le_body, k_count);
-	  remaining -= k_count;
-	}
-	assert(remaining == 0);
+        int remaining = count;
+        for (k = 0; b.le_body[k] != null; k++) {
+          band& k_case = *b.le_body[k];
+          int   k_count = 0;
+          if (k_case.le_casetags == null) {
+            k_count = remaining;  // last (empty) case
+          } else {
+            int* tags = k_case.le_casetags;
+            int ntags = *tags++;  // 1st element is length (why not?)
+            while (ntags-- > 0) {
+              int tag = *tags++;
+              k_count += b.getIntCount(tag);
+            }
+          }
+          readBandData(k_case.le_body, k_count);
+          remaining -= k_count;
+        }
+        assert(remaining == 0);
       }
       break;
     case EK_CALL:
       // Push the count forward, if it is not a backward call.
       if (!b.le_back) {
-	band& cble = *b.le_body[0];
-	assert(cble.le_kind == EK_CBLE);
-	cble.expectMoreLength(count);
+        band& cble = *b.le_body[0];
+        assert(cble.le_kind == EK_CBLE);
+        cble.expectMoreLength(count);
       }
       break;
     case EK_CBLE:
@@ -2447,12 +2447,12 @@ band** findMatchingCase(int matchTag, band** cases) {
       int* tags = k_case.le_casetags;
       int ntags = *tags++;  // 1st element is length
       for (; ntags > 0; ntags--) {
-	int tag = *tags++;
-	if (tag == matchTag)
-	  break;
+        int tag = *tags++;
+        if (tag == matchTag)
+          break;
       }
       if (ntags == 0)
-	continue;   // does not match
+        continue;   // does not match
     }
     return k_case.le_body;
   }
@@ -2474,46 +2474,46 @@ void unpacker::putlayout(band** body) {
     if (b.defc != null) {
       // It has data, so unparse an element.
       if (b.ixTag != CONSTANT_None) {
-	assert(le_kind == EK_REF);
-	if (b.ixTag == CONSTANT_Literal)
-	  e = b.getRefUsing(cp.getKQIndex());
-	else
-	  e = b.getRefN();
-	switch (b.le_len) {
-	case 0: break;
-	case 1: putu1ref(e); break;
-	case 2: putref(e); break;
-	case 4: putu2(0); putref(e); break;
-	default: assert(false);
-	}
+        assert(le_kind == EK_REF);
+        if (b.ixTag == CONSTANT_Literal)
+          e = b.getRefUsing(cp.getKQIndex());
+        else
+          e = b.getRefN();
+        switch (b.le_len) {
+        case 0: break;
+        case 1: putu1ref(e); break;
+        case 2: putref(e); break;
+        case 4: putu2(0); putref(e); break;
+        default: assert(false);
+        }
       } else {
-	assert(le_kind == EK_INT || le_kind == EK_REPL || le_kind == EK_UN);
-	x = b.getInt();
+        assert(le_kind == EK_INT || le_kind == EK_REPL || le_kind == EK_UN);
+        x = b.getInt();
 
-	assert(!b.le_bci || prevBCI == to_bci(prevBII));
-	switch (b.le_bci) {
-	case EK_BCI:   // PH:  transmit R(bci), store bci
-	  x = to_bci(prevBII = x);
-	  prevBCI = x;
-	  break;
-	case EK_BCID:  // POH: transmit D(R(bci)), store bci
-	  x = to_bci(prevBII += x);
-	  prevBCI = x;
-	  break;
-	case EK_BCO:   // OH:  transmit D(R(bci)), store D(bci)
-	  x = to_bci(prevBII += x) - prevBCI;
-	  prevBCI += x;
-	  break;
-	}
-	assert(!b.le_bci || prevBCI == to_bci(prevBII));
+        assert(!b.le_bci || prevBCI == to_bci(prevBII));
+        switch (b.le_bci) {
+        case EK_BCI:   // PH:  transmit R(bci), store bci
+          x = to_bci(prevBII = x);
+          prevBCI = x;
+          break;
+        case EK_BCID:  // POH: transmit D(R(bci)), store bci
+          x = to_bci(prevBII += x);
+          prevBCI = x;
+          break;
+        case EK_BCO:   // OH:  transmit D(R(bci)), store D(bci)
+          x = to_bci(prevBII += x) - prevBCI;
+          prevBCI += x;
+          break;
+        }
+        assert(!b.le_bci || prevBCI == to_bci(prevBII));
 
-	switch (b.le_len) {
-	case 0: break;
-	case 1: putu1(x); break;
-	case 2: putu2(x); break;
-	case 4: putu4(x); break;
-	default: assert(false);
-	}
+        switch (b.le_len) {
+        case 0: break;
+        case 1: putu1(x); break;
+        case 2: putu2(x); break;
+        case 4: putu4(x); break;
+        default: assert(false);
+        }
       }
     }
 
@@ -2522,7 +2522,7 @@ void unpacker::putlayout(band** body) {
     case EK_REPL:
       // x is the repeat count
       while (x-- > 0) {
-	putlayout(b.le_body);
+        putlayout(b.le_body);
       }
       break;
     case EK_UN:
@@ -2531,10 +2531,10 @@ void unpacker::putlayout(band** body) {
       break;
     case EK_CALL:
       {
-	band& cble = *b.le_body[0];
-	assert(cble.le_kind == EK_CBLE);
-	assert(cble.le_len == b.le_len);
-	putlayout(cble.le_body);
+        band& cble = *b.le_body[0];
+        assert(cble.le_kind == EK_CBLE);
+        assert(cble.le_len == b.le_len);
+        putlayout(cble.le_body);
       }
       break;
 
@@ -2560,7 +2560,7 @@ void unpacker::read_files() {
     // FO_IS_CLASS_STUB might be set, causing overlap between classes and files
     for (int i = 0; i < file_count; i++) {
       if ((file_options.getInt() & FO_IS_CLASS_STUB) != 0) {
-	allFiles -= 1;  // this one counts as both class and file
+        allFiles -= 1;  // this one counts as both class and file
       }
     }
     file_options.rewind();
@@ -2571,9 +2571,9 @@ void unpacker::read_files() {
 
 maybe_inline
 void unpacker::get_code_header(int& max_stack,
-			       int& max_na_locals,
-			       int& handler_count,
-			       int& cflags) {
+                               int& max_na_locals,
+                               int& handler_count,
+                               int& cflags) {
   int sc = code_headers.getByte();
   if (sc == 0) {
     max_stack = max_na_locals = handler_count = cflags = -1;
@@ -2722,7 +2722,7 @@ band* unpacker::ref_band_for_self_op(int bc, bool& isAloadVar, int& origBCVar) {
 inline  // called exactly once => inline
 void unpacker::read_bcs() {
   printcr(3, "reading compressed bytecodes and operands for %d codes...",
-	  code_count);
+          code_count);
 
   // read from bc_codes and bc_case_count
   fillbytes all_switch_ops;
@@ -2743,80 +2743,80 @@ void unpacker::read_bcs() {
     // Scan one method:
     for (;;) {
       if (opptr+2 > oplimit) {
-	rp = opptr;
-	ensure_input(2);
-	oplimit = rplimit;
-	rp = rp0;  // back up
+        rp = opptr;
+        ensure_input(2);
+        oplimit = rplimit;
+        rp = rp0;  // back up
       }
       if (opptr == oplimit) { abort(); break; }
       int bc = *opptr++ & 0xFF;
       bool isWide = false;
       if (bc == bc_wide) {
-	if (opptr == oplimit) { abort(); break; }
-	bc = *opptr++ & 0xFF;
-	isWide = true;
+        if (opptr == oplimit) { abort(); break; }
+        bc = *opptr++ & 0xFF;
+        isWide = true;
       }
       // Adjust expectations of various band sizes.
       switch (bc) {
       case bc_tableswitch:
       case bc_lookupswitch:
-	all_switch_ops.addByte(bc);
-	break;
+        all_switch_ops.addByte(bc);
+        break;
       case bc_iinc:
-	bc_local.expectMoreLength(1);
-	bc_which = isWide ? &bc_short : &bc_byte;
-	bc_which->expectMoreLength(1);
-	break;
+        bc_local.expectMoreLength(1);
+        bc_which = isWide ? &bc_short : &bc_byte;
+        bc_which->expectMoreLength(1);
+        break;
       case bc_sipush:
-	bc_short.expectMoreLength(1);
-	break;
+        bc_short.expectMoreLength(1);
+        break;
       case bc_bipush:
-	bc_byte.expectMoreLength(1);
-	break;
+        bc_byte.expectMoreLength(1);
+        break;
       case bc_newarray:
-	bc_byte.expectMoreLength(1);
-	break;
+        bc_byte.expectMoreLength(1);
+        break;
       case bc_multianewarray:
-	assert(ref_band_for_op(bc) == &bc_classref);
-	bc_classref.expectMoreLength(1);
-	bc_byte.expectMoreLength(1);
-	break;
+        assert(ref_band_for_op(bc) == &bc_classref);
+        bc_classref.expectMoreLength(1);
+        bc_byte.expectMoreLength(1);
+        break;
       case bc_ref_escape:
-	bc_escrefsize.expectMoreLength(1);
-	bc_escref.expectMoreLength(1);
-	break;
+        bc_escrefsize.expectMoreLength(1);
+        bc_escref.expectMoreLength(1);
+        break;
       case bc_byte_escape:
-	bc_escsize.expectMoreLength(1);
-	// bc_escbyte will have to be counted too
-	break;
+        bc_escsize.expectMoreLength(1);
+        // bc_escbyte will have to be counted too
+        break;
       default:
-	if (is_invoke_init_op(bc)) {
-	  bc_initref.expectMoreLength(1);
-	  break;
-	}
-	bc_which = ref_band_for_self_op(bc, isAload, junkBC);
-	if (bc_which != null) {
-	  bc_which->expectMoreLength(1);
-	  break;
-	}
-	if (is_branch_op(bc)) {
-	  bc_label.expectMoreLength(1);
-	  break;
-	}
-	bc_which = ref_band_for_op(bc);
-	if (bc_which != null) {
-	  bc_which->expectMoreLength(1);
-	  assert(bc != bc_multianewarray);  // handled elsewhere
-	  break;
-	}
-	if (is_local_slot_op(bc)) {
-	  bc_local.expectMoreLength(1);
-	  break;
-	}
-	break;
+        if (is_invoke_init_op(bc)) {
+          bc_initref.expectMoreLength(1);
+          break;
+        }
+        bc_which = ref_band_for_self_op(bc, isAload, junkBC);
+        if (bc_which != null) {
+          bc_which->expectMoreLength(1);
+          break;
+        }
+        if (is_branch_op(bc)) {
+          bc_label.expectMoreLength(1);
+          break;
+        }
+        bc_which = ref_band_for_op(bc);
+        if (bc_which != null) {
+          bc_which->expectMoreLength(1);
+          assert(bc != bc_multianewarray);  // handled elsewhere
+          break;
+        }
+        if (is_local_slot_op(bc)) {
+          bc_local.expectMoreLength(1);
+          break;
+        }
+        break;
       case bc_end_marker:
-	// Increment k and test against code_count.
-	goto doneScanningMethod;
+        // Increment k and test against code_count.
+        goto doneScanningMethod;
       }
     }
   doneScanningMethod:{}
@@ -2850,9 +2850,9 @@ void unpacker::read_bcs() {
   bc_escbyte.readData(bc_escsize.getIntTotal());
 
   printcr(3, "scanned %d opcode and %d operand bytes for %d codes...",
-	  (int)(bc_codes.size()),
-	  (int)(bc_escsize.maxRP() - bc_case_value.minRP()),
-	  code_count);
+          (int)(bc_codes.size()),
+          (int)(bc_escsize.maxRP() - bc_case_value.minRP()),
+          code_count);
 }
 
 void unpacker::read_bands() {
@@ -2984,8 +2984,8 @@ void cpool::expandSignatures() {
       int c = form.ptr[j];
       buf.addByte(c);
       if (c == 'L') {
-	entry* cls = e.refs[refnum++];
-	buf.append(cls->className()->asUtf8());
+        entry* cls = e.refs[refnum++];
+        buf.append(cls->className()->asUtf8());
       }
     }
     assert(refnum == e.nrefs);
@@ -3020,7 +3020,7 @@ void cpool::expandSignatures() {
     for (int j = 0; j < e.nrefs; j++) {
       entry*& e2 = e.refs[j];
       if (e2 != null && e2->tag == CONSTANT_Signature)
-	e2 = e2->refs[0];
+        e2 = e2->refs[0];
     }
   }
 }
@@ -3062,14 +3062,14 @@ void cpool::initMemberIndexes() {
     int fc = field_counts[i];
     int mc = method_counts[i];
     all_indexes[i*2+0].init(fc, field_ix+fbase,
-			    CONSTANT_Fieldref  + SUBINDEX_BIT);
+                            CONSTANT_Fieldref  + SUBINDEX_BIT);
     all_indexes[i*2+1].init(mc, method_ix+mbase,
-			    CONSTANT_Methodref + SUBINDEX_BIT);
+                            CONSTANT_Methodref + SUBINDEX_BIT);
     // reuse field_counts and member_counts as fill pointers:
     field_counts[i] = fbase;
     method_counts[i] = mbase;
     printcr(3, "class %d fields @%d[%d] methods @%d[%d]",
-	    i, fbase, fc, mbase, mc);
+            i, fbase, fc, mbase, mc);
     fbase += fc+1;
     mbase += mc+1;
     // (the +1 leaves a space between every subarray)
@@ -3099,7 +3099,7 @@ void cpool::initMemberIndexes() {
     cpindex* fix = getFieldIndex(cls);
     cpindex* mix = getMethodIndex(cls);
     printcr(2, "field and method index for %s [%d] [%d]",
-	    cls->string(), mix->len, fix->len);
+            cls->string(), mix->len, fix->len);
     prevord = -1;
     for (j = 0, len = fix->len; j < len; j++) {
       entry* f = fix->get(j);
@@ -3125,7 +3125,7 @@ void cpool::initMemberIndexes() {
   }
   assert(fvisited == nfields);
   assert(mvisited == nmethods);
-#endif  
+#endif
 
   // Free intermediate buffers.
   u->free_temps();
@@ -3359,8 +3359,8 @@ const char* unpacker::get_option(const char* prop) {
 bool unpacker::set_option(const char* prop, const char* value) {
   if (prop == NULL)  return false;
   if (strcmp(prop, UNPACK_DEFLATE_HINT) == 0) {
-    deflate_hint_or_zero = ( (value == null || strcmp(value, "keep") == 0)  
-				? 0: BOOL_TF(value) ? +1: -1);
+    deflate_hint_or_zero = ( (value == null || strcmp(value, "keep") == 0)
+                                ? 0: BOOL_TF(value) ? +1: -1);
 #ifdef HAVE_STRIP
   } else if (strcmp(prop, UNPACK_STRIP_COMPILE) == 0) {
     strip_compile = STR_TF(value);
@@ -3387,7 +3387,7 @@ bool unpacker::set_option(const char* prop, const char* value) {
     } else {
       modification_time_or_zero = atoi(value);
       if (modification_time_or_zero == 0)
-	modification_time_or_zero = 1;  // make non-zero
+        modification_time_or_zero = 1;  // make non-zero
     }
   } else if (strcmp(prop, UNPACK_LOG_FILE) == 0) {
     log_file = (value == null)? value: saveStr(value);
@@ -3518,7 +3518,7 @@ void unpacker::dump_options() {
 
 
 // Usage: unpack a byte buffer
-// packptr is a reference to byte buffer containing a 
+// packptr is a reference to byte buffer containing a
 // packed file and len is the length of the buffer.
 // If null, the callback is used to fill an internal buffer.
 void unpacker::start(void* packptr, size_t len) {
@@ -3681,196 +3681,196 @@ void unpacker::write_bc_ops() {
     case bc_tableswitch: // apc:  (df, lo, hi, (hi-lo+1)*(label))
     case bc_lookupswitch: // apc:  (df, nc, nc*(case, label))
       {
-	int caseCount = bc_case_count.getInt();
-	while (((wpoffset() - codeBase) % 4) != 0)  putu1_fast(0);
-	ensure_put_space(30 + caseCount*8);
-	put_label(curIP, 4);  //int df = bc_label.getInt();
-	if (bc == bc_tableswitch) {
-	  int lo = bc_case_value.getInt();
-	  int hi = lo + caseCount-1;
-	  putu4(lo);
-	  putu4(hi);
-	  for (int j = 0; j < caseCount; j++) {
-	    put_label(curIP, 4); //int lVal = bc_label.getInt();
-	    //int cVal = lo + j;
-	  }
-	} else {
-	  putu4(caseCount);
-	  for (int j = 0; j < caseCount; j++) {
-	    int cVal = bc_case_value.getInt();
-	    putu4(cVal);
-	    put_label(curIP, 4); //int lVal = bc_label.getInt();
-	  }
-	}
-	assert(to_bci(curIP) == curPC);
-	continue;
+        int caseCount = bc_case_count.getInt();
+        while (((wpoffset() - codeBase) % 4) != 0)  putu1_fast(0);
+        ensure_put_space(30 + caseCount*8);
+        put_label(curIP, 4);  //int df = bc_label.getInt();
+        if (bc == bc_tableswitch) {
+          int lo = bc_case_value.getInt();
+          int hi = lo + caseCount-1;
+          putu4(lo);
+          putu4(hi);
+          for (int j = 0; j < caseCount; j++) {
+            put_label(curIP, 4); //int lVal = bc_label.getInt();
+            //int cVal = lo + j;
+          }
+        } else {
+          putu4(caseCount);
+          for (int j = 0; j < caseCount; j++) {
+            int cVal = bc_case_value.getInt();
+            putu4(cVal);
+            put_label(curIP, 4); //int lVal = bc_label.getInt();
+          }
+        }
+        assert(to_bci(curIP) == curPC);
+        continue;
       }
     case bc_iinc:
       {
-	int local = bc_local.getInt();
-	int delta = (isWide ? bc_short : bc_byte).getInt();
-	if (isWide) {
-	  putu2(local);
-	  putu2(delta);
-	} else {
-	  putu1_fast(local);
-	  putu1_fast(delta);
-	}
-	continue;
+        int local = bc_local.getInt();
+        int delta = (isWide ? bc_short : bc_byte).getInt();
+        if (isWide) {
+          putu2(local);
+          putu2(delta);
+        } else {
+          putu1_fast(local);
+          putu1_fast(delta);
+        }
+        continue;
       }
     case bc_sipush:
       {
-	int val = bc_short.getInt();
-	putu2(val);
-	continue;
+        int val = bc_short.getInt();
+        putu2(val);
+        continue;
       }
     case bc_bipush:
     case bc_newarray:
       {
-	int val = bc_byte.getByte();
-	putu1_fast(val);
-	continue;
+        int val = bc_byte.getByte();
+        putu1_fast(val);
+        continue;
       }
     case bc_ref_escape:
       {
-	// Note that insnMap has one entry for this.
+        // Note that insnMap has one entry for this.
         --wp;  // not really part of the code
-	int size = bc_escrefsize.getInt();
-	entry* ref = bc_escref.getRefN();
-	CHECK;
-	switch (size) {
-	case 1: putu1ref(ref); break;
-	case 2: putref(ref);   break;
-	default: assert(false);
-	}
-	continue;
+        int size = bc_escrefsize.getInt();
+        entry* ref = bc_escref.getRefN();
+        CHECK;
+        switch (size) {
+        case 1: putu1ref(ref); break;
+        case 2: putref(ref);   break;
+        default: assert(false);
+        }
+        continue;
       }
     case bc_byte_escape:
       {
-	// Note that insnMap has one entry for all these bytes.
+        // Note that insnMap has one entry for all these bytes.
         --wp;  // not really part of the code
-	int size = bc_escsize.getInt();
-	ensure_put_space(size);
-	for (int j = 0; j < size; j++)
-	  putu1_fast(bc_escbyte.getByte());
-	continue;
+        int size = bc_escsize.getInt();
+        ensure_put_space(size);
+        for (int j = 0; j < size; j++)
+          putu1_fast(bc_escbyte.getByte());
+        continue;
       }
     default:
       if (is_invoke_init_op(bc)) {
-	origBC = bc_invokespecial;
-	entry* classRef;
-	switch (bc - _invokeinit_op) {
-	case _invokeinit_self_option:   classRef = thisClass;  break;
-	case _invokeinit_super_option:  classRef = superClass; break;
-	default: assert(bc == _invokeinit_op+_invokeinit_new_option);
-	case _invokeinit_new_option:    classRef = newClass;   break;
-	}
-	wp[-1] = origBC;  // overwrite with origBC
-	int coding = bc_initref.getInt();
-	// Find the nth overloading of <init> in classRef.
-	entry*   ref = null;
-	cpindex* ix = (classRef == null)? null: cp.getMethodIndex(classRef);
-	for (int j = 0, which_init = 0; ; j++) {
-	  ref = (ix == null)? null: ix->get(j);
-	  if (ref == null)  break;  // oops, bad input
-	  assert(ref->tag == CONSTANT_Methodref);
-	  if (ref->memberDescr()->descrName() == cp.sym[cpool::s_lt_init_gt]) {
-	    if (which_init++ == coding)  break;
-	  }
-	}
-	putref(ref);
-	continue;
+        origBC = bc_invokespecial;
+        entry* classRef;
+        switch (bc - _invokeinit_op) {
+        case _invokeinit_self_option:   classRef = thisClass;  break;
+        case _invokeinit_super_option:  classRef = superClass; break;
+        default: assert(bc == _invokeinit_op+_invokeinit_new_option);
+        case _invokeinit_new_option:    classRef = newClass;   break;
+        }
+        wp[-1] = origBC;  // overwrite with origBC
+        int coding = bc_initref.getInt();
+        // Find the nth overloading of <init> in classRef.
+        entry*   ref = null;
+        cpindex* ix = (classRef == null)? null: cp.getMethodIndex(classRef);
+        for (int j = 0, which_init = 0; ; j++) {
+          ref = (ix == null)? null: ix->get(j);
+          if (ref == null)  break;  // oops, bad input
+          assert(ref->tag == CONSTANT_Methodref);
+          if (ref->memberDescr()->descrName() == cp.sym[cpool::s_lt_init_gt]) {
+            if (which_init++ == coding)  break;
+          }
+        }
+        putref(ref);
+        continue;
       }
       bc_which = ref_band_for_self_op(bc, isAload, origBC);
       if (bc_which != null) {
-	if (!isAload) {
-	  wp[-1] = origBC;  // overwrite with origBC
-	} else {
-	  wp[-1] = bc_aload_0;  // overwrite with _aload_0
-	  // Note: insnMap keeps the _aload_0 separate.
-	  bcimap.add(++curPC);
-	  ++curIP;
-	  putu1_fast(origBC);
-	}
-	entry* ref = bc_which->getRef();
-	CHECK;
-	putref(ref);
-	continue;
+        if (!isAload) {
+          wp[-1] = origBC;  // overwrite with origBC
+        } else {
+          wp[-1] = bc_aload_0;  // overwrite with _aload_0
+          // Note: insnMap keeps the _aload_0 separate.
+          bcimap.add(++curPC);
+          ++curIP;
+          putu1_fast(origBC);
+        }
+        entry* ref = bc_which->getRef();
+        CHECK;
+        putref(ref);
+        continue;
       }
       if (is_branch_op(bc)) {
-	//int lVal = bc_label.getInt();
-	if (bc < bc_goto_w) {
-	  put_label(curIP, 2);  //putu2(lVal & 0xFFFF);
-	} else {
-	  assert(bc <= bc_jsr_w);
-	  put_label(curIP, 4);  //putu4(lVal);
-	}
-	assert(to_bci(curIP) == curPC);
-	continue;
+        //int lVal = bc_label.getInt();
+        if (bc < bc_goto_w) {
+          put_label(curIP, 2);  //putu2(lVal & 0xFFFF);
+        } else {
+          assert(bc <= bc_jsr_w);
+          put_label(curIP, 4);  //putu4(lVal);
+        }
+        assert(to_bci(curIP) == curPC);
+        continue;
       }
       bc_which = ref_band_for_op(bc);
       if (bc_which != null) {
-	entry* ref = bc_which->getRefCommon(bc_which->ix, bc_which->nullOK);
-	CHECK;
-	if (ref == null && bc_which == &bc_classref) {
-	  // Shorthand for class self-references.
-	  ref = thisClass;
-	}
-	origBC = bc;
-	switch (bc) {
-	case bc_ildc:
-	case bc_cldc:
-	case bc_fldc:
-	case bc_aldc:
-	  origBC = bc_ldc;
-	  break;
-	case bc_ildc_w:
-	case bc_cldc_w:
-	case bc_fldc_w:
-	case bc_aldc_w:
-	  origBC = bc_ldc_w;
-	  break;
-	case bc_lldc2_w:
-	case bc_dldc2_w:
-	  origBC = bc_ldc2_w;
-	  break;
-	case bc_new:
-	  newClass = ref;
-	  break;
-	}
-	wp[-1] = origBC;  // overwrite with origBC
-	if (origBC == bc_ldc) {
-	  putu1ref(ref);
-	} else {
-	  putref(ref);
-	}
-	if (origBC == bc_multianewarray) {
-	  // Copy the trailing byte also.
-	  int val = bc_byte.getByte();
-	  putu1_fast(val);
-	} else if (origBC == bc_invokeinterface) {
-	  int argSize = ref->memberDescr()->descrType()->typeSize();
-	  putu1_fast(1 + argSize);
-	  putu1_fast(0);
-	}
-	continue;
+        entry* ref = bc_which->getRefCommon(bc_which->ix, bc_which->nullOK);
+        CHECK;
+        if (ref == null && bc_which == &bc_classref) {
+          // Shorthand for class self-references.
+          ref = thisClass;
+        }
+        origBC = bc;
+        switch (bc) {
+        case bc_ildc:
+        case bc_cldc:
+        case bc_fldc:
+        case bc_aldc:
+          origBC = bc_ldc;
+          break;
+        case bc_ildc_w:
+        case bc_cldc_w:
+        case bc_fldc_w:
+        case bc_aldc_w:
+          origBC = bc_ldc_w;
+          break;
+        case bc_lldc2_w:
+        case bc_dldc2_w:
+          origBC = bc_ldc2_w;
+          break;
+        case bc_new:
+          newClass = ref;
+          break;
+        }
+        wp[-1] = origBC;  // overwrite with origBC
+        if (origBC == bc_ldc) {
+          putu1ref(ref);
+        } else {
+          putref(ref);
+        }
+        if (origBC == bc_multianewarray) {
+          // Copy the trailing byte also.
+          int val = bc_byte.getByte();
+          putu1_fast(val);
+        } else if (origBC == bc_invokeinterface) {
+          int argSize = ref->memberDescr()->descrType()->typeSize();
+          putu1_fast(1 + argSize);
+          putu1_fast(0);
+        }
+        continue;
       }
       if (is_local_slot_op(bc)) {
-	int local = bc_local.getInt();
-	if (isWide) {
-	  putu2(local);
-	  if (bc == bc_iinc) {
-	    int iVal = bc_short.getInt();
-	    putu2(iVal);
-	  }
-	} else {
-	  putu1_fast(local);
-	  if (bc == bc_iinc) {
-	    int iVal = bc_byte.getByte();
-	    putu1_fast(iVal);
-	  }
-	}
-	continue;
+        int local = bc_local.getInt();
+        if (isWide) {
+          putu2(local);
+          if (bc == bc_iinc) {
+            int iVal = bc_short.getInt();
+            putu2(iVal);
+          }
+        } else {
+          putu1_fast(local);
+          if (bc == bc_iinc) {
+            int iVal = bc_byte.getByte();
+            putu1_fast(iVal);
+          }
+        }
+        continue;
       }
       // Random bytecode.  Just copy it.
       assert(bc < bc_bytecode_limit);
@@ -3994,78 +3994,78 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
       case ADH_BYTE(ATTR_CONTEXT_FIELD,  X_ATTR_OVERFLOW):
       case ADH_BYTE(ATTR_CONTEXT_METHOD, X_ATTR_OVERFLOW):
       case ADH_BYTE(ATTR_CONTEXT_CODE,   X_ATTR_OVERFLOW):
-	// no attribute at all, so back up on this one
-	wp = wp_at(abase);
-	continue;
+        // no attribute at all, so back up on this one
+        wp = wp_at(abase);
+        continue;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS, CLASS_ATTR_ClassFile_version):
-	cur_class_minver = class_ClassFile_version_minor_H.getInt();
-	cur_class_majver = class_ClassFile_version_major_H.getInt();
-	// back up; not a real attribute
-	wp = wp_at(abase);
-	continue;
+        cur_class_minver = class_ClassFile_version_minor_H.getInt();
+        cur_class_majver = class_ClassFile_version_major_H.getInt();
+        // back up; not a real attribute
+        wp = wp_at(abase);
+        continue;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS, CLASS_ATTR_InnerClasses):
-	// note the existence of this attr, but save for later
-	if (cur_class_has_local_ics)
-	  abort("too many InnerClasses attrs");
-	cur_class_has_local_ics = true;
-	wp = wp_at(abase);
-	continue;
+        // note the existence of this attr, but save for later
+        if (cur_class_has_local_ics)
+          abort("too many InnerClasses attrs");
+        cur_class_has_local_ics = true;
+        wp = wp_at(abase);
+        continue;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS, CLASS_ATTR_SourceFile):
-	aname = cp.sym[cpool::s_SourceFile];
-	ref = class_SourceFile_RUN.getRefN();
-	CHECK_0;
-	if (ref == null) {
-	  bytes& n = cur_class->ref(0)->value.b;
-	  // parse n = (<pkg>/)*<outer>?($<id>)*
-	  int pkglen = lastIndexOf(SLASH_MIN,  SLASH_MAX,  n, n.len)+1;
-	  bytes prefix = n.slice(pkglen, n.len);
-	  for (;;) {
-	    // Work backwards, finding all '$', '#', etc.
-	    int dollar = lastIndexOf(DOLLAR_MIN, DOLLAR_MAX, prefix, prefix.len);
-	    if (dollar < 0)  break;
-	    prefix = prefix.slice(0, dollar);
-	  }
-	  const char* suffix = ".java";
-	  int len = prefix.len + strlen(suffix);
-	  bytes name; name.set(T_NEW(byte, len + 1), len);
-	  name.strcat(prefix).strcat(suffix);
-	  ref = cp.ensureUtf8(name);
-	}
-	putref(ref);
-	break;
+        aname = cp.sym[cpool::s_SourceFile];
+        ref = class_SourceFile_RUN.getRefN();
+        CHECK_0;
+        if (ref == null) {
+          bytes& n = cur_class->ref(0)->value.b;
+          // parse n = (<pkg>/)*<outer>?($<id>)*
+          int pkglen = lastIndexOf(SLASH_MIN,  SLASH_MAX,  n, n.len)+1;
+          bytes prefix = n.slice(pkglen, n.len);
+          for (;;) {
+            // Work backwards, finding all '$', '#', etc.
+            int dollar = lastIndexOf(DOLLAR_MIN, DOLLAR_MAX, prefix, prefix.len);
+            if (dollar < 0)  break;
+            prefix = prefix.slice(0, dollar);
+          }
+          const char* suffix = ".java";
+          int len = prefix.len + strlen(suffix);
+          bytes name; name.set(T_NEW(byte, len + 1), len);
+          name.strcat(prefix).strcat(suffix);
+          ref = cp.ensureUtf8(name);
+        }
+        putref(ref);
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS, CLASS_ATTR_EnclosingMethod):
-	aname = cp.sym[cpool::s_EnclosingMethod];
-	putref(class_EnclosingMethod_RC.getRefN());
-	putref(class_EnclosingMethod_RDN.getRefN());
-	break;
+        aname = cp.sym[cpool::s_EnclosingMethod];
+        putref(class_EnclosingMethod_RC.getRefN());
+        putref(class_EnclosingMethod_RDN.getRefN());
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_FIELD, FIELD_ATTR_ConstantValue):
-	aname = cp.sym[cpool::s_ConstantValue];
-	putref(field_ConstantValue_KQ.getRefUsing(cp.getKQIndex()));
-	break;
+        aname = cp.sym[cpool::s_ConstantValue];
+        putref(field_ConstantValue_KQ.getRefUsing(cp.getKQIndex()));
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_METHOD, METHOD_ATTR_Code):
-	aname = cp.sym[cpool::s_Code];
-	write_code();
-	break;
+        aname = cp.sym[cpool::s_Code];
+        write_code();
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_METHOD, METHOD_ATTR_Exceptions):
-	aname = cp.sym[cpool::s_Exceptions];
-	putu2(count = method_Exceptions_N.getInt());
-	for (j = 0; j < count; j++) {
-	  putref(method_Exceptions_RC.getRefN());
-	}
-	break;
+        aname = cp.sym[cpool::s_Exceptions];
+        putu2(count = method_Exceptions_N.getInt());
+        for (j = 0; j < count; j++) {
+          putref(method_Exceptions_RC.getRefN());
+        }
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CODE, CODE_ATTR_StackMapTable):
-	aname = cp.sym[cpool::s_StackMapTable];
+        aname = cp.sym[cpool::s_StackMapTable];
         // (keep this code aligned with its brother in unpacker::read_attrs)
-	putu2(count = code_StackMapTable_N.getInt());
-	for (j = 0; j < count; j++) {
+        putu2(count = code_StackMapTable_N.getInt());
+        for (j = 0; j < count; j++) {
           int tag = code_StackMapTable_frame_T.getByte();
           putu1(tag);
           if (tag <= 127) {
@@ -4092,69 +4092,69 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
             putu2(j2 = code_StackMapTable_stack_N.getInt());
             while (j2-- > 0)  put_stackmap_type();
           }
-	}
-	break;
+        }
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CODE, CODE_ATTR_LineNumberTable):
-	aname = cp.sym[cpool::s_LineNumberTable];
-	putu2(count = code_LineNumberTable_N.getInt());
-	for (j = 0; j < count; j++) {
-	  putu2(to_bci(code_LineNumberTable_bci_P.getInt()));
-	  putu2(code_LineNumberTable_line.getInt());
-	}
-	break;
+        aname = cp.sym[cpool::s_LineNumberTable];
+        putu2(count = code_LineNumberTable_N.getInt());
+        for (j = 0; j < count; j++) {
+          putu2(to_bci(code_LineNumberTable_bci_P.getInt()));
+          putu2(code_LineNumberTable_line.getInt());
+        }
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CODE, CODE_ATTR_LocalVariableTable):
-	aname = cp.sym[cpool::s_LocalVariableTable];
-	putu2(count = code_LocalVariableTable_N.getInt());
-	for (j = 0; j < count; j++) {
-	  int bii = code_LocalVariableTable_bci_P.getInt();
-	  int bci = to_bci(bii);
-	  putu2(bci);
-	  bii    += code_LocalVariableTable_span_O.getInt();
-	  putu2(to_bci(bii) - bci);
-	  putref(code_LocalVariableTable_name_RU.getRefN());
-	  putref(code_LocalVariableTable_type_RS.getRefN());
-	  putu2(code_LocalVariableTable_slot.getInt());
-	}
-	break;
+        aname = cp.sym[cpool::s_LocalVariableTable];
+        putu2(count = code_LocalVariableTable_N.getInt());
+        for (j = 0; j < count; j++) {
+          int bii = code_LocalVariableTable_bci_P.getInt();
+          int bci = to_bci(bii);
+          putu2(bci);
+          bii    += code_LocalVariableTable_span_O.getInt();
+          putu2(to_bci(bii) - bci);
+          putref(code_LocalVariableTable_name_RU.getRefN());
+          putref(code_LocalVariableTable_type_RS.getRefN());
+          putu2(code_LocalVariableTable_slot.getInt());
+        }
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CODE, CODE_ATTR_LocalVariableTypeTable):
-	aname = cp.sym[cpool::s_LocalVariableTypeTable];
-	putu2(count = code_LocalVariableTypeTable_N.getInt());
-	for (j = 0; j < count; j++) {
-	  int bii = code_LocalVariableTypeTable_bci_P.getInt();
-	  int bci = to_bci(bii);
-	  putu2(bci);
-	  bii    += code_LocalVariableTypeTable_span_O.getInt();
-	  putu2(to_bci(bii) - bci);
-	  putref(code_LocalVariableTypeTable_name_RU.getRefN());
-	  putref(code_LocalVariableTypeTable_type_RS.getRefN());
-	  putu2(code_LocalVariableTypeTable_slot.getInt());
-	}
-	break;
+        aname = cp.sym[cpool::s_LocalVariableTypeTable];
+        putu2(count = code_LocalVariableTypeTable_N.getInt());
+        for (j = 0; j < count; j++) {
+          int bii = code_LocalVariableTypeTable_bci_P.getInt();
+          int bci = to_bci(bii);
+          putu2(bci);
+          bii    += code_LocalVariableTypeTable_span_O.getInt();
+          putu2(to_bci(bii) - bci);
+          putref(code_LocalVariableTypeTable_name_RU.getRefN());
+          putref(code_LocalVariableTypeTable_type_RS.getRefN());
+          putu2(code_LocalVariableTypeTable_slot.getInt());
+        }
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS, X_ATTR_Signature):
-	aname = cp.sym[cpool::s_Signature];
-	putref(class_Signature_RS.getRefN());
-	break;
+        aname = cp.sym[cpool::s_Signature];
+        putref(class_Signature_RS.getRefN());
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_FIELD, X_ATTR_Signature):
-	aname = cp.sym[cpool::s_Signature];
-	putref(field_Signature_RS.getRefN());
-	break;
+        aname = cp.sym[cpool::s_Signature];
+        putref(field_Signature_RS.getRefN());
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_METHOD, X_ATTR_Signature):
-	aname = cp.sym[cpool::s_Signature];
-	putref(method_Signature_RS.getRefN());
-	break;
+        aname = cp.sym[cpool::s_Signature];
+        putref(method_Signature_RS.getRefN());
+        break;
 
       case ADH_BYTE(ATTR_CONTEXT_CLASS,  X_ATTR_Deprecated):
       case ADH_BYTE(ATTR_CONTEXT_FIELD,  X_ATTR_Deprecated):
       case ADH_BYTE(ATTR_CONTEXT_METHOD, X_ATTR_Deprecated):
-	aname = cp.sym[cpool::s_Deprecated];
-	// no data
-	break;
+        aname = cp.sym[cpool::s_Deprecated];
+        // no data
+        break;
       }
     }
 
@@ -4162,28 +4162,28 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
       // Unparse a compressor-defined attribute.
       layout_definition* lo = ad.getLayout(idx);
       if (lo == null) {
-	abort("bad layout index");
-	break;
+        abort("bad layout index");
+        break;
       }
       assert(lo->idx == idx);
       aname = lo->nameEntry;
       if (aname == null) {
-	bytes nameb; nameb.set(lo->name);
-	aname = cp.ensureUtf8(nameb);
-	// Cache the name entry for next time.
-	lo->nameEntry = aname;
+        bytes nameb; nameb.set(lo->name);
+        aname = cp.ensureUtf8(nameb);
+        // Cache the name entry for next time.
+        lo->nameEntry = aname;
       }
       // Execute all the layout elements.
       band** bands = lo->bands();
       if (lo->hasCallables()) {
-	band& cble = *bands[0];
-	assert(cble.le_kind == EK_CBLE);
-	bands = cble.le_body;
+        band& cble = *bands[0];
+        assert(cble.le_kind == EK_CBLE);
+        bands = cble.le_body;
       }
       putlayout(bands);
     }
 
-    if (aname == null) 
+    if (aname == null)
       abort("bad attribute index");
     CHECK_0;
 
@@ -4310,8 +4310,8 @@ void unpacker::write_classfile_tail() {
     entry& e = *oes[i];
     if (e.tag != CONSTANT_Class)  continue;  // wrong sort
     for (inner_class* ic = cp.getIC(&e);
-	 ic != null;
-	 ic = cp.getIC(ic->outer)) {
+         ic != null;
+         ic = cp.getIC(ic->outer)) {
       if (ic->requested)  break;  // already processed
       ic->requested = true;
       requested_ics.add(ic);
@@ -4342,8 +4342,8 @@ void unpacker::write_classfile_tail() {
     if (flags == 0) {
       // The extra IC is simply a copy of a global IC.
       if (global_ic == null) {
-	abort("bad reference to inner class");
-	break;
+        abort("bad reference to inner class");
+        break;
       }
       extra_ic = (*global_ic);  // fill in rest of fields
     } else {
@@ -4353,11 +4353,11 @@ void unpacker::write_classfile_tail() {
       extra_ic.name  = class_InnerClasses_name_RUN.getRefN();
       // Detect if this is an exact copy of the global tuple.
       if (global_ic != null) {
-	if (global_ic->flags != extra_ic.flags ||
-	    global_ic->outer != extra_ic.outer ||
-	    global_ic->name  != extra_ic.name) {
-	  global_ic = null;  // not really the same, so break the link
-	}
+        if (global_ic->flags != extra_ic.flags ||
+            global_ic->outer != extra_ic.outer ||
+            global_ic->name  != extra_ic.name) {
+          global_ic = null;  // not really the same, so break the link
+        }
       }
     }
     if (global_ic != null && global_ic->requested) {
@@ -4386,15 +4386,15 @@ void unpacker::write_classfile_tail() {
     for (i = -num_global_ics; i < num_extra_ics; i++) {
       inner_class* ic;
       if (i < 0)
-	ic = (inner_class*) requested_ics.get(num_global_ics+i);
+        ic = (inner_class*) requested_ics.get(num_global_ics+i);
       else
-	ic = &extra_ics[i];
+        ic = &extra_ics[i];
       if (ic->requested) {
-	putref(ic->inner);
-	putref(ic->outer);
-	putref(ic->name);
-	putu2(ic->flags);
-	NOT_PRODUCT(local_ics--);
+        putref(ic->inner);
+        putref(ic->outer);
+        putref(ic->name);
+        putu2(ic->flags);
+        NOT_PRODUCT(local_ics--);
       }
     }
     assert(local_ics == 0);           // must balance
@@ -4494,7 +4494,7 @@ unpacker::file* unpacker::get_next_file() {
     if (archive_size != 0) {
       julong predicted_size = unsized_bytes_read + archive_size;
       if (predicted_size != bytes_read)
-	abort("archive header had incorrect size");
+        abort("archive header had incorrect size");
     }
     return null;
   }
@@ -4558,7 +4558,7 @@ unpacker::file* unpacker::get_next_file() {
     size_t rpleft = input_remaining();
     if (rpleft > 0) {
       if (rpleft > cur_file.size)
-	rpleft = (size_t) cur_file.size;
+        rpleft = (size_t) cur_file.size;
       cur_file.data[0].set(rp, rpleft);
       rp += rpleft;
     }
@@ -4576,7 +4576,7 @@ unpacker::file* unpacker::get_next_file() {
 
 // Write a file to jarout.
 void unpacker::write_file_to_jar(unpacker::file* f) {
-  size_t htsize = f->data[0].len + f->data[1].len; 
+  size_t htsize = f->data[0].len + f->data[1].len;
   julong fsize = f->size;
 #ifndef PRODUCT
   if (nowrite NOT_PRODUCT(|| skipfiles-- > 0)) {
@@ -4586,7 +4586,7 @@ void unpacker::write_file_to_jar(unpacker::file* f) {
 #endif
   if (htsize == fsize) {
     jarout->addJarEntry(f->name, f->deflate_hint(), f->modtime,
-			f->data[0], f->data[1]);
+                        f->data[0], f->data[1]);
   } else {
     assert(input_remaining() == 0);
     bytes part1, part2;
@@ -4601,26 +4601,26 @@ void unpacker::write_file_to_jar(unpacker::file* f) {
     if (fleft > 0) {
       // Must read some more.
       if (live_input) {
-	// Stop using the input buffer.  Make a new one:
-	if (free_input)  input.free();
-	input.init(fleft > (1<<12) ? fleft : (1<<12));
-	free_input = true;
-	live_input = false;
+        // Stop using the input buffer.  Make a new one:
+        if (free_input)  input.free();
+        input.init(fleft > (1<<12) ? fleft : (1<<12));
+        free_input = true;
+        live_input = false;
       } else {
-	// Make it large enough.
-	assert(free_input);  // must be reallocable
-	input.ensureSize(fleft);
+        // Make it large enough.
+        assert(free_input);  // must be reallocable
+        input.ensureSize(fleft);
       }
       rplimit = rp = input.base();
       input.setLimit(rp + fleft);
       if (!ensure_input(fleft))
-	abort("EOF reading resource file");
+        abort("EOF reading resource file");
       part2.ptr = input_scan();
       part2.len = input_remaining();
       rplimit = rp = input.base();
     }
     jarout->addJarEntry(f->name, f->deflate_hint(), f->modtime,
-			part1, part2);
+                        part1, part2);
   }
   if (verbose >= 3) {
     fprintf(errstrm, "Wrote %lld bytes to: %s\n", fsize, f->name);
@@ -4642,7 +4642,7 @@ void unpacker::redirect_stdio() {
   } else if (strcmp(log_file, LOGFILE_STDOUT) == 0) {
     errstrm = stdout;
     return;
-  } else if (log_file[0] != '\0' && (errstrm = fopen(log_file,"a+")) != NULL) { 
+  } else if (log_file[0] != '\0' && (errstrm = fopen(log_file,"a+")) != NULL) {
     return;
   } else {
     char log_file_name[PATH_MAX+100];
@@ -4652,7 +4652,7 @@ void unpacker::redirect_stdio() {
     if (n < 1 || n > PATH_MAX) {
       sprintf(tmpdir,"C:\\");
     }
-    sprintf(log_file_name, "%sunpack.log", tmpdir); 
+    sprintf(log_file_name, "%sunpack.log", tmpdir);
 #else
     sprintf(tmpdir,"/tmp");
     sprintf(log_file_name, "/tmp/unpack.log");
@@ -4662,7 +4662,7 @@ void unpacker::redirect_stdio() {
       return ;
     }
 
-    char *tname = tempnam(tmpdir,"#upkg");	
+    char *tname = tempnam(tmpdir,"#upkg");
     sprintf(log_file_name, "%s", tname);
     if ((errstrm = fopen(log_file_name, "a+")) != NULL) {
       log_file = errstrm_name = saveStr(log_file_name);
@@ -4678,7 +4678,7 @@ void unpacker::redirect_stdio() {
 #endif
     // Last resort
     // (Do not use stdout, since it might be jarout->jarfp.)
-    errstrm = stderr;  
+    errstrm = stderr;
     log_file = errstrm_name = LOGFILE_STDERR;
   }
 }
@@ -4719,5 +4719,3 @@ void unpacker::abort(const char* message) {
 #endif
 #endif // JNI
 }
-
-

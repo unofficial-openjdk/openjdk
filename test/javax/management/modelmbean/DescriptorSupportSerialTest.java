@@ -56,11 +56,11 @@ public class DescriptorSupportSerialTest {
                                       new ModelMBeanOperationInfo[] {getNameInfo},
                                       null);  // no notifications
         ModelMBean mmb = new RequiredModelMBean(mmbi);
-        
+
         ObjectName on = new ObjectName("d:type=Thread");
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
         mbs.registerMBean(mmb, on);
-        
+
         JMXServiceURL url = new JMXServiceURL("rmi", null, 0);
         JMXConnectorServer cs =
             JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
@@ -77,7 +77,7 @@ public class DescriptorSupportSerialTest {
             cs.stop();
         }
     }
-        
+
     private static void test(MBeanServerConnection mbsc, ObjectName on)
             throws Exception {
         ModelMBeanInfo mmbi2 = (ModelMBeanInfo) mbsc.getMBeanInfo(on);

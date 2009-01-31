@@ -67,8 +67,8 @@ class WindowDimensions {
         } else {
             // Calculate client bounds
             if (insets != null) {
-                return new Rectangle(loc.x, loc.y, 
-                                     size.width-(insets.left+insets.right), 
+                return new Rectangle(loc.x, loc.y,
+                                     size.width-(insets.left+insets.right),
                                      size.height-(insets.top+insets.bottom));
             } else {
                 return new Rectangle(loc, size);
@@ -153,8 +153,8 @@ class WindowDimensions {
             return false;
         }
         WindowDimensions dims = (WindowDimensions)o;
-        return ((dims.insets.equals(insets))) 
-            && (getClientRect().equals(dims.getClientRect())) 
+        return ((dims.insets.equals(insets)))
+            && (getClientRect().equals(dims.getClientRect()))
             && (getBounds().equals(dims.getBounds()));
     }
 

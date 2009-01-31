@@ -112,7 +112,7 @@ public class TTY implements EventNotifier {
         Thread.yield();  // fetch output
         /*
          * These can be very numerous, so be as efficient as possible.
-         * If we are stopping here, then we will see the normal location 
+         * If we are stopping here, then we will see the normal location
          * info printed.
          */
         if (me.request().suspendPolicy() != EventRequest.SUSPEND_NONE) {
@@ -150,14 +150,14 @@ public class TTY implements EventNotifier {
             if (me.request().suspendPolicy() == EventRequest.SUSPEND_NONE) {
                 // We won't be stopping here, so show the method name
                 printLocationOfEvent(me);
-                
-            } 
+
+            }
 
             // In case we want to have a one shot trace exit some day, this
             // code disables the request so we don't hit it again.
             if (false) {
                 // This is a one shot deal; we don't want to stop
-                // here the next time. 
+                // here the next time.
                 Env.setAtExitMethod(null);
                 EventRequestManager erm = Env.vm().eventRequestManager();
                 Iterator it = erm.methodExitRequests().iterator();
@@ -237,7 +237,7 @@ public class TTY implements EventNotifier {
     }
 
     private static final String[][] commandList = {
-        /* 
+        /*
          * NOTE: this list must be kept sorted in ascending ASCII
          *       order by element [0].  Ref: isCommand() below.
          *
@@ -319,24 +319,24 @@ public class TTY implements EventNotifier {
         //Reference: binarySearch() in java/util/Arrays.java
         //           Adapted for use with String[][0].
         int low = 0;
-	int high = commandList.length - 1;
+        int high = commandList.length - 1;
         long i = 0;
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    String midVal = commandList[mid][0];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            String midVal = commandList[mid][0];
             int compare = midVal.compareTo(key);
-	    if (compare < 0)
-		low = mid + 1;
-	    else if (compare > 0)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (compare < 0)
+                low = mid + 1;
+            else if (compare > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     };
 
     /*
-     * Return true if the command is OK when disconnected. 
+     * Return true if the command is OK when disconnected.
      */
     private boolean isDisconnectCmd(int ii) {
         if (ii < 0 || ii >= commandList.length) return false;
@@ -533,7 +533,7 @@ public class TTY implements EventNotifier {
                             if (handler != null) {
                                 handler.shutdown();
                             }
-                            Env.shutdown(); 
+                            Env.shutdown();
                         } else {
                             MessageOutput.println("Unrecognized command.  Try help...", cmd);
                         }
@@ -567,14 +567,14 @@ public class TTY implements EventNotifier {
             while (it.hasNext()) {
                 MessageOutput.printDirectln((String)it.next());// Special case: use printDirectln()
             }
-        }            
+        }
     }
 
     void unmonitorCommand(StringTokenizer t) {
         if (t.hasMoreTokens()) {
             String monTok = t.nextToken();
             int monNum;
-            try {            
+            try {
                 monNum = Integer.parseInt(monTok);
             } catch (NumberFormatException exc) {
                 MessageOutput.println("Not a monitor number:", monTok);
@@ -661,7 +661,7 @@ public class TTY implements EventNotifier {
             return null;
         }
         if (canonPath == null || !canonPath.equals(myCanonFile)) {
-            if (!readCommandFile(dotInitFile)) { 
+            if (!readCommandFile(dotInitFile)) {
                 MessageOutput.println("Could not open:", dotInitFile.getPath());
             }
         }
@@ -672,34 +672,34 @@ public class TTY implements EventNotifier {
     public TTY() throws Exception {
 
         MessageOutput.println("Initializing progname", progname);
-       
+
         if (Env.connection().isOpen() && Env.vm().canBeModified()) {
             /*
              * Connection opened on startup. Start event handler
-             * immediately, telling it (through arg 2) to stop on the 
+             * immediately, telling it (through arg 2) to stop on the
              * VM start event.
              */
             this.handler = new EventHandler(this, true);
         }
         try {
-            BufferedReader in = 
+            BufferedReader in =
                     new BufferedReader(new InputStreamReader(System.in));
-    
+
             String lastLine = null;
-    
+
             Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-    
+
             /*
              * Read start up files.  This mimics the behavior
              * of gdb which will read both ~/.gdbinit and then
              * ./.gdbinit if they exist.  We have the twist that
              * we allow two different names, so we do this:
-             *  if ~/jdb.ini exists, 
+             *  if ~/jdb.ini exists,
              *      read it
-             *  else if ~/.jdbrc exists, 
+             *  else if ~/.jdbrc exists,
              *      read it
              *
-             *  if ./jdb.ini exists, 
+             *  if ./jdb.ini exists,
              *      if it hasn't been read, read it
              *      It could have been read above because ~ == .
              *      or because of symlinks, ...
@@ -720,7 +720,7 @@ public class TTY implements EventNotifier {
                     // Doesn't exist, try alternate spelling
                     readStartupCommandFile(userDir, ".jdbrc", canonPath);
                 }
-            }                
+            }
 
             // Process interactive commands.
             MessageOutput.printPrompt();
@@ -730,12 +730,12 @@ public class TTY implements EventNotifier {
                     MessageOutput.println("Input stream closed.");
                     ln = "quit";
                 }
-    
+
                 if (ln.startsWith("!!") && lastLine != null) {
                     ln = lastLine + ln.substring(2);
                     MessageOutput.printDirectln(ln);// Special case: use printDirectln()
                 }
-    
+
                 StringTokenizer t = new StringTokenizer(ln);
                 if (t.hasMoreTokens()) {
                     lastLine = ln;
@@ -805,7 +805,7 @@ public class TTY implements EventNotifier {
 
     private static String addArgument(String string, String argument) {
         if (hasWhitespace(argument) || argument.indexOf(',') != -1) {
-            // Quotes were stripped out for this argument, add 'em back. 
+            // Quotes were stripped out for this argument, add 'em back.
             StringBuffer buffer = new StringBuffer(string);
             buffer.append('"');
             for (int i = 0; i < argument.length(); i++) {
@@ -828,7 +828,7 @@ public class TTY implements EventNotifier {
         int traceFlags = VirtualMachine.TRACE_NONE;
         boolean launchImmediately = false;
         String connectSpec = null;
-        
+
         MessageOutput.textResources = ResourceBundle.getBundle
             ("com.sun.tools.example.debug.tty.TTYResources",
              Locale.getDefault());
@@ -847,7 +847,7 @@ public class TTY implements EventNotifier {
                     } catch (NumberFormatException nfe) {
                         usageError("dbgtrace flag value must be an integer:",
                                    flagStr);
-                        return;                
+                        return;
                     }
                 }
             } else if (token.equals("-X")) {
@@ -907,11 +907,11 @@ public class TTY implements EventNotifier {
                 /*
                  * -attach is shorthand for one of the reference implementation's
                  * attaching connectors. Use the shared memory attach if it's
-                 * available; otherwise, use sockets. Build a connect 
+                 * available; otherwise, use sockets. Build a connect
                  * specification string based on this decision.
                  */
                 if (supportsSharedMemory()) {
-                    connectSpec = "com.sun.jdi.SharedMemoryAttach:name=" + 
+                    connectSpec = "com.sun.jdi.SharedMemoryAttach:name=" +
                                    address;
                 } else {
                     String suboptions = addressToSocketArgs(address);
@@ -934,7 +934,7 @@ public class TTY implements EventNotifier {
                 /*
                  * -listen[any] is shorthand for one of the reference implementation's
                  * listening connectors. Use the shared memory listen if it's
-                 * available; otherwise, use sockets. Build a connect 
+                 * available; otherwise, use sockets. Build a connect
                  * specification string based on this decision.
                  */
                 if (supportsSharedMemory()) {
@@ -951,13 +951,13 @@ public class TTY implements EventNotifier {
             } else if (token.equals("-launch")) {
                 launchImmediately = true;
             } else if (token.equals("-listconnectors")) {
-                Commands evaluator = new Commands();                
+                Commands evaluator = new Commands();
                 evaluator.commandConnectors(Bootstrap.virtualMachineManager());
                 return;
             } else if (token.equals("-connect")) {
                 /*
                  * -connect allows the user to pick the connector
-                 * used in bringing up the target VM. This allows 
+                 * used in bringing up the target VM. This allows
                  * use of connectors other than those in the reference
                  * implementation.
                  */
@@ -973,7 +973,7 @@ public class TTY implements EventNotifier {
             } else if (token.equals("-help")) {
                 usage();
             } else if (token.equals("-version")) {
-                Commands evaluator = new Commands();                
+                Commands evaluator = new Commands();
                 evaluator.commandVersion(progname,
                                          Bootstrap.virtualMachineManager());
                 System.exit(0);
@@ -992,30 +992,30 @@ public class TTY implements EventNotifier {
 
         /*
          * Unless otherwise specified, set the default connect spec.
-	 */
+         */
 
         /*
          * Here are examples of jdb command lines and how the options
-	 * are interpreted as arguments to the program being debugged.
-	 * arg1       arg2
-	 * ----       ----
-	 * jdb hello a b       a          b
-	 * jdb hello "a b"     a b
-	 * jdb hello a,b       a,b
-	 * jdb hello a, b      a,         b
-	 * jdb hello "a, b"    a, b
-	 * jdb -connect "com.sun.jdi.CommandLineLaunch:main=hello  a,b"   illegal
-	 * jdb -connect  com.sun.jdi.CommandLineLaunch:main=hello "a,b"   illegal
-	 * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a,b"'  arg1 = a,b
-	 * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a b"'  arg1 = a b
-	 * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello  a b'   arg1 = a  arg2 = b
-	 * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a," b' arg1 = a, arg2 = b
-	 */
+         * are interpreted as arguments to the program being debugged.
+         * arg1       arg2
+         * ----       ----
+         * jdb hello a b       a          b
+         * jdb hello "a b"     a b
+         * jdb hello a,b       a,b
+         * jdb hello a, b      a,         b
+         * jdb hello "a, b"    a, b
+         * jdb -connect "com.sun.jdi.CommandLineLaunch:main=hello  a,b"   illegal
+         * jdb -connect  com.sun.jdi.CommandLineLaunch:main=hello "a,b"   illegal
+         * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a,b"'  arg1 = a,b
+         * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a b"'  arg1 = a b
+         * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello  a b'   arg1 = a  arg2 = b
+         * jdb -connect 'com.sun.jdi.CommandLineLaunch:main=hello "a," b' arg1 = a, arg2 = b
+         */
         if (connectSpec == null) {
             connectSpec = "com.sun.jdi.CommandLineLaunch:";
         } else if (!connectSpec.endsWith(",") && !connectSpec.endsWith(":")) {
             connectSpec += ","; // (Bug ID 4285874)
-        } 
+        }
 
         cmdLine = cmdLine.trim();
         javaArgs = javaArgs.trim();
@@ -1027,7 +1027,7 @@ public class TTY implements EventNotifier {
                 return;
             }
             connectSpec += "main=" + cmdLine + ",";
-        } 
+        }
 
         if (javaArgs.length() > 0) {
             if (!connectSpec.startsWith("com.sun.jdi.CommandLineLaunch:")) {
@@ -1036,7 +1036,7 @@ public class TTY implements EventNotifier {
                 return;
             }
             connectSpec += "options=" + javaArgs + ",";
-        } 
+        }
 
         try {
             if (! connectSpec.endsWith(",")) {
@@ -1044,9 +1044,8 @@ public class TTY implements EventNotifier {
             }
             Env.init(connectSpec, launchImmediately, traceFlags);
             new TTY();
-        } catch(Exception e) {                
+        } catch(Exception e) {
             MessageOutput.printException("Internal exception:", e);
         }
     }
 }
-

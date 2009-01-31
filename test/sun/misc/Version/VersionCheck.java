@@ -32,40 +32,40 @@
  *
  * @run main VersionCheck
  */
-                                                                                
+
 import sun.misc.Version;
 
 public class VersionCheck {
     public static void main(String[] argv) {
         if (Version.jvmMajorVersion() != Version.jdkMajorVersion()) {
-            throw new RuntimeException("Mismatched jvmMajorVersion = " + 
+            throw new RuntimeException("Mismatched jvmMajorVersion = " +
                 Version.jvmMajorVersion() + " jdkMajorVersion = " +
                 Version.jdkMajorVersion());
         }
         if (Version.jvmMinorVersion() != Version.jdkMinorVersion()) {
-            throw new RuntimeException("Mismatched jvmMinorVersion = " + 
+            throw new RuntimeException("Mismatched jvmMinorVersion = " +
                 Version.jvmMinorVersion() + " jdkMinorVersion = " +
                 Version.jdkMinorVersion());
         }
         if (Version.jvmMicroVersion() != Version.jdkMicroVersion()) {
-            throw new RuntimeException("Mismatched jvmMicroVersion = " + 
+            throw new RuntimeException("Mismatched jvmMicroVersion = " +
                 Version.jvmMicroVersion() + " jdkMicroVersion = " +
                 Version.jdkMicroVersion());
         }
 
-        System.out.printf("JVM version is %1$d.%2$d.%3$d_%4$02d%5$s-b%6$02d\n", 
-             Version.jvmMajorVersion(), 
+        System.out.printf("JVM version is %1$d.%2$d.%3$d_%4$02d%5$s-b%6$02d\n",
+             Version.jvmMajorVersion(),
              Version.jvmMinorVersion(),
              Version.jvmMicroVersion(),
-             Version.jvmUpdateVersion(), 
-             Version.jvmSpecialVersion(), 
-             Version.jvmBuildNumber()); 
-        System.out.printf("JDK version is %1$d.%2$d.%3$d_%4$02d%5$s-b%6$02d\n", 
+             Version.jvmUpdateVersion(),
+             Version.jvmSpecialVersion(),
+             Version.jvmBuildNumber());
+        System.out.printf("JDK version is %1$d.%2$d.%3$d_%4$02d%5$s-b%6$02d\n",
              Version.jdkMajorVersion(),
              Version.jdkMinorVersion(),
              Version.jdkMicroVersion(),
              Version.jdkUpdateVersion(),
-             Version.jdkSpecialVersion(), 
-             Version.jdkBuildNumber()); 
+             Version.jdkSpecialVersion(),
+             Version.jdkBuildNumber());
     }
 }

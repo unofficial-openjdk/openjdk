@@ -33,18 +33,17 @@ import sun.security.util.*;
 
 /**
  * Represents Netscape Certificate Type Extension.
- * The details are defined 
+ * The details are defined
  * <a href=http://www.netscape.com/eng/security/comm4-cert-exts.html>
  * here </a>.
  *
  * <p>This extension, if present, defines both the purpose
- * (e.g., encipherment, signature, certificate signing) and the application 
- * (e.g., SSL, S/Mime or Object Signing of the key contained in the 
+ * (e.g., encipherment, signature, certificate signing) and the application
+ * (e.g., SSL, S/Mime or Object Signing of the key contained in the
  * certificate. This extension has been superseded by IETF PKIX extensions
  * but is provided here for compatibility reasons.
  *
  * @author Hemma Prafullchandra
- * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -55,7 +54,7 @@ implements CertAttrSet<String> {
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */  
+     */
     public static final String IDENT = "x509.info.extensions.NetscapeCertType";
 
     /**
@@ -74,15 +73,15 @@ implements CertAttrSet<String> {
 
     /**
      * Object identifier for the Netscape-Cert-Type extension.
-     */  
+     */
     public static ObjectIdentifier NetscapeCertType_Id;
-    
+
     static {
-	try {
-	    NetscapeCertType_Id = new ObjectIdentifier(CertType_data);
-	} catch (IOException ioe) {
-	    // should not happen
-	}
+        try {
+            NetscapeCertType_Id = new ObjectIdentifier(CertType_data);
+        } catch (IOException ioe) {
+            // should not happen
+        }
     }
 
     private boolean[] bitString;
@@ -96,7 +95,7 @@ implements CertAttrSet<String> {
             mPosition = position;
         }
     }
-	
+
     private static MapEntry[] mMapData = {
         new MapEntry(SSL_CLIENT, 0),
         new MapEntry(SSL_SERVER, 1),
@@ -107,20 +106,20 @@ implements CertAttrSet<String> {
         new MapEntry(S_MIME_CA, 6),
         new MapEntry(OBJECT_SIGNING_CA, 7),
     };
-	
+
     private static final Vector<String> mAttributeNames = new Vector<String>();
     static {
-	for (MapEntry entry : mMapData) {
-	    mAttributeNames.add(entry.mName);
-	}
+        for (MapEntry entry : mMapData) {
+            mAttributeNames.add(entry.mName);
+        }
     }
-	
+
     private static int getPosition(String name) throws IOException {
         for (int i = 0; i < mMapData.length; i++) {
             if (name.equalsIgnoreCase(mMapData[i].mName))
                 return mMapData[i].mPosition;
         }
-        throw new IOException("Attribute name [" + name 
+        throw new IOException("Attribute name [" + name
                              + "] not recognized by CertAttrSet:NetscapeCertType.");
     }
 
@@ -130,7 +129,7 @@ implements CertAttrSet<String> {
         os.putTruncatedUnalignedBitString(new BitArray(this.bitString));
         this.extensionValue = os.toByteArray();
     }
-	
+
     /**
      * Check if bit is set.
      *
@@ -139,7 +138,7 @@ implements CertAttrSet<String> {
     private boolean isSet(int position) {
         return bitString[position];
     }
-	
+
     /**
      * Set the bit at the specified position.
      */
@@ -154,7 +153,7 @@ implements CertAttrSet<String> {
     }
 
     /**
-     * Create a NetscapeCertTypeExtension with the passed bit settings. 
+     * Create a NetscapeCertTypeExtension with the passed bit settings.
      * The criticality is set to true.
      *
      * @param bitString the bits to be set for the extension.
@@ -170,9 +169,9 @@ implements CertAttrSet<String> {
     /**
      * Create a NetscapeCertTypeExtension with the passed bit settings.
      * The criticality is set to true.
-     *   
+     *
      * @param bitString the bits to be set for the extension.
-     */  
+     */
     public NetscapeCertTypeExtension(boolean[] bitString) throws IOException {
         this.bitString = bitString;
         this.extensionId = NetscapeCertType_Id;
@@ -188,7 +187,7 @@ implements CertAttrSet<String> {
      * @exception ClassCastException if value is not an array of bytes
      * @exception IOException on error.
      */
-    public NetscapeCertTypeExtension(Boolean critical, Object value) 
+    public NetscapeCertTypeExtension(Boolean critical, Object value)
     throws IOException {
         this.extensionId = NetscapeCertType_Id;
         this.critical = critical.booleanValue();
@@ -196,7 +195,7 @@ implements CertAttrSet<String> {
         DerValue val = new DerValue(this.extensionValue);
         this.bitString = val.getUnalignedBitString().toBooleanArray();
     }
-	
+
     /**
      * Create a default key usage.
      */
@@ -232,7 +231,7 @@ implements CertAttrSet<String> {
         set(getPosition(name), false);
         encodeThis();
     }
-	
+
     /**
      * Returns a printable representation of the NetscapeCertType.
      */
@@ -273,7 +272,7 @@ implements CertAttrSet<String> {
             this.extensionId = NetscapeCertType_Id;
             this.critical = true;
             encodeThis();
-        } 
+        }
         super.encode(tmp);
         out.write(tmp.toByteArray());
     }

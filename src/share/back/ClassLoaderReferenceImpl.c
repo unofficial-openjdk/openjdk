@@ -28,24 +28,24 @@
 #include "inStream.h"
 #include "outStream.h"
 
-static jboolean 
+static jboolean
 visibleClasses(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env = getEnv();
     jobject loader;
-    
+
     loader = inStream_readClassLoaderRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     WITH_LOCAL_REFS(env, 1) {
-        
+
         jvmtiError error;
         jint count;
         jclass *classes;
         int i;
-    
+
         error = allClassLoaderClasses(loader, &classes, &count);
         if (error != JVMTI_ERROR_NONE) {
             outStream_setError(out, map2jdwpError(error));
@@ -65,7 +65,7 @@ visibleClasses(PacketInputStream *in, PacketOutputStream *out)
 
         if ( classes != NULL )
             jvmtiDeallocate(classes);
-     
+
      } END_WITH_LOCAL_REFS(env);
 
     return JNI_TRUE;

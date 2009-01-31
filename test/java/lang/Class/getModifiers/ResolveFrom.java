@@ -24,18 +24,18 @@
 /* @test
    @bug 4127549
    @summary getModifiers should resolve constant pool entries from
-	    its own class.
+            its own class.
    @author  James Bond
  */
 import java.lang.reflect.Modifier;
 public class ResolveFrom {
     private class Inner {
-	int i;
+        int i;
     }
 
     public static void main(String argv[]) throws Exception {
-	int m = ResolveFrom.class.getModifiers();
-	System.out.println("ResolveFrom has modifiers = " + 
-			   Modifier.toString(m));
+        int m = ResolveFrom.class.getModifiers();
+        System.out.println("ResolveFrom has modifiers = " +
+                           Modifier.toString(m));
     }
 }

@@ -41,8 +41,8 @@ struct bag;
  */
 struct bag *bagCreateBag(int itemSize, int initialAllocation);
 
-/* 
- * Copy bag contents to another new bag. The new bag is returned, or 
+/*
+ * Copy bag contents to another new bag. The new bag is returned, or
  * NULL if out of memory.
  */
 struct bag *bagDup(struct bag *);
@@ -52,16 +52,16 @@ struct bag *bagDup(struct bag *);
 void bagDestroyBag(struct bag *theBag);
 
 /* Find 'key' in bag.  Assumes first entry in item is a pointer.
- * Return found item pointer, NULL if not found. 
+ * Return found item pointer, NULL if not found.
  */
 void *bagFind(struct bag *theBag, void *key);
 
 /* Add space for an item in the bag.
- * Return allocated item pointer, NULL if no memory. 
+ * Return allocated item pointer, NULL if no memory.
  */
 void *bagAdd(struct bag *theBag);
 
-/* Delete specified item from bag. 
+/* Delete specified item from bag.
  * Does no checks.
  */
 void bagDelete(struct bag *theBag, void *condemned);
@@ -74,8 +74,8 @@ void bagDeleteAll(struct bag *theBag);
  */
 int bagSize(struct bag *theBag);
 
-/* Enumerate over the items in the bag, calling 'func' for 
- * each item.  The function is passed the item and the user 
+/* Enumerate over the items in the bag, calling 'func' for
+ * each item.  The function is passed the item and the user
  * supplied 'arg'.  Abort the enumeration if the function
  * returns FALSE.  Return TRUE if the enumeration completed
  * successfully and FALSE if it was aborted.
@@ -83,7 +83,7 @@ int bagSize(struct bag *theBag);
  */
 typedef jboolean (*bagEnumerateFunction)(void *item, void *arg);
 
-jboolean bagEnumerateOver(struct bag *theBag, 
+jboolean bagEnumerateOver(struct bag *theBag,
                         bagEnumerateFunction func, void *arg);
 
 #endif

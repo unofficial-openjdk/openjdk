@@ -39,7 +39,7 @@ jfieldID AwtDimension::heightID;
 
 extern "C" {
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_awt_Dimension_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 

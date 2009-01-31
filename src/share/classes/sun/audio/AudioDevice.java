@@ -55,7 +55,6 @@ import com.sun.media.sound.Toolkit;
  * @author Kara Kytle
  * @author Jan Borgersen
  * @author Florian Bomers
- * @version %I% %E%
  */
 
 public class
@@ -87,65 +86,65 @@ public class
      */
     private AudioDevice() {
 
-	clipStreams = new Hashtable();
-	infos = new Vector();
+        clipStreams = new Hashtable();
+        infos = new Vector();
     }
 
 
     private synchronized void startSampled( AudioInputStream as,
-					    InputStream in ) throws UnsupportedAudioFileException,
-				  LineUnavailableException {
+                                            InputStream in ) throws UnsupportedAudioFileException,
+                                  LineUnavailableException {
 
-	Info info = null;
-	DataPusher datapusher = null;
-	DataLine.Info lineinfo = null;
-	SourceDataLine sourcedataline = null;
+        Info info = null;
+        DataPusher datapusher = null;
+        DataLine.Info lineinfo = null;
+        SourceDataLine sourcedataline = null;
 
-	// if ALAW or ULAW, we must convert....
-	as = Toolkit.getPCMConvertedAudioInputStream(as);
+        // if ALAW or ULAW, we must convert....
+        as = Toolkit.getPCMConvertedAudioInputStream(as);
 
-	if( as==null ) {
-	    // could not convert
-	    return;
-	}
+        if( as==null ) {
+            // could not convert
+            return;
+        }
 
-	lineinfo = new DataLine.Info(SourceDataLine.class,
-				     as.getFormat());
-	if( !(AudioSystem.isLineSupported(lineinfo))) {
-	    return;
-	}
-	sourcedataline = (SourceDataLine)AudioSystem.getLine(lineinfo);
-	datapusher = new DataPusher(sourcedataline, as);
+        lineinfo = new DataLine.Info(SourceDataLine.class,
+                                     as.getFormat());
+        if( !(AudioSystem.isLineSupported(lineinfo))) {
+            return;
+        }
+        sourcedataline = (SourceDataLine)AudioSystem.getLine(lineinfo);
+        datapusher = new DataPusher(sourcedataline, as);
 
-	info = new Info( null, in, datapusher );
-	infos.addElement( info );
+        info = new Info( null, in, datapusher );
+        infos.addElement( info );
 
-	datapusher.start();
+        datapusher.start();
     }
 
     private synchronized void startMidi( InputStream bis,
-					 InputStream in ) throws InvalidMidiDataException,
-				  MidiUnavailableException  {
+                                         InputStream in ) throws InvalidMidiDataException,
+                                  MidiUnavailableException  {
 
-	Sequencer sequencer = null;
-	Info info = null;
+        Sequencer sequencer = null;
+        Info info = null;
 
-	sequencer = MidiSystem.getSequencer( );
-	sequencer.open();
-	try {
-	    sequencer.setSequence( bis );
-	} catch( IOException e ) {
-	    throw new InvalidMidiDataException( e.getMessage() );
-	}
+        sequencer = MidiSystem.getSequencer( );
+        sequencer.open();
+        try {
+            sequencer.setSequence( bis );
+        } catch( IOException e ) {
+            throw new InvalidMidiDataException( e.getMessage() );
+        }
 
-	info = new Info( sequencer, in, null );
+        info = new Info( sequencer, in, null );
 
-	infos.addElement( info );
+        infos.addElement( info );
 
-	// fix for bug 4302884: Audio device is not released when AudioClip stops
-	sequencer.addMetaEventListener(info);
+        // fix for bug 4302884: Audio device is not released when AudioClip stops
+        sequencer.addMetaEventListener(info);
 
-	sequencer.start();
+        sequencer.start();
 
     }
 
@@ -157,126 +156,126 @@ public class
     public synchronized void openChannel(InputStream in) {
 
 
-	if(DEBUG) {
-	    System.out.println("AudioDevice: openChannel");
-	    System.out.println("input stream =" + in);
-	}
+        if(DEBUG) {
+            System.out.println("AudioDevice: openChannel");
+            System.out.println("input stream =" + in);
+        }
 
-	Info info = null;
+        Info info = null;
 
-	// is this already playing?  if so, then just return
-	for(int i=0; i<infos.size(); i++) {
-	    info = (AudioDevice.Info)infos.elementAt(i);
-	    if( info.in == in ) {
+        // is this already playing?  if so, then just return
+        for(int i=0; i<infos.size(); i++) {
+            info = (AudioDevice.Info)infos.elementAt(i);
+            if( info.in == in ) {
 
-		return;
-	    }
-	}
-
-
-	AudioInputStream as = null;
-
-	if( in instanceof AudioStream ) {
-
-	    if ( ((AudioStream)in).midiformat != null ) {
-
-		// it's a midi file
-		try {
-		    startMidi( ((AudioStream)in).stream, in );
-		} catch (Exception e) {
-		    return;
-		}
+                return;
+            }
+        }
 
 
-	    } else if( ((AudioStream)in).ais != null ) {
+        AudioInputStream as = null;
 
-		// it's sampled audio
-		try {
-		    startSampled( ((AudioStream)in).ais, in );
-		} catch (Exception e) {
-		    return;
-		}
+        if( in instanceof AudioStream ) {
 
-	    }
-	} else if (in instanceof AudioDataStream ) {
-	    if (in instanceof ContinuousAudioDataStream) {
-		try {
-		    AudioInputStream ais = new AudioInputStream(in,
-								((AudioDataStream)in).getAudioData().format,
-								AudioSystem.NOT_SPECIFIED);
-		    startSampled(ais, in );
-		} catch (Exception e) {
-		    return;
-		}
-	    }
-	    else {
-		try {
-		    AudioInputStream ais = new AudioInputStream(in,
-								((AudioDataStream)in).getAudioData().format,
-								((AudioDataStream)in).getAudioData().buffer.length);
-		    startSampled(ais, in );
-		} catch (Exception e) {
-		    return;
-		}
-	    }
-	} else {
-	    BufferedInputStream bis = new BufferedInputStream( in, 1024 );
+            if ( ((AudioStream)in).midiformat != null ) {
 
-	    try {
-
-		try {
-		    as = AudioSystem.getAudioInputStream(bis);
-		} catch(IOException ioe) {
-		    return;
-		}
-
-		startSampled( as, in );
-
-	    } catch( UnsupportedAudioFileException e ) {
-
-		try {
-		    try {
-			MidiFileFormat mff =
-			    MidiSystem.getMidiFileFormat( bis );
-		    } catch(IOException ioe1) {
-			return;
-		    }
-
-		    startMidi( bis, in );
+                // it's a midi file
+                try {
+                    startMidi( ((AudioStream)in).stream, in );
+                } catch (Exception e) {
+                    return;
+                }
 
 
-		} catch( InvalidMidiDataException e1 ) {
+            } else if( ((AudioStream)in).ais != null ) {
 
-		    // $$jb:08.01.99: adding this section to make some of our other
-		    // legacy classes work.....
-		    // not MIDI either, special case handling for all others
+                // it's sampled audio
+                try {
+                    startSampled( ((AudioStream)in).ais, in );
+                } catch (Exception e) {
+                    return;
+                }
 
-		    AudioFormat defformat = new AudioFormat( AudioFormat.Encoding.ULAW,
-							     8000, 8, 1, 1, 8000, true );
-		    try {
-			AudioInputStream defaif = new AudioInputStream( bis,
-									defformat, AudioSystem.NOT_SPECIFIED);
-			startSampled( defaif, in );
-		    } catch (UnsupportedAudioFileException es) {
-			return;
-		    } catch (LineUnavailableException es2) {
-			return;
-		    }
+            }
+        } else if (in instanceof AudioDataStream ) {
+            if (in instanceof ContinuousAudioDataStream) {
+                try {
+                    AudioInputStream ais = new AudioInputStream(in,
+                                                                ((AudioDataStream)in).getAudioData().format,
+                                                                AudioSystem.NOT_SPECIFIED);
+                    startSampled(ais, in );
+                } catch (Exception e) {
+                    return;
+                }
+            }
+            else {
+                try {
+                    AudioInputStream ais = new AudioInputStream(in,
+                                                                ((AudioDataStream)in).getAudioData().format,
+                                                                ((AudioDataStream)in).getAudioData().buffer.length);
+                    startSampled(ais, in );
+                } catch (Exception e) {
+                    return;
+                }
+            }
+        } else {
+            BufferedInputStream bis = new BufferedInputStream( in, 1024 );
 
-		} catch( MidiUnavailableException e2 ) {
+            try {
 
-		    // could not open sequence
-		    return;
-		}
+                try {
+                    as = AudioSystem.getAudioInputStream(bis);
+                } catch(IOException ioe) {
+                    return;
+                }
 
-	    } catch( LineUnavailableException e ) {
+                startSampled( as, in );
 
-		return;
-	    }
-	}
+            } catch( UnsupportedAudioFileException e ) {
 
-	// don't forget adjust for a new stream.
-	notify();
+                try {
+                    try {
+                        MidiFileFormat mff =
+                            MidiSystem.getMidiFileFormat( bis );
+                    } catch(IOException ioe1) {
+                        return;
+                    }
+
+                    startMidi( bis, in );
+
+
+                } catch( InvalidMidiDataException e1 ) {
+
+                    // $$jb:08.01.99: adding this section to make some of our other
+                    // legacy classes work.....
+                    // not MIDI either, special case handling for all others
+
+                    AudioFormat defformat = new AudioFormat( AudioFormat.Encoding.ULAW,
+                                                             8000, 8, 1, 1, 8000, true );
+                    try {
+                        AudioInputStream defaif = new AudioInputStream( bis,
+                                                                        defformat, AudioSystem.NOT_SPECIFIED);
+                        startSampled( defaif, in );
+                    } catch (UnsupportedAudioFileException es) {
+                        return;
+                    } catch (LineUnavailableException es2) {
+                        return;
+                    }
+
+                } catch( MidiUnavailableException e2 ) {
+
+                    // could not open sequence
+                    return;
+                }
+
+            } catch( LineUnavailableException e ) {
+
+                return;
+            }
+        }
+
+        // don't forget adjust for a new stream.
+        notify();
     }
 
 
@@ -285,34 +284,34 @@ public class
      */
     public synchronized void closeChannel(InputStream in) {
 
-	if(DEBUG) {
-	    System.out.println("AudioDevice.closeChannel");
-	}
+        if(DEBUG) {
+            System.out.println("AudioDevice.closeChannel");
+        }
 
-	if (in == null) return;		// can't go anywhere here!
+        if (in == null) return;         // can't go anywhere here!
 
-	Info info;
+        Info info;
 
-	for(int i=0; i<infos.size(); i++) {
+        for(int i=0; i<infos.size(); i++) {
 
-	    info = (AudioDevice.Info)infos.elementAt(i);
+            info = (AudioDevice.Info)infos.elementAt(i);
 
-	    if( info.in == in ) {
+            if( info.in == in ) {
 
-		if( info.sequencer != null ) {
+                if( info.sequencer != null ) {
 
-		    info.sequencer.stop();
-		    //info.sequencer.close();
-		    infos.removeElement( info );
+                    info.sequencer.stop();
+                    //info.sequencer.close();
+                    infos.removeElement( info );
 
-		} else if( info.datapusher != null ) {
+                } else if( info.datapusher != null ) {
 
-		    info.datapusher.stop();
-		    infos.removeElement( info );
-		}
-	    }
-	}
-	notify();
+                    info.datapusher.stop();
+                    infos.removeElement( info );
+                }
+            }
+        }
+        notify();
     }
 
 
@@ -321,8 +320,8 @@ public class
      */
     public synchronized void open() {
 
-	// $$jb: 06.24.99: This is done on a per-stream
-	// basis using the new JS API now.
+        // $$jb: 06.24.99: This is done on a per-stream
+        // basis using the new JS API now.
     }
 
 
@@ -331,8 +330,8 @@ public class
      */
     public synchronized void close() {
 
-	// $$jb: 06.24.99: This is done on a per-stream
-	// basis using the new JS API now.
+        // $$jb: 06.24.99: This is done on a per-stream
+        // basis using the new JS API now.
 
     }
 
@@ -342,13 +341,13 @@ public class
      */
     public void play() {
 
-	// $$jb: 06.24.99:  Holdover from old architechture ...
-	// we now open/close the devices as needed on a per-stream
-	// basis using the JavaSound API.
+        // $$jb: 06.24.99:  Holdover from old architechture ...
+        // we now open/close the devices as needed on a per-stream
+        // basis using the JavaSound API.
 
-	if (DEBUG) {
-	    System.out.println("exiting play()");
-	}
+        if (DEBUG) {
+            System.out.println("exiting play()");
+        }
     }
 
     /**
@@ -356,46 +355,46 @@ public class
      */
     public synchronized void closeStreams() {
 
-	Info info;
+        Info info;
 
-	for(int i=0; i<infos.size(); i++) {
+        for(int i=0; i<infos.size(); i++) {
 
-	    info = (AudioDevice.Info)infos.elementAt(i);
+            info = (AudioDevice.Info)infos.elementAt(i);
 
-	    if( info.sequencer != null ) {
+            if( info.sequencer != null ) {
 
-		info.sequencer.stop();
-		info.sequencer.close();
-		infos.removeElement( info );
+                info.sequencer.stop();
+                info.sequencer.close();
+                infos.removeElement( info );
 
-	    } else if( info.datapusher != null ) {
+            } else if( info.datapusher != null ) {
 
-		info.datapusher.stop();
-		infos.removeElement( info );
-	    }
-	}
+                info.datapusher.stop();
+                infos.removeElement( info );
+            }
+        }
 
 
-	if (DEBUG) {
-	    System.err.println("Audio Device: Streams all closed.");
-	}
-	// Empty the hash table.
-	clipStreams = new Hashtable();
-	infos = new Vector();
+        if (DEBUG) {
+            System.err.println("Audio Device: Streams all closed.");
+        }
+        // Empty the hash table.
+        clipStreams = new Hashtable();
+        infos = new Vector();
     }
 
     /**
      * Number of channels currently open.
      */
     public int openChannels() {
-	return infos.size();
+        return infos.size();
     }
 
     /**
      * Make the debug info print out.
      */
     void setVerbose(boolean v) {
-	DEBUG = v;
+        DEBUG = v;
     }
 
 
@@ -407,26 +406,24 @@ public class
 
     class Info implements MetaEventListener {
 
-	Sequencer   sequencer;
-	InputStream in;
-	DataPusher  datapusher;
-	
-	Info( Sequencer sequencer, InputStream in, DataPusher datapusher ) {
-	    
-	    this.sequencer  = sequencer;
-	    this.in         = in;
-	    this.datapusher = datapusher;
-	}
+        Sequencer   sequencer;
+        InputStream in;
+        DataPusher  datapusher;
 
-	public void meta(MetaMessage event) {
-	    if (event.getType() == 47 && sequencer != null) {
-		sequencer.close();
-	    }
-	}
+        Info( Sequencer sequencer, InputStream in, DataPusher datapusher ) {
+
+            this.sequencer  = sequencer;
+            this.in         = in;
+            this.datapusher = datapusher;
+        }
+
+        public void meta(MetaMessage event) {
+            if (event.getType() == 47 && sequencer != null) {
+                sequencer.close();
+            }
+        }
     }
 
 
 
 }
-
-

@@ -37,14 +37,14 @@ import java.util.ServiceConfigurationError;
 /**
  * This class implements the LDAPv3 Extended Request for StartTLS as
  * defined in
- * <a href="http://www.ietf.org/rfc/rfc2830.txt">Lightweight Directory 
+ * <a href="http://www.ietf.org/rfc/rfc2830.txt">Lightweight Directory
  * Access Protocol (v3): Extension for Transport Layer Security</a>
  *
  * The object identifier for StartTLS is 1.3.6.1.4.1.1466.20037
  * and no extended request value is defined.
  *<p>
- * <tt>StartTlsRequest</tt>/<tt>StartTlsResponse</tt> are used to establish 
- * a TLS connection over the existing LDAP connection associated with 
+ * <tt>StartTlsRequest</tt>/<tt>StartTlsResponse</tt> are used to establish
+ * a TLS connection over the existing LDAP connection associated with
  * the JNDI context on which <tt>extendedOperation()</tt> is invoked.
  * Typically, a JNDI program uses these classes as follows.
  * <blockquote><pre>
@@ -119,13 +119,13 @@ public class StartTlsRequest implements ExtendedRequest {
     }
 
     /**
-     * Creates an extended response object that corresponds to the 
+     * Creates an extended response object that corresponds to the
      * LDAP StartTLS extended request.
      * <p>
      * The result must be a concrete subclass of StartTlsResponse
-     * and must have a public zero-argument constructor.  
+     * and must have a public zero-argument constructor.
      * <p>
-     * This method locates the implementation class by locating 
+     * This method locates the implementation class by locating
      * configuration files that have the name:
      * <blockquote><tt>
      *     META-INF/services/javax.naming.ldap.StartTlsResponse
@@ -142,7 +142,7 @@ public class StartTlsRequest implements ExtendedRequest {
      * This method will return an instance of the first implementation
      * class that it is able to load and instantiate successfully from
      * the list of class names collected from the configuration files.
-     * This method uses the calling thread's context classloader to find the 
+     * This method uses the calling thread's context classloader to find the
      * configuration files and to load the implementation class.
      * <p>
      * If no class can be found in this way, this method will use
@@ -168,46 +168,46 @@ public class StartTlsRequest implements ExtendedRequest {
      * @exception        NamingException If a naming exception was encountered
      *                   while creating the StartTLS extended response object.
      */
-    public ExtendedResponse createExtendedResponse(String id, byte[] berValue, 
-	int offset, int length) throws NamingException {
+    public ExtendedResponse createExtendedResponse(String id, byte[] berValue,
+        int offset, int length) throws NamingException {
 
-	// Confirm that the object identifier is correct
-	if ((id != null) && (!id.equals(OID))) {
-	    throw new ConfigurationException(
-		"Start TLS received the following response instead of " +
-		OID + ": " + id);
-	}
-
-	StartTlsResponse resp = null;
-
-	ServiceLoader<StartTlsResponse> sl = ServiceLoader.load(
-		StartTlsResponse.class, getContextClassLoader());
-	Iterator<StartTlsResponse> iter = sl.iterator();
-
-	while (resp == null && privilegedHasNext(iter)) {
-	    resp = iter.next();
-	}
-	if (resp != null) {
-	    return resp;
-	}
-        try {
-	    VersionHelper helper = VersionHelper.getVersionHelper();
-	    Class clas = helper.loadClass(
-		"com.sun.jndi.ldap.ext.StartTlsResponseImpl");
-
-	    resp = (StartTlsResponse) clas.newInstance();
-
-        } catch (IllegalAccessException e) {
-	    throw wrapException(e);
-
-        } catch (InstantiationException e) {
-	    throw wrapException(e);
-
-        } catch (ClassNotFoundException e) {
-	    throw wrapException(e);
+        // Confirm that the object identifier is correct
+        if ((id != null) && (!id.equals(OID))) {
+            throw new ConfigurationException(
+                "Start TLS received the following response instead of " +
+                OID + ": " + id);
         }
 
-	return resp;
+        StartTlsResponse resp = null;
+
+        ServiceLoader<StartTlsResponse> sl = ServiceLoader.load(
+                StartTlsResponse.class, getContextClassLoader());
+        Iterator<StartTlsResponse> iter = sl.iterator();
+
+        while (resp == null && privilegedHasNext(iter)) {
+            resp = iter.next();
+        }
+        if (resp != null) {
+            return resp;
+        }
+        try {
+            VersionHelper helper = VersionHelper.getVersionHelper();
+            Class clas = helper.loadClass(
+                "com.sun.jndi.ldap.ext.StartTlsResponseImpl");
+
+            resp = (StartTlsResponse) clas.newInstance();
+
+        } catch (IllegalAccessException e) {
+            throw wrapException(e);
+
+        } catch (InstantiationException e) {
+            throw wrapException(e);
+
+        } catch (ClassNotFoundException e) {
+            throw wrapException(e);
+        }
+
+        return resp;
     }
 
     /*
@@ -215,34 +215,34 @@ public class StartTlsRequest implements ExtendedRequest {
      * class, in a configuration exception.
      */
     private ConfigurationException wrapException(Exception e) {
-	ConfigurationException ce = new ConfigurationException(
-	    "Cannot load implementation of javax.naming.ldap.StartTlsResponse");
+        ConfigurationException ce = new ConfigurationException(
+            "Cannot load implementation of javax.naming.ldap.StartTlsResponse");
 
-	ce.setRootCause(e);
-	return ce;
+        ce.setRootCause(e);
+        return ce;
     }
 
     /*
      * Acquire the class loader associated with this thread.
      */
     private final ClassLoader getContextClassLoader() {
-	return (ClassLoader) AccessController.doPrivileged(
-	    new PrivilegedAction() {
-		public Object run() {
-		    return Thread.currentThread().getContextClassLoader();
-		}
-	    }
-	);
+        return (ClassLoader) AccessController.doPrivileged(
+            new PrivilegedAction() {
+                public Object run() {
+                    return Thread.currentThread().getContextClassLoader();
+                }
+            }
+        );
     }
 
     private final static boolean privilegedHasNext(final Iterator iter) {
-	Boolean answer = (Boolean) AccessController.doPrivileged(
-	    new PrivilegedAction() {
-	    public Object run() {
-		return Boolean.valueOf(iter.hasNext());
-	    }
-	});
-	return answer.booleanValue();
+        Boolean answer = (Boolean) AccessController.doPrivileged(
+            new PrivilegedAction() {
+            public Object run() {
+                return Boolean.valueOf(iter.hasNext());
+            }
+        });
+        return answer.booleanValue();
     }
 
     private static final long serialVersionUID = 4441679576360753397L;

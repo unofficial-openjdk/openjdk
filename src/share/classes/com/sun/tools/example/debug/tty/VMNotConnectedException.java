@@ -28,10 +28,10 @@ package com.sun.tools.example.debug.tty;
 public class VMNotConnectedException extends RuntimeException {
 
     public VMNotConnectedException() {
-	super();
+        super();
     }
 
     public VMNotConnectedException(String s) {
-	super(s);
+        super(s);
     }
 }

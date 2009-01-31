@@ -26,8 +26,8 @@
 #ifndef IntDcm_h_Included
 #define IntDcm_h_Included
 
-typedef jint	IntDcmPixelType;
-typedef jint	IntDcmElemType;
+typedef jint    IntDcmPixelType;
+typedef jint    IntDcmElemType;
 
 #define SwapIntDcmComponentsX123ToX321(pixel) \
     (((pixel) << 16) | \
@@ -52,24 +52,24 @@ typedef jint	IntDcmElemType;
 
 #define ExtractIntDcmComponentsX123(pixel, c1, c2, c3) \
     do { \
-	(c3) = (pixel) & 0xff; \
-	(c2) = ((pixel) >> 8) & 0xff; \
-	(c1) = ((pixel) >> 16) & 0xff; \
+        (c3) = (pixel) & 0xff; \
+        (c2) = ((pixel) >> 8) & 0xff; \
+        (c1) = ((pixel) >> 16) & 0xff; \
     } while (0)
 
 #define ExtractIntDcmComponents123X(pixel, c1, c2, c3) \
     do { \
-	(c3) = ((pixel) >> 8) & 0xff; \
-	(c2) = ((pixel) >> 16) & 0xff; \
-	(c1) = ((pixel) >> 24) & 0xff; \
+        (c3) = ((pixel) >> 8) & 0xff; \
+        (c2) = ((pixel) >> 16) & 0xff; \
+        (c1) = ((pixel) >> 24) & 0xff; \
     } while (0)
 
 #define ExtractIntDcmComponents1234(pixel, c1, c2, c3, c4) \
     do { \
-	(c4) = (pixel) & 0xff; \
-	(c3) = ((pixel) >> 8) & 0xff; \
-	(c2) = ((pixel) >> 16) & 0xff; \
-	(c1) = ((pixel) >> 24) & 0xff; \
+        (c4) = (pixel) & 0xff; \
+        (c3) = ((pixel) >> 8) & 0xff; \
+        (c2) = ((pixel) >> 16) & 0xff; \
+        (c1) = ((pixel) >> 24) & 0xff; \
     } while (0)
 
 #define ComposeIntDcmComponentsX123(c1, c2, c3) \

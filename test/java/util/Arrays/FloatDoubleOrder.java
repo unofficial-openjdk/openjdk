@@ -25,12 +25,12 @@
  * @test
  * @bug 4143272 6548425
  * @summary The natural ordering on Float and Double was not even a partial
- *	    order (i.e., it violated the contract of Comparable.compareTo).
- *	    Now it's a total ordering.  Arrays.sort(double[])
- *	    and Arrays.sort(double[]) reflect the new ordering.  Also,
- *	    Arrays.equals(double[], double[]) and
- *	    Arrays.equals(float[], float[]) reflect the definition of
- *	    equality used by Float and Double.
+ *          order (i.e., it violated the contract of Comparable.compareTo).
+ *          Now it's a total ordering.  Arrays.sort(double[])
+ *          and Arrays.sort(double[]) reflect the new ordering.  Also,
+ *          Arrays.equals(double[], double[]) and
+ *          Arrays.equals(float[], float[]) reflect the definition of
+ *          equality used by Float and Double.
  */
 
 import java.util.*;
@@ -56,14 +56,14 @@ public class FloatDoubleOrder {
         check(list.equals(sortedList));
 
         Arrays.sort(unsortedDbl);
-	check(Arrays.equals(unsortedDbl, sortedDbl));
+        check(Arrays.equals(unsortedDbl, sortedDbl));
 
-	double negNan = Double.longBitsToDouble(0xfff8000000000000L);
-	for (int i = 0; i < sortedDbl.length; i++) {
-	    equal(Arrays.binarySearch(sortedDbl, sortedDbl[i]), i);
-	    if (Double.isNaN(sortedDbl[i]))
-		equal(Arrays.binarySearch(sortedDbl, negNan), i);
-	}
+        double negNan = Double.longBitsToDouble(0xfff8000000000000L);
+        for (int i = 0; i < sortedDbl.length; i++) {
+            equal(Arrays.binarySearch(sortedDbl, sortedDbl[i]), i);
+            if (Double.isNaN(sortedDbl[i]))
+                equal(Arrays.binarySearch(sortedDbl, negNan), i);
+        }
 
         float[] unsortedFlt = new float[] {1.0f, 3.7f, Float.NaN, -2.0f,
            Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0.0f, -0.0f};
@@ -85,22 +85,22 @@ public class FloatDoubleOrder {
         Arrays.sort(unsortedFlt);
         check(Arrays.equals(unsortedFlt, sortedFlt));
 
-	float negNaN = Float.intBitsToFloat(0xFfc00000);
-	for (int i = 0; i < sortedDbl.length; i++) {
-	    equal(Arrays.binarySearch(sortedFlt, sortedFlt[i]), i);
-	    if (Float.isNaN(sortedFlt[i]))
-		equal(Arrays.binarySearch(sortedFlt, negNaN), i);
-	}
+        float negNaN = Float.intBitsToFloat(0xFfc00000);
+        for (int i = 0; i < sortedDbl.length; i++) {
+            equal(Arrays.binarySearch(sortedFlt, sortedFlt[i]), i);
+            if (Float.isNaN(sortedFlt[i]))
+                equal(Arrays.binarySearch(sortedFlt, negNaN), i);
+        }
 
 
-	// 6548425: Arrays.sort incorrectly sorts a double array
-	// containing negative zeros
-	double[] da = {-0.0d, -0.0d, 0.0d, -0.0d};
-	Arrays.sort(da, 1, 4);
+        // 6548425: Arrays.sort incorrectly sorts a double array
+        // containing negative zeros
+        double[] da = {-0.0d, -0.0d, 0.0d, -0.0d};
+        Arrays.sort(da, 1, 4);
         check(Arrays.equals(da, new double[] {-0.0d, -0.0d, -0.0d, 0.0d}));
 
-	float[] fa = {-0.0f, -0.0f, 0.0f, -0.0f};
-	Arrays.sort(fa, 1, 4);
+        float[] fa = {-0.0f, -0.0f, 0.0f, -0.0f};
+        Arrays.sort(fa, 1, 4);
         check(Arrays.equals(fa, new float[] {-0.0f, -0.0f, -0.0f, 0.0f}));
     }
 
@@ -112,12 +112,12 @@ public class FloatDoubleOrder {
     void unexpected(Throwable t) {failed++; t.printStackTrace();}
     void check(boolean cond) {if (cond) pass(); else fail();}
     void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	new FloatDoubleOrder().instanceMain(args);}
+        new FloatDoubleOrder().instanceMain(args);}
     void instanceMain(String[] args) throws Throwable {
-	try {test(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {test(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

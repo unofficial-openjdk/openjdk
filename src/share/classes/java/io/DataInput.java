@@ -186,7 +186,6 @@ package java.io;
  *     are represented in the form of surrogate pairs.
  * </ul>
  * @author  Frank Yellin
- * @version %I%, %G%
  * @see     java.io.DataInputStream
  * @see     java.io.DataOutput
  * @since   JDK1.0
@@ -542,7 +541,7 @@ interface DataInput {
      *
      * @return the next line of text from the input stream,
      *         or <CODE>null</CODE> if the end of file is
-     *         encountered before a byte can be read. 
+     *         encountered before a byte can be read.
      * @exception  IOException  if an I/O error occurs.
      */
     String readLine() throws IOException;

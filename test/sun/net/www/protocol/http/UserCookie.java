@@ -29,7 +29,7 @@
  */
 
 import java.net.*;
-import com.sun.net.httpserver.*; 
+import com.sun.net.httpserver.*;
 import java.util.*;
 import java.io.*;
 
@@ -38,31 +38,31 @@ public class UserCookie
     com.sun.net.httpserver.HttpServer httpServer;
 
     public static void main(String[] args) {
-	new UserCookie();
+        new UserCookie();
     }
 
     public UserCookie() {
-	try {
-	    startHttpServer();
-	    doClient();
-	} catch (IOException ioe) {
-	    ioe.printStackTrace();
-	}
+        try {
+            startHttpServer();
+            doClient();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     void doClient() {
-	try {
-	    // set default CookieHandler to accept only accepts cookies from original server.
-	    CookieHandler.setDefault(new CookieManager());
-	
+        try {
+            // set default CookieHandler to accept only accepts cookies from original server.
+            CookieHandler.setDefault(new CookieManager());
+
             InetSocketAddress address = httpServer.getAddress();
 
             URL url = new URL("http://" + address.getHostName() + ":" + address.getPort() + "/test/");
             HttpURLConnection uc = (HttpURLConnection)url.openConnection();
-	    uc.setRequestProperty("Cookie", "value=ValueDoesNotMatter");
+            uc.setRequestProperty("Cookie", "value=ValueDoesNotMatter");
             int resp = uc.getResponseCode();
 
-	    System.out.println("Response Code is " + resp);
+            System.out.println("Response Code is " + resp);
             if (resp != 200)
                 throw new RuntimeException("Failed: Cookie header was not retained");
 

@@ -40,7 +40,7 @@ public class InvalidPipeException extends IllegalStateException {
      * A detail message is a String that describes this particular exception.
      */
     public InvalidPipeException() {
-	super();
+        super();
     }
 
     /**
@@ -50,6 +50,6 @@ public class InvalidPipeException extends IllegalStateException {
      * @param s the String that contains a detailed message
      */
     public InvalidPipeException(String s) {
-	super(s);
+        super(s);
     }
 }

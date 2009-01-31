@@ -31,9 +31,9 @@ import javax.security.auth.callback.CallbackHandler;
 /**
  * An interface for creating instances of <tt>SaslServer</tt>.
  * A class that implements this interface
- * must be thread-safe and handle multiple simultaneous 
- * requests. It must also have a public constructor that accepts no 
- * argument. 
+ * must be thread-safe and handle multiple simultaneous
+ * requests. It must also have a public constructor that accepts no
+ * argument.
  *<p>
  * This interface is not normally accessed directly by a server, which will use the
  * <tt>Sasl</tt> static methods
@@ -64,7 +64,7 @@ public abstract interface SaslServerFactory {
      * to authenticate to.
      * @param props The possibly null set of properties used to select the SASL
      * mechanism and to configure the authentication exchange of the selected
-     * mechanism. See the <tt>Sasl</tt> class for a list of standard properties. 
+     * mechanism. See the <tt>Sasl</tt> class for a list of standard properties.
      * Other, possibly mechanism-specific, properties can be included.
      * Properties not relevant to the selected mechanism are ignored,
      * including any map entries with non-String keys.
@@ -77,7 +77,7 @@ public abstract interface SaslServerFactory {
      * The password is requested by using a <tt>PasswordCallback</tt>.
      * The realm is requested by using a <tt>RealmChoiceCallback</tt> if there is a list
      * of realms to choose from, and by using a <tt>RealmCallback</tt> if
-     * the realm must be entered. 
+     * the realm must be entered.
      *
      *@return A possibly null <tt>SaslServer</tt> created using the parameters
      * supplied. If null, this factory cannot produce a <tt>SaslServer</tt>
@@ -86,11 +86,11 @@ public abstract interface SaslServerFactory {
      * of an error.
      */
     public abstract SaslServer createSaslServer(
-	String mechanism,
-	String protocol,
-	String serverName,
-	Map<String,?> props,
-	CallbackHandler cbh) throws SaslException;
+        String mechanism,
+        String protocol,
+        String serverName,
+        Map<String,?> props,
+        CallbackHandler cbh) throws SaslException;
 
     /**
      * Returns an array of names of mechanisms that match the specified

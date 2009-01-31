@@ -46,12 +46,12 @@ void    CheckFlags();
 
 void    CheckRegistry();
 
-BOOL	DDSetupDevice(DDrawObjectStruct *tmpDdInstance, DxCapabilities *dxCaps);
+BOOL    DDSetupDevice(DDrawObjectStruct *tmpDdInstance, DxCapabilities *dxCaps);
 
 DDrawObjectStruct *CreateDevice(GUID *lpGUID, HMONITOR hMonitor);
 
-BOOL CALLBACK EnumDeviceCallback(GUID FAR* lpGUID, LPSTR szName, LPSTR szDevice, 
-				 LPVOID lParam, HMONITOR hMonitor);
+BOOL CALLBACK EnumDeviceCallback(GUID FAR* lpGUID, LPSTR szName, LPSTR szDevice,
+                                 LPVOID lParam, HMONITOR hMonitor);
 
 BOOL    DDCreateObject();
 

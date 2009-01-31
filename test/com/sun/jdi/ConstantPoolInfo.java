@@ -28,7 +28,7 @@
  *
  *  @author Swamy Venkataramanappa
  *
- *  @run build TestScaffold VMConnection 
+ *  @run build TestScaffold VMConnection
  *  @run compile -g ConstantPoolInfo.java
  *  @run main ConstantPoolInfo
  */
@@ -75,55 +75,55 @@ public class ConstantPoolInfo extends TestScaffold {
     public static final int CONSTANT_METHOD              = 10;
     public static final int CONSTANT_INTERFACEMETHOD     = 11;
     public static final int CONSTANT_NAMEANDTYPE         = 12;
-    
+
     ConstantPoolInfo (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new ConstantPoolInfo(args).startTests();
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("ConstantPoolTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
 
- 
+
         String targPathname = System.getProperty("test.classes") + File.separator + "ConstantPoolTarg.class";
 
-        readClassData(new FileInputStream(targPathname));        
-            
+        readClassData(new FileInputStream(targPathname));
+
         /* Test constant pool apis
          */
         if (vm().canGetClassFileVersion()) {
             if (expectedMajorVersion != targetClass.majorVersion()) {
                 failure("unexpected major version: actual value: " + targetClass.majorVersion()
                         + "expected value :" + expectedMajorVersion);
-                
+
             }
             if (expectedMinorVersion != targetClass.minorVersion()) {
                 failure("unexpected minor version: actual value: " + targetClass.minorVersion()
                         + "expected value :" + expectedMinorVersion);
-                
+
             }
         } else {
             System.out.println("can get class version not supported");
         }
-        
-    
+
+
         if (vm().canGetConstantPool()) {
-            
+
             cpool_count = targetClass.constantPoolCount();
 
             cpbytes = targetClass.constantPool();
-        
+
             try {
                 printcp();
             } catch (IOException x){
@@ -132,19 +132,19 @@ public class ConstantPoolInfo extends TestScaffold {
 
             if (expectedCpoolCount != cpool_count) {
                 failure("unexpected constant pool count: actual value: " + cpool_count
-                        + "expected value :" + expectedCpoolCount);                
+                        + "expected value :" + expectedCpoolCount);
             }
 
         } else {
             System.out.println("can get constant pool version not supported");
         }
 
-        
+
         /*
          * resume until end
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -165,7 +165,7 @@ public class ConstantPoolInfo extends TestScaffold {
             int tag = in.readByte();
             System.out.print("const #" + i + ":   ");
             switch(tag) {
-           	    case CONSTANT_UTF8:
+                    case CONSTANT_UTF8:
                     String str=in.readUTF();
                     System.out.println("Asciz " + str);
                     // "Howdy!" is an expected constant pool entry
@@ -203,12 +203,12 @@ public class ConstantPoolInfo extends TestScaffold {
                     break;
                 case CONSTANT_NAMEANDTYPE:
                     System.out.println("NameAndType " + in.readUnsignedShort() + " " + in.readUnsignedShort());
-                    break;		
+                    break;
                 case 0:
                 default:
                     System.out.println("class format error");
             }
-            
+
         }
 
         if (!found) {
@@ -216,7 +216,7 @@ public class ConstantPoolInfo extends TestScaffold {
         }
     }
 
-    
+
     /**
      * Read classfile
      */

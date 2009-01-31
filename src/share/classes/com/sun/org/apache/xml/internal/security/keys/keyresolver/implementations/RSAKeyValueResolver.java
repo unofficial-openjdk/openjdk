@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 public class RSAKeyValueResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                         RSAKeyValueResolver.class.getName());
 
@@ -53,8 +53,8 @@ public class RSAKeyValueResolver extends KeyResolverSpi {
    /** @inheritDoc */
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
-   	  if (true)
-   	  	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName());
+          if (true)
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName());
 
       if (element == null) {
          return false;
@@ -65,13 +65,13 @@ public class RSAKeyValueResolver extends KeyResolverSpi {
       boolean isRSAKeyValue = XMLUtils.elementIsInSignatureSpace(element,
                                  Constants._TAG_RSAKEYVALUE);
 
-      if (isKeyValue) {                  
+      if (isKeyValue) {
             this._rsaKeyElement = XMLUtils.selectDsNode(element.getFirstChild(),
                     Constants._TAG_RSAKEYVALUE, 0);
 
             if (this._rsaKeyElement != null) {
                return true;
-            }         
+            }
       } else if (isRSAKeyValue) {
 
          // this trick is needed to allow the RetrievalMethodResolver to eat a

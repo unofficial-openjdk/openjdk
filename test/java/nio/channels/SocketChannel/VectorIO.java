@@ -37,37 +37,37 @@ import sun.misc.*;
 public class VectorIO {
 
     static int port = 40170;
-    
+
     static Random generator = new Random();
 
     static int testSize;
 
     public static void main(String[] args) throws Exception {
-	testSize = 1;
-	runTest();
-	for(int i=15; i<18; i++) {
-	    testSize = i;
-	    runTest();
-	}
+        testSize = 1;
+        runTest();
+        for(int i=15; i<18; i++) {
+            testSize = i;
+            runTest();
+        }
     }
 
     static void runTest() throws Exception {
-	System.err.println("Length " + testSize);
-	Server sv = new Server(testSize);
-	sv.start();
-	do {
-	    try {
-		Thread.currentThread().sleep(200);
-	    } catch (InterruptedException x) {
-		if (sv.finish(8000) == 0)
-		    throw new Exception("Failed: Error in server thread");
-	    }
-	} while (!sv.ready);
+        System.err.println("Length " + testSize);
+        Server sv = new Server(testSize);
+        sv.start();
+        do {
+            try {
+                Thread.currentThread().sleep(200);
+            } catch (InterruptedException x) {
+                if (sv.finish(8000) == 0)
+                    throw new Exception("Failed: Error in server thread");
+            }
+        } while (!sv.ready);
         bufferTest();
-	if (sv.finish(8000) == 0)
-	    throw new Exception("Failed: Length = " + testSize);
+        if (sv.finish(8000) == 0)
+            throw new Exception("Failed: Length = " + testSize);
     }
-    
+
     static void bufferTest() throws Exception {
         ByteBuffer[] bufs = new ByteBuffer[testSize];
         for(int i=0; i<testSize; i++) {
@@ -82,7 +82,7 @@ public class VectorIO {
         }
 
         // Get a connection to the server
-	InetAddress lh = InetAddress.getLocalHost();
+        InetAddress lh = InetAddress.getLocalHost();
         InetSocketAddress isa = new InetSocketAddress(lh, port);
         SocketChannel sc = SocketChannel.open();
         sc.connect(isa);
@@ -93,7 +93,7 @@ public class VectorIO {
         do {
             bytesWritten = sc.write(bufs);
         } while (bytesWritten > 0);
-        
+
         try {
             Thread.currentThread().sleep(500);
         } catch (InterruptedException ie) { }
@@ -103,7 +103,7 @@ public class VectorIO {
     }
 
     static class Server
-	extends TestThread
+        extends TestThread
     {
         static int port = 40170;
 
@@ -184,8 +184,3 @@ public class VectorIO {
     }
 
 }
-
-
-
-
-    

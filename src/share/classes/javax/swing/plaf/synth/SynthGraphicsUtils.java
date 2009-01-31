@@ -34,7 +34,6 @@ import sun.swing.plaf.synth.*;
 /**
  * Wrapper for primitive graphics calls.
  *
- * @version %I%, %G%
  * @since 1.5
  * @author Scott Violet
  */
@@ -75,7 +74,7 @@ public class SynthGraphicsUtils {
                          Graphics g, int x1, int y1, int x2, int y2) {
         g.drawLine(x1, y1, x2, y2);
     }
-    
+
     /**
      * Draws a line between the two end points.
      * <p>This implementation supports only one line style key,
@@ -194,12 +193,12 @@ public class SynthGraphicsUtils {
         Dimension size = getPreferredSize(ss, font, text, icon, hAlign,
                                           vAlign, hTextPosition, vTextPosition,
                                           iconTextGap, mnemonicIndex);
-	View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
 
-	if (v != null) {
-	    size.width -= v.getPreferredSpan(View.X_AXIS) -
+        if (v != null) {
+            size.width -= v.getPreferredSpan(View.X_AXIS) -
                           v.getMinimumSpan(View.X_AXIS);
-	}
+        }
         return size;
     }
 
@@ -225,12 +224,12 @@ public class SynthGraphicsUtils {
         Dimension size = getPreferredSize(ss, font, text, icon, hAlign,
                                           vAlign, hTextPosition, vTextPosition,
                                           iconTextGap, mnemonicIndex);
-	View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
 
-	if (v != null) {
-	    size.width += v.getMaximumSpan(View.X_AXIS) -
+        if (v != null) {
+            size.width += v.getMaximumSpan(View.X_AXIS) -
                           v.getPreferredSpan(View.X_AXIS);
-	}
+        }
         return size;
     }
 
@@ -275,7 +274,7 @@ public class SynthGraphicsUtils {
             return new Dimension(dx, dy);
         }
         else if ((text == null) || ((icon != null) && (font == null))) {
-            return new Dimension(SynthIcon.getIconWidth(icon, ss) + dx, 
+            return new Dimension(SynthIcon.getIconWidth(icon, ss) + dx,
                                  SynthIcon.getIconHeight(icon, ss) + dy);
         }
         else {
@@ -377,14 +376,14 @@ public class SynthGraphicsUtils {
         paintIconR.x = paintIconR.y = paintIconR.width = paintIconR.height = 0;
         paintTextR.x = paintTextR.y = paintTextR.width = paintTextR.height = 0;
 
-        String clippedText = 
+        String clippedText =
             layoutText(ss, fm, text, icon, hAlign, vAlign,
                    hTextPosition, vTextPosition, paintViewR, paintIconR,
                    paintTextR, iconTextGap);
 
         if (icon != null) {
             Color color = g.getColor();
-            
+
             if (ss.getStyle().getBoolean(ss, "TableHeader.alignSorterArrow", false) &&
                 "TableHeader.renderer".equals(c.getName())) {
                 paintIconR.x = paintViewR.width - paintIconR.width;
@@ -398,16 +397,16 @@ public class SynthGraphicsUtils {
         }
 
         if (text != null) {
-	    View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
 
-	    if (v != null) {
-		v.paint(g, paintTextR);
-	    } else {
+            if (v != null) {
+                v.paint(g, paintTextR);
+            } else {
                 paintTextR.x += textOffset;
                 paintTextR.y += textOffset;
 
                 paintText(ss, g, clippedText, paintTextR, mnemonicIndex);
-	    }
+            }
         }
     }
 

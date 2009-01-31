@@ -72,7 +72,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
     static final Color focusColor = Color.black;
 
     // TODO: there is a time value that the mouse is held down.  If short
-    // enough,  the Choice stays popped down.  If long enough, Choice 
+    // enough,  the Choice stays popped down.  If long enough, Choice
     // is furled when the mouse is released
 
     private boolean unfurled = false;        // Choice list is popped down
@@ -80,7 +80,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
     private boolean dragging = false;        // Mouse was pressed and is being
                                              // dragged over the (unfurled)
                                              // Choice
-    
+
     private boolean mouseInSB = false;       // Mouse is interacting with the
                                              // scrollbar
 
@@ -91,16 +91,16 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
 
     // 6425067. Mouse was pressed on furled choice and dropdown list appeared over Choice itself
     // and then there were no mouse movements until MOUSE_RELEASE.
-    // This scenario leads to ItemStateChanged as the choice logic uses 
-    // MouseReleased event to send ItemStateChanged. To prevent it we should 
+    // This scenario leads to ItemStateChanged as the choice logic uses
+    // MouseReleased event to send ItemStateChanged. To prevent it we should
     // use a combination of firstPress and wasDragged variables.
-    // The only difference in dragging and wasDragged is: last one will not 
+    // The only difference in dragging and wasDragged is: last one will not
     // set to false on mouse ungrab. It become false after MouseRelased() finishes.
     private boolean wasDragged = false;
     private ListHelper helper;
     private UnfurledChoice unfurledChoice;
 
-    // TODO: Choice remembers where it was scrolled to when unfurled - it's not 
+    // TODO: Choice remembers where it was scrolled to when unfurled - it's not
     // always to the currently selected item.
 
     // Indicates whether or not to paint selected item in the choice.
@@ -163,7 +163,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
 
     public boolean isFocusable() { return true; }
 
-    // 6399679. check if super.setBounds() actually changes the size of the 
+    // 6399679. check if super.setBounds() actually changes the size of the
     // component and then compare current Choice size with a new one. If
     // they differs then hide dropdown menu
     public void setBounds(int x, int y, int width, int height, int op) {
@@ -177,14 +177,14 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         }
     }
 
-    public void focusGained(FocusEvent e) { 
+    public void focusGained(FocusEvent e) {
         // TODO: only need to paint the focus bit
         super.focusGained(e);
         repaint();
     }
 
     /*
-     * Fix for 6246503 : Disabling a choice after selection locks keyboard, mouse and makes the system unusable, Xtoolkit 
+     * Fix for 6246503 : Disabling a choice after selection locks keyboard, mouse and makes the system unusable, Xtoolkit
      * if setEnabled(false) invoked we should close opened choice in
      * order to prevent keyboard/mouse lock.
      */
@@ -195,8 +195,8 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
             hidePopdownMenu();
         }
     }
-    
-    public void focusLost(FocusEvent e) { 
+
+    public void focusLost(FocusEvent e) {
         // TODO: only need to paint the focus bit?
         super.focusLost(e);
         repaint();
@@ -214,7 +214,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
     }
 
     void handleJavaKeyEvent(KeyEvent e) {
-        if (e.getID() == KeyEvent.KEY_PRESSED) { 
+        if (e.getID() == KeyEvent.KEY_PRESSED) {
             keyPressed(e);
         }
     }
@@ -287,9 +287,9 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
               if (unfurled) {
                   if (dragging){
                       if (e.getKeyCode() == KeyEvent.VK_ESCAPE){
-                          //This also happens on 
+                          //This also happens on
                           // - MouseButton2,3, etc. press
-                          // - ENTER press 
+                          // - ENTER press
                           helper.select(dragStartIdx);
                       } else { //KeyEvent.VK_ENTER:
                           int newIdx = helper.getSelectedIndex();
@@ -333,7 +333,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         super.handleJavaMouseEvent(e);
         int i = e.getID();
         switch (i) {
-          case MouseEvent.MOUSE_PRESSED: 
+          case MouseEvent.MOUSE_PRESSED:
               mousePressed(e);
               break;
           case MouseEvent.MOUSE_RELEASED:
@@ -375,7 +375,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         }
     }
 
-    /* 
+    /*
      * helper method for mouseReleased routine
      */
     void hidePopdownMenu(){
@@ -422,7 +422,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
                     hidePopdownMenu();
                 }
                 //if user drags Mouse on pop-down menu, Scrollbar or
-                // outside the Choice 
+                // outside the Choice
                 if ( firstPress && dragging) {
                     hidePopdownMenu();
                 }
@@ -455,7 +455,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
 
                             /*fix for 6239941 : Choice triggers ItemEvent when selecting an item with right mouse button, Xtoolkit
                             * We should generate ItemEvent if only
-                            * LeftMouseButton used */  
+                            * LeftMouseButton used */
                             if (e.getButton() == MouseEvent.BUTTON1 &&
                                 (!firstPress || wasDragged ))
                             {
@@ -569,18 +569,18 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
                 g.setClip(1, 1, width - WIDGET_OFFSET - 2, height);
                 if (isEnabled()) {
                     g.setColor(getPeerForeground());
-                    g.drawString(lbl, 5, (height + fm.getMaxAscent()-fm.getMaxDescent())/2);        
+                    g.drawString(lbl, 5, (height + fm.getMaxAscent()-fm.getMaxDescent())/2);
                 }
                 else {
                     g.setColor(getPeerBackground().brighter());
-                    g.drawString(lbl, 5, (height + fm.getMaxAscent()-fm.getMaxDescent())/2);        
+                    g.drawString(lbl, 5, (height + fm.getMaxAscent()-fm.getMaxDescent())/2);
                     g.setColor(getPeerBackground().darker());
                     g.drawString(lbl, 4, ((height + fm.getMaxAscent()-fm.getMaxDescent())/2)-1);
                 }
                 g.setClip(0, 0, width, height);
             }
         }
-        if (hasFocus()) {            
+        if (hasFocus()) {
             paintFocus(g,focusInsets.left,focusInsets.top,size.width-(focusInsets.left+focusInsets.right)-1,size.height-(focusInsets.top+focusInsets.bottom)-1);
         }
         if (unfurled) {
@@ -589,11 +589,11 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         flush();
     }
 
-    protected void paintFocus(Graphics g, 
+    protected void paintFocus(Graphics g,
                               int x, int y, int w, int h) {
         g.setColor(focusColor);
         g.drawRect(x,y,w,h);
-    } 
+    }
 
 
 
@@ -626,7 +626,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         }
         /*
          * Fix for 6248016
-         * After removing the item of the choice we need to reshape unfurled choice 
+         * After removing the item of the choice we need to reshape unfurled choice
          * in order to keep actual bounds of the choice
          */
 
@@ -635,7 +635,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
          */
         if (!unfurled) {
             // Fix 6292186: PIT: Choice is not refreshed properly when the last item gets removed, XToolkit
-            // We should take into account that there is no 'select' invoking (hence 'repaint') 
+            // We should take into account that there is no 'select' invoking (hence 'repaint')
             // if the choice is empty (see Choice.java method removeNoInvalidate())
             // The condition isn't 'visibled' since it would be cause of the twice repainting
             if (helper.isEmpty()) {
@@ -669,7 +669,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         helper.select(-1);
         /*
          * Fix for 6248016
-         * After removing the item of the choice we need to reshape unfurled choice 
+         * After removing the item of the choice we need to reshape unfurled choice
          * in order to keep actual bounds of the choice
          */
         Rectangle r = unfurledChoice.placeOnScreen();
@@ -749,7 +749,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
      * Much, much more docs
      */
     class UnfurledChoice extends XWindow /*implements XScrollbarClient*/ {
- 
+
         // First try - use Choice as the target
 
         public UnfurledChoice(Component target) {
@@ -761,7 +761,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
             // A parent of this window is the target, at this point: wrong.
             // Remove parent window; in the following preInit() call we'll calculate as a default
             // a correct root window which is the proper parent for override redirect.
-            params.delete(PARENT_WINDOW);  
+            params.delete(PARENT_WINDOW);
             super.preInit(params);
             // Reset bounds(we'll set them later), set overrideRedirect
             params.remove(BOUNDS);
@@ -781,8 +781,8 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
             }
             else {
                 int numItems = helper.getItemCount();
-                numItemsDisplayed = Math.min(MAX_UNFURLED_ITEMS, numItems); 
-            } 
+                numItemsDisplayed = Math.min(MAX_UNFURLED_ITEMS, numItems);
+            }
             Point global = XChoicePeer.this.toGlobal(0,0);
             Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -796,14 +796,14 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
                 width = result.width;
                 x = result.x;
                 y = result.y + result.height;
-                height = 2*BORDER_WIDTH + 
+                height = 2*BORDER_WIDTH +
                     numItemsDisplayed*(helper.getItemHeight()+2*ITEM_MARGIN);
             } else {
                 x = global.x;
                 y = global.y + XChoicePeer.this.height;
                 width = Math.max(XChoicePeer.this.width,
                                  helper.getMaxItemWidth() + 2 * (BORDER_WIDTH + ITEM_MARGIN + TEXT_SPACE) + (helper.isVSBVisible() ? SCROLLBAR_WIDTH : 0));
-                height = 2*BORDER_WIDTH + 
+                height = 2*BORDER_WIDTH +
                     numItemsDisplayed*(helper.getItemHeight()+2*ITEM_MARGIN);
             }
             // Don't run off the edge of the screen
@@ -884,7 +884,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
                       trackSelection(local.x, local.y);
                   }
                   break;
-            }                 
+            }
         }
 
         private void trackSelection(int transX, int transY) {
@@ -917,10 +917,10 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
             g.setColor(getPeerBackground());
             g.fillRect(0, 0, width, height);
         }
-        
-        /* 
-         * 6405689. In some cases we should erase background to eliminate painting 
-         * artefacts. 
+
+        /*
+         * 6405689. In some cases we should erase background to eliminate painting
+         * artefacts.
          */
         public void repaint() {
             if (!isVisible()) {
@@ -1007,7 +1007,7 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         }
         super.dispose();
     }
-  
+
     /*
      * fix for 6239938 : Choice drop-down does not disappear when it loses
      * focus, on XToolkit
@@ -1026,10 +1026,10 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
             }
             //fix 6252982: PIT: Keyboard FocusTraversal not working when choice's drop-down is visible, on XToolkit
             if (e instanceof KeyEvent){
-                // notify XWindow that this event had been already handled and no need to post it again 
+                // notify XWindow that this event had been already handled and no need to post it again
                 EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            if(target.isFocusable() && 
+                            if(target.isFocusable() &&
                                getParentTopLevel().isFocusableWindow() )
                             {
                                 handleJavaKeyEvent((KeyEvent)e);
@@ -1085,15 +1085,15 @@ public class XChoicePeer extends XComponentPeer implements ChoicePeer, ToplevelS
         return true;
     }
 
-    /* Returns true if the MouseEvent coords 
-     * are inside of the Choice itself (it doesnt's depends on 
+    /* Returns true if the MouseEvent coords
+     * are inside of the Choice itself (it doesnt's depends on
      * if this choice opened or not).
      */
     private boolean isMouseEventInChoice(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
         Rectangle choiceRect = getBounds();
-        
+
         if (x < 0 || x > choiceRect.width ||
             y < 0 || y > choiceRect.height)
         {

@@ -136,7 +136,7 @@ public class CounterMonitorDeadlockTest {
                 if (notifCount.get() == 0)
                     throw new Exception("Test failed: presumable deadlock");
             }
-            
+
         }
 
         abstract void doSensitiveThing(CounterMonitorMBean monitorProxy,

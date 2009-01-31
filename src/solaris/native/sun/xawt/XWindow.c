@@ -23,9 +23,9 @@
  * have any questions.
  */
 
-/* Note that the contents of this file were taken from canvas.c 
- * in the old motif-based AWT. 
- */ 
+/* Note that the contents of this file were taken from canvas.c
+ * in the old motif-based AWT.
+ */
 
 #ifdef HEADLESS
     #error This file should not be included in headless library
@@ -55,13 +55,13 @@
 #include <X11/ap_keysym.h>  /* Apollo (HP) vendor-specific */
 /*
  * #include <X11/HPkeysym.h>    HP vendor-specific
- * I checked HPkeysym.h into the workspace because although 
- * I think it will ship with X11R6.4.2 (and later) on Linux, 
- * it doesn't seem to be in Solaris 9 Update 2.  
+ * I checked HPkeysym.h into the workspace because although
+ * I think it will ship with X11R6.4.2 (and later) on Linux,
+ * it doesn't seem to be in Solaris 9 Update 2.
  *
- * This is done not only for the hp keysyms, but also to 
+ * This is done not only for the hp keysyms, but also to
  * give us the osf keysyms that are also defined in HPkeysym.h.
- * However, HPkeysym.h is missing a couple of osf keysyms,  
+ * However, HPkeysym.h is missing a couple of osf keysyms,
  * so I have #defined them below.
  */
 #include "HPkeysym.h"   /* HP vendor-specific */
@@ -623,7 +623,7 @@ handleVendorKeySyms(XEvent *event, KeySym *keysym)
  * The purpose of this function is to adjust the keysym and XEvent
  * keycode for a key event.  This is basically a conglomeration of
  * bugfixes that require these adjustments.
- * Note that none of the keysyms in this function are less than 256. 
+ * Note that none of the keysyms in this function are less than 256.
  */
 static void
 adjustKeySym(XEvent *event, KeySym *keysym)
@@ -639,7 +639,7 @@ adjustKeySym(XEvent *event, KeySym *keysym)
 
     switch (*keysym) {
         case XK_ISO_Left_Tab:        /* shift-tab on Linux */
-            *keysym = XK_Tab; 
+            *keysym = XK_Tab;
             break;
         case XK_KP_Decimal:
             *keysym = '.';
@@ -758,7 +758,7 @@ adjustKeySym(XEvent *event, KeySym *keysym)
  * What a sniffer sez?
  * Xsun and Xorg if NumLock is on do two thing different:
  * keep Keypad key in different places of keysyms array and
- * ignore/obey "ModLock is ShiftLock", so we should choose. 
+ * ignore/obey "ModLock is ShiftLock", so we should choose.
  * People say, it's right to use behavior and not Vendor tags to decide.
  * Maybe. But why these tags were invented, then?
  * TODO: use behavior, not tags. Maybe.
@@ -770,8 +770,8 @@ isXsunServer(XEvent *event) {
         awt_ServerDetected = True;
         awt_IsXsun = False;
         return False;
-    }    
-    // Now, it's Sun. It still may be Xorg though, eg on Solaris 10, x86.    
+    }
+    // Now, it's Sun. It still may be Xorg though, eg on Solaris 10, x86.
     // Today (2005), VendorRelease of Xorg is a Big Number unlike Xsun.
     if( VendorRelease( event->xkey.display ) > 10000 ) {
         awt_ServerDetected = True;
@@ -802,15 +802,15 @@ isKPevent(XEvent *event)
 {
     /*
      *  Xlib manual, ch 12.7 says, as a first rule for choice of keysym:
-     *  The numlock modifier is on and the second KeySym is a keypad KeySym. In this case, 
-     *  if the Shift modifier is on, or if the Lock modifier is on and is interpreted as ShiftLock, 
+     *  The numlock modifier is on and the second KeySym is a keypad KeySym. In this case,
+     *  if the Shift modifier is on, or if the Lock modifier is on and is interpreted as ShiftLock,
      *  then the first KeySym is used, otherwise the second KeySym is used.
      *
      *  However, Xsun server does ignore ShiftLock and always takes 3-rd element from an array.
      *
      *  So, is it a keypad keysym?
      */
-    Boolean bsun = isXsunServer( event ); 
+    Boolean bsun = isXsunServer( event );
     Boolean bxkb = isXKBenabled( event->xkey.display );
     return IsKeypadKey( XKeycodeToKeysym(event->xkey.display, event->xkey.keycode,(bsun && !bxkb ? 2 : 1) ) );
 }
@@ -825,8 +825,8 @@ dumpKeysymArray(XEvent *event) {
  * In a next redesign, get rid of this code altogether.
  *
  */
-static void 
-handleKeyEventWithNumLockMask_New(XEvent *event, KeySym *keysym) 
+static void
+handleKeyEventWithNumLockMask_New(XEvent *event, KeySym *keysym)
 {
     KeySym originalKeysym = *keysym;
     if( !isKPevent( event ) ) {
@@ -979,39 +979,39 @@ handleKeyEventWithNumLockMask(XEvent *event, KeySym *keysym)
 }
 
 
-/* This function is called as the keyChar parameter of a call to 
- * awt_post_java_key_event.  It depends on being called after adjustKeySym. 
+/* This function is called as the keyChar parameter of a call to
+ * awt_post_java_key_event.  It depends on being called after adjustKeySym.
  *
- * This function just handles a few values where we know that the 
- * keysym is not the same as the unicode value.  For values that 
- * we don't handle explicitly, we just cast the keysym to a jchar.  
- * Most of the real mapping work that gets the correct keysym is handled 
- * in the mapping table, adjustKeySym, etc.  
- * 
+ * This function just handles a few values where we know that the
+ * keysym is not the same as the unicode value.  For values that
+ * we don't handle explicitly, we just cast the keysym to a jchar.
+ * Most of the real mapping work that gets the correct keysym is handled
+ * in the mapping table, adjustKeySym, etc.
+ *
  * XXX
- * Maybe we should enumerate the keysyms for which we have a mapping 
- * in the keyMap, but that don't map to unicode chars, and return 
- * CHAR_UNDEFINED?  Then use the buffer value from XLookupString 
- * instead of the keysym as the keychar when posting.  Then we don't 
- * need to test using mapsToUnicodeChar.  That way, we would post keyTyped 
- * for all the chars that generate unicode chars, including LATIN2-4, etc. 
- * Note: what does the buffer from XLookupString contain when 
- * the character is a non-printable unicode character like Cancel or Delete? 
- */ 
-jchar 
-keySymToUnicodeCharacter(KeySym keysym) { 
+ * Maybe we should enumerate the keysyms for which we have a mapping
+ * in the keyMap, but that don't map to unicode chars, and return
+ * CHAR_UNDEFINED?  Then use the buffer value from XLookupString
+ * instead of the keysym as the keychar when posting.  Then we don't
+ * need to test using mapsToUnicodeChar.  That way, we would post keyTyped
+ * for all the chars that generate unicode chars, including LATIN2-4, etc.
+ * Note: what does the buffer from XLookupString contain when
+ * the character is a non-printable unicode character like Cancel or Delete?
+ */
+jchar
+keySymToUnicodeCharacter(KeySym keysym) {
     jchar unicodeValue = (jchar) keysym;
 
     switch (keysym) {
       case XK_BackSpace:
       case XK_Tab:
-      case XK_Linefeed:  
+      case XK_Linefeed:
       case XK_Escape:
       case XK_Delete:
-          /* Strip off highorder bits defined in xkeysymdef.h 
-           * I think doing this converts them to values that 
-           * we can cast to jchars and use as java keychars. 
-           */ 
+          /* Strip off highorder bits defined in xkeysymdef.h
+           * I think doing this converts them to values that
+           * we can cast to jchars and use as java keychars.
+           */
           unicodeValue = (jchar) (keysym & 0x007F);
           break;
       case XK_Return:
@@ -1043,12 +1043,12 @@ awt_post_java_key_event(JNIEnv *env, jobject peer, jint id,
 
 
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_sun_awt_X11_XWindow_getAWTKeyCodeForKeySym(JNIEnv *env, jclass clazz, jint keysym) {
     jint keycode = java_awt_event_KeyEvent_VK_UNDEFINED;
     Boolean mapsToUnicodeChar;
     jint keyLocation;
-    keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);    
+    keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);
     return keycode;
 }
 
@@ -1057,7 +1057,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XWindow_haveCurrentX11InputMethodIns
     /*printf("Java_sun_awt_X11_XWindow_haveCurrentX11InputMethodInstance: %s\n", (currentX11InputMethodInstance==NULL? "NULL":" notnull"));
     */
     return currentX11InputMethodInstance != NULL ? JNI_TRUE : JNI_FALSE;
-}    
+}
 
 JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XWindow_x11inputMethodLookupString
 (JNIEnv *env, jobject object, jlong event, jlongArray keysymArray) {
@@ -1070,13 +1070,13 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XWindow_x11inputMethodLookupString
     * a current single result from awt_x11inputmethod_lookupString, we'll
     * change this.
     */
-   jlong testbuf[2]; 
-   
+   jlong testbuf[2];
+
    testbuf[1]=0;
-   
+
    boo = awt_x11inputmethod_lookupString((XKeyPressedEvent*)jlong_to_ptr(event), &keysym);
    testbuf[0] = keysym;
-   
+
    (*env)->SetLongArrayRegion(env, keysymArray, 0, 2, (jlong *)(testbuf));
    return boo ? JNI_TRUE : JNI_FALSE;
 }
@@ -1234,8 +1234,7 @@ Java_sun_awt_X11_XWindow_initIDs
    }
 }
 
-JNIEXPORT int JNICALL 
+JNIEXPORT int JNICALL
 Java_sun_awt_X11_XWindow_getKeySymForAWTKeyCode(JNIEnv* env, jclass clazz, jint keycode) {
     return awt_getX11KeySym(keycode);
 }
-

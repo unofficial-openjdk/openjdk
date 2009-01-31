@@ -42,11 +42,10 @@ import java.util.*;
  * not editable, the textarea will not be visible.
  *
  * @author  Scott Violet
- * @version %I%, %G%
  */
 class CommentView extends HiddenTagView {
     CommentView(Element e) {
-	super(e);
+        super(e);
     }
 
     protected Component createComponent() {
@@ -54,21 +53,21 @@ class CommentView extends HiddenTagView {
         if (host != null && !((JTextComponent)host).isEditable()) {
             return null;
         }
-	JTextArea ta = new JTextArea(getRepresentedText());
-	Document doc = getDocument();
-	Font font;
-	if (doc instanceof StyledDocument) {
-	    font = ((StyledDocument)doc).getFont(getAttributes());
-	    ta.setFont(font);
-	}
-	else {
-	    font = ta.getFont();
-	}
-	updateYAlign(font);
-	ta.setBorder(CBorder);
-	ta.getDocument().addDocumentListener(this);
-	ta.setFocusable(isVisible());
-	return ta;
+        JTextArea ta = new JTextArea(getRepresentedText());
+        Document doc = getDocument();
+        Font font;
+        if (doc instanceof StyledDocument) {
+            font = ((StyledDocument)doc).getFont(getAttributes());
+            ta.setFont(font);
+        }
+        else {
+            font = ta.getFont();
+        }
+        updateYAlign(font);
+        ta.setBorder(CBorder);
+        ta.getDocument().addDocumentListener(this);
+        ta.setFocusable(isVisible());
+        return ta;
     }
 
     void resetBorder() {
@@ -79,37 +78,37 @@ class CommentView extends HiddenTagView {
      * the Element's AttributeSet.
      */
     void _updateModelFromText() {
-	JTextComponent textC = getTextComponent();
-	Document doc = getDocument();
-	if (textC != null && doc != null) {
-	    String text = textC.getText();
-	    SimpleAttributeSet sas = new SimpleAttributeSet();
-	    isSettingAttributes = true;
-	    try {
-		sas.addAttribute(HTML.Attribute.COMMENT, text);
-		((StyledDocument)doc).setCharacterAttributes
-		    (getStartOffset(), getEndOffset() -
-		     getStartOffset(), sas, false);
-	    }
-	    finally {
-		isSettingAttributes = false;
-	    }
-	}
+        JTextComponent textC = getTextComponent();
+        Document doc = getDocument();
+        if (textC != null && doc != null) {
+            String text = textC.getText();
+            SimpleAttributeSet sas = new SimpleAttributeSet();
+            isSettingAttributes = true;
+            try {
+                sas.addAttribute(HTML.Attribute.COMMENT, text);
+                ((StyledDocument)doc).setCharacterAttributes
+                    (getStartOffset(), getEndOffset() -
+                     getStartOffset(), sas, false);
+            }
+            finally {
+                isSettingAttributes = false;
+            }
+        }
     }
 
     JTextComponent getTextComponent() {
-	return (JTextComponent)getComponent();
+        return (JTextComponent)getComponent();
     }
 
     String getRepresentedText() {
-	AttributeSet as = getElement().getAttributes();
-	if (as != null) {
-	    Object comment = as.getAttribute(HTML.Attribute.COMMENT);
-	    if (comment instanceof String) {
-		return (String)comment;
-	    }
-	}
-	return "";
+        AttributeSet as = getElement().getAttributes();
+        if (as != null) {
+            Object comment = as.getAttribute(HTML.Attribute.COMMENT);
+            if (comment instanceof String) {
+                return (String)comment;
+            }
+        }
+        return "";
     }
 
     static final Border CBorder = new CommentBorder();
@@ -117,26 +116,26 @@ class CommentView extends HiddenTagView {
     static final int commentPaddingD = commentPadding * 3;
 
     static class CommentBorder extends LineBorder {
-	CommentBorder() {
-	    super(Color.black, 1);
-	}
+        CommentBorder() {
+            super(Color.black, 1);
+        }
 
-	public void paintBorder(Component c, Graphics g, int x, int y,
-				int width, int height) {
-	    super.paintBorder(c, g, x + commentPadding, y,
-			      width - commentPaddingD, height);
-	}
+        public void paintBorder(Component c, Graphics g, int x, int y,
+                                int width, int height) {
+            super.paintBorder(c, g, x + commentPadding, y,
+                              width - commentPaddingD, height);
+        }
 
-	public Insets getBorderInsets(Component c) {
-	    Insets retI = super.getBorderInsets(c);
+        public Insets getBorderInsets(Component c) {
+            Insets retI = super.getBorderInsets(c);
 
-	    retI.left += commentPadding;
-	    retI.right += commentPadding;
-	    return retI;
-	}
+            retI.left += commentPadding;
+            retI.right += commentPadding;
+            return retI;
+        }
 
-	public boolean isBorderOpaque() {
-	    return false;
-	}
+        public boolean isBorderOpaque() {
+            return false;
+        }
     } // End of class CommentView.CommentBorder
 } // End of CommentView

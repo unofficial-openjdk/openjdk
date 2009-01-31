@@ -30,7 +30,7 @@
 
 #define INVOKE_CONSTRUCTOR 1
 #define INVOKE_STATIC      2
-#define INVOKE_INSTANCE    3 
+#define INVOKE_INSTANCE    3
 
 typedef struct InvokeRequest {
     jboolean pending;      /* Is an invoke requested? */
@@ -62,7 +62,7 @@ void invoker_unlock(void);
 void invoker_enableInvokeRequests(jthread thread);
 jvmtiError invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
                            jthread thread, jclass clazz, jmethodID method,
-                           jobject instance, 
+                           jobject instance,
                            jvalue *arguments, jint argumentCount);
 jboolean invoker_doInvoke(jthread thread);
 
@@ -72,4 +72,3 @@ jboolean invoker_isEnabled(jthread thread);
 void invoker_detach(InvokeRequest *request);
 
 #endif
-

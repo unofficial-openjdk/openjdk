@@ -26,7 +26,7 @@
 #if MOTIF_VERSION!=2
     #error This file should only be compiled with motif 2.1
 #endif
- 
+
 #include "awt_motif.h"
 #include <Xm/Xm.h>
 #include "awt.h"
@@ -40,8 +40,8 @@ extern int32_t _XmImGetGeo(
 #define MAXARGS 10
 static Arg xic_vlist[MAXARGS];
 
-#define SEPARATOR_HEIGHT	2
-#define MTEXTAREAPEER_CLASS_NAME	"sun/awt/motif/MTextAreaPeer"
+#define SEPARATOR_HEIGHT        2
+#define MTEXTAREAPEER_CLASS_NAME        "sun/awt/motif/MTextAreaPeer"
 extern struct MComponentPeerIDs mComponentPeerIDs;
 static jobject  mTextAreaClass = NULL;
 
@@ -51,21 +51,21 @@ static jobject  mTextAreaClass = NULL;
  */
 static Widget getTextWidget(jobject tc) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
+
     if (mTextAreaClass == NULL) {
         jclass localClass = (*env)->FindClass(env, MTEXTAREAPEER_CLASS_NAME);
-	mTextAreaClass = (jclass)(*env)->NewGlobalRef(env, localClass);
-	(*env)->DeleteLocalRef(env, localClass);
+        mTextAreaClass = (jclass)(*env)->NewGlobalRef(env, localClass);
+        (*env)->DeleteLocalRef(env, localClass);
     }
 
     if ((*env)->IsInstanceOf(env, tc, mTextAreaClass)) {
-	struct TextAreaData * tdata = (struct TextAreaData *)
-	JNU_GetLongFieldAsPtr(env, tc, mComponentPeerIDs.pData);
-	return tdata->txt;
+        struct TextAreaData * tdata = (struct TextAreaData *)
+        JNU_GetLongFieldAsPtr(env, tc, mComponentPeerIDs.pData);
+        return tdata->txt;
     } else {
-	struct ComponentData * tdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env, tc, mComponentPeerIDs.pData);
-	return tdata->widget;
+        struct ComponentData * tdata = (struct ComponentData *)
+        JNU_GetLongFieldAsPtr(env, tc, mComponentPeerIDs.pData);
+        return tdata->widget;
     }
 }
 
@@ -86,24 +86,24 @@ awt_motif_getIMStatusHeight(Widget w, jobject tc)
     xic = XmImGetXIC(getTextWidget(tc), XmPER_SHELL, NULL, 0);
 
     if(xic != NULL) {
-	/* finally query the server for the status area geometry */
-	xic_vlist[0].name = XNArea;
-	xic_vlist[0].value = (XtArgVal)&im_rect;
-	xic_vlist[1].name = NULL;
-	ret=XGetICValues(xic, XNStatusAttributes, &xic_vlist[0], NULL);
-	if (ret == NULL && im_rect != NULL) {
-	    im_height = im_rect->height;
-	    if (im_height > 0) {
-		im_height += SEPARATOR_HEIGHT;
-	    }
-	    XFree(im_rect);
-	} else {
-	    im_height = 0;
-	}    
+        /* finally query the server for the status area geometry */
+        xic_vlist[0].name = XNArea;
+        xic_vlist[0].value = (XtArgVal)&im_rect;
+        xic_vlist[1].name = NULL;
+        ret=XGetICValues(xic, XNStatusAttributes, &xic_vlist[0], NULL);
+        if (ret == NULL && im_rect != NULL) {
+            im_height = im_rect->height;
+            if (im_height > 0) {
+                im_height += SEPARATOR_HEIGHT;
+            }
+            XFree(im_rect);
+        } else {
+            im_height = 0;
+        }
     }
 
     if (im_height == 0) {
-	im_height = _XmImGetGeo(w);
+        im_height = _XmImGetGeo(w);
     }
 
 #if defined(DEBUG)
@@ -131,7 +131,7 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
 
     char *ret;
     Widget p=w;
-    
+
     while (!XtIsShell(p)) {
         p = XtParent(p);
     }
@@ -150,9 +150,9 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
     if(xic == NULL)
     {
 #if defined DEBUG
-	jio_fprintf(stderr,"Could not get XIC");
+        jio_fprintf(stderr,"Could not get XIC");
 #endif
-	return list ;
+        return list ;
     }
 
    /* finally query the server for the required attributes area geometry */
@@ -169,7 +169,7 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
 
     if(ret=XGetICValues(xic, XNStatusAttributes, &xic_vlist[0], NULL))
     {
-	return list ;
+        return list ;
     } else {
         geomRect.x = 0 ;
         geomRect.y = height - im_rect->height ;
@@ -177,14 +177,14 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
         geomRect.height = im_rect->height ;
         XFree(im_rect) ;
 
-    	list = XVaCreateNestedList(0 ,
-			XNFontSet, im_font ,
-			XNArea, &geomRect ,
-			XNBackground, bg ,   
-			XNForeground, fg ,
-			XNBackgroundPixmap, &bpm ,
-			NULL );
-    }    
+        list = XVaCreateNestedList(0 ,
+                        XNFontSet, im_font ,
+                        XNArea, &geomRect ,
+                        XNBackground, bg ,
+                        XNForeground, fg ,
+                        XNBackgroundPixmap, &bpm ,
+                        NULL );
+    }
 #if defined(DEBUG)
     jio_fprintf(stderr,"awt_motif_getXICStatusAreaList:\n");
     jio_fprintf(stderr,"XNArea:x=%d,y=%d,width=%d,height=%d\n", \
@@ -205,16 +205,16 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
      */
 
 #ifdef __solaris__
-void 
+void
 awt_motif_adjustDragTriggerEvent(XEvent* xevent) {
-    /* Do nothing. In Motif 2.1 the sanity check is corrected 
+    /* Do nothing. In Motif 2.1 the sanity check is corrected
        to allow any imput event as a drag trigger event. */
 }
 #endif /* __solaris__ */
 
-static void 
+static void
 CheckDragInitiator(Widget w, XtPointer client_data,
-		   XmDragStartCallbackStruct* cbstruct) {
+                   XmDragStartCallbackStruct* cbstruct) {
     Widget drag_initiator = (Widget)client_data;
     /*
      * Fix for BugTraq ID 4407057.
@@ -232,4 +232,3 @@ awt_motif_enableSingleDragInitiator(Widget w) {
                   XmNdragStartCallback, (XtCallbackProc)CheckDragInitiator,
                   (XtPointer)w);
 }
-

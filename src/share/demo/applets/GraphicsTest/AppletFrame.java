@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.awt.Frame;
 import java.awt.Event;
@@ -43,15 +41,15 @@ import java.awt.AWTEvent;
 class AppletFrame extends Frame
 {
 
-    public static void startApplet(String className, 
-                                   String title, 
+    public static void startApplet(String className,
+                                   String title,
                                    String args[])
     {
        // local variables
        Applet a;
        Dimension appletSize;
 
-       try 
+       try
        {
           // create an instance of your applet class
           a = (Applet) Class.forName(className).newInstance();
@@ -63,26 +61,26 @@ class AppletFrame extends Frame
        // initialize the applet
        a.init();
        a.start();
-  
+
        // create new application frame window
        AppletFrame f = new AppletFrame(title);
-  
+
        // add applet to frame window
        f.add("Center", a);
-  
+
        // resize frame window to fit applet
        // assumes that the applet sets its own size
        // otherwise, you should set a specific size here.
        appletSize =  a.getSize();
        f.pack();
-       f.setSize(appletSize);  
+       f.setSize(appletSize);
 
        // show the window
        f.show();
-  
+
     }  // end startApplet()
-  
-  
+
+
     // constructor needed to pass window title to class Frame
     public AppletFrame(String name)
     {
@@ -98,13 +96,7 @@ class AppletFrame extends Frame
        {
           // exit the program
           System.exit(0);
-       }    
+       }
    }  // end handleEvent()
 
 }   // end class AppletFrame
-
-
-
-
-
-

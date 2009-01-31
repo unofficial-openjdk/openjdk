@@ -43,8 +43,8 @@ public class IndexOf {
     }
 
     private static void report(String testName, int failCount) {
-	System.err.println(testName+": " +
-			 (failCount==0 ? "Passed":"Failed("+failCount+")"));
+        System.err.println(testName+": " +
+                         (failCount==0 ? "Passed":"Failed("+failCount+")"));
         if (failCount > 0)
             failure = true;
     }
@@ -81,7 +81,7 @@ public class IndexOf {
 
             int index1 = generator.nextInt(90) + 5;
             sourceBuffer = sourceBuffer.replace(index1, index1, targetString);
-        
+
             if (sourceBuffer.indexOf(targetString) != index1)
                 failCount++;
             if (sourceBuffer.indexOf(targetString, 5) != index1)
@@ -118,7 +118,7 @@ public class IndexOf {
                 matches++;
             if (matches > 1)
                 continue;
-        
+
             if (sourceBuffer.indexOf(targetString) !=
                 sourceBuffer.lastIndexOf(targetString))
                 failCount++;

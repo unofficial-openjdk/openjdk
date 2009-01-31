@@ -30,11 +30,9 @@ import java.awt.event.*;
 /**
  * Pluggable look and feel interface for JMenuItem.
  *
- * @version %W% %E%
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
  */
 public abstract class MenuItemUI extends ButtonUI {
 }
-

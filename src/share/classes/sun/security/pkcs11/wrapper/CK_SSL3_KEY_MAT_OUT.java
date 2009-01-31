@@ -77,7 +77,7 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public long hClientMacSecret;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -85,7 +85,7 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public long hServerMacSecret;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -93,7 +93,7 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public long hClientKey;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -101,7 +101,7 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public long hServerKey;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -109,7 +109,7 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public byte[] pIVClient;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -117,46 +117,46 @@ public class CK_SSL3_KEY_MAT_OUT{
      * </PRE>
      */
     public byte[] pIVServer;
-    
+
     /**
      * Returns the string representation of CK_SSL3_KEY_MAT_OUT.
      *
      * @return the string representation of CK_SSL3_KEY_MAT_OUT
      */
     public String toString() {
-	StringBuilder buffer = new StringBuilder();
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("hClientMacSecret: ");
-	buffer.append(hClientMacSecret);
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("hServerMacSecret: ");
-	buffer.append(hServerMacSecret);
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("hClientKey: ");
-	buffer.append(hClientKey);
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("hServerKey: ");
-	buffer.append(hServerKey);
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("pIVClient: ");
-	buffer.append(Functions.toHexString(pIVClient));
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("pIVServer: ");
-	buffer.append(Functions.toHexString(pIVServer));
-	//buffer.append(Constants.NEWLINE);
-	
-	return buffer.toString();
+        StringBuilder buffer = new StringBuilder();
+
+        buffer.append(Constants.INDENT);
+        buffer.append("hClientMacSecret: ");
+        buffer.append(hClientMacSecret);
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("hServerMacSecret: ");
+        buffer.append(hServerMacSecret);
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("hClientKey: ");
+        buffer.append(hClientKey);
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("hServerKey: ");
+        buffer.append(hServerKey);
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("pIVClient: ");
+        buffer.append(Functions.toHexString(pIVClient));
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("pIVServer: ");
+        buffer.append(Functions.toHexString(pIVServer));
+        //buffer.append(Constants.NEWLINE);
+
+        return buffer.toString();
     }
-    
+
 }

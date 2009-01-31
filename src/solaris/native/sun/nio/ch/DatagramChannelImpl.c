@@ -46,13 +46,13 @@
 
 #include "sun_nio_ch_DatagramChannelImpl.h"
 
-static jfieldID isa_addrID;	/* address in java.net.InetSocketAddress */
-static jfieldID isa_portID;	/* port in java.net.InetSocketAddress */
+static jfieldID isa_addrID;     /* address in java.net.InetSocketAddress */
+static jfieldID isa_portID;     /* port in java.net.InetSocketAddress */
 static jfieldID dci_senderID;   /* sender in sun.nio.ch.DatagramChannelImpl */
 static jfieldID dci_senderAddrID; /* sender InetAddress in sun.nio.ch.DatagramChannelImpl */
 static jfieldID dci_senderPortID; /* sender port in sun.nio.ch.DatagramChannelImpl */
-static jclass isa_class;	/* java.net.InetSocketAddress */
-static jmethodID isa_ctorID;	/*   .InetSocketAddress(InetAddress, int) */
+static jclass isa_class;        /* java.net.InetSocketAddress */
+static jmethodID isa_ctorID;    /*   .InetSocketAddress(InetAddress, int) */
 
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_DatagramChannelImpl_initIDs(JNIEnv *env, jclass clazz)
@@ -60,7 +60,7 @@ Java_sun_nio_ch_DatagramChannelImpl_initIDs(JNIEnv *env, jclass clazz)
     clazz = (*env)->FindClass(env, "java/net/InetSocketAddress");
     isa_class = (*env)->NewGlobalRef(env, clazz);
     isa_ctorID = (*env)->GetMethodID(env, clazz, "<init>",
-				     "(Ljava/net/InetAddress;I)V");
+                                     "(Ljava/net/InetAddress;I)V");
     isa_addrID = (*env)->GetFieldID(env, clazz, "addr",
                                     "Ljava/net/InetAddress;");
     isa_portID = (*env)->GetFieldID(env, clazz, "port", "I");
@@ -72,7 +72,7 @@ Java_sun_nio_ch_DatagramChannelImpl_initIDs(JNIEnv *env, jclass clazz)
                                           "cachedSenderInetAddress",
                                           "Ljava/net/InetAddress;");
     dci_senderPortID = (*env)->GetFieldID(env, clazz,
-					  "cachedSenderPort", "I");
+                                          "cachedSenderPort", "I");
 }
 
 JNIEXPORT void JNICALL
@@ -88,22 +88,22 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jobject this,
 
 #ifdef __linux__
     {
-	int len;
-	SOCKADDR sa;
+        int len;
+        SOCKADDR sa;
 
-	memset(&sa, 0, sizeof(sa));
+        memset(&sa, 0, sizeof(sa));
 
 #ifdef AF_INET6
         if (ipv6_available()) {
-	    struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)&sa;
-	    him6->sin6_family = AF_UNSPEC;
-	    len = sizeof(struct sockaddr_in6);
- 	} else  
+            struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)&sa;
+            him6->sin6_family = AF_UNSPEC;
+            len = sizeof(struct sockaddr_in6);
+        } else
 #endif
         {
-	    struct sockaddr_in *him4 = (struct sockaddr_in*)&sa;
-	    him4->sin_family = AF_UNSPEC;
-	    len = sizeof(struct sockaddr_in);
+            struct sockaddr_in *him4 = (struct sockaddr_in*)&sa;
+            him4->sin_family = AF_UNSPEC;
+            len = sizeof(struct sockaddr_in);
         }
 
         rv = connect(fd, (struct sockaddr *)&sa, len);
@@ -117,8 +117,8 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jobject this,
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_DatagramChannelImpl_receive0(JNIEnv *env, jobject this,
-					     jobject fdo, jlong address,
-					     jint len, jboolean connected)
+                                             jobject fdo, jlong address,
+                                             jint len, jboolean connected)
 {
     jint fd = fdval(env, fdo);
     void *buf = (void *)jlong_to_ptr(address);
@@ -139,14 +139,14 @@ Java_sun_nio_ch_DatagramChannelImpl_receive0(JNIEnv *env, jobject this,
             if (errno == EWOULDBLOCK) {
                 return IOS_UNAVAILABLE;
             }
-	    if (errno == EINTR) {
-		return IOS_INTERRUPTED;
-	    }
+            if (errno == EINTR) {
+                return IOS_INTERRUPTED;
+            }
             if (errno == ECONNREFUSED) {
                 if (connected == JNI_FALSE) {
                     retry = JNI_TRUE;
                 } else {
-                    JNU_ThrowByName(env, JNU_JAVANETPKG 
+                    JNU_ThrowByName(env, JNU_JAVANETPKG
                                     "PortUnreachableException", 0);
                     return IOS_THROWN;
                 }
@@ -189,7 +189,7 @@ Java_sun_nio_ch_DatagramChannelImpl_receive0(JNIEnv *env, jobject this,
         }
 
         (*env)->SetObjectField(env, this, dci_senderAddrID, ia);
-        (*env)->SetIntField(env, this, dci_senderPortID, 
+        (*env)->SetIntField(env, this, dci_senderPortID,
                             NET_GetPortFromSockaddr((struct sockaddr *)&sa));
         (*env)->SetObjectField(env, this, dci_senderID, isa);
     }
@@ -198,7 +198,7 @@ Java_sun_nio_ch_DatagramChannelImpl_receive0(JNIEnv *env, jobject this,
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_DatagramChannelImpl_send0(JNIEnv *env, jobject this,
-		                            jobject fdo, jlong address,
+                                            jobject fdo, jlong address,
                                             jint len, jobject dest)
 {
     jint fd = fdval(env, fdo);
@@ -212,21 +212,21 @@ Java_sun_nio_ch_DatagramChannelImpl_send0(JNIEnv *env, jobject this,
     if (len > MAX_PACKET_LEN) {
         len = MAX_PACKET_LEN;
     }
-    
+
     if (NET_InetAddressToSockaddr(env, destAddress, destPort,
-				  (struct sockaddr *)&sa, 
-				  &sa_len, JNI_TRUE) != 0) {
+                                  (struct sockaddr *)&sa,
+                                  &sa_len, JNI_TRUE) != 0) {
       return IOS_THROWN;
     }
-      
+
     n = sendto(fd, buf, len, 0, (struct sockaddr *)&sa, sa_len);
     if (n < 0) {
-	if (errno == EAGAIN) {
-	    return IOS_UNAVAILABLE;
+        if (errno == EAGAIN) {
+            return IOS_UNAVAILABLE;
         }
-	if (errno == EINTR) {
-	    return IOS_INTERRUPTED;
-	}
+        if (errno == EINTR) {
+            return IOS_INTERRUPTED;
+        }
         if (errno == ECONNREFUSED) {
             JNU_ThrowByName(env, JNU_JAVANETPKG "PortUnreachableException", 0);
             return IOS_THROWN;

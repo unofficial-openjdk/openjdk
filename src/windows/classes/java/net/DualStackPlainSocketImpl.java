@@ -32,10 +32,9 @@ import sun.misc.JavaIOFileDescriptorAccess;
 /**
  * This class defines the plain SocketImpl that is used on Windows platforms
  * greater or equal to Windows Vista. These platforms have a dual
- * layer TCP/IP stack and can handle both IPv4 and IPV6 through a 
+ * layer TCP/IP stack and can handle both IPv4 and IPV6 through a
  * single file descriptor.
  *
- * @version %I%, %G%
  * @author Chris Hegarty
  */
 
@@ -50,111 +49,111 @@ class DualStackPlainSocketImpl extends AbstractPlainSocketImpl
     }
 
     void socketCreate(boolean stream) throws IOException {
-	if (fd == null)
+        if (fd == null)
             throw new SocketException("Socket closed");
-	
-	int newfd = socket0(stream, false /*v6 Only*/);
 
-	fdAccess.set(fd, newfd);
+        int newfd = socket0(stream, false /*v6 Only*/);
+
+        fdAccess.set(fd, newfd);
     }
 
     void socketConnect(InetAddress address, int port, int timeout)
         throws IOException {
-	int nativefd = checkAndReturnNativeFD();
-
-	if (address == null)
-	    throw new NullPointerException("inet address argument is null.");	
-
-	int connectResult;
-	if (timeout <= 0) {
-	    connectResult = connect0(nativefd, address, port);
-	} else {
-	    configureBlocking(nativefd, false);
-	    try {
-	        connectResult = connect0(nativefd, address, port);
-	        if (connectResult == WOULDBLOCK) {
-		    waitForConnect(nativefd, timeout);
-		}
-	    } finally {
-		configureBlocking(nativefd, true);
-	    }
-	}
-	/*
-     	 * We need to set the local port field. If bind was called
-     	 * previous to the connect (by the client) then localport field
-     	 * will already be set.
-     	 */
-	if (localport == 0)
-	    localport = localPort0(nativefd);
-    }
-
-    void socketBind(InetAddress address, int port) throws IOException {
-	int nativefd = checkAndReturnNativeFD();
+        int nativefd = checkAndReturnNativeFD();
 
         if (address == null)
             throw new NullPointerException("inet address argument is null.");
 
-	bind0(nativefd, address, port);
-	if (port == 0) {
-	    localport = localPort0(nativefd);
-	} else {
-	    localport = port;
-	}
-
-	this.address = address;
-    }
-
-    void socketListen(int backlog) throws IOException {
-	int nativefd = checkAndReturnNativeFD();
-
-	listen0(nativefd, backlog);
-    }
-
-    void socketAccept(SocketImpl s) throws IOException {
-	int nativefd = checkAndReturnNativeFD();
-
-	if (s == null)
-	    throw new NullPointerException("socket is null");
-
-	int newfd = -1;
-	InetSocketAddress[] isaa = new InetSocketAddress[1];
-	if (timeout <= 0) {
-	    newfd = accept0(nativefd, isaa);
-	} else {
-	    configureBlocking(nativefd, false);
-	    try {
-		waitForNewConnection(nativefd, timeout);
-	  	newfd = accept0(nativefd, isaa);
-		if (newfd != -1) {
-		    configureBlocking(newfd, true);
-		}
+        int connectResult;
+        if (timeout <= 0) {
+            connectResult = connect0(nativefd, address, port);
+        } else {
+            configureBlocking(nativefd, false);
+            try {
+                connectResult = connect0(nativefd, address, port);
+                if (connectResult == WOULDBLOCK) {
+                    waitForConnect(nativefd, timeout);
+                }
             } finally {
                 configureBlocking(nativefd, true);
             }
-	}
-	/* Update (SocketImpl)s' fd */
-	fdAccess.set(s.fd, newfd);
-	/* Update socketImpls remote port, address and localport */
-	InetSocketAddress isa = isaa[0];
-	s.port = isa.getPort();
-	s.address = isa.getAddress();
-	s.localport = localport;
+        }
+        /*
+         * We need to set the local port field. If bind was called
+         * previous to the connect (by the client) then localport field
+         * will already be set.
+         */
+        if (localport == 0)
+            localport = localPort0(nativefd);
+    }
+
+    void socketBind(InetAddress address, int port) throws IOException {
+        int nativefd = checkAndReturnNativeFD();
+
+        if (address == null)
+            throw new NullPointerException("inet address argument is null.");
+
+        bind0(nativefd, address, port);
+        if (port == 0) {
+            localport = localPort0(nativefd);
+        } else {
+            localport = port;
+        }
+
+        this.address = address;
+    }
+
+    void socketListen(int backlog) throws IOException {
+        int nativefd = checkAndReturnNativeFD();
+
+        listen0(nativefd, backlog);
+    }
+
+    void socketAccept(SocketImpl s) throws IOException {
+        int nativefd = checkAndReturnNativeFD();
+
+        if (s == null)
+            throw new NullPointerException("socket is null");
+
+        int newfd = -1;
+        InetSocketAddress[] isaa = new InetSocketAddress[1];
+        if (timeout <= 0) {
+            newfd = accept0(nativefd, isaa);
+        } else {
+            configureBlocking(nativefd, false);
+            try {
+                waitForNewConnection(nativefd, timeout);
+                newfd = accept0(nativefd, isaa);
+                if (newfd != -1) {
+                    configureBlocking(newfd, true);
+                }
+            } finally {
+                configureBlocking(nativefd, true);
+            }
+        }
+        /* Update (SocketImpl)s' fd */
+        fdAccess.set(s.fd, newfd);
+        /* Update socketImpls remote port, address and localport */
+        InetSocketAddress isa = isaa[0];
+        s.port = isa.getPort();
+        s.address = isa.getAddress();
+        s.localport = localport;
     }
 
     int socketAvailable() throws IOException {
-	int nativefd = checkAndReturnNativeFD();
-	return available0(nativefd);
-    }	
+        int nativefd = checkAndReturnNativeFD();
+        return available0(nativefd);
+    }
 
     void socketClose0(boolean useDeferredClose/*unused*/) throws IOException {
-	if (fd == null)
-	    throw new SocketException("Socket closed");
+        if (fd == null)
+            throw new SocketException("Socket closed");
 
-	if (!fd.valid())
-	    return;
+        if (!fd.valid())
+            return;
 
-	close0(fdAccess.get(fd));
-	fdAccess.set(fd, -1);
+        close0(fdAccess.get(fd));
+        fdAccess.set(fd, -1);
     }
 
     void socketShutdown(int howto) throws IOException {
@@ -164,71 +163,71 @@ class DualStackPlainSocketImpl extends AbstractPlainSocketImpl
 
     void socketSetOption(int opt, boolean on, Object value)
         throws SocketException {
-	int nativefd = checkAndReturnNativeFD();
+        int nativefd = checkAndReturnNativeFD();
 
-	if (opt == SO_TIMEOUT) {  // timeout implemented through select.
-	    return;
-	}
+        if (opt == SO_TIMEOUT) {  // timeout implemented through select.
+            return;
+        }
 
-	int optionValue = 0;
+        int optionValue = 0;
 
-	switch(opt) {
-	    case TCP_NODELAY :
+        switch(opt) {
+            case TCP_NODELAY :
             case SO_OOBINLINE :
             case SO_KEEPALIVE :
-            case SO_REUSEADDR : 
-		optionValue = on ? 1 : 0;
-               	break;
+            case SO_REUSEADDR :
+                optionValue = on ? 1 : 0;
+                break;
             case SO_SNDBUF :
             case SO_RCVBUF :
-            case IP_TOS : 	
-		optionValue = ((Integer)value).intValue();
-		break;
-	    case SO_LINGER : 	
-		if (on) {
-		    optionValue =  ((Integer)value).intValue();
-		} else {
-		    optionValue = -1;
-		}
-		break;
-	    default :/* shouldn't get here */
-		throw new SocketException("Option not supported");
-	}
-		
-	setIntOption(nativefd, opt, optionValue);
+            case IP_TOS :
+                optionValue = ((Integer)value).intValue();
+                break;
+            case SO_LINGER :
+                if (on) {
+                    optionValue =  ((Integer)value).intValue();
+                } else {
+                    optionValue = -1;
+                }
+                break;
+            default :/* shouldn't get here */
+                throw new SocketException("Option not supported");
+        }
+
+        setIntOption(nativefd, opt, optionValue);
     }
 
     int socketGetOption(int opt, Object iaContainerObj) throws SocketException {
- 	int nativefd = checkAndReturnNativeFD();
+        int nativefd = checkAndReturnNativeFD();
 
-	// SO_BINDADDR is not a socket option.
-	if (opt == SO_BINDADDR) {
+        // SO_BINDADDR is not a socket option.
+        if (opt == SO_BINDADDR) {
             localAddress(nativefd, (InetAddressContainer)iaContainerObj);
             return 0;  // return value doesn't matter.
         }
 
-	int value = getIntOption(nativefd, opt);
+        int value = getIntOption(nativefd, opt);
 
-	switch (opt) {
+        switch (opt) {
             case TCP_NODELAY :
             case SO_OOBINLINE :
             case SO_KEEPALIVE :
             case SO_REUSEADDR :
                 return (value == 0) ? -1 : 1;
-	}
-	return value;
+        }
+        return value;
     }
 
-    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) 
-	throws SocketException {return 0;}   // un-implemented REMOVE
+    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
+        throws SocketException {return 0;}   // un-implemented REMOVE
 
     void socketSendUrgentData(int data) throws IOException {
-	int nativefd = checkAndReturnNativeFD();
+        int nativefd = checkAndReturnNativeFD();
         sendOOB(nativefd, data);
     }
 
     private int checkAndReturnNativeFD() throws SocketException {
-	if (fd == null || !fd.valid())
+        if (fd == null || !fd.valid())
             throw new SocketException("Socket closed");
 
         return fdAccess.get(fd);

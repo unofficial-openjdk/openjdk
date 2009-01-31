@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 4350951
- * @summary	UnresolvedPermission assumes permission constructor
- *		with 2 string parameters
+ * @summary     UnresolvedPermission assumes permission constructor
+ *              with 2 string parameters
  *
  * @compile Debug.java DebugPermissionBad.java DebugPermission0.java DebugPermission1.java DebugPermission2.java
  * @run main/othervm/policy=Debug.policy -Djava.security.debug=policy,access Debug
@@ -35,36 +35,36 @@ public class Debug {
 
     public static void main(String[] args) {
 
-	SecurityManager sm = System.getSecurityManager();
-	if (sm == null) {
-	    throw new SecurityException("Test Failed: no SecurityManager");
-	}
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            throw new SecurityException("Test Failed: no SecurityManager");
+        }
 
-	try {
-	    sm.checkPermission(new DebugPermissionBad("hello", 1));
-	    throw new SecurityException("Test 1 Failed: no SecurityException");
-	} catch (SecurityException se) {
-	    // good
-	}
+        try {
+            sm.checkPermission(new DebugPermissionBad("hello", 1));
+            throw new SecurityException("Test 1 Failed: no SecurityException");
+        } catch (SecurityException se) {
+            // good
+        }
 
-	try {
-	    sm.checkPermission(new DebugPermission0());
-	} catch (SecurityException se) {
-	    throw new SecurityException("Test 2 Failed");
-	}
+        try {
+            sm.checkPermission(new DebugPermission0());
+        } catch (SecurityException se) {
+            throw new SecurityException("Test 2 Failed");
+        }
 
-	try {
-	    sm.checkPermission(new DebugPermission1("1"));
-	} catch (SecurityException se) {
-	    throw new SecurityException("Test 3 Failed");
-	}
+        try {
+            sm.checkPermission(new DebugPermission1("1"));
+        } catch (SecurityException se) {
+            throw new SecurityException("Test 3 Failed");
+        }
 
-	try {
-	    sm.checkPermission(new DebugPermission2("1", "2"));
-	} catch (SecurityException se) {
-	    throw new SecurityException("Test 4 Failed");
-	}
+        try {
+            sm.checkPermission(new DebugPermission2("1", "2"));
+        } catch (SecurityException se) {
+            throw new SecurityException("Test 4 Failed");
+        }
 
-	System.out.println("Test Succeeded");
+        System.out.println("Test Succeeded");
     }
 }

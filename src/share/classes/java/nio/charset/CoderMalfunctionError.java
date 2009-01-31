@@ -48,7 +48,7 @@ public class CoderMalfunctionError
      *         The unexpected exception that was thrown
      */
     public CoderMalfunctionError(Exception cause) {
-	super(cause);
+        super(cause);
     }
 
 }

@@ -33,15 +33,15 @@ public class Test {
 
     public static void main(String args[]) throws Exception {
 
-	Enumeration nifs = NetworkInterface.getNetworkInterfaces();
+        Enumeration nifs = NetworkInterface.getNetworkInterfaces();
 
         while (nifs.hasMoreElements()) {
             NetworkInterface ni = (NetworkInterface)nifs.nextElement();
 
-	    String name = ni.getName();
-	    System.out.println("\n" + name);
+            String name = ni.getName();
+            System.out.println("\n" + name);
 
-	    /*
+            /*
              * Enumeration the IP addresses on this interface
              */
             Enumeration addrs = ni.getInetAddresses();
@@ -54,53 +54,53 @@ public class Test {
             }
             System.out.println("getInetAddresses() test passed.");
 
-	    /*
-	     * Check equals and hashCode contract
-	     */
-	    NetworkInterface ni2 = NetworkInterface.getByName(name);
-	    if (!ni2.equals(ni)) {
-		throw new Exception("getByName returned: " + ni2);
-	    }
-	    if (!ni.equals(ni2)) {
-		throw new Exception("equals specification broken");
-	    }
-	    System.out.println("equals() tests passed.");
-	    if (ni2.hashCode() != ni.hashCode()) {
-	        throw new Exception("hashCode contract broken");
-	    } 
-	    System.out.println("hashCode() test passed.");
+            /*
+             * Check equals and hashCode contract
+             */
+            NetworkInterface ni2 = NetworkInterface.getByName(name);
+            if (!ni2.equals(ni)) {
+                throw new Exception("getByName returned: " + ni2);
+            }
+            if (!ni.equals(ni2)) {
+                throw new Exception("equals specification broken");
+            }
+            System.out.println("equals() tests passed.");
+            if (ni2.hashCode() != ni.hashCode()) {
+                throw new Exception("hashCode contract broken");
+            }
+            System.out.println("hashCode() test passed.");
         }
 
-	// misc tests :-
-	//      getByXXX(null) should throw NPE
-	//	getByXXX("garbage") should return null
+        // misc tests :-
+        //      getByXXX(null) should throw NPE
+        //      getByXXX("garbage") should return null
 
-	System.out.println("\nMiscellenous tests: ");
+        System.out.println("\nMiscellenous tests: ");
 
-	try {
-	    NetworkInterface.getByName(null);
-	} catch (NullPointerException npe) {
-	}
-	System.out.println("getByName(null) test passed.");
+        try {
+            NetworkInterface.getByName(null);
+        } catch (NullPointerException npe) {
+        }
+        System.out.println("getByName(null) test passed.");
 
-	try {
+        try {
             NetworkInterface.getByInetAddress(null);
         } catch (NullPointerException npe) {
         }
-	System.out.println("getByInetAddress(null) test passed.");
+        System.out.println("getByInetAddress(null) test passed.");
 
-	if (NetworkInterface.getByName("not-a-valid-name") != null) {
-	    throw new Exception
-		("getByName returned unexpected interface: null expected");
-	}
-	System.out.println("getByName(<unknown>) test passed.");
+        if (NetworkInterface.getByName("not-a-valid-name") != null) {
+            throw new Exception
+                ("getByName returned unexpected interface: null expected");
+        }
+        System.out.println("getByName(<unknown>) test passed.");
 
-	InetAddress ia = InetAddress.getByName("255.255.255.255");
-	if (NetworkInterface.getByInetAddress(ia) != null) {
-	    throw new Exception
-		("getByInetAddress returned unexpected interface: null expected");
-	}
-	System.out.println("getByName(getByInetAddress(<unknown>) test passed.");
+        InetAddress ia = InetAddress.getByName("255.255.255.255");
+        if (NetworkInterface.getByInetAddress(ia) != null) {
+            throw new Exception
+                ("getByInetAddress returned unexpected interface: null expected");
+        }
+        System.out.println("getByName(getByInetAddress(<unknown>) test passed.");
 
     }
 }

@@ -58,31 +58,30 @@ import sun.nio.cs.StreamEncoder;
  * @author Mark Reinhold
  * @author Mike McCloskey
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
 public final class Channels {
 
-    private Channels() { }		// No instantiation
+    private Channels() { }              // No instantiation
 
 
     private static int write(WritableByteChannel ch, ByteBuffer bb)
-	throws IOException
+        throws IOException
     {
-	if (ch instanceof SelectableChannel) {
-	    SelectableChannel sc = (SelectableChannel)ch;
-	    synchronized (sc.blockingLock()) {
-		if (!sc.isBlocking())
-		    throw new IllegalBlockingModeException();
-		return ch.write(bb);
-	    }
-	} else {
-	    return ch.write(bb);
-	}
+        if (ch instanceof SelectableChannel) {
+            SelectableChannel sc = (SelectableChannel)ch;
+            synchronized (sc.blockingLock()) {
+                if (!sc.isBlocking())
+                    throw new IllegalBlockingModeException();
+                return ch.write(bb);
+            }
+        } else {
+            return ch.write(bb);
+        }
     }
 
-
+
     // -- Byte streams from channels --
 
     /**
@@ -102,7 +101,7 @@ public final class Channels {
      * @return  A new input stream
      */
     public static InputStream newInputStream(ReadableByteChannel ch) {
-	return new sun.nio.ch.ChannelInputStream(ch);
+        return new sun.nio.ch.ChannelInputStream(ch);
     }
 
     /**
@@ -120,11 +119,11 @@ public final class Channels {
      * @return  A new output stream
      */
     public static OutputStream newOutputStream(final WritableByteChannel ch) {
-	return new OutputStream() {
+        return new OutputStream() {
 
-		private ByteBuffer bb = null;
-		private byte[] bs = null; 	// Invoker's previous array
-		private byte[] b1 = null;
+                private ByteBuffer bb = null;
+                private byte[] bs = null;       // Invoker's previous array
+                private byte[] b1 = null;
 
                 public synchronized void write(int b) throws IOException {
                    if (b1 == null)
@@ -152,14 +151,14 @@ public final class Channels {
                     Channels.write(ch, bb);
                 }
 
-		public void close() throws IOException {
-		    ch.close();
-		}
+                public void close() throws IOException {
+                    ch.close();
+                }
 
-	    };
+            };
     }
 
-
+
     // -- Channels from streams --
 
     /**
@@ -175,20 +174,20 @@ public final class Channels {
      * @return  A new readable byte channel
      */
     public static ReadableByteChannel newChannel(final InputStream in) {
-	if (in == null) {
-	    throw new NullPointerException();
-	}
-	
-	if (in instanceof FileInputStream &&
-	    FileInputStream.class.equals(in.getClass())) {
-	    return ((FileInputStream)in).getChannel();
+        if (in == null) {
+            throw new NullPointerException();
         }
 
-	return new ReadableByteChannelImpl(in);
+        if (in instanceof FileInputStream &&
+            FileInputStream.class.equals(in.getClass())) {
+            return ((FileInputStream)in).getChannel();
+        }
+
+        return new ReadableByteChannelImpl(in);
     }
 
     private static class ReadableByteChannelImpl
-        extends AbstractInterruptibleChannel	// Not really interruptible
+        extends AbstractInterruptibleChannel    // Not really interruptible
         implements ReadableByteChannel
     {
         InputStream in;
@@ -252,20 +251,20 @@ public final class Channels {
      * @return  A new writable byte channel
      */
     public static WritableByteChannel newChannel(final OutputStream out) {
-	if (out == null) {
-	    throw new NullPointerException();
-	}
+        if (out == null) {
+            throw new NullPointerException();
+        }
 
         if (out instanceof FileOutputStream &&
-	    FileOutputStream.class.equals(out.getClass())) {
+            FileOutputStream.class.equals(out.getClass())) {
                 return ((FileOutputStream)out).getChannel();
         }
 
-	return new WritableByteChannelImpl(out);
+        return new WritableByteChannelImpl(out);
     }
 
     private static class WritableByteChannelImpl
-        extends AbstractInterruptibleChannel	// Not really interruptible
+        extends AbstractInterruptibleChannel    // Not really interruptible
         implements WritableByteChannel
     {
         OutputStream out;
@@ -294,7 +293,7 @@ public final class Channels {
                     } finally {
                         end(bytesToWrite > 0);
                     }
-		    totalWritten += bytesToWrite;
+                    totalWritten += bytesToWrite;
                 }
                 return totalWritten;
             }
@@ -306,7 +305,7 @@ public final class Channels {
         }
     }
 
-
+
     // -- Character streams from channels --
 
     /**
@@ -336,11 +335,11 @@ public final class Channels {
      * @return  A new reader
      */
     public static Reader newReader(ReadableByteChannel ch,
-				   CharsetDecoder dec,
-				   int minBufferCap)
+                                   CharsetDecoder dec,
+                                   int minBufferCap)
     {
-	dec.reset();
-	return StreamDecoder.forDecoder(ch, dec, minBufferCap);
+        dec.reset();
+        return StreamDecoder.forDecoder(ch, dec, minBufferCap);
     }
 
     /**
@@ -373,9 +372,9 @@ public final class Channels {
      *          in this instance of the Java virtual machine
      */
     public static Reader newReader(ReadableByteChannel ch,
-				   String csName)
+                                   String csName)
     {
-	return newReader(ch, Charset.forName(csName).newDecoder(), -1);
+        return newReader(ch, Charset.forName(csName).newDecoder(), -1);
     }
 
     /**
@@ -404,11 +403,11 @@ public final class Channels {
      * @return  A new writer
      */
     public static Writer newWriter(final WritableByteChannel ch,
-				   final CharsetEncoder enc,
-				   final int minBufferCap)
+                                   final CharsetEncoder enc,
+                                   final int minBufferCap)
     {
         enc.reset();
-	return StreamEncoder.forEncoder(ch, enc, minBufferCap);
+        return StreamEncoder.forEncoder(ch, enc, minBufferCap);
     }
 
     /**
@@ -441,9 +440,9 @@ public final class Channels {
      *          in this instance of the Java virtual machine
      */
     public static Writer newWriter(WritableByteChannel ch,
-				   String csName)
+                                   String csName)
     {
-	return newWriter(ch, Charset.forName(csName).newEncoder(), -1);
+        return newWriter(ch, Charset.forName(csName).newEncoder(), -1);
     }
 
 }

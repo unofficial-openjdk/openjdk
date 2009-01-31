@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -55,46 +55,46 @@ public class MarshalForeignStub
     }
 
     public void receive(Object obj) {
-	System.err.println("+ receive(): received object " + obj);
+        System.err.println("+ receive(): received object " + obj);
     }
 
     public static void main(String[] args) {
 
-	System.err.println("\nRegression test for bug 4117427\n");
+        System.err.println("\nRegression test for bug 4117427\n");
 
-	TestLibrary.suggestSecurityManager(null);
+        TestLibrary.suggestSecurityManager(null);
 
-	System.err.println("Creating remote object.");
-	MarshalForeignStub obj = null;
-	try {
-	    obj = new MarshalForeignStub();
-	} catch (RemoteException e) {
-	    TestLibrary.bomb(e);
-	}
+        System.err.println("Creating remote object.");
+        MarshalForeignStub obj = null;
+        try {
+            obj = new MarshalForeignStub();
+        } catch (RemoteException e) {
+            TestLibrary.bomb(e);
+        }
 
-	try {
-	    Receiver stub = (Receiver) RemoteObject.toStub(obj);
+        try {
+            Receiver stub = (Receiver) RemoteObject.toStub(obj);
 
-	    /*
-	     * Pass an instance of ForeignStub to the remote object.
-	     * This should succeed, because MarshalOutputStream now
-	     * allows objects that implement Remote, but not RemoteStub
-	     * to be serialized in an RMI call.
-	     */
-	    System.err.println(
-		"Passing a foreign stub to remote object.");
-	    stub.receive(new ForeignStub());
+            /*
+             * Pass an instance of ForeignStub to the remote object.
+             * This should succeed, because MarshalOutputStream now
+             * allows objects that implement Remote, but not RemoteStub
+             * to be serialized in an RMI call.
+             */
+            System.err.println(
+                "Passing a foreign stub to remote object.");
+            stub.receive(new ForeignStub());
 
-	    System.err.println("TEST SUCCEEDED");
-	} catch (Exception e) {
-	    System.err.println("TEST FAILED: ");
-	    e.printStackTrace();
-	    throw new RuntimeException("TEST FAILED: " + e.toString());
-	} finally {
-	    try {
-		UnicastRemoteObject.unexportObject(obj, true);
-	    } catch (Throwable e) {
-	    }
-	}
+            System.err.println("TEST SUCCEEDED");
+        } catch (Exception e) {
+            System.err.println("TEST FAILED: ");
+            e.printStackTrace();
+            throw new RuntimeException("TEST FAILED: " + e.toString());
+        } finally {
+            try {
+                UnicastRemoteObject.unexportObject(obj, true);
+            } catch (Throwable e) {
+            }
+        }
     }
 }

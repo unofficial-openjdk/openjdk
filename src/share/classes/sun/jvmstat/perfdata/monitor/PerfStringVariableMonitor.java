@@ -35,7 +35,6 @@ import java.nio.ByteBuffer;
  * The current value of a variable string instrument changes over time.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class PerfStringVariableMonitor extends PerfStringMonitor {

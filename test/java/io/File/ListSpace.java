@@ -30,7 +30,7 @@ import java.io.*;
 
 public class ListSpace {
     public static void main(String[] args) throws Exception {
-	File d = new File(".");
+        File d = new File(".");
         d = new File(d.getCanonicalPath()+" ");
         if (!d.isDirectory())
             return;

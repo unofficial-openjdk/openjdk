@@ -35,13 +35,13 @@ import javax.accessibility.*;
 
 
 /**
- * An extended version of <code>java.awt.Frame</code> that adds support for 
+ * An extended version of <code>java.awt.Frame</code> that adds support for
  * the JFC/Swing component architecture.
  * You can find task-oriented documentation about using <code>JFrame</code>
  * in <em>The Java Tutorial</em>, in the section
  * <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/frame.html">How to Make Frames</a>.
- * 
+ *
  * <p>
  * The <code>JFrame</code> class is slightly incompatible with <code>Frame</code>.
  * Like all other JFC/Swing top-level containers,
@@ -49,7 +49,7 @@ import javax.accessibility.*;
  * The <b>content pane</b> provided by the root pane should,
  * as a rule, contain
  * all the non-menu components displayed by the <code>JFrame</code>.
- * This is different from the AWT <code>Frame</code> case.  
+ * This is different from the AWT <code>Frame</code> case.
  * As a conveniance <code>add</code> and its variants, <code>remove</code> and
  * <code>setLayout</code> have been overridden to forward to the
  * <code>contentPane</code> as necessary. This means you can write:
@@ -60,12 +60,12 @@ import javax.accessibility.*;
  * The content pane will
  * always be non-null. Attempting to set it to null will cause the JFrame
  * to throw an exception. The default content pane will have a BorderLayout
- * manager set on it. 
+ * manager set on it.
  * Refer to {@link javax.swing.RootPaneContainer}
  * for details on adding, removing and setting the <code>LayoutManager</code>
  * of a <code>JFrame</code>.
  * <p>
- * Unlike a <code>Frame</code>, a <code>JFrame</code> has some notion of how to 
+ * Unlike a <code>Frame</code>, a <code>JFrame</code> has some notion of how to
  * respond when the user attempts to close the window. The default behavior
  * is to simply hide the JFrame when the user closes the window. To change the
  * default behavior, you invoke the method
@@ -107,7 +107,6 @@ import javax.accessibility.*;
  *      attribute: containerDelegate getContentPane
  *    description: A toplevel window which can be minimized to an icon.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  * @author Georges Saab
  * @author David Kloba
@@ -131,8 +130,8 @@ public class JFrame  extends Frame implements WindowConstants,
      * Key into the AppContext, used to check if should provide decorations
      * by default.
      */
-    private static final Object defaultLookAndFeelDecoratedKey = 
-    	    new StringBuffer("JFrame.defaultLookAndFeelDecorated");
+    private static final Object defaultLookAndFeelDecoratedKey =
+            new StringBuffer("JFrame.defaultLookAndFeelDecorated");
 
     private int defaultCloseOperation = HIDE_ON_CLOSE;
 
@@ -143,8 +142,8 @@ public class JFrame  extends Frame implements WindowConstants,
 
     /**
      * The <code>JRootPane</code> instance that manages the
-     * <code>contentPane</code> 
-     * and optional <code>menuBar</code> for this frame, as well as the 
+     * <code>contentPane</code>
+     * and optional <code>menuBar</code> for this frame, as well as the
      * <code>glassPane</code>.
      *
      * @see JRootPane
@@ -167,7 +166,7 @@ public class JFrame  extends Frame implements WindowConstants,
     /**
      * Constructs a new frame that is initially invisible.
      * <p>
-     * This constructor sets the component's locale property to the value 
+     * This constructor sets the component's locale property to the value
      * returned by <code>JComponent.getDefaultLocale</code>.
      *
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
@@ -178,7 +177,7 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see JComponent#getDefaultLocale
      */
     public JFrame() throws HeadlessException {
-        super();        
+        super();
         frameInit();
     }
 
@@ -187,15 +186,15 @@ public class JFrame  extends Frame implements WindowConstants,
      * <code>GraphicsConfiguration</code> of
      * a screen device and a blank title.
      * <p>
-     * This constructor sets the component's locale property to the value 
+     * This constructor sets the component's locale property to the value
      * returned by <code>JComponent.getDefaultLocale</code>.
      *
      * @param gc the <code>GraphicsConfiguration</code> that is used
-     * 		to construct the new <code>Frame</code>;
-     * 		if <code>gc</code> is <code>null</code>, the system
-     * 		default <code>GraphicsConfiguration</code> is assumed
+     *          to construct the new <code>Frame</code>;
+     *          if <code>gc</code> is <code>null</code>, the system
+     *          default <code>GraphicsConfiguration</code> is assumed
      * @exception IllegalArgumentException if <code>gc</code> is not from
-     * 		a screen device.  This exception is always thrown when
+     *          a screen device.  This exception is always thrown when
      *      GraphicsEnvironment.isHeadless() returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
      * @see JComponent#getDefaultLocale
@@ -207,10 +206,10 @@ public class JFrame  extends Frame implements WindowConstants,
     }
 
     /**
-     * Creates a new, initially invisible <code>Frame</code> with the 
+     * Creates a new, initially invisible <code>Frame</code> with the
      * specified title.
      * <p>
-     * This constructor sets the component's locale property to the value 
+     * This constructor sets the component's locale property to the value
      * returned by <code>JComponent.getDefaultLocale</code>.
      *
      * @param title the title for the frame
@@ -225,23 +224,23 @@ public class JFrame  extends Frame implements WindowConstants,
         super(title);
         frameInit();
     }
-    
+
     /**
      * Creates a <code>JFrame</code> with the specified title and the
      * specified <code>GraphicsConfiguration</code> of a screen device.
      * <p>
-     * This constructor sets the component's locale property to the value 
+     * This constructor sets the component's locale property to the value
      * returned by <code>JComponent.getDefaultLocale</code>.
      *
      * @param title the title to be displayed in the
-     * 		frame's border. A <code>null</code> value is treated as
-     * 		an empty string, "".
+     *          frame's border. A <code>null</code> value is treated as
+     *          an empty string, "".
      * @param gc the <code>GraphicsConfiguration</code> that is used
-     * 		to construct the new <code>JFrame</code> with;
-     *		if <code>gc</code> is <code>null</code>, the system
-     * 		default <code>GraphicsConfiguration</code> is assumed
+     *          to construct the new <code>JFrame</code> with;
+     *          if <code>gc</code> is <code>null</code>, the system
+     *          default <code>GraphicsConfiguration</code> is assumed
      * @exception IllegalArgumentException if <code>gc</code> is not from
-     * 		a screen device.  This exception is always thrown when
+     *          a screen device.  This exception is always thrown when
      *      GraphicsEnvironment.isHeadless() returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
      * @see JComponent#getDefaultLocale
@@ -260,7 +259,7 @@ public class JFrame  extends Frame implements WindowConstants,
         setBackground(UIManager.getColor("control"));
         setRootPaneCheckingEnabled(true);
         if (JFrame.isDefaultLookAndFeelDecorated()) {
-            boolean supportsWindowDecorations = 
+            boolean supportsWindowDecorations =
             UIManager.getLookAndFeel().getSupportsWindowDecorations();
             if (supportsWindowDecorations) {
                 setUndecorated(true);
@@ -283,8 +282,8 @@ public class JFrame  extends Frame implements WindowConstants,
         rp.setOpaque(true);
         return rp;
     }
- 
-    /** 
+
+    /**
      * Processes window events occurring on this component.
      * Hides the window or disposes of it, as specified by the setting
      * of the <code>defaultCloseOperation</code> property.
@@ -305,22 +304,22 @@ public class JFrame  extends Frame implements WindowConstants,
                  dispose();
                  break;
               case DO_NOTHING_ON_CLOSE:
-                 default: 
+                 default:
                  break;
-	      case EXIT_ON_CLOSE:
+              case EXIT_ON_CLOSE:
                   // This needs to match the checkExit call in
                   // setDefaultCloseOperation
-		System.exit(0);
-		break;
+                System.exit(0);
+                break;
             }
         }
     }
 
-//    public void setMenuBar(MenuBar menu) {  
+//    public void setMenuBar(MenuBar menu) {
 //        throw new IllegalComponentStateException("Please use setJMenuBar() with JFrame.");
 //    }
 
-    /**                   
+    /**
      * Sets the operation that will happen by default when
      * the user initiates a "close" on this frame.
      * You must specify one of the following choices:
@@ -340,7 +339,7 @@ public class JFrame  extends Frame implements WindowConstants,
      *
      * <li><code>DISPOSE_ON_CLOSE</code>
      * (defined in <code>WindowConstants</code>):
-     * Automatically hide and dispose the 
+     * Automatically hide and dispose the
      * frame after invoking any registered <code>WindowListener</code>
      * objects.
      *
@@ -361,7 +360,7 @@ public class JFrame  extends Frame implements WindowConstants,
      *
      * @param operation the operation which should be performed when the
      *        user closes the frame
-     * @exception IllegalArgumentException if defaultCloseOperation value 
+     * @exception IllegalArgumentException if defaultCloseOperation value
      *             isn't one of the above valid values
      * @see #addWindowListener
      * @see #getDefaultCloseOperation
@@ -382,12 +381,12 @@ public class JFrame  extends Frame implements WindowConstants,
      * description: The frame's default close operation.
      */
     public void setDefaultCloseOperation(int operation) {
-	if (operation != DO_NOTHING_ON_CLOSE &&
-	    operation != HIDE_ON_CLOSE &&
-	    operation != DISPOSE_ON_CLOSE &&
-	    operation != EXIT_ON_CLOSE) {
+        if (operation != DO_NOTHING_ON_CLOSE &&
+            operation != HIDE_ON_CLOSE &&
+            operation != DISPOSE_ON_CLOSE &&
+            operation != EXIT_ON_CLOSE) {
             throw new IllegalArgumentException("defaultCloseOperation must be one of: DO_NOTHING_ON_CLOSE, HIDE_ON_CLOSE, DISPOSE_ON_CLOSE, or EXIT_ON_CLOSE");
-	}
+        }
         if (this.defaultCloseOperation != operation) {
             if (operation == EXIT_ON_CLOSE) {
                 SecurityManager security = System.getSecurityManager();
@@ -398,7 +397,7 @@ public class JFrame  extends Frame implements WindowConstants,
             int oldValue = this.defaultCloseOperation;
             this.defaultCloseOperation = operation;
             firePropertyChange("defaultCloseOperation", oldValue, operation);
-	}
+        }
     }
 
 
@@ -433,7 +432,7 @@ public class JFrame  extends Frame implements WindowConstants,
      * <a href="http://java.sun.com/docs/books/tutorial/uiswing/misc/dnd.html">
      * How to Use Drag and Drop and Data Transfer</a>, a section in
      * <em>The Java Tutorial</em>, for more information.
-     * 
+     *
      * @param newHandler the new {@code TransferHandler}
      *
      * @see TransferHandler
@@ -466,8 +465,8 @@ public class JFrame  extends Frame implements WindowConstants,
         return transferHandler;
     }
 
-    /** 
-     * Just calls <code>paint(g)</code>.  This method was overridden to 
+    /**
+     * Just calls <code>paint(g)</code>.  This method was overridden to
      * prevent an unnecessary call to clear the background.
      *
      * @param g the Graphics context in which to paint
@@ -496,15 +495,15 @@ public class JFrame  extends Frame implements WindowConstants,
     *
     * @see #setJMenuBar
     */
-    public JMenuBar getJMenuBar() { 
-        return getRootPane().getMenuBar(); 
+    public JMenuBar getJMenuBar() {
+        return getRootPane().getMenuBar();
     }
 
     /**
-     * Returns whether calls to <code>add</code> and 
+     * Returns whether calls to <code>add</code> and
      * <code>setLayout</code> are forwarded to the <code>contentPane</code>.
      *
-     * @return true if <code>add</code> and <code>setLayout</code> 
+     * @return true if <code>add</code> and <code>setLayout</code>
      *         are fowarded; false otherwise
      *
      * @see #addImpl
@@ -518,9 +517,9 @@ public class JFrame  extends Frame implements WindowConstants,
 
 
     /**
-     * Sets whether calls to <code>add</code> and 
+     * Sets whether calls to <code>add</code> and
      * <code>setLayout</code> are forwarded to the <code>contentPane</code>.
-     * 
+     *
      * @param enabled  true if <code>add</code> and <code>setLayout</code>
      *        are forwarded, false if they should operate directly on the
      *        <code>JFrame</code>.
@@ -545,19 +544,19 @@ public class JFrame  extends Frame implements WindowConstants,
      * By default, children are added to the <code>contentPane</code> instead
      * of the frame, refer to {@link javax.swing.RootPaneContainer} for
      * details.
-     * 
+     *
      * @param comp the component to be enhanced
      * @param constraints the constraints to be respected
      * @param index the index
      * @exception IllegalArgumentException if <code>index</code> is invalid
      * @exception IllegalArgumentException if adding the container's parent
-     *			to itself
+     *                  to itself
      * @exception IllegalArgumentException if adding a window to a container
-     * 
+     *
      * @see #setRootPaneCheckingEnabled
      * @see javax.swing.RootPaneContainer
      */
-    protected void addImpl(Component comp, Object constraints, int index) 
+    protected void addImpl(Component comp, Object constraints, int index)
     {
         if(isRootPaneCheckingEnabled()) {
             getContentPane().add(comp, constraints, index);
@@ -567,7 +566,7 @@ public class JFrame  extends Frame implements WindowConstants,
         }
     }
 
-    /** 
+    /**
      * Removes the specified component from the container. If
      * <code>comp</code> is not the <code>rootPane</code>, this will forward
      * the call to the <code>contentPane</code>. This will do nothing if
@@ -580,11 +579,11 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see javax.swing.RootPaneContainer
      */
     public void remove(Component comp) {
-	if (comp == rootPane) {
-	    super.remove(comp);
-	} else {
-	    getContentPane().remove(comp);
-	}
+        if (comp == rootPane) {
+            super.remove(comp);
+        } else {
+            getContentPane().remove(comp);
+        }
     }
 
 
@@ -616,13 +615,13 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see #setRootPane
      * @see RootPaneContainer#getRootPane
      */
-    public JRootPane getRootPane() { 
-        return rootPane; 
+    public JRootPane getRootPane() {
+        return rootPane;
     }
 
 
     /**
-     * Sets the <code>rootPane</code> property. 
+     * Sets the <code>rootPane</code> property.
      * This method is called by the constructor.
      * @param root the <code>rootPane</code> object for this frame
      *
@@ -632,7 +631,7 @@ public class JFrame  extends Frame implements WindowConstants,
      *   hidden: true
      * description: the RootPane object for this frame.
      */
-    protected void setRootPane(JRootPane root) 
+    protected void setRootPane(JRootPane root)
     {
         if(rootPane != null) {
             remove(rootPane);
@@ -664,12 +663,12 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see #setContentPane
      * @see RootPaneContainer#getContentPane
      */
-    public Container getContentPane() { 
-        return getRootPane().getContentPane(); 
+    public Container getContentPane() {
+        return getRootPane().getContentPane();
     }
 
     /**
-     * Sets the <code>contentPane</code> property. 
+     * Sets the <code>contentPane</code> property.
      * This method is called by the constructor.
      * <p>
      * Swing's painting architecture requires an opaque <code>JComponent</code>
@@ -687,7 +686,7 @@ public class JFrame  extends Frame implements WindowConstants,
      *
      * @beaninfo
      *     hidden: true
-     *     description: The client area of the frame where child 
+     *     description: The client area of the frame where child
      *                  components are normally inserted.
      */
     public void setContentPane(Container contentPane) {
@@ -701,8 +700,8 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see #setLayeredPane
      * @see RootPaneContainer#getLayeredPane
      */
-    public JLayeredPane getLayeredPane() { 
-        return getRootPane().getLayeredPane(); 
+    public JLayeredPane getLayeredPane() {
+        return getRootPane().getLayeredPane();
     }
 
     /**
@@ -730,12 +729,12 @@ public class JFrame  extends Frame implements WindowConstants,
      * @see #setGlassPane
      * @see RootPaneContainer#getGlassPane
      */
-    public Component getGlassPane() { 
-        return getRootPane().getGlassPane(); 
+    public Component getGlassPane() {
+        return getRootPane().getGlassPane();
     }
 
     /**
-     * Sets the <code>glassPane</code> property. 
+     * Sets the <code>glassPane</code> property.
      * This method is called by the constructor.
      * @param glassPane the <code>glassPane</code> object for this frame
      *
@@ -764,7 +763,7 @@ public class JFrame  extends Frame implements WindowConstants,
      * Repaints the specified rectangle of this component within
      * <code>time</code> milliseconds.  Refer to <code>RepaintManager</code>
      * for details on how the repaint is handled.
-     * 
+     *
      * @param     time   maximum time in milliseconds before update
      * @param     x    the <i>x</i> coordinate
      * @param     y    the <i>y</i> coordinate
@@ -824,8 +823,8 @@ public class JFrame  extends Frame implements WindowConstants,
      * @return true if look and feel should provide Window decorations.
      * @since 1.4
      */
-    public static boolean isDefaultLookAndFeelDecorated() {    
-        Boolean defaultLookAndFeelDecorated = 
+    public static boolean isDefaultLookAndFeelDecorated() {
+        Boolean defaultLookAndFeelDecorated =
             (Boolean) SwingUtilities.appContextGet(defaultLookAndFeelDecoratedKey);
         if (defaultLookAndFeelDecorated == null) {
             defaultLookAndFeelDecorated = Boolean.FALSE;
@@ -835,12 +834,12 @@ public class JFrame  extends Frame implements WindowConstants,
 
     /**
      * Returns a string representation of this <code>JFrame</code>.
-     * This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>JFrame</code>
      */
     protected String paramString() {
@@ -854,15 +853,15 @@ public class JFrame  extends Frame implements WindowConstants,
         } else if (defaultCloseOperation == 3) {
             defaultCloseOperationString = "EXIT_ON_CLOSE";
         } else defaultCloseOperationString = "";
-	String rootPaneString = (rootPane != null ?
-				 rootPane.toString() : "");
-	String rootPaneCheckingEnabledString = (rootPaneCheckingEnabled ?
-						"true" : "false");
+        String rootPaneString = (rootPane != null ?
+                                 rootPane.toString() : "");
+        String rootPaneCheckingEnabledString = (rootPaneCheckingEnabled ?
+                                                "true" : "false");
 
-	return super.paramString() +
-	",defaultCloseOperation=" + defaultCloseOperationString +
-	",rootPane=" + rootPaneString +
-	",rootPaneCheckingEnabled=" + rootPaneCheckingEnabledString;
+        return super.paramString() +
+        ",defaultCloseOperation=" + defaultCloseOperationString +
+        ",rootPane=" + rootPaneString +
+        ",rootPaneCheckingEnabled=" + rootPaneCheckingEnabledString;
     }
 
 
@@ -875,12 +874,12 @@ public class JFrame  extends Frame implements WindowConstants,
     protected AccessibleContext accessibleContext = null;
 
     /**
-     * Gets the AccessibleContext associated with this JFrame. 
-     * For JFrames, the AccessibleContext takes the form of an 
-     * AccessibleJFrame. 
+     * Gets the AccessibleContext associated with this JFrame.
+     * For JFrames, the AccessibleContext takes the form of an
+     * AccessibleJFrame.
      * A new AccessibleJFrame instance is created if necessary.
      *
-     * @return an AccessibleJFrame that serves as the 
+     * @return an AccessibleJFrame that serves as the
      *         AccessibleContext of this JFrame
      */
     public AccessibleContext getAccessibleContext() {
@@ -891,18 +890,18 @@ public class JFrame  extends Frame implements WindowConstants,
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JFrame</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to frame user-interface 
+     * This class implements accessibility support for the
+     * <code>JFrame</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to frame user-interface
      * elements.
      */
     protected class AccessibleJFrame extends AccessibleAWTFrame {
 
         // AccessibleContext methods
         /**
-         * Get the accessible name of this object.  
+         * Get the accessible name of this object.
          *
-         * @return the localized name of the object -- can be null if this 
+         * @return the localized name of the object -- can be null if this
          * object does not have a name
          */
         public String getAccessibleName() {
@@ -920,7 +919,7 @@ public class JFrame  extends Frame implements WindowConstants,
         /**
          * Get the state of this object.
          *
-         * @return an instance of AccessibleStateSet containing the current 
+         * @return an instance of AccessibleStateSet containing the current
          * state set of the object
          * @see AccessibleState
          */
@@ -932,7 +931,7 @@ public class JFrame  extends Frame implements WindowConstants,
             }
             if (getFocusOwner() != null) {
                 states.add(AccessibleState.ACTIVE);
-            }   
+            }
             // FIXME:  [[[WDW - should also return ICONIFIED and ICONIFIABLE
             // if we can ever figure these out]]]
             return states;

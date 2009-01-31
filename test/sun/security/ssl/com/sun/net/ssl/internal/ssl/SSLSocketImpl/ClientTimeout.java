@@ -88,54 +88,54 @@ public class ClientTimeout {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	    
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        serverPort = sslServerSocket.getLocalPort();
 
-	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
-	sslSocket.startHandshake();
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
-	// transfer a file to client.
-	String transFilename =
-	    System.getProperty("test.src", "./") + "/" +
-			this.getClass().getName() + ".java";
-	MessageDigest md = MessageDigest.getInstance("SHA");
-	DigestInputStream transIns = new DigestInputStream(
-		new FileInputStream(transFilename), md);
+        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
+        sslSocket.startHandshake();
 
-	byte[] bytes = new byte[2000];
-	int i = 0;
-	while (true) {
-	    // reset the cycle
-	    if (i >= bytes.length) {
-		i = 0;
-	    }
+        // transfer a file to client.
+        String transFilename =
+            System.getProperty("test.src", "./") + "/" +
+                        this.getClass().getName() + ".java";
+        MessageDigest md = MessageDigest.getInstance("SHA");
+        DigestInputStream transIns = new DigestInputStream(
+                new FileInputStream(transFilename), md);
 
-	    int length = 0;
-	    if ((length = transIns.read(bytes, 0, i++)) == -1) {
-		break;
-	    } else {
-		sslOS.write(bytes, 0, length);
-		sslOS.flush();
+        byte[] bytes = new byte[2000];
+        int i = 0;
+        while (true) {
+            // reset the cycle
+            if (i >= bytes.length) {
+                i = 0;
+            }
 
-		if (i % 3 == 0) {
-		    Thread.sleep(300);  // Stall past the timeout...
-		}
-	    }
-	}
-	serverDigest = md.digest();
-	transIns.close();
-	sslSocket.close();
+            int length = 0;
+            if ((length = transIns.read(bytes, 0, i++)) == -1) {
+                break;
+            } else {
+                sslOS.write(bytes, 0, length);
+                sslOS.flush();
+
+                if (i % 3 == 0) {
+                    Thread.sleep(300);  // Stall past the timeout...
+                }
+            }
+        }
+        serverDigest = md.digest();
+        transIns.close();
+        sslSocket.close();
     }
 
     /*
@@ -145,14 +145,14 @@ public class ClientTimeout {
      * to avoid infinite hangs.
      */
     void doClientSide() throws Exception {
-	boolean caught = false;
+        boolean caught = false;
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
         Socket baseSocket = new Socket("localhost", serverPort) {
             MyInputStream ins = null;
@@ -167,56 +167,56 @@ public class ClientTimeout {
             }
         };
 
-	SSLSocketFactory sslsf =
-	    (SSLSocketFactory) SSLSocketFactory.getDefault();
-	SSLSocket sslSocket = (SSLSocket)
-	    sslsf.createSocket(baseSocket, "localhost", serverPort, true);
+        SSLSocketFactory sslsf =
+            (SSLSocketFactory) SSLSocketFactory.getDefault();
+        SSLSocket sslSocket = (SSLSocket)
+            sslsf.createSocket(baseSocket, "localhost", serverPort, true);
 
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	// handshaking
-	sslSocket.setSoTimeout(100); // The stall timeout.
-	while (true) {
-	    try {
-		rhythm = true;
-		sslSocket.startHandshake();
-		break;
-	    } catch (SocketTimeoutException e) {
-		System.out.println("Handshaker exception: "
-			+ e.getMessage());
-	    }
-	}
+        // handshaking
+        sslSocket.setSoTimeout(100); // The stall timeout.
+        while (true) {
+            try {
+                rhythm = true;
+                sslSocket.startHandshake();
+                break;
+            } catch (SocketTimeoutException e) {
+                System.out.println("Handshaker exception: "
+                        + e.getMessage());
+            }
+        }
 
-	// read application data from server
-	MessageDigest md = MessageDigest.getInstance("SHA");
-	DigestInputStream transIns = new DigestInputStream(sslIS, md);
-	byte[] bytes = new byte[2000];
-	while (true) {
-	    try {
-		rhythm = true;
+        // read application data from server
+        MessageDigest md = MessageDigest.getInstance("SHA");
+        DigestInputStream transIns = new DigestInputStream(sslIS, md);
+        byte[] bytes = new byte[2000];
+        while (true) {
+            try {
+                rhythm = true;
 
-		while (transIns.read(bytes, 0, 17) != -1) {
-		    rhythm = true;
-		}
-		break;
-	    } catch (SocketTimeoutException e) {
-		System.out.println("InputStream Exception: "
-			+ e.getMessage());
-	    }
-	}
-	// Wait for server to get ready.
-	while (serverDigest == null) {
-	    Thread.sleep(20);
-	}
+                while (transIns.read(bytes, 0, 17) != -1) {
+                    rhythm = true;
+                }
+                break;
+            } catch (SocketTimeoutException e) {
+                System.out.println("InputStream Exception: "
+                        + e.getMessage());
+            }
+        }
+        // Wait for server to get ready.
+        while (serverDigest == null) {
+            Thread.sleep(20);
+        }
 
-	byte[] cliDigest = md.digest();
-	if (!Arrays.equals(cliDigest, serverDigest)) {
-	    throw new Exception("Application data trans error");
-	}
+        byte[] cliDigest = md.digest();
+        if (!Arrays.equals(cliDigest, serverDigest)) {
+            throw new Exception("Application data trans error");
+        }
 
-	transIns.close();
-	sslSocket.close();
+        transIns.close();
+        sslSocket.close();
     }
 
     /*
@@ -225,24 +225,24 @@ public class ClientTimeout {
      */
 
     static class MyInputStream extends InputStream {
-	InputStream ins = null;
+        InputStream ins = null;
 
-	public MyInputStream(InputStream ins) {
-	    this.ins = ins;
-	}
+        public MyInputStream(InputStream ins) {
+            this.ins = ins;
+        }
 
-	public int read() throws IOException {
-	    return read(new byte[1], 0, 1);
-	}
+        public int read() throws IOException {
+            return read(new byte[1], 0, 1);
+        }
 
-	public int read(byte[] data, int offset, int len) throws IOException {
-	    if (!ClientTimeout.rhythm) {
-		throw new SocketTimeoutException(
-			"Throwing a timeout exception");
-	    }
-	    ClientTimeout.rhythm = false;
-	    return ins.read(data, offset, len);
-	}
+        public int read(byte[] data, int offset, int len) throws IOException {
+            if (!ClientTimeout.rhythm) {
+                throw new SocketTimeoutException(
+                        "Throwing a timeout exception");
+            }
+            ClientTimeout.rhythm = false;
+            return ins.read(data, offset, len);
+        }
     }
 
     // use any free port by default
@@ -254,25 +254,25 @@ public class ClientTimeout {
     volatile byte[] serverDigest = null;
 
     public static void main(String[] args) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
-	new ClientTimeout();
+        /*
+         * Start the tests.
+         */
+        new ClientTimeout();
     }
 
     Thread clientThread = null;
@@ -284,83 +284,83 @@ public class ClientTimeout {
      * Fork off the other side, then do your work.
      */
     ClientTimeout() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null) {
-	    System.out.print("Server Exception:");
-	    throw serverException;
-	}
-	if (clientException != null) {
-	    System.out.print("Client Exception:");
-	    throw clientException;
-	}
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null) {
+            System.out.print("Server Exception:");
+            throw serverException;
+        }
+        if (clientException != null) {
+            System.out.print("Client Exception:");
+            throw clientException;
+        }
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			System.err.println(e);
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        System.err.println(e);
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

@@ -41,7 +41,7 @@ public class GIFStreamMetadataFormat extends IIOMetadataFormatImpl {
         // root -> Version
         addElement("Version", GIFStreamMetadata.nativeMetadataFormatName,
                    CHILD_POLICY_EMPTY);
-        addAttribute("Version", "value", 
+        addAttribute("Version", "value",
                      DATATYPE_STRING, true, null,
                      Arrays.asList(GIFStreamMetadata.versionStrings));
 
@@ -66,7 +66,7 @@ public class GIFStreamMetadataFormat extends IIOMetadataFormatImpl {
         addElement("GlobalColorTable",
                    GIFStreamMetadata.nativeMetadataFormatName,
                    2, 256);
-        addAttribute("GlobalColorTable", "sizeOfGlobalColorTable", 
+        addAttribute("GlobalColorTable", "sizeOfGlobalColorTable",
                      DATATYPE_INTEGER, true, null,
                      Arrays.asList(GIFStreamMetadata.colorTableSizes));
         addAttribute("GlobalColorTable", "backgroundColorIndex",

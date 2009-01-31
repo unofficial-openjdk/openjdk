@@ -35,7 +35,6 @@ import java.math.BigInteger;
  * Message used by clients to send their Diffie-Hellman public
  * keys to servers.
  *
- * @version %I%, %G%
  * @author David Brownell
  */
 final class DHClientKeyExchange extends HandshakeMessage {
@@ -60,11 +59,11 @@ final class DHClientKeyExchange extends HandshakeMessage {
      * certificate).
      */
     DHClientKeyExchange(BigInteger publicKey) {
-	dh_Yc = toByteArray(publicKey);
+        dh_Yc = toByteArray(publicKey);
     }
 
     DHClientKeyExchange() {
-	dh_Yc = null;
+        dh_Yc = null;
     }
 
     /*
@@ -77,22 +76,22 @@ final class DHClientKeyExchange extends HandshakeMessage {
     }
 
     int messageLength() {
-	if (dh_Yc == null) {
-	    return 0;
-	} else {
-	    return dh_Yc.length + 2;
-	}
+        if (dh_Yc == null) {
+            return 0;
+        } else {
+            return dh_Yc.length + 2;
+        }
     }
 
     void send(HandshakeOutStream s) throws IOException {
-	s.putBytes16(dh_Yc);
+        s.putBytes16(dh_Yc);
     }
 
     void print(PrintStream s) throws IOException {
         s.println("*** ClientKeyExchange, DH");
 
-	if (debug != null && Debug.isOn("verbose")) {
-	    Debug.println(s, "DH Public key", dh_Yc);
-	}
+        if (debug != null && Debug.isOn("verbose")) {
+            Debug.println(s, "DH Public key", dh_Yc);
+        }
     }
 }

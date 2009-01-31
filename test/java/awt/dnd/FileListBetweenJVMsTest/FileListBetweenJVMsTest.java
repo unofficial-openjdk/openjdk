@@ -22,7 +22,7 @@
  */
 
 /*
-  test @(#)FileListBetweenJVMsTest.java	1.1 07/02/26
+  test
   @bug 5079469
   @summary DnD of File-List across JVM adds two empty items to the list
   @author : area=dnd
@@ -105,14 +105,14 @@ public class FileListBetweenJVMsTest extends Applet {
         Util.waitForIdle(null);
 
         final Robot robot = Util.createRobot();
-    
+
         robot.mouseMove((int)dragSourcePoint.getX(),(int)dragSourcePoint.getY());
         sleep(100);
         robot.mousePress(InputEvent.BUTTON1_MASK);
         sleep(100);
         robot.mouseRelease(InputEvent.BUTTON1_MASK);
         sleep(100);
-    
+
         Util.drag(robot, dragSourcePoint, targetFrame.getDropTargetPoint(),
                 InputEvent.BUTTON1_MASK);
 
@@ -147,4 +147,3 @@ public class FileListBetweenJVMsTest extends Applet {
 
 
 }// class FileListBetweenJVMsTest
-

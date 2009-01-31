@@ -31,21 +31,18 @@ import java.nio.charset.CharsetEncoder;
 public class UTF_32BE_BOM extends Unicode
 {
     public UTF_32BE_BOM() {
-	super("X-UTF-32BE-BOM", StandardCharsets.aliases_UTF_32BE_BOM);
+        super("X-UTF-32BE-BOM", StandardCharsets.aliases_UTF_32BE_BOM);
     }
 
     public String historicalName() {
-	return "X-UTF-32BE-BOM";
+        return "X-UTF-32BE-BOM";
     }
 
     public CharsetDecoder newDecoder() {
-	return new UTF_32Coder.Decoder(this, UTF_32Coder.BIG);
+        return new UTF_32Coder.Decoder(this, UTF_32Coder.BIG);
     }
 
     public CharsetEncoder newEncoder() {
-	return new UTF_32Coder.Encoder(this, UTF_32Coder.BIG, true);
+        return new UTF_32Coder.Encoder(this, UTF_32Coder.BIG, true);
     }
 }
-
-
-

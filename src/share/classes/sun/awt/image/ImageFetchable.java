@@ -35,8 +35,7 @@ package sun.awt.image;
  * @see ImageFetcher
  * @see ImageProducer
  *
- * @version 	%I% %G%
- * @author 	Jim Graham
+ * @author      Jim Graham
  */
 public interface ImageFetchable {
     /**

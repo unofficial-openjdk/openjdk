@@ -35,8 +35,7 @@ import java.util.regex.*;
  * <p>
  * StyleAssociation is used to lookup a style for a particular
  * component (or region).
- * 
- * @version %I%, %G%
+ *
  * @author Scott Violet
  */
 public class StyleAssociation {

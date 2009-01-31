@@ -39,7 +39,7 @@ public class NamedBuffer
         fName =     name;
         fBuffer =   buffer;
         }
-    
+
     public
     NamedBuffer(    String      name,
                     InputStream stream)
@@ -48,19 +48,19 @@ public class NamedBuffer
         this(   name,
                 loadBufferFromStream(stream));
         }
-        
+
     public String
     getName()
         {
         return fName;
         }
-    
+
     public byte[]
     getBuffer()
         {
         return fBuffer;
         }
-        
+
     public static byte[]
     loadBufferFromStream(InputStream stream)
         throws IOException
@@ -75,7 +75,7 @@ public class NamedBuffer
             // if there might be more bytes, just surrender
             throw new IOException("too big for buffer");
             }
-        
+
         byte[] resultBuffer = new byte[actualSize];
         System.arraycopy(   readBuffer,
                             0,

@@ -30,11 +30,11 @@ import javax.security.auth.callback.*;
 public class ConfigQuotedString extends PKCS11Test {
 
     public static void main(String[] args) throws Exception {
-	main(new ConfigQuotedString());
+        main(new ConfigQuotedString());
     }
 
     public void main(Provider p) throws Exception {
-	System.out.println(p);
-	System.out.println("test passed");
+        System.out.println(p);
+        System.out.println("test passed");
     }
 }

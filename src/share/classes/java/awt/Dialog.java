@@ -89,16 +89,15 @@ import sun.security.util.SecurityConstants;
  * @see WindowEvent
  * @see Window#addWindowListener
  *
- * @version	%I%, %G%
- * @author	Sami Shaio
- * @author	Arthur van Hoff
+ * @author      Sami Shaio
+ * @author      Arthur van Hoff
  * @since       JDK1.0
  */
 public class Dialog extends Window {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-	Toolkit.loadLibraries();
+        Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -753,16 +752,16 @@ public class Dialog extends Window {
      * @see #removeNotify
      */
     public void addNotify() {
-	synchronized (getTreeLock()) {
-	    if (parent != null && parent.getPeer() == null) {
+        synchronized (getTreeLock()) {
+            if (parent != null && parent.getPeer() == null) {
                 parent.addNotify();
-	    }
+            }
 
-	    if (peer == null) {
-	        peer = getToolkit().createDialog(this);
-	    }
-	    super.addNotify();
-	}
+            if (peer == null) {
+                peer = getToolkit().createDialog(this);
+            }
+            super.addNotify();
+        }
     }
 
     /**
@@ -878,13 +877,13 @@ public class Dialog extends Window {
      * @see       java.awt.Dialog#setTitle
      */
     public String getTitle() {
-	return title;
+        return title;
     }
 
     /**
      * Sets the title of the Dialog.
      * @param title the title displayed in the dialog's border;
-	 * a null value results in an empty title
+         * a null value results in an empty title
      * @see #getTitle
      */
     public void setTitle(String title) {
@@ -907,7 +906,7 @@ public class Dialog extends Window {
         boolean retval;
 
         closeSplashScreen();
-        
+
         synchronized (getTreeLock()) {
             if (peer == null) {
                 addNotify();
@@ -929,7 +928,7 @@ public class Dialog extends Window {
                     modalShow();
                 }
 
-                if (toFocus != null && time != null && isFocusable() && 
+                if (toFocus != null && time != null && isFocusable() &&
                     isEnabled() && !isModalBlocked()) {
                     // keep the KeyEvents from being dispatched
                     // until the focus has been transfered
@@ -982,11 +981,11 @@ public class Dialog extends Window {
     /**
      * Shows or hides this {@code Dialog} depending on the value of parameter
      * {@code b}.
-     * @param b if {@code true}, makes the {@code Dialog} visible, 
+     * @param b if {@code true}, makes the {@code Dialog} visible,
      * otherwise hides the {@code Dialog}.
      * If the dialog and/or its owner
-     * are not yet displayable, both are made displayable.  The 
-     * dialog will be validated prior to being made visible.  
+     * are not yet displayable, both are made displayable.  The
+     * dialog will be validated prior to being made visible.
      * If {@code false}, hides the {@code Dialog} and then causes {@code setVisible(true)}
      * to return if it is currently blocked.
      * <p>
@@ -1020,15 +1019,15 @@ public class Dialog extends Window {
 
    /**
      * Makes the {@code Dialog} visible. If the dialog and/or its owner
-     * are not yet displayable, both are made displayable.  The 
+     * are not yet displayable, both are made displayable.  The
      * dialog will be validated prior to being made visible.
-     * If the dialog is already visible, this will bring the dialog 
+     * If the dialog is already visible, this will bring the dialog
      * to the front.
      * <p>
      * If the dialog is modal and is not already visible, this call
      * will not return until the dialog is hidden by calling hide or
      * dispose. It is permissible to show modal dialogs from the event
-     * dispatching thread because the toolkit will ensure that another 
+     * dispatching thread because the toolkit will ensure that another
      * event pump runs while the one which invoked this method is blocked.
      * @see Component#hide
      * @see Component#isDisplayable
@@ -1118,7 +1117,7 @@ public class Dialog extends Window {
 
                             /*
                              * Event processing is done inside doPrivileged block so that
-                             * it wouldn't matter even if user code is on the stack 
+                             * it wouldn't matter even if user code is on the stack
                              * Fix for BugId 6300270
                              */
 
@@ -1228,8 +1227,8 @@ public class Dialog extends Window {
             if (keepBlockingEDT) {
                 keepBlockingEDT = false;
                 PeerEvent wakingEvent = new PeerEvent(this, new WakingRunnable(), PeerEvent.PRIORITY_EVENT);
-                AppContext curAppContext = AppContext.getAppContext(); 
-                if (showAppContext != curAppContext) { 
+                AppContext curAppContext = AppContext.getAppContext();
+                if (showAppContext != curAppContext) {
                     // Wake up event dispatch thread on which the dialog was
                     // initially shown
                     SunToolkit.postEvent(showAppContext, wakingEvent);
@@ -1297,13 +1296,13 @@ public class Dialog extends Window {
 
     /**
      * Indicates whether this dialog is resizable by the user.
-     * By default, all dialogs are initially resizable. 
+     * By default, all dialogs are initially resizable.
      * @return    <code>true</code> if the user can resize the dialog;
      *            <code>false</code> otherwise.
      * @see       java.awt.Dialog#setResizable
      */
     public boolean isResizable() {
-	return resizable;
+        return resizable;
     }
 
     /**
@@ -1365,7 +1364,7 @@ public class Dialog extends Window {
      * @since 1.4
      */
     public boolean isUndecorated() {
-	return undecorated;
+        return undecorated;
     }
 
     /**

@@ -44,7 +44,6 @@ import javax.net.ssl.*;
  * @see javax.net.ssl.SSLSocket
  * @see SSLSocketImpl
  *
- * @version %I% %G%
  */
 abstract class BaseSSLSocketImpl extends SSLSocket {
 
@@ -59,13 +58,13 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
     final Socket self;
 
     BaseSSLSocketImpl() {
-	super();
-	this.self = this;
+        super();
+        this.self = this;
     }
 
     BaseSSLSocketImpl(Socket socket) {
-	super();
-	this.self = socket;
+        super();
+        this.self = socket;
     }
 
     //
@@ -81,10 +80,10 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * The default is "false", i.e. tolerate the broken behavior.
      */
     private final static String PROP_NAME =
-				"com.sun.net.ssl.requireCloseNotify";
+                                "com.sun.net.ssl.requireCloseNotify";
 
     final static boolean requireCloseNotify =
-				Debug.getBooleanProperty(PROP_NAME, false);
+                                Debug.getBooleanProperty(PROP_NAME, false);
 
     //
     // MISC SOCKET METHODS
@@ -96,11 +95,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getChannel
      */
     public final SocketChannel getChannel() {
-	if (self == this) {
-	    return super.getChannel();
-	} else {
-	    return self.getChannel();
-	}
+        if (self == this) {
+            return super.getChannel();
+        } else {
+            return self.getChannel();
+        }
     }
 
     /**
@@ -108,16 +107,16 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#bind
      */
     public void bind(SocketAddress bindpoint) throws IOException {
-	/*
-	 * Bind to this socket
-	 */
-	if (self == this) {
-	    super.bind(bindpoint);
-	} else {
-	    // If we're binding on a layered socket...
-	    throw new IOException(
-		"Underlying socket should already be connected");
-	}
+        /*
+         * Bind to this socket
+         */
+        if (self == this) {
+            super.bind(bindpoint);
+        } else {
+            // If we're binding on a layered socket...
+            throw new IOException(
+                "Underlying socket should already be connected");
+        }
     }
 
     /**
@@ -125,11 +124,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getLocalSocketAddress
      */
     public SocketAddress getLocalSocketAddress() {
-	if (self == this) {
-	    return super.getLocalSocketAddress();
-	} else {
-	    return self.getLocalSocketAddress();
-	}
+        if (self == this) {
+            return super.getLocalSocketAddress();
+        } else {
+            return self.getLocalSocketAddress();
+        }
     }
 
     /**
@@ -137,11 +136,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getRemoteSocketAddress
      */
     public SocketAddress getRemoteSocketAddress() {
-	if (self == this) {
-	    return super.getRemoteSocketAddress();
-	} else {
-	    return self.getRemoteSocketAddress();
-	}
+        if (self == this) {
+            return super.getRemoteSocketAddress();
+        } else {
+            return self.getRemoteSocketAddress();
+        }
     }
 
     /**
@@ -158,7 +157,7 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @throws  IOException if an error occurs during the connection
      */
     public final void connect(SocketAddress endpoint) throws IOException {
-	connect(endpoint, 0);
+        connect(endpoint, 0);
     }
 
     /**
@@ -166,11 +165,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#isConnected
      */
     public final boolean isConnected() {
-	if (self == this) {
-	    return super.isConnected();
-	} else {
-	    return self.isConnected();
-	}
+        if (self == this) {
+            return super.isConnected();
+        } else {
+            return self.isConnected();
+        }
     }
 
     /**
@@ -178,11 +177,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#isBound
      */
     public final boolean isBound() {
-	if (self == this) {
-	    return super.isBound();
-	} else {
-	    return self.isBound();
-	}
+        if (self == this) {
+            return super.isBound();
+        } else {
+            return self.isBound();
+        }
     }
 
     //
@@ -197,8 +196,8 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @throws UnsupportedOperationException
      */
     public final void shutdownInput() throws IOException {
-	throw new UnsupportedOperationException("The method shutdownInput()" +
-		   " is not supported in SSLSocket");
+        throw new UnsupportedOperationException("The method shutdownInput()" +
+                   " is not supported in SSLSocket");
     }
 
     /**
@@ -209,8 +208,8 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @throws UnsupportedOperationException
      */
     public final void shutdownOutput() throws IOException {
-	throw new UnsupportedOperationException("The method shutdownOutput()" +
-		   " is not supported in SSLSocket");
+        throw new UnsupportedOperationException("The method shutdownOutput()" +
+                   " is not supported in SSLSocket");
 
     }
 
@@ -219,11 +218,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#isInputShutdown
      */
     public final boolean isInputShutdown() {
-	if (self == this) {
-	    return super.isInputShutdown();
-	} else {
-	    return self.isInputShutdown();
-	}
+        if (self == this) {
+            return super.isInputShutdown();
+        } else {
+            return self.isInputShutdown();
+        }
     }
 
     /**
@@ -231,11 +230,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#isOutputShutdown
      */
     public final boolean isOutputShutdown() {
-	if (self == this) {
-	    return super.isOutputShutdown();
-	} else {
-	    return self.isOutputShutdown();
-	}
+        if (self == this) {
+            return super.isOutputShutdown();
+        } else {
+            return self.isOutputShutdown();
+        }
     }
 
     /**
@@ -246,23 +245,23 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * the penalty of prematurly killing SSL sessions.
      */
     protected final void finalize() throws Throwable {
-	try {
-	    close();
-	} catch (IOException e1) {
-	    try {
-		if (self == this) {
-		    super.close();
-		}
-	    } catch (IOException e2) {
-		// ignore
-	    }
-	} finally {
-	    // we call close on the underlying socket anyway, but be
-	    // doubly sure all resources get released.
-	    // note that we don't need to worry about self, the GC
-	    // will finalize that separately
-	    super.finalize();
-	}
+        try {
+            close();
+        } catch (IOException e1) {
+            try {
+                if (self == this) {
+                    super.close();
+                }
+            } catch (IOException e2) {
+                // ignore
+            }
+        } finally {
+            // we call close on the underlying socket anyway, but be
+            // doubly sure all resources get released.
+            // note that we don't need to worry about self, the GC
+            // will finalize that separately
+            super.finalize();
+        }
     }
 
     //
@@ -273,11 +272,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * Returns the address of the remote peer for this connection.
      */
     public final InetAddress getInetAddress() {
-	if (self == this) {
-	    return super.getInetAddress();
-	} else {
-	    return self.getInetAddress();
-	}
+        if (self == this) {
+            return super.getInetAddress();
+        } else {
+            return self.getInetAddress();
+        }
     }
 
     /**
@@ -287,33 +286,33 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @since   JDK1.1
      */
     public final InetAddress getLocalAddress() {
-	if (self == this) {
-	    return super.getLocalAddress();
-	} else {
-	    return self.getLocalAddress();
-	}
+        if (self == this) {
+            return super.getLocalAddress();
+        } else {
+            return self.getLocalAddress();
+        }
     }
 
     /**
      * Returns the number of the remote port that this connection uses.
      */
     public final int getPort() {
-	if (self == this) {
-	    return super.getPort();
-	} else {
-	    return self.getPort();
-	}
+        if (self == this) {
+            return super.getPort();
+        } else {
+            return self.getPort();
+        }
     }
 
     /**
      * Returns the number of the local port that this connection uses.
      */
     public final int getLocalPort() {
-	if (self == this) {
-	    return super.getLocalPort();
-	} else {
-	    return self.getLocalPort();
-	}
+        if (self == this) {
+            return super.getLocalPort();
+        } else {
+            return self.getLocalPort();
+        }
     }
 
     //
@@ -325,11 +324,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setTcpNoDelay
      */
     public final void setTcpNoDelay(boolean value) throws SocketException {
-	if (self == this) {
-	    super.setTcpNoDelay(value);
-	} else {
-	    self.setTcpNoDelay(value);
-	}
+        if (self == this) {
+            super.setTcpNoDelay(value);
+        } else {
+            self.setTcpNoDelay(value);
+        }
     }
 
     /**
@@ -340,11 +339,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getTcpNoDelay
      */
     public final boolean getTcpNoDelay() throws SocketException {
-	if (self == this) {
-	    return super.getTcpNoDelay();
-	} else {
-	    return self.getTcpNoDelay();
-	}
+        if (self == this) {
+            return super.getTcpNoDelay();
+        } else {
+            return self.getTcpNoDelay();
+        }
     }
 
     /**
@@ -352,12 +351,12 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setSoLinger
      */
     public final void setSoLinger(boolean flag, int linger)
-	    throws SocketException {
-	if (self == this) {
-	    super.setSoLinger(flag, linger);
-	} else {
-	    self.setSoLinger(flag, linger);
-	}
+            throws SocketException {
+        if (self == this) {
+            super.setSoLinger(flag, linger);
+        } else {
+            self.setSoLinger(flag, linger);
+        }
     }
 
     /**
@@ -365,11 +364,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getSoLinger
      */
     public final int getSoLinger() throws SocketException {
-	if (self == this) {
-	    return super.getSoLinger();
-	} else {
-	    return self.getSoLinger();
-	}
+        if (self == this) {
+            return super.getSoLinger();
+        } else {
+            return self.getSoLinger();
+        }
     }
 
     /**
@@ -380,8 +379,8 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * arises in future.
      */
     public final void sendUrgentData(int data) throws SocketException {
-	throw new SocketException("This method is not supported "
-			+ "by SSLSockets");
+        throw new SocketException("This method is not supported "
+                        + "by SSLSockets");
     }
 
     /**
@@ -393,8 +392,8 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * since currently we don't support sending urgent data.
      */
     public final void setOOBInline(boolean on) throws SocketException {
-	throw new SocketException("This method is ineffective, since"
-		+ " sending urgent data is not supported by SSLSockets");
+        throw new SocketException("This method is ineffective, since"
+                + " sending urgent data is not supported by SSLSockets");
     }
 
     /**
@@ -402,8 +401,8 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getOOBInline
      */
     public final boolean getOOBInline() throws SocketException {
-	throw new SocketException("This method is ineffective, since"
-		+ " sending urgent data is not supported by SSLSockets");
+        throw new SocketException("This method is ineffective, since"
+                + " sending urgent data is not supported by SSLSockets");
     }
 
     /**
@@ -411,43 +410,43 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getSoTimeout
      */
     public final int getSoTimeout() throws SocketException {
-	if (self == this) {
-	    return super.getSoTimeout();
-	} else {
-	    return self.getSoTimeout();
-	}
+        if (self == this) {
+            return super.getSoTimeout();
+        } else {
+            return self.getSoTimeout();
+        }
     }
 
     public final void setSendBufferSize(int size) throws SocketException {
-	if (self == this) {
-	    super.setSendBufferSize(size);
-	} else {
-	    self.setSendBufferSize(size);
-	}
+        if (self == this) {
+            super.setSendBufferSize(size);
+        } else {
+            self.setSendBufferSize(size);
+        }
     }
 
     public final int getSendBufferSize() throws SocketException {
-	if (self == this) {
-	    return super.getSendBufferSize();
-	} else {
-	    return self.getSendBufferSize();
-	}
+        if (self == this) {
+            return super.getSendBufferSize();
+        } else {
+            return self.getSendBufferSize();
+        }
     }
 
     public final void setReceiveBufferSize(int size) throws SocketException {
-	if (self == this) {
-	    super.setReceiveBufferSize(size);
-	} else {
-	    self.setReceiveBufferSize(size);
-	}
+        if (self == this) {
+            super.setReceiveBufferSize(size);
+        } else {
+            self.setReceiveBufferSize(size);
+        }
     }
 
     public final int getReceiveBufferSize() throws SocketException {
-	if (self == this) {
-	    return super.getReceiveBufferSize();
-	} else {
-	    return self.getReceiveBufferSize();
-	}
+        if (self == this) {
+            return super.getReceiveBufferSize();
+        } else {
+            return self.getReceiveBufferSize();
+        }
     }
 
     /**
@@ -455,11 +454,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setKeepAlive
      */
     public final void setKeepAlive(boolean on) throws SocketException {
-	if (self == this) {
-	    super.setKeepAlive(on);
-	} else {
-	    self.setKeepAlive(on);
-	}
+        if (self == this) {
+            super.setKeepAlive(on);
+        } else {
+            self.setKeepAlive(on);
+        }
     }
 
     /**
@@ -467,11 +466,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getKeepAlive
      */
     public final boolean getKeepAlive() throws SocketException {
-	if (self == this) {
-	    return super.getKeepAlive();
-	} else {
-	    return self.getKeepAlive();
-	}
+        if (self == this) {
+            return super.getKeepAlive();
+        } else {
+            return self.getKeepAlive();
+        }
     }
 
     /**
@@ -480,11 +479,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setTrafficClass
      */
     public final void setTrafficClass(int tc) throws SocketException {
-	if (self == this) {
-	    super.setTrafficClass(tc);
-	} else {
-	    self.setTrafficClass(tc);
-	}
+        if (self == this) {
+            super.setTrafficClass(tc);
+        } else {
+            self.setTrafficClass(tc);
+        }
     }
 
     /**
@@ -493,11 +492,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getTrafficClass
      */
     public final int getTrafficClass() throws SocketException {
-	if (self == this) {
-	    return super.getTrafficClass();
-	} else {
-	    return self.getTrafficClass();
-	}
+        if (self == this) {
+            return super.getTrafficClass();
+        } else {
+            return self.getTrafficClass();
+        }
     }
 
     /**
@@ -505,11 +504,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setReuseAddress
      */
     public final void setReuseAddress(boolean on) throws SocketException {
-	if (self == this) {
-	    super.setReuseAddress(on);
-	} else {
-	    self.setReuseAddress(on);
-	}
+        if (self == this) {
+            super.setReuseAddress(on);
+        } else {
+            self.setReuseAddress(on);
+        }
     }
 
     /**
@@ -517,11 +516,11 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#getReuseAddress
      */
     public final boolean getReuseAddress() throws SocketException {
-	if (self == this) {
-	    return super.getReuseAddress();
-	} else {
-	    return self.getReuseAddress();
-	}
+        if (self == this) {
+            return super.getReuseAddress();
+        } else {
+            return self.getReuseAddress();
+        }
     }
 
     /**
@@ -530,14 +529,14 @@ abstract class BaseSSLSocketImpl extends SSLSocket {
      * @see java.net.Socket#setPerformancePreferences(int, int, int)
      */
     public void setPerformancePreferences(int connectionTime,
-	    int latency, int bandwidth) {
-	if (self == this) {
-	    super.setPerformancePreferences(
-		connectionTime, latency, bandwidth);
-	} else {
-	    self.setPerformancePreferences(
-		connectionTime, latency, bandwidth);
-	}
+            int latency, int bandwidth) {
+        if (self == this) {
+            super.setPerformancePreferences(
+                connectionTime, latency, bandwidth);
+        } else {
+            self.setPerformancePreferences(
+                connectionTime, latency, bandwidth);
+        }
     }
 
 }

@@ -38,7 +38,7 @@ import com.sun.jmx.snmp.agent.SnmpMibTable;
  * You should never need to use this interface directly.
  * </p></b></i>
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  **/
 public interface SnmpTableCallbackHandler {
@@ -55,9 +55,9 @@ public interface SnmpTableCallbackHandler {
      * </p></b></i>
      *
      **/
-    public void addEntryCb(int pos, SnmpOid row, ObjectName name, 
-			   Object entry, SnmpMibTable meta) 
-	throws SnmpStatusException;
+    public void addEntryCb(int pos, SnmpOid row, ObjectName name,
+                           Object entry, SnmpMibTable meta)
+        throws SnmpStatusException;
 
     /**
      * This method is called by the SNMP runtime after a new entry
@@ -70,7 +70,7 @@ public interface SnmpTableCallbackHandler {
      * </p></b></i>
      *
      **/
-    public void removeEntryCb(int pos, SnmpOid row, ObjectName name, 
-			      Object entry, SnmpMibTable meta)
-	throws SnmpStatusException;
+    public void removeEntryCb(int pos, SnmpOid row, ObjectName name,
+                              Object entry, SnmpMibTable meta)
+        throws SnmpStatusException;
 }

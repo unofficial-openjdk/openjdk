@@ -84,7 +84,7 @@ public class NotificationFilterSupport implements NotificationFilter {
             return false;
         }
         try {
-	    for (String prefix : enabledTypes) {
+            for (String prefix : enabledTypes) {
                 if (type.startsWith(prefix)) {
                     return true;
                 }
@@ -122,7 +122,7 @@ public class NotificationFilterSupport implements NotificationFilter {
      * @exception java.lang.IllegalArgumentException The prefix parameter is null.
      */
     public synchronized void enableType(String prefix)
-	    throws IllegalArgumentException {
+            throws IllegalArgumentException {
 
         if (prefix == null) {
             throw new IllegalArgumentException("The prefix cannot be null.");

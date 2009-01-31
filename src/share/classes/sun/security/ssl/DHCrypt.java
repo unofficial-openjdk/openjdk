@@ -39,9 +39,9 @@ import javax.crypto.spec.*;
  * D-H means combining your private key with your partners public key to
  * generate a number. The peer does the same with its private key and our
  * public key. Through the magic of Diffie-Hellman we both come up with the
- * same number. This number is secret (discounting MITM attacks) and hence 
- * called the shared secret. It has the same length as the modulus, e.g. 512 
- * or 1024 bit. Man-in-the-middle attacks are typically countered by an 
+ * same number. This number is secret (discounting MITM attacks) and hence
+ * called the shared secret. It has the same length as the modulus, e.g. 512
+ * or 1024 bit. Man-in-the-middle attacks are typically countered by an
  * independent authentication step using certificates (RSA, DSA, etc.).
  *
  * The thing to note is that the shared secret is constant for two partners
@@ -59,47 +59,46 @@ import javax.crypto.spec.*;
  *  . receive peers ephemeral public key
  *  . call getAgreedSecret() to calculate the shared secret
  *
- * In TLS the server chooses the parameter values itself, the client must use 
+ * In TLS the server chooses the parameter values itself, the client must use
  * those sent to it by the server.
  *
- * The use of ephemeral keys as described above also achieves what is called 
- * "forward secrecy". This means that even if the authentication keys are 
- * broken at a later date, the shared secret remains secure. The session is 
- * compromised only if the authentication keys are already broken at the 
- * time the key exchange takes place and an active MITM attack is used. 
+ * The use of ephemeral keys as described above also achieves what is called
+ * "forward secrecy". This means that even if the authentication keys are
+ * broken at a later date, the shared secret remains secure. The session is
+ * compromised only if the authentication keys are already broken at the
+ * time the key exchange takes place and an active MITM attack is used.
  * This is in contrast to straightforward encrypting RSA key exchanges.
  *
- * @version %I% %G%
  * @author David Brownell
  */
 final class DHCrypt {
 
     // group parameters (prime modulus and generator)
-    private BigInteger modulus;			// P (aka N)
-    private BigInteger base;			// G (aka alpha)
+    private BigInteger modulus;                 // P (aka N)
+    private BigInteger base;                    // G (aka alpha)
 
     // our private key (including private component x)
     private PrivateKey privateKey;
 
     // public component of our key, X = (g ^ x) mod p
-    private BigInteger publicValue;		// X (aka y)
-    
+    private BigInteger publicValue;             // X (aka y)
+
     /**
      * Generate a Diffie-Hellman keypair of the specified size.
      */
     DHCrypt(int keyLength, SecureRandom random) {
-	try {
-	    KeyPairGenerator kpg = JsseJce.getKeyPairGenerator("DiffieHellman");
-	    kpg.initialize(keyLength, random);
-	    KeyPair kp = kpg.generateKeyPair();
-	    privateKey = kp.getPrivate();
-	    DHPublicKeySpec spec = getDHPublicKeySpec(kp.getPublic());
-	    publicValue = spec.getY();
-	    modulus = spec.getP();
-	    base = spec.getG();
-	} catch (GeneralSecurityException e) {
-	    throw new RuntimeException("Could not generate DH keypair", e);
-	}
+        try {
+            KeyPairGenerator kpg = JsseJce.getKeyPairGenerator("DiffieHellman");
+            kpg.initialize(keyLength, random);
+            KeyPair kp = kpg.generateKeyPair();
+            privateKey = kp.getPrivate();
+            DHPublicKeySpec spec = getDHPublicKeySpec(kp.getPublic());
+            publicValue = spec.getY();
+            modulus = spec.getP();
+            base = spec.getG();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Could not generate DH keypair", e);
+        }
     }
 
 
@@ -110,52 +109,52 @@ final class DHCrypt {
      * @param base the Diffie-Hellman base G
      */
     DHCrypt(BigInteger modulus, BigInteger base, SecureRandom random) {
-	this.modulus = modulus;
-	this.base = base;
-	try {
-	    KeyPairGenerator kpg = JsseJce.getKeyPairGenerator("DiffieHellman");
-	    DHParameterSpec params = new DHParameterSpec(modulus, base);
-	    kpg.initialize(params, random);
-	    KeyPair kp = kpg.generateKeyPair();
-	    privateKey = kp.getPrivate();
-	    DHPublicKeySpec spec = getDHPublicKeySpec(kp.getPublic());
-	    publicValue = spec.getY();
-	} catch (GeneralSecurityException e) {
-	    throw new RuntimeException("Could not generate DH keypair", e);
-	}
+        this.modulus = modulus;
+        this.base = base;
+        try {
+            KeyPairGenerator kpg = JsseJce.getKeyPairGenerator("DiffieHellman");
+            DHParameterSpec params = new DHParameterSpec(modulus, base);
+            kpg.initialize(params, random);
+            KeyPair kp = kpg.generateKeyPair();
+            privateKey = kp.getPrivate();
+            DHPublicKeySpec spec = getDHPublicKeySpec(kp.getPublic());
+            publicValue = spec.getY();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Could not generate DH keypair", e);
+        }
     }
 
     static DHPublicKeySpec getDHPublicKeySpec(PublicKey key) {
-	if (key instanceof DHPublicKey) {
-	    DHPublicKey dhKey = (DHPublicKey)key;
-	    DHParameterSpec params = dhKey.getParams();
-	    return new DHPublicKeySpec(dhKey.getY(), params.getP(), params.getG());
-	}
-	try {   
-	    KeyFactory factory = JsseJce.getKeyFactory("DH");
-	    return (DHPublicKeySpec)factory.getKeySpec
-					    (key, DHPublicKeySpec.class);
-	} catch (Exception e) {
-	    throw new RuntimeException(e);
-	}
+        if (key instanceof DHPublicKey) {
+            DHPublicKey dhKey = (DHPublicKey)key;
+            DHParameterSpec params = dhKey.getParams();
+            return new DHPublicKeySpec(dhKey.getY(), params.getP(), params.getG());
+        }
+        try {
+            KeyFactory factory = JsseJce.getKeyFactory("DH");
+            return (DHPublicKeySpec)factory.getKeySpec
+                                            (key, DHPublicKeySpec.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-    
-    
+
+
     /** Returns the Diffie-Hellman modulus. */
     BigInteger getModulus() {
-	return modulus;
+        return modulus;
     }
 
     /** Returns the Diffie-Hellman base (generator).  */
-    BigInteger getBase() { 
-	return base;
+    BigInteger getBase() {
+        return base;
     }
 
     /**
      * Gets the public key of this end of the key exchange.
      */
     BigInteger getPublicKey() {
-	return publicValue;
+        return publicValue;
     }
 
     /**
@@ -170,21 +169,21 @@ final class DHCrypt {
      *
      * @param peerPublicKey the peer's public key.
      * @returns the secret, which is an unsigned big-endian integer
-     *	the same size as the Diffie-Hellman modulus.
+     *  the same size as the Diffie-Hellman modulus.
      */
     SecretKey getAgreedSecret(BigInteger peerPublicValue) {
-	try {
-	    KeyFactory kf = JsseJce.getKeyFactory("DiffieHellman");
-	    DHPublicKeySpec spec = 
-	    		new DHPublicKeySpec(peerPublicValue, modulus, base);
-	    PublicKey publicKey = kf.generatePublic(spec);
-	    KeyAgreement ka = JsseJce.getKeyAgreement("DiffieHellman");
-	    ka.init(privateKey);
-	    ka.doPhase(publicKey, true);
-	    return ka.generateSecret("TlsPremasterSecret");
-	} catch (GeneralSecurityException e) {
-	    throw new RuntimeException("Could not generate secret", e);
-	}
+        try {
+            KeyFactory kf = JsseJce.getKeyFactory("DiffieHellman");
+            DHPublicKeySpec spec =
+                        new DHPublicKeySpec(peerPublicValue, modulus, base);
+            PublicKey publicKey = kf.generatePublic(spec);
+            KeyAgreement ka = JsseJce.getKeyAgreement("DiffieHellman");
+            ka.init(privateKey);
+            ka.doPhase(publicKey, true);
+            return ka.generateSecret("TlsPremasterSecret");
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Could not generate secret", e);
+        }
     }
 
 }

@@ -36,14 +36,14 @@ import java.util.Hashtable;
   *
   * @author Rosanna Lee
   */
-   
+
 public class Continuation extends ResolveResult {
     /**
      * The name that we started out with. It is initialized by the constructor
-     * and used to calculate to "resolved name" in NamingException in 
+     * and used to calculate to "resolved name" in NamingException in
      * fillInException().
      * %%% Note that this approach does not always do the calculation
-     * correctly with respect to absence or presence of the trailing slash 
+     * correctly with respect to absence or presence of the trailing slash
      * for resolved name.
      */
     protected Name starter;
@@ -64,7 +64,7 @@ public class Continuation extends ResolveResult {
      * should be continued using the data in the Continuation.
      * Typically, this is only false if an error has been encountered or if
      * the operation has succeeded.
-     */ 
+     */
     protected boolean continuing = false;
 
     /**
@@ -89,15 +89,15 @@ public class Continuation extends ResolveResult {
     /**
      * Constructs a new instance of Continuation.
      * @param top The name of the object that is to be resolved/operated upon.
-     *		This becomes the Continuation's 'starter' and is used to
-     * 		calculate the "resolved name" when filling  in a NamingException.
+     *          This becomes the Continuation's 'starter' and is used to
+     *          calculate the "resolved name" when filling  in a NamingException.
      * @param environment The environment used by the caller. It is used
      * when setting the "environment" of a CannotProceedException.
      */
     public Continuation(Name top, Hashtable environment) {
-	super();
-	starter = top;
-	this.environment = environment;
+        super();
+        starter = top;
+        this.environment = environment;
     }
 
     /**
@@ -108,7 +108,7 @@ public class Continuation extends ResolveResult {
      * completed (successfully or unsuccessfully).
      */
     public boolean isContinue() {
-	return continuing;
+        return continuing;
     }
 
     /**
@@ -124,7 +124,7 @@ public class Continuation extends ResolveResult {
      * @see setErrorNNS
      */
     public void setSuccess() {
-	continuing = false;
+        continuing = false;
     }
 
     /**
@@ -140,28 +140,28 @@ public class Continuation extends ResolveResult {
      * data from this Continuation.
      */
     public NamingException fillInException(NamingException e) {
-	e.setRemainingName(remainingName);
-	e.setResolvedObj(resolvedObj);
+        e.setRemainingName(remainingName);
+        e.setResolvedObj(resolvedObj);
 
-	if (starter == null)
-	    e.setResolvedName(null);
-	else if (remainingName == null)
-	    e.setResolvedName(starter);
-	else
-	    e.setResolvedName(
-		starter.getPrefix(starter.size() - 
-				  remainingName.size()));
+        if (starter == null)
+            e.setResolvedName(null);
+        else if (remainingName == null)
+            e.setResolvedName(starter);
+        else
+            e.setResolvedName(
+                starter.getPrefix(starter.size() -
+                                  remainingName.size()));
 
-	if ((e instanceof CannotProceedException)) {
-	    CannotProceedException cpe = (CannotProceedException)e;
-	    Hashtable env = (environment == null ? 
-		new Hashtable(11) : (Hashtable)environment.clone());
-	    cpe.setEnvironment(env);
-	    cpe.setAltNameCtx(resolvedContext);
-	    cpe.setAltName(relativeResolvedName);
-	}
+        if ((e instanceof CannotProceedException)) {
+            CannotProceedException cpe = (CannotProceedException)e;
+            Hashtable env = (environment == null ?
+                new Hashtable(11) : (Hashtable)environment.clone());
+            cpe.setEnvironment(env);
+            cpe.setAltNameCtx(resolvedContext);
+            cpe.setAltName(relativeResolvedName);
+        }
 
-	return e;
+        return e;
     }
 
     /**
@@ -181,34 +181,34 @@ public class Continuation extends ResolveResult {
      * @param remain The non-null remaining name.
      */
     public void setErrorNNS(Object resObj, Name remain) {
-	Name nm = (Name)(remain.clone());
-	try {
-	    nm.add("");
-	} catch (InvalidNameException e) {
-	    // ignore; can't happen for composite name
-	}
-	setErrorAux(resObj, nm);
+        Name nm = (Name)(remain.clone());
+        try {
+            nm.add("");
+        } catch (InvalidNameException e) {
+            // ignore; can't happen for composite name
+        }
+        setErrorAux(resObj, nm);
     }
 
     /**
      * Form that accepts a String name instead of a Name name.
-     
+
      * @param resObj The possibly null object that was resolved to.
      * @param remain The possibly String remaining name.
      *
      * @see #setErrorNNS(java.lang.Object, javax.naming.Name)
      */
     public void setErrorNNS(Object resObj, String remain) {
-	CompositeName rname = new CompositeName();
-	try {
-	    if (remain != null && !remain.equals(""))
-		rname.add(remain);
+        CompositeName rname = new CompositeName();
+        try {
+            if (remain != null && !remain.equals(""))
+                rname.add(remain);
 
-	    rname.add("");
-	} catch (InvalidNameException e) {
-	    // ignore, can't happen for composite name
-	}
-	setErrorAux(resObj, rname);
+            rname.add("");
+        } catch (InvalidNameException e) {
+            // ignore, can't happen for composite name
+        }
+        setErrorAux(resObj, rname);
     }
 
     /**
@@ -218,7 +218,7 @@ public class Continuation extends ResolveResult {
      * This method is typically called by methods that have been
      * given a name to process. It might process part of that name but
      * encountered some error. Consequenetly, it would call setError()
-     * with the resolved object and the remaining name. 
+     * with the resolved object and the remaining name.
      *<p>
      * After this method is called, isContinuing() returns false.
      *
@@ -226,54 +226,54 @@ public class Continuation extends ResolveResult {
      * @param remain The possibly null remaining name.
      */
     public void setError(Object resObj, Name remain) {
-	if (remain != null)
-	    remainingName = (Name)(remain.clone());
-	else
-	    remainingName = null;
+        if (remain != null)
+            remainingName = (Name)(remain.clone());
+        else
+            remainingName = null;
 
-	setErrorAux(resObj, remainingName); 
+        setErrorAux(resObj, remainingName);
     }
 
 
     /**
      * Form that accepts a String name instead of a Name name.
-     
+
      * @param resObj The possibly null object that was resolved to.
      * @param remain The possibly String remaining name.
      *
      * @see #setError(java.lang.Object, javax.naming.Name)
      */
     public void setError(Object resObj, String remain) {
-	CompositeName rname = new CompositeName();
-	if (remain != null && !remain.equals("")) {
-	    try {
-		rname.add(remain);
-	    } catch (InvalidNameException e) {
-		// ignore; can't happen for composite name
-	    }
-	}
-	setErrorAux(resObj, rname);
+        CompositeName rname = new CompositeName();
+        if (remain != null && !remain.equals("")) {
+            try {
+                rname.add(remain);
+            } catch (InvalidNameException e) {
+                // ignore; can't happen for composite name
+            }
+        }
+        setErrorAux(resObj, rname);
     }
 
     private void setErrorAux(Object resObj, Name rname) {
-	remainingName = rname;
-	resolvedObj = resObj;
-	continuing = false;
+        remainingName = rname;
+        resolvedObj = resObj;
+        continuing = false;
     }
 
     private void setContinueAux(Object resObj,
-	Name relResName, Context currCtx,  Name remain) {
-	if (resObj instanceof LinkRef) {
-	    setContinueLink(resObj, relResName, currCtx, remain);
-	} else {
-	    remainingName = remain;
-	    resolvedObj = resObj;
+        Name relResName, Context currCtx,  Name remain) {
+        if (resObj instanceof LinkRef) {
+            setContinueLink(resObj, relResName, currCtx, remain);
+        } else {
+            remainingName = remain;
+            resolvedObj = resObj;
 
-	    relativeResolvedName = relResName;
-	    resolvedContext = currCtx;
+            relativeResolvedName = relResName;
+            resolvedContext = currCtx;
 
-	    continuing = true;
-	}
+            continuing = true;
+        }
     }
 
     /**
@@ -286,15 +286,15 @@ public class Continuation extends ResolveResult {
      * This method supplies "/" as the remaining name.
      *<p>
      * After this method is called, isContinuing() returns true.
-     * 
+     *
      * @param resObj The possibly null resolved object.
      * @param relResName The non-null resolved name relative to currCtx.
      * @param currCtx The non-null context from which relResName is to be resolved.
      */
     public void setContinueNNS(Object resObj, Name relResName, Context currCtx) {
-	CompositeName rname = new CompositeName();
+        CompositeName rname = new CompositeName();
 
-	setContinue(resObj, relResName, currCtx, PartialCompositeContext._NNS_NAME);
+        setContinue(resObj, relResName, currCtx, PartialCompositeContext._NNS_NAME);
     }
 
     /**
@@ -306,12 +306,12 @@ public class Continuation extends ResolveResult {
      * @see #setContinueNNS(java.lang.Object, javax.naming.Name, javax.naming.Context)
      */
     public void setContinueNNS(Object resObj, String relResName, Context currCtx) {
-	CompositeName relname = new CompositeName();
-	try {
-	    relname.add(relResName);
-	} catch (NamingException e) {}
+        CompositeName relname = new CompositeName();
+        try {
+            relname.add(relResName);
+        } catch (NamingException e) {}
 
-	setContinue(resObj, relname, currCtx, PartialCompositeContext._NNS_NAME);
+        setContinue(resObj, relname, currCtx, PartialCompositeContext._NNS_NAME);
     }
 
 
@@ -326,14 +326,14 @@ public class Continuation extends ResolveResult {
      * would be called with the empty name (i.e. list the target context itself).
      *<p>
      * After this method is called, isContinuing() returns true.
-     * 
+     *
      * @param resObj The possibly null resolved object.
      * @param relResName The non-null resolved name relative to currCtx.
      * @param currCtx The non-null context from which relResName is to be resolved.
      */
     public void setContinue(Object obj, Name relResName, Context currCtx) {
-	setContinueAux(obj, relResName, currCtx, 
-	    (Name)PartialCompositeContext._EMPTY_NAME.clone());
+        setContinueAux(obj, relResName, currCtx,
+            (Name)PartialCompositeContext._EMPTY_NAME.clone());
     }
 
     /**
@@ -346,48 +346,48 @@ public class Continuation extends ResolveResult {
      * using this data.
      *<p>
      * After this method is called, isContinuing() returns true.
-     * 
+     *
      * @param resObj The possibly null resolved object.
      * @param relResName The non-null resolved name relative to currCtx.
      * @param currCtx The non-null context from which relResName is to be resolved.
      * @param remain The non-null remaining name.
      */
     public void setContinue(Object obj, Name relResName, Context currCtx, Name remain) {
-	if (remain != null)
-	    this.remainingName = (Name)(remain.clone());
-	else
-	    this.remainingName = new CompositeName();
+        if (remain != null)
+            this.remainingName = (Name)(remain.clone());
+        else
+            this.remainingName = new CompositeName();
 
-	setContinueAux(obj, relResName, currCtx, remainingName);
+        setContinueAux(obj, relResName, currCtx, remainingName);
     }
 
     /**
      * String overload.
-     * 
+     *
      * @param resObj The possibly null resolved object.
      * @param relResName The non-null resolved name relative to currCtx.
      * @param currCtx The non-null context from which relResName is to be resolved.
      * @param remain The non-null remaining name.
      * @see #setContinue(java.lang.Object, java.lang.String, javax.naming.Context, java.lang.String)
      */
-    public void setContinue(Object obj, String relResName, 
-	Context currCtx, String remain) {
-	CompositeName relname = new CompositeName();
-	if (!relResName.equals("")) {
-	    try {
-		relname.add(relResName);
-	    } catch (NamingException e){}
-	}
-	 
-	CompositeName rname = new CompositeName();
-	if (!remain.equals("")) {
-	    try {
-		rname.add(remain);
-	    } catch (NamingException e) {
-	    }
-	}
+    public void setContinue(Object obj, String relResName,
+        Context currCtx, String remain) {
+        CompositeName relname = new CompositeName();
+        if (!relResName.equals("")) {
+            try {
+                relname.add(relResName);
+            } catch (NamingException e){}
+        }
 
-	setContinueAux(obj, relname, currCtx, rname);
+        CompositeName rname = new CompositeName();
+        if (!remain.equals("")) {
+            try {
+                rname.add(remain);
+            } catch (NamingException e) {
+            }
+        }
+
+        setContinueAux(obj, relname, currCtx, rname);
     }
 
     /**
@@ -396,11 +396,11 @@ public class Continuation extends ResolveResult {
      *
      * Replaced by setContinue(obj, relResName, (Context)currCtx);
      *
-     * @deprecated 
+     * @deprecated
      */
     @Deprecated
     public void setContinue(Object obj, Object currCtx) {
-	setContinue(obj, null, (Context)currCtx);
+        setContinue(obj, null, (Context)currCtx);
     }
 
 
@@ -408,32 +408,32 @@ public class Continuation extends ResolveResult {
      * Sets this Continuation to process a linkRef.
      * %%% Not working yet.
      */
-    private void setContinueLink(Object linkRef, Name relResName, 
-	Context resolvedCtx, Name rname) {
-	this.followingLink = linkRef;
+    private void setContinueLink(Object linkRef, Name relResName,
+        Context resolvedCtx, Name rname) {
+        this.followingLink = linkRef;
 
-	this.remainingName = rname;
-	this.resolvedObj = resolvedCtx;
+        this.remainingName = rname;
+        this.resolvedObj = resolvedCtx;
 
-	this.relativeResolvedName = PartialCompositeContext._EMPTY_NAME;
-	this.resolvedContext = resolvedCtx;
+        this.relativeResolvedName = PartialCompositeContext._EMPTY_NAME;
+        this.resolvedContext = resolvedCtx;
 
-	this.continuing = true;
+        this.continuing = true;
     }
 
     public String toString() {
-	if (remainingName != null)
-	    return starter.toString() + "; remainingName: '" + remainingName + "'";
-	else
-	    return starter.toString();
+        if (remainingName != null)
+            return starter.toString() + "; remainingName: '" + remainingName + "'";
+        else
+            return starter.toString();
     }
 
     public String toString(boolean detail) {
-	if (!detail || this.resolvedObj == null)
-		return this.toString();
-	return this.toString() + "; resolvedObj: " + this.resolvedObj +
-	    "; relativeResolvedName: " + relativeResolvedName +
-	    "; resolvedContext: " + resolvedContext;
+        if (!detail || this.resolvedObj == null)
+                return this.toString();
+        return this.toString() + "; resolvedObj: " + this.resolvedObj +
+            "; relativeResolvedName: " + relativeResolvedName +
+            "; resolvedContext: " + resolvedContext;
     }
 
     private static final long serialVersionUID = 8162530656132624308L;

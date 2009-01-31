@@ -57,9 +57,9 @@ import org.w3c.dom.Node;
 public class FuncHere extends Function {
 
    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+         *
+         */
+        private static final long serialVersionUID = 1L;
 
    /**
     * The here function returns a node-set containing the attribute or

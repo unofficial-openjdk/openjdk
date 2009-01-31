@@ -29,7 +29,6 @@ package sun.management.counter;
  * Interface for a performance counter wrapping a <code>String</code> object.
  *
  * @author   Brian Doherty
- * @version  %I%, %G%
  */
 public interface StringCounter extends Counter {
 

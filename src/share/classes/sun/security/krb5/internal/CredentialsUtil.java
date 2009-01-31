@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -51,7 +49,7 @@ import java.net.InetAddress;
  * acquisition in both the normal and the x-realm case.
  */
 public class CredentialsUtil {
-    
+
     private static boolean DEBUG = sun.security.krb5.internal.Krb5.DEBUG;
 
    /**
@@ -91,23 +89,23 @@ rs.
             sname.setRealm(serviceRealm);
         }
 
-	/*
-	  if (!localRealm.equalsIgnoreCase(serviceRealm)) { //do cross-realm auth entication
-	  if (DEBUG) {
-	  System.out.println(">>>DEBUG: Credentails request cross realm ticket for " + "krbtgt/" + serviceRealm + "@" + localRealm);
-	  }
-	  Credentials crossCreds = serviceCreds(new ServiceName("krbtgt/" + serviceRealm + "@" + localRealm), ccreds);
-	  if (DEBUG) {
-	  printDebug(crossCreds);
-	  }
-	  Credentials result = serviceCreds(sname, crossCreds);
-	  if (DEBUG) {
-	  printDebug(result);
-	  }
-	  return result;
-	  }
-	  else return serviceCreds(sname, ccreds);
-	*/
+        /*
+          if (!localRealm.equalsIgnoreCase(serviceRealm)) { //do cross-realm auth entication
+          if (DEBUG) {
+          System.out.println(">>>DEBUG: Credentails request cross realm ticket for " + "krbtgt/" + serviceRealm + "@" + localRealm);
+          }
+          Credentials crossCreds = serviceCreds(new ServiceName("krbtgt/" + serviceRealm + "@" + localRealm), ccreds);
+          if (DEBUG) {
+          printDebug(crossCreds);
+          }
+          Credentials result = serviceCreds(sname, crossCreds);
+          if (DEBUG) {
+          printDebug(result);
+          }
+          return result;
+          }
+          else return serviceCreds(sname, ccreds);
+        */
 
         if (localRealm.equals(serviceRealm))
         {
@@ -160,7 +158,7 @@ rs.
                  * That means traversing the realms list backwards.
                  */
 
-                for (newTgt = null, k = realms.length - 1; 
+                for (newTgt = null, k = realms.length - 1;
                      newTgt == null && k > i; k--)
                 {
 
@@ -198,7 +196,7 @@ rs.
 
             if (DEBUG)
             {
-                System.out.println(">>> Credentials acquireServiceCreds: got tgt"); 
+                System.out.println(">>> Credentials acquireServiceCreds: got tgt");
                 //printDebug(newTgt);
             }
 
@@ -235,7 +233,7 @@ rs.
 
                 if (DEBUG)
                 {
-                    System.out.println(">>> Credentials acquireServiceCreds: continuing with main loop counter reset to " + i); 
+                    System.out.println(">>> Credentials acquireServiceCreds: continuing with main loop counter reset to " + i);
                 }
 
                 continue;
@@ -243,10 +241,10 @@ rs.
             else
             {
                 /*
-                 * The new tgt's realm is not in the heirarchy of realms. 
+                 * The new tgt's realm is not in the heirarchy of realms.
                  * It's probably not safe to get a tgt from
                  * a tgs that is outside the known list of realms.
-                 * Give up now. 
+                 * Give up now.
                  */
 
                 break;
@@ -271,9 +269,9 @@ rs.
             try {
                 theCreds = serviceCreds(sname, theTgt);
             } catch (Exception exc) {
-	      if (DEBUG)
-		System.out.println(exc);
-	      theCreds = null;
+              if (DEBUG)
+                System.out.println(exc);
+              theCreds = null;
             }
         }
 
@@ -287,7 +285,7 @@ rs.
             return theCreds;
         }
         throw new KrbApErrException(Krb5.KRB_AP_ERR_GEN_CRED,
-				    "No service creds");
+                                    "No service creds");
     }
 
    /*

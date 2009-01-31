@@ -24,7 +24,7 @@
 /**
  *  @test
  *  @bug 4401399
- *  @summary Simple basic test of jdi Monitor request and event. 
+ *  @summary Simple basic test of jdi Monitor request and event.
  *
  *  @author Swamy Venkataramanappa
  *
@@ -50,7 +50,7 @@ class MonitorTestTarg {
     static void foo() {
         System.out.println("Howdy!");
     }
-    
+
     public static void main(String[] args){
         endingMonitor = new Object();
         startingMonitor = new Object();
@@ -119,12 +119,12 @@ public class MonitorEventTest extends TestScaffold {
     static int actualWaitedCount = 0;
     static int actualContendedEnterCount = 0;
     static int actualContendedEnteredCount= 0;
-    
+
     MonitorEventTest (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new MonitorEventTest(args).startTests();
     }
 
@@ -138,27 +138,27 @@ public class MonitorEventTest extends TestScaffold {
     public void monitorContendedEntered(MonitorContendedEnteredEvent event) {
 
         actualContendedEnteredCount++;
-        
+
     }
 
     public void monitorWait(MonitorWaitEvent event) {
 
         actualWaitCount++;
-        
+
     }
     public void monitorWaited(MonitorWaitedEvent event) {
 
         actualWaitedCount++;
-        
+
     }
 
 
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("MonitorTestTarg");
@@ -181,9 +181,9 @@ public class MonitorEventTest extends TestScaffold {
             monitorWaitedRequest.enable();
         } else {
             System.out.println("request monitor events not supported " );
-        } 
+        }
 
-        
+
         resumeTo("MonitorTestTarg", "foo", "()V");
 
         /*
@@ -208,8 +208,8 @@ public class MonitorEventTest extends TestScaffold {
                 failure("Did not receive any contended monitor waited event");
             }
         }
-        
-        
+
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

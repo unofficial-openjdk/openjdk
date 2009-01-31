@@ -74,25 +74,25 @@ int AwtGDIObject::maxGDIObjects = GetMaxGDILimit();
 int AwtGDIObject::GetMaxGDILimit() {
     int limit = MAX_GDI_OBJECTS;
     HKEY hKey = NULL;
-    DWORD ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
-        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", 0, 
+    DWORD ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", 0,
         KEY_QUERY_VALUE, &hKey);
     if (ret == ERROR_SUCCESS) {
         DWORD valueLength = 4;
         DWORD regValue;
-        ret = RegQueryValueEx(hKey, L"GDIProcessHandleQuota", NULL, NULL, 
+        ret = RegQueryValueEx(hKey, L"GDIProcessHandleQuota", NULL, NULL,
             (LPBYTE)&regValue, &valueLength);
         if (ret == ERROR_SUCCESS) {
-            // Set limit to 90% of the actual limit to account for other 
+            // Set limit to 90% of the actual limit to account for other
             // GDI objects that the process might need
             limit = (int)(regValue * .9);
         } else {
-            J2dTraceLn(J2D_TRACE_WARNING, 
+            J2dTraceLn(J2D_TRACE_WARNING,
                 "Problem with RegQueryValueEx in GetMaxGDILimit");
         }
         RegCloseKey(hKey);
     } else {
-        J2dTraceLn(J2D_TRACE_WARNING, 
+        J2dTraceLn(J2D_TRACE_WARNING,
             "Problem with RegOpenKeyEx in GetMaxGDILimit");
     }
     return limit;
@@ -112,7 +112,7 @@ BOOL AwtGDIObject::IncrementIfAvailable() {
         available = TRUE;
         ++numCurrentObjects;
     } else {
-        // First, flush the cache; we may have run out simply because 
+        // First, flush the cache; we may have run out simply because
         // we have unused colors still reserved in the cache
         GDIHashtable::flushAll();
         // Now check again to see if flushing helped.  If not, we really
@@ -146,12 +146,12 @@ void AwtGDIObject::Decrement() {
 BOOL AwtGDIObject::EnsureGDIObjectAvailability()
 {
     if (!IncrementIfAvailable()) {
-        // IncrementIfAvailable flushed the cache but still failed; must 
+        // IncrementIfAvailable flushed the cache but still failed; must
         // have hit the limit.  Throw an exception to indicate the problem.
         if (jvm != NULL) {
             JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-	    if (env != NULL && !safe_ExceptionOccurred(env)) {
-	        JNU_ThrowByName(env, "java/awt/AWTError", 
+            if (env != NULL && !safe_ExceptionOccurred(env)) {
+                JNU_ThrowByName(env, "java/awt/AWTError",
                     "Pen/Brush creation failure - " \
                     "exceeded maximum GDI resources");
             }

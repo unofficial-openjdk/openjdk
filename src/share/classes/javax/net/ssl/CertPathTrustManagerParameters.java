@@ -26,7 +26,7 @@
 package javax.net.ssl;
 
 import java.security.cert.CertPathParameters;
-    
+
 /**
  * A wrapper for CertPathParameters. This class is used to pass validation
  * settings to CertPath based {@link TrustManager}s using the
@@ -40,13 +40,12 @@ import java.security.cert.CertPathParameters;
  * @see java.security.cert.CertPathParameters
  *
  * @since   1.5
- * @version %I%, %G%
  * @author  Andreas Sterbenz
  */
 public class CertPathTrustManagerParameters implements ManagerFactoryParameters {
 
     private final CertPathParameters parameters;
-       
+
     /**
      * Construct new CertPathTrustManagerParameters from the specified
      * parameters. The parameters are cloned to protect against subsequent
@@ -57,16 +56,16 @@ public class CertPathTrustManagerParameters implements ManagerFactoryParameters 
      * @throws NullPointerException if parameters is null
      */
     public CertPathTrustManagerParameters(CertPathParameters parameters) {
-	this.parameters = (CertPathParameters)parameters.clone();
+        this.parameters = (CertPathParameters)parameters.clone();
     }
- 
+
     /**
      * Return a clone of the CertPathParameters encapsulated by this class.
      *
      * @return a clone of the CertPathParameters encapsulated by this class.
      */
     public CertPathParameters getParameters() {
-	return (CertPathParameters)parameters.clone();
+        return (CertPathParameters)parameters.clone();
     }
-    
+
 }

@@ -34,90 +34,89 @@ class XServer extends Thread {
     OutputStream os;
 
     XServer (ServerSocket s) {
-	srv = s;
+        srv = s;
     }
 
     Socket getSocket () {
-	return (s);
+        return (s);
     }
 
     public void run() {
-	try {
-	    String x;
-	    String msg = "Message from the server\r\n";
-	    s = srv.accept ();
-	    is = s.getInputStream ();
-	    BufferedReader r = new BufferedReader(new InputStreamReader(is));
-	    os = s.getOutputStream ();
-	    BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
-	    while ((x=r.readLine()) != null) {
-		if (x.length() == 0)
-		    break;
-	    }
-	    w.write("HTTP/1.1 200\r\n");
-	    w.write("Content-Type: text/html\r\n");
-	    w.write("Content-Length: "+msg.length()+"\r\n");
-	    w.write("\r\n");
-	    w.write(msg);
-	    w.flush();
+        try {
+            String x;
+            String msg = "Message from the server\r\n";
+            s = srv.accept ();
+            is = s.getInputStream ();
+            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+            os = s.getOutputStream ();
+            BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
+            while ((x=r.readLine()) != null) {
+                if (x.length() == 0)
+                    break;
+            }
+            w.write("HTTP/1.1 200\r\n");
+            w.write("Content-Type: text/html\r\n");
+            w.write("Content-Length: "+msg.length()+"\r\n");
+            w.write("\r\n");
+            w.write(msg);
+            w.flush();
 
-	    // second round
-	    while ((x=r.readLine()) != null) {
-		if (x.length() == 0)
-		    break;
-	    }
-	    w.write("HTTP/1.1 200\r\n");
-	    w.write("Content-Type: text/html\r\n");
-	    w.write("Content-Length: "+msg.length()+"\r\n");
-	    w.write("\r\n");
-	    w.write(msg);
-	    w.flush();
-	    s.close ();
-	    srv.close ();
-	} catch (IOException e) {} 
+            // second round
+            while ((x=r.readLine()) != null) {
+                if (x.length() == 0)
+                    break;
+            }
+            w.write("HTTP/1.1 200\r\n");
+            w.write("Content-Type: text/html\r\n");
+            w.write("Content-Length: "+msg.length()+"\r\n");
+            w.write("\r\n");
+            w.write(msg);
+            w.flush();
+            s.close ();
+            srv.close ();
+        } catch (IOException e) {}
     }
 }
 
 public class Finalizer {
     public static void main (String args[]) {
-	try {
-	    ServerSocket serversocket = new ServerSocket (0);
-	    int port = serversocket.getLocalPort ();
-	    XServer server = new XServer (serversocket);
-	    server.start ();
-	    Thread.sleep (2000);
-	    URL url = new URL ("http://localhost:"+port+"/index.html");
-	    URLConnection urlc = url.openConnection ();
-	    urlc.connect ();
-	    InputStream is = urlc.getInputStream ();
-	    is = urlc.getInputStream ();
-	    sink (is);
-  	    HttpURLConnection ht = (HttpURLConnection) urlc;
+        try {
+            ServerSocket serversocket = new ServerSocket (0);
+            int port = serversocket.getLocalPort ();
+            XServer server = new XServer (serversocket);
+            server.start ();
+            Thread.sleep (2000);
+            URL url = new URL ("http://localhost:"+port+"/index.html");
+            URLConnection urlc = url.openConnection ();
+            urlc.connect ();
+            InputStream is = urlc.getInputStream ();
+            is = urlc.getInputStream ();
+            sink (is);
+            HttpURLConnection ht = (HttpURLConnection) urlc;
 
-	    URLConnection url1 = url.openConnection ();
-	    is = url1.getInputStream ();
+            URLConnection url1 = url.openConnection ();
+            is = url1.getInputStream ();
 
-	    ht = null; urlc = null;
-	    System.gc();
-	    System.runFinalization ();
+            ht = null; urlc = null;
+            System.gc();
+            System.runFinalization ();
 
-	    sink (is);
-	    
-	    System.out.println("Passed!");
-	} catch (IOException e) {
-	    throw new RuntimeException("finalize method failure."+e);
-	} catch (InterruptedException ie) {
-	}
+            sink (is);
+
+            System.out.println("Passed!");
+        } catch (IOException e) {
+            throw new RuntimeException("finalize method failure."+e);
+        } catch (InterruptedException ie) {
+        }
     }
 
     static void sink (InputStream is) {
-	int c;
-	byte [] b = new byte [1024];
-	try {
-	    while ((c = is.read (b)) != -1);
-	} catch (Exception e) {
-	    throw new RuntimeException("finalize method failure."+e);
-	}
+        int c;
+        byte [] b = new byte [1024];
+        try {
+            while ((c = is.read (b)) != -1);
+        } catch (Exception e) {
+            throw new RuntimeException("finalize method failure."+e);
+        }
     }
 }
-

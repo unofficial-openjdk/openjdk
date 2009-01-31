@@ -29,16 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 /**
  * An example showing the JTable with a dataModel that is not derived
  * from a database. We add the optional TableSorter object to give the
  * JTable the ability to sort.
  *
- * @version 1.3 10/14/97
  * @author Philip Milne
  */
 
@@ -60,27 +57,27 @@ public class TableExample3 {
         final String[] names = {"First Name", "Last Name", "Favorite Color",
                                 "Favorite Number", "Vegetarian"};
         final Object[][] data = {
-	    {"Mark", "Andrews", "Red", new Integer(2), Boolean.TRUE},
-	    {"Tom", "Ball", "Blue", new Integer(99), Boolean.FALSE},
-	    {"Alan", "Chung", "Green", new Integer(838), Boolean.FALSE},
-	    {"Jeff", "Dinkins", "Turquois", new Integer(8), Boolean.TRUE},
-	    {"Amy", "Fowler", "Yellow", new Integer(3), Boolean.FALSE},
-	    {"Brian", "Gerhold", "Green", new Integer(0), Boolean.FALSE},
-	    {"James", "Gosling", "Pink", new Integer(21), Boolean.FALSE},
-	    {"David", "Karlton", "Red", new Integer(1), Boolean.FALSE},
-	    {"Dave", "Kloba", "Yellow", new Integer(14), Boolean.FALSE},
-	    {"Peter", "Korn", "Purple", new Integer(12), Boolean.FALSE},
-	    {"Phil", "Milne", "Purple", new Integer(3), Boolean.FALSE},
-	    {"Dave", "Moore", "Green", new Integer(88), Boolean.FALSE},
-	    {"Hans", "Muller", "Maroon", new Integer(5), Boolean.FALSE},
-	    {"Rick", "Levenson", "Blue", new Integer(2), Boolean.FALSE},
-	    {"Tim", "Prinzing", "Blue", new Integer(22), Boolean.FALSE},
-	    {"Chester", "Rose", "Black", new Integer(0), Boolean.FALSE},
-	    {"Ray", "Ryan", "Gray", new Integer(77), Boolean.FALSE},
-	    {"Georges", "Saab", "Red", new Integer(4), Boolean.FALSE},
-	    {"Willie", "Walker", "Phthalo Blue", new Integer(4), Boolean.FALSE},
-	    {"Kathy", "Walrath", "Blue", new Integer(8), Boolean.FALSE},
-	    {"Arnaud", "Weber", "Green", new Integer(44), Boolean.FALSE}
+            {"Mark", "Andrews", "Red", new Integer(2), Boolean.TRUE},
+            {"Tom", "Ball", "Blue", new Integer(99), Boolean.FALSE},
+            {"Alan", "Chung", "Green", new Integer(838), Boolean.FALSE},
+            {"Jeff", "Dinkins", "Turquois", new Integer(8), Boolean.TRUE},
+            {"Amy", "Fowler", "Yellow", new Integer(3), Boolean.FALSE},
+            {"Brian", "Gerhold", "Green", new Integer(0), Boolean.FALSE},
+            {"James", "Gosling", "Pink", new Integer(21), Boolean.FALSE},
+            {"David", "Karlton", "Red", new Integer(1), Boolean.FALSE},
+            {"Dave", "Kloba", "Yellow", new Integer(14), Boolean.FALSE},
+            {"Peter", "Korn", "Purple", new Integer(12), Boolean.FALSE},
+            {"Phil", "Milne", "Purple", new Integer(3), Boolean.FALSE},
+            {"Dave", "Moore", "Green", new Integer(88), Boolean.FALSE},
+            {"Hans", "Muller", "Maroon", new Integer(5), Boolean.FALSE},
+            {"Rick", "Levenson", "Blue", new Integer(2), Boolean.FALSE},
+            {"Tim", "Prinzing", "Blue", new Integer(22), Boolean.FALSE},
+            {"Chester", "Rose", "Black", new Integer(0), Boolean.FALSE},
+            {"Ray", "Ryan", "Gray", new Integer(77), Boolean.FALSE},
+            {"Georges", "Saab", "Red", new Integer(4), Boolean.FALSE},
+            {"Willie", "Walker", "Phthalo Blue", new Integer(4), Boolean.FALSE},
+            {"Kathy", "Walrath", "Blue", new Integer(8), Boolean.FALSE},
+            {"Arnaud", "Weber", "Green", new Integer(44), Boolean.FALSE}
         };
 
         // Create a model of the data.

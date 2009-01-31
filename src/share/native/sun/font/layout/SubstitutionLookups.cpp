@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)SubstitutionLookups.cpp	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -66,4 +65,3 @@ void SubstitutionLookup::applySubstitutionLookups(
         lookupProcessor->applySingleLookup(lookupListIndex, &tempIterator, fontInstance);
     }
 }
-

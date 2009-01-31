@@ -29,8 +29,7 @@ package java.util;
  * A task that can be scheduled for one-time or repeated execution by a Timer.
  *
  * @author  Josh Bloch
- * @version %I%, %G%
- * @see	    Timer
+ * @see     Timer
  * @since   1.3
  */
 
@@ -103,7 +102,7 @@ public abstract class TimerTask implements Runnable {
      * a repeating timer task absolutely guarantees that the timer task will
      * not run again.
      *
-     * <p>This method may be called repeatedly; the second and subsequent 
+     * <p>This method may be called repeatedly; the second and subsequent
      * calls have no effect.
      *
      * @return true if this task is scheduled for one-time execution and has

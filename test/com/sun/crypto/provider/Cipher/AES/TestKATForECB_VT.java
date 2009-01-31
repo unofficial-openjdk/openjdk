@@ -45,8 +45,8 @@ public class TestKATForECB_VT
     private static final String PADDING = "NoPadding";
 
     private static String[][] CTS = {
-	// Cipher Texts for 128-bit key
-	{
+        // Cipher Texts for 128-bit key
+        {
 "3AD78E726C1EC02B7EBFE92B23D9EC34",
 "45BC707D29E8204D88DFBA2F0B0CAD9B",
 "161556838018F52805CDBD6202002E3F",
@@ -175,9 +175,9 @@ public class TestKATForECB_VT
 "200211214E7394DA2089B6ACD093ABE0",
 "0388DACE60B6A392F328C2B971B2FE78",
 "58E2FCCEFA7E3061367F1D57A4E7455A"
-	},
-	// Cipher Texts for 192-bit key
-	{
+        },
+        // Cipher Texts for 192-bit key
+        {
 "6CD02513E8D4DC986B4AFE087A60BD0C",
 "423D2772A0CA56DAABB48D2129062987",
 "1021F2A8DA70EB2219DC16804445FF98",
@@ -306,9 +306,9 @@ public class TestKATForECB_VT
 "FDAA17C2CDE20268FE36E164EA532151",
 "98E7247C07F0FE411C267E4384B0F600",
 "CD33B28AC773F74BA00ED1F312572435"
-	},
-	// Cipher Texts for 256-bit key
-	{
+        },
+        // Cipher Texts for 256-bit key
+        {
 "DDC6BF790C15760D8D9AEB6F9A75FD4E",
 "C7098C217C334D0C9BDF37EA13B0822C",
 "60F0FB0D4C56A8D4EEFEC5264204042D",
@@ -437,11 +437,11 @@ public class TestKATForECB_VT
 "DD4AB1284D4AE17B41E85924470C36F7",
 "CEA7403D4D606B6E074EC5D3BAF39D18",
 "530F8AFBC74536B9A963B4F1C4CB738B"
-	}
+        }
     };
 
     private static int[] KEY_SIZES = {
-	16, 24, 32
+        16, 24, 32
     };
 
     /**
@@ -449,12 +449,12 @@ public class TestKATForECB_VT
      * @param len key size in bytes, i.e. 16, 24, or 32
      */
     private static SecretKey constructAESKey(int len)
-	throws IllegalArgumentException {
-	if ((len != 16) && (len != 24) && (len != 32)) {
-	    throw new IllegalArgumentException("Wrong Key Length: " + len);
-	}
-	byte[] keyval = new byte[len];
-	return new SecretKeySpec(keyval, "AES");
+        throws IllegalArgumentException {
+        if ((len != 16) && (len != 24) && (len != 32)) {
+            throw new IllegalArgumentException("Wrong Key Length: " + len);
+        }
+        byte[] keyval = new byte[len];
+        return new SecretKeySpec(keyval, "AES");
     }
     /**
      * Constructs plain text byte array according to the specified round
@@ -463,106 +463,105 @@ public class TestKATForECB_VT
      * to 127.
      */
     private static byte[] constructPT(int rounds) {
-	byte[] tempValue = new byte[16];
-	Arrays.fill(tempValue, (byte)0);
+        byte[] tempValue = new byte[16];
+        Arrays.fill(tempValue, (byte)0);
 
-	int whichByte = rounds/8;
-	int whichDigit = rounds % 8;
-	if ((whichByte >= 16) || (whichDigit < 0) ||
-	    (whichDigit > 8)) {
-	    throw new IllegalArgumentException("Invalid rounds: " +
-					       rounds);
-	}
-	switch (whichDigit) {
-	case 0:
-	    tempValue[whichByte] = (byte)0x80;
-	    break;
-	case 1:
-	    tempValue[whichByte] = (byte)0x40;
-	    break;
-	case 2:
-	    tempValue[whichByte] = (byte)0x20;
-	    break;
-	case 3:
-	    tempValue[whichByte] = (byte)0x10;
-	    break;
-	case 4:
-	    tempValue[whichByte] = (byte)0x08;
-	    break;
-	case 5:
-	    tempValue[whichByte] = (byte)0x04;
-	    break;
-	case 6:
-	    tempValue[whichByte] = (byte)0x02;
-	    break;
-	case 7:
-	    tempValue[whichByte] = (byte)0x01;
-	    break;
-	}
-	return tempValue;
+        int whichByte = rounds/8;
+        int whichDigit = rounds % 8;
+        if ((whichByte >= 16) || (whichDigit < 0) ||
+            (whichDigit > 8)) {
+            throw new IllegalArgumentException("Invalid rounds: " +
+                                               rounds);
+        }
+        switch (whichDigit) {
+        case 0:
+            tempValue[whichByte] = (byte)0x80;
+            break;
+        case 1:
+            tempValue[whichByte] = (byte)0x40;
+            break;
+        case 2:
+            tempValue[whichByte] = (byte)0x20;
+            break;
+        case 3:
+            tempValue[whichByte] = (byte)0x10;
+            break;
+        case 4:
+            tempValue[whichByte] = (byte)0x08;
+            break;
+        case 5:
+            tempValue[whichByte] = (byte)0x04;
+            break;
+        case 6:
+            tempValue[whichByte] = (byte)0x02;
+            break;
+        case 7:
+            tempValue[whichByte] = (byte)0x01;
+            break;
+        }
+        return tempValue;
     }
 
     private static byte[] constructByteArray(String s) {
-	int len = s.length()/2;
-	byte[] tempValue = new byte[len];
-	for (int i = 0; i < len; i++) {
-	    tempValue[i] = Integer.valueOf(s.substring(2*i, 2*i+2),
-					   16).byteValue();
-	}
-	return tempValue;
+        int len = s.length()/2;
+        byte[] tempValue = new byte[len];
+        for (int i = 0; i < len; i++) {
+            tempValue[i] = Integer.valueOf(s.substring(2*i, 2*i+2),
+                                           16).byteValue();
+        }
+        return tempValue;
     }
 
     public boolean execute() throws Exception {
-	String transformation = ALGO+"/"+MODE+"/"+PADDING;
-	Cipher c = Cipher.getInstance(transformation, "SunJCE");
+        String transformation = ALGO+"/"+MODE+"/"+PADDING;
+        Cipher c = Cipher.getInstance(transformation, "SunJCE");
 
-	for (int i=0; i<KEY_SIZES.length; i++) {
-	    if (KEY_SIZES[i]*8 >
-		Cipher.getMaxAllowedKeyLength(transformation)) {
-		// skip if this key length is larger than what's
-		// configured in the jce jurisdiction policy files
-		continue;
-	    }
-	    SecretKey aesKey = constructAESKey(KEY_SIZES[i]);
-	    byte[] plainText = null;
-	    byte[] cipherText = null;
-	    try {
-	    for (int j=0; j < 128; j++) {
-		plainText = constructPT(j);
-		c.init(Cipher.ENCRYPT_MODE, aesKey);
-		cipherText = c.doFinal(plainText);
-		byte[] answer = constructByteArray(CTS[i][j]);
-		if (!Arrays.equals(cipherText, answer)) {
-		    throw new Exception((i+1) +
-			"th known answer test failed for encryption");
-		}
-		c.init(Cipher.DECRYPT_MODE, aesKey);
-		byte[] restored = c.doFinal(cipherText);
-		if (!Arrays.equals(plainText, restored)) {
-		    throw new Exception((i+1) +
-			"th known answer test failed for decryption");
-		}
-	    }
-	    System.out.println(
-		"Finished KAT for " + KEY_SIZES[i] + "-byte key");
-	    } catch (SecurityException se) {
-		TestUtil.handleSE(se);
-	    }
-	}
+        for (int i=0; i<KEY_SIZES.length; i++) {
+            if (KEY_SIZES[i]*8 >
+                Cipher.getMaxAllowedKeyLength(transformation)) {
+                // skip if this key length is larger than what's
+                // configured in the jce jurisdiction policy files
+                continue;
+            }
+            SecretKey aesKey = constructAESKey(KEY_SIZES[i]);
+            byte[] plainText = null;
+            byte[] cipherText = null;
+            try {
+            for (int j=0; j < 128; j++) {
+                plainText = constructPT(j);
+                c.init(Cipher.ENCRYPT_MODE, aesKey);
+                cipherText = c.doFinal(plainText);
+                byte[] answer = constructByteArray(CTS[i][j]);
+                if (!Arrays.equals(cipherText, answer)) {
+                    throw new Exception((i+1) +
+                        "th known answer test failed for encryption");
+                }
+                c.init(Cipher.DECRYPT_MODE, aesKey);
+                byte[] restored = c.doFinal(cipherText);
+                if (!Arrays.equals(plainText, restored)) {
+                    throw new Exception((i+1) +
+                        "th known answer test failed for decryption");
+                }
+            }
+            System.out.println(
+                "Finished KAT for " + KEY_SIZES[i] + "-byte key");
+            } catch (SecurityException se) {
+                TestUtil.handleSE(se);
+            }
+        }
 
-	// passed all tests...hooray!
-	return true;
+        // passed all tests...hooray!
+        return true;
     }
 
     public static void main (String[] args) throws Exception {
-	Security.addProvider(new com.sun.crypto.provider.SunJCE());
+        Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-	TestKATForECB_VT test = new TestKATForECB_VT();
-	String testName = test.getClass().getName() + "[" + ALGO +
-	    "/" + MODE + "/" + PADDING + "]";
-	if (test.execute()) {
-	    System.out.println(testName + ": Passed!");
-	}
+        TestKATForECB_VT test = new TestKATForECB_VT();
+        String testName = test.getClass().getName() + "[" + ALGO +
+            "/" + MODE + "/" + PADDING + "]";
+        if (test.execute()) {
+            System.out.println(testName + ": Passed!");
+        }
     }
 }
-

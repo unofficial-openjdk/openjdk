@@ -26,31 +26,31 @@
  * @bug 5050487
  * @summary Check that Instrumentation methods can execute from a runtime
  *          shutdown hook
- * @run build FromShutdownHook 
+ * @run build FromShutdownHook
  * @run shell MakeJAR.sh basicAgent
  * @run main/othervm -javaagent:basicAgent.jar FromShutdownHook FromShutdownHook
  */
 import java.lang.instrument.Instrumentation;
 
-public class FromShutdownHook 
+public class FromShutdownHook
     extends ASimpleInstrumentationTestCase
 {
     public FromShutdownHook(String name) {
-	super(name);
-    }                                                                                                         
+        super(name);
+    }
     public static void main(String args[] ) throws Throwable {
-	FromShutdownHook fsh = new FromShutdownHook(args[0]);
+        FromShutdownHook fsh = new FromShutdownHook(args[0]);
         fsh.runTest();
     }
 
     Instrumentation ins;
 
     protected final void doRunTest() {
-	// keep reference to Instrumentation 
-	ins = fInst;
+        // keep reference to Instrumentation
+        ins = fInst;
 
-	// install shutdown hook
-	Runtime.getRuntime().addShutdownHook(new Thread() {
+        // install shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 System.err.println(ins.getAllLoadedClasses().length +
                         " classes loaded.");

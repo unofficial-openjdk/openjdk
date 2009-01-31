@@ -23,8 +23,6 @@
 # have any questions.
 #
 
-# @(#)B5086147.sh
-
 OS=`uname -s`
 case "$OS" in
   SunOS | Linux )

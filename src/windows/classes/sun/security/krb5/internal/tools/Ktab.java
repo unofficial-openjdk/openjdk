@@ -40,14 +40,13 @@ import java.io.InputStreamReader;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.util.Arrays;
-/** 
+/**
  * This class can execute as a command-line tool to help the user manage
- * entires in the key table. 
- * Available functions include list/add/update/delete service key(s). 
+ * entires in the key table.
+ * Available functions include list/add/update/delete service key(s).
  *
  * @author Yanni Zhang
- * @author Ram Marti 
- * @version 1.00 10 Jul 00
+ * @author Ram Marti
  */
 
 public class Ktab {
@@ -68,7 +67,7 @@ public class Ktab {
      * (&lt;<i>password</i>&gt;)  add an entry to the keytab.
      * The entry is added only to the keytab. No changes are made to the
      * Kerberos database.
-     * <li><b>-d</b>  &lt;<i>principal name</i>&gt; 
+     * <li><b>-d</b>  &lt;<i>principal name</i>&gt;
      * delete an entry from the keytab
      * The entry is deleted only from the keytab. No changes are made to the
      * Kerberos database.
@@ -79,8 +78,8 @@ public class Ktab {
     public static void main(String[] args) {
         Ktab ktab = new Ktab();
         if ((args.length == 1) && (args[0].equalsIgnoreCase("-help"))) {
-	    ktab.printHelp();
-	    System.exit(0);
+            ktab.printHelp();
+            System.exit(0);
         } else if ((args == null) || (args.length == 0)) {
             ktab.action = 'l';
         } else {
@@ -88,7 +87,7 @@ public class Ktab {
         }
         try {
             if (ktab.name == null) {
-		//  ktab.admin = new KeyTabAdmin();    // use the default keytab.
+                //  ktab.admin = new KeyTabAdmin();    // use the default keytab.
                 ktab.table = KeyTab.getInstance();
                 if (ktab.table == null) {
                     if (ktab.action == 'a') {
@@ -100,31 +99,31 @@ public class Ktab {
                 }
             } else {
                 if ((ktab.action != 'a') &&
-		    !(new File(ktab.name)).exists()) {
+                    !(new File(ktab.name)).exists()) {
                     System.out.println("Key table " +
-				ktab.name + " does not exist.");
+                                ktab.name + " does not exist.");
                     System.exit(-1);
                 } else {
-                    ktab.table = KeyTab.getInstance(ktab.name);  
-		}
-		if (ktab.table == null) {
-		    if (ktab.action == 'a') {
-			ktab.table = KeyTab.create(ktab.name);
-		    } else {
-			System.out.println("The format of key table " +
-				ktab.name + " is incorrect.");
-			System.exit(-1);
-		    }
-		}
-	    }
-	} catch (RealmException e) {
-	    System.err.println("Error loading key table.");
-	    System.exit(-1);
-	} catch (IOException e) {
-	    System.err.println("Error loading key table.");
-	    System.exit(-1);
-	}
-	switch (ktab.action) {
+                    ktab.table = KeyTab.getInstance(ktab.name);
+                }
+                if (ktab.table == null) {
+                    if (ktab.action == 'a') {
+                        ktab.table = KeyTab.create(ktab.name);
+                    } else {
+                        System.out.println("The format of key table " +
+                                ktab.name + " is incorrect.");
+                        System.exit(-1);
+                    }
+                }
+            }
+        } catch (RealmException e) {
+            System.err.println("Error loading key table.");
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println("Error loading key table.");
+            System.exit(-1);
+        }
+        switch (ktab.action) {
         case 'l':
             ktab.listKt();
             break;
@@ -149,74 +148,74 @@ public class Ktab {
             if ((args[i].length() == 2) && (args[i].startsWith("-"))) {
                 arg = new Character(args[i].charAt(1));
             } else {
-		printHelp();
-		System.exit(-1);
-	    }
-	    switch (arg.charValue()) {
-	    case 'l':                 
-	    case 'L':
-		action = 'l';    // list keytab location, name and entries
-		break;
-	    case 'a':
-	    case 'A':
-		action = 'a'; // add a new entry to keytab.
-		i++;
-		if ((i < args.length) && (!args[i].startsWith("-"))) {
-		    principal = args[i];
-		} else {
-		    System.out.println("Please specify the principal name"+
-				       " after -a option.");
-		    printHelp();
-		    System.exit(-1);
-		}
-		if ((i + 1 < args.length) && 
-		    (!args[i + 1].startsWith("-"))) {
-		    password = args[i + 1].toCharArray();
-		    i++;
-		} else {
-		    password = null; // prompt user for password later.
-		}
-		break;
-	    case 'd':
-	    case 'D':
-		action = 'd'; // delete an entry.
-		i++;
-		if ((i < args.length) && (!args[i].startsWith("-"))) {
-		    principal = args[i];
-		} else {
-		    System.out.println("Please specify the principal" +
-				       "name of the entry you want to " +
-				       " delete after -d option.");
-		    printHelp();
-		    System.exit(-1);
-		}
-		break;
-	    case 'k':
-	    case 'K':
-		i++;
-		if ((i < args.length) && (!args[i].startsWith("-"))) {
-		    if (args[i].length() >= 5 && 
-			args[i].substring(0, 5).equalsIgnoreCase("FILE:")) {
-			name = args[i].substring(5);
-		    } else
-			name = args[i];
-		} else {
-		    System.out.println("Please specify the keytab "+
-				       "file name and location " +
-				       "after -k option");
-		    printHelp();
-		    System.exit(-1);
-		}
-		break;
-	    default:
-		printHelp();
-		System.exit(-1);
-	    }
+                printHelp();
+                System.exit(-1);
+            }
+            switch (arg.charValue()) {
+            case 'l':
+            case 'L':
+                action = 'l';    // list keytab location, name and entries
+                break;
+            case 'a':
+            case 'A':
+                action = 'a'; // add a new entry to keytab.
+                i++;
+                if ((i < args.length) && (!args[i].startsWith("-"))) {
+                    principal = args[i];
+                } else {
+                    System.out.println("Please specify the principal name"+
+                                       " after -a option.");
+                    printHelp();
+                    System.exit(-1);
+                }
+                if ((i + 1 < args.length) &&
+                    (!args[i + 1].startsWith("-"))) {
+                    password = args[i + 1].toCharArray();
+                    i++;
+                } else {
+                    password = null; // prompt user for password later.
+                }
+                break;
+            case 'd':
+            case 'D':
+                action = 'd'; // delete an entry.
+                i++;
+                if ((i < args.length) && (!args[i].startsWith("-"))) {
+                    principal = args[i];
+                } else {
+                    System.out.println("Please specify the principal" +
+                                       "name of the entry you want to " +
+                                       " delete after -d option.");
+                    printHelp();
+                    System.exit(-1);
+                }
+                break;
+            case 'k':
+            case 'K':
+                i++;
+                if ((i < args.length) && (!args[i].startsWith("-"))) {
+                    if (args[i].length() >= 5 &&
+                        args[i].substring(0, 5).equalsIgnoreCase("FILE:")) {
+                        name = args[i].substring(5);
+                    } else
+                        name = args[i];
+                } else {
+                    System.out.println("Please specify the keytab "+
+                                       "file name and location " +
+                                       "after -k option");
+                    printHelp();
+                    System.exit(-1);
+                }
+                break;
+            default:
+                printHelp();
+                System.exit(-1);
+            }
         }
     }
 
     /**
-     * Adds a service key to key table. If the specified key table does not 
+     * Adds a service key to key table. If the specified key table does not
      * exist, the program will automatically generate
      * a new key table.
      */
@@ -226,44 +225,44 @@ public class Ktab {
             pname = new PrincipalName(principal);
             if (pname.getRealm() == null) {
                 pname.setRealm(Config.getInstance().getDefaultRealm());
-            } 
+            }
         } catch (KrbException e) {
-	    System.err.println("Failed to add " + principal + 
-			       " to keytab.");
-	    e.printStackTrace();
-	    System.exit(-1);
-	} 
+            System.err.println("Failed to add " + principal +
+                               " to keytab.");
+            e.printStackTrace();
+            System.exit(-1);
+        }
         if (password == null) {
-            try {               
+            try {
                 BufferedReader cis =
-		    new BufferedReader(new InputStreamReader(System.in));
+                    new BufferedReader(new InputStreamReader(System.in));
                 System.out.print("Password for " + pname.toString() + ":");
                 System.out.flush();
                 password = cis.readLine().toCharArray();
             } catch (IOException e) {
                 System.err.println("Failed to read the password.");
-		e.printStackTrace();
-		System.exit(-1);
+                e.printStackTrace();
+                System.exit(-1);
             }
-       
+
         }
         try {
-	    // admin.addEntry(pname, password);
+            // admin.addEntry(pname, password);
             table.addEntry(pname, password);
-	    Arrays.fill(password, '0');  // clear password
-	    // admin.save();
+            Arrays.fill(password, '0');  // clear password
+            // admin.save();
             table.save();
             System.out.println("Done!");
             System.out.println("Service key for " + principal +
-			       " is saved in " + table.tabName());
+                               " is saved in " + table.tabName());
 
         } catch (KrbException e) {
             System.err.println("Failed to add " + principal + " to keytab.");
-	    e.printStackTrace();
+            e.printStackTrace();
             System.exit(-1);
         } catch (IOException e) {
             System.err.println("Failed to save new entry.");
-	    e.printStackTrace();
+            e.printStackTrace();
             System.exit(-1);
         }
     }
@@ -274,7 +273,7 @@ public class Ktab {
     void listKt() {
         int version;
         String principal;
-	// System.out.println("Keytab name: " + admin.getKeyTabName());
+        // System.out.println("Keytab name: " + admin.getKeyTabName());
         System.out.println("Keytab name: " + table.tabName());
         // KeyTabEntry[] entries = admin.getEntries();
         KeyTabEntry[] entries = table.getEntries();
@@ -309,44 +308,44 @@ public class Ktab {
             }
             String answer;
             BufferedReader cis =
-		new BufferedReader(new InputStreamReader(System.in));
+                new BufferedReader(new InputStreamReader(System.in));
             System.out.print("Are you sure you want to "+
-			     " delete service key for " + pname.toString() + 
-			     " in " + table.tabName() + "?(Y/N) :");
+                             " delete service key for " + pname.toString() +
+                             " in " + table.tabName() + "?(Y/N) :");
 
             System.out.flush();
             answer = cis.readLine();
             if (answer.equalsIgnoreCase("Y") ||
-		answer.equalsIgnoreCase("Yes"));
+                answer.equalsIgnoreCase("Yes"));
             else {
-		// no error, the user did not want to delete the entry
+                // no error, the user did not want to delete the entry
                 System.exit(0);
             }
 
         } catch (KrbException e) {
             System.err.println("Error occured while deleting the entry. "+
-			       "Deletion failed.");
-	    e.printStackTrace(); 
+                               "Deletion failed.");
+            e.printStackTrace();
             System.exit(-1);
         } catch (IOException e) {
             System.err.println("Error occured while deleting the entry. "+
-			       " Deletion failed.");
-	    e.printStackTrace(); 
+                               " Deletion failed.");
+            e.printStackTrace();
             System.exit(-1);
         }
-	// admin.deleteEntry(pname);
+        // admin.deleteEntry(pname);
         table.deleteEntry(pname);
 
         try {
             table.save();
         } catch (IOException e) {
             System.err.println("Error occurs while saving the keytab." +
-			       "Deletion fails.");
-	    e.printStackTrace(); 
+                               "Deletion fails.");
+            e.printStackTrace();
             System.exit(-1);
         }
         System.out.println("Done!");
-        
+
     }
 
     /**
@@ -358,10 +357,10 @@ public class Ktab {
         System.out.println("available options to Ktab:");
         System.out.println("-l\t\t\t\tlist the keytab name and entries");
         System.out.println("-a <principal name> (<password>)add an entry " +
-			   "to the keytab");
+                           "to the keytab");
         System.out.println("-d <principal name>\t\tdelete an entry from "+
-			   "the keytab");
-        System.out.println("-k <keytab name>\t\tspecify keytab name and "+ 
-			   " path with prefix FILE:");                   
+                           "the keytab");
+        System.out.println("-k <keytab name>\t\tspecify keytab name and "+
+                           " path with prefix FILE:");
     }
 }

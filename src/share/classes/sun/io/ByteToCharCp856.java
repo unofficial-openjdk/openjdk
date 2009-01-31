@@ -32,7 +32,6 @@ import sun.nio.cs.ext.IBM856;
  * A table to convert to Cp856 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp856 extends ByteToCharSingleByte {

@@ -34,12 +34,12 @@ public class TypeVariableSignature implements FieldTypeSignature {
 
 
     public static TypeVariableSignature make(String id) {
-	return new TypeVariableSignature(id);
+        return new TypeVariableSignature(id);
     }
 
     public String getIdentifier(){return identifier;}
 
     public void accept(TypeTreeVisitor<?> v){
-	v.visitTypeVariableSignature(this);
+        v.visitTypeVariableSignature(this);
     }
 }

@@ -37,14 +37,13 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see CertAttrSet
  */
 public class CertificateValidity implements CertAttrSet<String> {
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */  
+     */
     public static final String IDENT = "x509.info.validity";
     /**
      * Sub attributes name for this CertAttrSet.
@@ -55,11 +54,11 @@ public class CertificateValidity implements CertAttrSet<String> {
     private static final long YR_2050 = 2524636800000L;
 
     // Private data members
-    private Date	notBefore;
-    private Date	notAfter;
+    private Date        notBefore;
+    private Date        notAfter;
 
     // Returns the first time the certificate is valid.
-    private Date getNotBefore() { 
+    private Date getNotBefore() {
         return (new Date(notBefore.getTime()));
     }
 
@@ -224,10 +223,10 @@ public class CertificateValidity implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(NOT_BEFORE);
         elements.addElement(NOT_AFTER);
-  
+
         return (elements.elements());
     }
-  
+
     /**
      * Return the name of this attribute.
      */
@@ -257,7 +256,7 @@ public class CertificateValidity implements CertAttrSet<String> {
      * with respect to the <code>Date</code> supplied.
      * @exception CertificateNotYetValidException if the certificate is not
      * yet valid with respect to the <code>Date</code> supplied.
-     * 
+     *
      */
     public void valid(Date now)
     throws CertificateNotYetValidException, CertificateExpiredException {

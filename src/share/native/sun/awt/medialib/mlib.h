@@ -26,10 +26,6 @@
 #ifndef MLIB_H
 #define MLIB_H
 
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib.h	1.13	02/09/06 SMI"
-#endif /* __SUNPRO_C */
-
 #include <mlib_types.h>
 #include <mlib_status.h>
 #include <mlib_sys.h>
@@ -41,4 +37,4 @@
 #include <mlib_graphics.h>
 #include <mlib_volume.h>
 
-#endif	/* MLIB_H */
+#endif  /* MLIB_H */

@@ -61,10 +61,10 @@ public class SSLContext {
      * @param algorithm the algorithm
      */
     protected SSLContext(SSLContextSpi contextSpi, Provider provider,
-	String protocol) {
-	this.contextSpi = contextSpi;
-	this.provider = provider;
-	this.protocol = protocol;
+        String protocol) {
+        this.contextSpi = contextSpi;
+        this.provider = provider;
+        this.protocol = protocol;
     }
 
     /**
@@ -80,16 +80,16 @@ public class SSLContext {
      * packages that were searched.
      */
     public static SSLContext getInstance(String protocol)
-	throws NoSuchAlgorithmException
+        throws NoSuchAlgorithmException
     {
-	try {
-	    Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
-						(String) null);
-	    return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
-		protocol);
-	} catch (NoSuchProviderException e) {
-	    throw new NoSuchAlgorithmException(protocol + " not found");
-	}
+        try {
+            Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
+                                                (String) null);
+            return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
+                protocol);
+        } catch (NoSuchProviderException e) {
+            throw new NoSuchAlgorithmException(protocol + " not found");
+        }
     }
 
     /**
@@ -107,14 +107,14 @@ public class SSLContext {
      * been configured.
      */
     public static SSLContext getInstance(String protocol, String provider)
-	throws NoSuchAlgorithmException, NoSuchProviderException
+        throws NoSuchAlgorithmException, NoSuchProviderException
     {
-	if (provider == null || provider.length() == 0)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
-					    provider);
-	return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
-	    protocol);
+        if (provider == null || provider.length() == 0)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
+                                            provider);
+        return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
+            protocol);
     }
 
     /**
@@ -130,14 +130,14 @@ public class SSLContext {
      * available from the specified provider.
      */
     public static SSLContext getInstance(String protocol, Provider provider)
-	throws NoSuchAlgorithmException
+        throws NoSuchAlgorithmException
     {
-	if (provider == null)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
-					    provider);
-	return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
-	    protocol);
+        if (provider == null)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = SSLSecurity.getImpl(protocol, "SSLContext",
+                                            provider);
+        return new SSLContext((SSLContextSpi)objs[0], (Provider)objs[1],
+            protocol);
     }
 
     /**
@@ -150,7 +150,7 @@ public class SSLContext {
      * @return the protocol name of this <code>SSLContext</code> object.
      */
     public final String getProtocol() {
-	return this.protocol;
+        return this.protocol;
     }
 
     /**
@@ -159,7 +159,7 @@ public class SSLContext {
      * @return the provider of this <code>SSLContext</code> object
      */
     public final Provider getProvider() {
-	return this.provider;
+        return this.provider;
     }
 
     /**
@@ -174,9 +174,9 @@ public class SSLContext {
      * @param random the source of randomness for this generator or null
      */
     public final void init(KeyManager[] km, TrustManager[] tm,
-				SecureRandom random)
-	throws KeyManagementException {
-	contextSpi.engineInit(km, tm, random);
+                                SecureRandom random)
+        throws KeyManagementException {
+        contextSpi.engineInit(km, tm, random);
     }
 
     /**
@@ -186,7 +186,7 @@ public class SSLContext {
      * @return the factory
      */
     public final SSLSocketFactory getSocketFactory() {
-	return contextSpi.engineGetSocketFactory();
+        return contextSpi.engineGetSocketFactory();
     }
 
     /**
@@ -196,6 +196,6 @@ public class SSLContext {
      * @return the factory
      */
     public final SSLServerSocketFactory getServerSocketFactory() {
-	return contextSpi.engineGetServerSocketFactory();
+        return contextSpi.engineGetServerSocketFactory();
     }
 }

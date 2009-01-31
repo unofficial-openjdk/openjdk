@@ -63,7 +63,6 @@ import sun.swing.PrintColorUIResource;
  *
  * @see java.beans.Intropector
  *
- * @version %I% %G%
  * @author Philip Milne
  * @author Steve Langley
  */
@@ -204,9 +203,9 @@ class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
         // This is needed for arrays whose subtype may be primitive.
         if (c.isPrimitive()) {
             Field field = null;
-	    try {
-		field = ReflectionUtils.typeToClass(c).getDeclaredField("TYPE");
-	    } catch (NoSuchFieldException ex) {
+            try {
+                field = ReflectionUtils.typeToClass(c).getDeclaredField("TYPE");
+            } catch (NoSuchFieldException ex) {
                 System.err.println("Unknown primitive type: " + c);
             }
             return new Expression(oldInstance, field, "get", new Object[]{null});
@@ -595,8 +594,8 @@ class java_util_EnumSet_PersistenceDelegate extends PersistenceDelegate {
 // Collection
 class java_util_Collection_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
-	java.util.Collection oldO = (java.util.Collection)oldInstance;
-	java.util.Collection newO = (java.util.Collection)newInstance;
+        java.util.Collection oldO = (java.util.Collection)oldInstance;
+        java.util.Collection newO = (java.util.Collection)newInstance;
 
         if (newO.size() != 0) {
             invokeStatement(oldInstance, "clear", new Object[]{}, out);
@@ -894,15 +893,15 @@ final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegat
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
- 
+
     protected Expression instantiate(Object oldInstance, Encoder out) {
         AWTKeyStroke key = (AWTKeyStroke) oldInstance;
- 
+
         char ch = key.getKeyChar();
         int code = key.getKeyCode();
         int mask = key.getModifiers();
         boolean onKeyRelease = key.isOnKeyRelease();
- 
+
         Object[] args = null;
         if (ch == KeyEvent.CHAR_UNDEFINED) {
             args = !onKeyRelease
@@ -934,28 +933,28 @@ final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegat
 class StaticFieldsPersistenceDelegate extends PersistenceDelegate {
     protected void installFields(Encoder out, Class<?> cls) {
         Field fields[] = cls.getFields();
-        for(int i = 0; i < fields.length; i++) { 
-            Field field = fields[i]; 
-            // Don't install primitives, their identity will not be preserved 
-            // by wrapping. 
-            if (Object.class.isAssignableFrom(field.getType())) { 
-                out.writeExpression(new Expression(field, "get", new Object[]{null})); 
+        for(int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
+            // Don't install primitives, their identity will not be preserved
+            // by wrapping.
+            if (Object.class.isAssignableFrom(field.getType())) {
+                out.writeExpression(new Expression(field, "get", new Object[]{null}));
             }
         }
     }
 
-    protected Expression instantiate(Object oldInstance, Encoder out) { 
-        throw new RuntimeException("Unrecognized instance: " + oldInstance); 
+    protected Expression instantiate(Object oldInstance, Encoder out) {
+        throw new RuntimeException("Unrecognized instance: " + oldInstance);
     }
-    
+
     public void writeObject(Object oldInstance, Encoder out) {
         if (out.getAttribute(this) == null) {
             out.setAttribute(this, Boolean.TRUE);
-            installFields(out, oldInstance.getClass()); 
-	}
+            installFields(out, oldInstance.getClass());
+        }
         super.writeObject(oldInstance, out);
     }
-} 
+}
 
 // SystemColor
 class java_awt_SystemColor_PersistenceDelegate extends StaticFieldsPersistenceDelegate {}
@@ -969,9 +968,9 @@ class java_awt_MenuShortcut_PersistenceDelegate extends PersistenceDelegate {
         return oldInstance.equals(newInstance);
     }
 
-    protected Expression instantiate(Object oldInstance, Encoder out) { 
-        java.awt.MenuShortcut m = (java.awt.MenuShortcut)oldInstance; 
-        return new Expression(oldInstance, m.getClass(), "new", 
+    protected Expression instantiate(Object oldInstance, Encoder out) {
+        java.awt.MenuShortcut m = (java.awt.MenuShortcut)oldInstance;
+        return new Expression(oldInstance, m.getClass(), "new",
                    new Object[]{new Integer(m.getKey()), Boolean.valueOf(m.usesShiftModifier())});
     }
 }
@@ -1000,19 +999,19 @@ class java_awt_Component_PersistenceDelegate extends DefaultPersistenceDelegate 
 
         // Bounds
         java.awt.Container p = c.getParent();
-        if (p == null || p.getLayout() == null) { 
+        if (p == null || p.getLayout() == null) {
             // Use the most concise construct.
-            boolean locationCorrect = c.getLocation().equals(c2.getLocation()); 
-            boolean sizeCorrect = c.getSize().equals(c2.getSize()); 
-            if (!locationCorrect && !sizeCorrect) { 
+            boolean locationCorrect = c.getLocation().equals(c2.getLocation());
+            boolean sizeCorrect = c.getSize().equals(c2.getSize());
+            if (!locationCorrect && !sizeCorrect) {
                 invokeStatement(oldInstance, "setBounds", new Object[]{c.getBounds()}, out);
-            } 
-            else if (!locationCorrect) { 
+            }
+            else if (!locationCorrect) {
                 invokeStatement(oldInstance, "setLocation", new Object[]{c.getLocation()}, out);
-            } 
-            else if (!sizeCorrect) { 
+            }
+            else if (!sizeCorrect) {
                 invokeStatement(oldInstance, "setSize", new Object[]{c.getSize()}, out);
-            }             
+            }
         }
     }
 }
@@ -1099,32 +1098,32 @@ class java_awt_List_PersistenceDelegate extends DefaultPersistenceDelegate {
         }
     }
 }
-    
+
 
 // LayoutManagers
 
 // BorderLayout
 class java_awt_BorderLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
-    protected void initialize(Class<?> type, Object oldInstance, 
-			      Object newInstance, Encoder out) {
+    protected void initialize(Class<?> type, Object oldInstance,
+                              Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         String[] locations = {"north", "south", "east", "west", "center"};
-        String[] names = {java.awt.BorderLayout.NORTH, java.awt.BorderLayout.SOUTH, 
-			  java.awt.BorderLayout.EAST, java.awt.BorderLayout.WEST, 
-			  java.awt.BorderLayout.CENTER};
+        String[] names = {java.awt.BorderLayout.NORTH, java.awt.BorderLayout.SOUTH,
+                          java.awt.BorderLayout.EAST, java.awt.BorderLayout.WEST,
+                          java.awt.BorderLayout.CENTER};
         for(int i = 0; i < locations.length; i++) {
-            Object oldC = ReflectionUtils.getPrivateField(oldInstance, 
-							  java.awt.BorderLayout.class, 
-							  locations[i], 
-							  out.getExceptionListener());
-            Object newC = ReflectionUtils.getPrivateField(newInstance, 
-							  java.awt.BorderLayout.class, 
-							  locations[i], 
-							  out.getExceptionListener());
+            Object oldC = ReflectionUtils.getPrivateField(oldInstance,
+                                                          java.awt.BorderLayout.class,
+                                                          locations[i],
+                                                          out.getExceptionListener());
+            Object newC = ReflectionUtils.getPrivateField(newInstance,
+                                                          java.awt.BorderLayout.class,
+                                                          locations[i],
+                                                          out.getExceptionListener());
             // Pending, assume any existing elements are OK.
             if (oldC != null && newC == null) {
-                invokeStatement(oldInstance, "addLayoutComponent", 
-				new Object[]{oldC, names[i]}, out);
+                invokeStatement(oldInstance, "addLayoutComponent",
+                                new Object[]{oldC, names[i]}, out);
             }
         }
     }
@@ -1132,13 +1131,13 @@ class java_awt_BorderLayout_PersistenceDelegate extends DefaultPersistenceDelega
 
 // CardLayout
 class java_awt_CardLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
-    protected void initialize(Class<?> type, Object oldInstance, 
-			      Object newInstance, Encoder out) {
+    protected void initialize(Class<?> type, Object oldInstance,
+                              Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
-        Hashtable tab = (Hashtable)ReflectionUtils.getPrivateField(oldInstance, 
-								   java.awt.CardLayout.class, 
-								   "tab", 
-								   out.getExceptionListener());
+        Hashtable tab = (Hashtable)ReflectionUtils.getPrivateField(oldInstance,
+                                                                   java.awt.CardLayout.class,
+                                                                   "tab",
+                                                                   out.getExceptionListener());
         if (tab != null) {
             for(Enumeration e = tab.keys(); e.hasMoreElements();) {
                 Object child = e.nextElement();
@@ -1151,13 +1150,13 @@ class java_awt_CardLayout_PersistenceDelegate extends DefaultPersistenceDelegate
 
 // GridBagLayout
 class java_awt_GridBagLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
-    protected void initialize(Class<?> type, Object oldInstance, 
-			      Object newInstance, Encoder out) {
+    protected void initialize(Class<?> type, Object oldInstance,
+                              Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
-        Hashtable comptable = (Hashtable)ReflectionUtils.getPrivateField(oldInstance, 
-						 java.awt.GridBagLayout.class, 
-						 "comptable", 
-						 out.getExceptionListener());
+        Hashtable comptable = (Hashtable)ReflectionUtils.getPrivateField(oldInstance,
+                                                 java.awt.GridBagLayout.class,
+                                                 "comptable",
+                                                 out.getExceptionListener());
         if (comptable != null) {
             for(Enumeration e = comptable.keys(); e.hasMoreElements();) {
                 Object child = e.nextElement();
@@ -1221,15 +1220,15 @@ class javax_swing_DefaultComboBoxModel_PersistenceDelegate extends DefaultPersis
 // DefaultMutableTreeNode
 class javax_swing_tree_DefaultMutableTreeNode_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object
-			      newInstance, Encoder out) {
+                              newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         javax.swing.tree.DefaultMutableTreeNode m =
-	    (javax.swing.tree.DefaultMutableTreeNode)oldInstance;
+            (javax.swing.tree.DefaultMutableTreeNode)oldInstance;
         javax.swing.tree.DefaultMutableTreeNode n =
-	    (javax.swing.tree.DefaultMutableTreeNode)newInstance;
+            (javax.swing.tree.DefaultMutableTreeNode)newInstance;
         for (int i = n.getChildCount(); i < m.getChildCount(); i++) {
             invokeStatement(oldInstance, "add", new
-		Object[]{m.getChildAt(i)}, out);
+                Object[]{m.getChildAt(i)}, out);
         }
     }
 }
@@ -1373,7 +1372,7 @@ class MetaData {
         registerConstructor("java.beans.EventHandler", new String[]{"target", "action", "eventPropertyName", "listenerMethodName"});
 
   // awt
-  
+
         registerConstructor("java.awt.Color", new String[]{"red", "green", "blue", "alpha"});
         registerConstructor("java.awt.Cursor", new String[]{"type"});
         registerConstructor("java.awt.ScrollPane", new String[]{"scrollbarDisplayPolicy"});
@@ -1470,14 +1469,14 @@ class MetaData {
         // The visible property of Component needs special treatment because of Windows.
         removeProperty("java.awt.Component", "visible");
 
-        // This property throws an exception if accessed when there is no child. 
-        removeProperty("java.awt.ScrollPane", "scrollPosition"); 
-        
-	// 4917458 this should be removed for XAWT since it may throw
-	// an unsupported exception if there isn't any input methods.
-	// This shouldn't be a problem since these are added behind
-	// the scenes automatically.
-        removeProperty("java.awt.im.InputContext", "compositionEnabled"); 
+        // This property throws an exception if accessed when there is no child.
+        removeProperty("java.awt.ScrollPane", "scrollPosition");
+
+        // 4917458 this should be removed for XAWT since it may throw
+        // an unsupported exception if there isn't any input methods.
+        // This shouldn't be a problem since these are added behind
+        // the scenes automatically.
+        removeProperty("java.awt.im.InputContext", "compositionEnabled");
 
   // swing
 
@@ -1501,7 +1500,7 @@ class MetaData {
         removeProperty("javax.swing.JScrollPane", "horizontalScrollBar");
         removeProperty("javax.swing.JScrollPane", "rowHeader");
         removeProperty("javax.swing.JScrollPane", "columnHeader");
-        
+
         removeProperty("javax.swing.JViewport", "extentSize");
 
         // Renderers need special treatment, since their properties
@@ -1526,7 +1525,7 @@ class MetaData {
 
         // PENDING: The "disabledIcon" property is often computed from the icon property.
         removeProperty("javax.swing.AbstractButton", "disabledIcon");
-	removeProperty("javax.swing.JLabel", "disabledIcon");
+        removeProperty("javax.swing.JLabel", "disabledIcon");
 
         // The caret property throws errors when it it set beyond
         // the extent of the text. We could just set it after the
@@ -1573,18 +1572,18 @@ class MetaData {
         //     return new DefaultPersistenceDelegate(new String[]{"this$0"});
         // }
 
-	String typeName = type.getName();
+        String typeName = type.getName();
 
-	// Check to see if there are properties that have been lazily registered for removal.
-	if (getBeanAttribute(type, "transient_init") == null) {
-	    Vector tp = (Vector)transientProperties.get(typeName);
-	    if (tp != null) {
-		for(int i = 0; i < tp.size(); i++) {
-		    setPropertyAttribute(type, (String)tp.get(i), "transient", Boolean.TRUE);
-		}
-	    }
-	    setBeanAttribute(type, "transient_init", Boolean.TRUE);
-	}
+        // Check to see if there are properties that have been lazily registered for removal.
+        if (getBeanAttribute(type, "transient_init") == null) {
+            Vector tp = (Vector)transientProperties.get(typeName);
+            if (tp != null) {
+                for(int i = 0; i < tp.size(); i++) {
+                    setPropertyAttribute(type, (String)tp.get(i), "transient", Boolean.TRUE);
+                }
+            }
+            setBeanAttribute(type, "transient_init", Boolean.TRUE);
+        }
 
         PersistenceDelegate pd = (PersistenceDelegate)getBeanAttribute(type, "persistenceDelegate");
         if (pd == null) {
@@ -1595,8 +1594,8 @@ class MetaData {
             internalPersistenceDelegates.put(typeName, defaultPersistenceDelegate);
             try {
                 String name =  type.getName();
-                Class c = Class.forName("java.beans." + name.replace('.', '_') 
-					+ "_PersistenceDelegate");
+                Class c = Class.forName("java.beans." + name.replace('.', '_')
+                                        + "_PersistenceDelegate");
                 pd = (PersistenceDelegate)c.newInstance();
                 internalPersistenceDelegates.put(typeName, pd);
             }
@@ -1618,7 +1617,7 @@ class MetaData {
     private static String[] getConstructorProperties(Class type) {
         String[] names = null;
         int length = 0;
-        for (Constructor constructor : type.getConstructors()) {
+        for (Constructor<?> constructor : type.getConstructors()) {
             String[] value = getAnnotationValue(constructor);
             if ((value != null) && (length < value.length) && isValid(constructor, value)) {
                 names = value;
@@ -1628,14 +1627,14 @@ class MetaData {
         return names;
     }
 
-    private static String[] getAnnotationValue(Constructor constructor) {
+    private static String[] getAnnotationValue(Constructor<?> constructor) {
         ConstructorProperties annotation = constructor.getAnnotation(ConstructorProperties.class);
         return (annotation != null)
                 ? annotation.value()
                 : null;
     }
 
-    private static boolean isValid(Constructor constructor, String[] names) {
+    private static boolean isValid(Constructor<?> constructor, String[] names) {
         Class[] parameters = constructor.getParameterTypes();
         if (names.length != parameters.length) {
             return false;
@@ -1651,14 +1650,14 @@ class MetaData {
     // Wrapper for Introspector.getBeanInfo to handle exception handling.
     // Note: this relys on new 1.4 Introspector semantics which cache the BeanInfos
     public static BeanInfo getBeanInfo(Class type) {
-	BeanInfo info = null;
-	try {
-	    info = Introspector.getBeanInfo(type);
-	} catch (Throwable e) {
-	    e.printStackTrace();
-	} 
+        BeanInfo info = null;
+        try {
+            info = Introspector.getBeanInfo(type);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
 
-	return info;
+        return info;
     }
 
     private static PropertyDescriptor getPropertyDescriptor(Class type, String propertyName) {
@@ -1688,14 +1687,14 @@ class MetaData {
     }
 
     private static Object getBeanAttribute(Class type, String attribute) {
-	return getBeanInfo(type).getBeanDescriptor().getValue(attribute);
+        return getBeanInfo(type).getBeanDescriptor().getValue(attribute);
     }
 
     // MetaData registration
 
-    private synchronized static void registerConstructor(String typeName, 
+    private synchronized static void registerConstructor(String typeName,
                                                          String[] constructor) {
-        internalPersistenceDelegates.put(typeName, 
+        internalPersistenceDelegates.put(typeName,
                                          new DefaultPersistenceDelegate(constructor));
     }
 
@@ -1708,4 +1707,3 @@ class MetaData {
         tp.add(property);
     }
 }
-

@@ -42,7 +42,7 @@ public:
     virtual ~AwtList();
 
     virtual LPCTSTR GetClassName();
-    
+
     static AwtList* Create(jobject peer, jobject parent);
 
     virtual BOOL NeedDblClick() { return TRUE; }
@@ -99,10 +99,10 @@ public:
 
     BOOL ActMouseMessage(MSG* pMsg);
 
-    // Netscape : Change the font on the list and redraw the 
-    // items nicely. 
+    // Netscape : Change the font on the list and redraw the
+    // items nicely.
     virtual void SetFont(AwtFont *pFont);
-    
+
     /* Set whether a list accepts single or multiple selections. */
     void SetMultiSelect(BOOL ms);
 
@@ -126,7 +126,7 @@ public:
     MsgRouting WmSize(UINT type, int w, int h);
 
     MsgRouting WmCtlColor(HDC hDC, HWND hCtrl, UINT ctlColor,
-			  HBRUSH& retBrush);
+                          HBRUSH& retBrush);
     MsgRouting WmSetFocus(HWND hWndLostFocus);
     MsgRouting WmKillFocus(HWND hWndGotFocus);
 
@@ -138,7 +138,7 @@ public:
     virtual void ReleaseDragCapture(UINT flags);
     void Reshape(int x, int y, int w, int h);
 
-    INLINE LRESULT SendListMessage(UINT msg, WPARAM wParam=0, LPARAM lParam=0) 
+    INLINE LRESULT SendListMessage(UINT msg, WPARAM wParam=0, LPARAM lParam=0)
     {
         DASSERT(GetListHandle() != NULL);
         return ::SendMessage(GetListHandle(), msg, wParam, lParam);
@@ -185,22 +185,22 @@ protected:
     INLINE HWND GetListHandle() { return GetHWnd(); }
 
     static BOOL IsListOwnerMessage(UINT message) {
-	switch (message) {
-	case WM_DRAWITEM:
-	case WM_MEASUREITEM:
-	case WM_COMMAND:
+        switch (message) {
+        case WM_DRAWITEM:
+        case WM_MEASUREITEM:
+        case WM_COMMAND:
 #if defined(WIN32)
-	case WM_CTLCOLORLISTBOX:
+        case WM_CTLCOLORLISTBOX:
 #else
-	case WM_CTLCOLOR:
+        case WM_CTLCOLOR:
 #endif
-	    return TRUE;
-	}
-	return FALSE;
+            return TRUE;
+        }
+        return FALSE;
     }
 
     static BOOL IsAwtMessage(UINT message) {
-	return (message >= WM_APP);
+        return (message >= WM_APP);
     }
 
 private:

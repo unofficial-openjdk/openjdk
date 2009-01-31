@@ -35,9 +35,9 @@
  */
 #include "gdefs.h"
 
-typedef unsigned char	jubyte;
-typedef unsigned short	jushort;
-typedef unsigned long	juint;
+typedef unsigned char   jubyte;
+typedef unsigned short  jushort;
+typedef unsigned long   juint;
 
 
 #endif /* j2d_md_h_Included */

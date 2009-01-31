@@ -44,14 +44,14 @@ inStream_init(PacketInputStream *stream, jdwpPacket packet)
     stream->packet = packet;
     stream->error = JDWP_ERROR(NONE);
     stream->left = packet.type.cmd.len;
-    stream->current = packet.type.cmd.data; 
+    stream->current = packet.type.cmd.data;
     stream->refs = bagCreateBag(sizeof(jobject), INITIAL_REF_ALLOC);
     if (stream->refs == NULL) {
         stream->error = JDWP_ERROR(OUT_OF_MEMORY);
     }
 }
 
-jint 
+jint
 inStream_id(PacketInputStream *stream)
 {
     return stream->packet.type.cmd.id;
@@ -63,8 +63,8 @@ inStream_command(PacketInputStream *stream)
     return stream->packet.type.cmd.cmd;
 }
 
-static jdwpError 
-readBytes(PacketInputStream *stream, void *dest, int size) 
+static jdwpError
+readBytes(PacketInputStream *stream, void *dest, int size)
 {
     if (stream->error) {
         return stream->error;
@@ -89,7 +89,7 @@ inStream_skipBytes(PacketInputStream *stream, jint size) {
     return readBytes(stream, NULL, size);
 }
 
-jboolean 
+jboolean
 inStream_readBoolean(PacketInputStream *stream)
 {
     jbyte flag = 0;
@@ -101,7 +101,7 @@ inStream_readBoolean(PacketInputStream *stream)
     }
 }
 
-jbyte 
+jbyte
 inStream_readByte(PacketInputStream *stream)
 {
     jbyte val = 0;
@@ -116,7 +116,7 @@ inStream_readBytes(PacketInputStream *stream, int length, jbyte *buf)
     return buf;
 }
 
-jchar 
+jchar
 inStream_readChar(PacketInputStream *stream)
 {
     jchar val = 0;
@@ -124,7 +124,7 @@ inStream_readChar(PacketInputStream *stream)
     return JAVA_TO_HOST_CHAR(val);
 }
 
-jshort 
+jshort
 inStream_readShort(PacketInputStream *stream)
 {
     jshort val = 0;
@@ -132,7 +132,7 @@ inStream_readShort(PacketInputStream *stream)
     return JAVA_TO_HOST_SHORT(val);
 }
 
-jint 
+jint
 inStream_readInt(PacketInputStream *stream)
 {
     jint val = 0;
@@ -140,7 +140,7 @@ inStream_readInt(PacketInputStream *stream)
     return JAVA_TO_HOST_INT(val);
 }
 
-jlong 
+jlong
 inStream_readLong(PacketInputStream *stream)
 {
     jlong val = 0;
@@ -148,7 +148,7 @@ inStream_readLong(PacketInputStream *stream)
     return JAVA_TO_HOST_LONG(val);
 }
 
-jfloat 
+jfloat
 inStream_readFloat(PacketInputStream *stream)
 {
     jfloat val = 0;
@@ -156,7 +156,7 @@ inStream_readFloat(PacketInputStream *stream)
     return JAVA_TO_HOST_FLOAT(val);
 }
 
-jdouble 
+jdouble
 inStream_readDouble(PacketInputStream *stream)
 {
     jdouble val = 0;
@@ -166,11 +166,11 @@ inStream_readDouble(PacketInputStream *stream)
 
 /*
  * Read an object from the stream. The ID used in the wire protocol
- * is converted to a reference which is returned. The reference is 
+ * is converted to a reference which is returned. The reference is
  * global and strong, but it should *not* be deleted by the caller
- * since it is freed when this stream is destroyed. 
+ * since it is freed when this stream is destroyed.
  */
-jobject 
+jobject
 inStream_readObjectRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject ref;
@@ -178,7 +178,7 @@ inStream_readObjectRef(JNIEnv *env, PacketInputStream *stream)
     jlong id = inStream_readLong(stream);
     if (stream->error) {
         return NULL;
-    } 
+    }
     if (id == NULL_OBJECT_ID) {
         return NULL;
     }
@@ -202,21 +202,21 @@ inStream_readObjectRef(JNIEnv *env, PacketInputStream *stream)
 /*
  * Read a raw object id from the stream. This should be used rarely.
  * Normally, inStream_readObjectRef is preferred since it takes care
- * of reference conversion and tracking. Only code that needs to 
+ * of reference conversion and tracking. Only code that needs to
  * perform maintence of the commonRef hash table uses this function.
  */
-jlong 
+jlong
 inStream_readObjectID(PacketInputStream *stream)
 {
     return inStream_readLong(stream);
 }
 
-jclass 
+jclass
 inStream_readClassRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -229,12 +229,12 @@ inStream_readClassRef(JNIEnv *env, PacketInputStream *stream)
     return object;
 }
 
-jthread 
+jthread
 inStream_readThreadRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -247,12 +247,12 @@ inStream_readThreadRef(JNIEnv *env, PacketInputStream *stream)
     return object;
 }
 
-jthreadGroup 
+jthreadGroup
 inStream_readThreadGroupRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -265,12 +265,12 @@ inStream_readThreadGroupRef(JNIEnv *env, PacketInputStream *stream)
     return object;
 }
 
-jstring 
+jstring
 inStream_readStringRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -283,12 +283,12 @@ inStream_readStringRef(JNIEnv *env, PacketInputStream *stream)
     return object;
 }
 
-jclass 
+jclass
 inStream_readClassLoaderRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -301,12 +301,12 @@ inStream_readClassLoaderRef(JNIEnv *env, PacketInputStream *stream)
     return object;
 }
 
-jarray 
+jarray
 inStream_readArrayRef(JNIEnv *env, PacketInputStream *stream)
 {
     jobject object = inStream_readObjectRef(env, stream);
     if (object == NULL) {
-        /* 
+        /*
          * Could be error or just the null reference. In either case,
          * stop now.
          */
@@ -323,7 +323,7 @@ inStream_readArrayRef(JNIEnv *env, PacketInputStream *stream)
  * Next 3 functions read an Int and convert to a Pointer!?
  * If sizeof(jxxxID) == 8 we must read these values as Longs.
  */
-FrameID 
+FrameID
 inStream_readFrameID(PacketInputStream *stream)
 {
     if (sizeof(FrameID) == 8) {
@@ -335,7 +335,7 @@ inStream_readFrameID(PacketInputStream *stream)
     }
 }
 
-jmethodID 
+jmethodID
 inStream_readMethodID(PacketInputStream *stream)
 {
     if (sizeof(jmethodID) == 8) {
@@ -347,7 +347,7 @@ inStream_readMethodID(PacketInputStream *stream)
     }
 }
 
-jfieldID 
+jfieldID
 inStream_readFieldID(PacketInputStream *stream)
 {
     if (sizeof(jfieldID) == 8) {
@@ -359,18 +359,18 @@ inStream_readFieldID(PacketInputStream *stream)
     }
 }
 
-jlocation 
+jlocation
 inStream_readLocation(PacketInputStream *stream)
 {
     return (jlocation)inStream_readLong(stream);
 }
 
-char * 
+char *
 inStream_readString(PacketInputStream *stream)
 {
     int length;
     char *string;
-    
+
     length = inStream_readInt(stream);
     string = jvmtiAllocate(length + 1);
     if (string != NULL) {
@@ -387,7 +387,7 @@ inStream_readString(PacketInputStream *stream)
 
             new_string = jvmtiAllocate(new_length+1);
             (gdata->npt->utf8sToUtf8m)
-                             (gdata->npt->utf, (jbyte*)string, length, 
+                             (gdata->npt->utf, (jbyte*)string, length,
                               (jbyte*)new_string, new_length);
             jvmtiDeallocate(string);
             return new_string;
@@ -396,24 +396,24 @@ inStream_readString(PacketInputStream *stream)
     return string;
 }
 
-jboolean 
+jboolean
 inStream_endOfInput(PacketInputStream *stream)
 {
     return (stream->left > 0);
 }
 
-jdwpError 
+jdwpError
 inStream_error(PacketInputStream *stream)
 {
     return stream->error;
 }
 
-void 
+void
 inStream_clearError(PacketInputStream *stream) {
     stream->error = JDWP_ERROR(NONE);
 }
 
-jvalue 
+jvalue
 inStream_readValue(PacketInputStream *stream, jbyte *typeKeyPtr)
 {
     jvalue value;
@@ -430,31 +430,31 @@ inStream_readValue(PacketInputStream *stream, jbyte *typeKeyPtr)
             case JDWP_TAG(BYTE):
                 value.b = inStream_readByte(stream);
                 break;
-    
+
             case JDWP_TAG(CHAR):
                 value.c = inStream_readChar(stream);
                 break;
-    
+
             case JDWP_TAG(FLOAT):
                 value.f = inStream_readFloat(stream);
                 break;
-    
+
             case JDWP_TAG(DOUBLE):
                 value.d = inStream_readDouble(stream);
                 break;
-    
+
             case JDWP_TAG(INT):
                 value.i = inStream_readInt(stream);
                 break;
-    
+
             case JDWP_TAG(LONG):
                 value.j = inStream_readLong(stream);
                 break;
-    
+
             case JDWP_TAG(SHORT):
                 value.s = inStream_readShort(stream);
                 break;
-    
+
             case JDWP_TAG(BOOLEAN):
                 value.z = inStream_readBoolean(stream);
                 break;
@@ -478,15 +478,13 @@ deleteRef(void *elementPtr, void *arg)
     return JNI_TRUE;
 }
 
-void 
+void
 inStream_destroy(PacketInputStream *stream)
 {
     if (stream->packet.type.cmd.data != NULL) {
     jvmtiDeallocate(stream->packet.type.cmd.data);
-    } 
+    }
 
     (void)bagEnumerateOver(stream->refs, deleteRef, (void *)getEnv());
     bagDestroyBag(stream->refs);
 }
-
-

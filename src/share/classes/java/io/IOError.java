@@ -26,10 +26,9 @@
 package java.io;
 
 /**
- * Thrown when a serious I/O error has occurred. 
+ * Thrown when a serious I/O error has occurred.
  *
  * @author  Xueming Shen
- * @version %I% %G%
  * @since   1.6
  */
 public class IOError extends Error {
@@ -44,7 +43,7 @@ public class IOError extends Error {
      *         is not known
      */
     public IOError(Throwable cause) {
-	super(cause);
+        super(cause);
     }
 
     private static final long serialVersionUID = 67100927991680413L;

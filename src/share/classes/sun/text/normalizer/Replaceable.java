@@ -77,7 +77,7 @@ package sun.text.normalizer;
  *   </li>
  * </ul>
  * If this is not the behavior, the subclass should document any differences.
- * 
+ *
  * <p>Copyright &copy; IBM Corporation 1999.  All rights reserved.
  *
  * @author Alan Liu
@@ -88,7 +88,7 @@ public interface Replaceable {
      * Returns the number of 16-bit code units in the text.
      * @return number of 16-bit code units in text
      * @stable ICU 2.0
-     */ 
+     */
     int length();
 
     /**

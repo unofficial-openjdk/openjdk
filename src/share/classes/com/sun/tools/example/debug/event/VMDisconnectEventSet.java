@@ -28,7 +28,7 @@ package com.sun.tools.example.debug.event;
 import com.sun.jdi.event.*;
 
 public class VMDisconnectEventSet extends AbstractEventSet {
-    
+
     VMDisconnectEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -37,4 +37,3 @@ public class VMDisconnectEventSet extends AbstractEventSet {
         listener.vmDisconnect(this);
     }
 }
-

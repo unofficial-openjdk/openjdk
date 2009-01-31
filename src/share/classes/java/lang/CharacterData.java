@@ -44,10 +44,10 @@ abstract class CharacterData {
 
     //need to implement for JSR204
     int toUpperCaseEx(int ch) {
-	return toUpperCase(ch);
+        return toUpperCase(ch);
     }
     char[] toUpperCaseCharArray(int ch) {
-	return null;
+        return null;
     }
 
     // Character <= 0xff (basic latin) is handled by internal fast-path
@@ -67,15 +67,14 @@ abstract class CharacterData {
                 return CharacterData01.instance;
             case(2):
                 return CharacterData02.instance;
-            case(14): 
+            case(14):
                 return CharacterData0E.instance;
             case(15):   // Private Use
             case(16):   // Private Use
                 return CharacterDataPrivateUse.instance;
             default:
-		return CharacterDataUndefined.instance;
+                return CharacterDataUndefined.instance;
             }
         }
     }
 }
-

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @bug 4838379
  * @summary Verify that serialization of enum constants that are instances of
- * 	    constant-specific subclasses functions properly.
+ *          constant-specific subclasses functions properly.
  */
 
 import java.io.*;
@@ -38,13 +38,13 @@ enum Foo {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("foo.ser"));
-	for (Foo f : Foo.values()) {
-	    Object obj = oin.readObject();
-	    if (obj != f) {
-		throw new Error("expected " + f + ", got " + obj);
-	    }
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("foo.ser"));
+        for (Foo f : Foo.values()) {
+            Object obj = oin.readObject();
+            if (obj != f) {
+                throw new Error("expected " + f + ", got " + obj);
+            }
+        }
     }
 }

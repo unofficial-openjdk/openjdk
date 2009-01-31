@@ -48,7 +48,6 @@ import java.util.Locale;
  * @see javax.swing.JFileChooser#addChoosableFileFilter
  * @see javax.swing.JFileChooser#getFileFilter
  *
- * @version %I% %G%
  * @since 1.6
  */
 public final class FileNameExtensionFilter extends FileFilter {
@@ -110,8 +109,8 @@ public final class FileNameExtensionFilter extends FileFilter {
             // overhead associated with java.io.File. Therefor we've stuck
             // with the simple lightweight approach.
             String fileName = f.getName();
-	    int i = fileName.lastIndexOf('.');
-	    if (i > 0 && i < fileName.length() - 1) {
+            int i = fileName.lastIndexOf('.');
+            if (i > 0 && i < fileName.length() - 1) {
                 String desiredExtension = fileName.substring(i+1).
                         toLowerCase(Locale.ENGLISH);
                 for (String extension : lowerCaseExtensions) {
@@ -119,7 +118,7 @@ public final class FileNameExtensionFilter extends FileFilter {
                         return true;
                     }
                 }
-	    }
+            }
         }
         return false;
     }

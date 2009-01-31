@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -39,13 +37,12 @@ import sun.security.krb5.internal.KerberosTime;
  * This class implements Hashtable to store the replay caches.
  *
  * @author Yanni Zhang
- * @version 1.00 10 Jul 00
  */
 public class CacheTable extends Hashtable<String,ReplayCache> {
 
     private static final long serialVersionUID = -4695501354546664910L;
 
-    private boolean DEBUG = sun.security.krb5.internal.Krb5.DEBUG; 
+    private boolean DEBUG = sun.security.krb5.internal.Krb5.DEBUG;
     public CacheTable () {
     }
 
@@ -60,19 +57,19 @@ public class CacheTable extends Hashtable<String,ReplayCache> {
             if (DEBUG) {
                 System.out.println("replay cache for " + principal + " is null.");
             }
-            rc = new ReplayCache(principal, this); 
+            rc = new ReplayCache(principal, this);
             rc.put(time, currTime);
             super.put(principal, rc);
         }
         else {
             rc.put(time, currTime);
-	    // re-insert the entry, since rc.put could have removed the entry
+            // re-insert the entry, since rc.put could have removed the entry
             super.put(principal, rc);
             if (DEBUG) {
                 System.out.println("replay cache found.");
             }
         }
-            
+
     }
 
     /**

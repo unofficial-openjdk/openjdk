@@ -37,10 +37,10 @@ import javax.naming.InterruptedNamingException;
 import javax.naming.CommunicationException;
 
 /**
- * Represents a list of PooledConnections (actually, ConnectionDescs) with the 
+ * Represents a list of PooledConnections (actually, ConnectionDescs) with the
  * same pool id.
- * The list starts out with an initial number of connections. 
- * Additional PooledConnections are created lazily upon demand. 
+ * The list starts out with an initial number of connections.
+ * Additional PooledConnections are created lazily upon demand.
  * The list has a maximum size. When the number of connections
  * reaches the maximum size, a request for a PooledConnection blocks until
  * a connection is returned to the list. A maximum size of zero means that
@@ -48,15 +48,15 @@ import javax.naming.CommunicationException;
  * no idle connection is available.
  *
  * The list may also have a preferred size. If the current list size
- * is less than the preferred size, a request for a connection will result in 
+ * is less than the preferred size, a request for a connection will result in
  * a PooledConnection being created (even if an idle connection is available).
  * If the current list size is greater than the preferred size,
  * a connection being returned to the list will be closed and removed from
  * the list. A preferred size of zero means that there is no preferred size:
  * connections are created only when no idle connection is available and
  * a connection being returned to the list is not closed. Regardless of the
- * preferred size, connection creation always observes the maximum size: 
- * a connection won't be created if the list size is at or exceeds the 
+ * preferred size, connection creation always observes the maximum size:
+ * a connection won't be created if the list size is at or exceeds the
  * maximum size.
  *
  * @author Rosanna Lee
@@ -65,7 +65,7 @@ import javax.naming.CommunicationException;
 // Package private: accessed only by Pool
 final class Connections implements PoolCallback {
     private static final boolean debug = Pool.debug;
-    private static final boolean trace = 
+    private static final boolean trace =
         com.sun.jndi.ldap.LdapPoolManager.trace;
     private static final int DEFAULT_SIZE = 10;
 
@@ -88,41 +88,41 @@ final class Connections implements PoolCallback {
      * when one is removed.
      * @param factory The factory responsible for creating a connection
      */
-    Connections(Object id, int initSize, int prefSize, int maxSize, 
-	PooledConnectionFactory factory) throws NamingException {
+    Connections(Object id, int initSize, int prefSize, int maxSize,
+        PooledConnectionFactory factory) throws NamingException {
 
-	this.maxSize = maxSize;
-	if (maxSize > 0) {
-	    // prefSize and initSize cannot exceed specified maxSize
-	    this.prefSize = Math.min(prefSize, maxSize);
-	    initSize = Math.min(initSize, maxSize);
-	} else {
-	    this.prefSize = prefSize;
-	}
-	conns = new ArrayList(maxSize > 0 ? maxSize : DEFAULT_SIZE);
+        this.maxSize = maxSize;
+        if (maxSize > 0) {
+            // prefSize and initSize cannot exceed specified maxSize
+            this.prefSize = Math.min(prefSize, maxSize);
+            initSize = Math.min(initSize, maxSize);
+        } else {
+            this.prefSize = prefSize;
+        }
+        conns = new ArrayList(maxSize > 0 ? maxSize : DEFAULT_SIZE);
 
-	// Maintain soft ref to id so that this Connections' entry in
-	// Pool doesn't get GC'ed prematurely
-	ref = new SoftReference(id); 
+        // Maintain soft ref to id so that this Connections' entry in
+        // Pool doesn't get GC'ed prematurely
+        ref = new SoftReference(id);
 
-	d("init size=", initSize);
-	d("max size=", maxSize);
-	d("preferred size=", prefSize);
+        d("init size=", initSize);
+        d("max size=", maxSize);
+        d("preferred size=", prefSize);
 
-	// Create initial connections
-	PooledConnection conn;
-	for (int i = 0; i < initSize; i++) {
-	    conn = factory.createPooledConnection(this);
-	    td("Create ", conn ,factory);
-	    conns.add(new ConnectionDesc(conn)); // Add new idle conn to pool
-	}
+        // Create initial connections
+        PooledConnection conn;
+        for (int i = 0; i < initSize; i++) {
+            conn = factory.createPooledConnection(this);
+            td("Create ", conn ,factory);
+            conns.add(new ConnectionDesc(conn)); // Add new idle conn to pool
+        }
     }
 
     /**
      * Retrieves a PooledConnection from this list of connections.
      * Use an existing one if one is idle, or create one if the list's
      * max size hasn't been reached. If max size has been reached, wait
-     * for a PooledConnection to be returned, or one to be removed (thus 
+     * for a PooledConnection to be returned, or one to be removed (thus
      * not reaching the max size any longer).
      *
      * @param timeout if > 0, msec to wait until connection is available
@@ -134,77 +134,77 @@ final class Connections implements PoolCallback {
      * or if it timed out while waiting, or the creation of a connection
      * resulted in an error.
      */
-    synchronized PooledConnection get(long timeout, 
-	PooledConnectionFactory factory) throws NamingException {
-	PooledConnection conn;
-	long start = (timeout > 0 ? System.currentTimeMillis() : 0);
-	long waittime = timeout;
+    synchronized PooledConnection get(long timeout,
+        PooledConnectionFactory factory) throws NamingException {
+        PooledConnection conn;
+        long start = (timeout > 0 ? System.currentTimeMillis() : 0);
+        long waittime = timeout;
 
-	d("get(): before");
-	while ((conn = getOrCreateConnection(factory)) == null) {
-	    if (timeout > 0 && waittime <= 0) {
-		throw new CommunicationException(
-		    "Timeout exceeded while waiting for a connection: " + 
-		    timeout + "ms");
-	    }
-	    try {
-		d("get(): waiting");
-		if (waittime > 0) {
-		    wait(waittime);  // Wait until one is released or removed
-		} else {
-		    wait();
-		}
-	    } catch (InterruptedException e) {
-		throw new InterruptedNamingException(
-		    "Interrupted while waiting for a connection");
-	    }
-	    // Check whether we timed out
-	    if (timeout > 0) {
-		long now = System.currentTimeMillis();
-		waittime = timeout - (now - start);
-	    }
-	}
+        d("get(): before");
+        while ((conn = getOrCreateConnection(factory)) == null) {
+            if (timeout > 0 && waittime <= 0) {
+                throw new CommunicationException(
+                    "Timeout exceeded while waiting for a connection: " +
+                    timeout + "ms");
+            }
+            try {
+                d("get(): waiting");
+                if (waittime > 0) {
+                    wait(waittime);  // Wait until one is released or removed
+                } else {
+                    wait();
+                }
+            } catch (InterruptedException e) {
+                throw new InterruptedNamingException(
+                    "Interrupted while waiting for a connection");
+            }
+            // Check whether we timed out
+            if (timeout > 0) {
+                long now = System.currentTimeMillis();
+                waittime = timeout - (now - start);
+            }
+        }
 
-	d("get(): after");
-	return conn;
+        d("get(): after");
+        return conn;
     }
 
     /**
-     * Retrieves an idle connection from this list if one is available. 
-     * If none is available, create a new one if maxSize hasn't been reached. 
+     * Retrieves an idle connection from this list if one is available.
+     * If none is available, create a new one if maxSize hasn't been reached.
      * If maxSize has been reached, return null.
      * Always called from a synchronized method.
      */
     private PooledConnection getOrCreateConnection(
-	PooledConnectionFactory factory) throws NamingException {
+        PooledConnectionFactory factory) throws NamingException {
 
-	int size = conns.size(); // Current number of idle/nonidle conns
-	PooledConnection conn = null;
+        int size = conns.size(); // Current number of idle/nonidle conns
+        PooledConnection conn = null;
 
-	if (prefSize <= 0 || size >= prefSize) {
-	    // If no prefSize specified, or list size already meets or 
-	    // exceeds prefSize, then first look for an idle connection
-	    ConnectionDesc entry;
-	    for (int i = 0; i < size; i++) {
-		entry = (ConnectionDesc) conns.get(i);
-		if ((conn = entry.tryUse()) != null) {
-		    d("get(): use ", conn);
-		    td("Use ", conn);
-		    return conn;
-		}
-	    }
-	}
+        if (prefSize <= 0 || size >= prefSize) {
+            // If no prefSize specified, or list size already meets or
+            // exceeds prefSize, then first look for an idle connection
+            ConnectionDesc entry;
+            for (int i = 0; i < size; i++) {
+                entry = (ConnectionDesc) conns.get(i);
+                if ((conn = entry.tryUse()) != null) {
+                    d("get(): use ", conn);
+                    td("Use ", conn);
+                    return conn;
+                }
+            }
+        }
 
-	// Check if list size already at maxSize specified
-	if (maxSize > 0 && size >= maxSize) {
-	    return null;   // List size is at limit; cannot create any more
-	}
+        // Check if list size already at maxSize specified
+        if (maxSize > 0 && size >= maxSize) {
+            return null;   // List size is at limit; cannot create any more
+        }
 
-	conn = factory.createPooledConnection(this);
-	td("Create and use ", conn, factory);
-	conns.add(new ConnectionDesc(conn, true)); // Add new conn to pool
+        conn = factory.createPooledConnection(this);
+        td("Create and use ", conn, factory);
+        conns.add(new ConnectionDesc(conn, true)); // Add new conn to pool
 
-	return conn;
+        return conn;
     }
 
     /**
@@ -216,39 +216,39 @@ final class Connections implements PoolCallback {
      * public because implemented as part of PoolCallback.
      */
     public synchronized boolean releasePooledConnection(PooledConnection conn) {
-	ConnectionDesc entry;
-	int loc = conns.indexOf(entry=new ConnectionDesc(conn));
+        ConnectionDesc entry;
+        int loc = conns.indexOf(entry=new ConnectionDesc(conn));
 
-	d("release(): ", conn);
+        d("release(): ", conn);
 
-	if (loc >= 0) {
-	    // Found entry
+        if (loc >= 0) {
+            // Found entry
 
-	    if (closed || (prefSize > 0 && conns.size() > prefSize)) {
-		// If list size exceeds prefSize, close connection
+            if (closed || (prefSize > 0 && conns.size() > prefSize)) {
+                // If list size exceeds prefSize, close connection
 
-		d("release(): closing ", conn);
-		td("Close ", conn);
+                d("release(): closing ", conn);
+                td("Close ", conn);
 
-		// size must be >= 2 so don't worry about empty list
-		conns.remove(entry); 
-		conn.closeConnection();
+                // size must be >= 2 so don't worry about empty list
+                conns.remove(entry);
+                conn.closeConnection();
 
-	    } else {
-		d("release(): release ", conn);
-		td("Release ", conn);
+            } else {
+                d("release(): release ", conn);
+                td("Release ", conn);
 
-		// Get ConnectionDesc from list to get correct state info
-		entry = (ConnectionDesc) conns.get(loc);
-		// Return connection to list, ready for reuse
-		entry.release();
-	    }
-	    notifyAll();
-	    d("release(): notify");
-	    return true;
-	} else {
-	    return false;
-	}
+                // Get ConnectionDesc from list to get correct state info
+                entry = (ConnectionDesc) conns.get(loc);
+                // Return connection to list, ready for reuse
+                entry.release();
+            }
+            notifyAll();
+            d("release(): notify");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -262,25 +262,25 @@ final class Connections implements PoolCallback {
      * public because implemented as part of PoolCallback.
      */
     public synchronized boolean removePooledConnection(PooledConnection conn) {
-	if (conns.remove(new ConnectionDesc(conn))) {
-	    d("remove(): ", conn);
+        if (conns.remove(new ConnectionDesc(conn))) {
+            d("remove(): ", conn);
 
-	    notifyAll();
+            notifyAll();
 
-	    d("remove(): notify");
-	    td("Remove ", conn);
+            d("remove(): notify");
+            td("Remove ", conn);
 
-	    if (conns.isEmpty()) {
-		// Remove softref to make pool entry eligible for GC.
-		// Once ref has been removed, it cannot be reinstated.
-		ref = null; 	
-	    }
-	    
-	    return true;
-	} else {
-	    d("remove(): not found ", conn);
-	    return false;
-	}
+            if (conns.isEmpty()) {
+                // Remove softref to make pool entry eligible for GC.
+                // Once ref has been removed, it cannot be reinstated.
+                ref = null;
+            }
+
+            return true;
+        } else {
+            d("remove(): not found ", conn);
+            return false;
+        }
     }
 
     /**
@@ -291,22 +291,22 @@ final class Connections implements PoolCallback {
      * @return true if no more connections in list
      */
     synchronized boolean expire(long threshold) {
-	Iterator iter = conns.iterator();
-	ConnectionDesc entry;
-	while (iter.hasNext()) {
-	    entry = (ConnectionDesc) iter.next();
-	    if (entry.expire(threshold)) {
-		d("expire(): removing ", entry);
-		td("Expired ", entry);
+        Iterator iter = conns.iterator();
+        ConnectionDesc entry;
+        while (iter.hasNext()) {
+            entry = (ConnectionDesc) iter.next();
+            if (entry.expire(threshold)) {
+                d("expire(): removing ", entry);
+                td("Expired ", entry);
 
-		iter.remove();  // remove from pool
+                iter.remove();  // remove from pool
 
-		// Don't need to call notify() because we're
-		// removing only idle connections. If there were
-		// idle connections, then there should be no waiters.
-	    }
-	}
-	return conns.isEmpty();  // whether whole list has 'expired'
+                // Don't need to call notify() because we're
+                // removing only idle connections. If there were
+                // idle connections, then there should be no waiters.
+            }
+        }
+        return conns.isEmpty();  // whether whole list has 'expired'
     }
 
     /**
@@ -317,71 +317,71 @@ final class Connections implements PoolCallback {
      * their return.
      */
     synchronized void close() {
-	expire(System.currentTimeMillis());	// Expire idle connections
-	closed = true;   // Close in-use connections when they are returned
+        expire(System.currentTimeMillis());     // Expire idle connections
+        closed = true;   // Close in-use connections when they are returned
     }
 
     String getStats() {
-	int idle = 0;
-	int busy = 0;
-	int expired = 0;
-	long use = 0;
-	int len;
+        int idle = 0;
+        int busy = 0;
+        int expired = 0;
+        long use = 0;
+        int len;
 
-	synchronized (this) {
-	    len = conns.size();
+        synchronized (this) {
+            len = conns.size();
 
-	    ConnectionDesc entry;
-	    for (int i = 0; i < len; i++) {
-		entry = (ConnectionDesc) conns.get(i);
-		use += entry.getUseCount();
-		switch (entry.getState()) {
-		case ConnectionDesc.BUSY:
-		    ++busy;
-		    break;
-		case ConnectionDesc.IDLE:
-		    ++idle;
-		    break;
-		case ConnectionDesc.EXPIRED:
-		    ++expired;
-		}
-	    }
-	}
-	return "size=" + len + "; use=" + use + "; busy=" + busy
-	    + "; idle=" + idle + "; expired=" + expired;
+            ConnectionDesc entry;
+            for (int i = 0; i < len; i++) {
+                entry = (ConnectionDesc) conns.get(i);
+                use += entry.getUseCount();
+                switch (entry.getState()) {
+                case ConnectionDesc.BUSY:
+                    ++busy;
+                    break;
+                case ConnectionDesc.IDLE:
+                    ++idle;
+                    break;
+                case ConnectionDesc.EXPIRED:
+                    ++expired;
+                }
+            }
+        }
+        return "size=" + len + "; use=" + use + "; busy=" + busy
+            + "; idle=" + idle + "; expired=" + expired;
     }
 
     private void d(String msg, Object o1) {
-	if (debug) {
-	    d(msg + o1);
-	}
+        if (debug) {
+            d(msg + o1);
+        }
     }
 
     private void d(String msg, int i) {
-	if (debug) {
-	    d(msg + i);
-	}
+        if (debug) {
+            d(msg + i);
+        }
     }
 
     private void d(String msg) {
-	if (debug) {
-	    System.err.println(this + "." + msg + "; size: " + conns.size());
-	}
+        if (debug) {
+            System.err.println(this + "." + msg + "; size: " + conns.size());
+        }
     }
 
     private void td(String msg, Object o1, Object o2) {
-	if (trace) { // redo test to avoid object creation
-	    td(msg + o1 + "[" + o2 + "]");
-	}
+        if (trace) { // redo test to avoid object creation
+            td(msg + o1 + "[" + o2 + "]");
+        }
     }
     private void td(String msg, Object o1) {
-	if (trace) { // redo test to avoid object creation
-	    td(msg + o1);
-	}
+        if (trace) { // redo test to avoid object creation
+            td(msg + o1);
+        }
     }
     private void td(String msg) {
-	if (trace) {
-	    System.err.println(msg);
-	}
+        if (trace) {
+            System.err.println(msg);
+        }
     }
 }

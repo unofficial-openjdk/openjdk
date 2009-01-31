@@ -101,7 +101,6 @@ import java.io.IOException;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  *
  * @see SelectableChannel
@@ -160,7 +159,7 @@ public abstract class SelectionKey {
      */
     public abstract void cancel();
 
-
+
     // -- Operation-set accessors --
 
     /**
@@ -212,7 +211,7 @@ public abstract class SelectionKey {
      */
     public abstract int readyOps();
 
-
+
     // -- Operation bits and bit-testing convenience methods --
 
     /**
@@ -287,7 +286,7 @@ public abstract class SelectionKey {
      *          If this key has been cancelled
      */
     public final boolean isReadable() {
-	return (readyOps() & OP_READ) != 0;
+        return (readyOps() & OP_READ) != 0;
     }
 
     /**
@@ -310,7 +309,7 @@ public abstract class SelectionKey {
      *          If this key has been cancelled
      */
     public final boolean isWritable() {
-	return (readyOps() & OP_WRITE) != 0;
+        return (readyOps() & OP_WRITE) != 0;
     }
 
     /**
@@ -334,7 +333,7 @@ public abstract class SelectionKey {
      *          If this key has been cancelled
      */
     public final boolean isConnectable() {
-	return (readyOps() & OP_CONNECT) != 0;
+        return (readyOps() & OP_CONNECT) != 0;
     }
 
     /**
@@ -358,10 +357,10 @@ public abstract class SelectionKey {
      *          If this key has been cancelled
      */
     public final boolean isAcceptable() {
-	return (readyOps() & OP_ACCEPT) != 0;
+        return (readyOps() & OP_ACCEPT) != 0;
     }
 
-
+
     // -- Attachments --
 
     private volatile Object attachment = null;
@@ -396,7 +395,7 @@ public abstract class SelectionKey {
      *          or <tt>null</tt> if there is no attachment
      */
     public final Object attachment() {
-	return attachment;
+        return attachment;
     }
 
 }

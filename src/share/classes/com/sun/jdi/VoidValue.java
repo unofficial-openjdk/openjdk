@@ -26,14 +26,14 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>void</code> value in 
+ * Provides access to a primitive <code>void</code> value in
  * the target VM.
  *
  * @author Robert Field
  * @since  1.3
  */
 public interface VoidValue extends Value {
-    
+
     /**
      * Compares the specified Object with this VoidValue for equality.
      *
@@ -49,4 +49,3 @@ public interface VoidValue extends Value {
      */
     int hashCode();
 }
-

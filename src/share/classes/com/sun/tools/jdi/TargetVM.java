@@ -39,22 +39,22 @@ public class TargetVM implements Runnable {
     private List<EventQueue> eventQueues = Collections.synchronizedList(new ArrayList<EventQueue>(2));
     private VirtualMachineImpl vm;
     private Connection connection;
-    private Thread readerThread; 
+    private Thread readerThread;
     private EventController eventController = null;
     private boolean eventsHeld = false;
 
     /*
-     * TO DO: The limit numbers below are somewhat arbitrary and should 
-     * be configurable in the future. 
+     * TO DO: The limit numbers below are somewhat arbitrary and should
+     * be configurable in the future.
      */
     static private final int OVERLOADED_QUEUE = 2000;
-    static private final int UNDERLOADED_QUEUE = 100; 
+    static private final int UNDERLOADED_QUEUE = 100;
 
     TargetVM(VirtualMachineImpl vm, Connection connection) {
         this.vm = vm;
         this.connection = connection;
         this.readerThread = new Thread(vm.threadGroupForJDI(),
-				       this, "JDI Target VM Interface");
+                                       this, "JDI Target VM Interface");
         this.readerThread.setDaemon(true);
     }
 
@@ -67,16 +67,16 @@ public class TargetVM implements Runnable {
         if (sending) {
             vm.printTrace(direction + " Command. id=" + packet.id +
                           ", length=" + packet.data.length +
-                          ", commandSet=" + packet.cmdSet + 
-                          ", command=" + packet.cmd +  
-                          ", flags=" + packet.flags);  
+                          ", commandSet=" + packet.cmdSet +
+                          ", command=" + packet.cmd +
+                          ", flags=" + packet.flags);
         } else {
             String type = (packet.flags & Packet.Reply) != 0 ?
                           "Reply" : "Event";
             vm.printTrace(direction + " " + type + ". id=" + packet.id +
                           ", length=" + packet.data.length +
-                          ", errorCode=" + packet.errorCode +  
-                          ", flags=" + packet.flags);  
+                          ", errorCode=" + packet.errorCode +
+                          ", flags=" + packet.flags);
         }
         StringBuffer line = new StringBuffer(80);
         line.append("0000: ");
@@ -113,22 +113,22 @@ public class TargetVM implements Runnable {
 
         while(shouldListen) {
 
-	    boolean done = false;
+            boolean done = false;
             try {
-		byte b[] = connection.readPacket();
-		if (b.length == 0) {
-		    done = true;	
-		}
-		p = Packet.fromByteArray(b);
+                byte b[] = connection.readPacket();
+                if (b.length == 0) {
+                    done = true;
+                }
+                p = Packet.fromByteArray(b);
             } catch (IOException e) {
-		done = true;
-	    }
+                done = true;
+            }
 
-	    if (done) {
-		shouldListen = false;
-		try {
+            if (done) {
+                shouldListen = false;
+                try {
                     connection.close();
-		} catch (IOException ioe) { }
+                } catch (IOException ioe) { }
                 break;
             }
 
@@ -143,13 +143,13 @@ public class TargetVM implements Runnable {
                 /*if(p.errorCode != Packet.ReplyNoError) {
                     System.err.println("Packet " + p.id + " returned failure = " + p.errorCode);
                 }*/
-                
+
                 vm.state().notifyCommandComplete(p.id);
                 idString = String.valueOf(p.id);
 
                 synchronized(waitingQueue) {
                     p2 = (Packet)waitingQueue.get(idString);
-                    
+
                     if (p2 != null)
                         waitingQueue.remove(idString);
                 }
@@ -184,7 +184,7 @@ public class TargetVM implements Runnable {
             }
         }
 
-        // indirectly throw VMDisconnectedException to 
+        // indirectly throw VMDisconnectedException to
         // command requesters.
         synchronized(waitingQueue) {
             Iterator iter = waitingQueue.values().iterator();
@@ -216,9 +216,9 @@ public class TargetVM implements Runnable {
     }
 
     /* Events should not be constructed on this thread (the thread
-     * which reads all data from the transport). This means that the 
-     * packet cannot be converted to real JDI objects as that may 
-     * involve further communications with the back end which would 
+     * which reads all data from the transport). This means that the
+     * packet cannot be converted to real JDI objects as that may
+     * involve further communications with the back end which would
      * deadlock.
      *
      * Instead the whole packet is passed for lazy eval by a queue
@@ -318,14 +318,14 @@ public class TargetVM implements Runnable {
             vm.printTrace("Target VM i/f closing event queues");
         }
         shouldListen = false;
-	try {
+        try {
             connection.close();
-	} catch (IOException ioe) { }
+        } catch (IOException ioe) { }
     }
 
     static private class EventController extends Thread {
         VirtualMachineImpl vm;
-        int controlRequest = 0;  
+        int controlRequest = 0;
 
         EventController(VirtualMachineImpl vm) {
             super(vm.threadGroupForJDI(), "JDI Event Control Thread");
@@ -363,8 +363,8 @@ public class TargetVM implements Runnable {
                     }
                 } catch (JDWPException e) {
                     /*
-                     * Don't want to terminate the thread, so the 
-                     * stack trace is printed and we continue. 
+                     * Don't want to terminate the thread, so the
+                     * stack trace is printed and we continue.
                      */
                     e.toJDIException().printStackTrace(System.err);
                 }
@@ -373,4 +373,3 @@ public class TargetVM implements Runnable {
     }
 
 }
-

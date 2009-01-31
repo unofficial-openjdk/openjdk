@@ -32,7 +32,6 @@ import java.util.*;
  * of the task.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class CountedTimerTask extends TimerTask {

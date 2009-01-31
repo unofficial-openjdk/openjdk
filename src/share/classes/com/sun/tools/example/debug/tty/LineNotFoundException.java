@@ -29,11 +29,11 @@ public class LineNotFoundException extends Exception
 {
     public LineNotFoundException()
     {
-	super();
+        super();
     }
 
     public LineNotFoundException(String s)
     {
-	super(s);
+        super(s);
     }
 }

@@ -35,10 +35,10 @@
  * LoopMacros.h to manipulate a surface of type "IntRgb".
  */
 
-typedef jint	IntRgbPixelType;
-typedef jint	IntRgbDataType;
+typedef jint    IntRgbPixelType;
+typedef jint    IntRgbDataType;
 
-#define IntRgbPixelStride	4
+#define IntRgbPixelStride       4
 
 #define DeclareIntRgbLoadVars(PREFIX)
 #define DeclareIntRgbStoreVars(PREFIX)
@@ -72,14 +72,14 @@ typedef jint	IntRgbDataType;
 
 #define LoadIntRgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-	jint pixel = (pRas)[x]; \
-	ExtractIntDcmComponentsX123(pixel, r, g, b); \
+        jint pixel = (pRas)[x]; \
+        ExtractIntDcmComponentsX123(pixel, r, g, b); \
     } while (0)
 
 #define LoadIntRgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-	LoadIntRgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-	(a) = 0xff; \
+        LoadIntRgbTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+        (a) = 0xff; \
     } while (0)
 
 #define StoreIntRgbFrom1IntRgb(pRas, PREFIX, x, rgb) \
@@ -120,7 +120,7 @@ typedef jint	IntRgbDataType;
         ExtractIntDcmComponentsX123(pRas[0], r, g, b); \
         COMP_PREFIX ## G = ComposeByteGrayFrom3ByteRgb(r, g, b); \
     } while (0)
-    
+
 #define Postload1ShortGrayFromIntRgb(pRas, PREFIX, COMP_PREFIX) \
     do { \
         int r, g, b; \
@@ -129,7 +129,7 @@ typedef jint	IntRgbDataType;
     } while (0)
 
 
-#define IntRgbIsPremultiplied	0
+#define IntRgbIsPremultiplied   0
 
 #define DeclareIntRgbBlendFillVars(PREFIX)
 

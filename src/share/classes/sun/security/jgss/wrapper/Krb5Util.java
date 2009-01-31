@@ -30,12 +30,11 @@ import javax.security.auth.kerberos.ServicePermission;
 /**
  * This class is an utility class for Kerberos related stuff.
  * @author Valerie Peng
- * @version %I%, %G%
  * @since 1.6
  */
 class Krb5Util {
 
-    // Return the Kerberos TGS principal name using the domain 
+    // Return the Kerberos TGS principal name using the domain
     // of the specified <code>name</code>
     static String getTGSName(GSSNameElement name)
         throws GSSException {
@@ -50,13 +49,13 @@ class Krb5Util {
     // Perform the Service Permission check using the specified
     // <code>target</code> and <code>action</code>
     static void checkServicePermission(String target, String action) {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    SunNativeProvider.debug("Checking ServicePermission(" +
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            SunNativeProvider.debug("Checking ServicePermission(" +
                                     target + ", " + action + ")");
-	    ServicePermission perm = 
-		new ServicePermission(target, action);
-	    sm.checkPermission(perm);
-	}
+            ServicePermission perm =
+                new ServicePermission(target, action);
+            sm.checkPermission(perm);
+        }
     }
 }

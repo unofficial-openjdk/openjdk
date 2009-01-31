@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -41,49 +39,49 @@ public class Crc32CksumType extends CksumType {
     }
 
     public int confounderSize() {
-	return 0;
+        return 0;
     }
 
     public int cksumType() {
-	return Checksum.CKSUMTYPE_CRC32;
+        return Checksum.CKSUMTYPE_CRC32;
     }
 
     public boolean isSafe() {
-	return false;
+        return false;
     }
 
     public int cksumSize() {
-	return 4;
+        return 4;
     }
 
     public int keyType() {
-	return Krb5.KEYTYPE_NULL;
+        return Krb5.KEYTYPE_NULL;
     }
 
     public int keySize() {
-	return 0;
+        return 0;
     }
 
     public byte[] calculateChecksum(byte[] data, int size) {
-	return crc32.byte2crc32sum_bytes(data, size);
+        return crc32.byte2crc32sum_bytes(data, size);
     }
 
     public byte[] calculateKeyedChecksum(byte[] data, int size,
-					 byte[] key, int usage) {
-					     return null;
-					 }
+                                         byte[] key, int usage) {
+                                             return null;
+                                         }
 
     public boolean verifyKeyedChecksum(byte[] data, int size,
-				       byte[] key, byte[] checksum, int usage) {
-	return false;
+                                       byte[] key, byte[] checksum, int usage) {
+        return false;
     }
 
     public static byte[] int2quad(long input) {
-	byte[] output = new byte[4];
-	for (int i = 0; i < 4; i++) {
-	    output[i] =	(byte)((input >>> (i * 8)) & 0xff);
-	}
-	return output;
+        byte[] output = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            output[i] = (byte)((input >>> (i * 8)) & 0xff);
+        }
+        return output;
     }
 
     public static long bytes2long(byte[] input) {

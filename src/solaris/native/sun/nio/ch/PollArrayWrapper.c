@@ -68,7 +68,7 @@ ipoll(struct pollfd fds[], unsigned int nfds, int timeout)
     }
 }
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_sun_nio_ch_PollArrayWrapper_poll0(JNIEnv *env, jobject this,
                                        jlong address, jint numfds,
                                        jlong timeout)
@@ -79,10 +79,10 @@ Java_sun_nio_ch_PollArrayWrapper_poll0(JNIEnv *env, jobject this,
     a = (struct pollfd *) jlong_to_ptr(address);
 
     if (timeout <= 0) {           /* Indefinite or no wait */
-        RESTARTABLE (poll(a, numfds, timeout), err);  
+        RESTARTABLE (poll(a, numfds, timeout), err);
     } else {                     /* Bounded wait; bounded restarts */
-        err = ipoll(a, numfds, timeout);  
-    } 
+        err = ipoll(a, numfds, timeout);
+    }
 
     if (err < 0) {
         JNU_ThrowIOExceptionWithLastError(env, "Poll failed");

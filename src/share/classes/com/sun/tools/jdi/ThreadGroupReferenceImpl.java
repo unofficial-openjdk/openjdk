@@ -57,7 +57,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     public String name() {
         if (name == null) {
             // Does not need synchronization, since worst-case
-            // static info is fetched twice (Thread group name 
+            // static info is fetched twice (Thread group name
             // cannot change)
             try {
                 name = JDWP.ThreadGroupReference.Name.
@@ -72,7 +72,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     public ThreadGroupReference parent() {
         if (!triedParent) {
             // Does not need synchronization, since worst-case
-            // static info is fetched twice (Thread group parent cannot 
+            // static info is fetched twice (Thread group parent cannot
             // change)
             try {
                 parent = JDWP.ThreadGroupReference.Parent.
@@ -127,7 +127,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
                 if (local != null) {
                     local.kids = kids;
                     if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
-                        vm.printTrace(description() + 
+                        vm.printTrace(description() +
                                       " temporarily caching children ");
                     }
                 }
@@ -147,7 +147,7 @@ public class ThreadGroupReferenceImpl extends ObjectReferenceImpl
     }
 
     public String toString() {
-        return "instance of " + referenceType().name() + 
+        return "instance of " + referenceType().name() +
                "(name='" + name() + "', " + "id=" + uniqueID() + ")";
     }
 

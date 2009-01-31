@@ -34,7 +34,6 @@ import java.math.BigInteger;
  *
  * @author Jan Luehe
  *
- * @version %I% %E%
  *
  * @see java.security.Key
  * @see java.security.KeyFactory
@@ -72,20 +71,20 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
     * coefficient q-1 mod p
     */
     public RSAPrivateCrtKeySpec(BigInteger modulus,
-				BigInteger publicExponent,
-				BigInteger privateExponent,
-				BigInteger primeP,
-				BigInteger primeQ,
-				BigInteger primeExponentP,
-				BigInteger primeExponentQ,
-				BigInteger crtCoefficient) {
-	super(modulus, privateExponent);
-	this.publicExponent = publicExponent;
-	this.primeP = primeP;
-	this.primeQ = primeQ;
-	this.primeExponentP = primeExponentP;
-	this.primeExponentQ = primeExponentQ;
-	this.crtCoefficient = crtCoefficient;
+                                BigInteger publicExponent,
+                                BigInteger privateExponent,
+                                BigInteger primeP,
+                                BigInteger primeQ,
+                                BigInteger primeExponentP,
+                                BigInteger primeExponentQ,
+                                BigInteger crtCoefficient) {
+        super(modulus, privateExponent);
+        this.publicExponent = publicExponent;
+        this.primeP = primeP;
+        this.primeQ = primeQ;
+        this.primeExponentP = primeExponentP;
+        this.primeExponentQ = primeExponentQ;
+        this.crtCoefficient = crtCoefficient;
     }
 
     /**
@@ -94,7 +93,7 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the public exponent
      */
     public BigInteger getPublicExponent() {
-	return this.publicExponent;
+        return this.publicExponent;
     }
 
     /**
@@ -103,7 +102,7 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the primeP
      */
     public BigInteger getPrimeP() {
-	return this.primeP;
+        return this.primeP;
     }
 
     /**
@@ -112,7 +111,7 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the primeQ
      */
     public BigInteger getPrimeQ() {
-	return this.primeQ;
+        return this.primeQ;
     }
 
     /**
@@ -121,7 +120,7 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the primeExponentP
      */
     public BigInteger getPrimeExponentP() {
-	return this.primeExponentP;
+        return this.primeExponentP;
     }
 
     /**
@@ -130,7 +129,7 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the primeExponentQ
      */
     public BigInteger getPrimeExponentQ() {
-	return this.primeExponentQ;
+        return this.primeExponentQ;
     }
 
     /**
@@ -139,6 +138,6 @@ public class RSAPrivateCrtKeySpec extends RSAPrivateKeySpec {
      * @return the crtCoefficient
      */
     public BigInteger getCrtCoefficient() {
-	return this.crtCoefficient;
+        return this.crtCoefficient;
     }
 }

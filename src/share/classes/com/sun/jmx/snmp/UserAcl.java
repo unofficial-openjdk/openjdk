@@ -34,7 +34,7 @@ import java.net.InetAddress;
 /**
  * Defines the user based ACL used by the SNMP protocol adaptor.
  * <p>
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */

@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *   1. method_compile_stat.d -c "java ..." TOP_RESULTS_COUNT INTERVAL_SECS
  *   2. method_compile_stat.d -p JAVA_PID TOP_RESULTS_COUNT INTERVAL_SECS

@@ -79,11 +79,11 @@ public class XClipboard extends SunClipboard implements Runnable {
 
     protected synchronized void setContentsNative(Transferable contents) {
         SortedMap formatMap = DataTransferer.getInstance().getFormatsForTransferable
-	        (contents, DataTransferer.adaptFlavorMap(flavorMap));
+                (contents, DataTransferer.adaptFlavorMap(flavorMap));
         long[] formats =
             DataTransferer.getInstance().keysToLongArray(formatMap);
 
-        if (!selection.setOwner(contents, formatMap, formats, 
+        if (!selection.setOwner(contents, formatMap, formats,
                                 XToolkit.getCurrentServerTime())) {
             this.owner = null;
             this.contents = null;

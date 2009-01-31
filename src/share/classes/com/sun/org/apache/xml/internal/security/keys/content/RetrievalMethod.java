@@ -42,7 +42,7 @@ public class RetrievalMethod extends SignatureElementProxy
         implements KeyInfoContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(RetrievalMethod.class.getName());
    //J-
     /** DSA retrieval */
@@ -110,7 +110,7 @@ public class RetrievalMethod extends SignatureElementProxy
    /**
     * Method getURI
     *
-    * 
+    *
     * @return URI string
     */
    public String getURI() {
@@ -133,7 +133,7 @@ public class RetrievalMethod extends SignatureElementProxy
 
       try {
        Element transformsElem =
-             XMLUtils.selectDsNode(this._constructionElement,                                                
+             XMLUtils.selectDsNode(this._constructionElement,
                                                 Constants
                                                    ._TAG_TRANSFORMS, 0);
 
@@ -146,7 +146,7 @@ public class RetrievalMethod extends SignatureElementProxy
          throw new XMLSecurityException("empty", ex);
       }
    }
-   
+
    /** @inheritDoc */
    public String getBaseLocalName() {
       return Constants._TAG_RETRIEVALMETHOD;

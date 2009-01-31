@@ -57,7 +57,7 @@ package sun.font;
  * - FontFamily objects
  * - FontManager.registeredFonts map
  * - FontInfo object on a SunGraphics2D
- * 
+ *
  * On discovering a bad font, all but the latter remove references to
  * the font. See FontManager.deRegisterBadFont(Font2D)
  */
@@ -67,6 +67,6 @@ public final class Font2DHandle {
     public Font2D font2D;
 
     public Font2DHandle(Font2D font) {
-	font2D = font;
+        font2D = font;
     }
 }

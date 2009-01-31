@@ -45,7 +45,7 @@ public class IllegalBlockSizeException
      * exception.
      */
     public IllegalBlockSizeException() {
-	super();
+        super();
     }
 
     /**
@@ -55,6 +55,6 @@ public class IllegalBlockSizeException
      * @param msg the detail message.
      */
     public IllegalBlockSizeException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

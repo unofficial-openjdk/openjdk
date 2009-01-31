@@ -77,8 +77,8 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * calls to 'graphics'.
      */
     public ProxyGraphics2D(Graphics2D graphics, PrinterJob printerJob) {
-	mGraphics = graphics;
-	mPrinterJob = printerJob;
+        mGraphics = graphics;
+        mPrinterJob = printerJob;
     }
 
     /**
@@ -86,7 +86,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * for this instance.
      */
     public Graphics2D getDelegate() {
-	return mGraphics;
+        return mGraphics;
     }
 
     /**
@@ -94,48 +94,48 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * drawing.
      */
     public void setDelegate(Graphics2D graphics) {
-	mGraphics = graphics;
+        mGraphics = graphics;
     }
 
     public PrinterJob getPrinterJob() {
         return mPrinterJob;
     }
-	
+
     /**
      * Returns the device configuration associated with this Graphics2D.
      */
     public GraphicsConfiguration getDeviceConfiguration() {
-	return ((RasterPrinterJob)mPrinterJob).getPrinterGraphicsConfig();
+        return ((RasterPrinterJob)mPrinterJob).getPrinterGraphicsConfig();
     }
 
 /* The Delegated Graphics Methods */
 
     /**
-     * Creates a new <code>Graphics</code> object that is 
+     * Creates a new <code>Graphics</code> object that is
      * a copy of this <code>Graphics</code> object.
-     * @return     a new graphics context that is a copy of 
+     * @return     a new graphics context that is a copy of
      *                       this graphics context.
      * @since      JDK1.0
      */
     public Graphics create() {
-	return new ProxyGraphics2D((Graphics2D) mGraphics.create(),
-				   mPrinterJob);
+        return new ProxyGraphics2D((Graphics2D) mGraphics.create(),
+                                   mPrinterJob);
     }
 
     /**
      * Translates the origin of the graphics context to the point
-     * (<i>x</i>,&nbsp;<i>y</i>) in the current coordinate system. 
-     * Modifies this graphics context so that its new origin corresponds 
-     * to the point (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's 
-     * original coordinate system.  All coordinates used in subsequent 
-     * rendering operations on this graphics context will be relative 
+     * (<i>x</i>,&nbsp;<i>y</i>) in the current coordinate system.
+     * Modifies this graphics context so that its new origin corresponds
+     * to the point (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's
+     * original coordinate system.  All coordinates used in subsequent
+     * rendering operations on this graphics context will be relative
      * to this new origin.
      * @param  x   the <i>x</i> coordinate.
      * @param  y   the <i>y</i> coordinate.
      * @since   JDK1.0
      */
     public void translate(int x, int y) {
-	mGraphics.translate(x, y);
+        mGraphics.translate(x, y);
     }
 
     /**
@@ -144,13 +144,13 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * This is equivalent to calling transform(T), where T is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *		[   1    0    tx  ]
-     *		[   0    1    ty  ]
-     *		[   0    0    1   ]
+     *          [   1    0    tx  ]
+     *          [   0    1    ty  ]
+     *          [   0    0    1   ]
      * </pre>
      */
     public void translate(double tx, double ty) {
-	mGraphics.translate(tx, ty);
+        mGraphics.translate(tx, ty);
     }
 
     /**
@@ -159,16 +159,16 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * This is equivalent to calling transform(R), where R is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *		[   cos(theta)    -sin(theta)    0   ]
-     *		[   sin(theta)     cos(theta)    0   ]
-     *		[       0              0         1   ]
+     *          [   cos(theta)    -sin(theta)    0   ]
+     *          [   sin(theta)     cos(theta)    0   ]
+     *          [       0              0         1   ]
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
      * @param theta The angle of rotation in radians.
      */
     public void rotate(double theta) {
-	mGraphics.rotate(theta);
+        mGraphics.rotate(theta);
     }
 
     /**
@@ -176,9 +176,9 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * translated rotation transformation.
      * This is equivalent to the following sequence of calls:
      * <pre>
-     *		translate(x, y);
-     *		rotate(theta);
-     *		translate(-x, -y);
+     *          translate(x, y);
+     *          rotate(theta);
+     *          translate(-x, -y);
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
@@ -187,7 +187,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @param y The x coordinate of the origin of the rotation
      */
     public void rotate(double theta, double x, double y) {
-	mGraphics.rotate(theta, x, y);
+        mGraphics.rotate(theta, x, y);
     }
 
     /**
@@ -196,13 +196,13 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * This is equivalent to calling transform(S), where S is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *		[   sx   0    0   ]
-     *		[   0    sy   0   ]
-     *		[   0    0    1   ]
+     *          [   sx   0    0   ]
+     *          [   0    sy   0   ]
+     *          [   0    0    1   ]
      * </pre>
      */
     public void scale(double sx, double sy) {
-	mGraphics.scale(sx, sy);
+        mGraphics.scale(sx, sy);
     }
 
     /**
@@ -211,9 +211,9 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * This is equivalent to calling transform(SH), where SH is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *		[   1   shx   0   ]
-     *		[  shy   1    0   ]
-     *		[   0    0    1   ]
+     *          [   1   shx   0   ]
+     *          [  shy   1    0   ]
+     *          [   0    0    1   ]
      * </pre>
      * @param shx The factor by which coordinates are shifted towards the
      * positive X axis direction according to their Y coordinate
@@ -221,7 +221,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * positive Y axis direction according to their X coordinate
      */
     public void shear(double shx, double shy) {
-	mGraphics.shear(shx, shy);
+        mGraphics.shear(shx, shy);
     }
 
     /**
@@ -232,52 +232,52 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since     JDK1.0
      */
     public Color getColor() {
-	return mGraphics.getColor();
+        return mGraphics.getColor();
     }
 
     /**
-     * Sets this graphics context's current color to the specified 
-     * color. All subsequent graphics operations using this graphics 
-     * context use this specified color. 
+     * Sets this graphics context's current color to the specified
+     * color. All subsequent graphics operations using this graphics
+     * context use this specified color.
      * @param     c   the new rendering color.
      * @see       java.awt.Color
      * @see       java.awt.Graphics#getColor
      * @since     JDK1.0
      */
     public void setColor(Color c) {
-	mGraphics.setColor(c);
+        mGraphics.setColor(c);
     }
 
     /**
-     * Sets the paint mode of this graphics context to overwrite the 
-     * destination with this graphics context's current color. 
+     * Sets the paint mode of this graphics context to overwrite the
+     * destination with this graphics context's current color.
      * This sets the logical pixel operation function to the paint or
      * overwrite mode.  All subsequent rendering operations will
-     * overwrite the destination with the current color. 
+     * overwrite the destination with the current color.
      * @since   JDK1.0
      */
     public void setPaintMode() {
-	mGraphics.setPaintMode();
+        mGraphics.setPaintMode();
     }
 
     /**
-     * Sets the paint mode of this graphics context to alternate between 
-     * this graphics context's current color and the new specified color. 
-     * This specifies that logical pixel operations are performed in the 
-     * XOR mode, which alternates pixels between the current color and 
-     * a specified XOR color. 
+     * Sets the paint mode of this graphics context to alternate between
+     * this graphics context's current color and the new specified color.
+     * This specifies that logical pixel operations are performed in the
+     * XOR mode, which alternates pixels between the current color and
+     * a specified XOR color.
      * <p>
-     * When drawing operations are performed, pixels which are the 
-     * current color are changed to the specified color, and vice versa. 
+     * When drawing operations are performed, pixels which are the
+     * current color are changed to the specified color, and vice versa.
      * <p>
-     * Pixels that are of colors other than those two colors are changed 
-     * in an unpredictable but reversible manner; if the same figure is 
-     * drawn twice, then all pixels are restored to their original values. 
+     * Pixels that are of colors other than those two colors are changed
+     * in an unpredictable but reversible manner; if the same figure is
+     * drawn twice, then all pixels are restored to their original values.
      * @param     c1 the XOR alternation color
      * @since     JDK1.0
      */
     public void setXORMode(Color c1) {
-	mGraphics.setXORMode(c1);
+        mGraphics.setXORMode(c1);
     }
 
     /**
@@ -288,13 +288,13 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since     JDK1.0
      */
     public Font getFont() {
-	return mGraphics.getFont();
+        return mGraphics.getFont();
     }
 
     /**
-     * Sets this graphics context's font to the specified font. 
-     * All subsequent text operations using this graphics context 
-     * use this font. 
+     * Sets this graphics context's font to the specified font.
+     * All subsequent text operations using this graphics context
+     * use this font.
      * @param  font   the font.
      * @see     java.awt.Graphics#getFont
      * @see     java.awt.Graphics#drawChars(java.lang.String, int, int)
@@ -303,7 +303,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since   JDK1.0
     */
     public void setFont(Font font) {
-	mGraphics.setFont(font);
+        mGraphics.setFont(font);
     }
 
     /**
@@ -316,7 +316,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since     JDK1.0
      */
     public FontMetrics getFontMetrics(Font f) {
-	return mGraphics.getFontMetrics(f);
+        return mGraphics.getFontMetrics(f);
     }
 
     /**
@@ -339,11 +339,11 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public Rectangle getClipBounds() {
-	return mGraphics.getClipBounds();
+        return mGraphics.getClipBounds();
     }
 
 
-    /** 
+    /**
      * Intersects the current clip with the specified rectangle.
      * The resulting clipping area is the intersection of the current
      * clipping area and the specified rectangle.
@@ -358,7 +358,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip(Shape)
      */
     public void clipRect(int x, int y, int width, int height) {
-	mGraphics.clipRect(x, y, width, height);
+        mGraphics.clipRect(x, y, width, height);
     }
 
 
@@ -375,12 +375,12 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public void setClip(int x, int y, int width, int height) {
-	mGraphics.setClip(x, y, width, height);
+        mGraphics.setClip(x, y, width, height);
     }
 
     /**
      * Gets the current clipping area.
-     * @return      a <code>Shape</code> object representing the 
+     * @return      a <code>Shape</code> object representing the
      *                      current clipping area.
      * @see         java.awt.Graphics#getClipBounds
      * @see         java.awt.Graphics#clipRect
@@ -389,17 +389,17 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public Shape getClip() {
-	return mGraphics.getClip();
+        return mGraphics.getClip();
     }
 
 
     /**
      * Sets the current clipping area to an arbitrary clip shape.
-     * Not all objects which implement the <code>Shape</code> 
-     * interface can be used to set the clip.  The only 
-     * <code>Shape</code> objects which are guaranteed to be 
+     * Not all objects which implement the <code>Shape</code>
+     * interface can be used to set the clip.  The only
+     * <code>Shape</code> objects which are guaranteed to be
      * supported are <code>Shape</code> objects which are
-     * obtained via the <code>getClip</code> method and via 
+     * obtained via the <code>getClip</code> method and via
      * <code>Rectangle</code> objects.
      * @see         java.awt.Graphics#getClip()
      * @see         java.awt.Graphics#clipRect
@@ -407,21 +407,21 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public void setClip(Shape clip) {
-	mGraphics.setClip(clip);
+        mGraphics.setClip(clip);
     }
 
 
     /**
-     * Copies an area of the component by a distance specified by 
+     * Copies an area of the component by a distance specified by
      * <code>dx</code> and <code>dy</code>. From the point specified
      * by <code>x</code> and <code>y</code>, this method
-     * copies downwards and to the right.  To copy an area of the 
-     * component to the left or upwards, specify a negative value for 
+     * copies downwards and to the right.  To copy an area of the
+     * component to the left or upwards, specify a negative value for
      * <code>dx</code> or <code>dy</code>.
-     * If a portion of the source rectangle lies outside the bounds 
-     * of the component, or is obscured by another window or component, 
+     * If a portion of the source rectangle lies outside the bounds
+     * of the component, or is obscured by another window or component,
      * <code>copyArea</code> will be unable to copy the associated
-     * pixels. The area that is omitted can be refreshed by calling 
+     * pixels. The area that is omitted can be refreshed by calling
      * the component's <code>paint</code> method.
      * @param       x the <i>x</i> coordinate of the source rectangle.
      * @param       y the <i>y</i> coordinate of the source rectangle.
@@ -432,14 +432,14 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void copyArea(int x, int y, int width, int height,
-			 int dx, int dy) {
-	mGraphics.copyArea(x, y, width, height, dx, dy);
+                         int dx, int dy) {
+        mGraphics.copyArea(x, y, width, height, dx, dy);
     }
 
-    /** 
-     * Draws a line, using the current color, between the points 
-     * <code>(x1,&nbsp;y1)</code> and <code>(x2,&nbsp;y2)</code> 
-     * in this graphics context's coordinate system. 
+    /**
+     * Draws a line, using the current color, between the points
+     * <code>(x1,&nbsp;y1)</code> and <code>(x2,&nbsp;y2)</code>
+     * in this graphics context's coordinate system.
      * @param   x1  the first point's <i>x</i> coordinate.
      * @param   y1  the first point's <i>y</i> coordinate.
      * @param   x2  the second point's <i>x</i> coordinate.
@@ -447,23 +447,23 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since   JDK1.0
      */
     public void drawLine(int x1, int y1, int x2, int y2) {
-	mGraphics.drawLine(x1, y1, x2, y2);
+        mGraphics.drawLine(x1, y1, x2, y2);
     }
 
 
-    /** 
-     * Fills the specified rectangle. 
-     * The left and right edges of the rectangle are at 
-     * <code>x</code> and <code>x&nbsp;+&nbsp;width&nbsp;-&nbsp;1</code>. 
-     * The top and bottom edges are at 
-     * <code>y</code> and <code>y&nbsp;+&nbsp;height&nbsp;-&nbsp;1</code>. 
-     * The resulting rectangle covers an area 
-     * <code>width</code> pixels wide by 
+    /**
+     * Fills the specified rectangle.
+     * The left and right edges of the rectangle are at
+     * <code>x</code> and <code>x&nbsp;+&nbsp;width&nbsp;-&nbsp;1</code>.
+     * The top and bottom edges are at
+     * <code>y</code> and <code>y&nbsp;+&nbsp;height&nbsp;-&nbsp;1</code>.
+     * The resulting rectangle covers an area
+     * <code>width</code> pixels wide by
      * <code>height</code> pixels tall.
-     * The rectangle is filled using the graphics context's current color. 
-     * @param         x   the <i>x</i> coordinate 
+     * The rectangle is filled using the graphics context's current color.
+     * @param         x   the <i>x</i> coordinate
      *                         of the rectangle to be filled.
-     * @param         y   the <i>y</i> coordinate 
+     * @param         y   the <i>y</i> coordinate
      *                         of the rectangle to be filled.
      * @param         width   the width of the rectangle to be filled.
      * @param         height   the height of the rectangle to be filled.
@@ -472,18 +472,18 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since         JDK1.0
      */
     public void fillRect(int x, int y, int width, int height) {
-	mGraphics.fillRect(x, y, width, height);
+        mGraphics.fillRect(x, y, width, height);
     }
 
-    /** 
+    /**
      * Clears the specified rectangle by filling it with the background
-     * color of the current drawing surface. This operation does not 
-     * use the current paint mode. 
+     * color of the current drawing surface. This operation does not
+     * use the current paint mode.
      * <p>
-     * Beginning with Java&nbsp;1.1, the background color 
-     * of offscreen images may be system dependent. Applications should 
-     * use <code>setColor</code> followed by <code>fillRect</code> to 
-     * ensure that an offscreen image is cleared to a specific color. 
+     * Beginning with Java&nbsp;1.1, the background color
+     * of offscreen images may be system dependent. Applications should
+     * use <code>setColor</code> followed by <code>fillRect</code> to
+     * ensure that an offscreen image is cleared to a specific color.
      * @param       x the <i>x</i> coordinate of the rectangle to clear.
      * @param       y the <i>y</i> coordinate of the rectangle to clear.
      * @param       width the width of the rectangle to clear.
@@ -496,65 +496,65 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void clearRect(int x, int y, int width, int height) {
-	mGraphics.clearRect(x, y, width, height);
+        mGraphics.clearRect(x, y, width, height);
     }
 
-    /** 
-     * Draws an outlined round-cornered rectangle using this graphics 
-     * context's current color. The left and right edges of the rectangle 
-     * are at <code>x</code> and <code>x&nbsp;+&nbsp;width</code>, 
-     * respectively. The top and bottom edges of the rectangle are at 
-     * <code>y</code> and <code>y&nbsp;+&nbsp;height</code>. 
+    /**
+     * Draws an outlined round-cornered rectangle using this graphics
+     * context's current color. The left and right edges of the rectangle
+     * are at <code>x</code> and <code>x&nbsp;+&nbsp;width</code>,
+     * respectively. The top and bottom edges of the rectangle are at
+     * <code>y</code> and <code>y&nbsp;+&nbsp;height</code>.
      * @param      x the <i>x</i> coordinate of the rectangle to be drawn.
      * @param      y the <i>y</i> coordinate of the rectangle to be drawn.
      * @param      width the width of the rectangle to be drawn.
      * @param      height the height of the rectangle to be drawn.
-     * @param      arcWidth the horizontal diameter of the arc 
+     * @param      arcWidth the horizontal diameter of the arc
      *                    at the four corners.
-     * @param      arcHeight the vertical diameter of the arc 
+     * @param      arcHeight the vertical diameter of the arc
      *                    at the four corners.
      * @see        java.awt.Graphics#fillRoundRect
      * @since      JDK1.0
      */
     public void drawRoundRect(int x, int y, int width, int height,
-			      int arcWidth, int arcHeight) {
-	mGraphics.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
+                              int arcWidth, int arcHeight) {
+        mGraphics.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
 
-    /** 
+    /**
      * Fills the specified rounded corner rectangle with the current color.
-     * The left and right edges of the rectangle 
-     * are at <code>x</code> and <code>x&nbsp;+&nbsp;width&nbsp;-&nbsp;1</code>, 
-     * respectively. The top and bottom edges of the rectangle are at 
-     * <code>y</code> and <code>y&nbsp;+&nbsp;height&nbsp;-&nbsp;1</code>. 
+     * The left and right edges of the rectangle
+     * are at <code>x</code> and <code>x&nbsp;+&nbsp;width&nbsp;-&nbsp;1</code>,
+     * respectively. The top and bottom edges of the rectangle are at
+     * <code>y</code> and <code>y&nbsp;+&nbsp;height&nbsp;-&nbsp;1</code>.
      * @param       x the <i>x</i> coordinate of the rectangle to be filled.
      * @param       y the <i>y</i> coordinate of the rectangle to be filled.
      * @param       width the width of the rectangle to be filled.
      * @param       height the height of the rectangle to be filled.
-     * @param       arcWidth the horizontal diameter 
+     * @param       arcWidth the horizontal diameter
      *                     of the arc at the four corners.
-     * @param       arcHeight the vertical diameter 
+     * @param       arcHeight the vertical diameter
      *                     of the arc at the four corners.
      * @see         java.awt.Graphics#drawRoundRect
      * @since       JDK1.0
      */
     public void fillRoundRect(int x, int y, int width, int height,
-				       int arcWidth, int arcHeight) {
-	mGraphics.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
+                                       int arcWidth, int arcHeight) {
+        mGraphics.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
 
-    /** 
+    /**
      * Draws the outline of an oval.
-     * The result is a circle or ellipse that fits within the 
-     * rectangle specified by the <code>x</code>, <code>y</code>, 
-     * <code>width</code>, and <code>height</code> arguments. 
-     * <p> 
-     * The oval covers an area that is 
-     * <code>width&nbsp;+&nbsp;1</code> pixels wide 
-     * and <code>height&nbsp;+&nbsp;1</code> pixels tall. 
-     * @param       x the <i>x</i> coordinate of the upper left 
+     * The result is a circle or ellipse that fits within the
+     * rectangle specified by the <code>x</code>, <code>y</code>,
+     * <code>width</code>, and <code>height</code> arguments.
+     * <p>
+     * The oval covers an area that is
+     * <code>width&nbsp;+&nbsp;1</code> pixels wide
+     * and <code>height&nbsp;+&nbsp;1</code> pixels tall.
+     * @param       x the <i>x</i> coordinate of the upper left
      *                     corner of the oval to be drawn.
-     * @param       y the <i>y</i> coordinate of the upper left 
+     * @param       y the <i>y</i> coordinate of the upper left
      *                     corner of the oval to be drawn.
      * @param       width the width of the oval to be drawn.
      * @param       height the height of the oval to be drawn.
@@ -562,15 +562,15 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void drawOval(int x, int y, int width, int height) {
-	mGraphics.drawOval(x, y, width, height);
+        mGraphics.drawOval(x, y, width, height);
     }
 
-    /** 
+    /**
      * Fills an oval bounded by the specified rectangle with the
      * current color.
-     * @param       x the <i>x</i> coordinate of the upper left corner 
+     * @param       x the <i>x</i> coordinate of the upper left corner
      *                     of the oval to be filled.
-     * @param       y the <i>y</i> coordinate of the upper left corner 
+     * @param       y the <i>y</i> coordinate of the upper left corner
      *                     of the oval to be filled.
      * @param       width the width of the oval to be filled.
      * @param       height the height of the oval to be filled.
@@ -578,83 +578,83 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void fillOval(int x, int y, int width, int height) {
-	mGraphics.fillOval(x, y, width, height);
+        mGraphics.fillOval(x, y, width, height);
     }
 
     /**
-     * Draws the outline of a circular or elliptical arc 
+     * Draws the outline of a circular or elliptical arc
      * covering the specified rectangle.
      * <p>
-     * The resulting arc begins at <code>startAngle</code> and extends  
+     * The resulting arc begins at <code>startAngle</code> and extends
      * for <code>arcAngle</code> degrees, using the current color.
-     * Angles are interpreted such that 0&nbsp;degrees 
-     * is at the 3&nbsp;o'clock position. 
+     * Angles are interpreted such that 0&nbsp;degrees
+     * is at the 3&nbsp;o'clock position.
      * A positive value indicates a counter-clockwise rotation
      * while a negative value indicates a clockwise rotation.
      * <p>
-     * The center of the arc is the center of the rectangle whose origin 
-     * is (<i>x</i>,&nbsp;<i>y</i>) and whose size is specified by the 
-     * <code>width</code> and <code>height</code> arguments. 
+     * The center of the arc is the center of the rectangle whose origin
+     * is (<i>x</i>,&nbsp;<i>y</i>) and whose size is specified by the
+     * <code>width</code> and <code>height</code> arguments.
      * <p>
-     * The resulting arc covers an area 
+     * The resulting arc covers an area
      * <code>width&nbsp;+&nbsp;1</code> pixels wide
      * by <code>height&nbsp;+&nbsp;1</code> pixels tall.
-     * @param        x the <i>x</i> coordinate of the 
+     * @param        x the <i>x</i> coordinate of the
      *                    upper-left corner of the arc to be drawn.
-     * @param        y the <i>y</i>  coordinate of the 
+     * @param        y the <i>y</i>  coordinate of the
      *                    upper-left corner of the arc to be drawn.
      * @param        width the width of the arc to be drawn.
      * @param        height the height of the arc to be drawn.
      * @param        startAngle the beginning angle.
-     * @param        arcAngle the angular extent of the arc, 
+     * @param        arcAngle the angular extent of the arc,
      *                    relative to the start angle.
      * @see         java.awt.Graphics#fillArc
      * @since       JDK1.0
      */
     public void drawArc(int x, int y, int width, int height,
-				 int startAngle, int arcAngle) {
-	mGraphics.drawArc(x, y, width, height, startAngle, arcAngle);
+                                 int startAngle, int arcAngle) {
+        mGraphics.drawArc(x, y, width, height, startAngle, arcAngle);
     }
 
-    /** 
+    /**
      * Fills a circular or elliptical arc covering the specified rectangle.
      * <p>
-     * The resulting arc begins at <code>startAngle</code> and extends  
+     * The resulting arc begins at <code>startAngle</code> and extends
      * for <code>arcAngle</code> degrees.
-     * Angles are interpreted such that 0&nbsp;degrees 
-     * is at the 3&nbsp;o'clock position. 
+     * Angles are interpreted such that 0&nbsp;degrees
+     * is at the 3&nbsp;o'clock position.
      * A positive value indicates a counter-clockwise rotation
      * while a negative value indicates a clockwise rotation.
      * <p>
-     * The center of the arc is the center of the rectangle whose origin 
-     * is (<i>x</i>,&nbsp;<i>y</i>) and whose size is specified by the 
-     * <code>width</code> and <code>height</code> arguments. 
+     * The center of the arc is the center of the rectangle whose origin
+     * is (<i>x</i>,&nbsp;<i>y</i>) and whose size is specified by the
+     * <code>width</code> and <code>height</code> arguments.
      * <p>
-     * The resulting arc covers an area 
+     * The resulting arc covers an area
      * <code>width&nbsp;+&nbsp;1</code> pixels wide
      * by <code>height&nbsp;+&nbsp;1</code> pixels tall.
-     * @param        x the <i>x</i> coordinate of the 
+     * @param        x the <i>x</i> coordinate of the
      *                    upper-left corner of the arc to be filled.
-     * @param        y the <i>y</i>  coordinate of the 
+     * @param        y the <i>y</i>  coordinate of the
      *                    upper-left corner of the arc to be filled.
      * @param        width the width of the arc to be filled.
      * @param        height the height of the arc to be filled.
      * @param        startAngle the beginning angle.
-     * @param        arcAngle the angular extent of the arc, 
+     * @param        arcAngle the angular extent of the arc,
      *                    relative to the start angle.
      * @see         java.awt.Graphics#drawArc
      * @since       JDK1.0
      */
     public void fillArc(int x, int y, int width, int height,
-			int startAngle, int arcAngle) {
-	mGraphics.fillArc(x, y, width, height, startAngle, arcAngle);
+                        int startAngle, int arcAngle) {
+        mGraphics.fillArc(x, y, width, height, startAngle, arcAngle);
     }
 
-    /** 
-     * Draws a sequence of connected lines defined by 
-     * arrays of <i>x</i> and <i>y</i> coordinates. 
+    /**
+     * Draws a sequence of connected lines defined by
+     * arrays of <i>x</i> and <i>y</i> coordinates.
      * Each pair of (<i>x</i>,&nbsp;<i>y</i>) coordinates defines a point.
-     * The figure is not closed if the first point 
+     * The figure is not closed if the first point
      * differs from the last point.
      * @param       xPoints an array of <i>x</i> points
      * @param       yPoints an array of <i>y</i> points
@@ -663,21 +663,21 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public void drawPolyline(int xPoints[], int yPoints[],
-			     int nPoints) {
-	mGraphics.drawPolyline(xPoints, yPoints, nPoints);
+                             int nPoints) {
+        mGraphics.drawPolyline(xPoints, yPoints, nPoints);
     }
 
-    /** 
-     * Draws a closed polygon defined by 
-     * arrays of <i>x</i> and <i>y</i> coordinates. 
+    /**
+     * Draws a closed polygon defined by
+     * arrays of <i>x</i> and <i>y</i> coordinates.
      * Each pair of (<i>x</i>,&nbsp;<i>y</i>) coordinates defines a point.
      * <p>
-     * This method draws the polygon defined by <code>nPoint</code> line 
-     * segments, where the first <code>nPoint&nbsp;-&nbsp;1</code> 
-     * line segments are line segments from 
-     * <code>(xPoints[i&nbsp;-&nbsp;1],&nbsp;yPoints[i&nbsp;-&nbsp;1])</code> 
-     * to <code>(xPoints[i],&nbsp;yPoints[i])</code>, for 
-     * 1&nbsp;&le;&nbsp;<i>i</i>&nbsp;&le;&nbsp;<code>nPoints</code>.  
+     * This method draws the polygon defined by <code>nPoint</code> line
+     * segments, where the first <code>nPoint&nbsp;-&nbsp;1</code>
+     * line segments are line segments from
+     * <code>(xPoints[i&nbsp;-&nbsp;1],&nbsp;yPoints[i&nbsp;-&nbsp;1])</code>
+     * to <code>(xPoints[i],&nbsp;yPoints[i])</code>, for
+     * 1&nbsp;&le;&nbsp;<i>i</i>&nbsp;&le;&nbsp;<code>nPoints</code>.
      * The figure is automatically closed by drawing a line connecting
      * the final point to the first point, if those points are different.
      * @param        xPoints   a an array of <code>x</code> coordinates.
@@ -688,24 +688,24 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since        JDK1.0
      */
     public void drawPolygon(int xPoints[], int yPoints[],
-			    int nPoints) {
-	mGraphics.drawPolygon(xPoints, yPoints, nPoints);
+                            int nPoints) {
+        mGraphics.drawPolygon(xPoints, yPoints, nPoints);
     }
 
-    /** 
-     * Fills a closed polygon defined by 
-     * arrays of <i>x</i> and <i>y</i> coordinates. 
+    /**
+     * Fills a closed polygon defined by
+     * arrays of <i>x</i> and <i>y</i> coordinates.
      * <p>
-     * This method draws the polygon defined by <code>nPoint</code> line 
-     * segments, where the first <code>nPoint&nbsp;-&nbsp;1</code> 
-     * line segments are line segments from 
-     * <code>(xPoints[i&nbsp;-&nbsp;1],&nbsp;yPoints[i&nbsp;-&nbsp;1])</code> 
-     * to <code>(xPoints[i],&nbsp;yPoints[i])</code>, for 
-     * 1&nbsp;&le;&nbsp;<i>i</i>&nbsp;&le;&nbsp;<code>nPoints</code>.  
+     * This method draws the polygon defined by <code>nPoint</code> line
+     * segments, where the first <code>nPoint&nbsp;-&nbsp;1</code>
+     * line segments are line segments from
+     * <code>(xPoints[i&nbsp;-&nbsp;1],&nbsp;yPoints[i&nbsp;-&nbsp;1])</code>
+     * to <code>(xPoints[i],&nbsp;yPoints[i])</code>, for
+     * 1&nbsp;&le;&nbsp;<i>i</i>&nbsp;&le;&nbsp;<code>nPoints</code>.
      * The figure is automatically closed by drawing a line connecting
      * the final point to the first point, if those points are different.
      * <p>
-     * The area inside the polygon is defined using an 
+     * The area inside the polygon is defined using an
      * even-odd fill rule, also known as the alternating rule.
      * @param        xPoints   a an array of <code>x</code> coordinates.
      * @param        yPoints   a an array of <code>y</code> coordinates.
@@ -714,15 +714,15 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since        JDK1.0
      */
     public void fillPolygon(int xPoints[], int yPoints[],
-			    int nPoints) {
-	mGraphics.fillPolygon(xPoints, yPoints, nPoints);
+                            int nPoints) {
+        mGraphics.fillPolygon(xPoints, yPoints, nPoints);
     }
 
-    /** 
-     * Draws the text given by the specified string, using this 
-     * graphics context's current font and color. The baseline of the 
-     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this 
-     * graphics context's coordinate system. 
+    /**
+     * Draws the text given by the specified string, using this
+     * graphics context's current font and color. The baseline of the
+     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this
+     * graphics context's coordinate system.
      * @param       str      the string to be drawn.
      * @param       x        the <i>x</i> coordinate.
      * @param       y        the <i>y</i> coordinate.
@@ -731,19 +731,19 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void drawString(String str, int x, int y) {
-	mGraphics.drawString(str, x, y);
+        mGraphics.drawString(str, x, y);
     }
 
     /**
-     * Draws the text given by the specified iterator, using this 
+     * Draws the text given by the specified iterator, using this
      * graphics context's current color. The iterator has to specify a font
-     * for each character. The baseline of the 
-     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this 
-     * graphics context's coordinate system. 
+     * for each character. The baseline of the
+     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this
+     * graphics context's coordinate system.
      * The rendering attributes applied include the clip, transform,
      * paint or color, and composite attributes.
      * For characters in script systems such as Hebrew and Arabic,
-     * the glyphs may be draw from right to left, in which case the 
+     * the glyphs may be draw from right to left, in which case the
      * coordinate supplied is the the location of the leftmost character
      * on the baseline.
      * @param iterator the iterator whose text is to be drawn
@@ -760,15 +760,15 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
     }
 
     /**
-     * Draws the text given by the specified iterator, using this 
+     * Draws the text given by the specified iterator, using this
      * graphics context's current color. The iterator has to specify a font
-     * for each character. The baseline of the 
-     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this 
-     * graphics context's coordinate system. 
+     * for each character. The baseline of the
+     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in this
+     * graphics context's coordinate system.
      * The rendering attributes applied include the clip, transform,
      * paint or color, and composite attributes.
      * For characters in script systems such as Hebrew and Arabic,
-     * the glyphs may be draw from right to left, in which case the 
+     * the glyphs may be draw from right to left, in which case the
      * coordinate supplied is the the location of the leftmost character
      * on the baseline.
      * @param iterator the iterator whose text is to be drawn
@@ -784,52 +784,52 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
         mGraphics.drawString(iterator, x, y);
     }
 
-    /** 
+    /**
      * Draws as much of the specified image as is currently available.
-     * The image is drawn with its top-left corner at 
-     * (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's coordinate 
-     * space. Transparent pixels in the image do not affect whatever 
-     * pixels are already there. 
+     * The image is drawn with its top-left corner at
+     * (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's coordinate
+     * space. Transparent pixels in the image do not affect whatever
+     * pixels are already there.
      * <p>
      * This method returns immediately in all cases, even if the
-     * complete image has not yet been loaded, and it has not been dithered 
+     * complete image has not yet been loaded, and it has not been dithered
      * and converted for the current output device.
      * <p>
      * If the image has not yet been completely loaded, then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the specified image observer.
      * @param    img the specified image to be drawn.
      * @param    x   the <i>x</i> coordinate.
      * @param    y   the <i>y</i> coordinate.
-     * @param    observer    object to be notified as more of 
+     * @param    observer    object to be notified as more of
      *                          the image is converted.
      * @see      java.awt.Image
      * @see      java.awt.image.ImageObserver
      * @see      java.awt.image.ImageObserver#imageUpdate(java.awt.Image, int, int, int, int, int)
      * @since    JDK1.0
      */
-    public boolean drawImage(Image img, int x, int y, 
-			     ImageObserver observer) {
+    public boolean drawImage(Image img, int x, int y,
+                             ImageObserver observer) {
 
-	return mGraphics.drawImage(img, x, y, observer);
+        return mGraphics.drawImage(img, x, y, observer);
     }
 
     /**
      * Draws as much of the specified image as has already been scaled
      * to fit inside the specified rectangle.
      * <p>
-     * The image is drawn inside the specified rectangle of this 
-     * graphics context's coordinate space, and is scaled if 
+     * The image is drawn inside the specified rectangle of this
+     * graphics context's coordinate space, and is scaled if
      * necessary. Transparent pixels do not affect whatever pixels
-     * are already there. 
+     * are already there.
      * <p>
      * This method returns immediately in all cases, even if the
      * entire image has not yet been scaled, dithered, and converted
      * for the current output device.
      * If the current output representation is not yet complete, then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the image observer by calling its <code>imageUpdate</code> method.
      * <p>
      * A scaled version of an image will not necessarily be
@@ -842,7 +842,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @param    y      the <i>y</i> coordinate.
      * @param    width  the width of the rectangle.
      * @param    height the height of the rectangle.
-     * @param    observer    object to be notified as more of 
+     * @param    observer    object to be notified as more of
      *                          the image is converted.
      * @see      java.awt.Image
      * @see      java.awt.image.ImageObserver
@@ -850,50 +850,50 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since    JDK1.0
      */
     public boolean drawImage(Image img, int x, int y,
-			     int width, int height, 
-			     ImageObserver observer) {
+                             int width, int height,
+                             ImageObserver observer) {
 
-	return mGraphics.drawImage(img, x, y, width, height, observer);
+        return mGraphics.drawImage(img, x, y, width, height, observer);
     }
-    
-    /** 
+
+    /**
      * Draws as much of the specified image as is currently available.
-     * The image is drawn with its top-left corner at 
-     * (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's coordinate 
+     * The image is drawn with its top-left corner at
+     * (<i>x</i>,&nbsp;<i>y</i>) in this graphics context's coordinate
      * space.  Transparent pixels are drawn in the specified
      * background color.
-     * <p> 
+     * <p>
      * This operation is equivalent to filling a rectangle of the
      * width and height of the specified image with the given color and then
      * drawing the image on top of it, but possibly more efficient.
      * <p>
      * This method returns immediately in all cases, even if the
-     * complete image has not yet been loaded, and it has not been dithered 
+     * complete image has not yet been loaded, and it has not been dithered
      * and converted for the current output device.
      * <p>
      * If the image has not yet been completely loaded, then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the specified image observer.
      * @param    img    the specified image to be drawn.
      * @param    x      the <i>x</i> coordinate.
      * @param    y      the <i>y</i> coordinate.
      * @param    bgcolor the background color to paint under the
      *                         non-opaque portions of the image.
-     * @param    observer    object to be notified as more of 
+     * @param    observer    object to be notified as more of
      *                          the image is converted.
      * @see      java.awt.Image
      * @see      java.awt.image.ImageObserver
      * @see      java.awt.image.ImageObserver#imageUpdate(java.awt.Image, int, int, int, int, int)
      * @since    JDK1.0
      */
-    public boolean drawImage(Image img, int x, int y, 
-			     Color bgcolor,
-			     ImageObserver observer) {
+    public boolean drawImage(Image img, int x, int y,
+                             Color bgcolor,
+                             ImageObserver observer) {
 
-	if (img == null) {
-	    return true;
-	}
+        if (img == null) {
+            return true;
+        }
 
         boolean result;
 
@@ -911,10 +911,10 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * Draws as much of the specified image as has already been scaled
      * to fit inside the specified rectangle.
      * <p>
-     * The image is drawn inside the specified rectangle of this 
-     * graphics context's coordinate space, and is scaled if 
+     * The image is drawn inside the specified rectangle of this
+     * graphics context's coordinate space, and is scaled if
      * necessary. Transparent pixels are drawn in the specified
-     * background color. 
+     * background color.
      * This operation is equivalent to filling a rectangle of the
      * width and height of the specified image with the given color and then
      * drawing the image on top of it, but possibly more efficient.
@@ -924,7 +924,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * for the current output device.
      * If the current output representation is not yet complete then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the specified image observer.
      * <p>
      * A scaled version of an image will not necessarily be
@@ -939,7 +939,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @param    height    the height of the rectangle.
      * @param    bgcolor   the background color to paint under the
      *                         non-opaque portions of the image.
-     * @param    observer    object to be notified as more of 
+     * @param    observer    object to be notified as more of
      *                          the image is converted.
      * @see      java.awt.Image
      * @see      java.awt.image.ImageObserver
@@ -947,13 +947,13 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since    JDK1.0
      */
     public boolean drawImage(Image img, int x, int y,
-			     int width, int height, 
-			     Color bgcolor,
-			     ImageObserver observer) {
+                             int width, int height,
+                             Color bgcolor,
+                             ImageObserver observer) {
 
-	if (img == null) {
-	    return true;
-	}
+        if (img == null) {
+            return true;
+        }
 
         boolean result;
 
@@ -967,11 +967,11 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
 
         return result;
     }
-    
+
     /**
      * Draws as much of the specified area of the specified image as is
      * currently available, scaling it on the fly to fit inside the
-     * specified area of the destination drawable surface. Transparent pixels 
+     * specified area of the destination drawable surface. Transparent pixels
      * do not affect whatever pixels are already there.
      * <p>
      * This method returns immediately in all cases, even if the
@@ -979,7 +979,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * for the current output device.
      * If the current output representation is not yet complete then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the specified image observer.
      * <p>
      * This method always uses the unscaled version of the image
@@ -1016,20 +1016,20 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public boolean drawImage(Image img,
-				      int dx1, int dy1, int dx2, int dy2,
-				      int sx1, int sy1, int sx2, int sy2,
-				      ImageObserver observer) {
-	return mGraphics.drawImage(img, dx1, dy1, dx2, dy2,
-				   sx1, sy1, sx2, sy2,
-				   observer);
+                                      int dx1, int dy1, int dx2, int dy2,
+                                      int sx1, int sy1, int sx2, int sy2,
+                                      ImageObserver observer) {
+        return mGraphics.drawImage(img, dx1, dy1, dx2, dy2,
+                                   sx1, sy1, sx2, sy2,
+                                   observer);
     }
 
     /**
      * Draws as much of the specified area of the specified image as is
      * currently available, scaling it on the fly to fit inside the
-     * specified area of the destination drawable surface. 
+     * specified area of the destination drawable surface.
      * <p>
-     * Transparent pixels are drawn in the specified background color. 
+     * Transparent pixels are drawn in the specified background color.
      * This operation is equivalent to filling a rectangle of the
      * width and height of the specified image with the given color and then
      * drawing the image on top of it, but possibly more efficient.
@@ -1039,7 +1039,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * for the current output device.
      * If the current output representation is not yet complete then
      * <code>drawImage</code> returns <code>false</code>. As more of
-     * the image becomes available, the process that draws the image notifies 
+     * the image becomes available, the process that draws the image notifies
      * the specified image observer.
      * <p>
      * This method always uses the unscaled version of the image
@@ -1078,14 +1078,14 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.1
      */
     public boolean drawImage(Image img,
-			     int dx1, int dy1, int dx2, int dy2,
-			     int sx1, int sy1, int sx2, int sy2,
-			     Color bgcolor,
-			     ImageObserver observer) {
+                             int dx1, int dy1, int dx2, int dy2,
+                             int sx1, int sy1, int sx2, int sy2,
+                             Color bgcolor,
+                             ImageObserver observer) {
 
-	if (img == null) {
-	    return true;
-	}
+        if (img == null) {
+            return true;
+        }
 
         boolean result;
         if (needToCopyBgColorImage(img)) {
@@ -1198,7 +1198,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public void drawRenderedImage(RenderedImage img,
-				  AffineTransform xform) {
+                                  AffineTransform xform) {
         mGraphics.drawRenderedImage(img, xform);
     }
 
@@ -1207,15 +1207,15 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
     public void drawRenderableImage(RenderableImage img,
                                     AffineTransform xform) {
 
-	if (img == null) {
-	    return;
-	}
+        if (img == null) {
+            return;
+        }
 
         AffineTransform pipeTransform = getTransform();
         AffineTransform concatTransform = new AffineTransform(xform);
         concatTransform.concatenate(pipeTransform);
         AffineTransform reverseTransform;
- 
+
         RenderContext rc = new RenderContext(concatTransform);
 
         try {
@@ -1230,25 +1230,25 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
     }
 
     /**
-     * Disposes of this graphics context and releases 
-     * any system resources that it is using. 
-     * A <code>Graphics</code> object cannot be used after 
+     * Disposes of this graphics context and releases
+     * any system resources that it is using.
+     * A <code>Graphics</code> object cannot be used after
      * <code>dispose</code>has been called.
      * <p>
      * When a Java program runs, a large number of <code>Graphics</code>
      * objects can be created within a short time frame.
-     * Although the finalization process of the garbage collector 
-     * also disposes of the same system resources, it is preferable 
+     * Although the finalization process of the garbage collector
+     * also disposes of the same system resources, it is preferable
      * to manually free the associated resources by calling this
-     * method rather than to rely on a finalization process which 
+     * method rather than to rely on a finalization process which
      * may not run to completion for a long period of time.
      * <p>
-     * Graphics objects which are provided as arguments to the 
-     * <code>paint</code> and <code>update</code> methods 
-     * of components are automatically released by the system when 
+     * Graphics objects which are provided as arguments to the
+     * <code>paint</code> and <code>update</code> methods
+     * of components are automatically released by the system when
      * those methods return. For efficiency, programmers should
      * call <code>dispose</code> when finished using
-     * a <code>Graphics</code> object only if it was created 
+     * a <code>Graphics</code> object only if it was created
      * directly from a component or another <code>Graphics</code> object.
      * @see         java.awt.Graphics#finalize
      * @see         java.awt.Component#paint
@@ -1258,7 +1258,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @since       JDK1.0
      */
     public void dispose() {
-	mGraphics.dispose();
+        mGraphics.dispose();
     }
 
     /**
@@ -1285,7 +1285,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setComposite
      */
     public void draw(Shape s) {
-	mGraphics.draw(s);
+        mGraphics.draw(s);
     }
 
     /**
@@ -1312,7 +1312,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
                              AffineTransform xform,
                              ImageObserver obs) {
 
-	return mGraphics.drawImage(img, xform, obs);	
+        return mGraphics.drawImage(img, xform, obs);
     }
 
     /**
@@ -1333,11 +1333,11 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public void drawImage(BufferedImage img,
-			  BufferedImageOp op,
-			  int x,
-			  int y) {
+                          BufferedImageOp op,
+                          int x,
+                          int y) {
 
-	mGraphics.drawImage(img, op, x, y);
+        mGraphics.drawImage(img, op, x, y);
     }
 
 
@@ -1357,9 +1357,9 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public void drawString(String str,
-			   float x,
-			   float y) {
-	mGraphics.drawString(str, x, y);
+                           float x,
+                           float y) {
+        mGraphics.drawString(str, x, y);
     }
 
     /**
@@ -1378,9 +1378,9 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public void drawGlyphVector(GlyphVector g,
-				float x,
-				float y) {
-	mGraphics.drawGlyphVector(g, x, y);
+                                float x,
+                                float y) {
+        mGraphics.drawGlyphVector(g, x, y);
     }
 
     /**
@@ -1396,7 +1396,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public void fill(Shape s) {
-	mGraphics.fill(s);
+        mGraphics.fill(s);
     }
 
     /**
@@ -1418,10 +1418,10 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setClip
      */
     public boolean hit(Rectangle rect,
-		       Shape s,
-		       boolean onStroke) {
+                       Shape s,
+                       boolean onStroke) {
 
-	return mGraphics.hit(rect, s, onStroke);
+        return mGraphics.hit(rect, s, onStroke);
     }
 
     /**
@@ -1435,7 +1435,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see AlphaComposite
      */
     public void setComposite(Composite comp) {
-	mGraphics.setComposite(comp); 
+        mGraphics.setComposite(comp);
     }
 
 
@@ -1448,7 +1448,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see TexturePaint
      */
     public void setPaint(Paint paint) {
-	mGraphics.setPaint(paint);
+        mGraphics.setPaint(paint);
     }
 
     /**
@@ -1458,30 +1458,30 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see BasicStroke
      */
     public void setStroke(Stroke s) {
-	mGraphics.setStroke(s);
+        mGraphics.setStroke(s);
     }
 
     /**
      * Sets the preferences for the rendering algorithms.
      * Hint categories include controls for rendering quality and
      * overall time/quality trade-off in the rendering process.
-     * @param hintCategory The category of hint to be set. 
+     * @param hintCategory The category of hint to be set.
      * @param hintValue The value indicating preferences for the specified
      * hint category.
      * @see RenderingHints
      */
     public void setRenderingHint(Key hintCategory, Object hintValue) {
-	mGraphics.setRenderingHint(hintCategory, hintValue);
+        mGraphics.setRenderingHint(hintCategory, hintValue);
     }
 
     /**
      * Returns the preferences for the rendering algorithms.
-     * @param hintCategory The category of hint to be set. 
-     * @return The preferences for rendering algorithms. 
+     * @param hintCategory The category of hint to be set.
+     * @return The preferences for rendering algorithms.
      * @see RenderingHings
      */
     public Object getRenderingHint(Key hintCategory) {
-	return mGraphics.getRenderingHint(hintCategory);
+        return mGraphics.getRenderingHint(hintCategory);
     }
 
     /**
@@ -1515,7 +1515,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
     public RenderingHints getRenderingHints() {
         return mGraphics.getRenderingHints();
     }
-    
+
     /**
      * Composes a Transform object with the transform in this
      * Graphics2D according to the rule last-specified-first-applied.
@@ -1535,7 +1535,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see AffineTransform
      */
     public void transform(AffineTransform Tx) {
-	mGraphics.transform(Tx);
+        mGraphics.transform(Tx);
     }
 
     /**
@@ -1546,7 +1546,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see AffineTransform
      */
     public void setTransform(AffineTransform Tx) {
-	mGraphics.setTransform(Tx);
+        mGraphics.setTransform(Tx);
     }
 
     /**
@@ -1555,7 +1555,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setTransform
      */
     public AffineTransform getTransform() {
-	return mGraphics.getTransform();
+        return mGraphics.getTransform();
     }
 
     /**
@@ -1564,7 +1564,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see java.awt.Graphics#setColor
      */
     public Paint getPaint() {
-	return mGraphics.getPaint();
+        return mGraphics.getPaint();
     }
 
     /**
@@ -1572,7 +1572,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see #setComposite
      */
     public Composite getComposite() {
-	return mGraphics.getComposite();
+        return mGraphics.getComposite();
     }
 
     /**
@@ -1588,7 +1588,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see Graphics.clearRect()
      */
     public void setBackground(Color color) {
-	mGraphics.setBackground(color);
+        mGraphics.setBackground(color);
     }
 
     /**
@@ -1596,7 +1596,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see setBackground
      */
     public Color getBackground() {
-	return mGraphics.getBackground();
+        return mGraphics.getBackground();
     }
 
     /**
@@ -1604,7 +1604,7 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @see setStroke
      */
     public Stroke getStroke() {
-	return mGraphics.getStroke();
+        return mGraphics.getStroke();
     }
 
     /**
@@ -1617,6 +1617,6 @@ public class ProxyGraphics2D extends Graphics2D implements PrinterGraphics {
      * @param s The Shape to be intersected with the current clip.
      */
      public void clip(Shape s) {
-	mGraphics.clip(s);
+        mGraphics.clip(s);
      }
 }

@@ -24,7 +24,7 @@
 /**
  * This is the management interface explicitly defined for the
  * "SimpleStandard" standard MBean.
- * The "SimpleStandard" standard MBean implements this interface 
+ * The "SimpleStandard" standard MBean implements this interface
  * in order to be manageable through a JMX agent.
  *
  * The "SimpleStandardMBean" interface shows how to expose for management:
@@ -60,7 +60,7 @@ public interface SimpleStandardMBean {
     public int getNbChanges();
 
     /**
-     * Operation: reset to their initial values the "State" and "NbChanges" 
+     * Operation: reset to their initial values the "State" and "NbChanges"
      * attributes of the "SimpleStandard" standard MBean.
      */
     public void reset();

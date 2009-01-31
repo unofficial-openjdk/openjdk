@@ -46,94 +46,94 @@
  * order of pixel delivery.
  */
 
-#define DeclareScaleVars					\
-    int dstX1, dstY1, dstX, dstY, dstX2, dstY2;			\
-    int srcX1, srcXinc, srcXrem, srcXincrem, srcX1increm;	\
+#define DeclareScaleVars                                        \
+    int dstX1, dstY1, dstX, dstY, dstX2, dstY2;                 \
+    int srcX1, srcXinc, srcXrem, srcXincrem, srcX1increm;       \
     int srcX, srcY, inputadjust;
 
-#define SRCX	srcX
-#define SRCY	srcY
-#define DSTX	dstX
-#define DSTY	dstY
-#define DSTX1	dstX1
-#define DSTY1	dstY1
-#define DSTX2	dstX2
-#define DSTY2	dstY2
+#define SRCX    srcX
+#define SRCY    srcY
+#define DSTX    dstX
+#define DSTY    dstY
+#define DSTX1   dstX1
+#define DSTY1   dstY1
+#define DSTX2   dstX2
+#define DSTY2   dstY2
 
-#define InitScale(pixels, srcOff, srcScan,				\
-		  srcOX, srcOY, srcW, srcH,				\
-		  srcTW, srcTH, dstTW, dstTH)				\
-    do {								\
-	inputadjust = srcScan;						\
-	if (srcTW == dstTW) {						\
-	    inputadjust -= srcW;					\
-	    dstX1 = srcOX;						\
-	    dstX2 = srcOX + srcW;					\
-	} else {							\
-	    dstX1 = DEST_XY_RANGE_START(srcOX, srcTW, dstTW);		\
-	    dstX2 = DEST_XY_RANGE_START(srcOX+srcW, srcTW, dstTW);	\
-	    if (dstX2 <= dstX1) {					\
-		return SCALENOOP;					\
-	    }								\
-	    srcX1 = SRC_XY(dstX1, srcTW, dstTW);			\
-	    srcXinc = srcTW / dstTW;					\
-	    srcXrem = (2 * srcTW) % (2 * dstTW);			\
-	    srcX1increm = (((2 * (dstX1) * (srcTW)) + (srcTW))		\
-			  % (2 * (dstTW)));				\
-	}								\
-	if (srcTH == dstTH) {						\
-	    dstY1 = srcOY;						\
-	    dstY2 = srcOY + srcH;					\
-	    SetInputRow(pixels, srcOff, srcScan, srcOY, srcOY);		\
-	} else {							\
-	    dstY1 = DEST_XY_RANGE_START(srcOY, srcTH, dstTH);		\
-	    dstY2 = DEST_XY_RANGE_START(srcOY+srcH, srcTH, dstTH);	\
-	    if (dstY2 <= dstY1) {					\
-		return SCALENOOP;					\
-	    }								\
-	}								\
+#define InitScale(pixels, srcOff, srcScan,                              \
+                  srcOX, srcOY, srcW, srcH,                             \
+                  srcTW, srcTH, dstTW, dstTH)                           \
+    do {                                                                \
+        inputadjust = srcScan;                                          \
+        if (srcTW == dstTW) {                                           \
+            inputadjust -= srcW;                                        \
+            dstX1 = srcOX;                                              \
+            dstX2 = srcOX + srcW;                                       \
+        } else {                                                        \
+            dstX1 = DEST_XY_RANGE_START(srcOX, srcTW, dstTW);           \
+            dstX2 = DEST_XY_RANGE_START(srcOX+srcW, srcTW, dstTW);      \
+            if (dstX2 <= dstX1) {                                       \
+                return SCALENOOP;                                       \
+            }                                                           \
+            srcX1 = SRC_XY(dstX1, srcTW, dstTW);                        \
+            srcXinc = srcTW / dstTW;                                    \
+            srcXrem = (2 * srcTW) % (2 * dstTW);                        \
+            srcX1increm = (((2 * (dstX1) * (srcTW)) + (srcTW))          \
+                          % (2 * (dstTW)));                             \
+        }                                                               \
+        if (srcTH == dstTH) {                                           \
+            dstY1 = srcOY;                                              \
+            dstY2 = srcOY + srcH;                                       \
+            SetInputRow(pixels, srcOff, srcScan, srcOY, srcOY);         \
+        } else {                                                        \
+            dstY1 = DEST_XY_RANGE_START(srcOY, srcTH, dstTH);           \
+            dstY2 = DEST_XY_RANGE_START(srcOY+srcH, srcTH, dstTH);      \
+            if (dstY2 <= dstY1) {                                       \
+                return SCALENOOP;                                       \
+            }                                                           \
+        }                                                               \
     } while (0)
 
-#define RowLoop(srcOY)							\
+#define RowLoop(srcOY)                                                  \
     for (dstY = dstY1; dstY < dstY2; dstY++)
 
-#define RowSetup(srcTH, dstTH, srcTW, dstTW,				\
-		 srcOY, pixels, srcOff, srcScan)			\
-	do {								\
-	    if (srcTH == dstTH) {					\
-		srcY = dstY;						\
-	    } else {							\
-		srcY = SRC_XY(dstY, srcTH, dstTH);			\
-		SetInputRow(pixels, srcOff, srcScan, srcY, srcOY);	\
-	    }								\
-	    if (srcTW != dstTW) {					\
-		srcXincrem = srcX1increm;				\
-		srcX = srcX1;						\
-	    }								\
-	} while (0)
+#define RowSetup(srcTH, dstTH, srcTW, dstTW,                            \
+                 srcOY, pixels, srcOff, srcScan)                        \
+        do {                                                            \
+            if (srcTH == dstTH) {                                       \
+                srcY = dstY;                                            \
+            } else {                                                    \
+                srcY = SRC_XY(dstY, srcTH, dstTH);                      \
+                SetInputRow(pixels, srcOff, srcScan, srcY, srcOY);      \
+            }                                                           \
+            if (srcTW != dstTW) {                                       \
+                srcXincrem = srcX1increm;                               \
+                srcX = srcX1;                                           \
+            }                                                           \
+        } while (0)
 
-#define ColLoop(srcOX)							\
-	for (dstX = dstX1; dstX < dstX2; dstX++)
+#define ColLoop(srcOX)                                                  \
+        for (dstX = dstX1; dstX < dstX2; dstX++)
 
-#define ColSetup(srcTW, dstTW, pixel)					\
-	    do {							\
-		if (srcTW == dstTW) {					\
-		    srcX = dstX;					\
-		    pixel = GetPixelInc();				\
-		} else {						\
-		    pixel = GetPixel(srcX);				\
-		    srcX += srcXinc;					\
-		    srcXincrem += srcXrem;				\
-		    if (srcXincrem >= (2 * dstTW)) {			\
-			srcXincrem -= (2 * dstTW);			\
-			srcX++;						\
-		    }							\
-		}							\
-	    } while (0)
+#define ColSetup(srcTW, dstTW, pixel)                                   \
+            do {                                                        \
+                if (srcTW == dstTW) {                                   \
+                    srcX = dstX;                                        \
+                    pixel = GetPixelInc();                              \
+                } else {                                                \
+                    pixel = GetPixel(srcX);                             \
+                    srcX += srcXinc;                                    \
+                    srcXincrem += srcXrem;                              \
+                    if (srcXincrem >= (2 * dstTW)) {                    \
+                        srcXincrem -= (2 * dstTW);                      \
+                        srcX++;                                         \
+                    }                                                   \
+                }                                                       \
+            } while (0)
 
-#define RowEnd(srcTH, dstTH, srcW, srcScan)				\
-	do {								\
-	    if (srcTH == dstTH) {					\
-		InputPixelInc(inputadjust);				\
-	    }								\
-	} while (0)
+#define RowEnd(srcTH, dstTH, srcW, srcScan)                             \
+        do {                                                            \
+            if (srcTH == dstTH) {                                       \
+                InputPixelInc(inputadjust);                             \
+            }                                                           \
+        } while (0)

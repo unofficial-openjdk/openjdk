@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W%	%E%
- */
+
 
 package sun.nio.cs.ext;
 
@@ -39,7 +37,7 @@ import sun.nio.cs.Surrogate;
 /**
  * An abstract base class for subclasses which encodes
  * IBM double byte host encodings such as ibm code
- * pages 942,943,948, etc. 
+ * pages 942,943,948, etc.
  *
  */
 
@@ -68,21 +66,21 @@ public abstract class DBCS_IBM_EBCDIC_Encoder extends CharsetEncoder
     private final Surrogate.Parser sgp = new Surrogate.Parser();
 
     protected DBCS_IBM_EBCDIC_Encoder(Charset cs) {
-	super(cs, 4.0f, 5.0f, new byte[] {(byte)0x6f});
+        super(cs, 4.0f, 5.0f, new byte[] {(byte)0x6f});
     }
 
     protected void implReset() {
-	currentState = SBCS;
+        currentState = SBCS;
     }
 
     protected CoderResult implFlush(ByteBuffer out) {
-	if (currentState == DBCS) {
-	    if (out.remaining() < 1)
-		return CoderResult.OVERFLOW;
-	    out.put(SI);
-	}
-	implReset();
-	return CoderResult.UNDERFLOW;
+        if (currentState == DBCS) {
+            if (out.remaining() < 1)
+                return CoderResult.OVERFLOW;
+            out.put(SI);
+        }
+        implReset();
+        return CoderResult.UNDERFLOW;
     }
 
     /**
@@ -109,147 +107,147 @@ public abstract class DBCS_IBM_EBCDIC_Encoder extends CharsetEncoder
     }
 
     private CoderResult encodeArrayLoop(CharBuffer src, ByteBuffer dst) {
-	char[] sa = src.array();
-	int sp = src.arrayOffset() + src.position();
-	int sl = src.arrayOffset() + src.limit();
-	byte[] da = dst.array();
-	int dp = dst.arrayOffset() + dst.position();
-	int dl = dst.arrayOffset() + dst.limit();
-	int outputSize = 0;		// size of output
-	int spaceNeeded;
+        char[] sa = src.array();
+        int sp = src.arrayOffset() + src.position();
+        int sl = src.arrayOffset() + src.limit();
+        byte[] da = dst.array();
+        int dp = dst.arrayOffset() + dst.position();
+        int dl = dst.arrayOffset() + dst.limit();
+        int outputSize = 0;             // size of output
+        int spaceNeeded;
 
-	try {
-	    while (sp < sl) {
-		int index;
-		int theBytes;
-		char c = sa[sp];
-		if (Surrogate.is(c)) {
-		    if (sgp.parse(c, sa, sp, sl) < 0)
-			return sgp.error();
-		    return sgp.unmappableResult();
-		}
-		if (c >= '\uFFFE')
-		    return CoderResult.unmappableForLength(1);
+        try {
+            while (sp < sl) {
+                int index;
+                int theBytes;
+                char c = sa[sp];
+                if (Surrogate.is(c)) {
+                    if (sgp.parse(c, sa, sp, sl) < 0)
+                        return sgp.error();
+                    return sgp.unmappableResult();
+                }
+                if (c >= '\uFFFE')
+                    return CoderResult.unmappableForLength(1);
 
 
-		index = index1[((c & mask1) >> shift)]
-				+ (c & mask2);
-		if (index < 15000)
-		    theBytes = (int)(index2.charAt(index));
-		else
-		    theBytes = (int)(index2a.charAt(index-15000));
-		b1= (byte)((theBytes & 0x0000ff00)>>8);
-		b2 = (byte)(theBytes & 0x000000ff);
+                index = index1[((c & mask1) >> shift)]
+                                + (c & mask2);
+                if (index < 15000)
+                    theBytes = (int)(index2.charAt(index));
+                else
+                    theBytes = (int)(index2a.charAt(index-15000));
+                b1= (byte)((theBytes & 0x0000ff00)>>8);
+                b2 = (byte)(theBytes & 0x000000ff);
 
-		if (b1 == 0x00 && b2 == 0x00
-		    && c != '\u0000') {
-			return CoderResult.unmappableForLength(1);
-		}
+                if (b1 == 0x00 && b2 == 0x00
+                    && c != '\u0000') {
+                        return CoderResult.unmappableForLength(1);
+                }
 
-		if (currentState == DBCS && b1 == 0x00) {
-		    if (dl - dp < 1)
-			return CoderResult.OVERFLOW;
-		    currentState = SBCS;
-		    da[dp++] = SI;
-		} else if (currentState == SBCS && b1 != 0x00) {
-		    if (dl - dp < 1)
-			return CoderResult.OVERFLOW;
-		    currentState = DBCS;
-		    da[dp++] = SO;
-		}
-		if (currentState == DBCS)
-		    spaceNeeded = 2;
-		else
-		    spaceNeeded = 1;
-		if (dl - dp < spaceNeeded)
-		    return CoderResult.OVERFLOW;
+                if (currentState == DBCS && b1 == 0x00) {
+                    if (dl - dp < 1)
+                        return CoderResult.OVERFLOW;
+                    currentState = SBCS;
+                    da[dp++] = SI;
+                } else if (currentState == SBCS && b1 != 0x00) {
+                    if (dl - dp < 1)
+                        return CoderResult.OVERFLOW;
+                    currentState = DBCS;
+                    da[dp++] = SO;
+                }
+                if (currentState == DBCS)
+                    spaceNeeded = 2;
+                else
+                    spaceNeeded = 1;
+                if (dl - dp < spaceNeeded)
+                    return CoderResult.OVERFLOW;
 
-		if (currentState == SBCS)
-		    da[dp++] = b2;
-		else {
-		    da[dp++] = b1;
-		    da[dp++] = b2;
-		}
-		sp++;
-	    }
-	    return CoderResult.UNDERFLOW;
-	} finally {
-	    src.position(sp - src.arrayOffset());
-	    dst.position(dp - dst.arrayOffset());
-	}
+                if (currentState == SBCS)
+                    da[dp++] = b2;
+                else {
+                    da[dp++] = b1;
+                    da[dp++] = b2;
+                }
+                sp++;
+            }
+            return CoderResult.UNDERFLOW;
+        } finally {
+            src.position(sp - src.arrayOffset());
+            dst.position(dp - dst.arrayOffset());
+        }
     }
 
     private CoderResult encodeBufferLoop(CharBuffer src, ByteBuffer dst) {
-	int mark = src.position();
-	int outputSize = 0;		// size of output
-	int spaceNeeded;
+        int mark = src.position();
+        int outputSize = 0;             // size of output
+        int spaceNeeded;
 
-	try {
-	    while (src.hasRemaining()) {
-		int index;
-		int theBytes;
-		char c = src.get();
-		if (Surrogate.is(c)) {
-		    if (sgp.parse(c, src) < 0)
-			return sgp.error();
-		    return sgp.unmappableResult();
-		}
-		if (c >= '\uFFFE')
-		    return CoderResult.unmappableForLength(1);
+        try {
+            while (src.hasRemaining()) {
+                int index;
+                int theBytes;
+                char c = src.get();
+                if (Surrogate.is(c)) {
+                    if (sgp.parse(c, src) < 0)
+                        return sgp.error();
+                    return sgp.unmappableResult();
+                }
+                if (c >= '\uFFFE')
+                    return CoderResult.unmappableForLength(1);
 
-		index = index1[((c & mask1) >> shift)]
-				+ (c & mask2);
-		if (index < 15000)
-		    theBytes = (int)(index2.charAt(index));
-		else
-		    theBytes = (int)(index2a.charAt(index-15000));
-		b1 = (byte)((theBytes & 0x0000ff00)>>8);
-		b2 = (byte)(theBytes & 0x000000ff);
+                index = index1[((c & mask1) >> shift)]
+                                + (c & mask2);
+                if (index < 15000)
+                    theBytes = (int)(index2.charAt(index));
+                else
+                    theBytes = (int)(index2a.charAt(index-15000));
+                b1 = (byte)((theBytes & 0x0000ff00)>>8);
+                b2 = (byte)(theBytes & 0x000000ff);
 
-		if (b1== 0x00 && b2 == 0x00
-		    && c != '\u0000') {
-			return CoderResult.unmappableForLength(1);
-		}
+                if (b1== 0x00 && b2 == 0x00
+                    && c != '\u0000') {
+                        return CoderResult.unmappableForLength(1);
+                }
 
-		if (currentState == DBCS && b1 == 0x00) {
-		    if (dst.remaining() < 1)
-			return CoderResult.OVERFLOW;
-		    currentState = SBCS;
-		    dst.put(SI);
-		} else if (currentState == SBCS && b1 != 0x00) {
-		    if (dst.remaining() < 1)
-			return CoderResult.OVERFLOW;
-		    currentState = DBCS;
-		    dst.put(SO);
-		}
+                if (currentState == DBCS && b1 == 0x00) {
+                    if (dst.remaining() < 1)
+                        return CoderResult.OVERFLOW;
+                    currentState = SBCS;
+                    dst.put(SI);
+                } else if (currentState == SBCS && b1 != 0x00) {
+                    if (dst.remaining() < 1)
+                        return CoderResult.OVERFLOW;
+                    currentState = DBCS;
+                    dst.put(SO);
+                }
 
-		if (currentState == DBCS)
-		    spaceNeeded = 2;
-		else
-		    spaceNeeded = 1;
+                if (currentState == DBCS)
+                    spaceNeeded = 2;
+                else
+                    spaceNeeded = 1;
 
-		if (dst.remaining() < spaceNeeded)
-		    return CoderResult.OVERFLOW;
+                if (dst.remaining() < spaceNeeded)
+                    return CoderResult.OVERFLOW;
 
-		if (currentState == SBCS)
-		    dst.put(b2);
-		else {
-		    dst.put(b1);
-		    dst.put(b2);
-		}
-		mark++;
-	     }
-	    return CoderResult.UNDERFLOW;
-	} finally {
-	    src.position(mark);
-	}
+                if (currentState == SBCS)
+                    dst.put(b2);
+                else {
+                    dst.put(b1);
+                    dst.put(b2);
+                }
+                mark++;
+             }
+            return CoderResult.UNDERFLOW;
+        } finally {
+            src.position(mark);
+        }
     }
 
     protected CoderResult encodeLoop(CharBuffer src, ByteBuffer dst) {
-	if (true && src.hasArray() && dst.hasArray())
-	    return encodeArrayLoop(src, dst);
-	else
-	    return encodeBufferLoop(src, dst);
+        if (true && src.hasArray() && dst.hasArray())
+            return encodeArrayLoop(src, dst);
+        else
+            return encodeBufferLoop(src, dst);
     }
 
 }

@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>boolean</code> value in 
+ * Provides access to a primitive <code>boolean</code> value in
  * the target VM.
  *
  * @author Robert Field
@@ -38,7 +38,7 @@ public interface BooleanValue extends PrimitiveValue
 {
     /**
      * Returns this BooleanValue as a boolean.
-     * 
+     *
      * @return the <code>boolean</code> mirrored by this object.
      */
     boolean value();
@@ -59,4 +59,3 @@ public interface BooleanValue extends PrimitiveValue
      */
     int hashCode();
 }
-

@@ -101,7 +101,7 @@ public class SSLSocketParametersTest implements Serializable {
             super(ciphers, protocols, need);
         }
 
-        public ServerSocket createServerSocket(int port) throws IOException { 
+        public ServerSocket createServerSocket(int port) throws IOException {
             System.out.println("ServerFactory::Calling createServerSocket(" +
                                port + ")");
             return super.createServerSocket(port);

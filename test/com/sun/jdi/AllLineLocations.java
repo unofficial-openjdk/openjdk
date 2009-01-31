@@ -24,9 +24,9 @@
 /**
  *  @test
  *  @bug 4248728
- *  @summary Test ReferenceType.allLineLocations 
+ *  @summary Test ReferenceType.allLineLocations
  *  @author Gordon Hirsch
- *  
+ *
  *  @library scaffold
  *  @run build JDIScaffold VMConnection
  *  @run compile -g RefTypes.java
@@ -72,10 +72,10 @@ public class AllLineLocations extends JDIScaffold {
         }
         List list = rt.allLineLocations();
         if (list.size() != 1) {
-            throw new Exception("AllAbstract: incorrect number of line locations"); 
+            throw new Exception("AllAbstract: incorrect number of line locations");
         }
         if (rt.locationsOfLine(5000).size() != 0) {
-            throw new Exception("AllAbstract: incorrect locationsOfLine"); 
+            throw new Exception("AllAbstract: incorrect locationsOfLine");
         }
         Method method = findMethod(rt, "<init>", "()V");
         if (method == null) {
@@ -86,7 +86,7 @@ public class AllLineLocations extends JDIScaffold {
             throw new Exception("AllAbstract: line locations in wrong method");
         }
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("AllAbstract: incorrect locationsOfLine"); 
+            throw new Exception("AllAbstract: incorrect locationsOfLine");
         }
         System.out.println("AllAbstract: passed");
 
@@ -96,10 +96,10 @@ public class AllLineLocations extends JDIScaffold {
         }
         list = rt.allLineLocations();
         if (list.size() != 1) {
-            throw new Exception("AllNative: incorrect number of line locations"); 
+            throw new Exception("AllNative: incorrect number of line locations");
         }
         if (rt.locationsOfLine(5000).size() != 0) {
-            throw new Exception("AllNative: incorrect locationsOfLine"); 
+            throw new Exception("AllNative: incorrect locationsOfLine");
         }
         method = findMethod(rt, "<init>", "()V");
         if (method == null) {
@@ -110,7 +110,7 @@ public class AllLineLocations extends JDIScaffold {
             throw new Exception("AllNative: line locations in wrong method");
         }
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("AllNative: incorrect locationsOfLine"); 
+            throw new Exception("AllNative: incorrect locationsOfLine");
         }
         System.out.println("AllNative: passed");
 
@@ -120,13 +120,13 @@ public class AllLineLocations extends JDIScaffold {
         }
         list = rt.allLineLocations();
         if (list.size() != 0) {
-            throw new Exception("Interface: locations reported for abstract methods"); 
+            throw new Exception("Interface: locations reported for abstract methods");
         }
         System.out.println("Interface: passed");
 
         /*
-         * These classes have line numbers in one method and 
-         * in the implicit constructor. 
+         * These classes have line numbers in one method and
+         * in the implicit constructor.
          */
         rt = findReferenceType("Abstract");
         if (rt == null) {
@@ -134,7 +134,7 @@ public class AllLineLocations extends JDIScaffold {
         }
         list = rt.allLineLocations();
         if (list.size() != 5) {
-            throw new Exception("Abstract: incorrect number of line locations"); 
+            throw new Exception("Abstract: incorrect number of line locations");
         }
         method = findMethod(rt, "b", "()V");
         if (method == null) {
@@ -149,14 +149,14 @@ public class AllLineLocations extends JDIScaffold {
             throw new Exception("Abstract: line locations in wrong method");
         }
         if (method.locationsOfLine(20).size() != 1) {
-            throw new Exception("Abstract method: incorrect locationsOfLine"); 
+            throw new Exception("Abstract method: incorrect locationsOfLine");
         }
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("Abstract method: incorrect locationsOfLine"); 
+            throw new Exception("Abstract method: incorrect locationsOfLine");
         }
         method = findMethod(rt, "a", "()V");
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("Abstract method: incorrect locationsOfLine"); 
+            throw new Exception("Abstract method: incorrect locationsOfLine");
         }
         System.out.println("Abstract: passed");
 
@@ -166,10 +166,10 @@ public class AllLineLocations extends JDIScaffold {
         }
         list = rt.allLineLocations();
         if (list.size() != 5) {
-            throw new Exception("Native: incorrect number of line locations"); 
+            throw new Exception("Native: incorrect number of line locations");
         }
         if (rt.locationsOfLine(5000).size() != 0) {
-            throw new Exception("Native: incorrect locationsOfLine"); 
+            throw new Exception("Native: incorrect locationsOfLine");
         }
         method = findMethod(rt, "b", "()V");
         if (method == null) {
@@ -184,14 +184,14 @@ public class AllLineLocations extends JDIScaffold {
             throw new Exception("Native: line locations in wrong method");
         }
         if (method.locationsOfLine(30).size() != 1) {
-            throw new Exception("Native method: incorrect locationsOfLine"); 
+            throw new Exception("Native method: incorrect locationsOfLine");
         }
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("Native method: incorrect locationsOfLine"); 
+            throw new Exception("Native method: incorrect locationsOfLine");
         }
         method = findMethod(rt, "a", "()V");
         if (method.locationsOfLine(5000).size() != 0) {
-            throw new Exception("Native method: incorrect locationsOfLine"); 
+            throw new Exception("Native method: incorrect locationsOfLine");
         }
         System.out.println("Native: passed");
 
@@ -201,10 +201,10 @@ public class AllLineLocations extends JDIScaffold {
         }
         list = rt.allLineLocations();
         if (list.size() != 5) {
-            throw new Exception("AbstractAndNative: incorrect number of line locations"); 
+            throw new Exception("AbstractAndNative: incorrect number of line locations");
         }
         if (rt.locationsOfLine(5000).size() != 0) {
-            throw new Exception("AbstractAndNative: incorrect locationsOfLine"); 
+            throw new Exception("AbstractAndNative: incorrect locationsOfLine");
         }
         method = findMethod(rt, "c", "()V");
         if (method == null) {

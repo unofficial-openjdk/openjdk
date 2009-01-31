@@ -230,7 +230,7 @@ Java_sun_awt_UNIXToolkit_load_1stock_1icon(JNIEnv *env, jobject this,
  * Signature: ()V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_UNIXToolkit_nativeSync(JNIEnv *env, jobject this) 
+Java_sun_awt_UNIXToolkit_nativeSync(JNIEnv *env, jobject this)
 {
 #ifndef HEADLESS
     AWT_LOCK();
@@ -245,11 +245,11 @@ Java_sun_awt_UNIXToolkit_nativeSync(JNIEnv *env, jobject this)
  * Signature: ()V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls) 
+Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls)
 {
     typedef void (*SplashClose_t)();
     SplashClose_t splashClose;
-    void* hSplashLib = dlopen(0, RTLD_LAZY); 
+    void* hSplashLib = dlopen(0, RTLD_LAZY);
     if (!hSplashLib) {
         return;
     }

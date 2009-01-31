@@ -37,19 +37,19 @@ import java.awt.Frame;
  * <P>
  *
  */
-public final class DialogOwner 
+public final class DialogOwner
     implements PrintRequestAttribute {
 
     private Frame dlgOwner;
 
     /**
-     * Construct a new dialog type selection enumeration value with the 
-     * given integer value. 
+     * Construct a new dialog type selection enumeration value with the
+     * given integer value.
      *
      * @param  value  Integer value.
      */
     public DialogOwner(Frame frame) {
-	dlgOwner = frame;
+        dlgOwner = frame;
     }
 
 
@@ -57,16 +57,16 @@ public final class DialogOwner
      * Returns the string table for class DialogOwner.
      */
     public Frame getOwner() {
-	return dlgOwner;
+        return dlgOwner;
     }
 
-    
+
     /**
-     * Get the printing attribute class which is to be used as the "category" 
+     * Get the printing attribute class which is to be used as the "category"
      * for this printing attribute value.
      * <P>
-     * For class DialogOwner the category is class 
-     * DialogOwner itself. 
+     * For class DialogOwner the category is class
+     * DialogOwner itself.
      *
      * @return  Printing attribute class (category), an instance of class
      *          {@link java.lang.Class java.lang.Class}.
@@ -74,14 +74,14 @@ public final class DialogOwner
     public final Class getCategory() {
         return DialogOwner.class;
     }
-   
+
 
     /**
-     * Get the name of the category of which this attribute value is an 
-     * instance. 
+     * Get the name of the category of which this attribute value is an
+     * instance.
      * <P>
      * For class DialogOwner the category name is
-     * <CODE>"dialog-owner"</CODE>. 
+     * <CODE>"dialog-owner"</CODE>.
      *
      * @return  Attribute category name.
      */
@@ -90,9 +90,3 @@ public final class DialogOwner
     }
 
 }
-
-
-
-
-
-

@@ -41,9 +41,9 @@ public class TunnelProxy {
 
     /**
      * Create a <code>TunnelProxy<code> instance with the specified callback object
-     * for handling requests. One thread is created to handle requests, 
+     * for handling requests. One thread is created to handle requests,
      * and up to ten TCP connections will be handled simultaneously.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *  incoming request
      */
 
@@ -52,14 +52,14 @@ public class TunnelProxy {
     }
 
     /**
-     * Create a <code>TunnelProxy<code> instance with the specified number of 
-     * threads and maximum number of connections per thread. This functions 
+     * Create a <code>TunnelProxy<code> instance with the specified number of
+     * threads and maximum number of connections per thread. This functions
      * the same as the 4 arg constructor, where the port argument is set to zero.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *     incoming request
-     * @param threads the number of threads to create to handle requests 
+     * @param threads the number of threads to create to handle requests
      *     in parallel
-     * @param cperthread the number of simultaneous TCP connections to 
+     * @param cperthread the number of simultaneous TCP connections to
      *     handle per thread
      */
 
@@ -69,18 +69,18 @@ public class TunnelProxy {
     }
 
     /**
-     * Create a <code>TunnelProxy<code> instance with the specified number 
-     * of threads and maximum number of connections per thread and running on 
-     * the specified port. The specified number of threads are created to 
+     * Create a <code>TunnelProxy<code> instance with the specified number
+     * of threads and maximum number of connections per thread and running on
+     * the specified port. The specified number of threads are created to
      * handle incoming requests, and each thread is allowed
      * to handle a number of simultaneous TCP connections.
-     * @param cb the callback object which is invoked to handle 
+     * @param cb the callback object which is invoked to handle
      *  each incoming request
-     * @param threads the number of threads to create to handle 
+     * @param threads the number of threads to create to handle
      *  requests in parallel
-     * @param cperthread the number of simultaneous TCP connections 
+     * @param cperthread the number of simultaneous TCP connections
      *  to handle per thread
-     * @param port the port number to bind the server to. <code>Zero</code> 
+     * @param port the port number to bind the server to. <code>Zero</code>
      *  means choose any free port.
      */
 
@@ -210,8 +210,8 @@ public class TunnelProxy {
             }
         }
 
-        /* read all the data off the channel without looking at it 
-             * return true if connection closed 
+        /* read all the data off the channel without looking at it
+             * return true if connection closed
              */
         boolean consume (SocketChannel chan) {
             try {
@@ -251,28 +251,28 @@ public class TunnelProxy {
                     System.err.println ("Invalid URI: " + e);
                     res = true;
                 }
-                
+
                 // CONNECT ack
                 OutputStream os = new BufferedOutputStream(new NioOutputStream(chan));
                 byte[] ack = "HTTP/1.1 200 Connection established\r\n\r\n".getBytes();
                 os.write(ack, 0, ack.length);
                 os.flush();
-                
+
                 // tunnel anything else
                 tunnel(is, os, uri);
-                
+
                 res = false;
             } catch (IOException e) {
                 res = true;
             }
             return res;
         }
-        
+
         private void tunnel(InputStream fromClient, OutputStream toClient, URI serverURI) throws IOException {
             Socket sockToServer = new Socket(serverURI.getHost(), serverURI.getPort());
             OutputStream toServer = sockToServer.getOutputStream();
             InputStream fromServer = sockToServer.getInputStream();
-            
+
             pipe1 = new Pipeline(fromClient, toServer);
             pipe2 = new Pipeline(fromServer, toClient);
             // start pump
@@ -420,7 +420,7 @@ public class TunnelProxy {
         }
 
         /**
-         * block() only called when available==0 and buf is empty 
+         * block() only called when available==0 and buf is empty
          */
         private synchronized void block () throws IOException {
             //assert available == 0;
@@ -506,7 +506,7 @@ public class TunnelProxy {
             closed = true;
         }
     }
-    
+
     /*
      * Pipeline object :-
      * 1) Will pump every byte from its input stream to output stream
@@ -516,25 +516,25 @@ public class TunnelProxy {
         InputStream in;
         OutputStream out;
         Thread t;
-        
+
         public Pipeline(InputStream is, OutputStream os) {
             in = is;
             out = os;
         }
-        
+
         public void start() {
             t = new Thread(this);
             t.start();
         }
-        
+
         public void join() throws InterruptedException {
             t.join();
         }
-        
+
         public void terminate() {
             t.interrupt();
         }
-        
+
         public void run() {
             byte[] buffer = new byte[10000];
             try {
@@ -553,11 +553,11 @@ public class TunnelProxy {
     }
 
     /**
-     * Utilities for synchronization. A condition is 
+     * Utilities for synchronization. A condition is
      * identified by a string name, and is initialized
-     * upon first use (ie. setCondition() or waitForCondition()). Threads 
+     * upon first use (ie. setCondition() or waitForCondition()). Threads
      * are blocked until some thread calls (or has called) setCondition() for the same
-     * condition. 
+     * condition.
      * <P>
      * A rendezvous built on a condition is also provided for synchronizing
      * N threads.
@@ -638,7 +638,7 @@ public class TunnelProxy {
     /**
      * Force N threads to rendezvous (ie. wait for each other) before proceeding.
      * The first thread(s) to call are blocked until the last
-     * thread makes the call. Then all threads continue. 
+     * thread makes the call. Then all threads continue.
      * <p>
      * All threads that call with the same condition name, must use the same value
      * for N (or the results may be not be as expected).
@@ -706,4 +706,3 @@ public class TunnelProxy {
         }
     }
 }
-

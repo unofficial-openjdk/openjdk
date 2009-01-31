@@ -103,14 +103,14 @@ import java.awt.Image;
  *             // Get a new graphics context every time through the loop
  *             // to make sure the strategy is validated
  *             Graphics graphics = strategy.getDrawGraphics();
- *     
+ *
  *             // Render to graphics
  *             // ...
  *
  *             // Dispose the graphics
  *             graphics.dispose();
  *
- *             // Repeat the rendering if the drawing buffer contents 
+ *             // Repeat the rendering if the drawing buffer contents
  *             // were restored
  *         } while (strategy.contentsRestored());
  *
@@ -134,7 +134,7 @@ import java.awt.Image;
  * @since 1.4
  */
 public abstract class BufferStrategy {
-    
+
     /**
      * Returns the <code>BufferCapabilities</code> for this
      * <code>BufferStrategy</code>.
@@ -160,7 +160,7 @@ public abstract class BufferStrategy {
      * For a discussion on lost buffers, see <code>VolatileImage</code>.
      *
      * @return Whether or not the drawing buffer was lost since the last call
-     * to <code>getDrawGraphics</code>. 
+     * to <code>getDrawGraphics</code>.
      * @see java.awt.image.VolatileImage
      */
     public abstract boolean contentsLost();
@@ -175,7 +175,7 @@ public abstract class BufferStrategy {
      * For a discussion on lost buffers, see <code>VolatileImage</code>.
      *
      * @return Whether or not the drawing buffer was restored since the last
-     *         call to <code>getDrawGraphics</code>. 
+     *         call to <code>getDrawGraphics</code>.
      * @see java.awt.image.VolatileImage
      */
     public abstract boolean contentsRestored();
@@ -203,4 +203,3 @@ public abstract class BufferStrategy {
     public void dispose() {
     }
 }
-

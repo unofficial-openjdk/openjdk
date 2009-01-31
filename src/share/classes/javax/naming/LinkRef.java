@@ -27,7 +27,7 @@ package javax.naming;
 
 /**
   * This class represents a Reference whose contents is a name, called the link name,
-  * that is bound to an atomic name in a context. 
+  * that is bound to an atomic name in a context.
   *<p>
   * The name is a URL, or a name to be resolved relative to the initial
   * context, or if the first character of the name is ".", the name
@@ -59,7 +59,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version 1.7 03/12/19
   *
   * @see LinkException
   * @see LinkLoopException
@@ -83,7 +82,7 @@ public class LinkRef extends Reference {
       * @param linkName The non-null name for which to create this link.
       */
     public LinkRef(Name linkName) {
-	super(linkClassName, new StringRefAddr(linkAddrType, linkName.toString()));
+        super(linkClassName, new StringRefAddr(linkAddrType, linkName.toString()));
     }
 
     /**
@@ -91,24 +90,24 @@ public class LinkRef extends Reference {
       * @param linkName The non-null name for which to create this link.
       */
     public LinkRef(String linkName) {
-	super(linkClassName, new StringRefAddr(linkAddrType, linkName));
+        super(linkClassName, new StringRefAddr(linkAddrType, linkName));
     }
 
     /**
       * Retrieves the name of this link.
-      * 
+      *
       * @return The non-null name of this link.
       * @exception MalformedLinkException If a link name could not be extracted
       * @exception NamingException If a naming exception was encountered.
       */
     public String getLinkName() throws NamingException {
-	if (className != null && className.equals(linkClassName)) {
-	    RefAddr addr = get(linkAddrType);
-	    if (addr != null && addr instanceof StringRefAddr) {
-		return (String)((StringRefAddr)addr).getContent();
-	    }
-	}
-	throw new MalformedLinkException();
+        if (className != null && className.equals(linkClassName)) {
+            RefAddr addr = get(linkAddrType);
+            if (addr != null && addr instanceof StringRefAddr) {
+                return (String)((StringRefAddr)addr).getContent();
+            }
+        }
+        throw new MalformedLinkException();
     }
     /**
      * Use serialVersionUID from JNDI 1.1.1 for interoperability

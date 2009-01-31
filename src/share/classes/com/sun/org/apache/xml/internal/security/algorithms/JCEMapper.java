@@ -40,13 +40,13 @@ import org.w3c.dom.Element;
 public class JCEMapper {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(JCEMapper.class.getName());
 
 
-   
+
    private static Map uriToJCEName = new HashMap();
-   
+
    private static Map algorithmsMap = new HashMap();
 
    private static String providerName = null;
@@ -73,7 +73,7 @@ public class JCEMapper {
    }
 
    static Algorithm getAlgorithmMapping(String algoURI) {
-   	   return ((Algorithm)algorithmsMap.get(algoURI));
+           return ((Algorithm)algorithmsMap.get(algoURI));
    }
 
    /**
@@ -131,33 +131,33 @@ public class JCEMapper {
 
    /**
     * Gets the default Provider for obtaining the security algorithms
-    * @return the default providerId.  
+    * @return the default providerId.
     */
    public static String getProviderId() {
-   		return providerName;
+                return providerName;
    }
-   
+
    /**
     * Sets the default Provider for obtaining the security algorithms
-    * @param provider the default providerId.  
+    * @param provider the default providerId.
     */
    public static void setProviderId(String provider) {
-   		providerName=provider;
+                providerName=provider;
    }
-   
+
    /**
     * Represents the Algorithm xml element
-    */   
+    */
    public static class Algorithm {
-   	    String algorithmClass;
-   	    String keyLength;
+            String algorithmClass;
+            String keyLength;
             String requiredKey;
         /**
          * Gets data from element
          * @param el
          */
         public Algorithm(Element el) {
-        	algorithmClass=el.getAttribute("AlgorithmClass");
+                algorithmClass=el.getAttribute("AlgorithmClass");
             keyLength=el.getAttribute("KeyLength");
             requiredKey=el.getAttribute("RequiredKey");
         }

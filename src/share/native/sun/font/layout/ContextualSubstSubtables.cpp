@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ContextualSubstSubtables.cpp	1.8 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -224,7 +223,7 @@ le_uint32 ContextualSubstitutionFormat1Subtable::process(const LookupProcessor *
                 le_uint16 substCount = SWAPW(subRuleTable->substCount);
 
                 if (matchGlyphIDs(subRuleTable->inputGlyphArray, matchCount, glyphIterator)) {
-                    const SubstitutionLookupRecord *substLookupRecordArray = 
+                    const SubstitutionLookupRecord *substLookupRecordArray =
                         (const SubstitutionLookupRecord *) &subRuleTable->inputGlyphArray[matchCount];
 
                     applySubstitutionLookups(lookupProcessor, substLookupRecordArray, substCount, glyphIterator, fontInstance, position);
@@ -238,7 +237,7 @@ le_uint32 ContextualSubstitutionFormat1Subtable::process(const LookupProcessor *
 
         // XXX If we get here, the table is mal-formed...
     }
-    
+
     return 0;
 }
 
@@ -270,7 +269,7 @@ le_uint32 ContextualSubstitutionFormat2Subtable::process(const LookupProcessor *
                 le_uint16 substCount = SWAPW(subClassRuleTable->substCount);
 
                 if (matchGlyphClasses(subClassRuleTable->classArray, matchCount, glyphIterator, classDefinitionTable)) {
-                    const SubstitutionLookupRecord *substLookupRecordArray = 
+                    const SubstitutionLookupRecord *substLookupRecordArray =
                         (const SubstitutionLookupRecord *) &subClassRuleTable->classArray[matchCount];
 
                     applySubstitutionLookups(lookupProcessor, substLookupRecordArray, substCount, glyphIterator, fontInstance, position);
@@ -284,12 +283,12 @@ le_uint32 ContextualSubstitutionFormat2Subtable::process(const LookupProcessor *
 
         // XXX If we get here, the table is mal-formed...
     }
-    
+
     return 0;
 }
 
 le_uint32 ContextualSubstitutionFormat3Subtable::process(const LookupProcessor *lookupProcessor, GlyphIterator *glyphIterator,
-                                                      const LEFontInstance *fontInstance)const 
+                                                      const LEFontInstance *fontInstance)const
 {
     le_uint16 gCount = SWAPW(glyphCount);
     le_uint16 subCount = SWAPW(substCount);
@@ -302,7 +301,7 @@ le_uint32 ContextualSubstitutionFormat3Subtable::process(const LookupProcessor *
     glyphIterator->prev();
 
     if (ContextualSubstitutionBase::matchGlyphCoverages(coverageTableOffsetArray, gCount, glyphIterator, (const char *) this)) {
-        const SubstitutionLookupRecord *substLookupRecordArray = 
+        const SubstitutionLookupRecord *substLookupRecordArray =
             (const SubstitutionLookupRecord *) &coverageTableOffsetArray[gCount];
 
         ContextualSubstitutionBase::applySubstitutionLookups(lookupProcessor, substLookupRecordArray, subCount, glyphIterator, fontInstance, position);
@@ -402,7 +401,7 @@ le_uint32 ChainingContextualSubstitutionFormat1Subtable::process(const LookupPro
                 }
 
                 if (matchGlyphIDs(inputGlyphArray, inputGlyphCount, glyphIterator)) {
-                    const SubstitutionLookupRecord *substLookupRecordArray = 
+                    const SubstitutionLookupRecord *substLookupRecordArray =
                         (const SubstitutionLookupRecord *) &lookaheadGlyphArray[lookaheadGlyphCount + 1];
 
                     applySubstitutionLookups(lookupProcessor, substLookupRecordArray, substCount, glyphIterator, fontInstance, position);
@@ -416,7 +415,7 @@ le_uint32 ChainingContextualSubstitutionFormat1Subtable::process(const LookupPro
 
         // XXX If we get here, the table is mal-formed...
     }
-    
+
     return 0;
 }
 
@@ -455,7 +454,7 @@ le_uint32 ChainingContextualSubstitutionFormat2Subtable::process(const LookupPro
                 le_uint16 lookaheadGlyphCount = SWAPW(inputClassArray[inputGlyphCount]);
                 const le_uint16 *lookaheadClassArray = &inputClassArray[inputGlyphCount + 1];
                 le_uint16 substCount = SWAPW(lookaheadClassArray[lookaheadGlyphCount]);
-                
+
 
                 tempIterator.setCurrStreamPosition(position);
 
@@ -476,7 +475,7 @@ le_uint32 ChainingContextualSubstitutionFormat2Subtable::process(const LookupPro
                 }
 
                 if (matchGlyphClasses(inputClassArray, inputGlyphCount, glyphIterator, inputClassDefinitionTable)) {
-                    const SubstitutionLookupRecord *substLookupRecordArray = 
+                    const SubstitutionLookupRecord *substLookupRecordArray =
                         (const SubstitutionLookupRecord *) &lookaheadClassArray[lookaheadGlyphCount + 1];
 
                     applySubstitutionLookups(lookupProcessor, substLookupRecordArray, substCount, glyphIterator, fontInstance, position);
@@ -490,7 +489,7 @@ le_uint32 ChainingContextualSubstitutionFormat2Subtable::process(const LookupPro
 
         // XXX If we get here, the table is mal-formed...
     }
-    
+
     return 0;
 }
 
@@ -531,7 +530,7 @@ le_uint32 ChainingContextualSubstitutionFormat3Subtable::process(const LookupPro
 
     if (ContextualSubstitutionBase::matchGlyphCoverages(inputCoverageTableOffsetArray,
         inputGlyphCount, glyphIterator, (const char *) this)) {
-        const SubstitutionLookupRecord *substLookupRecordArray = 
+        const SubstitutionLookupRecord *substLookupRecordArray =
             (const SubstitutionLookupRecord *) &lookaheadCoverageTableOffsetArray[lookaheadGlyphCount + 1];
 
         ContextualSubstitutionBase::applySubstitutionLookups(lookupProcessor, substLookupRecordArray, substCount, glyphIterator, fontInstance, position);

@@ -22,7 +22,7 @@
  */
 
 /**
- * @test @(#)Set.java	1.3 05/11/04
+ * @test
  * @bug 4250960 5044412
  * @summary Should not be able to set final fields through reflection unless setAccessible(true) passes and is not static
  * @author David Bowen (modified by Doug Lea)
@@ -32,47 +32,47 @@ import java.lang.reflect.*;
 
 public class Set {
     public static void main(String[] argv) throws Throwable {
-	boolean failed = false;
-	Test t = new Test();
-	if (!t.testPrimitive()) {
-	    failed = true; System.out.println("FAILED: testPrimitive()");
-	}
-	if (!t.testAccessiblePrimitive()) {
-	    failed = true; System.out.println("FAILED: testAccessiblePrimitive()");
-	}
-	if (!t.testVolatilePrimitive()) {
-	    failed = true; System.out.println("FAILED: testVolatilePrimitive()");
-	}
+        boolean failed = false;
+        Test t = new Test();
+        if (!t.testPrimitive()) {
+            failed = true; System.out.println("FAILED: testPrimitive()");
+        }
+        if (!t.testAccessiblePrimitive()) {
+            failed = true; System.out.println("FAILED: testAccessiblePrimitive()");
+        }
+        if (!t.testVolatilePrimitive()) {
+            failed = true; System.out.println("FAILED: testVolatilePrimitive()");
+        }
 
 
-	if (!t.testStaticPrimitive()) {
-	    failed = true; System.out.println("FAILED: testStaticPrimitive()");
-	}
-	if (!t.testAccessibleStaticPrimitive()) {
-	    failed = true; System.out.println("FAILED: testAccessibleStaticPrimitive()");
-	}
+        if (!t.testStaticPrimitive()) {
+            failed = true; System.out.println("FAILED: testStaticPrimitive()");
+        }
+        if (!t.testAccessibleStaticPrimitive()) {
+            failed = true; System.out.println("FAILED: testAccessibleStaticPrimitive()");
+        }
 
-	if (!t.testObject()) {
-	    failed = true; System.out.println("FAILED: testObject()");
-	}
-	if (!t.testAccessibleObject()) {
-	    failed = true; System.out.println("FAILED: testAccessibleObject()");
-	}
+        if (!t.testObject()) {
+            failed = true; System.out.println("FAILED: testObject()");
+        }
+        if (!t.testAccessibleObject()) {
+            failed = true; System.out.println("FAILED: testAccessibleObject()");
+        }
 
-	if (!t.testVolatileObject()) {
-	    failed = true; System.out.println("FAILED: testVolatileObject()");
-	}
+        if (!t.testVolatileObject()) {
+            failed = true; System.out.println("FAILED: testVolatileObject()");
+        }
 
-	if (!t.testStaticObject()) {
-	    failed = true; System.out.println("FAILED: testStaticObject()");
-	}
-	if (!t.testAccessibleStaticObject()) {
-	    failed = true; System.out.println("FAILED: testAccessibleStaticObject()");
-	}
+        if (!t.testStaticObject()) {
+            failed = true; System.out.println("FAILED: testStaticObject()");
+        }
+        if (!t.testAccessibleStaticObject()) {
+            failed = true; System.out.println("FAILED: testAccessibleStaticObject()");
+        }
 
-	if (failed) {
-	    throw( new Throwable("Test for Field.set FAILED"));
-	}
+        if (failed) {
+            throw( new Throwable("Test for Field.set FAILED"));
+        }
     }
 
 }
@@ -92,173 +92,173 @@ class Test {
     private static final Object so = new Object();
 
     Test() {
-	i = 911;
-	ni = i;
-	vi = i;
-	o = new Object();
-	no = o;
-	vo = o;
+        i = 911;
+        ni = i;
+        vi = i;
+        o = new Object();
+        no = o;
+        vo = o;
     }
 
-    boolean testPrimitive() 
-	throws NoSuchFieldException
+    boolean testPrimitive()
+        throws NoSuchFieldException
     {
-	try {
-	    Field f = this.getClass().getDeclaredField("ni");
-	    f.setInt(this, 7);
-	    if (ni != 7) {
-		System.out.println("setInt() did not work");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
+        try {
+            Field f = this.getClass().getDeclaredField("ni");
+            f.setInt(this, 7);
+            if (ni != 7) {
+                System.out.println("setInt() did not work");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
     }
 
-    boolean testStaticPrimitive() 
-	throws NoSuchFieldException
+    boolean testStaticPrimitive()
+        throws NoSuchFieldException
     {
-	try {
-	    Field f = this.getClass().getDeclaredField("si");
-	    f.setInt(this, 13);
-	    if (si != 13) {
-		System.out.println("setInt() did not work for static");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
+        try {
+            Field f = this.getClass().getDeclaredField("si");
+            f.setInt(this, 13);
+            if (si != 13) {
+                System.out.println("setInt() did not work for static");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
     }
 
-    boolean testObject() 
-	throws NoSuchFieldException
+    boolean testObject()
+        throws NoSuchFieldException
     {
-	Object saved = no;
-	try {
-	    Field f = this.getClass().getDeclaredField("no");
-	    f.set(this, new Object());
-	    if (no == saved) {
-		System.out.println("set() did not work");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
-    }  
-
-    boolean testStaticObject() 
-	throws NoSuchFieldException
-    {
-	Object saved = so;
-	try {
-	    Field f = this.getClass().getDeclaredField("so");
-	    f.set(this, new Object());
-	    if (so == saved) {
-		System.out.println("set() did not work for static");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
-    }  
-
-    boolean testAccessiblePrimitive() 
-	throws NoSuchFieldException
-    {
-	try {
-	    Field f = this.getClass().getDeclaredField("i");
-	    f.setAccessible(true);
-	    f.setInt(this, 7);
-	    if (i != 7) {
-		System.out.println("setInt() did not work");
-	    }
-	    return true;   // PASSED
-	} catch (IllegalAccessException iae) {
-	    return false;  // FAILED
-	}
+        Object saved = no;
+        try {
+            Field f = this.getClass().getDeclaredField("no");
+            f.set(this, new Object());
+            if (no == saved) {
+                System.out.println("set() did not work");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
     }
 
-    boolean testAccessibleStaticPrimitive() 
-	throws NoSuchFieldException
+    boolean testStaticObject()
+        throws NoSuchFieldException
     {
-	try {
-	    Field f = this.getClass().getDeclaredField("si");
-	    f.setAccessible(true);
-	    f.setInt(this, 13);
-	    if (si != 13) {
-		System.out.println("setInt() did not work for static");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
+        Object saved = so;
+        try {
+            Field f = this.getClass().getDeclaredField("so");
+            f.set(this, new Object());
+            if (so == saved) {
+                System.out.println("set() did not work for static");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
     }
 
-    boolean testAccessibleObject() 
-	throws NoSuchFieldException
+    boolean testAccessiblePrimitive()
+        throws NoSuchFieldException
     {
-	Object saved = o;
-	try {
-	    Field f = this.getClass().getDeclaredField("o");
-	    f.setAccessible(true);
-	    f.set(this, new Object());
-	    if (o == saved) {
-		System.out.println("set() did not work");
-	    }
-	    return true;   // PASSED
-	} catch (IllegalAccessException iae) {
-	    return false;  // FAILED
-	}
-    }  
+        try {
+            Field f = this.getClass().getDeclaredField("i");
+            f.setAccessible(true);
+            f.setInt(this, 7);
+            if (i != 7) {
+                System.out.println("setInt() did not work");
+            }
+            return true;   // PASSED
+        } catch (IllegalAccessException iae) {
+            return false;  // FAILED
+        }
+    }
 
-    boolean testAccessibleStaticObject() 
-	throws NoSuchFieldException
+    boolean testAccessibleStaticPrimitive()
+        throws NoSuchFieldException
     {
-	Object saved = so;
-	try {
-	    Field f = this.getClass().getDeclaredField("so");
-	    f.setAccessible(true);
-	    f.set(this, new Object());
-	    if (so == saved) {
-		System.out.println("set() did not work for static");
-	    }
-	    return false;  // FAILED
-	} catch (IllegalAccessException iae) {
-	    return true;   // PASSED
-	}
-    }  
+        try {
+            Field f = this.getClass().getDeclaredField("si");
+            f.setAccessible(true);
+            f.setInt(this, 13);
+            if (si != 13) {
+                System.out.println("setInt() did not work for static");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
+    }
 
-    boolean testVolatilePrimitive() 
-	throws NoSuchFieldException
+    boolean testAccessibleObject()
+        throws NoSuchFieldException
     {
-	try {
-	    Field f = this.getClass().getDeclaredField("vi");
-	    f.setAccessible(true);
-	    f.setInt(this, 7);
-	    if (vi != 7) {
-		System.out.println("setInt() did not work");
-	    }
-	    return true;   // PASSED
-	} catch (IllegalAccessException iae) {
-	    return false;  // FAILED
-	}
+        Object saved = o;
+        try {
+            Field f = this.getClass().getDeclaredField("o");
+            f.setAccessible(true);
+            f.set(this, new Object());
+            if (o == saved) {
+                System.out.println("set() did not work");
+            }
+            return true;   // PASSED
+        } catch (IllegalAccessException iae) {
+            return false;  // FAILED
+        }
+    }
+
+    boolean testAccessibleStaticObject()
+        throws NoSuchFieldException
+    {
+        Object saved = so;
+        try {
+            Field f = this.getClass().getDeclaredField("so");
+            f.setAccessible(true);
+            f.set(this, new Object());
+            if (so == saved) {
+                System.out.println("set() did not work for static");
+            }
+            return false;  // FAILED
+        } catch (IllegalAccessException iae) {
+            return true;   // PASSED
+        }
+    }
+
+    boolean testVolatilePrimitive()
+        throws NoSuchFieldException
+    {
+        try {
+            Field f = this.getClass().getDeclaredField("vi");
+            f.setAccessible(true);
+            f.setInt(this, 7);
+            if (vi != 7) {
+                System.out.println("setInt() did not work");
+            }
+            return true;   // PASSED
+        } catch (IllegalAccessException iae) {
+            return false;  // FAILED
+        }
     }
 
 
-    boolean testVolatileObject() 
-	throws NoSuchFieldException
+    boolean testVolatileObject()
+        throws NoSuchFieldException
     {
-	Object saved = vo;
-	try {
-	    Field f = this.getClass().getDeclaredField("vo");
-	    f.setAccessible(true);
-	    f.set(this, new Object());
-	    if (vo == saved) {
-		System.out.println("set() did not work");
-	    }
-	    return true;   // PASSED
-	} catch (IllegalAccessException iae) {
-	    return false;  // FAILED
-	}
-    }  
-} 
+        Object saved = vo;
+        try {
+            Field f = this.getClass().getDeclaredField("vo");
+            f.setAccessible(true);
+            f.set(this, new Object());
+            if (vo == saved) {
+                System.out.println("set() did not work");
+            }
+            return true;   // PASSED
+        } catch (IllegalAccessException iae) {
+            return false;  // FAILED
+        }
+    }
+}

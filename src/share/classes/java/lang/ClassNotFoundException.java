@@ -26,7 +26,7 @@
 package java.lang;
 
 /**
- * Thrown when an application tries to load in a class through its 
+ * Thrown when an application tries to load in a class through its
  * string name using:
  * <ul>
  * <li>The <code>forName</code> method in class <code>Class</code>.
@@ -35,7 +35,7 @@ package java.lang;
  * <li>The <code>loadClass</code> method in class <code>ClassLoader</code>.
  * </ul>
  * <p>
- * but no definition for the class with the specified name could be found. 
+ * but no definition for the class with the specified name could be found.
  *
  * <p>As of release 1.4, this exception has been retrofitted to conform to
  * the general purpose exception-chaining mechanism.  The "optional exception
@@ -45,7 +45,6 @@ package java.lang;
  * Throwable#getCause()} method, as well as the aforementioned "legacy method."
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see     java.lang.Class#forName(java.lang.String)
  * @see     java.lang.ClassLoader#findSystemClass(java.lang.String)
  * @see     java.lang.ClassLoader#loadClass(java.lang.String, boolean)
@@ -58,10 +57,10 @@ public class ClassNotFoundException extends Exception {
      private static final long serialVersionUID = 9176873029745254542L;
 
     /**
-     * This field holds the exception ex if the 
+     * This field holds the exception ex if the
      * ClassNotFoundException(String s, Throwable ex) constructor was
      * used to instantiate the object
-     * @serial 
+     * @serial
      * @since 1.2
      */
     private Throwable ex;
@@ -70,17 +69,17 @@ public class ClassNotFoundException extends Exception {
      * Constructs a <code>ClassNotFoundException</code> with no detail message.
      */
     public ClassNotFoundException() {
-	super((Throwable)null);  // Disallow initCause
+        super((Throwable)null);  // Disallow initCause
     }
 
     /**
-     * Constructs a <code>ClassNotFoundException</code> with the 
-     * specified detail message. 
+     * Constructs a <code>ClassNotFoundException</code> with the
+     * specified detail message.
      *
      * @param   s   the detail message.
      */
     public ClassNotFoundException(String s) {
-	super(s, null);  //  Disallow initCause
+        super(s, null);  //  Disallow initCause
     }
 
     /**
@@ -93,8 +92,8 @@ public class ClassNotFoundException extends Exception {
      * @since 1.2
      */
     public ClassNotFoundException(String s, Throwable ex) {
-	super(s, null);  //  Disallow initCause
-	this.ex = ex;
+        super(s, null);  //  Disallow initCause
+        this.ex = ex;
     }
 
     /**

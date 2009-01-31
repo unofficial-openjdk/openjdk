@@ -45,7 +45,6 @@ import javax.swing.plaf.basic.BasicComboBoxEditor;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public class MetalComboBoxEditor extends BasicComboBoxEditor {
@@ -81,7 +80,7 @@ public class MetalComboBoxEditor extends BasicComboBoxEditor {
     }
 
    /**
-    * The default editor border <code>Insets</code>. This field 
+    * The default editor border <code>Insets</code>. This field
     * might not be used.
     */
     protected static Insets editorBorderInsets = new Insets( 2, 2, 2, 0 );
@@ -142,4 +141,3 @@ public class MetalComboBoxEditor extends BasicComboBoxEditor {
     implements javax.swing.plaf.UIResource {
     }
 }
-

@@ -153,4 +153,3 @@ class SimpleNode implements Node {
         }
     }
 }
-

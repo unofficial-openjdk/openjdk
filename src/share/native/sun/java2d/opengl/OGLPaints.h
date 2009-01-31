@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 #ifndef OGLPaints_h_Included
 #define OGLPaints_h_Included

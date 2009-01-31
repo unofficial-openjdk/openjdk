@@ -87,11 +87,7 @@ public class SnmpPduTrap extends SnmpPduPacket {
      * and {@link com.sun.jmx.snmp.SnmpDefinitions#snmpVersionOne snmpVersionOne}.
      */
     public SnmpPduTrap() {
-	type = pduV1TrapPdu ;
-	version = snmpVersionOne ;
+        type = pduV1TrapPdu ;
+        version = snmpVersionOne ;
     }
 }
-
-
-
-

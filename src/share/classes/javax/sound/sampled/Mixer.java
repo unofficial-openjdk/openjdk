@@ -52,7 +52,6 @@ package javax.sound.sampled;
  * automatically start or stop simultaneously with the explicitly affected one.
  *
  * @author Kara Kytle
- * @version %I%, %E%
  * @since 1.3
  */
 public interface Mixer extends Line {
@@ -247,108 +246,107 @@ public interface Mixer extends Line {
      * method of the <code>Mixer</code> interface.
      *
      * @author Kara Kytle
-     * @version %I%, %E%
      * @since 1.3
      */
     public static class Info {
 
-	/**
-	 * Mixer name.
-	 */
-	private /*final*/ String name;
+        /**
+         * Mixer name.
+         */
+        private /*final*/ String name;
 
-	/**
-	 * Mixer vendor.
-	 */
-	private /*final*/ String vendor;
+        /**
+         * Mixer vendor.
+         */
+        private /*final*/ String vendor;
 
-	/**
-	 * Mixer description.
-	 */
-	private /*final*/ String description;
+        /**
+         * Mixer description.
+         */
+        private /*final*/ String description;
 
-	/**
-	 * Mixer version.
-	 */
-	private /*final*/ String version;
+        /**
+         * Mixer version.
+         */
+        private /*final*/ String version;
 
-	/**
-	 * Constructs a mixer's info object, passing it the given
-	 * textual information.
-	 * @param name the name of the mixer
-	 * @param vendor the company who manufactures or creates the hardware
-	 * or software mixer
-	 * @param description descriptive text about the mixer
-	 * @param version version information for the mixer
-	 */
-	protected Info(String name, String vendor, String description, String version) {
+        /**
+         * Constructs a mixer's info object, passing it the given
+         * textual information.
+         * @param name the name of the mixer
+         * @param vendor the company who manufactures or creates the hardware
+         * or software mixer
+         * @param description descriptive text about the mixer
+         * @param version version information for the mixer
+         */
+        protected Info(String name, String vendor, String description, String version) {
 
-	    this.name = name;
-	    this.vendor = vendor;
-	    this.description = description;
-	    this.version = version;
-	}
+            this.name = name;
+            this.vendor = vendor;
+            this.description = description;
+            this.version = version;
+        }
 
 
-	/**
-	 * Indicates whether two info objects are equal, returning <code>true</code> if
-	 * they are identical.
-	 * @param obj the reference object with which to compare this info
-	 * object
-	 * @return <code>true</code> if this info object is the same as the
-	 * <code>obj</code> argument; <code>false</code> otherwise
-	 */
-	public final boolean equals(Object obj) {
-	    return super.equals(obj);
-	}
+        /**
+         * Indicates whether two info objects are equal, returning <code>true</code> if
+         * they are identical.
+         * @param obj the reference object with which to compare this info
+         * object
+         * @return <code>true</code> if this info object is the same as the
+         * <code>obj</code> argument; <code>false</code> otherwise
+         */
+        public final boolean equals(Object obj) {
+            return super.equals(obj);
+        }
 
-	/**
-	 * Finalizes the hashcode method.
-	 *
-	 * @return the hashcode for this object
-	 */
-	public final int hashCode() {
-	    return super.hashCode();
-	}
+        /**
+         * Finalizes the hashcode method.
+         *
+         * @return the hashcode for this object
+         */
+        public final int hashCode() {
+            return super.hashCode();
+        }
 
-	/**
-	 * Obtains the name of the mixer.
-	 * @return a string that names the mixer
-	 */
-	public final String getName() {
-	    return name;
-	}
+        /**
+         * Obtains the name of the mixer.
+         * @return a string that names the mixer
+         */
+        public final String getName() {
+            return name;
+        }
 
-	/**
-	 * Obtains the vendor of the mixer.
-	 * @return a string that names the mixer's vendor
-	 */
-	public final String getVendor() {
-	    return vendor;
-	}
+        /**
+         * Obtains the vendor of the mixer.
+         * @return a string that names the mixer's vendor
+         */
+        public final String getVendor() {
+            return vendor;
+        }
 
-	/**
-	 * Obtains the description of the mixer.
-	 * @return a textual description of the mixer
-	 */
-	public final String getDescription() {
-	    return description;
-	}
+        /**
+         * Obtains the description of the mixer.
+         * @return a textual description of the mixer
+         */
+        public final String getDescription() {
+            return description;
+        }
 
-	/**
-	 * Obtains the version of the mixer.
-	 * @return textual version information for the mixer
-	 */
-	public final String getVersion() {
-	    return version;
-	}
+        /**
+         * Obtains the version of the mixer.
+         * @return textual version information for the mixer
+         */
+        public final String getVersion() {
+            return version;
+        }
 
-	/**
-	 * Provides a string representation of the mixer info.
-	 * @return a string describing the info object
-	 */
-	public final String toString() {
-	    return (name + ", version " + version);
-	}
+        /**
+         * Provides a string representation of the mixer info.
+         * @return a string describing the info object
+         */
+        public final String toString() {
+            return (name + ", version " + version);
+        }
     } // class Info
 }

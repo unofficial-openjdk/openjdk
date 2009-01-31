@@ -32,8 +32,8 @@ import java.util.Vector;
  * Represents a path to a node. A TreePath is an array of Objects that are
  * vended from a TreeModel. The elements of the array are ordered such
  * that the root is always the first element (index 0) of the array.
- * TreePath is Serializable, but if any 
- * components of the path are not serializable, it will not be written 
+ * TreePath is Serializable, but if any
+ * components of the path are not serializable, it will not be written
  * out.
  * <p>
  * For further information and examples of using tree paths,
@@ -50,7 +50,6 @@ import java.util.Vector;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Scott Violet
  * @author Philip Milne
  */
@@ -62,12 +61,12 @@ public class TreePath extends Object implements Serializable {
     transient private Object   lastPathComponent;
 
     /**
-     * Constructs a path from an array of Objects, uniquely identifying 
+     * Constructs a path from an array of Objects, uniquely identifying
      * the path from the root of the tree to a specific node, as returned
      * by the tree's data model.
      * <p>
-     * The model is free to return an array of any Objects it needs to 
-     * represent the path. The DefaultTreeModel returns an array of 
+     * The model is free to return an array of any Objects it needs to
+     * represent the path. The DefaultTreeModel returns an array of
      * TreeNode objects. The first TreeNode in the path is the root of the
      * tree, the last TreeNode is the node identified by the path.
      *
@@ -76,9 +75,9 @@ public class TreePath extends Object implements Serializable {
     public TreePath(Object[] path) {
         if(path == null || path.length == 0)
             throw new IllegalArgumentException("path in TreePath must be non null and not empty.");
-	lastPathComponent = path[path.length - 1];
-	if(path.length > 1)
-	    parentPath = new TreePath(path, path.length - 1);
+        lastPathComponent = path[path.length - 1];
+        if(path.length > 1)
+            parentPath = new TreePath(path, path.length - 1);
     }
 
     /**
@@ -92,7 +91,7 @@ public class TreePath extends Object implements Serializable {
         if(singlePath == null)
             throw new IllegalArgumentException("path in TreePath must be non null.");
         lastPathComponent = singlePath;
-	parentPath = null;
+        parentPath = null;
     }
 
     /**
@@ -102,7 +101,7 @@ public class TreePath extends Object implements Serializable {
     protected TreePath(TreePath parent, Object lastElement) {
         if(lastElement == null)
             throw new IllegalArgumentException("path in TreePath must be non null.");
-	parentPath = parent;
+        parentPath = parent;
         lastPathComponent = lastElement;
     }
 
@@ -111,15 +110,15 @@ public class TreePath extends Object implements Serializable {
      * length <code>length</code>.
      */
     protected TreePath(Object[] path, int length) {
-	lastPathComponent = path[length - 1];
-	if(length > 1)
-	    parentPath = new TreePath(path, length - 1);
+        lastPathComponent = path[length - 1];
+        if(length > 1)
+            parentPath = new TreePath(path, length - 1);
     }
 
     /**
-     * Primarily provided for subclasses 
+     * Primarily provided for subclasses
      * that represent paths in a different manner.
-     * If a subclass uses this constructor, it should also override 
+     * If a subclass uses this constructor, it should also override
      * the <code>getPath</code>,
      * <code>getPathCount</code>, and
      * <code>getPathComponent</code> methods,
@@ -136,13 +135,13 @@ public class TreePath extends Object implements Serializable {
      * @see #TreePath(Object[])
      */
     public Object[] getPath() {
-	int            i = getPathCount();
+        int            i = getPathCount();
         Object[]       result = new Object[i--];
 
         for(TreePath path = this; path != null; path = path.parentPath) {
             result[i--] = path.lastPathComponent;
         }
-	return result;
+        return result;
     }
 
     /**
@@ -153,7 +152,7 @@ public class TreePath extends Object implements Serializable {
      * @see #TreePath(Object[])
      */
     public Object getLastPathComponent() {
-	return lastPathComponent;
+        return lastPathComponent;
     }
 
     /**
@@ -166,7 +165,7 @@ public class TreePath extends Object implements Serializable {
         for(TreePath path = this; path != null; path = path.parentPath) {
             result++;
         }
-	return result;
+        return result;
     }
 
     /**
@@ -202,21 +201,21 @@ public class TreePath extends Object implements Serializable {
      * @param o the Object to compare
      */
     public boolean equals(Object o) {
-	if(o == this)
-	    return true;
+        if(o == this)
+            return true;
         if(o instanceof TreePath) {
             TreePath            oTreePath = (TreePath)o;
 
-	    if(getPathCount() != oTreePath.getPathCount())
-		return false;
+            if(getPathCount() != oTreePath.getPathCount())
+                return false;
             for(TreePath path = this; path != null; path = path.parentPath) {
                 if (!(path.lastPathComponent.equals
                       (oTreePath.lastPathComponent))) {
-		    return false;
-		}
+                    return false;
+                }
                 oTreePath = oTreePath.parentPath;
-	    }
-	    return true;
+            }
+            return true;
         }
         return false;
     }
@@ -227,7 +226,7 @@ public class TreePath extends Object implements Serializable {
      *
      * @return the hashCode for the object
      */
-    public int hashCode() { 
+    public int hashCode() {
         return lastPathComponent.hashCode();
     }
 
@@ -235,10 +234,10 @@ public class TreePath extends Object implements Serializable {
      * Returns true if <code>aTreePath</code> is a
      * descendant of this
      * TreePath. A TreePath P1 is a descendant of a TreePath P2
-     * if P1 contains all of the components that make up 
+     * if P1 contains all of the components that make up
      * P2's path.
      * For example, if this object has the path [a, b],
-     * and <code>aTreePath</code> has the path [a, b, c], 
+     * and <code>aTreePath</code> has the path [a, b, c],
      * then <code>aTreePath</code> is a descendant of this object.
      * However, if <code>aTreePath</code> has the path [a],
      * then it is not a descendant of this object.  By this definition
@@ -248,19 +247,19 @@ public class TreePath extends Object implements Serializable {
      * @return true if <code>aTreePath</code> is a descendant of this path
      */
     public boolean isDescendant(TreePath aTreePath) {
-	if(aTreePath == this)
-	    return true;
+        if(aTreePath == this)
+            return true;
 
         if(aTreePath != null) {
             int                 pathLength = getPathCount();
-	    int                 oPathLength = aTreePath.getPathCount();
+            int                 oPathLength = aTreePath.getPathCount();
 
-	    if(oPathLength < pathLength)
-		// Can't be a descendant, has fewer components in the path.
-		return false;
-	    while(oPathLength-- > pathLength)
-		aTreePath = aTreePath.getParentPath();
-	    return equals(aTreePath);
+            if(oPathLength < pathLength)
+                // Can't be a descendant, has fewer components in the path.
+                return false;
+            while(oPathLength-- > pathLength)
+                aTreePath = aTreePath.getParentPath();
+            return equals(aTreePath);
         }
         return false;
     }
@@ -273,10 +272,10 @@ public class TreePath extends Object implements Serializable {
      * if child is null.
      */
     public TreePath pathByAddingChild(Object child) {
-	if(child == null)
-	    throw new NullPointerException("Null child not allowed");
+        if(child == null)
+            throw new NullPointerException("Null child not allowed");
 
-	return new TreePath(this, child);
+        return new TreePath(this, child);
     }
 
     /**
@@ -284,7 +283,7 @@ public class TreePath extends Object implements Serializable {
      * the last path component.
      */
     public TreePath getParentPath() {
-	return parentPath;
+        return parentPath;
     }
 
     /**
@@ -297,7 +296,7 @@ public class TreePath extends Object implements Serializable {
         StringBuffer tempSpot = new StringBuffer("[");
 
         for(int counter = 0, maxCounter = getPathCount();counter < maxCounter;
-	    counter++) {
+            counter++) {
             if(counter > 0)
                 tempSpot.append(", ");
             tempSpot.append(getPathComponent(counter));
@@ -306,7 +305,7 @@ public class TreePath extends Object implements Serializable {
         return tempSpot.toString();
     }
 
-    // Serialization support.  
+    // Serialization support.
     private void writeObject(ObjectOutputStream s) throws IOException {
         s.defaultWriteObject();
 
@@ -321,7 +320,7 @@ public class TreePath extends Object implements Serializable {
         s.writeObject(values);
     }
 
-    private void readObject(ObjectInputStream s) 
+    private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         s.defaultReadObject();
 

@@ -1,5 +1,3 @@
-%W% %E%
-
 Quick summary of the main purpose here:  X.509 certs are used in public
 key infrastructure for protocols such as SSL and SET.  These certificates
 involve ISO/CCITT standard technologies such as ASN.1/DER, which control

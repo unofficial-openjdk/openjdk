@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. method_invocation_stat.d -c "java ..."
  *    2. method_invocation_stat.d -p JAVA_PID

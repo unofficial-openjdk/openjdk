@@ -51,7 +51,7 @@ public class LoadCounts {
         int classesNow = mbean.getLoadedClassCount();
         long classesTotal = mbean.getTotalLoadedClassCount();
 
-        if (classesNow > classesTotal) 
+        if (classesNow > classesTotal)
             throw new RuntimeException("getLoadedClassCount() > "
                                      + "getTotalLoadedClassCount()");
 
@@ -73,7 +73,7 @@ public class LoadCounts {
         LoaderForTwoInstances ins1 = new LoaderForTwoInstances();
         LoaderForTwoInstances ins2 = new LoaderForTwoInstances();
 
-        // Load different type of classes with different 
+        // Load different type of classes with different
         // initiating classloaders but the same defining class loader.
         System.out.println("Loading 2 class instances; each by " +
                            "2 initiating class loaders.");

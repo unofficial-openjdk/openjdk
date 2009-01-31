@@ -42,7 +42,7 @@ package java.beans;
  * Every propertyEditor must support one or more of the three simple
  * display styles.  Thus it can either (1) support isPaintable or (2)
  * both return a non-null String[] from getTags() and return a non-null
- * value from getAsText or (3) simply return a non-null String from 
+ * value from getAsText or (3) simply return a non-null String from
  * getAsText().
  * <p>
  * Every property editor must support a call on setValue when the argument
@@ -61,7 +61,7 @@ public interface PropertyEditor {
      * "java.lang.Integer".
      *
      * @param value The new target object to be edited.  Note that this
-     *     object should not be modified by the PropertyEditor, rather 
+     *     object should not be modified by the PropertyEditor, rather
      *     the PropertyEditor should create a new object to hold any
      *     modified value.
      */
@@ -108,19 +108,19 @@ public interface PropertyEditor {
     /**
      * Returns a fragment of Java code that can be used to set a property
      * to match the editors current state. This method is intended
-     * for use when generating Java code to reflect changes made through the 
+     * for use when generating Java code to reflect changes made through the
      * property editor.
      * <p>
-     * The code fragment should be context free and must be a legal Java 
+     * The code fragment should be context free and must be a legal Java
      * expression as specified by the JLS.
      * <p>
      * Specifically, if the expression represents a computation then all
-     * classes and static members should be fully qualified. This rule 
+     * classes and static members should be fully qualified. This rule
      * applies to constructors, static methods and non primitive arguments.
      * <p>
      * Caution should be used when evaluating the expression as it may throw
      * exceptions. In particular, code generators must ensure that generated
-     * code will compile in the presence of an expression that can throw 
+     * code will compile in the presence of an expression that can throw
      * checked exceptions.
      * <p>
      * Example results are:
@@ -128,12 +128,12 @@ public interface PropertyEditor {
      * <li>Primitive expresssion: <code>2</code>
      * <li>Class constructor: <code>new java.awt.Color(127,127,34)</code>
      * <li>Static field: <code>java.awt.Color.orange</code>
-     * <li>Static method: <code>javax.swing.Box.createRigidArea(new 
+     * <li>Static method: <code>javax.swing.Box.createRigidArea(new
      *                                   java.awt.Dimension(0, 5))</code>
      * </ul>
      *
      * @return a fragment of Java code representing an initializer for the
-     *         current value. It should not contain a semi-colon 
+     *         current value. It should not contain a semi-colon
      *         ('<code>;</code>') to end the expression.
      */
     String getJavaInitializationString();
@@ -142,11 +142,11 @@ public interface PropertyEditor {
 
     /**
      * Gets the property value as text.
-     * 
+     *
      * @return The property value as a human editable string.
      * <p>   Returns null if the value can't be expressed as an editable string.
      * <p>   If a non-null value is returned, then the PropertyEditor should
-     *	     be prepared to parse that string back in setAsText().
+     *       be prepared to parse that string back in setAsText().
      */
     String getAsText();
 
@@ -162,16 +162,16 @@ public interface PropertyEditor {
     //----------------------------------------------------------------------
 
     /**
-     * If the property value must be one of a set of known tagged values, 
+     * If the property value must be one of a set of known tagged values,
      * then this method should return an array of the tags.  This can
      * be used to represent (for example) enum values.  If a PropertyEditor
      * supports tags, then it should support the use of setAsText with
      * a tag value as a way of setting the value and the use of getAsText
      * to identify the current value.
      *
-     * @return The tag values for this property.  May be null if this 
+     * @return The tag values for this property.  May be null if this
      *   property cannot be represented as a tagged value.
-     *	
+     *
      */
     String[] getTags();
 
@@ -189,7 +189,7 @@ public interface PropertyEditor {
      *
      * @return A java.awt.Component that will allow a human to directly
      *      edit the current property value.  May be null if this is
-     *	    not supported.
+     *      not supported.
      */
 
     java.awt.Component getCustomEditor();
@@ -200,7 +200,7 @@ public interface PropertyEditor {
      * @return  True if the propertyEditor can provide a custom editor.
      */
     boolean supportsCustomEditor();
-  
+
     //----------------------------------------------------------------------
 
     /**
@@ -210,7 +210,7 @@ public interface PropertyEditor {
      * null value for the property name and itself as the source.
      *
      * @param listener  An object to be invoked when a PropertyChange
-     *		event is fired.
+     *          event is fired.
      */
     void addPropertyChangeListener(PropertyChangeListener listener);
 

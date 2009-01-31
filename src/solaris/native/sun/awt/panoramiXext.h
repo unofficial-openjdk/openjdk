@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -52,8 +52,8 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/*  
- *	PanoramiX definitions
+/*
+ *      PanoramiX definitions
  */
 /* $XFree86: xc/include/extensions/panoramiXext.h,v 3.6 2001/01/17 17:53:22 dawes Exp $ */
 
@@ -66,18 +66,18 @@ Equipment Corporation.
 
 typedef struct {
     Window  window;         /* PanoramiX window - may not exist */
-    int	    screen;
+    int     screen;
     int     State;          /* PanroamiXOff, PanoramiXOn */
-    int	    width;	    /* width of this screen */
-    int     height;	    /* height of this screen */
+    int     width;          /* width of this screen */
+    int     height;         /* height of this screen */
     int     ScreenCount;    /* real physical number of screens */
     XID     eventMask;      /* selected events for this client */
-} XPanoramiXInfo;    
+} XPanoramiXInfo;
 
 extern XPanoramiXInfo *XPanoramiXAllocInfo (
 #if NeedFunctionPrototypes
     void
 #endif
-);        
+);
 
 #endif /* __linux__*/

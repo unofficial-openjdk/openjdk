@@ -37,7 +37,7 @@ import com.sun.jmx.snmp.internal.SnmpSecurityCache;
 import com.sun.jmx.snmp.SnmpBadSecurityLevelException;
 /**
  * <P> An <CODE>SnmpIncomingResponse</CODE> handles the unmarshalling of the received response.</P>
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -66,7 +66,7 @@ public interface SnmpIncomingResponse {
      */
     public void setSecurityCache(SnmpSecurityCache cache);
     /**
-     * Gets the incoming response security level. This level is defined in 
+     * Gets the incoming response security level. This level is defined in
      * {@link com.sun.jmx.snmp.SnmpEngine SnmpEngine}.
      * @return The security level.
      */
@@ -81,31 +81,31 @@ public interface SnmpIncomingResponse {
      * @return The context name.
      */
     public byte[] getContextName();
-    
+
     /**
-     * Decodes the specified bytes and initializes itself with the received 
+     * Decodes the specified bytes and initializes itself with the received
      * response.
-     * 
+     *
      * @param inputBytes The bytes to be decoded.
      *
      * @exception SnmpStatusException If the specified bytes are not a valid encoding.
      */
-    public SnmpMsg decodeMessage(byte[] inputBytes, 
-				 int byteCount, 
-				 InetAddress address,
-				 int port) 
+    public SnmpMsg decodeMessage(byte[] inputBytes,
+                                 int byteCount,
+                                 InetAddress address,
+                                 int port)
         throws SnmpStatusException, SnmpSecurityException;
-   
+
     /**
      * Gets the request PDU encoded in the received response.
      * <P>
      * This method decodes the data field and returns the resulting PDU.
-     * 
+     *
      * @return The resulting PDU.
      * @exception SnmpStatusException If the encoding is not valid.
      */
-    public SnmpPdu decodeSnmpPdu() 
-	throws SnmpStatusException;
+    public SnmpPdu decodeSnmpPdu()
+        throws SnmpStatusException;
 
     /**
      * Returns the response request Id.

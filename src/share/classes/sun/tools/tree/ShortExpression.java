@@ -39,13 +39,13 @@ class ShortExpression extends IntegerExpression {
      * Constructor
      */
     public ShortExpression(long where, short value) {
-	super(SHORTVAL, where, Type.tShort, value);
+        super(SHORTVAL, where, Type.tShort, value);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-	out.print(value + "s");
+        out.print(value + "s");
     }
 }

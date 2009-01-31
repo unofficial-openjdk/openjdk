@@ -64,7 +64,7 @@ AwtCursor::AwtCursor(JNIEnv *env, HCURSOR hCur, jobject jCur)
 }
 
 AwtCursor::AwtCursor(JNIEnv *env, HCURSOR hCur, jobject jCur, int xH, int yH,
-		     int nWid, int nHgt, int nS, int *col, BYTE *hM) 
+                     int nWid, int nHgt, int nS, int *col, BYTE *hM)
 {
     hCursor = hCur;
     jCursor = env->NewWeakGlobalRef(jCur);
@@ -81,7 +81,7 @@ AwtCursor::AwtCursor(JNIEnv *env, HCURSOR hCur, jobject jCur, int xH, int yH,
     dirty = FALSE;
 
     if (IsWin95Cursor()) {
- 	customCursors.Add(this);
+        customCursors.Add(this);
     }
 }
 
@@ -93,7 +93,7 @@ void AwtCursor::Dispose()
 {
     delete[] mask;
     delete[] cols;
-    
+
     if (custom) {
         ::DestroyIcon(hCursor);
         if (IsWin95Cursor()) {
@@ -104,7 +104,7 @@ void AwtCursor::Dispose()
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject localObj = env->NewLocalRef(jCursor);
     if (localObj != NULL) {
-        setPData(localObj, ptr_to_jlong(NULL)); 
+        setPData(localObj, ptr_to_jlong(NULL));
         env->DeleteLocalRef(localObj);
     }
     env->DeleteWeakGlobalRef(jCursor);
@@ -123,49 +123,49 @@ AwtCursor * AwtCursor::CreateSystemCursor(jobject jCursor)
     switch (type) {
       case java_awt_Cursor_DEFAULT_CURSOR:
       default:
-	winCursor = IDC_ARROW;
-	break;
+        winCursor = IDC_ARROW;
+        break;
       case java_awt_Cursor_CROSSHAIR_CURSOR:
-	winCursor = IDC_CROSS;
-	break;
+        winCursor = IDC_CROSS;
+        break;
       case java_awt_Cursor_TEXT_CURSOR:
-	winCursor = IDC_IBEAM;
-	break;
+        winCursor = IDC_IBEAM;
+        break;
       case java_awt_Cursor_WAIT_CURSOR:
-	winCursor = IDC_WAIT;
-	break;
+        winCursor = IDC_WAIT;
+        break;
       case java_awt_Cursor_NE_RESIZE_CURSOR:
       case java_awt_Cursor_SW_RESIZE_CURSOR:
-	winCursor = IDC_SIZENESW;
-	break;
+        winCursor = IDC_SIZENESW;
+        break;
       case java_awt_Cursor_SE_RESIZE_CURSOR:
       case java_awt_Cursor_NW_RESIZE_CURSOR:
-	winCursor = IDC_SIZENWSE;
-	break;
+        winCursor = IDC_SIZENWSE;
+        break;
       case java_awt_Cursor_N_RESIZE_CURSOR:
       case java_awt_Cursor_S_RESIZE_CURSOR:
-	winCursor = IDC_SIZENS;
-	break;
+        winCursor = IDC_SIZENS;
+        break;
       case java_awt_Cursor_W_RESIZE_CURSOR:
       case java_awt_Cursor_E_RESIZE_CURSOR:
-	winCursor = IDC_SIZEWE;
-	break;
+        winCursor = IDC_SIZEWE;
+        break;
       case java_awt_Cursor_HAND_CURSOR:
-	winCursor = TEXT("HAND_CURSOR");
-	break;
+        winCursor = TEXT("HAND_CURSOR");
+        break;
       case java_awt_Cursor_MOVE_CURSOR:
-	winCursor = IDC_SIZEALL;
-	break;
+        winCursor = IDC_SIZEALL;
+        break;
     }
     HCURSOR hCursor = ::LoadCursor(NULL, winCursor);
     if (hCursor == NULL) {
         /* Not a system cursor, check for resource. */
         hCursor = ::LoadCursor(AwtToolkit::GetInstance().GetModuleHandle(),
-			       winCursor);
+                               winCursor);
     }
     if (hCursor == NULL) {
         hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	DASSERT(hCursor != NULL);
+        DASSERT(hCursor != NULL);
     }
 
     AwtCursor *awtCursor = new AwtCursor(env, hCursor, jCursor);
@@ -220,11 +220,11 @@ void AwtCursor::UpdateCursor(AwtComponent *comp) {
     //4372119:Disappearing of busy cursor on JDK 1.3
     HWND captureWnd = GetCapture();
     if ( !AwtComponent::isMenuLoopActive() &&
-        (captureWnd==NULL || captureWnd==comp->GetHWnd())) 
+        (captureWnd==NULL || captureWnd==comp->GetHWnd()))
     {
         if (IsWindow(AwtWindow::GetModalBlocker(
                                 AwtComponent::GetTopLevelParentForWindow(
-                                comp->GetHWnd())))) 
+                                comp->GetHWnd()))))
         {
             static HCURSOR hArrowCursor = LoadCursor(NULL, IDC_ARROW);
             SetCursor(hArrowCursor);
@@ -238,9 +238,9 @@ void AwtCursor::UpdateCursor(AwtComponent *comp) {
             }
 
             if (AwtCursor::updateCursorID == NULL) {
-                jclass cls = 
+                jclass cls =
                     env->FindClass("sun/awt/windows/WGlobalCursorManager");
-                AwtCursor::globalCursorManagerClass = 
+                AwtCursor::globalCursorManagerClass =
                     (jclass)env->NewGlobalRef(cls);
                 AwtCursor::updateCursorID =
                     env->GetStaticMethodID(cls, "nativeUpdateCursor",
@@ -259,10 +259,10 @@ void AwtCursor::UpdateCursor(AwtComponent *comp) {
 void AwtCursor::DirtyAllCustomCursors() {
     if (IsWin95Cursor()) {
         AwtObjectListItem *cur = customCursors.m_head;
-	while (cur != NULL) {
-	    ((AwtCursor *)(cur->obj))->dirty = TRUE;
-	    cur = cur->next;
-	}
+        while (cur != NULL) {
+            ((AwtCursor *)(cur->obj))->dirty = TRUE;
+            cur = cur->next;
+        }
     }
 }
 
@@ -273,7 +273,7 @@ void AwtCursor::Rebuild() {
 
     ::DestroyIcon(hCursor);
     hCursor = NULL;
-  
+
     HBITMAP hMask = ::CreateBitmap(nWidth, nHeight, 1, 1, mask);
     HBITMAP hColor = create_BMP(NULL, cols, nSS, nWidth, nHeight);
     if (hMask && hColor) {
@@ -284,9 +284,9 @@ void AwtCursor::Rebuild() {
         icnInfo.fIcon = FALSE;
         icnInfo.xHotspot = xHotSpot;
         icnInfo.yHotspot = yHotSpot;
-    
+
         hCursor = ::CreateIconIndirect(&icnInfo);
-    
+
         destroy_BMP(hColor);
         destroy_BMP(hMask);
     }
@@ -294,7 +294,7 @@ void AwtCursor::Rebuild() {
     dirty = FALSE;
 }
 
-/* Bug fix for 4205805: 
+/* Bug fix for 4205805:
    Custom cursor on WIN95 needs more effort, the same API works fine on NT
    and WIN98. On Win95, DDB has to be passed in when calling createIconIndirect
    Since DDB depends on the DISPLAY, we have to rebuild all the custom cursors
@@ -305,8 +305,8 @@ BOOL AwtCursor::IsWin95Cursor() {
     static BOOL known = FALSE;
     if (!known) {
         val = (IS_WIN32 && !IS_NT && LOBYTE(LOWORD(::GetVersion())) == 4 &&
-	       HIBYTE(LOWORD(::GetVersion())) == 0);
-	known = TRUE;
+               HIBYTE(LOWORD(::GetVersion())) == 0);
+        known = TRUE;
     }
     return val;
 }
@@ -349,7 +349,7 @@ Java_java_awt_Cursor_initIDs(JNIEnv *env, jclass cls)
  * Method:    finalizeImpl
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_awt_Cursor_finalizeImpl(JNIEnv *env, jclass clazz, jlong pData)
 {
     TRY_NO_VERIFY;
@@ -365,17 +365,17 @@ Java_java_awt_Cursor_finalizeImpl(JNIEnv *env, jclass clazz, jlong pData)
 
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCustomCursor_createCursorIndirect(
-    JNIEnv *env, jobject self, jintArray intRasterData, jbyteArray andMask, 
+    JNIEnv *env, jobject self, jintArray intRasterData, jbyteArray andMask,
     jint nSS, jint nW, jint nH, jint xHotSpot, jint yHotSpot)
 {
     TRY;
 
     JNI_CHECK_NULL_RETURN(intRasterData, "intRasterData argument");
 
-    if (nW != ::GetSystemMetrics(SM_CXCURSOR) || 
+    if (nW != ::GetSystemMetrics(SM_CXCURSOR) ||
         nH != ::GetSystemMetrics(SM_CYCURSOR)) {
-	JNU_ThrowArrayIndexOutOfBoundsException(env,
-						"bad width and/or height");
+        JNU_ThrowArrayIndexOutOfBoundsException(env,
+                                                "bad width and/or height");
         return;
     }
 
@@ -391,38 +391,38 @@ Java_sun_awt_windows_WCustomCursor_createCursorIndirect(
     jint *intRasterDataPtr = NULL;
     HBITMAP hColor = NULL;
     try {
-        intRasterDataPtr = 
-	    (jint *)env->GetPrimitiveArrayCritical(intRasterData, 0);
-	hColor = create_BMP(NULL, (int *)intRasterDataPtr, nSS, nW, nH);
-	memcpy(cols, intRasterDataPtr, nW*nH*sizeof(int));
+        intRasterDataPtr =
+            (jint *)env->GetPrimitiveArrayCritical(intRasterData, 0);
+        hColor = create_BMP(NULL, (int *)intRasterDataPtr, nSS, nW, nH);
+        memcpy(cols, intRasterDataPtr, nW*nH*sizeof(int));
     } catch (...) {
         if (intRasterDataPtr != NULL) {
-	    env->ReleasePrimitiveArrayCritical(intRasterData,
-					       intRasterDataPtr, 0);
-	}
-	throw;
+            env->ReleasePrimitiveArrayCritical(intRasterData,
+                                               intRasterDataPtr, 0);
+        }
+        throw;
     }
 
     env->ReleasePrimitiveArrayCritical(intRasterData, intRasterDataPtr, 0);
     intRasterDataPtr = NULL;
-    
+
     HCURSOR hCursor = NULL;
 
     if (hMask && hColor) {
         ICONINFO icnInfo;
-	memset(&icnInfo, 0, sizeof(ICONINFO));
-	icnInfo.hbmMask = hMask;
-	icnInfo.hbmColor = hColor;
-	icnInfo.fIcon = FALSE;
-	icnInfo.xHotspot = xHotSpot;
-	icnInfo.yHotspot = yHotSpot;
-	
-	hCursor = ::CreateIconIndirect(&icnInfo);
-	
-	destroy_BMP(hColor);
-	destroy_BMP(hMask);
+        memset(&icnInfo, 0, sizeof(ICONINFO));
+        icnInfo.hbmMask = hMask;
+        icnInfo.hbmColor = hColor;
+        icnInfo.fIcon = FALSE;
+        icnInfo.xHotspot = xHotSpot;
+        icnInfo.yHotspot = yHotSpot;
+
+        hCursor = ::CreateIconIndirect(&icnInfo);
+
+        destroy_BMP(hColor);
+        destroy_BMP(hMask);
     }
-   
+
     DASSERT(hCursor);
 
     AwtCursor::setPData(self, ptr_to_jlong(new AwtCursor(env, hCursor, self, xHotSpot,
@@ -474,8 +474,8 @@ Java_sun_awt_windows_WCustomCursor_getCursorHeight(JNIEnv *, jclass)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WGlobalCursorManager_getCursorPos(JNIEnv *env,
-						       jobject,
-						       jobject point)
+                                                       jobject,
+                                                       jobject point)
 {
     TRY;
 
@@ -570,8 +570,8 @@ Java_sun_awt_windows_WGlobalCursorManager_findHeavyweightUnderCursor(
 
     jobject globalRef = (jobject)AwtToolkit::GetInstance().
         InvokeFunction((void*(*)(void*))
-		       AwtComponent::FindHeavyweightUnderCursor,
-		       (void *)useCache);
+                       AwtComponent::FindHeavyweightUnderCursor,
+                       (void *)useCache);
     jobject localRef = env->NewLocalRef(globalRef);
     env->DeleteGlobalRef(globalRef);
     return localRef;
@@ -589,7 +589,7 @@ Java_sun_awt_windows_WGlobalCursorManager_findComponentAt(
     JNIEnv *env, jobject, jobject container, jint x, jint y)
 {
     TRY;
-	
+
     /*
      * Call private version of Container.findComponentAt with the following
      * flag set -- ignoreEnabled = false (i.e., don't return or recur into
@@ -599,7 +599,7 @@ Java_sun_awt_windows_WGlobalCursorManager_findComponentAt(
     JNI_CHECK_NULL_RETURN_NULL(container, "null container");
     jobject comp =
         env->CallObjectMethod(container, AwtContainer::findComponentAtMID,
-			      x, y, JNI_FALSE);
+                              x, y, JNI_FALSE);
     return comp;
 
     CATCH_BAD_ALLOC_RET(NULL);
@@ -615,7 +615,7 @@ Java_sun_awt_windows_WGlobalCursorManager_getLocationOnScreen(
     JNIEnv *env, jobject, jobject component)
 {
     TRY;
-	
+
     JNI_CHECK_NULL_RETURN_NULL(component, "null component");
     jobject point =
         env->CallObjectMethod(component, AwtComponent::getLocationOnScreenMID);

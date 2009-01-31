@@ -41,7 +41,7 @@ import java.util.Arrays;
  */
 public abstract class MultipleGradientPaint implements Paint {
 
-    /** The method to use when painting outside the gradient bounds. 
+    /** The method to use when painting outside the gradient bounds.
      * @since 1.6
      */
     public static enum CycleMethod {
@@ -117,7 +117,7 @@ public abstract class MultipleGradientPaint implements Paint {
      * @param colors array of colors corresponding to each fractional value
      * @param cycleMethod either {@code NO_CYCLE}, {@code REFLECT},
      *                    or {@code REPEAT}
-     * @param colorSpace which color space to use for interpolation, 
+     * @param colorSpace which color space to use for interpolation,
      *                   either {@code SRGB} or {@code LINEAR_RGB}
      * @param gradientTransform transform to apply to the gradient
      *

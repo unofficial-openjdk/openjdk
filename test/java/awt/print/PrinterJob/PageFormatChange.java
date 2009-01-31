@@ -45,7 +45,7 @@ public class PageFormatChange {
         if (!System.getProperty("os.name","").startsWith("Windows")) {
            System.out.println("Not Windows, so test is not applicable");
            return;
-        } 
+        }
         for (String s : text) {
             System.out.println(s);
         }
@@ -77,7 +77,7 @@ public class PageFormatChange {
         }
         displayPageFormat(pf2);
     }
-    
+
     public static void displayPageFormat(PageFormat pf)
     {
         System.out.println("------- Page Format -------");

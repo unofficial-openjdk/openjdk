@@ -34,14 +34,13 @@ import java.util.TreeSet;
 /**
  * Support for garbage-collection latency requests.
  *
- * @version  %I%, %E%
  * @author   Mark Reinhold
  * @since    1.2
  */
 
 public class GC {
 
-    private GC() { }		/* To prevent instantiation */
+    private GC() { }            /* To prevent instantiation */
 
 
     /* Latency-target value indicating that there's no active target
@@ -86,64 +85,64 @@ public class GC {
 
     private static class Daemon extends Thread {
 
-	public void run() {
-	    for (;;) {
-		long l;
-		synchronized (lock) {
+        public void run() {
+            for (;;) {
+                long l;
+                synchronized (lock) {
 
-		    l = latencyTarget;
-		    if (l == NO_TARGET) {
-			/* No latency target, so exit */
-			GC.daemon = null;
-			return;
-		    }
+                    l = latencyTarget;
+                    if (l == NO_TARGET) {
+                        /* No latency target, so exit */
+                        GC.daemon = null;
+                        return;
+                    }
 
-		    long d = maxObjectInspectionAge();
-		    if (d >= l) {
-			/* Do a full collection.  There is a remote possibility
-			 * that a full collection will occurr between the time
-			 * we sample the inspection age and the time the GC
-			 * actually starts, but this is sufficiently unlikely
-			 * that it doesn't seem worth the more expensive JVM
-			 * interface that would be required.
-			 */
-		        System.gc();
-			d = 0;
-		    }
+                    long d = maxObjectInspectionAge();
+                    if (d >= l) {
+                        /* Do a full collection.  There is a remote possibility
+                         * that a full collection will occurr between the time
+                         * we sample the inspection age and the time the GC
+                         * actually starts, but this is sufficiently unlikely
+                         * that it doesn't seem worth the more expensive JVM
+                         * interface that would be required.
+                         */
+                        System.gc();
+                        d = 0;
+                    }
 
-		    /* Wait for the latency period to expire,
+                    /* Wait for the latency period to expire,
                      * or for notification that the period has changed
-		     */
-		    try {
-			lock.wait(l - d);
-		    } catch (InterruptedException x) {
-			continue;
-		    }
-		}
-	    }
-	}
+                     */
+                    try {
+                        lock.wait(l - d);
+                    } catch (InterruptedException x) {
+                        continue;
+                    }
+                }
+            }
+        }
 
-	private Daemon(ThreadGroup tg) {
-	    super(tg, "GC Daemon");
-	}
+        private Daemon(ThreadGroup tg) {
+            super(tg, "GC Daemon");
+        }
 
-	/* Create a new daemon thread in the root thread group */
-	public static void create() {
-	    PrivilegedAction pa = new PrivilegedAction() {
-		public Object run() {
-		    ThreadGroup tg = Thread.currentThread().getThreadGroup();
-		    for (ThreadGroup tgn = tg;
-			 tgn != null;
-			 tg = tgn, tgn = tg.getParent());
-		    Daemon d = new Daemon(tg);
-		    d.setDaemon(true);
-		    d.setPriority(Thread.MIN_PRIORITY + 1);
-		    d.start();
-		    GC.daemon = d;
-		    return null;
-		}};
-	    AccessController.doPrivileged(pa);
-	}
+        /* Create a new daemon thread in the root thread group */
+        public static void create() {
+            PrivilegedAction pa = new PrivilegedAction() {
+                public Object run() {
+                    ThreadGroup tg = Thread.currentThread().getThreadGroup();
+                    for (ThreadGroup tgn = tg;
+                         tgn != null;
+                         tg = tgn, tgn = tg.getParent());
+                    Daemon d = new Daemon(tg);
+                    d.setDaemon(true);
+                    d.setPriority(Thread.MIN_PRIORITY + 1);
+                    d.start();
+                    GC.daemon = d;
+                    return null;
+                }};
+            AccessController.doPrivileged(pa);
+        }
 
     }
 
@@ -152,16 +151,16 @@ public class GC {
      * Must be invoked while holding the lock.
      */
     private static void setLatencyTarget(long ms) {
-	latencyTarget = ms;
-	if (daemon == null) {
-	    /* Create a new daemon thread */
-	    Daemon.create();
-	} else {
-	    /* Notify the existing daemon thread
+        latencyTarget = ms;
+        if (daemon == null) {
+            /* Create a new daemon thread */
+            Daemon.create();
+        } else {
+            /* Notify the existing daemon thread
              * that the lateency target has changed
-	     */
-	    lock.notify();
-	}
+             */
+            lock.notify();
+        }
     }
 
 
@@ -173,85 +172,85 @@ public class GC {
      */
     public static class LatencyRequest implements Comparable {
 
-	/* Instance counter, used to generate unique identifers */
-	private static long counter = 0;
+        /* Instance counter, used to generate unique identifers */
+        private static long counter = 0;
 
-	/* Sorted set of active latency requests */
-	private static SortedSet requests = null;
+        /* Sorted set of active latency requests */
+        private static SortedSet requests = null;
 
-	/* Examine the request set and reset the latency target if necessary.
+        /* Examine the request set and reset the latency target if necessary.
          * Must be invoked while holding the lock.
          */
-	private static void adjustLatencyIfNeeded() {
-	    if ((requests == null) || requests.isEmpty()) {
-		if (latencyTarget != NO_TARGET) {
-		    setLatencyTarget(NO_TARGET);
-		}
-	    } else {
-		LatencyRequest r = (LatencyRequest)requests.first();
-		if (r.latency != latencyTarget) {
-		    setLatencyTarget(r.latency);
-		}
-	    }
-	}
+        private static void adjustLatencyIfNeeded() {
+            if ((requests == null) || requests.isEmpty()) {
+                if (latencyTarget != NO_TARGET) {
+                    setLatencyTarget(NO_TARGET);
+                }
+            } else {
+                LatencyRequest r = (LatencyRequest)requests.first();
+                if (r.latency != latencyTarget) {
+                    setLatencyTarget(r.latency);
+                }
+            }
+        }
 
-	/* The requested latency, or NO_TARGET
+        /* The requested latency, or NO_TARGET
          * if this request has been cancelled
          */
-	private long latency;
+        private long latency;
 
-	/* Unique identifier for this request */
-	private long id;
+        /* Unique identifier for this request */
+        private long id;
 
-	private LatencyRequest(long ms) {
-	    if (ms <= 0) {
-		throw new IllegalArgumentException("Non-positive latency: "
+        private LatencyRequest(long ms) {
+            if (ms <= 0) {
+                throw new IllegalArgumentException("Non-positive latency: "
                                                    + ms);
-	    }
-	    this.latency = ms;
-	    synchronized (lock) {
-		this.id = ++counter;
-		if (requests == null) {
-		    requests = new TreeSet();
-		}
-		requests.add(this);
-		adjustLatencyIfNeeded();
-	    }
-	}
+            }
+            this.latency = ms;
+            synchronized (lock) {
+                this.id = ++counter;
+                if (requests == null) {
+                    requests = new TreeSet();
+                }
+                requests.add(this);
+                adjustLatencyIfNeeded();
+            }
+        }
 
-	/**
+        /**
          * Cancels this latency request.
          *
          * @throws  IllegalStateException
          *          If this request has already been cancelled
          */
-	public void cancel() {
-	    synchronized (lock) {
-		if (this.latency == NO_TARGET) {
-		    throw new IllegalStateException("Request already"
-						    + " cancelled");
-		}
-		if (!requests.remove(this)) {
-		    throw new InternalError("Latency request "
+        public void cancel() {
+            synchronized (lock) {
+                if (this.latency == NO_TARGET) {
+                    throw new IllegalStateException("Request already"
+                                                    + " cancelled");
+                }
+                if (!requests.remove(this)) {
+                    throw new InternalError("Latency request "
                                             + this + " not found");
-		}
-		if (requests.isEmpty()) requests = null;
-		this.latency = NO_TARGET;
-		adjustLatencyIfNeeded();
-	    }
-	}
+                }
+                if (requests.isEmpty()) requests = null;
+                this.latency = NO_TARGET;
+                adjustLatencyIfNeeded();
+            }
+        }
 
-	public int compareTo(Object o) {
-	    LatencyRequest r = (LatencyRequest)o;
-	    long d = this.latency - r.latency;
-	    if (d == 0) d = this.id - r.id;
-	    return (d < 0) ? -1 : ((d > 0) ? +1 : 0);
-	}
+        public int compareTo(Object o) {
+            LatencyRequest r = (LatencyRequest)o;
+            long d = this.latency - r.latency;
+            if (d == 0) d = this.id - r.id;
+            return (d < 0) ? -1 : ((d > 0) ? +1 : 0);
+        }
 
-	public String toString() {
-	    return (LatencyRequest.class.getName()
-		    + "[" + latency + "," + id + "]");
-	}
+        public String toString() {
+            return (LatencyRequest.class.getName()
+                    + "[" + latency + "," + id + "]");
+        }
 
     }
 
@@ -264,12 +263,12 @@ public class GC {
      *
      * @param   latency
      *          The requested latency
-     * 
+     *
      * @throws  IllegalArgumentException
      *          If the given <code>latency</code> is non-positive
      */
     public static LatencyRequest requestLatency(long latency) {
-	return new LatencyRequest(latency);
+        return new LatencyRequest(latency);
     }
 
 
@@ -278,8 +277,8 @@ public class GC {
      * if there are no active requests.
      */
     public static long currentLatencyTarget() {
-	long t = latencyTarget;
-	return (t == NO_TARGET) ? 0 : t;
+        long t = latencyTarget;
+        return (t == NO_TARGET) ? 0 : t;
     }
 
 }

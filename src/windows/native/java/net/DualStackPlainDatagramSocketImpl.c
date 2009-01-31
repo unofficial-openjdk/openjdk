@@ -1,23 +1,23 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -82,14 +82,14 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketCrea
 
     fd = (int) socket(AF_INET6, SOCK_DGRAM, 0);
     if (fd == INVALID_SOCKET) {
-	NET_ThrowNew(env, WSAGetLastError(), "Socket creation failed"); 
-	return -1;
+        NET_ThrowNew(env, WSAGetLastError(), "Socket creation failed");
+        return -1;
     }
 
     rv = setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
     if (rv == SOCKET_ERROR) {
         NET_ThrowNew(env, WSAGetLastError(), "Socket creation failed");
-	return -1;
+        return -1;
     }
 
     SetHandleInformation((HANDLE)(UINT_PTR)fd, HANDLE_FLAG_INHERIT, FALSE);
@@ -117,18 +117,18 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketBind
     int rv;
     int sa_len = sizeof(sa);
 
-    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa, 
-				 &sa_len, JNI_TRUE) != 0) {
-	return;
+    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
+                                 &sa_len, JNI_TRUE) != 0) {
+        return;
     }
 
     rv = bind(fd, (struct sockaddr *)&sa, sa_len);
 
     if (rv == SOCKET_ERROR) {
-	if (WSAGetLastError() == WSAEACCES) {
+        if (WSAGetLastError() == WSAEACCES) {
             WSASetLastError(WSAEADDRINUSE);
         }
-        NET_ThrowNew(env, WSAGetLastError(), "Cannot bind"); 
+        NET_ThrowNew(env, WSAGetLastError(), "Cannot bind");
     }
 }
 
@@ -145,15 +145,15 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketConn
     DWORD x1, x2; /* ignored result codes */
     int t = TRUE;
 
-    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa, 
-				   &sa_len, JNI_TRUE) != 0) {
-      	return;
+    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
+                                   &sa_len, JNI_TRUE) != 0) {
+        return;
     }
 
     rv = connect(fd, (struct sockaddr *)&sa, sa_len);
     if (rv == SOCKET_ERROR) {
-	NET_ThrowNew(env, WSAGetLastError(), "connect"); 
-    	return;
+        NET_ThrowNew(env, WSAGetLastError(), "connect");
+        return;
     }
 
     /* see comment in socketCreate */
@@ -202,7 +202,7 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketLoca
 
     if (getsockname(fd, (struct sockaddr *)&sa, &len) == SOCKET_ERROR) {
         NET_ThrowNew(env, WSAGetLastError(), "JVM_GetSockName");
-	return -1;
+        return -1;
     }
     return (int) ntohs((u_short)GET_PORT(&sa));
 }
@@ -234,7 +234,7 @@ JNIEXPORT jobject JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketL
  * Signature: (ILjava/net/DatagramPacket;IZZ)I
  */
 JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketReceiveOrPeekData
-  (JNIEnv *env, jclass clazz, jint fd, jobject dpObj, 
+  (JNIEnv *env, jclass clazz, jint fd, jobject dpObj,
    jint timeout, jboolean connected, jboolean peek) {
     SOCKETADDRESS sa;
     int sa_len = sizeof(sa);
@@ -249,20 +249,20 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketRece
 
     /* if we are only peeking. Called from peekData */
     if (peek) {
-	flags = MSG_PEEK;
+        flags = MSG_PEEK;
     }
 
     packetBuffer = (*env)->GetObjectField(env, dpObj, dp_bufID);
     packetBufferOffset = (*env)->GetIntField(env, dpObj, dp_offsetID);
-    packetBufferLen = (*env)->GetIntField(env, dpObj, dp_bufLengthID); 
+    packetBufferLen = (*env)->GetIntField(env, dpObj, dp_bufLengthID);
 
     if (packetBufferLen > MAX_BUFFER_LEN) {
-        /* Note: the buffer needn't be greater than 65,536 (0xFFFF) 
-	 * the max size of an IP packet. Anything bigger is truncated anyway.
+        /* Note: the buffer needn't be greater than 65,536 (0xFFFF)
+         * the max size of an IP packet. Anything bigger is truncated anyway.
          */
-	if (packetBufferLen > MAX_PACKET_LEN) {
-	    packetBufferLen = MAX_PACKET_LEN;
-	}
+        if (packetBufferLen > MAX_PACKET_LEN) {
+            packetBufferLen = MAX_PACKET_LEN;
+        }
         fullPacket = (char *)malloc(packetBufferLen);
         if (!fullPacket) {
             JNU_ThrowOutOfMemoryError(env, "heap allocation failed");
@@ -273,51 +273,51 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketRece
     }
 
     do {
-	retry = FALSE;
+        retry = FALSE;
 
-	if (timeout) {
-	    if (prevTime == 0) {
-		prevTime = JVM_CurrentTimeMillis(env, 0);
-	    }
-	    rv = NET_Timeout(fd, timeout);
-	    if (rv <= 0) {
-		if (rv == 0) {
-		    JNU_ThrowByName(env,JNU_JAVANETPKG "SocketTimeoutException",
-				    "Receive timed out");
-		} else if (rv == JVM_IO_ERR) {
-		    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-				    "Socket closed");
-		} else if (rv == JVM_IO_INTR) {
-		    JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
-				    "operation interrupted");
-		}
-		if (packetBufferLen > MAX_BUFFER_LEN) {
-		    free(fullPacket);
-		}
-		return -1;
-	    }
-	}
+        if (timeout) {
+            if (prevTime == 0) {
+                prevTime = JVM_CurrentTimeMillis(env, 0);
+            }
+            rv = NET_Timeout(fd, timeout);
+            if (rv <= 0) {
+                if (rv == 0) {
+                    JNU_ThrowByName(env,JNU_JAVANETPKG "SocketTimeoutException",
+                                    "Receive timed out");
+                } else if (rv == JVM_IO_ERR) {
+                    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                                    "Socket closed");
+                } else if (rv == JVM_IO_INTR) {
+                    JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
+                                    "operation interrupted");
+                }
+                if (packetBufferLen > MAX_BUFFER_LEN) {
+                    free(fullPacket);
+                }
+                return -1;
+            }
+        }
 
-	/* receive the packet */
-	rv = recvfrom(fd, fullPacket, packetBufferLen, flags,
-		    (struct sockaddr *)&sa, &sa_len);
-	
-	if (rv == SOCKET_ERROR && (WSAGetLastError() == WSAECONNRESET)) {
+        /* receive the packet */
+        rv = recvfrom(fd, fullPacket, packetBufferLen, flags,
+                    (struct sockaddr *)&sa, &sa_len);
+
+        if (rv == SOCKET_ERROR && (WSAGetLastError() == WSAECONNRESET)) {
             /* An icmp port unreachable - we must receive this as Windows
              * does not reset the state of the socket until this has been
              * received.
              */
             purgeOutstandingICMP(env, fd);
 
-	    if (connected) {
-		JNU_ThrowByName(env, JNU_JAVANETPKG "PortUnreachableException",
+            if (connected) {
+                JNU_ThrowByName(env, JNU_JAVANETPKG "PortUnreachableException",
                                 "ICMP Port Unreachable");
                 if (packetBufferLen > MAX_BUFFER_LEN)
                     free(fullPacket);
                 return -1;
             } else if (timeout) {
-		/* Adjust timeout */
-		jlong newTime = JVM_CurrentTimeMillis(env, 0);
+                /* Adjust timeout */
+                jlong newTime = JVM_CurrentTimeMillis(env, 0);
                 timeout -= (jint)(newTime - prevTime);
                 if (timeout <= 0) {
                     JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
@@ -367,15 +367,15 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketRece
          */
         packetAddress = (*env)->GetObjectField(env, dpObj, dp_addressID);
         if (packetAddress != NULL) {
-            if (!NET_SockaddrEqualsInetAddress(env, (struct sockaddr *)&sa, 
-					       packetAddress)) {
+            if (!NET_SockaddrEqualsInetAddress(env, (struct sockaddr *)&sa,
+                                               packetAddress)) {
                 /* force a new InetAddress to be created */
                 packetAddress = NULL;
             }
         }
         if (packetAddress == NULL) {
             packetAddress = NET_SockaddrToInetAddress(env, (struct sockaddr *)&sa,
-						      &port);
+                                                      &port);
             /* stuff the new Inetaddress into the packet */
             (*env)->SetObjectField(env, dpObj, dp_addressID, packetAddress);
         }
@@ -405,17 +405,17 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketSend
     int sa_len = sizeof(sa);
     SOCKETADDRESS *sap = &sa;
     char BUF[MAX_BUFFER_LEN];
-    char *fullPacket; 
+    char *fullPacket;
     int rv;
 
     if (connected) {
-	sap = 0; /* arg to JVM_Sendto () null in this case */
+        sap = 0; /* arg to JVM_Sendto () null in this case */
         sa_len = 0;
     } else {
-	if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
-	    			       &sa_len, JNI_TRUE) != 0) {
+        if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
+                                       &sa_len, JNI_TRUE) != 0) {
             return;
-	}
+        }
     }
 
     if (length > MAX_BUFFER_LEN) {
@@ -440,10 +440,10 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketSend
     if (rv == SOCKET_ERROR) {
         if (rv == JVM_IO_ERR) {
             NET_ThrowNew(env, WSAGetLastError(), "Datagram send failed");
-	} else if (rv == JVM_IO_INTR) {
+        } else if (rv == JVM_IO_INTR) {
             JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
                             "operation interrupted");
-	}
+        }
     }
 
     if (length > MAX_BUFFER_LEN) {
@@ -468,7 +468,7 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketSetI
 
     if (NET_SetSockOpt(fd, level, opt, (char *)&value, sizeof(value)) < 0) {
         NET_ThrowNew(env, WSAGetLastError(), "setsockopt");
-    } 
+    }
 }
 
 /*
@@ -494,4 +494,3 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainDatagramSocketImpl_socketGetI
 
     return result;
 }
-

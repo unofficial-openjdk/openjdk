@@ -53,10 +53,10 @@ JNIEXPORT void JNICALL
     NativeScalerContext *context = (NativeScalerContext*)pScalerContext;
 
     if (context != NULL) {
-	if (context->xFont != NULL) {
-	    AWTFreeFont(context->xFont);
-	}
-	free(context);
+        if (context->xFont != NULL) {
+            AWTFreeFont(context->xFont);
+        }
+        free(context);
     }
 }
 
@@ -64,7 +64,7 @@ JNIEXPORT jlong JNICALL
 Java_sun_font_NativeStrike_createNullScalerContext
     (JNIEnv *env, jobject strike) {
 
-   NativeScalerContext *context = 
+   NativeScalerContext *context =
        (NativeScalerContext*)malloc(sizeof(NativeScalerContext));
    context->xFont = NULL;
    context->minGlyph = 0;
@@ -86,7 +86,7 @@ Java_sun_font_NativeStrike_createScalerContext
     char* xlfd = (char*)malloc(len+1);
 
     if (xlfd == NULL) {
-	return (jlong)(uintptr_t)0L;
+        return (jlong)(uintptr_t)0L;
     }
 
     (*env)->GetByteArrayRegion(env, xlfdBytes, 0, len, (jbyte*)xlfd);
@@ -100,29 +100,29 @@ Java_sun_font_NativeStrike_createScalerContext
         free(context);
         context = NULL;
     } else {
-	/* numGlyphs is an estimate : X11 doesn't provide a quick way to 
-	 * discover which glyphs are valid: just the range that contains all
-	 * the valid glyphs, and this range may have holes.
-	 */
-	context->minGlyph = (AWTFontMinByte1(context->xFont) << 8) +
-	    AWTFontMinCharOrByte2(context->xFont);
-	context->maxGlyph = (AWTFontMaxByte1(context->xFont) << 8) +
-	    AWTFontMaxCharOrByte2(context->xFont);
-	context->numGlyphs = context->maxGlyph - context->minGlyph + 1;
-	context->defaultGlyph = AWTFontDefaultChar(context->xFont);
-	/* Sometimes the default_char field of the XFontStruct isn't 
-	 * initialized to anything, so it can be a large number. So,
-	 * check to see if its less than the largest possible value
-	 * and if so, then use it. Otherwise, just use the minGlyph.
-	 */
-	if (context->defaultGlyph < context->minGlyph ||
-	    context->defaultGlyph > context->maxGlyph) {
-	    context->defaultGlyph = context->minGlyph;
-	}
-	context->ptSize = ptSize;
-	context->scale = scale;
+        /* numGlyphs is an estimate : X11 doesn't provide a quick way to
+         * discover which glyphs are valid: just the range that contains all
+         * the valid glyphs, and this range may have holes.
+         */
+        context->minGlyph = (AWTFontMinByte1(context->xFont) << 8) +
+            AWTFontMinCharOrByte2(context->xFont);
+        context->maxGlyph = (AWTFontMaxByte1(context->xFont) << 8) +
+            AWTFontMaxCharOrByte2(context->xFont);
+        context->numGlyphs = context->maxGlyph - context->minGlyph + 1;
+        context->defaultGlyph = AWTFontDefaultChar(context->xFont);
+        /* Sometimes the default_char field of the XFontStruct isn't
+         * initialized to anything, so it can be a large number. So,
+         * check to see if its less than the largest possible value
+         * and if so, then use it. Otherwise, just use the minGlyph.
+         */
+        if (context->defaultGlyph < context->minGlyph ||
+            context->defaultGlyph > context->maxGlyph) {
+            context->defaultGlyph = context->minGlyph;
+        }
+        context->ptSize = ptSize;
+        context->scale = scale;
     }
-	
+
     /*
      * REMIND: freeing of native resources? XID, XFontStruct etc??
      */
@@ -136,9 +136,9 @@ Java_sun_font_NativeStrike_createScalerContext
 
 /*     UInt32 angle; */
 /*     AWTGetFontItalicAngle(xFont, &angle); */
-/*X11 reports italic angle as 1/64ths of a degree, relative to 3 o'clock 
+/*X11 reports italic angle as 1/64ths of a degree, relative to 3 o'clock
  * with anti-clockwise being the +ve rotation direction.
- * We return 
+ * We return
 XGetFontProperty(xFont,XA_ITALIC_ANGLE, &angle);
 */
 
@@ -154,7 +154,7 @@ Java_sun_font_NativeFont_fontExists
     char* xlfd = (char*)malloc(len+1);
 
     if (xlfd == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     (*env)->GetByteArrayRegion(env, xlfdBytes, 0, len, (jbyte*)xlfd);
@@ -163,9 +163,9 @@ Java_sun_font_NativeFont_fontExists
     count = AWTCountFonts(xlfd);
     free(xlfd);
     if (count > 0) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     } else {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 }
 
@@ -178,7 +178,7 @@ Java_sun_font_NativeFont_haveBitmapFonts
     char* xlfd = (char*)malloc(len+1);
 
     if (xlfd == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     (*env)->GetByteArrayRegion(env, xlfdBytes, 0, len, (jbyte*)xlfd);
@@ -187,9 +187,9 @@ Java_sun_font_NativeFont_haveBitmapFonts
     count = AWTCountFonts(xlfd);
     free(xlfd);
     if (count > 2) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     } else {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 }
 
@@ -203,16 +203,16 @@ Java_sun_font_NativeFont_countGlyphs
     (JNIEnv *env, jobject font, jbyteArray xlfdBytes, jint ptSize) {
 
     NativeScalerContext *context = (NativeScalerContext*)
-	Java_sun_font_NativeStrike_createScalerContext
-	(env, NULL, xlfdBytes, ptSize, 1);
+        Java_sun_font_NativeStrike_createScalerContext
+        (env, NULL, xlfdBytes, ptSize, 1);
 
     if (context == NULL) {
-	return 0;
+        return 0;
     } else {
-	int numGlyphs = context->numGlyphs;
-	AWTFreeFont(context->xFont);
-	free(context);
-	return numGlyphs;
+        int numGlyphs = context->numGlyphs;
+        AWTFreeFont(context->xFont);
+        free(context);
+        return numGlyphs;
     }
 }
 
@@ -222,7 +222,7 @@ Java_sun_font_NativeStrike_getMaxGlyph
 
     NativeScalerContext *context = (NativeScalerContext*)pScalerContext;
     if (context == NULL) {
-	return (jint)0;
+        return (jint)0;
     } else {
         return (jint)context->maxGlyph+1;
     }
@@ -242,27 +242,27 @@ Java_sun_font_NativeFont_getGlyphAdvance
     }
 
     if (glyphCode < context->minGlyph || glyphCode > context->maxGlyph) {
-	glyphCode = context->defaultGlyph;
+        glyphCode = context->defaultGlyph;
     }
-	
+
     /* If number of glyphs is 256 or less, the metrics are
      * stored correctly in the XFontStruct for each
      * character. If the # characters is more (double byte
      * case), then these metrics seem flaky and there's no
-     * way to determine if they have been set or not. 
+     * way to determine if they have been set or not.
      */
     if ((context->maxGlyph <= 256) && (AWTFontPerChar(xFont, 0) != NULL)) {
         xcs = AWTFontPerChar(xFont, glyphCode - context->minGlyph);
-	advance = AWTCharAdvance(xcs);
+        advance = AWTCharAdvance(xcs);
     } else {
         int direction, ascent, descent;
-	AWTChar2b xChar;
+        AWTChar2b xChar;
 
-	xChar.byte1 = (unsigned char) (glyphCode >> 8);
-	xChar.byte2 = (unsigned char) glyphCode;
-	AWTFontTextExtents16(xFont, &xChar, &xcs);
-	advance = AWTCharAdvance(xcs);
-	AWTFreeChar(xcs);
+        xChar.byte1 = (unsigned char) (glyphCode >> 8);
+        xChar.byte2 = (unsigned char) glyphCode;
+        AWTFontTextExtents16(xFont, &xChar, &xcs);
+        advance = AWTCharAdvance(xcs);
+        AWTFreeChar(xcs);
     }
     return (jfloat)(advance/context->scale);
 }
@@ -280,7 +280,7 @@ Java_sun_font_NativeFont_getGlyphImageNoDefault
     }
 
     if (glyphCode < context->minGlyph || glyphCode > context->maxGlyph) {
-	return (jlong)0;
+        return (jlong)0;
     }
 
     xChar.byte1 = (unsigned char)(glyphCode >> 8);
@@ -295,13 +295,13 @@ Java_sun_font_NativeFont_getGlyphImage
     NativeScalerContext *context = (NativeScalerContext*)pScalerContext;
     AWTFont xFont = context->xFont;
     AWTChar2b xChar;
-  
+
     if (xFont == NULL || context->ptSize == NO_POINTSIZE) {
         return (jlong)0;
     }
 
     if (glyphCode < context->minGlyph || glyphCode > context->maxGlyph) {
-	glyphCode = context->defaultGlyph;
+        glyphCode = context->defaultGlyph;
     }
 
     xChar.byte1 = (unsigned char)(glyphCode >> 8);
@@ -319,7 +319,7 @@ JNIEXPORT jobject JNICALL
     jobject metrics;
 
     if (xFont == NULL) {
-	return NULL;
+        return NULL;
     }
 
     /* the commented out lines are the old 1.4.x behaviour which used max
@@ -340,9 +340,9 @@ JNIEXPORT jobject JNICALL
      * advance : no need to set yMaxLinearAdvanceWidth - it will be zero.
      */
     metrics = (*env)->NewObject(env, sunFontIDs.strikeMetricsClass,
-				sunFontIDs.strikeMetricsCtr,
-				j0, ay, j0, dy, j1, j0, j0, j1, mx, j0);
+                                sunFontIDs.strikeMetricsCtr,
+                                j0, ay, j0, dy, j1, j0, j0, j1, mx, j0);
 /*      printf("X11 asc=%f dsc=%f adv=%f scale=%f\n", */
-/* 	    ay, dy, mx, (float)context->scale); */ 
+/*          ay, dy, mx, (float)context->scale); */
     return metrics;
 }

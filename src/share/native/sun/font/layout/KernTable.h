@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)KernTable.h	1.5 06/12/13
  *
  * (C) Copyright IBM Corp. 2004-2005 - All Rights Reserved
  *
@@ -69,4 +68,3 @@ class U_LAYOUT_API KernTable
 };
 
 #endif
-

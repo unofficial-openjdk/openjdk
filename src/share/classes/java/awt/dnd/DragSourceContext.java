@@ -7,6 +7,7 @@
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
+import java.awt.event.InputEvent;
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,6 +17,11 @@
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceListener;
+import java.awt.dnd.InvalidDnDOperationException;
+
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
@@ -46,49 +52,28 @@ import java.util.TooManyListenersException;
 /**
  * The <code>DragSourceContext</code> class is responsible for managing the
  * initiator side of the Drag and Drop protocol. In particular, it is responsible
- * for managing drag event notifications to the
- * {@linkplain DragSourceListener DragSourceListeners}
- * and {@linkplain DragSourceMotionListener DragSourceMotionListeners}, and providing the
- * {@link Transferable} representing the source data for the drag operation.
+ * for managing drag event notifications to the <code>DragSourceListener</code>s
+ * and <code>DragSourceMotionListener</code>s, and providing the
+ * <code>Transferable</code> representing the source data for the drag operation.
  * <p>
- * Note that the <code>DragSourceContext</code> itself 
+ * Note that the <code>DragSourceContext</code> itself
  * implements the <code>DragSourceListener</code> and
- * <code>DragSourceMotionListener</code> interfaces. 
- * This is to allow the platform peer  
- * (the {@link DragSourceContextPeer} instance) 
- * created by the {@link DragSource} to notify 
+ * <code>DragSourceMotionListener</code> interfaces.
+ * This is to allow the platform peer
+ * (the <code>DragSourceContextPeer</code> instance)
+ * created by the <code>DragSource</code> to notify
  * the <code>DragSourceContext</code> of
  * state changes in the ongoing operation. This allows the
- * <code>DragSourceContext</code> object to interpose 
+ * <code>DragSourceContext</code> to interpose
  * itself between the platform and the
  * listeners provided by the initiator of the drag operation.
- * <p>
- * <a name="defaultCursor" />
- * By default, {@code DragSourceContext} sets the cursor as appropriate
- * for the current state of the drag and drop operation. For example, if 
- * the user has chosen {@linkplain DnDConstants#ACTION_MOVE the move action},
- * and the pointer is over a target that accepts
- * the move action, the default move cursor is shown. When
- * the pointer is over an area that does not accept the transfer,
- * the default "no drop" cursor is shown.
- * <p>
- * This default handling mechanism is disabled when a custom cursor is set
- * by the {@link #setCursor} method. When the default handling is disabled,
- * it becomes the responsibility
- * of the developer to keep the cursor up to date, by listening 
- * to the {@code DragSource} events and calling the {@code setCursor()} method.
- * Alternatively, you can provide custom cursor behavior by providing
- * custom implementations of the {@code DragSource}
- * and the {@code DragSourceContext} classes.
  *
  * @see DragSourceListener
  * @see DragSourceMotionListener
- * @see DnDConstants
- * @version %I%, %G%
  * @since 1.2
  */
 
-public class DragSourceContext 
+public class DragSourceContext
     implements DragSourceListener, DragSourceMotionListener, Serializable {
 
     private static final long serialVersionUID = -115407898692194719L;
@@ -96,7 +81,7 @@ public class DragSourceContext
     // used by updateCurrentCursor
 
     /**
-     * An <code>int</code> used by updateCurrentCursor() 
+     * An <code>int</code> used by updateCurrentCursor()
      * indicating that the <code>Cursor</code> should change
      * to the default (no drop) <code>Cursor</code>.
      */
@@ -104,25 +89,25 @@ public class DragSourceContext
 
     /**
      * An <code>int</code> used by updateCurrentCursor()
-     * indicating that the <code>Cursor</code> 
-     * has entered a <code>DropTarget</code>. 
+     * indicating that the <code>Cursor</code>
+     * has entered a <code>DropTarget</code>.
      */
     protected static final int ENTER   = 1;
 
     /**
      * An <code>int</code> used by updateCurrentCursor()
-     * indicating that the <code>Cursor</code> is 
-     * over a <code>DropTarget</code>. 
+     * indicating that the <code>Cursor</code> is
+     * over a <code>DropTarget</code>.
      */
     protected static final int OVER    = 2;
 
     /**
      * An <code>int</code> used by updateCurrentCursor()
-     * indicating that the user operation has changed. 
-     */ 
+     * indicating that the user operation has changed.
+     */
 
     protected static final int CHANGED = 3;
-	
+
     /**
      * Called from <code>DragSource</code>, this constructor creates a new
      * <code>DragSourceContext</code> given the
@@ -131,7 +116,7 @@ public class DragSourceContext
      * <code>Cursor</code> to use for the Drag, an (optional)
      * <code>Image</code> to display while the Drag is taking place, the offset
      * of the <code>Image</code> origin from the hotspot at the instant of the
-     * triggering event, the <code>Transferable</code> subject data, and the 
+     * triggering event, the <code>Transferable</code> subject data, and the
      * <code>DragSourceListener</code> to use during the Drag and Drop
      * operation.
      * <br>
@@ -152,15 +137,12 @@ public class DragSourceContext
      * If <code>Transferable</code> is <code>null</code>
      * <code>NullPointerException</code> is thrown.
      * <br>
-     * If <code>DragSourceListener</code> is <code>null</code> no exception 
+     * If <code>DragSourceListener</code> is <code>null</code> no exception
      * is thrown.
      *
      * @param dscp       the <code>DragSourceContextPeer</code> for this drag
      * @param trigger    the triggering event
-     * @param dragCursor     the initial {@code Cursor} for this drag operation
-     *                       or {@code null} for the default cursor handling;
-     *                       see <a href="DragSourceContext.html#defaultCursor">class level documentation</a>
-     *                       for more details on the cursor handling mechanism during drag and drop
+     * @param dragCursor the initial <code>Cursor</code>
      * @param dragImage  the <code>Image</code> to drag (or <code>null</code>)
      * @param offset     the offset of the image origin from the hotspot at the
      *                   instant of the triggering event
@@ -169,18 +151,18 @@ public class DragSourceContext
      *
      * @throws IllegalArgumentException if the <code>Component</code> associated
      *         with the trigger event is <code>null</code>.
-     * @throws IllegalArgumentException if the <code>DragSource</code> for the 
+     * @throws IllegalArgumentException if the <code>DragSource</code> for the
      *         trigger event is <code>null</code>.
      * @throws IllegalArgumentException if the drag action for the
      *         trigger event is <code>DnDConstants.ACTION_NONE</code>.
      * @throws IllegalArgumentException if the source actions for the
      *         <code>DragGestureRecognizer</code> associated with the trigger
-     *         event are equal to <code>DnDConstants.ACTION_NONE</code>. 
+     *         event are equal to <code>DnDConstants.ACTION_NONE</code>.
      * @throws NullPointerException if dscp, trigger, or t are null, or
      *         if dragImage is non-null and offset is null
      */
-    public DragSourceContext(DragSourceContextPeer dscp, 
-                             DragGestureEvent trigger, Cursor dragCursor, 
+    public DragSourceContext(DragSourceContextPeer dscp,
+                             DragGestureEvent trigger, Cursor dragCursor,
                              Image dragImage, Point offset, Transferable t,
                              DragSourceListener dsl) {
         if (dscp == null) {
@@ -215,7 +197,7 @@ public class DragSourceContext
         if (dragImage != null && offset == null) {
             throw new NullPointerException("offset");
         }
-	
+
         peer         = dscp;
         this.trigger = trigger;
         cursor       = dragCursor;
@@ -230,19 +212,19 @@ public class DragSourceContext
     }
 
     /**
-     * Returns the <code>DragSource</code> 
+     * Returns the <code>DragSource</code>
      * that instantiated this <code>DragSourceContext</code>.
-     * 
-     * @return the <code>DragSource</code> that 
+     *
+     * @return the <code>DragSource</code> that
      *   instantiated this <code>DragSourceContext</code>
      */
 
     public DragSource   getDragSource() { return trigger.getDragSource(); }
 
     /**
-     * Returns the <code>Component</code> associated with this 
+     * Returns the <code>Component</code> associated with this
      * <code>DragSourceContext</code>.
-     * 
+     *
      * @return the <code>Component</code> that started the drag
      */
 
@@ -251,7 +233,7 @@ public class DragSourceContext
     /**
      * Returns the <code>DragGestureEvent</code>
      * that initially triggered the drag.
-     * 
+     *
      * @return the Event that triggered the drag
      */
 
@@ -261,7 +243,7 @@ public class DragSourceContext
      * Returns a bitwise mask of <code>DnDConstants</code> that
      * represent the set of drop actions supported by the drag source for the
      * drag operation associated with this <code>DragSourceContext</code>.
-     * 
+     *
      * @return the drop actions supported by the drag source
      */
     public int  getSourceActions() {
@@ -273,13 +255,11 @@ public class DragSourceContext
      * <code>Cursor</code>.  If the specified <code>Cursor</code>
      * is <code>null</code>, the default drag cursor behavior is
      * activated for this drag operation, otherwise it is deactivated.
-     * 
-     * @param c     the initial {@code Cursor} for this drag operation,
-     *                       or {@code null} for the default cursor handling;
-     *                       see {@linkplain #defaultCursor class
-     *                       level documentation} for more details
-     *                       on the cursor handling during drag and drop
-     * 
+     *
+     * @param c the <code>Cursor</code> to display, or
+     *   <code>null</code> to activate the default drag cursor
+     *   behavior
+     *
      */
 
     public synchronized void setCursor(Cursor c) {
@@ -288,7 +268,7 @@ public class DragSourceContext
     }
 
     /**
-     * Returns the current drag <code>Cursor</code>. 
+     * Returns the current drag <code>Cursor</code>.
      * <P>
      * @return the current drag <code>Cursor</code>
      */
@@ -298,42 +278,42 @@ public class DragSourceContext
     /**
      * Add a <code>DragSourceListener</code> to this
      * <code>DragSourceContext</code> if one has not already been added.
-     * If a <code>DragSourceListener</code> already exists, 
+     * If a <code>DragSourceListener</code> already exists,
      * this method throws a <code>TooManyListenersException</code>.
      * <P>
      * @param dsl the <code>DragSourceListener</code> to add.
      * Note that while <code>null</code> is not prohibited,
      * it is not acceptable as a parameter.
      * <P>
-     * @throws TooManyListenersException if
+     * @throws <code>TooManyListenersException</code> if
      * a <code>DragSourceListener</code> has already been added
      */
 
     public synchronized void addDragSourceListener(DragSourceListener dsl) throws TooManyListenersException {
-	if (dsl == null) return;
+        if (dsl == null) return;
 
-	if (equals(dsl)) throw new IllegalArgumentException("DragSourceContext may not be its own listener");
+        if (equals(dsl)) throw new IllegalArgumentException("DragSourceContext may not be its own listener");
 
-	if (listener != null)
-	    throw new TooManyListenersException();
-	else
-	    listener = dsl;
+        if (listener != null)
+            throw new TooManyListenersException();
+        else
+            listener = dsl;
     }
 
     /**
      * Removes the specified <code>DragSourceListener</code>
      * from  this <code>DragSourceContext</code>.
-     * 
+     *
      * @param dsl the <code>DragSourceListener</code> to remove;
      *     note that while <code>null</code> is not prohibited,
      *     it is not acceptable as a parameter
      */
 
     public synchronized void removeDragSourceListener(DragSourceListener dsl) {
-	if (listener != null && listener.equals(dsl)) {
-	    listener = null;
-	} else
-	    throw new IllegalArgumentException();
+        if (listener != null && listener.equals(dsl)) {
+            listener = null;
+        } else
+            throw new IllegalArgumentException();
     }
 
     /**
@@ -342,7 +322,7 @@ public class DragSourceContext
      */
 
     public void transferablesFlavorsChanged() {
-	if (peer != null) peer.transferablesFlavorsChanged();
+        if (peer != null) peer.transferablesFlavorsChanged();
     }
 
     /**
@@ -361,7 +341,7 @@ public class DragSourceContext
         }
         getDragSource().processDragEnter(dsde);
 
-	updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), ENTER);
+        updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), ENTER);
     }
 
     /**
@@ -380,7 +360,7 @@ public class DragSourceContext
         }
         getDragSource().processDragOver(dsde);
 
-	updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), OVER);
+        updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), OVER);
     }
 
     /**
@@ -399,7 +379,7 @@ public class DragSourceContext
         }
         getDragSource().processDragExit(dse);
 
-	updateCurrentCursor(DnDConstants.ACTION_NONE, DnDConstants.ACTION_NONE, DEFAULT);
+        updateCurrentCursor(DnDConstants.ACTION_NONE, DnDConstants.ACTION_NONE, DEFAULT);
     }
 
     /**
@@ -418,7 +398,7 @@ public class DragSourceContext
         }
         getDragSource().processDropActionChanged(dsde);
 
-	updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), CHANGED);
+        updateCurrentCursor(getSourceActions(), dsde.getTargetActions(), CHANGED);
     }
 
     /**
@@ -455,60 +435,60 @@ public class DragSourceContext
     /**
      * Returns the <code>Transferable</code> associated with
      * this <code>DragSourceContext</code>.
-     * 
+     *
      * @return the <code>Transferable</code>
      */
     public Transferable getTransferable() { return transferable; }
-   
+
     /**
      * If the default drag cursor behavior is active, this method
      * sets the default drag cursor for the specified actions
      * supported by the drag source, the drop target action,
      * and status, otherwise this method does nothing.
-     * 
+     *
      * @param sourceAct the actions supported by the drag source
      * @param targetAct the drop target action
      * @param status one of the fields <code>DEFAULT</code>,
-     *               <code>ENTER</code>, <code>OVER</code>, 
+     *               <code>ENTER</code>, <code>OVER</code>,
      *               <code>CHANGED</code>
      */
 
     protected synchronized void updateCurrentCursor(int sourceAct, int targetAct, int status) {
 
-	// if the cursor has been previously set then dont do any defaults
-	// processing.
+        // if the cursor has been previously set then dont do any defaults
+        // processing.
 
-	if (useCustomCursor) {
-	    return;
-	}
+        if (useCustomCursor) {
+            return;
+        }
 
-	// do defaults processing
+        // do defaults processing
 
-	Cursor c = null;
+        Cursor c = null;
 
         targetAct = DnDConstants.ACTION_NONE;
-	switch (status) {
-	    case ENTER:
-	    case OVER:
-	    case CHANGED:
-		int    ra = sourceAct & targetAct;
+        switch (status) {
+            case ENTER:
+            case OVER:
+            case CHANGED:
+                int    ra = sourceAct & targetAct;
 
-		if (ra == DnDConstants.ACTION_NONE) { // no drop possible
-		    if ((sourceAct & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK)
-		        c = DragSource.DefaultLinkNoDrop;
-		    else if ((sourceAct & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE)
-		        c = DragSource.DefaultMoveNoDrop;
-		    else
-		        c = DragSource.DefaultCopyNoDrop;
-		} else { // drop possible
-		    if ((ra & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK)
-		        c = DragSource.DefaultLinkDrop;
-		    else if ((ra & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE)
-		        c = DragSource.DefaultMoveDrop;
-		    else
-		        c = DragSource.DefaultCopyDrop;
-		}
-	}
+                if (ra == DnDConstants.ACTION_NONE) { // no drop possible
+                    if ((sourceAct & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK)
+                        c = DragSource.DefaultLinkNoDrop;
+                    else if ((sourceAct & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE)
+                        c = DragSource.DefaultMoveNoDrop;
+                    else
+                        c = DragSource.DefaultCopyNoDrop;
+                } else { // drop possible
+                    if ((ra & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK)
+                        c = DragSource.DefaultLinkDrop;
+                    else if ((ra & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE)
+                        c = DragSource.DefaultMoveDrop;
+                    else
+                        c = DragSource.DefaultCopyDrop;
+                }
+        }
 
         setCursorImpl(c);
     }
@@ -626,7 +606,7 @@ public class DragSourceContext
     /**
      * A bitwise mask of <code>DnDConstants</code> that represents the set of
      * drop actions supported by the drag source for the drag operation associated
-     * with this <code>DragSourceContext.</code>  
+     * with this <code>DragSourceContext.</code>
      *
      * @serial
      */

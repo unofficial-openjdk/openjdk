@@ -42,48 +42,48 @@ import static sun.tools.jconsole.Utilities.*;
 @SuppressWarnings("serial")
 public class XSheet extends JPanel
         implements ActionListener, NotificationListener {
-    
+
     private JPanel mainPanel;
     private JPanel southPanel;
-    
+
     // Node being currently displayed
     private DefaultMutableTreeNode node;
-    
+
     // MBean being currently displayed
     private XMBean mbean;
-    
+
     // XMBeanAttributes container
     private XMBeanAttributes mbeanAttributes;
-    
+
     // XMBeanOperations container
     private XMBeanOperations mbeanOperations;
-    
+
     // XMBeanNotifications container
     private XMBeanNotifications mbeanNotifications;
-    
+
     // XMBeanInfo container
     private XMBeanInfo mbeanInfo;
-    
+
     // Refresh JButton (mbean attributes case)
     private JButton refreshButton;
-    
+
     // Subscribe/Unsubscribe/Clear JButton (mbean notifications case)
     private JButton clearButton, subscribeButton, unsubscribeButton;
-    
+
     // Reference to MBeans tab
     private MBeansTab mbeansTab;
-    
+
     public XSheet(MBeansTab mbeansTab) {
         this.mbeansTab = mbeansTab;
         setupScreen();
     }
-    
+
     public void dispose() {
         clear();
         XDataViewer.dispose(mbeansTab);
         mbeanNotifications.dispose();
     }
-    
+
     private void setupScreen() {
         setLayout(new BorderLayout());
         // add main panel to XSheet
@@ -128,12 +128,12 @@ public class XSheet extends JPanel
         // create XMBeanInfo container
         mbeanInfo = new XMBeanInfo();
     }
-    
+
     public boolean isMBeanNode(DefaultMutableTreeNode node) {
         XNodeInfo uo = (XNodeInfo) node.getUserObject();
         return uo.getType().equals(Type.MBEAN);
     }
-    
+
     public void displayNode(DefaultMutableTreeNode node) {
         clear();
         if (node == null) {
@@ -172,7 +172,7 @@ public class XSheet extends JPanel
             displayEmptyNode();
         }
     }
-    
+
     private void displayMBeanNode(final DefaultMutableTreeNode node) {
         final XNodeInfo uo = (XNodeInfo) node.getUserObject();
         if (!uo.getType().equals(Type.MBEAN)) {
@@ -206,7 +206,7 @@ public class XSheet extends JPanel
             }
         });
     }
-    
+
     // Call on EDT
     private void displayMetadataNode(final DefaultMutableTreeNode node) {
         final XNodeInfo uo = (XNodeInfo) node.getUserObject();
@@ -319,7 +319,7 @@ public class XSheet extends JPanel
                 break;
         }
     }
-    
+
     private void displayMBeanAttributesNode(final DefaultMutableTreeNode node) {
         final XNodeInfo uo = (XNodeInfo) node.getUserObject();
         if (!uo.getType().equals(Type.ATTRIBUTES)) {
@@ -361,7 +361,7 @@ public class XSheet extends JPanel
             }
         });
     }
-    
+
     private void displayMBeanOperationsNode(final DefaultMutableTreeNode node) {
         final XNodeInfo uo = (XNodeInfo) node.getUserObject();
         if (!uo.getType().equals(Type.OPERATIONS)) {
@@ -400,7 +400,7 @@ public class XSheet extends JPanel
             }
         });
     }
-    
+
     private void displayMBeanNotificationsNode(
             final DefaultMutableTreeNode node) {
         final XNodeInfo uo = (XNodeInfo) node.getUserObject();
@@ -449,7 +449,7 @@ public class XSheet extends JPanel
             }
         });
     }
-    
+
     // Call on EDT
     private void displayEmptyNode() {
         invalidate();
@@ -458,7 +458,7 @@ public class XSheet extends JPanel
         validate();
         repaint();
     }
-    
+
     /**
      * Subscribe button action.
      */
@@ -468,7 +468,7 @@ public class XSheet extends JPanel
         updateNotifications();
         validate();
     }
-    
+
     /**
      * Unsubscribe button action.
      */
@@ -478,14 +478,14 @@ public class XSheet extends JPanel
             validate();
         }
     }
-    
+
     /**
      * Refresh button action.
      */
     private void refreshAttributes() {
         mbeanAttributes.refreshAttributes();
     }
-    
+
     private void updateNotifications() {
         if (mbean.isBroadcaster()) {
             if (mbeanNotifications.isListenerRegistered(mbean)) {
@@ -499,7 +499,7 @@ public class XSheet extends JPanel
             clearNotifications();
         }
     }
-    
+
     /**
      * Update notification node label in MBean tree: "Notifications[received]".
      */
@@ -513,7 +513,7 @@ public class XSheet extends JPanel
         }
         updateNotificationsNodeLabel(emitter, text);
     }
-    
+
     /**
      * Update notification node label in MBean tree: "Notifications".
      */
@@ -521,7 +521,7 @@ public class XSheet extends JPanel
         updateNotificationsNodeLabel(node,
                 Resources.getText("Notifications"));
     }
-    
+
     /**
      * Update notification node label in MBean tree: "Notifications[0]".
      */
@@ -529,7 +529,7 @@ public class XSheet extends JPanel
         updateNotificationsNodeLabel(node,
                 Resources.getText("Notifications") + "[0]");
     }
-    
+
     /**
      * Update the label of the supplied MBean tree node.
      */
@@ -553,7 +553,7 @@ public class XSheet extends JPanel
             }
         });
     }
-    
+
     /**
      * Clear button action.
      */
@@ -576,7 +576,7 @@ public class XSheet extends JPanel
             clearNotifications();
         }
     }
-    
+
     private void clear() {
         mbeanAttributes.stopCellEditing();
         mbeanAttributes.emptyTable();
@@ -588,7 +588,7 @@ public class XSheet extends JPanel
         mbean = null;
         node = null;
     }
-    
+
     /**
      * Notification listener: handles asynchronous reception
      * of MBean operation results and MBean notifications.
@@ -642,7 +642,7 @@ public class XSheet extends JPanel
             updateReceivedNotifications(emitter, received.longValue(), true);
         }
     }
-    
+
     /**
      * Action listener: handles actions in panel buttons
      */

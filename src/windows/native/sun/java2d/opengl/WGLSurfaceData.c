@@ -57,7 +57,7 @@ Java_sun_java2d_opengl_WGLSurfaceData_initOps(JNIEnv *env, jobject wglsd,
     J2dTraceLn(J2D_TRACE_INFO, "WGLSurfaceData_initOps");
 
     if (wglsdo == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "creating native wgl ops");
+        JNU_ThrowOutOfMemoryError(env, "creating native wgl ops");
         return;
     }
 
@@ -415,7 +415,7 @@ Java_sun_java2d_opengl_WGLSurfaceData_initPbuffer
     if (wglsdo == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR,
             "WGLSurfaceData_initPbuffer: wgl ops are null");
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     if (wglInfo == NULL) {

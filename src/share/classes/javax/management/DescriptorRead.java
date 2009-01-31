@@ -31,7 +31,7 @@ package javax.management;
  * @since 1.6
  */
 public interface DescriptorRead {
-   /** 
+   /**
     * Returns a copy of Descriptor.
     *
     * @return Descriptor associated with the component implementing this interface.

@@ -48,9 +48,8 @@ import java.util.*;
  *     draw the image yourself.  This is primarly useful when you are not
  *     using <code>VolatileImage</code>.
  * </ol>
- * 
  *
- * @version %I%, %G%
+ *
  */
 public abstract class CachedPainter {
     // CacheMap maps from class to ImageCache.

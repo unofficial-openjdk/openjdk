@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,9 +23,9 @@
 
 import java.io.Serializable;
 
-public class A implements Serializable { 
+public class A implements Serializable {
     static final long serialVersionUID = 746945609796141988L;
 
-    int field1; 
+    int field1;
     int field2;
 };

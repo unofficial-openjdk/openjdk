@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ExtensionSubtables.h	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 2002-2003 - All Rights Reserved
  *
@@ -50,4 +49,3 @@ struct ExtensionSubtable //: GlyphSubstitutionSubtable
 };
 
 #endif
-

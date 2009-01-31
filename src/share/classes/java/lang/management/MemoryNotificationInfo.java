@@ -31,20 +31,20 @@ import sun.management.MemoryNotifInfoCompositeData;
  * The information about a memory notification.
  *
  * <p>
- * A memory notification is emitted by {@link MemoryMXBean} 
- * when the Java virtual machine detects that the memory usage 
- * of a memory pool is exceeding a threshold value. 
+ * A memory notification is emitted by {@link MemoryMXBean}
+ * when the Java virtual machine detects that the memory usage
+ * of a memory pool is exceeding a threshold value.
  * The notification emitted will contain the memory notification
  * information about the detected condition:
  * <ul>
  *   <li>The name of the memory pool.</li>
- *   <li>The memory usage of the memory pool when the notification 
+ *   <li>The memory usage of the memory pool when the notification
  *       was constructed.</li>
- *   <li>The number of times that the memory usage has crossed 
+ *   <li>The number of times that the memory usage has crossed
  *       a threshold when the notification was constructed.
- *       For usage threshold notifications, this count will be the 
+ *       For usage threshold notifications, this count will be the
  *       {@link MemoryPoolMXBean#getUsageThresholdCount usage threshold
- *       count}.  For collection threshold notifications, 
+ *       count}.  For collection threshold notifications,
  *       this count will be the
  *       {@link MemoryPoolMXBean#getCollectionUsageThresholdCount
  *       collection usage threshold count}.
@@ -52,13 +52,13 @@ import sun.management.MemoryNotifInfoCompositeData;
  * </ul>
  *
  * <p>
- * A {@link CompositeData CompositeData} representing 
- * the <tt>MemoryNotificationInfo</tt> object 
+ * A {@link CompositeData CompositeData} representing
+ * the <tt>MemoryNotificationInfo</tt> object
  * is stored in the
- * {@link javax.management.Notification#setUserData user data} 
+ * {@link javax.management.Notification#setUserData user data}
  * of a {@link javax.management.Notification notification}.
- * The {@link #from from} method is provided to convert from 
- * a <tt>CompositeData</tt> to a <tt>MemoryNotificationInfo</tt> 
+ * The {@link #from from} method is provided to convert from
+ * a <tt>CompositeData</tt> to a <tt>MemoryNotificationInfo</tt>
  * object. For example:
  *
  * <blockquote><pre>
@@ -66,7 +66,7 @@ import sun.management.MemoryNotifInfoCompositeData;
  *
  *      // receive the notification emitted by MemoryMXBean and set to notif
  *      ...
- *            
+ *
  *      String notifType = notif.getType();
  *      if (notifType.equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED) ||
  *          notifType.equals(MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED)) {
@@ -74,17 +74,17 @@ import sun.management.MemoryNotifInfoCompositeData;
  *          CompositeData cd = (CompositeData) notif.getUserData();
  *          MemoryNotificationInfo info = MemoryNotificationInfo.from(cd);
  *          ....
- *      }  
+ *      }
  * </pre></blockquote>
  *
  * <p>
  * The types of notifications emitted by <tt>MemoryMXBean</tt> are:
- * <ul> 
- *   <li>A {@link #MEMORY_THRESHOLD_EXCEEDED 
+ * <ul>
+ *   <li>A {@link #MEMORY_THRESHOLD_EXCEEDED
  *       usage threshold exceeded notification}.
  *       <br>This notification will be emitted when
- *       the memory usage of a memory pool is increased and has reached 
- *       or exceeded its 
+ *       the memory usage of a memory pool is increased and has reached
+ *       or exceeded its
  *       <a href="MemoryPoolMXBean.html#UsageThreshold"> usage threshold</a> value.
  *       Subsequent crossing of the usage threshold value does not cause
  *       further notification until the memory usage has returned
@@ -97,11 +97,10 @@ import sun.management.MemoryNotifInfoCompositeData;
  *       <a href="MemoryPoolMXBean.html#CollectionThreshold">
  *       collection usage threshold</a> after the Java virtual machine
  *       has expended effort in recycling unused objects in that
- *       memory pool.</li> 
+ *       memory pool.</li>
  * </ul>
  *
  * @author  Mandy Chung
- * @version %I%, %G%
  * @since   1.5
  *
  */
@@ -111,7 +110,7 @@ public class MemoryNotificationInfo {
     private final long count;
 
     /**
-     * Notification type denoting that 
+     * Notification type denoting that
      * the memory usage of a memory pool has
      * reached or exceeded its
      * <a href="MemoryPoolMXBean.html#UsageThreshold"> usage threshold</a> value.
@@ -119,21 +118,21 @@ public class MemoryNotificationInfo {
      * Subsequent crossing of the usage threshold value does not cause
      * further notification until the memory usage has returned
      * to become less than the usage threshold value.
-     * The value of this notification type is 
+     * The value of this notification type is
      * <tt>java.management.memory.threshold.exceeded</tt>.
      */
-    public static final String MEMORY_THRESHOLD_EXCEEDED = 
+    public static final String MEMORY_THRESHOLD_EXCEEDED =
         "java.management.memory.threshold.exceeded";
 
     /**
-     * Notification type denoting that 
+     * Notification type denoting that
      * the memory usage of a memory pool is greater than or equal to its
      * <a href="MemoryPoolMXBean.html#CollectionThreshold">
      * collection usage threshold</a> after the Java virtual machine
      * has expended effort in recycling unused objects in that
-     * memory pool. 
+     * memory pool.
      * This notification is emitted by {@link MemoryMXBean}.
-     * The value of this notification type is 
+     * The value of this notification type is
      * <tt>java.management.memory.collection.threshold.exceeded</tt>.
      */
     public static final String MEMORY_COLLECTION_THRESHOLD_EXCEEDED =
@@ -183,24 +182,24 @@ public class MemoryNotificationInfo {
      * Returns the memory usage of the memory pool
      * when this notification was constructed.
      *
-     * @return the memory usage of the memory pool  
+     * @return the memory usage of the memory pool
      * when this notification was constructed.
      */
     public MemoryUsage getUsage() {
         return usage;
     }
- 
+
     /**
-     * Returns the number of times that the memory usage has crossed 
+     * Returns the number of times that the memory usage has crossed
      * a threshold when the notification was constructed.
-     * For usage threshold notifications, this count will be the 
+     * For usage threshold notifications, this count will be the
      * {@link MemoryPoolMXBean#getUsageThresholdCount threshold
-     * count}.  For collection threshold notifications, 
+     * count}.  For collection threshold notifications,
      * this count will be the
      * {@link MemoryPoolMXBean#getCollectionUsageThresholdCount
      * collection usage threshold count}.
      *
-     * @return the number of times that the memory usage has crossed 
+     * @return the number of times that the memory usage has crossed
      * a threshold when the notification was constructed.
      */
     public long getCount() {
@@ -239,7 +238,7 @@ public class MemoryNotificationInfo {
      * @throws IllegalArgumentException if <tt>cd</tt> does not
      *   represent a <tt>MemoryNotificationInfo</tt> object.
      *
-     * @return a <tt>MemoryNotificationInfo</tt> object represented 
+     * @return a <tt>MemoryNotificationInfo</tt> object represented
      *         by <tt>cd</tt> if <tt>cd</tt> is not <tt>null</tt>;
      *         <tt>null</tt> otherwise.
      */

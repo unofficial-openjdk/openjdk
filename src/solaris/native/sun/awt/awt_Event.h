@@ -41,4 +41,3 @@ struct EventIDs {
 extern struct EventIDs eventIDs;
 
 #endif /* _AWT_EVENT_H_ */
-

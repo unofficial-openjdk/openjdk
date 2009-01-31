@@ -53,11 +53,11 @@ public class WildcardTypeImpl extends LazyReflectiveObjectGenerator
 
     // constructor is private to enforce access through static factory
     private WildcardTypeImpl(FieldTypeSignature[] ubs,
-			     FieldTypeSignature[] lbs,
-			     GenericsFactory f) {
-	super(f);
-	upperBoundASTs = ubs;
-	lowerBoundASTs = lbs;
+                             FieldTypeSignature[] lbs,
+                             GenericsFactory f) {
+        super(f);
+        upperBoundASTs = ubs;
+        lowerBoundASTs = lbs;
     }
 
     /**
@@ -71,9 +71,9 @@ public class WildcardTypeImpl extends LazyReflectiveObjectGenerator
      * @return a wild card type with the requested bounds and factory
      */
     public static WildcardTypeImpl make(FieldTypeSignature[] ubs,
-					FieldTypeSignature[] lbs,
-	                                GenericsFactory f) {
-	return new WildcardTypeImpl(ubs, lbs, f);
+                                        FieldTypeSignature[] lbs,
+                                        GenericsFactory f) {
+        return new WildcardTypeImpl(ubs, lbs, f);
     }
 
     // Accessors
@@ -82,16 +82,16 @@ public class WildcardTypeImpl extends LazyReflectiveObjectGenerator
     // bounds have been evaluated, because we might throw the ASTs
     // away (but that is not thread-safe, is it?)
     private FieldTypeSignature[] getUpperBoundASTs() {
-	// check that upper bounds were not evaluated yet
-	assert(upperBounds == null);
+        // check that upper bounds were not evaluated yet
+        assert(upperBounds == null);
         return upperBoundASTs;
     }
     // accessor for ASTs for lower bounds. Must not be called after lower
     // bounds have been evaluated, because we might throw the ASTs
     // away (but that is not thread-safe, is it?)
     private FieldTypeSignature[] getLowerBoundASTs() {
-	// check that lower bounds were not evaluated yet
-	assert(lowerBounds == null);
+        // check that lower bounds were not evaluated yet
+        assert(lowerBounds == null);
         return lowerBoundASTs;
     }
 
@@ -105,44 +105,44 @@ public class WildcardTypeImpl extends LazyReflectiveObjectGenerator
      *  <li>if B is a parameterized type or a type variable, it is created,
      *  (see {@link #ParameterizedType} for the details of the creation
      *  process for parameterized types).
-     *  <li>Otherwise, B is resolved. 
+     *  <li>Otherwise, B is resolved.
      * </ul>
      *
-     * @return an array of Types representing the upper bound(s) of this 
+     * @return an array of Types representing the upper bound(s) of this
      *     type variable
      * @throws <tt>TypeNotPresentException</tt> if any of the
      *     bounds refers to a non-existent type declaration
-     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the 
-     *     bounds refer to a parameterized type that cannot be instantiated 
+     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the
+     *     bounds refer to a parameterized type that cannot be instantiated
      *     for any reason
      */
     public Type[] getUpperBounds() {
-	// lazily initialize bounds if necessary
-	if (upperBounds == null) {
-	    FieldTypeSignature[] fts = getUpperBoundASTs(); // get AST
+        // lazily initialize bounds if necessary
+        if (upperBounds == null) {
+            FieldTypeSignature[] fts = getUpperBoundASTs(); // get AST
 
-	    // allocate result array; note that
-	    // keeping ts and bounds separate helps with threads
-	    Type[] ts = new Type[fts.length];
-	    // iterate over bound trees, reifying each in turn
-	    for ( int j = 0; j  < fts.length; j++) {
-		Reifier r = getReifier();
-		fts[j].accept(r);
-		ts[j] = r.getResult();
-	    }
-	    // cache result
-	    upperBounds = ts; 
-	    // could throw away upper bound ASTs here; thread safety?
-	}
-	return upperBounds.clone(); // return cached bounds
+            // allocate result array; note that
+            // keeping ts and bounds separate helps with threads
+            Type[] ts = new Type[fts.length];
+            // iterate over bound trees, reifying each in turn
+            for ( int j = 0; j  < fts.length; j++) {
+                Reifier r = getReifier();
+                fts[j].accept(r);
+                ts[j] = r.getResult();
+            }
+            // cache result
+            upperBounds = ts;
+            // could throw away upper bound ASTs here; thread safety?
+        }
+        return upperBounds.clone(); // return cached bounds
     }
 
     /**
-     * Returns an array of <tt>Type</tt> objects representing the 
+     * Returns an array of <tt>Type</tt> objects representing the
      * lower bound(s) of this type variable.  Note that if no lower bound is
      * explicitly declared, the lower bound is the type of <tt>null</tt>.
      * In this case, a zero length array is returned.
-     * 
+     *
      * <p>For each lower bound B :
      * <ul>
      *   <li>if B is a parameterized type or a type variable, it is created,
@@ -151,84 +151,84 @@ public class WildcardTypeImpl extends LazyReflectiveObjectGenerator
      *   <li>Otherwise, B is resolved.
      * </ul>
      *
-     * @return an array of Types representing the lower bound(s) of this 
+     * @return an array of Types representing the lower bound(s) of this
      *     type variable
      * @throws <tt>TypeNotPresentException</tt> if any of the
      *     bounds refers to a non-existent type declaration
-     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the 
-     *     bounds refer to a parameterized type that cannot be instantiated 
+     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the
+     *     bounds refer to a parameterized type that cannot be instantiated
      *     for any reason
      */
-    public Type[] getLowerBounds() { 
-	// lazily initialize bounds if necessary
-	if (lowerBounds == null) {
-	    FieldTypeSignature[] fts = getLowerBoundASTs(); // get AST
-	    // allocate result array; note that
-	    // keeping ts and bounds separate helps with threads
-	    Type[] ts = new Type[fts.length];
-	    // iterate over bound trees, reifying each in turn
-	    for ( int j = 0; j  < fts.length; j++) {
-		Reifier r = getReifier();
-		fts[j].accept(r);
-		ts[j] = r.getResult();
-	    }
-	    // cache result
-	    lowerBounds = ts; 
-	    // could throw away lower bound ASTs here; thread safety?
-	}
-	return lowerBounds.clone(); // return cached bounds
+    public Type[] getLowerBounds() {
+        // lazily initialize bounds if necessary
+        if (lowerBounds == null) {
+            FieldTypeSignature[] fts = getLowerBoundASTs(); // get AST
+            // allocate result array; note that
+            // keeping ts and bounds separate helps with threads
+            Type[] ts = new Type[fts.length];
+            // iterate over bound trees, reifying each in turn
+            for ( int j = 0; j  < fts.length; j++) {
+                Reifier r = getReifier();
+                fts[j].accept(r);
+                ts[j] = r.getResult();
+            }
+            // cache result
+            lowerBounds = ts;
+            // could throw away lower bound ASTs here; thread safety?
+        }
+        return lowerBounds.clone(); // return cached bounds
     }
 
     public String toString() {
-	Type[] lowerBounds = getLowerBounds();
-	Type[] bounds = lowerBounds;
-	StringBuilder sb = new StringBuilder();
+        Type[] lowerBounds = getLowerBounds();
+        Type[] bounds = lowerBounds;
+        StringBuilder sb = new StringBuilder();
 
-	if (lowerBounds.length > 0)
-	    sb.append("? super ");
-	else {
-	    Type[] upperBounds = getUpperBounds();
-	    if (upperBounds.length > 0 && !upperBounds[0].equals(Object.class) ) {
-		bounds = upperBounds;
-		sb.append("? extends ");
-	    } else
-		return "?";
-	}
+        if (lowerBounds.length > 0)
+            sb.append("? super ");
+        else {
+            Type[] upperBounds = getUpperBounds();
+            if (upperBounds.length > 0 && !upperBounds[0].equals(Object.class) ) {
+                bounds = upperBounds;
+                sb.append("? extends ");
+            } else
+                return "?";
+        }
 
-	assert bounds.length > 0;
-	
-	boolean first = true;
-	for(Type bound: bounds) {
-	    if (!first)
-		sb.append(" & ");
+        assert bounds.length > 0;
 
-	    first = false;
-	    if (bound instanceof Class)
-		sb.append(((Class)bound).getName() );
-	    else
-		sb.append(bound.toString());
-	}
-	return sb.toString();
+        boolean first = true;
+        for(Type bound: bounds) {
+            if (!first)
+                sb.append(" & ");
+
+            first = false;
+            if (bound instanceof Class)
+                sb.append(((Class)bound).getName() );
+            else
+                sb.append(bound.toString());
+        }
+        return sb.toString();
     }
 
     @Override
     public boolean equals(Object o) {
-	if (o instanceof WildcardType) {
-	    WildcardType that = (WildcardType) o;
-	    return
-		Arrays.equals(this.getLowerBounds(),
-			      that.getLowerBounds()) && 
-		Arrays.equals(this.getUpperBounds(),
-			      that.getUpperBounds());
-	} else
-	    return false;
+        if (o instanceof WildcardType) {
+            WildcardType that = (WildcardType) o;
+            return
+                Arrays.equals(this.getLowerBounds(),
+                              that.getLowerBounds()) &&
+                Arrays.equals(this.getUpperBounds(),
+                              that.getUpperBounds());
+        } else
+            return false;
     }
 
     @Override
     public int hashCode() {
-	Type [] lowerBounds = getLowerBounds();
-	Type [] upperBounds = getUpperBounds();
-	
-	return Arrays.hashCode(lowerBounds) ^ Arrays.hashCode(upperBounds);
+        Type [] lowerBounds = getLowerBounds();
+        Type [] upperBounds = getUpperBounds();
+
+        return Arrays.hashCode(lowerBounds) ^ Arrays.hashCode(upperBounds);
     }
 }

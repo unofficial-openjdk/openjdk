@@ -37,7 +37,7 @@ public class StoredCRC {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream zos = new ZipOutputStream(baos);
-        
+
         ZipEntry ze = new ZipEntry("test");
         ze.setMethod(ZipOutputStream.STORED);
 
@@ -47,7 +47,7 @@ public class StoredCRC {
         CRC32 crc = new CRC32();
         crc.update(writtenData);
         ze.setCrc(crc.getValue());
-        
+
         zos.putNextEntry(ze);
         zos.write(writtenData, 0, writtenData.length);
         zos.close();
@@ -84,7 +84,7 @@ public class StoredCRC {
             zis = new ZipInputStream(
                 new ByteArrayInputStream(data));
             ze = zis.getNextEntry();
-            
+
             try {
                 zis.read(readData, 0, readData.length);
                 fail("Did not catch expected ZipException" );

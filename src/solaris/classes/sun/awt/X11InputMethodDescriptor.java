@@ -39,7 +39,7 @@ import sun.security.action.GetPropertyAction;
  * Provides sufficient information about an input method
  * to enable selection and loading of that input method.
  * The input method itself is only loaded when it is actually used.
- * 
+ *
  * @since JDK1.3
  */
 
@@ -58,14 +58,14 @@ public abstract class X11InputMethodDescriptor implements InputMethodDescriptor 
         Locale[] locales = {locale};
         return locales;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#hasDynamicLocaleList
      */
     public boolean hasDynamicLocaleList() {
         return false;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodDisplayName
      */
@@ -79,21 +79,21 @@ public abstract class X11InputMethodDescriptor implements InputMethodDescriptor 
         }
         return name;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodIcon
      */
     public Image getInputMethodIcon(Locale inputLocale) {
         return null;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#createInputMethod
      */
     public abstract InputMethod createInputMethod() throws Exception;
 
     /**
-     * returns supported locale. Currently this method returns the locale in which 
+     * returns supported locale. Currently this method returns the locale in which
      * the VM is started since Solaris doesn't provide a way to determine the login locale.
      */
     static Locale getSupportedLocale() {

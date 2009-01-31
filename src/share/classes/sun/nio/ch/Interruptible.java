@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.nio.ch;
 

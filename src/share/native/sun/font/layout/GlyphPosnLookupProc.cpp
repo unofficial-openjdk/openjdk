@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)GlyphPosnLookupProc.cpp	1.8 06/12/13
  *
  * (C) Copyright IBM Corp. 1998 - 2005 - All Rights Reserved
  *
@@ -58,7 +57,7 @@ typedef ChainingContextualSubstitutionSubtable ChainingContextualPositioningSubt
 
 GlyphPositioningLookupProcessor::GlyphPositioningLookupProcessor(
         const GlyphPositioningTableHeader *glyphPositioningTableHeader,
-        LETag scriptTag, LETag languageTag, 
+        LETag scriptTag, LETag languageTag,
         const FeatureMap *featureMap, le_int32 featureMapCount, le_bool featureOrder)
     : LookupProcessor(
                       (char *) glyphPositioningTableHeader,
@@ -167,4 +166,3 @@ le_uint32 GlyphPositioningLookupProcessor::applySubtable(const LookupSubtable *l
 GlyphPositioningLookupProcessor::~GlyphPositioningLookupProcessor()
 {
 }
-

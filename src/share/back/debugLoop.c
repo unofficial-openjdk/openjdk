@@ -87,19 +87,19 @@ debugLoop_sync(void)
 /*
  * This is where all the work gets done.
  */
-  
+
 void
 debugLoop_run(void)
 {
     jboolean shouldListen;
     jdwpPacket p;
     jvmtiStartFunction func;
-    
+
     /* Initialize all statics */
     /* We may be starting a new connection after an error */
     cmdQueue = NULL;
     cmdQueueLock = debugMonitorCreate("JDWP Command Queue Lock");
-    transportError = JNI_FALSE; 
+    transportError = JNI_FALSE;
 
     shouldListen = JNI_TRUE;
 
@@ -119,7 +119,7 @@ debugLoop_run(void)
             /*
              * Its a reply packet.
              */
-           continue; 
+           continue;
         } else {
             /*
              * Its a cmd packet.
@@ -130,10 +130,10 @@ debugLoop_run(void)
             CommandHandler func;
 
             /* Should reply be sent to sender.
-             * For error handling, assume yes, since 
+             * For error handling, assume yes, since
              * only VM/exit does not reply
              */
-            jboolean replyToSender = JNI_TRUE; 
+            jboolean replyToSender = JNI_TRUE;
 
             /*
              * For VirtualMachine.Resume commands we hold the resumeLock
@@ -151,7 +151,7 @@ debugLoop_run(void)
             outStream_initReply(&out, inStream_id(&in));
 
             LOG_MISC(("Command set %d, command %d", cmd->cmdSet, cmd->cmd));
-            
+
             func = debugDispatch_getHandler(cmd->cmdSet,cmd->cmd);
             if (func == NULL) {
                 /* we've never heard of this, so I guess we
@@ -160,7 +160,7 @@ debugLoop_run(void)
                  * and platform / vendor expansion.
                  */
                 outStream_setError(&out, JDWP_ERROR(NOT_IMPLEMENTED));
-            } else if (gdata->vmDead && 
+            } else if (gdata->vmDead &&
              ((cmd->cmdSet) != JDWP_COMMAND_SET(VirtualMachine))) {
                 /* Protect the VM from calls while dead.
                  * VirtualMachine cmdSet quietly ignores some cmds
@@ -176,7 +176,7 @@ debugLoop_run(void)
             if (replyToSender) {
                 if (inStream_error(&in)) {
                     outStream_setError(&out, inStream_error(&in));
-                } 
+                }
                 outStream_sendReply(&out);
             }
 
@@ -189,7 +189,7 @@ debugLoop_run(void)
 
             inStream_destroy(&in);
             outStream_destroy(&out);
-                
+
             shouldListen = !lastCommand(cmd);
         }
     }
@@ -197,7 +197,7 @@ debugLoop_run(void)
     standardHandlers_onDisconnect();
 
     /*
-     * Cut off the transport immediately. This has the effect of 
+     * Cut off the transport immediately. This has the effect of
      * cutting off any events that the eventHelper thread might
      * be trying to send.
      */
@@ -222,7 +222,7 @@ reader(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
 
     while (shouldListen) {
         jint rc;
-        
+
         rc = transport_receivePacket(&packet);
 
         /* I/O error or EOF */
@@ -231,10 +231,10 @@ reader(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
             notifyTransportError();
         } else {
             cmd = &packet.type.cmd;
-            
+
             LOG_MISC(("Command set %d, command %d", cmd->cmdSet, cmd->cmd));
 
-            /* 
+            /*
              * FIXME! We need to deal with high priority
              * packets and queue flushes!
              */
@@ -252,7 +252,7 @@ reader(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
  * to avoid any additional memory allocations.
  */
 
-static void 
+static void
 enqueue(jdwpPacket *packet)
 {
     struct PacketList *pL;
@@ -282,11 +282,11 @@ enqueue(jdwpPacket *packet)
     debugMonitorExit(cmdQueueLock);
 }
 
-static jboolean 
+static jboolean
 dequeue(jdwpPacket *packet) {
     struct PacketList *node = NULL;
 
-    debugMonitorEnter(cmdQueueLock); 
+    debugMonitorEnter(cmdQueueLock);
 
     while (!transportError && (cmdQueue == NULL)) {
         debugMonitorWait(cmdQueueLock);
@@ -305,9 +305,9 @@ dequeue(jdwpPacket *packet) {
     return (node != NULL);
 }
 
-static void 
+static void
 notifyTransportError(void) {
-    debugMonitorEnter(cmdQueueLock); 
+    debugMonitorEnter(cmdQueueLock);
     transportError = JNI_TRUE;
     debugMonitorNotify(cmdQueueLock);
     debugMonitorExit(cmdQueueLock);

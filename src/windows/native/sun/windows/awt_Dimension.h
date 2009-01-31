@@ -44,4 +44,3 @@ public:
 };
 
 #endif // AWT_DIMENSION_H
-

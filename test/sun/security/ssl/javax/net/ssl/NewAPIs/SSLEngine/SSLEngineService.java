@@ -48,292 +48,292 @@ public class SSLEngineService {
     private static char[] passphrase = "passphrase".toCharArray();
 
     private static String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
     private static String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
     // deliver local application data.
     protected static void deliver(SSLEngine ssle, SocketChannel sc)
-	throws Exception {
+        throws Exception {
 
-	// create buufer.
-	int appBufferMax = ssle.getSession().getApplicationBufferSize();
-	int netBufferMax = ssle.getSession().getPacketBufferSize();
-	int length = appBufferMax * (Integer.SIZE / 8);
+        // create buufer.
+        int appBufferMax = ssle.getSession().getApplicationBufferSize();
+        int netBufferMax = ssle.getSession().getPacketBufferSize();
+        int length = appBufferMax * (Integer.SIZE / 8);
 
-	// allocate more in order to check large packet
-	ByteBuffer localAppData = ByteBuffer.allocate(length);
+        // allocate more in order to check large packet
+        ByteBuffer localAppData = ByteBuffer.allocate(length);
 
-	// allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
-	ByteBuffer localNetData = ByteBuffer.allocate(netBufferMax/2);
+        // allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
+        ByteBuffer localNetData = ByteBuffer.allocate(netBufferMax/2);
 
-	// prepare local application data
-	localAppData.putInt(length);
-	for (int i = 1; i < appBufferMax; i++) {
-	    localAppData.putInt(i);
-	}
-	localAppData.flip();
+        // prepare local application data
+        localAppData.putInt(length);
+        for (int i = 1; i < appBufferMax; i++) {
+            localAppData.putInt(i);
+        }
+        localAppData.flip();
 
 
-	while (localAppData.hasRemaining()) {
-	    // empty the local network packet buffer.
-	    localNetData.clear();
+        while (localAppData.hasRemaining()) {
+            // empty the local network packet buffer.
+            localNetData.clear();
 
-	    // generated local network packet.
-	    SSLEngineResult res = ssle.wrap(localAppData, localNetData);
+            // generated local network packet.
+            SSLEngineResult res = ssle.wrap(localAppData, localNetData);
 
-	    // checking status
-	    switch (res.getStatus()) {
+            // checking status
+            switch (res.getStatus()) {
 
-	    case OK :
-		localNetData.flip();
+            case OK :
+                localNetData.flip();
 
-		// send the network packet
-		while (localNetData.hasRemaining()) {
-		    if (sc.write(localNetData) < 0) {
-			throw new IOException("Unable write to socket channel");
-		    }
-		}
+                // send the network packet
+                while (localNetData.hasRemaining()) {
+                    if (sc.write(localNetData) < 0) {
+                        throw new IOException("Unable write to socket channel");
+                    }
+                }
 
-		if (res.getHandshakeStatus() ==
-			SSLEngineResult.HandshakeStatus.NEED_TASK) {
-		    Runnable runnable;
-		    while ((runnable = ssle.getDelegatedTask()) != null) {
-			runnable.run();
-		    }
-		}
-		
-		// detect large buffer
-		if (res.bytesProduced() >= Short.MAX_VALUE) {
-		    System.out.println("Generate a " +
-			res.bytesProduced() + " bytes large packet ");
-		}
-		break;
+                if (res.getHandshakeStatus() ==
+                        SSLEngineResult.HandshakeStatus.NEED_TASK) {
+                    Runnable runnable;
+                    while ((runnable = ssle.getDelegatedTask()) != null) {
+                        runnable.run();
+                    }
+                }
 
-	    case BUFFER_OVERFLOW :
-	 	// maybe need to enlarge the local network packet buffer.
-		int size = ssle.getSession().getPacketBufferSize();
-		if (size > localNetData.capacity()) {
-		    System.out.println("resize destination buffer upto " +
-				size + " bytes for BUFFER_OVERFLOW");
-		    localNetData = enlargeBuffer(localNetData, size);
-		}
-		break;
+                // detect large buffer
+                if (res.bytesProduced() >= Short.MAX_VALUE) {
+                    System.out.println("Generate a " +
+                        res.bytesProduced() + " bytes large packet ");
+                }
+                break;
 
-	    default : // BUFFER_UNDERFLOW or CLOSED :
-		throw new IOException("Received invalid" + res.getStatus() +
-			"during transfer application data");
-	    }
-	}
+            case BUFFER_OVERFLOW :
+                // maybe need to enlarge the local network packet buffer.
+                int size = ssle.getSession().getPacketBufferSize();
+                if (size > localNetData.capacity()) {
+                    System.out.println("resize destination buffer upto " +
+                                size + " bytes for BUFFER_OVERFLOW");
+                    localNetData = enlargeBuffer(localNetData, size);
+                }
+                break;
+
+            default : // BUFFER_UNDERFLOW or CLOSED :
+                throw new IOException("Received invalid" + res.getStatus() +
+                        "during transfer application data");
+            }
+        }
     }
 
 
     // receive peer application data.
     protected static void receive(SSLEngine ssle, SocketChannel sc)
-	throws Exception {
+        throws Exception {
 
-	// create buufers.
-	int appBufferMax = ssle.getSession().getApplicationBufferSize();
-	int netBufferMax = ssle.getSession().getPacketBufferSize();
+        // create buufers.
+        int appBufferMax = ssle.getSession().getApplicationBufferSize();
+        int netBufferMax = ssle.getSession().getPacketBufferSize();
 
-	// allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
-	ByteBuffer peerAppData = ByteBuffer.allocate(appBufferMax/2);
-	ByteBuffer peerNetData = ByteBuffer.allocate(netBufferMax/2);
-	int received = -1;
+        // allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
+        ByteBuffer peerAppData = ByteBuffer.allocate(appBufferMax/2);
+        ByteBuffer peerNetData = ByteBuffer.allocate(netBufferMax/2);
+        int received = -1;
 
-	while (received != 0) {
-	    if (ssle.isInboundDone() || sc.read(peerNetData) < 0) {
-		break;
-	    }
+        while (received != 0) {
+            if (ssle.isInboundDone() || sc.read(peerNetData) < 0) {
+                break;
+            }
 
-	    peerNetData.flip();
-	    SSLEngineResult res = ssle.unwrap(peerNetData, peerAppData);
-	    peerNetData.compact();
+            peerNetData.flip();
+            SSLEngineResult res = ssle.unwrap(peerNetData, peerAppData);
+            peerNetData.compact();
 
-	    // checking status
-	    switch (res.getStatus()) {
+            // checking status
+            switch (res.getStatus()) {
 
-	    case OK :
-		if (res.getHandshakeStatus() ==
-			SSLEngineResult.HandshakeStatus.NEED_TASK) {
-		    Runnable runnable;
-		    while ((runnable = ssle.getDelegatedTask()) != null) {
-			runnable.run();
-		    }
-		}
+            case OK :
+                if (res.getHandshakeStatus() ==
+                        SSLEngineResult.HandshakeStatus.NEED_TASK) {
+                    Runnable runnable;
+                    while ((runnable = ssle.getDelegatedTask()) != null) {
+                        runnable.run();
+                    }
+                }
 
-		if (received < 0 && res.bytesProduced() < 4 ) {
-		    break;
-		}
-		
-		if (received < 0) {
-		    received = peerAppData.getInt(0);
-		}
+                if (received < 0 && res.bytesProduced() < 4 ) {
+                    break;
+                }
 
-		System.out.println("received " + peerAppData.position() +
-			" bytes client application data");
-		System.out.println("\tcomsumed " + res.bytesConsumed() +
-			" byes network data");
-		peerAppData.clear();
+                if (received < 0) {
+                    received = peerAppData.getInt(0);
+                }
 
-		received -= res.bytesProduced();
+                System.out.println("received " + peerAppData.position() +
+                        " bytes client application data");
+                System.out.println("\tcomsumed " + res.bytesConsumed() +
+                        " byes network data");
+                peerAppData.clear();
 
-		// detect large buffer
-		if (res.bytesConsumed() >= Short.MAX_VALUE) {
-		    System.out.println("Consumes a " + res.bytesConsumed() +
-			" bytes large packet ");
-		}
+                received -= res.bytesProduced();
 
-		break;
+                // detect large buffer
+                if (res.bytesConsumed() >= Short.MAX_VALUE) {
+                    System.out.println("Consumes a " + res.bytesConsumed() +
+                        " bytes large packet ");
+                }
 
-	    case BUFFER_OVERFLOW :
-	 	// maybe need to enlarge the peer application data buffer.
-		int size = ssle.getSession().getApplicationBufferSize();
-		if (size > peerAppData.capacity()) {
-		    System.out.println("resize destination buffer upto " +
-			size + " bytes for BUFFER_OVERFLOW");
-		    peerAppData = enlargeBuffer(peerAppData, size);
-		}
-		break;
+                break;
 
-	    case BUFFER_UNDERFLOW :
-	 	// maybe need to enlarge the peer network packet data buffer.
-		size = ssle.getSession().getPacketBufferSize();
-		if (size > peerNetData.capacity()) {
-		    System.out.println("resize source buffer upto " + size +
-			" bytes for BUFFER_UNDERFLOW");
-		    peerNetData = enlargeBuffer(peerNetData, size);
-		}
-		break;
+            case BUFFER_OVERFLOW :
+                // maybe need to enlarge the peer application data buffer.
+                int size = ssle.getSession().getApplicationBufferSize();
+                if (size > peerAppData.capacity()) {
+                    System.out.println("resize destination buffer upto " +
+                        size + " bytes for BUFFER_OVERFLOW");
+                    peerAppData = enlargeBuffer(peerAppData, size);
+                }
+                break;
 
-	    default : // CLOSED :
-		throw new IOException("Received invalid" + res.getStatus() +
-			"during transfer application data");
-	    }
-	}
+            case BUFFER_UNDERFLOW :
+                // maybe need to enlarge the peer network packet data buffer.
+                size = ssle.getSession().getPacketBufferSize();
+                if (size > peerNetData.capacity()) {
+                    System.out.println("resize source buffer upto " + size +
+                        " bytes for BUFFER_UNDERFLOW");
+                    peerNetData = enlargeBuffer(peerNetData, size);
+                }
+                break;
+
+            default : // CLOSED :
+                throw new IOException("Received invalid" + res.getStatus() +
+                        "during transfer application data");
+            }
+        }
     }
 
     protected static void handshaking(SSLEngine ssle, SocketChannel sc)
-	throws Exception {
+        throws Exception {
 
-	int appBufferMax = ssle.getSession().getApplicationBufferSize();
-	int netBufferMax = ssle.getSession().getPacketBufferSize();
+        int appBufferMax = ssle.getSession().getApplicationBufferSize();
+        int netBufferMax = ssle.getSession().getPacketBufferSize();
 
-	// allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
-	ByteBuffer localAppData = ByteBuffer.allocate(appBufferMax/10);
-	ByteBuffer peerAppData = ByteBuffer.allocate(appBufferMax/10);
-	ByteBuffer localNetData = ByteBuffer.allocate(netBufferMax/10);
-	ByteBuffer peerNetData = ByteBuffer.allocate(netBufferMax/10);
+        // allocate less in order to check BUFFER_OVERFLOW/BUFFER_UNDERFLOW
+        ByteBuffer localAppData = ByteBuffer.allocate(appBufferMax/10);
+        ByteBuffer peerAppData = ByteBuffer.allocate(appBufferMax/10);
+        ByteBuffer localNetData = ByteBuffer.allocate(netBufferMax/10);
+        ByteBuffer peerNetData = ByteBuffer.allocate(netBufferMax/10);
 
-	// begin handshake
-	ssle.beginHandshake();
-	SSLEngineResult.HandshakeStatus hs = ssle.getHandshakeStatus();
+        // begin handshake
+        ssle.beginHandshake();
+        SSLEngineResult.HandshakeStatus hs = ssle.getHandshakeStatus();
 
-	// start handshaking from unwrap
-	do {
-	    switch (hs) {
+        // start handshaking from unwrap
+        do {
+            switch (hs) {
 
-	    case NEED_UNWRAP :
-		if (peerNetData.position() == 0) {
-		    if (sc.read(peerNetData) < 0) {
-			ssle.closeInbound();
-			return;
-		    }
-		}
+            case NEED_UNWRAP :
+                if (peerNetData.position() == 0) {
+                    if (sc.read(peerNetData) < 0) {
+                        ssle.closeInbound();
+                        return;
+                    }
+                }
 
-		peerNetData.flip();
-		SSLEngineResult res = ssle.unwrap(peerNetData, peerAppData);
-		peerNetData.compact();
-		hs = res.getHandshakeStatus();
+                peerNetData.flip();
+                SSLEngineResult res = ssle.unwrap(peerNetData, peerAppData);
+                peerNetData.compact();
+                hs = res.getHandshakeStatus();
 
-		switch (res.getStatus()) {
-		case OK :
-		    break;
-		case BUFFER_UNDERFLOW :
-		    // maybe need to enlarge the peer network packet buffer.
-		    int size = ssle.getSession().getPacketBufferSize();
-		    if (size > peerNetData.capacity()) {
-			System.out.println("resize source buffer upto " +
-				size + " bytes for BUFFER_UNDERFLOW");
-			peerNetData = enlargeBuffer(peerNetData, size);
-		    }
-		    break;
-		case BUFFER_OVERFLOW :
-		    // maybe need to enlarge the peer application data buffer.
-		    size = ssle.getSession().getApplicationBufferSize();
-		    if (size > peerAppData.capacity()) {
-			System.out.println("resize destination buffer upto " +
-				size + " bytes for BUFFER_OVERFLOW");
-			peerAppData = enlargeBuffer(peerAppData, size);
-		    }
-		    break;
-		default : //CLOSED
-		    throw new IOException("Received invalid" + res.getStatus() +
-			"during initial handshaking");
-		}
-		break;
+                switch (res.getStatus()) {
+                case OK :
+                    break;
+                case BUFFER_UNDERFLOW :
+                    // maybe need to enlarge the peer network packet buffer.
+                    int size = ssle.getSession().getPacketBufferSize();
+                    if (size > peerNetData.capacity()) {
+                        System.out.println("resize source buffer upto " +
+                                size + " bytes for BUFFER_UNDERFLOW");
+                        peerNetData = enlargeBuffer(peerNetData, size);
+                    }
+                    break;
+                case BUFFER_OVERFLOW :
+                    // maybe need to enlarge the peer application data buffer.
+                    size = ssle.getSession().getApplicationBufferSize();
+                    if (size > peerAppData.capacity()) {
+                        System.out.println("resize destination buffer upto " +
+                                size + " bytes for BUFFER_OVERFLOW");
+                        peerAppData = enlargeBuffer(peerAppData, size);
+                    }
+                    break;
+                default : //CLOSED
+                    throw new IOException("Received invalid" + res.getStatus() +
+                        "during initial handshaking");
+                }
+                break;
 
-	    case NEED_WRAP :
-		// empty the local network packet buffer.
-		localNetData.clear();
+            case NEED_WRAP :
+                // empty the local network packet buffer.
+                localNetData.clear();
 
-		// generated local network packet.
-		res = ssle.wrap(localAppData, localNetData);
-		hs = res.getHandshakeStatus();
+                // generated local network packet.
+                res = ssle.wrap(localAppData, localNetData);
+                hs = res.getHandshakeStatus();
 
-		// checking status
-		switch (res.getStatus()) {
-		case OK :
-		    localNetData.flip();
+                // checking status
+                switch (res.getStatus()) {
+                case OK :
+                    localNetData.flip();
 
-		    // send the network packet
-		    while (localNetData.hasRemaining()) {
-			if (sc.write(localNetData) < 0) {
-			    throw new IOException(
-				"Unable write to socket channel");
-			}
-		    }
-		    break;
+                    // send the network packet
+                    while (localNetData.hasRemaining()) {
+                        if (sc.write(localNetData) < 0) {
+                            throw new IOException(
+                                "Unable write to socket channel");
+                        }
+                    }
+                    break;
 
-		case BUFFER_OVERFLOW :
-		    // maybe need to enlarge the local network packet buffer.
-		    int size = ssle.getSession().getPacketBufferSize();
-		    if (size > localNetData.capacity()) {
-			System.out.println("resize destination buffer upto " +
-				size + " bytes for BUFFER_OVERFLOW");
-			localNetData = enlargeBuffer(localNetData, size);
-		    }
-		    break;
+                case BUFFER_OVERFLOW :
+                    // maybe need to enlarge the local network packet buffer.
+                    int size = ssle.getSession().getPacketBufferSize();
+                    if (size > localNetData.capacity()) {
+                        System.out.println("resize destination buffer upto " +
+                                size + " bytes for BUFFER_OVERFLOW");
+                        localNetData = enlargeBuffer(localNetData, size);
+                    }
+                    break;
 
-		default : // BUFFER_UNDERFLOW or CLOSED :
-		    throw new IOException("Received invalid" + res.getStatus() +
-			"during initial handshaking");
-		}
-		break;
+                default : // BUFFER_UNDERFLOW or CLOSED :
+                    throw new IOException("Received invalid" + res.getStatus() +
+                        "during initial handshaking");
+                }
+                break;
 
-	    case NEED_TASK :
-		Runnable runnable;
-		while ((runnable = ssle.getDelegatedTask()) != null) {
-		    runnable.run();
-		}
-		hs = ssle.getHandshakeStatus();
-		break;
+            case NEED_TASK :
+                Runnable runnable;
+                while ((runnable = ssle.getDelegatedTask()) != null) {
+                    runnable.run();
+                }
+                hs = ssle.getHandshakeStatus();
+                break;
 
-	    default : // FINISHED or NOT_HANDSHAKING
-		// do nothing
-	    }
-	} while (hs != SSLEngineResult.HandshakeStatus.FINISHED &&
-		hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING);
+            default : // FINISHED or NOT_HANDSHAKING
+                // do nothing
+            }
+        } while (hs != SSLEngineResult.HandshakeStatus.FINISHED &&
+                hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING);
     }
 
     private static ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
-	ByteBuffer bb = ByteBuffer.allocate(size);
-	buffer.flip();
-	bb.put(buffer);
+        ByteBuffer bb = ByteBuffer.allocate(size);
+        buffer.flip();
+        bb.put(buffer);
 
-	return bb;
+        return bb;
     }
 
     /*
@@ -341,26 +341,26 @@ public class SSLEngineService {
      */
     protected static SSLEngine createSSLEngine(boolean mode) throws Exception {
 
-	SSLEngine ssle;
+        SSLEngine ssle;
 
-	KeyStore ks = KeyStore.getInstance("JKS");
-	KeyStore ts = KeyStore.getInstance("JKS");
+        KeyStore ks = KeyStore.getInstance("JKS");
+        KeyStore ts = KeyStore.getInstance("JKS");
 
-	ks.load(new FileInputStream(keyFilename), passphrase);
-	ts.load(new FileInputStream(trustFilename), passphrase);
+        ks.load(new FileInputStream(keyFilename), passphrase);
+        ts.load(new FileInputStream(trustFilename), passphrase);
 
-	KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-	kmf.init(ks, passphrase);
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(ks, passphrase);
 
-	TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-	tmf.init(ts);
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ts);
 
-	SSLContext sslCtx = SSLContext.getInstance("TLS");
-	sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+        SSLContext sslCtx = SSLContext.getInstance("TLS");
+        sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
-	ssle = sslCtx.createSSLEngine();
-	ssle.setUseClientMode(mode);
+        ssle = sslCtx.createSSLEngine();
+        ssle.setUseClientMode(mode);
 
-	return ssle;
+        return ssle;
     }
 }

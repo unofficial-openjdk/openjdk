@@ -28,7 +28,7 @@
  *
  *  @author Robert Field
  *
- *  @library .. 
+ *  @library ..
  *  @run build  TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g InvokeTest.java
  *  @run main InvokeTest
@@ -53,7 +53,7 @@ class InvokeTarg {
     float[] aFloatArray = new float[] {(float)2.1};
     double[] aDoubleArray = new double[] {3.141595358979};
 
-    boolean[][] aBoolean2DArray = new boolean[][] 
+    boolean[][] aBoolean2DArray = new boolean[][]
                                    {{true, false}, {false, true}};
     byte[][] aByte2DArray = new byte[][] {{22,66}, {8,9}};
     char[][] aChar2DArray = new char[][] {{22,66}, {8,9}};
@@ -305,7 +305,7 @@ public class InvokeTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new InvokeTest(args).startTests();
     }
 
@@ -319,14 +319,14 @@ public class InvokeTest extends TestScaffold {
         objectValue = thisObject.getValue(objectCheckField);
         voidValue = thisObject.getValue(voidCheckField);
     }
-    
+
     /********** test assist **********/
 
     void invoke(Method method, List args, Value value) {
         Value returnValue = null;
 
         try {
-            returnValue = thisObject.invokeMethod(mainThread, 
+            returnValue = thisObject.invokeMethod(mainThread,
                                                     method, args, 0);
         } catch ( Exception ee) {
             println("Got Exception: " + ee);
@@ -335,7 +335,7 @@ public class InvokeTest extends TestScaffold {
         println("        return val = " + returnValue);
         // It has to be the same value as what we passed in!
         if (returnValue.equals(value)) {
-            println("         " + method.name() + " return value matches: " 
+            println("         " + method.name() + " return value matches: "
                     + value);
         } else {
             if (value != null) {
@@ -344,17 +344,17 @@ public class InvokeTest extends TestScaffold {
             } else {
                 println("         " + method.name() + " return value : " + returnValue);
             }
-                
+
         }
-        Value checkValue = (value instanceof PrimitiveValue)? 
-                              ((value instanceof BooleanValue)? 
-                                        booleanValue : longValue) : 
+        Value checkValue = (value instanceof PrimitiveValue)?
+                              ((value instanceof BooleanValue)?
+                                        booleanValue : longValue) :
                               objectValue;
     }
 
 
-    void invoke(String methodName, String methodSig, 
-                List args, Value value) 
+    void invoke(String methodName, String methodSig,
+                List args, Value value)
         throws Exception {
         Method method = findMethod(targetClass, methodName, methodSig);
         if ( method == null) {
@@ -363,16 +363,16 @@ public class InvokeTest extends TestScaffold {
         }
         invoke(method, args, value);
     }
-    
-    void invoke(String methodName, String methodSig, Value value) 
+
+    void invoke(String methodName, String methodSig, Value value)
                                            throws Exception {
         List args = new ArrayList(1);
         args.add(value);
         invoke(methodName, methodSig, args, value);
     }
-    
 
-    void invoke(String methodName, String methodSig, String fieldName) 
+
+    void invoke(String methodName, String methodSig, String fieldName)
                                            throws Exception {
         invoke(methodName, methodSig, fieldValue(fieldName));
     }
@@ -399,7 +399,7 @@ public class InvokeTest extends TestScaffold {
             return null;
         }
 
-        // Then find toSting 
+        // Then find toSting
         List meths = objectMirror.methods();
         iter = meths.iterator();
         while (iter.hasNext()) {
@@ -434,7 +434,7 @@ public class InvokeTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of sayHi() 
+         * Get to the top of sayHi()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startTo("InvokeTarg", "sayHi", "()V");
@@ -449,7 +449,7 @@ public class InvokeTest extends TestScaffold {
         objectCheckField = targetClass.fieldByName("objectCheck");
         voidCheckField = targetClass.fieldByName("voidCheck");
         callToString("aBooleanArray");
-        
+
         invoke("invokeVoid",    "()Z",  new ArrayList(0), vm().mirrorOf(true));
 
         invoke("invokeBoolean", "(Z)Z", vm().mirrorOf(true));
@@ -479,18 +479,18 @@ public class InvokeTest extends TestScaffold {
         invoke("invokeFloat2DArray",   "([[F)[[F", "aFloat2DArray");
         invoke("invokeDouble2DArray",  "([[D)[[D", "aDouble2DArray");
 
-        invoke("invokeString",    "(Ljava/lang/String;)Ljava/lang/String;", 
+        invoke("invokeString",    "(Ljava/lang/String;)Ljava/lang/String;",
                                   vm().mirrorOf("Howdy"));
-        invoke("invokeStringArray",    "([Ljava/lang/String;)[Ljava/lang/String;", 
+        invoke("invokeStringArray",    "([Ljava/lang/String;)[Ljava/lang/String;",
                                   "aStringArray");
-        invoke("invokeString2DArray",    "([[Ljava/lang/String;)[[Ljava/lang/String;", 
+        invoke("invokeString2DArray",    "([[Ljava/lang/String;)[[Ljava/lang/String;",
                                   "aString2DArray");
 
-        invoke("invokeDate",    "(Ljava/util/Date;)Ljava/util/Date;", 
+        invoke("invokeDate",    "(Ljava/util/Date;)Ljava/util/Date;",
                                   "aDate");
-        invoke("invokeDateArray",  "([Ljava/util/Date;)[Ljava/util/Date;", 
+        invoke("invokeDateArray",  "([Ljava/util/Date;)[Ljava/util/Date;",
                                   "aDateArray");
-        invoke("invokeDate2DArray", "([[Ljava/util/Date;)[[Ljava/util/Date;", 
+        invoke("invokeDate2DArray", "([[Ljava/util/Date;)[[Ljava/util/Date;",
                                   "aDate2DArray");
 
         Value i2 = fieldValue("aInt2DArray");
@@ -498,17 +498,17 @@ public class InvokeTest extends TestScaffold {
         List args = new ArrayList(2);
         args.add(i2);
         args.add(str);
-        invoke("invokeCombo",    
-               "([[ILjava/lang/String;)Ljava/lang/String;", 
+        invoke("invokeCombo",
+               "([[ILjava/lang/String;)Ljava/lang/String;",
                args, str);
-        invoke("invokeCombo2",    
-               "([[ILjava/lang/String;)[[I", 
+        invoke("invokeCombo2",
+               "([[ILjava/lang/String;)[[I",
                args, i2);
         /*
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -520,4 +520,3 @@ public class InvokeTest extends TestScaffold {
         }
     }
 }
-

@@ -39,45 +39,45 @@ class AddExpression extends BinaryArithmeticExpression {
      * constructor
      */
     public AddExpression(long where, Expression left, Expression right) {
-	super(ADD, where, left, right);
+        super(ADD, where, left, right);
     }
 
     /**
      * Select the type
      */
     void selectType(Environment env, Context ctx, int tm) {
-	if ((left.type == Type.tString) && !right.type.isType(TC_VOID)) {
-	    type = Type.tString;
-	    return;
-	} else if ((right.type == Type.tString) && !left.type.isType(TC_VOID)) {
-	    type = Type.tString;
-	    return;
-	}
-	super.selectType(env, ctx, tm);
+        if ((left.type == Type.tString) && !right.type.isType(TC_VOID)) {
+            type = Type.tString;
+            return;
+        } else if ((right.type == Type.tString) && !left.type.isType(TC_VOID)) {
+            type = Type.tString;
+            return;
+        }
+        super.selectType(env, ctx, tm);
     }
 
     public boolean isNonNull() {
-	// an addition expression cannot yield a null reference as a result
-	return true;
+        // an addition expression cannot yield a null reference as a result
+        return true;
     }
 
     /**
      * Evaluate
      */
     Expression eval(int a, int b) {
-	return new IntExpression(where, a + b);
+        return new IntExpression(where, a + b);
     }
     Expression eval(long a, long b) {
-	return new LongExpression(where, a + b);
+        return new LongExpression(where, a + b);
     }
     Expression eval(float a, float b) {
-	return new FloatExpression(where, a + b);
+        return new FloatExpression(where, a + b);
     }
     Expression eval(double a, double b) {
-	return new DoubleExpression(where, a + b);
+        return new DoubleExpression(where, a + b);
     }
     Expression eval(String a, String b) {
-	return new StringExpression(where, a + b);
+        return new StringExpression(where, a + b);
     }
 
     /**
@@ -88,14 +88,14 @@ class AddExpression extends BinaryArithmeticExpression {
      */
     public Expression inlineValue(Environment env, Context ctx) {
         if (type == Type.tString && isConstant()) {
-	    StringBuffer buffer = inlineValueSB(env, ctx, new StringBuffer());
-	    if (buffer != null) {
-		// We were able to evaluate the String concatenation.
-		return new StringExpression(where, buffer.toString());
-	    }
+            StringBuffer buffer = inlineValueSB(env, ctx, new StringBuffer());
+            if (buffer != null) {
+                // We were able to evaluate the String concatenation.
+                return new StringExpression(where, buffer.toString());
+            }
         }
-	// For some reason inlinValueSB() failed to produce a value.
-	// Use the older, less efficient, inlining mechanism.
+        // For some reason inlinValueSB() failed to produce a value.
+        // Use the older, less efficient, inlining mechanism.
         return super.inlineValue(env, ctx);
     }
 
@@ -145,19 +145,19 @@ class AddExpression extends BinaryArithmeticExpression {
      * See also Expression#inlineValueSB() and ExprExpression#inlineValueSB().
      */
     protected StringBuffer inlineValueSB(Environment env,
-					 Context ctx,
-					 StringBuffer buffer) {
-	if (type != Type.tString) {
-	    // This isn't a concatenation.  It is actually an addition
-	    // of some sort.  Call the generic inlineValueSB()
-	    return super.inlineValueSB(env, ctx, buffer);
-	}
+                                         Context ctx,
+                                         StringBuffer buffer) {
+        if (type != Type.tString) {
+            // This isn't a concatenation.  It is actually an addition
+            // of some sort.  Call the generic inlineValueSB()
+            return super.inlineValueSB(env, ctx, buffer);
+        }
 
-	buffer = left.inlineValueSB(env, ctx, buffer);
-	if (buffer != null) {
-	    buffer = right.inlineValueSB(env, ctx, buffer);
-	}
-	return buffer;
+        buffer = left.inlineValueSB(env, ctx, buffer);
+        if (buffer != null) {
+            buffer = right.inlineValueSB(env, ctx, buffer);
+        }
+        return buffer;
     }
 
     /**
@@ -165,37 +165,37 @@ class AddExpression extends BinaryArithmeticExpression {
      */
     Expression simplify() {
         if (!type.isType(TC_CLASS)) {
-	    // Can't simplify floating point add because of -0.0 strangeness
-	    if (type.inMask(TM_INTEGER)) {
-		if (left.equals(0)) {
-		    return right;
-		}
-		if (right.equals(0)) {
-		    return left;
-		}
-	    }
-	} else if (right.type.isType(TC_NULL)) {
-	    right = new StringExpression(right.where, "null");
-	} else if (left.type.isType(TC_NULL)) {
-	    left = new StringExpression(left.where, "null");
-	}
-	return this;
+            // Can't simplify floating point add because of -0.0 strangeness
+            if (type.inMask(TM_INTEGER)) {
+                if (left.equals(0)) {
+                    return right;
+                }
+                if (right.equals(0)) {
+                    return left;
+                }
+            }
+        } else if (right.type.isType(TC_NULL)) {
+            right = new StringExpression(right.where, "null");
+        } else if (left.type.isType(TC_NULL)) {
+            left = new StringExpression(left.where, "null");
+        }
+        return this;
     }
 
     /**
      * The cost of inlining this expression
      */
     public int costInline(int thresh, Environment env, Context ctx) {
-	return (type.isType(TC_CLASS) ? 12 : 1)
-	    + left.costInline(thresh, env, ctx)
-	    + right.costInline(thresh, env, ctx);
+        return (type.isType(TC_CLASS) ? 12 : 1)
+            + left.costInline(thresh, env, ctx)
+            + right.costInline(thresh, env, ctx);
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_iadd + type.getTypeCodeOffset());
+        asm.add(where, opc_iadd + type.getTypeCodeOffset());
     }
 
     /**
@@ -205,53 +205,49 @@ class AddExpression extends BinaryArithmeticExpression {
      * created, initialized, and pushed on the stack, first.
      */
     void codeAppend(Environment env, Context ctx, Assembler asm,
-		    ClassDeclaration sbClass, boolean needBuffer)
-	throws ClassNotFound, AmbiguousMember {
-	if (type.isType(TC_CLASS)) {
-	    left.codeAppend(env, ctx, asm, sbClass, needBuffer);
-	    right.codeAppend(env, ctx, asm, sbClass, false);
-	} else {
-	    super.codeAppend(env, ctx, asm, sbClass, needBuffer);
-	}
+                    ClassDeclaration sbClass, boolean needBuffer)
+        throws ClassNotFound, AmbiguousMember {
+        if (type.isType(TC_CLASS)) {
+            left.codeAppend(env, ctx, asm, sbClass, needBuffer);
+            right.codeAppend(env, ctx, asm, sbClass, false);
+        } else {
+            super.codeAppend(env, ctx, asm, sbClass, needBuffer);
+        }
     }
 
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-	if (type.isType(TC_CLASS)) {
-	    try {
-		// optimize (""+foo) or (foo+"") to String.valueOf(foo)
-		if (left.equals("")) {
-		    right.codeValue(env, ctx, asm);
-		    right.ensureString(env, ctx, asm);
-		    return;
-		}
-		if (right.equals("")) {
-		    left.codeValue(env, ctx, asm);
-		    left.ensureString(env, ctx, asm);
-		    return;
-		}
+        if (type.isType(TC_CLASS)) {
+            try {
+                // optimize (""+foo) or (foo+"") to String.valueOf(foo)
+                if (left.equals("")) {
+                    right.codeValue(env, ctx, asm);
+                    right.ensureString(env, ctx, asm);
+                    return;
+                }
+                if (right.equals("")) {
+                    left.codeValue(env, ctx, asm);
+                    left.ensureString(env, ctx, asm);
+                    return;
+                }
 
-		ClassDeclaration sbClass =
-		    env.getClassDeclaration(idJavaLangStringBuffer);
-		ClassDefinition sourceClass = ctx.field.getClassDefinition();
-		// Create the string buffer and append to it.
-		codeAppend(env, ctx, asm, sbClass, true);
-		// Convert the string buffer to a string
-		MemberDefinition f =
-		    sbClass.getClassDefinition(env).matchMethod(env,
-								sourceClass,
-								idToString);
-		asm.add(where, opc_invokevirtual, f);
-	    } catch (ClassNotFound e) {
-		throw new CompilerError(e);
-	    } catch (AmbiguousMember e) {
-		throw new CompilerError(e);
-	    }
-	} else {
-	    super.codeValue(env, ctx, asm);
-	}
+                ClassDeclaration sbClass =
+                    env.getClassDeclaration(idJavaLangStringBuffer);
+                ClassDefinition sourceClass = ctx.field.getClassDefinition();
+                // Create the string buffer and append to it.
+                codeAppend(env, ctx, asm, sbClass, true);
+                // Convert the string buffer to a string
+                MemberDefinition f =
+                    sbClass.getClassDefinition(env).matchMethod(env,
+                                                                sourceClass,
+                                                                idToString);
+                asm.add(where, opc_invokevirtual, f);
+            } catch (ClassNotFound e) {
+                throw new CompilerError(e);
+            } catch (AmbiguousMember e) {
+                throw new CompilerError(e);
+            }
+        } else {
+            super.codeValue(env, ctx, asm);
+        }
     }
 }
-
-
-
-

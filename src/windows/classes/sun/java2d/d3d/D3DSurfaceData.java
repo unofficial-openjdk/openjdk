@@ -71,27 +71,27 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
      * VolatileImages typically use plain surfaces as their hardware
      * accelerated surfaces.
      */
-    public static final int 
+    public static final int
         D3D_PLAIN_SURFACE      = (1 << 0) | D3D_RENDER_TARGET;
     /**
      * Direct3D texture. Mostly used for cached accelerated surfaces.
      * Surfaces of this type can be copied from using hardware acceleration
      * by using texture mapping.
      */
-    public static final int 
+    public static final int
         D3D_TEXTURE_SURFACE    = (1 << 1);
     /**
-     * Direct3D Backbuffer surface - an attached surface. Used for 
+     * Direct3D Backbuffer surface - an attached surface. Used for
      * multibuffered BufferStrategies.
      */
-    public static final int 
+    public static final int
         D3D_BACKBUFFER_SURFACE = D3D_PLAIN_SURFACE | D3D_ATTACHED_SURFACE;
     /**
      * Render-to-texture. A texture which can also be a render target.
-     * Combines the benefits of textures (fast copies-from) and 
+     * Combines the benefits of textures (fast copies-from) and
      * backbuffers or plain surfaces (hw-accelerated rendering to the surface)
      */
-    public static final int 
+    public static final int
         D3D_RTT_SURFACE        = D3D_TEXTURE_SURFACE | D3D_RENDER_TARGET;
 
     // supported texture pixel formats
@@ -110,7 +110,7 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
         DESC_INT_ARGB_D3D         = "Integer ARGB D3D with translucency";
     public static final String
         DESC_USHORT_4444_ARGB_D3D = "UShort 4444 ARGB D3D with translucency";
-	
+
     /**
      * Surface type for texture destination.  We cannot render textures to
      * the screen because Direct3D is not clipped by the window's clip list,
@@ -131,55 +131,55 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
      * we do not care about the depth of the surface since texture ops
      * support multiple depths.
      */
-    public static final SurfaceType IntRgbD3D = 
-	IntRgbDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType IntRgbD3D =
+        IntRgbDD.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType IntRgbxD3D = 
-	IntRgbxDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType IntRgbxD3D =
+        IntRgbxDD.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort565RgbD3D = 
-	Ushort565RgbDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort565RgbD3D =
+        Ushort565RgbDD.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort555RgbxD3D = 
-	Ushort555RgbxDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort555RgbxD3D =
+        Ushort555RgbxDD.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort555RgbD3D = 
-	Ushort555RgbDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort555RgbD3D =
+        Ushort555RgbDD.deriveSubType(DESC_DEST_D3D);
 
     // REMIND: Is it possible to have d3d accelerated on this type of surface?
-    public static final SurfaceType ThreeByteBgrD3D = 
-	ThreeByteBgrDD.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType ThreeByteBgrD3D =
+        ThreeByteBgrDD.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType IntArgbD3D = 
-	SurfaceType.IntArgb.deriveSubType(DESC_INT_ARGB_D3D);
+    public static final SurfaceType IntArgbD3D =
+        SurfaceType.IntArgb.deriveSubType(DESC_INT_ARGB_D3D);
 
-    public static final SurfaceType Ushort4444ArgbD3D = 
-	SurfaceType.Ushort4444Argb.deriveSubType(DESC_USHORT_4444_ARGB_D3D);
+    public static final SurfaceType Ushort4444ArgbD3D =
+        SurfaceType.Ushort4444Argb.deriveSubType(DESC_USHORT_4444_ARGB_D3D);
 
     // Textures we can render to using d3d
-    public static final SurfaceType IntRgbD3D_RTT = 
-	IntRgbD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType IntRgbD3D_RTT =
+        IntRgbD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType IntRgbxD3D_RTT = 
-	IntRgbxD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType IntRgbxD3D_RTT =
+        IntRgbxD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort565RgbD3D_RTT = 
-	Ushort565RgbD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort565RgbD3D_RTT =
+        Ushort565RgbD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort555RgbxD3D_RTT = 
-	Ushort555RgbxD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort555RgbxD3D_RTT =
+        Ushort555RgbxD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort555RgbD3D_RTT = 
-	Ushort555RgbD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort555RgbD3D_RTT =
+        Ushort555RgbD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType Ushort4444ArgbD3D_RTT = 
-	Ushort4444ArgbD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType Ushort4444ArgbD3D_RTT =
+        Ushort4444ArgbD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType IntArgbD3D_RTT = 
-	IntArgbD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType IntArgbD3D_RTT =
+        IntArgbD3D.deriveSubType(DESC_DEST_D3D);
 
-    public static final SurfaceType ThreeByteBgrD3D_RTT = 
-	ThreeByteBgrD3D.deriveSubType(DESC_DEST_D3D);
+    public static final SurfaceType ThreeByteBgrD3D_RTT =
+        ThreeByteBgrD3D.deriveSubType(DESC_DEST_D3D);
 
     // the type of this surface - texture, plain, back-buffer
     protected int type;
@@ -199,16 +199,16 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
             D3DBlitLoops.register();
             D3DMaskFill.register();
         }
-        
+
         d3dPipe = new D3DRenderer();
         d3dTxPipe = new PixelToShapeConverter(d3dPipe);
         d3dTextPipe = new D3DTextRenderer();
-	d3dDrawImagePipe = new D3DDrawImage();	
-        
+        d3dDrawImagePipe = new D3DDrawImage();
+
         if (GraphicsPrimitive.tracingEnabled()) {
             d3dPipe = d3dPipe.traceWrapD3D();
             d3dTextPipe = d3dTextPipe.traceWrap();
-	}
+        }
     }
 
     @Override
@@ -236,7 +236,7 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
     {
         super(width, height, sType, cm, gc, image, transparency);
         this.type = d3dSurfaceType;
-    }    
+    }
 
     /**
      * Private constructor.  Use createData() to create an object.
@@ -252,19 +252,19 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
                            int screen)
     {
         this(width, height, d3dSurfaceType, sType, cm, gc, image, transparency);
-        pixelFormat = initSurface(width, height, screen, 
+        pixelFormat = initSurface(width, height, screen,
                                   null /*parent SurfaceData*/);
-    }    
+    }
 
     public static D3DSurfaceData createData(int width, int height,
                                             int d3dSurfaceType,
                                             ColorModel cm,
                                             GraphicsConfiguration gc,
-                                            Image image) 
+                                            Image image)
     {
         Win32GraphicsDevice gd = (Win32GraphicsDevice)gc.getDevice();
         // After a display change ddInstance may not be
-        // recreated yet, and in this case isD3DEnabledOnDevice will 
+        // recreated yet, and in this case isD3DEnabledOnDevice will
         // return false, until someone attempted to recreate the
         // primary.
         if (!gd.isD3DEnabledOnDevice()) {
@@ -274,7 +274,7 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
         return new D3DSurfaceData(width, height,
                                   d3dSurfaceType,
                                   getSurfaceType(gc, cm, d3dSurfaceType),
-                                  cm, gc, image, 
+                                  cm, gc, image,
                                   cm.getTransparency(), gd.getScreen());
     }
 
@@ -294,10 +294,10 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
             Win32GraphicsDevice gd = (Win32GraphicsDevice)gc.getDevice();
             int transparency = cm.getTransparency();
 
-            // We'll attempt to use render-to-texture if render target is 
-            // requested, but it's not a back-buffer and we support RTT 
+            // We'll attempt to use render-to-texture if render target is
+            // requested, but it's not a back-buffer and we support RTT
             // for this configuration.
-            boolean useRTT = 
+            boolean useRTT =
                 ((d3dSurfaceType & D3D_RENDER_TARGET) != 0) &&
                 ((d3dSurfaceType & D3D_BACKBUFFER_SURFACE) == 0) &&
                 gd.getD3DContext().isRTTSupported();
@@ -305,10 +305,10 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
             // if there's no RTT available, we can't accelerate non-opaque
             // surfaces, so we return null.
             if (transparency == Transparency.TRANSLUCENT ||
-                transparency == Transparency.BITMASK) 
+                transparency == Transparency.BITMASK)
             {
                 if (pixelSize == 16) {
-                    return useRTT ? Ushort4444ArgbD3D_RTT : 
+                    return useRTT ? Ushort4444ArgbD3D_RTT :
                         null/*Ushort4444ArgbD3D*/;
                 } else {
                     return useRTT ? IntArgbD3D_RTT : null/*IntArgbD3D*/;
@@ -331,7 +331,7 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
                     return useRTT ? Ushort555RgbD3D_RTT : Ushort555RgbD3D;
                 case 16:
                     if ((cm instanceof DirectColorModel) &&
-                        (((DirectColorModel)cm).getBlueMask() == 0x3e)) 
+                        (((DirectColorModel)cm).getBlueMask() == 0x3e))
                     {
                         return useRTT ? Ushort555RgbxD3D_RTT : Ushort555RgbxD3D;
                     } else {
@@ -340,20 +340,20 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
                 case 8: // not supported
                 default:
                     throw new sun.java2d.InvalidPipeException("Unsupported bit " +
-                                                              "depth: " + 
+                                                              "depth: " +
                                                               cm.getPixelSize());
                 }
             }
         }
     }
 
-    private native int initOffScreenSurface(long pCtx, 
+    private native int initOffScreenSurface(long pCtx,
                                             long pData, long parentPdata,
-                                            int width, int height, 
+                                            int width, int height,
                                             int type, int screen);
 
-    protected int initSurface(int width, int height, int screen, 
-                              Win32SurfaceData parentData) 
+    protected int initSurface(int width, int height, int screen,
+                              Win32SurfaceData parentData)
     {
         int pFormat = PF_INVALID;
 
@@ -392,12 +392,12 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
             boolean validated = false;
 
             if (((sg2d.compositeState <= sg2d.COMP_ISCOPY &&
-		  sg2d.paintState <= sg2d.PAINT_ALPHACOLOR) ||
-		 (sg2d.compositeState == sg2d.COMP_ALPHA &&
-		  sg2d.paintState <= sg2d.PAINT_ALPHACOLOR &&
-		  (((AlphaComposite)sg2d.composite).getRule() ==
-		   AlphaComposite.SRC_OVER))) &&
-		sg2d.textAntialiasHint <= SunHints.INTVAL_TEXT_ANTIALIAS_GASP)
+                  sg2d.paintState <= sg2d.PAINT_ALPHACOLOR) ||
+                 (sg2d.compositeState == sg2d.COMP_ALPHA &&
+                  sg2d.paintState <= sg2d.PAINT_ALPHACOLOR &&
+                  (((AlphaComposite)sg2d.composite).getRule() ==
+                   AlphaComposite.SRC_OVER))) &&
+                sg2d.textAntialiasHint <= SunHints.INTVAL_TEXT_ANTIALIAS_GASP)
             {
                 // D3DTextRenderer handles both AA and non-AA text, but
                 // only works if composite is SrcNoEa or SrcOver
@@ -411,9 +411,9 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
             }
 
             if (sg2d.antialiasHint != SunHints.INTVAL_ANTIALIAS_ON &&
-                sg2d.paintState <= sg2d.PAINT_ALPHACOLOR) 
+                sg2d.paintState <= sg2d.PAINT_ALPHACOLOR)
             {
-                sg2d.drawpipe = 
+                sg2d.drawpipe =
                     sg2d.strokeState == sg2d.STROKE_THIN ? d3dPipe : d3dTxPipe;
                 sg2d.fillpipe = d3dPipe;
                 sg2d.shapepipe = d3dPipe;
@@ -431,9 +431,9 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
     }
 
     /**
-     * Disables D3D acceleration on the surface manager of this surfaceData 
+     * Disables D3D acceleration on the surface manager of this surfaceData
      * object. This can happen when we encounter a hard error in rendering a D3D
-     * primitive (for example, if we were unable to set a surface as D3D target 
+     * primitive (for example, if we were unable to set a surface as D3D target
      * surface).
      * Upon next validation the SurfaceManager will create a non-D3D surface.
      */
@@ -450,7 +450,7 @@ public class D3DSurfaceData extends Win32OffScreenSurfaceData {
         // Punting is disabled for D3D surfaces
         return false;
     }
-    
+
     D3DContext getContext() {
         return ((Win32GraphicsDevice)graphicsConfig.getDevice()).getD3DContext();
     }

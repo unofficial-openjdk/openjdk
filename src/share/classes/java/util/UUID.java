@@ -187,7 +187,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * Static factory to retrieve a type 3 (name based) {@code UUID} based on
      * the specified byte array.
      *
-     * @param  name 
+     * @param  name
      *         A byte array to be used to construct a {@code UUID}
      *
      * @return  A {@code UUID} generated from the specified array
@@ -211,12 +211,12 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * Creates a {@code UUID} from the string standard representation as
      * described in the {@link #toString} method.
      *
-     * @param  name 
+     * @param  name
      *         A string that specifies a {@code UUID}
      *
      * @return  A {@code UUID} with the specified value
      *
-     * @throws  IllegalArgumentException 
+     * @throws  IllegalArgumentException
      *          If name does not conform to the string representation as
      *          described in {@link #toString}
      *
@@ -323,7 +323,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * has version type 1.  If this {@code UUID} is not a time-based UUID then
      * this method throws UnsupportedOperationException.
      *
-     * @throws UnsupportedOperationException 
+     * @throws UnsupportedOperationException
      *         If this UUID is not a version 1 UUID
      */
     public long timestamp() {
@@ -353,7 +353,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      *
      * @return  The clock sequence of this {@code UUID}
      *
-     * @throws  UnsupportedOperationException 
+     * @throws  UnsupportedOperationException
      *          If this UUID is not a version 1 UUID
      */
     public int clockSequence() {
@@ -379,7 +379,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      *
      * @return  The node value of this {@code UUID}
      *
-     * @throws  UnsupportedOperationException 
+     * @throws  UnsupportedOperationException
      *          If this UUID is not a version 1 UUID
      */
     public long node() {
@@ -419,17 +419,17 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * @return  A string representation of this {@code UUID}
      */
     public String toString() {
-	return (digits(mostSigBits >> 32, 8) + "-" +
-		digits(mostSigBits >> 16, 4) + "-" +
-		digits(mostSigBits, 4) + "-" +
-		digits(leastSigBits >> 48, 4) + "-" +
-		digits(leastSigBits, 12));
+        return (digits(mostSigBits >> 32, 8) + "-" +
+                digits(mostSigBits >> 16, 4) + "-" +
+                digits(mostSigBits, 4) + "-" +
+                digits(leastSigBits >> 48, 4) + "-" +
+                digits(leastSigBits, 12));
     }
 
     /** Returns val represented by the specified number of hex digits. */
     private static String digits(long val, int digits) {
-	long hi = 1L << (digits * 4);
-	return Long.toHexString(hi | (val & (hi - 1))).substring(1);
+        long hi = 1L << (digits * 4);
+        return Long.toHexString(hi | (val & (hi - 1))).substring(1);
     }
 
     /**
@@ -453,19 +453,19 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * object, has the same variant, and contains the same value, bit for bit,
      * as this {@code UUID}.
      *
-     * @param  obj   
+     * @param  obj
      *         The object to be compared
      *
      * @return  {@code true} if the objects are the same; {@code false}
      *          otherwise
      */
     public boolean equals(Object obj) {
-	if (!(obj instanceof UUID))
-	    return false;
+        if (!(obj instanceof UUID))
+            return false;
         if (((UUID)obj).variant() != this.variant())
             return false;
         UUID id = (UUID)obj;
-	return (mostSigBits == id.mostSigBits &&
+        return (mostSigBits == id.mostSigBits &&
                 leastSigBits == id.leastSigBits);
     }
 

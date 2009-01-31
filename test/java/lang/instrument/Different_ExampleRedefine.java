@@ -28,7 +28,7 @@
 public class ExampleRedefine
     {
     private Counter fCounter;
-    
+
     public
     ExampleRedefine()
         {
@@ -36,13 +36,13 @@ public class ExampleRedefine
         System.out.println("Simple ExampleRedefine constructor");
         fCounter = new Counter();
         }
-    
+
     public int
     get()
         {
         return fCounter.get();
         }
-    
+
     // this redefined version of the class correctly increments the counter.
     // Meant to be compared with "uncorrected" bytecode
     public void

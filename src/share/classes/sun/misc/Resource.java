@@ -40,7 +40,6 @@ import sun.nio.ByteBuffered;
  * from the class path.
  *
  * @author  David Connelly
- * @version %I%, %G%
  * @since   1.2
  */
 public abstract class Resource {
@@ -73,26 +72,26 @@ public abstract class Resource {
 
     /* Cache result in case getBytes is called after getByteBuffer. */
     private synchronized InputStream cachedInputStream() throws IOException {
-	if (cis == null) {
-	    cis = getInputStream();
-	}
-	return cis;
+        if (cis == null) {
+            cis = getInputStream();
+        }
+        return cis;
     }
 
     /**
      * Returns the Resource data as an array of bytes.
      */
     public byte[] getBytes() throws IOException {
-	byte[] b;
+        byte[] b;
         // Get stream before content length so that a FileNotFoundException
         // can propagate upwards without being caught too early
-	InputStream in = cachedInputStream();
+        InputStream in = cachedInputStream();
 
         // This code has been uglified to protect against interrupts.
         // Even if a thread has been interrupted when loading resources,
         // the IO should not abort, so must carefully retry, failing only
         // if the retry leads to some other IO exception.
-	
+
         boolean isInterrupted = Thread.interrupted();
         int len;
         for (;;) {
@@ -150,7 +149,7 @@ public abstract class Resource {
                     b = tmp;
                 }
             }
-	} finally {
+        } finally {
             try {
                 in.close();
             } catch (InterruptedIOException iioe) {
@@ -160,8 +159,8 @@ public abstract class Resource {
             if (isInterrupted) {
                 Thread.currentThread().interrupt();
             }
-	}
-	return b;
+        }
+        return b;
     }
 
     /**
@@ -169,31 +168,31 @@ public abstract class Resource {
      * was implemented on top of a ByteBuffer. Return <tt>null</tt> otherwise.
      */
     public ByteBuffer getByteBuffer() throws IOException {
-	InputStream in = cachedInputStream();
-	if (in instanceof ByteBuffered) {
-	    return ((ByteBuffered)in).getByteBuffer();
-	}
-	return null;
+        InputStream in = cachedInputStream();
+        if (in instanceof ByteBuffered) {
+            return ((ByteBuffered)in).getByteBuffer();
+        }
+        return null;
     }
-	
+
     /**
      * Returns the Manifest for the Resource, or null if none.
      */
     public Manifest getManifest() throws IOException {
-	return null;
+        return null;
     }
 
     /**
      * Returns theCertificates for the Resource, or null if none.
      */
     public java.security.cert.Certificate[] getCertificates() {
-	return null;
+        return null;
     }
 
     /**
      * Returns the code signers for the Resource, or null if none.
      */
     public CodeSigner[] getCodeSigners() {
-	return null;
+        return null;
     }
 }

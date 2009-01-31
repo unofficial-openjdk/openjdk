@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4981727
- * @summary 
+ * @summary
  * @author Joseph D. Darcy
  * @compile -source 1.5 exceptionCauseTest.java
  * @run main exceptionCauseTest
@@ -37,12 +37,12 @@ public class exceptionCauseTest {
         Throwable cause = new Throwable("because");
         Throwable par   = new Throwable(cause);
         TypeNotPresentException cnp = new TypeNotPresentException("test", par);
-    
+
         try {
             throw cnp;
         } catch (TypeNotPresentException e) {
-	    if (par != e.getCause() )
-		throw new RuntimeException("Unexpected value of cause.");
+            if (par != e.getCause() )
+                throw new RuntimeException("Unexpected value of cause.");
         }
     }
 }

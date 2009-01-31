@@ -33,11 +33,11 @@ public class ByteToCharCp834 extends ByteToCharDBCS_ONLY_EBCDIC {
 
     public ByteToCharCp834() {
         super();
-	super.mask1 = 0xFFF0;
-	super.mask2 = 0x000F;
-	super.shift = 4;
-	super.index1 = IBM933.getDecoderIndex1();
-	super.index2 = IBM933.getDecoderIndex2();
+        super.mask1 = 0xFFF0;
+        super.mask2 = 0x000F;
+        super.shift = 4;
+        super.index1 = IBM933.getDecoderIndex1();
+        super.index2 = IBM933.getDecoderIndex2();
     }
 }
 
@@ -109,37 +109,37 @@ abstract class ByteToCharDBCS_ONLY_EBCDIC extends ByteToCharConverter {
               savedBytePresent = true;
               byteOff += inputSize;
               break;
-	  }
+          }
 
           byte2 = input[byteOff+inputSize] & 0xff;
           inputSize++;
 
           // validate the pair of bytes
           if ((byte1 != 0x40 || byte2 != 0x40) &&
-	      (byte2 < 0x41 || byte2 > 0xfe)) {
-	      badInputLength = 2;
-	      throw new MalformedInputException();
-	  }
+              (byte2 < 0x41 || byte2 > 0xfe)) {
+              badInputLength = 2;
+              throw new MalformedInputException();
+          }
 
           // Lookup in the two level index
           v = byte1 * 256 + byte2;
-	  outputChar = index2.charAt(index1[((v & mask1) >> shift)] 
-				     + (v & mask2));
+          outputChar = index2.charAt(index1[((v & mask1) >> shift)]
+                                     + (v & mask2));
 
-	  if (outputChar == '\uFFFD') {
-	      if (subMode)
+          if (outputChar == '\uFFFD') {
+              if (subMode)
                   outputChar = subChars[0];
-	      else {
-		  badInputLength = inputSize;
-		  throw new UnknownCharacterException();
-	      }
-	  }
+              else {
+                  badInputLength = inputSize;
+                  throw new UnknownCharacterException();
+              }
+          }
 
-	  if (charOff >= outEnd)
-	      throw new ConversionBufferFullException();
+          if (charOff >= outEnd)
+              throw new ConversionBufferFullException();
 
-	  output[charOff++] = outputChar;
-	  byteOff += inputSize;
+          output[charOff++] = outputChar;
+          byteOff += inputSize;
        }
        return charOff - outOff;
     }

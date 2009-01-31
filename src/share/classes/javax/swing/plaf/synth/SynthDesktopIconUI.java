@@ -40,11 +40,10 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth L&F for a minimized window on a desktop.
  *
- * @version %I%, %G%
  * @author Joshua Outwater
  */
 class SynthDesktopIconUI extends BasicDesktopIconUI implements SynthUI,
-					ActionListener, PropertyChangeListener {
+                                        ActionListener, PropertyChangeListener {
     private SynthStyle style;
 
     public static ComponentUI createUI(JComponent c)    {
@@ -52,42 +51,42 @@ class SynthDesktopIconUI extends BasicDesktopIconUI implements SynthUI,
     }
 
     protected void installComponents() {
-	if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
-	    iconPane = new JToggleButton(frame.getTitle(), frame.getFrameIcon()) {
-		public String getToolTipText() {
-		    return getText();
-		}
+        if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
+            iconPane = new JToggleButton(frame.getTitle(), frame.getFrameIcon()) {
+                public String getToolTipText() {
+                    return getText();
+                }
 
-		public JPopupMenu getComponentPopupMenu() {
-		    return frame.getComponentPopupMenu();
-		}
-	    };
-	    ToolTipManager.sharedInstance().registerComponent(iconPane);
-	    iconPane.setFont(desktopIcon.getFont());
-	    iconPane.setBackground(desktopIcon.getBackground());
-	    iconPane.setForeground(desktopIcon.getForeground());
-	} else {
-	    iconPane = new SynthInternalFrameTitlePane(frame);
-	    iconPane.setName("InternalFrame.northPane");
-	}
-	desktopIcon.setLayout(new BorderLayout());
-	desktopIcon.add(iconPane, BorderLayout.CENTER);
+                public JPopupMenu getComponentPopupMenu() {
+                    return frame.getComponentPopupMenu();
+                }
+            };
+            ToolTipManager.sharedInstance().registerComponent(iconPane);
+            iconPane.setFont(desktopIcon.getFont());
+            iconPane.setBackground(desktopIcon.getBackground());
+            iconPane.setForeground(desktopIcon.getForeground());
+        } else {
+            iconPane = new SynthInternalFrameTitlePane(frame);
+            iconPane.setName("InternalFrame.northPane");
+        }
+        desktopIcon.setLayout(new BorderLayout());
+        desktopIcon.add(iconPane, BorderLayout.CENTER);
     }
 
     protected void installListeners() {
         super.installListeners();
         desktopIcon.addPropertyChangeListener(this);
 
-	if (iconPane instanceof JToggleButton) {
-	    frame.addPropertyChangeListener(this);
-	    ((JToggleButton)iconPane).addActionListener(this);
-	}
+        if (iconPane instanceof JToggleButton) {
+            frame.addPropertyChangeListener(this);
+            ((JToggleButton)iconPane).addActionListener(this);
+        }
     }
 
     protected void uninstallListeners() {
-	if (iconPane instanceof JToggleButton) {
-	    frame.removePropertyChangeListener(this);	
-	}
+        if (iconPane instanceof JToggleButton) {
+            frame.removePropertyChangeListener(this);
+        }
         desktopIcon.removePropertyChangeListener(this);
         super.uninstallListeners();
     }
@@ -153,43 +152,43 @@ class SynthDesktopIconUI extends BasicDesktopIconUI implements SynthUI,
     }
 
     public void actionPerformed(ActionEvent evt) {
-	if (evt.getSource() instanceof JToggleButton) {
-	    // Either iconify the frame or deiconify and activate it.
-	    JToggleButton button = (JToggleButton)evt.getSource();
-	    try {
-		boolean selected = button.isSelected();
-		if (!selected && !frame.isIconifiable()) {
-		    button.setSelected(true);
-		} else {
-		    frame.setIcon(!selected);
-		    if (selected) {
-			frame.setSelected(true);
-		    }
-		}
-	    } catch (PropertyVetoException e2) {
-	    }
-	}
+        if (evt.getSource() instanceof JToggleButton) {
+            // Either iconify the frame or deiconify and activate it.
+            JToggleButton button = (JToggleButton)evt.getSource();
+            try {
+                boolean selected = button.isSelected();
+                if (!selected && !frame.isIconifiable()) {
+                    button.setSelected(true);
+                } else {
+                    frame.setIcon(!selected);
+                    if (selected) {
+                        frame.setSelected(true);
+                    }
+                }
+            } catch (PropertyVetoException e2) {
+            }
+        }
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
-	if (evt.getSource() instanceof JInternalFrame.JDesktopIcon) {
-	    if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
-		updateStyle((JInternalFrame.JDesktopIcon)evt.getSource());
-	    }
-	} else if (evt.getSource() instanceof JInternalFrame) {
-	    JInternalFrame frame = (JInternalFrame)evt.getSource();
-	    if (iconPane instanceof JToggleButton) {
-		JToggleButton button = (JToggleButton)iconPane;
-		String prop = evt.getPropertyName();
-		if (prop == "title") {
-		    button.setText((String)evt.getNewValue());
-		} else if (prop == "frameIcon") {
-		    button.setIcon((Icon)evt.getNewValue());
-		} else if (prop == JInternalFrame.IS_ICON_PROPERTY ||
-			   prop == JInternalFrame.IS_SELECTED_PROPERTY) {
-		    button.setSelected(!frame.isIcon() && frame.isSelected());
-		}
-	    }
-	}
+        if (evt.getSource() instanceof JInternalFrame.JDesktopIcon) {
+            if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+                updateStyle((JInternalFrame.JDesktopIcon)evt.getSource());
+            }
+        } else if (evt.getSource() instanceof JInternalFrame) {
+            JInternalFrame frame = (JInternalFrame)evt.getSource();
+            if (iconPane instanceof JToggleButton) {
+                JToggleButton button = (JToggleButton)iconPane;
+                String prop = evt.getPropertyName();
+                if (prop == "title") {
+                    button.setText((String)evt.getNewValue());
+                } else if (prop == "frameIcon") {
+                    button.setIcon((Icon)evt.getNewValue());
+                } else if (prop == JInternalFrame.IS_ICON_PROPERTY ||
+                           prop == JInternalFrame.IS_SELECTED_PROPERTY) {
+                    button.setSelected(!frame.isIcon() && frame.isSelected());
+                }
+            }
+        }
     }
 }

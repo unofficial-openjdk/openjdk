@@ -55,7 +55,7 @@ public class UnicastServerRef2 extends UnicastServerRef
      */
     public UnicastServerRef2(LiveRef ref)
     {
-	super(ref);
+        super(ref);
     }
 
     /**
@@ -63,10 +63,10 @@ public class UnicastServerRef2 extends UnicastServerRef
      * on the specified port.
      */
     public UnicastServerRef2(int port,
-			     RMIClientSocketFactory csf,
-			     RMIServerSocketFactory ssf)
+                             RMIClientSocketFactory csf,
+                             RMIServerSocketFactory ssf)
     {
-	super(new LiveRef(port, csf, ssf));
+        super(new LiveRef(port, csf, ssf));
     }
 
     /**
@@ -74,7 +74,7 @@ public class UnicastServerRef2 extends UnicastServerRef
      */
     public String getRefClass(ObjectOutput out)
     {
-	return "UnicastServerRef2";
+        return "UnicastServerRef2";
     }
 
     /**
@@ -84,6 +84,6 @@ public class UnicastServerRef2 extends UnicastServerRef
      * found or created.
      */
     protected RemoteRef getClientRef() {
-	return new UnicastRef2(ref);
+        return new UnicastRef2(ref);
     }
 }

@@ -73,7 +73,7 @@ Java_sun_management_MemoryPoolImpl_setUsageThreshold0
     // Set both high and low threshold to the same threshold
     if (newThreshold > current) {
         // high threshold has to be set first so that high >= low
-        jmm_interface->SetPoolThreshold(env, pool, 
+        jmm_interface->SetPoolThreshold(env, pool,
                                         JMM_USAGE_THRESHOLD_HIGH, newThreshold);
         jmm_interface->SetPoolThreshold(env, pool,
                                         JMM_USAGE_THRESHOLD_LOW, newThreshold);
@@ -81,7 +81,7 @@ Java_sun_management_MemoryPoolImpl_setUsageThreshold0
         // low threshold has to be set first so that high >= low
         jmm_interface->SetPoolThreshold(env, pool,
                                         JMM_USAGE_THRESHOLD_LOW, newThreshold);
-        jmm_interface->SetPoolThreshold(env, pool, 
+        jmm_interface->SetPoolThreshold(env, pool,
                                         JMM_USAGE_THRESHOLD_HIGH, newThreshold);
     }
 }
@@ -141,4 +141,3 @@ Java_sun_management_MemoryPoolImpl_getCollectionUsage0
 {
     return jmm_interface->GetPoolCollectionUsage(env, pool);
 }
-

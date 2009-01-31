@@ -27,17 +27,17 @@
  * An "echo" service designed to be used with inetd. It can be configured in
  * inetd.conf to be used by any of the following types of services :-
  *
- * 	stream  tcp   nowait
- *	stream  tcp6  nowait
- *	stream  tcp   wait 
- * 	stream  tcp6  wait
- *	dgram   udp   wait
- *	dgram   udp6  wait
+ *      stream  tcp   nowait
+ *      stream  tcp6  nowait
+ *      stream  tcp   wait
+ *      stream  tcp6  wait
+ *      dgram   udp   wait
+ *      dgram   udp6  wait
  *
  * If configured as a "tcp nowait" service then inetd will launch a
  * VM to run the EchoService each time that a client connects to
- * the TCP port. The EchoService simply echos any messages it 
- * receives from the client and shuts if the client closes the 
+ * the TCP port. The EchoService simply echos any messages it
+ * receives from the client and shuts if the client closes the
  * connection.
  *
  * If configured as a "tcp wait" service then inetd will launch a VM
@@ -50,10 +50,10 @@
  * each UDP packet to the configured port. System.inheritedChannel()
  * will return a DatagramChannel. The echo service here will terminate after
  * echoing the UDP packet back to the client.
- * 
+ *
  * The service closes the inherited network channel when complete. To
  * facilate testing that the channel is closed the "tcp nowait" service
- * can close the connection after a given number of bytes. 
+ * can close the connection after a given number of bytes.
  */
 import java.nio.*;
 import java.nio.channels.*;
@@ -63,40 +63,40 @@ import java.net.*;
 public class EchoService {
 
     private static void doIt(SocketChannel sc, int closeAfter, int delay) throws IOException {
-	ByteBuffer bb = ByteBuffer.allocate(1024);
-	int total = 0;
-	for (;;) {
-	    bb.clear();
-	    int n = sc.read(bb);
-	    if (n < 0) {
-		break;	
-	    }
-	    total += n;
+        ByteBuffer bb = ByteBuffer.allocate(1024);
+        int total = 0;
+        for (;;) {
+            bb.clear();
+            int n = sc.read(bb);
+            if (n < 0) {
+                break;
+            }
+            total += n;
 
-	    // echo
-	    bb.flip();
-	    sc.write(bb);
+            // echo
+            bb.flip();
+            sc.write(bb);
 
-	    // close after X bytes?
-	    if (closeAfter > 0 && total >= closeAfter) {
-		break;
-	    }
-	}
+            // close after X bytes?
+            if (closeAfter > 0 && total >= closeAfter) {
+                break;
+            }
+        }
 
-	sc.close();
-	if (delay > 0) {
-	    try {
-	        Thread.currentThread().sleep(delay);
-	    } catch (InterruptedException x) { }
-	}
-    }	
+        sc.close();
+        if (delay > 0) {
+            try {
+                Thread.currentThread().sleep(delay);
+            } catch (InterruptedException x) { }
+        }
+    }
 
     private static void doIt(DatagramChannel dc) throws IOException {
-	ByteBuffer bb = ByteBuffer.allocate(1024);
-	SocketAddress sa = dc.receive(bb);
-	bb.flip();
-	dc.send(bb, sa);
-	dc.close();
+        ByteBuffer bb = ByteBuffer.allocate(1024);
+        SocketAddress sa = dc.receive(bb);
+        bb.flip();
+        dc.send(bb, sa);
+        dc.close();
     }
 
 
@@ -105,95 +105,95 @@ public class EchoService {
     // can the service can terminate then all clients disconnect.
 
     static class Worker implements Runnable {
-	private static int count = 0;
+        private static int count = 0;
         private static Object lock = new Object();
 
-	public static int count() {
-	    synchronized (lock) {
-		return count;
-	    }
-	}
+        public static int count() {
+            synchronized (lock) {
+                return count;
+            }
+        }
 
-	private SocketChannel sc;
+        private SocketChannel sc;
 
- 	Worker(SocketChannel sc) {
-	    this.sc = sc;
-	    synchronized (lock) {
-		count++;
-	    }
-	}
+        Worker(SocketChannel sc) {
+            this.sc = sc;
+            synchronized (lock) {
+                count++;
+            }
+        }
 
-	public void run() {
-	    try {
-		doIt(sc, -1, -1);
-	    } catch (IOException x) {
-	    } finally {
-		synchronized (lock) {
-		    count--;
-		}
-	    }
-	    
-	}
+        public void run() {
+            try {
+                doIt(sc, -1, -1);
+            } catch (IOException x) {
+            } finally {
+                synchronized (lock) {
+                    count--;
+                }
+            }
+
+        }
     }
 
     public static void main(String args[]) throws IOException {
-	Channel c = System.inheritedChannel();
-	if (c == null) {
-	    return;
-	}
+        Channel c = System.inheritedChannel();
+        if (c == null) {
+            return;
+        }
 
-	// tcp nowait
-	if (c instanceof SocketChannel) {
-	    int closeAfter = 0;
-	    int delay = 0;
-	    if (args.length > 0) {
+        // tcp nowait
+        if (c instanceof SocketChannel) {
+            int closeAfter = 0;
+            int delay = 0;
+            if (args.length > 0) {
                 closeAfter = Integer.parseInt(args[0]);
-	    }
-	    if (args.length > 1) {
-		delay = Integer.parseInt(args[1]);
-	    }
-	    doIt((SocketChannel)c, closeAfter, delay);
-	}
+            }
+            if (args.length > 1) {
+                delay = Integer.parseInt(args[1]);
+            }
+            doIt((SocketChannel)c, closeAfter, delay);
+        }
 
-	// tcp wait - in this case we take over the listener socket
-	// In this test case we create a thread to service each connection
-	// and terminate after all clients are gone.
-	// 
-	if (c instanceof ServerSocketChannel) {
-	    ServerSocketChannel ssc = (ServerSocketChannel)c;
+        // tcp wait - in this case we take over the listener socket
+        // In this test case we create a thread to service each connection
+        // and terminate after all clients are gone.
+        //
+        if (c instanceof ServerSocketChannel) {
+            ServerSocketChannel ssc = (ServerSocketChannel)c;
 
-	    ssc.configureBlocking(false);
-	    Selector sel = ssc.provider().openSelector();
-	    SelectionKey sk = ssc.register(sel, SelectionKey.OP_ACCEPT);
-	    SocketChannel sc;
-	    int count = 0;
-	    for (;;) {
-                 sel.select(5000);	
+            ssc.configureBlocking(false);
+            Selector sel = ssc.provider().openSelector();
+            SelectionKey sk = ssc.register(sel, SelectionKey.OP_ACCEPT);
+            SocketChannel sc;
+            int count = 0;
+            for (;;) {
+                 sel.select(5000);
                  if (sk.isAcceptable() && ((sc = ssc.accept()) != null)) {
-		    Worker w = new Worker(sc);
-		    (new Thread(w)).start();
-	 	 } else {
-		     // if all clients have disconnected then we die as well.
-		     if (Worker.count() == 0) {
-			break;
-		     }
-		 }
-	    }
-	    ssc.close();
-	}
+                    Worker w = new Worker(sc);
+                    (new Thread(w)).start();
+                 } else {
+                     // if all clients have disconnected then we die as well.
+                     if (Worker.count() == 0) {
+                        break;
+                     }
+                 }
+            }
+            ssc.close();
+        }
 
-	// udp wait
-	if (c instanceof DatagramChannel) {
-	    doIt((DatagramChannel)c);
-	}
+        // udp wait
+        if (c instanceof DatagramChannel) {
+            doIt((DatagramChannel)c);
+        }
 
-	// linger?
-	if (args.length > 0) {
-	    int delay = Integer.parseInt(args[0]);
-	    try {
-	   	Thread.currentThread().sleep(delay);
-	    } catch (InterruptedException x) { }
-	}
+        // linger?
+        if (args.length > 0) {
+            int delay = Integer.parseInt(args[0]);
+            try {
+                Thread.currentThread().sleep(delay);
+            } catch (InterruptedException x) { }
+        }
 
     }
 

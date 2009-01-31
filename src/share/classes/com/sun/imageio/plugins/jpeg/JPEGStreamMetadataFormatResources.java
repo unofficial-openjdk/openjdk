@@ -27,7 +27,7 @@ package com.sun.imageio.plugins.jpeg;
 
 import java.util.ListResourceBundle;
 
-public class JPEGStreamMetadataFormatResources 
+public class JPEGStreamMetadataFormatResources
        extends JPEGMetadataFormatResources {
 
     public JPEGStreamMetadataFormatResources() {}

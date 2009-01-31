@@ -28,11 +28,11 @@ package javax.print.event;
 /**
   * An abstract adapter class for receiving print job events.
   * The methods in this class are empty.
-  * This class exists as a convenience for creating listener objects. 
+  * This class exists as a convenience for creating listener objects.
   * Extend this class to create a {@link PrintJobEvent} listener and override
   * the methods for the events of interest.  Unlike the
   * {@link java.awt.event.ComponentListener ComponentListener}
-  * interface, this abstract interface provides null methods so that you 
+  * interface, this abstract interface provides null methods so that you
   * only need to define the methods you need, rather than all of the methods.
   *
   */
@@ -51,7 +51,7 @@ public abstract class PrintJobAdapter implements PrintJobListener {
     public void printDataTransferCompleted(PrintJobEvent pje)  {
     }
 
-    /** 
+    /**
      * Called to notify the client that the job completed successfully.
      *
      * @param pje the event being notified
@@ -60,7 +60,7 @@ public abstract class PrintJobAdapter implements PrintJobListener {
     }
 
 
-    /** 
+    /**
      * Called to notify the client that the job failed to complete
      * successfully and will have to be resubmitted.
      *
@@ -69,7 +69,7 @@ public abstract class PrintJobAdapter implements PrintJobListener {
     public void printJobFailed(PrintJobEvent pje)  {
     }
 
-    /** 
+    /**
      * Called to notify the client that the job was canceled
      * by user or program.
      *
@@ -78,11 +78,11 @@ public abstract class PrintJobAdapter implements PrintJobListener {
     public void printJobCanceled(PrintJobEvent pje) {
     }
 
- 
-    /** 
+
+    /**
      * Called to notify the client that no more events will be delivered.
      * One cause of this event being generated is if the job
-     * has successfully completed, but the printing system  
+     * has successfully completed, but the printing system
      * is limited in capability and cannot verify this.
      * This event is required to be delivered if none of the other
      * terminal events (completed/failed/canceled) are delivered.
@@ -91,9 +91,9 @@ public abstract class PrintJobAdapter implements PrintJobListener {
      */
     public void printJobNoMoreEvents(PrintJobEvent pje)  {
     }
- 
- 
-    /** 
+
+
+    /**
      * Called to notify the client that some possibly user rectifiable
      * problem occurs (eg printer out of paper).
      *
@@ -101,5 +101,5 @@ public abstract class PrintJobAdapter implements PrintJobListener {
      */
     public void printJobRequiresAttention(PrintJobEvent pje)  {
     }
- 
+
 }

@@ -55,47 +55,47 @@ import sun.security.action.GetPropertyAction;
 public abstract class GraphicsPrimitive {
 
     protected static interface GeneralBinaryOp {
-	/**
-	 * This method allows the setupGeneralBinaryOp method to set
-	 * the converters into the General version of the Primitive.
-	 */
-	public void setPrimitives(Blit srcconverter,
-				  Blit dstconverter,
-				  GraphicsPrimitive genericop,
-				  Blit resconverter);
+        /**
+         * This method allows the setupGeneralBinaryOp method to set
+         * the converters into the General version of the Primitive.
+         */
+        public void setPrimitives(Blit srcconverter,
+                                  Blit dstconverter,
+                                  GraphicsPrimitive genericop,
+                                  Blit resconverter);
 
-	/**
-	 * These 4 methods are implemented automatically for any
-	 * GraphicsPrimitive.  They are used by setupGeneralBinaryOp
-	 * to retrieve the information needed to find the right
-	 * converter primitives.
-	 */
-	public SurfaceType getSourceType();
-	public CompositeType getCompositeType();
-	public SurfaceType getDestType();
-	public String getSignature();
-	public int getPrimTypeID(); 
+        /**
+         * These 4 methods are implemented automatically for any
+         * GraphicsPrimitive.  They are used by setupGeneralBinaryOp
+         * to retrieve the information needed to find the right
+         * converter primitives.
+         */
+        public SurfaceType getSourceType();
+        public CompositeType getCompositeType();
+        public SurfaceType getDestType();
+        public String getSignature();
+        public int getPrimTypeID();
     }
 
     protected static interface GeneralUnaryOp {
-	/**
-	 * This method allows the setupGeneralUnaryOp method to set
-	 * the converters into the General version of the Primitive.
-	 */
-	public void setPrimitives(Blit dstconverter,
-				  GraphicsPrimitive genericop,
-				  Blit resconverter);
+        /**
+         * This method allows the setupGeneralUnaryOp method to set
+         * the converters into the General version of the Primitive.
+         */
+        public void setPrimitives(Blit dstconverter,
+                                  GraphicsPrimitive genericop,
+                                  Blit resconverter);
 
-	/**
-	 * These 3 methods are implemented automatically for any
-	 * GraphicsPrimitive.  They are used by setupGeneralUnaryOp
-	 * to retrieve the information needed to find the right
-	 * converter primitives.
-	 */
-	public CompositeType getCompositeType();
-	public SurfaceType getDestType();
-	public String getSignature();
-	public int getPrimTypeID(); 
+        /**
+         * These 3 methods are implemented automatically for any
+         * GraphicsPrimitive.  They are used by setupGeneralUnaryOp
+         * to retrieve the information needed to find the right
+         * converter primitives.
+         */
+        public CompositeType getCompositeType();
+        public SurfaceType getDestType();
+        public String getSignature();
+        public int getPrimTypeID();
     }
 
     /**
@@ -107,56 +107,56 @@ public abstract class GraphicsPrimitive {
     // is a singleton.  As instance data members with final accessors,
     // accesses can be inlined.
     private String methodSignature;
-    private int uniqueID; 
-    private static int unusedPrimID = 1; 
+    private int uniqueID;
+    private static int unusedPrimID = 1;
 
     private SurfaceType sourceType;
     private CompositeType compositeType;
     private SurfaceType destType;
 
-    private long pNativePrim;	// Native blit loop info
-    
+    private long pNativePrim;   // Native blit loop info
+
     public synchronized static final int makePrimTypeID() {
-	if (unusedPrimID > 255) {
-	    throw new InternalError("primitive id overflow"); 
-    	} 
-	return unusedPrimID++;     
+        if (unusedPrimID > 255) {
+            throw new InternalError("primitive id overflow");
+        }
+        return unusedPrimID++;
     }
-    
-    public synchronized static final int makeUniqueID(int primTypeID, 
-						      SurfaceType src, 
-						      CompositeType cmp, 
-						      SurfaceType dst) 
+
+    public synchronized static final int makeUniqueID(int primTypeID,
+                                                      SurfaceType src,
+                                                      CompositeType cmp,
+                                                      SurfaceType dst)
     {
-	return (primTypeID << 24) |
-	    (dst.getUniqueID() << 16) |
-	    (cmp.getUniqueID() << 8)  |
-	    (src.getUniqueID());
+        return (primTypeID << 24) |
+            (dst.getUniqueID() << 16) |
+            (cmp.getUniqueID() << 8)  |
+            (src.getUniqueID());
     }
-    
+
     /**
      * Create a new GraphicsPrimitive with all of the required
      * descriptive information.
      */
     protected GraphicsPrimitive(String methodSignature,
-				int primTypeID, 
-				SurfaceType sourceType,
-				CompositeType compositeType,
-				SurfaceType destType)
+                                int primTypeID,
+                                SurfaceType sourceType,
+                                CompositeType compositeType,
+                                SurfaceType destType)
     {
-	this.methodSignature = methodSignature;
-	this.sourceType = sourceType;
-	this.compositeType = compositeType;
-	this.destType = destType;
-	
-	if(sourceType == null || compositeType == null || destType == null) {
-	    this.uniqueID = primTypeID << 24; 
-	} else {
-	    this.uniqueID = GraphicsPrimitive.makeUniqueID(primTypeID, 
-							   sourceType, 
-							   compositeType, 
-							   destType); 
-	}
+        this.methodSignature = methodSignature;
+        this.sourceType = sourceType;
+        this.compositeType = compositeType;
+        this.destType = destType;
+
+        if(sourceType == null || compositeType == null || destType == null) {
+            this.uniqueID = primTypeID << 24;
+        } else {
+            this.uniqueID = GraphicsPrimitive.makeUniqueID(primTypeID,
+                                                           sourceType,
+                                                           compositeType,
+                                                           destType);
+        }
     }
 
     /**
@@ -164,155 +164,155 @@ public abstract class GraphicsPrimitive {
      * with all of the required descriptive information.
      */
     protected GraphicsPrimitive(long pNativePrim,
-				String methodSignature,
-				int primTypeID, 
-				SurfaceType sourceType,
-				CompositeType compositeType,
-				SurfaceType destType)
+                                String methodSignature,
+                                int primTypeID,
+                                SurfaceType sourceType,
+                                CompositeType compositeType,
+                                SurfaceType destType)
     {
-	this.pNativePrim = pNativePrim;
-	this.methodSignature = methodSignature;
-	this.sourceType = sourceType;
-	this.compositeType = compositeType;
-	this.destType = destType;
+        this.pNativePrim = pNativePrim;
+        this.methodSignature = methodSignature;
+        this.sourceType = sourceType;
+        this.compositeType = compositeType;
+        this.destType = destType;
 
-	if(sourceType == null || compositeType == null || destType == null) {
-	    this.uniqueID = primTypeID << 24; 
-	} else {
-	    this.uniqueID = GraphicsPrimitive.makeUniqueID(primTypeID, 
-							   sourceType, 
-							   compositeType, 
-							   destType); 
-	}
+        if(sourceType == null || compositeType == null || destType == null) {
+            this.uniqueID = primTypeID << 24;
+        } else {
+            this.uniqueID = GraphicsPrimitive.makeUniqueID(primTypeID,
+                                                           sourceType,
+                                                           compositeType,
+                                                           destType);
+        }
     }
-        
+
     /**
     *   METHODS TO DESCRIBE THE SURFACES PRIMITIVES
     *   CAN OPERATE ON AND THE FUNCTIONALITY THEY IMPLEMENT
     **/
-    
-    /** 
-     * Gets instance ID of this graphics primitive. 
-     * 
+
+    /**
+     * Gets instance ID of this graphics primitive.
+     *
      * Instance ID is comprised of four distinct ids (ORed together)
-     * that uniquely identify each instance of a GraphicsPrimitive 
-     * object. The four ids making up instance ID are: 
-     * 1. primitive id - identifier shared by all primitives of the 
+     * that uniquely identify each instance of a GraphicsPrimitive
+     * object. The four ids making up instance ID are:
+     * 1. primitive id - identifier shared by all primitives of the
      * same type (eg. all Blits have the same primitive id)
      * 2. sourcetype id - identifies source surface type
      * 3. desttype id - identifies destination surface type
      * 4. compositetype id - identifies composite used
-     * 
+     *
      * @return instance ID
      */
     public final int getUniqueID() {
-	return uniqueID; 
+        return uniqueID;
     }
 
     /**
      */
     public final String getSignature() {
-	return methodSignature;
+        return methodSignature;
     }
 
     /**
-     * Gets unique id for this GraphicsPrimitive type. 
+     * Gets unique id for this GraphicsPrimitive type.
      *
-     * This id is used to identify the TYPE of primitive (Blit vs. BlitBg) 
-     * as opposed to INSTANCE of primitive. 
-     * 
+     * This id is used to identify the TYPE of primitive (Blit vs. BlitBg)
+     * as opposed to INSTANCE of primitive.
+     *
      * @return primitive ID
-     */ 
+     */
     public final int getPrimTypeID() {
-	return uniqueID >>> 24; 
+        return uniqueID >>> 24;
     }
-    
+
     /**
      */
     public final long getNativePrim() {
-	return pNativePrim;
+        return pNativePrim;
     }
 
     /**
      */
     public final SurfaceType getSourceType() {
-	return sourceType;
+        return sourceType;
     }
 
     /**
      */
     public final CompositeType getCompositeType() {
-	return compositeType;
+        return compositeType;
     }
 
     /**
      */
     public final SurfaceType getDestType() {
-	return destType;
+        return destType;
     }
-    
+
     /**
      * Return true if this primitive can be used for the given signature
      * surfaces, and composite.
      *
      * @param signature The signature of the given operation.  Must be
-     *		== (not just .equals) the signature string given by the
-     *		abstract class that declares the operation.
+     *          == (not just .equals) the signature string given by the
+     *          abstract class that declares the operation.
      * @param srctype The surface type for the source of the operation
      * @param comptype The composite type for the operation
      * @param dsttype The surface type for the destination of the operation
      */
     public final boolean satisfies(String signature,
-				   SurfaceType srctype,
-				   CompositeType comptype,
-				   SurfaceType dsttype)
+                                   SurfaceType srctype,
+                                   CompositeType comptype,
+                                   SurfaceType dsttype)
     {
-	if (signature != methodSignature) {
-	    return false;
-	}
-	while (true) {
-	    if (srctype == null) {
-		return false;
-	    }
-	    if (srctype.equals(sourceType)) {
-		break;
-	    }
-	    srctype = srctype.getSuperType();
-	}
-	while (true) {
-	    if (comptype == null) {
-		return false;
-	    }
-	    if (comptype.equals(compositeType)) {
-		break;
-	    }
-	    comptype = comptype.getSuperType();
-	}
-	while (true) {
-	    if (dsttype == null) {
-		return false;
-	    }
-	    if (dsttype.equals(destType)) {
-		break;
-	    }
-	    dsttype = dsttype.getSuperType();
-	}
-	return true;
+        if (signature != methodSignature) {
+            return false;
+        }
+        while (true) {
+            if (srctype == null) {
+                return false;
+            }
+            if (srctype.equals(sourceType)) {
+                break;
+            }
+            srctype = srctype.getSuperType();
+        }
+        while (true) {
+            if (comptype == null) {
+                return false;
+            }
+            if (comptype.equals(compositeType)) {
+                break;
+            }
+            comptype = comptype.getSuperType();
+        }
+        while (true) {
+            if (dsttype == null) {
+                return false;
+            }
+            if (dsttype.equals(destType)) {
+                break;
+            }
+            dsttype = dsttype.getSuperType();
+        }
+        return true;
     }
 
     //
     // A version of satisfies used for regression testing
     //
     final boolean satisfiesSameAs(GraphicsPrimitive other) {
-	return (methodSignature == other.methodSignature &&
-		sourceType.equals(other.sourceType) &&
-		compositeType.equals(other.compositeType) &&
-		destType.equals(other.destType));
+        return (methodSignature == other.methodSignature &&
+                sourceType.equals(other.sourceType) &&
+                compositeType.equals(other.compositeType) &&
+                destType.equals(other.destType));
     }
 
     public abstract GraphicsPrimitive makePrimitive(SurfaceType srctype,
-						    CompositeType comptype,
-						    SurfaceType dsttype);
+                                                    CompositeType comptype,
+                                                    SurfaceType dsttype);
 
     public abstract GraphicsPrimitive traceWrap();
 
@@ -327,214 +327,214 @@ public abstract class GraphicsPrimitive {
     public static final int TRACECOUNTS = 4;
 
     static {
-	GetPropertyAction gpa = new GetPropertyAction("sun.java2d.trace");
-	String trace = (String)AccessController.doPrivileged(gpa);
-	if (trace != null) {
-	    boolean verbose = false;
-	    int traceflags = 0;
-	    StringTokenizer st = new StringTokenizer(trace, ",");
-	    while (st.hasMoreTokens()) {
-		String tok = st.nextToken();
-		if (tok.equalsIgnoreCase("count")) {
-		    traceflags |= GraphicsPrimitive.TRACECOUNTS;
-		} else if (tok.equalsIgnoreCase("log")) {
-		    traceflags |= GraphicsPrimitive.TRACELOG;
-		} else if (tok.equalsIgnoreCase("timestamp")) {
-		    traceflags |= GraphicsPrimitive.TRACETIMESTAMP;
-		} else if (tok.equalsIgnoreCase("verbose")) {
-		    verbose = true;
-		} else if (tok.regionMatches(true, 0, "out:", 0, 4)) {
-		    tracefile = tok.substring(4);
-		} else {
-		    if (!tok.equalsIgnoreCase("help")) {
-			System.err.println("unrecognized token: "+tok);
-		    }
-		    System.err.println("usage: -Dsun.java2d.trace="+
-				       "[log[,timestamp]],[count],"+
-				       "[out:<filename>],[help],[verbose]");
-		}
-	    }
-	    if (verbose) {
-		System.err.print("GraphicsPrimitive logging ");
-		if ((traceflags & GraphicsPrimitive.TRACELOG) != 0) {
-		    System.err.println("enabled");
-		    System.err.print("GraphicsPrimitive timetamps ");
-		    if ((traceflags & GraphicsPrimitive.TRACETIMESTAMP) != 0) {
-			System.err.println("enabled");
-		    } else {
-			System.err.println("disabled");
-		    }
-		} else {
-		    System.err.println("[and timestamps] disabled");
-		}
-		System.err.print("GraphicsPrimitive invocation counts ");
-		if ((traceflags & GraphicsPrimitive.TRACECOUNTS) != 0) {
-		    System.err.println("enabled");
-		} else {
-		    System.err.println("disabled");
-		}
-		System.err.print("GraphicsPrimitive trace output to ");
-		if (tracefile == null) {
-		    System.err.println("System.err");
-		} else {
-		    System.err.println("file '"+tracefile+"'");
-		}
-	    }
-	    GraphicsPrimitive.traceflags = traceflags;
-	}
+        GetPropertyAction gpa = new GetPropertyAction("sun.java2d.trace");
+        String trace = (String)AccessController.doPrivileged(gpa);
+        if (trace != null) {
+            boolean verbose = false;
+            int traceflags = 0;
+            StringTokenizer st = new StringTokenizer(trace, ",");
+            while (st.hasMoreTokens()) {
+                String tok = st.nextToken();
+                if (tok.equalsIgnoreCase("count")) {
+                    traceflags |= GraphicsPrimitive.TRACECOUNTS;
+                } else if (tok.equalsIgnoreCase("log")) {
+                    traceflags |= GraphicsPrimitive.TRACELOG;
+                } else if (tok.equalsIgnoreCase("timestamp")) {
+                    traceflags |= GraphicsPrimitive.TRACETIMESTAMP;
+                } else if (tok.equalsIgnoreCase("verbose")) {
+                    verbose = true;
+                } else if (tok.regionMatches(true, 0, "out:", 0, 4)) {
+                    tracefile = tok.substring(4);
+                } else {
+                    if (!tok.equalsIgnoreCase("help")) {
+                        System.err.println("unrecognized token: "+tok);
+                    }
+                    System.err.println("usage: -Dsun.java2d.trace="+
+                                       "[log[,timestamp]],[count],"+
+                                       "[out:<filename>],[help],[verbose]");
+                }
+            }
+            if (verbose) {
+                System.err.print("GraphicsPrimitive logging ");
+                if ((traceflags & GraphicsPrimitive.TRACELOG) != 0) {
+                    System.err.println("enabled");
+                    System.err.print("GraphicsPrimitive timetamps ");
+                    if ((traceflags & GraphicsPrimitive.TRACETIMESTAMP) != 0) {
+                        System.err.println("enabled");
+                    } else {
+                        System.err.println("disabled");
+                    }
+                } else {
+                    System.err.println("[and timestamps] disabled");
+                }
+                System.err.print("GraphicsPrimitive invocation counts ");
+                if ((traceflags & GraphicsPrimitive.TRACECOUNTS) != 0) {
+                    System.err.println("enabled");
+                } else {
+                    System.err.println("disabled");
+                }
+                System.err.print("GraphicsPrimitive trace output to ");
+                if (tracefile == null) {
+                    System.err.println("System.err");
+                } else {
+                    System.err.println("file '"+tracefile+"'");
+                }
+            }
+            GraphicsPrimitive.traceflags = traceflags;
+        }
     }
 
     public static boolean tracingEnabled() {
-	return (traceflags != 0);
+        return (traceflags != 0);
     }
 
     private static PrintStream getTraceOutputFile() {
-	if (traceout == null) {
-	    if (tracefile != null) {
-		Object o =
-		    AccessController.doPrivileged(new PrivilegedAction() {
-			public Object run() {
-			    try {
-				return new FileOutputStream(tracefile);
-			    } catch (FileNotFoundException e) {
-				return null;
-			    }
-			}
-		    });
-		if (o != null) {
-		    traceout = new PrintStream((OutputStream) o);
-		} else {
-		    traceout = System.err;
-		}
-	    } else {
-		traceout = System.err;
-	    }
-	}
-	return traceout;
+        if (traceout == null) {
+            if (tracefile != null) {
+                Object o =
+                    AccessController.doPrivileged(new PrivilegedAction() {
+                        public Object run() {
+                            try {
+                                return new FileOutputStream(tracefile);
+                            } catch (FileNotFoundException e) {
+                                return null;
+                            }
+                        }
+                    });
+                if (o != null) {
+                    traceout = new PrintStream((OutputStream) o);
+                } else {
+                    traceout = System.err;
+                }
+            } else {
+                traceout = System.err;
+            }
+        }
+        return traceout;
     }
 
     public static class TraceReporter extends Thread {
-	public static void setShutdownHook() {
-	    AccessController.doPrivileged(new PrivilegedAction() {
-		public Object run() {
-		    Runtime.getRuntime().addShutdownHook(new TraceReporter());
-		    return null;
-		}
-	    });
-	}
+        public static void setShutdownHook() {
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    Runtime.getRuntime().addShutdownHook(new TraceReporter());
+                    return null;
+                }
+            });
+        }
 
-	public void run() {
-	    PrintStream ps = getTraceOutputFile();
-	    Iterator iterator = traceMap.entrySet().iterator();
-	    long total = 0;
-	    int numprims = 0;
-	    while (iterator.hasNext()) {
-		Map.Entry me = (Map.Entry) iterator.next();
-		Object prim = me.getKey();
-		int[] count = (int[]) me.getValue();
-		if (count[0] == 1) {
-		    ps.print("1 call to ");
-		} else {
-		    ps.print(count[0]+" calls to ");
-		}
-		ps.println(prim);
-		numprims++;
-		total += count[0];
-	    }
-	    if (numprims == 0) {
-		ps.println("No graphics primitives executed");
-	    } else if (numprims > 1) {
-		ps.println(total+" total calls to "+
-			   numprims+" different primitives");
-	    }
-	}
+        public void run() {
+            PrintStream ps = getTraceOutputFile();
+            Iterator iterator = traceMap.entrySet().iterator();
+            long total = 0;
+            int numprims = 0;
+            while (iterator.hasNext()) {
+                Map.Entry me = (Map.Entry) iterator.next();
+                Object prim = me.getKey();
+                int[] count = (int[]) me.getValue();
+                if (count[0] == 1) {
+                    ps.print("1 call to ");
+                } else {
+                    ps.print(count[0]+" calls to ");
+                }
+                ps.println(prim);
+                numprims++;
+                total += count[0];
+            }
+            if (numprims == 0) {
+                ps.println("No graphics primitives executed");
+            } else if (numprims > 1) {
+                ps.println(total+" total calls to "+
+                           numprims+" different primitives");
+            }
+        }
     }
 
     public synchronized static void tracePrimitive(Object prim) {
-	if ((traceflags & TRACECOUNTS) != 0) {
-	    if (traceMap == null) {
-		traceMap = new HashMap();
-		TraceReporter.setShutdownHook();
-	    }
-	    Object o = traceMap.get(prim);
-	    if (o == null) {
-		o = new int[1];
-		traceMap.put(prim, o);
-	    }
-	    ((int[]) o)[0]++;
-	}
-	if ((traceflags & TRACELOG) != 0) {
-	    PrintStream ps = getTraceOutputFile();
-	    if ((traceflags & TRACETIMESTAMP) != 0) {
-		ps.print(System.currentTimeMillis()+": ");
-	    }
-	    ps.println(prim);
-	}
+        if ((traceflags & TRACECOUNTS) != 0) {
+            if (traceMap == null) {
+                traceMap = new HashMap();
+                TraceReporter.setShutdownHook();
+            }
+            Object o = traceMap.get(prim);
+            if (o == null) {
+                o = new int[1];
+                traceMap.put(prim, o);
+            }
+            ((int[]) o)[0]++;
+        }
+        if ((traceflags & TRACELOG) != 0) {
+            PrintStream ps = getTraceOutputFile();
+            if ((traceflags & TRACETIMESTAMP) != 0) {
+                ps.print(System.currentTimeMillis()+": ");
+            }
+            ps.println(prim);
+        }
     }
 
     protected void setupGeneralBinaryOp(GeneralBinaryOp gbo) {
-	int primID = gbo.getPrimTypeID(); 
-	String methodSignature = gbo.getSignature();
-	SurfaceType srctype = gbo.getSourceType();
-	CompositeType comptype = gbo.getCompositeType();
-	SurfaceType dsttype = gbo.getDestType();
-	Blit convertsrc, convertdst, convertres;
-	GraphicsPrimitive performop;
+        int primID = gbo.getPrimTypeID();
+        String methodSignature = gbo.getSignature();
+        SurfaceType srctype = gbo.getSourceType();
+        CompositeType comptype = gbo.getCompositeType();
+        SurfaceType dsttype = gbo.getDestType();
+        Blit convertsrc, convertdst, convertres;
+        GraphicsPrimitive performop;
 
-	convertsrc = createConverter(srctype, SurfaceType.IntArgb);
-	performop = GraphicsPrimitiveMgr.locatePrim(primID,
-						    SurfaceType.IntArgb,
-						    comptype, dsttype);
-	if (performop != null) {
-	    convertdst = null;
-	    convertres = null;
-	} else {
-	    performop = getGeneralOp(primID, comptype);
-	    if (performop == null) {
-		throw new InternalError("Cannot construct general op for "+
-					methodSignature+" "+comptype);
-	    }
-	    convertdst = createConverter(dsttype, SurfaceType.IntArgb);
-	    convertres = createConverter(SurfaceType.IntArgb, dsttype);
-	}
+        convertsrc = createConverter(srctype, SurfaceType.IntArgb);
+        performop = GraphicsPrimitiveMgr.locatePrim(primID,
+                                                    SurfaceType.IntArgb,
+                                                    comptype, dsttype);
+        if (performop != null) {
+            convertdst = null;
+            convertres = null;
+        } else {
+            performop = getGeneralOp(primID, comptype);
+            if (performop == null) {
+                throw new InternalError("Cannot construct general op for "+
+                                        methodSignature+" "+comptype);
+            }
+            convertdst = createConverter(dsttype, SurfaceType.IntArgb);
+            convertres = createConverter(SurfaceType.IntArgb, dsttype);
+        }
 
-	gbo.setPrimitives(convertsrc, convertdst, performop, convertres);
+        gbo.setPrimitives(convertsrc, convertdst, performop, convertres);
     }
 
     protected void setupGeneralUnaryOp(GeneralUnaryOp guo) {
-	int primID = guo.getPrimTypeID(); 
-	String methodSignature = guo.getSignature();
-	CompositeType comptype = guo.getCompositeType();
-	SurfaceType dsttype = guo.getDestType();
-	
-	Blit convertdst = createConverter(dsttype, SurfaceType.IntArgb);
-	GraphicsPrimitive performop = getGeneralOp(primID, comptype);
-	Blit convertres = createConverter(SurfaceType.IntArgb, dsttype);
-	if (convertdst == null || performop == null || convertres == null) {
-	    throw new InternalError("Cannot construct binary op for "+
-				    comptype+" "+dsttype);
-	}
+        int primID = guo.getPrimTypeID();
+        String methodSignature = guo.getSignature();
+        CompositeType comptype = guo.getCompositeType();
+        SurfaceType dsttype = guo.getDestType();
 
-	guo.setPrimitives(convertdst, performop, convertres);
+        Blit convertdst = createConverter(dsttype, SurfaceType.IntArgb);
+        GraphicsPrimitive performop = getGeneralOp(primID, comptype);
+        Blit convertres = createConverter(SurfaceType.IntArgb, dsttype);
+        if (convertdst == null || performop == null || convertres == null) {
+            throw new InternalError("Cannot construct binary op for "+
+                                    comptype+" "+dsttype);
+        }
+
+        guo.setPrimitives(convertdst, performop, convertres);
     }
 
     protected static Blit createConverter(SurfaceType srctype,
-					  SurfaceType dsttype)
+                                          SurfaceType dsttype)
     {
-	if (srctype.equals(dsttype)) {
-	    return null;
-	}
-	Blit cv = Blit.getFromCache(srctype, CompositeType.SrcNoEa, dsttype);
-	if (cv == null) {
-	    throw new InternalError("Cannot construct converter for "+
-				    srctype+"=>"+dsttype);
-	}
-	return cv;
+        if (srctype.equals(dsttype)) {
+            return null;
+        }
+        Blit cv = Blit.getFromCache(srctype, CompositeType.SrcNoEa, dsttype);
+        if (cv == null) {
+            throw new InternalError("Cannot construct converter for "+
+                                    srctype+"=>"+dsttype);
+        }
+        return cv;
     }
 
     protected static SurfaceData convertFrom(Blit ob, SurfaceData srcData,
-					     int srcX, int srcY, int w, int h,
-					     SurfaceData dstData)
+                                             int srcX, int srcY, int w, int h,
+                                             SurfaceData dstData)
     {
         return convertFrom(ob, srcData,
                            srcX, srcY, w, h, dstData,
@@ -542,80 +542,80 @@ public abstract class GraphicsPrimitive {
     }
 
     protected static SurfaceData convertFrom(Blit ob, SurfaceData srcData,
-					     int srcX, int srcY, int w, int h,
-					     SurfaceData dstData, int type)
+                                             int srcX, int srcY, int w, int h,
+                                             SurfaceData dstData, int type)
     {
-	if (dstData != null) {
-	    Rectangle r = dstData.getBounds();
-	    if (w > r.width || h > r.height) {
-		dstData = null;
-	    }
-	}
-	if (dstData == null) {
-	    BufferedImage dstBI = new BufferedImage(w, h, type);
-	    dstData = BufImgSurfaceData.createData(dstBI);
-	}
-	ob.Blit(srcData, dstData, AlphaComposite.Src, null,
-		srcX, srcY, 0, 0, w, h);
+        if (dstData != null) {
+            Rectangle r = dstData.getBounds();
+            if (w > r.width || h > r.height) {
+                dstData = null;
+            }
+        }
+        if (dstData == null) {
+            BufferedImage dstBI = new BufferedImage(w, h, type);
+            dstData = BufImgSurfaceData.createData(dstBI);
+        }
+        ob.Blit(srcData, dstData, AlphaComposite.Src, null,
+                srcX, srcY, 0, 0, w, h);
         return dstData;
     }
 
     protected static void convertTo(Blit ob,
-				    SurfaceData srcImg, SurfaceData dstImg,
-				    Region clip,
-				    int dstX, int dstY, int w, int h)
+                                    SurfaceData srcImg, SurfaceData dstImg,
+                                    Region clip,
+                                    int dstX, int dstY, int w, int h)
     {
-	if (ob != null) {
-	    ob.Blit(srcImg, dstImg, AlphaComposite.Src, clip,
-		    0, 0, dstX, dstY, w, h);
-	}
+        if (ob != null) {
+            ob.Blit(srcImg, dstImg, AlphaComposite.Src, clip,
+                    0, 0, dstX, dstY, w, h);
+        }
     }
 
     protected static GraphicsPrimitive getGeneralOp(int primID,
-						    CompositeType comptype)
+                                                    CompositeType comptype)
     {
-	return GraphicsPrimitiveMgr.locatePrim(primID,
-					       SurfaceType.IntArgb,
-					       comptype,
-					       SurfaceType.IntArgb);
+        return GraphicsPrimitiveMgr.locatePrim(primID,
+                                               SurfaceType.IntArgb,
+                                               comptype,
+                                               SurfaceType.IntArgb);
     }
 
     public static String simplename(Field[] fields, Object o) {
-	for (int i = 0; i < fields.length; i++) {
-	    Field f = fields[i];
-	    try {
-		if (o == f.get(null)) {
-		    return f.getName();
-		}
-	    } catch (Exception e) {
-	    }
-	}
-	return "\""+o.toString()+"\"";
+        for (int i = 0; i < fields.length; i++) {
+            Field f = fields[i];
+            try {
+                if (o == f.get(null)) {
+                    return f.getName();
+                }
+            } catch (Exception e) {
+            }
+        }
+        return "\""+o.toString()+"\"";
     }
 
     public static String simplename(SurfaceType st) {
-	return simplename(SurfaceType.class.getDeclaredFields(), st);
+        return simplename(SurfaceType.class.getDeclaredFields(), st);
     }
 
     public static String simplename(CompositeType ct) {
-	return simplename(CompositeType.class.getDeclaredFields(), ct);
+        return simplename(CompositeType.class.getDeclaredFields(), ct);
     }
 
     private String cachedname;
 
     public String toString() {
-	if (cachedname == null) {
-	    String sig = methodSignature;
-	    int index = sig.indexOf('(');
-	    if (index >= 0) {
-		sig = sig.substring(0, index);
-	    }
-	    cachedname = (getClass().getName()+"::"+
-			  sig+"("+
-			  simplename(sourceType)+", "+
-			  simplename(compositeType)+", "+
-			  simplename(destType)+")");
-	}
-	return cachedname;
+        if (cachedname == null) {
+            String sig = methodSignature;
+            int index = sig.indexOf('(');
+            if (index >= 0) {
+                sig = sig.substring(0, index);
+            }
+            cachedname = (getClass().getName()+"::"+
+                          sig+"("+
+                          simplename(sourceType)+", "+
+                          simplename(compositeType)+", "+
+                          simplename(destType)+")");
+        }
+        return cachedname;
     }
 }

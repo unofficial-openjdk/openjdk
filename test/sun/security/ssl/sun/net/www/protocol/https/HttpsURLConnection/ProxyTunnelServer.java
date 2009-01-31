@@ -53,7 +53,7 @@ public class ProxyTunnelServer extends Thread {
      * wants to establish the tunnel for communication.
      */
     private InetAddress serverInetAddr;
-    private int	serverPort;
+    private int serverPort;
 
     /*
      * denote whether the proxy needs to authorize
@@ -62,14 +62,14 @@ public class ProxyTunnelServer extends Thread {
     static boolean needAuth = false;
 
     public ProxyTunnelServer() throws IOException {
-	if (ss == null) {
+        if (ss == null) {
           ss = (ServerSocket) ServerSocketFactory.getDefault().
           createServerSocket(0);
         }
     }
 
     public void needUserAuth(boolean auth) {
-	needAuth = auth;
+        needAuth = auth;
     }
 
     /*
@@ -82,20 +82,20 @@ public class ProxyTunnelServer extends Thread {
     }
 
     public void run() {
-	try {
-	    clientSocket = ss.accept();
-	    processRequests();
-	} catch (Exception e) {
-	    System.out.println("Proxy Failed: " + e);
-	    e.printStackTrace();
-	    try {
-		ss.close();
-	    }
-	    catch (IOException excep) {
-		System.out.println("ProxyServer close error: " + excep);
-		excep.printStackTrace();
-	    }
-	  }
+        try {
+            clientSocket = ss.accept();
+            processRequests();
+        } catch (Exception e) {
+            System.out.println("Proxy Failed: " + e);
+            e.printStackTrace();
+            try {
+                ss.close();
+            }
+            catch (IOException excep) {
+                System.out.println("ProxyServer close error: " + excep);
+                excep.printStackTrace();
+            }
+          }
     }
 
     /*
@@ -107,63 +107,63 @@ public class ProxyTunnelServer extends Thread {
      */
     private void processRequests() throws Exception {
 
-	InputStream in = clientSocket.getInputStream();
-	MessageHeader mheader = new MessageHeader(in);
- 	String statusLine = mheader.getValue(0);
+        InputStream in = clientSocket.getInputStream();
+        MessageHeader mheader = new MessageHeader(in);
+        String statusLine = mheader.getValue(0);
 
-	if (statusLine.startsWith("CONNECT")) {
-	    // retrieve the host and port info from the status-line
+        if (statusLine.startsWith("CONNECT")) {
+            // retrieve the host and port info from the status-line
             retrieveConnectInfo(statusLine);
             if (needAuth) {
-		String authInfo;
-		if ((authInfo = mheader.findValue("Proxy-Authorization"))
-					 != null) {
-		   if (authenticate(authInfo)) {
-			needAuth = false;
-			System.out.println(
-				"Proxy: client authentication successful");
-		   }
-		}
-	    }
-	    respondForConnect(needAuth);
+                String authInfo;
+                if ((authInfo = mheader.findValue("Proxy-Authorization"))
+                                         != null) {
+                   if (authenticate(authInfo)) {
+                        needAuth = false;
+                        System.out.println(
+                                "Proxy: client authentication successful");
+                   }
+                }
+            }
+            respondForConnect(needAuth);
 
-	    // connection set to the tunneling mode
+            // connection set to the tunneling mode
             if (!needAuth) {
                 doTunnel();
-		/*
+                /*
                  * done with tunneling, we process only one successful
-		 * tunneling request
-		 */
-		ss.close();
+                 * tunneling request
+                 */
+                ss.close();
             } else {
                 // we may get another request with Proxy-Authorization set
-		in.close();
-		clientSocket.close();
+                in.close();
+                clientSocket.close();
                 restart();
             }
-	} else {
-	    System.out.println("proxy server: processes only "
-				   + "CONNECT method requests, recieved: "
-				   + statusLine);
+        } else {
+            System.out.println("proxy server: processes only "
+                                   + "CONNECT method requests, recieved: "
+                                   + statusLine);
         }
     }
 
     private void respondForConnect(boolean needAuth) throws Exception {
 
-	OutputStream out = clientSocket.getOutputStream();
-	PrintWriter pout = new PrintWriter(out);
+        OutputStream out = clientSocket.getOutputStream();
+        PrintWriter pout = new PrintWriter(out);
 
-	if (needAuth) {
+        if (needAuth) {
             pout.println("HTTP/1.1 407 Proxy Auth Required");
             pout.println("Proxy-Authenticate: Basic realm=\"WallyWorld\"");
             pout.println();
             pout.flush();
-	    out.close();
-	} else {
+            out.close();
+        } else {
             pout.println("HTTP/1.1 200 OK");
             pout.println();
             pout.flush();
-	}
+        }
     }
 
     private void restart() throws IOException {
@@ -179,20 +179,20 @@ public class ProxyTunnelServer extends Thread {
     private void doTunnel() throws Exception {
 
         Socket serverSocket = new Socket(serverInetAddr, serverPort);
-	ProxyTunnel clientToServer = new ProxyTunnel(
-				clientSocket, serverSocket);
-	ProxyTunnel serverToClient = new ProxyTunnel(
-				serverSocket, clientSocket);
-	clientToServer.start();
-	serverToClient.start();
+        ProxyTunnel clientToServer = new ProxyTunnel(
+                                clientSocket, serverSocket);
+        ProxyTunnel serverToClient = new ProxyTunnel(
+                                serverSocket, clientSocket);
+        clientToServer.start();
+        serverToClient.start();
         System.out.println("Proxy: Started tunneling.......");
 
-	clientToServer.join();
-	serverToClient.join();
-	System.out.println("Proxy: Finished tunneling........");
+        clientToServer.join();
+        serverToClient.join();
+        System.out.println("Proxy: Finished tunneling........");
 
-	clientToServer.close();
-	serverToClient.close();
+        clientToServer.close();
+        serverToClient.close();
     }
 
     /*
@@ -201,82 +201,82 @@ public class ProxyTunnelServer extends Thread {
      * socket, until both sockets are open and EOF has not been received.
      */
     class ProxyTunnel extends Thread {
-	Socket sockIn;
-	Socket sockOut;
-	InputStream input;
-	OutputStream output;
+        Socket sockIn;
+        Socket sockOut;
+        InputStream input;
+        OutputStream output;
 
-	public ProxyTunnel(Socket sockIn, Socket sockOut)
-	throws Exception {
-	    this.sockIn = sockIn;
-	    this.sockOut = sockOut;
-	    input = sockIn.getInputStream();
-	    output = sockOut.getOutputStream();
-	}
+        public ProxyTunnel(Socket sockIn, Socket sockOut)
+        throws Exception {
+            this.sockIn = sockIn;
+            this.sockOut = sockOut;
+            input = sockIn.getInputStream();
+            output = sockOut.getOutputStream();
+        }
 
-	public void run() {
-	    int BUFFER_SIZE = 400;
-	    byte[] buf = new byte[BUFFER_SIZE];
-	    int bytesRead = 0;
-	    int count = 0;  // keep track of the amount of data transfer
+        public void run() {
+            int BUFFER_SIZE = 400;
+            byte[] buf = new byte[BUFFER_SIZE];
+            int bytesRead = 0;
+            int count = 0;  // keep track of the amount of data transfer
 
-	    try {
-		while ((bytesRead = input.read(buf)) >= 0) {
-		    output.write(buf, 0, bytesRead);
-		    output.flush();
-		    count += bytesRead;
-		}
-	    } catch (IOException e) {
-		/*
-		 * The peer end has closed the connection
-		 * we will close the tunnel
-		 */
-		close();
-	      }
-	}
+            try {
+                while ((bytesRead = input.read(buf)) >= 0) {
+                    output.write(buf, 0, bytesRead);
+                    output.flush();
+                    count += bytesRead;
+                }
+            } catch (IOException e) {
+                /*
+                 * The peer end has closed the connection
+                 * we will close the tunnel
+                 */
+                close();
+              }
+        }
 
-	public void close() {
-	    try {
-		if (!sockIn.isClosed())
-		    sockIn.close();
-		if (!sockOut.isClosed())
-		    sockOut.close();
-	    } catch (IOException ignored) { }
-	}
+        public void close() {
+            try {
+                if (!sockIn.isClosed())
+                    sockIn.close();
+                if (!sockOut.isClosed())
+                    sockOut.close();
+            } catch (IOException ignored) { }
+        }
     }
 
     /*
      ***************************************************************
-     *			helper methods follow
+     *                  helper methods follow
      ***************************************************************
      */
 
-    /* 
+    /*
      * This method retrieves the hostname and port of the destination
      * that the connect request wants to establish a tunnel for
      * communication.
      * The input, connectStr is of the form:
-     * 				CONNECT server-name:server-port HTTP/1.x
+     *                          CONNECT server-name:server-port HTTP/1.x
      */
     private void retrieveConnectInfo(String connectStr) throws Exception {
 
-    	int starti;
-	int endi;
-	String connectInfo;
-	String serverName = null;
-	try {
-	    starti = connectStr.indexOf(' ');
-	    endi = connectStr.lastIndexOf(' ');
-	    connectInfo = connectStr.substring(starti+1, endi).trim();
-	    // retrieve server name and port
-	    endi = connectInfo.indexOf(':');
+        int starti;
+        int endi;
+        String connectInfo;
+        String serverName = null;
+        try {
+            starti = connectStr.indexOf(' ');
+            endi = connectStr.lastIndexOf(' ');
+            connectInfo = connectStr.substring(starti+1, endi).trim();
+            // retrieve server name and port
+            endi = connectInfo.indexOf(':');
             serverName = connectInfo.substring(0, endi);
-	    serverPort = Integer.parseInt(connectInfo.substring(endi+1));
-	} catch (Exception e) {
-	    throw new IOException("Proxy recieved a request: "
-					+ connectStr);
-	  }
-	serverInetAddr = InetAddress.getByName(serverName);
+            serverPort = Integer.parseInt(connectInfo.substring(endi+1));
+        } catch (Exception e) {
+            throw new IOException("Proxy recieved a request: "
+                                        + connectStr);
+          }
+        serverInetAddr = InetAddress.getByName(serverName);
     }
 
     public int getPort() {
@@ -285,24 +285,24 @@ public class ProxyTunnelServer extends Thread {
 
     /*
      * do "basic" authentication, authInfo is of the form:
-     *					Basic <encoded username":"password>
+     *                                  Basic <encoded username":"password>
      * reference RFC 2617
      */
     private boolean authenticate(String authInfo) throws IOException {
-	boolean matched = false;
+        boolean matched = false;
         try {
             authInfo.trim();
             int ind = authInfo.indexOf(' ');
-	    String recvdUserPlusPass = authInfo.substring(ind + 1).trim();
-	    // extract encoded (username:passwd
-	    if (userPlusPass.equals(
-				new String(
-				(new sun.misc.BASE64Decoder()).
-				decodeBuffer(recvdUserPlusPass)
-				))) {
-		matched = true;
-	    }
-	} catch (Exception e) {
+            String recvdUserPlusPass = authInfo.substring(ind + 1).trim();
+            // extract encoded (username:passwd
+            if (userPlusPass.equals(
+                                new String(
+                                (new sun.misc.BASE64Decoder()).
+                                decodeBuffer(recvdUserPlusPass)
+                                ))) {
+                matched = true;
+            }
+        } catch (Exception e) {
               throw new IOException(
                 "Proxy received invalid Proxy-Authorization value: "
                  + authInfo);

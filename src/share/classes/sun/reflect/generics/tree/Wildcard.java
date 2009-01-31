@@ -38,21 +38,21 @@ public class Wildcard implements TypeArgument {
 
     private static final FieldTypeSignature[] emptyBounds = new FieldTypeSignature[0];
 
-    public static Wildcard make(FieldTypeSignature[] ubs, 
-				FieldTypeSignature[] lbs) {
-	return new Wildcard(ubs, lbs);
+    public static Wildcard make(FieldTypeSignature[] ubs,
+                                FieldTypeSignature[] lbs) {
+        return new Wildcard(ubs, lbs);
     }
 
     public FieldTypeSignature[] getUpperBounds(){
-	return upperBounds;
+        return upperBounds;
     }
 
     public FieldTypeSignature[] getLowerBounds(){
-	if (lowerBounds.length == 1 && 
-	    lowerBounds[0] == BottomSignature.make())
-	    return emptyBounds;
-	else
-	    return lowerBounds;
+        if (lowerBounds.length == 1 &&
+            lowerBounds[0] == BottomSignature.make())
+            return emptyBounds;
+        else
+            return lowerBounds;
     }
 
     public void accept(TypeTreeVisitor<?> v){v.visitWildcard(this);}

@@ -168,7 +168,7 @@ OGLVertexCache_InitMaskCache()
                             OGLVC_MASK_CACHE_SPECIAL_TILE_Y,
                             OGLVC_MASK_CACHE_TILE_WIDTH,
                             OGLVC_MASK_CACHE_TILE_HEIGHT,
-                            GL_LUMINANCE, GL_UNSIGNED_BYTE, allOnes);        
+                            GL_LUMINANCE, GL_UNSIGNED_BYTE, allOnes);
     }
 
     return JNI_TRUE;

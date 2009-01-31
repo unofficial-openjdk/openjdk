@@ -32,7 +32,7 @@
 #include <Xm/DragCP.h>
 #include "debug_util.h"
 #include "awt.h"
- 
+
 /*
  * awt_motif_getIMStatusHeight is a cut and paste of the ImGetGeo() function
  * found in CDE Motif's Xm/XmIm.c.  It returns the height of the Input Method
@@ -123,17 +123,17 @@ get_iclist(Widget w)
 
     p = w;
     while (!XtIsShell(p))
-	p = XtParent(p);
+        p = XtParent(p);
 
     extData = (XmWidgetExtData)_XmGetWidgetExtData((Widget) p, XmSHELL_EXTENSION);
     if (extData == NULL)
-	return NULL;
+        return NULL;
 
     ve = (XmVendorShellExtObject) extData->widget;
     if ((im_info = (XmImInfo *) ve->vendor.im_info) == NULL)
-	return NULL;
+        return NULL;
     else
-	return im_info->iclist;
+        return im_info->iclist;
 }
 
 int32_t
@@ -158,13 +158,13 @@ awt_motif_getIMStatusHeight(Widget vw, jobject tc)
     ve = (XmVendorShellExtObject) extData->widget;
 
     if ((icp = get_iclist(vw)) == NULL) {
-	ve->vendor.im_height = 0;
-	return 0;
+        ve->vendor.im_height = 0;
+        return 0;
     }
     im_info = (XmImInfo *) ve->vendor.im_info;
     if (im_info->xic == NULL) {
-	ve->vendor.im_height = 0;
-	return 0;
+        ve->vendor.im_height = 0;
+        return 0;
     }
     status_vlist[0].name = XNFontSet;
     status_vlist[1].name = NULL;
@@ -179,98 +179,98 @@ awt_motif_getIMStatusHeight(Widget vw, jobject tc)
     im_info->preedit_width = 0;
     im_info->preedit_height = 0;
     for (; icp != NULL; icp = icp->next) {
-	if (im_info->input_style & XIMStatusArea) {
-	    if (icp->status_height == 0) {
-		char *ret;
+        if (im_info->input_style & XIMStatusArea) {
+            if (icp->status_height == 0) {
+                char *ret;
 
-		if (icp->font_list == NO_ARG_VAL ||
-		    (fss = extract_fontset((XmFontList) icp->font_list)) == NULL)
-		    continue;
+                if (icp->font_list == NO_ARG_VAL ||
+                    (fss = extract_fontset((XmFontList) icp->font_list)) == NULL)
+                    continue;
 
-		status_vlist[0].value = (XtArgVal) fss;
-		XSetICValues(im_info->xic,
-			     XNStatusAttributes, &status_vlist[0],
-			     NULL);
+                status_vlist[0].value = (XtArgVal) fss;
+                XSetICValues(im_info->xic,
+                             XNStatusAttributes, &status_vlist[0],
+                             NULL);
 
-		xic_vlist[0].value = (XtArgVal) & rp;
-		ret = XGetICValues(im_info->xic,
-				   XNStatusAttributes, &xic_vlist[0],
-				   NULL);
+                xic_vlist[0].value = (XtArgVal) & rp;
+                ret = XGetICValues(im_info->xic,
+                                   XNStatusAttributes, &xic_vlist[0],
+                                   NULL);
 
-		if (ret) {
-		    /* Cannot obtain XIC value. IM server may be gone. */
-		    ve->vendor.im_height = 0;
-		    return 0;
-		} else {
-		    icp->status_width = rp->width;
-		    icp->status_height = rp->height;
-		    XFree(rp);
-		}
-	    }
-	    if (icp->status_width > im_info->status_width)
-		im_info->status_width = icp->status_width;
-	    if (icp->status_height > im_info->status_height)
-		im_info->status_height = icp->status_height;
-	}
-	if (im_info->input_style & XIMPreeditArea) {
-	    if (icp->preedit_height == 0) {
-		if (icp->font_list == NO_ARG_VAL ||
-		    (fsp = extract_fontset((XmFontList) icp->font_list)) == NULL)
-		    continue;
+                if (ret) {
+                    /* Cannot obtain XIC value. IM server may be gone. */
+                    ve->vendor.im_height = 0;
+                    return 0;
+                } else {
+                    icp->status_width = rp->width;
+                    icp->status_height = rp->height;
+                    XFree(rp);
+                }
+            }
+            if (icp->status_width > im_info->status_width)
+                im_info->status_width = icp->status_width;
+            if (icp->status_height > im_info->status_height)
+                im_info->status_height = icp->status_height;
+        }
+        if (im_info->input_style & XIMPreeditArea) {
+            if (icp->preedit_height == 0) {
+                if (icp->font_list == NO_ARG_VAL ||
+                    (fsp = extract_fontset((XmFontList) icp->font_list)) == NULL)
+                    continue;
 
-		preedit_vlist[0].value = (XtArgVal) fsp;
-		XSetICValues(im_info->xic,
-			     XNPreeditAttributes, &preedit_vlist[0],
-			     NULL);
+                preedit_vlist[0].value = (XtArgVal) fsp;
+                XSetICValues(im_info->xic,
+                             XNPreeditAttributes, &preedit_vlist[0],
+                             NULL);
 
-		xic_vlist[0].value = (XtArgVal) & rp;
-		XGetICValues(im_info->xic,
-			     XNPreeditAttributes, &xic_vlist[0],
-			     NULL);
+                xic_vlist[0].value = (XtArgVal) & rp;
+                XGetICValues(im_info->xic,
+                             XNPreeditAttributes, &xic_vlist[0],
+                             NULL);
 
-		icp->preedit_width = rp->width;
-		icp->preedit_height = rp->height;
-		XFree(rp);
-	    }
-	    if (icp->preedit_width > im_info->preedit_width)
-		im_info->preedit_width = icp->preedit_width;
-	    if (icp->preedit_height > im_info->preedit_height)
-		im_info->preedit_height = icp->preedit_height;
-	}
+                icp->preedit_width = rp->width;
+                icp->preedit_height = rp->height;
+                XFree(rp);
+            }
+            if (icp->preedit_width > im_info->preedit_width)
+                im_info->preedit_width = icp->preedit_width;
+            if (icp->preedit_height > im_info->preedit_height)
+                im_info->preedit_height = icp->preedit_height;
+        }
     }
 
     if (im_info->current != NULL && (fss != NULL || fsp != NULL)) {
-	if (im_info->current->font_list != NO_ARG_VAL &&
-	    (fs = extract_fontset((XmFontList) im_info->current->font_list))
-	    != NULL) {
-	    if (fss != NULL)
-		status_vlist[0].value = (XtArgVal) fs;
-	    else
-		status_vlist[0].name = NULL;
-	    if (fsp != NULL)
-		preedit_vlist[0].value = (XtArgVal) fs;
-	    else
-		preedit_vlist[0].name = NULL;
-	    XSetICValues(im_info->xic,
-			 XNStatusAttributes, &status_vlist[0],
-			 XNPreeditAttributes, &preedit_vlist[0],
-			 NULL);
-	}
+        if (im_info->current->font_list != NO_ARG_VAL &&
+            (fs = extract_fontset((XmFontList) im_info->current->font_list))
+            != NULL) {
+            if (fss != NULL)
+                status_vlist[0].value = (XtArgVal) fs;
+            else
+                status_vlist[0].name = NULL;
+            if (fsp != NULL)
+                preedit_vlist[0].value = (XtArgVal) fs;
+            else
+                preedit_vlist[0].name = NULL;
+            XSetICValues(im_info->xic,
+                         XNStatusAttributes, &status_vlist[0],
+                         XNPreeditAttributes, &preedit_vlist[0],
+                         NULL);
+        }
     }
     if (im_info->status_height > im_info->preedit_height)
-	height = im_info->status_height;
+        height = im_info->status_height;
     else
-	height = im_info->preedit_height;
+        height = im_info->preedit_height;
     old_height = ve->vendor.im_height;
     if (height)
-	height += SEPARATOR_HEIGHT;
+        height += SEPARATOR_HEIGHT;
 
     ve->vendor.im_height = height;
 
     XtSetArg(args[0], XtNbaseHeight, &base_height);
     XtGetValues(vw, args, 1);
     if (base_height < 0)
-	base_height = 0;
+        base_height = 0;
     XtSetArg(args[0], XtNbaseHeight, base_height);
     XtSetValues(vw, args, 1);
     return height;
@@ -294,52 +294,52 @@ XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc)
 
     p = w;
     while (!XtIsShell(p)){
-	p = XtParent(p);
+        p = XtParent(p);
     }
 
     XtVaGetValues(p,
-		  XmNx, &x,
-		  XmNy, &y,
-		  XmNwidth, &width,
-		  XmNheight, &height,
-		  NULL);
+                  XmNx, &x,
+                  XmNy, &y,
+                  XmNwidth, &width,
+                  XmNheight, &height,
+                  NULL);
 
     extData = (XmWidgetExtData)_XmGetWidgetExtData((Widget) p, XmSHELL_EXTENSION);
     if (extData == NULL) {
-	return NULL;
+        return NULL;
     }
 
     ve = (XmVendorShellExtObject) extData->widget;
     if ((im_info = (XmImInfo *) ve->vendor.im_info) == NULL) {
-	return NULL;         
+        return NULL;
     } else
-	icp = im_info->iclist;
+        icp = im_info->iclist;
 
 
     if (icp) {
-	/*
-	 * We hava at least a textfield/textarea in the frame, use the
-	 * first one.
-	 */
-	ssgeometry->x = 0;
-	ssgeometry->y = height - icp->status_height;
-	ssgeometry->width = icp->status_width;
-	ssgeometry->height = icp->status_height;
+        /*
+         * We hava at least a textfield/textarea in the frame, use the
+         * first one.
+         */
+        ssgeometry->x = 0;
+        ssgeometry->y = height - icp->status_height;
+        ssgeometry->width = icp->status_width;
+        ssgeometry->height = icp->status_height;
 
-	/*
-	 * use motif TextComponent's resource
-	 */
-	fg = icp->foreground;
-	bg = icp->background;
-	bpm = icp->background_pixmap;
+        /*
+         * use motif TextComponent's resource
+         */
+        fg = icp->foreground;
+        bg = icp->background;
+        bpm = icp->background_pixmap;
 
-	list = XVaCreateNestedList(0, 
-			XNFontSet, extract_fontset((XmFontList)icp->font_list),
-			XNArea, ssgeometry, 
-			XNBackground, bg, 
-			XNForeground, fg, 
-			XNBackgroundPixmap, bpm, 
-			NULL);
+        list = XVaCreateNestedList(0,
+                        XNFontSet, extract_fontset((XmFontList)icp->font_list),
+                        XNArea, ssgeometry,
+                        XNBackground, bg,
+                        XNForeground, fg,
+                        XNBackgroundPixmap, bpm,
+                        NULL);
    }
     return list ;
 }
@@ -381,8 +381,8 @@ extract_fontset(XmFontList fl)
 
 /*
  * Motif 1.2 requires that an X event passed to XmDragStart is of
- * ButtonPress type. In Motif 2.1 the restriction is relaxed to allow 
- * ButtonPress, ButtonRelease, KeyRelease, KeyPress, MotionNotify events 
+ * ButtonPress type. In Motif 2.1 the restriction is relaxed to allow
+ * ButtonPress, ButtonRelease, KeyRelease, KeyPress, MotionNotify events
  * as drag initiators. Actually the code in Motif 1.2 works okay for these
  * events as well, since it uses only the fields that have the same values
  * in all five event types. To bypass the initial sanity check in
@@ -395,7 +395,7 @@ extract_fontset(XmFontList fl)
  */
 
 #ifdef __solaris__
-void 
+void
 awt_motif_adjustDragTriggerEvent(XEvent* xevent) {
     xevent->type = ButtonPress;
 }
@@ -404,7 +404,7 @@ awt_motif_adjustDragTriggerEvent(XEvent* xevent) {
 static XmDragStartProc do_drag_start = NULL;
 static Widget drag_initiator = NULL;
 
-static void 
+static void
 CheckedDragStart(XmDragContext dc, Widget src, XEvent *event) {
     DASSERT(do_drag_start != NULL);
     DASSERT(drag_initiator != NULL);
@@ -416,11 +416,11 @@ CheckedDragStart(XmDragContext dc, Widget src, XEvent *event) {
     if (src == drag_initiator) {
         do_drag_start(dc, src, event);
     } else {
-	/* 
-	 * This is the last chance to destroy the XmDragContext widget.
-	 * NOTE: We rely on the fact that Motif 1.2 never uses the pointer
-	 * to XmDragContext object returned from XmDragStart.
-	 */
+        /*
+         * This is the last chance to destroy the XmDragContext widget.
+         * NOTE: We rely on the fact that Motif 1.2 never uses the pointer
+         * to XmDragContext object returned from XmDragStart.
+         */
         XtDestroyWidget(dc);
     }
 }
@@ -433,4 +433,3 @@ awt_motif_enableSingleDragInitiator(Widget w) {
     DASSERT(do_drag_start != NULL);
     xmDragContextClassRec.drag_class.start = (XmDragStartProc)CheckedDragStart;
 }
-

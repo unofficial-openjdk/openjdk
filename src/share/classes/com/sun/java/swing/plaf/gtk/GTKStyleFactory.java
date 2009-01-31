@@ -44,13 +44,13 @@ class GTKStyleFactory extends SynthStyleFactory {
      * differentiate similar styles.
      */
     private final Map<Object, GTKStyle> stylesCache;
-    
+
     private Font defaultFont;
-    
+
     GTKStyleFactory() {
         stylesCache = new HashMap<Object, GTKStyle>();
     }
-    
+
     /**
      * Returns the <code>GTKStyle</code> to use based on the
      * <code>Region</code> id
@@ -103,7 +103,7 @@ class GTKStyleFactory extends SynthStyleFactory {
             result = new GTKStyle(defaultFont, wt);
             stylesCache.put(key, result);
         }
-        
+
         return result;
     }
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,39 +29,39 @@ public final class Impl2_Stub
     implements Pong
 {
     private static final long serialVersionUID = 2;
-    
+
     private static java.lang.reflect.Method $method_pong_0;
-    
+
     static {
-	try {
-	    $method_pong_0 = Pong.class.getMethod("pong", new java.lang.Class[] {});
-	} catch (java.lang.NoSuchMethodException e) {
-	    throw new java.lang.NoSuchMethodError(
-		"stub class initialization failed");
-	}
+        try {
+            $method_pong_0 = Pong.class.getMethod("pong", new java.lang.Class[] {});
+        } catch (java.lang.NoSuchMethodException e) {
+            throw new java.lang.NoSuchMethodError(
+                "stub class initialization failed");
+        }
     }
-    
+
     // constructors
     public Impl2_Stub(java.rmi.server.RemoteRef ref) {
-	super(ref);
+        super(ref);
     }
-    
+
     // methods from remote interfaces
-    
+
     // implementation of pong()
     public void pong()
-	throws PongException, java.rmi.RemoteException
+        throws PongException, java.rmi.RemoteException
     {
-	try {
-	    ref.invoke(this, $method_pong_0, null, -5941237182396893426L);
-	} catch (java.lang.RuntimeException e) {
-	    throw e;
-	} catch (java.rmi.RemoteException e) {
-	    throw e;
-	} catch (PongException e) {
-	    throw e;
-	} catch (java.lang.Exception e) {
-	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
-	}
+        try {
+            ref.invoke(this, $method_pong_0, null, -5941237182396893426L);
+        } catch (java.lang.RuntimeException e) {
+            throw e;
+        } catch (java.rmi.RemoteException e) {
+            throw e;
+        } catch (PongException e) {
+            throw e;
+        } catch (java.lang.Exception e) {
+            throw new java.rmi.UnexpectedException("undeclared checked exception", e);
+        }
     }
 }

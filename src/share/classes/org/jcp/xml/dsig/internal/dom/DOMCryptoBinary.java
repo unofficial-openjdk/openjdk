@@ -37,7 +37,7 @@ import org.w3c.dom.Text;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 /**
- * A DOM-based representation of the XML <code>CryptoBinary</code> simple type 
+ * A DOM-based representation of the XML <code>CryptoBinary</code> simple type
  * as defined in the W3C specification for XML-Signature Syntax and Processing.
  * The XML Schema Definition is defined as:
  *
@@ -47,7 +47,7 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
  *   </restriction>
  * </simpleType>
  * </xmp>
- * 
+ *
  * @author Sean Mullan
  */
 public final class DOMCryptoBinary extends DOMStructure {
@@ -92,12 +92,12 @@ public final class DOMCryptoBinary extends DOMStructure {
      * @return the <code>BigInteger</code> that this object contains
      */
     public BigInteger getBigNum() {
-	return bigNum;
+        return bigNum;
     }
 
-    public void marshal(Node parent, String prefix, DOMCryptoContext context) 
-	throws MarshalException {
+    public void marshal(Node parent, String prefix, DOMCryptoContext context)
+        throws MarshalException {
         parent.appendChild
-	    (DOMUtils.getOwnerDocument(parent).createTextNode(value));
+            (DOMUtils.getOwnerDocument(parent).createTextNode(value));
     }
 }

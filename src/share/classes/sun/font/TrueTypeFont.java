@@ -102,9 +102,9 @@ public class TrueTypeFont extends FileFont {
 
 
     class DirectoryEntry {
-	int tag;
-	int offset;
-	int length;
+        int tag;
+        int offset;
+        int length;
     }
 
     /* There is a pool which limits the number of fd's that are in
@@ -116,19 +116,19 @@ public class TrueTypeFont extends FileFont {
      * fd's - its a safeguard.
      */
     private static class TTDisposerRecord implements DisposerRecord {
-	
-	FileChannel channel = null;
 
-	public synchronized void dispose() {
-	    try {
-		if (channel != null) {
-		    channel.close(); 
-		}
-	    } catch (IOException e) {
-	    } finally {
-		channel = null;
-	    }
-	}
+        FileChannel channel = null;
+
+        public synchronized void dispose() {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+            } catch (IOException e) {
+            } finally {
+                channel = null;
+            }
+        }
     }
 
     TTDisposerRecord disposerRecord = new TTDisposerRecord();
@@ -144,8 +144,8 @@ public class TrueTypeFont extends FileFont {
 
     /* number of table entries in the directory/offsets table */
     int numTables;
-    
-    /* The contents of the the directory/offsets table */ 
+
+    /* The contents of the the directory/offsets table */
     DirectoryEntry []tableDirectory;
 
 //     protected byte []gposTable = null;
@@ -155,7 +155,7 @@ public class TrueTypeFont extends FileFont {
 //     protected boolean hintsTabledChecked = false;
 //     protected boolean containsHintsTable = false;
 
-    /* These fields are set from os/2 table info. */ 
+    /* These fields are set from os/2 table info. */
     private boolean supportsJA;
     private boolean supportsCJK;
 
@@ -169,14 +169,14 @@ public class TrueTypeFont extends FileFont {
      * or fails verification,  or there's no usable cmap
      */
     TrueTypeFont(String platname, Object nativeNames, int fIndex,
-		 boolean javaRasterizer)
-	throws FontFormatException {
-	super(platname, nativeNames);
-	useJavaRasterizer = javaRasterizer;
-	fontRank = Font2D.TTF_RANK;
-	verify();
-	init(fIndex);
-	Disposer.addObjectRecord(this, disposerRecord);
+                 boolean javaRasterizer)
+        throws FontFormatException {
+        super(platname, nativeNames);
+        useJavaRasterizer = javaRasterizer;
+        fontRank = Font2D.TTF_RANK;
+        verify();
+        init(fIndex);
+        Disposer.addObjectRecord(this, disposerRecord);
     }
 
     /* Enable natives just for fonts picked up from the platform that
@@ -191,137 +191,137 @@ public class TrueTypeFont extends FileFont {
      * This method is called when creating the first strike for this font.
      */
     protected boolean checkUseNatives() {
-	if (checkedNatives) {
-	    return useNatives;
-	}
-	if (!FontManager.isSolaris || useJavaRasterizer ||
+        if (checkedNatives) {
+            return useNatives;
+        }
+        if (!FontManager.isSolaris || useJavaRasterizer ||
             FontManager.useT2K || nativeNames == null ||
-	    getDirectoryEntry(EBLCTag) != null ||
+            getDirectoryEntry(EBLCTag) != null ||
             GraphicsEnvironment.isHeadless()) {
-	    checkedNatives = true;
+            checkedNatives = true;
             return false; /* useNatives is false */
-	} else if (nativeNames instanceof String) {
+        } else if (nativeNames instanceof String) {
             String name = (String)nativeNames;
             /* Don't do do this for Latin fonts */
             if (name.indexOf("8859") > 0) {
-		checkedNatives = true;
-		return false;
+                checkedNatives = true;
+                return false;
             } else if (NativeFont.hasExternalBitmaps(name)) {
-		nativeFonts = new NativeFont[1];
-		try {
-		    nativeFonts[0] = new NativeFont(name, true);
-		    /* If reach here we have an non-latin font that has
-		     * external bitmaps and we successfully created it.
-		     */
-		    useNatives = true;
-		} catch (FontFormatException e) {
-		    nativeFonts = null;
-		}
+                nativeFonts = new NativeFont[1];
+                try {
+                    nativeFonts[0] = new NativeFont(name, true);
+                    /* If reach here we have an non-latin font that has
+                     * external bitmaps and we successfully created it.
+                     */
+                    useNatives = true;
+                } catch (FontFormatException e) {
+                    nativeFonts = null;
+                }
             }
-	} else if (nativeNames instanceof String[]) {
-	    String[] natNames = (String[])nativeNames;
-	    int numNames = natNames.length;
-	    boolean externalBitmaps = false;
+        } else if (nativeNames instanceof String[]) {
+            String[] natNames = (String[])nativeNames;
+            int numNames = natNames.length;
+            boolean externalBitmaps = false;
             for (int nn = 0; nn < numNames; nn++) {
-		if (natNames[nn].indexOf("8859") > 0) {
-		    checkedNatives = true;
-		    return false;
-		} else if (NativeFont.hasExternalBitmaps(natNames[nn])) {
+                if (natNames[nn].indexOf("8859") > 0) {
+                    checkedNatives = true;
+                    return false;
+                } else if (NativeFont.hasExternalBitmaps(natNames[nn])) {
                     externalBitmaps = true;
                 }
             }
-            if (!externalBitmaps) { 
-		checkedNatives = true;
-		return false;
+            if (!externalBitmaps) {
+                checkedNatives = true;
+                return false;
             }
-	    useNatives = true;
-       	    nativeFonts = new NativeFont[numNames];
+            useNatives = true;
+            nativeFonts = new NativeFont[numNames];
             for (int nn = 0; nn < numNames; nn++) {
-		try {
-		    nativeFonts[nn] = new NativeFont(natNames[nn], true);
-	   	} catch (FontFormatException e) {
+                try {
+                    nativeFonts[nn] = new NativeFont(natNames[nn], true);
+                } catch (FontFormatException e) {
                     useNatives = false;
-		    nativeFonts = null;
-		}
+                    nativeFonts = null;
+                }
             }
-	}
-	if (useNatives) {
-	    glyphToCharMap = new char[getMapper().getNumGlyphs()];
-	}
-	checkedNatives = true;
-	return useNatives;
+        }
+        if (useNatives) {
+            glyphToCharMap = new char[getMapper().getNumGlyphs()];
+        }
+        checkedNatives = true;
+        return useNatives;
     }
 
 
     /* This is intended to be called, and the returned value used,
-     * from within a block synchronized on this font object. 
+     * from within a block synchronized on this font object.
      * ie the channel returned may be nulled out at any time by "close()"
      * unless the caller holds a lock.
      * Deadlock warning: FontManager.addToPool(..) acquires a global lock,
-     * which means nested locks may be in effect. 
+     * which means nested locks may be in effect.
      */
     private synchronized FileChannel open() throws FontFormatException {
-	if (disposerRecord.channel == null) {
+        if (disposerRecord.channel == null) {
             if (FontManager.logging) {
                 FontManager.logger.info("open TTF: " + platName);
             }
-	    try {
-		RandomAccessFile raf = (RandomAccessFile)
-		java.security.AccessController.doPrivileged(
-	            new java.security.PrivilegedAction() {
-			public Object run() {
-			    try {
-				return new RandomAccessFile(platName, "r");
-			    } catch (FileNotFoundException ffne) {
-			    }
-			    return null;
-		    }
-	        });
-		disposerRecord.channel = raf.getChannel();
-		fileSize = (int)disposerRecord.channel.size();
-		FontManager.addToPool(this);
-	    } catch (NullPointerException e) {
-		close();
-		throw new FontFormatException(e.toString());
-	    } catch (ClosedChannelException e) {
-		/* NIO I/O is interruptible, recurse to retry operation.
-		 * The call to channel.size() above can throw this exception.
-		 * Clear interrupts before recursing in case NIO didn't.
-		 * Note that close() sets disposerRecord.channel to null.
-		 */
-		Thread.interrupted();
-		close();
-		open();
-	    } catch (IOException e) {
-		close();
-		throw new FontFormatException(e.toString());
-	    }
-	}
-	return disposerRecord.channel;
+            try {
+                RandomAccessFile raf = (RandomAccessFile)
+                java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction() {
+                        public Object run() {
+                            try {
+                                return new RandomAccessFile(platName, "r");
+                            } catch (FileNotFoundException ffne) {
+                            }
+                            return null;
+                    }
+                });
+                disposerRecord.channel = raf.getChannel();
+                fileSize = (int)disposerRecord.channel.size();
+                FontManager.addToPool(this);
+            } catch (NullPointerException e) {
+                close();
+                throw new FontFormatException(e.toString());
+            } catch (ClosedChannelException e) {
+                /* NIO I/O is interruptible, recurse to retry operation.
+                 * The call to channel.size() above can throw this exception.
+                 * Clear interrupts before recursing in case NIO didn't.
+                 * Note that close() sets disposerRecord.channel to null.
+                 */
+                Thread.interrupted();
+                close();
+                open();
+            } catch (IOException e) {
+                close();
+                throw new FontFormatException(e.toString());
+            }
+        }
+        return disposerRecord.channel;
     }
 
     protected synchronized void close() {
-	disposerRecord.dispose();
+        disposerRecord.dispose();
     }
- 
-    
+
+
     int readBlock(ByteBuffer buffer, int offset, int length) {
-	int bread = 0;
-	try {
-	    synchronized (this) {
-		if (disposerRecord.channel == null) {
-		    open();
-		}
-		if (offset + length > fileSize) {
-		    if (offset >= fileSize) {
-                        /* Since the caller ensures that offset is < fileSize 
-                         * this condition suggests that fileSize is now 
-                         * different than the value we originally provided 
-                         * to native when the scaler was created. 
-                         * Also fileSize is updated every time we 
-                         * open() the file here, but in native the value 
-                         * isn't updated. If the file has changed whilst we 
-                         * are executing we want to bail, not spin. 
+        int bread = 0;
+        try {
+            synchronized (this) {
+                if (disposerRecord.channel == null) {
+                    open();
+                }
+                if (offset + length > fileSize) {
+                    if (offset >= fileSize) {
+                        /* Since the caller ensures that offset is < fileSize
+                         * this condition suggests that fileSize is now
+                         * different than the value we originally provided
+                         * to native when the scaler was created.
+                         * Also fileSize is updated every time we
+                         * open() the file here, but in native the value
+                         * isn't updated. If the file has changed whilst we
+                         * are executing we want to bail, not spin.
                          */
                         if (FontManager.logging) {
                             String msg = "Read offset is " + offset +
@@ -330,15 +330,15 @@ public class TrueTypeFont extends FileFont {
                             FontManager.logger.severe(msg);
                         }
                         return -1;
-		    } else {
-			length = fileSize - offset;
-		    }
-		}
-		buffer.clear();
+                    } else {
+                        length = fileSize - offset;
+                    }
+                }
+                buffer.clear();
                 disposerRecord.channel.position(offset);
                 while (bread < length) {
-		    int cnt = disposerRecord.channel.read(buffer);
-		    if (cnt == -1) {
+                    int cnt = disposerRecord.channel.read(buffer);
+                    if (cnt == -1) {
                         String msg = "Unexpected EOF " + this;
                         int currSize = (int)disposerRecord.channel.size();
                         if (currSize != fileSize) {
@@ -369,29 +369,29 @@ public class TrueTypeFont extends FileFont {
                             bread = -1;
                         }
                         throw new IOException(msg);
-		    }
-		    bread += cnt;
-		}
-		buffer.flip();
+                    }
+                    bread += cnt;
+                }
+                buffer.flip();
                 if (bread > length) { // possible if buffer.size() > length
                     bread = length;
                 }
-	    }
- 	} catch (FontFormatException e) {
+            }
+        } catch (FontFormatException e) {
             if (FontManager.logging) {
                 FontManager.logger.log(Level.SEVERE,
                                        "While reading " + platName, e);
             }
             bread = -1; // signal EOF
             deregisterFontAndClearStrikeCache();
-	} catch (ClosedChannelException e) {
-	    /* NIO I/O is interruptible, recurse to retry operation.
-	     * Clear interrupts before recursing in case NIO didn't.
-	     */
-	    Thread.interrupted();
-	    close();
-	    return readBlock(buffer, offset, length);
-	} catch (IOException e) {
+        } catch (ClosedChannelException e) {
+            /* NIO I/O is interruptible, recurse to retry operation.
+             * Clear interrupts before recursing in case NIO didn't.
+             */
+            Thread.interrupted();
+            close();
+            return readBlock(buffer, offset, length);
+        } catch (IOException e) {
             /* If we did not read any bytes at all and the exception is
              * not a recoverable one (ie is not ClosedChannelException) then
              * we should indicate that there is no point in re-trying.
@@ -407,42 +407,42 @@ public class TrueTypeFont extends FileFont {
                 bread = -1; // signal EOF
                 deregisterFontAndClearStrikeCache();
             }
-	}
-	return bread;
+        }
+        return bread;
     }
-   
+
     ByteBuffer readBlock(int offset, int length) {
 
-	ByteBuffer buffer = ByteBuffer.allocate(length);
-	try {
-	    synchronized (this) {
-		if (disposerRecord.channel == null) {
-		    open();
-		}
-		if (offset + length > fileSize) {
-		    if (offset > fileSize) {
-			return null; // assert?
-		    } else {
-			buffer = ByteBuffer.allocate(fileSize-offset);
-		    }
-		}
-		disposerRecord.channel.position(offset);
-		disposerRecord.channel.read(buffer);
-		buffer.flip();
-	    }
-	} catch (FontFormatException e) {
-	    return null;
-	} catch (ClosedChannelException e) {
-	    /* NIO I/O is interruptible, recurse to retry operation.
-	     * Clear interrupts before recursing in case NIO didn't.
-	     */
-	    Thread.interrupted();
-	    close();
-	    readBlock(buffer, offset, length);
-	} catch (IOException e) {
-	    return null;
-	}
-	return buffer;
+        ByteBuffer buffer = ByteBuffer.allocate(length);
+        try {
+            synchronized (this) {
+                if (disposerRecord.channel == null) {
+                    open();
+                }
+                if (offset + length > fileSize) {
+                    if (offset > fileSize) {
+                        return null; // assert?
+                    } else {
+                        buffer = ByteBuffer.allocate(fileSize-offset);
+                    }
+                }
+                disposerRecord.channel.position(offset);
+                disposerRecord.channel.read(buffer);
+                buffer.flip();
+            }
+        } catch (FontFormatException e) {
+            return null;
+        } catch (ClosedChannelException e) {
+            /* NIO I/O is interruptible, recurse to retry operation.
+             * Clear interrupts before recursing in case NIO didn't.
+             */
+            Thread.interrupted();
+            close();
+            readBlock(buffer, offset, length);
+        } catch (IOException e) {
+            return null;
+        }
+        return buffer;
     }
 
     /* This is used by native code which can't allocate a direct byte
@@ -452,18 +452,18 @@ public class TrueTypeFont extends FileFont {
      * us anything if its never used/called.
      */
     byte[] readBytes(int offset, int length) {
-	ByteBuffer buffer = readBlock(offset, length);
-	if (buffer.hasArray()) {
-	    return buffer.array();
-	} else {
-	    byte[] bufferBytes = new byte[buffer.limit()];
-	    buffer.get(bufferBytes);
-	    return bufferBytes;
-	}
+        ByteBuffer buffer = readBlock(offset, length);
+        if (buffer.hasArray()) {
+            return buffer.array();
+        } else {
+            byte[] bufferBytes = new byte[buffer.limit()];
+            buffer.get(bufferBytes);
+            return bufferBytes;
+        }
     }
 
     private void verify() throws FontFormatException {
-	open();	
+        open();
     }
 
     /* sizes, in bytes, of TT/TTC header records */
@@ -472,68 +472,68 @@ public class TrueTypeFont extends FileFont {
     private static final int DIRECTORYENTRYSIZE = 16;
 
     protected void init(int fIndex) throws FontFormatException  {
-	int headerOffset = 0;
-	ByteBuffer buffer = readBlock(0, TTCHEADERSIZE);
-	try {
-	    switch (buffer.getInt()) {
+        int headerOffset = 0;
+        ByteBuffer buffer = readBlock(0, TTCHEADERSIZE);
+        try {
+            switch (buffer.getInt()) {
 
-	    case ttcfTag:
-		buffer.getInt(); // skip TTC version ID
-		directoryCount = buffer.getInt();
-		if (fIndex >= directoryCount) {
-		    throw new FontFormatException("Bad collection index");
-		}
-		fontIndex = fIndex;
-		buffer = readBlock(TTCHEADERSIZE+4*fIndex, 4);
-		headerOffset = buffer.getInt();
-		break;
-		
-	    case v1ttTag:
-	    case trueTag:
-		break;
+            case ttcfTag:
+                buffer.getInt(); // skip TTC version ID
+                directoryCount = buffer.getInt();
+                if (fIndex >= directoryCount) {
+                    throw new FontFormatException("Bad collection index");
+                }
+                fontIndex = fIndex;
+                buffer = readBlock(TTCHEADERSIZE+4*fIndex, 4);
+                headerOffset = buffer.getInt();
+                break;
 
-	    default:
-		throw new FontFormatException("Unsupported sfnt " + platName);
-	    }
+            case v1ttTag:
+            case trueTag:
+                break;
 
-	    /* Now have the offset of this TT font (possibly within a TTC)
-	     * After the TT version/scaler type field, is the short
-	     * representing the number of tables in the table directory.
-	     * The table directory begins at 12 bytes after the header.
-	     * Each table entry is 16 bytes long (4 32-bit ints)
-	     */
-	    buffer = readBlock(headerOffset+4, 2);
-	    numTables = buffer.getShort();
-	    directoryOffset = headerOffset+DIRECTORYHEADERSIZE;
-	    ByteBuffer bbuffer = readBlock(directoryOffset,
-					   numTables*DIRECTORYENTRYSIZE);
-	    IntBuffer ibuffer = bbuffer.asIntBuffer();
-	    DirectoryEntry table;
-	    tableDirectory = new DirectoryEntry[numTables];
-	    for (int i=0; i<numTables;i++) {
-		tableDirectory[i] = table = new DirectoryEntry();
-		table.tag   =  ibuffer.get();
-		/* checksum */ ibuffer.get();
-		table.offset = ibuffer.get();
-		table.length = ibuffer.get();
-		if (table.offset + table.length > fileSize) {
-		    throw new FontFormatException("bad table, tag="+table.tag);
-		}
-	    }
-	    initNames();
-	} catch (Exception e) {
-	    if (FontManager.logging) {
-		FontManager.logger.severe(e.toString());
-	    }
-	    if (e instanceof FontFormatException) {
-		throw (FontFormatException)e;
-	    } else {
-		throw new FontFormatException(e.toString());
-	    }
-	}
-	if (familyName == null || fullName == null) {
-	    throw new FontFormatException("Font name not found");
-	}
+            default:
+                throw new FontFormatException("Unsupported sfnt " + platName);
+            }
+
+            /* Now have the offset of this TT font (possibly within a TTC)
+             * After the TT version/scaler type field, is the short
+             * representing the number of tables in the table directory.
+             * The table directory begins at 12 bytes after the header.
+             * Each table entry is 16 bytes long (4 32-bit ints)
+             */
+            buffer = readBlock(headerOffset+4, 2);
+            numTables = buffer.getShort();
+            directoryOffset = headerOffset+DIRECTORYHEADERSIZE;
+            ByteBuffer bbuffer = readBlock(directoryOffset,
+                                           numTables*DIRECTORYENTRYSIZE);
+            IntBuffer ibuffer = bbuffer.asIntBuffer();
+            DirectoryEntry table;
+            tableDirectory = new DirectoryEntry[numTables];
+            for (int i=0; i<numTables;i++) {
+                tableDirectory[i] = table = new DirectoryEntry();
+                table.tag   =  ibuffer.get();
+                /* checksum */ ibuffer.get();
+                table.offset = ibuffer.get();
+                table.length = ibuffer.get();
+                if (table.offset + table.length > fileSize) {
+                    throw new FontFormatException("bad table, tag="+table.tag);
+                }
+            }
+            initNames();
+        } catch (Exception e) {
+            if (FontManager.logging) {
+                FontManager.logger.severe(e.toString());
+            }
+            if (e instanceof FontFormatException) {
+                throw (FontFormatException)e;
+            } else {
+                throw new FontFormatException(e.toString());
+            }
+        }
+        if (familyName == null || fullName == null) {
+            throw new FontFormatException("Font name not found");
+        }
         /* The os2_Table is needed to gather some info, but we don't
          * want to keep it around (as a field) so obtain it once and
          * pass it to the code that needs it.
@@ -562,43 +562,43 @@ public class TrueTypeFont extends FileFont {
      * supported locales, so we only map the first of these fields.
      */
     static final String encoding_mapping[] = {
-	"cp1252",    /*  0:Latin 1  */
-	"cp1250",    /*  1:Latin 2  */
-	"cp1251",    /*  2:Cyrillic */
-	"cp1253",    /*  3:Greek    */
-	"cp1254",    /*  4:Turkish/Latin 5  */
-	"cp1255",    /*  5:Hebrew   */
-	"cp1256",    /*  6:Arabic   */
-	"cp1257",    /*  7:Windows Baltic   */
-	"",          /*  8:reserved for alternate ANSI */
-	"",          /*  9:reserved for alternate ANSI */
-	"",          /* 10:reserved for alternate ANSI */
-	"",          /* 11:reserved for alternate ANSI */
-	"",          /* 12:reserved for alternate ANSI */
-	"",          /* 13:reserved for alternate ANSI */
-	"",          /* 14:reserved for alternate ANSI */
-	"",          /* 15:reserved for alternate ANSI */
-	"ms874",     /* 16:Thai     */
-	"ms932",     /* 17:JIS/Japanese */
-	"gbk",       /* 18:PRC GBK Cp950  */
-	"ms949",     /* 19:Korean Extended Wansung */
-	"ms950",     /* 20:Chinese (Taiwan, Hongkong, Macau) */
-	"ms1361",    /* 21:Korean Johab */
-	"",          /* 22 */
-	"",          /* 23 */
-	"",          /* 24 */
-	"",          /* 25 */
-	"",          /* 26 */
-	"",          /* 27 */
-	"",          /* 28 */
-	"",          /* 29 */
-	"",          /* 30 */
-	"",          /* 31 */
+        "cp1252",    /*  0:Latin 1  */
+        "cp1250",    /*  1:Latin 2  */
+        "cp1251",    /*  2:Cyrillic */
+        "cp1253",    /*  3:Greek    */
+        "cp1254",    /*  4:Turkish/Latin 5  */
+        "cp1255",    /*  5:Hebrew   */
+        "cp1256",    /*  6:Arabic   */
+        "cp1257",    /*  7:Windows Baltic   */
+        "",          /*  8:reserved for alternate ANSI */
+        "",          /*  9:reserved for alternate ANSI */
+        "",          /* 10:reserved for alternate ANSI */
+        "",          /* 11:reserved for alternate ANSI */
+        "",          /* 12:reserved for alternate ANSI */
+        "",          /* 13:reserved for alternate ANSI */
+        "",          /* 14:reserved for alternate ANSI */
+        "",          /* 15:reserved for alternate ANSI */
+        "ms874",     /* 16:Thai     */
+        "ms932",     /* 17:JIS/Japanese */
+        "gbk",       /* 18:PRC GBK Cp950  */
+        "ms949",     /* 19:Korean Extended Wansung */
+        "ms950",     /* 20:Chinese (Taiwan, Hongkong, Macau) */
+        "ms1361",    /* 21:Korean Johab */
+        "",          /* 22 */
+        "",          /* 23 */
+        "",          /* 24 */
+        "",          /* 25 */
+        "",          /* 26 */
+        "",          /* 27 */
+        "",          /* 28 */
+        "",          /* 29 */
+        "",          /* 30 */
+        "",          /* 31 */
     };
 
     /* This maps two letter language codes to a Windows code page.
      * Note that eg Cp1252 (the first subarray) is not exactly the same as
-     * Latin-1 since Windows code pages are do not necessarily correspond. 
+     * Latin-1 since Windows code pages are do not necessarily correspond.
      * There are two codepages for zh and ko so if a font supports
      * only one of these ranges then we need to distinguish based on
      * country. So far this only seems to matter for zh.
@@ -740,14 +740,14 @@ public class TrueTypeFont extends FileFont {
             encoding = "ms950";
         }
 
-	ByteBuffer buffer = getTableBuffer(os_2Tag);
-	/* required info is at offsets 78 and 82 */
-	if (buffer == null || buffer.capacity() < 86) {
-	    return false;
-	}
- 
-	int range1 = buffer.getInt(78); /* ulCodePageRange1 */
-	int range2 = buffer.getInt(82); /* ulCodePageRange2 */
+        ByteBuffer buffer = getTableBuffer(os_2Tag);
+        /* required info is at offsets 78 and 82 */
+        if (buffer == null || buffer.capacity() < 86) {
+            return false;
+        }
+
+        int range1 = buffer.getInt(78); /* ulCodePageRange1 */
+        int range2 = buffer.getInt(82); /* ulCodePageRange2 */
 
         /* This test is too stringent for Arial on Solaris (and perhaps
          * other fonts). Arial has at least one reserved bit set for an
@@ -757,23 +757,23 @@ public class TrueTypeFont extends FileFont {
 //             return false;
 //         }
 
-	for (int em=0; em<encoding_mapping.length; em++) {
-	    if (encoding_mapping[em].equals(encoding)) {
-		if (((1 << em) & range1) != 0) {
-		    return true;
-		}
-	    }
-	}
-	return false;
+        for (int em=0; em<encoding_mapping.length; em++) {
+            if (encoding_mapping[em].equals(encoding)) {
+                if (((1 << em) & range1) != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 
-    /* Use info in the os_2Table to test CJK support */ 
+    /* Use info in the os_2Table to test CJK support */
     private void setCJKSupport(ByteBuffer os2Table) {
-	/* required info is in ulong at offset 46 */
+        /* required info is in ulong at offset 46 */
         if (os2Table == null || os2Table.capacity() < 50) {
             return;
-	}
+        }
         int range2 = os2Table.getInt(46); /* ulUnicodeRange2 */
 
         /* Any of these bits set in the 32-63 range indicate a font with
@@ -792,7 +792,7 @@ public class TrueTypeFont extends FileFont {
          */
         supportsJA = ((range2 & 0x60000) != 0);
     }
-        
+
     boolean supportsJA() {
         return supportsJA;
     }
@@ -800,48 +800,48 @@ public class TrueTypeFont extends FileFont {
      ByteBuffer getTableBuffer(int tag) {
         DirectoryEntry entry = null;
 
-	for (int i=0;i<numTables;i++) {
-	    if (tableDirectory[i].tag == tag) {
-		entry = tableDirectory[i];
-		break;
-	    }
-	}
-	if (entry == null || entry.length == 0 ||
-	    entry.offset+entry.length > fileSize) {
-	    return null;
-	}
+        for (int i=0;i<numTables;i++) {
+            if (tableDirectory[i].tag == tag) {
+                entry = tableDirectory[i];
+                break;
+            }
+        }
+        if (entry == null || entry.length == 0 ||
+            entry.offset+entry.length > fileSize) {
+            return null;
+        }
 
-	int bread = 0;
-	ByteBuffer buffer = ByteBuffer.allocate(entry.length);
-	synchronized (this) {
-	    try {
-		if (disposerRecord.channel == null) {
-		    open();
-		}
-		disposerRecord.channel.position(entry.offset);
-		bread = disposerRecord.channel.read(buffer);
-		buffer.flip();
-	    } catch (ClosedChannelException e) {
-		/* NIO I/O is interruptible, recurse to retry operation.
-		 * Clear interrupts before recursing in case NIO didn't.
-		 */
-		Thread.interrupted();
+        int bread = 0;
+        ByteBuffer buffer = ByteBuffer.allocate(entry.length);
+        synchronized (this) {
+            try {
+                if (disposerRecord.channel == null) {
+                    open();
+                }
+                disposerRecord.channel.position(entry.offset);
+                bread = disposerRecord.channel.read(buffer);
+                buffer.flip();
+            } catch (ClosedChannelException e) {
+                /* NIO I/O is interruptible, recurse to retry operation.
+                 * Clear interrupts before recursing in case NIO didn't.
+                 */
+                Thread.interrupted();
                 close();
-		return getTableBuffer(tag);
-	    } catch (IOException e) {
-		return null;
-	    } catch (FontFormatException e) {
-		return null;
-	    }
+                return getTableBuffer(tag);
+            } catch (IOException e) {
+                return null;
+            } catch (FontFormatException e) {
+                return null;
+            }
 
-	    if (bread < entry.length) {
-		return null;
-	    } else {
-		return buffer;
-	    }
-	}
+            if (bread < entry.length) {
+                return null;
+            } else {
+                return buffer;
+            }
+        }
     }
-     
+
     /* NB: is it better to move declaration to Font2D? */
     long getLayoutTableCache() {
         try {
@@ -850,51 +850,51 @@ public class TrueTypeFont extends FileFont {
             return 0L;
         }
     }
-    
+
     byte[] getTableBytes(int tag) {
-	ByteBuffer buffer = getTableBuffer(tag);
-	if (buffer == null) {
-	    return null;
-	} else if (buffer.hasArray()) {
-	    try {
-		return buffer.array();
-	    } catch (Exception re) {
-	    }
-	}
-	byte []data = new byte[getTableSize(tag)];
-	buffer.get(data);
-	return data;
+        ByteBuffer buffer = getTableBuffer(tag);
+        if (buffer == null) {
+            return null;
+        } else if (buffer.hasArray()) {
+            try {
+                return buffer.array();
+            } catch (Exception re) {
+            }
+        }
+        byte []data = new byte[getTableSize(tag)];
+        buffer.get(data);
+        return data;
     }
 
     int getTableSize(int tag) {
-	for (int i=0;i<numTables;i++) {
-	    if (tableDirectory[i].tag == tag) {
-		return tableDirectory[i].length;
-	    }
-	}
-	return 0;
+        for (int i=0;i<numTables;i++) {
+            if (tableDirectory[i].tag == tag) {
+                return tableDirectory[i].length;
+            }
+        }
+        return 0;
     }
 
     int getTableOffset(int tag) {
-	for (int i=0;i<numTables;i++) {
-	    if (tableDirectory[i].tag == tag) {
-		return tableDirectory[i].offset;
-	    }
-	}
-	return 0;
+        for (int i=0;i<numTables;i++) {
+            if (tableDirectory[i].tag == tag) {
+                return tableDirectory[i].offset;
+            }
+        }
+        return 0;
     }
 
     DirectoryEntry getDirectoryEntry(int tag) {
-	for (int i=0;i<numTables;i++) {
-	    if (tableDirectory[i].tag == tag) {
-		return tableDirectory[i];
-	    }
-	}
-	return null;
+        for (int i=0;i<numTables;i++) {
+            if (tableDirectory[i].tag == tag) {
+                return tableDirectory[i];
+            }
+        }
+        return null;
     }
 
     public String getFullName() {
-	return fullName;
+        return fullName;
     }
 
     /* This probably won't get called but is there to support the
@@ -919,44 +919,44 @@ public class TrueTypeFont extends FileFont {
     private static final int fsSelectionBoldBit    = 0x00020;
     private static final int fsSelectionRegularBit = 0x00040;
     private void setStyle(ByteBuffer os_2Table) {
-	/* fsSelection is unsigned short at buffer offset 62 */
-	if (os_2Table == null || os_2Table.capacity() < 64) {
-	    super.setStyle();
-	    return;
-	}
-	int fsSelection = os_2Table.getChar(62) & 0xffff;
-	int italic  = fsSelection & fsSelectionItalicBit;
-	int bold    = fsSelection & fsSelectionBoldBit;
-	int regular = fsSelection & fsSelectionRegularBit;
-// 	System.out.println("platname="+platName+" font="+fullName+
-// 			   " family="+familyName+
-// 			   " R="+regular+" I="+italic+" B="+bold);
-	if (regular!=0 && ((italic|bold)!=0)) {
-	    /* This is inconsistent. Try using the font name algorithm */
-	    super.setStyle();
-	    return;
-	} else if ((regular|italic|bold) == 0) {
-	    /* No style specified. Try using the font name algorithm */
-	    super.setStyle();
-	    return;
-	}
-	switch (bold|italic) {
-	case fsSelectionItalicBit:
-	    style = Font.ITALIC;
-	    break;
-	case fsSelectionBoldBit:
-	    if (FontManager.isSolaris && platName.endsWith("HG-GothicB.ttf")) {
-		/* Workaround for Solaris's use of a JA font that's marked as
-		 * being designed bold, but is used as a PLAIN font.
-		 */
-		style = Font.PLAIN;
-	    } else {
-		style = Font.BOLD;
-	    }
-	    break;
-	case fsSelectionBoldBit|fsSelectionItalicBit:
-	    style = Font.BOLD|Font.ITALIC;
-	}
+        /* fsSelection is unsigned short at buffer offset 62 */
+        if (os_2Table == null || os_2Table.capacity() < 64) {
+            super.setStyle();
+            return;
+        }
+        int fsSelection = os_2Table.getChar(62) & 0xffff;
+        int italic  = fsSelection & fsSelectionItalicBit;
+        int bold    = fsSelection & fsSelectionBoldBit;
+        int regular = fsSelection & fsSelectionRegularBit;
+//      System.out.println("platname="+platName+" font="+fullName+
+//                         " family="+familyName+
+//                         " R="+regular+" I="+italic+" B="+bold);
+        if (regular!=0 && ((italic|bold)!=0)) {
+            /* This is inconsistent. Try using the font name algorithm */
+            super.setStyle();
+            return;
+        } else if ((regular|italic|bold) == 0) {
+            /* No style specified. Try using the font name algorithm */
+            super.setStyle();
+            return;
+        }
+        switch (bold|italic) {
+        case fsSelectionItalicBit:
+            style = Font.ITALIC;
+            break;
+        case fsSelectionBoldBit:
+            if (FontManager.isSolaris && platName.endsWith("HG-GothicB.ttf")) {
+                /* Workaround for Solaris's use of a JA font that's marked as
+                 * being designed bold, but is used as a PLAIN font.
+                 */
+                style = Font.PLAIN;
+            } else {
+                style = Font.BOLD;
+            }
+            break;
+        case fsSelectionBoldBit|fsSelectionItalicBit:
+            style = Font.BOLD|Font.ITALIC;
+        }
     }
 
     private float stSize, stPos, ulSize, ulPos;
@@ -980,7 +980,7 @@ public class TrueTypeFont extends FileFont {
         }
         ShortBuffer sb = postTable.asShortBuffer();
         ulSize = sb.get(5) / (float)upem;
-        ulPos = -sb.get(4) / (float)upem; 
+        ulPos = -sb.get(4) / (float)upem;
     }
 
     public void getStyleMetrics(float pointSize, float[] metrics, int offset) {
@@ -992,8 +992,8 @@ public class TrueTypeFont extends FileFont {
 
     private String makeString(byte[] bytes, int len, short encoding) {
 
-	/* Check for fonts using encodings 2->6 is just for
-	 * some old DBCS fonts, apparently mostly on Solaris.
+        /* Check for fonts using encodings 2->6 is just for
+         * some old DBCS fonts, apparently mostly on Solaris.
          * Some of these fonts encode ascii names as double-byte characters.
          * ie with a leading zero byte for what properly should be a
          * single byte-char.
@@ -1004,98 +1004,98 @@ public class TrueTypeFont extends FileFont {
              bytes = new byte[oldlen];
              len = 0;
              for (int i=0; i<oldlen; i++) {
-                 if (oldbytes[i] != 0) { 
+                 if (oldbytes[i] != 0) {
                      bytes[len++] = oldbytes[i];
                  }
              }
          }
 
-	String charset;
-	switch (encoding) {
-	    case 1:  charset = "UTF-16";  break; // most common case first.
-	    case 0:  charset = "UTF-16";  break; // symbol uses this
-	    case 2:  charset = "SJIS";    break;
-	    case 3:  charset = "GBK";     break;
-	    case 4:  charset = "MS950";   break;
-	    case 5:  charset = "EUC_KR";  break;
-	    case 6:  charset = "Johab";   break;
-	    default: charset = "UTF-16";  break;
+        String charset;
+        switch (encoding) {
+            case 1:  charset = "UTF-16";  break; // most common case first.
+            case 0:  charset = "UTF-16";  break; // symbol uses this
+            case 2:  charset = "SJIS";    break;
+            case 3:  charset = "GBK";     break;
+            case 4:  charset = "MS950";   break;
+            case 5:  charset = "EUC_KR";  break;
+            case 6:  charset = "Johab";   break;
+            default: charset = "UTF-16";  break;
         }
 
-	try {
-	    return new String(bytes, 0, len, charset);
-	} catch (UnsupportedEncodingException e) {
-	    if (FontManager.logging) {
-		FontManager.logger.warning(e + " EncodingID=" + encoding);
-	    }
-	    return new String(bytes, 0, len);
-	} catch (Throwable t) {
-	    return null;
-	}
+        try {
+            return new String(bytes, 0, len, charset);
+        } catch (UnsupportedEncodingException e) {
+            if (FontManager.logging) {
+                FontManager.logger.warning(e + " EncodingID=" + encoding);
+            }
+            return new String(bytes, 0, len);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     protected void initNames() {
 
         byte[] name = new byte[256];
-	ByteBuffer buffer = getTableBuffer(nameTag);
+        ByteBuffer buffer = getTableBuffer(nameTag);
 
-	if (buffer != null) {
-	    ShortBuffer sbuffer = buffer.asShortBuffer();
-	    sbuffer.get(); // format - not needed.
-	    short numRecords = sbuffer.get();
+        if (buffer != null) {
+            ShortBuffer sbuffer = buffer.asShortBuffer();
+            sbuffer.get(); // format - not needed.
+            short numRecords = sbuffer.get();
             /* The name table uses unsigned shorts. Many of these
              * are known small values that fit in a short.
              * The values that are sizes or offsets into the table could be
              * greater than 32767, so read and store those as ints
              */
             int stringPtr = sbuffer.get() & 0xffff;
-	    for (int i=0; i<numRecords; i++) {
-		short platformID = sbuffer.get();
-		if (platformID != MS_PLATFORM_ID) {
-		    sbuffer.position(sbuffer.position()+5);
-		    continue; // skip over this record.
-		}		    
-		short encodingID = sbuffer.get();
-		short langID     = sbuffer.get();
-		short nameID     = sbuffer.get();
+            for (int i=0; i<numRecords; i++) {
+                short platformID = sbuffer.get();
+                if (platformID != MS_PLATFORM_ID) {
+                    sbuffer.position(sbuffer.position()+5);
+                    continue; // skip over this record.
+                }
+                short encodingID = sbuffer.get();
+                short langID     = sbuffer.get();
+                short nameID     = sbuffer.get();
                 int nameLen    = ((int) sbuffer.get()) & 0xffff;
                 int namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;
 
-		switch (nameID) {
+                switch (nameID) {
 
-		case FAMILY_NAME_ID:
+                case FAMILY_NAME_ID:
 
-		    if (familyName == null || langID == ENGLISH_LOCALE_ID) {
-			buffer.position(namePtr);
-			buffer.get(name, 0, nameLen);
-			familyName = makeString(name, nameLen, encodingID);
-		    }
+                    if (familyName == null || langID == ENGLISH_LOCALE_ID) {
+                        buffer.position(namePtr);
+                        buffer.get(name, 0, nameLen);
+                        familyName = makeString(name, nameLen, encodingID);
+                    }
 /*
-		    for (int ii=0;ii<nameLen;ii++) {
-			int val = (int)name[ii]&0xff;
-			System.err.print(Integer.toHexString(val)+ " ");
-		    }
-		    System.err.println();
-		    System.err.println("familyName="+familyName +
-				       " nameLen="+nameLen+
-				       " langID="+langID+ " eid="+encodingID +
-				       " str len="+familyName.length());
+                    for (int ii=0;ii<nameLen;ii++) {
+                        int val = (int)name[ii]&0xff;
+                        System.err.print(Integer.toHexString(val)+ " ");
+                    }
+                    System.err.println();
+                    System.err.println("familyName="+familyName +
+                                       " nameLen="+nameLen+
+                                       " langID="+langID+ " eid="+encodingID +
+                                       " str len="+familyName.length());
 
 */
-		    break;
-	        
-		case FULL_NAME_ID:
+                    break;
 
-		    if (fullName == null || langID == ENGLISH_LOCALE_ID) {
-			buffer.position(namePtr);
-			buffer.get(name, 0, nameLen);
-			fullName = makeString(name, nameLen, encodingID);
-		    }
-		    break;
+                case FULL_NAME_ID:
 
-		}
-	    }
-	}
+                    if (fullName == null || langID == ENGLISH_LOCALE_ID) {
+                        buffer.position(namePtr);
+                        buffer.get(name, 0, nameLen);
+                        fullName = makeString(name, nameLen, encodingID);
+                    }
+                    break;
+
+                }
+            }
+        }
     }
 
     /* Return the requested name in the requested locale, for the
@@ -1104,58 +1104,58 @@ public class TrueTypeFont extends FileFont {
      * figure out how to handle that.
      */
     protected String lookupName(short findLocaleID, int findNameID) {
-	String foundName = null;
-	byte[] name = new byte[1024];
+        String foundName = null;
+        byte[] name = new byte[1024];
 
-	ByteBuffer buffer = getTableBuffer(nameTag);
-	if (buffer != null) {
-	    ShortBuffer sbuffer = buffer.asShortBuffer();
-	    sbuffer.get(); // format - not needed.
-	    short numRecords = sbuffer.get();
+        ByteBuffer buffer = getTableBuffer(nameTag);
+        if (buffer != null) {
+            ShortBuffer sbuffer = buffer.asShortBuffer();
+            sbuffer.get(); // format - not needed.
+            short numRecords = sbuffer.get();
 
-	    /* The name table uses unsigned shorts. Many of these
-	     * are known small values that fit in a short.
-	     * The values that are sizes or offsets into the table could be
-	     * greater than 32767, so read and store those as ints
-	     */
-	    int stringPtr = ((int) sbuffer.get()) & 0xffff;
-	    
-	    for (int i=0; i<numRecords; i++) {
-		short platformID = sbuffer.get();
-		if (platformID != MS_PLATFORM_ID) {
-		    sbuffer.position(sbuffer.position()+5);
-		    continue; // skip over this record.
-		}
-		short encodingID = sbuffer.get();
-		short langID     = sbuffer.get();
-		short nameID     = sbuffer.get();
-		int   nameLen    = ((int) sbuffer.get()) & 0xffff;
-		int   namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;
-		if (nameID == findNameID &&
-		    ((foundName == null && langID == ENGLISH_LOCALE_ID)
-		     || langID == findLocaleID)) {
-		    buffer.position(namePtr);
-		    buffer.get(name, 0, nameLen);
-		    foundName = makeString(name, nameLen, encodingID);
-		    if (langID == findLocaleID) {
-			return foundName;
-		    }
-		}
-	    }
-	}
-	return foundName;
+            /* The name table uses unsigned shorts. Many of these
+             * are known small values that fit in a short.
+             * The values that are sizes or offsets into the table could be
+             * greater than 32767, so read and store those as ints
+             */
+            int stringPtr = ((int) sbuffer.get()) & 0xffff;
+
+            for (int i=0; i<numRecords; i++) {
+                short platformID = sbuffer.get();
+                if (platformID != MS_PLATFORM_ID) {
+                    sbuffer.position(sbuffer.position()+5);
+                    continue; // skip over this record.
+                }
+                short encodingID = sbuffer.get();
+                short langID     = sbuffer.get();
+                short nameID     = sbuffer.get();
+                int   nameLen    = ((int) sbuffer.get()) & 0xffff;
+                int   namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;
+                if (nameID == findNameID &&
+                    ((foundName == null && langID == ENGLISH_LOCALE_ID)
+                     || langID == findLocaleID)) {
+                    buffer.position(namePtr);
+                    buffer.get(name, 0, nameLen);
+                    foundName = makeString(name, nameLen, encodingID);
+                    if (langID == findLocaleID) {
+                        return foundName;
+                    }
+                }
+            }
+        }
+        return foundName;
     }
 
     /**
      * @return number of logical fonts. Is "1" for all but TTC files
      */
     public int getFontCount() {
-	return directoryCount;
+        return directoryCount;
     }
 
     protected synchronized FontScaler getScaler() {
         if (scaler == null) {
-            scaler = FontManager.getScaler(this, fontIndex, 
+            scaler = FontManager.getScaler(this, fontIndex,
                 supportsCJK, fileSize);
         }
         return scaler;
@@ -1166,47 +1166,47 @@ public class TrueTypeFont extends FileFont {
      * as part of font creation, nor storage to hold it. Get it only on demand.
      */
     public String getPostscriptName() {
-	String name = lookupName(ENGLISH_LOCALE_ID, POSTSCRIPT_NAME_ID);
-	if (name == null) {
-	    return fullName;
-	} else {
-	    return name;
-	}
+        String name = lookupName(ENGLISH_LOCALE_ID, POSTSCRIPT_NAME_ID);
+        if (name == null) {
+            return fullName;
+        } else {
+            return name;
+        }
     }
 
     public String getFontName(Locale locale) {
-	if (locale == null) {
-	    return fullName;
-	} else {
-	    short localeID = FontManager.getLCIDFromLocale(locale);
-	    String name = lookupName(localeID, FULL_NAME_ID);
-	    if (name == null) {
-		return fullName;
-	    } else {
-		return name;
-	    }
-	}
+        if (locale == null) {
+            return fullName;
+        } else {
+            short localeID = FontManager.getLCIDFromLocale(locale);
+            String name = lookupName(localeID, FULL_NAME_ID);
+            if (name == null) {
+                return fullName;
+            } else {
+                return name;
+            }
+        }
     }
 
     public String getFamilyName(Locale locale) {
-	if (locale == null) {
-	    return familyName;
-	} else {
-	    short localeID = FontManager.getLCIDFromLocale(locale);
-	    String name = lookupName(localeID, FAMILY_NAME_ID);
-	    if (name == null) {
-		return familyName;
-	    } else {
-		return name;
-	    }
-	}
+        if (locale == null) {
+            return familyName;
+        } else {
+            short localeID = FontManager.getLCIDFromLocale(locale);
+            String name = lookupName(localeID, FAMILY_NAME_ID);
+            if (name == null) {
+                return familyName;
+            } else {
+                return name;
+            }
+        }
     }
 
     public CharToGlyphMapper getMapper() {
-	if (mapper == null) {
-	    mapper = new TrueTypeGlyphMapper(this);
-	}
-	return mapper;
+        if (mapper == null) {
+            mapper = new TrueTypeGlyphMapper(this);
+        }
+        return mapper;
     }
 
     /* This duplicates initNames() but that has to run fast as its used
@@ -1216,66 +1216,66 @@ public class TrueTypeFont extends FileFont {
     protected void initAllNames(int requestedID, HashSet names) {
 
         byte[] name = new byte[256];
-	ByteBuffer buffer = getTableBuffer(nameTag);
+        ByteBuffer buffer = getTableBuffer(nameTag);
 
-	if (buffer != null) {
-	    ShortBuffer sbuffer = buffer.asShortBuffer();
-	    sbuffer.get(); // format - not needed.
-	    short numRecords = sbuffer.get();
+        if (buffer != null) {
+            ShortBuffer sbuffer = buffer.asShortBuffer();
+            sbuffer.get(); // format - not needed.
+            short numRecords = sbuffer.get();
 
-	    /* The name table uses unsigned shorts. Many of these
-	     * are known small values that fit in a short.
-	     * The values that are sizes or offsets into the table could be
-	     * greater than 32767, so read and store those as ints
-	     */
-	    int stringPtr = ((int) sbuffer.get()) & 0xffff;
-	    for (int i=0; i<numRecords; i++) {
-		short platformID = sbuffer.get();
-		if (platformID != MS_PLATFORM_ID) {
-		    sbuffer.position(sbuffer.position()+5);
-		    continue; // skip over this record.
-		}		    
-		short encodingID = sbuffer.get();
-		short langID     = sbuffer.get();
-		short nameID     = sbuffer.get();
-		int   nameLen    = ((int) sbuffer.get()) & 0xffff;
-		int   namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;
+            /* The name table uses unsigned shorts. Many of these
+             * are known small values that fit in a short.
+             * The values that are sizes or offsets into the table could be
+             * greater than 32767, so read and store those as ints
+             */
+            int stringPtr = ((int) sbuffer.get()) & 0xffff;
+            for (int i=0; i<numRecords; i++) {
+                short platformID = sbuffer.get();
+                if (platformID != MS_PLATFORM_ID) {
+                    sbuffer.position(sbuffer.position()+5);
+                    continue; // skip over this record.
+                }
+                short encodingID = sbuffer.get();
+                short langID     = sbuffer.get();
+                short nameID     = sbuffer.get();
+                int   nameLen    = ((int) sbuffer.get()) & 0xffff;
+                int   namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;
 
-		if (nameID == requestedID) {
-		    buffer.position(namePtr);
-		    buffer.get(name, 0, nameLen);
-		    names.add(makeString(name, nameLen, encodingID));
-		}
-	    }
-	}
+                if (nameID == requestedID) {
+                    buffer.position(namePtr);
+                    buffer.get(name, 0, nameLen);
+                    names.add(makeString(name, nameLen, encodingID));
+                }
+            }
+        }
     }
 
     String[] getAllFamilyNames() {
-	HashSet aSet = new HashSet();
-	try {
-	    initAllNames(FAMILY_NAME_ID, aSet);
-	} catch (Exception e) {
-	    /* In case of malformed font */
-	}
-	return (String[])aSet.toArray(new String[0]);
+        HashSet aSet = new HashSet();
+        try {
+            initAllNames(FAMILY_NAME_ID, aSet);
+        } catch (Exception e) {
+            /* In case of malformed font */
+        }
+        return (String[])aSet.toArray(new String[0]);
     }
 
     String[] getAllFullNames() {
-	HashSet aSet = new HashSet();
-	try {
-	    initAllNames(FULL_NAME_ID, aSet);
-	} catch (Exception e) {
-	    /* In case of malformed font */
-	}
-	return (String[])aSet.toArray(new String[0]);
+        HashSet aSet = new HashSet();
+        try {
+            initAllNames(FULL_NAME_ID, aSet);
+        } catch (Exception e) {
+            /* In case of malformed font */
+        }
+        return (String[])aSet.toArray(new String[0]);
     }
 
     /*  Used by the OpenType engine for mark positioning.
      */
-    Point2D.Float getGlyphPoint(long pScalerContext, 
+    Point2D.Float getGlyphPoint(long pScalerContext,
                                 int glyphCode, int ptNumber) {
         try {
-            return getScaler().getGlyphPoint(pScalerContext, 
+            return getScaler().getGlyphPoint(pScalerContext,
                                              glyphCode, ptNumber);
         } catch(FontScalerException fe) {
             return null;
@@ -1307,7 +1307,7 @@ public class TrueTypeFont extends FileFont {
 
         char numRanges = cbuffer.get();
         if (4+numRanges*4 > getTableSize(gaspTag)) { // sanity check
-	    return gaspTable = new char[0];
+            return gaspTable = new char[0];
         }
         gaspTable = new char[2*numRanges];
         cbuffer.get(gaspTable);
@@ -1348,7 +1348,7 @@ public class TrueTypeFont extends FileFont {
         if (style == Font.BOLD) {
             return true;
         } else {
-	    return ptsize <= 8 || ptsize >= 18;
+            return ptsize <= 8 || ptsize >= 18;
         }
     }
 
@@ -1357,7 +1357,7 @@ public class TrueTypeFont extends FileFont {
     }
 
     public String toString() {
-	return "** TrueType Font: Family="+familyName+ " Name="+fullName+
-	    " style="+style+" fileName="+platName;
+        return "** TrueType Font: Family="+familyName+ " Name="+fullName+
+            " style="+style+" fileName="+platName;
     }
 }

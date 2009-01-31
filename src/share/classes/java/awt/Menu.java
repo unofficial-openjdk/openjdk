@@ -49,7 +49,6 @@ import javax.accessibility.*;
  * (an instance of <code>Menu</code>), or a check box (an instance of
  * <code>CheckboxMenuItem</code>).
  *
- * @version %I%, %G%
  * @author Sami Shaio
  * @see     java.awt.MenuItem
  * @see     java.awt.CheckboxMenuItem
@@ -59,7 +58,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-	Toolkit.loadLibraries();
+        Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -71,7 +70,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @serial
      * @see #countItems()
      */
-    Vector		items = new Vector();
+    Vector              items = new Vector();
 
     /**
      * This field indicates whether the menu has the
@@ -85,7 +84,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @serial
      * @see #isTearOff()
      */
-    boolean		tearOff;
+    boolean             tearOff;
 
     /**
      * This field will be set to <code>true</code>
@@ -95,7 +94,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      *
      * @serial
      */
-    boolean		isHelpMenu;
+    boolean             isHelpMenu;
 
     private static final String base = "menu";
     private static int nameCounter = 0;
@@ -114,7 +113,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @since      JDK1.1
      */
     public Menu() throws HeadlessException {
-	this("", false);
+        this("", false);
     }
 
     /**
@@ -127,7 +126,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public Menu(String label) throws HeadlessException {
-	this(label, false);
+        this(label, false);
     }
 
     /**
@@ -147,8 +146,8 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @since       JDK1.0.
      */
     public Menu(String label, boolean tearOff) throws HeadlessException {
-	super(label);
-	this.tearOff = tearOff;
+        super(label);
+        this.tearOff = tearOff;
     }
 
     /**
@@ -167,15 +166,15 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-	    if (peer == null)
-	        peer = Toolkit.getDefaultToolkit().createMenu(this);
-	    int nitems = getItemCount();
-	    for (int i = 0 ; i < nitems ; i++) {
-	        MenuItem mi = getItem(i);
-		mi.parent = this;
-		mi.addNotify();
-	    }
-	}
+            if (peer == null)
+                peer = Toolkit.getDefaultToolkit().createMenu(this);
+            int nitems = getItemCount();
+            for (int i = 0 ; i < nitems ; i++) {
+                MenuItem mi = getItem(i);
+                mi.parent = this;
+                mi.addNotify();
+            }
+        }
     }
 
     /**
@@ -184,12 +183,12 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     public void removeNotify() {
         synchronized (getTreeLock()) {
-	    int nitems = getItemCount();
-	    for (int i = 0 ; i < nitems ; i++) {
-	        getItem(i).removeNotify();
-	    }
-	    super.removeNotify();
-	}
+            int nitems = getItemCount();
+            for (int i = 0 ; i < nitems ; i++) {
+                getItem(i).removeNotify();
+            }
+            super.removeNotify();
+        }
     }
 
     /**
@@ -202,7 +201,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      *                         <code>false</code> otherwise.
      */
     public boolean isTearOff() {
-	return tearOff;
+        return tearOff;
     }
 
     /**
@@ -211,7 +210,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
       * @since      JDK1.1
       */
     public int getItemCount() {
-	return countItems();
+        return countItems();
     }
 
     /**
@@ -220,7 +219,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     @Deprecated
     public int countItems() {
-	return countItemsImpl();
+        return countItemsImpl();
     }
 
     /*
@@ -228,7 +227,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * be called on the toolkit thread.
      */
     final int countItemsImpl() {
-	return items.size();
+        return items.size();
     }
 
     /**
@@ -237,7 +236,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @return    the item located at the specified index.
      */
     public MenuItem getItem(int index) {
-	return getItemImpl(index);
+        return getItemImpl(index);
     }
 
     /*
@@ -245,7 +244,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * be called on the toolkit thread.
      */
     final MenuItem getItemImpl(int index) {
-	return (MenuItem)items.elementAt(index);
+        return (MenuItem)items.elementAt(index);
     }
 
     /**
@@ -260,18 +259,18 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     public MenuItem add(MenuItem mi) {
         synchronized (getTreeLock()) {
-	    if (mi.parent != null) {
-	        mi.parent.remove(mi);
-	    }
-	    items.addElement(mi);
-	    mi.parent = this;
-	    MenuPeer peer = (MenuPeer)this.peer;
-	    if (peer != null) {
-	        mi.addNotify();
-		peer.addItem(mi);
-	    }
-	    return mi;
-	}
+            if (mi.parent != null) {
+                mi.parent.remove(mi);
+            }
+            items.addElement(mi);
+            mi.parent = this;
+            MenuPeer peer = (MenuPeer)this.peer;
+            if (peer != null) {
+                mi.addNotify();
+                peer.addItem(mi);
+            }
+            return mi;
+        }
     }
 
     /**
@@ -282,7 +281,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @see         java.awt.Menu#insert(java.awt.MenuItem, int)
      */
     public void add(String label) {
-	add(new MenuItem(label));
+        add(new MenuItem(label));
     }
 
     /**
@@ -301,31 +300,31 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 
     public void insert(MenuItem menuitem, int index) {
         synchronized (getTreeLock()) {
-	    if (index < 0) {
-	        throw new IllegalArgumentException("index less than zero.");
-	    }
+            if (index < 0) {
+                throw new IllegalArgumentException("index less than zero.");
+            }
 
-	    int nitems = getItemCount();
-	    Vector tempItems = new Vector();
+            int nitems = getItemCount();
+            Vector tempItems = new Vector();
 
-	    /* Remove the item at index, nitems-index times 
-	       storing them in a temporary vector in the
-	       order they appear on the menu.
-	    */
-	    for (int i = index ; i < nitems; i++) {
-	        tempItems.addElement(getItem(index));
-		remove(index);
-	    }
+            /* Remove the item at index, nitems-index times
+               storing them in a temporary vector in the
+               order they appear on the menu.
+            */
+            for (int i = index ; i < nitems; i++) {
+                tempItems.addElement(getItem(index));
+                remove(index);
+            }
 
-	    add(menuitem);
+            add(menuitem);
 
-	    /* Add the removed items back to the menu, they are
-	       already in the correct order in the temp vector.
-	    */
-	    for (int i = 0; i < tempItems.size()  ; i++) {
-	        add((MenuItem)tempItems.elementAt(i));
-	    }
-	}
+            /* Add the removed items back to the menu, they are
+               already in the correct order in the temp vector.
+            */
+            for (int i = 0; i < tempItems.size()  ; i++) {
+                add((MenuItem)tempItems.elementAt(i));
+            }
+        }
     }
 
     /**
@@ -352,7 +351,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @see         java.awt.Menu#insertSeparator(int)
      */
     public void addSeparator() {
-	add("-");
+        add("-");
     }
 
     /**
@@ -367,31 +366,31 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 
     public void insertSeparator(int index) {
         synchronized (getTreeLock()) {
-	    if (index < 0) {
-	        throw new IllegalArgumentException("index less than zero.");
-	    }
+            if (index < 0) {
+                throw new IllegalArgumentException("index less than zero.");
+            }
 
-	    int nitems = getItemCount();
-	    Vector tempItems = new Vector();
+            int nitems = getItemCount();
+            Vector tempItems = new Vector();
 
-	    /* Remove the item at index, nitems-index times 
-	       storing them in a temporary vector in the
-	       order they appear on the menu.
-	    */
-	    for (int i = index ; i < nitems; i++) {
-	        tempItems.addElement(getItem(index));
-		remove(index);
-	    }
+            /* Remove the item at index, nitems-index times
+               storing them in a temporary vector in the
+               order they appear on the menu.
+            */
+            for (int i = index ; i < nitems; i++) {
+                tempItems.addElement(getItem(index));
+                remove(index);
+            }
 
-	    addSeparator();
+            addSeparator();
 
-	    /* Add the removed items back to the menu, they are
-	       already in the correct order in the temp vector.
-	    */
-	    for (int i = 0; i < tempItems.size()  ; i++) {
-	        add((MenuItem)tempItems.elementAt(i));
-	    }
-	}
+            /* Add the removed items back to the menu, they are
+               already in the correct order in the temp vector.
+            */
+            for (int i = 0; i < tempItems.size()  ; i++) {
+                add((MenuItem)tempItems.elementAt(i));
+            }
+        }
     }
 
     /**
@@ -400,31 +399,31 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     public void remove(int index) {
         synchronized (getTreeLock()) {
-	    MenuItem mi = getItem(index);
-	    items.removeElementAt(index);
-	    MenuPeer peer = (MenuPeer)this.peer;
-	    if (peer != null) {
-	        mi.removeNotify();
-		mi.parent = null;
-		peer.delItem(index);
-	    }
-	}
+            MenuItem mi = getItem(index);
+            items.removeElementAt(index);
+            MenuPeer peer = (MenuPeer)this.peer;
+            if (peer != null) {
+                mi.removeNotify();
+                mi.parent = null;
+                peer.delItem(index);
+            }
+        }
     }
 
     /**
      * Removes the specified menu item from this menu.
-     * @param  item the item to be removed from the menu. 
-     *         If <code>item</code> is <code>null</code> 
-     *         or is not in this menu, this method does 
-     *         nothing. 
+     * @param  item the item to be removed from the menu.
+     *         If <code>item</code> is <code>null</code>
+     *         or is not in this menu, this method does
+     *         nothing.
      */
     public void remove(MenuComponent item) {
         synchronized (getTreeLock()) {
-	    int index = items.indexOf(item);
-	    if (index >= 0) {
-	        remove(index);
-	    }
-	}
+            int index = items.indexOf(item);
+            if (index >= 0) {
+                remove(index);
+            }
+        }
     }
 
     /**
@@ -433,11 +432,11 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      */
     public void removeAll() {
         synchronized (getTreeLock()) {
-	    int nitems = getItemCount();
-	    for (int i = nitems-1 ; i >= 0 ; i--) {
-	        remove(i);
-	    }
-	}
+            int nitems = getItemCount();
+            for (int i = nitems-1 ; i >= 0 ; i--) {
+                remove(i);
+            }
+        }
     }
 
     /*
@@ -458,20 +457,20 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
     }
 
     MenuItem getShortcutMenuItem(MenuShortcut s) {
-	int nitems = getItemCount();
-	for (int i = 0 ; i < nitems ; i++) {
+        int nitems = getItemCount();
+        for (int i = 0 ; i < nitems ; i++) {
             MenuItem mi = getItem(i).getShortcutMenuItem(s);
             if (mi != null) {
                 return mi;
             }
-	}
+        }
         return null;
     }
 
     synchronized Enumeration shortcuts() {
         Vector shortcuts = new Vector();
         int nitems = getItemCount();
-	for (int i = 0 ; i < nitems ; i++) {
+        for (int i = 0 ; i < nitems ; i++) {
             MenuItem mi = getItem(i);
             if (mi instanceof Menu) {
                 Enumeration e = ((Menu)mi).shortcuts();
@@ -484,15 +483,15 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
                     shortcuts.addElement(ms);
                 }
             }
-	}
+        }
         return shortcuts.elements();
     }
 
     void deleteShortcut(MenuShortcut s) {
-	int nitems = getItemCount();
-	for (int i = 0 ; i < nitems ; i++) {
-	    getItem(i).deleteShortcut(s);
-	}
+        int nitems = getItemCount();
+        for (int i = 0 ; i < nitems ; i++) {
+            getItem(i).deleteShortcut(s);
+        }
     }
 
 
@@ -537,18 +536,18 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
       // HeadlessException will be thrown from MenuComponent's readObject
       s.defaultReadObject();
       for(int i = 0; i < items.size(); i++) {
-	MenuItem item = (MenuItem)items.elementAt(i);
-	item.parent = this;
+        MenuItem item = (MenuItem)items.elementAt(i);
+        item.parent = this;
       }
     }
 
     /**
      * Returns a string representing the state of this <code>Menu</code>.
-     * This method is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between 
-     * implementations. The returned string may be empty but may not be 
+     * This method is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not be
      * <code>null</code>.
-     * 
+     *
      * @return the parameter string of this menu
      */
     public String paramString() {
@@ -567,12 +566,12 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this Menu. 
-     * For menus, the AccessibleContext takes the form of an 
-     * AccessibleAWTMenu. 
+     * Gets the AccessibleContext associated with this Menu.
+     * For menus, the AccessibleContext takes the form of an
+     * AccessibleAWTMenu.
      * A new AccessibleAWTMenu instance is created if necessary.
      *
-     * @return an AccessibleAWTMenu that serves as the 
+     * @return an AccessibleAWTMenu that serves as the
      *         AccessibleContext of this Menu
      * @since 1.3
      */
@@ -596,8 +595,8 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * application developers, but is instead meant only to be
      * subclassed by menu component developers.
      * <p>
-     * This class implements accessibility support for the 
-     * <code>Menu</code> class.  It provides an implementation of the 
+     * This class implements accessibility support for the
+     * <code>Menu</code> class.  It provides an implementation of the
      * Java Accessibility API appropriate to menu user-interface elements.
      * @since 1.3
      */
@@ -611,7 +610,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          */
         public AccessibleRole getAccessibleRole() {

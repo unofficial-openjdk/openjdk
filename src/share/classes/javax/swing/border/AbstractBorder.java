@@ -31,8 +31,8 @@ import java.awt.Component;
 import java.io.Serializable;
 
 /**
- * A class that implements an empty border with no size.  
- * This provides a convenient base class from which other border 
+ * A class that implements an empty border with no size.
+ * This provides a convenient base class from which other border
  * classes can be easily derived.
  * <p>
  * <strong>Warning:</strong>
@@ -44,7 +44,6 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author David Kloba
  */
 public abstract class AbstractBorder implements Border, Serializable
@@ -65,17 +64,17 @@ public abstract class AbstractBorder implements Border, Serializable
     /**
      * This default implementation returns a new <code>Insets</code>
      * instance where the <code>top</code>, <code>left</code>,
-     * <code>bottom</code>, and 
+     * <code>bottom</code>, and
      * <code>right</code> fields are set to <code>0</code>.
      * @param c the component for which this border insets value applies
      * @return the new <code>Insets</code> object initialized to 0
      */
-    public Insets getBorderInsets(Component c)       { 
+    public Insets getBorderInsets(Component c)       {
         return new Insets(0, 0, 0, 0);
     }
 
-    /** 
-     * Reinitializes the insets parameter with this Border's current Insets. 
+    /**
+     * Reinitializes the insets parameter with this Border's current Insets.
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      * @return the <code>insets</code> object
@@ -101,8 +100,8 @@ public abstract class AbstractBorder implements Border, Serializable
      * @return a <code>Rectangle</code> containing the interior coordinates
      */
     public Rectangle getInteriorRectangle(Component c, int x, int y, int width, int height) {
-	return getInteriorRectangle(c, this, x, y, width, height);
-    } 
+        return getInteriorRectangle(c, this, x, y, width, height);
+    }
 
     /**
      * Returns a rectangle using the arguments minus the
@@ -118,14 +117,14 @@ public abstract class AbstractBorder implements Border, Serializable
      */
     public static Rectangle getInteriorRectangle(Component c, Border b, int x, int y, int width, int height) {
         Insets insets;
-	if(b != null)
-	    insets = b.getBorderInsets(c);
-	else
-	    insets = new Insets(0, 0, 0, 0);
+        if(b != null)
+            insets = b.getBorderInsets(c);
+        else
+            insets = new Insets(0, 0, 0, 0);
         return new Rectangle(x + insets.left,
-	                            y + insets.top,
-	                            width - insets.right - insets.left,
-	                            height - insets.top - insets.bottom);
+                                    y + insets.top,
+                                    width - insets.right - insets.left,
+                                    height - insets.top - insets.bottom);
     }
 
     /**
@@ -188,11 +187,11 @@ public abstract class AbstractBorder implements Border, Serializable
     }
 
     /*
-     * Convenience function for determining ComponentOrientation.  
+     * Convenience function for determining ComponentOrientation.
      * Helps us avoid having Munge directives throughout the code.
      */
     static boolean isLeftToRight( Component c ) {
         return c.getComponentOrientation().isLeftToRight();
     }
-    
+
 }

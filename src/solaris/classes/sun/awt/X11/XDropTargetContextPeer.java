@@ -48,7 +48,7 @@ import sun.misc.Unsafe;
  * @since 1.5
  */
 final class XDropTargetContextPeer extends SunDropTargetContextPeer {
-    private static final Logger logger = 
+    private static final Logger logger =
         Logger.getLogger("sun.awt.X11.xembed.xdnd.XDropTargetContextPeer");
 
     private static final Unsafe unsafe = XlibWrapper.unsafe;
@@ -56,19 +56,19 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
     /*
      * A key to store a peer instance for an AppContext.
      */
-    private static final Object DTCP_KEY = "DropTargetContextPeer"; 
+    private static final Object DTCP_KEY = "DropTargetContextPeer";
 
     private XDropTargetContextPeer() {}
 
     static XDropTargetContextPeer getPeer(AppContext appContext) {
         synchronized (_globalLock) {
-            XDropTargetContextPeer peer = 
+            XDropTargetContextPeer peer =
                 (XDropTargetContextPeer)appContext.get(DTCP_KEY);
             if (peer == null) {
                 peer = new XDropTargetContextPeer();
                 appContext.put(DTCP_KEY, peer);
             }
-            
+
             return peer;
         }
     }
@@ -80,7 +80,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
     /*
      * @param returnValue the drop action selected by the Java drop target.
      */
-    protected void eventProcessed(SunDropTargetEvent e, int returnValue, 
+    protected void eventProcessed(SunDropTargetEvent e, int returnValue,
                                   boolean dispatcherDone) {
         /* The native context is the pointer to the XClientMessageEvent
            structure. */
@@ -88,14 +88,14 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         /* If the event was not consumed, send a response to the source. */
         try {
             if (ctxt != 0 && !e.isConsumed()) {
-                Iterator dropTargetProtocols = 
+                Iterator dropTargetProtocols =
                     XDragAndDropProtocols.getDropTargetProtocols();
-        
+
                 while (dropTargetProtocols.hasNext()) {
-                    XDropTargetProtocol dropTargetProtocol = 
+                    XDropTargetProtocol dropTargetProtocol =
                         (XDropTargetProtocol)dropTargetProtocols.next();
                     if (dropTargetProtocol.sendResponse(ctxt, e.getID(),
-                                                        returnValue)) { 
+                                                        returnValue)) {
                         break;
                     }
                 }
@@ -107,7 +107,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 
-    protected void doDropDone(boolean success, int dropAction, 
+    protected void doDropDone(boolean success, int dropAction,
                               boolean isLocal) {
         /* The native context is the pointer to the XClientMessageEvent
            structure. */
@@ -115,14 +115,14 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
 
         if (ctxt != 0) {
             try {
-                Iterator dropTargetProtocols = 
+                Iterator dropTargetProtocols =
                     XDragAndDropProtocols.getDropTargetProtocols();
-        
+
                 while (dropTargetProtocols.hasNext()) {
-                    XDropTargetProtocol dropTargetProtocol = 
+                    XDropTargetProtocol dropTargetProtocol =
                         (XDropTargetProtocol)dropTargetProtocols.next();
                     if (dropTargetProtocol.sendDropDone(ctxt, success,
-                                                        dropAction)) { 
+                                                        dropAction)) {
                         break;
                     }
                 }
@@ -132,18 +132,18 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 
-    protected Object getNativeData(long format) 
+    protected Object getNativeData(long format)
       throws IOException {
         /* The native context is the pointer to the XClientMessageEvent
            structure. */
         long ctxt = getNativeDragContext();
 
         if (ctxt != 0) {
-            Iterator dropTargetProtocols = 
+            Iterator dropTargetProtocols =
                 XDragAndDropProtocols.getDropTargetProtocols();
-        
+
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol = 
+                XDropTargetProtocol dropTargetProtocol =
                     (XDropTargetProtocol)dropTargetProtocols.next();
                 // getData throws IAE if ctxt is not for this protocol.
                 try {
@@ -152,7 +152,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -171,7 +171,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 
-    protected void processMotionMessage(SunDropTargetEvent event, 
+    protected void processMotionMessage(SunDropTargetEvent event,
                                         boolean operationChanged) {
         if (!processSunDropTargetEvent(event)) {
             super.processMotionMessage(event, operationChanged);
@@ -185,7 +185,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
     }
 
     // If source is an XEmbedCanvasPeer, passes the event to it for processing and
-    // return true if the event is forwarded to the XEmbed child. 
+    // return true if the event is forwarded to the XEmbed child.
     // Otherwise, does nothing and return false.
     private boolean processSunDropTargetEvent(SunDropTargetEvent event) {
         Object source = event.getSource();
@@ -199,7 +199,7 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
                 long ctxt = getNativeDragContext();
 
                 if (logger.isLoggable(Level.FINER)) {
-                    logger.finer("        processing " + event + " ctxt=" + ctxt + 
+                    logger.finer("        processing " + event + " ctxt=" + ctxt +
                                  " consumed=" + event.isConsumed());
                 }
                 /* If the event is not consumed, pass it to the
@@ -218,25 +218,25 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         return false;
     }
 
-    public void forwardEventToEmbedded(long embedded, long ctxt, 
+    public void forwardEventToEmbedded(long embedded, long ctxt,
                                        int eventID) {
         Iterator dropTargetProtocols =
-            XDragAndDropProtocols.getDropTargetProtocols(); 
-        
+            XDragAndDropProtocols.getDropTargetProtocols();
+
         while (dropTargetProtocols.hasNext()) {
-            XDropTargetProtocol dropTargetProtocol = 
+            XDropTargetProtocol dropTargetProtocol =
                 (XDropTargetProtocol)dropTargetProtocols.next();
-            if (dropTargetProtocol.forwardEventToEmbedded(embedded, ctxt, 
-                                                          eventID)) { 
+            if (dropTargetProtocol.forwardEventToEmbedded(embedded, ctxt,
+                                                          eventID)) {
                 break;
             }
         }
     }
 
-    static final class XDropTargetProtocolListenerImpl 
+    static final class XDropTargetProtocolListenerImpl
         implements XDropTargetProtocolListener {
 
-        private final static XDropTargetProtocolListener theInstance = 
+        private final static XDropTargetProtocolListener theInstance =
             new XDropTargetProtocolListenerImpl();
 
         private XDropTargetProtocolListenerImpl() {}
@@ -245,10 +245,10 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
             return theInstance;
         }
 
-        public void handleDropTargetNotification(XWindow xwindow, int x, int y, 
-                                                 int dropAction, int actions, 
-                                                 long[] formats, long nativeCtxt, 
-                                                 int eventID) { 
+        public void handleDropTargetNotification(XWindow xwindow, int x, int y,
+                                                 int dropAction, int actions,
+                                                 long[] formats, long nativeCtxt,
+                                                 int eventID) {
             Object target = xwindow.getTarget();
 
             // The Every component is associated with some AppContext.
@@ -269,4 +269,3 @@ final class XDropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 }
-

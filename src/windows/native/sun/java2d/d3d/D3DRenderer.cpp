@@ -181,8 +181,8 @@ Java_sun_java2d_d3d_D3DRenderer_doDrawRectD3D
  * Signature: (JIIII)Z
  */
 JNIEXPORT jboolean JNICALL Java_sun_java2d_d3d_D3DRenderer_doFillRectD3D
-  (JNIEnv *env, jobject d3dr, 
-   jlong pData, jlong pCtx, 
+  (JNIEnv *env, jobject d3dr,
+   jlong pData, jlong pCtx,
    jint x, jint y, jint w, jint h)
 {
     Win32SDOps *wsdo = (Win32SDOps *)jlong_to_ptr(pData);
@@ -249,10 +249,10 @@ JNIEXPORT jboolean JNICALL Java_sun_java2d_d3d_D3DRenderer_doFillRectD3D
  * Signature: (JII[I[IIZ)V
  */
 JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
-  (JNIEnv *env, jobject d3dr, 
-   jlong pData, jlong pCtx, 
-   jint transx, jint transy, 
-   jintArray xcoordsArray, jintArray ycoordsArray, jint npoints, 
+  (JNIEnv *env, jobject d3dr,
+   jlong pData, jlong pCtx,
+   jint transx, jint transy,
+   jintArray xcoordsArray, jintArray ycoordsArray, jint npoints,
    jboolean needToClose)
 {
     Win32SDOps *wsdo = (Win32SDOps *)jlong_to_ptr(pData);
@@ -267,7 +267,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
                 transx, transy, npoints, needToClose);
 
     if (d3dc == NULL) {
-        J2dTraceLn(J2D_TRACE_WARNING, 
+        J2dTraceLn(J2D_TRACE_WARNING,
                    "D3DRenderer_doDrawPoly: null device context");
         return;
     }
@@ -288,7 +288,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
     if (xcoords == NULL) {
         return;
     }
-    
+
     ycoords = (jint *)
         env->GetPrimitiveArrayCritical(ycoordsArray, NULL);
     if (ycoords == NULL) {
@@ -317,14 +317,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
     int totalPoints = npoints;
     if (needToClose) {
         if (xcoords[npoints - 1] != xcoords[0] ||
-            ycoords[npoints - 1] != ycoords[0]) 
+            ycoords[npoints - 1] != ycoords[0])
         {
             totalPoints++;
         } else {
             needToClose = FALSE;
         }
     }
-    J2D_XY_C_VERTEX *lpVerts = 
+    J2D_XY_C_VERTEX *lpVerts =
         (J2D_XY_C_VERTEX *)safe_Malloc(totalPoints*sizeof(J2D_XY_C_VERTEX));
     if (!lpVerts) {
         d3dc->ReleaseExclusiveAccess();
@@ -353,7 +353,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
     HRESULT res;
     D3DU_PRIM_LOOP_BEGIN(res, wsdo);
     if (SUCCEEDED(res = d3dc->BeginScene(STATE_RENDEROP))) {
-        res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP, D3DFVF_J2D_XY_C, 
+        res = d3dDevice->DrawPrimitive(D3DPT_LINESTRIP, D3DFVF_J2D_XY_C,
                                        lpVerts, totalPoints, 0);
         // REMIND: temp hack, need to be using the results of device testing
         if (!needToClose) {
@@ -373,7 +373,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DRenderer_doDrawPoly
 JNIEXPORT void JNICALL
 Java_sun_java2d_d3d_D3DRenderer_devFillSpans
     (JNIEnv *env, jobject d3dr,
-     jlong pData, jlong pCtx, 
+     jlong pData, jlong pCtx,
      jobject si, jlong pIterator, jint transx, jint transy)
 {
     Win32SDOps *wsdo = (Win32SDOps *)jlong_to_ptr(pData);
@@ -396,7 +396,7 @@ Java_sun_java2d_d3d_D3DRenderer_devFillSpans
     }
 
     if (d3dc == NULL) {
-        J2dTraceLn(J2D_TRACE_WARNING, 
+        J2dTraceLn(J2D_TRACE_WARNING,
                    "D3DRenderer_devFillSpans: context is null");
         return;
     }
@@ -426,7 +426,7 @@ Java_sun_java2d_d3d_D3DRenderer_devFillSpans
     if (SUCCEEDED(res = d3dc->BeginScene(STATE_RENDEROP))) {
         srData = (*pFuncs->open)(env, si);
 
-        // REMIND: this is wrong, if something has failed, we need to 
+        // REMIND: this is wrong, if something has failed, we need to
         // do a EndScene/BeginScene()
         D3DU_PRIM_LOOP_BEGIN(res, wsdo);
         while ((*pFuncs->nextSpan)(srData, spanbox)) {
@@ -447,7 +447,7 @@ Java_sun_java2d_d3d_D3DRenderer_devFillSpans
 
                 res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST,
                                                D3DFVF_J2D_XY_C,
-                                               (void*)spanVx, 
+                                               (void*)spanVx,
                                                6*numOfCachedSpans, 0);
                 numOfCachedSpans = 0;
                 pHexa = (J2DXYC_HEXA*)spanVx;

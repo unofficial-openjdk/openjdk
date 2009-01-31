@@ -90,4 +90,3 @@ public class FilenameFilterTest extends Applet
     }// start()
 
 }// class FilenameFilterTest
-

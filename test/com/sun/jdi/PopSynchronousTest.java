@@ -103,17 +103,17 @@ public class PopSynchronousTest extends TestScaffold {
     {"main-i", "p-e", "p-i", "c-e", "c-i", "b-e", "b-i", "a-e", "a-l", "b-l", "c-l", "p-l", "main-r", "report-e"};
     static final String[] output =
     {"",       "",    "(",   "",    "<",   "",    "[",   "",    "@",   "]",   ">",   ")",   "",       ""};
-    
+
 
     PopSynchronousTest (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new PopSynchronousTest(args).startTests();
     }
 
-    
+
     /********** test assist **********/
 
     StackFrame frameFor(String methodName) throws Exception {
@@ -137,10 +137,10 @@ public class PopSynchronousTest extends TestScaffold {
 
     void checkExpected() throws Exception {
         if (!actual().equals(expected)) {
-            failure("FAIL: expected value: " + expected + 
+            failure("FAIL: expected value: " + expected +
                     " got: " + actual());
         }
-    }            
+    }
 
     int methodIndex(String methodName) {
         for (int i = 0; i < popMax; ++i) {
@@ -160,7 +160,7 @@ public class PopSynchronousTest extends TestScaffold {
         Method meth = loc.method();
         String name = meth.name();
         if (!isTop(methodName)) {
-            failure("FAIL: expected " + methodName + 
+            failure("FAIL: expected " + methodName +
                     " at top of stack, instead: " + name);
         } else if ((meth.location().codeIndex() == loc.codeIndex()) != atStart) {
             failure("FAIL: not at expect position: " + loc.codeIndex());
@@ -179,7 +179,7 @@ public class PopSynchronousTest extends TestScaffold {
     void incrementState() {
         stateIndex = (stateIndex + 1) % (states.length);
     }
-    
+
     void resetState(String stateName) {
         for (int i=0; i < states.length; ++i) {
             if (states[i].equals(stateName)) {
@@ -218,7 +218,7 @@ public class PopSynchronousTest extends TestScaffold {
         --stateIndex;
         checkState();
     }
-    
+
     void reenter(String methodName) throws Exception {
         pop(methodName);
         stepIntoInstruction(mainThread);
@@ -230,7 +230,7 @@ public class PopSynchronousTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("PopSynchronousTarg");
@@ -238,7 +238,7 @@ public class PopSynchronousTest extends TestScaffold {
         mainThread = bpe.thread();
 
         /*
-         * Testing 
+         * Testing
          */
 
         /* individual tests */
@@ -254,7 +254,7 @@ public class PopSynchronousTest extends TestScaffold {
                 resetExpected();
             }
         }
-        
+
         /* sequential tests */
 
         println("TEST pop a b c p");
@@ -265,7 +265,7 @@ public class PopSynchronousTest extends TestScaffold {
         pop("p");
         resumeTo("report");
         resetExpected();
-        
+
         println("TEST pop a c p");
         resumeTo("a");
         pop("a");
@@ -289,12 +289,12 @@ public class PopSynchronousTest extends TestScaffold {
         }
         resumeTo("report");
         resetExpected();
-        
+
         /*
          * we are done, get rid of target
          */
         vm().dispose();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -306,4 +306,3 @@ public class PopSynchronousTest extends TestScaffold {
         }
     }
 }
-

@@ -22,11 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_sys.c	1.13	03/01/14 SMI"
-#endif /* __SUNPRO_C */
 
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +62,7 @@
     __attribute__ ((weak,alias("__mlib_memcpy")));
 
 #ifdef MLIB_NO_LIBSUNMATH
- 
+
 void __mlib_sincosf (float x, float *s, float *c);
 
 __typeof__ ( __mlib_sincosf) mlib_sincosf

@@ -47,8 +47,8 @@ extern int XShmQueryExtension();
 
 void TryInitMITShm(JNIEnv *env, jint *shmExt, jint *shmPixmaps);
 void resetXShmAttachFailed();
-jboolean isXShmAttachFailed(); 
-  
+jboolean isXShmAttachFailed();
+
 #endif /* MITSHM */
 
 /* fieldIDs for X11GraphicsConfig fields that may be accessed from C */

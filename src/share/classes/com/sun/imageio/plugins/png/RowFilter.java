@@ -26,7 +26,6 @@
 package com.sun.imageio.plugins.png;
 
 /**
- * @version 0.5
  */
 public class RowFilter {
 
@@ -45,7 +44,7 @@ public class RowFilter {
             int left = currRow[i - bytesPerPixel] & 0xff;
             int difference = curr - left;
             subFilteredRow[i] = (byte)difference;
-            
+
             badness += abs(difference);
         }
 
@@ -64,10 +63,10 @@ public class RowFilter {
             int up = prevRow[i] & 0xff;
             int difference = curr - up;
             upFilteredRow[i] = (byte)difference;
-            
+
             badness += abs(difference);
         }
-        
+
         return badness;
     }
 
@@ -105,28 +104,28 @@ public class RowFilter {
         for (int i = 0; i < 5; i++) {
             filterBadness[i] = Integer.MAX_VALUE;
         }
-        
+
         {
             int badness = 0;
-            
+
             for (int i = bytesPerPixel; i < bytesPerRow + bytesPerPixel; i++) {
                 int curr = currRow[i] & 0xff;
                 badness += curr;
             }
-            
+
             filterBadness[0] = badness;
         }
-        
+
         {
             byte[] subFilteredRow = scratchRows[1];
             int badness = subFilter(currRow,
                                     subFilteredRow,
                                     bytesPerPixel,
                                     bytesPerRow);
-            
+
             filterBadness[1] = badness;
         }
-        
+
         {
             byte[] upFilteredRow = scratchRows[2];
             int badness = upFilter(currRow,
@@ -134,10 +133,10 @@ public class RowFilter {
                                    upFilteredRow,
                                    bytesPerPixel,
                                    bytesPerRow);
-            
+
             filterBadness[2] = badness;
         }
-        
+
         {
             byte[] averageFilteredRow = scratchRows[3];
             int badness = 0;
@@ -148,17 +147,17 @@ public class RowFilter {
                 int up = prevRow[i] & 0xff;
                 int difference = curr - (left + up)/2;;
                 averageFilteredRow[i] = (byte)difference;
-                
+
                 badness += abs(difference);
             }
-            
+
             filterBadness[3] = badness;
         }
-        
+
         {
             byte[] paethFilteredRow = scratchRows[4];
             int badness = 0;
-            
+
             for (int i = bytesPerPixel; i < bytesPerRow + bytesPerPixel; i++) {
                 int curr = currRow[i] & 0xff;
                 int left = currRow[i - bytesPerPixel] & 0xff;
@@ -167,13 +166,13 @@ public class RowFilter {
                 int predictor = paethPredictor(left, up, upleft);
                 int difference = curr - predictor;
                 paethFilteredRow[i] = (byte)difference;
-                
+
                 badness += abs(difference);
             }
-            
+
             filterBadness[4] = badness;
         }
-        
+
         int minBadness = filterBadness[0];
         int filterType = 0;
 
@@ -189,7 +188,7 @@ public class RowFilter {
                              scratchRows[0], bytesPerPixel,
                              bytesPerRow);
         }
-        
+
         return filterType;
     }
 }

@@ -25,7 +25,7 @@
  * @test
  * @bug 4091859
  * @summary Test Socket.available()
- * 
+ *
  */
 
 import java.net.*;
@@ -39,12 +39,12 @@ public class CloseAvailable implements Runnable {
 
     public static void main(String[] args) throws Exception {
         boolean error = true;
-	addr = InetAddress.getLocalHost();
+        addr = InetAddress.getLocalHost();
         ss = new ServerSocket(0);
-	port = ss.getLocalPort();
+        port = ss.getLocalPort();
 
-	Thread t = new Thread(new CloseAvailable());
-	t.start();
+        Thread t = new Thread(new CloseAvailable());
+        t.start();
 
         Socket  soc = ss.accept();
 
@@ -62,13 +62,12 @@ public class CloseAvailable implements Runnable {
     }
 
     public void run() {
-	try {
-	    Socket s = new Socket(addr, port);
-            
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        try {
+            Socket s = new Socket(addr, port);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
-

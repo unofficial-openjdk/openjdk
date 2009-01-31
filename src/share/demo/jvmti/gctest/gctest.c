@@ -50,36 +50,36 @@ static jrawMonitorID lock;
 
 /* Worker thread that waits for garbage collections */
 static void JNICALL
-worker(jvmtiEnv* jvmti, JNIEnv* jni, void *p) 
+worker(jvmtiEnv* jvmti, JNIEnv* jni, void *p)
 {
     jvmtiError err;
-    
+
     stdout_message("GC worker started...\n");
 
     for (;;) {
         err = (*jvmti)->RawMonitorEnter(jvmti, lock);
         check_jvmti_error(jvmti, err, "raw monitor enter");
-	while (gc_count == 0) {
-	    err = (*jvmti)->RawMonitorWait(jvmti, lock, 0);
-	    if (err != JVMTI_ERROR_NONE) {
-		err = (*jvmti)->RawMonitorExit(jvmti, lock);
+        while (gc_count == 0) {
+            err = (*jvmti)->RawMonitorWait(jvmti, lock, 0);
+            if (err != JVMTI_ERROR_NONE) {
+                err = (*jvmti)->RawMonitorExit(jvmti, lock);
                 check_jvmti_error(jvmti, err, "raw monitor wait");
-		return;
-	    }
-	}
-	gc_count = 0;
-        
-	err = (*jvmti)->RawMonitorExit(jvmti, lock);
-	check_jvmti_error(jvmti, err, "raw monitor exit");
+                return;
+            }
+        }
+        gc_count = 0;
 
-	/* Perform arbitrary JVMTI/JNI work here to do post-GC cleanup */
-	stdout_message("post-GarbageCollectionFinish actions...\n");
+        err = (*jvmti)->RawMonitorExit(jvmti, lock);
+        check_jvmti_error(jvmti, err, "raw monitor exit");
+
+        /* Perform arbitrary JVMTI/JNI work here to do post-GC cleanup */
+        stdout_message("post-GarbageCollectionFinish actions...\n");
     }
 }
 
 /* Creates a new jthread */
-static jthread 
-alloc_thread(JNIEnv *env) 
+static jthread
+alloc_thread(JNIEnv *env)
 {
     jclass    thrClass;
     jmethodID cid;
@@ -87,45 +87,45 @@ alloc_thread(JNIEnv *env)
 
     thrClass = (*env)->FindClass(env, "java/lang/Thread");
     if ( thrClass == NULL ) {
-	fatal_error("Cannot find Thread class\n");
+        fatal_error("Cannot find Thread class\n");
     }
     cid      = (*env)->GetMethodID(env, thrClass, "<init>", "()V");
     if ( cid == NULL ) {
-	fatal_error("Cannot find Thread constructor method\n");
+        fatal_error("Cannot find Thread constructor method\n");
     }
     res      = (*env)->NewObject(env, thrClass, cid);
     if ( res == NULL ) {
-	fatal_error("Cannot create new Thread object\n");
+        fatal_error("Cannot create new Thread object\n");
     }
     return res;
 }
 
 /* Callback for JVMTI_EVENT_VM_INIT */
-static void JNICALL 
+static void JNICALL
 vm_init(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 {
     jvmtiError err;
-    
+
     stdout_message("VMInit...\n");
 
     err = (*jvmti)->RunAgentThread(jvmti, alloc_thread(env), &worker, NULL,
-	JVMTI_THREAD_MAX_PRIORITY);
+        JVMTI_THREAD_MAX_PRIORITY);
     check_jvmti_error(jvmti, err, "running agent thread");
 }
 
 /* Callback for JVMTI_EVENT_GARBAGE_COLLECTION_START */
-static void JNICALL 
-gc_start(jvmtiEnv* jvmti_env) 
+static void JNICALL
+gc_start(jvmtiEnv* jvmti_env)
 {
     stdout_message("GarbageCollectionStart...\n");
 }
 
 /* Callback for JVMTI_EVENT_GARBAGE_COLLECTION_FINISH */
-static void JNICALL 
-gc_finish(jvmtiEnv* jvmti_env) 
+static void JNICALL
+gc_finish(jvmtiEnv* jvmti_env)
 {
     jvmtiError err;
-    
+
     stdout_message("GarbageCollectionFinish...\n");
 
     err = (*jvmti)->RawMonitorEnter(jvmti, lock);
@@ -145,15 +145,15 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     jvmtiError          err;
     jvmtiCapabilities   capabilities;
     jvmtiEventCallbacks callbacks;
-    
+
     /* Get JVMTI environment */
     rc = (*vm)->GetEnv(vm, (void **)&jvmti, JVMTI_VERSION);
     if (rc != JNI_OK) {
-	fatal_error("ERROR: Unable to create jvmtiEnv, rc=%d\n", rc);
-	return -1;
+        fatal_error("ERROR: Unable to create jvmtiEnv, rc=%d\n", rc);
+        return -1;
     }
 
-    /* Get/Add JVMTI capabilities */ 
+    /* Get/Add JVMTI capabilities */
     (void)memset(&capabilities, 0, sizeof(capabilities));
     capabilities.can_generate_garbage_collection_events = 1;
     err = (*jvmti)->AddCapabilities(jvmti, &capabilities);
@@ -166,14 +166,14 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     callbacks.GarbageCollectionFinish = &gc_finish;
     err = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks));
     check_jvmti_error(jvmti, err, "set event callbacks");
-    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			JVMTI_EVENT_VM_INIT, NULL);
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                        JVMTI_EVENT_VM_INIT, NULL);
     check_jvmti_error(jvmti, err, "set event notification");
-    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			JVMTI_EVENT_GARBAGE_COLLECTION_START, NULL);
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                        JVMTI_EVENT_GARBAGE_COLLECTION_START, NULL);
     check_jvmti_error(jvmti, err, "set event notification");
-    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
-			JVMTI_EVENT_GARBAGE_COLLECTION_FINISH, NULL);
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                        JVMTI_EVENT_GARBAGE_COLLECTION_FINISH, NULL);
     check_jvmti_error(jvmti, err, "set event notification");
 
     /* Create the necessary raw monitor */
@@ -187,4 +187,3 @@ JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *vm)
 {
 }
-

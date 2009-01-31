@@ -32,24 +32,24 @@
  * (srcOff + srcY * srcScan + srcX) in the array.
  */
 
-#define DeclareOutputVars				\
+#define DeclareOutputVars                               \
     pixptr dstP;
 
-#define InitOutput(cvdata, clrdata, dstX, dstY)			\
-    do {							\
-	img_check(clrdata->bitsperpixel == 8);			\
-	dstP.vp = cvdata->outbuf;				\
-	dstP.bp += dstY * ScanBytes(cvdata) + dstX;		\
+#define InitOutput(cvdata, clrdata, dstX, dstY)                 \
+    do {                                                        \
+        img_check(clrdata->bitsperpixel == 8);                  \
+        dstP.vp = cvdata->outbuf;                               \
+        dstP.bp += dstY * ScanBytes(cvdata) + dstX;             \
     } while (0)
 
-#define PutPixelInc(pixel, red, green, blue)			\
+#define PutPixelInc(pixel, red, green, blue)                    \
     *dstP.bp++ = ((unsigned char) pixel)
 
-#define EndOutputRow(cvdata, dstY, dstX1, dstX2)		\
-    do {							\
-	SendRow(cvdata, dstY, dstX1, dstX2);			\
-	dstP.bp += ScanBytes(cvdata) - (dstX2 - dstX1);		\
+#define EndOutputRow(cvdata, dstY, dstX1, dstX2)                \
+    do {                                                        \
+        SendRow(cvdata, dstY, dstX1, dstX2);                    \
+        dstP.bp += ScanBytes(cvdata) - (dstX2 - dstX1);         \
     } while (0)
 
-#define EndOutputRect(cvdata, dstX1, dstY1, dstX2, dstY2)	\
+#define EndOutputRect(cvdata, dstX1, dstY1, dstX2, dstY2)       \
     SendBuffer(cvdata, dstX1, dstY1, dstX2, dstY2)

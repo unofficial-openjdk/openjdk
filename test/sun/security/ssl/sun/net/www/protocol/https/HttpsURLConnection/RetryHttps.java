@@ -76,50 +76,50 @@ public class RetryHttps {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	serverPort = sslServerSocket.getLocalPort();
-	
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
-	SSLSocket sslSocket = null;
-	try {
-	    for (int i = 0; i < 2; i++) {
-	    sslSocket = (SSLSocket) sslServerSocket.accept();
-	    // read request
-	    InputStream is = sslSocket.getInputStream ();
-	    BufferedReader r = new BufferedReader(new InputStreamReader(is));
-	    boolean flag = false;
-	    String x;
-	    while ((x=r.readLine()) != null) {
-		if (x.length() ==0) {
-		    break;
-		}
-	    }
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+        serverPort = sslServerSocket.getLocalPort();
 
-	    PrintStream out = new PrintStream( 
-				 new BufferedOutputStream(
-				    sslSocket.getOutputStream() ));
-	    
-	    /* send the header */
-	    out.print("HTTP/1.1 200 OK\r\n");
-	    out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
-	    out.print("Content-Length: "+10+"\r\n");
-	    out.print("\r\n");
-	    out.print("Testing"+i+"\r\n");
-	    out.flush();
-	    sslSocket.close();
-	    }
-	    
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
+        SSLSocket sslSocket = null;
+        try {
+            for (int i = 0; i < 2; i++) {
+            sslSocket = (SSLSocket) sslServerSocket.accept();
+            // read request
+            InputStream is = sslSocket.getInputStream ();
+            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+            boolean flag = false;
+            String x;
+            while ((x=r.readLine()) != null) {
+                if (x.length() ==0) {
+                    break;
+                }
+            }
 
-	    sslServerSocket.close();
-	} catch (Exception e) { 
-	    e.printStackTrace();
-	}
+            PrintStream out = new PrintStream(
+                                 new BufferedOutputStream(
+                                    sslSocket.getOutputStream() ));
+
+            /* send the header */
+            out.print("HTTP/1.1 200 OK\r\n");
+            out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
+            out.print("Content-Length: "+10+"\r\n");
+            out.print("\r\n");
+            out.print("Testing"+i+"\r\n");
+            out.flush();
+            sslSocket.close();
+            }
+
+
+            sslServerSocket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -130,36 +130,36 @@ public class RetryHttps {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
-	try {
-	HttpsURLConnection http = null;
-	/* establish http connection to server */
-	URL url = new URL("https://localhost:" + serverPort+"/file1");
-	System.out.println("url is "+url.toString());
-	HttpsURLConnection.setDefaultHostnameVerifier(new NameVerifier());
-	http = (HttpsURLConnection)url.openConnection();
-	int respCode = http.getResponseCode();
-	int cl = http.getContentLength();
-	InputStream is = http.getInputStream ();
-	int count = 0;
-	while (is.read() != -1 && count++ < cl);
-	System.out.println("respCode1 = "+respCode);
-	Thread.sleep(2000);
-	url = new URL("https://localhost:" + serverPort+"/file2");
-	http = (HttpsURLConnection)url.openConnection();
-	respCode = http.getResponseCode();
-	System.out.println("respCode2 = "+respCode);
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
+        try {
+        HttpsURLConnection http = null;
+        /* establish http connection to server */
+        URL url = new URL("https://localhost:" + serverPort+"/file1");
+        System.out.println("url is "+url.toString());
+        HttpsURLConnection.setDefaultHostnameVerifier(new NameVerifier());
+        http = (HttpsURLConnection)url.openConnection();
+        int respCode = http.getResponseCode();
+        int cl = http.getContentLength();
+        InputStream is = http.getInputStream ();
+        int count = 0;
+        while (is.read() != -1 && count++ < cl);
+        System.out.println("respCode1 = "+respCode);
+        Thread.sleep(2000);
+        url = new URL("https://localhost:" + serverPort+"/file2");
+        http = (HttpsURLConnection)url.openConnection();
+        respCode = http.getResponseCode();
+        System.out.println("respCode2 = "+respCode);
 
-	} catch (IOException ioex) {
-	    if (sslServerSocket != null)
-		sslServerSocket.close();
-	    throw ioex;
-	}
+        } catch (IOException ioex) {
+            if (sslServerSocket != null)
+                sslServerSocket.close();
+            throw ioex;
+        }
     }
 
     static class NameVerifier implements HostnameVerifier {
@@ -180,25 +180,25 @@ public class RetryHttps {
     volatile Exception clientException = null;
 
     public static void main(String args[]) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
-	new RetryHttps();
+        /*
+         * Start the tests.
+         */
+        new RetryHttps();
     }
 
     Thread clientThread = null;
@@ -209,78 +209,78 @@ public class RetryHttps {
      * Fork off the other side, then do your work.
      */
     RetryHttps() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null)
-	    throw serverException;
-	if (clientException != null)
-	    throw clientException;
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null)
+            throw serverException;
+        if (clientException != null)
+            throw clientException;
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

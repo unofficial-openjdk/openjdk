@@ -35,21 +35,21 @@ package javax.naming.ldap;
  */
 public class BasicControl implements Control {
 
-    /** 
+    /**
      * The control's object identifier string.
      *
      * @serial
      */
     protected String id;
 
-    /** 
+    /**
      * The control's criticality.
      *
      * @serial
      */
     protected boolean criticality = false; // default
 
-    /** 
+    /**
      * The control's ASN.1 BER encoded value.
      *
      * @serial
@@ -60,28 +60,28 @@ public class BasicControl implements Control {
 
     /**
      * Constructs a non-critical control.
-     * 
-     * @param	id	The control's object identifier string.
+     *
+     * @param   id      The control's object identifier string.
      *
      */
     public BasicControl(String id) {
-	this.id = id;
+        this.id = id;
     }
 
     /**
      * Constructs a control using the supplied arguments.
-     * 
-     * @param	id		The control's object identifier string.
-     * @param	criticality	The control's criticality.
-     * @param	value		The control's ASN.1 BER encoded value.
-     * 				It is not cloned - any changes to value 
+     *
+     * @param   id              The control's object identifier string.
+     * @param   criticality     The control's criticality.
+     * @param   value           The control's ASN.1 BER encoded value.
+     *                          It is not cloned - any changes to value
      *                          will affect the contents of the control.
      *                          It may be null.
      */
     public BasicControl(String id, boolean criticality, byte[] value) {
-	this.id = id;
-	this.criticality = criticality;
-	this.value = value;
+        this.id = id;
+        this.criticality = criticality;
+        this.value = value;
     }
 
     /**
@@ -90,7 +90,7 @@ public class BasicControl implements Control {
      * @return The non-null object identifier string.
      */
     public String getID() {
-	return id;
+        return id;
     }
 
     /**
@@ -99,7 +99,7 @@ public class BasicControl implements Control {
      * @return true if the control is critical; false otherwise.
      */
     public boolean isCritical() {
-	return criticality;
+        return criticality;
     }
 
     /**
@@ -108,10 +108,10 @@ public class BasicControl implements Control {
      * does not include the control's object identifier and criticality setting.
      *
      * @return A possibly null byte array representing the control's
-     *		ASN.1 BER encoded value. It is not cloned - any changes to the 
+     *          ASN.1 BER encoded value. It is not cloned - any changes to the
      *          returned value will affect the contents of the control.
      */
     public byte[] getEncodedValue() {
-	return value;
+        return value;
     }
 }

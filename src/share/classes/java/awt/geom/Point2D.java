@@ -36,8 +36,7 @@ import java.io.Serializable;
  * The actual storage representation of the coordinates is left to
  * the subclass.
  *
- * @version 	%I%, %G%
- * @author	Jim Graham
+ * @author      Jim Graham
  * @since 1.2
  */
 public abstract class Point2D implements Cloneable {
@@ -48,90 +47,90 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public static class Float extends Point2D implements Serializable {
-	/**
-	 * The X coordinate of this <code>Point2D</code>.
-	 * @since 1.2
+        /**
+         * The X coordinate of this <code>Point2D</code>.
+         * @since 1.2
          * @serial
-	 */
-	public float x;
+         */
+        public float x;
 
-	/**
-	 * The Y coordinate of this <code>Point2D</code>.
-	 * @since 1.2
+        /**
+         * The Y coordinate of this <code>Point2D</code>.
+         * @since 1.2
          * @serial
-	 */
-	public float y;
+         */
+        public float y;
 
-	/**
-	 * Constructs and initializes a <code>Point2D</code> with
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
          * coordinates (0,&nbsp;0).
-	 * @since 1.2
-	 */
-	public Float() {
-	}
+         * @since 1.2
+         */
+        public Float() {
+        }
 
-	/**
-	 * Constructs and initializes a <code>Point2D</code> with 
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
          * the specified coordinates.
          *
          * @param x the X coordinate of the newly
          *          constructed <code>Point2D</code>
          * @param y the Y coordinate of the newly
          *          constructed <code>Point2D</code>
-	 * @since 1.2
-	 */
-	public Float(float x, float y) {
-	    this.x = x;
-	    this.y = y;
-	}
+         * @since 1.2
+         */
+        public Float(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public double getX() {
-	    return (double) x;
-	}
+         */
+        public double getX() {
+            return (double) x;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public double getY() {
-	    return (double) y;
-	}
+         */
+        public double getY() {
+            return (double) y;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public void setLocation(double x, double y) {
-	    this.x = (float) x;
-	    this.y = (float) y;
-	}
+         */
+        public void setLocation(double x, double y) {
+            this.x = (float) x;
+            this.y = (float) y;
+        }
 
-	/**
-	 * Sets the location of this <code>Point2D</code> to the 
+        /**
+         * Sets the location of this <code>Point2D</code> to the
          * specified <code>float</code> coordinates.
          *
          * @param x the new X coordinate of this {@code Point2D}
          * @param y the new Y coordinate of this {@code Point2D}
-	 * @since 1.2
-	 */
-	public void setLocation(float x, float y) {
-	    this.x = x;
-	    this.y = y;
-	}
+         * @since 1.2
+         */
+        public void setLocation(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
 
-	/**
-	 * Returns a <code>String</code> that represents the value 
+        /**
+         * Returns a <code>String</code> that represents the value
          * of this <code>Point2D</code>.
          * @return a string representation of this <code>Point2D</code>.
-	 * @since 1.2
-	 */
-	public String toString() {
-	    return "Point2D.Float["+x+", "+y+"]";
-	}
+         * @since 1.2
+         */
+        public String toString() {
+            return "Point2D.Float["+x+", "+y+"]";
+        }
 
         /*
          * JDK 1.6 serialVersionUID
@@ -140,82 +139,82 @@ public abstract class Point2D implements Cloneable {
     }
 
     /**
-     * The <code>Double</code> class defines a point specified in 
+     * The <code>Double</code> class defines a point specified in
      * <code>double</code> precision.
      * @since 1.2
      */
     public static class Double extends Point2D implements Serializable {
-	/**
-	 * The X coordinate of this <code>Point2D</code>.
-	 * @since 1.2
+        /**
+         * The X coordinate of this <code>Point2D</code>.
+         * @since 1.2
          * @serial
-	 */
-	public double x;
+         */
+        public double x;
 
-	/**
-	 * The Y coordinate of this <code>Point2D</code>.
-	 * @since 1.2
+        /**
+         * The Y coordinate of this <code>Point2D</code>.
+         * @since 1.2
          * @serial
-	 */
-	public double y;
+         */
+        public double y;
 
-	/**
-	 * Constructs and initializes a <code>Point2D</code> with
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
          * coordinates (0,&nbsp;0).
-	 * @since 1.2
-	 */
-	public Double() {
-	}
+         * @since 1.2
+         */
+        public Double() {
+        }
 
-	/**
-	 * Constructs and initializes a <code>Point2D</code> with the
+        /**
+         * Constructs and initializes a <code>Point2D</code> with the
          * specified coordinates.
          *
          * @param x the X coordinate of the newly
          *          constructed <code>Point2D</code>
          * @param y the Y coordinate of the newly
          *          constructed <code>Point2D</code>
-	 * @since 1.2
-	 */
-	public Double(double x, double y) {
-	    this.x = x;
-	    this.y = y;
-	}
+         * @since 1.2
+         */
+        public Double(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public double getX() {
-	    return x;
-	}
+         */
+        public double getX() {
+            return x;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public double getY() {
-	    return y;
-	}
+         */
+        public double getY() {
+            return y;
+        }
 
-	/**
+        /**
          * {@inheritDoc}
          * @since 1.2
-	 */
-	public void setLocation(double x, double y) {
-	    this.x = x;
-	    this.y = y;
-	}
+         */
+        public void setLocation(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
 
-	/**
-	 * Returns a <code>String</code> that represents the value 
+        /**
+         * Returns a <code>String</code> that represents the value
          * of this <code>Point2D</code>.
          * @return a string representation of this <code>Point2D</code>.
-	 * @since 1.2
-	 */
-	public String toString() {
-	    return "Point2D.Double["+x+", "+y+"]";
-	}
+         * @since 1.2
+         */
+        public String toString() {
+            return "Point2D.Double["+x+", "+y+"]";
+        }
 
         /*
          * JDK 1.6 serialVersionUID
@@ -239,7 +238,7 @@ public abstract class Point2D implements Cloneable {
     }
 
     /**
-     * Returns the X coordinate of this <code>Point2D</code> in 
+     * Returns the X coordinate of this <code>Point2D</code> in
      * <code>double</code> precision.
      * @return the X coordinate of this <code>Point2D</code>.
      * @since 1.2
@@ -247,15 +246,15 @@ public abstract class Point2D implements Cloneable {
     public abstract double getX();
 
     /**
-     * Returns the Y coordinate of this <code>Point2D</code> in 
+     * Returns the Y coordinate of this <code>Point2D</code> in
      * <code>double</code> precision.
-     * @return the Y coordinate of this <code>Point2D</code>. 
+     * @return the Y coordinate of this <code>Point2D</code>.
      * @since 1.2
      */
     public abstract double getY();
 
     /**
-     * Sets the location of this <code>Point2D</code> to the 
+     * Sets the location of this <code>Point2D</code> to the
      * specified <code>double</code> coordinates.
      *
      * @param x the new X coordinate of this {@code Point2D}
@@ -272,7 +271,7 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public void setLocation(Point2D p) {
-	setLocation(p.getX(), p.getY());
+        setLocation(p.getX(), p.getY());
     }
 
     /**
@@ -287,11 +286,11 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public static double distanceSq(double x1, double y1,
-				    double x2, double y2)
+                                    double x2, double y2)
     {
-	x1 -= x2;
-	y1 -= y2;
-	return (x1 * x1 + y1 * y1);
+        x1 -= x2;
+        y1 -= y2;
+        return (x1 * x1 + y1 * y1);
     }
 
     /**
@@ -306,15 +305,15 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public static double distance(double x1, double y1,
-				  double x2, double y2)
+                                  double x2, double y2)
     {
-	x1 -= x2;
-	y1 -= y2;
-	return Math.sqrt(x1 * x1 + y1 * y1);
+        x1 -= x2;
+        y1 -= y2;
+        return Math.sqrt(x1 * x1 + y1 * y1);
     }
 
     /**
-     * Returns the square of the distance from this 
+     * Returns the square of the distance from this
      * <code>Point2D</code> to a specified point.
      *
      * @param px the X coordinate of the specified point to be measured
@@ -326,13 +325,13 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public double distanceSq(double px, double py) {
-	px -= getX();
-	py -= getY();
-	return (px * px + py * py);
+        px -= getX();
+        py -= getY();
+        return (px * px + py * py);
     }
 
     /**
-     * Returns the square of the distance from this 
+     * Returns the square of the distance from this
      * <code>Point2D</code> to a specified <code>Point2D</code>.
      *
      * @param pt the specified point to be measured
@@ -342,13 +341,13 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public double distanceSq(Point2D pt) {
-	double px = pt.getX() - this.getX();
-	double py = pt.getY() - this.getY();
-	return (px * px + py * py);
+        double px = pt.getX() - this.getX();
+        double py = pt.getY() - this.getY();
+        return (px * px + py * py);
     }
 
     /**
-     * Returns the distance from this <code>Point2D</code> to 
+     * Returns the distance from this <code>Point2D</code> to
      * a specified point.
      *
      * @param px the X coordinate of the specified point to be measured
@@ -360,9 +359,9 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public double distance(double px, double py) {
-	px -= getX();
-	py -= getY();
-	return Math.sqrt(px * px + py * py);
+        px -= getX();
+        py -= getY();
+        return Math.sqrt(px * px + py * py);
     }
 
     /**
@@ -376,9 +375,9 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public double distance(Point2D pt) {
-	double px = pt.getX() - this.getX();
-	double py = pt.getY() - this.getY();
-	return Math.sqrt(px * px + py * py);
+        double px = pt.getX() - this.getX();
+        double py = pt.getY() - this.getY();
+        return Math.sqrt(px * px + py * py);
     }
 
     /**
@@ -390,12 +389,12 @@ public abstract class Point2D implements Cloneable {
      * @since      1.2
      */
     public Object clone() {
-	try {
-	    return super.clone();
-	} catch (CloneNotSupportedException e) {
-	    // this shouldn't happen, since we are Cloneable
-	    throw new InternalError();
-	}
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
     }
 
     /**
@@ -403,14 +402,14 @@ public abstract class Point2D implements Cloneable {
      * @return      a hash code for this <code>Point2D</code>.
      */
     public int hashCode() {
-	long bits = java.lang.Double.doubleToLongBits(getX());
-	bits ^= java.lang.Double.doubleToLongBits(getY()) * 31;
-	return (((int) bits) ^ ((int) (bits >> 32)));
+        long bits = java.lang.Double.doubleToLongBits(getX());
+        bits ^= java.lang.Double.doubleToLongBits(getY()) * 31;
+        return (((int) bits) ^ ((int) (bits >> 32)));
     }
 
     /**
      * Determines whether or not two points are equal. Two instances of
-     * <code>Point2D</code> are equal if the values of their 
+     * <code>Point2D</code> are equal if the values of their
      * <code>x</code> and <code>y</code> member fields, representing
      * their position in the coordinate space, are the same.
      * @param obj an object to be compared with this <code>Point2D</code>
@@ -420,10 +419,10 @@ public abstract class Point2D implements Cloneable {
      * @since 1.2
      */
     public boolean equals(Object obj) {
-	if (obj instanceof Point2D) {
-	    Point2D p2d = (Point2D) obj;
-	    return (getX() == p2d.getX()) && (getY() == p2d.getY());
-	}
-	return super.equals(obj);
+        if (obj instanceof Point2D) {
+            Point2D p2d = (Point2D) obj;
+            return (getX() == p2d.getX()) && (getY() == p2d.getY());
+        }
+        return super.equals(obj);
     }
 }

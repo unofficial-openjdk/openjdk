@@ -32,11 +32,10 @@ import java.awt.dnd.InvalidDnDOperationException;
 
 /**
  * <p>
- * This interface is exposed by the underlying window system platform to 
+ * This interface is exposed by the underlying window system platform to
  * enable control of platform DnD operations
  * </p>
  *
- * @version 	%I%, %G%
  * @since 1.2
  *
  */

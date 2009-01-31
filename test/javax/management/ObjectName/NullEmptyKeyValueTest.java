@@ -82,7 +82,7 @@ public class NullEmptyKeyValueTest {
                 error++;
                 System.out.println("Got Unexpected ObjectName = " +
                            (on == null ? "null" : on.getCanonicalName()));
-            } else { 
+            } else {
                 System.out.println("Got Expected ObjectName = " +
                            (on == null ? "null" : on.getCanonicalName()));
             }

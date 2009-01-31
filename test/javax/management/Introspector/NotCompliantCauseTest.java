@@ -24,7 +24,7 @@
 /*
  * @test NotCompliantCauseTest.java
  * @bug 6374290
- * @summary Test that NotCompliantMBeanException has a cause in case of 
+ * @summary Test that NotCompliantMBeanException has a cause in case of
  *          type mapping problems.
  * @author Daniel Fuchs, Alexander Shusherov
  * @run clean NotCompliantCauseTest
@@ -52,22 +52,22 @@ import javax.management.openmbean.OpenDataException;
  * @author Sun Microsystems, 2005 - All rights reserved.
  */
 public class NotCompliantCauseTest {
-    
+
     /**
      * A logger for this class.
      **/
     private static final Logger LOG =
             Logger.getLogger(NotCompliantCauseTest.class.getName());
-    
+
     /**
      * Creates a new instance of NotCompliantCauseTest
      */
     public NotCompliantCauseTest() {
     }
 
-    /** 
-     * Test that NotCompliantMBeanException has a cause in case of 
-     * type mapping problems. 
+    /**
+     * Test that NotCompliantMBeanException has a cause in case of
+     * type mapping problems.
      **/
     public static void main(String[] args) {
         NotCompliantCauseTest instance = new NotCompliantCauseTest();
@@ -77,25 +77,25 @@ public class NotCompliantCauseTest {
 
     public static class RuntimeTestException extends RuntimeException {
         public RuntimeTestException(String msg) {
-            super(msg); 
+            super(msg);
         }
         public RuntimeTestException(String msg, Throwable cause) {
-            super(msg,cause); 
+            super(msg,cause);
         }
         public RuntimeTestException(Throwable cause) {
-            super(cause); 
+            super(cause);
         }
     }
-    
-    /** 
-     * Test that NotCompliantMBeanException has a cause in case of 
-     * type mapping problems. 
+
+    /**
+     * Test that NotCompliantMBeanException has a cause in case of
+     * type mapping problems.
      **/
     void test1() {
         try {
             MBeanServer mbs = MBeanServerFactory.createMBeanServer();
             ObjectName oname = new ObjectName("domain:type=test");
-            
+
             mbs.createMBean(NotCompliant.class.getName(), oname);
             System.err.println("ERROR: expected " +
                     "NotCompliantMBeanException not thrown");
@@ -131,5 +131,5 @@ public class NotCompliantCauseTest {
             return new Random();
         }
     }
-    
+
 }

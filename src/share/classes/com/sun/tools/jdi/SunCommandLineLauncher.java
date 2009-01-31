@@ -49,42 +49,42 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
     boolean usingSharedMemory = false;
 
     TransportService transportService() {
-	return transportService;
+        return transportService;
     }
 
     public Transport transport() {
-	return transport;
+        return transport;
     }
 
     public SunCommandLineLauncher() {
-	super();
+        super();
 
-	/**
-	 * By default this connector uses either the shared memory
-	 * transport or the socket transport 
-	 */
-	try {
-	    Class c = Class.forName("com.sun.tools.jdi.SharedMemoryTransportService");
-	    transportService = (TransportService)c.newInstance();
-	    transport = new Transport() {
-		public String name() {
-		    return "dt_shmem";	
-		}
-	    };
-	    usingSharedMemory = true;
-	} catch (ClassNotFoundException x) { 
-	} catch (UnsatisfiedLinkError x) { 
-	} catch (InstantiationException x) {
-	} catch (IllegalAccessException x) {
-	};
-	if (transportService == null) {
-	    transportService = new SocketTransportService();
-	    transport = new Transport() {
-		public String name() {
-		    return "dt_socket";		
-		}
-	    };
-	}
+        /**
+         * By default this connector uses either the shared memory
+         * transport or the socket transport
+         */
+        try {
+            Class c = Class.forName("com.sun.tools.jdi.SharedMemoryTransportService");
+            transportService = (TransportService)c.newInstance();
+            transport = new Transport() {
+                public String name() {
+                    return "dt_shmem";
+                }
+            };
+            usingSharedMemory = true;
+        } catch (ClassNotFoundException x) {
+        } catch (UnsatisfiedLinkError x) {
+        } catch (InstantiationException x) {
+        } catch (IllegalAccessException x) {
+        };
+        if (transportService == null) {
+            transportService = new SocketTransportService();
+            transport = new Transport() {
+                public String name() {
+                    return "dt_socket";
+                }
+            };
+        }
 
         addStringArgument(
                 ARG_HOME,
@@ -137,49 +137,49 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
     }
 
     public VirtualMachine
-	launch(Map<String,? extends Connector.Argument> arguments)
-	throws IOException, IllegalConnectorArgumentsException,
-	       VMStartException
+        launch(Map<String,? extends Connector.Argument> arguments)
+        throws IOException, IllegalConnectorArgumentsException,
+               VMStartException
     {
         VirtualMachine vm;
 
         String home = argument(ARG_HOME, arguments).value();
         String options = argument(ARG_OPTIONS, arguments).value();
         String mainClassAndArgs = argument(ARG_MAIN, arguments).value();
-        boolean wait = ((BooleanArgumentImpl)argument(ARG_INIT_SUSPEND, 
+        boolean wait = ((BooleanArgumentImpl)argument(ARG_INIT_SUSPEND,
                                                   arguments)).booleanValue();
         String quote = argument(ARG_QUOTE, arguments).value();
         String exe = argument(ARG_VM_EXEC, arguments).value();
         String exePath = null;
 
         if (quote.length() > 1) {
-            throw new IllegalConnectorArgumentsException("Invalid length", 
+            throw new IllegalConnectorArgumentsException("Invalid length",
                                                          ARG_QUOTE);
         }
 
         if ((options.indexOf("-Djava.compiler=") != -1) &&
             (options.toLowerCase().indexOf("-djava.compiler=none") == -1)) {
-            throw new IllegalConnectorArgumentsException("Cannot debug with a JIT compiler", 
+            throw new IllegalConnectorArgumentsException("Cannot debug with a JIT compiler",
                                                          ARG_OPTIONS);
         }
 
         /*
          * Start listening.
-         * If we're using the shared memory transport then we pick a 
+         * If we're using the shared memory transport then we pick a
          * random address rather than using the (fixed) default.
          * Random() uses System.currentTimeMillis() as the seed
-         * which can be a problem on windows (many calls to 
+         * which can be a problem on windows (many calls to
          * currentTimeMillis can return the same value), so
          * we do a few retries if we get an IOException (we
          * assume the IOException is the filename is already in use.)
          */
-	TransportService.ListenKey listenKey;
-	if (usingSharedMemory) {
-	    Random rr = new Random();
+        TransportService.ListenKey listenKey;
+        if (usingSharedMemory) {
+            Random rr = new Random();
             int failCount = 0;
             while(true) {
                 try {
-                    String address = "javadebug" + 
+                    String address = "javadebug" +
                         String.valueOf(rr.nextInt(100000));
                     listenKey = transportService().startListening(address);
                     break;
@@ -190,10 +190,10 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
                 }
             }
         } else {
-	    listenKey = transportService().startListening();
-	}
-	String address = listenKey.address();
-	
+            listenKey = transportService().startListening();
+        }
+        String address = listenKey.address();
+
         try {
             if (home.length() > 0) {
                 /*
@@ -202,8 +202,8 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
                  * 32-bit executables are stored under $JAVA_HOME/bin
                  */
                 String os_arch = System.getProperty("os.arch");
-		if ("SunOS".equals(System.getProperty("os.name")) &&
-		   ("sparcv9".equals(os_arch) || "amd64".equals(os_arch))) {
+                if ("SunOS".equals(System.getProperty("os.name")) &&
+                   ("sparcv9".equals(os_arch) || "amd64".equals(os_arch))) {
                     exePath = home + File.separator + "bin" + File.separator +
                         os_arch + File.separator + exe;
                 } else {
@@ -212,7 +212,7 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
             } else {
                 exePath = exe;
             }
-            // Quote only if necessary in case the quote arg value is bogus 
+            // Quote only if necessary in case the quote arg value is bogus
             if (hasWhitespace(exe)) {
                 exePath = quote + exePath + quote;
             }
@@ -220,12 +220,12 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
             String xrun = "transport=" + transport().name() +
                           ",address=" + address +
                           ",suspend=" + (wait? 'y' : 'n');
-            // Quote only if necessary in case the quote arg value is bogus 
+            // Quote only if necessary in case the quote arg value is bogus
             if (hasWhitespace(xrun)) {
                 xrun = quote + xrun + quote;
             }
-                          
-            String command = exePath + ' ' + 
+
+            String command = exePath + ' ' +
                              options + ' ' +
                              "-Xdebug " +
                              "-Xrunjdwp:" + xrun + ' ' +
@@ -233,7 +233,7 @@ public class SunCommandLineLauncher extends AbstractLauncher implements Launchin
 
             // System.err.println("Command: \"" + command + '"');
             vm = launch(tokenizeCommand(command, quote.charAt(0)), address, listenKey,
-			transportService());
+                        transportService());
         } finally {
             transportService().stopListening(listenKey);
         }

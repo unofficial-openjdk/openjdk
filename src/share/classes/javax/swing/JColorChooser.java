@@ -81,7 +81,6 @@ import sun.swing.SwingUtilities2;
  *    description: A component that supports selecting a Color.
  *
  *
- * @version %I% %G%
  * @author James Gosling
  * @author Amy Fowler
  * @author Steve Wilson
@@ -177,15 +176,15 @@ public class JColorChooser extends JComponent implements Accessible {
         ActionListener cancelListener) throws HeadlessException {
 
         Window window = JOptionPane.getWindowForComponent(c);
-	ColorChooserDialog dialog;
+        ColorChooserDialog dialog;
         if (window instanceof Frame) {
             dialog = new ColorChooserDialog((Frame)window, title, modal, c, chooserPane,
-					    okListener, cancelListener);
+                                            okListener, cancelListener);
         } else {
             dialog = new ColorChooserDialog((Dialog)window, title, modal, c, chooserPane,
-					    okListener, cancelListener);
+                                            okListener, cancelListener);
         }
-	return dialog;
+        return dialog;
     }
 
     /**
@@ -201,7 +200,7 @@ public class JColorChooser extends JComponent implements Accessible {
      * @param initialColor the initial color set in the chooser
      */
     public JColorChooser(Color initialColor) {
-	this( new DefaultColorSelectionModel(initialColor) );
+        this( new DefaultColorSelectionModel(initialColor) );
 
     }
 
@@ -212,16 +211,16 @@ public class JColorChooser extends JComponent implements Accessible {
      * @param model the <code>ColorSelectionModel</code> to be used
      */
     public JColorChooser(ColorSelectionModel model) {
-	selectionModel = model;
+        selectionModel = model;
         updateUI();
-	dragEnabled = false;
+        dragEnabled = false;
     }
 
     /**
      * Returns the L&F object that renders this component.
      *
      * @return the <code>ColorChooserUI</code> object that renders
-     *		this component
+     *          this component
      */
     public ColorChooserUI getUI() {
         return (ColorChooserUI)ui;
@@ -361,7 +360,7 @@ public class JColorChooser extends JComponent implements Accessible {
         if (b && GraphicsEnvironment.isHeadless()) {
             throw new HeadlessException();
         }
-	dragEnabled = b;
+        dragEnabled = b;
     }
 
     /**
@@ -372,7 +371,7 @@ public class JColorChooser extends JComponent implements Accessible {
      * @since 1.4
      */
     public boolean getDragEnabled() {
-	return dragEnabled;
+        return dragEnabled;
     }
 
     /**
@@ -391,8 +390,8 @@ public class JColorChooser extends JComponent implements Accessible {
     public void setPreviewPanel(JComponent preview) {
 
         if (previewPanel != preview) {
-	    JComponent oldPreview = previewPanel;
-	    previewPanel = preview;
+            JComponent oldPreview = previewPanel;
+            previewPanel = preview;
             firePropertyChange(JColorChooser.PREVIEW_PANEL_PROPERTY, oldPreview, preview);
         }
     }
@@ -414,9 +413,9 @@ public class JColorChooser extends JComponent implements Accessible {
     public void addChooserPanel( AbstractColorChooserPanel panel ) {
         AbstractColorChooserPanel[] oldPanels = getChooserPanels();
         AbstractColorChooserPanel[] newPanels = new AbstractColorChooserPanel[oldPanels.length+1];
-	System.arraycopy(oldPanels, 0, newPanels, 0, oldPanels.length);
-	newPanels[newPanels.length-1] = panel;
-	setChooserPanels(newPanels);
+        System.arraycopy(oldPanels, 0, newPanels, 0, oldPanels.length);
+        newPanels[newPanels.length-1] = panel;
+        setChooserPanels(newPanels);
     }
 
     /**
@@ -425,40 +424,40 @@ public class JColorChooser extends JComponent implements Accessible {
      * @param panel   a string that specifies the panel to be removed
      * @return the color panel
      * @exception IllegalArgumentException if panel is not in list of
-     * 			known chooser panels
+     *                  known chooser panels
      */
     public AbstractColorChooserPanel removeChooserPanel( AbstractColorChooserPanel panel ) {
 
 
-	int containedAt = -1;
+        int containedAt = -1;
 
         for (int i = 0; i < chooserPanels.length; i++) {
-  	    if (chooserPanels[i] == panel) {
-	        containedAt = i;
-		break;
-	    }
-	}
-	if (containedAt == -1) {
-	    throw new IllegalArgumentException("chooser panel not in this chooser");
-	}
+            if (chooserPanels[i] == panel) {
+                containedAt = i;
+                break;
+            }
+        }
+        if (containedAt == -1) {
+            throw new IllegalArgumentException("chooser panel not in this chooser");
+        }
 
         AbstractColorChooserPanel[] newArray = new AbstractColorChooserPanel[chooserPanels.length-1];
 
-	if (containedAt == chooserPanels.length-1) {  // at end
-	    System.arraycopy(chooserPanels, 0, newArray, 0, newArray.length);
-	}
-	else if (containedAt == 0) {  // at start
-	    System.arraycopy(chooserPanels, 1, newArray, 0, newArray.length);
-	}
-	else {  // in middle
-	    System.arraycopy(chooserPanels, 0, newArray, 0, containedAt);
-	    System.arraycopy(chooserPanels, containedAt+1,
-			     newArray, containedAt, (chooserPanels.length - containedAt - 1));
-	}
+        if (containedAt == chooserPanels.length-1) {  // at end
+            System.arraycopy(chooserPanels, 0, newArray, 0, newArray.length);
+        }
+        else if (containedAt == 0) {  // at start
+            System.arraycopy(chooserPanels, 1, newArray, 0, newArray.length);
+        }
+        else {  // in middle
+            System.arraycopy(chooserPanels, 0, newArray, 0, containedAt);
+            System.arraycopy(chooserPanels, containedAt+1,
+                             newArray, containedAt, (chooserPanels.length - containedAt - 1));
+        }
 
-	setChooserPanels(newArray);
+        setChooserPanels(newArray);
 
-	return panel;
+        return panel;
     }
 
 
@@ -466,7 +465,7 @@ public class JColorChooser extends JComponent implements Accessible {
      * Specifies the Color Panels used to choose a color value.
      *
      * @param panels  an array of <code>AbstractColorChooserPanel</code>
-     *		objects
+     *          objects
      *
      * @beaninfo
      *       bound: true
@@ -475,8 +474,8 @@ public class JColorChooser extends JComponent implements Accessible {
      */
     public void setChooserPanels( AbstractColorChooserPanel[] panels) {
         AbstractColorChooserPanel[] oldValue = chooserPanels;
-	chooserPanels = panels;
-	firePropertyChange(CHOOSER_PANELS_PROPERTY, oldValue, panels);
+        chooserPanels = panels;
+        firePropertyChange(CHOOSER_PANELS_PROPERTY, oldValue, panels);
     }
 
     /**
@@ -491,7 +490,7 @@ public class JColorChooser extends JComponent implements Accessible {
     /**
      * Returns the data model that handles color selections.
      *
-     * @return a <code>ColorSelectionModel</code> object 
+     * @return a <code>ColorSelectionModel</code> object
      */
     public ColorSelectionModel getSelectionModel() {
         return selectionModel;
@@ -510,8 +509,8 @@ public class JColorChooser extends JComponent implements Accessible {
      */
     public void setSelectionModel(ColorSelectionModel newModel ) {
         ColorSelectionModel oldModel = selectionModel;
-	selectionModel = newModel;
-	firePropertyChange(JColorChooser.SELECTION_MODEL_PROPERTY, oldModel, newModel);
+        selectionModel = newModel;
+        firePropertyChange(JColorChooser.SELECTION_MODEL_PROPERTY, oldModel, newModel);
     }
 
 
@@ -534,22 +533,22 @@ public class JColorChooser extends JComponent implements Accessible {
 
     /**
      * Returns a string representation of this <code>JColorChooser</code>.
-     * This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>JColorChooser</code>
      */
     protected String paramString() {
-	StringBuffer chooserPanelsString = new StringBuffer("");
-	for (int i=0; i<chooserPanels.length; i++) {
-	    chooserPanelsString.append("[" + chooserPanels[i].toString()
-				       + "]");
-	}
+        StringBuffer chooserPanelsString = new StringBuffer("");
+        for (int i=0; i<chooserPanels.length; i++) {
+            chooserPanelsString.append("[" + chooserPanels[i].toString()
+                                       + "]");
+        }
         String previewPanelString = (previewPanel != null ?
-				     previewPanel.toString() : "");
+                                     previewPanel.toString() : "");
 
         return super.paramString() +
         ",chooserPanels=" + chooserPanelsString.toString() +
@@ -563,12 +562,12 @@ public class JColorChooser extends JComponent implements Accessible {
     protected AccessibleContext accessibleContext = null;
 
     /**
-     * Gets the AccessibleContext associated with this JColorChooser. 
-     * For color choosers, the AccessibleContext takes the form of an 
-     * AccessibleJColorChooser. 
+     * Gets the AccessibleContext associated with this JColorChooser.
+     * For color choosers, the AccessibleContext takes the form of an
+     * AccessibleJColorChooser.
      * A new AccessibleJColorChooser instance is created if necessary.
      *
-     * @return an AccessibleJColorChooser that serves as the 
+     * @return an AccessibleJColorChooser that serves as the
      *         AccessibleContext of this JColorChooser
      */
     public AccessibleContext getAccessibleContext() {
@@ -579,9 +578,9 @@ public class JColorChooser extends JComponent implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JColorChooser</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to color chooser user-interface 
+     * This class implements accessibility support for the
+     * <code>JColorChooser</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to color chooser user-interface
      * elements.
      */
     protected class AccessibleJColorChooser extends AccessibleJComponent {
@@ -617,7 +616,7 @@ class ColorChooserDialog extends JDialog {
         ActionListener okListener, ActionListener cancelListener)
         throws HeadlessException {
         super(owner, title, modal);
-	initColorChooserDialog(c, chooserPane, okListener, cancelListener);
+        initColorChooserDialog(c, chooserPane, okListener, cancelListener);
     }
 
     public ColorChooserDialog(Frame owner, String title, boolean modal,
@@ -625,18 +624,18 @@ class ColorChooserDialog extends JDialog {
         ActionListener okListener, ActionListener cancelListener)
         throws HeadlessException {
         super(owner, title, modal);
-	initColorChooserDialog(c, chooserPane, okListener, cancelListener);
+        initColorChooserDialog(c, chooserPane, okListener, cancelListener);
     }
 
     protected void initColorChooserDialog(Component c, JColorChooser chooserPane,
-	ActionListener okListener, ActionListener cancelListener) {
+        ActionListener okListener, ActionListener cancelListener) {
         //setResizable(false);
 
         this.chooserPane = chooserPane;
 
-	String okString = UIManager.getString("ColorChooser.okText");
-	String cancelString = UIManager.getString("ColorChooser.cancelText");
-	String resetString = UIManager.getString("ColorChooser.resetText");
+        String okString = UIManager.getString("ColorChooser.okText");
+        String cancelString = UIManager.getString("ColorChooser.cancelText");
+        String resetString = UIManager.getString("ColorChooser.resetText");
 
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
@@ -648,7 +647,7 @@ class ColorChooserDialog extends JDialog {
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new FlowLayout(FlowLayout.CENTER));
         JButton okButton = new JButton(okString);
-	getRootPane().setDefaultButton(okButton);
+        getRootPane().setDefaultButton(okButton);
         okButton.setActionCommand("OK");
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -662,21 +661,21 @@ class ColorChooserDialog extends JDialog {
 
         cancelButton = new JButton(cancelString);
 
-	// The following few lines are used to register esc to close the dialog
-	Action cancelKeyAction = new AbstractAction() {
+        // The following few lines are used to register esc to close the dialog
+        Action cancelKeyAction = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 ((AbstractButton)e.getSource()).fireActionPerformed(e);
             }
-        }; 
+        };
         KeyStroke cancelKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-	InputMap inputMap = cancelButton.getInputMap(JComponent.
-						     WHEN_IN_FOCUSED_WINDOW);
-	ActionMap actionMap = cancelButton.getActionMap();
-	if (inputMap != null && actionMap != null) {
-	    inputMap.put(cancelKeyStroke, "cancel");
-	    actionMap.put("cancel", cancelKeyAction);
-	}
-	// end esc handling
+        InputMap inputMap = cancelButton.getInputMap(JComponent.
+                                                     WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = cancelButton.getActionMap();
+        if (inputMap != null && actionMap != null) {
+            inputMap.put(cancelKeyStroke, "cancel");
+            actionMap.put("cancel", cancelKeyAction);
+        }
+        // end esc handling
 
         cancelButton.setActionCommand("cancel");
         cancelButton.addActionListener(new ActionListener() {
@@ -703,7 +702,7 @@ class ColorChooserDialog extends JDialog {
         contentPane.add(buttonPane, BorderLayout.SOUTH);
 
         if (JDialog.isDefaultLookAndFeelDecorated()) {
-            boolean supportsWindowDecorations = 
+            boolean supportsWindowDecorations =
             UIManager.getLookAndFeel().getSupportsWindowDecorations();
             if (supportsWindowDecorations) {
                 getRootPane().setWindowDecorationStyle(JRootPane.COLOR_CHOOSER_DIALOG);
@@ -759,4 +758,3 @@ class ColorTracker implements ActionListener, Serializable {
         return color;
     }
 }
-

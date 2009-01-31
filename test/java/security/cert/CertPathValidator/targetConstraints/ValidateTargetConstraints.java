@@ -25,7 +25,7 @@
  * @test
  * @bug 4459538
  * @summary make sure that target constraints are processed correctly
- * 	by a PKIX CertPathValidator
+ *      by a PKIX CertPathValidator
  */
 
 import java.io.File;
@@ -50,16 +50,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * ValidateTargetConstraints performs a simple validation of a certification 
- * path, but adds a requirement that the serial number of the last 
- * certificate match an arbitrarily chosen number. This should cause the 
- * validation to fail. 
+ * ValidateTargetConstraints performs a simple validation of a certification
+ * path, but adds a requirement that the serial number of the last
+ * certificate match an arbitrarily chosen number. This should cause the
+ * validation to fail.
  *
  * @author      Steve Hanna
  * @author      Sean Mullan
  */
 public final class ValidateTargetConstraints {
- 
+
     private static CertPath path;
     private static PKIXParameters params;
 
@@ -67,14 +67,14 @@ public final class ValidateTargetConstraints {
 
         String[] certs = { "sun.cer", "sun2labs1.cer" };
 
-	try {
+        try {
             createPath(certs);
-       	    validate(path, params);
+            validate(path, params);
             throw new Exception
                 ("CertPath should not have been validated succesfully");
-	} catch (CertPathValidatorException cpve) {
+        } catch (CertPathValidatorException cpve) {
             System.out.println("Test failed as expected: " + cpve);
-	}	
+        }
     }
 
     public static void createPath(String[] certs) throws Exception {
@@ -93,7 +93,7 @@ public final class ValidateTargetConstraints {
         sel.setSerialNumber(new BigInteger("1427"));
         params.setTargetCertConstraints(sel);
     }
-    
+
     /**
      * Get a DER-encoded X.509 certificate from a file.
      *
@@ -106,7 +106,7 @@ public final class ValidateTargetConstraints {
             X509Certificate cert = null;
             try {
                 File certFile = new File(System.getProperty("test.src", "."),
-		    certFilePath);
+                    certFilePath);
                 FileInputStream certFileInputStream =
                     new FileInputStream(certFile);
                 CertificateFactory cf = CertificateFactory.getInstance("X509");
@@ -121,7 +121,7 @@ public final class ValidateTargetConstraints {
     }
 
     /**
-     * Perform a PKIX validation. 
+     * Perform a PKIX validation.
      *
      * @param path CertPath to validate
      * @param params PKIXParameters to use in validation

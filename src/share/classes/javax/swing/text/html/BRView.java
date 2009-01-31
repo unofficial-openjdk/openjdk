@@ -30,7 +30,6 @@ import javax.swing.text.*;
  * Processes the &lt;BR&gt; tag.  In other words, forces a line break.
  *
  * @author Sunita Mani
- * @version %I% %G%
  */
 class BRView extends InlineView {
 
@@ -40,7 +39,7 @@ class BRView extends InlineView {
      * @param elem the element to create a view for
      */
     public BRView(Element elem) {
-	super(elem);
+        super(elem);
     }
 
     /**
@@ -49,10 +48,10 @@ class BRView extends InlineView {
      * @return View.ForcedBreakWeight
      */
     public int getBreakWeight(int axis, float pos, float len) {
-	if (axis == X_AXIS) {
-	    return ForcedBreakWeight;
-	} else {
-	    return super.getBreakWeight(axis, pos, len);
-	}
+        if (axis == X_AXIS) {
+            return ForcedBreakWeight;
+        } else {
+            return super.getBreakWeight(axis, pos, len);
+        }
     }
 }

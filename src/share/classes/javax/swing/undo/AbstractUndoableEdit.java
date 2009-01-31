@@ -31,9 +31,8 @@ import javax.swing.UIManager;
 /**
  * An abstract implementation of <code>UndoableEdit</code>,
  * implementing simple responses to all boolean methods in
- * that interface. 
+ * that interface.
  *
- * @version %I% %G%
  * @author Ray Ryan
  */
 public class AbstractUndoableEdit implements UndoableEdit, Serializable {
@@ -60,7 +59,7 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
 
     /**
      * Defaults to true; becomes false if this edit is undone, true
-     * again if it is redone.  
+     * again if it is redone.
      */
     boolean hasBeenDone;
 
@@ -75,10 +74,10 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * <code>hasBeenDone</code> and <code>alive</code> to <code>true</code>.
      */
     public AbstractUndoableEdit() {
-	super();
+        super();
 
-	hasBeenDone = true;
-	alive = true;
+        hasBeenDone = true;
+        alive = true;
     }
 
     /**
@@ -87,12 +86,12 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * Sending <code>undo</code> or <code>redo</code> to
      * a dead edit results in an exception being thrown.
      *
-     * <p>Typically an edit is killed when it is consolidated by 
+     * <p>Typically an edit is killed when it is consolidated by
      * another edit's <code>addEdit</code> or <code>replaceEdit</code>
      * method, or when it is dequeued from an <code>UndoManager</code>.
      */
     public void die() {
-	alive = false;
+        alive = false;
     }
 
     /**
@@ -104,13 +103,13 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      *
      * @exception CannotUndoException if <code>canUndo</code>
      *    returns <code>false</code>
-     * @see	#canUndo
+     * @see     #canUndo
      */
     public void undo() throws CannotUndoException {
-	if (!canUndo()) {
-	    throw new CannotUndoException();
-	}
-	hasBeenDone = false;
+        if (!canUndo()) {
+            throw new CannotUndoException();
+        }
+        hasBeenDone = false;
     }
 
     /**
@@ -121,11 +120,11 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      *    and <code>hasBeenDone</code> is <code>true</code>
      *
      * @see     #die
-     * @see	#undo
-     * @see	#redo
+     * @see     #undo
+     * @see     #redo
      */
     public boolean canUndo() {
-	return alive && hasBeenDone;
+        return alive && hasBeenDone;
     }
 
     /**
@@ -136,13 +135,13 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      *
      * @exception CannotRedoException if <code>canRedo</code>
      *     returns <code>false</code>
-     * @see	#canRedo
+     * @see     #canRedo
      */
     public void redo() throws CannotRedoException {
-	if (!canRedo()) {
-	    throw new CannotRedoException();
-	}
-	hasBeenDone = true;
+        if (!canRedo()) {
+            throw new CannotRedoException();
+        }
+        hasBeenDone = true;
     }
 
     /**
@@ -152,15 +151,15 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * @return <code>true</code> if this edit is <code>alive</code>
      *   and <code>hasBeenDone</code> is <code>false</code>
      * @see     #die
-     * @see	#undo
-     * @see	#redo
+     * @see     #undo
+     * @see     #redo
      */
     public boolean canRedo() {
-	return alive && !hasBeenDone;
+        return alive && !hasBeenDone;
     }
-	
+
     /**
-     * This default implementation returns false. 
+     * This default implementation returns false.
      *
      * @param anEdit the edit to be added
      * @return false
@@ -168,11 +167,11 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * @see UndoableEdit#addEdit
      */
     public boolean addEdit(UndoableEdit anEdit) {
-	return false;
+        return false;
     }
 
     /**
-     * This default implementation returns false. 
+     * This default implementation returns false.
      *
      * @param anEdit the edit to replace
      * @return false
@@ -180,22 +179,22 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * @see UndoableEdit#replaceEdit
      */
     public boolean replaceEdit(UndoableEdit anEdit) {
-	return false;
+        return false;
     }
 
     /**
-     * This default implementation returns true. 
+     * This default implementation returns true.
      *
      * @return true
      * @see UndoableEdit#isSignificant
      */
     public boolean isSignificant() {
-	return true;
+        return true;
     }
 
     /**
      * This default implementation returns "". Used by
-     * <code>getUndoPresentationName</code> and 
+     * <code>getUndoPresentationName</code> and
      * <code>getRedoPresentationName</code> to
      * construct the strings they return. Subclasses should override to
      * return an appropriate description of the operation this edit
@@ -203,11 +202,11 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      *
      * @return the empty string ""
      *
-     * @see	#getUndoPresentationName
-     * @see	#getRedoPresentationName
+     * @see     #getUndoPresentationName
+     * @see     #getRedoPresentationName
      */
     public String getPresentationName() {
-	return "";
+        return "";
     }
 
     /**
@@ -226,15 +225,15 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * @see #getPresentationName
      */
     public String getUndoPresentationName() {
-	String name = getPresentationName();
-	if (!"".equals(name)) {
-	    name = UIManager.getString("AbstractUndoableEdit.undoText") +
+        String name = getPresentationName();
+        if (!"".equals(name)) {
+            name = UIManager.getString("AbstractUndoableEdit.undoText") +
                 " " + name;
-	} else {
-	    name = UIManager.getString("AbstractUndoableEdit.undoText");
-	}
+        } else {
+            name = UIManager.getString("AbstractUndoableEdit.undoText");
+        }
 
-	return name;
+        return name;
     }
 
     /**
@@ -253,15 +252,15 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      * @see #getPresentationName
      */
     public String getRedoPresentationName() {
-	String name = getPresentationName();
-	if (!"".equals(name)) {
-	    name = UIManager.getString("AbstractUndoableEdit.redoText") +
+        String name = getPresentationName();
+        if (!"".equals(name)) {
+            name = UIManager.getString("AbstractUndoableEdit.redoText") +
                 " " + name;
-	} else {
-	    name = UIManager.getString("AbstractUndoableEdit.redoText");
-	}
+        } else {
+            name = UIManager.getString("AbstractUndoableEdit.redoText");
+        }
 
-	return name;
+        return name;
     }
 
     /**
@@ -272,9 +271,8 @@ public class AbstractUndoableEdit implements UndoableEdit, Serializable {
      */
     public String toString()
     {
-	return super.toString()
-	    + " hasBeenDone: " + hasBeenDone
-	    + " alive: " + alive;
+        return super.toString()
+            + " hasBeenDone: " + hasBeenDone
+            + " alive: " + alive;
     }
 }
-

@@ -31,22 +31,22 @@ import java.util.zip.*;
 
 public class ReadZip {
     private static void Unreached (Object o)
-	throws Exception
+        throws Exception
     {
-	// Should never get here
-	throw new Exception ("Expected exception was not thrown");
+        // Should never get here
+        throw new Exception ("Expected exception was not thrown");
     }
 
     public static void main(String args[]) throws Exception {
         ZipFile zf = new ZipFile(new File(System.getProperty("test.src", "."),
                                           "input.zip"));
 
-	// Make sure we throw NPE on null objects
-	try { Unreached (zf.getEntry(null)); }
-	catch (NullPointerException e) {}
+        // Make sure we throw NPE on null objects
+        try { Unreached (zf.getEntry(null)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (zf.getInputStream(null)); }
-	catch (NullPointerException e) {}
+        try { Unreached (zf.getInputStream(null)); }
+        catch (NullPointerException e) {}
 
         ZipEntry ze = zf.getEntry("ReadZip.java");
         if (ze == null) {

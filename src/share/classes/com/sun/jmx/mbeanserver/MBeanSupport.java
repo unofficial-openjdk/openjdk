@@ -123,18 +123,18 @@ public abstract class MBeanSupport<M>
 
     <T> MBeanSupport(T resource, Class<T> mbeanInterface)
             throws NotCompliantMBeanException {
-	if (mbeanInterface == null)
-	    throw new NotCompliantMBeanException("Null MBean interface");
-	if (!mbeanInterface.isInstance(resource)) {
-	    final String msg =
-		"Resource class " + resource.getClass().getName() +
-		" is not an instance of " + mbeanInterface.getName();
-	    throw new NotCompliantMBeanException(msg);
-	}
-	this.resource = resource;
+        if (mbeanInterface == null)
+            throw new NotCompliantMBeanException("Null MBean interface");
+        if (!mbeanInterface.isInstance(resource)) {
+            final String msg =
+                "Resource class " + resource.getClass().getName() +
+                " is not an instance of " + mbeanInterface.getName();
+            throw new NotCompliantMBeanException(msg);
+        }
+        this.resource = resource;
         MBeanIntrospector<M> introspector = getMBeanIntrospector();
         this.perInterface = introspector.getPerInterface(mbeanInterface);
-	this.mbeanInfo = introspector.getMBeanInfo(resource, perInterface);
+        this.mbeanInfo = introspector.getMBeanInfo(resource, perInterface);
     }
 
     /** Return the appropriate introspector for this type of MBean. */
@@ -149,7 +149,7 @@ public abstract class MBeanSupport<M>
     abstract Object getCookie();
 
     public final boolean isMXBean() {
-	return perInterface.isMXBean();
+        return perInterface.isMXBean();
     }
 
     // Methods that javax.management.StandardMBean should call from its
@@ -199,62 +199,62 @@ public abstract class MBeanSupport<M>
     }
 
     public final Object getAttribute(String attribute)
-	    throws AttributeNotFoundException,
-		   MBeanException,
-		   ReflectionException {
-	return perInterface.getAttribute(resource, attribute, getCookie());
+            throws AttributeNotFoundException,
+                   MBeanException,
+                   ReflectionException {
+        return perInterface.getAttribute(resource, attribute, getCookie());
     }
 
     public final AttributeList getAttributes(String[] attributes) {
-	final AttributeList result = new AttributeList(attributes.length);
-	for (String attrName : attributes) {
-	    try {
-		final Object attrValue = getAttribute(attrName);
-		result.add(new Attribute(attrName, attrValue));
-	    } catch (Exception e) {
-		// OK: attribute is not included in returned list, per spec
-		// XXX: log the exception
-	    }
-	}
-	return result;
+        final AttributeList result = new AttributeList(attributes.length);
+        for (String attrName : attributes) {
+            try {
+                final Object attrValue = getAttribute(attrName);
+                result.add(new Attribute(attrName, attrValue));
+            } catch (Exception e) {
+                // OK: attribute is not included in returned list, per spec
+                // XXX: log the exception
+            }
+        }
+        return result;
     }
 
     public final void setAttribute(Attribute attribute)
-	    throws AttributeNotFoundException,
-		   InvalidAttributeValueException,
-		   MBeanException,
-		   ReflectionException {
-	final String name = attribute.getName();
-	final Object value = attribute.getValue();
-	perInterface.setAttribute(resource, name, value, getCookie());
+            throws AttributeNotFoundException,
+                   InvalidAttributeValueException,
+                   MBeanException,
+                   ReflectionException {
+        final String name = attribute.getName();
+        final Object value = attribute.getValue();
+        perInterface.setAttribute(resource, name, value, getCookie());
     }
 
     public final AttributeList setAttributes(AttributeList attributes) {
-	final AttributeList result = new AttributeList(attributes.size());
-	for (Object attrObj : attributes) {
-	    // We can't use AttributeList.asList because it has side-effects
-	    Attribute attr = (Attribute) attrObj;
-	    try {
-		setAttribute(attr);
-		result.add(new Attribute(attr.getName(), attr.getValue()));
-	    } catch (Exception e) {
-		// OK: attribute is not included in returned list, per spec
-		// XXX: log the exception
-	    }
-	}
-	return result;
+        final AttributeList result = new AttributeList(attributes.size());
+        for (Object attrObj : attributes) {
+            // We can't use AttributeList.asList because it has side-effects
+            Attribute attr = (Attribute) attrObj;
+            try {
+                setAttribute(attr);
+                result.add(new Attribute(attr.getName(), attr.getValue()));
+            } catch (Exception e) {
+                // OK: attribute is not included in returned list, per spec
+                // XXX: log the exception
+            }
+        }
+        return result;
     }
 
     public final Object invoke(String operation, Object[] params,
-			 String[] signature)
-	    throws MBeanException, ReflectionException {
-	return perInterface.invoke(resource, operation, params, signature,
-				   getCookie());
+                         String[] signature)
+            throws MBeanException, ReflectionException {
+        return perInterface.invoke(resource, operation, params, signature,
+                                   getCookie());
     }
 
     // Overridden by StandardMBeanSupport
     public MBeanInfo getMBeanInfo() {
-	return mbeanInfo;
+        return mbeanInfo;
     }
 
     public final String getClassName() {
@@ -262,7 +262,7 @@ public abstract class MBeanSupport<M>
     }
 
     public final Object getResource() {
-	return resource;
+        return resource;
     }
 
     public final Class<?> getMBeanInterface() {

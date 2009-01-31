@@ -35,8 +35,7 @@ import java.awt.*;
  * java.awt.* hierarchy; it is not to be considered public and is subject
  * to change.
  *
- * @version 	%I%, %G%
- * @author 	Robi Khan
+ * @author      Robi Khan
  */
 public interface RobotPeer
 {
@@ -51,6 +50,6 @@ public interface RobotPeer
 
     public int getRGBPixel(int x, int y);
     public int [] getRGBPixels(Rectangle bounds);
-    
+
     public void dispose();
 }

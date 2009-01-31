@@ -35,10 +35,9 @@ import java.rmi.RemoteException;
  * <code>ActivationGroup</code> implements the <code>newInstance</code>
  * method to handle creating objects within the group.
  *
- * @author 	Ann Wollrath
- * @version	%I%, %G%
- * @see 	ActivationGroup
- * @since	1.2
+ * @author      Ann Wollrath
+ * @see         ActivationGroup
+ * @since       1.2
  */
 public interface ActivationInstantiator extends Remote {
 
@@ -72,6 +71,6 @@ public interface ActivationInstantiator extends Remote {
     * @since 1.2
     */
     public MarshalledObject<? extends Remote> newInstance(ActivationID id,
-							  ActivationDesc desc)
-	throws ActivationException, RemoteException;
+                                                          ActivationDesc desc)
+        throws ActivationException, RemoteException;
 }

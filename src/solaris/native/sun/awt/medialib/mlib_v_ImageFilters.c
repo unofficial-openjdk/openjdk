@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageFilters.c	1.9	02/05/08 SMI"
+
 
 /*  Table mlib_filters_u8_bl
  *

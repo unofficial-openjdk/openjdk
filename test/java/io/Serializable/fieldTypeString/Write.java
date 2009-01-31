@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,17 +23,17 @@
 
 /* @test
  * @bug 4404696
- * 
+ *
  * @clean Write Read Foo Bar
  * @compile Write.java
  * @run main Write
  * @clean Write Read Foo Bar
  * @compile Read.java
  * @run main Read
- * 
+ *
  * @summary Verify that serialization does not require matching type strings
  *          for non-primitive fields.
- *          
+ *
  * NOTE: This test should be removed if it is determined that serialization
  * *should* consider type strings when matching non-primitive fields.
  */
@@ -43,9 +43,9 @@ import java.io.*;
 class Foo implements Serializable {
     private static final long serialVersionUID = 0L;
     Object obj;
-    
+
     Foo(Object obj) {
-	this.obj = obj;
+        this.obj = obj;
     }
 }
 
@@ -56,14 +56,14 @@ class Bar implements Serializable {
 
 public class Write {
     public static void main(String[] args) throws Exception {
-	ObjectOutputStream oout = 
-	    new ObjectOutputStream(new FileOutputStream("foo.ser"));
-	oout.writeObject(new Foo("foo"));
-	oout.writeObject(new Foo(new Integer(0)));
-	oout.close();
-	
-	oout = new ObjectOutputStream(new FileOutputStream("bar.ser"));
-	oout.writeObject(new Bar());
-	oout.close();
+        ObjectOutputStream oout =
+            new ObjectOutputStream(new FileOutputStream("foo.ser"));
+        oout.writeObject(new Foo("foo"));
+        oout.writeObject(new Foo(new Integer(0)));
+        oout.close();
+
+        oout = new ObjectOutputStream(new FileOutputStream("bar.ser"));
+        oout.writeObject(new Bar());
+        oout.close();
     }
 }

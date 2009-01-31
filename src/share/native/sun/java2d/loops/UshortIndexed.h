@@ -34,16 +34,16 @@
  * LoopMacros.h to manipulate a surface of type "UshortIndexed".
  */
 
-typedef jushort	UshortIndexedPixelType;
-typedef jushort	UshortIndexedDataType;
+typedef jushort UshortIndexedPixelType;
+typedef jushort UshortIndexedDataType;
 
-#define UshortIndexedPixelStride		2
+#define UshortIndexedPixelStride                2
 /*
  * Note that even though the type is called UshortIndex it is
  * really only used as 12-bit indexed (per the BitsPerPixel
  * define), thus we need to mask 12 bits of the index into Lut.
  */
-#define UshortIndexedBitsPerPixel		12
+#define UshortIndexedBitsPerPixel               12
 #define UshortIndexedLutMask                    0xfff
 
 #define DeclareUshortIndexedLoadVars(PREFIX) \
@@ -61,9 +61,9 @@ typedef jushort	UshortIndexedDataType;
 
 #define SetUshortIndexedStoreVarsXPos(PREFIX, pRasInfo, LOC) \
     do { \
-	PREFIX ## rerr = (pRasInfo)->redErrTable + PREFIX ## YDither; \
-	PREFIX ## gerr = (pRasInfo)->grnErrTable + PREFIX ## YDither; \
-	PREFIX ## berr = (pRasInfo)->bluErrTable + PREFIX ## YDither; \
+        PREFIX ## rerr = (pRasInfo)->redErrTable + PREFIX ## YDither; \
+        PREFIX ## gerr = (pRasInfo)->grnErrTable + PREFIX ## YDither; \
+        PREFIX ## berr = (pRasInfo)->bluErrTable + PREFIX ## YDither; \
         PREFIX ## XDither = (LOC & 7); \
     } while (0)
 
@@ -76,7 +76,7 @@ typedef jushort	UshortIndexedDataType;
 #define InitUshortIndexedStoreVarsY(PREFIX, pRasInfo) \
     do { \
         SetUshortIndexedStoreVarsYPos(PREFIX, pRasInfo, (pRasInfo)->bounds.y1); \
-	PREFIX ## InvLut = (pRasInfo)->invColorTable; \
+        PREFIX ## InvLut = (pRasInfo)->invColorTable; \
     } while (0)
 
 #define InitUshortIndexedStoreVarsX(PREFIX, pRasInfo) \
@@ -89,23 +89,23 @@ typedef jushort	UshortIndexedDataType;
 #define NextUshortIndexedStoreVarsY(PREFIX) \
     PREFIX ## YDither = (PREFIX ## YDither + (1 << 3)) & (7 << 3)
 
-typedef jushort	UshortIndexedBmPixelType;
-typedef jushort	UshortIndexedBmDataType;
+typedef jushort UshortIndexedBmPixelType;
+typedef jushort UshortIndexedBmDataType;
 
-#define UshortIndexedBmPixelStride	2
-#define UshortIndexedBmBitsPerPixel	12
+#define UshortIndexedBmPixelStride      2
+#define UshortIndexedBmBitsPerPixel     12
 
-#define DeclareUshortIndexedBmLoadVars	DeclareUshortIndexedLoadVars
-#define DeclareUshortIndexedBmStoreVars	DeclareUshortIndexedStoreVars
-#define InitUshortIndexedBmLoadVars	InitUshortIndexedLoadVars
-#define InitUshortIndexedBmStoreVarsY	InitUshortIndexedStoreVarsY
-#define InitUshortIndexedBmStoreVarsX	InitUshortIndexedStoreVarsX
-#define NextUshortIndexedBmStoreVarsX	NextUshortIndexedStoreVarsX
-#define NextUshortIndexedBmStoreVarsY	NextUshortIndexedStoreVarsY
+#define DeclareUshortIndexedBmLoadVars  DeclareUshortIndexedLoadVars
+#define DeclareUshortIndexedBmStoreVars DeclareUshortIndexedStoreVars
+#define InitUshortIndexedBmLoadVars     InitUshortIndexedLoadVars
+#define InitUshortIndexedBmStoreVarsY   InitUshortIndexedStoreVarsY
+#define InitUshortIndexedBmStoreVarsX   InitUshortIndexedStoreVarsX
+#define NextUshortIndexedBmStoreVarsX   NextUshortIndexedStoreVarsX
+#define NextUshortIndexedBmStoreVarsY   NextUshortIndexedStoreVarsY
 
-#define UshortIndexedXparLutEntry			-1
-#define UshortIndexedIsXparLutEntry(pix)		(pix < 0)
-#define StoreUshortIndexedNonXparFromArgb		StoreUshortIndexedFrom1IntArgb
+#define UshortIndexedXparLutEntry                       -1
+#define UshortIndexedIsXparLutEntry(pix)                (pix < 0)
+#define StoreUshortIndexedNonXparFromArgb               StoreUshortIndexedFrom1IntArgb
 
 #define StoreUshortIndexedPixel(pRas, x, pixel) \
     ((pRas)[x] = (jushort) (pixel))
@@ -133,20 +133,20 @@ typedef jushort	UshortIndexedBmDataType;
 #define LoadUshortIndexedTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
         jint rgb = PREFIX ## Lut[(pRas[x])&UshortIndexedLutMask]; \
-	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+        ExtractIntDcmComponentsX123(rgb, r, g, b); \
     } while (0)
 
 #define LoadUshortIndexedTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
         jint argb = PREFIX ## Lut[(pRas[x])&UshortIndexedLutMask]; \
-	ExtractIntDcmComponents1234(argb, a, r, g, b); \
+        ExtractIntDcmComponents1234(argb, a, r, g, b); \
     } while (0)
 
 #define StoreUshortIndexedFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-	int r, g, b; \
-	ExtractIntDcmComponentsX123(rgb, r, g, b); \
-	StoreUshortIndexedFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
+        int r, g, b; \
+        ExtractIntDcmComponentsX123(rgb, r, g, b); \
+        StoreUshortIndexedFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreUshortIndexedFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -154,11 +154,11 @@ typedef jushort	UshortIndexedBmDataType;
 
 #define StoreUshortIndexedFrom3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-	r += PREFIX ## rerr[PREFIX ## XDither]; \
-	g += PREFIX ## gerr[PREFIX ## XDither]; \
-	b += PREFIX ## berr[PREFIX ## XDither]; \
-	ByteClamp3Components(r, g, b); \
-	(pRas)[x] = SurfaceData_InvColorMap(PREFIX ## InvLut, r, g, b); \
+        r += PREFIX ## rerr[PREFIX ## XDither]; \
+        g += PREFIX ## gerr[PREFIX ## XDither]; \
+        b += PREFIX ## berr[PREFIX ## XDither]; \
+        ByteClamp3Components(r, g, b); \
+        (pRas)[x] = SurfaceData_InvColorMap(PREFIX ## InvLut, r, g, b); \
     } while (0)
 
 #define StoreUshortIndexedFrom4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
@@ -175,18 +175,18 @@ typedef jushort	UshortIndexedBmDataType;
 #define LoadAlphaFromUshortIndexedFor4ByteArgb(pRas, PREFIX, COMP_PREFIX) \
     do { \
         PREFIX ## rgb = PREFIX ## Lut[((pRas)[0])&UshortIndexedLutMask]; \
-	COMP_PREFIX ## A = ((juint) PREFIX ## rgb) >> 24; \
+        COMP_PREFIX ## A = ((juint) PREFIX ## rgb) >> 24; \
     } while (0)
 
 #define Postload4ByteArgbFromUshortIndexed(pRas, PREFIX, COMP_PREFIX) \
     do { \
-	COMP_PREFIX ## R = (PREFIX ## rgb >> 16) & 0xff; \
-	COMP_PREFIX ## G = (PREFIX ## rgb >>  8) & 0xff; \
-	COMP_PREFIX ## B = (PREFIX ## rgb >>  0) & 0xff; \
+        COMP_PREFIX ## R = (PREFIX ## rgb >> 16) & 0xff; \
+        COMP_PREFIX ## G = (PREFIX ## rgb >>  8) & 0xff; \
+        COMP_PREFIX ## B = (PREFIX ## rgb >>  0) & 0xff; \
     } while (0)
 
 
-#define UshortIndexedIsPremultiplied	0
+#define UshortIndexedIsPremultiplied    0
 
 #define StoreUshortIndexedFrom4ByteArgbComps(pRas, PREFIX, x, COMP_PREFIX) \
     StoreUshortIndexedFrom4ByteArgb(pRas, PREFIX, x, \

@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)GlyphPositioningTables.h	1.16 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -46,11 +45,11 @@ struct GlyphDefinitionTableHeader;
 
 struct GlyphPositioningTableHeader : public GlyphLookupTableHeader
 {
-    void    process(LEGlyphStorage &glyphStorage, 
+    void    process(LEGlyphStorage &glyphStorage,
                 GlyphPositionAdjustments *glyphPositionAdjustments,
                 le_bool rightToLeft, LETag scriptTag, LETag languageTag,
                 const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
-                const LEFontInstance *fontInstance, 
+                const LEFontInstance *fontInstance,
                 const FeatureMap *featureMap, le_int32 featureMapCount, le_bool featureOrder) const;
 };
 

@@ -25,7 +25,7 @@
  * @test
  * @bug  4491255
  * @summary Test for a new protected method PrintWriter.clearError()
- * 	    to reset its internal error state 
+ *          to reset its internal error state
  */
 
 import java.io.*;
@@ -34,33 +34,33 @@ public class ClearErrorWriter extends PrintWriter {
 
 
     public ClearErrorWriter(Writer w, boolean autoFlush) {
-	super(w, autoFlush);
+        super(w, autoFlush);
     }
-    
+
     public static void main(String[] args) throws Exception {
 
-	File f = new File(System.getProperty("test.dir", "."),
+        File f = new File(System.getProperty("test.dir", "."),
                           "print-writer.out");
-	f.deleteOnExit();
-	ClearErrorWriter out = new ClearErrorWriter(new BufferedWriter(
-				new FileWriter(f)),
-				true);
+        f.deleteOnExit();
+        ClearErrorWriter out = new ClearErrorWriter(new BufferedWriter(
+                                new FileWriter(f)),
+                                true);
         out.println("Hello World!");
-	out.close();
-	out.println("Writing after close");
+        out.close();
+        out.println("Writing after close");
 
-	if (out.checkError()) {
-	    System.out.println("An error occured");
+        if (out.checkError()) {
+            System.out.println("An error occured");
             out.clearError();
 
-	    if (!out.checkError()) {
+            if (!out.checkError()) {
                 System.out.println("Error status cleared");
             } else {
-	        throw new Exception("Error Status unchanged"); 
-	    }
+                throw new Exception("Error Status unchanged");
+            }
          }
-	 else { 
+         else {
              System.out.println(" No error occured");
-	 }
+         }
     }
 }

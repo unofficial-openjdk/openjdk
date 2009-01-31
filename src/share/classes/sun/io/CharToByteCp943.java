@@ -53,4 +53,3 @@ public class CharToByteCp943 extends CharToByteDBCS_ASCII {
         subBytes[0] = 0x6f;
     }
 }
-

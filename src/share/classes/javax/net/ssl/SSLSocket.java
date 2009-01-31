@@ -41,20 +41,20 @@ import java.util.Vector;
  * add a layer of security protections over the underlying network transport
  * protocol, such as TCP.  Those protections include: <UL>
  *
- *	<LI> <em>Integrity Protection</em>.  SSL protects against
- *	modification of messages by an active wiretapper.
+ *      <LI> <em>Integrity Protection</em>.  SSL protects against
+ *      modification of messages by an active wiretapper.
  *
- *	<LI> <em>Authentication</em>.  In most modes, SSL provides
- *	peer authentication.  Servers are usually authenticated,
- *	and clients may be authenticated as requested by servers.
+ *      <LI> <em>Authentication</em>.  In most modes, SSL provides
+ *      peer authentication.  Servers are usually authenticated,
+ *      and clients may be authenticated as requested by servers.
  *
- *	<LI> <em>Confidentiality (Privacy Protection)</em>.  In most
- *	modes, SSL encrypts data being sent between client and server.
- *	This protects the confidentiality of data, so that passive
- *	wiretappers won't see sensitive data such as financial
- *	information or personal information of many kinds.
+ *      <LI> <em>Confidentiality (Privacy Protection)</em>.  In most
+ *      modes, SSL encrypts data being sent between client and server.
+ *      This protects the confidentiality of data, so that passive
+ *      wiretappers won't see sensitive data such as financial
+ *      information or personal information of many kinds.
  *
- *	</UL>
+ *      </UL>
  *
  * <P>These kinds of protection are specified by a "cipher suite", which
  * is a combination of cryptographic algorithms used by a given SSL connection.
@@ -72,12 +72,12 @@ import java.util.Vector;
  * one of three ways: <UL>
  *
  *      <LI> calling <code>startHandshake</code> which explicitly
- *		begins handshakes, or
+ *              begins handshakes, or
  *      <LI> any attempt to read or write application data on
- *		this socket causes an implicit handshake, or
+ *              this socket causes an implicit handshake, or
  *      <LI> a call to <code>getSession</code> tries to set up a session
- *		if there is no currently valid session, and
- *		an implicit handshake is done.
+ *              if there is no currently valid session, and
+ *              an implicit handshake is done.
  * </UL>
  *
  * <P>If handshaking fails for any reason, the <code>SSLSocket</code>
@@ -86,18 +86,18 @@ import java.util.Vector;
  * <P>There are two groups of cipher suites which you will need to know
  * about when managing cipher suites: <UL>
  *
- *	<LI> <em>Supported</em> cipher suites:  all the suites which are
- *	supported by the SSL implementation.  This list is reported
- *	using <em>getSupportedCipherSuites</em>.
+ *      <LI> <em>Supported</em> cipher suites:  all the suites which are
+ *      supported by the SSL implementation.  This list is reported
+ *      using <em>getSupportedCipherSuites</em>.
  *
- *	<LI> <em>Enabled</em> cipher suites, which may be fewer
- *	than the full set of supported suites.  This group is
- *	set using the <em>setEnabledCipherSuites</em> method, and
- *	queried using the <em>getEnabledCipherSuites</em> method.
- *	Initially, a default set of cipher suites will be enabled on
+ *      <LI> <em>Enabled</em> cipher suites, which may be fewer
+ *      than the full set of supported suites.  This group is
+ *      set using the <em>setEnabledCipherSuites</em> method, and
+ *      queried using the <em>getEnabledCipherSuites</em> method.
+ *      Initially, a default set of cipher suites will be enabled on
  *      a new socket that represents the minimum suggested configuration.
  *
- *	</UL>
+ *      </UL>
  *
  * <P> Implementation defaults require that only cipher
  * suites which authenticate servers and provide confidentiality
@@ -136,7 +136,6 @@ import java.util.Vector;
  * @see SSLSocketFactory
  *
  * @since 1.4
- * @version %I%
  * @author David Brownell
  */
 public abstract class SSLSocket extends Socket
@@ -146,7 +145,7 @@ public abstract class SSLSocket extends Socket
      * Constructs an uninitialized, unconnected TCP socket.
      */
     protected SSLSocket()
-	{ super(); }
+        { super(); }
 
 
     /**
@@ -161,7 +160,7 @@ public abstract class SSLSocket extends Socket
      */
     protected SSLSocket(String host, int port)
     throws IOException, UnknownHostException
-	{ super(host, port); }
+        { super(host, port); }
 
 
     /**
@@ -175,7 +174,7 @@ public abstract class SSLSocket extends Socket
      */
     protected SSLSocket(InetAddress address, int port)
     throws IOException
-	{ super(address, port); }
+        { super(address, port); }
 
 
     /**
@@ -192,9 +191,9 @@ public abstract class SSLSocket extends Socket
      * @throws UnknownHostException if the host is not known
      */
     protected SSLSocket(String host, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException, UnknownHostException
-	{ super(host, port, clientAddress, clientPort); }
+        { super(host, port, clientAddress, clientPort); }
 
 
     /**
@@ -210,9 +209,9 @@ public abstract class SSLSocket extends Socket
      * @throws IOException if an I/O error occurs when creating the socket
      */
     protected SSLSocket(InetAddress address, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException
-	{ super(address, port, clientAddress, clientPort); }
+        { super(address, port, clientAddress, clientPort); }
 
 
     /**
@@ -260,8 +259,8 @@ public abstract class SSLSocket extends Socket
      *
      * @param suites Names of all the cipher suites to enable
      * @throws IllegalArgumentException when one or more of the ciphers
-     *		named by the parameter is not supported, or when the
-     *		parameter is null.
+     *          named by the parameter is not supported, or when the
+     *          parameter is null.
      * @see #getSupportedCipherSuites()
      * @see #getEnabledCipherSuites()
      */
@@ -296,8 +295,8 @@ public abstract class SSLSocket extends Socket
      *
      * @param protocols Names of all the protocols to enable.
      * @throws IllegalArgumentException when one or more of
-     *		  the protocols named by the parameter is not supported or
-     *		  when the protocols parameter is null.
+     *            the protocols named by the parameter is not supported or
+     *            when the protocols parameter is null.
      * @see #getEnabledProtocols()
      */
     public abstract void setEnabledProtocols(String protocols[]);
@@ -333,7 +332,7 @@ public abstract class SSLSocket extends Socket
      * @throws IllegalArgumentException if the argument is null.
      */
     public abstract void addHandshakeCompletedListener(
-	HandshakeCompletedListener listener);
+        HandshakeCompletedListener listener);
 
 
     /**
@@ -345,7 +344,7 @@ public abstract class SSLSocket extends Socket
      * @see #addHandshakeCompletedListener(HandshakeCompletedListener)
      */
     public abstract void removeHandshakeCompletedListener(
-	HandshakeCompletedListener listener);
+        HandshakeCompletedListener listener);
 
 
     /**
@@ -381,9 +380,9 @@ public abstract class SSLSocket extends Socket
      * are not required to do so.
      *
      * @param mode true if the socket should start its handshaking
-     *		in "client" mode
+     *          in "client" mode
      * @throws IllegalArgumentException if a mode change is attempted
-     *		after the initial handshake has begun.
+     *          after the initial handshake has begun.
      * @see #getUseClientMode()
      */
     public abstract void setUseClientMode(boolean mode);
@@ -394,7 +393,7 @@ public abstract class SSLSocket extends Socket
      * handshaking.
      *
      * @return true if the socket should do handshaking
-     *		in "client" mode
+     *          in "client" mode
      * @see #setUseClientMode(boolean)
      */
     public abstract boolean getUseClientMode();
@@ -419,8 +418,8 @@ public abstract class SSLSocket extends Socket
      * Calling this method overrides any previous setting made by
      * this method or {@link #setWantClientAuth(boolean)}.
      *
-     * @param	need set to true if client authentication is required,
-     *		or false if no client authentication is desired.
+     * @param   need set to true if client authentication is required,
+     *          or false if no client authentication is desired.
      * @see #getNeedClientAuth()
      * @see #setWantClientAuth(boolean)
      * @see #getWantClientAuth()
@@ -433,8 +432,8 @@ public abstract class SSLSocket extends Socket
      * Returns true if the socket will <i>require</i> client authentication.
      * This option is only useful to sockets in the server mode.
      *
-     * @return	true if client authentication is required,
-     *		or false if no client authentication is desired.
+     * @return  true if client authentication is required,
+     *          or false if no client authentication is desired.
      * @see #setNeedClientAuth(boolean)
      * @see #setWantClientAuth(boolean)
      * @see #getWantClientAuth()
@@ -461,8 +460,8 @@ public abstract class SSLSocket extends Socket
      * Calling this method overrides any previous setting made by
      * this method or {@link #setNeedClientAuth(boolean)}.
      *
-     * @param	want set to true if client authentication is requested,
-     *		or false if no client authentication is desired.
+     * @param   want set to true if client authentication is requested,
+     *          or false if no client authentication is desired.
      * @see #getWantClientAuth()
      * @see #setNeedClientAuth(boolean)
      * @see #getNeedClientAuth()
@@ -475,8 +474,8 @@ public abstract class SSLSocket extends Socket
      * Returns true if the socket will <i>request</i> client authentication.
      * This option is only useful for sockets in the server mode.
      *
-     * @return	true if client authentication is requested,
-     *		or false if no client authentication is desired.
+     * @return  true if client authentication is requested,
+     *          or false if no client authentication is desired.
      * @see #setNeedClientAuth(boolean)
      * @see #getNeedClientAuth()
      * @see #setWantClientAuth(boolean)
@@ -492,8 +491,8 @@ public abstract class SSLSocket extends Socket
      * handshaking.
      *
      * @param flag true indicates that sessions may be created; this
-     *		is the default.  false indicates that an existing session
-     *		must be resumed
+     *          is the default.  false indicates that an existing session
+     *          must be resumed
      * @see #getEnableSessionCreation()
      */
     public abstract void setEnableSessionCreation(boolean flag);
@@ -503,8 +502,8 @@ public abstract class SSLSocket extends Socket
      * Returns true if new SSL sessions may be established by this socket.
      *
      * @return true indicates that sessions may be created; this
-     *		is the default.  false indicates that an existing session
-     *		must be resumed
+     *          is the default.  false indicates that an existing session
+     *          must be resumed
      * @see #setEnableSessionCreation(boolean)
      */
     public abstract boolean getEnableSessionCreation();
@@ -518,15 +517,15 @@ public abstract class SSLSocket extends Socket
      * @since 1.6
      */
     public SSLParameters getSSLParameters() {
-	SSLParameters params = new SSLParameters();
-	params.setCipherSuites(getEnabledCipherSuites());
-	params.setProtocols(getEnabledProtocols());
-	if (getNeedClientAuth()) {
-	    params.setNeedClientAuth(true);
-	} else if (getWantClientAuth()) {
-	    params.setWantClientAuth(true);
-	}
-	return params;
+        SSLParameters params = new SSLParameters();
+        params.setCipherSuites(getEnabledCipherSuites());
+        params.setProtocols(getEnabledProtocols());
+        if (getNeedClientAuth()) {
+            params.setNeedClientAuth(true);
+        } else if (getWantClientAuth()) {
+            params.setWantClientAuth(true);
+        }
+        return params;
     }
 
     /**
@@ -551,22 +550,22 @@ public abstract class SSLSocket extends Socket
      * @since 1.6
      */
     public void setSSLParameters(SSLParameters params) {
-	String[] s;
-	s = params.getCipherSuites();
-	if (s != null) {
-	    setEnabledCipherSuites(s);
-	}
-	s = params.getProtocols();
-	if (s != null) {
-	    setEnabledProtocols(s);
-	}
-	if (params.getNeedClientAuth()) {
-	    setNeedClientAuth(true);
-	} else if (params.getWantClientAuth()) {
-	    setWantClientAuth(true);
-	} else {
-	    setWantClientAuth(false);
-	}
+        String[] s;
+        s = params.getCipherSuites();
+        if (s != null) {
+            setEnabledCipherSuites(s);
+        }
+        s = params.getProtocols();
+        if (s != null) {
+            setEnabledProtocols(s);
+        }
+        if (params.getNeedClientAuth()) {
+            setNeedClientAuth(true);
+        } else if (params.getWantClientAuth()) {
+            setWantClientAuth(true);
+        } else {
+            setWantClientAuth(false);
+        }
     }
 
 }

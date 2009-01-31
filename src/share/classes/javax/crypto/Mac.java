@@ -61,7 +61,7 @@ import sun.security.jca.GetInstance.Instance;
 public class Mac implements Cloneable {
 
     private static final Debug debug =
-			Debug.getInstance("jca", "Mac");
+                        Debug.getInstance("jca", "Mac");
 
     // The provider
     private Provider provider;
@@ -93,18 +93,18 @@ public class Mac implements Cloneable {
      * @param algorithm the algorithm
      */
     protected Mac(MacSpi macSpi, Provider provider, String algorithm) {
-	this.spi = macSpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
-	serviceIterator = null;
-	lock = null;
+        this.spi = macSpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
+        serviceIterator = null;
+        lock = null;
     }
 
     private Mac(Service s, Iterator t, String algorithm) {
-	firstService = s;
-	serviceIterator = t;
-	this.algorithm = algorithm;
-	lock = new Object();
+        firstService = s;
+        serviceIterator = t;
+        this.algorithm = algorithm;
+        lock = new Object();
     }
 
     /**
@@ -117,7 +117,7 @@ public class Mac implements Cloneable {
      * @return the algorithm name of this <code>Mac</code> object.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -142,25 +142,25 @@ public class Mac implements Cloneable {
      * @return the new <code>Mac</code> object.
      *
      * @exception NoSuchAlgorithmException if no Provider supports a
-     *		MacSpi implementation for the
-     *		specified algorithm.
+     *          MacSpi implementation for the
+     *          specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final Mac getInstance(String algorithm)
-	    throws NoSuchAlgorithmException {
-	List services = GetInstance.getServices("Mac", algorithm);
-	// make sure there is at least one service from a signed provider
-	Iterator t = services.iterator();
-	while (t.hasNext()) {
-	    Service s = (Service)t.next();
-	    if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		continue;
-	    }
-	    return new Mac(s, t, algorithm);
-	}
-	throw new NoSuchAlgorithmException
-				("Algorithm " + algorithm + " not available");
+            throws NoSuchAlgorithmException {
+        List services = GetInstance.getServices("Mac", algorithm);
+        // make sure there is at least one service from a signed provider
+        Iterator t = services.iterator();
+        while (t.hasNext()) {
+            Service s = (Service)t.next();
+            if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                continue;
+            }
+            return new Mac(s, t, algorithm);
+        }
+        throw new NoSuchAlgorithmException
+                                ("Algorithm " + algorithm + " not available");
     }
 
     /**
@@ -186,22 +186,22 @@ public class Mac implements Cloneable {
      * @return the new <code>Mac</code> object.
      *
      * @exception NoSuchAlgorithmException if a MacSpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @exception NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null or empty.
+     *          is null or empty.
      *
      * @see java.security.Provider
      */
     public static final Mac getInstance(String algorithm, String provider)
-	    throws NoSuchAlgorithmException, NoSuchProviderException {
-	Instance instance = JceSecurity.getInstance
-		("Mac", MacSpi.class, algorithm, provider);
-	return new Mac((MacSpi)instance.impl, instance.provider, algorithm);
+            throws NoSuchAlgorithmException, NoSuchProviderException {
+        Instance instance = JceSecurity.getInstance
+                ("Mac", MacSpi.class, algorithm, provider);
+        return new Mac((MacSpi)instance.impl, instance.provider, algorithm);
     }
 
     /**
@@ -224,19 +224,19 @@ public class Mac implements Cloneable {
      * @return the new <code>Mac</code> object.
      *
      * @exception NoSuchAlgorithmException if a MacSpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null.
+     *          is null.
      *
      * @see java.security.Provider
      */
     public static final Mac getInstance(String algorithm, Provider provider)
-	    throws NoSuchAlgorithmException {
-	Instance instance = JceSecurity.getInstance
-		("Mac", MacSpi.class, algorithm, provider);
-	return new Mac((MacSpi)instance.impl, instance.provider, algorithm);
+            throws NoSuchAlgorithmException {
+        Instance instance = JceSecurity.getInstance
+                ("Mac", MacSpi.class, algorithm, provider);
+        return new Mac((MacSpi)instance.impl, instance.provider, algorithm);
     }
 
     // max number of debug warnings to print from chooseFirstProvider()
@@ -248,116 +248,116 @@ public class Mac implements Cloneable {
      * is not the first method called.
      */
     void chooseFirstProvider() {
-	if ((spi != null) || (serviceIterator == null)) {
-	    return;
-	}
-	synchronized (lock) {
-	    if (spi != null) {
-		return;
-	    }
-	    if (debug != null) {
-		int w = --warnCount;
-		if (w >= 0) {
-		    debug.println("Mac.init() not first method "
-			+ "called, disabling delayed provider selection");
-		    if (w == 0) {
-			debug.println("Further warnings of this type will "
-			    + "be suppressed");
-		    }
-		    new Exception("Call trace").printStackTrace();
-		}
-	    }
-	    Exception lastException = null;
-	    while ((firstService != null) || serviceIterator.hasNext()) {
-		Service s;
-		if (firstService != null) {
-		    s = firstService;
-		    firstService = null;
-		} else {
-		    s = (Service)serviceIterator.next();
-		}
-		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		    continue;
-		}
-		try {
-		    Object obj = s.newInstance(null);
-		    if (obj instanceof MacSpi == false) {
-			continue;
-		    }
-		    spi = (MacSpi)obj;
-		    provider = s.getProvider();
-		    // not needed any more
-		    firstService = null;
-		    serviceIterator = null;
-		    return;
-		} catch (NoSuchAlgorithmException e) {
-		    lastException = e;
-		}
-	    }
-	    ProviderException e = new ProviderException
-		    ("Could not construct MacSpi instance");
-	    if (lastException != null) {
-		e.initCause(lastException);
-	    }
-	    throw e;
-	}
+        if ((spi != null) || (serviceIterator == null)) {
+            return;
+        }
+        synchronized (lock) {
+            if (spi != null) {
+                return;
+            }
+            if (debug != null) {
+                int w = --warnCount;
+                if (w >= 0) {
+                    debug.println("Mac.init() not first method "
+                        + "called, disabling delayed provider selection");
+                    if (w == 0) {
+                        debug.println("Further warnings of this type will "
+                            + "be suppressed");
+                    }
+                    new Exception("Call trace").printStackTrace();
+                }
+            }
+            Exception lastException = null;
+            while ((firstService != null) || serviceIterator.hasNext()) {
+                Service s;
+                if (firstService != null) {
+                    s = firstService;
+                    firstService = null;
+                } else {
+                    s = (Service)serviceIterator.next();
+                }
+                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                    continue;
+                }
+                try {
+                    Object obj = s.newInstance(null);
+                    if (obj instanceof MacSpi == false) {
+                        continue;
+                    }
+                    spi = (MacSpi)obj;
+                    provider = s.getProvider();
+                    // not needed any more
+                    firstService = null;
+                    serviceIterator = null;
+                    return;
+                } catch (NoSuchAlgorithmException e) {
+                    lastException = e;
+                }
+            }
+            ProviderException e = new ProviderException
+                    ("Could not construct MacSpi instance");
+            if (lastException != null) {
+                e.initCause(lastException);
+            }
+            throw e;
+        }
     }
 
     private void chooseProvider(Key key, AlgorithmParameterSpec params)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException {
-	synchronized (lock) {
-	    if (spi != null) {
-		spi.engineInit(key, params);
-		return;
-	    }
-	    Exception lastException = null;
-	    while ((firstService != null) || serviceIterator.hasNext()) {
-		Service s;
-		if (firstService != null) {
-		    s = firstService;
-		    firstService = null;
-		} else {
-		    s = (Service)serviceIterator.next();
-		}
-		// if provider says it does not support this key, ignore it
-		if (s.supportsParameter(key) == false) {
-		    continue;
-		}
-		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		    continue;
-		}
-		try {
-		    MacSpi spi = (MacSpi)s.newInstance(null);
-		    spi.engineInit(key, params);
-		    provider = s.getProvider();
-		    this.spi = spi;
-		    firstService = null;
-		    serviceIterator = null;
-		    return;
-		} catch (Exception e) {
-		    // NoSuchAlgorithmException from newInstance()
-		    // InvalidKeyException from init()
-		    // RuntimeException (ProviderException) from init()
-		    if (lastException == null) {
-			lastException = e;
-		    }
-		}
-	    }
-	    // no working provider found, fail
-	    if (lastException instanceof InvalidKeyException) {
-		throw (InvalidKeyException)lastException;
-	    }
-	    if (lastException instanceof InvalidAlgorithmParameterException) {
-		throw (InvalidAlgorithmParameterException)lastException;
-	    }
-	    if (lastException instanceof RuntimeException) {
-		throw (RuntimeException)lastException;
-	    }
-	    String kName = (key != null) ? key.getClass().getName() : "(null)";
-	    throw new InvalidKeyException
-		("No installed provider supports this key: "
-		+ kName, lastException);
-	}
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
+        synchronized (lock) {
+            if (spi != null) {
+                spi.engineInit(key, params);
+                return;
+            }
+            Exception lastException = null;
+            while ((firstService != null) || serviceIterator.hasNext()) {
+                Service s;
+                if (firstService != null) {
+                    s = firstService;
+                    firstService = null;
+                } else {
+                    s = (Service)serviceIterator.next();
+                }
+                // if provider says it does not support this key, ignore it
+                if (s.supportsParameter(key) == false) {
+                    continue;
+                }
+                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                    continue;
+                }
+                try {
+                    MacSpi spi = (MacSpi)s.newInstance(null);
+                    spi.engineInit(key, params);
+                    provider = s.getProvider();
+                    this.spi = spi;
+                    firstService = null;
+                    serviceIterator = null;
+                    return;
+                } catch (Exception e) {
+                    // NoSuchAlgorithmException from newInstance()
+                    // InvalidKeyException from init()
+                    // RuntimeException (ProviderException) from init()
+                    if (lastException == null) {
+                        lastException = e;
+                    }
+                }
+            }
+            // no working provider found, fail
+            if (lastException instanceof InvalidKeyException) {
+                throw (InvalidKeyException)lastException;
+            }
+            if (lastException instanceof InvalidAlgorithmParameterException) {
+                throw (InvalidAlgorithmParameterException)lastException;
+            }
+            if (lastException instanceof RuntimeException) {
+                throw (RuntimeException)lastException;
+            }
+            String kName = (key != null) ? key.getClass().getName() : "(null)";
+            throw new InvalidKeyException
+                ("No installed provider supports this key: "
+                + kName, lastException);
+        }
     }
 
     /**
@@ -366,8 +366,8 @@ public class Mac implements Cloneable {
      * @return the provider of this <code>Mac</code> object.
      */
     public final Provider getProvider() {
-	chooseFirstProvider();
-	return this.provider;
+        chooseFirstProvider();
+        return this.provider;
     }
 
     /**
@@ -376,8 +376,8 @@ public class Mac implements Cloneable {
      * @return the MAC length in bytes.
      */
     public final int getMacLength() {
-	chooseFirstProvider();
-	return spi.engineGetMacLength();
+        chooseFirstProvider();
+        return spi.engineGetMacLength();
     }
 
     /**
@@ -389,16 +389,16 @@ public class Mac implements Cloneable {
      * initializing this MAC.
      */
     public final void init(Key key) throws InvalidKeyException {
-	try {
-	    if (spi != null) {
-		spi.engineInit(key, null);
-	    } else {
-		chooseProvider(key, null);
-	    }
-	} catch (InvalidAlgorithmParameterException e) {
-	    throw new InvalidKeyException("init() failed", e);
-	}
-	initialized = true;
+        try {
+            if (spi != null) {
+                spi.engineInit(key, null);
+            } else {
+                chooseProvider(key, null);
+            }
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new InvalidKeyException("init() failed", e);
+        }
+        initialized = true;
     }
 
     /**
@@ -414,13 +414,13 @@ public class Mac implements Cloneable {
      * parameters are inappropriate for this MAC.
      */
     public final void init(Key key, AlgorithmParameterSpec params)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException {
-	if (spi != null) {
-	    spi.engineInit(key, params);
-	} else {
-	    chooseProvider(key, params);
-	}
-	initialized = true;
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
+        if (spi != null) {
+            spi.engineInit(key, params);
+        } else {
+            chooseProvider(key, params);
+        }
+        initialized = true;
     }
 
     /**
@@ -432,11 +432,11 @@ public class Mac implements Cloneable {
      * initialized.
      */
     public final void update(byte input) throws IllegalStateException {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	spi.engineUpdate(input);
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        spi.engineUpdate(input);
     }
 
     /**
@@ -448,13 +448,13 @@ public class Mac implements Cloneable {
      * initialized.
      */
     public final void update(byte[] input) throws IllegalStateException {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	if (input != null) {
-	    spi.engineUpdate(input, 0, input.length);
-	}
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        if (input != null) {
+            spi.engineUpdate(input, 0, input.length);
+        }
     }
 
     /**
@@ -469,17 +469,17 @@ public class Mac implements Cloneable {
      * initialized.
      */
     public final void update(byte[] input, int offset, int len)
-	    throws IllegalStateException {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
+            throws IllegalStateException {
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
 
-	if (input != null) {
-	    if ((offset < 0) || (len > (input.length - offset)) || (len < 0))
-		throw new IllegalArgumentException("Bad arguments");
-	    spi.engineUpdate(input, offset, len);
-	}
+        if (input != null) {
+            if ((offset < 0) || (len > (input.length - offset)) || (len < 0))
+                throw new IllegalArgumentException("Bad arguments");
+            spi.engineUpdate(input, offset, len);
+        }
     }
 
     /**
@@ -495,14 +495,14 @@ public class Mac implements Cloneable {
      * @since 1.5
      */
     public final void update(ByteBuffer input) {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	if (input == null) {
-	    throw new IllegalArgumentException("Buffer must not be null");
-	}
-	spi.engineUpdate(input);
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        if (input == null) {
+            throw new IllegalArgumentException("Buffer must not be null");
+        }
+        spi.engineUpdate(input);
     }
 
     /**
@@ -525,13 +525,13 @@ public class Mac implements Cloneable {
      * initialized.
      */
     public final byte[] doFinal() throws IllegalStateException {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	byte[] mac = spi.engineDoFinal();
-	spi.engineReset();
-	return mac;
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        byte[] mac = spi.engineDoFinal();
+        spi.engineReset();
+        return mac;
     }
 
     /**
@@ -561,20 +561,20 @@ public class Mac implements Cloneable {
      * initialized.
      */
     public final void doFinal(byte[] output, int outOffset)
-	throws ShortBufferException, IllegalStateException
+        throws ShortBufferException, IllegalStateException
     {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	int macLen = getMacLength();
-	if (output == null || output.length-outOffset < macLen) {
-	    throw new ShortBufferException
-		("Cannot store MAC in output buffer");
-	}
-	byte[] mac = doFinal();
-	System.arraycopy(mac, 0, output, outOffset, macLen);
-	return;
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        int macLen = getMacLength();
+        if (output == null || output.length-outOffset < macLen) {
+            throw new ShortBufferException
+                ("Cannot store MAC in output buffer");
+        }
+        byte[] mac = doFinal();
+        System.arraycopy(mac, 0, output, outOffset, macLen);
+        return;
     }
 
     /**
@@ -599,12 +599,12 @@ public class Mac implements Cloneable {
      */
     public final byte[] doFinal(byte[] input) throws IllegalStateException
     {
-	chooseFirstProvider();
-	if (initialized == false) {
-	    throw new IllegalStateException("MAC not initialized");
-	}
-	update(input);
-	return doFinal();
+        chooseFirstProvider();
+        if (initialized == false) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+        update(input);
+        return doFinal();
     }
 
     /**
@@ -622,8 +622,8 @@ public class Mac implements Cloneable {
      * <code>init(Key, AlgorithmParameterSpec)</code>.
      */
     public final void reset() {
-	chooseFirstProvider();
-	spi.engineReset();
+        chooseFirstProvider();
+        spi.engineReset();
     }
 
     /**
@@ -635,10 +635,9 @@ public class Mac implements Cloneable {
      * delegate that does not support <code>Cloneable</code>.
      */
     public final Object clone() throws CloneNotSupportedException {
-	chooseFirstProvider();
-	Mac that = (Mac)super.clone();
-	that.spi = (MacSpi)this.spi.clone();
-	return that;
+        chooseFirstProvider();
+        Mac that = (Mac)super.clone();
+        that.spi = (MacSpi)this.spi.clone();
+        return that;
     }
 }
-

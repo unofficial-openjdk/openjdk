@@ -58,7 +58,7 @@ public class DOMTransform extends DOMStructure implements Transform {
      * @param spi the TransformService
      */
     public DOMTransform(TransformService spi) {
-	this.spi = spi;
+        this.spi = spi;
     }
 
     /**
@@ -68,50 +68,50 @@ public class DOMTransform extends DOMStructure implements Transform {
      *
      * @param transElem a Transform element
      */
-    public DOMTransform(Element transElem, XMLCryptoContext context) 
-	throws MarshalException {
+    public DOMTransform(Element transElem, XMLCryptoContext context)
+        throws MarshalException {
         Document ownerDoc = transElem.getOwnerDocument();
         String algorithm = DOMUtils.getAttributeValue(transElem, "Algorithm");
-	try {
-	    spi = TransformService.getInstance(algorithm, "DOM");
-	} catch (NoSuchAlgorithmException e) {
-	    throw new MarshalException(e);
-	}
-	try {
+        try {
+            spi = TransformService.getInstance(algorithm, "DOM");
+        } catch (NoSuchAlgorithmException e) {
+            throw new MarshalException(e);
+        }
+        try {
             spi.init(new javax.xml.crypto.dom.DOMStructure(transElem), context);
-	} catch (InvalidAlgorithmParameterException iape) {
-	    throw new MarshalException(iape);
-	}
+        } catch (InvalidAlgorithmParameterException iape) {
+            throw new MarshalException(iape);
+        }
     }
 
     public final AlgorithmParameterSpec getParameterSpec() {
-	return spi.getParameterSpec();
+        return spi.getParameterSpec();
     }
 
     public final String getAlgorithm() {
-	return spi.getAlgorithm();
+        return spi.getAlgorithm();
     }
 
     /**
-     * This method invokes the abstract {@link #marshalParams marshalParams} 
+     * This method invokes the abstract {@link #marshalParams marshalParams}
      * method to marshal any algorithm-specific parameters.
      */
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-	throws MarshalException {
+        throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
-	Element transformElem = null;
-	if (parent.getLocalName().equals("Transforms")) {
+        Element transformElem = null;
+        if (parent.getLocalName().equals("Transforms")) {
             transformElem = DOMUtils.createElement
-		(ownerDoc, "Transform", XMLSignature.XMLNS, dsPrefix);
-	} else {
+                (ownerDoc, "Transform", XMLSignature.XMLNS, dsPrefix);
+        } else {
             transformElem = DOMUtils.createElement
             (ownerDoc, "CanonicalizationMethod", XMLSignature.XMLNS, dsPrefix);
-	}
-	DOMUtils.setAttribute(transformElem, "Algorithm", getAlgorithm());
+        }
+        DOMUtils.setAttribute(transformElem, "Algorithm", getAlgorithm());
 
         spi.marshalParams
-	    (new javax.xml.crypto.dom.DOMStructure(transformElem), context);
+            (new javax.xml.crypto.dom.DOMStructure(transformElem), context);
 
         parent.appendChild(transformElem);
     }
@@ -127,9 +127,9 @@ public class DOMTransform extends DOMStructure implements Transform {
      * @throws XMLSignatureException if an unexpected error occurs while
      *    executing the transform
      */
-    public Data transform(Data data, XMLCryptoContext xc) 
-	throws TransformException {
-	return spi.transform(data, xc);
+    public Data transform(Data data, XMLCryptoContext xc)
+        throws TransformException {
+        return spi.transform(data, xc);
     }
 
     /**
@@ -145,24 +145,24 @@ public class DOMTransform extends DOMStructure implements Transform {
      * @throws XMLSignatureException if an unexpected error occurs while
      *    executing the transform
      */
-    public Data transform(Data data, XMLCryptoContext xc, OutputStream os) 
-	throws TransformException {
-	return spi.transform(data, xc, os);
+    public Data transform(Data data, XMLCryptoContext xc, OutputStream os)
+        throws TransformException {
+        return spi.transform(data, xc, os);
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof Transform)) {
             return false;
-	}
+        }
         Transform otransform = (Transform) o;
 
-	return (getAlgorithm().equals(otransform.getAlgorithm()) && 
-	    DOMUtils.paramsEqual
-		(getParameterSpec(), otransform.getParameterSpec()));
+        return (getAlgorithm().equals(otransform.getAlgorithm()) &&
+            DOMUtils.paramsEqual
+                (getParameterSpec(), otransform.getParameterSpec()));
     }
 
     /**
@@ -176,15 +176,15 @@ public class DOMTransform extends DOMStructure implements Transform {
      * @param context the marshalling context
      * @return the transformed data
      * @throws MarshalException if an exception occurs while marshalling
-     * @throws NullPointerException if <code>data</code> or <code>context</code> 
+     * @throws NullPointerException if <code>data</code> or <code>context</code>
      *    is <code>null</code>
      * @throws XMLSignatureException if an unexpected error occurs while
      *    executing the transform
      */
-    Data transform(Data data, XMLCryptoContext xc, DOMSignContext context) 
-	throws MarshalException, TransformException {
+    Data transform(Data data, XMLCryptoContext xc, DOMSignContext context)
+        throws MarshalException, TransformException {
         marshal(context.getParent(),
             DOMUtils.getSignaturePrefix(context), context);
-	return transform(data, xc);
+        return transform(data, xc);
     }
 }

@@ -40,7 +40,7 @@ jfieldID ia_preferIPv6AddressID;
 /*
  * Class:     java_net_InetAddress
  * Method:    init
- * Signature: ()V 
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL
 Java_java_net_InetAddress_init(JNIEnv *env, jclass cls) {
@@ -52,6 +52,6 @@ Java_java_net_InetAddress_init(JNIEnv *env, jclass cls) {
     CHECK_NULL(ia_addressID);
     ia_familyID = (*env)->GetFieldID(env, ia_class, "family", "I");
     CHECK_NULL(ia_familyID);
-    ia_preferIPv6AddressID = (*env)->GetStaticFieldID(env, ia_class, "preferIPv6Address", "Z"); 
+    ia_preferIPv6AddressID = (*env)->GetStaticFieldID(env, ia_class, "preferIPv6Address", "Z");
     CHECK_NULL(ia_preferIPv6AddressID);
 }

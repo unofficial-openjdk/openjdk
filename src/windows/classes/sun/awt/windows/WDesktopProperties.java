@@ -43,11 +43,11 @@ import sun.awt.SunToolkit;
  * Class encapsulating Windows desktop properties.;
  * This class exposes Windows user configuration values
  * for things like:
- *	Window metrics
- *	Accessibility, display settings
- *	Animation effects
- *	Colors
- * 	Etc, etc etc.
+ *      Window metrics
+ *      Accessibility, display settings
+ *      Animation effects
+ *      Colors
+ *      Etc, etc etc.
  *
  * It's primary use is so that Windows specific Java code;
  * like the Windows Pluggable Look-and-Feel can better adapt
@@ -80,8 +80,8 @@ class WDesktopProperties {
     }
 
     WDesktopProperties(WToolkit wToolkit) {
-	this.wToolkit = wToolkit;
-	init();
+        this.wToolkit = wToolkit;
+        init();
     }
 
     private native void init();
@@ -90,14 +90,14 @@ class WDesktopProperties {
      * Returns String[] containing available property names
      */
     private String [] getKeyNames() {
-	Object	keys[] = map.keySet().toArray();
-	String	sortedKeys[] = new String[keys.length];
+        Object  keys[] = map.keySet().toArray();
+        String  sortedKeys[] = new String[keys.length];
 
-	for ( int nkey = 0; nkey < keys.length; nkey++ ) {
-	    sortedKeys[nkey] = keys[nkey].toString();
-	}
-	Arrays.sort(sortedKeys);
-	return sortedKeys;
+        for ( int nkey = 0; nkey < keys.length; nkey++ ) {
+            sortedKeys[nkey] = keys[nkey].toString();
+        }
+        Arrays.sort(sortedKeys);
+        return sortedKeys;
     }
 
     /*
@@ -154,13 +154,13 @@ class WDesktopProperties {
     /* Map of known windows font aliases to the preferred JDK name */
     static HashMap<String,String> fontNameMap;
     static {
- 	fontNameMap = new HashMap<String,String>();
- 	fontNameMap.put("Courier", Font.MONOSPACED);
- 	fontNameMap.put("MS Serif", "Microsoft Serif");
- 	fontNameMap.put("MS Sans Serif", "Microsoft Sans Serif");
- 	fontNameMap.put("Terminal", Font.DIALOG);
- 	fontNameMap.put("FixedSys", Font.MONOSPACED);
- 	fontNameMap.put("System", Font.DIALOG);
+        fontNameMap = new HashMap<String,String>();
+        fontNameMap.put("Courier", Font.MONOSPACED);
+        fontNameMap.put("MS Serif", "Microsoft Serif");
+        fontNameMap.put("MS Sans Serif", "Microsoft Sans Serif");
+        fontNameMap.put("Terminal", Font.DIALOG);
+        fontNameMap.put("FixedSys", Font.MONOSPACED);
+        fontNameMap.put("System", Font.DIALOG);
     }
     /*
      * Called from native code to set a font property
@@ -170,20 +170,20 @@ class WDesktopProperties {
 
         String mappedName = fontNameMap.get(name);
         if (mappedName != null) {
-	    name = mappedName;
+            name = mappedName;
         }
-	Font	font = new Font(name, style, size);
+        Font    font = new Font(name, style, size);
         if (log.isLoggable(Level.FINE)) {
             log.fine(key + "=" + font);
         }
-	map.put(key, font);
+        map.put(key, font);
 
         String sizeKey = key + ".height";
         Integer iSize = Integer.valueOf(size);
         if (log.isLoggable(Level.FINE)) {
             log.fine(sizeKey + "=" + iSize);
         }
-	map.put(sizeKey, iSize);
+        map.put(sizeKey, iSize);
     }
 
     /*
@@ -192,11 +192,11 @@ class WDesktopProperties {
     private synchronized void setSoundProperty(String key, String winEventName) {
         assert( key != null && winEventName != null );
 
-	Runnable soundRunnable = new WinPlaySound(winEventName);
+        Runnable soundRunnable = new WinPlaySound(winEventName);
         if (log.isLoggable(Level.FINE)) {
             log.fine(key + "=" + soundRunnable);
         }
-	map.put(key, soundRunnable);
+        map.put(key, soundRunnable);
     }
 
     /*
@@ -205,19 +205,19 @@ class WDesktopProperties {
     private native void playWindowsSound(String winEventName);
 
     class WinPlaySound implements Runnable {
-	String	winEventName;
+        String  winEventName;
 
-	WinPlaySound(String winEventName) {
-	    this.winEventName = winEventName;
-	}
+        WinPlaySound(String winEventName) {
+            this.winEventName = winEventName;
+        }
 
-	public void run() {
-	    WDesktopProperties.this.playWindowsSound(winEventName);
-	}
+        public void run() {
+            WDesktopProperties.this.playWindowsSound(winEventName);
+        }
 
-	public String toString() {
-	    return "WinPlaySound("+winEventName+")";
-	}
+        public String toString() {
+            return "WinPlaySound("+winEventName+")";
+        }
 
         public boolean equals(Object o) {
             if (o == this) {

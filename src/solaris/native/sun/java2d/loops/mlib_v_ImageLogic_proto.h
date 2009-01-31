@@ -26,7 +26,6 @@
 #ifndef __MLIB_V_IMAGELOGIC_PROTO_H
 #define __MLIB_V_IMAGELOGIC_PROTO_H
 
-#pragma ident	"@(#)mlib_v_ImageLogic_proto.h	1.3	03/01/31 SMI"
 
 #include <mlib_types.h>
 #include <mlib_image_types.h>

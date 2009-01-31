@@ -29,8 +29,8 @@
  * @author  Mandy Chung
  *
  * @build MonitorDeadlock
- * @build ThreadDump 
- * @run main FindMonitorDeadlock 
+ * @build ThreadDump
+ * @run main FindMonitorDeadlock
  */
 
 import java.lang.management.*;
@@ -40,7 +40,7 @@ public class FindMonitorDeadlock {
     public static void main(String[] argv) {
         // create deadlocked threads
         MonitorDeadlock md = new MonitorDeadlock();
-       
+
         // No deadlock
         ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
         long[] threads = mbean.findMonitorDeadlockedThreads();
@@ -49,12 +49,12 @@ public class FindMonitorDeadlock {
         }
 
         // Let the threads to proceed
-        md.goDeadlock(); 
+        md.goDeadlock();
 
         // wait until the deadlock is ready
         md.waitUntilDeadlock();
 
-        // Find Deadlock 
+        // Find Deadlock
         threads = mbean.findMonitorDeadlockedThreads();
         if (threads == null) {
             ThreadDump.dumpStacks();

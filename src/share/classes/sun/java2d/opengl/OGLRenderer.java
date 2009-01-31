@@ -79,7 +79,7 @@ class OGLRenderer extends BufferedRenderPipe {
                                    int transX, int transY);
 
     OGLRenderer traceWrap() {
-	return new Tracer(this);
+        return new Tracer(this);
     }
 
     private class Tracer extends OGLRenderer {
@@ -94,24 +94,24 @@ class OGLRenderer extends BufferedRenderPipe {
         public void drawLine(SunGraphics2D sg2d,
                              int x1, int y1, int x2, int y2)
         {
-	    GraphicsPrimitive.tracePrimitive("OGLDrawLine");
-	    oglr.drawLine(sg2d, x1, y1, x2, y2);
-	}
+            GraphicsPrimitive.tracePrimitive("OGLDrawLine");
+            oglr.drawLine(sg2d, x1, y1, x2, y2);
+        }
         public void drawRect(SunGraphics2D sg2d, int x, int y, int w, int h) {
-	    GraphicsPrimitive.tracePrimitive("OGLDrawRect");
-	    oglr.drawRect(sg2d, x, y, w, h);
-	}
+            GraphicsPrimitive.tracePrimitive("OGLDrawRect");
+            oglr.drawRect(sg2d, x, y, w, h);
+        }
         protected void drawPoly(SunGraphics2D sg2d,
                                 int[] xPoints, int[] yPoints,
                                 int nPoints, boolean isClosed)
         {
-	    GraphicsPrimitive.tracePrimitive("OGLDrawPoly");
-	    oglr.drawPoly(sg2d, xPoints, yPoints, nPoints, isClosed);
-	}
+            GraphicsPrimitive.tracePrimitive("OGLDrawPoly");
+            oglr.drawPoly(sg2d, xPoints, yPoints, nPoints, isClosed);
+        }
         public void fillRect(SunGraphics2D sg2d, int x, int y, int w, int h) {
-	    GraphicsPrimitive.tracePrimitive("OGLFillRect");
-	    oglr.fillRect(sg2d, x, y, w, h);
-	}
+            GraphicsPrimitive.tracePrimitive("OGLFillRect");
+            oglr.fillRect(sg2d, x, y, w, h);
+        }
         protected void drawPath(SunGraphics2D sg2d,
                                 Path2D.Float p2df, int transx, int transy)
         {
@@ -126,15 +126,15 @@ class OGLRenderer extends BufferedRenderPipe {
         }
         protected void fillSpans(SunGraphics2D sg2d, SpanIterator si,
                                  int transx, int transy)
-	{
+        {
             GraphicsPrimitive.tracePrimitive("OGLFillSpans");
             oglr.fillSpans(sg2d, si, transx, transy);
-	}
+        }
         public void copyArea(SunGraphics2D sg2d,
                              int x, int y, int w, int h, int dx, int dy)
         {
             GraphicsPrimitive.tracePrimitive("OGLCopyArea");
             oglr.copyArea(sg2d, x, y, w, h, dx, dy);
-	}
+        }
     }
 }

@@ -34,7 +34,7 @@
 import sun.management.Agent;
 
 public class AgentCheckTest {
-    
+
     public static void main(String[] args){
         String [][] testStrings = {
             {"agent.err.error", "", ""},

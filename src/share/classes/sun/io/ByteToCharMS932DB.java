@@ -31,7 +31,6 @@ import sun.nio.cs.ext.MS932DB;
  * Tables and data to convert MS932 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 abstract class ByteToCharMS932DB extends ByteToCharDoubleByte {

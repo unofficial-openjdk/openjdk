@@ -51,7 +51,6 @@ import java.util.Map;
  *
  * @author David Mendenhall
  * @author Danila Sinopalnikov
- * @version %I%, %G%
  *
  * @since 1.4 (appeared in modified form as FullyRenderedTransferable in 1.3.1)
  */
@@ -67,7 +66,7 @@ public class ClipboardTransferable implements Transferable {
             this.data   = data;
         }
 
-        public Object getTransferData(DataFlavor flavor) throws IOException { 
+        public Object getTransferData(DataFlavor flavor) throws IOException {
             return DataTransferer.getInstance().
                 translateBytes(data, flavor, format,
                                ClipboardTransferable.this);
@@ -75,16 +74,16 @@ public class ClipboardTransferable implements Transferable {
     }
 
     public ClipboardTransferable(SunClipboard clipboard) {
-        
+
         clipboard.openClipboard(null);
-        
+
         try {
             long[] formats = clipboard.getClipboardFormats();
 
             if (formats != null && formats.length > 0) {
-		// Since the SystemFlavorMap will specify many DataFlavors
-		// which map to the same format, we should cache data as we
-		// read it.
+                // Since the SystemFlavorMap will specify many DataFlavors
+                // which map to the same format, we should cache data as we
+                // read it.
                 HashMap cached_data = new HashMap(formats.length, 1.0f);
 
                 Map flavorsForFormats = DataTransferer.getInstance().
@@ -92,84 +91,84 @@ public class ClipboardTransferable implements Transferable {
                 for (Iterator iter = flavorsForFormats.keySet().iterator();
                      iter.hasNext(); )
                 {
-		    DataFlavor flavor = (DataFlavor)iter.next();
-		    Long lFormat = (Long)flavorsForFormats.get(flavor);
+                    DataFlavor flavor = (DataFlavor)iter.next();
+                    Long lFormat = (Long)flavorsForFormats.get(flavor);
 
-		    fetchOneFlavor(clipboard, flavor, lFormat, cached_data);
+                    fetchOneFlavor(clipboard, flavor, lFormat, cached_data);
                 }
 
                 flavors = DataTransferer.getInstance().
                     setToSortedDataFlavorArray(flavorsToData.keySet(),
                                                flavorsForFormats);
             }
-        } finally {            
+        } finally {
             clipboard.closeClipboard();
         }
     }
 
     private boolean fetchOneFlavor(SunClipboard clipboard, DataFlavor flavor,
-				   Long lFormat, HashMap cached_data)
+                                   Long lFormat, HashMap cached_data)
     {
-	if (!flavorsToData.containsKey(flavor)) {
-	    long format = lFormat.longValue();
-	    Object data = null;
-	    
-	    if (!cached_data.containsKey(lFormat)) {
-		try {
-		    data = clipboard.getClipboardData(format);
-		} catch (IOException e) {
+        if (!flavorsToData.containsKey(flavor)) {
+            long format = lFormat.longValue();
+            Object data = null;
+
+            if (!cached_data.containsKey(lFormat)) {
+                try {
+                    data = clipboard.getClipboardData(format);
+                } catch (IOException e) {
                     data = e;
-		} catch (Throwable e) {
-		    e.printStackTrace();
-		}
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
 
-		// Cache this data, even if it's null, so we don't have to go
-		// to native code again for this format.
-		cached_data.put(lFormat, data);
-	    } else {
-		data = cached_data.get(lFormat);
-	    }
+                // Cache this data, even if it's null, so we don't have to go
+                // to native code again for this format.
+                cached_data.put(lFormat, data);
+            } else {
+                data = cached_data.get(lFormat);
+            }
 
-            // Casting IOException to byte array causes ClassCastException. 
+            // Casting IOException to byte array causes ClassCastException.
             // We should handle IOException separately - do not wrap them into
             // DataFactory and report failure.
             if (data instanceof IOException) {
                 flavorsToData.put(flavor, data);
                 return false;
             } else if (data != null) {
-		flavorsToData.put(flavor, new DataFactory(format,
-							  (byte[])data));
-		return true;
-	    }
-	}	
+                flavorsToData.put(flavor, new DataFactory(format,
+                                                          (byte[])data));
+                return true;
+            }
+        }
 
-	return false;
+        return false;
     }
-    
+
     public DataFlavor[] getTransferDataFlavors() {
         return (DataFlavor[])flavors.clone();
     }
-    
+
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         return flavorsToData.containsKey(flavor);
     }
-    
+
     public Object getTransferData(DataFlavor flavor)
-	throws UnsupportedFlavorException, IOException
+        throws UnsupportedFlavorException, IOException
     {
         if (!isDataFlavorSupported(flavor)) {
             throw new UnsupportedFlavorException(flavor);
         }
         Object ret = flavorsToData.get(flavor);
         if (ret instanceof IOException) {
-	    // rethrow IOExceptions generated while fetching data
+            // rethrow IOExceptions generated while fetching data
             throw (IOException)ret;
         } else if (ret instanceof DataFactory) {
-	    // Now we can render the data
+            // Now we can render the data
             DataFactory factory = (DataFactory)ret;
-	    ret = factory.getTransferData(flavor);
-	}
+            ret = factory.getTransferData(flavor);
+        }
         return ret;
     }
-    
+
 }

@@ -103,14 +103,14 @@ findpow2tilesize(jint shift, jint sxinc, jint syinc)
      * than 1 destination pixel of error as well.
      */
     if (sxinc > syinc) {
-	sxinc = syinc;
+        sxinc = syinc;
     }
     if (sxinc == 0) {
-	/* Degenerate case will cause infinite loop in next loop... */
-	return 1;
+        /* Degenerate case will cause infinite loop in next loop... */
+        return 1;
     }
     while ((1 << shift) > sxinc) {
-	shift--;
+        shift--;
     }
     /*
      * shift is now the largest it can be for less than 1 pixel
@@ -122,13 +122,13 @@ findpow2tilesize(jint shift, jint sxinc, jint syinc)
      * we have no bits of sub-pixel accuracy.
      */
     if (shift >= 16) {
-	/* Subtracting 8 asks for 8 bits of subpixel accuracy. */
-	shift -= 8;
+        /* Subtracting 8 asks for 8 bits of subpixel accuracy. */
+        shift -= 8;
     } else {
-	/* Ask for half of the remaining bits to be subpixel accuracy. */
-	/* Rounding is in favor of subpixel accuracy over tile size. */
-	/* Worst case, shift == 0 and tilesize == (1 << 0) == 1 */
-	shift /= 2;
+        /* Ask for half of the remaining bits to be subpixel accuracy. */
+        /* Rounding is in favor of subpixel accuracy over tile size. */
+        /* Worst case, shift == 0 and tilesize == (1 << 0) == 1 */
+        shift /= 2;
     }
     return (1 << shift);
 }
@@ -144,7 +144,7 @@ findpow2tilesize(jint shift, jint sxinc, jint syinc)
  * io == integer destination operation origin
  * ts == tilesize (must be power of 2)
  */
-#define TILESTART(id, io, ts)	((io) + (((id)-(io)) & (~((ts)-1))))
+#define TILESTART(id, io, ts)   ((io) + (((id)-(io)) & (~((ts)-1))))
 
 /*
  * For a given integer destination pixel coordinate "id", calculate the
@@ -225,34 +225,34 @@ refine(jint intorigin, jdouble dblorigin, jint tilesize,
     jlong lsrctarget = srctarget;
 
     while (JNI_TRUE) {
-	/*
-	 * Find src coordinate from dest coordinate using the same
-	 * math we will use below when iterating over tiles.
-	 */
-	jint tilestart = TILESTART(dstloc, intorigin, tilesize);
-	jlong lsrcloc = (jlong) SRCLOC(tilestart, dblorigin, scale);
-	if (dstloc > tilestart) {
-	    lsrcloc += lsrcinc * ((jlong) dstloc - tilestart);
-	}
-	if (lsrcloc >= lsrctarget) {
-	    /*
-	     * If we were previously less than target, then the current
-	     * dstloc is the smallest dst which maps >= the target.
-	     */
-	    if (wasneg) break;
-	    dstloc--;
-	    waspos = JNI_TRUE;
-	} else {
-	    /*
-	     * If we were previously greater than target, then this must
-	     * be the first dstloc which maps to < the target.  Since we
-	     * want the smallest which maps >= the target, increment it
-	     * first before returning.
-	     */
-	    dstloc++;
-	    if (waspos) break;
-	    wasneg = JNI_TRUE;
-	}
+        /*
+         * Find src coordinate from dest coordinate using the same
+         * math we will use below when iterating over tiles.
+         */
+        jint tilestart = TILESTART(dstloc, intorigin, tilesize);
+        jlong lsrcloc = (jlong) SRCLOC(tilestart, dblorigin, scale);
+        if (dstloc > tilestart) {
+            lsrcloc += lsrcinc * ((jlong) dstloc - tilestart);
+        }
+        if (lsrcloc >= lsrctarget) {
+            /*
+             * If we were previously less than target, then the current
+             * dstloc is the smallest dst which maps >= the target.
+             */
+            if (wasneg) break;
+            dstloc--;
+            waspos = JNI_TRUE;
+        } else {
+            /*
+             * If we were previously greater than target, then this must
+             * be the first dstloc which maps to < the target.  Since we
+             * want the smallest which maps >= the target, increment it
+             * first before returning.
+             */
+            dstloc++;
+            if (waspos) break;
+            wasneg = JNI_TRUE;
+        }
     }
     return dstloc;
 }
@@ -286,19 +286,19 @@ Java_sun_java2d_loops_ScaledBlit_Scale
 
     pPrim = GetNativePrim(env, self);
     if (pPrim == NULL) {
-	return;
+        return;
     }
     if (pPrim->pCompType->getCompInfo != NULL) {
-	(*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
+        (*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
     }
     if (Region_GetInfo(env, clip, &clipInfo)) {
-	return;
+        return;
     }
 
     srcOps = SurfaceData_GetOps(env, srcData);
     dstOps = SurfaceData_GetOps(env, dstData);
     if (srcOps == 0 || dstOps == 0) {
-	return;
+        return;
     }
 
     /*
@@ -364,13 +364,13 @@ Java_sun_java2d_loops_ScaledBlit_Scale
     srcInfo.bounds.x2 = sx2;
     srcInfo.bounds.y2 = sy2;
     if (srcOps->Lock(env, srcOps, &srcInfo, pPrim->srcflags) != SD_SUCCESS) {
-	return;
+        return;
     }
     if (srcInfo.bounds.x2 <= srcInfo.bounds.x1 ||
-	srcInfo.bounds.y2 <= srcInfo.bounds.y1)
+        srcInfo.bounds.y2 <= srcInfo.bounds.y1)
     {
-	SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
-	return;
+        SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
+        return;
     }
 
     /*
@@ -418,110 +418,110 @@ Java_sun_java2d_loops_ScaledBlit_Scale
     SurfaceData_IntersectBounds(&dstInfo.bounds, &clipInfo.bounds);
     dstFlags = pPrim->dstflags;
     if (!Region_IsRectangular(&clipInfo)) {
-	dstFlags |= SD_LOCK_PARTIAL_WRITE;
+        dstFlags |= SD_LOCK_PARTIAL_WRITE;
     }
     if (dstOps->Lock(env, dstOps, &dstInfo, dstFlags) != SD_SUCCESS) {
-	SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
-	return;
+        SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
+        return;
     }
 
     if (dstInfo.bounds.x2 > dstInfo.bounds.x1 &&
-	dstInfo.bounds.y2 > dstInfo.bounds.y1)
+        dstInfo.bounds.y2 > dstInfo.bounds.y1)
     {
-	srcOps->GetRasInfo(env, srcOps, &srcInfo);
-	dstOps->GetRasInfo(env, dstOps, &dstInfo);
-	if (srcInfo.rasBase && dstInfo.rasBase) {
-	    SurfaceDataBounds span;
-	    void *pSrc = PtrCoord(srcInfo.rasBase,
-				  sx1, srcInfo.pixelStride,
-				  sy1, srcInfo.scanStride);
+        srcOps->GetRasInfo(env, srcOps, &srcInfo);
+        dstOps->GetRasInfo(env, dstOps, &dstInfo);
+        if (srcInfo.rasBase && dstInfo.rasBase) {
+            SurfaceDataBounds span;
+            void *pSrc = PtrCoord(srcInfo.rasBase,
+                                  sx1, srcInfo.pixelStride,
+                                  sy1, srcInfo.scanStride);
 
-	    Region_IntersectBounds(&clipInfo, &dstInfo.bounds);
-	    Region_StartIteration(env, &clipInfo);
-	    if (tilesize >= (ddx2 - ddx1) &&
-		tilesize >= (ddy2 - ddy1))
-	    {
-		/* Do everything in one tile */
-		jint sxloc = (jint) SRCLOC(idx1, ddx1, scalex);
-		jint syloc = (jint) SRCLOC(idy1, ddy1, scaley);
-		while (Region_NextIteration(&clipInfo, &span)) {
-		    jint tsxloc = sxloc;
-		    jint tsyloc = syloc;
-		    void *pDst;
+            Region_IntersectBounds(&clipInfo, &dstInfo.bounds);
+            Region_StartIteration(env, &clipInfo);
+            if (tilesize >= (ddx2 - ddx1) &&
+                tilesize >= (ddy2 - ddy1))
+            {
+                /* Do everything in one tile */
+                jint sxloc = (jint) SRCLOC(idx1, ddx1, scalex);
+                jint syloc = (jint) SRCLOC(idy1, ddy1, scaley);
+                while (Region_NextIteration(&clipInfo, &span)) {
+                    jint tsxloc = sxloc;
+                    jint tsyloc = syloc;
+                    void *pDst;
 
-		    if (span.y1 > idy1) {
-			tsyloc += syinc * (span.y1 - idy1);
-		    }
-		    if (span.x1 > idx1) {
-			tsxloc += sxinc * (span.x1 - idx1);
-		    }
+                    if (span.y1 > idy1) {
+                        tsyloc += syinc * (span.y1 - idy1);
+                    }
+                    if (span.x1 > idx1) {
+                        tsxloc += sxinc * (span.x1 - idx1);
+                    }
 
-		    pDst = PtrCoord(dstInfo.rasBase,
-				    span.x1, dstInfo.pixelStride,
-				    span.y1, dstInfo.scanStride);
-		    (*pPrim->funcs.scaledblit)(pSrc, pDst,
-					       span.x2-span.x1, span.y2-span.y1,
-					       tsxloc, tsyloc,
-					       sxinc, syinc, shift,
-					       &srcInfo, &dstInfo,
-					       pPrim, &compInfo);
-		}
-	    } else {
-		/* Break each clip span into tiles for better accuracy. */
-		while (Region_NextIteration(&clipInfo, &span)) {
-		    jint tilex, tiley;
-		    jint sxloc, syloc;
-		    jint x1, y1, x2, y2;
-		    void *pDst;
+                    pDst = PtrCoord(dstInfo.rasBase,
+                                    span.x1, dstInfo.pixelStride,
+                                    span.y1, dstInfo.scanStride);
+                    (*pPrim->funcs.scaledblit)(pSrc, pDst,
+                                               span.x2-span.x1, span.y2-span.y1,
+                                               tsxloc, tsyloc,
+                                               sxinc, syinc, shift,
+                                               &srcInfo, &dstInfo,
+                                               pPrim, &compInfo);
+                }
+            } else {
+                /* Break each clip span into tiles for better accuracy. */
+                while (Region_NextIteration(&clipInfo, &span)) {
+                    jint tilex, tiley;
+                    jint sxloc, syloc;
+                    jint x1, y1, x2, y2;
+                    void *pDst;
 
-		    for (tiley = TILESTART(span.y1, idy1, tilesize);
-			 tiley < span.y2;
-			 tiley += tilesize)
-		    {
-			/* Clip span to Y range of current tile */
-			y1 = tiley;
-			y2 = tiley + tilesize;
-			if (y1 < span.y1) y1 = span.y1;
-			if (y2 > span.y2) y2 = span.y2;
+                    for (tiley = TILESTART(span.y1, idy1, tilesize);
+                         tiley < span.y2;
+                         tiley += tilesize)
+                    {
+                        /* Clip span to Y range of current tile */
+                        y1 = tiley;
+                        y2 = tiley + tilesize;
+                        if (y1 < span.y1) y1 = span.y1;
+                        if (y2 > span.y2) y2 = span.y2;
 
-			/* Find scaled source coordinate of first pixel */
-			syloc = (jint) SRCLOC(tiley, ddy1, scaley);
-			if (y1 > tiley) {
-			    syloc += syinc * (y1 - tiley);
-			}
+                        /* Find scaled source coordinate of first pixel */
+                        syloc = (jint) SRCLOC(tiley, ddy1, scaley);
+                        if (y1 > tiley) {
+                            syloc += syinc * (y1 - tiley);
+                        }
 
-			for (tilex = TILESTART(span.x1, idx1, tilesize);
-			     tilex < span.x2;
-			     tilex += tilesize)
-			{
-			    /* Clip span to X range of current tile */
-			    x1 = tilex;
-			    x2 = tilex + tilesize;
-			    if (x1 < span.x1) x1 = span.x1;
-			    if (x2 > span.x2) x2 = span.x2;
+                        for (tilex = TILESTART(span.x1, idx1, tilesize);
+                             tilex < span.x2;
+                             tilex += tilesize)
+                        {
+                            /* Clip span to X range of current tile */
+                            x1 = tilex;
+                            x2 = tilex + tilesize;
+                            if (x1 < span.x1) x1 = span.x1;
+                            if (x2 > span.x2) x2 = span.x2;
 
-			    /* Find scaled source coordinate of first pixel */
-			    sxloc = (jint) SRCLOC(tilex, ddx1, scalex);
-			    if (x1 > tilex) {
-				sxloc += sxinc * (x1 - tilex);
-			    }
+                            /* Find scaled source coordinate of first pixel */
+                            sxloc = (jint) SRCLOC(tilex, ddx1, scalex);
+                            if (x1 > tilex) {
+                                sxloc += sxinc * (x1 - tilex);
+                            }
 
-			    pDst = PtrCoord(dstInfo.rasBase,
-					    x1, dstInfo.pixelStride,
-					    y1, dstInfo.scanStride);
-			    (*pPrim->funcs.scaledblit)(pSrc, pDst, x2-x1, y2-y1,
-						       sxloc, syloc,
-						       sxinc, syinc, shift,
-						       &srcInfo, &dstInfo,
-						       pPrim, &compInfo);
-			}
-		    }
-		}
-	    }
-	    Region_EndIteration(env, &clipInfo);
-	}
-	SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
-	SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
+                            pDst = PtrCoord(dstInfo.rasBase,
+                                            x1, dstInfo.pixelStride,
+                                            y1, dstInfo.scanStride);
+                            (*pPrim->funcs.scaledblit)(pSrc, pDst, x2-x1, y2-y1,
+                                                       sxloc, syloc,
+                                                       sxinc, syinc, shift,
+                                                       &srcInfo, &dstInfo,
+                                                       pPrim, &compInfo);
+                        }
+                    }
+                }
+            }
+            Region_EndIteration(env, &clipInfo);
+        }
+        SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
+        SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
     }
     SurfaceData_InvokeUnlock(env, dstOps, &dstInfo);
     SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);

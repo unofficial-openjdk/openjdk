@@ -47,14 +47,14 @@ import java.util.ListResourceBundle;
 public class FormatData_ga_IE extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "NumberPatterns", 
+            { "NumberPatterns",
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00",
                     "#,##0%",
                 }
             },
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "HH:mm:ss z",
                     "HH:mm:ss z",

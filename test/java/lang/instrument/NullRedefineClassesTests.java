@@ -58,30 +58,30 @@ NullRedefineClassesTests
     doRunTest() throws ClassNotFoundException, UnmodifiableClassException  {
         testNullRedefineClasses();
     }
-    
-    
+
+
     public void
     testNullRedefineClasses() throws ClassNotFoundException, UnmodifiableClassException {
         boolean caught;
-        
+
         // Test that a null argument throws NullPointerException
         caught = false;
         try {
             fInst.redefineClasses(null);
         } catch (NullPointerException npe) {
             caught = true;
-        }      
+        }
         assertTrue(caught);
-        
+
         // Test that a null element throws NullPointerException
         caught = false;
         try {
             fInst.redefineClasses(new ClassDefinition[]{ null });
         } catch (NullPointerException npe) {
             caught = true;
-        }      
+        }
         assertTrue(caught);
-        
+
         // Test that a null element amonst others throws NullPointerException
         caught = false;
         ClassDefinition cd = new ClassDefinition(DummyClass.class, new byte[] {1, 2, 3});
@@ -89,25 +89,25 @@ NullRedefineClassesTests
             fInst.redefineClasses(new ClassDefinition[]{ cd, null });
         } catch (NullPointerException npe) {
             caught = true;
-        }      
+        }
         assertTrue(caught);
-        
+
         // Test that a null class throws NullPointerException
-        caught = false;   
+        caught = false;
         try {
             new ClassDefinition(null, new byte[] {1, 2, 3});
         } catch (NullPointerException npe) {
             caught = true;
-        }      
+        }
         assertTrue(caught);
-        
+
         // Test that a null byte array throws NullPointerException
-        caught = false;   
+        caught = false;
         try {
             new ClassDefinition(DummyClass.class, null);
         } catch (NullPointerException npe) {
             caught = true;
-        }      
+        }
         assertTrue(caught);
     }
 }

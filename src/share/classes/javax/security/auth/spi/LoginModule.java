@@ -50,7 +50,7 @@ import java.util.Map;
  * LoginModules.  Each <code>LoginModule</code> is initialized with
  * a <code>Subject</code>, a <code>CallbackHandler</code>, shared
  * <code>LoginModule</code> state, and LoginModule-specific options.
- * 
+ *
  * The <code>Subject</code> represents the
  * <code>Subject</code> currently being authenticated and is updated
  * with relevant Credentials if authentication succeeds.
@@ -123,7 +123,6 @@ import java.util.Map;
  * no arguments.  This allows classes which load the <code>LoginModule</code>
  * to instantiate it.
  *
- * @version %I%, %G%
  * @see javax.security.auth.login.LoginContext
  * @see javax.security.auth.login.Configuration
  */
@@ -145,18 +144,18 @@ public interface LoginModule {
      * @param subject the <code>Subject</code> to be authenticated. <p>
      *
      * @param callbackHandler a <code>CallbackHandler</code> for communicating
-     *			with the end user (prompting for usernames and
-     *			passwords, for example). <p>
+     *                  with the end user (prompting for usernames and
+     *                  passwords, for example). <p>
      *
      * @param sharedState state shared with other configured LoginModules. <p>
      *
      * @param options options specified in the login
-     *			<code>Configuration</code> for this particular
-     *			<code>LoginModule</code>.
+     *                  <code>Configuration</code> for this particular
+     *                  <code>LoginModule</code>.
      */
     void initialize(Subject subject, CallbackHandler callbackHandler,
-		    Map<String,?> sharedState,
-		    Map<String,?> options);
+                    Map<String,?> sharedState,
+                    Map<String,?> options);
 
     /**
      * Method to authenticate a <code>Subject</code> (phase 1).
@@ -173,7 +172,7 @@ public interface LoginModule {
      * @exception LoginException if the authentication fails
      *
      * @return true if the authentication succeeded, or false if this
-     *			<code>LoginModule</code> should be ignored.
+     *                  <code>LoginModule</code> should be ignored.
      */
     boolean login() throws LoginException;
 
@@ -198,7 +197,7 @@ public interface LoginModule {
      * @exception LoginException if the commit fails
      *
      * @return true if this method succeeded, or false if this
-     *			<code>LoginModule</code> should be ignored.
+     *                  <code>LoginModule</code> should be ignored.
      */
     boolean commit() throws LoginException;
 
@@ -220,12 +219,12 @@ public interface LoginModule {
      * @exception LoginException if the abort fails
      *
      * @return true if this method succeeded, or false if this
-     *			<code>LoginModule</code> should be ignored.
+     *                  <code>LoginModule</code> should be ignored.
      */
     boolean abort() throws LoginException;
 
     /**
-     * Method which logs out a <code>Subject</code>.  
+     * Method which logs out a <code>Subject</code>.
      *
      * <p>An implementation of this method might remove/destroy a Subject's
      * Principals and Credentials.
@@ -235,7 +234,7 @@ public interface LoginModule {
      * @exception LoginException if the logout fails
      *
      * @return true if this method succeeded, or false if this
-     *			<code>LoginModule</code> should be ignored.
+     *                  <code>LoginModule</code> should be ignored.
      */
     boolean logout() throws LoginException;
 }

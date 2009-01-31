@@ -27,7 +27,7 @@ package com.sun.jdi.request;
 
 /**
  * Thrown to indicate that the requested event cannot be modified
- * because it is enabled. Filters can be added only to disabled 
+ * because it is enabled. Filters can be added only to disabled
  * event requests.
  * Also thrown if an operation is attempted on a deleted request.
  * See {@link EventRequestManager#deleteEventRequest(EventRequest)}
@@ -38,11 +38,11 @@ package com.sun.jdi.request;
 public class InvalidRequestStateException extends RuntimeException {
     public InvalidRequestStateException()
     {
-	super();
+        super();
     }
 
     public InvalidRequestStateException(String s)
     {
-	super(s);
+        super(s);
     }
 }

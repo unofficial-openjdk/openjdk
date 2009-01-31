@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -40,15 +38,15 @@ import java.io.IOException;
  * Implements the ASN.1 APOptions type.
  *
  * <xmp>
- * APOptions	::= KerberosFlags
- *	-- reserved(0),
- *	-- use-session-key(1),
+ * APOptions    ::= KerberosFlags
+ *      -- reserved(0),
+ *      -- use-session-key(1),
  *      -- mutual-required(2)
  * </xmp>
  *
  * KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
- *		-- minimum number of bits shall be sent,
- *		-- but no fewer than 32
+ *              -- minimum number of bits shall be sent,
+ *              -- but no fewer than 32
  *
  * <p>
  * This definition reflects the Network Working Group RFC4120
@@ -61,7 +59,7 @@ public class APOptions extends KerberosFlags {
     public APOptions() {
         super(Krb5.AP_OPTS_MAX + 1);
     }
-    
+
     public APOptions(int oneBit) throws Asn1Exception {
         super(Krb5.AP_OPTS_MAX + 1);
         set(oneBit, true);
@@ -72,18 +70,18 @@ public class APOptions extends KerberosFlags {
             throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
         }
     }
-    
+
     public APOptions(boolean[] data) throws Asn1Exception {
         super(data);
         if (data.length > Krb5.AP_OPTS_MAX + 1) {
             throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
         }
     }
-    
+
     public APOptions(DerValue encoding) throws IOException, Asn1Exception {
         this(encoding.getUnalignedBitString(true).toBooleanArray());
     }
-    
+
     /**
      * Parse (unmarshal) an APOptions from a DER input stream.  This form
      * parsing might be used when expanding a value which is part of

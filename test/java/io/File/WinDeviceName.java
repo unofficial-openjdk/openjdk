@@ -44,14 +44,14 @@ public class WinDeviceName {
             if (new File(devnames[i]).isFile() ||
                 new File(devnames[i] + ".txt").isFile()) {
                 if ("CLOCK$".equals(devnames[i]) &&
-		    (osName.startsWith("Windows 9") ||
-		     osName.startsWith("Windows Me"))) {
-		    //"CLOCK$" is a reserved device name for NT
+                    (osName.startsWith("Windows 9") ||
+                     osName.startsWith("Windows Me"))) {
+                    //"CLOCK$" is a reserved device name for NT
                     continue;
-		}
+                }
                 throw new Exception("isFile() returns true for Device name "
-				    +  devnames[i]);
-	    }
+                                    +  devnames[i]);
+            }
         }
     }
 }

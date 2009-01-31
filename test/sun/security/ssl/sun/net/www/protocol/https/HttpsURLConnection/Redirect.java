@@ -70,7 +70,7 @@ public class Redirect {
      */
     static String postMsg = "Testing HTTP post on a https server";
 
-    /* 
+    /*
      * If the client or server is doing some kind of object creation
      * that the other side depends on, and that thread prematurely
      * exits, you may experience a hang.  The test harness will
@@ -86,36 +86,36 @@ public class Redirect {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+        serverPort = sslServerSocket.getLocalPort();
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
-	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
-	BufferedReader br = new BufferedReader(new InputStreamReader(sslIS));
-	PrintStream ps = new PrintStream(sslOS);
-	// process HTTP POST request from client
-	System.out.println("status line: "+br.readLine());
+        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(sslIS));
+        PrintStream ps = new PrintStream(sslOS);
+        // process HTTP POST request from client
+        System.out.println("status line: "+br.readLine());
 
-	ps.println("HTTP/1.1 307 Redirect");
-	ps.println("Location: https://localhost:"+serverPort+"/index.html\n\n");
-	ps.flush();
-	sslSocket = (SSLSocket) sslServerSocket.accept();
-	sslOS = sslSocket.getOutputStream();
-	ps = new PrintStream(sslOS);
-	ps.println("HTTP/1.1 200 Redirect succeeded\n\n");
-	ps.flush();
-	Thread.sleep(2000);
-	sslSocket.close();
-	sslServerSocket.close();
+        ps.println("HTTP/1.1 307 Redirect");
+        ps.println("Location: https://localhost:"+serverPort+"/index.html\n\n");
+        ps.flush();
+        sslSocket = (SSLSocket) sslServerSocket.accept();
+        sslOS = sslSocket.getOutputStream();
+        ps = new PrintStream(sslOS);
+        ps.println("HTTP/1.1 200 Redirect succeeded\n\n");
+        ps.flush();
+        Thread.sleep(2000);
+        sslSocket.close();
+        sslServerSocket.close();
     }
 
     /*
@@ -126,24 +126,24 @@ public class Redirect {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
-	
-	// Send HTTP POST request to server
-	URL url = new URL("https://localhost:"+serverPort);
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
-	HttpsURLConnection.setDefaultHostnameVerifier(
+        // Send HTTP POST request to server
+        URL url = new URL("https://localhost:"+serverPort);
+
+        HttpsURLConnection.setDefaultHostnameVerifier(
                                       new NameVerifier());
-	HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
+        HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
 
-	System.out.println("response header: "+http.getHeaderField(0));
-	if (http.getResponseCode() != 200) {
-	    throw new RuntimeException("test Failed");
-	}
+        System.out.println("response header: "+http.getHeaderField(0));
+        if (http.getResponseCode() != 200) {
+            throw new RuntimeException("test Failed");
+        }
     }
 
     static class NameVerifier implements HostnameVerifier {
@@ -164,24 +164,24 @@ public class Redirect {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
+        /*
+         * Start the tests.
+         */
         new Redirect();
     }
 
@@ -194,78 +194,78 @@ public class Redirect {
      * Fork off the other side, then do your work.
      */
     Redirect() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null)
-	    throw serverException;
-	if (clientException != null)
-	    throw clientException;
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null)
+            throw serverException;
+        if (clientException != null)
+            throw clientException;
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

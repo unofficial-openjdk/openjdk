@@ -35,23 +35,23 @@ import sun.net.www.http.HttpClient;
 import java.security.*;
 
 public class IsKeepingAlive {
-    
+
     public static void main(String[] args) throws Exception {
 
-	ServerSocket ss = new ServerSocket(0);
+        ServerSocket ss = new ServerSocket(0);
 
-	SecurityManager security = System.getSecurityManager();
-	if (security == null) {
-	    security = new SecurityManager();
-	    System.setSecurityManager(security);
-	}
+        SecurityManager security = System.getSecurityManager();
+        if (security == null) {
+            security = new SecurityManager();
+            System.setSecurityManager(security);
+        }
 
-	URL url1 = new URL("http://localhost:" + ss.getLocalPort());
+        URL url1 = new URL("http://localhost:" + ss.getLocalPort());
 
-	HttpClient c1 = HttpClient.New(url1);
+        HttpClient c1 = HttpClient.New(url1);
 
-	boolean keepAlive = c1.isKeepingAlive();
+        boolean keepAlive = c1.isKeepingAlive();
 
-	ss.close();
+        ss.close();
     }
 }

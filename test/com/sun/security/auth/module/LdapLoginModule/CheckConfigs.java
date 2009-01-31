@@ -25,7 +25,7 @@
  * @test
  * @author Vincent Ryan
  * @bug 4814522
- * @summary Check that an LdapLoginModule can be initialized using various 
+ * @summary Check that an LdapLoginModule can be initialized using various
  *          JAAS configurations.
  *          (LdapLoginModule replaces the JndiLoginModule for LDAP access)
  *
@@ -49,13 +49,13 @@ import com.sun.security.auth.module.LdapLoginModule;
 public class CheckConfigs {
 
     public static void main(String[] args) throws Exception {
-	SecurityManager securityManager = System.getSecurityManager();
-	System.out.println(securityManager == null
-	    ? "[security manager is not running]"
-	    : "[security manager is running: " + 
-		securityManager.getClass().getName() + "]");
-	init();
-	checkConfigModes();
+        SecurityManager securityManager = System.getSecurityManager();
+        System.out.println(securityManager == null
+            ? "[security manager is not running]"
+            : "[security manager is running: " +
+                securityManager.getClass().getName() + "]");
+        init();
+        checkConfigModes();
     }
 
     private static void init() throws Exception {
@@ -63,73 +63,73 @@ public class CheckConfigs {
 
     private static void checkConfigModes() throws Exception {
 
-	LoginContext ldapLogin;
+        LoginContext ldapLogin;
 
-	// search-first mode
-	System.out.println("Testing search-first mode...");
-	try {
-	    ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
-		null, new TestCallbackHandler(), new SearchFirstMode());
-	    ldapLogin.login();
-	    throw new SecurityException("expected a LoginException");
+        // search-first mode
+        System.out.println("Testing search-first mode...");
+        try {
+            ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
+                null, new TestCallbackHandler(), new SearchFirstMode());
+            ldapLogin.login();
+            throw new SecurityException("expected a LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour (because no LDAP server is available)
-	    if (!(le.getCause() instanceof CommunicationException)) {
-		throw le;
-	    }
-	}
+        } catch (LoginException le) {
+            // expected behaviour (because no LDAP server is available)
+            if (!(le.getCause() instanceof CommunicationException)) {
+                throw le;
+            }
+        }
 
-	// authentication-first mode
-	System.out.println("\nTesting authentication-first mode...");
-	try {
-	    ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
-		null, new TestCallbackHandler(), new AuthFirstMode());
-	    ldapLogin.login();
-	    throw new SecurityException("expected a LoginException");
+        // authentication-first mode
+        System.out.println("\nTesting authentication-first mode...");
+        try {
+            ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
+                null, new TestCallbackHandler(), new AuthFirstMode());
+            ldapLogin.login();
+            throw new SecurityException("expected a LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour (because no LDAP server is available)
-	    if (!(le.getCause() instanceof CommunicationException)) {
-		throw le;
-	    }
-	}
+        } catch (LoginException le) {
+            // expected behaviour (because no LDAP server is available)
+            if (!(le.getCause() instanceof CommunicationException)) {
+                throw le;
+            }
+        }
 
-	// authentication-only mode
-	System.out.println("\nTesting authentication-only mode...");
-	try {
-	    ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
-		null, new TestCallbackHandler(), new AuthOnlyMode());
-	    ldapLogin.login();
-	    throw new SecurityException("expected a LoginException");
+        // authentication-only mode
+        System.out.println("\nTesting authentication-only mode...");
+        try {
+            ldapLogin = new LoginContext(LdapConfiguration.LOGIN_CONFIG_NAME,
+                null, new TestCallbackHandler(), new AuthOnlyMode());
+            ldapLogin.login();
+            throw new SecurityException("expected a LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour (because no LDAP server is available)
-	    if (!(le.getCause() instanceof CommunicationException)) {
-		throw le;
-	    }
-	}
+        } catch (LoginException le) {
+            // expected behaviour (because no LDAP server is available)
+            if (!(le.getCause() instanceof CommunicationException)) {
+                throw le;
+            }
+        }
     }
 
     private static class TestCallbackHandler implements CallbackHandler {
 
-	public void handle(Callback[] callbacks)
-		throws IOException, UnsupportedCallbackException {
+        public void handle(Callback[] callbacks)
+                throws IOException, UnsupportedCallbackException {
 
-	    for (int i = 0; i < callbacks.length; i++) {
-		if (callbacks[i] instanceof NameCallback) {
-		    ((NameCallback)callbacks[i]).setName("myname");
+            for (int i = 0; i < callbacks.length; i++) {
+                if (callbacks[i] instanceof NameCallback) {
+                    ((NameCallback)callbacks[i]).setName("myname");
 
-		} else if (callbacks[i] instanceof PasswordCallback) {
-		    ((PasswordCallback)callbacks[i])
-			.setPassword("mypassword".toCharArray());
+                } else if (callbacks[i] instanceof PasswordCallback) {
+                    ((PasswordCallback)callbacks[i])
+                        .setPassword("mypassword".toCharArray());
 
-		} else {
-		    throw new UnsupportedCallbackException
-			(callbacks[i], "Unrecognized callback");
-		}
-	    }
-	}
+                } else {
+                    throw new UnsupportedCallbackException
+                        (callbacks[i], "Unrecognized callback");
+                }
+            }
+        }
     }
 }
 
@@ -176,14 +176,14 @@ class LdapConfiguration extends Configuration {
 class SearchFirstMode extends LdapConfiguration {
 
     public SearchFirstMode() {
-	super();
+        super();
 
         Map<String, String> options = new HashMap<String, String>(4);
         options.put("userProvider", "ldap://localhost:23456/dc=example,dc=com");
-        options.put("userFilter", 
-	    "(&(uid={USERNAME})(objectClass=inetOrgPerson))");
-	options.put("authzIdentity", "{EMPLOYEENUMBER}");
-	options.put("debug", "true");
+        options.put("userFilter",
+            "(&(uid={USERNAME})(objectClass=inetOrgPerson))");
+        options.put("authzIdentity", "{EMPLOYEENUMBER}");
+        options.put("debug", "true");
 
         entries = new AppConfigurationEntry[] {
             new AppConfigurationEntry(LDAP_LOGIN_MODULE,
@@ -211,16 +211,16 @@ class SearchFirstMode extends LdapConfiguration {
 class AuthFirstMode extends LdapConfiguration {
 
     public AuthFirstMode() {
-	super();
+        super();
 
         Map<String, String> options = new HashMap<String, String>(5);
         options.put("userProvider", "ldap://localhost:23456/dc=example,dc=com");
-	options.put("authIdentity", "{USERNAME}");
-        options.put("userFilter", 
-	    "(&(|(samAccountName={USERNAME})(userPrincipalName={USERNAME})" +
-	    "(cn={USERNAME}))(objectClass=user))");
-	options.put("useSSL", "false");
-	options.put("debug", "true");
+        options.put("authIdentity", "{USERNAME}");
+        options.put("userFilter",
+            "(&(|(samAccountName={USERNAME})(userPrincipalName={USERNAME})" +
+            "(cn={USERNAME}))(objectClass=user))");
+        options.put("useSSL", "false");
+        options.put("debug", "true");
 
         entries = new AppConfigurationEntry[] {
             new AppConfigurationEntry(LDAP_LOGIN_MODULE,
@@ -246,15 +246,15 @@ class AuthFirstMode extends LdapConfiguration {
 class AuthOnlyMode extends LdapConfiguration {
 
     public AuthOnlyMode() {
-	super();
+        super();
 
         Map<String, String> options = new HashMap<String, String>(4);
-        options.put("userProvider", 
-	    "ldap://localhost:23456 ldap://localhost:23457");
-	options.put("authIdentity",
-	    "cn={USERNAME},ou=people,dc=example,dc=com");
-	options.put("authzIdentity", "staff");
-	options.put("debug", "true");
+        options.put("userProvider",
+            "ldap://localhost:23456 ldap://localhost:23457");
+        options.put("authIdentity",
+            "cn={USERNAME},ou=people,dc=example,dc=com");
+        options.put("authzIdentity", "staff");
+        options.put("debug", "true");
 
         entries = new AppConfigurationEntry[] {
             new AppConfigurationEntry(LDAP_LOGIN_MODULE,

@@ -29,8 +29,8 @@
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.*; 
-import java.nio.channels.spi.SelectorProvider; 
+import java.nio.channels.*;
+import java.nio.channels.spi.SelectorProvider;
 
 /**
  * Testing PipeChannel

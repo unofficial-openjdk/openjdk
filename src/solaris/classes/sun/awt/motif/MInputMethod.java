@@ -36,46 +36,45 @@ import sun.awt.SunToolkit;
 /**
  * Input Method Adapter for XIM (with Motif)
  *
- * @version %I% %G%
  * @author JavaSoft International
  */
 public class MInputMethod extends X11InputMethod {
 
     public MInputMethod() throws AWTException {
-	super();
+        super();
     }
 
     protected boolean openXIM() {
-	return openXIMNative();
+        return openXIMNative();
     }
 
     protected boolean createXIC() {
-	MComponentPeer peer = (MComponentPeer)getPeer(clientComponentWindow);
-	if (peer == null) {
-	    return false;
-	}
-	MComponentPeer tc = null;
-	if (peer instanceof MInputMethodControl) {
-	    tc = ((MInputMethodControl)peer).getTextComponent();
-	}
-	if (!createXICNative(peer, tc)) { 
-	    return false;
-	}
-	if (peer instanceof MInputMethodControl) {
-	    ((MInputMethodControl)peer).addInputMethod(this);
-	}
-	return true;
+        MComponentPeer peer = (MComponentPeer)getPeer(clientComponentWindow);
+        if (peer == null) {
+            return false;
+        }
+        MComponentPeer tc = null;
+        if (peer instanceof MInputMethodControl) {
+            tc = ((MInputMethodControl)peer).getTextComponent();
+        }
+        if (!createXICNative(peer, tc)) {
+            return false;
+        }
+        if (peer instanceof MInputMethodControl) {
+            ((MInputMethodControl)peer).addInputMethod(this);
+        }
+        return true;
     }
 
     protected void setXICFocus(ComponentPeer peer,
-				    boolean value, boolean active) {
-	setXICFocusNative((MComponentPeer)peer, value, active);
+                                    boolean value, boolean active) {
+        setXICFocusNative((MComponentPeer)peer, value, active);
     }
 
     protected Container getParent(Component client) {
-	// SECURITY: Use _NoClientCode(), because this thread may
-	//           be privileged
-	return MComponentPeer.getParent_NoClientCode(client);
+        // SECURITY: Use _NoClientCode(), because this thread may
+        //           be privileged
+        return MComponentPeer.getParent_NoClientCode(client);
     }
 
     /**
@@ -83,13 +82,13 @@ public class MInputMethod extends X11InputMethod {
      * doesn't have peer, peer of the native container of the client is returned.
      */
     protected ComponentPeer getPeer(Component client) {
-	MComponentPeer peer = (MComponentPeer)MToolkit.targetToPeer(client);
-	if (peer != null)
-	    return peer;
+        MComponentPeer peer = (MComponentPeer)MToolkit.targetToPeer(client);
+        if (peer != null)
+            return peer;
 
-	Container nativeContainer = MToolkit.getNativeContainer(client);
-	peer = (MComponentPeer)MToolkit.targetToPeer(nativeContainer);
-	return peer;
+        Container nativeContainer = MToolkit.getNativeContainer(client);
+        peer = (MComponentPeer)MToolkit.targetToPeer(nativeContainer);
+        return peer;
     }
 
     /**
@@ -97,15 +96,15 @@ public class MInputMethod extends X11InputMethod {
      * by Frame or Dialog.
      */
     void configureStatus() {
-	if (isDisposed()) {
-	    return;
-	}
+        if (isDisposed()) {
+            return;
+        }
 
-	MComponentPeer peer = (MComponentPeer)getPeer((Window) clientComponentWindow);
-	MComponentPeer tc = ((MInputMethodControl)peer).getTextComponent();
-	if (tc != null) {
-	    configureStatusAreaNative(tc);
-	}
+        MComponentPeer peer = (MComponentPeer)getPeer((Window) clientComponentWindow);
+        MComponentPeer tc = ((MInputMethodControl)peer).getTextComponent();
+        if (tc != null) {
+            configureStatusAreaNative(tc);
+        }
     }
 
     /*
@@ -113,26 +112,26 @@ public class MInputMethod extends X11InputMethod {
      * code should always invoke dispose(), never disposeImpl().
      */
     protected synchronized void disposeImpl() {
-	if (clientComponentWindow != null) {
-	    MComponentPeer peer = (MComponentPeer)getPeer(clientComponentWindow);
-	    if (peer instanceof MInputMethodControl)
-	        ((MInputMethodControl)peer).removeInputMethod(this);
-	    clientComponentWindow = null;
-	}
+        if (clientComponentWindow != null) {
+            MComponentPeer peer = (MComponentPeer)getPeer(clientComponentWindow);
+            if (peer instanceof MInputMethodControl)
+                ((MInputMethodControl)peer).removeInputMethod(this);
+            clientComponentWindow = null;
+        }
 
-	super.disposeImpl();
+        super.disposeImpl();
     }
 
     /**
      * @see java.awt.im.spi.InputMethod#removeNotify
      */
     public synchronized void removeNotify() {
-	if (MToolkit.targetToPeer(getClientComponent()) != null) {
-	    dispose();
-	} else {
-	    // We do not have to dispose XICs in case of lightweight component.
-	    resetXIC();
-	}
+        if (MToolkit.targetToPeer(getClientComponent()) != null) {
+            dispose();
+        } else {
+            // We do not have to dispose XICs in case of lightweight component.
+            resetXIC();
+        }
     }
 
     /**
@@ -142,19 +141,19 @@ public class MInputMethod extends X11InputMethod {
      * by Frame or Dialog.
      */
     synchronized void reconfigureXIC(MInputMethodControl control) {
-	if (!isDisposed()) {
-	    // Some IM servers require to reset XIC before destroying
-	    // the XIC. I.e., Destroying XIC doesn't reset the internal
-	    // state of the IM server. endComposition() takes care of
-	    // resetting XIC and preedit synchronization. However,
-	    // there is no client at this point. It is assumed that
-	    // the previous client is still available for dispatching
-	    // committed text which maintains client's composition
-	    // context.
-	    endComposition();
+        if (!isDisposed()) {
+            // Some IM servers require to reset XIC before destroying
+            // the XIC. I.e., Destroying XIC doesn't reset the internal
+            // state of the IM server. endComposition() takes care of
+            // resetting XIC and preedit synchronization. However,
+            // there is no client at this point. It is assumed that
+            // the previous client is still available for dispatching
+            // committed text which maintains client's composition
+            // context.
+            endComposition();
             resetXICifneeded();
-	    reconfigureXICNative((MComponentPeer) control, control.getTextComponent());
-	}
+            reconfigureXICNative((MComponentPeer) control, control.getTextComponent());
+        }
     }
 
     protected void awtLock() {
@@ -171,8 +170,8 @@ public class MInputMethod extends X11InputMethod {
     private native boolean openXIMNative();
     private native boolean createXICNative(MComponentPeer peer, MComponentPeer tc);
     private native void reconfigureXICNative(MComponentPeer peer,
-					    MComponentPeer tc);
+                                            MComponentPeer tc);
     private native void configureStatusAreaNative(MComponentPeer tc);
     private native void setXICFocusNative(MComponentPeer peer,
-				    boolean value, boolean active);
+                                    boolean value, boolean active);
 }

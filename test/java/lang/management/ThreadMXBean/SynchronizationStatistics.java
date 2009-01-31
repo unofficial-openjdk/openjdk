@@ -25,7 +25,7 @@
  * @test
  * @bug     4530538
  * @summary Basic unit test of the synchronization statistics support:
- *          
+ *
  * @author  Mandy Chung
  *
  * @ignore  6309226
@@ -38,7 +38,7 @@ import java.lang.management.*;
 public class SynchronizationStatistics {
     private static ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
 
-    private static boolean blockedTimeCheck = 
+    private static boolean blockedTimeCheck =
         mbean.isThreadContentionMonitoringSupported();
     private static boolean trace = false;
 
@@ -74,7 +74,7 @@ public class SynchronizationStatistics {
             throw new RuntimeException("TEST FAILED: " +
                 "Thread Contention Monitoring is not enabled");
         }
-        
+
         Examiner examiner = new Examiner("Examiner");
         BlockedThread blocked = new BlockedThread("BlockedThread");
         examiner.setThread(blocked);
@@ -87,7 +87,7 @@ public class SynchronizationStatistics {
         examiner.waitUntilWaiting();
 
         System.out.println("Checking the thread state for the examiner thread " +
-                           "is waiting to begin."); 
+                           "is waiting to begin.");
 
         // The Examiner should be waiting to be notified by the BlockedThread
         checkThreadState(examiner, Thread.State.WAITING);
@@ -127,7 +127,7 @@ public class SynchronizationStatistics {
 
         ThreadInfo ti = mbean.getThreadInfo(thread.getId());
         if (ti.getThreadState() != s) {
-            ThreadInfo info = mbean.getThreadInfo(thread.getId(), 
+            ThreadInfo info = mbean.getThreadInfo(thread.getId(),
                                                   Integer.MAX_VALUE);
             System.out.println(INDENT + "TEST FAILED:");
             printStack(thread, info.getStackTrace());
@@ -178,7 +178,7 @@ public class SynchronizationStatistics {
             long t = totalBlockedEnterTime + (now - blockingBaseTime);
             return t / 1000000;
         }
- 
+
         long totalWaitTimeMs() {
             return totalWaitTime / 1000000;
         }
@@ -318,7 +318,7 @@ public class SynchronizationStatistics {
             blockedThread = thread;
         }
 
-        private void blockedTimeRangeCheck(StatThread t, 
+        private void blockedTimeRangeCheck(StatThread t,
                                            long blockedTime,
                                            long nowNano)
             throws Exception {
@@ -327,7 +327,7 @@ public class SynchronizationStatistics {
             // accept 5% range
             timeRangeCheck(blockedTime, expected, 5);
         }
-        private void waitedTimeRangeCheck(StatThread t, 
+        private void waitedTimeRangeCheck(StatThread t,
                                           long waitedTime,
                                           long nowNano)
             throws Exception {
@@ -339,14 +339,14 @@ public class SynchronizationStatistics {
 
         private void timeRangeCheck(long time, long expected, int percent)
             throws Exception {
-     
+
             double diff = expected - time;
 
             if (trace) {
                  System.out.println("  Time = " + time +
-                    " expected = " + expected + 
+                    " expected = " + expected +
                     ".  Diff = " + diff);
-       
+
             }
             // throw an exception if blockedTime and expectedTime
             // differs > percent%
@@ -358,7 +358,7 @@ public class SynchronizationStatistics {
             // minimum range = 2 ms
             if (range < 2) {
                 range = 2;
-            } 
+            }
             if (diff > range) {
                 throw new RuntimeException("TEST FAILED: " +
                     "Time returned = " + time +
@@ -366,7 +366,7 @@ public class SynchronizationStatistics {
             }
         }
         private void checkInfo(StatThread t, Thread.State s, Object lock,
-                               String lockName, int bcount, int wcount) 
+                               String lockName, int bcount, int wcount)
             throws Exception {
 
             String action = "ERROR";
@@ -375,7 +375,7 @@ public class SynchronizationStatistics {
             } else if (s == Thread.State.BLOCKED) {
                 action = "block on ";
             }
-            System.out.println(t + " expected to " + action + lockName + 
+            System.out.println(t + " expected to " + action + lockName +
                 " with blocked count = " + bcount +
                 " and waited count = " + wcount);
 
@@ -385,32 +385,32 @@ public class SynchronizationStatistics {
                 printStack(t, info.getStackTrace());
                 throw new RuntimeException("TEST FAILED: " +
                     "Thread state returned is " + info.getThreadState() +
-                    ". Expected to be " + s); 
+                    ". Expected to be " + s);
             }
 
             if (info.getLockName() == null ||
                 !info.getLockName().equals(lock.toString())) {
                 throw new RuntimeException("TEST FAILED: " +
                     "getLockName() returned " + info.getLockName() +
-                    ". Expected to be " + lockName + " - "  + lock.toString()); 
+                    ". Expected to be " + lockName + " - "  + lock.toString());
             }
-             
+
             if (info.getBlockedCount() != bcount) {
                 throw new RuntimeException("TEST FAILED: " +
                     "Blocked Count returned is " + info.getBlockedCount() +
-                    ". Expected to be " + bcount); 
+                    ". Expected to be " + bcount);
             }
             if (info.getWaitedCount() != wcount) {
                 throw new RuntimeException("TEST FAILED: " +
                     "Waited Count returned is " + info.getWaitedCount() +
-                    ". Expected to be " + wcount); 
+                    ". Expected to be " + wcount);
             }
 
             String lockObj = info.getLockName();
             if (lockObj == null || !lockObj.equals(lock.toString())) {
                 throw new RuntimeException("TEST FAILED: " +
                     "Object blocked on is " + lockObj  +
-                    ". Expected to be " + lock.toString()); 
+                    ". Expected to be " + lock.toString());
             }
 
             if (!blockedTimeCheck) {
@@ -425,7 +425,7 @@ public class SynchronizationStatistics {
             if (s == Thread.State.BLOCKED) {
                 blockedTimeRangeCheck(t, blockedTime, now);
             } else {
-                timeRangeCheck(blockedTime, t.totalBlockedTimeMs(), 5); 
+                timeRangeCheck(blockedTime, t.totalBlockedTimeMs(), 5);
             }
 
             long waitedTime = info.getWaitedTime();
@@ -438,7 +438,7 @@ public class SynchronizationStatistics {
             } else {
                 timeRangeCheck(waitedTime, t.totalWaitTimeMs(), 5);
             }
-            
+
         }
 
         private void examine() {
@@ -455,10 +455,10 @@ public class SynchronizationStatistics {
 
                                 blockedCount++;
                                 checkInfo(blockedThread, Thread.State.BLOCKED,
-                                          lockA, "lockA", 
+                                          lockA, "lockA",
                                           blockedCount, waitedCount);
                             }
- 
+
                            // wait until BlockedThread to block on lockB
                             blockedThread.waitUntilBlocked();
 
@@ -473,7 +473,7 @@ public class SynchronizationStatistics {
 
                         blockedCount++;
                         checkInfo(blockedThread, Thread.State.BLOCKED,
-                                  lockC, "lockC", 
+                                  lockC, "lockC",
                                   blockedCount, waitedCount);
                     }
                     // wait until BlockedThread to block on lockD
@@ -490,19 +490,19 @@ public class SynchronizationStatistics {
                 blockedThread.waitUntilWaiting();
 
                 waitedCount++;
-                checkInfo(blockedThread, Thread.State.TIMED_WAITING, 
+                checkInfo(blockedThread, Thread.State.TIMED_WAITING,
                           waiter, "waiter", blockedCount, waitedCount);
 
                 blockedThread.waitUntilWaiting();
 
                 waitedCount++;
-                checkInfo(blockedThread, Thread.State.TIMED_WAITING, 
+                checkInfo(blockedThread, Thread.State.TIMED_WAITING,
                           waiter, "waiter", blockedCount, waitedCount);
 
                 blockedThread.waitUntilWaiting();
 
                 waitedCount++;
-                checkInfo(blockedThread, Thread.State.TIMED_WAITING, 
+                checkInfo(blockedThread, Thread.State.TIMED_WAITING,
                           waiter, "waiter", blockedCount, waitedCount);
 
             } catch (Exception e) {
@@ -519,7 +519,7 @@ public class SynchronizationStatistics {
         public void waitUntilWaiting() {
             semaphore.semaP();
 
-            // wait until the examiner is waiting for 
+            // wait until the examiner is waiting for
             while (!blockedThread.hasWaitersForBlocked()) {
                 goSleep(50);
             }

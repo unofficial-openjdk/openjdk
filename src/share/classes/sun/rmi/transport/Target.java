@@ -66,7 +66,7 @@ public final class Target {
     private boolean removed = false;
     /**
      * the transport through which this target was exported and
-     * through which remote calls will be allowed 
+     * through which remote calls will be allowed
      */
     private volatile Transport exportedTransport = null;
 
@@ -84,39 +84,39 @@ public final class Target {
      * exiting.
      */
     public Target(Remote impl, Dispatcher disp, Remote stub, ObjID id,
-		  boolean permanent)
+                  boolean permanent)
     {
-	this.weakImpl = new WeakRef(impl, ObjectTable.reapQueue);
-	this.disp = disp;
-	this.stub = stub;
-	this.id = id;
-	this.acc = AccessController.getContext();
+        this.weakImpl = new WeakRef(impl, ObjectTable.reapQueue);
+        this.disp = disp;
+        this.stub = stub;
+        this.id = id;
+        this.acc = AccessController.getContext();
 
-	/*
-	 * Fix for 4149366: so that downloaded parameter types unmarshalled
-	 * for this impl will be compatible with types known only to the
-	 * impl class's class loader (when it's not identical to the
-	 * exporting thread's context class loader), mark the impl's class
-	 * loader as the loader to use as the context class loader in the
-	 * server's dispatch thread while a call to this impl is being
-	 * processed (unless this exporting thread's context class loader is
-	 * a child of the impl's class loader, such as when a registry is
-	 * exported by an application, in which case this thread's context
-	 * class loader is preferred).
-	 */
-	ClassLoader threadContextLoader =
-	    Thread.currentThread().getContextClassLoader();
-	ClassLoader serverLoader = impl.getClass().getClassLoader();
-	if (checkLoaderAncestry(threadContextLoader, serverLoader)) {
-	    this.ccl = threadContextLoader;
-	} else {
-	    this.ccl = serverLoader;
-	}
+        /*
+         * Fix for 4149366: so that downloaded parameter types unmarshalled
+         * for this impl will be compatible with types known only to the
+         * impl class's class loader (when it's not identical to the
+         * exporting thread's context class loader), mark the impl's class
+         * loader as the loader to use as the context class loader in the
+         * server's dispatch thread while a call to this impl is being
+         * processed (unless this exporting thread's context class loader is
+         * a child of the impl's class loader, such as when a registry is
+         * exported by an application, in which case this thread's context
+         * class loader is preferred).
+         */
+        ClassLoader threadContextLoader =
+            Thread.currentThread().getContextClassLoader();
+        ClassLoader serverLoader = impl.getClass().getClassLoader();
+        if (checkLoaderAncestry(threadContextLoader, serverLoader)) {
+            this.ccl = threadContextLoader;
+        } else {
+            this.ccl = serverLoader;
+        }
 
-	this.permanent = permanent;
-	if (permanent) {
-	    pinImpl();
-	}
+        this.permanent = permanent;
+        if (permanent) {
+            pinImpl();
+        }
     }
 
     /**
@@ -127,84 +127,84 @@ public final class Target {
      * (utility method added for the 1.2beta4 fix for 4149366)
      */
     private static boolean checkLoaderAncestry(ClassLoader child,
-					       ClassLoader ancestor)
+                                               ClassLoader ancestor)
     {
-	if (ancestor == null) {
-	    return true;
-	} else if (child == null) {
-	    return false;
-	} else {
-	    for (ClassLoader parent = child;
-		 parent != null;
-		 parent = parent.getParent())
-	    {
-		if (parent == ancestor) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
+        if (ancestor == null) {
+            return true;
+        } else if (child == null) {
+            return false;
+        } else {
+            for (ClassLoader parent = child;
+                 parent != null;
+                 parent = parent.getParent())
+            {
+                if (parent == ancestor) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /** Get the stub (proxy) object for this target
      */
     public Remote getStub() {
-	return stub;
+        return stub;
     }
 
     /**
      * Returns the object endpoint for the target.
      */
     ObjectEndpoint getObjectEndpoint() {
-	return new ObjectEndpoint(id, exportedTransport);
+        return new ObjectEndpoint(id, exportedTransport);
     }
 
     /**
      * Get the weak reference for the Impl of this target.
      */
     WeakRef getWeakImpl() {
-	return weakImpl;
+        return weakImpl;
     }
 
     /**
      * Returns the dispatcher for this remote object target.
      */
     Dispatcher getDispatcher() {
-	return disp;
+        return disp;
     }
 
     AccessControlContext getAccessControlContext() {
-	return acc;
+        return acc;
     }
 
     ClassLoader getContextClassLoader() {
-	return ccl;
+        return ccl;
     }
-    
+
     /**
      * Get the impl for this target.
      * Note: this may return null if the impl has been garbage collected.
      * (currently, there is no need to make this method public)
      */
     Remote getImpl() {
-	return (Remote)weakImpl.get();
+        return (Remote)weakImpl.get();
     }
 
     /**
      * Returns true if the target is permanent.
      */
     boolean isPermanent() {
-	return permanent;
+        return permanent;
     }
 
     /**
      * Pin impl in target. Pin the WeakRef object so it holds a strong
      * reference to the object to it will not be garbage collected locally.
-     * This way there is a single object responsible for the weak ref 
+     * This way there is a single object responsible for the weak ref
      * mechanism.
      */
     synchronized void pinImpl() {
-	weakImpl.pin();
+        weakImpl.pin();
     }
 
     /**
@@ -213,25 +213,25 @@ public final class Target {
      * is empty.  All of the weak/strong handling is in WeakRef
      */
     synchronized void unpinImpl() {
-	/* only unpin if:
-	 * a) impl is not permanent, and
-	 * b) impl is not already unpinned, and
-	 * c) there are no external references (outside this
-	 *    address space) for the impl
-	 */
-	if (!permanent && refSet.isEmpty()) {
-	    weakImpl.unpin();
-	}
+        /* only unpin if:
+         * a) impl is not permanent, and
+         * b) impl is not already unpinned, and
+         * c) there are no external references (outside this
+         *    address space) for the impl
+         */
+        if (!permanent && refSet.isEmpty()) {
+            weakImpl.unpin();
+        }
     }
 
-    /** 
+    /**
      * Enable the transport through which remote calls to this target
-     * are allowed to be set if it has not already been set.  
+     * are allowed to be set if it has not already been set.
      */
     void setExportedTransport(Transport exportedTransport) {
-	if (this.exportedTransport == null) {
-	    this.exportedTransport = exportedTransport;
-	}
+        if (this.exportedTransport == null) {
+            this.exportedTransport = exportedTransport;
+        }
     }
 
     /**
@@ -240,37 +240,37 @@ public final class Target {
      * dies.
      */
     synchronized void referenced(long sequenceNum, VMID vmid) {
-	// check sequence number for vmid
-	SequenceEntry entry = (SequenceEntry) sequenceTable.get(vmid);
-	if (entry == null) {
-	    sequenceTable.put(vmid, new SequenceEntry(sequenceNum));
-	} else if (entry.sequenceNum < sequenceNum) {
-	    entry.update(sequenceNum);
-	} else  {
-	    // late dirty call; ignore.
-	    return;
-	}
+        // check sequence number for vmid
+        SequenceEntry entry = (SequenceEntry) sequenceTable.get(vmid);
+        if (entry == null) {
+            sequenceTable.put(vmid, new SequenceEntry(sequenceNum));
+        } else if (entry.sequenceNum < sequenceNum) {
+            entry.update(sequenceNum);
+        } else  {
+            // late dirty call; ignore.
+            return;
+        }
 
-	if (!refSet.contains(vmid)) {
-	    /*
-	     * A Target must be pinned while its refSet is not empty.  It may
-	     * have become unpinned if external LiveRefs only existed in
-	     * serialized form for some period of time, or if a client failed
-	     * to renew its lease due to a transient network failure.  So,
-	     * make sure that it is pinned here; this fixes bugid 4069644.
-	     */
-	    pinImpl();
-	    if (getImpl() == null)	// too late if impl was collected
-		return;
+        if (!refSet.contains(vmid)) {
+            /*
+             * A Target must be pinned while its refSet is not empty.  It may
+             * have become unpinned if external LiveRefs only existed in
+             * serialized form for some period of time, or if a client failed
+             * to renew its lease due to a transient network failure.  So,
+             * make sure that it is pinned here; this fixes bugid 4069644.
+             */
+            pinImpl();
+            if (getImpl() == null)      // too late if impl was collected
+                return;
 
-	    if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
-		DGCImpl.dgcLog.log(Log.VERBOSE, "add to dirty set: " + vmid);
-	    }
+            if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
+                DGCImpl.dgcLog.log(Log.VERBOSE, "add to dirty set: " + vmid);
+            }
 
-	    refSet.addElement(vmid);
+            refSet.addElement(vmid);
 
-	    DGCImpl.getDGCImpl().registerTarget(vmid, this);
-	}
+            DGCImpl.getDGCImpl().registerTarget(vmid, this);
+        }
     }
 
     /**
@@ -279,73 +279,73 @@ public final class Target {
      */
     synchronized void unreferenced(long sequenceNum, VMID vmid, boolean strong)
     {
-	// check sequence number for vmid
-	SequenceEntry entry = (SequenceEntry) sequenceTable.get(vmid);
-	if (entry == null || entry.sequenceNum > sequenceNum) {
-	    // late clean call; ignore
-	    return;
-	} else if (strong) {
-	    // strong clean call; retain sequenceNum
-	    entry.retain(sequenceNum);
-	} else if (entry.keep == false) {
-	    // get rid of sequence number
-	    sequenceTable.remove(vmid);
-	}
+        // check sequence number for vmid
+        SequenceEntry entry = (SequenceEntry) sequenceTable.get(vmid);
+        if (entry == null || entry.sequenceNum > sequenceNum) {
+            // late clean call; ignore
+            return;
+        } else if (strong) {
+            // strong clean call; retain sequenceNum
+            entry.retain(sequenceNum);
+        } else if (entry.keep == false) {
+            // get rid of sequence number
+            sequenceTable.remove(vmid);
+        }
 
-	if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
-	    DGCImpl.dgcLog.log(Log.VERBOSE, "remove from dirty set: " + vmid);
-	}
+        if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
+            DGCImpl.dgcLog.log(Log.VERBOSE, "remove from dirty set: " + vmid);
+        }
 
-	refSetRemove(vmid);
+        refSetRemove(vmid);
     }
 
     /**
      * Remove endpoint from the reference set.
      */
     synchronized private void refSetRemove(VMID vmid) {
-	// remove notification request
-	DGCImpl.getDGCImpl().unregisterTarget(vmid, this);
+        // remove notification request
+        DGCImpl.getDGCImpl().unregisterTarget(vmid, this);
 
-	if (refSet.removeElement(vmid) && refSet.isEmpty()) {
-	    // reference set is empty, so server can be garbage collected.
-	    // remove object from table.
-	    if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
-		DGCImpl.dgcLog.log(Log.VERBOSE,
-		    "reference set is empty: target = " + this);
-	    }
+        if (refSet.removeElement(vmid) && refSet.isEmpty()) {
+            // reference set is empty, so server can be garbage collected.
+            // remove object from table.
+            if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
+                DGCImpl.dgcLog.log(Log.VERBOSE,
+                    "reference set is empty: target = " + this);
+            }
 
-	    /*
-	     * If the remote object implements the Unreferenced interface,
-	     * invoke its unreferenced callback in a separate thread.
-	     */
-	    Remote obj = getImpl();
-	    if (obj instanceof Unreferenced) {
-		final Unreferenced unrefObj = (Unreferenced) obj;
-		final Thread t = (Thread)
-		    java.security.AccessController.doPrivileged(
-			new NewThreadAction(new Runnable() {
-			    public void run() {
-				unrefObj.unreferenced();
-			    }
-			}, "Unreferenced-" + nextThreadNum++, false, true));
-		// REMIND: access to nextThreadNum not synchronized; you care?
-		/*
-		 * We must manually set the context class loader appropriately
-		 * for threads that may invoke user code (see bugid 4171278).
-		 */
-		java.security.AccessController.doPrivileged(
-		    new java.security.PrivilegedAction() {
-		    public Object run() {
-			t.setContextClassLoader(ccl);
-			return null;
-		    }
-		});
+            /*
+             * If the remote object implements the Unreferenced interface,
+             * invoke its unreferenced callback in a separate thread.
+             */
+            Remote obj = getImpl();
+            if (obj instanceof Unreferenced) {
+                final Unreferenced unrefObj = (Unreferenced) obj;
+                final Thread t = (Thread)
+                    java.security.AccessController.doPrivileged(
+                        new NewThreadAction(new Runnable() {
+                            public void run() {
+                                unrefObj.unreferenced();
+                            }
+                        }, "Unreferenced-" + nextThreadNum++, false, true));
+                // REMIND: access to nextThreadNum not synchronized; you care?
+                /*
+                 * We must manually set the context class loader appropriately
+                 * for threads that may invoke user code (see bugid 4171278).
+                 */
+                java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction() {
+                    public Object run() {
+                        t.setContextClassLoader(ccl);
+                        return null;
+                    }
+                });
 
-		t.start();
-	    }
+                t.start();
+            }
 
-	    unpinImpl();
-	}
+            unpinImpl();
+        }
     }
 
     /**
@@ -356,53 +356,53 @@ public final class Target {
      * accepting new calls; returns false otherwise.
      */
     synchronized boolean unexport(boolean force) {
-	
-	if ((force == true) || (callCount == 0) || (disp == null)) {
-	    disp = null;
-	    /*
-	     * Fix for 4331349: unpin object so that it may be gc'd.
-	     * Also, unregister all vmids referencing this target
-	     * so target can be gc'd.
-	     */
-	    unpinImpl();
-	    DGCImpl dgc = DGCImpl.getDGCImpl();
-	    Enumeration enum_ = refSet.elements();
-	    while (enum_.hasMoreElements()) {
-		VMID vmid = (VMID) enum_.nextElement();
-		dgc.unregisterTarget(vmid, this);
-	    }
-	    return true;
-	} else {
-	    return false;
-	}
+
+        if ((force == true) || (callCount == 0) || (disp == null)) {
+            disp = null;
+            /*
+             * Fix for 4331349: unpin object so that it may be gc'd.
+             * Also, unregister all vmids referencing this target
+             * so target can be gc'd.
+             */
+            unpinImpl();
+            DGCImpl dgc = DGCImpl.getDGCImpl();
+            Enumeration enum_ = refSet.elements();
+            while (enum_.hasMoreElements()) {
+                VMID vmid = (VMID) enum_.nextElement();
+                dgc.unregisterTarget(vmid, this);
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * Mark this target as having been removed from the object table.
      */
     synchronized void markRemoved() {
-	if (!(!removed)) { throw new AssertionError(); }
+        if (!(!removed)) { throw new AssertionError(); }
 
-	removed = true;
-	if (!permanent && callCount == 0) {
-	    ObjectTable.decrementKeepAliveCount();
-	}
+        removed = true;
+        if (!permanent && callCount == 0) {
+            ObjectTable.decrementKeepAliveCount();
+        }
 
-	if (exportedTransport != null) {
-	    exportedTransport.targetUnexported();
-	}
+        if (exportedTransport != null) {
+            exportedTransport.targetUnexported();
+        }
     }
 
     /**
      * Increment call count.
      */
     synchronized void incrementCallCount() throws NoSuchObjectException {
-	
-	if (disp != null) {
-	    callCount ++;
-	} else {
-	    throw new NoSuchObjectException("object not accepting new calls");
-	}
+
+        if (disp != null) {
+            callCount ++;
+        } else {
+            throw new NoSuchObjectException("object not accepting new calls");
+        }
     }
 
     /**
@@ -410,21 +410,21 @@ public final class Target {
      */
     synchronized void decrementCallCount() {
 
-	if (--callCount < 0) {
-	    throw new Error("internal error: call count less than zero");
-	}
+        if (--callCount < 0) {
+            throw new Error("internal error: call count less than zero");
+        }
 
-	/*
-	 * The "keep-alive count" is the number of non-permanent remote
-	 * objects that are either in the object table or still have calls
-	 * in progress.  Therefore, this state change may affect the
-	 * keep-alive count: if this target is for a non-permanent remote
-	 * object that has been removed from the object table and now has a
-	 * call count of zero, it needs to be decremented.
-	 */
-	if (!permanent && removed && callCount == 0) {
-	    ObjectTable.decrementKeepAliveCount();
-	}
+        /*
+         * The "keep-alive count" is the number of non-permanent remote
+         * objects that are either in the object table or still have calls
+         * in progress.  Therefore, this state change may affect the
+         * keep-alive count: if this target is for a non-permanent remote
+         * object that has been removed from the object table and now has a
+         * call count of zero, it needs to be decremented.
+         */
+        if (!permanent && removed && callCount == 0) {
+            ObjectTable.decrementKeepAliveCount();
+        }
     }
 
     /**
@@ -432,7 +432,7 @@ public final class Target {
      * false
      */
     boolean isEmpty() {
-	return refSet.isEmpty();
+        return refSet.isEmpty();
     }
 
     /**
@@ -441,13 +441,13 @@ public final class Target {
      * from the reference set.
      */
     synchronized public void vmidDead(VMID vmid) {
-	if (DGCImpl.dgcLog.isLoggable(Log.BRIEF)) {
-	    DGCImpl.dgcLog.log(Log.BRIEF, "removing endpoint " +
-			    vmid + " from reference set");
-	}
+        if (DGCImpl.dgcLog.isLoggable(Log.BRIEF)) {
+            DGCImpl.dgcLog.log(Log.BRIEF, "removing endpoint " +
+                            vmid + " from reference set");
+        }
 
-	sequenceTable.remove(vmid);
-	refSetRemove(vmid);
+        sequenceTable.remove(vmid);
+        refSetRemove(vmid);
     }
 }
 
@@ -456,16 +456,16 @@ class SequenceEntry {
     boolean keep;
 
     SequenceEntry(long sequenceNum) {
-	this.sequenceNum = sequenceNum;
-	keep = false;
+        this.sequenceNum = sequenceNum;
+        keep = false;
     }
 
     void retain(long sequenceNum) {
-	this.sequenceNum = sequenceNum;
-	keep = true;
+        this.sequenceNum = sequenceNum;
+        keep = true;
     }
 
     void update(long sequenceNum) {
-	this.sequenceNum = sequenceNum;
+        this.sequenceNum = sequenceNum;
     }
 }

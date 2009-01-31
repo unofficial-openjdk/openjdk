@@ -31,7 +31,7 @@ package javax.naming;
  * It consists of a type that describes the communication mechanism
  * and a string contents specific to that communication mechanism.
  * The format and interpretation of
- * the address type and the contents of the address are based on 
+ * the address type and the contents of the address are based on
  * the agreement of three parties: the client that uses the address,
  * the object/server that can be reached using the address, and the
  * administrator or program that creates the address.
@@ -40,12 +40,11 @@ package javax.naming;
  * Another example of a string reference address is a URL.
  *
  * <p> A string reference address is immutable:
- * once created, it cannot be changed.  Multithreaded access to 
+ * once created, it cannot be changed.  Multithreaded access to
  * a single StringRefAddr need not be synchronized.
  *
  * @author Rosanna Lee
  * @author Scott Seligman
- * @version %I% %E%
  *
  * @see RefAddr
  * @see BinaryRefAddr
@@ -60,15 +59,15 @@ public class StringRefAddr extends RefAddr {
      */
     private String contents;
     /**
-      * Constructs a new instance of StringRefAddr using its address type 
+      * Constructs a new instance of StringRefAddr using its address type
       * and contents.
       *
       * @param addrType A non-null string describing the type of the address.
       * @param addr The possibly null contents of the address in the form of a string.
       */
     public StringRefAddr(String addrType, String addr) {
-	super(addrType);
-	contents = addr;
+        super(addrType);
+        contents = addr;
     }
 
     /**
@@ -77,7 +76,7 @@ public class StringRefAddr extends RefAddr {
       * @return The possibly null address contents.
       */
     public Object getContent() {
-	return contents;
+        return contents;
     }
 
     /**

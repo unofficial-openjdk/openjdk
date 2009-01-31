@@ -38,7 +38,6 @@ import sun.management.counter.Units;
  * various UNIX platforms.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class Jstat {
@@ -144,7 +143,7 @@ public class Jstat {
             }
 
             if (!constants.isEmpty()) {
-                logger.printList(constants, arguments.isVerbose(), 
+                logger.printList(constants, arguments.isVerbose(),
                                  arguments.showUnsupported(), System.out);
                 if (!logged.isEmpty()) {
                     System.out.println();

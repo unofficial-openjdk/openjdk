@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -41,47 +41,47 @@ public class InvalidProperty {
 
     public static void main(String[] args) throws Exception {
 
-	ServiceConfiguration.installServiceConfigurationFile();
+        ServiceConfiguration.installServiceConfigurationFile();
 
-	System.setProperty(
-	    "java.rmi.server.RMIClassLoaderSpi", "NonexistentProvider");
+        System.setProperty(
+            "java.rmi.server.RMIClassLoaderSpi", "NonexistentProvider");
 
-	String classname = "Foo";
+        String classname = "Foo";
 
-	TestLibrary.suggestSecurityManager(null);
+        TestLibrary.suggestSecurityManager(null);
 
-	try {
-	    System.err.println("first attempt:");
-	    Object ret;
-	    try {
-		ret = RMIClassLoader.loadClass(classname);
-	    } catch (Exception e) {
-		throw new RuntimeException(
-		    "RMIClassLoader.loadClass threw exception", e);
-	    }
-	    throw new RuntimeException(
-		"RMIClassLoader.loadClass returned " + ret);
-	} catch (Error e) {
-	    System.err.println("RMIClassLoader.loadClass threw an Error:");
-	    e.printStackTrace();
-	}
+        try {
+            System.err.println("first attempt:");
+            Object ret;
+            try {
+                ret = RMIClassLoader.loadClass(classname);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    "RMIClassLoader.loadClass threw exception", e);
+            }
+            throw new RuntimeException(
+                "RMIClassLoader.loadClass returned " + ret);
+        } catch (Error e) {
+            System.err.println("RMIClassLoader.loadClass threw an Error:");
+            e.printStackTrace();
+        }
 
-	try {
-	    System.err.println("second attempt:");
-	    Object ret;
-	    try {
-		ret = RMIClassLoader.loadClass(classname);
-	    } catch (Exception e) {
-		throw new RuntimeException(
-		    "RMIClassLoader.loadClass threw exception", e);
-	    }
-	    throw new RuntimeException(
-		"RMIClassLoader.loadClass returned " + ret);
-	} catch (Error e) {
-	    System.err.println("RMIClassLoader.loadClass threw an Error:");
-	    e.printStackTrace();
-	}
+        try {
+            System.err.println("second attempt:");
+            Object ret;
+            try {
+                ret = RMIClassLoader.loadClass(classname);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    "RMIClassLoader.loadClass threw exception", e);
+            }
+            throw new RuntimeException(
+                "RMIClassLoader.loadClass returned " + ret);
+        } catch (Error e) {
+            System.err.println("RMIClassLoader.loadClass threw an Error:");
+            e.printStackTrace();
+        }
 
-	System.err.println("TEST PASSED");
+        System.err.println("TEST PASSED");
     }
 }

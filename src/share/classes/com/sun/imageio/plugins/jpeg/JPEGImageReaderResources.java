@@ -30,7 +30,7 @@ import java.util.ListResourceBundle;
 public class JPEGImageReaderResources extends ListResourceBundle {
 
     public JPEGImageReaderResources() {}
-         
+
     protected Object[][] getContents() {
         return new Object[][] {
 

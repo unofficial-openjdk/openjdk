@@ -54,7 +54,7 @@ typedef struct PacketOutputStream {
     struct bag *ids;
 } PacketOutputStream;
 
-void outStream_initCommand(PacketOutputStream *stream, jint id, 
+void outStream_initCommand(PacketOutputStream *stream, jint id,
                            jbyte flags, jbyte commandSet, jbyte command);
 void outStream_initReply(PacketOutputStream *stream, jint id);
 
@@ -77,7 +77,7 @@ jdwpError outStream_writeFieldID(PacketOutputStream *stream, jfieldID val);
 jdwpError outStream_writeLocation(PacketOutputStream *stream, jlocation val);
 jdwpError outStream_writeByteArray(PacketOutputStream*stream, jint length, jbyte *bytes);
 jdwpError outStream_writeString(PacketOutputStream *stream, char *string);
-jdwpError outStream_writeValue(JNIEnv *env, struct PacketOutputStream *out, 
+jdwpError outStream_writeValue(JNIEnv *env, struct PacketOutputStream *out,
                           jbyte typeKey, jvalue value);
 jdwpError outStream_skipBytes(PacketOutputStream *stream, jint count);
 

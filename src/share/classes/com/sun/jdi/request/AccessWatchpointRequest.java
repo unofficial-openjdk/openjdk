@@ -38,13 +38,13 @@ import com.sun.jdi.*;
  * Access by JDI does not trigger this event.
  * When an enabled AccessWatchpointRequest is satisfied, an
  * {@link com.sun.jdi.event.EventSet event set} containing an
- * {@link com.sun.jdi.event.AccessWatchpointEvent AccessWatchpointEvent} will be placed 
+ * {@link com.sun.jdi.event.AccessWatchpointEvent AccessWatchpointEvent} will be placed
  * on the {@link com.sun.jdi.event.EventQueue EventQueue}.
- * The collection of existing ExceptionRequests is 
+ * The collection of existing ExceptionRequests is
  * managed by the {@link EventRequestManager}
  * The collection of existing
- * watchpoints is 
- * managed by the {@link EventRequestManager}.  
+ * watchpoints is
+ * managed by the {@link EventRequestManager}.
  * <p>
  * Note that the modification
  * of a Field is not considered an access.
@@ -58,6 +58,3 @@ import com.sun.jdi.*;
  */
 public interface AccessWatchpointRequest extends WatchpointRequest {
 }
-
-
-			

@@ -39,7 +39,7 @@ QueryColorMap(Display *disp,
               Visual *src_vis,
               XColor **src_colors,
               int32_t *rShift, int32_t *gShift, int32_t *bShift)
-              
+
 {
      int32_t ncolors, i;
      unsigned long redMask, greenMask, blueMask;
@@ -95,4 +95,3 @@ QueryColorMap(Display *disp,
       XQueryColors(disp, src_cmap, colors, ncolors);
       return ncolors ;
 }
-

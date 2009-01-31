@@ -39,13 +39,12 @@ import java.awt.image.ColorModel;
  * At construction time, the texture is anchored to the upper
  * left corner of a {@link Rectangle2D} that is
  * specified in user space.  Texture is computed for
- * locations in the device space by conceptually replicating the   
+ * locations in the device space by conceptually replicating the
  * specified <code>Rectangle2D</code> infinitely in all directions
  * in user space and mapping the <code>BufferedImage</code> to each
  * replicated <code>Rectangle2D</code>.
  * @see Paint
  * @see Graphics2D#setPaint
- * @version %I%, %G%
  */
 
 public class TexturePaint implements Paint {
@@ -64,21 +63,21 @@ public class TexturePaint implements Paint {
      * anchor and replicate the texture
      */
     public TexturePaint(BufferedImage txtr,
-			Rectangle2D anchor) {
+                        Rectangle2D anchor) {
         this.bufImg = txtr;
-	this.tx = anchor.getX();
-	this.ty = anchor.getY();
-	this.sx = anchor.getWidth() / bufImg.getWidth();
-	this.sy = anchor.getHeight() / bufImg.getHeight();
+        this.tx = anchor.getX();
+        this.ty = anchor.getY();
+        this.sx = anchor.getWidth() / bufImg.getWidth();
+        this.sy = anchor.getHeight() / bufImg.getHeight();
     }
 
     /**
-     * Returns the <code>BufferedImage</code> texture used to 
+     * Returns the <code>BufferedImage</code> texture used to
      * fill the shapes.
      * @return a <code>BufferedImage</code>.
      */
     public BufferedImage getImage() {
-	return bufImg;
+        return bufImg;
     }
 
     /**
@@ -88,9 +87,9 @@ public class TexturePaint implements Paint {
      * size this <code>TexturePaint</code>.
      */
     public Rectangle2D getAnchorRect() {
-	return new Rectangle2D.Double(tx, ty,
-				      sx * bufImg.getWidth(),
-				      sy * bufImg.getHeight());
+        return new Rectangle2D.Double(tx, ty,
+                                      sx * bufImg.getWidth(),
+                                      sy * bufImg.getHeight());
     }
 
     /**
@@ -110,26 +109,26 @@ public class TexturePaint implements Paint {
      * @see PaintContext
      */
     public PaintContext createContext(ColorModel cm,
-				      Rectangle deviceBounds,
-				      Rectangle2D userBounds,
-				      AffineTransform xform,
+                                      Rectangle deviceBounds,
+                                      Rectangle2D userBounds,
+                                      AffineTransform xform,
                                       RenderingHints hints) {
-	if (xform == null) {
-	    xform = new AffineTransform();
-	} else {
-	    xform = (AffineTransform) xform.clone();
-	}
-	xform.translate(tx, ty);
-	xform.scale(sx, sy);
+        if (xform == null) {
+            xform = new AffineTransform();
+        } else {
+            xform = (AffineTransform) xform.clone();
+        }
+        xform.translate(tx, ty);
+        xform.scale(sx, sy);
 
-	return TexturePaintContext.getContext(bufImg, xform, hints,
-					      deviceBounds);
+        return TexturePaintContext.getContext(bufImg, xform, hints,
+                                              deviceBounds);
     }
 
     /**
      * Returns the transparency mode for this <code>TexturePaint</code>.
      * @return the transparency mode for this <code>TexturePaint</code>
-     * as an integer value. 
+     * as an integer value.
      * @see Transparency
      */
     public int getTransparency() {
@@ -137,4 +136,3 @@ public class TexturePaint implements Paint {
     }
 
 }
-

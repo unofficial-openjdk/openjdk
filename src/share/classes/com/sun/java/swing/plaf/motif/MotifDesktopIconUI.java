@@ -40,7 +40,6 @@ import java.io.Serializable;
 /**
  * Motif rendition of the component.
  *
- * @version %I% %G%
  * @author Thomas Ball
  * @author Rich Schiavi
  */
@@ -64,7 +63,7 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
     final static int LABEL_DIVIDER = 4;    // padding between icon and label
 
     final static Font defaultTitleFont =
-	new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+        new Font(Font.SANS_SERIF, Font.PLAIN, 12);
 
     public static ComponentUI createUI(JComponent c)    {
         return new MotifDesktopIconUI();
@@ -74,23 +73,23 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
     }
 
     protected void installDefaults(){
-	super.installDefaults();
-	setDefaultIcon(UIManager.getIcon("DesktopIcon.icon"));
-	iconButton = createIconButton(defaultIcon);
+        super.installDefaults();
+        setDefaultIcon(UIManager.getIcon("DesktopIcon.icon"));
+        iconButton = createIconButton(defaultIcon);
         // An underhanded way of creating a system popup menu.
         sysMenuTitlePane =  new MotifInternalFrameTitlePane(frame);
         systemMenu = sysMenuTitlePane.getSystemMenu();
 
         MotifBorders.FrameBorder border = new MotifBorders.FrameBorder(desktopIcon);
-	desktopIcon.setLayout(new BorderLayout());
+        desktopIcon.setLayout(new BorderLayout());
         iconButton.setBorder(border);
-	desktopIcon.add(iconButton, BorderLayout.CENTER);
+        desktopIcon.add(iconButton, BorderLayout.CENTER);
         iconLabel = createIconLabel(frame);
         iconLabel.setBorder(border);
         desktopIcon.add(iconLabel, BorderLayout.SOUTH);
         desktopIcon.setSize(desktopIcon.getPreferredSize());
         desktopIcon.validate();
-	JLayeredPane.putLayer(desktopIcon, JLayeredPane.getLayer(frame));
+        JLayeredPane.putLayer(desktopIcon, JLayeredPane.getLayer(frame));
     }
 
     protected void installComponents(){
@@ -98,13 +97,13 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
 
     protected void uninstallComponents(){
     }
-    
+
     protected void installListeners(){
-	super.installListeners();
-	desktopIconActionListener = createDesktopIconActionListener();
-	desktopIconMouseListener = createDesktopIconMouseListener();
-	iconButton.addActionListener(desktopIconActionListener);
-	iconButton.addMouseListener(desktopIconMouseListener);
+        super.installListeners();
+        desktopIconActionListener = createDesktopIconActionListener();
+        desktopIconMouseListener = createDesktopIconMouseListener();
+        iconButton.addActionListener(desktopIconActionListener);
+        iconButton.addMouseListener(desktopIconMouseListener);
         iconLabel.addMouseListener(desktopIconMouseListener);
     }
 
@@ -119,7 +118,7 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
     JInternalFrame getFrame(){
       return frame;
     }
-  
+
     void setFrame(JInternalFrame f){
       frame = f ;
     }
@@ -127,34 +126,34 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
     protected void showSystemMenu(){
       systemMenu.show(iconButton, 0, getDesktopIcon().getHeight());
     }
-    
+
     protected void hideSystemMenu(){
       systemMenu.setVisible(false);
     }
 
     protected IconLabel createIconLabel(JInternalFrame frame){
-	return new IconLabel(frame);
+        return new IconLabel(frame);
     }
-    
+
     protected IconButton createIconButton(Icon i){
-	return new IconButton(i);
+        return new IconButton(i);
     }
-    
+
     protected DesktopIconActionListener createDesktopIconActionListener(){
-	return new DesktopIconActionListener();
+        return new DesktopIconActionListener();
     }
 
     protected DesktopIconMouseListener createDesktopIconMouseListener(){
-	return new DesktopIconMouseListener();
+        return new DesktopIconMouseListener();
     }
-    
+
     protected void uninstallDefaults(){
-	super.uninstallDefaults();
-	desktopIcon.setLayout(null);
-	desktopIcon.remove(iconButton);
-	desktopIcon.remove(iconLabel);
+        super.uninstallDefaults();
+        desktopIcon.setLayout(null);
+        desktopIcon.remove(iconButton);
+        desktopIcon.remove(iconLabel);
     }
-	
+
     protected void uninstallListeners(){
         super.uninstallListeners();
         iconButton.removeActionListener(desktopIconActionListener);
@@ -164,19 +163,19 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
 
     public Dimension getMinimumSize(JComponent c) {
         JInternalFrame iframe = desktopIcon.getInternalFrame();
-	
+
         int w = defaultIcon.getIconWidth();
         int h = defaultIcon.getIconHeight() + LABEL_HEIGHT + LABEL_DIVIDER;
 
-	Border border = iframe.getBorder();
-	if(border != null) {
-	    w += border.getBorderInsets(iframe).left + 
+        Border border = iframe.getBorder();
+        if(border != null) {
+            w += border.getBorderInsets(iframe).left +
                 border.getBorderInsets(iframe).right;
-	    h += border.getBorderInsets(iframe).bottom + 
+            h += border.getBorderInsets(iframe).bottom +
                 border.getBorderInsets(iframe).top;
         }
 
-	return new Dimension(w, h);
+        return new Dimension(w, h);
     }
 
     public Dimension getPreferredSize(JComponent c) {
@@ -191,22 +190,22 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
       * Returns the default desktop icon.
       */
     public Icon getDefaultIcon() {
-	return defaultIcon;
+        return defaultIcon;
     }
 
     /**
       * Sets the icon used as the default desktop icon.
       */
     public void setDefaultIcon(Icon newIcon) {
-	defaultIcon = newIcon;
+        defaultIcon = newIcon;
     }
 
     protected class IconLabel extends JPanel {
-	JInternalFrame frame;
+        JInternalFrame frame;
 
         IconLabel(JInternalFrame f) {
             super();
-	    this.frame = f;
+            this.frame = f;
             setFont(defaultTitleFont);
 
             // Forward mouse events to titlebar for moves.
@@ -245,8 +244,8 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
                 e.isPopupTrigger(), MouseEvent.NOBUTTON));
         }
 
-        public boolean isFocusTraversable() { 
-            return false; 
+        public boolean isFocusTraversable() {
+            return false;
         }
 
         public Dimension getMinimumSize() {
@@ -269,7 +268,7 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
 
             // touch-up frame
             int maxX = getWidth() - 1;
-            Color shadow = 
+            Color shadow =
                 UIManager.getColor("inactiveCaptionBorder").darker().darker();
             g.setColor(shadow);
             g.setClip(0, 0, getWidth(), getHeight());
@@ -335,32 +334,32 @@ public class MotifDesktopIconUI extends BasicDesktopIconUI
                 e.getClickCount(), e.isPopupTrigger(), MouseEvent.NOBUTTON ));
         }
 
-        public boolean isFocusTraversable() { 
-            return false; 
+        public boolean isFocusTraversable() {
+            return false;
         }
     }
 
 
     protected class DesktopIconActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
-	    systemMenu.show(iconButton, 0, getDesktopIcon().getHeight());
-	}
+            systemMenu.show(iconButton, 0, getDesktopIcon().getHeight());
+        }
     }
 
     protected class DesktopIconMouseListener extends MouseAdapter {
-	// if we drag or move we should deengage the popup
+        // if we drag or move we should deengage the popup
         public void mousePressed(MouseEvent e){
-	    if (e.getClickCount() > 1) {
-		try {
-		    getFrame().setIcon(false);
-		} catch (PropertyVetoException e2){ }
-		systemMenu.setVisible(false);
-		/* the mouse release will not get reported correctly,
-		   because the icon will no longer be in the hierarchy;
-		   maybe that should be fixed, but until it is, we need
-		   to do the required cleanup here. */
-	        getFrame().getDesktopPane().getDesktopManager().endDraggingFrame((JComponent)e.getSource());
-	    }
-	}
+            if (e.getClickCount() > 1) {
+                try {
+                    getFrame().setIcon(false);
+                } catch (PropertyVetoException e2){ }
+                systemMenu.setVisible(false);
+                /* the mouse release will not get reported correctly,
+                   because the icon will no longer be in the hierarchy;
+                   maybe that should be fixed, but until it is, we need
+                   to do the required cleanup here. */
+                getFrame().getDesktopPane().getDesktopManager().endDraggingFrame((JComponent)e.getSource());
+            }
+        }
     }
 }

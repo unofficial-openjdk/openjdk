@@ -50,7 +50,7 @@ abstract class EventRequestSpec {
     /**
      * The 'refType' is known to match, return the EventRequest.
      */
-    abstract EventRequest resolveEventRequest(ReferenceType refType) 
+    abstract EventRequest resolveEventRequest(ReferenceType refType)
                                            throws Exception;
 
     /**
@@ -59,7 +59,7 @@ abstract class EventRequestSpec {
      * return null.
      */
     synchronized EventRequest resolve(ClassPrepareEvent event) throws Exception {
-        if ((resolved == null) && 
+        if ((resolved == null) &&
             (prepareRequest != null) &&
             prepareRequest.equals(event.request())) {
 
@@ -71,7 +71,7 @@ abstract class EventRequestSpec {
             if (refSpec instanceof PatternReferenceTypeSpec) {
                 PatternReferenceTypeSpec prs = (PatternReferenceTypeSpec)refSpec;
                 if (! prs.isUnique()){
-                    /* 
+                    /*
                      * Class pattern event requests are never
                      * considered "resolved", since future class loads
                      * might also match.
@@ -85,7 +85,7 @@ abstract class EventRequestSpec {
             }
         }
         return resolved;
-    }   
+    }
 
     synchronized void remove() {
         if (isResolved()) {
@@ -113,7 +113,7 @@ abstract class EventRequestSpec {
             }
         }
     }
-    
+
     private EventRequest resolveAgainstPreparedClasses() throws Exception {
         Iterator iter = Env.vm().allClasses().iterator();
         while (iter.hasNext()) {
@@ -134,7 +134,7 @@ abstract class EventRequestSpec {
                  */
                 prepareRequest = refSpec.createPrepareRequest();
                 prepareRequest.enable();
-    
+
                 // Try to resolve in case the class is already loaded.
                 resolveAgainstPreparedClasses();
                 if (resolved != null) {
@@ -146,7 +146,7 @@ abstract class EventRequestSpec {
             if (refSpec instanceof PatternReferenceTypeSpec) {
                 PatternReferenceTypeSpec prs = (PatternReferenceTypeSpec)refSpec;
                 if (! prs.isUnique()){
-                    /* 
+                    /*
                      * Class pattern event requests are never
                      * considered "resolved", since future class loads
                      * might also match.  Create a new
@@ -158,10 +158,10 @@ abstract class EventRequestSpec {
                         prepareRequest = refSpec.createPrepareRequest();
                         prepareRequest.enable();
                     }
-                }            
+                }
             }
         } catch (VMNotConnectedException e) {
-            // Do nothing. Another resolve will be attempted when the 
+            // Do nothing. Another resolve will be attempted when the
             // VM is started.
         }
         return resolved;
@@ -183,7 +183,7 @@ abstract class EventRequestSpec {
     }
 
     protected boolean isJavaIdentifier(String s) {
-        if (s.length() == 0) {                              
+        if (s.length() == 0) {
             return false;
         }
 
@@ -202,7 +202,7 @@ abstract class EventRequestSpec {
         return true;
     }
 
-    String errorMessageFor(Exception e) { 
+    String errorMessageFor(Exception e) {
         if (e instanceof IllegalArgumentException) {
             return (MessageOutput.format("Invalid command syntax"));
         } else if (e instanceof RuntimeException) {
@@ -211,8 +211,6 @@ abstract class EventRequestSpec {
         } else {
             return (MessageOutput.format("Internal error; unable to set",
                                          this.refSpec.toString()));
-        } 
+        }
     }
 }
-
-

@@ -37,10 +37,9 @@ import javax.swing.plaf.DimensionUIResource;
 import sun.swing.plaf.synth.SynthUI;
 
 /**
- * A Synth L&F implementation of SeparatorUI.  This implementation 
+ * A Synth L&F implementation of SeparatorUI.  This implementation
  * is a "combined" view/controller.
  *
- * @version %I% %G%
  * @author Shannon Hickey
  * @author Joshua Outwater
  */
@@ -51,7 +50,7 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
     public static ComponentUI createUI(JComponent c) {
         return new SynthSeparatorUI();
     }
-    
+
     public void installUI(JComponent c) {
         installDefaults((JSeparator)c);
         installListeners((JSeparator)c);
@@ -65,7 +64,7 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
     public void installDefaults(JSeparator c) {
         updateStyle(c);
     }
-    
+
     private void updateStyle(JSeparator sep) {
         SynthContext context = getContext(sep, ENABLED);
         SynthStyle oldStyle = style;
@@ -96,15 +95,15 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
         context.dispose();
         style = null;
     }
-    
+
     public void installListeners(JSeparator c) {
         c.addPropertyChangeListener(this);
     }
-    
+
     public void uninstallListeners(JSeparator c) {
         c.removePropertyChangeListener(this);
     }
-    
+
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -130,7 +129,7 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
                              separator.getWidth(), separator.getHeight(),
                              separator.getOrientation());
     }
-    
+
     public void paintBorder(SynthContext context, Graphics g, int x,
                             int y, int w, int h) {
         JSeparator separator = (JSeparator)context.getComponent();
@@ -155,15 +154,15 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
         context.dispose();
         return size;
     }
-    
+
     public Dimension getMinimumSize(JComponent c) {
         return getPreferredSize(c);
     }
-    
+
     public Dimension getMaximumSize(JComponent c) {
         return new Dimension(Short.MAX_VALUE, Short.MAX_VALUE);
     }
-    
+
     public SynthContext getContext(JComponent c) {
         return getContext(c, getComponentState(c));
     }
@@ -180,7 +179,7 @@ class SynthSeparatorUI extends SeparatorUI implements PropertyChangeListener,
     private int getComponentState(JComponent c) {
         return SynthLookAndFeel.getComponentState(c);
     }
-    
+
     public void propertyChange(PropertyChangeEvent evt) {
         if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
             updateStyle((JSeparator)evt.getSource());

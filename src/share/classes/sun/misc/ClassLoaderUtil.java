@@ -28,12 +28,11 @@ package sun.misc;
 /**
  * Provides utility functions related to URLClassLoaders or subclasses of it.
  *
- *                  W  A  R  N  I  N  G    
+ *                  W  A  R  N  I  N  G
  *
  * This class uses undocumented, unpublished, private data structures inside
  * java.net.URLClassLoader and sun.misc.URLClassPath.  Use with extreme caution.
  *
- * @version     %I%, %G%
  * @author      tjquinn
  */
 
@@ -48,40 +47,40 @@ public class ClassLoaderUtil {
     /**
      * Releases resources held by a URLClassLoader. A new classloader must
      * be created before the underlying resources can be accessed again.
-     * @param classLoader the instance of URLClassLoader (or a subclass) 
+     * @param classLoader the instance of URLClassLoader (or a subclass)
      */
     public static void releaseLoader(URLClassLoader classLoader) {
         releaseLoader(classLoader, null);
     }
-    
+
     /**
      * Releases resources held by a URLClassLoader.  Notably, close the jars
-     * opened by the loader. Initializes and updates the List of 
+     * opened by the loader. Initializes and updates the List of
      * jars that have been successfully closed.
      * <p>
-     * @param classLoader the instance of URLClassLoader (or a subclass) 
-     * @param jarsClosed a List of Strings that will contain the names of jars 
+     * @param classLoader the instance of URLClassLoader (or a subclass)
+     * @param jarsClosed a List of Strings that will contain the names of jars
      *  successfully closed; can be null if the caller does not need the information returned
      * @return a List of IOExceptions reporting jars that failed to close; null
      * indicates that an error other than an IOException occurred attempting to
-     * release the loader; empty indicates a successful release; non-empty 
+     * release the loader; empty indicates a successful release; non-empty
      * indicates at least one error attempting to close an open jar.
      */
     public static List<IOException> releaseLoader(URLClassLoader classLoader, List<String> jarsClosed) {
-        
+
         List<IOException> ioExceptions = new LinkedList<IOException>();
 
-	try {
+        try {
             /* Records all IOExceptions thrown while closing jar files. */
 
             if (jarsClosed != null) {
                 jarsClosed.clear();
             }
 
-	    System.out.println ("classLoader = " + classLoader);
-	    System.out.println ("SharedSecrets.getJavaNetAccess()="+SharedSecrets.getJavaNetAccess());
+            System.out.println ("classLoader = " + classLoader);
+            System.out.println ("SharedSecrets.getJavaNetAccess()="+SharedSecrets.getJavaNetAccess());
             URLClassPath ucp = SharedSecrets.getJavaNetAccess()
-						.getURLClassPath(classLoader);
+                                                .getURLClassPath(classLoader);
             ArrayList loaders = ucp.loaders;
             Stack urls = ucp.urls;
             HashMap lmap = ucp.lmap;
@@ -90,8 +89,8 @@ public class ClassLoaderUtil {
              *The urls variable in the URLClassPath object holds URLs that have not yet
              *been used to resolve a resource or load a class and, therefore, do
              *not yet have a loader associated with them.  Clear the stack so any
-             *future requests that might incorrectly reach the loader cannot be 
-             *resolved and cannot open a jar file after we think we've closed 
+             *future requests that might incorrectly reach the loader cannot be
+             *resolved and cannot open a jar file after we think we've closed
              *them all.
              */
             synchronized(urls) {
@@ -111,22 +110,22 @@ public class ClassLoaderUtil {
              *the URLClassPath's class path.  Leave that unchanged.  This might
              *help someone trying to debug why a released class loader is still used.
              *Because the stack and lmap are now clear, code that incorrectly uses a
-             *the released class loader will trigger an exception if the 
+             *the released class loader will trigger an exception if the
              *class or resource would have been resolved by the class
-             *loader (and no other) if it had not been released.  
+             *loader (and no other) if it had not been released.
              *
              *The list of URLs might provide some hints to the person as to where
              *in the code the class loader was set up, which might in turn suggest
              *where in the code the class loader needs to stop being used.
-             *The URLClassPath does not use the path variable to open new jar 
+             *The URLClassPath does not use the path variable to open new jar
              *files - it uses the urls Stack for that - so leaving the path variable
              *will not by itself allow the class loader to continue handling requests.
              */
 
             /*
-             *For each loader, close the jar file associated with that loader.  
+             *For each loader, close the jar file associated with that loader.
              *
-             *The URLClassPath's use of loaders is sync-ed on the entire URLClassPath 
+             *The URLClassPath's use of loaders is sync-ed on the entire URLClassPath
              *object.
              */
             synchronized (ucp) {
@@ -138,7 +137,7 @@ public class ClassLoaderUtil {
                          *it to the list of closed files if successful.
                          */
                         if (o instanceof URLClassPath.JarLoader) {
-				URLClassPath.JarLoader jl = (URLClassPath.JarLoader)o;
+                                URLClassPath.JarLoader jl = (URLClassPath.JarLoader)o;
                                 JarFile jarFile = jl.getJarFile();
                                 try {
                                     if (jarFile != null) {
@@ -149,7 +148,7 @@ public class ClassLoaderUtil {
                                     }
                                 } catch (IOException ioe) {
                                     /*
-                                     *Wrap the IOException to identify which jar 
+                                     *Wrap the IOException to identify which jar
                                      *could not be closed and add it to the list
                                      *of IOExceptions to be returned to the caller.
                                      */
@@ -167,9 +166,9 @@ public class ClassLoaderUtil {
                  */
                 loaders.clear();
             }
-	} catch (Throwable t) {
-	    throw new RuntimeException (t);
-	}
+        } catch (Throwable t) {
+            throw new RuntimeException (t);
+        }
         return ioExceptions;
     }
 }

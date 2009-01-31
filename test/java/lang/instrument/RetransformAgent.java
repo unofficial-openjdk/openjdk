@@ -38,12 +38,12 @@ import java.io.*;
 import ilib.*;
 
 class RetransformAgent {
-    
+
     static ClassFileTransformer t1, t2, t3, t4;
     static Instrumentation inst;
     static boolean succeeded = true;
     static int markCount = 0;
-    static int[] markGolden = {30, 40, 20, 30, 40, 20, 30, 40, 20, 30, 40, 20, 
+    static int[] markGolden = {30, 40, 20, 30, 40, 20, 30, 40, 20, 30, 40, 20,
                                11, 40, 20, 11, 40, 20, 11, 40, 20, 11, 40, 20};
 
     static class Tr implements ClassFileTransformer {
@@ -55,7 +55,7 @@ class RetransformAgent {
         final String cname;
         final String nname;
 
-        Tr(String trname, boolean onLoad, int loadIndex, boolean onRedef, int redefIndex, 
+        Tr(String trname, boolean onLoad, int loadIndex, boolean onRedef, int redefIndex,
            String cname, String nname) {
             this.trname = trname;
             this.onLoad = onLoad;
@@ -65,7 +65,7 @@ class RetransformAgent {
             this.cname = cname;
             this.nname = nname;
         }
-      
+
         public byte[] transform(ClassLoader loader,
                                 String className,
                                 Class<?> classBeingRedefined,
@@ -89,7 +89,7 @@ class RetransformAgent {
                          write_buffer(fname + "_instr.class", newcf);
                     ***/
                     System.err.println(trname + ": " + className + " index: " + opt.fixedIndex +
-                                       (redef? " REDEF" : " LOAD") + 
+                                       (redef? " REDEF" : " LOAD") +
                                        " len before: " + classfileBuffer.length +
                                        " after: " + newcf.length);
                     return newcf;
@@ -125,7 +125,7 @@ class RetransformAgent {
         t4 = new Tr("TN4", true,  40, true, 41, "RetransformApp", "foo");
         inst.addTransformer(t4, false);
     }
-    
+
     public static void undo() {
         inst.removeTransformer(t3);
         try {
@@ -138,7 +138,7 @@ class RetransformAgent {
 
     public static boolean succeeded() {
         return succeeded && markCount == markGolden.length;
-    }  
+    }
 
     public static void callTracker(int mark) {
         System.err.println("got mark " + mark);

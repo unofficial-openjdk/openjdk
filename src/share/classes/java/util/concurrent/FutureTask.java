@@ -246,11 +246,11 @@ public class FutureTask<V> implements RunnableFuture<V> {
 
         V innerGet() throws InterruptedException, ExecutionException {
             acquireSharedInterruptibly(0);
-	    if (getState() == CANCELLED)
-		throw new CancellationException();
-	    if (exception != null)
-		throw new ExecutionException(exception);
-	    return result;
+            if (getState() == CANCELLED)
+                throw new CancellationException();
+            if (exception != null)
+                throw new ExecutionException(exception);
+            return result;
         }
 
         V innerGet(long nanosTimeout) throws InterruptedException, ExecutionException, TimeoutException {
@@ -264,55 +264,55 @@ public class FutureTask<V> implements RunnableFuture<V> {
         }
 
         void innerSet(V v) {
-	    for (;;) {
-		int s = getState();
-		if (s == RAN)
-		    return;
+            for (;;) {
+                int s = getState();
+                if (s == RAN)
+                    return;
                 if (s == CANCELLED) {
-		    // aggressively release to set runner to null,
-		    // in case we are racing with a cancel request
-		    // that will try to interrupt runner
+                    // aggressively release to set runner to null,
+                    // in case we are racing with a cancel request
+                    // that will try to interrupt runner
                     releaseShared(0);
                     return;
                 }
-		if (compareAndSetState(s, RAN)) {
+                if (compareAndSetState(s, RAN)) {
                     result = v;
                     releaseShared(0);
                     done();
-		    return;
+                    return;
                 }
             }
         }
 
         void innerSetException(Throwable t) {
-	    for (;;) {
-		int s = getState();
-		if (s == RAN)
-		    return;
+            for (;;) {
+                int s = getState();
+                if (s == RAN)
+                    return;
                 if (s == CANCELLED) {
-		    // aggressively release to set runner to null,
-		    // in case we are racing with a cancel request
-		    // that will try to interrupt runner
+                    // aggressively release to set runner to null,
+                    // in case we are racing with a cancel request
+                    // that will try to interrupt runner
                     releaseShared(0);
                     return;
                 }
-		if (compareAndSetState(s, RAN)) {
+                if (compareAndSetState(s, RAN)) {
                     exception = t;
                     releaseShared(0);
                     done();
-		    return;
+                    return;
                 }
-	    }
+            }
         }
 
         boolean innerCancel(boolean mayInterruptIfRunning) {
-	    for (;;) {
-		int s = getState();
-		if (ranOrCancelled(s))
-		    return false;
-		if (compareAndSetState(s, CANCELLED))
-		    break;
-	    }
+            for (;;) {
+                int s = getState();
+                if (ranOrCancelled(s))
+                    return false;
+                if (compareAndSetState(s, CANCELLED))
+                    break;
+            }
             if (mayInterruptIfRunning) {
                 Thread r = runner;
                 if (r != null)
@@ -339,7 +339,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
                 set(result);
             } else {
                 releaseShared(0); // cancel
-	    }
+            }
         }
 
         boolean innerRunAndReset() {

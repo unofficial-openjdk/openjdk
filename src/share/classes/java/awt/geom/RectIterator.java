@@ -31,8 +31,7 @@ import java.util.*;
  * A utility class to iterate over the path segments of a rectangle
  * through the PathIterator interface.
  *
- * @version 10 Feb 1997
- * @author	Jim Graham
+ * @author      Jim Graham
  */
 class RectIterator implements PathIterator {
     double x, y, w, h;
@@ -40,14 +39,14 @@ class RectIterator implements PathIterator {
     int index;
 
     RectIterator(Rectangle2D r, AffineTransform at) {
-	this.x = r.getX();
-	this.y = r.getY();
-	this.w = r.getWidth();
-	this.h = r.getHeight();
-	this.affine = at;
-	if (w < 0 || h < 0) {
-	    index = 6;
-	}
+        this.x = r.getX();
+        this.y = r.getY();
+        this.w = r.getWidth();
+        this.h = r.getHeight();
+        this.affine = at;
+        if (w < 0 || h < 0) {
+            index = 6;
+        }
     }
 
     /**
@@ -57,7 +56,7 @@ class RectIterator implements PathIterator {
      * @see #WIND_NON_ZERO
      */
     public int getWindingRule() {
-	return WIND_NON_ZERO;
+        return WIND_NON_ZERO;
     }
 
     /**
@@ -65,7 +64,7 @@ class RectIterator implements PathIterator {
      * @return true if there are more points to read
      */
     public boolean isDone() {
-	return index > 5;
+        return index > 5;
     }
 
     /**
@@ -74,7 +73,7 @@ class RectIterator implements PathIterator {
      * more points in that direction.
      */
     public void next() {
-	index++;
+        index++;
     }
 
     /**
@@ -96,24 +95,24 @@ class RectIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(float[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("rect iterator out of bounds");
-	}
-	if (index == 5) {
-	    return SEG_CLOSE;
-	}
-	coords[0] = (float) x;
-	coords[1] = (float) y;
-	if (index == 1 || index == 2) {
-	    coords[0] += (float) w;
-	}
-	if (index == 2 || index == 3) {
-	    coords[1] += (float) h;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, 1);
-	}
-	return (index == 0 ? SEG_MOVETO : SEG_LINETO);
+        if (isDone()) {
+            throw new NoSuchElementException("rect iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        coords[0] = (float) x;
+        coords[1] = (float) y;
+        if (index == 1 || index == 2) {
+            coords[0] += (float) w;
+        }
+        if (index == 2 || index == 3) {
+            coords[1] += (float) h;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 1);
+        }
+        return (index == 0 ? SEG_MOVETO : SEG_LINETO);
     }
 
     /**
@@ -135,23 +134,23 @@ class RectIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(double[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("rect iterator out of bounds");
-	}
-	if (index == 5) {
-	    return SEG_CLOSE;
-	}
-	coords[0] = x;
-	coords[1] = y;
-	if (index == 1 || index == 2) {
-	    coords[0] += w;
-	}
-	if (index == 2 || index == 3) {
-	    coords[1] += h;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, 1);
-	}
-	return (index == 0 ? SEG_MOVETO : SEG_LINETO);
+        if (isDone()) {
+            throw new NoSuchElementException("rect iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        coords[0] = x;
+        coords[1] = y;
+        if (index == 1 || index == 2) {
+            coords[0] += w;
+        }
+        if (index == 2 || index == 3) {
+            coords[1] += h;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 1);
+        }
+        return (index == 0 ? SEG_MOVETO : SEG_LINETO);
     }
 }

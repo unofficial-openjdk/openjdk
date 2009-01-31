@@ -30,8 +30,6 @@
  */
 
 /*
- * %W% %E%
- *
  * Example of a JConsole Plugin.  This loads JTop as a JConsole tab.
  *
  * @author Mandy Chung
@@ -88,16 +86,16 @@ public class JTopPlugin extends JConsolePlugin implements PropertyChangeListener
      * Returns a SwingWorker which is responsible for updating the JTop tab.
      */
     public SwingWorker<?,?> newSwingWorker() {
-        return jtop.newSwingWorker();    
+        return jtop.newSwingWorker();
     }
 
-    // You can implement the dispose() method if you need to release 
+    // You can implement the dispose() method if you need to release
     // any resource when the plugin instance is disposed when the JConsole
     // window is closed.
     //
     // public void dispose() {
     // }
-                                                                    
+
     /*
      * Property listener to reset the MBeanServerConnection
      * at reconnection time.
@@ -113,7 +111,7 @@ public class JTopPlugin extends JConsolePlugin implements PropertyChangeListener
             // created at reconnection time.
             if (newState == ConnectionState.CONNECTED && jtop != null) {
                 jtop.setMBeanServerConnection(
-                    getContext().getMBeanServerConnection()); 
+                    getContext().getMBeanServerConnection());
             }
         }
     }

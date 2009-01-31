@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /*
  *
- * 
+ *
  * Indictly used by SolarisRunpath.sh; this file is used to generate
  * the shared objects:
  *

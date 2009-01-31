@@ -40,7 +40,7 @@ import javax.xml.crypto.dsig.*;
  *
  * @author Sean Mullan
  */
-public class DOMCanonicalizationMethod extends DOMTransform 
+public class DOMCanonicalizationMethod extends DOMTransform
     implements CanonicalizationMethod {
 
     /**
@@ -49,20 +49,20 @@ public class DOMCanonicalizationMethod extends DOMTransform
      * @param spi TransformService
      */
     public DOMCanonicalizationMethod(TransformService spi)
-	throws InvalidAlgorithmParameterException {
-	super(spi);
+        throws InvalidAlgorithmParameterException {
+        super(spi);
     }
 
     /**
-     * Creates a <code>DOMCanonicalizationMethod</code> from an element. This 
-     * ctor invokes the abstract {@link #unmarshalParams unmarshalParams} 
+     * Creates a <code>DOMCanonicalizationMethod</code> from an element. This
+     * ctor invokes the abstract {@link #unmarshalParams unmarshalParams}
      * method to unmarshal any algorithm-specific input parameters.
      *
      * @param cmElem a CanonicalizationMethod element
      */
-    public DOMCanonicalizationMethod(Element cmElem, XMLCryptoContext context) 
-	throws MarshalException{
-	super(cmElem, context);
+    public DOMCanonicalizationMethod(Element cmElem, XMLCryptoContext context)
+        throws MarshalException{
+        super(cmElem, context);
     }
 
     /**
@@ -78,27 +78,27 @@ public class DOMCanonicalizationMethod extends DOMTransform
      * @throws XMLSignatureException if an unexpected error occurs while
      *    canonicalizing the data
      */
-    public Data canonicalize(Data data, XMLCryptoContext xc) 
-	throws TransformException {
-	return transform(data, xc);
+    public Data canonicalize(Data data, XMLCryptoContext xc)
+        throws TransformException {
+        return transform(data, xc);
     }
 
-    public Data canonicalize(Data data, XMLCryptoContext xc, OutputStream os) 
-	throws TransformException {
-	return transform(data, xc, os);
+    public Data canonicalize(Data data, XMLCryptoContext xc, OutputStream os)
+        throws TransformException {
+        return transform(data, xc, os);
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof CanonicalizationMethod)) {
             return false;
-	}
+        }
         CanonicalizationMethod ocm = (CanonicalizationMethod) o;
 
-	return (getAlgorithm().equals(ocm.getAlgorithm()) && 
-	    DOMUtils.paramsEqual(getParameterSpec(), ocm.getParameterSpec()));
+        return (getAlgorithm().equals(ocm.getAlgorithm()) &&
+            DOMUtils.paramsEqual(getParameterSpec(), ocm.getParameterSpec()));
     }
 }

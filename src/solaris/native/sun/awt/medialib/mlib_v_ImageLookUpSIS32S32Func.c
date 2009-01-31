@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageLookUpSIS32S32Func.c	1.5	02/03/28 SMI"
+
 
 #include "mlib_image.h"
 #include "mlib_v_ImageLookUpFunc.h"

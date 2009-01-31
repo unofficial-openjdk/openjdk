@@ -64,7 +64,6 @@ import java.util.Iterator;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  *
  * @see java.nio.charset.Charset
@@ -80,9 +79,9 @@ public abstract class CharsetProvider {
      *          {@link RuntimePermission}<tt>("charsetProvider")</tt>
      */
     protected CharsetProvider() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null)
-	    sm.checkPermission(new RuntimePermission("charsetProvider"));
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkPermission(new RuntimePermission("charsetProvider"));
     }
 
     /**

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,33 +23,33 @@
 
 /* @test
  * @bug 4186885
- * @clean OriginalClass EvolvedClass 
+ * @clean OriginalClass EvolvedClass
  * @build OriginalClass
  * @run main OriginalClass
  * @build EvolvedClass
  * @run main EvolvedClass
- * @summary To ensure that during deserializing classes, only the highest 
- *          non-serializable class in the hierarchy has its no-arg constructor 
- * 	    invoked.
+ * @summary To ensure that during deserializing classes, only the highest
+ *          non-serializable class in the hierarchy has its no-arg constructor
+ *          invoked.
  *
  */
- 
+
 import java.io.*;
 public class OriginalClass {
 
     public static void main(String args[]) throws Exception{
-	ASubClass corg = new ASubClass(1);
-	ASubClass cnew = null;
+        ASubClass corg = new ASubClass(1);
+        ASubClass cnew = null;
 
-	// Serialize the subclass
-	FileOutputStream fo = new FileOutputStream("parents.ser");
-	ObjectOutputStream so = new ObjectOutputStream(fo);
-	so.writeObject(corg);
-	so.flush();
+        // Serialize the subclass
+        FileOutputStream fo = new FileOutputStream("parents.ser");
+        ObjectOutputStream so = new ObjectOutputStream(fo);
+        so.writeObject(corg);
+        so.flush();
 
-	System.out.println("Printing the serialized class: ");
-	System.out.println();
-	System.out.println(corg);
+        System.out.println("Printing the serialized class: ");
+        System.out.println();
+        System.out.println(corg);
     }
 }
 
@@ -58,10 +58,10 @@ class ASubClass implements Serializable {
     int num;
 
     ASubClass(int num) {
-	this.num = num;
+        this.num = num;
     }
 
     public String toString() {
-	return ("\nNum:  " + num);
+        return ("\nNum:  " + num);
     }
 }

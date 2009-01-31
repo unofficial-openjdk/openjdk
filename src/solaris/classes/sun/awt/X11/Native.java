@@ -40,7 +40,7 @@ class Native {
     private static Unsafe unsafe = XlibWrapper.unsafe;
 
     static int longSize;
-  
+
     static int dataModel;
     static {
         String dataModelProp = (String)AccessController.
@@ -69,7 +69,7 @@ class Native {
      * and they have the same size as they would have in C compiler
      * on the same platform.
      */
-    
+
     static boolean getBool(long ptr) { return getInt(ptr) != 0; }
     static boolean getBool(long ptr, int index) { return getInt(ptr, index) != 0; }
     static void putBool(long ptr, boolean data) { putInt(ptr, (data)?(1):(0)); }
@@ -123,7 +123,7 @@ class Native {
         }
         return res;
     }
-    
+
     /**
      * Access to C unsigned byte data(one byte)
      */
@@ -133,7 +133,7 @@ class Native {
     static short getUByte(long ptr, int index) {
         return getUByte(ptr+index);
     }
-    
+
     /**
      * Stores to C unsigned byte data(one byte)
      */
@@ -142,9 +142,9 @@ class Native {
     static void putUByte(long ptr, int index, short data) {
         putUByte(ptr+index, data);
     }
-    
+
     /**
-     * Converts length usnigned bytes of data pointed by <code>data</code> into 
+     * Converts length usnigned bytes of data pointed by <code>data</code> into
      * short array
      * Returns null if data is zero
      * @param data native pointer to native memory
@@ -178,12 +178,12 @@ class Native {
 
     /**
      * Access to C short data(two bytes)
-     */    
+     */
     static int getShortSize() { return 2; }
     static short getShort(long ptr) { return unsafe.getShort(ptr); }
     /**
      * Stores to C short data(two bytes)
-     */    
+     */
     static void putShort(long ptr, short data) { unsafe.putShort(ptr, data); }
     static void putShort(long ptr, int index, short data) {
         putShort(ptr + index*getShortSize(), data);
@@ -196,23 +196,23 @@ class Native {
         for (int i = 0; i < shorts.length; i++) {
             putShort(res, i, shorts[i]);
         }
-        return res;                
+        return res;
     }
 
     /**
      * Access to C unsigned short data(two bytes)
-     */    
+     */
     static int getUShortSize() { return 2; }
-    
+
     static int getUShort(long ptr) { return 0xFFFF & unsafe.getShort(ptr); }
     /**
      * Stores to C unsigned short data(two bytes)
-     */    
+     */
     static void putUShort(long ptr, int data) { unsafe.putShort(ptr, (short)data); }
     static void putUShort(long ptr, int index, int data) {
         putUShort(ptr + index*getShortSize(), data);
     }
-    
+
     /**
      * Stores int array as unsigned shorts into native memory and returns pointer
      * to this memory
@@ -226,7 +226,7 @@ class Native {
         for (int i = 0; i < shorts.length; i++) {
             putUShort(res, i, shorts[i]);
         }
-        return res;                
+        return res;
     }
 
     /**
@@ -234,7 +234,7 @@ class Native {
      */
     static int getIntSize() { return 4; }
     static int getInt(long ptr) { return unsafe.getInt(ptr); }
-    static int getInt(long ptr, int index) { return getInt(ptr +getIntSize()*index); } 
+    static int getInt(long ptr, int index) { return getInt(ptr +getIntSize()*index); }
     /**
      * Stores to C int data(four bytes)
      */
@@ -250,7 +250,7 @@ class Native {
         for (int i = 0; i < ints.length; i++) {
             putInt(res, i, ints[i]);
         }
-        return res;        
+        return res;
     }
 
     /**
@@ -258,7 +258,7 @@ class Native {
      */
     static int getUIntSize() { return 4; }
     static long getUInt(long ptr) { return 0xFFFFFFFFL & unsafe.getInt(ptr); }
-    static long getUInt(long ptr, int index) { return getUInt(ptr +getIntSize()*index); } 
+    static long getUInt(long ptr, int index) { return getUInt(ptr +getIntSize()*index); }
     /**
      * Stores to C unsigned int data(four bytes)
      */
@@ -266,7 +266,7 @@ class Native {
     static void putUInt(long ptr, int index, long data) {
         putUInt(ptr + index*getIntSize(), data);
     }
-    
+
     /**
      * Stores long array as unsigned intss into native memory and returns pointer
      * to this memory
@@ -280,16 +280,16 @@ class Native {
         for (int i = 0; i < ints.length; i++) {
             putUInt(res, i, ints[i]);
         }
-        return res;        
+        return res;
     }
-        
+
     /**
      * Access to C long data(size depends on platform)
      */
     static int getLongSize() {
         return longSize;
     }
-    static long getLong(long ptr) { 
+    static long getLong(long ptr) {
         if (XlibWrapper.dataModel == 32) {
             return unsafe.getInt(ptr);
         } else {
@@ -301,7 +301,7 @@ class Native {
      * Note: <code>data</code> has <code>long</code> type
      * to be able to keep 64-bit C <code>long</code> data
      */
-    static void putLong(long ptr, long data) { 
+    static void putLong(long ptr, long data) {
         if (XlibWrapper.dataModel == 32) {
             unsafe.putInt(ptr, (int)data);
         } else {
@@ -323,7 +323,7 @@ class Native {
      * Stores Java long[] array into memory. Memory location is treated as array
      * of native <code>long</code>s
      */
-    static void put(long ptr, long[] arr) {        
+    static void put(long ptr, long[] arr) {
         for (int i = 0; i < arr.length; i ++, ptr += getLongSize()) {
             putLong(ptr, arr[i]);
         }
@@ -332,8 +332,8 @@ class Native {
     /**
      * Stores Java Vector of Longs into memory. Memory location is treated as array
      * of native <code>long</code>s
-     */    
-    static void putLong(long ptr, Vector arr) {        
+     */
+    static void putLong(long ptr, Vector arr) {
         for (int i = 0; i < arr.size(); i ++, ptr += getLongSize()) {
             putLong(ptr, ((Long)arr.elementAt(i)).longValue());
         }
@@ -342,8 +342,8 @@ class Native {
     /**
      * Stores Java Vector of Longs into memory. Memory location is treated as array
      * of native <code>long</code>s. Array is stored in reverse order
-     */    
-    static void putLongReverse(long ptr, Vector arr) {        
+     */
+    static void putLongReverse(long ptr, Vector arr) {
         for (int i = arr.size()-1; i >= 0; i--, ptr += getLongSize()) {
             putLong(ptr, ((Long)arr.elementAt(i)).longValue());
         }
@@ -362,7 +362,7 @@ class Native {
         for (int i = 0; i < length; i++, data += getLongSize()) {
             res[i] = getLong(data);
         }
-        return res;        
+        return res;
     }
     static long toData(long[] longs) {
         if (longs == null) {
@@ -372,7 +372,7 @@ class Native {
         for (int i = 0; i < longs.length; i++) {
             putLong(res, i, longs[i]);
         }
-        return res;                
+        return res;
     }
 
 
@@ -386,8 +386,8 @@ class Native {
         } else {
             // Can't do anything!!!
             return unsafe.getLong(ptr);
-        }        
-    }    
+        }
+    }
 
     static void putULong(long ptr, long value) {
         putLong(ptr, value);
@@ -406,7 +406,7 @@ class Native {
     }
     static long getWindow(long ptr, int index) {
         return getLong(ptr + getWindowSize()*index);
-    }    
+    }
 
     static void putWindow(long ptr, long window) {
         putLong(ptr, window);
@@ -428,7 +428,7 @@ class Native {
     /**
      * Set of function to access CARD32 type. All data which types are derived
      * from CARD32 should be accessed using this accessors.
-     * These types are: XID(Window, Drawable, Font, Pixmap, Cursor, Colormap, GContext, KeySym), 
+     * These types are: XID(Window, Drawable, Font, Pixmap, Cursor, Colormap, GContext, KeySym),
      *                  Atom, Mask, VisualID, Time
      */
     static long getCard32(long ptr) {

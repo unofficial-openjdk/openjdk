@@ -23,31 +23,31 @@
 
 /* @test
    @bug 4059406
-   @summary Throwable.toString() should call getLocalizedMessage() 
+   @summary Throwable.toString() should call getLocalizedMessage()
    @author Anand Palaniswamy
  */
 public class LocalizedMessage {
 
     static class LocalizedException extends Throwable {
-	
+
         boolean localizedMessageCalled = false;
-	
+
         LocalizedException() {
-	    localizedMessageCalled = false;
+            localizedMessageCalled = false;
         }
-	
+
         public String getLocalizedMessage() {
-	    localizedMessageCalled = true;
-	    return new String("FOOBAR");
+            localizedMessageCalled = true;
+            return new String("FOOBAR");
         }
     }
-    
+
     public static void main(String[] args) throws Exception {
-	LocalizedException e = new LocalizedException();
-	e.toString();
-	if (!e.localizedMessageCalled) {
-	    throw new Exception("Throwable.toString() must call " + 
-				"getLocalizedMessage()");
-	}
+        LocalizedException e = new LocalizedException();
+        e.toString();
+        if (!e.localizedMessageCalled) {
+            throw new Exception("Throwable.toString() must call " +
+                                "getLocalizedMessage()");
+        }
     }
 }

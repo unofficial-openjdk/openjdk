@@ -50,10 +50,10 @@ public class CloseFailedClientTest {
      * The port 999 is specified in
      * http://www.iana.org/assignments/port-numbers
      * as:
-     * garcon		999/tcp
-     * applix		999/udp	       Applix ac
-     * puprouter	999/tcp
-     * puprouter	999/udp
+     * garcon           999/tcp
+     * applix           999/udp        Applix ac
+     * puprouter        999/tcp
+     * puprouter        999/udp
      *
      * If the test fails because a server runs on this port and does
      * not give back an IOException, we can change to another one like
@@ -64,7 +64,7 @@ public class CloseFailedClientTest {
     private static final String[] protocols = {"rmi", "iiop", "jmxmp"};
 
     public static void main(String[] args) throws Exception {
-	System.out.println("Test to close a failed client.");
+        System.out.println("Test to close a failed client.");
 
         boolean ok = true;
         for (int i = 0; i < protocols.length; i++) {
@@ -95,53 +95,53 @@ public class CloseFailedClientTest {
     private static boolean test(String proto)
             throws Exception {
         System.out.println("Test for protocol " + proto);
-	JMXServiceURL url = new JMXServiceURL(proto, null, port);
+        JMXServiceURL url = new JMXServiceURL(proto, null, port);
 
-	JMXConnector connector;
-	JMXConnectorServer server;
+        JMXConnector connector;
+        JMXConnectorServer server;
 
-	for (int i=0; i<20; i++) {
-	    // no server
-	    try {
-		connector = JMXConnectorFactory.newJMXConnector(url, null);
-	    } catch (MalformedURLException e) {
-		System.out.println("Skipping unsupported URL " + url);
-		return true;
-	    }
+        for (int i=0; i<20; i++) {
+            // no server
+            try {
+                connector = JMXConnectorFactory.newJMXConnector(url, null);
+            } catch (MalformedURLException e) {
+                System.out.println("Skipping unsupported URL " + url);
+                return true;
+            }
 
-	    try {
-		connector.connect();
-		
-		throw new RuntimeException("Do not get expected IOEeption.");
-	    } catch (IOException e) {
-		// OK, the expected IOException is thrown.");                  
-	    }
-	    
-	    // close the connector client
-	    connector.close();
+            try {
+                connector.connect();
 
-	    // with server but not started
-	    try {
-		server = JMXConnectorServerFactory.newJMXConnectorServer(url, null, null);
-	    } catch (MalformedURLException e) {
-		System.out.println("Skipping unsupported URL " + url);
-		return true;
-	    }
+                throw new RuntimeException("Do not get expected IOEeption.");
+            } catch (IOException e) {
+                // OK, the expected IOException is thrown.");
+            }
 
-	    connector = JMXConnectorFactory.newJMXConnector(url, null);
+            // close the connector client
+            connector.close();
 
-	    try {
-		connector.connect();
-		
-		throw new RuntimeException("Do not get expected IOEeption.");
-	    } catch (IOException e) {
-		// OK, the expected IOException is thrown.");                  
-	    }
-	    
-	    // close the connector client
-	    connector.close();
-	}
+            // with server but not started
+            try {
+                server = JMXConnectorServerFactory.newJMXConnectorServer(url, null, null);
+            } catch (MalformedURLException e) {
+                System.out.println("Skipping unsupported URL " + url);
+                return true;
+            }
 
-	return true;
+            connector = JMXConnectorFactory.newJMXConnector(url, null);
+
+            try {
+                connector.connect();
+
+                throw new RuntimeException("Do not get expected IOEeption.");
+            } catch (IOException e) {
+                // OK, the expected IOException is thrown.");
+            }
+
+            // close the connector client
+            connector.close();
+        }
+
+        return true;
     }
 }

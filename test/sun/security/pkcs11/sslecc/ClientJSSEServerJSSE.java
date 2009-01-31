@@ -32,36 +32,36 @@
 import java.security.*;
 
 public class ClientJSSEServerJSSE extends PKCS11Test {
-    
+
     private static String[] cmdArgs;
-    
+
     public static void main(String[] args) throws Exception {
-	cmdArgs = args;
-	main(new ClientJSSEServerJSSE());
+        cmdArgs = args;
+        main(new ClientJSSEServerJSSE());
     }
-    
+
     public void main(Provider p) throws Exception {
-	if (p.getService("KeyFactory", "EC") == null) {
-	    System.out.println("Provider does not support EC, skipping");
-	    return;
-	}
-	Security.insertProviderAt(p, 1);
-	CipherTest.main(new JSSEFactory(), cmdArgs);
-	Security.removeProvider(p.getName());
+        if (p.getService("KeyFactory", "EC") == null) {
+            System.out.println("Provider does not support EC, skipping");
+            return;
+        }
+        Security.insertProviderAt(p, 1);
+        CipherTest.main(new JSSEFactory(), cmdArgs);
+        Security.removeProvider(p.getName());
     }
 
     private static class JSSEFactory extends CipherTest.PeerFactory {
-	
-	String getName() {
-	    return "Client JSSE - Server JSSE";
-	}
-	
+
+        String getName() {
+            return "Client JSSE - Server JSSE";
+        }
+
         CipherTest.Client newClient(CipherTest cipherTest) throws Exception {
-	    return new JSSEClient(cipherTest);
-	}
-	
-	CipherTest.Server newServer(CipherTest cipherTest) throws Exception {
-	    return new JSSEServer(cipherTest);
-	}
+            return new JSSEClient(cipherTest);
+        }
+
+        CipherTest.Server newServer(CipherTest cipherTest) throws Exception {
+            return new JSSEServer(cipherTest);
+        }
     }
 }

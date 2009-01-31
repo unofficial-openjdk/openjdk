@@ -42,39 +42,39 @@ package javax.management;
  *
  * @since 1.5
  */
- public class Query extends Object   { 
-     
-     
+ public class Query extends Object   {
+
+
      /**
       * A code representing the {@link Query#gt} query.  This is chiefly
       * of interest for the serialized form of queries.
       */
-     public static final int GT	 = 0;
+     public static final int GT  = 0;
 
      /**
       * A code representing the {@link Query#lt} query.  This is chiefly
       * of interest for the serialized form of queries.
       */
-     public static final int LT	 = 1;
+     public static final int LT  = 1;
 
      /**
       * A code representing the {@link Query#geq} query.  This is chiefly
       * of interest for the serialized form of queries.
       */
-     public static final int GE	 = 2;
+     public static final int GE  = 2;
 
      /**
       * A code representing the {@link Query#leq} query.  This is chiefly
       * of interest for the serialized form of queries.
       */
-     public static final int LE	 = 3;
+     public static final int LE  = 3;
 
      /**
       * A code representing the {@link Query#eq} query.  This is chiefly
       * of interest for the serialized form of queries.
       */
-     public static final int EQ	 = 4;
-     
+     public static final int EQ  = 4;
+
 
      /**
       * A code representing the {@link Query#plus} expression.  This
@@ -99,13 +99,13 @@ package javax.management;
       * chiefly of interest for the serialized form of queries.
       */
      public static final int DIV   = 3;
-     
+
 
      /**
       * Basic constructor.
       */
-     public Query() { 
-     } 
+     public Query() {
+     }
 
 
      /**
@@ -120,10 +120,10 @@ package javax.management;
       * <a href="../../serialized-form.html#javax.management.AndQueryExp">
       * javax.management.AndQueryExp</a>}.
       */
-     public static QueryExp and(QueryExp q1, QueryExp q2)  { 
-	 return new AndQueryExp(q1, q2);
-     } 
-     
+     public static QueryExp and(QueryExp q1, QueryExp q2)  {
+         return new AndQueryExp(q1, q2);
+     }
+
      /**
       * Returns a query expression that is the disjunction of two other query
       * expressions.
@@ -136,10 +136,10 @@ package javax.management;
       * <a href="../../serialized-form.html#javax.management.OrQueryExp">
       * javax.management.OrQueryExp</a>}.
       */
-     public static QueryExp or(QueryExp q1, QueryExp q2)  { 
-	 return new OrQueryExp(q1, q2);
-     } 
-     
+     public static QueryExp or(QueryExp q1, QueryExp q2)  {
+         return new OrQueryExp(q1, q2);
+     }
+
      /**
       * Returns a query expression that represents a "greater than" constraint on
       * two values.
@@ -154,9 +154,9 @@ package javax.management;
       * javax.management.BinaryRelQueryExp</a>} with a {@code relOp} equal
       * to {@link #GT}.
       */
-     public static QueryExp gt(ValueExp v1, ValueExp v2)  { 
-	 return new BinaryRelQueryExp(GT, v1, v2);
-     } 
+     public static QueryExp gt(ValueExp v1, ValueExp v2)  {
+         return new BinaryRelQueryExp(GT, v1, v2);
+     }
 
      /**
       * Returns a query expression that represents a "greater than or equal
@@ -172,9 +172,9 @@ package javax.management;
       * javax.management.BinaryRelQueryExp</a>} with a {@code relOp} equal
       * to {@link #GE}.
       */
-     public static QueryExp geq(ValueExp v1, ValueExp v2)  { 
-	 return new BinaryRelQueryExp(GE, v1, v2);
-     } 
+     public static QueryExp geq(ValueExp v1, ValueExp v2)  {
+         return new BinaryRelQueryExp(GE, v1, v2);
+     }
 
      /**
       * Returns a query expression that represents a "less than or equal to"
@@ -190,9 +190,9 @@ package javax.management;
       * javax.management.BinaryRelQueryExp</a>} with a {@code relOp} equal
       * to {@link #LE}.
       */
-     public static QueryExp leq(ValueExp v1, ValueExp v2)  { 
-	 return new BinaryRelQueryExp(LE, v1, v2);
-     } 
+     public static QueryExp leq(ValueExp v1, ValueExp v2)  {
+         return new BinaryRelQueryExp(LE, v1, v2);
+     }
 
      /**
       * Returns a query expression that represents a "less than" constraint on
@@ -208,9 +208,9 @@ package javax.management;
       * javax.management.BinaryRelQueryExp</a>} with a {@code relOp} equal
       * to {@link #LT}.
       */
-     public static QueryExp lt(ValueExp v1, ValueExp v2)  { 
-	 return new BinaryRelQueryExp(LT, v1, v2);
-     } 
+     public static QueryExp lt(ValueExp v1, ValueExp v2)  {
+         return new BinaryRelQueryExp(LT, v1, v2);
+     }
 
      /**
       * Returns a query expression that represents an equality constraint on
@@ -226,16 +226,16 @@ package javax.management;
       * javax.management.BinaryRelQueryExp</a>} with a {@code relOp} equal
       * to {@link #EQ}.
       */
-     public static QueryExp eq(ValueExp v1, ValueExp v2)  { 
-	 return new BinaryRelQueryExp(EQ, v1, v2);
-     } 
+     public static QueryExp eq(ValueExp v1, ValueExp v2)  {
+         return new BinaryRelQueryExp(EQ, v1, v2);
+     }
 
      /**
       * Returns a query expression that represents the constraint that one
       * value is between two other values.
       *
       * @param v1 A value expression that is "between" v2 and v3.
-      * @param v2 Value expression that represents a boundary of the constraint.     
+      * @param v2 Value expression that represents a boundary of the constraint.
       * @param v3 Value expression that represents a boundary of the constraint.
       *
       * @return The constraint that v1 lies between v2 and v3.  The
@@ -245,8 +245,8 @@ package javax.management;
       * javax.management.BetweenQueryExp</a>}.
       */
      public static QueryExp between(ValueExp v1, ValueExp v2, ValueExp v3) {
-	 return new BetweenQueryExp(v1, v2, v3); 
-     } 
+         return new BetweenQueryExp(v1, v2, v3);
+     }
 
      /**
       * Returns a query expression that represents a matching constraint on
@@ -272,9 +272,9 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.MatchQueryExp">
       * javax.management.MatchQueryExp</a>}.
       */
-     public static QueryExp match(AttributeValueExp a, StringValueExp s)  { 
-	 return new MatchQueryExp(a, s);
-     } 
+     public static QueryExp match(AttributeValueExp a, StringValueExp s)  {
+         return new MatchQueryExp(a, s);
+     }
 
      /**
       * <p>Returns a new attribute expression.</p>
@@ -287,10 +287,10 @@ package javax.management;
       * @param name The name of the attribute.
       *
       * @return  An attribute expression for the attribute named name.
-      */    
-     public static AttributeValueExp attr(String name)  { 
-	 return new AttributeValueExp(name);
-     }     
+      */
+     public static AttributeValueExp attr(String name)  {
+         return new AttributeValueExp(name);
+     }
 
      /**
       * <p>Returns a new qualified attribute expression.</p>
@@ -310,11 +310,11 @@ package javax.management;
       * non-public class {@link <a
       * href="../../serialized-form.html#javax.management.QualifiedAttributeValueExp">
       * javax.management.QualifiedAttributeValueExp</a>}.
-      */     
-     public static AttributeValueExp attr(String className, String name)  { 
-	 return new QualifiedAttributeValueExp(className, name);
-     } 
-     
+      */
+     public static AttributeValueExp attr(String className, String name)  {
+         return new QualifiedAttributeValueExp(className, name);
+     }
+
      /**
       * <p>Returns a new class attribute expression which can be used in any
       * Query call that expects a ValueExp.</p>
@@ -330,10 +330,10 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.ClassAttributeValueExp">
       * javax.management.ClassAttributeValueExp</a>}.
       */
-     public static AttributeValueExp classattr()  { 
-	 return new ClassAttributeValueExp();
-     } 
-     
+     public static AttributeValueExp classattr()  {
+         return new ClassAttributeValueExp();
+     }
+
      /**
       * Returns a constraint that is the negation of its argument.
       *
@@ -344,13 +344,13 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NotQueryExp">
       * javax.management.NotQueryExp</a>}.
       */
-     public static QueryExp not(QueryExp queryExp)  { 
-	 return new NotQueryExp(queryExp);
-     } 
-    
+     public static QueryExp not(QueryExp queryExp)  {
+         return new NotQueryExp(queryExp);
+     }
+
      /**
       * Returns an expression constraining a value to be one of an explicit list.
-      *      
+      *
       * @param val A value to be constrained.
       * @param valueList An array of ValueExps.
       *
@@ -360,21 +360,21 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.InQueryExp">
       * javax.management.InQueryExp</a>}.
       */
-     public static QueryExp in(ValueExp val, ValueExp valueList[])  { 
-	 return new InQueryExp(val, valueList);
-     } 
-     
+     public static QueryExp in(ValueExp val, ValueExp valueList[])  {
+         return new InQueryExp(val, valueList);
+     }
+
      /**
       * Returns a new string expression.
       *
       * @param val The string value.
       *
       * @return  A ValueExp object containing the string argument.
-      */    
-     public static StringValueExp value(String val)  { 
-	 return new StringValueExp(val);
-     } 
-     
+      */
+     public static StringValueExp value(String val)  {
+         return new StringValueExp(val);
+     }
+
      /**
       * Returns a numeric value expression that can be used in any Query call
       * that expects a ValueExp.
@@ -387,9 +387,9 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NumericValueExp">
       * javax.management.NumericValueExp</a>}.
       */
-     public static ValueExp value(Number val)  { 
-	 return new NumericValueExp(val);
-     } 
+     public static ValueExp value(Number val)  {
+         return new NumericValueExp(val);
+     }
 
      /**
       * Returns a numeric value expression that can be used in any Query call
@@ -403,9 +403,9 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NumericValueExp">
       * javax.management.NumericValueExp</a>}.
       */
-     public static ValueExp value(int val)  { 
-	 return new NumericValueExp((long) val);
-     } 
+     public static ValueExp value(int val)  {
+         return new NumericValueExp((long) val);
+     }
 
      /**
       * Returns a numeric value expression that can be used in any Query call
@@ -419,10 +419,10 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NumericValueExp">
       * javax.management.NumericValueExp</a>}.
       */
-     public static ValueExp value(long val)  { 
-	 return new NumericValueExp(val);
-     } 
-     
+     public static ValueExp value(long val)  {
+         return new NumericValueExp(val);
+     }
+
      /**
       * Returns a numeric value expression that can be used in any Query call
       * that expects a ValueExp.
@@ -435,10 +435,10 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NumericValueExp">
       * javax.management.NumericValueExp</a>}.
       */
-     public static ValueExp value(float val)  { 
-	 return new NumericValueExp((double) val);
-     } 
-     
+     public static ValueExp value(float val)  {
+         return new NumericValueExp((double) val);
+     }
+
      /**
       * Returns a numeric value expression that can be used in any Query call
       * that expects a ValueExp.
@@ -451,9 +451,9 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.NumericValueExp">
       * javax.management.NumericValueExp</a>}.
       */
-     public static ValueExp value(double val)  { 
-	 return new NumericValueExp(val);
-     } 
+     public static ValueExp value(double val)  {
+         return new NumericValueExp(val);
+     }
 
      /**
       * Returns a boolean value expression that can be used in any Query call
@@ -467,9 +467,9 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.BooleanValueExp">
       * javax.management.BooleanValueExp</a>}.
       */
-     public static ValueExp value(boolean val)  { 
-	 return new BooleanValueExp(val);
-     } 
+     public static ValueExp value(boolean val)  {
+         return new BooleanValueExp(val);
+     }
 
      /**
       * Returns a binary expression representing the sum of two numeric values,
@@ -486,14 +486,14 @@ package javax.management;
       * {@link #PLUS}.
       */
      public static ValueExp plus(ValueExp value1, ValueExp value2) {
-	 return new BinaryOpValueExp(PLUS, value1, value2); 
-     } 
-     
+         return new BinaryOpValueExp(PLUS, value1, value2);
+     }
+
      /**
       * Returns a binary expression representing the product of two numeric values.
       *
       *
-      * @param value1 The first '*' operand.      
+      * @param value1 The first '*' operand.
       * @param value2 The second '*' operand.
       *
       * @return A ValueExp representing the product.  The returned
@@ -504,14 +504,14 @@ package javax.management;
       * {@link #TIMES}.
       */
      public static ValueExp times(ValueExp value1,ValueExp value2) {
-	 return new BinaryOpValueExp(TIMES, value1, value2); 
+         return new BinaryOpValueExp(TIMES, value1, value2);
      }
-     
+
      /**
       * Returns a binary expression representing the difference between two numeric
       * values.
       *
-      * @param value1 The first '-' operand.      
+      * @param value1 The first '-' operand.
       * @param value2 The second '-' operand.
       *
       * @return A ValueExp representing the difference between two
@@ -522,9 +522,9 @@ package javax.management;
       * {@link #MINUS}.
       */
      public static ValueExp minus(ValueExp value1, ValueExp value2) {
-	 return new BinaryOpValueExp(MINUS, value1, value2);
-     } 
-     
+         return new BinaryOpValueExp(MINUS, value1, value2);
+     }
+
      /**
       * Returns a binary expression representing the quotient of two numeric
       * values.
@@ -538,11 +538,11 @@ package javax.management;
       * href="../../serialized-form.html#javax.management.BinaryOpValueExp">
       * javax.management.BinaryOpValueExp</a>} with an {@code op} equal to
       * {@link #DIV}.
-      */     
+      */
      public static ValueExp div(ValueExp value1, ValueExp value2) {
-	 return new BinaryOpValueExp(DIV, value1, value2); 
-     } 
-     
+         return new BinaryOpValueExp(DIV, value1, value2);
+     }
+
      /**
       * Returns a query expression that represents a matching constraint on
       * a string argument. The value must start with the given literal string
@@ -559,7 +559,7 @@ package javax.management;
       * javax.management.MatchQueryExp</a>}.
       */
      public static QueryExp initialSubString(AttributeValueExp a, StringValueExp s)  {
-	 return new MatchQueryExp(a,
+         return new MatchQueryExp(a,
              new StringValueExp(escapeString(s.getValue()) + "*"));
      }
 
@@ -578,7 +578,7 @@ package javax.management;
       * javax.management.MatchQueryExp</a>}.
       */
      public static QueryExp anySubString(AttributeValueExp a, StringValueExp s) {
-	 return new MatchQueryExp(a,
+         return new MatchQueryExp(a,
              new StringValueExp("*" + escapeString(s.getValue()) + "*"));
      }
 
@@ -598,15 +598,15 @@ package javax.management;
       * javax.management.MatchQueryExp</a>}.
       */
      public static QueryExp finalSubString(AttributeValueExp a, StringValueExp s) {
-	 return new MatchQueryExp(a,
+         return new MatchQueryExp(a,
              new StringValueExp("*" + escapeString(s.getValue())));
      }
 
      /**
-      * Returns a query expression that represents an inheritance constraint 
+      * Returns a query expression that represents an inheritance constraint
       * on an MBean class.
-      * <p>Example: to find MBeans that are instances of 
-      * {@link NotificationBroadcaster}, use 
+      * <p>Example: to find MBeans that are instances of
+      * {@link NotificationBroadcaster}, use
       * {@code Query.isInstanceOf(Query.value(NotificationBroadcaster.class.getName()))}.
       * </p>
       * <p>Evaluating this expression for a given

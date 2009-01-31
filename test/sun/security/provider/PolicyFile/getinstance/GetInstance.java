@@ -23,18 +23,18 @@
 
 public class GetInstance {
     public static void main(String[] args) {
-	SecurityManager sm = System.getSecurityManager();
-	try {
-	    sm.checkPermission(new NoArgPermission());
-	    sm.checkPermission(new OneArgPermission("one"));
-	    sm.checkPermission(new TwoArgPermission("two", "two"));
-	    sm.checkPermission(new TwoArgNullActionsPermission
-						("two",
-						(String)null));
-	} catch (Exception e) {
-	    System.out.println("Test Failed");
-	    e.printStackTrace();
-	    throw new SecurityException("Test Failed");
-	}
+        SecurityManager sm = System.getSecurityManager();
+        try {
+            sm.checkPermission(new NoArgPermission());
+            sm.checkPermission(new OneArgPermission("one"));
+            sm.checkPermission(new TwoArgPermission("two", "two"));
+            sm.checkPermission(new TwoArgNullActionsPermission
+                                                ("two",
+                                                (String)null));
+        } catch (Exception e) {
+            System.out.println("Test Failed");
+            e.printStackTrace();
+            throw new SecurityException("Test Failed");
+        }
     }
 }

@@ -32,27 +32,26 @@ import com.sun.script.util.*;
 /**
  * Factory to create RhinoScriptEngine
  *
- * @version 1.0
  * @author Mike Grogan
  * @since 1.6
  */
 public class RhinoScriptEngineFactory extends ScriptEngineFactoryBase {
-    
+
     public RhinoScriptEngineFactory() {
     }
-    
+
     public List<String> getExtensions() {
         return extensions;
     }
-    
+
     public List<String> getMimeTypes() {
         return mimeTypes;
     }
-    
+
     public List<String> getNames() {
         return names;
     }
-    
+
     public Object getParameter(String key) {
         if (key.equals(ScriptEngine.NAME)) {
             return "javascript";
@@ -70,22 +69,22 @@ public class RhinoScriptEngineFactory extends ScriptEngineFactoryBase {
             throw new IllegalArgumentException("Invalid key");
         }
     }
-    
+
     public ScriptEngine getScriptEngine() {
         RhinoScriptEngine ret = new RhinoScriptEngine();
         ret.setEngineFactory(this);
         return ret;
     }
-    
+
     public String getMethodCallSyntax(String obj, String method, String... args) {
-        
+
         String ret = obj + "." + method + "(";
         int len = args.length;
         if (len == 0) {
             ret += ")";
             return ret;
         }
-        
+
         for (int i = 0; i < len; i++) {
             ret += args[i];
             if (i != len - 1) {
@@ -96,7 +95,7 @@ public class RhinoScriptEngineFactory extends ScriptEngineFactoryBase {
         }
         return ret;
     }
-    
+
     public String getOutputStatement(String toDisplay) {
         StringBuffer buf = new StringBuffer();
         int len = toDisplay.length();
@@ -118,26 +117,26 @@ public class RhinoScriptEngineFactory extends ScriptEngineFactoryBase {
         buf.append("\")");
         return buf.toString();
     }
-    
+
     public String getProgram(String... statements) {
         int len = statements.length;
         String ret = "";
         for (int i = 0; i < len; i++) {
             ret += statements[i] + ";";
         }
-        
+
         return ret;
     }
-    
+
     public static void main(String[] args) {
         RhinoScriptEngineFactory fact = new RhinoScriptEngineFactory();
         System.out.println(fact.getParameter(ScriptEngine.ENGINE_VERSION));
     }
-    
+
     private static List<String> names;
     private static List<String> mimeTypes;
     private static List<String> extensions;
-    
+
     static {
         names = new ArrayList<String>(6);
         names.add("js");

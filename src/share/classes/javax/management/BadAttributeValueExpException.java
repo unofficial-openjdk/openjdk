@@ -34,7 +34,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class BadAttributeValueExpException extends Exception   { 
+public class BadAttributeValueExpException extends Exception   {
 
 
     /* Serial version */
@@ -50,16 +50,16 @@ public class BadAttributeValueExpException extends Exception   {
      *
      * @param val the inappropriate value.
      */
-    public BadAttributeValueExpException (Object val) { 
-	this.val = val;
-    } 
-   
- 
+    public BadAttributeValueExpException (Object val) {
+        this.val = val;
+    }
+
+
     /**
      * Returns the string representing the object.
      */
-    public String toString()  { 
-	return "BadAttributeValueException: " + val;
-    } 
+    public String toString()  {
+        return "BadAttributeValueException: " + val;
+    }
 
  }

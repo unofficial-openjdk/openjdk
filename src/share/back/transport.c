@@ -32,7 +32,7 @@ static jdwpTransportEnv *transport;
 static jrawMonitorID listenerLock;
 static jrawMonitorID sendLock;
 
-/*                  
+/*
  * data structure used for passing transport info from thread to thread
  */
 typedef struct TransportInfo {
@@ -47,13 +47,13 @@ static struct jdwpTransportCallback callback = {jvmtiAllocate, jvmtiDeallocate};
 /*
  * Print the last transport error
  */
-static void 
+static void
 printLastError(jdwpTransportEnv *t, jdwpTransportError err)
 {
     char  *msg;
     jbyte *utf8msg;
     jdwpTransportError rv;
-    
+
     msg     = NULL;
     utf8msg = NULL;
     rv = (*t)->GetLastError(t, &msg); /* This is a platform encoded string */
@@ -103,28 +103,28 @@ loadTransportLibrary(char *libdir, char *name)
     char libname[MAXPATHLEN+2];
     char buf[MAXPATHLEN*2+100];
     char *plibdir;
-   
+
     /* Convert libdir from UTF-8 to platform encoding */
     plibdir = NULL;
     if ( libdir != NULL ) {
         int  len;
-        
+
         len = (int)strlen(libdir);
         (void)(gdata->npt->utf8ToPlatform)(gdata->npt->utf,
             (jbyte*)libdir, len, buf, (int)sizeof(buf));
         plibdir = buf;
     }
-    
+
     /* Construct library name (simple name or full path) */
     dbgsysBuildLibName(libname, sizeof(libname), plibdir, name);
-    
+
     /* dlopen (unix) / LoadLibrary (windows) the transport library */
     handle = dbgsysLoadLibrary(libname, buf, sizeof(buf));
     return handle;
 }
 
 /*
- * loadTransport() is adapted from loadJVMHelperLib() in 
+ * loadTransport() is adapted from loadJVMHelperLib() in
  * JDK 1.2 javai.c v1.61
  */
 static jdwpError
@@ -140,7 +140,7 @@ loadTransport(char *name, jdwpTransportEnv **transportPtr)
         ERROR_MESSAGE(("library name is empty"));
         return JDWP_ERROR(TRANSPORT_LOAD);
     }
-    
+
     /* First, look in sun.boot.library.path. This should find the standard
      *  dt_socket and dt_shmem transport libraries, or any library
      *  that was delivered with the J2SE.
@@ -172,14 +172,14 @@ loadTransport(char *name, jdwpTransportEnv **transportPtr)
     if (handle == NULL) {
         ERROR_MESSAGE(("transport library not found: %s", name));
         return JDWP_ERROR(TRANSPORT_LOAD);
-    } 
+    }
 
     /* Find the onLoad address */
     onLoad = findTransportOnLoad(handle);
     if (onLoad == NULL) {
         ERROR_MESSAGE(("transport library missing onLoad entry: %s", name));
         return JDWP_ERROR(TRANSPORT_LOAD);
-    } 
+    }
 
     /* Get transport interface */
     env = getEnv();
@@ -187,12 +187,12 @@ loadTransport(char *name, jdwpTransportEnv **transportPtr)
         jdwpTransportEnv *t;
         JavaVM           *jvm;
         jint              ver;
-        
+
         JNI_FUNC_PTR(env,GetJavaVM)(env, &jvm);
         ver = (*onLoad)(jvm, &callback, JDWPTRANSPORT_VERSION_1_0, &t);
         if (ver != JNI_OK) {
             switch (ver) {
-                case JNI_ENOMEM : 
+                case JNI_ENOMEM :
                     ERROR_MESSAGE(("insufficient memory to complete initialization"));
                     break;
 
@@ -215,18 +215,18 @@ loadTransport(char *name, jdwpTransportEnv **transportPtr)
         *transportPtr = t;
     } else {
         return JDWP_ERROR(TRANSPORT_LOAD);
-    } 
-    
+    }
+
     return JDWP_ERROR(NONE);
 }
 
-static void 
+static void
 connectionInitiated(jdwpTransportEnv *t)
 {
     jint isValid = JNI_FALSE;
 
     debugMonitorEnter(listenerLock);
-    
+
     /*
      * Don't allow a connection until initialization is complete
      */
@@ -264,11 +264,11 @@ connectionInitiated(jdwpTransportEnv *t)
 }
 
 /*
- * Set the transport property (sun.jdwp.listenerAddress) to the 
+ * Set the transport property (sun.jdwp.listenerAddress) to the
  * specified value.
  */
 static void
-setTransportProperty(JNIEnv* env, char* value) { 
+setTransportProperty(JNIEnv* env, char* value) {
     char* prop_value = (value == NULL) ? "" : value;
     setAgentPropertyValue(env, "sun.jdwp.listenerAddress", prop_value);
 }
@@ -277,7 +277,7 @@ void
 transport_waitForConnection(void)
 {
     /*
-     * If the VM is suspended on debugger initialization, we wait 
+     * If the VM is suspended on debugger initialization, we wait
      * for a connection before continuing. This ensures that all
      * events are delivered to the debugger. (We might as well do this
      * this since the VM won't continue until a remote debugger attaches
@@ -295,7 +295,7 @@ transport_waitForConnection(void)
 }
 
 static void JNICALL
-acceptThread(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg) 
+acceptThread(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
 {
     TransportInfo *info;
     jdwpTransportEnv *t;
@@ -317,7 +317,7 @@ acceptThread(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
          * We thus exit the VM after stopping the listener.
          */
         printLastError(t, rc);
-        (*t)->StopListening(t); 
+        (*t)->StopListening(t);
         EXIT_ERROR(JVMTI_ERROR_NONE, "could not connect, timeout or fatal error");
     } else {
         (*t)->StopListening(t);
@@ -335,7 +335,7 @@ attachThread(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
     LOG_MISC(("End attach thread"));
 }
 
-void 
+void
 transport_initialize(void)
 {
     transport = NULL;
@@ -343,7 +343,7 @@ transport_initialize(void)
     sendLock = debugMonitorCreate("JDWP Transport Send Monitor");
 }
 
-void 
+void
 transport_reset(void)
 {
     /*
@@ -364,13 +364,13 @@ transport_reset(void)
 }
 
 static jdwpError
-launch(char *command, char *name, char *address) 
+launch(char *command, char *name, char *address)
 {
     jint rc;
     char *buf;
     char *commandLine;
     int  len;
-   
+
     /* Construct complete command line (all in UTF-8) */
     commandLine = jvmtiAllocate((int)strlen(command) +
                                  (int)strlen(name) +
@@ -389,7 +389,7 @@ launch(char *command, char *name, char *address)
     buf = jvmtiAllocate(len*3+3);
     (void)(gdata->npt->utf8ToPlatform)(gdata->npt->utf,
         (jbyte*)commandLine, len, buf, len*3+3);
-   
+
     /* Exec commandLine */
     rc = dbgsysExec(buf);
 
@@ -404,8 +404,8 @@ launch(char *command, char *name, char *address)
     return JDWP_ERROR(NONE);
 }
 
-jdwpError 
-transport_startTransport(jboolean isServer, char *name, char *address, 
+jdwpError
+transport_startTransport(jboolean isServer, char *name, char *address,
                          long timeout)
 {
     jvmtiStartFunction func;
@@ -419,8 +419,8 @@ transport_startTransport(jboolean isServer, char *name, char *address,
      * Note: We're assuming here that we don't support multiple
      * transports - when we do then we need to handle the case
      * where the transport library only supports a single environment.
-     * That probably means we have a bag a transport environments 
-     * to correspond to the transports bag. 
+     * That probably means we have a bag a transport environments
+     * to correspond to the transports bag.
      */
     if (transport != NULL) {
         trans = transport;
@@ -432,21 +432,21 @@ transport_startTransport(jboolean isServer, char *name, char *address,
     }
 
     if (isServer) {
-        
+
         char *retAddress;
         char *launchCommand;
         TransportInfo *info;
         jvmtiError error;
         int len;
         char* prop_value;
-        
+
         info = jvmtiAllocate(sizeof(*info));
         if (info == NULL) {
             return JDWP_ERROR(OUT_OF_MEMORY);
         }
         info->name = jvmtiAllocate((int)strlen(name)+1);
         (void)strcpy(info->name, name);
-        info->address = NULL; 
+        info->address = NULL;
         info->timeout = timeout;
         if (info->name == NULL) {
             serror = JDWP_ERROR(OUT_OF_MEMORY);
@@ -484,7 +484,7 @@ transport_startTransport(jboolean isServer, char *name, char *address,
 
         (void)strcpy(threadName, "JDWP Transport Listener: ");
         (void)strcat(threadName, name);
-        
+
         func = &acceptThread;
         error = spawnNewThread(func, (void*)info, threadName);
         if (error != JVMTI_ERROR_NONE) {
@@ -505,7 +505,7 @@ transport_startTransport(jboolean isServer, char *name, char *address,
             }
         }
         return JDWP_ERROR(NONE);
-        
+
 handleError:
         jvmtiDeallocate(info->name);
         jvmtiDeallocate(info->address);
@@ -533,7 +533,7 @@ handleError:
           */
          (void)strcpy(threadName, "JDWP Transport Listener: ");
          (void)strcat(threadName, name);
-         
+
          func = &attachThread;
          err = spawnNewThread(func, (void*)trans, threadName);
          serror = map2jdwpError(err);
@@ -541,7 +541,7 @@ handleError:
     return serror;
 }
 
-void 
+void
 transport_close(void)
 {
     if ( transport != NULL ) {
@@ -549,23 +549,23 @@ transport_close(void)
     }
 }
 
-jboolean 
+jboolean
 transport_is_open(void)
 {
     jboolean is_open = JNI_FALSE;
-    
+
     if ( transport != NULL ) {
         is_open = (*transport)->IsOpen(transport);
     }
     return is_open;
 }
 
-jint 
+jint
 transport_sendPacket(jdwpPacket *packet)
 {
     jdwpTransportError err = JDWPTRANSPORT_ERROR_NONE;
     jint rc = 0;
-    
+
     if (transport != NULL) {
         if ( (*transport)->IsOpen(transport) ) {
             debugMonitorEnter(sendLock);
@@ -582,18 +582,18 @@ transport_sendPacket(jdwpPacket *packet)
              * success; non-0 otherwise.
              */
             rc = (jint)-1;
-        }       
+        }
 
     } /* else, bit bucket */
 
     return rc;
 }
 
-jint 
-transport_receivePacket(jdwpPacket *packet) 
+jint
+transport_receivePacket(jdwpPacket *packet)
 {
     jdwpTransportError err;
-    
+
     err = (*transport)->ReadPacket(transport, packet);
     if (err != JDWPTRANSPORT_ERROR_NONE) {
         /*
@@ -606,7 +606,7 @@ transport_receivePacket(jdwpPacket *packet)
 
         printLastError(transport, err);
 
-        /* 
+        /*
          * Users of transport_receivePacket expect 0 for success,
          * non-0 otherwise.
          */
@@ -614,4 +614,3 @@ transport_receivePacket(jdwpPacket *packet)
     }
     return 0;
 }
-

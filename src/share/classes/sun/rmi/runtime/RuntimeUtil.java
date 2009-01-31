@@ -44,23 +44,22 @@ import sun.security.action.GetIntegerAction;
  * because the public methods of this class expose security-sensitive
  * capabilities.
  *
- * @author	Peter Jones
- * @version	%I%, %E%
+ * @author      Peter Jones
  **/
 public final class RuntimeUtil {
 
     /** runtime package log */
     private static final Log runtimeLog =
-	Log.getLog("sun.rmi.runtime", null, false);
+        Log.getLog("sun.rmi.runtime", null, false);
 
     /** number of scheduler threads */
-    private static final int schedulerThreads =		// default 1
-	AccessController.doPrivileged(
-	    new GetIntegerAction("sun.rmi.runtime.schedulerThreads", 1));
+    private static final int schedulerThreads =         // default 1
+        AccessController.doPrivileged(
+            new GetIntegerAction("sun.rmi.runtime.schedulerThreads", 1));
 
     /** permission required to get instance */
     private static final Permission GET_INSTANCE_PERMISSION =
-	new RuntimePermission("sun.rmi.runtime.RuntimeUtil.getInstance");
+        new RuntimePermission("sun.rmi.runtime.RuntimeUtil.getInstance");
 
     /** the singleton instance of this class */
     private static final RuntimeUtil instance = new RuntimeUtil();
@@ -69,55 +68,55 @@ public final class RuntimeUtil {
     private final ScheduledThreadPoolExecutor scheduler;
 
     private RuntimeUtil() {
-	scheduler = new ScheduledThreadPoolExecutor(
-	    schedulerThreads,
-	    new ThreadFactory() {
-		private final AtomicInteger count = new AtomicInteger(0);
-		public Thread newThread(Runnable runnable) {
-		    try {
-			return AccessController.doPrivileged(
-			    new NewThreadAction(runnable,
-				"Scheduler(" + count.getAndIncrement() + ")",
-				true));
-		    } catch (Throwable t) {
-			runtimeLog.log(Level.WARNING,
-				       "scheduler thread factory throws", t);
-			return null;
-		    }
-		}
-	    });
-	/*
-	 * We would like to allow the scheduler's threads to terminate
-	 * if possible, but a bug in DelayQueue.poll can cause code
-	 * like this to result in a busy loop:
-	 */
-	// stpe.setKeepAliveTime(10, TimeUnit.MINUTES);
-	// stpe.allowCoreThreadTimeOut(true);
+        scheduler = new ScheduledThreadPoolExecutor(
+            schedulerThreads,
+            new ThreadFactory() {
+                private final AtomicInteger count = new AtomicInteger(0);
+                public Thread newThread(Runnable runnable) {
+                    try {
+                        return AccessController.doPrivileged(
+                            new NewThreadAction(runnable,
+                                "Scheduler(" + count.getAndIncrement() + ")",
+                                true));
+                    } catch (Throwable t) {
+                        runtimeLog.log(Level.WARNING,
+                                       "scheduler thread factory throws", t);
+                        return null;
+                    }
+                }
+            });
+        /*
+         * We would like to allow the scheduler's threads to terminate
+         * if possible, but a bug in DelayQueue.poll can cause code
+         * like this to result in a busy loop:
+         */
+        // stpe.setKeepAliveTime(10, TimeUnit.MINUTES);
+        // stpe.allowCoreThreadTimeOut(true);
     }
 
     /**
      * A PrivilegedAction for getting the RuntimeUtil instance.
      **/
     public static class GetInstanceAction
-	implements PrivilegedAction<RuntimeUtil>
+        implements PrivilegedAction<RuntimeUtil>
     {
-	/**
-	 * Creates an action that returns the RuntimeUtil instance.
-	 **/
-	public GetInstanceAction() {
-	}
+        /**
+         * Creates an action that returns the RuntimeUtil instance.
+         **/
+        public GetInstanceAction() {
+        }
 
-	public RuntimeUtil run() {
-	    return getInstance();
-	}
+        public RuntimeUtil run() {
+            return getInstance();
+        }
     }
 
     private static RuntimeUtil getInstance() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(GET_INSTANCE_PERMISSION);
-	}
-	return instance;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_INSTANCE_PERMISSION);
+        }
+        return instance;
     }
 
     /**
@@ -127,6 +126,6 @@ public final class RuntimeUtil {
      * submitted tasks should be short-lived and should not block.
      **/
     public ScheduledThreadPoolExecutor getScheduler() {
-	return scheduler;
+        return scheduler;
     }
 }

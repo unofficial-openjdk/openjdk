@@ -40,14 +40,14 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularType;
 
 public interface TigerMXBean {
-    
+
     class Point {
         @ConstructorProperties({"x", "y"})
         public Point(double x, double y) {
             this.x = x;
             this.y = y;
         }
-        
+
         public boolean equals(Object o) {
             if (!(o instanceof Point))
                 return false;
@@ -55,15 +55,15 @@ public interface TigerMXBean {
             return p.x == x && p.y == y;
         }
 
-	public int hashCode() {
-	    return new Double(x).hashCode() ^ new Double(y).hashCode();
-	}
-        
+        public int hashCode() {
+            return new Double(x).hashCode() ^ new Double(y).hashCode();
+        }
+
         public double getX() {return x;}
         public double getY() {return y;}
         private final double x, y;
     }
-    
+
     Point Point = new Point(1.5, 2.5);
     CompositeType PointType = MerlinMXBean.CompositeTypeMaker.make(
         Point.class.getName(),
@@ -74,34 +74,34 @@ public interface TigerMXBean {
     Point getPoint();
     void setPoint(Point x);
     Point opPoint(Point x, Point y);
-    
+
     enum Tuiseal {AINMNEACH, GAIRMEACH, GINIDEACH, TABHARTHACH}
     Tuiseal Enum = Tuiseal.GINIDEACH;
     SimpleType EnumType = SimpleType.STRING;
     Tuiseal getEnum();
     void setEnum(Tuiseal x);
     Tuiseal opEnum(Tuiseal x, Tuiseal y);
-    
+
     List<String> StringList = Arrays.asList(new String[] {"a", "b", "x"});
     ArrayType StringListType =
         MerlinMXBean.ArrayTypeMaker.make(1, SimpleType.STRING);
     List<String> getStringList();
     void setStringList(List<String> x);
     List<String> opStringList(List<String> x, List<String> y);
-    
+
     Set<String> StringSet = new HashSet(StringList);
     ArrayType StringSetType = StringListType;
     Set<String> getStringSet();
     void setStringSet(Set<String> x);
     Set<String> opStringSet(Set<String> x, Set<String> y);
-    
+
     SortedSet<String> SortedStringSet = new TreeSet(StringList);
     ArrayType SortedStringSetType = StringListType;
     SortedSet<String> getSortedStringSet();
     void setSortedStringSet(SortedSet<String> x);
     SortedSet<String> opSortedStringSet(SortedSet<String> x,
                                         SortedSet<String> y);
-    
+
     Map<String,List<String>> XMap = Collections.singletonMap("yo", StringList);
     String XMapTypeName =
         "java.util.Map<java.lang.String, java.util.List<java.lang.String>>";
@@ -146,7 +146,7 @@ public interface TigerMXBean {
 
     Map<Point,Point> PointMap = Collections.singletonMap(Point, Point);
     String PointMapTypeName =
-	"java.util.Map<" + Point.class.getName() + ", " +
+        "java.util.Map<" + Point.class.getName() + ", " +
         Point.class.getName() + ">";
     CompositeType PointMapRowType = MerlinMXBean.CompositeTypeMaker.make(
         PointMapTypeName, PointMapTypeName,
@@ -155,7 +155,7 @@ public interface TigerMXBean {
         new OpenType[] {PointType, PointType});
     TabularType PointMapType =
         TabularTypeMaker.make(PointMapTypeName, PointMapTypeName,
-			      PointMapRowType, new String[] {"key"});
+                              PointMapRowType, new String[] {"key"});
     Map<Point,Point> getPointMap();
     void setPointMap(Map<Point,Point> x);
     Map<Point,Point> opPointMap(Map<Point,Point> x, Map<Point,Point> y);

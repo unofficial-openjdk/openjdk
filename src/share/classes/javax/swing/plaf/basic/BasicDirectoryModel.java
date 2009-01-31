@@ -37,7 +37,6 @@ import sun.awt.shell.ShellFolder;
 /**
  * Basic implementation of a file list.
  *
- * @version %i% %g%
  * @author Jeff Dinkins
  */
 public class BasicDirectoryModel extends AbstractListModel implements PropertyChangeListener {
@@ -55,18 +54,18 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
     private boolean busy = false;
 
     public BasicDirectoryModel(JFileChooser filechooser) {
-	this.filechooser = filechooser;
-	validateFileCache();
+        this.filechooser = filechooser;
+        validateFileCache();
     }
 
     public void propertyChange(PropertyChangeEvent e) {
-	String prop = e.getPropertyName();
-	if(prop == JFileChooser.DIRECTORY_CHANGED_PROPERTY ||
-	   prop == JFileChooser.FILE_VIEW_CHANGED_PROPERTY ||
-	   prop == JFileChooser.FILE_FILTER_CHANGED_PROPERTY ||
-	   prop == JFileChooser.FILE_HIDING_CHANGED_PROPERTY ||
-	   prop == JFileChooser.FILE_SELECTION_MODE_CHANGED_PROPERTY) {
-	    validateFileCache();
+        String prop = e.getPropertyName();
+        if(prop == JFileChooser.DIRECTORY_CHANGED_PROPERTY ||
+           prop == JFileChooser.FILE_VIEW_CHANGED_PROPERTY ||
+           prop == JFileChooser.FILE_FILTER_CHANGED_PROPERTY ||
+           prop == JFileChooser.FILE_HIDING_CHANGED_PROPERTY ||
+           prop == JFileChooser.FILE_SELECTION_MODE_CHANGED_PROPERTY) {
+            validateFileCache();
         } else if ("UI".equals(prop)) {
             Object old = e.getOldValue();
             if (old instanceof BasicFileChooserUI) {
@@ -78,7 +77,7 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
             }
         } else if ("JFileChooserDialogIsClosingProperty".equals(prop)) {
             invalidateFileCache();
-	}
+        }
     }
 
     /**
@@ -93,52 +92,52 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
     }
 
     public Vector<File> getDirectories() {
-	synchronized(fileCache) {
-	    if (directories != null) {
-		return directories;
-	    }
-	    Vector fls = getFiles();
-	    return directories;
-	}
+        synchronized(fileCache) {
+            if (directories != null) {
+                return directories;
+            }
+            Vector fls = getFiles();
+            return directories;
+        }
     }
 
     public Vector<File> getFiles() {
-	synchronized(fileCache) {
-	    if (files != null) {
-		return files;
-	    }
-	    files = new Vector();
-	    directories = new Vector();
-	    directories.addElement(filechooser.getFileSystemView().createFileObject(
-		filechooser.getCurrentDirectory(), "..")
-	    );
+        synchronized(fileCache) {
+            if (files != null) {
+                return files;
+            }
+            files = new Vector();
+            directories = new Vector();
+            directories.addElement(filechooser.getFileSystemView().createFileObject(
+                filechooser.getCurrentDirectory(), "..")
+            );
 
-	    for (int i = 0; i < getSize(); i++) {
-		File f = (File)fileCache.get(i);
-		if (filechooser.isTraversable(f)) {
-		    directories.add(f);
-		} else {
-		    files.add(f);
-		}
-	    }
-	    return files;
-	}
+            for (int i = 0; i < getSize(); i++) {
+                File f = (File)fileCache.get(i);
+                if (filechooser.isTraversable(f)) {
+                    directories.add(f);
+                } else {
+                    files.add(f);
+                }
+            }
+            return files;
+        }
     }
 
     public void validateFileCache() {
-	File currentDirectory = filechooser.getCurrentDirectory();
-	if (currentDirectory == null) {
-	    return;
-	}
-	if (loadThread != null) {
-	    loadThread.interrupt();
+        File currentDirectory = filechooser.getCurrentDirectory();
+        if (currentDirectory == null) {
+            return;
+        }
+        if (loadThread != null) {
+            loadThread.interrupt();
             loadThread.cancelRunnables();
-	}
+        }
 
-	setBusy(true, ++fetchID);
+        setBusy(true, ++fetchID);
 
-	loadThread = new LoadFilesThread(currentDirectory, fetchID);
-	loadThread.start();
+        loadThread = new LoadFilesThread(currentDirectory, fetchID);
+        loadThread.start();
     }
 
     /**
@@ -153,35 +152,35 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
      * @since 1.4
      */
     public boolean renameFile(File oldFile, File newFile) {
-	synchronized(fileCache) {
-	    if (oldFile.renameTo(newFile)) {
-		validateFileCache();
-		return true;
-	    }
-	    return false;
-	}
+        synchronized(fileCache) {
+            if (oldFile.renameTo(newFile)) {
+                validateFileCache();
+                return true;
+            }
+            return false;
+        }
     }
 
 
     public void fireContentsChanged() {
-	// System.out.println("BasicDirectoryModel: firecontentschanged");
-	fireContentsChanged(this, 0, getSize()-1);
+        // System.out.println("BasicDirectoryModel: firecontentschanged");
+        fireContentsChanged(this, 0, getSize()-1);
     }
 
     public int getSize() {
-	return fileCache.size();
+        return fileCache.size();
     }
 
     public boolean contains(Object o) {
-	return fileCache.contains(o);
+        return fileCache.contains(o);
     }
 
     public int indexOf(Object o) {
-	return fileCache.indexOf(o);
+        return fileCache.indexOf(o);
     }
 
     public Object getElementAt(int index) {
-	return fileCache.get(index);
+        return fileCache.get(index);
     }
 
     /**
@@ -197,44 +196,44 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
     }
 
     protected void sort(Vector<? extends File> v){
-	ShellFolder.sortFiles(v);
+        ShellFolder.sortFiles(v);
     }
 
     // Obsolete - not used
     protected boolean lt(File a, File b) {
-	// First ignore case when comparing
-	int diff = a.getName().toLowerCase().compareTo(b.getName().toLowerCase());
-	if (diff != 0) {
-	    return diff < 0;
-	} else {
-	    // May differ in case (e.g. "mail" vs. "Mail")
-	    return a.getName().compareTo(b.getName()) < 0;
-	}
+        // First ignore case when comparing
+        int diff = a.getName().toLowerCase().compareTo(b.getName().toLowerCase());
+        if (diff != 0) {
+            return diff < 0;
+        } else {
+            // May differ in case (e.g. "mail" vs. "Mail")
+            return a.getName().compareTo(b.getName()) < 0;
+        }
     }
 
 
     class LoadFilesThread extends Thread {
-	File currentDirectory = null;
-	int fid;
-	Vector runnables = new Vector(10);
-	
-	public LoadFilesThread(File currentDirectory, int fid) {
-	    super("Basic L&F File Loading Thread");
-	    this.currentDirectory = currentDirectory;
-	    this.fid = fid;
-	}
-	
-	private void invokeLater(Runnable runnable) {
-	    runnables.addElement(runnable);
-	    SwingUtilities.invokeLater(runnable);
-	}
+        File currentDirectory = null;
+        int fid;
+        Vector runnables = new Vector(10);
 
-	public void run() {
-	    run0();
-	    setBusy(false, fid);
-	}
+        public LoadFilesThread(File currentDirectory, int fid) {
+            super("Basic L&F File Loading Thread");
+            this.currentDirectory = currentDirectory;
+            this.fid = fid;
+        }
 
-	public void run0() {
+        private void invokeLater(Runnable runnable) {
+            runnables.addElement(runnable);
+            SwingUtilities.invokeLater(runnable);
+        }
+
+        public void run() {
+            run0();
+            setBusy(false, fid);
+        }
+
+        public void run0() {
             try {
                 FileSystemView fileSystem = filechooser.getFileSystemView();
 
@@ -341,15 +340,15 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
         }
 
 
-	public void cancelRunnables(Vector runnables) {
-	    for(int i = 0; i < runnables.size(); i++) {
-		((DoChangeContents)runnables.elementAt(i)).cancel();
-	    }
-	}
+        public void cancelRunnables(Vector runnables) {
+            for(int i = 0; i < runnables.size(); i++) {
+                ((DoChangeContents)runnables.elementAt(i)).cancel();
+            }
+        }
 
- 	public void cancelRunnables() {
+        public void cancelRunnables() {
             cancelRunnables(runnables);
-	}
+        }
    }
 
 
@@ -368,10 +367,10 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
      * @since 1.6
      */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-	if (changeSupport == null) {
-	    changeSupport = new PropertyChangeSupport(this);
-	}
-	changeSupport.addPropertyChangeListener(listener);
+        if (changeSupport == null) {
+            changeSupport = new PropertyChangeSupport(this);
+        }
+        changeSupport.addPropertyChangeListener(listener);
     }
 
     /**
@@ -387,9 +386,9 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
      * @since 1.6
      */
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-	if (changeSupport != null) {
-	    changeSupport.removePropertyChangeListener(listener);
-	}
+        if (changeSupport != null) {
+            changeSupport.removePropertyChangeListener(listener);
+        }
     }
 
     /**
@@ -414,7 +413,7 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
     }
 
     /**
-     * Support for reporting bound property changes for boolean properties. 
+     * Support for reporting bound property changes for boolean properties.
      * This method can be called when a bound property has changed and it will
      * send the appropriate PropertyChangeEvent to any registered
      * PropertyChangeListeners.
@@ -425,12 +424,12 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
      *
      * @since 1.6
      */
-    protected void firePropertyChange(String propertyName, 
-				      Object oldValue, Object newValue) {
-	if (changeSupport != null) {
-	    changeSupport.firePropertyChange(propertyName,
-					     oldValue, newValue);
-	}
+    protected void firePropertyChange(String propertyName,
+                                      Object oldValue, Object newValue) {
+        if (changeSupport != null) {
+            changeSupport.firePropertyChange(propertyName,
+                                             oldValue, newValue);
+        }
     }
 
 
@@ -440,65 +439,64 @@ public class BasicDirectoryModel extends AbstractListModel implements PropertyCh
      * thread in order to load the contents of a directory.
      */
     private synchronized void setBusy(final boolean busy, int fid) {
-	if (fid == fetchID) {
-	    boolean oldValue = this.busy;
-	    this.busy = busy;
+        if (fid == fetchID) {
+            boolean oldValue = this.busy;
+            this.busy = busy;
 
-	    if (changeSupport != null && busy != oldValue) {
-		SwingUtilities.invokeLater(new Runnable() {
-		    public void run() {
-			firePropertyChange("busy", !busy, busy);
-		    }
-		});
-	    }
-	}
+            if (changeSupport != null && busy != oldValue) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        firePropertyChange("busy", !busy, busy);
+                    }
+                });
+            }
+        }
     }
 
 
     class DoChangeContents implements Runnable {
-	private List addFiles;
-	private List remFiles;
-	private boolean doFire = true;
-	private int fid;
-	private int addStart = 0;
-	private int remStart = 0;
-	private int change;
-	
-	public DoChangeContents(List addFiles, int addStart, List remFiles, int remStart, int fid) {
-	    this.addFiles = addFiles;
-	    this.addStart = addStart;
-	    this.remFiles = remFiles;
-	    this.remStart = remStart;
-	    this.fid = fid;
-	}
+        private List addFiles;
+        private List remFiles;
+        private boolean doFire = true;
+        private int fid;
+        private int addStart = 0;
+        private int remStart = 0;
+        private int change;
 
-	synchronized void cancel() {
-		doFire = false;
-	}
-	
-	public synchronized void run() {
-	    if (fetchID == fid && doFire) {
-		int remSize = (remFiles == null) ? 0 : remFiles.size();
-		int addSize = (addFiles == null) ? 0 : addFiles.size();
-		synchronized(fileCache) {
-		    if (remSize > 0) {
-			fileCache.removeAll(remFiles);
-		    }
-		    if (addSize > 0) {
-			fileCache.addAll(addStart, addFiles);
-		    }
-		    files = null;
-		    directories = null;
-		}
-		if (remSize > 0 && addSize == 0) {
-		    fireIntervalRemoved(BasicDirectoryModel.this, remStart, remStart + remSize - 1);
-		} else if (addSize > 0 && remSize == 0 && fileCache.size() > addSize) {
-		    fireIntervalAdded(BasicDirectoryModel.this, addStart, addStart + addSize - 1);
-		} else {
-		    fireContentsChanged();
-		}
-	    }
-	}
+        public DoChangeContents(List addFiles, int addStart, List remFiles, int remStart, int fid) {
+            this.addFiles = addFiles;
+            this.addStart = addStart;
+            this.remFiles = remFiles;
+            this.remStart = remStart;
+            this.fid = fid;
+        }
+
+        synchronized void cancel() {
+                doFire = false;
+        }
+
+        public synchronized void run() {
+            if (fetchID == fid && doFire) {
+                int remSize = (remFiles == null) ? 0 : remFiles.size();
+                int addSize = (addFiles == null) ? 0 : addFiles.size();
+                synchronized(fileCache) {
+                    if (remSize > 0) {
+                        fileCache.removeAll(remFiles);
+                    }
+                    if (addSize > 0) {
+                        fileCache.addAll(addStart, addFiles);
+                    }
+                    files = null;
+                    directories = null;
+                }
+                if (remSize > 0 && addSize == 0) {
+                    fireIntervalRemoved(BasicDirectoryModel.this, remStart, remStart + remSize - 1);
+                } else if (addSize > 0 && remSize == 0 && fileCache.size() > addSize) {
+                    fireIntervalAdded(BasicDirectoryModel.this, addStart, addStart + addSize - 1);
+                } else {
+                    fireContentsChanged();
+                }
+            }
+        }
     }
 }
-

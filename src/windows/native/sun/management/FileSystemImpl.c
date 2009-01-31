@@ -32,7 +32,7 @@
 #include "sun_management_FileSystemImpl.h"
 
 /*
- * Access mask to represent any file access 
+ * Access mask to represent any file access
  */
 #define ANY_ACCESS (FILE_GENERIC_READ | FILE_GENERIC_WRITE | FILE_GENERIC_EXECUTE)
 
@@ -40,13 +40,13 @@
  * Function prototypes for security functions - we can't statically
  * link because these functions aren't on Windows 9x.
  */
-typedef BOOL (WINAPI *GetFileSecurityFunc) 
+typedef BOOL (WINAPI *GetFileSecurityFunc)
     (LPCTSTR lpFileName, SECURITY_INFORMATION RequestedInformation,
      PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
      LPDWORD lpnLengthNeeded);
 
 typedef BOOL (WINAPI *GetSecurityDescriptorOwnerFunc)
-    (PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID *pOwner, 
+    (PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID *pOwner,
      LPBOOL lpbOwnerDefaulted);
 
 typedef BOOL (WINAPI *GetSecurityDescriptorDaclFunc)
@@ -54,7 +54,7 @@ typedef BOOL (WINAPI *GetSecurityDescriptorDaclFunc)
      PACL *pDacl, LPBOOL lpbDaclDefaulted);
 
 typedef BOOL (WINAPI *GetAclInformationFunc)
-    (PACL pAcl, LPVOID pAclInformation, DWORD nAclInformationLength, 
+    (PACL pAcl, LPVOID pAclInformation, DWORD nAclInformationLength,
      ACL_INFORMATION_CLASS dwAclInformationClass);
 
 typedef BOOL (WINAPI *GetAceFunc)
@@ -95,40 +95,40 @@ static jboolean isSecuritySupported(JNIEnv* env, const char* path) {
      */
     root = strdup(path);
     if (*root == '\\') {
-	/*
-	 * \\server\share\file ==> \\server\share\	 
-	 */
-	int slashskip = 3;
-	p = root;		   
-	while ((*p == '\\') && (slashskip > 0)) {
-	    char* p2;
-	    p++;
-	    p2 = strchr(p, '\\');
-	    if ((p2 == NULL) || (*p2 != '\\')) {
-		free(root);
-		JNU_ThrowIOException(env, "Malformed UNC");
-		return JNI_FALSE;
-	    }
-	    p = p2;
-	    slashskip--;
-	}
-	if (slashskip != 0) {
-	    free(root);
-	    JNU_ThrowIOException(env, "Malformed UNC");
-	    return JNI_FALSE;
-	}
-	p++;
-	*p = '\0';
+        /*
+         * \\server\share\file ==> \\server\share\
+         */
+        int slashskip = 3;
+        p = root;
+        while ((*p == '\\') && (slashskip > 0)) {
+            char* p2;
+            p++;
+            p2 = strchr(p, '\\');
+            if ((p2 == NULL) || (*p2 != '\\')) {
+                free(root);
+                JNU_ThrowIOException(env, "Malformed UNC");
+                return JNI_FALSE;
+            }
+            p = p2;
+            slashskip--;
+        }
+        if (slashskip != 0) {
+            free(root);
+            JNU_ThrowIOException(env, "Malformed UNC");
+            return JNI_FALSE;
+        }
+        p++;
+        *p = '\0';
 
     } else {
-	p = strchr(root, '\\');
-	if (p == NULL) {
-	    free(root);
+        p = strchr(root, '\\');
+        if (p == NULL) {
+            free(root);
             JNU_ThrowIOException(env, "Absolute filename not specified");
-	    return JNI_FALSE;
-	}
-	p++;
-	*p = '\0';
+            return JNI_FALSE;
+        }
+        p++;
+        *p = '\0';
     }
 
 
@@ -138,17 +138,17 @@ static jboolean isSecuritySupported(JNIEnv* env, const char* path) {
      */
     fsNameLength = sizeof(fsName)-1;
     res = GetVolumeInformation(root,
-			       NULL,	    // address of name of the volume, can be NULL
-			       0,	    // length of volume name
-			       NULL,	    // address of volume serial number, can be NULL
-			       &dwMaxComponentLength,
-			       &dwFlags,
-			       fsName,
-			       fsNameLength);	
+                               NULL,        // address of name of the volume, can be NULL
+                               0,           // length of volume name
+                               NULL,        // address of volume serial number, can be NULL
+                               &dwMaxComponentLength,
+                               &dwFlags,
+                               fsName,
+                               fsNameLength);
     if (res == 0) {
-	free(root);
-	JNU_ThrowIOExceptionWithLastError(env, "GetVolumeInformation failed");
-	return JNI_FALSE;
+        free(root);
+        JNU_ThrowIOExceptionWithLastError(env, "GetVolumeInformation failed");
+        return JNI_FALSE;
     }
 
     free(root);
@@ -157,29 +157,29 @@ static jboolean isSecuritySupported(JNIEnv* env, const char* path) {
 
 
 /*
- * Returns the security descriptor for a file. 
+ * Returns the security descriptor for a file.
  */
 static SECURITY_DESCRIPTOR* getFileSecurityDescriptor(JNIEnv* env, const char* path) {
     SECURITY_DESCRIPTOR* sd;
     DWORD len = 0;
-    SECURITY_INFORMATION info = 
-	OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
+    SECURITY_INFORMATION info =
+        OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
 
     (*GetFileSecurity_func)(path, info , 0, 0, &len);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         JNU_ThrowIOExceptionWithLastError(env, "GetFileSecurity failed");
-	return NULL;
+        return NULL;
     }
     sd = (SECURITY_DESCRIPTOR *)malloc(len);
     if (sd == NULL) {
-	JNU_ThrowOutOfMemoryError(env, 0);
+        JNU_ThrowOutOfMemoryError(env, 0);
     } else {
-	if (!(*GetFileSecurity_func)(path, info, sd, len, &len)) {
-	    JNU_ThrowIOExceptionWithLastError(env, "GetFileSecurity failed");
-	    free(sd);
-	    return NULL;
-	}
-    }    
+        if (!(*GetFileSecurity_func)(path, info, sd, len, &len)) {
+            JNU_ThrowIOExceptionWithLastError(env, "GetFileSecurity failed");
+            free(sd);
+            return NULL;
+        }
+    }
     return sd;
 }
 
@@ -190,10 +190,10 @@ static SECURITY_DESCRIPTOR* getFileSecurityDescriptor(JNIEnv* env, const char* p
 static SID* getFileOwner(JNIEnv* env, SECURITY_DESCRIPTOR* sd) {
     SID* owner;
     BOOL defaulted;
-   
+
     if (!(*GetSecurityDescriptorOwner_func)(sd, &owner, &defaulted)) {
-	JNU_ThrowIOExceptionWithLastError(env, "GetSecurityDescriptorOwner failed");
-	return NULL;
+        JNU_ThrowIOExceptionWithLastError(env, "GetSecurityDescriptorOwner failed");
+        return NULL;
     }
     return owner;
 }
@@ -205,17 +205,17 @@ static SID* getFileOwner(JNIEnv* env, SECURITY_DESCRIPTOR* sd) {
 static ACL* getFileDACL(JNIEnv* env, SECURITY_DESCRIPTOR* sd) {
     ACL *acl;
     int defaulted, present;
-      
+
     if (!(*GetSecurityDescriptorDacl_func)(sd, &present, &acl, &defaulted)) {
-	JNU_ThrowIOExceptionWithLastError(env, "GetSecurityDescriptorDacl failed");
-	return NULL;
-    }        
+        JNU_ThrowIOExceptionWithLastError(env, "GetSecurityDescriptorDacl failed");
+        return NULL;
+    }
     if (!present) {
-	JNU_ThrowInternalError(env, "Security descriptor does not contain a DACL");
-	return NULL;
+        JNU_ThrowInternalError(env, "Security descriptor does not contain a DACL");
+        return NULL;
     }
     return acl;
-}    
+}
 
 /*
  * Returns JNI_TRUE if the specified owner is the only SID will access
@@ -229,44 +229,44 @@ static jboolean isAccessUserOnly(JNIEnv* env, SID* owner, ACL* acl) {
      * If there's no DACL then there's no access to the file
      */
     if (acl == NULL) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     }
 
     /*
      * Get the ACE count
      */
-    if (!(*GetAclInformation_func)(acl, (void *) &acl_size_info, sizeof(acl_size_info), 
-				  AclSizeInformation)) {
-	JNU_ThrowIOExceptionWithLastError(env, "GetAclInformation failed");
-	return JNI_FALSE;
-    }  
+    if (!(*GetAclInformation_func)(acl, (void *) &acl_size_info, sizeof(acl_size_info),
+                                  AclSizeInformation)) {
+        JNU_ThrowIOExceptionWithLastError(env, "GetAclInformation failed");
+        return JNI_FALSE;
+    }
 
     /*
      * Iterate over the ACEs. For each "allow" type check that the SID
      * matches the owner, and check that the access is read only.
      */
     for (i = 0; i < acl_size_info.AceCount; i++) {
-	void* ace;
-	ACCESS_ALLOWED_ACE *access;
-	SID* sid;
+        void* ace;
+        ACCESS_ALLOWED_ACE *access;
+        SID* sid;
 
-	if (!(*GetAce_func)(acl, i, &ace)) {
- 	    JNU_ThrowIOExceptionWithLastError(env, "GetAce failed");
-	    return -1;
-	}
-	if (((ACCESS_ALLOWED_ACE *)ace)->Header.AceType != ACCESS_ALLOWED_ACE_TYPE) {
-	    continue;
-	}
-	access = (ACCESS_ALLOWED_ACE *)ace;
-	sid = (SID *) &access->SidStart;
-	if (!EqualSid(owner, sid)) {
-	    /*
-	     * If the ACE allows any access then the file is not secure.
-	     */
-	    if (access->Mask & ANY_ACCESS) {
-	        return JNI_FALSE;
-	    }
-	}
+        if (!(*GetAce_func)(acl, i, &ace)) {
+            JNU_ThrowIOExceptionWithLastError(env, "GetAce failed");
+            return -1;
+        }
+        if (((ACCESS_ALLOWED_ACE *)ace)->Header.AceType != ACCESS_ALLOWED_ACE_TYPE) {
+            continue;
+        }
+        access = (ACCESS_ALLOWED_ACE *)ace;
+        sid = (SID *) &access->SidStart;
+        if (!EqualSid(owner, sid)) {
+            /*
+             * If the ACE allows any access then the file is not secure.
+             */
+            if (access->Mask & ANY_ACCESS) {
+                return JNI_FALSE;
+            }
+        }
     }
     return JNI_TRUE;
 }
@@ -291,7 +291,7 @@ JNIEXPORT void JNICALL Java_sun_management_FileSystemImpl_init0
     GetVersionEx(&ver);
     isNT = (ver.dwPlatformId == VER_PLATFORM_WIN32_NT);
     if (!isNT) {
-	return;
+        return;
     }
 
     /*
@@ -300,30 +300,30 @@ JNIEXPORT void JNICALL Java_sun_management_FileSystemImpl_init0
     hInst = LoadLibrary("ADVAPI32.DLL");
     if (hInst == NULL) {
         JNU_ThrowIOExceptionWithLastError(env, "Unable to load ADVAPI32.DLL");
-	return;
+        return;
     }
 
-   
+
     GetFileSecurity_func = (GetFileSecurityFunc)GetProcAddress(hInst, "GetFileSecurityA");
-    GetSecurityDescriptorOwner_func = 
-	(GetSecurityDescriptorOwnerFunc)GetProcAddress(hInst, "GetSecurityDescriptorOwner");	
+    GetSecurityDescriptorOwner_func =
+        (GetSecurityDescriptorOwnerFunc)GetProcAddress(hInst, "GetSecurityDescriptorOwner");
     GetSecurityDescriptorDacl_func =
-	(GetSecurityDescriptorDaclFunc)GetProcAddress(hInst, "GetSecurityDescriptorDacl");
-    GetAclInformation_func = 
-	(GetAclInformationFunc)GetProcAddress(hInst, "GetAclInformation");
+        (GetSecurityDescriptorDaclFunc)GetProcAddress(hInst, "GetSecurityDescriptorDacl");
+    GetAclInformation_func =
+        (GetAclInformationFunc)GetProcAddress(hInst, "GetAclInformation");
     GetAce_func = (GetAceFunc)GetProcAddress(hInst, "GetAce");
     EqualSid_func = (EqualSidFunc)GetProcAddress(hInst, "EqualSid");
 
-    if (GetFileSecurity_func == NULL || 
-	GetSecurityDescriptorDacl_func == NULL ||
-	GetSecurityDescriptorDacl_func == NULL ||
-	GetAclInformation_func == NULL || 
-	GetAce_func == NULL ||
-	EqualSid_func == NULL) 
+    if (GetFileSecurity_func == NULL ||
+        GetSecurityDescriptorDacl_func == NULL ||
+        GetSecurityDescriptorDacl_func == NULL ||
+        GetAclInformation_func == NULL ||
+        GetAce_func == NULL ||
+        EqualSid_func == NULL)
     {
-        JNU_ThrowIOExceptionWithLastError(env, 
-	    "Unable to get address of security functions");
-	return;    
+        JNU_ThrowIOExceptionWithLastError(env,
+            "Unable to get address of security functions");
+        return;
     }
 }
 
@@ -338,21 +338,21 @@ JNIEXPORT jboolean JNICALL Java_sun_management_FileSystemImpl_isSecuritySupporte
     jboolean res;
     jboolean isCopy;
     const char* path;
-    
+
     if (!isNT) {
-	return JNI_FALSE;
-    } 
-    
+        return JNI_FALSE;
+    }
+
     path = JNU_GetStringPlatformChars(env, str, &isCopy);
     if (path != NULL) {
         res = isSecuritySupported(env, path);
-	if (isCopy) {
-	    JNU_ReleaseStringPlatformChars(env, str, path);	    
-	}
-	return res;
+        if (isCopy) {
+            JNU_ReleaseStringPlatformChars(env, str, path);
+        }
+        return res;
     } else {
-	/* exception thrown - doesn't matter what we return */
-	return JNI_TRUE;
+        /* exception thrown - doesn't matter what we return */
+        return JNI_TRUE;
     }
 }
 
@@ -364,39 +364,38 @@ JNIEXPORT jboolean JNICALL Java_sun_management_FileSystemImpl_isSecuritySupporte
  */
 JNIEXPORT jboolean JNICALL Java_sun_management_FileSystemImpl_isAccessUserOnly0
   (JNIEnv *env, jclass ignored, jstring str)
-{    
+{
     jboolean res = JNI_FALSE;
     jboolean isCopy;
     const char* path;
-    
+
     path = JNU_GetStringPlatformChars(env, str, &isCopy);
-    if (path != NULL) {	    	
-	/*
-	 * From the security descriptor get the file owner and
-	 * DACL. Then check if anybody but the owner has access
-	 * to the file.
-	 */
-	SECURITY_DESCRIPTOR* sd = getFileSecurityDescriptor(env, path);
-	if (sd != NULL) {
-	    SID *owner = getFileOwner(env, sd);
-	    if (owner != NULL) {
-		ACL* acl = getFileDACL(env, sd);
-		if (acl != NULL) {
-		    res = isAccessUserOnly(env, owner, acl);
-		} else {
-		    /*
-		     * If acl is NULL it means that an exception was thrown
-		     * or there is "all acess" to the file.
-		     */
-		    res = JNI_FALSE;
-		} 	
-	    }
-	    free(sd);
-	}
-	if (isCopy) {
-	    JNU_ReleaseStringPlatformChars(env, str, path);
-	}
+    if (path != NULL) {
+        /*
+         * From the security descriptor get the file owner and
+         * DACL. Then check if anybody but the owner has access
+         * to the file.
+         */
+        SECURITY_DESCRIPTOR* sd = getFileSecurityDescriptor(env, path);
+        if (sd != NULL) {
+            SID *owner = getFileOwner(env, sd);
+            if (owner != NULL) {
+                ACL* acl = getFileDACL(env, sd);
+                if (acl != NULL) {
+                    res = isAccessUserOnly(env, owner, acl);
+                } else {
+                    /*
+                     * If acl is NULL it means that an exception was thrown
+                     * or there is "all acess" to the file.
+                     */
+                    res = JNI_FALSE;
+                }
+            }
+            free(sd);
+        }
+        if (isCopy) {
+            JNU_ReleaseStringPlatformChars(env, str, path);
+        }
     }
     return res;
 }
-

@@ -44,7 +44,7 @@ public class PageableDoc implements Doc {
     public PageableDoc(Pageable pageable) {
        this.pageable = pageable;
     }
-    
+
    public DocFlavor getDocFlavor() {
        return DocFlavor.SERVICE_FORMATTED.PAGEABLE;
    }
@@ -59,7 +59,7 @@ public class PageableDoc implements Doc {
 
    public Reader getReaderForText()
       throws UnsupportedEncodingException, IOException {
-    
+
       return null;
    }
 

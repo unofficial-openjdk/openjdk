@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageChannelExtract_1.c	1.12	02/03/20 SMI"
+
 
 /*
  * FILENAME: mlib_ImageChannelExtract_1.c

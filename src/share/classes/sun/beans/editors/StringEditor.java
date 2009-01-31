@@ -68,8 +68,7 @@ public class StringEditor extends PropertyEditorSupport {
     }
 
     public void setAsText(String text) {
-	setValue(text);
+        setValue(text);
     }
 
 }
-

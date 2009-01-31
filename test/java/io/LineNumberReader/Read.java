@@ -23,7 +23,7 @@
 
 /* @test
    @bug 4074875 4063511
-   @summary Make sure LineNumberReader.read(char, int , int) will increase 
+   @summary Make sure LineNumberReader.read(char, int , int) will increase
             the linenumber correctly.
    */
 
@@ -33,21 +33,20 @@ public class Read {
 
     public static void main(String[] args) throws Exception {
         String s = "aaaa\nbbb\n";
-	char[] buf = new char[5];
-	int n = 0;
+        char[] buf = new char[5];
+        int n = 0;
         int line = 0;
 
-	LineNumberReader r = new LineNumberReader(new StringReader(s));
-	
-	do {
+        LineNumberReader r = new LineNumberReader(new StringReader(s));
+
+        do {
             n = r.read(buf, 0, buf.length);
-	} while (n > 0);
+        } while (n > 0);
 
-	line = r.getLineNumber();
+        line = r.getLineNumber();
 
-	if (line != 2)
+        if (line != 2)
             throw new Exception("Failed test: Expected line number: 2, got "
                                 + line);
     }
 }
-

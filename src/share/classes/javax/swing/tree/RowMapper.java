@@ -31,7 +31,6 @@ import javax.swing.tree.TreePath;
  * Defines the requirements for an object that translates paths in
  * the tree into display rows.
  *
- * @version %I% %G%
  * @author Scott Violet
  */
 public interface RowMapper

@@ -34,7 +34,7 @@ public class RetransformApp {
     int foo(int x) {
         return x * x;
     }
-  
+
     public void run(String args[], PrintStream out) throws Exception {
         out.println("start");
         for (int i = 0; i < 4; i++) {

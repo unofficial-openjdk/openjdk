@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>short</code> value in 
+ * Provides access to a primitive <code>short</code> value in
  * the target VM.
  *
  * @author Robert Field
@@ -38,7 +38,7 @@ public interface ShortValue extends PrimitiveValue, Comparable<ShortValue>
 {
     /**
      * Returns this ShortValue as a short.
-     * 
+     *
      * @return the <code>short</code> mirrored by this object.
      */
     short value();
@@ -59,4 +59,3 @@ public interface ShortValue extends PrimitiveValue, Comparable<ShortValue>
      */
     int hashCode();
 }
-

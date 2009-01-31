@@ -40,7 +40,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's ToolTipUI.
  *
- * @version %I%, %G%
  * @author Joshua Outwater
  */
 class SynthToolTipUI extends BasicToolTipUI implements PropertyChangeListener,
@@ -61,7 +60,7 @@ class SynthToolTipUI extends BasicToolTipUI implements PropertyChangeListener,
         style = SynthLookAndFeel.updateStyle(context, this);
         context.dispose();
     }
-    
+
     protected void uninstallDefaults(JComponent c) {
         SynthContext context = getContext(c, ENABLED);
         style.uninstallDefaults(context);
@@ -123,46 +122,46 @@ class SynthToolTipUI extends BasicToolTipUI implements PropertyChangeListener,
 
     protected void paint(SynthContext context, Graphics g) {
         JToolTip tip = (JToolTip)context.getComponent();
-	String tipText = tip.getToolTipText();
+        String tipText = tip.getToolTipText();
 
         Insets insets = tip.getInsets();
-	View v = (View)tip.getClientProperty(BasicHTML.propertyKey);
-	if (v != null) {
+        View v = (View)tip.getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
             Rectangle paintTextR = new Rectangle(insets.left, insets.top,
                   tip.getWidth() - (insets.left + insets.right),
                   tip.getHeight() - (insets.top + insets.bottom));
-	    v.paint(g, paintTextR);
-	} else {
+            v.paint(g, paintTextR);
+        } else {
             g.setColor(context.getStyle().getColor(context,
                                                    ColorType.TEXT_FOREGROUND));
             g.setFont(style.getFont(context));
             context.getStyle().getGraphicsUtils(context).paintText(
                 context, g, tip.getTipText(), insets.left, insets.top, -1);
-	}
+        }
     }
 
     public Dimension getPreferredSize(JComponent c) {
         SynthContext context = getContext(c);
-	Insets insets = c.getInsets();
-	Dimension prefSize = new Dimension(insets.left+insets.right,
-					   insets.top+insets.bottom);
-	String text = ((JToolTip)c).getTipText();
+        Insets insets = c.getInsets();
+        Dimension prefSize = new Dimension(insets.left+insets.right,
+                                           insets.top+insets.bottom);
+        String text = ((JToolTip)c).getTipText();
 
-	if (text != null) {
-	    View v = (c != null) ? (View) c.getClientProperty("html") : null;
-	    if (v != null) {
-		prefSize.width += (int) v.getPreferredSpan(View.X_AXIS);
-		prefSize.height += (int) v.getPreferredSpan(View.Y_AXIS);
-	    } else {
+        if (text != null) {
+            View v = (c != null) ? (View) c.getClientProperty("html") : null;
+            if (v != null) {
+                prefSize.width += (int) v.getPreferredSpan(View.X_AXIS);
+                prefSize.height += (int) v.getPreferredSpan(View.Y_AXIS);
+            } else {
                 Font font = context.getStyle().getFont(context);
                 FontMetrics fm = c.getFontMetrics(font);
-		prefSize.width += context.getStyle().getGraphicsUtils(context).
+                prefSize.width += context.getStyle().getGraphicsUtils(context).
                                   computeStringWidth(context, font, fm, text);
-		prefSize.height += fm.getHeight();
-	    }
+                prefSize.height += fm.getHeight();
+            }
         }
         context.dispose();
-	return prefSize;
+        return prefSize;
     }
 
     public void propertyChange(PropertyChangeEvent e) {

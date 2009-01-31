@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 /**
  * I love blinking things.
@@ -65,8 +63,8 @@ public class Blink extends java.applet.Applet {
     public void start() {
         timer = new Timer();     //creates a new timer to schedule the blinking
         timer.schedule(new TimerTask() {      //creates a timertask to schedule
-            // overrides the run method to provide functionality 
-            public void run() {  
+            // overrides the run method to provide functionality
+            public void run() {
                 repaint();
             }
         }
@@ -83,7 +81,7 @@ public class Blink extends java.applet.Applet {
         g.setColor(Color.black);
         FontMetrics fm = g.getFontMetrics();
         space = fm.stringWidth(" ");
-        for (StringTokenizer t = new StringTokenizer(labelString); 
+        for (StringTokenizer t = new StringTokenizer(labelString);
              t.hasMoreTokens();) {
             String word = t.nextToken();
             int w = fm.stringWidth(word) + space;
@@ -92,7 +90,7 @@ public class Blink extends java.applet.Applet {
                 y += fontSize;  //move word to next line if it doesn't fit
             }
             if (Math.random() < 0.5)
-                g.setColor(new java.awt.Color((red + y*30) % 256, 
+                g.setColor(new java.awt.Color((red + y*30) % 256,
                                               (green + x/3) % 256, blue));
             else
                 g.setColor(getBackground());
@@ -100,17 +98,17 @@ public class Blink extends java.applet.Applet {
             x += w;  //shift to the right to draw the next word
         }
     }
-    
+
     public void stop() {
         timer.cancel();  //stops the timer
     }
 
     public String getAppletInfo() {
         return "Title: Blinker\n"
-            + "Author: Arthur van Hoff\n" 
+            + "Author: Arthur van Hoff\n"
             + "Displays multicolored blinking text.";
     }
-    
+
     public String[][] getParameterInfo() {
         String pinfo[][] = {
             {"speed", "string", "The blink frequency"},

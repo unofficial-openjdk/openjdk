@@ -34,9 +34,9 @@ import java.io.IOException;
 public class FileKey {
 
     private long st_dev;    // ID of device
-    private long st_ino;    // Inode number 
-    
-    private FileKey() { }    
+    private long st_ino;    // Inode number
+
+    private FileKey() { }
 
     public static FileKey create(FileDescriptor fd) {
         FileKey fk = new FileKey();
@@ -56,7 +56,7 @@ public class FileKey {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (!(obj instanceof FileKey)) 
+        if (!(obj instanceof FileKey))
             return false;
         FileKey other = (FileKey)obj;
         if ((this.st_dev != other.st_dev) ||
@@ -65,10 +65,10 @@ public class FileKey {
         }
         return true;
     }
-     
+
     private native void init(FileDescriptor fd) throws IOException;
     private static native void initIDs();
-    
+
     static {
         initIDs();
     }

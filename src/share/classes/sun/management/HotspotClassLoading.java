@@ -30,7 +30,7 @@ import sun.management.counter.*;
 /**
  * Implementation class of HotspotClassLoadingMBean interface.
  *
- * Internal, uncommitted management interface for Hotspot class loading 
+ * Internal, uncommitted management interface for Hotspot class loading
  * system.
  */
 class HotspotClassLoading
@@ -48,23 +48,23 @@ class HotspotClassLoading
     public long getLoadedClassSize() {
         return jvm.getLoadedClassSize();
     }
- 
+
     public long getUnloadedClassSize() {
         return jvm.getUnloadedClassSize();
     }
- 
+
     public long getClassLoadingTime() {
         return jvm.getClassLoadingTime();
     }
- 
+
     public long getMethodDataSize() {
         return jvm.getMethodDataSize();
     }
- 
+
     public long getInitializedClassCount() {
         return jvm.getInitializedClassCount();
     }
- 
+
     public long getClassInitializationTime() {
         return jvm.getClassInitializationTime();
     }
@@ -72,7 +72,7 @@ class HotspotClassLoading
     public long getClassVerificationTime() {
         return jvm.getClassVerificationTime();
     }
- 
+
     // Performance counter support
     private static final String JAVA_CLS    = "java.cls.";
     private static final String COM_SUN_CLS = "com.sun.cls.";

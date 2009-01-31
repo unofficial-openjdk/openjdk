@@ -50,12 +50,12 @@ public class GenericListeningConnector
     Transport transport;
 
     /**
-     * Initialize a new instance of this connector. The connector 
+     * Initialize a new instance of this connector. The connector
      * encapsulates a transport service, has a "timeout" connector argument,
      * and optionally an "address" connector argument.
      */
-    private GenericListeningConnector(TransportService ts, 
-				      boolean addAddressArgument)
+    private GenericListeningConnector(TransportService ts,
+                                      boolean addAddressArgument)
     {
         transportService = ts;
         transport = new Transport() {
@@ -64,16 +64,16 @@ public class GenericListeningConnector
                 }
             };
 
-	if (addAddressArgument) {
+        if (addAddressArgument) {
             addStringArgument(
                 ARG_ADDRESS,
                 getString("generic_listening.address.label"),
                 getString("generic_listening.address"),
-		"",
+                "",
                 false);
-	}
+        }
 
-	addIntegerArgument(
+        addIntegerArgument(
                 ARG_TIMEOUT,
                 getString("generic_listening.timeout.label"),
                 getString("generic_listening.timeout"),
@@ -81,16 +81,16 @@ public class GenericListeningConnector
                 false,
                 0, Integer.MAX_VALUE);
 
-	listenMap = new HashMap<Map<String,? extends Connector.Argument>,TransportService.ListenKey>(10);
+        listenMap = new HashMap<Map<String,? extends Connector.Argument>,TransportService.ListenKey>(10);
     }
 
     /**
-     * Initialize a new instance of this connector. This constructor is used 
+     * Initialize a new instance of this connector. This constructor is used
      * when sub-classing - the resulting connector will a "timeout" connector
      * argument.
      */
     protected GenericListeningConnector(TransportService ts) {
-	this(ts, false);
+        this(ts, false);
     }
 
     /**
@@ -98,82 +98,82 @@ public class GenericListeningConnector
      * have "address" and "timeout" connector arguments.
      */
     public static GenericListeningConnector create(TransportService ts) {
-	return new GenericListeningConnector(ts, true);
+        return new GenericListeningConnector(ts, true);
     }
 
-    public String startListening(String address, Map<String,? extends Connector.Argument> args) 
-	throws IOException, IllegalConnectorArgumentsException
+    public String startListening(String address, Map<String,? extends Connector.Argument> args)
+        throws IOException, IllegalConnectorArgumentsException
     {
-	TransportService.ListenKey listener = listenMap.get(args);
-	if (listener != null) {
-	   throw new IllegalConnectorArgumentsException("Already listening",
-               new ArrayList<String>(args.keySet())); 
-	}
+        TransportService.ListenKey listener = listenMap.get(args);
+        if (listener != null) {
+           throw new IllegalConnectorArgumentsException("Already listening",
+               new ArrayList<String>(args.keySet()));
+        }
 
-	listener = transportService.startListening(address);
-	listenMap.put(args, listener);
-	return listener.address();
+        listener = transportService.startListening(address);
+        listenMap.put(args, listener);
+        return listener.address();
     }
 
     public String
-	startListening(Map<String,? extends Connector.Argument> args)
-	throws IOException, IllegalConnectorArgumentsException
+        startListening(Map<String,? extends Connector.Argument> args)
+        throws IOException, IllegalConnectorArgumentsException
     {
-	String address = argument(ARG_ADDRESS, args).value();
-	return startListening(address, args);
+        String address = argument(ARG_ADDRESS, args).value();
+        return startListening(address, args);
     }
 
     public void stopListening(Map<String,? extends Connector.Argument> args)
-	throws IOException, IllegalConnectorArgumentsException
+        throws IOException, IllegalConnectorArgumentsException
     {
-	TransportService.ListenKey listener = listenMap.get(args);
-	if (listener == null) {
-           throw new IllegalConnectorArgumentsException("Not listening", 
+        TransportService.ListenKey listener = listenMap.get(args);
+        if (listener == null) {
+           throw new IllegalConnectorArgumentsException("Not listening",
                new ArrayList<String>(args.keySet()));
         }
-	transportService.stopListening(listener);
-	listenMap.remove(args);
+        transportService.stopListening(listener);
+        listenMap.remove(args);
     }
 
     public VirtualMachine
-	accept(Map<String,? extends Connector.Argument> args)
-	throws IOException, IllegalConnectorArgumentsException
+        accept(Map<String,? extends Connector.Argument> args)
+        throws IOException, IllegalConnectorArgumentsException
     {
-	String ts = argument(ARG_TIMEOUT, args).value();
-	int timeout = 0;
+        String ts = argument(ARG_TIMEOUT, args).value();
+        int timeout = 0;
         if (ts.length() > 0) {
-	    timeout = Integer.decode(ts).intValue();
+            timeout = Integer.decode(ts).intValue();
         }
 
-	TransportService.ListenKey listener = listenMap.get(args);
-	Connection connection;
-	if (listener != null) {
-	    connection = transportService.accept(listener, timeout, 0);
-	} else {
-	    /*
-	     * Keep compatibility with previous releases - if the
-	     * debugger hasn't called startListening then we do a 
-	     * once-off accept
-	     */
-	     startListening(args);
-	     listener = listenMap.get(args);
-	     assert listener != null;
-	     connection = transportService.accept(listener, timeout, 0);
-	     stopListening(args);
-	}
+        TransportService.ListenKey listener = listenMap.get(args);
+        Connection connection;
+        if (listener != null) {
+            connection = transportService.accept(listener, timeout, 0);
+        } else {
+            /*
+             * Keep compatibility with previous releases - if the
+             * debugger hasn't called startListening then we do a
+             * once-off accept
+             */
+             startListening(args);
+             listener = listenMap.get(args);
+             assert listener != null;
+             connection = transportService.accept(listener, timeout, 0);
+             stopListening(args);
+        }
         return Bootstrap.virtualMachineManager().createVirtualMachine(connection);
     }
 
     public boolean supportsMultipleConnections() {
-	return transportService.capabilities().supportsMultipleConnections();
+        return transportService.capabilities().supportsMultipleConnections();
     }
 
     public String name() {
-	return transport.name() + "Listen";
+        return transport.name() + "Listen";
     }
 
     public String description() {
-	return transportService.description();
+        return transportService.description();
     }
 
     public Transport transport() {
@@ -181,4 +181,3 @@ public class GenericListeningConnector
     }
 
 }
-

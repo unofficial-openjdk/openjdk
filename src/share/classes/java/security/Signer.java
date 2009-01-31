@@ -37,7 +37,6 @@ import java.io.*;
  *
  * @see Identity
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  *
  * @deprecated This class is no longer used. Its functionality has been
@@ -62,7 +61,7 @@ public abstract class Signer extends Identity {
      * serialization.
      */
     protected Signer() {
-	super();
+        super();
     }
 
 
@@ -72,7 +71,7 @@ public abstract class Signer extends Identity {
      * @param name the identity name.
      */
     public Signer(String name) {
-	super(name);
+        super(name);
     }
 
     /**
@@ -87,82 +86,82 @@ public abstract class Signer extends Identity {
      */
     public Signer(String name, IdentityScope scope)
     throws KeyManagementException {
-	super(name, scope);
+        super(name, scope);
     }
 
     /**
      * Returns this signer's private key.
      *
-     * <p>First, if there is a security manager, its <code>checkSecurityAccess</code> 
-     * method is called with <code>"getSignerPrivateKey"</code> 
-     * as its argument to see if it's ok to return the private key. 
-     * 
+     * <p>First, if there is a security manager, its <code>checkSecurityAccess</code>
+     * method is called with <code>"getSignerPrivateKey"</code>
+     * as its argument to see if it's ok to return the private key.
+     *
      * @return this signer's private key, or null if the private key has
      * not yet been set.
-     * 
-     * @exception  SecurityException  if a security manager exists and its  
-     * <code>checkSecurityAccess</code> method doesn't allow 
+     *
+     * @exception  SecurityException  if a security manager exists and its
+     * <code>checkSecurityAccess</code> method doesn't allow
      * returning the private key.
-     * 
+     *
      * @see SecurityManager#checkSecurityAccess
      */
     public PrivateKey getPrivateKey() {
-	check("getSignerPrivateKey");
-	return privateKey;
+        check("getSignerPrivateKey");
+        return privateKey;
     }
 
    /**
      * Sets the key pair (public key and private key) for this signer.
      *
-     * <p>First, if there is a security manager, its <code>checkSecurityAccess</code> 
-     * method is called with <code>"setSignerKeyPair"</code> 
-     * as its argument to see if it's ok to set the key pair. 
-     * 
+     * <p>First, if there is a security manager, its <code>checkSecurityAccess</code>
+     * method is called with <code>"setSignerKeyPair"</code>
+     * as its argument to see if it's ok to set the key pair.
+     *
      * @param pair an initialized key pair.
      *
      * @exception InvalidParameterException if the key pair is not
      * properly initialized.
      * @exception KeyException if the key pair cannot be set for any
      * other reason.
-     * @exception  SecurityException  if a security manager exists and its  
-     * <code>checkSecurityAccess</code> method doesn't allow 
+     * @exception  SecurityException  if a security manager exists and its
+     * <code>checkSecurityAccess</code> method doesn't allow
      * setting the key pair.
-     * 
+     *
      * @see SecurityManager#checkSecurityAccess
      */
     public final void setKeyPair(KeyPair pair)
     throws InvalidParameterException, KeyException {
-	check("setSignerKeyPair");
-	final PublicKey pub = pair.getPublic();
-	PrivateKey priv = pair.getPrivate();
+        check("setSignerKeyPair");
+        final PublicKey pub = pair.getPublic();
+        PrivateKey priv = pair.getPrivate();
 
-	if (pub == null || priv == null) {
-	    throw new InvalidParameterException();
-	}
-	try {
-	    AccessController.doPrivileged(
-		new PrivilegedExceptionAction<Void>() {
-		public Void run() throws KeyManagementException {
-		    setPublicKey(pub);
-		    return null;
-		}
-	    });
-	} catch (PrivilegedActionException pae) {
-	    throw (KeyManagementException) pae.getException();
-	}
-	privateKey = priv;
+        if (pub == null || priv == null) {
+            throw new InvalidParameterException();
+        }
+        try {
+            AccessController.doPrivileged(
+                new PrivilegedExceptionAction<Void>() {
+                public Void run() throws KeyManagementException {
+                    setPublicKey(pub);
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException pae) {
+            throw (KeyManagementException) pae.getException();
+        }
+        privateKey = priv;
     }
 
     String printKeys() {
-	String keys = "";
-	PublicKey publicKey = getPublicKey();
-	if (publicKey != null && privateKey != null) {
-	    keys = "\tpublic and private keys initialized";
+        String keys = "";
+        PublicKey publicKey = getPublicKey();
+        if (publicKey != null && privateKey != null) {
+            keys = "\tpublic and private keys initialized";
 
-	} else {
-	    keys = "\tno keys";
-	}
-	return keys;
+        } else {
+            keys = "\tno keys";
+        }
+        return keys;
     }
 
     /**
@@ -171,15 +170,14 @@ public abstract class Signer extends Identity {
      * @return a string of information about the signer.
      */
     public String toString() {
-	return "[Signer]" + super.toString();
+        return "[Signer]" + super.toString();
     }
 
     private static void check(String directive) {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkSecurityAccess(directive);
-	}
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkSecurityAccess(directive);
+        }
     }
 
 }
-

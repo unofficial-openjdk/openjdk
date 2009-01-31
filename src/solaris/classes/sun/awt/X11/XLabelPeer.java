@@ -45,7 +45,7 @@ class XLabelPeer extends XComponentPeer implements LabelPeer {
     {
         if (cachedFontMetrics != null)
             return cachedFontMetrics;
-        else return getFontMetrics(getPeerFont());   
+        else return getFontMetrics(getPeerFont());
 
     }
 
@@ -56,11 +56,11 @@ class XLabelPeer extends XComponentPeer implements LabelPeer {
         if (label == null) {
             label = "";
         }
-        alignment = target.getAlignment(); 
+        alignment = target.getAlignment();
     }
-    
+
     XLabelPeer(Label target) {
-        super(target); 
+        super(target);
     }
 
     /**
@@ -82,7 +82,7 @@ class XLabelPeer extends XComponentPeer implements LabelPeer {
 
     /**
      * Paint the label
-     */ 
+     */
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void paint(Graphics g) {

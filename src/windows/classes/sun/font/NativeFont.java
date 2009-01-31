@@ -44,64 +44,64 @@ public class NativeFont extends PhysicalFont {
      * @throws FontFormatException - if the font can't be located.
      */
     public NativeFont(String platName, boolean isBitmapDelegate)
-	throws FontFormatException {
+        throws FontFormatException {
 
-	throw new FontFormatException("NativeFont not used on Windows");
+        throw new FontFormatException("NativeFont not used on Windows");
     }
 
     static boolean hasExternalBitmaps(String platName) {
-	return false;
+        return false;
     }
 
     public CharToGlyphMapper getMapper() {
-	return null;
+        return null;
     }
 
     PhysicalFont getDelegateFont() {
-	return null;
+        return null;
     }
 
     FontStrike createStrike(FontStrikeDesc desc) {
-	return null;
+        return null;
     }
 
     public Rectangle2D getMaxCharBounds(FontRenderContext frc) {
-	return null;
+        return null;
     }
 
     StrikeMetrics getFontMetrics(long pScalerContext) {
-	return null;
+        return null;
     }
 
     public GeneralPath getGlyphOutline(long pScalerContext,
-				       int glyphCode,
-				       float x, float y) {
-	return null;
+                                       int glyphCode,
+                                       float x, float y) {
+        return null;
     }
 
     public  GeneralPath getGlyphVectorOutline(long pScalerContext,
-					      int[] glyphs, int numGlyphs,
-					      float x, float y) {
-	return null;
+                                              int[] glyphs, int numGlyphs,
+                                              float x, float y) {
+        return null;
     }
 
 
     long getGlyphImage(long pScalerContext, int glyphCode) {
-	return 0L;
+        return 0L;
     }
 
 
     void getGlyphMetrics(long pScalerContext, int glyphCode,
-			 Point2D.Float metrics) {
+                         Point2D.Float metrics) {
     }
 
 
     float getGlyphAdvance(long pScalerContext, int glyphCode) {
-	return 0f;
+        return 0f;
     }
 
     Rectangle2D.Float getGlyphOutlineBounds(long pScalerContext,
-					    int glyphCode) {
-	return new Rectangle2D.Float(0f, 0f, 0f, 0f);
+                                            int glyphCode) {
+        return new Rectangle2D.Float(0f, 0f, 0f, 0f);
     }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,11 +22,11 @@
  */
 
 /**
- * Interface Task that must be serializable so that the task can be 
+ * Interface Task that must be serializable so that the task can be
  * passed to the compute server.
  */
 public interface Task extends java.io.Serializable {
-  
+
     /**
      * Called by compute server and returns an object.
      */

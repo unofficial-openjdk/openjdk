@@ -29,14 +29,14 @@ import java.awt.peer.*;
 import sun.awt.*;
 
 public class MMenuBarPeer implements MenuBarPeer {
-    long	pData;
-    MenuBar	target;
-    private X11GraphicsConfig	graphicsConfig=null;
+    long        pData;
+    MenuBar     target;
+    private X11GraphicsConfig   graphicsConfig=null;
 
     private boolean disposed = false;
 
     static {
-	initIDs();
+        initIDs();
     }
 
      /**
@@ -48,14 +48,14 @@ public class MMenuBarPeer implements MenuBarPeer {
     native void create(MFramePeer f);
 
     public MMenuBarPeer(MenuBar target) {
-	this.target = target;
-	MFramePeer parent = (MFramePeer) MToolkit.targetToPeer(MMenuItemPeer.getParent_NoClientCode(target));
-	create(parent);
+        this.target = target;
+        MFramePeer parent = (MFramePeer) MToolkit.targetToPeer(MMenuItemPeer.getParent_NoClientCode(target));
+        create(parent);
     }
 
     protected void finalize() throws Throwable {
         dispose();
-	super.finalize();
+        super.finalize();
     }
 
     /*
@@ -65,7 +65,7 @@ public class MMenuBarPeer implements MenuBarPeer {
     private native void pDispose();
     protected void disposeImpl() {
         MToolkit.targetDisposedPeer(target, this);
-	pDispose();
+        pDispose();
     }
     public final void dispose() {
         boolean call_disposeImpl = false;
@@ -101,9 +101,9 @@ public class MMenuBarPeer implements MenuBarPeer {
     void print(Graphics g) {
         MenuBar mb = (MenuBar)target;
         Frame f = (Frame)MMenuItemPeer.getParent_NoClientCode(target);
-	Dimension fd = f.size();
-	Insets insets = f.insets();
-        
+        Dimension fd = f.size();
+        Insets insets = f.insets();
+
         /* Calculate menubar dimension. */
         int width = fd.width;
         int height = insets.top;
@@ -119,13 +119,13 @@ public class MMenuBarPeer implements MenuBarPeer {
         }
         Dimension d = new Dimension(width, height);
 
-	Shape oldClipArea = g.getClip();
-	g.clipRect(0, 0, d.width, d.height);
+        Shape oldClipArea = g.getClip();
+        g.clipRect(0, 0, d.width, d.height);
 
-	Color bg = f.getBackground();
-	Color fg = f.getForeground();
-	Color highlight = bg.brighter();
-	Color shadow = bg.darker();
+        Color bg = f.getBackground();
+        Color fg = f.getForeground();
+        Color highlight = bg.brighter();
+        Color shadow = bg.darker();
 
         // because we'll most likely be drawing on white paper,
         // for aesthetic reasons, don't make any part of the outer border
@@ -136,54 +136,54 @@ public class MMenuBarPeer implements MenuBarPeer {
         else {
             g.setColor(highlight);
         }
-	g.drawLine(0, 0, d.width, 0);
-	g.drawLine(1, 1, d.width - 1, 1);
-	g.drawLine(0, 0, 0, d.height);
-	g.drawLine(1, 1, 1, d.height - 1);
-	g.setColor(shadow);
-	g.drawLine(d.width, 1, d.width, d.height);
-	g.drawLine(d.width - 1, 2, d.width - 1, d.height);
-	g.drawLine(1, d.height, d.width, d.height);
-	g.drawLine(2, d.height - 1, d.width, d.height - 1);
+        g.drawLine(0, 0, d.width, 0);
+        g.drawLine(1, 1, d.width - 1, 1);
+        g.drawLine(0, 0, 0, d.height);
+        g.drawLine(1, 1, 1, d.height - 1);
+        g.setColor(shadow);
+        g.drawLine(d.width, 1, d.width, d.height);
+        g.drawLine(d.width - 1, 2, d.width - 1, d.height);
+        g.drawLine(1, d.height, d.width, d.height);
+        g.drawLine(2, d.height - 1, d.width, d.height - 1);
 
-	int x = GAP;
-	int nitems = mb.countMenus();
+        int x = GAP;
+        int nitems = mb.countMenus();
 
-	Menu helpMenu = target.getHelpMenu();
+        Menu helpMenu = target.getHelpMenu();
 
-	for (int i = 0 ; i < nitems ; i++) {
-	    Menu mn = target.getMenu(i);
-	    String item = mn.getLabel();
+        for (int i = 0 ; i < nitems ; i++) {
+            Menu mn = target.getMenu(i);
+            String item = mn.getLabel();
             if (item == null) {
                 item = "";
             }
-	    Font menuFont = mn.getFont();
-	    g.setFont(menuFont);
-	    FontMetrics menuMetrics = g.getFontMetrics();
-	    int y = (d.height / 2) + menuMetrics.getMaxDescent();
-	    int w = menuMetrics.stringWidth(item) + GAP * 2;
+            Font menuFont = mn.getFont();
+            g.setFont(menuFont);
+            FontMetrics menuMetrics = g.getFontMetrics();
+            int y = (d.height / 2) + menuMetrics.getMaxDescent();
+            int w = menuMetrics.stringWidth(item) + GAP * 2;
 
-	    if (x >= d.width) {
-	        break;
-	    }
-	    if (mn.isEnabled()) {
-	        g.setColor(fg);
-	    }
-	    else {
-	          // draw text as grayed out
-	        g.setColor(shadow);
-	    }
+            if (x >= d.width) {
+                break;
+            }
+            if (mn.isEnabled()) {
+                g.setColor(fg);
+            }
+            else {
+                  // draw text as grayed out
+                g.setColor(shadow);
+            }
 
-	    if (helpMenu == mn) {
-	        g.drawString(item, d.width - w + GAP, y);
-	    }
-	    else {
-	        g.drawString(item, x, y);
-		x += w;
-	    }
-	}
+            if (helpMenu == mn) {
+                g.drawString(item, d.width - w + GAP, y);
+            }
+            else {
+                g.drawString(item, x, y);
+                x += w;
+            }
+        }
 
-	g.setClip(oldClipArea);
+        g.setClip(oldClipArea);
     }
 
     // Needed for MenuComponentPeer.

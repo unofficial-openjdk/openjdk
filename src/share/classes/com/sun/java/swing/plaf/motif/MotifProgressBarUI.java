@@ -35,7 +35,7 @@ import javax.swing.plaf.basic.BasicProgressBarUI;
 
 
 /**
- * A Motif ProgressBarUI.  
+ * A Motif ProgressBarUI.
  * <p>
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -44,16 +44,15 @@ import javax.swing.plaf.basic.BasicProgressBarUI;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Michael C. Albers
  */
-public class MotifProgressBarUI extends BasicProgressBarUI 
+public class MotifProgressBarUI extends BasicProgressBarUI
 {
     /**
      * Creates the ProgressBar's UI
      */
     public static ComponentUI createUI(JComponent x) {
-	return new MotifProgressBarUI();
+        return new MotifProgressBarUI();
     }
 
 }

@@ -49,7 +49,7 @@ Java_sun_java2d_pipe_SpanClipRenderer_initIDs
 
     /* RegionIterator fields */
     pRegionID = (*env)->GetFieldID(env, ric, "region",
-				   "Lsun/java2d/pipe/Region;");
+                                   "Lsun/java2d/pipe/Region;");
     pCurIndexID = (*env)->GetFieldID(env, ric, "curIndex", "I");
     pNumXbandsID = (*env)->GetFieldID(env, ric, "numXbands", "I");
 
@@ -70,16 +70,16 @@ fill(jbyte *alpha, jint offset, jint tsize,
     alpha += offset + y * tsize + x;
     tsize -= w;
     while (--h >= 0) {
-	for (x = 0; x < w; x++) {
-	    *alpha++ = value;
-	}
-	alpha += tsize;
+        for (x = 0; x < w; x++) {
+            *alpha++ = value;
+        }
+        alpha += tsize;
     }
 }
 
 static jboolean
 nextYRange(jint *box, jint *bands, jint endIndex,
-	   jint *pCurIndex, jint *pNumXbands)
+           jint *pCurIndex, jint *pNumXbands)
 {
     jint curIndex = *pCurIndex;
     jint numXbands = *pNumXbands;
@@ -88,11 +88,11 @@ nextYRange(jint *box, jint *bands, jint endIndex,
     curIndex += numXbands * 2;
     ret = (curIndex + 3 < endIndex);
     if (ret) {
-	box[1] = bands[curIndex++];
-	box[3] = bands[curIndex++];
-	numXbands = bands[curIndex++];
+        box[1] = bands[curIndex++];
+        box[3] = bands[curIndex++];
+        numXbands = bands[curIndex++];
     } else {
-	numXbands = 0;
+        numXbands = 0;
     }
     *pCurIndex = curIndex;
     *pNumXbands = numXbands;
@@ -101,13 +101,13 @@ nextYRange(jint *box, jint *bands, jint endIndex,
 
 static jboolean
 nextXBand(jint *box, jint *bands, jint endIndex,
-	  jint *pCurIndex, jint *pNumXbands)
+          jint *pCurIndex, jint *pNumXbands)
 {
     jint curIndex = *pCurIndex;
     jint numXbands = *pNumXbands;
 
     if (numXbands <= 0 || curIndex + 2 > endIndex) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
     numXbands--;
     box[0] = bands[curIndex++];
@@ -117,7 +117,7 @@ nextXBand(jint *box, jint *bands, jint endIndex,
     *pNumXbands = numXbands;
     return JNI_TRUE;
 }
-	
+
 JNIEXPORT void JNICALL
 Java_sun_java2d_pipe_SpanClipRenderer_fillTile
     (JNIEnv *env, jobject sr, jobject ri,
@@ -129,7 +129,7 @@ Java_sun_java2d_pipe_SpanClipRenderer_fillTile
     jsize alphalen;
 
     if ((*env)->GetArrayLength(env, boxArray) < 4) {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "band array");
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "band array");
     }
     alphalen = (*env)->GetArrayLength(env, alphaTile);
 
@@ -139,8 +139,8 @@ Java_sun_java2d_pipe_SpanClipRenderer_fillTile
     h = box[3] - box[1];
 
     if (alphalen < offset || (alphalen - offset) / tsize < h) {
-	(*env)->ReleasePrimitiveArrayCritical(env, boxArray, box, 0);
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "alpha tile array");
+        (*env)->ReleasePrimitiveArrayCritical(env, boxArray, box, 0);
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "alpha tile array");
     }
 
     alpha = (*env)->GetPrimitiveArrayCritical(env, alphaTile, 0);
@@ -151,8 +151,8 @@ Java_sun_java2d_pipe_SpanClipRenderer_fillTile
     (*env)->ReleasePrimitiveArrayCritical(env, boxArray, box, 0);
 
     Java_sun_java2d_pipe_SpanClipRenderer_eraseTile(env, sr, ri,
-						    alphaTile, offset, tsize,
-						    boxArray);
+                                                    alphaTile, offset, tsize,
+                                                    boxArray);
 }
 
 JNIEXPORT void JNICALL
@@ -182,7 +182,7 @@ Java_sun_java2d_pipe_SpanClipRenderer_eraseTile
     jsize alphalen;
 
     if ((*env)->GetArrayLength(env, boxArray) < 4) {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "band array");
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "band array");
     }
     alphalen = (*env)->GetArrayLength(env, alphaTile);
 
@@ -193,7 +193,7 @@ Java_sun_java2d_pipe_SpanClipRenderer_eraseTile
     endIndex = (*env)->GetIntField(env, region, pEndIndexID);
 
     if (endIndex > (*env)->GetArrayLength(env, bandsArray)) {
-	endIndex = (*env)->GetArrayLength(env, bandsArray);
+        endIndex = (*env)->GetArrayLength(env, bandsArray);
     }
 
     box = (*env)->GetPrimitiveArrayCritical(env, boxArray, 0);
@@ -204,10 +204,10 @@ Java_sun_java2d_pipe_SpanClipRenderer_eraseTile
     hiy = box[3];
 
     if (alphalen < offset ||
-	alphalen < offset + (hix-lox) ||
-	(alphalen - offset - (hix-lox)) / tsize < (hiy - loy - 1)) {
-	(*env)->ReleasePrimitiveArrayCritical(env, boxArray, box, 0);
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "alpha tile array");
+        alphalen < offset + (hix-lox) ||
+        (alphalen - offset - (hix-lox)) / tsize < (hiy - loy - 1)) {
+        (*env)->ReleasePrimitiveArrayCritical(env, boxArray, box, 0);
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "alpha tile array");
     }
 
     bands = (*env)->GetPrimitiveArrayCritical(env, bandsArray, 0);
@@ -221,64 +221,64 @@ Java_sun_java2d_pipe_SpanClipRenderer_eraseTile
     lastx = lox;
 
     while (nextYRange(box, bands, endIndex, &curIndex, &numXbands)) {
-	if (box[3] <= loy) {
-	    saveNumXbands = numXbands;
-	    saveCurIndex = curIndex;
-	    continue;
-	}
-	if (box[1] >= hiy) {
-	    break;
-	}
-	if (box[1] < loy) {
-	    box[1] = loy;
-	}
-	if (box[3] > hiy) {
-	    box[3] = hiy;
-	}
-	curx = lox;
-	while (nextXBand(box, bands, endIndex, &curIndex, &numXbands)) {
-	    if (box[2] <= lox) {
-		continue;
-	    }
-	    if (box[0] >= hix) {
-		break;
-	    }
-	    if (box[0] < lox) {
-		box[0] = lox;
-	    }
-	    if (lasty < box[1]) {
-		fill(alpha, offset, tsize,
-		     0, lasty - loy,
-		     hix - lox, box[1] - lasty, 0);
-	    }
-	    lasty = box[3];
-	    if (firstx > box[0]) {
-		firstx = box[0];
-	    }
-	    if (curx < box[0]) {
-		fill(alpha, offset, tsize,
-		     curx - lox, box[1] - loy,
-		     box[0] - curx, box[3] - box[1], 0);
-	    }
-	    curx = box[2];
-	    if (curx >= hix) {
-		curx = hix;
-		break;
-	    }
-	}
-	if (curx > lox) {
-	    if (curx < hix) {
-		fill(alpha, offset, tsize,
-		     curx - lox, box[1] - loy,
-		     hix - curx, box[3] - box[1], 0);
-	    }
-	    if (firsty > box[1]) {
-		firsty = box[1];
-	    }
-	}
-	if (lastx < curx) {
-	    lastx = curx;
-	}
+        if (box[3] <= loy) {
+            saveNumXbands = numXbands;
+            saveCurIndex = curIndex;
+            continue;
+        }
+        if (box[1] >= hiy) {
+            break;
+        }
+        if (box[1] < loy) {
+            box[1] = loy;
+        }
+        if (box[3] > hiy) {
+            box[3] = hiy;
+        }
+        curx = lox;
+        while (nextXBand(box, bands, endIndex, &curIndex, &numXbands)) {
+            if (box[2] <= lox) {
+                continue;
+            }
+            if (box[0] >= hix) {
+                break;
+            }
+            if (box[0] < lox) {
+                box[0] = lox;
+            }
+            if (lasty < box[1]) {
+                fill(alpha, offset, tsize,
+                     0, lasty - loy,
+                     hix - lox, box[1] - lasty, 0);
+            }
+            lasty = box[3];
+            if (firstx > box[0]) {
+                firstx = box[0];
+            }
+            if (curx < box[0]) {
+                fill(alpha, offset, tsize,
+                     curx - lox, box[1] - loy,
+                     box[0] - curx, box[3] - box[1], 0);
+            }
+            curx = box[2];
+            if (curx >= hix) {
+                curx = hix;
+                break;
+            }
+        }
+        if (curx > lox) {
+            if (curx < hix) {
+                fill(alpha, offset, tsize,
+                     curx - lox, box[1] - loy,
+                     hix - curx, box[3] - box[1], 0);
+            }
+            if (firsty > box[1]) {
+                firsty = box[1];
+            }
+        }
+        if (lastx < curx) {
+            lastx = curx;
+        }
     }
 
     box[0] = firstx;

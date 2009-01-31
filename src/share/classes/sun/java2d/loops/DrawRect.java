@@ -44,72 +44,72 @@ import sun.java2d.SurfaceData;
  */
 public class DrawRect extends GraphicsPrimitive
 {
-    public final static String methodSignature = "DrawRect(...)".toString(); 
+    public final static String methodSignature = "DrawRect(...)".toString();
 
-    public final static int primTypeID = makePrimTypeID(); 
+    public final static int primTypeID = makePrimTypeID();
 
     public static DrawRect locate(SurfaceType srctype,
-				  CompositeType comptype,
-				  SurfaceType dsttype)
+                                  CompositeType comptype,
+                                  SurfaceType dsttype)
     {
-	return (DrawRect)
-	    GraphicsPrimitiveMgr.locate(primTypeID,
-					srctype, comptype, dsttype);
+        return (DrawRect)
+            GraphicsPrimitiveMgr.locate(primTypeID,
+                                        srctype, comptype, dsttype);
     }
 
     protected DrawRect(SurfaceType srctype,
-		       CompositeType comptype,
-		       SurfaceType dsttype)
+                       CompositeType comptype,
+                       SurfaceType dsttype)
     {
-	super(methodSignature, primTypeID, srctype, comptype, dsttype);
+        super(methodSignature, primTypeID, srctype, comptype, dsttype);
     }
 
     public DrawRect(long pNativePrim,
-		    SurfaceType srctype,
-		    CompositeType comptype,
-		    SurfaceType dsttype)
+                    SurfaceType srctype,
+                    CompositeType comptype,
+                    SurfaceType dsttype)
     {
-	super(pNativePrim, methodSignature, primTypeID, srctype, comptype, dsttype);
+        super(pNativePrim, methodSignature, primTypeID, srctype, comptype, dsttype);
     }
 
     /**
      *   All DrawRect implementors must have this invoker method
      */
     public native void DrawRect(SunGraphics2D sg2d, SurfaceData dest,
-				int x1, int y1, int w, int h);
+                                int x1, int y1, int w, int h);
 
     public GraphicsPrimitive makePrimitive(SurfaceType srctype,
-					   CompositeType comptype,
-					   SurfaceType dsttype)
+                                           CompositeType comptype,
+                                           SurfaceType dsttype)
     {
-	// REMIND: use FillSpans or converter object?
-	throw new InternalError("DrawRect not implemented for "+
-				srctype+" with "+comptype);
+        // REMIND: use FillSpans or converter object?
+        throw new InternalError("DrawRect not implemented for "+
+                                srctype+" with "+comptype);
     }
 
     public GraphicsPrimitive traceWrap() {
-	return new TraceDrawRect(this);
+        return new TraceDrawRect(this);
     }
 
     private static class TraceDrawRect extends DrawRect {
-	DrawRect target;
+        DrawRect target;
 
-	public TraceDrawRect(DrawRect target) {
-	    super(target.getSourceType(),
-		  target.getCompositeType(),
-		  target.getDestType());
-	    this.target = target;
-	}
+        public TraceDrawRect(DrawRect target) {
+            super(target.getSourceType(),
+                  target.getCompositeType(),
+                  target.getDestType());
+            this.target = target;
+        }
 
-	public GraphicsPrimitive traceWrap() {
-	    return this;
-	}
+        public GraphicsPrimitive traceWrap() {
+            return this;
+        }
 
-	public void DrawRect(SunGraphics2D sg2d, SurfaceData dest,
-			     int x1, int y1, int w, int h)
-	{
-	    tracePrimitive(target);
-	    target.DrawRect(sg2d, dest, x1, y1, w, h);
-	}
+        public void DrawRect(SunGraphics2D sg2d, SurfaceData dest,
+                             int x1, int y1, int w, int h)
+        {
+            tracePrimitive(target);
+            target.DrawRect(sg2d, dest, x1, y1, w, h);
+        }
     }
 }

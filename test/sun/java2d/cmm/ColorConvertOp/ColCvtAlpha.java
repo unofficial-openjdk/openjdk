@@ -45,7 +45,7 @@ import java.awt.color.ColorSpace;
 public class ColCvtAlpha {
 
     public static void main(String args[]) {
-        BufferedImage src 
+        BufferedImage src
             = new BufferedImage(1, 10, BufferedImage.TYPE_INT_ARGB);
 
         // Set src pixel values
@@ -84,4 +84,3 @@ public class ColCvtAlpha {
 
     }
 }
-

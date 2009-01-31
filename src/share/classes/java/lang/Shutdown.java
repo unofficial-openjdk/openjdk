@@ -33,7 +33,6 @@ import java.util.ArrayList;
  * governing the virtual-machine shutdown sequence.
  *
  * @author   Mark Reinhold
- * @version  %I%, %E%
  * @since    1.3
  */
 
@@ -60,9 +59,9 @@ class Shutdown {
 
     /* Invoked by Runtime.runFinalizersOnExit */
     static void setRunFinalizersOnExit(boolean run) {
-	synchronized (lock) {
-	    runFinalizersOnExit = run;
-	}
+        synchronized (lock) {
+            runFinalizersOnExit = run;
+        }
     }
 
 
@@ -70,12 +69,12 @@ class Shutdown {
      * but does not do any security checks.
      */
     static void add(Runnable hook) {
-	synchronized (lock) {
-	    if (state > RUNNING)
-		throw new IllegalStateException("Shutdown in progress");
+        synchronized (lock) {
+            if (state > RUNNING)
+                throw new IllegalStateException("Shutdown in progress");
 
-	    hooks.add(hook);
-	}
+            hooks.add(hook);
+        }
     }
 
 
@@ -83,35 +82,35 @@ class Shutdown {
      * does not do any security checks.
      */
     static boolean remove(Runnable hook) {
-	synchronized (lock) {
-	    if (state > RUNNING)
-		throw new IllegalStateException("Shutdown in progress");
-	    if (hook == null) throw new NullPointerException();
-	    if (hooks == null) {
-		return false;
-	    } else {
-		return hooks.remove(hook);
-	    }
-	}
+        synchronized (lock) {
+            if (state > RUNNING)
+                throw new IllegalStateException("Shutdown in progress");
+            if (hook == null) throw new NullPointerException();
+            if (hooks == null) {
+                return false;
+            } else {
+                return hooks.remove(hook);
+            }
+        }
     }
 
 
     /* Run all registered shutdown hooks
      */
     private static void runHooks() {
-	/* We needn't bother acquiring the lock just to read the hooks field,
-	 * since the hooks can't be modified once shutdown is in progress
-	 */
-	for (Runnable hook : hooks) {
-	    try {
-		hook.run();
-	    } catch(Throwable t) { 
-		if (t instanceof ThreadDeath) {
-   		    ThreadDeath td = (ThreadDeath)t;
-		    throw td;
-		} 
-	    }
-	}
+        /* We needn't bother acquiring the lock just to read the hooks field,
+         * since the hooks can't be modified once shutdown is in progress
+         */
+        for (Runnable hook : hooks) {
+            try {
+                hook.run();
+            } catch(Throwable t) {
+                if (t instanceof ThreadDeath) {
+                    ThreadDeath td = (ThreadDeath)t;
+                    throw td;
+                }
+            }
+        }
     }
 
     /* The halt method is synchronized on the halt lock
@@ -142,19 +141,19 @@ class Shutdown {
      * response to SIGINT, SIGTERM, etc.
      */
     private static void sequence() {
-	synchronized (lock) {
-	    /* Guard against the possibility of a daemon thread invoking exit
-	     * after DestroyJavaVM initiates the shutdown sequence
-	     */
-	    if (state != HOOKS) return;
-	}
-	runHooks();
-	boolean rfoe;
-	synchronized (lock) {
-	    state = FINALIZERS;
-	    rfoe = runFinalizersOnExit;
-	}
-	if (rfoe) runAllFinalizers();
+        synchronized (lock) {
+            /* Guard against the possibility of a daemon thread invoking exit
+             * after DestroyJavaVM initiates the shutdown sequence
+             */
+            if (state != HOOKS) return;
+        }
+        runHooks();
+        boolean rfoe;
+        synchronized (lock) {
+            state = FINALIZERS;
+            rfoe = runFinalizersOnExit;
+        }
+        if (rfoe) runAllFinalizers();
     }
 
 
@@ -163,39 +162,39 @@ class Shutdown {
      * which should pass a nonzero status code.
      */
     static void exit(int status) {
-	boolean runMoreFinalizers = false;
-	synchronized (lock) {
-	    if (status != 0) runFinalizersOnExit = false;
-	    switch (state) {
-	    case RUNNING:	/* Initiate shutdown */
-		state = HOOKS;
-		break;
-	    case HOOKS:		/* Stall and halt */
-		break;
-	    case FINALIZERS:
-		if (status != 0) {
-		    /* Halt immediately on nonzero status */
-		    halt(status);
-		} else {
-		    /* Compatibility with old behavior:
-		     * Run more finalizers and then halt
-		     */
-		    runMoreFinalizers = runFinalizersOnExit;
-		}
-		break;
-	    }
-	}
-	if (runMoreFinalizers) {
-	    runAllFinalizers();
-	    halt(status);
-	}
-	synchronized (Shutdown.class) {
-	    /* Synchronize on the class object, causing any other thread
+        boolean runMoreFinalizers = false;
+        synchronized (lock) {
+            if (status != 0) runFinalizersOnExit = false;
+            switch (state) {
+            case RUNNING:       /* Initiate shutdown */
+                state = HOOKS;
+                break;
+            case HOOKS:         /* Stall and halt */
+                break;
+            case FINALIZERS:
+                if (status != 0) {
+                    /* Halt immediately on nonzero status */
+                    halt(status);
+                } else {
+                    /* Compatibility with old behavior:
+                     * Run more finalizers and then halt
+                     */
+                    runMoreFinalizers = runFinalizersOnExit;
+                }
+                break;
+            }
+        }
+        if (runMoreFinalizers) {
+            runAllFinalizers();
+            halt(status);
+        }
+        synchronized (Shutdown.class) {
+            /* Synchronize on the class object, causing any other thread
              * that attempts to initiate shutdown to stall indefinitely
-	     */
-	    sequence();
-	    halt(status);
-	}
+             */
+            sequence();
+            halt(status);
+        }
     }
 
 
@@ -204,19 +203,19 @@ class Shutdown {
      * actually halt the VM.
      */
     static void shutdown() {
-	synchronized (lock) {
-	    switch (state) {
-	    case RUNNING:	/* Initiate shutdown */
-		state = HOOKS;
-		break;
-	    case HOOKS:		/* Stall and then return */
-	    case FINALIZERS:
-		break;
-	    }
-	}
-	synchronized (Shutdown.class) {
-	    sequence();
-	}
+        synchronized (lock) {
+            switch (state) {
+            case RUNNING:       /* Initiate shutdown */
+                state = HOOKS;
+                break;
+            case HOOKS:         /* Stall and then return */
+            case FINALIZERS:
+                break;
+            }
+        }
+        synchronized (Shutdown.class) {
+            sequence();
+        }
     }
 
 }

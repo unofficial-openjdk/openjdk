@@ -52,64 +52,64 @@
  * reuse their implementations for the specific optimization cases.
  */
 #define DecodeDeclared
-#define DeclareDecodeVars	DeclareAnyVars
-#define InitPixelDecode		InitPixelAny
-#define PixelDecode		PixelAnyDecode
+#define DeclareDecodeVars       DeclareAnyVars
+#define InitPixelDecode         InitPixelAny
+#define PixelDecode             PixelAnyDecode
 
 /* Include the optimal implementations for Index and Direct ColorModels */
 #include "img_icm.h"
 #include "img_dcm.h"
 
-#define ICMTYPE		0
-#define DCMTYPE		1
-#define OCMTYPE		2
+#define ICMTYPE         0
+#define DCMTYPE         1
+#define OCMTYPE         2
 
-#define DeclareAnyVars						\
-    DeclareICMVars						\
-    DeclareDCMVars						\
-    struct execenv *ee;						\
-    struct methodblock *mb = 0;					\
+#define DeclareAnyVars                                          \
+    DeclareICMVars                                              \
+    DeclareDCMVars                                              \
+    struct execenv *ee;                                         \
+    struct methodblock *mb = 0;                                 \
     int CMtype;
 
-#define InitPixelAny(CM)						\
-    do {								\
-	Classjava_awt_image_ColorModel *cm =				\
-	    (Classjava_awt_image_ColorModel *) unhand(CM);		\
-	ImgCMData *icmd = (ImgCMData *) cm->pData;			\
-	if ((icmd->type & IMGCV_CMBITS) == IMGCV_ICM) {			\
-	    CMtype = ICMTYPE;						\
-	    InitPixelICM(cm);						\
-	} else if (((icmd->type & IMGCV_CMBITS) == IMGCV_DCM)		\
-		   || ((icmd->type & IMGCV_CMBITS) == IMGCV_DCM8)) {	\
-	    CMtype = DCMTYPE;						\
-	    InitPixelDCM(cm);						\
-	} else {							\
-	    CMtype = OCMTYPE;						\
-	    ee = EE();							\
-	    mb = icmd->mb;						\
-	}								\
+#define InitPixelAny(CM)                                                \
+    do {                                                                \
+        Classjava_awt_image_ColorModel *cm =                            \
+            (Classjava_awt_image_ColorModel *) unhand(CM);              \
+        ImgCMData *icmd = (ImgCMData *) cm->pData;                      \
+        if ((icmd->type & IMGCV_CMBITS) == IMGCV_ICM) {                 \
+            CMtype = ICMTYPE;                                           \
+            InitPixelICM(cm);                                           \
+        } else if (((icmd->type & IMGCV_CMBITS) == IMGCV_DCM)           \
+                   || ((icmd->type & IMGCV_CMBITS) == IMGCV_DCM8)) {    \
+            CMtype = DCMTYPE;                                           \
+            InitPixelDCM(cm);                                           \
+        } else {                                                        \
+            CMtype = OCMTYPE;                                           \
+            ee = EE();                                                  \
+            mb = icmd->mb;                                              \
+        }                                                               \
     } while (0)
 
-#define PixelAnyDecode(CM, pixel, red, green, blue, alpha)		\
-    do {								\
-	switch (CMtype) {						\
-	case ICMTYPE:							\
-	    PixelICMDecode(CM, pixel, red, green, blue, alpha);		\
-	    break;							\
-	case DCMTYPE:							\
-	    PixelDCMDecode(CM, pixel, red, green, blue, alpha);		\
-	    break;							\
-	case OCMTYPE:							\
-	    pixel = do_execute_java_method(ee, (void *) CM,		\
-					   "getRGB","(I)I", mb,		\
-					   FALSE, pixel);		\
-	    if (exceptionOccurred(ee)) {				\
-		return SCALEFAILURE;					\
-	    }								\
-	    IfAlpha(alpha = pixel >> ALPHASHIFT;)			\
-	    red = (pixel >> REDSHIFT) & 0xff;				\
-	    green = (pixel >> GREENSHIFT) & 0xff;			\
-	    blue = (pixel >> BLUESHIFT) & 0xff;				\
-	    break;							\
-	}								\
+#define PixelAnyDecode(CM, pixel, red, green, blue, alpha)              \
+    do {                                                                \
+        switch (CMtype) {                                               \
+        case ICMTYPE:                                                   \
+            PixelICMDecode(CM, pixel, red, green, blue, alpha);         \
+            break;                                                      \
+        case DCMTYPE:                                                   \
+            PixelDCMDecode(CM, pixel, red, green, blue, alpha);         \
+            break;                                                      \
+        case OCMTYPE:                                                   \
+            pixel = do_execute_java_method(ee, (void *) CM,             \
+                                           "getRGB","(I)I", mb,         \
+                                           FALSE, pixel);               \
+            if (exceptionOccurred(ee)) {                                \
+                return SCALEFAILURE;                                    \
+            }                                                           \
+            IfAlpha(alpha = pixel >> ALPHASHIFT;)                       \
+            red = (pixel >> REDSHIFT) & 0xff;                           \
+            green = (pixel >> GREENSHIFT) & 0xff;                       \
+            blue = (pixel >> BLUESHIFT) & 0xff;                         \
+            break;                                                      \
+        }                                                               \
     } while (0)

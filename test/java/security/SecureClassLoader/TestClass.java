@@ -23,6 +23,6 @@
 
 public class TestClass {
     public static String foo() {
-	return "OK";
+        return "OK";
     }
 }

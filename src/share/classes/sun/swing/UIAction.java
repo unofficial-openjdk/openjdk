@@ -56,7 +56,6 @@ import javax.swing.Action;
  *
  * @see com.sun.java.swing.ExtendedAction
  * @see javax.swing.Action
- * @version %I% %G%
  * @author Scott Violet
  */
 public abstract class UIAction implements Action {

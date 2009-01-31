@@ -81,14 +81,14 @@ NativePrimitive IntRgbxPrimitives[] = {
     REGISTER_CONVERT_BLIT(ThreeByteBgr, IntRgbx),
     REGISTER_CONVERT_BLIT(ByteGray, IntRgbx),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, IntRgbx,
-				NAME_CONVERT_BLIT(IntArgb, IntRgbx)),
+                                NAME_CONVERT_BLIT(IntArgb, IntRgbx)),
     REGISTER_CONVERT_BLIT(ByteIndexed, IntRgbx),
     REGISTER_SCALE_BLIT(IntRgbx, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, IntRgbx),
     REGISTER_SCALE_BLIT(ThreeByteBgr, IntRgbx),
     REGISTER_SCALE_BLIT(ByteGray, IntRgbx),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, IntRgbx,
-			      NAME_SCALE_BLIT(IntArgb, IntRgbx)),
+                              NAME_SCALE_BLIT(IntArgb, IntRgbx)),
     REGISTER_SCALE_BLIT(ByteIndexed, IntRgbx),
     REGISTER_XPAR_CONVERT_BLIT(ByteIndexedBm, IntRgbx),
     REGISTER_XPAR_SCALE_BLIT(ByteIndexedBm, IntRgbx),
@@ -112,7 +112,7 @@ NativePrimitive IntRgbxPrimitives[] = {
 jboolean RegisterIntRgbx(JNIEnv *env)
 {
     return RegisterPrimitives(env, IntRgbxPrimitives,
-			      ArraySize(IntRgbxPrimitives));
+                              ArraySize(IntRgbxPrimitives));
 }
 
 jint PixelForIntRgbx(SurfaceDataRasInfo *pRasInfo, jint rgb)

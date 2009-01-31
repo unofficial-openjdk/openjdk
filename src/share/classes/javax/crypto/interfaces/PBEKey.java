@@ -30,7 +30,7 @@ import java.math.BigInteger;
 /**
  * The interface to a PBE key.
  *
- * @author Valerie Peng 
+ * @author Valerie Peng
  *
  * @see javax.crypto.spec.PBEKeySpec
  * @see javax.crypto.SecretKey
@@ -38,12 +38,12 @@ import java.math.BigInteger;
  */
 public interface PBEKey extends javax.crypto.SecretKey {
 
-    /** 
+    /**
      * The class fingerprint that is set to indicate serialization
-     * compatibility since J2SE 1.4. 
+     * compatibility since J2SE 1.4.
      */
     static final long serialVersionUID = -1430015993304333921L;
-    
+
     /**
      * Returns the password.
      *
@@ -63,13 +63,13 @@ public interface PBEKey extends javax.crypto.SecretKey {
      * it is no longer needed.
      *
      * @return the salt.
-     */        
+     */
     byte[] getSalt();
 
     /**
      * Returns the iteration count or 0 if not specified.
      *
      * @return the iteration count.
-     */        
+     */
     int getIterationCount();
 }

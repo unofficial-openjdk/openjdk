@@ -48,7 +48,6 @@ import sun.awt.datatransfer.DataTransferer;
  * @author Roger Brinkley
  * @author Danila Sinopalnikov
  * @author Alexander Gerasimov
- * @version %I%, %G%
  *
  * @since JDK1.1
  */
@@ -70,14 +69,14 @@ public class X11Selection {
     private static final Object source = new Object();
 
     static {
-	// 4154170:  Need to ensure the the toolkit is initialized prior
-	// to executing this initializer
-	Toolkit toolkit = Toolkit.getDefaultToolkit();
+        // 4154170:  Need to ensure the the toolkit is initialized prior
+        // to executing this initializer
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
 
-	selections = new Vector();
+        selections = new Vector();
 
         initIDs();
-	init();
+        init();
 
     }
 
@@ -85,13 +84,13 @@ public class X11Selection {
     static native void init();
 
     public X11Selection(String name, X11Clipboard clipboard) {
-	atom = ((MDataTransferer)DataTransferer.getInstance()).getAtomForTarget(name);
+        atom = ((MDataTransferer)DataTransferer.getInstance()).getAtomForTarget(name);
         selections.addElement(this);
         this.clipboard = clipboard;
     }
 
     private static Object[] getSelectionsArray() {
-	return selections.toArray();
+        return selections.toArray();
     }
 
    /*
@@ -104,18 +103,18 @@ public class X11Selection {
                                           X11SelectionHolder holder);
 
     boolean getSelectionOwnership(Transferable contents,
-				  X11SelectionHolder holder) {
-        SortedMap formatMap = 
+                                  X11SelectionHolder holder) {
+        SortedMap formatMap =
             DataTransferer.getInstance().getFormatsForTransferable
-	        (contents, DataTransferer.adaptFlavorMap(flavorMap));
-        long[] formats = 
+                (contents, DataTransferer.adaptFlavorMap(flavorMap));
+        long[] formats =
             DataTransferer.getInstance().keysToLongArray(formatMap);
         SunToolkit.insertTargetMapping(source, AppContext.getAppContext());
 
         /*
          * Update 'contents' and 'holder' fields in the native code under
          * AWTLock protection to prevent race with lostSelectionOwnership().
-         */        
+         */
         SunToolkit.awtLock();
         try {
             boolean isOwnerSet = pGetSelectionOwnership(source, contents, formats, formatMap,
@@ -141,7 +140,7 @@ public class X11Selection {
             holder.lostSelectionOwnership();
             holder = null;
         }
-	contents = null;
+        contents = null;
     }
 
     native void clearNativeContext();

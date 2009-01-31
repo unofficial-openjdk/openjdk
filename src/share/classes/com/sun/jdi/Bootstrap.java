@@ -26,8 +26,8 @@
 package com.sun.jdi;
 
 /**
- * Initial class that provides access to the default implementation 
- * of JDI interfaces. A debugger application uses this class to access the 
+ * Initial class that provides access to the default implementation
+ * of JDI interfaces. A debugger application uses this class to access the
  * single instance of the {@link VirtualMachineManager} interface.
  *
  * @author Gordon Hirsch
@@ -37,10 +37,10 @@ package com.sun.jdi;
 public class Bootstrap extends Object {
 
     /**
-     * Returns the virtual machine manager. 
+     * Returns the virtual machine manager.
      *
      * <p> May throw an unspecified error if initialization of the
-     * {@link com.sun.jdi.VirtualMachineManager} fails or if 
+     * {@link com.sun.jdi.VirtualMachineManager} fails or if
      * the virtual machine manager is unable to locate or create
      * any {@link com.sun.jdi.connect.Connector Connectors}. </p>
      * <p>

@@ -33,25 +33,25 @@ import java.io.*;
 public class NonUTF8EncodedChar
 {
     public static void main(String[] args) {
-	try {
+        try {
             String s = "file:///c:/temp//m%FCnchen.txt";
             System.out.println("URL = "+s);
             URL url = new URL(s);
             URLConnection urlCon = url.openConnection();
             System.out.println("succeeded");
 
-	    urlCon.getInputStream();
-	     System.out.println("succeeded");
+            urlCon.getInputStream();
+             System.out.println("succeeded");
 
         } catch (IOException ioe) {
-	    // Ignore this is ok. The file may not exist.
-	    ioe.printStackTrace();
+            // Ignore this is ok. The file may not exist.
+            ioe.printStackTrace();
         } catch (IllegalArgumentException iae) {
-	    String message = iae.getMessage();
-	    if (message == null || message.equals("")) {
-		System.out.println("No message");
-	   	throw new RuntimeException("Failed: No message in Exception");
-	    }
-	}
+            String message = iae.getMessage();
+            if (message == null || message.equals("")) {
+                System.out.println("No message");
+                throw new RuntimeException("Failed: No message in Exception");
+            }
+        }
     }
 }

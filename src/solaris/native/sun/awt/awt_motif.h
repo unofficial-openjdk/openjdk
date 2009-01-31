@@ -39,9 +39,9 @@
 
 extern int32_t awt_motif_getIMStatusHeight(Widget w, jobject tc);
 extern XVaNestedList awt_motif_getXICStatusAreaList(Widget w, jobject tc);
-extern void awt_motif_Scrollbar_ButtonReleaseHandler (Widget, 
-                                                      XtPointer, 
-                                                      XEvent *, 
+extern void awt_motif_Scrollbar_ButtonReleaseHandler (Widget,
+                                                      XtPointer,
+                                                      XEvent *,
                                                       Boolean *) ;
 
     /* This function causes an UnsatisfiedLinkError on Linux.

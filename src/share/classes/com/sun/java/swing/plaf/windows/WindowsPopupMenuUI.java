@@ -53,23 +53,22 @@ import static sun.swing.SwingUtilities2.BASICMENUITEMUI_MAX_TEXT_OFFSET;
  * for short term storage or RMI between applications running the same
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
- * 
- * @version %I% %G%
+ *
  * @author Igor Kushnirskiy
  */
 public class WindowsPopupMenuUI extends BasicPopupMenuUI {
 
     static MnemonicListener mnemonicListener = null;
-    static final Object GUTTER_OFFSET_KEY = 
-        new StringUIClientPropertyKey("GUTTER_OFFSET_KEY"); 
+    static final Object GUTTER_OFFSET_KEY =
+        new StringUIClientPropertyKey("GUTTER_OFFSET_KEY");
 
     public static ComponentUI createUI(JComponent c) {
-	return new WindowsPopupMenuUI();
+        return new WindowsPopupMenuUI();
     }
 
     public void installListeners() {
         super.installListeners();
-	if (! UIManager.getBoolean("Button.showMnemonics") &&
+        if (! UIManager.getBoolean("Button.showMnemonics") &&
             mnemonicListener == null) {
 
             mnemonicListener = new MnemonicListener();
@@ -97,7 +96,7 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
         JRootPane repaintRoot = null;
 
         public void stateChanged(ChangeEvent ev) {
-	    MenuSelectionManager msm = (MenuSelectionManager)ev.getSource();
+            MenuSelectionManager msm = (MenuSelectionManager)ev.getSource();
             MenuElement[] path = msm.getSelectedPath();
             if (path.length == 0) {
                 if(!WindowsLookAndFeel.isMnemonicHidden()) {
@@ -116,7 +115,7 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
             }
         }
     }
-    
+
     /**
      * Returns offset for the text.
      * BasicMenuItemUI sets max text offset on the JPopupMenuUI.
@@ -125,11 +124,11 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
      */
     static int getTextOffset(JComponent c) {
         int rv = -1;
-        Object maxTextOffset = 
+        Object maxTextOffset =
             c.getClientProperty(BASICMENUITEMUI_MAX_TEXT_OFFSET);
         if (maxTextOffset instanceof Integer) {
-            /* 
-             * this is in JMenuItem coordinates. 
+            /*
+             * this is in JMenuItem coordinates.
              * Let's assume all the JMenuItem have the same offset along X.
              */
             rv = (Integer) maxTextOffset;
@@ -142,7 +141,7 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
         }
         return rv;
     }
-    
+
     /**
      * Returns span before gutter.
      * used only on Vista.
@@ -151,7 +150,7 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
     static int getSpanBeforeGutter() {
         return 3;
     }
-    
+
     /**
      * Returns span after gutter.
      * used only on Vista.
@@ -160,7 +159,7 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
     static int getSpanAfterGutter() {
         return 3;
     }
-    
+
     /**
      * Returns gutter width.
      * used only on Vista.
@@ -174,25 +173,25 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
             rv = skin.getWidth();
         }
         return rv;
-    } 
+    }
 
     /**
-     * Checks if PopupMenu is leftToRight 
+     * Checks if PopupMenu is leftToRight
      * The orientation is derived from the children of the component.
      * It is leftToRight if all the children are leftToRight
-     * 
+     *
      * @param c component to return orientation for
      * @return true if all the children are leftToRight
      */
     private static boolean isLeftToRight(JComponent c) {
         boolean leftToRight = true;
         for (int i = c.getComponentCount() - 1; i >=0 && leftToRight; i-- ) {
-            leftToRight = 
+            leftToRight =
                 c.getComponent(i).getComponentOrientation().isLeftToRight();
         }
         return leftToRight;
     }
-    
+
     @Override
     public void paint(Graphics g, JComponent c) {
         if (WindowsMenuItemUI.isVistaPainting()) {
@@ -205,17 +204,17 @@ public class WindowsPopupMenuUI extends BasicPopupMenuUI {
                     && isLeftToRight(c)) {
                 skin = xp.getSkin(c, Part.MP_POPUPGUTTER);
                 int gutterWidth = getGutterWidth();
-                int gutterOffset = 
+                int gutterOffset =
                     textOffset - getSpanAfterGutter() - gutterWidth;
-                c.putClientProperty(GUTTER_OFFSET_KEY, 
+                c.putClientProperty(GUTTER_OFFSET_KEY,
                     Integer.valueOf(gutterOffset));
                 Insets insets = c.getInsets();
-                skin.paintSkin(g, gutterOffset, insets.top, 
-                    gutterWidth, c.getHeight() - insets.bottom - insets.top, 
+                skin.paintSkin(g, gutterOffset, insets.top,
+                    gutterWidth, c.getHeight() - insets.bottom - insets.top,
                     State.NORMAL);
             } else {
                 if (c.getClientProperty(GUTTER_OFFSET_KEY) != null) {
-                    c.putClientProperty(GUTTER_OFFSET_KEY, null);  
+                    c.putClientProperty(GUTTER_OFFSET_KEY, null);
                 }
             }
         } else {

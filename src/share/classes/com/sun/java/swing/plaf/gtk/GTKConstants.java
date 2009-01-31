@@ -25,7 +25,6 @@
 package com.sun.java.swing.plaf.gtk;
 
 /**
- * @version %I%, %G%
  * @author Scott Violet
  */
 public interface GTKConstants {

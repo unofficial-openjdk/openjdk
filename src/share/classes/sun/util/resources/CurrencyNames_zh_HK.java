@@ -1,23 +1,23 @@
 /*
  * Portions copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -26,10 +26,10 @@
 /*
  * Derived from Common Locale Data Repository data.
  * COPYRIGHT AND PERMISSION NOTICE
- * 
- * Copyright (C) 1991-2005 Unicode, Inc. All rights reserved. 
+ *
+ * Copyright (C) 1991-2005 Unicode, Inc. All rights reserved.
  * Distributed under the Terms of Use in http://www.unicode.org/copyright.html.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of the Unicode data files and any associated documentation (the "Data
  * Files") or Unicode software and any associated documentation (the
@@ -43,7 +43,7 @@
  * documentation, and (c) there is clear notice in each modified Data File or
  * in the Software as well as in the documentation associated with the Data
  * File(s) or Software that the data or software has been modified.
- * 
+ *
  * THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
  * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
@@ -53,7 +53,7 @@
  * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THE DATA FILES OR SOFTWARE.
- * 
+ *
  * Except as contained in this notice, the name of a copyright holder shall not
  * be used in advertising or otherwise to promote the sale, use or other
  * dealings in these Data Files or Software without prior written
@@ -90,8 +90,8 @@ public final class CurrencyNames_zh_HK extends OpenListResourceBundle {
 
     protected final Object[][] getContents() {
         return new Object[][] {
-	    {"HKD", "HK$"},
-	    {"TWD", "TWD"},
-	};
+            {"HKD", "HK$"},
+            {"TWD", "TWD"},
+        };
     }
 }

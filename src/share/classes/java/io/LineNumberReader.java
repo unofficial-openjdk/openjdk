@@ -31,20 +31,19 @@ package java.io;
  * class defines methods {@link #setLineNumber(int)} and {@link
  * #getLineNumber()} for setting and getting the current line number
  * respectively.
- * 
+ *
  * <p> By default, line numbering begins at 0. This number increments at every
  * <a href="#lt">line terminator</a> as the data is read, and can be changed
  * with a call to <tt>setLineNumber(int)</tt>.  Note however, that
  * <tt>setLineNumber(int)</tt> does not actually change the current position in
  * the stream; it only changes the value that will be returned by
  * <tt>getLineNumber()</tt>.
- * 
+ *
  * <p> A line is considered to be <a name="lt">terminated</a> by any one of a
  * line feed ('\n'), a carriage return ('\r'), or a carriage return followed
  * immediately by a linefeed.
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
+ * @author      Mark Reinhold
  * @since       JDK1.1
  */
 
@@ -70,7 +69,7 @@ public class LineNumberReader extends BufferedReader {
      *         A Reader object to provide the underlying stream
      */
     public LineNumberReader(Reader in) {
-	super(in);
+        super(in);
     }
 
     /**
@@ -84,7 +83,7 @@ public class LineNumberReader extends BufferedReader {
      *         An int specifying the size of the buffer
      */
     public LineNumberReader(Reader in, int sz) {
-	super(in, sz);
+        super(in, sz);
     }
 
     /**
@@ -96,7 +95,7 @@ public class LineNumberReader extends BufferedReader {
      * @see #getLineNumber
      */
     public void setLineNumber(int lineNumber) {
-	this.lineNumber = lineNumber;
+        this.lineNumber = lineNumber;
     }
 
     /**
@@ -107,7 +106,7 @@ public class LineNumberReader extends BufferedReader {
      * @see #setLineNumber
      */
     public int getLineNumber() {
-	return lineNumber;
+        return lineNumber;
     }
 
     /**
@@ -122,28 +121,28 @@ public class LineNumberReader extends BufferedReader {
      *          If an I/O error occurs
      */
     public int read() throws IOException {
-	synchronized (lock) {
-	    int c = super.read();
-	    if (skipLF) {
-		if (c == '\n')
-		    c = super.read();
-		skipLF = false;
-	    }
-	    switch (c) {
-	    case '\r':
-		skipLF = true;
-	    case '\n':		/* Fall through */
-		lineNumber++;
-		return '\n';
-	    }
-	    return c;
-	}
+        synchronized (lock) {
+            int c = super.read();
+            if (skipLF) {
+                if (c == '\n')
+                    c = super.read();
+                skipLF = false;
+            }
+            switch (c) {
+            case '\r':
+                skipLF = true;
+            case '\n':          /* Fall through */
+                lineNumber++;
+                return '\n';
+            }
+            return c;
+        }
     }
 
     /**
      * Read characters into a portion of an array.  Whenever a <a
      * href="#lt">line terminator</a> is read the current line number is
-     * incremented. 
+     * incremented.
      *
      * @param  cbuf
      *         Destination buffer
@@ -161,27 +160,27 @@ public class LineNumberReader extends BufferedReader {
      *          If an I/O error occurs
      */
     public int read(char cbuf[], int off, int len) throws IOException {
-	synchronized (lock) {
-	    int n = super.read(cbuf, off, len);
+        synchronized (lock) {
+            int n = super.read(cbuf, off, len);
 
-	    for (int i = off; i < off + n; i++) {
-		int c = cbuf[i];
-		if (skipLF) {
-		    skipLF = false;
-		    if (c == '\n')
-			continue;
-		}
-		switch (c) {
-		case '\r':
-		    skipLF = true;
-		case '\n':	/* Fall through */
-		    lineNumber++;
-		    break;
-		}
-	    }
+            for (int i = off; i < off + n; i++) {
+                int c = cbuf[i];
+                if (skipLF) {
+                    skipLF = false;
+                    if (c == '\n')
+                        continue;
+                }
+                switch (c) {
+                case '\r':
+                    skipLF = true;
+                case '\n':      /* Fall through */
+                    lineNumber++;
+                    break;
+                }
+            }
 
-	    return n;
-	}
+            return n;
+        }
     }
 
     /**
@@ -189,20 +188,20 @@ public class LineNumberReader extends BufferedReader {
      * read the current line number is incremented.
      *
      * @return  A String containing the contents of the line, not including
-     *          any <a href="#lt">line termination characters</a>, or 
+     *          any <a href="#lt">line termination characters</a>, or
      *          <tt>null</tt> if the end of the stream has been reached
      *
      * @throws  IOException
      *          If an I/O error occurs
      */
     public String readLine() throws IOException {
-	synchronized (lock) {
-	    String l = super.readLine(skipLF);
+        synchronized (lock) {
+            String l = super.readLine(skipLF);
             skipLF = false;
-	    if (l != null)
-		lineNumber++;
-	    return l;
-	}
+            if (l != null)
+                lineNumber++;
+            return l;
+        }
     }
 
     /** Maximum skip-buffer size */
@@ -226,21 +225,21 @@ public class LineNumberReader extends BufferedReader {
      *          If <tt>n</tt> is negative
      */
     public long skip(long n) throws IOException {
-	if (n < 0) 
-	    throw new IllegalArgumentException("skip() value is negative");
-	int nn = (int) Math.min(n, maxSkipBufferSize);
-	synchronized (lock) {
-	    if ((skipBuffer == null) || (skipBuffer.length < nn))
-		skipBuffer = new char[nn];
-	    long r = n;
-	    while (r > 0) {
-		int nc = read(skipBuffer, 0, (int) Math.min(r, nn));
-		if (nc == -1)
-		    break;
-		r -= nc;
-	    }
-	    return n - r;
-	}
+        if (n < 0)
+            throw new IllegalArgumentException("skip() value is negative");
+        int nn = (int) Math.min(n, maxSkipBufferSize);
+        synchronized (lock) {
+            if ((skipBuffer == null) || (skipBuffer.length < nn))
+                skipBuffer = new char[nn];
+            long r = n;
+            while (r > 0) {
+                int nc = read(skipBuffer, 0, (int) Math.min(r, nn));
+                if (nc == -1)
+                    break;
+                r -= nc;
+            }
+            return n - r;
+        }
     }
 
     /**
@@ -257,11 +256,11 @@ public class LineNumberReader extends BufferedReader {
      *          If an I/O error occurs
      */
     public void mark(int readAheadLimit) throws IOException {
-	synchronized (lock) {
-	    super.mark(readAheadLimit);
-	    markedLineNumber = lineNumber;
+        synchronized (lock) {
+            super.mark(readAheadLimit);
+            markedLineNumber = lineNumber;
             markedSkipLF     = skipLF;
-	}
+        }
     }
 
     /**
@@ -269,14 +268,14 @@ public class LineNumberReader extends BufferedReader {
      *
      * @throws  IOException
      *          If the stream has not been marked, or if the mark has been
-     *          invalidated 
+     *          invalidated
      */
     public void reset() throws IOException {
-	synchronized (lock) {
-	    super.reset();
-	    lineNumber = markedLineNumber;
+        synchronized (lock) {
+            super.reset();
+            lineNumber = markedLineNumber;
             skipLF     = markedSkipLF;
-	}
+        }
     }
 
 }

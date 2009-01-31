@@ -27,15 +27,14 @@ package java.awt.image;
 
 
 /**
- * The <code>Kernel</code> class defines a matrix that describes how a 
- * specified pixel and its surrounding pixels affect the value 
+ * The <code>Kernel</code> class defines a matrix that describes how a
+ * specified pixel and its surrounding pixels affect the value
  * computed for the pixel's position in the output image of a filtering
  * operation.  The X origin and Y origin indicate the kernel matrix element
  * that corresponds to the pixel position for which an output value is
  * being computed.
  *
  * @see ConvolveOp
- * @version 10 Feb 1997
  */
 public class Kernel implements Cloneable {
     private int  width;
@@ -51,17 +50,17 @@ public class Kernel implements Cloneable {
     }
 
     /**
-     * Constructs a <code>Kernel</code> object from an array of floats.  
-     * The first <code>width</code>*<code>height</code> elements of 
-     * the <code>data</code> array are copied.  
-     * If the length of the <code>data</code> array is less 
+     * Constructs a <code>Kernel</code> object from an array of floats.
+     * The first <code>width</code>*<code>height</code> elements of
+     * the <code>data</code> array are copied.
+     * If the length of the <code>data</code> array is less
      * than width*height, an <code>IllegalArgumentException</code> is thrown.
      * The X origin is (width-1)/2 and the Y origin is (height-1)/2.
      * @param width         width of the kernel
      * @param height        height of the kernel
      * @param data          kernel data in row major order
      * @throws IllegalArgumentException if the length of <code>data</code>
-     *         is less than the product of <code>width</code> and 
+     *         is less than the product of <code>width</code> and
      *         <code>height</code>
      */
     public Kernel(int width, int height, float data[]) {
@@ -113,13 +112,13 @@ public class Kernel implements Cloneable {
     }
 
     /**
-     * Returns the kernel data in row major order.  
-     * The <code>data</code> array is returned.  If <code>data</code> 
+     * Returns the kernel data in row major order.
+     * The <code>data</code> array is returned.  If <code>data</code>
      * is <code>null</code>, a new array is allocated.
      * @param data  if non-null, contains the returned kernel data
-     * @return the <code>data</code> array containing the kernel data 
-     *         in row major order or, if <code>data</code> is 
-     *         <code>null</code>, a newly allocated array containing 
+     * @return the <code>data</code> array containing the kernel data
+     *         in row major order or, if <code>data</code> is
+     *         <code>null</code>, a newly allocated array containing
      *         the kernel data in row major order
      * @throws IllegalArgumentException if <code>data</code> is less
      *         than the size of this <code>Kernel</code>
@@ -144,17 +143,11 @@ public class Kernel implements Cloneable {
      * @return a clone of this object.
      */
     public Object clone() {
-	try {
-	    return super.clone();
-	} catch (CloneNotSupportedException e) {
-	    // this shouldn't happen, since we are Cloneable
-	    throw new InternalError();
-	}
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
     }
 }
-
-
-
-
-
-

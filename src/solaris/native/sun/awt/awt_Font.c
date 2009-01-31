@@ -61,10 +61,10 @@ static XFontStruct *XLoadQueryFontX(Display *display, char *name)
 #if FONT_DEBUG < 2
     if (result == NULL)
 #endif
-	fprintf(stderr, "XLoadQueryFont(\"%s\") -> 0x%x.\n", name, result);
+        fprintf(stderr, "XLoadQueryFont(\"%s\") -> 0x%x.\n", name, result);
 #if FONT_DEBUG >= 3
     if (result == NULL)
-	exit(-1);
+        exit(-1);
 #endif
     return result;
 }
@@ -87,15 +87,15 @@ Java_java_awt_Font_initIDs
 {
 #ifndef HEADLESS
     /** We call "NoClientCode" methods because they won't invoke client
-	code on the privileged toolkit thread **/
+        code on the privileged toolkit thread **/
     fontIDs.pData = (*env)->GetFieldID(env, cls, "pData", "J");
     fontIDs.style = (*env)->GetFieldID(env, cls, "style", "I");
     fontIDs.size = (*env)->GetFieldID(env, cls, "size", "I");
     fontIDs.getPeer = (*env)->GetMethodID(env, cls, "getPeer_NoClientCode",
-					   "()Ljava/awt/peer/FontPeer;");
+                                           "()Ljava/awt/peer/FontPeer;");
     fontIDs.getFamily =
-      (*env)->GetMethodID(env, cls, "getFamily_NoClientCode", 
-					    "()Ljava/lang/String;");
+      (*env)->GetMethodID(env, cls, "getFamily_NoClientCode",
+                                            "()Ljava/lang/String;");
 #endif /* !HEADLESS */
 }
 
@@ -175,10 +175,10 @@ Java_sun_awt_FontDescriptor_initIDs
 #ifndef HEADLESS
     fontDescriptorIDs.nativeName =
       (*env)->GetFieldID(env, cls, "nativeName",
-			 "Ljava/lang/String;");
+                         "Ljava/lang/String;");
     fontDescriptorIDs.charsetName =
       (*env)->GetFieldID(env, cls, "charsetName",
-			 "Ljava/lang/String;");
+                         "Ljava/lang/String;");
 #endif /* !HEADLESS */
 }
 
@@ -220,18 +220,18 @@ Java_sun_awt_PlatformFont_initIDs
 #ifndef HEADLESS
     platformFontIDs.componentFonts =
       (*env)->GetFieldID(env, cls, "componentFonts",
-			 "[Lsun/awt/FontDescriptor;");
+                         "[Lsun/awt/FontDescriptor;");
     platformFontIDs.fontConfig =
       (*env)->GetFieldID(env,cls, "fontConfig",
-			 "Lsun/awt/FontConfiguration;");
+                         "Lsun/awt/FontConfiguration;");
 
-    platformFontIDs.makeConvertedMultiFontString = 
+    platformFontIDs.makeConvertedMultiFontString =
       (*env)->GetMethodID(env, cls, "makeConvertedMultiFontString",
-			  "(Ljava/lang/String;)[Ljava/lang/Object;");
+                          "(Ljava/lang/String;)[Ljava/lang/Object;");
 
     platformFontIDs.makeConvertedMultiFontChars =
       (*env)->GetMethodID(env, cls, "makeConvertedMultiFontChars",
-			  "([CII)[Ljava/lang/Object;");
+                          "([CII)[Ljava/lang/Object;");
 #endif /* !HEADLESS */
 }
 
@@ -267,8 +267,8 @@ loadFont(Display * display, char *name, int32_t pointSize)
         Boolean useDefault = FALSE;
 
         char buffer[BUFSIZ], buffer2[BUFSIZ];
-	char *family = NULL, *style = NULL, *slant = NULL, *encoding = NULL;
-	char *start = NULL, *end = NULL;
+        char *family = NULL, *style = NULL, *slant = NULL, *encoding = NULL;
+        char *start = NULL, *end = NULL;
 
         if (strlen(name) > BUFSIZ - 1) {
             useDefault = TRUE;
@@ -337,8 +337,8 @@ loadFont(Display * display, char *name, int32_t pointSize)
 #ifdef __linux__
             if (!strcmp(family, "lucidasans")) {
                 family = "lucida";
-	    }
-#endif 
+            }
+#endif
             /* try 1. */
             jio_snprintf(buffer2, sizeof(buffer2),
                          "-*-%s-%s-%s-*-*-*-%d-*-*-*-*-%s",
@@ -351,7 +351,7 @@ loadFont(Display * display, char *name, int32_t pointSize)
                              family, altstyle, slant, pointSize, encoding);
                 TRY_LOAD;
             }
-                
+
             /* search bitmap font */
             pixelSize = pointSize / 10;
 
@@ -379,14 +379,14 @@ loadFont(Display * display, char *name, int32_t pointSize)
                              altstyle, slant, pixelSize, encoding);
                 TRY_LOAD;
             }
-            
+
             /* try 4 */
             jio_snprintf(buffer2, sizeof(buffer2),
                          "-*-*-*-%s-*-*-%d-*-*-*-*-*-%s",
                          slant, pixelSize, encoding);
 
             TRY_LOAD;
-            
+
             /* try 5. */
             jio_snprintf(buffer2, sizeof(buffer2),
                          "-*-*-*-*-*-*-%d-*-*-*-*-*-%s",
@@ -533,7 +533,7 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
         jstring charsetName = NULL;
 
         fdata = (struct FontData *) JNU_GetLongFieldAsPtr(env,font,
-							 fontIDs.pData);
+                                                         fontIDs.pData);
 
         if (fdata != NULL && fdata->flist != NULL) {
             return fdata;
@@ -544,9 +544,9 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
         peer = (*env)->CallObjectMethod(env, font, fontIDs.getPeer);
 
         componentFonts =
-	  (*env)->GetObjectField(env, peer, platformFontIDs.componentFonts);
-	/* We no longer need peer */
-	(*env)->DeleteLocalRef(env, peer);
+          (*env)->GetObjectField(env, peer, platformFontIDs.componentFonts);
+        /* We no longer need peer */
+        (*env)->DeleteLocalRef(env, peer);
 
         fdata->charset_num = (*env)->GetArrayLength(env, componentFonts);
 
@@ -560,8 +560,8 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
 
             fontDescriptor = (*env)->GetObjectArrayElement(env, componentFonts, i);
             fontDescriptorName =
-	      (*env)->GetObjectField(env, fontDescriptor,
-				     fontDescriptorIDs.nativeName);
+              (*env)->GetObjectField(env, fontDescriptor,
+                                     fontDescriptorIDs.nativeName);
 
             if (!JNU_IsNull(env, fontDescriptorName)) {
                 nativename = (char *) JNU_GetStringPlatformChars(env, fontDescriptorName, NULL);
@@ -582,33 +582,33 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
              */
 
             charsetName =
-	      (*env)->GetObjectField(env, fontDescriptor,
-				     fontDescriptorIDs.charsetName);
+              (*env)->GetObjectField(env, fontDescriptor,
+                                     fontDescriptorIDs.charsetName);
 
             fdata->flist[i].charset_name = (char *)
                 JNU_GetStringPlatformChars(env, charsetName, NULL);
 
-	    /* We are done with the objects. */
-	    (*env)->DeleteLocalRef(env, fontDescriptor);
-	    (*env)->DeleteLocalRef(env, fontDescriptorName);
-	    (*env)->DeleteLocalRef(env, charsetName);
+            /* We are done with the objects. */
+            (*env)->DeleteLocalRef(env, fontDescriptor);
+            (*env)->DeleteLocalRef(env, fontDescriptorName);
+            (*env)->DeleteLocalRef(env, charsetName);
 
             /*
              * set load & XFontStruct
              */
             fdata->flist[i].load = 0;
 
-	    /*
-	     * This appears to be a bogus check.  The actual intent appears
-	     * to be to find out whether this is the "base" font in a set,
-	     * rather than iso8859_1 explicitly.  Note that iso8859_15 will
-	     * and must also pass this test.
-	     */
+            /*
+             * This appears to be a bogus check.  The actual intent appears
+             * to be to find out whether this is the "base" font in a set,
+             * rather than iso8859_1 explicitly.  Note that iso8859_15 will
+             * and must also pass this test.
+             */
 
             if (fdata->xfont == NULL &&
                 strstr(fdata->flist[i].charset_name, "8859_1")) {
-		fdata->flist[i].xfont = 
-		    loadFont(awt_display, fdata->flist[i].xlfd, size * 10);
+                fdata->flist[i].xfont =
+                    loadFont(awt_display, fdata->flist[i].xlfd, size * 10);
                 if (fdata->flist[i].xfont != NULL) {
                     fdata->flist[i].load = 1;
                     fdata->xfont = fdata->flist[i].xfont;
@@ -617,12 +617,12 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
                     if (errmsg != NULL) {
                         *errmsg = "java/lang" "NullPointerException";
                     }
-		    (*env)->DeleteLocalRef(env, componentFonts);
+                    (*env)->DeleteLocalRef(env, componentFonts);
                     return NULL;
                 }
             }
         }
-	(*env)->DeleteLocalRef(env, componentFonts);
+        (*env)->DeleteLocalRef(env, componentFonts);
         /*
          * XFontSet will create if the peer of TextField/TextArea
          * are used.
@@ -666,7 +666,7 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
             if (errmsg != NULL) {
                 *errmsg = "java/lang" "NullPointerException";
             }
-	    (*env)->DeleteLocalRef(env, family);
+            (*env)->DeleteLocalRef(env, family);
             return (struct FontData *) NULL;
         }
         style = Style((*env)->GetIntField(env, font, fontIDs.style));
@@ -718,7 +718,7 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
                             if (errmsg != NULL) {
                                 *errmsg = "java/io/" "FileNotFoundException";
                             }
-			    (*env)->DeleteLocalRef(env, family);
+                            (*env)->DeleteLocalRef(env, family);
                             return (struct FontData *) NULL;
                         }
                     }
@@ -738,11 +738,11 @@ awtJNI_GetFontData(JNIEnv * env, jobject font, char **errmsg)
                     Disposer_AddRecord(env, font, pDataDisposeMethod,
                                        ptr_to_jlong(fdata));
                 }
-		(*env)->DeleteLocalRef(env, family);
+                (*env)->DeleteLocalRef(env, family);
                 return fdata;
             }
         }
-	/* not reached */
+        /* not reached */
     }
 }
 
@@ -861,43 +861,43 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_X11FontMetrics_init
      * because the underlying Motif widgets are.
      */
     if (awtJNI_IsMultiFont(env, font) && fdata->xfs == NULL) {
-	fdata->xfs = awtJNI_MakeFontSet(env, font);
+        fdata->xfs = awtJNI_MakeFontSet(env, font);
     }
     if (fdata->xfs != NULL) {
-	XFontSetExtents *fs_extents = NULL;
-	fs_extents = XExtentsOfFontSet(fdata->xfs);
+        XFontSetExtents *fs_extents = NULL;
+        fs_extents = XExtentsOfFontSet(fdata->xfs);
 
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxAscent,
-			(jint)(-fs_extents->max_logical_extent.y));
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxDescent,
-			(jint)(fs_extents->max_logical_extent.height +
-			       fs_extents->max_logical_extent.y));
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxAdvance,
-			(jint)(fs_extents->max_logical_extent.width));
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.ascent,
-			(jint)(-fs_extents->max_ink_extent.y));
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.descent,
-			(jint)(fs_extents->max_ink_extent.height +
-		         fs_extents->max_ink_extent.y));
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxAscent,
+                        (jint)(-fs_extents->max_logical_extent.y));
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxDescent,
+                        (jint)(fs_extents->max_logical_extent.height +
+                               fs_extents->max_logical_extent.y));
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxAdvance,
+                        (jint)(fs_extents->max_logical_extent.width));
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.ascent,
+                        (jint)(-fs_extents->max_ink_extent.y));
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.descent,
+                        (jint)(fs_extents->max_ink_extent.height +
+                         fs_extents->max_ink_extent.y));
     } else {
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxAscent,
-			(jint) fdata->xfont->max_bounds.ascent);
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxDescent,
-			(jint) fdata->xfont->max_bounds.descent);
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.maxAdvance,
-			(jint) fdata->xfont->max_bounds.width);
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.ascent,
-			(jint) fdata->xfont->ascent);
-	(*env)->SetIntField(env, this, x11FontMetricsIDs.descent,
-			(jint) fdata->xfont->descent);
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxAscent,
+                        (jint) fdata->xfont->max_bounds.ascent);
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxDescent,
+                        (jint) fdata->xfont->max_bounds.descent);
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.maxAdvance,
+                        (jint) fdata->xfont->max_bounds.width);
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.ascent,
+                        (jint) fdata->xfont->ascent);
+        (*env)->SetIntField(env, this, x11FontMetricsIDs.descent,
+                        (jint) fdata->xfont->descent);
     }
 
     (*env)->SetIntField(env, this, x11FontMetricsIDs.leading, (jint) 1);
     (*env)->SetIntField(env, this, x11FontMetricsIDs.height,
-			(jint) fdata->xfont->ascent + fdata->xfont->descent + 1);
+                        (jint) fdata->xfont->ascent + fdata->xfont->descent + 1);
     (*env)->SetIntField(env, this, x11FontMetricsIDs.maxHeight,
-			(jint) fdata->xfont->max_bounds.ascent
-			+ fdata->xfont->max_bounds.descent + 1);
+                        (jint) fdata->xfont->max_bounds.ascent
+                        + fdata->xfont->max_bounds.descent + 1);
 
 
     widths = (*env)->NewIntArray(env, 256);
@@ -962,16 +962,16 @@ static void pDataDisposeMethod(JNIEnv *env, jlong pData)
         for (i = 0; i < fdata->charset_num; i++) {
             free((void *)fdata->flist[i].xlfd);
             JNU_ReleaseStringPlatformChars(env, NULL,
-					   fdata->flist[i].charset_name);
-	    if (fdata->flist[i].load) {
-	        XFreeFont(display, fdata->flist[i].xfont);
-	    }
+                                           fdata->flist[i].charset_name);
+            if (fdata->flist[i].load) {
+                XFreeFont(display, fdata->flist[i].xfont);
+            }
         }
 
         free((void *)fdata->flist);
 
-	/* Don't free fdata->xfont because it is equal to fdata->flist[i].xfont
-	   for some 'i' */
+        /* Don't free fdata->xfont because it is equal to fdata->flist[i].xfont
+           for some 'i' */
     } else {
         if (fdata->xfont != NULL) {
             XFreeFont(display, fdata->xfont);

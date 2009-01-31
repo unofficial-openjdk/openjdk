@@ -33,61 +33,61 @@ import java.security.*;
 public class KeyWrapping {
 
     public static void main(String[] args) throws Exception {
-	Cipher c1 = Cipher.getInstance("DES", "SunJCE");
-	Cipher c2 = Cipher.getInstance("DES");
+        Cipher c1 = Cipher.getInstance("DES", "SunJCE");
+        Cipher c2 = Cipher.getInstance("DES");
 
-	KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-	keyGen.init(56);
+        KeyGenerator keyGen = KeyGenerator.getInstance("DES");
+        keyGen.init(56);
 
-	// Generate two DES keys: sKey and sessionKey
-	SecretKey sKey = keyGen.generateKey();
-	SecretKey sessionKey = keyGen.generateKey();
+        // Generate two DES keys: sKey and sessionKey
+        SecretKey sKey = keyGen.generateKey();
+        SecretKey sessionKey = keyGen.generateKey();
 
-	// wrap and unwrap the session key
-	// make sure the unwrapped session key
-	// can decrypt a message encrypted
-	// with the session key
-	c1.init(Cipher.WRAP_MODE, sKey);
+        // wrap and unwrap the session key
+        // make sure the unwrapped session key
+        // can decrypt a message encrypted
+        // with the session key
+        c1.init(Cipher.WRAP_MODE, sKey);
 
-	byte[] wrappedKey = c1.wrap(sessionKey);
+        byte[] wrappedKey = c1.wrap(sessionKey);
 
-	c1.init(Cipher.UNWRAP_MODE, sKey);
+        c1.init(Cipher.UNWRAP_MODE, sKey);
 
-	SecretKey unwrappedSessionKey =
-			      (SecretKey)c1.unwrap(wrappedKey, "DES",
-						  Cipher.SECRET_KEY);
+        SecretKey unwrappedSessionKey =
+                              (SecretKey)c1.unwrap(wrappedKey, "DES",
+                                                  Cipher.SECRET_KEY);
 
-	c2.init(Cipher.ENCRYPT_MODE, unwrappedSessionKey);
+        c2.init(Cipher.ENCRYPT_MODE, unwrappedSessionKey);
 
-	String msg = "Hello";
+        String msg = "Hello";
 
-	byte[] cipherText = c2.doFinal(msg.getBytes());
+        byte[] cipherText = c2.doFinal(msg.getBytes());
 
-	c2.init(Cipher.DECRYPT_MODE, unwrappedSessionKey);
+        c2.init(Cipher.DECRYPT_MODE, unwrappedSessionKey);
 
-	byte[] clearText = c2.doFinal(cipherText);
+        byte[] clearText = c2.doFinal(cipherText);
 
-	if (!msg.equals(new String(clearText)))
-	    throw new Exception("The unwrapped session key is corrupted.");
+        if (!msg.equals(new String(clearText)))
+            throw new Exception("The unwrapped session key is corrupted.");
 
-	KeyPairGenerator kpairGen = KeyPairGenerator.getInstance("DSA");
-	kpairGen.initialize(1024);
+        KeyPairGenerator kpairGen = KeyPairGenerator.getInstance("DSA");
+        kpairGen.initialize(1024);
 
-	KeyPair kpair = kpairGen.genKeyPair();
+        KeyPair kpair = kpairGen.genKeyPair();
 
-	PublicKey pub = kpair.getPublic();
-	PrivateKey pri = kpair.getPrivate();
+        PublicKey pub = kpair.getPublic();
+        PrivateKey pri = kpair.getPrivate();
 
-	c1.init(Cipher.WRAP_MODE, sKey);
+        c1.init(Cipher.WRAP_MODE, sKey);
 
-	byte[] wrappedPub = c1.wrap(pub);
-	byte[] wrappedPri = c1.wrap(pri);
+        byte[] wrappedPub = c1.wrap(pub);
+        byte[] wrappedPri = c1.wrap(pri);
 
-	c1.init(Cipher.UNWRAP_MODE, sKey);
+        c1.init(Cipher.UNWRAP_MODE, sKey);
 
-	Key unwrappedPub = c1.unwrap(wrappedPub, "DSA",
-					   Cipher.PUBLIC_KEY);
-	Key unwrappedPri = c1.unwrap(wrappedPri, "DSA",
-					    Cipher.PRIVATE_KEY);
+        Key unwrappedPub = c1.unwrap(wrappedPub, "DSA",
+                                           Cipher.PUBLIC_KEY);
+        Key unwrappedPri = c1.unwrap(wrappedPri, "DSA",
+                                            Cipher.PRIVATE_KEY);
     }
 }

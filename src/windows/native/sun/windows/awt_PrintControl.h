@@ -76,29 +76,29 @@ public:
 
     static void initIDs(JNIEnv *env, jclass cls);
     static BOOL FindPrinter(jstring printerName, LPBYTE pPrinterEnum,
-			    LPDWORD pcbBuf, LPTSTR * foundPrinter,
-			    LPTSTR * foundPORT);
+                            LPDWORD pcbBuf, LPTSTR * foundPrinter,
+                            LPTSTR * foundPORT);
     // This function determines whether the printer driver
     // for the passed printer handle supports PRINTER_INFO
     // structure of level dwLevel.
     static BOOL IsSupportedLevel(HANDLE hPrinter, DWORD dwLevel);
     static BOOL CreateDevModeAndDevNames(PRINTDLG *ppd,
-					       LPTSTR pPrinterName,
-					       LPTSTR pPortName);
+                                               LPTSTR pPrinterName,
+                                               LPTSTR pPortName);
     static BOOL InitPrintDialog(JNIEnv *env,
-		 		      jobject printCtrl, PRINTDLG &pd);
-    static BOOL UpdateAttributes(JNIEnv *env, 
-				      jobject printCtrl, PRINTDLG &pd);
-    static WORD getNearestMatchingPaper(LPTSTR printer, LPTSTR port, 
-				      double origWid, double origHgt,
-				      double* newWid, double *newHgt); 
+                                      jobject printCtrl, PRINTDLG &pd);
+    static BOOL UpdateAttributes(JNIEnv *env,
+                                      jobject printCtrl, PRINTDLG &pd);
+    static WORD getNearestMatchingPaper(LPTSTR printer, LPTSTR port,
+                                      double origWid, double origHgt,
+                                      double* newWid, double *newHgt);
 
     static BOOL getDevmode(HANDLE hPrinter,
-				 LPTSTR pPrinterName,
-				 LPDEVMODE *pDevMode);
-    
+                                 LPTSTR pPrinterName,
+                                 LPDEVMODE *pDevMode);
+
     inline static  HDC getPrintDC(JNIEnv *env, jobject self) {
-      return (HDC)env->CallLongMethod(self, getPrintDCID);	
+      return (HDC)env->CallLongMethod(self, getPrintDCID);
     }
 
     inline static void setPrintDC(JNIEnv *env, jobject self, HDC printDC) {
@@ -109,22 +109,22 @@ public:
       return (HGLOBAL) env->CallLongMethod(self, getDevmodeID);
     }
 
-    inline static void setPrintHDMode(JNIEnv *env, jobject self, 
-				      HGLOBAL hGlobal) {      		   
+    inline static void setPrintHDMode(JNIEnv *env, jobject self,
+                                      HGLOBAL hGlobal) {
       env->CallVoidMethod(self, setDevmodeID,
-			  reinterpret_cast<jlong>(hGlobal));
+                          reinterpret_cast<jlong>(hGlobal));
     }
 
     inline static HGLOBAL getPrintHDName(JNIEnv *env, jobject self) {
       return (HGLOBAL) env->CallLongMethod(self, getDevnamesID);
     }
 
-    inline static void setPrintHDName(JNIEnv *env, jobject self, 
-				      HGLOBAL hGlobal) {
+    inline static void setPrintHDName(JNIEnv *env, jobject self,
+                                      HGLOBAL hGlobal) {
       env->CallVoidMethod(self, setDevnamesID,
-			  reinterpret_cast<jlong>(hGlobal));
+                          reinterpret_cast<jlong>(hGlobal));
     }
-    
+
 };
 
 #endif

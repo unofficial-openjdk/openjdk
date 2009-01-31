@@ -79,8 +79,8 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
     }
 
     void setRMIConnectorServer(RMIConnectorServer connServer)
-	    throws IOException {
-	this.connServer = connServer;
+            throws IOException {
+        this.connServer = connServer;
     }
 
     /**
@@ -205,51 +205,51 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
      * before creating the new client connection.
      */
     RMIConnection doNewClient(Object credentials) throws IOException {
-	final boolean tracing = logger.traceOn();
+        final boolean tracing = logger.traceOn();
 
-	if (tracing) logger.trace("newClient","making new client");
+        if (tracing) logger.trace("newClient","making new client");
 
-	if (getMBeanServer() == null)
-	    throw new IllegalStateException("Not attached to an MBean server");
+        if (getMBeanServer() == null)
+            throw new IllegalStateException("Not attached to an MBean server");
 
         Subject subject = null;
         JMXAuthenticator authenticator =
             (JMXAuthenticator) env.get(JMXConnectorServer.AUTHENTICATOR);
-	if (authenticator == null) {
-	    /*
-	     * Create the JAAS-based authenticator only if authentication
-	     * has been enabled
-	     */
-	    if (env.get("jmx.remote.x.password.file") != null ||
-		env.get("jmx.remote.x.login.config") != null) {
-		authenticator = new JMXPluggableAuthenticator(env);
-	    }
-	}
+        if (authenticator == null) {
+            /*
+             * Create the JAAS-based authenticator only if authentication
+             * has been enabled
+             */
+            if (env.get("jmx.remote.x.password.file") != null ||
+                env.get("jmx.remote.x.login.config") != null) {
+                authenticator = new JMXPluggableAuthenticator(env);
+            }
+        }
         if (authenticator != null) {
-	    if (tracing) logger.trace("newClient","got authenticator: " +
-			       authenticator.getClass().getName());
-	    try {
-		subject = authenticator.authenticate(credentials);
-	    } catch (SecurityException e) {
-		logger.trace("newClient", "Authentication failed: " + e);
-		throw e;
-	    }
+            if (tracing) logger.trace("newClient","got authenticator: " +
+                               authenticator.getClass().getName());
+            try {
+                subject = authenticator.authenticate(credentials);
+            } catch (SecurityException e) {
+                logger.trace("newClient", "Authentication failed: " + e);
+                throw e;
+            }
         }
 
-	if (tracing) {
-	    if (subject != null)
-		logger.trace("newClient","subject is not null");
-	    else logger.trace("newClient","no subject");
-	}
+        if (tracing) {
+            if (subject != null)
+                logger.trace("newClient","subject is not null");
+            else logger.trace("newClient","no subject");
+        }
 
-	final String connectionId = makeConnectionId(getProtocol(), subject);
+        final String connectionId = makeConnectionId(getProtocol(), subject);
 
-	if (tracing)
-	    logger.trace("newClient","making new connection: " + connectionId);
+        if (tracing)
+            logger.trace("newClient","making new connection: " + connectionId);
 
         RMIConnection client = makeClient(connectionId, subject);
 
-	connServer.connectionOpened(connectionId, "Connection opened", null);
+        connServer.connectionOpened(connectionId, "Connection opened", null);
 
         dropDeadReferences();
         WeakReference<RMIConnection> wr = new WeakReference<RMIConnection>(client);
@@ -257,8 +257,8 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
             clientList.add(wr);
         }
 
-	if (tracing)
-	    logger.trace("newClient","new connection done: " + connectionId );
+        if (tracing)
+            logger.trace("newClient","new connection done: " + connectionId );
 
         return client;
     }
@@ -280,8 +280,8 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
      * created or exported.
      */
     protected abstract RMIConnection makeClient(String connectionId,
-						Subject subject)
-	    throws IOException;
+                                                Subject subject)
+            throws IOException;
 
     /**
      * <p>Closes a client connection made by {@link #makeClient makeClient}.
@@ -296,7 +296,7 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
      * closed.
      */
     protected abstract void closeClient(RMIConnection client)
-	    throws IOException;
+            throws IOException;
 
     /**
      * <p>Returns the protocol string for this object.  The string is
@@ -328,12 +328,12 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
      * @exception NullPointerException if <code>client</code> is null.
      */
     protected void clientClosed(RMIConnection client) throws IOException {
-	final boolean debug = logger.debugOn();
+        final boolean debug = logger.debugOn();
 
-	if (debug) logger.trace("clientClosed","client="+client);
+        if (debug) logger.trace("clientClosed","client="+client);
 
-	if (client == null)
-	    throw new NullPointerException("Null client");
+        if (client == null)
+            throw new NullPointerException("Null client");
 
         synchronized (clientList) {
             dropDeadReferences();
@@ -349,14 +349,14 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
                calling its close() method.  */
         }
 
-	if (debug) logger.trace("clientClosed", "closing client.");
+        if (debug) logger.trace("clientClosed", "closing client.");
         closeClient(client);
 
-	if (debug) logger.trace("clientClosed", "sending notif");
-	connServer.connectionClosed(client.getConnectionId(),
-				    "Client connection closed", null);
+        if (debug) logger.trace("clientClosed", "sending notif");
+        connServer.connectionClosed(client.getConnectionId(),
+                                    "Client connection closed", null);
 
-	if (debug) logger.trace("clientClosed","done");
+        if (debug) logger.trace("clientClosed","done");
     }
 
     /**
@@ -388,29 +388,29 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
      * <code>IOException</code>.
      */
     public synchronized void close() throws IOException {
-	final boolean tracing = logger.traceOn();
-	final boolean debug   = logger.debugOn();
+        final boolean tracing = logger.traceOn();
+        final boolean debug   = logger.debugOn();
 
-	if (tracing) logger.trace("close","closing");
+        if (tracing) logger.trace("close","closing");
 
         IOException ioException = null;
         try {
-	    if (debug)   logger.debug("close","closing Server");
+            if (debug)   logger.debug("close","closing Server");
             closeServer();
         } catch (IOException e) {
-	    if (tracing) logger.trace("close","Failed to close server: " + e);
-	    if (debug)   logger.debug("close",e);
+            if (tracing) logger.trace("close","Failed to close server: " + e);
+            if (debug)   logger.debug("close",e);
             ioException = e;
         }
 
-	if (debug)   logger.debug("close","closing Clients");
+        if (debug)   logger.debug("close","closing Clients");
         // Loop to close all clients
         while (true) {
             synchronized (clientList) {
-		if (debug) logger.debug("close","droping dead references");
+                if (debug) logger.debug("close","droping dead references");
                 dropDeadReferences();
 
-		if (debug) logger.debug("close","client count: "+clientList.size());
+                if (debug) logger.debug("close","client count: "+clientList.size());
                 if (clientList.size() == 0)
                     break;
                 /* Loop until we find a non-null client.  Because we called
@@ -425,9 +425,9 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
                         try {
                             client.close();
                         } catch (IOException e) {
-			    if (tracing)
-				logger.trace("close","Failed to close client: " + e);
-			    if (debug) logger.debug("close",e);
+                            if (tracing)
+                                logger.trace("close","Failed to close client: " + e);
+                            if (debug) logger.debug("close",e);
                             if (ioException == null)
                                 ioException = e;
                         }
@@ -437,15 +437,15 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
             }
         }
 
-	if(notifBuffer != null)
-	    notifBuffer.dispose();
+        if(notifBuffer != null)
+            notifBuffer.dispose();
 
         if (ioException != null) {
-	    if (tracing) logger.trace("close","close failed.");
+            if (tracing) logger.trace("close","close failed.");
             throw ioException;
-	}
+        }
 
-	if (tracing) logger.trace("close","closed.");
+        if (tracing) logger.trace("close","closed.");
     }
 
     /**
@@ -459,34 +459,34 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
     protected abstract void closeServer() throws IOException;
 
     private static synchronized String makeConnectionId(String protocol,
-							Subject subject) {
+                                                        Subject subject) {
         connectionIdNumber++;
 
-	String clientHost = "";
-	try {
-	    clientHost = RemoteServer.getClientHost();
-	} catch (ServerNotActiveException e) {
-	    logger.trace("makeConnectionId", "getClientHost", e);
-	}
+        String clientHost = "";
+        try {
+            clientHost = RemoteServer.getClientHost();
+        } catch (ServerNotActiveException e) {
+            logger.trace("makeConnectionId", "getClientHost", e);
+        }
 
-	final StringBuilder buf = new StringBuilder();
-	buf.append(protocol).append(":");
-	if (clientHost.length() > 0)
-	    buf.append("//").append(clientHost);
-	buf.append(" ");
-	if (subject != null) {
-	    Set principals = subject.getPrincipals();
-	    String sep = "";
-	    for (Iterator it = principals.iterator(); it.hasNext(); ) {
-		Principal p = (Principal) it.next();
-		String name = p.getName().replace(' ', '_').replace(';', ':');
-		buf.append(sep).append(name);
-		sep = ";";
-	    }
-	}
-	buf.append(" ").append(connectionIdNumber);
-	if (logger.traceOn())
-	    logger.trace("newConnectionId","connectionId="+buf);
+        final StringBuilder buf = new StringBuilder();
+        buf.append(protocol).append(":");
+        if (clientHost.length() > 0)
+            buf.append("//").append(clientHost);
+        buf.append(" ");
+        if (subject != null) {
+            Set principals = subject.getPrincipals();
+            String sep = "";
+            for (Iterator it = principals.iterator(); it.hasNext(); ) {
+                Principal p = (Principal) it.next();
+                String name = p.getName().replace(' ', '_').replace(';', ':');
+                buf.append(sep).append(name);
+                sep = ";";
+            }
+        }
+        buf.append(" ").append(connectionIdNumber);
+        if (logger.traceOn())
+            logger.trace("newConnectionId","connectionId="+buf);
         return buf.toString();
     }
 
@@ -501,16 +501,16 @@ public abstract class RMIServerImpl implements Closeable, RMIServer {
     }
 
     synchronized NotificationBuffer getNotifBuffer() {
-	//Notification buffer is lazily created when the first client connects
-	if(notifBuffer == null)
-	    notifBuffer =
-		ArrayNotificationBuffer.getNotificationBuffer(mbeanServer,
-							      env);
-	return notifBuffer;
+        //Notification buffer is lazily created when the first client connects
+        if(notifBuffer == null)
+            notifBuffer =
+                ArrayNotificationBuffer.getNotificationBuffer(mbeanServer,
+                                                              env);
+        return notifBuffer;
     }
 
     private static final ClassLogger logger =
-	new ClassLogger("javax.management.remote.rmi", "RMIServerImpl");
+        new ClassLogger("javax.management.remote.rmi", "RMIServerImpl");
 
     /** List of WeakReference values.  Each one references an
         RMIConnection created by this object, or null if the

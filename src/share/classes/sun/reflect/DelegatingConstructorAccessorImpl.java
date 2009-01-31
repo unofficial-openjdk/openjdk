@@ -35,7 +35,7 @@ class DelegatingConstructorAccessorImpl extends ConstructorAccessorImpl {
 
     DelegatingConstructorAccessorImpl(ConstructorAccessorImpl delegate) {
         setDelegate(delegate);
-    }    
+    }
 
     public Object newInstance(Object[] args)
       throws InstantiationException,

@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar SingleTransformerTest SingleTransformerTest
  */
-public class 
-SingleTransformerTest 
+public class
+SingleTransformerTest
     extends ATransformerManagementTestCase
 {
 
@@ -46,20 +46,20 @@ SingleTransformerTest
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new SingleTransformerTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         beVerbose(); // We are seeing problems on this test -- print what is happenning
         testOneTransformer();
     }
-        
-    
+
+
     /**
      * Add and check just one transformer to the manager
      */
@@ -69,5 +69,5 @@ SingleTransformerTest
         addTransformerToManager(fInst, getRandomTransformer());
         verifyTransformers(fInst);
     }
-    
+
 }

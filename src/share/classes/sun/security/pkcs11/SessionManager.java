@@ -42,7 +42,7 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
  * The session manager pools sessions to minimize the number of
  * C_OpenSession() and C_CloseSession() that have to be made. It
  * maintains two pools: one for "object" sessions and one for
- * "operation" sessions. 
+ * "operation" sessions.
  *
  * The reason for this separation is how PKCS#11 deals with session objects.
  * It defines that when a session is closed, all objects created within
@@ -56,243 +56,241 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
  * finalizer where appropriate. Otherwise, they will be "lost", i.e. there
  * will be a resource leak eventually leading to exhaustion.
  *
- * Note that sessions are automatically closed when they are not used for a 
+ * Note that sessions are automatically closed when they are not used for a
  * period of time, see Session.
  *
  * @author  Andreas Sterbenz
- * @version %I%, %G%
  * @since   1.5
  */
 final class SessionManager {
 
     private final static int DEFAULT_MAX_SESSIONS = 32;
-    
+
     private final static Debug debug = Debug.getInstance("pkcs11");
-    
+
     // token instance
     private final Token token;
-    
+
     // maximum number of sessions to open with this token
     private final int maxSessions;
-    
+
     // total number of active sessions
     private int activeSessions;
-    
+
     // pool of available object sessions
     private final Pool objSessions;
-    
+
     // pool of available operation sessions
     private final Pool opSessions;
-    
+
     // maximum number of active sessions during this invocation, for debugging
     private int maxActiveSessions;
-    
+
     // flags to use in the C_OpenSession() call
     private final long openSessionFlags;
 
     SessionManager(Token token) {
-	long n;
-	if (token.isWriteProtected()) {
-	    openSessionFlags = CKF_SERIAL_SESSION;
-	    n = token.tokenInfo.ulMaxSessionCount;
-	} else {
-	    openSessionFlags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
-	    n = token.tokenInfo.ulMaxRwSessionCount;
-	}
-	if (n == CK_EFFECTIVELY_INFINITE) {
-	    n = Integer.MAX_VALUE;
-	} else if ((n == CK_UNAVAILABLE_INFORMATION) || (n < 0)) {
-	    // choose an arbitrary concrete value
-	    n = DEFAULT_MAX_SESSIONS;
-	}
-	maxSessions = (int)Math.min(n, Integer.MAX_VALUE);
-	this.token = token;
-	this.objSessions = new Pool(this);
-	this.opSessions = new Pool(this);
+        long n;
+        if (token.isWriteProtected()) {
+            openSessionFlags = CKF_SERIAL_SESSION;
+            n = token.tokenInfo.ulMaxSessionCount;
+        } else {
+            openSessionFlags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
+            n = token.tokenInfo.ulMaxRwSessionCount;
+        }
+        if (n == CK_EFFECTIVELY_INFINITE) {
+            n = Integer.MAX_VALUE;
+        } else if ((n == CK_UNAVAILABLE_INFORMATION) || (n < 0)) {
+            // choose an arbitrary concrete value
+            n = DEFAULT_MAX_SESSIONS;
+        }
+        maxSessions = (int)Math.min(n, Integer.MAX_VALUE);
+        this.token = token;
+        this.objSessions = new Pool(this);
+        this.opSessions = new Pool(this);
     }
 
     // returns whether only a fairly low number of sessions are
     // supported by this token.
     boolean lowMaxSessions() {
-	return (maxSessions <= DEFAULT_MAX_SESSIONS);
+        return (maxSessions <= DEFAULT_MAX_SESSIONS);
     }
 
     synchronized Session getObjSession() throws PKCS11Exception {
-	Session session = objSessions.poll();
-	if (session != null) {
-	    return ensureValid(session);
-	}
-	session = opSessions.poll();
-	if (session != null) {
-	    return ensureValid(session);
-	}
-	session = openSession();
-	return ensureValid(session);
+        Session session = objSessions.poll();
+        if (session != null) {
+            return ensureValid(session);
+        }
+        session = opSessions.poll();
+        if (session != null) {
+            return ensureValid(session);
+        }
+        session = openSession();
+        return ensureValid(session);
     }
 
     synchronized Session getOpSession() throws PKCS11Exception {
-	Session session = opSessions.poll();
-	if (session != null) {
-	    return ensureValid(session);
-	}
-	// create a new session rather than re-using an obj session
-	// that avoids potential expensive cancels() for Signatures & RSACipher
-	if (activeSessions < maxSessions) {
-	    session = openSession();
-	    return ensureValid(session);
-	}
-	session = objSessions.poll();
-	if (session != null) {
-	    return ensureValid(session);
-	}
-	throw new ProviderException("Could not obtain session");
+        Session session = opSessions.poll();
+        if (session != null) {
+            return ensureValid(session);
+        }
+        // create a new session rather than re-using an obj session
+        // that avoids potential expensive cancels() for Signatures & RSACipher
+        if (activeSessions < maxSessions) {
+            session = openSession();
+            return ensureValid(session);
+        }
+        session = objSessions.poll();
+        if (session != null) {
+            return ensureValid(session);
+        }
+        throw new ProviderException("Could not obtain session");
     }
-    
+
     private Session ensureValid(Session session) {
-	session.id();
-	return session;
+        session.id();
+        return session;
     }
 
     synchronized Session killSession(Session session) {
-	if ((session == null) || (token.isValid() == false)) {
-	    return null;
-	}
-	if (debug != null) {
-	    String location = new Exception().getStackTrace()[2].toString();
-	    System.out.println("Killing session (" + location + ") active: "
-	    	+ activeSessions);
-	}
-	try {
-	    closeSession(session);
-	    return null;
-	} catch (PKCS11Exception e) {
-	    throw new ProviderException(e);
-	}
+        if ((session == null) || (token.isValid() == false)) {
+            return null;
+        }
+        if (debug != null) {
+            String location = new Exception().getStackTrace()[2].toString();
+            System.out.println("Killing session (" + location + ") active: "
+                + activeSessions);
+        }
+        try {
+            closeSession(session);
+            return null;
+        } catch (PKCS11Exception e) {
+            throw new ProviderException(e);
+        }
     }
-    
-    synchronized Session releaseSession(Session session) {
-	if ((session == null) || (token.isValid() == false)) {
-	    return null;
-	}
 
-	if (session.hasObjects()) {
-	    objSessions.release(session);
-	} else {
-	    opSessions.release(session);
-	}
-	return null;
+    synchronized Session releaseSession(Session session) {
+        if ((session == null) || (token.isValid() == false)) {
+            return null;
+        }
+
+        if (session.hasObjects()) {
+            objSessions.release(session);
+        } else {
+            opSessions.release(session);
+        }
+        return null;
     }
-    
+
     synchronized void demoteObjSession(Session session) {
-	if (token.isValid() == false) {
-	    return;
-	}
-	if (debug != null) {
-	    System.out.println("Demoting session, active: " + activeSessions);
-	}
-	boolean present = objSessions.remove(session);
-	if (present == false) {
-	    // session is currently in use
-	    // will be added to correct pool on release, nothing to do now
-	    return;
-	}
-	opSessions.release(session);
+        if (token.isValid() == false) {
+            return;
+        }
+        if (debug != null) {
+            System.out.println("Demoting session, active: " + activeSessions);
+        }
+        boolean present = objSessions.remove(session);
+        if (present == false) {
+            // session is currently in use
+            // will be added to correct pool on release, nothing to do now
+            return;
+        }
+        opSessions.release(session);
     }
-    
+
     private Session openSession() throws PKCS11Exception {
-	if (activeSessions >= maxSessions) {
-	    throw new ProviderException("No more sessions available");
-	}
-	long id = token.p11.C_OpenSession
-		    (token.provider.slotID, openSessionFlags, null, null);
-	Session session = new Session(token, id);
-	activeSessions++;
-	if (debug != null) {
-	    if (activeSessions > maxActiveSessions) {
-		maxActiveSessions = activeSessions;
-		if (maxActiveSessions % 10 == 0) {
-		    System.out.println("Open sessions: " + maxActiveSessions);
-		}
-	    }
-	}
-	return session;
+        if (activeSessions >= maxSessions) {
+            throw new ProviderException("No more sessions available");
+        }
+        long id = token.p11.C_OpenSession
+                    (token.provider.slotID, openSessionFlags, null, null);
+        Session session = new Session(token, id);
+        activeSessions++;
+        if (debug != null) {
+            if (activeSessions > maxActiveSessions) {
+                maxActiveSessions = activeSessions;
+                if (maxActiveSessions % 10 == 0) {
+                    System.out.println("Open sessions: " + maxActiveSessions);
+                }
+            }
+        }
+        return session;
     }
-    
+
     private void closeSession(Session session) throws PKCS11Exception {
-	if (session.hasObjects()) {
-	    throw new ProviderException
-	    	("Internal error: close session with active objects");
-	}
-	token.p11.C_CloseSession(session.id());
-	activeSessions--;
+        if (session.hasObjects()) {
+            throw new ProviderException
+                ("Internal error: close session with active objects");
+        }
+        token.p11.C_CloseSession(session.id());
+        activeSessions--;
     }
 
     private static final class Pool {
-	
-	private final SessionManager mgr;
-	
-	private final List<Session> pool;
-	
-	Pool(SessionManager mgr) {
-	    this.mgr = mgr;
-	    pool = new ArrayList<Session>();
-	}
-	
-	boolean remove(Session session) {
-	    return pool.remove(session);
-	}
-	
-	Session poll() {
-	    int n = pool.size();
-	    if (n == 0) {
-		return null;
-	    }
-	    Session session = pool.remove(n - 1);
-	    return session;
-	}
-	
-	void release(Session session) {
-	    pool.add(session);
-	    // if there are idle sessions, close them
-	    if (session.hasObjects()) {
-		return;
-	    }
-	    int n = pool.size();
-	    if (n < 5) {
-		return;
-	    }
-	    Session oldestSession = pool.get(0);
-	    long time = System.currentTimeMillis();
-	    if (session.isLive(time) && oldestSession.isLive(time)) {
-		return;
-	    }
-	    Collections.sort(pool);
-	    int i = 0;
-	    PKCS11Exception exc = null;
-	    while (i < n - 1) { // always keep at least 1 session open
-		oldestSession = pool.get(i);
-		if (oldestSession.isLive(time)) {
-		    break;
-		}
-		i++;
-		try {
-		    mgr.closeSession(oldestSession);
-		} catch (PKCS11Exception e) {
-		    exc = e;
-		}
-	    }
-	    if (debug != null) {
-		System.out.println("Closing " + i + " idle sessions, active: "
-			+ mgr.activeSessions);
-	    }
-	    List<Session> subList = pool.subList(0, i);
-	    subList.clear();
-	    if (exc != null) {
-		throw new ProviderException(exc);
-	    }
-	}
-	
-    }
-    
-}
 
+        private final SessionManager mgr;
+
+        private final List<Session> pool;
+
+        Pool(SessionManager mgr) {
+            this.mgr = mgr;
+            pool = new ArrayList<Session>();
+        }
+
+        boolean remove(Session session) {
+            return pool.remove(session);
+        }
+
+        Session poll() {
+            int n = pool.size();
+            if (n == 0) {
+                return null;
+            }
+            Session session = pool.remove(n - 1);
+            return session;
+        }
+
+        void release(Session session) {
+            pool.add(session);
+            // if there are idle sessions, close them
+            if (session.hasObjects()) {
+                return;
+            }
+            int n = pool.size();
+            if (n < 5) {
+                return;
+            }
+            Session oldestSession = pool.get(0);
+            long time = System.currentTimeMillis();
+            if (session.isLive(time) && oldestSession.isLive(time)) {
+                return;
+            }
+            Collections.sort(pool);
+            int i = 0;
+            PKCS11Exception exc = null;
+            while (i < n - 1) { // always keep at least 1 session open
+                oldestSession = pool.get(i);
+                if (oldestSession.isLive(time)) {
+                    break;
+                }
+                i++;
+                try {
+                    mgr.closeSession(oldestSession);
+                } catch (PKCS11Exception e) {
+                    exc = e;
+                }
+            }
+            if (debug != null) {
+                System.out.println("Closing " + i + " idle sessions, active: "
+                        + mgr.activeSessions);
+            }
+            List<Session> subList = pool.subList(0, i);
+            subList.clear();
+            if (exc != null) {
+                throw new ProviderException(exc);
+            }
+        }
+
+    }
+
+}

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 
 package com.sun.java.swing.plaf.windows;
 
@@ -41,17 +41,14 @@ import javax.swing.plaf.basic.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Rich Schiavi
  */
 public class WindowsButtonListener extends BasicButtonListener {
     public WindowsButtonListener(AbstractButton b) {
-	super(b);
+        super(b);
     }
     /*
-     This class is currently not used, but exists in case customers 
+     This class is currently not used, but exists in case customers
      were subclassing it.
      */
 }
-
-

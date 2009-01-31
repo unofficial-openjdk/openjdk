@@ -40,20 +40,20 @@ package sun.text.normalizer;
 import java.text.CharacterIterator;
 
 /**
- * This class is a wrapper around CharacterIterator and implements the 
+ * This class is a wrapper around CharacterIterator and implements the
  * UCharacterIterator protocol
  * @author ram
  */
 
 public class CharacterIteratorWrapper extends UCharacterIterator {
-    
+
     private CharacterIterator iterator;
-    
+
     public CharacterIteratorWrapper(CharacterIterator iter){
         if(iter==null){
             throw new IllegalArgumentException();
         }
-        iterator     = iter;   
+        iterator     = iter;
     }
 
     /**
@@ -87,7 +87,7 @@ public class CharacterIteratorWrapper extends UCharacterIterator {
     public int next() {
         int i = iterator.current();
         iterator.next();
-        if(i==CharacterIterator.DONE){  
+        if(i==CharacterIterator.DONE){
           return DONE;
         }
         return i;
@@ -116,12 +116,12 @@ public class CharacterIteratorWrapper extends UCharacterIterator {
      * @see UCharacterIterator#getText(char[])
      */
     public int getText(char[] fillIn, int offset){
-        int length =iterator.getEndIndex() - iterator.getBeginIndex(); 
+        int length =iterator.getEndIndex() - iterator.getBeginIndex();
         int currentIndex = iterator.getIndex();
         if(offset < 0 || offset + length > fillIn.length){
             throw new IndexOutOfBoundsException(Integer.toString(length));
         }
-    
+
         for (char ch = iterator.first(); ch != CharacterIterator.DONE; ch = iterator.next()) {
             fillIn[offset++] = ch;
         }
@@ -139,7 +139,7 @@ public class CharacterIteratorWrapper extends UCharacterIterator {
             CharacterIteratorWrapper result = (CharacterIteratorWrapper) super.clone();
             result.iterator = (CharacterIterator)this.iterator.clone();
             return result;
-        } catch (CloneNotSupportedException e) {      
+        } catch (CloneNotSupportedException e) {
             return null; // only invoked if bad underlying character iterator
         }
     }

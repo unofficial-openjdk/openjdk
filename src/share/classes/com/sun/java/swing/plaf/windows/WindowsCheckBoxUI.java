@@ -41,7 +41,6 @@ import java.awt.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class WindowsCheckBoxUI extends WindowsRadioButtonUI
@@ -55,34 +54,33 @@ public class WindowsCheckBoxUI extends WindowsRadioButtonUI
     private final static String propertyPrefix = "CheckBox" + ".";
 
     private boolean defaults_initialized = false;
-    
+
     // ********************************
     //          Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent c) {
-	return windowsCheckBoxUI;
+        return windowsCheckBoxUI;
     }
 
 
     public String getPropertyPrefix() {
-	return propertyPrefix;
+        return propertyPrefix;
     }
 
     // ********************************
     //          Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+            defaults_initialized = true;
+        }
     }
 
     public void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
 
 }
-

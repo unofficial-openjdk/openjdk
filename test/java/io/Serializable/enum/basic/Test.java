@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4838379
  * @summary Verify that basic serialization of non-specialized enum constants
- * 	    functions properly.
+ *          functions properly.
  *
  * @compile -source 1.5 Test.java
  * @run main Test
@@ -36,19 +36,19 @@ enum Foo { klaatu, barada, nikto }
 
 public class Test {
     public static void main(String[] args) throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new ObjectOutputStream(bout);
-	for (Foo f : Foo.values()) {
-	    oout.writeObject(f);
-	}
-	oout.close();
-	ObjectInputStream oin = new ObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()));
-	for (Foo f : Foo.values()) {
-	    Object obj = oin.readObject();
-	    if (obj != f) {
-		throw new Error("expected " + f + ", got " + obj);
-	    }
-	}
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);
+        for (Foo f : Foo.values()) {
+            oout.writeObject(f);
+        }
+        oout.close();
+        ObjectInputStream oin = new ObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray()));
+        for (Foo f : Foo.values()) {
+            Object obj = oin.readObject();
+            if (obj != f) {
+                throw new Error("expected " + f + ", got " + obj);
+            }
+        }
     }
 }

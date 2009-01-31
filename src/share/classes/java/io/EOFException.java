@@ -35,7 +35,6 @@ package java.io;
  * <p>
  *
  * @author  Frank Yellin
- * @version %I%, %G%
  * @see     java.io.DataInputStream
  * @see     java.io.IOException
  * @since   JDK1.0
@@ -47,7 +46,7 @@ class EOFException extends IOException {
      * as its error detail message.
      */
     public EOFException() {
-	super();
+        super();
     }
 
     /**
@@ -59,6 +58,6 @@ class EOFException extends IOException {
      * @param   s   the detail message.
      */
     public EOFException(String s) {
-	super(s);
+        super(s);
     }
 }

@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,28 +31,28 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "lcms.h"
 
-// Uncomment this line if you want lcms to use the black point tag in profile, 
-// if commented, lcms will compute the black point by its own. 
+// Uncomment this line if you want lcms to use the black point tag in profile,
+// if commented, lcms will compute the black point by its own.
 // It is safer to leve it commented out
 // #define HONOR_BLACK_POINT_TAG
 
@@ -192,14 +192,14 @@ BOOL LCMSEXPORT cmsBuildRGB2XYZtransferMatrix(LPMAT3 r, LPcmsCIExyY WhitePt,
         VEC3init(&r -> v[0], Coef.n[VX]*xr,          Coef.n[VY]*xg,          Coef.n[VZ]*xb);
         VEC3init(&r -> v[1], Coef.n[VX]*yr,          Coef.n[VY]*yg,          Coef.n[VZ]*yb);
         VEC3init(&r -> v[2], Coef.n[VX]*(1.0-xr-yr), Coef.n[VY]*(1.0-xg-yg), Coef.n[VZ]*(1.0-xb-yb));
-       
+
 
         return TRUE;
 }
 
 
 
-// Compute chromatic adaptation matrix using Chad as cone matrix 
+// Compute chromatic adaptation matrix using Chad as cone matrix
 
 static
 void ComputeChromaticAdaptation(LPMAT3 Conversion,
@@ -208,7 +208,7 @@ void ComputeChromaticAdaptation(LPMAT3 Conversion,
                                 LPMAT3 Chad)
 
 {
-      
+
         MAT3 Chad_Inv;
         VEC3 ConeSourceXYZ, ConeSourceRGB;
         VEC3 ConeDestXYZ, ConeDestRGB;
@@ -267,12 +267,12 @@ BOOL cmsAdaptationMatrix(LPMAT3 r, LPMAT3 ConeMatrix, LPcmsCIEXYZ FromIll, LPcms
 
 BOOL cmsAdaptMatrixToD50(LPMAT3 r, LPcmsCIExyY SourceWhitePt)
 {
-        cmsCIEXYZ Dn;      
+        cmsCIEXYZ Dn;
         MAT3 Bradford;
         MAT3 Tmp;
 
         cmsxyY2XYZ(&Dn, SourceWhitePt);
-        
+
         cmsAdaptationMatrix(&Bradford, NULL, &Dn, cmsD50_XYZ());
 
         Tmp = *r;
@@ -286,12 +286,12 @@ BOOL cmsAdaptMatrixToD50(LPMAT3 r, LPcmsCIExyY SourceWhitePt)
 
 BOOL cmsAdaptMatrixFromD50(LPMAT3 r, LPcmsCIExyY DestWhitePt)
 {
-        cmsCIEXYZ Dn;       
+        cmsCIEXYZ Dn;
         MAT3 Bradford;
         MAT3 Tmp;
 
         cmsxyY2XYZ(&Dn, DestWhitePt);
-        
+
         cmsAdaptationMatrix(&Bradford, NULL, cmsD50_XYZ(), &Dn);
 
         Tmp = *r;
@@ -302,16 +302,16 @@ BOOL cmsAdaptMatrixFromD50(LPMAT3 r, LPcmsCIExyY DestWhitePt)
 
 
 // Adapts a color to a given illuminant. Original color is expected to have
-// a SourceWhitePt white point. 
+// a SourceWhitePt white point.
 
-BOOL LCMSEXPORT cmsAdaptToIlluminant(LPcmsCIEXYZ Result, 
-                                     LPcmsCIEXYZ SourceWhitePt, 
-                                     LPcmsCIEXYZ Illuminant, 
+BOOL LCMSEXPORT cmsAdaptToIlluminant(LPcmsCIEXYZ Result,
+                                     LPcmsCIEXYZ SourceWhitePt,
+                                     LPcmsCIEXYZ Illuminant,
                                      LPcmsCIEXYZ Value)
 {
         MAT3 Bradford;
         VEC3 In, Out;
-    
+
         // BradfordLamRiggChromaticAdaptation(&Bradford, SourceWhitePt, Illuminant);
 
         cmsAdaptationMatrix(&Bradford, NULL, SourceWhitePt, Illuminant);
@@ -330,15 +330,15 @@ BOOL LCMSEXPORT cmsAdaptToIlluminant(LPcmsCIEXYZ Result,
 
 typedef struct {
 
-    double mirek;  // temp (in microreciprocal kelvin) 
-    double ut;     // u coord of intersection w/ blackbody locus  
-    double vt;     // v coord of intersection w/ blackbody locus 
-    double tt;     // slope of ISOTEMPERATURE. line 
+    double mirek;  // temp (in microreciprocal kelvin)
+    double ut;     // u coord of intersection w/ blackbody locus
+    double vt;     // v coord of intersection w/ blackbody locus
+    double tt;     // slope of ISOTEMPERATURE. line
 
     } ISOTEMPERATURE,FAR* LPISOTEMPERATURE;
 
 static ISOTEMPERATURE isotempdata[] = {
-//  {Mirek, Ut,       Vt,      Tt      } 
+//  {Mirek, Ut,       Vt,      Tt      }
     {0,     0.18006,  0.26352,  -0.24341},
     {10,    0.18066,  0.26589,  -0.25479},
     {20,    0.18133,  0.26846,  -0.26876},
@@ -377,7 +377,7 @@ static ISOTEMPERATURE isotempdata[] = {
 
 // Robertson's method
 
-static 
+static
 double Robertson(LPcmsCIExyY v)
 {
     int j;
@@ -389,7 +389,7 @@ double Robertson(LPcmsCIExyY v)
     xs = v -> x;
     ys = v -> y;
 
-    // convert (x,y) to CIE 1960 (u,v) 
+    // convert (x,y) to CIE 1960 (u,v)
 
     us = (2*xs) / (-xs + 6*ys + 1.5);
     vs = (3*ys) / (-xs + 6*ys + 1.5);
@@ -416,7 +416,7 @@ double Robertson(LPcmsCIExyY v)
     }
 
 
-    if (j == NISO) return -1;   
+    if (j == NISO) return -1;
     return Tc;
 }
 
@@ -481,29 +481,29 @@ void _cmsIdentifyWhitePoint(char *Buffer, LPcmsCIEXYZ WhitePt)
                             if (InRange(&Val, &SomeIlluminants[i].Val, 0.000005))
                             {
                                 strcpy(Buffer, "WhitePoint : ");
-                                strcat(Buffer, SomeIlluminants[i].Name);                                
+                                strcat(Buffer, SomeIlluminants[i].Name);
                                 return;
                             }
               }
 
               T = Robertson(&Val);
 
-              if (T > 0) 
-                sprintf(Buffer, "White point near %dK", (int) T);                                                     
+              if (T > 0)
+                sprintf(Buffer, "White point near %dK", (int) T);
               else
               {
               sprintf(Buffer, "Unknown white point (X:%1.2g, Y:%1.2g, Z:%1.2g)",
                                           WhitePt -> X, WhitePt -> Y, WhitePt -> Z);
-              
+
               }
-              
+
 }
 
 
 // Use darker colorant to obtain black point
 
 static
-int BlackPointAsDarkerColorant(cmsHPROFILE hInput,                               
+int BlackPointAsDarkerColorant(cmsHPROFILE hInput,
                                int Intent,
                                LPcmsCIEXYZ BlackPoint,
                                DWORD dwFlags)
@@ -512,38 +512,38 @@ int BlackPointAsDarkerColorant(cmsHPROFILE hInput,
     cmsHTRANSFORM xform;
     icColorSpaceSignature Space;
     int nChannels;
-    DWORD dwFormat; 
+    DWORD dwFormat;
     cmsHPROFILE hLab;
     cmsCIELab  Lab;
-    cmsCIEXYZ  BlackXYZ, MediaWhite;        
-    
+    cmsCIEXYZ  BlackXYZ, MediaWhite;
+
     // If the profile does not support input direction, assume Black point 0
-    
+
     if (!cmsIsIntentSupported(hInput, Intent, LCMS_USED_AS_INPUT)) {
 
         BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
         return 0;
     }
-    
+
 
     // Try to get black by using black colorant
 
     Space = cmsGetColorSpace(hInput);
-    
+
     if (!_cmsEndPointsBySpace(Space, &White, &Black, &nChannels)) {
-        
+
         BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
         return 0;
     }
-    
+
     dwFormat = CHANNELS_SH(nChannels)|BYTES_SH(2);
 
     hLab = cmsCreateLabProfile(NULL);
-    
+
     xform = cmsCreateTransform(hInput, dwFormat,
                                 hLab, TYPE_Lab_DBL, Intent, cmsFLAGS_NOTPRECALC);
-    
-    
+
+
     cmsDoTransform(xform, Black, &Lab, 1);
 
     // Force it to be neutral, clip to max. L* of 50
@@ -553,15 +553,15 @@ int BlackPointAsDarkerColorant(cmsHPROFILE hInput,
 
     cmsCloseProfile(hLab);
     cmsDeleteTransform(xform);
-    
+
     cmsLab2XYZ(NULL, &BlackXYZ, &Lab);
-    
+
     if (Intent == INTENT_ABSOLUTE_COLORIMETRIC) {
-        
-        *BlackPoint = BlackXYZ; 
+
+        *BlackPoint = BlackXYZ;
     }
     else {
-        
+
         if (!(dwFlags & LCMS_BPFLAGS_D50_ADAPTED)) {
 
             cmsTakeMediaWhitePoint(&MediaWhite, hInput);
@@ -570,25 +570,25 @@ int BlackPointAsDarkerColorant(cmsHPROFILE hInput,
         else
             *BlackPoint = BlackXYZ;
     }
-        
+
     return 1;
 }
 
 
-// Get a black point of output CMYK profile, discounting any ink-limiting embedded 
+// Get a black point of output CMYK profile, discounting any ink-limiting embedded
 // in the profile. Fou doing that, use perceptual intent in input direction:
 // Lab (0, 0, 0) -> [Perceptual] Profile -> CMYK -> [Rel. colorimetric] Profile -> Lab
 
 static
-int BlackPointUsingPerceptualBlack(LPcmsCIEXYZ BlackPoint, 
-                                   cmsHPROFILE hProfile, 
+int BlackPointUsingPerceptualBlack(LPcmsCIEXYZ BlackPoint,
+                                   cmsHPROFILE hProfile,
                                    DWORD dwFlags)
 {
     cmsHTRANSFORM hPercLab2CMYK, hRelColCMYK2Lab;
     cmsHPROFILE hLab;
     cmsCIELab LabIn, LabOut;
     WORD CMYK[MAXCHANNELS];
-    cmsCIEXYZ  BlackXYZ, MediaWhite;        
+    cmsCIEXYZ  BlackXYZ, MediaWhite;
 
 
      if (!cmsIsIntentSupported(hProfile, INTENT_PERCEPTUAL, LCMS_USED_AS_INPUT)) {
@@ -596,15 +596,15 @@ int BlackPointUsingPerceptualBlack(LPcmsCIEXYZ BlackPoint,
         BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
         return 0;
     }
-   
+
     hLab = cmsCreateLabProfile(NULL);
 
-    hPercLab2CMYK  = cmsCreateTransform(hLab, TYPE_Lab_DBL, 
-                                        hProfile, TYPE_CMYK_16, 
+    hPercLab2CMYK  = cmsCreateTransform(hLab, TYPE_Lab_DBL,
+                                        hProfile, TYPE_CMYK_16,
                                         INTENT_PERCEPTUAL, cmsFLAGS_NOTPRECALC);
 
-    hRelColCMYK2Lab = cmsCreateTransform(hProfile, TYPE_CMYK_16, 
-                                         hLab, TYPE_Lab_DBL, 
+    hRelColCMYK2Lab = cmsCreateTransform(hProfile, TYPE_CMYK_16,
+                                         hLab, TYPE_Lab_DBL,
                                          INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOTPRECALC);
 
     LabIn.L = LabIn.a = LabIn.b = 0;
@@ -619,15 +619,15 @@ int BlackPointUsingPerceptualBlack(LPcmsCIEXYZ BlackPoint,
     cmsDeleteTransform(hRelColCMYK2Lab);
     cmsCloseProfile(hLab);
 
-    cmsLab2XYZ(NULL, &BlackXYZ, &LabOut);   
-    
+    cmsLab2XYZ(NULL, &BlackXYZ, &LabOut);
+
     if (!(dwFlags & LCMS_BPFLAGS_D50_ADAPTED)){
             cmsTakeMediaWhitePoint(&MediaWhite, hProfile);
             cmsAdaptToIlluminant(BlackPoint, cmsD50_XYZ(), &MediaWhite, &BlackXYZ);
     }
     else
             *BlackPoint = BlackXYZ;
-   
+
     return 1;
 
 }
@@ -648,7 +648,7 @@ int GetV4PerceptualBlack(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, DWORD dwF
             cmsCIEXYZ D50BlackPoint, MediaWhite;
 
             cmsTakeMediaWhitePoint(&MediaWhite, hProfile);
-            D50BlackPoint.X = PERCEPTUAL_BLACK_X; 
+            D50BlackPoint.X = PERCEPTUAL_BLACK_X;
             D50BlackPoint.Y = PERCEPTUAL_BLACK_Y;
             D50BlackPoint.Z = PERCEPTUAL_BLACK_Z;
             cmsAdaptToIlluminant(BlackPoint, cmsD50_XYZ(), &MediaWhite, &D50BlackPoint);
@@ -660,7 +660,7 @@ int GetV4PerceptualBlack(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, DWORD dwF
 
 
 // This function shouldn't exist at all -- there is such quantity of broken
-// profiles on black point tag, that we must somehow fix chromaticity to 
+// profiles on black point tag, that we must somehow fix chromaticity to
 // avoid huge tint when doing Black point compensation. This function does
 // just that. If BP is specified, then forces it to neutral and uses only L
 // component. If does not exist, computes it by taking 400% of ink or RGB=0 This
@@ -669,16 +669,16 @@ int GetV4PerceptualBlack(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, DWORD dwF
 
 
 int cmsDetectBlackPoint(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, int Intent, DWORD dwFlags)
-{    
+{
 
     // v4 + perceptual & saturation intents does have its own black point
 
-    if ((cmsGetProfileICCversion(hProfile) >= 0x4000000) &&     
+    if ((cmsGetProfileICCversion(hProfile) >= 0x4000000) &&
         (Intent == INTENT_PERCEPTUAL || Intent == INTENT_SATURATION)) {
 
        // Matrix shaper share MRC & perceptual intents
 
-       if (_cmsIsMatrixShaper(hProfile)) 
+       if (_cmsIsMatrixShaper(hProfile))
            return BlackPointAsDarkerColorant(hProfile, INTENT_RELATIVE_COLORIMETRIC, BlackPoint, cmsFLAGS_NOTPRECALC);
 
        // Get fixed value
@@ -689,14 +689,14 @@ int cmsDetectBlackPoint(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, int Intent
 #ifdef HONOR_BLACK_POINT_TAG
 
     // v2, v4 rel/abs colorimetric
-    if (cmsIsTag(hProfile, icSigMediaBlackPointTag) && 
+    if (cmsIsTag(hProfile, icSigMediaBlackPointTag) &&
                     Intent == INTENT_RELATIVE_COLORIMETRIC) {
 
         cmsCIEXYZ BlackXYZ, UntrustedBlackPoint, TrustedBlackPoint, MediaWhite;
         cmsCIELab Lab;
 
-             // If black point is specified, then use it, 
-        
+             // If black point is specified, then use it,
+
              cmsTakeMediaBlackPoint(&BlackXYZ, hProfile);
              cmsTakeMediaWhitePoint(&MediaWhite, hProfile);
 
@@ -723,10 +723,10 @@ int cmsDetectBlackPoint(LPcmsCIEXYZ BlackPoint, cmsHPROFILE hProfile, int Intent
     }
 
 #endif
-    
+
     // If output profile, discount ink-limiting
 
-    if (Intent == INTENT_RELATIVE_COLORIMETRIC && 
+    if (Intent == INTENT_RELATIVE_COLORIMETRIC &&
             (cmsGetDeviceClass(hProfile) == icSigOutputClass) &&
             (cmsGetColorSpace(hProfile) == icSigCmykData))
                 return BlackPointUsingPerceptualBlack(BlackPoint, hProfile, dwFlags);

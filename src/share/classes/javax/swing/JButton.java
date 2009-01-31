@@ -40,7 +40,7 @@ import java.io.IOException;
 /**
  * An implementation of a "push" button.
   * <p>
- * Buttons can be configured, and to some degree controlled, by 
+ * Buttons can be configured, and to some degree controlled, by
  * <code><a href="Action.html">Action</a></code>s.  Using an
  * <code>Action</code> with a button has many benefits beyond directly
  * configuring a button.  Refer to <a href="Action.html#buttonActions">
@@ -71,7 +71,6 @@ import java.io.IOException;
  *   attribute: isContainer false
  * description: An implementation of a \"push\" button.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class JButton extends AbstractButton implements Accessible {
@@ -88,7 +87,7 @@ public class JButton extends AbstractButton implements Accessible {
     public JButton() {
         this(null, null);
     }
-    
+
     /**
      * Creates a button with an icon.
      *
@@ -97,7 +96,7 @@ public class JButton extends AbstractButton implements Accessible {
     public JButton(Icon icon) {
         this(null, icon);
     }
-    
+
     /**
      * Creates a button with text.
      *
@@ -106,9 +105,9 @@ public class JButton extends AbstractButton implements Accessible {
     public JButton(String text) {
         this(text, null);
     }
-    
+
     /**
-     * Creates a button where properties are taken from the 
+     * Creates a button where properties are taken from the
      * <code>Action</code> supplied.
      *
      * @param a the <code>Action</code> used to specify the new button
@@ -117,7 +116,7 @@ public class JButton extends AbstractButton implements Accessible {
      */
     public JButton(Action a) {
         this();
-	setAction(a);
+        setAction(a);
     }
 
     /**
@@ -143,7 +142,7 @@ public class JButton extends AbstractButton implements Accessible {
     public void updateUI() {
         setUI((ButtonUI)UIManager.getUI(this));
     }
-    
+
 
     /**
      * Returns a string that specifies the name of the L&F class
@@ -172,7 +171,7 @@ public class JButton extends AbstractButton implements Accessible {
      * @return the value of the <code>defaultButton</code> property
      * @see JRootPane#setDefaultButton
      * @see #isDefaultCapable
-     * @beaninfo 
+     * @beaninfo
      *  description: Whether or not this button is the default button
      */
     public boolean isDefaultButton() {
@@ -188,7 +187,7 @@ public class JButton extends AbstractButton implements Accessible {
      *
      * @return the value of the <code>defaultCapable</code> property
      * @see #setDefaultCapable
-     * @see #isDefaultButton 
+     * @see #isDefaultButton
      * @see JRootPane#setDefaultButton
      */
     public boolean isDefaultCapable() {
@@ -207,7 +206,7 @@ public class JButton extends AbstractButton implements Accessible {
      *        capable of being the default button on the
      *        <code>RootPane</code>; otherwise <code>false</code>
      * @see #isDefaultCapable
-     * @beaninfo 
+     * @beaninfo
      *        bound: true
      *    attribute: visualUpdate true
      *  description: Whether or not this button can be the default button
@@ -233,8 +232,8 @@ public class JButton extends AbstractButton implements Accessible {
         super.removeNotify();
     }
 
-    /** 
-     * See readObject() and writeObject() in JComponent for more 
+    /**
+     * See readObject() and writeObject() in JComponent for more
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -251,18 +250,18 @@ public class JButton extends AbstractButton implements Accessible {
 
     /**
      * Returns a string representation of this <code>JButton</code>.
-     * This method is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * This method is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>JButton</code>
      */
     protected String paramString() {
-	String defaultCapableString = (defaultCapable ? "true" : "false");
-	
-	return super.paramString() +
-	    ",defaultCapable=" + defaultCapableString;
+        String defaultCapableString = (defaultCapable ? "true" : "false");
+
+        return super.paramString() +
+            ",defaultCapable=" + defaultCapableString;
     }
 
 
@@ -273,11 +272,11 @@ public class JButton extends AbstractButton implements Accessible {
     /**
      * Gets the <code>AccessibleContext</code> associated with this
      * <code>JButton</code>. For <code>JButton</code>s,
-     * the <code>AccessibleContext</code> takes the form of an 
-     * <code>AccessibleJButton</code>. 
+     * the <code>AccessibleContext</code> takes the form of an
+     * <code>AccessibleJButton</code>.
      * A new <code>AccessibleJButton</code> instance is created if necessary.
      *
-     * @return an <code>AccessibleJButton</code> that serves as the 
+     * @return an <code>AccessibleJButton</code> that serves as the
      *         <code>AccessibleContext</code> of this <code>JButton</code>
      * @beaninfo
      *       expert: true
@@ -291,9 +290,9 @@ public class JButton extends AbstractButton implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JButton</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to button user-interface 
+     * This class implements accessibility support for the
+     * <code>JButton</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to button user-interface
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -306,11 +305,11 @@ public class JButton extends AbstractButton implements Accessible {
      * Please see {@link java.beans.XMLEncoder}.
      */
     protected class AccessibleJButton extends AccessibleAbstractButton {
-    
+
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          * @see AccessibleRole
          */

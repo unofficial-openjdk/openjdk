@@ -44,8 +44,7 @@ import sun.swing.plaf.synth.SynthUI;
 
 /**
  * Synth's ColorChooserUI.
- * 
- * @version %I%, %G%
+ *
  * @author Tom Santos
  * @author Steve Wilson
  */
@@ -54,7 +53,7 @@ class SynthColorChooserUI extends BasicColorChooserUI implements
     private SynthStyle style;
 
     public static ComponentUI createUI(JComponent c) {
-	return new SynthColorChooserUI();
+        return new SynthColorChooserUI();
     }
 
     protected AbstractColorChooserPanel[] createDefaultChoosers() {
@@ -66,7 +65,7 @@ class SynthColorChooserUI extends BasicColorChooserUI implements
         if (panels == null) {
             panels = ColorChooserComponentFactory.getDefaultChooserPanels();
         }
-	return panels;
+        return panels;
     }
 
     protected void installDefaults() {

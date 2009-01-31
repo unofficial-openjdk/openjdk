@@ -40,110 +40,110 @@ import javax.management.remote.JMXServiceURL;
 
 public class URLTest {
     private static final String[] good = {
-	"",
-	"a",
-	"a.b",
-	"a.b.c.d.e.f.g",
-	"aaa.bbb",
-	"a-a.b-b",
-	"a-a",
-	"a--b",
-	"1.2.3.4",
-	"1.2.3.x",
-	"111.222.222.111",
-	"1",
-	"23skiddoo",
-	"23skiddoo.sfbay",
-	"a1.b2",
-	"1234.sfbay",
-	"[::]",
-	"[ffff::ffff]",
+        "",
+        "a",
+        "a.b",
+        "a.b.c.d.e.f.g",
+        "aaa.bbb",
+        "a-a.b-b",
+        "a-a",
+        "a--b",
+        "1.2.3.4",
+        "1.2.3.x",
+        "111.222.222.111",
+        "1",
+        "23skiddoo",
+        "23skiddoo.sfbay",
+        "a1.b2",
+        "1234.sfbay",
+        "[::]",
+        "[ffff::ffff]",
     };
     private static final String[] bad = {
-	"-a",
-	"a-",
-	"-",
-	"_",
-	"a_b",
-	"a_b.sfbay",
-	".",
-	"..",
-	".a",
-	"a.",
-	"a..",
-	"a..b",
-	".a.b",
-	"a.b.",
-	"a.b..",
-	"1.2",
-	"111.222.333.444",
-	"a.23skiddoo",
-	"[:::]",
-	"[:]",
+        "-a",
+        "a-",
+        "-",
+        "_",
+        "a_b",
+        "a_b.sfbay",
+        ".",
+        "..",
+        ".a",
+        "a.",
+        "a..",
+        "a..b",
+        ".a.b",
+        "a.b.",
+        "a.b..",
+        "1.2",
+        "111.222.333.444",
+        "a.23skiddoo",
+        "[:::]",
+        "[:]",
     };
-	
+
     public static void main(String[] args) throws Exception {
-	System.out.println("Testing that JMXServiceURL accepts the same " +
-			   "hosts as java.net.URI");
-	System.out.println("(Except that it allows empty host names and " +
-			   "forbids a trailing \".\")");
-	System.out.println();
+        System.out.println("Testing that JMXServiceURL accepts the same " +
+                           "hosts as java.net.URI");
+        System.out.println("(Except that it allows empty host names and " +
+                           "forbids a trailing \".\")");
+        System.out.println();
 
-	int failures = 0;
+        int failures = 0;
 
-	for (int pass = 1; pass <= 2; pass++) {
-	    final boolean accept = (pass == 1);
-	    System.out.println("  Hosts that should " +
-			       (accept ? "" : "not ") + "work");
-	    String[] hosts = accept ? good : bad;
+        for (int pass = 1; pass <= 2; pass++) {
+            final boolean accept = (pass == 1);
+            System.out.println("  Hosts that should " +
+                               (accept ? "" : "not ") + "work");
+            String[] hosts = accept ? good : bad;
 
-	    for (int i = 0; i < hosts.length; i++) {
-		final String host = hosts[i];
-		System.out.print("    " + host + ": ");
+            for (int i = 0; i < hosts.length; i++) {
+                final String host = hosts[i];
+                System.out.print("    " + host + ": ");
 
-		boolean jmxAccept = true;
-		try {
-		    new JMXServiceURL("rmi", hosts[i], 0);
-		} catch (MalformedURLException e) {
-		    jmxAccept = false;
-		}
+                boolean jmxAccept = true;
+                try {
+                    new JMXServiceURL("rmi", hosts[i], 0);
+                } catch (MalformedURLException e) {
+                    jmxAccept = false;
+                }
 
-		boolean uriAccept;
-		try {
-		    final URI uri = new URI("http://" + host + "/");
-		    uriAccept = (uri.getHost() != null);
-		} catch (URISyntaxException e) {
-		    uriAccept = false;
-		}
+                boolean uriAccept;
+                try {
+                    final URI uri = new URI("http://" + host + "/");
+                    uriAccept = (uri.getHost() != null);
+                } catch (URISyntaxException e) {
+                    uriAccept = false;
+                }
 
-		final int len = host.length();
-		if (accept != uriAccept && len != 0 &&
-		    !(len > 1 && host.charAt(len - 1) == '.'
-		      && host.charAt(len - 2) != '.')) {
-		    // JMXServiceURL allows empty host name; also
-		    // java.net.URI allows trailing dot in hostname,
-		    // following RFC 2396, but JMXServiceURL doesn't,
-		    // following RFC 2609
-		    System.out.println("TEST BUG: URI accept=" + uriAccept);
-		    failures++;
-		} else {
-		    if (jmxAccept == accept)
-			System.out.println("OK");
-		    else {
-			System.out.println("FAILED");
-			failures++;
-		    }
-		}
-	    }
+                final int len = host.length();
+                if (accept != uriAccept && len != 0 &&
+                    !(len > 1 && host.charAt(len - 1) == '.'
+                      && host.charAt(len - 2) != '.')) {
+                    // JMXServiceURL allows empty host name; also
+                    // java.net.URI allows trailing dot in hostname,
+                    // following RFC 2396, but JMXServiceURL doesn't,
+                    // following RFC 2609
+                    System.out.println("TEST BUG: URI accept=" + uriAccept);
+                    failures++;
+                } else {
+                    if (jmxAccept == accept)
+                        System.out.println("OK");
+                    else {
+                        System.out.println("FAILED");
+                        failures++;
+                    }
+                }
+            }
 
-	    System.out.println();
-	}
+            System.out.println();
+        }
 
-	if (failures == 0)
-	    System.out.println("Test passed");
-	else {
-	    System.out.println("TEST FAILURES: " + failures);
-	    System.exit(1);
-	}
+        if (failures == 0)
+            System.out.println("Test passed");
+        else {
+            System.out.println("TEST FAILURES: " + failures);
+            System.exit(1);
+        }
     }
 }

@@ -6,7 +6,7 @@
  */
 
 public class ChainedExceptions {
-    public static void main(String args[]) { 
+    public static void main(String args[]) {
         try {
             a();
         } catch(HighLevelException e) {
@@ -50,7 +50,7 @@ public class ChainedExceptions {
     }
     static void b() throws MidLevelException {
         c();
-    }   
+    }
     static void c() throws MidLevelException {
         try {
             d();
@@ -58,7 +58,7 @@ public class ChainedExceptions {
             throw new MidLevelException(e);
         }
     }
-    static void d() throws LowLevelException { 
+    static void d() throws LowLevelException {
        e();
     }
     static void e() throws LowLevelException {

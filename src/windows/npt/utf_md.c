@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
-   
+
 /*
  * Initialize all utf processing.
  */
@@ -39,15 +39,15 @@ utfInitialize(char *options)
     LANGID langID;
     LCID localeID;
     TCHAR strCodePage[7];       // ANSI code page id
-        
+
     ui = (struct UtfInst*)calloc(sizeof(struct UtfInst), 1);
-    
+
     /*
      * Get the code page for this locale
      */
-    langID = LANGIDFROMLCID(GetUserDefaultLCID());  
+    langID = LANGIDFROMLCID(GetUserDefaultLCID());
     localeID = MAKELCID(langID, SORT_DEFAULT);
-    if (GetLocaleInfo(localeID, LOCALE_IDEFAULTANSICODEPAGE, 
+    if (GetLocaleInfo(localeID, LOCALE_IDEFAULTANSICODEPAGE,
                       strCodePage, sizeof(strCodePage)/sizeof(TCHAR)) > 0 ) {
         ui->platformCodePage = atoi(strCodePage);
     } else {
@@ -79,10 +79,10 @@ getWideString(UINT codePage, char* str, int len, int *pwlen)
     *pwlen = wlen;
     if (wlen <= 0) {
         UTF_ERROR(("Can't get WIDE string length"));
-	return NULL;
+        return NULL;
     }
     wstr = (WCHAR*)malloc(wlen * sizeof(WCHAR));
-    if (wstr == NULL) { 
+    if (wstr == NULL) {
         UTF_ERROR(("Can't malloc() any space"));
         return NULL;
     }
@@ -94,10 +94,10 @@ getWideString(UINT codePage, char* str, int len, int *pwlen)
 }
 
 /*
- * Convert UTF-8 to a platform string 
+ * Convert UTF-8 to a platform string
  */
 int JNICALL
-utf8ToPlatform(struct UtfInst *ui, jbyte *utf8, int len, char* output, int outputMaxLen) 
+utf8ToPlatform(struct UtfInst *ui, jbyte *utf8, int len, char* output, int outputMaxLen)
 {
     int wlen;
     int plen;
@@ -105,28 +105,28 @@ utf8ToPlatform(struct UtfInst *ui, jbyte *utf8, int len, char* output, int outpu
 
     /* Negative length is an error */
     if ( len < 0 ) {
-	return -1;
+        return -1;
     }
 
     /* Zero length is ok, but we don't need to do much */
     if ( len == 0 ) {
-	output[0] = 0;
-	return 0;
+        output[0] = 0;
+        return 0;
     }
 
     /* Get WIDE string version (assumes len>0) */
     wstr = getWideString(CP_UTF8, (char*)utf8, len, &wlen);
     if ( wstr == NULL ) {
-	return -1;
+        return -1;
     }
 
     /* Convert WIDE string to MultiByte string */
-    plen = WideCharToMultiByte(ui->platformCodePage, 0, wstr, wlen, 
-			       output, outputMaxLen, NULL, NULL);   
+    plen = WideCharToMultiByte(ui->platformCodePage, 0, wstr, wlen,
+                               output, outputMaxLen, NULL, NULL);
     free(wstr);
     if (plen <= 0) {
-	UTF_ERROR(("Can't convert WIDE string to multi-byte"));
-	return -1;
+        UTF_ERROR(("Can't convert WIDE string to multi-byte"));
+        return -1;
     }
     output[plen] = '\0';
     return plen;
@@ -144,30 +144,29 @@ utf8FromPlatform(struct UtfInst *ui, char *str, int len, jbyte *output, int outp
 
     /* Negative length is an error */
     if ( len < 0 ) {
-	return -1;
+        return -1;
     }
 
     /* Zero length is ok, but we don't need to do much */
     if ( len == 0 ) {
-	output[0] = 0;
-	return 0;
+        output[0] = 0;
+        return 0;
     }
 
     /* Get WIDE string version (assumes len>0) */
     wstr = getWideString(ui->platformCodePage, str, len, &wlen);
     if ( wstr == NULL ) {
-	return -1;
+        return -1;
     }
 
     /* Convert WIDE string to UTF-8 string */
-    plen = WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, 
-			       (char*)output, outputMaxLen, NULL, NULL);   
+    plen = WideCharToMultiByte(CP_UTF8, 0, wstr, wlen,
+                               (char*)output, outputMaxLen, NULL, NULL);
     free(wstr);
     if (plen <= 0) {
-	UTF_ERROR(("Can't convert WIDE string to multi-byte"));
-	return -1;
+        UTF_ERROR(("Can't convert WIDE string to multi-byte"));
+        return -1;
     }
     output[plen] = '\0';
     return plen;
 }
-

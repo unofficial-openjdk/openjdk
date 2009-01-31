@@ -73,7 +73,7 @@ public class LocationRelativeToTest
             Frame f2 = new Frame("F2", gc);
             f2.setBounds(gcBounds.x + 100, gcBounds.y + 100,
                          FRAME_WIDTH, FRAME_HEIGHT);
-            
+
             // second, check setLocationRelativeTo(invisible)
             f.setLocationRelativeTo(f2);
             Util.waitForIdle(r);
@@ -87,14 +87,14 @@ public class LocationRelativeToTest
             f.setLocationRelativeTo(f2);
             Util.waitForIdle(r);
             checkLocation(f, new Point(f2Loc.x + f2.getWidth() / 2,
-                                       f2Loc.y + f2.getHeight() / 2));           
+                                       f2Loc.y + f2.getHeight() / 2));
         }
     }
 
     /*
      * Here the check is performed. Note this check works correctly both
      * for virtual (Win32, X11/Xinerama) and non-virtual (X11/non-Xinerama)
-     * screen configurations. 
+     * screen configurations.
      */
     private static void checkLocation(Frame f, Point rightLoc)
     {
@@ -108,4 +108,3 @@ public class LocationRelativeToTest
         }
     }
 }
-

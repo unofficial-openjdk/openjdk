@@ -33,7 +33,6 @@ import java.util.Map;
  *
  * @since 1.7
  *
- * @version %I% %G%
  * @author Sergey A. Malenkov
  */
 final class PrimitiveTypeMap {

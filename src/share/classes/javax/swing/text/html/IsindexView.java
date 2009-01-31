@@ -36,21 +36,20 @@ import javax.swing.*;
 
 /**
  * A view that supports the &lt;ISINDEX&lt; tag.  This is implemented
- * as a JPanel that contains 
+ * as a JPanel that contains
  *
  * @author Sunita Mani
- * @version %I%, %G%
  */
 
 class IsindexView extends ComponentView implements ActionListener {
- 
+
     JTextField textField;
 
     /**
      * Creates an IsindexView
      */
     public IsindexView(Element elem) {
-	super(elem);
+        super(elem);
     }
 
     /**
@@ -60,24 +59,24 @@ class IsindexView extends ComponentView implements ActionListener {
      * to the right.
      */
     public Component createComponent() {
-	AttributeSet attr = getElement().getAttributes();
-	
-	JPanel panel = new JPanel(new BorderLayout());
-	panel.setBackground(null);
-	
-	String prompt = (String)attr.getAttribute(HTML.Attribute.PROMPT);
-	if (prompt == null) {
-            prompt = UIManager.getString("IsindexView.prompt");
-	}
-	JLabel label = new JLabel(prompt);
+        AttributeSet attr = getElement().getAttributes();
 
-	textField = new JTextField();
-	textField.addActionListener(this);
-	panel.add(label, BorderLayout.WEST);
-	panel.add(textField, BorderLayout.CENTER);
-	panel.setAlignmentY(1.0f);
-	panel.setOpaque(false);
-	return panel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(null);
+
+        String prompt = (String)attr.getAttribute(HTML.Attribute.PROMPT);
+        if (prompt == null) {
+            prompt = UIManager.getString("IsindexView.prompt");
+        }
+        JLabel label = new JLabel(prompt);
+
+        textField = new JTextField();
+        textField.addActionListener(this);
+        panel.add(label, BorderLayout.WEST);
+        panel.add(textField, BorderLayout.CENTER);
+        panel.setAlignmentY(1.0f);
+        panel.setOpaque(false);
+        return panel;
     }
 
     /**
@@ -86,30 +85,30 @@ class IsindexView extends ComponentView implements ActionListener {
      * in the text field.  This will construct the
      * URL from the base URL of the document.
      * To the URL is appended a '?' followed by the
-     * contents of the JTextField.  The search 
+     * contents of the JTextField.  The search
      * contents are URLEncoded.
      */
     public void actionPerformed(ActionEvent evt) {
 
-	String data = textField.getText();
-	if (data != null) {
-	    data = URLEncoder.encode(data);
-	}
+        String data = textField.getText();
+        if (data != null) {
+            data = URLEncoder.encode(data);
+        }
 
 
-	AttributeSet attr = getElement().getAttributes();
-	HTMLDocument hdoc = (HTMLDocument)getElement().getDocument();
+        AttributeSet attr = getElement().getAttributes();
+        HTMLDocument hdoc = (HTMLDocument)getElement().getDocument();
 
-	String action = (String) attr.getAttribute(HTML.Attribute.ACTION);
-	if (action == null) {
-	    action = hdoc.getBase().toString();
-	}
-	try {
-	    URL url = new URL(action+"?"+data);
-	    JEditorPane pane = (JEditorPane)getContainer();
-	    pane.setPage(url);
-	} catch (MalformedURLException e1) {
-	} catch (IOException e2) {
-	}
+        String action = (String) attr.getAttribute(HTML.Attribute.ACTION);
+        if (action == null) {
+            action = hdoc.getBase().toString();
+        }
+        try {
+            URL url = new URL(action+"?"+data);
+            JEditorPane pane = (JEditorPane)getContainer();
+            pane.setPage(url);
+        } catch (MalformedURLException e1) {
+        } catch (IOException e2) {
+        }
     }
 }

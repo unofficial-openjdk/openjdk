@@ -24,10 +24,10 @@
 /*
  * @test
  * @bug 4143541 4147035 4244362
- * @summary URLConnection cannot enumerate request properties, 
- *          and URLConnection can neither get nor set multiple 
+ * @summary URLConnection cannot enumerate request properties,
+ *          and URLConnection can neither get nor set multiple
  *          request properties w/ same key
- * 
+ *
  */
 
 import java.net.*;
@@ -57,53 +57,53 @@ public class URLConnectionHeaders {
                 is = s.getInputStream ();
                 BufferedReader r = new BufferedReader(new InputStreamReader(is));
                 os = s.getOutputStream ();
-	        BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
-	        w.write("HTTP/1.1 200 OK\r\n");
-	        w.write("Content-Type: text/plain\r\n");
+                BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os));
+                w.write("HTTP/1.1 200 OK\r\n");
+                w.write("Content-Type: text/plain\r\n");
                 while ((x=r.readLine()).length() != 0) {
-		    System.out.println("request: "+x);
-		    if (!x.startsWith("GET")) {
-		        w.write(x);
-		        w.newLine();
-		    }
-	        }       
-	        w.newLine();
-	        w.flush();
+                    System.out.println("request: "+x);
+                    if (!x.startsWith("GET")) {
+                        w.write(x);
+                        w.newLine();
+                    }
+                }
+                w.newLine();
+                w.flush();
                 s.close ();
                 srv.close (); // or else the HTTPURLConnection will retry
-            } catch (IOException e) { e.printStackTrace();} 
+            } catch (IOException e) { e.printStackTrace();}
         }
     }
-        
+
     public static void main(String[] args) {
-	try {
-	    ServerSocket serversocket = new ServerSocket (0);
+        try {
+            ServerSocket serversocket = new ServerSocket (0);
             int port = serversocket.getLocalPort ();
             XServer server = new XServer (serversocket);
             server.start ();
             Thread.sleep (200);
-	    URL url = new URL ("http://localhost:"+port+"/index.html");
+            URL url = new URL ("http://localhost:"+port+"/index.html");
             URLConnection uc = url.openConnection ();
 
-	    // add request properties
-	    uc.addRequestProperty("Cookie", "cookie1");
-	    uc.addRequestProperty("Cookie", "cookie2");
-	    uc.addRequestProperty("Cookie", "cookie3");
+            // add request properties
+            uc.addRequestProperty("Cookie", "cookie1");
+            uc.addRequestProperty("Cookie", "cookie2");
+            uc.addRequestProperty("Cookie", "cookie3");
 
-	    Map e = uc.getRequestProperties();
-	    
-	    if (!((List)e.get("Cookie")).toString().equals("[cookie3, cookie2, cookie1]")) {
-		throw new RuntimeException("getRequestProperties fails");
-	    }
+            Map e = uc.getRequestProperties();
 
-	    e = uc.getHeaderFields();
+            if (!((List)e.get("Cookie")).toString().equals("[cookie3, cookie2, cookie1]")) {
+                throw new RuntimeException("getRequestProperties fails");
+            }
 
-	    if ((e.get("Content-Type") == null) || (e.get(null) == null)) {
-		throw new RuntimeException("getHeaderFields fails");
-	    }
-	   
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+            e = uc.getHeaderFields();
+
+            if ((e.get("Content-Type") == null) || (e.get(null) == null)) {
+                throw new RuntimeException("getHeaderFields fails");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

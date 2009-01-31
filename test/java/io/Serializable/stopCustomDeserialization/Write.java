@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4663191
  * @summary Verify that readObject and readObjectNoData methods will not be
- * 	    called on an object being deserialized if that object is already
- * 	    tagged with a ClassNotFoundException.
+ *          called on an object being deserialized if that object is already
+ *          tagged with a ClassNotFoundException.
  *
  * @clean Write Read A B C X
  * @compile Write.java
@@ -52,10 +52,10 @@ class X implements Serializable {
 
 public class Write {
     public static void main(String[] args) throws Exception {
-	ObjectOutputStream oout = 
-	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-	oout.writeObject(new C());
-	oout.writeObject("after");
-	oout.close();
+        ObjectOutputStream oout =
+            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+        oout.writeObject(new C());
+        oout.writeObject("after");
+        oout.close();
     }
 }

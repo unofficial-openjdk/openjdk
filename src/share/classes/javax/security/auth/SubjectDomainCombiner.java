@@ -47,26 +47,25 @@ import java.lang.ref.WeakReference;
  * with Principals from the <code>Subject</code> associated with this
  * <code>SubjectDomainCombiner</code>.
  *
- * @version %I%, %G%
  */
 public class SubjectDomainCombiner implements java.security.DomainCombiner {
 
     private Subject subject;
     private WeakKeyValueMap<ProtectionDomain, ProtectionDomain> cachedPDs =
-		new WeakKeyValueMap<ProtectionDomain, ProtectionDomain>();
+                new WeakKeyValueMap<ProtectionDomain, ProtectionDomain>();
     private Set<Principal> principalSet;
     private Principal[] principals;
 
     private static final sun.security.util.Debug debug =
-	sun.security.util.Debug.getInstance("combiner",
-					"\t[SubjectDomainCombiner]");
+        sun.security.util.Debug.getInstance("combiner",
+                                        "\t[SubjectDomainCombiner]");
 
     // Note: check only at classloading time, not dynamically during combine()
     private static final boolean useJavaxPolicy = compatPolicy();
 
     // Relevant only when useJavaxPolicy is true
     private static final boolean allowCaching =
-					(useJavaxPolicy && cachePolicy());
+                                        (useJavaxPolicy && cachePolicy());
 
     /**
      * Associate the provided <code>Subject</code> with this
@@ -75,16 +74,16 @@ public class SubjectDomainCombiner implements java.security.DomainCombiner {
      * <p>
      *
      * @param subject the <code>Subject</code> to be associated with
-     *		with this <code>SubjectDomainCombiner</code>.
+     *          with this <code>SubjectDomainCombiner</code>.
      */
     public SubjectDomainCombiner(Subject subject) {
-	this.subject = subject;
+        this.subject = subject;
 
-	if (subject.isReadOnly()) {
-	    principalSet = subject.getPrincipals();
-	    principals = principalSet.toArray
-			(new Principal[principalSet.size()]);
-	}
+        if (subject.isReadOnly()) {
+            principalSet = subject.getPrincipals();
+            principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+        }
     }
 
     /**
@@ -94,21 +93,21 @@ public class SubjectDomainCombiner implements java.security.DomainCombiner {
      * <p>
      *
      * @return the <code>Subject</code> associated with this
-     *		<code>SubjectDomainCombiner</code>, or <code>null</code>
-     *		if no <code>Subject</code> is associated with this
-     *		<code>SubjectDomainCombiner</code>.
+     *          <code>SubjectDomainCombiner</code>, or <code>null</code>
+     *          if no <code>Subject</code> is associated with this
+     *          <code>SubjectDomainCombiner</code>.
      *
      * @exception SecurityException if the caller does not have permission
-     *		to get the <code>Subject</code> associated with this
-     *		<code>SubjectDomainCombiner</code>.
+     *          to get the <code>Subject</code> associated with this
+     *          <code>SubjectDomainCombiner</code>.
      */
     public Subject getSubject() {
-	java.lang.SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(new AuthPermission
-		("getSubjectFromDomainCombiner"));
-	}
-	return subject;
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new AuthPermission
+                ("getSubjectFromDomainCombiner"));
+        }
+        return subject;
     }
 
     /**
@@ -125,7 +124,7 @@ public class SubjectDomainCombiner implements java.security.DomainCombiner {
      * <i>currentDomains</i>, as well as with the Principals from
      * the <code>Subject</code> associated with this
      * <code>SubjectDomainCombiner</code>.
-     * 
+     *
      * <p> All of the newly instantiated ProtectionDomains are
      * combined into a new array.  The ProtectionDomains from the
      * <i>assignedDomains</i> array are appended to this new array,
@@ -138,421 +137,421 @@ public class SubjectDomainCombiner implements java.security.DomainCombiner {
      * <p>
      *
      * @param currentDomains the ProtectionDomains associated with the
-     *		current execution Thread, up to the most recent
-     *		privileged <code>ProtectionDomain</code>.
-     *		The ProtectionDomains are are listed in order of execution,
-     *		with the most recently executing <code>ProtectionDomain</code>
-     *		residing at the beginning of the array. This parameter may
-     *		be <code>null</code> if the current execution Thread
-     *		has no associated ProtectionDomains.<p>
+     *          current execution Thread, up to the most recent
+     *          privileged <code>ProtectionDomain</code>.
+     *          The ProtectionDomains are are listed in order of execution,
+     *          with the most recently executing <code>ProtectionDomain</code>
+     *          residing at the beginning of the array. This parameter may
+     *          be <code>null</code> if the current execution Thread
+     *          has no associated ProtectionDomains.<p>
      *
      * @param assignedDomains the ProtectionDomains inherited from the
-     *		parent Thread, or the ProtectionDomains from the
-     *		privileged <i>context</i>, if a call to
-     *		AccessController.doPrivileged(..., <i>context</i>)
-     *		had occurred  This parameter may be <code>null</code>
-     *		if there were no ProtectionDomains inherited from the
-     *		parent Thread, or from the privileged <i>context</i>.
+     *          parent Thread, or the ProtectionDomains from the
+     *          privileged <i>context</i>, if a call to
+     *          AccessController.doPrivileged(..., <i>context</i>)
+     *          had occurred  This parameter may be <code>null</code>
+     *          if there were no ProtectionDomains inherited from the
+     *          parent Thread, or from the privileged <i>context</i>.
      *
      * @return a new array consisting of the updated ProtectionDomains,
-     *		or <code>null</code>.
+     *          or <code>null</code>.
      */
     public ProtectionDomain[] combine(ProtectionDomain[] currentDomains,
-				ProtectionDomain[] assignedDomains) {
-	if (debug != null) {
-	    if (subject == null) {
-		debug.println("null subject");
-	    } else {
-		final Subject s = subject;
-		AccessController.doPrivileged
-		    (new java.security.PrivilegedAction<Void>() {
-		    public Void run() {
-			debug.println(s.toString());
-			return null;
-		    }
-		});
-	    }
-	    printInputDomains(currentDomains, assignedDomains);
-	}
-
-	if (currentDomains == null || currentDomains.length == 0) {
-	    // No need to optimize assignedDomains because it should
-	    // have been previously optimized (when it was set).
-
-	    // Note that we are returning a direct reference
-	    // to the input array - since ACC does not clone
-	    // the arrays when it calls combiner.combine,
-	    // multiple ACC instances may share the same
-	    // array instance in this case
-
-	    return assignedDomains;
-	}
-
-	// optimize currentDomains
-	//
-	// No need to optimize assignedDomains because it should
-        // have been previously optimized (when it was set).
-
-	currentDomains = optimize(currentDomains);
-	if (debug != null) {
-	    debug.println("after optimize");
-	    printInputDomains(currentDomains, assignedDomains);
-	}
-
-	if (currentDomains == null && assignedDomains == null) {
-	    return null;
-	}
-
-	// maintain backwards compatibility for people who provide
-	// their own javax.security.auth.Policy implementations
-	if (useJavaxPolicy) {
-	    return combineJavaxPolicy(currentDomains, assignedDomains);
-	}
-	
-	int cLen = (currentDomains == null ? 0 : currentDomains.length);
-	int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
-
-	// the ProtectionDomains for the new AccessControlContext
-	// that we will return
-	ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
-
-	boolean allNew = true;
-	synchronized(cachedPDs) {
-	    if (!subject.isReadOnly() &&
-		!subject.getPrincipals().equals(principalSet)) {
-
-		// if the Subject was mutated, clear the PD cache
-		Set<Principal> newSet = subject.getPrincipals();
-		synchronized(newSet) {
-		    principalSet = new java.util.HashSet<Principal>(newSet);
-		}
-		principals = principalSet.toArray
-			(new Principal[principalSet.size()]);
-		cachedPDs.clear();
-
-		if (debug != null) {
-		    debug.println("Subject mutated - clearing cache");
-		}
-	    } 
-
-	    ProtectionDomain subjectPd;
-	    for (int i = 0; i < cLen; i++) {
-		ProtectionDomain pd = currentDomains[i];
-
-		subjectPd = cachedPDs.getValue(pd);
-
-		if (subjectPd == null) {
-		    subjectPd = new ProtectionDomain(pd.getCodeSource(),
-						pd.getPermissions(), 
-						pd.getClassLoader(),
-						principals);
-		    cachedPDs.putValue(pd, subjectPd);
-		} else {
-		    allNew = false;
-		}
-		newDomains[i] = subjectPd;
-	    }
+                                ProtectionDomain[] assignedDomains) {
+        if (debug != null) {
+            if (subject == null) {
+                debug.println("null subject");
+            } else {
+                final Subject s = subject;
+                AccessController.doPrivileged
+                    (new java.security.PrivilegedAction<Void>() {
+                    public Void run() {
+                        debug.println(s.toString());
+                        return null;
+                    }
+                });
+            }
+            printInputDomains(currentDomains, assignedDomains);
         }
 
-	if (debug != null) {
-	    debug.println("updated current: "); 
-	    for (int i = 0; i < cLen; i++) {
-		debug.println("\tupdated[" + i + "] = " +
-				printDomain(newDomains[i]));
-	    }
-	}
+        if (currentDomains == null || currentDomains.length == 0) {
+            // No need to optimize assignedDomains because it should
+            // have been previously optimized (when it was set).
 
-	// now add on the assigned domains
-	if (aLen > 0) {
-	    System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
+            // Note that we are returning a direct reference
+            // to the input array - since ACC does not clone
+            // the arrays when it calls combiner.combine,
+            // multiple ACC instances may share the same
+            // array instance in this case
 
-	    // optimize the result (cached PDs might exist in assignedDomains)
-	    if (!allNew) {
-		newDomains = optimize(newDomains);
-	    }
-	}
+            return assignedDomains;
+        }
 
-	// if aLen == 0 || allNew, no need to further optimize newDomains
-	
-	if (debug != null) {
-	    if (newDomains == null || newDomains.length == 0) {
-		debug.println("returning null");
-	    } else {
-		debug.println("combinedDomains: ");
-		for (int i = 0; i < newDomains.length; i++) {
-		    debug.println("newDomain " + i + ": " +
-				  printDomain(newDomains[i]));
-		}
-	    }
-	}
-	
-	// return the new ProtectionDomains
-	if (newDomains == null || newDomains.length == 0) {
-	    return null;
-	} else {
-	    return newDomains;
-	}
+        // optimize currentDomains
+        //
+        // No need to optimize assignedDomains because it should
+        // have been previously optimized (when it was set).
+
+        currentDomains = optimize(currentDomains);
+        if (debug != null) {
+            debug.println("after optimize");
+            printInputDomains(currentDomains, assignedDomains);
+        }
+
+        if (currentDomains == null && assignedDomains == null) {
+            return null;
+        }
+
+        // maintain backwards compatibility for people who provide
+        // their own javax.security.auth.Policy implementations
+        if (useJavaxPolicy) {
+            return combineJavaxPolicy(currentDomains, assignedDomains);
+        }
+
+        int cLen = (currentDomains == null ? 0 : currentDomains.length);
+        int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
+
+        // the ProtectionDomains for the new AccessControlContext
+        // that we will return
+        ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
+
+        boolean allNew = true;
+        synchronized(cachedPDs) {
+            if (!subject.isReadOnly() &&
+                !subject.getPrincipals().equals(principalSet)) {
+
+                // if the Subject was mutated, clear the PD cache
+                Set<Principal> newSet = subject.getPrincipals();
+                synchronized(newSet) {
+                    principalSet = new java.util.HashSet<Principal>(newSet);
+                }
+                principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+                cachedPDs.clear();
+
+                if (debug != null) {
+                    debug.println("Subject mutated - clearing cache");
+                }
+            }
+
+            ProtectionDomain subjectPd;
+            for (int i = 0; i < cLen; i++) {
+                ProtectionDomain pd = currentDomains[i];
+
+                subjectPd = cachedPDs.getValue(pd);
+
+                if (subjectPd == null) {
+                    subjectPd = new ProtectionDomain(pd.getCodeSource(),
+                                                pd.getPermissions(),
+                                                pd.getClassLoader(),
+                                                principals);
+                    cachedPDs.putValue(pd, subjectPd);
+                } else {
+                    allNew = false;
+                }
+                newDomains[i] = subjectPd;
+            }
+        }
+
+        if (debug != null) {
+            debug.println("updated current: ");
+            for (int i = 0; i < cLen; i++) {
+                debug.println("\tupdated[" + i + "] = " +
+                                printDomain(newDomains[i]));
+            }
+        }
+
+        // now add on the assigned domains
+        if (aLen > 0) {
+            System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
+
+            // optimize the result (cached PDs might exist in assignedDomains)
+            if (!allNew) {
+                newDomains = optimize(newDomains);
+            }
+        }
+
+        // if aLen == 0 || allNew, no need to further optimize newDomains
+
+        if (debug != null) {
+            if (newDomains == null || newDomains.length == 0) {
+                debug.println("returning null");
+            } else {
+                debug.println("combinedDomains: ");
+                for (int i = 0; i < newDomains.length; i++) {
+                    debug.println("newDomain " + i + ": " +
+                                  printDomain(newDomains[i]));
+                }
+            }
+        }
+
+        // return the new ProtectionDomains
+        if (newDomains == null || newDomains.length == 0) {
+            return null;
+        } else {
+            return newDomains;
+        }
     }
 
     /**
      * Use the javax.security.auth.Policy implementation
      */
     private ProtectionDomain[] combineJavaxPolicy(
-	ProtectionDomain[] currentDomains,
-	ProtectionDomain[] assignedDomains) {
+        ProtectionDomain[] currentDomains,
+        ProtectionDomain[] assignedDomains) {
 
-	if (!allowCaching) {
-	    java.security.AccessController.doPrivileged
-		(new PrivilegedAction<Void>() {
-		    public Void run() {
-			// Call refresh only caching is disallowed
-			javax.security.auth.Policy.getPolicy().refresh();
-			return null;
-		    }
-		});
-	}
-	
-	int cLen = (currentDomains == null ? 0 : currentDomains.length);
-	int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
+        if (!allowCaching) {
+            java.security.AccessController.doPrivileged
+                (new PrivilegedAction<Void>() {
+                    public Void run() {
+                        // Call refresh only caching is disallowed
+                        javax.security.auth.Policy.getPolicy().refresh();
+                        return null;
+                    }
+                });
+        }
 
-	// the ProtectionDomains for the new AccessControlContext
-	// that we will return
-	ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
+        int cLen = (currentDomains == null ? 0 : currentDomains.length);
+        int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
 
-	synchronized(cachedPDs) {
-	    if (!subject.isReadOnly() &&
-		!subject.getPrincipals().equals(principalSet)) {
+        // the ProtectionDomains for the new AccessControlContext
+        // that we will return
+        ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
 
-		// if the Subject was mutated, clear the PD cache
-		Set<Principal> newSet = subject.getPrincipals();
-		synchronized(newSet) {
-		    principalSet = new java.util.HashSet<Principal>(newSet);
-		}
-		principals = principalSet.toArray
-			(new Principal[principalSet.size()]);
-		cachedPDs.clear();
+        synchronized(cachedPDs) {
+            if (!subject.isReadOnly() &&
+                !subject.getPrincipals().equals(principalSet)) {
 
-		if (debug != null) {
-		    debug.println("Subject mutated - clearing cache");
-		}
-	    }
+                // if the Subject was mutated, clear the PD cache
+                Set<Principal> newSet = subject.getPrincipals();
+                synchronized(newSet) {
+                    principalSet = new java.util.HashSet<Principal>(newSet);
+                }
+                principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+                cachedPDs.clear();
 
-	    for (int i = 0; i < cLen; i++) {
-		ProtectionDomain pd = currentDomains[i];
-		ProtectionDomain subjectPd = cachedPDs.getValue(pd);
+                if (debug != null) {
+                    debug.println("Subject mutated - clearing cache");
+                }
+            }
 
-		if (subjectPd == null) {
+            for (int i = 0; i < cLen; i++) {
+                ProtectionDomain pd = currentDomains[i];
+                ProtectionDomain subjectPd = cachedPDs.getValue(pd);
 
-		    // XXX 
-		    // we must first add the original permissions.
-		    // that way when we later add the new JAAS permissions,
-		    // any unresolved JAAS-related permissions will
-		    // automatically get resolved.
+                if (subjectPd == null) {
 
-		    // get the original perms
-		    Permissions perms = new Permissions();
-		    PermissionCollection coll = pd.getPermissions();
-		    java.util.Enumeration e;
-		    if (coll != null) {
-			synchronized (coll) {
-			    e = coll.elements();
-			    while (e.hasMoreElements()) {
-				Permission newPerm =
-					(Permission)e.nextElement();
-				 perms.add(newPerm);
-			    }
-			}
-		    }
+                    // XXX
+                    // we must first add the original permissions.
+                    // that way when we later add the new JAAS permissions,
+                    // any unresolved JAAS-related permissions will
+                    // automatically get resolved.
 
-		    // get perms from the policy
+                    // get the original perms
+                    Permissions perms = new Permissions();
+                    PermissionCollection coll = pd.getPermissions();
+                    java.util.Enumeration e;
+                    if (coll != null) {
+                        synchronized (coll) {
+                            e = coll.elements();
+                            while (e.hasMoreElements()) {
+                                Permission newPerm =
+                                        (Permission)e.nextElement();
+                                 perms.add(newPerm);
+                            }
+                        }
+                    }
 
-		    final java.security.CodeSource finalCs = pd.getCodeSource();
-		    final Subject finalS = subject;
-		    PermissionCollection newPerms =
-			java.security.AccessController.doPrivileged
-			(new PrivilegedAction<PermissionCollection>() {
-			public PermissionCollection run() {
-			  return
-			  javax.security.auth.Policy.getPolicy().getPermissions
-				(finalS, finalCs);
-			}
-		    });
-			
-		    // add the newly granted perms,
-		    // avoiding duplicates
-		    synchronized (newPerms) {
-			e = newPerms.elements();
-			while (e.hasMoreElements()) {
-			    Permission newPerm = (Permission)e.nextElement();
-			    if (!perms.implies(newPerm)) {
-				perms.add(newPerm);
-				if (debug != null) 
-				    debug.println (
-					"Adding perm " + newPerm + "\n");
-			    }
-			}
-		    }
-		    subjectPd = new ProtectionDomain
-			(finalCs, perms, pd.getClassLoader(), principals);
+                    // get perms from the policy
 
-		    if (allowCaching)
-			cachedPDs.putValue(pd, subjectPd);
-		}
-		newDomains[i] = subjectPd;
-	    }
-	}
+                    final java.security.CodeSource finalCs = pd.getCodeSource();
+                    final Subject finalS = subject;
+                    PermissionCollection newPerms =
+                        java.security.AccessController.doPrivileged
+                        (new PrivilegedAction<PermissionCollection>() {
+                        public PermissionCollection run() {
+                          return
+                          javax.security.auth.Policy.getPolicy().getPermissions
+                                (finalS, finalCs);
+                        }
+                    });
 
-	if (debug != null) {
-	    debug.println("updated current: ");
-	    for (int i = 0; i < cLen; i++) {
-		debug.println("\tupdated[" + i + "] = " + newDomains[i]);
-	    }
-	}
+                    // add the newly granted perms,
+                    // avoiding duplicates
+                    synchronized (newPerms) {
+                        e = newPerms.elements();
+                        while (e.hasMoreElements()) {
+                            Permission newPerm = (Permission)e.nextElement();
+                            if (!perms.implies(newPerm)) {
+                                perms.add(newPerm);
+                                if (debug != null)
+                                    debug.println (
+                                        "Adding perm " + newPerm + "\n");
+                            }
+                        }
+                    }
+                    subjectPd = new ProtectionDomain
+                        (finalCs, perms, pd.getClassLoader(), principals);
 
-	// now add on the assigned domains
-	if (aLen > 0) {
-	    System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
-	}
+                    if (allowCaching)
+                        cachedPDs.putValue(pd, subjectPd);
+                }
+                newDomains[i] = subjectPd;
+            }
+        }
 
-	if (debug != null) {
-	    if (newDomains == null || newDomains.length == 0) {
-		debug.println("returning null");
-	    } else {
-		debug.println("combinedDomains: ");
-		for (int i = 0; i < newDomains.length; i++) {
-		    debug.println("newDomain " + i + ": " +
-			newDomains[i].toString());
-		}
-	    }
-	}
+        if (debug != null) {
+            debug.println("updated current: ");
+            for (int i = 0; i < cLen; i++) {
+                debug.println("\tupdated[" + i + "] = " + newDomains[i]);
+            }
+        }
 
-	// return the new ProtectionDomains
-	if (newDomains == null || newDomains.length == 0) {
-	    return null;
-	} else {
-	    return newDomains;
-	}
+        // now add on the assigned domains
+        if (aLen > 0) {
+            System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
+        }
+
+        if (debug != null) {
+            if (newDomains == null || newDomains.length == 0) {
+                debug.println("returning null");
+            } else {
+                debug.println("combinedDomains: ");
+                for (int i = 0; i < newDomains.length; i++) {
+                    debug.println("newDomain " + i + ": " +
+                        newDomains[i].toString());
+                }
+            }
+        }
+
+        // return the new ProtectionDomains
+        if (newDomains == null || newDomains.length == 0) {
+            return null;
+        } else {
+            return newDomains;
+        }
     }
-	
+
     private static ProtectionDomain[] optimize(ProtectionDomain[] domains) {
-	if (domains == null || domains.length == 0)
-	    return null;
+        if (domains == null || domains.length == 0)
+            return null;
 
-	ProtectionDomain[] optimized = new ProtectionDomain[domains.length];
-	ProtectionDomain pd;
-	int num = 0;
-	for (int i = 0; i < domains.length; i++) {
+        ProtectionDomain[] optimized = new ProtectionDomain[domains.length];
+        ProtectionDomain pd;
+        int num = 0;
+        for (int i = 0; i < domains.length; i++) {
 
-	    // skip domains with AllPermission 
-	    // XXX
-	    //
-	    //	if (domains[i].implies(ALL_PERMISSION))
-	    //	continue;
+            // skip domains with AllPermission
+            // XXX
+            //
+            //  if (domains[i].implies(ALL_PERMISSION))
+            //  continue;
 
-	    // skip System Domains
-	    if ((pd = domains[i]) != null) {
+            // skip System Domains
+            if ((pd = domains[i]) != null) {
 
-		// remove duplicates
-		boolean found = false;
-		for (int j = 0; j < num && !found; j++) {
-		    found = (optimized[j] == pd);
-		}
-		if (!found) {
-		    optimized[num++] = pd;
-		}
-	    }
-	}
+                // remove duplicates
+                boolean found = false;
+                for (int j = 0; j < num && !found; j++) {
+                    found = (optimized[j] == pd);
+                }
+                if (!found) {
+                    optimized[num++] = pd;
+                }
+            }
+        }
 
-	// resize the array if necessary
-	if (num > 0 && num < domains.length) {
-	    ProtectionDomain[] downSize = new ProtectionDomain[num];
-	    System.arraycopy(optimized, 0, downSize, 0, downSize.length);
-	    optimized = downSize;
-	}
+        // resize the array if necessary
+        if (num > 0 && num < domains.length) {
+            ProtectionDomain[] downSize = new ProtectionDomain[num];
+            System.arraycopy(optimized, 0, downSize, 0, downSize.length);
+            optimized = downSize;
+        }
 
-	return ((num == 0 || optimized.length == 0) ? null : optimized);
+        return ((num == 0 || optimized.length == 0) ? null : optimized);
     }
 
     private static boolean cachePolicy() {
-	String s = AccessController.doPrivileged
-	    (new PrivilegedAction<String>() {
-	    public String run() {
-		return java.security.Security.getProperty
-					("cache.auth.policy");
-	    }
-	});
-	if (s != null) {
-	    return Boolean.parseBoolean(s);
-	}
+        String s = AccessController.doPrivileged
+            (new PrivilegedAction<String>() {
+            public String run() {
+                return java.security.Security.getProperty
+                                        ("cache.auth.policy");
+            }
+        });
+        if (s != null) {
+            return Boolean.parseBoolean(s);
+        }
 
-	// cache by default
-	return true;
+        // cache by default
+        return true;
     }
 
     // maintain backwards compatibility for people who provide
     // their own javax.security.auth.Policy implementations
     private static boolean compatPolicy() {
-	javax.security.auth.Policy javaxPolicy = AccessController.doPrivileged
-	    (new PrivilegedAction<javax.security.auth.Policy>() {
-	    public javax.security.auth.Policy run() {
-		return javax.security.auth.Policy.getPolicy();
-	    }
-	});
+        javax.security.auth.Policy javaxPolicy = AccessController.doPrivileged
+            (new PrivilegedAction<javax.security.auth.Policy>() {
+            public javax.security.auth.Policy run() {
+                return javax.security.auth.Policy.getPolicy();
+            }
+        });
 
-	if (!(javaxPolicy instanceof com.sun.security.auth.PolicyFile)) {
-	    if (debug != null) {
-		debug.println("Providing backwards compatibility for " +
-			"javax.security.auth.policy implementation: " +
-			javaxPolicy.toString());
-	    }
+        if (!(javaxPolicy instanceof com.sun.security.auth.PolicyFile)) {
+            if (debug != null) {
+                debug.println("Providing backwards compatibility for " +
+                        "javax.security.auth.policy implementation: " +
+                        javaxPolicy.toString());
+            }
 
-	    return true;
-	} else {
-	    return false;
-	}
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static void printInputDomains(ProtectionDomain[] currentDomains,
-				ProtectionDomain[] assignedDomains) {
-	if (currentDomains == null || currentDomains.length == 0) {
-	    debug.println("currentDomains null or 0 length");
-	} else {
-	    for (int i = 0; currentDomains != null &&
-			i < currentDomains.length; i++) {
-		if (currentDomains[i] == null) {
-		    debug.println("currentDomain " + i + ": SystemDomain");
-		} else {
-		    debug.println("currentDomain " + i + ": " +
-				printDomain(currentDomains[i]));
-		}
-	    }
-	}
+                                ProtectionDomain[] assignedDomains) {
+        if (currentDomains == null || currentDomains.length == 0) {
+            debug.println("currentDomains null or 0 length");
+        } else {
+            for (int i = 0; currentDomains != null &&
+                        i < currentDomains.length; i++) {
+                if (currentDomains[i] == null) {
+                    debug.println("currentDomain " + i + ": SystemDomain");
+                } else {
+                    debug.println("currentDomain " + i + ": " +
+                                printDomain(currentDomains[i]));
+                }
+            }
+        }
 
-	if (assignedDomains == null || assignedDomains.length == 0) {
-	    debug.println("assignedDomains null or 0 length");
-	} else {
-	    debug.println("assignedDomains = ");
-	    for (int i = 0; assignedDomains != null &&
-			i < assignedDomains.length; i++) {
-		if (assignedDomains[i] == null) {
-		    debug.println("assignedDomain " + i + ": SystemDomain");
-		} else {
-		    debug.println("assignedDomain " + i + ": " +
-				printDomain(assignedDomains[i]));
-		}
-	    }
-	}
+        if (assignedDomains == null || assignedDomains.length == 0) {
+            debug.println("assignedDomains null or 0 length");
+        } else {
+            debug.println("assignedDomains = ");
+            for (int i = 0; assignedDomains != null &&
+                        i < assignedDomains.length; i++) {
+                if (assignedDomains[i] == null) {
+                    debug.println("assignedDomain " + i + ": SystemDomain");
+                } else {
+                    debug.println("assignedDomain " + i + ": " +
+                                printDomain(assignedDomains[i]));
+                }
+            }
+        }
     }
 
     private static String printDomain(final ProtectionDomain pd) {
-	if (pd == null) {
-	    return "null";
-	}
-	return AccessController.doPrivileged(new PrivilegedAction<String>() {
-	    public String run() {
-		return pd.toString();
-	    }
-	});
+        if (pd == null) {
+            return "null";
+        }
+        return AccessController.doPrivileged(new PrivilegedAction<String>() {
+            public String run() {
+                return pd.toString();
+            }
+        });
     }
 
     /**
@@ -572,22 +571,22 @@ public class SubjectDomainCombiner implements java.security.DomainCombiner {
      * in the "current PD".
      */
     private static class WeakKeyValueMap<K,V> extends
-					WeakHashMap<K,WeakReference<V>> {
+                                        WeakHashMap<K,WeakReference<V>> {
 
-	public V getValue(K key) {
-	    WeakReference<V> wr = super.get(key);
-	    if (wr != null) {
-		return wr.get();
-	    }
-	    return null;
-	}
+        public V getValue(K key) {
+            WeakReference<V> wr = super.get(key);
+            if (wr != null) {
+                return wr.get();
+            }
+            return null;
+        }
 
-	public V putValue(K key, V value) {
-	    WeakReference<V> wr = super.put(key, new WeakReference<V>(value));
-	    if (wr != null) {
-		return wr.get();
-	    }
-	    return null;
-	}
+        public V putValue(K key, V value) {
+            WeakReference<V> wr = super.put(key, new WeakReference<V>(value));
+            if (wr != null) {
+                return wr.get();
+            }
+            return null;
+        }
     }
 }

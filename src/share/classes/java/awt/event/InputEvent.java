@@ -44,7 +44,6 @@ import java.util.logging.Level;
  * activated.
  *
  * @author Carl Quinn
- * @version %I% %G%
  *
  * @see KeyEvent
  * @see KeyAdapter
@@ -125,7 +124,7 @@ public abstract class InputEvent extends ComponentEvent {
     public static final int META_DOWN_MASK = 1 << 8;
 
     /**
-     * The Alt key extended modifier constant.                    
+     * The Alt key extended modifier constant.
      * @since 1.4
      */
     public static final int ALT_DOWN_MASK = 1 << 9;
@@ -159,14 +158,14 @@ public abstract class InputEvent extends ComponentEvent {
     // in fact, it is undesirable to add modifier bits
     // to the same field as this may break applications
     // see bug# 5066958
-    
+
     static final int FIRST_HIGH_BIT = 1 << 14;
-    
+
     static final int JDK_1_3_MODIFIERS = SHIFT_DOWN_MASK - 1;
     static final int HIGH_MODIFIERS = ~( FIRST_HIGH_BIT - 1 );
 
     /**
-     * The input event's Time stamp in UTC format.  The time stamp 
+     * The input event's Time stamp in UTC format.  The time stamp
      * indicates when the input event was created.
      *
      * @serial
@@ -187,14 +186,14 @@ public abstract class InputEvent extends ComponentEvent {
     int modifiers;
 
     /*
-     * A flag that indicates that this instance can be used to access 
-     * the system clipboard. 
+     * A flag that indicates that this instance can be used to access
+     * the system clipboard.
      */
     private transient boolean canAccessSystemClipboard;
 
     static {
         /* ensure that the necessary native libraries are loaded */
-	NativeLibLoader.loadLibraries();
+        NativeLibLoader.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -213,11 +212,11 @@ public abstract class InputEvent extends ComponentEvent {
      * unspecified behavior. This method throws an
      * <code>IllegalArgumentException</code> if <code>source</code>
      * is <code>null</code>.
-     * 
+     *
      * @param source the object where the event originated
      * @param id the event type
      * @param when the time the event occurred
-     * @param modifiers represents the modifier keys and mouse buttons down 
+     * @param modifiers represents the modifier keys and mouse buttons down
      *                  while the event occurred
      * @throws IllegalArgumentException if <code>source</code> is null
      */
@@ -301,10 +300,10 @@ public abstract class InputEvent extends ComponentEvent {
 
     /**
      * Returns the extended modifier mask for this event.
-     * Extended modifiers represent the state of all modal keys, 
-     * such as ALT, CTRL, META, and the mouse buttons just after 
+     * Extended modifiers represent the state of all modal keys,
+     * such as ALT, CTRL, META, and the mouse buttons just after
      * the event occurred
-     * <P> 
+     * <P>
      * For example, if the user presses <b>button 1</b> followed by
      * <b>button 2</b>, and then releases them in the same order,
      * the following sequence of events is generated:
@@ -313,8 +312,8 @@ public abstract class InputEvent extends ComponentEvent {
      *    <code>MOUSE_PRESSED</code>:  <code>BUTTON1_DOWN_MASK | BUTTON2_DOWN_MASK</code>
      *    <code>MOUSE_RELEASED</code>: <code>BUTTON2_DOWN_MASK</code>
      *    <code>MOUSE_CLICKED</code>:  <code>BUTTON2_DOWN_MASK</code>
-     *    <code>MOUSE_RELEASED</code>: 
-     *    <code>MOUSE_CLICKED</code>:  
+     *    <code>MOUSE_RELEASED</code>:
+     *    <code>MOUSE_CLICKED</code>:
      * </PRE>
      * <P>
      * It is not recommended to compare the return value of this method
@@ -329,7 +328,7 @@ public abstract class InputEvent extends ComponentEvent {
      *    }
      * </PRE>
      * The above code will work even if new modifiers are added.
-     * 
+     *
      * @since 1.4
      */
     public int getModifiersEx() {
@@ -356,16 +355,16 @@ public abstract class InputEvent extends ComponentEvent {
     static final long serialVersionUID = -2482525981698309786L;
 
     /**
-     * Returns a String describing the extended modifier keys and 
-     * mouse buttons, such as "Shift", "Button1", or "Ctrl+Shift".  
-     * These strings can be localized by changing the 
+     * Returns a String describing the extended modifier keys and
+     * mouse buttons, such as "Shift", "Button1", or "Ctrl+Shift".
+     * These strings can be localized by changing the
      * awt.properties file.
      *
      * @param modifiers a modifier mask describing the extended
-       *                modifier keys and mouse buttons for the event 
-     * @return a text description of the combination of extended 
-     *         modifier keys and mouse buttons that were held down 
-     *         during the event. 
+       *                modifier keys and mouse buttons for the event
+     * @return a text description of the combination of extended
+     *         modifier keys and mouse buttons that were held down
+     *         during the event.
      * @since 1.4
      */
     public static String getModifiersExText(int modifiers) {
@@ -408,4 +407,3 @@ public abstract class InputEvent extends ComponentEvent {
         return buf.toString();
     }
 }
-

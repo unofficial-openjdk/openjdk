@@ -39,7 +39,6 @@ import sun.security.util.*;
  * }
  * BaseDistance ::= INTEGER (0..MAX)
  * </pre>
- * @version %I%
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
  */
@@ -48,9 +47,9 @@ public class GeneralSubtree {
     private static final byte TAG_MAX = 1;
     private static final int  MIN_DEFAULT = 0;
 
-    private GeneralName	name;
-    private int		minimum = MIN_DEFAULT;
-    private int		maximum = -1;
+    private GeneralName name;
+    private int         minimum = MIN_DEFAULT;
+    private int         maximum = -1;
 
     private int myhash = -1;
 
@@ -90,9 +89,9 @@ public class GeneralSubtree {
 
             } else if (opt.isContextSpecific(TAG_MAX) && !opt.isConstructed()) {
                 opt.resetTag(DerValue.tag_Integer);
-	        maximum = opt.getInteger();
-            } else 
-	        throw new IOException("Invalid encoding of GeneralSubtree.");
+                maximum = opt.getInteger();
+            } else
+                throw new IOException("Invalid encoding of GeneralSubtree.");
         }
     }
 
@@ -102,8 +101,8 @@ public class GeneralSubtree {
      * @return the GeneralName
      */
     public GeneralName getName() {
-	//XXXX May want to consider cloning this
-	return name;
+        //XXXX May want to consider cloning this
+        return name;
     }
 
     /**
@@ -112,7 +111,7 @@ public class GeneralSubtree {
      * @return the minimum BaseDistance. Default is 0 if not set.
      */
     public int getMinimum() {
-	return minimum;
+        return minimum;
     }
 
     /**
@@ -121,7 +120,7 @@ public class GeneralSubtree {
      * @return the maximum BaseDistance, or -1 if not set.
      */
     public int getMaximum() {
-	return maximum;
+        return maximum;
     }
 
     /**
@@ -146,22 +145,22 @@ public class GeneralSubtree {
      * @returns true if match
      */
     public boolean equals(Object other) {
-	if (!(other instanceof GeneralSubtree))
-	    return false;
-	GeneralSubtree otherGS = (GeneralSubtree)other;
-	if (this.name == null) {
-	    if (otherGS.name != null) {
-		return false;
-	    }
-	} else {
-	    if (!((this.name).equals(otherGS.name)))
-		return false;
-	}
-	if (this.minimum != otherGS.minimum)
-	    return false;
-	if (this.maximum != otherGS.maximum)
-	    return false;
-	return true;
+        if (!(other instanceof GeneralSubtree))
+            return false;
+        GeneralSubtree otherGS = (GeneralSubtree)other;
+        if (this.name == null) {
+            if (otherGS.name != null) {
+                return false;
+            }
+        } else {
+            if (!((this.name).equals(otherGS.name)))
+                return false;
+        }
+        if (this.minimum != otherGS.minimum)
+            return false;
+        if (this.maximum != otherGS.maximum)
+            return false;
+        return true;
     }
 
     /**
@@ -170,19 +169,19 @@ public class GeneralSubtree {
      * @return a hash code value.
      */
     public int hashCode() {
-	if (myhash == -1) {
-	    myhash = 17;
-	    if (name != null) {
-		myhash = 37 * myhash + name.hashCode();
-	    }
-	    if (minimum != MIN_DEFAULT) {
-		myhash = 37 * myhash + minimum;
-	    }
-	    if (maximum != -1) {
-		myhash = 37 * myhash + maximum;
-	    }
-	}
-	return myhash;
+        if (myhash == -1) {
+            myhash = 17;
+            if (name != null) {
+                myhash = 37 * myhash + name.hashCode();
+            }
+            if (minimum != MIN_DEFAULT) {
+                myhash = 37 * myhash + minimum;
+            }
+            if (maximum != -1) {
+                myhash = 37 * myhash + maximum;
+            }
+        }
+        return myhash;
     }
 
     /**

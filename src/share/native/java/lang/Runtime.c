@@ -25,14 +25,14 @@
 
 /*
  *      Link foreign methods.  This first half of this file contains the
- *	machine independent dynamic linking routines.
- *	See "BUILD_PLATFORM"/java/lang/linker_md.c to see
- *	the implementation of this shared dynamic linking
- *	interface.
+ *      machine independent dynamic linking routines.
+ *      See "BUILD_PLATFORM"/java/lang/linker_md.c to see
+ *      the implementation of this shared dynamic linking
+ *      interface.
  *
- *	NOTE - source in this file is POSIX.1 compliant, host
- *	       specific code lives in the platform specific
- *	       code tree.
+ *      NOTE - source in this file is POSIX.1 compliant, host
+ *             specific code lives in the platform specific
+ *             code tree.
  */
 
 #include "jni.h"
@@ -84,9 +84,9 @@ Java_java_lang_Runtime_runFinalization0(JNIEnv *env, jobject this)
     jmethodID mid;
 
     if ((cl = (*env)->FindClass(env, "java/lang/ref/Finalizer"))
-	&& (mid = (*env)->GetStaticMethodID(env, cl,
-					    "runFinalization", "()V"))) {
-	(*env)->CallStaticVoidMethod(env, cl, mid);
+        && (mid = (*env)->GetStaticMethodID(env, cl,
+                                            "runFinalization", "()V"))) {
+        (*env)->CallStaticVoidMethod(env, cl, mid);
     }
 }
 

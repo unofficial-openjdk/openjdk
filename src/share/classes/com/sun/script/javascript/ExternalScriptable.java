@@ -29,7 +29,7 @@ import javax.script.*;
 import java.util.*;
 
 /**
- * ExternalScriptable is an implementation of Scriptable 
+ * ExternalScriptable is an implementation of Scriptable
  * backed by a JSR 223 ScriptContext instance.
  *
  * @author Mike Grogan
@@ -44,11 +44,11 @@ final class ExternalScriptable implements Scriptable {
     private ScriptContext context;
 
     /* JavaScript allows variables to be named as numbers (indexed
-     * properties). This way arrays, objects (scopes) are treated uniformly. 
-     * Note that JSR 223 API supports only String named variables and 
-     * so we can't store these in Bindings. Also, JavaScript allows name 
-     * of the property name to be even empty String! Again, JSR 223 API 
-     * does not support empty name. So, we use the following fallback map 
+     * properties). This way arrays, objects (scopes) are treated uniformly.
+     * Note that JSR 223 API supports only String named variables and
+     * so we can't store these in Bindings. Also, JavaScript allows name
+     * of the property name to be even empty String! Again, JSR 223 API
+     * does not support empty name. So, we use the following fallback map
      * to store such variables of this scope. This map is not exposed to
      * JSR 223 API. We can just script objects "as is" and need not convert.
      */
@@ -80,7 +80,7 @@ final class ExternalScriptable implements Scriptable {
     }
 
     /**
-     * Return the name of the class.   
+     * Return the name of the class.
      */
     public String getClassName() {
         return "Global";
@@ -98,7 +98,7 @@ final class ExternalScriptable implements Scriptable {
      */
     public synchronized Object get(String name, Scriptable start) {
         if (isEmpty(name)) {
-            if (indexedProps.containsKey(name)) {                
+            if (indexedProps.containsKey(name)) {
                 return indexedProps.get(name);
             } else {
                 return NOT_FOUND;
@@ -129,7 +129,7 @@ final class ExternalScriptable implements Scriptable {
             return indexedProps.get(key);
         } else {
             return NOT_FOUND;
-        }            
+        }
     }
 
     /**
@@ -163,7 +163,7 @@ final class ExternalScriptable implements Scriptable {
 
     /**
      * Sets the value of the named property, creating it if need be.
-     *    
+     *
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
@@ -348,7 +348,7 @@ final class ExternalScriptable implements Scriptable {
                     hint = "number";
                 } else {
                     throw Context.reportRuntimeError(
-                        "Invalid JavaScript value of type " + 
+                        "Invalid JavaScript value of type " +
                         typeHint.toString());
                 }
                 args[0] = hint;
@@ -384,10 +384,10 @@ final class ExternalScriptable implements Scriptable {
         // fall through to error
         String arg = (typeHint == null) ? "undefined" : typeHint.getName();
         throw Context.reportRuntimeError(
-                  "Cannot find default value for object " + arg); 
+                  "Cannot find default value for object " + arg);
     }
 
-    /**  
+    /**
      * Implements the instanceof operator.
      *
      * @param instance The value that appeared on the LHS of the instanceof
@@ -446,9 +446,9 @@ final class ExternalScriptable implements Scriptable {
              * (such as java.lang.Integer, java.lang.Boolean etc)
              * explicitly. If we unwrap, then these script objects
              * will become script primitive types. For example,
-             * 
+             *
              *    var x = new java.lang.Double(3.0); print(typeof x);
-             * 
+             *
              * will print 'number'. We don't want that to happen.
              */
             Object obj = njb.unwrap();

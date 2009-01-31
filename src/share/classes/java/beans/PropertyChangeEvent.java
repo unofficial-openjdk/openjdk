@@ -32,7 +32,7 @@ package java.beans;
  * <P>
  * Normally PropertyChangeEvents are accompanied by the name and the old
  * and new value of the changed property.  If the new value is a primitive
- * type (such as int or boolean) it must be wrapped as the 
+ * type (such as int or boolean) it must be wrapped as the
  * corresponding java.lang.* Object type (such as Integer or Boolean).
  * <P>
  * Null values may be provided for the old and the new values if their
@@ -50,46 +50,46 @@ public class PropertyChangeEvent extends java.util.EventObject {
      *
      * @param source  The bean that fired the event.
      * @param propertyName  The programmatic name of the property
-     *		that was changed.
+     *          that was changed.
      * @param oldValue  The old value of the property.
      * @param newValue  The new value of the property.
      */
     public PropertyChangeEvent(Object source, String propertyName,
-				     Object oldValue, Object newValue) {
-	super(source);
-	this.propertyName = propertyName;
-	this.newValue = newValue;
-	this.oldValue = oldValue;
+                                     Object oldValue, Object newValue) {
+        super(source);
+        this.propertyName = propertyName;
+        this.newValue = newValue;
+        this.oldValue = oldValue;
     }
 
     /**
      * Gets the programmatic name of the property that was changed.
      *
      * @return  The programmatic name of the property that was changed.
-     *		May be null if multiple properties have changed.
+     *          May be null if multiple properties have changed.
      */
     public String getPropertyName() {
-	return propertyName;
+        return propertyName;
     }
-    
+
     /**
      * Gets the new value for the property, expressed as an Object.
      *
      * @return  The new value for the property, expressed as an Object.
-     *		May be null if multiple properties have changed.
+     *          May be null if multiple properties have changed.
      */
     public Object getNewValue() {
-	return newValue;
+        return newValue;
     }
 
     /**
      * Gets the old value for the property, expressed as an Object.
      *
      * @return  The old value for the property, expressed as an Object.
-     *		May be null if multiple properties have changed.
+     *          May be null if multiple properties have changed.
      */
     public Object getOldValue() {
-	return oldValue;
+        return oldValue;
     }
 
     /**
@@ -98,7 +98,7 @@ public class PropertyChangeEvent extends java.util.EventObject {
      * @param propagationId  The propagationId object for the event.
      */
     public void setPropagationId(Object propagationId) {
-	this.propagationId = propagationId;
+        this.propagationId = propagationId;
     }
 
     /**
@@ -109,10 +109,10 @@ public class PropertyChangeEvent extends java.util.EventObject {
      * incoming event to its outgoing event.
      *
      * @return the propagationId object associated with a bound/constrained
-     *		property update.
+     *          property update.
      */
     public Object getPropagationId() {
-	return propagationId;
+        return propagationId;
     }
 
     /**

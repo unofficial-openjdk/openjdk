@@ -38,7 +38,6 @@ import java.io.IOException;
  * exception to occur.  For example, an <code>IOException</code> while
  * reading from a <code>File</code> would be stored there.
  *
- * @version 0.5
  */
 public class IIOException extends IOException {
 

@@ -42,42 +42,42 @@ public class OffScreenImageSource implements ImageProducer {
     int height;
     Hashtable properties;
 
-    public OffScreenImageSource(BufferedImage image, 
-				Hashtable properties) {
+    public OffScreenImageSource(BufferedImage image,
+                                Hashtable properties) {
         this.image = image;
-	if (properties != null) {
-	    this.properties = properties;
-	} else {
-	    this.properties = new Hashtable();
-	}
+        if (properties != null) {
+            this.properties = properties;
+        } else {
+            this.properties = new Hashtable();
+        }
         width  = image.getWidth();
         height = image.getHeight();
     }
 
     public OffScreenImageSource(BufferedImage image) {
-	this(image, null);
+        this(image, null);
     }
 
     // We can only have one consumer since we immediately return the data...
     private ImageConsumer theConsumer;
 
     public synchronized void addConsumer(ImageConsumer ic) {
-	theConsumer = ic;
-	produce();
+        theConsumer = ic;
+        produce();
     }
 
     public synchronized boolean isConsumer(ImageConsumer ic) {
-	return (ic == theConsumer);
+        return (ic == theConsumer);
     }
 
     public synchronized void removeConsumer(ImageConsumer ic) {
-	if (theConsumer == ic) {
-	    theConsumer = null;
-	}
+        if (theConsumer == ic) {
+            theConsumer = null;
+        }
     }
 
     public void startProduction(ImageConsumer ic) {
-	addConsumer(ic);
+        addConsumer(ic);
     }
 
     public void requestTopDownLeftRightResend(ImageConsumer ic) {
@@ -182,11 +182,11 @@ public class OffScreenImageSource implements ImageProducer {
 
     private void produce() {
         try {
-	    theConsumer.setDimensions(image.getWidth(), image.getHeight());
-	    theConsumer.setProperties(properties);
+            theConsumer.setDimensions(image.getWidth(), image.getHeight());
+            theConsumer.setProperties(properties);
             sendPixels();
-	    theConsumer.imageComplete(ImageConsumer.SINGLEFRAMEDONE);
-	} catch (NullPointerException e) {
+            theConsumer.imageComplete(ImageConsumer.SINGLEFRAMEDONE);
+        } catch (NullPointerException e) {
             if (theConsumer != null) {
                 theConsumer.imageComplete(ImageConsumer.IMAGEERROR);
             }

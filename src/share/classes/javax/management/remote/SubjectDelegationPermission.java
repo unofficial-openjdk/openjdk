@@ -90,7 +90,7 @@ public final class SubjectDelegationPermission extends BasicPermission {
     public SubjectDelegationPermission(String name, String actions) {
         super(name, actions);
 
-	if (actions != null)
-	    throw new IllegalArgumentException("Non-null actions");
+        if (actions != null)
+            throw new IllegalArgumentException("Non-null actions");
     }
 }

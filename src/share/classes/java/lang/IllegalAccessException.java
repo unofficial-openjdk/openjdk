@@ -26,14 +26,13 @@
 package java.lang;
 
 /**
- * An IllegalAccessException is thrown when an application tries 
- * to reflectively create an instance (other than an array), 
- * set or get a field, or invoke a method, but the currently 
- * executing method does not have access to the definition of 
+ * An IllegalAccessException is thrown when an application tries
+ * to reflectively create an instance (other than an array),
+ * set or get a field, or invoke a method, but the currently
+ * executing method does not have access to the definition of
  * the specified class, field, method or constructor.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see     Class#newInstance()
  * @see     java.lang.reflect.Field#set(Object, Object)
  * @see     java.lang.reflect.Field#setBoolean(Object, boolean)
@@ -59,19 +58,19 @@ package java.lang;
  */
 public class IllegalAccessException extends Exception {
     /**
-     * Constructs an <code>IllegalAccessException</code> without a 
-     * detail message. 
+     * Constructs an <code>IllegalAccessException</code> without a
+     * detail message.
      */
     public IllegalAccessException() {
-	super();
+        super();
     }
 
     /**
-     * Constructs an <code>IllegalAccessException</code> with a detail message. 
+     * Constructs an <code>IllegalAccessException</code> with a detail message.
      *
      * @param   s   the detail message.
      */
     public IllegalAccessException(String s) {
-	super(s);
+        super(s);
     }
 }

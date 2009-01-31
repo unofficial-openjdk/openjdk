@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -47,115 +47,115 @@ import java.util.Vector;
  * Ensure that all legal forms of Naming URLs operate with the
  * java.rmi.Naming interface
  */
-public class LegalRegistryNames extends UnicastRemoteObject 
+public class LegalRegistryNames extends UnicastRemoteObject
     implements Legal
 {
-    
+
     public LegalRegistryNames() throws java.rmi.RemoteException {}
-    
+
     public static void main(String args[]) throws RuntimeException {
-	
-	System.err.println("\nRegression test for bug/rfe 4254808\n");
 
-	Registry registry = null;
-	LegalRegistryNames legal = null;
+        System.err.println("\nRegression test for bug/rfe 4254808\n");
 
-	boolean oneFormFailed = false;
-	String[] names = null;
-	Vector legalForms = getLegalForms();
-	Remote shouldFind = null;
+        Registry registry = null;
+        LegalRegistryNames legal = null;
 
-	// create a registry and the test object
-	try {
-	    legal = new LegalRegistryNames();
+        boolean oneFormFailed = false;
+        String[] names = null;
+        Vector legalForms = getLegalForms();
+        Remote shouldFind = null;
+
+        // create a registry and the test object
+        try {
+            legal = new LegalRegistryNames();
 
             System.err.println("Starting registry on default port");
-	    registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-	} catch (Exception e) {
-	    TestLibrary.bomb("registry already running on test port");
-	}
-	
-	// enumerate through all legal URLs to verify that a remote
-	// object can be bound and unbound
-	String s = null;	
-	Enumeration en = legalForms.elements();
-	while (en.hasMoreElements()) {
-	    s = (String) en.nextElement();
-	    
-	    System.err.println("\ntesting form: " + s);
-	    
-	    try {
-		Naming.rebind(s, legal);
-		names = registry.list();
-		
-		// ensure that the name in the registry is what is expected
-		if ((names.length > 0) &&
-		    (names[0].compareTo("MyName") != 0)) 
-		{
-		    oneFormFailed = true;
-		    System.err.println("\tRegistry entry for form: " +
-				       s + " is incorrect: " + names[0]);
-		}
+            registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+        } catch (Exception e) {
+            TestLibrary.bomb("registry already running on test port");
+        }
 
-		// ensure that the object can be unbound under the URL string
-		shouldFind = Naming.lookup(s);
-		Naming.unbind(s);
-		System.err.println("\tform " + s + " OK");
+        // enumerate through all legal URLs to verify that a remote
+        // object can be bound and unbound
+        String s = null;
+        Enumeration en = legalForms.elements();
+        while (en.hasMoreElements()) {
+            s = (String) en.nextElement();
 
-	    } catch (Exception e) {
-		
-		e.printStackTrace();
-		oneFormFailed = true;
-		System.err.println("\tunexpected lookup or unbind " +
-				   "exception for form: " + s + e.getMessage() );
-	    }
-	}
-	if (oneFormFailed) {
-	    TestLibrary.bomb("Test failed");
-	}
-	
-	// get the test to exit quickly
-	TestLibrary.unexport(legal);
+            System.err.println("\ntesting form: " + s);
+
+            try {
+                Naming.rebind(s, legal);
+                names = registry.list();
+
+                // ensure that the name in the registry is what is expected
+                if ((names.length > 0) &&
+                    (names[0].compareTo("MyName") != 0))
+                {
+                    oneFormFailed = true;
+                    System.err.println("\tRegistry entry for form: " +
+                                       s + " is incorrect: " + names[0]);
+                }
+
+                // ensure that the object can be unbound under the URL string
+                shouldFind = Naming.lookup(s);
+                Naming.unbind(s);
+                System.err.println("\tform " + s + " OK");
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+                oneFormFailed = true;
+                System.err.println("\tunexpected lookup or unbind " +
+                                   "exception for form: " + s + e.getMessage() );
+            }
+        }
+        if (oneFormFailed) {
+            TestLibrary.bomb("Test failed");
+        }
+
+        // get the test to exit quickly
+        TestLibrary.unexport(legal);
     }
 
     /**
      * return a vector of valid legal RMI naming URLs.
      */
     private static Vector getLegalForms() {
-	String localHostAddress = null;
-	String localHostName = null;
+        String localHostAddress = null;
+        String localHostName = null;
 
-	// get the local host name and address
-	try {
-	    localHostName = InetAddress.getLocalHost().getHostName();
-	    localHostAddress = InetAddress.getLocalHost().getHostAddress();
-	} catch(UnknownHostException e) {
-	    TestLibrary.bomb("Test failed: unexpected exception", e);
-	}
+        // get the local host name and address
+        try {
+            localHostName = InetAddress.getLocalHost().getHostName();
+            localHostAddress = InetAddress.getLocalHost().getHostAddress();
+        } catch(UnknownHostException e) {
+            TestLibrary.bomb("Test failed: unexpected exception", e);
+        }
 
-	Vector legalForms = new Vector();
-	legalForms.add("///MyName");
-	legalForms.add("//:" + Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("//" + localHostAddress + "/MyName");
-	legalForms.add("//" + localHostAddress + ":" +
-		       Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("//localhost/MyName");
-	legalForms.add("//localhost:" + Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("//" + localHostName + "/MyName");
-	legalForms.add("//" + localHostName + ":" + Registry.REGISTRY_PORT +
-		       "/MyName");
-	legalForms.add("MyName");
-	legalForms.add("/MyName");
-	legalForms.add("rmi:///MyName");
-	legalForms.add("rmi://:" + Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("rmi://" + localHostAddress + "/MyName");
-	legalForms.add("rmi://" + localHostAddress + ":" +
-		       Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("rmi://localhost/MyName");
-	legalForms.add("rmi://localhost:" + Registry.REGISTRY_PORT + "/MyName");
-	legalForms.add("rmi://" + localHostName + "/MyName");
-	legalForms.add("rmi://" + localHostName + ":" +
-		       Registry.REGISTRY_PORT + "/MyName");
-	return legalForms;
+        Vector legalForms = new Vector();
+        legalForms.add("///MyName");
+        legalForms.add("//:" + Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("//" + localHostAddress + "/MyName");
+        legalForms.add("//" + localHostAddress + ":" +
+                       Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("//localhost/MyName");
+        legalForms.add("//localhost:" + Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("//" + localHostName + "/MyName");
+        legalForms.add("//" + localHostName + ":" + Registry.REGISTRY_PORT +
+                       "/MyName");
+        legalForms.add("MyName");
+        legalForms.add("/MyName");
+        legalForms.add("rmi:///MyName");
+        legalForms.add("rmi://:" + Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("rmi://" + localHostAddress + "/MyName");
+        legalForms.add("rmi://" + localHostAddress + ":" +
+                       Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("rmi://localhost/MyName");
+        legalForms.add("rmi://localhost:" + Registry.REGISTRY_PORT + "/MyName");
+        legalForms.add("rmi://" + localHostName + "/MyName");
+        legalForms.add("rmi://" + localHostName + ":" +
+                       Registry.REGISTRY_PORT + "/MyName");
+        return legalForms;
     }
 }

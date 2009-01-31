@@ -627,8 +627,8 @@ public class ImageUtil {
                     int rightShift = bitOffset & 7;
                     int leftShift = 8 - rightShift;
                     int leftShift8 = 8 + leftShift;
-		    int mask = (byte)(255<<leftShift);
-		    int mask1 = (byte)~mask;
+                    int mask = (byte)(255<<leftShift);
+                    int mask1 = (byte)~mask;
 
                     for(int y = 0; y < rectHeight; y++) {
                         int i = eltOffset;
@@ -637,27 +637,27 @@ public class ImageUtil {
                             byte datum = binaryDataArray[b++];
 
                             if (xRemaining > leftShift8) {
-				// when all the bits in this BYTE will be set
-				// into the data buffer.
+                                // when all the bits in this BYTE will be set
+                                // into the data buffer.
                                 data[i] = (byte)((data[i] & mask ) |
                                     ((datum&0xFF) >>> rightShift));
                                 data[++i] = (byte)((datum & 0xFF) << leftShift);
                             } else if (xRemaining > leftShift) {
-				// All the "leftShift" high bits will be set
-				// into the data buffer.  But not all the
-				// "rightShift" low bits will be set.
-				data[i] = (byte)((data[i] & mask ) |
-				    ((datum&0xFF) >>> rightShift));
-				i++;
-				data[i] =
-				    (byte)((data[i] & mask1) | ((datum & 0xFF) << leftShift));
-			    }
-			    else {
-				// Less than "leftShift" high bits will be set.
-				int remainMask = (1 << leftShift - xRemaining) - 1;
+                                // All the "leftShift" high bits will be set
+                                // into the data buffer.  But not all the
+                                // "rightShift" low bits will be set.
+                                data[i] = (byte)((data[i] & mask ) |
+                                    ((datum&0xFF) >>> rightShift));
+                                i++;
+                                data[i] =
+                                    (byte)((data[i] & mask1) | ((datum & 0xFF) << leftShift));
+                            }
+                            else {
+                                // Less than "leftShift" high bits will be set.
+                                int remainMask = (1 << leftShift - xRemaining) - 1;
                                 data[i] =
                                     (byte)((data[i] & (mask | remainMask)) |
-				    (datum&0xFF) >>> rightShift & ~remainMask);
+                                    (datum&0xFF) >>> rightShift & ~remainMask);
                             }
                             xRemaining -= 8;
                         }
@@ -670,90 +670,90 @@ public class ImageUtil {
                     ((DataBufferShort)dataBuffer).getData() :
                     ((DataBufferUShort)dataBuffer).getData();
 
-		int rightShift = bitOffset & 7;
-		int leftShift = 8 - rightShift;
+                int rightShift = bitOffset & 7;
+                int leftShift = 8 - rightShift;
                 int leftShift16 = 16 + leftShift;
-		int mask = (short)(~(255 << leftShift));
-		int mask1 = (short)(65535 << leftShift);
-		int mask2 = (short)~mask1;
+                int mask = (short)(~(255 << leftShift));
+                int mask1 = (short)(65535 << leftShift);
+                int mask2 = (short)~mask1;
 
                 for(int y = 0; y < rectHeight; y++) {
                     int bOffset = bitOffset;
-		    int xRemaining = rectWidth;
+                    int xRemaining = rectWidth;
                     for(int x = 0; x < rectWidth;
-			x += 8, bOffset += 8, xRemaining -= 8) {
+                        x += 8, bOffset += 8, xRemaining -= 8) {
                         int i = eltOffset + (bOffset >> 4);
                         int mod = bOffset & 15;
                         int datum = binaryDataArray[b++] & 0xFF;
                         if(mod <= 8) {
-			    // This BYTE is set into one SHORT
-			    if (xRemaining < 8) {
-				// Mask the bits to be set.
-				datum &= 255 << 8 - xRemaining;
-			    }
+                            // This BYTE is set into one SHORT
+                            if (xRemaining < 8) {
+                                // Mask the bits to be set.
+                                datum &= 255 << 8 - xRemaining;
+                            }
                             data[i] = (short)((data[i] & mask) | (datum << leftShift));
                         } else if (xRemaining > leftShift16) {
-			    // This BYTE will be set into two SHORTs
+                            // This BYTE will be set into two SHORTs
                             data[i] = (short)((data[i] & mask1) | ((datum >>> rightShift)&0xFFFF));
                             data[++i] =
                                 (short)((datum << leftShift)&0xFFFF);
                         } else if (xRemaining > leftShift) {
-			    // This BYTE will be set into two SHORTs;
-			    // But not all the low bits will be set into SHORT
-			    data[i] = (short)((data[i] & mask1) | ((datum >>> rightShift)&0xFFFF));
-			    i++;
-			    data[i] =
-			        (short)((data[i] & mask2) | ((datum << leftShift)&0xFFFF));
-			} else {
-			    // Only some of the high bits will be set into
-			    // SHORTs
-			    int remainMask = (1 << leftShift - xRemaining) - 1;
-			    data[i] = (short)((data[i] & (mask1 | remainMask)) |
-				      ((datum >>> rightShift)&0xFFFF & ~remainMask));
-			}
+                            // This BYTE will be set into two SHORTs;
+                            // But not all the low bits will be set into SHORT
+                            data[i] = (short)((data[i] & mask1) | ((datum >>> rightShift)&0xFFFF));
+                            i++;
+                            data[i] =
+                                (short)((data[i] & mask2) | ((datum << leftShift)&0xFFFF));
+                        } else {
+                            // Only some of the high bits will be set into
+                            // SHORTs
+                            int remainMask = (1 << leftShift - xRemaining) - 1;
+                            data[i] = (short)((data[i] & (mask1 | remainMask)) |
+                                      ((datum >>> rightShift)&0xFFFF & ~remainMask));
+                        }
                     }
                     eltOffset += lineStride;
                 }
             } else if(dataBuffer instanceof DataBufferInt) {
                 int[] data = ((DataBufferInt)dataBuffer).getData();
                 int rightShift = bitOffset & 7;
-		int leftShift = 8 - rightShift;
-		int leftShift32 = 32 + leftShift;
-		int mask = 0xFFFFFFFF << leftShift;
-		int mask1 = ~mask;
+                int leftShift = 8 - rightShift;
+                int leftShift32 = 32 + leftShift;
+                int mask = 0xFFFFFFFF << leftShift;
+                int mask1 = ~mask;
 
                 for(int y = 0; y < rectHeight; y++) {
                     int bOffset = bitOffset;
-		    int xRemaining = rectWidth;
+                    int xRemaining = rectWidth;
                     for(int x = 0; x < rectWidth;
-			x += 8, bOffset += 8, xRemaining -= 8) {
+                        x += 8, bOffset += 8, xRemaining -= 8) {
                         int i = eltOffset + (bOffset >> 5);
                         int mod = bOffset & 31;
                         int datum = binaryDataArray[b++] & 0xFF;
                         if(mod <= 24) {
-			    // This BYTE is set into one INT
-			    int shift = 24 - mod;
-			    if (xRemaining < 8) {
-				// Mask the bits to be set.
-				datum &= 255 << 8 - xRemaining;
-			    }
+                            // This BYTE is set into one INT
+                            int shift = 24 - mod;
+                            if (xRemaining < 8) {
+                                // Mask the bits to be set.
+                                datum &= 255 << 8 - xRemaining;
+                            }
                             data[i] = (data[i] & (~(255 << shift))) | (datum << shift);
                         } else if (xRemaining > leftShift32) {
-			    // All the bits of this BYTE will be set into two INTs
+                            // All the bits of this BYTE will be set into two INTs
                             data[i] = (data[i] & mask) | (datum >>> rightShift);
                             data[++i] = datum << leftShift;
                         } else if (xRemaining > leftShift) {
-			    // This BYTE will be set into two INTs;
-			    // But not all the low bits will be set into INT
+                            // This BYTE will be set into two INTs;
+                            // But not all the low bits will be set into INT
                             data[i] = (data[i] & mask) | (datum >>> rightShift);
-			    i++;
+                            i++;
                             data[i] = (data[i] & mask1) | (datum << leftShift);
                         } else {
-			    // Only some of the high bits will be set into INT
-			    int remainMask = (1 << leftShift - xRemaining) - 1;
-			    data[i] = (data[i] & (mask | remainMask)) |
-				      (datum >>> rightShift & ~remainMask);
-			}
+                            // Only some of the high bits will be set into INT
+                            int remainMask = (1 << leftShift - xRemaining) - 1;
+                            data[i] = (data[i] & (mask | remainMask)) |
+                                      (datum >>> rightShift & ~remainMask);
+                        }
                     }
                     eltOffset += lineStride;
                 }
@@ -952,7 +952,7 @@ public class ImageUtil {
 
     public static int getElementSize(SampleModel sm) {
         int elementSize = DataBuffer.getDataTypeSize(sm.getDataType());
-        
+
         if (sm instanceof MultiPixelPackedSampleModel) {
             MultiPixelPackedSampleModel mppsm =
                 (MultiPixelPackedSampleModel)sm;
@@ -962,11 +962,11 @@ public class ImageUtil {
         } else if (sm instanceof SinglePixelPackedSampleModel) {
             return elementSize;
         }
-        
+
         return elementSize * sm.getNumBands();
-        
+
     }
-    
+
     public static long getTileSize(SampleModel sm) {
         int elementSize = DataBuffer.getDataTypeSize(sm.getDataType());
 
@@ -1053,12 +1053,12 @@ public class ImageUtil {
 
         return true;
     }
- 
+
     /** Converts the provided object to <code>String</code> */
     public static String convertObjectToString(Object obj) {
         if (obj == null)
             return "";
-        
+
         String s = "";
         if (obj instanceof byte[]) {
             byte[] bArray = (byte[])obj;
@@ -1066,25 +1066,25 @@ public class ImageUtil {
                 s += bArray[i] + " ";
             return s;
         }
-        
+
         if (obj instanceof int[]) {
             int[] iArray = (int[])obj;
             for (int i = 0; i < iArray.length; i++)
                 s += iArray[i] + " " ;
             return s;
         }
-        
+
         if (obj instanceof short[]) {
             short[] sArray = (short[])obj;
             for (int i = 0; i < sArray.length; i++)
                 s += sArray[i] + " " ;
             return s;
         }
-        
+
         return obj.toString();
-        
+
     }
-    
+
     /** Checks that the provided <code>ImageWriter</code> can encode
      * the provided <code>ImageTypeSpecifier</code> or not.  If not, an
      * <code>IIOException</code> will be thrown.
@@ -1095,12 +1095,12 @@ public class ImageUtil {
     public static final void canEncodeImage(ImageWriter writer,
                                             ImageTypeSpecifier type)
         throws IIOException {
-	ImageWriterSpi spi = writer.getOriginatingProvider();
-  
-	if(type != null && spi != null && !spi.canEncodeImage(type))  {
-	    throw new IIOException(I18N.getString("ImageUtil2")+" "+
+        ImageWriterSpi spi = writer.getOriginatingProvider();
+
+        if(type != null && spi != null && !spi.canEncodeImage(type))  {
+            throw new IIOException(I18N.getString("ImageUtil2")+" "+
                                    writer.getClass().getName());
-	}
+        }
     }
 
     /** Checks that the provided <code>ImageWriter</code> can encode
@@ -1111,14 +1111,14 @@ public class ImageUtil {
      * @param sampleModel The provided <code>SampleModel</code>.
      * @throws IIOException If the writer cannot encoded the provided image.
      */
-    public static final void canEncodeImage(ImageWriter writer, 
+    public static final void canEncodeImage(ImageWriter writer,
                                             ColorModel colorModel,
                                             SampleModel sampleModel)
         throws IIOException {
-	ImageTypeSpecifier type = null;
-	if (colorModel != null && sampleModel != null)
-	    type = new ImageTypeSpecifier(colorModel, sampleModel);
-	canEncodeImage(writer, type);
+        ImageTypeSpecifier type = null;
+        if (colorModel != null && sampleModel != null)
+            type = new ImageTypeSpecifier(colorModel, sampleModel);
+        canEncodeImage(writer, type);
     }
 
     /**
@@ -1132,7 +1132,7 @@ public class ImageUtil {
         } else {
             sm = image.getSampleModel();
         }
-        
+
         if (sm instanceof ComponentSampleModel) {
             // Ensure image rows samples are stored contiguously
             // in a single bank.
@@ -1165,7 +1165,3 @@ public class ImageUtil {
         return ImageUtil.isBinary(sm);
     }
 }
-
-  
-
-

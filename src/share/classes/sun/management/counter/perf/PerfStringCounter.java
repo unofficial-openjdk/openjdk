@@ -34,7 +34,7 @@ public class PerfStringCounter extends PerfByteArrayCounter
     implements StringCounter {
 
     private static Charset defaultCharset = Charset.defaultCharset();
-    PerfStringCounter(String name, Variability v, 
+    PerfStringCounter(String name, Variability v,
                       int flags, ByteBuffer bb) {
         this(name, v, flags, bb.limit(), bb);
     }

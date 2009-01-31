@@ -29,7 +29,7 @@ package javax.print;
  * Services may optionally provide UIs which allow different styles
  * of interaction in different roles.
  * One role may be end-user browsing and setting of print options.
- * Another role may be administering the print service. 
+ * Another role may be administering the print service.
  * <p>
  * Although the Print Service API does not presently provide standardised
  * support for administering a print service, monitoring of the print
@@ -58,28 +58,28 @@ package javax.print;
 
 public abstract class ServiceUIFactory {
 
-    /** 
+    /**
      * Denotes a UI implemented as a Swing component.
      * The value of the String is the fully qualified classname :
      * "javax.swing.JComponent".
      */
     public static final String JCOMPONENT_UI = "javax.swing.JComponent";
 
-    /** 
+    /**
      * Denotes a UI implemented as an AWT panel.
      * The value of the String is the fully qualified classname :
      * "java.awt.Panel"
      */
     public static final String PANEL_UI = "java.awt.Panel";
 
-    /** 
+    /**
      * Denotes a UI implemented as an AWT dialog.
      * The value of the String is the fully qualified classname :
      * "java.awt.Dialog"
      */
     public static final String DIALOG_UI = "java.awt.Dialog";
 
-    /** 
+    /**
      * Denotes a UI implemented as a Swing dialog.
      * The value of the String is the fully qualified classname :
      * "javax.swing.JDialog"
@@ -98,7 +98,7 @@ public abstract class ServiceUIFactory {
 
     /**
      * Denotes a UI which performs the normal end user role.
-     */    
+     */
     public static final int MAIN_UIROLE = 3;
 
     /**
@@ -123,7 +123,7 @@ public abstract class ServiceUIFactory {
      */
     public abstract Object getUI(int role, String ui) ;
 
-    /** 
+    /**
      * Given a UI role obtained from this factory obtain the UI
      * types available from this factory which implement this role.
      * The returned Strings should refer to the static variables defined
@@ -137,6 +137,6 @@ public abstract class ServiceUIFactory {
      */
     public abstract String[] getUIClassNamesForRole(int role) ;
 
-    
+
 
 }

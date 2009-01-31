@@ -32,14 +32,13 @@ import java.io.*;
  * Unicode characters, assuming a big-endian byte order and requiring no
  * byte-order mark.
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
+ * @author      Mark Reinhold
  */
 
 public class ByteToCharUnicodeBigUnmarked extends ByteToCharUnicode {
 
     public ByteToCharUnicodeBigUnmarked() {
-	super(BIG, false);
+        super(BIG, false);
     }
 
 }

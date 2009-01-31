@@ -61,8 +61,8 @@ public abstract class KeyGeneratorSpi {
      * inappropriate for this key generator
      */
     protected abstract void engineInit(AlgorithmParameterSpec params,
-				       SecureRandom random)
-	throws InvalidAlgorithmParameterException;
+                                       SecureRandom random)
+        throws InvalidAlgorithmParameterException;
 
     /**
      * Initializes this key generator for a certain keysize, using the given

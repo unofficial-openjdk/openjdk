@@ -35,8 +35,8 @@ struct bag {
     int itemSize;   /* size of each item, should init to sizeof item */
 };
 
-struct bag * 
-bagCreateBag(int itemSize, int initialAllocation) {   
+struct bag *
+bagCreateBag(int itemSize, int initialAllocation) {
     struct bag *theBag = (struct bag *)jvmtiAllocate(sizeof(struct bag));
     if (theBag == NULL) {
         return NULL;
@@ -54,7 +54,7 @@ bagCreateBag(int itemSize, int initialAllocation) {
 }
 
 struct bag *
-bagDup(struct bag *oldBag) 
+bagDup(struct bag *oldBag)
 {
     struct bag *newBag = bagCreateBag(oldBag->itemSize,
                                       oldBag->allocated);
@@ -66,7 +66,7 @@ bagDup(struct bag *oldBag)
 }
 
 void
-bagDestroyBag(struct bag *theBag) 
+bagDestroyBag(struct bag *theBag)
 {
     if (theBag != NULL) {
         jvmtiDeallocate(theBag->items);
@@ -75,12 +75,12 @@ bagDestroyBag(struct bag *theBag)
 }
 
 void *
-bagFind(struct bag *theBag, void *key) 
+bagFind(struct bag *theBag, void *key)
 {
     char *items = theBag->items;
     int itemSize = theBag->itemSize;
     char *itemsEnd = items + (itemSize * theBag->used);
-    
+
     for (; items < itemsEnd; items += itemSize) {
         /*LINTED*/
         if (*((void**)items) == key) {
@@ -91,7 +91,7 @@ bagFind(struct bag *theBag, void *key)
 }
 
 void *
-bagAdd(struct bag *theBag) 
+bagAdd(struct bag *theBag)
 {
     int allocated = theBag->allocated;
     int itemSize = theBag->itemSize;
@@ -116,40 +116,40 @@ bagAdd(struct bag *theBag)
     (void)memset(ret, 0, itemSize);
     return ret;
 }
-    
+
 void
-bagDelete(struct bag *theBag, void *condemned) 
+bagDelete(struct bag *theBag, void *condemned)
 {
     int used = --(theBag->used);
     int itemSize = theBag->itemSize;
     void *items = theBag->items;
     void *tailItem = ((char *)items) + (used * itemSize);
-    
+
     if (condemned != tailItem) {
         (void)memcpy(condemned, tailItem, itemSize);
     }
 }
 
 void
-bagDeleteAll(struct bag *theBag) 
+bagDeleteAll(struct bag *theBag)
 {
     theBag->used = 0;
 }
 
-    
+
 int
-bagSize(struct bag *theBag) 
+bagSize(struct bag *theBag)
 {
     return theBag->used;
-}    
+}
 
 jboolean
-bagEnumerateOver(struct bag *theBag, bagEnumerateFunction func, void *arg) 
+bagEnumerateOver(struct bag *theBag, bagEnumerateFunction func, void *arg)
 {
     char *items = theBag->items;
     int itemSize = theBag->itemSize;
     char *itemsEnd = items + (itemSize * theBag->used);
-    
+
     for (; items < itemsEnd; items += itemSize) {
         if (!(func)((void *)items, arg)) {
             return JNI_FALSE;
@@ -157,4 +157,3 @@ bagEnumerateOver(struct bag *theBag, bagEnumerateFunction func, void *arg)
     }
     return JNI_TRUE;
 }
-

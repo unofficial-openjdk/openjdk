@@ -80,7 +80,6 @@ import java.util.Date;
  * <p>Implementation note: All constructors start a timer thread.
  *
  * @author  Josh Bloch
- * @version %I%, %G%
  * @see     TimerTask
  * @see     Object#wait(long)
  * @since   1.3
@@ -576,7 +575,7 @@ class TaskQueue {
     void add(TimerTask task) {
         // Grow backing store if necessary
         if (size + 1 == queue.length)
-	    queue = Arrays.copyOf(queue, 2*queue.length);
+            queue = Arrays.copyOf(queue, 2*queue.length);
 
         queue[++size] = task;
         fixUp(size);

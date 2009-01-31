@@ -50,7 +50,7 @@ public class WindowsMenuUI extends BasicMenuUI {
     protected Integer menuBarHeight;
     protected boolean hotTrackingOn;
 
-    final WindowsMenuItemUIAccessor accessor = 
+    final WindowsMenuItemUIAccessor accessor =
         new WindowsMenuItemUIAccessor() {
 
             public JMenuItem getMenuItem() {
@@ -62,18 +62,18 @@ public class WindowsMenuUI extends BasicMenuUI {
                         : State.DISABLED;
                 ButtonModel model = menu.getModel();
                 if (model.isArmed() || model.isSelected()) {
-                    state = (menu.isEnabled()) ? State.PUSHED 
+                    state = (menu.isEnabled()) ? State.PUSHED
                             : State.DISABLEDPUSHED;
-                } else if (model.isRollover() 
+                } else if (model.isRollover()
                            && ((JMenu) menu).isTopLevelMenu()) {
-                    /* 
-                     * Only paint rollover if no other menu on menubar is 
+                    /*
+                     * Only paint rollover if no other menu on menubar is
                      * selected
                      */
                     State stateTmp = state;
-                    state = (menu.isEnabled()) ? State.HOT 
+                    state = (menu.isEnabled()) ? State.HOT
                             : State.DISABLEDHOT;
-                    for (MenuElement menuElement : 
+                    for (MenuElement menuElement :
                         ((JMenuBar) menu.getParent()).getSubElements()) {
                         if (((JMenuItem) menuElement).isSelected()) {
                             state = stateTmp;
@@ -91,9 +91,9 @@ public class WindowsMenuUI extends BasicMenuUI {
                     }
                 }
 
-                /* 
+                /*
                  * on Vista top level menu for non active frame looks disabled
-                 */ 
+                 */
                 if (((JMenu) menu).isTopLevelMenu() && WindowsMenuItemUI.isVistaPainting()) {
                     if (! WindowsMenuBarUI.isActive(menu)) {
                         state = State.DISABLED;
@@ -103,24 +103,24 @@ public class WindowsMenuUI extends BasicMenuUI {
             }
 
             public Part getPart(JMenuItem menuItem) {
-                return ((JMenu) menuItem).isTopLevelMenu() ? Part.MP_BARITEM 
+                return ((JMenu) menuItem).isTopLevelMenu() ? Part.MP_BARITEM
                         : Part.MP_POPUPITEM;
             }
     };
     public static ComponentUI createUI(JComponent x) {
-	return new WindowsMenuUI();
+        return new WindowsMenuUI();
     }
 
     protected void installDefaults() {
-	super.installDefaults();
-	if (!WindowsLookAndFeel.isClassicWindows()) {
-	    menuItem.setRolloverEnabled(true);
-	}
+        super.installDefaults();
+        if (!WindowsLookAndFeel.isClassicWindows()) {
+            menuItem.setRolloverEnabled(true);
+        }
 
-	menuBarHeight = (Integer)UIManager.getInt("MenuBar.height");
+        menuBarHeight = (Integer)UIManager.getInt("MenuBar.height");
 
-	Object obj      = UIManager.get("MenuBar.rolloverEnabled");
-	hotTrackingOn = (obj instanceof Boolean) ? (Boolean)obj : true;
+        Object obj      = UIManager.get("MenuBar.rolloverEnabled");
+        hotTrackingOn = (obj instanceof Boolean) ? (Boolean)obj : true;
     }
 
     /**
@@ -131,70 +131,70 @@ public class WindowsMenuUI extends BasicMenuUI {
         if (WindowsMenuItemUI.isVistaPainting()) {
             WindowsMenuItemUI.paintBackground(accessor, g, menuItem, bgColor);
             return;
-        } 
-        
-	JMenu menu = (JMenu)menuItem;
-	ButtonModel model = menu.getModel();
+        }
 
-	// Use superclass method for the old Windows LAF,
+        JMenu menu = (JMenu)menuItem;
+        ButtonModel model = menu.getModel();
+
+        // Use superclass method for the old Windows LAF,
         // for submenus, and for XP toplevel if selected or pressed
-	if (WindowsLookAndFeel.isClassicWindows() ||
-	    !menu.isTopLevelMenu() ||
-	    (XPStyle.getXP() != null && (model.isArmed() || model.isSelected()))) {
+        if (WindowsLookAndFeel.isClassicWindows() ||
+            !menu.isTopLevelMenu() ||
+            (XPStyle.getXP() != null && (model.isArmed() || model.isSelected()))) {
 
-	    super.paintBackground(g, menu, bgColor);
-	    return;
-	}
+            super.paintBackground(g, menu, bgColor);
+            return;
+        }
 
-	Color oldColor = g.getColor();
+        Color oldColor = g.getColor();
         int menuWidth = menu.getWidth();
         int menuHeight = menu.getHeight();
 
-	UIDefaults table = UIManager.getLookAndFeelDefaults();
-	Color highlight = table.getColor("controlLtHighlight");
-	Color shadow = table.getColor("controlShadow");
+        UIDefaults table = UIManager.getLookAndFeelDefaults();
+        Color highlight = table.getColor("controlLtHighlight");
+        Color shadow = table.getColor("controlShadow");
 
-	g.setColor(menu.getBackground());
-	g.fillRect(0,0, menuWidth, menuHeight);
+        g.setColor(menu.getBackground());
+        g.fillRect(0,0, menuWidth, menuHeight);
 
         if (menu.isOpaque()) {
             if (model.isArmed() || model.isSelected()) {
-		// Draw a lowered bevel border
-		g.setColor(shadow);
-		g.drawLine(0,0, menuWidth - 1,0);
-		g.drawLine(0,0, 0,menuHeight - 2);
+                // Draw a lowered bevel border
+                g.setColor(shadow);
+                g.drawLine(0,0, menuWidth - 1,0);
+                g.drawLine(0,0, 0,menuHeight - 2);
 
-		g.setColor(highlight);
-		g.drawLine(menuWidth - 1,0, menuWidth - 1,menuHeight - 2);
-		g.drawLine(0,menuHeight - 2, menuWidth - 1,menuHeight - 2);
+                g.setColor(highlight);
+                g.drawLine(menuWidth - 1,0, menuWidth - 1,menuHeight - 2);
+                g.drawLine(0,menuHeight - 2, menuWidth - 1,menuHeight - 2);
             } else if (model.isRollover() && model.isEnabled()) {
-		// Only paint rollover if no other menu on menubar is selected
-		boolean otherMenuSelected = false;
-		MenuElement[] menus = ((JMenuBar)menu.getParent()).getSubElements();
-		for (int i = 0; i < menus.length; i++) {
-		    if (((JMenuItem)menus[i]).isSelected()) {
-			otherMenuSelected = true;
-			break;
-		    }
-		}
-		if (!otherMenuSelected) {
-		    if (XPStyle.getXP() != null) {
-			g.setColor(selectionBackground); // Uses protected field.
-			g.fillRect(0, 0, menuWidth, menuHeight);
-		    } else {
-			// Draw a raised bevel border
-			g.setColor(highlight);
-			g.drawLine(0,0, menuWidth - 1,0);
-			g.drawLine(0,0, 0,menuHeight - 2);
+                // Only paint rollover if no other menu on menubar is selected
+                boolean otherMenuSelected = false;
+                MenuElement[] menus = ((JMenuBar)menu.getParent()).getSubElements();
+                for (int i = 0; i < menus.length; i++) {
+                    if (((JMenuItem)menus[i]).isSelected()) {
+                        otherMenuSelected = true;
+                        break;
+                    }
+                }
+                if (!otherMenuSelected) {
+                    if (XPStyle.getXP() != null) {
+                        g.setColor(selectionBackground); // Uses protected field.
+                        g.fillRect(0, 0, menuWidth, menuHeight);
+                    } else {
+                        // Draw a raised bevel border
+                        g.setColor(highlight);
+                        g.drawLine(0,0, menuWidth - 1,0);
+                        g.drawLine(0,0, 0,menuHeight - 2);
 
-			g.setColor(shadow);
-			g.drawLine(menuWidth - 1,0, menuWidth - 1,menuHeight - 2);
-			g.drawLine(0,menuHeight - 2, menuWidth - 1,menuHeight - 2);
-		    }
-		}
+                        g.setColor(shadow);
+                        g.drawLine(menuWidth - 1,0, menuWidth - 1,menuHeight - 2);
+                        g.drawLine(0,menuHeight - 2, menuWidth - 1,menuHeight - 2);
+                    }
+                }
             }
         }
-	g.setColor(oldColor);
+        g.setColor(oldColor);
     }
 
     /**
@@ -212,32 +212,32 @@ public class WindowsMenuUI extends BasicMenuUI {
             WindowsMenuItemUI.paintText(accessor, g, menuItem, textRect, text);
             return;
         }
-	JMenu menu = (JMenu)menuItem;
-	ButtonModel model = menuItem.getModel();
+        JMenu menu = (JMenu)menuItem;
+        ButtonModel model = menuItem.getModel();
         Color oldColor = g.getColor();
 
-	// Only paint rollover if no other menu on menubar is selected
-	boolean paintRollover = model.isRollover();
-	if (paintRollover && menu.isTopLevelMenu()) {
-	    MenuElement[] menus = ((JMenuBar)menu.getParent()).getSubElements();
-	    for (int i = 0; i < menus.length; i++) {
-		if (((JMenuItem)menus[i]).isSelected()) {
-		    paintRollover = false;
-		    break;
-		}
-	    }
-	}
+        // Only paint rollover if no other menu on menubar is selected
+        boolean paintRollover = model.isRollover();
+        if (paintRollover && menu.isTopLevelMenu()) {
+            MenuElement[] menus = ((JMenuBar)menu.getParent()).getSubElements();
+            for (int i = 0; i < menus.length; i++) {
+                if (((JMenuItem)menus[i]).isSelected()) {
+                    paintRollover = false;
+                    break;
+                }
+            }
+        }
 
-	if ((model.isSelected() && (WindowsLookAndFeel.isClassicWindows() ||
-				    !menu.isTopLevelMenu())) ||
-	    (XPStyle.getXP() != null && (paintRollover ||
-					 model.isArmed() ||
-					 model.isSelected()))) {
-	    g.setColor(selectionForeground); // Uses protected field.
-	}
+        if ((model.isSelected() && (WindowsLookAndFeel.isClassicWindows() ||
+                                    !menu.isTopLevelMenu())) ||
+            (XPStyle.getXP() != null && (paintRollover ||
+                                         model.isArmed() ||
+                                         model.isSelected()))) {
+            g.setColor(selectionForeground); // Uses protected field.
+        }
 
         WindowsGraphicsUtils.paintText(g, menuItem, textRect, text, 0);
- 
+
         g.setColor(oldColor);
     }
 
@@ -251,26 +251,26 @@ public class WindowsMenuUI extends BasicMenuUI {
      * @since 1.4
      */
     protected class WindowsMouseInputHandler extends BasicMenuUI.MouseInputHandler {
-	public void mouseEntered(MouseEvent evt) {
-	    super.mouseEntered(evt);
+        public void mouseEntered(MouseEvent evt) {
+            super.mouseEntered(evt);
 
-	    JMenu menu = (JMenu)evt.getSource();
-	    if (hotTrackingOn && menu.isTopLevelMenu() && menu.isRolloverEnabled()) {
-		menu.getModel().setRollover(true);
-		menuItem.repaint();
-	    }
-	}
+            JMenu menu = (JMenu)evt.getSource();
+            if (hotTrackingOn && menu.isTopLevelMenu() && menu.isRolloverEnabled()) {
+                menu.getModel().setRollover(true);
+                menuItem.repaint();
+            }
+        }
 
-	public void mouseExited(MouseEvent evt) {
-	    super.mouseExited(evt);
+        public void mouseExited(MouseEvent evt) {
+            super.mouseExited(evt);
 
-	    JMenu menu = (JMenu)evt.getSource();
-	    ButtonModel model = menu.getModel();
-	    if (menu.isRolloverEnabled()) {
-		model.setRollover(false);
-		menuItem.repaint();
-	    }
-	}
+            JMenu menu = (JMenu)evt.getSource();
+            ButtonModel model = menu.getModel();
+            if (menu.isRolloverEnabled()) {
+                model.setRollover(false);
+                menuItem.repaint();
+            }
+        }
     }
 
     protected Dimension getPreferredMenuItemSize(JComponent c,
@@ -278,19 +278,18 @@ public class WindowsMenuUI extends BasicMenuUI {
                                                      Icon arrowIcon,
                                                      int defaultTextIconGap) {
 
-	Dimension d = super.getPreferredMenuItemSize(c, checkIcon, arrowIcon,
-						     defaultTextIconGap);
+        Dimension d = super.getPreferredMenuItemSize(c, checkIcon, arrowIcon,
+                                                     defaultTextIconGap);
 
-	// Note: When toolbar containers (rebars) are implemented, only do
-	// this if the JMenuBar is not in a rebar (i.e. ignore the desktop
-	// property win.menu.height if in a rebar.)
-	if (c instanceof JMenu && ((JMenu)c).isTopLevelMenu() &&
-	    menuBarHeight != null && d.height < menuBarHeight) {
+        // Note: When toolbar containers (rebars) are implemented, only do
+        // this if the JMenuBar is not in a rebar (i.e. ignore the desktop
+        // property win.menu.height if in a rebar.)
+        if (c instanceof JMenu && ((JMenu)c).isTopLevelMenu() &&
+            menuBarHeight != null && d.height < menuBarHeight) {
 
-	    d.height = menuBarHeight;
-	}
+            d.height = menuBarHeight;
+        }
 
-	return d;
+        return d;
     }
 }
-

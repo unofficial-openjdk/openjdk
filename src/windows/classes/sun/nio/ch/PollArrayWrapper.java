@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.nio.ch;
 
@@ -39,36 +37,35 @@ package sun.nio.ch;
  *
  * @author Konstantin Kladko
  * @author Mike McCloskey
- * @version %I%, %E%
  */
 
-class PollArrayWrapper { 
-    
-    private AllocatedNativeObject pollArray; // The fd array     
-    
-    long pollArrayAddress; // pollArrayAddress               
-    
-    private static final short FD_OFFSET     = 0; // fd offset in pollfd    
+class PollArrayWrapper {
+
+    private AllocatedNativeObject pollArray; // The fd array
+
+    long pollArrayAddress; // pollArrayAddress
+
+    private static final short FD_OFFSET     = 0; // fd offset in pollfd
     private static final short EVENT_OFFSET  = 4; // events offset in pollfd
-    
+
     static short SIZE_POLLFD = 8; // sizeof pollfd struct
 
-    // events masks   
+    // events masks
     static final short POLLIN     = AbstractPollArrayWrapper.POLLIN;
     static final short POLLOUT    = AbstractPollArrayWrapper.POLLOUT;
     static final short POLLERR    = AbstractPollArrayWrapper.POLLERR;
     static final short POLLHUP    = AbstractPollArrayWrapper.POLLHUP;
-    static final short POLLNVAL	  = AbstractPollArrayWrapper.POLLNVAL;
-    static final short POLLREMOVE = AbstractPollArrayWrapper.POLLREMOVE;    
-    static final short POLLCONN   = 0x0002; 
+    static final short POLLNVAL   = AbstractPollArrayWrapper.POLLNVAL;
+    static final short POLLREMOVE = AbstractPollArrayWrapper.POLLREMOVE;
+    static final short POLLCONN   = 0x0002;
 
     private int size; // Size of the pollArray
-    
-    PollArrayWrapper(int newSize) {        
+
+    PollArrayWrapper(int newSize) {
         int allocationSize = newSize * SIZE_POLLFD;
         pollArray = new AllocatedNativeObject(allocationSize, true);
         pollArrayAddress = pollArray.address();
-        this.size = newSize;        
+        this.size = newSize;
     }
 
     // Prepare another pollfd struct for use.
@@ -82,10 +79,10 @@ class PollArrayWrapper {
                                      PollArrayWrapper target, int tindex) {
         target.putDescriptor(tindex, source.getDescriptor(sindex));
         target.putEventOps(tindex, source.getEventOps(sindex));
-    } 
+    }
 
     // Grows the pollfd array to new size
-    void grow(int newSize) {        
+    void grow(int newSize) {
         PollArrayWrapper temp = new PollArrayWrapper(newSize);
         for (int i = 0; i < size; i++)
             replaceEntry(this, i, temp, i);
@@ -97,28 +94,28 @@ class PollArrayWrapper {
 
     void free() {
         pollArray.free();
-    }    
+    }
 
-    // Access methods for fd structures        
+    // Access methods for fd structures
     void putDescriptor(int i, int fd) {
         pollArray.putInt(SIZE_POLLFD * i + FD_OFFSET, fd);
     }
-    
+
     void putEventOps(int i, int event) {
         pollArray.putShort(SIZE_POLLFD * i + EVENT_OFFSET, (short)event);
-    }                
+    }
 
     int getEventOps(int i) {
         return pollArray.getShort(SIZE_POLLFD * i + EVENT_OFFSET);
-    }        
-    
-    int getDescriptor(int i) {            
+    }
+
+    int getDescriptor(int i) {
        return pollArray.getInt(SIZE_POLLFD * i + FD_OFFSET);
     }
-        
+
     // Adds Windows wakeup socket at a given index.
     void addWakeupSocket(int fdVal, int index) {
         putDescriptor(index, fdVal);
         putEventOps(index, POLLIN);
-    }   
-}        
+    }
+}

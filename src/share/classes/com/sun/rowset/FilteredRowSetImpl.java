@@ -38,27 +38,27 @@ import com.sun.rowset.providers.*;
 import com.sun.rowset.internal.*;
 
 /**
- * The standard implementation of the <code>FilteredRowSet</code> interface. See the interface 
+ * The standard implementation of the <code>FilteredRowSet</code> interface. See the interface
  * defintion for full behaviour and implementation requirements.
  *
  * @see javax.sql.rowset.Predicate
  * @author Jonathan Bruce, Amit Handa
- */ 
+ */
 
 public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, Cloneable, FilteredRowSet {
 
     private Predicate p;
-    
+
     private boolean onInsertRow = false;
-    
-   
+
+
     /**
      * Construct a <code>FilteredRowSet</code>
      */
     public FilteredRowSetImpl() throws SQLException {
         super();
     }
-   
+
     /**
      * Construct a <code>FilteredRowSet</code> with a specified synchronization
      * provider.
@@ -76,7 +76,7 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * @param p an implementation of the predicate interface
      */
     public void setFilter(Predicate p) throws SQLException {
-	this.p = p;
+        this.p = p;
     }
 
     /**
@@ -85,7 +85,7 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * @return a <code>Predicate</code> object instance
      */
     public Predicate getFilter() {
-	return this.p;
+        return this.p;
     }
 
     /**
@@ -94,50 +94,50 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * manipulated. It moves the cursor to the next row according to the set
      * predicate and returns <code>true</code> if the cursor is still within the rowset or
      * <code>false</code> if the cursor position is over the last row
-     * 
+     *
      * @return true if over the valid row in the rowset; false if over the last
      * row
      */
     protected boolean internalNext() throws SQLException {
-	// CachedRowSetImpl.next() internally calls 
-	// this(crs).internalNext() NOTE: this holds crs object
-	// So when frs.next() is called, 
-	// internally this(frs).internalNext() will be called
-	// which will be nothing but this method.
-	// because this holds frs object
-	
-	// keep on doing super.internalNext()
-	// rather than doing it once.
-	 
+        // CachedRowSetImpl.next() internally calls
+        // this(crs).internalNext() NOTE: this holds crs object
+        // So when frs.next() is called,
+        // internally this(frs).internalNext() will be called
+        // which will be nothing but this method.
+        // because this holds frs object
 
-	 // p.evaluate will help us in changing the cursor
-	 // and checking the next value by returning true or false.
-	 // to fit the filter
-	 
-	 // So while() loop will have a "random combination" of
-	 // true and false returned depending upon the records 
-	 // are in or out of filter.
-	 // We need to traverse from present cursorPos till end,
-	 // whether true or false and check each row for "filter" 
-	 // "till we get a "true"
-	 
+        // keep on doing super.internalNext()
+        // rather than doing it once.
 
-	 boolean bool = false;
-	 
+
+         // p.evaluate will help us in changing the cursor
+         // and checking the next value by returning true or false.
+         // to fit the filter
+
+         // So while() loop will have a "random combination" of
+         // true and false returned depending upon the records
+         // are in or out of filter.
+         // We need to traverse from present cursorPos till end,
+         // whether true or false and check each row for "filter"
+         // "till we get a "true"
+
+
+         boolean bool = false;
+
          for(int rows=this.getRow(); rows<=this.size();rows++) {
-   	     bool = super.internalNext();
-   	     
-	     if( p == null) {
-	       return bool;
-	     }
+             bool = super.internalNext();
+
+             if( p == null) {
+               return bool;
+             }
              if(p.evaluate(this)){
-		   break;
-             }   
-	       	       
-	 }
-	      
+                   break;
+             }
+
+         }
+
        return bool;
-    } 
+    }
 
 
     /**
@@ -146,31 +146,31 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * manipulated. It moves the cursor to the previous row according to the set
      * predicate and returns <code>true</code> if the cursor is still within the rowset or
      * <code>false</code> if the cursor position is over the last row
-     * 
+     *
      * @return true if over the valid row in the rowset; false if over the last
      * row
      */
     protected boolean internalPrevious() throws SQLException {
-	 boolean bool = false;
-	 // with previous move backwards,
-	 // i.e. from any record towards first record
-	 
+         boolean bool = false;
+         // with previous move backwards,
+         // i.e. from any record towards first record
+
          for(int rows=this.getRow(); rows>0;rows--) {
-   	     
-   	     bool = super.internalPrevious();
-   	     
-   	     if( p == null) {
-	       return bool;
-	     }
-             
+
+             bool = super.internalPrevious();
+
+             if( p == null) {
+               return bool;
+             }
+
              if(p.evaluate(this)){
-		   break;
-             }   
-	       	       
-	 }
-	      
+                   break;
+             }
+
+         }
+
        return bool;
-    } 
+    }
 
 
     /**
@@ -179,30 +179,30 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * row. It moves the cursor to the first row according to the set
      * predicate and returns <code>true</code> if the cursor is still within the rowset or
      * <code>false</code> if the cursor position is over the last row
-     * 
+     *
      * @return true if over the valid row in the rowset; false if over the last
      * row
      */
     protected boolean internalFirst() throws SQLException {
 
-	// from first till present cursor position(go forward),
-	// find the actual first which matches the filter.
+        // from first till present cursor position(go forward),
+        // find the actual first which matches the filter.
 
-	 boolean bool = super.internalFirst();
-	 
-	 if( p == null) {
-	       return bool;
-	     }
-         
+         boolean bool = super.internalFirst();
+
+         if( p == null) {
+               return bool;
+             }
+
          while(bool) {
-         
+
              if(p.evaluate(this)){
-		   break;
-             }   
-	bool = super.internalNext();
-	}
-     return bool;	    	
-    } 
+                   break;
+             }
+        bool = super.internalNext();
+        }
+     return bool;
+    }
 
 
     /**
@@ -211,31 +211,31 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * last row. It moves the cursor to the last row according to the set
      * predicate and returns <code>true</code> if the cursor is still within the rowset or
      * <code>false</code> if the cursor position is over the last row
-     * 
+     *
      * @return true if over the valid row in the rowset; false if over the last
      * row
      */
     protected boolean internalLast() throws SQLException {
-	// from last to the present cursor position(go backward),
-	// find the actual last which matches the filter.
-	
-	 boolean bool = super.internalLast();
-	 
-	 if( p == null) {
-	       return bool;
-	     }
-         
+        // from last to the present cursor position(go backward),
+        // find the actual last which matches the filter.
+
+         boolean bool = super.internalLast();
+
+         if( p == null) {
+               return bool;
+             }
+
          while(bool) {
-         
+
              if(p.evaluate(this)){
-		   break;
-             }   
-	
-	bool = super.internalPrevious();
-	
-	}
-     return bool;	    	
-   
+                   break;
+             }
+
+        bool = super.internalPrevious();
+
+        }
+     return bool;
+
    } // end internalLast()
    /**
      * Moves the cursor the specified number of rows from the current
@@ -291,32 +291,32 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * @throws SQLException if the rowset is type <code>ResultSet.TYPE_FORWARD_ONLY</code>
      */
    public boolean relative(int rows) throws SQLException {
-   
+
       boolean retval;
       boolean bool = false;
       boolean boolval = false;
-      
+
       if(getType() == ResultSet.TYPE_FORWARD_ONLY) {
          throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.relative").toString());
       }
-      
+
       if( rows > 0 ) {
-         
+
          int i = 0;
          while( i < (rows)) {
-         
+
             if( isAfterLast() ) {
                return false;
             }
             bool = internalNext();
             i++;
          }
-         
+
          retval = bool;
       } else {
          int j = rows;
          while( (j) < 0 ) {
-           
+
            if( isBeforeFirst() ) {
               return false;
            }
@@ -329,7 +329,7 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
           notifyCursorMoved();
       return retval;
    }
-   
+
    /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the row number
      * specified.
@@ -376,19 +376,19 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *         otherwise
      * @throws SQLException if the given cursor position is <code>0</code> or the
      *            type of this rowset is <code>ResultSet.TYPE_FORWARD_ONLY</code>
-     */   
+     */
     public boolean absolute(int rows) throws SQLException {
-   
+
       boolean retval;
       boolean bool = false;
-            
+
       if(rows == 0 || getType() == ResultSet.TYPE_FORWARD_ONLY) {
          throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.absolute").toString());
       }
-   
+
       if (rows > 0) {
          bool = internalFirst();
-         
+
          int i = 0;
          while(i < (rows-1)) {
             if( isAfterLast() ) {
@@ -400,12 +400,12 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
          retval = bool;
       } else {
          bool = internalLast();
-         
+
          int j = rows;
          while((j+1) < 0 ) {
             if( isBeforeFirst() ) {
                return false;
-	    }
+            }
             bool = internalPrevious();
             j++;
          }
@@ -414,7 +414,7 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
       notifyCursorMoved();
       return retval;
    }
-   
+
    /**
      * Moves the cursor for this <code>CachedRowSetImpl</code> object
      * to the insert row.  The current row in the rowset is remembered
@@ -442,34 +442,34 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void moveToInsertRow() throws SQLException {
-      
-      onInsertRow = true;      
-      super.moveToInsertRow();            
+
+      onInsertRow = true;
+      super.moveToInsertRow();
    }
-   
+
    /**
      * This is explanation for the overriding of the updateXXX functions.
      * These functions have been overriden to ensure that only correct
      * values that pass the criteria for the filter are actaully inserted.
-     * The evaluation of whether a particular value passes the criteria 
+     * The evaluation of whether a particular value passes the criteria
      * of the filter is done using the evaluate function in the Predicate
-     * interface. 
+     * interface.
      *
      * The checking can will done in the evaluate function which is implemented
      * in the class that implements the Predicate interface. So the checking
      * can vary from one implementation to another.
      *
-     * Some additional points here on the following: 
+     * Some additional points here on the following:
      * 1. updateBytes()     - since the evaluate function takes Object as parameter
-     *                        a String is constructed from the byte array and would 
+     *                        a String is constructed from the byte array and would
      *                        passed to the evaluate function.
-     * 2. updateXXXstream() - here it would suffice to pass the stream handle 
+     * 2. updateXXXstream() - here it would suffice to pass the stream handle
      *                        to the evaluate function and the implementation
      *                        of the evaluate function can do the comparision
      *                        based on the stream and also type of data.
      */
- 
-   
+
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -494,22 +494,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateInt(int columnIndex , int x) throws SQLException {
-     
+
      boolean bool;
-     
+
      if(onInsertRow) {
         if(p != null) {
            bool = p.evaluate(new Integer(x),columnIndex);
-        
+
            if(!bool) {
               throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
            }
-        } 
+        }
      }
-     
+
      super.updateInt(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -533,10 +533,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateInt(String columnName , int x) throws SQLException {
-   
+
        this.updateInt(findColumn(columnName), x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -561,22 +561,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-      
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Boolean(x) , columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
          }
       }
-      
+
       super.updateBoolean(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -600,12 +600,12 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBoolean(String columnName , boolean x) throws SQLException {
-   
+
       this.updateBoolean(findColumn(columnName),x);
    }
-   
-   
-    
+
+
+
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -631,21 +631,21 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      */
    public void updateByte(int columnIndex , byte x) throws SQLException {
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Byte(x),columnIndex);
-         
+
             if(!bool) {
                 throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
-          } 
+          }
       }
-      
+
       super.updateByte(columnIndex,x);
    }
-   
-   
+
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -669,11 +669,11 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateByte(String columnName , byte x) throws SQLException {
-   
+
       this.updateByte(findColumn(columnName),x);
    }
-   
-   
+
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -698,22 +698,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateShort( int columnIndex , short x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Short(x), columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
           }
       }
-      
+
       super.updateShort(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -737,11 +737,11 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateShort( String columnName , short x) throws SQLException {
-      
+
       this.updateShort(findColumn(columnName),x);
    }
-   
-   
+
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -766,22 +766,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateLong(int columnIndex , long x) throws SQLException {
-      
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Long(x), columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
           }
       }
-      
+
       super.updateLong(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -805,10 +805,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateLong( String columnName , long x) throws SQLException {
-      
+
       this.updateLong(findColumn(columnName) , x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -833,22 +833,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateFloat(int columnIndex , float x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Float(x) , columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
           }
       }
-      
+
       super.updateFloat(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -872,10 +872,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateFloat(String columnName , float x) throws SQLException {
-      
+
       this.updateFloat(findColumn(columnName),x);
    }
-   
+
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -900,22 +900,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateDouble(int columnIndex , double x) throws SQLException {
-    
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(new Double(x) , columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
           }
       }
-      
+
       super.updateDouble(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -939,10 +939,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateDouble(String columnName , double x) throws SQLException {
-      
+
       this.updateDouble(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -967,22 +967,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBigDecimal(int columnIndex , BigDecimal x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
             bool = p.evaluate(x,columnIndex);
-         
+
             if(!bool) {
                throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
             }
           }
       }
-      
+
       super.updateBigDecimal(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1006,10 +1006,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBigDecimal(String columnName , BigDecimal x) throws SQLException {
-      
+
       this.updateBigDecimal(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1037,22 +1037,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateString(int columnIndex , String x) throws SQLException {
-      
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
            bool = p.evaluate(x,columnIndex);
-         
+
            if(!bool) {
-              throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());    
+              throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
            }
          }
       }
-      
+
       super.updateString(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1076,10 +1076,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateString(String columnName , String x) throws SQLException {
-      
+
       this.updateString(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1104,31 +1104,31 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBytes(int columnIndex , byte []x) throws SQLException {
-   
+
       boolean bool;
       String val = new String();
-      
+
       Byte [] obj_arr = new Byte[x.length];
-      
+
       for(int i = 0; i < x.length; i++) {
          obj_arr[i] = new Byte(x[i]);
          val = val.concat(obj_arr[i].toString());
      }
-           
-      
+
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(val,columnIndex);
-         
+
              if(!bool) {
-                 throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString()); 
+                 throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateBytes(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1152,10 +1152,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBytes(String columnName , byte []x) throws SQLException {
-      
+
       this.updateBytes(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1181,22 +1181,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateDate(int columnIndex , java.sql.Date x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateDate(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1222,10 +1222,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateDate(String columnName , java.sql.Date x) throws SQLException {
-   
+
       this.updateDate(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1251,22 +1251,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateTime(int columnIndex , Time x) throws SQLException {
-      
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x, columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateTime(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1292,10 +1292,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateTime(String columnName , Time x) throws SQLException {
-   
+
       this.updateTime(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1322,22 +1322,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateTimestamp(int columnIndex , Timestamp x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateTimestamp(columnIndex,x);
    }
-   
+
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1366,10 +1366,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateTimestamp(String columnName , Timestamp x) throws SQLException {
-   
+
       this.updateTimestamp(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1392,22 +1392,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * @throws SQLException if this method is invoked
      */
    public void updateAsciiStream(int columnIndex , java.io.InputStream x ,int length) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
-         }         
+         }
       }
-      
+
       super.updateAsciiStream(columnIndex,x,length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1428,10 +1428,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      * @param length the number of one-byte ASCII characters in the stream
      */
    public void updateAsciiStream(String columnName , java.io.InputStream x , int length) throws SQLException {
-   
+
       this.updateAsciiStream(findColumn(columnName),x,length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1461,22 +1461,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateCharacterStream(int columnIndex , java.io.Reader x , int length) throws SQLException {
-      
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateCharacterStream(columnIndex,x,length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1504,10 +1504,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            in the stream is not a binary or character type, or (4) this
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
-   public void updateCharacterStream(String columnName , java.io.Reader reader, int length) throws SQLException {   
+   public void updateCharacterStream(String columnName , java.io.Reader reader, int length) throws SQLException {
       this.updateCharacterStream(findColumn(columnName), reader, length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1535,22 +1535,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBinaryStream(int columnIndex , java.io.InputStream x , int length) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
-         }         
+         }
       }
-      
+
       super.updateBinaryStream(columnIndex,x,length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1578,10 +1578,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateBinaryStream(String columnName , java.io.InputStream x, int length) throws SQLException {
-      
+
       this.updateBinaryStream(findColumn(columnName),x,length);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1606,22 +1606,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateObject(int columnIndex , Object x) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateObject(columnIndex,x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1645,10 +1645,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateObject(String columnName , Object x) throws SQLException {
-   
+
       this.updateObject(findColumn(columnName),x);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1678,22 +1678,22 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateObject(int columnIndex , Object x , int scale) throws SQLException {
-   
+
       boolean bool;
-      
+
       if(onInsertRow) {
          if(p != null) {
              bool = p.evaluate(x,columnIndex);
-         
+
              if(!bool) {
                  throw new SQLException(resBundle.handleGetObject("filteredrowsetimpl.notallowed").toString());
              }
          }
       }
-      
+
       super.updateObject(columnIndex,x,scale);
    }
-   
+
    /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -1722,10 +1722,10 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void updateObject(String columnName , Object x, int scale) throws SQLException {
-      
+
       this.updateObject(findColumn(columnName),x,scale);
    }
-   
+
    /**
      * Inserts the contents of this <code>CachedRowSetImpl</code> object's insert
      * row into this rowset immediately following the current row.
@@ -1742,9 +1742,9 @@ public class FilteredRowSetImpl extends WebRowSetImpl implements Serializable, C
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
    public void insertRow() throws SQLException {
-      
+
       onInsertRow = false;
       super.insertRow();
-   }      
+   }
   static final long serialVersionUID = 6178454588413509360L;
 } // end FilteredRowSetImpl class

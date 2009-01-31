@@ -50,14 +50,14 @@ public class XMouseInfoPeer implements MouseInfoPeer {
         XToolkit.awtLock();
         try {
             for (int i = 0; i < gdslen; i++) {
-                long screenRoot = XlibWrapper.RootWindow(display, i); 
+                long screenRoot = XlibWrapper.RootWindow(display, i);
                 boolean pointerFound = XlibWrapper.XQueryPointer(
                                            display, screenRoot,
                                            XlibWrapper.larg1,  // root_return
                                            XlibWrapper.larg2,  // child_return
-                                           XlibWrapper.larg3,  // xr_return 
+                                           XlibWrapper.larg3,  // xr_return
                                            XlibWrapper.larg4,  // yr_return
-                                           XlibWrapper.larg5,  // xw_return 
+                                           XlibWrapper.larg5,  // xw_return
                                            XlibWrapper.larg6,  // yw_return
                                            XlibWrapper.larg7); // mask_return
                 if (pointerFound) {
@@ -76,13 +76,13 @@ public class XMouseInfoPeer implements MouseInfoPeer {
     }
 
     public boolean isWindowUnderMouse(Window w) {
-            
+
         long display = XToolkit.getDisplay();
 
-        // java.awt.Component.findUnderMouseInWindow checks that 
+        // java.awt.Component.findUnderMouseInWindow checks that
         // the peer is non-null by checking that the component
         // is showing.
- 
+
         long contentWindow = ((XWindow)w.getPeer()).getContentWindow();
         long parent = XlibUtil.getParentWindow(contentWindow);
 
@@ -106,4 +106,3 @@ public class XMouseInfoPeer implements MouseInfoPeer {
         }
     }
 }
-

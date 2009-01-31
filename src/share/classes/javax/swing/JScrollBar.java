@@ -48,7 +48,7 @@ import java.io.IOException;
  * scrollbar to determine the contents of the viewing area. The
  * program typically adjusts the display so that the end of the
  * scrollbar represents the end of the displayable contents, or 100%
- * of the contents. The start of the scrollbar is the beginning of the 
+ * of the contents. The start of the scrollbar is the beginning of the
  * displayable contents, or 0%. The position of the knob within
  * those bounds then translates to the corresponding percentage of
  * the displayable contents.
@@ -76,7 +76,6 @@ import java.io.IOException;
  *      attribute: isContainer false
  *    description: A component that helps determine the visible content range of an area.
  *
- * @version %I% %G%
  * @author David Kloba
  */
 public class JScrollBar extends JComponent implements Adjustable, Accessible
@@ -89,7 +88,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
     /**
      * All changes from the model are treated as though the user moved
-     * the scrollbar knob.  
+     * the scrollbar knob.
      */
     private ChangeListener fwdAdjustmentEvents = new ModelListener();
 
@@ -119,7 +118,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      */
     protected int blockIncrement;
 
-    
+
     private void checkOrientation(int orientation) {
         switch (orientation) {
         case VERTICAL:
@@ -135,22 +134,22 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      * Creates a scrollbar with the specified orientation,
      * value, extent, minimum, and maximum.
      * The "extent" is the size of the viewable area. It is also known
-     * as the "visible amount". 
+     * as the "visible amount".
      * <p>
-     * Note: Use <code>setBlockIncrement</code> to set the block 
+     * Note: Use <code>setBlockIncrement</code> to set the block
      * increment to a size slightly smaller than the view's extent.
      * That way, when the user jumps the knob to an adjacent position,
      * one or two lines of the original contents remain in view.
-     * 
+     *
      * @exception IllegalArgumentException if orientation is not one of VERTICAL, HORIZONTAL
-     * 
+     *
      * @see #setOrientation
      * @see #setValue
      * @see #setVisibleAmount
      * @see #setMinimum
      * @see #setMaximum
      */
-    public JScrollBar(int orientation, int value, int extent, int min, int max)   
+    public JScrollBar(int orientation, int value, int extent, int min, int max)
     {
         checkOrientation(orientation);
         this.unitIncrement = 1;
@@ -158,7 +157,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         this.orientation = orientation;
         this.model = new DefaultBoundedRangeModel(value, extent, min, max);
         this.model.addChangeListener(fwdAdjustmentEvents);
-	setRequestFocusEnabled(false);
+        setRequestFocusEnabled(false);
         updateUI();
     }
 
@@ -167,8 +166,8 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      * Creates a scrollbar with the specified orientation
      * and the following initial values:
      * <pre>
-     * minimum = 0 
-     * maximum = 100 
+     * minimum = 0
+     * maximum = 100
      * value = 0
      * extent = 10
      * </pre>
@@ -181,8 +180,8 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
     /**
      * Creates a vertical scrollbar with the following initial values:
      * <pre>
-     * minimum = 0 
-     * maximum = 100 
+     * minimum = 0
+     * maximum = 100
      * value = 0
      * extent = 10
      * </pre>
@@ -210,12 +209,12 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
 
     /**
-     * Returns the delegate that implements the look and feel for 
+     * Returns the delegate that implements the look and feel for
      * this component.
      *
      * @see JComponent#setUI
      */
-    public ScrollBarUI getUI() { 
+    public ScrollBarUI getUI() {
         return (ScrollBarUI)ui;
     }
 
@@ -243,21 +242,21 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
 
     /**
-     * Returns the component's orientation (horizontal or vertical). 
-     *                     
+     * Returns the component's orientation (horizontal or vertical).
+     *
      * @return VERTICAL or HORIZONTAL
      * @see #setOrientation
      * @see java.awt.Adjustable#getOrientation
      */
-    public int getOrientation() { 
-        return orientation; 
+    public int getOrientation() {
+        return orientation;
     }
 
 
     /**
      * Set the scrollbar's orientation to either VERTICAL or
      * HORIZONTAL.
-     * 
+     *
      * @exception IllegalArgumentException if orientation is not one of VERTICAL, HORIZONTAL
      * @see #getOrientation
      * @beaninfo
@@ -265,11 +264,11 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      *        bound: true
      *    attribute: visualUpdate true
      *  description: The scrollbar's orientation.
-     *         enum: VERTICAL JScrollBar.VERTICAL 
+     *         enum: VERTICAL JScrollBar.VERTICAL
      *               HORIZONTAL JScrollBar.HORIZONTAL
      */
-    public void setOrientation(int orientation) 
-    { 
+    public void setOrientation(int orientation)
+    {
         checkOrientation(orientation);
         int oldValue = this.orientation;
         this.orientation = orientation;
@@ -278,9 +277,9 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         if ((oldValue != orientation) && (accessibleContext != null)) {
             accessibleContext.firePropertyChange(
                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
-                    ((oldValue == VERTICAL) 
+                    ((oldValue == VERTICAL)
                      ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL),
-                    ((orientation == VERTICAL) 
+                    ((orientation == VERTICAL)
                      ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL));
         }
         if (orientation != oldValue) {
@@ -292,18 +291,18 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
     /**
      * Returns data model that handles the scrollbar's four
      * fundamental properties: minimum, maximum, value, extent.
-     * 
+     *
      * @see #setModel
      */
-    public BoundedRangeModel getModel() { 
-        return model; 
+    public BoundedRangeModel getModel() {
+        return model;
     }
 
 
     /**
      * Sets the model that handles the scrollbar's four
      * fundamental properties: minimum, maximum, value, extent.
-     * 
+     *
      * @see #getModel
      * @beaninfo
      *       bound: true
@@ -327,7 +326,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         if (accessibleContext != null) {
             accessibleContext.firePropertyChange(
                     AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
-                    oldValue, new Integer(model.getValue()));        
+                    oldValue, new Integer(model.getValue()));
         }
     }
 
@@ -335,25 +334,25 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
     /**
      * Returns the amount to change the scrollbar's value by,
      * given a unit up/down request.  A ScrollBarUI implementation
-     * typically calls this method when the user clicks on a scrollbar 
+     * typically calls this method when the user clicks on a scrollbar
      * up/down arrow and uses the result to update the scrollbar's
      * value.   Subclasses my override this method to compute
      * a value, e.g. the change required to scroll up or down one
      * (variable height) line text or one row in a table.
      * <p>
-     * The JScrollPane component creates scrollbars (by default) 
+     * The JScrollPane component creates scrollbars (by default)
      * that override this method and delegate to the viewports
      * Scrollable view, if it has one.  The Scrollable interface
      * provides a more specialized version of this method.
-     * 
+     *
      * @param direction is -1 or 1 for up/down respectively
      * @return the value of the unitIncrement property
      * @see #setUnitIncrement
      * @see #setValue
      * @see Scrollable#getScrollableUnitIncrement
      */
-    public int getUnitIncrement(int direction) { 
-        return unitIncrement; 
+    public int getUnitIncrement(int direction) {
+        return unitIncrement;
     }
 
 
@@ -368,7 +367,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      *       bound: true
      * description: The scrollbar's unit increment.
      */
-    public void setUnitIncrement(int unitIncrement) { 
+    public void setUnitIncrement(int unitIncrement) {
         int oldValue = this.unitIncrement;
         this.unitIncrement = unitIncrement;
         firePropertyChange("unitIncrement", oldValue, unitIncrement);
@@ -377,26 +376,26 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
     /**
      * Returns the amount to change the scrollbar's value by,
-     * given a block (usually "page") up/down request.  A ScrollBarUI 
-     * implementation typically calls this method when the user clicks 
+     * given a block (usually "page") up/down request.  A ScrollBarUI
+     * implementation typically calls this method when the user clicks
      * above or below the scrollbar "knob" to change the value
-     * up or down by large amount.  Subclasses my override this 
-     * method to compute a value, e.g. the change required to scroll 
+     * up or down by large amount.  Subclasses my override this
+     * method to compute a value, e.g. the change required to scroll
      * up or down one paragraph in a text document.
      * <p>
-     * The JScrollPane component creates scrollbars (by default) 
+     * The JScrollPane component creates scrollbars (by default)
      * that override this method and delegate to the viewports
      * Scrollable view, if it has one.  The Scrollable interface
      * provides a more specialized version of this method.
-     * 
+     *
      * @param direction is -1 or 1 for up/down respectively
      * @return the value of the blockIncrement property
      * @see #setBlockIncrement
      * @see #setValue
      * @see Scrollable#getScrollableBlockIncrement
      */
-    public int getBlockIncrement(int direction) { 
-        return blockIncrement; 
+    public int getBlockIncrement(int direction) {
+        return blockIncrement;
     }
 
 
@@ -411,7 +410,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      *       bound: true
      * description: The scrollbar's block increment.
      */
-    public void setBlockIncrement(int blockIncrement) { 
+    public void setBlockIncrement(int blockIncrement) {
         int oldValue = this.blockIncrement;
         this.blockIncrement = blockIncrement;
         firePropertyChange("blockIncrement", oldValue, blockIncrement);
@@ -443,8 +442,8 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      * @return the model's value property
      * @see #setValue
      */
-    public int getValue() { 
-        return getModel().getValue(); 
+    public int getValue() {
+        return getModel().getValue();
     }
 
 
@@ -473,41 +472,41 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
 
     /**
-     * Returns the scrollbar's extent, aka its "visibleAmount".  In many 
-     * scrollbar look and feel implementations the size of the 
+     * Returns the scrollbar's extent, aka its "visibleAmount".  In many
+     * scrollbar look and feel implementations the size of the
      * scrollbar "knob" or "thumb" is proportional to the extent.
-     * 
+     *
      * @return the value of the model's extent property
      * @see #setVisibleAmount
      */
-    public int getVisibleAmount() { 
-        return getModel().getExtent(); 
+    public int getVisibleAmount() {
+        return getModel().getExtent();
     }
 
 
     /**
      * Set the model's extent property.
-     * 
+     *
      * @see #getVisibleAmount
      * @see BoundedRangeModel#setExtent
      * @beaninfo
      *   preferred: true
      * description: The amount of the view that is currently visible.
      */
-    public void setVisibleAmount(int extent) { 
-        getModel().setExtent(extent); 
+    public void setVisibleAmount(int extent) {
+        getModel().setExtent(extent);
     }
 
 
     /**
-     * Returns the minimum value supported by the scrollbar 
+     * Returns the minimum value supported by the scrollbar
      * (usually zero).
      *
      * @return the value of the model's minimum property
      * @see #setMinimum
      */
-    public int getMinimum() { 
-        return getModel().getMinimum(); 
+    public int getMinimum() {
+        return getModel().getMinimum();
     }
 
 
@@ -520,8 +519,8 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      *   preferred: true
      * description: The scrollbar's minimum value.
      */
-    public void setMinimum(int minimum) { 
-        getModel().setMinimum(minimum); 
+    public void setMinimum(int minimum) {
+        getModel().setMinimum(minimum);
     }
 
 
@@ -531,55 +530,55 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      * @return the value of the model's maximum property
      * @see #setMaximum
      */
-    public int getMaximum() { 
-        return getModel().getMaximum(); 
+    public int getMaximum() {
+        return getModel().getMaximum();
     }
 
 
     /**
      * Sets the model's maximum property.  Note that the scrollbar's value
      * can only be set to maximum - extent.
-     * 
+     *
      * @see #getMaximum
      * @see BoundedRangeModel#setMaximum
      * @beaninfo
      *   preferred: true
-     * description: The scrollbar's maximum value. 
+     * description: The scrollbar's maximum value.
      */
-    public void setMaximum(int maximum) { 
-        getModel().setMaximum(maximum); 
+    public void setMaximum(int maximum) {
+        getModel().setMaximum(maximum);
     }
 
 
     /**
      * True if the scrollbar knob is being dragged.
-     * 
+     *
      * @return the value of the model's valueIsAdjusting property
      * @see #setValueIsAdjusting
      */
-    public boolean getValueIsAdjusting() { 
-        return getModel().getValueIsAdjusting(); 
+    public boolean getValueIsAdjusting() {
+        return getModel().getValueIsAdjusting();
     }
 
 
     /**
      * Sets the model's valueIsAdjusting property.  Scrollbar look and
-     * feel implementations should set this property to true when 
+     * feel implementations should set this property to true when
      * a knob drag begins, and to false when the drag ends.  The
      * scrollbar model will not generate ChangeEvents while
      * valueIsAdjusting is true.
-     * 
+     *
      * @see #getValueIsAdjusting
      * @see BoundedRangeModel#setValueIsAdjusting
      * @beaninfo
      *      expert: true
      * description: True if the scrollbar thumb is being dragged.
      */
-    public void setValueIsAdjusting(boolean b) { 
-        BoundedRangeModel m = getModel();   
+    public void setValueIsAdjusting(boolean b) {
+        BoundedRangeModel m = getModel();
         boolean oldValue = m.getValueIsAdjusting();
         m.setValueIsAdjusting(b);
-   
+
         if ((oldValue != b) && (accessibleContext != null)) {
             accessibleContext.firePropertyChange(
                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
@@ -596,14 +595,14 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
      * minimum <= value <= value+extent <= maximum
      * </pre>
      * <p>
-     * 
+     *
      * @see BoundedRangeModel#setRangeProperties
      * @see #setValue
      * @see #setVisibleAmount
      * @see #setMinimum
      * @see #setMaximum
      */
-    public void setValues(int newValue, int newExtent, int newMin, int newMax)    
+    public void setValues(int newValue, int newExtent, int newMin, int newMax)
     {
         BoundedRangeModel m = getModel();
         int oldValue = m.getValue();
@@ -620,7 +619,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
     /**
      * Adds an AdjustmentListener.  Adjustment listeners are notified
-     * each time the scrollbar's model changes.  Adjustment events are 
+     * each time the scrollbar's model changes.  Adjustment events are
      * provided for backwards compatibility with java.awt.Scrollbar.
      * <p>
      * Note that the AdjustmentEvents type property will always have a
@@ -667,22 +666,22 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
     /**
      * Notify listeners that the scrollbar's model has changed.
-     * 
+     *
      * @see #addAdjustmentListener
      * @see EventListenerList
      */
     protected void fireAdjustmentValueChanged(int id, int type, int value) {
-	fireAdjustmentValueChanged(id, type, value, getValueIsAdjusting());
-    }   
-    
+        fireAdjustmentValueChanged(id, type, value, getValueIsAdjusting());
+    }
+
     /**
      * Notify listeners that the scrollbar's model has changed.
-     * 
+     *
      * @see #addAdjustmentListener
      * @see EventListenerList
      */
     private void fireAdjustmentValueChanged(int id, int type, int value,
-					    boolean isAdjusting) {
+                                            boolean isAdjusting) {
         Object[] listeners = listenerList.getListenerList();
         AdjustmentEvent e = null;
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -691,36 +690,36 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
                     e = new AdjustmentEvent(this, id, type, value, isAdjusting);
                 }
                 ((AdjustmentListener)listeners[i+1]).adjustmentValueChanged(e);
-            }          
+            }
         }
-    }   
+    }
 
 
-    /** 
-     * This class listens to ChangeEvents on the model and forwards 
-     * AdjustmentEvents for the sake of backwards compatibility. 
+    /**
+     * This class listens to ChangeEvents on the model and forwards
+     * AdjustmentEvents for the sake of backwards compatibility.
      * Unfortunately there's no way to determine the proper
      * type of the AdjustmentEvent as all updates to the model's
-     * value are considered equivalent. 
+     * value are considered equivalent.
      */
     private class ModelListener implements ChangeListener, Serializable {
         public void stateChanged(ChangeEvent e)   {
-	    Object obj = e.getSource();
-	    if (obj instanceof BoundedRangeModel) {
-		int id = AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED;
-		int type = AdjustmentEvent.TRACK;
-		BoundedRangeModel model = (BoundedRangeModel)obj;
-		int value = model.getValue();
-		boolean isAdjusting = model.getValueIsAdjusting();
-		fireAdjustmentValueChanged(id, type, value, isAdjusting);
-	    }
+            Object obj = e.getSource();
+            if (obj instanceof BoundedRangeModel) {
+                int id = AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED;
+                int type = AdjustmentEvent.TRACK;
+                BoundedRangeModel model = (BoundedRangeModel)obj;
+                int value = model.getValue();
+                boolean isAdjusting = model.getValueIsAdjusting();
+                fireAdjustmentValueChanged(id, type, value, isAdjusting);
+            }
         }
     }
 
     // PENDING(hmuller) - the next three methods should be removed
 
     /**
-     * The scrollbar is flexible along it's scrolling axis and 
+     * The scrollbar is flexible along it's scrolling axis and
      * rigid along the other axis.
      */
     public Dimension getMinimumSize() {
@@ -760,8 +759,8 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         }
     }
 
-    /** 
-     * See readObject() and writeObject() in JComponent for more 
+    /**
+     * See readObject() and writeObject() in JComponent for more
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -777,22 +776,22 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
 
     /**
-     * Returns a string representation of this JScrollBar. This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * Returns a string representation of this JScrollBar. This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this JScrollBar.
      */
     protected String paramString() {
-	String orientationString = (orientation == HORIZONTAL ?
-				    "HORIZONTAL" : "VERTICAL");
+        String orientationString = (orientation == HORIZONTAL ?
+                                    "HORIZONTAL" : "VERTICAL");
 
-	return super.paramString() +
-	",blockIncrement=" + blockIncrement +
-	",orientation=" + orientationString +
-	",unitIncrement=" + unitIncrement;
+        return super.paramString() +
+        ",blockIncrement=" + blockIncrement +
+        ",orientation=" + orientationString +
+        ",unitIncrement=" + unitIncrement;
     }
 
 /////////////////
@@ -800,12 +799,12 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JScrollBar. 
-     * For JScrollBar, the AccessibleContext takes the form of an 
-     * AccessibleJScrollBar. 
+     * Gets the AccessibleContext associated with this JScrollBar.
+     * For JScrollBar, the AccessibleContext takes the form of an
+     * AccessibleJScrollBar.
      * A new AccessibleJScrollBar instance is created if necessary.
      *
-     * @return an AccessibleJScrollBar that serves as the 
+     * @return an AccessibleJScrollBar that serves as the
      *         AccessibleContext of this JScrollBar
      */
     public AccessibleContext getAccessibleContext() {
@@ -816,9 +815,9 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JScrollBar</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to scroll bar user-interface 
+     * This class implements accessibility support for the
+     * <code>JScrollBar</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to scroll bar user-interface
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -836,7 +835,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         /**
          * Get the state set of this object.
          *
-         * @return an instance of AccessibleState containing the current state 
+         * @return an instance of AccessibleState containing the current state
          * of the object
          * @see AccessibleState
          */
@@ -856,7 +855,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          */
         public AccessibleRole getAccessibleRole() {
@@ -865,11 +864,11 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
 
         /**
          * Get the AccessibleValue associated with this object.  In the
-         * implementation of the Java Accessibility API for this class, 
-	 * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
          * AccessibleValue interface on behalf of itself.
-	 * 
-	 * @return this object
+         *
+         * @return this object
          */
         public AccessibleValue getAccessibleValue() {
             return this;
@@ -890,12 +889,12 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
          * @return True if the value was set.
          */
         public boolean setCurrentAccessibleValue(Number n) {
-	    // TIGER - 4422535 
+            // TIGER - 4422535
             if (n == null) {
-		return false;
-	    }
-	    setValue(n.intValue());
-	    return true;
+                return false;
+            }
+            setValue(n.intValue());
+            return true;
         }
 
         /**
@@ -913,7 +912,7 @@ public class JScrollBar extends JComponent implements Adjustable, Accessible
          * @return The maximum value of this object.
          */
         public Number getMaximumAccessibleValue() {
-	    // TIGER - 4422362
+            // TIGER - 4422362
             return new Integer(model.getMaximum() - model.getExtent());
         }
 

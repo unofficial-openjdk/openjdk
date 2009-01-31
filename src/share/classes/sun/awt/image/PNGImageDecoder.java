@@ -75,7 +75,7 @@ public class PNGImageDecoder extends ImageDecoder
     private ColorModel cm;
     private byte[] red_map, green_map, blue_map, alpha_map;
     private int transparentPixel = -1;
-    private byte[]  transparentPixel_16 = null; // we need 6 bytes to store 16bpp value 
+    private byte[]  transparentPixel_16 = null; // we need 6 bytes to store 16bpp value
     private static ColorModel greyModels[] = new ColorModel[4];
   /* this is not needed
      PNGImageDecoder next;
@@ -154,9 +154,9 @@ public class PNGImageDecoder extends ImageDecoder
                 filterMethod = getByte(st+11);
                 interlaceMethod = getByte(st+12);
                 /* this is not needed
-		  if(target!=null) target.setDimensions(width,height);
-		  */
-		break;
+                  if(target!=null) target.setDimensions(width,height);
+                  */
+                break;
             case PLTEChunk:
                 {   int tsize = len/3;
                     red_map = new byte[tsize];
@@ -206,7 +206,7 @@ public class PNGImageDecoder extends ImageDecoder
                             transparentPixel_16 = new byte[6];
                             for (int i = 0; i < 6; i++) {
                                 transparentPixel_16[i] = (byte)getByte(st + i);
-                            }                            
+                            }
                         } else {
                             transparentPixel =
                                       ((getShort(st + 0)&0xFF)<<16)
@@ -217,12 +217,12 @@ public class PNGImageDecoder extends ImageDecoder
                     case GRAY:  // doesn't deal with 16 bit colors properly
                     case GRAY|ALPHA:  // doesn't deal with 16 bit colors properly
                         pngassert(len==2);
-			/* REMIND: Discarding the LSB for 16 bit depth here
+                        /* REMIND: Discarding the LSB for 16 bit depth here
                          * means that the all pixels which match the MSB
                          * will be treated as transparent.
-			 */ 
+                         */
                         int t = getShort(st);
-                        t = 0xFF & ((bitDepth == 16) ? (t >> 8) : t);                        
+                        t = 0xFF & ((bitDepth == 16) ? (t >> 8) : t);
                         transparentPixel = (t<<16) | (t<< 8) | t;
                         break;
                 }
@@ -244,12 +244,12 @@ public class PNGImageDecoder extends ImageDecoder
        */
     try {
             for(int i=0; i<signature.length; i++)
-	      if((signature[i]&0xFF)!=underlyingInputStream.read())
-		throw new PNGException("Chunk signature mismatch");
-	    
-	    InputStream is = new BufferedInputStream(new InflaterInputStream(inputStream,new Inflater()));
-          
-	    getData();
+              if((signature[i]&0xFF)!=underlyingInputStream.read())
+                throw new PNGException("Chunk signature mismatch");
+
+            InputStream is = new BufferedInputStream(new InflaterInputStream(inputStream,new Inflater()));
+
+            getData();
 
             byte[] bPixels = null;
             int[] wPixels = null;
@@ -285,10 +285,10 @@ public class PNGImageDecoder extends ImageDecoder
                     {   int llog = logDepth>=4 ? 3 : logDepth;
                         if((cm=greyModels[llog]) == null) {
                             int size = 1<<(1<<llog);
-                            
+
                             byte ramp[] = new byte[size];
                             for(int i = 0; i<size; i++) ramp[i] = (byte)(255*i/(size-1));
-                            
+
                             if (transparentPixel == -1) {
                                 cm = new IndexColorModel(bitDepth,ramp.length,ramp,ramp,ramp);
                             } else {
@@ -310,24 +310,24 @@ public class PNGImageDecoder extends ImageDecoder
                     throw new PNGException("invalid color type");
             }
             /* this is going to be set in the pixel store
-	      t.setColorModel(cm);
+              t.setColorModel(cm);
             t.setHints(interlaceMethod !=0
                        ? ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES
                        : ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES |
                          ImageConsumer.SINGLEPASS | ImageConsumer.SINGLEFRAME);
-			 */
-	    // code added to make it work with ImageDecoder architecture
+                         */
+            // code added to make it work with ImageDecoder architecture
             setDimensions(width, height);
             setColorModel(cm);
-	    int flags = (interlaceMethod !=0
+            int flags = (interlaceMethod !=0
                        ? ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES
                        : ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES |
                          ImageConsumer.SINGLEPASS | ImageConsumer.SINGLEFRAME);
-	    setHints(flags);
-	    headerComplete();
-	    // end of adding
+            setHints(flags);
+            headerComplete();
+            // end of adding
 
-	    int samplesPerPixel = ((colorType&PALETTE)!=0 ? 1
+            int samplesPerPixel = ((colorType&PALETTE)!=0 ? 1
                                  : ((colorType&COLOR)!=0 ? 3 : 1)+((colorType&ALPHA)!=0?1:0));
             int bitsPerPixel = samplesPerPixel*bitDepth;
             int bytesPerPixel = (bitsPerPixel+7)>>3;
@@ -337,9 +337,9 @@ public class PNGImageDecoder extends ImageDecoder
             // These loops are far from being tuned.  They're this way to make them easy to
             // debug.  Tuning comes later.
             /* code changed. target not needed here
-	       while(++pass<=passLimit && (t=target)!=null) {
-	       */
-	    while(++pass<=passLimit) {
+               while(++pass<=passLimit && (t=target)!=null) {
+               */
+            while(++pass<=passLimit) {
                 int row = startingRow[pass];
                 int rowInc = rowIncrement[pass];
                 int colInc = colIncrement[pass];
@@ -352,13 +352,13 @@ public class PNGImageDecoder extends ImageDecoder
                 int pixelBufferInc = interlaceMethod==0 ? rowInc*width : 0;
                 int rowOffset = rowStride*row;
                 boolean firstRow = true;
-                
+
                 byte[] rowByteBuffer = new byte[rowByteWidth];
                 byte[] prevRowByteBuffer = new byte[rowByteWidth];
-		/* code changed. target not needed here 
-		   while (row < height && (t=target)!=null) {
-		   */
-		while (row < height) {
+                /* code changed. target not needed here
+                   while (row < height && (t=target)!=null) {
+                   */
+                while (row < height) {
                     int rowFilter = is.read();
                     for (int rowFillPos=0;rowFillPos<rowByteWidth; ) {
                         int n = is.read(rowByteBuffer,rowFillPos,rowByteWidth-rowFillPos);
@@ -398,7 +398,7 @@ public class PNGImageDecoder extends ImageDecoder
                                     if (pixel != transparentPixel) {
                                         pixel |= 0xff000000;
                                     }
-                                    wPixels[col+rowOffset] = pixel;                                     
+                                    wPixels[col+rowOffset] = pixel;
                                     spos+=3;
                                     break;
                                 case COLOR|(16<<3):
@@ -406,7 +406,7 @@ public class PNGImageDecoder extends ImageDecoder
                                               ((rowByteBuffer[spos  ]&0xFF)<<16)
                                             | ((rowByteBuffer[spos+2]&0xFF)<< 8)
                                             | ((rowByteBuffer[spos+4]&0xFF)    );
-                                    
+
                                     boolean isTransparent = (transparentPixel_16 != null);
                                     for (int i = 0; isTransparent && (i < 6); i++) {
                                         isTransparent &=
@@ -414,7 +414,7 @@ public class PNGImageDecoder extends ImageDecoder
                                     }
                                     if (!isTransparent)  {
                                         pixel |= 0xff000000;
-                                    }                                       
+                                    }
                                     wPixels[col+rowOffset] = pixel;
                                     spos+=6;
                                     break;
@@ -461,23 +461,23 @@ public class PNGImageDecoder extends ImageDecoder
                             min (bWidth, width - col)); */
                         col += colInc;
                     }
-                    if(interlaceMethod==0) 
-		      if(wPixels!=null) {
-			/* code changed. target not needed here
-			  t.setPixels(0,row,width,1,cm,wPixels,0,width); 
-			  */
-		       // code added to make it work with ImageDecoder arch
-			sendPixels(0,row,width,1,wPixels,0,width); 
-			// end of adding
-		      }
-		      else {
-			/* code changed. target not needed here
-			   t.setPixels(0,row,width,1,cm,bPixels,0,width);
-			   */
-			// code added to make it work with ImageDecoder arch
-			sendPixels(0,row,width,1,bPixels,0,width);
-			//end of adding
-		      }
+                    if(interlaceMethod==0)
+                      if(wPixels!=null) {
+                        /* code changed. target not needed here
+                          t.setPixels(0,row,width,1,cm,wPixels,0,width);
+                          */
+                       // code added to make it work with ImageDecoder arch
+                        sendPixels(0,row,width,1,wPixels,0,width);
+                        // end of adding
+                      }
+                      else {
+                        /* code changed. target not needed here
+                           t.setPixels(0,row,width,1,cm,bPixels,0,width);
+                           */
+                        // code added to make it work with ImageDecoder arch
+                        sendPixels(0,row,width,1,bPixels,0,width);
+                        //end of adding
+                      }
                     row += rowInc;
                     rowOffset += rowInc*rowStride;
                     byte[] T = rowByteBuffer;
@@ -486,22 +486,22 @@ public class PNGImageDecoder extends ImageDecoder
                     firstRow = false;
                 }
                 if(interlaceMethod!=0)
-		  if(wPixels!=null) {
-		    /* code changed. target not needed here
-		       t.setPixels(0,0,width,height,cm,wPixels,0,width); 
-		       */
-		    // code added to make it work with ImageDecoder arch
-		      sendPixels(0,0,width,height,wPixels,0,width); 
-		      //end of adding
-		  }
-		  else {
-		     /* code changed. target not needed here
-			t.setPixels(0,0,width,height,cm,bPixels,0,width);
-			*/
-		    // code added to make it work with ImageDecoder arch
-		      sendPixels(0,0,width,height,bPixels,0,width);
-		      //end of adding
-		  }
+                  if(wPixels!=null) {
+                    /* code changed. target not needed here
+                       t.setPixels(0,0,width,height,cm,wPixels,0,width);
+                       */
+                    // code added to make it work with ImageDecoder arch
+                      sendPixels(0,0,width,height,wPixels,0,width);
+                      //end of adding
+                  }
+                  else {
+                     /* code changed. target not needed here
+                        t.setPixels(0,0,width,height,cm,bPixels,0,width);
+                        */
+                    // code added to make it work with ImageDecoder arch
+                      sendPixels(0,0,width,height,bPixels,0,width);
+                      //end of adding
+                  }
             }
 
    /* Here, the function "visit(row,column,height,width)" obtains the
@@ -509,18 +509,18 @@ public class PNGImageDecoder extends ImageDecoder
       height and width, whose upper-left corner is at the specified row
       and column, using the color indicated by the pixel.  Note that row
       and column are measured from 0,0 at the upper left corner. */
-  
-	    /* code not needed, don't deal with target
-             if((t=target)!=null) {
-	       if(properties!=null) t.setProperties(properties);
-                 t.imageComplete(ImageConsumer.STATICIMAGEDONE);
-		 */
 
-	      imageComplete(ImageConsumer.STATICIMAGEDONE, true);
-	      
-	      /* code not needed }
-	       is.close();
-	       */
+            /* code not needed, don't deal with target
+             if((t=target)!=null) {
+               if(properties!=null) t.setProperties(properties);
+                 t.imageComplete(ImageConsumer.STATICIMAGEDONE);
+                 */
+
+              imageComplete(ImageConsumer.STATICIMAGEDONE, true);
+
+              /* code not needed }
+               is.close();
+               */
         } catch(IOException e) {
             if(!aborted) {
                 /* code not needed
@@ -535,32 +535,32 @@ public class PNGImageDecoder extends ImageDecoder
                 imageComplete(ImageConsumer.IMAGEERROR|ImageConsumer.STATICIMAGEDONE, true);
                 throw e;
             }
-	} finally { 
-	  try { close(); } catch(Throwable e){}
-	  /* code not needed
-	     target = null;
-	     endTurn();
-	     */
-	}
+        } finally {
+          try { close(); } catch(Throwable e){}
+          /* code not needed
+             target = null;
+             endTurn();
+             */
+        }
     }
 
     private boolean sendPixels(int x, int y, int w, int h, int[] pixels,
                                int offset, int pixlength) {
-	int count = setPixels(x, y, w, h, cm,
-			      pixels, offset, pixlength);
-	if (count <= 0) {
-	    aborted = true;
-	}
-	return !aborted;
+        int count = setPixels(x, y, w, h, cm,
+                              pixels, offset, pixlength);
+        if (count <= 0) {
+            aborted = true;
+        }
+        return !aborted;
     }
     private boolean sendPixels(int x, int y, int w, int h, byte[] pixels,
                                int offset, int pixlength) {
-	int count = setPixels(x, y, w, h, cm,
-			      pixels, offset, pixlength);
-	if (count <= 0) {
-	    aborted = true;
-	}
-	return !aborted;
+        int count = setPixels(x, y, w, h, cm,
+                              pixels, offset, pixlength);
+        if (count <= 0) {
+            aborted = true;
+        }
+        return !aborted;
     }
 
     private void filterRow(byte rowByteBuffer[], byte[] prevRow,
@@ -576,7 +576,7 @@ public class PNGImageDecoder extends ImageDecoder
             break;
           case 2:
             if (prevRow != null)
-                for ( ; x < rowByteWidth; x++) 
+                for ( ; x < rowByteWidth; x++)
                     rowByteBuffer[x] += prevRow[x];
             break;
           case 3:
@@ -618,13 +618,13 @@ public class PNGImageDecoder extends ImageDecoder
     private static final byte[] colIncrement = { 1, 8, 8, 4, 4, 2, 2, 1 };
     private static final byte[] blockHeight =  { 1, 8, 8, 4, 4, 2, 2, 1 };
     private static final byte[] blockWidth =   { 1, 8, 4, 4, 2, 2, 1, 1 };
-    
+
     //abstract public class ChunkReader extends FilterInputStream {
   int pos, limit;
     int chunkStart;
    int chunkKey, chunkLength, chunkCRC;
     boolean seenEOF;
-    
+
     private static final byte[] signature = { (byte) 137, (byte) 80, (byte) 78,
         (byte) 71, (byte) 13, (byte) 10, (byte) 26, (byte) 10 };
 
@@ -650,14 +650,14 @@ public class PNGImageDecoder extends ImageDecoder
   /* code changed to make it work with ImageDecoder architecture
     static int ThreadLimit = 10;
     private synchronized static void waitTurn() {
-	try {
-	    while(ThreadLimit<=0) PNGImageDecoder.class.wait(1000);
-	} catch(InterruptedException e){}
-	ThreadLimit--;
+        try {
+            while(ThreadLimit<=0) PNGImageDecoder.class.wait(1000);
+        } catch(InterruptedException e){}
+        ThreadLimit--;
     }
     private synchronized static void endTurn() {
-	if(ThreadLimit<=0) PNGImageDecoder.class.notify();
-	ThreadLimit++;
+        if(ThreadLimit<=0) PNGImageDecoder.class.notify();
+        ThreadLimit++;
     }
     */
     byte[] inbuf = new byte[4096];
@@ -812,7 +812,7 @@ class PNGFilterInputStream extends FilterInputStream {
     underlyingInputStream = in;
     this.owner = owner;
   }
-  
+
     public int available() throws IOException {
         return owner.limit-owner.pos+in.available();}
     public boolean markSupported() { return false; }
@@ -834,8 +834,7 @@ class PNGFilterInputStream extends FilterInputStream {
         int i;
         for(i = 0; i<n && read()>=0; i++);
         return i;
-    } 
+    }
 
 
 }
-

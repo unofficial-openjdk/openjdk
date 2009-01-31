@@ -25,7 +25,7 @@
 
 package sun.font;
 
-/* 
+/*
  * NB the versions that take a char as an int are used by the opentype
  * layout engine. If that remains in native these methods may not be
  * needed in the Java class.
@@ -44,7 +44,7 @@ public abstract class CharToGlyphMapper {
     protected int missingGlyph = CharToGlyphMapper.UNINITIALIZED_GLYPH;
 
     public int getMissingGlyphCode() {
-	return missingGlyph;
+        return missingGlyph;
     }
 
     /* Default implementations of these methods may be overridden by
@@ -52,40 +52,40 @@ public abstract class CharToGlyphMapper {
      */
 
     public boolean canDisplay(char ch) {
-	int glyph = charToGlyph(ch);
-	return glyph != missingGlyph;
+        int glyph = charToGlyph(ch);
+        return glyph != missingGlyph;
     }
 
     public boolean canDisplay(int cp) {
-	int glyph = charToGlyph(cp);
-	return glyph != missingGlyph;
+        int glyph = charToGlyph(cp);
+        return glyph != missingGlyph;
     }
 
     public int charToGlyph(char unicode) {
-	char[] chars = new char[1];
-	int[] glyphs = new int[1];
-	chars[0] = unicode;
+        char[] chars = new char[1];
+        int[] glyphs = new int[1];
+        chars[0] = unicode;
         charsToGlyphs(1, chars, glyphs);
         return glyphs[0];
     }
 
     public int charToGlyph(int unicode) {
-	int[] chars = new int[1];
-	int [] glyphs = new int[1];
-	chars[0] = unicode;
-	charsToGlyphs(1, chars, glyphs);
+        int[] chars = new int[1];
+        int [] glyphs = new int[1];
+        chars[0] = unicode;
+        charsToGlyphs(1, chars, glyphs);
         return glyphs[0];
     }
 
     public abstract int getNumGlyphs();
 
     public abstract void charsToGlyphs(int count,
-				       char[] unicodes, int[] glyphs);
+                                       char[] unicodes, int[] glyphs);
 
     public abstract boolean charsToGlyphsNS(int count,
-					    char[] unicodes, int[] glyphs);
+                                            char[] unicodes, int[] glyphs);
 
     public abstract void charsToGlyphs(int count,
-				       int[] unicodes, int[] glyphs);
+                                       int[] unicodes, int[] glyphs);
 
 }

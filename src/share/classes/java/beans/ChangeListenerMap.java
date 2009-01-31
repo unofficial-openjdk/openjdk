@@ -42,7 +42,6 @@ import java.util.Set;
  * @see PropertyChangeListenerMap
  * @see VetoableChangeListenerMap
  *
- * @version %I% %G%
  * @author Sergey A. Malenkov
  */
 abstract class ChangeListenerMap<L extends EventListener> {

@@ -70,7 +70,7 @@ public class ExceptionSpec extends EventRequestSpec {
      */
     void resolve(ReferenceType refType) {
         setRequest(refType.virtualMachine().eventRequestManager()
-                   .createExceptionRequest(refType, 
+                   .createExceptionRequest(refType,
                                            notifyCaught, notifyUncaught));
     }
 

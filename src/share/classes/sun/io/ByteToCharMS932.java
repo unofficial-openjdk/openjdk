@@ -30,7 +30,6 @@ package sun.io;
  *
  * @author Limin Shi
  * @author Mark Son-Bell
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharMS932 extends ByteToCharMS932DB {
@@ -43,12 +42,12 @@ public class ByteToCharMS932 extends ByteToCharMS932DB {
     protected char convSingleByte(int b) {
         // If the high bits are all off, it's ASCII == Unicode
         if ((b & 0xFF80) == 0) {
-	    return (char)b;
+            return (char)b;
         }
-	return bcJIS0201.getUnicode(b);
+        return bcJIS0201.getUnicode(b);
     }
 
     String prt(int i) {
-	return Integer.toString(i,16);
+        return Integer.toString(i,16);
     }
 }

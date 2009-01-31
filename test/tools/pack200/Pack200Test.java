@@ -34,17 +34,17 @@ import java.util.zip.*;
  */
 
 /**
- * These tests are very rudimentary smoke tests to ensure that the packing 
- * unpacking process works on a select set of JARs. 
+ * These tests are very rudimentary smoke tests to ensure that the packing
+ * unpacking process works on a select set of JARs.
  */
 public class Pack200Test {
-    
+
     private static ArrayList <File> jarList = new ArrayList();
     private static final String PACKEXT = ".pack";
-    
+
     /** Creates a new instance of Pack200Test */
     private Pack200Test() {}
-    
+
     private static void doPackUnpack() {
         for (File in : jarList) {
             Pack200.Packer packer = Pack200.newPacker();
@@ -62,22 +62,22 @@ public class Pack200Test {
 
             try {
                 JarFile jarFile = new JarFile(in);
-                
+
                 // Write out to a jtreg scratch area
                 FileOutputStream fos = new FileOutputStream(in.getName() + PACKEXT);
-                
+
                 System.out.print("Packing [" + in.toString() + "]...");
                 // Call the packer
                 packer.pack(jarFile, fos);
                 jarFile.close();
                 fos.close();
-                
+
                 System.out.print("Unpacking...");
                 File f = new File(in.getName() + PACKEXT);
-                
+
                 // Write out to current directory, jtreg will setup a scratch area
                 JarOutputStream jostream = new JarOutputStream(new FileOutputStream(in.getName()));
-                
+
                 // Unpack the files
                 Pack200.Unpacker unpacker = Pack200.newUnpacker();
                 // Call the unpacker
@@ -94,7 +94,7 @@ public class Pack200Test {
             }
         }
     }
-    
+
     private static ArrayList <String> getZipFileEntryNames(ZipFile z) {
         ArrayList <String> out = new ArrayList();
         for (ZipEntry ze : Collections.list(z.entries())) {
@@ -102,25 +102,25 @@ public class Pack200Test {
         }
         return out;
     }
-    
+
     private static void doTest(File in) throws Exception {
        // make sure all the files in the original jar exists in the other
        ArrayList <String> refList = getZipFileEntryNames(new ZipFile(in));
        ArrayList <String> cmpList = getZipFileEntryNames(new ZipFile(in.getName()));
-       
+
        System.out.print(refList.size() + "/" + cmpList.size() + " entries...");
-       
+
        if (refList.size() != cmpList.size()) {
            throw new Exception("Missing: files ?, entries don't match");
        }
-       
+
        for (String ename: refList) {
           if (!cmpList.contains(ename)) {
               throw new Exception("Does not contain : " + ename);
-          } 
-       }       
+          }
+       }
     }
-    
+
     private static void doSanity(String[] args) {
         for (String s: args) {
             File f = new File(s);
@@ -131,8 +131,8 @@ public class Pack200Test {
                 System.out.println("         this test requires a JDK image, this file will be skipped.");
             }
         }
-    } 
-    
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -143,5 +143,5 @@ public class Pack200Test {
         }
         doSanity(args);
         doPackUnpack();
-    } 
+    }
 }

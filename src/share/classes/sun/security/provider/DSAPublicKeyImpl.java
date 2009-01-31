@@ -38,7 +38,6 @@ import java.security.InvalidKeyException;
  *
  * See the comments in DSAKeyFactory, 4532506, and 6232513.
  *
- * @version %I%, %G%
  */
 
 public final class DSAPublicKeyImpl extends DSAPublicKey {
@@ -59,22 +58,22 @@ public final class DSAPublicKeyImpl extends DSAPublicKey {
      * @param g DSA parameter g, may be null if all of p, q, and g are null.
      */
     public DSAPublicKeyImpl(BigInteger y, BigInteger p, BigInteger q,
-			BigInteger g)
-		throws InvalidKeyException {
-	super(y, p, q, g);
+                        BigInteger g)
+                throws InvalidKeyException {
+        super(y, p, q, g);
     }
 
     /**
      * Make a DSA public key from its DER encoding (X.509).
      */
     public DSAPublicKeyImpl(byte[] encoded) throws InvalidKeyException {
-	super(encoded);
+        super(encoded);
     }
 
     protected Object writeReplace() throws java.io.ObjectStreamException {
-	return new KeyRep(KeyRep.Type.PUBLIC,
-			getAlgorithm(),
-			getFormat(),
-			getEncoded());
+        return new KeyRep(KeyRep.Type.PUBLIC,
+                        getAlgorithm(),
+                        getFormat(),
+                        getEncoded());
     }
 }

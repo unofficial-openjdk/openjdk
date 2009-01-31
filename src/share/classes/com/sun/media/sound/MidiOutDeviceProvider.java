@@ -32,7 +32,6 @@ import javax.sound.midi.spi.MidiDeviceProvider;
 /**
  * MIDI output device provider.
  *
- * @version %I%, %E%
  * @author Kara Kytle
  * @author Florian Bomers
  */
@@ -49,9 +48,9 @@ public class MidiOutDeviceProvider extends AbstractMidiDeviceProvider {
     // STATIC
 
     static {
-	// initialize
-	Platform.initialize();
-	enabled = Platform.isMidiIOEnabled();
+        // initialize
+        Platform.initialize();
+        enabled = Platform.isMidiIOEnabled();
     }
 
     // CONSTRUCTOR
@@ -60,31 +59,31 @@ public class MidiOutDeviceProvider extends AbstractMidiDeviceProvider {
      * Required public no-arg constructor.
      */
     public MidiOutDeviceProvider() {
-	if (Printer.trace) Printer.trace("MidiOutDeviceProvider: constructor");
+        if (Printer.trace) Printer.trace("MidiOutDeviceProvider: constructor");
     }
 
     // implementation of abstract methods in AbstractMidiDeviceProvider
 
     AbstractMidiDeviceProvider.Info createInfo(int index) {
-	if (!enabled) {
-	    return null;
-	}
-	return new MidiOutDeviceInfo(index, MidiOutDeviceProvider.class);
+        if (!enabled) {
+            return null;
+        }
+        return new MidiOutDeviceInfo(index, MidiOutDeviceProvider.class);
     }
 
     MidiDevice createDevice(AbstractMidiDeviceProvider.Info info) {
-	if (enabled && (info instanceof MidiOutDeviceInfo)) {
-	    return new MidiOutDevice(info);
-	}
-	return null;
+        if (enabled && (info instanceof MidiOutDeviceInfo)) {
+            return new MidiOutDevice(info);
+        }
+        return null;
     }
 
-    int getNumDevices() { 
-	if (!enabled) {
-	    if (Printer.debug)Printer.debug("MidiOutDevice not enabled, returning 0 devices");
-	    return 0;
-	}
-	return nGetNumDevices(); 
+    int getNumDevices() {
+        if (!enabled) {
+            if (Printer.debug)Printer.debug("MidiOutDevice not enabled, returning 0 devices");
+            return 0;
+        }
+        return nGetNumDevices();
     }
 
     MidiDevice[] getDeviceCache() { return devices; }
@@ -106,12 +105,12 @@ public class MidiOutDeviceProvider extends AbstractMidiDeviceProvider {
      * the new instance will not reflect that state...
      */
     static class MidiOutDeviceInfo extends AbstractMidiDeviceProvider.Info {
-	private Class providerClass;
+        private Class providerClass;
 
-	private MidiOutDeviceInfo(int index, Class providerClass) {
-	    super(nGetName(index), nGetVendor(index), nGetDescription(index), nGetVersion(index), index);
-	    this.providerClass = providerClass;
-	}
+        private MidiOutDeviceInfo(int index, Class providerClass) {
+            super(nGetName(index), nGetVendor(index), nGetDescription(index), nGetVersion(index), index);
+            this.providerClass = providerClass;
+        }
 
     } // class MidiOutDeviceInfo
 

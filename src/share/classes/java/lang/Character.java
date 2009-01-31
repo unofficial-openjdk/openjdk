@@ -576,7 +576,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
 
     /**
      * The minimum value of a Unicode code point.
-     * 
+     *
      * @since 1.5
      */
     public static final int MIN_CODE_POINT = 0x000000;
@@ -658,7 +658,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
         private static Map map = new HashMap();
 
         /**
-         * Create a UnicodeBlock with the given identifier name. 
+         * Create a UnicodeBlock with the given identifier name.
          * This name must be the same as the block identifier.
          */
         private UnicodeBlock(String idName) {
@@ -675,8 +675,8 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             map.put(alias.toUpperCase(Locale.US), this);
         }
 
-        /** 
-         * Create a UnicodeBlock with the given identifier name and 
+        /**
+         * Create a UnicodeBlock with the given identifier name and
          * alias names.
          */
         private UnicodeBlock(String idName, String[] aliasName) {
@@ -692,7 +692,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Basic Latin" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock  BASIC_LATIN = 
+        public static final UnicodeBlock  BASIC_LATIN =
             new UnicodeBlock("BASIC_LATIN", new String[] {"Basic Latin", "BasicLatin" });
 
         /**
@@ -706,28 +706,28 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Latin Extended-A" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock LATIN_EXTENDED_A = 
+        public static final UnicodeBlock LATIN_EXTENDED_A =
             new UnicodeBlock("LATIN_EXTENDED_A", new String[]{ "Latin Extended-A", "LatinExtended-A"});
 
         /**
          * Constant for the "Latin Extended-B" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock LATIN_EXTENDED_B = 
+        public static final UnicodeBlock LATIN_EXTENDED_B =
             new UnicodeBlock("LATIN_EXTENDED_B", new String[] {"Latin Extended-B", "LatinExtended-B"});
 
         /**
          * Constant for the "IPA Extensions" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock IPA_EXTENSIONS = 
+        public static final UnicodeBlock IPA_EXTENSIONS =
             new UnicodeBlock("IPA_EXTENSIONS", new String[] {"IPA Extensions", "IPAExtensions"});
 
         /**
          * Constant for the "Spacing Modifier Letters" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock SPACING_MODIFIER_LETTERS = 
+        public static final UnicodeBlock SPACING_MODIFIER_LETTERS =
             new UnicodeBlock("SPACING_MODIFIER_LETTERS", new String[] { "Spacing Modifier Letters",
                                                                         "SpacingModifierLetters"});
 
@@ -735,7 +735,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Combining Diacritical Marks" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock COMBINING_DIACRITICAL_MARKS = 
+        public static final UnicodeBlock COMBINING_DIACRITICAL_MARKS =
             new UnicodeBlock("COMBINING_DIACRITICAL_MARKS", new String[] {"Combining Diacritical Marks",
                                                                           "CombiningDiacriticalMarks" });
 
@@ -746,42 +746,42 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          *
          * @since 1.2
          */
-        public static final UnicodeBlock GREEK 
+        public static final UnicodeBlock GREEK
             = new UnicodeBlock("GREEK", new String[] {"Greek and Coptic", "GreekandCoptic"});
 
         /**
          * Constant for the "Cyrillic" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CYRILLIC = 
+        public static final UnicodeBlock CYRILLIC =
             new UnicodeBlock("CYRILLIC");
 
         /**
          * Constant for the "Armenian" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ARMENIAN = 
+        public static final UnicodeBlock ARMENIAN =
             new UnicodeBlock("ARMENIAN");
 
         /**
          * Constant for the "Hebrew" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HEBREW = 
+        public static final UnicodeBlock HEBREW =
             new UnicodeBlock("HEBREW");
 
         /**
          * Constant for the "Arabic" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ARABIC = 
+        public static final UnicodeBlock ARABIC =
             new UnicodeBlock("ARABIC");
 
         /**
          * Constant for the "Devanagari" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock DEVANAGARI = 
+        public static final UnicodeBlock DEVANAGARI =
             new UnicodeBlock("DEVANAGARI");
 
         /**
@@ -795,42 +795,42 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Gurmukhi" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock GURMUKHI = 
+        public static final UnicodeBlock GURMUKHI =
             new UnicodeBlock("GURMUKHI");
 
         /**
          * Constant for the "Gujarati" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock GUJARATI = 
+        public static final UnicodeBlock GUJARATI =
             new UnicodeBlock("GUJARATI");
 
         /**
          * Constant for the "Oriya" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ORIYA = 
+        public static final UnicodeBlock ORIYA =
             new UnicodeBlock("ORIYA");
 
         /**
          * Constant for the "Tamil" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock TAMIL = 
+        public static final UnicodeBlock TAMIL =
             new UnicodeBlock("TAMIL");
 
         /**
          * Constant for the "Telugu" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock TELUGU = 
+        public static final UnicodeBlock TELUGU =
             new UnicodeBlock("TELUGU");
 
         /**
          * Constant for the "Kannada" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock KANNADA = 
+        public static final UnicodeBlock KANNADA =
             new UnicodeBlock("KANNADA");
 
         /**
@@ -844,21 +844,21 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Thai" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock THAI = 
+        public static final UnicodeBlock THAI =
             new UnicodeBlock("THAI");
 
         /**
          * Constant for the "Lao" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock LAO = 
+        public static final UnicodeBlock LAO =
             new UnicodeBlock("LAO");
 
         /**
          * Constant for the "Tibetan" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock TIBETAN = 
+        public static final UnicodeBlock TIBETAN =
             new UnicodeBlock("TIBETAN");
 
         /**
@@ -872,14 +872,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Hangul Jamo" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HANGUL_JAMO = 
+        public static final UnicodeBlock HANGUL_JAMO =
             new UnicodeBlock("HANGUL_JAMO", new String[] {"Hangul Jamo", "HangulJamo"});
 
         /**
          * Constant for the "Latin Extended Additional" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock LATIN_EXTENDED_ADDITIONAL = 
+        public static final UnicodeBlock LATIN_EXTENDED_ADDITIONAL =
             new UnicodeBlock("LATIN_EXTENDED_ADDITIONAL", new String[] {"Latin Extended Additional",
                                                                         "LatinExtendedAdditional"});
 
@@ -887,21 +887,21 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Greek Extended" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock GREEK_EXTENDED = 
+        public static final UnicodeBlock GREEK_EXTENDED =
             new UnicodeBlock("GREEK_EXTENDED", new String[] {"Greek Extended", "GreekExtended"});
 
         /**
          * Constant for the "General Punctuation" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock GENERAL_PUNCTUATION = 
+        public static final UnicodeBlock GENERAL_PUNCTUATION =
             new UnicodeBlock("GENERAL_PUNCTUATION", new String[] {"General Punctuation", "GeneralPunctuation"});
 
         /**
          * Constant for the "Superscripts and Subscripts" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock SUPERSCRIPTS_AND_SUBSCRIPTS = 
+        public static final UnicodeBlock SUPERSCRIPTS_AND_SUBSCRIPTS =
             new UnicodeBlock("SUPERSCRIPTS_AND_SUBSCRIPTS", new String[] {"Superscripts and Subscripts",
                                                                           "SuperscriptsandSubscripts" });
 
@@ -909,7 +909,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Currency Symbols" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CURRENCY_SYMBOLS = 
+        public static final UnicodeBlock CURRENCY_SYMBOLS =
             new UnicodeBlock("CURRENCY_SYMBOLS", new String[] { "Currency Symbols", "CurrencySymbols"});
 
         /**
@@ -918,7 +918,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * This block was previously known as "Combining Marks for Symbols".
          * @since 1.2
          */
-        public static final UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS = 
+        public static final UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS =
             new UnicodeBlock("COMBINING_MARKS_FOR_SYMBOLS", new String[] {"Combining Diacritical Marks for Symbols",
                                                                                                                                                   "CombiningDiacriticalMarksforSymbols",
                                                                           "Combining Marks for Symbols",
@@ -928,28 +928,28 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Letterlike Symbols" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock LETTERLIKE_SYMBOLS = 
+        public static final UnicodeBlock LETTERLIKE_SYMBOLS =
             new UnicodeBlock("LETTERLIKE_SYMBOLS", new String[] { "Letterlike Symbols", "LetterlikeSymbols"});
 
         /**
          * Constant for the "Number Forms" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock NUMBER_FORMS = 
+        public static final UnicodeBlock NUMBER_FORMS =
             new UnicodeBlock("NUMBER_FORMS", new String[] {"Number Forms", "NumberForms"});
 
         /**
          * Constant for the "Arrows" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ARROWS = 
+        public static final UnicodeBlock ARROWS =
             new UnicodeBlock("ARROWS");
 
         /**
          * Constant for the "Mathematical Operators" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock MATHEMATICAL_OPERATORS = 
+        public static final UnicodeBlock MATHEMATICAL_OPERATORS =
             new UnicodeBlock("MATHEMATICAL_OPERATORS", new String[] {"Mathematical Operators",
                                                                      "MathematicalOperators"});
 
@@ -957,7 +957,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Miscellaneous Technical" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock MISCELLANEOUS_TECHNICAL = 
+        public static final UnicodeBlock MISCELLANEOUS_TECHNICAL =
             new UnicodeBlock("MISCELLANEOUS_TECHNICAL", new String[] {"Miscellaneous Technical",
                                                                       "MiscellaneousTechnical"});
 
@@ -965,66 +965,66 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Control Pictures" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CONTROL_PICTURES = 
+        public static final UnicodeBlock CONTROL_PICTURES =
             new UnicodeBlock("CONTROL_PICTURES", new String[] {"Control Pictures", "ControlPictures"});
 
         /**
          * Constant for the "Optical Character Recognition" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock OPTICAL_CHARACTER_RECOGNITION = 
-            new UnicodeBlock("OPTICAL_CHARACTER_RECOGNITION", new String[] {"Optical Character Recognition", 
+        public static final UnicodeBlock OPTICAL_CHARACTER_RECOGNITION =
+            new UnicodeBlock("OPTICAL_CHARACTER_RECOGNITION", new String[] {"Optical Character Recognition",
                                                                             "OpticalCharacterRecognition"});
 
         /**
          * Constant for the "Enclosed Alphanumerics" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ENCLOSED_ALPHANUMERICS = 
-            new UnicodeBlock("ENCLOSED_ALPHANUMERICS", new String[] {"Enclosed Alphanumerics", 
+        public static final UnicodeBlock ENCLOSED_ALPHANUMERICS =
+            new UnicodeBlock("ENCLOSED_ALPHANUMERICS", new String[] {"Enclosed Alphanumerics",
                                                                      "EnclosedAlphanumerics"});
 
         /**
          * Constant for the "Box Drawing" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock BOX_DRAWING = 
+        public static final UnicodeBlock BOX_DRAWING =
             new UnicodeBlock("BOX_DRAWING", new String[] {"Box Drawing", "BoxDrawing"});
 
         /**
          * Constant for the "Block Elements" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock BLOCK_ELEMENTS = 
+        public static final UnicodeBlock BLOCK_ELEMENTS =
             new UnicodeBlock("BLOCK_ELEMENTS", new String[] {"Block Elements", "BlockElements"});
 
         /**
          * Constant for the "Geometric Shapes" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock GEOMETRIC_SHAPES = 
+        public static final UnicodeBlock GEOMETRIC_SHAPES =
             new UnicodeBlock("GEOMETRIC_SHAPES", new String[] {"Geometric Shapes", "GeometricShapes"});
 
         /**
          * Constant for the "Miscellaneous Symbols" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock MISCELLANEOUS_SYMBOLS = 
-            new UnicodeBlock("MISCELLANEOUS_SYMBOLS", new String[] {"Miscellaneous Symbols", 
+        public static final UnicodeBlock MISCELLANEOUS_SYMBOLS =
+            new UnicodeBlock("MISCELLANEOUS_SYMBOLS", new String[] {"Miscellaneous Symbols",
                                                                     "MiscellaneousSymbols"});
 
         /**
          * Constant for the "Dingbats" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock DINGBATS = 
+        public static final UnicodeBlock DINGBATS =
             new UnicodeBlock("DINGBATS");
 
         /**
          * Constant for the "CJK Symbols and Punctuation" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CJK_SYMBOLS_AND_PUNCTUATION = 
+        public static final UnicodeBlock CJK_SYMBOLS_AND_PUNCTUATION =
             new UnicodeBlock("CJK_SYMBOLS_AND_PUNCTUATION", new String[] {"CJK Symbols and Punctuation",
                                                                           "CJKSymbolsandPunctuation"});
 
@@ -1032,28 +1032,28 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Hiragana" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HIRAGANA = 
+        public static final UnicodeBlock HIRAGANA =
             new UnicodeBlock("HIRAGANA");
 
         /**
          * Constant for the "Katakana" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock KATAKANA = 
+        public static final UnicodeBlock KATAKANA =
             new UnicodeBlock("KATAKANA");
 
         /**
          * Constant for the "Bopomofo" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock BOPOMOFO = 
+        public static final UnicodeBlock BOPOMOFO =
             new UnicodeBlock("BOPOMOFO");
 
         /**
          * Constant for the "Hangul Compatibility Jamo" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HANGUL_COMPATIBILITY_JAMO = 
+        public static final UnicodeBlock HANGUL_COMPATIBILITY_JAMO =
             new UnicodeBlock("HANGUL_COMPATIBILITY_JAMO", new String[] {"Hangul Compatibility Jamo",
                                                                         "HangulCompatibilityJamo"});
 
@@ -1061,14 +1061,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Kanbun" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock KANBUN = 
+        public static final UnicodeBlock KANBUN =
             new UnicodeBlock("KANBUN");
 
         /**
          * Constant for the "Enclosed CJK Letters and Months" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ENCLOSED_CJK_LETTERS_AND_MONTHS = 
+        public static final UnicodeBlock ENCLOSED_CJK_LETTERS_AND_MONTHS =
             new UnicodeBlock("ENCLOSED_CJK_LETTERS_AND_MONTHS", new String[] {"Enclosed CJK Letters and Months",
                                                                               "EnclosedCJKLettersandMonths"});
 
@@ -1076,37 +1076,37 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "CJK Compatibility" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CJK_COMPATIBILITY = 
+        public static final UnicodeBlock CJK_COMPATIBILITY =
             new UnicodeBlock("CJK_COMPATIBILITY", new String[] {"CJK Compatibility", "CJKCompatibility"});
 
         /**
          * Constant for the "CJK Unified Ideographs" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS = 
-            new UnicodeBlock("CJK_UNIFIED_IDEOGRAPHS", new String[] {"CJK Unified Ideographs", 
+        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS =
+            new UnicodeBlock("CJK_UNIFIED_IDEOGRAPHS", new String[] {"CJK Unified Ideographs",
                                                                      "CJKUnifiedIdeographs"});
 
         /**
          * Constant for the "Hangul Syllables" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HANGUL_SYLLABLES = 
+        public static final UnicodeBlock HANGUL_SYLLABLES =
             new UnicodeBlock("HANGUL_SYLLABLES", new String[] {"Hangul Syllables", "HangulSyllables"});
 
         /**
          * Constant for the "Private Use Area" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock PRIVATE_USE_AREA = 
+        public static final UnicodeBlock PRIVATE_USE_AREA =
             new UnicodeBlock("PRIVATE_USE_AREA", new String[] {"Private Use Area", "PrivateUseArea"});
 
         /**
          * Constant for the "CJK Compatibility Ideographs" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CJK_COMPATIBILITY_IDEOGRAPHS = 
-            new UnicodeBlock("CJK_COMPATIBILITY_IDEOGRAPHS", 
+        public static final UnicodeBlock CJK_COMPATIBILITY_IDEOGRAPHS =
+            new UnicodeBlock("CJK_COMPATIBILITY_IDEOGRAPHS",
                              new String[] {"CJK Compatibility Ideographs",
                                            "CJKCompatibilityIdeographs"});
 
@@ -1114,7 +1114,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Alphabetic Presentation Forms" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ALPHABETIC_PRESENTATION_FORMS = 
+        public static final UnicodeBlock ALPHABETIC_PRESENTATION_FORMS =
             new UnicodeBlock("ALPHABETIC_PRESENTATION_FORMS", new String[] {"Alphabetic Presentation Forms",
                                                                             "AlphabeticPresentationForms"});
 
@@ -1122,7 +1122,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Arabic Presentation Forms-A" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ARABIC_PRESENTATION_FORMS_A = 
+        public static final UnicodeBlock ARABIC_PRESENTATION_FORMS_A =
             new UnicodeBlock("ARABIC_PRESENTATION_FORMS_A", new String[] {"Arabic Presentation Forms-A",
                                                                           "ArabicPresentationForms-A"});
 
@@ -1130,7 +1130,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Combining Half Marks" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock COMBINING_HALF_MARKS = 
+        public static final UnicodeBlock COMBINING_HALF_MARKS =
             new UnicodeBlock("COMBINING_HALF_MARKS", new String[] {"Combining Half Marks",
                                                                    "CombiningHalfMarks"});
 
@@ -1138,7 +1138,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "CJK Compatibility Forms" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock CJK_COMPATIBILITY_FORMS = 
+        public static final UnicodeBlock CJK_COMPATIBILITY_FORMS =
             new UnicodeBlock("CJK_COMPATIBILITY_FORMS", new String[] {"CJK Compatibility Forms",
                                                                       "CJKCompatibilityForms"});
 
@@ -1146,15 +1146,15 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Small Form Variants" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock SMALL_FORM_VARIANTS = 
-            new UnicodeBlock("SMALL_FORM_VARIANTS", new String[] {"Small Form Variants", 
+        public static final UnicodeBlock SMALL_FORM_VARIANTS =
+            new UnicodeBlock("SMALL_FORM_VARIANTS", new String[] {"Small Form Variants",
                                                                   "SmallFormVariants"});
 
         /**
          * Constant for the "Arabic Presentation Forms-B" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock ARABIC_PRESENTATION_FORMS_B = 
+        public static final UnicodeBlock ARABIC_PRESENTATION_FORMS_B =
             new UnicodeBlock("ARABIC_PRESENTATION_FORMS_B", new String[] {"Arabic Presentation Forms-B",
                                                                           "ArabicPresentationForms-B"});
 
@@ -1162,8 +1162,8 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Halfwidth and Fullwidth Forms" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock HALFWIDTH_AND_FULLWIDTH_FORMS = 
-            new UnicodeBlock("HALFWIDTH_AND_FULLWIDTH_FORMS", 
+        public static final UnicodeBlock HALFWIDTH_AND_FULLWIDTH_FORMS =
+            new UnicodeBlock("HALFWIDTH_AND_FULLWIDTH_FORMS",
                              new String[] {"Halfwidth and Fullwidth Forms",
                                            "HalfwidthandFullwidthForms"});
 
@@ -1171,68 +1171,68 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Specials" Unicode character block.
          * @since 1.2
          */
-        public static final UnicodeBlock SPECIALS = 
+        public static final UnicodeBlock SPECIALS =
             new UnicodeBlock("SPECIALS");
 
         /**
          * @deprecated As of J2SE 5, use {@link #HIGH_SURROGATES},
          *             {@link #HIGH_PRIVATE_USE_SURROGATES}, and
-         *             {@link #LOW_SURROGATES}. These new constants match 
+         *             {@link #LOW_SURROGATES}. These new constants match
          *             the block definitions of the Unicode Standard.
          *             The {@link #of(char)} and {@link #of(int)} methods
          *             return the new constants, not SURROGATES_AREA.
          */
         @Deprecated
-        public static final UnicodeBlock SURROGATES_AREA = 
+        public static final UnicodeBlock SURROGATES_AREA =
             new UnicodeBlock("SURROGATES_AREA");
 
         /**
          * Constant for the "Syriac" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock SYRIAC = 
+        public static final UnicodeBlock SYRIAC =
             new UnicodeBlock("SYRIAC");
 
         /**
          * Constant for the "Thaana" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock THAANA = 
+        public static final UnicodeBlock THAANA =
             new UnicodeBlock("THAANA");
 
-        /** 
+        /**
          * Constant for the "Sinhala" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock SINHALA = 
+        public static final UnicodeBlock SINHALA =
             new UnicodeBlock("SINHALA");
 
         /**
          * Constant for the "Myanmar" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock MYANMAR = 
+        public static final UnicodeBlock MYANMAR =
             new UnicodeBlock("MYANMAR");
 
         /**
          * Constant for the "Ethiopic" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock ETHIOPIC = 
+        public static final UnicodeBlock ETHIOPIC =
             new UnicodeBlock("ETHIOPIC");
 
         /**
          * Constant for the "Cherokee" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock CHEROKEE = 
+        public static final UnicodeBlock CHEROKEE =
             new UnicodeBlock("CHEROKEE");
 
         /**
          * Constant for the "Unified Canadian Aboriginal Syllabics" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS = 
+        public static final UnicodeBlock UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS =
             new UnicodeBlock("UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS",
                              new String[] {"Unified Canadian Aboriginal Syllabics",
                                            "UnifiedCanadianAboriginalSyllabics"});
@@ -1241,35 +1241,35 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Ogham" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock OGHAM = 
+        public static final UnicodeBlock OGHAM =
                              new UnicodeBlock("OGHAM");
 
         /**
          * Constant for the "Runic" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock RUNIC = 
+        public static final UnicodeBlock RUNIC =
                              new UnicodeBlock("RUNIC");
 
         /**
          * Constant for the "Khmer" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock KHMER = 
+        public static final UnicodeBlock KHMER =
                              new UnicodeBlock("KHMER");
 
         /**
          * Constant for the "Mongolian" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock MONGOLIAN = 
+        public static final UnicodeBlock MONGOLIAN =
                              new UnicodeBlock("MONGOLIAN");
 
         /**
          * Constant for the "Braille Patterns" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock BRAILLE_PATTERNS = 
+        public static final UnicodeBlock BRAILLE_PATTERNS =
             new UnicodeBlock("BRAILLE_PATTERNS", new String[] {"Braille Patterns",
                                                                "BraillePatterns"});
 
@@ -1277,7 +1277,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "CJK Radicals Supplement" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock CJK_RADICALS_SUPPLEMENT = 
+        public static final UnicodeBlock CJK_RADICALS_SUPPLEMENT =
              new UnicodeBlock("CJK_RADICALS_SUPPLEMENT", new String[] {"CJK Radicals Supplement",
                                                                        "CJKRadicalsSupplement"});
 
@@ -1285,7 +1285,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Kangxi Radicals" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock KANGXI_RADICALS = 
+        public static final UnicodeBlock KANGXI_RADICALS =
             new UnicodeBlock("KANGXI_RADICALS", new String[] {"Kangxi Radicals", "KangxiRadicals"});
 
         /**
@@ -1300,15 +1300,15 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Bopomofo Extended" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock BOPOMOFO_EXTENDED = 
-            new UnicodeBlock("BOPOMOFO_EXTENDED", new String[] {"Bopomofo Extended", 
+        public static final UnicodeBlock BOPOMOFO_EXTENDED =
+            new UnicodeBlock("BOPOMOFO_EXTENDED", new String[] {"Bopomofo Extended",
                                                                 "BopomofoExtended"});
 
         /**
          * Constant for the "CJK Unified Ideographs Extension A" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A = 
+        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A =
             new UnicodeBlock("CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A", new String[] {"CJK Unified Ideographs Extension A",
                                                                                  "CJKUnifiedIdeographsExtensionA"});
 
@@ -1316,7 +1316,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Yi Syllables" Unicode character block.
          * @since 1.4
          */
-        public static final UnicodeBlock YI_SYLLABLES = 
+        public static final UnicodeBlock YI_SYLLABLES =
             new UnicodeBlock("YI_SYLLABLES", new String[] {"Yi Syllables", "YiSyllables"});
 
         /**
@@ -1325,13 +1325,13 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          */
         public static final UnicodeBlock YI_RADICALS =
             new UnicodeBlock("YI_RADICALS", new String[] {"Yi Radicals", "YiRadicals"});
-        
+
 
         /**
          * Constant for the "Cyrillic Supplementary" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock CYRILLIC_SUPPLEMENTARY = 
+        public static final UnicodeBlock CYRILLIC_SUPPLEMENTARY =
             new UnicodeBlock("CYRILLIC_SUPPLEMENTARY", new String[] {"Cyrillic Supplementary",
                                                                      "CyrillicSupplementary"});
 
@@ -1339,64 +1339,64 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Tagalog" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock TAGALOG = 
+        public static final UnicodeBlock TAGALOG =
             new UnicodeBlock("TAGALOG");
 
         /**
          * Constant for the "Hanunoo" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock HANUNOO = 
+        public static final UnicodeBlock HANUNOO =
             new UnicodeBlock("HANUNOO");
 
         /**
          * Constant for the "Buhid" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock BUHID = 
+        public static final UnicodeBlock BUHID =
             new UnicodeBlock("BUHID");
 
         /**
          * Constant for the "Tagbanwa" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock TAGBANWA = 
+        public static final UnicodeBlock TAGBANWA =
             new UnicodeBlock("TAGBANWA");
 
         /**
          * Constant for the "Limbu" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock LIMBU = 
+        public static final UnicodeBlock LIMBU =
             new UnicodeBlock("LIMBU");
 
         /**
          * Constant for the "Tai Le" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock TAI_LE = 
+        public static final UnicodeBlock TAI_LE =
             new UnicodeBlock("TAI_LE", new String[] {"Tai Le", "TaiLe"});
 
         /**
          * Constant for the "Khmer Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock KHMER_SYMBOLS = 
+        public static final UnicodeBlock KHMER_SYMBOLS =
             new UnicodeBlock("KHMER_SYMBOLS", new String[] {"Khmer Symbols", "KhmerSymbols"});
 
         /**
          * Constant for the "Phonetic Extensions" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock PHONETIC_EXTENSIONS = 
+        public static final UnicodeBlock PHONETIC_EXTENSIONS =
             new UnicodeBlock("PHONETIC_EXTENSIONS", new String[] {"Phonetic Extensions", "PhoneticExtensions"});
 
         /**
          * Constant for the "Miscellaneous Mathematical Symbols-A" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A = 
-            new UnicodeBlock("MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A", 
+        public static final UnicodeBlock MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A =
+            new UnicodeBlock("MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A",
                              new String[]{"Miscellaneous Mathematical Symbols-A",
                                           "MiscellaneousMathematicalSymbols-A"});
 
@@ -1404,7 +1404,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Supplemental Arrows-A" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock SUPPLEMENTAL_ARROWS_A = 
+        public static final UnicodeBlock SUPPLEMENTAL_ARROWS_A =
             new UnicodeBlock("SUPPLEMENTAL_ARROWS_A", new String[] {"Supplemental Arrows-A",
                                                                     "SupplementalArrows-A"});
 
@@ -1412,7 +1412,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Supplemental Arrows-B" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock SUPPLEMENTAL_ARROWS_B = 
+        public static final UnicodeBlock SUPPLEMENTAL_ARROWS_B =
             new UnicodeBlock("SUPPLEMENTAL_ARROWS_B", new String[] {"Supplemental Arrows-B",
                                                                     "SupplementalArrows-B"});
 
@@ -1421,7 +1421,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * @since 1.5
          */
         public static final UnicodeBlock MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B
-                = new UnicodeBlock("MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B", 
+                = new UnicodeBlock("MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B",
                                    new String[] {"Miscellaneous Mathematical Symbols-B",
                                                  "MiscellaneousMathematicalSymbols-B"});
 
@@ -1429,8 +1429,8 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Supplemental Mathematical Operators" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock SUPPLEMENTAL_MATHEMATICAL_OPERATORS = 
-            new UnicodeBlock("SUPPLEMENTAL_MATHEMATICAL_OPERATORS", 
+        public static final UnicodeBlock SUPPLEMENTAL_MATHEMATICAL_OPERATORS =
+            new UnicodeBlock("SUPPLEMENTAL_MATHEMATICAL_OPERATORS",
                              new String[]{"Supplemental Mathematical Operators",
                                           "SupplementalMathematicalOperators"} );
 
@@ -1438,7 +1438,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Miscellaneous Symbols and Arrows" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock MISCELLANEOUS_SYMBOLS_AND_ARROWS = 
+        public static final UnicodeBlock MISCELLANEOUS_SYMBOLS_AND_ARROWS =
             new UnicodeBlock("MISCELLANEOUS_SYMBOLS_AND_ARROWS", new String[] {"Miscellaneous Symbols and Arrows",
                                                                                "MiscellaneousSymbolsandArrows"});
 
@@ -1446,7 +1446,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Katakana Phonetic Extensions" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock KATAKANA_PHONETIC_EXTENSIONS = 
+        public static final UnicodeBlock KATAKANA_PHONETIC_EXTENSIONS =
             new UnicodeBlock("KATAKANA_PHONETIC_EXTENSIONS", new String[] {"Katakana Phonetic Extensions",
                                                                            "KatakanaPhoneticExtensions"});
 
@@ -1454,7 +1454,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Yijing Hexagram Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock YIJING_HEXAGRAM_SYMBOLS = 
+        public static final UnicodeBlock YIJING_HEXAGRAM_SYMBOLS =
             new UnicodeBlock("YIJING_HEXAGRAM_SYMBOLS", new String[] {"Yijing Hexagram Symbols",
                                                                       "YijingHexagramSymbols"});
 
@@ -1462,35 +1462,35 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Variation Selectors" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock VARIATION_SELECTORS = 
+        public static final UnicodeBlock VARIATION_SELECTORS =
             new UnicodeBlock("VARIATION_SELECTORS", new String[] {"Variation Selectors", "VariationSelectors"});
 
         /**
          * Constant for the "Linear B Syllabary" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock LINEAR_B_SYLLABARY = 
+        public static final UnicodeBlock LINEAR_B_SYLLABARY =
             new UnicodeBlock("LINEAR_B_SYLLABARY", new String[] {"Linear B Syllabary", "LinearBSyllabary"});
 
         /**
          * Constant for the "Linear B Ideograms" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock LINEAR_B_IDEOGRAMS = 
+        public static final UnicodeBlock LINEAR_B_IDEOGRAMS =
             new UnicodeBlock("LINEAR_B_IDEOGRAMS", new String[] {"Linear B Ideograms", "LinearBIdeograms"});
 
         /**
          * Constant for the "Aegean Numbers" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock AEGEAN_NUMBERS = 
+        public static final UnicodeBlock AEGEAN_NUMBERS =
             new UnicodeBlock("AEGEAN_NUMBERS", new String[] {"Aegean Numbers", "AegeanNumbers"});
 
         /**
          * Constant for the "Old Italic" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock OLD_ITALIC = 
+        public static final UnicodeBlock OLD_ITALIC =
             new UnicodeBlock("OLD_ITALIC", new String[] {"Old Italic", "OldItalic"});
 
         /**
@@ -1527,14 +1527,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Cypriot Syllabary" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock CYPRIOT_SYLLABARY = 
+        public static final UnicodeBlock CYPRIOT_SYLLABARY =
             new UnicodeBlock("CYPRIOT_SYLLABARY", new String[] {"Cypriot Syllabary", "CypriotSyllabary"});
 
         /**
          * Constant for the "Byzantine Musical Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock BYZANTINE_MUSICAL_SYMBOLS = 
+        public static final UnicodeBlock BYZANTINE_MUSICAL_SYMBOLS =
             new UnicodeBlock("BYZANTINE_MUSICAL_SYMBOLS", new String[] {"Byzantine Musical Symbols",
                                                                         "ByzantineMusicalSymbols"});
 
@@ -1542,14 +1542,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Musical Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock MUSICAL_SYMBOLS = 
+        public static final UnicodeBlock MUSICAL_SYMBOLS =
             new UnicodeBlock("MUSICAL_SYMBOLS", new String[] {"Musical Symbols", "MusicalSymbols"});
 
         /**
          * Constant for the "Tai Xuan Jing Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock TAI_XUAN_JING_SYMBOLS = 
+        public static final UnicodeBlock TAI_XUAN_JING_SYMBOLS =
             new UnicodeBlock("TAI_XUAN_JING_SYMBOLS", new String[] {"Tai Xuan Jing Symbols",
                                                                      "TaiXuanJingSymbols"});
 
@@ -1557,23 +1557,23 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Mathematical Alphanumeric Symbols" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock MATHEMATICAL_ALPHANUMERIC_SYMBOLS = 
-            new UnicodeBlock("MATHEMATICAL_ALPHANUMERIC_SYMBOLS", 
+        public static final UnicodeBlock MATHEMATICAL_ALPHANUMERIC_SYMBOLS =
+            new UnicodeBlock("MATHEMATICAL_ALPHANUMERIC_SYMBOLS",
                              new String[] {"Mathematical Alphanumeric Symbols", "MathematicalAlphanumericSymbols"});
 
         /**
          * Constant for the "CJK Unified Ideographs Extension B" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B = 
-            new UnicodeBlock("CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B", 
+        public static final UnicodeBlock CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B =
+            new UnicodeBlock("CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B",
                              new String[] {"CJK Unified Ideographs Extension B", "CJKUnifiedIdeographsExtensionB"});
 
         /**
          * Constant for the "CJK Compatibility Ideographs Supplement" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT = 
+        public static final UnicodeBlock CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT =
             new UnicodeBlock("CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT",
                              new String[]{"CJK Compatibility Ideographs Supplement",
                                           "CJKCompatibilityIdeographsSupplement"});
@@ -1588,7 +1588,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Variation Selectors Supplement" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock VARIATION_SELECTORS_SUPPLEMENT = 
+        public static final UnicodeBlock VARIATION_SELECTORS_SUPPLEMENT =
             new UnicodeBlock("VARIATION_SELECTORS_SUPPLEMENT", new String[] {"Variation Selectors Supplement",
                                                                              "VariationSelectorsSupplement"});
 
@@ -1596,16 +1596,16 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * Constant for the "Supplementary Private Use Area-A" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock SUPPLEMENTARY_PRIVATE_USE_AREA_A = 
-            new UnicodeBlock("SUPPLEMENTARY_PRIVATE_USE_AREA_A", 
-                             new String[] {"Supplementary Private Use Area-A", 
+        public static final UnicodeBlock SUPPLEMENTARY_PRIVATE_USE_AREA_A =
+            new UnicodeBlock("SUPPLEMENTARY_PRIVATE_USE_AREA_A",
+                             new String[] {"Supplementary Private Use Area-A",
                                            "SupplementaryPrivateUseArea-A"});
 
         /**
          * Constant for the "Supplementary Private Use Area-B" Unicode character block.
          * @since 1.5
          */
-        public static final UnicodeBlock SUPPLEMENTARY_PRIVATE_USE_AREA_B = 
+        public static final UnicodeBlock SUPPLEMENTARY_PRIVATE_USE_AREA_B =
             new UnicodeBlock("SUPPLEMENTARY_PRIVATE_USE_AREA_B",
                              new String[] {"Supplementary Private Use Area-B",
                                            "SupplementaryPrivateUseArea-B"});
@@ -1617,7 +1617,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          *
          * @since 1.5
          */
-        public static final UnicodeBlock HIGH_SURROGATES = 
+        public static final UnicodeBlock HIGH_SURROGATES =
             new UnicodeBlock("HIGH_SURROGATES", new String[] {"High Surrogates", "HighSurrogates"});
 
         /**
@@ -1627,7 +1627,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          *
          * @since 1.5
          */
-        public static final UnicodeBlock HIGH_PRIVATE_USE_SURROGATES = 
+        public static final UnicodeBlock HIGH_PRIVATE_USE_SURROGATES =
             new UnicodeBlock("HIGH_PRIVATE_USE_SURROGATES", new String[] { "High Private Use Surrogates",
                                                                            "HighPrivateUseSurrogates"});
 
@@ -1638,9 +1638,9 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          *
          * @since 1.5
          */
-        public static final UnicodeBlock LOW_SURROGATES = 
+        public static final UnicodeBlock LOW_SURROGATES =
             new UnicodeBlock("LOW_SURROGATES", new String[] {"Low Surrogates", "LowSurrogates"});
-     
+
         private static final int blockStarts[] = {
             0x0000, // Basic Latin
             0x0080, // Latin-1 Supplement
@@ -2019,7 +2019,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
          * <ol>
          * <li> Canonical block names as defined by the Unicode Standard.
          * For example, the standard defines a "Basic Latin" block. Therefore, this
-         * method accepts "Basic Latin" as a valid block name. The documentation of 
+         * method accepts "Basic Latin" as a valid block name. The documentation of
          * each UnicodeBlock provides the canonical name.
          * <li>Canonical block names with all spaces removed. For example, "BasicLatin"
          * is a valid block name for the "Basic Latin" block.
@@ -2068,7 +2068,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * Constructs a newly allocated <code>Character</code> object that
      * represents the specified <code>char</code> value.
      *
-     * @param  value   the value to be represented by the 
+     * @param  value   the value to be represented by the
      *                  <code>Character</code> object.
      */
     public Character(char value) {
@@ -2076,14 +2076,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     private static class CharacterCache {
-	private CharacterCache(){}
+        private CharacterCache(){}
 
-	static final Character cache[] = new Character[127 + 1];
+        static final Character cache[] = new Character[127 + 1];
 
-	static {
-	    for(int i = 0; i < cache.length; i++)
-		cache[i] = new Character((char)i);
-	}
+        static {
+            for(int i = 0; i < cache.length; i++)
+                cache[i] = new Character((char)i);
+        }
     }
 
     /**
@@ -2100,9 +2100,9 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static Character valueOf(char c) {
-	if(c <= 127) { // must cache
-	    return CharacterCache.cache[(int)c];
-	}
+        if(c <= 127) { // must cache
+            return CharacterCache.cache[(int)c];
+        }
         return new Character(c);
     }
 
@@ -2229,7 +2229,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     public static boolean isHighSurrogate(char ch) {
         return ch >= MIN_HIGH_SURROGATE && ch <= MAX_HIGH_SURROGATE;
     }
-    
+
     /**
      * Determines if the given <code>char</code> value is a
      * low-surrogate code unit (also known as <i>trailing-surrogate code
@@ -2365,7 +2365,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int codePointAt(char[] a, int index) {
-	return codePointAtImpl(a, index, a.length);
+        return codePointAtImpl(a, index, a.length);
     }
 
     /**
@@ -2394,10 +2394,10 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int codePointAt(char[] a, int index, int limit) {
-	if (index >= limit || limit < 0 || limit > a.length) {
-	    throw new IndexOutOfBoundsException();
-	}
-	return codePointAtImpl(a, index, limit);
+        if (index >= limit || limit < 0 || limit > a.length) {
+            throw new IndexOutOfBoundsException();
+        }
+        return codePointAtImpl(a, index, limit);
     }
 
     static int codePointAtImpl(char[] a, int index, int limit) {
@@ -2500,10 +2500,10 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int codePointBefore(char[] a, int index, int start) {
-	if (index <= start || start < 0 || start >= a.length) {
-	    throw new IndexOutOfBoundsException();
-	}
-	return codePointBeforeImpl(a, index, start);
+        if (index <= start || start < 0 || start >= a.length) {
+            throw new IndexOutOfBoundsException();
+        }
+        return codePointBeforeImpl(a, index, start);
     }
 
     static int codePointBeforeImpl(char[] a, int index, int start) {
@@ -2620,20 +2620,20 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int codePointCount(CharSequence seq, int beginIndex, int endIndex) {
-	int length = seq.length();
-	if (beginIndex < 0 || endIndex > length || beginIndex > endIndex) {
-	    throw new IndexOutOfBoundsException();
-	}
-	int n = 0;
-	for (int i = beginIndex; i < endIndex; ) {
-	    n++;
-	    if (isHighSurrogate(seq.charAt(i++))) {
-		if (i < endIndex && isLowSurrogate(seq.charAt(i))) {
-		    i++;
-		}
-	    }
-	}
-	return n;
+        int length = seq.length();
+        if (beginIndex < 0 || endIndex > length || beginIndex > endIndex) {
+            throw new IndexOutOfBoundsException();
+        }
+        int n = 0;
+        for (int i = beginIndex; i < endIndex; ) {
+            n++;
+            if (isHighSurrogate(seq.charAt(i++))) {
+                if (i < endIndex && isLowSurrogate(seq.charAt(i))) {
+                    i++;
+                }
+            }
+        }
+        return n;
     }
 
     /**
@@ -2656,24 +2656,24 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since  1.5
      */
     public static int codePointCount(char[] a, int offset, int count) {
-	if (count > a.length - offset || offset < 0 || count < 0) {
-	    throw new IndexOutOfBoundsException();
-	}
-	return codePointCountImpl(a, offset, count);
+        if (count > a.length - offset || offset < 0 || count < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+        return codePointCountImpl(a, offset, count);
     }
 
     static int codePointCountImpl(char[] a, int offset, int count) {
-	int endIndex = offset + count;
-	int n = 0;
-	for (int i = offset; i < endIndex; ) {
-	    n++;
-	    if (isHighSurrogate(a[i++])) {
-		if (i < endIndex && isLowSurrogate(a[i])) {
-		    i++;
-		}
-	    }
-	}
-	return n;
+        int endIndex = offset + count;
+        int n = 0;
+        for (int i = offset; i < endIndex; ) {
+            n++;
+            if (isHighSurrogate(a[i++])) {
+                if (i < endIndex && isLowSurrogate(a[i])) {
+                    i++;
+                }
+            }
+        }
+        return n;
     }
 
     /**
@@ -2699,39 +2699,39 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since 1.5
      */
     public static int offsetByCodePoints(CharSequence seq, int index,
-					 int codePointOffset) {
-	int length = seq.length();
-	if (index < 0 || index > length) {
-	    throw new IndexOutOfBoundsException();
-	}
+                                         int codePointOffset) {
+        int length = seq.length();
+        if (index < 0 || index > length) {
+            throw new IndexOutOfBoundsException();
+        }
 
-	int x = index;
-	if (codePointOffset >= 0) {
-	    int i;
-	    for (i = 0; x < length && i < codePointOffset; i++) {
-		if (isHighSurrogate(seq.charAt(x++))) {
-		    if (x < length && isLowSurrogate(seq.charAt(x))) {
-			x++;
-		    }
-		}
-	    }
-	    if (i < codePointOffset) {
-		throw new IndexOutOfBoundsException();
-	    }
-	} else {
-	    int i;
-	    for (i = codePointOffset; x > 0 && i < 0; i++) {
-		if (isLowSurrogate(seq.charAt(--x))) {
-		    if (x > 0 && isHighSurrogate(seq.charAt(x-1))) {
-			x--;
-		    }
-		}
-	    }
-	    if (i < 0) {
-		throw new IndexOutOfBoundsException();
-	    }
-	}
-	return x;
+        int x = index;
+        if (codePointOffset >= 0) {
+            int i;
+            for (i = 0; x < length && i < codePointOffset; i++) {
+                if (isHighSurrogate(seq.charAt(x++))) {
+                    if (x < length && isLowSurrogate(seq.charAt(x))) {
+                        x++;
+                    }
+                }
+            }
+            if (i < codePointOffset) {
+                throw new IndexOutOfBoundsException();
+            }
+        } else {
+            int i;
+            for (i = codePointOffset; x > 0 && i < 0; i++) {
+                if (isLowSurrogate(seq.charAt(--x))) {
+                    if (x > 0 && isHighSurrogate(seq.charAt(x-1))) {
+                        x--;
+                    }
+                }
+            }
+            if (i < 0) {
+                throw new IndexOutOfBoundsException();
+            }
+        }
+        return x;
     }
 
     /**
@@ -2751,7 +2751,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @param codePointOffset the offset in code points
      * @return the index within the subarray
      * @exception NullPointerException if <code>a</code> is null.
-     * @exception IndexOutOfBoundsException 
+     * @exception IndexOutOfBoundsException
      *   if <code>start</code> or <code>count</code> is negative,
      *   or if <code>start + count</code> is larger than the length of
      *   the given array,
@@ -2768,44 +2768,44 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since 1.5
      */
     public static int offsetByCodePoints(char[] a, int start, int count,
-					 int index, int codePointOffset) {
-	if (count > a.length-start || start < 0 || count < 0
-	    || index < start || index > start+count) {
-	    throw new IndexOutOfBoundsException();
-	}
-	return offsetByCodePointsImpl(a, start, count, index, codePointOffset);
+                                         int index, int codePointOffset) {
+        if (count > a.length-start || start < 0 || count < 0
+            || index < start || index > start+count) {
+            throw new IndexOutOfBoundsException();
+        }
+        return offsetByCodePointsImpl(a, start, count, index, codePointOffset);
     }
 
     static int offsetByCodePointsImpl(char[]a, int start, int count,
-				      int index, int codePointOffset) {
-	int x = index;
-	if (codePointOffset >= 0) {
-	    int limit = start + count;
-	    int i;
-	    for (i = 0; x < limit && i < codePointOffset; i++) {
-		if (isHighSurrogate(a[x++])) {
-		    if (x < limit && isLowSurrogate(a[x])) {
-			x++;
-		    }
-		}
-	    }
-	    if (i < codePointOffset) {
-		throw new IndexOutOfBoundsException();
-	    }
-	} else {
-	    int i;
-	    for (i = codePointOffset; x > start && i < 0; i++) {
-		if (isLowSurrogate(a[--x])) {
-		    if (x > start && isHighSurrogate(a[x-1])) {
-			x--;
-		    }
-		}
-	    } 
-	    if (i < 0) {
-		throw new IndexOutOfBoundsException();
-	    }
-	}
-	return x;
+                                      int index, int codePointOffset) {
+        int x = index;
+        if (codePointOffset >= 0) {
+            int limit = start + count;
+            int i;
+            for (i = 0; x < limit && i < codePointOffset; i++) {
+                if (isHighSurrogate(a[x++])) {
+                    if (x < limit && isLowSurrogate(a[x])) {
+                        x++;
+                    }
+                }
+            }
+            if (i < codePointOffset) {
+                throw new IndexOutOfBoundsException();
+            }
+        } else {
+            int i;
+            for (i = codePointOffset; x > start && i < 0; i++) {
+                if (isLowSurrogate(a[--x])) {
+                    if (x > start && isHighSurrogate(a[x-1])) {
+                        x--;
+                    }
+                }
+            }
+            if (i < 0) {
+                throw new IndexOutOfBoundsException();
+            }
+        }
+        return x;
     }
 
    /**
@@ -2818,7 +2818,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * The following are examples of lowercase characters:
      * <p><blockquote><pre>
      * a b c d e f g h i j k l m n o p q r s t u v w x y z
-     * '&#92;u00DF' '&#92;u00E0' '&#92;u00E1' '&#92;u00E2' '&#92;u00E3' '&#92;u00E4' '&#92;u00E5' '&#92;u00E6' 
+     * '&#92;u00DF' '&#92;u00E0' '&#92;u00E1' '&#92;u00E2' '&#92;u00E3' '&#92;u00E4' '&#92;u00E5' '&#92;u00E6'
      * '&#92;u00E7' '&#92;u00E8' '&#92;u00E9' '&#92;u00EA' '&#92;u00EB' '&#92;u00EC' '&#92;u00ED' '&#92;u00EE'
      * '&#92;u00EF' '&#92;u00F0' '&#92;u00F1' '&#92;u00F2' '&#92;u00F3' '&#92;u00F4' '&#92;u00F5' '&#92;u00F6'
      * '&#92;u00F8' '&#92;u00F9' '&#92;u00FA' '&#92;u00FB' '&#92;u00FC' '&#92;u00FD' '&#92;u00FE' '&#92;u00FF'
@@ -2853,7 +2853,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * The following are examples of lowercase characters:
      * <p><blockquote><pre>
      * a b c d e f g h i j k l m n o p q r s t u v w x y z
-     * '&#92;u00DF' '&#92;u00E0' '&#92;u00E1' '&#92;u00E2' '&#92;u00E3' '&#92;u00E4' '&#92;u00E5' '&#92;u00E6' 
+     * '&#92;u00DF' '&#92;u00E0' '&#92;u00E1' '&#92;u00E2' '&#92;u00E3' '&#92;u00E4' '&#92;u00E5' '&#92;u00E6'
      * '&#92;u00E7' '&#92;u00E8' '&#92;u00E9' '&#92;u00EA' '&#92;u00EB' '&#92;u00EC' '&#92;u00ED' '&#92;u00EE'
      * '&#92;u00EF' '&#92;u00F0' '&#92;u00F1' '&#92;u00F2' '&#92;u00F3' '&#92;u00F4' '&#92;u00F5' '&#92;u00F6'
      * '&#92;u00F8' '&#92;u00F9' '&#92;u00FA' '&#92;u00FB' '&#92;u00FC' '&#92;u00FD' '&#92;u00FE' '&#92;u00FF'
@@ -2938,7 +2938,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
 
     /**
      * Determines if the specified character is a titlecase character.
-     * <p> 
+     * <p>
      * A character is a titlecase character if its general
      * category type, provided by <code>Character.getType(ch)</code>,
      * is <code>TITLECASE_LETTER</code>.
@@ -2979,7 +2979,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
 
     /**
      * Determines if the specified character (Unicode code point) is a titlecase character.
-     * <p> 
+     * <p>
      * A character is a titlecase character if its general
      * category type, provided by {@link Character#getType(int) getType(codePoint)},
      * is <code>TITLECASE_LETTER</code>.
@@ -3022,7 +3022,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * <p>
      * Some Unicode character ranges that contain digits:
      * <ul>
-     * <li><code>'&#92;u0030'</code> through <code>'&#92;u0039'</code>, 
+     * <li><code>'&#92;u0030'</code> through <code>'&#92;u0039'</code>,
      *     ISO-LATIN-1 digits (<code>'0'</code> through <code>'9'</code>)
      * <li><code>'&#92;u0660'</code> through <code>'&#92;u0669'</code>,
      *     Arabic-Indic digits
@@ -3061,7 +3061,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * <p>
      * Some Unicode character ranges that contain digits:
      * <ul>
-     * <li><code>'&#92;u0030'</code> through <code>'&#92;u0039'</code>, 
+     * <li><code>'&#92;u0030'</code> through <code>'&#92;u0039'</code>,
      *     ISO-LATIN-1 digits (<code>'0'</code> through <code>'9'</code>)
      * <li><code>'&#92;u0660'</code> through <code>'&#92;u0669'</code>,
      *     Arabic-Indic digits
@@ -3213,7 +3213,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             (1 << Character.TITLECASE_LETTER) |
             (1 << Character.MODIFIER_LETTER) |
             (1 << Character.OTHER_LETTER)) >> getType(codePoint)) & 1)
-	    != 0;
+            != 0;
     }
 
     /**
@@ -3268,7 +3268,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
             (1 << Character.MODIFIER_LETTER) |
             (1 << Character.OTHER_LETTER) |
             (1 << Character.DECIMAL_DIGIT_NUMBER)) >> getType(codePoint)) & 1)
-	    != 0;
+            != 0;
     }
 
     /**
@@ -3394,7 +3394,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isJavaIdentifierStart(int codePoint) {
-	return CharacterData.of(codePoint).isJavaIdentifierStart(codePoint);
+        return CharacterData.of(codePoint).isJavaIdentifierStart(codePoint);
     }
 
     /**
@@ -3464,7 +3464,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isJavaIdentifierPart(int codePoint) {
-	return CharacterData.of(codePoint).isJavaIdentifierPart(codePoint);
+        return CharacterData.of(codePoint).isJavaIdentifierPart(codePoint);
     }
 
     /**
@@ -3475,7 +3475,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * one of the following conditions is true:
      * <ul>
      * <li> {@link #isLetter(char) isLetter(ch)} returns <code>true</code>
-     * <li> {@link #getType(char) getType(ch)} returns 
+     * <li> {@link #getType(char) getType(ch)} returns
      *      <code>LETTER_NUMBER</code>.
      * </ul>
      *
@@ -3485,7 +3485,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * the {@link #isUnicodeIdentifierStart(int)} method.
      *
      * @param   ch      the character to be tested.
-     * @return  <code>true</code> if the character may start a Unicode 
+     * @return  <code>true</code> if the character may start a Unicode
      *          identifier; <code>false</code> otherwise.
      * @see     java.lang.Character#isJavaIdentifierStart(char)
      * @see     java.lang.Character#isLetter(char)
@@ -3509,7 +3509,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      *      returns <code>LETTER_NUMBER</code>.
      * </ul>
      * @param   codePoint the character (Unicode code point) to be tested.
-     * @return  <code>true</code> if the character may start a Unicode 
+     * @return  <code>true</code> if the character may start a Unicode
      *          identifier; <code>false</code> otherwise.
      * @see     java.lang.Character#isJavaIdentifierStart(int)
      * @see     java.lang.Character#isLetter(int)
@@ -3517,7 +3517,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isUnicodeIdentifierStart(int codePoint) {
-	return CharacterData.of(codePoint).isUnicodeIdentifierStart(codePoint);
+        return CharacterData.of(codePoint).isUnicodeIdentifierStart(codePoint);
     }
 
     /**
@@ -3536,14 +3536,14 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * <li> <code>isIdentifierIgnorable</code> returns
      * <code>true</code> for this character.
      * </ul>
-     * 
+     *
      * <p><b>Note:</b> This method cannot handle <a
      * href="#supplementary"> supplementary characters</a>. To support
      * all Unicode characters, including supplementary characters, use
      * the {@link #isUnicodeIdentifierPart(int)} method.
      *
      * @param   ch      the character to be tested.
-     * @return  <code>true</code> if the character may be part of a 
+     * @return  <code>true</code> if the character may be part of a
      *          Unicode identifier; <code>false</code> otherwise.
      * @see     java.lang.Character#isIdentifierIgnorable(char)
      * @see     java.lang.Character#isJavaIdentifierPart(char)
@@ -3572,7 +3572,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * <code>true</code> for this character.
      * </ul>
      * @param   codePoint the character (Unicode code point) to be tested.
-     * @return  <code>true</code> if the character may be part of a 
+     * @return  <code>true</code> if the character may be part of a
      *          Unicode identifier; <code>false</code> otherwise.
      * @see     java.lang.Character#isIdentifierIgnorable(int)
      * @see     java.lang.Character#isJavaIdentifierPart(int)
@@ -3581,7 +3581,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isUnicodeIdentifierPart(int codePoint) {
-	return CharacterData.of(codePoint).isUnicodeIdentifierPart(codePoint);
+        return CharacterData.of(codePoint).isUnicodeIdentifierPart(codePoint);
     }
 
     /**
@@ -3608,7 +3608,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * the {@link #isIdentifierIgnorable(int)} method.
      *
      * @param   ch      the character to be tested.
-     * @return  <code>true</code> if the character is an ignorable control 
+     * @return  <code>true</code> if the character is an ignorable control
      *          character that may be part of a Java or Unicode identifier;
      *           <code>false</code> otherwise.
      * @see     java.lang.Character#isJavaIdentifierPart(char)
@@ -3638,7 +3638,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * </ul>
      *
      * @param   codePoint the character (Unicode code point) to be tested.
-     * @return  <code>true</code> if the character is an ignorable control 
+     * @return  <code>true</code> if the character is an ignorable control
      *          character that may be part of a Java or Unicode identifier;
      *          <code>false</code> otherwise.
      * @see     java.lang.Character#isJavaIdentifierPart(int)
@@ -3646,7 +3646,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isIdentifierIgnorable(int codePoint) {
-	return CharacterData.of(codePoint).isIdentifierIgnorable(codePoint);
+        return CharacterData.of(codePoint).isIdentifierIgnorable(codePoint);
     }
 
     /**
@@ -3706,7 +3706,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static int toLowerCase(int codePoint) {
-	return CharacterData.of(codePoint).toLowerCase(codePoint);
+        return CharacterData.of(codePoint).toLowerCase(codePoint);
     }
 
     /**
@@ -3744,7 +3744,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * Converts the character (Unicode code point) argument to
      * uppercase using case mapping information from the UnicodeData
      * file.
-     * 
+     *
      * <p>Note that
      * <code>Character.isUpperCase(Character.toUpperCase(codePoint))</code>
      * does not always return <code>true</code> for some ranges of
@@ -3762,11 +3762,11 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      *          otherwise, the character itself.
      * @see     java.lang.Character#isUpperCase(int)
      * @see     java.lang.String#toUpperCase()
-     * 
+     *
      * @since   1.5
      */
     public static int toUpperCase(int codePoint) {
-	return CharacterData.of(codePoint).toUpperCase(codePoint);
+        return CharacterData.of(codePoint).toUpperCase(codePoint);
     }
 
     /**
@@ -3810,7 +3810,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * character argument is already a titlecase
      * character, the same character value will be
      * returned.
-     * 
+     *
      * <p>Note that
      * <code>Character.isTitleCase(Character.toTitleCase(codePoint))</code>
      * does not always return <code>true</code> for some ranges of
@@ -3825,7 +3825,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static int toTitleCase(int codePoint) {
-	return CharacterData.of(codePoint).toTitleCase(codePoint);
+        return CharacterData.of(codePoint).toTitleCase(codePoint);
     }
 
     /**
@@ -3873,7 +3873,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     /**
      * Returns the numeric value of the specified character (Unicode
      * code point) in the specified radix.
-     * 
+     *
      * <p>If the radix is not in the range <code>MIN_RADIX</code>&nbsp;&lt;=
      * <code>radix</code>&nbsp;&lt;= <code>MAX_RADIX</code> or if the
      * character is not a valid digit in the specified
@@ -3905,7 +3905,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static int digit(int codePoint, int radix) {
-	return CharacterData.of(codePoint).digit(codePoint, radix);
+        return CharacterData.of(codePoint).digit(codePoint, radix);
     }
 
     /**
@@ -3947,7 +3947,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
     }
 
     /**
-     * Returns the <code>int</code> value that the specified 
+     * Returns the <code>int</code> value that the specified
      * character (Unicode code point) represents. For example, the character
      * <code>'&#92;u216C'</code> (the Roman numeral fifty) will return
      * an <code>int</code> with a value of 50.
@@ -3976,7 +3976,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static int getNumericValue(int codePoint) {
-	return CharacterData.of(codePoint).getNumericValue(codePoint);
+        return CharacterData.of(codePoint).getNumericValue(codePoint);
     }
 
     /**
@@ -4032,7 +4032,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * the {@link #isSpaceChar(int)} method.
      *
      * @param   ch      the character to be tested.
-     * @return  <code>true</code> if the character is a space character; 
+     * @return  <code>true</code> if the character is a space character;
      *          <code>false</code> otherwise.
      * @see     java.lang.Character#isWhitespace(char)
      * @since   1.1
@@ -4055,16 +4055,16 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * </ul>
      *
      * @param   codePoint the character (Unicode code point) to be tested.
-     * @return  <code>true</code> if the character is a space character; 
+     * @return  <code>true</code> if the character is a space character;
      *          <code>false</code> otherwise.
      * @see     java.lang.Character#isWhitespace(int)
      * @since   1.5
      */
     public static boolean isSpaceChar(int codePoint) {
         return ((((1 << Character.SPACE_SEPARATOR) |
-		  (1 << Character.LINE_SEPARATOR) |
-		  (1 << Character.PARAGRAPH_SEPARATOR)) >> getType(codePoint)) & 1)
-	    != 0;
+                  (1 << Character.LINE_SEPARATOR) |
+                  (1 << Character.PARAGRAPH_SEPARATOR)) >> getType(codePoint)) & 1)
+            != 0;
     }
 
     /**
@@ -4073,7 +4073,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * one of the following criteria:
      * <ul>
      * <li> It is a Unicode space character (<code>SPACE_SEPARATOR</code>,
-     *      <code>LINE_SEPARATOR</code>, or <code>PARAGRAPH_SEPARATOR</code>) 
+     *      <code>LINE_SEPARATOR</code>, or <code>PARAGRAPH_SEPARATOR</code>)
      *      but is not also a non-breaking space (<code>'&#92;u00A0'</code>,
      *      <code>'&#92;u2007'</code>, <code>'&#92;u202F'</code>).
      * <li> It is <code>'&#92;u0009'</code>, HORIZONTAL TABULATION.
@@ -4109,7 +4109,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * following criteria:
      * <ul>
      * <li> It is a Unicode space character ({@link #SPACE_SEPARATOR},
-     *      {@link #LINE_SEPARATOR}, or {@link #PARAGRAPH_SEPARATOR}) 
+     *      {@link #LINE_SEPARATOR}, or {@link #PARAGRAPH_SEPARATOR})
      *      but is not also a non-breaking space (<code>'&#92;u00A0'</code>,
      *      <code>'&#92;u2007'</code>, <code>'&#92;u202F'</code>).
      * <li> It is <code>'&#92;u0009'</code>, HORIZONTAL TABULATION.
@@ -4131,7 +4131,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isWhitespace(int codePoint) {
-	return CharacterData.of(codePoint).isWhitespace(codePoint);
+        return CharacterData.of(codePoint).isWhitespace(codePoint);
     }
 
     /**
@@ -4173,7 +4173,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isISOControl(int codePoint) {
-        return (codePoint >= 0x0000 && codePoint <= 0x001F) || 
+        return (codePoint >= 0x0000 && codePoint <= 0x001F) ||
             (codePoint >= 0x007F && codePoint <= 0x009F);
     }
 
@@ -4186,7 +4186,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * the {@link #getType(int)} method.
      *
      * @param   ch      the character to be tested.
-     * @return  a value of type <code>int</code> representing the 
+     * @return  a value of type <code>int</code> representing the
      *          character's general category.
      * @see     java.lang.Character#COMBINING_SPACING_MARK
      * @see     java.lang.Character#CONNECTOR_PUNCTUATION
@@ -4228,7 +4228,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * Returns a value indicating a character's general category.
      *
      * @param   codePoint the character (Unicode code point) to be tested.
-     * @return  a value of type <code>int</code> representing the 
+     * @return  a value of type <code>int</code> representing the
      *          character's general category.
      * @see     Character#COMBINING_SPACING_MARK COMBINING_SPACING_MARK
      * @see     Character#CONNECTOR_PUNCTUATION CONNECTOR_PUNCTUATION
@@ -4263,7 +4263,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static int getType(int codePoint) {
-	return CharacterData.of(codePoint).getType(codePoint);
+        return CharacterData.of(codePoint).getType(codePoint);
     }
 
     /**
@@ -4314,7 +4314,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * all Unicode characters, including supplementary characters, use
      * the {@link #getDirectionality(int)} method.
      *
-     * @param  ch <code>char</code> for which the directionality property 
+     * @param  ch <code>char</code> for which the directionality property
      *            is requested.
      * @return the directionality property of the <code>char</code> value.
      *
@@ -4378,7 +4378,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since    1.5
      */
     public static byte getDirectionality(int codePoint) {
-	return CharacterData.of(codePoint).getDirectionality(codePoint);
+        return CharacterData.of(codePoint).getDirectionality(codePoint);
     }
 
     /**
@@ -4420,7 +4420,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * @since   1.5
      */
     public static boolean isMirrored(int codePoint) {
-	return CharacterData.of(codePoint).isMirrored(codePoint);
+        return CharacterData.of(codePoint).isMirrored(codePoint);
     }
 
     /**
@@ -4428,13 +4428,13 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      *
      * @param   anotherCharacter   the <code>Character</code> to be compared.
 
-     * @return  the value <code>0</code> if the argument <code>Character</code> 
-     *          is equal to this <code>Character</code>; a value less than 
-     *          <code>0</code> if this <code>Character</code> is numerically less 
-     *          than the <code>Character</code> argument; and a value greater than 
-     *          <code>0</code> if this <code>Character</code> is numerically greater 
-     *          than the <code>Character</code> argument (unsigned comparison).  
-     *          Note that this is strictly a numerical comparison; it is not 
+     * @return  the value <code>0</code> if the argument <code>Character</code>
+     *          is equal to this <code>Character</code>; a value less than
+     *          <code>0</code> if this <code>Character</code> is numerically less
+     *          than the <code>Character</code> argument; and a value greater than
+     *          <code>0</code> if this <code>Character</code> is numerically greater
+     *          than the <code>Character</code> argument (unsigned comparison).
+     *          Note that this is strictly a numerical comparison; it is not
      *          locale-dependent.
      * @since   1.2
      */
@@ -4448,8 +4448,8 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      * <p>
      *
      * @param   codePoint   the character (Unicode code point) to be converted.
-     * @return  either the uppercase equivalent of the character, if 
-     *          any, or an error flag (<code>Character.ERROR</code>) 
+     * @return  either the uppercase equivalent of the character, if
+     *          any, or an error flag (<code>Character.ERROR</code>)
      *          that indicates that a 1:M <code>char</code> mapping exists.
      * @see     java.lang.Character#isLowerCase(char)
      * @see     java.lang.Character#isUpperCase(char)
@@ -4459,7 +4459,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
      */
     static int toUpperCaseEx(int codePoint) {
         assert isValidCodePoint(codePoint);
-	return CharacterData.of(codePoint).toUpperCaseEx(codePoint);
+        return CharacterData.of(codePoint).toUpperCaseEx(codePoint);
     }
 
     /**
@@ -4477,7 +4477,7 @@ class Character extends Object implements java.io.Serializable, Comparable<Chara
         // As of Unicode 4.0, 1:M uppercasings only happen in the BMP.
         assert isValidCodePoint(codePoint) &&
                !isSupplementaryCodePoint(codePoint);
-	return CharacterData.of(codePoint).toUpperCaseCharArray(codePoint);
+        return CharacterData.of(codePoint).toUpperCaseCharArray(codePoint);
     }
 
     /**

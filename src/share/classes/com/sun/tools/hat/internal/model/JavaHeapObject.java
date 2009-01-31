@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- * 
+ *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- * 
+ *
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- * 
+ *
  */
 
 package com.sun.tools.hat.internal.model;
@@ -51,14 +51,13 @@ import com.sun.tools.hat.internal.util.Misc;
 
 /**
  *
- * @version     1.2, 10/08/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
 /**
  * Represents an object that's allocated out of the Java heap.  It occupies
  * memory in the VM, and is the sort of thing that in a JDK 1.1 VM had
- * a handle.  It can be a 
+ * a handle.  It can be a
  * JavaClass, a JavaObjectArray, a JavaValueArray or a JavaObject.
  */
 
@@ -73,7 +72,7 @@ public abstract class JavaHeapObject extends JavaThing {
     // empty slots.
     //
     private JavaThing[] referers = null;
-    private int referersLen = 0;	// -1 when resolved
+    private int referersLen = 0;        // -1 when resolved
 
     public abstract JavaClass getClazz();
     public abstract int getSize();
@@ -85,9 +84,9 @@ public abstract class JavaHeapObject extends JavaThing {
      */
     public void resolve(Snapshot snapshot) {
         StackTrace trace = snapshot.getSiteTrace(this);
-	if (trace != null) {
-	    trace.resolve(snapshot);
-	}
+        if (trace != null) {
+            trace.resolve(snapshot);
+        }
     }
 
     //
@@ -96,20 +95,20 @@ public abstract class JavaHeapObject extends JavaThing {
     // referers data member for details.
     //
     void setupReferers() {
-	if (referersLen > 1) {
-	    // Copy referers to map, screening out duplicates
-	    Map<JavaThing, JavaThing> map = new HashMap<JavaThing, JavaThing>();
-	    for (int i = 0; i < referersLen; i++) {
-		if (map.get(referers[i]) == null) {
-		    map.put(referers[i], referers[i]);
-		}
-	    }
+        if (referersLen > 1) {
+            // Copy referers to map, screening out duplicates
+            Map<JavaThing, JavaThing> map = new HashMap<JavaThing, JavaThing>();
+            for (int i = 0; i < referersLen; i++) {
+                if (map.get(referers[i]) == null) {
+                    map.put(referers[i], referers[i]);
+                }
+            }
 
-	    // Now copy into the array
-	    referers = new JavaThing[map.size()];
+            // Now copy into the array
+            referers = new JavaThing[map.size()];
             map.keySet().toArray(referers);
-	}
-	referersLen = -1;
+        }
+        referersLen = -1;
     }
 
 
@@ -126,14 +125,14 @@ public abstract class JavaHeapObject extends JavaThing {
 
     /**
      * @return the StackTrace of the point of allocation of this object,
-     *		or null if unknown
+     *          or null if unknown
      */
     public StackTrace getAllocatedFrom() {
-	return getClazz().getSiteTrace(this);
+        return getClazz().getSiteTrace(this);
     }
 
     public boolean isNew() {
-	return getClazz().isNew(this);
+        return getClazz().isNew(this);
     }
 
     void setNew(boolean flag) {
@@ -144,21 +143,21 @@ public abstract class JavaHeapObject extends JavaThing {
      * Tell the visitor about all of the objects we refer to
      */
     public void visitReferencedObjects(JavaHeapObjectVisitor v) {
-	v.visit(getClazz());
+        v.visit(getClazz());
     }
-    
+
     void addReferenceFrom(JavaHeapObject other) {
-	if (referersLen == 0) {
-	    referers = new JavaThing[1];	// It was null
-	} else if (referersLen == referers.length) {
-	    JavaThing[] copy = new JavaThing[(3 * (referersLen + 1)) / 2];
-	    System.arraycopy(referers, 0, copy, 0, referersLen);
-	    referers = copy;
-	}
-	referers[referersLen++] = other;
-	// We just append to referers here.  Measurements have shown that
-	// around 10% to 30% are duplicates, so it's better to just append
-	// blindly and screen out all the duplicates at once.
+        if (referersLen == 0) {
+            referers = new JavaThing[1];        // It was null
+        } else if (referersLen == referers.length) {
+            JavaThing[] copy = new JavaThing[(3 * (referersLen + 1)) / 2];
+            System.arraycopy(referers, 0, copy, 0, referersLen);
+            referers = copy;
+        }
+        referers[referersLen++] = other;
+        // We just append to referers here.  Measurements have shown that
+        // around 10% to 30% are duplicates, so it's better to just append
+        // blindly and screen out all the duplicates at once.
     }
 
     void addReferenceFromRoot(Root r) {
@@ -170,7 +169,7 @@ public abstract class JavaHeapObject extends JavaThing {
      * of the reasons why.
      */
     public Root getRoot() {
-	return getClazz().getRoot(this);
+        return getClazz().getRoot(this);
     }
 
     /**
@@ -179,29 +178,29 @@ public abstract class JavaHeapObject extends JavaThing {
      * @return an Enumeration of JavaHeapObject instances
      */
     public Enumeration getReferers() {
-	if (referersLen != -1) {
-	    throw new RuntimeException("not resolved: " + getIdString());
-	}
-	return new Enumeration() {
+        if (referersLen != -1) {
+            throw new RuntimeException("not resolved: " + getIdString());
+        }
+        return new Enumeration() {
 
-	    private int num = 0;
+            private int num = 0;
 
-	    public boolean hasMoreElements() {
-		return referers != null && num < referers.length;
-	    }
+            public boolean hasMoreElements() {
+                return referers != null && num < referers.length;
+            }
 
-	    public Object nextElement() {
-		return referers[num++];
-	    }
-	};
+            public Object nextElement() {
+                return referers[num++];
+            }
+        };
     }
 
-    /** 
+    /**
      * Given other, which the caller promises is in referers, determines if
      * the reference is only a weak reference.
      */
     public boolean refersOnlyWeaklyTo(Snapshot ss, JavaThing other) {
-	return false;
+        return false;
     }
 
     /**
@@ -209,11 +208,11 @@ public abstract class JavaHeapObject extends JavaThing {
      * be called if target is in the array returned by getChildrenForRootset.
      */
     public String describeReferenceTo(JavaThing target, Snapshot ss) {
-	return "??";
+        return "??";
     }
 
     public boolean isHeapAllocated() {
-	return true;
+        return true;
     }
 
 }

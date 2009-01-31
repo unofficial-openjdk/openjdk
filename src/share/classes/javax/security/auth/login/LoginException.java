@@ -28,7 +28,6 @@ package javax.security.auth.login;
 /**
  * This is the basic login exception.
  *
- * @version %I%, %G%
  * @see javax.security.auth.login.LoginContext
  */
 
@@ -41,7 +40,7 @@ public class LoginException extends java.security.GeneralSecurityException {
      * message is a String that describes this particular exception.
      */
     public LoginException() {
-	super();
+        super();
     }
 
     /**
@@ -51,9 +50,9 @@ public class LoginException extends java.security.GeneralSecurityException {
      *
      * <p>
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public LoginException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

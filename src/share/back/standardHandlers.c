@@ -36,7 +36,7 @@
 
 #include "standardHandlers.h"
 
-static void 
+static void
 handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
                    HandlerNode *node,
                    struct bag *eventBag)
@@ -48,9 +48,9 @@ handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
      * likely for exceptions that are thrown within JNI
      * methods). If such an event occurs, we must report it, but
      * we cannot suspend the debugger thread.
-     * 
+     *
      * 1) We report the thread as NULL because we don't want the
-     *    application to get hold of a debugger thread object. 
+     *    application to get hold of a debugger thread object.
      * 2) We try to do the right thing wrt to suspending
      *    threads without suspending debugger threads. If the
      *    requested suspend policy is NONE, there's no problem. If
@@ -63,19 +63,19 @@ handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
      *    (just as if the policy was ALL). This allows the
      *    application to operate on the class before it gets into
      *    circulation and so it is preferable to the other
-     *    alternative of suspending no threads.  
+     *    alternative of suspending no threads.
      */
-    if (threadControl_isDebugThread(thread)) { 
+    if (threadControl_isDebugThread(thread)) {
         evinfo->thread = NULL;
         if (node->suspendPolicy == JDWP_SUSPEND_POLICY(EVENT_THREAD)) {
             node->suspendPolicy = JDWP_SUSPEND_POLICY(ALL);
         }
     }
-    eventHelper_recordEvent(evinfo, node->handlerID, 
+    eventHelper_recordEvent(evinfo, node->handlerID,
                             node->suspendPolicy, eventBag);
 }
 
-static void 
+static void
 handleGarbageCollectionFinish(JNIEnv *env, EventInfo *evinfo,
                   HandlerNode *node,
                   struct bag *eventBag)
@@ -83,7 +83,7 @@ handleGarbageCollectionFinish(JNIEnv *env, EventInfo *evinfo,
     JDI_ASSERT_MSG(JNI_FALSE, "Should never call handleGarbageCollectionFinish");
 }
 
-static void 
+static void
 handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
                  HandlerNode *node,
                  struct bag *eventBag)
@@ -91,12 +91,12 @@ handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
     /*
      * The frame id that comes with this event is very transient.
      * We can't send the frame to the helper thread because it
-     * might be useless by the time the helper thread can use it 
-     * (if suspend policy is NONE). So, get the needed info from 
+     * might be useless by the time the helper thread can use it
+     * (if suspend policy is NONE). So, get the needed info from
      * the frame and then use a special command to the helper
      * thread.
      */
-    
+
     jmethodID method;
     jlocation location;
     jvmtiError error;
@@ -110,29 +110,29 @@ handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
     }
     returnValue = evinfo->u.method_exit.return_value;
 
-    eventHelper_recordFrameEvent(node->handlerID, 
+    eventHelper_recordFrameEvent(node->handlerID,
                                  node->suspendPolicy,
-                                 evinfo->ei, 
-                                 evinfo->thread, 
-                                 evinfo->clazz, 
-                                 evinfo->method, 
-                                 location, 
+                                 evinfo->ei,
+                                 evinfo->thread,
+                                 evinfo->clazz,
+                                 evinfo->method,
+                                 location,
                                  node->needReturnValue,
-                                 returnValue, 
+                                 returnValue,
                                  eventBag);
 }
 
-static void  
+static void
 genericHandler(JNIEnv *env, EventInfo *evinfo,
-               HandlerNode *node,  
+               HandlerNode *node,
                struct bag *eventBag)
-{ 
-    eventHelper_recordEvent(evinfo, node->handlerID, node->suspendPolicy, 
-                            eventBag); 
+{
+    eventHelper_recordEvent(evinfo, node->handlerID, node->suspendPolicy,
+                            eventBag);
 }
 
 HandlerFunction
-standardHandlers_defaultHandler(EventIndex ei) 
+standardHandlers_defaultHandler(EventIndex ei)
 {
     switch (ei) {
         case EI_BREAKPOINT:
@@ -149,10 +149,10 @@ standardHandlers_defaultHandler(EventIndex ei)
         case EI_MONITOR_WAITED:
             return &genericHandler;
 
-        case EI_CLASS_PREPARE: 
+        case EI_CLASS_PREPARE:
             return &handleClassPrepare;
 
-        case EI_GC_FINISH: 
+        case EI_GC_FINISH:
             return &handleGarbageCollectionFinish;
 
         case EI_METHOD_ENTRY:
@@ -165,7 +165,7 @@ standardHandlers_defaultHandler(EventIndex ei)
     }
 }
 
-void 
+void
 standardHandlers_onConnect(void)
 {
     jboolean installed;
@@ -178,7 +178,7 @@ standardHandlers_onConnect(void)
     }
 }
 
-void 
+void
 standardHandlers_onDisconnect(void)
 {
 }

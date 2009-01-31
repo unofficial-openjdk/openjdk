@@ -95,11 +95,10 @@ import java.util.NoSuchElementException;
  * key set, the value set, and the entry set to yield successively smaller
  * numbers of elements.
  *
- * @version	%I%, %E%
- * @author	Mark Reinhold
- * @since	1.2
- * @see		java.util.HashMap
- * @see		java.lang.ref.SoftReference
+ * @author      Mark Reinhold
+ * @since       1.2
+ * @see         java.util.HashMap
+ * @see         java.lang.ref.SoftReference
  */
 
 
@@ -117,39 +116,39 @@ public class SoftCache extends AbstractMap implements Map {
 
 
     static private class ValueCell extends SoftReference {
-	static private Object INVALID_KEY = new Object();
-	static private int dropped = 0;
-	private Object key;
+        static private Object INVALID_KEY = new Object();
+        static private int dropped = 0;
+        private Object key;
 
-	private ValueCell(Object key, Object value, ReferenceQueue queue) {
-	    super(value, queue);
-	    this.key = key;
-	}
+        private ValueCell(Object key, Object value, ReferenceQueue queue) {
+            super(value, queue);
+            this.key = key;
+        }
 
-	private static ValueCell create(Object key, Object value,
-					ReferenceQueue queue)
-	{
-	    if (value == null) return null;
-	    return new ValueCell(key, value, queue);
-	}
+        private static ValueCell create(Object key, Object value,
+                                        ReferenceQueue queue)
+        {
+            if (value == null) return null;
+            return new ValueCell(key, value, queue);
+        }
 
-	private static Object strip(Object val, boolean drop) {
-	    if (val == null) return null;
-	    ValueCell vc = (ValueCell)val;
-	    Object o = vc.get();
-	    if (drop) vc.drop();
-	    return o;
-	}
+        private static Object strip(Object val, boolean drop) {
+            if (val == null) return null;
+            ValueCell vc = (ValueCell)val;
+            Object o = vc.get();
+            if (drop) vc.drop();
+            return o;
+        }
 
-	private boolean isValid() {
-	    return (key != INVALID_KEY);
-	}
+        private boolean isValid() {
+            return (key != INVALID_KEY);
+        }
 
-	private void drop() {
-	    super.clear();
-	    key = INVALID_KEY;
-	    dropped++;
-	}
+        private void drop() {
+            super.clear();
+            key = INVALID_KEY;
+            dropped++;
+        }
 
     }
 
@@ -167,14 +166,14 @@ public class SoftCache extends AbstractMap implements Map {
        because that can lead to surprising ConcurrentModificationExceptions.
      */
     private void processQueue() {
-	ValueCell vc;
-	while ((vc = (ValueCell)queue.poll()) != null) {
-	    if (vc.isValid()) hash.remove(vc.key);
-	    else ValueCell.dropped--;
-	}
+        ValueCell vc;
+        while ((vc = (ValueCell)queue.poll()) != null) {
+            if (vc.isValid()) hash.remove(vc.key);
+            else ValueCell.dropped--;
+        }
     }
 
-
+
     /* -- Constructors -- */
 
     /**
@@ -190,7 +189,7 @@ public class SoftCache extends AbstractMap implements Map {
      *                                   factor is less than zero
      */
     public SoftCache(int initialCapacity, float loadFactor) {
-	hash = new HashMap(initialCapacity, loadFactor);
+        hash = new HashMap(initialCapacity, loadFactor);
     }
 
     /**
@@ -203,7 +202,7 @@ public class SoftCache extends AbstractMap implements Map {
      *                                   or equal to zero
      */
     public SoftCache(int initialCapacity) {
-	hash = new HashMap(initialCapacity);
+        hash = new HashMap(initialCapacity);
     }
 
     /**
@@ -211,10 +210,10 @@ public class SoftCache extends AbstractMap implements Map {
      * capacity and the default load factor.
      */
     public SoftCache() {
-	hash = new HashMap();
+        hash = new HashMap();
     }
 
-
+
     /* -- Simple queries -- */
 
     /**
@@ -222,14 +221,14 @@ public class SoftCache extends AbstractMap implements Map {
      * required by this operation is linear in the size of the map.
      */
     public int size() {
-	return entrySet().size();
+        return entrySet().size();
     }
 
     /**
      * Return <code>true</code> if this cache contains no key-value mappings.
      */
     public boolean isEmpty() {
-	return entrySet().isEmpty();
+        return entrySet().isEmpty();
     }
 
     /**
@@ -240,10 +239,10 @@ public class SoftCache extends AbstractMap implements Map {
      * @param   key   The key whose presence in the cache is to be tested
      */
     public boolean containsKey(Object key) {
-	return ValueCell.strip(hash.get(key), false) != null;
+        return ValueCell.strip(hash.get(key), false) != null;
     }
 
-
+
     /* -- Lookup and modification operations -- */
 
     /**
@@ -258,13 +257,13 @@ public class SoftCache extends AbstractMap implements Map {
      * override this method to provide more useful behavior.
      *
      * @param  key  The key for which a value is to be computed
-     * 
+     *
      * @return      A value for <code>key</code>, or <code>null</code> if one
      *              could not be computed
      * @see #get
      */
     protected Object fill(Object key) {
-	return null;
+        return null;
     }
 
     /**
@@ -284,16 +283,16 @@ public class SoftCache extends AbstractMap implements Map {
      * @see #fill
      */
     public Object get(Object key) {
-	processQueue();
-	Object v = hash.get(key);
-	if (v == null) {
-	    v = fill(key);
-	    if (v != null) {
-		hash.put(key, ValueCell.create(key, v, queue));
-		return v;
-	    }
-	}
-	return ValueCell.strip(v, false);
+        processQueue();
+        Object v = hash.get(key);
+        if (v == null) {
+            v = fill(key);
+            if (v != null) {
+                hash.put(key, ValueCell.create(key, v, queue));
+                return v;
+            }
+        }
+        return ValueCell.strip(v, false);
     }
 
     /**
@@ -303,7 +302,7 @@ public class SoftCache extends AbstractMap implements Map {
      * returned.
      *
      * @param  key    The key that is to be mapped to the given
-     *                <code>value</code> 
+     *                <code>value</code>
      * @param  value  The value to which the given <code>key</code> is to be
      *                mapped
      *
@@ -311,9 +310,9 @@ public class SoftCache extends AbstractMap implements Map {
      *          <code>null</code> if if there was no mapping for the key
      */
     public Object put(Object key, Object value) {
-	processQueue();
-	ValueCell vc = ValueCell.create(key, value, queue);
-	return ValueCell.strip(hash.put(key, vc), true);
+        processQueue();
+        ValueCell vc = ValueCell.create(key, value, queue);
+        return ValueCell.strip(hash.put(key, vc), true);
     }
 
     /**
@@ -326,23 +325,23 @@ public class SoftCache extends AbstractMap implements Map {
      *          there was no mapping for the key
      */
     public Object remove(Object key) {
-	processQueue();
-	return ValueCell.strip(hash.remove(key), true);
+        processQueue();
+        return ValueCell.strip(hash.remove(key), true);
     }
 
     /**
      * Remove all mappings from this cache.
      */
     public void clear() {
-	processQueue();
-	hash.clear();
+        processQueue();
+        hash.clear();
     }
 
-
+
     /* -- Views -- */
 
     private static boolean valEquals(Object o1, Object o2) {
-	return (o1 == null) ? (o2 == null) : o1.equals(o2);
+        return (o1 == null) ? (o2 == null) : o1.equals(o2);
     }
 
 
@@ -350,99 +349,99 @@ public class SoftCache extends AbstractMap implements Map {
        Because it uses SoftCache.this.queue, this class cannot be static.
      */
     private class Entry implements Map.Entry {
-	private Map.Entry ent;
-	private Object value;	/* Strong reference to value, to prevent the GC
-				   from flushing the value while this Entry
-				   exists */
+        private Map.Entry ent;
+        private Object value;   /* Strong reference to value, to prevent the GC
+                                   from flushing the value while this Entry
+                                   exists */
 
-	Entry(Map.Entry ent, Object value) {
-	    this.ent = ent;
-	    this.value = value;
-	}
+        Entry(Map.Entry ent, Object value) {
+            this.ent = ent;
+            this.value = value;
+        }
 
-	public Object getKey() {
-	    return ent.getKey();
-	}
+        public Object getKey() {
+            return ent.getKey();
+        }
 
-	public Object getValue() {
-	    return value;
-	}
+        public Object getValue() {
+            return value;
+        }
 
-	public Object setValue(Object value) {
-	    return ent.setValue(ValueCell.create(ent.getKey(), value, queue));
-	}
+        public Object setValue(Object value) {
+            return ent.setValue(ValueCell.create(ent.getKey(), value, queue));
+        }
 
-	public boolean equals(Object o) {
-	    if (! (o instanceof Map.Entry)) return false;
-	    Map.Entry e = (Map.Entry)o;
-	    return (valEquals(ent.getKey(), e.getKey())
-		    && valEquals(value, e.getValue()));
-	}
+        public boolean equals(Object o) {
+            if (! (o instanceof Map.Entry)) return false;
+            Map.Entry e = (Map.Entry)o;
+            return (valEquals(ent.getKey(), e.getKey())
+                    && valEquals(value, e.getValue()));
+        }
 
-	public int hashCode() {
-	    Object k;
-	    return ((((k = getKey()) == null) ? 0 : k.hashCode())
-		    ^ ((value == null) ? 0 : value.hashCode()));
-	}
+        public int hashCode() {
+            Object k;
+            return ((((k = getKey()) == null) ? 0 : k.hashCode())
+                    ^ ((value == null) ? 0 : value.hashCode()));
+        }
 
     }
 
 
     /* Internal class for entry sets */
     private class EntrySet extends AbstractSet {
-	Set hashEntries = hash.entrySet();
+        Set hashEntries = hash.entrySet();
 
-	public Iterator iterator() {
+        public Iterator iterator() {
 
-	    return new Iterator() {
-		Iterator hashIterator = hashEntries.iterator();
-		Entry next = null;
+            return new Iterator() {
+                Iterator hashIterator = hashEntries.iterator();
+                Entry next = null;
 
-		public boolean hasNext() {
-		    while (hashIterator.hasNext()) {
-			Map.Entry ent = (Map.Entry)hashIterator.next();
-			ValueCell vc = (ValueCell)ent.getValue();
-			Object v = null;
-			if ((vc != null) && ((v = vc.get()) == null)) {
-			    /* Value has been flushed by GC */
-			    continue;
-			}
-			next = new Entry(ent, v);
-			return true;
-		    }
-		    return false;
-		}
+                public boolean hasNext() {
+                    while (hashIterator.hasNext()) {
+                        Map.Entry ent = (Map.Entry)hashIterator.next();
+                        ValueCell vc = (ValueCell)ent.getValue();
+                        Object v = null;
+                        if ((vc != null) && ((v = vc.get()) == null)) {
+                            /* Value has been flushed by GC */
+                            continue;
+                        }
+                        next = new Entry(ent, v);
+                        return true;
+                    }
+                    return false;
+                }
 
-		public Object next() {
-		    if ((next == null) && !hasNext())
-			throw new NoSuchElementException();
-		    Entry e = next;
-		    next = null;
-		    return e;
-		}
+                public Object next() {
+                    if ((next == null) && !hasNext())
+                        throw new NoSuchElementException();
+                    Entry e = next;
+                    next = null;
+                    return e;
+                }
 
-		public void remove() {
-		    hashIterator.remove();
-		}
+                public void remove() {
+                    hashIterator.remove();
+                }
 
-	    };
-	}
+            };
+        }
 
-	public boolean isEmpty() {
-	    return !(iterator().hasNext());
-	}
+        public boolean isEmpty() {
+            return !(iterator().hasNext());
+        }
 
-	public int size() {
-	    int j = 0;
-	    for (Iterator i = iterator(); i.hasNext(); i.next()) j++;
-	    return j;
-	}
+        public int size() {
+            int j = 0;
+            for (Iterator i = iterator(); i.hasNext(); i.next()) j++;
+            return j;
+        }
 
-	public boolean remove(Object o) {
-	    processQueue();
-	    if (o instanceof Entry) return hashEntries.remove(((Entry)o).ent);
-	    else return false;
-	}
+        public boolean remove(Object o) {
+            processQueue();
+            if (o instanceof Entry) return hashEntries.remove(((Entry)o).ent);
+            else return false;
+        }
 
     }
 
@@ -453,8 +452,8 @@ public class SoftCache extends AbstractMap implements Map {
      * Return a <code>Set</code> view of the mappings in this cache.
      */
     public Set entrySet() {
-	if (entrySet == null) entrySet = new EntrySet();
-	return entrySet;
+        if (entrySet == null) entrySet = new EntrySet();
+        return entrySet;
     }
 
 }

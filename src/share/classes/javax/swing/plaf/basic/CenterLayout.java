@@ -31,7 +31,6 @@ import java.io.*;
 
 /**
   * Center-positioning layout manager.
-  * @version %I% %G%
   * @author Tom Santos
   * @author Steve Wilson
   */
@@ -40,21 +39,21 @@ class CenterLayout implements LayoutManager, Serializable {
     public void removeLayoutComponent(Component comp) { }
 
     public Dimension preferredLayoutSize( Container container ) {
-	Component c = container.getComponent( 0 );
-	if ( c != null ) {
+        Component c = container.getComponent( 0 );
+        if ( c != null ) {
             Dimension size = c.getPreferredSize();
             Insets insets = container.getInsets();
 
             return new Dimension(size.width + insets.left + insets.right,
                                  size.height + insets.top + insets.bottom);
-	}
-	else {
-	    return new Dimension( 0, 0 );
-	}
+        }
+        else {
+            return new Dimension( 0, 0 );
+        }
     }
 
     public Dimension minimumLayoutSize(Container cont) {
-    	return preferredLayoutSize(cont);
+        return preferredLayoutSize(cont);
     }
 
     public void layoutContainer(Container container) {

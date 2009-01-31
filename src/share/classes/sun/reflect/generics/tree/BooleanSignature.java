@@ -36,6 +36,6 @@ public class BooleanSignature implements BaseType {
     public static BooleanSignature make() {return singleton;}
 
     public void accept(TypeTreeVisitor<?> v){
-	v.visitBooleanSignature(this);
+        v.visitBooleanSignature(this);
     }
 }

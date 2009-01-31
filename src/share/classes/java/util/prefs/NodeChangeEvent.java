@@ -30,13 +30,12 @@ import java.io.NotSerializableException;
 /**
  * An event emitted by a <tt>Preferences</tt> node to indicate that
  * a child of that node has been added or removed.<p>
- *  
+ *
  * Note, that although NodeChangeEvent inherits Serializable interface from
  * java.util.EventObject, it is not intended to be Serializable. Appropriate
- * serialization methods are implemented to throw NotSerializableException. 
+ * serialization methods are implemented to throw NotSerializableException.
  *
  * @author  Josh Bloch
- * @version $I$, $G$ 
  * @see     Preferences
  * @see     NodeChangeListener
  * @see     PreferenceChangeEvent
@@ -59,8 +58,8 @@ public class NodeChangeEvent extends java.util.EventObject {
      * @param child   The node that was added or removed.
      */
     public NodeChangeEvent(Preferences parent, Preferences child) {
-	super(parent);
-	this.child = child;
+        super(parent);
+        this.child = child;
     }
 
     /**
@@ -71,7 +70,7 @@ public class NodeChangeEvent extends java.util.EventObject {
     public Preferences getParent() {
         return (Preferences) getSource();
     }
-    
+
     /**
      * Returns the node that was added or removed.
      *
@@ -80,12 +79,12 @@ public class NodeChangeEvent extends java.util.EventObject {
     public Preferences getChild() {
         return child;
     }
-    
+
     /**
      * Throws NotSerializableException, since NodeChangeEvent objects are not
      * intended to be serializable.
      */
-     private void writeObject(java.io.ObjectOutputStream out) 
+     private void writeObject(java.io.ObjectOutputStream out)
                                                throws NotSerializableException {
          throw new NotSerializableException("Not serializable.");
      }
@@ -94,7 +93,7 @@ public class NodeChangeEvent extends java.util.EventObject {
      * Throws NotSerializableException, since NodeChangeEvent objects are not
      * intended to be serializable.
      */
-     private void readObject(java.io.ObjectInputStream in) 
+     private void readObject(java.io.ObjectInputStream in)
                                                throws NotSerializableException {
          throw new NotSerializableException("Not serializable.");
      }
@@ -103,4 +102,3 @@ public class NodeChangeEvent extends java.util.EventObject {
     // searches for missing serialVersionUID fields are done.
     private static final long serialVersionUID = 8068949086596572957L;
 }
-

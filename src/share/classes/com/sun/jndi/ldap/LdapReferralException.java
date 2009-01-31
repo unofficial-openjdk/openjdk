@@ -65,59 +65,59 @@ import java.util.Vector;
   *
   * @author Vincent Ryan
   */
-final public class LdapReferralException extends 
+final public class LdapReferralException extends
     javax.naming.ldap.LdapReferralException {
 
-	// ----------- fields initialized in constructor ---------------
+        // ----------- fields initialized in constructor ---------------
     private int handleReferrals;
     private Hashtable envprops;
     private String nextName;
     private Control[] reqCtls;
 
-	// ----------- fields that have defaults -----------------------
-    private Vector referrals = null;	// alternatives,set by setReferralInfo()
-    private int referralIndex = 0;	// index into referrals
-    private int referralCount = 0;	// count of referrals
+        // ----------- fields that have defaults -----------------------
+    private Vector referrals = null;    // alternatives,set by setReferralInfo()
+    private int referralIndex = 0;      // index into referrals
+    private int referralCount = 0;      // count of referrals
     private boolean foundEntry = false; // will stop when entry is found
     private boolean skipThisReferral = false;
     private int hopCount = 1;
     private NamingException errorEx = null;
     private String newRdn = null;
     private boolean debug = false;
-	    LdapReferralException nextReferralEx = null; // referral ex. chain
+            LdapReferralException nextReferralEx = null; // referral ex. chain
 
     /**
      * Constructs a new instance of LdapReferralException.
-     * @param	resolvedName	The part of the name that has been successfully
+     * @param   resolvedName    The part of the name that has been successfully
      *                          resolved.
-     * @param	resolvedObj	The object to which resolution was successful.
-     * @param	remainingName	The remaining unresolved portion of the name.
-     * @param	explanation	Additional detail about this exception.
+     * @param   resolvedObj     The object to which resolution was successful.
+     * @param   remainingName   The remaining unresolved portion of the name.
+     * @param   explanation     Additional detail about this exception.
      */
     LdapReferralException(Name resolvedName,
-	Object resolvedObj, 
-	Name remainingName,
-	String explanation,
-	Hashtable envprops,
-	String nextName,
-	int handleReferrals,
-	Control[] reqCtls) {
+        Object resolvedObj,
+        Name remainingName,
+        String explanation,
+        Hashtable envprops,
+        String nextName,
+        int handleReferrals,
+        Control[] reqCtls) {
 
-	super(explanation);
+        super(explanation);
 
-	if (debug)
-	    System.out.println("LdapReferralException constructor");
+        if (debug)
+            System.out.println("LdapReferralException constructor");
 
-	setResolvedName(resolvedName);
-	setResolvedObj(resolvedObj);
-	setRemainingName(remainingName);
-	this.envprops = envprops;
-	this.nextName = nextName;
-	this.handleReferrals = handleReferrals;
+        setResolvedName(resolvedName);
+        setResolvedObj(resolvedObj);
+        setRemainingName(remainingName);
+        this.envprops = envprops;
+        this.nextName = nextName;
+        this.handleReferrals = handleReferrals;
 
-	// If following referral, request controls are passed to referral ctx
-	this.reqCtls = 
-	    (handleReferrals == LdapClient.LDAP_REF_FOLLOW ? reqCtls : null);
+        // If following referral, request controls are passed to referral ctx
+        this.reqCtls =
+            (handleReferrals == LdapClient.LDAP_REF_FOLLOW ? reqCtls : null);
     }
 
     /**
@@ -125,7 +125,7 @@ final public class LdapReferralException extends
      * The current environment properties are re-used.
      */
     public Context getReferralContext() throws NamingException {
-	return getReferralContext(envprops, null);
+        return getReferralContext(envprops, null);
     }
 
     /**
@@ -133,57 +133,57 @@ final public class LdapReferralException extends
      * The supplied environment properties are used.
      */
     public Context getReferralContext(Hashtable<?,?> newProps) throws
-	NamingException {
-	return getReferralContext(newProps, null);
+        NamingException {
+        return getReferralContext(newProps, null);
     }
 
     /**
      * Gets a context at which to continue processing.
      * The supplied environment properties and connection controls are used.
      */
-    public Context getReferralContext(Hashtable<?,?> newProps, Control[] connCtls) 
-	throws NamingException {
+    public Context getReferralContext(Hashtable<?,?> newProps, Control[] connCtls)
+        throws NamingException {
 
-	if (debug)
-	    System.out.println("LdapReferralException.getReferralContext");
+        if (debug)
+            System.out.println("LdapReferralException.getReferralContext");
 
-	LdapReferralContext refCtx = new LdapReferralContext(
-	    this, newProps, connCtls, reqCtls,
-	    nextName, skipThisReferral, handleReferrals);
+        LdapReferralContext refCtx = new LdapReferralContext(
+            this, newProps, connCtls, reqCtls,
+            nextName, skipThisReferral, handleReferrals);
 
-	refCtx.setHopCount(hopCount + 1);
+        refCtx.setHopCount(hopCount + 1);
 
-	if (skipThisReferral) {
-	    skipThisReferral = false; // reset
-	}
-	return (Context)refCtx;
+        if (skipThisReferral) {
+            skipThisReferral = false; // reset
+        }
+        return (Context)refCtx;
     }
 
     /**
       * Gets referral information.
       */
     public Object getReferralInfo() {
-	if (debug) {
-	    System.out.println("LdapReferralException.getReferralInfo");
-	    System.out.println("  referralIndex=" + referralIndex);
-	}
+        if (debug) {
+            System.out.println("LdapReferralException.getReferralInfo");
+            System.out.println("  referralIndex=" + referralIndex);
+        }
 
-	if (hasMoreReferrals()) {
-	    return referrals.elementAt(referralIndex);
-	} else {
-	    return null;
-	}
+        if (hasMoreReferrals()) {
+            return referrals.elementAt(referralIndex);
+        } else {
+            return null;
+        }
     }
 
     /**
      * Marks the current referral as one to be retried.
      */
     public void retryReferral() {
-	if (debug)
-	    System.out.println("LdapReferralException.retryReferral");
+        if (debug)
+            System.out.println("LdapReferralException.retryReferral");
 
-	if (referralIndex > 0)
-	    referralIndex--; // decrement index
+        if (referralIndex > 0)
+            referralIndex--; // decrement index
     }
 
     /**
@@ -191,19 +191,19 @@ final public class LdapReferralException extends
      * Returns false when there are no referrals remaining to be processed.
      */
     public boolean skipReferral() {
-	if (debug)
-	    System.out.println("LdapReferralException.skipReferral");
+        if (debug)
+            System.out.println("LdapReferralException.skipReferral");
 
-	skipThisReferral = true;
+        skipThisReferral = true;
 
-	// advance to next referral
-	try {
-	    getNextReferral();
-	} catch (ReferralException e) {
-	    // mask the referral exception
-	}
+        // advance to next referral
+        try {
+            getNextReferral();
+        } catch (ReferralException e) {
+            // mask the referral exception
+        }
 
-	return (hasMoreReferrals() || hasMoreReferralExceptions());
+        return (hasMoreReferrals() || hasMoreReferralExceptions());
     }
 
 
@@ -211,21 +211,21 @@ final public class LdapReferralException extends
      * Sets referral information.
      */
     void setReferralInfo(Vector referrals, boolean continuationRef) {
-	// %%% continuationRef is currently ignored
+        // %%% continuationRef is currently ignored
 
-	if (debug)
-	    System.out.println("LdapReferralException.setReferralInfo");
+        if (debug)
+            System.out.println("LdapReferralException.setReferralInfo");
 
-	this.referrals = referrals;
-	if (referrals != null) {
-	    referralCount = referrals.size();
-	}
+        this.referrals = referrals;
+        if (referrals != null) {
+            referralCount = referrals.size();
+        }
 
-	if (debug) {
-	    for (int i = 0; i < referralCount; i++) {
-		System.out.println("  [" + i + "] " + referrals.elementAt(i));
-	    }
-	}
+        if (debug) {
+            for (int i = 0; i < referralCount; i++) {
+                System.out.println("  [" + i + "] " + referrals.elementAt(i));
+            }
+        }
     }
 
     /**
@@ -234,16 +234,16 @@ final public class LdapReferralException extends
      */
     String getNextReferral() throws ReferralException {
 
-	if (debug)
-	    System.out.println("LdapReferralException.getNextReferral");
+        if (debug)
+            System.out.println("LdapReferralException.getNextReferral");
 
-	if (hasMoreReferrals()) {
-	    return (String)referrals.elementAt(referralIndex++);
-	} else if (hasMoreReferralExceptions()) {
-	    throw nextReferralEx;
-	} else {
-	    return null;
-	}
+        if (hasMoreReferrals()) {
+            return (String)referrals.elementAt(referralIndex++);
+        } else if (hasMoreReferralExceptions()) {
+            throw nextReferralEx;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -252,48 +252,48 @@ final public class LdapReferralException extends
      * are trimmed off.
      */
     LdapReferralException
-	appendUnprocessedReferrals(LdapReferralException back) {
+        appendUnprocessedReferrals(LdapReferralException back) {
 
-	if (debug) {
-	    System.out.println(
-		"LdapReferralException.appendUnprocessedReferrals");
-	    dump();
-	    if (back != null) {
-		back.dump();
-	    }
-	}
+        if (debug) {
+            System.out.println(
+                "LdapReferralException.appendUnprocessedReferrals");
+            dump();
+            if (back != null) {
+                back.dump();
+            }
+        }
 
-	LdapReferralException front = this;
+        LdapReferralException front = this;
 
-	if (! front.hasMoreReferrals()) {
-	    front = nextReferralEx; // trim
+        if (! front.hasMoreReferrals()) {
+            front = nextReferralEx; // trim
 
-	    if ((errorEx != null) && (front != null)) {
-		front.setNamingException(errorEx); //advance the saved exception
-	    }
-	}
+            if ((errorEx != null) && (front != null)) {
+                front.setNamingException(errorEx); //advance the saved exception
+            }
+        }
 
-	// don't append onto itself
-	if (this == back) {
-	    return front;
-	}
+        // don't append onto itself
+        if (this == back) {
+            return front;
+        }
 
-	if ((back != null) && (! back.hasMoreReferrals())) {
-	    back = back.nextReferralEx; // trim
-	}
+        if ((back != null) && (! back.hasMoreReferrals())) {
+            back = back.nextReferralEx; // trim
+        }
 
-	if (back == null) {
-	    return front;
-	}
+        if (back == null) {
+            return front;
+        }
 
-	// Locate the end of the current chain
-	LdapReferralException ptr = front;
-	while (ptr.nextReferralEx != null) {
-	    ptr = ptr.nextReferralEx;
-	}
-	ptr.nextReferralEx = back; // append
+        // Locate the end of the current chain
+        LdapReferralException ptr = front;
+        while (ptr.nextReferralEx != null) {
+            ptr = ptr.nextReferralEx;
+        }
+        ptr.nextReferralEx = back; // append
 
-	return front;
+        return front;
     }
 
     /**
@@ -302,21 +302,21 @@ final public class LdapReferralException extends
      * referrals (in the current referral exception) will be ignored.
      */
     boolean hasMoreReferrals() {
-	if (debug)
-	    System.out.println("LdapReferralException.hasMoreReferrals");
+        if (debug)
+            System.out.println("LdapReferralException.hasMoreReferrals");
 
-	return (! foundEntry) && (referralIndex < referralCount);
+        return (! foundEntry) && (referralIndex < referralCount);
     }
 
     /**
      * Tests if there are any referral exceptions remaining to be processed.
      */
     boolean hasMoreReferralExceptions() {
-	if (debug)
-	    System.out.println(
-		"LdapReferralException.hasMoreReferralExceptions");
+        if (debug)
+            System.out.println(
+                "LdapReferralException.hasMoreReferralExceptions");
 
-	return (nextReferralEx != null);
+        return (nextReferralEx != null);
     }
 
     /**
@@ -324,20 +324,20 @@ final public class LdapReferralException extends
      * from following a sequence of referrals.
      */
     void setHopCount(int hopCount) {
-	if (debug)
-	    System.out.println("LdapReferralException.setHopCount");
+        if (debug)
+            System.out.println("LdapReferralException.setHopCount");
 
-	this.hopCount = hopCount;
+        this.hopCount = hopCount;
     }
 
     /**
      * Sets the flag to indicate that the target name has been resolved.
      */
     void setNameResolved(boolean resolved) {
-	if (debug)
-	    System.out.println("LdapReferralException.setNameResolved");
+        if (debug)
+            System.out.println("LdapReferralException.setNameResolved");
 
-	foundEntry = resolved;
+        foundEntry = resolved;
     }
 
     /**
@@ -345,23 +345,23 @@ final public class LdapReferralException extends
      * Only the first exception is recorded.
      */
     void setNamingException(NamingException e) {
-	if (debug)
-	    System.out.println("LdapReferralException.setNamingException");
+        if (debug)
+            System.out.println("LdapReferralException.setNamingException");
 
-	if (errorEx == null) {
-	    e.setRootCause(this); //record the referral exception that caused it
-	    errorEx = e;
-	}
+        if (errorEx == null) {
+            e.setRootCause(this); //record the referral exception that caused it
+            errorEx = e;
+        }
     }
 
     /**
      * Gets the new RDN name.
      */
     String getNewRdn() {
-	if (debug)
-	    System.out.println("LdapReferralException.getNewRdn");
+        if (debug)
+            System.out.println("LdapReferralException.getNewRdn");
 
-	return newRdn;
+        return newRdn;
     }
 
     /**
@@ -369,20 +369,20 @@ final public class LdapReferralException extends
      * (when a referral is being followed).
      */
     void setNewRdn(String newRdn) {
-	if (debug)
-	    System.out.println("LdapReferralException.setNewRdn");
+        if (debug)
+            System.out.println("LdapReferralException.setNewRdn");
 
-	this.newRdn = newRdn;
+        this.newRdn = newRdn;
     }
 
     /**
      * Gets the exception generated while processing a referral.
      */
     NamingException getNamingException() {
-	if (debug)
-	    System.out.println("LdapReferralException.getNamingException");
+        if (debug)
+            System.out.println("LdapReferralException.getNamingException");
 
-	return errorEx;
+        return errorEx;
     }
 
     /**
@@ -393,11 +393,11 @@ final public class LdapReferralException extends
 
         System.out.println();
         System.out.println("LdapReferralException.dump");
-	LdapReferralException ptr = this;
-	while (ptr != null) {
-	    ptr.dumpState();
-	    ptr = ptr.nextReferralEx;
-	}
+        LdapReferralException ptr = this;
+        while (ptr != null) {
+            ptr.dumpState();
+            ptr = ptr.nextReferralEx;
+        }
     }
 
     /**
@@ -410,22 +410,22 @@ final public class LdapReferralException extends
         System.out.println("  skipThisReferral=" + skipThisReferral);
         System.out.println("  referralIndex=" + referralIndex);
 
-	if (referrals != null) {
+        if (referrals != null) {
             System.out.println("  referrals:");
-	    for (int i = 0; i < referralCount; i++) {
-		System.out.println("    [" + i + "] " + referrals.elementAt(i));
-	    }
-	} else {
+            for (int i = 0; i < referralCount; i++) {
+                System.out.println("    [" + i + "] " + referrals.elementAt(i));
+            }
+        } else {
             System.out.println("  referrals=null");
-	}
+        }
 
         System.out.println("  errorEx=" + errorEx);
 
-	if (nextReferralEx == null) {
+        if (nextReferralEx == null) {
             System.out.println("  nextRefEx=null");
-	} else {
+        } else {
             System.out.println("  nextRefEx=" + nextReferralEx.hashCode());
-	}
+        }
         System.out.println();
     }
 }

@@ -64,24 +64,24 @@
 
 #define AWT_NIF_INFO        0x00000010
 
-typedef struct _AWT_NOTIFYICONDATA { 
-    DWORD cbSize; 
-    HWND hWnd; 
-    UINT uID; 
-    UINT uFlags; 
-    UINT uCallbackMessage; 
-    HICON hIcon; 
+typedef struct _AWT_NOTIFYICONDATA {
+    DWORD cbSize;
+    HWND hWnd;
+    UINT uID;
+    UINT uFlags;
+    UINT uCallbackMessage;
+    HICON hIcon;
     TCHAR szTip[128];
 
     DWORD dwState;        // _WIN32_IE >= 0x0500
-    DWORD dwStateMask; 
-    TCHAR szInfo[256]; 
+    DWORD dwStateMask;
+    TCHAR szInfo[256];
     union {
-        UINT  uTimeout; 
-        UINT  uVersion; 
+        UINT  uTimeout;
+        UINT  uVersion;
     } DUMMYUNIONNAME;
-    TCHAR szInfoTitle[64]; 
-    DWORD dwInfoFlags; 
+    TCHAR szInfoTitle[64];
+    DWORD dwInfoFlags;
 
     GUID guidItem;        // _WIN32_IE >= 0x600
 } AWT_NOTIFYICONDATA, *PAWT_NOTIFYICONDATA;
@@ -104,10 +104,10 @@ public:
 
     void InitNID(UINT uID);
 
-    void InitMessage(MSG* msg, UINT message, WPARAM wParam, LPARAM lParam, 
+    void InitMessage(MSG* msg, UINT message, WPARAM wParam, LPARAM lParam,
                      int x = 0, int y = 0);
 
-    void SendMouseEvent(jint id, jlong when, jint x, jint y, jint modifiers, jint clickCount, 
+    void SendMouseEvent(jint id, jlong when, jint x, jint y, jint modifiers, jint clickCount,
                         jboolean popupTrigger, jint button = 0, MSG *pMsg = NULL);
     void SendActionEvent(jint id, jlong when, jint modifiers, MSG *pMsg = NULL);
 
@@ -196,7 +196,7 @@ private:
     };
 
 public:
-    static TrayIconListItem* sm_trayIconList;    
+    static TrayIconListItem* sm_trayIconList;
 };
 
 #endif /* AWT_TRAY_ICON_H */

@@ -31,7 +31,6 @@ import java.util.*;
  * A class to represent the format for a column of data.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class ColumnFormat extends OptionFormat {

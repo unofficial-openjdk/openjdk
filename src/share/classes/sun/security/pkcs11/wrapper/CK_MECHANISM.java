@@ -65,7 +65,7 @@ import java.math.BigInteger;
  * @author Martin Schlaeffer <schlaeff@sbox.tugraz.at>
  */
 public class CK_MECHANISM {
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -84,52 +84,52 @@ public class CK_MECHANISM {
     public Object pParameter;
 
     public CK_MECHANISM() {
-	// empty
+        // empty
     }
-    
+
     public CK_MECHANISM(long mechanism) {
-	this.mechanism = mechanism;
+        this.mechanism = mechanism;
     }
 
     // We don't have a (long,Object) constructor to force type checking.
     // This makes sure we don't accidentally pass a class that the native
     // code cannot handle.
-    
+
     public CK_MECHANISM(long mechanism, byte[] pParameter) {
-	init(mechanism, pParameter);
+        init(mechanism, pParameter);
     }
-    
+
     public CK_MECHANISM(long mechanism, BigInteger b) {
-	init(mechanism, sun.security.pkcs11.P11Util.getMagnitude(b));
+        init(mechanism, sun.security.pkcs11.P11Util.getMagnitude(b));
     }
-    
+
     public CK_MECHANISM(long mechanism, CK_VERSION version) {
-	init(mechanism, version);
+        init(mechanism, version);
     }
-    
+
     public CK_MECHANISM(long mechanism, CK_SSL3_MASTER_KEY_DERIVE_PARAMS params) {
-	init(mechanism, params);
+        init(mechanism, params);
     }
-    
+
     public CK_MECHANISM(long mechanism, CK_SSL3_KEY_MAT_PARAMS params) {
-	init(mechanism, params);
+        init(mechanism, params);
     }
-    
+
     public CK_MECHANISM(long mechanism, CK_TLS_PRF_PARAMS params) {
-	init(mechanism, params);
+        init(mechanism, params);
     }
-    
+
     public CK_MECHANISM(long mechanism, CK_ECDH1_DERIVE_PARAMS params) {
-	init(mechanism, params);
+        init(mechanism, params);
     }
-    
+
     public CK_MECHANISM(long mechanism, Long params) {
-	init(mechanism, params);
+        init(mechanism, params);
     }
 
     private void init(long mechanism, Object pParameter) {
-	this.mechanism = mechanism;
-	this.pParameter = pParameter;
+        this.mechanism = mechanism;
+        this.pParameter = pParameter;
     }
 
     /**
@@ -138,24 +138,24 @@ public class CK_MECHANISM {
      * @return the string representation of CK_MECHANISM
      */
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer();
 
-	buffer.append(Constants.INDENT);
-	buffer.append("mechanism: ");
-	buffer.append(mechanism);
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("mechanism: ");
+        buffer.append(mechanism);
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("pParameter: ");
-	buffer.append(pParameter.toString());
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("pParameter: ");
+        buffer.append(pParameter.toString());
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("ulParameterLen: ??");
-	//buffer.append(pParameter.length);
-	//buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("ulParameterLen: ??");
+        //buffer.append(pParameter.length);
+        //buffer.append(Constants.NEWLINE);
 
-	return buffer.toString() ;
+        return buffer.toString() ;
     }
 
 }

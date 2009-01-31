@@ -43,7 +43,7 @@ static inline UINT32 packMessage(int status, int data1, int data2) {
 
 
 static void setShortMessage(MidiMessage* message,
-			    int status, int data1, int data2) {
+                            int status, int data1, int data2) {
     message->type = SHORT_MESSAGE;
     message->data.s.packedMsg = packMessage(status, data1, data2);
 }
@@ -59,14 +59,14 @@ static void set14bitMessage(MidiMessage* message, int status, int value) {
     value &= 0x3FFF;
     TRACE3("14bit value (2): %d, lsb: %d, msb: %d\n", value, value & 0x7F, (value >> 7) & 0x7F);
     setShortMessage(message, status,
-		    value & 0x7F,
-		    (value >> 7) & 0x7F);
+                    value & 0x7F,
+                    (value >> 7) & 0x7F);
 }
 
 
-/* 
- * implementation of the platform-dependent 
- * MIDI in functions declared in PlatformMidi.h 
+/*
+ * implementation of the platform-dependent
+ * MIDI in functions declared in PlatformMidi.h
  */
 
 char* MIDI_IN_GetErrorStr(INT32 err) {
@@ -82,7 +82,7 @@ INT32 MIDI_IN_GetNumDevices() {
 
 INT32 MIDI_IN_GetDeviceName(INT32 deviceIndex, char *name, UINT32 nameLength) {
     int ret = getMidiDeviceName(SND_RAWMIDI_STREAM_INPUT, deviceIndex,
-				name, nameLength);
+                                name, nameLength);
     return ret;
 }
 
@@ -95,7 +95,7 @@ INT32 MIDI_IN_GetDeviceVendor(INT32 deviceIndex, char *name, UINT32 nameLength) 
 
 INT32 MIDI_IN_GetDeviceDescription(INT32 deviceIndex, char *name, UINT32 nameLength) {
     int ret = getMidiDeviceDescription(SND_RAWMIDI_STREAM_INPUT, deviceIndex,
-				       name, nameLength);
+                                       name, nameLength);
     return ret;
 }
 
@@ -152,156 +152,156 @@ MidiMessage* MIDI_IN_GetMessage(MidiDeviceHandle* handle) {
 
     TRACE0("> MIDI_IN_GetMessage\n");
     if (!handle) {
-	ERROR0("< ERROR: MIDI_IN_GetMessage(): handle is NULL\n");
-	return NULL;
+        ERROR0("< ERROR: MIDI_IN_GetMessage(): handle is NULL\n");
+        return NULL;
     }
     if (!handle->deviceHandle) {
-	ERROR0("< ERROR: MIDI_IN_GetMessage(): native handle is NULL\n");
-	return NULL;
+        ERROR0("< ERROR: MIDI_IN_GetMessage(): native handle is NULL\n");
+        return NULL;
     }
     if (!handle->platformData) {
-	ERROR0("< ERROR: MIDI_IN_GetMessage(): platformData is NULL\n");
-	return NULL;
+        ERROR0("< ERROR: MIDI_IN_GetMessage(): platformData is NULL\n");
+        return NULL;
     }
 
     /* For MIDI In, the device is left in non blocking mode. So if there is
        no data from the device, snd_rawmidi_read() returns with -11 (EAGAIN).
        This results in jumping back to the Java layer. */
     while (TRUE) {
-	TRACE0("before snd_rawmidi_read()\n");
-	err = snd_rawmidi_read((snd_rawmidi_t*) handle->deviceHandle, buffer, 1);
-	TRACE0("after snd_rawmidi_read()\n");
-	if (err != 1) {
-	    ERROR2("< ERROR: MIDI_IN_GetMessage(): snd_rawmidi_read() returned %d : %s\n", err, snd_strerror(err));
-	    return NULL;
-	}
-	// printf("received byte: %d\n", buffer[0]);
-	err = snd_midi_event_encode_byte((snd_midi_event_t*) handle->platformData,
-					 (int) buffer[0],
-					 &alsa_message);
-	if (err == 1) {
-	    break;
-	} else if (err < 0) {
-	    ERROR1("< ERROR: MIDI_IN_GetMessage(): snd_midi_event_encode_byte() returned %d\n", err);
-	    return NULL;
-	}
+        TRACE0("before snd_rawmidi_read()\n");
+        err = snd_rawmidi_read((snd_rawmidi_t*) handle->deviceHandle, buffer, 1);
+        TRACE0("after snd_rawmidi_read()\n");
+        if (err != 1) {
+            ERROR2("< ERROR: MIDI_IN_GetMessage(): snd_rawmidi_read() returned %d : %s\n", err, snd_strerror(err));
+            return NULL;
+        }
+        // printf("received byte: %d\n", buffer[0]);
+        err = snd_midi_event_encode_byte((snd_midi_event_t*) handle->platformData,
+                                         (int) buffer[0],
+                                         &alsa_message);
+        if (err == 1) {
+            break;
+        } else if (err < 0) {
+            ERROR1("< ERROR: MIDI_IN_GetMessage(): snd_midi_event_encode_byte() returned %d\n", err);
+            return NULL;
+        }
     }
     jdk_message = (MidiMessage*) calloc(sizeof(MidiMessage), 1);
     if (!jdk_message) {
-	ERROR0("< ERROR: MIDI_IN_GetMessage(): out of memory\n");
-	return NULL;
+        ERROR0("< ERROR: MIDI_IN_GetMessage(): out of memory\n");
+        return NULL;
     }
     // TODO: tra
     switch (alsa_message.type) {
     case SND_SEQ_EVENT_NOTEON:
     case SND_SEQ_EVENT_NOTEOFF:
     case SND_SEQ_EVENT_KEYPRESS:
-	status = (alsa_message.type == SND_SEQ_EVENT_KEYPRESS) ? 0xA0 :
-	    (alsa_message.type == SND_SEQ_EVENT_NOTEON) ? 0x90 : 0x80;
-	status |= alsa_message.data.note.channel;
-	setShortMessage(jdk_message, status,
-			alsa_message.data.note.note,
-			alsa_message.data.note.velocity);
-	break;
+        status = (alsa_message.type == SND_SEQ_EVENT_KEYPRESS) ? 0xA0 :
+            (alsa_message.type == SND_SEQ_EVENT_NOTEON) ? 0x90 : 0x80;
+        status |= alsa_message.data.note.channel;
+        setShortMessage(jdk_message, status,
+                        alsa_message.data.note.note,
+                        alsa_message.data.note.velocity);
+        break;
 
     case SND_SEQ_EVENT_CONTROLLER:
-	status = 0xB0 | alsa_message.data.control.channel;
-	setShortMessage(jdk_message, status,
-			alsa_message.data.control.param,
-			alsa_message.data.control.value);
-	break;
+        status = 0xB0 | alsa_message.data.control.channel;
+        setShortMessage(jdk_message, status,
+                        alsa_message.data.control.param,
+                        alsa_message.data.control.value);
+        break;
 
     case SND_SEQ_EVENT_PGMCHANGE:
     case SND_SEQ_EVENT_CHANPRESS:
-	status = (alsa_message.type == SND_SEQ_EVENT_PGMCHANGE) ? 0xC0 : 0xD0;
-	status |= alsa_message.data.control.channel;
-	setShortMessage(jdk_message, status,
-			alsa_message.data.control.value, 0);
-	break;
+        status = (alsa_message.type == SND_SEQ_EVENT_PGMCHANGE) ? 0xC0 : 0xD0;
+        status |= alsa_message.data.control.channel;
+        setShortMessage(jdk_message, status,
+                        alsa_message.data.control.value, 0);
+        break;
 
     case SND_SEQ_EVENT_PITCHBEND:
-	status = 0xE0 | alsa_message.data.control.channel;
-	// $$mp 2003-09-23:
-	// possible hack to work around a bug in ALSA. Necessary for
-	// ALSA 0.9.2. May be fixed in newer versions of ALSA.
-	// alsa_message.data.control.value ^= 0x2000;
-	// TRACE1("pitchbend value: %d\n", alsa_message.data.control.value);
-	set14bitMessage(jdk_message, status,
-			alsa_message.data.control.value);
-	break;
+        status = 0xE0 | alsa_message.data.control.channel;
+        // $$mp 2003-09-23:
+        // possible hack to work around a bug in ALSA. Necessary for
+        // ALSA 0.9.2. May be fixed in newer versions of ALSA.
+        // alsa_message.data.control.value ^= 0x2000;
+        // TRACE1("pitchbend value: %d\n", alsa_message.data.control.value);
+        set14bitMessage(jdk_message, status,
+                        alsa_message.data.control.value);
+        break;
 
-	/* System exclusive messages */
+        /* System exclusive messages */
 
     case SND_SEQ_EVENT_SYSEX:
-	jdk_message->type = LONG_MESSAGE;
-	jdk_message->data.l.size = alsa_message.data.ext.len;
-	jdk_message->data.l.data = malloc(alsa_message.data.ext.len);
-	if (jdk_message->data.l.data == NULL) {
-	    ERROR0("< ERROR: MIDI_IN_GetMessage(): out of memory\n");
-	    free(jdk_message);
-	    jdk_message = NULL;
-	} else {
-	    memcpy(jdk_message->data.l.data, alsa_message.data.ext.ptr, alsa_message.data.ext.len);
-	}
-	break;
+        jdk_message->type = LONG_MESSAGE;
+        jdk_message->data.l.size = alsa_message.data.ext.len;
+        jdk_message->data.l.data = malloc(alsa_message.data.ext.len);
+        if (jdk_message->data.l.data == NULL) {
+            ERROR0("< ERROR: MIDI_IN_GetMessage(): out of memory\n");
+            free(jdk_message);
+            jdk_message = NULL;
+        } else {
+            memcpy(jdk_message->data.l.data, alsa_message.data.ext.ptr, alsa_message.data.ext.len);
+        }
+        break;
 
-	/* System common messages */
+        /* System common messages */
 
     case SND_SEQ_EVENT_QFRAME:
-	setShortMessage(jdk_message, 0xF1,
-			alsa_message.data.control.value & 0x7F, 0);
-	break;
+        setShortMessage(jdk_message, 0xF1,
+                        alsa_message.data.control.value & 0x7F, 0);
+        break;
 
     case SND_SEQ_EVENT_SONGPOS:
-	set14bitMessage(jdk_message, 0xF2,
-			alsa_message.data.control.value);
-	break;
+        set14bitMessage(jdk_message, 0xF2,
+                        alsa_message.data.control.value);
+        break;
 
     case SND_SEQ_EVENT_SONGSEL:
-	setShortMessage(jdk_message, 0xF3,
-			alsa_message.data.control.value & 0x7F, 0);
-	break;
+        setShortMessage(jdk_message, 0xF3,
+                        alsa_message.data.control.value & 0x7F, 0);
+        break;
 
     case SND_SEQ_EVENT_TUNE_REQUEST:
-	setRealtimeMessage(jdk_message, 0xF6);
-	break;
+        setRealtimeMessage(jdk_message, 0xF6);
+        break;
 
-	/* System realtime messages */
+        /* System realtime messages */
 
     case SND_SEQ_EVENT_CLOCK:
-	setRealtimeMessage(jdk_message, 0xF8);
-	break;
+        setRealtimeMessage(jdk_message, 0xF8);
+        break;
 
     case SND_SEQ_EVENT_START:
-	setRealtimeMessage(jdk_message, 0xFA);
-	break;
+        setRealtimeMessage(jdk_message, 0xFA);
+        break;
 
     case SND_SEQ_EVENT_CONTINUE:
-	setRealtimeMessage(jdk_message, 0xFB);
-	break;
+        setRealtimeMessage(jdk_message, 0xFB);
+        break;
 
     case SND_SEQ_EVENT_STOP:
-	setRealtimeMessage(jdk_message, 0xFC);
-	break;
+        setRealtimeMessage(jdk_message, 0xFC);
+        break;
 
     case SND_SEQ_EVENT_SENSING:
-	setRealtimeMessage(jdk_message, 0xFE);
-	break;
+        setRealtimeMessage(jdk_message, 0xFE);
+        break;
 
     case SND_SEQ_EVENT_RESET:
-	setRealtimeMessage(jdk_message, 0xFF);
-	break;
+        setRealtimeMessage(jdk_message, 0xFF);
+        break;
 
     default:
-	ERROR0("< ERROR: MIDI_IN_GetMessage(): unhandled ALSA MIDI message type\n");
-	free(jdk_message);
-	jdk_message = NULL;
+        ERROR0("< ERROR: MIDI_IN_GetMessage(): unhandled ALSA MIDI message type\n");
+        free(jdk_message);
+        jdk_message = NULL;
 
     }
 
     // set timestamp
     if (jdk_message != NULL) {
-	jdk_message->timestamp = getMidiTimestamp(handle);
+        jdk_message->timestamp = getMidiTimestamp(handle);
     }
     TRACE1("< MIDI_IN_GetMessage: returning %p\n", jdk_message);
     return jdk_message;
@@ -310,11 +310,11 @@ MidiMessage* MIDI_IN_GetMessage(MidiDeviceHandle* handle) {
 
 void MIDI_IN_ReleaseMessage(MidiDeviceHandle* handle, MidiMessage* msg) {
     if (!msg) {
-	ERROR0("< ERROR: MIDI_IN_ReleaseMessage(): message is NULL\n");
-	return;
+        ERROR0("< ERROR: MIDI_IN_ReleaseMessage(): message is NULL\n");
+        return;
     }
     if (msg->type == LONG_MESSAGE && msg->data.l.data) {
-	free(msg->data.l.data);
+        free(msg->data.l.data);
     }
     free(msg);
 }

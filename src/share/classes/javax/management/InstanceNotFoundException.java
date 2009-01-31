@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management; 
+package javax.management;
 
 
 /**
@@ -31,7 +31,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class InstanceNotFoundException extends OperationsException   { 
+public class InstanceNotFoundException extends OperationsException   {
 
     /* Serial version */
     private static final long serialVersionUID = -882579438394773049L;
@@ -40,15 +40,15 @@ public class InstanceNotFoundException extends OperationsException   {
      * Default constructor.
      */
     public InstanceNotFoundException() {
-	super();
+        super();
     }
-    
+
     /**
      * Constructor that allows a specific error message to be specified.
      *
      * @param message the detail message.
      */
     public InstanceNotFoundException(String message) {
-	super(message);
+        super(message);
     }
 }

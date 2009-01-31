@@ -33,8 +33,7 @@ import java.awt.print.*;
  * Printable to merge multiple printables into one.
  *
  * @author Igor Kushnirskiy
- * @version %I% %G%
- * 
+ *
  * @since 1.6
  */
 class CompoundPrintable implements CountingPrintable {
@@ -45,7 +44,7 @@ class CompoundPrintable implements CountingPrintable {
         this.printables = new LinkedList<CountingPrintable>(printables);
     }
 
-    public int print(final Graphics graphics, 
+    public int print(final Graphics graphics,
                      final PageFormat pf,
                      final int pageIndex) throws PrinterException {
         int ret = NO_SUCH_PAGE;

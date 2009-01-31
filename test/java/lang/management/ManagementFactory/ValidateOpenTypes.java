@@ -25,11 +25,11 @@
  * @test
  * @bug     5024531
  * @summary Validata open types mapped for the MXBeans in the platform
- *          MBeanServer. 
+ *          MBeanServer.
  * @author  Mandy Chung
  *
  * @compile -source 1.5 ValidateOpenTypes.java
- * @run main/othervm -verbose:gc ValidateOpenTypes 
+ * @run main/othervm -verbose:gc ValidateOpenTypes
  */
 import java.lang.management.*;
 import javax.management.*;
@@ -42,7 +42,7 @@ import java.util.Properties;
 import com.sun.management.GcInfo;
 
 public class ValidateOpenTypes {
-    private static MBeanServer server = 
+    private static MBeanServer server =
         ManagementFactory.getPlatformMBeanServer();
     private static ObjectName memory;
     private static ObjectName thread;
@@ -59,22 +59,22 @@ public class ValidateOpenTypes {
 
         List<MemoryPoolMXBean> pools = getMemoryPoolMXBeans();
         for (MemoryPoolMXBean p : pools) {
-            if (heapPool == null && 
+            if (heapPool == null &&
                 p.getType() == MemoryType.HEAP &&
                 p.isUsageThresholdSupported() &&
                 p.isCollectionUsageThresholdSupported()) {
                 heapPool = new ObjectName(MEMORY_POOL_MXBEAN_DOMAIN_TYPE +
                                ",name=" + p.getName());
             }
-            if (nonHeapPool == null && 
+            if (nonHeapPool == null &&
                 p.getType() == MemoryType.NON_HEAP &&
                 p.isUsageThresholdSupported()) {
                 nonHeapPool = new ObjectName(MEMORY_POOL_MXBEAN_DOMAIN_TYPE +
                                ",name=" + p.getName());
             }
         }
- 
-        // Check notification emitters 
+
+        // Check notification emitters
         MyListener listener = new MyListener();
         server.addNotificationListener(memory, listener, null, null);
         server.removeNotificationListener(memory, listener);
@@ -107,7 +107,7 @@ public class ValidateOpenTypes {
 
     private static final String OPTION = "-verbose:gc";
     private static void checkList() throws Exception {
-        String[] args = (String[]) server.getAttribute(runtime, 
+        String[] args = (String[]) server.getAttribute(runtime,
                                                        "InputArguments");
         if (args.length < 1) {
            throw new RuntimeException("TEST FAILED: " +
@@ -120,7 +120,7 @@ public class ValidateOpenTypes {
                found = true;
                break;
            }
-        } 
+        }
         if (!found) {
             throw new RuntimeException("TEST FAILED: " +
                 "VM option " + OPTION + " not found");
@@ -137,7 +137,7 @@ public class ValidateOpenTypes {
         System.setProperty(KEY1, VALUE1);
         System.setProperty(KEY2, VALUE2);
 
-        TabularData props1 = (TabularData) 
+        TabularData props1 = (TabularData)
             server.getAttribute(runtime, "SystemProperties");
 
         String value1 = getProperty(props1, KEY1);
@@ -201,7 +201,7 @@ public class ValidateOpenTypes {
     private static long getCommitted(Object data) {
         MemoryUsage u = MemoryUsage.from((CompositeData) data);
         return u.getCommitted();
-    } 
+    }
 
     private static void checkThreadInfo() throws Exception {
         // assume all threads stay alive
@@ -246,7 +246,7 @@ public class ValidateOpenTypes {
         System.out.print(info.getThreadName());
         System.out.print(" id=" + info.getThreadId());
         System.out.println(" " + info.getThreadState());
-   
+
         for (StackTraceElement s : info.getStackTrace()) {
             System.out.println(s);
         }
@@ -263,8 +263,8 @@ public class ValidateOpenTypes {
        // Test com.sun.management proxy
         List<GarbageCollectorMXBean> gcs = getGarbageCollectorMXBeans();
         for (GarbageCollectorMXBean gc : gcs) {
-            ObjectName sunGc = 
-                new ObjectName(GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE + 
+            ObjectName sunGc =
+                new ObjectName(GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE +
                                ",name=" + gc.getName());
             CompositeData cd = (CompositeData) server.getAttribute(sunGc, "LastGcInfo");
             if (cd != null) {

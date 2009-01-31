@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,22 +44,22 @@ class Foo implements Serializable {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	Foo foo = (Foo) oin.readObject();
-	oin.close();
-	
-	if ((! foo.z) ||
-	    (foo.b != 5) ||
-	    (foo.c != '5') ||
-	    (foo.s != 5) ||
-	    (foo.i != 5) ||
-	    (foo.j != 5) ||
-	    (foo.f != 5.0f) ||
-	    (foo.d != 5.0) ||
-	    (! foo.str.equals("5")))
-	{
-	    throw new Error();
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        Foo foo = (Foo) oin.readObject();
+        oin.close();
+
+        if ((! foo.z) ||
+            (foo.b != 5) ||
+            (foo.c != '5') ||
+            (foo.s != 5) ||
+            (foo.i != 5) ||
+            (foo.j != 5) ||
+            (foo.f != 5.0f) ||
+            (foo.d != 5.0) ||
+            (! foo.str.equals("5")))
+        {
+            throw new Error();
+        }
     }
 }

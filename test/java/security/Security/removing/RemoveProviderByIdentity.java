@@ -32,15 +32,15 @@ import java.security.*;
 public class RemoveProviderByIdentity {
 
     public static void main(String[] args) throws Exception {
-	String PROVIDER_NAME = "myprovider";
+        String PROVIDER_NAME = "myprovider";
 
-	Security.addProvider(new MyProvider(PROVIDER_NAME, 1, "test"));
-	if (Security.getProvider(PROVIDER_NAME) == null)
-	    throw new Exception("provider not registered");
+        Security.addProvider(new MyProvider(PROVIDER_NAME, 1, "test"));
+        if (Security.getProvider(PROVIDER_NAME) == null)
+            throw new Exception("provider not registered");
 
-	Security.removeProvider(PROVIDER_NAME);
-	if (Security.getProvider(PROVIDER_NAME) != null)
-	    throw new Exception("provider not removed");
+        Security.removeProvider(PROVIDER_NAME);
+        if (Security.getProvider(PROVIDER_NAME) != null)
+            throw new Exception("provider not removed");
     }
 }
 

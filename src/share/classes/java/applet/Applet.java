@@ -45,18 +45,17 @@ import javax.accessibility.*;
  *
  * @author      Arthur van Hoff
  * @author      Chris Warth
- * @version     %I%, %G%
  * @since       JDK1.0
  */
 public class Applet extends Panel {
-    
+
     /**
-     * Constructs a new Applet. 
+     * Constructs a new Applet.
      * <p>
-     * Note: Many methods in <code>java.applet.Applet</code> 
-     * may be invoked by the applet only after the applet is 
-     * fully constructed; applet should avoid calling methods 
-     * in <code>java.applet.Applet</code> in the constructor. 
+     * Note: Many methods in <code>java.applet.Applet</code>
+     * may be invoked by the applet only after the applet is
+     * fully constructed; applet should avoid calling methods
+     * in <code>java.applet.Applet</code> in the constructor.
      *
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
@@ -68,7 +67,7 @@ public class Applet extends Panel {
             throw new HeadlessException();
         }
     }
-    
+
     /**
      * Applets can be serialized but the following conventions MUST be followed:
      *
@@ -112,13 +111,13 @@ public class Applet extends Panel {
      * @exception SecurityException if the caller cannot set the stub
      */
     public final void setStub(AppletStub stub) {
-	if (this.stub != null) {
-	    SecurityManager s = System.getSecurityManager();
-	    if (s != null) {
-	        s.checkPermission(new AWTPermission("setAppletStub"));
-	    }
-	}
-	this.stub = (AppletStub)stub;
+        if (this.stub != null) {
+            SecurityManager s = System.getSecurityManager();
+            if (s != null) {
+                s.checkPermission(new AWTPermission("setAppletStub"));
+            }
+        }
+        this.stub = (AppletStub)stub;
     }
 
     /**
@@ -132,15 +131,15 @@ public class Applet extends Panel {
      * @see     java.applet.Applet#stop()
      */
     public boolean isActive() {
-	if (stub != null) {
-	    return stub.isActive();
-	} else {	// If stub field not filled in, applet never active
-	    return false;
-	}
+        if (stub != null) {
+            return stub.isActive();
+        } else {        // If stub field not filled in, applet never active
+            return false;
+        }
     }
 
     /**
-     * Gets the URL of the document in which this applet is embedded. 
+     * Gets the URL of the document in which this applet is embedded.
      * For example, suppose an applet is contained
      * within the document:
      * <blockquote><pre>
@@ -156,18 +155,18 @@ public class Applet extends Panel {
      * @see     java.applet.Applet#getCodeBase()
      */
     public URL getDocumentBase() {
-	return stub.getDocumentBase();
+        return stub.getDocumentBase();
     }
 
     /**
-     * Gets the base URL. This is the URL of the directory which contains this applet.  
+     * Gets the base URL. This is the URL of the directory which contains this applet.
      *
      * @return  the base {@link java.net.URL} of
      *          the directory which contains this applet.
      * @see     java.applet.Applet#getDocumentBase()
      */
     public URL getCodeBase() {
-	return stub.getCodeBase();
+        return stub.getCodeBase();
     }
 
     /**
@@ -189,7 +188,7 @@ public class Applet extends Panel {
      *          or <code>null</code> if not set.
      */
      public String getParameter(String name) {
-	 return stub.getParameter(name);
+         return stub.getParameter(name);
      }
 
     /**
@@ -202,7 +201,7 @@ public class Applet extends Panel {
      * @return  the applet's context.
      */
     public AppletContext getAppletContext() {
-	return stub.getAppletContext();
+        return stub.getAppletContext();
     }
 
     /**
@@ -212,13 +211,13 @@ public class Applet extends Panel {
      * @param   height   the new requested height for the applet.
      */
     public void resize(int width, int height) {
-	Dimension d = size();
-	if ((d.width != width) || (d.height != height)) {
-	    super.resize(width, height);
-	    if (stub != null) {
-		stub.appletResize(width, height);
-	    }
-	}
+        Dimension d = size();
+        if ((d.width != width) || (d.height != height)) {
+            super.resize(width, height);
+            if (stub != null) {
+                stub.appletResize(width, height);
+            }
+        }
     }
 
     /**
@@ -227,7 +226,7 @@ public class Applet extends Panel {
      * @param   d   an object giving the new width and height.
      */
     public void resize(Dimension d) {
-	resize(d.width, d.height);
+        resize(d.width, d.height);
     }
 
     /**
@@ -239,7 +238,7 @@ public class Applet extends Panel {
      * @param   msg   a string to display in the status window.
      */
     public void showStatus(String msg) {
-	getAppletContext().showStatus(msg);
+        getAppletContext().showStatus(msg);
     }
 
     /**
@@ -257,7 +256,7 @@ public class Applet extends Panel {
      * @see     java.awt.Image
      */
     public Image getImage(URL url) {
-	return getAppletContext().getImage(url);
+        return getAppletContext().getImage(url);
     }
 
     /**
@@ -278,11 +277,11 @@ public class Applet extends Panel {
      * @see     java.awt.Image
      */
     public Image getImage(URL url, String name) {
-	try {
-	    return getImage(new URL(url, name));
-	} catch (MalformedURLException e) {
-	    return null;
-	}
+        try {
+            return getImage(new URL(url, name));
+        } catch (MalformedURLException e) {
+            return null;
+        }
     }
 
     /**
@@ -310,7 +309,7 @@ public class Applet extends Panel {
      * @see     java.applet.AudioClip
      */
     public AudioClip getAudioClip(URL url) {
-	return getAppletContext().getAudioClip(url);
+        return getAppletContext().getAudioClip(url);
     }
 
     /**
@@ -329,11 +328,11 @@ public class Applet extends Panel {
      * @see     java.applet.AudioClip
      */
     public AudioClip getAudioClip(URL url, String name) {
-	try {
-	    return getAudioClip(new URL(url, name));
-	} catch (MalformedURLException e) {
-	    return null;
-	}
+        try {
+            return getAudioClip(new URL(url, name));
+        } catch (MalformedURLException e) {
+            return null;
+        }
     }
 
     /**
@@ -348,11 +347,11 @@ public class Applet extends Panel {
      *          copyright of the applet.
      */
     public String getAppletInfo() {
-	return null;
+        return null;
     }
 
     /**
-     * Gets the locale of the applet. It allows the applet 
+     * Gets the locale of the applet. It allows the applet
      * to maintain its own locale separated from the locale
      * of the browser or appletviewer.
      *
@@ -363,7 +362,7 @@ public class Applet extends Panel {
     public Locale getLocale() {
       Locale locale = super.getLocale();
       if (locale == null) {
-	return Locale.getDefault();
+        return Locale.getDefault();
       }
       return locale;
     }
@@ -378,9 +377,9 @@ public class Applet extends Panel {
      * description. For example:
      * <p><blockquote><pre>
      * String pinfo[][] = {
-     *	 {"fps",    "1-10",    "frames per second"},
-     *	 {"repeat", "boolean", "repeat image loop"},
-     *	 {"imgs",   "url",     "images directory"}
+     *   {"fps",    "1-10",    "frames per second"},
+     *   {"repeat", "boolean", "repeat image loop"},
+     *   {"imgs",   "url",     "images directory"}
      * };
      * </pre></blockquote>
      * <p>
@@ -390,7 +389,7 @@ public class Applet extends Panel {
      * @return  an array describing the parameters this applet looks for.
      */
     public String[][] getParameterInfo() {
-	return null;
+        return null;
     }
 
     /**
@@ -400,10 +399,10 @@ public class Applet extends Panel {
      * @param   url   an absolute URL giving the location of the audio clip.
      */
     public void play(URL url) {
-	AudioClip clip = getAudioClip(url);
-	if (clip != null) {
-	    clip.play();
-	}
+        AudioClip clip = getAudioClip(url);
+        if (clip != null) {
+            clip.play();
+        }
     }
 
     /**
@@ -416,10 +415,10 @@ public class Applet extends Panel {
      *                 <code>url</code> argument.
      */
     public void play(URL url, String name) {
-	AudioClip clip = getAudioClip(url, name);
-	if (clip != null) {
-	    clip.play();
-	}
+        AudioClip clip = getAudioClip(url, name);
+        if (clip != null) {
+            clip.play();
+        }
     }
 
     /**
@@ -526,12 +525,12 @@ public class Applet extends Panel {
     AccessibleContext accessibleContext = null;
 
     /**
-     * Gets the AccessibleContext associated with this Applet. 
-     * For applets, the AccessibleContext takes the form of an 
-     * AccessibleApplet. 
+     * Gets the AccessibleContext associated with this Applet.
+     * For applets, the AccessibleContext takes the form of an
+     * AccessibleApplet.
      * A new AccessibleApplet instance is created if necessary.
      *
-     * @return an AccessibleApplet that serves as the 
+     * @return an AccessibleApplet that serves as the
      *         AccessibleContext of this Applet
      * @since 1.3
      */
@@ -543,8 +542,8 @@ public class Applet extends Panel {
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>Applet</code> class.  It provides an implementation of the 
+     * This class implements accessibility support for the
+     * <code>Applet</code> class.  It provides an implementation of the
      * Java Accessibility API appropriate to applet user-interface elements.
      * @since 1.3
      */

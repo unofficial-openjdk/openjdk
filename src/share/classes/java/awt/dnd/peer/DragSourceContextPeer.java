@@ -39,7 +39,6 @@ import java.awt.dnd.InvalidDnDOperationException;
  * the same
  * </p>
  *
- * @version 	%I%, %G%
  * @since 1.2
  *
  */

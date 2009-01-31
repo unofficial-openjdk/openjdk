@@ -50,15 +50,15 @@ public abstract class Font2D {
     public static final int JRE_RANK     = 2;
     public static final int TTF_RANK     = 3;
     public static final int TYPE1_RANK   = 4;
-    public static final int NATIVE_RANK  = 5;    
-    public static final int UNKNOWN_RANK = 6;    
-    public static final int DEFAULT_RANK = 4;    
+    public static final int NATIVE_RANK  = 5;
+    public static final int UNKNOWN_RANK = 6;
+    public static final int DEFAULT_RANK = 4;
 
     private static final String[] boldNames = {
-	"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi", };
+        "bold", "demibold", "demi-bold", "demi bold", "negreta", "demi", };
 
     private static final String[] italicNames = {
-	"italic", "cursiva", "oblique", "inclined", };
+        "italic", "cursiva", "oblique", "inclined", };
 
     private static final String[] boldItalicNames = {
           "bolditalic", "bold-italic", "bold italic",
@@ -66,7 +66,7 @@ public abstract class Font2D {
           "demibold italic", "negreta cursiva","demi oblique", };
 
     private static final FontRenderContext DEFAULT_FRC =
-	new FontRenderContext(null, false, false);
+        new FontRenderContext(null, false, false);
 
     public Font2DHandle handle;
     protected String familyName;           /* Family font name (english) */
@@ -75,7 +75,7 @@ public abstract class Font2D {
     protected FontFamily family;
     protected int fontRank = DEFAULT_RANK;
 
-    /* 
+    /*
      * A mapper can be independent of the strike.
      * Perhaps the reference to the mapper ought to be held on the
      * scaler, as it may be implemented via scaler functionality anyway
@@ -84,7 +84,7 @@ public abstract class Font2D {
      */
     protected CharToGlyphMapper mapper;
 
-    /* 
+    /*
      * The strike cache is maintained per "Font2D" as that is the
      * principal object by which you look up fonts.
      * It means more Hashmaps, but look ups can be quicker because
@@ -94,7 +94,7 @@ public abstract class Font2D {
     protected ConcurrentHashMap<FontStrikeDesc, Reference>
         strikeCache = new ConcurrentHashMap<FontStrikeDesc, Reference>();
 
-    /* Store the last Strike in a Reference object. 
+    /* Store the last Strike in a Reference object.
      * Similarly to the strike that was stored on a C++ font object,
      * this is an optimisation which helps if multiple clients (ie
      * typically SunGraphics2D instances) are using the same font, then
@@ -111,7 +111,7 @@ public abstract class Font2D {
      * POSSIBLE OPTIMISATION:
      * Array of length 1024 elements of 64 bits indicating if a font
      * contains these. This kind of information can be shared between
-     * all point sizes. 
+     * all point sizes.
      * if corresponding bit in knownBitmaskMap is set then canDisplayBitmaskMap
      * is valid. This is 16Kbytes of data per composite font style.
      * What about UTF-32 and surrogates?
@@ -129,41 +129,41 @@ public abstract class Font2D {
      * it may be able to used to simulate bold italic
      */
     public int getStyle() {
-	return style;
+        return style;
     }
     protected void setStyle() {
 
-	String fName = fullName.toLowerCase();
+        String fName = fullName.toLowerCase();
 
-	for (int i=0; i < boldItalicNames.length; i++) {
-	    if (fName.indexOf(boldItalicNames[i]) != -1) {
-		style = Font.BOLD|Font.ITALIC;
-		return;
-	    }
-	}
+        for (int i=0; i < boldItalicNames.length; i++) {
+            if (fName.indexOf(boldItalicNames[i]) != -1) {
+                style = Font.BOLD|Font.ITALIC;
+                return;
+            }
+        }
 
-	for (int i=0; i < italicNames.length; i++) {
-	    if (fName.indexOf(italicNames[i]) != -1) {
-		style = Font.ITALIC;
-		return;
-	    }
-	}
-	
-	for (int i=0; i < boldNames.length; i++) {
-	    if (fName.indexOf(boldNames[i]) != -1 ) {
-		style = Font.BOLD;
-		return;
-	    }
-	}
+        for (int i=0; i < italicNames.length; i++) {
+            if (fName.indexOf(italicNames[i]) != -1) {
+                style = Font.ITALIC;
+                return;
+            }
+        }
+
+        for (int i=0; i < boldNames.length; i++) {
+            if (fName.indexOf(boldNames[i]) != -1 ) {
+                style = Font.BOLD;
+                return;
+            }
+        }
     }
 
-	
+
     int getRank() {
-	return fontRank;
+        return fontRank;
     }
 
     void setRank(int rank) {
-	fontRank = rank;
+        fontRank = rank;
     }
 
     abstract CharToGlyphMapper getMapper();
@@ -176,10 +176,10 @@ public abstract class Font2D {
      * glyph elsewhere.
      */
     protected int getValidatedGlyphCode(int glyphCode) {
-	if (glyphCode < 0 || glyphCode >= getMapper().getNumGlyphs()) {
-	    glyphCode = getMapper().getMissingGlyphCode();
-	}
-	return glyphCode; 
+        if (glyphCode < 0 || glyphCode >= getMapper().getNumGlyphs()) {
+            glyphCode = getMapper().getMissingGlyphCode();
+        }
+        return glyphCode;
     }
 
     /*
@@ -195,12 +195,12 @@ public abstract class Font2D {
      * strike.
      */
     public FontStrike getStrike(Font font) {
-	FontStrike strike = (FontStrike)lastFontStrike.get();
-	if (strike != null) {
-	    return strike;
-	} else {
-	    return getStrike(font, DEFAULT_FRC);
-	}
+        FontStrike strike = (FontStrike)lastFontStrike.get();
+        if (strike != null) {
+            return strike;
+        } else {
+            return getStrike(font, DEFAULT_FRC);
+        }
     }
 
     /* SunGraphics2D has font, tx, aa and fm. From this info
@@ -225,132 +225,132 @@ public abstract class Font2D {
      * required with its attendant consequences for MP scaleability.
      */
     public FontStrike getStrike(Font font, AffineTransform devTx,
-				int aa, int fm) {
+                                int aa, int fm) {
 
-	/* Create the descriptor which is used to identify a strike
-	 * in the strike cache/map. A strike is fully described by
-	 * the attributes of this descriptor.
-	 */
-	/* REMIND: generating garbage and doing computation here in order
-	 * to include pt size in the tx just for a lookup! Figure out a
-	 * better way.
-	 */
-	double ptSize = font.getSize2D();
-	AffineTransform glyphTx = (AffineTransform)devTx.clone();
-	glyphTx.scale(ptSize, ptSize);
-	if (font.isTransformed()) {
-	    glyphTx.concatenate(font.getTransform());
-	}
-	FontStrikeDesc desc = new FontStrikeDesc(devTx, glyphTx,
-						 font.getStyle(), aa, fm);
-	return getStrike(desc, false);
+        /* Create the descriptor which is used to identify a strike
+         * in the strike cache/map. A strike is fully described by
+         * the attributes of this descriptor.
+         */
+        /* REMIND: generating garbage and doing computation here in order
+         * to include pt size in the tx just for a lookup! Figure out a
+         * better way.
+         */
+        double ptSize = font.getSize2D();
+        AffineTransform glyphTx = (AffineTransform)devTx.clone();
+        glyphTx.scale(ptSize, ptSize);
+        if (font.isTransformed()) {
+            glyphTx.concatenate(font.getTransform());
+        }
+        FontStrikeDesc desc = new FontStrikeDesc(devTx, glyphTx,
+                                                 font.getStyle(), aa, fm);
+        return getStrike(desc, false);
     }
 
     public FontStrike getStrike(Font font, AffineTransform devTx,
-				AffineTransform glyphTx,
-				int aa, int fm) {
+                                AffineTransform glyphTx,
+                                int aa, int fm) {
 
-	/* Create the descriptor which is used to identify a strike
-	 * in the strike cache/map. A strike is fully described by
-	 * the attributes of this descriptor.
-	 */
-	FontStrikeDesc desc = new FontStrikeDesc(devTx, glyphTx,
-						 font.getStyle(), aa, fm);
-	return getStrike(desc, false);
+        /* Create the descriptor which is used to identify a strike
+         * in the strike cache/map. A strike is fully described by
+         * the attributes of this descriptor.
+         */
+        FontStrikeDesc desc = new FontStrikeDesc(devTx, glyphTx,
+                                                 font.getStyle(), aa, fm);
+        return getStrike(desc, false);
     }
 
     public FontStrike getStrike(Font font, FontRenderContext frc) {
 
-	AffineTransform at = frc.getTransform();
-	double ptSize = font.getSize2D();
-	at.scale(ptSize, ptSize);
-	if (font.isTransformed()) {
-	    at.concatenate(font.getTransform());
-	}
-	int aa = FontStrikeDesc.getAAHintIntVal(this, font, frc);
-	int fm = FontStrikeDesc.getFMHintIntVal(frc.getFractionalMetricsHint());
-	FontStrikeDesc desc = new FontStrikeDesc(frc.getTransform(),
-						 at, font.getStyle(),
-						 aa, fm);
-	return getStrike(desc, false);
+        AffineTransform at = frc.getTransform();
+        double ptSize = font.getSize2D();
+        at.scale(ptSize, ptSize);
+        if (font.isTransformed()) {
+            at.concatenate(font.getTransform());
+        }
+        int aa = FontStrikeDesc.getAAHintIntVal(this, font, frc);
+        int fm = FontStrikeDesc.getFMHintIntVal(frc.getFractionalMetricsHint());
+        FontStrikeDesc desc = new FontStrikeDesc(frc.getTransform(),
+                                                 at, font.getStyle(),
+                                                 aa, fm);
+        return getStrike(desc, false);
     }
 
     FontStrike getStrike(FontStrikeDesc desc) {
-	return getStrike(desc, true);
+        return getStrike(desc, true);
     }
 
     private FontStrike getStrike(FontStrikeDesc desc, boolean copy) {
-	/* Before looking in the map, see if the descriptor matches the
-	 * last strike returned from this Font2D. This should often be a win
-	 * since its common for the same font, in the same size to be
-	 * used frequently, for example in many parts of a UI.
-	 *
-	 * If its not the same then we use the descriptor to locate a
-	 * Reference to the strike. If it exists and points to a strike,
-	 * then we update the last strike to refer to that and return it.
-	 * 
-	 * If the key isn't in the map, or its reference object has been
-	 * collected, then we create a new strike, put it in the map and
-	 * set it to be the last strike.
-	 */
-	FontStrike strike = (FontStrike)lastFontStrike.get();
-	if (strike != null && desc.equals(strike.desc)) {
-	    //strike.lastlookupTime = System.currentTimeMillis();
-	    return strike;
-	} else {
+        /* Before looking in the map, see if the descriptor matches the
+         * last strike returned from this Font2D. This should often be a win
+         * since its common for the same font, in the same size to be
+         * used frequently, for example in many parts of a UI.
+         *
+         * If its not the same then we use the descriptor to locate a
+         * Reference to the strike. If it exists and points to a strike,
+         * then we update the last strike to refer to that and return it.
+         *
+         * If the key isn't in the map, or its reference object has been
+         * collected, then we create a new strike, put it in the map and
+         * set it to be the last strike.
+         */
+        FontStrike strike = (FontStrike)lastFontStrike.get();
+        if (strike != null && desc.equals(strike.desc)) {
+            //strike.lastlookupTime = System.currentTimeMillis();
+            return strike;
+        } else {
             Reference strikeRef = strikeCache.get(desc);
-	    if (strikeRef != null) {
-		strike = (FontStrike)strikeRef.get();
-		if (strike != null) {
-		    //strike.lastlookupTime = System.currentTimeMillis();
-		    lastFontStrike = new SoftReference(strike);
-		    StrikeCache.refStrike(strike);
-		    return strike;
-		} else {
-		    /* We have found a cleared reference that has not yet
-		     * been removed by the disposer.
-		     * If we make this reference unreachable by removing it
-		     * from the map,or overwriting it with a new reference to
-		     * a new strike, then it is possible it may never be
-		     * enqueued for disposal. That is the implication of
-		     * the docs for java.lang.ref. So on finding a cleared
-		     * reference, we need to dispose the native resources,
-		     * if they haven't already been freed.
-		     * The reference object needs to have a reference to
-		     * the disposer instance for this to occur.
-		     */
-		  ((StrikeCache.DisposableStrike)strikeRef)
-		      .getDisposer().dispose();
-		}
-	    }
-	    /* When we create a new FontStrike instance, we *must*
-	     * ask the StrikeCache for a reference. We must then ensure
-	     * this reference remains reachable, by storing it in the
-	     * Font2D's strikeCache map.
-	     * So long as the Reference is there (reachable) then if the
-	     * reference is cleared, it will be enqueued for disposal.
-	     * If for some reason we explicitly remove this reference, it
-	     * must only be done when holding a strong reference to the
-	     * referent (the FontStrike), or if the reference is cleared,
-	     * then we must explicitly "dispose" of the native resources.
-	     * The only place this currently happens is in this same method,
-	     * where we find a cleared reference and need to overwrite it
-	     * here with a new reference.
-	     * Clearing the whilst holding a strong reference, should only
-	     * be done if the 
-	     */
-	    if (copy) {
-		desc = new FontStrikeDesc(desc);
-	    }
-	    strike = createStrike(desc);
-	    //StrikeCache.addStrike();
-	    strikeRef = StrikeCache.getStrikeRef(strike);
+            if (strikeRef != null) {
+                strike = (FontStrike)strikeRef.get();
+                if (strike != null) {
+                    //strike.lastlookupTime = System.currentTimeMillis();
+                    lastFontStrike = new SoftReference(strike);
+                    StrikeCache.refStrike(strike);
+                    return strike;
+                } else {
+                    /* We have found a cleared reference that has not yet
+                     * been removed by the disposer.
+                     * If we make this reference unreachable by removing it
+                     * from the map,or overwriting it with a new reference to
+                     * a new strike, then it is possible it may never be
+                     * enqueued for disposal. That is the implication of
+                     * the docs for java.lang.ref. So on finding a cleared
+                     * reference, we need to dispose the native resources,
+                     * if they haven't already been freed.
+                     * The reference object needs to have a reference to
+                     * the disposer instance for this to occur.
+                     */
+                  ((StrikeCache.DisposableStrike)strikeRef)
+                      .getDisposer().dispose();
+                }
+            }
+            /* When we create a new FontStrike instance, we *must*
+             * ask the StrikeCache for a reference. We must then ensure
+             * this reference remains reachable, by storing it in the
+             * Font2D's strikeCache map.
+             * So long as the Reference is there (reachable) then if the
+             * reference is cleared, it will be enqueued for disposal.
+             * If for some reason we explicitly remove this reference, it
+             * must only be done when holding a strong reference to the
+             * referent (the FontStrike), or if the reference is cleared,
+             * then we must explicitly "dispose" of the native resources.
+             * The only place this currently happens is in this same method,
+             * where we find a cleared reference and need to overwrite it
+             * here with a new reference.
+             * Clearing the whilst holding a strong reference, should only
+             * be done if the
+             */
+            if (copy) {
+                desc = new FontStrikeDesc(desc);
+            }
+            strike = createStrike(desc);
+            //StrikeCache.addStrike();
+            strikeRef = StrikeCache.getStrikeRef(strike);
             strikeCache.put(desc, strikeRef);
-	    //strike.lastlookupTime = System.currentTimeMillis();
-	    lastFontStrike = new SoftReference(strike);
-	    StrikeCache.refStrike(strike);
-	    return strike;
-	}
+            //strike.lastlookupTime = System.currentTimeMillis();
+            lastFontStrike = new SoftReference(strike);
+            StrikeCache.refStrike(strike);
+            return strike;
+        }
     }
 
     void removeFromCache(FontStrikeDesc desc) {
@@ -360,7 +360,7 @@ public abstract class Font2D {
             if (o == null) {
                 strikeCache.remove(desc);
             }
-	}
+        }
     }
 
     /**
@@ -392,7 +392,7 @@ public abstract class Font2D {
 
         getStyleMetrics(font.getSize2D(), metrics, 4);
     }
-    
+
     /**
      * The length of the metrics array must be >= offset+4, and offset must be
      * >= 0.  Typically offset is 4.  This method will
@@ -434,20 +434,20 @@ public abstract class Font2D {
      * to promote this method up from TrueTypeFont
      */
     byte[] getTableBytes(int tag) {
-	return null;
+        return null;
     }
-    
+
     /* for layout code */
     protected long getUnitsPerEm() {
         return 2048;
     }
 
     boolean supportsEncoding(String encoding) {
-	return false;
+        return false;
     }
 
     public boolean canDoStyle(int style) {
-	return (style == this.style);
+        return (style == this.style);
     }
 
     /*
@@ -455,8 +455,8 @@ public abstract class Font2D {
      * the TrueType 'gasp' table.
      */
     public boolean useAAForPtSize(int ptsize) {
-	return true;
-    }    
+        return true;
+    }
 
     public boolean hasSupplementaryChars() {
         return false;
@@ -464,58 +464,58 @@ public abstract class Font2D {
 
     /* The following methods implement public methods on java.awt.Font */
     public String getPostscriptName() {
-	return fullName;
+        return fullName;
     }
 
     public String getFontName(Locale l) {
-	return fullName;
+        return fullName;
     }
 
     public String getFamilyName(Locale l) {
-	return familyName;
+        return familyName;
     }
 
     public int getNumGlyphs() {
-	return getMapper().getNumGlyphs();
+        return getMapper().getNumGlyphs();
     }
 
     public int charToGlyph(int wchar) {
-	return getMapper().charToGlyph(wchar);
+        return getMapper().charToGlyph(wchar);
     }
 
     public int getMissingGlyphCode() {
-	return getMapper().getMissingGlyphCode();
+        return getMapper().getMissingGlyphCode();
     }
 
     public boolean canDisplay(char c) {
-	return getMapper().canDisplay(c);
+        return getMapper().canDisplay(c);
     }
 
     public boolean canDisplay(int cp) {
-	return getMapper().canDisplay(cp);
+        return getMapper().canDisplay(cp);
     }
 
     public byte getBaselineFor(char c) {
-	return Font.ROMAN_BASELINE;
-    }  
+        return Font.ROMAN_BASELINE;
+    }
 
     public float getItalicAngle(Font font, AffineTransform at,
-				Object aaHint, Object fmHint) {
-	/* hardwire psz=12 as that's typical and AA vs non-AA for 'gasp' mode
-	 * isn't important for the caret slope of this rarely used API.
-	 */
-	int aa = FontStrikeDesc.getAAHintIntVal(aaHint, this, 12);
-	int fm = FontStrikeDesc.getFMHintIntVal(fmHint);
-	FontStrike strike = getStrike(font, at, aa, fm);
-	StrikeMetrics metrics = strike.getFontMetrics();
-	if (metrics.ascentY == 0 || metrics.ascentX == 0) {
-	    return 0f;
-	} else {
-	    /* ascent is "up" from the baseline so its typically
-	     * a negative value, so we need to compensate
-	     */
-	    return metrics.ascentX/-metrics.ascentY;
-	}
+                                Object aaHint, Object fmHint) {
+        /* hardwire psz=12 as that's typical and AA vs non-AA for 'gasp' mode
+         * isn't important for the caret slope of this rarely used API.
+         */
+        int aa = FontStrikeDesc.getAAHintIntVal(aaHint, this, 12);
+        int fm = FontStrikeDesc.getFMHintIntVal(fmHint);
+        FontStrike strike = getStrike(font, at, aa, fm);
+        StrikeMetrics metrics = strike.getFontMetrics();
+        if (metrics.ascentY == 0 || metrics.ascentX == 0) {
+            return 0f;
+        } else {
+            /* ascent is "up" from the baseline so its typically
+             * a negative value, so we need to compensate
+             */
+            return metrics.ascentX/-metrics.ascentY;
+        }
     }
-	
+
 }

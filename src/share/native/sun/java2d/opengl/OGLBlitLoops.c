@@ -64,7 +64,7 @@ OGLBlitSurfaceToSurface(OGLContext *oglc, OGLSDOps *srcOps, OGLSDOps *dstOps,
     // region whose lower-left corner is at (x,y), but the source parameters
     // (sx1,sy1) we are given here point to the upper-left corner of the
     // source region... so here we play with the sy1 and dy1 parameters so
-    // that they point to the lower-left corners of the regions... 
+    // that they point to the lower-left corners of the regions...
     sx1 = srcOps->xOffset + sx1;
     sy1 = srcOps->yOffset + srcOps->height - sy2;
     dy1 = dy2;
@@ -570,11 +570,11 @@ OGLBlitLoops_Blit(JNIEnv *env,
             j2d_glPixelStorei(GL_UNPACK_ALIGNMENT, pf.alignment);
 
             if (texture) {
-		// These coordinates will always be integers since we
-		// only ever do a straight copy from sw to texture.
-		// Thus these casts are "safe" - no loss of precision.
+                // These coordinates will always be integers since we
+                // only ever do a straight copy from sw to texture.
+                // Thus these casts are "safe" - no loss of precision.
                 OGLBlitSwToTexture(&srcInfo, &pf, dstOps,
-				   (jint)dx1, (jint)dy1, (jint)dx2, (jint)dy2);
+                                   (jint)dx1, (jint)dy1, (jint)dx2, (jint)dy2);
             } else {
                 jboolean viaTexture;
                 if (xform) {
@@ -617,8 +617,8 @@ OGLBlitLoops_Blit(JNIEnv *env,
             j2d_glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
             j2d_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
             j2d_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	}
-	SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
+        }
+        SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
     }
     SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
 }
@@ -663,19 +663,19 @@ OGLBlitLoops_SurfaceToSwBlit(JNIEnv *env, OGLContext *oglc,
     if (dstOps->Lock(env, dstOps, &dstInfo, SD_LOCK_WRITE) != SD_SUCCESS) {
         J2dTraceLn(J2D_TRACE_WARNING,
             "OGLBlitLoops_SurfaceToSwBlit: could not acquire dst lock");
-	return;
+        return;
     }
 
     SurfaceData_IntersectBoundsXYXY(&srcInfo.bounds,
                                     0, 0, srcOps->width, srcOps->height);
     SurfaceData_IntersectBlitBounds(&dstInfo.bounds, &srcInfo.bounds,
                                     srcx - dstx, srcy - dsty);
-    
+
     if (srcInfo.bounds.x2 > srcInfo.bounds.x1 &&
-	srcInfo.bounds.y2 > srcInfo.bounds.y1)
+        srcInfo.bounds.y2 > srcInfo.bounds.y1)
     {
         dstOps->GetRasInfo(env, dstOps, &dstInfo);
-	if (dstInfo.rasBase) {
+        if (dstInfo.rasBase) {
             void *pDst = dstInfo.rasBase;
 
             srcx = srcInfo.bounds.x1;
@@ -714,8 +714,8 @@ OGLBlitLoops_SurfaceToSwBlit(JNIEnv *env, OGLContext *oglc,
             j2d_glPixelStorei(GL_PACK_SKIP_ROWS, 0);
             j2d_glPixelStorei(GL_PACK_ROW_LENGTH, 0);
             j2d_glPixelStorei(GL_PACK_ALIGNMENT, 4);
-	}
-	SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
+        }
+        SurfaceData_InvokeRelease(env, dstOps, &dstInfo);
     }
     SurfaceData_InvokeUnlock(env, dstOps, &dstInfo);
 }

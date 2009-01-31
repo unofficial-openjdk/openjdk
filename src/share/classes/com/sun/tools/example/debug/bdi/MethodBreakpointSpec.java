@@ -36,8 +36,8 @@ public class MethodBreakpointSpec extends BreakpointSpec {
     String methodId;
     List methodArgs;
 
-    MethodBreakpointSpec(EventRequestSpecList specs,  
-                         ReferenceTypeSpec refSpec, 
+    MethodBreakpointSpec(EventRequestSpecList specs,
+                         ReferenceTypeSpec refSpec,
                          String methodId, List methodArgs) {
         super(specs, refSpec);
         this.methodId = methodId;
@@ -63,7 +63,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
                    .createBreakpointRequest(location));
     }
 
-    private Location location(ClassType clazz) throws 
+    private Location location(ClassType clazz) throws
                                                AmbiguousMethodException,
                                                NoSuchMethodException,
                                                NoSessionException {
@@ -81,7 +81,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
     }
 
     public int hashCode() {
-        return refSpec.hashCode() + 
+        return refSpec.hashCode() +
             ((methodId != null) ? methodId.hashCode() : 0) +
             ((methodArgs != null) ? methodArgs.hashCode() : 0);
     }
@@ -98,7 +98,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
         }
     }
 
-    public String errorMessageFor(Exception e) { 
+    public String errorMessageFor(Exception e) {
         if (e instanceof AmbiguousMethodException) {
             return ("Method " + methodName() + " is overloaded; specify arguments");
             /*
@@ -107,11 +107,11 @@ public class MethodBreakpointSpec extends BreakpointSpec {
         } else if (e instanceof NoSuchMethodException) {
             return ("No method " + methodName() + " in " + refSpec);
         } else if (e instanceof InvalidTypeException) {
-            return ("Breakpoints can be located only in classes. " + 
+            return ("Breakpoints can be located only in classes. " +
                         refSpec + " is an interface or array");
         } else {
             return super.errorMessageFor( e);
-        } 
+        }
     }
 
     public String toString() {
@@ -139,16 +139,16 @@ public class MethodBreakpointSpec extends BreakpointSpec {
     }
 
     private boolean isValidMethodName(String s) {
-        return isJavaIdentifier(s) || 
+        return isJavaIdentifier(s) ||
                s.equals("<init>") ||
                s.equals("<clinit>");
     }
 
-    /* 
+    /*
      * Compare a method's argument types with a Vector of type names.
-     * Return true if each argument type has a name identical to the 
+     * Return true if each argument type has a name identical to the
      * corresponding string in the vector (allowing for varargs)
-     * and if the number of arguments in the method matches the 
+     * and if the number of arguments in the method matches the
      * number of names passed
      */
     private boolean compareArgTypes(Method method, List nameList) {
@@ -172,7 +172,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
                  * Note that the nameList can also contain
                  * xxx[] in which case we don't get here.
                  */
-                if (i != nTypes - 1 || 
+                if (i != nTypes - 1 ||
                     !method.isVarArgs()  ||
                     !comp2.endsWith("...")) {
                     return false;
@@ -206,12 +206,12 @@ public class MethodBreakpointSpec extends BreakpointSpec {
   }
 
   /**
-     * Remove unneeded spaces and expand class names to fully 
+     * Remove unneeded spaces and expand class names to fully
      * qualified names, if necessary and possible.
      */
     private String normalizeArgTypeName(String name) throws NoSessionException {
-        /* 
-         * Separate the type name from any array modifiers, 
+        /*
+         * Separate the type name from any array modifiers,
          * stripping whitespace after the name ends.
          */
         int i = 0;
@@ -252,8 +252,8 @@ public class MethodBreakpointSpec extends BreakpointSpec {
         name = typePart.toString();
 
         /*
-         * When there's no sign of a package name already, 
-	 * try to expand the 
+         * When there's no sign of a package name already,
+         * try to expand the
          * the name to a fully qualified class name
          */
         if ((name.indexOf('.') == -1) || name.startsWith("*.")) {
@@ -263,7 +263,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
                     name = ((ReferenceType)(refs.get(0))).name();
                 }
             } catch (IllegalArgumentException e) {
-                // We'll try the name as is 
+                // We'll try the name as is
             }
         }
         name += arrayPart.toString();
@@ -273,13 +273,13 @@ public class MethodBreakpointSpec extends BreakpointSpec {
         return name;
     }
 
-    /* 
-     * Attempt an unambiguous match of the method name and 
-     * argument specification to a method. If no arguments 
+    /*
+     * Attempt an unambiguous match of the method name and
+     * argument specification to a method. If no arguments
      * are specified, the method must not be overloaded.
-     * Otherwise, the argument types much match exactly 
+     * Otherwise, the argument types much match exactly
      */
-    private Method findMatchingMethod(ClassType clazz) 
+    private Method findMatchingMethod(ClassType clazz)
                                         throws AmbiguousMethodException,
                                                NoSuchMethodException,
                                                NoSessionException  {
@@ -313,7 +313,7 @@ public class MethodBreakpointSpec extends BreakpointSpec {
                 }
 
                 // If argument types were specified, check against candidate
-                if ((argTypeNames != null) 
+                if ((argTypeNames != null)
                         && compareArgTypes(candidate, argTypeNames) == true) {
                     exactMatch = candidate;
                     break;

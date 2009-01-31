@@ -36,7 +36,7 @@ public class Utils {
         if (fileSeparator.length() == 1 && fileSeparator.charAt(0) == '/') {
             return path;
         }
- 
+
         char[] cs = path.toCharArray();
         for (int i = 0; i < cs.length; i++) {
             if (cs[i] == '/') {

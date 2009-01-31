@@ -42,13 +42,13 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
-* <p>Internal reader class for ICU data file uprops.icu containing 
-* Unicode codepoint data.</p> 
+* <p>Internal reader class for ICU data file uprops.icu containing
+* Unicode codepoint data.</p>
 * <p>This class simply reads uprops.icu, authenticates that it is a valid
 * ICU data file and split its contents up into blocks of data for use in
 * <a href=UCharacterProperty.html>com.ibm.icu.impl.UCharacterProperty</a>.
-* </p> 
-* <p>uprops.icu which is in big-endian format is jared together with this 
+* </p>
+* <p>uprops.icu which is in big-endian format is jared together with this
 * package.</p>
 * @author Syn Wee Quek
 * @since release 2.1, February 1st 2002
@@ -301,32 +301,32 @@ See i10 maxValues above, contains only UBLOCK_COUNT and USCRIPT_CODE_LIMIT.
 final class UCharacterPropertyReader implements ICUBinary.Authenticate
 {
     // public methods ----------------------------------------------------
-    
+
     public boolean isDataVersionAcceptable(byte version[])
     {
-        return version[0] == DATA_FORMAT_VERSION_[0] 
-               && version[2] == DATA_FORMAT_VERSION_[2] 
+        return version[0] == DATA_FORMAT_VERSION_[0]
+               && version[2] == DATA_FORMAT_VERSION_[2]
                && version[3] == DATA_FORMAT_VERSION_[3];
     }
-    
+
     // protected constructor ---------------------------------------------
-    
+
     /**
     * <p>Protected constructor.</p>
     * @param inputStream ICU uprop.dat file input stream
-    * @exception IOException throw if data file fails authentication 
+    * @exception IOException throw if data file fails authentication
     * @draft 2.1
     */
-    protected UCharacterPropertyReader(InputStream inputStream) 
+    protected UCharacterPropertyReader(InputStream inputStream)
                                                         throws IOException
     {
-        m_unicodeVersion_ = ICUBinary.readHeader(inputStream, DATA_FORMAT_ID_, 
+        m_unicodeVersion_ = ICUBinary.readHeader(inputStream, DATA_FORMAT_ID_,
                                                  this);
         m_dataInputStream_ = new DataInputStream(inputStream);
     }
-    
+
     // protected methods -------------------------------------------------
-      
+
     /**
     * <p>Reads uprops.icu, parse it into blocks of data to be stored in
     * UCharacterProperty.</P
@@ -359,62 +359,62 @@ final class UCharacterPropertyReader implements ICUBinary.Authenticate
         ucharppty.m_maxJTGValue_ = m_dataInputStream_.readInt();
         count --; // 11
         m_dataInputStream_.skipBytes(count << 2);
-        
+
         // read the trie index block
         // m_props_index_ in terms of ints
         ucharppty.m_trie_ = new CharTrie(m_dataInputStream_, ucharppty);
-        
+
         // reads the 32 bit properties block
         int size = m_exceptionOffset_ - m_propertyOffset_;
         ucharppty.m_property_ = new int[size];
         for (int i = 0; i < size; i ++) {
             ucharppty.m_property_[i] = m_dataInputStream_.readInt();
         }
-        
+
         // reads the 32 bit exceptions block
         size = m_caseOffset_ - m_exceptionOffset_;
         ucharppty.m_exception_ = new int[size];
         for (int i = 0; i < size; i ++) {
             ucharppty.m_exception_[i] = m_dataInputStream_.readInt();
         }
-        
+
         // reads the 32 bit case block
         size = (m_additionalOffset_ - m_caseOffset_) << 1;
         ucharppty.m_case_ = new char[size];
         for (int i = 0; i < size; i ++) {
             ucharppty.m_case_[i] = m_dataInputStream_.readChar();
         }
-        
+
         // reads the additional property block
-        ucharppty.m_additionalTrie_ = new CharTrie(m_dataInputStream_, 
+        ucharppty.m_additionalTrie_ = new CharTrie(m_dataInputStream_,
                                                    ucharppty);
-                                                           
+
         // additional properties
         size = m_reservedOffset_ - m_additionalVectorsOffset_;
         ucharppty.m_additionalVectors_ = new int[size];
         for (int i = 0; i < size; i ++) {
             ucharppty.m_additionalVectors_[i] = m_dataInputStream_.readInt();
         }
-        
+
         m_dataInputStream_.close();
         ucharppty.m_additionalColumnsCount_ = m_additionalColumnsCount_;
         ucharppty.m_unicodeVersion_ = VersionInfo.getInstance(
                          (int)m_unicodeVersion_[0], (int)m_unicodeVersion_[1],
                          (int)m_unicodeVersion_[2], (int)m_unicodeVersion_[3]);
     }
-    
+
     // private variables -------------------------------------------------
-      
+
     /**
     * Index size
     */
     private static final int INDEX_SIZE_ = 16;
-    
+
     /**
     * ICU data file input stream
     */
     private DataInputStream m_dataInputStream_;
-      
+
     /**
     * Offset information in the indexes.
     */
@@ -425,15 +425,15 @@ final class UCharacterPropertyReader implements ICUBinary.Authenticate
     private int m_additionalVectorsOffset_;
     private int m_additionalColumnsCount_;
     private int m_reservedOffset_;
-    private byte m_unicodeVersion_[];  
-                                      
+    private byte m_unicodeVersion_[];
+
     /**
     * File format version that this class understands.
     * No guarantees are made if a older version is used
     */
-    private static final byte DATA_FORMAT_ID_[] = {(byte)0x55, (byte)0x50, 
+    private static final byte DATA_FORMAT_ID_[] = {(byte)0x55, (byte)0x50,
                                                     (byte)0x72, (byte)0x6F};
-    private static final byte DATA_FORMAT_VERSION_[] = {(byte)0x3, (byte)0x1, 
-                                             (byte)Trie.INDEX_STAGE_1_SHIFT_, 
+    private static final byte DATA_FORMAT_VERSION_[] = {(byte)0x3, (byte)0x1,
+                                             (byte)Trie.INDEX_STAGE_1_SHIFT_,
                                              (byte)Trie.INDEX_STAGE_2_SHIFT_};
 }

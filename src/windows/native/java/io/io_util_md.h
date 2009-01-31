@@ -27,7 +27,7 @@
 #include "jni_util.h"
 
 /*
- * Prototypes for functions in io_util_md.c called from io_util, 
+ * Prototypes for functions in io_util_md.c called from io_util,
  * FileDescriptor.c, FileInputStream.c, FileOutputStream.c
  */
 WCHAR* pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE);
@@ -84,7 +84,7 @@ jlong winFileHandleOpen(JNIEnv *env, jstring path, int flags);
 #define IO_SetLength handleSetLength
 
 /*
- * Setting the handle field in Java_java_io_FileDescriptor_set for 
+ * Setting the handle field in Java_java_io_FileDescriptor_set for
  * standard handles stdIn, stdOut, stdErr
  */
 #define SET_HANDLE(fd) \
@@ -98,7 +98,7 @@ if (fd == 0) { \
     return (jlong)-1; \
 } \
 
-/* INVALID_FILE_ATTRIBUTES is not defined in VC++6.0's header files but 
+/* INVALID_FILE_ATTRIBUTES is not defined in VC++6.0's header files but
  * in later release. Keep here just in case someone is still using VC++6.0
  */
 #ifndef INVALID_FILE_ATTRIBUTES

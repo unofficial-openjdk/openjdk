@@ -50,27 +50,26 @@ package javax.accessibility;
  * @see AccessibleContext
  * @see AccessibleContext#getAccessibleTable
  *
- * @version     1.2 10/12/99
- * @author	Lynn Monsanto
+ * @author      Lynn Monsanto
  * @since 1.3
  */
 public interface AccessibleTableModelChange {
 
-    /** 
-     * Identifies the insertion of new rows and/or columns. 
+    /**
+     * Identifies the insertion of new rows and/or columns.
      */
     public static final int INSERT =  1;
 
-    /** 
-     * Identifies a change to existing data. 
+    /**
+     * Identifies a change to existing data.
      */
     public static final int UPDATE =  0;
 
-    /** 
-     * Identifies the deletion of rows and/or columns. 
+    /**
+     * Identifies the deletion of rows and/or columns.
      */
     public static final int DELETE = -1;
-    
+
     /**
      *  Returns the type of event
      *
@@ -80,23 +79,23 @@ public interface AccessibleTableModelChange {
      */
     public int getType();
 
-    /** 
+    /**
      * Returns the first row that changed.
      */
     public int getFirstRow();
-    
-    /** 
-     * Returns the last row that changed. 
+
+    /**
+     * Returns the last row that changed.
      */
     public int getLastRow();
-    
-    /** 
+
+    /**
      * Returns the first column that changed.
      */
     public int getFirstColumn();
-    
-    /** 
-     * Returns the last column that changed. 
+
+    /**
+     * Returns the last column that changed.
      */
     public int getLastColumn();
 }

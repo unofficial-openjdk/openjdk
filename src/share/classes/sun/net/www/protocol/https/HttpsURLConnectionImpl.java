@@ -60,16 +60,15 @@ import sun.net.www.http.HttpClient;
  * needs to implement all public methods in it's super class and all
  * the way to Object.
  *
- * @version %I% %G%
  */
 
 // For both copies of the file, uncomment one line and comment the
 // other. The differences between the two copies are introduced for
 // plugin, and it is marked as such.
 public class HttpsURLConnectionImpl
-	extends javax.net.ssl.HttpsURLConnection {
+        extends javax.net.ssl.HttpsURLConnection {
 // public class HttpsURLConnectionOldImpl
-//	extends com.sun.net.ssl.HttpsURLConnection {
+//      extends com.sun.net.ssl.HttpsURLConnection {
 
     // NOTE: made protected for plugin so that subclass can set it.
     protected DelegateHttpsURLConnection delegate;
@@ -77,31 +76,31 @@ public class HttpsURLConnectionImpl
 // For both copies of the file, uncomment one line and comment the other
     HttpsURLConnectionImpl(URL u, Handler handler) throws IOException {
 //    HttpsURLConnectionOldImpl(URL u, Handler handler) throws IOException {
-	this(u, null, handler);
+        this(u, null, handler);
     }
 
 // For both copies of the file, uncomment one line and comment the other
     HttpsURLConnectionImpl(URL u, Proxy p, Handler handler) throws IOException {
 //    HttpsURLConnectionOldImpl(URL u, Proxy p, Handler handler) throws IOException {
-	super(u);
-	delegate = new DelegateHttpsURLConnection(url, p, handler, this);
+        super(u);
+        delegate = new DelegateHttpsURLConnection(url, p, handler, this);
     }
 
     // NOTE: introduced for plugin
     // subclass needs to overwrite this to set delegate to
     // the appropriate delegatee
     protected HttpsURLConnectionImpl(URL u) throws IOException {
-	super(u);
+        super(u);
     }
 
     /**
      * Create a new HttpClient object, bypassing the cache of
      * HTTP client objects/connections.
      *
-     * @param url	the URL being accessed
+     * @param url       the URL being accessed
      */
     protected void setNewClient(URL url) throws IOException {
-	delegate.setNewClient(url, false);
+        delegate.setNewClient(url, false);
     }
 
     /**
@@ -109,11 +108,11 @@ public class HttpsURLConnectionImpl
      *
      * @param url       the URL being accessed
      * @param useCache  whether the cached connection should be used
-     *			if present
+     *                  if present
      */
     protected void setNewClient(URL url, boolean useCache)
-	    throws IOException {
-	delegate.setNewClient(url, useCache);
+            throws IOException {
+        delegate.setNewClient(url, useCache);
     }
 
     /**
@@ -121,13 +120,13 @@ public class HttpsURLConnectionImpl
      * per-instance proxying to the given HTTP proxy.  This
      * bypasses the cache of HTTP client objects/connections.
      *
-     * @param url	the URL being accessed
-     * @param proxyHost	the proxy host to use
-     * @param proxyPort	the proxy port to use
+     * @param url       the URL being accessed
+     * @param proxyHost the proxy host to use
+     * @param proxyPort the proxy port to use
      */
     protected void setProxiedClient(URL url, String proxyHost, int proxyPort)
-	    throws IOException {
-	delegate.setProxiedClient(url, proxyHost, proxyPort);
+            throws IOException {
+        delegate.setProxiedClient(url, proxyHost, proxyPort);
     }
 
     /**
@@ -139,11 +138,11 @@ public class HttpsURLConnectionImpl
      * @param proxyHost the proxy host to use
      * @param proxyPort the proxy port to use
      * @param useCache  whether the cached connection should be used
-     *			if present
+     *                  if present
      */
     protected void setProxiedClient(URL url, String proxyHost, int proxyPort,
-	    boolean useCache) throws IOException {
-	delegate.setProxiedClient(url, proxyHost, proxyPort, useCache);
+            boolean useCache) throws IOException {
+        delegate.setProxiedClient(url, proxyHost, proxyPort, useCache);
     }
 
     /**
@@ -151,7 +150,7 @@ public class HttpsURLConnectionImpl
      * establishing an SSL connection to the server as necessary.
      */
     public void connect() throws IOException {
-	delegate.connect();
+        delegate.connect();
     }
 
     /**
@@ -160,7 +159,7 @@ public class HttpsURLConnectionImpl
      * delegate the access of "connected" as well.
      */
     protected boolean isConnected() {
-	return delegate.isConnected();
+        return delegate.isConnected();
     }
 
     /**
@@ -169,14 +168,14 @@ public class HttpsURLConnectionImpl
      * delegate the access of "connected" as well.
      */
     protected void setConnected(boolean conn) {
-	delegate.setConnected(conn);
+        delegate.setConnected(conn);
     }
 
     /**
      * Returns the cipher suite in use on this connection.
      */
     public String getCipherSuite() {
-	return delegate.getCipherSuite();
+        return delegate.getCipherSuite();
     }
 
     /**
@@ -184,8 +183,8 @@ public class HttpsURLConnectionImpl
      * server, or null if the client did not authenticate.
      */
     public java.security.cert.Certificate []
-	getLocalCertificates() {
-	return delegate.getLocalCertificates();
+        getLocalCertificates() {
+        return delegate.getLocalCertificates();
     }
 
     /**
@@ -194,8 +193,8 @@ public class HttpsURLConnectionImpl
      * the server did not authenticate.
      */
     public java.security.cert.Certificate []
-	getServerCertificates() throws SSLPeerUnverifiedException {
-	return delegate.getServerCertificates();
+        getServerCertificates() throws SSLPeerUnverifiedException {
+        return delegate.getServerCertificates();
     }
 
     /**
@@ -207,14 +206,14 @@ public class HttpsURLConnectionImpl
      * compatibility with the com.sun.net.ssl.HttpsURLConnection version.
      */
     public javax.security.cert.X509Certificate[] getServerCertificateChain() {
-	try {
-	    return delegate.getServerCertificateChain();
-	} catch (SSLPeerUnverifiedException e) {
-	    // this method does not throw an exception as declared in
-	    // com.sun.net.ssl.HttpsURLConnection.
-	    // Return null for compatibility.
-	    return null;
-	}
+        try {
+            return delegate.getServerCertificateChain();
+        } catch (SSLPeerUnverifiedException e) {
+            // this method does not throw an exception as declared in
+            // com.sun.net.ssl.HttpsURLConnection.
+            // Return null for compatibility.
+            return null;
+        }
     }
 
     /**
@@ -222,9 +221,9 @@ public class HttpsURLConnectionImpl
      * or throw a SSLPeerUnverifiedException if the server did not authenticate.
      */
     public Principal getPeerPrincipal()
-	    throws SSLPeerUnverifiedException
+            throws SSLPeerUnverifiedException
     {
-	return delegate.getPeerPrincipal();
+        return delegate.getPeerPrincipal();
     }
 
     /**
@@ -233,7 +232,7 @@ public class HttpsURLConnectionImpl
      */
     public Principal getLocalPrincipal()
     {
-	return delegate.getLocalPrincipal();
+        return delegate.getLocalPrincipal();
     }
 
     /*
@@ -248,26 +247,26 @@ public class HttpsURLConnectionImpl
      */
 
     public synchronized OutputStream getOutputStream() throws IOException {
-	return delegate.getOutputStream();
+        return delegate.getOutputStream();
     }
 
     public synchronized InputStream getInputStream() throws IOException {
-	return delegate.getInputStream();
+        return delegate.getInputStream();
     }
 
     public InputStream getErrorStream() {
-	return delegate.getErrorStream();
+        return delegate.getErrorStream();
     }
 
     /**
      * Disconnect from the server.
      */
     public void disconnect() {
-	delegate.disconnect();
+        delegate.disconnect();
     }
 
     public boolean usingProxy() {
-	return delegate.usingProxy();
+        return delegate.usingProxy();
     }
 
     /**
@@ -281,7 +280,7 @@ public class HttpsURLConnectionImpl
      * @since 1.4
      */
     public Map<String,List<String>> getHeaderFields() {
-	return delegate.getHeaderFields();
+        return delegate.getHeaderFields();
     }
 
     /**
@@ -289,7 +288,7 @@ public class HttpsURLConnectionImpl
      * @param name the name of the header field
      */
     public String getHeaderField(String name) {
-	return delegate.getHeaderField(name);
+        return delegate.getHeaderField(name);
     }
 
     /**
@@ -297,7 +296,7 @@ public class HttpsURLConnectionImpl
      * @param n the index of the header field
      */
     public String getHeaderField(int n) {
-	return delegate.getHeaderField(n);
+        return delegate.getHeaderField(n);
     }
 
     /**
@@ -305,7 +304,7 @@ public class HttpsURLConnectionImpl
      * @param n the index of the header field
      */
     public String getHeaderFieldKey(int n) {
-	return delegate.getHeaderFieldKey(n);
+        return delegate.getHeaderFieldKey(n);
     }
 
     /**
@@ -314,7 +313,7 @@ public class HttpsURLConnectionImpl
      * @param value the value to be set
      */
     public void setRequestProperty(String key, String value) {
-	delegate.setRequestProperty(key, value);
+        delegate.setRequestProperty(key, value);
     }
 
     /**
@@ -323,24 +322,24 @@ public class HttpsURLConnectionImpl
      * existing values associated with the same key.
      *
      * @param   key     the keyword by which the request is known
-     *			(e.g., "<code>accept</code>").
+     *                  (e.g., "<code>accept</code>").
      * @param   value  the value associated with it.
      * @see #getRequestProperties(java.lang.String)
      * @since 1.4
      */
     public void addRequestProperty(String key, String value) {
-	delegate.addRequestProperty(key, value);
+        delegate.addRequestProperty(key, value);
     }
 
     /**
      * Overwrite super class method
      */
     public int getResponseCode() throws IOException {
-	return delegate.getResponseCode();
+        return delegate.getResponseCode();
     }
 
     public String getRequestProperty(String key) {
-	return delegate.getRequestProperty(key);
+        return delegate.getRequestProperty(key);
     }
 
     /**
@@ -356,7 +355,7 @@ public class HttpsURLConnectionImpl
      * @since 1.4
      */
     public Map<String,List<String>> getRequestProperties() {
-	return delegate.getRequestProperties();
+        return delegate.getRequestProperties();
     }
 
     /*
@@ -364,123 +363,123 @@ public class HttpsURLConnectionImpl
      * We override and supply our own version.
      */
     public void setInstanceFollowRedirects(boolean shouldFollow) {
-	delegate.setInstanceFollowRedirects(shouldFollow);
+        delegate.setInstanceFollowRedirects(shouldFollow);
     }
 
     public boolean getInstanceFollowRedirects() {
-	return delegate.getInstanceFollowRedirects();
+        return delegate.getInstanceFollowRedirects();
     }
 
     public void setRequestMethod(String method) throws ProtocolException {
-	delegate.setRequestMethod(method);
+        delegate.setRequestMethod(method);
     }
 
     public String getRequestMethod() {
-	return delegate.getRequestMethod();
+        return delegate.getRequestMethod();
     }
 
     public String getResponseMessage() throws IOException {
-	return delegate.getResponseMessage();
+        return delegate.getResponseMessage();
     }
 
     public long getHeaderFieldDate(String name, long Default) {
-	return delegate.getHeaderFieldDate(name, Default);
+        return delegate.getHeaderFieldDate(name, Default);
     }
 
     public Permission getPermission() throws IOException {
-	return delegate.getPermission();
+        return delegate.getPermission();
     }
 
     public URL getURL() {
-	return delegate.getURL();
+        return delegate.getURL();
     }
 
     public int getContentLength() {
-	return delegate.getContentLength();
+        return delegate.getContentLength();
     }
 
     public String getContentType() {
-	return delegate.getContentType();
+        return delegate.getContentType();
     }
 
     public String getContentEncoding() {
-	return delegate.getContentEncoding();
+        return delegate.getContentEncoding();
     }
 
     public long getExpiration() {
-	return delegate.getExpiration();
+        return delegate.getExpiration();
     }
 
     public long getDate() {
-	return delegate.getDate();
+        return delegate.getDate();
     }
 
     public long getLastModified() {
-	return delegate.getLastModified();
+        return delegate.getLastModified();
     }
 
     public int getHeaderFieldInt(String name, int Default) {
-	return delegate.getHeaderFieldInt(name, Default);
+        return delegate.getHeaderFieldInt(name, Default);
     }
 
     public Object getContent() throws IOException {
-	return delegate.getContent();
+        return delegate.getContent();
     }
 
     public Object getContent(Class[] classes) throws IOException {
-	return delegate.getContent(classes);
+        return delegate.getContent(classes);
     }
 
     public String toString() {
-	return delegate.toString();
+        return delegate.toString();
     }
 
     public void setDoInput(boolean doinput) {
-	delegate.setDoInput(doinput);
+        delegate.setDoInput(doinput);
     }
 
     public boolean getDoInput() {
-	return delegate.getDoInput();
+        return delegate.getDoInput();
     }
 
     public void setDoOutput(boolean dooutput) {
-	delegate.setDoOutput(dooutput);
+        delegate.setDoOutput(dooutput);
     }
 
     public boolean getDoOutput() {
-	return delegate.getDoOutput();
+        return delegate.getDoOutput();
     }
 
     public void setAllowUserInteraction(boolean allowuserinteraction) {
-	delegate.setAllowUserInteraction(allowuserinteraction);
+        delegate.setAllowUserInteraction(allowuserinteraction);
     }
 
     public boolean getAllowUserInteraction() {
-	return delegate.getAllowUserInteraction();
+        return delegate.getAllowUserInteraction();
     }
 
     public void setUseCaches(boolean usecaches) {
-	delegate.setUseCaches(usecaches);
+        delegate.setUseCaches(usecaches);
     }
 
     public boolean getUseCaches() {
-	return delegate.getUseCaches();
+        return delegate.getUseCaches();
     }
 
     public void setIfModifiedSince(long ifmodifiedsince) {
-	delegate.setIfModifiedSince(ifmodifiedsince);
+        delegate.setIfModifiedSince(ifmodifiedsince);
     }
 
     public long getIfModifiedSince() {
-	return delegate.getIfModifiedSince();
+        return delegate.getIfModifiedSince();
     }
 
     public boolean getDefaultUseCaches() {
-	return delegate.getDefaultUseCaches();
+        return delegate.getDefaultUseCaches();
     }
 
     public void setDefaultUseCaches(boolean defaultusecaches) {
-	delegate.setDefaultUseCaches(defaultusecaches);
+        delegate.setDefaultUseCaches(defaultusecaches);
     }
 
     /*
@@ -489,38 +488,38 @@ public class HttpsURLConnectionImpl
      * would have to be made public.
      */
     protected void finalize() throws Throwable {
-	delegate.dispose();
+        delegate.dispose();
     }
 
     public boolean equals(Object obj) {
-	return delegate.equals(obj);
+        return delegate.equals(obj);
     }
 
     public int hashCode() {
-	return delegate.hashCode();
+        return delegate.hashCode();
     }
 
     public void setConnectTimeout(int timeout) {
-	delegate.setConnectTimeout(timeout);
+        delegate.setConnectTimeout(timeout);
     }
 
     public int getConnectTimeout() {
-	return delegate.getConnectTimeout();
+        return delegate.getConnectTimeout();
     }
 
     public void setReadTimeout(int timeout) {
-	delegate.setReadTimeout(timeout);
+        delegate.setReadTimeout(timeout);
     }
 
     public int getReadTimeout() {
-	return delegate.getReadTimeout();
+        return delegate.getReadTimeout();
     }
 
     public void setFixedLengthStreamingMode (int contentLength) {
-	delegate.setFixedLengthStreamingMode(contentLength);
+        delegate.setFixedLengthStreamingMode(contentLength);
     }
 
     public void setChunkedStreamingMode (int chunklen) {
-	delegate.setChunkedStreamingMode(chunklen);
+        delegate.setChunkedStreamingMode(chunklen);
     }
 }

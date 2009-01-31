@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -48,18 +46,18 @@ public class SwingApplet extends JApplet {
 
     public void init() {
 
-	// Force SwingApplet to come up in the System L&F
-	String laf = UIManager.getSystemLookAndFeelClassName();
-	try {
-	    UIManager.setLookAndFeel(laf);
-	    // If you want the Cross Platform L&F instead, comment out the above line and
-	    // uncomment the following:
-	    // UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-	} catch (UnsupportedLookAndFeelException exc) {
-	    System.err.println("Warning: UnsupportedLookAndFeel: " + laf);
-	} catch (Exception exc) {
-	    System.err.println("Error loading " + laf + ": " + exc);
-	}
+        // Force SwingApplet to come up in the System L&F
+        String laf = UIManager.getSystemLookAndFeelClassName();
+        try {
+            UIManager.setLookAndFeel(laf);
+            // If you want the Cross Platform L&F instead, comment out the above line and
+            // uncomment the following:
+            // UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (UnsupportedLookAndFeelException exc) {
+            System.err.println("Warning: UnsupportedLookAndFeel: " + laf);
+        } catch (Exception exc) {
+            System.err.println("Error loading " + laf + ": " + exc);
+        }
 
         getContentPane().setLayout(new FlowLayout());
         button = new JButton("Hello, I'm a Swing Button!");
@@ -73,5 +71,3 @@ public class SwingApplet extends JApplet {
         }
     }
 }
-
-

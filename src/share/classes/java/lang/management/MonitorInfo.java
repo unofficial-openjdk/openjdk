@@ -38,14 +38,13 @@ import sun.management.MonitorInfoCompositeData;
  * the {@link #from from} method.
  *
  * @author  Mandy Chung
- * @version %I%, %G%
  * @since   1.6
  */
 public class MonitorInfo extends LockInfo {
 
     private int    stackDepth;
     private StackTraceElement stackFrame;
-    
+
     /**
      * Construct a <tt>MonitorInfo</tt> object.
      *
@@ -55,7 +54,7 @@ public class MonitorInfo extends LockInfo {
      * @param stackDepth the depth in the stack trace where the object monitor
      *                   was locked.
      * @param stackFrame the stack frame that locked the object monitor.
-     * @throws IllegalArgumentException if 
+     * @throws IllegalArgumentException if
      *    <tt>stackDepth</tt> &ge; 0 but <tt>stackFrame</tt> is <tt>null</tt>,
      *    or <tt>stackDepth</tt> &lt; 0 but <tt>stackFrame</tt> is not
      *       <tt>null</tt>.
@@ -75,13 +74,13 @@ public class MonitorInfo extends LockInfo {
         }
         this.stackDepth = stackDepth;
         this.stackFrame = stackFrame;
-    } 
+    }
 
     /**
      * Returns the depth in the stack trace where the object monitor
      * was locked.  The depth is the index to the <tt>StackTraceElement</tt>
      * array returned in the {@link ThreadInfo#getStackTrace} method.
-     * 
+     *
      * @return the depth in the stack trace where the object monitor
      *         was locked, or a negative number if not available.
      */
@@ -103,9 +102,9 @@ public class MonitorInfo extends LockInfo {
      * Returns a <tt>MonitorInfo</tt> object represented by the
      * given <tt>CompositeData</tt>.
      * The given <tt>CompositeData</tt> must contain the following attributes
-     * as well as the attributes specified in the 
+     * as well as the attributes specified in the
      * <a href="LockInfo.html#MappedType">
-     * mapped type</a> for the {@link LockInfo} class: 
+     * mapped type</a> for the {@link LockInfo} class:
      * <blockquote>
      * <table border>
      * <tr>
@@ -114,7 +113,7 @@ public class MonitorInfo extends LockInfo {
      * </tr>
      * <tr>
      *   <td>lockedStackFrame</td>
-     *   <td><tt>CompositeData as specified in the 
+     *   <td><tt>CompositeData as specified in the
      *       <a href="ThreadInfo.html#StackTrace">stackTrace</a>
      *       attribute defined in the {@link ThreadInfo#from
      *       ThreadInfo.from} method.

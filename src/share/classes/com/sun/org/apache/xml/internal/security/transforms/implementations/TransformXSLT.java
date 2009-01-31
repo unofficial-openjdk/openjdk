@@ -77,7 +77,7 @@ public class TransformXSLT extends TransformSpi {
 
    /**
     * Method enginePerformTransform
-    * 
+    *
     * @param input the input for this transform
     * @return the result of this Transform
     * @throws IOException
@@ -86,13 +86,13 @@ public class TransformXSLT extends TransformSpi {
    protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
            throws IOException,
                   TransformationException {
-   	return enginePerformTransform(input,null);
+        return enginePerformTransform(input,null);
    }
     protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input,OutputStream baos)
     throws IOException,
            TransformationException {
       try {
-         Element transformElement = this._transformObject.getElement();        
+         Element transformElement = this._transformObject.getElement();
 
          Element _xsltElement =
             XMLUtils.selectNode(transformElement.getFirstChild(),
@@ -105,8 +105,8 @@ public class TransformXSLT extends TransformSpi {
          }
 
          TransformerFactory tFactory = TransformerFactory.newInstance();
-	 // Process XSLT stylesheets in a secure manner
-	 tFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+         // Process XSLT stylesheets in a secure manner
+         tFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 
          /*
           * This transform requires an octet stream as input. If the actual
@@ -140,7 +140,7 @@ public class TransformXSLT extends TransformSpi {
 
          Transformer transformer = tFactory.newTransformer(stylesheet);
          if (baos==null) {
-         	    ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+                    ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
                StreamResult outputTarget = new StreamResult(baos1);
                transformer.transform(xmlSource, outputTarget);
                return new XMLSignatureInput(baos1.toByteArray());
@@ -148,7 +148,7 @@ public class TransformXSLT extends TransformSpi {
          }
          StreamResult outputTarget = new StreamResult(baos);
 
-         transformer.transform(xmlSource, outputTarget);         
+         transformer.transform(xmlSource, outputTarget);
          XMLSignatureInput output=new XMLSignatureInput((byte[])null);
          output.setOutputStream(baos);
          return output;

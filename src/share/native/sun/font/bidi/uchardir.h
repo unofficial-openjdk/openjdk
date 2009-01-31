@@ -54,9 +54,9 @@
 /*===========================================================================*/
 #define UNICODE_VERSION  "3.0.0.beta"
 
-enum UCharDirection   { 
-    U_LEFT_TO_RIGHT               = 0, 
-    U_RIGHT_TO_LEFT               = 1, 
+enum UCharDirection   {
+    U_LEFT_TO_RIGHT               = 0,
+    U_RIGHT_TO_LEFT               = 1,
     U_EUROPEAN_NUMBER             = 2,
     U_EUROPEAN_NUMBER_SEPARATOR   = 3,
     U_EUROPEAN_NUMBER_TERMINATOR  = 4,
@@ -64,8 +64,8 @@ enum UCharDirection   {
     U_COMMON_NUMBER_SEPARATOR     = 6,
     U_BLOCK_SEPARATOR             = 7,
     U_SEGMENT_SEPARATOR           = 8,
-    U_WHITE_SPACE_NEUTRAL         = 9, 
-    U_OTHER_NEUTRAL               = 10, 
+    U_WHITE_SPACE_NEUTRAL         = 9,
+    U_OTHER_NEUTRAL               = 10,
     U_LEFT_TO_RIGHT_EMBEDDING     = 11,
     U_LEFT_TO_RIGHT_OVERRIDE      = 12,
     U_RIGHT_TO_LEFT_ARABIC        = 13,
@@ -83,7 +83,7 @@ typedef enum UCharDirection UCharDirection;
   * Returns the linguistic direction property of a character.
   * <P>
   * Returns the linguistic direction property of a character.
-  * For example, 0x0041 (letter A) has the LEFT_TO_RIGHT directional 
+  * For example, 0x0041 (letter A) has the LEFT_TO_RIGHT directional
   * property.
   * @see UCharDirection
   */
@@ -98,4 +98,3 @@ u_surrogatePairDirection(UChar lead, UChar trail);
 
 #endif /*_UCHAR*/
 /*eof*/
-

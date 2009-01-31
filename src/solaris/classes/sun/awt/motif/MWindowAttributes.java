@@ -26,9 +26,9 @@ package sun.awt.motif;
 import java.awt.Image;
 
 class MWindowAttributes {
-    static int NORMAL		= 0;
-    static int ICONIC		= 1;
-    static int MAXIMIZED	= 2;
+    static int NORMAL           = 0;
+    static int ICONIC           = 1;
+    static int MAXIMIZED        = 2;
 
     static int AWT_DECOR_NONE        = 0;
     static int AWT_DECOR_ALL         = 1;
@@ -50,13 +50,13 @@ class MWindowAttributes {
     int visibilityState; // updated by native X11 event handling code.
     String title;
     java.awt.Image icon;
-    int	decorations;		// for future expansion to be able to 
-				// specify native decorations
-    
+    int decorations;            // for future expansion to be able to
+                                // specify native decorations
+
     private static native void initIDs();
-    
+
     static {
-	initIDs();
+        initIDs();
     }
 
     MWindowAttributes() {
@@ -64,10 +64,9 @@ class MWindowAttributes {
         initialFocus = false;
         isResizable = false;
         initialState = NORMAL;
-	visibilityState = AWT_UNKNOWN_OBSCURITY;
-	title = null;
-	icon = null;
-	decorations = 0;
-    }   
+        visibilityState = AWT_UNKNOWN_OBSCURITY;
+        title = null;
+        icon = null;
+        decorations = 0;
+    }
 }
-

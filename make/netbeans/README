@@ -23,27 +23,27 @@ Getting Started
         from http://java.sun.com/javase
 
     Downloading the OpenJDK sources
-        Since you're reading this, d you've already downloaded the OpenJDK
+        Since you're reading this, you've already downloaded the OpenJDK
         source bundle.  Later in this document we'll refer to the location
         where you installed the Open JDK sources as *install-dir*.
 
-    Downloading a pre-built, JDK 7
-        This will be necessary to do builds of some of the projects.  In
-        general, you want to download and install a pre-built JDK that
-        corresponds to the OpenJDK sources you download.  Building the entire
-        OpenJDK depends on a few parts of the pre-built JDK.  Get this from
-        http://download.java.net/jdk7/binaries
-
-        Note: For working on certain projects, like JMX and JConsole, you 
-              may find convenient to use a pre-built version of JDK 7 (or 
-              OpenJDK) rather than building your own. This will allow you
-              to build only that part of the OpenJDK sources which correspond
-              to that project. 
+    Downloading a binary JDK
+        Some of the projects do not require that you first build the JDK: for
+        those, you'll need to first obtain a fully built JDK that corresponds
+        to the sources you've downloaded.  Depending on the version of the JDK
+        with which you're working, this JDK binary may or not be available; in
+        the latter case you'll have to build the JDK.  When JDKs are
+        available, you can find them at:
+        http://download.java.net/jdk7/binaries.  If you build the JDK, follow
+        the build instructions accompanying it
+        (*install-dir*/jdk/make/README-builds.html), and/or use the "world"
+        NetBeans project.  (Currently, there are no binary downloads based on
+        the OpenJDK 6 sources, so you'll have to build it yourself.)
 
     NetBeans 6
-        Yep, NetBeans *6*. Nope, not FCS'd yet. We're on the edge here,
-        enjoy it! Get the latest working development build of NetBeans 6
-        from http://netbeans.org
+        These NetBeans projects use features not available in previous
+        versions of NetBeans.  Get NetBeans 6 from http://netbeans.org; the
+        Java SE version is all that's needed.
 
     jtreg
         "jtreg" is the test harness for running OpenJDK's regression tests.
@@ -54,13 +54,16 @@ Getting Started
        please make sure that it is at least version 1.7.0.
 
 Configuring
-    Building OpenJDK is hard and complex. No, strike that. While it's not
-    exactly "easy", we've got it down to *relatively* small set of
-    properties you need to set.
+    Building OpenJDK requires some configuration information, as described in
+    *install-dir*/jdk/make/README-builds.html.  You can follow the
+    instructions there for building the entire JDK from the command line.
+    Building using the NetBeans projects requires that those same settings
+    (and others) be available to NetBeans, and these must be specified in a
+    properties file.
 
     The NetBeans projects provided here share a fair amount of common
     structure. They share properties values where it makes sense. Each
-    project loads properties from these properties files, in this order
+    project loads properties from these properties files, in this order:
 
         ${basedir}/nbproject/private/build.properties
         $HOME/.openjdk/${ant.project.name}-build.properties
@@ -79,37 +82,34 @@ Configuring
     want the same values for all your work, set them in
     $HOME/.openjdk/build.properties.
 
-    * bootstrap.jdk
-        Set to the location where you installed JDK 7.
-
-    * jtreg.home
-        Set to the location where you installed jtreg.
-
     * make.options
         Some of the projects invoke "make", since they compile native code.
         The make.options property is for passing information about what you
         installed where to make.  Change the paths to fit your particular
-        situation:
+        situation.  For example, here are settings you might use for working
+        on OpenJDK 7:
 
         make.options=\
             ALT_BOOTDIR=/home/me/bin/jdk1.6.0 \
             ALT_BINARY_PLUGS_PATH=/home/me/bin/openjdk-binary-plugs \
-            ALT_MOTIF_DIR=/home/me/lib/motif \
-            ALT_JDK_IMPORT_PATH=/home/me/bin/jdk1.7.0 \
-            OPENJDK=true
+            ALT_JDK_IMPORT_PATH=/home/me/bin/jdk1.7.0
 
         The trailing '\' are important, so that make gets the above as a
         single set of options.
 
-        You might want to add additional additional options: see the README
-        for the project you're using for more information.  And see
-                 *install-dir*/jdk/make/README-builds.html
-        to read much more about building the JDK.
+    * bootstrap.jdk
+        Set to the location where you installed a binary JDK which corresponds
+        to the sources you are building.  Continuing the above example of
+        working with sources for OpenJDK 7:
+
+        bootstrap.jdk=/home/me/bin/jdk1.7.0
+
+    * jtreg.home
+        Set to the location where you installed jtreg.
 
   Windows-specific configuration
-    First, please note that the entire JDK cannot currently be built on
-    Windows platforms.  This will likely limit your ability to build
-    make-based projects.  See 
+    First, please note that the entire OpenJDK on Windows platforms is more
+    difficult than on other platforms.  We're working on it!  
          *install-dir*/jdk/make/README-builds.html
     for full information on issues with building on the Windows platform.
 
@@ -222,13 +222,13 @@ Provided NetBeans projects
         running and debugging JConsole.
 
         This ant-based project does *not* require that you build the jdk
-        project first, provided that you use a pre-built version of JDK 7. 
+        project first, provided that you use a pre-built version of JDK. 
 
     Java (TM) Management Extensions (JMX(TM)) API (directory "jmx")
         For working on JMX source code. Creates ../dist/lib/jmx.jar.
 
         This ant-based project does *not* require that you build the jdk
-        project first, provided that you use a pre-built version of JDK 7. 
+        project first, provided that you use a pre-built version of JDK. 
 
     Jar & Zip (directory "jarzip")
         For working on jar & zip. It builds the zip library (including
@@ -244,7 +244,7 @@ Provided NetBeans projects
         running and debugging the SampleTree demo.
 
         This ant-based project does *not* require that you build the jdk
-        project first, provided that you use a pre-built version of JDK 7. 
+        project first, provided that you use a pre-built version of JDK. 
 
     In addition, there are projects for building the compiler, javadoc,
     and related tools, in the OpenJDK langtools component.  These

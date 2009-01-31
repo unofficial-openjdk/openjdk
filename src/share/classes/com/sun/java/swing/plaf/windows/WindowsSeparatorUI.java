@@ -31,6 +31,5 @@ import javax.swing.plaf.basic.*;
  * Windows Separator.
  * <p>
  *
- * @version %I% %G%
  */
 public class WindowsSeparatorUI extends BasicSeparatorUI { }

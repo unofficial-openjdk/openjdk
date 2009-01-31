@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package javax.swing.plaf.synth;
 
 import java.awt.*;
@@ -35,7 +35,6 @@ import javax.swing.text.View;
 /**
  * Synth's ToggleButtonUI.
  * <p>
- * @version %I%, %G%
  * @author Jeff Dinkins
  */
 class SynthToggleButtonUI extends SynthButtonUI {

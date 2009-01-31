@@ -25,23 +25,23 @@
  *
  * @bug 4619757
  * @summary User Policy Setting is not recognized on Netscape 6
- *		when invoked as root
+ *              when invoked as root
  * @ignore - must run test as root
  *
  * place Root.policy in the root home directory (/), as /.java.policy
  * run this test as root:
- *	java Root
+ *      java Root
  */
 
 import java.security.*;
 
 public class Root {
     public static void main(String[] args) {
-	Policy p = Policy.getPolicy();
-	if (p.implies(Root.class.getProtectionDomain(), new AllPermission())) {
-	    System.out.println("Test succeeded");
-	} else {
-	    throw new SecurityException("Test failed");
-	}
+        Policy p = Policy.getPolicy();
+        if (p.implies(Root.class.getProtectionDomain(), new AllPermission())) {
+            System.out.println("Test succeeded");
+        } else {
+            throw new SecurityException("Test failed");
+        }
     }
 }

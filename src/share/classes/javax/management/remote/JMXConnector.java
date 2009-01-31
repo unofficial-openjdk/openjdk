@@ -55,7 +55,7 @@ public interface JMXConnector extends Closeable {
       * JMXAuthenticator}.
       */
      public static final String CREDENTIALS =
-	 "jmx.remote.credentials";
+         "jmx.remote.credentials";
 
     /**
      * <p>Establishes the connection to the connector server.  This
@@ -132,7 +132,7 @@ public interface JMXConnector extends Closeable {
      * connect} method), or it has been closed, or it has broken.
      */
     public MBeanServerConnection getMBeanServerConnection()
-	    throws IOException;
+            throws IOException;
 
     /**
      * <p>Returns an <code>MBeanServerConnection</code> object representing
@@ -170,8 +170,8 @@ public interface JMXConnector extends Closeable {
      * connect} method), or it has been closed, or it has broken.
      */
     public MBeanServerConnection getMBeanServerConnection(
-					       Subject delegationSubject)
-	    throws IOException;
+                                               Subject delegationSubject)
+            throws IOException;
 
     /**
      * <p>Closes the client connection to its server.  Any ongoing or new
@@ -228,9 +228,9 @@ public interface JMXConnector extends Closeable {
      * @see javax.management.NotificationBroadcaster#addNotificationListener
      */
     public void
-	addConnectionNotificationListener(NotificationListener listener,
-					  NotificationFilter filter,
-					  Object handback);
+        addConnectionNotificationListener(NotificationListener listener,
+                                          NotificationFilter filter,
+                                          Object handback);
 
     /**
      * <p>Removes a listener from the list to be informed of changes
@@ -252,8 +252,8 @@ public interface JMXConnector extends Closeable {
      * @see javax.management.NotificationEmitter#removeNotificationListener
      */
     public void
-	removeConnectionNotificationListener(NotificationListener listener)
-	    throws ListenerNotFoundException;
+        removeConnectionNotificationListener(NotificationListener listener)
+            throws ListenerNotFoundException;
 
     /**
      * <p>Removes a listener from the list to be informed of changes
@@ -276,9 +276,9 @@ public interface JMXConnector extends Closeable {
      * @see javax.management.NotificationEmitter#removeNotificationListener
      */
     public void removeConnectionNotificationListener(NotificationListener l,
-						     NotificationFilter f,
-						     Object handback)
-	    throws ListenerNotFoundException;
+                                                     NotificationFilter f,
+                                                     Object handback)
+            throws ListenerNotFoundException;
 
     /**
      * <p>Gets this connection's ID from the connector server.  For a

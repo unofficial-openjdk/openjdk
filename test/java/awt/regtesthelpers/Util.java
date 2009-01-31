@@ -24,16 +24,16 @@
 package test.java.awt.regtesthelpers;
 /**
  * <p>This class contains utilities useful for regression testing.
- * <p>When using jtreg you would include this class into the build 
+ * <p>When using jtreg you would include this class into the build
  * list via something like:
  * <pre>
      @library ../../../regtesthelpers
      @build Util
      @run main YourTest
    </pre>
- * Note that if you are about to create a test based on 
+ * Note that if you are about to create a test based on
  * Applet-template, then put those lines into html-file, not in java-file.
- * <p> And put an 
+ * <p> And put an
  * import test.java.awt.regtesthelpers.Util;
  * into the java source of test.
 */
@@ -87,7 +87,7 @@ public final class Util {
             throw new RuntimeException("Error: unable to create robot", e);
         }
     }
-    
+
     public static Frame createEmbeddedFrame(final Frame embedder)
         throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
                InstantiationException, InvocationTargetException
@@ -161,7 +161,7 @@ public final class Util {
     public static void clickOnTitle(final Window decoratedWindow, final Robot robot) {
         Point p = decoratedWindow.getLocationOnScreen();
         Dimension d = decoratedWindow.getSize();
-        
+
         if (decoratedWindow instanceof Frame || decoratedWindow instanceof Dialog) {
             robot.mouseMove(p.x + (int)(d.getWidth()/2), p.y + (int)decoratedWindow.getInsets().top/2);
             robot.delay(50);
@@ -170,7 +170,7 @@ public final class Util {
             robot.mouseRelease(InputEvent.BUTTON1_MASK);
         }
     }
-    
+
     public static void waitForIdle(final Robot robot) {
         // we do not use robot for now, use SunToolkit.realSync() instead
         ((sun.awt.SunToolkit)Toolkit.getDefaultToolkit()).realSync();
@@ -218,7 +218,7 @@ public final class Util {
             }
             return condition.get();
         }
- 
+
     /*
      * The same as {@code waitForConditionEx(AtomicBoolean, long)} except that it
      * doesn't throw InterruptedException.
@@ -230,7 +230,7 @@ public final class Util {
             throw new RuntimeException("Error: unexpected exception caught!", e);
         }
     }
- 
+
     /*
      * The same as {@code waitForConditionEx(AtomicBoolean, long)} but without a timeout.
      */
@@ -243,7 +243,7 @@ public final class Util {
                 }
             }
         }
- 
+
     /*
      * The same as {@code waitForConditionEx(AtomicBoolean)} except that it
      * doesn't throw InterruptedException.
@@ -255,7 +255,7 @@ public final class Util {
             throw new RuntimeException("Error: unexpected exception caught!", e);
         }
     }
- 
+
     public static void waitTillShownEx(final Component comp) throws InterruptedException {
         while (true) {
             try {
@@ -313,18 +313,18 @@ public final class Util {
     public static void mouseMove(Robot robot, Point startPoint, Point endPoint) {
         int dx = endPoint.x - startPoint.x;
         int dy = endPoint.y - startPoint.y;
-        
+
         int ax = Math.abs(dx) * 2;
         int ay = Math.abs(dy) * 2;
-        
+
         int sx = signWOZero(dx);
         int sy = signWOZero(dy);
-        
+
         int x = startPoint.x;
         int y = startPoint.y;
-        
+
         int d = 0;
-        
+
         if (ax > ay) {
             d = ay - ax/2;
             while (true){
@@ -487,7 +487,7 @@ public final class Util {
     }
 
     private static class WindowGainedFocusListener extends EventListener implements WindowFocusListener {
-      
+
         void setListener(Component comp) {
             ((Window)comp).addWindowFocusListener(this);
         }
@@ -546,7 +546,7 @@ public final class Util {
         action.run();
         return Util.waitForCondition(listener.getNotifier(), time);
     }
-  
+
     /*
      * Tracks WINDOW_GAINED_FOCUS event for a window caused by an action.
      * @param window the window to track the event for

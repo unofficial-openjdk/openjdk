@@ -56,7 +56,7 @@ static jmethodID sendPixelsIntID;
 static jmethodID InputStream_readID;
 static jmethodID InputStream_availableID;
 
-/* Initialize the Java VM instance variable when the library is 
+/* Initialize the Java VM instance variable when the library is
    first loaded */
 JavaVM *jvm;
 
@@ -91,9 +91,9 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  */
 
 struct sun_jpeg_error_mgr {
-  struct jpeg_error_mgr pub;	/* "public" fields */
+  struct jpeg_error_mgr pub;    /* "public" fields */
 
-  jmp_buf setjmp_buffer;	/* for return to caller */
+  jmp_buf setjmp_buffer;        /* for return to caller */
 };
 
 typedef struct sun_jpeg_error_mgr * sun_jpeg_error_ptr;
@@ -159,7 +159,7 @@ sun_jpeg_output_message (j_common_ptr cinfo)
  */
 
 struct sun_jpeg_source_mgr {
-  struct jpeg_source_mgr pub;	/* "public" fields */
+  struct jpeg_source_mgr pub;   /* "public" fields */
 
   jobject hInputStream;
   int suspendable;
@@ -171,8 +171,8 @@ struct sun_jpeg_source_mgr {
 
   /* More stuff */
   union pixptr {
-      int		*ip;
-      unsigned char	*bp;
+      int               *ip;
+      unsigned char     *bp;
   } outbuf;
   jobject hOutputBuffer;
 };
@@ -196,18 +196,18 @@ typedef struct sun_jpeg_source_mgr * sun_jpeg_source_ptr;
 static void RELEASE_ARRAYS(JNIEnv *env, sun_jpeg_source_ptr src)
 {
     if (src->inbuf) {
-	if (src->pub.next_input_byte == 0) {
-	    src->inbufoffset = -1;
-	} else {
-	    src->inbufoffset = src->pub.next_input_byte - src->inbuf;
-	}
+        if (src->pub.next_input_byte == 0) {
+            src->inbufoffset = -1;
+        } else {
+            src->inbufoffset = src->pub.next_input_byte - src->inbuf;
+        }
         (*env)->ReleasePrimitiveArrayCritical(env, src->hInputBuffer,
-					      src->inbuf, 0);
+                                              src->inbuf, 0);
         src->inbuf = 0;
     }
     if (src->outbuf.ip) {
         (*env)->ReleasePrimitiveArrayCritical(env, src->hOutputBuffer,
-					      src->outbuf.ip, 0);
+                                              src->outbuf.ip, 0);
         src->outbuf.ip = 0;
     }
 }
@@ -218,21 +218,21 @@ static int GET_ARRAYS(JNIEnv *env, sun_jpeg_source_ptr src)
         assert(src->inbuf == 0);
         src->inbuf = (JOCTET *)(*env)->GetPrimitiveArrayCritical
             (env, src->hInputBuffer, 0);
-	if (src->inbuf == 0) {
-	    return 0;
-	}
-	if ((int)(src->inbufoffset) >= 0) {
-	    src->pub.next_input_byte = src->inbuf + src->inbufoffset;
-	}
+        if (src->inbuf == 0) {
+            return 0;
+        }
+        if ((int)(src->inbufoffset) >= 0) {
+            src->pub.next_input_byte = src->inbuf + src->inbufoffset;
+        }
     }
     if (src->hOutputBuffer) {
-	assert(src->outbuf.ip == 0);
+        assert(src->outbuf.ip == 0);
         src->outbuf.ip = (int *)(*env)->GetPrimitiveArrayCritical
             (env, src->hOutputBuffer, 0);
-	if (src->outbuf.ip == 0) {
-	    RELEASE_ARRAYS(env, src);
-	    return 0;
-	}
+        if (src->outbuf.ip == 0) {
+            RELEASE_ARRAYS(env, src);
+            return 0;
+        }
     }
     return 1;
 }
@@ -280,24 +280,24 @@ sun_jpeg_fill_input_buffer(j_decompress_ptr cinfo)
     int ret, buflen;
 
     if (src->suspendable) {
-	return FALSE;
+        return FALSE;
     }
     if (src->remaining_skip) {
-	src->pub.skip_input_data(cinfo, 0);
+        src->pub.skip_input_data(cinfo, 0);
     }
     RELEASE_ARRAYS(env, src);
     buflen = (*env)->GetArrayLength(env, src->hInputBuffer);
     ret = (*env)->CallIntMethod(env, src->hInputStream, InputStream_readID,
-				src->hInputBuffer, 0, buflen);
+                                src->hInputBuffer, 0, buflen);
     if ((*env)->ExceptionOccurred(env) || !GET_ARRAYS(env, src)) {
-	cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+        cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
     }
     if (ret <= 0) {
-	/* Silently accept truncated JPEG files */
-	WARNMS(cinfo, JWRN_JPEG_EOF);
-	src->inbuf[0] = (JOCTET) 0xFF;
-	src->inbuf[1] = (JOCTET) JPEG_EOI;
-	ret = 2;
+        /* Silently accept truncated JPEG files */
+        WARNMS(cinfo, JWRN_JPEG_EOF);
+        src->inbuf[0] = (JOCTET) 0xFF;
+        src->inbuf[1] = (JOCTET) JPEG_EOI;
+        ret = 2;
     }
 
     src->pub.next_input_byte = src->inbuf;
@@ -324,40 +324,40 @@ sun_jpeg_fill_suspended_buffer(j_decompress_ptr cinfo)
 
     RELEASE_ARRAYS(env, src);
     ret = (*env)->CallIntMethod(env, src->hInputStream,
-				InputStream_availableID);
+                                InputStream_availableID);
     if ((*env)->ExceptionOccurred(env) || !GET_ARRAYS(env, src)) {
-	cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+        cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
     }
     if (ret <= src->remaining_skip) {
-	return;
+        return;
     }
     if (src->remaining_skip) {
-	src->pub.skip_input_data(cinfo, 0);
+        src->pub.skip_input_data(cinfo, 0);
     }
     /* Save the data currently in the buffer */
     offset = src->pub.bytes_in_buffer;
     if (src->pub.next_input_byte > src->inbuf) {
-	memcpy(src->inbuf, src->pub.next_input_byte, offset);
+        memcpy(src->inbuf, src->pub.next_input_byte, offset);
     }
     RELEASE_ARRAYS(env, src);
     buflen = (*env)->GetArrayLength(env, src->hInputBuffer) - offset;
     if (buflen <= 0) {
         if (!GET_ARRAYS(env, src)) {
-	    cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
-	} 
-	return;
+            cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+        }
+        return;
     }
     ret = (*env)->CallIntMethod(env, src->hInputStream, InputStream_readID,
-				src->hInputBuffer, offset, buflen);
+                                src->hInputBuffer, offset, buflen);
     if ((*env)->ExceptionOccurred(env) || !GET_ARRAYS(env, src)) {
-	cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+        cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
     }
     if (ret <= 0) {
-	/* Silently accept truncated JPEG files */
-	WARNMS(cinfo, JWRN_JPEG_EOF);
-	src->inbuf[offset] = (JOCTET) 0xFF;
-	src->inbuf[offset + 1] = (JOCTET) JPEG_EOI;
-	ret = 2;
+        /* Silently accept truncated JPEG files */
+        WARNMS(cinfo, JWRN_JPEG_EOF);
+        src->inbuf[offset] = (JOCTET) 0xFF;
+        src->inbuf[offset + 1] = (JOCTET) JPEG_EOI;
+        ret = 2;
     }
 
     src->pub.next_input_byte = src->inbuf;
@@ -391,24 +391,24 @@ sun_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     int ret;
     int buflen;
 
-    
+
     if (num_bytes < 0) {
-	return;
+        return;
     }
     num_bytes += src->remaining_skip;
     src->remaining_skip = 0;
     ret = src->pub.bytes_in_buffer;
     if (ret >= num_bytes) {
-	src->pub.next_input_byte += num_bytes;
-	src->pub.bytes_in_buffer -= num_bytes;
-	return;
+        src->pub.next_input_byte += num_bytes;
+        src->pub.bytes_in_buffer -= num_bytes;
+        return;
     }
     num_bytes -= ret;
     if (src->suspendable) {
-	src->remaining_skip = num_bytes;
-	src->pub.bytes_in_buffer = 0;
-	src->pub.next_input_byte = src->inbuf;
-	return;
+        src->remaining_skip = num_bytes;
+        src->pub.bytes_in_buffer = 0;
+        src->pub.next_input_byte = src->inbuf;
+        return;
     }
 
     /* Note that the signature for the method indicates that it takes
@@ -421,30 +421,30 @@ sun_jpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     RELEASE_ARRAYS(env, src);
     buflen =  (*env)->GetArrayLength(env, src->hInputBuffer);
     while (num_bytes > 0) {
-	ret = (*env)->CallIntMethod(env, src->hInputStream, 
-				    InputStream_readID,
-				    src->hInputBuffer, 0, buflen);
-	if ((*env)->ExceptionOccurred(env)) {
-	    cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
-	}
-	if (ret < 0) {
-	    break;
-	}
-	num_bytes -= ret;
+        ret = (*env)->CallIntMethod(env, src->hInputStream,
+                                    InputStream_readID,
+                                    src->hInputBuffer, 0, buflen);
+        if ((*env)->ExceptionOccurred(env)) {
+            cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+        }
+        if (ret < 0) {
+            break;
+        }
+        num_bytes -= ret;
     }
     if (!GET_ARRAYS(env, src)) {
         cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
     }
     if (num_bytes > 0) {
-	/* Silently accept truncated JPEG files */
-	WARNMS(cinfo, JWRN_JPEG_EOF);
-	src->inbuf[0] = (JOCTET) 0xFF;
-	src->inbuf[1] = (JOCTET) JPEG_EOI;
-	src->pub.bytes_in_buffer = 2;
-	src->pub.next_input_byte = src->inbuf;
+        /* Silently accept truncated JPEG files */
+        WARNMS(cinfo, JWRN_JPEG_EOF);
+        src->inbuf[0] = (JOCTET) 0xFF;
+        src->inbuf[1] = (JOCTET) JPEG_EOI;
+        src->pub.bytes_in_buffer = 2;
+        src->pub.next_input_byte = src->inbuf;
     } else {
-	src->pub.bytes_in_buffer = -num_bytes;
-	src->pub.next_input_byte = src->inbuf + ret + num_bytes;
+        src->pub.bytes_in_buffer = -num_bytes;
+        src->pub.next_input_byte = src->inbuf + ret + num_bytes;
     }
 }
 
@@ -459,21 +459,21 @@ sun_jpeg_term_source(j_decompress_ptr cinfo)
 }
 
 JNIEXPORT void JNICALL
-Java_sun_awt_image_JPEGImageDecoder_initIDs(JNIEnv *env, jclass cls, 
-					    jclass InputStreamClass)
+Java_sun_awt_image_JPEGImageDecoder_initIDs(JNIEnv *env, jclass cls,
+                                            jclass InputStreamClass)
 {
-    sendHeaderInfoID = (*env)->GetMethodID(env, cls, "sendHeaderInfo", 
-					   "(IIZZZ)Z");
+    sendHeaderInfoID = (*env)->GetMethodID(env, cls, "sendHeaderInfo",
+                                           "(IIZZZ)Z");
     sendPixelsByteID = (*env)->GetMethodID(env, cls, "sendPixels", "([BI)Z");
     sendPixelsIntID = (*env)->GetMethodID(env, cls, "sendPixels", "([II)Z");
     InputStream_readID = (*env)->GetMethodID(env, InputStreamClass,
-					     "read", "([BII)I");
+                                             "read", "([BII)I");
     InputStream_availableID = (*env)->GetMethodID(env, InputStreamClass,
-						  "available", "()I");
+                                                  "available", "()I");
 }
-						
 
-/* 
+
+/*
  * The Windows Itanium Aug 2002 SDK generates bad code
  * for this routine.  Disable optimization for now.
  */
@@ -483,9 +483,9 @@ Java_sun_awt_image_JPEGImageDecoder_initIDs(JNIEnv *env, jclass cls,
 
 JNIEXPORT void JNICALL
 Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
-					      jobject this,
-					      jobject hInputStream,
-					      jbyteArray hInputBuffer)
+                                              jobject this,
+                                              jobject hInputStream,
+                                              jbyteArray hInputBuffer)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -524,7 +524,7 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
 
   /* We need to setup our own print routines */
   jerr.pub.output_message = sun_jpeg_output_message;
-  
+
   /* Establish the setjmp return context for sun_jpeg_error_exit to use. */
   if (setjmp(jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error.
@@ -533,10 +533,10 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
     jpeg_destroy_decompress(&cinfo);
     RELEASE_ARRAYS(env, &jsrc);
     if (!(*env)->ExceptionOccurred(env)) {
-	char buffer[JMSG_LENGTH_MAX];
-	(*cinfo.err->format_message) ((struct jpeg_common_struct *) &cinfo,
-				      buffer);
-	JNU_ThrowByName(env, "sun/awt/image/ImageFormatException", buffer);
+        char buffer[JMSG_LENGTH_MAX];
+        (*cinfo.err->format_message) ((struct jpeg_common_struct *) &cinfo,
+                                      buffer);
+        JNU_ThrowByName(env, "sun/awt/image/ImageFormatException", buffer);
     }
     return;
   }
@@ -574,14 +574,14 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
 #endif
   /* We can ignore the return value from jpeg_read_header since
    *   (a) suspension is not possible with the stdio data source, and
-   *					(nor with the Java input source)
+   *                                    (nor with the Java input source)
    *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
    * See libjpeg.doc for more info.
    */
   RELEASE_ARRAYS(env, &jsrc);
   ret = (*env)->CallBooleanMethod(env, this, sendHeaderInfoID,
-				  cinfo.image_width, cinfo.image_height,
-				  grayscale, hasalpha, buffered_mode);
+                                  cinfo.image_width, cinfo.image_height,
+                                  grayscale, hasalpha, buffered_mode);
   if ((*env)->ExceptionOccurred(env) || !ret) {
     /* No more interest in this image... */
     jpeg_destroy_decompress(&cinfo);
@@ -598,7 +598,7 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
     jpeg_destroy_decompress(&cinfo);
     return;
   }
-  
+
   /* Step 4: set parameters for decompression */
 
   /* In this example, we don't need to change any of the defaults set by
@@ -607,9 +607,9 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
   /* For the first pass for Java, we want to deal with RGB for simplicity */
   /* Unfortunately, the JPEG code does not automatically convert Grayscale */
   /* to RGB, so we have to deal with Grayscale explicitly. */
-  if (!grayscale && !hasalpha) { 
-      cinfo.out_color_space = JCS_RGB; 
-  } 
+  if (!grayscale && !hasalpha) {
+      cinfo.out_color_space = JCS_RGB;
+  }
 
   /* Step 5: Start decompressor */
 
@@ -619,7 +619,7 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
    * the data.  After jpeg_start_decompress() we have the correct scaled
    * output image dimensions available, as well as the output colormap
    * if we asked for color quantization.
-   */ 
+   */
 
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
@@ -635,38 +635,38 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
   }
   do {
       if (buffered_mode) {
-	  do {
-	      sun_jpeg_fill_suspended_buffer(&cinfo);
-	      jsrc.suspendable = TRUE;
-	      ret = jpeg_consume_input(&cinfo);
-	      jsrc.suspendable = FALSE;
-	  } while (ret != JPEG_SUSPENDED && ret != JPEG_REACHED_EOI);
-	  if (ret == JPEG_REACHED_EOI) {
-	      final_pass = TRUE;
-	      cinfo.dct_method = JDCT_ISLOW;
-	  }
-	  jpeg_start_output(&cinfo, cinfo.input_scan_number);
+          do {
+              sun_jpeg_fill_suspended_buffer(&cinfo);
+              jsrc.suspendable = TRUE;
+              ret = jpeg_consume_input(&cinfo);
+              jsrc.suspendable = FALSE;
+          } while (ret != JPEG_SUSPENDED && ret != JPEG_REACHED_EOI);
+          if (ret == JPEG_REACHED_EOI) {
+              final_pass = TRUE;
+              cinfo.dct_method = JDCT_ISLOW;
+          }
+          jpeg_start_output(&cinfo, cinfo.input_scan_number);
       }
       while (cinfo.output_scanline < cinfo.output_height) {
-	  if (! final_pass) {
-	      do {
-		  sun_jpeg_fill_suspended_buffer(&cinfo);
-		  jsrc.suspendable = TRUE;
-		  ret = jpeg_consume_input(&cinfo);
-		  jsrc.suspendable = FALSE;
-	      } while (ret != JPEG_SUSPENDED && ret != JPEG_REACHED_EOI);
-	      if (ret == JPEG_REACHED_EOI) {
-		  break;
-	      }
-	  }
-	  (void) jpeg_read_scanlines(&cinfo, (JSAMPARRAY) &(jsrc.outbuf), 1);
+          if (! final_pass) {
+              do {
+                  sun_jpeg_fill_suspended_buffer(&cinfo);
+                  jsrc.suspendable = TRUE;
+                  ret = jpeg_consume_input(&cinfo);
+                  jsrc.suspendable = FALSE;
+              } while (ret != JPEG_SUSPENDED && ret != JPEG_REACHED_EOI);
+              if (ret == JPEG_REACHED_EOI) {
+                  break;
+              }
+          }
+          (void) jpeg_read_scanlines(&cinfo, (JSAMPARRAY) &(jsrc.outbuf), 1);
 
-	  if (grayscale) {
-	      RELEASE_ARRAYS(env, &jsrc);
-	      ret = (*env)->CallBooleanMethod(env, this, sendPixelsByteID,
-					      jsrc.hOutputBuffer,
-					      cinfo.output_scanline - 1);
-	  } else {
+          if (grayscale) {
+              RELEASE_ARRAYS(env, &jsrc);
+              ret = (*env)->CallBooleanMethod(env, this, sendPixelsByteID,
+                                              jsrc.hOutputBuffer,
+                                              cinfo.output_scanline - 1);
+          } else {
               if (hasalpha) {
                   ip = jsrc.outbuf.ip + cinfo.image_width;
                   bp = jsrc.outbuf.bp + cinfo.image_width * 4;
@@ -687,20 +687,20 @@ Java_sun_awt_image_JPEGImageDecoder_readImage(JNIEnv *env,
                       *--ip = pixel;
                   }
               }
-	      RELEASE_ARRAYS(env, &jsrc);
-	      ret = (*env)->CallBooleanMethod(env, this, sendPixelsIntID,
-					      jsrc.hOutputBuffer,
-					      cinfo.output_scanline - 1);
-	  }
-	  if ((*env)->ExceptionOccurred(env) || !ret || 
-	      !GET_ARRAYS(env, &jsrc)) {
-	      /* No more interest in this image... */
-	      jpeg_destroy_decompress(&cinfo);
-	      return;
-	  }
+              RELEASE_ARRAYS(env, &jsrc);
+              ret = (*env)->CallBooleanMethod(env, this, sendPixelsIntID,
+                                              jsrc.hOutputBuffer,
+                                              cinfo.output_scanline - 1);
+          }
+          if ((*env)->ExceptionOccurred(env) || !ret ||
+              !GET_ARRAYS(env, &jsrc)) {
+              /* No more interest in this image... */
+              jpeg_destroy_decompress(&cinfo);
+              return;
+          }
       }
       if (buffered_mode) {
-	  jpeg_finish_output(&cinfo);
+          jpeg_finish_output(&cinfo);
       }
   } while (! final_pass);
 

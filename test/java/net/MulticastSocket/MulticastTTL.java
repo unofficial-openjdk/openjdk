@@ -25,7 +25,7 @@
  * @test
  * @bug 4089415
  * @summary Test MulticastSocket send for modification of ttl
- * 
+ *
  */
 import java.io.*;
 import java.net.*;
@@ -57,5 +57,5 @@ public class MulticastTTL {
                 throw new RuntimeException("TTL ");
         }
         soc.close();
-    }    
+    }
 }

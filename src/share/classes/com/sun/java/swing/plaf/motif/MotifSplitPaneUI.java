@@ -41,27 +41,26 @@ import java.awt.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class MotifSplitPaneUI extends BasicSplitPaneUI
 {
     public MotifSplitPaneUI() {
-	super();
+        super();
     }
 
     /**
       * Creates a new MotifSplitPaneUI instance
       */
     public static ComponentUI createUI(JComponent x) {
-	return new MotifSplitPaneUI();
+        return new MotifSplitPaneUI();
     }
 
     /**
       * Creates the default divider.
       */
     public BasicSplitPaneDivider createDefaultDivider() {
-	return new MotifSplitPaneDivider(this);
+        return new MotifSplitPaneDivider(this);
     }
 
 }

@@ -47,14 +47,13 @@ import sun.security.util.DerOutputStream;
  *
  * @author Benjamin Renaud
  *
- * @version %I%, %G%
  *
  * @see DSAPublicKey
  * @see AlgIdDSA
  * @see DSA
  */
 
-public final class DSAPrivateKey extends PKCS8Key 
+public final class DSAPrivateKey extends PKCS8Key
 implements java.security.interfaces.DSAPrivateKey, Serializable {
 
     /** use serialVersionUID from JDK 1.1. for interoperability */
@@ -72,30 +71,30 @@ implements java.security.interfaces.DSAPrivateKey, Serializable {
     /**
      * Make a DSA private key out of a private key and three parameters.
      */
-    public DSAPrivateKey(BigInteger x, BigInteger p, 
-			 BigInteger q, BigInteger g) 
+    public DSAPrivateKey(BigInteger x, BigInteger p,
+                         BigInteger q, BigInteger g)
     throws InvalidKeyException {
-	this.x = x;
-	algid = new AlgIdDSA(p, q, g);
+        this.x = x;
+        algid = new AlgIdDSA(p, q, g);
 
-	try {
-	    key = new DerValue(DerValue.tag_Integer, 
-			       x.toByteArray()).toByteArray();
-	    encode();
-	} catch (IOException e) {
-	    InvalidKeyException ike = new InvalidKeyException(
+        try {
+            key = new DerValue(DerValue.tag_Integer,
+                               x.toByteArray()).toByteArray();
+            encode();
+        } catch (IOException e) {
+            InvalidKeyException ike = new InvalidKeyException(
                 "could not DER encode x: " + e.getMessage());
-	    ike.initCause(e);
-	    throw ike;
-	}
+            ike.initCause(e);
+            throw ike;
+        }
     }
 
     /**
      * Make a DSA private key from its DER encoding (PKCS #8).
      */
     public DSAPrivateKey(byte[] encoded) throws InvalidKeyException {
-	clearOldKey();
-	decode(encoded);
+        clearOldKey();
+        decode(encoded);
     }
 
     /**
@@ -103,21 +102,21 @@ implements java.security.interfaces.DSAPrivateKey, Serializable {
      * parameters could not be parsed.
      */
     public DSAParams getParams() {
-	try {
-	    if (algid instanceof DSAParams) {
-		return (DSAParams)algid;
-	    } else {
-		DSAParameterSpec paramSpec;
-		AlgorithmParameters algParams = algid.getParameters();
-		if (algParams == null) {
-		    return null;
-		}
-		paramSpec = algParams.getParameterSpec(DSAParameterSpec.class);
-		return (DSAParams)paramSpec;
-	    }
-	} catch (InvalidParameterSpecException e) {
-	    return null;
-	}
+        try {
+            if (algid instanceof DSAParams) {
+                return (DSAParams)algid;
+            } else {
+                DSAParameterSpec paramSpec;
+                AlgorithmParameters algParams = algid.getParameters();
+                if (algParams == null) {
+                    return null;
+                }
+                paramSpec = algParams.getParameterSpec(DSAParameterSpec.class);
+                return (DSAParams)paramSpec;
+            }
+        } catch (InvalidParameterSpecException e) {
+            return null;
+        }
     }
 
     /**
@@ -126,36 +125,36 @@ implements java.security.interfaces.DSAPrivateKey, Serializable {
      * @see getParameters
      */
     public BigInteger getX() {
-	return x;
+        return x;
     }
 
     private void clearOldKey() {
-	int i;
-	if (this.encodedKey != null) {
-	    for (i = 0; i < this.encodedKey.length; i++) {
-		this.encodedKey[i] = (byte)0x00;
-	    }
-	}
-	if (this.key != null) {
-	    for (i = 0; i < this.key.length; i++) {
-		this.key[i] = (byte)0x00;
-	    }
-	}
+        int i;
+        if (this.encodedKey != null) {
+            for (i = 0; i < this.encodedKey.length; i++) {
+                this.encodedKey[i] = (byte)0x00;
+            }
+        }
+        if (this.key != null) {
+            for (i = 0; i < this.key.length; i++) {
+                this.key[i] = (byte)0x00;
+            }
+        }
     }
 
     public String toString() {
-	return "Sun DSA Private Key \nparameters:" + algid + "\nx: " +
-	    Debug.toHexString(x) + "\n";
+        return "Sun DSA Private Key \nparameters:" + algid + "\nx: " +
+            Debug.toHexString(x) + "\n";
     }
 
     protected void parseKeyBits() throws InvalidKeyException {
-	try {
-	    DerInputStream in = new DerInputStream(key);
-	    x = in.getBigInteger();
-	} catch (IOException e) {
-	    InvalidKeyException ike = new InvalidKeyException(e.getMessage());
-	    ike.initCause(e);
-	    throw ike;
-	}
+        try {
+            DerInputStream in = new DerInputStream(key);
+            x = in.getBigInteger();
+        } catch (IOException e) {
+            InvalidKeyException ike = new InvalidKeyException(e.getMessage());
+            ike.initCause(e);
+            throw ike;
+        }
     }
 }

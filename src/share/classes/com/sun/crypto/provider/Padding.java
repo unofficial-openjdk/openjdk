@@ -47,7 +47,7 @@ interface Padding {
      * The value of the padding bytes is determined
      * by the specific padding mechanism that implements this
      * interface.
-     * 
+     *
      * @param in the input buffer with the data to pad
      * @param the offset in <code>in</code> where the padding bytes
      *  are appended
@@ -77,7 +77,7 @@ interface Padding {
      * Determines how long the padding will be for a given input length.
      *
      * @param len the length of the data to pad
-     * 
+     *
      * @return the length of the padding
      */
     int padLength(int len);

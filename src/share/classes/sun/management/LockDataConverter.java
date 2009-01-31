@@ -32,7 +32,7 @@ import javax.management.StandardMBean;
 import javax.management.openmbean.CompositeData;
 
 /**
- * This MXBean is used for data conversion from LockInfo 
+ * This MXBean is used for data conversion from LockInfo
  * to CompositeData (its mapped type) or vice versa.
  */
 class LockDataConverter extends StandardMBean

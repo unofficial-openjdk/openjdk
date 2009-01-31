@@ -34,34 +34,34 @@ import java.io.IOException;
 
 public class Constructor {
     private static void Unreached (Object o)
-	throws Exception
+        throws Exception
     {
-	// Should never get here
-	throw new Exception ("Expected exception was not thrown");
+        // Should never get here
+        throw new Exception ("Expected exception was not thrown");
     }
 
     public static void main(String[] args)
-	throws Exception
+        throws Exception
     {
-	try { Unreached (new JarFile ((File) null, true, JarFile.OPEN_READ)); }
-	catch (NullPointerException e) {}
+        try { Unreached (new JarFile ((File) null, true, JarFile.OPEN_READ)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (new JarFile ((File) null, true)); }
-	catch (NullPointerException e) {}
+        try { Unreached (new JarFile ((File) null, true)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (new JarFile ((File) null)); }
-	catch (NullPointerException e) {}
+        try { Unreached (new JarFile ((File) null)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (new JarFile ((String) null, true)); }
-	catch (NullPointerException e) {}
+        try { Unreached (new JarFile ((String) null, true)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (new JarFile ((String) null)); }
-	catch (NullPointerException e) {}
+        try { Unreached (new JarFile ((String) null)); }
+        catch (NullPointerException e) {}
 
-	try { Unreached (new JarFile ("NoSuchJar.jar")); }
-	catch (IOException e) {}
+        try { Unreached (new JarFile ("NoSuchJar.jar")); }
+        catch (IOException e) {}
 
-	try { Unreached (new JarFile (new File ("NoSuchJar.jar"))); }
-	catch (IOException e) {}
+        try { Unreached (new JarFile (new File ("NoSuchJar.jar"))); }
+        catch (IOException e) {}
     }
 }

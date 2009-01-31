@@ -95,7 +95,7 @@ NativePrimitive FourByteAbgrPrePrimitives[] = {
     REGISTER_XPAR_SCALE_BLIT(IntArgbBm, FourByteAbgrPre),
     REGISTER_XPAR_BLITBG(ByteIndexedBm, FourByteAbgrPre),
 
-    REGISTER_XOR_BLIT(IntArgb, FourByteAbgrPre),      
+    REGISTER_XOR_BLIT(IntArgb, FourByteAbgrPre),
     REGISTER_SRC_MASKFILL(FourByteAbgrPre),
     REGISTER_SRCOVER_MASKFILL(FourByteAbgrPre),
     REGISTER_ALPHA_MASKFILL(FourByteAbgrPre),
@@ -113,7 +113,7 @@ NativePrimitive FourByteAbgrPrePrimitives[] = {
 jboolean RegisterFourByteAbgrPre(JNIEnv *env)
 {
     return RegisterPrimitives(env, FourByteAbgrPrePrimitives,
-			      ArraySize(FourByteAbgrPrePrimitives));
+                              ArraySize(FourByteAbgrPrePrimitives));
 }
 
 jint PixelForFourByteAbgrPre(SurfaceDataRasInfo *pRasInfo, jint rgb)

@@ -74,45 +74,44 @@ import sun.security.ssl.SSLSocketImpl;
  * "sun.net.www" HTTP protocol handler.  HTTPS is the same protocol as HTTP,
  * but differs in the transport layer which it uses:  <UL>
  *
- *	<LI>There's a <em>Secure Sockets Layer</em> between TCP
- *	and the HTTP protocol code.
+ *      <LI>There's a <em>Secure Sockets Layer</em> between TCP
+ *      and the HTTP protocol code.
  *
- *	<LI>It uses a different default TCP port.
+ *      <LI>It uses a different default TCP port.
  *
- *	<LI>It doesn't use application level proxies, which can see and
- *	manipulate HTTP user level data, compromising privacy.  It uses
- *	low level tunneling instead, which hides HTTP protocol and data
- *	from all third parties.  (Traffic analysis is still possible).
+ *      <LI>It doesn't use application level proxies, which can see and
+ *      manipulate HTTP user level data, compromising privacy.  It uses
+ *      low level tunneling instead, which hides HTTP protocol and data
+ *      from all third parties.  (Traffic analysis is still possible).
  *
- *	<LI>It does basic server authentication, to protect
- *	against "URL spoofing" attacks.  This involves deciding
- *	whether the X.509 certificate chain identifying the server
- *	is trusted, and verifying that the name of the server is
- *	found in the certificate.  (The application may enable an
- *	anonymous SSL cipher suite, and such checks are not done
- *	for anonymous ciphers.)
+ *      <LI>It does basic server authentication, to protect
+ *      against "URL spoofing" attacks.  This involves deciding
+ *      whether the X.509 certificate chain identifying the server
+ *      is trusted, and verifying that the name of the server is
+ *      found in the certificate.  (The application may enable an
+ *      anonymous SSL cipher suite, and such checks are not done
+ *      for anonymous ciphers.)
  *
- *	<LI>It exposes key SSL session attributes, specifically the
- *	cipher suite in use and the server's X509 certificates, to
- *	application software which knows about this protocol handler.
+ *      <LI>It exposes key SSL session attributes, specifically the
+ *      cipher suite in use and the server's X509 certificates, to
+ *      application software which knows about this protocol handler.
  *
- *	</UL>
+ *      </UL>
  *
  * <P> System properties used include:  <UL>
  *
- *	<LI><em>https.proxyHost</em> ... the host supporting SSL
- *	tunneling using the conventional CONNECT syntax
+ *      <LI><em>https.proxyHost</em> ... the host supporting SSL
+ *      tunneling using the conventional CONNECT syntax
  *
- *	<LI><em>https.proxyPort</em> ... port to use on proxyHost
+ *      <LI><em>https.proxyPort</em> ... port to use on proxyHost
  *
- *	<LI><em>https.cipherSuites</em> ... comma separated list of
- *	SSL cipher suite names to enable.
+ *      <LI><em>https.cipherSuites</em> ... comma separated list of
+ *      SSL cipher suite names to enable.
  *
- *	<LI><em>http.nonProxyHosts</em> ...
+ *      <LI><em>http.nonProxyHosts</em> ...
  *
- *	</UL>
+ *      </UL>
  *
- * @version %I% %G%
  * @author David Brownell
  * @author Bill Foote
  */
@@ -124,7 +123,7 @@ final class HttpsClient extends HttpClient
     // STATIC STATE and ACCESSORS THERETO
 
     // HTTPS uses a different default port number than HTTP.
-    private static final int	httpsPortNumber = 443;
+    private static final int    httpsPortNumber = 443;
 
     /** Returns the default HTTPS port (443) */
     protected int getDefaultPort() { return httpsPortNumber; }
@@ -140,80 +139,80 @@ final class HttpsClient extends HttpClient
     // INSTANCE DATA
 
     // last negotiated SSL session
-    private SSLSession	session;
+    private SSLSession  session;
 
     private String [] getCipherSuites() {
-	//
-	// If ciphers are assigned, sort them into an array.
-	//
+        //
+        // If ciphers are assigned, sort them into an array.
+        //
         String ciphers [];
-	String cipherString = AccessController.doPrivileged(
+        String cipherString = AccessController.doPrivileged(
                 new GetPropertyAction("https.cipherSuites"));
 
-	if (cipherString == null || "".equals(cipherString)) {
-	    ciphers = null;
-	} else {
-	    StringTokenizer	tokenizer;
-	    Vector<String>	v = new Vector<String>();
+        if (cipherString == null || "".equals(cipherString)) {
+            ciphers = null;
+        } else {
+            StringTokenizer     tokenizer;
+            Vector<String>      v = new Vector<String>();
 
-	    tokenizer = new StringTokenizer(cipherString, ",");
-	    while (tokenizer.hasMoreTokens())
-		v.addElement(tokenizer.nextToken());
-	    ciphers = new String [v.size()];
-	    for (int i = 0; i < ciphers.length; i++)
-		ciphers [i] = v.elementAt(i);
-	}
-	return ciphers;
+            tokenizer = new StringTokenizer(cipherString, ",");
+            while (tokenizer.hasMoreTokens())
+                v.addElement(tokenizer.nextToken());
+            ciphers = new String [v.size()];
+            for (int i = 0; i < ciphers.length; i++)
+                ciphers [i] = v.elementAt(i);
+        }
+        return ciphers;
     }
 
     private String [] getProtocols() {
-	//
-	// If protocols are assigned, sort them into an array.
-	//
+        //
+        // If protocols are assigned, sort them into an array.
+        //
         String protocols [];
-	String protocolString = AccessController.doPrivileged(
+        String protocolString = AccessController.doPrivileged(
                 new GetPropertyAction("https.protocols"));
 
-	if (protocolString == null || "".equals(protocolString)) {
-	    protocols = null;
-	} else {
-	    StringTokenizer	tokenizer;
-	    Vector<String>	v = new Vector<String>();
+        if (protocolString == null || "".equals(protocolString)) {
+            protocols = null;
+        } else {
+            StringTokenizer     tokenizer;
+            Vector<String>      v = new Vector<String>();
 
-	    tokenizer = new StringTokenizer(protocolString, ",");
-	    while (tokenizer.hasMoreTokens())
-		v.addElement(tokenizer.nextToken());
-	    protocols = new String [v.size()];
-	    for (int i = 0; i < protocols.length; i++) {
-		protocols [i] = v.elementAt(i);
-	    }
-	}
-	return protocols;
+            tokenizer = new StringTokenizer(protocolString, ",");
+            while (tokenizer.hasMoreTokens())
+                v.addElement(tokenizer.nextToken());
+            protocols = new String [v.size()];
+            for (int i = 0; i < protocols.length; i++) {
+                protocols [i] = v.elementAt(i);
+            }
+        }
+        return protocols;
     }
 
     private String getUserAgent() {
-	String userAgent = java.security.AccessController.doPrivileged(
+        String userAgent = java.security.AccessController.doPrivileged(
                 new sun.security.action.GetPropertyAction("https.agent"));
-	if (userAgent == null || userAgent.length() == 0) {
-	    userAgent = "JSSE";
-	}
-	return userAgent;
+        if (userAgent == null || userAgent.length() == 0) {
+            userAgent = "JSSE";
+        }
+        return userAgent;
     }
-    
+
     // should remove once HttpClient.newHttpProxy is putback
     private static Proxy newHttpProxy(String proxyHost, int proxyPort) {
-	InetSocketAddress saddr = null;
-	final String phost = proxyHost;
-	final int pport = proxyPort < 0 ? httpsPortNumber : proxyPort;
-	try {
-	    saddr = java.security.AccessController.doPrivileged(new
-		java.security.PrivilegedExceptionAction<InetSocketAddress>() {
-		public InetSocketAddress run() {
-		    return new InetSocketAddress(phost, pport);
-		}});
-	} catch (java.security.PrivilegedActionException pae) {
-	}
-	return new Proxy(Proxy.Type.HTTP, saddr);
+        InetSocketAddress saddr = null;
+        final String phost = proxyHost;
+        final int pport = proxyPort < 0 ? httpsPortNumber : proxyPort;
+        try {
+            saddr = java.security.AccessController.doPrivileged(new
+                java.security.PrivilegedExceptionAction<InetSocketAddress>() {
+                public InetSocketAddress run() {
+                    return new InetSocketAddress(phost, pport);
+                }});
+        } catch (java.security.PrivilegedActionException pae) {
+        }
+        return new Proxy(Proxy.Type.HTTP, saddr);
     }
 
     // CONSTRUCTOR, FACTORY
@@ -236,9 +235,9 @@ final class HttpsClient extends HttpClient
     private HttpsClient(SSLSocketFactory sf, URL url)
     throws IOException
     {
-	// HttpClient-level proxying is always disabled,
-	// because we override doConnect to do tunneling instead.
-	this(sf, url, (String)null, -1); 
+        // HttpClient-level proxying is always disabled,
+        // because we override doConnect to do tunneling instead.
+        this(sf, url, (String)null, -1);
     }
 
     /**
@@ -246,8 +245,8 @@ final class HttpsClient extends HttpClient
      * the specified proxy server.
      */
     HttpsClient(SSLSocketFactory sf, URL url, String proxyHost, int proxyPort)
-	throws IOException {
-	this(sf, url, proxyHost, proxyPort, -1);
+        throws IOException {
+        this(sf, url, proxyHost, proxyPort, -1);
     }
 
     /**
@@ -255,39 +254,39 @@ final class HttpsClient extends HttpClient
      * the specified proxy server, with a connect timeout
      */
     HttpsClient(SSLSocketFactory sf, URL url, String proxyHost, int proxyPort,
-		int connectTimeout)
-	throws IOException {
-	this(sf, url,
-	     (proxyHost == null? null:
-		HttpsClient.newHttpProxy(proxyHost, proxyPort)),
-		connectTimeout);
+                int connectTimeout)
+        throws IOException {
+        this(sf, url,
+             (proxyHost == null? null:
+                HttpsClient.newHttpProxy(proxyHost, proxyPort)),
+                connectTimeout);
     }
 
     /**
-     *  Same as previous constructor except using a Proxy 
+     *  Same as previous constructor except using a Proxy
      */
     HttpsClient(SSLSocketFactory sf, URL url, Proxy proxy,
-		int connectTimeout)
-	throws IOException {
-	this.proxy = proxy;
-	setSSLSocketFactory(sf); 
-	this.proxyDisabled = true;
+                int connectTimeout)
+        throws IOException {
+        this.proxy = proxy;
+        setSSLSocketFactory(sf);
+        this.proxyDisabled = true;
 
-	this.host = url.getHost();
-	this.url = url;
-	port = url.getPort();
-	if (port == -1) {
-	    port = getDefaultPort();
-	}
-	setConnectTimeout(connectTimeout);
-	// get the cookieHandler if there is any
-	cookieHandler = java.security.AccessController.doPrivileged(
-	    new java.security.PrivilegedAction<CookieHandler>() {
-		public CookieHandler run() {
-		    return CookieHandler.getDefault();
-		}
-	    });
-	openServer();
+        this.host = url.getHost();
+        this.url = url;
+        port = url.getPort();
+        if (port == -1) {
+            port = getDefaultPort();
+        }
+        setConnectTimeout(connectTimeout);
+        // get the cookieHandler if there is any
+        cookieHandler = java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<CookieHandler>() {
+                public CookieHandler run() {
+                    return CookieHandler.getDefault();
+                }
+            });
+        openServer();
     }
 
 
@@ -295,14 +294,14 @@ final class HttpsClient extends HttpClient
     // it uses the same keepalive cache.
 
     static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv)
-	    throws IOException {
-	return HttpsClient.New(sf, url, hv, true);
+            throws IOException {
+        return HttpsClient.New(sf, url, hv, true);
     }
 
     /** See HttpClient for the model for this method. */
     static HttpClient New(SSLSocketFactory sf, URL url,
-	    HostnameVerifier hv, boolean useCache) throws IOException {
-	return HttpsClient.New(sf, url, hv, (String)null, -1, useCache);
+            HostnameVerifier hv, boolean useCache) throws IOException {
+        return HttpsClient.New(sf, url, hv, (String)null, -1, useCache);
     }
 
     /**
@@ -310,220 +309,220 @@ final class HttpsClient extends HttpClient
      * the specified proxy server.
      */
     static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv,
-			   String proxyHost, int proxyPort) throws IOException {
-	return HttpsClient.New(sf, url, hv, proxyHost, proxyPort, true);
+                           String proxyHost, int proxyPort) throws IOException {
+        return HttpsClient.New(sf, url, hv, proxyHost, proxyPort, true);
     }
 
     static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv,
-			   String proxyHost, int proxyPort, boolean useCache)
-	throws IOException {
-	return HttpsClient.New(sf, url, hv, proxyHost, proxyPort, useCache, -1);
+                           String proxyHost, int proxyPort, boolean useCache)
+        throws IOException {
+        return HttpsClient.New(sf, url, hv, proxyHost, proxyPort, useCache, -1);
     }
 
     static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv,
-			  String proxyHost, int proxyPort, boolean useCache,
-			  int connectTimeout)
-	throws IOException {
-	
-	return HttpsClient.New(sf, url, hv,
-			       (proxyHost == null? null :
-				HttpsClient.newHttpProxy(proxyHost, proxyPort)),
-			       useCache, connectTimeout);
-    }
-    
-    static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv,
-			  Proxy p, boolean useCache,
-			  int connectTimeout)
-	throws IOException {
-	HttpsClient ret = null;
-	if (useCache) {
-	    /* see if one's already around */
-	    ret = (HttpsClient) kac.get(url, sf);
-	    if (ret != null) {
-		ret.cachedHttpClient = true;
-	    }
-	}
-	if (ret == null) {
-	    ret = new HttpsClient(sf, url, p, connectTimeout);
-	} else {
-	    SecurityManager security = System.getSecurityManager();
-	    if (security != null) {
-		security.checkConnect(url.getHost(), url.getPort());
-	    }
-	    ret.url = url;
-	}
-	ret.setHostnameVerifier(hv); 
+                          String proxyHost, int proxyPort, boolean useCache,
+                          int connectTimeout)
+        throws IOException {
 
-	return ret;
+        return HttpsClient.New(sf, url, hv,
+                               (proxyHost == null? null :
+                                HttpsClient.newHttpProxy(proxyHost, proxyPort)),
+                               useCache, connectTimeout);
+    }
+
+    static HttpClient New(SSLSocketFactory sf, URL url, HostnameVerifier hv,
+                          Proxy p, boolean useCache,
+                          int connectTimeout)
+        throws IOException {
+        HttpsClient ret = null;
+        if (useCache) {
+            /* see if one's already around */
+            ret = (HttpsClient) kac.get(url, sf);
+            if (ret != null) {
+                ret.cachedHttpClient = true;
+            }
+        }
+        if (ret == null) {
+            ret = new HttpsClient(sf, url, p, connectTimeout);
+        } else {
+            SecurityManager security = System.getSecurityManager();
+            if (security != null) {
+                security.checkConnect(url.getHost(), url.getPort());
+            }
+            ret.url = url;
+        }
+        ret.setHostnameVerifier(hv);
+
+        return ret;
     }
 
     // METHODS
     void setHostnameVerifier(HostnameVerifier hv) {
-	this.hv = hv;
+        this.hv = hv;
     }
-    
+
     void setSSLSocketFactory(SSLSocketFactory sf) {
-	sslSocketFactory = sf;
+        sslSocketFactory = sf;
     }
 
     SSLSocketFactory getSSLSocketFactory() {
-	return sslSocketFactory;
+        return sslSocketFactory;
     }
 
     public boolean needsTunneling() {
-	return (proxy != null && proxy.type() != Proxy.Type.DIRECT
-		&& proxy.type() != Proxy.Type.SOCKS);
+        return (proxy != null && proxy.type() != Proxy.Type.DIRECT
+                && proxy.type() != Proxy.Type.SOCKS);
     }
 
     public void afterConnect() throws IOException, UnknownHostException {
-	if (!isCachedConnection()) {
-	    SSLSocket s = null;
-	    SSLSocketFactory factory = sslSocketFactory;
-	    try {
-		if (!(serverSocket instanceof SSLSocket)) {
-		    s = (SSLSocket)factory.createSocket(serverSocket,
-							host, port, true);
-		} else {
-		    s = (SSLSocket)serverSocket;
-		}
-	    } catch (IOException ex) {
-		// If we fail to connect through the tunnel, try it
-		// locally, as a last resort.  If this doesn't work,
-		// throw the original exception.
-		try {
-		    s = (SSLSocket)factory.createSocket(host, port);
-		} catch (IOException ignored) {
-		    throw ex;
-		}
-	    }
+        if (!isCachedConnection()) {
+            SSLSocket s = null;
+            SSLSocketFactory factory = sslSocketFactory;
+            try {
+                if (!(serverSocket instanceof SSLSocket)) {
+                    s = (SSLSocket)factory.createSocket(serverSocket,
+                                                        host, port, true);
+                } else {
+                    s = (SSLSocket)serverSocket;
+                }
+            } catch (IOException ex) {
+                // If we fail to connect through the tunnel, try it
+                // locally, as a last resort.  If this doesn't work,
+                // throw the original exception.
+                try {
+                    s = (SSLSocket)factory.createSocket(host, port);
+                } catch (IOException ignored) {
+                    throw ex;
+                }
+            }
 
-	    //
-	    // Force handshaking, so that we get any authentication.
-	    // Register a handshake callback so our session state tracks any
-	    // later session renegotiations.
-	    //
-	    String [] protocols = getProtocols();
-	    String [] ciphers = getCipherSuites();
-	    if (protocols != null) {
-		s.setEnabledProtocols(protocols);
-	    }
-	    if (ciphers != null) {
-		s.setEnabledCipherSuites(ciphers);
-	    }
-	    s.addHandshakeCompletedListener(this);
+            //
+            // Force handshaking, so that we get any authentication.
+            // Register a handshake callback so our session state tracks any
+            // later session renegotiations.
+            //
+            String [] protocols = getProtocols();
+            String [] ciphers = getCipherSuites();
+            if (protocols != null) {
+                s.setEnabledProtocols(protocols);
+            }
+            if (ciphers != null) {
+                s.setEnabledCipherSuites(ciphers);
+            }
+            s.addHandshakeCompletedListener(this);
 
-	    // if the HostnameVerifier is not set, try to enable endpoint
-	    // identification during handshaking
-	    boolean enabledIdentification = false;
-	    if (hv instanceof DefaultHostnameVerifier &&
-		(s instanceof SSLSocketImpl) && 
-		((SSLSocketImpl)s).trySetHostnameVerification("HTTPS")) {
-		enabledIdentification = true;
-	    }
+            // if the HostnameVerifier is not set, try to enable endpoint
+            // identification during handshaking
+            boolean enabledIdentification = false;
+            if (hv instanceof DefaultHostnameVerifier &&
+                (s instanceof SSLSocketImpl) &&
+                ((SSLSocketImpl)s).trySetHostnameVerification("HTTPS")) {
+                enabledIdentification = true;
+            }
 
-	    s.startHandshake();
-	    session = s.getSession();
-	    // change the serverSocket and serverOutput
-	    serverSocket = s;
-	    try {
-		serverOutput = new PrintStream(
-		    new BufferedOutputStream(serverSocket.getOutputStream()), 
-		    false, encoding);
-	    } catch (UnsupportedEncodingException e) {
-		throw new InternalError(encoding+" encoding not found");
-	    }
-	
-	    // check URL spoofing if it has not been checked under handshaking
-	    if (!enabledIdentification) {
-		checkURLSpoofing(hv); 
-	    }
-	} else {
-	    // if we are reusing a cached https session,
-	    // we don't need to do handshaking etc. But we do need to 
-	    // set the ssl session
-	    session = ((SSLSocket)serverSocket).getSession();
-	}
+            s.startHandshake();
+            session = s.getSession();
+            // change the serverSocket and serverOutput
+            serverSocket = s;
+            try {
+                serverOutput = new PrintStream(
+                    new BufferedOutputStream(serverSocket.getOutputStream()),
+                    false, encoding);
+            } catch (UnsupportedEncodingException e) {
+                throw new InternalError(encoding+" encoding not found");
+            }
+
+            // check URL spoofing if it has not been checked under handshaking
+            if (!enabledIdentification) {
+                checkURLSpoofing(hv);
+            }
+        } else {
+            // if we are reusing a cached https session,
+            // we don't need to do handshaking etc. But we do need to
+            // set the ssl session
+            session = ((SSLSocket)serverSocket).getSession();
+        }
     }
 
     // Server identity checking is done according to RFC 2818: HTTP over TLS
     // Section 3.1 Server Identity
     private void checkURLSpoofing(HostnameVerifier hostnameVerifier)
-	    throws IOException
+            throws IOException
     {
-	//
-	// Get authenticated server name, if any
-	//
-	boolean done = false;
-	String host = url.getHost();
+        //
+        // Get authenticated server name, if any
+        //
+        boolean done = false;
+        String host = url.getHost();
 
-	// if IPv6 strip off the "[]"
-	if (host != null && host.startsWith("[") && host.endsWith("]")) {
-	    host = host.substring(1, host.length()-1);
-	}
+        // if IPv6 strip off the "[]"
+        if (host != null && host.startsWith("[") && host.endsWith("]")) {
+            host = host.substring(1, host.length()-1);
+        }
 
-	Certificate[] peerCerts = null;
-	try {
-	    HostnameChecker checker = HostnameChecker.getInstance(
-	    					HostnameChecker.TYPE_TLS);
+        Certificate[] peerCerts = null;
+        try {
+            HostnameChecker checker = HostnameChecker.getInstance(
+                                                HostnameChecker.TYPE_TLS);
 
-	    Principal principal = getPeerPrincipal();
-	    if (principal instanceof KerberosPrincipal) {
-		if (!checker.match(host, (KerberosPrincipal)principal)) {
-		    throw new SSLPeerUnverifiedException("Hostname checker" +
-				" failed for Kerberos");
-		}
-	    } else {
-		// get the subject's certificate
-		peerCerts = session.getPeerCertificates();
+            Principal principal = getPeerPrincipal();
+            if (principal instanceof KerberosPrincipal) {
+                if (!checker.match(host, (KerberosPrincipal)principal)) {
+                    throw new SSLPeerUnverifiedException("Hostname checker" +
+                                " failed for Kerberos");
+                }
+            } else {
+                // get the subject's certificate
+                peerCerts = session.getPeerCertificates();
 
-		X509Certificate peerCert;
-		if (peerCerts[0] instanceof 
-			java.security.cert.X509Certificate) {
-		    peerCert = (java.security.cert.X509Certificate)peerCerts[0];
-		} else {
-		    throw new SSLPeerUnverifiedException("");
-		}
-		checker.match(host, peerCert);
-	    }
+                X509Certificate peerCert;
+                if (peerCerts[0] instanceof
+                        java.security.cert.X509Certificate) {
+                    peerCert = (java.security.cert.X509Certificate)peerCerts[0];
+                } else {
+                    throw new SSLPeerUnverifiedException("");
+                }
+                checker.match(host, peerCert);
+            }
 
-	    // if it doesn't throw an exception, we passed. Return.
-	    return;
-	    
-	} catch (SSLPeerUnverifiedException e) {
+            // if it doesn't throw an exception, we passed. Return.
+            return;
 
-	    //
-	    // client explicitly changed default policy and enabled
-	    // anonymous ciphers; we can't check the standard policy
-	    //
-	    // ignore
-	} catch (java.security.cert.CertificateException cpe) {
-	    // ignore
-	}
+        } catch (SSLPeerUnverifiedException e) {
 
-	String cipher = session.getCipherSuite();
-	if ((cipher != null) && (cipher.indexOf("_anon_") != -1)) {
-	    return;
-	} else if ((hostnameVerifier != null) &&
+            //
+            // client explicitly changed default policy and enabled
+            // anonymous ciphers; we can't check the standard policy
+            //
+            // ignore
+        } catch (java.security.cert.CertificateException cpe) {
+            // ignore
+        }
+
+        String cipher = session.getCipherSuite();
+        if ((cipher != null) && (cipher.indexOf("_anon_") != -1)) {
+            return;
+        } else if ((hostnameVerifier != null) &&
                    (hostnameVerifier.verify(host, session))) {
-	    return;
-	}
+            return;
+        }
 
-	serverSocket.close();
-	session.invalidate();
+        serverSocket.close();
+        session.invalidate();
 
-	throw new IOException("HTTPS hostname wrong:  should be <"
-			      + url.getHost() + ">");
+        throw new IOException("HTTPS hostname wrong:  should be <"
+                              + url.getHost() + ">");
     }
 
     protected void putInKeepAliveCache() {
-	kac.put(url, sslSocketFactory, this);
+        kac.put(url, sslSocketFactory, this);
     }
 
     /**
      * Returns the cipher suite in use on this connection.
      */
     String getCipherSuite() {
-	return session.getCipherSuite();
+        return session.getCipherSuite();
     }
 
     /**
@@ -531,7 +530,7 @@ final class HttpsClient extends HttpClient
      * server, or null if the client did not authenticate.
      */
     public java.security.cert.Certificate [] getLocalCertificates() {
-	return session.getLocalCertificates();
+        return session.getLocalCertificates();
     }
 
     /**
@@ -540,9 +539,9 @@ final class HttpsClient extends HttpClient
      * if the server did not authenticate.
      */
     java.security.cert.Certificate [] getServerCertificates()
-	    throws SSLPeerUnverifiedException
+            throws SSLPeerUnverifiedException
     {
-	return session.getPeerCertificates();
+        return session.getPeerCertificates();
     }
 
     /**
@@ -550,9 +549,9 @@ final class HttpsClient extends HttpClient
      * authenticated itself, or null if the server did not authenticate.
      */
     javax.security.cert.X509Certificate [] getServerCertificateChain()
-	    throws SSLPeerUnverifiedException
+            throws SSLPeerUnverifiedException
     {
-	return session.getPeerCertificateChain();
+        return session.getPeerCertificateChain();
     }
 
     /**
@@ -561,20 +560,20 @@ final class HttpsClient extends HttpClient
      * server did not authenticate.
      */
     Principal getPeerPrincipal()
-	    throws SSLPeerUnverifiedException
+            throws SSLPeerUnverifiedException
     {
-	Principal principal;
-	try {
-	    principal = session.getPeerPrincipal();
-	} catch (AbstractMethodError e) {
-	    // if the provider does not support it, fallback to peer certs.
-	    // return the X500Principal of the end-entity cert.
-	    java.security.cert.Certificate[] certs = 
-			session.getPeerCertificates();
-	    principal = (X500Principal)
-		((X509Certificate)certs[0]).getSubjectX500Principal();
-	}
-	return principal;
+        Principal principal;
+        try {
+            principal = session.getPeerPrincipal();
+        } catch (AbstractMethodError e) {
+            // if the provider does not support it, fallback to peer certs.
+            // return the X500Principal of the end-entity cert.
+            java.security.cert.Certificate[] certs =
+                        session.getPeerCertificates();
+            principal = (X500Principal)
+                ((X509Certificate)certs[0]).getSubjectX500Principal();
+        }
+        return principal;
     }
 
     /**
@@ -583,21 +582,21 @@ final class HttpsClient extends HttpClient
      */
     Principal getLocalPrincipal()
     {
-	Principal principal;
-	try {
-	    principal = session.getLocalPrincipal();
-	} catch (AbstractMethodError e) {
-	    principal = null;
-	    // if the provider does not support it, fallback to local certs.
-	    // return the X500Principal of the end-entity cert.
-	    java.security.cert.Certificate[] certs = 
-			session.getLocalCertificates();
-	    if (certs != null) {
-		principal = (X500Principal)
-		    ((X509Certificate)certs[0]).getSubjectX500Principal();
-	    }
-	}
-	return principal;
+        Principal principal;
+        try {
+            principal = session.getLocalPrincipal();
+        } catch (AbstractMethodError e) {
+            principal = null;
+            // if the provider does not support it, fallback to local certs.
+            // return the X500Principal of the end-entity cert.
+            java.security.cert.Certificate[] certs =
+                        session.getLocalCertificates();
+            if (certs != null) {
+                principal = (X500Principal)
+                    ((X509Certificate)certs[0]).getSubjectX500Principal();
+            }
+        }
+        return principal;
     }
 
     /**
@@ -610,7 +609,7 @@ final class HttpsClient extends HttpClient
      */
     public void handshakeCompleted(HandshakeCompletedEvent event)
     {
-	session = event.getSession();
+        session = event.getSession();
     }
 
     /**
@@ -618,20 +617,20 @@ final class HttpsClient extends HttpClient
      *          if we're not going through a proxy
      */
     public String getProxyHostUsed() {
-	if (!needsTunneling()) {
-	    return null;
-	} else {
-	    return ((InetSocketAddress)proxy.address()).getHostName();
-	}
+        if (!needsTunneling()) {
+            return null;
+        } else {
+            return ((InetSocketAddress)proxy.address()).getHostName();
+        }
     }
-    
+
     /**
      * @return the proxy port being used for this client.  Meaningless
      *          if getProxyHostUsed() gives null.
      */
     public int getProxyPortUsed() {
-	return (proxy == null || proxy.type() == Proxy.Type.DIRECT ||
-		proxy.type() == Proxy.Type.SOCKS)? -1:
-	    ((InetSocketAddress)proxy.address()).getPort();
+        return (proxy == null || proxy.type() == Proxy.Type.DIRECT ||
+                proxy.type() == Proxy.Type.SOCKS)? -1:
+            ((InetSocketAddress)proxy.address()).getPort();
     }
 }

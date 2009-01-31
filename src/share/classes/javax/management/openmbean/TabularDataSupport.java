@@ -102,49 +102,49 @@ public class TabularDataSupport
      * <p>
      * This constructor simply calls <tt>this(tabularType, 101, 0.75f);</tt>
      *
-     * @param  tabularType 		 the <i>tabular type</i> describing this <tt>TabularData</tt> instance;
-     *					 cannot be null.
+     * @param  tabularType               the <i>tabular type</i> describing this <tt>TabularData</tt> instance;
+     *                                   cannot be null.
      *
      * @throws IllegalArgumentException  if the tabular type is null.
      */
     public TabularDataSupport(TabularType tabularType) {
 
-	this(tabularType, 101, 0.75f);
+        this(tabularType, 101, 0.75f);
     }
 
     /**
      * Creates an empty <tt>TabularDataSupport</tt> instance whose open-type is <var>tabularType</var>,
      * and whose underlying <tt>HashMap</tt> has the specified initial capacity and load factor.
      *
-     * @param  tabularType		 the <i>tabular type</i> describing this <tt>TabularData</tt> instance;
-     *				 cannot be null.
+     * @param  tabularType               the <i>tabular type</i> describing this <tt>TabularData</tt> instance;
+     *                           cannot be null.
      *
      * @param  initialCapacity   the initial capacity of the HashMap.
      *
      * @param  loadFactor        the load factor of the HashMap
      *
      * @throws IllegalArgumentException  if the initial capacity is less than zero,
-     *					 or the load factor is nonpositive,
-     *					 or the tabular type is null.
+     *                                   or the load factor is nonpositive,
+     *                                   or the tabular type is null.
      */
     public TabularDataSupport(TabularType tabularType, int initialCapacity, float loadFactor) {
 
-	// Check tabularType is not null
-	//
-	if (tabularType == null) {
-	    throw new IllegalArgumentException("Argument tabularType cannot be null.");
-	}
+        // Check tabularType is not null
+        //
+        if (tabularType == null) {
+            throw new IllegalArgumentException("Argument tabularType cannot be null.");
+        }
 
-	// Initialize this.tabularType (and indexNamesArray for convenience)
-	//
-	this.tabularType = tabularType;
-	List<String> tmpNames = tabularType.getIndexNames();
-	this.indexNamesArray = tmpNames.toArray(new String[tmpNames.size()]);
+        // Initialize this.tabularType (and indexNamesArray for convenience)
+        //
+        this.tabularType = tabularType;
+        List<String> tmpNames = tabularType.getIndexNames();
+        this.indexNamesArray = tmpNames.toArray(new String[tmpNames.size()]);
 
-	// Construct the empty contents HashMap
-	//
-	this.dataMap =
-	    new HashMap<Object,CompositeData>(initialCapacity, loadFactor);
+        // Construct the empty contents HashMap
+        //
+        this.dataMap =
+            new HashMap<Object,CompositeData>(initialCapacity, loadFactor);
     }
 
 
@@ -158,7 +158,7 @@ public class TabularDataSupport
      */
     public TabularType getTabularType() {
 
-	return tabularType;
+        return tabularType;
     }
 
     /**
@@ -167,27 +167,27 @@ public class TabularDataSupport
      * This method checks for the type validity of the specified <var>value</var>,
      * but does not check if the calculated index is already used to refer to a value in this <tt>TabularData</tt> instance.
      *
-     * @param  value			  the composite data value whose index in this
-     *					  <tt>TabularData</tt> instance is to be calculated;
-     *					  must be of the same composite type as this instance's row type;
-     *					  must not be null.
+     * @param  value                      the composite data value whose index in this
+     *                                    <tt>TabularData</tt> instance is to be calculated;
+     *                                    must be of the same composite type as this instance's row type;
+     *                                    must not be null.
      *
      * @return the index that the specified <var>value</var> would have in this <tt>TabularData</tt> instance.
      *
      * @throws NullPointerException       if <var>value</var> is <tt>null</tt>.
      *
      * @throws InvalidOpenTypeException   if <var>value</var> does not conform to this <tt>TabularData</tt> instance's
-     *				          row type definition.
+     *                                    row type definition.
      */
     public Object[] calculateIndex(CompositeData value) {
 
-	// Check value is valid
-	//
-	checkValueType(value);
+        // Check value is valid
+        //
+        checkValueType(value);
 
-	// Return its calculated index
-	//
-	return internalCalculateIndex(value).toArray();
+        // Return its calculated index
+        //
+        return internalCalculateIndex(value).toArray();
     }
 
 
@@ -208,16 +208,16 @@ public class TabularDataSupport
      */
     public boolean containsKey(Object key) {
 
-	// if key is not an array of Object instances, return false
-	//
-	Object[] k;
-	try {
-	    k = (Object[]) key;
-	} catch (ClassCastException e) {
-	    return false;
-	}
+        // if key is not an array of Object instances, return false
+        //
+        Object[] k;
+        try {
+            k = (Object[]) key;
+        } catch (ClassCastException e) {
+            return false;
+        }
 
-	return  this.containsKey(k);
+        return  this.containsKey(k);
     }
 
     /**
@@ -231,7 +231,7 @@ public class TabularDataSupport
      */
     public boolean containsKey(Object[] key) {
 
-	return  ( key == null ? false : dataMap.containsKey(Arrays.asList(key)));
+        return  ( key == null ? false : dataMap.containsKey(Arrays.asList(key)));
     }
 
     /**
@@ -245,7 +245,7 @@ public class TabularDataSupport
      */
     public boolean containsValue(CompositeData value) {
 
-	return dataMap.containsValue(value);
+        return dataMap.containsValue(value);
     }
 
     /**
@@ -258,7 +258,7 @@ public class TabularDataSupport
      */
     public boolean containsValue(Object value) {
 
-	return dataMap.containsValue(value);
+        return dataMap.containsValue(value);
     }
 
     /**
@@ -267,11 +267,11 @@ public class TabularDataSupport
      * @throws NullPointerException  if the <var>key</var> is <tt>null</tt>
      * @throws ClassCastException    if the <var>key</var> is not of the type <tt>Object[]</tt>
      * @throws InvalidKeyException   if the <var>key</var> does not conform to this <tt>TabularData</tt> instance's
-     *				     <tt>TabularType</tt> definition
+     *                               <tt>TabularType</tt> definition
      */
     public Object get(Object key) {
 
-	return get((Object[]) key);
+        return get((Object[]) key);
     }
 
     /**
@@ -288,18 +288,18 @@ public class TabularDataSupport
      *
      * @throws NullPointerException  if the <var>key</var> is <tt>null</tt>
      * @throws InvalidKeyException   if the <var>key</var> does not conform to this <tt>TabularData</tt> instance's
-     *				     <tt>TabularType</tt> type definition.
+     *                               <tt>TabularType</tt> type definition.
      */
     public CompositeData get(Object[] key) {
 
-	// Check key is not null and valid with tabularType
-	// (throws NullPointerException, InvalidKeyException)
-	//
-	checkKeyType(key);
+        // Check key is not null and valid with tabularType
+        // (throws NullPointerException, InvalidKeyException)
+        //
+        checkKeyType(key);
 
-	// Return the mapping stored in the parent HashMap
-	//
-	return dataMap.get(Arrays.asList(key));
+        // Return the mapping stored in the parent HashMap
+        //
+        return dataMap.get(Arrays.asList(key));
     }
 
 
@@ -329,24 +329,24 @@ public class TabularDataSupport
      * already maps to an existing value
      */
     public Object put(Object key, Object value) {
-	internalPut((CompositeData) value);
-	return value; // should be return internalPut(...); (5090566)
+        internalPut((CompositeData) value);
+        return value; // should be return internalPut(...); (5090566)
     }
 
     public void put(CompositeData value) {
-	internalPut(value);
+        internalPut(value);
     }
 
     private CompositeData internalPut(CompositeData value) {
-	// Check value is not null, value's type is the same as this instance's row type,
-	// and calculate the value's index according to this instance's tabularType and
-	// check it is not already used for a mapping in the parent HashMap
-	//
-	List<?> index = checkValueAndIndex(value);
+        // Check value is not null, value's type is the same as this instance's row type,
+        // and calculate the value's index according to this instance's tabularType and
+        // check it is not already used for a mapping in the parent HashMap
+        //
+        List<?> index = checkValueAndIndex(value);
 
-	// store the (key, value) mapping in the dataMap HashMap
-	//
-	return dataMap.put(index, value);
+        // store the (key, value) mapping in the dataMap HashMap
+        //
+        return dataMap.put(index, value);
     }
 
     /**
@@ -355,16 +355,16 @@ public class TabularDataSupport
      * @param key an <tt>Object[]</tt> representing the key to remove.
      *
      * @return previous value associated with specified key, or <tt>null</tt>
-     *	       if there was no mapping for key.
+     *         if there was no mapping for key.
      *
      * @throws NullPointerException  if the <var>key</var> is <tt>null</tt>
      * @throws ClassCastException    if the <var>key</var> is not of the type <tt>Object[]</tt>
      * @throws InvalidKeyException   if the <var>key</var> does not conform to this <tt>TabularData</tt> instance's
-     *				     <tt>TabularType</tt> definition
+     *                               <tt>TabularType</tt> definition
      */
     public Object remove(Object key) {
 
-	return remove((Object[]) key);
+        return remove((Object[]) key);
     }
 
     /**
@@ -372,26 +372,26 @@ public class TabularDataSupport
      * and returns the removed value, or returns <tt>null</tt> if there is no value whose index is <var>key</var>.
      *
      * @param  key  the index of the value to get in this <tt>TabularData</tt> instance;
-     *		    must be valid with this <tt>TabularData</tt> instance's row type definition;
-     *		    must not be null.
+     *              must be valid with this <tt>TabularData</tt> instance's row type definition;
+     *              must not be null.
      *
      * @return previous value associated with specified key, or <tt>null</tt>
-     *	       if there was no mapping for key.
+     *         if there was no mapping for key.
      *
      * @throws NullPointerException  if the <var>key</var> is <tt>null</tt>
      * @throws InvalidKeyException   if the <var>key</var> does not conform to this <tt>TabularData</tt> instance's
-     *				     <tt>TabularType</tt> definition
+     *                               <tt>TabularType</tt> definition
      */
     public CompositeData remove(Object[] key) {
 
-	// Check key is not null and valid with tabularType
-	// (throws NullPointerException, InvalidKeyException)
-	//
-	checkKeyType(key);
+        // Check key is not null and valid with tabularType
+        // (throws NullPointerException, InvalidKeyException)
+        //
+        checkKeyType(key);
 
-	// Removes the (key, value) mapping in the parent HashMap
-	//
-	return dataMap.remove(Arrays.asList(key));
+        // Removes the (key, value) mapping in the parent HashMap
+        //
+        return dataMap.remove(Arrays.asList(key));
     }
 
 
@@ -430,25 +430,25 @@ public class TabularDataSupport
      */
     public void putAll(Map<?,?> t) {
 
-	// if t is null or empty, just return
-	//
-	if ( (t == null) || (t.size() == 0) ) {
-	    return;
-	}
+        // if t is null or empty, just return
+        //
+        if ( (t == null) || (t.size() == 0) ) {
+            return;
+        }
 
-	// Convert the values in t into an array of <tt>CompositeData</tt>
-	//
-	CompositeData[] values;
-	try {
-	    values =
+        // Convert the values in t into an array of <tt>CompositeData</tt>
+        //
+        CompositeData[] values;
+        try {
+            values =
                 t.values().toArray(new CompositeData[t.size()]);
-	} catch (java.lang.ArrayStoreException e) {
-	    throw new ClassCastException("Map argument t contains values which are not instances of <tt>CompositeData</tt>");
-	}
+        } catch (java.lang.ArrayStoreException e) {
+            throw new ClassCastException("Map argument t contains values which are not instances of <tt>CompositeData</tt>");
+        }
 
-	// Add the array of values
-	//
-	putAll(values);
+        // Add the array of values
+        //
+        putAll(values);
     }
 
     /**
@@ -482,37 +482,37 @@ public class TabularDataSupport
      */
     public void putAll(CompositeData[] values) {
 
-	// if values is null or empty, just return
-	//
-	if ( (values == null) || (values.length == 0) ) {
-	    return;
-	}
+        // if values is null or empty, just return
+        //
+        if ( (values == null) || (values.length == 0) ) {
+            return;
+        }
 
-	// create the list of indexes corresponding to each value
-	List<List<?>> indexes =
-	    new ArrayList<List<?>>(values.length + 1);
+        // create the list of indexes corresponding to each value
+        List<List<?>> indexes =
+            new ArrayList<List<?>>(values.length + 1);
 
-	// Check all elements in values and build index list
-	//
-	List<?> index;
-	for (int i=0; i<values.length; i++) {
-	    // check value and calculate index
-	    index = checkValueAndIndex(values[i]);
-	    // check index is different of those previously calculated
-	    if (indexes.contains(index)) {
-		throw new KeyAlreadyExistsException("Argument elements values["+ i +"] and values["+ indexes.indexOf(index) +
-						    "] have the same indexes, "+
-						    "calculated according to this TabularData instance's tabularType.");
-	    }
-	    // add to index list
-	    indexes.add(index);
-	}
+        // Check all elements in values and build index list
+        //
+        List<?> index;
+        for (int i=0; i<values.length; i++) {
+            // check value and calculate index
+            index = checkValueAndIndex(values[i]);
+            // check index is different of those previously calculated
+            if (indexes.contains(index)) {
+                throw new KeyAlreadyExistsException("Argument elements values["+ i +"] and values["+ indexes.indexOf(index) +
+                                                    "] have the same indexes, "+
+                                                    "calculated according to this TabularData instance's tabularType.");
+            }
+            // add to index list
+            indexes.add(index);
+        }
 
-	// store all (index, value) mappings in the dataMap HashMap
-	//
-	for (int i=0; i<values.length; i++) {
-	    dataMap.put(indexes.get(i), values[i]);
-	}
+        // store all (index, value) mappings in the dataMap HashMap
+        //
+        for (int i=0; i<values.length; i++) {
+            dataMap.put(indexes.get(i), values[i]);
+        }
     }
 
     /**
@@ -534,7 +534,7 @@ public class TabularDataSupport
      */
     public int size() {
 
-	return dataMap.size();
+        return dataMap.size();
     }
 
     /**
@@ -544,7 +544,7 @@ public class TabularDataSupport
      */
     public boolean isEmpty() {
 
-	return (this.size() == 0);
+        return (this.size() == 0);
     }
 
 
@@ -652,14 +652,14 @@ public class TabularDataSupport
        TabularDataSupport and overrode Object clone().  It would not
        override the new clone().  */
     public Object clone() {
-	try {
-	    TabularDataSupport c = (TabularDataSupport) super.clone();
-	    c.dataMap = new HashMap<Object,CompositeData>(c.dataMap);
-	    return c;
-	}
-	catch (CloneNotSupportedException e) {
-	    throw new InternalError(e.toString());
-	}
+        try {
+            TabularDataSupport c = (TabularDataSupport) super.clone();
+            c.dataMap = new HashMap<Object,CompositeData>(c.dataMap);
+            return c;
+        }
+        catch (CloneNotSupportedException e) {
+            throw new InternalError(e.toString());
+        }
     }
 
 
@@ -682,47 +682,47 @@ public class TabularDataSupport
      */
     public boolean equals(Object obj) {
 
-	// if obj is null, return false
-	//
-	if (obj == null) {
-	    return false;
-	}
+        // if obj is null, return false
+        //
+        if (obj == null) {
+            return false;
+        }
 
-	// if obj is not a TabularData, return false
-	//
-	TabularData other;
-	try {
-	    other = (TabularData) obj;
-	} catch (ClassCastException e) {
-	    return false;
-	}
+        // if obj is not a TabularData, return false
+        //
+        TabularData other;
+        try {
+            other = (TabularData) obj;
+        } catch (ClassCastException e) {
+            return false;
+        }
 
-	// Now, really test for equality between this TabularData implementation and the other:
-	//
+        // Now, really test for equality between this TabularData implementation and the other:
+        //
 
-	// their tabularType should be equal
-	if ( ! this.getTabularType().equals(other.getTabularType()) ) {
-	    return false;
-	}
+        // their tabularType should be equal
+        if ( ! this.getTabularType().equals(other.getTabularType()) ) {
+            return false;
+        }
 
-	// their contents should be equal:
-	// . same size
-	// . values in this instance are in the other (we know there are no duplicate elements possible)
-	// (row values comparison is enough, because keys are calculated according to tabularType)
+        // their contents should be equal:
+        // . same size
+        // . values in this instance are in the other (we know there are no duplicate elements possible)
+        // (row values comparison is enough, because keys are calculated according to tabularType)
 
-	if (this.size() != other.size()) {
-	    return false;
-	}
-	for (Iterator iter = this.values().iterator(); iter.hasNext();  ) {
-	    CompositeData value = (CompositeData) iter.next();
-	    if ( ! other.containsValue(value) ) {
-		return false;
-	    }
-	}
+        if (this.size() != other.size()) {
+            return false;
+        }
+        for (Iterator iter = this.values().iterator(); iter.hasNext();  ) {
+            CompositeData value = (CompositeData) iter.next();
+            if ( ! other.containsValue(value) ) {
+                return false;
+            }
+        }
 
-	// All tests for equality were successfull
-	//
-	return true;
+        // All tests for equality were successfull
+        //
+        return true;
     }
 
     /**
@@ -745,14 +745,14 @@ public class TabularDataSupport
      */
    public int hashCode() {
 
-	int result = 0;
+        int result = 0;
 
-	result += this.tabularType.hashCode();
-	for (Iterator iter = this.values().iterator(); iter.hasNext();  ) {
-	    result += ((CompositeData)iter.next()).hashCode();
-	}
+        result += this.tabularType.hashCode();
+        for (Iterator iter = this.values().iterator(); iter.hasNext();  ) {
+            result += ((CompositeData)iter.next()).hashCode();
+        }
 
-	return result;
+        return result;
 
     }
 
@@ -768,14 +768,14 @@ public class TabularDataSupport
      */
     public String toString() {
 
-	return new StringBuilder()
-	    .append(this.getClass().getName())
-	    .append("(tabularType=")
-	    .append(tabularType.toString())
-	    .append(",contents=")
-	    .append(dataMap.toString())
-	    .append(")")
-	    .toString();
+        return new StringBuilder()
+            .append(this.getClass().getName())
+            .append("(tabularType=")
+            .append(tabularType.toString())
+            .append(",contents=")
+            .append(dataMap.toString())
+            .append(")")
+            .toString();
     }
 
 
@@ -796,7 +796,7 @@ public class TabularDataSupport
      */
     private List<?> internalCalculateIndex(CompositeData value) {
 
-	return Collections.unmodifiableList(Arrays.asList(value.getAll(this.indexNamesArray)));
+        return Collections.unmodifiableList(Arrays.asList(value.getAll(this.indexNamesArray)));
     }
 
     /**
@@ -807,33 +807,33 @@ public class TabularDataSupport
      */
     private void checkKeyType(Object[] key) {
 
-	// Check key is neither null nor empty
-	//
-	if ( (key == null) || (key.length == 0) ) {
-	    throw new NullPointerException("Argument key cannot be null or empty.");
-	}
+        // Check key is neither null nor empty
+        //
+        if ( (key == null) || (key.length == 0) ) {
+            throw new NullPointerException("Argument key cannot be null or empty.");
+        }
 
-	/* Now check key is valid with tabularType index and row type definitions: */
+        /* Now check key is valid with tabularType index and row type definitions: */
 
-	// key[] should have the size expected for an index
-	//
-	if (key.length != this.indexNamesArray.length) {
-	    throw new InvalidKeyException("Argument key's length="+ key.length +
-					  " is different from the number of item values, which is "+ indexNamesArray.length +
-					  ", specified for the indexing rows in this TabularData instance.");
-	}
+        // key[] should have the size expected for an index
+        //
+        if (key.length != this.indexNamesArray.length) {
+            throw new InvalidKeyException("Argument key's length="+ key.length +
+                                          " is different from the number of item values, which is "+ indexNamesArray.length +
+                                          ", specified for the indexing rows in this TabularData instance.");
+        }
 
-	// each element in key[] should be a value for its corresponding open type specified in rowType
-	//
-	OpenType<?> keyElementType;
-	for (int i=0; i<key.length; i++) {
-	    keyElementType = tabularType.getRowType().getType(this.indexNamesArray[i]);
-	    if ( (key[i] != null) && (! keyElementType.isValue(key[i])) ) {
-		throw new InvalidKeyException("Argument element key["+ i +"] is not a value for the open type expected for "+
-					      "this element of the index, whose name is \""+ indexNamesArray[i] +
-					      "\" and whose open type is "+ keyElementType);
-	    }
-	}
+        // each element in key[] should be a value for its corresponding open type specified in rowType
+        //
+        OpenType<?> keyElementType;
+        for (int i=0; i<key.length; i++) {
+            keyElementType = tabularType.getRowType().getType(this.indexNamesArray[i]);
+            if ( (key[i] != null) && (! keyElementType.isValue(key[i])) ) {
+                throw new InvalidKeyException("Argument element key["+ i +"] is not a value for the open type expected for "+
+                                              "this element of the index, whose name is \""+ indexNamesArray[i] +
+                                              "\" and whose open type is "+ keyElementType);
+            }
+        }
     }
 
     /**
@@ -845,19 +845,19 @@ public class TabularDataSupport
      */
     private void checkValueType(CompositeData value) {
 
-	// Check value is not null
-	//
-	if (value == null) {
-	    throw new NullPointerException("Argument value cannot be null.");
-	}
+        // Check value is not null
+        //
+        if (value == null) {
+            throw new NullPointerException("Argument value cannot be null.");
+        }
 
-	// if value's type is not the same as this instance's row type, throw InvalidOpenTypeException
-	//
-	if (!tabularType.getRowType().isValue(value)) {
-	    throw new InvalidOpenTypeException("Argument value's composite type ["+ value.getCompositeType() +
-					       "] is not assignable to "+
-					       "this TabularData instance's row type ["+ tabularType.getRowType() +"].");
-	}
+        // if value's type is not the same as this instance's row type, throw InvalidOpenTypeException
+        //
+        if (!tabularType.getRowType().isValue(value)) {
+            throw new InvalidOpenTypeException("Argument value's composite type ["+ value.getCompositeType() +
+                                               "] is not assignable to "+
+                                               "this TabularData instance's row type ["+ tabularType.getRowType() +"].");
+        }
     }
 
     /**
@@ -874,30 +874,30 @@ public class TabularDataSupport
      */
     private List<?> checkValueAndIndex(CompositeData value) {
 
-	// Check value is valid
-	//
-	checkValueType(value);
+        // Check value is valid
+        //
+        checkValueType(value);
 
-	// Calculate value's index according to this instance's tabularType
-	// and check it is not already used for a mapping in the parent HashMap
-	//
-	List<?> index = internalCalculateIndex(value);
+        // Calculate value's index according to this instance's tabularType
+        // and check it is not already used for a mapping in the parent HashMap
+        //
+        List<?> index = internalCalculateIndex(value);
 
-	if (dataMap.containsKey(index)) {
-	    throw new KeyAlreadyExistsException("Argument value's index, calculated according to this TabularData "+
-						"instance's tabularType, already refers to a value in this table.");
-	}
+        if (dataMap.containsKey(index)) {
+            throw new KeyAlreadyExistsException("Argument value's index, calculated according to this TabularData "+
+                                                "instance's tabularType, already refers to a value in this table.");
+        }
 
-	// The check is OK, so return the index
-	//
-	return index;
+        // The check is OK, so return the index
+        //
+        return index;
     }
 
     /**
      * Deserializes a {@link TabularDataSupport} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-	    throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
       in.defaultReadObject();
       List<String> tmpNames = tabularType.getIndexNames();
       indexNamesArray = tmpNames.toArray(new String[tmpNames.size()]);

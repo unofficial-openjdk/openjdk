@@ -30,7 +30,7 @@
 public class ITLRemoveTest {
     private static final int INITIAL_VALUE = Integer.MIN_VALUE;
     private static final int REMOVE_SET_VALUE = Integer.MAX_VALUE;
-    
+
     static InheritableThreadLocal<Integer> n = new InheritableThreadLocal<Integer>() {
         protected Integer initialValue() {
             return INITIAL_VALUE;
@@ -48,20 +48,20 @@ public class ITLRemoveTest {
     /* ThreadLocal values will be removed for these threads. */
     static final int[] removeAndSet = {12,34,10};
     /* ThreadLocal values will be removed and sets new values */
-    
+
     public static void main(String args[]) throws Throwable {
         x = new int[threadCount];
         exceptions = new Throwable[threadCount];
-        
+
         Thread progenitor = new MyThread();
         progenitor.start();
 
         // Wait for *all* threads to complete
         progenitor.join();
 
-	for(int i = 0; i<threadCount; i++){
+        for(int i = 0; i<threadCount; i++){
             int checkValue = i+INITIAL_VALUE;
-            
+
             /* If the remove method is called then the ThreadLocal value will
              * be its initial value */
             for(int removeId : removeNode)
@@ -69,44 +69,44 @@ public class ITLRemoveTest {
                     checkValue = INITIAL_VALUE;
                     break;
                 }
-            
+
             for(int removeId : removeAndSet)
                 if(removeId == i){
                     checkValue = REMOVE_SET_VALUE;
                     break;
                 }
-            
+
             if(exceptions[i] != null)
                 throw(exceptions[i]);
-            if(x[i] != checkValue)    
+            if(x[i] != checkValue)
                 throw(new Throwable("x[" + i + "] =" + x[i]));
         }
     }
     private static class MyThread extends Thread {
         public void run() {
-            
+
             Thread child = null;
             int threadId=0;
             try{
-                threadId = n.get();   
+                threadId = n.get();
                 // Creating child thread...
                 if (threadId < (threadCount-1+INITIAL_VALUE)) {
                     child = new MyThread();
                     child.start();
                 }
-                
-                for (int j = 0; j<threadId; j++) 
+
+                for (int j = 0; j<threadId; j++)
                     Thread.currentThread().yield();
-                
+
 
                 // To remove the ThreadLocal value...
                 for(int removeId  : removeNode)
                    if((threadId-INITIAL_VALUE) == removeId){
-                       n.remove();		
+                       n.remove();
                        break;
                    }
 
-                 // To remove the ThreadLocal value and set new value ...        
+                 // To remove the ThreadLocal value and set new value ...
                  for(int removeId  : removeAndSet)
                     if((threadId-INITIAL_VALUE) == removeId){
                         n.remove();

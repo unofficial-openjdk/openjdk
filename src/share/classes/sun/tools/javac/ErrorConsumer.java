@@ -32,11 +32,11 @@ package sun.tools.javac;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  */
-@Deprecated 
+@Deprecated
 public
 interface ErrorConsumer {
-	public void pushError(String errorFileName, 
-							int line, 
-							String message,
-							String referenceText, String referenceTextPointer);
+        public void pushError(String errorFileName,
+                                                        int line,
+                                                        String message,
+                                                        String referenceText, String referenceTextPointer);
 };

@@ -37,42 +37,42 @@ public class MetaInf {
     static String INDEX = "META-INF/INDEX.LIST";
     static String SERVICES = "META-INF/services";
     static String contents =
-	System.getProperty("test.src") + File.separatorChar + "jarcontents";
+        System.getProperty("test.src") + File.separatorChar + "jarcontents";
 
     // Options passed to "jar" command.
     static String[] jarArgs1 = new String[] {
-	"cf", jarName, "-C", contents, SERVICES
+        "cf", jarName, "-C", contents, SERVICES
     };
     static String[] jarArgs2 = new String[] {
-	"i", jarName
+        "i", jarName
     };
 
     public static void main(String[] args) throws IOException {
 
-	// Create a jar to be indexed.
-	Main jarTool = new Main(System.out, System.err, "jar");
-	if (!jarTool.run(jarArgs1)) {
-	    throw new Error("Could not create jar file.");
-	}
+        // Create a jar to be indexed.
+        Main jarTool = new Main(System.out, System.err, "jar");
+        if (!jarTool.run(jarArgs1)) {
+            throw new Error("Could not create jar file.");
+        }
 
-	// Index the jar.
-	jarTool = new Main(System.out, System.err, "jar");
-	if (!jarTool.run(jarArgs2)) {
-	    throw new Error("Could not index jar file.");
-	}
+        // Index the jar.
+        jarTool = new Main(System.out, System.err, "jar");
+        if (!jarTool.run(jarArgs2)) {
+            throw new Error("Could not index jar file.");
+        }
 
-	// Read the index.  Verify that META-INF/services is indexed.
-	JarFile f = new JarFile(jarName);
-	BufferedReader index =
-	    new BufferedReader(
-		    new InputStreamReader(
-			    f.getInputStream(f.getJarEntry(INDEX))));
-	String line;
-	while ((line = index.readLine()) != null) {
-	    if (line.equals(SERVICES)) {
-		return;
-	    }
-	}
-	throw new Error(SERVICES + " not indexed.");
+        // Read the index.  Verify that META-INF/services is indexed.
+        JarFile f = new JarFile(jarName);
+        BufferedReader index =
+            new BufferedReader(
+                    new InputStreamReader(
+                            f.getInputStream(f.getJarEntry(INDEX))));
+        String line;
+        while ((line = index.readLine()) != null) {
+            if (line.equals(SERVICES)) {
+                return;
+            }
+        }
+        throw new Error(SERVICES + " not indexed.");
     }
 }

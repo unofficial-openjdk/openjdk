@@ -40,13 +40,12 @@ package java.io;
  * and fields.
  *
  * @author  Jonathan Payne
- * @version %I%, %G%
  * @since   JDK1.0
  */
 public
 class FilterInputStream extends InputStream {
     /**
-     * The input stream to be filtered. 
+     * The input stream to be filtered.
      */
     protected volatile InputStream in;
 
@@ -56,21 +55,21 @@ class FilterInputStream extends InputStream {
      * to the field <code>this.in</code> so as
      * to remember it for later use.
      *
-     * @param   in   the underlying input stream, or <code>null</code> if 
+     * @param   in   the underlying input stream, or <code>null</code> if
      *          this instance is to be created without an underlying stream.
      */
     protected FilterInputStream(InputStream in) {
-	this.in = in;
+        this.in = in;
     }
 
     /**
-     * Reads the next byte of data from this input stream. The value 
-     * byte is returned as an <code>int</code> in the range 
-     * <code>0</code> to <code>255</code>. If no byte is available 
-     * because the end of the stream has been reached, the value 
-     * <code>-1</code> is returned. This method blocks until input data 
-     * is available, the end of the stream is detected, or an exception 
-     * is thrown. 
+     * Reads the next byte of data from this input stream. The value
+     * byte is returned as an <code>int</code> in the range
+     * <code>0</code> to <code>255</code>. If no byte is available
+     * because the end of the stream has been reached, the value
+     * <code>-1</code> is returned. This method blocks until input data
+     * is available, the end of the stream is detected, or an exception
+     * is thrown.
      * <p>
      * This method
      * simply performs <code>in.read()</code> and returns the result.
@@ -81,13 +80,13 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public int read() throws IOException {
-	return in.read();
+        return in.read();
     }
 
     /**
-     * Reads up to <code>byte.length</code> bytes of data from this 
-     * input stream into an array of bytes. This method blocks until some 
-     * input is available. 
+     * Reads up to <code>byte.length</code> bytes of data from this
+     * input stream into an array of bytes. This method blocks until some
+     * input is available.
      * <p>
      * This method simply performs the call
      * <code>read(b, 0, b.length)</code> and returns
@@ -105,16 +104,16 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#read(byte[], int, int)
      */
     public int read(byte b[]) throws IOException {
-	return read(b, 0, b.length);
+        return read(b, 0, b.length);
     }
 
     /**
-     * Reads up to <code>len</code> bytes of data from this input stream 
+     * Reads up to <code>len</code> bytes of data from this input stream
      * into an array of bytes. If <code>len</code> is not zero, the method
      * blocks until some input is available; otherwise, no
-     * bytes are read and <code>0</code> is returned. 
+     * bytes are read and <code>0</code> is returned.
      * <p>
-     * This method simply performs <code>in.read(b, off, len)</code> 
+     * This method simply performs <code>in.read(b, off, len)</code>
      * and returns the result.
      *
      * @param      b     the buffer into which the data is read.
@@ -124,23 +123,23 @@ class FilterInputStream extends InputStream {
      *             <code>-1</code> if there is no more data because the end of
      *             the stream has been reached.
      * @exception  NullPointerException If <code>b</code> is <code>null</code>.
-     * @exception  IndexOutOfBoundsException If <code>off</code> is negative, 
-     * <code>len</code> is negative, or <code>len</code> is greater than 
+     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
+     * <code>len</code> is negative, or <code>len</code> is greater than
      * <code>b.length - off</code>
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
     public int read(byte b[], int off, int len) throws IOException {
-	return in.read(b, off, len);
+        return in.read(b, off, len);
     }
 
     /**
-     * {@inheritDoc} 
+     * {@inheritDoc}
      * <p>
      * This method simply performs <code>in.skip(n)</code>.
      */
     public long skip(long n) throws IOException {
-	return in.skip(n);
+        return in.skip(n);
     }
 
     /**
@@ -157,12 +156,12 @@ class FilterInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int available() throws IOException {
-	return in.available();
+        return in.available();
     }
 
     /**
-     * Closes this input stream and releases any system resources 
-     * associated with the stream. 
+     * Closes this input stream and releases any system resources
+     * associated with the stream.
      * This
      * method simply performs <code>in.close()</code>.
      *
@@ -170,17 +169,17 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public void close() throws IOException {
-	in.close();
+        in.close();
     }
 
     /**
-     * Marks the current position in this input stream. A subsequent 
-     * call to the <code>reset</code> method repositions this stream at 
+     * Marks the current position in this input stream. A subsequent
+     * call to the <code>reset</code> method repositions this stream at
      * the last marked position so that subsequent reads re-read the same bytes.
      * <p>
-     * The <code>readlimit</code> argument tells this input stream to 
-     * allow that many bytes to be read before the mark position gets 
-     * invalidated. 
+     * The <code>readlimit</code> argument tells this input stream to
+     * allow that many bytes to be read before the mark position gets
+     * invalidated.
      * <p>
      * This method simply performs <code>in.mark(readlimit)</code>.
      *
@@ -190,12 +189,12 @@ class FilterInputStream extends InputStream {
      * @see     java.io.FilterInputStream#reset()
      */
     public synchronized void mark(int readlimit) {
-	in.mark(readlimit);
+        in.mark(readlimit);
     }
 
     /**
-     * Repositions this stream to the position at the time the 
-     * <code>mark</code> method was last called on this input stream. 
+     * Repositions this stream to the position at the time the
+     * <code>mark</code> method was last called on this input stream.
      * <p>
      * This method
      * simply performs <code>in.reset()</code>.
@@ -215,12 +214,12 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#mark(int)
      */
     public synchronized void reset() throws IOException {
-	in.reset();
+        in.reset();
     }
 
     /**
-     * Tests if this input stream supports the <code>mark</code> 
-     * and <code>reset</code> methods. 
+     * Tests if this input stream supports the <code>mark</code>
+     * and <code>reset</code> methods.
      * This method
      * simply performs <code>in.markSupported()</code>.
      *
@@ -232,6 +231,6 @@ class FilterInputStream extends InputStream {
      * @see     java.io.InputStream#reset()
      */
     public boolean markSupported() {
-	return in.markSupported();
+        return in.markSupported();
     }
 }

@@ -37,27 +37,26 @@ import java.nio.channels.*;
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
- * @version %I%, %E%
  */
 public class B1 extends Server {
 
     B1(int port, int backlog, boolean secure) throws Exception {
-	super(port, backlog, secure);
+        super(port, backlog, secure);
     }
 
     void runServer() throws Exception {
-	for (;;) {
+        for (;;) {
 
-	    SocketChannel sc = ssc.accept();
+            SocketChannel sc = ssc.accept();
 
-	    ChannelIO cio = (sslContext != null ?
-		ChannelIOSecure.getInstance(
-		    sc, true /* blocking */, sslContext) :
-		ChannelIO.getInstance(
-		    sc, true /* blocking */));
+            ChannelIO cio = (sslContext != null ?
+                ChannelIOSecure.getInstance(
+                    sc, true /* blocking */, sslContext) :
+                ChannelIO.getInstance(
+                    sc, true /* blocking */));
 
-	    RequestServicer svc = new RequestServicer(cio);
-	    svc.run();
-	}
+            RequestServicer svc = new RequestServicer(cio);
+            svc.run();
+        }
     }
 }

@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-/** 
+/**
  * <p>RMI object used to establish connections to an RMI connector.
  * There is one Remote object implementing this interface for each RMI
  * connector.</p>

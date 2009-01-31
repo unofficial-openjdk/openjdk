@@ -35,7 +35,6 @@ import java.security.cert.*;
  * status checking or other means.
  *
  * @since 1.4
- * @version %I%
  */
 public interface X509TrustManager extends TrustManager {
     /**
@@ -53,11 +52,11 @@ public interface X509TrustManager extends TrustManager {
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
      *         string is passed in for the  authType parameter
-     * @throws CertificateException if the certificate chain is not trusted 
+     * @throws CertificateException if the certificate chain is not trusted
      *         by this TrustManager.
      */
-    public void checkClientTrusted(X509Certificate[] chain, String authType) 
-	throws CertificateException;
+    public void checkClientTrusted(X509Certificate[] chain, String authType)
+        throws CertificateException;
 
     /**
      * Given the partial or complete certificate chain provided by the
@@ -79,18 +78,18 @@ public interface X509TrustManager extends TrustManager {
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
      *         string is passed in for the  authType parameter
-     * @throws CertificateException if the certificate chain is not trusted 
+     * @throws CertificateException if the certificate chain is not trusted
      *         by this TrustManager.
      */
     public void checkServerTrusted(X509Certificate[] chain, String authType)
-	throws CertificateException;
+        throws CertificateException;
 
     /**
      * Return an array of certificate authority certificates
      * which are trusted for authenticating peers.
      *
      * @return a non-null (possibly empty) array of acceptable
-     *		CA issuer certificates.
+     *          CA issuer certificates.
      */
     public X509Certificate[] getAcceptedIssuers();
 }

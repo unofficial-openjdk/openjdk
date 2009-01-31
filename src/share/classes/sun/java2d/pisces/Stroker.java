@@ -275,7 +275,7 @@ public class Stroker extends LineSink {
 
     private boolean isCCW(int x0, int y0,
                           int x1, int y1,
-                          int x2, int y2) { 
+                          int x2, int y2) {
         int dx0 = x1 - x0;
         int dy0 = y1 - y0;
         int dx1 = x2 - x1;
@@ -435,7 +435,7 @@ public class Stroker extends LineSink {
     }
 
     private void drawMiter(int px0, int py0,
-                           int x0, int y0, 
+                           int x0, int y0,
                            int x1, int y1,
                            int omx, int omy, int mx, int my,
                            boolean rev) {
@@ -481,7 +481,7 @@ public class Stroker extends LineSink {
             lineToImpl(sx0, sy0, joinToOrigin);
             lineToOrigin = false;
         }
-        
+
         if (prev == LINE_TO) {
             finish();
         }
@@ -509,8 +509,8 @@ public class Stroker extends LineSink {
                 // staying in the starting point
                 return;
             }
-        
-            // not closing the path, do the previous lineTo   
+
+            // not closing the path, do the previous lineTo
             lineToImpl(sx0, sy0, joinToOrigin);
             lineToOrigin = false;
         } else if (x1 == x0 && y1 == y0) {
@@ -525,7 +525,7 @@ public class Stroker extends LineSink {
         lineToImpl(x1, y1, joinSegment);
         joinSegment = false;
     }
-    
+
     private void lineToImpl(int x1, int y1, boolean joinSegment) {
         computeOffset(x0, y0, x1, y1, offset);
         int mx = offset[0];
@@ -545,14 +545,14 @@ public class Stroker extends LineSink {
                     drawMiter(px0, py0, x0, y0, x1, y1, omx, omy, mx, my,
                               ccw);
                 } else if (joinStyle == JOIN_ROUND) {
-                    drawRoundJoin(x0, y0, 
+                    drawRoundJoin(x0, y0,
                                   omx, omy,
                                   mx, my, 0, false, ccw,
                                   ROUND_JOIN_THRESHOLD);
                 }
             } else {
                 // Draw internal joins as round
-                drawRoundJoin(x0, y0, 
+                drawRoundJoin(x0, y0,
                               omx, omy,
                               mx, my, 0, false, ccw,
                               ROUND_JOIN_INTERNAL_THRESHOLD);
@@ -582,7 +582,7 @@ public class Stroker extends LineSink {
 
     public void close() {
         // System.out.println("Stroker.close()");
-        
+
         if (lineToOrigin) {
             // ignore the previous lineTo
             lineToOrigin = false;
@@ -592,7 +592,7 @@ public class Stroker extends LineSink {
             finish();
             return;
         }
-        
+
         computeOffset(x0, y0, sx0, sy0, offset);
         int mx = offset[0];
         int my = offset[1];
@@ -608,7 +608,7 @@ public class Stroker extends LineSink {
             }
         } else {
             // Draw internal joins as round
-            drawRoundJoin(x0, y0, 
+            drawRoundJoin(x0, y0,
                           omx, omy,
                           mx, my, 0, false, ccw,
                           ROUND_JOIN_INTERNAL_THRESHOLD);

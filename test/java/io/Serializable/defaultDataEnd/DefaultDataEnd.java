@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4360508
  * @summary Verify that a custom readObject() method reading in data written
- * 	    via default serialization cannot read past the end of the default
- * 	    data.
+ *          via default serialization cannot read past the end of the default
+ *          data.
  */
 
 import java.io.*;
@@ -33,117 +33,117 @@ import java.io.*;
 class A implements Serializable {
     int i1 = 1, i2 = 2;
     String s1 = "foo", s2 = "bar";
-    
+
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	in.defaultReadObject();
-	if (in.read() != -1) {
-	    throw new Error();
-	}
-	try {
-	    in.readInt();
-	    throw new Error();
-	} catch (EOFException ex) {
-	}
-	try {
-	    in.readObject();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
-	try {
-	    in.readUnshared();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
+        in.defaultReadObject();
+        if (in.read() != -1) {
+            throw new Error();
+        }
+        try {
+            in.readInt();
+            throw new Error();
+        } catch (EOFException ex) {
+        }
+        try {
+            in.readObject();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
+        try {
+            in.readUnshared();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
     }
 }
 
 class B implements Serializable {
     int i1 = 1, i2 = 2;
     String s1 = "foo", s2 = "bar";
-    
+
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	in.readFields();
-	try {
-	    in.readObject();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
-	try {
-	    in.readUnshared();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
-	if (in.read() != -1) {
-	    throw new Error();
-	}
-	try {
-	    in.readInt();
-	    throw new Error();
-	} catch (EOFException ex) {
-	}
+        in.readFields();
+        try {
+            in.readObject();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
+        try {
+            in.readUnshared();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
+        if (in.read() != -1) {
+            throw new Error();
+        }
+        try {
+            in.readInt();
+            throw new Error();
+        } catch (EOFException ex) {
+        }
     }
 }
 
 class C implements Serializable {
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	in.defaultReadObject();
-	try {
-	    in.readObject();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
-	try {
-	    in.readUnshared();
-	    throw new Error();
-	} catch (OptionalDataException ex) {
-	    if (!ex.eof) {
-		throw new Error();
-	    }
-	}
-	if (in.read() != -1) {
-	    throw new Error();
-	}
-	try {
-	    in.readInt();
-	    throw new Error();
-	} catch (EOFException ex) {
-	}
+        in.defaultReadObject();
+        try {
+            in.readObject();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
+        try {
+            in.readUnshared();
+            throw new Error();
+        } catch (OptionalDataException ex) {
+            if (!ex.eof) {
+                throw new Error();
+            }
+        }
+        if (in.read() != -1) {
+            throw new Error();
+        }
+        try {
+            in.readInt();
+            throw new Error();
+        } catch (EOFException ex) {
+        }
     }
 }
 
 public class DefaultDataEnd {
     public static void main(String[] args) throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new ObjectOutputStream(bout);
-	oout.writeObject(new A());
-	oout.writeObject(new B());
-	oout.writeObject(new C());
-	oout.close();
-	ObjectInputStream oin = new ObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()));
-	oin.readObject();
-	oin.readObject();
-	oin.readObject();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);
+        oout.writeObject(new A());
+        oout.writeObject(new B());
+        oout.writeObject(new C());
+        oout.close();
+        ObjectInputStream oin = new ObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray()));
+        oin.readObject();
+        oin.readObject();
+        oin.readObject();
     }
 }

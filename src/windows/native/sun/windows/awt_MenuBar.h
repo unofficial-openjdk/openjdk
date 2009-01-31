@@ -44,7 +44,7 @@ class AwtMenuBar : public AwtMenu {
 public:
     // id's for methods executed on toolkit thread
     enum MenuExecIds {
-	MENUBAR_DELITEM = MENU_LAST+1
+        MENUBAR_DELITEM = MENU_LAST+1
     };
 
     /* java.awt.MenuBar method ids */
@@ -70,9 +70,9 @@ public:
     int CountItem(jobject menuBar);
 
     void SendDrawItem(AwtMenuItem* awtMenuItem,
-		      DRAWITEMSTRUCT& drawInfo);
+                      DRAWITEMSTRUCT& drawInfo);
     void SendMeasureItem(AwtMenuItem* awtMenuItem,
-			 HDC hDC, MEASUREITEMSTRUCT& measureInfo);
+                         HDC hDC, MEASUREITEMSTRUCT& measureInfo);
     void DrawItem(DRAWITEMSTRUCT& drawInfo);
     void MeasureItem(HDC hDC, MEASUREITEMSTRUCT& measureInfo);
 

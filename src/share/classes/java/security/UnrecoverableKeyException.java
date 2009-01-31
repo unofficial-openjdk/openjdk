@@ -28,7 +28,6 @@ package java.security;
 /**
  * This exception is thrown if a key in the keystore cannot be recovered.
  *
- * @version %I%, %G%
  *
  * @since 1.2
  */
@@ -41,7 +40,7 @@ public class UnrecoverableKeyException extends UnrecoverableEntryException {
      * Constructs an UnrecoverableKeyException with no detail message.
      */
     public UnrecoverableKeyException() {
-	super();
+        super();
     }
 
     /**

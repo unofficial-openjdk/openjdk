@@ -38,7 +38,7 @@
  *   1. In a shell, enter the command: "cat /proc/meminfo"
  *   2. The value (reported in bytes) is in "Mem" entry, "total" column.
  * Windows NT/XP/2000:
- *   1. Hit Ctrl-Alt-Delete, select Task Manager, select Performance tab 
+ *   1. Hit Ctrl-Alt-Delete, select Task Manager, select Performance tab
  *   2. The value (reported in Kbytes) is in the "Physical Memory" box,
  *      in the "Total" entry.
  * Windows 98/ME:
@@ -52,8 +52,8 @@ import java.lang.management.*;
 public class GetTotalPhysicalMemorySize {
 
     private static OperatingSystemMXBean mbean =
-	(com.sun.management.OperatingSystemMXBean)
-	ManagementFactory.getOperatingSystemMXBean();
+        (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
 
     // Careful with these values.
     // Min size for pass dynamically determined below.
@@ -67,24 +67,24 @@ public class GetTotalPhysicalMemorySize {
             trace = true;
         }
 
-	long min_size = mbean.getFreePhysicalMemorySize();
-	if (min_size > 0) {
-	    min_size_for_pass = min_size;
-	}
+        long min_size = mbean.getFreePhysicalMemorySize();
+        if (min_size > 0) {
+            min_size_for_pass = min_size;
+        }
 
-	long size = mbean.getTotalPhysicalMemorySize();
+        long size = mbean.getTotalPhysicalMemorySize();
 
-	if (trace) {
-	    System.out.println("Total physical memory size in bytes: " + size);
-	}
+        if (trace) {
+            System.out.println("Total physical memory size in bytes: " + size);
+        }
 
-	if (size < min_size_for_pass || size > MAX_SIZE_FOR_PASS) {
-	    throw new RuntimeException("Total physical memory size " +
-				       "illegal value: " + size + " bytes " + 
-				       "(MIN = " + min_size_for_pass + "; " +
-				       "MAX = " + MAX_SIZE_FOR_PASS + ")");
-	}
-	
-	System.out.println("Test passed.");
+        if (size < min_size_for_pass || size > MAX_SIZE_FOR_PASS) {
+            throw new RuntimeException("Total physical memory size " +
+                                       "illegal value: " + size + " bytes " +
+                                       "(MIN = " + min_size_for_pass + "; " +
+                                       "MAX = " + MAX_SIZE_FOR_PASS + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }

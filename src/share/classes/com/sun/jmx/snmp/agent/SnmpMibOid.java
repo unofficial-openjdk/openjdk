@@ -80,13 +80,13 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      *            overridden) is to generate a SnmpStatusException.
      */
     public void get(SnmpMibSubRequest req, int depth)
-	throws SnmpStatusException {
+        throws SnmpStatusException {
         for (Enumeration e= req.getElements(); e.hasMoreElements();) {
             SnmpVarBind var= (SnmpVarBind) e.nextElement();
-	    SnmpStatusException x =
-		new SnmpStatusException(SnmpStatusException.noSuchObject);
-	    req.registerGetException(var,x);
-	}
+            SnmpStatusException x =
+                new SnmpStatusException(SnmpStatusException.noSuchObject);
+            req.registerGetException(var,x);
+        }
     }
 
     /**
@@ -103,13 +103,13 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      *            overridden) is to generate a SnmpStatusException.
      */
     public void set(SnmpMibSubRequest req, int depth)
-	throws SnmpStatusException {
+        throws SnmpStatusException {
         for (Enumeration e= req.getElements(); e.hasMoreElements();) {
             SnmpVarBind var= (SnmpVarBind) e.nextElement();
-	    SnmpStatusException x =
-		new SnmpStatusException(SnmpStatusException.noAccess);
-	    req.registerSetException(var,x);
-	}
+            SnmpStatusException x =
+                new SnmpStatusException(SnmpStatusException.noAccess);
+            req.registerSetException(var,x);
+        }
     }
 
     /**
@@ -126,13 +126,13 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      *            overriden) is to generate a SnmpStatusException.
      */
     public void check(SnmpMibSubRequest req, int depth)
-	throws SnmpStatusException {
+        throws SnmpStatusException {
         for (Enumeration e= req.getElements(); e.hasMoreElements();) {
             SnmpVarBind var= (SnmpVarBind) e.nextElement();
-	    SnmpStatusException x =
-		new SnmpStatusException(SnmpStatusException.noAccess);
-	    req.registerCheckException(var,x);
-	}
+            SnmpStatusException x =
+                new SnmpStatusException(SnmpStatusException.noAccess);
+            req.registerCheckException(var,x);
+        }
     }
 
 
@@ -144,45 +144,45 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
     // ---------------------------------------------------------------------
     //
     void findHandlingNode(SnmpVarBind varbind,
-			  long[] oid, int depth,
-			  SnmpRequestTree handlers)
-	throws SnmpStatusException {
+                          long[] oid, int depth,
+                          SnmpRequestTree handlers)
+        throws SnmpStatusException {
 
 
-	final int length = oid.length;
-	SnmpMibNode node = null;
+        final int length = oid.length;
+        SnmpMibNode node = null;
 
-	if (handlers == null)
+        if (handlers == null)
             throw new SnmpStatusException(SnmpStatusException.snmpRspGenErr);
 
-	if (depth > length) {
-	    // Nothing is left... the oid is not valid
+        if (depth > length) {
+            // Nothing is left... the oid is not valid
             throw noSuchObjectException;
 
-	} else if (depth == length) {
-	    // The oid is not complete...
-	    throw noSuchInstanceException;
+        } else if (depth == length) {
+            // The oid is not complete...
+            throw noSuchInstanceException;
 
-	} else {
-	    // Some children variable or subobject is being querried
-	    // getChild() will raise an exception if no child is found.
-	    //
-	    final SnmpMibNode child= getChild(oid[depth]);
+        } else {
+            // Some children variable or subobject is being querried
+            // getChild() will raise an exception if no child is found.
+            //
+            final SnmpMibNode child= getChild(oid[depth]);
 
-	    // XXXX zzzz : what about null children?
-	    //             (variables for nested groups)
-	    // if child==null, then we're dealing with a variable or
-	    // a table: we register this node.
-	    // This behaviour should be overriden in subclasses,
-	    // in particular in group meta classes: the group
-	    // meta classes that hold tables should take care
-	    // of forwarding this call to all the tables involved.
-	    //
-	    if (child == null)
-		handlers.add(this,depth,varbind);
-	    else
-		child.findHandlingNode(varbind,oid,depth+1,handlers);
-	}
+            // XXXX zzzz : what about null children?
+            //             (variables for nested groups)
+            // if child==null, then we're dealing with a variable or
+            // a table: we register this node.
+            // This behaviour should be overriden in subclasses,
+            // in particular in group meta classes: the group
+            // meta classes that hold tables should take care
+            // of forwarding this call to all the tables involved.
+            //
+            if (child == null)
+                handlers.add(this,depth,varbind);
+            else
+                child.findHandlingNode(varbind,oid,depth+1,handlers);
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -192,31 +192,31 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
     // ---------------------------------------------------------------------
     //
     long[] findNextHandlingNode(SnmpVarBind varbind,
-				long[] oid, int pos, int depth,
-				SnmpRequestTree handlers,
-				AcmChecker checker)
-	throws SnmpStatusException {
+                                long[] oid, int pos, int depth,
+                                SnmpRequestTree handlers,
+                                AcmChecker checker)
+        throws SnmpStatusException {
 
 
-	final int length = oid.length;
-	SnmpMibNode node = null;
-	long[] result = null;
-	if (handlers == null)
-	    // This should be considered as a genErr, but we do not want to
-	    // abort the whole request, so we're going to throw
-	    // a noSuchObject...
-	    //
+        final int length = oid.length;
+        SnmpMibNode node = null;
+        long[] result = null;
+        if (handlers == null)
+            // This should be considered as a genErr, but we do not want to
+            // abort the whole request, so we're going to throw
+            // a noSuchObject...
+            //
             throw noSuchObjectException;
 
-	final Object data = handlers.getUserData();
-	final int pduVersion = handlers.getRequestPduVersion();
+        final Object data = handlers.getUserData();
+        final int pduVersion = handlers.getRequestPduVersion();
 
         if (pos >= length) {
             long[] newOid= new long[1];
-	    newOid[0]=  getNextVarId(-1,data,pduVersion);
+            newOid[0]=  getNextVarId(-1,data,pduVersion);
             result = findNextHandlingNode(varbind,newOid,0,depth,handlers,
-					  checker);
-	    return result;
+                                          checker);
+            return result;
         }
 
         // search the element specified in the oid
@@ -228,25 +228,25 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
 
             try {
                 final SnmpMibNode child = getChild(index);
-		// SnmpOid result = null;
-		if (child == null) {
-		    // shouldn't happen
-		    throw noSuchObjectException;
-		    // validateVarId(index);
-		    // handlers.add(this,varbind,depth);
-		    // result = new SnmpOid(0);
-		} else {
-		    checker.add(depth, index);
-		    try {
-			result = child.findNextHandlingNode(varbind,oid,pos+1,
-							    depth+1,handlers,
-							    checker);
-		    } finally {
-			checker.remove(depth);
-		    }
-		}
+                // SnmpOid result = null;
+                if (child == null) {
+                    // shouldn't happen
+                    throw noSuchObjectException;
+                    // validateVarId(index);
+                    // handlers.add(this,varbind,depth);
+                    // result = new SnmpOid(0);
+                } else {
+                    checker.add(depth, index);
+                    try {
+                        result = child.findNextHandlingNode(varbind,oid,pos+1,
+                                                            depth+1,handlers,
+                                                            checker);
+                    } finally {
+                        checker.remove(depth);
+                    }
+                }
 
-		// Build up the leaf OID
+                // Build up the leaf OID
                 result[depth] = index;
                 return result;
 
@@ -287,7 +287,7 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      * Registers a specific node in the tree.
      */
     public void registerNode(String oidString ,SnmpMibNode node)
-	throws IllegalAccessException {
+        throws IllegalAccessException {
         SnmpOid oid= new SnmpOid(oidString);
         registerNode(oid.longValue(), 0, node);
     }
@@ -299,7 +299,7 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      * Registers a specific node in the tree.
      */
     void registerNode(long[] oid, int cursor ,SnmpMibNode node)
-	throws IllegalAccessException {
+        throws IllegalAccessException {
 
         if (cursor >= oid.length)
             throw new IllegalAccessException();
@@ -309,7 +309,7 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
         long var= oid[cursor];
 
         //System.out.println("entering registration for val="
-	// + String.valueOf(var) + " position= " + cursor);
+        // + String.valueOf(var) + " position= " + cursor);
 
         int pos = retrieveIndex(var);
         if (pos  == nbChildren) {
@@ -319,16 +319,16 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
             pos =0;
             if ( (cursor + 1) == oid.length) {
                 // That 's the end of the trip.
-		// Do not forward the registration
+                // Do not forward the registration
 
                 //System.out.println("End of trip for val="
-		//      + String.valueOf(var) + " position= " + cursor);
+                //      + String.valueOf(var) + " position= " + cursor);
                 children.insertElementAt(node,pos);
                 return;
             }
 
             //System.out.println("Create node for val="
-	    //       + String.valueOf(var) + " position= " + cursor);
+            //       + String.valueOf(var) + " position= " + cursor);
             SnmpMibOid child= new SnmpMibOid();
             children.insertElementAt(child, pos);
             child.registerNode(oid, cursor + 1, node);
@@ -347,16 +347,16 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
             varList[newPos]= (int) var;
             if ( (cursor + 1) == oid.length) {
                 // That 's the end of the trip.
-		// Do not forward the registration
+                // Do not forward the registration
 
                 //System.out.println("End of trip for val="
-		//     + String.valueOf(var) + " position= " + cursor);
+                //     + String.valueOf(var) + " position= " + cursor);
                 children.insertElementAt(node, newPos);
                 return;
             }
             SnmpMibOid child= new SnmpMibOid();
             // System.out.println("Create node for val=" +
-	    //     String.valueOf(var) + " position= " + cursor);
+            //     String.valueOf(var) + " position= " + cursor);
             children.insertElementAt(child, newPos);
             child.registerNode(oid, cursor + 1, node);
             return;
@@ -367,47 +367,47 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
             SnmpMibNode child= children.elementAt(pos);
             if ( (cursor + 1) == oid.length ) {
                 //System.out.println("Node already registered val=" +
-		//          String.valueOf(var) + " position= " + cursor);
-		if (child == node) return;
-		if (child != null && node != null) {
-		    // Now we're going to patch the tree the following way:
-		    //   if a subgroup has been registered before its father,
-		    //   we're going to replace the father OID node with
-		    //   the actual group-node and export the children from
-		    //   the temporary OID node to the actual group node.
-		    //
+                //          String.valueOf(var) + " position= " + cursor);
+                if (child == node) return;
+                if (child != null && node != null) {
+                    // Now we're going to patch the tree the following way:
+                    //   if a subgroup has been registered before its father,
+                    //   we're going to replace the father OID node with
+                    //   the actual group-node and export the children from
+                    //   the temporary OID node to the actual group node.
+                    //
 
-		    if (node instanceof SnmpMibGroup) {
-			// `node' is a group => replace `child' with `node'
-			// export the child's subtree to `node'.
-			//
-			((SnmpMibOid)child).exportChildren((SnmpMibOid)node);
-			children.setElementAt(node,pos);
-			return;
+                    if (node instanceof SnmpMibGroup) {
+                        // `node' is a group => replace `child' with `node'
+                        // export the child's subtree to `node'.
+                        //
+                        ((SnmpMibOid)child).exportChildren((SnmpMibOid)node);
+                        children.setElementAt(node,pos);
+                        return;
 
-		    } else if ((node instanceof SnmpMibOid) &&
-			     (child instanceof SnmpMibGroup)) {
-			// `node' is a temporary node, and `child' is a
-			//  group => keep child and export the node's
-			//  subtree to `child'.
-			//
-			((SnmpMibOid)node).exportChildren((SnmpMibOid)child);
-			return;
-		    } else if (node instanceof SnmpMibOid) {
-			// `node' and `child' are both temporary OID nodes
-			// => replace `child' with `node' and export child's
-			// subtree to `node'.
-			//
-			((SnmpMibOid)child).exportChildren((SnmpMibOid)node);
-			children.setElementAt(node,pos);
-			return;
-		    }
-		}
-		children.setElementAt(node,pos);
+                    } else if ((node instanceof SnmpMibOid) &&
+                             (child instanceof SnmpMibGroup)) {
+                        // `node' is a temporary node, and `child' is a
+                        //  group => keep child and export the node's
+                        //  subtree to `child'.
+                        //
+                        ((SnmpMibOid)node).exportChildren((SnmpMibOid)child);
+                        return;
+                    } else if (node instanceof SnmpMibOid) {
+                        // `node' and `child' are both temporary OID nodes
+                        // => replace `child' with `node' and export child's
+                        // subtree to `node'.
+                        //
+                        ((SnmpMibOid)child).exportChildren((SnmpMibOid)node);
+                        children.setElementAt(node,pos);
+                        return;
+                    }
+                }
+                children.setElementAt(node,pos);
                 return;
             } else {
-		if (child == null)
-		    throw new IllegalAccessException();
+                if (child == null)
+                    throw new IllegalAccessException();
                 ((SnmpMibOid)child).registerNode(oid, cursor + 1, node);
             }
         }
@@ -421,16 +421,16 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
      *
      **/
     void exportChildren(SnmpMibOid brother)
-	throws IllegalAccessException {
+        throws IllegalAccessException {
 
-	if (brother == null) return;
-	final long[] oid = new long[1];
-	for (int i=0; i<nbChildren; i++) {
-	    final SnmpMibNode child = children.elementAt(i);
-	    if (child == null) continue;
-	    oid[0] = varList[i];
-	    brother.registerNode(oid,0,child);
-	}
+        if (brother == null) return;
+        final long[] oid = new long[1];
+        for (int i=0; i<nbChildren; i++) {
+            final SnmpMibNode child = children.elementAt(i);
+            if (child == null) continue;
+            oid[0] = varList[i];
+            brother.registerNode(oid,0,child);
+        }
     }
 
     // PRIVATE METHODS
@@ -449,23 +449,23 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
 
         // Access the node
         //
-	SnmpMibNode child = null;
+        SnmpMibNode child = null;
         try {
             child = children.elementAtNonSync(pos);
         } catch(ArrayIndexOutOfBoundsException e) {
             throw noSuchObjectException;
         }
-	if (child == null)
+        if (child == null)
             throw noSuchInstanceException;
-	return child;
+        return child;
     }
 
     private int retrieveIndex(long val) {
 
         int low= 0;
         int cursor= (int) val;
-	if (varList == null || varList.length < 1)
-	    return nbChildren;
+        if (varList == null || varList.length < 1)
+            return nbChildren;
 
         int max= varList.length -1 ;
         int curr= low + (max-low)/2;
@@ -491,11 +491,11 @@ public class SnmpMibOid extends SnmpMibNode implements Serializable {
 
         int low= 0;
         final int index= (int) val;
-	if (varList == null)
+        if (varList == null)
             return -1;
         int max= varList.length -1 ;
         int elmt=0;
-	//final int[] v = varList;
+        //final int[] v = varList;
 
         //if (index > a[max])
         //return max +1;

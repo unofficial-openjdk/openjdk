@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM861;
  * Tables and data to convert Unicode to Cp861
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp861 extends CharToByteSingleByte {

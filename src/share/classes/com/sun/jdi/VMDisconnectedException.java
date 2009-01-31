@@ -26,8 +26,8 @@
 package com.sun.jdi;
 
 /**
- * Unchecked exception thrown to indicate that the 
- * requested operation cannot be 
+ * Unchecked exception thrown to indicate that the
+ * requested operation cannot be
  * completed because there is no longer a connection to the target VM.
  *
  * @author Robert Field
@@ -36,9 +36,9 @@ package com.sun.jdi;
 public class VMDisconnectedException extends RuntimeException {
 
     public VMDisconnectedException() {
-	super();
+        super();
     }
     public VMDisconnectedException(String message) {
-	super(message);
+        super(message);
     }
 }

@@ -81,7 +81,7 @@ public class MemoryManagement {
         ListIterator iter = pools.listIterator();
         while (iter.hasNext()) {
             MemoryPoolMXBean p = (MemoryPoolMXBean) iter.next();
-            if (p.getType() == MemoryType.HEAP && 
+            if (p.getType() == MemoryType.HEAP &&
                 p.isUsageThresholdSupported()) {
                 mpool = p;
                 if (trace) {
@@ -111,12 +111,12 @@ public class MemoryManagement {
 
         if (mpool.getUsageThreshold() != newThreshold) {
             throw new RuntimeException("TEST FAILED: " +
-                "Threshold for Memory pool " + mpool.getName() + 
+                "Threshold for Memory pool " + mpool.getName() +
                 "is " + mpool.getUsageThreshold() + " but expected to be" +
                 newThreshold);
         }
 
-        // Start the AllocatorThread to continously allocate memory 
+        // Start the AllocatorThread to continously allocate memory
         System.out.println("Starting an AllocatorThread to allocate memory.");
         allocator.start();
 
@@ -148,7 +148,7 @@ public class MemoryManagement {
                 iterations++;
                 if (trace) {
                     System.out.println("    Iteration " + iterations +
-                        ": before allocation " + 
+                        ": before allocation " +
                         mpool.getUsage().getUsed());
                 }
 
@@ -161,7 +161,7 @@ public class MemoryManagement {
 
                 if (trace) {
                     System.out.println("                " +
-                        "  after allocation " + 
+                        "  after allocation " +
                         mpool.getUsage().getUsed());
                 }
                 try {
@@ -176,7 +176,6 @@ public class MemoryManagement {
             System.out.println("AllocatedThread finished memory allocation " +
                 " num_iteration = " + iterations);
         }
-    } 
+    }
 
 }
-

@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)IndicClassTables.cpp	1.12 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -209,7 +208,7 @@ static const IndicClassTable::CharClass mlymCharClasses[] =
     _xx, _xx, _xx, _xx, _xx, _xx, _xx, _m2, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, // 0D50 - 0D5F
     _iv, _iv, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx, _xx  // 0D60 - 0D6F
 };
- 
+
 static const IndicClassTable::CharClass sinhCharClasses[] =
 {
     _xx, _xx, _mp, _mp, _xx, _iv, _iv, _iv, _iv, _iv, _iv, _iv, _iv, _iv, _iv, _iv, // 0D80 - 0D8F
@@ -238,7 +237,7 @@ static const SplitMatra kndaSplitTable[] = {{0x0CBF, 0x0CD5}, {0x0CC6, 0x0CD5}, 
 
 static const SplitMatra mlymSplitTable[] = {{0x0D46, 0x0D3E}, {0x0D47, 0x0D3E}, {0x0D46, 0x0D57}};
 
- 
+
 static const SplitMatra sinhSplitTable[] = {{0x0DD9, 0x0DCA}, {0x0DD9, 0x0DCF}, {0x0DD9, 0x0DCF,0x0DCA},
                                             {0x0DD9, 0x0DDF}};
 //
@@ -386,5 +385,3 @@ le_int32 IndicReordering::getWorstCaseExpansion(le_int32 scriptCode)
 
     return classTable->getWorstCaseExpansion();
 }
-
-

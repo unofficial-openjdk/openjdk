@@ -31,7 +31,6 @@ import java.util.*;
 /** Class used by DebugGraphics for maintaining information about how
   * to render graphics calls.
   *
-  * @version %I% %G%
   * @author Dave Karlton
   */
 class DebugGraphicsInfo {
@@ -43,17 +42,17 @@ class DebugGraphicsInfo {
     java.io.PrintStream  stream = System.out;
 
     void setDebugOptions(JComponent component, int debug) {
-	if (debug == 0) {
-	    return;
-	}
+        if (debug == 0) {
+            return;
+        }
         if (componentToDebug == null) {
             componentToDebug = new Hashtable();
         }
-	if (debug > 0) {
-	    componentToDebug.put(component, new Integer(debug));
-	} else {
-	    componentToDebug.remove(component);
-	}
+        if (debug > 0) {
+            componentToDebug.put(component, new Integer(debug));
+        } else {
+            componentToDebug.remove(component);
+        }
     }
 
     int getDebugOptions(JComponent component) {
@@ -70,5 +69,3 @@ class DebugGraphicsInfo {
         stream.println(string);
     }
 }
-
-

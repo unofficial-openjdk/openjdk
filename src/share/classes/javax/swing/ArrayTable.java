@@ -39,7 +39,6 @@ import java.util.Hashtable;
  * This does no synchronization, if you need thread safety synchronize on
  * another object before calling this.
  *
- * @version %I% %G%
  * @author Georges Saab
  * @author Scott Violet
  */
@@ -111,7 +110,7 @@ class ArrayTable implements Cloneable {
             table = new Object[] {key, value};
         } else {
             int size = size();
-            if (size < ARRAY_BOUNDARY) {	      // We are an array
+            if (size < ARRAY_BOUNDARY) {              // We are an array
                 if (containsKey(key)) {
                     Object[] tmp = (Object[])table;
                     for (int i = 0; i<tmp.length-1; i+=2) {
@@ -125,20 +124,20 @@ class ArrayTable implements Cloneable {
                     int i = array.length;
                     Object[] tmp = new Object[i+2];
                     System.arraycopy(array, 0, tmp, 0, i);
-			
+
                     tmp[i] = key;
-                    tmp[i+1] = value;		    
+                    tmp[i+1] = value;
                     table = tmp;
                 }
-            } else {		     // We are a hashtable		    
-                if ((size==ARRAY_BOUNDARY) && isArray()) {   
+            } else {                 // We are a hashtable
+                if ((size==ARRAY_BOUNDARY) && isArray()) {
                     grow();
                 }
-                ((Hashtable)table).put(key, value);		    
-            }	    
+                ((Hashtable)table).put(key, value);
+            }
         }
     }
-	
+
     /*
      * Gets the value for key
      */
@@ -157,9 +156,9 @@ class ArrayTable implements Cloneable {
                 value = ((Hashtable)table).get(key);
             }
         }
-        return value;		
+        return value;
     }
-    
+
     /*
      * Returns the number of pairs in storage
      */
@@ -169,12 +168,12 @@ class ArrayTable implements Cloneable {
             return 0;
         if (isArray()) {
             size = ((Object[])table).length/2;
-        } else {       
+        } else {
             size = ((Hashtable)table).size();
-        }	
+        }
         return size;
     }
-	
+
     /*
      * Returns true if we have a value for the key
      */
@@ -193,9 +192,9 @@ class ArrayTable implements Cloneable {
                 contains = ((Hashtable)table).containsKey(key);
             }
         }
-        return contains;		
+        return contains;
     }
-    
+
     /*
      * Removes the key and its value
      * Returns the value for the pair removed
@@ -217,7 +216,7 @@ class ArrayTable implements Cloneable {
                         break;
                     }
                 }
-		    
+
                 // If so,  remove it
                 if (index != -1) {
                     Object[] tmp = new Object[array.length-2];
@@ -227,7 +226,7 @@ class ArrayTable implements Cloneable {
                     // the end of tmp (which is two elements
                     // shorter than the old list)
                     if (index < tmp.length)
-                        System.arraycopy(array, index+2, tmp, index, 
+                        System.arraycopy(array, index+2, tmp, index,
                                          tmp.length - index);
                     // set the listener array to the new array or null
                     table = (tmp.length == 0) ? null : tmp;
@@ -249,20 +248,20 @@ class ArrayTable implements Cloneable {
         table = null;
     }
 
-    /* 
+    /*
      * Returns a clone of the <code>ArrayTable</code>.
      */
     public Object clone() {
         ArrayTable newArrayTable = new ArrayTable();
         if (isArray()) {
-            Object[] array = (Object[])table;			
+            Object[] array = (Object[])table;
             for (int i = 0 ;i < array.length-1 ; i+=2) {
                 newArrayTable.put(array[i], array[i+1]);
             }
         } else {
             Hashtable tmp = (Hashtable)table;
             Enumeration keys = tmp.keys();
-            while (keys.hasMoreElements()) {	    
+            while (keys.hasMoreElements()) {
                 Object o = keys.nextElement();
                 newArrayTable.put(o,tmp.get(o));
             }
@@ -271,7 +270,7 @@ class ArrayTable implements Cloneable {
     }
 
     /**
-     * Returns the keys of the table, or <code>null</code> if there 
+     * Returns the keys of the table, or <code>null</code> if there
      * are currently no bindings.
      * @param keys  array of keys
      * @return an array of bindings
@@ -281,7 +280,7 @@ class ArrayTable implements Cloneable {
             return null;
         }
         if (isArray()) {
-            Object[] array = (Object[])table;			
+            Object[] array = (Object[])table;
             if (keys == null) {
                 keys = new Object[array.length / 2];
             }
@@ -304,7 +303,7 @@ class ArrayTable implements Cloneable {
     }
 
     /*
-     * Returns true if the current storage mechanism is 
+     * Returns true if the current storage mechanism is
      * an array of alternating key-value pairs.
      */
     private boolean isArray(){
@@ -322,7 +321,7 @@ class ArrayTable implements Cloneable {
         }
         table = tmp;
     }
-    
+
     /*
      * Shrinks the storage from a hashtable to an array.
      */
@@ -331,13 +330,13 @@ class ArrayTable implements Cloneable {
         Object[] array = new Object[tmp.size()*2];
         Enumeration keys = tmp.keys();
         int j = 0;
-	
-        while (keys.hasMoreElements()) {	    
+
+        while (keys.hasMoreElements()) {
             Object o = keys.nextElement();
             array[j] = o;
             array[j+1] = tmp.get(o);
             j+=2;
         }
-        table = array;	
+        table = array;
     }
 }

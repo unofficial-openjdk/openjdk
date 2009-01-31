@@ -39,16 +39,16 @@ class PreDecExpression extends IncDecExpression {
      * Constructor
      */
     public PreDecExpression(long where, Expression right) {
-	super(PREDEC, where, right);
+        super(PREDEC, where, right);
     }
 
     /**
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-	codeIncDec(env, ctx, asm, false, true, true);
+        codeIncDec(env, ctx, asm, false, true, true);
     }
     public void code(Environment env, Context ctx, Assembler asm) {
-	codeIncDec(env, ctx, asm, false, true, false);
+        codeIncDec(env, ctx, asm, false, true, false);
     }
 }

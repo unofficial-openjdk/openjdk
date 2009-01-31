@@ -58,7 +58,6 @@ import sun.awt.datatransfer.DataTransferer;
  * TBC
  * </p>
  *
- * @version %I%.%G%
  * @since JDK1.3.1
  *
  */
@@ -104,12 +103,12 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      */
     public void startSecondaryEventLoop(){}
     public void quitSecondaryEventLoop(){}
-    
+
     /**
      * initiate a DnD operation ...
      */
 
-    public void startDrag(DragSourceContext dsc, Cursor c, Image di, Point p) 
+    public void startDrag(DragSourceContext dsc, Cursor c, Image di, Point p)
       throws InvalidDnDOperationException {
 
         /* Fix for 4354044: don't initiate a drag if event sequence provided by
@@ -118,16 +117,16 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
             throw new InvalidDnDOperationException("DragGestureEvent has a null trigger");
         }
 
-        dragSourceContext = dsc; 
+        dragSourceContext = dsc;
         cursor            = c;
         sourceActions     = getDragSourceContext().getSourceActions();
 
         Transferable transferable  = getDragSourceContext().getTransferable();
         SortedMap formatMap = DataTransferer.getInstance().getFormatsForTransferable
-	     (transferable, DataTransferer.adaptFlavorMap
-	         (getTrigger().getDragSource().getFlavorMap()));
+             (transferable, DataTransferer.adaptFlavorMap
+                 (getTrigger().getDragSource().getFlavorMap()));
         long[] formats = DataTransferer.getInstance().
-	    keysToLongArray(formatMap);        
+            keysToLongArray(formatMap);
         startDrag(transferable, formats, formatMap);
 
         /*
@@ -142,7 +141,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
             });
     }
 
-    protected abstract void startDrag(Transferable trans, 
+    protected abstract void startDrag(Transferable trans,
                                       long[] formats, Map formatMap);
 
     /**
@@ -155,7 +154,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
                 cursor = c;
                 // NOTE: native context can be null at this point.
                 // setNativeCursor() should handle it properly.
-                setNativeCursor(getNativeContext(), c, 
+                setNativeCursor(getNativeContext(), c,
                                 c != null ? c.getType() : 0);
             }
         }
@@ -165,8 +164,8 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      * return cursor
      */
 
-    public Cursor getCursor() { 
-        return cursor; 
+    public Cursor getCursor() {
+        return cursor;
     }
 
     /**
@@ -174,11 +173,11 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      */
 
 
-    protected abstract void setNativeCursor(long nativeCtxt, Cursor c, 
+    protected abstract void setNativeCursor(long nativeCtxt, Cursor c,
                                             int cType);
 
-    protected synchronized void setTrigger(DragGestureEvent dge) { 
-        trigger = dge; 
+    protected synchronized void setTrigger(DragGestureEvent dge) {
+        trigger = dge;
         if (trigger != null) {
             component = trigger.getComponent();
         } else {
@@ -186,24 +185,24 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
         }
     }
 
-    protected DragGestureEvent getTrigger() { 
-        return trigger; 
+    protected DragGestureEvent getTrigger() {
+        return trigger;
     }
 
-    protected Component getComponent() { 
-        return component; 
+    protected Component getComponent() {
+        return component;
     }
 
-    protected synchronized void setNativeContext(long ctxt) { 
-        nativeCtxt = ctxt; 
+    protected synchronized void setNativeContext(long ctxt) {
+        nativeCtxt = ctxt;
     }
 
-    protected synchronized long getNativeContext() { 
-        return nativeCtxt; 
+    protected synchronized long getNativeContext() {
+        return nativeCtxt;
     }
 
-    protected DragSourceContext getDragSourceContext() { 
-        return dragSourceContext; 
+    protected DragSourceContext getDragSourceContext() {
+        return dragSourceContext;
     }
 
     /**
@@ -220,19 +219,19 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
 
 
 
-    protected final void postDragSourceDragEvent(final int targetAction, 
+    protected final void postDragSourceDragEvent(final int targetAction,
                                                  final int modifiers,
                                                  final int x, final int y,
                                                  final int dispatchType) {
 
         final int dropAction =
             SunDragSourceContextPeer.convertModifiersToDropAction(modifiers,
-                                                                  sourceActions); 
+                                                                  sourceActions);
 
-        DragSourceDragEvent event = 
-            new DragSourceDragEvent(getDragSourceContext(), 
-                                    dropAction, 
-                                    targetAction & sourceActions, 
+        DragSourceDragEvent event =
+            new DragSourceDragEvent(getDragSourceContext(),
+                                    dropAction,
+                                    targetAction & sourceActions,
                                     modifiers, x, y);
         EventDispatcher dispatcher = new EventDispatcher(dispatchType, event);
 
@@ -246,7 +245,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      * upcall from native code
      */
 
-    private void dragEnter(final int targetActions, 
+    private void dragEnter(final int targetActions,
                            final int modifiers,
                            final int x, final int y) {
         postDragSourceDragEvent(targetActions, modifiers, x, y, DISPATCH_ENTER);
@@ -255,8 +254,8 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
     /**
      * upcall from native code
      */
- 
-    private void dragMotion(final int targetActions, 
+
+    private void dragMotion(final int targetActions,
                             final int modifiers,
                             final int x, final int y) {
         postDragSourceDragEvent(targetActions, modifiers, x, y, DISPATCH_MOTION);
@@ -266,7 +265,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      * upcall from native code
      */
 
-    private void operationChanged(final int targetActions, 
+    private void operationChanged(final int targetActions,
                                   final int modifiers,
                                   final int x, final int y) {
         postDragSourceDragEvent(targetActions, modifiers, x, y, DISPATCH_CHANGED);
@@ -277,9 +276,9 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      */
 
     protected final void dragExit(final int x, final int y) {
-        DragSourceEvent event = 
+        DragSourceEvent event =
             new DragSourceEvent(getDragSourceContext(), x, y);
-        EventDispatcher dispatcher = 
+        EventDispatcher dispatcher =
             new EventDispatcher(DISPATCH_EXIT, event);
 
         SunToolkit.invokeLaterOnAppContext(
@@ -292,7 +291,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      * upcall from native code
      */
 
-    private void dragMouseMoved(final int targetActions, 
+    private void dragMouseMoved(final int targetActions,
                                 final int modifiers,
                                 final int x, final int y) {
         postDragSourceDragEvent(targetActions, modifiers, x, y,
@@ -303,14 +302,14 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
      * upcall from native code via implemented class (do)
      */
 
-    protected final void dragDropFinished(final boolean success, 
+    protected final void dragDropFinished(final boolean success,
                                           final int operations,
                                           final int x, final int y) {
-        DragSourceEvent event = 
+        DragSourceEvent event =
             new DragSourceDropEvent(getDragSourceContext(),
                                     operations & sourceActions,
                                     success, x, y);
-        EventDispatcher dispatcher = 
+        EventDispatcher dispatcher =
             new EventDispatcher(DISPATCH_FINISH, event);
 
         SunToolkit.invokeLaterOnAppContext(
@@ -320,7 +319,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
         setNativeContext(0);
     }
 
-    public static void setDragDropInProgress(boolean b) 
+    public static void setDragDropInProgress(boolean b)
       throws InvalidDnDOperationException {
         if (dragDropInProgress == b) {
             throw new InvalidDnDOperationException(getExceptionMessage(b));
@@ -348,7 +347,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
         return true;
     }
 
-    public static void checkDragDropInProgress() 
+    public static void checkDragDropInProgress()
       throws InvalidDnDOperationException {
         if (dragDropInProgress) {
             throw new InvalidDnDOperationException(getExceptionMessage(true));
@@ -359,7 +358,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
         return b ? "Drag and drop in progress" : "No drag in progress";
     }
 
-    public static int convertModifiersToDropAction(final int modifiers, 
+    public static int convertModifiersToDropAction(final int modifiers,
                                                    final int supportedActions) {
         int dropAction = DnDConstants.ACTION_NONE;
 
@@ -368,14 +367,14 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
          * Calculate the drop action to match Motif DnD behavior.
          * If the user selects an operation (by pressing a modifier key),
          * return the selected operation or ACTION_NONE if the selected
-         * operation is not supported by the drag source. 
+         * operation is not supported by the drag source.
          * If the user doesn't select an operation search the set of operations
-         * supported by the drag source for ACTION_MOVE, then for 
+         * supported by the drag source for ACTION_MOVE, then for
          * ACTION_COPY, then for ACTION_LINK and return the first operation
          * found.
          */
         switch (modifiers & (InputEvent.SHIFT_DOWN_MASK |
-                             InputEvent.CTRL_DOWN_MASK)) { 
+                             InputEvent.CTRL_DOWN_MASK)) {
         case InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK:
             dropAction = DnDConstants.ACTION_LINK; break;
         case InputEvent.CTRL_DOWN_MASK:
@@ -384,11 +383,11 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
             dropAction = DnDConstants.ACTION_MOVE; break;
         default:
             if ((supportedActions & DnDConstants.ACTION_MOVE) != 0) {
-                dropAction = DnDConstants.ACTION_MOVE; 
+                dropAction = DnDConstants.ACTION_MOVE;
             } else if ((supportedActions & DnDConstants.ACTION_COPY) != 0) {
-                dropAction = DnDConstants.ACTION_COPY; 
+                dropAction = DnDConstants.ACTION_COPY;
             } else if ((supportedActions & DnDConstants.ACTION_LINK) != 0) {
-                dropAction = DnDConstants.ACTION_LINK; 
+                dropAction = DnDConstants.ACTION_LINK;
             }
         }
 
@@ -415,7 +414,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
             case DISPATCH_ENTER:
             case DISPATCH_MOTION:
             case DISPATCH_CHANGED:
-            case DISPATCH_MOUSE_MOVED: 
+            case DISPATCH_MOUSE_MOVED:
                 if (!(event instanceof DragSourceDragEvent)) {
                     throw new IllegalArgumentException("Event: " + event);
                 }
@@ -437,7 +436,7 @@ public abstract class SunDragSourceContextPeer implements DragSourceContextPeer 
         }
 
         public void run() {
-            DragSourceContext dragSourceContext = 
+            DragSourceContext dragSourceContext =
                 SunDragSourceContextPeer.this.getDragSourceContext();
             try {
                 switch (dispatchType) {

@@ -42,12 +42,11 @@ import org.w3c.dom.Element;
  * </PRE>
  *
  * @author $Author: raul $
- * @version $Revision: 1.11 $
  */
 public abstract class KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(KeyResolverSpi.class.getName());
 
    /**
@@ -69,7 +68,7 @@ public abstract class KeyResolverSpi {
     * @param BaseURI
     * @param storage
     * @return resolved public key from the registered from the element.
-    * 
+    *
     * @throws KeyResolverException
     */
    abstract public PublicKey engineResolvePublicKey(

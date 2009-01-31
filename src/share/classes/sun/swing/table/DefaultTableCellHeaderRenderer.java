@@ -32,14 +32,13 @@ import javax.swing.border.Border;
 import javax.swing.table.*;
 
 /**
- * @version %I% %G%
  */
 public class DefaultTableCellHeaderRenderer extends DefaultTableCellRenderer
         implements UIResource {
     private boolean horizontalTextPositionSet;
 
     public DefaultTableCellHeaderRenderer() {
-	setHorizontalAlignment(JLabel.CENTER);
+        setHorizontalAlignment(JLabel.CENTER);
     }
 
     public void setHorizontalTextPosition(int textPosition) {
@@ -104,7 +103,7 @@ public class DefaultTableCellHeaderRenderer extends DefaultTableCellRenderer
 
         setText(value == null ? "" : value.toString());
         setIcon(sortIcon);
-        
+
         Border border = null;
         if (hasFocus) {
             border = UIManager.getBorder("TableHeader.focusCellBorder");
@@ -113,7 +112,7 @@ public class DefaultTableCellHeaderRenderer extends DefaultTableCellRenderer
             border = UIManager.getBorder("TableHeader.cellBorder");
         }
         setBorder(border);
-        
+
         return this;
     }
 

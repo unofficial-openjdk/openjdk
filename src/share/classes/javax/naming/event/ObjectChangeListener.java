@@ -48,11 +48,10 @@ package javax.naming.event;
   * A listener that wants to be notified of namespace change events
   * should also implement the <tt>NamespaceChangeListener</tt>
   * interface.
-  * 
+  *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
-  * 
+  *
   * @see NamingEvent
   * @see NamespaceChangeListener
   * @see EventContext

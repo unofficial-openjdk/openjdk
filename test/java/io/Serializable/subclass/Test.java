@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,10 +34,10 @@
  *          Also, would be appropriate that this program verify
  *          that if SerializablePermission "enableSubclassImplamentation"
  *          is not in the security policy and security is enabled, that
- *          a security excepiton is thrown when constructing the 
+ *          a security excepiton is thrown when constructing the
  *          ObjectOutputStream subclass.
- *          
- *           
+ *
+ *
  * @compile AbstractObjectInputStream.java AbstractObjectOutputStream.java XObjectInputStream.java XObjectOutputStream.java Test.java
  * @run main  Test
  */
@@ -58,10 +58,10 @@ class B implements Serializable {
         os.defaultWriteObject();
     }
 
-    private void readObject(ObjectInputStream is) 
-	throws IOException, ClassNotFoundException 
+    private void readObject(ObjectInputStream is)
+        throws IOException, ClassNotFoundException
     {
-	is.defaultReadObject();
+        is.defaultReadObject();
     }
 
 };
@@ -74,25 +74,25 @@ class C implements Serializable {
     public int xx1;
     public int xx2;
     final static ObjectStreamField[] serialPersistentFields = {
-	new ObjectStreamField("x1", Integer.TYPE),
-	new ObjectStreamField("x2", Integer.TYPE),
-	new ObjectStreamField("x3", Integer.TYPE),
-	new ObjectStreamField("x4", Integer.TYPE)
+        new ObjectStreamField("x1", Integer.TYPE),
+        new ObjectStreamField("x2", Integer.TYPE),
+        new ObjectStreamField("x3", Integer.TYPE),
+        new ObjectStreamField("x4", Integer.TYPE)
     };
     C() {
-	xx1 = 300;
-	xx2 = 400;
+        xx1 = 300;
+        xx2 = 400;
     }
 
     private void writeObject(ObjectOutputStream os) throws IOException {
-	ObjectOutputStream.PutField putFields = os.putFields();
-	putFields.put("x1", xx1);
-	putFields.put("x2", xx2);
-	putFields.put("x3", xx1 * 2);
-	putFields.put("x4", xx2 * 2);
-	os.writeFields();
+        ObjectOutputStream.PutField putFields = os.putFields();
+        putFields.put("x1", xx1);
+        putFields.put("x2", xx2);
+        putFields.put("x3", xx1 * 2);
+        putFields.put("x4", xx2 * 2);
+        os.writeFields();
     }
-     
+
 };
 
 
@@ -102,51 +102,51 @@ class A implements Serializable {
     public B    publicBField;
     public B[]  publicBArray = { new B(4), new B(6)};
     public C    publicCField;
-    
+
     public A() {
         publicIntField = 3;
         publicLongField = 10L;
         publicBField = new B(5);
-	publicCField = new C();
+        publicCField = new C();
     }
 };
 
 public class Test {
-    static public void main(String argv[]) 
-	throws IOException, ClassNotFoundException 
+    static public void main(String argv[])
+        throws IOException, ClassNotFoundException
     {
-	boolean expectSecurityException = false;
-	
-	if (argv.length > 0 && 
-	    argv[0].compareTo("-expectSecurityException") == 0)
-	    expectSecurityException = true;
+        boolean expectSecurityException = false;
+
+        if (argv.length > 0 &&
+            argv[0].compareTo("-expectSecurityException") == 0)
+            expectSecurityException = true;
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream(20);
-	XObjectOutputStream os = null;
-	try {
-	    os = new XObjectOutputStream(baos);
-	    if (expectSecurityException)
-		throw new Error("Assertion failure. " + 
-				"Expected a security exception on previous line.");
-	} catch (SecurityException e) {
-	    if (expectSecurityException)
-		return;
-	    else 
-		throw e;
-	}
+        XObjectOutputStream os = null;
+        try {
+            os = new XObjectOutputStream(baos);
+            if (expectSecurityException)
+                throw new Error("Assertion failure. " +
+                                "Expected a security exception on previous line.");
+        } catch (SecurityException e) {
+            if (expectSecurityException)
+                return;
+            else
+                throw e;
+        }
         os.writeObject(new A());
         os.close();
         if (B.numWriteObjectCalled != 3)
             throw new Error("Expected B.writeObject() to be called 3 times;" +
                             " observed only " + B.numWriteObjectCalled + " times");
 
-	XObjectInputStream is = 
-	    new XObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-	try {
-	    A a = (A)is.readObject();
-	    throw new Error("Expected readObjectOverride() to be called and throw IOException(not implemented)");
-	} catch (IOException e) {
-	}
-	is.close();
+        XObjectInputStream is =
+            new XObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+        try {
+            A a = (A)is.readObject();
+            throw new Error("Expected readObjectOverride() to be called and throw IOException(not implemented)");
+        } catch (IOException e) {
+        }
+        is.close();
     }
 };

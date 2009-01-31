@@ -49,7 +49,6 @@ import java.security.*;
  * System.setSecurityManager(new SecurityManager());
  * </pre>
  *
- * @version %I%, %G%
  * @author  Roger Riggs
  * @author  Peter Jones
  * @since JDK1.1

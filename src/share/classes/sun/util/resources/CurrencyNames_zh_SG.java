@@ -38,8 +38,8 @@ public final class CurrencyNames_zh_SG extends OpenListResourceBundle {
 
     protected final Object[][] getContents() {
         return new Object[][] {
-	    {"CNY", "CNY"},
-	    {"SGD", "S$"},
-	};
+            {"CNY", "CNY"},
+            {"SGD", "S$"},
+        };
     }
 }

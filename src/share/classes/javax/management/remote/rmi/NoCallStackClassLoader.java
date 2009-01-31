@@ -78,40 +78,40 @@ import java.security.ProtectionDomain;
 class NoCallStackClassLoader extends ClassLoader {
     /** Simplified constructor when this loader only defines one class.  */
     public NoCallStackClassLoader(String className,
-				  byte[] byteCode,
-				  String[] referencedClassNames,
-				  ClassLoader referencedClassLoader,
-				  ProtectionDomain protectionDomain) {
-	this(new String[] {className}, new byte[][] {byteCode},
-	     referencedClassNames, referencedClassLoader, protectionDomain);
+                                  byte[] byteCode,
+                                  String[] referencedClassNames,
+                                  ClassLoader referencedClassLoader,
+                                  ProtectionDomain protectionDomain) {
+        this(new String[] {className}, new byte[][] {byteCode},
+             referencedClassNames, referencedClassLoader, protectionDomain);
     }
 
     public NoCallStackClassLoader(String[] classNames,
-				  byte[][] byteCodes,
-				  String[] referencedClassNames,
-				  ClassLoader referencedClassLoader,
-				  ProtectionDomain protectionDomain) {
-	super(null);
+                                  byte[][] byteCodes,
+                                  String[] referencedClassNames,
+                                  ClassLoader referencedClassLoader,
+                                  ProtectionDomain protectionDomain) {
+        super(null);
 
-	/* Validation. */
-	if (classNames == null || classNames.length == 0
-	    || byteCodes == null || classNames.length != byteCodes.length
-	    || referencedClassNames == null || protectionDomain == null)
-	    throw new IllegalArgumentException();
-	for (int i = 0; i < classNames.length; i++) {
-	    if (classNames[i] == null || byteCodes[i] == null)
-		throw new IllegalArgumentException();
-	}
-	for (int i = 0; i < referencedClassNames.length; i++) {
-	    if (referencedClassNames[i] == null)
-		throw new IllegalArgumentException();
-	}
+        /* Validation. */
+        if (classNames == null || classNames.length == 0
+            || byteCodes == null || classNames.length != byteCodes.length
+            || referencedClassNames == null || protectionDomain == null)
+            throw new IllegalArgumentException();
+        for (int i = 0; i < classNames.length; i++) {
+            if (classNames[i] == null || byteCodes[i] == null)
+                throw new IllegalArgumentException();
+        }
+        for (int i = 0; i < referencedClassNames.length; i++) {
+            if (referencedClassNames[i] == null)
+                throw new IllegalArgumentException();
+        }
 
-	this.classNames = classNames;
-	this.byteCodes = byteCodes;
-	this.referencedClassNames = referencedClassNames;
-	this.referencedClassLoader = referencedClassLoader;
-	this.protectionDomain = protectionDomain;
+        this.classNames = classNames;
+        this.byteCodes = byteCodes;
+        this.referencedClassNames = referencedClassNames;
+        this.referencedClassLoader = referencedClassLoader;
+        this.protectionDomain = protectionDomain;
     }
 
     /* This method is called at most once per name.  Define the name
@@ -119,25 +119,25 @@ class NoCallStackClassLoader extends ClassLoader {
      * delegate the load if it is one of the referenced classes.
      */
     protected Class findClass(String name) throws ClassNotFoundException {
-	for (int i = 0; i < classNames.length; i++) {
-	    if (name.equals(classNames[i])) {
-		return defineClass(classNames[i], byteCodes[i], 0,
-				   byteCodes[i].length, protectionDomain);
-	    }
-	}
+        for (int i = 0; i < classNames.length; i++) {
+            if (name.equals(classNames[i])) {
+                return defineClass(classNames[i], byteCodes[i], 0,
+                                   byteCodes[i].length, protectionDomain);
+            }
+        }
 
-	/* If the referencedClassLoader is null, it is the bootstrap
-	 * class loader, and there's no point in delegating to it
-	 * because it's already our parent class loader.
-	 */
-	if (referencedClassLoader != null) {
-	    for (int i = 0; i < referencedClassNames.length; i++) {
-		if (name.equals(referencedClassNames[i]))
-		    return referencedClassLoader.loadClass(name);
-	    }
-	}
+        /* If the referencedClassLoader is null, it is the bootstrap
+         * class loader, and there's no point in delegating to it
+         * because it's already our parent class loader.
+         */
+        if (referencedClassLoader != null) {
+            for (int i = 0; i < referencedClassNames.length; i++) {
+                if (name.equals(referencedClassNames[i]))
+                    return referencedClassLoader.loadClass(name);
+            }
+        }
 
-	throw new ClassNotFoundException(name);
+        throw new ClassNotFoundException(name);
     }
 
     private final String[] classNames;
@@ -171,11 +171,11 @@ class NoCallStackClassLoader extends ClassLoader {
      * corresponding character of the input.
      */
     public static byte[] stringToBytes(String s) {
-	final int slen = s.length();
-	byte[] bytes = new byte[slen];
-	for (int i = 0; i < slen; i++)
-	    bytes[i] = (byte) s.charAt(i);
-	return bytes;
+        final int slen = s.length();
+        byte[] bytes = new byte[slen];
+        for (int i = 0; i < slen; i++)
+            bytes[i] = (byte) s.charAt(i);
+        return bytes;
     }
 }
 
@@ -197,29 +197,29 @@ possibly with a numeric suffix like <2>.  From there it can be
 insert-buffer'd into a Java program."
   (interactive)
   (let* ((s (buffer-string))
-	 (slen (length s))
-	 (i 0)
-	 (buf (generate-new-buffer "*string*")))
+         (slen (length s))
+         (i 0)
+         (buf (generate-new-buffer "*string*")))
     (set-buffer buf)
     (insert "\"")
     (while (< i slen)
       (if (> (current-column) 61)
-	  (insert "\"+\n\""))
+          (insert "\"+\n\""))
       (let ((c (aref s i)))
-	(insert (cond
-		 ((> c 126) (format "\\%o" c))
-		 ((= c ?\") "\\\"")
-		 ((= c ?\\) "\\\\")
-		 ((< c 33)
-		  (let ((nextc (if (< (1+ i) slen)
-				   (aref s (1+ i))
-				 ?\0)))
-		    (cond
-		     ((and (<= nextc ?7) (>= nextc ?0))
-		      (format "\\%03o" c))
-		     (t
-		      (format "\\%o" c)))))
-		 (t c))))
+        (insert (cond
+                 ((> c 126) (format "\\%o" c))
+                 ((= c ?\") "\\\"")
+                 ((= c ?\\) "\\\\")
+                 ((< c 33)
+                  (let ((nextc (if (< (1+ i) slen)
+                                   (aref s (1+ i))
+                                 ?\0)))
+                    (cond
+                     ((and (<= nextc ?7) (>= nextc ?0))
+                      (format "\\%03o" c))
+                     (t
+                      (format "\\%o" c)))))
+                 (t c))))
       (setq i (1+ i)))
     (insert "\"")
     (switch-to-buffer buf)))

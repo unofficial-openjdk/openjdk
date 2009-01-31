@@ -68,7 +68,7 @@ DECLARE_ALPHA_MASKFILL(ByteIndexed);
 DECLARE_ALPHA_MASKBLIT(IntArgb, ByteIndexed);
 DECLARE_ALPHA_MASKBLIT(IntArgbPre, ByteIndexed);
 DECLARE_ALPHA_MASKBLIT(IntRgb, ByteIndexed);
-DECLARE_SOLID_DRAWGLYPHLISTAA(ByteIndexed); 
+DECLARE_SOLID_DRAWGLYPHLISTAA(ByteIndexed);
 
 DECLARE_TRANSFORMHELPER_FUNCS(ByteIndexed);
 DECLARE_TRANSFORMHELPER_FUNCS(ByteIndexedBm);
@@ -76,18 +76,18 @@ DECLARE_TRANSFORMHELPER_FUNCS(ByteIndexedBm);
 NativePrimitive ByteIndexedPrimitives[] = {
     REGISTER_CONVERT_BLIT(IntArgb, ByteIndexed),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, ByteIndexed,
-				NAME_CONVERT_BLIT(IntArgb, ByteIndexed)),
+                                NAME_CONVERT_BLIT(IntArgb, ByteIndexed)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, ByteIndexed,
-				NAME_CONVERT_BLIT(IntArgb, ByteIndexed)),
+                                NAME_CONVERT_BLIT(IntArgb, ByteIndexed)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, ByteIndexed),
     REGISTER_CONVERT_BLIT(ByteGray, ByteIndexed),
     REGISTER_CONVERT_BLIT(Index12Gray, ByteIndexed),
     REGISTER_CONVERT_BLIT_FLAGS(ByteIndexed, ByteIndexed, 0, SD_LOCK_LUT),
     REGISTER_SCALE_BLIT(IntArgb, ByteIndexed),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, ByteIndexed,
-			      NAME_SCALE_BLIT(IntArgb, ByteIndexed)),
+                              NAME_SCALE_BLIT(IntArgb, ByteIndexed)),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, ByteIndexed,
-			      NAME_SCALE_BLIT(IntArgb, ByteIndexed)),
+                              NAME_SCALE_BLIT(IntArgb, ByteIndexed)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, ByteIndexed),
     REGISTER_SCALE_BLIT(ByteGray, ByteIndexed),
     REGISTER_SCALE_BLIT(Index12Gray, ByteIndexed),
@@ -113,7 +113,7 @@ NativePrimitive ByteIndexedPrimitives[] = {
 jboolean RegisterByteIndexed(JNIEnv *env)
 {
     return RegisterPrimitives(env, ByteIndexedPrimitives,
-			      ArraySize(ByteIndexedPrimitives));
+                              ArraySize(ByteIndexedPrimitives));
 }
 
 jint PixelForByteIndexed(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -124,21 +124,21 @@ jint PixelForByteIndexed(SurfaceDataRasInfo *pRasInfo, jint rgb)
 }
 
 jboolean checkSameLut(jint *SrcReadLut, jint *DstReadLut,
-		      SurfaceDataRasInfo *pSrcInfo,
-		      SurfaceDataRasInfo *pDstInfo)
+                      SurfaceDataRasInfo *pSrcInfo,
+                      SurfaceDataRasInfo *pDstInfo)
 {
     if (SrcReadLut != DstReadLut) {
-	juint lutSize = pSrcInfo->lutSize;
-	if (lutSize > pDstInfo->lutSize) {
-	    return JNI_FALSE;
-	} else {
-	    juint i;
-	    for (i = 0; i < lutSize; i++) {
-		if (SrcReadLut[i] != DstReadLut[i]) {
-		    return JNI_FALSE;
-		}
-	    }
-	}
+        juint lutSize = pSrcInfo->lutSize;
+        if (lutSize > pDstInfo->lutSize) {
+            return JNI_FALSE;
+        } else {
+            juint i;
+            for (i = 0; i < lutSize; i++) {
+                if (SrcReadLut[i] != DstReadLut[i]) {
+                    return JNI_FALSE;
+                }
+            }
+        }
     }
     return JNI_TRUE;
 }
@@ -168,20 +168,20 @@ void NAME_CONVERT_BLIT(ByteIndexed, ByteIndexed)
     InitByteIndexedLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-	do {
-	    memcpy(dstBase, srcBase, width);
-	    srcBase = PtrAddBytes(srcBase, srcScan);
-	    dstBase = PtrAddBytes(dstBase, dstScan);
-	} while (--height > 0);
+        do {
+            memcpy(dstBase, srcBase, width);
+            srcBase = PtrAddBytes(srcBase, srcScan);
+            dstBase = PtrAddBytes(dstBase, dstScan);
+        } while (--height > 0);
     } else {
-	DeclareByteIndexedStoreVars(DstWrite);
+        DeclareByteIndexedStoreVars(DstWrite);
 
-	BlitLoopWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
-			    ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
-			    width, height,
-			    ConvertVia3ByteRgb
+        BlitLoopWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
+                            ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
+                            width, height,
+                            ConvertVia3ByteRgb
                                 (pSrc, ByteIndexed, SrcRead,
-				 pDst, ByteIndexed, DstWrite, 0, 0));
+                                 pDst, ByteIndexed, DstWrite, 0, 0));
     }
 }
 
@@ -213,19 +213,19 @@ void NAME_SCALE_BLIT(ByteIndexed, ByteIndexed)
     InitByteIndexedLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-	BlitLoopScaleWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
-				 ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
-				 x, width, height,
-				 sxloc, syloc, sxinc, syinc, shift,
-				 pDst[0] = pSrc[x]);
+        BlitLoopScaleWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
+                                 ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
+                                 x, width, height,
+                                 sxloc, syloc, sxinc, syinc, shift,
+                                 pDst[0] = pSrc[x]);
     } else {
-	BlitLoopScaleWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
-				 ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
-				 x, width, height,
-				 sxloc, syloc, sxinc, syinc, shift,
-				 ConvertVia3ByteRgb(pSrc, ByteIndexed, SrcRead,
-						    pDst, ByteIndexed, DstWrite,
-						    x, 0));
+        BlitLoopScaleWidthHeight(ByteIndexed, pSrc, srcBase, pSrcInfo,
+                                 ByteIndexed, pDst, dstBase, pDstInfo, DstWrite,
+                                 x, width, height,
+                                 sxloc, syloc, sxinc, syinc, shift,
+                                 ConvertVia3ByteRgb(pSrc, ByteIndexed, SrcRead,
+                                                    pDst, ByteIndexed, DstWrite,
+                                                    x, 0));
     }
 }
 

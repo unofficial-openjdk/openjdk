@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4461737
  * @summary Verify that serialization functions properly for externalizable
- * 	    classes if ObjectInputStream.readClassDescriptor() returns a local
- * 	    class descriptor.
+ *          classes if ObjectInputStream.readClassDescriptor() returns a local
+ *          class descriptor.
  */
 
 import java.io.*;
@@ -34,89 +34,89 @@ import java.util.*;
 class LoopbackOutputStream extends ObjectOutputStream {
     LinkedList descs;
 
-    LoopbackOutputStream(OutputStream out, LinkedList descs) 
-	throws IOException 
+    LoopbackOutputStream(OutputStream out, LinkedList descs)
+        throws IOException
     {
-	super(out);
-	this.descs = descs;
+        super(out);
+        this.descs = descs;
     }
 
     protected void writeClassDescriptor(ObjectStreamClass desc)
-        throws IOException 
+        throws IOException
     {
-	descs.add(desc);
+        descs.add(desc);
     }
 }
 
 class LoopbackInputStream extends ObjectInputStream {
     LinkedList descs;
-    
+
     LoopbackInputStream(InputStream in, LinkedList descs) throws IOException {
-	super(in);
-	this.descs = descs;
+        super(in);
+        this.descs = descs;
     }
-    
+
     protected ObjectStreamClass readClassDescriptor()
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	return (ObjectStreamClass) descs.removeFirst();
+        return (ObjectStreamClass) descs.removeFirst();
     }
 }
 
 public class ExternLoopback implements Externalizable {
 
     String a, b, c;
-    
+
     public ExternLoopback() {
     }
 
     ExternLoopback(String a, String b, String c) {
-	this.a = a;
-	this.b = b;
-	this.c = c;
+        this.a = a;
+        this.b = b;
+        this.c = c;
     }
-    
+
     public void writeExternal(ObjectOutput out) throws IOException {
-	out.writeBoolean(false);
-	out.writeObject(a);
-	out.writeObject(b);
-	out.writeObject(c);
+        out.writeBoolean(false);
+        out.writeObject(a);
+        out.writeObject(b);
+        out.writeObject(c);
     }
-    
+
     public void readExternal(ObjectInput in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	in.readBoolean();
-	a = (String) in.readObject();
-	b = (String) in.readObject();
-	c = (String) in.readObject();
+        in.readBoolean();
+        a = (String) in.readObject();
+        b = (String) in.readObject();
+        c = (String) in.readObject();
     }
-    
+
     public boolean equals(Object obj) {
-	if (!(obj instanceof ExternLoopback)) {
-	    return false;
-	}
-	ExternLoopback other = (ExternLoopback) obj;
-	return streq(a, other.a) && streq(b, other.b) && streq(c, other.c);
+        if (!(obj instanceof ExternLoopback)) {
+            return false;
+        }
+        ExternLoopback other = (ExternLoopback) obj;
+        return streq(a, other.a) && streq(b, other.b) && streq(c, other.c);
     }
-    
+
     static boolean streq(String s1, String s2) {
-	return (s1 != null) ? s1.equals(s2) : (s2 == null);
+        return (s1 != null) ? s1.equals(s2) : (s2 == null);
     }
 
     public static void main(String[] args) throws Exception {
-	ExternLoopback lb = new ExternLoopback("foo", "bar", "baz");
-	LinkedList descs = new LinkedList();
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	LoopbackOutputStream lout = new LoopbackOutputStream(bout, descs);
-	lout.writeObject(lb);
-	lout.close();
-	
-	LoopbackInputStream lin = new LoopbackInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()), descs);
-	ExternLoopback lbcopy = (ExternLoopback) lin.readObject();
-	if (!lb.equals(lbcopy)) {
-	    throw new Error();
-	}
+        ExternLoopback lb = new ExternLoopback("foo", "bar", "baz");
+        LinkedList descs = new LinkedList();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        LoopbackOutputStream lout = new LoopbackOutputStream(bout, descs);
+        lout.writeObject(lb);
+        lout.close();
+
+        LoopbackInputStream lin = new LoopbackInputStream(
+            new ByteArrayInputStream(bout.toByteArray()), descs);
+        ExternLoopback lbcopy = (ExternLoopback) lin.readObject();
+        if (!lb.equals(lbcopy)) {
+            throw new Error();
+        }
     }
 }

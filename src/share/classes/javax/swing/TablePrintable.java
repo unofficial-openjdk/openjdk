@@ -93,7 +93,6 @@ import java.text.MessageFormat;
  * changed at any time after creation.
  *
  * @author  Shannon Hickey
- * @version %I% %G%
  */
 class TablePrintable implements Printable {
 
@@ -175,7 +174,7 @@ class TablePrintable implements Printable {
         header = table.getTableHeader();
         colModel = table.getColumnModel();
         totalColWidth = colModel.getTotalColumnWidth();
-        
+
         if (header != null) {
             // the header clip height can be set once since it's unchanging
             hclip.height = header.getHeight();
@@ -315,10 +314,10 @@ class TablePrintable implements Printable {
 
         // translate into the co-ordinate system of the pageFormat
         g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
-        
+
         // to save and store the transform
         AffineTransform oldTrans;
-        
+
         // if there's footer text, print it at the bottom of the imageable area
         if (footerText != null) {
             oldTrans = g2d.getTransform();
@@ -383,11 +382,11 @@ class TablePrintable implements Printable {
         g2d.translate(-clip.x, -clip.y);
         g2d.clip(clip);
         table.print(g2d);
-        
+
         // restore the original transform and clip
         g2d.setTransform(oldTrans);
         g2d.setClip(oldClip);
-        
+
         // draw a box around the table
         g2d.setColor(Color.BLACK);
         g2d.drawRect(0, 0, clip.width, hclip.height + clip.height);
@@ -463,7 +462,7 @@ class TablePrintable implements Printable {
 
             // adjust clip to the top of the next set of rows
             clip.y += clip.height;
-            
+
             // adjust clip width and height to be zero
             clip.width = 0;
             clip.height = 0;

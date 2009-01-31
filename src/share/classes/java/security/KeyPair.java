@@ -35,7 +35,6 @@ import java.util.*;
  * @see PublicKey
  * @see PrivateKey
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  */
 
@@ -58,8 +57,8 @@ public final class KeyPair implements java.io.Serializable {
      * @param privateKey the private key.
      */
     public KeyPair(PublicKey publicKey, PrivateKey privateKey) {
-	this.publicKey = publicKey;
-	this.privateKey = privateKey;
+        this.publicKey = publicKey;
+        this.privateKey = privateKey;
     }
 
     /**
@@ -68,7 +67,7 @@ public final class KeyPair implements java.io.Serializable {
      * @return a reference to the public key.
      */
     public PublicKey getPublic() {
-	return publicKey;
+        return publicKey;
     }
 
      /**
@@ -77,6 +76,6 @@ public final class KeyPair implements java.io.Serializable {
      * @return a reference to the private key.
      */
    public PrivateKey getPrivate() {
-	return privateKey;
+        return privateKey;
     }
 }

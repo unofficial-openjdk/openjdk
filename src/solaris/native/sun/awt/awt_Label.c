@@ -53,7 +53,7 @@ static char emptyString[] = "";
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_create
-  (JNIEnv *env, jobject this, jobject parent) 
+  (JNIEnv *env, jobject this, jobject parent)
 {
     struct ComponentData *cdata;
     struct ComponentData *wdata;
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_create
     }
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     wdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
 
     if (JNU_IsNull(env, target) || wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -87,7 +87,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_create
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData,cdata);
 
     adata = copyGraphicsConfigToPeer(env, this);
-    
+
     cdata->widget = XtVaCreateManagedWidget("",
                                             xmLabelWidgetClass, wdata->widget,
                                             XmNhighlightThickness, 0,
@@ -98,7 +98,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_create
                                             XmNscreen,
                                             ScreenOfDisplay(awt_display,
                                                adata->awt_visInfo.screen),
-					    XmNfontList, getMotifFontList(),
+                                            XmNfontList, getMotifFontList(),
                                             NULL);
     XtSetMappedWhenManaged(cdata->widget, False);
     AWT_UNLOCK();
@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_create
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_setText
-  (JNIEnv *env, jobject this, jstring label) 
+  (JNIEnv *env, jobject this, jstring label)
 {
     char *clabel = NULL;
     char *clabelEnd;
@@ -125,7 +125,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_setText
     isMultiFont = awtJNI_IsMultiFont(env, font);
 
     cdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (cdata == NULL || cdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -179,7 +179,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MLabelPeer_setAlignment
     AWT_LOCK();
 
     cdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (cdata == NULL || cdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();

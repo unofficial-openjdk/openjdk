@@ -31,8 +31,8 @@ import java.util.*;
  * Hash table based implementation of the Map interface.  This implementation
  * provides all of the optional Map operations, and permits null values and
  * the null key.  (HashMap is roughly equivalent to Hashtable, except that it
- * is unsynchronized and permits nulls.) In addition, elements in the map are 
- * ordered and doubly linked together. 
+ * is unsynchronized and permits nulls.) In addition, elements in the map are
+ * ordered and doubly linked together.
  * <p>
  * This implementation provides constant-time performance for the basic
  * operations (get and put), assuming the the hash function disperses the
@@ -58,32 +58,31 @@ import java.util.*;
  * <p>
  * <strong>Note that this implementation is not synchronized.</strong> If
  * multiple threads access a LinkedHashMap concurrently, and at least one of the
- * threads modifies the LinkedHashMap structurally, it <em>must</em> be 
- * synchronized externally.  (A structural modification is any operation that 
+ * threads modifies the LinkedHashMap structurally, it <em>must</em> be
+ * synchronized externally.  (A structural modification is any operation that
  * adds or deletes one or more mappings; merely changing the value associated
  * with a key that is already contained in the Table is not a structural
  * modification.)  This is typically accomplished by synchronizing on some
- * object that naturally encapsulates the LinkedHashMap.  If no such object 
- * exists, the LinkedHashMap should be "wrapped" using the 
- * Collections.synchronizedSet method.  This is best done at creation time, to 
+ * object that naturally encapsulates the LinkedHashMap.  If no such object
+ * exists, the LinkedHashMap should be "wrapped" using the
+ * Collections.synchronizedSet method.  This is best done at creation time, to
  * prevent accidental unsynchronized access to the LinkedHashMap:
  * <pre>
  *      Map m = Collections.synchronizedMap(new LinkedHashMap(...));
  * </pre>
  * <p>
  * The Iterators returned by the iterator methods of the Collections returned
- * by all of LinkedHashMap's "collection view methods" are <em>fail-fast</em>: 
+ * by all of LinkedHashMap's "collection view methods" are <em>fail-fast</em>:
  * if the LinkedHashMap is structurally modified at any time after the Iterator
- * is created, in any way except through the Iterator's own remove or add 
- * methods, the Iterator will throw a ConcurrentModificationException.  Thus, 
- * in the face of concurrent modification, the Iterator fails quickly and 
- * cleanly, rather than risking arbitrary, non-deterministic behavior at an 
+ * is created, in any way except through the Iterator's own remove or add
+ * methods, the Iterator will throw a ConcurrentModificationException.  Thus,
+ * in the face of concurrent modification, the Iterator fails quickly and
+ * cleanly, rather than risking arbitrary, non-deterministic behavior at an
  * undetermined time in the future.
  *
  * @author  Josh Bloch
  * @author  Arthur van Hoff
  * @author  Zhenghua Li
- * @version %I% %G%
  * @see     Object#hashCode()
  * @see     java.util.Collection
  * @see     java.util.Map
@@ -104,7 +103,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
      * The head of the double linked list.
      */
     private transient Entry header;
-                                             
+
     /**
      * The total number of mappings in the hash table.
      */
@@ -130,8 +129,8 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     private transient int modCount = 0;
 
     /**
-     * Constructs a new, empty LinkedHashMap with the specified initial 
-     * capacity and the specified load factor. 
+     * Constructs a new, empty LinkedHashMap with the specified initial
+     * capacity and the specified load factor.
      *
      * @param      initialCapacity   the initial capacity of the LinkedHashMap.
      * @param      loadFactor        a number between 0.0 and 1.0.
@@ -167,14 +166,14 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
 
     /**
      * Constructs a new, empty LinkedHashMap with a default capacity and load
-     * factor. 
+     * factor.
      */
     public LinkedHashMap() {
         this(101, 0.75f);
     }
 
     /**
-     * Constructs a new LinkedHashMap with the same mappings as the given 
+     * Constructs a new LinkedHashMap with the same mappings as the given
      * Map.  The LinkedHashMap is created with a capacity of thrice the number
      * of mappings in the given Map or 11 (whichever is greater), and a
      * default load factor.
@@ -220,7 +219,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Returns true if this LinkedHashMap contains a mapping for the specified
      * key.
-     * 
+     *
      * @param key key whose presence in this Map is to be tested.
      */
     public boolean containsKey(Object key) {
@@ -242,10 +241,10 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
 
     /**
      * Returns the value to which this LinkedHashMap maps the specified key.
-     * Returns null if the LinkedHashMap contains no mapping for this key. 
-     * A return value of null does not <em>necessarily</em> indicate that the 
-     * LinkedHashMap contains no mapping for the key; it's also possible that 
-     * the LinkedHashMap explicitly maps the key to null.  The containsKey 
+     * Returns null if the LinkedHashMap contains no mapping for this key.
+     * A return value of null does not <em>necessarily</em> indicate that the
+     * LinkedHashMap contains no mapping for the key; it's also possible that
+     * the LinkedHashMap explicitly maps the key to null.  The containsKey
      * operation may be used to distinguish these two cases.
      *
      * @param key key whose associated value is to be returned.
@@ -257,7 +256,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
 
     /**
      * Returns the entry associated with the specified key in the LinkedHashMap.
-     * Returns null if the LinkedHashMap contains no mapping for this key.  
+     * Returns null if the LinkedHashMap contains no mapping for this key.
      */
     private Entry getEntry(Object key) {
         Entry tab[] = table;
@@ -278,10 +277,10 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     }
 
     /**
-     * Rehashes the contents of the LinkedHashMap into a LinkedHashMap with a 
-     * larger capacity. This method is called automatically when the 
+     * Rehashes the contents of the LinkedHashMap into a LinkedHashMap with a
+     * larger capacity. This method is called automatically when the
      * number of keys in the LinkedHashMap exceeds this LinkedHashMap's capacity
-     * and load factor. 
+     * and load factor.
      */
     private void rehash() {
         int oldCapacity = table.length;
@@ -301,7 +300,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
         }
     }
 
-    /**                                             
+    /**
      * Remove an entry from the linked list.
      */
     private void listRemove(Entry entry) {
@@ -312,7 +311,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
         entry.after.before = entry.before;
     }
 
-   /**                                             
+   /**
     * Add the specified entry before the specified existing entry to
     * the linked list.
     */
@@ -326,7 +325,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Returns the position of the mapping for the specified key
      * in the ordered map.
-     * 
+     *
      * @param key the specified key.
      * @return index of the key mapping.
      */
@@ -348,11 +347,11 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
      * Associates the specified value with the specified key in this
      * LinkedHashMap. If the LinkedHashMap previously contained a mapping for
      * this key, the old value is replaced and the position of this mapping
-     * entry in the double linked list remains the same. Otherwise, a new 
+     * entry in the double linked list remains the same. Otherwise, a new
      * mapping entry is created and inserted into the list before the specified
      * existing mapping entry. The method returns the previous value associated
      * with the specified key, or null if there was no mapping for key.  A null
-     * return can also indicate that the LinkedHashMap previously associated 
+     * return can also indicate that the LinkedHashMap previously associated
      * null with the specified key.
      */
     private Object putAhead(Object key, Object value, Entry existEntry) {
@@ -360,7 +359,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
         Entry tab[] = table;
         int hash = 0;
         int index = 0;
-        
+
         if (key != null) {
             hash = key.hashCode();
             index = (hash & 0x7FFFFFFF) % tab.length;
@@ -400,10 +399,10 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Associates the specified value with the specified key in this
      * LinkedHashMap and position the mapping at the specified index.
-     * If the LinkedHashMap previously contained a mapping for this key, 
-     * the old value is replaced and the position of this mapping entry 
+     * If the LinkedHashMap previously contained a mapping for this key,
+     * the old value is replaced and the position of this mapping entry
      * in the double linked list remains the same. Otherwise, a new mapping
-     * entry is created and inserted into the list at the specified 
+     * entry is created and inserted into the list at the specified
      * position.
      *
      * @param index     the position to put the key-value mapping.
@@ -426,11 +425,11 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
             return putAhead(key, value, e);
         }
     }
-    
+
 
     /**
-     * Associates the specified value with the specified key in this 
-     * LinkedHashMap. If the LinkedHashMap previously contained a mapping for 
+     * Associates the specified value with the specified key in this
+     * LinkedHashMap. If the LinkedHashMap previously contained a mapping for
      * this key, the old value is replaced. The mapping entry is also appended
      * to the end of the ordered linked list.
      *
@@ -505,7 +504,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Copies all of the mappings from the specified Map to this LinkedHashMap
      * These mappings will replace any mappings that this LinkedHashMap had for
-     * any of the keys currently in the specified Map. 
+     * any of the keys currently in the specified Map.
      *
       * @param t Mappings to be stored in this Map.
      */
@@ -530,8 +529,8 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     }
 
     /**
-     * Returns a shallow copy of this LinkedHashMap. The keys and values 
-     * themselves are not cloned. 
+     * Returns a shallow copy of this LinkedHashMap. The keys and values
+     * themselves are not cloned.
      */
     public Object clone() {
         return new LinkedHashMap(this);
@@ -545,9 +544,9 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
 
     /**
      * Returns a Set view of the keys contained in this LinkedHashMap.  The Set
-     * is backed by the LinkedHashMap, so changes to the LinkedHashMap are 
+     * is backed by the LinkedHashMap, so changes to the LinkedHashMap are
      * reflected in the Set, and vice-versa.  The Set supports element removal,
-     * which removes the corresponding mapping from the LinkedHashMap, via the 
+     * which removes the corresponding mapping from the LinkedHashMap, via the
      * Iterator.remove, Set.remove, removeAll retainAll, and clear operations.
      * It does not support the add or addAll operations.
      */
@@ -577,7 +576,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Returns a Collection view of the values contained in this LinkedHashMap.
      * The Collection is backed by the LinkedHashMap, so changes to the
-     * LinkedHashMap are reflected in the Collection, and vice-versa.  The 
+     * LinkedHashMap are reflected in the Collection, and vice-versa.  The
      * Collection supports element removal, which removes the corresponding
      * mapping from the LinkedHashMap, via the Iterator.remove,
      * Collection.remove, removeAll, retainAll and clear operations.  It does
@@ -604,13 +603,13 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     }
 
     /**
-     * Returns a Collection view of the mappings contained in this 
-     * LinkedHashMap. Each element in the returned collection is a Map.Entry. 
-     * The Collection is backed by the LinkedHashMap, so changes to the 
-     * LinkedHashMap are reflected in the Collection, and vice-versa.  The 
-     * Collection supports element removal, which removes the corresponding 
-     * mapping from the LinkedHashMap, via the Iterator.remove, 
-     * Collection.remove, removeAll, retainAll and clear operations.  It does 
+     * Returns a Collection view of the mappings contained in this
+     * LinkedHashMap. Each element in the returned collection is a Map.Entry.
+     * The Collection is backed by the LinkedHashMap, so changes to the
+     * LinkedHashMap are reflected in the Collection, and vice-versa.  The
+     * Collection supports element removal, which removes the corresponding
+     * mapping from the LinkedHashMap, via the Iterator.remove,
+     * Collection.remove, removeAll, retainAll and clear operations.  It does
      * not support the add or addAll operations.
      *
      * @see   java.util.Map.Entry
@@ -654,7 +653,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
                                 prev.next = e.next;
                             else
                                 tab[index] = e.next;
-                            
+
                             count--;
                             e.value = null;
                             listRemove(e);
@@ -680,9 +679,9 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
     /**
      * Compares the specified Object with this Map for equality.
      * Returns true if the given object is also a LinkedHashMap and the two
-     * Maps represent the same mappings in the same order.  More formally, 
+     * Maps represent the same mappings in the same order.  More formally,
      * two Maps <code>t1</code> and <code>t2</code> represent the same mappings
-     * if <code>t1.keySet().equals(t2.keySet())</code> and for every 
+     * if <code>t1.keySet().equals(t2.keySet())</code> and for every
      * key <code>k</code> in <code>t1.keySet()</code>, <code>
      * (t1.get(k)==null ? t2.get(k)==null : t1.get(k).equals(t2.get(k)))
      * </code>.
@@ -691,14 +690,14 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
      * if so it returns true.  Then, it checks if the specified Object is
      * a Map whose size is identical to the size of this Set; if not, it
      * it returns false.  If so, it iterates over this Map and the specified
-     * Map's entrySet() Collection, and checks that the specified Map contains 
-     * each mapping that this Map contains at the same position.  If the 
-     * specified Map fails to contain such a mapping in the right order, false 
+     * Map's entrySet() Collection, and checks that the specified Map contains
+     * each mapping that this Map contains at the same position.  If the
+     * specified Map fails to contain such a mapping in the right order, false
      * is returned.  If the iteration completes, true is returned.
      *
      * @param o Object to be compared for equality with this Map.
      * @return true if the specified Object is equal to this Map.
-     * 
+     *
      */
     public boolean equals(Object o) {
         if (o == this)
@@ -712,7 +711,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
 
         Iterator i1 = entrySet().iterator();
         Iterator i2 = t.entrySet().iterator();
-        
+
         while (i1.hasNext()) {
             Entry e1 = (Entry) i1.next();
             Entry e2 = (Entry) i2.next();
@@ -752,7 +751,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
             this.next = next;
         }
 
-        // Map.Entry Ops 
+        // Map.Entry Ops
 
         public Object getKey() {
             return key;
@@ -895,7 +894,7 @@ public class LinkedHashMap extends AbstractMap implements Map, Serializable {
         // Read in size (number of Mappings)
         int size = s.readInt();
 
-        // Read the keys and values, and put the mappings in the LinkedHashMap 
+        // Read the keys and values, and put the mappings in the LinkedHashMap
         for (int i=0; i<size; i++) {
             Object key = s.readObject();
             Object value = s.readObject();

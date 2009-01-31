@@ -36,7 +36,6 @@ import sun.tools.java.*;
  * they are subject to change or removal without notice.
  *
  * @author Arthur van Hoff
- * @version 	%I%, %G%
  */
 public final
 class LocalVariable {
@@ -46,22 +45,22 @@ class LocalVariable {
     int to;
 
     public LocalVariable(MemberDefinition field, int slot) {
-	if (field == null) {
-	    new Exception().printStackTrace();
-	}
-	this.field = field;
-	this.slot = slot;
-	to = -1;
+        if (field == null) {
+            new Exception().printStackTrace();
+        }
+        this.field = field;
+        this.slot = slot;
+        to = -1;
     }
 
     LocalVariable(MemberDefinition field, int slot, int from, int to) {
-	this.field = field;
-	this.slot = slot;
-	this.from = from;
-	this.to = to;
+        this.field = field;
+        this.slot = slot;
+        this.from = from;
+        this.to = to;
     }
 
     public String toString() {
-	return field + "/" + slot;
+        return field + "/" + slot;
     }
 }

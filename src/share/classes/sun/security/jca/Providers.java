@@ -35,36 +35,35 @@ import java.security.Security;
  * special code for the provider list during JAR verification.
  *
  * @author  Andreas Sterbenz
- * @version %I%, %G%
  * @since   1.5
  */
 public class Providers {
-    
+
     private static final ThreadLocal<ProviderList> threadLists =
-	new InheritableThreadLocal<ProviderList>();
-	
+        new InheritableThreadLocal<ProviderList>();
+
     // number of threads currently using thread-local provider lists
     // tracked to allow an optimization if == 0
     private static volatile int threadListsUsed;
-    
+
     // current system-wide provider list
     // Note volatile immutable object, so no synchronization needed.
     private static volatile ProviderList providerList;
-    
+
     static {
-	// set providerList to empty list first in case initialization somehow
-	// triggers a getInstance() call (although that should not happen)
-	providerList = ProviderList.EMPTY;
-	providerList = ProviderList.fromSecurityProperties();
+        // set providerList to empty list first in case initialization somehow
+        // triggers a getInstance() call (although that should not happen)
+        providerList = ProviderList.EMPTY;
+        providerList = ProviderList.fromSecurityProperties();
     }
-    
+
     private Providers() {
-	// empty
+        // empty
     }
 
     // we need special handling to resolve circularities when loading
     // signed JAR files during startup. The code below is part of that.
-    
+
     // Basically, before we load data from a signed JAR file, we parse
     // the PKCS#7 file and verify the signature. We need a
     // CertificateFactory, Signatures, etc. to do that. We have to make
@@ -72,39 +71,39 @@ public class Providers {
     // file we are just verifying.
     //
     // To avoid that, we use different provider settings during JAR
-    // verification.  However, we do not want those provider settings to 
+    // verification.  However, we do not want those provider settings to
     // interfere with other parts of the system. Therefore, we make them local
     // to the Thread executing the JAR verification code.
     //
     // The code here is used by sun.security.util.SignatureFileVerifier.
     // See there for details.
-    
+
     private static final String BACKUP_PROVIDER_CLASSNAME =
-	"sun.security.provider.VerificationProvider";
-    
+        "sun.security.provider.VerificationProvider";
+
     // Hardcoded classnames of providers to use for JAR verification.
     // MUST NOT be on the bootclasspath and not in signed JAR files.
     private static final String[] jarVerificationProviders = {
-	"sun.security.provider.Sun",
-	"sun.security.rsa.SunRsaSign",
-	BACKUP_PROVIDER_CLASSNAME,
+        "sun.security.provider.Sun",
+        "sun.security.rsa.SunRsaSign",
+        BACKUP_PROVIDER_CLASSNAME,
     };
-    
+
     // Return to Sun provider or its backup.
     // This method should only be called by
     // sun.security.util.ManifestEntryVerifier and java.security.SecureRandom.
     public static Provider getSunProvider() {
-	try {
-	    Class clazz = Class.forName(jarVerificationProviders[0]);
-	    return (Provider)clazz.newInstance();
-	} catch (Exception e) {
-	    try {
-		Class clazz = Class.forName(BACKUP_PROVIDER_CLASSNAME);
-		return (Provider)clazz.newInstance();
-	    } catch (Exception ee) {
-		throw new RuntimeException("Sun provider not found", e);
-	    }
-	}
+        try {
+            Class clazz = Class.forName(jarVerificationProviders[0]);
+            return (Provider)clazz.newInstance();
+        } catch (Exception e) {
+            try {
+                Class clazz = Class.forName(BACKUP_PROVIDER_CLASSNAME);
+                return (Provider)clazz.newInstance();
+            } catch (Exception ee) {
+                throw new RuntimeException("Sun provider not found", e);
+            }
+        }
     }
 
     /**
@@ -114,42 +113,42 @@ public class Providers {
      * once you are done.
      */
     public static Object startJarVerification() {
-	ProviderList currentList = getProviderList();
-	ProviderList jarList = currentList.getJarList(jarVerificationProviders);
-	// return the old thread-local provider list, usually null
-	return beginThreadProviderList(jarList);
+        ProviderList currentList = getProviderList();
+        ProviderList jarList = currentList.getJarList(jarVerificationProviders);
+        // return the old thread-local provider list, usually null
+        return beginThreadProviderList(jarList);
     }
-    
+
     /**
      * Stop JAR verification. Call once you have completed JAR verification.
      */
     public static void stopJarVerification(Object obj) {
-	// restore old thread-local provider list
-	endThreadProviderList((ProviderList)obj);
+        // restore old thread-local provider list
+        endThreadProviderList((ProviderList)obj);
     }
-    
+
     /**
      * Return the current ProviderList. If the thread-local list is set,
      * it is returned. Otherwise, the system wide list is returned.
      */
     public static ProviderList getProviderList() {
-	ProviderList list = getThreadProviderList();
-	if (list == null) {
-	    list = getSystemProviderList();
-	}
-	return list;
+        ProviderList list = getThreadProviderList();
+        if (list == null) {
+            list = getSystemProviderList();
+        }
+        return list;
     }
-    
+
     /**
      * Set the current ProviderList. Affects the thread-local list if set,
      * otherwise the system wide list.
      */
     public static void setProviderList(ProviderList newList) {
-	if (getThreadProviderList() == null) {
-	    setSystemProviderList(newList);
-	} else {
-	    changeThreadProviderList(newList);
-	}
+        if (getThreadProviderList() == null) {
+            setSystemProviderList(newList);
+        } else {
+            changeThreadProviderList(newList);
+        }
     }
 
     /**
@@ -158,54 +157,54 @@ public class Providers {
      * present to applications.
      */
     public static synchronized ProviderList getFullProviderList() {
-	ProviderList list = getThreadProviderList();
-	if (list != null) {
-	    ProviderList newList = list.removeInvalid();
-	    if (newList != list) {
-		changeThreadProviderList(newList);
-		list = newList;
-	    }
-	    return list;
-	}
-	list = getSystemProviderList();
-	ProviderList newList = list.removeInvalid();
-	if (newList != list) {
-	    setSystemProviderList(newList);
-	    list = newList;
-	}
-	return list;
+        ProviderList list = getThreadProviderList();
+        if (list != null) {
+            ProviderList newList = list.removeInvalid();
+            if (newList != list) {
+                changeThreadProviderList(newList);
+                list = newList;
+            }
+            return list;
+        }
+        list = getSystemProviderList();
+        ProviderList newList = list.removeInvalid();
+        if (newList != list) {
+            setSystemProviderList(newList);
+            list = newList;
+        }
+        return list;
     }
-    
+
     private static ProviderList getSystemProviderList() {
-	return providerList;
+        return providerList;
     }
-    
+
     private static void setSystemProviderList(ProviderList list) {
-	providerList = list;
+        providerList = list;
     }
-    
+
     public static ProviderList getThreadProviderList() {
-	// avoid accessing the threadlocal if none are currently in use
-	// (first use of ThreadLocal.get() for a Thread allocates a Map)
-	if (threadListsUsed == 0) {
-	    return null;
-	}
-	return threadLists.get();
+        // avoid accessing the threadlocal if none are currently in use
+        // (first use of ThreadLocal.get() for a Thread allocates a Map)
+        if (threadListsUsed == 0) {
+            return null;
+        }
+        return threadLists.get();
     }
 
     // Change the thread local provider list. Use only if the current thread
     // is already using a thread local list and you want to change it in place.
     // In other cases, use the begin/endThreadProviderList() methods.
     private static void changeThreadProviderList(ProviderList list) {
-	threadLists.set(list);
+        threadLists.set(list);
     }
 
     /**
-     * Methods to manipulate the thread local provider list. It is for use by 
+     * Methods to manipulate the thread local provider list. It is for use by
      * JAR verification (see above) and the SunJSSE FIPS mode only.
      *
      * It should be used as follows:
-     * 
+     *
      *   ProviderList list = ...;
      *   ProviderList oldList = Providers.beginThreadProviderList(list);
      *   try {
@@ -217,29 +216,29 @@ public class Providers {
      */
 
     public static synchronized ProviderList beginThreadProviderList(ProviderList list) {
-	if (ProviderList.debug != null) {
-	    ProviderList.debug.println("ThreadLocal providers: " + list);
-	}
-	ProviderList oldList = threadLists.get();
-	threadListsUsed++;
-	threadLists.set(list);
-	return oldList;
+        if (ProviderList.debug != null) {
+            ProviderList.debug.println("ThreadLocal providers: " + list);
+        }
+        ProviderList oldList = threadLists.get();
+        threadListsUsed++;
+        threadLists.set(list);
+        return oldList;
     }
-    
+
     public static synchronized void endThreadProviderList(ProviderList list) {
-	if (list == null) {
-	    if (ProviderList.debug != null) {
-		ProviderList.debug.println("Disabling ThreadLocal providers");
-	    }
-	    threadLists.remove();
-	} else {
-	    if (ProviderList.debug != null) {
-		ProviderList.debug.println
-		    ("Restoring previous ThreadLocal providers: " + list);
-	    }
- 	    threadLists.set(list);
-	}
-	threadListsUsed--;
+        if (list == null) {
+            if (ProviderList.debug != null) {
+                ProviderList.debug.println("Disabling ThreadLocal providers");
+            }
+            threadLists.remove();
+        } else {
+            if (ProviderList.debug != null) {
+                ProviderList.debug.println
+                    ("Restoring previous ThreadLocal providers: " + list);
+            }
+            threadLists.set(list);
+        }
+        threadListsUsed--;
     }
 
 }

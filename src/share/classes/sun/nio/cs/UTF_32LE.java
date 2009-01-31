@@ -32,19 +32,18 @@ import java.nio.charset.CharsetEncoder;
 public class UTF_32LE extends Unicode
 {
     public UTF_32LE() {
-	super("UTF-32LE", StandardCharsets.aliases_UTF_32LE);
+        super("UTF-32LE", StandardCharsets.aliases_UTF_32LE);
     }
 
     public String historicalName() {
-	return "UTF-32LE";
+        return "UTF-32LE";
     }
 
     public CharsetDecoder newDecoder() {
-	return new UTF_32Coder.Decoder(this, UTF_32Coder.LITTLE);
+        return new UTF_32Coder.Decoder(this, UTF_32Coder.LITTLE);
     }
 
     public CharsetEncoder newEncoder() {
-	return new UTF_32Coder.Encoder(this, UTF_32Coder.LITTLE, false);
+        return new UTF_32Coder.Encoder(this, UTF_32Coder.LITTLE, false);
     }
 }
-

@@ -61,7 +61,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         };
 
     volatile boolean isDisposed;
-    
+
     boolean isParentWindowLocated;
     int old_x, old_y;
     int ex_width, ex_height;
@@ -77,7 +77,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         eventProxy = new TrayIconEventProxy(this);
 
         canvas = new TrayIconCanvas(target, TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);
-       
+
         eframe = new XTrayIconEmbeddedFrame();
 
         eframe.setSize(TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);
@@ -93,7 +93,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             }
         });
 
-        
+
         if (XWM.getWMID() != XWM.METACITY_WM) {
             parentXED = dummyXED; // We don't like to leave it 'null'.
 
@@ -104,7 +104,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                     if (isDisposed() || ev.get_type() != XlibWrapper.ConfigureNotify) {
                         return;
                     }
-                    
+
                     XConfigureEvent ce = ev.get_xconfigure();
 
                     ctrLog.log(Level.FINE, "ConfigureNotify on parent of {0}: {1}x{2}+{3}+{4} (old: {5}+{6})",
@@ -215,10 +215,10 @@ public class XTrayIconPeer implements TrayIconPeer {
                         }
                         return;
                     }
-                    
+
                     if (!isTrayIconDisplayed) {
                         addXED(eframeParentID, parentXED, XlibWrapper.StructureNotifyMask);
-                        
+
                         isTrayIconDisplayed = true;
                         XToolkit.awtLockNotifyAll();
                     }
@@ -245,7 +245,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                 }
             }
         } finally {
-            XToolkit.awtUnlock(); 
+            XToolkit.awtUnlock();
         }
 
         // This is unlikely to happen.
@@ -285,7 +285,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         // isDisposed value must be checked.
         XToolkit.awtLock();
         isDisposed = true;
-        XToolkit.awtUnlock(); 
+        XToolkit.awtUnlock();
 
         removeXED(getWindow(), eframeXED);
         removeXED(eframeParentID, parentXED);
@@ -305,7 +305,7 @@ public class XTrayIconPeer implements TrayIconPeer {
 
     public void updateImage() {
         Runnable r = new Runnable() {
-                public void run() { 
+                public void run() {
                     canvas.updateImage(target.getImage());
                 }
             };
@@ -348,7 +348,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         }
 
         if (popup != null) {
-            Point loc = ((XBaseWindow)eframe.getPeer()).toLocal(new Point(x, y));        
+            Point loc = ((XBaseWindow)eframe.getPeer()).toLocal(new Point(x, y));
             popup.show(eframe, loc.x, loc.y);
         }
     }
@@ -431,14 +431,14 @@ public class XTrayIconPeer implements TrayIconPeer {
                 xtiPeer.showPopupMenu(coord.x, coord.y);
             }
 
-            e.translatePoint(coord.x - e.getX(), coord.y - e.getY());        
+            e.translatePoint(coord.x - e.getX(), coord.y - e.getY());
             // This is a hack in order to set non-Component source to MouseEvent
             // instance.
             // In some cases this could lead to unpredictable result (e.g. when
             // other class tries to cast source field to Component).
             // We already filter DRAG events out (CR 6565779).
             e.setSource(xtiPeer.target);
-            Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(e); 
+            Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(e);
         }
         public void mouseClicked(MouseEvent e) {
             if ((e.getClickCount() > 1 || xtiPeer.balloon.isVisible()) &&
@@ -467,7 +467,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         }
         public void mouseReleased(MouseEvent e) {
             handleEvent(e);
-        }        
+        }
         public void mouseDragged(MouseEvent e) {
             handleEvent(e);
         }
@@ -541,7 +541,7 @@ public class XTrayIconPeer implements TrayIconPeer {
 
         IconCanvas(int width, int height) {
             this.width = curW = width;
-            this.height = curH = height; 
+            this.height = curH = height;
         }
 
         // Invoke on EDT.
@@ -552,7 +552,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             }
             repaintImage(true);
         }
-    
+
         // Invoke on EDT.
         protected void repaintImage(boolean doClear) {
             Graphics g = getGraphics();
@@ -582,7 +582,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                         gr.fillRect(0, 0, curW, curH);
                         gr.drawImage(image, 0, 0, curW, curH, observer);
                         gr.dispose();
-                        
+
                         g.drawImage(bufImage, 0, 0, curW, curH, null);
                     } finally {
                         gr.dispose();
@@ -628,7 +628,7 @@ public class XTrayIconPeer implements TrayIconPeer {
         final static int TOOLTIP_START_DELAY_TIME = 1000;
         final static int TOOLTIP_MAX_LENGTH = 64;
         final static int TOOLTIP_MOUSE_CURSOR_INDENT = 5;
-        final static Color TOOLTIP_BACKGROUND_COLOR = new Color(255, 255, 220);        
+        final static Color TOOLTIP_BACKGROUND_COLOR = new Color(255, 255, 220);
         final static Font TOOLTIP_TEXT_FONT = XWindow.defaultFont;
 
         Tooltip(XTrayIconPeer xtiPeer, Frame parent) {
@@ -655,7 +655,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             } else {
                 textLabel.setText(tip);
             }
-            
+
             // Execute on EDT to avoid deadlock (see 6280857).
             SunToolkit.executeOnEventHandlerThread(xtiPeer.target, new Runnable() {
                     public void run() {
@@ -679,9 +679,9 @@ public class XTrayIconPeer implements TrayIconPeer {
         }
 
         void enter() {
-            XToolkit.schedule(starter, TOOLTIP_START_DELAY_TIME);        
+            XToolkit.schedule(starter, TOOLTIP_START_DELAY_TIME);
         }
-        
+
         void exit() {
             XToolkit.remove(starter);
             if (isVisible()) {
@@ -739,7 +739,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                             iconCanvas.setSize(0, 0);
                             XToolkit.awtLock();
                             try {
-                                displayer.isDisplayed = false;  
+                                displayer.isDisplayed = false;
                                 XToolkit.awtLockNotifyAll();
                             } finally {
                                 XToolkit.awtUnlock();
@@ -747,7 +747,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                         }
                     }
                 }, BALLOON_SHOW_TIME);
-            
+
             add(mainPanel);
 
             captionLabel.setFont(BALLOON_CAPTION_FONT);
@@ -858,7 +858,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             displayer.interrupt();
             super.dispose();
         }
-        
+
         void loadGtkImages() {
             if (!gtkImagesLoaded) {
                 errorImage = (Image)Toolkit.getDefaultToolkit().getDesktopProperty(
@@ -870,7 +870,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                 gtkImagesLoaded = true;
             }
         }
-        
+
         class ActionPerformer extends MouseAdapter {
             public void mouseClicked(MouseEvent e) {
                 // hide the balloon by any click
@@ -881,7 +881,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                                                       e.getWhen(), e.getModifiers());
                     Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(aev);
                 }
-            }  
+            }
         }
 
         class Displayer extends Thread {
@@ -893,7 +893,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             Displayer() {
                 setDaemon(true);
             }
-            
+
             public void run() {
                 while (true) {
                     Message msg = null;
@@ -972,7 +972,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             assert SunToolkit.isDispatchThreadForAppContext(InfoWindow.this);
 
             pack();
-            
+
             Dimension size = getSize();
             // TODO: When 6356322 is fixed we should get screen bounds in
             // this way: eframe.getGraphicsConfiguration().getBounds().
@@ -1013,7 +1013,7 @@ public class XTrayIconPeer implements TrayIconPeer {
             }
 
             void schedule() {
-                XToolkit.schedule(this, time);  
+                XToolkit.schedule(this, time);
             }
 
             void close() {
@@ -1028,7 +1028,7 @@ public class XTrayIconPeer implements TrayIconPeer {
                             InfoWindow.super.hide();
                             invalidate();
                             if (action != null) {
-                                action.run(); 
+                                action.run();
                             }
                         }
                     });

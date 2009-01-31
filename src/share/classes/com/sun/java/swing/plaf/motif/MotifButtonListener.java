@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 
 package com.sun.java.swing.plaf.motif;
 
@@ -36,7 +36,6 @@ import javax.swing.event.*;
  * Button Listener
  * <p>
  *
- * @version %I% %G%
  * @author Rich Schiavi
  */
 public class MotifButtonListener extends BasicButtonListener {
@@ -45,8 +44,6 @@ public class MotifButtonListener extends BasicButtonListener {
     }
 
     protected void checkOpacity(AbstractButton b) {
-	b.setOpaque( false );
+        b.setOpaque( false );
     }
 }
-
-

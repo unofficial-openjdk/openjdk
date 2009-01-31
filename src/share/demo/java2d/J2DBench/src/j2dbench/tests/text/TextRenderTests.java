@@ -51,62 +51,62 @@ public abstract class TextRenderTests extends TextTests {
     static Group rendertestroot;
 
     public static void init() {
-	renderroot = new Group(textroot, "Rendering", "Rendering Benchmarks");
-	rendertestroot = new Group(renderroot, "tests", "Rendering Tests");
+        renderroot = new Group(textroot, "Rendering", "Rendering Benchmarks");
+        rendertestroot = new Group(renderroot, "tests", "Rendering Tests");
 
-	new DrawStrings();
+        new DrawStrings();
         new DrawChars();
-	new DrawBytes();
+        new DrawBytes();
 
-	if (hasGraphics2D) {
+        if (hasGraphics2D) {
             new DrawGlyphVectors();
             new DrawTextLayouts();
-	}
+        }
     }
 
     public TextRenderTests(Group parent, String nodeName, String description) {
-	super(parent, nodeName, description);
+        super(parent, nodeName, description);
     }
 
     public static class DrawStrings extends TextRenderTests {
-	public DrawStrings() {
-	    super(rendertestroot, "drawString", "Drawing Strings");
-	}
+        public DrawStrings() {
+            super(rendertestroot, "drawString", "Drawing Strings");
+        }
 
-	public void runTest(Object ctx, int numReps) {
-	    TextContext tctx = (TextContext)ctx;
+        public void runTest(Object ctx, int numReps) {
+            TextContext tctx = (TextContext)ctx;
             Graphics g = tctx.graphics;
             g.setFont(tctx.font);
             String text = tctx.text;
             do {
                 g.drawString(text, 40, 40);
             } while (--numReps >= 0);
-	}
+        }
     }
 
     public static class DrawChars extends TextRenderTests {
-	public DrawChars() {
-	    super(rendertestroot, "drawChars", "Drawing Char Arrays");
-	}
+        public DrawChars() {
+            super(rendertestroot, "drawChars", "Drawing Char Arrays");
+        }
 
-	public void runTest(Object ctx, int numReps) {
-	    TextContext tctx = (TextContext)ctx;
+        public void runTest(Object ctx, int numReps) {
+            TextContext tctx = (TextContext)ctx;
             Graphics g = tctx.graphics;
             char[] chars = tctx.chars;
             g.setFont(tctx.font);
             do {
                 g.drawChars(chars, 0, chars.length, 40, 40);
             } while (--numReps >= 0);
-	}
+        }
     }
 
     public static class DrawBytes extends TextRenderTests {
-	public DrawBytes() {
-	    super(rendertestroot, "drawBytes", "Drawing Byte Arrays");
-	}
+        public DrawBytes() {
+            super(rendertestroot, "drawBytes", "Drawing Byte Arrays");
+        }
 
-	public void runTest(Object ctx, int numReps) {
-	    TextContext tctx = (TextContext)ctx;
+        public void runTest(Object ctx, int numReps) {
+            TextContext tctx = (TextContext)ctx;
             Graphics g = tctx.graphics;
             g.setFont(tctx.font);
             try {
@@ -118,7 +118,7 @@ public abstract class TextRenderTests extends TextTests {
             catch (Exception e) {
                 throw new RuntimeException(e);
             }
-	}
+        }
     }
 
     public static class GVContext extends G2DContext {
@@ -131,22 +131,22 @@ public abstract class TextRenderTests extends TextTests {
     }
 
     public static class DrawGlyphVectors extends TextRenderTests {
-	public DrawGlyphVectors() {
-	    super(rendertestroot, "drawGlyphVectors", "Drawing GlyphVectors");
-	}
+        public DrawGlyphVectors() {
+            super(rendertestroot, "drawGlyphVectors", "Drawing GlyphVectors");
+        }
 
         public Context createContext() {
             return new GVContext();
         }
 
-	public void runTest(Object ctx, int numReps) {
-	    GVContext gvctx = (GVContext)ctx;
+        public void runTest(Object ctx, int numReps) {
+            GVContext gvctx = (GVContext)ctx;
             Graphics2D g2d = gvctx.g2d;
             GlyphVector gv = gvctx.gv;
             do {
                 g2d.drawGlyphVector(gv, 40, 40);
             } while (--numReps >= 0);
-	}
+        }
     }
 
     public static class TLContext extends G2DContext {
@@ -159,21 +159,21 @@ public abstract class TextRenderTests extends TextTests {
     }
 
     public static class DrawTextLayouts extends TextRenderTests {
-	public DrawTextLayouts() {
-	    super(rendertestroot, "drawTextLayout", "Drawing TextLayouts");
-	}
+        public DrawTextLayouts() {
+            super(rendertestroot, "drawTextLayout", "Drawing TextLayouts");
+        }
 
         public Context createContext() {
             return new TLContext();
         }
 
-	public void runTest(Object ctx, int numReps) {
-	    TLContext tlctx = (TLContext)ctx;
+        public void runTest(Object ctx, int numReps) {
+            TLContext tlctx = (TLContext)ctx;
             Graphics2D g2d = tlctx.g2d;
             TextLayout tl = tlctx.tl;
             do {
                 tl.draw(g2d, 40, 40);
             } while (--numReps >= 0);
-	}
+        }
     }
 }

@@ -47,18 +47,18 @@ public class XPanelPeer extends XCanvasPeer implements PanelPeer {
     }
 
     XPanelPeer(Component target) {
-	super(target);
+        super(target);
     }
 
     void postInit(XCreateWindowParams params) {
         super.postInit(params);
         if (embedder != null) {
             embedder.install(this);
-        }        
+        }
     }
 
     public Insets getInsets() {
-	return new Insets(0, 0, 0, 0);
+        return new Insets(0, 0, 0, 0);
     }
 
     public void paint(Graphics g) {
@@ -74,28 +74,28 @@ public class XPanelPeer extends XCanvasPeer implements PanelPeer {
             runComponents(((Container)target).getComponents(), g,
                           SunGraphicsCallback.LIGHTWEIGHTS |
                           SunGraphicsCallback.HEAVYWEIGHTS);
-            
+
     }
 
     public void setBackground(Color c) {
-	Component comp;
-	int i;
+        Component comp;
+        int i;
 
-	Container cont = (Container) target;
-	synchronized(target.getTreeLock()) {
-	    int n = cont.getComponentCount();
-	    for(i=0; i < n; i++) {
-	        comp = cont.getComponent(i);
-	        ComponentPeer peer = comp.getPeer();
-	        if (peer != null) {
-		    Color color = comp.getBackground();
+        Container cont = (Container) target;
+        synchronized(target.getTreeLock()) {
+            int n = cont.getComponentCount();
+            for(i=0; i < n; i++) {
+                comp = cont.getComponent(i);
+                ComponentPeer peer = comp.getPeer();
+                if (peer != null) {
+                    Color color = comp.getBackground();
                     if (color == null || color.equals(c)) {
-			peer.setBackground(c);
-		    }
- 		}
-	    }
-	}
-  	super.setBackground(c);
+                        peer.setBackground(c);
+                    }
+                }
+            }
+        }
+        super.setBackground(c);
     }
 
     public void setForeground(Color c) {
@@ -127,7 +127,7 @@ public class XPanelPeer extends XCanvasPeer implements PanelPeer {
      * DEPRECATED:  Replaced by getInsets().
      */
     public Insets insets() {
-	return getInsets();
+        return getInsets();
     }
 
     /*
@@ -137,7 +137,7 @@ public class XPanelPeer extends XCanvasPeer implements PanelPeer {
      *
      * The notification is propagated to the child Canvas components.
      * Top-level windows and other Panels are notified too as their
-     * peers are subclasses of XCanvasPeer. 
+     * peers are subclasses of XCanvasPeer.
      */
     public void displayChanged(int screenNum) {
         super.displayChanged(screenNum);
@@ -176,4 +176,3 @@ public class XPanelPeer extends XCanvasPeer implements PanelPeer {
         return ((Container)target).getComponentCount() == 0;
     }
 }
-

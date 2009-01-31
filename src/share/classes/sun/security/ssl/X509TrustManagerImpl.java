@@ -49,155 +49,154 @@ import sun.security.util.HostnameChecker;
  * make sense to separate the Simple and PKIX trust managers into separate
  * classes.
  *
- * @version %I%, %G%
  * @author Andreas Sterbenz
  * @author Xuelei Fan
  */
-final class X509TrustManagerImpl extends X509ExtendedTrustManager 
-	implements X509TrustManager {
-    
+final class X509TrustManagerImpl extends X509ExtendedTrustManager
+        implements X509TrustManager {
+
     /**
      * Flag indicating whether to enable revocation check for the PKIX trust
      * manager. Typically, this will only work if the PKIX implementation
      * supports CRL distribution points as we do not manually setup CertStores.
      */
-    private final static boolean checkRevocation = 
-    	Debug.getBooleanProperty("com.sun.net.ssl.checkRevocation", false);
-    
+    private final static boolean checkRevocation =
+        Debug.getBooleanProperty("com.sun.net.ssl.checkRevocation", false);
+
     private final String validatorType;
-    
+
     /**
-     * The Set of trusted X509Certificates. 
+     * The Set of trusted X509Certificates.
      */
     private final Collection<X509Certificate> trustedCerts;
-    
+
     private final PKIXBuilderParameters pkixParams;
-    
+
     // note that we need separate validator for client and server due to
     // the different extension checks. They are initialized lazily on demand.
     private volatile Validator clientValidator, serverValidator;
 
     private static final Debug debug = Debug.getInstance("ssl");
 
-    X509TrustManagerImpl(String validatorType, KeyStore ks) 
-	    throws KeyStoreException {
-	this.validatorType = validatorType;
-	this.pkixParams = null;
-	if (ks == null) {
-	    trustedCerts = Collections.<X509Certificate>emptySet();
-	} else {
-	    trustedCerts = KeyStores.getTrustedCerts(ks);
-	}
-	showTrustedCerts();
+    X509TrustManagerImpl(String validatorType, KeyStore ks)
+            throws KeyStoreException {
+        this.validatorType = validatorType;
+        this.pkixParams = null;
+        if (ks == null) {
+            trustedCerts = Collections.<X509Certificate>emptySet();
+        } else {
+            trustedCerts = KeyStores.getTrustedCerts(ks);
+        }
+        showTrustedCerts();
     }
-    
+
     X509TrustManagerImpl(String validatorType, PKIXBuilderParameters params) {
-	this.validatorType = validatorType;
-	this.pkixParams = params;
-	// create server validator eagerly so that we can conveniently
-	// get the trusted certificates
-	// clients need it anyway eventually, and servers will not mind
-	// the little extra footprint
-	Validator v = getValidator(Validator.VAR_TLS_SERVER);
-	trustedCerts = v.getTrustedCertificates();
-	serverValidator = v;
-	showTrustedCerts();
+        this.validatorType = validatorType;
+        this.pkixParams = params;
+        // create server validator eagerly so that we can conveniently
+        // get the trusted certificates
+        // clients need it anyway eventually, and servers will not mind
+        // the little extra footprint
+        Validator v = getValidator(Validator.VAR_TLS_SERVER);
+        trustedCerts = v.getTrustedCertificates();
+        serverValidator = v;
+        showTrustedCerts();
     }
-    
+
     private void showTrustedCerts() {
-	if (debug != null && Debug.isOn("trustmanager")) {
-	    for (X509Certificate cert : trustedCerts) {
-		System.out.println("adding as trusted cert:");
-		System.out.println("  Subject: "
-					+ cert.getSubjectX500Principal());
-		System.out.println("  Issuer:  " 
-					+ cert.getIssuerX500Principal());
-		System.out.println("  Algorithm: "
-					+ cert.getPublicKey().getAlgorithm()
-					+ "; Serial number: 0x"
-					+ cert.getSerialNumber().toString(16));
-		System.out.println("  Valid from "
-					+ cert.getNotBefore() + " until "
-					+ cert.getNotAfter());
-		System.out.println();
-	    }
-	}
+        if (debug != null && Debug.isOn("trustmanager")) {
+            for (X509Certificate cert : trustedCerts) {
+                System.out.println("adding as trusted cert:");
+                System.out.println("  Subject: "
+                                        + cert.getSubjectX500Principal());
+                System.out.println("  Issuer:  "
+                                        + cert.getIssuerX500Principal());
+                System.out.println("  Algorithm: "
+                                        + cert.getPublicKey().getAlgorithm()
+                                        + "; Serial number: 0x"
+                                        + cert.getSerialNumber().toString(16));
+                System.out.println("  Valid from "
+                                        + cert.getNotBefore() + " until "
+                                        + cert.getNotAfter());
+                System.out.println();
+            }
+        }
     }
 
     private Validator getValidator(String variant) {
-	Validator v;
-	if (pkixParams == null) {
-	    v = Validator.getInstance(validatorType, variant, trustedCerts);
-	    // if the PKIX validator is created from a KeyStore,
-	    // disable revocation checking
-	    if (v instanceof PKIXValidator) {
-		PKIXValidator pkixValidator = (PKIXValidator)v;
-		pkixValidator.getParameters().setRevocationEnabled
-							    (checkRevocation);
-	    }
-	} else {
-	    v = Validator.getInstance(validatorType, variant, pkixParams);
-	}
-	return v;
+        Validator v;
+        if (pkixParams == null) {
+            v = Validator.getInstance(validatorType, variant, trustedCerts);
+            // if the PKIX validator is created from a KeyStore,
+            // disable revocation checking
+            if (v instanceof PKIXValidator) {
+                PKIXValidator pkixValidator = (PKIXValidator)v;
+                pkixValidator.getParameters().setRevocationEnabled
+                                                            (checkRevocation);
+            }
+        } else {
+            v = Validator.getInstance(validatorType, variant, pkixParams);
+        }
+        return v;
     }
-    
-    private static X509Certificate[] validate(Validator v, 
-	    X509Certificate[] chain, String authType) throws CertificateException {
-	Object o = JsseJce.beginFipsProvider();
-	try {
-	    return v.validate(chain, null, authType);
-	} finally {
-	    JsseJce.endFipsProvider(o);
-	}
+
+    private static X509Certificate[] validate(Validator v,
+            X509Certificate[] chain, String authType) throws CertificateException {
+        Object o = JsseJce.beginFipsProvider();
+        try {
+            return v.validate(chain, null, authType);
+        } finally {
+            JsseJce.endFipsProvider(o);
+        }
     }
-    
+
     /**
      * Returns true if the client certificate can be trusted.
      *
      * @param chain certificates which establish an identity for the client.
-     *	    Chains of arbitrary length are supported, and certificates
-     *	    marked internally as trusted will short-circuit signature checks.
+     *      Chains of arbitrary length are supported, and certificates
+     *      marked internally as trusted will short-circuit signature checks.
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
      *         string is passed in for the authType parameter.
      * @throws CertificateException if the certificate chain is not trusted
-     *	    by this TrustManager.
-     */  
+     *      by this TrustManager.
+     */
     public void checkClientTrusted(X509Certificate chain[], String authType)
-	    throws CertificateException {
-	if (chain == null || chain.length == 0) {
-	    throw new IllegalArgumentException(
-		"null or zero-length certificate chain");
-	}
-	if (authType == null || authType.length() == 0) {
-	    throw new IllegalArgumentException(
-		"null or zero-length authentication type");
-	}
+            throws CertificateException {
+        if (chain == null || chain.length == 0) {
+            throw new IllegalArgumentException(
+                "null or zero-length certificate chain");
+        }
+        if (authType == null || authType.length() == 0) {
+            throw new IllegalArgumentException(
+                "null or zero-length authentication type");
+        }
 
-	// assume double checked locking with a volatile flag works
-	// (guaranteed under the new Tiger memory model)
-	Validator v = clientValidator;
-	if (v == null) {
-	    synchronized (this) {
-		v = clientValidator;
-		if (v == null) {
-		    v = getValidator(Validator.VAR_TLS_CLIENT);
-		    clientValidator = v;
-		}
-	    }
-	}
-	X509Certificate[] trustedChain = validate(v, chain, null);
-	if (debug != null && Debug.isOn("trustmanager")) {
-	    System.out.println("Found trusted certificate:");
-	    System.out.println(trustedChain[trustedChain.length - 1]);
-	}
+        // assume double checked locking with a volatile flag works
+        // (guaranteed under the new Tiger memory model)
+        Validator v = clientValidator;
+        if (v == null) {
+            synchronized (this) {
+                v = clientValidator;
+                if (v == null) {
+                    v = getValidator(Validator.VAR_TLS_CLIENT);
+                    clientValidator = v;
+                }
+            }
+        }
+        X509Certificate[] trustedChain = validate(v, chain, null);
+        if (debug != null && Debug.isOn("trustmanager")) {
+            System.out.println("Found trusted certificate:");
+            System.out.println(trustedChain[trustedChain.length - 1]);
+        }
     }
 
     /**
      * Returns true if the server certifcate can be trusted.
      *
      * @param chain certificates which establish an identity for the server.
-     *	    Chains of arbitrary length are supported, and certificates
+     *      Chains of arbitrary length are supported, and certificates
      *      marked internally as trusted will short-circuit signature checks.
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
@@ -206,35 +205,35 @@ final class X509TrustManagerImpl extends X509ExtendedTrustManager
      *      by this TrustManager.
      */
     public void checkServerTrusted(X509Certificate chain[], String authType)
-	    throws CertificateException {
-	if (chain == null || chain.length == 0) {
-	    throw new IllegalArgumentException(
-		"null or zero-length certificate chain");
-	}
-	if (authType == null || authType.length() == 0) {
-	    throw new IllegalArgumentException(
-		"null or zero-length authentication type");
-	}
+            throws CertificateException {
+        if (chain == null || chain.length == 0) {
+            throw new IllegalArgumentException(
+                "null or zero-length certificate chain");
+        }
+        if (authType == null || authType.length() == 0) {
+            throw new IllegalArgumentException(
+                "null or zero-length authentication type");
+        }
 
-	// assume double checked locking with a volatile flag works
-	// (guaranteed under the new Tiger memory model)
-	Validator v = serverValidator;
-	if (v == null) {
-	    synchronized (this) {
-		v = serverValidator;
-		if (v == null) {
-		    v = getValidator(Validator.VAR_TLS_SERVER);
-		    serverValidator = v;
-		}
-	    }
-	}
-	X509Certificate[] trustedChain = validate(v, chain, authType);
-	if (debug != null && Debug.isOn("trustmanager")) {
-	    System.out.println("Found trusted certificate:");
-	    System.out.println(trustedChain[trustedChain.length - 1]);
-	}
+        // assume double checked locking with a volatile flag works
+        // (guaranteed under the new Tiger memory model)
+        Validator v = serverValidator;
+        if (v == null) {
+            synchronized (this) {
+                v = serverValidator;
+                if (v == null) {
+                    v = getValidator(Validator.VAR_TLS_SERVER);
+                    serverValidator = v;
+                }
+            }
+        }
+        X509Certificate[] trustedChain = validate(v, chain, authType);
+        if (debug != null && Debug.isOn("trustmanager")) {
+            System.out.println("Found trusted certificate:");
+            System.out.println(trustedChain[trustedChain.length - 1]);
+        }
     }
-    
+
     /**
      * Returns a list of CAs accepted to authenticate entities for the
      * specified purpose.
@@ -243,9 +242,9 @@ final class X509TrustManagerImpl extends X509ExtendedTrustManager
      * @return list of CAs accepted for authenticating such tasks
      */
     public X509Certificate[] getAcceptedIssuers() {
-	X509Certificate[] certsArray = new X509Certificate[trustedCerts.size()];
-	trustedCerts.toArray(certsArray);
-	return certsArray;
+        X509Certificate[] certsArray = new X509Certificate[trustedCerts.size()];
+        trustedCerts.toArray(certsArray);
+        return certsArray;
     }
 
     /**
@@ -255,9 +254,9 @@ final class X509TrustManagerImpl extends X509ExtendedTrustManager
      * authentication based on the authentication type.
      */
     public void checkClientTrusted(X509Certificate[] chain, String authType,
-	String hostname, String algorithm) throws CertificateException {
-	checkClientTrusted(chain, authType);
-	checkIdentity(hostname, chain[0], algorithm);
+        String hostname, String algorithm) throws CertificateException {
+        checkClientTrusted(chain, authType);
+        checkIdentity(hostname, chain[0], algorithm);
     }
 
     /**
@@ -267,31 +266,31 @@ final class X509TrustManagerImpl extends X509ExtendedTrustManager
      * authentication based on the authentication type.
      */
     public void checkServerTrusted(X509Certificate[] chain, String authType,
-	String hostname, String algorithm) throws CertificateException {
-	checkServerTrusted(chain, authType);
-	checkIdentity(hostname, chain[0], algorithm);
+        String hostname, String algorithm) throws CertificateException {
+        checkServerTrusted(chain, authType);
+        checkIdentity(hostname, chain[0], algorithm);
     }
 
     // Identify the peer by its certificate and hostname.
     private void checkIdentity(String hostname, X509Certificate cert,
-	String algorithm) throws CertificateException {
-	if (algorithm != null && algorithm.length() != 0) {
-	    // if IPv6 strip off the "[]"
-	    if (hostname != null && hostname.startsWith("[") &&
-		hostname.endsWith("]")) {
-		hostname = hostname.substring(1, hostname.length()-1);
-	    }
+        String algorithm) throws CertificateException {
+        if (algorithm != null && algorithm.length() != 0) {
+            // if IPv6 strip off the "[]"
+            if (hostname != null && hostname.startsWith("[") &&
+                hostname.endsWith("]")) {
+                hostname = hostname.substring(1, hostname.length()-1);
+            }
 
-	    if (algorithm.equalsIgnoreCase("HTTPS")) {
-		HostnameChecker.getInstance(HostnameChecker.TYPE_TLS).match(
-			hostname, cert);
-	    } else if (algorithm.equalsIgnoreCase("LDAP")) {
-		HostnameChecker.getInstance(HostnameChecker.TYPE_LDAP).match(
-			hostname, cert);
-	    } else {
-		throw new CertificateException(
-			"Unknown identification algorithm: " + algorithm);
-	    }
-	}
+            if (algorithm.equalsIgnoreCase("HTTPS")) {
+                HostnameChecker.getInstance(HostnameChecker.TYPE_TLS).match(
+                        hostname, cert);
+            } else if (algorithm.equalsIgnoreCase("LDAP")) {
+                HostnameChecker.getInstance(HostnameChecker.TYPE_LDAP).match(
+                        hostname, cert);
+            } else {
+                throw new CertificateException(
+                        "Unknown identification algorithm: " + algorithm);
+            }
+        }
     }
 }

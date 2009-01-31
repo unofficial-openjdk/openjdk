@@ -31,13 +31,13 @@ import java.io.*;
 public class ReadOffset {
 
     public static void main(String[] args) throws Exception {
-	InputStream is
-	    = new ByteArrayInputStream("foo bar".getBytes("US-ASCII"));
-	InputStreamReader isr = new InputStreamReader(is, "US-ASCII");
-	char[] cbuf = new char[100];
-	int n;
-	System.out.println(n = isr.read(cbuf, 0, 3));
-	System.out.println(isr.read(cbuf, n, cbuf.length - n));
+        InputStream is
+            = new ByteArrayInputStream("foo bar".getBytes("US-ASCII"));
+        InputStreamReader isr = new InputStreamReader(is, "US-ASCII");
+        char[] cbuf = new char[100];
+        int n;
+        System.out.println(n = isr.read(cbuf, 0, 3));
+        System.out.println(isr.read(cbuf, n, cbuf.length - n));
     }
 
 }

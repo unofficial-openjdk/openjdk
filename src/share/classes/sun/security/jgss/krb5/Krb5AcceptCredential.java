@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
+
 package sun.security.jgss.krb5;
 
 import org.ietf.jgss.*;
@@ -41,7 +41,6 @@ import javax.security.auth.DestroyFailedException;
  * Implements the krb5 acceptor credential element.
  *
  * @author Mayank Upadhyay
- * @version %I%, %G%
  * @since 1.4
  */
 public class Krb5AcceptCredential
@@ -49,75 +48,75 @@ public class Krb5AcceptCredential
     implements Krb5CredElement {
 
     private static final long serialVersionUID = 7714332137352567952L;
-    
+
     private Krb5NameElement name;
 
     /**
      * We cache an EncryptionKey representation of this key because many
-     * Krb5 operation require a key in that form. At some point we might do 
+     * Krb5 operation require a key in that form. At some point we might do
      * away with EncryptionKey altogether and use the base class
      * KerberosKey everywhere.
      */
     private EncryptionKey[] krb5EncryptionKeys;
-    
-    private Krb5AcceptCredential(Krb5NameElement name, KerberosKey[] keys) {
-	/*
-	 * Initialize this instance with the data from the acquired
-	 * KerberosKey. This class needs to be a KerberosKey too
-	 * hence we can't just store a reference.
-	 */
-	super(keys[0].getPrincipal(),
-	      keys[0].getEncoded(),
-	      keys[0].getKeyType(),
-	      keys[0].getVersionNumber());
 
-	this.name = name;
-	// Cache this for later use by the sun.security.krb5 package.
-	krb5EncryptionKeys = new EncryptionKey[keys.length];
-	for (int i = 0; i < keys.length; i++) {
-	    krb5EncryptionKeys[i] = new EncryptionKey(keys[i].getEncoded(),
-				    keys[i].getKeyType(),
-				    new Integer(keys[i].getVersionNumber()));
-	}
+    private Krb5AcceptCredential(Krb5NameElement name, KerberosKey[] keys) {
+        /*
+         * Initialize this instance with the data from the acquired
+         * KerberosKey. This class needs to be a KerberosKey too
+         * hence we can't just store a reference.
+         */
+        super(keys[0].getPrincipal(),
+              keys[0].getEncoded(),
+              keys[0].getKeyType(),
+              keys[0].getVersionNumber());
+
+        this.name = name;
+        // Cache this for later use by the sun.security.krb5 package.
+        krb5EncryptionKeys = new EncryptionKey[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            krb5EncryptionKeys[i] = new EncryptionKey(keys[i].getEncoded(),
+                                    keys[i].getKeyType(),
+                                    new Integer(keys[i].getVersionNumber()));
+        }
     }
-    
+
     static Krb5AcceptCredential getInstance(final int caller, Krb5NameElement name)
-	throws GSSException {
-	
-	final String serverPrinc = (name == null? null: 
-	    name.getKrb5PrincipalName().getName());
-	final AccessControlContext acc = AccessController.getContext();
+        throws GSSException {
+
+        final String serverPrinc = (name == null? null:
+            name.getKrb5PrincipalName().getName());
+        final AccessControlContext acc = AccessController.getContext();
 
         KerberosKey[] keys;
-	try {
-	    keys = AccessController.doPrivileged(
-			new PrivilegedExceptionAction<KerberosKey[]>() {
-		public KerberosKey[] run() throws Exception {
-		    return Krb5Util.getKeys( 
-			caller == GSSUtil.CALLER_UNKNOWN ? GSSUtil.CALLER_ACCEPT: caller,
+        try {
+            keys = AccessController.doPrivileged(
+                        new PrivilegedExceptionAction<KerberosKey[]>() {
+                public KerberosKey[] run() throws Exception {
+                    return Krb5Util.getKeys(
+                        caller == GSSUtil.CALLER_UNKNOWN ? GSSUtil.CALLER_ACCEPT: caller,
                         serverPrinc, acc);
-		}});
-	} catch (PrivilegedActionException e) {
-	    GSSException ge = 
-		new GSSException(GSSException.NO_CRED, -1,
-		    "Attempt to obtain new ACCEPT credentials failed!");
-	    ge.initCause(e.getException());
-	    throw ge;
-	}
-        
-	if (keys == null || keys.length == 0)
-	    throw new GSSException(GSSException.NO_CRED, -1, 
-				   "Failed to find any Kerberos Key");
-	
-	if (name == null) {
-	    String fullName = keys[0].getPrincipal().getName();
-	    name = Krb5NameElement.getInstance(fullName, 
-				       Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
-	}
-	
-	return new Krb5AcceptCredential(name, keys);
+                }});
+        } catch (PrivilegedActionException e) {
+            GSSException ge =
+                new GSSException(GSSException.NO_CRED, -1,
+                    "Attempt to obtain new ACCEPT credentials failed!");
+            ge.initCause(e.getException());
+            throw ge;
+        }
+
+        if (keys == null || keys.length == 0)
+            throw new GSSException(GSSException.NO_CRED, -1,
+                                   "Failed to find any Kerberos Key");
+
+        if (name == null) {
+            String fullName = keys[0].getPrincipal().getName();
+            name = Krb5NameElement.getInstance(fullName,
+                                       Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
+        }
+
+        return new Krb5AcceptCredential(name, keys);
     }
-    
+
     /**
      * Returns the principal name for this credential. The name
      * is in mechanism specific format.
@@ -126,7 +125,7 @@ public class Krb5AcceptCredential
      * @exception GSSException may be thrown
      */
     public final GSSNameSpi getName() throws GSSException {
-	return name;
+        return name;
     }
 
     /**
@@ -136,7 +135,7 @@ public class Krb5AcceptCredential
      * @exception GSSException may be thrown
      */
     public int getInitLifetime() throws GSSException {
-	return 0;
+        return 0;
     }
 
     /**
@@ -146,17 +145,17 @@ public class Krb5AcceptCredential
      * @exception GSSException may be thrown
      */
     public int getAcceptLifetime() throws GSSException {
-	return GSSCredential.INDEFINITE_LIFETIME;
+        return GSSCredential.INDEFINITE_LIFETIME;
     }
-    
+
     public boolean isInitiatorCredential() throws GSSException {
-	return false;
+        return false;
     }
-    
+
     public boolean isAcceptorCredential() throws GSSException {
         return true;
     }
-    
+
     /**
      * Returns the oid representing the underlying credential
      * mechanism oid.
@@ -165,29 +164,29 @@ public class Krb5AcceptCredential
      * @exception GSSException may be thrown
      */
     public final Oid getMechanism() {
-	return Krb5MechFactory.GSS_KRB5_MECH_OID;
+        return Krb5MechFactory.GSS_KRB5_MECH_OID;
     }
 
     public final java.security.Provider getProvider() {
-	return Krb5MechFactory.PROVIDER;
+        return Krb5MechFactory.PROVIDER;
     }
 
     EncryptionKey[] getKrb5EncryptionKeys() {
-	return krb5EncryptionKeys;
+        return krb5EncryptionKeys;
     }
 
-    /** 
+    /**
      * Called to invalidate this credential element.
-     */ 
+     */
     public void dispose() throws GSSException {
-	try {
-	    destroy();
-	} catch (DestroyFailedException e) {
-	    GSSException gssException =
-		new GSSException(GSSException.FAILURE, -1,
-		 "Could not destroy credentials - " + e.getMessage());
-	    gssException.initCause(e);
-	}
+        try {
+            destroy();
+        } catch (DestroyFailedException e) {
+            GSSException gssException =
+                new GSSException(GSSException.FAILURE, -1,
+                 "Could not destroy credentials - " + e.getMessage());
+            gssException.initCause(e);
+        }
     }
 
     /**
@@ -195,13 +194,13 @@ public class Krb5AcceptCredential
      * destroy in the base class.
      */
     public void destroy() throws DestroyFailedException {
-	if (krb5EncryptionKeys != null) {
-	    for (int i = 0; i < krb5EncryptionKeys.length; i++) {
-		krb5EncryptionKeys[i].destroy();
-	    }
-	    krb5EncryptionKeys = null;
-	}
+        if (krb5EncryptionKeys != null) {
+            for (int i = 0; i < krb5EncryptionKeys.length; i++) {
+                krb5EncryptionKeys[i].destroy();
+            }
+            krb5EncryptionKeys = null;
+        }
 
-	super.destroy();
+        super.destroy();
     }
 }

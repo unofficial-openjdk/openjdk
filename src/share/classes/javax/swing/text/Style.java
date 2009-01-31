@@ -44,13 +44,12 @@ import java.util.Hashtable;
  * implementations that are more efficient.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public interface Style extends MutableAttributeSet {
 
     /**
      * Fetches the name of the style.   A style is not required to be named,
-     * so <code>null</code> is returned if there is no name 
+     * so <code>null</code> is returned if there is no name
      * associated with the style.
      *
      * @return the name

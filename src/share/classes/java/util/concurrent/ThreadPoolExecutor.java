@@ -392,29 +392,29 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
 
     private static boolean runStateLessThan(int c, int s) {
-	return c < s;
+        return c < s;
     }
 
     private static boolean runStateAtLeast(int c, int s) {
-	return c >= s;
+        return c >= s;
     }
 
     private static boolean isRunning(int c) {
-	return c < SHUTDOWN;
+        return c < SHUTDOWN;
     }
 
     /**
      * Attempt to CAS-increment the workerCount field of ctl.
      */
     private boolean compareAndIncrementWorkerCount(int expect) {
-	return ctl.compareAndSet(expect, expect + 1);
+        return ctl.compareAndSet(expect, expect + 1);
     }
 
     /**
      * Attempt to CAS-decrement the workerCount field of ctl.
      */
     private boolean compareAndDecrementWorkerCount(int expect) {
-	return ctl.compareAndSet(expect, expect - 1);
+        return ctl.compareAndSet(expect, expect - 1);
     }
 
     /**
@@ -423,7 +423,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * decrements are performed within getTask.
      */
     private void decrementWorkerCount() {
-	do {} while (! compareAndDecrementWorkerCount(ctl.get()));
+        do {} while (! compareAndDecrementWorkerCount(ctl.get()));
     }
 
     /**
@@ -573,14 +573,14 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * lock when they invoke pool control methods like setCorePoolSize.
      */
     private final class Worker
-	extends AbstractQueuedSynchronizer
-	implements Runnable
+        extends AbstractQueuedSynchronizer
+        implements Runnable
     {
-	/**
-	 * This class will never be serialized, but we provide a
-	 * serialVersionUID to suppress a javac warning.
-	 */
-	private static final long serialVersionUID = 6138294804551838833L;
+        /**
+         * This class will never be serialized, but we provide a
+         * serialVersionUID to suppress a javac warning.
+         */
+        private static final long serialVersionUID = 6138294804551838833L;
 
         /** Thread this worker is running in.  Null if factory fails. */
         final Thread thread;
@@ -595,7 +595,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          */
         Worker(Runnable firstTask) {
             this.firstTask = firstTask;
-	    this.thread = getThreadFactory().newThread(this);
+            this.thread = getThreadFactory().newThread(this);
         }
 
         /** Delegates main run loop to outer runWorker  */
@@ -603,33 +603,33 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             runWorker(this);
         }
 
-	// Lock methods
-	//
-	// The value 0 represents the unlocked state.
-	// The value 1 represents the locked state.
+        // Lock methods
+        //
+        // The value 0 represents the unlocked state.
+        // The value 1 represents the locked state.
 
-	protected boolean isHeldExclusively() {
-	    return getState() == 1;
-	}
+        protected boolean isHeldExclusively() {
+            return getState() == 1;
+        }
 
-	protected boolean tryAcquire(int unused) {
-	    if (compareAndSetState(0, 1)) {
-		setExclusiveOwnerThread(Thread.currentThread());
-		return true;
-	    }
-	    return false;
-	}
+        protected boolean tryAcquire(int unused) {
+            if (compareAndSetState(0, 1)) {
+                setExclusiveOwnerThread(Thread.currentThread());
+                return true;
+            }
+            return false;
+        }
 
-	protected boolean tryRelease(int unused) {
-	    setExclusiveOwnerThread(null);
-	    setState(0);
-	    return true;
-	}
+        protected boolean tryRelease(int unused) {
+            setExclusiveOwnerThread(null);
+            setState(0);
+            return true;
+        }
 
-	public void lock()        { acquire(1); }
-	public boolean tryLock()  { return tryAcquire(1); }
-	public void unlock()      { release(1); }
-	public boolean isLocked() { return isHeldExclusively(); }
+        public void lock()        { acquire(1); }
+        public boolean tryLock()  { return tryAcquire(1); }
+        public void unlock()      { release(1); }
+        public boolean isLocked() { return isHeldExclusively(); }
     }
 
     /*
@@ -665,30 +665,30 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     final void tryTerminate() {
         for (;;) {
             int c = ctl.get();
-	    if (isRunning(c) ||
-		runStateAtLeast(c, TIDYING) ||
-		(runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))
-		return;
+            if (isRunning(c) ||
+                runStateAtLeast(c, TIDYING) ||
+                (runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))
+                return;
             if (workerCountOf(c) != 0) { // Eligible to terminate
                 interruptIdleWorkers(ONLY_ONE);
                 return;
             }
 
-	    final ReentrantLock mainLock = this.mainLock;
-	    mainLock.lock();
-	    try {
-		if (ctl.compareAndSet(c, ctlOf(TIDYING, 0))) {
-		    try {
-			terminated();
-		    } finally {
-			ctl.set(ctlOf(TERMINATED, 0));
-			termination.signalAll();
-		    }
-		    return;
-		}
-	    } finally {
-		mainLock.unlock();
-	    }
+            final ReentrantLock mainLock = this.mainLock;
+            mainLock.lock();
+            try {
+                if (ctl.compareAndSet(c, ctlOf(TIDYING, 0))) {
+                    try {
+                        terminated();
+                    } finally {
+                        ctl.set(ctlOf(TERMINATED, 0));
+                        termination.signalAll();
+                    }
+                    return;
+                }
+            } finally {
+                mainLock.unlock();
+            }
             // else retry on failed CAS
         }
     }
@@ -759,12 +759,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * waiting for a straggler task to finish.
      */
     private void interruptIdleWorkers(boolean onlyOne) {
-	final ReentrantLock mainLock = this.mainLock;
+        final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
-	    for (Worker w : workers) {
+            for (Worker w : workers) {
                 Thread t = w.thread;
-		if (!t.isInterrupted() && w.tryLock()) {
+                if (!t.isInterrupted() && w.tryLock()) {
                     try {
                         t.interrupt();
                     } catch (SecurityException ignore) {
@@ -884,30 +884,30 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @return true if successful
      */
     private boolean addWorker(Runnable firstTask, boolean core) {
-	retry:
+        retry:
         for (;;) {
-	    int c = ctl.get();
-	    int rs = runStateOf(c);
+            int c = ctl.get();
+            int rs = runStateOf(c);
 
-	    // Check if queue empty only if necessary.
+            // Check if queue empty only if necessary.
             if (rs >= SHUTDOWN &&
-		! (rs == SHUTDOWN &&
-		   firstTask == null &&
-		   ! workQueue.isEmpty()))
-		return false;
+                ! (rs == SHUTDOWN &&
+                   firstTask == null &&
+                   ! workQueue.isEmpty()))
+                return false;
 
-	    for (;;) {
-		int wc = workerCountOf(c);
-		if (wc >= CAPACITY ||
-		    wc >= (core ? corePoolSize : maximumPoolSize))
-		    return false;
-		if (compareAndIncrementWorkerCount(c))
-		    break retry;
-		c = ctl.get();	// Re-read ctl
-		if (runStateOf(c) != rs)
-		    continue retry;
-		// else CAS failed due to workerCount change; retry inner loop
-	    }
+            for (;;) {
+                int wc = workerCountOf(c);
+                if (wc >= CAPACITY ||
+                    wc >= (core ? corePoolSize : maximumPoolSize))
+                    return false;
+                if (compareAndIncrementWorkerCount(c))
+                    break retry;
+                c = ctl.get();  // Re-read ctl
+                if (runStateOf(c) != rs)
+                    continue retry;
+                // else CAS failed due to workerCount change; retry inner loop
+            }
         }
 
         Worker w = new Worker(firstTask);
@@ -916,24 +916,24 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
-	    // Recheck while holding lock.
-	    // Back out on ThreadFactory failure or if
-	    // shut down before lock acquired.
+            // Recheck while holding lock.
+            // Back out on ThreadFactory failure or if
+            // shut down before lock acquired.
             int c = ctl.get();
-	    int rs = runStateOf(c);
+            int rs = runStateOf(c);
 
-	    if (t == null ||
-		(rs >= SHUTDOWN &&
-		 ! (rs == SHUTDOWN &&
-		    firstTask == null))) {
-		decrementWorkerCount();
-		tryTerminate();
-		return false;
-	    }
+            if (t == null ||
+                (rs >= SHUTDOWN &&
+                 ! (rs == SHUTDOWN &&
+                    firstTask == null))) {
+                decrementWorkerCount();
+                tryTerminate();
+                return false;
+            }
 
-	    workers.add(w);
+            workers.add(w);
 
-	    int s = workers.size();
+            int s = workers.size();
             if (s > largestPoolSize)
                 largestPoolSize = s;
         } finally {
@@ -941,15 +941,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
 
         t.start();
-	// It is possible (but unlikely) for a thread to have been
-	// added to workers, but not yet started, during transition to
-	// STOP, which could result in a rare missed interrupt,
-	// because Thread.interrupt is not guaranteed to have any effect
-	// on a non-yet-started Thread (see Thread#interrupt).
-	if (runStateOf(ctl.get()) == STOP && ! t.isInterrupted())
-	    t.interrupt();
+        // It is possible (but unlikely) for a thread to have been
+        // added to workers, but not yet started, during transition to
+        // STOP, which could result in a rare missed interrupt,
+        // because Thread.interrupt is not guaranteed to have any effect
+        // on a non-yet-started Thread (see Thread#interrupt).
+        if (runStateOf(ctl.get()) == STOP && ! t.isInterrupted())
+            t.interrupt();
 
-	return true;
+        return true;
     }
 
     /**
@@ -980,17 +980,17 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
         tryTerminate();
 
-	int c = ctl.get();
-	if (runStateLessThan(c, STOP)) {
-	    if (!completedAbruptly) {
-		int min = allowCoreThreadTimeOut ? 0 : corePoolSize;
-		if (min == 0 && ! workQueue.isEmpty())
-		    min = 1;
-		if (workerCountOf(c) >= min)
-		    return; // replacement not needed
-	    }
-	    addWorker(null, false);
-	}
+        int c = ctl.get();
+        if (runStateLessThan(c, STOP)) {
+            if (!completedAbruptly) {
+                int min = allowCoreThreadTimeOut ? 0 : corePoolSize;
+                if (min == 0 && ! workQueue.isEmpty())
+                    min = 1;
+                if (workerCountOf(c) >= min)
+                    return; // replacement not needed
+            }
+            addWorker(null, false);
+        }
     }
 
     /**
@@ -1010,33 +1010,33 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *         workerCount is decremented
      */
     private Runnable getTask() {
-	boolean timedOut = false; // Did the last poll() time out?
+        boolean timedOut = false; // Did the last poll() time out?
 
-	retry:
-	for (;;) {
+        retry:
+        for (;;) {
             int c = ctl.get();
-	    int rs = runStateOf(c);
+            int rs = runStateOf(c);
 
-	    // Check if queue empty only if necessary.
-	    if (rs >= SHUTDOWN && (rs >= STOP || workQueue.isEmpty())) {
-		decrementWorkerCount();
-		return null;
-	    }
+            // Check if queue empty only if necessary.
+            if (rs >= SHUTDOWN && (rs >= STOP || workQueue.isEmpty())) {
+                decrementWorkerCount();
+                return null;
+            }
 
-	    boolean timed;	// Are workers subject to culling?
+            boolean timed;      // Are workers subject to culling?
 
-	    for (;;) {
-		int wc = workerCountOf(c);
-		timed = allowCoreThreadTimeOut || wc > corePoolSize;
+            for (;;) {
+                int wc = workerCountOf(c);
+                timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
-		if (wc <= maximumPoolSize && ! (timedOut && timed))
-		    break;
-		if (compareAndDecrementWorkerCount(c))
-		    return null;
-		c = ctl.get();	// Re-read ctl
-		if (runStateOf(c) != rs)
-		    continue retry;
-		// else CAS failed due to workerCount change; retry inner loop
+                if (wc <= maximumPoolSize && ! (timedOut && timed))
+                    break;
+                if (compareAndDecrementWorkerCount(c))
+                    return null;
+                c = ctl.get();  // Re-read ctl
+                if (runStateOf(c) != rs)
+                    continue retry;
+                // else CAS failed due to workerCount change; retry inner loop
             }
 
             try {
@@ -1045,9 +1045,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     workQueue.take();
                 if (r != null)
                     return r;
-		timedOut = true;
+                timedOut = true;
             } catch (InterruptedException retry) {
-		timedOut = false;
+                timedOut = false;
             }
         }
     }
@@ -1717,15 +1717,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             while (it.hasNext()) {
                 Runnable r = it.next();
                 if (r instanceof Future<?> && ((Future<?>)r).isCancelled())
-		    it.remove();
+                    it.remove();
             }
         } catch (ConcurrentModificationException fallThrough) {
-	    // Take slow path if we encounter interference during traversal.
+            // Take slow path if we encounter interference during traversal.
             // Make copy for traversal and call remove for cancelled entries.
-	    // The slow path is more likely to be O(N*N).
+            // The slow path is more likely to be O(N*N).
             for (Object r : q.toArray())
                 if (r instanceof Future<?> && ((Future<?>)r).isCancelled())
-		    q.remove(r);
+                    q.remove(r);
         }
 
         tryTerminate(); // In case SHUTDOWN and now empty
@@ -1742,10 +1742,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
-	    // Remove rare and surprising possibility of
-	    // isTerminated() && getPoolSize() > 0
+            // Remove rare and surprising possibility of
+            // isTerminated() && getPoolSize() > 0
             return runStateAtLeast(ctl.get(), TIDYING) ? 0
-		: workers.size();
+                : workers.size();
         } finally {
             mainLock.unlock();
         }

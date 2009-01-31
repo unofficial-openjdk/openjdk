@@ -44,51 +44,51 @@ import javax.management.NotificationBroadcasterSupport;
  */
 class StandardMBeanIntrospector extends MBeanIntrospector<Method> {
     private static final StandardMBeanIntrospector instance =
-	new StandardMBeanIntrospector();
+        new StandardMBeanIntrospector();
 
     static StandardMBeanIntrospector getInstance() {
-	return instance;
+        return instance;
     }
 
     @Override
     PerInterfaceMap<Method> getPerInterfaceMap() {
-	return perInterfaceMap;
+        return perInterfaceMap;
     }
 
     @Override
     MBeanInfoMap getMBeanInfoMap() {
-	return mbeanInfoMap;
+        return mbeanInfoMap;
     }
 
     @Override
     MBeanAnalyzer<Method> getAnalyzer(Class<?> mbeanInterface)
-	    throws NotCompliantMBeanException {
-	return MBeanAnalyzer.analyzer(mbeanInterface, this);
+            throws NotCompliantMBeanException {
+        return MBeanAnalyzer.analyzer(mbeanInterface, this);
     }
 
     @Override
     boolean isMXBean() {
-	return false;
+        return false;
     }
 
     @Override
     Method mFrom(Method m) {
-	return m;
+        return m;
     }
 
     @Override
     String getName(Method m) {
-	return m.getName();
+        return m.getName();
     }
 
     @Override
     Type getGenericReturnType(Method m) {
-	return m.getGenericReturnType();
+        return m.getGenericReturnType();
     }
 
     @Override
     Type[] getGenericParameterTypes(Method m) {
-	return m.getGenericParameterTypes();
+        return m.getGenericParameterTypes();
     }
 
     @Override
@@ -106,9 +106,9 @@ class StandardMBeanIntrospector extends MBeanIntrospector<Method> {
 
     @Override
     Object invokeM2(Method m, Object target, Object[] args, Object cookie)
-	    throws InvocationTargetException, IllegalAccessException,
-		   MBeanException {
-	return m.invoke(target, args);
+            throws InvocationTargetException, IllegalAccessException,
+                   MBeanException {
+        return m.invoke(target, args);
     }
 
     @Override
@@ -138,10 +138,10 @@ class StandardMBeanIntrospector extends MBeanIntrospector<Method> {
 
     @Override
     Descriptor getBasicMBeanDescriptor() {
-	/* We don't bother saying mxbean=false, and we can't know whether
-	   the info is immutable until we know whether the MBean class
-	   (not interface) is a NotificationBroadcaster. */
-	return ImmutableDescriptor.EMPTY_DESCRIPTOR;
+        /* We don't bother saying mxbean=false, and we can't know whether
+           the info is immutable until we know whether the MBean class
+           (not interface) is a NotificationBroadcaster. */
+        return ImmutableDescriptor.EMPTY_DESCRIPTOR;
     }
 
     @Override

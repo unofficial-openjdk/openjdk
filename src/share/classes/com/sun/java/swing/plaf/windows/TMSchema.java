@@ -35,7 +35,7 @@
  * <code>JComponent</code>s may also produce unexpected results,
  * such as the wrong colors showing up, and is generally not
  * encouraged.
- * 
+ *
  */
 
 package com.sun.java.swing.plaf.windows;
@@ -53,7 +53,6 @@ import sun.awt.windows.ThemeReader;
  * See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/userex/topics/partsandstates.asp
  * See tmschema.h (or vssym32.h & vsstyle.h for MS Vista)
  *
- * @version %I% %G%
  * @author Leif Samuelsson
  */
 class TMSchema {
@@ -63,22 +62,22 @@ class TMSchema {
      * components, or top-level parts)
      */
     public static enum Control {
-	BUTTON,
-	COMBOBOX,
-	EDIT,
-	HEADER,
-	LISTBOX,
-	LISTVIEW,
-	MENU,
-	PROGRESS,
-	REBAR,
-	SCROLLBAR,
-	SPIN,
-	TAB,
-	TOOLBAR,
-	TRACKBAR,
-	TREEVIEW,
-	WINDOW
+        BUTTON,
+        COMBOBOX,
+        EDIT,
+        HEADER,
+        LISTBOX,
+        LISTVIEW,
+        MENU,
+        PROGRESS,
+        REBAR,
+        SCROLLBAR,
+        SPIN,
+        TAB,
+        TOOLBAR,
+        TRACKBAR,
+        TREEVIEW,
+        WINDOW
     }
 
 
@@ -86,7 +85,7 @@ class TMSchema {
      * An enumeration of the Windows compoent parts
      */
     public static enum Part {
-	MENU (Control.MENU, 0),	// Special case, not in native
+        MENU (Control.MENU, 0), // Special case, not in native
         MP_BARBACKGROUND   (Control.MENU, 7),
         MP_BARITEM         (Control.MENU, 8),
         MP_POPUPBACKGROUND (Control.MENU, 9),
@@ -112,7 +111,7 @@ class TMSchema {
         CP_DROPDOWNBUTTONRIGHT   (Control.COMBOBOX, 6),
         CP_DROPDOWNBUTTONLEFT    (Control.COMBOBOX, 7),
         CP_CUEBANNER             (Control.COMBOBOX, 8),
- 
+
 
         EP_EDIT    (Control.EDIT, 0),
         EP_EDITTEXT(Control.EDIT, 1),
@@ -143,7 +142,7 @@ class TMSchema {
         SBP_UPPERTRACKVERT(Control.SCROLLBAR,  7),
         SBP_GRIPPERHORZ   (Control.SCROLLBAR,  8),
         SBP_GRIPPERVERT   (Control.SCROLLBAR,  9),
-        SBP_SIZEBOX	  (Control.SCROLLBAR, 10),
+        SBP_SIZEBOX       (Control.SCROLLBAR, 10),
 
         SPNP_UP  (Control.SPIN, 1),
         SPNP_DOWN(Control.SPIN, 2),
@@ -197,24 +196,24 @@ class TMSchema {
             this.value = value;
         }
 
-	public int getValue() {
-	    return value;
-	}
+        public int getValue() {
+            return value;
+        }
 
         public String getControlName(Component component) {
-	    String str = "";
-	    if (component instanceof JComponent) {
-		JComponent c = (JComponent)component;
-		String subAppName = (String)c.getClientProperty("XPStyle.subAppName");
-		if (subAppName != null) {
-		    str = subAppName + "::";
-		}
-	    }
+            String str = "";
+            if (component instanceof JComponent) {
+                JComponent c = (JComponent)component;
+                String subAppName = (String)c.getClientProperty("XPStyle.subAppName");
+                if (subAppName != null) {
+                    str = subAppName + "::";
+                }
+            }
             return str + control.toString();
         }
 
         public String toString() {
-            return control.toString()+"."+name(); 
+            return control.toString()+"."+name();
         }
     }
 
@@ -254,10 +253,10 @@ class TMSchema {
         ICONSORTEDNORMAL,
         ICONSORTEDPRESSED,
         INACTIVE,
-	INACTIVENORMAL,		// See note 1
-	INACTIVEHOT,		// See note 1
-	INACTIVEPUSHED,		// See note 1
-	INACTIVEDISABLED,	// See note 1
+        INACTIVENORMAL,         // See note 1
+        INACTIVEHOT,            // See note 1
+        INACTIVEPUSHED,         // See note 1
+        INACTIVEDISABLED,       // See note 1
         LEFTDISABLED,
         LEFTHOT,
         LEFTNORMAL,
@@ -285,9 +284,9 @@ class TMSchema {
         UPNORMAL,
         UPPRESSED,
         HOVER,
-        UPHOVER, 
-        DOWNHOVER, 
-        LEFTHOVER, 
+        UPHOVER,
+        DOWNHOVER,
+        LEFTHOVER,
         RIGHTHOVER,
         SORTEDDOWN,
         SORTEDHOT,
@@ -296,34 +295,34 @@ class TMSchema {
         SORTEDUP;
 
 
-	/**
-	 * A map of allowed states for each Part
-	 */
-	private static EnumMap<Part, State[]> stateMap;
+        /**
+         * A map of allowed states for each Part
+         */
+        private static EnumMap<Part, State[]> stateMap;
 
-	private static synchronized void initStates() {
-	    stateMap = new EnumMap<Part, State[]>(Part.class);
+        private static synchronized void initStates() {
+            stateMap = new EnumMap<Part, State[]>(Part.class);
 
-	    stateMap.put(Part.EP_EDITTEXT,
-		       new State[] {
-			NORMAL, HOT, SELECTED, DISABLED, FOCUSED, READONLY, ASSIST
-	    });
+            stateMap.put(Part.EP_EDITTEXT,
+                       new State[] {
+                        NORMAL, HOT, SELECTED, DISABLED, FOCUSED, READONLY, ASSIST
+            });
 
-	    stateMap.put(Part.BP_PUSHBUTTON,
-		       new State[] { NORMAL, HOT, PRESSED, DISABLED, DEFAULTED });
+            stateMap.put(Part.BP_PUSHBUTTON,
+                       new State[] { NORMAL, HOT, PRESSED, DISABLED, DEFAULTED });
 
-	    stateMap.put(Part.BP_RADIOBUTTON,
-		       new State[] {
-			UNCHECKEDNORMAL, UNCHECKEDHOT, UNCHECKEDPRESSED, UNCHECKEDDISABLED,
-			CHECKEDNORMAL,   CHECKEDHOT,   CHECKEDPRESSED,   CHECKEDDISABLED
-	    });
+            stateMap.put(Part.BP_RADIOBUTTON,
+                       new State[] {
+                        UNCHECKEDNORMAL, UNCHECKEDHOT, UNCHECKEDPRESSED, UNCHECKEDDISABLED,
+                        CHECKEDNORMAL,   CHECKEDHOT,   CHECKEDPRESSED,   CHECKEDDISABLED
+            });
 
-	    stateMap.put(Part.BP_CHECKBOX,
-		       new State[] {
-			UNCHECKEDNORMAL, UNCHECKEDHOT, UNCHECKEDPRESSED, UNCHECKEDDISABLED,
-			CHECKEDNORMAL,   CHECKEDHOT,   CHECKEDPRESSED,   CHECKEDDISABLED,
-			MIXEDNORMAL,     MIXEDHOT,     MIXEDPRESSED,     MIXEDDISABLED
-	    });
+            stateMap.put(Part.BP_CHECKBOX,
+                       new State[] {
+                        UNCHECKEDNORMAL, UNCHECKEDHOT, UNCHECKEDPRESSED, UNCHECKEDDISABLED,
+                        CHECKEDNORMAL,   CHECKEDHOT,   CHECKEDPRESSED,   CHECKEDDISABLED,
+                        MIXEDNORMAL,     MIXEDHOT,     MIXEDPRESSED,     MIXEDDISABLED
+            });
 
             State[] comboBoxStates = new State[] { NORMAL, HOT, PRESSED, DISABLED };
             stateMap.put(Part.CP_COMBOBOX, comboBoxStates);
@@ -345,89 +344,89 @@ class TMSchema {
                          new State[] {SORTEDDOWN, SORTEDUP});
 
             State[] scrollBarStates = new State[] { NORMAL, HOT, PRESSED, DISABLED, HOVER };
-	    stateMap.put(Part.SBP_SCROLLBAR,    scrollBarStates);
-	    stateMap.put(Part.SBP_THUMBBTNVERT, scrollBarStates);
-	    stateMap.put(Part.SBP_THUMBBTNHORZ, scrollBarStates);
-	    stateMap.put(Part.SBP_GRIPPERVERT,  scrollBarStates);
-	    stateMap.put(Part.SBP_GRIPPERHORZ,  scrollBarStates);
+            stateMap.put(Part.SBP_SCROLLBAR,    scrollBarStates);
+            stateMap.put(Part.SBP_THUMBBTNVERT, scrollBarStates);
+            stateMap.put(Part.SBP_THUMBBTNHORZ, scrollBarStates);
+            stateMap.put(Part.SBP_GRIPPERVERT,  scrollBarStates);
+            stateMap.put(Part.SBP_GRIPPERHORZ,  scrollBarStates);
 
-	    stateMap.put(Part.SBP_ARROWBTN,
-		       new State[] {
+            stateMap.put(Part.SBP_ARROWBTN,
+                       new State[] {
                 UPNORMAL,    UPHOT,     UPPRESSED,    UPDISABLED,
                 DOWNNORMAL,  DOWNHOT,   DOWNPRESSED,  DOWNDISABLED,
                 LEFTNORMAL,  LEFTHOT,   LEFTPRESSED,  LEFTDISABLED,
                 RIGHTNORMAL, RIGHTHOT,  RIGHTPRESSED, RIGHTDISABLED,
                 UPHOVER,     DOWNHOVER, LEFTHOVER,    RIGHTHOVER
-	    });
+            });
 
 
-	    State[] spinnerStates = new State[] { NORMAL, HOT, PRESSED, DISABLED };
+            State[] spinnerStates = new State[] { NORMAL, HOT, PRESSED, DISABLED };
             stateMap.put(Part.SPNP_UP,   spinnerStates);
             stateMap.put(Part.SPNP_DOWN, spinnerStates);
 
-	    stateMap.put(Part.TVP_GLYPH, new State[] { CLOSED, OPENED });
+            stateMap.put(Part.TVP_GLYPH, new State[] { CLOSED, OPENED });
 
-	    State[] frameButtonStates = new State[] {
-			NORMAL,         HOT,         PUSHED,         DISABLED,	// See note 1
-			INACTIVENORMAL, INACTIVEHOT, INACTIVEPUSHED, INACTIVEDISABLED,
-	    };
-	    // Note 1: The INACTIVE frame button states apply when the frame
-	    //         is inactive. They are not defined in tmschema.h
+            State[] frameButtonStates = new State[] {
+                        NORMAL,         HOT,         PUSHED,         DISABLED,  // See note 1
+                        INACTIVENORMAL, INACTIVEHOT, INACTIVEPUSHED, INACTIVEDISABLED,
+            };
+            // Note 1: The INACTIVE frame button states apply when the frame
+            //         is inactive. They are not defined in tmschema.h
 
-	    // Fix for 6316538: Vista has five frame button states
-	    if (ThemeReader.getInt(Control.WINDOW.toString(),
-				   Part.WP_CLOSEBUTTON.getValue(), 1,
-				   Prop.IMAGECOUNT.getValue()) == 10) {
-		frameButtonStates = new State[] {
-			NORMAL,         HOT,         PUSHED,         DISABLED,         null,
-			INACTIVENORMAL, INACTIVEHOT, INACTIVEPUSHED, INACTIVEDISABLED, null
-		};
-	    }
+            // Fix for 6316538: Vista has five frame button states
+            if (ThemeReader.getInt(Control.WINDOW.toString(),
+                                   Part.WP_CLOSEBUTTON.getValue(), 1,
+                                   Prop.IMAGECOUNT.getValue()) == 10) {
+                frameButtonStates = new State[] {
+                        NORMAL,         HOT,         PUSHED,         DISABLED,         null,
+                        INACTIVENORMAL, INACTIVEHOT, INACTIVEPUSHED, INACTIVEDISABLED, null
+                };
+            }
 
-	    stateMap.put(Part.WP_MINBUTTON,     frameButtonStates);
-	    stateMap.put(Part.WP_MAXBUTTON,     frameButtonStates);
-	    stateMap.put(Part.WP_RESTOREBUTTON, frameButtonStates);
-	    stateMap.put(Part.WP_CLOSEBUTTON,   frameButtonStates);
+            stateMap.put(Part.WP_MINBUTTON,     frameButtonStates);
+            stateMap.put(Part.WP_MAXBUTTON,     frameButtonStates);
+            stateMap.put(Part.WP_RESTOREBUTTON, frameButtonStates);
+            stateMap.put(Part.WP_CLOSEBUTTON,   frameButtonStates);
 
-	    // States for Slider (trackbar)
-	    stateMap.put(Part.TKP_TRACK,     new State[] { NORMAL });
-	    stateMap.put(Part.TKP_TRACKVERT, new State[] { NORMAL });
+            // States for Slider (trackbar)
+            stateMap.put(Part.TKP_TRACK,     new State[] { NORMAL });
+            stateMap.put(Part.TKP_TRACKVERT, new State[] { NORMAL });
 
-	    State[] sliderThumbStates = 
-		new State[] { NORMAL, HOT, PRESSED, FOCUSED, DISABLED };
-	    stateMap.put(Part.TKP_THUMB,       sliderThumbStates);
-	    stateMap.put(Part.TKP_THUMBBOTTOM, sliderThumbStates);
-	    stateMap.put(Part.TKP_THUMBTOP,    sliderThumbStates);
-	    stateMap.put(Part.TKP_THUMBVERT,   sliderThumbStates);
-	    stateMap.put(Part.TKP_THUMBRIGHT,  sliderThumbStates);
+            State[] sliderThumbStates =
+                new State[] { NORMAL, HOT, PRESSED, FOCUSED, DISABLED };
+            stateMap.put(Part.TKP_THUMB,       sliderThumbStates);
+            stateMap.put(Part.TKP_THUMBBOTTOM, sliderThumbStates);
+            stateMap.put(Part.TKP_THUMBTOP,    sliderThumbStates);
+            stateMap.put(Part.TKP_THUMBVERT,   sliderThumbStates);
+            stateMap.put(Part.TKP_THUMBRIGHT,  sliderThumbStates);
 
-	    // States for Tabs
-	    State[] tabStates = new State[] { NORMAL, HOT, SELECTED, DISABLED, FOCUSED };
-	    stateMap.put(Part.TABP_TABITEM,          tabStates);
-	    stateMap.put(Part.TABP_TABITEMLEFTEDGE,  tabStates);
-	    stateMap.put(Part.TABP_TABITEMRIGHTEDGE, tabStates);
+            // States for Tabs
+            State[] tabStates = new State[] { NORMAL, HOT, SELECTED, DISABLED, FOCUSED };
+            stateMap.put(Part.TABP_TABITEM,          tabStates);
+            stateMap.put(Part.TABP_TABITEMLEFTEDGE,  tabStates);
+            stateMap.put(Part.TABP_TABITEMRIGHTEDGE, tabStates);
 
 
-	    stateMap.put(Part.TP_BUTTON,
-		       new State[] {
-			NORMAL, HOT, PRESSED, DISABLED, CHECKED, HOTCHECKED
-	    });
+            stateMap.put(Part.TP_BUTTON,
+                       new State[] {
+                        NORMAL, HOT, PRESSED, DISABLED, CHECKED, HOTCHECKED
+            });
 
-	    State[] frameStates = new State[] { ACTIVE, INACTIVE };
-	    stateMap.put(Part.WP_WINDOW,      frameStates);
-	    stateMap.put(Part.WP_FRAMELEFT,   frameStates);
-	    stateMap.put(Part.WP_FRAMERIGHT,  frameStates);
-	    stateMap.put(Part.WP_FRAMEBOTTOM, frameStates);
+            State[] frameStates = new State[] { ACTIVE, INACTIVE };
+            stateMap.put(Part.WP_WINDOW,      frameStates);
+            stateMap.put(Part.WP_FRAMELEFT,   frameStates);
+            stateMap.put(Part.WP_FRAMERIGHT,  frameStates);
+            stateMap.put(Part.WP_FRAMEBOTTOM, frameStates);
 
-	    State[] captionStates = new State[] { ACTIVE, INACTIVE, DISABLED };
-	    stateMap.put(Part.WP_CAPTION,    captionStates);
-	    stateMap.put(Part.WP_MINCAPTION, captionStates);
-	    stateMap.put(Part.WP_MAXCAPTION, captionStates);
+            State[] captionStates = new State[] { ACTIVE, INACTIVE, DISABLED };
+            stateMap.put(Part.WP_CAPTION,    captionStates);
+            stateMap.put(Part.WP_MINCAPTION, captionStates);
+            stateMap.put(Part.WP_MAXCAPTION, captionStates);
 
-            stateMap.put(Part.MP_BARBACKGROUND, 
+            stateMap.put(Part.MP_BARBACKGROUND,
                          new State[] { ACTIVE, INACTIVE });
-            stateMap.put(Part.MP_BARITEM, 
-                         new State[] { NORMAL, HOT, PUSHED, 
+            stateMap.put(Part.MP_BARITEM,
+                         new State[] { NORMAL, HOT, PUSHED,
                                        DISABLED, DISABLEDHOT, DISABLEDPUSHED });
             stateMap.put(Part.MP_POPUPCHECK,
                          new State[] { CHECKMARKNORMAL, CHECKMARKDISABLED,
@@ -438,30 +437,30 @@ class TMSchema {
                          new State[] { NORMAL, HOT, DISABLED, DISABLEDHOT });
             stateMap.put(Part.MP_POPUPSUBMENU,
                          new State[] { NORMAL, DISABLED });
-            
+
         }
 
 
-	public static synchronized int getValue(Part part, State state) {
-	    if (stateMap == null) {
-		initStates();
-	    }
+        public static synchronized int getValue(Part part, State state) {
+            if (stateMap == null) {
+                initStates();
+            }
 
-	    Enum[] states = stateMap.get(part);
-	    if (states != null) {
-		for (int i = 0; i < states.length; i++) {
-		    if (state == states[i]) {
-			return i + 1;
-		    }
-		}
-	    }
+            Enum[] states = stateMap.get(part);
+            if (states != null) {
+                for (int i = 0; i < states.length; i++) {
+                    if (state == states[i]) {
+                        return i + 1;
+                    }
+                }
+            }
 
-	    if (state == null || state == State.NORMAL) {
-		return 1;
-	    }
+            if (state == null || state == State.NORMAL) {
+                return 1;
+            }
 
-	    return 0;
-	}
+            return 0;
+        }
 
     }
 
@@ -471,37 +470,37 @@ class TMSchema {
      * corresponding value type
      */
     public static enum Prop {
-        COLOR(Color.class,		  204),
-        SIZE(Dimension.class,		  207),
+        COLOR(Color.class,                204),
+        SIZE(Dimension.class,             207),
 
-        FLATMENUS(Boolean.class,	 1001),
+        FLATMENUS(Boolean.class,         1001),
 
-        BORDERONLY(Boolean.class,	 2203),	// only draw the border area of the image
+        BORDERONLY(Boolean.class,        2203), // only draw the border area of the image
 
-        IMAGECOUNT(Integer.class,	 2401),	// the number of state images in an imagefile
-        BORDERSIZE(Integer.class,	 2403),	// the size of the border line for bgtype=BorderFill
+        IMAGECOUNT(Integer.class,        2401), // the number of state images in an imagefile
+        BORDERSIZE(Integer.class,        2403), // the size of the border line for bgtype=BorderFill
 
-        PROGRESSCHUNKSIZE(Integer.class, 2411),	// size of progress control chunks
-        PROGRESSSPACESIZE(Integer.class, 2412),	// size of progress control spaces
+        PROGRESSCHUNKSIZE(Integer.class, 2411), // size of progress control chunks
+        PROGRESSSPACESIZE(Integer.class, 2412), // size of progress control spaces
 
-        TEXTSHADOWOFFSET(Point.class,	 3402),	// where char shadows are drawn, relative to orig. chars
+        TEXTSHADOWOFFSET(Point.class,    3402), // where char shadows are drawn, relative to orig. chars
 
-        NORMALSIZE(Dimension.class,	 3409),	// size of dest rect that exactly source
+        NORMALSIZE(Dimension.class,      3409), // size of dest rect that exactly source
 
 
-        SIZINGMARGINS ( Insets.class,	 3601),	// margins used for 9-grid sizing
-        CONTENTMARGINS(Insets.class,	 3602),	// margins that define where content can be placed
-        CAPTIONMARGINS(Insets.class,	 3603),	// margins that define where caption text can be placed
+        SIZINGMARGINS ( Insets.class,    3601), // margins used for 9-grid sizing
+        CONTENTMARGINS(Insets.class,     3602), // margins that define where content can be placed
+        CAPTIONMARGINS(Insets.class,     3603), // margins that define where caption text can be placed
 
-        BORDERCOLOR(Color.class,	 3801),	// color of borders for BorderFill 
-        FILLCOLOR  (  Color.class,	 3802),	// color of bg fill
-        TEXTCOLOR  (  Color.class,	 3803),	// color text is drawn in
+        BORDERCOLOR(Color.class,         3801), // color of borders for BorderFill
+        FILLCOLOR  (  Color.class,       3802), // color of bg fill
+        TEXTCOLOR  (  Color.class,       3803), // color text is drawn in
 
-        TEXTSHADOWCOLOR(Color.class,	 3818),	// color of text shadow
+        TEXTSHADOWCOLOR(Color.class,     3818), // color of text shadow
 
-        BGTYPE(Integer.class,		 4001),	// basic drawing type for each part
+        BGTYPE(Integer.class,            4001), // basic drawing type for each part
 
-        TEXTSHADOWTYPE(Integer.class,	 4010),	// type of shadow to draw with text
+        TEXTSHADOWTYPE(Integer.class,    4010), // type of shadow to draw with text
 
         TRANSITIONDURATIONS(Integer.class, 6000);
 
@@ -513,12 +512,12 @@ class TMSchema {
             this.value    = value;
         }
 
-	public int getValue() {
-	    return value;
-	}
+        public int getValue() {
+            return value;
+        }
 
         public String toString() {
-            return name()+"["+type.getName()+"] = "+value; 
+            return name()+"["+type.getName()+"] = "+value;
         }
     }
 
@@ -546,12 +545,12 @@ class TMSchema {
         private final int value;
 
         public String toString() {
-            return prop+"="+enumName+"="+value; 
+            return prop+"="+enumName+"="+value;
         }
 
-	String getName() {
-	    return enumName;
-	}
+        String getName() {
+            return enumName;
+        }
 
 
         static TypeEnum getTypeEnum(Prop prop, int enumval) {

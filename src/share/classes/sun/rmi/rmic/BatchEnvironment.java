@@ -70,8 +70,8 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * Create a ClassPath object for rmic from a class path string.
      */
     public static ClassPath createClassPath(String classPathString) {
-	ClassPath[] paths = classPaths(null, classPathString, null, null);
-	return paths[1];
+        ClassPath[] paths = classPaths(null, classPathString, null, null);
+        return paths[1];
     }
 
     /**
@@ -79,29 +79,29 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * options for class path, boot class path, and extension directories.
      */
     public static ClassPath createClassPath(String classPathString,
-					    String sysClassPathString,
-					    String extDirsString)
+                                            String sysClassPathString,
+                                            String extDirsString)
     {
-        /**  
-         * Previously, this method delegated to the  
-         * sun.tools.javac.BatchEnvironment.classPaths method in order  
-         * to supply default values for paths not specified on the  
-         * command line, expand extensions directories into specific  
-         * JAR files, and construct the ClassPath object-- but as part  
-         * of the fix for 6473331, which adds support for Class-Path  
-         * manifest entries in JAR files, those steps are now handled  
-         * here directly, with the help of a Path utility class copied  
-         * from the new javac implementation (see below).  
-         */  
-        Path path = new Path();  
-            
-        if (sysClassPathString == null) {  
-            sysClassPathString = System.getProperty("sun.boot.class.path");  
+        /**
+         * Previously, this method delegated to the
+         * sun.tools.javac.BatchEnvironment.classPaths method in order
+         * to supply default values for paths not specified on the
+         * command line, expand extensions directories into specific
+         * JAR files, and construct the ClassPath object-- but as part
+         * of the fix for 6473331, which adds support for Class-Path
+         * manifest entries in JAR files, those steps are now handled
+         * here directly, with the help of a Path utility class copied
+         * from the new javac implementation (see below).
+         */
+        Path path = new Path();
+
+        if (sysClassPathString == null) {
+            sysClassPathString = System.getProperty("sun.boot.class.path");
         }
         if (sysClassPathString != null) {
             path.addFiles(sysClassPathString);
         }
-  
+
         /*
          * Class-Path manifest entries are supported for JAR files
          * everywhere except in the boot class path.
@@ -120,7 +120,7 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
          * the current working directory.
          */
         path.emptyPathDefault(".");
- 
+
         if (classPathString == null) {
             // The env.class.path property is the user's CLASSPATH
             // environment variable, and it set by the wrapper (ie,
@@ -140,16 +140,16 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * stream for messages and Main.
      */
     public BatchEnvironment(OutputStream out, ClassPath path, Main main) {
-	super(out, new ClassPath(""), path);
-				// use empty "sourcePath" (see 4666958)
-	this.main = main;
+        super(out, new ClassPath(""), path);
+                                // use empty "sourcePath" (see 4666958)
+        this.main = main;
     }
 
     /**
      * Get the instance of Main which created this environment.
      */
     public Main getMain() {
-	return main;
+        return main;
     }
 
     /**
@@ -167,7 +167,7 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * can be removed later, if appropriate.
      */
     public void addGeneratedFile(File file) {
-	generatedFiles.addElement(file);
+        generatedFiles.addElement(file);
     }
 
     /**
@@ -176,14 +176,14 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * "addGeneratedFile" method).
      */
     public void deleteGeneratedFiles() {
-	synchronized(generatedFiles) {
-	    Enumeration enumeration = generatedFiles.elements();
-	    while (enumeration.hasMoreElements()) {
-		File file = (File) enumeration.nextElement();
-		file.delete();
-	    }
-	    generatedFiles.removeAllElements();
-	}
+        synchronized(generatedFiles) {
+            Enumeration enumeration = generatedFiles.elements();
+            while (enumeration.hasMoreElements()) {
+                File file = (File) enumeration.nextElement();
+                file.delete();
+            }
+            generatedFiles.removeAllElements();
+        }
     }
 
     /**
@@ -202,21 +202,21 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
      * bundle; otherwise, defer to java's superclass method.
      */
     public String errorString(String err,
-			      Object arg0, Object arg1, Object arg2)
+                              Object arg0, Object arg1, Object arg2)
     {
-	if (err.startsWith("rmic.") || err.startsWith("warn.rmic.")) {
-	    String result =  Main.getText(err,
-					  (arg0 != null ? arg0.toString() : null),
-					  (arg1 != null ? arg1.toString() : null),
-					  (arg2 != null ? arg2.toString() : null));
+        if (err.startsWith("rmic.") || err.startsWith("warn.rmic.")) {
+            String result =  Main.getText(err,
+                                          (arg0 != null ? arg0.toString() : null),
+                                          (arg1 != null ? arg1.toString() : null),
+                                          (arg2 != null ? arg2.toString() : null));
 
-	    if (err.startsWith("warn.")) {
-		result = "warning: " + result;
-	    }
-	    return result;
-	} else {
-	    return super.errorString(err, arg0, arg1, arg2);
-	}
+            if (err.startsWith("warn.")) {
+                result = "warning: " + result;
+            }
+            return result;
+        } else {
+            return super.errorString(err, arg0, arg1, arg2);
+        }
     }
     public void reset() {
     }
@@ -231,12 +231,12 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
     private static class Path extends LinkedHashSet<String> {
         private static final long serialVersionUID = 0;
         private static final boolean warn = false;
- 
+
         private static class PathIterator implements Collection<String> {
             private int pos = 0;
             private final String path;
             private final String emptyPathDefault;
- 
+
             public PathIterator(String path, String emptyPathDefault) {
                 this.path = path;
                 this.emptyPathDefault = emptyPathDefault;
@@ -266,83 +266,83 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
             }
 
             // required for Collection.
-            public int size() { 
-	        throw new UnsupportedOperationException(); 
-	    }
-            public boolean isEmpty() { 
-	        throw new UnsupportedOperationException(); 
+            public int size() {
+                throw new UnsupportedOperationException();
             }
-            public boolean contains(Object o) { 
-		throw new UnsupportedOperationException(); 
- 	    }
-            public Object[] toArray() { 
-		throw new UnsupportedOperationException(); 
-	    }
-	    public <T> T[] toArray(T[] a) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean add(String o) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean remove(Object o) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean containsAll(Collection<?> c) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean addAll(Collection<? extends String> c) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean removeAll(Collection<?> c) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean retainAll(Collection<?> c) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public void clear() { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public boolean equals(Object o) { 
-		throw new UnsupportedOperationException(); 
-	    }
-            public int hashCode() { 
-		throw new UnsupportedOperationException(); 
-	    }
+            public boolean isEmpty() {
+                throw new UnsupportedOperationException();
+            }
+            public boolean contains(Object o) {
+                throw new UnsupportedOperationException();
+            }
+            public Object[] toArray() {
+                throw new UnsupportedOperationException();
+            }
+            public <T> T[] toArray(T[] a) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean add(String o) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean remove(Object o) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean containsAll(Collection<?> c) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean addAll(Collection<? extends String> c) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean removeAll(Collection<?> c) {
+                throw new UnsupportedOperationException();
+            }
+            public boolean retainAll(Collection<?> c) {
+                throw new UnsupportedOperationException();
+            }
+            public void clear() {
+                throw new UnsupportedOperationException();
+            }
+            public boolean equals(Object o) {
+                throw new UnsupportedOperationException();
+            }
+            public int hashCode() {
+                throw new UnsupportedOperationException();
+            }
         }
 
         /** Is this the name of a zip file? */
         private static boolean isZip(String name) {
             return new File(name).isFile();
         }
- 
+
         private boolean expandJarClassPaths = false;
- 
+
         public Path expandJarClassPaths(boolean x) {
             expandJarClassPaths = x;
             return this;
         }
- 
+
         /** What to use when path element is the empty string */
         private String emptyPathDefault = null;
- 
+
         public Path emptyPathDefault(String x) {
             emptyPathDefault = x;
             return this;
         }
- 
+
         public Path() { super(); }
- 
+
         public Path addDirectories(String dirs, boolean warn) {
             if (dirs != null)
                 for (String dir : new PathIterator(dirs))
                     addDirectory(dir, warn);
             return this;
         }
- 
+
         public Path addDirectories(String dirs) {
             return addDirectories(dirs, warn);
         }
- 
+
         private void addDirectory(String dir, boolean warn) {
             if (! new File(dir).isDirectory()) {
 //              if (warn)
@@ -350,7 +350,7 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
 //                              "dir.path.element.not.found", dir);
                 return;
             }
- 
+
             for (String direntry : new File(dir).list()) {
                 String canonicalized = direntry.toLowerCase();
                 if (canonicalized.endsWith(".jar") ||
@@ -365,17 +365,17 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
                     addFile(file, warn);
             return this;
         }
- 
+
         public Path addFiles(String files) {
             return addFiles(files, warn);
         }
- 
+
         private void addFile(String file, boolean warn) {
             if (contains(file)) {
                 /* Discard duplicates and avoid infinite recursion */
                 return;
-            } 
- 
+            }
+
             File ele = new File(file);
             if (! ele.exists()) {
                 /* No such file or directory exist */
@@ -384,11 +384,11 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
 //                          "path.element.not.found", file);
                     return;
             }
- 
-            if (ele.isFile()) { 
+
+            if (ele.isFile()) {
                 /* File is an ordinay file  */
                 String arcname = file.toLowerCase();
-                if (! (arcname.endsWith(".zip") || 
+                if (! (arcname.endsWith(".zip") ||
                        arcname.endsWith(".jar"))) {
                     /* File name don't have right extension */
 //                      if (warn)
@@ -397,10 +397,10 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
                     return;
                 }
             }
-         
+
             /* Now what we have left is either a directory or a file name
                confirming to archive naming convention */
- 
+
             super.add(file);
             if (expandJarClassPaths && isZip(file))
                 addJarClassPath(file, warn);
@@ -414,17 +414,17 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
             try {
                 String jarParent = new File(jarFileName).getParent();
                 JarFile jar = new JarFile(jarFileName);
- 
+
                 try {
                     Manifest man = jar.getManifest();
                     if (man == null) return;
- 
+
                     Attributes attr = man.getMainAttributes();
                     if (attr == null) return;
- 
+
                     String path = attr.getValue(Attributes.Name.CLASS_PATH);
                     if (path == null) return;
- 
+
                     for (StringTokenizer st = new StringTokenizer(path);
                         st.hasMoreTokens();) {
                         String elt = st.nextToken();
@@ -437,8 +437,8 @@ public class BatchEnvironment extends sun.tools.javac.BatchEnvironment {
                 }
             } catch (IOException e) {
 //              log.error(Position.NOPOS,
-//                        "error.reading.file", jarFileName, 
-//			  e.getLocalizedMessage());
+//                        "error.reading.file", jarFileName,
+//                        e.getLocalizedMessage());
             }
         }
     }

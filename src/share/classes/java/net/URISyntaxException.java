@@ -31,7 +31,6 @@ package java.net;
  * URI reference.
  *
  * @author Mark Reinhold
- * @version %I%, %E%
  * @see URI
  * @since 1.4
  */
@@ -58,13 +57,13 @@ public class URISyntaxException
      *          If the error index is less than <tt>-1</tt>
      */
     public URISyntaxException(String input, String reason, int index) {
-	super(reason);
-	if ((input == null) || (reason == null))
-	    throw new NullPointerException();
-	if (index < -1)
-	    throw new IllegalArgumentException();
-	this.input = input;
-	this.index = index;
+        super(reason);
+        if ((input == null) || (reason == null))
+            throw new NullPointerException();
+        if (index < -1)
+            throw new IllegalArgumentException();
+        this.input = input;
+        this.index = index;
     }
 
     /**
@@ -78,7 +77,7 @@ public class URISyntaxException
      *          If either the input or reason strings are <tt>null</tt>
      */
     public URISyntaxException(String input, String reason) {
-	this(input, reason, -1);
+        this(input, reason, -1);
     }
 
     /**
@@ -87,7 +86,7 @@ public class URISyntaxException
      * @return  The input string
      */
     public String getInput() {
-	return input;
+        return input;
     }
 
     /**
@@ -96,7 +95,7 @@ public class URISyntaxException
      * @return  The reason string
      */
     public String getReason() {
-	return super.getMessage();
+        return super.getMessage();
     }
 
     /**
@@ -106,7 +105,7 @@ public class URISyntaxException
      * @return  The error index
      */
     public int getIndex() {
-	return index;
+        return index;
     }
 
     /**
@@ -120,15 +119,15 @@ public class URISyntaxException
      * @return  A string describing the parse error
      */
     public String getMessage() {
-	StringBuffer sb = new StringBuffer();
-	sb.append(getReason());
-	if (index > -1) {
-	    sb.append(" at index ");
-	    sb.append(index);
-	}
-	sb.append(": ");
-	sb.append(input);
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        sb.append(getReason());
+        if (index > -1) {
+            sb.append(" at index ");
+            sb.append(index);
+        }
+        sb.append(": ");
+        sb.append(input);
+        return sb.toString();
     }
 
 }

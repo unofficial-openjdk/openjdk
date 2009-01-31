@@ -40,7 +40,7 @@ package java.lang.management;
  * <p>The <tt>ObjectName</tt> for uniquely identifying the MXBean for
  * the compilation system within an MBeanServer is:
  * <blockquote>
- *  {@link ManagementFactory#COMPILATION_MXBEAN_NAME 
+ *  {@link ManagementFactory#COMPILATION_MXBEAN_NAME
  *         <tt>java.lang:type=Compilation</tt>}
  * </blockquote>
  *
@@ -50,50 +50,48 @@ package java.lang.management;
  *      Ways to Access MXBeans</a>
  *
  * @author  Mandy Chung
- * @version %I%, %G% 
  * @since   1.5
  */
 public interface CompilationMXBean {
-    /** 
-     * Returns the name of the Just-in-time (JIT) compiler. 
+    /**
+     * Returns the name of the Just-in-time (JIT) compiler.
      *
      * @return the name of the JIT compiler.
      */
     public java.lang.String    getName();
-    
+
     /**
      * Tests if the Java virtual machine supports the monitoring of
-     * compilation time. 
+     * compilation time.
      *
-     * @return <tt>true</tt> if the monitoring of compilation time is  
+     * @return <tt>true</tt> if the monitoring of compilation time is
      * supported ; <tt>false</tt> otherwise.
      */
     public boolean isCompilationTimeMonitoringSupported();
 
-    /** 
-     * Returns the approximate accumlated elapsed time (in milliseconds) 
+    /**
+     * Returns the approximate accumlated elapsed time (in milliseconds)
      * spent in compilation.
-     * If multiple threads are used for compilation, this value is 
+     * If multiple threads are used for compilation, this value is
      * summation of the approximate time that each thread spent in compilation.
      *
      * <p>This method is optionally supported by the platform.
-     * A Java virtual machine implementation may not support the compilation 
-     * time monitoring. The {@link #isCompilationTimeMonitoringSupported} 
-     * method can be used to determine if the Java virtual machine 
+     * A Java virtual machine implementation may not support the compilation
+     * time monitoring. The {@link #isCompilationTimeMonitoringSupported}
+     * method can be used to determine if the Java virtual machine
      * supports this operation.
      *
-     * <p> This value does not indicate the level of performance of 
+     * <p> This value does not indicate the level of performance of
      * the Java virtual machine and is not intended for performance comparisons
      * of different virtual machine implementations.
-     * The implementations may have different definitions and different 
+     * The implementations may have different definitions and different
      * measurements of the compilation time.
      *
      * @return Compilation time in milliseconds
-     * @throws java.lang.UnsupportedOperationException if the Java 
+     * @throws java.lang.UnsupportedOperationException if the Java
      * virtual machine does not support
      * this operation.
      *
      */
     public long                getTotalCompilationTime();
 }
-

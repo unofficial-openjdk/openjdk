@@ -32,18 +32,18 @@
 
 import java.net.*;
 import java.io.*;
-import java.util.*; 
+import java.util.*;
 
 /*
  * http server returns 200 and content-length=0
- * Test will throw NPE if bug still exists  
+ * Test will throw NPE if bug still exists
  */
 
 public class B6296310
 {
    static SimpleHttpTransaction httpTrans;
    static HttpServer server;
-   
+
    public static void main(String[] args)
    {
       ResponseCache.setDefault(new MyCacheHandler());
@@ -51,7 +51,7 @@ public class B6296310
 
       makeHttpCall();
    }
-   
+
    public static void startHttpServer() {
       try {
          httpTrans = new SimpleHttpTransaction();
@@ -76,7 +76,7 @@ public class B6296310
    }
 }
 
-class SimpleHttpTransaction implements HttpCallback 
+class SimpleHttpTransaction implements HttpCallback
 {
    /*
     * Our http server which simply retruns a file with no content
@@ -93,11 +93,11 @@ class SimpleHttpTransaction implements HttpCallback
 
 class MyCacheHandler extends ResponseCache
 {
-   public CacheResponse get(URI uri, String rqstMethod, Map rqstHeaders) 
+   public CacheResponse get(URI uri, String rqstMethod, Map rqstHeaders)
    {
       return null;
    }
-   
+
    public CacheRequest put(URI uri, URLConnection conn)
    {
       return new MyCacheRequest();
@@ -105,9 +105,9 @@ class MyCacheHandler extends ResponseCache
 }
 
 class MyCacheRequest extends CacheRequest
-{   
+{
    public void abort() {}
-    
+
    public OutputStream getBody() throws IOException {
        return null;
    }

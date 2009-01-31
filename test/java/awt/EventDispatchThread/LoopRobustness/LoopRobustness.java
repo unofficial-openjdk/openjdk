@@ -71,7 +71,7 @@ public class LoopRobustness {
                 throw new RuntimeException("Test interrupted.", e);
             }
         }
-        if (clicks != 2) { 
+        if (clicks != 2) {
             throw new RuntimeException("robot should press button twice");
         }
     }
@@ -86,7 +86,7 @@ class Impl implements Runnable{
            If load on Main (on the parent ThreadGroup of current ThreadGroup) then
            EDT will be created on Main thread and supplied with it's own exceptionHandler,
            which just throws an Exception and terminates current thread.
-           The test implies that EDT is created on the child ThreadGroup (testThreadGroup) 
+           The test implies that EDT is created on the child ThreadGroup (testThreadGroup)
            which is supplied with its own uncaughtException().
         */
         Toolkit.getDefaultToolkit();
@@ -99,7 +99,7 @@ class Impl implements Runnable{
                     System.out.println(HostileCrasher.aStaticMethod());
                 }
             });
-        lr.add(b);        
+        lr.add(b);
         lr.setVisible(true);
 
         try {

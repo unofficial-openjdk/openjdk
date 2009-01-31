@@ -51,41 +51,41 @@ import sun.java2d.loops.CompositeType;
 public abstract class SurfaceManager {
 
     public static abstract class ImageAccessor {
-	public abstract SurfaceManager getSurfaceManager(Image img);
-	public abstract void setSurfaceManager(Image img, SurfaceManager mgr);
+        public abstract SurfaceManager getSurfaceManager(Image img);
+        public abstract void setSurfaceManager(Image img, SurfaceManager mgr);
     }
 
     private static ImageAccessor imgaccessor;
 
     public static void setImageAccessor(ImageAccessor ia) {
-	if (imgaccessor != null) {
-	    throw new InternalError("Attempt to set ImageAccessor twice");
-	}
-	imgaccessor = ia;
+        if (imgaccessor != null) {
+            throw new InternalError("Attempt to set ImageAccessor twice");
+        }
+        imgaccessor = ia;
     }
 
     /**
      * Returns the SurfaceManager object contained within the given Image.
      */
     public static SurfaceManager getManager(Image img) {
-	SurfaceManager sMgr = imgaccessor.getSurfaceManager(img);
-	if (sMgr == null) {
-	    /*
-	     * In practice only a BufferedImage will get here.
-	     */
-	    try {
-		BufferedImage bi = (BufferedImage) img;
-		sMgr = new BufImgSurfaceManager(bi);
-		setManager(bi, sMgr);
+        SurfaceManager sMgr = imgaccessor.getSurfaceManager(img);
+        if (sMgr == null) {
+            /*
+             * In practice only a BufferedImage will get here.
+             */
+            try {
+                BufferedImage bi = (BufferedImage) img;
+                sMgr = new BufImgSurfaceManager(bi);
+                setManager(bi, sMgr);
             } catch (ClassCastException e) {
                 throw new IllegalArgumentException("Invalid Image variant");
             }
-	}
-	return sMgr;
+        }
+        return sMgr;
     }
 
     public static void setManager(Image img, SurfaceManager mgr) {
-	imgaccessor.setSurfaceManager(img, mgr);
+        imgaccessor.setSurfaceManager(img, mgr);
     }
 
     private ConcurrentHashMap cacheMap;
@@ -150,8 +150,8 @@ public abstract class SurfaceManager {
      * Notification that any accelerated surfaces associated with this manager
      * have been "lost", which might mean that they need to be manually
      * restored or recreated.
-     * 
-     * The default implementation does nothing, but platform-specific 
+     *
+     * The default implementation does nothing, but platform-specific
      * variants which have accelerated surfaces should perform any necessary
      * actions.
      */
@@ -181,26 +181,26 @@ public abstract class SurfaceManager {
      * @since 1.5
      */
     public ImageCapabilities getCapabilities(GraphicsConfiguration gc) {
-	return new ImageCapabilitiesGc(gc);
+        return new ImageCapabilitiesGc(gc);
     }
-    
+
     class ImageCapabilitiesGc extends ImageCapabilities {
-	GraphicsConfiguration gc;
-	
-	public ImageCapabilitiesGc(GraphicsConfiguration gc) {
-	    super(false);
-	    this.gc = gc;
-	}
-	
-	public boolean isAccelerated() {
+        GraphicsConfiguration gc;
+
+        public ImageCapabilitiesGc(GraphicsConfiguration gc) {
+            super(false);
+            this.gc = gc;
+        }
+
+        public boolean isAccelerated() {
             // Note that when img.getAccelerationPriority() gets set to 0
             // we remove SurfaceDataProxy objects from the cache and the
             // answer will be false.
-	    GraphicsConfiguration tmpGc = gc;
-	    if (tmpGc == null) {
-		tmpGc = GraphicsEnvironment.getLocalGraphicsEnvironment().
-		    getDefaultScreenDevice().getDefaultConfiguration();
-	    }
+            GraphicsConfiguration tmpGc = gc;
+            if (tmpGc == null) {
+                tmpGc = GraphicsEnvironment.getLocalGraphicsEnvironment().
+                    getDefaultScreenDevice().getDefaultConfiguration();
+            }
             if (tmpGc instanceof ProxiedGraphicsConfig) {
                 Object proxyKey =
                     ((ProxiedGraphicsConfig) tmpGc).getProxyKey();
@@ -211,7 +211,7 @@ public abstract class SurfaceManager {
                 }
             }
             return false;
-	}
+        }
     }
 
     /**

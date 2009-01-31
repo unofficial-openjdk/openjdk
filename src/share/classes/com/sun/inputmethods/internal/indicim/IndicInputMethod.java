@@ -53,12 +53,12 @@ class IndicInputMethod implements InputMethod {
 
     private IndicInputMethodImpl impl;
     private Locale locale;
-    
+
     IndicInputMethod(Locale theLocale, IndicInputMethodImpl theImplementation) {
         locale = theLocale;
         impl = theImplementation;
     }
-    
+
     /**
      * Sets the input method context, which is used to dispatch input method
      * events to the client component and to request information from
@@ -71,7 +71,7 @@ class IndicInputMethod implements InputMethod {
      * @exception NullPointerException if <code>context</code> is null
      */
     public void setInputMethodContext(InputMethodContext context) {
-        
+
         impl.setInputMethodContext(context);
     }
 
@@ -95,7 +95,7 @@ class IndicInputMethod implements InputMethod {
      * @exception NullPointerException if <code>locale</code> is null
      */
     public boolean setLocale(Locale locale) {
-        
+
         if (locale.getLanguage().equals(this.locale.getLanguage())) {
             //System.out.println("returning true for locale " + locale);
             return true;
@@ -119,10 +119,10 @@ class IndicInputMethod implements InputMethod {
      * @return the current input locale, or null
      */
     public Locale getLocale() {
-        
+
         return locale;
     }
-    
+
     /**
      * Sets the subsets of the Unicode character set that this input method
      * is allowed to input. Null may be passed in to indicate that all
@@ -170,7 +170,7 @@ class IndicInputMethod implements InputMethod {
      * @see #isCompositionEnabled
      */
     public void setCompositionEnabled(boolean enable) {
-        
+
         throw new UnsupportedOperationException();
     }
 
@@ -195,7 +195,7 @@ class IndicInputMethod implements InputMethod {
      * @see #setCompositionEnabled
      */
     public boolean isCompositionEnabled() {
-        
+
         return true;
     }
 
@@ -218,7 +218,7 @@ class IndicInputMethod implements InputMethod {
      * support the reconversion operation.
      */
     public void reconvert() {
-        
+
         throw new UnsupportedOperationException("This input method does not reconvert.");
     }
 
@@ -242,9 +242,9 @@ class IndicInputMethod implements InputMethod {
      * @exception NullPointerException if <code>event</code> is null
      */
     public void dispatchEvent(AWTEvent event) {
-        
+
         if (event instanceof KeyEvent) {
-            
+
             KeyEvent keyEvent = (KeyEvent) event;
             if (event.getID() == KeyEvent.KEY_TYPED) {
                 impl.handleKeyTyped(keyEvent);
@@ -362,7 +362,7 @@ class IndicInputMethod implements InputMethod {
      */
     public void hideWindows() {
     }
-  
+
     /**
      * Notifies the input method that a client component has been
      * removed from its containment hierarchy, or that input method
@@ -398,7 +398,7 @@ class IndicInputMethod implements InputMethod {
      * </ul>
      */
     public void endComposition() {
-        
+
         impl.endComposition();
     }
 
@@ -430,7 +430,7 @@ class IndicInputMethod implements InputMethod {
      * @return a control object from this input method, or null
      */
     public Object getControlObject() {
-        
+
         return null;
     }
 }

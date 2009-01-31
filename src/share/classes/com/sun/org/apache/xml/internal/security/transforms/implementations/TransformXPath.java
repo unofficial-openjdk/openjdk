@@ -54,7 +54,7 @@ import org.w3c.dom.Node;
 public class TransformXPath extends TransformSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(TransformXPath.class.getName());
 
    /** Field implementedTransformURI */
@@ -94,9 +94,9 @@ public class TransformXPath extends TransformSpi {
           * The evaluation of this expression includes all of the document's nodes
           * (including comments) in the node-set representing the octet stream.
           */
-		  CachedXPathAPIHolder.setDoc(this._transformObject.getElement().getOwnerDocument());
-         
-         
+                  CachedXPathAPIHolder.setDoc(this._transformObject.getElement().getOwnerDocument());
+
+
 
          Element xpathElement =XMLUtils.selectDsNode(
             this._transformObject.getElement().getFirstChild(),
@@ -111,9 +111,9 @@ public class TransformXPath extends TransformSpi {
          String str=CachedXPathFuncHereAPI.getStrFromNode(xpathnode);
          input.setNeedsToBeExpanded(needsCircunvent(str));
          if (xpathnode == null) {
-     	    throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR,
-     	                           "Text must be in ds:Xpath");
-     	 }
+            throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR,
+                                   "Text must be in ds:Xpath");
+         }
 
 
          input.addNodeFilter(new XPathNodeFilter( xpathElement, xpathnode, str));
@@ -121,7 +121,7 @@ public class TransformXPath extends TransformSpi {
          return input;
       } catch (DOMException ex) {
          throw new TransformationException("empty", ex);
-      } 
+      }
    }
 
    /**
@@ -129,42 +129,42 @@ public class TransformXPath extends TransformSpi {
     * @return true if needs to be circunvent for bug.
     */
     private boolean needsCircunvent(String str) {
-    	return true;
-    	//return str.contains("namespace");
-    	
+        return true;
+        //return str.contains("namespace");
+
     }
     class XPathNodeFilter implements NodeFilter {
-    	 PrefixResolverDefault prefixResolver;
-    	 CachedXPathFuncHereAPI xPathFuncHereAPI =
+         PrefixResolverDefault prefixResolver;
+         CachedXPathFuncHereAPI xPathFuncHereAPI =
              new CachedXPathFuncHereAPI(CachedXPathAPIHolder.getCachedXPathAPI());
           ;
-    	Node xpathnode; 
-    	String str;
-    	XPathNodeFilter(Element xpathElement,
-    			Node xpathnode, String str) {
-    		this.xpathnode=xpathnode;
-    		this.str=str;
-    		prefixResolver =new PrefixResolverDefault(xpathElement);
-    	}
-    	    
+        Node xpathnode;
+        String str;
+        XPathNodeFilter(Element xpathElement,
+                        Node xpathnode, String str) {
+                this.xpathnode=xpathnode;
+                this.str=str;
+                prefixResolver =new PrefixResolverDefault(xpathElement);
+        }
 
-		/**
-		 * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
-		 */
-		public boolean isNodeInclude(Node currentNode) {			
-			XObject includeInResult;
-			try {
-				includeInResult = xPathFuncHereAPI.eval(currentNode,
-				        xpathnode, str,prefixResolver);
-				return includeInResult.bool();
-			} catch (TransformerException e) {
+
+                /**
+                 * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
+                 */
+                public boolean isNodeInclude(Node currentNode) {
+                        XObject includeInResult;
+                        try {
+                                includeInResult = xPathFuncHereAPI.eval(currentNode,
+                                        xpathnode, str,prefixResolver);
+                                return includeInResult.bool();
+                        } catch (TransformerException e) {
                 Object[] eArgs = {currentNode};
-				throw new XMLSecurityRuntimeException("signature.Transform.node", eArgs, e);
-			}	
-			catch (Exception e) {
+                                throw new XMLSecurityRuntimeException("signature.Transform.node", eArgs, e);
+                        }
+                        catch (Exception e) {
                 Object[] eArgs = {currentNode, new Short(currentNode.getNodeType())};
-				throw new XMLSecurityRuntimeException("signature.Transform.nodeAndType",eArgs, e);
-			}
-		}
+                                throw new XMLSecurityRuntimeException("signature.Transform.nodeAndType",eArgs, e);
+                        }
+                }
     }
 }

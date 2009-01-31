@@ -64,16 +64,16 @@ class SocketDispatcher extends NativeDispatcher
 
     //-- Native methods
     static native int read0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native long readv0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native int write0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native long writev0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native void close0(FileDescriptor fd) throws IOException;
 }

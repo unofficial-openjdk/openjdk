@@ -52,7 +52,6 @@ import java.net.*;
  * implement {@link Object#hashCode} consistently with its
  * <code>Object.equals</code> implementation).
  *
- * @version %I%, %G%
  * @author  Ann Wollrath
  * @author  Peter Jones
  * @since   1.2
@@ -71,5 +70,5 @@ public interface RMIClientSocketFactory {
      * @since 1.2
      */
     public Socket createSocket(String host, int port)
-	throws IOException;
+        throws IOException;
 }

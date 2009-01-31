@@ -24,7 +24,7 @@
 /**
  *  @test
  *  @bug 4916263
- *  @summary Test 
+ *  @summary Test
  *
  *  @author Serguei Spitsyn
  *
@@ -206,11 +206,11 @@ public class LocalVariableEqual extends TestScaffold {
         int index1 = 0;
         for (Iterator it1 = localVars.iterator(); it1.hasNext(); index1++) {
             LocalVariable lv1 = (LocalVariable) it1.next();
-            
+
             int index2 = 0;
             for (Iterator it2 = localVars.iterator(); it2.hasNext(); index2++) {
                 LocalVariable lv2 = (LocalVariable) it2.next();
-            
+
                 println("\n Two variables:");
                 printVariable(lv1, index1);
                 printVariable(lv2, index2);
@@ -254,4 +254,3 @@ public class LocalVariableEqual extends TestScaffold {
         }
     }
 }
-

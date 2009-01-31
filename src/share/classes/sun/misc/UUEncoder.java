@@ -49,7 +49,7 @@ import java.io.IOException;
  *
  * This is followed by one or more lines of the form:
  * <pre>
- *	(len)(data)(data)(data) ...
+ *      (len)(data)(data)(data) ...
  * </pre>
  * where (len) is the number of bytes on this line. Note that groupings
  * are always four characters, even if length is not a multiple of three
@@ -61,10 +61,9 @@ import java.io.IOException;
  * length of zero. This is immediately followed by a line which contains
  * the word 'end[newline]'
  *
- * @version     %I%, %G%
  * @author      Chuck McManis
- * @see		CharacterEncoder
- * @see		UUDecoder
+ * @see         CharacterEncoder
+ * @see         UUDecoder
  */
 public class UUEncoder extends CharacterEncoder {
 
@@ -78,7 +77,7 @@ public class UUEncoder extends CharacterEncoder {
      * read, write, and execute permission of the owner, group owner, and
      * others. They should be interpreted as the bit groups:
      * (owner) (group) (others)
-     *	rwx      rwx     rwx 	(r = read, w = write, x = execute)
+     *  rwx      rwx     rwx    (r = read, w = write, x = execute)
      *
      * By default these are set to 644 (UNIX rw-r--r-- permissions).
      */
@@ -88,44 +87,44 @@ public class UUEncoder extends CharacterEncoder {
     /**
      * Default - buffer begin line will be:
      * <pre>
-     *	begin 644 encoder.buf
+     *  begin 644 encoder.buf
      * </pre>
      */
     public UUEncoder() {
-	bufferName = "encoder.buf";
-	mode = 644;
+        bufferName = "encoder.buf";
+        mode = 644;
     }
 
     /**
      * Specifies a name for the encoded buffer, begin line will be:
      * <pre>
-     *	begin 644 [FNAME]
+     *  begin 644 [FNAME]
      * </pre>
      */
     public UUEncoder(String fname) {
-	bufferName = fname;
-	mode = 644;
+        bufferName = fname;
+        mode = 644;
     }
 
     /**
      * Specifies a name and mode for the encoded buffer, begin line will be:
      * <pre>
-     *	begin [MODE] [FNAME]
+     *  begin [MODE] [FNAME]
      * </pre>
      */
     public UUEncoder(String fname, int newMode) {
-	bufferName = fname;
-	mode = newMode;
+        bufferName = fname;
+        mode = newMode;
     }
 
     /** number of bytes per atom in uuencoding is 3 */
     protected int bytesPerAtom() {
-	return (3);
+        return (3);
     }
 
     /** number of bytes per line in uuencoding is 45 */
     protected int bytesPerLine() {
-	return (45);
+        return (45);
     }
 
     /**
@@ -135,27 +134,27 @@ public class UUEncoder extends CharacterEncoder {
      * be truncated.
      */
     protected void encodeAtom(OutputStream outStream, byte data[], int offset, int len)
-	throws IOException {
-	byte	a, b = 1, c = 1;
-	int	c1, c2, c3, c4;
+        throws IOException {
+        byte    a, b = 1, c = 1;
+        int     c1, c2, c3, c4;
 
-	a = data[offset];
-	if (len > 1) {
-	    b = data[offset+1];
-	}
-	if (len > 2) {
-	    c = data[offset+2];
-	}
+        a = data[offset];
+        if (len > 1) {
+            b = data[offset+1];
+        }
+        if (len > 2) {
+            c = data[offset+2];
+        }
 
-	c1 = (a >>> 2) & 0x3f;
-	c2 = ((a << 4) & 0x30) | ((b >>> 4) & 0xf);
-	c3 = ((b << 2) & 0x3c) | ((c >>> 6) & 0x3);
-	c4 = c & 0x3f;
-	outStream.write(c1 + ' ');
-	outStream.write(c2 + ' ');
-	outStream.write(c3 + ' ');
-	outStream.write(c4 + ' ');
-	return;
+        c1 = (a >>> 2) & 0x3f;
+        c2 = ((a << 4) & 0x30) | ((b >>> 4) & 0xf);
+        c3 = ((b << 2) & 0x3c) | ((c >>> 6) & 0x3);
+        c4 = c & 0x3f;
+        outStream.write(c1 + ' ');
+        outStream.write(c2 + ' ');
+        outStream.write(c3 + ' ');
+        outStream.write(c4 + ' ');
+        return;
     }
 
     /**
@@ -163,8 +162,8 @@ public class UUEncoder extends CharacterEncoder {
      * lenght is added to the value of ' ' (32 decimal) and printed.
      */
     protected void encodeLinePrefix(OutputStream outStream, int length)
-	throws IOException {
-	outStream.write((length & 0x3f) + ' ');
+        throws IOException {
+        outStream.write((length & 0x3f) + ' ');
     }
 
 
@@ -172,21 +171,21 @@ public class UUEncoder extends CharacterEncoder {
      * The line suffix for uuencoded files is simply a new line.
      */
     protected void encodeLineSuffix(OutputStream outStream) throws IOException {
-	pStream.println();
+        pStream.println();
     }
 
     /**
      * encodeBufferPrefix writes the begin line to the output stream.
      */
     protected void encodeBufferPrefix(OutputStream a) throws IOException {
-	super.pStream = new PrintStream(a);
-	super.pStream.print("begin "+mode+" ");
-	if (bufferName != null) {
-	    super.pStream.println(bufferName);
-	} else {
-	    super.pStream.println("encoder.bin");
-	}
-	super.pStream.flush();
+        super.pStream = new PrintStream(a);
+        super.pStream.print("begin "+mode+" ");
+        if (bufferName != null) {
+            super.pStream.println(bufferName);
+        } else {
+            super.pStream.println("encoder.bin");
+        }
+        super.pStream.flush();
     }
 
     /**
@@ -194,8 +193,8 @@ public class UUEncoder extends CharacterEncoder {
      * the line containing the word 'end' to the output stream.
      */
     protected void encodeBufferSuffix(OutputStream a) throws IOException {
-	super.pStream.println(" \nend");
-	super.pStream.flush();
+        super.pStream.println(" \nend");
+        super.pStream.flush();
     }
 
 }

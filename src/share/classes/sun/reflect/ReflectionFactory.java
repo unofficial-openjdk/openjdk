@@ -93,13 +93,13 @@ public class ReflectionFactory {
     /**
      * Provides the caller with the capability to instantiate reflective
      * objects.
-     * 
+     *
      * <p> First, if there is a security manager, its
      * <code>checkPermission</code> method is called with a {@link
      * java.lang.RuntimePermission} with target
      * <code>"reflectionFactoryAccess"</code>.  This may result in a
      * security exception.
-     * 
+     *
      * <p> The returned <code>ReflectionFactory</code> object should be
      * carefully guarded by the caller, since it can be used to read and
      * write private data and invoke private methods, as well as to load
@@ -137,7 +137,7 @@ public class ReflectionFactory {
      */
     public FieldAccessor newFieldAccessor(Field field, boolean override) {
         checkInitted();
-	return UnsafeFieldAccessorFactory.newFieldAccessor(field, override);
+        return UnsafeFieldAccessorFactory.newFieldAccessor(field, override);
     }
 
     public MethodAccessor newMethodAccessor(Method method) {
@@ -392,7 +392,7 @@ public class ReflectionFactory {
                         try {
                             inflationThreshold = Integer.parseInt(val);
                         } catch (NumberFormatException e) {
-                            throw (RuntimeException) 
+                            throw (RuntimeException)
                                 new RuntimeException("Unable to parse property sun.reflect.inflationThreshold").
                                     initCause(e);
                         }

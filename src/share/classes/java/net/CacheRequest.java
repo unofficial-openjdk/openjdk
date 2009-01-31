@@ -38,12 +38,11 @@ import java.io.IOException;
  * response or writing to the cache, the current cache store operation
  * will be aborted.
  *
- * @version 1.1, 03/09/22
  * @author Yingxian Wang
  * @since 1.5
  */
 public abstract class CacheRequest {
- 
+
     /**
      * Returns an OutputStream to which the response body can be
      * written.
@@ -54,7 +53,7 @@ public abstract class CacheRequest {
      *         writing the response body
      */
     public abstract OutputStream getBody() throws IOException;
- 
+
     /**
      * Aborts the attempt to cache the response. If an IOException is
      * encountered while reading the response or writing to the cache,

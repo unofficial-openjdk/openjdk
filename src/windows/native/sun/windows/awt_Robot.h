@@ -37,23 +37,23 @@ class AwtRobot : public AwtObject
         AwtRobot( jobject peer );
         virtual ~AwtRobot();
 
-	void MouseMove( jint x, jint y);
-	void MousePress( jint buttonMask );
-	void MouseRelease( jint buttonMask );
+        void MouseMove( jint x, jint y);
+        void MousePress( jint buttonMask );
+        void MouseRelease( jint buttonMask );
 
-	void MouseWheel(jint wheelAmt);
+        void MouseWheel(jint wheelAmt);
 
-	jint GetRGBPixel( jint x, jint y);
-	void GetRGBPixels(jint x, jint y, jint width, jint height, jintArray pixelArray);
+        jint GetRGBPixel( jint x, jint y);
+        void GetRGBPixels(jint x, jint y, jint width, jint height, jintArray pixelArray);
 
-	void KeyPress( jint key );
-	void KeyRelease( jint key );
-    
-	static AwtRobot * GetRobot( jobject self );
-	
+        void KeyPress( jint key );
+        void KeyRelease( jint key );
+
+        static AwtRobot * GetRobot( jobject self );
+
     private:
-	void DoKeyEvent( jint jkey, DWORD dwFlags );
-	static jint WinToJavaPixel(USHORT r, USHORT g, USHORT b);
+        void DoKeyEvent( jint jkey, DWORD dwFlags );
+        static jint WinToJavaPixel(USHORT r, USHORT g, USHORT b);
 };
 
 #endif // AWT_ROBOT_H

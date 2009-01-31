@@ -88,7 +88,7 @@ public class CounterMonitorInitThresholdTest {
         // Retrieve the platform MBean server
         //
         System.out.println("\nRetrieve the platform MBean server");
-	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         String domain = mbs.getDefaultDomain();
 
         // Create and register TestMBeans

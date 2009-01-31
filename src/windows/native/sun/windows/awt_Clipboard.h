@@ -47,13 +47,13 @@ public:
     static jobject theCurrentClipboard;
 
     INLINE static void GetOwnership() {
-	AwtClipboard::isGettingOwnership = TRUE;
-	VERIFY(EmptyClipboard());
-	AwtClipboard::isGettingOwnership = FALSE;
+        AwtClipboard::isGettingOwnership = TRUE;
+        VERIFY(EmptyClipboard());
+        AwtClipboard::isGettingOwnership = FALSE;
     }
 
     INLINE static BOOL IsGettingOwnership() {
-	return isGettingOwnership;
+        return isGettingOwnership;
     }
 
     static void LostOwnership(JNIEnv *env);

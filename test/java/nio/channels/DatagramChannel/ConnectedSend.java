@@ -32,7 +32,7 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.nio.charset.*;
- 
+
 public class ConnectedSend {
 
     public static void main(String[] args) throws Exception {
@@ -47,13 +47,13 @@ public class ConnectedSend {
         DatagramChannel sndChannel = DatagramChannel.open();
         sndChannel.socket().bind(null);
         InetSocketAddress sender = new InetSocketAddress(
-            InetAddress.getLocalHost(), 
+            InetAddress.getLocalHost(),
             sndChannel.socket().getLocalPort());
 
         DatagramChannel rcvChannel = DatagramChannel.open();
         rcvChannel.socket().bind(null);
         InetSocketAddress receiver = new InetSocketAddress(
-            InetAddress.getLocalHost(), 
+            InetAddress.getLocalHost(),
             rcvChannel.socket().getLocalPort());
 
         rcvChannel.connect(sender);
@@ -81,13 +81,13 @@ public class ConnectedSend {
         DatagramChannel sndChannel = DatagramChannel.open();
         sndChannel.socket().bind(null);
         InetSocketAddress sender = new InetSocketAddress(
-            InetAddress.getLocalHost(), 
+            InetAddress.getLocalHost(),
             sndChannel.socket().getLocalPort());
 
         DatagramChannel rcvChannel = DatagramChannel.open();
         rcvChannel.socket().bind(null);
         InetSocketAddress receiver = new InetSocketAddress(
-            InetAddress.getLocalHost(), 
+            InetAddress.getLocalHost(),
             rcvChannel.socket().getLocalPort());
 
         rcvChannel.connect(sender);

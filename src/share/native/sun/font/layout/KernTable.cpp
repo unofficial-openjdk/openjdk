@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)KernTable.cpp	1.7 06/12/13
  *
  * (C) Copyright IBM Corp. 2004-2005 - All Rights Reserved
  *
@@ -89,7 +88,7 @@ struct KernTableHeader {
  * TODO: support multiple subtables
  * TODO: respect header flags
  */
-KernTable::KernTable(const LEFontInstance* font, const void* tableData) 
+KernTable::KernTable(const LEFontInstance* font, const void* tableData)
   : pairs(0), font(font)
 {
   const KernTableHeader* header = (const KernTableHeader*)tableData;
@@ -177,13 +176,13 @@ KernTable::KernTable(const LEFontInstance* font, const void* tableData)
     }
   }
 }
-  
+
 
 /*
  * Process the glyph positions.  The positions array has two floats for each
  * glyph, plus a trailing pair to mark the end of the last glyph.
  */
-void KernTable::process(LEGlyphStorage& storage) 
+void KernTable::process(LEGlyphStorage& storage)
 {
   if (pairs) {
     LEErrorCode success = LE_NO_ERROR;
@@ -214,9 +213,9 @@ void KernTable::process(LEGlyphStorage& storage)
           if (tkey == key) {
             le_int16 value = SWAPW(tp->value);
 #if DEBUG
-	    fprintf(stdout, "binary found kerning pair %x:%x at %d, value: 0x%x (%g)\n", 
-		    storage[i-1], storage[i], i, value & 0xffff, font->xUnitsToPoints(value));
-	    fflush(stdout);
+            fprintf(stdout, "binary found kerning pair %x:%x at %d, value: 0x%x (%g)\n",
+                    storage[i-1], storage[i], i, value & 0xffff, font->xUnitsToPoints(value));
+            fflush(stdout);
 #endif
             // Have to undo the device transform.
             // REMIND either find a way to do this only if there is a
@@ -228,9 +227,9 @@ void KernTable::process(LEGlyphStorage& storage)
 
             font->getKerningAdjustment(pt);
             adjust += pt.fX;
-	    break;
-	  }
-	  p = tp;
+            break;
+          }
+          p = tp;
         }
       }
 
@@ -239,4 +238,3 @@ void KernTable::process(LEGlyphStorage& storage)
     storage.adjustPosition(storage.getGlyphCount(), adjust, 0, success);
   }
 }
-

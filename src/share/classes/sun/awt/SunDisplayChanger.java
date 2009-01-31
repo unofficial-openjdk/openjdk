@@ -43,7 +43,7 @@ import java.util.logging.*;
  *
  * It is safe for a DisplayChangedListener to be added while the list is being
  * iterated.
- * 
+ *
  * The displayChanged() call is propagated after some occurrence (either
  * due to user action or some other application) causes the display mode
  * (e.g., depth or resolution) to change.  All heavyweight components need
@@ -56,15 +56,15 @@ import java.util.logging.*;
 public class SunDisplayChanger {
     private static final Logger log = Logger.getLogger("sun.awt.multiscreen.SunDisplayChanger");
 
-    // Create a new synchronizedMap with initial capacity of one listener.  
-    // It is asserted that the most common case is to have one GraphicsDevice 
-    // and one top-level Window.  
+    // Create a new synchronizedMap with initial capacity of one listener.
+    // It is asserted that the most common case is to have one GraphicsDevice
+    // and one top-level Window.
     private Map listeners = Collections.synchronizedMap(new WeakHashMap(1));
 
     public SunDisplayChanger() {}
 
     /*
-     * Add a DisplayChangeListener to this SunDisplayChanger so that it is 
+     * Add a DisplayChangeListener to this SunDisplayChanger so that it is
      * notified when the display is changed.
      */
     public void add(DisplayChangedListener theListener) {
@@ -104,12 +104,12 @@ public class SunDisplayChanger {
         }
     // This method is implemented by making a clone of the set of listeners,
     // and then iterating over the clone.  This is because during the course
-    // of responding to a display change, it may be appropriate for a 
+    // of responding to a display change, it may be appropriate for a
     // DisplayChangedListener to add or remove itself from a SunDisplayChanger.
-    // If the set itself were iterated over, rather than a clone, it is 
+    // If the set itself were iterated over, rather than a clone, it is
     // trivial to get a ConcurrentModificationException by having a
     // DisplayChangedListener remove itself from its list.
-    // Because all display change handling is done on the event thread, 
+    // Because all display change handling is done on the event thread,
     // synchronization provides no protection against modifying the listener
     // list while in the middle of iterating over it.  -bchristi 7/10/2001
 
@@ -151,12 +151,12 @@ public class SunDisplayChanger {
         }
     // This method is implemented by making a clone of the set of listeners,
     // and then iterating over the clone.  This is because during the course
-    // of responding to a display change, it may be appropriate for a 
+    // of responding to a display change, it may be appropriate for a
     // DisplayChangedListener to add or remove itself from a SunDisplayChanger.
-    // If the set itself were iterated over, rather than a clone, it is 
+    // If the set itself were iterated over, rather than a clone, it is
     // trivial to get a ConcurrentModificationException by having a
     // DisplayChangedListener remove itself from its list.
-    // Because all display change handling is done on the event thread, 
+    // Because all display change handling is done on the event thread,
     // synchronization provides no protection against modifying the listener
     // list while in the middle of iterating over it.  -bchristi 7/10/2001
 
@@ -169,7 +169,7 @@ public class SunDisplayChanger {
         cloneSet = listClone.keySet();
         Iterator itr = cloneSet.iterator();
         while (itr.hasNext()) {
-            DisplayChangedListener current = 
+            DisplayChangedListener current =
              (DisplayChangedListener) itr.next();
             try {
                 if (log.isLoggable(Level.FINEST)) {
@@ -187,4 +187,3 @@ public class SunDisplayChanger {
         }
     }
 }
-

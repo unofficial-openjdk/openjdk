@@ -48,7 +48,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
 
     private static native int nativeGetXThickness(int widgetType);
     private static native int nativeGetYThickness(int widgetType);
-    private static native int nativeGetColorForState(int widgetType, 
+    private static native int nativeGetColorForState(int widgetType,
                                                      int state, int typeID);
     private static native Object nativeGetClassValue(int widgetType,
                                                      String key);
@@ -59,10 +59,10 @@ class GTKStyle extends SynthStyle implements GTKConstants {
     static final Color BLACK_COLOR = new ColorUIResource(Color.BLACK);
     static final Color WHITE_COLOR = new ColorUIResource(Color.WHITE);
 
-    static final Font DEFAULT_FONT = new FontUIResource("sansserif", 
+    static final Font DEFAULT_FONT = new FontUIResource("sansserif",
                                                         Font.PLAIN, 10  );
     static final Insets BUTTON_DEFAULT_BORDER_INSETS = new Insets(1, 1, 1, 1);
-    
+
     private static final GTKGraphicsUtils GTK_GRAPHICS = new GTKGraphicsUtils();
 
     /**
@@ -111,15 +111,15 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             this.font = DEFAULT_FONT;
         }
     }
-    
+
     @Override
     public void installDefaults(SynthContext context) {
         super.installDefaults(context);
         if (!context.getRegion().isSubregion()) {
             context.getComponent().putClientProperty(
-                SwingUtilities2.AA_TEXT_PROPERTY_KEY,		
+                SwingUtilities2.AA_TEXT_PROPERTY_KEY,
                 GTKLookAndFeel.aaTextInfo);
-        }        
+        }
     }
 
     @Override
@@ -146,28 +146,28 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         else if (type == GTKColorType.WHITE) {
             return WHITE_COLOR;
         }
-        
+
         Region id = context.getRegion();
         int state = context.getComponentState();
         state = GTKLookAndFeel.synthStateToGTKState(id, state);
 
-        if (type == ColorType.TEXT_FOREGROUND && 
-               (id == Region.BUTTON || 
+        if (type == ColorType.TEXT_FOREGROUND &&
+               (id == Region.BUTTON ||
                 id == Region.CHECK_BOX ||
-                id == Region.CHECK_BOX_MENU_ITEM || 
+                id == Region.CHECK_BOX_MENU_ITEM ||
                 id == Region.MENU ||
-                id == Region.MENU_ITEM || 
+                id == Region.MENU_ITEM ||
                 id == Region.RADIO_BUTTON ||
                 id == Region.RADIO_BUTTON_MENU_ITEM ||
                 id == Region.TABBED_PANE_TAB ||
-                id == Region.TOGGLE_BUTTON || 
-                id == Region.TOOL_TIP || 
+                id == Region.TOGGLE_BUTTON ||
+                id == Region.TOOL_TIP ||
                 id == Region.MENU_ITEM_ACCELERATOR ||
                 id == Region.TABBED_PANE_TAB)) {
             type = ColorType.FOREGROUND;
-        } else if (id == Region.TABLE || 
+        } else if (id == Region.TABLE ||
                    id == Region.LIST ||
-                   id == Region.TREE || 
+                   id == Region.TREE ||
                    id == Region.TREE_CELL) {
             if (type == ColorType.FOREGROUND) {
                 type = ColorType.TEXT_FOREGROUND;
@@ -183,7 +183,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
     }
 
     /**
-     * Returns color specific to the current style. This method is 
+     * Returns color specific to the current style. This method is
      * invoked when other variants don't fit.
      */
     private Color getStyleSpecificColor(SynthContext context, int state,
@@ -200,7 +200,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
     Color getGTKColor(int state, ColorType type) {
         return getGTKColor(null, state, type);
     }
-    
+
     /**
      * Returns the color for the specified state.
      *
@@ -213,18 +213,18 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         if (context != null) {
             JComponent c = context.getComponent();
             Region id = context.getRegion();
-    
+
             state = GTKLookAndFeel.synthStateToGTKState(id, state);
             if (!id.isSubregion() &&
                 (state & SynthConstants.ENABLED) != 0) {
-                if (type == ColorType.BACKGROUND || 
+                if (type == ColorType.BACKGROUND ||
                     type == ColorType.TEXT_BACKGROUND) {
                     Color bg = c.getBackground();
                     if (!(bg instanceof UIResource)) {
                         return bg;
                     }
                 }
-                else if (type == ColorType.FOREGROUND || 
+                else if (type == ColorType.FOREGROUND ||
                          type == ColorType.TEXT_FOREGROUND) {
                     Color fg = c.getForeground();
                     if (!(fg instanceof UIResource)) {
@@ -233,7 +233,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
                 }
             }
         }
-        
+
         return getStyleSpecificColor(context, state, type);
     }
 
@@ -246,10 +246,10 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         if (c.getName() == "Table.cellRenderer") {
              if (type == ColorType.BACKGROUND) {
                  return c.getBackground();
-             } 
+             }
              if (type == ColorType.FOREGROUND) {
                  return c.getForeground();
-             } 
+             }
         }
 
         if (id == Region.LABEL && type == ColorType.TEXT_FOREGROUND) {
@@ -281,7 +281,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
     protected Font getFontForState(SynthContext context) {
         return font;
     }
-    
+
     /**
      * Returns the X thickness to use for this GTKStyle.
      *
@@ -320,7 +320,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         } else {
             insets.top = insets.bottom = insets.left = insets.right = 0;
         }
-        
+
         if (id == Region.ARROW_BUTTON || id == Region.BUTTON ||
                 id == Region.TOGGLE_BUTTON) {
             if ("Spinner.previousButton" == name ||
@@ -512,23 +512,23 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         insets.top = insets.bottom = insets.right = insets.left = n;
         return insets;
     }
-    
+
     private Insets getTabbedPaneTabInsets(SynthContext context, Insets insets) {
         int xThickness = getXThickness();
         int yThickness = getYThickness();
         int focusSize = getClassSpecificIntValue(context, "focus-line-width",1);
         int pad = 2;
-        
+
         insets.left = insets.right = focusSize + pad + xThickness;
         insets.top = insets.bottom = focusSize + pad + yThickness;
         return insets;
     }
-    
+
     // NOTE: this is called for ComboBox, and FormattedTextField also
     private Insets getTextFieldInsets(SynthContext context, Insets insets) {
-        insets = getClassSpecificInsetsValue(context, "inner-border", 
+        insets = getClassSpecificInsetsValue(context, "inner-border",
                                     getSimpleInsets(context, insets, 2));
-        
+
         int xThickness = getXThickness();
         int yThickness = getYThickness();
         boolean interiorFocus =
@@ -538,10 +538,10 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         if (!interiorFocus) {
             focusSize = getClassSpecificIntValue(context, "focus-line-width",1);
         }
-        
-        insets.left   += focusSize + xThickness; 
-        insets.right  += focusSize + xThickness; 
-        insets.top    += focusSize + yThickness; 
+
+        insets.left   += focusSize + xThickness;
+        insets.right  += focusSize + xThickness;
+        insets.top    += focusSize + yThickness;
         insets.bottom += focusSize + yThickness;
         return insets;
     }
@@ -717,7 +717,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
               region == Region.LIST ||
               region == Region.MENU_BAR ||
               region == Region.PANEL ||
-              region == Region.PASSWORD_FIELD || 
+              region == Region.PASSWORD_FIELD ||
               region == Region.POPUP_MENU ||
               region == Region.PROGRESS_BAR ||
               region == Region.ROOT_PANE ||
@@ -742,7 +742,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         return false;
     }
 
-    @Override    
+    @Override
     public Object get(SynthContext context, Object key) {
         // See if this is a class specific value.
         String classKey = CLASS_SPECIFIC_MAP.get(key);
@@ -752,7 +752,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
                 return value;
             }
         }
-        
+
         // Is it a specific value ?
         if (key == "ScrollPane.viewportBorderInsets") {
             return getThicknessInsets(context, new Insets(0, 0, 0, 0));
@@ -836,11 +836,11 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         synchronized (ICONS_MAP) {
             stockIcon = ICONS_MAP.get(key);
         }
-        
+
         if (stockIcon != null) {
             return stockIcon;
         }
-        
+
         // Is it another kind of value ?
         if (key != "engine") {
             // For backward compatability we'll fallback to the UIManager.
@@ -848,7 +848,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             // specific.
             Object value = UIManager.get(key);
             if (key == "Table.rowHeight") {
-                int focusLineWidth = getClassSpecificIntValue(context, 
+                int focusLineWidth = getClassSpecificIntValue(context,
                         "focus-line-width", 0);
                 if (value == null && focusLineWidth > 0) {
                     value = new Integer(16 + 2 * focusLineWidth);
@@ -856,7 +856,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             }
             return value;
         }
-        
+
         // Don't call super, we don't want to pick up defaults from
         // SynthStyle.
         return null;
@@ -864,7 +864,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
 
     private Icon getStockIcon(SynthContext context, String key, int type) {
         TextDirection direction = TextDirection.LTR;
-        
+
         if (context != null) {
             ComponentOrientation co = context.getComponent().
                                               getComponentOrientation();
@@ -884,7 +884,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         // In a failure case where native GTK (unexpectedly) returns a
         // null icon, we can try loading a default icon as a fallback.
         String propName = ICON_PROPERTY_PREFIX + key + '.' + type + '.' +
-                          (direction == TextDirection.RTL ? "rtl" : "ltr"); 
+                          (direction == TextDirection.RTL ? "rtl" : "ltr");
         Image img = (Image)
             Toolkit.getDefaultToolkit().getDesktopProperty(propName);
         if (img != null) {
@@ -911,10 +911,10 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         private static final Object ICON_SIZE_KEY = new StringBuffer("IconSize");
 
         private static Dimension[] getIconSizesMap() {
-            AppContext appContext = AppContext.getAppContext(); 
-            Dimension[] iconSizes = (Dimension[])appContext.get(ICON_SIZE_KEY); 
+            AppContext appContext = AppContext.getAppContext();
+            Dimension[] iconSizes = (Dimension[])appContext.get(ICON_SIZE_KEY);
 
-            if (iconSizes == null) { 
+            if (iconSizes == null) {
                 iconSizes = new Dimension[7];
                 iconSizes[0] = null;                  // GTK_ICON_SIZE_INVALID
                 iconSizes[1] = new Dimension(16, 16); // GTK_ICON_SIZE_MENU
@@ -928,26 +928,26 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             return iconSizes;
         }
 
-        /** 
+        /**
          * Return the size of a particular icon type (logical size)
-         * 
+         *
          * @param type icon type (GtkIconSize value)
          * @return a Dimension object, or null if lsize is invalid
          */
         public static Dimension getIconSize(int type) {
             Dimension[] iconSizes = getIconSizesMap();
             return type >= 0 && type < iconSizes.length ?
-                iconSizes[type] : null;  
+                iconSizes[type] : null;
         }
 
         /**
          * Change icon size in a type to size mapping. This is called by code
          * that parses the gtk-icon-sizes setting
-         *  
+         *
          * @param type icon type (GtkIconSize value)
          * @param w the new icon width
          * @param h the new icon height
-         */ 
+         */
         public static void setIconSize(int type, int w, int h) {
             Dimension[] iconSizes = getIconSizesMap();
             if (type >= 0 && type < iconSizes.length) {
@@ -958,10 +958,10 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         /**
          * Return icon type (GtkIconSize value) given a symbolic name which can
          * occur in a theme file.
-         * 
+         *
          * @param size symbolic name, e.g. gtk-button
-         * @return icon type. Valid types are 1 to 6 
-         */ 
+         * @return icon type. Valid types are 1 to 6
+         */
         public static int getIconType(String size) {
             if (size == null) {
                 return UNDEFINED;
@@ -982,9 +982,9 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             ICON_TYPE_MAP.put("gtk-dnd", new Integer(5));
             ICON_TYPE_MAP.put("gtk-dialog", new Integer(6));
         }
-        
+
     }
-    
+
     /**
      * An Icon that is fetched using getStockIcon.
      */
@@ -1001,7 +1001,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             this.key = key;
             this.size = size;
         }
-        
+
         public void paintIcon(SynthContext context, Graphics g, int x,
                               int y, int w, int h) {
             Icon icon = getIcon(context);
@@ -1125,7 +1125,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         CLASS_SPECIFIC_MAP.put("TextPane.caretAspectRatio", "cursor-aspect-ratio");
         CLASS_SPECIFIC_MAP.put("EditorPane.caretForeground", "cursor-color");
         CLASS_SPECIFIC_MAP.put("EditorPane.caretAspectRatio", "cursor-aspect-ratio");
-        
+
         ICONS_MAP = new HashMap<String, GTKStockIcon>();
         ICONS_MAP.put("FileChooser.cancelIcon", new GTKStockIcon("gtk-cancel", 4));
         ICONS_MAP.put("FileChooser.okIcon",     new GTKStockIcon("gtk-ok",     4));

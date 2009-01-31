@@ -33,33 +33,32 @@ import sun.awt.image.IntegerComponentRaster;
 import sun.awt.image.ToolkitImage;
 
 /**
- * A class to encapsulate a custom image-based cursor.  
+ * A class to encapsulate a custom image-based cursor.
  *
  * @see Component#setCursor
- * @version 	%I%, %G%
- * @author 	ThomasBall
+ * @author      ThomasBall
  */
 public class WCustomCursor extends CustomCursor {
 
-    public WCustomCursor(Image cursor, Point hotSpot, String name) 
+    public WCustomCursor(Image cursor, Point hotSpot, String name)
             throws IndexOutOfBoundsException {
         super(cursor, hotSpot, name);
     }
 
     protected void createNativeCursor(Image im, int[] pixels, int w, int h,
                                       int xHotSpot, int yHotSpot) {
-	BufferedImage bimage = new BufferedImage(w, h,
+        BufferedImage bimage = new BufferedImage(w, h,
                                BufferedImage.TYPE_INT_RGB);
         Graphics g = bimage.getGraphics();
-	try {
-	    if (im instanceof ToolkitImage) {
-	        ImageRepresentation ir = ((ToolkitImage)im).getImageRep();
-		ir.reconstruct(ImageObserver.ALLBITS);
-	    }
-	    g.drawImage(im, 0, 0, w, h, null);
-	} finally {
-	    g.dispose();
-	}
+        try {
+            if (im instanceof ToolkitImage) {
+                ImageRepresentation ir = ((ToolkitImage)im).getImageRep();
+                ir.reconstruct(ImageObserver.ALLBITS);
+            }
+            g.drawImage(im, 0, 0, w, h, null);
+        } finally {
+            g.dispose();
+        }
         Raster  raster = bimage.getRaster();
         DataBuffer buffer = raster.getDataBuffer();
         // REMIND: native code should use ScanStride _AND_ width
@@ -73,8 +72,8 @@ public class WCustomCursor extends CustomCursor {
             if ((pixels[i] & 0xff000000) == 0) {
                 // Transparent bit
                 andMask[ibyte] |= omask;
-	    }
-	}
+            }
+        }
 
         {
             int     ficW = raster.getWidth();
@@ -83,15 +82,15 @@ public class WCustomCursor extends CustomCursor {
             }
             createCursorIndirect(
                 ((DataBufferInt)bimage.getRaster().getDataBuffer()).getData(),
-		andMask, ficW, raster.getWidth(), raster.getHeight(),
+                andMask, ficW, raster.getWidth(), raster.getHeight(),
                 xHotSpot, yHotSpot);
         }
     }
 
     private native void createCursorIndirect(int[] rData, byte[] andMask,
-					     int nScanStride, int width,
-					     int height, int xHotSpot,
-					     int yHotSpot);
+                                             int nScanStride, int width,
+                                             int height, int xHotSpot,
+                                             int yHotSpot);
     /**
      * Return the current value of SM_CXCURSOR.
      */

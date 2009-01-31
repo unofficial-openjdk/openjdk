@@ -39,7 +39,7 @@ public class InvalidRelationServiceException extends RelationException {
      * Default constructor, no message put in exception.
      */
     public InvalidRelationServiceException() {
-	super();
+        super();
     }
 
     /**
@@ -48,6 +48,6 @@ public class InvalidRelationServiceException extends RelationException {
      * @param message the detail message.
      */
     public InvalidRelationServiceException(String message) {
-	super(message);
+        super(message);
     }
 }

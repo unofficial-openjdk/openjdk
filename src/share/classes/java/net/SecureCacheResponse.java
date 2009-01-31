@@ -44,7 +44,7 @@ public abstract class SecureCacheResponse extends CacheResponse {
      * @return a string representing the cipher suite
      */
     public abstract String getCipherSuite();
- 
+
     /**
      * Returns the certificate chain that were sent to the server during
      * handshaking of the original connection that retrieved the
@@ -72,8 +72,8 @@ public abstract class SecureCacheResponse extends CacheResponse {
      * @see #getPeerPrincipal()
      */
     public abstract List<Certificate> getServerCertificateChain()
-	throws SSLPeerUnverifiedException;
-    
+        throws SSLPeerUnverifiedException;
+
     /**
      * Returns the server's principal which was established as part of
      * defining the session during the original connection that
@@ -90,7 +90,7 @@ public abstract class SecureCacheResponse extends CacheResponse {
      */
      public abstract Principal getPeerPrincipal()
              throws SSLPeerUnverifiedException;
- 
+
     /**
       * Returns the principal that was sent to the server during
       * handshaking in the original connection that retrieved the

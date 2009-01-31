@@ -51,27 +51,27 @@ RedefineClassesDisabledTest
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new RedefineClassesDisabledTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testIsRedefineClassesSupported();
         testSimpleRedefineClasses();
     }
-    
-    
+
+
     public void
     testIsRedefineClassesSupported()
     {
         boolean canRedef = fInst.isRedefineClassesSupported();
         assertTrue("Can redefine classes flag set incorrectly (true)", !canRedef);
     }
-        
+
     public void
     testSimpleRedefineClasses()
         throws Throwable
@@ -81,13 +81,13 @@ RedefineClassesDisabledTest
 
         // with this version of the class, doSomething is a nop
         int firstGet = ex.get();
-        ex.doSomething();        
+        ex.doSomething();
         int secondGet = ex.get();
-        
+
         assertEquals(firstGet, secondGet);
-        
+
         // now redefine the class. This will change doSomething to be an increment
-        
+
         // this class is stored in a different place (scratch directory) to avoid collisions
         File f = new File("Different_ExampleRedefine.class");
         System.out.println("Reading test class from " + f);
@@ -97,7 +97,7 @@ RedefineClassesDisabledTest
 
         ClassDefinition redefineParamBlock = new ClassDefinition(   ExampleRedefine.class,
                                                                     redefineBuffer);
-        
+
         // test that the redefine fails with an UnsupportedOperationException
         boolean caught = false;
         try {

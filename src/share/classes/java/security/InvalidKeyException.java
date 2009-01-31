@@ -30,8 +30,7 @@ package java.security;
  * This is the exception for invalid Keys (invalid encoding, wrong
  * length, uninitialized, etc).
  *
- * @version %I%, %G%
- * @author Benjamin Renaud 
+ * @author Benjamin Renaud
  */
 
 public class InvalidKeyException extends KeyException {
@@ -44,18 +43,18 @@ public class InvalidKeyException extends KeyException {
      * exception.
      */
     public InvalidKeyException() {
-	super();
+        super();
     }
 
     /**
      * Constructs an InvalidKeyException with the specified detail
      * message. A detail message is a String that describes this
-     * particular exception.  
+     * particular exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public InvalidKeyException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**

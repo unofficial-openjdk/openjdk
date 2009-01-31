@@ -82,7 +82,7 @@ public final class SupplementaryCharacterData implements Cloneable {
             }
         }
     }
- 
+
     /**
      * Returns the data array.
      */

@@ -39,7 +39,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageReadParam;
-import javax.imageio.event.IIOReadProgressListener; 
+import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
 
 
@@ -55,7 +55,7 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
         System.out.println("Test reset()....");
         t = new ReadingInterruptionTest(new ResetAction());
         t.doTest();
- 
+
         System.out.println("Test dispose()....");
         t = new ReadingInterruptionTest(new DisposeAction());
         t.doTest();
@@ -63,7 +63,7 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
 
     protected abstract static class Action implements Runnable {
         protected ImageReader target;
-        
+
         public void setTarget(ImageReader target) {
             this.target = target;
         }
@@ -117,7 +117,7 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
         this.action = action;
 
         reader = ImageIO.getImageReadersByFormatName("JPEG").next();
-        
+
         this.action.setTarget(reader);
     }
 
@@ -132,7 +132,7 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
             Thread.sleep(70);
         } catch (Exception e) {
             /*
-             * we do expect that concurrent attempt to dispose this 
+             * we do expect that concurrent attempt to dispose this
              * instance of image reader will be blocked. So, this image
              * should be read sucessfuly. Otherwise, something went wrong
              * and we need to report test failure.
@@ -173,16 +173,16 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
 
     public void imageComplete(ImageReader source) {};
 
-    
+
     public void sequenceStarted(ImageReader source,
                                 int minIndex) {};
-    
+
     public void sequenceComplete(ImageReader source) {};
 
     public void thumbnailStarted(ImageReader source,
                                  int imageIndex,
                                  int thumbnailIndex) {};
-    
+
     public void thumbnailProgress(ImageReader source,
                                   float percentageDone) {};
 
@@ -193,20 +193,20 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
     private static void createTestFile() {
         int w = 1280;
         int h = 1024;
-        
+
         BufferedImage img = new
             BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
         Color[] colors = { Color.red, Color.green, Color.blue };
         float[] dist = {0.0f, 0.5f, 1.0f };
         Point2D center = new Point2D.Float(0.5f * w, 0.5f * h);
-        
+
         RadialGradientPaint p =
             new RadialGradientPaint(center, 0.5f * w, dist, colors);
         g.setPaint(p);
         g.fillRect(0, 0, w, h);
         g.dispose();
-        
+
         try {
             System.out.println("Create test image " + file.getAbsolutePath());
             boolean b = ImageIO.write(img, "JPEG", file);

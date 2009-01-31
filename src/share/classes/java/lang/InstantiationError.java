@@ -26,15 +26,14 @@
 package java.lang;
 
 /**
- * Thrown when an application tries to use the Java <code>new</code> 
- * construct to instantiate an abstract class or an interface. 
+ * Thrown when an application tries to use the Java <code>new</code>
+ * construct to instantiate an abstract class or an interface.
  * <p>
- * Normally, this error is caught by the compiler; this error can 
- * only occur at run time if the definition of a class has 
- * incompatibly changed. 
+ * Normally, this error is caught by the compiler; this error can
+ * only occur at run time if the definition of a class has
+ * incompatibly changed.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @since   JDK1.0
  */
 
@@ -45,16 +44,16 @@ class InstantiationError extends IncompatibleClassChangeError {
      * Constructs an <code>InstantiationError</code> with no detail  message.
      */
     public InstantiationError() {
-	super();
+        super();
     }
 
     /**
-     * Constructs an <code>InstantiationError</code> with the specified 
-     * detail message. 
+     * Constructs an <code>InstantiationError</code> with the specified
+     * detail message.
      *
      * @param   s   the detail message.
      */
     public InstantiationError(String s) {
-	super(s);
+        super(s);
     }
 }

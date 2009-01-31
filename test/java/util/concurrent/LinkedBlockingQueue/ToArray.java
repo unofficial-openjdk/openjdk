@@ -33,8 +33,8 @@ import java.util.concurrent.*;
 
 public class ToArray {
     public static void main(String[] args) throws Throwable {
-	Collection<Integer> c = new LinkedBlockingQueue<Integer>();
-	if (c.toArray(new Integer[]{42})[0] != null)
-	    throw new Error("should be null");
+        Collection<Integer> c = new LinkedBlockingQueue<Integer>();
+        if (c.toArray(new Integer[]{42})[0] != null)
+            throw new Error("should be null");
     }
 }

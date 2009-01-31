@@ -28,8 +28,8 @@ import java.net.*;
 import sun.net.www.MessageHeader;
 
 /**
- * This class encapsulates a HTTP request received and a response to be 
- * generated in one transaction. It provides methods for examaining the 
+ * This class encapsulates a HTTP request received and a response to be
+ * generated in one transaction. It provides methods for examaining the
  * request from the client, and for building and sending a reply.
  */
 
@@ -46,38 +46,38 @@ public class HttpTransaction {
     int rspbodylen;
     boolean rspchunked;
 
-    HttpTransaction (HttpServer.ServerWorker server, String command, 
-			URI requesturi, MessageHeader headers, 
-			String body, MessageHeader trailers, SocketChannel ch) {
-	this.command = command;
-	this.requesturi = requesturi;
-	this.reqheaders = headers;
-	this.reqbody = body;
-	this.reqtrailers = trailers;
-	this.ch = ch;
-	this.server = server;
+    HttpTransaction (HttpServer.ServerWorker server, String command,
+                        URI requesturi, MessageHeader headers,
+                        String body, MessageHeader trailers, SocketChannel ch) {
+        this.command = command;
+        this.requesturi = requesturi;
+        this.reqheaders = headers;
+        this.reqbody = body;
+        this.reqtrailers = trailers;
+        this.ch = ch;
+        this.server = server;
     }
 
     /**
-     * Get the value of a request header whose name is specified by the 
+     * Get the value of a request header whose name is specified by the
      * String argument.
      *
      * @param key the name of the request header
      * @return the value of the header or null if it does not exist
      */
     public String getRequestHeader (String key) {
-	return reqheaders.findValue (key);
+        return reqheaders.findValue (key);
     }
 
     /**
-     * Get the value of a response header whose name is specified by the 
+     * Get the value of a response header whose name is specified by the
      * String argument.
      *
      * @param key the name of the response header
      * @return the value of the header or null if it does not exist
      */
     public String getResponseHeader (String key) {
-	return rspheaders.findValue (key);
+        return rspheaders.findValue (key);
     }
 
     /**
@@ -86,35 +86,35 @@ public class HttpTransaction {
      * @return the request URI
      */
     public URI getRequestURI () {
-	return requesturi;
+        return requesturi;
     }
 
     public String toString () {
-	StringBuffer buf = new StringBuffer();
-	buf.append ("Request from: ").append (ch.toString()).append("\r\n");
-	buf.append ("Command: ").append (command).append("\r\n");
-	buf.append ("Request URI: ").append (requesturi).append("\r\n");
-	buf.append ("Headers: ").append("\r\n");
-	buf.append (reqheaders.toString()).append("\r\n");
-	buf.append ("Body: ").append (reqbody).append("\r\n");
-	buf.append ("---------Response-------\r\n");
-	buf.append ("Headers: ").append("\r\n");
-	if (rspheaders != null) {
-	    buf.append (rspheaders.toString()).append("\r\n");
-	}
-	buf.append ("Body: ").append (new String(rspbody)).append("\r\n");
-	return new String (buf);
+        StringBuffer buf = new StringBuffer();
+        buf.append ("Request from: ").append (ch.toString()).append("\r\n");
+        buf.append ("Command: ").append (command).append("\r\n");
+        buf.append ("Request URI: ").append (requesturi).append("\r\n");
+        buf.append ("Headers: ").append("\r\n");
+        buf.append (reqheaders.toString()).append("\r\n");
+        buf.append ("Body: ").append (reqbody).append("\r\n");
+        buf.append ("---------Response-------\r\n");
+        buf.append ("Headers: ").append("\r\n");
+        if (rspheaders != null) {
+            buf.append (rspheaders.toString()).append("\r\n");
+        }
+        buf.append ("Body: ").append (new String(rspbody)).append("\r\n");
+        return new String (buf);
     }
 
     /**
-     * Get the value of a request trailer whose name is specified by 
+     * Get the value of a request trailer whose name is specified by
      * the String argument.
      *
      * @param key the name of the request trailer
      * @return the value of the trailer or null if it does not exist
      */
     public String getRequestTrailer (String key) {
-	return reqtrailers.findValue (key);
+        return reqtrailers.findValue (key);
     }
 
     /**
@@ -124,9 +124,9 @@ public class HttpTransaction {
      * @param val the value of the header
      */
     public void addResponseHeader (String key, String val) {
-	if (rspheaders == null) 
-	    rspheaders = new MessageHeader ();
-	rspheaders.add (key, val);
+        if (rspheaders == null)
+            rspheaders = new MessageHeader ();
+        rspheaders.add (key, val);
     }
 
     /**
@@ -136,9 +136,9 @@ public class HttpTransaction {
      * @param val the value of the header
      */
     public void setResponseHeader (String key, String val) {
-	if (rspheaders == null) 
-	    rspheaders = new MessageHeader ();
-	rspheaders.set (key, val);
+        if (rspheaders == null)
+            rspheaders = new MessageHeader ();
+        rspheaders.set (key, val);
     }
 
     /**
@@ -148,9 +148,9 @@ public class HttpTransaction {
      * @param val the value of the trailer
      */
     public void addResponseTrailer (String key, String val) {
-	if (rsptrailers == null) 
-	    rsptrailers = new MessageHeader ();
-	rsptrailers.add (key, val);
+        if (rsptrailers == null)
+            rsptrailers = new MessageHeader ();
+        rsptrailers.add (key, val);
     }
 
     /**
@@ -159,37 +159,37 @@ public class HttpTransaction {
      * @return the request method
      */
     public String getRequestMethod (){
-	return command;
+        return command;
     }
 
     /**
-     * Perform an orderly close of the TCP connection associated with this 
-     * request. This method guarantees that any response already sent will 
-     * not be reset (by this end). The implementation does a shutdownOutput() 
-     * of the TCP connection and for a period of time consumes and discards 
+     * Perform an orderly close of the TCP connection associated with this
+     * request. This method guarantees that any response already sent will
+     * not be reset (by this end). The implementation does a shutdownOutput()
+     * of the TCP connection and for a period of time consumes and discards
      * data received on the reading side of the connection. This happens
-     * in the background. After the period has expired the 
+     * in the background. After the period has expired the
      * connection is completely closed.
      */
 
     public void orderlyClose () {
-	try {
-	    server.orderlyCloseChannel (ch);
-	} catch (IOException e) {
-	    System.out.println (e);
-	}
+        try {
+            server.orderlyCloseChannel (ch);
+        } catch (IOException e) {
+            System.out.println (e);
+        }
     }
 
     /**
-     * Do an immediate abortive close of the TCP connection associated 
+     * Do an immediate abortive close of the TCP connection associated
      * with this request.
      */
     public void abortiveClose () {
-	try {
-	    server.abortiveCloseChannel(ch);
-	} catch (IOException e) {
-	    System.out.println (e);
-	}
+        try {
+            server.abortiveCloseChannel(ch);
+        } catch (IOException e) {
+            System.out.println (e);
+        }
     }
 
     /**
@@ -198,7 +198,7 @@ public class HttpTransaction {
      * @return the socket channel
      */
     public SocketChannel channel() {
-	return ch;
+        return ch;
     }
 
     /**
@@ -208,7 +208,7 @@ public class HttpTransaction {
      * @return the entity body in one String
      */
     public String getRequestEntityBody (){
-	return reqbody;
+        return reqbody;
     }
 
     /**
@@ -217,21 +217,21 @@ public class HttpTransaction {
      * @param body the string to send in the response
      */
     public void setResponseEntityBody (String body){
-	rspbody = body.getBytes();
-	rspbodylen = body.length();
-	rspchunked = false;
-    	addResponseHeader ("Content-length", Integer.toString (rspbodylen));
+        rspbody = body.getBytes();
+        rspbodylen = body.length();
+        rspchunked = false;
+        addResponseHeader ("Content-length", Integer.toString (rspbodylen));
     }
     /**
      * Set the entity response body with the given byte[]
-     * The content length is set to the gven length 
+     * The content length is set to the gven length
      * @param body the string to send in the response
      */
     public void setResponseEntityBody (byte[] body, int len){
-	rspbody = body;
-	rspbodylen = len;
-	rspchunked = false;
-    	addResponseHeader ("Content-length", Integer.toString (rspbodylen));
+        rspbody = body;
+        rspbodylen = len;
+        rspchunked = false;
+        addResponseHeader ("Content-length", Integer.toString (rspbodylen));
     }
 
 
@@ -241,23 +241,23 @@ public class HttpTransaction {
      * @param is the inputstream from which to read the body
      */
     public void setResponseEntityBody (InputStream is) throws IOException {
-	byte[] buf = new byte [2048];
-	byte[] total = new byte [2048];
-	int total_len = 2048;
-	int c, len=0;
-	while ((c=is.read (buf)) != -1) {
-	    if (len+c > total_len) {
-		byte[] total1 = new byte [total_len * 2];
-		System.arraycopy (total, 0, total1, 0, len);
-		total = total1;
-		total_len = total_len * 2;
-	    }
-	    System.arraycopy (buf, 0, total, len, c);
-	    len += c;
-	}
-	setResponseEntityBody (total, len);
+        byte[] buf = new byte [2048];
+        byte[] total = new byte [2048];
+        int total_len = 2048;
+        int c, len=0;
+        while ((c=is.read (buf)) != -1) {
+            if (len+c > total_len) {
+                byte[] total1 = new byte [total_len * 2];
+                System.arraycopy (total, 0, total1, 0, len);
+                total = total1;
+                total_len = total_len * 2;
+            }
+            System.arraycopy (buf, 0, total, len, c);
+            len += c;
+        }
+        setResponseEntityBody (total, len);
     }
-	    
+
     /* chunked */
 
     /**
@@ -267,19 +267,19 @@ public class HttpTransaction {
      * @param body the array of string chunks to send in the response
      */
     public void setResponseEntityBody (String[] body) {
-	StringBuffer buf = new StringBuffer ();
-	int len = 0;
-	for (int i=0; i<body.length; i++) {
-	    String chunklen = Integer.toHexString (body[i].length());
-	    len += body[i].length();
-	    buf.append (chunklen).append ("\r\n");
-	    buf.append (body[i]).append ("\r\n");
-	}
-    	buf.append ("0\r\n");
-	rspbody = new String (buf).getBytes();
-	rspbodylen = rspbody.length;
-	rspchunked = true;
-	addResponseHeader ("Transfer-encoding", "chunked");
+        StringBuffer buf = new StringBuffer ();
+        int len = 0;
+        for (int i=0; i<body.length; i++) {
+            String chunklen = Integer.toHexString (body[i].length());
+            len += body[i].length();
+            buf.append (chunklen).append ("\r\n");
+            buf.append (body[i]).append ("\r\n");
+        }
+        buf.append ("0\r\n");
+        rspbody = new String (buf).getBytes();
+        rspbodylen = rspbody.length;
+        rspchunked = true;
+        addResponseHeader ("Transfer-encoding", "chunked");
     }
 
     /**
@@ -289,41 +289,41 @@ public class HttpTransaction {
      * @param rTag the response string to send with the response code
      */
     public void sendResponse (int rCode, String rTag) throws IOException {
-	OutputStream os = new HttpServer.NioOutputStream(channel(), server.getSSLEngine(), server.outNetBB(), server.outAppBB());
-	PrintStream ps = new PrintStream (os);
-	ps.print ("HTTP/1.1 " + rCode + " " + rTag + "\r\n");
-	if (rspheaders != null) {
-	    rspheaders.print (ps);
-	} else {
-	    ps.print ("\r\n");
-	}
-	ps.flush ();
-	if (rspbody != null) {
-    	    os.write (rspbody, 0, rspbodylen);
-	    os.flush();
-	}
-	if (rsptrailers != null) {
-	    rsptrailers.print (ps);
-	} else if (rspchunked) {
-	    ps.print ("\r\n");
-	}
-	ps.flush();
+        OutputStream os = new HttpServer.NioOutputStream(channel(), server.getSSLEngine(), server.outNetBB(), server.outAppBB());
+        PrintStream ps = new PrintStream (os);
+        ps.print ("HTTP/1.1 " + rCode + " " + rTag + "\r\n");
+        if (rspheaders != null) {
+            rspheaders.print (ps);
+        } else {
+            ps.print ("\r\n");
+        }
+        ps.flush ();
+        if (rspbody != null) {
+            os.write (rspbody, 0, rspbodylen);
+            os.flush();
+        }
+        if (rsptrailers != null) {
+            rsptrailers.print (ps);
+        } else if (rspchunked) {
+            ps.print ("\r\n");
+        }
+        ps.flush();
     }
 
     /* sends one byte less than intended */
 
     public void sendPartialResponse (int rCode, String rTag)throws IOException {
-	OutputStream os = new HttpServer.NioOutputStream(channel(), server.getSSLEngine(), server.outNetBB(), server.outAppBB());
-	PrintStream ps = new PrintStream (os);
-	ps.print ("HTTP/1.1 " + rCode + " " + rTag + "\r\n");
-	ps.flush();
-	if (rspbody != null) {
-    	    os.write (rspbody, 0, rspbodylen-1);
-	    os.flush();
-	}
-	if (rsptrailers != null) {
-	    rsptrailers.print (ps);
-	}
-	ps.flush();
+        OutputStream os = new HttpServer.NioOutputStream(channel(), server.getSSLEngine(), server.outNetBB(), server.outAppBB());
+        PrintStream ps = new PrintStream (os);
+        ps.print ("HTTP/1.1 " + rCode + " " + rTag + "\r\n");
+        ps.flush();
+        if (rspbody != null) {
+            os.write (rspbody, 0, rspbodylen-1);
+            os.flush();
+        }
+        if (rsptrailers != null) {
+            rsptrailers.print (ps);
+        }
+        ps.flush();
     }
 }

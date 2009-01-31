@@ -36,7 +36,7 @@ import java.util.List;
  * Parameters for the W3C Recommendation:
  * <a href="http://www.w3.org/TR/xml-exc-c14n/">
  * Exclusive XML Canonicalization (C14N) algorithm</a>. The
- * parameters include an optional inclusive namespace prefix list. The XML 
+ * parameters include an optional inclusive namespace prefix list. The XML
  * Schema Definition of the Exclusive XML Canonicalization parameters is
  * defined as:
  * <pre><code>
@@ -67,36 +67,36 @@ public final class ExcC14NParameterSpec implements C14NMethodParameterSpec {
     public static final String DEFAULT = "#default";
 
     /**
-     * Creates a <code>ExcC14NParameterSpec</code> with an empty prefix 
+     * Creates a <code>ExcC14NParameterSpec</code> with an empty prefix
      * list.
      */
     public ExcC14NParameterSpec() {
-	preList = Collections.EMPTY_LIST;
+        preList = Collections.EMPTY_LIST;
     }
 
     /**
      * Creates a <code>ExcC14NParameterSpec</code> with the specified list
-     * of prefixes. The list is copied to protect against subsequent 
+     * of prefixes. The list is copied to protect against subsequent
      * modification.
      *
      * @param prefixList the inclusive namespace prefix list. Each entry in
      *    the list is a <code>String</code> that represents a namespace prefix.
-     * @throws NullPointerException if <code>prefixList</code> is 
+     * @throws NullPointerException if <code>prefixList</code> is
      *    <code>null</code>
      * @throws ClassCastException if any of the entries in the list are not
      *    of type <code>String</code>
      */
     public ExcC14NParameterSpec(List prefixList) {
-	if (prefixList == null) {
-	    throw new NullPointerException("prefixList cannot be null");
-	}
-	this.preList = new ArrayList(prefixList);
-	for (int i = 0, size = preList.size(); i < size; i++) {
-	    if (!(preList.get(i) instanceof String)) {
-		throw new ClassCastException("not a String");
-	    }
-	}
-	preList = Collections.unmodifiableList(preList);
+        if (prefixList == null) {
+            throw new NullPointerException("prefixList cannot be null");
+        }
+        this.preList = new ArrayList(prefixList);
+        for (int i = 0, size = preList.size(); i < size; i++) {
+            if (!(preList.get(i) instanceof String)) {
+                throw new ClassCastException("not a String");
+            }
+        }
+        preList = Collections.unmodifiableList(preList);
     }
 
     /**
@@ -110,6 +110,6 @@ public final class ExcC14NParameterSpec implements C14NMethodParameterSpec {
      *    <code>null</code>)
      */
     public List getPrefixList() {
-	return preList;
+        return preList;
     }
 }

@@ -88,7 +88,7 @@ public class XIconWindow extends XBaseWindow {
             // ICE_WM has a bug - it only displays icons of the size
             // 16x16, while reporting 32x32 in its size list
             log.log(Level.FINEST, "Returning ICE_WM icon size: 16x16");
-            return new Dimension(16, 16);            
+            return new Dimension(16, 16);
         }
 
         XIconSize[] sizeList = getIconSizes();
@@ -206,12 +206,12 @@ public class XIconWindow extends XBaseWindow {
         }
         return size;
     }
-   
+
    /**
     * This function replaces iconPixmap handle with new image
-    * It does not replace window's hints, so it should be 
+    * It does not replace window's hints, so it should be
     * called only from setIconImage()
-    */ 
+    */
    void replaceImage(Image img)
     {
         if (parent == null) {
@@ -226,14 +226,14 @@ public class XIconWindow extends XBaseWindow {
             ColorModel model = defaultGC.getColorModel();
             WritableRaster raster = model.createCompatibleWritableRaster(iconWidth, iconHeight);
             bi = new BufferedImage(model, raster, model.isAlphaPremultiplied(), null);
-            Graphics g = bi.getGraphics(); 
+            Graphics g = bi.getGraphics();
             try {
                 //We need to draw image on SystemColors.window
                 //for using as iconWindow's background
                 g.setColor(SystemColor.window);
                 g.fillRect(0, 0, iconWidth, iconHeight);
                 if (g instanceof Graphics2D) {
-                    ((Graphics2D)g).setComposite(AlphaComposite.Src); 
+                    ((Graphics2D)g).setComposite(AlphaComposite.Src);
                 }
                 g.drawImage(img, 0, 0, iconWidth, iconHeight, null);
             } finally {
@@ -254,7 +254,7 @@ public class XIconWindow extends XBaseWindow {
             AwtGraphicsConfigData adata = parent.getGraphicsConfigurationData();
             awtImageData awtImage = adata.get_awtImage(0);
             XVisualInfo visInfo = adata.get_awt_visInfo();
-            iconPixmap = XlibWrapper.XCreatePixmap(XToolkit.getDisplay(), 
+            iconPixmap = XlibWrapper.XCreatePixmap(XToolkit.getDisplay(),
                                                    XlibWrapper.RootWindow(XToolkit.getDisplay(), visInfo.get_screen()),
                                                    iconWidth,
                                                    iconHeight,
@@ -284,7 +284,7 @@ public class XIconWindow extends XBaseWindow {
                 throw new IllegalArgumentException("Unknown data buffer: " + srcBuf);
             }
             int bpp = awtImage.get_wsImageFormat().get_bits_per_pixel();
-            int slp =awtImage.get_wsImageFormat().get_scanline_pad(); 
+            int slp =awtImage.get_wsImageFormat().get_scanline_pad();
             int bpsl = paddedwidth(iconWidth*bpp, slp) >> 3;
             if (((bpsl << 3) / bpp) < iconWidth) {
                 log.finest("Image format doesn't fit to icon width");
@@ -292,7 +292,7 @@ public class XIconWindow extends XBaseWindow {
             }
             long dst = XlibWrapper.XCreateImage(XToolkit.getDisplay(),
                                                 visInfo.get_visual(),
-                                                (int)awtImage.get_Depth(),                                               
+                                                (int)awtImage.get_Depth(),
                                                 (int)XlibWrapper.ZPixmap,
                                                 0,
                                                 bytes,
@@ -307,7 +307,7 @@ public class XIconWindow extends XBaseWindow {
                 return;
             } else {
                 log.finest("Created XImage for icon");
-            }            
+            }
             long gc = XlibWrapper.XCreateGC(XToolkit.getDisplay(), iconPixmap, 0, 0);
             if (gc == 0) {
                 log.finest("Can't create GC for pixmap");
@@ -330,9 +330,9 @@ public class XIconWindow extends XBaseWindow {
 
    /**
     * This function replaces iconPixmap handle with new image
-    * It does not replace window's hints, so it should be 
+    * It does not replace window's hints, so it should be
     * called only from setIconImage()
-    */ 
+    */
     void replaceMask(Image img) {
         if (parent == null) {
             return;
@@ -341,7 +341,7 @@ public class XIconWindow extends XBaseWindow {
         BufferedImage bi = null;
         if (img != null && iconWidth != 0 && iconHeight != 0) {
             bi = new BufferedImage(iconWidth, iconHeight, BufferedImage.TYPE_INT_ARGB);
-            Graphics g = bi.getGraphics(); 
+            Graphics g = bi.getGraphics();
             try {
                 g.drawImage(img, 0, 0, iconWidth, iconHeight, null);
             } finally {
@@ -366,7 +366,7 @@ public class XIconWindow extends XBaseWindow {
             DataBuffer srcBuf = bi.getRaster().getDataBuffer();
             int sidx = 0;//index of source element
             int bpl = (iconWidth + 7) >> 3;//bytes per line
-            byte[] destBuf = new byte[bpl * iconHeight]; 
+            byte[] destBuf = new byte[bpl * iconHeight];
             int didx = 0;//index of destination element
             for (int i = 0; i < iconHeight; i++) {
                 int dbit = 0;//index of current bit
@@ -407,7 +407,7 @@ public class XIconWindow extends XBaseWindow {
             if (iconInfo.isValid()) {
                 Image image = iconInfo.getImage();
                 Dimension dim = calcIconSize(image.getWidth(null), image.getHeight(null));
-                int widthDiff = Math.abs(dim.width - image.getWidth(null)); 
+                int widthDiff = Math.abs(dim.width - image.getWidth(null));
                 int heightDiff = Math.abs(image.getHeight(null) - dim.height);
 
                 // "=" below allows to select the best matching icon
@@ -496,7 +496,7 @@ public class XIconWindow extends XBaseWindow {
             hints.set_icon_pixmap(iconPixmap);
             hints.set_icon_mask(iconMask);
             hints.set_icon_window(getWindow());
-            XlibWrapper.XSetWMHints(XToolkit.getDisplay(), parent.getShell(), hints.pData);                
+            XlibWrapper.XSetWMHints(XToolkit.getDisplay(), parent.getShell(), hints.pData);
             log.finest("Set icon window hint");
         } finally {
             XToolkit.awtUnlock();

@@ -22,9 +22,9 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-                                                                                
+
 package sun.tools.jconsole;
-                                                                                                                        
+
 import java.util.*;
 import java.io.IOException;
 import java.io.File;
@@ -35,7 +35,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
-                                                                                
+
 // Sun private
 import sun.management.ConnectorAddressLink;
 import sun.jvmstat.monitor.HostIdentifier;
@@ -52,12 +52,12 @@ public class LocalVirtualMachine {
     private String displayName;
     private int vmid;
     private boolean isAttachSupported;
-                                                                                
+
     public LocalVirtualMachine(int vmid, String commandLine, boolean canAttach, String connectorAddress) {
         this.vmid = vmid;
         this.commandLine = commandLine;
         this.address = connectorAddress;
-        this.isAttachSupported = canAttach; 
+        this.isAttachSupported = canAttach;
         this.displayName = getDisplayName(commandLine);
     }
 
@@ -67,18 +67,18 @@ public class LocalVirtualMachine {
         if (res[0].endsWith(".jar")) {
            File jarfile = new File(res[0]);
            String displayName = jarfile.getName();
-           if (res.length == 2) { 
+           if (res.length == 2) {
                displayName += " " + res[1];
            }
            return displayName;
-        } 
+        }
         return commandLine;
     }
 
     public int vmid() {
         return vmid;
     }
- 
+
     public boolean isManageable() {
         return (address != null);
     }
@@ -119,10 +119,10 @@ public class LocalVirtualMachine {
         return commandLine;
     }
 
-    // This method returns the list of all virtual machines currently 
-    // running on the machine 
+    // This method returns the list of all virtual machines currently
+    // running on the machine
     public static Map<Integer, LocalVirtualMachine> getAllVirtualMachines() {
-        Map<Integer, LocalVirtualMachine> map = 
+        Map<Integer, LocalVirtualMachine> map =
             new HashMap<Integer, LocalVirtualMachine>();
         getMonitoredVMs(map);
         getAttachableVMs(map);
@@ -156,7 +156,7 @@ public class LocalVirtualMachine {
                 } catch (Exception x) {
                      // ignore
                 }
-                map.put((Integer) vmid, 
+                map.put((Integer) vmid,
                         new LocalVirtualMachine(pid, name, attachable, address));
             }
         }
@@ -182,7 +182,7 @@ public class LocalVirtualMachine {
                     } catch (AttachNotSupportedException x) {
                         // not attachable
                     } catch (IOException x) {
-                        // ignore 
+                        // ignore
                     }
                     map.put(vmid, new LocalVirtualMachine(vmid.intValue(),
                                                           vmd.displayName(),
@@ -190,7 +190,7 @@ public class LocalVirtualMachine {
                                                           address));
                 }
             } catch (NumberFormatException e) {
-                // do not support vmid different than pid 
+                // do not support vmid different than pid
             }
         }
     }
@@ -203,10 +203,10 @@ public class LocalVirtualMachine {
             // if it's running with a different security context.
             // For example, Windows services running
             // local SYSTEM account are attachable if you have Adminstrator
-            // privileges. 
+            // privileges.
             boolean attachable = false;
             String address = null;
-            String name = String.valueOf(vmid); // default display name to pid 
+            String name = String.valueOf(vmid); // default display name to pid
             try {
                 VirtualMachine vm = VirtualMachine.attach(name);
                 attachable = true;
@@ -220,7 +220,7 @@ public class LocalVirtualMachine {
                     x.printStackTrace();
                 }
             } catch (IOException x) {
-                // ignore 
+                // ignore
                 if (JConsole.isDebug()) {
                     x.printStackTrace();
                 }
@@ -242,11 +242,11 @@ public class LocalVirtualMachine {
         }
 
         String home = vm.getSystemProperties().getProperty("java.home");
-                                                       
+
         // Normally in ${java.home}/jre/lib/management-agent.jar but might
         // be in ${java.home}/lib in build environments.
- 
-        String agent = home + File.separator + "jre" + File.separator + 
+
+        String agent = home + File.separator + "jre" + File.separator +
                            "lib" + File.separator + "management-agent.jar";
         File f = new File(agent);
         if (!f.exists()) {

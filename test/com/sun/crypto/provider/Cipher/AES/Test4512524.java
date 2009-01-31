@@ -46,32 +46,32 @@ public class Test4512524 {
 
     public boolean execute() throws Exception {
 
-	Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
+        Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
 
-	// TEST FIX 4512524
-	KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
-	kg.init(KEYSIZE*8);
-	SecretKey key = kg.generateKey();
+        // TEST FIX 4512524
+        KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
+        kg.init(KEYSIZE*8);
+        SecretKey key = kg.generateKey();
 
-	try{
-	    AlgorithmParameterSpec aps = null;
-	    ci.init(Cipher.ENCRYPT_MODE, key, aps);
-	} catch (NullPointerException ex) {
-	    throw new Exception("null parameter is not handled correctly!");
-	}
+        try{
+            AlgorithmParameterSpec aps = null;
+            ci.init(Cipher.ENCRYPT_MODE, key, aps);
+        } catch (NullPointerException ex) {
+            throw new Exception("null parameter is not handled correctly!");
+        }
 
-	// passed all tests...hooray!
-	return true;
+        // passed all tests...hooray!
+        return true;
     }
 
     public static void main (String[] args) throws Exception {
-	Security.addProvider(new com.sun.crypto.provider.SunJCE());
+        Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-	Test4512524 test = new Test4512524();
-	String testName = test.getClass().getName() + "[" + ALGO +
-	    "/" + MODE + "/" + PADDING + "]";
-	if (test.execute()) {
-	    System.out.println(testName + ": Passed!");
-	}
+        Test4512524 test = new Test4512524();
+        String testName = test.getClass().getName() + "[" + ALGO +
+            "/" + MODE + "/" + PADDING + "]";
+        if (test.execute()) {
+            System.out.println(testName + ": Passed!");
+        }
     }
 }

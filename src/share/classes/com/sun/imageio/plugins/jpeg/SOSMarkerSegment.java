@@ -46,7 +46,7 @@ class SOSMarkerSegment extends MarkerSegment {
     int approxLow;
     ScanComponentSpec [] componentSpecs; // Array size is numScanComponents
 
-    SOSMarkerSegment(boolean willSubsample, 
+    SOSMarkerSegment(boolean willSubsample,
                      byte[] componentIDs,
                      int numComponents) {
         super(JPEG.SOS);
@@ -62,7 +62,7 @@ class SOSMarkerSegment extends MarkerSegment {
                     tableSel = 1;
                 }
             }
-            componentSpecs[i] = new ScanComponentSpec(componentIDs[i], 
+            componentSpecs[i] = new ScanComponentSpec(componentIDs[i],
                                                       tableSel);
         }
     }
@@ -93,10 +93,10 @@ class SOSMarkerSegment extends MarkerSegment {
     protected Object clone () {
         SOSMarkerSegment newGuy = (SOSMarkerSegment) super.clone();
         if (componentSpecs != null) {
-            newGuy.componentSpecs = 
+            newGuy.componentSpecs =
                 (ScanComponentSpec []) componentSpecs.clone();
             for (int i = 0; i < componentSpecs.length; i++) {
-                newGuy.componentSpecs[i] = 
+                newGuy.componentSpecs[i] =
                     (ScanComponentSpec) componentSpecs[i].clone();
             }
         }
@@ -105,15 +105,15 @@ class SOSMarkerSegment extends MarkerSegment {
 
     IIOMetadataNode getNativeNode() {
         IIOMetadataNode node = new IIOMetadataNode("sos");
-        node.setAttribute("numScanComponents", 
+        node.setAttribute("numScanComponents",
                           Integer.toString(componentSpecs.length));
-        node.setAttribute("startSpectralSelection", 
+        node.setAttribute("startSpectralSelection",
                           Integer.toString(startSpectralSelection));
-        node.setAttribute("endSpectralSelection", 
+        node.setAttribute("endSpectralSelection",
                           Integer.toString(endSpectralSelection));
-        node.setAttribute("approxHigh", 
+        node.setAttribute("approxHigh",
                           Integer.toString(approxHigh));
-        node.setAttribute("approxLow", 
+        node.setAttribute("approxLow",
                           Integer.toString(approxLow));
         for (int i = 0; i < componentSpecs.length; i++) {
             node.appendChild(componentSpecs[i].getNativeNode());
@@ -122,7 +122,7 @@ class SOSMarkerSegment extends MarkerSegment {
         return node;
     }
 
-    void updateFromNativeNode(Node node, boolean fromScratch) 
+    void updateFromNativeNode(Node node, boolean fromScratch)
         throws IIOInvalidTreeException {
         NamedNodeMap attrs = node.getAttributes();
         int numComponents = getAttributeValue(node, attrs, "numScanComponents",
@@ -192,7 +192,7 @@ class SOSMarkerSegment extends MarkerSegment {
             dcHuffTable = tableSel;
             acHuffTable = tableSel;
         }
-        
+
         ScanComponentSpec(JPEGBuffer buffer) {
             // Parent already loaded the buffer
             componentSelector = buffer.buf[buffer.bufPtr++];
@@ -219,11 +219,11 @@ class SOSMarkerSegment extends MarkerSegment {
 
         IIOMetadataNode getNativeNode() {
             IIOMetadataNode node = new IIOMetadataNode("scanComponentSpec");
-            node.setAttribute("componentSelector", 
+            node.setAttribute("componentSelector",
                               Integer.toString(componentSelector));
-            node.setAttribute("dcHuffTable", 
+            node.setAttribute("dcHuffTable",
                               Integer.toString(dcHuffTable));
-            node.setAttribute("acHuffTable", 
+            node.setAttribute("acHuffTable",
                               Integer.toString(acHuffTable));
             return node;
         }

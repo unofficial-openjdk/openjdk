@@ -28,7 +28,7 @@
 
 #define CALL_SCardConnect(hContext, szReader, dwSharedMode, dwPreferredProtocols, phCard, pdwActiveProtocols) \
     (SCardConnect(hContext, szReader, dwSharedMode, dwPreferredProtocols, phCard, pdwActiveProtocols))
-    
+
 #define CALL_SCardDisconnect(hCard, dwDisposition) \
     (SCardDisconnect(hCard, dwDisposition))
 
@@ -39,9 +39,9 @@
     (SCardGetStatusChange(hContext, dwTimeout, rgReaderStates, cReaders))
 
 #define CALL_SCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, \
-			    pioRecvPci, pbRecvBuffer, pcbRecvLength) \
+                            pioRecvPci, pbRecvBuffer, pcbRecvLength) \
     (SCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, \
-			    pioRecvPci, pbRecvBuffer, pcbRecvLength))
+                            pioRecvPci, pbRecvBuffer, pcbRecvLength))
 
 #define CALL_SCardListReaders(hContext, mszGroups, mszReaders, pcchReaders) \
     (SCardListReaders(hContext, mszGroups, mszReaders, pcchReaders))
@@ -53,6 +53,6 @@
     (SCardEndTransaction(hCard, dwDisposition))
 
 #define CALL_SCardControl(hCard, dwControlCode, lpInBuffer, nInBufferSize, \
-	lpOutBuffer, nOutBufferSize, lpBytesReturns) \
+        lpOutBuffer, nOutBufferSize, lpBytesReturns) \
     (SCardControl(hCard, dwControlCode, lpInBuffer, nInBufferSize, \
-	lpOutBuffer, nOutBufferSize, lpBytesReturns))
+        lpOutBuffer, nOutBufferSize, lpBytesReturns))

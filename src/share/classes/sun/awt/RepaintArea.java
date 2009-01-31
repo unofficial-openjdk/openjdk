@@ -27,76 +27,75 @@ package sun.awt;
 
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Rectangle; 
+import java.awt.Rectangle;
 import java.awt.event.PaintEvent;
 
 /**
- * The <code>RepaintArea</code> is a geometric construct created for the 
- * purpose of holding the geometry of several coalesced paint events.  
- * This geometry is accessed synchronously, although it is written such 
- * that painting may still be executed asynchronously.  
+ * The <code>RepaintArea</code> is a geometric construct created for the
+ * purpose of holding the geometry of several coalesced paint events.
+ * This geometry is accessed synchronously, although it is written such
+ * that painting may still be executed asynchronously.
  *
- * @author 	Eric Hawkes
- * @version 	%I% %G%
- * @since 	1.3
+ * @author      Eric Hawkes
+ * @since       1.3
  */
 public class RepaintArea {
 
-    /** 
-     * Maximum ratio of bounding rectangle to benefit for which 
-     * both the vertical and horizontal unions are repainted. 
-     * For smaller ratios the whole bounding rectangle is repainted. 
-     * @see #paint 
-     */ 
-    private static final int MAX_BENEFIT_RATIO = 4; 
-     
+    /**
+     * Maximum ratio of bounding rectangle to benefit for which
+     * both the vertical and horizontal unions are repainted.
+     * For smaller ratios the whole bounding rectangle is repainted.
+     * @see #paint
+     */
+    private static final int MAX_BENEFIT_RATIO = 4;
+
     private static final int HORIZONTAL = 0;
     private static final int VERTICAL = 1;
     private static final int UPDATE = 2;
 
     private static final int RECT_COUNT = UPDATE + 1;
- 
+
     private Rectangle paintRects[] = new Rectangle[RECT_COUNT];
 
- 
+
     /**
-     * Constructs a new <code>RepaintArea</code> 
-     * @since 	1.3
-     */ 
+     * Constructs a new <code>RepaintArea</code>
+     * @since   1.3
+     */
     public RepaintArea() {
     }
 
     /**
-     * Constructs a new <code>RepaintArea</code> initialized to match 
-     * the values of the specified RepaintArea.  
+     * Constructs a new <code>RepaintArea</code> initialized to match
+     * the values of the specified RepaintArea.
      *
-     * @param   ra  the <code>RepaintArea</code> from which to copy initial 
+     * @param   ra  the <code>RepaintArea</code> from which to copy initial
      *              values to a newly constructed RepaintArea
-     * @since 	1.3
-     */ 
+     * @since   1.3
+     */
     private RepaintArea(RepaintArea ra) {
-        // This constructor is private because it should only be called 
-	// from the cloneAndReset method
+        // This constructor is private because it should only be called
+        // from the cloneAndReset method
         for (int i = 0; i < RECT_COUNT; i++) {
             paintRects[i] = ra.paintRects[i];
         }
     }
 
     /**
-     * Adds a <code>Rectangle</code> to this <code>RepaintArea</code>. 
+     * Adds a <code>Rectangle</code> to this <code>RepaintArea</code>.
      * PAINT Rectangles are divided into mostly vertical and mostly horizontal.
      * Each group is unioned together.
      * UPDATE Rectangles are unioned.
      *
      * @param   r   the specified <code>Rectangle</code>
      * @param   id  possible values PaintEvent.UPDATE or PaintEvent.PAINT
-     * @since 	1.3
+     * @since   1.3
      */
     public synchronized void add(Rectangle r, int id) {
-        // Make sure this new rectangle has positive dimensions 
+        // Make sure this new rectangle has positive dimensions
         if (r.isEmpty()) {
-	    return;
-	}
+            return;
+        }
         int addTo = UPDATE;
         if (id == PaintEvent.PAINT) {
             addTo = (r.width > r.height) ? HORIZONTAL : VERTICAL;
@@ -110,15 +109,15 @@ public class RepaintArea {
 
 
     /**
-     * Creates a new <code>RepaintArea</code> with the same geometry as this 
-     * RepaintArea, then removes all of the geometry from this 
-     * RepaintArea and restores it to an empty RepaintArea.  
+     * Creates a new <code>RepaintArea</code> with the same geometry as this
+     * RepaintArea, then removes all of the geometry from this
+     * RepaintArea and restores it to an empty RepaintArea.
      *
-     * @return	ra a new <code>RepaintArea</code> having the same geometry as 
-     *          this RepaintArea.  
-     * @since 	1.3
+     * @return  ra a new <code>RepaintArea</code> having the same geometry as
+     *          this RepaintArea.
+     * @since   1.3
      */
-    private synchronized RepaintArea cloneAndReset() { 
+    private synchronized RepaintArea cloneAndReset() {
         RepaintArea ra = new RepaintArea(this);
         for (int i = 0; i < RECT_COUNT; i++) {
             paintRects[i] = null;
@@ -133,7 +132,7 @@ public class RepaintArea {
             }
         }
         return true;
-    }    
+    }
 
     /**
      * Constrains the size of the repaint area to the passed in bounds.
@@ -191,40 +190,40 @@ public class RepaintArea {
      * @since   1.4
      */
     public void paint(Object target, boolean shouldClearRectBeforePaint) {
-	Component comp = (Component)target; 
+        Component comp = (Component)target;
 
-	if (isEmpty()) { 
-	    return; 
-        } 
+        if (isEmpty()) {
+            return;
+        }
 
         if (!comp.isVisible()) {
             return;
         }
 
-        RepaintArea ra = this.cloneAndReset(); 
+        RepaintArea ra = this.cloneAndReset();
 
         if (!subtract(ra.paintRects[VERTICAL], ra.paintRects[HORIZONTAL])) {
-            subtract(ra.paintRects[HORIZONTAL], ra.paintRects[VERTICAL]); 
+            subtract(ra.paintRects[HORIZONTAL], ra.paintRects[VERTICAL]);
         }
 
-        if (ra.paintRects[HORIZONTAL] != null && ra.paintRects[VERTICAL] != null) { 
+        if (ra.paintRects[HORIZONTAL] != null && ra.paintRects[VERTICAL] != null) {
             Rectangle paintRect = ra.paintRects[HORIZONTAL].union(ra.paintRects[VERTICAL]);
-            int square = paintRect.width * paintRect.height; 
-            int benefit = square - ra.paintRects[HORIZONTAL].width 
-                * ra.paintRects[HORIZONTAL].height - ra.paintRects[VERTICAL].width 
-                * ra.paintRects[VERTICAL].height; 
-            // if benefit is comparable with bounding box 
-            if (MAX_BENEFIT_RATIO * benefit < square) { 
+            int square = paintRect.width * paintRect.height;
+            int benefit = square - ra.paintRects[HORIZONTAL].width
+                * ra.paintRects[HORIZONTAL].height - ra.paintRects[VERTICAL].width
+                * ra.paintRects[VERTICAL].height;
+            // if benefit is comparable with bounding box
+            if (MAX_BENEFIT_RATIO * benefit < square) {
                 ra.paintRects[HORIZONTAL] = paintRect;
                 ra.paintRects[VERTICAL] = null;
             }
-        } 
+        }
         for (int i = 0; i < paintRects.length; i++) {
-            if (ra.paintRects[i] != null 
-                && !ra.paintRects[i].isEmpty()) 
+            if (ra.paintRects[i] != null
+                && !ra.paintRects[i].isEmpty())
             {
                 // Should use separate Graphics for each paint() call,
-                // since paint() can change Graphics state for next call. 
+                // since paint() can change Graphics state for next call.
                 Graphics g = comp.getGraphics();
                 if (g != null) {
                     try {
@@ -244,7 +243,7 @@ public class RepaintArea {
                         g.dispose();
                     }
                 }
-            } 
+            }
         }
     }
 
@@ -288,10 +287,10 @@ public class RepaintArea {
                 rect.x += common.width;
                 rect.width -= common.width;
                 return true;
-            } 
-        } else       
-        if (rect.x + rect.width == common.x + common.width 
-            && rect.y + rect.height == common.y + common.height) 
+            }
+        } else
+        if (rect.x + rect.width == common.x + common.width
+            && rect.y + rect.height == common.y + common.height)
         {
             if (rect.width == common.width) {
                 rect.height -= common.height;
@@ -300,7 +299,7 @@ public class RepaintArea {
             if (rect.height == common.height) {
                 rect.width -= common.width;
                 return true;
-            } 
+            }
         }
         return false;
     }
@@ -311,4 +310,3 @@ public class RepaintArea {
             " update=" + paintRects[2] + "]";
     }
 }
-

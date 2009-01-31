@@ -47,7 +47,7 @@ class DatagramChannelImpl
     private static NativeDispatcher nd = new DatagramDispatcher();
 
     // Our file descriptor
-    FileDescriptor fd = null;	
+    FileDescriptor fd = null;
 
     // fd value needed for dev/poll. This value will remain valid
     // even after the value in the file descriptor object has been set to -1
@@ -95,68 +95,68 @@ class DatagramChannelImpl
 
 
     public DatagramChannelImpl(SelectorProvider sp)
-	throws IOException
+        throws IOException
     {
-	super(sp);
+        super(sp);
         this.fd = Net.socket(false);
         this.fdVal = IOUtil.fdVal(fd);
-	this.state = ST_UNCONNECTED;
+        this.state = ST_UNCONNECTED;
     }
 
     public DatagramChannelImpl(SelectorProvider sp, FileDescriptor fd)
-	throws IOException 
+        throws IOException
     {
-	super(sp);
+        super(sp);
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         this.state = ST_UNCONNECTED;
     }
 
     public DatagramSocket socket() {
-	synchronized (stateLock) {
-	    if (socket == null)
-		socket = DatagramSocketAdaptor.create(this);
-	    return socket;
-	}
+        synchronized (stateLock) {
+            if (socket == null)
+                socket = DatagramSocketAdaptor.create(this);
+            return socket;
+        }
     }
 
     private void ensureOpen() throws ClosedChannelException {
-	if (!isOpen())
-	    throw new ClosedChannelException();
+        if (!isOpen())
+            throw new ClosedChannelException();
     }
 
-    private SocketAddress sender;	// Set by receive0 (## ugh)
+    private SocketAddress sender;       // Set by receive0 (## ugh)
 
     public SocketAddress receive(ByteBuffer dst) throws IOException {
-	if (dst.isReadOnly())
-	    throw new IllegalArgumentException("Read-only buffer");
-	if (dst == null)
-	    throw new NullPointerException();
-	synchronized (readLock) {
+        if (dst.isReadOnly())
+            throw new IllegalArgumentException("Read-only buffer");
+        if (dst == null)
+            throw new NullPointerException();
+        synchronized (readLock) {
             ensureOpen();
             // If socket is not bound then behave as if nothing received
-            if (!isBound())		// ## NotYetBoundException ??
+            if (!isBound())             // ## NotYetBoundException ??
                 return null;
-	    int n = 0;
+            int n = 0;
             ByteBuffer bb = null;
-	    try {
-		begin();
-		if (!isOpen())
-		    return null;
+            try {
+                begin();
+                if (!isOpen())
+                    return null;
                 SecurityManager security = System.getSecurityManager();
-		readerThread = NativeThread.current();
+                readerThread = NativeThread.current();
                 if (isConnected() || (security == null)) {
-		    do {
-			n = receive(fd, dst);
-		    } while ((n == IOStatus.INTERRUPTED) && isOpen());
-		    if (n == IOStatus.UNAVAILABLE)
-			return null;
+                    do {
+                        n = receive(fd, dst);
+                    } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                    if (n == IOStatus.UNAVAILABLE)
+                        return null;
                 } else {
                     bb = Util.getTemporaryDirectBuffer(dst.remaining());
                     for (;;) {
-			do {
-			    n = receive(fd, bb);
-			} while ((n == IOStatus.INTERRUPTED) && isOpen());
+                        do {
+                            n = receive(fd, bb);
+                        } while ((n == IOStatus.INTERRUPTED) && isOpen());
                         if (n == IOStatus.UNAVAILABLE)
                             return null;
                         InetSocketAddress isa = (InetSocketAddress)sender;
@@ -175,24 +175,24 @@ class DatagramChannelImpl
                         break;
                     }
                 }
-		return sender;
-	    } finally {
+                return sender;
+            } finally {
                 if (bb != null)
                     Util.releaseTemporaryDirectBuffer(bb);
-		readerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+                readerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     private int receive(FileDescriptor fd, ByteBuffer dst)
         throws IOException
     {
-	int pos = dst.position();
-	int lim = dst.limit();
-	assert (pos <= lim);
-	int rem = (pos <= lim ? lim - pos : 0);
+        int pos = dst.position();
+        int lim = dst.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
         if (dst instanceof DirectBuffer && rem > 0)
             return receiveIntoNativeBuffer(fd, dst, rem, pos);
 
@@ -215,12 +215,12 @@ class DatagramChannelImpl
 
     private int receiveIntoNativeBuffer(FileDescriptor fd, ByteBuffer bb,
                                         int rem, int pos)
-	throws IOException
+        throws IOException
     {
         int n = receive0(fd, ((DirectBuffer)bb).address() + pos, rem,
                          isConnected());
         if (n > 0)
- 	    bb.position(pos + n);
+            bb.position(pos + n);
         return n;
     }
 
@@ -230,50 +230,50 @@ class DatagramChannelImpl
         if (src == null)
             throw new NullPointerException();
 
-	synchronized (writeLock) {
+        synchronized (writeLock) {
             ensureOpen();
             InetSocketAddress isa = (InetSocketAddress)target;
             InetAddress ia = isa.getAddress();
             if (ia == null)
                 throw new IOException("Target address not resolved");
-	    synchronized (stateLock) {
-		if (!isConnected()) {
-		    if (target == null)
-			throw new NullPointerException();
-		    SecurityManager sm = System.getSecurityManager();
-		    if (sm != null) {
-			if (ia.isMulticastAddress()) {
-			    sm.checkMulticast(isa.getAddress());
-			} else {
-			    sm.checkConnect(isa.getAddress().getHostAddress(),
-					    isa.getPort());
-			}
-		    }
-		} else { // Connected case; Check address then write
-		    if (!target.equals(remoteAddress)) {
-			throw new IllegalArgumentException(
+            synchronized (stateLock) {
+                if (!isConnected()) {
+                    if (target == null)
+                        throw new NullPointerException();
+                    SecurityManager sm = System.getSecurityManager();
+                    if (sm != null) {
+                        if (ia.isMulticastAddress()) {
+                            sm.checkMulticast(isa.getAddress());
+                        } else {
+                            sm.checkConnect(isa.getAddress().getHostAddress(),
+                                            isa.getPort());
+                        }
+                    }
+                } else { // Connected case; Check address then write
+                    if (!target.equals(remoteAddress)) {
+                        throw new IllegalArgumentException(
                             "Connected address not equal to target address");
-		    }
+                    }
                     return write(src);
-		}
-	    }
+                }
+            }
 
-	    int n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		writerThread = NativeThread.current();
-		do {
-		    n = send(fd, src, target);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
+            int n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                writerThread = NativeThread.current();
+                do {
+                    n = send(fd, src, target);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
-	    } finally {
-		writerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+            } finally {
+                writerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     private int send(FileDescriptor fd, ByteBuffer src, SocketAddress target)
@@ -283,10 +283,10 @@ class DatagramChannelImpl
             return sendFromNativeBuffer(fd, src, target);
 
         // Substitute a native buffer
-	int pos = src.position();
-	int lim = src.limit();
-	assert (pos <= lim);
-	int rem = (pos <= lim ? lim - pos : 0);
+        int pos = src.position();
+        int lim = src.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
 
         ByteBuffer bb = null;
         try {
@@ -298,7 +298,7 @@ class DatagramChannelImpl
 
             int n = sendFromNativeBuffer(fd, bb, target);
             if (n > 0) {
-	        // now update src
+                // now update src
                 src.position(pos + n);
             }
             return n;
@@ -309,168 +309,168 @@ class DatagramChannelImpl
 
     private int sendFromNativeBuffer(FileDescriptor fd, ByteBuffer bb,
                                             SocketAddress target)
-	throws IOException
+        throws IOException
     {
-	int pos = bb.position();
-	int lim = bb.limit();
-	assert (pos <= lim);
-	int rem = (pos <= lim ? lim - pos : 0);
+        int pos = bb.position();
+        int lim = bb.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
 
-	int written = send0(fd, ((DirectBuffer)bb).address() + pos,
-			    rem, target);
+        int written = send0(fd, ((DirectBuffer)bb).address() + pos,
+                            rem, target);
         if (written > 0)
-	    bb.position(pos + written);
+            bb.position(pos + written);
         return written;
     }
 
     public int read(ByteBuffer buf) throws IOException {
-	if (buf == null)
-	    throw new NullPointerException();
-	synchronized (readLock) {
-	    synchronized (stateLock) {
-		ensureOpen();
-		if (!isConnected())
-		    throw new NotYetConnectedException();
-	    }
-	    int n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		readerThread = NativeThread.current();
-		do {
-		    n = IOUtil.read(fd, buf, -1, nd, readLock);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		readerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        if (buf == null)
+            throw new NullPointerException();
+        synchronized (readLock) {
+            synchronized (stateLock) {
+                ensureOpen();
+                if (!isConnected())
+                    throw new NotYetConnectedException();
+            }
+            int n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                readerThread = NativeThread.current();
+                do {
+                    n = IOUtil.read(fd, buf, -1, nd, readLock);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                readerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     private long read0(ByteBuffer[] bufs) throws IOException {
         if (bufs == null)
             throw new NullPointerException();
-	synchronized (readLock) {
-	    synchronized (stateLock) {
-		ensureOpen();
-		if (!isConnected())
-		    throw new NotYetConnectedException();
-	    }
-	    long n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		readerThread = NativeThread.current();
-		do {
-		    n = IOUtil.read(fd, bufs, nd);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		readerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        synchronized (readLock) {
+            synchronized (stateLock) {
+                ensureOpen();
+                if (!isConnected())
+                    throw new NotYetConnectedException();
+            }
+            long n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                readerThread = NativeThread.current();
+                do {
+                    n = IOUtil.read(fd, bufs, nd);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                readerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     public long read(ByteBuffer[] dsts, int offset, int length)
-	throws IOException
+        throws IOException
     {
         if ((offset < 0) || (length < 0) || (offset > dsts.length - length))
            throw new IndexOutOfBoundsException();
-	// ## Fix IOUtil.write so that we can avoid this array copy
-	return read0(Util.subsequence(dsts, offset, length));
+        // ## Fix IOUtil.write so that we can avoid this array copy
+        return read0(Util.subsequence(dsts, offset, length));
     }
 
     public int write(ByteBuffer buf) throws IOException {
         if (buf == null)
             throw new NullPointerException();
-	synchronized (writeLock) {
-	    synchronized (stateLock) {
-		ensureOpen();
-		if (!isConnected())
-		    throw new NotYetConnectedException();
-	    }
-	    int n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		writerThread = NativeThread.current();
-		do {
-		    n = IOUtil.write(fd, buf, -1, nd, writeLock);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		writerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        synchronized (writeLock) {
+            synchronized (stateLock) {
+                ensureOpen();
+                if (!isConnected())
+                    throw new NotYetConnectedException();
+            }
+            int n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                writerThread = NativeThread.current();
+                do {
+                    n = IOUtil.write(fd, buf, -1, nd, writeLock);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                writerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     private long write0(ByteBuffer[] bufs) throws IOException {
         if (bufs == null)
             throw new NullPointerException();
-	synchronized (writeLock) {
-	    synchronized (stateLock) {
-		ensureOpen();
-		if (!isConnected())
-		    throw new NotYetConnectedException();
-	    }
-	    long n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		writerThread = NativeThread.current();
-		do {
-		    n = IOUtil.write(fd, bufs, nd);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		writerThread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        synchronized (writeLock) {
+            synchronized (stateLock) {
+                ensureOpen();
+                if (!isConnected())
+                    throw new NotYetConnectedException();
+            }
+            long n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                writerThread = NativeThread.current();
+                do {
+                    n = IOUtil.write(fd, bufs, nd);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                writerThread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     public long write(ByteBuffer[] srcs, int offset, int length)
-	throws IOException
+        throws IOException
     {
         if ((offset < 0) || (length < 0) || (offset > srcs.length - length))
             throw new IndexOutOfBoundsException();
-	// ## Fix IOUtil.write so that we can avoid this array copy
-	return write0(Util.subsequence(srcs, offset, length));
+        // ## Fix IOUtil.write so that we can avoid this array copy
+        return write0(Util.subsequence(srcs, offset, length));
     }
 
     protected void implConfigureBlocking(boolean block) throws IOException {
-	IOUtil.configureBlocking(fd, block);
+        IOUtil.configureBlocking(fd, block);
     }
 
     public SocketOpts options() {
-	synchronized (stateLock) {
-	    if (options == null) {
-		SocketOptsImpl.Dispatcher d
-		    = new SocketOptsImpl.Dispatcher() {
-			    int getInt(int opt) throws IOException {
-				return Net.getIntOption(fd, opt);
-			    }
-			    void setInt(int opt, int arg)
-				throws IOException
-			    {
-				Net.setIntOption(fd, opt, arg);
-			    }
-			};
-		options = new SocketOptsImpl.IP(d);
-	    }
-	    return options;
-	}
+        synchronized (stateLock) {
+            if (options == null) {
+                SocketOptsImpl.Dispatcher d
+                    = new SocketOptsImpl.Dispatcher() {
+                            int getInt(int opt) throws IOException {
+                                return Net.getIntOption(fd, opt);
+                            }
+                            void setInt(int opt, int arg)
+                                throws IOException
+                            {
+                                Net.setIntOption(fd, opt, arg);
+                            }
+                        };
+                options = new SocketOptsImpl.IP(d);
+            }
+            return options;
+        }
     }
 
     public boolean isBound() {
@@ -478,142 +478,142 @@ class DatagramChannelImpl
     }
 
     public SocketAddress localAddress() {
-	synchronized (stateLock) {
-	    if (isConnected() && (localAddress == null)) {
-		// Socket was not bound before connecting,
-		// so ask what the address turned out to be
-		localAddress = Net.localAddress(fd);
-	    }
-	    SecurityManager sm = System.getSecurityManager();
-	    if (sm != null) {
-		InetSocketAddress isa = (InetSocketAddress)localAddress;
-		sm.checkConnect(isa.getAddress().getHostAddress(), -1);
-	    }
-	    return localAddress;
-	}
+        synchronized (stateLock) {
+            if (isConnected() && (localAddress == null)) {
+                // Socket was not bound before connecting,
+                // so ask what the address turned out to be
+                localAddress = Net.localAddress(fd);
+            }
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                InetSocketAddress isa = (InetSocketAddress)localAddress;
+                sm.checkConnect(isa.getAddress().getHostAddress(), -1);
+            }
+            return localAddress;
+        }
     }
 
     public SocketAddress remoteAddress() {
-	synchronized (stateLock) {
-	    return remoteAddress;
-	}
+        synchronized (stateLock) {
+            return remoteAddress;
+        }
     }
 
     public void bind(SocketAddress local) throws IOException {
-	synchronized (readLock) {
-	    synchronized (writeLock) {
-		synchronized (stateLock) {
-		    ensureOpen();
-		    if (isBound())
-			throw new AlreadyBoundException();
-		    InetSocketAddress isa = Net.checkAddress(local);
-		    SecurityManager sm = System.getSecurityManager();
-		    if (sm != null)
-			sm.checkListen(isa.getPort());
-		    Net.bind(fd, isa.getAddress(), isa.getPort());
-		    localAddress = Net.localAddress(fd);
-		}
-	    }
-	}
+        synchronized (readLock) {
+            synchronized (writeLock) {
+                synchronized (stateLock) {
+                    ensureOpen();
+                    if (isBound())
+                        throw new AlreadyBoundException();
+                    InetSocketAddress isa = Net.checkAddress(local);
+                    SecurityManager sm = System.getSecurityManager();
+                    if (sm != null)
+                        sm.checkListen(isa.getPort());
+                    Net.bind(fd, isa.getAddress(), isa.getPort());
+                    localAddress = Net.localAddress(fd);
+                }
+            }
+        }
     }
 
     public boolean isConnected() {
-	synchronized (stateLock) {
-	    return (state == ST_CONNECTED);
-	}
+        synchronized (stateLock) {
+            return (state == ST_CONNECTED);
+        }
     }
 
     void ensureOpenAndUnconnected() throws IOException { // package-private
-	synchronized (stateLock) {
-	    if (!isOpen())
-		throw new ClosedChannelException();
-	    if (state != ST_UNCONNECTED)
-		throw new IllegalStateException("Connect already invoked");
-	}
+        synchronized (stateLock) {
+            if (!isOpen())
+                throw new ClosedChannelException();
+            if (state != ST_UNCONNECTED)
+                throw new IllegalStateException("Connect already invoked");
+        }
     }
 
     public DatagramChannel connect(SocketAddress sa) throws IOException {
-	int trafficClass = 0;
-	int localPort = 0;
+        int trafficClass = 0;
+        int localPort = 0;
 
         synchronized(readLock) {
             synchronized(writeLock) {
-		synchronized (stateLock) {
-		    ensureOpenAndUnconnected();
-		    InetSocketAddress isa = Net.checkAddress(sa);
-		    SecurityManager sm = System.getSecurityManager();
-		    if (sm != null)
-			sm.checkConnect(isa.getAddress().getHostAddress(),
-					isa.getPort());
-		    int n = Net.connect(fd,
-					isa.getAddress(),
-					isa.getPort(),
-					trafficClass);
-		    if (n <= 0)
-			throw new Error();	// Can't happen
+                synchronized (stateLock) {
+                    ensureOpenAndUnconnected();
+                    InetSocketAddress isa = Net.checkAddress(sa);
+                    SecurityManager sm = System.getSecurityManager();
+                    if (sm != null)
+                        sm.checkConnect(isa.getAddress().getHostAddress(),
+                                        isa.getPort());
+                    int n = Net.connect(fd,
+                                        isa.getAddress(),
+                                        isa.getPort(),
+                                        trafficClass);
+                    if (n <= 0)
+                        throw new Error();      // Can't happen
 
-		    // Connection succeeded; disallow further invocation
-		    state = ST_CONNECTED;
-		    remoteAddress = sa;
-		    sender = isa;
-		    cachedSenderInetAddress = isa.getAddress();
-		    cachedSenderPort = isa.getPort();
-		}
+                    // Connection succeeded; disallow further invocation
+                    state = ST_CONNECTED;
+                    remoteAddress = sa;
+                    sender = isa;
+                    cachedSenderInetAddress = isa.getAddress();
+                    cachedSenderPort = isa.getPort();
+                }
             }
         }
-	return this;
+        return this;
     }
 
     public DatagramChannel disconnect() throws IOException {
         synchronized(readLock) {
             synchronized(writeLock) {
-		synchronized (stateLock) {
-		    if (!isConnected() || !isOpen())
-			return this;
-		    InetSocketAddress isa = (InetSocketAddress)remoteAddress;
-		    SecurityManager sm = System.getSecurityManager();
-		    if (sm != null)
-			sm.checkConnect(isa.getAddress().getHostAddress(),
-					isa.getPort());
-		    disconnect0(fd);
-		    remoteAddress = null;
-		    state = ST_UNCONNECTED;
-		}
+                synchronized (stateLock) {
+                    if (!isConnected() || !isOpen())
+                        return this;
+                    InetSocketAddress isa = (InetSocketAddress)remoteAddress;
+                    SecurityManager sm = System.getSecurityManager();
+                    if (sm != null)
+                        sm.checkConnect(isa.getAddress().getHostAddress(),
+                                        isa.getPort());
+                    disconnect0(fd);
+                    remoteAddress = null;
+                    state = ST_UNCONNECTED;
+                }
             }
         }
-	return this;
+        return this;
     }
 
     protected void implCloseSelectableChannel() throws IOException {
-	synchronized (stateLock) {
-	    nd.preClose(fd);
-	    long th;
-	    if ((th = readerThread) != 0)
-		NativeThread.signal(th);
-	    if ((th = writerThread) != 0)
-		NativeThread.signal(th);
-	    if (!isRegistered())
-		kill();
-	}
+        synchronized (stateLock) {
+            nd.preClose(fd);
+            long th;
+            if ((th = readerThread) != 0)
+                NativeThread.signal(th);
+            if ((th = writerThread) != 0)
+                NativeThread.signal(th);
+            if (!isRegistered())
+                kill();
+        }
     }
 
     public void kill() throws IOException {
-	synchronized (stateLock) {
-	    if (state == ST_KILLED)
-		return;
-	    if (state == ST_UNINITIALIZED) {
+        synchronized (stateLock) {
+            if (state == ST_KILLED)
+                return;
+            if (state == ST_UNINITIALIZED) {
                 state = ST_KILLED;
-		return;
+                return;
             }
-	    assert !isOpen() && !isRegistered();
-	    nd.close(fd);
-	    state = ST_KILLED;
-	}
+            assert !isOpen() && !isRegistered();
+            nd.close(fd);
+            state = ST_KILLED;
+        }
     }
 
     protected void finalize() throws IOException {
         // fd is null if constructor threw exception
-	if (fd != null) 
+        if (fd != null)
             close();
     }
 
@@ -627,11 +627,11 @@ class DatagramChannelImpl
         int newOps = initialOps;
 
         if ((ops & PollArrayWrapper.POLLNVAL) != 0) {
-	    // This should only happen if this channel is pre-closed while a
-	    // selection operation is in progress
-	    // ## Throw an error if this channel has not been pre-closed
-	    return false;
-	}
+            // This should only happen if this channel is pre-closed while a
+            // selection operation is in progress
+            // ## Throw an error if this channel has not been pre-closed
+            return false;
+        }
 
         if ((ops & (PollArrayWrapper.POLLERR
                     | PollArrayWrapper.POLLHUP)) != 0) {
@@ -689,7 +689,7 @@ class DatagramChannelImpl
     private static native void initIDs();
 
     private static native void disconnect0(FileDescriptor fd)
-	throws IOException;
+        throws IOException;
 
     private native int receive0(FileDescriptor fd, long address, int len,
                                 boolean connected)

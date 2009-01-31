@@ -30,8 +30,8 @@ abstract class WObjectPeer {
         initIDs();
     }
 
-    long      pData;	// The Windows handle for the native widget.
-    Object    target;	// The associated AWT object.
+    long      pData;    // The Windows handle for the native widget.
+    Object    target;   // The associated AWT object.
 
     private volatile boolean disposed;
 
@@ -39,8 +39,8 @@ abstract class WObjectPeer {
     protected Error createError = null;
 
     public static WObjectPeer getPeerForTarget(Object t) {
-	WObjectPeer peer = (WObjectPeer) WToolkit.targetToPeer(t);
-	return peer;
+        WObjectPeer peer = (WObjectPeer) WToolkit.targetToPeer(t);
+        return peer;
     }
 
     public long getData() {
@@ -63,11 +63,11 @@ abstract class WObjectPeer {
             if (!disposed) {
                 disposed = call_disposeImpl = true;
             }
-        }    
+        }
 
-	if (call_disposeImpl) {
-	    disposeImpl();
-	}
+        if (call_disposeImpl) {
+            disposeImpl();
+        }
     }
     protected final boolean isDisposed() {
         return disposed;

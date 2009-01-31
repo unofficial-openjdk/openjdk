@@ -57,19 +57,19 @@ final class JceSecurityManager extends SecurityManager {
     static final JceSecurityManager INSTANCE;
 
     static {
-	defaultPolicy = JceSecurity.getDefaultPolicy();
-	exemptPolicy = JceSecurity.getExemptPolicy();
-	allPerm = CryptoAllPermission.INSTANCE;
-	INSTANCE = (JceSecurityManager)
-	      AccessController.doPrivileged(new PrivilegedAction() {
-		  public Object run() {
-		      return new JceSecurityManager();
-		  }
-	      });
+        defaultPolicy = JceSecurity.getDefaultPolicy();
+        exemptPolicy = JceSecurity.getExemptPolicy();
+        allPerm = CryptoAllPermission.INSTANCE;
+        INSTANCE = (JceSecurityManager)
+              AccessController.doPrivileged(new PrivilegedAction() {
+                  public Object run() {
+                      return new JceSecurityManager();
+                  }
+              });
     }
 
     private JceSecurityManager() {
-	// empty
+        // empty
     }
 
     /**
@@ -77,137 +77,137 @@ final class JceSecurityManager extends SecurityManager {
      * applet/application, for the given algorithm.
      */
     CryptoPermission getCryptoPermission(String alg) {
-	// Need to convert to uppercase since the crypto perm
-	// lookup is case sensitive.
-	alg = alg.toUpperCase(Locale.ENGLISH);
+        // Need to convert to uppercase since the crypto perm
+        // lookup is case sensitive.
+        alg = alg.toUpperCase(Locale.ENGLISH);
 
-	// If CryptoAllPermission is granted by default, we return that.
-	// Otherwise, this will be the permission we return if anything goes
-	// wrong.
-	CryptoPermission defaultPerm = getDefaultPermission(alg);
-	if (defaultPerm == CryptoAllPermission.INSTANCE) {
-	    return defaultPerm;
-	}
+        // If CryptoAllPermission is granted by default, we return that.
+        // Otherwise, this will be the permission we return if anything goes
+        // wrong.
+        CryptoPermission defaultPerm = getDefaultPermission(alg);
+        if (defaultPerm == CryptoAllPermission.INSTANCE) {
+            return defaultPerm;
+        }
 
-	// Determine the codebase of the caller of the JCE API.
-	// This is the codebase of the first class which is not in
-	// javax.crypto.* packages.
-	// NOTE: javax.crypto.* package maybe subject to package
-	// insertion, so need to check its classloader as well.
-	Class[] context = getClassContext();
-	URL callerCodeBase = null;
-	int i;
-	for (i=0; i<context.length; i++) {
-	    Class cls = context[i];
-	    callerCodeBase = JceSecurity.getCodeBase(cls);
-	    if (callerCodeBase != null) {
-		break;
-	    } else {
-		if (cls.getName().startsWith("javax.crypto.")) {
-		    // skip jce classes since they aren't the callers
-		    continue;
-		}
-		// use default permission when the caller is system classes
-		return defaultPerm;
-	    }
-	}
+        // Determine the codebase of the caller of the JCE API.
+        // This is the codebase of the first class which is not in
+        // javax.crypto.* packages.
+        // NOTE: javax.crypto.* package maybe subject to package
+        // insertion, so need to check its classloader as well.
+        Class[] context = getClassContext();
+        URL callerCodeBase = null;
+        int i;
+        for (i=0; i<context.length; i++) {
+            Class cls = context[i];
+            callerCodeBase = JceSecurity.getCodeBase(cls);
+            if (callerCodeBase != null) {
+                break;
+            } else {
+                if (cls.getName().startsWith("javax.crypto.")) {
+                    // skip jce classes since they aren't the callers
+                    continue;
+                }
+                // use default permission when the caller is system classes
+                return defaultPerm;
+            }
+        }
 
-	if (i == context.length) {
-	    return defaultPerm;
-	}
+        if (i == context.length) {
+            return defaultPerm;
+        }
 
-	CryptoPermissions appPerms;
-	synchronized (this.getClass()) {
-	    if (exemptCache.containsKey(callerCodeBase)) {
-		appPerms = (CryptoPermissions)exemptCache.get(callerCodeBase);
-	    } else {
-		appPerms = getAppPermissions(callerCodeBase);
-		exemptCache.put(callerCodeBase, appPerms);
-	    }
-	}
+        CryptoPermissions appPerms;
+        synchronized (this.getClass()) {
+            if (exemptCache.containsKey(callerCodeBase)) {
+                appPerms = (CryptoPermissions)exemptCache.get(callerCodeBase);
+            } else {
+                appPerms = getAppPermissions(callerCodeBase);
+                exemptCache.put(callerCodeBase, appPerms);
+            }
+        }
 
-	if (appPerms == null) {
-	    return defaultPerm;
-	}
+        if (appPerms == null) {
+            return defaultPerm;
+        }
 
-	// If the app was granted the special CryptoAllPermission, return that.
-	if (appPerms.implies(allPerm)) {
-	    return allPerm;
-	}
+        // If the app was granted the special CryptoAllPermission, return that.
+        if (appPerms.implies(allPerm)) {
+            return allPerm;
+        }
 
-	// Check if the crypto permissions granted to the app contain a
-	// crypto permission for the requested algorithm that does not require
-	// any exemption mechanism to be enforced.
-	// Return that permission, if present.
-	PermissionCollection appPc = appPerms.getPermissionCollection(alg);
-	if (appPc == null) {
-	    return defaultPerm;
-	}
-	Enumeration enum_ = appPc.elements();
-	while (enum_.hasMoreElements()) {
-	    CryptoPermission cp = (CryptoPermission)enum_.nextElement();
-	    if (cp.getExemptionMechanism() == null) {
-		return cp;
-	    }
-	}
+        // Check if the crypto permissions granted to the app contain a
+        // crypto permission for the requested algorithm that does not require
+        // any exemption mechanism to be enforced.
+        // Return that permission, if present.
+        PermissionCollection appPc = appPerms.getPermissionCollection(alg);
+        if (appPc == null) {
+            return defaultPerm;
+        }
+        Enumeration enum_ = appPc.elements();
+        while (enum_.hasMoreElements()) {
+            CryptoPermission cp = (CryptoPermission)enum_.nextElement();
+            if (cp.getExemptionMechanism() == null) {
+                return cp;
+            }
+        }
 
-	// Check if the jurisdiction file for exempt applications contains
-	// any entries for the requested algorithm.
-	// If not, return the default permission.
-	PermissionCollection exemptPc =
-	    exemptPolicy.getPermissionCollection(alg);
-	if (exemptPc == null) {
-	    return defaultPerm;
-	}
+        // Check if the jurisdiction file for exempt applications contains
+        // any entries for the requested algorithm.
+        // If not, return the default permission.
+        PermissionCollection exemptPc =
+            exemptPolicy.getPermissionCollection(alg);
+        if (exemptPc == null) {
+            return defaultPerm;
+        }
 
-	// In the jurisdiction file for exempt applications, go through the
-	// list of CryptoPermission entries for the requested algorithm, and
-	// stop at the first entry:
-	//  - that is implied by the collection of crypto permissions granted
-	//    to the app, and
-	//  - whose exemption mechanism is available from one of the
-	//    registered CSPs
-	enum_ = exemptPc.elements();
-	while (enum_.hasMoreElements()) {
-	    CryptoPermission cp = (CryptoPermission)enum_.nextElement();
-	    try {
-		ExemptionMechanism.getInstance(cp.getExemptionMechanism());
-		if (cp.getAlgorithm().equals(
-				      CryptoPermission.ALG_NAME_WILDCARD)) {
-		    CryptoPermission newCp;
-		    if (cp.getCheckParam()) {
-			newCp = new CryptoPermission(
-				alg, cp.getMaxKeySize(),
-				cp.getAlgorithmParameterSpec(),
-				cp.getExemptionMechanism());
-		    } else {
-			newCp = new CryptoPermission(
-				alg, cp.getMaxKeySize(),
-				cp.getExemptionMechanism());
-		    }
-		    if (appPerms.implies(newCp)) {
-			return newCp;
-		    }
-		}
+        // In the jurisdiction file for exempt applications, go through the
+        // list of CryptoPermission entries for the requested algorithm, and
+        // stop at the first entry:
+        //  - that is implied by the collection of crypto permissions granted
+        //    to the app, and
+        //  - whose exemption mechanism is available from one of the
+        //    registered CSPs
+        enum_ = exemptPc.elements();
+        while (enum_.hasMoreElements()) {
+            CryptoPermission cp = (CryptoPermission)enum_.nextElement();
+            try {
+                ExemptionMechanism.getInstance(cp.getExemptionMechanism());
+                if (cp.getAlgorithm().equals(
+                                      CryptoPermission.ALG_NAME_WILDCARD)) {
+                    CryptoPermission newCp;
+                    if (cp.getCheckParam()) {
+                        newCp = new CryptoPermission(
+                                alg, cp.getMaxKeySize(),
+                                cp.getAlgorithmParameterSpec(),
+                                cp.getExemptionMechanism());
+                    } else {
+                        newCp = new CryptoPermission(
+                                alg, cp.getMaxKeySize(),
+                                cp.getExemptionMechanism());
+                    }
+                    if (appPerms.implies(newCp)) {
+                        return newCp;
+                    }
+                }
 
-		if (appPerms.implies(cp)) {
-		    return cp;
-		}
-	    } catch (Exception e) {
-		continue;
-	    }
-	}
-	return defaultPerm;
+                if (appPerms.implies(cp)) {
+                    return cp;
+                }
+            } catch (Exception e) {
+                continue;
+            }
+        }
+        return defaultPerm;
     }
 
     private static CryptoPermissions getAppPermissions(URL callerCodeBase) {
-	// Check if app is exempt, and retrieve the permissions bundled with it
-	try {
-	    return JceSecurity.verifyExemptJar(callerCodeBase);
-	} catch (Exception e) {
-	    // Jar verification fails
-	    return null;
-	}
+        // Check if app is exempt, and retrieve the permissions bundled with it
+        try {
+            return JceSecurity.verifyExemptJar(callerCodeBase);
+        } catch (Exception e) {
+            // Jar verification fails
+            return null;
+        }
 
     }
 
@@ -215,38 +215,38 @@ final class JceSecurityManager extends SecurityManager {
      * Returns the default permission for the given algorithm.
      */
     private CryptoPermission getDefaultPermission(String alg) {
-	Enumeration enum_ =
-	    defaultPolicy.getPermissionCollection(alg).elements();
-	return (CryptoPermission)enum_.nextElement();
+        Enumeration enum_ =
+            defaultPolicy.getPermissionCollection(alg).elements();
+        return (CryptoPermission)enum_.nextElement();
     }
 
     // See  bug 4341369 & 4334690 for more info.
     boolean isCallerTrusted() {
-	// Get the caller and its codebase.
-	Class[] context = getClassContext();
-	URL callerCodeBase = null;
-	int i;
-	for (i=0; i<context.length; i++) {
-	    callerCodeBase = JceSecurity.getCodeBase(context[i]);
-	    if (callerCodeBase != null) {
-		break;
-	    }
-	}
-	// The caller is in the JCE framework.
-	if (i == context.length) {
-	    return true;
-	}
-	//The caller has been verified.
-	if (TrustedCallersCache.contains(context[i])) {
-	    return true;
-	}
-	// Check whether the caller is a trusted provider.
-	try {
-	    JceSecurity.verifyProviderJar(callerCodeBase);
-	} catch (Exception e2) {
-	    return false;
-	}
-	TrustedCallersCache.addElement(context[i]);
-	return true;
+        // Get the caller and its codebase.
+        Class[] context = getClassContext();
+        URL callerCodeBase = null;
+        int i;
+        for (i=0; i<context.length; i++) {
+            callerCodeBase = JceSecurity.getCodeBase(context[i]);
+            if (callerCodeBase != null) {
+                break;
+            }
+        }
+        // The caller is in the JCE framework.
+        if (i == context.length) {
+            return true;
+        }
+        //The caller has been verified.
+        if (TrustedCallersCache.contains(context[i])) {
+            return true;
+        }
+        // Check whether the caller is a trusted provider.
+        try {
+            JceSecurity.verifyProviderJar(callerCodeBase);
+        } catch (Exception e2) {
+            return false;
+        }
+        TrustedCallersCache.addElement(context[i]);
+        return true;
     }
 }

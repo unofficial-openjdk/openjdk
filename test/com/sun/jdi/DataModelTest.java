@@ -68,13 +68,13 @@ public class DataModelTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new DataModelTest(args).startTests();
     }
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of ready() 
+         * Get to the top of ready()
          */
         BreakpointEvent bpe = startTo("DataModelTarg", "ready", "()V");
 
@@ -82,7 +82,7 @@ public class DataModelTest extends TestScaffold {
         ReferenceType rt = targetObject.referenceType();
         Field field = rt.fieldByName("dataModel");
         Value v = targetObject.getValue(field);
-	StringReference sv = (StringReference) v;
+        StringReference sv = (StringReference) v;
         String expectedValue = System.getProperty("EXPECTED", "32");
         if (!expectedValue.equals(sv.value())) {
             failure("Expecting sun.arch.data.model = " + expectedValue +
@@ -92,7 +92,7 @@ public class DataModelTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

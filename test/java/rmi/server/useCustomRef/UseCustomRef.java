@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -52,17 +52,17 @@ import java.rmi.registry.*;
 import sun.rmi.transport.LiveRef;
 
 public class UseCustomRef
-	extends RemoteServer
-	implements Ping
+        extends RemoteServer
+        implements Ping
 {
 
     public UseCustomRef() throws RemoteException {
-	exportObject();
+        exportObject();
     }
 
     public void exportObject() throws RemoteException {
-	ref = new CustomServerRef(new LiveRef(0));
-	((ServerRef) ref).exportObject(this, null);
+        ref = new CustomServerRef(new LiveRef(0));
+        ((ServerRef) ref).exportObject(this, null);
     }
 
     public RemoteRef getRef() { return ref; }
@@ -70,149 +70,149 @@ public class UseCustomRef
     public void ping() {}
 
     public void receiveAndPing(Ping p) throws RemoteException {
-	p.ping();
+        p.ping();
     }
 
     public static void main(String[] args) {
-	Ping obj = null;
-	Registry registry = null;
+        Ping obj = null;
+        Registry registry = null;
 
-	try {
-	    /*
-	     * create registry
-	     */
-	    TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+        try {
+            /*
+             * create registry
+             */
+            TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
 
-	    System.err.println("creating Registry...");
-	    registry = LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
-	    
-	    /*
-	     * create object with custom ref and bind in registry
-	     */
-	    System.err.println("creating UseCustomRef...");
-	    UseCustomRef cr = new UseCustomRef();
-	    RemoteRef ref = cr.getRef();
-	    if (!(ref instanceof CustomServerRef)) {
-		TestLibrary.bomb("test failed: reference not " +
-				"instanceof CustomServerRef");
-	    }
+            System.err.println("creating Registry...");
+            registry = LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
 
-	    String name = "//:" + TestLibrary.REGISTRY_PORT + "/UseCustomRef";
-	    //	    String name = "UseCustomRef";
-	    System.err.println("binding object in registry...");
-	    Naming.rebind(name, cr);
+            /*
+             * create object with custom ref and bind in registry
+             */
+            System.err.println("creating UseCustomRef...");
+            UseCustomRef cr = new UseCustomRef();
+            RemoteRef ref = cr.getRef();
+            if (!(ref instanceof CustomServerRef)) {
+                TestLibrary.bomb("test failed: reference not " +
+                                "instanceof CustomServerRef");
+            }
 
-	    /*
-	     * look up object and invoke its ping method
-	     */
-	    System.err.println("ping object...");
-	    obj = (Ping) Naming.lookup(name);
-	    obj.ping();
+            String name = "//:" + TestLibrary.REGISTRY_PORT + "/UseCustomRef";
+            //      String name = "UseCustomRef";
+            System.err.println("binding object in registry...");
+            Naming.rebind(name, cr);
 
-	    /*
-	     * pass object with custom ref in remote call
-	     */
-	    System.err.println("pass object in remote call...");
-	    obj.receiveAndPing(cr);
+            /*
+             * look up object and invoke its ping method
+             */
+            System.err.println("ping object...");
+            obj = (Ping) Naming.lookup(name);
+            obj.ping();
 
-	    /*
-	     * write remote object with custom ref to output stream
-	     */
-	    System.err.println("writing remote object to stream...");
-	    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	    ObjectOutputStream out = new ObjectOutputStream(bout);
-	    out.writeObject(cr);
-	    out.flush();
-	    out.close();
+            /*
+             * pass object with custom ref in remote call
+             */
+            System.err.println("pass object in remote call...");
+            obj.receiveAndPing(cr);
 
-	    /*
-	     * read back remote object from output stream
-	     */
-	    System.err.println("reading remote object from stream...");
-	    ObjectInputStream in = new ObjectInputStream(
-		new ByteArrayInputStream(bout.toByteArray()));
-	    cr = (UseCustomRef) in.readObject();
+            /*
+             * write remote object with custom ref to output stream
+             */
+            System.err.println("writing remote object to stream...");
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(bout);
+            out.writeObject(cr);
+            out.flush();
+            out.close();
 
-	    /*
-	     * re-export object and ping
-	     */
-	    System.err.println("re-export object read...");
-	    cr.exportObject();
-	    System.err.println("look up object again...");
-	    Naming.rebind(name, cr);
-	    System.err.println("ping object read...");
-	    obj = (Ping) Naming.lookup(name);
-	    obj.ping();
-	    System.err.println("TEST PASSED");
-	    Naming.unbind(name);
-	    cr = null;
+            /*
+             * read back remote object from output stream
+             */
+            System.err.println("reading remote object from stream...");
+            ObjectInputStream in = new ObjectInputStream(
+                new ByteArrayInputStream(bout.toByteArray()));
+            cr = (UseCustomRef) in.readObject();
 
-	} catch (Exception e) {
-	    TestLibrary.bomb("test failed with exception: ", e);
-	} finally {
-	    TestLibrary.unexport(obj);
-	    TestLibrary.unexport(registry);
+            /*
+             * re-export object and ping
+             */
+            System.err.println("re-export object read...");
+            cr.exportObject();
+            System.err.println("look up object again...");
+            Naming.rebind(name, cr);
+            System.err.println("ping object read...");
+            obj = (Ping) Naming.lookup(name);
+            obj.ping();
+            System.err.println("TEST PASSED");
+            Naming.unbind(name);
+            cr = null;
 
-	    registry = null;
-	    obj = null;
-	}
+        } catch (Exception e) {
+            TestLibrary.bomb("test failed with exception: ", e);
+        } finally {
+            TestLibrary.unexport(obj);
+            TestLibrary.unexport(registry);
+
+            registry = null;
+            obj = null;
+        }
     }
 
     public static class CustomServerRef
         extends sun.rmi.server.UnicastServerRef
     {
-	public CustomServerRef() {}
-	
-	public CustomServerRef(LiveRef ref) {
-	    super(ref);
-	}
-	/*****
-	public CustomServerRef(int port,
-			       RMIClientSocketFactory csf,
-			       RMIServerSocketFactory ssf)
-	{
-	    super (new LiveRef(port, csf, ssf));
-	}
-	*****/
-    
-	public String getRefClass(ObjectOutput out) {
-	    return "";
-	}
-	
-	protected void unmarshalCustomCallData(ObjectInput in)
-    	    throws IOException, ClassNotFoundException
-	{
-	    System.err.println("unmarshalling call data...");
-	    String s = (String) (in.readObject());
-	    System.err.println(s);
-	}
-	
-	protected RemoteRef getClientRef() {
-	    return new CustomRef(ref);
-	}
+        public CustomServerRef() {}
+
+        public CustomServerRef(LiveRef ref) {
+            super(ref);
+        }
+        /*****
+        public CustomServerRef(int port,
+                               RMIClientSocketFactory csf,
+                               RMIServerSocketFactory ssf)
+        {
+            super (new LiveRef(port, csf, ssf));
+        }
+        *****/
+
+        public String getRefClass(ObjectOutput out) {
+            return "";
+        }
+
+        protected void unmarshalCustomCallData(ObjectInput in)
+            throws IOException, ClassNotFoundException
+        {
+            System.err.println("unmarshalling call data...");
+            String s = (String) (in.readObject());
+            System.err.println(s);
+        }
+
+        protected RemoteRef getClientRef() {
+            return new CustomRef(ref);
+        }
     }
 
     public static class CustomRef extends sun.rmi.server.UnicastRef {
 
-	public CustomRef() {
-	}
+        public CustomRef() {
+        }
 
-	public CustomRef(sun.rmi.transport.LiveRef ref) {
-	    super(ref);
-	}
+        public CustomRef(sun.rmi.transport.LiveRef ref) {
+            super(ref);
+        }
 
-	protected void marshalCustomCallData(ObjectOutput out)
-    	    throws IOException
-	{
-	    // this custom data ensures that a custom server
-	    // ref has written the relevant information.
-	    System.err.println("marshalling call data...");
-	    out.writeObject("hello there.");
-	}
-	
-	public String getRefClass(ObjectOutput out) {
-	    return "";
-	}
+        protected void marshalCustomCallData(ObjectOutput out)
+            throws IOException
+        {
+            // this custom data ensures that a custom server
+            // ref has written the relevant information.
+            System.err.println("marshalling call data...");
+            out.writeObject("hello there.");
+        }
+
+        public String getRefClass(ObjectOutput out) {
+            return "";
+        }
 
     }
 }

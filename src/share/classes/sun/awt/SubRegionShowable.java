@@ -31,7 +31,6 @@ package sun.awt;
  * buffer when only a small sub-region has changed.
  * @see javax.swing.BufferStrategyPaintManager
  *
- * @version %I%, %G%
  */
 public interface SubRegionShowable {
     /**
@@ -47,4 +46,3 @@ public interface SubRegionShowable {
     // NOTE: this is invoked by swing on the toolkit thread!
     public boolean validateAndShow(int x1, int y1, int x2, int y2);
 }
-

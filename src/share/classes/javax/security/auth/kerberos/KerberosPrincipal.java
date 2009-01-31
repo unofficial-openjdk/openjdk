@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
+
 package javax.security.auth.kerberos;
 
 import java.io.*;
@@ -36,46 +36,45 @@ import sun.security.util.*;
  * This class encapsulates a Kerberos principal.
  *
  * @author Mayank Upadhyay
- * @version %I%, %G%
  * @since 1.4
  */
 
-public final class KerberosPrincipal 
+public final class KerberosPrincipal
     implements java.security.Principal, java.io.Serializable {
 
     private static final long serialVersionUID = -7374788026156829911L;
 
     //name types
-    
+
     /**
      * unknown name type.
      */
 
     public static final int KRB_NT_UNKNOWN =   0;
-    
+
     /**
      * user principal name type.
      */
 
     public static final int KRB_NT_PRINCIPAL = 1;
-    
+
     /**
      * service and other unique instance (krbtgt) name type.
      */
     public static final int KRB_NT_SRV_INST =  2;
-    
+
     /**
      * service with host name as instance (telnet, rcommands) name type.
      */
 
     public static final int KRB_NT_SRV_HST =   3;
-    
+
     /**
      * service with host as remaining components name type.
      */
 
     public static final int KRB_NT_SRV_XHST =  4;
-    
+
     /**
      * unique ID name type.
      */
@@ -91,46 +90,46 @@ public final class KerberosPrincipal
 
     private static final char NAME_REALM_SEPARATOR = '@';
 
-    /** 
-     * Constructs a KerberosPrincipal from the provided string input. The 
-     * name type for this  principal defaults to 
+    /**
+     * Constructs a KerberosPrincipal from the provided string input. The
+     * name type for this  principal defaults to
      * {@link #KRB_NT_PRINCIPAL KRB_NT_PRINCIPAL}
      * This string is assumed to contain a name in the format
-     * that is specified in Section 2.1.1. (Kerberos Principal Name Form) of 
+     * that is specified in Section 2.1.1. (Kerberos Principal Name Form) of
      * <a href=http://www.ietf.org/rfc/rfc1964.txt> RFC 1964 </a>
      * (for example, <i>duke@FOO.COM</i>, where <i>duke</i>
      * represents a principal, and <i>FOO.COM</i> represents a realm).
-     * 
+     *
      * <p>If the input name does not contain a realm, the default realm
-     * is used. The default realm can be specified either in a Kerberos 
+     * is used. The default realm can be specified either in a Kerberos
      * configuration file or via the java.security.krb5.realm
-     * system property. For more information, 
+     * system property. For more information,
      * <a href="../../../../../technotes/guides/security/jgss/tutorials/index.html">
      * Kerberos Requirements </a>
-     * 
+     *
      * @param name the principal name
      * @throws IllegalArgumentException if name is improperly
-     * formatted, if name is null, or if name does not contain 
+     * formatted, if name is null, or if name does not contain
      * the realm to use and the default realm is not specified
-     * in either a Kerberos configuration file or via the 
+     * in either a Kerberos configuration file or via the
      * java.security.krb5.realm system property.
      */
     public KerberosPrincipal(String name) {
 
-	PrincipalName krb5Principal = null;
+        PrincipalName krb5Principal = null;
 
-	try {
-	    // Appends the default realm if it is missing
-	    krb5Principal = new PrincipalName(name, KRB_NT_PRINCIPAL);
-	} catch (KrbException e) {
-	    throw new IllegalArgumentException(e.getMessage());
-	}
-	nameType = KRB_NT_PRINCIPAL;  // default name type
-	fullName = krb5Principal.toString();
-	realm = krb5Principal.getRealmString();
+        try {
+            // Appends the default realm if it is missing
+            krb5Principal = new PrincipalName(name, KRB_NT_PRINCIPAL);
+        } catch (KrbException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        nameType = KRB_NT_PRINCIPAL;  // default name type
+        fullName = krb5Principal.toString();
+        realm = krb5Principal.getRealmString();
     }
 
-    /** 
+    /**
      * Constructs a KerberosPrincipal from the provided string and
      * name type input.  The string is assumed to contain a name in the
      * format that is specified in Section 2.1 (Mandatory Name Forms) of
@@ -148,30 +147,30 @@ public final class KerberosPrincipal
      * system property. For more information, see
      * <a href="../../../../../technotes/guides/security/jgss/tutorials/index.html">
      * Kerberos Requirements</a>.
-     * 
+     *
      * @param name the principal name
-     * @param nameType the name type of the principal 
+     * @param nameType the name type of the principal
      * @throws IllegalArgumentException if name is improperly
-     * formatted, if name is null, if the nameType is not supported,  
-     * or if name does not contain the realm to use and the default 
-     * realm is not specified in either a Kerberos configuration 
+     * formatted, if name is null, if the nameType is not supported,
+     * or if name does not contain the realm to use and the default
+     * realm is not specified in either a Kerberos configuration
      * file or via the java.security.krb5.realm system property.
      */
 
     public KerberosPrincipal(String name, int nameType) {
 
-	PrincipalName krb5Principal = null;
+        PrincipalName krb5Principal = null;
 
-	try {
-	    // Appends the default realm if it is missing
-	    krb5Principal  = new PrincipalName(name,nameType);
-	} catch (KrbException e) {
-	    throw new IllegalArgumentException(e.getMessage());
-	}
-	 
-	this.nameType = nameType;
-	fullName = krb5Principal.toString();
-	realm = krb5Principal.getRealmString();
+        try {
+            // Appends the default realm if it is missing
+            krb5Principal  = new PrincipalName(name,nameType);
+        } catch (KrbException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        this.nameType = nameType;
+        fullName = krb5Principal.toString();
+        realm = krb5Principal.getRealmString();
     }
     /**
      * Returns the realm component of this Kerberos principal.
@@ -179,29 +178,29 @@ public final class KerberosPrincipal
      * @return the realm component of this Kerberos principal.
      */
     public String getRealm() {
-	return realm;
+        return realm;
     }
 
     /**
-     * Returns a hashcode for this principal. The hash code is defined to 
+     * Returns a hashcode for this principal. The hash code is defined to
      * be the result of the following  calculation:
      * <pre><code>
      *  hashCode = getName().hashCode();
      * </code></pre>
-     * 
+     *
      * @return a hashCode() for the <code>KerberosPrincipal</code>
      */
     public int hashCode() {
-	return getName().hashCode();
+        return getName().hashCode();
     }
 
     /**
      * Compares the specified Object with this Principal for equality.
-     * Returns true if the given object is also a 
+     * Returns true if the given object is also a
      * <code>KerberosPrincipal</code> and the two
-     * <code>KerberosPrincipal</code> instances are equivalent. 
-     * More formally two <code>KerberosPrincipal</code> instances are equal 
-     * if the values returned by <code>getName()</code> are equal and the 
+     * <code>KerberosPrincipal</code> instances are equivalent.
+     * More formally two <code>KerberosPrincipal</code> instances are equal
+     * if the values returned by <code>getName()</code> are equal and the
      * values returned by <code>getNameType()</code> are equal.
      *
      * @param other the Object to compare to
@@ -210,44 +209,44 @@ public final class KerberosPrincipal
      */
     public boolean equals(Object other) {
 
-	if (other == this)
-	    return true;
+        if (other == this)
+            return true;
 
-	if (! (other instanceof KerberosPrincipal)) {
-	    return false;
-	} else {
-	    String myFullName = getName();
-	    String otherFullName = ((KerberosPrincipal) other).getName();
-	    if (nameType == ((KerberosPrincipal)other).nameType && 
-		myFullName.equals(otherFullName)) {
-		 return true;
-	    }
-	} 
-	return false;
+        if (! (other instanceof KerberosPrincipal)) {
+            return false;
+        } else {
+            String myFullName = getName();
+            String otherFullName = ((KerberosPrincipal) other).getName();
+            if (nameType == ((KerberosPrincipal)other).nameType &&
+                myFullName.equals(otherFullName)) {
+                 return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Save the KerberosPrincipal object to a stream
      *
      * @serialData this <code>KerberosPrincipal</code> is serialized
-     *		by writing out the PrincipalName and the
-     *		realm in their DER-encoded form as specified in Section 5.2.2 of
-     *		<a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>. 
-     */ 
+     *          by writing out the PrincipalName and the
+     *          realm in their DER-encoded form as specified in Section 5.2.2 of
+     *          <a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>.
+     */
 
-    private void writeObject(ObjectOutputStream oos) 
-	throws IOException {
+    private void writeObject(ObjectOutputStream oos)
+        throws IOException {
 
-	PrincipalName krb5Principal = null;
-	try {
-	    krb5Principal  = new PrincipalName(fullName,nameType);
-	    oos.writeObject(krb5Principal.asn1Encode());
-	    oos.writeObject(krb5Principal.getRealm().asn1Encode());
-	} catch (Exception e) {
-	    IOException ioe = new IOException(e.getMessage());
-	    ioe.initCause(e);
-	    throw ioe; 
-	}
+        PrincipalName krb5Principal = null;
+        try {
+            krb5Principal  = new PrincipalName(fullName,nameType);
+            oos.writeObject(krb5Principal.asn1Encode());
+            oos.writeObject(krb5Principal.getRealm().asn1Encode());
+        } catch (Exception e) {
+            IOException ioe = new IOException(e.getMessage());
+            ioe.initCause(e);
+            throw ioe;
+        }
     }
 
     /**
@@ -255,23 +254,23 @@ public final class KerberosPrincipal
      */
 
     private void readObject(ObjectInputStream ois)
-	 throws IOException, ClassNotFoundException {
-	byte[] asn1EncPrincipal = (byte [])ois.readObject();
-	byte[] encRealm = (byte [])ois.readObject();
-	try {
-	   PrincipalName krb5Principal = new PrincipalName(new 
-						DerValue(asn1EncPrincipal));
-	   realm = (new Realm(new DerValue(encRealm))).toString();
-	   fullName = krb5Principal.toString() + NAME_REALM_SEPARATOR +
-			 realm.toString(); 
-	   nameType = krb5Principal.getNameType();
-	} catch (Exception e) {
-	    IOException ioe = new IOException(e.getMessage());
-	    ioe.initCause(e);
-	    throw ioe; 
-	}
-    }	
-	
+         throws IOException, ClassNotFoundException {
+        byte[] asn1EncPrincipal = (byte [])ois.readObject();
+        byte[] encRealm = (byte [])ois.readObject();
+        try {
+           PrincipalName krb5Principal = new PrincipalName(new
+                                                DerValue(asn1EncPrincipal));
+           realm = (new Realm(new DerValue(encRealm))).toString();
+           fullName = krb5Principal.toString() + NAME_REALM_SEPARATOR +
+                         realm.toString();
+           nameType = krb5Principal.getNameType();
+        } catch (Exception e) {
+            IOException ioe = new IOException(e.getMessage());
+            ioe.initCause(e);
+            throw ioe;
+        }
+    }
+
     /**
      * The returned string corresponds to the single-string
      * representation of a Kerberos Principal name as specified in
@@ -280,24 +279,24 @@ public final class KerberosPrincipal
      * @return the principal name.
      */
     public String getName() {
-	return fullName;
+        return fullName;
     }
 
     /**
      * Returns the name type of the KerberosPrincipal. Valid name types
      * are specified in Section 6.2 of
-     * <a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>. 
+     * <a href=http://www.ietf.org/rfc/rfc4120.txt> RFC4120</a>.
      *
      * @return the name type.
      *
      */
 
     public int getNameType() {
-	return nameType;
+        return nameType;
     }
-    
+
     // Inherits javadocs from Object
     public String toString() {
-	return getName();
+        return getName();
     }
 }

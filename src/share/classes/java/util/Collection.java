@@ -105,20 +105,19 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
- * @version %I%, %G%
- * @see	    Set
- * @see	    List
- * @see	    Map
- * @see	    SortedSet
- * @see	    SortedMap
- * @see	    HashSet
- * @see	    TreeSet
- * @see	    ArrayList
- * @see	    LinkedList
- * @see	    Vector
+ * @see     Set
+ * @see     List
+ * @see     Map
+ * @see     SortedSet
+ * @see     SortedMap
+ * @see     HashSet
+ * @see     TreeSet
+ * @see     ArrayList
+ * @see     LinkedList
+ * @see     Vector
  * @see     Collections
- * @see	    Arrays
- * @see	    AbstractCollection
+ * @see     Arrays
+ * @see     AbstractCollection
  * @since 1.2
  */
 
@@ -278,7 +277,7 @@ public interface Collection<E> extends Iterable<E> {
      * @param o element to be removed from this collection, if present
      * @return <tt>true</tt> if an element was removed as a result of this call
      * @throws ClassCastException if the type of the specified element
-     * 	       is incompatible with this collection (optional)
+     *         is incompatible with this collection (optional)
      * @throws NullPointerException if the specified element is null and this
      *         collection does not permit null elements (optional)
      * @throws UnsupportedOperationException if the <tt>remove</tt> operation
@@ -295,7 +294,7 @@ public interface Collection<E> extends Iterable<E> {
      *
      * @param  c collection to be checked for containment in this collection
      * @return <tt>true</tt> if this collection contains all of the elements
-     *	       in the specified collection
+     *         in the specified collection
      * @throws ClassCastException if the types of one or more elements
      *         in the specified collection are incompatible with this
      *         collection (optional)

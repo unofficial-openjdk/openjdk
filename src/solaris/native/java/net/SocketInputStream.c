@@ -47,7 +47,7 @@ static jfieldID IO_fd_fdID;
  * Method:    init
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_net_SocketInputStream_init(JNIEnv *env, jclass cls) {
     IO_fd_fdID = NET_GetFileDescriptorID(env);
 }
@@ -58,9 +58,9 @@ Java_java_net_SocketInputStream_init(JNIEnv *env, jclass cls) {
  * Signature: (Ljava/io/FileDescriptor;[BIII)I
  */
 JNIEXPORT jint JNICALL
-Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this, 
-					    jobject fdObj, jbyteArray data,
-					    jint off, jint len, jint timeout)
+Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
+                                            jobject fdObj, jbyteArray data,
+                                            jint off, jint len, jint timeout)
 {
     char BUF[MAX_BUFFER_LEN];
     char *bufP;
@@ -68,10 +68,10 @@ Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
     jint n;
 
     if (IS_NULL(fdObj)) {
-	/* should't this be a NullPointerException? -br */
-        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", 
-			"Socket closed");
-	return -1;
+        /* should't this be a NullPointerException? -br */
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+        return -1;
     } else {
         fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
         /* Bug 4086704 - If the Socket associated with this file descriptor
@@ -88,75 +88,75 @@ Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
      * we allocate from the heap (up to a limit)
      */
     if (len > MAX_BUFFER_LEN) {
-	if (len > MAX_HEAP_BUFFER_LEN) {
-	    len = MAX_HEAP_BUFFER_LEN;
-	}
-	bufP = (char *)malloc((size_t)len);
-	if (bufP == NULL) {
-	    bufP = BUF;
-	    len = MAX_BUFFER_LEN;
-	}
+        if (len > MAX_HEAP_BUFFER_LEN) {
+            len = MAX_HEAP_BUFFER_LEN;
+        }
+        bufP = (char *)malloc((size_t)len);
+        if (bufP == NULL) {
+            bufP = BUF;
+            len = MAX_BUFFER_LEN;
+        }
     } else {
-	bufP = BUF;
+        bufP = BUF;
     }
 
     if (timeout) {
-	nread = NET_Timeout(fd, timeout);
-	if (nread <= 0) {
+        nread = NET_Timeout(fd, timeout);
+        if (nread <= 0) {
             if (nread == 0) {
                 JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
-			    "Read timed out");
+                            "Read timed out");
             } else if (nread == JVM_IO_ERR) {
-	        if (errno == EBADF) { 
+                if (errno == EBADF) {
                      JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Socket closed");
                  } else {
                      NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                                                   "select/poll failed");
                  }
-	    } else if (nread == JVM_IO_INTR) {
-	        JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
-			    "Operation interrupted");
-	    }
-	    if (bufP != BUF) {
-	        free(bufP);
-	    }
-	    return -1;
-	}
+            } else if (nread == JVM_IO_INTR) {
+                JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
+                            "Operation interrupted");
+            }
+            if (bufP != BUF) {
+                free(bufP);
+            }
+            return -1;
+        }
     }
 
     nread = NET_Read(fd, bufP, len);
 
     if (nread <= 0) {
-	if (nread < 0) {
+        if (nread < 0) {
 
-	    switch (errno) {
-		case ECONNRESET:
-		case EPIPE:
-		    JNU_ThrowByName(env, "sun/net/ConnectionResetException", 	
-			"Connection reset");
-		    break;
+            switch (errno) {
+                case ECONNRESET:
+                case EPIPE:
+                    JNU_ThrowByName(env, "sun/net/ConnectionResetException",
+                        "Connection reset");
+                    break;
 
-		case EBADF:
-		    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", 
-			"Socket closed");
-		    break;
+                case EBADF:
+                    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+                    break;
 
-		case EINTR:
+                case EINTR:
                      JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
                            "Operation interrupted");
-		     break;
+                     break;
 
-		default:
-	            NET_ThrowByNameWithLastError(env, 
-			JNU_JAVANETPKG "SocketException", "Read failed");
-	    }
-	}
+                default:
+                    NET_ThrowByNameWithLastError(env,
+                        JNU_JAVANETPKG "SocketException", "Read failed");
+            }
+        }
     } else {
         (*env)->SetByteArrayRegion(env, data, off, nread, (jbyte *)bufP);
     }
 
     if (bufP != BUF) {
-	free(bufP);
+        free(bufP);
     }
     return nread;
-}					   
+}

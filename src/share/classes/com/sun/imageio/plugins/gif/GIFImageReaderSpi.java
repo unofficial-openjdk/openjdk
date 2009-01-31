@@ -35,7 +35,6 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
 /**
- * @version 0.5
  */
 public class GIFImageReaderSpi extends ImageReaderSpi {
 
@@ -84,7 +83,7 @@ public class GIFImageReaderSpi extends ImageReaderSpi {
         if (!(input instanceof ImageInputStream)) {
             return false;
         }
-        
+
         ImageInputStream stream = (ImageInputStream)input;
         byte[] b = new byte[6];
         stream.mark();

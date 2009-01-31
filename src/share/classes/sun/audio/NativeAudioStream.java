@@ -33,7 +33,6 @@ import java.io.IOException;
 /**
  * A Sun-specific AudioStream that supports native audio formats.
  *
- * @version %I% %E%
  */
 
  /*
@@ -49,12 +48,12 @@ public
     class NativeAudioStream extends FilterInputStream {
 
 
-	public NativeAudioStream(InputStream in) throws IOException {
+        public NativeAudioStream(InputStream in) throws IOException {
 
-	    super(in);
-	}
+            super(in);
+        }
 
-	public int getLength() {
-	    return 0;
-	}
+        public int getLength() {
+            return 0;
+        }
     }

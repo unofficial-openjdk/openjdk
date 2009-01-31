@@ -39,8 +39,8 @@ import java.io.IOException;
  * A <code>CardLayout</code> object is a layout manager for a
  * container. It treats each component in the container as a card.
  * Only one card is visible at a time, and the container acts as
- * a stack of cards. The first component added to a 
- * <code>CardLayout</code> object is the visible component when the 
+ * a stack of cards. The first component added to a
+ * <code>CardLayout</code> object is the visible component when the
  * container is first displayed.
  * <p>
  * The ordering of cards is determined by the container's own internal
@@ -51,14 +51,13 @@ import java.io.IOException;
  * method can be used to associate a string identifier with a given card
  * for fast random access.
  *
- * @version 	%I% %G%
- * @author 	Arthur van Hoff
+ * @author      Arthur van Hoff
  * @see         java.awt.Container
  * @since       JDK1.0
  */
 
 public class CardLayout implements LayoutManager2,
-				   Serializable {
+                                   Serializable {
 
     private static final long serialVersionUID = -4328196481005934313L;
 
@@ -90,7 +89,7 @@ public class CardLayout implements LayoutManager2,
 
     /*
     * A cards horizontal Layout gap (inset). It specifies
-    * the space between the left and right edges of a 
+    * the space between the left and right edges of a
     * container and the current component.
     * This should be a non negative Integer.
     * @see getHgap()
@@ -100,7 +99,7 @@ public class CardLayout implements LayoutManager2,
 
     /*
     * A cards vertical Layout gap (inset). It specifies
-    * the space between the top and bottom edges of a 
+    * the space between the top and bottom edges of a
     * container and the current component.
     * This should be a non negative Integer.
     * @see getVgap()
@@ -109,26 +108,26 @@ public class CardLayout implements LayoutManager2,
     int vgap;
 
     /**
-     * @serialField tab	        Hashtable
+     * @serialField tab         Hashtable
      *      deprectated, for forward compatibility only
      * @serialField hgap        int
      * @serialField vgap        int
      * @serialField vector      Vector
      * @serialField currentCard int
      */
-    private static final ObjectStreamField[] serialPersistentFields = { 
-	new ObjectStreamField("tab", Hashtable.class), 
-        new ObjectStreamField("hgap", Integer.TYPE), 
-        new ObjectStreamField("vgap", Integer.TYPE), 
-        new ObjectStreamField("vector", Vector.class), 
-        new ObjectStreamField("currentCard", Integer.TYPE) 
+    private static final ObjectStreamField[] serialPersistentFields = {
+        new ObjectStreamField("tab", Hashtable.class),
+        new ObjectStreamField("hgap", Integer.TYPE),
+        new ObjectStreamField("vgap", Integer.TYPE),
+        new ObjectStreamField("vector", Vector.class),
+        new ObjectStreamField("currentCard", Integer.TYPE)
     };
 
     /**
      * Creates a new card layout with gaps of size zero.
      */
     public CardLayout() {
-	this(0, 0);
+        this(0, 0);
     }
 
     /**
@@ -140,8 +139,8 @@ public class CardLayout implements LayoutManager2,
      * @param     vgap   the vertical gap.
      */
     public CardLayout(int hgap, int vgap) {
-	this.hgap = hgap;
-	this.vgap = vgap;
+        this.hgap = hgap;
+        this.vgap = vgap;
     }
 
     /**
@@ -152,7 +151,7 @@ public class CardLayout implements LayoutManager2,
      * @since     JDK1.1
      */
     public int getHgap() {
-	return hgap;
+        return hgap;
     }
 
     /**
@@ -163,7 +162,7 @@ public class CardLayout implements LayoutManager2,
      * @since     JDK1.1
      */
     public void setHgap(int hgap) {
-	this.hgap = hgap;
+        this.hgap = hgap;
     }
 
     /**
@@ -173,7 +172,7 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#getHgap()
      */
     public int getVgap() {
-	return vgap;
+        return vgap;
     }
 
     /**
@@ -184,7 +183,7 @@ public class CardLayout implements LayoutManager2,
      * @since     JDK1.1
      */
     public void setVgap(int vgap) {
-	this.vgap = vgap;
+        this.vgap = vgap;
     }
 
     /**
@@ -205,11 +204,11 @@ public class CardLayout implements LayoutManager2,
           if (constraints == null){
               constraints = "";
           }
-	if (constraints instanceof String) {
-	    addLayoutComponent((String)constraints, comp);
-	} else {
-	    throw new IllegalArgumentException("cannot add to layout: constraint must be a string");
-	}
+        if (constraints instanceof String) {
+            addLayoutComponent((String)constraints, comp);
+        } else {
+            throw new IllegalArgumentException("cannot add to layout: constraint must be a string");
+        }
       }
     }
 
@@ -243,7 +242,7 @@ public class CardLayout implements LayoutManager2,
     public void removeLayoutComponent(Component comp) {
         synchronized (comp.getTreeLock()) {
             for (int i = 0; i < vector.size(); i++) {
-                if (((Card)vector.get(i)).comp == comp) { 
+                if (((Card)vector.get(i)).comp == comp) {
                     // if we remove current component we should show next one
                     if (comp.isVisible() && (comp.getParent() != null)) {
                         next(comp.getParent());
@@ -331,7 +330,7 @@ public class CardLayout implements LayoutManager2,
      * @see #preferredLayoutSize
      */
     public Dimension maximumLayoutSize(Container target) {
-	return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
     /**
@@ -342,7 +341,7 @@ public class CardLayout implements LayoutManager2,
      * the furthest away from the origin, 0.5 is centered, etc.
      */
     public float getLayoutAlignmentX(Container parent) {
-	return 0.5f;
+        return 0.5f;
     }
 
     /**
@@ -353,7 +352,7 @@ public class CardLayout implements LayoutManager2,
      * the furthest away from the origin, 0.5 is centered, etc.
      */
     public float getLayoutAlignmentY(Container parent) {
-	return 0.5f;
+        return 0.5f;
     }
 
     /**
@@ -401,9 +400,9 @@ public class CardLayout implements LayoutManager2,
      * Otherwise havoc can ensue!
      */
     void checkLayout(Container parent) {
-	if (parent.getLayout() != this) {
-	    throw new IllegalArgumentException("wrong parent for CardLayout");
-	}
+        if (parent.getLayout() != this) {
+            throw new IllegalArgumentException("wrong parent for CardLayout");
+        }
     }
 
     /**
@@ -412,8 +411,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#last
      */
     public void first(Container parent) {
-	synchronized (parent.getTreeLock()) {
-	    checkLayout(parent);
+        synchronized (parent.getTreeLock()) {
+            checkLayout(parent);
             int ncomponents = parent.getComponentCount();
             for (int i = 0 ; i < ncomponents ; i++) {
                 Component comp = parent.getComponent(i);
@@ -427,7 +426,7 @@ public class CardLayout implements LayoutManager2,
                 parent.getComponent(0).setVisible(true);
                 parent.validate();
             }
-	}
+        }
     }
 
     /**
@@ -438,8 +437,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#previous
      */
     public void next(Container parent) {
-	synchronized (parent.getTreeLock()) {
-	    checkLayout(parent);
+        synchronized (parent.getTreeLock()) {
+            checkLayout(parent);
             int ncomponents = parent.getComponentCount();
             for (int i = 0 ; i < ncomponents ; i++) {
                 Component comp = parent.getComponent(i);
@@ -453,7 +452,7 @@ public class CardLayout implements LayoutManager2,
                 }
             }
             showDefaultComponent(parent);
-	}
+        }
     }
 
     /**
@@ -464,8 +463,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#next
      */
     public void previous(Container parent) {
-	synchronized (parent.getTreeLock()) {
-	    checkLayout(parent);
+        synchronized (parent.getTreeLock()) {
+            checkLayout(parent);
             int ncomponents = parent.getComponentCount();
             for (int i = 0 ; i < ncomponents ; i++) {
                 Component comp = parent.getComponent(i);
@@ -479,7 +478,7 @@ public class CardLayout implements LayoutManager2,
                 }
             }
             showDefaultComponent(parent);
-	}
+        }
     }
 
     void showDefaultComponent(Container parent) {
@@ -496,8 +495,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#first
      */
     public void last(Container parent) {
-	synchronized (parent.getTreeLock()) {
-	    checkLayout(parent);
+        synchronized (parent.getTreeLock()) {
+            checkLayout(parent);
             int ncomponents = parent.getComponentCount();
             for (int i = 0 ; i < ncomponents ; i++) {
                 Component comp = parent.getComponent(i);
@@ -511,7 +510,7 @@ public class CardLayout implements LayoutManager2,
                 parent.getComponent(currentCard).setVisible(true);
                 parent.validate();
             }
-	}
+        }
     }
 
     /**
@@ -523,8 +522,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#addLayoutComponent(java.awt.Component, java.lang.Object)
      */
     public void show(Container parent, String name) {
-	synchronized (parent.getTreeLock()) {
-	    checkLayout(parent);
+        synchronized (parent.getTreeLock()) {
+            checkLayout(parent);
             Component next = null;
             int ncomponents = vector.size();
             for (int i = 0; i < ncomponents; i++) {
@@ -547,7 +546,7 @@ public class CardLayout implements LayoutManager2,
                 next.setVisible(true);
                 parent.validate();
             }
-	}
+        }
     }
 
     /**
@@ -555,21 +554,21 @@ public class CardLayout implements LayoutManager2,
      * @return    a string representation of this card layout.
      */
     public String toString() {
-	return getClass().getName() + "[hgap=" + hgap + ",vgap=" + vgap + "]";
+        return getClass().getName() + "[hgap=" + hgap + ",vgap=" + vgap + "]";
     }
 
     /**
      * Reads serializable fields from stream.
      */
     private void readObject(ObjectInputStream s)
-	throws ClassNotFoundException, IOException
+        throws ClassNotFoundException, IOException
     {
         ObjectInputStream.GetField f = s.readFields();
 
         hgap = f.get("hgap", 0);
         vgap = f.get("vgap", 0);
 
-        if (f.defaulted("vector")) { 
+        if (f.defaulted("vector")) {
             //  pre-1.4 stream
             Hashtable tab = (Hashtable)f.get("tab", null);
             vector = new Vector();

@@ -80,18 +80,18 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
 
     /**
      * Factory method for "JvmRTClassPathEntry" entry metadata class.
-     * 
+     *
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     * 
+     *
      * @param snmpEntryName Name of the SNMP Entry object (conceptual row) ("JvmRTClassPathEntry")
      * @param tableName Name of the table in which the entries are registered ("JvmRTClassPathTable")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     * 
+     *
      * @return An instance of the metadata class generated for the
      *         "JvmRTClassPathEntry" conceptual row (JvmRTClassPathEntryMeta)
-     * 
+     *
      **/
     protected JvmRTClassPathEntryMeta createJvmRTClassPathEntryMetaNode(String snmpEntryName, String tableName, SnmpMib mib, MBeanServer server)  {
         return new JvmRTClassPathEntryMeta(mib, objectserver);
@@ -99,10 +99,10 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "createNewEntry" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void createNewEntry(SnmpMibSubRequest req, SnmpOid rowOid, int depth)
@@ -117,10 +117,10 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "isRegistrationRequired" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public boolean isRegistrationRequired()  {
@@ -135,28 +135,28 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "addEntry" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public synchronized void addEntry(SnmpOid rowOid, ObjectName objname,
                  Object entry)
         throws SnmpStatusException {
         if (! (entry instanceof JvmRTClassPathEntryMBean) )
-            throw new ClassCastException("Entries for Table \"" + 
-                           "JvmRTClassPathTable" + "\" must implement the \"" + 
+            throw new ClassCastException("Entries for Table \"" +
+                           "JvmRTClassPathTable" + "\" must implement the \"" +
                            "JvmRTClassPathEntryMBean" + "\" interface.");
         super.addEntry(rowOid, objname, entry);
     }
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "get" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void get(SnmpMibSubRequest req, SnmpOid rowOid, int depth)
@@ -169,10 +169,10 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
     }
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "set" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void set(SnmpMibSubRequest req, SnmpOid rowOid, int depth)
@@ -187,10 +187,10 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
     }
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "check" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void check(SnmpMibSubRequest req, SnmpOid rowOid, int depth)
@@ -232,10 +232,10 @@ public class JvmRTClassPathTableMeta extends SnmpMibTable implements Serializabl
     }
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "skipEntryVariable" method defined in "SnmpMibTable".
     // See the "SnmpMibTable" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public boolean skipEntryVariable( SnmpOid rowOid, long var, Object data, int pduVersion) {

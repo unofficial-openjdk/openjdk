@@ -38,9 +38,9 @@ public class SharedMemoryListeningConnector extends GenericListeningConnector {
     static final String ARG_NAME = "name";
 
     public SharedMemoryListeningConnector() {
-	super(new SharedMemoryTransportService());
+        super(new SharedMemoryTransportService());
 
-	addStringArgument(
+        addStringArgument(
             ARG_NAME,
             getString("memory_listening.name.label"),
             getString("memory_listening.name"),
@@ -49,7 +49,7 @@ public class SharedMemoryListeningConnector extends GenericListeningConnector {
 
         transport = new Transport() {
             public String name() {
-                return "dt_shmem";		// compatability
+                return "dt_shmem";              // compatability
             }
         };
     }
@@ -58,20 +58,20 @@ public class SharedMemoryListeningConnector extends GenericListeningConnector {
     // converted into "address" argument
 
     public String
-	startListening(Map<String, ? extends Connector.Argument> args)
-	throws IOException, IllegalConnectorArgumentsException
+        startListening(Map<String, ? extends Connector.Argument> args)
+        throws IOException, IllegalConnectorArgumentsException
     {
-	String name = argument(ARG_NAME, args).value();
+        String name = argument(ARG_NAME, args).value();
 
-	// if the name argument isn't specified then we use the default
-	// address for the transport service.
-	if (name.length() == 0) {
-	    assert transportService instanceof SharedMemoryTransportService;
-	    SharedMemoryTransportService ts = (SharedMemoryTransportService)transportService;
-	    name = ts.defaultAddress();
-	}
+        // if the name argument isn't specified then we use the default
+        // address for the transport service.
+        if (name.length() == 0) {
+            assert transportService instanceof SharedMemoryTransportService;
+            SharedMemoryTransportService ts = (SharedMemoryTransportService)transportService;
+            name = ts.defaultAddress();
+        }
 
-	return super.startListening(name, args);
+        return super.startListening(name, args);
     }
 
     public String name() {
@@ -82,4 +82,3 @@ public class SharedMemoryListeningConnector extends GenericListeningConnector {
        return getString("memory_listening.description");
     }
 }
-

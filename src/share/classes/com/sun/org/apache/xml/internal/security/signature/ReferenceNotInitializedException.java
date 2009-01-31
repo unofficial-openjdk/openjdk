@@ -34,9 +34,9 @@ package com.sun.org.apache.xml.internal.security.signature;
 public class ReferenceNotInitializedException extends XMLSignatureException {
 
    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+         *
+         */
+        private static final long serialVersionUID = 1L;
 
    /**
     * Constructor ReferenceNotInitializedException

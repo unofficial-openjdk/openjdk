@@ -34,10 +34,10 @@ import java.awt.im.InputMethodRequests;
 class WTextFieldPeer extends WTextComponentPeer implements TextFieldPeer {
 
     // WComponentPeer overrides
-  
+
     public Dimension getMinimumSize() {
-	FontMetrics fm = getFontMetrics(((TextField)target).getFont());
-	return new Dimension(fm.stringWidth(getText()) + 24, 
+        FontMetrics fm = getFontMetrics(((TextField)target).getFont());
+        return new Dimension(fm.stringWidth(getText()) + 24,
                              fm.getHeight() + 8);
     }
 
@@ -59,16 +59,16 @@ class WTextFieldPeer extends WTextComponentPeer implements TextFieldPeer {
 
     /* This should eventually be a direct native method. */
     public void setEchoChar(char c) {
-      	setEchoCharacter(c);
+        setEchoCharacter(c);
     }
 
     public Dimension getPreferredSize(int cols) {
-	return getMinimumSize(cols);
+        return getMinimumSize(cols);
     }
 
     public Dimension getMinimumSize(int cols) {
-	FontMetrics fm = getFontMetrics(((TextField)target).getFont());
-	return new Dimension(fm.charWidth('0') * cols + 24, fm.getHeight() + 8);
+        FontMetrics fm = getFontMetrics(((TextField)target).getFont());
+        return new Dimension(fm.charWidth('0') * cols + 24, fm.getHeight() + 8);
     }
 
     public InputMethodRequests getInputMethodRequests() {
@@ -80,17 +80,17 @@ class WTextFieldPeer extends WTextComponentPeer implements TextFieldPeer {
     // Toolkit & peer internals
 
     WTextFieldPeer(TextField target) {
-	super(target);
+        super(target);
     }
 
     native void create(WComponentPeer parent);
 
     void initialize() {
-	TextField tf = (TextField)target;
-	if (tf.echoCharIsSet()) {
-	    setEchoChar(tf.getEchoChar());
-	}
-	super.initialize();
+        TextField tf = (TextField)target;
+        if (tf.echoCharIsSet()) {
+            setEchoChar(tf.getEchoChar());
+        }
+        super.initialize();
     }
 
     // deprecated methods
@@ -104,21 +104,21 @@ class WTextFieldPeer extends WTextComponentPeer implements TextFieldPeer {
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	return getMinimumSize();
+        return getMinimumSize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize(int cols) {
-	return getMinimumSize(cols);
+        return getMinimumSize(cols);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension preferredSize(int cols) {
-	return getPreferredSize(cols);
+        return getPreferredSize(cols);
     }
 
 }

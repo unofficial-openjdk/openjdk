@@ -50,8 +50,8 @@ ioname_init(void)
 IoNameIndex
 ioname_find_or_create(const char *name, jboolean *pnew_entry)
 {
-    return table_find_or_create_entry(gdata->ioname_table, 
-			(void*)name, (int)strlen(name)+1, pnew_entry, NULL);
+    return table_find_or_create_entry(gdata->ioname_table,
+                        (void*)name, (int)strlen(name)+1, pnew_entry, NULL);
 }
 
 void
@@ -60,4 +60,3 @@ ioname_cleanup(void)
     table_cleanup(gdata->ioname_table, NULL, NULL);
     gdata->ioname_table = NULL;
 }
-

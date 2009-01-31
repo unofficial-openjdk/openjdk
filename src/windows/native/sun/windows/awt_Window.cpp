@@ -86,7 +86,7 @@ struct UpdateInsetsStruct {
 struct ReshapeFrameStruct {
     jobject frame;
     jint x, y;
-    jint w, h; 
+    jint w, h;
 };
 
 // struct for _SetIconImagesData
@@ -102,7 +102,7 @@ struct SetIconImagesDataStruct {
 // and other methods setting sizes
 struct SizeStruct {
     jobject window;
-    jint w, h; 
+    jint w, h;
 };
 // struct for _SetFocusableWindow() method
 struct SetFocusableWindowStruct {
@@ -174,11 +174,11 @@ AwtWindow::~AwtWindow()
 void AwtWindow::Dispose()
 {
     // Fix 4745575 GDI Resource Leak
-    // MSDN 
-    // Before a window is destroyed (that is, before it returns from processing 
-    // the WM_NCDESTROY message), an application must remove all entries it has 
+    // MSDN
+    // Before a window is destroyed (that is, before it returns from processing
+    // the WM_NCDESTROY message), an application must remove all entries it has
     // added to the property list. The application must use the RemoveProp function
-    // to remove the entries. 
+    // to remove the entries.
 
     if (--AwtWindow::ms_instanceCounter == 0) {
         ::UnhookWindowsHookEx(AwtWindow::ms_hCBTFilter);
@@ -235,7 +235,7 @@ AwtWindow::Ungrab() {
 
 void AwtWindow::_Grab(void * param) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
+
     jobject self = (jobject)param;
 
     if (env->EnsureLocalCapacity(1) < 0)
@@ -257,7 +257,7 @@ void AwtWindow::_Grab(void * param) {
 
 void AwtWindow::_Ungrab(void * param) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
+
     jobject self = (jobject)param;
 
     if (env->EnsureLocalCapacity(1) < 0)
@@ -367,7 +367,7 @@ AwtWindow* AwtWindow::Create(jobject self, jobject parent)
         JNI_CHECK_NULL_GOTO(target, "null target", done);
 
         window = new AwtWindow();
-      
+
         {
             if (JNU_IsInstanceOfByName(env, target, "javax/swing/Popup$HeavyWeightWindow") > 0) {
                 window->m_isRetainingHierarchyZOrder = TRUE;
@@ -408,11 +408,11 @@ AwtWindow* AwtWindow::Create(jobject self, jobject parent)
                 window->m_iconInherited = TRUE;
             }
             window->DoUpdateIcon();
-            
 
-            /* 
+
+            /*
              * Reshape here instead of during create, so that a WM_NCCALCSIZE
-             * is sent. 
+             * is sent.
              */
             window->Reshape(x, y, width, height);
         }
@@ -444,16 +444,16 @@ void AwtWindow::InitOwner(AwtWindow *owner)
             owner = NULL;
             break;
         }
-        owner = (AwtWindow *)AwtComponent::GetComponent(ownerOwnerHWND);        
+        owner = (AwtWindow *)AwtComponent::GetComponent(ownerOwnerHWND);
     }
     m_owningFrameDialog = (AwtFrame *)owner;
 }
 
 void AwtWindow::moveToDefaultLocation() {
-    HWND boggy = ::CreateWindow(GetClassName(), L"BOGGY", WS_OVERLAPPED, CW_USEDEFAULT, 0 ,0, 0, 
+    HWND boggy = ::CreateWindow(GetClassName(), L"BOGGY", WS_OVERLAPPED, CW_USEDEFAULT, 0 ,0, 0,
         NULL, NULL, NULL, NULL);
     RECT defLoc;
-    
+
     // Fixed 6477497: Windows drawn off-screen on Win98, even when java.awt.Window.locationByPlatform is set
     //    Win9x does not position a window until the window is shown.
     //    The behavior is slightly opposite to the WinNT (and up), where
@@ -495,9 +495,9 @@ void AwtWindow::Show()
     if (locationByPlatform) {
          moveToDefaultLocation();
     }
-    
+
     // The following block exists to support Menu/Tooltip animation for
-    // Swing programs in a way which avoids introducing any new public api into 
+    // Swing programs in a way which avoids introducing any new public api into
     // AWT or Swing.
     // This code should eventually be replaced by a better longterm solution
     // which might involve tagging java.awt.Window instances with a semantic
@@ -549,7 +549,7 @@ void AwtWindow::Show()
               // animateStyle = fadeflag? AW_BLEND : AW_SLIDE | AW_VER_POSITIVE;
                  animateStyle = fadeflag? 0 : AW_SLIDE | AW_VER_POSITIVE;
             }
-        } else if (windowType == windowTYPES[MENU] || windowType == windowTYPES[SUBMENU] || 
+        } else if (windowType == windowTYPES[MENU] || windowType == windowTYPES[SUBMENU] ||
                    windowType == windowTYPES[POPUPMENU]) {
             SystemParametersInfo(SPI_GETMENUANIMATION, 0, &animateflag, 0);
             if (animateflag) {
@@ -558,8 +558,8 @@ void AwtWindow::Show()
                     SystemParametersInfo(SPI_GETMENUFADE, 0, &fadeflag, 0);
                     if (fadeflag) {
                       // AW_BLEND currently produces runtime parameter error
-                      //animateStyle = AW_BLEND;                      
-                    } 
+                      //animateStyle = AW_BLEND;
+                    }
                 }
                 if (animateStyle == 0 && !fadeflag) {
                     animateStyle = AW_SLIDE;
@@ -577,7 +577,7 @@ void AwtWindow::Show()
             if (animateflag) {
                  animateStyle = AW_SLIDE | AW_VER_POSITIVE;
             }
-        } 
+        }
 
         if (animateStyle != 0) {
             load_user_procs();
@@ -609,11 +609,11 @@ void AwtWindow::Show()
                     ::GetWindowRect(hWnd,&rect);
                     ::ScreenToClient(hWnd, (LPPOINT)&rect);
                     ::InvalidateRect(hWnd,&rect,TRUE);
-                    ::UpdateWindow(hWnd); 
+                    ::UpdateWindow(hWnd);
                     done = TRUE;
                 }
             }
-        } 
+        }
     }
     if (!done) {
         ::ShowWindow(GetHWnd(), nCmdShow);
@@ -651,14 +651,14 @@ BOOL AwtWindow::UpdateInsets(jobject insets)
     ::GetWindowRect(GetHWnd(), &outside);
 
     jobject target = GetTarget(env);
-    jstring warningString = 
+    jstring warningString =
       (jstring)(env)->GetObjectField(target, AwtWindow::warningStringID);
     if (warningString != NULL) {
         ::CopyRect(&inside, &outside);
         DefWindowProc(WM_NCCALCSIZE, FALSE, (LPARAM)&inside);
         /*
          * Fix for BugTraq ID 4304024.
-         * Calculate client rectangle in client coordinates. 
+         * Calculate client rectangle in client coordinates.
          */
         VERIFY(::OffsetRect(&inside, -inside.left, -inside.top));
         extraBottomInsets = ::GetSystemMetrics(SM_CYCAPTION) +
@@ -686,26 +686,26 @@ BOOL AwtWindow::UpdateInsets(jobject insets)
             /* Get outer frame sizes. */
             LONG style = GetStyle();
             if (style & WS_THICKFRAME) {
-                m_insets.left = m_insets.right = 
+                m_insets.left = m_insets.right =
                     ::GetSystemMetrics(SM_CXSIZEFRAME);
-                m_insets.top = m_insets.bottom = 
+                m_insets.top = m_insets.bottom =
                     ::GetSystemMetrics(SM_CYSIZEFRAME);
             } else {
-                m_insets.left = m_insets.right = 
+                m_insets.left = m_insets.right =
                     ::GetSystemMetrics(SM_CXDLGFRAME);
-                m_insets.top = m_insets.bottom = 
+                m_insets.top = m_insets.bottom =
                     ::GetSystemMetrics(SM_CYDLGFRAME);
             }
-          
+
 
             /* Add in title. */
             m_insets.top += ::GetSystemMetrics(SM_CYCAPTION);
         }
-        else { 
+        else {
             /* fix for 4418125: Undecorated frames are off by one */
             /* undo the -1 set above */
             /* Additional fix for 5059656 */
-	        /* Also, 5089312: Window insets should be 0. */	 
+                /* Also, 5089312: Window insets should be 0. */
             ::memset(&m_insets, 0, sizeof(m_insets));
         }
 
@@ -726,7 +726,7 @@ BOOL AwtWindow::UpdateInsets(jobject insets)
     DASSERT(!safe_ExceptionOccurred(env));
     if (peerInsets != NULL) { // may have been called during creation
         (env)->SetIntField(peerInsets, AwtInsets::topID, m_insets.top);
-        (env)->SetIntField(peerInsets, AwtInsets::bottomID, 
+        (env)->SetIntField(peerInsets, AwtInsets::bottomID,
                            m_insets.bottom);
         (env)->SetIntField(peerInsets, AwtInsets::leftID, m_insets.left);
         (env)->SetIntField(peerInsets, AwtInsets::rightID, m_insets.right);
@@ -740,7 +740,7 @@ BOOL AwtWindow::UpdateInsets(jobject insets)
     }
     env->DeleteLocalRef(peerInsets);
 
-    insetsChanged = !::EqualRect( &m_old_insets, &m_insets );       
+    insetsChanged = !::EqualRect( &m_old_insets, &m_insets );
     ::CopyRect( &m_old_insets, &m_insets );
 
     if (insetsChanged && DDCanReplaceSurfaces(GetHWnd())) {
@@ -794,7 +794,7 @@ void AwtWindow::SendComponentEvent(jint eventId)
         return;
     }
     jobject target = GetTarget(env);
-    jobject event = env->NewObject(classEvent, eventInitMID, 
+    jobject event = env->NewObject(classEvent, eventInitMID,
                                    target, eventId);
     DASSERT(!safe_ExceptionOccurred(env));
     DASSERT(event != NULL);
@@ -968,7 +968,7 @@ MsgRouting AwtWindow::WmDDExitFullScreen(HMONITOR monitor) {
     DDExitFullScreen(monitor, hWnd);
 
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    jboolean alwaysOnTop = JNU_CallMethodByName(env, NULL, GetTarget(env), 
+    jboolean alwaysOnTop = JNU_CallMethodByName(env, NULL, GetTarget(env),
                                                 "isAlwaysOnTop", "()Z").z;
 
     // We should restore alwaysOnTop state as it's anyway dropped here.
@@ -978,7 +978,7 @@ MsgRouting AwtWindow::WmDDExitFullScreen(HMONITOR monitor) {
 
 MsgRouting AwtWindow::WmCreate()
 {
-    return mrDoDefault;  
+    return mrDoDefault;
 }
 
 MsgRouting AwtWindow::WmClose()
@@ -986,7 +986,7 @@ MsgRouting AwtWindow::WmClose()
     SendWindowEvent(java_awt_event_WindowEvent_WINDOW_CLOSING);
 
     /* Rely on above notification to handle quitting as needed */
-    return mrConsume;  
+    return mrConsume;
 }
 
 MsgRouting AwtWindow::WmDestroy()
@@ -1012,7 +1012,7 @@ MsgRouting AwtWindow::WmShowWindow(BOOL show, UINT status)
         ::PostMessage(hwndParent, WM_ACTIVATE, (WPARAM)WA_ACTIVE, (LPARAM)hwndSelf);
     }
 
-    //Fixed 4842599: REGRESSION: JPopupMenu not Hidden Properly After Iconified and Deiconified 
+    //Fixed 4842599: REGRESSION: JPopupMenu not Hidden Properly After Iconified and Deiconified
     if (show && (status == SW_PARENTOPENING)) {
         if (!IsVisible()) {
             return mrConsume;
@@ -1040,7 +1040,7 @@ MsgRouting AwtWindow::WmMove(int x, int y)
     if (m_screenNum == -1) {
     // Set initial value
         m_screenNum = GetScreenImOn();
-    } 
+    }
     else {
         CheckIfOnNewScreen();
     }
@@ -1102,7 +1102,7 @@ MsgRouting AwtWindow::WmSizing()
 }
 
 /*
- * Override AwtComponent's size handling to first update the 
+ * Override AwtComponent's size handling to first update the
  * java AWT target's dimension fields directly, since Windows
  * and below can be resized from outside of java (by user)
  */
@@ -1149,8 +1149,8 @@ MsgRouting AwtWindow::WmSettingChange(UINT wFlag, LPCTSTR pszSection)
     // Control Panel->Display->Appearance
     // which may cause window insets to change
         UpdateInsets(NULL);
-        
-    // [rray] fix for 4407329 - Changing Active Window Border width in display 
+
+    // [rray] fix for 4407329 - Changing Active Window Border width in display
     //  settings causes problems
         WindowResized();
         Invalidate(NULL);
@@ -1160,7 +1160,7 @@ MsgRouting AwtWindow::WmSettingChange(UINT wFlag, LPCTSTR pszSection)
     return mrDoDefault;
 }
 
-MsgRouting AwtWindow::WmNcCalcSize(BOOL fCalcValidRects, 
+MsgRouting AwtWindow::WmNcCalcSize(BOOL fCalcValidRects,
                                    LPNCCALCSIZE_PARAMS lpncsp, LRESULT& retVal)
 {
     MsgRouting mrRetVal = mrDoDefault;
@@ -1173,7 +1173,7 @@ MsgRouting AwtWindow::WmNcCalcSize(BOOL fCalcValidRects,
         return mrConsume;
     }
     jobject target = GetTarget(env);
-    jstring warningString = 
+    jstring warningString =
       (jstring)(env)->GetObjectField(target, AwtWindow::warningStringID);
     if (warningString != NULL) {
         RECT r;
@@ -1185,7 +1185,7 @@ MsgRouting AwtWindow::WmNcCalcSize(BOOL fCalcValidRects,
         m_warningRect.left = lpncsp->rgrc[0].left;
         m_warningRect.right = lpncsp->rgrc[0].right;
         m_warningRect.bottom = lpncsp->rgrc[0].bottom;
-        m_warningRect.top = 
+        m_warningRect.top =
             m_warningRect.bottom - ::GetSystemMetrics(SM_CYCAPTION);
         if (GetStyle() & WS_THICKFRAME) {
             m_warningRect.top -= 2;
@@ -1320,7 +1320,7 @@ LRESULT AwtWindow::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 /*
  * Fix for BugTraq ID 4041703: keyDown not being invoked.
- * This method overrides AwtCanvas::HandleEvent() since 
+ * This method overrides AwtCanvas::HandleEvent() since
  * an empty Window always receives the focus on the activation
  * so we don't have to modify the behavior.
  */
@@ -1332,7 +1332,7 @@ MsgRouting AwtWindow::HandleEvent(MSG *msg, BOOL synthetic)
 void AwtWindow::WindowResized()
 {
     SendComponentEvent(java_awt_event_ComponentEvent_COMPONENT_RESIZED);
-    // Need to replace surfaceData on resize to catch changes to 
+    // Need to replace surfaceData on resize to catch changes to
     // various component-related values, such as insets
     if (DDCanReplaceSurfaces(GetHWnd())) {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -1386,7 +1386,7 @@ void AwtWindow::SetResizable(BOOL isResizable)
 static const UINT SwpFrameChangeFlags =
     SWP_FRAMECHANGED | /* causes WM_NCCALCSIZE to be called */
     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-    SWP_NOACTIVATE | SWP_NOCOPYBITS | 
+    SWP_NOACTIVATE | SWP_NOCOPYBITS |
     SWP_NOREPOSITION | SWP_NOSENDCHANGING;
 
 //
@@ -1413,7 +1413,7 @@ int AwtWindow::GetScreenImOn() {
 
     hmon = ::MonitorFromWindow(GetHWnd(), MONITOR_DEFAULT_TO_PRIMARY);
     DASSERT(hmon != NULL);
-    
+
     scrnNum = AwtWin32GraphicsDevice::GetScreenFromMHND(hmon);
     DASSERT(scrnNum > -1);
 
@@ -1427,7 +1427,7 @@ int AwtWindow::GetScreenImOn() {
 void AwtWindow::CheckIfOnNewScreen() {
     int curScrn = GetScreenImOn();
 
-    if (curScrn != m_screenNum) {  // we've been moved 
+    if (curScrn != m_screenNum) {  // we've been moved
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
         jclass peerCls = env->GetObjectClass(m_peerObject);
@@ -1737,7 +1737,7 @@ ret:
 void AwtWindow::_ReshapeFrame(void *param)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
+
     ReshapeFrameStruct *rfs = (ReshapeFrameStruct *)param;
     jobject self = rfs->frame;
     jint x = rfs->x;
@@ -1760,11 +1760,11 @@ void AwtWindow::_ReshapeFrame(void *param)
     if (::IsWindow(p->GetHWnd()))
     {
         jobject target = env->GetObjectField(self, AwtObject::targetID);
-        if (target != NULL)        
+        if (target != NULL)
         {
             // enforce tresholds before sending the event
             // Fix for 4459064 : do not enforce thresholds for embedded frames
-            if (!p->IsEmbeddedFrame()) 
+            if (!p->IsEmbeddedFrame())
             {
                 jobject peer = p->GetPeer(env);
                 int minWidth = ::GetSystemMetrics(SM_CXMIN);
@@ -1791,18 +1791,18 @@ void AwtWindow::_ReshapeFrame(void *param)
             p->SendMessage(WM_AWT_RESHAPE_COMPONENT, 0, (LPARAM)r);
             // r is deleted in message handler
 
-	    // After the input method window shown, the dimension & position may not
-	    // be valid until this method is called. So we need to adjust the 
-	    // IME candidate window position for the same reason as commented on
-	    // awt_Frame.cpp Show() method.
-	    if (p->isInputMethodWindow() && ::IsWindowVisible(p->GetHWnd())) {
-	      p->AdjustCandidateWindowPos();
-	    }
+            // After the input method window shown, the dimension & position may not
+            // be valid until this method is called. So we need to adjust the
+            // IME candidate window position for the same reason as commented on
+            // awt_Frame.cpp Show() method.
+            if (p->isInputMethodWindow() && ::IsWindowVisible(p->GetHWnd())) {
+              p->AdjustCandidateWindowPos();
+            }
         }
         else
         {
             JNU_ThrowNullPointerException(env, "null target");
-        }	    
+        }
     }
 ret:
    env->DeleteGlobalRef(self);
@@ -1813,7 +1813,7 @@ ret:
 /*
  * This is AwtWindow-specific function that is not intended for reusing
  */
-HICON CreateIconFromRaster(JNIEnv* env, jintArray iconRaster, jint w, jint h) 
+HICON CreateIconFromRaster(JNIEnv* env, jintArray iconRaster, jint w, jint h)
 {
     HBITMAP mask = NULL;
     HBITMAP image = NULL;
@@ -1822,9 +1822,9 @@ HICON CreateIconFromRaster(JNIEnv* env, jintArray iconRaster, jint w, jint h)
         int* iconRasterBuffer = NULL;
         try {
             iconRasterBuffer = (int *)env->GetPrimitiveArrayCritical(iconRaster, 0);
-            
+
             JNI_CHECK_NULL_GOTO(iconRasterBuffer, "iconRaster data", done);
-            
+
             mask = BitmapUtil::CreateTransparencyMaskFromARGB(w, h, iconRasterBuffer);
             image = BitmapUtil::CreateV4BitmapFromARGB(w, h, iconRasterBuffer);
         } catch (...) {
@@ -1844,7 +1844,7 @@ HICON CreateIconFromRaster(JNIEnv* env, jintArray iconRaster, jint w, jint h)
         icnInfo.hbmColor = image;
         icnInfo.fIcon = TRUE;
         icon = ::CreateIconIndirect(&icnInfo);
-    }    
+    }
     if (image) {
         destroy_BMP(image);
     }
@@ -1855,7 +1855,7 @@ done:
     return icon;
 }
 
-void AwtWindow::SetIconData(JNIEnv* env, jintArray iconRaster, jint w, jint h, 
+void AwtWindow::SetIconData(JNIEnv* env, jintArray iconRaster, jint w, jint h,
                              jintArray smallIconRaster, jint smw, jint smh)
 {
     HICON hOldIcon = NULL;
@@ -1875,14 +1875,14 @@ void AwtWindow::SetIconData(JNIEnv* env, jintArray iconRaster, jint w, jint h,
     m_iconInherited = (m_hIcon == NULL);
     if (m_iconInherited) {
         HWND hOwner = ::GetWindow(GetHWnd(), GW_OWNER);
-        AwtWindow* owner = (AwtWindow *)AwtComponent::GetComponent(hOwner);        
+        AwtWindow* owner = (AwtWindow *)AwtComponent::GetComponent(hOwner);
         if (owner != NULL) {
             m_hIcon = owner->GetHIcon();
             m_hIconSm = owner->GetHIconSm();
         } else {
             m_iconInherited = FALSE;
         }
-    } 
+    }
     DoUpdateIcon();
     EnumThreadWindows(AwtToolkit::MainThread(), UpdateOwnedIconCallback, (LPARAM)this);
     if (hOldIcon != NULL) {
@@ -1955,9 +1955,9 @@ void AwtWindow::_SetMinSize(void* param)
     jobject self = ss->window;
     jint w = ss->w;
     jint h = ss->h;
-    //Perform size setting 
+    //Perform size setting
     AwtWindow *window = NULL;
-    
+
     PDATA pData;
     JNI_CHECK_PEER_GOTO(self, ret);
     window = (AwtWindow *)pData;
@@ -1974,21 +1974,21 @@ jint AwtWindow::_GetScreenImOn(void *param)
 
     jobject self = (jobject)param;
 
-    // It's entirely possible that our native resources have been destroyed 
-    // before our java peer - if we're dispose()d, for instance. 
-    // Alert caller w/ IllegalComponentStateException. 
-    if (self == NULL) { 
-        JNU_ThrowByName(env, "java/awt/IllegalComponentStateException", 
-                        "Peer null in JNI"); 
-        return 0; 
-    } 
-    PDATA pData = JNI_GET_PDATA(self); 
-    if (pData == NULL) { 
-        JNU_ThrowByName(env, "java/awt/IllegalComponentStateException", 
-                        "Native resources unavailable"); 
+    // It's entirely possible that our native resources have been destroyed
+    // before our java peer - if we're dispose()d, for instance.
+    // Alert caller w/ IllegalComponentStateException.
+    if (self == NULL) {
+        JNU_ThrowByName(env, "java/awt/IllegalComponentStateException",
+                        "Peer null in JNI");
+        return 0;
+    }
+    PDATA pData = JNI_GET_PDATA(self);
+    if (pData == NULL) {
+        JNU_ThrowByName(env, "java/awt/IllegalComponentStateException",
+                        "Native resources unavailable");
         env->DeleteGlobalRef(self);
-        return 0; 
-    } 
+        return 0;
+    }
 
     jint result = 0;
     AwtWindow *w = (AwtWindow *)pData;
@@ -2004,14 +2004,14 @@ jint AwtWindow::_GetScreenImOn(void *param)
 
 void AwtWindow::_SetFocusableWindow(void *param)
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2); 
-    
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
     SetFocusableWindowStruct *sfws = (SetFocusableWindowStruct *)param;
     jobject self = sfws->window;
     jboolean isFocusableWindow = sfws->isFocusableWindow;
-    
+
     AwtWindow *window = NULL;
-    
+
     PDATA pData;
     JNI_CHECK_PEER_GOTO(self, ret);
     window = (AwtWindow *)pData;
@@ -2023,9 +2023,9 @@ void AwtWindow::_SetFocusableWindow(void *param)
             LONG isPopup = window->GetStyle() & WS_POPUP;
             window->SetStyleEx(window->GetStyleEx() | (isPopup ? 0 : WS_EX_APPWINDOW) | AWT_WS_EX_NOACTIVATE);
         } else {
-            window->SetStyleEx(window->GetStyleEx() & ~WS_EX_APPWINDOW & ~AWT_WS_EX_NOACTIVATE); 
+            window->SetStyleEx(window->GetStyleEx() & ~WS_EX_APPWINDOW & ~AWT_WS_EX_NOACTIVATE);
         }
-    } 
+    }
 
   ret:
     env->DeleteGlobalRef(self);
@@ -2034,12 +2034,12 @@ void AwtWindow::_SetFocusableWindow(void *param)
 
 void AwtWindow::_ModalDisable(void *param)
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2); 
-    
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
     ModalDisableStruct *mds = (ModalDisableStruct *)param;
     jobject self = mds->window;
     HWND blockerHWnd = (HWND)mds->blockerHWnd;
-    
+
     AwtWindow *window = NULL;
     HWND windowHWnd = 0;
 
@@ -2056,7 +2056,7 @@ void AwtWindow::_ModalDisable(void *param)
     if (::IsWindow(windowHWnd)) {
         AwtWindow::SetAndActivateModalBlocker(windowHWnd, blockerHWnd);
     }
- 
+
 ret:
     env->DeleteGlobalRef(self);
 
@@ -2065,13 +2065,13 @@ ret:
 
 void AwtWindow::_ModalEnable(void *param)
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2); 
-    
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
     jobject self = (jobject)param;
-    
+
     AwtWindow *window = NULL;
     HWND windowHWnd = 0;
-    
+
     JNI_CHECK_NULL_GOTO(self, "peer", ret);
     PDATA pData = JNI_GET_PDATA(self);
     if (pData == NULL) {
@@ -2084,7 +2084,7 @@ void AwtWindow::_ModalEnable(void *param)
     if (::IsWindow(windowHWnd)) {
         AwtWindow::SetModalBlocker(windowHWnd, NULL);
     }
- 
+
   ret:
     env->DeleteGlobalRef(self);
 }
@@ -2217,14 +2217,14 @@ Java_sun_awt_windows_WWindowPeer_setAlwaysOnTopNative(JNIEnv *env, jobject self,
                                                 jboolean value)
 {
     TRY;
-  
+
     SetAlwaysOnTopStruct *sas = new SetAlwaysOnTopStruct;
     sas->window = env->NewGlobalRef(self);
     sas->value = value;
 
     AwtToolkit::GetInstance().SyncCall(AwtWindow::_SetAlwaysOnTop, sas);
     // global ref and sas are deleted in _SetAlwaysOnTop
-  
+
     CATCH_BAD_ALLOC;
 }
 
@@ -2276,7 +2276,7 @@ Java_sun_awt_windows_WWindowPeer__1setResizable(JNIEnv *env, jobject self,
  * Signature: (Lsun/awt/windows/WComponentPeer;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WWindowPeer_createAwtWindow(JNIEnv *env, jobject self, 
+Java_sun_awt_windows_WWindowPeer_createAwtWindow(JNIEnv *env, jobject self,
                                                  jobject parent)
 {
     TRY;
@@ -2319,7 +2319,7 @@ Java_sun_awt_windows_WWindowPeer_updateInsets(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WWindowPeer_reshapeFrame(JNIEnv *env, jobject self,
-                                        jint x, jint y, jint w, jint h) 
+                                        jint x, jint y, jint w, jint h)
 {
     TRY;
 
@@ -2432,7 +2432,7 @@ Java_sun_awt_windows_WWindowPeer_getSysSmIconWidth(JNIEnv *env, jclass self)
  * Signature: ([I)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WWindowPeer_setIconImagesData(JNIEnv *env, jobject self, 
+Java_sun_awt_windows_WWindowPeer_setIconImagesData(JNIEnv *env, jobject self,
     jintArray iconRaster, jint w, jint h,
     jintArray smallIconRaster, jint smw, jint smh)
 {
@@ -2534,18 +2534,18 @@ Java_sun_awt_windows_WWindowPeer_modalEnable(JNIEnv *env, jobject self, jobject 
 
 /*
  * Class:     sun_awt_windows_WWindowPeer
- * Method:    setFocusableWindow 
- * Signature: (Z)V 
+ * Method:    setFocusableWindow
+ * Signature: (Z)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WWindowPeer_setFocusableWindow(JNIEnv *env, jobject self, jboolean isFocusableWindow) 
+Java_sun_awt_windows_WWindowPeer_setFocusableWindow(JNIEnv *env, jobject self, jboolean isFocusableWindow)
 {
     TRY;
-    
+
     SetFocusableWindowStruct *sfws = new SetFocusableWindowStruct;
     sfws->window = env->NewGlobalRef(self);
     sfws->isFocusableWindow = isFocusableWindow;
-    
+
     AwtToolkit::GetInstance().SyncCall(AwtWindow::_SetFocusableWindow, sfws);
     // global ref and sfws are deleted in _SetFocusableWindow()
 
@@ -2553,10 +2553,10 @@ Java_sun_awt_windows_WWindowPeer_setFocusableWindow(JNIEnv *env, jobject self, j
 }
 
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WWindowPeer_nativeGrab(JNIEnv *env, jobject self) 
+Java_sun_awt_windows_WWindowPeer_nativeGrab(JNIEnv *env, jobject self)
 {
     TRY;
-    
+
     AwtToolkit::GetInstance().SyncCall(AwtWindow::_Grab, env->NewGlobalRef(self));
     // global ref is deleted in _Grab()
 
@@ -2564,10 +2564,10 @@ Java_sun_awt_windows_WWindowPeer_nativeGrab(JNIEnv *env, jobject self)
 }
 
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WWindowPeer_nativeUngrab(JNIEnv *env, jobject self) 
+Java_sun_awt_windows_WWindowPeer_nativeUngrab(JNIEnv *env, jobject self)
 {
     TRY;
-    
+
     AwtToolkit::GetInstance().SyncCall(AwtWindow::_Ungrab, env->NewGlobalRef(self));
     // global ref is deleted in _Ungrab()
 

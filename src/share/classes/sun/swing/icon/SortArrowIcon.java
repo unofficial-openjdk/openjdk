@@ -35,7 +35,6 @@ import javax.swing.plaf.UIResource;
 /**
  * Sorting icon.
  *
- * @version %I%, %G%
  */
 public class SortArrowIcon implements Icon, UIResource, Serializable {
     // Height of the arrow, the width is ARROW_HEIGHT
@@ -104,7 +103,7 @@ public class SortArrowIcon implements Icon, UIResource, Serializable {
             }
         }
     }
-    
+
     public int getIconWidth() {
         return X_PADDING + ARROW_HEIGHT * 2;
     }

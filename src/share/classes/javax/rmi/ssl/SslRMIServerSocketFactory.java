@@ -107,14 +107,14 @@ public class SslRMIServerSocketFactory implements RMIServerSocketFactory {
     public SslRMIServerSocketFactory(String[] enabledCipherSuites,
                                      String[] enabledProtocols,
                                      boolean needClientAuth)
-	throws IllegalArgumentException {
+        throws IllegalArgumentException {
 
         // Initialize the configuration parameters.
         //
         this.enabledCipherSuites = enabledCipherSuites == null ?
-	    null : (String[]) enabledCipherSuites.clone();
+            null : (String[]) enabledCipherSuites.clone();
         this.enabledProtocols = enabledProtocols == null ?
-	    null : (String[]) enabledProtocols.clone();
+            null : (String[]) enabledProtocols.clone();
         this.needClientAuth = needClientAuth;
 
         // Force the initialization of the default at construction time,
@@ -122,32 +122,32 @@ public class SslRMIServerSocketFactory implements RMIServerSocketFactory {
         // is called.
         //
         final SSLSocketFactory sslSocketFactory = getDefaultSSLSocketFactory();
-	SSLSocket sslSocket = null;
+        SSLSocket sslSocket = null;
         if (this.enabledCipherSuites != null || this.enabledProtocols != null) {
-	    try {
-		sslSocket = (SSLSocket) sslSocketFactory.createSocket();
-	    } catch (Exception e) {
-		final String msg = "Unable to check if the cipher suites " +
-		    "and protocols to enable are supported";
-		throw (IllegalArgumentException)
-		    new IllegalArgumentException(msg).initCause(e);
-	    }
-	}
+            try {
+                sslSocket = (SSLSocket) sslSocketFactory.createSocket();
+            } catch (Exception e) {
+                final String msg = "Unable to check if the cipher suites " +
+                    "and protocols to enable are supported";
+                throw (IllegalArgumentException)
+                    new IllegalArgumentException(msg).initCause(e);
+            }
+        }
 
-	// Check if all the cipher suites and protocol versions to enable
-	// are supported by the underlying SSL/TLS implementation and if
-	// true create lists from arrays.
-	//
+        // Check if all the cipher suites and protocol versions to enable
+        // are supported by the underlying SSL/TLS implementation and if
+        // true create lists from arrays.
+        //
         if (this.enabledCipherSuites != null) {
-	    sslSocket.setEnabledCipherSuites(this.enabledCipherSuites);
+            sslSocket.setEnabledCipherSuites(this.enabledCipherSuites);
             enabledCipherSuitesList =
                 Arrays.asList((String[]) this.enabledCipherSuites);
-	}
+        }
         if (this.enabledProtocols != null) {
-	    sslSocket.setEnabledProtocols(this.enabledProtocols);
+            sslSocket.setEnabledProtocols(this.enabledProtocols);
             enabledProtocolsList =
                 Arrays.asList((String[]) this.enabledProtocols);
-	}
+        }
     }
 
     /**
@@ -162,7 +162,7 @@ public class SslRMIServerSocketFactory implements RMIServerSocketFactory {
      */
     public final String[] getEnabledCipherSuites() {
         return enabledCipherSuites == null ?
-	null : (String[]) enabledCipherSuites.clone();
+        null : (String[]) enabledCipherSuites.clone();
     }
 
     /**
@@ -178,7 +178,7 @@ public class SslRMIServerSocketFactory implements RMIServerSocketFactory {
      */
     public final String[] getEnabledProtocols() {
         return enabledProtocols == null ?
-	null : (String[]) enabledProtocols.clone();
+        null : (String[]) enabledProtocols.clone();
     }
 
     /**

@@ -48,7 +48,7 @@ public class ReadAfterClose {
         } catch (IOException e) {
         }
     }
-    
+
     public static void main(String argv[]) throws Exception {
         BufferedInputStream bis = new BufferedInputStream
             (new ByteArrayInputStream(new byte[32]));

@@ -26,7 +26,7 @@
 #ifndef _JDGADEVICE_H_
 #define _JDGADEVICE_H_
 
-/* 
+/*
  *   Interface for Supporting DGA to Framebuffers under Java
  *   -------------------------------------------------------
  *
@@ -74,8 +74,8 @@
  *    device-dependent library must examine these version numbers and
  *    act as follows:
  *
- *      - In all cases, the device-dependent code should reset the 
- *        supplied major and minor version numbers to those of the 
+ *      - In all cases, the device-dependent code should reset the
+ *        supplied major and minor version numbers to those of the
  *        device-dependent library.
  *
  *      - If the supplied major version number is not the same as that
@@ -85,15 +85,15 @@
  *        the device minor version number, then backward compatibility
  *        is assumed and the open should return JDGA_SUCCESS.
  *
- *      - If the supplied minor version number is greater than the 
- *        device minor version number, the open should also return 
- *        JDGA_SUCCESS. The returned device minor version number will 
- *        indicate to the device-independent code what features are 
- *        supported in the device library. 
+ *      - If the supplied minor version number is greater than the
+ *        device minor version number, the open should also return
+ *        JDGA_SUCCESS. The returned device minor version number will
+ *        indicate to the device-independent code what features are
+ *        supported in the device library.
  *
  *  - The function SolarisJDgaDevOpen() must also return a structure
  *    containing function pointers as given in the SolarisJDgaDevFunc
- *    structure below. The winlock and winunlock functions are 
+ *    structure below. The winlock and winunlock functions are
  *    required only if there is some device-specific locking to be done
  *    in addition to the DGA lock. If this is not required for the device
  *    these function pointers may be specified as NULL pointers.
@@ -119,13 +119,13 @@ typedef enum {
 #endif
 
 /*
- * Structure to be filled in by device-dependent library's 
+ * Structure to be filled in by device-dependent library's
  * SolarisJDgaDevOpen() function
  */
 typedef struct {
   char *                         visidName; /* device name from ioctl */
   int                         majorVersion;
-  int                         minorVersion; 
+  int                         minorVersion;
   struct _SolarisJDgaDevFuncList* function;    /* Device function pointers */
 } SolarisJDgaDevInfo;
 
@@ -170,15 +170,15 @@ JDgaStatus SolarisJDgaDevOpen(SolarisJDgaDevInfo* devInfo);
 
 /*
  * Functions supplied by the device-dependent library.
- * These function pointers will be returned to the 
+ * These function pointers will be returned to the
  * device-independent code in the SolarisJDgaDevFunc structure.
  */
 
 JDgaStatus (*winopen)(SolarisJDgaWinInfo* info);
 
 /*
- *  Fills in window-specific information in the supplied SolarisJDgaWinInfo 
- *  structure. Because multiple windows may be open concurrently, 
+ *  Fills in window-specific information in the supplied SolarisJDgaWinInfo
+ *  structure. Because multiple windows may be open concurrently,
  *  implementations should avoid the use of static structures.
  */
 
@@ -204,14 +204,14 @@ JDgaStatus (*winunlock)(SolarisJDgaWinInfo* info);
 
 /*
  *  Performs any device-specific unlocking needed for the framebuffer.
- *  In most cases it will be unnecessary. In those cases, the 
+ *  In most cases it will be unnecessary. In those cases, the
  *  device-dependent library can supply NULL for this function pointer.
  */
 
 JDgaStatus (*devclose)(SolarisJDgaDevInfo* info);
 
 /*
- *  This function will be called at the last usage of the framebuffer 
+ *  This function will be called at the last usage of the framebuffer
  *  device to allow the library to clean up any remaining resources.
  */
 

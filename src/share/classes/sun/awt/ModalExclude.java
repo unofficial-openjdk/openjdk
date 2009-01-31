@@ -30,7 +30,6 @@ package sun.awt;
  * modal operations.  Implementing this interface will ensure that the
  * component willl still receive it's events.
  *
- * @version %I% %G%
  * @since 1.5
  * @author Joshua Outwater
  */

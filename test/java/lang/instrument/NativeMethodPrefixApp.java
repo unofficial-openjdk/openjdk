@@ -33,7 +33,7 @@ public class NativeMethodPrefixApp implements StringIdCallback {
     // It assumes that a specific non-native library method will call a specific
     // native method.  The below may need to be updated based on library changes.
     static String goldenNativeMethodName = "getStartupTime";
-    
+
     static boolean gotIt[] = {false, false, false};
 
     public static void main(String args[]) throws Exception {
@@ -56,7 +56,7 @@ public class NativeMethodPrefixApp implements StringIdCallback {
     }
 
     public void tracker(String name, int id) {
-        if (name.endsWith(goldenNativeMethodName)) { 
+        if (name.endsWith(goldenNativeMethodName)) {
             System.err.println("Tracked #" + id + ": MATCHED -- " + name);
             gotIt[id] = true;
         } else {

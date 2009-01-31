@@ -35,22 +35,22 @@ import java.lang.reflect.*;
 
 /**
  * Simple tests for the Instrumentation
- * 
+ *
  */
 public abstract class
 ASimpleInstrumentationTestCase
     extends AInstrumentationTestCase
 {
-        
+
     /**
      * Constructor for ASimpleInstrumentationTestCase.
      */
     public ASimpleInstrumentationTestCase(String name)
     {
         super(name);
-        
-    }   
-    
+
+    }
+
     protected void
     assertClassArrayContainsClass(Class[] list, Class target)
         {
@@ -64,7 +64,7 @@ ASimpleInstrumentationTestCase
             }
         assertTrue(inList);
         }
-  
+
     protected void
     assertClassArrayDoesNotContainClassByName(Class[] list, String name)
         {
@@ -77,5 +77,5 @@ ASimpleInstrumentationTestCase
                 }
             }
         }
-       
+
 }

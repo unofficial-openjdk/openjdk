@@ -22,11 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
-package sun.security.jgss; 
- 
+
+package sun.security.jgss;
+
 import java.lang.reflect.InvocationTargetException;
-import org.ietf.jgss.*; 
+import org.ietf.jgss.*;
 import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
@@ -48,7 +48,7 @@ import sun.security.action.GetPropertyAction;
  * GSS-Implementation is configured to use. The GSSManagerImpl class
  * queries this class whenever it needs a mechanism's factory.<p>
  *
- * This class stores an ordered list of pairs of the form 
+ * This class stores an ordered list of pairs of the form
  * <provider, oid>. When it attempts to instantiate a mechanism
  * defined by oid o, it steps through the list looking for an entry
  * with oid=o, or with oid=null. (An entry with oid=null matches all
@@ -70,7 +70,7 @@ import sun.security.action.GetPropertyAction;
  * of the providers without adding any new providers, by causing a
  * provider to move up in a list. The method addProviderAtEnd can
  * only add providers at the end of the list if they are not already
- * in the list. The rationale is that an application will call 
+ * in the list. The rationale is that an application will call
  * addProviderAtFront when it wants a provider to be used in
  * preference over the default ones. And it will call
  * addProviderAtEnd when it wants a provider to be used in case
@@ -78,7 +78,7 @@ import sun.security.action.GetPropertyAction;
  *
  * If a mechanism's factory is being obtained from a provider as a
  * result of encountering a entryof the form <provider, oid> where
- * oid is non-null, then the assumption is that the application added 
+ * oid is non-null, then the assumption is that the application added
  * this entry and it wants this mechanism to be obtained from this
  * provider. Thus is the provider does not actually contain the
  * requested mechanism, an exception will be thrown. However, if the
@@ -90,62 +90,62 @@ import sun.security.action.GetPropertyAction;
 public final class ProviderList {
 
     private static final String PROV_PROP_PREFIX = "GssApiMechanism.";
-    private static final int PROV_PROP_PREFIX_LEN = 
-	PROV_PROP_PREFIX.length();
+    private static final int PROV_PROP_PREFIX_LEN =
+        PROV_PROP_PREFIX.length();
 
-    private static final String SPI_MECH_FACTORY_TYPE 
-	= "sun.security.jgss.spi.MechanismFactory";
+    private static final String SPI_MECH_FACTORY_TYPE
+        = "sun.security.jgss.spi.MechanismFactory";
 
     // Undocumented property?
-    private static final String DEFAULT_MECH_PROP = 
+    private static final String DEFAULT_MECH_PROP =
         "sun.security.jgss.mechanism";
 
     public static final Oid DEFAULT_MECH_OID;
 
     static {
-	/*
-	 * Set the default mechanism. Kerberos v5 is the default
-	 * mechanism unless it is overridden by a system property.
-	 * with a valid OID value
-	 */
-	Oid defOid = null;
-	String defaultOidStr = AccessController.doPrivileged
-	    (new GetPropertyAction(DEFAULT_MECH_PROP));
-	if (defaultOidStr != null) {
-	    defOid = GSSUtil.createOid(defaultOidStr);
-	}
- 	DEFAULT_MECH_OID = 
-	    (defOid == null ? GSSUtil.GSS_KRB5_MECH_OID : defOid);
+        /*
+         * Set the default mechanism. Kerberos v5 is the default
+         * mechanism unless it is overridden by a system property.
+         * with a valid OID value
+         */
+        Oid defOid = null;
+        String defaultOidStr = AccessController.doPrivileged
+            (new GetPropertyAction(DEFAULT_MECH_PROP));
+        if (defaultOidStr != null) {
+            defOid = GSSUtil.createOid(defaultOidStr);
+        }
+        DEFAULT_MECH_OID =
+            (defOid == null ? GSSUtil.GSS_KRB5_MECH_OID : defOid);
    }
 
     private ArrayList<PreferencesEntry> preferences =
-			new ArrayList<PreferencesEntry>(5);
+                        new ArrayList<PreferencesEntry>(5);
     private HashMap<PreferencesEntry, MechanismFactory> factories =
-			new HashMap<PreferencesEntry, MechanismFactory>(5);
+                        new HashMap<PreferencesEntry, MechanismFactory>(5);
     private HashSet<Oid> mechs = new HashSet<Oid>(5);
 
     final private int caller;
 
     public ProviderList(int caller, boolean useNative) {
         this.caller = caller;
-	Provider[] provList;
-        if (useNative) { 
-	    provList = new Provider[1];
-	    provList[0] = new SunNativeProvider(); 
+        Provider[] provList;
+        if (useNative) {
+            provList = new Provider[1];
+            provList[0] = new SunNativeProvider();
         } else {
-	    provList = Security.getProviders();
-	}
+            provList = Security.getProviders();
+        }
 
-	for (int i = 0; i < provList.length; i++) {
-	    Provider prov = provList[i];
-	    try {
-		addProviderAtEnd(prov, null);
-	    } catch (GSSException ge) {
-		// Move on to the next provider
-		GSSUtil.debug("Error in adding provider " + 
-			      prov.getName() + ": " + ge);
-	    }
-	} // End of for loop
+        for (int i = 0; i < provList.length; i++) {
+            Provider prov = provList[i];
+            try {
+                addProviderAtEnd(prov, null);
+            } catch (GSSException ge) {
+                // Move on to the next provider
+                GSSUtil.debug("Error in adding provider " +
+                              prov.getName() + ": " + ge);
+            }
+        } // End of for loop
     }
 
     /**
@@ -154,24 +154,24 @@ public final class ProviderList {
      * @return true if this is a GSS-API property, false otherwise.
      */
     private boolean isMechFactoryProperty(String prop) {
-	return (prop.startsWith(PROV_PROP_PREFIX) ||
-		prop.regionMatches(true, 0, // Try ignoring case
-				   PROV_PROP_PREFIX, 0,
-				   PROV_PROP_PREFIX_LEN));
+        return (prop.startsWith(PROV_PROP_PREFIX) ||
+                prop.regionMatches(true, 0, // Try ignoring case
+                                   PROV_PROP_PREFIX, 0,
+                                   PROV_PROP_PREFIX_LEN));
     }
 
     private Oid getOidFromMechFactoryProperty(String prop)
-	throws GSSException {
+        throws GSSException {
 
-	String oidPart = prop.substring(PROV_PROP_PREFIX_LEN); 
-	return new Oid(oidPart);
+        String oidPart = prop.substring(PROV_PROP_PREFIX_LEN);
+        return new Oid(oidPart);
     }
 
     // So the existing code do not have to be changed
     synchronized public MechanismFactory getMechFactory(Oid mechOid)
-	throws GSSException {
-	if (mechOid == null) mechOid = ProviderList.DEFAULT_MECH_OID;
-	return getMechFactory(mechOid, null);
+        throws GSSException {
+        if (mechOid == null) mechOid = ProviderList.DEFAULT_MECH_OID;
+        return getMechFactory(mechOid, null);
     }
 
     /**
@@ -186,31 +186,31 @@ public final class ProviderList {
      * the desired mechanism.
      */
     synchronized public MechanismFactory getMechFactory(Oid mechOid,
-							Provider p)
-	throws GSSException {
+                                                        Provider p)
+        throws GSSException {
 
-	if (mechOid == null) mechOid = ProviderList.DEFAULT_MECH_OID;
+        if (mechOid == null) mechOid = ProviderList.DEFAULT_MECH_OID;
 
-	if (p == null) {
-	    // Iterate thru all preferences to find right provider
-	    String className;
-	    PreferencesEntry entry;
+        if (p == null) {
+            // Iterate thru all preferences to find right provider
+            String className;
+            PreferencesEntry entry;
 
-	    Iterator<PreferencesEntry> list = preferences.iterator();
-	    while (list.hasNext()) {
-		entry = list.next();
-		if (entry.impliesMechanism(mechOid)) {
-		    MechanismFactory retVal = getMechFactory(entry, mechOid);
-		    if (retVal != null) return retVal;
-		}
-	    } // end of while loop
-	    throw new GSSExceptionImpl(GSSException.BAD_MECH, mechOid); 
-	} else {
-	    // Use the impl from the specified provider; return null if the
-	    // the mech is unsupported by the specified provider.
-	    PreferencesEntry entry = new PreferencesEntry(p, mechOid);
-	    return getMechFactory(entry, mechOid);
-	}
+            Iterator<PreferencesEntry> list = preferences.iterator();
+            while (list.hasNext()) {
+                entry = list.next();
+                if (entry.impliesMechanism(mechOid)) {
+                    MechanismFactory retVal = getMechFactory(entry, mechOid);
+                    if (retVal != null) return retVal;
+                }
+            } // end of while loop
+            throw new GSSExceptionImpl(GSSException.BAD_MECH, mechOid);
+        } else {
+            // Use the impl from the specified provider; return null if the
+            // the mech is unsupported by the specified provider.
+            PreferencesEntry entry = new PreferencesEntry(p, mechOid);
+            return getMechFactory(entry, mechOid);
+        }
     }
 
     /**
@@ -221,44 +221,44 @@ public final class ProviderList {
      * desired mechanism.
      * @param mechOid the oid of the desired mechanism
      * @throws GSSException If the application explicitly requested
-     * this entry's provider to be used for the desired mechanism but 
+     * this entry's provider to be used for the desired mechanism but
      * some problem is encountered
      */
     private MechanismFactory getMechFactory(PreferencesEntry e, Oid mechOid)
-	throws GSSException {
-	Provider p = e.getProvider();
+        throws GSSException {
+        Provider p = e.getProvider();
 
-	/*
-	 * See if a MechanismFactory was previously instantiated for
-	 * this provider and mechanism combination.
-	 */
-	PreferencesEntry searchEntry = new PreferencesEntry(p, mechOid);
-	MechanismFactory retVal = factories.get(searchEntry);
-	if (retVal == null) {
-	    /*
-	     * Apparently not. Now try to instantiate this class from
-	     * the provider.
-	     */
-	    String prop = PROV_PROP_PREFIX + mechOid.toString();
-	    String className = p.getProperty(prop);
-	    if (className != null) {
-		retVal = getMechFactoryImpl(p, className, mechOid, caller);
-		factories.put(searchEntry, retVal);
-	    } else {
-		/*
-		 * This provider does not support this mechanism.
-		 * If the application explicitly requested that
-		 * this provider be used for this mechanism, then
-		 * throw an exception
-		 */
-		if (e.getOid() != null) {
-		    throw new GSSExceptionImpl(GSSException.BAD_MECH,
-			 "Provider " + p.getName() + 
-			 " does not support mechanism " + mechOid);
-		}
-	    }
-	}
-	return retVal;
+        /*
+         * See if a MechanismFactory was previously instantiated for
+         * this provider and mechanism combination.
+         */
+        PreferencesEntry searchEntry = new PreferencesEntry(p, mechOid);
+        MechanismFactory retVal = factories.get(searchEntry);
+        if (retVal == null) {
+            /*
+             * Apparently not. Now try to instantiate this class from
+             * the provider.
+             */
+            String prop = PROV_PROP_PREFIX + mechOid.toString();
+            String className = p.getProperty(prop);
+            if (className != null) {
+                retVal = getMechFactoryImpl(p, className, mechOid, caller);
+                factories.put(searchEntry, retVal);
+            } else {
+                /*
+                 * This provider does not support this mechanism.
+                 * If the application explicitly requested that
+                 * this provider be used for this mechanism, then
+                 * throw an exception
+                 */
+                if (e.getOid() != null) {
+                    throw new GSSExceptionImpl(GSSException.BAD_MECH,
+                         "Provider " + p.getName() +
+                         " does not support mechanism " + mechOid);
+                }
+            }
+        }
+        return retVal;
     }
 
     /**
@@ -272,141 +272,141 @@ public final class ProviderList {
      * instantiate this MechanismFactory.
      */
     private static MechanismFactory getMechFactoryImpl(Provider p,
-						       String className,
-						       Oid mechOid,
-                                                       int caller) 
-	throws GSSException {
+                                                       String className,
+                                                       Oid mechOid,
+                                                       int caller)
+        throws GSSException {
 
-	try {
-	    Class<?> baseClass = Class.forName(SPI_MECH_FACTORY_TYPE);
-	    
-	    /*  
-	     * Load the implementation class with the same class loader
-	     * that was used to load the provider.
-	     * In order to get the class loader of a class, the
-	     * caller's class loader must be the same as or an ancestor of
-	     * the class loader being returned. Otherwise, the caller must
-	     * have "getClassLoader" permission, or a SecurityException
-	     * will be thrown.
-	     */
+        try {
+            Class<?> baseClass = Class.forName(SPI_MECH_FACTORY_TYPE);
 
-	    ClassLoader cl = p.getClass().getClassLoader();
-	    Class<?> implClass;
-	    if (cl != null) {
-		implClass = cl.loadClass(className);
-	    } else {
-		implClass = Class.forName(className);
-	    }
-	    
-	    if (baseClass.isAssignableFrom(implClass)) {
+            /*
+             * Load the implementation class with the same class loader
+             * that was used to load the provider.
+             * In order to get the class loader of a class, the
+             * caller's class loader must be the same as or an ancestor of
+             * the class loader being returned. Otherwise, the caller must
+             * have "getClassLoader" permission, or a SecurityException
+             * will be thrown.
+             */
+
+            ClassLoader cl = p.getClass().getClassLoader();
+            Class<?> implClass;
+            if (cl != null) {
+                implClass = cl.loadClass(className);
+            } else {
+                implClass = Class.forName(className);
+            }
+
+            if (baseClass.isAssignableFrom(implClass)) {
 
                 java.lang.reflect.Constructor<?> c =
-				implClass.getConstructor(Integer.TYPE);
+                                implClass.getConstructor(Integer.TYPE);
                 MechanismFactory mf = (MechanismFactory) (c.newInstance(caller));
 
                 if (mf instanceof NativeGSSFactory) {
                     ((NativeGSSFactory) mf).setMech(mechOid);
                 }
                 return mf;
-	    } else {
-		throw createGSSException(p, className, "is not a " +
-					 SPI_MECH_FACTORY_TYPE, null);
-	    }
-	} catch (ClassNotFoundException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	} catch (NoSuchMethodException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	} catch (InvocationTargetException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	} catch (InstantiationException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	} catch (IllegalAccessException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	} catch (SecurityException e) {
-	    throw createGSSException(p, className, "cannot be created", e);
-	}
+            } else {
+                throw createGSSException(p, className, "is not a " +
+                                         SPI_MECH_FACTORY_TYPE, null);
+            }
+        } catch (ClassNotFoundException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        } catch (NoSuchMethodException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        } catch (InvocationTargetException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        } catch (InstantiationException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        } catch (IllegalAccessException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        } catch (SecurityException e) {
+            throw createGSSException(p, className, "cannot be created", e);
+        }
     }
 
     // Only used by getMechFactoryImpl
-    private static GSSException createGSSException(Provider p, 
-						   String className,
-						   String trailingMsg,
-						   Exception cause) {
-	String errClassInfo = className + " configured by " +
-	    p.getName() + " for GSS-API Mechanism Factory ";
-	return new GSSExceptionImpl(GSSException.BAD_MECH, 
-				    errClassInfo + trailingMsg,
-				    cause);
+    private static GSSException createGSSException(Provider p,
+                                                   String className,
+                                                   String trailingMsg,
+                                                   Exception cause) {
+        String errClassInfo = className + " configured by " +
+            p.getName() + " for GSS-API Mechanism Factory ";
+        return new GSSExceptionImpl(GSSException.BAD_MECH,
+                                    errClassInfo + trailingMsg,
+                                    cause);
     }
 
     public Oid[] getMechs() {
-	return mechs.toArray(new Oid[] {});
-    }
-    
-    synchronized public void addProviderAtFront(Provider p, Oid mechOid) 
-	throws GSSException {
-
-	PreferencesEntry newEntry = new PreferencesEntry(p, mechOid);
-	PreferencesEntry oldEntry;
-	boolean foundSomeMech;
-
-	Iterator<PreferencesEntry> list = preferences.iterator();
-	while (list.hasNext()) {
-	    oldEntry = list.next();
-	    if (newEntry.implies(oldEntry))
-		list.remove();
-	}
-
-	if (mechOid == null) {
-	    foundSomeMech = addAllMechsFromProvider(p);
-	} else {
-	    String oidStr = mechOid.toString();
-	    if (p.getProperty(PROV_PROP_PREFIX + oidStr) == null)
-		throw new GSSExceptionImpl(GSSException.BAD_MECH,
-					   "Provider " + p.getName()
-					   + " does not support "
-					   + oidStr);
-	    mechs.add(mechOid);
-	    foundSomeMech = true;
-	}
-	
-	if (foundSomeMech) {
-	    preferences.add(0, newEntry);
-	}
+        return mechs.toArray(new Oid[] {});
     }
 
-    synchronized public void addProviderAtEnd(Provider p, Oid mechOid) 
-	throws GSSException {
+    synchronized public void addProviderAtFront(Provider p, Oid mechOid)
+        throws GSSException {
 
-	PreferencesEntry newEntry = new PreferencesEntry(p, mechOid);
-	PreferencesEntry oldEntry;
-	boolean foundSomeMech;
+        PreferencesEntry newEntry = new PreferencesEntry(p, mechOid);
+        PreferencesEntry oldEntry;
+        boolean foundSomeMech;
 
-	Iterator<PreferencesEntry> list = preferences.iterator();
-	while (list.hasNext()) {
-	    oldEntry = list.next();
-	    if (oldEntry.implies(newEntry))
-		return;
-	}
+        Iterator<PreferencesEntry> list = preferences.iterator();
+        while (list.hasNext()) {
+            oldEntry = list.next();
+            if (newEntry.implies(oldEntry))
+                list.remove();
+        }
 
-	// System.out.println("addProviderAtEnd: No it is not redundant");
-	
-	if (mechOid == null)
-	    foundSomeMech = addAllMechsFromProvider(p);
-	else {
-	    String oidStr = mechOid.toString();
-	    if (p.getProperty(PROV_PROP_PREFIX + oidStr) == null)
-		throw new GSSExceptionImpl(GSSException.BAD_MECH,
-				       "Provider " + p.getName()
-				       + " does not support "
-				       + oidStr);
-	    mechs.add(mechOid);
-	    foundSomeMech = true;
-	}
+        if (mechOid == null) {
+            foundSomeMech = addAllMechsFromProvider(p);
+        } else {
+            String oidStr = mechOid.toString();
+            if (p.getProperty(PROV_PROP_PREFIX + oidStr) == null)
+                throw new GSSExceptionImpl(GSSException.BAD_MECH,
+                                           "Provider " + p.getName()
+                                           + " does not support "
+                                           + oidStr);
+            mechs.add(mechOid);
+            foundSomeMech = true;
+        }
 
-	if (foundSomeMech) {
-	    preferences.add(newEntry);
-	}
+        if (foundSomeMech) {
+            preferences.add(0, newEntry);
+        }
+    }
+
+    synchronized public void addProviderAtEnd(Provider p, Oid mechOid)
+        throws GSSException {
+
+        PreferencesEntry newEntry = new PreferencesEntry(p, mechOid);
+        PreferencesEntry oldEntry;
+        boolean foundSomeMech;
+
+        Iterator<PreferencesEntry> list = preferences.iterator();
+        while (list.hasNext()) {
+            oldEntry = list.next();
+            if (oldEntry.implies(newEntry))
+                return;
+        }
+
+        // System.out.println("addProviderAtEnd: No it is not redundant");
+
+        if (mechOid == null)
+            foundSomeMech = addAllMechsFromProvider(p);
+        else {
+            String oidStr = mechOid.toString();
+            if (p.getProperty(PROV_PROP_PREFIX + oidStr) == null)
+                throw new GSSExceptionImpl(GSSException.BAD_MECH,
+                                       "Provider " + p.getName()
+                                       + " does not support "
+                                       + oidStr);
+            mechs.add(mechOid);
+            foundSomeMech = true;
+        }
+
+        if (foundSomeMech) {
+            preferences.add(newEntry);
+        }
     }
 
     /**
@@ -419,31 +419,31 @@ public final class ProviderList {
      * provider contributed, false otherwise
      */
     private boolean addAllMechsFromProvider(Provider p) {
-	
-	String prop;
-	boolean retVal = false;
-	
-	// Get all props for this provider
-	Enumeration<Object> props = p.keys();
 
-	// See if there are any GSS prop's
-	while (props.hasMoreElements()) {
-	    prop = (String) props.nextElement();
-	    if (isMechFactoryProperty(prop)) {
-		// Ok! This is a GSS provider!
-		try {
-		    Oid mechOid = getOidFromMechFactoryProperty(prop);
-		    mechs.add(mechOid);
-		    retVal = true;
-		} catch (GSSException e) {
-		    // Skip to next property
-		    GSSUtil.debug("Ignore the invalid property " +
-				  prop + " from provider " + p.getName());  
-		}
-	    } // Processed GSS property
-	} // while loop
+        String prop;
+        boolean retVal = false;
 
-	return retVal;
+        // Get all props for this provider
+        Enumeration<Object> props = p.keys();
+
+        // See if there are any GSS prop's
+        while (props.hasMoreElements()) {
+            prop = (String) props.nextElement();
+            if (isMechFactoryProperty(prop)) {
+                // Ok! This is a GSS provider!
+                try {
+                    Oid mechOid = getOidFromMechFactoryProperty(prop);
+                    mechs.add(mechOid);
+                    retVal = true;
+                } catch (GSSException e) {
+                    // Skip to next property
+                    GSSUtil.debug("Ignore the invalid property " +
+                                  prop + " from provider " + p.getName());
+                }
+            } // Processed GSS property
+        } // while loop
+
+        return retVal;
 
     }
 
@@ -458,94 +458,93 @@ public final class ProviderList {
      * instantiate MechanismFactory's.
      */
     private static final class PreferencesEntry {
-	private Provider p;
-	private Oid oid;
-	PreferencesEntry(Provider p, Oid oid) {
-	    this.p = p;
-	    this.oid = oid;
-	}
+        private Provider p;
+        private Oid oid;
+        PreferencesEntry(Provider p, Oid oid) {
+            this.p = p;
+            this.oid = oid;
+        }
 
-	public boolean equals(Object other) {
-	    if (this == other) {
-		return true;
-	    }
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
 
-	    if (!(other instanceof PreferencesEntry)) {
-		return false;
-	    }
+            if (!(other instanceof PreferencesEntry)) {
+                return false;
+            }
 
-	    PreferencesEntry that = (PreferencesEntry)other;
-	    if (this.p.getName().equals(that.p.getName())) {
-		if (this.oid != null && that.oid != null) {
-		    return this.oid.equals(that.oid);
-		} else {
-		    return (this.oid == null && that.oid == null);
-		}
-	    }
+            PreferencesEntry that = (PreferencesEntry)other;
+            if (this.p.getName().equals(that.p.getName())) {
+                if (this.oid != null && that.oid != null) {
+                    return this.oid.equals(that.oid);
+                } else {
+                    return (this.oid == null && that.oid == null);
+                }
+            }
 
-	    return false;
-	}
+            return false;
+        }
 
-	public int hashCode() {
-	    int result = 17;
+        public int hashCode() {
+            int result = 17;
 
-	    result = 37 * result + p.getName().hashCode();
-	    if (oid != null) {
-		result = 37 * result + oid.hashCode();
-	    }
+            result = 37 * result + p.getName().hashCode();
+            if (oid != null) {
+                result = 37 * result + oid.hashCode();
+            }
 
-	    return result;
-	}
+            return result;
+        }
 
-	/**
-	 * Determines if a preference implies another. A preference
-	 * implies another if the latter is subsumed by the
-	 * former. e.g., <Provider1, null> implies <Provider1, OidX>
-	 * because the null in the former indicates that it should
-	 * be used for all mechanisms.
-	 */
-	boolean implies(Object other) {
+        /**
+         * Determines if a preference implies another. A preference
+         * implies another if the latter is subsumed by the
+         * former. e.g., <Provider1, null> implies <Provider1, OidX>
+         * because the null in the former indicates that it should
+         * be used for all mechanisms.
+         */
+        boolean implies(Object other) {
 
-	    if (other instanceof PreferencesEntry) {
-		PreferencesEntry temp = (PreferencesEntry) other;
-		return (equals(temp) ||
-			p.getName().equals(temp.p.getName()) &&
-			oid == null);
-	    } else {
-		return false;
-	    }
-	}
+            if (other instanceof PreferencesEntry) {
+                PreferencesEntry temp = (PreferencesEntry) other;
+                return (equals(temp) ||
+                        p.getName().equals(temp.p.getName()) &&
+                        oid == null);
+            } else {
+                return false;
+            }
+        }
 
-	Provider getProvider() {
-	    return p;
-	}
+        Provider getProvider() {
+            return p;
+        }
 
-	Oid getOid() {
-	    return oid;
-	}
+        Oid getOid() {
+            return oid;
+        }
 
-	/**
-	 * Determines if this entry is applicable to the desired
-	 * mechanism. The entry is applicable to the desired mech if
-	 * it contains the same oid or if it contains a null oid
-	 * indicating that it is applicable to all mechs.
-	 * @param mechOid the desired mechanism
-	 * @return true if the provider in this entry should be
-	 * queried for this mechanism.
-	 */
-	boolean impliesMechanism(Oid oid) {
-	    return (this.oid == null || this.oid.equals(oid));
-	}
+        /**
+         * Determines if this entry is applicable to the desired
+         * mechanism. The entry is applicable to the desired mech if
+         * it contains the same oid or if it contains a null oid
+         * indicating that it is applicable to all mechs.
+         * @param mechOid the desired mechanism
+         * @return true if the provider in this entry should be
+         * queried for this mechanism.
+         */
+        boolean impliesMechanism(Oid oid) {
+            return (this.oid == null || this.oid.equals(oid));
+        }
 
-	// For debugging
-	public String toString() {
-	    StringBuffer buf = new StringBuffer("<");
-	    buf.append(p.getName());
-	    buf.append(", ");
-	    buf.append(oid);
-	    buf.append(">");
-	    return buf.toString();
-	}
+        // For debugging
+        public String toString() {
+            StringBuffer buf = new StringBuffer("<");
+            buf.append(p.getName());
+            buf.append(", ");
+            buf.append(oid);
+            buf.append(">");
+            return buf.toString();
+        }
     }
 }
-

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,4 +30,3 @@ interface Ping extends Remote {
     public void ping() throws RemoteException;
     public void receiveAndPing(Ping p) throws RemoteException;
 }
-

@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * <p>
- * 
+ *
  * @author Dr. Harold Carr
  * </p>
  */
@@ -47,9 +47,9 @@ public interface Decoder {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * </p><p>
- * 
+ *
  * @param messageInfo ...
  * </p>
  */
@@ -58,19 +58,12 @@ public interface Decoder {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * </p><p>
- * 
+ *
  * @param messageInfo ...
  * </p>
  */
     public void receiveAndDecode(MessageInfo messageInfo);
 
 } // end Decoder
-
-
-
-
-
-
-

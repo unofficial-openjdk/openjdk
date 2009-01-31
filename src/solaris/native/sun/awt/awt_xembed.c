@@ -63,7 +63,7 @@
 #define MTRACEP7(format, p1, p2, p3, p4, p5, p6, p7)
 #endif
 
-#ifdef DOTRACE    
+#ifdef DOTRACE
 static FILE* myerr;
 #endif
 
@@ -77,10 +77,10 @@ const char * xembed_strs[] = {
     "EMBEDDED_NOTIFY",
     "WINDOW_ACTIVATE",
     "WINDOW_DEACTIVATE",
-    "REQUEST_FOCUS", 
-    "FOCUS_IN", 
-    "FOCUS_OUT", 
-    "FOCUS_NEXT", 
+    "REQUEST_FOCUS",
+    "FOCUS_IN",
+    "FOCUS_OUT",
+    "FOCUS_NEXT",
     "FOCUS_PREV" ,
     "GRAB_KEY",
     "UNGRAB_KEY",
@@ -91,7 +91,7 @@ const char * xembed_strs[] = {
     "ACTIVATE_ACCELERATOR"
 };
 
-const char * 
+const char *
 msg_to_str(int msg) {
     if (msg >= 0 && msg <= XEMBED_LAST_MSG) {
         return xembed_strs[msg];
@@ -142,7 +142,7 @@ getDataByFrame(struct FrameData* wdata) {
     return NULL;
 }
 
-static pxembed_data 
+static pxembed_data
 addData(Window client) {
     xembed_data * data = malloc(sizeof(xembed_data));
     memset(data, 0, sizeof(xembed_data));
@@ -152,28 +152,28 @@ addData(Window client) {
     return data;
 }
 
-static void 
+static void
 removeData(Window client) {
     pxembed_data * temp = &xembed_list;
     while (*temp != NULL) {
         if ((*temp)->client == client) {
-            xembed_data * data = *temp;            
+            xembed_data * data = *temp;
             *temp = (*temp)->next;
             free(data);
             return;
         }
         temp = &(*temp)->next;
-    }    
+    }
 }
 
 static Atom XA_XEmbedInfo;
 static Atom XA_XEmbed;
 
-void 
+void
 init_xembed() {
     XA_XEmbedInfo = XInternAtom(awt_display, "_XEMBED_INFO", False);
     XA_XEmbed = XInternAtom(awt_display, "_XEMBED", False);
-#ifdef DOTRACE    
+#ifdef DOTRACE
     myerr = fopen("xembedclient.log","w");
 #endif
 }
@@ -184,15 +184,15 @@ getCurrentServerTime() {
 }
 
 
-void 
-sendMessageHelper(Window window, int message, long detail, 
-                              long data1, long data2) 
+void
+sendMessageHelper(Window window, int message, long detail,
+                              long data1, long data2)
 {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     XEvent ev;
     XClientMessageEvent * req = (XClientMessageEvent*)&ev;
     memset(&ev, 0, sizeof(ev));
-    
+
     req->type = ClientMessage;
     req->window = window;
     req->message_type = XA_XEmbed;
@@ -207,13 +207,13 @@ sendMessageHelper(Window window, int message, long detail,
     AWT_UNLOCK();
 }
 
-void 
+void
 sendMessage(Window window, int message) {
     sendMessageHelper(window, message, 0, 0, 0);
 }
 
 
-static Window 
+static Window
 getParent(Window window) {
     Window root, parent = None, *children = NULL;
     unsigned int count;
@@ -224,13 +224,13 @@ getParent(Window window) {
     return parent;
 }
 
-static Window 
+static Window
 getEmbedder(Window client) {
     return getParent(client);
 }
 
 
-static void 
+static void
 handleFocusIn(struct FrameData* wdata, int detail) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     struct WidgetInfo* winfo;
@@ -270,30 +270,30 @@ genWindowFocus(struct FrameData *wdata, Boolean gain) {
 
 extern Boolean skipNextFocusIn;
 
-static void 
+static void
 callNotifyStarted(JNIEnv* env, jobject peer) {
-    DECLARE_VOID_JAVA_METHOD(notifyStartedMID, MEmbeddedFramePeerClass, 
+    DECLARE_VOID_JAVA_METHOD(notifyStartedMID, MEmbeddedFramePeerClass,
                              "notifyStarted", "()V");
 
     (*env)->CallVoidMethod(env, peer, notifyStartedMID);
 }
 
-void 
-xembed_eventHandler(XEvent *event) 
+void
+xembed_eventHandler(XEvent *event)
 {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     struct FrameData *wdata;
     xembed_data * data;
-    
+
     data = getData(event->xany.window);
     if (data == NULL) {
         MTRACEP1("No XEMBED client registered for this window %x\n", event->xany.window);
         if (event->xany.type == ClientMessage) {
             MTRACEP7("Unprocessed handleClientMessage: type=%d 0=%ld 1=%ld(%s) 2=%ld 3=%ld 4=%ld\n",
-                     event->xclient.message_type, event->xclient.data.l[0], 
+                     event->xclient.message_type, event->xclient.data.l[0],
                      event->xclient.data.l[1], msg_to_str(event->xclient.data.l[1]),
-                     event->xclient.data.l[2], 
-                     event->xclient.data.l[3], event->xclient.data.l[4]);    
+                     event->xclient.data.l[2],
+                     event->xclient.data.l[3], event->xclient.data.l[4]);
         }
         return;
     }
@@ -302,9 +302,9 @@ xembed_eventHandler(XEvent *event)
 
     if (event->xany.type == ClientMessage) {
         MTRACEP6("handleClientMessage: type=%d 0=%ld 1=%ld 2=%ld 3=%ld 4=%ld\n",
-                 event->xclient.message_type, event->xclient.data.l[0], 
-                 event->xclient.data.l[1], event->xclient.data.l[2], 
-                 event->xclient.data.l[3], event->xclient.data.l[4]);    
+                 event->xclient.message_type, event->xclient.data.l[0],
+                 event->xclient.data.l[1], event->xclient.data.l[2],
+                 event->xclient.data.l[3], event->xclient.data.l[4]);
         // Probably a message from embedder
         if (event->xclient.message_type == XA_XEmbed) {
             // XEmbed message, data[1] contains message
@@ -316,11 +316,11 @@ xembed_eventHandler(XEvent *event)
                   // If Frame has not been reparented already we should "reparent"
                   // it manually
                   if (!(wdata->reparented)) {
-                      wdata->reparented = True;                      
+                      wdata->reparented = True;
                       // in XAWT we also update WM_NORMAL_HINTS here.
                   }
                   {
-                      struct WidgetInfo* winfo = 
+                      struct WidgetInfo* winfo =
                           findWidgetInfo(wdata->winData.comp.widget);
                       JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_4);
                       if (winfo != NULL) {
@@ -343,7 +343,7 @@ xembed_eventHandler(XEvent *event)
                   handleFocusIn(wdata, (int)(event->xclient.data.l[2]));
                   genWindowFocus(wdata, True);
                   break;
-              case XEMBED_FOCUS_OUT:                  
+              case XEMBED_FOCUS_OUT:
                   MTRACE("FOCUS OUT\n");
                   genWindowFocus(wdata, False);
                   break;
@@ -359,13 +359,13 @@ notify_ready(Window client) {
     sendMessage(getEmbedder(client), _SUN_XEMBED_START);
 }
 
-void 
+void
 install_xembed(Widget client_widget, struct FrameData* wdata) {
     JNIEnv      *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     xembed_info info = {XEMBED_VERSION, XEMBED_MAPPED};
     Window client = XtWindow(client_widget);
     xembed_data * data;
-    
+
     AWT_LOCK();
     data = addData(client);
     data->wdata = wdata;
@@ -374,9 +374,9 @@ install_xembed(Widget client_widget, struct FrameData* wdata) {
     XSelectInput(awt_display, client, StructureNotifyMask);
 
     // Install XEMBED_INFO information
-    XChangeProperty(awt_display, client, XA_XEmbedInfo, 
-                    XA_XEmbedInfo, 32, PropModeReplace, 
-                    (unsigned char*)&info, 2);        
+    XChangeProperty(awt_display, client, XA_XEmbedInfo,
+                    XA_XEmbedInfo, 32, PropModeReplace,
+                    (unsigned char*)&info, 2);
     MTRACE("Installing xembed\n");
 
     notify_ready(client);
@@ -384,16 +384,16 @@ install_xembed(Widget client_widget, struct FrameData* wdata) {
     AWT_UNLOCK();
 }
 
-void 
+void
 deinstall_xembed(struct FrameData* wdata) {
     xembed_data * data = getDataByFrame(wdata);
 
-    if (data != NULL) {        
+    if (data != NULL) {
         removeData(data->client);
     }
 }
 
-void 
+void
 requestXEmbedFocus(struct FrameData * wdata) {
     xembed_data * data = getDataByFrame(wdata);
 
@@ -404,26 +404,26 @@ requestXEmbedFocus(struct FrameData * wdata) {
     }
 }
 
-Boolean 
+Boolean
 isXEmbedActive(struct FrameData * wdata) {
     xembed_data * data = getDataByFrame(wdata);
     return (data != NULL && data->active);
 }
 
-Boolean 
+Boolean
 isXEmbedActiveByWindow(Window client) {
     xembed_data * data = getData(client);
     return (data != NULL && data->active);
 }
 
 
-Boolean 
+Boolean
 isXEmbedApplicationActive(struct FrameData * wdata) {
     xembed_data * data = getDataByFrame(wdata);
     return (data != NULL && data->applicationActive);
 }
 
-void 
+void
 xembed_traverse_out(struct FrameData * wdata, jboolean direction) {
     xembed_data * data = getDataByFrame(wdata);
     sendMessage(data->embedder, (direction == JNI_TRUE)?XEMBED_FOCUS_NEXT:XEMBED_FOCUS_PREV);

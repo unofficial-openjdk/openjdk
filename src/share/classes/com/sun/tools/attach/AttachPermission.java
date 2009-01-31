@@ -28,11 +28,11 @@ package com.sun.tools.attach;
 /**
  * When a {@link java.lang.SecurityManager SecurityManager} set, this
  * is the permission which will be checked when code invokes {@link
- * VirtualMachine#attach VirtalMachine.attach} to attach to a target virtual 
+ * VirtualMachine#attach VirtalMachine.attach} to attach to a target virtual
  * machine.
  * This permission is also checked when an {@link
  * com.sun.tools.attach.spi.AttachProvider AttachProvider} is created. </p>
- * 
+ *
  * <p> An <code>AttachPermission</code> object contains a name (also referred
  * to as a "target name") but no actions list; you either have the
  * named permission or you don't.
@@ -62,14 +62,14 @@ package com.sun.tools.attach;
  *   <td>createAttachProvider</td>
  *   <td>Ability to create an <code>AttachProvider</code> instance.
  *   </td>
- *   <td>This allows an attacker to create an AttachProvider which can 
+ *   <td>This allows an attacker to create an AttachProvider which can
  *       potentially be used to attach to other Java virtual machines.
  *   </td>
  * </tr>
 
  *
  * </table>
- 
+
  * <p>
  * Programmers do not normally create AttachPermission objects directly.
  * Instead they are created by the security policy code based on reading
@@ -95,9 +95,9 @@ public final class AttachPermission extends java.security.BasicPermission {
      */
     public AttachPermission(String name) {
         super(name);
- 	if (!name.equals("attachVirtualMachine") && !name.equals("createAttachProvider")) {
-	    throw new IllegalArgumentException("name: " + name);
-	}
+        if (!name.equals("attachVirtualMachine") && !name.equals("createAttachProvider")) {
+            throw new IllegalArgumentException("name: " + name);
+        }
     }
 
     /**
@@ -117,8 +117,8 @@ public final class AttachPermission extends java.security.BasicPermission {
         if (!name.equals("attachVirtualMachine") && !name.equals("createAttachProvider")) {
             throw new IllegalArgumentException("name: " + name);
         }
-	if (actions != null && actions.length() > 0) {
-	    throw new IllegalArgumentException("actions: " + actions);
-	}
+        if (actions != null && actions.length() > 0) {
+            throw new IllegalArgumentException("actions: " + actions);
+        }
     }
 }

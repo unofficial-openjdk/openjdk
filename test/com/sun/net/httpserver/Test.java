@@ -25,8 +25,8 @@ import com.sun.net.httpserver.*;
 
 public class Test {
     static void delay () {
-	try {
-	    Thread.sleep (1000);
-	} catch (Exception e) {}
+        try {
+            Thread.sleep (1000);
+        } catch (Exception e) {}
     }
 }

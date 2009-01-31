@@ -39,7 +39,7 @@ public class ToLowerCase {
         Locale lt = new Locale("lt"); // Lithanian
         Locale az = new Locale("az"); // Azeri
 
-	// Greek Sigma final/non-final tests
+        // Greek Sigma final/non-final tests
         test("\u03A3", Locale.US, "\u03C3");
         test("LAST\u03A3", Locale.US, "last\u03C2");
         test("MID\u03A3DLE", Locale.US, "mid\u03C3dle");
@@ -47,9 +47,9 @@ public class ToLowerCase {
         test("WORD1 LAST\u03A3 WORD3", Locale.US, "word1 last\u03C2 word3");
         test("WORD1 MID\u03A3DLE WORD3", Locale.US, "word1 mid\u03C3dle word3");
         test("\u0399\u0395\u03a3\u03a5\u03a3 \u03a7\u03a1\u0399\u03a3\u03a4\u039f\u03a3", Locale.US,
-	     "\u03b9\u03b5\u03c3\u03c5\u03c2 \u03c7\u03c1\u03b9\u03c3\u03c4\u03bf\u03c2"); // "IESUS XRISTOS"
+             "\u03b9\u03b5\u03c3\u03c5\u03c2 \u03c7\u03c1\u03b9\u03c3\u03c4\u03bf\u03c2"); // "IESUS XRISTOS"
 
-	// Explicit dot above for I's and J's whenever there are more accents above (Lithanian)
+        // Explicit dot above for I's and J's whenever there are more accents above (Lithanian)
         test("I", lt, "i");
         test("I\u0300", lt, "i\u0307\u0300"); // "I" followed by COMBINING GRAVE ACCENT (cc==230)
         test("I\u0316", lt, "i\u0316"); // "I" followed by COMBINING GRAVE ACCENT BELOW (cc!=230)
@@ -69,18 +69,18 @@ public class ToLowerCase {
         test("\u00CD", Locale.US, "\u00ED");
         test("\u0128", Locale.US, "\u0129");
 
-	// I-dot tests (Turkish and Azeri)
+        // I-dot tests (Turkish and Azeri)
         test("\u0130", turkish, "i");
         test("\u0130", az, "i");
         test("\u0130", Locale.US, "i");
 
-	// Remove dot_above in the sequence I + dot_above (Turkish and Azeri)
+        // Remove dot_above in the sequence I + dot_above (Turkish and Azeri)
         test("I\u0307", turkish, "i");
         test("I\u0307", az, "i");
         test("J\u0307", turkish, "j\u0307");
         test("J\u0307", az, "j\u0307");
-	
-	// Unless an I is before a dot_above, it turns into a dotless i (Turkish and Azeri)
+
+        // Unless an I is before a dot_above, it turns into a dotless i (Turkish and Azeri)
         test("I", turkish, "\u0131");
         test("I", az, "\u0131");
         test("I", Locale.US, "i");
@@ -88,7 +88,7 @@ public class ToLowerCase {
         test("IABC", az, "\u0131abc");
         test("IABC", Locale.US, "iabc");
 
-	// Supplementary character tests
+        // Supplementary character tests
         //
         // U+10400 ("\uD801\uDC00"): DESERET CAPITAL LETTER LONG I
         // U+10401 ("\uD801\uDC01"): DESERET CAPITAL LETTER LONG E

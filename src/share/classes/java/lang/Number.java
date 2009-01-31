@@ -31,14 +31,13 @@ package java.lang;
  * <code>Byte</code>, <code>Double</code>, <code>Float</code>,
  * <code>Integer</code>, <code>Long</code>, and <code>Short</code>.
  * <p>
- * Subclasses of <code>Number</code> must provide methods to convert 
+ * Subclasses of <code>Number</code> must provide methods to convert
  * the represented numeric value to <code>byte</code>, <code>double</code>,
  * <code>float</code>, <code>int</code>, <code>long</code>, and
  * <code>short</code>.
  *
- * @author	Lee Boynton
- * @author	Arthur van Hoff
- * @version %I%, %G%
+ * @author      Lee Boynton
+ * @author      Arthur van Hoff
  * @see     java.lang.Byte
  * @see     java.lang.Double
  * @see     java.lang.Float
@@ -93,7 +92,7 @@ public abstract class Number implements java.io.Serializable {
      * @since   JDK1.1
      */
     public byte byteValue() {
-	return (byte)intValue();
+        return (byte)intValue();
     }
 
     /**
@@ -105,7 +104,7 @@ public abstract class Number implements java.io.Serializable {
      * @since   JDK1.1
      */
     public short shortValue() {
-	return (short)intValue();
+        return (short)intValue();
     }
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */

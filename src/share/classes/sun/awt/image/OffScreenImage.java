@@ -61,7 +61,7 @@ public class OffScreenImage extends BufferedImage {
     {
         super(cm, raster, isRasterPremultiplied, null);
         this.c = c;
-	initSurface(raster.getWidth(), raster.getHeight());
+        initSurface(raster.getWidth(), raster.getHeight());
     }
 
     public Graphics getGraphics() {
@@ -69,7 +69,7 @@ public class OffScreenImage extends BufferedImage {
     }
 
     public Graphics2D createGraphics() {
-	if (c == null) {
+        if (c == null) {
             GraphicsEnvironment env =
                 GraphicsEnvironment.getLocalGraphicsEnvironment();
             return env.createGraphics(this);
@@ -87,10 +87,10 @@ public class OffScreenImage extends BufferedImage {
 
         Font font = c.getFont();
         if (font == null) {
-	    if (defaultFont == null) {
-		defaultFont = new Font("Dialog", Font.PLAIN, 12);
-	    }
-	    font = defaultFont;
+            if (defaultFont == null) {
+                defaultFont = new Font("Dialog", Font.PLAIN, 12);
+            }
+            font = defaultFont;
         }
 
         return new SunGraphics2D(SurfaceData.getPrimarySurfaceData(this),
@@ -98,18 +98,18 @@ public class OffScreenImage extends BufferedImage {
     }
 
     private void initSurface(int width, int height) {
-	Graphics2D g2 = createGraphics();
-	try {
-	    g2.clearRect(0, 0, width, height);
-	} finally {
-	    g2.dispose();
-	}
+        Graphics2D g2 = createGraphics();
+        try {
+            g2.clearRect(0, 0, width, height);
+        } finally {
+            g2.dispose();
+        }
     }
 
     public ImageProducer getSource() {
-	if (osis == null) {
-	    osis = new OffScreenImageSource(this);
-	}
+        if (osis == null) {
+            osis = new OffScreenImageSource(this);
+        }
         return osis;
     }
 }

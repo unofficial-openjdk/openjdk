@@ -42,7 +42,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's ScrollPaneUI.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthScrollPaneUI extends BasicScrollPaneUI implements
@@ -50,7 +49,7 @@ class SynthScrollPaneUI extends BasicScrollPaneUI implements
     private SynthStyle style;
 
     public static ComponentUI createUI(JComponent x) {
-	return new SynthScrollPaneUI();
+        return new SynthScrollPaneUI();
     }
 
     public void update(Graphics g, JComponent c) {
@@ -71,11 +70,11 @@ class SynthScrollPaneUI extends BasicScrollPaneUI implements
     }
 
     protected void paint(SynthContext context, Graphics g) {
-	Border vpBorder = scrollpane.getViewportBorder();
-	if (vpBorder != null) {
-	    Rectangle r = scrollpane.getViewportBorderBounds();
-	    vpBorder.paintBorder(scrollpane, g, r.x, r.y, r.width, r.height);
-	}
+        Border vpBorder = scrollpane.getViewportBorder();
+        if (vpBorder != null) {
+            Rectangle r = scrollpane.getViewportBorderBounds();
+            vpBorder.paintBorder(scrollpane, g, r.x, r.y, r.width, r.height);
+        }
     }
 
 
@@ -183,7 +182,7 @@ class SynthScrollPaneUI extends BasicScrollPaneUI implements
             context.dispose();
         }
 
-        public Insets getBorderInsets(Component c) { 
+        public Insets getBorderInsets(Component c) {
             return getBorderInsets(c, null);
         }
 

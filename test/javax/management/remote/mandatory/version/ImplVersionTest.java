@@ -69,7 +69,7 @@ public class ImplVersionTest {
             // Get boot class path
             String bootClassPath = System.getProperty("sun.boot.class.path");
 
-            // Build command string 
+            // Build command string
             String command =
                 javaHome + File.separator + "bin" + File.separator + "java " +
                 " -Xbootclasspath/p:" + bootClassPath +
@@ -79,13 +79,13 @@ public class ImplVersionTest {
                 " ImplVersionCommand " + System.getProperty("java.runtime.version");
             System.out.println("ImplVersionCommand Exec Command = " + command);
 
-            // Exec command  
+            // Exec command
             Process proc = Runtime.getRuntime().exec(command);
             new ImplVersionReader(proc, proc.getInputStream()).start();
             new ImplVersionReader(proc, proc.getErrorStream()).start();
             int exitValue = proc.waitFor();
 
-            System.out.println("ImplVersionCommand Exit Value = " + 
+            System.out.println("ImplVersionCommand Exit Value = " +
                                exitValue);
             if (exitValue != 0) {
                 System.out.println("TEST FAILED: Incorrect exit value " +

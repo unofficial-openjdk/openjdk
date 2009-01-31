@@ -78,7 +78,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      * property at the moment that the socket was created.
      */
     private String lineSeparator =
-	(String) java.security.AccessController.doPrivileged(
+        (String) java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("line.separator"));
 
     /**
@@ -89,22 +89,22 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public HttpSendSocket(String host, int port, URL url) throws IOException
     {
-	super((SocketImpl)null);	// no underlying SocketImpl for this object
+        super((SocketImpl)null);        // no underlying SocketImpl for this object
 
-	if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-		"host = " + host + ", port = " + port + ", url = " + url);
-	}
+        if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
+            RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                "host = " + host + ", port = " + port + ", url = " + url);
+        }
 
-	this.host = host;
-	this.port = port;
-	this.url = url;
+        this.host = host;
+        this.port = port;
+        this.url = url;
 
-	inNotifier = new HttpSendInputStream(null, this);
-	outNotifier = new HttpSendOutputStream(writeNotify(), this);
+        inNotifier = new HttpSendInputStream(null, this);
+        outNotifier = new HttpSendOutputStream(writeNotify(), this);
     }
 
-    /** 
+    /**
      * Create a stream socket and connect it to the specified port on
      * the specified host.
      * @param host the host
@@ -112,10 +112,10 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public HttpSendSocket(String host, int port) throws IOException
     {
-	this(host, port, new URL("http", host, port, "/"));
+        this(host, port, new URL("http", host, port, "/"));
     }
 
-    /** 
+    /**
      * Create a stream socket and connect it to the specified address on
      * the specified port.
      * @param address the address
@@ -123,7 +123,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public HttpSendSocket(InetAddress address, int port) throws IOException
     {
-	this(address.getHostName(), port);
+        this(address.getHostName(), port);
     }
 
     /**
@@ -131,7 +131,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public boolean isReusable()
     {
-	return false;
+        return false;
     }
 
     /**
@@ -140,20 +140,20 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public synchronized OutputStream writeNotify() throws IOException
     {
-	if (conn != null) {
-	    throw new IOException("attempt to write on HttpSendSocket after " +
-	                          "request has been sent");
-	}
+        if (conn != null) {
+            throw new IOException("attempt to write on HttpSendSocket after " +
+                                  "request has been sent");
+        }
 
-	conn = url.openConnection();
-	conn.setDoOutput(true);
-	conn.setUseCaches(false);
-	conn.setRequestProperty("Content-type", "application/octet-stream");
+        conn = url.openConnection();
+        conn.setDoOutput(true);
+        conn.setUseCaches(false);
+        conn.setRequestProperty("Content-type", "application/octet-stream");
 
-	inNotifier.deactivate();
-	in = null;
+        inNotifier.deactivate();
+        in = null;
 
-	return out = conn.getOutputStream();
+        return out = conn.getOutputStream();
     }
 
     /**
@@ -161,61 +161,61 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public synchronized InputStream readNotify() throws IOException
     {
-	RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-	    "sending request and activating input stream");
+        RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+            "sending request and activating input stream");
 
-	outNotifier.deactivate();
-	out.close();
-	out = null;
+        outNotifier.deactivate();
+        out.close();
+        out = null;
 
-	try {
-	    in = conn.getInputStream();
-	} catch (IOException e) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
-		"failed to get input stream, exception: ", e);
+        try {
+            in = conn.getInputStream();
+        } catch (IOException e) {
+            RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
+                "failed to get input stream, exception: ", e);
 
-	    throw new IOException("HTTP request failed");
-	}
+            throw new IOException("HTTP request failed");
+        }
 
-	/*
-	 * If an HTTP error response is returned, sometimes an IOException
-	 * is thrown, which is handled above, and other times it isn't, and
-	 * the error response body will be available for reading.
-	 * As a safety net to catch any such unexpected HTTP behavior, we
-	 * verify that the content type of the response is what the
-	 * HttpOutputStream generates: "application/octet-stream".
-	 * (Servers' error responses will generally be "text/html".)
-	 * Any error response body is printed to the log.
-	 */
-	String contentType = conn.getContentType();
-	if (contentType == null ||
-	    !conn.getContentType().equals("application/octet-stream"))
+        /*
+         * If an HTTP error response is returned, sometimes an IOException
+         * is thrown, which is handled above, and other times it isn't, and
+         * the error response body will be available for reading.
+         * As a safety net to catch any such unexpected HTTP behavior, we
+         * verify that the content type of the response is what the
+         * HttpOutputStream generates: "application/octet-stream".
+         * (Servers' error responses will generally be "text/html".)
+         * Any error response body is printed to the log.
+         */
+        String contentType = conn.getContentType();
+        if (contentType == null ||
+            !conn.getContentType().equals("application/octet-stream"))
         {
-	    if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.BRIEF)) {
-		String message;
-		if (contentType == null) {
-		    message = "missing content type in response" +
-			lineSeparator;
-		} else {
-		    message = "invalid content type in response: " +
-			contentType + lineSeparator;
-		}
+            if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.BRIEF)) {
+                String message;
+                if (contentType == null) {
+                    message = "missing content type in response" +
+                        lineSeparator;
+                } else {
+                    message = "invalid content type in response: " +
+                        contentType + lineSeparator;
+                }
 
-		message += "HttpSendSocket.readNotify: response body: ";
-		try {
-		    DataInputStream din = new DataInputStream(in);
-		    String line;
-		    while ((line = din.readLine()) != null)
-			message += line + lineSeparator;
-		} catch (IOException e) {
-		}
-		RMIMasterSocketFactory.proxyLog.log(Log.BRIEF, message);
-	    }
+                message += "HttpSendSocket.readNotify: response body: ";
+                try {
+                    DataInputStream din = new DataInputStream(in);
+                    String line;
+                    while ((line = din.readLine()) != null)
+                        message += line + lineSeparator;
+                } catch (IOException e) {
+                }
+                RMIMasterSocketFactory.proxyLog.log(Log.BRIEF, message);
+            }
 
-	    throw new IOException("HTTP request failed");
-	}
+            throw new IOException("HTTP request failed");
+        }
 
-	return in;
+        return in;
     }
 
     /**
@@ -223,11 +223,11 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public InetAddress getInetAddress()
     {
-	try {
-	    return InetAddress.getByName(host);
-	} catch (UnknownHostException e) {
-	    return null;	// null if couldn't resolve destination host
-	}
+        try {
+            return InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            return null;        // null if couldn't resolve destination host
+        }
     }
 
     /**
@@ -235,11 +235,11 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public InetAddress getLocalAddress()
     {
-	try {
-	    return InetAddress.getLocalHost();
-	} catch (UnknownHostException e) {
-	    return null;	// null if couldn't determine local host
-	}
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            return null;        // null if couldn't determine local host
+        }
     }
 
     /**
@@ -247,7 +247,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public int getPort()
     {
-	return port;
+        return port;
     }
 
     /**
@@ -255,7 +255,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public int getLocalPort()
     {
-	return -1;	// request not applicable to this socket type
+        return -1;      // request not applicable to this socket type
     }
 
     /**
@@ -263,7 +263,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public InputStream getInputStream() throws IOException
     {
-	return inNotifier;
+        return inNotifier;
     }
 
     /**
@@ -271,7 +271,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public OutputStream getOutputStream() throws IOException
     {
-	return outNotifier;
+        return outNotifier;
     }
 
     /**
@@ -287,11 +287,11 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public boolean getTcpNoDelay() throws SocketException
     {
-	return false;	// imply option is disabled
+        return false;   // imply option is disabled
     }
 
     /**
-     * Enable/disable SO_LINGER with the specified linger time.  
+     * Enable/disable SO_LINGER with the specified linger time.
      * This operation has no effect for an HttpSendSocket.
      */
     public void setSoLinger(boolean on, int val) throws SocketException
@@ -303,7 +303,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public int getSoLinger() throws SocketException
     {
-	return -1;	// imply option is disabled
+        return -1;      // imply option is disabled
     }
 
     /**
@@ -319,7 +319,7 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public synchronized int getSoTimeout() throws SocketException
     {
-	return 0;	// imply option is disabled
+        return 0;       // imply option is disabled
     }
 
     /**
@@ -327,8 +327,8 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public synchronized void close() throws IOException
     {
-	if (out != null) // push out transmission if not done
-	    out.close();
+        if (out != null) // push out transmission if not done
+            out.close();
     }
 
     /**
@@ -336,8 +336,8 @@ class HttpSendSocket extends Socket implements RMISocketInfo {
      */
     public String toString()
     {
-	return "HttpSendSocket[host=" + host +
-	       ",port=" + port +
-	       ",url=" + url + "]";
+        return "HttpSendSocket[host=" + host +
+               ",port=" + port +
+               ",url=" + url + "]";
     }
 }

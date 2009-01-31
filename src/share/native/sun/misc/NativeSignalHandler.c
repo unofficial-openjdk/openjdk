@@ -38,4 +38,3 @@ Java_sun_misc_NativeSignalHandler_handle0(JNIEnv *env, jclass cls, jint sig, jlo
     /* We've lost the siginfo and context */
     (*(sig_handler_t)jlong_to_ptr(f))(sig, NULL, NULL);
 }
-

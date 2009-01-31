@@ -91,7 +91,6 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
- * @version %I%, %G%
  * @see Collection
  * @see Set
  * @see ArrayList

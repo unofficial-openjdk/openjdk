@@ -53,10 +53,10 @@ extern jboolean IsMultiFont(JNIEnv *env, jobject obj);
 class AwtFont : public AwtObject {
 public:
 
-    /* int[] width field for sun.awt.windows.WFontDescriptor */    
+    /* int[] width field for sun.awt.windows.WFontDescriptor */
     static jfieldID widthsID;
 
-    /* int fields for sun.awt.windows.WFontDescriptor */    
+    /* int fields for sun.awt.windows.WFontDescriptor */
     static jfieldID ascentID;
     static jfieldID descentID;
     static jfieldID leadingID;
@@ -118,19 +118,19 @@ public:
 
     virtual void Dispose();
 
-    /* 
-     * Access methods 
+    /*
+     * Access methods
      */
     INLINE int GetHFontNum()     { return m_hFontNum; }
-    INLINE HFONT GetHFont(int i) { 
-        DASSERT(m_hFont[i] != NULL); 
-        return m_hFont[i]; 
+    INLINE HFONT GetHFont(int i) {
+        DASSERT(m_hFont[i] != NULL);
+        return m_hFont[i];
     }
 
     /* Used to keep English version unchanged as much as possiple. */
-    INLINE HFONT GetHFont() { 
-        DASSERT(m_hFont[0] != NULL); 
-        return m_hFont[0]; 
+    INLINE HFONT GetHFont() {
+        DASSERT(m_hFont[0] != NULL);
+        return m_hFont[0];
     }
     INLINE int GetInputHFontIndex() { return m_textInput; }
 
@@ -139,25 +139,25 @@ public:
     INLINE int GetOverhang()         { return m_overhang; }
 
     /*
-     * Font methods 
+     * Font methods
      */
-    
+
     /*
      * Returns the AwtFont object associated with the pFontJavaObject.
-     * If none exists, create one.  
+     * If none exists, create one.
      */
     static AwtFont* GetFont(JNIEnv *env, jobject font,
-			    jint angle=0, jfloat awScale=1.0f);
-    
+                            jint angle=0, jfloat awScale=1.0f);
+
     /*
      * Creates the specified font.  name names the font.  style is a bit
      * vector that describes the style of the font.  height is the point
      * size of the font.
      */
     static AwtFont* Create(JNIEnv *env, jobject font,
-			   jint angle = 0, jfloat awScale=1.0f);
+                           jint angle = 0, jfloat awScale=1.0f);
     static HFONT CreateHFont(WCHAR* name, int style, int height,
-			     int angle = 0, float awScale=1.0f);
+                             int angle = 0, float awScale=1.0f);
 
     static void Cleanup();
 
@@ -168,7 +168,7 @@ public:
     /*
      * Loads the metrics of the associated font.  See Font.GetFont for
      * purpose of pWS.  (Also, client should provide Font java object
-     * instead of getting it from the FontMetrics instance variable.)  
+     * instead of getting it from the FontMetrics instance variable.)
      */
     static void LoadMetrics(JNIEnv *env, jobject fontMetrics);
 
@@ -177,50 +177,50 @@ public:
 
     /*
      * Sets the ascent of the font.  This member should be called if
-     * font->m_nAscent < 0.  
+     * font->m_nAscent < 0.
      */
     static void SetupAscent(AwtFont* font);
 
     /*
      * Determines the average dimension of the character in the
      * specified font 'font' and multiplies it by the specified number
-     * of rows and columns.  'font' can be a temporary object.  
+     * of rows and columns.  'font' can be a temporary object.
      */
     static SIZE TextSize(AwtFont* font, int columns, int rows);
 
     /*
      * If 'font' is NULL, the SYSTEM_FONT is used to compute the size.
-     * 'font' can be a temporary object.  
+     * 'font' can be a temporary object.
      */
-    static int getFontDescriptorNumber(JNIEnv *env, jobject font, 
+    static int getFontDescriptorNumber(JNIEnv *env, jobject font,
                                        jobject fontDescriptor);
 
     /*
      * 'font' is of type java.awt.Font.
      */
     static SIZE DrawStringSize_sub(jstring str, HDC hDC, jobject font,
-				   long x, long y, BOOL draw,
-				   UINT codePage = 0);
+                                   long x, long y, BOOL draw,
+                                   UINT codePage = 0);
 
-    INLINE static SIZE drawMFStringSize(HDC hDC, jobject font, 
-					jstring str, long x, long y,
-					UINT codePage = 0)
+    INLINE static SIZE drawMFStringSize(HDC hDC, jobject font,
+                                        jstring str, long x, long y,
+                                        UINT codePage = 0)
     {
         return DrawStringSize_sub(str, hDC, font, x, y, TRUE , codePage);
     }
 
 
     INLINE static SIZE getMFStringSize(HDC hDC, jobject font, jstring str,
-				       UINT codePage = 0)
+                                       UINT codePage = 0)
     {
-	return DrawStringSize_sub(str, hDC, font, 0, 0, FALSE, codePage);
+        return DrawStringSize_sub(str, hDC, font, 0, 0, FALSE, codePage);
     }
 
 
-    INLINE static long getMFStringWidth(HDC hDC, jobject font, 
-					    jstring str) {
+    INLINE static long getMFStringWidth(HDC hDC, jobject font,
+                                            jstring str) {
         return getMFStringSize(hDC, font, str).cx;
-    }    
+    }
 
     INLINE static void drawMFString(HDC hDC, jobject font, jstring str,
                                     long x, long y, UINT codePage = 0)
@@ -228,12 +228,12 @@ public:
         DrawStringSize_sub(str, hDC, font, x, y, TRUE, codePage);
     }
 
-    INLINE static jobjectArray GetComponentFonts(JNIEnv *env, 
-						     jobject font) {
+    INLINE static jobjectArray GetComponentFonts(JNIEnv *env,
+                                                     jobject font) {
       jobject platformFont = env->CallObjectMethod(font, AwtFont::peerMID);
-      jobjectArray result = 
-	  (jobjectArray)(env->GetObjectField(platformFont, 
-					     AwtFont::componentFontsID));
+      jobjectArray result =
+          (jobjectArray)(env->GetObjectField(platformFont,
+                                             AwtFont::componentFontsID));
       env->DeleteLocalRef(platformFont);
       return result;
     }
@@ -271,7 +271,7 @@ private:
         WCHAR*      name;
         HFONT       font;
         Item*       next;
-       	DWORD       refCount;   /*  The same HFONT can be associated with
+        DWORD       refCount;   /*  The same HFONT can be associated with
                                     multiple Java objects.*/
     };
 
@@ -286,11 +286,11 @@ public:
     LONG    IncRefCount(Item* item);
     LONG    DecRefCount(Item* item);
 
-  
+
     Item* m_head;
 };
 
 #define GET_FONT(target, OBJ) \
     ((jobject)env->CallObjectMethod(target, AwtComponent::getFontMID))
-       
+
 #endif /* AWT_FONT_H */

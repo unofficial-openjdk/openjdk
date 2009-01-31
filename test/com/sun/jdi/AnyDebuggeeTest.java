@@ -84,7 +84,7 @@ public class AnyDebuggeeTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         /*
          * If args contains @@xxxx, then that is the
          * name of the class we are to run.
@@ -100,7 +100,7 @@ public class AnyDebuggeeTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe;
@@ -108,14 +108,14 @@ public class AnyDebuggeeTest extends TestScaffold {
 
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
-                
+
         // Let debuggee run for awhile to get classes loaded
         resumeForMsecs(20000);
 
         List<ReferenceType> allClasses = vm().allClasses();
         System.out.println( allClasses.size() + " classes");
 
-        
+
         int size = 0;
         long start = System.currentTimeMillis();
         for(ReferenceType rt: allClasses) {
@@ -139,7 +139,7 @@ public class AnyDebuggeeTest extends TestScaffold {
         }
         end = System.currentTimeMillis();
         System.out.println(size + " subclasses took " + (end - start) + " ms");
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -151,4 +151,3 @@ public class AnyDebuggeeTest extends TestScaffold {
         }
     }
 }
-

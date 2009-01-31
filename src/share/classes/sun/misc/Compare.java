@@ -25,9 +25,8 @@
 
 /**
  * Compare: an interface to enable users to define the result of
- * 	    a comparison of two objects.
+ *          a comparison of two objects.
  *
- * @version %I%, %G%
  * @author Sunita Mani
  */
 

@@ -48,4 +48,3 @@ interface EventNotifier {
     void vmInterrupted();
     void receivedEvent(Event event);
 }
-

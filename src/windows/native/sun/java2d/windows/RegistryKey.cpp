@@ -43,7 +43,7 @@
  * then you need to remember to delete that object, else you will leave a
  * registry key open, which could cause various problems such as leaks
  * and synchronization.
- * 
+ *
  * One important item implemented in this class is the ability to force
  * a flush during a registry set operation.  This was implemented because
  * the primary usage for the registry at this time is in storing results
@@ -53,7 +53,7 @@
  * knowing whether our last settings into the registry were recorded before
  * the process died.
  */
- 
+
 #include <windows.h>
 #include <stdio.h>
 #include "Trace.h"
@@ -62,11 +62,11 @@
 
 /**
  * Constructs a registry key object.  permissions can be any of the
- * allowable values for keys, but are generally KEY_WRITE or 
+ * allowable values for keys, but are generally KEY_WRITE or
  * KEY_QUERY_VALUE.  If the key does not yet exist in the registry, it
  * will be created here.
  * Note that we use HKEY_CURRENT_USER as the registry hierarchy; this is
- * because we want any user (restricted or administrator) to be able to 
+ * because we want any user (restricted or administrator) to be able to
  * read and write these test results; storing the results in a more central
  * location (e.g., HKEY_LOCAL_MACHINE) would prevent usage by users without
  * permission to read and write in that registry hierarchy.
@@ -75,52 +75,52 @@ RegistryKey::RegistryKey(WCHAR *keyName, REGSAM permissions)
 {
     hKey = NULL; // default value
     if (disableRegistry) {
-	return;
+        return;
     }
     DWORD disposition;
     DWORD ret = RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, 0,
-			       REG_OPTION_NON_VOLATILE, permissions, 
-			       NULL, &hKey, &disposition);
+                               REG_OPTION_NON_VOLATILE, permissions,
+                               NULL, &hKey, &disposition);
     if (ret != ERROR_SUCCESS) {
-	PrintRegistryError(ret, "RegCreateKeyEx");
+        PrintRegistryError(ret, "RegCreateKeyEx");
     }
-}    
+}
 
 /**
  * Destruction of the registry key object; this closes the key if
  * if was opened.
  */
-RegistryKey::~RegistryKey() 
+RegistryKey::~RegistryKey()
 {
     if (hKey) {
-	RegCloseKey(hKey);
+        RegCloseKey(hKey);
     }
 }
 
-DWORD RegistryKey::EnumerateSubKeys(DWORD index, WCHAR *subKeyName, 
+DWORD RegistryKey::EnumerateSubKeys(DWORD index, WCHAR *subKeyName,
                                     DWORD *buffSize)
 {
     if (disableRegistry) {
-	// truncate the enumeration
-	return ERROR_NO_MORE_ITEMS;
+        // truncate the enumeration
+        return ERROR_NO_MORE_ITEMS;
     }
     FILETIME lastWriteTime;
     return RegEnumKeyEx(hKey, index, subKeyName, buffSize, NULL, NULL, NULL,
-			&lastWriteTime);
+                        &lastWriteTime);
 }
-   
+
 /**
  * Retrieves the value of the given parameter from the registry.
  * If no such value exists in the registry, it returns the default
  * value of J2D_ACCEL_UNVERIFIED.
  */
-int RegistryKey::GetIntValue(WCHAR *valueName) 
+int RegistryKey::GetIntValue(WCHAR *valueName)
 {
     DWORD valueLength = 4;
     int regValue = J2D_ACCEL_UNVERIFIED;
     if (!disableRegistry) {
-	RegQueryValueEx(hKey, valueName, NULL, NULL, (LPBYTE) & regValue,
-			& valueLength);
+        RegQueryValueEx(hKey, valueName, NULL, NULL, (LPBYTE) & regValue,
+                        & valueLength);
     }
     // QueryValue could fail if value does not exist, but in this
     // case regValue still equals the UNVERIFIED state, so no need to
@@ -132,7 +132,7 @@ int RegistryKey::GetIntValue(WCHAR *valueName)
  * Static method which opens a registry key with the given keyName and
  * calls GetIntValue(valueName) on that key.
  */
-int RegistryKey::GetIntValue(WCHAR *keyName, WCHAR *valueName) 
+int RegistryKey::GetIntValue(WCHAR *keyName, WCHAR *valueName)
 {
     RegistryKey key(keyName, KEY_QUERY_VALUE);
     return key.GetIntValue(valueName);
@@ -149,25 +149,25 @@ int RegistryKey::GetIntValue(WCHAR *keyName, WCHAR *valueName)
 BOOL RegistryKey::SetIntValue(WCHAR *valueName, int regValue, BOOL flush)
 {
     if (disableRegistry) {
-	return TRUE;
+        return TRUE;
     }
     if (!hKey) {
-	PrintRegistryError(0, "Null hKey in SetIntValue");
-	return FALSE;
+        PrintRegistryError(0, "Null hKey in SetIntValue");
+        return FALSE;
     }
     DWORD valueLength = 4;
-    DWORD ret = RegSetValueEx(hKey, valueName, 0, REG_DWORD, (LPBYTE)&regValue, 
-			valueLength);
+    DWORD ret = RegSetValueEx(hKey, valueName, 0, REG_DWORD, (LPBYTE)&regValue,
+                        valueLength);
     if (ret != ERROR_SUCCESS) {
-	PrintRegistryError(ret, "RegSetValueEx");
-	return FALSE;
+        PrintRegistryError(ret, "RegSetValueEx");
+        return FALSE;
     }
     if (flush) {
-	ret = RegFlushKey(hKey);
-	if (ret != ERROR_SUCCESS) {
-	    PrintRegistryError(ret, "RegFlushKey");
-	    return FALSE;
-	}
+        ret = RegFlushKey(hKey);
+        if (ret != ERROR_SUCCESS) {
+            PrintRegistryError(ret, "RegFlushKey");
+            return FALSE;
+        }
     }
     return TRUE;
 }
@@ -176,8 +176,8 @@ BOOL RegistryKey::SetIntValue(WCHAR *valueName, int regValue, BOOL flush)
  * Static method which opens a registry key with the given keyName and
  * calls SetIntValue(valueName, regValue, flush) on that key.
  */
-BOOL RegistryKey::SetIntValue(WCHAR *keyName, WCHAR *valueName, 
-			      int regValue, BOOL flush) 
+BOOL RegistryKey::SetIntValue(WCHAR *keyName, WCHAR *valueName,
+                              int regValue, BOOL flush)
 {
     RegistryKey key(keyName, KEY_WRITE);
     return key.SetIntValue(valueName, regValue, flush);
@@ -187,12 +187,12 @@ BOOL RegistryKey::SetIntValue(WCHAR *keyName, WCHAR *valueName,
  * Deletes the key with the given key name.  This is useful when using
  * the -Dsun.java2d.accelReset flag, which resets the registry values
  * to force the startup tests to be rerun and re-recorded.
- * 
+ *
  */
-void RegistryKey::DeleteKey(WCHAR *keyName) 
+void RegistryKey::DeleteKey(WCHAR *keyName)
 {
     if (disableRegistry) {
-	return;
+        return;
     }
     // We should be able to do this with the ShDeleteKey() function, but
     // that is apparently not available on the ia64 sdk, so we revert back
@@ -203,29 +203,29 @@ void RegistryKey::DeleteKey(WCHAR *keyName)
     int subKeyIndex = 0;
     FILETIME lastWriteTime;
     HKEY hKey;
-    DWORD ret = RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, 
-			     &hKey);
+    DWORD ret = RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS,
+                             &hKey);
     if (ret != ERROR_SUCCESS) {
-	PrintRegistryError(ret, "DeleteKey, during RegOpenKeyEx");
-    }	
+        PrintRegistryError(ret, "DeleteKey, during RegOpenKeyEx");
+    }
     while ((ret = RegEnumKeyEx(hKey, subKeyIndex, subKeyName, &buffSize,
-			       NULL, NULL, NULL, &lastWriteTime)) ==
+                               NULL, NULL, NULL, &lastWriteTime)) ==
            ERROR_SUCCESS)
     {
-	WCHAR subKeyBuffer[1024];
-	swprintf(subKeyBuffer, L"%s\\%s", keyName, subKeyName);
-	DeleteKey(subKeyBuffer);
-	++subKeyIndex;
-	buffSize = 1024;
+        WCHAR subKeyBuffer[1024];
+        swprintf(subKeyBuffer, L"%s\\%s", keyName, subKeyName);
+        DeleteKey(subKeyBuffer);
+        ++subKeyIndex;
+        buffSize = 1024;
     }
     ret = RegCloseKey(hKey);
     if (ret != ERROR_SUCCESS) {
-	PrintRegistryError(ret, "DeleteKey, during RegCloseKey");
-    }	
+        PrintRegistryError(ret, "DeleteKey, during RegCloseKey");
+    }
     ret = RegDeleteKey(HKEY_CURRENT_USER, keyName);
     if (ret != ERROR_SUCCESS) {
-	PrintRegistryError(ret, "DeleteKey, during RegDeleteKey");
-    }	
+        PrintRegistryError(ret, "DeleteKey, during RegDeleteKey");
+    }
 }
 
 void RegistryKey::PrintValue(WCHAR *keyName, WCHAR *valueName,
@@ -234,21 +234,21 @@ void RegistryKey::PrintValue(WCHAR *keyName, WCHAR *valueName,
     int value = GetIntValue(keyName, valueName);
     switch (value) {
     case J2D_ACCEL_UNVERIFIED:
-	printf("%S: %s\n", msg, "UNVERIFIED");
-	break;
+        printf("%S: %s\n", msg, "UNVERIFIED");
+        break;
     case J2D_ACCEL_TESTING:
-	printf("%S: %s\n", msg, "TESTING (may indicate crash during test)");
-	break;
+        printf("%S: %s\n", msg, "TESTING (may indicate crash during test)");
+        break;
     case J2D_ACCEL_FAILURE:
-	printf("%S: %s\n", msg, "FAILURE");
-	break;
+        printf("%S: %s\n", msg, "FAILURE");
+        break;
     case J2D_ACCEL_SUCCESS:
-	printf("%S: %s\n", msg, "SUCCESS");
-	break;
+        printf("%S: %s\n", msg, "SUCCESS");
+        break;
     default:
-	printf("No registry value for key, value %S, %S\n",
-		keyName, valueName);
-	break;
+        printf("No registry value for key, value %S, %S\n",
+                keyName, valueName);
+        break;
     }
 }
 
@@ -256,16 +256,15 @@ void RegistryKey::PrintValue(WCHAR *keyName, WCHAR *valueName,
  * Debugging utility: prints information about errors received
  * during interaction with the registry.
  */
-void RegistryKey::PrintRegistryError(LONG errNum, char *message) 
+void RegistryKey::PrintRegistryError(LONG errNum, char *message)
 {
     WCHAR errString[255];
-    int numChars =  FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errNum, 0, 
-	errString, 255, NULL);
+    int numChars =  FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errNum, 0,
+        errString, 255, NULL);
     if (numChars == 0) {
-	J2dTraceLn1(J2D_TRACE_ERROR, "problem with formatmessage, err = %d\n", 
-		    GetLastError());
+        J2dTraceLn1(J2D_TRACE_ERROR, "problem with formatmessage, err = %d\n",
+                    GetLastError());
     }
-    J2dTraceLn3(J2D_TRACE_ERROR, "problem with %s, errNum, string = %d, %S\n", 
-		message, errNum, errString);
+    J2dTraceLn3(J2D_TRACE_ERROR, "problem with %s, errNum, string = %d, %S\n",
+                message, errNum, errString);
 }
-

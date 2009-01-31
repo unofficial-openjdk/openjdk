@@ -25,7 +25,7 @@
  *  @test
  *  @bug 4329140
  *  @author Robert Field
- *  
+ *
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g InstTarg.java
  *  @run main ConnectedVMs InstTarg
@@ -41,7 +41,7 @@ import java.util.List;
 public class ConnectedVMs extends TestScaffold {
     static int failCount = 0;;
     static int pass;
-    static String[] passNames = {"Kill", "Resume to exit", 
+    static String[] passNames = {"Kill", "Resume to exit",
                                  "dispose()", "exit()"};
 
     public static void main(String args[]) throws Exception {
@@ -67,13 +67,13 @@ public class ConnectedVMs extends TestScaffold {
         List vms = Bootstrap.virtualMachineManager().
             connectedVirtualMachines();
         if (vms.size() != expected) {
-            System.out.println("FAILURE! " + passNames[pass] + 
-                               " - expected: " + expected + 
+            System.out.println("FAILURE! " + passNames[pass] +
+                               " - expected: " + expected +
                                ", got: " + vms.size());
             ++failCount;
         }
     }
-        
+
     protected void runTests() throws Exception {
         System.out.println("Testing " + passNames[pass]);
         vms(0);

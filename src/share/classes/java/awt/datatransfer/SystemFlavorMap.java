@@ -63,7 +63,6 @@ import sun.awt.datatransfer.DataTransferer;
  * <code>AWT.DnD.flavorMapFileURL</code>. See <code>flavormap.properties</code>
  * for details.
  *
- * @version %I%, %G%
  * @since 1.2
  */
 public final class SystemFlavorMap implements FlavorMap, FlavorTable {
@@ -558,7 +557,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * encoding the DataFlavor's MIME type. Otherwise an empty List is returned
      * and 'flavorToNative' remains unaffected.
      */
-    private List flavorToNativeLookup(final DataFlavor flav, 
+    private List flavorToNativeLookup(final DataFlavor flav,
                                       final boolean synthesize) {
         List natives = (List)flavorToNative.get(flav);
 
@@ -573,7 +572,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
                         // Prepend the platform-specific mappings to ensure
                         // that the natives added with
                         // addUnencodedNativeForFlavor() are at the end of
-                        // list. 
+                        // list.
                         platformNatives.addAll(natives);
                     }
                     natives = platformNatives;
@@ -616,7 +615,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * If the specified <code>DataFlavor</code> is previously unknown to the
      * data transfer subsystem and the data transfer subsystem is unable to
      * translate this <code>DataFlavor</code> to any existing native, then
-     * invoking this method will establish a 
+     * invoking this method will establish a
      * mapping in both directions between the specified <code>DataFlavor</code>
      * and an encoded version of its MIME type as its native.
      *
@@ -653,7 +652,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
             retval = flavorToNativeLookup(flav, !SYNTHESIZE_IF_NOT_FOUND);
         } else if (DataTransferer.isFlavorCharsetTextType(flav)) {
 
-            // For text/* flavors, flavor-to-native mappings specified in 
+            // For text/* flavors, flavor-to-native mappings specified in
             // flavormap.properties are stored per flavor's base type.
             if ("text".equals(flav.getPrimaryType())) {
                 retval = (List)flavorToNative.get(flav.mimeType.getBaseType());
@@ -685,8 +684,8 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
                 // In this branch it is guaranteed that natives explicitly
                 // listed for flav's MIME type were added with
                 // addUnencodedNativeForFlavor(), so they have lower priority.
-                List explicitList = 
-                    flavorToNativeLookup(flav, !SYNTHESIZE_IF_NOT_FOUND);  
+                List explicitList =
+                    flavorToNativeLookup(flav, !SYNTHESIZE_IF_NOT_FOUND);
 
                 // flavorToNativeLookup() never returns null.
                 // It can return an empty List, however.
@@ -708,7 +707,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
                 // In this branch it is guaranteed that natives explicitly
                 // listed for flav's MIME type were added with
                 // addUnencodedNativeForFlavor(), so they have lower priority.
-                List explicitList = 
+                List explicitList =
                     flavorToNativeLookup(flav, !SYNTHESIZE_IF_NOT_FOUND);
 
                 // flavorToNativeLookup() never returns null.
@@ -806,7 +805,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
             List flavorsAndbaseTypes = nativeToFlavorLookup(nat);
 
             for (Iterator flavorsAndbaseTypes_iter =
-                     flavorsAndbaseTypes.iterator(); 
+                     flavorsAndbaseTypes.iterator();
                  flavorsAndbaseTypes_iter.hasNext(); )
             {
                 Object value = flavorsAndbaseTypes_iter.next();
@@ -821,7 +820,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
                         // on load from flavormap.properties.
                         assert(false);
                     }
-                    if (DataTransferer.doesSubtypeSupportCharset(subType, 
+                    if (DataTransferer.doesSubtypeSupportCharset(subType,
                                                                  null)) {
                         if (TEXT_PLAIN_BASE_TYPE.equals(baseType) &&
                             dups.add(DataFlavor.stringFlavor))
@@ -924,7 +923,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * @param flavors an array of <code>DataFlavor</code>s which will be the
      *        key set of the returned <code>Map</code>. If <code>null</code> is
      *        specified, a mapping of all <code>DataFlavor</code>s known to the
-     *        data transfer subsystem to their most preferred 
+     *        data transfer subsystem to their most preferred
      *        <code>String</code> natives will be returned.
      * @return a <code>java.util.Map</code> of <code>DataFlavor</code>s to
      *         <code>String</code> natives
@@ -933,7 +932,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * @see #encodeDataFlavor
      */
     public synchronized Map<DataFlavor,String>
-	getNativesForFlavors(DataFlavor[] flavors)
+        getNativesForFlavors(DataFlavor[] flavors)
     {
         // Use getNativesForFlavor to generate extra natives for text flavors
         // and stringFlavor
@@ -979,7 +978,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * @see #encodeJavaMIMEType
      */
     public synchronized Map<String,DataFlavor>
-	getFlavorsForNatives(String[] natives)
+        getFlavorsForNatives(String[] natives)
     {
         // Use getFlavorsForNative to generate extra flavors for text natives
 
@@ -1007,7 +1006,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * Unlike <code>getNativesForFlavor</code>, the mapping will only be
      * established in one direction, and the native will not be encoded. To
      * establish a two-way mapping, call
-     * <code>addFlavorForUnencodedNative</code> as well. The new mapping will 
+     * <code>addFlavorForUnencodedNative</code> as well. The new mapping will
      * be of lower priority than any existing mapping.
      * This method has no effect if a mapping from the specified or equal
      * <code>DataFlavor</code> to the specified <code>String</code> native
@@ -1025,7 +1024,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
         if (flav == null || nat == null) {
             throw new NullPointerException("null arguments not permitted");
         }
-        
+
         List natives = (List)flavorToNative.get(flav);
         if (natives == null) {
             natives = new ArrayList(1);
@@ -1041,7 +1040,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
     /**
      * Discards the current mappings for the specified <code>DataFlavor</code>
      * and all <code>DataFlavor</code>s equal to the specified
-     * <code>DataFlavor</code>, and creates new mappings to the 
+     * <code>DataFlavor</code>, and creates new mappings to the
      * specified <code>String</code> natives.
      * Unlike <code>getNativesForFlavor</code>, the mappings will only be
      * established in one direction, and the natives will not be encoded. To
@@ -1053,7 +1052,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      * If the array contains several elements that reference equal
      * <code>String</code> natives, this method will establish new mappings
      * for the first of those elements and ignore the rest of them.
-     * <p> 
+     * <p>
      * It is recommended that client code not reset mappings established by the
      * data transfer subsystem. This method should only be used for
      * application-level mappings.
@@ -1188,7 +1187,7 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
 
     /**
      * Encodes a <code>DataFlavor</code> for use as a <code>String</code>
-     * native. The format of an encoded <code>DataFlavor</code> is 
+     * native. The format of an encoded <code>DataFlavor</code> is
      * implementation-dependent. The only restrictions are:
      * <ul>
      * <li>The encoded representation is <code>null</code> if and only if the

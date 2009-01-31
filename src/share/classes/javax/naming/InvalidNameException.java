@@ -36,7 +36,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see Context
   * @see javax.naming.directory.DirContext
@@ -51,11 +50,11 @@ public class InvalidNameException extends NamingException {
       * Constructs an instance of InvalidNameException using an
       * explanation of the problem.
       * All other fields are initialized to null.
-      * @param explanation	A possibly null message explaining the problem.
+      * @param explanation      A possibly null message explaining the problem.
       * @see java.lang.Throwable#getMessage
       */
     public InvalidNameException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -63,7 +62,7 @@ public class InvalidNameException extends NamingException {
       * all fields set to null.
       */
     public InvalidNameException() {
-	super();
+        super();
     }
 
     /**

@@ -38,7 +38,7 @@ import java.lang.ref.WeakReference;
 
 /**
  * This abstract class implements a weak cache that holds table data.
- * <p>The table data is stored in an instance of 
+ * <p>The table data is stored in an instance of
  * {@link SnmpCachedData}, which is kept in a {@link WeakReference}.
  * If the WeakReference is null or empty, the cached data is recomputed.</p>
  *
@@ -62,32 +62,32 @@ public abstract class SnmpTableCache implements Serializable {
      * true if the given cached table data is obsolete.
      **/
     protected boolean isObsolete(SnmpCachedData cached) {
-	if (cached   == null) return true;
-	if (validity < 0)     return false;
-	return ((System.currentTimeMillis() - cached.lastUpdated) > validity);
+        if (cached   == null) return true;
+        if (validity < 0)     return false;
+        return ((System.currentTimeMillis() - cached.lastUpdated) > validity);
     }
 
     /**
      * Returns the cached table data.
      * Returns null if the cached data is obsolete, or if there is no
      * cached data, or if the cached data was garbage collected.
-     * @return a still valid cached data or null. 
+     * @return a still valid cached data or null.
      **/
     protected SnmpCachedData getCachedDatas() {
-	if (datas == null) return null;
-	final SnmpCachedData cached = datas.get();
-	if ((cached == null) || isObsolete(cached)) return null;
-	return cached;
+        if (datas == null) return null;
+        final SnmpCachedData cached = datas.get();
+        if ((cached == null) || isObsolete(cached)) return null;
+        return cached;
     }
 
     /**
      * Returns the cached table data, if it is still valid,
-     * or recompute it if it is obsolete. 
+     * or recompute it if it is obsolete.
      * <p>
      * When cache data is recomputed, store it in the weak reference,
      * unless {@link #validity} is 0: then the data will not be stored
      * at all.<br>
-     * This method calls {@link #isObsolete(SnmpCachedData)} to determine 
+     * This method calls {@link #isObsolete(SnmpCachedData)} to determine
      * whether the cached data is obsolete, and {
      * {@link #updateCachedDatas(Object)} to recompute it.
      * </p>
@@ -95,16 +95,16 @@ public abstract class SnmpTableCache implements Serializable {
      * @return the valid cached data, or the recomputed table data.
      **/
     protected synchronized SnmpCachedData getTableDatas(Object context) {
-	final SnmpCachedData cached   = getCachedDatas();
-	if (cached != null) return cached;
-	final SnmpCachedData computedDatas = updateCachedDatas(context);
-	if (validity != 0) datas = new WeakReference<SnmpCachedData>(computedDatas);
-	return computedDatas;
+        final SnmpCachedData cached   = getCachedDatas();
+        if (cached != null) return cached;
+        final SnmpCachedData computedDatas = updateCachedDatas(context);
+        if (validity != 0) datas = new WeakReference<SnmpCachedData>(computedDatas);
+        return computedDatas;
     }
 
     /**
      * Recompute cached data.
-     * @param context A context object, as passed to 
+     * @param context A context object, as passed to
      *        {@link #getTableDatas(Object)}
      **/
     protected abstract SnmpCachedData updateCachedDatas(Object context);

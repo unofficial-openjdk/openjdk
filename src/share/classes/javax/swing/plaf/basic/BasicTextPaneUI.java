@@ -46,7 +46,6 @@ import javax.swing.border.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class BasicTextPaneUI extends BasicEditorPaneUI {
 
@@ -64,7 +63,7 @@ public class BasicTextPaneUI extends BasicEditorPaneUI {
      * Creates a new BasicTextPaneUI.
      */
     public BasicTextPaneUI() {
-	super();
+        super();
     }
 
     /**
@@ -75,7 +74,7 @@ public class BasicTextPaneUI extends BasicEditorPaneUI {
      * @return the name ("TextPane")
      */
     protected String getPropertyPrefix() {
-	return "TextPane";
+        return "TextPane";
     }
 
     public void installUI(JComponent c) {
@@ -94,6 +93,6 @@ public class BasicTextPaneUI extends BasicEditorPaneUI {
      * @param evt the property change event
      */
     protected void propertyChange(PropertyChangeEvent evt) {
-	super.propertyChange(evt);
+        super.propertyChange(evt);
     }
 }

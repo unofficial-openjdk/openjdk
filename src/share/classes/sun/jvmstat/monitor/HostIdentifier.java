@@ -96,7 +96,6 @@ import java.net.*;
  * @see VmIdentifier
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class HostIdentifier {

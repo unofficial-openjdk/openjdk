@@ -34,16 +34,16 @@ public class SocketTimeout  {
     public static void main(String args[]) throws Exception {
     InetAddress  sin = null;
     Socket       soc = null,soc1 = null;
-    InputStream	 is = null;
+    InputStream  is = null;
     OutputStream os = null;
     ServerSocket srv = null;
     int          port = 0;
     int          tout = 1000;
 
-    sin = InetAddress.getLocalHost(); 
+    sin = InetAddress.getLocalHost();
     srv = new ServerSocket(port);
     port = srv.getLocalPort();
-    soc = new Socket(sin, port); 
+    soc = new Socket(sin, port);
     soc1 = srv.accept();
     soc.setSoTimeout(tout);
     srv.setSoTimeout(tout);
@@ -53,25 +53,25 @@ public class SocketTimeout  {
       os = soc1.getOutputStream();
       is.read();
     } catch(InterruptedIOException e) {
-	try {
-	    if (! (e instanceof java.net.SocketTimeoutException))
-	    	throw new Exception ("Wrong exception class thrown");
-    	} catch(NoClassDefFoundError e1) {
-    	    throw new Exception ("SocketTimeoutException: not found");
-    	}
+        try {
+            if (! (e instanceof java.net.SocketTimeoutException))
+                throw new Exception ("Wrong exception class thrown");
+        } catch(NoClassDefFoundError e1) {
+            throw new Exception ("SocketTimeoutException: not found");
+        }
     }
 
-    // now check accept 
+    // now check accept
 
     try {
       srv.accept ();
     } catch(InterruptedIOException e) {
-	try {
-	    if (! (e instanceof java.net.SocketTimeoutException))
-	    	throw new Exception ("Wrong exception class thrown");
-    	} catch(NoClassDefFoundError e1) {
-    	    throw new Exception ("SocketTimeoutException: not found");
-    	}
+        try {
+            if (! (e instanceof java.net.SocketTimeoutException))
+                throw new Exception ("Wrong exception class thrown");
+        } catch(NoClassDefFoundError e1) {
+            throw new Exception ("SocketTimeoutException: not found");
+        }
     }
 
     // Now check DatagramSocket.receive()
@@ -82,14 +82,14 @@ public class SocketTimeout  {
     try {
       dg.receive (new DatagramPacket (new byte [64], 64));
     } catch(InterruptedIOException e) {
-	try {
-	    if (! (e instanceof java.net.SocketTimeoutException))
-	    	throw new Exception ("Wrong exception class thrown");
-    	} catch(NoClassDefFoundError e1) {
-    	    throw new Exception ("SocketTimeoutException: not found");
-    	}
+        try {
+            if (! (e instanceof java.net.SocketTimeoutException))
+                throw new Exception ("Wrong exception class thrown");
+        } catch(NoClassDefFoundError e1) {
+            throw new Exception ("SocketTimeoutException: not found");
+        }
     }
-    
+
     soc.close();
     soc1.close();
     srv.close();

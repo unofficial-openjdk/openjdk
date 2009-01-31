@@ -30,7 +30,7 @@ import java.util.List;
  /**
  * <code>MidiDevice</code> is the base interface for all MIDI devices.
  * Common devices include synthesizers, sequencers, MIDI input ports, and MIDI
- * output ports.  
+ * output ports.
  *
  * <p>A <code>MidiDevice</code> can be a transmitter or a receiver of
  * MIDI events, or both. Therefore, it can provide {@link Transmitter}
@@ -103,7 +103,6 @@ import java.util.List;
  * @see Receiver
  * @see Transmitter
  *
- * @version %I%, %E%
  * @author Kara Kytle
  * @author Florian Bomers
  */
@@ -151,7 +150,7 @@ public interface MidiDevice {
      * <p>All <code>Receiver</code> and <code>Transmitter</code> instances
      * open from this device are closed. This includes instances retrieved
      * via <code>MidiSystem</code>.
-     * 
+     *
      * @see #open
      * @see #isOpen
      */
@@ -185,7 +184,7 @@ public interface MidiDevice {
     /**
      * Obtains the maximum number of MIDI IN connections available on this
      * MIDI device for receiving MIDI data.
-     * @return maximum number of MIDI IN connections, 
+     * @return maximum number of MIDI IN connections,
      * or -1 if an unlimited number of connections is available.
      */
     public int getMaxReceivers();
@@ -258,8 +257,8 @@ public interface MidiDevice {
      * @since 1.5
      */
     List<Transmitter> getTransmitters();
- 
- 
+
+
 
     /**
      * A <code>MidiDevice.Info</code> object contains assorted
@@ -270,110 +269,110 @@ public interface MidiDevice {
      */
     public static class Info {
 
-	/**
-	 * The device's name.
-	 */
-	private String name;
+        /**
+         * The device's name.
+         */
+        private String name;
 
-	/**
-	 * The name of the company who provides the device.
-	 */
-	private String vendor;
+        /**
+         * The name of the company who provides the device.
+         */
+        private String vendor;
 
-	/**
-	 * A description of the device.
-	 */
-	private String description;
+        /**
+         * A description of the device.
+         */
+        private String description;
 
-	/**
-	 * Device version.
-	 */
-	private String version;
-
-
-	/**
-	 * Constructs a device info object.
-	 *
-	 * @param name the name of the device
-	 * @param vendor the name of the company who provides the device
-	 * @param description a description of the device
-	 * @param version version information for the device
-	 */
-	protected Info(String name, String vendor, String description, String version) {
-
-	    this.name = name;
-	    this.vendor = vendor;
-	    this.description = description;
-	    this.version = version;
-	}
+        /**
+         * Device version.
+         */
+        private String version;
 
 
-	/**
-	 * Reports whether two objects are equal.
-	 * Returns <code>true</code> if the objects are identical.
-	 * @param obj the reference object with which to compare this
-	 * object
-	 * @return <code>true</code> if this object is the same as the
-	 * <code>obj</code> argument; <code>false</code> otherwise
-	 */
-	public final boolean equals(Object obj) {
-	    return super.equals(obj);
-	}
+        /**
+         * Constructs a device info object.
+         *
+         * @param name the name of the device
+         * @param vendor the name of the company who provides the device
+         * @param description a description of the device
+         * @param version version information for the device
+         */
+        protected Info(String name, String vendor, String description, String version) {
+
+            this.name = name;
+            this.vendor = vendor;
+            this.description = description;
+            this.version = version;
+        }
 
 
-	/**
-	 * Finalizes the hashcode method.
-	 */
-	public final int hashCode() {
-	    return super.hashCode();
-	}
+        /**
+         * Reports whether two objects are equal.
+         * Returns <code>true</code> if the objects are identical.
+         * @param obj the reference object with which to compare this
+         * object
+         * @return <code>true</code> if this object is the same as the
+         * <code>obj</code> argument; <code>false</code> otherwise
+         */
+        public final boolean equals(Object obj) {
+            return super.equals(obj);
+        }
 
 
-	/**
-	 * Obtains the name of the device.
-	 *
-	 * @return a string containing the device's name
-	 */
-	public final String getName() {
-	    return name;
-	}
+        /**
+         * Finalizes the hashcode method.
+         */
+        public final int hashCode() {
+            return super.hashCode();
+        }
 
 
-	/**
-	 * Obtains the name of the company who supplies the device.
-	 * @return device the vendor's name
-	 */
-	public final String getVendor() {
-	    return vendor;
-	}
+        /**
+         * Obtains the name of the device.
+         *
+         * @return a string containing the device's name
+         */
+        public final String getName() {
+            return name;
+        }
 
 
-	/**
-	 * Obtains the description of the device.
-	 * @return a description of the device
-	 */
-	public final String getDescription() {
-	    return description;
-	}
+        /**
+         * Obtains the name of the company who supplies the device.
+         * @return device the vendor's name
+         */
+        public final String getVendor() {
+            return vendor;
+        }
 
 
-	/**
-	 * Obtains the version of the device.
-	 * @return textual version information for the device.
-	 */
-	public final String getVersion() {
-	    return version;
-	}
+        /**
+         * Obtains the description of the device.
+         * @return a description of the device
+         */
+        public final String getDescription() {
+            return description;
+        }
 
 
-	/**
-	 * Provides a string representation of the device information.
+        /**
+         * Obtains the version of the device.
+         * @return textual version information for the device.
+         */
+        public final String getVersion() {
+            return version;
+        }
 
-	 * @return a description of the info object
-	 */
-	public final String toString() {
-	    return name;
-	}
+
+        /**
+         * Provides a string representation of the device information.
+
+         * @return a description of the info object
+         */
+        public final String toString() {
+            return name;
+        }
     } // class Info
 
 

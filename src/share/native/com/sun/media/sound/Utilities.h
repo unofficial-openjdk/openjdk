@@ -25,7 +25,7 @@
 
 #include <jni.h>
 #include "SoundDefs.h"
-#include "Configure.h"		// put flags for debug msgs etc. here
+#include "Configure.h"          // put flags for debug msgs etc. here
 
 // return 1 if this platform is big endian, or 0 for little endian
 int UTIL_IsBigEndianPlatform();
@@ -67,11 +67,11 @@ int UTIL_IsBigEndianPlatform();
 
 // VERBOSE TRACE PRINTS
 #ifdef USE_VERBOSE_TRACE
-#define VTRACE0(string)			fprintf(stdout, (string));
-#define VTRACE1(string, p1)		fprintf(stdout, (string), (p1));
-#define VTRACE2(string, p1, p2)		printf(stdout, (string), (p1), (p2));
-#define VTRACE3(string, p1, p2, p3)	fprintf(stdout, (string), (p1), (p2), (p3));
-#define VTRACE4(string, p1, p2, p3, p4)	fprintf(stdout, (string), (p1), (p2), (p3), (p4));
+#define VTRACE0(string)                 fprintf(stdout, (string));
+#define VTRACE1(string, p1)             fprintf(stdout, (string), (p1));
+#define VTRACE2(string, p1, p2)         printf(stdout, (string), (p1), (p2));
+#define VTRACE3(string, p1, p2, p3)     fprintf(stdout, (string), (p1), (p2), (p3));
+#define VTRACE4(string, p1, p2, p3, p4) fprintf(stdout, (string), (p1), (p2), (p3), (p4));
 #else
 #define VTRACE0(string)
 #define VTRACE1(string, p1)
@@ -82,5 +82,3 @@ int UTIL_IsBigEndianPlatform();
 
 
 void ThrowJavaMessageException(JNIEnv *e, const char *exClass, const char *msg);
-
-

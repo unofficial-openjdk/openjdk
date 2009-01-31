@@ -68,7 +68,6 @@ import java.math.RoundingMode;
  * @see  DecimalFormat
  * @see  ChoiceFormat
  * @see  MessageFormat
- * @version      %I% %G%
  * @author       Mark Davis, Alan Liu
  */
 final class DigitList implements Cloneable {
@@ -572,7 +571,7 @@ final class DigitList implements Cloneable {
      * in source, the representation will be rounded.  Ignored if <= 0.
      */
     final void set(boolean isNegative, BigInteger source, int maximumDigits) {
-	this.isNegative = isNegative;
+        this.isNegative = isNegative;
         String s = source.toString();
         int len = s.length();
         extendDigits(len);

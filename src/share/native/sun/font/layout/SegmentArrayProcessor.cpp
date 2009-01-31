@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)SegmentArrayProcessor.cpp	1.11 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -72,10 +71,9 @@ void SegmentArrayProcessor::process(LEGlyphStorage &glyphStorage)
             if (offset != 0) {
                 TTGlyphID  *glyphArray = (TTGlyphID *) ((char *) subtableHeader + offset);
                 TTGlyphID   newGlyph   = (TTGlyphID)SWAPW(glyphArray[LE_GET_GLYPH(thisGlyph) - firstGlyph]);
-                
+
                 glyphStorage[glyph] = LE_SET_GLYPH(thisGlyph, newGlyph);
-            } 
+            }
         }
     }
 }
- 

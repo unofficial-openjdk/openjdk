@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,6 +36,6 @@ import java.rmi.server.RemoteServer;
 
 public class SetLogNull {
     public static void main(String[] args) {
-	RemoteServer.setLog(null);
+        RemoteServer.setLog(null);
     }
 }

@@ -43,17 +43,17 @@ public abstract class ShellFolder extends File {
      * Create a file system shell folder from a file
      */
     ShellFolder(ShellFolder parent, String pathname) {
-	super((pathname != null) ? pathname : "ShellFolder");
-	this.parent = parent;
+        super((pathname != null) ? pathname : "ShellFolder");
+        this.parent = parent;
     }
-    
+
     /**
      * @return Whether this is a file system shell folder
      */
     public boolean isFileSystem() {
         return (!getPath().startsWith("ShellFolder"));
     }
-    
+
     /**
      * This method must be implemented to make sure that no instances
      * of <code>ShellFolder</code> are ever serialized. If <code>isFileSystem()</code> returns
@@ -79,14 +79,14 @@ public abstract class ShellFolder extends File {
      * @since 1.4
      */
     public String getParent() {
-	if (parent == null && isFileSystem()) {
-	    return super.getParent();
-	}
-	if (parent != null) {
-	    return (parent.getPath());
-	} else {
-	    return null;
-	}
+        if (parent == null && isFileSystem()) {
+            return super.getParent();
+        }
+        if (parent != null) {
+            return (parent.getPath());
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -102,34 +102,34 @@ public abstract class ShellFolder extends File {
      * @since 1.4
      */
     public File getParentFile() {
-	if (parent != null) {
-	    return parent;
-	} else if (isFileSystem()) {
-	    return super.getParentFile();
-	} else {
-	    return null;
-	}
+        if (parent != null) {
+            return parent;
+        } else if (isFileSystem()) {
+            return super.getParentFile();
+        } else {
+            return null;
+        }
     }
-    
+
     public File[] listFiles() {
-	return listFiles(true);
+        return listFiles(true);
     }
 
     public File[] listFiles(boolean includeHiddenFiles) {
-	File[] files = super.listFiles();
+        File[] files = super.listFiles();
 
-	if (!includeHiddenFiles) {
-	    Vector v = new Vector();
-	    int nameCount = (files == null) ? 0 : files.length;
-	    for (int i = 0; i < nameCount; i++) {
-		if (!files[i].isHidden()) {
-		    v.addElement(files[i]);
-		}
-	    }
-	    files = (File[])v.toArray(new File[v.size()]);
-	}
+        if (!includeHiddenFiles) {
+            Vector v = new Vector();
+            int nameCount = (files == null) ? 0 : files.length;
+            for (int i = 0; i < nameCount; i++) {
+                if (!files[i].isHidden()) {
+                    v.addElement(files[i]);
+                }
+            }
+            files = (File[])v.toArray(new File[v.size()]);
+        }
 
-	return files;
+        return files;
     }
 
 
@@ -137,49 +137,49 @@ public abstract class ShellFolder extends File {
      * @return Whether this shell folder is a link
      */
     public abstract boolean isLink();
-    
+
     /**
      * @return The shell folder linked to by this shell folder, or null
      * if this shell folder is not a link
      */
     public abstract ShellFolder getLinkLocation() throws FileNotFoundException;
-    
+
     /**
      * @return The name used to display this shell folder
      */
     public abstract String getDisplayName();
-    
+
     /**
      * @return The type of shell folder as a string
      */
     public abstract String getFolderType();
-    
+
     /**
      * @return The executable type as a string
      */
     public abstract String getExecutableType();
-    
+
     /**
      * Compares this ShellFolder with the specified ShellFolder for order.
      *
      * @see #compareTo(Object)
      */
     public int compareTo(File file2) {
-	if (file2 == null || !(file2 instanceof ShellFolder)
-	    || ((file2 instanceof ShellFolder) && ((ShellFolder)file2).isFileSystem())) {
+        if (file2 == null || !(file2 instanceof ShellFolder)
+            || ((file2 instanceof ShellFolder) && ((ShellFolder)file2).isFileSystem())) {
 
-	    if (isFileSystem()) {
-		return super.compareTo(file2);
-	    } else {
-		return -1;
-	    }
-	} else {
-	    if (isFileSystem()) {
-		return 1;
-	    } else {
-		return getName().compareTo(file2.getName());
-	    }
-	}
+            if (isFileSystem()) {
+                return super.compareTo(file2);
+            } else {
+                return -1;
+            }
+        } else {
+            if (isFileSystem()) {
+                return 1;
+            } else {
+                return getName().compareTo(file2.getName());
+            }
+        }
     }
 
     /**
@@ -187,14 +187,14 @@ public abstract class ShellFolder extends File {
      * @return The icon used to display this shell folder
      */
     public Image getIcon(boolean getLargeIcon) {
-	return null;
+        return null;
     }
-    
+
 
     // Static
-    
+
     private static ShellFolderManager shellFolderManager;
-    
+
     static {
         Class managerClass = (Class)Toolkit.getDefaultToolkit().
             getDesktopProperty("Shell.shellFolderManager");
@@ -212,21 +212,21 @@ public abstract class ShellFolder extends File {
             + managerClass.getName());
         }
     }
-    
+
     /**
      * Return a shell folder from a file object
      * @exception FileNotFoundException if file does not exist
      */
     public static ShellFolder getShellFolder(File file) throws FileNotFoundException {
-	if (file instanceof ShellFolder) {
-	    return (ShellFolder)file;
-	}
+        if (file instanceof ShellFolder) {
+            return (ShellFolder)file;
+        }
         if (!file.exists()) {
             throw new FileNotFoundException();
         }
         return shellFolderManager.createShellFolder(file);
     }
-    
+
     /**
      * @param key a <code>String</code>
      * @return An Object matching the string <code>key</code>.
@@ -241,16 +241,16 @@ public abstract class ShellFolder extends File {
      * "My Computer" on the desktop.
      */
     public static boolean isComputerNode(File dir) {
-	return shellFolderManager.isComputerNode(dir);
+        return shellFolderManager.isComputerNode(dir);
     }
 
     /**
      * @return Whether this is a file system root directory
      */
     public static boolean isFileSystemRoot(File dir) {
-	return shellFolderManager.isFileSystemRoot(dir);
+        return shellFolderManager.isFileSystemRoot(dir);
     }
-    
+
     /**
      * Canonicalizes files that don't have symbolic links in their path.
      * Normalizes files that do, preserving symbolic links from being resolved.
@@ -269,19 +269,19 @@ public abstract class ShellFolder extends File {
     // Override File methods
 
     public static void sortFiles(List files) {
-	shellFolderManager.sortFiles(files);
+        shellFolderManager.sortFiles(files);
     }
 
     public boolean isAbsolute() {
-	return (!isFileSystem() || super.isAbsolute());
+        return (!isFileSystem() || super.isAbsolute());
     }
 
     public File getAbsoluteFile() {
-	return (isFileSystem() ? super.getAbsoluteFile() : this);
+        return (isFileSystem() ? super.getAbsoluteFile() : this);
     }
 
     public boolean canRead() {
-	return (isFileSystem() ? super.canRead() : true);	// ((Fix?))
+        return (isFileSystem() ? super.canRead() : true);       // ((Fix?))
     }
 
     /**
@@ -290,69 +290,69 @@ public abstract class ShellFolder extends File {
      * folder.
      */
     public boolean canWrite() {
-	return (isFileSystem() ? super.canWrite() : false);	// ((Fix?))
+        return (isFileSystem() ? super.canWrite() : false);     // ((Fix?))
     }
 
     public boolean exists() {
-	// Assume top-level drives exist, because state is uncertain for
-	// removable drives.
-	return (!isFileSystem() || isFileSystemRoot(this) || super.exists()) ;
+        // Assume top-level drives exist, because state is uncertain for
+        // removable drives.
+        return (!isFileSystem() || isFileSystemRoot(this) || super.exists()) ;
     }
 
     public boolean isDirectory() {
-	return (isFileSystem() ? super.isDirectory() : true);	// ((Fix?))
+        return (isFileSystem() ? super.isDirectory() : true);   // ((Fix?))
     }
 
     public boolean isFile() {
-	return (isFileSystem() ? super.isFile() : !isDirectory());	// ((Fix?))
+        return (isFileSystem() ? super.isFile() : !isDirectory());      // ((Fix?))
     }
 
     public long lastModified() {
-	return (isFileSystem() ? super.lastModified() : 0L);	// ((Fix?))
+        return (isFileSystem() ? super.lastModified() : 0L);    // ((Fix?))
     }
 
     public long length() {
-	return (isFileSystem() ? super.length() : 0L);	// ((Fix?))
+        return (isFileSystem() ? super.length() : 0L);  // ((Fix?))
     }
 
     public boolean createNewFile() throws IOException {
-	return (isFileSystem() ? super.createNewFile() : false);
+        return (isFileSystem() ? super.createNewFile() : false);
     }
 
     public boolean delete() {
-	return (isFileSystem() ? super.delete() : false);	// ((Fix?))
+        return (isFileSystem() ? super.delete() : false);       // ((Fix?))
     }
 
     public void deleteOnExit() {
-	if (isFileSystem()) {
-	    super.deleteOnExit();
-	} else {
-	    // Do nothing	// ((Fix?))
-	}
+        if (isFileSystem()) {
+            super.deleteOnExit();
+        } else {
+            // Do nothing       // ((Fix?))
+        }
     }
 
     public boolean mkdir() {
-	return (isFileSystem() ? super.mkdir() : false);
+        return (isFileSystem() ? super.mkdir() : false);
     }
 
     public boolean mkdirs() {
-	return (isFileSystem() ? super.mkdirs() : false);
+        return (isFileSystem() ? super.mkdirs() : false);
     }
 
     public boolean renameTo(File dest) {
-	return (isFileSystem() ? super.renameTo(dest) : false); // ((Fix?))
+        return (isFileSystem() ? super.renameTo(dest) : false); // ((Fix?))
     }
 
     public boolean setLastModified(long time) {
-	return (isFileSystem() ? super.setLastModified(time) : false); // ((Fix?))
+        return (isFileSystem() ? super.setLastModified(time) : false); // ((Fix?))
     }
 
     public boolean setReadOnly() {
-	return (isFileSystem() ? super.setReadOnly() : false); // ((Fix?))
+        return (isFileSystem() ? super.setReadOnly() : false); // ((Fix?))
     }
 
     public String toString() {
-	return (isFileSystem() ? super.toString() : getDisplayName());
+        return (isFileSystem() ? super.toString() : getDisplayName());
     }
 
     public static ShellFolderColumnInfo[] getFolderColumns(File dir) {

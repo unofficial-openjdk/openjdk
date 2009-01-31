@@ -46,15 +46,15 @@ Java_sun_java2d_loops_MaskFill_MaskFill
 
     pPrim = GetNativePrim(env, self);
     if (pPrim == NULL) {
-	return;
+        return;
     }
     if (pPrim->pCompType->getCompInfo != NULL) {
-	(*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
+        (*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
     }
 
     sdOps = SurfaceData_GetOps(env, sData);
     if (sdOps == 0) {
-	return;
+        return;
     }
 
     rasInfo.bounds.x1 = x;
@@ -62,37 +62,37 @@ Java_sun_java2d_loops_MaskFill_MaskFill
     rasInfo.bounds.x2 = x + w;
     rasInfo.bounds.y2 = y + h;
     if (sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags) != SD_SUCCESS) {
-	return;
+        return;
     }
 
     if (rasInfo.bounds.x2 > rasInfo.bounds.x1 &&
-	rasInfo.bounds.y2 > rasInfo.bounds.y1)
+        rasInfo.bounds.y2 > rasInfo.bounds.y1)
     {
-	jint color = GrPrim_Sg2dGetEaRGB(env, sg2d);
-	sdOps->GetRasInfo(env, sdOps, &rasInfo);
-	if (rasInfo.rasBase) {
-	    jint width = rasInfo.bounds.x2 - rasInfo.bounds.x1;
-	    jint height = rasInfo.bounds.y2 - rasInfo.bounds.y1;
-	    void *pDst = PtrCoord(rasInfo.rasBase,
-				  rasInfo.bounds.x1, rasInfo.pixelStride,
-				  rasInfo.bounds.y1, rasInfo.scanStride);
-	    unsigned char *pMask =
-		(maskArray
-		 ? (*env)->GetPrimitiveArrayCritical(env, maskArray, 0)
-		 : 0);
+        jint color = GrPrim_Sg2dGetEaRGB(env, sg2d);
+        sdOps->GetRasInfo(env, sdOps, &rasInfo);
+        if (rasInfo.rasBase) {
+            jint width = rasInfo.bounds.x2 - rasInfo.bounds.x1;
+            jint height = rasInfo.bounds.y2 - rasInfo.bounds.y1;
+            void *pDst = PtrCoord(rasInfo.rasBase,
+                                  rasInfo.bounds.x1, rasInfo.pixelStride,
+                                  rasInfo.bounds.y1, rasInfo.scanStride);
+            unsigned char *pMask =
+                (maskArray
+                 ? (*env)->GetPrimitiveArrayCritical(env, maskArray, 0)
+                 : 0);
             maskoff += ((rasInfo.bounds.y1 - y) * maskscan +
-			(rasInfo.bounds.x1 - x));
-	    (*pPrim->funcs.maskfill)(pDst,
-				     pMask, maskoff, maskscan,
-				     width, height,
-				     color, &rasInfo,
-				     pPrim, &compInfo);
-	    if (pMask) {
-		(*env)->ReleasePrimitiveArrayCritical(env, maskArray,
-						      pMask, JNI_ABORT);
-	    }
-	}
-	SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
+                        (rasInfo.bounds.x1 - x));
+            (*pPrim->funcs.maskfill)(pDst,
+                                     pMask, maskoff, maskscan,
+                                     width, height,
+                                     color, &rasInfo,
+                                     pPrim, &compInfo);
+            if (pMask) {
+                (*env)->ReleasePrimitiveArrayCritical(env, maskArray,
+                                                      pMask, JNI_ABORT);
+            }
+        }
+        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
     }
     SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
 }

@@ -61,7 +61,7 @@ public class Agent {
     private static final String SNMP_PORT =
         "com.sun.management.snmp.port";
     private static final String JMXREMOTE =
-	"com.sun.management.jmxremote";
+        "com.sun.management.jmxremote";
     private static final String JMXREMOTE_PORT =
         "com.sun.management.jmxremote.port";
     private static final String ENABLE_THREAD_CONTENTION_MONITORING =
@@ -71,16 +71,16 @@ public class Agent {
 
     // invoked by -javaagent or -Dcom.sun.management.agent.class
     public static void premain(String args) throws Exception {
-	agentmain(args);
+        agentmain(args);
     }
 
     // invoked by attach mechanism
     public static void agentmain(String args) throws Exception {
-	if (args == null || args.length() == 0) {
-	    args = JMXREMOTE;		// default to local management
-	}
+        if (args == null || args.length() == 0) {
+            args = JMXREMOTE;           // default to local management
+        }
 
-	// Parse agent options into properties
+        // Parse agent options into properties
 
         Properties arg_props = new Properties();
         if (args != null) {
@@ -92,30 +92,30 @@ public class Agent {
                     String value = (option.length == 1) ? "" : option[1];
                     if (name != null && name.length() > 0) {
 
-			// Assume that any com.sun.management.* options are okay
-			if (name.startsWith("com.sun.management.")) {
+                        // Assume that any com.sun.management.* options are okay
+                        if (name.startsWith("com.sun.management.")) {
                             arg_props.setProperty(name, value);
-			} else {
-			    error(INVALID_OPTION, name);
-			}
+                        } else {
+                            error(INVALID_OPTION, name);
+                        }
                     }
                 }
             }
         }
 
-	// Read properties from the config file 
-	Properties config_props = new Properties();
-	String fname = arg_props.getProperty(CONFIG_FILE);
-	readConfiguration(fname, config_props);
+        // Read properties from the config file
+        Properties config_props = new Properties();
+        String fname = arg_props.getProperty(CONFIG_FILE);
+        readConfiguration(fname, config_props);
 
-	// Arguments override config file
-	config_props.putAll(arg_props);
-	startAgent(config_props);
+        // Arguments override config file
+        config_props.putAll(arg_props);
+        startAgent(config_props);
     }
 
     private static void startAgent(Properties props) throws Exception {
         String snmpPort = props.getProperty(SNMP_PORT);
-	String jmxremote = props.getProperty(JMXREMOTE);
+        String jmxremote = props.getProperty(JMXREMOTE);
         String jmxremotePort = props.getProperty(JMXREMOTE_PORT);
 
         // Enable optional monitoring functionality if requested
@@ -131,39 +131,39 @@ public class Agent {
                 AdaptorBootstrap.initialize(snmpPort, props);
             }
 
-	    /*
-	     * If the jmxremote.port property is set then we start the
-	     * RMIConnectorServer for remote M&M.	
-	     * 
-	     * If the jmxremote or jmxremote.port properties are set then
-	     * we start a RMIConnectorServer for local M&M. The address
-	     * of this "local" server is exported as a counter to the jstat
-	     * instrumentation buffer.
-	     */
+            /*
+             * If the jmxremote.port property is set then we start the
+             * RMIConnectorServer for remote M&M.
+             *
+             * If the jmxremote or jmxremote.port properties are set then
+             * we start a RMIConnectorServer for local M&M. The address
+             * of this "local" server is exported as a counter to the jstat
+             * instrumentation buffer.
+             */
             if (jmxremote != null || jmxremotePort != null) {
-		if (jmxremotePort != null) {
+                if (jmxremotePort != null) {
                     ConnectorBootstrap.initialize(jmxremotePort, props);
-		}
+                }
 
                 Properties agentProps = VMSupport.getAgentProperties();
                 // start local connector if not started
-                // System.out.println("local address : " + 
+                // System.out.println("local address : " +
                   //     agentProps.get(LOCAL_CONNECTOR_ADDRESS_PROP));
                 if (agentProps.get(LOCAL_CONNECTOR_ADDRESS_PROP) == null) {
-	  	    JMXConnectorServer cs = ConnectorBootstrap.startLocalConnectorServer();
+                    JMXConnectorServer cs = ConnectorBootstrap.startLocalConnectorServer();
                     String address = cs.getAddress().toString();
                     // Add the local connector address to the agent properties
                     agentProps.put(LOCAL_CONNECTOR_ADDRESS_PROP, address);
 
-        	    try {
+                    try {
                         // export the address to the instrumentation buffer
-        	        ConnectorAddressLink.export(address);
-        	    } catch (Exception x) {
-        	        // Connector server started but unable to export address
-        	        // to instrumentation buffer - non-fatal error.
-        	        warning(EXPORT_ADDRESS_FAILED, x.getMessage());
+                        ConnectorAddressLink.export(address);
+                    } catch (Exception x) {
+                        // Connector server started but unable to export address
+                        // to instrumentation buffer - non-fatal error.
+                        warning(EXPORT_ADDRESS_FAILED, x.getMessage());
                     }
-        	}
+                }
             }
         } catch (AgentConfigurationError e) {
             error(e.getError(), e.getParams());
@@ -174,13 +174,13 @@ public class Agent {
 
     public static Properties loadManagementProperties() {
         Properties props = new Properties();
-    
+
         // Load the management properties from the config file
 
-	String fname = System.getProperty(CONFIG_FILE);
+        String fname = System.getProperty(CONFIG_FILE);
         readConfiguration(fname, props);
 
-        // management properties can be overridden by system properties 
+        // management properties can be overridden by system properties
         // which take precedence
         props.putAll(System.getProperties());
 
@@ -191,10 +191,10 @@ public class Agent {
         if (mgmtProps == null) {
             String configFile = System.getProperty(CONFIG_FILE);
             String snmpPort = System.getProperty(SNMP_PORT);
-	    String jmxremote = System.getProperty(JMXREMOTE);
+            String jmxremote = System.getProperty(JMXREMOTE);
             String jmxremotePort = System.getProperty(JMXREMOTE_PORT);
 
-            if (configFile == null && snmpPort == null && 
+            if (configFile == null && snmpPort == null &&
                 jmxremote == null && jmxremotePort == null) {
                 // return if out-of-the-management option is not specified
                 return null;
@@ -248,19 +248,19 @@ public class Agent {
     public static void startAgent() throws Exception {
         String prop = System.getProperty("com.sun.management.agent.class");
 
-	// -Dcom.sun.management.agent.class not set so read management
-	// properties and start agent
-	if (prop == null) {
+        // -Dcom.sun.management.agent.class not set so read management
+        // properties and start agent
+        if (prop == null) {
             // initialize management properties
             Properties props = getManagementProperties();
             if (props != null) {
-	        startAgent(props);
-	    }
-	    return;
-	}
-        
+                startAgent(props);
+            }
+            return;
+        }
+
         // -Dcom.sun.management.agent.class=<agent classname>:<agent args>
-        String[] values = prop.split(":"); 
+        String[] values = prop.split(":");
         if (values.length < 1 || values.length > 2) {
             error(AGENT_CLASS_INVALID, "\"" + prop + "\"");
         }
@@ -273,10 +273,10 @@ public class Agent {
 
         if (cname != null) {
             try {
-                // Instantiate the named class. 
+                // Instantiate the named class.
                 // invoke the premain(String args) method
                 Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(cname);
-                Method premain = clz.getMethod("premain", 
+                Method premain = clz.getMethod("premain",
                                                new Class[] { String.class });
                 premain.invoke(null, /* static */
                                new Object[] { args });
@@ -287,8 +287,8 @@ public class Agent {
             } catch (SecurityException ex) {
                 error(AGENT_CLASS_ACCESS_DENIED);
             } catch (Exception ex) {
-                String msg = (ex.getCause() == null 
-                                 ? ex.getMessage() 
+                String msg = (ex.getCause() == null
+                                 ? ex.getMessage()
                                  : ex.getCause().getMessage());
                 error(AGENT_CLASS_FAILED, msg);
             }
@@ -296,9 +296,9 @@ public class Agent {
     }
 
     public static void error(String key) {
-	String keyText = getText(key);
+        String keyText = getText(key);
         System.err.print(getText("agent.err.error") + ": " + keyText);
-	throw new RuntimeException(keyText);
+        throw new RuntimeException(keyText);
     }
 
     public static void error(String key, String[] params) {
@@ -315,21 +315,21 @@ public class Agent {
 
 
     public static void error(String key, String message) {
-	String keyText = getText(key);
+        String keyText = getText(key);
         System.err.print(getText("agent.err.error") + ": " + keyText);
         System.err.println(": " + message);
-	throw new RuntimeException(keyText);
+        throw new RuntimeException(keyText);
     }
 
     public static void error(Exception e) {
         e.printStackTrace();
         System.err.println(getText(AGENT_EXCEPTION) + ": " + e.toString());
-	throw new RuntimeException(e);
+        throw new RuntimeException(e);
     }
 
     public static void warning(String key, String message) {
         System.err.print(getText("agent.err.warning") + ": " + getText(key));
-	System.err.println(": " + message);
+        System.err.println(": " + message);
     }
 
     private static void initResource() {
@@ -356,12 +356,12 @@ public class Agent {
         if (messageRB == null) {
             initResource();
         }
-	String format = messageRB.getString(key);
-	if (format == null) {
-	    format = "missing resource key: key = \"" + key + "\", " +
-		"arguments = \"{0}\", \"{1}\", \"{2}\"";
-	}
-	return MessageFormat.format(format, (Object[]) args);
+        String format = messageRB.getString(key);
+        if (format == null) {
+            format = "missing resource key: key = \"" + key + "\", " +
+                "arguments = \"{0}\", \"{1}\", \"{2}\"";
+        }
+        return MessageFormat.format(format, (Object[]) args);
     }
 
 }

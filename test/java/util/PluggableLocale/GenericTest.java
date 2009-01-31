@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -56,9 +56,9 @@ public class GenericTest {
     void availableLocalesTest() {
         // Check that Locale.getAvailableLocales() returns the union of the JRE supported
         // locales and providers' locales
-        HashSet<Locale> result = 
+        HashSet<Locale> result =
             new HashSet<Locale>(Arrays.asList(Locale.getAvailableLocales()));
-        HashSet<Locale> expected = 
+        HashSet<Locale> expected =
             new HashSet<Locale>(Arrays.asList(LocaleData.getAvailableLocales()));
         expected.addAll(Arrays.asList(breakIP.getAvailableLocales()));
         expected.addAll(Arrays.asList(collatorP.getAvailableLocales()));
@@ -75,7 +75,7 @@ public class GenericTest {
     }
 
     /**
-     * test with "xx_YY_ZZ", which is an example locale not contained 
+     * test with "xx_YY_ZZ", which is an example locale not contained
      * in Locale.getAvailableLocales().  Fallback tests for supported locales
      * are done in each xxxProviderTest test cases.
      */

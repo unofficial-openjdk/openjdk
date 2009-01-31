@@ -69,15 +69,15 @@ public class SimpleServer
       Socket ctrlSock = skMain.accept();
 
       BufferedReader ctrlReader =
-	new BufferedReader(new InputStreamReader(ctrlSock.getInputStream()));
+        new BufferedReader(new InputStreamReader(ctrlSock.getInputStream()));
       String ctrlString = ctrlReader.readLine();
       bytesToRead = Integer.valueOf(ctrlString).intValue();
       ctrlString = ctrlReader.readLine();
       totalConn = Integer.valueOf(ctrlString).intValue();
 
       System.out.println("Receiving " + bytesToRead + " bytes from " +
-			 totalConn + " client connections");
-      
+                         totalConn + " client connections");
+
       timestart = System.currentTimeMillis();
 
       /*
@@ -86,18 +86,18 @@ public class SimpleServer
       ConnHandler[] connHA = new ConnHandler[MAXCONN];
       int conn = 0;
       while ( conn < totalConn ) {
-	  Socket sock = skMain.accept();
-	  connHA[conn] = new ConnHandler(sock.getInputStream());
-	  connHA[conn].start();
-	  conn++;
+          Socket sock = skMain.accept();
+          connHA[conn] = new ConnHandler(sock.getInputStream());
+          connHA[conn].start();
+          conn++;
       }
 
       while ( bytesRead < bytesToRead ) {
-	  java.lang.Thread.sleep(500);
+          java.lang.Thread.sleep(500);
       }
       timestop = System.currentTimeMillis();
       System.out.println("Time for all reads (" + totalConn +
-			 " sockets) : " + (timestop-timestart));
+                         " sockets) : " + (timestop-timestart));
       // Tell the client it can now go away
       byte[] buff = new byte[BYTESPEROP];
       ctrlSock.getOutputStream().write(buff,0,BYTESPEROP);
@@ -121,30 +121,29 @@ public class SimpleServer
 
     public void run() {
       try {
-	int bytes;
-	byte[] buff = new byte[BYTESPEROP];
-	
-	while ( bytesRead < bytesToRead ) {
-	  bytes = instr.read (buff, 0, BYTESPEROP);
-	  if (bytes > 0 ) {
-	    synchronized(eventSync) {
-	      bytesRead += bytes; 
-	    }
-	    /*
-	     * Any real server would do some synchronized and some
-	     * unsynchronized work on behalf of the client, and
-	     * most likely send some data back...but this is a
-	     * gross oversimplification.
-	     */
-	  }
-	  else {
-	    if (bytesRead < bytesToRead)
-	      System.out.println("instr.read returned : " + bytes);
-	  }
-	}
+        int bytes;
+        byte[] buff = new byte[BYTESPEROP];
+
+        while ( bytesRead < bytesToRead ) {
+          bytes = instr.read (buff, 0, BYTESPEROP);
+          if (bytes > 0 ) {
+            synchronized(eventSync) {
+              bytesRead += bytes;
+            }
+            /*
+             * Any real server would do some synchronized and some
+             * unsynchronized work on behalf of the client, and
+             * most likely send some data back...but this is a
+             * gross oversimplification.
+             */
+          }
+          else {
+            if (bytesRead < bytesToRead)
+              System.out.println("instr.read returned : " + bytes);
+          }
+        }
       }
       catch (Exception e) {e.printStackTrace();}
     }
   }
-}  
-
+}

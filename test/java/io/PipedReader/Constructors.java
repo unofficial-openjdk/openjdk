@@ -23,8 +23,8 @@
 
 /**
  * @test
- * @bug 4028462 
- * @summary Test for new constructors that set the pipe size 
+ * @bug 4028462
+ * @summary Test for new constructors that set the pipe size
  */
 
 import java.io.*;
@@ -36,18 +36,18 @@ public class Constructors extends Thread {
     static int pipeSize = totalToWrite;
 
     public void run() {
-	try {
-	    for (int times = (totalToWrite / pipeSize); times > 0; times--) {
-		System.out.println("Reader reading...");
-            	int read = in.read(new char[pipeSize]);
-	    	System.out.println("read: " + read);
-		if (read < pipeSize) {
-		    throw new Exception("Pipe Size is not set to:" + pipeSize);
-		}
-	    }
+        try {
+            for (int times = (totalToWrite / pipeSize); times > 0; times--) {
+                System.out.println("Reader reading...");
+                int read = in.read(new char[pipeSize]);
+                System.out.println("read: " + read);
+                if (read < pipeSize) {
+                    throw new Exception("Pipe Size is not set to:" + pipeSize);
+                }
+            }
         } catch (Throwable e) {
-	    System.out.println("Reader exception:");
-	    e.printStackTrace();
+            System.out.println("Reader exception:");
+            e.printStackTrace();
         } finally {
             System.out.println("Reader done.");
         }
@@ -55,32 +55,32 @@ public class Constructors extends Thread {
 
     public static void main(String args[]) throws Exception {
 
-	in = new PipedReader(pipeSize);
-      	out = new PipedWriter(in);
-	testPipe();
+        in = new PipedReader(pipeSize);
+        out = new PipedWriter(in);
+        testPipe();
 
-      	out = new PipedWriter();
-	in = new PipedReader(out, pipeSize);
-	testPipe();
+        out = new PipedWriter();
+        in = new PipedReader(out, pipeSize);
+        testPipe();
    }
 
 
    private static void testPipe() throws Exception {
-	Constructors reader = new Constructors();
-	reader.start();
+        Constructors reader = new Constructors();
+        reader.start();
 
-	try {
-	    System.out.println("Writer started.");
+        try {
+            System.out.println("Writer started.");
             out.write(new char[totalToWrite]);
         } catch (Throwable e) {
-	    System.out.println("Writer exception:");
-	    e.printStackTrace();
-	} finally {
-	    out.close();
-	    System.out.println("Waiting for reader...");
-	    reader.join();
-	    in.close();
-	    System.out.println("Done.");
-    	}
+            System.out.println("Writer exception:");
+            e.printStackTrace();
+        } finally {
+            out.close();
+            System.out.println("Waiting for reader...");
+            reader.join();
+            in.close();
+            System.out.println("Done.");
+        }
     }
 }

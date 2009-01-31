@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 /*
  * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
@@ -1381,7 +1379,7 @@ public class CollationData_ja extends ListResourceBundle {
                 //  (1)Level 3 and 4 kanji characters are sorted after jisx0208
                 //     kanji (Level 1 and 2 kanji)
                 //  (2)In each level, characters are sorted by JIS order
-                //  (3)"JIS X 0213 compatibility additions" characters 
+                //  (3)"JIS X 0213 compatibility additions" characters
                 //     0xfa30-0xfa6a have been purposely removed from the rules,
                 //     they will be added later during rule table initialization
                 //     by using the order value of their corresponding canonical

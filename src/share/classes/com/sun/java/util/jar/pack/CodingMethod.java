@@ -30,7 +30,6 @@ import java.io.*;
 /**
  * Interface for encoding and decoding int arrays using bytewise codes.
  * @author John Rose
- * @version %I%, %G%
  */
 interface CodingMethod {
     // Read and write an array of ints from/to a stream.

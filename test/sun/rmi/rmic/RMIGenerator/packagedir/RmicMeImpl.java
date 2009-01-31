@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,7 +36,7 @@ class RmicMeImpl
     implements packagedir.RmicMeInterface
 {
     public RmicMeImpl()
-	throws RemoteException
+        throws RemoteException
     {
     }
 }

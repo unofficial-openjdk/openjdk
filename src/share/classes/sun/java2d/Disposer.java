@@ -39,7 +39,7 @@ import java.util.Hashtable;
  * methods and providing either the pointer to the native disposal
  * method or a descendant of the DisposerRecord class with overridden
  * dispose() method.
- * 
+ *
  * When the object becomes unreachable, the dispose() method
  * of the associated DisposerRecord object will be called.
  *
@@ -57,19 +57,19 @@ public class Disposer implements Runnable {
     static {
         java.security.AccessController.doPrivileged(
             new sun.security.action.LoadLibraryAction("awt"));
-	initIDs();
-	String type = (String) java.security.AccessController.doPrivileged(
-		new sun.security.action.GetPropertyAction("sun.java2d.reftype"));
-	if (type != null) {
-	    if (type.equals("weak")) {
-		refType = WEAK;
-		System.err.println("Using WEAK refs");
-	    } else {
-		refType = PHANTOM;
-		System.err.println("Using PHANTOM refs");
-	    }
-	}
-	disposerInstance = new Disposer();
+        initIDs();
+        String type = (String) java.security.AccessController.doPrivileged(
+                new sun.security.action.GetPropertyAction("sun.java2d.reftype"));
+        if (type != null) {
+            if (type.equals("weak")) {
+                refType = WEAK;
+                System.err.println("Using WEAK refs");
+            } else {
+                refType = PHANTOM;
+                System.err.println("Using PHANTOM refs");
+            }
+        }
+        disposerInstance = new Disposer();
         java.security.AccessController.doPrivileged(
             new java.security.PrivilegedAction() {
                 public Object run() {
@@ -78,10 +78,10 @@ public class Disposer implements Runnable {
                      * Make its parent the top-level thread group.
                      */
                     ThreadGroup tg = Thread.currentThread().getThreadGroup();
-                    for (ThreadGroup tgn = tg; 
-                         tgn != null; 
+                    for (ThreadGroup tgn = tg;
+                         tgn != null;
                          tg = tgn, tgn = tg.getParent());
-                    Thread t = 
+                    Thread t =
                         new Thread(tg, disposerInstance, "Java2D Disposer");
                     t.setDaemon(true);
                     t.setPriority(Thread.MAX_PRIORITY);
@@ -100,10 +100,10 @@ public class Disposer implements Runnable {
      *              native disposal method
      */
     public static void addRecord(Object target,
-				 long disposeMethod, long pData)
+                                 long disposeMethod, long pData)
     {
-	disposerInstance.add(target,
-			     new DefaultDisposerRecord(disposeMethod, pData));
+        disposerInstance.add(target,
+                             new DefaultDisposerRecord(disposeMethod, pData));
     }
 
     /**
@@ -113,7 +113,7 @@ public class Disposer implements Runnable {
      * @see DisposerRecord
      */
     public static void addRecord(Object target, DisposerRecord rec) {
-	disposerInstance.add(target, rec);
+        disposerInstance.add(target, rec);
     }
 
     /**
@@ -128,12 +128,12 @@ public class Disposer implements Runnable {
         if (target instanceof DisposerTarget) {
             target = ((DisposerTarget)target).getDisposerReferent();
         }
-	java.lang.ref.Reference ref;
-	if (refType == PHANTOM) {
+        java.lang.ref.Reference ref;
+        if (refType == PHANTOM) {
             ref = new PhantomReference(target, queue);
-	} else {
+        } else {
             ref = new WeakReference(target, queue);
-	}
+        }
         records.put(ref, rec);
     }
 
@@ -143,12 +143,12 @@ public class Disposer implements Runnable {
                 Object obj = queue.remove();
                 ((Reference)obj).clear();
                 DisposerRecord rec = (DisposerRecord)records.remove(obj);
-		rec.dispose();
+                rec.dispose();
                 obj = null;
                 rec = null;
             } catch (Exception e) {
                 System.out.println("Exception while removing reference: " + e);
-		e.printStackTrace();
+                e.printStackTrace();
             }
         }
     }
@@ -164,17 +164,17 @@ public class Disposer implements Runnable {
      * the reference queue.
      */
     public static void addReference(Reference ref, DisposerRecord rec) {
-	records.put(ref, rec);
+        records.put(ref, rec);
     }
 
     public static void addObjectRecord(Object obj, DisposerRecord rec) {
-	records.put(new WeakReference(obj, queue) , rec);
+        records.put(new WeakReference(obj, queue) , rec);
     }
 
     /* This is intended for use in conjunction with addReference(..)
      */
     public static ReferenceQueue getQueue() {
-	return queue;
+        return queue;
     }
 
 }

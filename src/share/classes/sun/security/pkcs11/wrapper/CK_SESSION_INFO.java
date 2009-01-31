@@ -102,10 +102,10 @@ public class CK_SESSION_INFO {
 
     public CK_SESSION_INFO(long slotID, long state,
                            long flags, long ulDeviceError) {
-	this.slotID = slotID;
-	this.state = state;
-	this.flags = flags;
-	this.ulDeviceError = ulDeviceError;
+        this.slotID = slotID;
+        this.state = state;
+        this.flags = flags;
+        this.ulDeviceError = ulDeviceError;
     }
 
     /**
@@ -114,29 +114,29 @@ public class CK_SESSION_INFO {
      * @return the string representation of CK_SESSION_INFO
      */
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer();
 
-	buffer.append(Constants.INDENT);
-	buffer.append("slotID: ");
-	buffer.append(String.valueOf(slotID));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("slotID: ");
+        buffer.append(String.valueOf(slotID));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("state: ");
-	buffer.append(Functions.sessionStateToString(state));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("state: ");
+        buffer.append(Functions.sessionStateToString(state));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("flags: ");
-	buffer.append(Functions.sessionInfoFlagsToString(flags));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("flags: ");
+        buffer.append(Functions.sessionInfoFlagsToString(flags));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("ulDeviceError: ");
-	buffer.append(Functions.toHexString(ulDeviceError));
-	//buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("ulDeviceError: ");
+        buffer.append(Functions.toHexString(ulDeviceError));
+        //buffer.append(Constants.NEWLINE);
 
-	return buffer.toString() ;
+        return buffer.toString() ;
     }
 
 }

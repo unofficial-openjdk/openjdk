@@ -39,7 +39,7 @@ import org.w3c.dom.NodeList;
 public class HelperNodeList implements NodeList {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
     java.util.logging.Logger.getLogger(HelperNodeList.class.getName());
 
    /** Field nodes */
@@ -48,13 +48,13 @@ public class HelperNodeList implements NodeList {
    boolean _allNodesMustHaveSameParent = false;
 
    /**
-    * 
+    *
     */
    public HelperNodeList() {
       this(false);
    }
 
-   
+
    /**
     * @param allNodesMustHaveSameParent
     */

@@ -39,31 +39,30 @@ import com.sun.crypto.provider.*;
 public class TestWithoutInit {
 
     public static void main(String argv[]) throws Exception {
-	// Initialization
-	Cipher ci = new NullCipher();
+        // Initialization
+        Cipher ci = new NullCipher();
 
-	byte[] in = new byte[8];
+        byte[] in = new byte[8];
 
-	// try calling doFinal() directly
-	ci.doFinal(in);
+        // try calling doFinal() directly
+        ci.doFinal(in);
 
-	// try calling update() directly
-	ci.update(in);
-	ci.doFinal(); // reset cipher state
+        // try calling update() directly
+        ci.update(in);
+        ci.doFinal(); // reset cipher state
 
-	// try calling wrap() and unwrap() directly
-	Key key = new SecretKeySpec(in, "any");
-	try {
-	    ci.wrap(key);
-	} catch (UnsupportedOperationException uoe) {
-	    // expected
-	}
-	try {
-	    ci.unwrap(in, "any", Cipher.SECRET_KEY);
-	} catch (UnsupportedOperationException uoe) {
-	    // expected
-	}
-	System.out.println("Test Passed");
+        // try calling wrap() and unwrap() directly
+        Key key = new SecretKeySpec(in, "any");
+        try {
+            ci.wrap(key);
+        } catch (UnsupportedOperationException uoe) {
+            // expected
+        }
+        try {
+            ci.unwrap(in, "any", Cipher.SECRET_KEY);
+        } catch (UnsupportedOperationException uoe) {
+            // expected
+        }
+        System.out.println("Test Passed");
     }
 }
-

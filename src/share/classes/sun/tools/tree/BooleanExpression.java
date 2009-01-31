@@ -39,30 +39,30 @@ import java.util.Hashtable;
 public
 class BooleanExpression extends ConstantExpression {
     boolean value;
-    
+
     /**
      * Constructor
      */
     public BooleanExpression(long where, boolean value) {
-	super(BOOLEANVAL, where, Type.tBoolean);
-	this.value = value;
+        super(BOOLEANVAL, where, Type.tBoolean);
+        this.value = value;
     }
 
     /**
      * Get the value
      */
     public Object getValue() {
-	return new Integer(value ? 1 : 0);
+        return new Integer(value ? 1 : 0);
     }
 
     /**
      * Check if the expression is equal to a value
      */
     public boolean equals(boolean b) {
-	return value == b;
+        return value == b;
     }
 
-    
+
     /**
      * Check if the expression is equal to its default static value
      */
@@ -73,27 +73,27 @@ class BooleanExpression extends ConstantExpression {
 
     /*
      * Check a "not" expression.
-     * 
-     * cvars is modified so that 
-     *    cvar.vsTrue indicates variables with a known value if 
+     *
+     * cvars is modified so that
+     *    cvar.vsTrue indicates variables with a known value if
      *         the expression is true.
      *    cvars.vsFalse indicates variables with a known value if
      *         the expression is false
-     * 
+     *
      * For constant expressions, set the side that corresponds to our
      * already known value to vset.  Set the side that corresponds to the
      * other way to "impossible"
      */
 
-    public void checkCondition(Environment env, Context ctx, 
-			       Vset vset, Hashtable exp, ConditionVars cvars) {
-	if (value) { 
-	    cvars.vsFalse = Vset.DEAD_END; 
-	    cvars.vsTrue = vset;
-	} else { 
-	    cvars.vsFalse = vset;
-	    cvars.vsTrue = Vset.DEAD_END;
-	}
+    public void checkCondition(Environment env, Context ctx,
+                               Vset vset, Hashtable exp, ConditionVars cvars) {
+        if (value) {
+            cvars.vsFalse = Vset.DEAD_END;
+            cvars.vsTrue = vset;
+        } else {
+            cvars.vsFalse = vset;
+            cvars.vsTrue = Vset.DEAD_END;
+        }
     }
 
 
@@ -101,18 +101,18 @@ class BooleanExpression extends ConstantExpression {
      * Code
      */
     void codeBranch(Environment env, Context ctx, Assembler asm, Label lbl, boolean whenTrue) {
-	if (value == whenTrue) {
-	    asm.add(where, opc_goto, lbl);
-	}
+        if (value == whenTrue) {
+            asm.add(where, opc_goto, lbl);
+        }
     }
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_ldc, new Integer(value ? 1 : 0));
+        asm.add(where, opc_ldc, new Integer(value ? 1 : 0));
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-	out.print(value ? "true" : "false");
+        out.print(value ? "true" : "false");
     }
 }

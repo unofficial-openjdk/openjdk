@@ -34,23 +34,23 @@ import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 
 /**
- * The mapping in the JavaTM programming language for the SQL XML type. 
- * XML is a built-in type that stores an XML value 
- * as a column value in a row of a database table. 
- * By default drivers implement an SQLXML object as 
- * a logical pointer to the XML data 
- * rather than the data itself. 
- * An SQLXML object is valid for the duration of the transaction in which it was created. 
+ * The mapping in the JavaTM programming language for the SQL XML type.
+ * XML is a built-in type that stores an XML value
+ * as a column value in a row of a database table.
+ * By default drivers implement an SQLXML object as
+ * a logical pointer to the XML data
+ * rather than the data itself.
+ * An SQLXML object is valid for the duration of the transaction in which it was created.
  * <p>
  * The SQLXML interface provides methods for accessing the XML value
  * as a String, a Reader or Writer, or as a Stream.  The XML value
  * may also be accessed through a Source or set as a Result, which
  * are used with XML Parser APIs such as DOM, SAX, and StAX, as
- * well as with XSLT transforms and XPath evaluations. 
+ * well as with XSLT transforms and XPath evaluations.
  * <p>
- * Methods in the interfaces ResultSet, CallableStatement, and PreparedStatement, 
- * such as getSQLXML allow a programmer to access an XML value. 
- * In addition, this interface has methods for updating an XML value. 
+ * Methods in the interfaces ResultSet, CallableStatement, and PreparedStatement,
+ * such as getSQLXML allow a programmer to access an XML value.
+ * In addition, this interface has methods for updating an XML value.
  * <p>
  * The XML value of the SQLXML instance may be obtained as a BinaryStream using
  * <pre>
@@ -73,7 +73,7 @@ import javax.xml.transform.Source;
  *   XMLStreamReader streamReader = factory.createXMLStreamReader(binaryStream);
  * </pre>
  * <p>
- * Because databases may use an optimized representation for the XML, 
+ * Because databases may use an optimized representation for the XML,
  * accessing the value through getSource() and
  * setResult() can lead to improved processing performance
  * without serializing to a stream representation and parsing the XML.
@@ -131,7 +131,7 @@ import javax.xml.transform.Source;
  *   String expression = "/foo/@bar";
  *   String barValue = xpath.evaluate(expression, document);
  * </pre>
- * To set the XML value to be the result of an XSLT transform: 
+ * To set the XML value to be the result of an XSLT transform:
  * <pre>
  *   File sourceFile = new File("source.xml");
  *   Transformer xslt = TransformerFactory.newInstance().newTransformer(new StreamSource(xsltFile));
@@ -157,7 +157,7 @@ import javax.xml.transform.Source;
  * </pre>
  * To create a DOMSource from a DOMResult:
  * <pre>
- *    DOMSource domSource = new DOMSource(domResult.getNode()); 
+ *    DOMSource domSource = new DOMSource(domResult.getNode());
  * </pre>
  * <p>
  * Incomplete or invalid XML values may cause an SQLException when
@@ -179,7 +179,7 @@ import javax.xml.transform.Source;
  * Implementations may also change the state to not readable when this occurs.
  * <p>
   * <p>
- * All methods on the <code>SQLXML</code> interface must be fully implemented if the 
+ * All methods on the <code>SQLXML</code> interface must be fully implemented if the
  * JDBC driver supports the data type.
  *
  * @see javax.xml.parsers
@@ -192,11 +192,11 @@ public interface SQLXML
 {
   /**
    * This method closes this object and releases the resources that it held.
-   * The SQL XML object becomes invalid and neither readable or writeable 
+   * The SQL XML object becomes invalid and neither readable or writeable
    * when this method is called.
    *
    * After <code>free</code> has been called, any attempt to invoke a
-   * method other than <code>free</code> will result in a <code>SQLException</code> 
+   * method other than <code>free</code> will result in a <code>SQLException</code>
    * being thrown.  If <code>free</code> is called multiple times, the subsequent
    * calls to <code>free</code> are treated as a no-op.
    * @throws SQLException if there is an error freeing the XML value.
@@ -207,14 +207,14 @@ public interface SQLXML
   void free() throws SQLException;
 
   /**
-   * Retrieves the XML value designated by this SQLXML instance as a stream.  
-   * The bytes of the input stream are interpreted according to appendix F of the XML 1.0 specification. 
+   * Retrieves the XML value designated by this SQLXML instance as a stream.
+   * The bytes of the input stream are interpreted according to appendix F of the XML 1.0 specification.
    * The behavior of this method is the same as ResultSet.getBinaryStream()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not readable when this method is called and
    * may also become not writable depending on implementation.
-   * 
+   *
    * @return a stream containing the XML data.
    * @throws SQLException if there is an error processing the XML value.
    *   An exception is thrown if the state is not readable.
@@ -223,17 +223,17 @@ public interface SQLXML
    * @since 1.6
    */
   InputStream getBinaryStream() throws SQLException;
-  
+
   /**
-   * Retrieves a stream that can be used to write the XML value that this SQLXML instance represents. 
-   * The stream begins at position 0. 
+   * Retrieves a stream that can be used to write the XML value that this SQLXML instance represents.
+   * The stream begins at position 0.
    * The bytes of the stream are interpreted according to appendix F of the XML 1.0 specification
    * The behavior of this method is the same as ResultSet.updateBinaryStream()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not writeable when this method is called and
    * may also become not readable depending on implementation.
-   * 
+   *
    * @return a stream to which data can be written.
    * @throws SQLException if there is an error processing the XML value.
    *   An exception is thrown if the state is not writable.
@@ -242,48 +242,48 @@ public interface SQLXML
    * @since 1.6
    */
   OutputStream setBinaryStream() throws SQLException;
-  
+
   /**
    * Retrieves the XML value designated by this SQLXML instance as a java.io.Reader object.
    * The format of this stream is defined by org.xml.sax.InputSource,
-   * where the characters in the stream represent the unicode code points for  
+   * where the characters in the stream represent the unicode code points for
    * XML according to section 2 and appendix B of the XML 1.0 specification.
-   * Although an encoding declaration other than unicode may be present, 
+   * Although an encoding declaration other than unicode may be present,
    * the encoding of the stream is unicode.
    * The behavior of this method is the same as ResultSet.getCharacterStream()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not readable when this method is called and
    * may also become not writable depending on implementation.
-   * 
+   *
    * @return a stream containing the XML data.
    * @throws SQLException if there is an error processing the XML value.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if the stream does not contain valid characters. 
+   *   if the stream does not contain valid characters.
    *   An exception is thrown if the state is not readable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
    * @since 1.6
    */
   Reader getCharacterStream() throws SQLException;
-  
+
   /**
    * Retrieves a stream to be used to write the XML value that this SQLXML instance represents.
    * The format of this stream is defined by org.xml.sax.InputSource,
-   * where the characters in the stream represent the unicode code points for  
+   * where the characters in the stream represent the unicode code points for
    * XML according to section 2 and appendix B of the XML 1.0 specification.
-   * Although an encoding declaration other than unicode may be present, 
+   * Although an encoding declaration other than unicode may be present,
    * the encoding of the stream is unicode.
    * The behavior of this method is the same as ResultSet.updateCharacterStream()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not writeable when this method is called and
    * may also become not readable depending on implementation.
-   * 
+   *
    * @return a stream to which data can be written.
    * @throws SQLException if there is an error processing the XML value.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if the stream does not contain valid characters. 
+   *   if the stream does not contain valid characters.
    *   An exception is thrown if the state is not writable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
@@ -294,51 +294,51 @@ public interface SQLXML
   /**
    * Returns a string representation of the XML value designated by this SQLXML instance.
    * The format of this String is defined by org.xml.sax.InputSource,
-   * where the characters in the stream represent the unicode code points for  
+   * where the characters in the stream represent the unicode code points for
    * XML according to section 2 and appendix B of the XML 1.0 specification.
-   * Although an encoding declaration other than unicode may be present, 
+   * Although an encoding declaration other than unicode may be present,
    * the encoding of the String is unicode.
    * The behavior of this method is the same as ResultSet.getString()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not readable when this method is called and
    * may also become not writable depending on implementation.
-   * 
+   *
    * @return a string representation of the XML value designated by this SQLXML instance.
    * @throws SQLException if there is an error processing the XML value.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if the stream does not contain valid characters. 
+   *   if the stream does not contain valid characters.
    *   An exception is thrown if the state is not readable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
    * @since 1.6
    */
-  String getString() throws SQLException; 
-  
+  String getString() throws SQLException;
+
   /**
-   * Sets the XML value designated by this SQLXML instance to the given String representation. 
+   * Sets the XML value designated by this SQLXML instance to the given String representation.
    * The format of this String is defined by org.xml.sax.InputSource,
-   * where the characters in the stream represent the unicode code points for  
+   * where the characters in the stream represent the unicode code points for
    * XML according to section 2 and appendix B of the XML 1.0 specification.
-   * Although an encoding declaration other than unicode may be present, 
+   * Although an encoding declaration other than unicode may be present,
    * the encoding of the String is unicode.
    * The behavior of this method is the same as ResultSet.updateString()
    * when the designated column of the ResultSet has a type java.sql.Types of SQLXML.
    * <p>
    * The SQL XML object becomes not writeable when this method is called and
    * may also become not readable depending on implementation.
-   * 
+   *
    * @param value the XML value
    * @throws SQLException if there is an error processing the XML value.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if the stream does not contain valid characters. 
+   *   if the stream does not contain valid characters.
    *   An exception is thrown if the state is not writable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
    * @since 1.6
    */
-  void setString(String value) throws SQLException; 
-  
+  void setString(String value) throws SQLException;
+
   /**
    * Returns a Source for reading the XML value designated by this SQLXML instance.
    * Sources are used as inputs to XML parsers and XSLT transformers.
@@ -359,8 +359,8 @@ public interface SQLXML
    *   xmlReader.setContentHandler(myHandler);
    *   xmlReader.parse(saxSource.getInputSource());
    * </pre>
-   * 
-   * @param sourceClass The class of the source, or null.  
+   *
+   * @param sourceClass The class of the source, or null.
    * If the class is null, a vendor specifc Source implementation will be returned.
    * The following classes are supported at a minimum:
    * <pre>
@@ -373,7 +373,7 @@ public interface SQLXML
    * @throws SQLException if there is an error processing the XML value
    *   or if this feature is not supported.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if an XML parser exception occurs. 
+   *   if an XML parser exception occurs.
    *   An exception is thrown if the state is not readable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
@@ -390,7 +390,7 @@ public interface SQLXML
    * may also become not readable depending on implementation.
    * <p>
    * Note that SAX is a callback architecture and the returned
-   * SAXResult has a content handler assigned that will receive the 
+   * SAXResult has a content handler assigned that will receive the
    * SAX events based on the contents of the XML.  Call the content
    * handler with the contents of the XML document to assign the values.
    * <pre>
@@ -400,8 +400,8 @@ public interface SQLXML
    *   // set the XML elements and attributes into the result
    *   contentHandler.endDocument();
    * </pre>
-   * 
-   * @param resultClass The class of the result, or null.  
+   *
+   * @param resultClass The class of the result, or null.
    * If resultClass is null, a vendor specific Result implementation will be returned.
    * The following classes are supported at a minimum:
    * <pre>
@@ -414,7 +414,7 @@ public interface SQLXML
    * @throws SQLException if there is an error processing the XML value
    *   or if this feature is not supported.
    *   The getCause() method of the exception may provide a more detailed exception, for example,
-   *   if an XML parser exception occurs. 
+   *   if an XML parser exception occurs.
    *   An exception is thrown if the state is not writable.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method

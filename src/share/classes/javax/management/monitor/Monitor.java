@@ -209,7 +209,7 @@ public abstract class Monitor
                             "<static initializer>",
                             maximumPoolSizeSysProp + " defaults to 10");
                 }
-                maximumPoolSizeTmp = 10;                
+                maximumPoolSizeTmp = 10;
             }
             if (maximumPoolSizeTmp < 1) {
                 maximumPoolSize = 1;
@@ -1461,7 +1461,7 @@ public abstract class Monitor
                              trigger,
                              object,
                              true);
-        
+
         // Notify monitor alarms
         //
         if (alarm != null && alarm.getType() != null)
@@ -1476,7 +1476,7 @@ public abstract class Monitor
 
     /**
      * Cleanup the scheduler and monitor tasks futures.
-     */ 
+     */
     private synchronized void cleanupFutures() {
         if (schedulerFuture != null) {
             schedulerFuture.cancel(false);

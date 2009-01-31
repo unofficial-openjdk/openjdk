@@ -29,13 +29,13 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public abstract class WatchpointEventSet extends LocatableEventSet {
-    
+
     WatchpointEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
 
     /**
-     * Returns the field that is about to be accessed/modified. 
+     * Returns the field that is about to be accessed/modified.
      *
      * @return a {@link Field} which mirrors the field
      * in the target VM.
@@ -45,10 +45,10 @@ public abstract class WatchpointEventSet extends LocatableEventSet {
     }
 
     /**
-     * Returns the object whose field is about to be accessed/modified. 
+     * Returns the object whose field is about to be accessed/modified.
      * Return null is the access is to a static field.
      *
-     * @return a {@link ObjectReference} which mirrors the event's 
+     * @return a {@link ObjectReference} which mirrors the event's
      * object in the target VM.
      */
     public ObjectReference getObject() {
@@ -62,4 +62,3 @@ public abstract class WatchpointEventSet extends LocatableEventSet {
         return ((WatchpointEvent)oneEvent).valueCurrent();
     }
 }
-

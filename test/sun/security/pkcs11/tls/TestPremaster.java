@@ -38,45 +38,45 @@ import javax.crypto.SecretKey;
 import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
 
 public class TestPremaster extends PKCS11Test {
-    
+
     public static void main(String[] args) throws Exception {
-	main(new TestPremaster());
+        main(new TestPremaster());
     }
-    
+
     public void main(Provider provider) throws Exception {
-	if (provider.getService("KeyGenerator", "SunTlsRsaPremasterSecret") == null) {
-	    System.out.println("Not supported by provider, skipping");
-	    return;
-	}
-	KeyGenerator kg;
-	kg = KeyGenerator.getInstance("SunTlsRsaPremasterSecret", provider);
-	
-	try {
-	    kg.generateKey();
-	    throw new Exception("no exception");
-	} catch (IllegalStateException e) {
-	    System.out.println("OK: " + e);
-	}
-	
-	test(kg, 3, 0);
-	test(kg, 3, 1);
-	test(kg, 3, 2);
-	test(kg, 4, 0);
-	
-	System.out.println("Done.");
+        if (provider.getService("KeyGenerator", "SunTlsRsaPremasterSecret") == null) {
+            System.out.println("Not supported by provider, skipping");
+            return;
+        }
+        KeyGenerator kg;
+        kg = KeyGenerator.getInstance("SunTlsRsaPremasterSecret", provider);
+
+        try {
+            kg.generateKey();
+            throw new Exception("no exception");
+        } catch (IllegalStateException e) {
+            System.out.println("OK: " + e);
+        }
+
+        test(kg, 3, 0);
+        test(kg, 3, 1);
+        test(kg, 3, 2);
+        test(kg, 4, 0);
+
+        System.out.println("Done.");
     }
-    
+
     private static void test(KeyGenerator kg, int major, int minor) throws Exception {
-	
-	kg.init(new TlsRsaPremasterSecretParameterSpec(major, minor));
-	SecretKey key = kg.generateKey();
-	byte[] encoded = key.getEncoded();
-	if (encoded.length != 48) {
-	    throw new Exception("length: " + encoded.length);
-	}
-	if ((encoded[0] != major) || (encoded[1] != minor)) {
-	    throw new Exception("version mismatch: "  + encoded[0] + "." + encoded[1]);
-	}
-	System.out.println("OK: " + major + "." + minor);
+
+        kg.init(new TlsRsaPremasterSecretParameterSpec(major, minor));
+        SecretKey key = kg.generateKey();
+        byte[] encoded = key.getEncoded();
+        if (encoded.length != 48) {
+            throw new Exception("length: " + encoded.length);
+        }
+        if ((encoded[0] != major) || (encoded[1] != minor)) {
+            throw new Exception("version mismatch: "  + encoded[0] + "." + encoded[1]);
+        }
+        System.out.println("OK: " + major + "." + minor);
     }
 }

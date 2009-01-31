@@ -39,7 +39,7 @@ public class ASCIICaseInsensitiveComparator implements Comparator<String> {
 
     public int compare(String s1, String s2) {
         int n1=s1.length(), n2=s2.length();
-	int minLen = n1 < n2 ? n1 : n2;
+        int minLen = n1 < n2 ? n1 : n2;
         for (int i=0; i < minLen; i++) {
             char c1 = s1.charAt(i);
             char c2 = s2.charAt(i);
@@ -59,25 +59,25 @@ public class ASCIICaseInsensitiveComparator implements Comparator<String> {
      * A case insensitive hash code method to go with the case insensitive
      * compare() method.
      *
-     * Returns a hash code for this ASCII string as if it were lower case. 
+     * Returns a hash code for this ASCII string as if it were lower case.
      *
      * returns same answer as:<p>
      * <code>s.toLowerCase(Locale.US).hashCode();</code><p>
      * but does not allocate memory (it does NOT have the special
      * case Turkish rules).
-     * 
+     *
      * @param s a String to compute the hashcode on.
      * @return  a hash code value for this object.
      */
     public static int lowerCaseHashCode(String s) {
-	int h = 0;
-	int len = s.length();
-	
-	for (int i = 0; i < len; i++) {
-	    h = 31*h + toLower(s.charAt(i));
-	}
-	
-	return h;
+        int h = 0;
+        int len = s.length();
+
+        for (int i = 0; i < len; i++) {
+            h = 31*h + toLower(s.charAt(i));
+        }
+
+        return h;
     }
 
     /* If java.util.regex.ASCII ever becomes public or sun.*, use its code instead:*/

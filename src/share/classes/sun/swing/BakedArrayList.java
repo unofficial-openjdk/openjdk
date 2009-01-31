@@ -40,8 +40,7 @@ import java.util.*;
  * where the list won't change and you want to avoid the overhead of hashCode
  * iterating through the elements invoking hashCode. This also assumes you'll
  * only ever compare a BakedArrayList to another BakedArrayList.
- * 
- * @version %I%, %G%
+ *
  * @author Scott Violet
  */
 public class BakedArrayList extends ArrayList {

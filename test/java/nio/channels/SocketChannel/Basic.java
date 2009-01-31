@@ -40,43 +40,43 @@ public class Basic {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     static void test() throws Exception {
-	InetSocketAddress isa
-	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-				    DAYTIME_PORT);
-	SocketChannel sc = SocketChannel.open(isa);
-	out.println("opened: " + sc);
-	/*
-	out.println("opts:   " + sc.options());
-	((SocketOpts.IP.TCP)sc.options())
-	    .noDelay(true)
-	    .typeOfService(SocketOpts.IP.TOS_THROUGHPUT)
-	    .broadcast(true)
-	    .keepAlive(true)
-	    .linger(42)
-	    .outOfBandInline(true)
-	    .receiveBufferSize(128)
-	    .sendBufferSize(128)
-	    .reuseAddress(true);
-	out.println("        " + sc.options());
-	*/
-	// sc.connect(isa);
-	out.println("connected: " + sc);
-	ByteBuffer bb = ByteBuffer.allocateDirect(100);
-	int n = sc.read(bb);
-	bb.position(bb.position() - 2);		// Drop CRLF
-	bb.flip();
-	CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
-	out.println(isa + " says: \"" + cb + "\"");
-	sc.socket().shutdownInput();
-	out.println("ishut: " + sc);
-	sc.socket().shutdownOutput();
-	out.println("oshut: " + sc);
-	sc.close();
-	out.println("closed: " + sc);
+        InetSocketAddress isa
+            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+                                    DAYTIME_PORT);
+        SocketChannel sc = SocketChannel.open(isa);
+        out.println("opened: " + sc);
+        /*
+        out.println("opts:   " + sc.options());
+        ((SocketOpts.IP.TCP)sc.options())
+            .noDelay(true)
+            .typeOfService(SocketOpts.IP.TOS_THROUGHPUT)
+            .broadcast(true)
+            .keepAlive(true)
+            .linger(42)
+            .outOfBandInline(true)
+            .receiveBufferSize(128)
+            .sendBufferSize(128)
+            .reuseAddress(true);
+        out.println("        " + sc.options());
+        */
+        // sc.connect(isa);
+        out.println("connected: " + sc);
+        ByteBuffer bb = ByteBuffer.allocateDirect(100);
+        int n = sc.read(bb);
+        bb.position(bb.position() - 2);         // Drop CRLF
+        bb.flip();
+        CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
+        out.println(isa + " says: \"" + cb + "\"");
+        sc.socket().shutdownInput();
+        out.println("ishut: " + sc);
+        sc.socket().shutdownOutput();
+        out.println("oshut: " + sc);
+        sc.close();
+        out.println("closed: " + sc);
     }
 
     public static void main(String[] args) throws Exception {
-	test();
+        test();
     }
 
 }

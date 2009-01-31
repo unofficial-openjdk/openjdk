@@ -32,7 +32,6 @@ package java.rmi.server;
  * <code>java.rmi.server.UnicastRemoteObject</code> and
  * <code>java.rmi.activation.Activatable</code>.
  *
- * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  * @see java.rmi.server.UnicastRemoteObject
@@ -51,7 +50,7 @@ public class ExportException extends java.rmi.RemoteException {
      * @since JDK1.1
      */
     public ExportException(String s) {
-	super(s);
+        super(s);
     }
 
     /**
@@ -63,7 +62,7 @@ public class ExportException extends java.rmi.RemoteException {
      * @since JDK1.1
      */
     public ExportException(String s, Exception ex) {
-	super(s, ex);
+        super(s, ex);
     }
 
 }

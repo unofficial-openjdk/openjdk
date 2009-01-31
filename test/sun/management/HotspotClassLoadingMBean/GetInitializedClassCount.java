@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetInitializedClassCount {
 
     private static HotspotClassLoadingMBean mbean =
-	(HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
+        (HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
 
     // Careful with these values.
     private static final long MIN_VALUE_FOR_PASS = 1;
@@ -50,46 +50,46 @@ public class GetInitializedClassCount {
             trace = true;
         }
 
-	long value = mbean.getInitializedClassCount();
+        long value = mbean.getInitializedClassCount();
 
-	if (trace) {
-	    System.out.println("Initialized class count: " + value);
-	}
+        if (trace) {
+            System.out.println("Initialized class count: " + value);
+        }
 
-	if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
-	    throw new RuntimeException("Initialized class count " + 
-				       "illegal value: " + value + " " + 
-				       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
-				       "MAX = " + MAX_VALUE_FOR_PASS + ")");
-	}
-	
-	// Initialize a class
-	Class.forName("ClassToInitialize0");
+        if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
+            throw new RuntimeException("Initialized class count " +
+                                       "illegal value: " + value + " " +
+                                       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
+                                       "MAX = " + MAX_VALUE_FOR_PASS + ")");
+        }
 
-	long value2 = mbean.getInitializedClassCount();
+        // Initialize a class
+        Class.forName("ClassToInitialize0");
 
-	if (trace) {
-	    System.out.println("Initialized class count2: " + value2);
-	}
-	
-	// If new count does not reflect that at least one class has
-	// been initialized, throw an exception.  We don't check that
-	// _exactly_ one class has been initialized because another
-	// thread may (rarely) have also done some class initialization.
-	if (value2 < value + 1) {
-	    throw new RuntimeException("Initialized class count " + 
-				       "did not increase " +
-				       "(value = " + value + "; " +
-				       "value2 = " + value2 + ")");
-	}
-	
-	System.out.println("Test passed.");
+        long value2 = mbean.getInitializedClassCount();
+
+        if (trace) {
+            System.out.println("Initialized class count2: " + value2);
+        }
+
+        // If new count does not reflect that at least one class has
+        // been initialized, throw an exception.  We don't check that
+        // _exactly_ one class has been initialized because another
+        // thread may (rarely) have also done some class initialization.
+        if (value2 < value + 1) {
+            throw new RuntimeException("Initialized class count " +
+                                       "did not increase " +
+                                       "(value = " + value + "; " +
+                                       "value2 = " + value2 + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }
 
 class ClassToInitialize0 {
     static int i = 0;
     static {
-	i = 1;
+        i = 1;
     }
 }

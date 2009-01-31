@@ -31,12 +31,11 @@ package java.io;
  * The abstract class <code>FilterWriter</code> itself
  * provides default methods that pass all requests to the
  * contained stream. Subclasses of <code>FilterWriter</code>
- * should override some of these methods and may also 
+ * should override some of these methods and may also
  * provide additional methods and fields.
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
- * @since	JDK1.1
+ * @author      Mark Reinhold
+ * @since       JDK1.1
  */
 
 public abstract class FilterWriter extends Writer {
@@ -53,8 +52,8 @@ public abstract class FilterWriter extends Writer {
      * @throws NullPointerException if <code>out</code> is <code>null</code>
      */
     protected FilterWriter(Writer out) {
-	super(out);
-	this.out = out;
+        super(out);
+        this.out = out;
     }
 
     /**
@@ -63,7 +62,7 @@ public abstract class FilterWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(int c) throws IOException {
-	out.write(c);
+        out.write(c);
     }
 
     /**
@@ -76,7 +75,7 @@ public abstract class FilterWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(char cbuf[], int off, int len) throws IOException {
-	out.write(cbuf, off, len);
+        out.write(cbuf, off, len);
     }
 
     /**
@@ -89,7 +88,7 @@ public abstract class FilterWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
-	out.write(str, off, len);
+        out.write(str, off, len);
     }
 
     /**
@@ -98,11 +97,11 @@ public abstract class FilterWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void flush() throws IOException {
-	out.flush();
+        out.flush();
     }
 
     public void close() throws IOException {
-	out.close();
+        out.close();
     }
 
 }

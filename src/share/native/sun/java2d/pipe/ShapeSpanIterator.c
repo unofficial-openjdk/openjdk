@@ -63,68 +63,68 @@ typedef struct {
 typedef struct {
     PathConsumerVec funcs;      /* Native PathConsumer function vector */
 
-    char state;			/* Path delivery sequence state */
-    char evenodd;		/* non-zero if path has EvenOdd winding rule */
-    char first;			/* non-zero if first path segment */
-    char adjust;		/* normalize to nearest (0.25, 0.25) */
+    char state;                 /* Path delivery sequence state */
+    char evenodd;               /* non-zero if path has EvenOdd winding rule */
+    char first;                 /* non-zero if first path segment */
+    char adjust;                /* normalize to nearest (0.25, 0.25) */
 
-    jint lox;			/* clip bbox low X */
-    jint loy;			/* clip bbox low Y */
-    jint hix;			/* clip bbox high X */
-    jint hiy;			/* clip bbox high Y */
+    jint lox;                   /* clip bbox low X */
+    jint loy;                   /* clip bbox low Y */
+    jint hix;                   /* clip bbox high X */
+    jint hiy;                   /* clip bbox high Y */
 
-    jfloat curx;		/* current path point X coordinate */
-    jfloat cury;		/* current path point Y coordinate */
-    jfloat movx;		/* last moveto X coordinate */
-    jfloat movy;		/* last moveto Y coordinate */
+    jfloat curx;                /* current path point X coordinate */
+    jfloat cury;                /* current path point Y coordinate */
+    jfloat movx;                /* last moveto X coordinate */
+    jfloat movy;                /* last moveto Y coordinate */
 
-    jfloat adjx;		/* last X coordinate adjustment */
-    jfloat adjy;		/* last Y coordinate adjustment */
+    jfloat adjx;                /* last X coordinate adjustment */
+    jfloat adjy;                /* last Y coordinate adjustment */
 
-    jfloat pathlox;		/* lowest X coordinate in path */
-    jfloat pathloy;		/* lowest Y coordinate in path */
-    jfloat pathhix;		/* highest X coordinate in path */
-    jfloat pathhiy;		/* highest Y coordinate in path */
+    jfloat pathlox;             /* lowest X coordinate in path */
+    jfloat pathloy;             /* lowest Y coordinate in path */
+    jfloat pathhix;             /* highest X coordinate in path */
+    jfloat pathhiy;             /* highest Y coordinate in path */
 
-    segmentData *segments;	/* pointer to array of path segments */
-    int numSegments;		/* number of segments entries in array */
-    int segmentsSize;		/* size of array of path segments */
+    segmentData *segments;      /* pointer to array of path segments */
+    int numSegments;            /* number of segments entries in array */
+    int segmentsSize;           /* size of array of path segments */
 
-    int lowSegment;		/* lower limit of segments in active range */
-    int curSegment;		/* index of next active segment to return */
-    int hiSegment;		/* upper limit of segments in active range */
+    int lowSegment;             /* lower limit of segments in active range */
+    int curSegment;             /* index of next active segment to return */
+    int hiSegment;              /* upper limit of segments in active range */
 
-    segmentData **segmentTable;	/* pointers to segments being stepped */
+    segmentData **segmentTable; /* pointers to segments being stepped */
 } pathData;
 
-#define STATE_INIT		0
-#define STATE_HAVE_CLIP		1
-#define STATE_HAVE_RULE		2
-#define STATE_PATH_DONE		3
-#define STATE_SPAN_STARTED	4
+#define STATE_INIT              0
+#define STATE_HAVE_CLIP         1
+#define STATE_HAVE_RULE         2
+#define STATE_PATH_DONE         3
+#define STATE_SPAN_STARTED      4
 
 static jboolean subdivideLine(pathData *pd, int level,
-			      jfloat x0, jfloat y0,
-			      jfloat x1, jfloat y1);
+                              jfloat x0, jfloat y0,
+                              jfloat x1, jfloat y1);
 static jboolean subdivideQuad(pathData *pd, int level,
-			      jfloat x0, jfloat y0,
-			      jfloat x1, jfloat y1,
-			      jfloat x2, jfloat y2);
+                              jfloat x0, jfloat y0,
+                              jfloat x1, jfloat y1,
+                              jfloat x2, jfloat y2);
 static jboolean subdivideCubic(pathData *pd, int level,
-			       jfloat x0, jfloat y0,
-			       jfloat x1, jfloat y1,
-			       jfloat x2, jfloat y2,
-			       jfloat x3, jfloat y3);
+                               jfloat x0, jfloat y0,
+                               jfloat x1, jfloat y1,
+                               jfloat x2, jfloat y2,
+                               jfloat x3, jfloat y3);
 static jboolean appendSegment(pathData *pd,
-			      jfloat x0, jfloat y0,
-			      jfloat x1, jfloat y1);
+                              jfloat x0, jfloat y0,
+                              jfloat x1, jfloat y1);
 static jboolean initSegmentTable(pathData *pd);
 
 static void *ShapeSIOpen(JNIEnv *env, jobject iterator);
 static void ShapeSIClose(JNIEnv *env, void *private);
 static void ShapeSIGetPathBox(JNIEnv *env, void *private, jint pathbox[]);
 static void ShapeSIIntersectClipBox(JNIEnv *env, void *private,
-					jint lox, jint loy, jint hix, jint hiy);
+                                        jint lox, jint loy, jint hix, jint hiy);
 static jboolean ShapeSINextSpan(void *state, jint spanbox[]);
 static void ShapeSISkipDownTo(void *private, jint y);
 
@@ -146,18 +146,18 @@ static CubicToFunc PCCubicTo;
 static ClosePathFunc PCClosePath;
 static PathDoneFunc PCPathDone;
 
-#define PDBOXPOINT(pd, x, y)					\
-    do {							\
-	if (pd->first) {					\
-	    pd->pathlox = pd->pathhix = x;			\
-	    pd->pathloy = pd->pathhiy = y;			\
-	    pd->first = 0;					\
-	} else {						\
-	    if (pd->pathlox > x) pd->pathlox = x;		\
-	    if (pd->pathloy > y) pd->pathloy = y;		\
-	    if (pd->pathhix < x) pd->pathhix = x;		\
-	    if (pd->pathhiy < y) pd->pathhiy = y;		\
-	}							\
+#define PDBOXPOINT(pd, x, y)                                    \
+    do {                                                        \
+        if (pd->first) {                                        \
+            pd->pathlox = pd->pathhix = x;                      \
+            pd->pathloy = pd->pathhiy = y;                      \
+            pd->first = 0;                                      \
+        } else {                                                \
+            if (pd->pathlox > x) pd->pathlox = x;               \
+            if (pd->pathloy > y) pd->pathloy = y;               \
+            if (pd->pathhix < x) pd->pathhix = x;               \
+            if (pd->pathhiy < y) pd->pathhiy = y;               \
+        }                                                       \
     } while (0)
 
 /*
@@ -170,29 +170,29 @@ static PathDoneFunc PCPathDone;
  * pd->adj[xy] will still contain the previous adjustment
  * that was applied to the old endpoint.
  */
-#define _ADJUST(pd, x, y, additional)				\
-    do {							\
-	if (pd->adjust) {					\
-	    jfloat newx = (jfloat) floor(x + 0.25f) + 0.25f;	\
-	    jfloat newy = (jfloat) floor(y + 0.25f) + 0.25f;	\
-	    jfloat newadjx = newx - x;				\
-	    jfloat newadjy = newy - y;				\
-	    x = newx;						\
-	    y = newy;						\
-	    additional;						\
-	    pd->adjx = newadjx;					\
-	    pd->adjy = newadjy;					\
-	}							\
+#define _ADJUST(pd, x, y, additional)                           \
+    do {                                                        \
+        if (pd->adjust) {                                       \
+            jfloat newx = (jfloat) floor(x + 0.25f) + 0.25f;    \
+            jfloat newy = (jfloat) floor(y + 0.25f) + 0.25f;    \
+            jfloat newadjx = newx - x;                          \
+            jfloat newadjy = newy - y;                          \
+            x = newx;                                           \
+            y = newy;                                           \
+            additional;                                         \
+            pd->adjx = newadjx;                                 \
+            pd->adjy = newadjy;                                 \
+        }                                                       \
     } while (0)
 
 /*
  * Adjust a single endpoint with no control points.
  * "additional" code is a null statement.
  */
-#define ADJUST1(pd, x1, y1)					\
-    _ADJUST(pd, x1, y1,						\
-	    do {						\
-	    } while (0))
+#define ADJUST1(pd, x1, y1)                                     \
+    _ADJUST(pd, x1, y1,                                         \
+            do {                                                \
+            } while (0))
 
 /*
  * Adjust a quadratic curve.  The _ADJUST macro takes care
@@ -200,12 +200,12 @@ static PathDoneFunc PCPathDone;
  * the single quadratic control point by the averge of
  * the prior and the new adjustment amounts.
  */
-#define ADJUST2(pd, x1, y1, x2, y2)				\
-    _ADJUST(pd, x2, y2,						\
-	    do {						\
-		x1 += (pd->adjx + newadjy) / 2;			\
-		y1 += (pd->adjy + newadjy) / 2;			\
-	    } while (0))
+#define ADJUST2(pd, x1, y1, x2, y2)                             \
+    _ADJUST(pd, x2, y2,                                         \
+            do {                                                \
+                x1 += (pd->adjx + newadjy) / 2;                 \
+                y1 += (pd->adjy + newadjy) / 2;                 \
+            } while (0))
 
 /*
  * Adjust a cubic curve.  The _ADJUST macro takes care
@@ -217,89 +217,89 @@ static PathDoneFunc PCPathDone;
  * keeps the tangent lines from xy0 to xy1 and xy3 to xy2
  * parallel before and after the adjustment.
  */
-#define ADJUST3(pd, x1, y1, x2, y2, x3, y3)			\
-    _ADJUST(pd, x3, y3,						\
-	    do {						\
-		x1 += pd->adjx;					\
-		y1 += pd->adjy;					\
-		x2 += newadjx;					\
-		y2 += newadjy;					\
-	    } while (0))
+#define ADJUST3(pd, x1, y1, x2, y2, x3, y3)                     \
+    _ADJUST(pd, x3, y3,                                         \
+            do {                                                \
+                x1 += pd->adjx;                                 \
+                y1 += pd->adjy;                                 \
+                x2 += newadjx;                                  \
+                y2 += newadjy;                                  \
+            } while (0))
 
-#define HANDLEMOVETO(pd, x0, y0, OOMERR)			\
-    do {							\
-	HANDLECLOSE(pd, OOMERR);				\
-	ADJUST1(pd, x0, y0);					\
-	pd->movx = x0;						\
-	pd->movy = y0;						\
-	PDBOXPOINT(pd, x0, y0);					\
-	pd->curx = x0;						\
-	pd->cury = y0;						\
+#define HANDLEMOVETO(pd, x0, y0, OOMERR)                        \
+    do {                                                        \
+        HANDLECLOSE(pd, OOMERR);                                \
+        ADJUST1(pd, x0, y0);                                    \
+        pd->movx = x0;                                          \
+        pd->movy = y0;                                          \
+        PDBOXPOINT(pd, x0, y0);                                 \
+        pd->curx = x0;                                          \
+        pd->cury = y0;                                          \
     } while (0)
 
-#define HANDLELINETO(pd, x1, y1, OOMERR)			\
-    do {							\
-	ADJUST1(pd, x1, y1);					\
-	if (!subdivideLine(pd, 0,				\
-			   pd->curx, pd->cury,			\
-			   x1, y1)) {				\
-	    OOMERR;						\
-	    break;						\
-	}							\
-	PDBOXPOINT(pd, x1, y1);					\
-	pd->curx = x1;						\
-	pd->cury = y1;						\
+#define HANDLELINETO(pd, x1, y1, OOMERR)                        \
+    do {                                                        \
+        ADJUST1(pd, x1, y1);                                    \
+        if (!subdivideLine(pd, 0,                               \
+                           pd->curx, pd->cury,                  \
+                           x1, y1)) {                           \
+            OOMERR;                                             \
+            break;                                              \
+        }                                                       \
+        PDBOXPOINT(pd, x1, y1);                                 \
+        pd->curx = x1;                                          \
+        pd->cury = y1;                                          \
     } while (0)
 
-#define HANDLEQUADTO(pd, x1, y1, x2, y2, OOMERR)		\
-    do {							\
-	ADJUST2(pd, x1, y1, x2, y2);				\
-	if (!subdivideQuad(pd, 0,				\
-			   pd->curx, pd->cury,			\
-			   x1, y1, x2, y2)) {			\
-	    OOMERR;						\
-	    break;						\
-	}							\
-	PDBOXPOINT(pd, x1, y1);					\
-	PDBOXPOINT(pd, x2, y2);					\
-	pd->curx = x2;						\
-	pd->cury = y2;						\
+#define HANDLEQUADTO(pd, x1, y1, x2, y2, OOMERR)                \
+    do {                                                        \
+        ADJUST2(pd, x1, y1, x2, y2);                            \
+        if (!subdivideQuad(pd, 0,                               \
+                           pd->curx, pd->cury,                  \
+                           x1, y1, x2, y2)) {                   \
+            OOMERR;                                             \
+            break;                                              \
+        }                                                       \
+        PDBOXPOINT(pd, x1, y1);                                 \
+        PDBOXPOINT(pd, x2, y2);                                 \
+        pd->curx = x2;                                          \
+        pd->cury = y2;                                          \
     } while (0)
 
-#define HANDLECUBICTO(pd, x1, y1, x2, y2, x3, y3, OOMERR)	\
-    do {							\
-	ADJUST3(pd, x1, y1, x2, y2, x3, y3);			\
-	if (!subdivideCubic(pd, 0,				\
-			    pd->curx, pd->cury,			\
-			    x1, y1, x2, y2, x3, y3)) {		\
-	    OOMERR;						\
-	    break;						\
-	}							\
-	PDBOXPOINT(pd, x1, y1);					\
-	PDBOXPOINT(pd, x2, y2);					\
-	PDBOXPOINT(pd, x3, y3);					\
-	pd->curx = x3;						\
-	pd->cury = y3;						\
+#define HANDLECUBICTO(pd, x1, y1, x2, y2, x3, y3, OOMERR)       \
+    do {                                                        \
+        ADJUST3(pd, x1, y1, x2, y2, x3, y3);                    \
+        if (!subdivideCubic(pd, 0,                              \
+                            pd->curx, pd->cury,                 \
+                            x1, y1, x2, y2, x3, y3)) {          \
+            OOMERR;                                             \
+            break;                                              \
+        }                                                       \
+        PDBOXPOINT(pd, x1, y1);                                 \
+        PDBOXPOINT(pd, x2, y2);                                 \
+        PDBOXPOINT(pd, x3, y3);                                 \
+        pd->curx = x3;                                          \
+        pd->cury = y3;                                          \
     } while (0)
 
-#define HANDLECLOSE(pd, OOMERR)					\
-    do {							\
-	if (pd->curx != pd->movx || pd->cury != pd->movy) {	\
-	    if (!subdivideLine(pd, 0,				\
-			       pd->curx, pd->cury,		\
-			       pd->movx, pd->movy)) {		\
-		OOMERR;						\
-		break;						\
-	    }							\
-	    pd->curx = pd->movx;				\
-	    pd->cury = pd->movy;				\
-	}							\
+#define HANDLECLOSE(pd, OOMERR)                                 \
+    do {                                                        \
+        if (pd->curx != pd->movx || pd->cury != pd->movy) {     \
+            if (!subdivideLine(pd, 0,                           \
+                               pd->curx, pd->cury,              \
+                               pd->movx, pd->movy)) {           \
+                OOMERR;                                         \
+                break;                                          \
+            }                                                   \
+            pd->curx = pd->movx;                                \
+            pd->cury = pd->movy;                                \
+        }                                                       \
     } while (0)
 
-#define HANDLEENDPATH(pd, OOMERR)				\
-    do {							\
-	HANDLECLOSE(pd, OOMERR);				\
-	pd->state = STATE_PATH_DONE;				\
+#define HANDLEENDPATH(pd, OOMERR)                               \
+    do {                                                        \
+        HANDLECLOSE(pd, OOMERR);                                \
+        pd->state = STATE_PATH_DONE;                            \
     } while (0)
 
 static pathData *
@@ -308,10 +308,10 @@ GetSpanData(JNIEnv *env, jobject sr, int minState, int maxState)
     pathData *pd = (pathData *) JNU_GetLongFieldAsPtr(env, sr, pSpanDataID);
 
     if (pd == NULL) {
-	JNU_ThrowNullPointerException(env, "private data");
+        JNU_ThrowNullPointerException(env, "private data");
     } else if (pd->state < minState || pd->state > maxState) {
-	JNU_ThrowInternalError(env, "bad path delivery sequence");
-	pd = NULL;
+        JNU_ThrowInternalError(env, "bad path delivery sequence");
+        pd = NULL;
     }
 
     return pd;
@@ -323,16 +323,16 @@ MakeSpanData(JNIEnv *env, jobject sr)
     pathData *pd = (pathData *) JNU_GetLongFieldAsPtr(env, sr, pSpanDataID);
 
     if (pd != NULL) {
-	JNU_ThrowInternalError(env, "private data already initialized");
-	return NULL;
+        JNU_ThrowInternalError(env, "private data already initialized");
+        return NULL;
     }
 
     pd = calloc(1, sizeof(pathData));
 
     if (pd == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "private data");
+        JNU_ThrowOutOfMemoryError(env, "private data");
     } else {
-	/* Initialize PathConsumer2D struct header */
+        /* Initialize PathConsumer2D struct header */
         pd->funcs.moveTo = PCMoveTo;
         pd->funcs.lineTo = PCLineTo;
         pd->funcs.quadTo = PCQuadTo;
@@ -340,10 +340,10 @@ MakeSpanData(JNIEnv *env, jobject sr)
         pd->funcs.closePath = PCClosePath;
         pd->funcs.pathDone = PCPathDone;
 
-	/* Initialize ShapeSpanIterator fields */
-	pd->first = 1;
+        /* Initialize ShapeSpanIterator fields */
+        pd->first = 1;
 
-	(*env)->SetLongField(env, sr, pSpanDataID, ptr_to_jlong(pd));
+        (*env)->SetLongField(env, sr, pSpanDataID, ptr_to_jlong(pd));
     }
 
     return pd;
@@ -369,7 +369,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_setNormalize
 
     pd = MakeSpanData(env, sr);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     pd->adjust = adjust;
@@ -383,7 +383,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_setOutputAreaXYXY
 
     pd = GetSpanData(env, sr, STATE_INIT, STATE_INIT);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     pd->lox = lox;
@@ -401,7 +401,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_setRule
 
     pd = GetSpanData(env, sr, STATE_HAVE_CLIP, STATE_HAVE_CLIP);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     pd->evenodd = (rule == java_awt_geom_PathIterator_WIND_EVEN_ODD);
@@ -420,45 +420,45 @@ Java_sun_java2d_pipe_ShapeSpanIterator_addSegment
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     (*env)->GetFloatArrayRegion(env, coordObj, 0, 6, coords);
     if ((*env)->ExceptionCheck(env)) {
-	return;
+        return;
     }
 
     switch (type) {
     case java_awt_geom_PathIterator_SEG_MOVETO:
-	x1 = coords[0]; y1 = coords[1];
-	HANDLEMOVETO(pd, x1, y1, {oom = JNI_TRUE;});
-	break;
+        x1 = coords[0]; y1 = coords[1];
+        HANDLEMOVETO(pd, x1, y1, {oom = JNI_TRUE;});
+        break;
     case java_awt_geom_PathIterator_SEG_LINETO:
-	x1 = coords[0]; y1 = coords[1];
-	HANDLELINETO(pd, x1, y1, {oom = JNI_TRUE;});
-	break;
+        x1 = coords[0]; y1 = coords[1];
+        HANDLELINETO(pd, x1, y1, {oom = JNI_TRUE;});
+        break;
     case java_awt_geom_PathIterator_SEG_QUADTO:
-	x1 = coords[0]; y1 = coords[1];
-	x2 = coords[2]; y2 = coords[3];
-	HANDLEQUADTO(pd, x1, y1, x2, y2, {oom = JNI_TRUE;});
-	break;
+        x1 = coords[0]; y1 = coords[1];
+        x2 = coords[2]; y2 = coords[3];
+        HANDLEQUADTO(pd, x1, y1, x2, y2, {oom = JNI_TRUE;});
+        break;
     case java_awt_geom_PathIterator_SEG_CUBICTO:
-	x1 = coords[0]; y1 = coords[1];
-	x2 = coords[2]; y2 = coords[3];
-	x3 = coords[4]; y3 = coords[5];
-	HANDLECUBICTO(pd, x1, y1, x2, y2, x3, y3, {oom = JNI_TRUE;});
-	break;
+        x1 = coords[0]; y1 = coords[1];
+        x2 = coords[2]; y2 = coords[3];
+        x3 = coords[4]; y3 = coords[5];
+        HANDLECUBICTO(pd, x1, y1, x2, y2, x3, y3, {oom = JNI_TRUE;});
+        break;
     case java_awt_geom_PathIterator_SEG_CLOSE:
-	HANDLECLOSE(pd, {oom = JNI_TRUE;});
-	break;
+        HANDLECLOSE(pd, {oom = JNI_TRUE;});
+        break;
     default:
         JNU_ThrowInternalError(env, "bad path segment type");
-	return;
+        return;
     }
 
     if (oom) {
-	JNU_ThrowOutOfMemoryError(env, "path segment data");
-	return;
+        JNU_ThrowOutOfMemoryError(env, "path segment data");
+        return;
     }
 }
 
@@ -471,7 +471,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_getPathBox
 
     pd = GetSpanData(env, sr, STATE_PATH_DONE, STATE_PATH_DONE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     ShapeSIGetPathBox(env, pd, coords);
@@ -487,7 +487,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_intersectClipBox
 
     pd = GetSpanData(env, ri, STATE_PATH_DONE, STATE_PATH_DONE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     ShapeSIIntersectClipBox(env, pd, clox, cloy, chix, chiy);
@@ -503,12 +503,12 @@ Java_sun_java2d_pipe_ShapeSpanIterator_nextSpan
 
     pd = GetSpanData(env, sr, STATE_PATH_DONE, STATE_SPAN_STARTED);
     if (pd == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     ret = ShapeSINextSpan(pd, coords);
     if (ret) {
-	(*env)->SetIntArrayRegion(env, spanbox, 0, 4, coords);
+        (*env)->SetIntArrayRegion(env, spanbox, 0, 4, coords);
     }
 
     return ret;
@@ -522,7 +522,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_skipDownTo
 
     pd = GetSpanData(env, sr, STATE_PATH_DONE, STATE_SPAN_STARTED);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     ShapeSISkipDownTo(pd, y);
@@ -542,14 +542,14 @@ Java_sun_java2d_pipe_ShapeSpanIterator_dispose
     pathData *pd = (pathData *) JNU_GetLongFieldAsPtr(env, sr, pSpanDataID);
 
     if (pd == NULL) {
-	return;
+        return;
     }
 
     if (pd->segments != NULL) {
-	free(pd->segments);
+        free(pd->segments);
     }
     if (pd->segmentTable != NULL) {
-	free(pd->segmentTable);
+        free(pd->segmentTable);
     }
     free(pd);
 
@@ -563,11 +563,11 @@ Java_sun_java2d_pipe_ShapeSpanIterator_dispose
 
 #define CALCULATE_OUTCODES(pd, outc, x, y) \
     do { \
-	if (y <= pd->loy) outc = OUT_YLO; \
-	else if (y >= pd->hiy) outc = OUT_YHI; \
-	else outc = 0; \
-	if (x <= pd->lox) outc |= OUT_XLO; \
-	else if (x >= pd->hix) outc |= OUT_XHI; \
+        if (y <= pd->loy) outc = OUT_YLO; \
+        else if (y >= pd->hiy) outc = OUT_YHI; \
+        else outc = 0; \
+        if (x <= pd->lox) outc |= OUT_XLO; \
+        else if (x >= pd->hix) outc |= OUT_XHI; \
     } while (0)
 
 JNIEXPORT void JNICALL
@@ -584,87 +584,87 @@ Java_sun_java2d_pipe_ShapeSpanIterator_appendPoly
 
     pd = GetSpanData(env, sr, STATE_HAVE_CLIP, STATE_HAVE_CLIP);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     pd->evenodd = JNI_TRUE;
     pd->state = STATE_HAVE_RULE;
     if (pd->adjust) {
-	xoff += 0.25f;
-	yoff += 0.25f;
+        xoff += 0.25f;
+        yoff += 0.25f;
     }
 
     if (xArray == NULL || yArray == NULL) {
-	JNU_ThrowNullPointerException(env, "polygon data arrays");
-	return;
+        JNU_ThrowNullPointerException(env, "polygon data arrays");
+        return;
     }
     if ((*env)->GetArrayLength(env, xArray) < nPoints ||
-	(*env)->GetArrayLength(env, yArray) < nPoints)
+        (*env)->GetArrayLength(env, yArray) < nPoints)
     {
-	JNU_ThrowArrayIndexOutOfBoundsException(env, "polygon data arrays");
-	return;
+        JNU_ThrowArrayIndexOutOfBoundsException(env, "polygon data arrays");
+        return;
     }
 
     if (nPoints > 0) {
-	xPoints = (*env)->GetPrimitiveArrayCritical(env, xArray, NULL);
-	if (xPoints != NULL) {
-	    yPoints = (*env)->GetPrimitiveArrayCritical(env, yArray, NULL);
-	    if (yPoints != NULL) {
-		jint outc0;
-		jfloat x, y;
+        xPoints = (*env)->GetPrimitiveArrayCritical(env, xArray, NULL);
+        if (xPoints != NULL) {
+            yPoints = (*env)->GetPrimitiveArrayCritical(env, yArray, NULL);
+            if (yPoints != NULL) {
+                jint outc0;
+                jfloat x, y;
 
-		x = xPoints[0] + xoff;
-		y = yPoints[0] + yoff;
-		CALCULATE_OUTCODES(pd, outc0, x, y);
-		pd->movx = pd->curx = x;
-		pd->movy = pd->cury = y;
-		pd->pathlox = pd->pathhix = x;
-		pd->pathloy = pd->pathhiy = y;
-		pd->first = 0;
-		for (i = 1; !oom && i < nPoints; i++) {
-		    jint outc1;
+                x = xPoints[0] + xoff;
+                y = yPoints[0] + yoff;
+                CALCULATE_OUTCODES(pd, outc0, x, y);
+                pd->movx = pd->curx = x;
+                pd->movy = pd->cury = y;
+                pd->pathlox = pd->pathhix = x;
+                pd->pathloy = pd->pathhiy = y;
+                pd->first = 0;
+                for (i = 1; !oom && i < nPoints; i++) {
+                    jint outc1;
 
-		    x = xPoints[i] + xoff;
-		    y = yPoints[i] + yoff;
-		    if (y == pd->cury) {
-			/* Horizontal segment - do not append */
-			if (x != pd->curx) {
-			    /* Not empty segment - track change in X */
-			    CALCULATE_OUTCODES(pd, outc0, x, y);
-			    pd->curx = x;
-			    if (pd->pathlox > x) pd->pathlox = x;
-			    if (pd->pathhix < x) pd->pathhix = x;
-			}
-			continue;
-		    }
-		    CALCULATE_OUTCODES(pd, outc1, x, y);
-		    outc0 &= outc1;
-		    if (outc0 == 0) {
-			oom = !appendSegment(pd, pd->curx, pd->cury, x, y);
-		    } else if (outc0 == OUT_XLO) {
-			oom = !appendSegment(pd, (jfloat) pd->lox, pd->cury,
-					     (jfloat) pd->lox, y);
-		    }
-		    if (pd->pathlox > x) pd->pathlox = x;
-		    if (pd->pathloy > y) pd->pathloy = y;
-		    if (pd->pathhix < x) pd->pathhix = x;
-		    if (pd->pathhiy < y) pd->pathhiy = y;
-		    outc0 = outc1;
-		    pd->curx = x;
-		    pd->cury = y;
-		}
-	    }
-	    (*env)->ReleasePrimitiveArrayCritical(env, yArray,
-						  yPoints, JNI_ABORT);
-	}
-	(*env)->ReleasePrimitiveArrayCritical(env, xArray,
-					      xPoints, JNI_ABORT);
+                    x = xPoints[i] + xoff;
+                    y = yPoints[i] + yoff;
+                    if (y == pd->cury) {
+                        /* Horizontal segment - do not append */
+                        if (x != pd->curx) {
+                            /* Not empty segment - track change in X */
+                            CALCULATE_OUTCODES(pd, outc0, x, y);
+                            pd->curx = x;
+                            if (pd->pathlox > x) pd->pathlox = x;
+                            if (pd->pathhix < x) pd->pathhix = x;
+                        }
+                        continue;
+                    }
+                    CALCULATE_OUTCODES(pd, outc1, x, y);
+                    outc0 &= outc1;
+                    if (outc0 == 0) {
+                        oom = !appendSegment(pd, pd->curx, pd->cury, x, y);
+                    } else if (outc0 == OUT_XLO) {
+                        oom = !appendSegment(pd, (jfloat) pd->lox, pd->cury,
+                                             (jfloat) pd->lox, y);
+                    }
+                    if (pd->pathlox > x) pd->pathlox = x;
+                    if (pd->pathloy > y) pd->pathloy = y;
+                    if (pd->pathhix < x) pd->pathhix = x;
+                    if (pd->pathhiy < y) pd->pathhiy = y;
+                    outc0 = outc1;
+                    pd->curx = x;
+                    pd->cury = y;
+                }
+            }
+            (*env)->ReleasePrimitiveArrayCritical(env, yArray,
+                                                  yPoints, JNI_ABORT);
+        }
+        (*env)->ReleasePrimitiveArrayCritical(env, xArray,
+                                              xPoints, JNI_ABORT);
     }
     if (!oom) {
-	HANDLEENDPATH(pd, {oom = JNI_TRUE;});
+        HANDLEENDPATH(pd, {oom = JNI_TRUE;});
     }
     if (oom) {
-	JNU_ThrowOutOfMemoryError(env, "path segment data");
+        JNU_ThrowOutOfMemoryError(env, "path segment data");
     }
 }
 
@@ -676,11 +676,11 @@ Java_sun_java2d_pipe_ShapeSpanIterator_moveTo
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLEMOVETO(pd, x0, y0,
-		 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
+                 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
 }
 
 JNIEXPORT void JNICALL
@@ -691,11 +691,11 @@ Java_sun_java2d_pipe_ShapeSpanIterator_lineTo
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLELINETO(pd, x1, y1,
-		 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
+                 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
 }
 
 JNIEXPORT void JNICALL
@@ -707,11 +707,11 @@ Java_sun_java2d_pipe_ShapeSpanIterator_quadTo
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLEQUADTO(pd, xm, ym, x1, y1,
-		 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
+                 {JNU_ThrowOutOfMemoryError(env, "path segment data");});
 }
 
 JNIEXPORT void JNICALL
@@ -725,11 +725,11 @@ Java_sun_java2d_pipe_ShapeSpanIterator_curveTo
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLECUBICTO(pd, xm, ym, xn, yn, x1, y1,
-		  {JNU_ThrowOutOfMemoryError(env, "path segment data");});
+                  {JNU_ThrowOutOfMemoryError(env, "path segment data");});
 }
 
 JNIEXPORT void JNICALL
@@ -740,7 +740,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_closePath
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLECLOSE(pd, {JNU_ThrowOutOfMemoryError(env, "path segment data");});
@@ -754,7 +754,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_pathDone
 
     pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
     if (pd == NULL) {
-	return;
+        return;
     }
 
     HANDLEENDPATH(pd, {JNU_ThrowOutOfMemoryError(env, "path segment data");});
@@ -767,7 +767,7 @@ Java_sun_java2d_pipe_ShapeSpanIterator_getNativeConsumer
     pathData *pd = GetSpanData(env, sr, STATE_HAVE_RULE, STATE_HAVE_RULE);
 
     if (pd == NULL) {
-	return jlong_zero;
+        return jlong_zero;
     }
 
     return ptr_to_jlong(&(pd->funcs));
@@ -793,7 +793,7 @@ PCLineTo(PathConsumerVec *consumer,
     jboolean oom = JNI_FALSE;
 
     HANDLELINETO(pd, x1, y1, {oom = JNI_TRUE;});
-    
+
     return oom;
 }
 
@@ -806,7 +806,7 @@ PCQuadTo(PathConsumerVec *consumer,
     jboolean oom = JNI_FALSE;
 
     HANDLEQUADTO(pd, x1, y1, x2, y2, {oom = JNI_TRUE;});
-    
+
     return oom;
 }
 
@@ -820,7 +820,7 @@ PCCubicTo(PathConsumerVec *consumer,
     jboolean oom = JNI_FALSE;
 
     HANDLECUBICTO(pd, x1, y1, x2, y2, x3, y3, {oom = JNI_TRUE;});
-    
+
     return oom;
 }
 
@@ -831,7 +831,7 @@ PCClosePath(PathConsumerVec *consumer)
     jboolean oom = JNI_FALSE;
 
     HANDLECLOSE(pd, {oom = JNI_TRUE;});
-    
+
     return oom;
 }
 
@@ -842,7 +842,7 @@ PCPathDone(PathConsumerVec *consumer)
     jboolean oom = JNI_FALSE;
 
     HANDLEENDPATH(pd, {oom = JNI_TRUE;});
-    
+
     return oom;
 }
 
@@ -856,69 +856,69 @@ PCPathDone(PathConsumerVec *consumer)
 #define CDECL
 #endif
 
-#define SUBDIVIDE_MAX	10
-#define MAX_FLAT_SQ	(1.0 * 1.0)
-#define GROW_SIZE	20
-#define ERRSTEP_MAX	(0x7fffffff)
-#define FRACTTOJINT(f)	((jint) ((f) * (double) ERRSTEP_MAX))
+#define SUBDIVIDE_MAX   10
+#define MAX_FLAT_SQ     (1.0 * 1.0)
+#define GROW_SIZE       20
+#define ERRSTEP_MAX     (0x7fffffff)
+#define FRACTTOJINT(f)  ((jint) ((f) * (double) ERRSTEP_MAX))
 
-#define minmax2(v1, v2, min, max)	\
-do {					\
-    if (v1 < v2) {			\
-	min = v1;			\
-	max = v2;			\
-    } else {				\
-	min = v2;			\
-	max = v1;			\
-    }					\
+#define minmax2(v1, v2, min, max)       \
+do {                                    \
+    if (v1 < v2) {                      \
+        min = v1;                       \
+        max = v2;                       \
+    } else {                            \
+        min = v2;                       \
+        max = v1;                       \
+    }                                   \
 } while(0)
 
-#define minmax3(v1, v2, v3, min, max)	\
-do {					\
-    if (v1 < v2) {			\
-	if (v1 < v3) {			\
-	    min = v1;			\
-	    max = (v2 < v3) ? v3 : v2;	\
-	} else {			\
-	    max = v2;			\
-	    min = v3;			\
-	}				\
-    } else {				\
-	if (v1 < v3) {			\
-	    max = v3;			\
-	    min = v2;			\
-	} else {			\
-	    max = v1;			\
-	    min = (v2 < v3) ? v2 : v3;	\
-	}				\
-    }					\
+#define minmax3(v1, v2, v3, min, max)   \
+do {                                    \
+    if (v1 < v2) {                      \
+        if (v1 < v3) {                  \
+            min = v1;                   \
+            max = (v2 < v3) ? v3 : v2;  \
+        } else {                        \
+            max = v2;                   \
+            min = v3;                   \
+        }                               \
+    } else {                            \
+        if (v1 < v3) {                  \
+            max = v3;                   \
+            min = v2;                   \
+        } else {                        \
+            max = v1;                   \
+            min = (v2 < v3) ? v2 : v3;  \
+        }                               \
+    }                                   \
 } while (0)
 
-#define minmax4(v1, v2, v3, v4, min, max)	\
-do {						\
-    if (v1 < v2) {				\
-	if (v3 < v4) {				\
-	    max = (v2 < v4) ? v4 : v2;		\
-	    min = (v1 < v3) ? v1 : v3;		\
-	} else {				\
-	    max = (v2 < v3) ? v3 : v2;		\
-	    min = (v1 < v4) ? v1 : v4;		\
-	}					\
-    } else {					\
-	if (v3 < v4) {				\
-	    max = (v1 < v4) ? v4 : v1;		\
-	    min = (v2 < v3) ? v2 : v3;		\
-	} else {				\
-	    max = (v1 < v3) ? v3 : v1;		\
-	    min = (v2 < v4) ? v2 : v4;		\
-	}					\
-    }						\
+#define minmax4(v1, v2, v3, v4, min, max)       \
+do {                                            \
+    if (v1 < v2) {                              \
+        if (v3 < v4) {                          \
+            max = (v2 < v4) ? v4 : v2;          \
+            min = (v1 < v3) ? v1 : v3;          \
+        } else {                                \
+            max = (v2 < v3) ? v3 : v2;          \
+            min = (v1 < v4) ? v1 : v4;          \
+        }                                       \
+    } else {                                    \
+        if (v3 < v4) {                          \
+            max = (v1 < v4) ? v4 : v1;          \
+            min = (v2 < v3) ? v2 : v3;          \
+        } else {                                \
+            max = (v1 < v3) ? v3 : v1;          \
+            min = (v2 < v4) ? v2 : v4;          \
+        }                                       \
+    }                                           \
 } while(0)
 
 static jfloat
 ptSegDistSq(jfloat x0, jfloat y0,
-	    jfloat x1, jfloat y1,
-	    jfloat px, jfloat py)
+            jfloat x1, jfloat y1,
+            jfloat px, jfloat py)
 {
     jfloat dotprod, projlenSq;
 
@@ -931,31 +931,31 @@ ptSegDistSq(jfloat x0, jfloat y0,
     py -= y0;
     dotprod = px * x1 + py * y1;
     if (dotprod <= 0.0) {
-	/* px,py is on the side of x0,y0 away from x1,y1 */
-	/* distance to segment is length of px,py vector */
-	/* "length of its (clipped) projection" is now 0.0 */
-	projlenSq = 0.0;
+        /* px,py is on the side of x0,y0 away from x1,y1 */
+        /* distance to segment is length of px,py vector */
+        /* "length of its (clipped) projection" is now 0.0 */
+        projlenSq = 0.0;
     } else {
-	/* switch to backwards vectors relative to x1,y1 */
-	/* x1,y1 are already the negative of x0,y0=>x1,y1 */
-	/* to get px,py to be the negative of px,py=>x1,y1 */
-	/* the dot product of two negated vectors is the same */
-	/* as the dot product of the two normal vectors */
-	px = x1 - px;
-	py = y1 - py;
-	dotprod = px * x1 + py * y1;
-	if (dotprod <= 0.0) {
-	    /* px,py is on the side of x1,y1 away from x0,y0 */
-	    /* distance to segment is length of (backwards) px,py vector */
-	    /* "length of its (clipped) projection" is now 0.0 */
-	    projlenSq = 0.0;
-	} else {
-	    /* px,py is between x0,y0 and x1,y1 */
-	    /* dotprod is the length of the px,py vector */
-	    /* projected on the x1,y1=>x0,y0 vector times the */
-	    /* length of the x1,y1=>x0,y0 vector */
-	    projlenSq = dotprod * dotprod / (x1 * x1 + y1 * y1);
-	}
+        /* switch to backwards vectors relative to x1,y1 */
+        /* x1,y1 are already the negative of x0,y0=>x1,y1 */
+        /* to get px,py to be the negative of px,py=>x1,y1 */
+        /* the dot product of two negated vectors is the same */
+        /* as the dot product of the two normal vectors */
+        px = x1 - px;
+        py = y1 - py;
+        dotprod = px * x1 + py * y1;
+        if (dotprod <= 0.0) {
+            /* px,py is on the side of x1,y1 away from x0,y0 */
+            /* distance to segment is length of (backwards) px,py vector */
+            /* "length of its (clipped) projection" is now 0.0 */
+            projlenSq = 0.0;
+        } else {
+            /* px,py is between x0,y0 and x1,y1 */
+            /* dotprod is the length of the px,py vector */
+            /* projected on the x1,y1=>x0,y0 vector times the */
+            /* length of the x1,y1=>x0,y0 vector */
+            projlenSq = dotprod * dotprod / (x1 * x1 + y1 * y1);
+        }
     }
     /* Distance to line is now the length of the relative point */
     /* vector minus the length of its projection onto the line */
@@ -966,8 +966,8 @@ ptSegDistSq(jfloat x0, jfloat y0,
 
 static jboolean
 appendSegment(pathData *pd,
-	      jfloat x0, jfloat y0,
-	      jfloat x1, jfloat y1)
+              jfloat x0, jfloat y0,
+              jfloat x1, jfloat y1)
 {
     jbyte windDir;
     jint istartx, istarty, ilasty;
@@ -977,12 +977,12 @@ appendSegment(pathData *pd,
     segmentData *seg;
 
     if (y0 > y1) {
-	jfloat t;
-	t = x0; x0 = x1; x1 = t;
-	t = y0; y0 = y1; y1 = t;
-	windDir = -1;
+        jfloat t;
+        t = x0; x0 = x1; x1 = t;
+        t = y0; y0 = y1; y1 = t;
+        windDir = -1;
     } else {
-	windDir = 1;
+        windDir = 1;
     }
     /* We want to iterate at every horizontal pixel center (HPC) crossing. */
     /* First calculate next highest HPC we will cross at the start. */
@@ -991,24 +991,24 @@ appendSegment(pathData *pd,
     ilasty  = (jint) ceil(y1 - 0.5f);
     /* Ignore if we start and end outside clip, or on the same scanline. */
     if (istarty >= ilasty || istarty >= pd->hiy || ilasty <= pd->loy) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     }
 
     /* We will need to insert this segment, check for room. */
     if (pd->numSegments >= pd->segmentsSize) {
-	segmentData *newSegs;
-	int newSize = pd->segmentsSize + GROW_SIZE;
-	newSegs = (segmentData *) calloc(newSize, sizeof(segmentData));
-	if (newSegs == NULL) {
-	    return JNI_FALSE;
-	}
-	if (pd->segments != NULL) {
-	    memcpy(newSegs, pd->segments,
-		   sizeof(segmentData) * pd->segmentsSize);
-	    free(pd->segments);
-	}
-	pd->segments = newSegs;
-	pd->segmentsSize = newSize;
+        segmentData *newSegs;
+        int newSize = pd->segmentsSize + GROW_SIZE;
+        newSegs = (segmentData *) calloc(newSize, sizeof(segmentData));
+        if (newSegs == NULL) {
+            return JNI_FALSE;
+        }
+        if (pd->segments != NULL) {
+            memcpy(newSegs, pd->segments,
+                   sizeof(segmentData) * pd->segmentsSize);
+            free(pd->segments);
+        }
+        pd->segments = newSegs;
+        pd->segmentsSize = newSize;
     }
 
     dx = x1 - x0;
@@ -1054,8 +1054,8 @@ appendSegment(pathData *pd,
  */
 static jboolean
 subdivideLine(pathData *pd, int level,
-	      jfloat x0, jfloat y0,
-	      jfloat x1, jfloat y1)
+              jfloat x0, jfloat y0,
+              jfloat x1, jfloat y1)
 {
     jfloat miny, maxy;
     jfloat minx, maxx;
@@ -1064,10 +1064,10 @@ subdivideLine(pathData *pd, int level,
     minmax2(y0, y1, miny, maxy);
 
     if (maxy <= pd->loy || miny >= pd->hiy || minx >= pd->hix) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     }
     if (maxx <= pd->lox) {
-	return appendSegment(pd, maxx, y0, maxx, y1);
+        return appendSegment(pd, maxx, y0, maxx, y1);
     }
 
     return appendSegment(pd, x0, y0, x1, y1);
@@ -1075,9 +1075,9 @@ subdivideLine(pathData *pd, int level,
 
 static jboolean
 subdivideQuad(pathData *pd, int level,
-	      jfloat x0, jfloat y0,
-	      jfloat x1, jfloat y1,
-	      jfloat x2, jfloat y2)
+              jfloat x0, jfloat y0,
+              jfloat x1, jfloat y1,
+              jfloat x2, jfloat y2)
 {
     jfloat miny, maxy;
     jfloat minx, maxx;
@@ -1086,30 +1086,30 @@ subdivideQuad(pathData *pd, int level,
     minmax3(y0, y1, y2, miny, maxy);
 
     if (maxy <= pd->loy || miny >= pd->hiy || minx >= pd->hix) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     }
     if (maxx <= pd->lox) {
-	return appendSegment(pd, maxx, y0, maxx, y2);
+        return appendSegment(pd, maxx, y0, maxx, y2);
     }
 
     if (level < SUBDIVIDE_MAX) {
-	/* Test if the curve is flat enough for insertion. */
-	if (ptSegDistSq(x0, y0, x2, y2, x1, y1) > MAX_FLAT_SQ) {
-	    jfloat cx1, cx2;
-	    jfloat cy1, cy2;
+        /* Test if the curve is flat enough for insertion. */
+        if (ptSegDistSq(x0, y0, x2, y2, x1, y1) > MAX_FLAT_SQ) {
+            jfloat cx1, cx2;
+            jfloat cy1, cy2;
 
-	    cx1 = (x0 + x1) / 2.0f;
-	    cx2 = (x1 + x2) / 2.0f;
-	    x1 = (cx1 + cx2) / 2.0f;
+            cx1 = (x0 + x1) / 2.0f;
+            cx2 = (x1 + x2) / 2.0f;
+            x1 = (cx1 + cx2) / 2.0f;
 
-	    cy1 = (y0 + y1) / 2.0f;
-	    cy2 = (y1 + y2) / 2.0f;
-	    y1 = (cy1 + cy2) / 2.0f;
+            cy1 = (y0 + y1) / 2.0f;
+            cy2 = (y1 + y2) / 2.0f;
+            y1 = (cy1 + cy2) / 2.0f;
 
-	    level++;
-	    return (subdivideQuad(pd, level, x0, y0, cx1, cy1, x1, y1) &&
-		    subdivideQuad(pd, level, x1, y1, cx2, cy2, x2, y2));
-	}
+            level++;
+            return (subdivideQuad(pd, level, x0, y0, cx1, cy1, x1, y1) &&
+                    subdivideQuad(pd, level, x1, y1, cx2, cy2, x2, y2));
+        }
     }
 
     return appendSegment(pd, x0, y0, x2, y2);
@@ -1117,10 +1117,10 @@ subdivideQuad(pathData *pd, int level,
 
 static jboolean
 subdivideCubic(pathData *pd, int level,
-	       jfloat x0, jfloat y0,
-	       jfloat x1, jfloat y1,
-	       jfloat x2, jfloat y2,
-	       jfloat x3, jfloat y3)
+               jfloat x0, jfloat y0,
+               jfloat x1, jfloat y1,
+               jfloat x2, jfloat y2,
+               jfloat x3, jfloat y3)
 {
     jfloat miny, maxy;
     jfloat minx, maxx;
@@ -1129,40 +1129,40 @@ subdivideCubic(pathData *pd, int level,
     minmax4(y0, y1, y2, y3, miny, maxy);
 
     if (maxy <= pd->loy || miny >= pd->hiy || minx >= pd->hix) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     }
     if (maxx <= pd->lox) {
-	return appendSegment(pd, maxx, y0, maxx, y3);
+        return appendSegment(pd, maxx, y0, maxx, y3);
     }
 
     if (level < SUBDIVIDE_MAX) {
-	/* Test if the curve is flat enough for insertion. */
-	if (ptSegDistSq(x0, y0, x3, y3, x1, y1) > MAX_FLAT_SQ ||
-	    ptSegDistSq(x0, y0, x3, y3, x2, y2) > MAX_FLAT_SQ)
-	{
-	    jfloat ctrx, cx12, cx21;
-	    jfloat ctry, cy12, cy21;
+        /* Test if the curve is flat enough for insertion. */
+        if (ptSegDistSq(x0, y0, x3, y3, x1, y1) > MAX_FLAT_SQ ||
+            ptSegDistSq(x0, y0, x3, y3, x2, y2) > MAX_FLAT_SQ)
+        {
+            jfloat ctrx, cx12, cx21;
+            jfloat ctry, cy12, cy21;
 
-	    ctrx = (x1 + x2) / 2.0f;
-	    x1 = (x0 + x1) / 2.0f;
-	    x2 = (x2 + x3) / 2.0f;
-	    cx12 = (x1 + ctrx) / 2.0f;
-	    cx21 = (ctrx + x2) / 2.0f;
-	    ctrx = (cx12 + cx21) / 2.0f;
+            ctrx = (x1 + x2) / 2.0f;
+            x1 = (x0 + x1) / 2.0f;
+            x2 = (x2 + x3) / 2.0f;
+            cx12 = (x1 + ctrx) / 2.0f;
+            cx21 = (ctrx + x2) / 2.0f;
+            ctrx = (cx12 + cx21) / 2.0f;
 
-	    ctry = (y1 + y2) / 2.0f;
-	    y1 = (y0 + y1) / 2.0f;
-	    y2 = (y2 + y3) / 2.0f;
-	    cy12 = (y1 + ctry) / 2.0f;
-	    cy21 = (ctry + y2) / 2.0f;
-	    ctry = (cy12 + cy21) / 2.0f;
+            ctry = (y1 + y2) / 2.0f;
+            y1 = (y0 + y1) / 2.0f;
+            y2 = (y2 + y3) / 2.0f;
+            cy12 = (y1 + ctry) / 2.0f;
+            cy21 = (ctry + y2) / 2.0f;
+            ctry = (cy12 + cy21) / 2.0f;
 
-	    level++;
-	    return (subdivideCubic(pd, level, x0, y0, x1, y1,
-				   cx12, cy12, ctrx, ctry) &&
-		    subdivideCubic(pd, level, ctrx, ctry, cx21, cy21,
-				   x2, y2, x3, y3));
-	}
+            level++;
+            return (subdivideCubic(pd, level, x0, y0, x1, y1,
+                                   cx12, cy12, ctrx, ctry) &&
+                    subdivideCubic(pd, level, ctrx, ctry, cx21, cy21,
+                                   x2, y2, x3, y3));
+        }
     }
 
     return appendSegment(pd, x0, y0, x3, y3);
@@ -1175,22 +1175,22 @@ sortSegmentsByLeadingY(const void *elem1, const void *elem2)
     segmentData *seg2 = *(segmentData **)elem2;
 
     if (seg1->cury < seg2->cury) {
-	return -1;
+        return -1;
     }
     if (seg1->cury > seg2->cury) {
-	return 1;
+        return 1;
     }
     if (seg1->curx < seg2->curx) {
-	return -1;
+        return -1;
     }
     if (seg1->curx > seg2->curx) {
-	return 1;
+        return 1;
     }
     if (seg1->lasty < seg2->lasty) {
-	return -1;
+        return -1;
     }
     if (seg1->lasty > seg2->lasty) {
-	return 1;
+        return 1;
     }
     return 0;
 }
@@ -1222,21 +1222,21 @@ ShapeSIGetPathBox(JNIEnv *env, void *private, jint pathbox[])
 */
 static void
 ShapeSIIntersectClipBox(JNIEnv *env, void *private,
-			    jint clox, jint cloy, jint chix, jint chiy)
+                            jint clox, jint cloy, jint chix, jint chiy)
 {
     pathData *pd = (pathData *)private;
 
     if (clox > pd->lox) {
-	pd->lox = clox;
+        pd->lox = clox;
     }
     if (cloy > pd->loy) {
-	pd->loy = cloy;
+        pd->loy = cloy;
     }
     if (chix < pd->hix) {
-	pd->hix = chix;
+        pd->hix = chix;
     }
     if (chiy < pd->hiy) {
-	pd->hiy = chiy;
+        pd->hiy = chiy;
     }
 }
 
@@ -1253,11 +1253,11 @@ ShapeSINextSpan(void *state, jint spanbox[])
     segmentData *seg;
 
     if (pd->state != STATE_SPAN_STARTED) {
-	if (!initSegmentTable(pd)) {
-	    /* REMIND: - throw exception? */
-	    pd->lowSegment = num;
-	    return JNI_FALSE;
-	}
+        if (!initSegmentTable(pd)) {
+            /* REMIND: - throw exception? */
+            pd->lowSegment = num;
+            return JNI_FALSE;
+        }
     }
 
     lo = pd->lowSegment;
@@ -1268,125 +1268,125 @@ ShapeSINextSpan(void *state, jint spanbox[])
     segmentTable = pd->segmentTable;
 
     while (lo < num) {
-	if (cur < hi) {
-	    seg = segmentTable[cur];
-	    x0 = seg->curx;
-	    if (x0 >= pd->hix) {
-		cur = hi;
-		continue;
-	    }
-	    if (x0 < pd->lox) {
-		x0 = pd->lox;
-	    }
+        if (cur < hi) {
+            seg = segmentTable[cur];
+            x0 = seg->curx;
+            if (x0 >= pd->hix) {
+                cur = hi;
+                continue;
+            }
+            if (x0 < pd->lox) {
+                x0 = pd->lox;
+            }
 
-	    if (pd->evenodd) {
-		cur += 2;
-		if (cur <= hi) {
-		    x1 = segmentTable[cur - 1]->curx;
-		} else {
-		    x1 = pd->hix;
-		}
-	    } else {
-		int wind = seg->windDir;
-		cur++;
+            if (pd->evenodd) {
+                cur += 2;
+                if (cur <= hi) {
+                    x1 = segmentTable[cur - 1]->curx;
+                } else {
+                    x1 = pd->hix;
+                }
+            } else {
+                int wind = seg->windDir;
+                cur++;
 
-		while (JNI_TRUE) {
-		    if (cur >= hi) {
-			x1 = pd->hix;
-			break;
-		    }
-		    seg = segmentTable[cur++];
-		    wind += seg->windDir;
-		    if (wind == 0) {
-			x1 = seg->curx;
-			break;
-		    }
-		}
-	    }
+                while (JNI_TRUE) {
+                    if (cur >= hi) {
+                        x1 = pd->hix;
+                        break;
+                    }
+                    seg = segmentTable[cur++];
+                    wind += seg->windDir;
+                    if (wind == 0) {
+                        x1 = seg->curx;
+                        break;
+                    }
+                }
+            }
 
-	    if (x1 > pd->hix) {
-		x1 = pd->hix;
-	    }
-	    if (x1 <= x0) {
-		continue;
-	    }
-	    spanbox[0] = x0;
-	    spanbox[1] = loy;
-	    spanbox[2] = x1;
-	    spanbox[3] = loy + 1;
-	    ret = JNI_TRUE;
-	    break;
-	}
+            if (x1 > pd->hix) {
+                x1 = pd->hix;
+            }
+            if (x1 <= x0) {
+                continue;
+            }
+            spanbox[0] = x0;
+            spanbox[1] = loy;
+            spanbox[2] = x1;
+            spanbox[3] = loy + 1;
+            ret = JNI_TRUE;
+            break;
+        }
 
-	if (++loy >= pd->hiy) {
-	    lo = cur = hi = num;
-	    break;
-	}
+        if (++loy >= pd->hiy) {
+            lo = cur = hi = num;
+            break;
+        }
 
-	/* Go through active segments and toss which end "above" loy */
-	cur = new = hi;
-	while (--cur >= lo) {
-	    seg = segmentTable[cur];
-	    if (seg->lasty > loy) {
-		segmentTable[--new] = seg;
-	    }
-	}
+        /* Go through active segments and toss which end "above" loy */
+        cur = new = hi;
+        while (--cur >= lo) {
+            seg = segmentTable[cur];
+            if (seg->lasty > loy) {
+                segmentTable[--new] = seg;
+            }
+        }
 
-	lo = new;
-	if (lo == hi && lo < num) {
-	    /* The current list of segments is empty so we need to
-	     * jump to the beginning of the next set of segments.
-	     * Since the segments are not clipped to the output
-	     * area we need to make sure we don't jump "backwards"
-	     */
-	    seg = segmentTable[lo];
-	    if (loy < seg->cury) {
-		loy = seg->cury;
-	    }
-	}
+        lo = new;
+        if (lo == hi && lo < num) {
+            /* The current list of segments is empty so we need to
+             * jump to the beginning of the next set of segments.
+             * Since the segments are not clipped to the output
+             * area we need to make sure we don't jump "backwards"
+             */
+            seg = segmentTable[lo];
+            if (loy < seg->cury) {
+                loy = seg->cury;
+            }
+        }
 
-	/* Go through new segments and accept any which start "above" loy */
-	while (hi < num && segmentTable[hi]->cury <= loy) {
-	    hi++;
-	}
+        /* Go through new segments and accept any which start "above" loy */
+        while (hi < num && segmentTable[hi]->cury <= loy) {
+            hi++;
+        }
 
-	/* Update and sort the active segments by x0 */
-	for (cur = lo; cur < hi; cur++) {
-	    seg = segmentTable[cur];
+        /* Update and sort the active segments by x0 */
+        for (cur = lo; cur < hi; cur++) {
+            seg = segmentTable[cur];
 
-	    /* First update the x0, y0 of the segment */
-	    x0 = seg->curx;
-	    y0 = seg->cury;
-	    err = seg->error;
-	    if (++y0 == loy) {
-		x0 += seg->bumpx;
-		err += seg->bumperr;
-		x0 -= (err >> 31);
-		err &= ERRSTEP_MAX;
-	    } else {
-		jlong steps = loy;
-		steps -= y0 - 1;
-		y0 = loy;
-		x0 += (jint) (steps * seg->bumpx);
-		steps = err + (steps * seg->bumperr);
-		x0 += (jint) (steps >> 31);
-		err = ((jint) steps) & ERRSTEP_MAX;
-	    }
-	    seg->curx = x0;
-	    seg->cury = y0;
-	    seg->error = err;
+            /* First update the x0, y0 of the segment */
+            x0 = seg->curx;
+            y0 = seg->cury;
+            err = seg->error;
+            if (++y0 == loy) {
+                x0 += seg->bumpx;
+                err += seg->bumperr;
+                x0 -= (err >> 31);
+                err &= ERRSTEP_MAX;
+            } else {
+                jlong steps = loy;
+                steps -= y0 - 1;
+                y0 = loy;
+                x0 += (jint) (steps * seg->bumpx);
+                steps = err + (steps * seg->bumperr);
+                x0 += (jint) (steps >> 31);
+                err = ((jint) steps) & ERRSTEP_MAX;
+            }
+            seg->curx = x0;
+            seg->cury = y0;
+            seg->error = err;
 
-	    /* Then make sure the segment is sorted by x0 */
-	    for (new = cur; new > lo; new--) {
-		segmentData *seg2 = segmentTable[new - 1];
-		if (seg2->curx <= x0) {
-		    break;
-		}
-		segmentTable[new] = seg2;
-	    }
-	    segmentTable[new] = seg;
-	}
-	cur = lo;
+            /* Then make sure the segment is sorted by x0 */
+            for (new = cur; new > lo; new--) {
+                segmentData *seg2 = segmentTable[new - 1];
+                if (seg2->curx <= x0) {
+                    break;
+                }
+                segmentTable[new] = seg2;
+            }
+            segmentTable[new] = seg;
+        }
+        cur = lo;
     }
 
     pd->lowSegment = lo;
@@ -1402,18 +1402,18 @@ ShapeSISkipDownTo(void *private, jint y)
     pathData *pd = (pathData *)private;
 
     if (pd->state != STATE_SPAN_STARTED) {
-	if (!initSegmentTable(pd)) {
-	    /* REMIND: - throw exception? */
-	    pd->lowSegment = pd->numSegments;
-	    return;
-	}
+        if (!initSegmentTable(pd)) {
+            /* REMIND: - throw exception? */
+            pd->lowSegment = pd->numSegments;
+            return;
+        }
     }
 
     /* Make sure we are jumping forward */
     if (pd->loy < y) {
-	/* Pretend like we just finished with the span line y-1... */
-	pd->loy = y - 1;
-	pd->curSegment = pd->hiSegment; /* no more segments on that line */
+        /* Pretend like we just finished with the span line y-1... */
+        pd->loy = y - 1;
+        pd->curSegment = pd->hiSegment; /* no more segments on that line */
     }
 }
 
@@ -1424,14 +1424,14 @@ initSegmentTable(pathData *pd)
     segmentData **segmentTable;
     segmentTable = malloc(pd->numSegments * sizeof(segmentData *));
     if (segmentTable == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
     pd->state = STATE_SPAN_STARTED;
     for (i = 0; i < pd->numSegments; i++) {
-	segmentTable[i] = &pd->segments[i];
+        segmentTable[i] = &pd->segments[i];
     }
     qsort(segmentTable, pd->numSegments, sizeof(segmentData *),
-	  sortSegmentsByLeadingY);
+          sortSegmentsByLeadingY);
 
     pd->segmentTable = segmentTable;
 
@@ -1440,7 +1440,7 @@ initSegmentTable(pathData *pd)
     num = pd->numSegments;
     loy = pd->loy;
     while (cur < num && segmentTable[cur]->lasty <= loy) {
-	cur++;
+        cur++;
     }
     pd->lowSegment = pd->curSegment = pd->hiSegment = cur;
 

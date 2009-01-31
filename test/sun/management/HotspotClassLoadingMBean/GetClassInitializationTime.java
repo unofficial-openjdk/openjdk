@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetClassInitializationTime {
 
     private static HotspotClassLoadingMBean mbean =
-	(HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
+        (HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
 
     // Careful with these values.
     private static final long MIN_TIME_FOR_PASS = 1;
@@ -50,46 +50,46 @@ public class GetClassInitializationTime {
             trace = true;
         }
 
-	long time = mbean.getClassInitializationTime();
+        long time = mbean.getClassInitializationTime();
 
-	if (trace) {
-	    System.out.println("Class initialization time (ms): " + time);
-	}
+        if (trace) {
+            System.out.println("Class initialization time (ms): " + time);
+        }
 
-	if (time < MIN_TIME_FOR_PASS || time > MAX_TIME_FOR_PASS) {
-	    throw new RuntimeException("Class initialization time " + 
-				       "illegal value: " + time + " ms " + 
-				       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
-				       "MAX = " + MAX_TIME_FOR_PASS + ")");
-	}
-	
-	// Load a class and make sure the time increases
-	Class.forName("ClassToInitialize");
+        if (time < MIN_TIME_FOR_PASS || time > MAX_TIME_FOR_PASS) {
+            throw new RuntimeException("Class initialization time " +
+                                       "illegal value: " + time + " ms " +
+                                       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
+                                       "MAX = " + MAX_TIME_FOR_PASS + ")");
+        }
 
-	long time2 = mbean.getClassInitializationTime();
+        // Load a class and make sure the time increases
+        Class.forName("ClassToInitialize");
 
-	if (trace) {
-	    System.out.println("Class initialization time2 (ms): " + time2);
-	}
+        long time2 = mbean.getClassInitializationTime();
 
-	if (time2 <= time) {
-	    throw new RuntimeException("Class initialization time " + 
-				       "did not increase when class loaded " + 
-				       "(time = " + time + "; " +
-				       "time2 = " + time2 + ")");
-	}
+        if (trace) {
+            System.out.println("Class initialization time2 (ms): " + time2);
+        }
 
-	System.out.println("Test passed.");
+        if (time2 <= time) {
+            throw new RuntimeException("Class initialization time " +
+                                       "did not increase when class loaded " +
+                                       "(time = " + time + "; " +
+                                       "time2 = " + time2 + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }
 
 // This class should just cause the initialization timer to run
 class ClassToInitialize {
     static {
-	try {
-	    Thread.sleep(1000);
-	} catch (InterruptedException ie) {
-	    // do nothing
-	}
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            // do nothing
+        }
     }
 }

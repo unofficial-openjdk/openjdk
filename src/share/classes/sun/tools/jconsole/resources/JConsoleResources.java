@@ -109,14 +109,14 @@ public class JConsoleResources extends ListResourceBundle {
         {"Chart:", "Chart:"},
         {"Chart:.mnemonic", 'C'},
         {"Class path","Class path"},
-	{"Class","Class"},
-	{"ClassName","ClassName"},
+        {"Class","Class"},
+        {"ClassName","ClassName"},
         {"ClassTab.infoLabelFormat", "<html>Loaded: {0}    Unloaded: {1}    Total: {2}</html>"},
         {"ClassTab.loadedClassesPlotter.accessibleName", "Chart for Loaded Classes."},
         {"Classes","Classes"},
         {"Close","Close"},
         {"Column.Name", "Name"},
-	{"Column.PID", "PID"},
+        {"Column.PID", "PID"},
         {"Committed memory","Committed memory"},
         {"Committed virtual memory","Committed virtual memory"},
         {"Committed", "Committed"},
@@ -142,7 +142,7 @@ public class JConsoleResources extends ListResourceBundle {
         {"Current classes loaded", "Current classes loaded"},
         {"Current heap size","Current heap size"},
         {"Current value","Current value: {0}"},
-	{"Create", "Create"},
+        {"Create", "Create"},
         {"Daemon threads","Daemon threads"},
         {"Disconnected. Click to connect.","Disconnected. Click to connect."},
         {"Double click to expand/collapse","Double click to expand/collapse"},
@@ -168,8 +168,8 @@ public class JConsoleResources extends ListResourceBundle {
         {"Empty array", "Empty array"},
         {"Empty opentype viewer", "Empty opentype viewer"},
         {"Error","Error"},
-	{"Error: MBeans already exist","Error: MBeans already exist"},
-	{"Error: MBeans do not exist","Error: MBeans do not exist"},
+        {"Error: MBeans already exist","Error: MBeans already exist"},
+        {"Error: MBeans do not exist","Error: MBeans do not exist"},
         {"Error:","Error:"},
         {"Event","Event"},
         {"Exit", "Exit"},
@@ -212,8 +212,8 @@ public class JConsoleResources extends ListResourceBundle {
         {"Impact","Impact"},
         {"Info","Info"},
         {"INFO","INFO"},
-	{"Invalid plugin path", "Warning: Invalid plugin path: {0}"},
-	{"Invalid URL", "Invalid URL: {0}"},
+        {"Invalid plugin path", "Warning: Invalid plugin path: {0}"},
+        {"Invalid URL", "Invalid URL: {0}"},
         {"Is","Is"},
         {"Java Monitoring & Management Console", "Java Monitoring & Management Console"},
         {"JConsole: ","JConsole: {0}"},
@@ -224,10 +224,10 @@ public class JConsoleResources extends ListResourceBundle {
         {"Java","Java"},
         {"Library path","Library path"},
         {"Listeners","Listeners"},
-	{"Live Threads","Live threads"},
-	{"Loaded", "Loaded"},
-	{"Local Process:", "Local Process:"},
-	{"Local Process:.mnemonic", 'L'},
+        {"Live Threads","Live threads"},
+        {"Loaded", "Loaded"},
+        {"Local Process:", "Local Process:"},
+        {"Local Process:.mnemonic", 'L'},
         {"Look and Feel","Look and Feel"},
         {"Masthead.font", "Dialog-PLAIN-25"},
         {"Management Not Enabled","<b>Note</b>: The management agent is not enabled on this process."},
@@ -300,7 +300,7 @@ public class JConsoleResources extends ListResourceBundle {
         {"Notification buffer","Notification buffer"},
         {"Notifications","Notifications"},
         {"NotifTypes", "NotifTypes"},
-	{"Number of Threads","Number of Threads"},
+        {"Number of Threads","Number of Threads"},
         {"Number of Loaded Classes","Number of Loaded Classes"},
         {"Number of processors","Number of processors"},
         {"ObjectName","ObjectName"},
@@ -336,15 +336,15 @@ public class JConsoleResources extends ListResourceBundle {
         {"Readable","Readable"},
         {"Received","Received"},
         {"Reconnect","Reconnect"},
-	{"Remote Process:", "Remote Process:"},
-	{"Remote Process:.mnemonic", 'R'},
-	{"Remote Process.textField.accessibleName", "Remote Process"},
+        {"Remote Process:", "Remote Process:"},
+        {"Remote Process:.mnemonic", 'R'},
+        {"Remote Process.textField.accessibleName", "Remote Process"},
         {"Remove","Remove"},
         {"Restore All", "Restore All"},
         {"Restore All.mnemonic", 'R'},
         {"Return value", "Return value"},
         {"ReturnType", "ReturnType"},
-	{"SeqNum","SeqNum"},
+        {"SeqNum","SeqNum"},
         {"Size Bytes", "{0,number,integer} bytes"},
         {"Size Gb","{0} Gb"},
         {"Size Kb","{0} Kb"},
@@ -353,13 +353,13 @@ public class JConsoleResources extends ListResourceBundle {
         {"Stack trace",
              cr + "Stack trace: " + cr},
         {"Success:","Success:"},
-	// Note: SummaryTab.headerDateTimeFormat can be one the following:
-	// 1. A combination of two styles for date and time, using the
-	//    constants from class DateFormat: SHORT, MEDIUM, LONG, FULL.
-	//    Example: "MEDIUM,MEDIUM" or "FULL,SHORT"
-	// 2. An explicit string pattern used for creating an instance
-	//    of the class SimpleDateFormat.
-	//    Example: "yyyy-MM-dd HH:mm:ss" or "M/d/yyyy h:mm:ss a"
+        // Note: SummaryTab.headerDateTimeFormat can be one the following:
+        // 1. A combination of two styles for date and time, using the
+        //    constants from class DateFormat: SHORT, MEDIUM, LONG, FULL.
+        //    Example: "MEDIUM,MEDIUM" or "FULL,SHORT"
+        // 2. An explicit string pattern used for creating an instance
+        //    of the class SimpleDateFormat.
+        //    Example: "yyyy-MM-dd HH:mm:ss" or "M/d/yyyy h:mm:ss a"
         {"SummaryTab.headerDateTimeFormat", "FULL,FULL"},
         {"SummaryTab.pendingFinalization.label", "Pending finalization"},
         {"SummaryTab.pendingFinalization.value", "{0} objects"},
@@ -370,14 +370,14 @@ public class JConsoleResources extends ListResourceBundle {
         {"ThreadTab.infoLabelFormat", "<html>Live: {0}    Peak: {1}    Total: {2}</html>"},
         {"ThreadTab.threadInfo.accessibleName", "Thread Information"},
         {"ThreadTab.threadPlotter.accessibleName", "Chart for number of threads."},
-	{"Threshold","Threshold"},
+        {"Threshold","Threshold"},
         {"Tile", "Tile"},
         {"Tile.mnemonic", 'T'},
         {"Time Range:", "Time Range:"},
         {"Time Range:.mnemonic", 'T'},
         {"Time", "Time"},
         {"TimeStamp","TimeStamp"},
-	{"Total Loaded", "Total Loaded"},
+        {"Total Loaded", "Total Loaded"},
         {"Total classes loaded","Total classes loaded"},
         {"Total classes unloaded","Total classes unloaded"},
         {"Total compile time","Total compile time"},
@@ -388,7 +388,7 @@ public class JConsoleResources extends ListResourceBundle {
         {"Unavailable","Unavailable"},
         {"UNKNOWN","UNKNOWN"},
         {"Unknown Host","Unknown Host: {0}"},
-	{"Unregister", "Unregister"},
+        {"Unregister", "Unregister"},
         {"Uptime","Uptime"},
         {"Uptime: ","Uptime: "},
         {"Usage Threshold","Usage Threshold"},
@@ -440,7 +440,7 @@ public class JConsoleResources extends ListResourceBundle {
              "  -pluginpath Specify the path that jconsole uses to look up the plugins" + cr +
              "  -version    Print program version" + cr +
              cr +
-	     "  connection = pid || host:port || JMX URL (service:jmx:<protocol>://...)" + cr +
+             "  connection = pid || host:port || JMX URL (service:jmx:<protocol>://...)" + cr +
              "  pid         The process id of a target process" + cr +
              "  host        A remote host name or IP address" + cr +
              "  port        The port number for the remote connection" + cr +
@@ -452,6 +452,6 @@ public class JConsoleResources extends ListResourceBundle {
     }
 
     public synchronized Object[][] getContents() {
-	return getContents0();
+        return getContents0();
     }
 }

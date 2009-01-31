@@ -32,7 +32,6 @@ import sun.jvmstat.monitor.*;
  * A class for formatting raw counter output.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class RawOutputFormatter implements OutputFormatter {

@@ -40,7 +40,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's SplitPaneUI.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthSplitPaneUI extends BasicSplitPaneUI implements
@@ -95,22 +94,22 @@ class SynthSplitPaneUI extends BasicSplitPaneUI implements
             setNonContinuousLayoutDivider(nonContinuousLayoutDivider, true);
         }
 
-	// focus forward traversal key
-	if (managingFocusForwardTraversalKeys==null) {
-	    managingFocusForwardTraversalKeys = new HashSet();
-	    managingFocusForwardTraversalKeys.add(
-		KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
-	}
-	splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-					managingFocusForwardTraversalKeys);
-	// focus backward traversal key
-	if (managingFocusBackwardTraversalKeys==null) {
-	    managingFocusBackwardTraversalKeys = new HashSet();
-	    managingFocusBackwardTraversalKeys.add(
-		KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
-	}
-	splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-					managingFocusBackwardTraversalKeys);
+        // focus forward traversal key
+        if (managingFocusForwardTraversalKeys==null) {
+            managingFocusForwardTraversalKeys = new HashSet();
+            managingFocusForwardTraversalKeys.add(
+                KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+        }
+        splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+                                        managingFocusForwardTraversalKeys);
+        // focus backward traversal key
+        if (managingFocusBackwardTraversalKeys==null) {
+            managingFocusBackwardTraversalKeys = new HashSet();
+            managingFocusBackwardTraversalKeys.add(
+                KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
+        }
+        splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                                        managingFocusBackwardTraversalKeys);
     }
 
     private void updateStyle(JSplitPane splitPane) {

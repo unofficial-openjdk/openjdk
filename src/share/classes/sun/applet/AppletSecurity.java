@@ -49,7 +49,6 @@ import sun.security.util.SecurityConstants;
 /**
  * This class defines an applet security policy
  *
- * @version 	%I%, %G%
  */
 public
 class AppletSecurity extends AWTSecurityManager {
@@ -77,47 +76,47 @@ class AppletSecurity extends AWTSecurityManager {
      * Construct and initialize.
      */
     public AppletSecurity() {
-	reset();
-	mainAppContext = AppContext.getAppContext();
+        reset();
+        mainAppContext = AppContext.getAppContext();
     }
 
     // Cache to store known restricted packages
     private HashSet restrictedPackages = new HashSet();
-   
+
     /**
      * Reset from Properties
      */
-    public void reset() 
+    public void reset()
     {
-	// Clear cache
-	restrictedPackages.clear();
+        // Clear cache
+        restrictedPackages.clear();
 
-	AccessController.doPrivileged(new PrivilegedAction() {
-	    public Object run() 
-	    {
-		// Enumerate system properties
-		Enumeration e = System.getProperties().propertyNames();
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run()
+            {
+                // Enumerate system properties
+                Enumeration e = System.getProperties().propertyNames();
 
-		while (e.hasMoreElements())
-		{
-		    String name = (String) e.nextElement();
+                while (e.hasMoreElements())
+                {
+                    String name = (String) e.nextElement();
 
-		    if (name != null && name.startsWith("package.restrict.access."))
-		    {
-			String value = System.getProperty(name);
+                    if (name != null && name.startsWith("package.restrict.access."))
+                    {
+                        String value = System.getProperty(name);
 
-			if (value != null && value.equalsIgnoreCase("true"))
-			{
-			    String pkg = name.substring(24);
+                        if (value != null && value.equalsIgnoreCase("true"))
+                        {
+                            String pkg = name.substring(24);
 
-    			    // Cache restricted packages
-			    restrictedPackages.add(pkg);
-			}
-		    }
-		}
-		return null;
-	    }
-	});
+                            // Cache restricted packages
+                            restrictedPackages.add(pkg);
+                        }
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     /**
@@ -125,76 +124,76 @@ class AppletSecurity extends AWTSecurityManager {
      */
     private AppletClassLoader currentAppletClassLoader()
     {
-	// try currentClassLoader first
-	ClassLoader loader = currentClassLoader();
-	
-	if ((loader == null) || (loader instanceof AppletClassLoader))
-	    return (AppletClassLoader)loader;
+        // try currentClassLoader first
+        ClassLoader loader = currentClassLoader();
 
-	// if that fails, get all the classes on the stack and check them.
-	Class[] context = getClassContext();
-	for (int i = 0; i < context.length; i++) {
-	    loader = context[i].getClassLoader();
-	    if (loader instanceof AppletClassLoader)
-		return (AppletClassLoader)loader;
-	}
+        if ((loader == null) || (loader instanceof AppletClassLoader))
+            return (AppletClassLoader)loader;
 
-	/* 
-	 * fix bug # 6433620 the logic here is : try to find URLClassLoader from
-	 * class context, check its AccessControlContext to see if 
-	 * AppletClassLoader is in stack when it's created. for this kind of 
-	 * URLClassLoader, return the AppContext assocated with the  
-	 * AppletClassLoader.
-	 */
-	for (int i = 0; i < context.length; i++) {
-	    final ClassLoader currentLoader = context[i].getClassLoader();
+        // if that fails, get all the classes on the stack and check them.
+        Class[] context = getClassContext();
+        for (int i = 0; i < context.length; i++) {
+            loader = context[i].getClassLoader();
+            if (loader instanceof AppletClassLoader)
+                return (AppletClassLoader)loader;
+        }
 
-	    if (currentLoader instanceof URLClassLoader) {
-		loader = (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-		    public Object run() {
+        /*
+         * fix bug # 6433620 the logic here is : try to find URLClassLoader from
+         * class context, check its AccessControlContext to see if
+         * AppletClassLoader is in stack when it's created. for this kind of
+         * URLClassLoader, return the AppContext assocated with the
+         * AppletClassLoader.
+         */
+        for (int i = 0; i < context.length; i++) {
+            final ClassLoader currentLoader = context[i].getClassLoader();
 
-			AccessControlContext acc = null;
-			ProtectionDomain[] pds = null;
+            if (currentLoader instanceof URLClassLoader) {
+                loader = (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
 
-			try {
-			    acc = (AccessControlContext) facc.get(currentLoader);
-			    if (acc == null) {
-				return null;
-			    }
+                        AccessControlContext acc = null;
+                        ProtectionDomain[] pds = null;
 
-		    	    pds = (ProtectionDomain[]) fcontext.get(acc);
-			    if (pds == null) {
-				return null;
-			    }
-			} catch (Exception e) {
-            		    throw new UnsupportedOperationException(e);
-			}
+                        try {
+                            acc = (AccessControlContext) facc.get(currentLoader);
+                            if (acc == null) {
+                                return null;
+                            }
 
-		    	for (int i=0; i<pds.length; i++) {
-		    	    ClassLoader cl = pds[i].getClassLoader();
+                            pds = (ProtectionDomain[]) fcontext.get(acc);
+                            if (pds == null) {
+                                return null;
+                            }
+                        } catch (Exception e) {
+                            throw new UnsupportedOperationException(e);
+                        }
 
-	 		    if (cl instanceof AppletClassLoader) {
-				    return cl;
-			    }
-			}
+                        for (int i=0; i<pds.length; i++) {
+                            ClassLoader cl = pds[i].getClassLoader();
 
-			return null;
-	    	    }
-		});
+                            if (cl instanceof AppletClassLoader) {
+                                    return cl;
+                            }
+                        }
 
-		if (loader != null) {
-		    return (AppletClassLoader) loader;
-		}
-	    }
-	}
+                        return null;
+                    }
+                });
 
-	// if that fails, try the context class loader
-	loader = Thread.currentThread().getContextClassLoader();
-	if (loader instanceof AppletClassLoader)
-	    return (AppletClassLoader)loader;
+                if (loader != null) {
+                    return (AppletClassLoader) loader;
+                }
+            }
+        }
 
-	// no AppletClassLoaders on the stack
-	return (AppletClassLoader)null;
+        // if that fails, try the context class loader
+        loader = Thread.currentThread().getContextClassLoader();
+        if (loader instanceof AppletClassLoader)
+            return (AppletClassLoader)loader;
+
+        // no AppletClassLoaders on the stack
+        return (AppletClassLoader)null;
     }
 
     /**
@@ -203,10 +202,10 @@ class AppletSecurity extends AWTSecurityManager {
      * loader.
      */
     protected boolean inThreadGroup(ThreadGroup g) {
-	if (currentAppletClassLoader() == null)
-	    return false;
-	else
-	    return getThreadGroup().parentOf(g);
+        if (currentAppletClassLoader() == null)
+            return false;
+        else
+            return getThreadGroup().parentOf(g);
     }
 
     /**
@@ -214,7 +213,7 @@ class AppletSecurity extends AWTSecurityManager {
      * own threadgroup.
      */
     protected boolean inThreadGroup(Thread thread) {
-	return inThreadGroup(thread.getThreadGroup());
+        return inThreadGroup(thread.getThreadGroup());
     }
 
     /**
@@ -223,14 +222,14 @@ class AppletSecurity extends AWTSecurityManager {
      * to any group.
      */
     public void checkAccess(Thread t) {
-        /* When multiple applets is reloaded simultaneously, there will be 
-         * multiple invocations to this method from plugin's SecurityManager. 
-         * This method should not be synchronized to avoid deadlock when 
-         * a page with multiple applets is reloaded 
+        /* When multiple applets is reloaded simultaneously, there will be
+         * multiple invocations to this method from plugin's SecurityManager.
+         * This method should not be synchronized to avoid deadlock when
+         * a page with multiple applets is reloaded
          */
-	if ((t.getState() != Thread.State.TERMINATED) && !inThreadGroup(t)) {
-	    checkPermission(SecurityConstants.MODIFY_THREAD_PERMISSION);
-	}
+        if ((t.getState() != Thread.State.TERMINATED) && !inThreadGroup(t)) {
+            checkPermission(SecurityConstants.MODIFY_THREAD_PERMISSION);
+        }
     }
 
     private boolean inThreadGroupCheck = false;
@@ -240,34 +239,34 @@ class AppletSecurity extends AWTSecurityManager {
      * applet thread groups.
      */
     public synchronized void checkAccess(ThreadGroup g) {
-	if (inThreadGroupCheck) {
-	    // if we are in a recursive check, it is because
-	    // inThreadGroup is calling appletLoader.getThreadGroup
-	    // in that case, only do the super check, as appletLoader
-	    // has a begin/endPrivileged
-	    checkPermission(SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
-	} else {
-	    try {
-		inThreadGroupCheck = true;
-		if (!inThreadGroup(g)) {
-		    checkPermission(SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
-		}
-	    } finally {
-		inThreadGroupCheck = false;
-	    }
-	}
+        if (inThreadGroupCheck) {
+            // if we are in a recursive check, it is because
+            // inThreadGroup is calling appletLoader.getThreadGroup
+            // in that case, only do the super check, as appletLoader
+            // has a begin/endPrivileged
+            checkPermission(SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
+        } else {
+            try {
+                inThreadGroupCheck = true;
+                if (!inThreadGroup(g)) {
+                    checkPermission(SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
+                }
+            } finally {
+                inThreadGroupCheck = false;
+            }
+        }
     }
 
 
     /**
-     * Throws a <code>SecurityException</code> if the 
-     * calling thread is not allowed to access the package specified by 
-     * the argument. 
+     * Throws a <code>SecurityException</code> if the
+     * calling thread is not allowed to access the package specified by
+     * the argument.
      * <p>
-     * This method is used by the <code>loadClass</code> method of class 
-     * loaders. 
+     * This method is used by the <code>loadClass</code> method of class
+     * loaders.
      * <p>
-     * The <code>checkPackageAccess</code> method for class 
+     * The <code>checkPackageAccess</code> method for class
      * <code>SecurityManager</code>  calls
      * <code>checkPermission</code> with the
      * <code>RuntimePermission("accessClassInPackage."+pkg)</code>
@@ -280,23 +279,23 @@ class AppletSecurity extends AWTSecurityManager {
      */
     public void checkPackageAccess(final String pkgname) {
 
-	// first see if the VM-wide policy allows access to this package
-	super.checkPackageAccess(pkgname);
+        // first see if the VM-wide policy allows access to this package
+        super.checkPackageAccess(pkgname);
 
-	// now check the list of restricted packages
-	for (Iterator iter = restrictedPackages.iterator(); iter.hasNext();)
-	{
-	    String pkg = (String) iter.next();
-	    
-	    // Prevent matching "sun" and "sunir" even if they
-	    // starts with similar beginning characters
-	    //
-	    if (pkgname.equals(pkg) || pkgname.startsWith(pkg + "."))
-	    {
-		checkPermission(new java.lang.RuntimePermission
-			    ("accessClassInPackage." + pkgname));
-	    }
-	}
+        // now check the list of restricted packages
+        for (Iterator iter = restrictedPackages.iterator(); iter.hasNext();)
+        {
+            String pkg = (String) iter.next();
+
+            // Prevent matching "sun" and "sunir" even if they
+            // starts with similar beginning characters
+            //
+            if (pkgname.equals(pkg) || pkgname.startsWith(pkg + "."))
+            {
+                checkPermission(new java.lang.RuntimePermission
+                            ("accessClassInPackage." + pkgname));
+            }
+        }
     }
 
     /**
@@ -306,19 +305,19 @@ class AppletSecurity extends AWTSecurityManager {
      * <code>AWTPermission("accessEventQueue")</code> permission.
      *
      * @since   JDK1.1
-     * @exception  SecurityException  if the caller does not have 
+     * @exception  SecurityException  if the caller does not have
      *             permission to accesss the AWT event queue.
      */
     public void checkAwtEventQueueAccess() {
-	AppContext appContext = AppContext.getAppContext();
-	AppletClassLoader appletClassLoader = currentAppletClassLoader();
+        AppContext appContext = AppContext.getAppContext();
+        AppletClassLoader appletClassLoader = currentAppletClassLoader();
 
-	if ((appContext == mainAppContext) && (appletClassLoader != null)) {
-	    // If we're about to allow access to the main EventQueue,
-	    // and anything untrusted is on the class context stack,
-	    // disallow access.
-	    super.checkAwtEventQueueAccess();
-	}
+        if ((appContext == mainAppContext) && (appletClassLoader != null)) {
+            // If we're about to allow access to the main EventQueue,
+            // and anything untrusted is on the class context stack,
+            // disallow access.
+            super.checkAwtEventQueueAccess();
+        }
     } // checkAwtEventQueueAccess()
 
     /**
@@ -345,7 +344,7 @@ class AppletSecurity extends AWTSecurityManager {
       * may be overridden by various SecurityManagers
       * (e.g. AppletSecurity) to index AppContext objects by the
       * calling context.
-      * 
+      *
       * @return  the AppContext corresponding to the current context.
       * @see     sun.awt.AppContext
       * @see     java.lang.SecurityManager
@@ -354,19 +353,19 @@ class AppletSecurity extends AWTSecurityManager {
     public AppContext getAppContext() {
         AppletClassLoader appletLoader = currentAppletClassLoader();
 
-	if (appletLoader == null) {
-	    return null;
-	} else {
-	    AppContext context =  appletLoader.getAppContext();
-		
-	    // context == null when some thread in applet thread group
-	    // has not been destroyed in AppContext.dispose() 
-	    if (context == null) {
-		throw new SecurityException("Applet classloader has invalid AppContext");
-	    }
+        if (appletLoader == null) {
+            return null;
+        } else {
+            AppContext context =  appletLoader.getAppContext();
 
-	    return context;
-	}
+            // context == null when some thread in applet thread group
+            // has not been destroyed in AppContext.dispose()
+            if (context == null) {
+                throw new SecurityException("Applet classloader has invalid AppContext");
+            }
+
+            return context;
+        }
     }
 
 } // class AppletSecurity

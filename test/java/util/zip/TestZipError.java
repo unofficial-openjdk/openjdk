@@ -45,17 +45,17 @@ public class TestZipError {
         File f = new File(fileName);
         f.delete();
         ZipOutputStream zos;
-	ZipEntry ze;
+        ZipEntry ze;
 
         // Create a zip file with two entries.
         zos = new ZipOutputStream(new FileOutputStream(f));
-	ze = new ZipEntry("one");
-	zos.putNextEntry(ze);
-	zos.write("hello".getBytes());
-	zos.closeEntry();
-	ze = new ZipEntry("two");
-	zos.putNextEntry(ze);
-	zos.write("world".getBytes());
+        ze = new ZipEntry("one");
+        zos.putNextEntry(ze);
+        zos.write("hello".getBytes());
+        zos.closeEntry();
+        ze = new ZipEntry("two");
+        zos.putNextEntry(ze);
+        zos.write("world".getBytes());
         zos.closeEntry();
         zos.close();
 
@@ -66,15 +66,15 @@ public class TestZipError {
         // Delete the file; of course this does not change the in-memory data
         // structures that represent the central directory!
         f.delete();
-        
+
         // Re-create zip file, with different entries than earlier.  However,
         // recall that we have in-memory information about the central
         // directory of the file at its previous state.
         zos = new ZipOutputStream(new FileOutputStream(f));
-	ze = new ZipEntry("uno");
-	zos.putNextEntry(ze);
-	zos.write("hola".getBytes());
-	zos.closeEntry();
+        ze = new ZipEntry("uno");
+        zos.putNextEntry(ze);
+        zos.write("hola".getBytes());
+        zos.closeEntry();
         zos.close();
 
         // Iterate zip file's contents.  On Windows, this will result in a

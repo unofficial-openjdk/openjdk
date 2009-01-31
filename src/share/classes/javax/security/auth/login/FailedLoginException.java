@@ -27,12 +27,11 @@ package javax.security.auth.login;
 
 /**
  * Signals that user authentication failed.
- * 
+ *
  * <p> This exception is thrown by LoginModules if authentication failed.
  * For example, a <code>LoginModule</code> throws this exception if
  * the user entered an incorrect password.
  *
- * @version %I%, %G%
  */
 public class FailedLoginException extends LoginException {
 
@@ -43,7 +42,7 @@ public class FailedLoginException extends LoginException {
      * message is a String that describes this particular exception.
      */
     public FailedLoginException() {
-	super();
+        super();
     }
 
     /**
@@ -53,9 +52,9 @@ public class FailedLoginException extends LoginException {
      *
      * <p>
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public FailedLoginException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

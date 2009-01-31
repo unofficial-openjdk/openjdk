@@ -35,16 +35,16 @@ extern "C" {
 #if defined(DEBUG)
 
 #define DASSERT(_expr) \
-	if ( !(_expr) ) { \
-	    DAssert_Impl( #_expr, __FILE__, __LINE__); \
-	} else { \
-	}
-	
+        if ( !(_expr) ) { \
+            DAssert_Impl( #_expr, __FILE__, __LINE__); \
+        } else { \
+        }
+
 #define DASSERTMSG(_expr, _msg) \
-	if ( !(_expr) ) { \
-	    DAssert_Impl( (_msg), __FILE__, __LINE__); \
-	} else { \
-	}
+        if ( !(_expr) ) { \
+            DAssert_Impl( (_msg), __FILE__, __LINE__); \
+        } else { \
+        }
 
 /* prototype for assert function */
 typedef void (*DASSERT_CALLBACK)(const char * msg, const char * file, int line);

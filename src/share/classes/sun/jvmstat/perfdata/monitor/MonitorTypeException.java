@@ -32,7 +32,6 @@ import sun.jvmstat.monitor.MonitorException;
  * the type field of a PerfData entry in a HotSpot PerfData buffer.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitorTypeException extends MonitorException {

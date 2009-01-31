@@ -45,7 +45,7 @@ public class VectorParams {
 
     public static void main(String[] args) throws Exception {
         initBufs();
-	testSocketChannelVectorParams();
+        testSocketChannelVectorParams();
         testDatagramChannelVectorParams();
         testPipeVectorParams();
         testFileVectorParams();
@@ -60,11 +60,11 @@ public class VectorParams {
             bufs[i].flip();
         }
         isa =  new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-				    DAYTIME_PORT);
+                                    DAYTIME_PORT);
     }
 
     static void testSocketChannelVectorParams() throws Exception {
-	SocketChannel sc = SocketChannel.open(isa);
+        SocketChannel sc = SocketChannel.open(isa);
         tryBadWrite(sc, bufs, 0, -1);
         tryBadWrite(sc, bufs, -1, 0);
         tryBadWrite(sc, bufs, 0, 1000);
@@ -73,7 +73,7 @@ public class VectorParams {
         tryBadRead(sc, bufs, -1, 0);
         tryBadRead(sc, bufs, 0, 1000);
         tryBadRead(sc, bufs, 1000, 1);
-	sc.close();
+        sc.close();
     }
 
     static void testDatagramChannelVectorParams() throws Exception {
@@ -91,7 +91,7 @@ public class VectorParams {
     }
 
     static void testPipeVectorParams() throws Exception {
-	Pipe p = Pipe.open();
+        Pipe p = Pipe.open();
         Pipe.SinkChannel sink = p.sink();
         Pipe.SourceChannel source = p.source();
         tryBadWrite(sink, bufs, 0, -1);
@@ -107,8 +107,8 @@ public class VectorParams {
     }
 
     static void testFileVectorParams() throws Exception {
-	File testFile = File.createTempFile("filevec", null);
-	testFile.deleteOnExit();
+        File testFile = File.createTempFile("filevec", null);
+        testFile.deleteOnExit();
         RandomAccessFile raf = new RandomAccessFile(testFile, "rw");
         FileChannel fc = raf.getChannel();
         tryBadWrite(fc, bufs, 0, -1);
@@ -122,9 +122,9 @@ public class VectorParams {
         fc.close();
     }
 
-    private static void tryBadWrite(GatheringByteChannel gbc, 
-                                    ByteBuffer[] bufs, int offset, int len) 
-        throws Exception 
+    private static void tryBadWrite(GatheringByteChannel gbc,
+                                    ByteBuffer[] bufs, int offset, int len)
+        throws Exception
     {
         try {
             gbc.write(bufs, offset, len);
@@ -134,9 +134,9 @@ public class VectorParams {
         }
     }
 
-    private static void tryBadRead(ScatteringByteChannel sbc, 
-                                   ByteBuffer[] bufs, int offset, int len) 
-        throws Exception 
+    private static void tryBadRead(ScatteringByteChannel sbc,
+                                   ByteBuffer[] bufs, int offset, int len)
+        throws Exception
     {
         try {
             sbc.read(bufs, offset, len);

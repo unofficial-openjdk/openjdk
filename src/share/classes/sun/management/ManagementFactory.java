@@ -219,14 +219,14 @@ public class ManagementFactory {
         return hsCompileMBean;
     }
 
-    private static Permission monitorPermission = 
+    private static Permission monitorPermission =
         new ManagementPermission("monitor");
-    private static Permission controlPermission = 
+    private static Permission controlPermission =
         new ManagementPermission("control");
 
     /**
-     * Check that the current context is trusted to perform monitoring 
-     * or management.  
+     * Check that the current context is trusted to perform monitoring
+     * or management.
      * <p>
      * If the check fails we throw a SecurityException, otherwise
      * we return normally.
@@ -234,12 +234,12 @@ public class ManagementFactory {
      * @exception  SecurityException  if a security manager exists and if
      *             the caller does not have ManagementPermission("control").
      */
-    static void checkAccess(Permission p) 
+    static void checkAccess(Permission p)
          throws SecurityException {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(p);
-	}
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(p);
+        }
     }
 
     static void checkMonitorAccess() throws SecurityException {
@@ -279,7 +279,7 @@ public class ManagementFactory {
         addMBean(mbs, mbean, mbeanName, false);
     }
 
-    private static void addMBean(MBeanServer mbs, Object mbean, 
+    private static void addMBean(MBeanServer mbs, Object mbean,
                                  String mbeanName, boolean ignoreConflicts) {
         try {
             final ObjectName objName = new ObjectName(mbeanName);
@@ -337,12 +337,12 @@ public class ManagementFactory {
             addMXBean(mbs, getCompilationMXBean(),
                       COMPILATION_MXBEAN_NAME, null);
         }
-    
+
         // Register MBeans for memory pools and memory managers
         addMemoryManagers(mbs);
         addMemoryPools(mbs);
 
-        // Register platform extension 
+        // Register platform extension
         addMXBean(mbs, LogManager.getLoggingMXBean(),
                   LogManager.LOGGING_MXBEAN_NAME, null);
 
@@ -363,7 +363,7 @@ public class ManagementFactory {
 
     private static final String HOTSPOT_RUNTIME_MBEAN_NAME =
         "sun.management:type=HotspotRuntime";
- 
+
     private final static String HOTSPOT_THREAD_MBEAN_NAME =
         "sun.management:type=HotspotThreading";
 
@@ -381,15 +381,15 @@ public class ManagementFactory {
             }
         }
         return hsInternalObjName;
-    } 
+    }
 
     static void registerInternalMBeans(MBeanServer mbs) {
         // register all internal MBeans if not registered
-        // No exception is thrown if a MBean with that object name 
+        // No exception is thrown if a MBean with that object name
         // already registered (i.e. ignore if name conflicts).
-        addMBean(mbs, getHotspotClassLoadingMBean(), 
+        addMBean(mbs, getHotspotClassLoadingMBean(),
             HOTSPOT_CLASS_LOADING_MBEAN_NAME, true);
-        addMBean(mbs, getHotspotMemoryMBean(), 
+        addMBean(mbs, getHotspotMemoryMBean(),
             HOTSPOT_MEMORY_MBEAN_NAME, true);
         addMBean(mbs, getHotspotRuntimeMBean(),
             HOTSPOT_RUNTIME_MBEAN_NAME, true);
@@ -398,7 +398,7 @@ public class ManagementFactory {
 
         // CompilationMBean may not exist
         if (getCompilationMXBean() != null) {
-            addMBean(mbs, getHotspotCompilationMBean(), 
+            addMBean(mbs, getHotspotCompilationMBean(),
                 HOTSPOT_COMPILATION_MBEAN_NAME, true);
         }
     }
@@ -429,7 +429,7 @@ public class ManagementFactory {
     }
 
     static void unregisterInternalMBeans(MBeanServer mbs) {
-        // unregister all internal MBeans 
+        // unregister all internal MBeans
         unregisterMBean(mbs, HOTSPOT_CLASS_LOADING_MBEAN_NAME);
         unregisterMBean(mbs, HOTSPOT_MEMORY_MBEAN_NAME);
         unregisterMBean(mbs, HOTSPOT_RUNTIME_MBEAN_NAME);
@@ -457,7 +457,7 @@ public class ManagementFactory {
 
         // Get a list of memory managers
         MemoryManagerMXBean[] newMgrs = MemoryImpl.getMemoryManagers();
-        
+
         for (int i = 0; i < newMgrs.length; i++) {
             String mgrObjNameString = Util.getMBeanObjectName(newMgrs[i]);
             addMXBean(mbs, newMgrs[i], mgrObjNameString, null);
@@ -467,15 +467,15 @@ public class ManagementFactory {
     // Invoked by the VM
     private static MemoryPoolMXBean createMemoryPool
         (String name, boolean isHeap, long uThreshold, long gcThreshold) {
-        return new MemoryPoolImpl(name, isHeap, uThreshold, gcThreshold); 
+        return new MemoryPoolImpl(name, isHeap, uThreshold, gcThreshold);
     }
 
-    private static MemoryManagerMXBean createMemoryManager(String name) { 
+    private static MemoryManagerMXBean createMemoryManager(String name) {
         return new MemoryManagerImpl(name);
     }
 
-    private static GarbageCollectorMXBean 
-        createGarbageCollector(String name, String type) { 
+    private static GarbageCollectorMXBean
+        createGarbageCollector(String name, String type) {
 
         // ignore type parameter which is for future extension
         return new GarbageCollectorImpl(name);

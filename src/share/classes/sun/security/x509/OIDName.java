@@ -35,7 +35,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see GeneralName
  * @see GeneralNames
  * @see GeneralNameInterface
@@ -69,11 +68,11 @@ public class OIDName implements GeneralNameInterface {
      * @throws IOException on error
      */
     public OIDName(String name) throws IOException {
-	try {
-	    oid = new ObjectIdentifier(name);
-	} catch (Exception e) {
-	    throw new IOException("Unable to create OIDName: " + e);
-	}
+        try {
+            oid = new ObjectIdentifier(name);
+        } catch (Exception e) {
+            throw new IOException("Unable to create OIDName: " + e);
+        }
     }
 
     /**
@@ -113,24 +112,24 @@ public class OIDName implements GeneralNameInterface {
      * @return true iff the names are identical
      */
     public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
+        if (this == obj)
+            return true;
 
-	if (!(obj instanceof OIDName))
-	    return false;
+        if (!(obj instanceof OIDName))
+            return false;
 
-	OIDName other = (OIDName)obj;
-	
-	return oid.equals(other.oid);
+        OIDName other = (OIDName)obj;
+
+        return oid.equals(other.oid);
     }
 
     /**
      * Returns the hash code value for this object.
-     * 
+     *
      * @return a hash code value for this object.
      */
     public int hashCode() {
-	return oid.hashCode();
+        return oid.hashCode();
     }
 
     /**
@@ -149,17 +148,17 @@ public class OIDName implements GeneralNameInterface {
      *          not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) throws UnsupportedOperationException {
-	int constraintType;
-	if (inputName == null)
-	    constraintType = NAME_DIFF_TYPE;
-	else if (inputName.getType() != NAME_OID)
-	    constraintType = NAME_DIFF_TYPE;
-	else if (this.equals((OIDName)inputName))
-	    constraintType = NAME_MATCH;
-	else
-	    //widens and narrows not defined in RFC2459 for OIDName (aka registeredID)
-	    throw new UnsupportedOperationException("Narrowing and widening are not supported for OIDNames");
-	return constraintType;
+        int constraintType;
+        if (inputName == null)
+            constraintType = NAME_DIFF_TYPE;
+        else if (inputName.getType() != NAME_OID)
+            constraintType = NAME_DIFF_TYPE;
+        else if (this.equals((OIDName)inputName))
+            constraintType = NAME_MATCH;
+        else
+            //widens and narrows not defined in RFC2459 for OIDName (aka registeredID)
+            throw new UnsupportedOperationException("Narrowing and widening are not supported for OIDNames");
+        return constraintType;
     }
 
     /**
@@ -171,6 +170,6 @@ public class OIDName implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-	throw new UnsupportedOperationException("subtreeDepth() not supported for OIDName.");
+        throw new UnsupportedOperationException("subtreeDepth() not supported for OIDName.");
    }
 }

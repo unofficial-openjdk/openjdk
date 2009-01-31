@@ -26,7 +26,6 @@
 #ifndef __MLIB_V_IMAGELOGIC_H
 #define __MLIB_V_IMAGELOGIC_H
 
-#pragma ident	"@(#)mlib_v_ImageLogic.h	1.18	03/01/31 SMI"
 
 #include <vis_proto.h>
 #include <mlib_ImageCheck.h>

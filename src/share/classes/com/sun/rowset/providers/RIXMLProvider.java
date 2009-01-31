@@ -33,13 +33,13 @@ import javax.sql.*;
 import javax.sql.rowset.spi.*;
 
 /**
- * A reference implementation of a JDBC RowSet synchronization provider 
+ * A reference implementation of a JDBC RowSet synchronization provider
  * with the ability to read and write rowsets in well formed XML using the
- * standard WebRowSet schema. 
+ * standard WebRowSet schema.
  *
  * <h3>1.0 Background</h3>
  * This synchronization provider is registered with the
- * <code>SyncFactory</code> by default as the 
+ * <code>SyncFactory</code> by default as the
  * <code>com.sun.rowset.providers.RIXMLProvider</code>.
  * <P>
  * A <code>WebRowSet</code> object uses an <code>RIXMLProvider</code> implementation
@@ -53,66 +53,66 @@ import javax.sql.rowset.spi.*;
  * simply writes a <code>WebRowSet</code> object to a file.
  * <h3>2.0 Usage</h3>
  * A <code>WebRowSet</code> implementation is created with an <code>RIXMLProvider</code>
- * by default.  
+ * by default.
  * <pre>
  *     WebRowSet wrs = new FooWebRowSetImpl();
  * </pre>
- * The <code>SyncFactory</code> always provides an instance of 
- * <code>RIOptimisticProvider</code> when no provider is specified, 
+ * The <code>SyncFactory</code> always provides an instance of
+ * <code>RIOptimisticProvider</code> when no provider is specified,
  * but the implementation of the default constructor for <code>WebRowSet</code> sets the
  * provider to be the <code>RIXMLProvider</code> implementation.  Therefore,
- * the following line of code is executed behind the scenes as part of the 
- * implementation of the default constructor. 
+ * the following line of code is executed behind the scenes as part of the
+ * implementation of the default constructor.
  * <pre>
- *     wrs.setSyncProvider("com.sun.rowset.providers.RIXMLProvider"); 
+ *     wrs.setSyncProvider("com.sun.rowset.providers.RIXMLProvider");
  * </pre>
- * See the standard <code>RowSet</code> reference implementations in the 
+ * See the standard <code>RowSet</code> reference implementations in the
  * <code>com.sun.rowset</code> package for more details.
  *
- * @author  Jonathan Bruce 
+ * @author  Jonathan Bruce
  * @see javax.sql.rowset.spi.SyncProvider
  * @see javax.sql.rowset.spi.SyncProviderException
  * @see javax.sql.rowset.spi.SyncFactory
  * @see javax.sql.rowset.spi.SyncFactoryException
  */
-public final class RIXMLProvider extends SyncProvider {    
-    
+public final class RIXMLProvider extends SyncProvider {
+
     /**
      * The unique provider identifier.
      */
     private String providerID = "com.sun.rowset.providers.RIXMLProvider";
-    
+
     /**
      * The vendor name of this SyncProvider implementation.
      */
-    private String vendorName = "Sun Microsystems Inc.";    
-    
+    private String vendorName = "Sun Microsystems Inc.";
+
     /**
      * The version number of this SyncProvider implementation.
      */
-    private String versionNumber = "1.0";  
-    
+    private String versionNumber = "1.0";
+
     private JdbcRowSetResourceBundle resBundle;
-    
+
     private XmlReader xmlReader;
     private XmlWriter xmlWriter;
 
-    /** 
+    /**
      * This provider is available to all JDBC <code>RowSet</code> implementations as the
      * default persistence provider.
-     */ 
-    public RIXMLProvider() {        
+     */
+    public RIXMLProvider() {
         providerID = this.getClass().getName();
         try {
-	   resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
-	} catch(IOException ioe) {
+           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
+        } catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
 
     /**
      * Returns <code>"javax.sql.rowset.providers.RIXMLProvider"</code>, which is
-     * the fully qualified class name of this provider implementation. 
+     * the fully qualified class name of this provider implementation.
      *
      * @return a <code>String</code> object with the fully specified class name of
      *           this <code>RIOptimisticProvider</code> implementation
@@ -120,7 +120,7 @@ public final class RIXMLProvider extends SyncProvider {
     public String getProviderID() {
         return providerID;
     }
-    
+
     // additional methods that sit on top of reader/writer methods back to
     // original datasource. Allow XML state to be written out and in
 
@@ -143,7 +143,7 @@ public final class RIXMLProvider extends SyncProvider {
     public void setXmlWriter(XmlWriter writer) throws SQLException {
         xmlWriter = writer;
     }
-    
+
     /**
      * Retrieves the reader that this <code>WebRowSet</code> object
      * will call when its <code>readXml</code> method is called.
@@ -154,7 +154,7 @@ public final class RIXMLProvider extends SyncProvider {
     public XmlReader getXmlReader() throws SQLException {
         return xmlReader;
     }
-    
+
     /**
      * Retrieves the writer that this <code>WebRowSet</code> object
      * will call when its <code>writeXml</code> method is called.
@@ -165,10 +165,10 @@ public final class RIXMLProvider extends SyncProvider {
     public XmlWriter getXmlWriter() throws SQLException {
         return xmlWriter;
     }
-    
+
     /**
      * Returns the <code>SyncProvider</code> grade of syncrhonization that
-     * <code>RowSet</code> object instances can expect when using this 
+     * <code>RowSet</code> object instances can expect when using this
      * implementation. As this implementation provides no synchonization
      * facilities to the XML data source, the lowest grade is returned.
      *
@@ -208,13 +208,13 @@ public final class RIXMLProvider extends SyncProvider {
      */
     public void setDataSourceLock(int lock) throws SyncProviderException {
         throw new UnsupportedOperationException(resBundle.handleGetObject("rixml.unsupp").toString());
-    }   
+    }
 
     /**
      * Returns a null object as RowSetWriters are not returned by this SyncProvider
      */
     public RowSetWriter getRowSetWriter() {
-        return null;      
+        return null;
     }
 
     /**
@@ -224,9 +224,9 @@ public final class RIXMLProvider extends SyncProvider {
     public RowSetReader getRowSetReader() {
         return null;
     }
-    
+
   /**
-     * Returns the release version ID of the Reference Implementation Optimistic 
+     * Returns the release version ID of the Reference Implementation Optimistic
      * Synchronization Provider.
      *
      * @return the <code>String</code> detailing the version number of this SyncProvider
@@ -234,7 +234,7 @@ public final class RIXMLProvider extends SyncProvider {
     public String getVersion() {
         return this.versionNumber;
     }
-    
+
     /**
      * Returns the vendor name of the Reference Implemntation Optimistic
      * Syncchronication Provider
@@ -244,5 +244,5 @@ public final class RIXMLProvider extends SyncProvider {
      */
     public String getVendor() {
         return this.vendorName;
-    }                                               
+    }
 }

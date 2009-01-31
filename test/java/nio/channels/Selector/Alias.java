@@ -35,27 +35,27 @@ import java.util.*;
 import java.nio.channels.spi.SelectorProvider;
 
 public class Alias {
-    
+
     static int success = 0;
     static int LIMIT = 20; // Hangs after just 1 if problem is present
 
     public static void main(String[] args) throws Exception {
         test1();
     }
-    
+
     public static void test1() throws Exception {
         Selector selector = SelectorProvider.provider().openSelector();
         InetAddress myAddress=InetAddress.getByName(TestUtil.HOST);
         InetSocketAddress isa = new InetSocketAddress(myAddress,13);
-	
-	for (int j=0; j<LIMIT; j++) {
+
+        for (int j=0; j<LIMIT; j++) {
             SocketChannel sc = SocketChannel.open();
             sc.configureBlocking(false);
             boolean result = sc.connect(isa);
             if (!result) {
                 SelectionKey key = sc.register(selector,
                                                SelectionKey.OP_CONNECT);
-                while (!result) {	
+                while (!result) {
                     int keysAdded = selector.select(100);
                     if (keysAdded > 0) {
                         Set readyKeys = selector.selectedKeys();
@@ -65,18 +65,18 @@ public class Alias {
                             SocketChannel nextReady =
                                 (SocketChannel)sk.channel();
                             result = nextReady.finishConnect();
-                        } 
+                        }
                     }
                 }
                 key.cancel();
             }
             read(sc);
-	}
+        }
         selector.close();
     }
 
     static void read(SocketChannel sc) throws Exception {
-	ByteBuffer bb = ByteBuffer.allocateDirect(100);
+        ByteBuffer bb = ByteBuffer.allocateDirect(100);
         int n = 0;
         while (n == 0) // Note this is not a rigorous check for done reading
             n = sc.read(bb);
@@ -84,18 +84,7 @@ public class Alias {
         //bb.flip();
         //CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
         //System.out.println("Received: \"" + cb + "\"");
-        sc.close(); 
+        sc.close();
         success++;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

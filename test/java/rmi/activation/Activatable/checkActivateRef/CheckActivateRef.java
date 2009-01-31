@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,9 +24,9 @@
 /* @test
  * @bug 4105080
  * @summary Activation retry during a remote method call to an activatable
- *	    object can cause infinite recursion in some situations. The
- *	    RemoteRef contained in the ActivatableRef should never be
- *	    an ActivatableRef, but another type.
+ *          object can cause infinite recursion in some situations. The
+ *          RemoteRef contained in the ActivatableRef should never be
+ *          an ActivatableRef, but another type.
  * (Needs /othervm to evade JavaTest security manager --aecolley)
  * @author Ann Wollrath
  *
@@ -51,14 +51,14 @@ import java.lang.reflect.*;
 import java.util.Properties;
 
 public class CheckActivateRef
-	extends Activatable
-	implements ActivateMe, Runnable
+        extends Activatable
+        implements ActivateMe, Runnable
 {
 
     private CheckActivateRef(ActivationID id, MarshalledObject obj)
-	throws ActivationException, RemoteException
+        throws ActivationException, RemoteException
     {
-	super(id, 0);
+        super(id, 0);
     }
 
     public void ping()
@@ -69,7 +69,7 @@ public class CheckActivateRef
      */
     public void shutdown() throws Exception
     {
-	(new Thread(this,"CheckActivateRef")).start();
+        (new Thread(this,"CheckActivateRef")).start();
     }
 
     /**
@@ -79,192 +79,192 @@ public class CheckActivateRef
      * unexport the object forcibly.
      */
     public void run() {
-	ActivationLibrary.deactivate(this, getID());
+        ActivationLibrary.deactivate(this, getID());
     }
 
     public static void main(String[] args)  {
-	/*
-	 * The following line is required with the JDK 1.2 VM so that the
-	 * VM can exit gracefully when this test completes.  Otherwise, the
-	 * conservative garbage collector will find a handle to the server
-	 * object on the native stack and not clear the weak reference to
-	 * it in the RMI runtime's object table.
-	 */
-	Object dummy = new Object();
-	RMID rmid = null;
-	ActivateMe obj;
+        /*
+         * The following line is required with the JDK 1.2 VM so that the
+         * VM can exit gracefully when this test completes.  Otherwise, the
+         * conservative garbage collector will find a handle to the server
+         * object on the native stack and not clear the weak reference to
+         * it in the RMI runtime's object table.
+         */
+        Object dummy = new Object();
+        RMID rmid = null;
+        ActivateMe obj;
 
-	// test should tolerate certain types of failures
-	int failures = 0;
-	int i = 0;
-	
-	System.err.println("\nRegression test for bug 4105080\n");
-	System.err.println("java.security.policy = " +
-			   System.getProperty("java.security.policy",
-					      "no policy"));
+        // test should tolerate certain types of failures
+        int failures = 0;
+        int i = 0;
+
+        System.err.println("\nRegression test for bug 4105080\n");
+        System.err.println("java.security.policy = " +
+                           System.getProperty("java.security.policy",
+                                              "no policy"));
 
 
-	String propValue =
-	    System.getProperty("java.rmi.server.useDynamicProxies", "false");
-	boolean useDynamicProxies = Boolean.parseBoolean(propValue);
-	
-	CheckActivateRef server;
-	try {
-	    TestLibrary.suggestSecurityManager(TestParams.defaultSecurityManager);
+        String propValue =
+            System.getProperty("java.rmi.server.useDynamicProxies", "false");
+        boolean useDynamicProxies = Boolean.parseBoolean(propValue);
 
-	    // start an rmid.
-	    RMID.removeLog();
-	    rmid = RMID.createRMID();
-	    rmid.start();
-	    
-	    /* Cause activation groups to have a security policy that will
-	     * allow security managers to be downloaded and installed
-	     */
-	    Properties p = new Properties();
-	    // this test must always set policies/managers in its
-	    // activation groups
-	    p.put("java.security.policy", 
-		  TestParams.defaultGroupPolicy);
-	    p.put("java.security.manager", 
-		  TestParams.defaultSecurityManager);
-	    p.put("java.rmi.server.useDynamicProxies", propValue);
-	    
-	    /*
-	     * Activate an object by registering its object
-	     * descriptor and invoking a method on the
-	     * stub returned from the register call.
-	     */
-	    System.err.println("Create activation group in this VM");
-	    ActivationGroupDesc groupDesc =
-		new ActivationGroupDesc(p, null);
-	    ActivationSystem system = ActivationGroup.getSystem();
-	    ActivationGroupID groupID = system.registerGroup(groupDesc);
-	    ActivationGroup.createGroup(groupID, groupDesc, 0);
-	    System.err.println("Creating descriptor");
-	    ActivationDesc desc =
-		new ActivationDesc("CheckActivateRef", null, null);
-	    System.err.println("Registering descriptor");
-	    obj = (ActivateMe) Activatable.register(desc);
+        CheckActivateRef server;
+        try {
+            TestLibrary.suggestSecurityManager(TestParams.defaultSecurityManager);
 
-	    System.err.println("proxy = " + obj);
-	    
-	    if (useDynamicProxies && !Proxy.isProxyClass(obj.getClass()))
-	    {
-		throw new RuntimeException("proxy is not dynamic proxy");
-	    }
-	    
-	    /*
-	     * Loop a bunch of times to force activator to
-	     * spawn VMs (groups)
-	     */
-	    try {
-		for (; i < 7; i++) {
-		    
-		    System.err.println("Activate object via method call");
+            // start an rmid.
+            RMID.removeLog();
+            rmid = RMID.createRMID();
+            rmid.start();
 
-		    /*
-		     * Fix for 4277196: if we got an inactive group
-		     * exception, it is likely that we accidentally
-		     * invoked a method on an old activation
-		     * group. Give some time for the group to go away
-		     * and then retry the activation.
-		     */
-		    try { 
-			obj.ping();
-		    } catch (RemoteException e) {
-			Exception detail = (Exception) e.detail;
-			if ((detail != null) &&
-			    (detail instanceof ActivationException) &&
-			    (detail.getMessage().equals("group is inactive")))
-			{
-			    try {
-				Thread.sleep(5000);
-			    } catch (InterruptedException ex) {
-			    }
-			    obj.ping();
-			    
-			} else {
-			    throw e;
-			}
-		    }
+            /* Cause activation groups to have a security policy that will
+             * allow security managers to be downloaded and installed
+             */
+            Properties p = new Properties();
+            // this test must always set policies/managers in its
+            // activation groups
+            p.put("java.security.policy",
+                  TestParams.defaultGroupPolicy);
+            p.put("java.security.manager",
+                  TestParams.defaultSecurityManager);
+            p.put("java.rmi.server.useDynamicProxies", propValue);
 
-		    System.err.println("proxy = " + obj);
-		    
-		    /*
-		     * Now that object is activated, check to make sure that
-		     * the RemoteRef inside the stub's ActivatableRef
-		     * is *not* an ActivatableRef.
-		     */
-		    ActivatableRef aref;
-		    if (obj instanceof RemoteStub) {
-			aref = (ActivatableRef) ((RemoteObject) obj).getRef();
-		    } else if (Proxy.isProxyClass(obj.getClass())) {
-			RemoteObjectInvocationHandler handler =
-			    (RemoteObjectInvocationHandler)
-			    Proxy.getInvocationHandler(obj);
-			aref = (ActivatableRef) handler.getRef();
-		    } else {
-			throw new RuntimeException("unknown proxy type");
-		    }
+            /*
+             * Activate an object by registering its object
+             * descriptor and invoking a method on the
+             * stub returned from the register call.
+             */
+            System.err.println("Create activation group in this VM");
+            ActivationGroupDesc groupDesc =
+                new ActivationGroupDesc(p, null);
+            ActivationSystem system = ActivationGroup.getSystem();
+            ActivationGroupID groupID = system.registerGroup(groupDesc);
+            ActivationGroup.createGroup(groupID, groupDesc, 0);
+            System.err.println("Creating descriptor");
+            ActivationDesc desc =
+                new ActivationDesc("CheckActivateRef", null, null);
+            System.err.println("Registering descriptor");
+            obj = (ActivateMe) Activatable.register(desc);
 
-		    final ActivatableRef ref = aref;
-		    Field f = (Field)
-			java.security.AccessController.doPrivileged
-			(new java.security.PrivilegedExceptionAction() {
-			    public Object run() throws Exception {
-				Field ff = ref.getClass().getDeclaredField("ref");
-				ff.setAccessible(true);
-				return ff;
-			    }
-			});
-		    Object insideRef = f.get(ref);
-		    System.err.println("insideRef = " + insideRef);
-		    if (insideRef instanceof ActivatableRef) {
-			TestLibrary.bomb("Embedded ref is an ActivatableRef");
-		    } else {
-			System.err.println("ActivatableRef's embedded ref type: " +
-					   insideRef.getClass().getName());
-		    }
-		    
-		    /*
-		     * Clean up object too.
-		     */
-		    System.err.println("Deactivate object via method call");
-		    obj.shutdown();
+            System.err.println("proxy = " + obj);
 
-		    try {
-			// give activation group time to go away
-			Thread.sleep(3000);
-		    } catch (InterruptedException e) {
-		    }
-		}
-	    } catch (java.rmi.UnmarshalException ue) {
-		// account for test's activation race condition
-		if (ue.detail instanceof java.io.IOException) {
-		    if ((failures ++) >= 3) {
-			throw ue;
-		    }
-		} else {
-		    throw ue;
-		}
-	    }
-	    
-	    System.err.println("\nsuccess: CheckActivateRef test passed ");
-	
-	} catch (java.rmi.activation.ActivationException e) {
-	    // test only needs to pass 3 times in 7
-	    if (i < 4) {
-		TestLibrary.bomb(e);
-	    }
-	} catch (Exception e) {
-	    if (e instanceof java.security.PrivilegedActionException)
-		e = ((java.security.PrivilegedActionException)e).getException();
-	    TestLibrary.bomb("\nfailure: unexpected exception " +
-			     e.getClass().getName(), e);
-	    
-	} finally {
-	    ActivationLibrary.rmidCleanup(rmid);
-	    obj = null;
-	}
+            if (useDynamicProxies && !Proxy.isProxyClass(obj.getClass()))
+            {
+                throw new RuntimeException("proxy is not dynamic proxy");
+            }
+
+            /*
+             * Loop a bunch of times to force activator to
+             * spawn VMs (groups)
+             */
+            try {
+                for (; i < 7; i++) {
+
+                    System.err.println("Activate object via method call");
+
+                    /*
+                     * Fix for 4277196: if we got an inactive group
+                     * exception, it is likely that we accidentally
+                     * invoked a method on an old activation
+                     * group. Give some time for the group to go away
+                     * and then retry the activation.
+                     */
+                    try {
+                        obj.ping();
+                    } catch (RemoteException e) {
+                        Exception detail = (Exception) e.detail;
+                        if ((detail != null) &&
+                            (detail instanceof ActivationException) &&
+                            (detail.getMessage().equals("group is inactive")))
+                        {
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException ex) {
+                            }
+                            obj.ping();
+
+                        } else {
+                            throw e;
+                        }
+                    }
+
+                    System.err.println("proxy = " + obj);
+
+                    /*
+                     * Now that object is activated, check to make sure that
+                     * the RemoteRef inside the stub's ActivatableRef
+                     * is *not* an ActivatableRef.
+                     */
+                    ActivatableRef aref;
+                    if (obj instanceof RemoteStub) {
+                        aref = (ActivatableRef) ((RemoteObject) obj).getRef();
+                    } else if (Proxy.isProxyClass(obj.getClass())) {
+                        RemoteObjectInvocationHandler handler =
+                            (RemoteObjectInvocationHandler)
+                            Proxy.getInvocationHandler(obj);
+                        aref = (ActivatableRef) handler.getRef();
+                    } else {
+                        throw new RuntimeException("unknown proxy type");
+                    }
+
+                    final ActivatableRef ref = aref;
+                    Field f = (Field)
+                        java.security.AccessController.doPrivileged
+                        (new java.security.PrivilegedExceptionAction() {
+                            public Object run() throws Exception {
+                                Field ff = ref.getClass().getDeclaredField("ref");
+                                ff.setAccessible(true);
+                                return ff;
+                            }
+                        });
+                    Object insideRef = f.get(ref);
+                    System.err.println("insideRef = " + insideRef);
+                    if (insideRef instanceof ActivatableRef) {
+                        TestLibrary.bomb("Embedded ref is an ActivatableRef");
+                    } else {
+                        System.err.println("ActivatableRef's embedded ref type: " +
+                                           insideRef.getClass().getName());
+                    }
+
+                    /*
+                     * Clean up object too.
+                     */
+                    System.err.println("Deactivate object via method call");
+                    obj.shutdown();
+
+                    try {
+                        // give activation group time to go away
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                    }
+                }
+            } catch (java.rmi.UnmarshalException ue) {
+                // account for test's activation race condition
+                if (ue.detail instanceof java.io.IOException) {
+                    if ((failures ++) >= 3) {
+                        throw ue;
+                    }
+                } else {
+                    throw ue;
+                }
+            }
+
+            System.err.println("\nsuccess: CheckActivateRef test passed ");
+
+        } catch (java.rmi.activation.ActivationException e) {
+            // test only needs to pass 3 times in 7
+            if (i < 4) {
+                TestLibrary.bomb(e);
+            }
+        } catch (Exception e) {
+            if (e instanceof java.security.PrivilegedActionException)
+                e = ((java.security.PrivilegedActionException)e).getException();
+            TestLibrary.bomb("\nfailure: unexpected exception " +
+                             e.getClass().getName(), e);
+
+        } finally {
+            ActivationLibrary.rmidCleanup(rmid);
+            obj = null;
+        }
     }
 }

@@ -42,7 +42,6 @@ import java.awt.im.spi.InputMethod;
  * Licensees are free to modify this class as necessary to implement
  * their host input method adapters.
  *
- * @version %I% %G%
  * @author JavaSoft International
  */
 
@@ -69,7 +68,7 @@ public abstract class InputMethodAdapter implements InputMethod {
     protected void setAWTFocussedComponent(Component component) {
         // ignore - adapters can override if needed
     }
-    
+
     /**
      * Returns whether host input methods can support below-the-spot input.
      * Returns false by default.
@@ -77,7 +76,7 @@ public abstract class InputMethodAdapter implements InputMethod {
     protected boolean supportsBelowTheSpot() {
         return false;
     }
-    
+
     /**
      * Informs the input method adapter not to listen to the native events.
      * This method is called when a Java input method is active.
@@ -99,20 +98,20 @@ public abstract class InputMethodAdapter implements InputMethod {
      * the method.
      */
     public void reconvert() {
-	throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Disable the native input method. This method is provided for explicitly
      * turning off the native IM. The native IM is not turned off
-     * when the native input method is deactivated. This method is 
+     * when the native input method is deactivated. This method is
      * always called on AWT EDT. See details in bug 6226489.
      */
     public abstract void disableInputMethod();
 
 
     /**
-     * Returns a string with information about the native input method, or 
+     * Returns a string with information about the native input method, or
      * null.
      */
     public abstract String getNativeInputMethodInfo();

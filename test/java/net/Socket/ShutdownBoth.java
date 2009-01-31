@@ -24,24 +24,24 @@
 /*
  * @test
  * @bug 4425485
- * @summary Check that shutdownInput followed by shutdownOutput 
+ * @summary Check that shutdownInput followed by shutdownOutput
  *          doesn't throw an exception.
  */
 import java.net.*;
 
-public class ShutdownBoth { 
+public class ShutdownBoth {
 
     public static void main(String args[]) throws Exception {
-	ServerSocket ss = new ServerSocket(0);
-	Socket s1 = new Socket(ss.getInetAddress(), ss.getLocalPort());
-	Socket s2 = ss.accept();
+        ServerSocket ss = new ServerSocket(0);
+        Socket s1 = new Socket(ss.getInetAddress(), ss.getLocalPort());
+        Socket s2 = ss.accept();
 
-	s1.shutdownInput();
-	s1.shutdownOutput();		// failed b55
+        s1.shutdownInput();
+        s1.shutdownOutput();            // failed b55
 
-	s1.close();
-	s2.close();
-	ss.close();
+        s1.close();
+        s2.close();
+        ss.close();
     }
 
 }

@@ -36,7 +36,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   * @since 1.3
   */
 
@@ -45,10 +44,10 @@ public class NoPermissionException extends NamingSecurityException {
      * Constructs a new instance of NoPermissionException using an
      * explanation. All other fields default to null.
      *
-     * @param	explanation	Possibly null additional detail about this exception.
+     * @param   explanation     Possibly null additional detail about this exception.
      */
     public NoPermissionException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -56,7 +55,7 @@ public class NoPermissionException extends NamingSecurityException {
       * All fields are initialized to null.
       */
     public NoPermissionException() {
-	super();
+        super();
     }
     /**
      * Use serialVersionUID from JNDI 1.1.1 for interoperability

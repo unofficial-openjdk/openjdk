@@ -22,7 +22,7 @@
  */
 
 /**
- * @test @(#)ReadLongZipFileName.java	1.1 06/05/02
+ * @test
  * @bug 6374379
  * @summary Verify that we can read zip file names > 255 chars long
  */
@@ -43,7 +43,7 @@ public class ReadLongZipFileName {
         int currentFileLength = 0;
         int minRequiredLength = 600; // long enough to definitely fail.
         Stack<File> directories = new Stack<File>();
-	
+
         String filename = "." + File.separator;
         try {
             // Create a directory structure long enough that the filename will

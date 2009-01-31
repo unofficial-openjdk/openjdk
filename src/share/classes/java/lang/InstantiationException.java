@@ -39,7 +39,6 @@ package java.lang;
  *</ul>
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see     java.lang.Class#newInstance()
  * @since   JDK1.0
  */
@@ -49,16 +48,16 @@ class InstantiationException extends Exception {
      * Constructs an {@code InstantiationException} with no detail message.
      */
     public InstantiationException() {
-	super();
+        super();
     }
 
     /**
-     * Constructs an {@code InstantiationException} with the 
-     * specified detail message. 
+     * Constructs an {@code InstantiationException} with the
+     * specified detail message.
      *
      * @param   s   the detail message.
      */
     public InstantiationException(String s) {
-	super(s);
+        super(s);
     }
 }

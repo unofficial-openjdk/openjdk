@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package sun.awt.motif;
 
 import java.awt.Toolkit;
@@ -50,7 +50,6 @@ import sun.awt.dnd.SunDragSourceContextPeer;
  * </p>
  *
  * @author Laurence P. G. Cable
- * @version %R%.%L%
  *
  * @see java.awt.dnd.DragGestureListener
  * @see java.awt.dnd.DragGestureEvent
@@ -70,8 +69,8 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
 
 
     protected static final int ButtonMask = InputEvent.BUTTON1_DOWN_MASK |
-                                            InputEvent.BUTTON2_DOWN_MASK | 
-                                            InputEvent.BUTTON3_DOWN_MASK; 
+                                            InputEvent.BUTTON2_DOWN_MASK |
+                                            InputEvent.BUTTON3_DOWN_MASK;
 
     /**
      * construct a new MMouseDragGestureRecognizer
@@ -84,7 +83,7 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected MMouseDragGestureRecognizer(DragSource ds, Component c, int act, DragGestureListener dgl) {
-	super(ds, c, act, dgl);
+        super(ds, c, act, dgl);
     }
 
     /**
@@ -96,7 +95,7 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected MMouseDragGestureRecognizer(DragSource ds, Component c, int act) {
-	this(ds, c, act, null);
+        this(ds, c, act, null);
     }
 
     /**
@@ -107,7 +106,7 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected MMouseDragGestureRecognizer(DragSource ds, Component c) {
-	this(ds, c, DnDConstants.ACTION_NONE);
+        this(ds, c, DnDConstants.ACTION_NONE);
     }
 
     /**
@@ -117,7 +116,7 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected MMouseDragGestureRecognizer(DragSource ds) {
-	this(ds, null);
+        this(ds, null);
     }
 
     /**
@@ -125,8 +124,8 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected int mapDragOperationFromModifiers(MouseEvent e) {
-	int mods = e.getModifiersEx();
-	int btns = mods & ButtonMask;
+        int mods = e.getModifiersEx();
+        int btns = mods & ButtonMask;
 
         // Do not allow right mouse button drag since Motif DnD does not
         // terminate drag operation on right mouse button release.
@@ -135,9 +134,9 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
             return DnDConstants.ACTION_NONE;
         }
 
-        return 
+        return
             SunDragSourceContextPeer.convertModifiersToDropAction(mods,
-                                                                  getSourceActions()); 
+                                                                  getSourceActions());
     }
 
     /**
@@ -145,54 +144,54 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseClicked(MouseEvent e) {
-	// do nothing
+        // do nothing
     }
- 
+
     /**
      * Invoked when a mouse button has been pressed on a component.
      */
 
     public void mousePressed(MouseEvent e) {
-	events.clear();
+        events.clear();
 
-	if (mapDragOperationFromModifiers(e) != DnDConstants.ACTION_NONE) {
+        if (mapDragOperationFromModifiers(e) != DnDConstants.ACTION_NONE) {
             try {
                 motionThreshold = DragSource.getDragThreshold();
             } catch (Exception exc) {
                 motionThreshold = 5;
             }
-	    appendEvent(e);
-	}
+            appendEvent(e);
+        }
     }
- 
+
     /**
      * Invoked when a mouse button has been released on a component.
      */
 
     public void mouseReleased(MouseEvent e) {
-	events.clear();
+        events.clear();
     }
- 
+
     /**
      * Invoked when the mouse enters a component.
      */
 
     public void mouseEntered(MouseEvent e) {
-	events.clear();
+        events.clear();
     }
- 
+
     /**
      * Invoked when the mouse exits a component.
      */
 
     public void mouseExited(MouseEvent e) {
-	if (!events.isEmpty()) { // gesture pending
-	    int dragAction = mapDragOperationFromModifiers(e);
+        if (!events.isEmpty()) { // gesture pending
+            int dragAction = mapDragOperationFromModifiers(e);
 
             if (dragAction == DnDConstants.ACTION_NONE) {
-		events.clear();
+                events.clear();
             }
-	}
+        }
     }
 
     /**
@@ -200,35 +199,35 @@ class MMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseDragged(MouseEvent e) {
-	if (!events.isEmpty()) { // gesture pending
-	    int dop = mapDragOperationFromModifiers(e);
+        if (!events.isEmpty()) { // gesture pending
+            int dop = mapDragOperationFromModifiers(e);
 
-	    
-	    if (dop == DnDConstants.ACTION_NONE) {
-		return;
-	    }
 
-	    MouseEvent trigger = (MouseEvent)events.get(0);
+            if (dop == DnDConstants.ACTION_NONE) {
+                return;
+            }
 
-	    Point      origin  = trigger.getPoint();
-	    Point      current = e.getPoint();
+            MouseEvent trigger = (MouseEvent)events.get(0);
 
-	    int        dx      = Math.abs(origin.x - current.x);
-	    int        dy      = Math.abs(origin.y - current.y);
+            Point      origin  = trigger.getPoint();
+            Point      current = e.getPoint();
 
-	    if (dx > motionThreshold || dy > motionThreshold) {
-	        fireDragGestureRecognized(dop, ((MouseEvent)getTriggerEvent()).getPoint());
-	    } else
-		appendEvent(e);
-	} 
+            int        dx      = Math.abs(origin.x - current.x);
+            int        dy      = Math.abs(origin.y - current.y);
+
+            if (dx > motionThreshold || dy > motionThreshold) {
+                fireDragGestureRecognized(dop, ((MouseEvent)getTriggerEvent()).getPoint());
+            } else
+                appendEvent(e);
+        }
     }
- 
+
     /**
      * Invoked when the mouse button has been moved on a component
      * (with no buttons no down).
      */
 
     public void mouseMoved(MouseEvent e) {
-	// do nothing
+        // do nothing
     }
 }

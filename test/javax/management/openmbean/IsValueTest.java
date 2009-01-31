@@ -32,7 +32,7 @@ import javax.management.openmbean.*;
 
 public class IsValueTest {
     private static String failed;
-    
+
     public static void main(String[] args) throws Exception {
         CompositeType ctOld =
             new CompositeType("same.type.name", "old",
@@ -52,13 +52,13 @@ public class IsValueTest {
             new CompositeDataSupport(ctNew,
                 new String[] {"int2", "int", "string"},
                 new Object[] {4, 3, "foo"});
-        
+
         // Check that adding fields doesn't make isValue return false
         check(ctOld.isValue(cdNew), "isValue: " + ctOld + "[" + cdNew + "]");
-        
+
         // Check that removing fields does make isValue return false
         check(!ctNew.isValue(cdOld), "isValue: " + ctNew + "[" + cdOld + "]");
-        
+
         // Check that we can add a contained CompositeData with extra fields
         // inside another CompositeData
         CompositeType ctWrapOld =
@@ -75,7 +75,7 @@ public class IsValueTest {
             e.printStackTrace(System.out);
             check(false, "CompositeDataSupport containing CompositeDataSupport: " + e);
         }
-        
+
         // ...but not the contrary
         CompositeType ctWrapNew =
             new CompositeType("wrapper", "wrapper",
@@ -90,7 +90,7 @@ public class IsValueTest {
         } catch (OpenDataException e) {
             check(true, "CompositeDataSupport containing old got expected exception: " + e);
         }
-        
+
         // Check that a TabularData can get an extended CompositeData row
         TabularType ttOld =
             new TabularType("tabular", "tabular", ctOld, new String[] {"int"});
@@ -103,7 +103,7 @@ public class IsValueTest {
             e.printStackTrace(System.out);
             check(false, "TabularDataSupport adding extended CompositeData: " + e);
         }
-        
+
         // Check that an extended TabularData can be put into a CompositeData
         TabularType ttNew =
             new TabularType("tabular", "tabular", ctNew, new String[] {"int"});
@@ -123,11 +123,11 @@ public class IsValueTest {
             e.printStackTrace(System.out);
             check(false, "CompositeDataSupport adding extended TabularData: " + e);
         }
-        
+
         if (failed != null)
             throw new Exception("TEST FAILED: " + failed);
     }
-    
+
     private static void check(boolean value, String what) {
         if (value)
             System.out.println("OK: " + what);

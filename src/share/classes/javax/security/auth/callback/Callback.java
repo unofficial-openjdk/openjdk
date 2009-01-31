@@ -40,7 +40,6 @@ package javax.security.auth.callback;
  * if appropriate, to return requested information back to the
  * underlying security services.
  *
- * @version %I%, %G%
  * @see javax.security.auth.callback.CallbackHandler
  * @see javax.security.auth.callback.ChoiceCallback
  * @see javax.security.auth.callback.ConfirmationCallback

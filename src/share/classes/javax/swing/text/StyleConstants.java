@@ -33,19 +33,18 @@ import javax.swing.Icon;
  * <p>
  * A collection of <em>well known</em> or common attribute keys
  * and methods to apply to an AttributeSet or MutableAttributeSet
- * to get/set the properties in a typesafe manner.  
+ * to get/set the properties in a typesafe manner.
  * <p>
  * The paragraph attributes form the definition of a paragraph to be rendered.
  * All sizes are specified in points (such as found in postscript), a
  * device independent measure.
  * </p>
  * <p align=center><img src="doc-files/paragraph.gif"
- * alt="Diagram shows SpaceAbove, FirstLineIndent, LeftIndent, RightIndent, 
+ * alt="Diagram shows SpaceAbove, FirstLineIndent, LeftIndent, RightIndent,
  *      and SpaceBelow a paragraph."></p>
  * <p>
- * 
+ *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class StyleConstants {
 
@@ -53,7 +52,7 @@ public class StyleConstants {
      * Name of elements used to represent components.
      */
     public static final String ComponentElementName = "component";
-    
+
     /**
      * Name of elements used to represent icons.
      */
@@ -90,7 +89,7 @@ public class StyleConstants {
 
     /**
      * Bidirectional level of a character as assigned by the Unicode bidi
-     * algorithm.  
+     * algorithm.
      */
     public static final Object BidiLevel = new CharacterConstants("bidiLevel");
 
@@ -98,7 +97,7 @@ public class StyleConstants {
      * Name of the font family.
      */
     public static final Object FontFamily = new FontConstants("family");
- 
+
     /**
      * Name of the font family.
      *
@@ -242,7 +241,7 @@ public class StyleConstants {
     public static final Object Orientation = new ParagraphConstants("Orientation");
     /**
      * A possible value for paragraph alignment.  This
-     * specifies that the text is aligned to the left 
+     * specifies that the text is aligned to the left
      * indent and extra whitespace should be placed on
      * the right.
      */
@@ -289,13 +288,13 @@ public class StyleConstants {
         }
         return 0;  // Level 0 is base level (non-embedded) left-to-right
     }
-    
+
     /**
      * Sets the BidiLevel.
      *
      * @param a the attribute set
      * @param o the bidi level value
-     */ 
+     */
     public static void setBidiLevel(MutableAttributeSet a, int o) {
         a.addAttribute(BidiLevel, new Integer(o));
     }
@@ -384,7 +383,7 @@ public class StyleConstants {
      * Sets the font size attribute.
      *
      * @param a the attribute set
-     * @param s the font size 
+     * @param s the font size
      */
     public static void setFontSize(MutableAttributeSet a, int s) {
         a.addAttribute(FontSize, new Integer(s));
@@ -602,13 +601,13 @@ public class StyleConstants {
         }
         return 0;
     }
-    
+
     /**
      * Sets the first line indent.
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setFirstLineIndent(MutableAttributeSet a, float i) {
         a.addAttribute(FirstLineIndent, new Float(i));
     }
@@ -632,7 +631,7 @@ public class StyleConstants {
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setRightIndent(MutableAttributeSet a, float i) {
         a.addAttribute(RightIndent, new Float(i));
     }
@@ -656,7 +655,7 @@ public class StyleConstants {
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setLeftIndent(MutableAttributeSet a, float i) {
         a.addAttribute(LeftIndent, new Float(i));
     }
@@ -680,7 +679,7 @@ public class StyleConstants {
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setLineSpacing(MutableAttributeSet a, float i) {
         a.addAttribute(LineSpacing, new Float(i));
     }
@@ -704,7 +703,7 @@ public class StyleConstants {
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setSpaceAbove(MutableAttributeSet a, float i) {
         a.addAttribute(SpaceAbove, new Float(i));
     }
@@ -728,7 +727,7 @@ public class StyleConstants {
      *
      * @param a the attribute set
      * @param i the value
-     */ 
+     */
     public static void setSpaceBelow(MutableAttributeSet a, float i) {
         a.addAttribute(SpaceBelow, new Float(i));
     }
@@ -746,13 +745,13 @@ public class StyleConstants {
         }
         return ALIGN_LEFT;
     }
-    
+
     /**
      * Sets alignment.
      *
      * @param a the attribute set
      * @param align the alignment value
-     */ 
+     */
     public static void setAlignment(MutableAttributeSet a, int align) {
         a.addAttribute(Alignment, new Integer(align));
     }
@@ -781,14 +780,14 @@ public class StyleConstants {
 
     // --- privates ---------------------------------------------
 
-    static Object[] keys = { 
+    static Object[] keys = {
         NameAttribute, ResolveAttribute, BidiLevel,
-        FontFamily, FontSize, Bold, Italic, Underline, 
-	StrikeThrough, Superscript, Subscript, Foreground, 
-	Background, ComponentAttribute, IconAttribute, 
-	FirstLineIndent, LeftIndent, RightIndent, LineSpacing, 
-	SpaceAbove, SpaceBelow, Alignment, TabSet, Orientation,
-	ModelAttribute, ComposedTextAttribute
+        FontFamily, FontSize, Bold, Italic, Underline,
+        StrikeThrough, Superscript, Subscript, Foreground,
+        Background, ComponentAttribute, IconAttribute,
+        FirstLineIndent, LeftIndent, RightIndent, LineSpacing,
+        SpaceAbove, SpaceBelow, Alignment, TabSet, Orientation,
+        ModelAttribute, ComposedTextAttribute
     };
 
     StyleConstants(String representation) {
@@ -798,8 +797,8 @@ public class StyleConstants {
     private String representation;
 
     /**
-     * This is a typesafe enumeration of the <em>well-known</em> 
-     * attributes that contribute to a paragraph style.  These are 
+     * This is a typesafe enumeration of the <em>well-known</em>
+     * attributes that contribute to a paragraph style.  These are
      * aliased by the outer class for general presentation.
      */
     public static class ParagraphConstants extends StyleConstants
@@ -811,20 +810,20 @@ public class StyleConstants {
     }
 
     /**
-     * This is a typesafe enumeration of the <em>well-known</em> 
-     * attributes that contribute to a character style.  These are 
+     * This is a typesafe enumeration of the <em>well-known</em>
+     * attributes that contribute to a character style.  These are
      * aliased by the outer class for general presentation.
      */
-    public static class CharacterConstants extends StyleConstants 
+    public static class CharacterConstants extends StyleConstants
         implements AttributeSet.CharacterAttribute {
 
         private CharacterConstants(String representation) {
-	    super(representation);
+            super(representation);
         }
     }
 
     /**
-     * This is a typesafe enumeration of the <em>well-known</em> 
+     * This is a typesafe enumeration of the <em>well-known</em>
      * attributes that contribute to a color.  These are aliased
      * by the outer class for general presentation.
      */
@@ -837,7 +836,7 @@ public class StyleConstants {
     }
 
     /**
-     * This is a typesafe enumeration of the <em>well-known</em> 
+     * This is a typesafe enumeration of the <em>well-known</em>
      * attributes that contribute to a font.  These are aliased
      * by the outer class for general presentation.
      */

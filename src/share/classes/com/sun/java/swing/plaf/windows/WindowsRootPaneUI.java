@@ -61,7 +61,6 @@ import javax.swing.plaf.basic.ComboPopup;
  * Windows implementation of RootPaneUI, there is one shared between all
  * JRootPane instances.
  *
- * @version %I% %G%
  * @author Mark Davidson
  * @since 1.4
  */
@@ -71,7 +70,7 @@ public class WindowsRootPaneUI extends BasicRootPaneUI {
     static final AltProcessor altProcessor = new AltProcessor();
 
     public static ComponentUI createUI(JComponent c) {
-	return windowsRootPaneUI;
+        return windowsRootPaneUI;
     }
 
     static class AltProcessor implements KeyEventPostProcessor {
@@ -95,7 +94,7 @@ public class WindowsRootPaneUI extends BasicRootPaneUI {
                 ev.consume();
             } else {
                 menuCanceledOnPress = false;
-	        WindowsLookAndFeel.setMnemonicHidden(false);
+                WindowsLookAndFeel.setMnemonicHidden(false);
                 WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
                 JMenuBar mbar = root != null ? root.getJMenuBar() : null;
                 if(mbar == null && winAncestor instanceof JFrame) {
@@ -110,7 +109,7 @@ public class WindowsRootPaneUI extends BasicRootPaneUI {
 
         void altReleased(KeyEvent ev) {
             if (menuCanceledOnPress) {
-	        WindowsLookAndFeel.setMnemonicHidden(true);
+                WindowsLookAndFeel.setMnemonicHidden(true);
                 WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
                 return;
             }
@@ -151,7 +150,7 @@ public class WindowsRootPaneUI extends BasicRootPaneUI {
             }
             if (ev.getKeyCode() == KeyEvent.VK_ALT) {
                 root = SwingUtilities.getRootPane(ev.getComponent());
-                winAncestor = (root == null ? null : 
+                winAncestor = (root == null ? null :
                         SwingUtilities.getWindowAncestor(root));
 
                 if (ev.getID() == KeyEvent.KEY_PRESSED) {

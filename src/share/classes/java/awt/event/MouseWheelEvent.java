@@ -41,7 +41,7 @@ import java.awt.Component;
  * <P>
  * Due to the mouse wheel's special relationship to scrolling Components,
  * MouseWheelEvents are delivered somewhat differently than other MouseEvents.
- * This is because while other MouseEvents usually affect a change on 
+ * This is because while other MouseEvents usually affect a change on
  * the Component directly under the mouse
  * cursor (for instance, when clicking a button), MouseWheelEvents often have
  * an effect away from the mouse cursor (moving the wheel while
@@ -50,7 +50,7 @@ import java.awt.Component;
  * <P>
  * MouseWheelEvents start delivery from the Component underneath the
  * mouse cursor.  If MouseWheelEvents are not enabled on the
- * Component, the event is delivered to the first ancestor 
+ * Component, the event is delivered to the first ancestor
  * Container with MouseWheelEvents enabled.  This will usually be
  * a ScrollPane with wheel scrolling enabled.  The source
  * Component and x,y coordinates will be relative to the event's
@@ -60,7 +60,7 @@ import java.awt.Component;
  * scrolling.
  * <P>
  * Some AWT Components are implemented using native widgets which
- * display their own scrollbars and handle their own scrolling.  
+ * display their own scrollbars and handle their own scrolling.
  * The particular Components for which this is true will vary from
  * platform to platform.  When the mouse wheel is
  * moved over one of these Components, the event is delivered straight to
@@ -76,7 +76,6 @@ import java.awt.Component;
  * reflect the most recent settings.
  *
  * @author Brent Christian
- * @version %I% %G%
  * @see MouseWheelListener
  * @see java.awt.ScrollPane
  * @see java.awt.ScrollPane#setWheelScrollingEnabled(boolean)
@@ -90,14 +89,14 @@ public class MouseWheelEvent extends MouseEvent {
     /**
      * Constant representing scrolling by "units" (like scrolling with the
      * arrow keys)
-     * 
+     *
      * @see #getScrollType
      */
     public static final int WHEEL_UNIT_SCROLL = 0;
 
     /**
      * Constant representing scrolling by a "block" (like scrolling
-     * with page-up, page-down keys) 
+     * with page-up, page-down keys)
      *
      * @see #getScrollType
      */
@@ -110,7 +109,7 @@ public class MouseWheelEvent extends MouseEvent {
      * <li> WHEEL_UNIT_SCROLL
      * <li> WHEEL_BLOCK_SCROLL
      * </ul>
-     * 
+     *
      * @see #getScrollType
      */
     int scrollType;
@@ -159,7 +158,7 @@ public class MouseWheelEvent extends MouseEvent {
      * @param y              the vertical y coordinate for the mouse location
      * @param clickCount     the number of mouse clicks associated with event
      * @param popupTrigger   a boolean, true if this event is a trigger for a
-     *                       popup-menu 
+     *                       popup-menu
      * @param scrollType     the type of scrolling which should take place in
      *                       response to this event;  valid values are
      *                       <code>WHEEL_UNIT_SCROLL</code> and
@@ -191,7 +190,7 @@ public class MouseWheelEvent extends MouseEvent {
      * is <code>null</code>.<p>
      * Even if inconsistent values for relative and absolute coordinates are
      * passed to the constructor, the MouseWheelEvent instance is still
-     * created and no exception is thrown. 
+     * created and no exception is thrown.
      *
      * @param source         the <code>Component</code> that originated
      *                       the event
@@ -205,7 +204,7 @@ public class MouseWheelEvent extends MouseEvent {
      * @param yAbs           the absolute vertical y coordinate for the mouse location
      * @param clickCount     the number of mouse clicks associated with event
      * @param popupTrigger   a boolean, true if this event is a trigger for a
-     *                       popup-menu 
+     *                       popup-menu
      * @param scrollType     the type of scrolling which should take place in
      *                       response to this event;  valid values are
      *                       <code>WHEEL_UNIT_SCROLL</code> and
@@ -255,7 +254,7 @@ public class MouseWheelEvent extends MouseEvent {
     /**
      * Returns the number of units that should be scrolled per
      * click of mouse wheel rotation.
-     * Only valid if <code>getScrollType</code> returns 
+     * Only valid if <code>getScrollType</code> returns
      * <code>MouseWheelEvent.WHEEL_UNIT_SCROLL</code>
      *
      * @return number of units to scroll, or an undefined value if
@@ -297,9 +296,9 @@ public class MouseWheelEvent extends MouseEvent {
      * <P>
      * A simplified example of how this method might be used in a
      * listener:
-     * <pre> 
+     * <pre>
      *  mouseWheelMoved(MouseWheelEvent event) {
-     *      ScrollPane sp = getScrollPaneFromSomewhere(); 
+     *      ScrollPane sp = getScrollPaneFromSomewhere();
      *      Adjustable adj = sp.getVAdjustable()
      *      if (MouseWheelEvent.getScrollType() == WHEEL_UNIT_SCROLL) {
      *          int totalScrollAmount =
@@ -352,4 +351,3 @@ public class MouseWheelEvent extends MouseEvent {
          getWheelRotation();
     }
 }
-

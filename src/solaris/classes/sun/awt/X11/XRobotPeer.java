@@ -32,11 +32,11 @@ class XRobotPeer implements RobotPeer {
     private X11GraphicsConfig   xgc = null;
     /*
      * native implementation uses some static shared data (pipes, processes)
-     * so use a class lock to synchronize native method calls 
+     * so use a class lock to synchronize native method calls
      */
     static Object robotLock = new Object();
 
-    XRobotPeer(GraphicsConfiguration gc) {   
+    XRobotPeer(GraphicsConfiguration gc) {
         this.xgc = (X11GraphicsConfig)gc;
         setup();
     }

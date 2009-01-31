@@ -39,7 +39,7 @@ public class LCDTextAndGraphicsState extends Component {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(Color.white);
         g2d.fillRect(0,0,getSize().width, getSize().height);
-         
+
         test1(g.create(0,   0, 500, 200));
         test2(g.create(0, 200, 500, 200));
         test3(g.create(0, 400, 500, 200));
@@ -63,7 +63,7 @@ public class LCDTextAndGraphicsState extends Component {
         g2d.setColor(Color.black);
         g2d.drawString(text, 10, 50);
         g2d.setPaint(new GradientPaint(
-                     0f, 0f, Color.BLACK, 100f, 100f, Color.GRAY)); 
+                     0f, 0f, Color.BLACK, 100f, 100f, Color.GRAY));
         g2d.drawString(text, 10, 80);
     }
 
@@ -83,7 +83,7 @@ public class LCDTextAndGraphicsState extends Component {
     }
 
     public static void main(String[] args) throws Exception {
-   
+
         Frame f = new Frame("Composite and Text Test");
         f.add(new LCDTextAndGraphicsState(), BorderLayout.CENTER);
         f.pack();

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,27 +24,27 @@
 /*
  * @bug 4482471
  * @summary Verify that even if an incoming ObjectStreamClass is not resolvable
- * 	    to a local class, the ObjectStreamClass object itself is still
- * 	    deserializable (without incurring a ClassNotFoundException).
+ *          to a local class, the ObjectStreamClass object itself is still
+ *          deserializable (without incurring a ClassNotFoundException).
  */
 
 import java.io.*;
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	oin.readObject();
-	oin.readObject();
-	try {
-	    oin.readObject();
-	    throw new Error("read of Foo instance succeeded");
-	} catch (ClassNotFoundException ex) {
-	}
-	try {
-	    oin.readObject();
-	    throw new Error("indirect read of Foo instance succeeded");
-	} catch (ClassNotFoundException ex) {
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        oin.readObject();
+        oin.readObject();
+        try {
+            oin.readObject();
+            throw new Error("read of Foo instance succeeded");
+        } catch (ClassNotFoundException ex) {
+        }
+        try {
+            oin.readObject();
+            throw new Error("indirect read of Foo instance succeeded");
+        } catch (ClassNotFoundException ex) {
+        }
     }
 }

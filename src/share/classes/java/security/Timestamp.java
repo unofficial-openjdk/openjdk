@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security;
 
 import java.io.Serializable;
@@ -33,11 +33,10 @@ import java.util.Date;
 /**
  * This class encapsulates information about a signed timestamp.
  * It is immutable.
- * It includes the timestamp's date and time as well as information about the 
+ * It includes the timestamp's date and time as well as information about the
  * Timestamping Authority (TSA) which generated and signed the timestamp.
  *
  * @since 1.5
- * @version %I%, %G%
  * @author Vincent Ryan
  */
 
@@ -72,11 +71,11 @@ public final class Timestamp implements Serializable {
      * @throws NullPointerException if timestamp or signerCertPath is null.
      */
     public Timestamp(Date timestamp, CertPath signerCertPath) {
-	if (timestamp == null || signerCertPath == null) {
-	    throw new NullPointerException();
-	}
-	this.timestamp = new Date(timestamp.getTime()); // clone
-	this.signerCertPath = signerCertPath;
+        if (timestamp == null || signerCertPath == null) {
+            throw new NullPointerException();
+        }
+        this.timestamp = new Date(timestamp.getTime()); // clone
+        this.signerCertPath = signerCertPath;
     }
 
     /**
@@ -85,7 +84,7 @@ public final class Timestamp implements Serializable {
      * @return The timestamp's date and time.
      */
     public Date getTimestamp() {
-	return new Date(timestamp.getTime()); // clone
+        return new Date(timestamp.getTime()); // clone
     }
 
     /**
@@ -94,57 +93,57 @@ public final class Timestamp implements Serializable {
      * @return The TSA's certificate path.
      */
     public CertPath getSignerCertPath() {
-	return signerCertPath;
+        return signerCertPath;
     }
 
     /**
-     * Returns the hash code value for this timestamp. 
+     * Returns the hash code value for this timestamp.
      * The hash code is generated using the date and time of the timestamp
      * and the TSA's certificate path.
      *
      * @return a hash code value for this timestamp.
      */
     public int hashCode() {
-	if (myhash == -1) {
-	    myhash = timestamp.hashCode() + signerCertPath.hashCode();
-	}
-	return myhash;
+        if (myhash == -1) {
+            myhash = timestamp.hashCode() + signerCertPath.hashCode();
+        }
+        return myhash;
     }
 
     /**
      * Tests for equality between the specified object and this
      * timestamp. Two timestamps are considered equal if the date and time of
      * their timestamp's and their signer's certificate paths are equal.
-     * 
+     *
      * @param obj the object to test for equality with this timestamp.
-     * 
+     *
      * @return true if the timestamp are considered equal, false otherwise.
      */
     public boolean equals(Object obj) {
-	if (obj == null || (!(obj instanceof Timestamp))) {
-	    return false;
-	}
-	Timestamp that = (Timestamp)obj;
+        if (obj == null || (!(obj instanceof Timestamp))) {
+            return false;
+        }
+        Timestamp that = (Timestamp)obj;
 
-	if (this == that) {
-	    return true;
-	}
-	return (timestamp.equals(that.getTimestamp()) &&
-	    signerCertPath.equals(that.getSignerCertPath()));
+        if (this == that) {
+            return true;
+        }
+        return (timestamp.equals(that.getTimestamp()) &&
+            signerCertPath.equals(that.getSignerCertPath()));
     }
 
     /**
      * Returns a string describing this timestamp.
-     * 
+     *
      * @return A string comprising the date and time of the timestamp and
      *         its signer's certificate.
      */
     public String toString() {
-	StringBuffer sb = new StringBuffer();
-	sb.append("(");
-	sb.append("timestamp: " + timestamp);
-	sb.append("TSA: " + signerCertPath.getCertificates().get(0));
-	sb.append(")");
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        sb.append("(");
+        sb.append("timestamp: " + timestamp);
+        sb.append("TSA: " + signerCertPath.getCertificates().get(0));
+        sb.append(")");
+        return sb.toString();
     }
 }

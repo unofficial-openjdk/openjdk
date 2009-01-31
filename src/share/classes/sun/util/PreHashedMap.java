@@ -76,7 +76,6 @@ import java.util.NoSuchElementException;
  * <tt>Hasher</tt> program in the <tt>make/tools/Hasher</tt> directory.
  *
  * @author Mark Reinhold
- * @version %I% %E%
  * @since 1.5
  *
  * @see java.util.AbstractMap
@@ -108,12 +107,12 @@ public abstract class PreHashedMap<V>
      *        The value with which hash codes are masked after being shifted
      */
     protected PreHashedMap(int rows, int size, int shift, int mask) {
-	this.rows = rows;
-	this.size = size;
-	this.shift = shift;
-	this.mask = mask;
-	this.ht = new Object[rows];
-	init(ht);
+        this.rows = rows;
+        this.size = size;
+        this.shift = shift;
+        this.mask = mask;
+        this.ht = new Object[rows];
+        init(ht);
     }
 
     /**
@@ -129,7 +128,7 @@ public abstract class PreHashedMap<V>
 
     // @SuppressWarnings("unchecked")
     private V toV(Object x) {
-	return (V)x;
+        return (V)x;
     }
 
     public V get(Object k) {
@@ -153,10 +152,10 @@ public abstract class PreHashedMap<V>
         int h = (k.hashCode() >> shift) & mask;
         Object[] a = (Object[])ht[h];
         if (a == null)
-	    throw new UnsupportedOperationException(k);
+            throw new UnsupportedOperationException(k);
         for (;;) {
             if (a[0].equals(k)) {
-		V ov = toV(a[1]);
+                V ov = toV(a[1]);
                 a[1] = v;
                 return ov;
             }
@@ -167,124 +166,124 @@ public abstract class PreHashedMap<V>
     }
 
     public Set<String> keySet() {
-	return new AbstractSet<String> () {
+        return new AbstractSet<String> () {
 
-	    public int size() {
-		return size;
-	    }
+            public int size() {
+                return size;
+            }
 
-	    public Iterator<String> iterator() {
-		return new Iterator<String>() {
-		    private int i = -1;
-		    Object[] a = null;
-		    String cur = null;
+            public Iterator<String> iterator() {
+                return new Iterator<String>() {
+                    private int i = -1;
+                    Object[] a = null;
+                    String cur = null;
 
-		    private boolean findNext() {
-			if (a != null) {
-			    if (a.length == 3) {
-				a = (Object[])a[2];
-				cur = (String)a[0];
-				return true;
-			    }
-			    i++;
-			    a = null;
-			}
-			cur = null;
-			if (i >= rows)
-			    return false;
-			if (i < 0 || ht[i] == null) {
-			    do {
-				if (++i >= rows)
-				    return false;
-			    } while (ht[i] == null);
-			}
-			a = (Object[])ht[i];
-			cur = (String)a[0];
-			return true;
-		    }
+                    private boolean findNext() {
+                        if (a != null) {
+                            if (a.length == 3) {
+                                a = (Object[])a[2];
+                                cur = (String)a[0];
+                                return true;
+                            }
+                            i++;
+                            a = null;
+                        }
+                        cur = null;
+                        if (i >= rows)
+                            return false;
+                        if (i < 0 || ht[i] == null) {
+                            do {
+                                if (++i >= rows)
+                                    return false;
+                            } while (ht[i] == null);
+                        }
+                        a = (Object[])ht[i];
+                        cur = (String)a[0];
+                        return true;
+                    }
 
-		    public boolean hasNext() {
-			if (cur != null)
-			    return true;
-			return findNext();
-		    }
+                    public boolean hasNext() {
+                        if (cur != null)
+                            return true;
+                        return findNext();
+                    }
 
-		    public String next() {
-			if (cur == null) {
-			    if (!findNext())
-				throw new NoSuchElementException();
-			}
-			String s = cur;
-			cur = null;
-			return s;
-		    }
+                    public String next() {
+                        if (cur == null) {
+                            if (!findNext())
+                                throw new NoSuchElementException();
+                        }
+                        String s = cur;
+                        cur = null;
+                        return s;
+                    }
 
-		    public void remove() {
-			throw new UnsupportedOperationException();
-		    }
-			 
-		};
-	    }
-	};
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                };
+            }
+        };
     }
 
     public Set<Map.Entry<String,V>> entrySet() {
-	return new AbstractSet<Map.Entry<String,V>> () {
+        return new AbstractSet<Map.Entry<String,V>> () {
 
-	    public int size() {
-		return size;
-	    }
+            public int size() {
+                return size;
+            }
 
-	    public Iterator<Map.Entry<String,V>> iterator() {
-		return new Iterator<Map.Entry<String,V>>() {
-		    final Iterator<String> i = keySet().iterator();
+            public Iterator<Map.Entry<String,V>> iterator() {
+                return new Iterator<Map.Entry<String,V>>() {
+                    final Iterator<String> i = keySet().iterator();
 
-		    public boolean hasNext() {
-			return i.hasNext();
-		    }
+                    public boolean hasNext() {
+                        return i.hasNext();
+                    }
 
-		    public Map.Entry<String,V> next() {
-			return new Map.Entry<String,V>() {
-			    String k = i.next();
-			    public String getKey() { return k; }
-			    public V getValue() { return get(k); }
-			    public int hashCode() {
-				V v = get(k);
-				return (k.hashCode()
-					+ (v == null
-					   ? 0
-					   : v.hashCode()));
-			    }
-			    public boolean equals(Object ob) {
-				if (ob == this)
-				    return true;
-				if (!(ob instanceof Map.Entry))
-				    return false;
-				Map.Entry<String,V> that
-				    = (Map.Entry<String,V>)ob;
-				return ((this.getKey() == null
-					 ? that.getKey() == null
-					 : this.getKey()
-					       .equals(that.getKey()))
-					&&
-					(this.getValue() == null
-					 ? that.getValue() == null
-					 : this.getValue()
-					       .equals(that.getValue())));
-			    }
-			    public V setValue(V v) {
-				throw new UnsupportedOperationException();
-			    }
-			};
-		    }
+                    public Map.Entry<String,V> next() {
+                        return new Map.Entry<String,V>() {
+                            String k = i.next();
+                            public String getKey() { return k; }
+                            public V getValue() { return get(k); }
+                            public int hashCode() {
+                                V v = get(k);
+                                return (k.hashCode()
+                                        + (v == null
+                                           ? 0
+                                           : v.hashCode()));
+                            }
+                            public boolean equals(Object ob) {
+                                if (ob == this)
+                                    return true;
+                                if (!(ob instanceof Map.Entry))
+                                    return false;
+                                Map.Entry<String,V> that
+                                    = (Map.Entry<String,V>)ob;
+                                return ((this.getKey() == null
+                                         ? that.getKey() == null
+                                         : this.getKey()
+                                               .equals(that.getKey()))
+                                        &&
+                                        (this.getValue() == null
+                                         ? that.getValue() == null
+                                         : this.getValue()
+                                               .equals(that.getValue())));
+                            }
+                            public V setValue(V v) {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
 
-		    public void remove() {
-			throw new UnsupportedOperationException();
-		    }
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
 
-		};
-	    }
-	};
+                };
+            }
+        };
     }
 
 }

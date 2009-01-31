@@ -69,13 +69,13 @@ import sun.java2d.Disposer;
  */
 public final class FontManager {
 
-    public static final int FONTFORMAT_NONE      = -1;   
-    public static final int FONTFORMAT_TRUETYPE  = 0;   
+    public static final int FONTFORMAT_NONE      = -1;
+    public static final int FONTFORMAT_TRUETYPE  = 0;
     public static final int FONTFORMAT_TYPE1     = 1;
-    public static final int FONTFORMAT_T2K	 = 2;
-    public static final int FONTFORMAT_TTC	 = 3;
+    public static final int FONTFORMAT_T2K       = 2;
+    public static final int FONTFORMAT_TTC       = 3;
     public static final int FONTFORMAT_COMPOSITE = 4;
-    public static final int FONTFORMAT_NATIVE	 = 5;
+    public static final int FONTFORMAT_NATIVE    = 5;
 
     public static final int NO_FALLBACK         = 0;
     public static final int PHYSICAL_FALLBACK   = 1;
@@ -130,7 +130,7 @@ public final class FontManager {
 
     /* deprecated, unsupported hack - actually invokes a bug! */
     private static boolean usePlatformFontMetrics = false;
-   
+
     public static Logger logger = null;
     public static boolean logging;
     static boolean longAddresses;
@@ -155,127 +155,127 @@ public final class FontManager {
 
     private static void initJREFontMap() {
 
-	/* Key is familyname+style value as an int.
-	 * Value is filename containing the font.
-	 * If no mapping exists, it means there is no font file for the style
-	 * If the mapping exists but the file doesn't exist in the deferred
-	 * list then it means its not installed.
-	 * This looks like a lot of code and strings but if it saves even
-	 * a single file being opened at JRE start-up there's a big payoff.
-	 * Lucida Sans is probably the only important case as the others
-	 * are rarely used. Consider removing the other mappings if there's
-	 * no evidence they are useful in practice.
-	 */
-	jreFontMap = new HashMap<String,String>();
+        /* Key is familyname+style value as an int.
+         * Value is filename containing the font.
+         * If no mapping exists, it means there is no font file for the style
+         * If the mapping exists but the file doesn't exist in the deferred
+         * list then it means its not installed.
+         * This looks like a lot of code and strings but if it saves even
+         * a single file being opened at JRE start-up there's a big payoff.
+         * Lucida Sans is probably the only important case as the others
+         * are rarely used. Consider removing the other mappings if there's
+         * no evidence they are useful in practice.
+         */
+        jreFontMap = new HashMap<String,String>();
         jreLucidaFontFiles = new HashSet<String>();
         if (SunGraphicsEnvironment.isOpenJDK()) {
             return;
         }
-	/* Lucida Sans Family */
-	jreFontMap.put("lucida sans0",   "LucidaSansRegular.ttf");
-	jreFontMap.put("lucida sans1",   "LucidaSansDemiBold.ttf");
-	/* Lucida Sans full names (map Bold and DemiBold to same file) */
-	jreFontMap.put("lucida sans regular0", "LucidaSansRegular.ttf");
-	jreFontMap.put("lucida sans regular1", "LucidaSansDemiBold.ttf");
-	jreFontMap.put("lucida sans bold1", "LucidaSansDemiBold.ttf");
-	jreFontMap.put("lucida sans demibold1", "LucidaSansDemiBold.ttf");
+        /* Lucida Sans Family */
+        jreFontMap.put("lucida sans0",   "LucidaSansRegular.ttf");
+        jreFontMap.put("lucida sans1",   "LucidaSansDemiBold.ttf");
+        /* Lucida Sans full names (map Bold and DemiBold to same file) */
+        jreFontMap.put("lucida sans regular0", "LucidaSansRegular.ttf");
+        jreFontMap.put("lucida sans regular1", "LucidaSansDemiBold.ttf");
+        jreFontMap.put("lucida sans bold1", "LucidaSansDemiBold.ttf");
+        jreFontMap.put("lucida sans demibold1", "LucidaSansDemiBold.ttf");
 
-	/* Lucida Sans Typewriter Family */
+        /* Lucida Sans Typewriter Family */
         jreFontMap.put("lucida sans typewriter0",
                        "LucidaTypewriterRegular.ttf");
-	jreFontMap.put("lucida sans typewriter1", "LucidaTypewriterBold.ttf");
-	/* Typewriter full names (map Bold and DemiBold to same file) */
-	jreFontMap.put("lucida sans typewriter regular0",
-		       "LucidaTypewriter.ttf");
-	jreFontMap.put("lucida sans typewriter regular1",
-		       "LucidaTypewriterBold.ttf");
-	jreFontMap.put("lucida sans typewriter bold1",
-		       "LucidaTypewriterBold.ttf");
-	jreFontMap.put("lucida sans typewriter demibold1",
-		       "LucidaTypewriterBold.ttf");
+        jreFontMap.put("lucida sans typewriter1", "LucidaTypewriterBold.ttf");
+        /* Typewriter full names (map Bold and DemiBold to same file) */
+        jreFontMap.put("lucida sans typewriter regular0",
+                       "LucidaTypewriter.ttf");
+        jreFontMap.put("lucida sans typewriter regular1",
+                       "LucidaTypewriterBold.ttf");
+        jreFontMap.put("lucida sans typewriter bold1",
+                       "LucidaTypewriterBold.ttf");
+        jreFontMap.put("lucida sans typewriter demibold1",
+                       "LucidaTypewriterBold.ttf");
 
-	/* Lucida Bright Family */
-	jreFontMap.put("lucida bright0", "LucidaBrightRegular.ttf");
-	jreFontMap.put("lucida bright1", "LucidaBrightDemiBold.ttf");
-	jreFontMap.put("lucida bright2", "LucidaBrightItalic.ttf");
-	jreFontMap.put("lucida bright3", "LucidaBrightDemiItalic.ttf");
-	/* Lucida Bright full names (map Bold and DemiBold to same file) */
-	jreFontMap.put("lucida bright regular0", "LucidaBrightRegular.ttf");
-	jreFontMap.put("lucida bright regular1", "LucidaBrightDemiBold.ttf");
-	jreFontMap.put("lucida bright regular2", "LucidaBrightItalic.ttf");
-	jreFontMap.put("lucida bright regular3", "LucidaBrightDemiItalic.ttf");
-	jreFontMap.put("lucida bright bold1", "LucidaBrightDemiBold.ttf");
-	jreFontMap.put("lucida bright bold3", "LucidaBrightDemiItalic.ttf");
-	jreFontMap.put("lucida bright demibold1", "LucidaBrightDemiBold.ttf");
-	jreFontMap.put("lucida bright demibold3","LucidaBrightDemiItalic.ttf");
-	jreFontMap.put("lucida bright italic2", "LucidaBrightItalic.ttf");
-	jreFontMap.put("lucida bright italic3", "LucidaBrightDemiItalic.ttf");
-	jreFontMap.put("lucida bright bold italic3",
-		       "LucidaBrightDemiItalic.ttf");
-	jreFontMap.put("lucida bright demibold italic3",
-		       "LucidaBrightDemiItalic.ttf");
+        /* Lucida Bright Family */
+        jreFontMap.put("lucida bright0", "LucidaBrightRegular.ttf");
+        jreFontMap.put("lucida bright1", "LucidaBrightDemiBold.ttf");
+        jreFontMap.put("lucida bright2", "LucidaBrightItalic.ttf");
+        jreFontMap.put("lucida bright3", "LucidaBrightDemiItalic.ttf");
+        /* Lucida Bright full names (map Bold and DemiBold to same file) */
+        jreFontMap.put("lucida bright regular0", "LucidaBrightRegular.ttf");
+        jreFontMap.put("lucida bright regular1", "LucidaBrightDemiBold.ttf");
+        jreFontMap.put("lucida bright regular2", "LucidaBrightItalic.ttf");
+        jreFontMap.put("lucida bright regular3", "LucidaBrightDemiItalic.ttf");
+        jreFontMap.put("lucida bright bold1", "LucidaBrightDemiBold.ttf");
+        jreFontMap.put("lucida bright bold3", "LucidaBrightDemiItalic.ttf");
+        jreFontMap.put("lucida bright demibold1", "LucidaBrightDemiBold.ttf");
+        jreFontMap.put("lucida bright demibold3","LucidaBrightDemiItalic.ttf");
+        jreFontMap.put("lucida bright italic2", "LucidaBrightItalic.ttf");
+        jreFontMap.put("lucida bright italic3", "LucidaBrightDemiItalic.ttf");
+        jreFontMap.put("lucida bright bold italic3",
+                       "LucidaBrightDemiItalic.ttf");
+        jreFontMap.put("lucida bright demibold italic3",
+                       "LucidaBrightDemiItalic.ttf");
         for (String ffile : jreFontMap.values()) {
             jreLucidaFontFiles.add(ffile);
-	}
+        }
     }
 
     static {
 
-	if (SunGraphicsEnvironment.debugFonts) {
-	    logger = Logger.getLogger("sun.java2d", null);
-	    logging = logger.getLevel() != Level.OFF;
-	}
+        if (SunGraphicsEnvironment.debugFonts) {
+            logger = Logger.getLogger("sun.java2d", null);
+            logging = logger.getLevel() != Level.OFF;
+        }
         initJREFontMap();
 
-	java.security.AccessController.doPrivileged(
-				    new java.security.PrivilegedAction() {
-  	   public Object run() {
+        java.security.AccessController.doPrivileged(
+                                    new java.security.PrivilegedAction() {
+           public Object run() {
                FontManagerNativeLibrary.load();
 
-	       // JNI throws an exception if a class/method/field is not found,
-	       // so there's no need to do anything explicit here.
-	       initIDs();
+               // JNI throws an exception if a class/method/field is not found,
+               // so there's no need to do anything explicit here.
+               initIDs();
 
-	       switch (StrikeCache.nativeAddressSize) {
-	       case 8: longAddresses = true; break;
-	       case 4: longAddresses = false; break;
-	       default: throw new RuntimeException("Unexpected address size");
-	       }
+               switch (StrikeCache.nativeAddressSize) {
+               case 8: longAddresses = true; break;
+               case 4: longAddresses = false; break;
+               default: throw new RuntimeException("Unexpected address size");
+               }
 
-	       osName = System.getProperty("os.name", "unknownOS");
-	       isSolaris = osName.startsWith("SunOS");
+               osName = System.getProperty("os.name", "unknownOS");
+               isSolaris = osName.startsWith("SunOS");
 
-	       if (isSolaris) {
-		   String t2kStr= System.getProperty("sun.java2d.font.scaler");
+               if (isSolaris) {
+                   String t2kStr= System.getProperty("sun.java2d.font.scaler");
                    useT2K = "t2k".equals(t2kStr);
-		   String version = System.getProperty("os.version", "unk");
-		   isSolaris8 = version.equals("5.8");
-		   isSolaris9 = version.equals("5.9");
-	       } else {
-		   isWindows = osName.startsWith("Windows");
-		   if (isWindows) {
-		       String eudcFile =
-			   SunGraphicsEnvironment.eudcFontFileName;
-		       if (eudcFile != null) {
-			   try {
-			       eudcFont = new TrueTypeFont(eudcFile, null, 0,
-							   true);
-			   } catch (FontFormatException e) {
-			   }
-		       }
-		       String prop =
-			   System.getProperty("java2d.font.usePlatformFont");
-		       if (("true".equals(prop) || getPlatformFontVar())) {
-			   usePlatformFontMetrics = true;
-			   System.out.println("Enabling platform font metrics for win32. This is an unsupported option.");
-			   System.out.println("This yields incorrect composite font metrics as reported by 1.1.x releases.");
-			   System.out.println("It is appropriate only for use by applications which do not use any Java 2");
-			   System.out.println("functionality. This property will be removed in a later release.");
-		       }
-		   }
-	       }
-	       return null;
-	   }
+                   String version = System.getProperty("os.version", "unk");
+                   isSolaris8 = version.equals("5.8");
+                   isSolaris9 = version.equals("5.9");
+               } else {
+                   isWindows = osName.startsWith("Windows");
+                   if (isWindows) {
+                       String eudcFile =
+                           SunGraphicsEnvironment.eudcFontFileName;
+                       if (eudcFile != null) {
+                           try {
+                               eudcFont = new TrueTypeFont(eudcFile, null, 0,
+                                                           true);
+                           } catch (FontFormatException e) {
+                           }
+                       }
+                       String prop =
+                           System.getProperty("java2d.font.usePlatformFont");
+                       if (("true".equals(prop) || getPlatformFontVar())) {
+                           usePlatformFontMetrics = true;
+                           System.out.println("Enabling platform font metrics for win32. This is an unsupported option.");
+                           System.out.println("This yields incorrect composite font metrics as reported by 1.1.x releases.");
+                           System.out.println("It is appropriate only for use by applications which do not use any Java 2");
+                           System.out.println("functionality. This property will be removed in a later release.");
+                       }
+                   }
+               }
+               return null;
+           }
         });
     }
 
@@ -283,36 +283,36 @@ public final class FontManager {
     private static native void initIDs();
 
     public static void addToPool(FileFont font) {
-	boolean added = false;
-	synchronized (fontFileCache) {
-	    /* use poolSize to quickly detect if there's any free slots.
-	     * This is a performance tweak based on the assumption that
-	     * if this is executed at all often, its because there are many
-	     * fonts being used and the pool will be full, and we will save
-	     * a fruitless iteration
-	     */
-	    if (poolSize < CHANNELPOOLSIZE) {
-		for (int i=0; i<CHANNELPOOLSIZE; i++) {
-		    if (fontFileCache[i] == null) {
-			fontFileCache[i] = font;
-			poolSize++;
-			added = true;
-			break;
-		    }
-		}
-		assert added;
-	    } else {
-		// is it possible for this to be the same font?
-		assert fontFileCache[lastPoolIndex] != font;
-		/* replace with new font,  poolSize is unchanged. */
-		fontFileCache[lastPoolIndex].close();
-		fontFileCache[lastPoolIndex] = font;
-		/* lastPoolIndex is updated so that the least recently opened
-		 * file will be closed next.
-		 */
-		lastPoolIndex = (lastPoolIndex+1) % CHANNELPOOLSIZE;
-	    }
-	}
+        boolean added = false;
+        synchronized (fontFileCache) {
+            /* use poolSize to quickly detect if there's any free slots.
+             * This is a performance tweak based on the assumption that
+             * if this is executed at all often, its because there are many
+             * fonts being used and the pool will be full, and we will save
+             * a fruitless iteration
+             */
+            if (poolSize < CHANNELPOOLSIZE) {
+                for (int i=0; i<CHANNELPOOLSIZE; i++) {
+                    if (fontFileCache[i] == null) {
+                        fontFileCache[i] = font;
+                        poolSize++;
+                        added = true;
+                        break;
+                    }
+                }
+                assert added;
+            } else {
+                // is it possible for this to be the same font?
+                assert fontFileCache[lastPoolIndex] != font;
+                /* replace with new font,  poolSize is unchanged. */
+                fontFileCache[lastPoolIndex].close();
+                fontFileCache[lastPoolIndex] = font;
+                /* lastPoolIndex is updated so that the least recently opened
+                 * file will be closed next.
+                 */
+                lastPoolIndex = (lastPoolIndex+1) % CHANNELPOOLSIZE;
+            }
+        }
     }
 
     /*
@@ -330,14 +330,14 @@ public final class FontManager {
      * be closed.
      */
     public static void removeFromPool(FileFont font) {
-	synchronized (fontFileCache) {
-	    for (int i=0; i<CHANNELPOOLSIZE; i++) {
-		if (fontFileCache[i] == font) {
-		    fontFileCache[i] = null;
-		    poolSize--;
-		}
-	    }
-	}
+        synchronized (fontFileCache) {
+            for (int i=0; i<CHANNELPOOLSIZE; i++) {
+                if (fontFileCache[i] == font) {
+                    fontFileCache[i] = null;
+                    poolSize--;
+                }
+            }
+        }
     }
 
     /**
@@ -345,7 +345,7 @@ public final class FontManager {
      *
      * @param font representing a physical font.
      * @return true if the underlying font is a TrueType or OpenType font
-     * that claims to support the Microsoft Windows encoding corresponding to 
+     * that claims to support the Microsoft Windows encoding corresponding to
      * the default file.encoding property of this JRE instance.
      * This narrow value is useful for Swing to decide if the font is useful
      * for the the Windows Look and Feel, or, if a  composite font should be
@@ -357,17 +357,17 @@ public final class FontManager {
      * returns true.
      */
 //     static boolean fontSupportsDefaultEncoding(Font font) {
-// 	String encoding =
-// 	    (String) java.security.AccessController.doPrivileged(
+//      String encoding =
+//          (String) java.security.AccessController.doPrivileged(
 //                new sun.security.action.GetPropertyAction("file.encoding"));
-	
-// 	if (encoding == null || font == null) {
-// 	    return false;
-// 	}
 
-// 	encoding = encoding.toLowerCase(Locale.ENGLISH);
+//      if (encoding == null || font == null) {
+//          return false;
+//      }
 
-// 	return FontManager.fontSupportsEncoding(font, encoding);
+//      encoding = encoding.toLowerCase(Locale.ENGLISH);
+
+//      return FontManager.fontSupportsEncoding(font, encoding);
 //     }
 
     /* Revise the implementation to in fact mean "font is a composite font.
@@ -375,7 +375,7 @@ public final class FontManager {
      * fall back fonts
      */
     public static boolean fontSupportsDefaultEncoding(Font font) {
-	return getFont2D(font) instanceof CompositeFont;
+        return getFont2D(font) instanceof CompositeFont;
     }
 
     /**
@@ -428,15 +428,15 @@ public final class FontManager {
      *   fuir = FontManager.getCompositeFontUIResource(desktopFont);
      * }
      * return fuir;
-     */ 
+     */
     public static FontUIResource getCompositeFontUIResource(Font font) {
 
         FontUIResource fuir =
             new FontUIResource(font.getName(),font.getStyle(),font.getSize());
-	Font2D font2D = getFont2D(font);
+        Font2D font2D = getFont2D(font);
 
-	if (!(font2D instanceof PhysicalFont)) {
-	    /* Swing should only be calling this when a font is obtained
+        if (!(font2D instanceof PhysicalFont)) {
+            /* Swing should only be calling this when a font is obtained
              * from desktop properties, so should generally be a physical font,
              * an exception might be for names like "MS Serif" which are
              * automatically mapped to "Serif", so there's no need to do
@@ -445,21 +445,21 @@ public final class FontManager {
              * method should not be called if that were to return true.
              */
              return fuir;
-	}
+        }
 
-	CompositeFont dialog2D =
-	  (CompositeFont)findFont2D("dialog", font.getStyle(), NO_FALLBACK);
-	if (dialog2D == null) { /* shouldn't happen */
-	    return fuir;
-	}
-	PhysicalFont physicalFont = (PhysicalFont)font2D;
-	CompositeFont compFont = new CompositeFont(physicalFont, dialog2D);
-	setFont2D(fuir, compFont.handle);
-	/* marking this as a created font is needed as only created fonts
-	 * copy their creator's handles.
-	 */
-	setCreatedFont(fuir);
-	return fuir;
+        CompositeFont dialog2D =
+          (CompositeFont)findFont2D("dialog", font.getStyle(), NO_FALLBACK);
+        if (dialog2D == null) { /* shouldn't happen */
+            return fuir;
+        }
+        PhysicalFont physicalFont = (PhysicalFont)font2D;
+        CompositeFont compFont = new CompositeFont(physicalFont, dialog2D);
+        setFont2D(fuir, compFont.handle);
+        /* marking this as a created font is needed as only created fonts
+         * copy their creator's handles.
+         */
+        setCreatedFont(fuir);
+        return fuir;
     }
 
     public static Font2DHandle getNewComposite(String family, int style,
@@ -500,23 +500,23 @@ public final class FontManager {
     private static native void setCreatedFont(Font font);
 
     public static void registerCompositeFont(String compositeName,
-					     String[] componentFileNames,
-					     String[] componentNames,
-					     int numMetricsSlots,
-					     int[] exclusionRanges,
-					     int[] exclusionMaxIndex,
-					     boolean defer) {
+                                             String[] componentFileNames,
+                                             String[] componentNames,
+                                             int numMetricsSlots,
+                                             int[] exclusionRanges,
+                                             int[] exclusionMaxIndex,
+                                             boolean defer) {
 
-	CompositeFont cf = new CompositeFont(compositeName,
-					     componentFileNames,
-					     componentNames,
-					     numMetricsSlots,
-					     exclusionRanges,
-					     exclusionMaxIndex, defer);
-	addCompositeToFontList(cf, Font2D.FONT_CONFIG_RANK);
-	synchronized (compFonts) {
-	    compFonts[maxCompFont++] = cf;
-	}
+        CompositeFont cf = new CompositeFont(compositeName,
+                                             componentFileNames,
+                                             componentNames,
+                                             numMetricsSlots,
+                                             exclusionRanges,
+                                             exclusionMaxIndex, defer);
+        addCompositeToFontList(cf, Font2D.FONT_CONFIG_RANK);
+        synchronized (compFonts) {
+            compFonts[maxCompFont++] = cf;
+        }
     }
 
     /* This variant is used only when the application specifies
@@ -524,66 +524,66 @@ public final class FontManager {
      * proportional fonts.
      */
     public static void registerCompositeFont(String compositeName,
-					     String[] componentFileNames,
-					     String[] componentNames,
-					     int numMetricsSlots,
-					     int[] exclusionRanges,
-					     int[] exclusionMaxIndex,
-					     boolean defer,
+                                             String[] componentFileNames,
+                                             String[] componentNames,
+                                             int numMetricsSlots,
+                                             int[] exclusionRanges,
+                                             int[] exclusionMaxIndex,
+                                             boolean defer,
                                              ConcurrentHashMap<String, Font2D>
                                              altNameCache) {
 
-	CompositeFont cf = new CompositeFont(compositeName,
-					     componentFileNames,
-					     componentNames,
-					     numMetricsSlots,
-					     exclusionRanges,
-					     exclusionMaxIndex, defer);
-	/* if the cache has an existing composite for this case, make
-	 * its handle point to this new font.
-	 * This ensures that when the altNameCache that is passed in
-	 * is the global mapNameCache - ie we are running as an application -
-	 * that any statically created java.awt.Font instances which already
-	 * have a Font2D instance will have that re-directed to the new Font
-	 * on subsequent uses. This is particularly important for "the"
-	 * default font instance, or similar cases where a UI toolkit (eg
-	 * Swing) has cached a java.awt.Font. Note that if Swing is using
-	 * a custom composite APIs which update the standard composites have
-	 * no effect - this is typically the case only when using the Windows
-	 * L&F where these APIs would conflict with that L&F anyway.
-	 */
-	Font2D oldFont = (Font2D)
-	    altNameCache.get(compositeName.toLowerCase(Locale.ENGLISH));
-	if (oldFont instanceof CompositeFont) {
-	    oldFont.handle.font2D = cf;
-	}
-	altNameCache.put(compositeName.toLowerCase(Locale.ENGLISH), cf);
+        CompositeFont cf = new CompositeFont(compositeName,
+                                             componentFileNames,
+                                             componentNames,
+                                             numMetricsSlots,
+                                             exclusionRanges,
+                                             exclusionMaxIndex, defer);
+        /* if the cache has an existing composite for this case, make
+         * its handle point to this new font.
+         * This ensures that when the altNameCache that is passed in
+         * is the global mapNameCache - ie we are running as an application -
+         * that any statically created java.awt.Font instances which already
+         * have a Font2D instance will have that re-directed to the new Font
+         * on subsequent uses. This is particularly important for "the"
+         * default font instance, or similar cases where a UI toolkit (eg
+         * Swing) has cached a java.awt.Font. Note that if Swing is using
+         * a custom composite APIs which update the standard composites have
+         * no effect - this is typically the case only when using the Windows
+         * L&F where these APIs would conflict with that L&F anyway.
+         */
+        Font2D oldFont = (Font2D)
+            altNameCache.get(compositeName.toLowerCase(Locale.ENGLISH));
+        if (oldFont instanceof CompositeFont) {
+            oldFont.handle.font2D = cf;
+        }
+        altNameCache.put(compositeName.toLowerCase(Locale.ENGLISH), cf);
     }
 
     private static void addCompositeToFontList(CompositeFont f, int rank) {
 
-	if (logging) {
-	    logger.info("Add to Family "+ f.familyName +
-			", Font " + f.fullName + " rank="+rank);
-	}
-	f.setRank(rank);
-	compositeFonts.put(f.fullName, f);
-	fullNameToFont.put(f.fullName.toLowerCase(Locale.ENGLISH), f);
+        if (logging) {
+            logger.info("Add to Family "+ f.familyName +
+                        ", Font " + f.fullName + " rank="+rank);
+        }
+        f.setRank(rank);
+        compositeFonts.put(f.fullName, f);
+        fullNameToFont.put(f.fullName.toLowerCase(Locale.ENGLISH), f);
 
-	FontFamily family = FontFamily.getFamily(f.familyName);
-	if (family == null) {
-	    family = new FontFamily(f.familyName, true, rank);
-	}
-	family.setFont(f, f.style);
+        FontFamily family = FontFamily.getFamily(f.familyName);
+        if (family == null) {
+            family = new FontFamily(f.familyName, true, rank);
+        }
+        family.setFont(f, f.style);
     }
 
-    /* 
+    /*
      * Systems may have fonts with the same name.
      * We want to register only one of such fonts (at least until
      * such time as there might be APIs which can accommodate > 1).
      * Rank is 1) font configuration fonts, 2) JRE fonts, 3) OT/TT fonts,
      * 4) Type1 fonts, 5) native fonts.
-     * 
+     *
      * If the new font has the same name as the old font, the higher
      * ranked font gets added, replacing the lower ranked one.
      * If the fonts are of equal rank, then make a special case of
@@ -610,133 +610,133 @@ public final class FontManager {
      */
     private static PhysicalFont addToFontList(PhysicalFont f, int rank) {
 
-	String fontName = f.fullName;
-	String familyName = f.familyName;
-	if (fontName == null || "".equals(fontName)) {
-	    return null;
-	}
-	if (compositeFonts.containsKey(fontName)) {
-	    /* Don't register any font that has the same name as a composite */
-	    return null;
-	}
-	f.setRank(rank);
-	if (!physicalFonts.containsKey(fontName)) {
-	    if (logging) {
-		logger.info("Add to Family "+familyName +
-			    ", Font " + fontName + " rank="+rank);
-	    }
-	    physicalFonts.put(fontName, f);
-	    FontFamily family = FontFamily.getFamily(familyName);
-	    if (family == null) {
-		family = new FontFamily(familyName, false, rank);
-		family.setFont(f, f.style);
-	    } else if (family.getRank() >= rank) {
-		family.setFont(f, f.style);
-	    }
-	    fullNameToFont.put(fontName.toLowerCase(Locale.ENGLISH), f);
-	    return f;
-	} else {
-	    PhysicalFont newFont = f;
+        String fontName = f.fullName;
+        String familyName = f.familyName;
+        if (fontName == null || "".equals(fontName)) {
+            return null;
+        }
+        if (compositeFonts.containsKey(fontName)) {
+            /* Don't register any font that has the same name as a composite */
+            return null;
+        }
+        f.setRank(rank);
+        if (!physicalFonts.containsKey(fontName)) {
+            if (logging) {
+                logger.info("Add to Family "+familyName +
+                            ", Font " + fontName + " rank="+rank);
+            }
+            physicalFonts.put(fontName, f);
+            FontFamily family = FontFamily.getFamily(familyName);
+            if (family == null) {
+                family = new FontFamily(familyName, false, rank);
+                family.setFont(f, f.style);
+            } else if (family.getRank() >= rank) {
+                family.setFont(f, f.style);
+            }
+            fullNameToFont.put(fontName.toLowerCase(Locale.ENGLISH), f);
+            return f;
+        } else {
+            PhysicalFont newFont = f;
             PhysicalFont oldFont = physicalFonts.get(fontName);
-	    if (oldFont == null) {
-		return null;
-	    }
-	    /* If the new font is of an equal or higher rank, it is a
-	     * candidate to replace the current one, subject to further tests.
-	     */
-	    if (oldFont.getRank() >= rank) {
+            if (oldFont == null) {
+                return null;
+            }
+            /* If the new font is of an equal or higher rank, it is a
+             * candidate to replace the current one, subject to further tests.
+             */
+            if (oldFont.getRank() >= rank) {
 
-		/* All fonts initialise their mapper when first
-		 * used. If the mapper is non-null then this font
-		 * has been accessed at least once. In that case
-		 * do not replace it. This may be overly stringent,
-		 * but its probably better not to replace a font that
-		 * someone is already using without a compelling reason.
-		 * Additionally the primary case where it is known
-		 * this behaviour is important is in certain composite
-		 * fonts, and since all the components of a given
-		 * composite are usually initialised together this
-		 * is unlikely. For this to be a problem, there would
-		 * have to be a case where two different composites used
-		 * different versions of the same-named font, and they
-		 * were initialised and used at separate times.
-		 * In that case we continue on and allow the new font to
-		 * be installed, but replaceFont will continue to allow
-		 * the original font to be used in Composite fonts.
-		 */
-		if (oldFont.mapper != null && rank > Font2D.FONT_CONFIG_RANK) {
-		    return oldFont;
-		}
-		
-		/* Normally we require a higher rank to replace a font,
-		 * but as a special case, if the two fonts are the same rank,
-		 * and are instances of TrueTypeFont we want the
-		 * more complete (larger) one.
-		 */
-                if (oldFont.getRank() == rank) {
-		    if (oldFont instanceof TrueTypeFont &&
-			newFont instanceof TrueTypeFont) {
-			TrueTypeFont oldTTFont = (TrueTypeFont)oldFont;
-			TrueTypeFont newTTFont = (TrueTypeFont)newFont;
-			if (oldTTFont.fileSize >= newTTFont.fileSize) {
-			    return oldFont;
-			}
-		    } else {
-			return oldFont;
-		    }
-		}
-		/* Don't replace ever JRE fonts.
-		 * This test is in case a font configuration references
-		 * a Lucida font, which has been mapped to a Lucida
-		 * from the host O/S. The assumption here is that any
-		 * such font configuration file is probably incorrect, or
-		 * the host O/S version is for the use of AWT.
-		 * In other words if we reach here, there's a possible
-		 * problem with our choice of font configuration fonts.
-		 */
-		if (oldFont.platName.startsWith(
-		           SunGraphicsEnvironment.jreFontDirName)) {
-		    if (logging) {
-			logger.warning("Unexpected attempt to replace a JRE " +
-				       " font " + fontName + " from " +
-				        oldFont.platName +
-				       " with " + newFont.platName);
-		    }
-		    return oldFont;
+                /* All fonts initialise their mapper when first
+                 * used. If the mapper is non-null then this font
+                 * has been accessed at least once. In that case
+                 * do not replace it. This may be overly stringent,
+                 * but its probably better not to replace a font that
+                 * someone is already using without a compelling reason.
+                 * Additionally the primary case where it is known
+                 * this behaviour is important is in certain composite
+                 * fonts, and since all the components of a given
+                 * composite are usually initialised together this
+                 * is unlikely. For this to be a problem, there would
+                 * have to be a case where two different composites used
+                 * different versions of the same-named font, and they
+                 * were initialised and used at separate times.
+                 * In that case we continue on and allow the new font to
+                 * be installed, but replaceFont will continue to allow
+                 * the original font to be used in Composite fonts.
+                 */
+                if (oldFont.mapper != null && rank > Font2D.FONT_CONFIG_RANK) {
+                    return oldFont;
                 }
 
-		if (logging) {
-		    logger.info("Replace in Family " + familyName +
-				",Font " + fontName + " new rank="+rank +
-				" from " + oldFont.platName +
-				" with " + newFont.platName);
-		}
-		replaceFont(oldFont, newFont);
-		physicalFonts.put(fontName, newFont);
-		fullNameToFont.put(fontName.toLowerCase(Locale.ENGLISH),
+                /* Normally we require a higher rank to replace a font,
+                 * but as a special case, if the two fonts are the same rank,
+                 * and are instances of TrueTypeFont we want the
+                 * more complete (larger) one.
+                 */
+                if (oldFont.getRank() == rank) {
+                    if (oldFont instanceof TrueTypeFont &&
+                        newFont instanceof TrueTypeFont) {
+                        TrueTypeFont oldTTFont = (TrueTypeFont)oldFont;
+                        TrueTypeFont newTTFont = (TrueTypeFont)newFont;
+                        if (oldTTFont.fileSize >= newTTFont.fileSize) {
+                            return oldFont;
+                        }
+                    } else {
+                        return oldFont;
+                    }
+                }
+                /* Don't replace ever JRE fonts.
+                 * This test is in case a font configuration references
+                 * a Lucida font, which has been mapped to a Lucida
+                 * from the host O/S. The assumption here is that any
+                 * such font configuration file is probably incorrect, or
+                 * the host O/S version is for the use of AWT.
+                 * In other words if we reach here, there's a possible
+                 * problem with our choice of font configuration fonts.
+                 */
+                if (oldFont.platName.startsWith(
+                           SunGraphicsEnvironment.jreFontDirName)) {
+                    if (logging) {
+                        logger.warning("Unexpected attempt to replace a JRE " +
+                                       " font " + fontName + " from " +
+                                        oldFont.platName +
+                                       " with " + newFont.platName);
+                    }
+                    return oldFont;
+                }
+
+                if (logging) {
+                    logger.info("Replace in Family " + familyName +
+                                ",Font " + fontName + " new rank="+rank +
+                                " from " + oldFont.platName +
+                                " with " + newFont.platName);
+                }
+                replaceFont(oldFont, newFont);
+                physicalFonts.put(fontName, newFont);
+                fullNameToFont.put(fontName.toLowerCase(Locale.ENGLISH),
                                    newFont);
 
-		FontFamily family = FontFamily.getFamily(familyName);
-		if (family == null) {
-		    family = new FontFamily(familyName, false, rank);
-		    family.setFont(newFont, newFont.style);
-		} else if (family.getRank() >= rank) {
-		    family.setFont(newFont, newFont.style);
-		}
-		return newFont;
-	    } else {
-		return oldFont;
-	    }
-	}
+                FontFamily family = FontFamily.getFamily(familyName);
+                if (family == null) {
+                    family = new FontFamily(familyName, false, rank);
+                    family.setFont(newFont, newFont.style);
+                } else if (family.getRank() >= rank) {
+                    family.setFont(newFont, newFont.style);
+                }
+                return newFont;
+            } else {
+                return oldFont;
+            }
+        }
     }
 
     public static Font2D[] getRegisteredFonts() {
-	PhysicalFont[] physFonts = getPhysicalFonts();
-	int mcf = maxCompFont; /* for MT-safety */
-	Font2D[] regFonts = new Font2D[physFonts.length+mcf];
-	System.arraycopy(compFonts, 0, regFonts, 0, mcf);
-	System.arraycopy(physFonts, 0, regFonts, mcf, physFonts.length);
-	return regFonts;
+        PhysicalFont[] physFonts = getPhysicalFonts();
+        int mcf = maxCompFont; /* for MT-safety */
+        Font2D[] regFonts = new Font2D[physFonts.length+mcf];
+        System.arraycopy(compFonts, 0, regFonts, 0, mcf);
+        System.arraycopy(physFonts, 0, regFonts, mcf, physFonts.length);
+        return regFonts;
     }
 
     public static PhysicalFont[] getPhysicalFonts() {
@@ -759,20 +759,20 @@ public final class FontManager {
 
     private static final class FontRegistrationInfo {
 
-	String fontFilePath;
-	String[] nativeNames;
-	int fontFormat;
-	boolean javaRasterizer;
-	int fontRank;
+        String fontFilePath;
+        String[] nativeNames;
+        int fontFormat;
+        boolean javaRasterizer;
+        int fontRank;
 
-	FontRegistrationInfo(String fontPath, String[] names, int format,
-			     boolean useJavaRasterizer, int rank) {
-	    this.fontFilePath = fontPath;
-	    this.nativeNames = names;
-	    this.fontFormat = format;
-	    this.javaRasterizer = useJavaRasterizer;
-	    this.fontRank = rank;
-	}
+        FontRegistrationInfo(String fontPath, String[] names, int format,
+                             boolean useJavaRasterizer, int rank) {
+            this.fontFilePath = fontPath;
+            this.nativeNames = names;
+            this.fontFormat = format;
+            this.javaRasterizer = useJavaRasterizer;
+            this.fontRank = rank;
+        }
     }
 
     private static final ConcurrentHashMap<String, FontRegistrationInfo>
@@ -798,7 +798,7 @@ public final class FontManager {
             if (info.fontFilePath != null &&
                 info.fontFilePath.startsWith(jreDir)) {
                 initialiseDeferredFont(info.fontFilePath);
-	    }
+            }
         }
     }
 
@@ -813,74 +813,74 @@ public final class FontManager {
      */
     private static PhysicalFont findJREDeferredFont(String name, int style) {
 
-	PhysicalFont physicalFont;
-	String nameAndStyle = name.toLowerCase(Locale.ENGLISH) + style;
-	String fileName = jreFontMap.get(nameAndStyle);
-	if (fileName != null) {
-	    initSGEnv(); /* ensure jreFontDirName is initialised */
-	    fileName = SunGraphicsEnvironment.jreFontDirName +
-		File.separator + fileName;
-	    if (deferredFontFiles.get(fileName) != null) {
-		physicalFont = initialiseDeferredFont(fileName);
-		if (physicalFont != null &&
-		    (physicalFont.getFontName(null).equalsIgnoreCase(name) ||
-		     physicalFont.getFamilyName(null).equalsIgnoreCase(name))
-		    && physicalFont.style == style) {
-		    return physicalFont;
-		}
-	    }
-	}
+        PhysicalFont physicalFont;
+        String nameAndStyle = name.toLowerCase(Locale.ENGLISH) + style;
+        String fileName = jreFontMap.get(nameAndStyle);
+        if (fileName != null) {
+            initSGEnv(); /* ensure jreFontDirName is initialised */
+            fileName = SunGraphicsEnvironment.jreFontDirName +
+                File.separator + fileName;
+            if (deferredFontFiles.get(fileName) != null) {
+                physicalFont = initialiseDeferredFont(fileName);
+                if (physicalFont != null &&
+                    (physicalFont.getFontName(null).equalsIgnoreCase(name) ||
+                     physicalFont.getFamilyName(null).equalsIgnoreCase(name))
+                    && physicalFont.style == style) {
+                    return physicalFont;
+                }
+            }
+        }
 
-	/* Iterate over the deferred font files looking for any in the
-	 * jre directory that we didn't recognise, open each of these.
-	 * In almost all installations this will quickly fall through
-	 * because only the Lucidas will be present and jreOtherFontFiles
-	 * will be empty.
-	 * noOtherJREFontFiles is used so we can skip this block as soon
-	 * as its determined that its not needed - almost always after the
-	 * very first time through.
-	 */
-	if (noOtherJREFontFiles) {
-	    return null;
-	}
-	synchronized (jreLucidaFontFiles) {
-	    if (jreOtherFontFiles == null) {
-		HashSet<String> otherFontFiles = new HashSet<String>();
+        /* Iterate over the deferred font files looking for any in the
+         * jre directory that we didn't recognise, open each of these.
+         * In almost all installations this will quickly fall through
+         * because only the Lucidas will be present and jreOtherFontFiles
+         * will be empty.
+         * noOtherJREFontFiles is used so we can skip this block as soon
+         * as its determined that its not needed - almost always after the
+         * very first time through.
+         */
+        if (noOtherJREFontFiles) {
+            return null;
+        }
+        synchronized (jreLucidaFontFiles) {
+            if (jreOtherFontFiles == null) {
+                HashSet<String> otherFontFiles = new HashSet<String>();
                 for (String deferredFile : deferredFontFiles.keySet()) {
                     File file = new File(deferredFile);
-		    String dir = file.getParent();
-		    String fname = file.getName();
-		    /* skip names which aren't absolute, aren't in the JRE
-		     * directory, or are known Lucida fonts.
-		     */
-		    if (dir == null ||
-			!dir.equals(SunGraphicsEnvironment.jreFontDirName) ||
-		  	jreLucidaFontFiles.contains(fname)) {
-			continue;
-		    }
+                    String dir = file.getParent();
+                    String fname = file.getName();
+                    /* skip names which aren't absolute, aren't in the JRE
+                     * directory, or are known Lucida fonts.
+                     */
+                    if (dir == null ||
+                        !dir.equals(SunGraphicsEnvironment.jreFontDirName) ||
+                        jreLucidaFontFiles.contains(fname)) {
+                        continue;
+                    }
                     otherFontFiles.add(deferredFile);
-		}
-		jreOtherFontFiles = otherFontFiles.toArray(STR_ARRAY);
-		if (jreOtherFontFiles.length == 0) {
-		    noOtherJREFontFiles = true;
-		}
-	    }
+                }
+                jreOtherFontFiles = otherFontFiles.toArray(STR_ARRAY);
+                if (jreOtherFontFiles.length == 0) {
+                    noOtherJREFontFiles = true;
+                }
+            }
 
-	    for (int i=0; i<jreOtherFontFiles.length;i++) {
-		fileName = jreOtherFontFiles[i];
-		if (fileName == null) {
-		    continue;
-		}
-		jreOtherFontFiles[i] = null;
-		physicalFont = initialiseDeferredFont(fileName);
-		if (physicalFont != null &&
-		    (physicalFont.getFontName(null).equalsIgnoreCase(name) ||
-		     physicalFont.getFamilyName(null).equalsIgnoreCase(name))
-		    && physicalFont.style == style) {
-		    return physicalFont;
-		}
-	    }
-	}
+            for (int i=0; i<jreOtherFontFiles.length;i++) {
+                fileName = jreOtherFontFiles[i];
+                if (fileName == null) {
+                    continue;
+                }
+                jreOtherFontFiles[i] = null;
+                physicalFont = initialiseDeferredFont(fileName);
+                if (physicalFont != null &&
+                    (physicalFont.getFontName(null).equalsIgnoreCase(name) ||
+                     physicalFont.getFamilyName(null).equalsIgnoreCase(name))
+                    && physicalFont.style == style) {
+                    return physicalFont;
+                }
+            }
+        }
 
         return null;
     }
@@ -889,168 +889,168 @@ public final class FontManager {
     private static PhysicalFont findOtherDeferredFont(String name, int style) {
         for (String fileName : deferredFontFiles.keySet()) {
             File file = new File(fileName);
-	    String dir = file.getParent();
-	    String fname = file.getName();
-	    if (dir != null &&
-		dir.equals(SunGraphicsEnvironment.jreFontDirName) &&
-		jreLucidaFontFiles.contains(fname)) {
-		continue;
-	    }
+            String dir = file.getParent();
+            String fname = file.getName();
+            if (dir != null &&
+                dir.equals(SunGraphicsEnvironment.jreFontDirName) &&
+                jreLucidaFontFiles.contains(fname)) {
+                continue;
+            }
             PhysicalFont physicalFont = initialiseDeferredFont(fileName);
-	    if (physicalFont != null &&
-		(physicalFont.getFontName(null).equalsIgnoreCase(name) ||
-		physicalFont.getFamilyName(null).equalsIgnoreCase(name)) &&
-		physicalFont.style == style) {
-		return physicalFont;
-	    }
-	}
-	return null;
+            if (physicalFont != null &&
+                (physicalFont.getFontName(null).equalsIgnoreCase(name) ||
+                physicalFont.getFamilyName(null).equalsIgnoreCase(name)) &&
+                physicalFont.style == style) {
+                return physicalFont;
+            }
+        }
+        return null;
     }
 
     private static PhysicalFont findDeferredFont(String name, int style) {
 
-	PhysicalFont physicalFont = findJREDeferredFont(name, style);
+        PhysicalFont physicalFont = findJREDeferredFont(name, style);
         if (physicalFont != null) {
             return physicalFont;
-	} else {	
-	    return findOtherDeferredFont(name, style);
-	}
+        } else {
+            return findOtherDeferredFont(name, style);
+        }
     }
 
     public static void registerDeferredFont(String fileNameKey,
-					    String fullPathName,
-					    String[] nativeNames,
-					    int fontFormat,
-					    boolean useJavaRasterizer,
-					    int fontRank) {
-	FontRegistrationInfo regInfo =
-	    new FontRegistrationInfo(fullPathName, nativeNames, fontFormat,
-				     useJavaRasterizer, fontRank);
-	deferredFontFiles.put(fileNameKey, regInfo);
+                                            String fullPathName,
+                                            String[] nativeNames,
+                                            int fontFormat,
+                                            boolean useJavaRasterizer,
+                                            int fontRank) {
+        FontRegistrationInfo regInfo =
+            new FontRegistrationInfo(fullPathName, nativeNames, fontFormat,
+                                     useJavaRasterizer, fontRank);
+        deferredFontFiles.put(fileNameKey, regInfo);
     }
 
 
     public static synchronized
-	 PhysicalFont initialiseDeferredFont(String fileNameKey) {
+         PhysicalFont initialiseDeferredFont(String fileNameKey) {
 
-	if (fileNameKey == null) {
-	    return null;
-	}
-	if (logging) {
-	    logger.info("Opening deferred font file " + fileNameKey);
-	}
+        if (fileNameKey == null) {
+            return null;
+        }
+        if (logging) {
+            logger.info("Opening deferred font file " + fileNameKey);
+        }
 
-	PhysicalFont physicalFont;
+        PhysicalFont physicalFont;
         FontRegistrationInfo regInfo = deferredFontFiles.get(fileNameKey);
-	if (regInfo != null) {
-	    deferredFontFiles.remove(fileNameKey);
-	    physicalFont = registerFontFile(regInfo.fontFilePath,
-					    regInfo.nativeNames,
-					    regInfo.fontFormat,
-					    regInfo.javaRasterizer,
-					    regInfo.fontRank);
+        if (regInfo != null) {
+            deferredFontFiles.remove(fileNameKey);
+            physicalFont = registerFontFile(regInfo.fontFilePath,
+                                            regInfo.nativeNames,
+                                            regInfo.fontFormat,
+                                            regInfo.javaRasterizer,
+                                            regInfo.fontRank);
 
 
-	    if (physicalFont != null) {
-		/* Store the handle, so that if a font is bad, we
-		 * retrieve the substituted font.
-		 */
-		initialisedFonts.put(fileNameKey, physicalFont.handle);
-	    } else {
-		initialisedFonts.put(fileNameKey,
-				     getDefaultPhysicalFont().handle);
-	    }
-	} else {
+            if (physicalFont != null) {
+                /* Store the handle, so that if a font is bad, we
+                 * retrieve the substituted font.
+                 */
+                initialisedFonts.put(fileNameKey, physicalFont.handle);
+            } else {
+                initialisedFonts.put(fileNameKey,
+                                     getDefaultPhysicalFont().handle);
+            }
+        } else {
             Font2DHandle handle = initialisedFonts.get(fileNameKey);
-	    if (handle == null) {
-		/* Probably shouldn't happen, but just in case */
-		physicalFont = getDefaultPhysicalFont();
-	    } else {
-		physicalFont = (PhysicalFont)(handle.font2D);
-	    }
-	}
-	return physicalFont;
+            if (handle == null) {
+                /* Probably shouldn't happen, but just in case */
+                physicalFont = getDefaultPhysicalFont();
+            } else {
+                physicalFont = (PhysicalFont)(handle.font2D);
+            }
+        }
+        return physicalFont;
     }
-    
+
     /* Note that the return value from this method is not always
      * derived from this file, and may be null. See addToFontList for
      * some explanation of this.
      */
     public static PhysicalFont registerFontFile(String fileName,
-						String[] nativeNames,
-						int fontFormat,
-						boolean useJavaRasterizer,
-						int fontRank) {
+                                                String[] nativeNames,
+                                                int fontFormat,
+                                                boolean useJavaRasterizer,
+                                                int fontRank) {
 
         PhysicalFont regFont = registeredFontFiles.get(fileName);
         if (regFont != null) {
             return regFont;
         }
 
-	PhysicalFont physicalFont = null;
-	try {
-	    String name;
-	    
-	    switch (fontFormat) {
+        PhysicalFont physicalFont = null;
+        try {
+            String name;
 
-	    case FontManager.FONTFORMAT_TRUETYPE:
-		int fn = 0;
-		TrueTypeFont ttf;
-		do {
-		    ttf = new TrueTypeFont(fileName, nativeNames, fn++,
-					   useJavaRasterizer);
-		    PhysicalFont pf = addToFontList(ttf, fontRank);
-		    if (physicalFont == null) {
-			physicalFont = pf;
+            switch (fontFormat) {
+
+            case FontManager.FONTFORMAT_TRUETYPE:
+                int fn = 0;
+                TrueTypeFont ttf;
+                do {
+                    ttf = new TrueTypeFont(fileName, nativeNames, fn++,
+                                           useJavaRasterizer);
+                    PhysicalFont pf = addToFontList(ttf, fontRank);
+                    if (physicalFont == null) {
+                        physicalFont = pf;
                     }
-		}
-		while (fn < ttf.getFontCount());
-		break;
-	
-	    case FontManager.FONTFORMAT_TYPE1:
-		Type1Font t1f = new Type1Font(fileName, nativeNames);
-		physicalFont = addToFontList(t1f, fontRank);
-		break;
+                }
+                while (fn < ttf.getFontCount());
+                break;
 
-	    case FontManager.FONTFORMAT_NATIVE:
-		NativeFont nf = new NativeFont(fileName, false);
-		physicalFont = addToFontList(nf, fontRank);
-	    default:
+            case FontManager.FONTFORMAT_TYPE1:
+                Type1Font t1f = new Type1Font(fileName, nativeNames);
+                physicalFont = addToFontList(t1f, fontRank);
+                break;
 
-	    }
-	    if (logging) {
-		logger.info("Registered file " + fileName + " as font " +
-			    physicalFont + " rank="  + fontRank);
-	    }
-	} catch (FontFormatException ffe) {
-	    if (logging) {
-		logger.warning("Unusable font: " + 
-			       fileName + " " + ffe.toString());
-	    }
-	}
+            case FontManager.FONTFORMAT_NATIVE:
+                NativeFont nf = new NativeFont(fileName, false);
+                physicalFont = addToFontList(nf, fontRank);
+            default:
+
+            }
+            if (logging) {
+                logger.info("Registered file " + fileName + " as font " +
+                            physicalFont + " rank="  + fontRank);
+            }
+        } catch (FontFormatException ffe) {
+            if (logging) {
+                logger.warning("Unusable font: " +
+                               fileName + " " + ffe.toString());
+            }
+        }
         if (physicalFont != null &&
             fontFormat != FontManager.FONTFORMAT_NATIVE) {
             registeredFontFiles.put(fileName, physicalFont);
         }
-	return physicalFont;
+        return physicalFont;
     }
 
     public static void registerFonts(String[] fileNames,
-				     String[][] nativeNames,
-				     int fontCount,
-				     int fontFormat,
-				     boolean useJavaRasterizer,
-				     int fontRank, boolean defer) {
+                                     String[][] nativeNames,
+                                     int fontCount,
+                                     int fontFormat,
+                                     boolean useJavaRasterizer,
+                                     int fontRank, boolean defer) {
 
-	for (int i=0; i < fontCount; i++) {
-	    if (defer) {
-		registerDeferredFont(fileNames[i],fileNames[i], nativeNames[i],
-				     fontFormat, useJavaRasterizer, fontRank);
-	    } else {
-		registerFontFile(fileNames[i], nativeNames[i],
-				 fontFormat, useJavaRasterizer, fontRank);
-	    }
-	}
+        for (int i=0; i < fontCount; i++) {
+            if (defer) {
+                registerDeferredFont(fileNames[i],fileNames[i], nativeNames[i],
+                                     fontFormat, useJavaRasterizer, fontRank);
+            } else {
+                registerFontFile(fileNames[i], nativeNames[i],
+                                 fontFormat, useJavaRasterizer, fontRank);
+            }
+        }
     }
 
     /*
@@ -1060,40 +1060,40 @@ public final class FontManager {
      * the Java platform.
      */
     public static PhysicalFont getDefaultPhysicalFont() {
-	if (defaultPhysicalFont == null) {
-	    /* findFont2D will load all fonts before giving up the search.
-	     * If the JRE Lucida isn't found (eg because the JRE fonts
-	     * directory is missing), it could find another version of Lucida
-	     * from the host system. This is OK because at that point we are
-	     * trying to gracefully handle/recover from a system
-	     * misconfiguration and this is probably a reasonable substitution.
-	     */
-	    defaultPhysicalFont = (PhysicalFont)
-		findFont2D("Lucida Sans Regular", Font.PLAIN, NO_FALLBACK);
-	    if (defaultPhysicalFont == null) {
-		defaultPhysicalFont = (PhysicalFont)
-		    findFont2D("Arial", Font.PLAIN, NO_FALLBACK);
-	    }
-	    if (defaultPhysicalFont == null) {
-		/* Because of the findFont2D call above, if we reach here, we
-		 * know all fonts have already been loaded, just accept any
-		 * match at this point. If this fails we are in real trouble
-		 * and I don't know how to recover from there being absolutely
-		 * no fonts anywhere on the system.
-		 */
-		Iterator i = physicalFonts.values().iterator();
-		if (i.hasNext()) {
-		    defaultPhysicalFont = (PhysicalFont)i.next();
-		} else {
-		    throw new Error("Probable fatal error:No fonts found.");
-		}
-	    }
-	}
-	return defaultPhysicalFont;
+        if (defaultPhysicalFont == null) {
+            /* findFont2D will load all fonts before giving up the search.
+             * If the JRE Lucida isn't found (eg because the JRE fonts
+             * directory is missing), it could find another version of Lucida
+             * from the host system. This is OK because at that point we are
+             * trying to gracefully handle/recover from a system
+             * misconfiguration and this is probably a reasonable substitution.
+             */
+            defaultPhysicalFont = (PhysicalFont)
+                findFont2D("Lucida Sans Regular", Font.PLAIN, NO_FALLBACK);
+            if (defaultPhysicalFont == null) {
+                defaultPhysicalFont = (PhysicalFont)
+                    findFont2D("Arial", Font.PLAIN, NO_FALLBACK);
+            }
+            if (defaultPhysicalFont == null) {
+                /* Because of the findFont2D call above, if we reach here, we
+                 * know all fonts have already been loaded, just accept any
+                 * match at this point. If this fails we are in real trouble
+                 * and I don't know how to recover from there being absolutely
+                 * no fonts anywhere on the system.
+                 */
+                Iterator i = physicalFonts.values().iterator();
+                if (i.hasNext()) {
+                    defaultPhysicalFont = (PhysicalFont)i.next();
+                } else {
+                    throw new Error("Probable fatal error:No fonts found.");
+                }
+            }
+        }
+        return defaultPhysicalFont;
     }
 
     public static CompositeFont getDefaultLogicalFont(int style) {
-	return (CompositeFont)findFont2D("dialog", style, NO_FALLBACK);
+        return (CompositeFont)findFont2D("dialog", style, NO_FALLBACK);
     }
 
     /*
@@ -1101,31 +1101,31 @@ public final class FontManager {
      * This is useful for performance to avoid unnecessary string operations.
      */
     private static String dotStyleStr(int num) {
-	switch(num){
-	  case Font.BOLD:
+        switch(num){
+          case Font.BOLD:
             return ".bold";
-	  case Font.ITALIC:
+          case Font.ITALIC:
             return ".italic";
-	  case Font.ITALIC | Font.BOLD:
+          case Font.ITALIC | Font.BOLD:
             return ".bolditalic";
-	  default:
+          default:
             return ".plain";
-	}
+        }
     }
 
     static void initSGEnv() {
-	if (sgEnv == null) {
-	    GraphicsEnvironment ge =
-		GraphicsEnvironment.getLocalGraphicsEnvironment();
-	    if (ge instanceof HeadlessGraphicsEnvironment) {
-		HeadlessGraphicsEnvironment hgEnv =
-		    (HeadlessGraphicsEnvironment)ge;
-		sgEnv = (SunGraphicsEnvironment)
-		    hgEnv.getSunGraphicsEnvironment();
-	    } else {
-		sgEnv = (SunGraphicsEnvironment)ge;
-	    }
-	}
+        if (sgEnv == null) {
+            GraphicsEnvironment ge =
+                GraphicsEnvironment.getLocalGraphicsEnvironment();
+            if (ge instanceof HeadlessGraphicsEnvironment) {
+                HeadlessGraphicsEnvironment hgEnv =
+                    (HeadlessGraphicsEnvironment)ge;
+                sgEnv = (SunGraphicsEnvironment)
+                    hgEnv.getSunGraphicsEnvironment();
+            } else {
+                sgEnv = (SunGraphicsEnvironment)ge;
+            }
+        }
     }
 
     /* This is implemented only on windows and is called from code that
@@ -1133,11 +1133,11 @@ public final class FontManager {
      * in this file. This very probably should be cleaned up at some point.
      */
     private static native void
-	populateFontFileNameMap(HashMap<String,String> fontToFileMap,
-				HashMap<String,String> fontToFamilyNameMap,
-				HashMap<String,ArrayList<String>>
-				familyToFontListMap,
-				Locale locale);
+        populateFontFileNameMap(HashMap<String,String> fontToFileMap,
+                                HashMap<String,String> fontToFamilyNameMap,
+                                HashMap<String,ArrayList<String>>
+                                familyToFontListMap,
+                                Locale locale);
 
     /* Obtained from Platform APIs (windows only)
      * Map from lower-case font full name to basename of font file.
@@ -1223,39 +1223,39 @@ public final class FontManager {
      */
     private static void resolveWindowsFonts() {
 
-	ArrayList<String> unmappedFontNames = null;
+        ArrayList<String> unmappedFontNames = null;
         for (String font : fontToFamilyNameMap.keySet()) {
-	    String file = fontToFileMap.get(font);
-	    if (file == null) {
-		if (font.indexOf("  ") > 0) {
-		    String newName = font.replaceFirst("  ", " ");
-		    file = fontToFileMap.get(newName);
-		    /* If this name exists and isn't for a valid name
-		     * replace the mapping to the file with this font
-		     */
-		    if (file != null &&
-			!fontToFamilyNameMap.containsKey(newName)) {
-			fontToFileMap.remove(newName);
-			fontToFileMap.put(font, file);
-		    }
-		} else if (font.equals("marlett")) {
-		    fontToFileMap.put(font, "marlett.ttf");
-		} else if (font.equals("david")) {
-		    file = fontToFileMap.get("david regular");
-		    if (file != null) {
-			fontToFileMap.remove("david regular");
-			fontToFileMap.put("david", file);
-		    }
-		} else {
-		    if (unmappedFontNames == null) {
-			unmappedFontNames = new ArrayList<String>();
-		    }
-		    unmappedFontNames.add(font);		    
-		}
-	    }
-	}
+            String file = fontToFileMap.get(font);
+            if (file == null) {
+                if (font.indexOf("  ") > 0) {
+                    String newName = font.replaceFirst("  ", " ");
+                    file = fontToFileMap.get(newName);
+                    /* If this name exists and isn't for a valid name
+                     * replace the mapping to the file with this font
+                     */
+                    if (file != null &&
+                        !fontToFamilyNameMap.containsKey(newName)) {
+                        fontToFileMap.remove(newName);
+                        fontToFileMap.put(font, file);
+                    }
+                } else if (font.equals("marlett")) {
+                    fontToFileMap.put(font, "marlett.ttf");
+                } else if (font.equals("david")) {
+                    file = fontToFileMap.get("david regular");
+                    if (file != null) {
+                        fontToFileMap.remove("david regular");
+                        fontToFileMap.put("david", file);
+                    }
+                } else {
+                    if (unmappedFontNames == null) {
+                        unmappedFontNames = new ArrayList<String>();
+                    }
+                    unmappedFontNames.add(font);
+                }
+            }
+        }
 
-	if (unmappedFontNames != null) {
+        if (unmappedFontNames != null) {
             HashSet<String> unmappedFontFiles = new HashSet<String>();
 
             /* Every font key in fontToFileMap ought to correspond to a
@@ -1329,29 +1329,29 @@ public final class FontManager {
                 resolveFontFiles(unmappedFontFiles, unmappedFontNames);
             }
 
-	    /* remove from the set of names that will be returned to the
+            /* remove from the set of names that will be returned to the
              * user any fonts that can't be mapped to files.
-	     */
-	    if (unmappedFontNames.size() > 0) {
-		int sz = unmappedFontNames.size();
-		for (int i=0; i<sz; i++) {
-		    String name = unmappedFontNames.get(i);
-		    String familyName = fontToFamilyNameMap.get(name);
-		    if (familyName != null) {
-			ArrayList family = familyToFontListMap.get(familyName);
-			if (family != null) {
-			    if (family.size() <= 1) {
-				familyToFontListMap.remove(familyName);	
-			    }
-			}
-		    }
-		    fontToFamilyNameMap.remove(name);
-		    if (logging) {
-			logger.info("No file for font:" + name);
-		    }
-		}
-	    }
-	}
+             */
+            if (unmappedFontNames.size() > 0) {
+                int sz = unmappedFontNames.size();
+                for (int i=0; i<sz; i++) {
+                    String name = unmappedFontNames.get(i);
+                    String familyName = fontToFamilyNameMap.get(name);
+                    if (familyName != null) {
+                        ArrayList family = familyToFontListMap.get(familyName);
+                        if (family != null) {
+                            if (family.size() <= 1) {
+                                familyToFontListMap.remove(familyName);
+                            }
+                        }
+                    }
+                    fontToFamilyNameMap.remove(name);
+                    if (logging) {
+                        logger.info("No file for font:" + name);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1465,69 +1465,69 @@ public final class FontManager {
     }
 
     private static synchronized HashMap<String,String> getFullNameToFileMap() {
-	if (fontToFileMap == null) {
+        if (fontToFileMap == null) {
 
             initSGEnv();
-	    pathDirs = sgEnv.getPlatformFontDirs();
-            
-	    fontToFileMap = new HashMap<String,String>(100);
-	    fontToFamilyNameMap = new HashMap<String,String>(100);
-	    familyToFontListMap = new HashMap<String,ArrayList<String>>(50);
-	    populateFontFileNameMap(fontToFileMap,
-				    fontToFamilyNameMap,
-				    familyToFontListMap,
-				    Locale.ENGLISH);
-	    if (isWindows) {
-		resolveWindowsFonts();
-	    }
-	    if (logging) {
-		logPlatformFontInfo();
-	    }
-	}
+            pathDirs = sgEnv.getPlatformFontDirs();
+
+            fontToFileMap = new HashMap<String,String>(100);
+            fontToFamilyNameMap = new HashMap<String,String>(100);
+            familyToFontListMap = new HashMap<String,ArrayList<String>>(50);
+            populateFontFileNameMap(fontToFileMap,
+                                    fontToFamilyNameMap,
+                                    familyToFontListMap,
+                                    Locale.ENGLISH);
+            if (isWindows) {
+                resolveWindowsFonts();
+            }
+            if (logging) {
+                logPlatformFontInfo();
+            }
+        }
         return fontToFileMap;
     }
 
     private static void logPlatformFontInfo() {
-	for (int i=0; i< pathDirs.length;i++) {
-	    logger.info("fontdir="+pathDirs[i]);
-	}
+        for (int i=0; i< pathDirs.length;i++) {
+            logger.info("fontdir="+pathDirs[i]);
+        }
         for (String keyName : fontToFileMap.keySet()) {
             logger.info("font="+keyName+" file="+ fontToFileMap.get(keyName));
-	}
+        }
         for (String keyName : fontToFamilyNameMap.keySet()) {
             logger.info("font="+keyName+" family="+
                         fontToFamilyNameMap.get(keyName));
-	}
+        }
         for (String keyName : familyToFontListMap.keySet()) {
             logger.info("family="+keyName+ " fonts="+
                         familyToFontListMap.get(keyName));
-	}	
+        }
     }
 
     /* Note this return list excludes logical fonts and JRE fonts */
     public static String[] getFontNamesFromPlatform() {
-	if (getFullNameToFileMap().size() == 0) {
+        if (getFullNameToFileMap().size() == 0) {
             return null;
-	} 
+        }
         checkForUnreferencedFontFiles();
-	/* This odd code with TreeMap is used to preserve a historical
-	 * behaviour wrt the sorting order .. */
-	ArrayList<String> fontNames = new ArrayList<String>();
-	for (ArrayList<String> a : familyToFontListMap.values()) {
-	    for (String s : a) {
-		fontNames.add(s);	
-	    }
-	}
-	return fontNames.toArray(STR_ARRAY);
+        /* This odd code with TreeMap is used to preserve a historical
+         * behaviour wrt the sorting order .. */
+        ArrayList<String> fontNames = new ArrayList<String>();
+        for (ArrayList<String> a : familyToFontListMap.values()) {
+            for (String s : a) {
+                fontNames.add(s);
+            }
+        }
+        return fontNames.toArray(STR_ARRAY);
     }
 
     public static boolean gotFontsFromPlatform() {
-	return getFullNameToFileMap().size() != 0;
+        return getFullNameToFileMap().size() != 0;
     }
 
     public static String getFileNameForFontName(String fontName) {
-	String fontNameLC = fontName.toLowerCase(Locale.ENGLISH);
-	return fontToFileMap.get(fontNameLC);
+        String fontNameLC = fontName.toLowerCase(Locale.ENGLISH);
+        return fontToFileMap.get(fontNameLC);
     }
 
     private static PhysicalFont registerFontFile(String file) {
@@ -1560,45 +1560,45 @@ public final class FontManager {
      * installed fonts.
      */
     public static void registerOtherFontFiles(HashSet registeredFontFiles) {
-	if (getFullNameToFileMap().size() == 0) {
+        if (getFullNameToFileMap().size() == 0) {
             return;
-	}
+        }
         for (String file : fontToFileMap.values()) {
             registerFontFile(file);
         }
     }
 
     public static boolean
-	getFamilyNamesFromPlatform(TreeMap<String,String> familyNames,
-				   Locale requestedLocale) {
-	if (getFullNameToFileMap().size() == 0) {
+        getFamilyNamesFromPlatform(TreeMap<String,String> familyNames,
+                                   Locale requestedLocale) {
+        if (getFullNameToFileMap().size() == 0) {
             return false;
-	}
+        }
         checkForUnreferencedFontFiles();
         for (String name : fontToFamilyNameMap.values()) {
             familyNames.put(name.toLowerCase(requestedLocale), name);
-	}
-	return true;
+        }
+        return true;
     }
 
     /* Path may be absolute or a base file name relative to one of
      * the platform font directories
      */
     private static String getPathName(String s) {
-	File f = new File(s);
-	if (f.isAbsolute()) {
-	    return s;
-	} else if (pathDirs.length==1) {
-	    return pathDirs[0] + File.separator + s;
-	} else {
-	    for (int p=0; p<pathDirs.length; p++) {
-		f = new File(pathDirs[p] + File.separator + s);
-		if (f.exists()) {
-		    return f.getAbsolutePath();
-		}
-	    }
-	}    
-	return s; // shouldn't happen, but harmless
+        File f = new File(s);
+        if (f.isAbsolute()) {
+            return s;
+        } else if (pathDirs.length==1) {
+            return pathDirs[0] + File.separator + s;
+        } else {
+            for (int p=0; p<pathDirs.length; p++) {
+                f = new File(pathDirs[p] + File.separator + s);
+                if (f.exists()) {
+                    return f.getAbsolutePath();
+                }
+            }
+        }
+        return s; // shouldn't happen, but harmless
     }
 
     /* lcName is required to be lower case for use as a key.
@@ -1622,92 +1622,92 @@ public final class FontManager {
      * findFont2D.
      */
     private static Font2D findFontFromPlatform(String lcName, int style) {
-	if (getFullNameToFileMap().size() == 0) {
+        if (getFullNameToFileMap().size() == 0) {
             return null;
-	}
+        }
 
-	ArrayList<String> family = null;
-	String fontFile = null;
-	String familyName = fontToFamilyNameMap.get(lcName);
-	if (familyName != null) {
-	    fontFile = fontToFileMap.get(lcName);
-	    family = familyToFontListMap.get
-		(familyName.toLowerCase(Locale.ENGLISH));
-	} else {
-	    family = familyToFontListMap.get(lcName); // is lcName is a family?
-	    if (family != null && family.size() > 0) {
-		String lcFontName = family.get(0).toLowerCase(Locale.ENGLISH);
-		if (lcFontName != null) {
-		    familyName = fontToFamilyNameMap.get(lcFontName);
-		}
-	    }
-	}
-	if (family == null || familyName == null) {
+        ArrayList<String> family = null;
+        String fontFile = null;
+        String familyName = fontToFamilyNameMap.get(lcName);
+        if (familyName != null) {
+            fontFile = fontToFileMap.get(lcName);
+            family = familyToFontListMap.get
+                (familyName.toLowerCase(Locale.ENGLISH));
+        } else {
+            family = familyToFontListMap.get(lcName); // is lcName is a family?
+            if (family != null && family.size() > 0) {
+                String lcFontName = family.get(0).toLowerCase(Locale.ENGLISH);
+                if (lcFontName != null) {
+                    familyName = fontToFamilyNameMap.get(lcFontName);
+                }
+            }
+        }
+        if (family == null || familyName == null) {
             return null;
-	}
+        }
         String [] fontList = (String[])family.toArray(STR_ARRAY);
-	if (fontList.length == 0) {
+        if (fontList.length == 0) {
             return null;
-	}
+        }
 
-	/* first check that for every font in this family we can find
-	 * a font file. The specific reason for doing this is that
-	 * in at least one case on Windows a font has the face name "David"
-	 * but the registry entry is "David Regular". That is the "unique"
-	 * name of the font but in other cases the registry contains the
-	 * "full" name. See the specifications of name ids 3 and 4 in the
-	 * TrueType 'name' table.
-	 * In general this could cause a problem that we fail to register
-	 * if we all members of a family that we may end up mapping to
-	 * the wrong font member: eg return Bold when Plain is needed.
-	 */
-	for (int f=0;f<fontList.length;f++) {
+        /* first check that for every font in this family we can find
+         * a font file. The specific reason for doing this is that
+         * in at least one case on Windows a font has the face name "David"
+         * but the registry entry is "David Regular". That is the "unique"
+         * name of the font but in other cases the registry contains the
+         * "full" name. See the specifications of name ids 3 and 4 in the
+         * TrueType 'name' table.
+         * In general this could cause a problem that we fail to register
+         * if we all members of a family that we may end up mapping to
+         * the wrong font member: eg return Bold when Plain is needed.
+         */
+        for (int f=0;f<fontList.length;f++) {
             String fontNameLC = fontList[f].toLowerCase(Locale.ENGLISH);
             String fileName = fontToFileMap.get(fontNameLC);
             if (fileName == null) {
-		if (logging) {
+                if (logging) {
                     logger.info("Platform lookup : No file for font " +
-				fontList[f] + " in family " +familyName);
-		}
+                                fontList[f] + " in family " +familyName);
+                }
                 return null;
             }
-	}
+        }
 
-	/* Currently this code only looks for TrueType fonts, so format
-	 * and rank can be specified without looking at the filename.
-	 */
+        /* Currently this code only looks for TrueType fonts, so format
+         * and rank can be specified without looking at the filename.
+         */
         PhysicalFont physicalFont = null;
-	if (fontFile != null) {
+        if (fontFile != null) {
             physicalFont = registerFontFile(getPathName(fontFile), null,
-					    FONTFORMAT_TRUETYPE, false,
-					    Font2D.TTF_RANK);
-	}
-	/* Register all fonts in this family. */
-	for (int f=0;f<fontList.length;f++) {
+                                            FONTFORMAT_TRUETYPE, false,
+                                            Font2D.TTF_RANK);
+        }
+        /* Register all fonts in this family. */
+        for (int f=0;f<fontList.length;f++) {
             String fontNameLC = fontList[f].toLowerCase(Locale.ENGLISH);
             String fileName = fontToFileMap.get(fontNameLC);
-	    if (fontFile != null && fontFile.equals(fileName)) {
-		continue;
-	    }
+            if (fontFile != null && fontFile.equals(fileName)) {
+                continue;
+            }
             /* Currently this code only looks for TrueType fonts, so format
              * and rank can be specified without looking at the filename.
              */
             registerFontFile(getPathName(fileName), null,
                              FONTFORMAT_TRUETYPE, false, Font2D.TTF_RANK);
-	}
+        }
 
         Font2D font = null;
-	FontFamily fontFamily = FontFamily.getFamily(familyName);
-	/* Handle case where request "MyFont Bold", style=Font.ITALIC */
-	if (physicalFont != null) {
+        FontFamily fontFamily = FontFamily.getFamily(familyName);
+        /* Handle case where request "MyFont Bold", style=Font.ITALIC */
+        if (physicalFont != null) {
             style |= physicalFont.style;
-	}
+        }
         if (fontFamily != null) {
             font = fontFamily.getFont(style);
             if (font == null) {
-		font = fontFamily.getClosestStyle(style);
+                font = fontFamily.getClosestStyle(style);
             }
-	}
+        }
         return font;
     }
 
@@ -1722,218 +1722,218 @@ public final class FontManager {
      * may be able to emulate the required style.
      */
     public static Font2D findFont2D(String name, int style, int fallback) {
-	String lowerCaseName = name.toLowerCase(Locale.ENGLISH);
+        String lowerCaseName = name.toLowerCase(Locale.ENGLISH);
         String mapName = lowerCaseName + dotStyleStr(style);
-	Font2D font;
+        Font2D font;
 
-	/* If preferLocaleFonts() or preferProportionalFonts() has been
-	 * called we may be using an alternate set of composite fonts in this
-	 * app context. The presence of a pre-built name map indicates whether
-	 * this is so, and gives access to the alternate composite for the
-	 * name.
-	 */
-	if (usingPerAppContextComposites) {
+        /* If preferLocaleFonts() or preferProportionalFonts() has been
+         * called we may be using an alternate set of composite fonts in this
+         * app context. The presence of a pre-built name map indicates whether
+         * this is so, and gives access to the alternate composite for the
+         * name.
+         */
+        if (usingPerAppContextComposites) {
             ConcurrentHashMap<String, Font2D> altNameCache =
                 (ConcurrentHashMap<String, Font2D>)
                 AppContext.getAppContext().get(CompositeFont.class);
-	    if (altNameCache != null) {
-		font = (Font2D)altNameCache.get(mapName);
-	    } else {
-		font = null;
-	    }
-	} else {
+            if (altNameCache != null) {
+                font = (Font2D)altNameCache.get(mapName);
+            } else {
+                font = null;
+            }
+        } else {
             font = fontNameCache.get(mapName);
-	}
-	if (font != null) {
-	    return font;
-	}
+        }
+        if (font != null) {
+            return font;
+        }
 
-	if (logging) {
-	    logger.info("Search for font: " + name);
-	}
+        if (logging) {
+            logger.info("Search for font: " + name);
+        }
 
         // The check below is just so that the bitmap fonts being set by
         // AWT and Swing thru the desktop properties do not trigger the
         // the load fonts case. The two bitmap fonts are now mapped to
         // appropriate equivalents for serif and sansserif.
-	// Note that the cost of this comparison is only for the first
-	// call until the map is filled.
-	if (isWindows) {
-	    if (lowerCaseName.equals("ms sans serif")) {
-		name = "sansserif";
-	    } else if (lowerCaseName.equals("ms serif")) {
-		name = "serif";
-	    }
-	}
-	
-	/* This isn't intended to support a client passing in the
-	 * string default, but if a client passes in null for the name
-	 * the java.awt.Font class internally substitutes this name.
-	 * So we need to recognise it here to prevent a loadFonts
-	 * on the unrecognised name. The only potential problem with
-	 * this is it would hide any real font called "default"!
-	 * But that seems like a potential problem we can ignore for now.
-	 */
-	if (lowerCaseName.equals("default")) {
-	    name = "dialog";
-	}
-
-	/* First see if its a family name. */
-	FontFamily family = FontFamily.getFamily(name);
-	if (family != null) {
-	    font = family.getFontWithExactStyleMatch(style);
-	    if (font == null) {
-		font = findDeferredFont(name, style);
-	    }
-	    if (font == null) {
-		font = family.getFont(style); 
-	    }
-	    if (font == null) {
-		font = family.getClosestStyle(style);
-	    }
-	    if (font != null) {
-		fontNameCache.put(mapName, font);
-		return font;
-	    }
-	}
-
-	/* If it wasn't a family name, it should be a full name of
-	 * either a composite, or a physical font
-	 */
-        font = fullNameToFont.get(lowerCaseName);
-	if (font != null) {	
-	    /* Check that the requested style matches the matched font's style.
-	     * But also match style automatically if the requested style is
-	     * "plain". This because the existing behaviour is that the fonts
-	     * listed via getAllFonts etc always list their style as PLAIN.
-	     * This does lead to non-commutative behaviours where you might
-	     * start with "Lucida Sans Regular" and ask for a BOLD version
-	     * and get "Lucida Sans DemiBold" but if you ask for the PLAIN
-	     * style of "Lucida Sans DemiBold" you get "Lucida Sans DemiBold".
-	     * This consistent however with what happens if you have a bold
-	     * version of a font and no plain version exists - alg. styling
-	     * doesn't "unbolden" the font.
-	     */
-	    if (font.style == style || style == Font.PLAIN) {
-		fontNameCache.put(mapName, font);
-		return font;
-	    } else {
-		/* If it was a full name like "Lucida Sans Regular", but
-		 * the style requested is "bold", then we want to see if
-		 * there's the appropriate match against another font in
-		 * that family before trying to load all fonts, or applying a
-		 * algorithmic styling
-		 */
-		family = FontFamily.getFamily(font.getFamilyName(null));
-		if (family != null) {
-		    Font2D familyFont = family.getFont(style|font.style);
-		    /* We exactly matched the requested style, use it! */
-		    if (familyFont != null) {
-			fontNameCache.put(mapName, familyFont);	
-			return familyFont;
-		    } else {
-			/* This next call is designed to support the case
-			 * where bold italic is requested, and if we must
-			 * style, then base it on either bold or italic -
-			 * not on plain!
-			 */
-			familyFont = family.getClosestStyle(style|font.style);
-			if (familyFont != null) {
-			    /* The next check is perhaps one
-			     * that shouldn't be done. ie if we get this
-			     * far we have probably as close a match as we
-			     * are going to get. We could load all fonts to
-			     * see if somehow some parts of the family are
-			     * loaded but not all of it.
-			     */
-			    if (familyFont.canDoStyle(style|font.style)) { 
-				fontNameCache.put(mapName, familyFont);	
-				return familyFont;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-	
-	/* If reach here its possible that this is in a client which never
-	 * loaded the GraphicsEnvironment, so we haven't even loaded ANY of
-	 * the fonts from the environment. Do so now and recurse.
-	 */
-	if (sgEnv == null) {
-	    initSGEnv();
-	    return findFont2D(name, style, fallback);
-	}
-
+        // Note that the cost of this comparison is only for the first
+        // call until the map is filled.
         if (isWindows) {
-	    /* Don't want Windows to return a Lucida Sans font from
-	     * C:\Windows\Fonts
-	     */
-	    if (deferredFontFiles.size() > 0) {
-		font = findJREDeferredFont(lowerCaseName, style);
-		if (font != null) {
-		    fontNameCache.put(mapName, font);
-		    return font;
-		}
-	    }
-	    font = findFontFromPlatform(lowerCaseName, style);
-	    if (font != null) {
-		if (logging) {
-		    logger.info("Found font via platform API for request:\"" +
-				name + "\":, style="+style+
-				" found font: " + font);
-		}
-		fontNameCache.put(mapName, font);
-		return font;
-	    }
+            if (lowerCaseName.equals("ms sans serif")) {
+                name = "sansserif";
+            } else if (lowerCaseName.equals("ms serif")) {
+                name = "serif";
+            }
         }
 
-	/* If reach here and no match has been located, then if there are
-	 * uninitialised deferred fonts, load as many of those as needed
-	 * to find the deferred font. If none is found through that
-	 * search continue on.
-	 * There is possibly a minor issue when more than one
-	 * deferred font implements the same font face. Since deferred
-	 * fonts are only those in font configuration files, this is a
-	 * controlled situation, the known case being Solaris euro_fonts
-	 * versions of Arial, Times New Roman, Courier New. However
-	 * the larger font will transparently replace the smaller one
-	 *  - see addToFontList() - when it is needed by the composite font.
-	 */
-	if (deferredFontFiles.size() > 0) {
-	    font = findDeferredFont(name, style);
-	    if (font != null) {
-		fontNameCache.put(mapName, font);
-		return font;
-	    }
-	}
+        /* This isn't intended to support a client passing in the
+         * string default, but if a client passes in null for the name
+         * the java.awt.Font class internally substitutes this name.
+         * So we need to recognise it here to prevent a loadFonts
+         * on the unrecognised name. The only potential problem with
+         * this is it would hide any real font called "default"!
+         * But that seems like a potential problem we can ignore for now.
+         */
+        if (lowerCaseName.equals("default")) {
+            name = "dialog";
+        }
 
-	/* Some apps use deprecated 1.0 names such as helvetica and courier. On
-	 * Solaris these are Type1 fonts in /usr/openwin/lib/X11/fonts/Type1.
-	 * If running on Solaris will register all the fonts in this
-	 * directory.
-	 * May as well register the whole directory without actually testing
-	 * the font name is one of the deprecated names as the next step would
-	 * load all fonts which are in this directory anyway.
-	 * In the event that this lookup is successful it potentially "hides"
-	 * TrueType versions of such fonts that are elsewhere but since they
-	 * do not exist on Solaris this is not a problem.
-	 * Set a flag to indicate we've done this registration to avoid
-	 * repetition and more seriously, to avoid recursion.
-	 */
-	if (isSolaris&&!loaded1dot0Fonts) {
-	    /* "timesroman" is a special case since that's not the
-	     * name of any known font on Solaris or elsewhere.
-	     */
-	    if (lowerCaseName.equals("timesroman")) {
-		font = findFont2D("serif", style, fallback);
-		fontNameCache.put(mapName, font);
-	    }
-	    sgEnv.register1dot0Fonts();
-	    loaded1dot0Fonts = true;
-	    Font2D ff = findFont2D(name, style, fallback);
-	    return ff;
-	}
+        /* First see if its a family name. */
+        FontFamily family = FontFamily.getFamily(name);
+        if (family != null) {
+            font = family.getFontWithExactStyleMatch(style);
+            if (font == null) {
+                font = findDeferredFont(name, style);
+            }
+            if (font == null) {
+                font = family.getFont(style);
+            }
+            if (font == null) {
+                font = family.getClosestStyle(style);
+            }
+            if (font != null) {
+                fontNameCache.put(mapName, font);
+                return font;
+            }
+        }
+
+        /* If it wasn't a family name, it should be a full name of
+         * either a composite, or a physical font
+         */
+        font = fullNameToFont.get(lowerCaseName);
+        if (font != null) {
+            /* Check that the requested style matches the matched font's style.
+             * But also match style automatically if the requested style is
+             * "plain". This because the existing behaviour is that the fonts
+             * listed via getAllFonts etc always list their style as PLAIN.
+             * This does lead to non-commutative behaviours where you might
+             * start with "Lucida Sans Regular" and ask for a BOLD version
+             * and get "Lucida Sans DemiBold" but if you ask for the PLAIN
+             * style of "Lucida Sans DemiBold" you get "Lucida Sans DemiBold".
+             * This consistent however with what happens if you have a bold
+             * version of a font and no plain version exists - alg. styling
+             * doesn't "unbolden" the font.
+             */
+            if (font.style == style || style == Font.PLAIN) {
+                fontNameCache.put(mapName, font);
+                return font;
+            } else {
+                /* If it was a full name like "Lucida Sans Regular", but
+                 * the style requested is "bold", then we want to see if
+                 * there's the appropriate match against another font in
+                 * that family before trying to load all fonts, or applying a
+                 * algorithmic styling
+                 */
+                family = FontFamily.getFamily(font.getFamilyName(null));
+                if (family != null) {
+                    Font2D familyFont = family.getFont(style|font.style);
+                    /* We exactly matched the requested style, use it! */
+                    if (familyFont != null) {
+                        fontNameCache.put(mapName, familyFont);
+                        return familyFont;
+                    } else {
+                        /* This next call is designed to support the case
+                         * where bold italic is requested, and if we must
+                         * style, then base it on either bold or italic -
+                         * not on plain!
+                         */
+                        familyFont = family.getClosestStyle(style|font.style);
+                        if (familyFont != null) {
+                            /* The next check is perhaps one
+                             * that shouldn't be done. ie if we get this
+                             * far we have probably as close a match as we
+                             * are going to get. We could load all fonts to
+                             * see if somehow some parts of the family are
+                             * loaded but not all of it.
+                             */
+                            if (familyFont.canDoStyle(style|font.style)) {
+                                fontNameCache.put(mapName, familyFont);
+                                return familyFont;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /* If reach here its possible that this is in a client which never
+         * loaded the GraphicsEnvironment, so we haven't even loaded ANY of
+         * the fonts from the environment. Do so now and recurse.
+         */
+        if (sgEnv == null) {
+            initSGEnv();
+            return findFont2D(name, style, fallback);
+        }
+
+        if (isWindows) {
+            /* Don't want Windows to return a Lucida Sans font from
+             * C:\Windows\Fonts
+             */
+            if (deferredFontFiles.size() > 0) {
+                font = findJREDeferredFont(lowerCaseName, style);
+                if (font != null) {
+                    fontNameCache.put(mapName, font);
+                    return font;
+                }
+            }
+            font = findFontFromPlatform(lowerCaseName, style);
+            if (font != null) {
+                if (logging) {
+                    logger.info("Found font via platform API for request:\"" +
+                                name + "\":, style="+style+
+                                " found font: " + font);
+                }
+                fontNameCache.put(mapName, font);
+                return font;
+            }
+        }
+
+        /* If reach here and no match has been located, then if there are
+         * uninitialised deferred fonts, load as many of those as needed
+         * to find the deferred font. If none is found through that
+         * search continue on.
+         * There is possibly a minor issue when more than one
+         * deferred font implements the same font face. Since deferred
+         * fonts are only those in font configuration files, this is a
+         * controlled situation, the known case being Solaris euro_fonts
+         * versions of Arial, Times New Roman, Courier New. However
+         * the larger font will transparently replace the smaller one
+         *  - see addToFontList() - when it is needed by the composite font.
+         */
+        if (deferredFontFiles.size() > 0) {
+            font = findDeferredFont(name, style);
+            if (font != null) {
+                fontNameCache.put(mapName, font);
+                return font;
+            }
+        }
+
+        /* Some apps use deprecated 1.0 names such as helvetica and courier. On
+         * Solaris these are Type1 fonts in /usr/openwin/lib/X11/fonts/Type1.
+         * If running on Solaris will register all the fonts in this
+         * directory.
+         * May as well register the whole directory without actually testing
+         * the font name is one of the deprecated names as the next step would
+         * load all fonts which are in this directory anyway.
+         * In the event that this lookup is successful it potentially "hides"
+         * TrueType versions of such fonts that are elsewhere but since they
+         * do not exist on Solaris this is not a problem.
+         * Set a flag to indicate we've done this registration to avoid
+         * repetition and more seriously, to avoid recursion.
+         */
+        if (isSolaris&&!loaded1dot0Fonts) {
+            /* "timesroman" is a special case since that's not the
+             * name of any known font on Solaris or elsewhere.
+             */
+            if (lowerCaseName.equals("timesroman")) {
+                font = findFont2D("serif", style, fallback);
+                fontNameCache.put(mapName, font);
+            }
+            sgEnv.register1dot0Fonts();
+            loaded1dot0Fonts = true;
+            Font2D ff = findFont2D(name, style, fallback);
+            return ff;
+        }
 
         /* We check for application registered fonts before
          * explicitly loading all fonts as if necessary the registration
@@ -1964,14 +1964,14 @@ public final class FontManager {
             if (family != null) {
                 font = family.getFontWithExactStyleMatch(style);
                 if (font == null) {
-                    font = family.getFont(style); 
+                    font = family.getFont(style);
                 }
                 if (font == null) {
                     font = family.getClosestStyle(style);
                 }
                 if (font != null) {
                     if (fontsAreRegistered) {
-                        fontNameCache.put(mapName, font); 
+                        fontNameCache.put(mapName, font);
                     }
                     return font;
                 }
@@ -1979,94 +1979,94 @@ public final class FontManager {
             font = nameTable.get(lowerCaseName);
             if (font != null) {
                 if (fontsAreRegistered) {
-                    fontNameCache.put(mapName, font); 
+                    fontNameCache.put(mapName, font);
                 }
                 return font;
             }
         }
 
-	/* If reach here and no match has been located, then if all fonts
-	 * are not yet loaded, do so, and then recurse.
-	 */
-	if (!loadedAllFonts) {
-	    if (logging) {
-		logger.info("Load fonts looking for:" + name);
-	    }
-	    sgEnv.loadFonts();
-	    loadedAllFonts = true;
-	    return findFont2D(name, style, fallback);
-	}
+        /* If reach here and no match has been located, then if all fonts
+         * are not yet loaded, do so, and then recurse.
+         */
+        if (!loadedAllFonts) {
+            if (logging) {
+                logger.info("Load fonts looking for:" + name);
+            }
+            sgEnv.loadFonts();
+            loadedAllFonts = true;
+            return findFont2D(name, style, fallback);
+        }
 
-	if (!loadedAllFontFiles) {
-	    if (logging) {
-		logger.info("Load font files looking for:" + name);
-	    }
-	    sgEnv.loadFontFiles();
-	    loadedAllFontFiles = true;
-	    return findFont2D(name, style, fallback);
-	}
+        if (!loadedAllFontFiles) {
+            if (logging) {
+                logger.info("Load font files looking for:" + name);
+            }
+            sgEnv.loadFontFiles();
+            loadedAllFontFiles = true;
+            return findFont2D(name, style, fallback);
+        }
 
-	/* The primary name is the locale default - ie not US/English but
-	 * whatever is the default in this locale. This is the way it always
-	 * has been but may be surprising to some developers if "Arial Regular"
-	 * were hard-coded in their app and yet "Arial Regular" was not the
-	 * default name. Fortunately for them, as a consequence of the JDK
-	 * supporting returning names and family names for arbitrary locales,
-	 * we also need to support searching all localised names for a match.
-	 * But because this case of the name used to reference a font is not
-	 * the same as the default for this locale is rare, it makes sense to
-	 * search a much shorter list of default locale names and only go to
-	 * a longer list of names in the event that no match was found.
-	 * So add here code which searches localised names too.
-	 * As in 1.4.x this happens only after loading all fonts, which
-	 * is probably the right order.
-	 */
-	if ((font = findFont2DAllLocales(name, style)) != null) {
-	    fontNameCache.put(mapName, font);
-	    return font;
-	}
+        /* The primary name is the locale default - ie not US/English but
+         * whatever is the default in this locale. This is the way it always
+         * has been but may be surprising to some developers if "Arial Regular"
+         * were hard-coded in their app and yet "Arial Regular" was not the
+         * default name. Fortunately for them, as a consequence of the JDK
+         * supporting returning names and family names for arbitrary locales,
+         * we also need to support searching all localised names for a match.
+         * But because this case of the name used to reference a font is not
+         * the same as the default for this locale is rare, it makes sense to
+         * search a much shorter list of default locale names and only go to
+         * a longer list of names in the event that no match was found.
+         * So add here code which searches localised names too.
+         * As in 1.4.x this happens only after loading all fonts, which
+         * is probably the right order.
+         */
+        if ((font = findFont2DAllLocales(name, style)) != null) {
+            fontNameCache.put(mapName, font);
+            return font;
+        }
 
-	/* Perhaps its a "compatibility" name - timesroman, helvetica,
-	 * or courier, which 1.0 apps used for logical fonts.
-	 * We look for these "late" after a loadFonts as we must not
-	 * hide real fonts of these names.
-	 * Map these appropriately:
-	 * On windows this means according to the rules specified by the
-	 * FontConfiguration : do it only for encoding==Cp1252
-	 *
-	 * REMIND: this is something we plan to remove.
-	 */
-	if (isWindows) {
-	    String compatName =
-		sgEnv.getFontConfiguration().getFallbackFamilyName(name, null);
-	    if (compatName != null) {
-		font = findFont2D(compatName, style, fallback);
-		fontNameCache.put(mapName, font);
-		return font;
-	    }
-	} else if (lowerCaseName.equals("timesroman")) {
-	    font = findFont2D("serif", style, fallback);
-	    fontNameCache.put(mapName, font);
-	    return font;
-	} else if (lowerCaseName.equals("helvetica")) {
-	    font = findFont2D("sansserif", style, fallback);
-	    fontNameCache.put(mapName, font);
-	    return font;
-	} else if (lowerCaseName.equals("courier")) {
-	    font = findFont2D("monospaced", style, fallback);
-	    fontNameCache.put(mapName, font);
-	    return font;
-	}
+        /* Perhaps its a "compatibility" name - timesroman, helvetica,
+         * or courier, which 1.0 apps used for logical fonts.
+         * We look for these "late" after a loadFonts as we must not
+         * hide real fonts of these names.
+         * Map these appropriately:
+         * On windows this means according to the rules specified by the
+         * FontConfiguration : do it only for encoding==Cp1252
+         *
+         * REMIND: this is something we plan to remove.
+         */
+        if (isWindows) {
+            String compatName =
+                sgEnv.getFontConfiguration().getFallbackFamilyName(name, null);
+            if (compatName != null) {
+                font = findFont2D(compatName, style, fallback);
+                fontNameCache.put(mapName, font);
+                return font;
+            }
+        } else if (lowerCaseName.equals("timesroman")) {
+            font = findFont2D("serif", style, fallback);
+            fontNameCache.put(mapName, font);
+            return font;
+        } else if (lowerCaseName.equals("helvetica")) {
+            font = findFont2D("sansserif", style, fallback);
+            fontNameCache.put(mapName, font);
+            return font;
+        } else if (lowerCaseName.equals("courier")) {
+            font = findFont2D("monospaced", style, fallback);
+            fontNameCache.put(mapName, font);
+            return font;
+        }
 
-	if (logging) {
-	    logger.info("No font found for:" + name);
-	}
+        if (logging) {
+            logger.info("No font found for:" + name);
+        }
 
-	switch (fallback) {
-	case PHYSICAL_FALLBACK: return getDefaultPhysicalFont();
-	case LOGICAL_FALLBACK: return getDefaultLogicalFont(style);
-	default: return null;
-	}
+        switch (fallback) {
+        case PHYSICAL_FALLBACK: return getDefaultPhysicalFont();
+        case LOGICAL_FALLBACK: return getDefaultLogicalFont(style);
+        default: return null;
+        }
     }
 
     /* This method can be more efficient as it will only need to
@@ -2086,7 +2086,7 @@ public final class FontManager {
     public static boolean usePlatformFontMetrics() {
         return usePlatformFontMetrics;
     }
-    
+
     static native boolean getPlatformFontVar();
 
     private static final short US_LCID = 0x0409;  // US English - default
@@ -2095,16 +2095,16 @@ public final class FontManager {
     // Return a Microsoft LCID from the given Locale.
     // Used when getting localized font data.
 
-    public static short getLCIDFromLocale(Locale locale) {    
+    public static short getLCIDFromLocale(Locale locale) {
         // optimize for common case
         if (locale.equals(Locale.US)) {
             return US_LCID;
         }
-            
+
         if (lcidMap == null) {
             createLCIDMap();
         }
-    
+
         String key = locale.toString();
         while (!"".equals(key)) {
             Short lcidObject = (Short) lcidMap.get(key);
@@ -2117,11 +2117,11 @@ public final class FontManager {
             }
             key = key.substring(0, pos);
         }
-        
+
         return US_LCID;
     }
 
-        
+
     private static void addLCIDMapEntry(Map<String, Short> map,
                                         String key, short value) {
         map.put(key, new Short(value));
@@ -2131,9 +2131,9 @@ public final class FontManager {
         if (lcidMap != null) {
             return;
         }
-        
+
         Map<String, Short> map = new HashMap<String, Short>(200);
-        
+
         // the following statements are derived from the langIDMap
         // in src/windows/native/java/lang/java_props_md.c using the following
         // awk script:
@@ -2311,16 +2311,16 @@ public final class FontManager {
         addLCIDMapEntry(map, "es_HN", (short) 0x480a);
         addLCIDMapEntry(map, "es_NI", (short) 0x4c0a);
         addLCIDMapEntry(map, "es_PR", (short) 0x500a);
-        
+
         lcidMap = map;
     }
 
     public static int getNumFonts() {
-	return physicalFonts.size()+maxCompFont;
+        return physicalFonts.size()+maxCompFont;
     }
 
     private static boolean fontSupportsEncoding(Font font, String encoding) {
-	return getFont2D(font).supportsEncoding(encoding);
+        return getFont2D(font).supportsEncoding(encoding);
     }
 
     public synchronized static native String getFontPath(boolean noType1Fonts);
@@ -2331,110 +2331,110 @@ public final class FontManager {
     static Vector<File> tmpFontFiles = null;
 
     public static Font2D createFont2D(File fontFile, int fontFormat,
-                                      boolean isCopy) 
-	throws FontFormatException {
+                                      boolean isCopy)
+        throws FontFormatException {
 
-	String fontFilePath = fontFile.getPath();
-	FileFont font2D = null;
-	final File fFile = fontFile;
-	try {
-	    switch (fontFormat) {
-	    case Font.TRUETYPE_FONT: 
-		font2D = new TrueTypeFont(fontFilePath, null, 0, true);
-		break;
-	    case Font.TYPE1_FONT:
-		font2D = new Type1Font(fontFilePath, null);
-		break;
-	    default:
-		throw new FontFormatException("Unrecognised Font Format");
-	    }
-	} catch (FontFormatException e) {
-            if (isCopy) {
-	        java.security.AccessController.doPrivileged(
-	             new java.security.PrivilegedAction() {
-	                  public Object run() {
-			      fFile.delete();
-			      return null;
-		          }
-	        });
+        String fontFilePath = fontFile.getPath();
+        FileFont font2D = null;
+        final File fFile = fontFile;
+        try {
+            switch (fontFormat) {
+            case Font.TRUETYPE_FONT:
+                font2D = new TrueTypeFont(fontFilePath, null, 0, true);
+                break;
+            case Font.TYPE1_FONT:
+                font2D = new Type1Font(fontFilePath, null);
+                break;
+            default:
+                throw new FontFormatException("Unrecognised Font Format");
             }
-	    throw(e);
-	}
+        } catch (FontFormatException e) {
+            if (isCopy) {
+                java.security.AccessController.doPrivileged(
+                     new java.security.PrivilegedAction() {
+                          public Object run() {
+                              fFile.delete();
+                              return null;
+                          }
+                });
+            }
+            throw(e);
+        }
         if (isCopy) {
-	    font2D.setFileToRemove(fontFile);
-	    synchronized (FontManager.class) {
+            font2D.setFileToRemove(fontFile);
+            synchronized (FontManager.class) {
 
-		if (tmpFontFiles == null) {
-		    tmpFontFiles = new Vector<File>();
-		}
-		tmpFontFiles.add(fontFile);
+                if (tmpFontFiles == null) {
+                    tmpFontFiles = new Vector<File>();
+                }
+                tmpFontFiles.add(fontFile);
 
-		if (fileCloser == null) {
-		    final Runnable fileCloserRunnable = new Runnable() {
-		      public void run() {
-		         java.security.AccessController.doPrivileged(
-		         new java.security.PrivilegedAction() {
-	                 public Object run() {
+                if (fileCloser == null) {
+                    final Runnable fileCloserRunnable = new Runnable() {
+                      public void run() {
+                         java.security.AccessController.doPrivileged(
+                         new java.security.PrivilegedAction() {
+                         public Object run() {
 
-			    for (int i=0;i<CHANNELPOOLSIZE;i++) {
-				if (fontFileCache[i] != null) {
-				    try {
-					fontFileCache[i].close();
-				    } catch (Exception e) {
-				    }
-				}
-			    }
-			    if (tmpFontFiles != null) {
-				File[] files = new File[tmpFontFiles.size()];
-				files = tmpFontFiles.toArray(files);
-				for (int f=0; f<files.length;f++) {
-				    try {
-					files[f].delete();
-				    } catch (Exception e) {
-				    }
-				}
-			    }
+                            for (int i=0;i<CHANNELPOOLSIZE;i++) {
+                                if (fontFileCache[i] != null) {
+                                    try {
+                                        fontFileCache[i].close();
+                                    } catch (Exception e) {
+                                    }
+                                }
+                            }
+                            if (tmpFontFiles != null) {
+                                File[] files = new File[tmpFontFiles.size()];
+                                files = tmpFontFiles.toArray(files);
+                                for (int f=0; f<files.length;f++) {
+                                    try {
+                                        files[f].delete();
+                                    } catch (Exception e) {
+                                    }
+                                }
+                            }
 
-			    return null;
-			  }
+                            return null;
+                          }
 
-			  });
-		      }
-		    };
-		    java.security.AccessController.doPrivileged(
-		       new java.security.PrivilegedAction() {
-	                  public Object run() {
-			      /* The thread must be a member of a thread group
-			       * which will not get GCed before VM exit.
-			       * Make its parent the top-level thread group.
-			       */
-			      ThreadGroup tg =
-				  Thread.currentThread().getThreadGroup();
-			      for (ThreadGroup tgn = tg;
-				   tgn != null;
-				   tg = tgn, tgn = tg.getParent());
-			      fileCloser = new Thread(tg, fileCloserRunnable);
-		              Runtime.getRuntime().addShutdownHook(fileCloser);
-		              return null;
-		          }
-		    });
-		}
-	    }
-	}
-	return font2D;
+                          });
+                      }
+                    };
+                    java.security.AccessController.doPrivileged(
+                       new java.security.PrivilegedAction() {
+                          public Object run() {
+                              /* The thread must be a member of a thread group
+                               * which will not get GCed before VM exit.
+                               * Make its parent the top-level thread group.
+                               */
+                              ThreadGroup tg =
+                                  Thread.currentThread().getThreadGroup();
+                              for (ThreadGroup tgn = tg;
+                                   tgn != null;
+                                   tg = tgn, tgn = tg.getParent());
+                              fileCloser = new Thread(tg, fileCloserRunnable);
+                              Runtime.getRuntime().addShutdownHook(fileCloser);
+                              return null;
+                          }
+                    });
+                }
+            }
+        }
+        return font2D;
     }
 
     /* remind: used in X11GraphicsEnvironment and called often enough
      * that we ought to obsolete this code
      */
     public synchronized static String getFullNameByFileName(String fileName) {
-	PhysicalFont[] physFonts = getPhysicalFonts();
-	for (int i=0;i<physFonts.length;i++) {
-	    if (physFonts[i].platName.equals(fileName)) {
-		return (physFonts[i].getFontName(null));
-	    }
-	}
-	return null;
+        PhysicalFont[] physFonts = getPhysicalFonts();
+        for (int i=0;i<physFonts.length;i++) {
+            if (physFonts[i].platName.equals(fileName)) {
+                return (physFonts[i].getFontName(null));
+            }
+        }
+        return null;
     }
 
     /*
@@ -2450,15 +2450,15 @@ public final class FontManager {
      * make sense for a Composite to be "bad".
      */
     public static synchronized void deRegisterBadFont(Font2D font2D) {
-	if (!(font2D instanceof PhysicalFont)) {
-	    /* We should never reach here, but just in case */
-	    return;
-	} else {
-	    if (logging) {
-		logger.severe("Deregister bad font: " + font2D);
-	    }
-	    replaceFont((PhysicalFont)font2D, getDefaultPhysicalFont());
-	}
+        if (!(font2D instanceof PhysicalFont)) {
+            /* We should never reach here, but just in case */
+            return;
+        } else {
+            if (logging) {
+                logger.severe("Deregister bad font: " + font2D);
+            }
+            replaceFont((PhysicalFont)font2D, getDefaultPhysicalFont());
+        }
     }
 
     /*
@@ -2466,12 +2466,12 @@ public final class FontManager {
      * Font2D is replaced by a different Font2D.
      */
     public static synchronized void replaceFont(PhysicalFont oldFont,
-						PhysicalFont newFont) {
+                                                PhysicalFont newFont) {
 
-	if (oldFont.handle.font2D != oldFont) {
-	    /* already done */
-	    return;
-	}
+        if (oldFont.handle.font2D != oldFont) {
+            /* already done */
+            return;
+        }
 
         /* If we try to replace the font with itself, that won't work,
          * so pick any alternative physical font
@@ -2495,91 +2495,91 @@ public final class FontManager {
             }
         }
 
-	/* eliminate references to this font, so it won't be located
-	 * by future callers, and will be eligible for GC when all
-	 * references are removed
-	 */
-	oldFont.handle.font2D = newFont;
-	physicalFonts.remove(oldFont.fullName);
-	fullNameToFont.remove(oldFont.fullName.toLowerCase(Locale.ENGLISH));
-	FontFamily.remove(oldFont);
+        /* eliminate references to this font, so it won't be located
+         * by future callers, and will be eligible for GC when all
+         * references are removed
+         */
+        oldFont.handle.font2D = newFont;
+        physicalFonts.remove(oldFont.fullName);
+        fullNameToFont.remove(oldFont.fullName.toLowerCase(Locale.ENGLISH));
+        FontFamily.remove(oldFont);
 
-	if (localeFullNamesToFont != null) {
-	    Map.Entry[] mapEntries =
-		(Map.Entry[])localeFullNamesToFont.entrySet().
-		toArray(new Map.Entry[0]);
-	    /* Should I be replacing these, or just I just remove
-	     * the names from the map?
-	     */
-	    for (int i=0; i<mapEntries.length;i++) {
-		if (mapEntries[i].getValue() == oldFont) {
-		    try {
-			mapEntries[i].setValue(newFont);
-		    } catch (Exception e) {
-			/* some maps don't support this operation.
-			 * In this case just give up and remove the entry.
-			 */
-			localeFullNamesToFont.remove(mapEntries[i].getKey());
-		    }
-		}
-	    }
-	}
+        if (localeFullNamesToFont != null) {
+            Map.Entry[] mapEntries =
+                (Map.Entry[])localeFullNamesToFont.entrySet().
+                toArray(new Map.Entry[0]);
+            /* Should I be replacing these, or just I just remove
+             * the names from the map?
+             */
+            for (int i=0; i<mapEntries.length;i++) {
+                if (mapEntries[i].getValue() == oldFont) {
+                    try {
+                        mapEntries[i].setValue(newFont);
+                    } catch (Exception e) {
+                        /* some maps don't support this operation.
+                         * In this case just give up and remove the entry.
+                         */
+                        localeFullNamesToFont.remove(mapEntries[i].getKey());
+                    }
+                }
+            }
+        }
 
-	for (int i=0; i<maxCompFont; i++) {
-	    /* Deferred initialization of composites shouldn't be
-	     * a problem for this case, since a font must have been
-	     * initialised to be discovered to be bad.
-	     * Some JRE composites on Solaris use two versions of the same
-	     * font. The replaced font isn't bad, just "smaller" so there's
-	     * no need to make the slot point to the new font.
-	     * Since composites have a direct reference to the Font2D (not
-	     * via a handle) making this substitution is not safe and could
-	     * cause an additional problem and so this substitution is
-	     * warranted only when a font is truly "bad" and could cause
-	     * a crash. So we now replace it only if its being substituted
-	     * with some font other than a fontconfig rank font
-	     * Since in practice a substitution will have the same rank
-	     * this may never happen, but the code is safer even if its
-	     * also now a no-op.
-	     * The only obvious "glitch" from this stems from the current
-	     * implementation that when asked for the number of glyphs in a
-	     * composite it lies and returns the number in slot 0 because
-	     * composite glyphs aren't contiguous. Since we live with that
-	     * we can live with the glitch that depending on how it was
-	     * initialised a composite may return different values for this.
-	     * Fixing the issues with composite glyph ids is tricky as
-	     * there are exclusion ranges and unlike other fonts even the
-	     * true "numGlyphs" isn't a contiguous range. Likely the only
-	     * solution is an API that returns an array of glyph ranges
-	     * which takes precedence over the existing API. That might
-	     * also need to address excluding ranges which represent a
-	     * code point supported by an earlier component. 
-	     */
-	    if (newFont.getRank() > Font2D.FONT_CONFIG_RANK) {
-		compFonts[i].replaceComponentFont(oldFont, newFont);
-	    }
-	}
+        for (int i=0; i<maxCompFont; i++) {
+            /* Deferred initialization of composites shouldn't be
+             * a problem for this case, since a font must have been
+             * initialised to be discovered to be bad.
+             * Some JRE composites on Solaris use two versions of the same
+             * font. The replaced font isn't bad, just "smaller" so there's
+             * no need to make the slot point to the new font.
+             * Since composites have a direct reference to the Font2D (not
+             * via a handle) making this substitution is not safe and could
+             * cause an additional problem and so this substitution is
+             * warranted only when a font is truly "bad" and could cause
+             * a crash. So we now replace it only if its being substituted
+             * with some font other than a fontconfig rank font
+             * Since in practice a substitution will have the same rank
+             * this may never happen, but the code is safer even if its
+             * also now a no-op.
+             * The only obvious "glitch" from this stems from the current
+             * implementation that when asked for the number of glyphs in a
+             * composite it lies and returns the number in slot 0 because
+             * composite glyphs aren't contiguous. Since we live with that
+             * we can live with the glitch that depending on how it was
+             * initialised a composite may return different values for this.
+             * Fixing the issues with composite glyph ids is tricky as
+             * there are exclusion ranges and unlike other fonts even the
+             * true "numGlyphs" isn't a contiguous range. Likely the only
+             * solution is an API that returns an array of glyph ranges
+             * which takes precedence over the existing API. That might
+             * also need to address excluding ranges which represent a
+             * code point supported by an earlier component.
+             */
+            if (newFont.getRank() > Font2D.FONT_CONFIG_RANK) {
+                compFonts[i].replaceComponentFont(oldFont, newFont);
+            }
+        }
     }
 
     private static synchronized void loadLocaleNames() {
-	if (localeFullNamesToFont != null) {
-	    return;
-	}
+        if (localeFullNamesToFont != null) {
+            return;
+        }
         localeFullNamesToFont = new HashMap<String, TrueTypeFont>();
-	Font2D[] fonts = getRegisteredFonts();
-	for (int i=0; i<fonts.length; i++) {
-	    if (fonts[i] instanceof TrueTypeFont) {
-		TrueTypeFont ttf = (TrueTypeFont)fonts[i];
-		String[] fullNames = ttf.getAllFullNames();
-		for (int n=0; n<fullNames.length; n++) {
-		    localeFullNamesToFont.put(fullNames[n], ttf);
-		}
-		FontFamily family = FontFamily.getFamily(ttf.familyName);
-		if (family != null) {
-		    FontFamily.addLocaleNames(family, ttf.getAllFamilyNames());
-		}
-	    }
-	}
+        Font2D[] fonts = getRegisteredFonts();
+        for (int i=0; i<fonts.length; i++) {
+            if (fonts[i] instanceof TrueTypeFont) {
+                TrueTypeFont ttf = (TrueTypeFont)fonts[i];
+                String[] fullNames = ttf.getAllFullNames();
+                for (int n=0; n<fullNames.length; n++) {
+                    localeFullNamesToFont.put(fullNames[n], ttf);
+                }
+                FontFamily family = FontFamily.getFamily(ttf.familyName);
+                if (family != null) {
+                    FontFamily.addLocaleNames(family, ttf.getAllFamilyNames());
+                }
+            }
+        }
     }
 
     /* This replicate the core logic of findFont2D but operates on
@@ -2591,67 +2591,67 @@ public final class FontManager {
      */
     private static Font2D findFont2DAllLocales(String name, int style) {
 
-	if (logging) {
-	    logger.info("Searching localised font names for:" + name);
-	}
+        if (logging) {
+            logger.info("Searching localised font names for:" + name);
+        }
 
-	/* If reach here and no match has been located, then if we have
-	 * not yet built the map of localeFullNamesToFont for TT fonts, do so
-	 * now. This method must be called after all fonts have been loaded.
-	 */
-	if (localeFullNamesToFont == null) {
-	    loadLocaleNames();
-	}
-	String lowerCaseName = name.toLowerCase();
-	Font2D font = null;
+        /* If reach here and no match has been located, then if we have
+         * not yet built the map of localeFullNamesToFont for TT fonts, do so
+         * now. This method must be called after all fonts have been loaded.
+         */
+        if (localeFullNamesToFont == null) {
+            loadLocaleNames();
+        }
+        String lowerCaseName = name.toLowerCase();
+        Font2D font = null;
 
-	/* First see if its a family name. */
-	FontFamily family = FontFamily.getLocaleFamily(lowerCaseName);
-	if (family != null) {
-	  font = family.getFont(style);
-	  if (font == null) {
-	    font = family.getClosestStyle(style);
-	  }
-	  if (font != null) {
-	      return font;
-	  }
-	}
+        /* First see if its a family name. */
+        FontFamily family = FontFamily.getLocaleFamily(lowerCaseName);
+        if (family != null) {
+          font = family.getFont(style);
+          if (font == null) {
+            font = family.getClosestStyle(style);
+          }
+          if (font != null) {
+              return font;
+          }
+        }
 
-	/* If it wasn't a family name, it should be a full name. */
-	synchronized (FontManager.class) {
+        /* If it wasn't a family name, it should be a full name. */
+        synchronized (FontManager.class) {
             font = localeFullNamesToFont.get(name);
-	}
-	if (font != null) {
-	    if (font.style == style || style == Font.PLAIN) {	
-		return font;
-	    } else {
-		family = FontFamily.getFamily(font.getFamilyName(null));
-		if (family != null) {
-		    Font2D familyFont = family.getFont(style);
-		    /* We exactly matched the requested style, use it! */
-		    if (familyFont != null) {
-			return familyFont;
-		    } else {
-			familyFont = family.getClosestStyle(style);
-			if (familyFont != null) {
-			    /* The next check is perhaps one
-			     * that shouldn't be done. ie if we get this
-			     * far we have probably as close a match as we
-			     * are going to get. We could load all fonts to
-			     * see if somehow some parts of the family are
-			     * loaded but not all of it.
-			     * This check is commented out for now.
-			     */
-			    if (!familyFont.canDoStyle(style)) {
-				familyFont = null;
-			    }    
-			    return familyFont;
-			}
-		    }
-		}
-	    }
-	}
-	return font;
+        }
+        if (font != null) {
+            if (font.style == style || style == Font.PLAIN) {
+                return font;
+            } else {
+                family = FontFamily.getFamily(font.getFamilyName(null));
+                if (family != null) {
+                    Font2D familyFont = family.getFont(style);
+                    /* We exactly matched the requested style, use it! */
+                    if (familyFont != null) {
+                        return familyFont;
+                    } else {
+                        familyFont = family.getClosestStyle(style);
+                        if (familyFont != null) {
+                            /* The next check is perhaps one
+                             * that shouldn't be done. ie if we get this
+                             * far we have probably as close a match as we
+                             * are going to get. We could load all fonts to
+                             * see if somehow some parts of the family are
+                             * loaded but not all of it.
+                             * This check is commented out for now.
+                             */
+                            if (!familyFont.canDoStyle(style)) {
+                                familyFont = null;
+                            }
+                            return familyFont;
+                        }
+                    }
+                }
+            }
+        }
+        return font;
     }
 
     /* Supporting "alternate" composite fonts on 2D graphics objects
@@ -2677,7 +2677,7 @@ public final class FontManager {
      * instances would not retrieve the correct Font2D for the appcontext.
      * sun.font.FontManager.findFont2D is also updated to that it uses
      * a name map cache specific to that appcontext.
-     * 
+     *
      * Getting an AppContext is expensive, so there is a global variable
      * that records whether these methods have ever been called and can
      * avoid the expense for almost all applications. Once the correct
@@ -2730,26 +2730,26 @@ public final class FontManager {
      * combined metrics instead. For now though this test can be simple.
      */
     static boolean maybeUsingAlternateCompositeFonts() {
-       return usingAlternateComposites || usingPerAppContextComposites; 
+       return usingAlternateComposites || usingPerAppContextComposites;
     }
 
     public static boolean usingAlternateCompositeFonts() {
-	return (usingAlternateComposites ||
-		(usingPerAppContextComposites &&
-		AppContext.getAppContext().get(CompositeFont.class) != null));
+        return (usingAlternateComposites ||
+                (usingPerAppContextComposites &&
+                AppContext.getAppContext().get(CompositeFont.class) != null));
     }
 
     private static boolean maybeMultiAppContext() {
-	Boolean appletSM = (Boolean)
-	    java.security.AccessController.doPrivileged(
-	        new java.security.PrivilegedAction() {
-			public Object run() {
-			    SecurityManager sm = System.getSecurityManager();
-			    return new Boolean
-				(sm instanceof sun.applet.AppletSecurity);
-			}
-		    });
-	return appletSM.booleanValue();
+        Boolean appletSM = (Boolean)
+            java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction() {
+                        public Object run() {
+                            SecurityManager sm = System.getSecurityManager();
+                            return new Boolean
+                                (sm instanceof sun.applet.AppletSecurity);
+                        }
+                    });
+        return appletSM.booleanValue();
     }
 
     /* Modifies the behaviour of a subsequent call to preferLocaleFonts()
@@ -2758,94 +2758,94 @@ public final class FontManager {
      */
     public static synchronized void useAlternateFontforJALocales() {
 
-	if (!isWindows) {
-	    return;
-	}
+        if (!isWindows) {
+            return;
+        }
 
-	initSGEnv();
-	if (!maybeMultiAppContext()) {
-	    gAltJAFont = true;
-	} else {
-	    AppContext appContext = AppContext.getAppContext();
-	    appContext.put(altJAFontKey, altJAFontKey);
-	}
+        initSGEnv();
+        if (!maybeMultiAppContext()) {
+            gAltJAFont = true;
+        } else {
+            AppContext appContext = AppContext.getAppContext();
+            appContext.put(altJAFontKey, altJAFontKey);
+        }
     }
 
     public static boolean usingAlternateFontforJALocales() {
-	if (!maybeMultiAppContext()) {
-	    return gAltJAFont;
-	} else {
-	    AppContext appContext = AppContext.getAppContext();
-	    return appContext.get(altJAFontKey) == altJAFontKey;
-	}	
+        if (!maybeMultiAppContext()) {
+            return gAltJAFont;
+        } else {
+            AppContext appContext = AppContext.getAppContext();
+            return appContext.get(altJAFontKey) == altJAFontKey;
+        }
     }
 
     public static synchronized void preferLocaleFonts() {
 
-	initSGEnv();
+        initSGEnv();
 
-	/* Test if re-ordering will have any effect */
-	if (!FontConfiguration.willReorderForStartupLocale()) {
-	    return;
-	}
+        /* Test if re-ordering will have any effect */
+        if (!FontConfiguration.willReorderForStartupLocale()) {
+            return;
+        }
 
-	if (!maybeMultiAppContext()) {
-	    if (gLocalePref == true) {
-		return;
-	    }
-	    gLocalePref = true;
-	    sgEnv.createCompositeFonts(fontNameCache, gLocalePref, gPropPref);
-	    usingAlternateComposites = true;
-	} else {
-	    AppContext appContext = AppContext.getAppContext();
-	    if (appContext.get(localeFontKey) == localeFontKey) {
-		return;
-	    }
-	    appContext.put(localeFontKey, localeFontKey);
-	    boolean acPropPref =
-		appContext.get(proportionalFontKey) == proportionalFontKey;
+        if (!maybeMultiAppContext()) {
+            if (gLocalePref == true) {
+                return;
+            }
+            gLocalePref = true;
+            sgEnv.createCompositeFonts(fontNameCache, gLocalePref, gPropPref);
+            usingAlternateComposites = true;
+        } else {
+            AppContext appContext = AppContext.getAppContext();
+            if (appContext.get(localeFontKey) == localeFontKey) {
+                return;
+            }
+            appContext.put(localeFontKey, localeFontKey);
+            boolean acPropPref =
+                appContext.get(proportionalFontKey) == proportionalFontKey;
             ConcurrentHashMap<String, Font2D>
                 altNameCache = new ConcurrentHashMap<String, Font2D> ();
-	    /* If there is an existing hashtable, we can drop it. */
-	    appContext.put(CompositeFont.class, altNameCache);
-	    usingPerAppContextComposites = true;
-	    sgEnv.createCompositeFonts(altNameCache, true, acPropPref);
-	}
+            /* If there is an existing hashtable, we can drop it. */
+            appContext.put(CompositeFont.class, altNameCache);
+            usingPerAppContextComposites = true;
+            sgEnv.createCompositeFonts(altNameCache, true, acPropPref);
+        }
     }
 
     public static synchronized void preferProportionalFonts() {
-	
-	/* If no proportional fonts are configured, there's no need
-	 * to take any action.
-	 */
-	if (!FontConfiguration.hasMonoToPropMap()) {
-	    return;
-	}
 
-	initSGEnv();
+        /* If no proportional fonts are configured, there's no need
+         * to take any action.
+         */
+        if (!FontConfiguration.hasMonoToPropMap()) {
+            return;
+        }
 
-	if (!maybeMultiAppContext()) {
-	    if (gPropPref == true) {
-		return;
-	    }
-	    gPropPref = true;
-	    sgEnv.createCompositeFonts(fontNameCache, gLocalePref, gPropPref);
-	    usingAlternateComposites = true;
-	} else {
-	    AppContext appContext = AppContext.getAppContext();
-	    if (appContext.get(proportionalFontKey) == proportionalFontKey) {
-		return;
-	    }
-	    appContext.put(proportionalFontKey, proportionalFontKey);
-	    boolean acLocalePref =
-		appContext.get(localeFontKey) == localeFontKey;
+        initSGEnv();
+
+        if (!maybeMultiAppContext()) {
+            if (gPropPref == true) {
+                return;
+            }
+            gPropPref = true;
+            sgEnv.createCompositeFonts(fontNameCache, gLocalePref, gPropPref);
+            usingAlternateComposites = true;
+        } else {
+            AppContext appContext = AppContext.getAppContext();
+            if (appContext.get(proportionalFontKey) == proportionalFontKey) {
+                return;
+            }
+            appContext.put(proportionalFontKey, proportionalFontKey);
+            boolean acLocalePref =
+                appContext.get(localeFontKey) == localeFontKey;
             ConcurrentHashMap<String, Font2D>
                 altNameCache = new ConcurrentHashMap<String, Font2D> ();
-	    /* If there is an existing hashtable, we can drop it. */
-	    appContext.put(CompositeFont.class, altNameCache);
-	    usingPerAppContextComposites = true;
-	    sgEnv.createCompositeFonts(altNameCache, acLocalePref, true);
-	}
+            /* If there is an existing hashtable, we can drop it. */
+            appContext.put(CompositeFont.class, altNameCache);
+            usingPerAppContextComposites = true;
+            sgEnv.createCompositeFonts(altNameCache, acLocalePref, true);
+        }
     }
 
     private static HashSet<String> installedNames = null;
@@ -2873,7 +2873,7 @@ public final class FontManager {
     private static Hashtable<String,Font2D>     createdByFullName;
     private static boolean fontsAreRegistered = false;
     private static boolean fontsAreRegisteredPerAppContext = false;
-    
+
     public static boolean registerFont(Font font) {
         /* This method should not be called with "null".
          * It is the caller's responsibility to ensure that.
@@ -2917,7 +2917,7 @@ public final class FontManager {
         HashSet<String> names = getInstalledNames();
         Locale l = sgEnv.getSystemStartupLocale();
         String familyName = font.getFamily(l).toLowerCase();
-        String fullName = font.getFontName(l).toLowerCase();  
+        String fullName = font.getFontName(l).toLowerCase();
         if (names.contains(familyName) || names.contains(fullName)) {
             return false;
         }
@@ -3040,7 +3040,7 @@ public final class FontManager {
      */
 
     /* A small "map" from GTK/fontconfig names to the equivalent JDK
-     * logical font name. 
+     * logical font name.
     */
     private static final String[][] nameMap = {
         {"sans",       "sansserif"},
@@ -3054,7 +3054,7 @@ public final class FontManager {
             if (name.equals(nameMap[i][0])) {
                 return nameMap[i][1];
             }
-        }   
+        }
         return null;
     }
 
@@ -3104,7 +3104,7 @@ public final class FontManager {
         String country = l.getCountry();
         if (!country.equals("")) {
             localeStr = localeStr + "-" + country;
-        } 
+        }
         return localeStr;
     }
 
@@ -3263,7 +3263,7 @@ public final class FontManager {
         if (physFont == null) {
             int fontFormat = FONTFORMAT_NONE;
             int fontRank = Font2D.UNKNOWN_RANK;
-  
+
             if (ext.equals(".ttf") || isTTC) {
                 fontFormat = FONTFORMAT_TRUETYPE;
                 fontRank = Font2D.TTF_RANK;
@@ -3453,7 +3453,7 @@ public final class FontManager {
             }
         }
 
-        /* Now we have a physical font. We will back this up with the JDK 
+        /* Now we have a physical font. We will back this up with the JDK
          * logical font (sansserif, serif, or monospaced) that corresponds
          * to the Pango/GTK/FC logical font name.
          */
@@ -3674,7 +3674,7 @@ public final class FontManager {
 
         Font2D font2D = FontManager.getFont2D(font);
         if (font2D instanceof TrueTypeFont) {
-            TrueTypeFont ttf = (TrueTypeFont)font2D;            
+            TrueTypeFont ttf = (TrueTypeFont)font2D;
             return
                 ttf.getDirectoryEntry(TrueTypeFont.GSUBTag) == null ||
                 ttf.getDirectoryEntry(TrueTypeFont.GPOSTag) != null;
@@ -3682,10 +3682,10 @@ public final class FontManager {
             return false;
         }
     }
-     
+
     private static FontScaler nullScaler = null;
     private static Constructor<FontScaler> scalerConstructor = null;
-    
+
     //Find preferred font scaler
     //
     //NB: we can allow property based preferences
@@ -3700,11 +3700,11 @@ public final class FontManager {
                 scalerClass = Class.forName("sun.font.FreetypeFontScaler");
             } else {
                 scalerClass = Class.forName("sun.font.T2KFontScaler");
-            } 
+            }
         } catch (ClassNotFoundException e) {
                 scalerClass = NullFontScaler.class;
         }
-        
+
         //NB: rewrite using factory? constructor is ugly way
         try {
             scalerConstructor = scalerClass.getConstructor(arglst);
@@ -3712,8 +3712,8 @@ public final class FontManager {
             //should not happen
         }
     }
-    
-    /* At the moment it is harmless to create 2 null scalers 
+
+    /* At the moment it is harmless to create 2 null scalers
        so, technically, syncronized keyword is not needed.
 
        But it is safer to keep it to avoid subtle problems if we will be
@@ -3724,19 +3724,19 @@ public final class FontManager {
         }
         return nullScaler;
     }
-    
+
     /* This is the only place to instantiate new FontScaler.
-     * Therefore this is very convinient place to register 
-     * scaler with Disposer as well as trigger deregistring bad font 
+     * Therefore this is very convinient place to register
+     * scaler with Disposer as well as trigger deregistring bad font
      * in case when scaler reports this.
      */
-    
-    public static FontScaler getScaler(Font2D font, 
+
+    public static FontScaler getScaler(Font2D font,
                                        int indexInCollection,
-                                       boolean supportsCJK, 
+                                       boolean supportsCJK,
                                        int filesize) {
         FontScaler scaler = null;
-        
+
         try {
             Object args[] = new Object[] {font, indexInCollection,
                                           supportsCJK, filesize};
@@ -3753,4 +3753,3 @@ public final class FontManager {
         return scaler;
     }
 }
-

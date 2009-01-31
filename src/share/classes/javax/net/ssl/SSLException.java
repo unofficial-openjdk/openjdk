@@ -34,7 +34,6 @@ import java.io.IOException;
  * by failed SSL-related operations.
  *
  * @since 1.4
- * @version %I%
  * @author David Brownell
  */
 public
@@ -50,7 +49,7 @@ class SSLException extends IOException
      */
     public SSLException(String reason)
     {
-	super(reason);
+        super(reason);
     }
 
     /**
@@ -58,16 +57,16 @@ class SSLException extends IOException
      * detail message and cause.
      *
      * @param message the detail message (which is saved for later retrieval
-     *		by the {@link #getMessage()} method).
+     *          by the {@link #getMessage()} method).
      * @param cause the cause (which is saved for later retrieval by the
-     *		{@link #getCause()} method).  (A <tt>null</tt> value is
-     *		permitted, and indicates that the cause is nonexistent or
-     *		unknown.)
+     *          {@link #getCause()} method).  (A <tt>null</tt> value is
+     *          permitted, and indicates that the cause is nonexistent or
+     *          unknown.)
      * @since 1.5
      */
     public SSLException(String message, Throwable cause) {
-	super(message);
-	initCause(cause);
+        super(message);
+        initCause(cause);
     }
 
     /**
@@ -77,13 +76,13 @@ class SSLException extends IOException
      * <tt>cause</tt>).
      *
      * @param cause the cause (which is saved for later retrieval by the
-     *		{@link #getCause()} method).  (A <tt>null</tt> value is
-     *		permitted, and indicates that the cause is nonexistent or
-     *		unknown.)
+     *          {@link #getCause()} method).  (A <tt>null</tt> value is
+     *          permitted, and indicates that the cause is nonexistent or
+     *          unknown.)
      * @since 1.5
      */
     public SSLException(Throwable cause) {
-	super(cause == null ? null : cause.toString());
-	initCause(cause);
+        super(cause == null ? null : cause.toString());
+        initCause(cause);
     }
 }

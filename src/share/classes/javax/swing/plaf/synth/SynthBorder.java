@@ -35,7 +35,6 @@ import sun.swing.plaf.synth.SynthUI;
  * SynthBorder is a border that delegates to a Painter. The Insets
  * are determined at construction time.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthBorder extends AbstractBorder implements UIResource {
@@ -68,17 +67,17 @@ class SynthBorder extends AbstractBorder implements UIResource {
     /**
      * This default implementation returns a new <code>Insets</code>
      * instance where the <code>top</code>, <code>left</code>,
-     * <code>bottom</code>, and 
+     * <code>bottom</code>, and
      * <code>right</code> fields are set to <code>0</code>.
      * @param c the component for which this border insets value applies
      * @return the new <code>Insets</code> object initialized to 0
      */
-    public Insets getBorderInsets(Component c) { 
+    public Insets getBorderInsets(Component c) {
         return getBorderInsets(c, null);
     }
 
-    /** 
-     * Reinitializes the insets parameter with this Border's current Insets. 
+    /**
+     * Reinitializes the insets parameter with this Border's current Insets.
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      * @return the <code>insets</code> object

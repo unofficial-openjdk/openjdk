@@ -30,10 +30,10 @@ import java.io.IOException;
 public
 class JarException extends IOException {
     public JarException() {
-	super();
+        super();
     }
 
     public JarException(String s) {
-	super(s);
+        super(s);
     }
 }

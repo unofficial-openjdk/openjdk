@@ -72,7 +72,7 @@ public class CK_SSL3_MASTER_KEY_DERIVE_PARAMS {
      * </PRE>
      */
     public CK_SSL3_RANDOM_DATA RandomInfo;
-    
+
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -80,31 +80,31 @@ public class CK_SSL3_MASTER_KEY_DERIVE_PARAMS {
      * </PRE>
      */
     public CK_VERSION pVersion;
-    
+
     public CK_SSL3_MASTER_KEY_DERIVE_PARAMS(CK_SSL3_RANDOM_DATA random, CK_VERSION version) {
-	RandomInfo = random;
-	pVersion = version;
+        RandomInfo = random;
+        pVersion = version;
     }
-    
+
     /**
      * Returns the string representation of CK_SSL3_MASTER_KEY_DERIVE_PARAMS.
      *
      * @return the string representation of CK_SSL3_MASTER_KEY_DERIVE_PARAMS
      */
     public String toString() {
-	StringBuilder buffer = new StringBuilder();
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("RandomInfo: ");
-	buffer.append(RandomInfo);
-	buffer.append(Constants.NEWLINE);
-	
-	buffer.append(Constants.INDENT);
-	buffer.append("pVersion: ");
-	buffer.append(pVersion);
-	//buffer.append(Constants.NEWLINE);
-	
-	return buffer.toString();
+        StringBuilder buffer = new StringBuilder();
+
+        buffer.append(Constants.INDENT);
+        buffer.append("RandomInfo: ");
+        buffer.append(RandomInfo);
+        buffer.append(Constants.NEWLINE);
+
+        buffer.append(Constants.INDENT);
+        buffer.append("pVersion: ");
+        buffer.append(pVersion);
+        //buffer.append(Constants.NEWLINE);
+
+        return buffer.toString();
     }
-    
+
 }

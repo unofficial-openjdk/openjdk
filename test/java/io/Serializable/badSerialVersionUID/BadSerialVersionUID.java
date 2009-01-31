@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -66,17 +66,17 @@ class L implements Serializable {
 
 public class BadSerialVersionUID {
     public static void main(String[] args) throws Exception {
-	Class[] ignore = { Z.class, F.class, D.class, L.class };
-	Class[] convert = { B.class, C.class, S.class, I.class };
-	
-	for (int i = 0; i < ignore.length; i++) {
-	    ObjectStreamClass.lookup(ignore[i]).getSerialVersionUID();
-	}
-	for (int i = 0; i < convert.length; i++) {
-	    ObjectStreamClass desc = ObjectStreamClass.lookup(convert[i]);
-	    if (desc.getSerialVersionUID() != 5L) {
-		throw new Error();
-	    }
-	}
+        Class[] ignore = { Z.class, F.class, D.class, L.class };
+        Class[] convert = { B.class, C.class, S.class, I.class };
+
+        for (int i = 0; i < ignore.length; i++) {
+            ObjectStreamClass.lookup(ignore[i]).getSerialVersionUID();
+        }
+        for (int i = 0; i < convert.length; i++) {
+            ObjectStreamClass desc = ObjectStreamClass.lookup(convert[i]);
+            if (desc.getSerialVersionUID() != 5L) {
+                throw new Error();
+            }
+        }
     }
 }

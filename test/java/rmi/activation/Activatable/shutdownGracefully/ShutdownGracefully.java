@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -59,194 +59,194 @@ public class ShutdownGracefully
     private static RegisteringActivatable registering = null;
 
     private final static long SHUTDOWN_TIMEOUT = 400 * 1000;
-    
-    public static void main(String args[]) {  
 
-	RMID rmid = null;
+    public static void main(String args[]) {
 
-	System.err.println("\nRegression test for bug/rfe 4183169\n");
-	    
-	try {
-	    TestLibrary.suggestSecurityManager(
-	        "java.rmi.RMISecurityManager");
+        RMID rmid = null;
 
-	    // start an rmid.
-	    RMID.removeLog();
-	    rmid = RMID.createRMID();
-	    
-	    // rmid needs to run with a security manager that
-	    // simulates a log problem; rmid should also snapshot
-	    // quickly.
-	    rmid.addOptions(new String[] {
-  		"-Djava.security.manager=TestSecurityManager",
-  		"-Dsun.rmi.activation.snapshotInterval=1"});
-		    
-	    //	    rmid.addArguments(new String[] {
-	    //          "-C-Djava.rmi.server.logCalls=true"});
-	    
-	    rmid.start();
-	    
-	    // Ensure that activation groups run with the correct
-	    // security manager.
-	    //
-	    Properties p = new Properties();
-	    p.put("java.security.policy", 
-		  TestParams.defaultGroupPolicy);
-	    p.put("java.security.manager", 
-		  "java.lang.SecurityManager");
+        System.err.println("\nRegression test for bug/rfe 4183169\n");
 
-  	    System.err.println("activation group will be created " +
-			       "in a new VM");
-  	    ActivationGroupDesc groupDesc =
-  		new ActivationGroupDesc(p, null);
-  	    ActivationSystem system = ActivationGroup.getSystem();
-  	    ActivationGroupID groupID = system.registerGroup(groupDesc);
-	    
-	    System.err.println("registering activatable");
-	    ActivationDesc desc = new ActivationDesc 
-		(groupID, "ShutdownGracefully", null, null);
-	    registering = (RegisteringActivatable)
-		Activatable.register(desc);
+        try {
+            TestLibrary.suggestSecurityManager(
+                "java.rmi.RMISecurityManager");
 
-	    System.err.println("activate and deactivate object " +
-			       "via method call");
-	    registering.shutdown();
+            // start an rmid.
+            RMID.removeLog();
+            rmid = RMID.createRMID();
 
-	    /*
-	     * the security manager rmid is running with will stop
-	     * rmid from writing to its log files; in 1.2.x this would
-	     * have caused rmid to have thrown a runtime exception and
-	     * continue running in an unstable state.  With the fix
-	     * for 4183169, rmid should shutdown gracefully instead.
-	     */
+            // rmid needs to run with a security manager that
+            // simulates a log problem; rmid should also snapshot
+            // quickly.
+            rmid.addOptions(new String[] {
+                "-Djava.security.manager=TestSecurityManager",
+                "-Dsun.rmi.activation.snapshotInterval=1"});
 
-	    /*
-	     * register another activatable with a new group id; rmid
-	     * should not recover from this...  I use two
-	     * registrations to more closely simulate the environment
-	     * in which the bug was found.  In java versions with out
-	     * the appropriate bug fix, rmid would hide a
-	     * NullPointerException in this circumstance.
-	     */
-	    p.put("dummyname", "dummyvalue");
-  	    groupDesc = new ActivationGroupDesc(p, null);
-  	    ActivationGroupID secondGroupID =
-		system.registerGroup(groupDesc);
-	    desc = new ActivationDesc(secondGroupID,
-	        "ShutdownGracefully", null, null);
-	    
-	    try {
-		registering = (RegisteringActivatable)
-		    Activatable.register(desc);
+            //      rmid.addArguments(new String[] {
+            //          "-C-Djava.rmi.server.logCalls=true"});
 
-		System.err.println("second activate and deactivate " +
-				   "object via method call");
-	    } catch (ActivationException e) {
-  		System.err.println("received exception from registration " +
-  				   "call that should have failed...");
-	    }
-	    
-	    /*
-	     * no longer needed because the security manager
-	     * throws an exception during snapshot
-	     */
-	    /*
-	    try {
-  		registering.shutdown();
+            rmid.start();
 
-  		System.err.println("received exception from remote " +
-  				   "call that should have failed...");
-	    } catch (RemoteException e) {
-	    }
-	    */
-	    
-	} catch (Exception e) {
-	    TestLibrary.bomb("\nfailure: unexpected exception ", e);
-	} finally {
-	    try {
-		Thread.sleep(4000);
-	    } catch (InterruptedException e) {
-	    }
-	    
-	    registering = null;
+            // Ensure that activation groups run with the correct
+            // security manager.
+            //
+            Properties p = new Properties();
+            p.put("java.security.policy",
+                  TestParams.defaultGroupPolicy);
+            p.put("java.security.manager",
+                  "java.lang.SecurityManager");
 
-	    // Need to make sure that rmid goes away by itself
-	    Process rmidProcess = rmid.getVM();
-	    if (rmidProcess != null) {
-		try {
-		    Runnable waitThread =
-			new ShutdownDetectThread(rmidProcess);
-		    
-		    synchronized (waitThread) {
-			(new Thread(waitThread)).start();
-			waitThread.wait(SHUTDOWN_TIMEOUT);
-			System.err.println("rmid has shutdown");
-			
-			if (!rmidDone) {
-			    // ensure that this rmid does not infect
-			    // other tests.
-			    rmidProcess.destroy();
-			    TestLibrary.bomb("rmid did not shutdown " +
-					     "gracefully in time");
-			}
-		    }
-		} catch (Exception e) {
-		    TestLibrary.bomb("exception waiting for rmid " +
-				     "to shut down");
-		}
-	    }
-	    // else rmid should be down
-	}
+            System.err.println("activation group will be created " +
+                               "in a new VM");
+            ActivationGroupDesc groupDesc =
+                new ActivationGroupDesc(p, null);
+            ActivationSystem system = ActivationGroup.getSystem();
+            ActivationGroupID groupID = system.registerGroup(groupDesc);
 
-	System.err.println
-	    ("\nsuccess: ShutdownGracefully test passed ");
+            System.err.println("registering activatable");
+            ActivationDesc desc = new ActivationDesc
+                (groupID, "ShutdownGracefully", null, null);
+            registering = (RegisteringActivatable)
+                Activatable.register(desc);
+
+            System.err.println("activate and deactivate object " +
+                               "via method call");
+            registering.shutdown();
+
+            /*
+             * the security manager rmid is running with will stop
+             * rmid from writing to its log files; in 1.2.x this would
+             * have caused rmid to have thrown a runtime exception and
+             * continue running in an unstable state.  With the fix
+             * for 4183169, rmid should shutdown gracefully instead.
+             */
+
+            /*
+             * register another activatable with a new group id; rmid
+             * should not recover from this...  I use two
+             * registrations to more closely simulate the environment
+             * in which the bug was found.  In java versions with out
+             * the appropriate bug fix, rmid would hide a
+             * NullPointerException in this circumstance.
+             */
+            p.put("dummyname", "dummyvalue");
+            groupDesc = new ActivationGroupDesc(p, null);
+            ActivationGroupID secondGroupID =
+                system.registerGroup(groupDesc);
+            desc = new ActivationDesc(secondGroupID,
+                "ShutdownGracefully", null, null);
+
+            try {
+                registering = (RegisteringActivatable)
+                    Activatable.register(desc);
+
+                System.err.println("second activate and deactivate " +
+                                   "object via method call");
+            } catch (ActivationException e) {
+                System.err.println("received exception from registration " +
+                                   "call that should have failed...");
+            }
+
+            /*
+             * no longer needed because the security manager
+             * throws an exception during snapshot
+             */
+            /*
+            try {
+                registering.shutdown();
+
+                System.err.println("received exception from remote " +
+                                   "call that should have failed...");
+            } catch (RemoteException e) {
+            }
+            */
+
+        } catch (Exception e) {
+            TestLibrary.bomb("\nfailure: unexpected exception ", e);
+        } finally {
+            try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+            }
+
+            registering = null;
+
+            // Need to make sure that rmid goes away by itself
+            Process rmidProcess = rmid.getVM();
+            if (rmidProcess != null) {
+                try {
+                    Runnable waitThread =
+                        new ShutdownDetectThread(rmidProcess);
+
+                    synchronized (waitThread) {
+                        (new Thread(waitThread)).start();
+                        waitThread.wait(SHUTDOWN_TIMEOUT);
+                        System.err.println("rmid has shutdown");
+
+                        if (!rmidDone) {
+                            // ensure that this rmid does not infect
+                            // other tests.
+                            rmidProcess.destroy();
+                            TestLibrary.bomb("rmid did not shutdown " +
+                                             "gracefully in time");
+                        }
+                    }
+                } catch (Exception e) {
+                    TestLibrary.bomb("exception waiting for rmid " +
+                                     "to shut down");
+                }
+            }
+            // else rmid should be down
+        }
+
+        System.err.println
+            ("\nsuccess: ShutdownGracefully test passed ");
     }
 
     private static boolean rmidDone = false;
-    
+
     /**
      * class that waits for rmid to exit
      */
     private static class ShutdownDetectThread implements Runnable {
-	private Process rmidProcess = null;
-	
-	ShutdownDetectThread(Process rmidProcess) {
-	    this.rmidProcess = rmidProcess;	    
-	}
-	public void run() {
-	    System.err.println("waiting for rmid to shutdown");
+        private Process rmidProcess = null;
 
-	    try {
-		rmidProcess.waitFor();
-	    } catch (InterruptedException e) {
-		// should not happen
-	    }
+        ShutdownDetectThread(Process rmidProcess) {
+            this.rmidProcess = rmidProcess;
+        }
+        public void run() {
+            System.err.println("waiting for rmid to shutdown");
 
-	    synchronized (this) {
-		// notify parent thread when rmid has exited
-		this.notify();
-		rmidDone = true;
-	    }
+            try {
+                rmidProcess.waitFor();
+            } catch (InterruptedException e) {
+                // should not happen
+            }
 
-	    RMID.removeLog();
-	}
+            synchronized (this) {
+                // notify parent thread when rmid has exited
+                this.notify();
+                rmidDone = true;
+            }
+
+            RMID.removeLog();
+        }
     }
 
     /**
-     * implementation of RegisteringActivatable 
+     * implementation of RegisteringActivatable
      */
     public ShutdownGracefully
-	(ActivationID id, MarshalledObject mo) throws RemoteException 
+        (ActivationID id, MarshalledObject mo) throws RemoteException
     {
-	// register/export anonymously
-	super(id, 0);
+        // register/export anonymously
+        super(id, 0);
     }
-    
+
     /**
      * Spawns a thread to deactivate the object.
      */
     public void shutdown() throws Exception {
-	(new Thread(this, "ShutdownGracefully")).start();
+        (new Thread(this, "ShutdownGracefully")).start();
     }
 
     /**
@@ -256,10 +256,10 @@ public class ShutdownGracefully
      * unexport the object forcibly.
      */
     public void run() {
-	try {
-	    Thread.sleep(50 * 1000);	    
-	} catch (InterruptedException e) {
-	}
-	ActivationLibrary.deactivate(this, getID());
+        try {
+            Thread.sleep(50 * 1000);
+        } catch (InterruptedException e) {
+        }
+        ActivationLibrary.deactivate(this, getID());
     }
 }

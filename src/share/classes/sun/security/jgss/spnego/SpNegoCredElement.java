@@ -38,7 +38,6 @@ import sun.security.jgss.spi.GSSCredentialSpi;
  * This should be changed once multi-mechanism support is needed.
  *
  * @author Valerie Peng
- * @version %I%, %G%
  * @since 1.6
  */
 public class SpNegoCredElement implements GSSCredentialSpi {
@@ -46,11 +45,11 @@ public class SpNegoCredElement implements GSSCredentialSpi {
     private GSSCredentialSpi cred = null;
 
     SpNegoCredElement(GSSCredentialSpi cred) throws GSSException {
-	this.cred = cred;
+        this.cred = cred;
     }
 
     Oid getInternalMech() {
-	return cred.getMechanism();
+        return cred.getMechanism();
     }
 
     // Used by GSSUtil.populateCredentials()
@@ -59,34 +58,34 @@ public class SpNegoCredElement implements GSSCredentialSpi {
     }
 
     public Provider getProvider() {
-	return SpNegoMechFactory.PROVIDER;
+        return SpNegoMechFactory.PROVIDER;
     }
 
     public void dispose() throws GSSException {
-	cred.dispose();
+        cred.dispose();
     }
 
     public GSSNameSpi getName() throws GSSException {
-	return cred.getName();
+        return cred.getName();
     }
 
     public int getInitLifetime() throws GSSException {
-	return cred.getInitLifetime();
+        return cred.getInitLifetime();
     }
 
     public int getAcceptLifetime() throws GSSException {
-	return cred.getAcceptLifetime();
+        return cred.getAcceptLifetime();
     }
 
     public boolean isInitiatorCredential() throws GSSException {
-	return cred.isInitiatorCredential();
+        return cred.isInitiatorCredential();
     }
 
     public boolean isAcceptorCredential() throws GSSException {
-	return cred.isAcceptorCredential();
+        return cred.isAcceptorCredential();
     }
 
     public Oid getMechanism() {
-	return GSSUtil.GSS_SPNEGO_MECH_OID;
+        return GSSUtil.GSS_SPNEGO_MECH_OID;
     }
 }

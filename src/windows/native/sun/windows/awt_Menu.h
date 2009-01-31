@@ -44,9 +44,9 @@ class AwtMenu : public AwtMenuItem {
 public:
     // id's for methods executed on toolkit thread
     enum {
-	MENU_ADDSEPARATOR = MENUITEM_LAST+1,
-	MENU_DELITEM,
-	MENU_LAST
+        MENU_ADDSEPARATOR = MENUITEM_LAST+1,
+        MENU_DELITEM,
+        MENU_LAST
     };
 
     /* method ids for java.awt.Menu */
@@ -83,10 +83,10 @@ public:
 
     virtual int CountItem(jobject target);
 
-    virtual void SendDrawItem(AwtMenuItem* awtMenuItem, 
-			      DRAWITEMSTRUCT& drawInfo);
-    virtual void SendMeasureItem(AwtMenuItem* awtMenuItem, HDC hDC, 
-				 MEASUREITEMSTRUCT& measureInfo);
+    virtual void SendDrawItem(AwtMenuItem* awtMenuItem,
+                              DRAWITEMSTRUCT& drawInfo);
+    virtual void SendMeasureItem(AwtMenuItem* awtMenuItem, HDC hDC,
+                                 MEASUREITEMSTRUCT& measureInfo);
     void DrawItem(DRAWITEMSTRUCT& drawInfo);
     void DrawItems(DRAWITEMSTRUCT& drawInfo);
     void MeasureItem(HDC hDC, MEASUREITEMSTRUCT& measureInfo);

@@ -94,7 +94,7 @@ public class ParseUtil {
      * component of a URL.
      */
     public static String encodePath(String path) {
-	return encodePath(path, true);
+        return encodePath(path, true);
     }
     /*
      * flag indicates whether path uses platform dependent
@@ -106,14 +106,14 @@ public class ParseUtil {
         int    retLen = 0;
         char[] pathCC = path.toCharArray();
 
-	int n = path.length();
+        int n = path.length();
         for (int i=0; i<n; i++) {
             char c = pathCC[i];
             if ((!flag && c == '/') || (flag && c == File.separatorChar))
                 retCC[retLen++] = '/';
             else {
                 if (c <= 0x007F) {
-                    if (c >= 'a' && c <= 'z' || 
+                    if (c >= 'a' && c <= 'z' ||
                         c >= 'A' && c <= 'Z' ||
                         c >= '0' && c <= '9') {
                         retCC[retLen++] = c;
@@ -167,23 +167,23 @@ public class ParseUtil {
 
     /**
      * Returns a new String constructed from the specified String by replacing
-     * the URL escape sequences and UTF8 encoding with the characters they 
+     * the URL escape sequences and UTF8 encoding with the characters they
      * represent.
      */
     public static String decode(String s) {
-	int n = s.length();
+        int n = s.length();
         if ((n == 0) || (s.indexOf('%') < 0))
             return s;
-	
+
         StringBuilder sb = new StringBuilder(n);
-	ByteBuffer bb = ByteBuffer.allocate(n);
+        ByteBuffer bb = ByteBuffer.allocate(n);
         CharBuffer cb = CharBuffer.allocate(n);
         CharsetDecoder dec = ThreadLocalCoders.decoderFor("UTF-8")
             .onMalformedInput(CodingErrorAction.REPORT)
             .onUnmappableCharacter(CodingErrorAction.REPORT);
 
-	char c = s.charAt(0);
-	for (int i = 0; i < n;) {
+        char c = s.charAt(0);
+        for (int i = 0; i < n;) {
             assert c == s.charAt(i);
             if (c != '%') {
                 sb.append(c);
@@ -196,12 +196,12 @@ public class ParseUtil {
             int ui = i;
             for (;;) {
                 assert (n - i >= 2);
-		try {
-	  	    bb.put(unescape(s, i));
-		} catch (NumberFormatException e) {
+                try {
+                    bb.put(unescape(s, i));
+                } catch (NumberFormatException e) {
                     throw new IllegalArgumentException();
                 }
-		i += 3;
+                i += 3;
                 if (i >= n)
                     break;
                 c = s.charAt(i);
@@ -213,9 +213,9 @@ public class ParseUtil {
             dec.reset();
             CoderResult cr = dec.decode(bb, cb, true);
             if (cr.isError())
-		throw new IllegalArgumentException("Error decoding percent encoded characters");
+                throw new IllegalArgumentException("Error decoding percent encoded characters");
             cr = dec.flush(cb);
-	    if (cr.isError())
+            if (cr.isError())
                 throw new IllegalArgumentException("Error decoding percent encoded characters");
             sb.append(cb.flip().toString());
         }
@@ -229,19 +229,19 @@ public class ParseUtil {
     public String canonizeString(String file) {
         int i = 0;
         int lim = file.length();
-       	
+
         // Remove embedded /../
         while ((i = file.indexOf("/../")) >= 0) {
-	    if ((lim = file.lastIndexOf('/', i - 1)) >= 0) {
-		file = file.substring(0, lim) + file.substring(i + 3);
-	    } else {
-		file = file.substring(i + 3);
-	    }
-	}
+            if ((lim = file.lastIndexOf('/', i - 1)) >= 0) {
+                file = file.substring(0, lim) + file.substring(i + 3);
+            } else {
+                file = file.substring(i + 3);
+            }
+        }
         // Remove embedded /./
         while ((i = file.indexOf("/./")) >= 0) {
-	    file = file.substring(0, i) + file.substring(i + 2);
-	}
+            file = file.substring(0, i) + file.substring(i + 2);
+        }
         // Remove trailing ..
         while (file.endsWith("/..")) {
             i = file.indexOf("/..");
@@ -263,38 +263,38 @@ public class ParseUtil {
     {
         String path = file.getAbsolutePath();
         path = ParseUtil.encodePath(path);
-	if (!path.startsWith("/")) {
-	    path = "/" + path;
-	}
-	if (!path.endsWith("/") && file.isDirectory()) {
-	    path = path + "/";
-	}
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        if (!path.endsWith("/") && file.isDirectory()) {
+            path = path + "/";
+        }
         return new URL("file", "", path);
     }
 
     public static java.net.URI toURI(URL url) {
-	String protocol = url.getProtocol();
-	String auth = url.getAuthority();
-	String path = url.getPath();
-	String query = url.getQuery();
-	String ref = url.getRef();
-	if (path != null && !(path.startsWith("/")))
-	    path = "/" + path;
-        
+        String protocol = url.getProtocol();
+        String auth = url.getAuthority();
+        String path = url.getPath();
+        String query = url.getQuery();
+        String ref = url.getRef();
+        if (path != null && !(path.startsWith("/")))
+            path = "/" + path;
+
         //
         // In java.net.URI class, a port number of -1 implies the default
         // port number. So get it stripped off before creating URI instance.
         //
         if (auth != null && auth.endsWith(":-1"))
             auth = auth.substring(0, auth.length() - 3);
-	
+
         java.net.URI uri;
-	try {
-	    uri = createURI(protocol, auth, path, query, ref);
-	} catch (java.net.URISyntaxException e) {
-	    uri = null;
-	}
-	return uri;
+        try {
+            uri = createURI(protocol, auth, path, query, ref);
+        } catch (java.net.URISyntaxException e) {
+            uri = null;
+        }
+        return uri;
     }
 
     //
@@ -313,165 +313,165 @@ public class ParseUtil {
                                  String query,
                                  String fragment) throws URISyntaxException
     {
-	String s = toString(scheme, null,
-			    authority, null, null, -1,
-			    path, query, fragment);
-	checkPath(s, scheme, path);
+        String s = toString(scheme, null,
+                            authority, null, null, -1,
+                            path, query, fragment);
+        checkPath(s, scheme, path);
         return new URI(s);
     }
 
     private static String toString(String scheme,
-                    	    String opaquePart,
-			    String authority,
-			    String userInfo,
-			    String host,
-			    int port,
-			    String path,
-			    String query,
-			    String fragment)
+                            String opaquePart,
+                            String authority,
+                            String userInfo,
+                            String host,
+                            int port,
+                            String path,
+                            String query,
+                            String fragment)
     {
-	StringBuffer sb = new StringBuffer();
-	if (scheme != null) {
-	    sb.append(scheme);
-	    sb.append(':');
-	}
-	appendSchemeSpecificPart(sb, opaquePart,
-				 authority, userInfo, host, port,
-				 path, query);
-	appendFragment(sb, fragment);
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        if (scheme != null) {
+            sb.append(scheme);
+            sb.append(':');
+        }
+        appendSchemeSpecificPart(sb, opaquePart,
+                                 authority, userInfo, host, port,
+                                 path, query);
+        appendFragment(sb, fragment);
+        return sb.toString();
     }
 
     private static void appendSchemeSpecificPart(StringBuffer sb,
-					  String opaquePart,
-					  String authority,
-					  String userInfo,
-					  String host,
-					  int port,
-					  String path,
-					  String query)
+                                          String opaquePart,
+                                          String authority,
+                                          String userInfo,
+                                          String host,
+                                          int port,
+                                          String path,
+                                          String query)
     {
-	if (opaquePart != null) {
-	    /* check if SSP begins with an IPv6 address
-	     * because we must not quote a literal IPv6 address
-	     */
-	    if (opaquePart.startsWith("//[")) {
-		int end =  opaquePart.indexOf("]");
-		if (end != -1 && opaquePart.indexOf(":")!=-1) {
-		    String doquote, dontquote;
-		    if (end == opaquePart.length()) {
-			dontquote = opaquePart;
-			doquote = "";
-		    } else {
-		    	dontquote = opaquePart.substring(0,end+1);
-			doquote = opaquePart.substring(end+1);
-		    }
-		    sb.append (dontquote);
-	    	    sb.append(quote(doquote, L_URIC, H_URIC));
-		}
-	    } else {
-	    	sb.append(quote(opaquePart, L_URIC, H_URIC));
-	    }
-	} else {
-	    appendAuthority(sb, authority, userInfo, host, port);
-	    if (path != null) 
-		sb.append(quote(path, L_PATH, H_PATH));
-	    if (query != null) {
-		sb.append('?');
-		sb.append(quote(query, L_URIC, H_URIC));
-	    }
-	}
+        if (opaquePart != null) {
+            /* check if SSP begins with an IPv6 address
+             * because we must not quote a literal IPv6 address
+             */
+            if (opaquePart.startsWith("//[")) {
+                int end =  opaquePart.indexOf("]");
+                if (end != -1 && opaquePart.indexOf(":")!=-1) {
+                    String doquote, dontquote;
+                    if (end == opaquePart.length()) {
+                        dontquote = opaquePart;
+                        doquote = "";
+                    } else {
+                        dontquote = opaquePart.substring(0,end+1);
+                        doquote = opaquePart.substring(end+1);
+                    }
+                    sb.append (dontquote);
+                    sb.append(quote(doquote, L_URIC, H_URIC));
+                }
+            } else {
+                sb.append(quote(opaquePart, L_URIC, H_URIC));
+            }
+        } else {
+            appendAuthority(sb, authority, userInfo, host, port);
+            if (path != null)
+                sb.append(quote(path, L_PATH, H_PATH));
+            if (query != null) {
+                sb.append('?');
+                sb.append(quote(query, L_URIC, H_URIC));
+            }
+        }
     }
 
     private static void appendAuthority(StringBuffer sb,
-				 String authority,
-				 String userInfo,
-				 String host,
-				 int port)
+                                 String authority,
+                                 String userInfo,
+                                 String host,
+                                 int port)
     {
-	if (host != null) {
-	    sb.append("//");
-	    if (userInfo != null) {
-		sb.append(quote(userInfo, L_USERINFO, H_USERINFO));
-		sb.append('@');
-	    }
-	    boolean needBrackets = ((host.indexOf(':') >= 0)
-				    && !host.startsWith("[")
-				    && !host.endsWith("]"));
-	    if (needBrackets) sb.append('[');
-	    sb.append(host);
-	    if (needBrackets) sb.append(']');
-	    if (port != -1) {
-		sb.append(':');
-		sb.append(port);
-	    }
-	} else if (authority != null) {
-	    sb.append("//");
-	    if (authority.startsWith("[")) {
-		int end = authority.indexOf("]");
-		if (end != -1 && authority.indexOf(":")!=-1) {
-		    String doquote, dontquote;
-		    if (end == authority.length()) {
-			dontquote = authority;
-			doquote = "";
-		    } else {
-		    	dontquote = authority.substring(0,end+1);
-			doquote = authority.substring(end+1);
-		    }
-		    sb.append (dontquote);
-	    	    sb.append(quote(doquote, 
-			    L_REG_NAME | L_SERVER,
-			    H_REG_NAME | H_SERVER));
-		}
-	    } else {
-	    	sb.append(quote(authority,
-			    L_REG_NAME | L_SERVER,
-			    H_REG_NAME | H_SERVER));
-	    }
-	}
+        if (host != null) {
+            sb.append("//");
+            if (userInfo != null) {
+                sb.append(quote(userInfo, L_USERINFO, H_USERINFO));
+                sb.append('@');
+            }
+            boolean needBrackets = ((host.indexOf(':') >= 0)
+                                    && !host.startsWith("[")
+                                    && !host.endsWith("]"));
+            if (needBrackets) sb.append('[');
+            sb.append(host);
+            if (needBrackets) sb.append(']');
+            if (port != -1) {
+                sb.append(':');
+                sb.append(port);
+            }
+        } else if (authority != null) {
+            sb.append("//");
+            if (authority.startsWith("[")) {
+                int end = authority.indexOf("]");
+                if (end != -1 && authority.indexOf(":")!=-1) {
+                    String doquote, dontquote;
+                    if (end == authority.length()) {
+                        dontquote = authority;
+                        doquote = "";
+                    } else {
+                        dontquote = authority.substring(0,end+1);
+                        doquote = authority.substring(end+1);
+                    }
+                    sb.append (dontquote);
+                    sb.append(quote(doquote,
+                            L_REG_NAME | L_SERVER,
+                            H_REG_NAME | H_SERVER));
+                }
+            } else {
+                sb.append(quote(authority,
+                            L_REG_NAME | L_SERVER,
+                            H_REG_NAME | H_SERVER));
+            }
+        }
     }
 
     private static void appendFragment(StringBuffer sb, String fragment) {
-	if (fragment != null) {
-	    sb.append('#');
-	    sb.append(quote(fragment, L_URIC, H_URIC));
-	}
+        if (fragment != null) {
+            sb.append('#');
+            sb.append(quote(fragment, L_URIC, H_URIC));
+        }
     }
 
     // Quote any characters in s that are not permitted
     // by the given mask pair
     //
     private static String quote(String s, long lowMask, long highMask) {
-	int n = s.length();
-	StringBuffer sb = null;
-	boolean allowNonASCII = ((lowMask & L_ESCAPED) != 0);
-	for (int i = 0; i < s.length(); i++) {
-	    char c = s.charAt(i);
-	    if (c < '\u0080') {
-		if (!match(c, lowMask, highMask) && !isEscaped(s, i)) {
-		    if (sb == null) {
-			sb = new StringBuffer();
-			sb.append(s.substring(0, i));
-		    }
-		    appendEscape(sb, (byte)c);
-		} else {
-		    if (sb != null)
-			sb.append(c);
-		}
-	    } else if (allowNonASCII
-		       && (Character.isSpaceChar(c)
-			   || Character.isISOControl(c))) {
-		if (sb == null) {
-		    sb = new StringBuffer();
-		    sb.append(s.substring(0, i));
-		}
-		appendEncoded(sb, c);
-	    } else {
-		if (sb != null)
-		    sb.append(c);
-	    }
-	}
-	return (sb == null) ? s : sb.toString();
+        int n = s.length();
+        StringBuffer sb = null;
+        boolean allowNonASCII = ((lowMask & L_ESCAPED) != 0);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c < '\u0080') {
+                if (!match(c, lowMask, highMask) && !isEscaped(s, i)) {
+                    if (sb == null) {
+                        sb = new StringBuffer();
+                        sb.append(s.substring(0, i));
+                    }
+                    appendEscape(sb, (byte)c);
+                } else {
+                    if (sb != null)
+                        sb.append(c);
+                }
+            } else if (allowNonASCII
+                       && (Character.isSpaceChar(c)
+                           || Character.isISOControl(c))) {
+                if (sb == null) {
+                    sb = new StringBuffer();
+                    sb.append(s.substring(0, i));
+                }
+                appendEncoded(sb, c);
+            } else {
+                if (sb != null)
+                    sb.append(c);
+            }
+        }
+        return (sb == null) ? s : sb.toString();
     }
 
     //
@@ -481,60 +481,60 @@ public class ParseUtil {
     private static boolean isEscaped(String s, int pos) {
         if (s == null || (s.length() <= (pos + 2)))
             return false;
-        
+
         return s.charAt(pos) == '%'
                && match(s.charAt(pos + 1), L_HEX, H_HEX)
                && match(s.charAt(pos + 2), L_HEX, H_HEX);
     }
 
     private static void appendEncoded(StringBuffer sb, char c) {
-	ByteBuffer bb = null;
-	try {
-	    bb = ThreadLocalCoders.encoderFor("UTF-8")
-		.encode(CharBuffer.wrap("" + c));
-	} catch (CharacterCodingException x) {
-	    assert false;
-	}
-	while (bb.hasRemaining()) {
-	    int b = bb.get() & 0xff;
-	    if (b >= 0x80)
-		appendEscape(sb, (byte)b);
-	    else
-		sb.append((char)b);
-	}
+        ByteBuffer bb = null;
+        try {
+            bb = ThreadLocalCoders.encoderFor("UTF-8")
+                .encode(CharBuffer.wrap("" + c));
+        } catch (CharacterCodingException x) {
+            assert false;
+        }
+        while (bb.hasRemaining()) {
+            int b = bb.get() & 0xff;
+            if (b >= 0x80)
+                appendEscape(sb, (byte)b);
+            else
+                sb.append((char)b);
+        }
     }
 
     private final static char[] hexDigits = {
-	'0', '1', '2', '3', '4', '5', '6', '7',
-	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
 
     private static void appendEscape(StringBuffer sb, byte b) {
-	sb.append('%');
-	sb.append(hexDigits[(b >> 4) & 0x0f]);
-	sb.append(hexDigits[(b >> 0) & 0x0f]);
+        sb.append('%');
+        sb.append(hexDigits[(b >> 4) & 0x0f]);
+        sb.append(hexDigits[(b >> 0) & 0x0f]);
     }
 
     // Tell whether the given character is permitted by the given mask pair
     private static boolean match(char c, long lowMask, long highMask) {
-	if (c < 64)
-	    return ((1L << c) & lowMask) != 0;
-	if (c < 128)
-	    return ((1L << (c - 64)) & highMask) != 0;
-	return false;
+        if (c < 64)
+            return ((1L << c) & lowMask) != 0;
+        if (c < 128)
+            return ((1L << (c - 64)) & highMask) != 0;
+        return false;
     }
 
     // If a scheme is given then the path, if given, must be absolute
     //
     private static void checkPath(String s, String scheme, String path)
-	throws URISyntaxException
+        throws URISyntaxException
     {
-	if (scheme != null) {
-	    if ((path != null)
-		&& ((path.length() > 0) && (path.charAt(0) != '/')))
-		throw new URISyntaxException(s,
-					     "Relative path in absolute URI");
-	}
+        if (scheme != null) {
+            if ((path != null)
+                && ((path.length() > 0) && (path.charAt(0) != '/')))
+                throw new URISyntaxException(s,
+                                             "Relative path in absolute URI");
+        }
     }
 
 
@@ -543,52 +543,52 @@ public class ParseUtil {
     // Compute a low-order mask for the characters
     // between first and last, inclusive
     private static long lowMask(char first, char last) {
-	long m = 0;
-	int f = Math.max(Math.min(first, 63), 0);
-	int l = Math.max(Math.min(last, 63), 0);
-	for (int i = f; i <= l; i++)
-	    m |= 1L << i;
-	return m;
+        long m = 0;
+        int f = Math.max(Math.min(first, 63), 0);
+        int l = Math.max(Math.min(last, 63), 0);
+        for (int i = f; i <= l; i++)
+            m |= 1L << i;
+        return m;
     }
 
     // Compute the low-order mask for the characters in the given string
     private static long lowMask(String chars) {
-	int n = chars.length();
-	long m = 0;
-	for (int i = 0; i < n; i++) {
-	    char c = chars.charAt(i);
-	    if (c < 64)
-		m |= (1L << c);
-	}
-	return m;
+        int n = chars.length();
+        long m = 0;
+        for (int i = 0; i < n; i++) {
+            char c = chars.charAt(i);
+            if (c < 64)
+                m |= (1L << c);
+        }
+        return m;
     }
 
     // Compute a high-order mask for the characters
     // between first and last, inclusive
     private static long highMask(char first, char last) {
-	long m = 0;
-	int f = Math.max(Math.min(first, 127), 64) - 64;
-	int l = Math.max(Math.min(last, 127), 64) - 64;
-	for (int i = f; i <= l; i++)
-	    m |= 1L << i;
-	return m;
+        long m = 0;
+        int f = Math.max(Math.min(first, 127), 64) - 64;
+        int l = Math.max(Math.min(last, 127), 64) - 64;
+        for (int i = f; i <= l; i++)
+            m |= 1L << i;
+        return m;
     }
 
     // Compute the high-order mask for the characters in the given string
     private static long highMask(String chars) {
-	int n = chars.length();
-	long m = 0;
-	for (int i = 0; i < n; i++) {
-	    char c = chars.charAt(i);
-	    if ((c >= 64) && (c < 128))
-		m |= (1L << (c - 64));
-	}
-	return m;
+        int n = chars.length();
+        long m = 0;
+        for (int i = 0; i < n; i++) {
+            char c = chars.charAt(i);
+            if ((c >= 64) && (c < 128))
+                m |= (1L << (c - 64));
+        }
+        return m;
     }
 
 
     // Character-class masks
-    
+
     // digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
     //            "8" | "9"
     private static final long L_DIGIT = lowMask('0', '9');
@@ -650,9 +650,9 @@ public class ParseUtil {
     // pchar         = unreserved | escaped |
     //                 ":" | "@" | "&" | "=" | "+" | "$" | ","
     private static final long L_PCHAR
-	= L_UNRESERVED | L_ESCAPED | lowMask(":@&=+$,");
+        = L_UNRESERVED | L_ESCAPED | lowMask(":@&=+$,");
     private static final long H_PCHAR
-	= H_UNRESERVED | H_ESCAPED | highMask(":@&=+$,");
+        = H_UNRESERVED | H_ESCAPED | highMask(":@&=+$,");
 
     // All valid path characters
     private static final long L_PATH = L_PCHAR | lowMask(";/");
@@ -661,20 +661,20 @@ public class ParseUtil {
     // userinfo      = *( unreserved | escaped |
     //                    ";" | ":" | "&" | "=" | "+" | "$" | "," )
     private static final long L_USERINFO
-	= L_UNRESERVED | L_ESCAPED | lowMask(";:&=+$,");
+        = L_UNRESERVED | L_ESCAPED | lowMask(";:&=+$,");
     private static final long H_USERINFO
-	= H_UNRESERVED | H_ESCAPED | highMask(";:&=+$,");
+        = H_UNRESERVED | H_ESCAPED | highMask(";:&=+$,");
 
     // reg_name      = 1*( unreserved | escaped | "$" | "," |
     //                     ";" | ":" | "@" | "&" | "=" | "+" )
     private static final long L_REG_NAME
-	= L_UNRESERVED | L_ESCAPED | lowMask("$,;:@&=+");
+        = L_UNRESERVED | L_ESCAPED | lowMask("$,;:@&=+");
     private static final long H_REG_NAME
-	= H_UNRESERVED | H_ESCAPED | highMask("$,;:@&=+");
+        = H_UNRESERVED | H_ESCAPED | highMask("$,;:@&=+");
 
     // All valid characters for server-based authorities
     private static final long L_SERVER
-	= L_USERINFO | L_ALPHANUM | L_DASH | lowMask(".:@[]");
+        = L_USERINFO | L_ALPHANUM | L_DASH | lowMask(".:@[]");
     private static final long H_SERVER
-	= H_USERINFO | H_ALPHANUM | H_DASH | highMask(".:@[]");
+        = H_USERINFO | H_ALPHANUM | H_DASH | highMask(".:@[]");
 }

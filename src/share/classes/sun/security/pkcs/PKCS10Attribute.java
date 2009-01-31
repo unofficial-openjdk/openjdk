@@ -52,12 +52,11 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  */
 public class PKCS10Attribute implements DerEncoder {
 
-    protected ObjectIdentifier	attributeId = null;
-    protected Object		attributeValue = null;
+    protected ObjectIdentifier  attributeId = null;
+    protected Object            attributeValue = null;
 
     /**
      * Constructs an attribute from a DER encoding.

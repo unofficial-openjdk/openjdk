@@ -43,82 +43,82 @@ class Node implements Constants, Cloneable {
      * Constructor
      */
     Node(int op, long where) {
-	this.op = op;
-	this.where = where;
+        this.op = op;
+        this.where = where;
     }
 
     /**
      * Get the operator
      */
     public int getOp() {
-	return op;
+        return op;
     }
 
     /**
-     * Get where 
+     * Get where
      */
     public long getWhere() {
-	return where;
+        return where;
     }
 
     /**
      * Implicit conversions
      */
     public Expression convert(Environment env, Context ctx, Type t, Expression e) {
-	if (e.type.isType(TC_ERROR) || t.isType(TC_ERROR)) {
-	    // An error was already reported
-	    return e;
-	}
+        if (e.type.isType(TC_ERROR) || t.isType(TC_ERROR)) {
+            // An error was already reported
+            return e;
+        }
 
-	if (e.type.equals(t)) {
-	    // The types are already the same
-	    return e;
-	}
+        if (e.type.equals(t)) {
+            // The types are already the same
+            return e;
+        }
 
-	try {
-	    if (e.fitsType(env, ctx, t)) { 
-		return new ConvertExpression(where, t, e);
-	    }
+        try {
+            if (e.fitsType(env, ctx, t)) {
+                return new ConvertExpression(where, t, e);
+            }
 
-	    if (env.explicitCast(e.type, t)) {
-		env.error(where, "explicit.cast.needed", opNames[op], e.type, t);
-		return new ConvertExpression(where, t, e);
-	    }
-	} catch (ClassNotFound ee) {
-	    env.error(where, "class.not.found", ee.name, opNames[op]);
-	}
+            if (env.explicitCast(e.type, t)) {
+                env.error(where, "explicit.cast.needed", opNames[op], e.type, t);
+                return new ConvertExpression(where, t, e);
+            }
+        } catch (ClassNotFound ee) {
+            env.error(where, "class.not.found", ee.name, opNames[op]);
+        }
 
-	// The cast is not allowed
-	env.error(where, "incompatible.type", opNames[op], e.type, t);
-	return new ConvertExpression(where, Type.tError, e);
+        // The cast is not allowed
+        env.error(where, "incompatible.type", opNames[op], e.type, t);
+        return new ConvertExpression(where, Type.tError, e);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-	throw new CompilerError("print");
+        throw new CompilerError("print");
     }
 
     /**
      * Clone this object.
      */
     public Object clone() {
-	try { 
-	    return super.clone();
-	} catch (CloneNotSupportedException e) {
-	    // this shouldn't happen, since we are Cloneable
-	    throw new InternalError();
-	}
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
     }
 
     /*
      * Useful for simple debugging
      */
-    public String toString() { 
-	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	print(new PrintStream(bos));
-	return bos.toString();
+    public String toString() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        print(new PrintStream(bos));
+        return bos.toString();
     }
 
 }

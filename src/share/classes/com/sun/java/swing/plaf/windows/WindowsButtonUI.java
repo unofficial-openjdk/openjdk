@@ -47,7 +47,6 @@ import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Jeff Dinkins
  *
  */
@@ -63,47 +62,47 @@ public class WindowsButtonUI extends BasicButtonUI
     protected Color focusColor;
 
     private boolean defaults_initialized = false;
-    
+
 
     // ********************************
     //          Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent c){
-	return windowsButtonUI;
+        return windowsButtonUI;
     }
-    
+
 
     // ********************************
     //            Defaults
     // ********************************
     protected void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    String pp = getPropertyPrefix();
-	    dashedRectGapX = UIManager.getInt(pp + "dashedRectGapX");
-	    dashedRectGapY = UIManager.getInt(pp + "dashedRectGapY");
-	    dashedRectGapWidth = UIManager.getInt(pp + "dashedRectGapWidth");
-	    dashedRectGapHeight = UIManager.getInt(pp + "dashedRectGapHeight");
-	    focusColor = UIManager.getColor(pp + "focus");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            String pp = getPropertyPrefix();
+            dashedRectGapX = UIManager.getInt(pp + "dashedRectGapX");
+            dashedRectGapY = UIManager.getInt(pp + "dashedRectGapY");
+            dashedRectGapWidth = UIManager.getInt(pp + "dashedRectGapWidth");
+            dashedRectGapHeight = UIManager.getInt(pp + "dashedRectGapHeight");
+            focusColor = UIManager.getColor(pp + "focus");
+            defaults_initialized = true;
+        }
 
-	XPStyle xp = XPStyle.getXP();
-	if (xp != null) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
             b.setBorder(xp.getBorder(b, getXPButtonType(b)));
             LookAndFeel.installProperty(b, "rolloverEnabled", Boolean.TRUE);
-	}
+        }
     }
-    
+
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
 
     protected Color getFocusColor() {
-	return focusColor;
+        return focusColor;
     }
-    
+
     // ********************************
     //         Paint Methods
     // ********************************
@@ -112,53 +111,53 @@ public class WindowsButtonUI extends BasicButtonUI
      * Overridden method to render the text without the mnemonic
      */
     protected void paintText(Graphics g, AbstractButton b, Rectangle textRect, String text) {
-	WindowsGraphicsUtils.paintText(g, b, textRect, text, getTextShiftOffset());
-    } 
-	
+        WindowsGraphicsUtils.paintText(g, b, textRect, text, getTextShiftOffset());
+    }
+
     protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect){
 
-	// focus painted same color as text on Basic??
-	int width = b.getWidth();
-	int height = b.getHeight();
-	g.setColor(getFocusColor());
-	BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
-					  width - dashedRectGapWidth, height - dashedRectGapHeight);
+        // focus painted same color as text on Basic??
+        int width = b.getWidth();
+        int height = b.getHeight();
+        g.setColor(getFocusColor());
+        BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
+                                          width - dashedRectGapWidth, height - dashedRectGapHeight);
     }
-    
+
     protected void paintButtonPressed(Graphics g, AbstractButton b){
-	setTextShiftOffset();
+        setTextShiftOffset();
     }
 
     // ********************************
     //          Layout Methods
     // ********************************
     public Dimension getPreferredSize(JComponent c) {
-	Dimension d = super.getPreferredSize(c);
-	
-	/* Ensure that the width and height of the button is odd,
-	 * to allow for the focus line if focus is painted
-	 */
+        Dimension d = super.getPreferredSize(c);
+
+        /* Ensure that the width and height of the button is odd,
+         * to allow for the focus line if focus is painted
+         */
         AbstractButton b = (AbstractButton)c;
-	if (d != null && b.isFocusPainted()) {
-	    if(d.width % 2 == 0) { d.width += 1; }
-	    if(d.height % 2 == 0) { d.height += 1; }
-	}
-	return d;
+        if (d != null && b.isFocusPainted()) {
+            if(d.width % 2 == 0) { d.width += 1; }
+            if(d.height % 2 == 0) { d.height += 1; }
+        }
+        return d;
     }
 
 
-    /* These rectangles/insets are allocated once for all 
-     * ButtonUI.paint() calls.  Re-using rectangles rather than 
+    /* These rectangles/insets are allocated once for all
+     * ButtonUI.paint() calls.  Re-using rectangles rather than
      * allocating them in each paint call substantially reduced the time
      * it took paint to run.  Obviously, this method can't be re-entered.
      */
     private static Rectangle viewRect = new Rectangle();
 
     public void paint(Graphics g, JComponent c) {
-	if (XPStyle.getXP() != null) {
-	    WindowsButtonUI.paintXPButtonBackground(g, c);
-	}
-	super.paint(g, c);
+        if (XPStyle.getXP() != null) {
+            WindowsButtonUI.paintXPButtonBackground(g, c);
+        }
+        super.paint(g, c);
     }
 
     static Part getXPButtonType(AbstractButton b) {
@@ -178,16 +177,16 @@ public class WindowsButtonUI extends BasicButtonUI
         State state = State.NORMAL;
         switch (part) {
         case BP_RADIOBUTTON:
-            /* falls through */            
+            /* falls through */
         case BP_CHECKBOX:
             if (! model.isEnabled()) {
-                state = (model.isSelected()) ? State.CHECKEDDISABLED 
+                state = (model.isSelected()) ? State.CHECKEDDISABLED
                     : State.UNCHECKEDDISABLED;
             } else if (model.isPressed() && model.isArmed()) {
-                state = (model.isSelected()) ? State.CHECKEDPRESSED 
+                state = (model.isSelected()) ? State.CHECKEDPRESSED
                     : State.UNCHECKEDPRESSED;
             } else if (model.isRollover()) {
-                state = (model.isSelected()) ? State.CHECKEDHOT 
+                state = (model.isSelected()) ? State.CHECKEDHOT
                     : State.UNCHECKEDHOT;
             } else {
                 state = (model.isSelected()) ? State.CHECKEDNORMAL
@@ -195,7 +194,7 @@ public class WindowsButtonUI extends BasicButtonUI
             }
             break;
         case BP_PUSHBUTTON:
-            /* falls through */            
+            /* falls through */
         case TP_BUTTON:
             boolean toolbar = (b.getParent() instanceof JToolBar);
             if (toolbar) {
@@ -213,14 +212,14 @@ public class WindowsButtonUI extends BasicButtonUI
                     state = State.HOT;
                 }
             } else {
-                if ((model.isArmed() && model.isPressed()) 
+                if ((model.isArmed() && model.isPressed())
                       || model.isSelected()) {
                     state = State.PRESSED;
                 } else if (!model.isEnabled()) {
                     state = State.DISABLED;
                 } else if (model.isRollover() || model.isPressed()) {
                     state = State.HOT;
-                } else if (b instanceof JButton 
+                } else if (b instanceof JButton
                            && ((JButton)b).isDefaultButton()) {
                     state = State.DEFAULTED;
                 } else if (b.hasFocus()) {
@@ -228,7 +227,7 @@ public class WindowsButtonUI extends BasicButtonUI
                 }
             }
             break;
-        default : 
+        default :
             state = State.NORMAL;
         }
 
@@ -236,43 +235,43 @@ public class WindowsButtonUI extends BasicButtonUI
     }
 
     static void paintXPButtonBackground(Graphics g, JComponent c) {
-	AbstractButton b = (AbstractButton)c;
+        AbstractButton b = (AbstractButton)c;
 
-	XPStyle xp = XPStyle.getXP();
+        XPStyle xp = XPStyle.getXP();
 
         Part part = getXPButtonType(b);
 
-	if (b.isContentAreaFilled() && xp != null) {
+        if (b.isContentAreaFilled() && xp != null) {
 
-	    Skin skin = xp.getSkin(b, part);
+            Skin skin = xp.getSkin(b, part);
 
             State state = getXPButtonState(b);
-	    Dimension d = c.getSize();
-	    int dx = 0;
-	    int dy = 0;
-	    int dw = d.width;
-	    int dh = d.height;
+            Dimension d = c.getSize();
+            int dx = 0;
+            int dy = 0;
+            int dw = d.width;
+            int dh = d.height;
 
-	    Border border = c.getBorder();
-	    Insets insets;
-	    if (border != null) {
-		// Note: The border may be compound, containing an outer
-		// opaque border (supplied by the application), plus an
-		// inner transparent margin border. We want to size the
-		// background to fill the transparent part, but stay
-		// inside the opaque part.
-		insets = WindowsButtonUI.getOpaqueInsets(border, c);
-	    } else {
-		insets = c.getInsets();
-	    }
-	    if (insets != null) {
-		dx += insets.left;
-		dy += insets.top;
-		dw -= (insets.left + insets.right);
-		dh -= (insets.top + insets.bottom);
-	    }
-	    skin.paintSkin(g, dx, dy, dw, dh, state);
-	}
+            Border border = c.getBorder();
+            Insets insets;
+            if (border != null) {
+                // Note: The border may be compound, containing an outer
+                // opaque border (supplied by the application), plus an
+                // inner transparent margin border. We want to size the
+                // background to fill the transparent part, but stay
+                // inside the opaque part.
+                insets = WindowsButtonUI.getOpaqueInsets(border, c);
+            } else {
+                insets = c.getInsets();
+            }
+            if (insets != null) {
+                dx += insets.left;
+                dy += insets.top;
+                dw -= (insets.left + insets.right);
+                dh -= (insets.top + insets.bottom);
+            }
+            skin.paintSkin(g, dx, dy, dw, dh, state);
+        }
     }
 
     /**
@@ -282,34 +281,33 @@ public class WindowsButtonUI extends BasicButtonUI
      *              outside border is opaque and inside isn't
      */
     private static Insets getOpaqueInsets(Border b, Component c) {
-	if (b == null) {
-	    return null;
-	}
-	if (b.isBorderOpaque()) {
-	    return b.getBorderInsets(c);
-	} else if (b instanceof CompoundBorder) {
-	    CompoundBorder cb = (CompoundBorder)b;
-	    Insets iOut = getOpaqueInsets(cb.getOutsideBorder(), c);
-	    if (iOut != null && iOut.equals(cb.getOutsideBorder().getBorderInsets(c))) {
-		// Outside border is opaque, keep looking
-		Insets iIn = getOpaqueInsets(cb.getInsideBorder(), c);
-		if (iIn == null) {
-		    // Inside is non-opaque, use outside insets
-		    return iOut;
-		} else {
-		    // Found non-opaque somewhere in the inside (which is
-		    // also compound).
-		    return new Insets(iOut.top + iIn.top, iOut.left + iIn.left,
-				      iOut.bottom + iIn.bottom, iOut.right + iIn.right);
-		}
-	    } else {
-		// Outside is either all non-opaque or has non-opaque
-		// border inside another compound border
-		return iOut;
-	    }
-	} else {
-	    return null;
-	}
+        if (b == null) {
+            return null;
+        }
+        if (b.isBorderOpaque()) {
+            return b.getBorderInsets(c);
+        } else if (b instanceof CompoundBorder) {
+            CompoundBorder cb = (CompoundBorder)b;
+            Insets iOut = getOpaqueInsets(cb.getOutsideBorder(), c);
+            if (iOut != null && iOut.equals(cb.getOutsideBorder().getBorderInsets(c))) {
+                // Outside border is opaque, keep looking
+                Insets iIn = getOpaqueInsets(cb.getInsideBorder(), c);
+                if (iIn == null) {
+                    // Inside is non-opaque, use outside insets
+                    return iOut;
+                } else {
+                    // Found non-opaque somewhere in the inside (which is
+                    // also compound).
+                    return new Insets(iOut.top + iIn.top, iOut.left + iIn.left,
+                                      iOut.bottom + iIn.bottom, iOut.right + iIn.right);
+                }
+            } else {
+                // Outside is either all non-opaque or has non-opaque
+                // border inside another compound border
+                return iOut;
+            }
+        } else {
+            return null;
+        }
     }
 }
-

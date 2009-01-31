@@ -40,15 +40,15 @@ import sun.font.FontManager;
 /**
  * A pool of styles and their associated resources.  This class determines
  * the lifetime of a group of resources by being a container that holds
- * caches for various resources such as font and color that get reused 
+ * caches for various resources such as font and color that get reused
  * by the various style definitions.  This can be shared by multiple
  * documents if desired to maximize the sharing of related resources.
  * <p>
  * This class also provides efficient support for small sets of attributes
- * and compresses them by sharing across uses and taking advantage of 
+ * and compresses them by sharing across uses and taking advantage of
  * their immutable nature.  Since many styles are replicated, the potential
- * for sharing is significant, and copies can be extremely cheap.  
- * Larger sets reduce the possibility of sharing, and therefore revert 
+ * for sharing is significant, and copies can be extremely cheap.
+ * Larger sets reduce the possibility of sharing, and therefore revert
  * automatically to a less space-efficient implementation.
  * <p>
  * <strong>Warning:</strong>
@@ -61,7 +61,6 @@ import sun.font.FontManager;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class StyleContext implements Serializable, AbstractDocument.AttributeContext {
 
@@ -94,18 +93,18 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * will override an attribute specified in the parent.
      *
      * @param nm   the name of the style (must be unique within the
-     *   collection of named styles in the document).  The name may 
+     *   collection of named styles in the document).  The name may
      *   be null if the style is unnamed, but the caller is responsible
      *   for managing the reference returned as an unnamed style can't
      *   be fetched by name.  An unnamed style may be useful for things
-     *   like character attribute overrides such as found in a style 
+     *   like character attribute overrides such as found in a style
      *   run.
      * @param parent the parent style.  This may be null if unspecified
      *   attributes need not be resolved in some other style.
      * @return the created style
      */
     public Style addStyle(String nm, Style parent) {
-        Style style = new NamedStyle(nm, parent); 
+        Style style = new NamedStyle(nm, parent);
         if (nm != null) {
             // add a named style, a class of attributes
             styles.addAttribute(nm, style);
@@ -114,7 +113,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     }
 
     /**
-     * Removes a named style previously added to the document.  
+     * Removes a named style previously added to the document.
      *
      * @param nm  the name of the style to remove
      */
@@ -176,7 +175,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     /**
      * Gets the font from an attribute set.  This is
      * implemented to try and fetch a cached font
-     * for the given AttributeSet, and if that fails 
+     * for the given AttributeSet, and if that fails
      * the font features are resolved and the
      * font is fetched from the low-level font cache.
      *
@@ -195,15 +194,15 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         String family = StyleConstants.getFontFamily(attr);
         int size = StyleConstants.getFontSize(attr);
 
-	/**
-	 * if either superscript or subscript is
-	 * is set, we need to reduce the font size
-	 * by 2.
-	 */
-	if (StyleConstants.isSuperscript(attr) ||
-	    StyleConstants.isSubscript(attr)) {
-	    size -= 2;
-	}
+        /**
+         * if either superscript or subscript is
+         * is set, we need to reduce the font size
+         * by 2.
+         */
+        if (StyleConstants.isSuperscript(attr) ||
+            StyleConstants.isSubscript(attr)) {
+            size -= 2;
+        }
 
         return getFont(family, style, size);
     }
@@ -218,7 +217,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * @return the color
      */
     public Color getForeground(AttributeSet attr) {
-	return StyleConstants.getForeground(attr);
+        return StyleConstants.getForeground(attr);
     }
 
     /**
@@ -231,7 +230,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * @return the color
      */
     public Color getBackground(AttributeSet attr) {
-	return StyleConstants.getBackground(attr);
+        return StyleConstants.getBackground(attr);
     }
 
     /**
@@ -250,11 +249,11 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         Font f = (Font) fontTable.get(fontSearch);
         if (f == null) {
             // haven't seen this one yet.
-            Style defaultStyle = 
+            Style defaultStyle =
                 getStyle(StyleContext.DEFAULT_STYLE);
             if (defaultStyle != null) {
                 final String FONT_ATTRIBUTE_KEY = "FONT_ATTRIBUTE_KEY";
-                Font defaultFont = 
+                Font defaultFont =
                     (Font) defaultStyle.getAttribute(FONT_ATTRIBUTE_KEY);
                 if (defaultFont != null
                       && defaultFont.getFamily().equalsIgnoreCase(family)) {
@@ -292,9 +291,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * the new representative set.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param old the old attribute set
      * @param name the non-null attribute name
@@ -321,9 +320,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * Adds a set of attributes to the element.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param old the old attribute set
      * @param attr the attributes to add
@@ -349,9 +348,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * Removes an attribute from the set.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param old the old set of attributes
      * @param name the non-null attribute name
@@ -377,9 +376,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * Removes a set of attributes for the element.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param old the old attribute set
      * @param names the attribute names
@@ -405,9 +404,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * Removes a set of attributes for the element.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param old the old attribute set
      * @param attrs the attributes
@@ -440,29 +439,29 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
     /**
      * Returns a set no longer needed by the MutableAttributeSet implmentation.
-     * This is useful for operation under 1.1 where there are no weak 
+     * This is useful for operation under 1.1 where there are no weak
      * references.  This would typically be called by the finalize method
      * of the MutableAttributeSet implementation.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see 
+     * are not. Please see
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.     
+     * to Use Threads</A> for more information.
      *
      * @param a the set to reclaim
      */
     public void reclaim(AttributeSet a) {
-	if (SwingUtilities.isEventDispatchThread()) {
-	    attributesPool.size(); // force WeakHashMap to expunge stale entries
-	} 
-	// if current thread is not event dispatching thread
-	// do not bother with expunging stale entries.
+        if (SwingUtilities.isEventDispatchThread()) {
+            attributesPool.size(); // force WeakHashMap to expunge stale entries
+        }
+        // if current thread is not event dispatching thread
+        // do not bother with expunging stale entries.
     }
 
     // --- local methods -----------------------------------------------
 
     /**
-     * Returns the maximum number of key/value pairs to try and 
+     * Returns the maximum number of key/value pairs to try and
      * compress into unique/immutable sets.  Any sets above this
      * limit will use hashtables and be a MutableAttributeSet.
      *
@@ -474,7 +473,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
     /**
      * Create a compact set of attributes that might be shared.
-     * This is a hook for subclasses that want to alter the 
+     * This is a hook for subclasses that want to alter the
      * behavior of SmallAttributeSet.  This can be reimplemented
      * to return an AttributeSet that provides some sort of
      * attribute conversion.
@@ -483,14 +482,14 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      *  the compact form.
      */
     protected SmallAttributeSet createSmallAttributeSet(AttributeSet a) {
-	return new SmallAttributeSet(a);
+        return new SmallAttributeSet(a);
     }
 
     /**
      * Create a large set of attributes that should trade off
      * space for time.  This set will not be shared.  This is
      * a hook for subclasses that want to alter the behavior
-     * of the larger attribute storage format (which is 
+     * of the larger attribute storage format (which is
      * SimpleAttributeSet by default).   This can be reimplemented
      * to return a MutableAttributeSet that provides some sort of
      * attribute conversion.
@@ -506,7 +505,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * Clean the unused immutable sets out of the hashtable.
      */
     synchronized void removeUnusedSets() {
-	attributesPool.size(); // force WeakHashMap to expunge stale entries
+        attributesPool.size(); // force WeakHashMap to expunge stale entries
     }
 
     /**
@@ -515,16 +514,16 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * is not found, we create a new set and add it to the pool.
      */
     AttributeSet getImmutableUniqueSet() {
-	// PENDING(prinz) should consider finding a alternative to
-	// generating extra garbage on search key.
-	SmallAttributeSet key = createSmallAttributeSet(search);
-	WeakReference reference = (WeakReference)attributesPool.get(key);
+        // PENDING(prinz) should consider finding a alternative to
+        // generating extra garbage on search key.
+        SmallAttributeSet key = createSmallAttributeSet(search);
+        WeakReference reference = (WeakReference)attributesPool.get(key);
         SmallAttributeSet a;
-        if (reference == null 
-	    || (a = (SmallAttributeSet)reference.get()) == null) {
+        if (reference == null
+            || (a = (SmallAttributeSet)reference.get()) == null) {
             a = key;
             attributesPool.put(a, new WeakReference(a));
-        } 
+        }
         return a;
     }
 
@@ -534,7 +533,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      */
     MutableAttributeSet getMutableAttributeSet(AttributeSet a) {
         if (a instanceof MutableAttributeSet &&
-	    a != SimpleAttributeSet.EMPTY) {
+            a != SimpleAttributeSet.EMPTY) {
             return (MutableAttributeSet) a;
         }
         return createLargeAttributeSet(a);
@@ -561,24 +560,24 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     /**
      * Context-specific handling of writing out attributes
      */
-    public void writeAttributes(ObjectOutputStream out, 
-				  AttributeSet a) throws IOException {
-        writeAttributeSet(out, a);				      
+    public void writeAttributes(ObjectOutputStream out,
+                                  AttributeSet a) throws IOException {
+        writeAttributeSet(out, a);
     }
 
     /**
      * Context-specific handling of reading in attributes
      */
-    public void readAttributes(ObjectInputStream in, 
-			       MutableAttributeSet a) throws ClassNotFoundException, IOException {
+    public void readAttributes(ObjectInputStream in,
+                               MutableAttributeSet a) throws ClassNotFoundException, IOException {
         readAttributeSet(in, a);
     }
-				  
+
     /**
      * Writes a set of attributes to the given object stream
      * for the purpose of serialization.  This will take
      * special care to deal with static attribute keys that
-     * have been registered wit the 
+     * have been registered wit the
      * <code>registerStaticAttributeKey</code> method.
      * Any attribute key not regsitered as a static key
      * will be serialized directly.  All values are expected
@@ -588,7 +587,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * @param a the attribute set
      * @exception IOException on any I/O error
      */
-    public static void writeAttributeSet(ObjectOutputStream out, 
+    public static void writeAttributeSet(ObjectOutputStream out,
                                          AttributeSet a) throws IOException {
         int n = a.getAttributeCount();
         out.writeInt(n);
@@ -599,10 +598,10 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
                 out.writeObject(key);
             } else {
                 Object ioFmt = freezeKeyMap.get(key);
-		if (ioFmt == null) {
-		    throw new NotSerializableException(key.getClass().
-			         getName() + " is not serializable as a key in an AttributeSet");
-		}
+                if (ioFmt == null) {
+                    throw new NotSerializableException(key.getClass().
+                                 getName() + " is not serializable as a key in an AttributeSet");
+                }
                 out.writeObject(ioFmt);
             }
             Object value = a.getAttribute(key);
@@ -610,10 +609,10 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
             if (value instanceof Serializable) {
                 out.writeObject((ioFmt != null) ? ioFmt : value);
             } else {
-		if (ioFmt == null) {
-		    throw new NotSerializableException(value.getClass().
-			         getName() + " is not serializable as a value in an AttributeSet");
-		}
+                if (ioFmt == null) {
+                    throw new NotSerializableException(value.getClass().
+                                 getName() + " is not serializable as a value in an AttributeSet");
+                }
                 out.writeObject(ioFmt);
             }
         }
@@ -625,36 +624,36 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * <code>writeAttributeSet</code>.  This will try to restore
      * keys that were static objects to the static objects in
      * the current virtual machine considering only those keys
-     * that have been registered with the 
+     * that have been registered with the
      * <code>registerStaticAttributeKey</code> method.
      * The attributes retrieved from the stream will be placed
      * into the given mutable set.
      *
      * @param in the object stream to read the attribute data from.
-     * @param a  the attribute set to place the attribute 
+     * @param a  the attribute set to place the attribute
      *   definitions in.
      * @exception ClassNotFoundException passed upward if encountered
      *  when reading the object stream.
      * @exception IOException passed upward if encountered when
      *  reading the object stream.
      */
-    public static void readAttributeSet(ObjectInputStream in, 
+    public static void readAttributeSet(ObjectInputStream in,
         MutableAttributeSet a) throws ClassNotFoundException, IOException {
 
         int n = in.readInt();
         for (int i = 0; i < n; i++) {
             Object key = in.readObject();
             Object value = in.readObject();
-	    if (thawKeyMap != null) {
-		Object staticKey = thawKeyMap.get(key);
-		if (staticKey != null) {
-		    key = staticKey;
-		}
-		Object staticValue = thawKeyMap.get(value);
-		if (staticValue != null) {
-		    value = staticValue;
-		}
-	    }
+            if (thawKeyMap != null) {
+                Object staticKey = thawKeyMap.get(key);
+                if (staticKey != null) {
+                    key = staticKey;
+                }
+                Object staticValue = thawKeyMap.get(value);
+                if (staticValue != null) {
+                    value = staticValue;
+                }
+            }
             a.addAttribute(key, value);
         }
     }
@@ -668,7 +667,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * uses the value returned by <code>toString</code>
      * concatenated to the classname.  The value returned
      * by toString should not have the class reference
-     * in it (ie it should be reimplemented from the 
+     * in it (ie it should be reimplemented from the
      * definition in Object) in order to be the same when
      * recomputed later.
      *
@@ -689,10 +688,10 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * <code>registerStaticAttributeKey</code>.
      */
     public static Object getStaticAttribute(Object key) {
-	if (thawKeyMap == null || key == null) {
-	    return null;
-	}
-	return thawKeyMap.get(key);
+        if (thawKeyMap == null || key == null) {
+            return null;
+        }
+        return thawKeyMap.get(key);
     }
 
     /**
@@ -714,13 +713,13 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     }
 
     private void readObject(ObjectInputStream s)
-      throws ClassNotFoundException, IOException 
+      throws ClassNotFoundException, IOException
     {
         fontSearch = new FontKey(null, 0, 0);
         fontTable = new Hashtable();
         search = new SimpleAttributeSet();
         attributesPool = Collections.
-	    synchronizedMap(new WeakHashMap());
+            synchronizedMap(new WeakHashMap());
         s.defaultReadObject();
     }
 
@@ -740,7 +739,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     private transient Hashtable fontTable = new Hashtable();
 
     private transient Map attributesPool = Collections.
-	synchronizedMap(new WeakHashMap());
+        synchronizedMap(new WeakHashMap());
     private transient MutableAttributeSet search = new SimpleAttributeSet();
 
     /**
@@ -756,7 +755,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
      * in an immutable table.
      */
     static final int THRESHOLD = 9;
-    
+
     /**
      * This class holds a small number of attributes in an array.
      * The storage format is key, value, key, value, etc.  The size
@@ -768,7 +767,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
         public SmallAttributeSet(Object[] attributes) {
             this.attributes = attributes;
-	    updateResolveParent();
+            updateResolveParent();
         }
 
         public SmallAttributeSet(AttributeSet attrs) {
@@ -782,24 +781,24 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
                 i += 2;
             }
             attributes = tbl;
-	    updateResolveParent();
+            updateResolveParent();
         }
 
-	private void updateResolveParent() {
-	    resolveParent = null;
+        private void updateResolveParent() {
+            resolveParent = null;
             Object[] tbl = attributes;
             for (int i = 0; i < tbl.length; i += 2) {
-		if (tbl[i] == StyleConstants.ResolveAttribute) {
-		    resolveParent = (AttributeSet)tbl[i + 1];
-		    break;
-		}
+                if (tbl[i] == StyleConstants.ResolveAttribute) {
+                    resolveParent = (AttributeSet)tbl[i + 1];
+                    break;
+                }
             }
-	}
+        }
 
         Object getLocalAttribute(Object nm) {
-	    if (nm == StyleConstants.ResolveAttribute) {
-		return resolveParent;
-	    }
+            if (nm == StyleConstants.ResolveAttribute) {
+                return resolveParent;
+            }
             Object[] tbl = attributes;
             for (int i = 0; i < tbl.length; i += 2) {
                 if (nm.equals(tbl[i])) {
@@ -845,9 +844,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         /**
          * Compares this object to the specifed object.
          * The result is <code>true</code> if the object is an equivalent
-	 * set of attributes.
+         * set of attributes.
          * @param     obj   the object to compare with.
-         * @return    <code>true</code> if the objects are equal; 
+         * @return    <code>true</code> if the objects are equal;
          *            <code>false</code> otherwise.
          */
         public boolean equals(Object obj) {
@@ -984,7 +983,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         }
 
         /**
-         * If not overriden, the resolving parent defaults to 
+         * If not overriden, the resolving parent defaults to
          * the parent element.
          *
          * @return the attributes from the parent
@@ -997,8 +996,8 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         // --- variables -----------------------------------------
 
         Object[] attributes;
-	// This is also stored in attributes
-	AttributeSet resolveParent;
+        // This is also stored in attributes
+        AttributeSet resolveParent;
     }
 
     /**
@@ -1025,7 +1024,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         /**
          * Returns the next element of this enumeration.
          *
-         * @return     the next element of this enumeration. 
+         * @return     the next element of this enumeration.
          * @exception  NoSuchElementException  if no more elements exist.
          * @since      JDK1.0
          */
@@ -1078,7 +1077,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
         /**
          * Creates a table of sorted key/value entries
-         * suitable for creation of an instance of 
+         * suitable for creation of an instance of
          * SmallAttributeSet.
          */
         public Object[] createTable() {
@@ -1208,17 +1207,17 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
          * @return     a hashcode value for this font.
          */
         public int hashCode() {
-	    int fhash = (family != null) ? family.hashCode() : 0;
+            int fhash = (family != null) ? family.hashCode() : 0;
             return fhash ^ style ^ size;
         }
-    
+
         /**
          * Compares this object to the specifed object.
-         * The result is <code>true</code> if and only if the argument is not 
-         * <code>null</code> and is a <code>Font</code> object with the same 
-         * name, style, and point size as this font. 
+         * The result is <code>true</code> if and only if the argument is not
+         * <code>null</code> and is a <code>Font</code> object with the same
+         * name, style, and point size as this font.
          * @param     obj   the object to compare this font with.
-         * @return    <code>true</code> if the objects are equal; 
+         * @return    <code>true</code> if the objects are equal;
          *            <code>false</code> otherwise.
          */
         public boolean equals(Object obj) {
@@ -1234,7 +1233,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     /**
      * A collection of attributes, typically used to represent
      * character and paragraph styles.  This is an implementation
-     * of MutableAttributeSet that can be observed if desired. 
+     * of MutableAttributeSet that can be observed if desired.
      * These styles will take advantage of immutability while
      * the sets are small enough, and may be substantially more
      * efficient than something like SimpleAttributeSet.
@@ -1255,7 +1254,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
          *
          * @param name the style name, null for unnamed
          * @param parent the parent style, null if none
-	 * @since 1.4
+         * @since 1.4
          */
         public NamedStyle(String name, Style parent) {
             attributes = getEmptySet();
@@ -1271,7 +1270,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
          * Creates a new named style.
          *
          * @param parent the parent style, null if none
-	 * @since 1.4
+         * @since 1.4
          */
         public NamedStyle(Style parent) {
             this(null, parent);
@@ -1352,8 +1351,8 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
         /**
          * Notifies all listeners that have registered interest for
-         * notification on this event type.  The event instance 
-         * is lazily created using the parameters passed into 
+         * notification on this event type.  The event instance
+         * is lazily created using the parameters passed into
          * the fire method.
          *
          * @see EventListenerList
@@ -1369,23 +1368,23 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
                     if (changeEvent == null)
                         changeEvent = new ChangeEvent(this);
                     ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
-                }              
+                }
             }
-        }       
+        }
 
-	/**
-	 * Return an array of all the listeners of the given type that 
-	 * were added to this model. 
-	 *
-	 * @return all of the objects receiving <em>listenerType</em> notifications 
-	 *          from this model
-	 * 
-	 * @since 1.3
-	 */
-	public <T extends EventListener> T[] getListeners(Class<T> listenerType) { 
-	    return listenerList.getListeners(listenerType); 
-	}
-        
+        /**
+         * Return an array of all the listeners of the given type that
+         * were added to this model.
+         *
+         * @return all of the objects receiving <em>listenerType</em> notifications
+         *          from this model
+         *
+         * @since 1.3
+         */
+        public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+            return listenerList.getListeners(listenerType);
+        }
+
         // --- AttributeSet ----------------------------
         // delegated to the immutable field "attributes"
 
@@ -1480,7 +1479,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
 
         /**
          * Gets attributes from the parent.
-         * If not overriden, the resolving parent defaults to 
+         * If not overriden, the resolving parent defaults to
          * the parent element.
          *
          * @return the attributes from the parent
@@ -1581,7 +1580,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         }
 
         private void readObject(ObjectInputStream s)
-            throws ClassNotFoundException, IOException 
+            throws ClassNotFoundException, IOException
         {
             s.defaultReadObject();
             attributes = SimpleAttributeSet.EMPTY;
@@ -1603,7 +1602,7 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
         protected transient ChangeEvent changeEvent = null;
 
         /**
-         * Inner AttributeSet implementation, which may be an 
+         * Inner AttributeSet implementation, which may be an
          * immutable unique set being shared.
          */
         private transient AttributeSet attributes;
@@ -1611,9 +1610,9 @@ public class StyleContext implements Serializable, AbstractDocument.AttributeCon
     }
 
     static {
-	// initialize the static key registry with the StyleConstants keys
+        // initialize the static key registry with the StyleConstants keys
         try {
-	    int n = StyleConstants.keys.length;
+            int n = StyleConstants.keys.length;
             for (int i = 0; i < n; i++) {
                 StyleContext.registerStaticAttributeKey(StyleConstants.keys[i]);
             }

@@ -28,55 +28,55 @@
 
 #include "awt_Win32GraphicsDevice.h"
 
-#define CMAPSIZE	256	// number of colors to use in default cmap
+#define CMAPSIZE        256     // number of colors to use in default cmap
 
-#define GS_NOTGRAY	0	// screen is not grayscale
-#define GS_INDEXGRAY	1	// screen is 8-bit indexed with several
-				//  gray colormap entries
-#define GS_STATICGRAY	2	// screen is 8-bit with 256 gray values
-				// from 0 to 255 (no index table used)
+#define GS_NOTGRAY      0       // screen is not grayscale
+#define GS_INDEXGRAY    1       // screen is 8-bit indexed with several
+                                //  gray colormap entries
+#define GS_STATICGRAY   2       // screen is 8-bit with 256 gray values
+                                // from 0 to 255 (no index table used)
 #define GS_NONLINGRAY   3       /* screen is 8-bit with 256 gray values
                                    in non-monotonic order */
 
 class AwtWin32GraphicsDevice;
 
 class AwtPalette {
-    
+
 public:
-    HPALETTE		    Select(HDC hDC);
+    HPALETTE                Select(HDC hDC);
 
-    void		    Realize(HDC hDC);
+    void                    Realize(HDC hDC);
 
-    HPALETTE		    GetPalette() { return logicalPalette; }
+    HPALETTE                GetPalette() { return logicalPalette; }
 
-    static void		    DisableCustomPalette();
+    static void             DisableCustomPalette();
 
-    static BOOL		    UseCustomPalette();
+    static BOOL             UseCustomPalette();
 
-			    AwtPalette(AwtWin32GraphicsDevice *device);
+                            AwtPalette(AwtWin32GraphicsDevice *device);
 
-    static int		    FetchPaletteEntries(HDC hDC, PALETTEENTRY* pPalEntries);
-    int			    GetGSType(PALETTEENTRY* pPalEntries);
+    static int              FetchPaletteEntries(HDC hDC, PALETTEENTRY* pPalEntries);
+    int                     GetGSType(PALETTEENTRY* pPalEntries);
 
-    BOOL		    Update();
-    void		    UpdateLogical();
+    BOOL                    Update();
+    void                    UpdateLogical();
 
-    unsigned int	    *GetSystemEntries() {return systemEntries; }
-    unsigned int	    *GetLogicalEntries() {return logicalEntries; }
-    unsigned char	    *GetSystemInverseLUT() { return systemInverseLUT; }
+    unsigned int            *GetSystemEntries() {return systemEntries; }
+    unsigned int            *GetLogicalEntries() {return logicalEntries; }
+    unsigned char           *GetSystemInverseLUT() { return systemInverseLUT; }
 
 private:
-    static BOOL		    m_useCustomPalette;
+    static BOOL             m_useCustomPalette;
 
-    unsigned int	    logicalEntries[256];
-    unsigned int	    systemEntries[256];
-    PALETTEENTRY	    systemEntriesWin32[256];  // cached to eliminate
-					      // copying it when unnec.
-    int			    numSystemEntries;
-    HPALETTE		    logicalPalette;
+    unsigned int            logicalEntries[256];
+    unsigned int            systemEntries[256];
+    PALETTEENTRY            systemEntriesWin32[256];  // cached to eliminate
+                                              // copying it when unnec.
+    int                     numSystemEntries;
+    HPALETTE                logicalPalette;
 
     AwtWin32GraphicsDevice  *device;
-    unsigned char	    *systemInverseLUT;
+    unsigned char           *systemInverseLUT;
 
     /**
      * This custom palette is derived from the IE palette.
@@ -102,7 +102,7 @@ private:
      *
      * The palette is initialized in awt_CustomPaletteDef.h
      */
-    static PALETTEENTRY	    customPalette[236];
+    static PALETTEENTRY     customPalette[236];
 };
 
 

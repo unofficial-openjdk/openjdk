@@ -46,68 +46,68 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * The <code>DirectoryScannerConfig</code> Java Bean is used to model
- * the configuration of a {@link 
+ * the configuration of a {@link
  * com.sun.jmx.examples.scandir.DirectoryScannerMXBean}.
  * <p>
  * This class is annotated for XML binding.
- * </p> 
+ * </p>
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 @XmlRootElement(name="DirectoryScanner",
         namespace=XmlConfigUtils.NAMESPACE)
 public class DirectoryScannerConfig {
-    
+
     //
     // A logger for this class.
     //
     // private static final Logger LOG =
     //        Logger.getLogger(DirectoryScannerConfig.class.getName());
-    
+
     /**
-     * This enumeration is used to model the actions that a {@link 
-     * com.sun.jmx.examples.scandir.DirectoryScannerMXBean 
+     * This enumeration is used to model the actions that a {@link
+     * com.sun.jmx.examples.scandir.DirectoryScannerMXBean
      * DirectoryScannerMXBean} should take when a file matches its set
      * of matching criteria.
      **/
-    public enum Action { 
+    public enum Action {
         /**
-         * Indicates that the {@code DirectoryScannerMXBean} should 
+         * Indicates that the {@code DirectoryScannerMXBean} should
          * emit a {@code Notification} when a matching file is found.
          */
-        NOTIFY, 
+        NOTIFY,
         /**
-         * Indicates that the {@code DirectoryScannerMXBean} should 
+         * Indicates that the {@code DirectoryScannerMXBean} should
          * delete the matching files.
          */
-        DELETE, 
+        DELETE,
         /**
-         * Indicates that the {@code DirectoryScannerMXBean} should 
+         * Indicates that the {@code DirectoryScannerMXBean} should
          * log the actions that were taken on the matching files.
          */
         LOGRESULT };
-    
-    // A short name for the Directory Scanner 
+
+    // A short name for the Directory Scanner
     // This name is used for the value of the {@code name=} key in the
     // {@code DirectoryScannerMXBean} ObjectName.
     private String name;
-    
+
     // The root directory of the Directory Scanner
     private String rootDirectory;
 
     // List of filters identifying files that should be selected.
     // A file is selected if at least one filter matches.
     //
-    private final List<FileMatch> includeFiles = 
+    private final List<FileMatch> includeFiles =
             new ArrayList<FileMatch>();
 
     // List of filters identifying files that should be excluded.
     // A file is excluded if at least one filter matches.
     //
-    private final List<FileMatch> excludeFiles = 
+    private final List<FileMatch> excludeFiles =
             new ArrayList<FileMatch>();
 
 
-    // The actions that this Directory Scanner should carry out when a 
+    // The actions that this Directory Scanner should carry out when a
     // file is selected. Default is NOTIFY and LOGRESULT.
     //
     private Action[] actions = { Action.NOTIFY, Action.LOGRESULT };
@@ -115,18 +115,18 @@ public class DirectoryScannerConfig {
     /**
      * Creates a new instance of {@code DirectoryScannerConfig}.
      * We keep this empty constructor to make XML binding easier.
-     * You shouldn't use this constructor directly: 
-     * use {@link #DirectoryScannerConfig(String) 
+     * You shouldn't use this constructor directly:
+     * use {@link #DirectoryScannerConfig(String)
      * DirectoryScannerConfig(String name)} instead.
      * @deprecated <p>Tagged deprecated so that a compiler warning is issued.
-     *             Use {@link #DirectoryScannerConfig(String) 
+     *             Use {@link #DirectoryScannerConfig(String)
      *                  DirectoryScannerConfig(String name)} instead.
      *             </p>
      **/
     public DirectoryScannerConfig() {
         this(null);
     }
-    
+
     /**
      * Creates a new instance of {@code DirectoryScannerConfig}.
      * @param name A short name for the Directory Scanner. This name is used for
@@ -137,7 +137,7 @@ public class DirectoryScannerConfig {
         this.name = name;
         rootDirectory = null;
     }
-    
+
     /**
      * Gets the root directory configured for that Directory Scanner.
      * @return the root directory at which the directory scanner should start
@@ -147,7 +147,7 @@ public class DirectoryScannerConfig {
     public String getRootDirectory() {
         return rootDirectory;
     }
-    
+
     /**
      * Configures a root directory for that Directory Scanner.
      * @param root The root directory at which the directory scanner should
@@ -156,8 +156,8 @@ public class DirectoryScannerConfig {
     public void setRootDirectory(String root) {
         rootDirectory=root;
     }
-  
-    
+
+
     /**
      * Gets the short name of this directory scanner.
      *
@@ -177,8 +177,8 @@ public class DirectoryScannerConfig {
      * Setter for property {@link #getName() name}.
      * Once set its value cannot change.
      * @param name New value of property name.
-     * @throws IllegalArgumentException if {@code name} is already set to a 
-     *         different non null value. 
+     * @throws IllegalArgumentException if {@code name} is already set to a
+     *         different non null value.
      */
     public void setName(String name) {
         if (this.name == null)
@@ -195,7 +195,7 @@ public class DirectoryScannerConfig {
      * A file is selected if at least one filter matches.
      * @return Value of property includeFiles.
      */
-    @XmlElementWrapper(name="IncludeFiles", 
+    @XmlElementWrapper(name="IncludeFiles",
             namespace=XmlConfigUtils.NAMESPACE)
     @XmlElementRef
     public FileMatch[] getIncludeFiles() {
@@ -210,18 +210,18 @@ public class DirectoryScannerConfig {
      * @param include A filter identifying files that should be selected.
      */
     public void addIncludeFiles(FileMatch include) {
-        if (include == null) 
+        if (include == null)
             throw new IllegalArgumentException("null");
         synchronized (includeFiles) {
             includeFiles.add(include);
         }
     }
-    
+
     /**
      * Setter for property includeFiles.
      * @param includeFiles New value of property includeFiles.
-     *        This is an array of filters identifying files 
-     *        that should be selected. A file is selected if at least 
+     *        This is an array of filters identifying files
+     *        that should be selected. A file is selected if at least
      *        one filter matches.
      */
     public void setIncludeFiles(FileMatch[] includeFiles) {
@@ -238,7 +238,7 @@ public class DirectoryScannerConfig {
      * A file is excluded if at least one filter matches.
      * @return Value of property excludeFiles.
      */
-    @XmlElementWrapper(name="ExcludeFiles", 
+    @XmlElementWrapper(name="ExcludeFiles",
             namespace=XmlConfigUtils.NAMESPACE)
     @XmlElementRef
     public FileMatch[] getExcludeFiles() {
@@ -250,8 +250,8 @@ public class DirectoryScannerConfig {
     /**
      * Setter for property excludeFiles.
      * @param excludeFiles New value of property excludeFiles.
-     *        This is an array of filters identifying files 
-     *        that should be excluded. A file is excluded if at least 
+     *        This is an array of filters identifying files
+     *        that should be excluded. A file is excluded if at least
      *        one filter matches.
      */
     public void setExcludeFiles(FileMatch[] excludeFiles) {
@@ -261,25 +261,25 @@ public class DirectoryScannerConfig {
             this.excludeFiles.addAll(Arrays.asList(excludeFiles));
         }
     }
-    
+
     /**
      * Adds a filter to the excludeFiles property.
      * A file is excluded if at least one filter matches.
      * @param exclude A filter identifying files that should be excluded.
      */
     public void addExcludeFiles(FileMatch exclude) {
-        if (exclude == null) 
+        if (exclude == null)
             throw new IllegalArgumentException("null");
         synchronized (excludeFiles) {
             this.excludeFiles.add(exclude);
         }
     }
-    
+
     /**
-     * Gets the list of actions that this Directory Scanner should carry 
+     * Gets the list of actions that this Directory Scanner should carry
      * out when a file is selected. Default is NOTIFY and LOGRESULT.
 
-     * @return The list of actions that this Directory Scanner should carry 
+     * @return The list of actions that this Directory Scanner should carry
      * out when a file is selected.
      */
     @XmlElement(name="Actions",namespace=XmlConfigUtils.NAMESPACE)
@@ -289,31 +289,31 @@ public class DirectoryScannerConfig {
     }
 
     /**
-     * Sets the list of actions that this Directory Scanner should carry 
+     * Sets the list of actions that this Directory Scanner should carry
      * out when a file is selected. Default is NOTIFY and LOGRESULT.
 
-     * @param actions The list of actions that this Directory Scanner should 
+     * @param actions The list of actions that this Directory Scanner should
      * carry out when a file is selected.
      */
     public void setActions(Action[] actions) {
         this.actions = (actions == null)?null:actions.clone();
     }
-    
+
     /**
-     * Builds a {@code FileFilter} from the {@link #getIncludeFiles 
+     * Builds a {@code FileFilter} from the {@link #getIncludeFiles
      * includeFiles} and {@link #getExcludeFiles excludeFiles} lists.
      * A file will be accepted if it is selected by at least one of
-     * the filters in {@link #getIncludeFiles includeFiles}, and is 
-     * not excluded by any of the filters in {@link 
+     * the filters in {@link #getIncludeFiles includeFiles}, and is
+     * not excluded by any of the filters in {@link
      * #getExcludeFiles excludeFiles}. If there's no filter in
      * {@link #getIncludeFiles includeFiles}, then a file is accepted
-     * simply if it is not excluded by any of the filters in {@link 
+     * simply if it is not excluded by any of the filters in {@link
      * #getExcludeFiles excludeFiles}.
      *
      * @return A new {@code FileFilter}  created from the current snapshot
-     *         of the {@link #getIncludeFiles 
+     *         of the {@link #getIncludeFiles
      * includeFiles} and {@link #getExcludeFiles excludeFiles} lists.
-     *         Later modification of these lists will not affect the 
+     *         Later modification of these lists will not affect the
      *         returned {@code FileFilter}.
      **/
     public FileFilter buildFileFilter() {
@@ -321,28 +321,28 @@ public class DirectoryScannerConfig {
         final FileFilter[] outs = getExcludeFiles();
         final FileFilter filter = new FileFilter() {
             public boolean accept(File f) {
-                boolean result = false; 
+                boolean result = false;
                 // If no include filter, all files are included.
                 if (ins != null) {
                     for (FileFilter in: ins) {
                         // if one filter accepts it, file is included
-                        if (!in.accept(f)) continue; 
-                        
+                        if (!in.accept(f)) continue;
+
                         // file is accepted, include it
                         result=true;
                         break;
                     }
                 } else result= true;
                 if (result == false) return false;
-                
+
                 // The file is in the include list. Let's see if it's not
                 // in the exclude list...
                 //
                 if (outs != null) {
                     for (FileFilter out: outs) {
                         // if one filter accepts it, file is excluded
-                        if (!out.accept(f)) continue; 
-                        
+                        if (!out.accept(f)) continue;
+
                         // file is accepted, exclude it.
                         result=false;
                         break;
@@ -353,15 +353,15 @@ public class DirectoryScannerConfig {
         };
         return filter;
     }
-    
+
     // Used for equality - see equals().
     private Object[] toArray() {
         final Object[] thisconfig = {
             name,rootDirectory,actions,excludeFiles,includeFiles
-        };        
+        };
         return thisconfig;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -371,7 +371,7 @@ public class DirectoryScannerConfig {
         final Object[] otherconfig = other.toArray();
         return Arrays.deepEquals(thisconfig,otherconfig);
     }
-    
+
     @Override
     public int hashCode() {
         final String key = name;

@@ -36,13 +36,13 @@ public class OpenStream {
 
     public static void main(String[] args) throws IOException {
 
-	URL u = new URL(badHttp);
-	try {
-	    InputStream in = u.openStream();
-	} catch (UnknownHostException x) {
-	    return;
-	}
-   	throw new RuntimeException("Expected UnknownHostException to be thrown");
+        URL u = new URL(badHttp);
+        try {
+            InputStream in = u.openStream();
+        } catch (UnknownHostException x) {
+            return;
+        }
+        throw new RuntimeException("Expected UnknownHostException to be thrown");
 
     }
 

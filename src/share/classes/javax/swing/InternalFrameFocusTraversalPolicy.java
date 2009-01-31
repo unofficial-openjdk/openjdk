@@ -36,7 +36,6 @@ import java.awt.FocusTraversalPolicy;
  * focus.
  *
  * @author David Mendenhall
- * @version %I%, %G%
  *
  * @since 1.4
  */

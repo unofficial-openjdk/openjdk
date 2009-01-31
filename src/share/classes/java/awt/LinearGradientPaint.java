@@ -36,12 +36,12 @@ import java.awt.image.ColorModel;
  * a {@link java.awt.Shape} with a linear color gradient pattern.  The user
  * may specify two or more gradient colors, and this paint will provide an
  * interpolation between each color.  The user also specifies start and end
- * points which define where in user space the color gradient should begin 
+ * points which define where in user space the color gradient should begin
  * and end.
  * <p>
  * The user must provide an array of floats specifying how to distribute the
- * colors along the gradient.  These values should range from 0.0 to 1.0 and 
- * act like keyframes along the gradient (they mark where the gradient should 
+ * colors along the gradient.  These values should range from 0.0 to 1.0 and
+ * act like keyframes along the gradient (they mark where the gradient should
  * be exactly a particular color).
  * <p>
  * In the event that the user does not set the first keyframe value equal
@@ -90,7 +90,7 @@ import java.awt.image.ColorModel;
  * <center>
  * <img src = "doc-files/LinearGradientPaint.png">
  * </center>
- *  
+ *
  * @see java.awt.Paint
  * @see java.awt.Graphics2D#setPaint
  * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans
@@ -100,23 +100,23 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
 
     /** Gradient start and end points. */
     private final Point2D start, end;
-       
+
     /**
-     * Constructs a {@code LinearGradientPaint} with a default 
+     * Constructs a {@code LinearGradientPaint} with a default
      * {@code NO_CYCLE} repeating method and {@code SRGB} color space.
      *
-     * @param startX the X coordinate of the gradient axis start point 
+     * @param startX the X coordinate of the gradient axis start point
      *               in user space
-     * @param startY the Y coordinate of the gradient axis start point 
+     * @param startY the Y coordinate of the gradient axis start point
      *               in user space
-     * @param endX   the X coordinate of the gradient axis end point 
+     * @param endX   the X coordinate of the gradient axis end point
      *               in user space
-     * @param endY   the Y coordinate of the gradient axis end point 
+     * @param endY   the Y coordinate of the gradient axis end point
      *               in user space
-     * @param fractions numbers ranging from 0.0 to 1.0 specifying the 
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
      *                  distribution of colors along the gradient
      * @param colors array of colors corresponding to each fractional value
-     *     
+     *
      * @throws NullPointerException
      * if {@code fractions} array is null,
      * or {@code colors} array is null,
@@ -127,13 +127,13 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
      * or a {@code fractions} value is less than 0.0 or greater than 1.0,
      * or the {@code fractions} are not provided in strictly increasing order
      */
-    public LinearGradientPaint(float startX, float startY, 
-                               float endX, float endY, 
+    public LinearGradientPaint(float startX, float startY,
+                               float endX, float endY,
                                float[] fractions, Color[] colors)
     {
         this(new Point2D.Float(startX, startY),
-             new Point2D.Float(endX, endY), 
-             fractions, 
+             new Point2D.Float(endX, endY),
+             fractions,
              colors,
              CycleMethod.NO_CYCLE);
     }
@@ -142,15 +142,15 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
      * Constructs a {@code LinearGradientPaint} with a default {@code SRGB}
      * color space.
      *
-     * @param startX the X coordinate of the gradient axis start point 
+     * @param startX the X coordinate of the gradient axis start point
      *               in user space
-     * @param startY the Y coordinate of the gradient axis start point 
+     * @param startY the Y coordinate of the gradient axis start point
      *               in user space
-     * @param endX   the X coordinate of the gradient axis end point 
+     * @param endX   the X coordinate of the gradient axis end point
      *               in user space
-     * @param endY   the Y coordinate of the gradient axis end point 
+     * @param endY   the Y coordinate of the gradient axis end point
      *               in user space
-     * @param fractions numbers ranging from 0.0 to 1.0 specifying the 
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
      *                  distribution of colors along the gradient
      * @param colors array of colors corresponding to each fractional value
      * @param cycleMethod either {@code NO_CYCLE}, {@code REFLECT},
@@ -167,25 +167,25 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
      * or a {@code fractions} value is less than 0.0 or greater than 1.0,
      * or the {@code fractions} are not provided in strictly increasing order
      */
-    public LinearGradientPaint(float startX, float startY, 
-                               float endX, float endY, 
-                               float[] fractions, Color[] colors, 
+    public LinearGradientPaint(float startX, float startY,
+                               float endX, float endY,
+                               float[] fractions, Color[] colors,
                                CycleMethod cycleMethod)
     {
-        this(new Point2D.Float(startX, startY), 
-             new Point2D.Float(endX, endY), 
-             fractions, 
+        this(new Point2D.Float(startX, startY),
+             new Point2D.Float(endX, endY),
+             fractions,
              colors,
              cycleMethod);
     }
 
     /**
-     * Constructs a {@code LinearGradientPaint} with a default 
+     * Constructs a {@code LinearGradientPaint} with a default
      * {@code NO_CYCLE} repeating method and {@code SRGB} color space.
      *
      * @param start the gradient axis start {@code Point2D} in user space
      * @param end the gradient axis end {@code Point2D} in user space
-     * @param fractions numbers ranging from 0.0 to 1.0 specifying the 
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
      *                  distribution of colors along the gradient
      * @param colors array of colors corresponding to each fractional value
      *
@@ -207,19 +207,19 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
              fractions, colors,
              CycleMethod.NO_CYCLE);
     }
-    
+
     /**
      * Constructs a {@code LinearGradientPaint} with a default {@code SRGB}
      * color space.
      *
      * @param start the gradient axis start {@code Point2D} in user space
      * @param end the gradient axis end {@code Point2D} in user space
-     * @param fractions numbers ranging from 0.0 to 1.0 specifying the 
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
      *                  distribution of colors along the gradient
      * @param colors array of colors corresponding to each fractional value
      * @param cycleMethod either {@code NO_CYCLE}, {@code REFLECT},
      *                    or {@code REPEAT}
-     *   
+     *
      * @throws NullPointerException
      * if one of the points is null,
      * or {@code fractions} array is null,
@@ -233,7 +233,7 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
      * or the {@code fractions} are not provided in strictly increasing order
      */
     public LinearGradientPaint(Point2D start, Point2D end,
-                               float[] fractions, Color[] colors, 
+                               float[] fractions, Color[] colors,
                                CycleMethod cycleMethod)
     {
         this(start, end,
@@ -242,21 +242,21 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
              ColorSpaceType.SRGB,
              new AffineTransform());
     }
-    
+
     /**
      * Constructs a {@code LinearGradientPaint}.
      *
      * @param start the gradient axis start {@code Point2D} in user space
      * @param end the gradient axis end {@code Point2D} in user space
-     * @param fractions numbers ranging from 0.0 to 1.0 specifying the 
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
      *                  distribution of colors along the gradient
      * @param colors array of colors corresponding to each fractional value
      * @param cycleMethod either {@code NO_CYCLE}, {@code REFLECT},
      *                    or {@code REPEAT}
-     * @param colorSpace which color space to use for interpolation, 
+     * @param colorSpace which color space to use for interpolation,
      *                   either {@code SRGB} or {@code LINEAR_RGB}
      * @param gradientTransform transform to apply to the gradient
-     *     
+     *
      * @throws NullPointerException
      * if one of the points is null,
      * or {@code fractions} array is null,
@@ -273,8 +273,8 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
      */
     public LinearGradientPaint(Point2D start, Point2D end,
                                float[] fractions, Color[] colors,
-                               CycleMethod cycleMethod, 
-                               ColorSpaceType colorSpace, 
+                               CycleMethod cycleMethod,
+                               ColorSpaceType colorSpace,
                                AffineTransform gradientTransform)
     {
         super(fractions, colors, cycleMethod, colorSpace, gradientTransform);
@@ -307,7 +307,7 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
         // avoid modifying the user's transform...
         transform = new AffineTransform(transform);
         // incorporate the gradient transform
-        transform.concatenate(gradientTransform); 
+        transform.concatenate(gradientTransform);
 
         if ((fractions.length == 2) &&
             (cycleMethod != CycleMethod.REPEAT) &&
@@ -329,7 +329,7 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
                                                   cycleMethod, colorSpace);
         }
     }
-    
+
     /**
      * Returns a copy of the start point of the gradient axis.
      *
@@ -339,7 +339,7 @@ public final class LinearGradientPaint extends MultipleGradientPaint {
     public Point2D getStartPoint() {
         return new Point2D.Double(start.getX(), start.getY());
     }
-    
+
     /**
      * Returns a copy of the end point of the gradient axis.
      *

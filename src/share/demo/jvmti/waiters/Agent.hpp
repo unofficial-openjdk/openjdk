@@ -46,15 +46,14 @@ class Agent {
     void vm_death(jvmtiEnv *jvmti, JNIEnv *env);
     void thread_start(jvmtiEnv *jvmti, JNIEnv *env, jthread thread);
     void thread_end(jvmtiEnv *jvmti, JNIEnv *env, jthread thread);
-    void monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env, 
-		   jthread thread, jobject object);
+    void monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env,
+                   jthread thread, jobject object);
     void monitor_contended_entered(jvmtiEnv* jvmti, JNIEnv *env,
-		   jthread thread, jobject object);
-    void monitor_wait(jvmtiEnv* jvmti, JNIEnv *env, 
-		   jthread thread, jobject object, jlong timeout);
+                   jthread thread, jobject object);
+    void monitor_wait(jvmtiEnv* jvmti, JNIEnv *env,
+                   jthread thread, jobject object, jlong timeout);
     void monitor_waited(jvmtiEnv* jvmti, JNIEnv *env,
-		   jthread thread, jobject object, jboolean timed_out);
+                   jthread thread, jobject object, jboolean timed_out);
     void object_free(jvmtiEnv* jvmti, jlong tag);
 
 };
-

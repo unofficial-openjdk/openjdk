@@ -38,7 +38,6 @@ import java.net.URL;
  * It defines the type and value of the the entity.
  *
  * @see DTD
- * @version %I%, %G%
  * @author Arthur van Hoff
  */
 public final
@@ -54,9 +53,9 @@ class Entity implements DTDConstants {
      * @param data the char array of data
      */
     public Entity(String name, int type, char data[]) {
-	this.name = name;
-	this.type = type;
-	this.data = data;
+        this.name = name;
+        this.type = type;
+        this.data = data;
     }
 
     /**
@@ -64,7 +63,7 @@ class Entity implements DTDConstants {
      * @return the name of the entity, as a <code>String</code>
      */
     public String getName() {
-	return name;
+        return name;
     }
 
     /**
@@ -72,7 +71,7 @@ class Entity implements DTDConstants {
      * @return the type of the entity
      */
     public int getType() {
-	return type & 0xFFFF;
+        return type & 0xFFFF;
     }
 
     /**
@@ -80,7 +79,7 @@ class Entity implements DTDConstants {
      * @return <code>true</code> if it is a parameter entity
      */
     public boolean isParameter() {
-	return (type & PARAMETER) != 0;
+        return (type & PARAMETER) != 0;
     }
 
     /**
@@ -88,7 +87,7 @@ class Entity implements DTDConstants {
      * @return <code>true</code> if it is a general entity
      */
     public boolean isGeneral() {
-	return (type & GENERAL) != 0;
+        return (type & GENERAL) != 0;
     }
 
     /**
@@ -96,7 +95,7 @@ class Entity implements DTDConstants {
      * @return the <code>data</code>
      */
     public char getData()[] {
-	return data;
+        return data;
     }
 
     /**
@@ -104,22 +103,22 @@ class Entity implements DTDConstants {
      * @return the data as a <code>String</code>
      */
     public String getString() {
-	return new String(data, 0, data.length);
+        return new String(data, 0, data.length);
     }
 
 
     static Hashtable entityTypes = new Hashtable();
 
     static {
-	entityTypes.put("PUBLIC", new Integer(PUBLIC));
-	entityTypes.put("CDATA", new Integer(CDATA));
-	entityTypes.put("SDATA", new Integer(SDATA));
-	entityTypes.put("PI", new Integer(PI));
-	entityTypes.put("STARTTAG", new Integer(STARTTAG));
-	entityTypes.put("ENDTAG", new Integer(ENDTAG));
-	entityTypes.put("MS", new Integer(MS));
-	entityTypes.put("MD", new Integer(MD));
-	entityTypes.put("SYSTEM", new Integer(SYSTEM));
+        entityTypes.put("PUBLIC", new Integer(PUBLIC));
+        entityTypes.put("CDATA", new Integer(CDATA));
+        entityTypes.put("SDATA", new Integer(SDATA));
+        entityTypes.put("PI", new Integer(PI));
+        entityTypes.put("STARTTAG", new Integer(STARTTAG));
+        entityTypes.put("ENDTAG", new Integer(ENDTAG));
+        entityTypes.put("MS", new Integer(MS));
+        entityTypes.put("MD", new Integer(MD));
+        entityTypes.put("SYSTEM", new Integer(SYSTEM));
     }
 
     /**
@@ -134,8 +133,7 @@ class Entity implements DTDConstants {
      *   to "CDATA", if none exists
      */
     public static int name2type(String nm) {
-	Integer i = (Integer)entityTypes.get(nm);
-	return (i == null) ? CDATA : i.intValue();
+        Integer i = (Integer)entityTypes.get(nm);
+        return (i == null) ? CDATA : i.intValue();
     }
 }
-

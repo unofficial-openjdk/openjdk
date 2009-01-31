@@ -38,7 +38,6 @@ import sun.awt.SunToolkit;
  * before the wrapping SequencedEvent was able to be dispatched. In this case,
  * the nested event is never dispatched.
  *
- * @version %I%, %G%
  * @author David Mendenhall
  */
 class SequencedEvent extends AWTEvent implements ActiveEvent {
@@ -48,7 +47,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
     private static final long serialVersionUID = 547742659238625067L;
 
     private static final int ID =
-	java.awt.event.FocusEvent.FOCUS_LAST + 1;
+        java.awt.event.FocusEvent.FOCUS_LAST + 1;
     private static final LinkedList list = new LinkedList();
 
     private final AWTEvent nested;
@@ -63,11 +62,11 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
      *        method will dispatch
      */
     public SequencedEvent(AWTEvent nested) {
-	super(nested.getSource(), ID);
-	this.nested = nested;
-	synchronized (SequencedEvent.class) {
-	    list.add(this);
-	}
+        super(nested.getSource(), ID);
+        this.nested = nested;
+        synchronized (SequencedEvent.class) {
+            list.add(this);
+        }
     }
 
     /**
@@ -77,9 +76,9 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
      * reached.
      * While waiting disposes nested events to disposed AppContext
      *
-     * NOTE: Locking protocol.  Since dispose() can get EventQueue lock, 
-     * dispatch() shall never call dispose() while holding the lock on the list, 
-     * as EventQueue lock is held during dispatching.  The locks should be acquired 
+     * NOTE: Locking protocol.  Since dispose() can get EventQueue lock,
+     * dispatch() shall never call dispose() while holding the lock on the list,
+     * as EventQueue lock is held during dispatching.  The locks should be acquired
      * in the same order.
      */
     public final void dispatch() {
@@ -98,7 +97,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
                 } else {
                     while(!isFirstOrDisposed()) {
                         synchronized (SequencedEvent.class) {
-                            try {                             
+                            try {
                                 SequencedEvent.class.wait(1000);
                             } catch (InterruptedException e) {
                                 break;
@@ -117,7 +116,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
             dispose();
         }
     }
-   
+
     /**
      * true only if event exists and nested source appContext is disposed.
      */
@@ -136,7 +135,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
      * until we are the first sequenced event in the queue (i.e. it's our
      * turn).  But while we wait for our turn to dispatch, the event
      * could have been disposed for a number of reasons.
-     */    
+     */
     public final boolean isFirstOrDisposed() {
         if (disposed) {
             return true;
@@ -149,7 +148,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
         return (SequencedEvent)list.getFirst();
     }
 
-    /* Disposes all events from disposed AppContext 
+    /* Disposes all events from disposed AppContext
      * return first valid event
      */
     private final static SequencedEvent getFirstWithContext() {
@@ -157,7 +156,7 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
         while(isOwnerAppContextDisposed(first)) {
             first.dispose();
             first = getFirst();
-        }        
+        }
         return first;
     }
 
@@ -166,9 +165,9 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
      * has been dispatched and handled, or when the peer of the target of the
      * nested event has been disposed with a call to Component.removeNotify.
      *
-     * NOTE: Locking protocol.  Since SunToolkit.postEvent can get EventQueue lock, 
-     * it shall never be called while holding the lock on the list, 
-     * as EventQueue lock is held during dispatching and dispatch() will get 
+     * NOTE: Locking protocol.  Since SunToolkit.postEvent can get EventQueue lock,
+     * it shall never be called while holding the lock on the list,
+     * as EventQueue lock is held during dispatching and dispatch() will get
      * lock on the list. The locks should be acquired in the same order.
      */
     final void dispose() {
@@ -187,9 +186,9 @@ class SequencedEvent extends AWTEvent implements ActiveEvent {
         if (appContext != null) {
             SunToolkit.postEvent(appContext, new SentEvent());
         }
-        
+
         SequencedEvent next = null;
-        
+
         synchronized (SequencedEvent.class) {
           SequencedEvent.class.notifyAll();
 

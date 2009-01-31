@@ -24,7 +24,7 @@
 /*
  * @test
  * @author Gary Ellison
- * @bug 4208282 
+ * @bug 4208282
  * @summary java.net.InetAddress.getByName caching unknown host lookups
  */
 
@@ -33,11 +33,11 @@ import java.net.InetAddress;
 public class CachedUnknownHostName {
   public static void main(String argv[]) throws Exception {
     String hostname = new String("bogusHostName");
-  
+
     try {
       InetAddress.getByName(hostname);
       System.err.println("Missing java.net.UnknownHostException for host " +
-			 hostname);
+                         hostname);
       throw new Exception("Missing java.net.UnknownHostException");
     } catch(java.net.UnknownHostException e) {
       // this one is anticipated
@@ -47,14 +47,13 @@ public class CachedUnknownHostName {
     try {
       InetAddress.getByName(hostname);
       System.err.println("Missing java.net.UnknownHostException for host " +
-			 hostname);
+                         hostname);
       throw new Exception("Missing java.net.UnknownHostException");
     } catch(java.net.UnknownHostException e) {
       // this is the one that was not firing off.
       System.out.println("Caught expected exception:" + e);
     }
 
-    System.out.println("Passed. OKAY");    
+    System.out.println("Passed. OKAY");
   }
 }
-

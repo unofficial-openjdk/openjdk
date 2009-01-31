@@ -36,16 +36,16 @@ class StringCounterSnapshot extends AbstractCounter
     String value;
 
     // package private
-    StringCounterSnapshot(String name, Units u, Variability v, int flags, 
+    StringCounterSnapshot(String name, Units u, Variability v, int flags,
                           String value) {
         super(name, u, v, flags);
         this.value = value;
     }
-    
+
     public Object getValue() {
         return value;
     }
-    
+
     public String stringValue() {
         return value;
     }

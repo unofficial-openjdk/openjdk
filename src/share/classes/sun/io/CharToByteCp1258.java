@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MS1258;
  * Tables and data to convert Unicode to Cp1258
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp1258 extends CharToByteSingleByte {

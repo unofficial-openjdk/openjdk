@@ -50,7 +50,7 @@ public interface MouseInfoPeer {
      * coordinate system. Otherwise, coordinates are calculated in
      * the coordinate system of the screen device where the pointer
      * is located.
-     * See java.awt.GraphicsConfiguration documentation for more 
+     * See java.awt.GraphicsConfiguration documentation for more
      * details about virtual screen devices.
      */
     int fillPointWithCoords(Point point);

@@ -37,49 +37,49 @@ import java.util.ServiceLoader;
 import java.util.ServiceConfigurationError;
 
 /**
- * A <code>StreamPrintServiceFactory</code> is the factory for 
+ * A <code>StreamPrintServiceFactory</code> is the factory for
  * {@link StreamPrintService} instances,
  * which can print to an output stream in a particular
  * document format described as a mime type.
- * A typical output document format may be Postscript(TM). 
+ * A typical output document format may be Postscript(TM).
  * <p>
  * This class is implemented by a service and located by the
- * implementation using the 
+ * implementation using the
  * <a href="../../../technotes/guides/jar/jar.html#Service Provider">
  * SPI JAR File specification</a>.
  * <p>
  * Applications locate instances of this class by calling the
  * {@link #lookupStreamPrintServiceFactories(DocFlavor, String)} method.
  * <p>
- * Applications can use a <code>StreamPrintService</code> obtained from a 
- * factory in place of a <code>PrintService</code> which represents a 
+ * Applications can use a <code>StreamPrintService</code> obtained from a
+ * factory in place of a <code>PrintService</code> which represents a
  * physical printer device.
  */
 
 public abstract class StreamPrintServiceFactory {
 
     static class Services {
-	private ArrayList listOfFactories = null;
+        private ArrayList listOfFactories = null;
     }
 
     private static Services getServices() {
-	Services services =
-	    (Services)AppContext.getAppContext().get(Services.class);
-	if (services == null) {
-	    services = new Services();
-	    AppContext.getAppContext().put(Services.class, services);
-	}
-	return services;	
+        Services services =
+            (Services)AppContext.getAppContext().get(Services.class);
+        if (services == null) {
+            services = new Services();
+            AppContext.getAppContext().put(Services.class, services);
+        }
+        return services;
     }
 
     private static ArrayList getListOfFactories() {
-	return getServices().listOfFactories;
+        return getServices().listOfFactories;
     }
 
     private static ArrayList initListOfFactories() {
-	ArrayList listOfFactories = new ArrayList();
-	getServices().listOfFactories = listOfFactories;
-	return listOfFactories;
+        ArrayList listOfFactories = new ArrayList();
+        getServices().listOfFactories = listOfFactories;
+        return listOfFactories;
     }
 
     /**
@@ -106,10 +106,10 @@ public abstract class StreamPrintServiceFactory {
      */
      public static StreamPrintServiceFactory[]
          lookupStreamPrintServiceFactories(DocFlavor flavor,
-					   String outputMimeType) {
-         
+                                           String outputMimeType) {
+
          ArrayList list = getFactories(flavor, outputMimeType);
-	 return (StreamPrintServiceFactory[])
+         return (StreamPrintServiceFactory[])
                (list.toArray(new StreamPrintServiceFactory[list.size()]));
      }
 
@@ -126,8 +126,8 @@ public abstract class StreamPrintServiceFactory {
      * @return array of supported doc flavors.
      */
     public abstract DocFlavor[] getSupportedDocFlavors();
-   
-    /** 
+
+    /**
      * Returns a <code>StreamPrintService</code> that can print to
      * the specified output stream.
      * The output stream is created and managed by the application.
@@ -138,15 +138,15 @@ public abstract class StreamPrintServiceFactory {
      * a <code>PrinterException</code> and an event indicating that the
      * job failed.
      * <p>
-     * Whereas a <code>PrintService</code> connected to a physical printer 
+     * Whereas a <code>PrintService</code> connected to a physical printer
      * can be reused,
      * a <code>StreamPrintService</code> connected to a stream cannot.
      * The underlying <code>StreamPrintService</code> may be disposed by
      * the print system with
-     * the {@link StreamPrintService#dispose() dispose} method 
+     * the {@link StreamPrintService#dispose() dispose} method
      * before returning from the
-     * {@link DocPrintJob#print(Doc, javax.print.attribute.PrintRequestAttributeSet) print} 
-     * method of <code>DocPrintJob</code> so that the print system knows 
+     * {@link DocPrintJob#print(Doc, javax.print.attribute.PrintRequestAttributeSet) print}
+     * method of <code>DocPrintJob</code> so that the print system knows
      * this printer is no longer usable.
      * This is equivalent to a physical printer going offline - permanently.
      * Applications may supply a null print stream to create a queryable
@@ -160,28 +160,28 @@ public abstract class StreamPrintServiceFactory {
      * DocFlavor supported by this Factory.
      */
     public abstract StreamPrintService getPrintService(OutputStream out);
-    
+
 
     private static ArrayList getAllFactories() {
-	synchronized (StreamPrintServiceFactory.class) {
+        synchronized (StreamPrintServiceFactory.class) {
 
-	  ArrayList listOfFactories = getListOfFactories(); 
-	    if (listOfFactories != null) {
-		return listOfFactories;
-	    } else {
-		listOfFactories = initListOfFactories();
-	    }
+          ArrayList listOfFactories = getListOfFactories();
+            if (listOfFactories != null) {
+                return listOfFactories;
+            } else {
+                listOfFactories = initListOfFactories();
+            }
 
-	    try {
-		java.security.AccessController.doPrivileged(
-		     new java.security.PrivilegedExceptionAction() {
+            try {
+                java.security.AccessController.doPrivileged(
+                     new java.security.PrivilegedExceptionAction() {
                         public Object run() {
                             Iterator<StreamPrintServiceFactory> iterator =
                                 ServiceLoader.load
                                 (StreamPrintServiceFactory.class).iterator();
-			    ArrayList lof = getListOfFactories();
-			    while (iterator.hasNext()) {
-				try {
+                            ArrayList lof = getListOfFactories();
+                            while (iterator.hasNext()) {
+                                try {
                                     lof.add(iterator.next());
                                 }  catch (ServiceConfigurationError err) {
                                      /* In the applet case, we continue */
@@ -190,28 +190,28 @@ public abstract class StreamPrintServiceFactory {
                                     } else {
                                         throw err;
                                     }
-				}
-			    }
-			    return null;
-			}
-		});
-	    } catch (java.security.PrivilegedActionException e) {
-	    }
-	    return listOfFactories;
-	}
+                                }
+                            }
+                            return null;
+                        }
+                });
+            } catch (java.security.PrivilegedActionException e) {
+            }
+            return listOfFactories;
+        }
     }
-   
+
     private static boolean isMember(DocFlavor flavor, DocFlavor[] flavors) {
-	for (int f=0; f<flavors.length; f++ ) {
-	    if (flavor.equals(flavors[f])) {
-		return true;
-	    }
-	}
-	return false;
+        for (int f=0; f<flavors.length; f++ ) {
+            if (flavor.equals(flavors[f])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static ArrayList getFactories(DocFlavor flavor, String outType) {
-	
+
         if (flavor == null && outType == null) {
             return getAllFactories();
         }
@@ -221,10 +221,10 @@ public abstract class StreamPrintServiceFactory {
         while (iterator.hasNext()) {
             StreamPrintServiceFactory factory =
                 (StreamPrintServiceFactory)iterator.next();
-	    if ((outType == null || 
-		 outType.equalsIgnoreCase(factory.getOutputFormat())) &&
-		(flavor == null || 
-		 isMember(flavor, factory.getSupportedDocFlavors()))) {
+            if ((outType == null ||
+                 outType.equalsIgnoreCase(factory.getOutputFormat())) &&
+                (flavor == null ||
+                 isMember(flavor, factory.getSupportedDocFlavors()))) {
                 list.add(factory);
             }
         }

@@ -40,7 +40,6 @@ import java.util.HashMap;
  * <em>rmi</em> protocol of the HotSpot PerfData monitoring implementation.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitoredHostProvider extends MonitoredHost {

@@ -36,13 +36,13 @@ import sun.java2d.SunGraphics2D;
  */
 public interface CompositePipe {
     public Object startSequence(SunGraphics2D sg, Shape s, Rectangle dev,
-				int[] abox);
+                                int[] abox);
 
     public boolean needTile(Object context, int x, int y, int w, int h);
 
     public void renderPathTile(Object context,
-			       byte[] atile, int offset, int tilesize,
-			       int x, int y, int w, int h);
+                               byte[] atile, int offset, int tilesize,
+                               int x, int y, int w, int h);
 
     public void skipTile(Object context, int x, int y);
 

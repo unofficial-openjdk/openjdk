@@ -36,35 +36,34 @@
 
 #define NPT_LIBNAME "libnpt.so"
 
-#define NPT_INITIALIZE(pnpt,version,options)				\
-    {									\
-        void   *_handle;						\
-        void   *_sym;							\
-									\
-        if ( (pnpt) == NULL ) NPT_ERROR("NptEnv* is NULL");		\
-        *(pnpt) = NULL;							\
-        _handle =  dlopen(NPT_LIBNAME, RTLD_LAZY);			\
-        if ( _handle == NULL ) NPT_ERROR("Cannot open library");	\
-        _sym = dlsym(_handle, "nptInitialize");				\
-        if ( _sym == NULL ) NPT_ERROR("Cannot find nptInitialize");	\
-        ((NptInitialize)_sym)((pnpt), version, (options));		\
-        if ( (*(pnpt)) == NULL ) NPT_ERROR("Cannot initialize NptEnv");	\
-        (*(pnpt))->libhandle = _handle;					\
+#define NPT_INITIALIZE(pnpt,version,options)                            \
+    {                                                                   \
+        void   *_handle;                                                \
+        void   *_sym;                                                   \
+                                                                        \
+        if ( (pnpt) == NULL ) NPT_ERROR("NptEnv* is NULL");             \
+        *(pnpt) = NULL;                                                 \
+        _handle =  dlopen(NPT_LIBNAME, RTLD_LAZY);                      \
+        if ( _handle == NULL ) NPT_ERROR("Cannot open library");        \
+        _sym = dlsym(_handle, "nptInitialize");                         \
+        if ( _sym == NULL ) NPT_ERROR("Cannot find nptInitialize");     \
+        ((NptInitialize)_sym)((pnpt), version, (options));              \
+        if ( (*(pnpt)) == NULL ) NPT_ERROR("Cannot initialize NptEnv"); \
+        (*(pnpt))->libhandle = _handle;                                 \
     }
 
-#define NPT_TERMINATE(npt,options)					\
-    {									\
-        void *_handle;							\
-        void *_sym;							\
-									\
-        if ( (npt) == NULL ) NPT_ERROR("NptEnv* is NULL");		\
-        _handle = (npt)->libhandle;					\
-        _sym = dlsym(_handle, "nptTerminate");				\
-        if ( _sym == NULL ) NPT_ERROR("Cannot find nptTerminate");	\
-        ((NptTerminate)_sym)((npt), (options));				\
-        if ( _handle != NULL ) (void)dlclose(_handle);			\
+#define NPT_TERMINATE(npt,options)                                      \
+    {                                                                   \
+        void *_handle;                                                  \
+        void *_sym;                                                     \
+                                                                        \
+        if ( (npt) == NULL ) NPT_ERROR("NptEnv* is NULL");              \
+        _handle = (npt)->libhandle;                                     \
+        _sym = dlsym(_handle, "nptTerminate");                          \
+        if ( _sym == NULL ) NPT_ERROR("Cannot find nptTerminate");      \
+        ((NptTerminate)_sym)((npt), (options));                         \
+        if ( _handle != NULL ) (void)dlclose(_handle);                  \
     }
 
 
 #endif
-

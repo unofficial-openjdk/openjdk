@@ -32,14 +32,14 @@ import javax.xml.crypto.OctetStreamData;
 import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
 import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
 
-public class ApacheOctetStreamData extends OctetStreamData 
+public class ApacheOctetStreamData extends OctetStreamData
     implements ApacheData {
 
     private XMLSignatureInput xi;
 
-    public ApacheOctetStreamData(XMLSignatureInput xi) 
-	throws CanonicalizationException, IOException {
-	super(xi.getOctetStream(), xi.getSourceURI(), xi.getMIMEType());
+    public ApacheOctetStreamData(XMLSignatureInput xi)
+        throws CanonicalizationException, IOException {
+        super(xi.getOctetStream(), xi.getSourceURI(), xi.getMIMEType());
         this.xi = xi;
     }
 

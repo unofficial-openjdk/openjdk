@@ -26,9 +26,9 @@
 package javax.security.sasl;
 
 /**
- * This exception is thrown by a SASL mechanism implementation 
+ * This exception is thrown by a SASL mechanism implementation
  * to indicate that the SASL
- * exchange has failed due to reasons related to authentication, such as 
+ * exchange has failed due to reasons related to authentication, such as
  * an invalid identity, passphrase, or key.
  * <p>
  * Note that the lack of an AuthenticationException does not mean that
@@ -49,11 +49,11 @@ public class AuthenticationException extends SaslException {
      * The root exception and the detailed message are null.
      */
     public AuthenticationException () {
-	super();
+        super();
     }
 
     /**
-     * Constructs a new instance of <tt>AuthenticationException</tt> 
+     * Constructs a new instance of <tt>AuthenticationException</tt>
      * with a detailed message.
      * The root exception is null.
      * @param detail A possibly null string containing details of the exception.
@@ -61,7 +61,7 @@ public class AuthenticationException extends SaslException {
      * @see java.lang.Throwable#getMessage
      */
     public AuthenticationException (String detail) {
-	super(detail);
+        super(detail);
     }
 
     /**
@@ -75,9 +75,9 @@ public class AuthenticationException extends SaslException {
      * @see #getCause
      */
     public AuthenticationException (String detail, Throwable ex) {
-	super(detail, ex);
+        super(detail, ex);
     }
 
-    /** Use serialVersionUID from JSR 28 RI for interoperability */ 
+    /** Use serialVersionUID from JSR 28 RI for interoperability */
     private static final long serialVersionUID = -3579708765071815007L;
 }

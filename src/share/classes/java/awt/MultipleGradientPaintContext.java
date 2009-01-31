@@ -51,15 +51,15 @@ import java.util.Arrays;
  * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans
  */
 abstract class MultipleGradientPaintContext implements PaintContext {
-    
-    /** 
+
+    /**
      * The PaintContext's ColorModel.  This is ARGB if colors are not all
      * opaque, otherwise it is RGB.
      */
-    protected ColorModel model;        
-    
+    protected ColorModel model;
+
     /** Color model used if gradient colors are all opaque. */
-    private static ColorModel xrgbmodel = 
+    private static ColorModel xrgbmodel =
         new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
 
     /** The cached ColorModel. */
@@ -67,19 +67,19 @@ abstract class MultipleGradientPaintContext implements PaintContext {
 
     /** The cached raster, which is reusable among instances. */
     protected static WeakReference<Raster> cached;
-    
+
     /** Raster is reused whenever possible. */
     protected Raster saved;
 
     /** The method to use when painting out of the gradient bounds. */
     protected CycleMethod cycleMethod;
-    
+
     /** The ColorSpace in which to perform the interpolation */
     protected ColorSpaceType colorSpace;
 
     /** Elements of the inverse transform matrix. */
     protected float a00, a01, a10, a11, a02, a12;
-    
+
     /**
      * This boolean specifies wether we are in simple lookup mode, where an
      * input value between 0 and 1 may be used to directly index into a single
@@ -88,20 +88,20 @@ abstract class MultipleGradientPaintContext implements PaintContext {
      * we fall into, then determine the index into that array.
      */
     protected boolean isSimpleLookup;
-    
+
     /**
      * Size of gradients array for scaling the 0-1 index when looking up
      * colors the fast way.
      */
     protected int fastGradientArraySize;
-    
+
     /**
      * Array which contains the interpolated color values for each interval,
      * used by calculateSingleArrayGradient().  It is protected for possible
      * direct access by subclasses.
      */
     protected int[] gradient;
-    
+
     /**
      * Array of gradient arrays, one array for each interval.  Used by
      * calculateMultipleArrayGradient().
@@ -110,10 +110,10 @@ abstract class MultipleGradientPaintContext implements PaintContext {
 
     /** Normalized intervals array. */
     private float[] normalizedIntervals;
-    
+
     /** Fractions array. */
     private float[] fractions;
-    
+
     /** Used to determine if gradient colors are all opaque. */
     private int transparencyTest;
 
@@ -121,9 +121,9 @@ abstract class MultipleGradientPaintContext implements PaintContext {
     private static final int SRGBtoLinearRGB[] = new int[256];
     private static final int LinearRGBtoSRGB[] = new int[256];
 
-    static { 
+    static {
         // build the tables
-        for (int k = 0; k < 256; k++) {            
+        for (int k = 0; k < 256; k++) {
             SRGBtoLinearRGB[k] = convertSRGBtoLinearRGB(k);
             LinearRGBtoSRGB[k] = convertLinearRGBtoSRGB(k);
         }
@@ -154,10 +154,10 @@ abstract class MultipleGradientPaintContext implements PaintContext {
                                            AffineTransform t,
                                            RenderingHints hints,
                                            float[] fractions,
-                                           Color[] colors, 
+                                           Color[] colors,
                                            CycleMethod cycleMethod,
-                                           ColorSpaceType colorSpace) 
-    {               
+                                           ColorSpaceType colorSpace)
+    {
         if (deviceBounds == null) {
             throw new NullPointerException("Device bounds cannot be null");
         }
@@ -174,7 +174,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             throw new NullPointerException("RenderingHints cannot be null");
         }
 
-        // The inverse transform is needed to go from device to user space.  
+        // The inverse transform is needed to go from device to user space.
         // Get all the components of the inverse transform matrix.
         AffineTransform tInv;
         try {
@@ -195,7 +195,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         a11 = (float)m[3];
         a02 = (float)m[4];
         a12 = (float)m[5];
-        
+
         // copy some flags
         this.cycleMethod = cycleMethod;
         this.colorSpace = colorSpace;
@@ -238,7 +238,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             this.gradients             = gradients;
         }
     }
-    
+
     /**
      * This function is the meat of this class.  It calculates an array of
      * gradient colors based on an array of fractions and color values at
@@ -282,7 +282,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         // find smallest interval
         float Imin = 1;
         for (int i = 0; i < normalizedIntervals.length; i++) {
-            Imin = (Imin > normalizedIntervals[i]) ? 
+            Imin = (Imin > normalizedIntervals[i]) ?
                 normalizedIntervals[i] : Imin;
         }
 
@@ -295,7 +295,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         for (int i = 0; i < normalizedIntervals.length; i++) {
             estimatedSize += (normalizedIntervals[i]/Imin) * GRADIENT_SIZE;
         }
-        
+
         if (estimatedSize > MAX_GRADIENT_ARRAY_SIZE) {
             // slow method
             calculateMultipleArrayGradient(normalizedColors);
@@ -303,7 +303,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             // fast method
             calculateSingleArrayGradient(normalizedColors, Imin);
         }
-        
+
         // use the most "economical" model
         if ((transparencyTest >>> 24) == 0xff) {
             model = xrgbmodel;
@@ -311,26 +311,26 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             model = ColorModel.getRGBdefault();
         }
     }
-    
+
     /**
      * FAST LOOKUP METHOD
      *
-     * This method calculates the gradient color values and places them in a 
-     * single int array, gradient[].  It does this by allocating space for 
-     * each interval based on its size relative to the smallest interval in 
-     * the array.  The smallest interval is allocated 255 interpolated values 
-     * (the maximum number of unique in-between colors in a 24 bit color 
-     * system), and all other intervals are allocated 
-     * size = (255 * the ratio of their size to the smallest interval). 
-     * 
-     * This scheme expedites a speedy retrieval because the colors are 
-     * distributed along the array according to their user-specified 
-     * distribution.  All that is needed is a relative index from 0 to 1.  
+     * This method calculates the gradient color values and places them in a
+     * single int array, gradient[].  It does this by allocating space for
+     * each interval based on its size relative to the smallest interval in
+     * the array.  The smallest interval is allocated 255 interpolated values
+     * (the maximum number of unique in-between colors in a 24 bit color
+     * system), and all other intervals are allocated
+     * size = (255 * the ratio of their size to the smallest interval).
      *
-     * The only problem with this method is that the possibility exists for 
-     * the array size to balloon in the case where there is a 
+     * This scheme expedites a speedy retrieval because the colors are
+     * distributed along the array according to their user-specified
+     * distribution.  All that is needed is a relative index from 0 to 1.
+     *
+     * The only problem with this method is that the possibility exists for
+     * the array size to balloon in the case where there is a
      * disproportionately small gradient interval.  In this case the other
-     * intervals will be allocated huge space, but much of that data is 
+     * intervals will be allocated huge space, but much of that data is
      * redundant.  We thus need to use the space conserving scheme below.
      *
      * @param Imin the size of the smallest interval
@@ -344,33 +344,33 @@ abstract class MultipleGradientPaintContext implements PaintContext {
 
         //the eventual size of the single array
         int gradientsTot = 1;
-        
+
         // for every interval (transition between 2 colors)
         for (int i = 0; i < gradients.length; i++) {
             // create an array whose size is based on the ratio to the
             // smallest interval
             int nGradients = (int)((normalizedIntervals[i]/Imin)*255f);
             gradientsTot += nGradients;
-            gradients[i] = new int[nGradients];           
-            
+            gradients[i] = new int[nGradients];
+
             // the 2 colors (keyframes) to interpolate between
             rgb1 = colors[i].getRGB();
-            rgb2 = colors[i+1].getRGB();           
-            
+            rgb2 = colors[i+1].getRGB();
+
             // fill this array with the colors in between rgb1 and rgb2
             interpolate(rgb1, rgb2, gradients[i]);
-            
+
             // if the colors are opaque, transparency should still
             // be 0xff000000
             transparencyTest &= rgb1;
-            transparencyTest &= rgb2;                     
+            transparencyTest &= rgb2;
         }
 
         // put all gradients in a single array
         gradient = new int[gradientsTot];
-        int curOffset = 0;        
+        int curOffset = 0;
         for (int i = 0; i < gradients.length; i++){
-            System.arraycopy(gradients[i], 0, gradient, 
+            System.arraycopy(gradients[i], 0, gradient,
                              curOffset, gradients[i].length);
             curOffset += gradients[i].length;
         }
@@ -378,7 +378,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
 
         // if interpolation occurred in Linear RGB space, convert the
         // gradients back to sRGB using the lookup table
-        if (colorSpace == ColorSpaceType.LINEAR_RGB) {            
+        if (colorSpace == ColorSpaceType.LINEAR_RGB) {
             for (int i = 0; i < gradient.length; i++) {
                 gradient[i] = convertEntireColorLinearRGBtoSRGB(gradient[i]);
             }
@@ -390,50 +390,50 @@ abstract class MultipleGradientPaintContext implements PaintContext {
     /**
      * SLOW LOOKUP METHOD
      *
-     * This method calculates the gradient color values for each interval and 
-     * places each into its own 255 size array.  The arrays are stored in 
-     * gradients[][].  (255 is used because this is the maximum number of 
+     * This method calculates the gradient color values for each interval and
+     * places each into its own 255 size array.  The arrays are stored in
+     * gradients[][].  (255 is used because this is the maximum number of
      * unique colors between 2 arbitrary colors in a 24 bit color system.)
      *
-     * This method uses the minimum amount of space (only 255 * number of 
-     * intervals), but it aggravates the lookup procedure, because now we 
-     * have to find out which interval to select, then calculate the index 
-     * within that interval.  This causes a significant performance hit, 
+     * This method uses the minimum amount of space (only 255 * number of
+     * intervals), but it aggravates the lookup procedure, because now we
+     * have to find out which interval to select, then calculate the index
+     * within that interval.  This causes a significant performance hit,
      * because it requires this calculation be done for every point in
      * the rendering loop.
      *
-     * For those of you who are interested, this is a classic example of the 
+     * For those of you who are interested, this is a classic example of the
      * time-space tradeoff.
-     */  
+     */
     private void calculateMultipleArrayGradient(Color[] colors) {
         // set the flag so we know later it is a non-simple lookup
-        isSimpleLookup = false;             
+        isSimpleLookup = false;
 
         // 2 colors to interpolate
         int rgb1, rgb2;
-        
+
         // for every interval (transition between 2 colors)
         for (int i = 0; i < gradients.length; i++){
             // create an array of the maximum theoretical size for
             // each interval
-            gradients[i] = new int[GRADIENT_SIZE];          
-                        
+            gradients[i] = new int[GRADIENT_SIZE];
+
             // get the the 2 colors
             rgb1 = colors[i].getRGB();
-            rgb2 = colors[i+1].getRGB();           
-            
+            rgb2 = colors[i+1].getRGB();
+
             // fill this array with the colors in between rgb1 and rgb2
             interpolate(rgb1, rgb2, gradients[i]);
-            
+
             // if the colors are opaque, transparency should still
             // be 0xff000000
             transparencyTest &= rgb1;
-            transparencyTest &= rgb2;                     
+            transparencyTest &= rgb2;
         }
-        
+
         // if interpolation occurred in Linear RGB space, convert the
         // gradients back to SRGB using the lookup table
-        if (colorSpace == ColorSpaceType.LINEAR_RGB) {         
+        if (colorSpace == ColorSpaceType.LINEAR_RGB) {
             for (int j = 0; j < gradients.length; j++) {
                 for (int i = 0; i < gradients[j].length; i++) {
                     gradients[j][i] =
@@ -442,7 +442,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             }
         }
     }
-    
+
     /**
      * Yet another helper function.  This one linearly interpolates between
      * 2 colors, filling up the output array.
@@ -454,10 +454,10 @@ abstract class MultipleGradientPaintContext implements PaintContext {
     private void interpolate(int rgb1, int rgb2, int[] output) {
         // color components
         int a1, r1, g1, b1, da, dr, dg, db;
-        
+
         // step between interpolated values
-        float stepSize = 1.0f / output.length; 
-        
+        float stepSize = 1.0f / output.length;
+
         // extract color components from packed integer
         a1 = (rgb1 >> 24) & 0xff;
         r1 = (rgb1 >> 16) & 0xff;
@@ -469,7 +469,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         dr = ((rgb2 >> 16) & 0xff) - r1;
         dg = ((rgb2 >>  8) & 0xff) - g1;
         db = ((rgb2      ) & 0xff) - b1;
-        
+
         // for each step in the interval calculate the in-between color by
         // multiplying the normalized current position by the total color
         // change (0.5 is added to prevent truncation round-off error)
@@ -478,10 +478,10 @@ abstract class MultipleGradientPaintContext implements PaintContext {
                 (((int) ((a1 + i * da * stepSize) + 0.5) << 24)) |
                 (((int) ((r1 + i * dr * stepSize) + 0.5) << 16)) |
                 (((int) ((g1 + i * dg * stepSize) + 0.5) <<  8)) |
-                (((int) ((b1 + i * db * stepSize) + 0.5)      ));           
+                (((int) ((b1 + i * db * stepSize) + 0.5)      ));
         }
     }
-    
+
     /**
      * Yet another helper function.  This one extracts the color components
      * of an integer RGB triple, converts them from LinearRGB to SRGB, then
@@ -519,7 +519,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
      *                 into the range 0 to 1
      * @returns integer color to display
      */
-    protected final int indexIntoGradientsArrays(float position) {       
+    protected final int indexIntoGradientsArrays(float position) {
         // first, manipulate position value depending on the cycle method
         if (cycleMethod == CycleMethod.NO_CYCLE) {
             if (position > 1) {
@@ -532,18 +532,18 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         } else if (cycleMethod == CycleMethod.REPEAT) {
             // get the fractional part
             // (modulo behavior discards integer component)
-            position = position - (int)position; 
+            position = position - (int)position;
 
             //position should now be between -1 and 1
             if (position < 0) {
                 // force it to be in the range 0-1
                 position = position + 1;
-            }           
+            }
         } else { // cycleMethod == CycleMethod.REFLECT
             if (position < 0) {
                 // take absolute value
                 position = -position;
-            }                      
+            }
 
             // get the integer part
             int part = (int)position;
@@ -556,7 +556,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
                 position = 1 - position;
             }
         }
-       
+
         // now, get the color based on this 0-1 position...
 
         if (isSimpleLookup) {
@@ -564,25 +564,25 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             return gradient[(int)(position * fastGradientArraySize)];
         } else {
             // more complicated computation, to save space
-            
+
             // for all the gradient interval arrays
-            for (int i = 0; i < gradients.length; i++) { 
+            for (int i = 0; i < gradients.length; i++) {
                 if (position < fractions[i+1]) {
                     // this is the array we want
-                    float delta = position - fractions[i];        
+                    float delta = position - fractions[i];
 
                     // this is the interval we want
-                    int index = (int)((delta / normalizedIntervals[i]) 
+                    int index = (int)((delta / normalizedIntervals[i])
                                       * (GRADIENT_SIZE_INDEX));
-                    
+
                     return gradients[i][index];
-                }            
+                }
             }
         }
-        
-        return gradients[gradients.length - 1][GRADIENT_SIZE_INDEX];        
+
+        return gradients[gradients.length - 1][GRADIENT_SIZE_INDEX];
     }
-    
+
     /**
      * Helper function to convert a color component in sRGB space to linear
      * RGB space.  Used to build a static lookup table.
@@ -621,7 +621,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
     /**
      * {@inheritDoc}
      */
-    public final Raster getRaster(int x, int y, int w, int h) {          
+    public final Raster getRaster(int x, int y, int w, int h) {
         // If working raster is big enough, reuse it. Otherwise,
         // build a large enough new one.
         Raster raster = saved;
@@ -635,7 +635,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         // Access raster internal int array. Because we use a DirectColorModel,
         // we know the DataBuffer is of type DataBufferInt and the SampleModel
         // is SinglePixelPackedSampleModel.
-        // Adjust for initial offset in DataBuffer and also for the scanline 
+        // Adjust for initial offset in DataBuffer and also for the scanline
         // stride.
         // These calls make the DataBuffer non-acceleratable, but the
         // Raster is never Stable long enough to accelerate anyway...
@@ -645,21 +645,21 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         int scanlineStride = ((SinglePixelPackedSampleModel)
                               raster.getSampleModel()).getScanlineStride();
         int adjust = scanlineStride - w;
-        
+
         fillRaster(pixels, off, adjust, x, y, w, h); // delegate to subclass
-        
+
         return raster;
     }
-    
+
     protected abstract void fillRaster(int pixels[], int off, int adjust,
                                        int x, int y, int w, int h);
 
-    
+
     /**
-     * Took this cacheRaster code from GradientPaint. It appears to recycle 
+     * Took this cacheRaster code from GradientPaint. It appears to recycle
      * rasters for use by any other instance, as long as they are sufficiently
      * large.
-     */    
+     */
     private static synchronized Raster getCachedRaster(ColorModel cm,
                                                        int w, int h)
     {
@@ -677,7 +677,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         }
         return cm.createCompatibleWritableRaster(w, h);
     }
-    
+
     /**
      * Took this cacheRaster code from GradientPaint. It appears to recycle
      * rasters for use by any other instance, as long as they are sufficiently
@@ -704,7 +704,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
         cachedModel = cm;
         cached = new WeakReference<Raster>(ras);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -714,7 +714,7 @@ abstract class MultipleGradientPaintContext implements PaintContext {
             saved = null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */

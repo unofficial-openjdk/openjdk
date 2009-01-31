@@ -26,4 +26,3 @@
 package com.sun.tools.example.debug.bdi;
 
 public class EvaluationException extends Exception {}
-

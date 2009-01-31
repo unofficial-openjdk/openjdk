@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 4440955
- * @summary toExternalForm() , toString() 's results format is 
+ * @summary toExternalForm() , toString() 's results format is
  *          not proper with IPv6 host nam
  */
 
@@ -32,20 +32,20 @@ import java.net.*;
 public class TestRFC2732 {
 
     public static void main(String[] args) {
-	URL u = null;
+        URL u = null;
         try {
-	    u = new URL("http", "10:100::1234", 99, "/index");
+            u = new URL("http", "10:100::1234", 99, "/index");
 
-	    if (!u.toString().equals("http://[10:100::1234]:99/index") ||
-		!u.toExternalForm().equals("http://[10:100::1234]:99/index")) {
-		throw new Exception("Failed test for RFC 2732");
-	    }
-	    System.out.println("Test passed!");
+            if (!u.toString().equals("http://[10:100::1234]:99/index") ||
+                !u.toExternalForm().equals("http://[10:100::1234]:99/index")) {
+                throw new Exception("Failed test for RFC 2732");
+            }
+            System.out.println("Test passed!");
         } catch(Exception exp) {
-	    throw new RuntimeException(exp.getMessage() +
-				       "Expect: " + 
-				       "http://[10:100::1234]:99/index" +
-				       " Got: " + u.toExternalForm());
+            throw new RuntimeException(exp.getMessage() +
+                                       "Expect: " +
+                                       "http://[10:100::1234]:99/index" +
+                                       " Got: " + u.toExternalForm());
         }
     }
 }

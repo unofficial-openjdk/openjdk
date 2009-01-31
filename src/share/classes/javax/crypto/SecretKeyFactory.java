@@ -93,21 +93,21 @@ public class SecretKeyFactory {
      * @param algorithm the secret-key algorithm
      */
     protected SecretKeyFactory(SecretKeyFactorySpi keyFacSpi,
-			       Provider provider, String algorithm) {
-	this.spi = keyFacSpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
+                               Provider provider, String algorithm) {
+        this.spi = keyFacSpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
     }
 
     private SecretKeyFactory(String algorithm) throws NoSuchAlgorithmException {
-	this.algorithm = algorithm;
-	List list = GetInstance.getServices("SecretKeyFactory", algorithm);
-	serviceIterator = list.iterator();
-	// fetch and instantiate initial spi
-	if (nextSpi(null) == null) {
-	    throw new NoSuchAlgorithmException
-		(algorithm + " SecretKeyFactory not available");
-	}
+        this.algorithm = algorithm;
+        List list = GetInstance.getServices("SecretKeyFactory", algorithm);
+        serviceIterator = list.iterator();
+        // fetch and instantiate initial spi
+        if (nextSpi(null) == null) {
+            throw new NoSuchAlgorithmException
+                (algorithm + " SecretKeyFactory not available");
+        }
     }
 
     /**
@@ -133,17 +133,17 @@ public class SecretKeyFactory {
      * @return the new <code>SecretKeyFactory</code> object.
      *
      * @exception NullPointerException if the specified algorithm
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if no Provider supports a
-     *		SecretKeyFactorySpi implementation for the
-     *		specified algorithm.
+     *          SecretKeyFactorySpi implementation for the
+     *          specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final SecretKeyFactory getInstance(String algorithm)
-	    throws NoSuchAlgorithmException {
-	return new SecretKeyFactory(algorithm);
+            throws NoSuchAlgorithmException {
+        return new SecretKeyFactory(algorithm);
     }
 
     /**
@@ -170,27 +170,27 @@ public class SecretKeyFactory {
      * @return the new <code>SecretKeyFactory</code> object.
      *
      * @exception NoSuchAlgorithmException if a SecretKeyFactorySpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @exception NullPointerException if the specified algorithm
-     *		is null.
+     *          is null.
      *
      * @throws NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null or empty.
+     *          is null or empty.
      *
      * @see java.security.Provider
      */
     public static final SecretKeyFactory getInstance(String algorithm,
-	    String provider) throws NoSuchAlgorithmException,
-	    NoSuchProviderException {
-	Instance instance = JceSecurity.getInstance("SecretKeyFactory",
-		SecretKeyFactorySpi.class, algorithm, provider);
-	return new SecretKeyFactory((SecretKeyFactorySpi)instance.impl,
-		instance.provider, algorithm);
+            String provider) throws NoSuchAlgorithmException,
+            NoSuchProviderException {
+        Instance instance = JceSecurity.getInstance("SecretKeyFactory",
+                SecretKeyFactorySpi.class, algorithm, provider);
+        return new SecretKeyFactory((SecretKeyFactorySpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -217,20 +217,20 @@ public class SecretKeyFactory {
      * is null.
      *
      * @exception NoSuchAlgorithmException if a SecretKeyFactorySpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null.
+     *          is null.
      *
      * @see java.security.Provider
      */
     public static final SecretKeyFactory getInstance(String algorithm,
-	    Provider provider) throws NoSuchAlgorithmException {
-	Instance instance = JceSecurity.getInstance("SecretKeyFactory",
-		SecretKeyFactorySpi.class, algorithm, provider);
-	return new SecretKeyFactory((SecretKeyFactorySpi)instance.impl,
-		instance.provider, algorithm);
+            Provider provider) throws NoSuchAlgorithmException {
+        Instance instance = JceSecurity.getInstance("SecretKeyFactory",
+                SecretKeyFactorySpi.class, algorithm, provider);
+        return new SecretKeyFactory((SecretKeyFactorySpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -239,11 +239,11 @@ public class SecretKeyFactory {
      * @return the provider of this <code>SecretKeyFactory</code> object
      */
     public final Provider getProvider() {
-	synchronized (lock) {
-	    // disable further failover after this call
-	    serviceIterator = null;
-	    return provider;
-	}
+        synchronized (lock) {
+            // disable further failover after this call
+            serviceIterator = null;
+            return provider;
+        }
     }
 
     /**
@@ -257,7 +257,7 @@ public class SecretKeyFactory {
      * object.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -267,36 +267,36 @@ public class SecretKeyFactory {
      * this class is never set to null.
      */
     private SecretKeyFactorySpi nextSpi(SecretKeyFactorySpi oldSpi) {
-	synchronized (lock) {
-	    // somebody else did a failover concurrently
-	    // try that spi now
-	    if ((oldSpi != null) && (oldSpi != spi)) {
-		return spi;
-	    }
-	    if (serviceIterator == null) {
-		return null;
-	    }
-	    while (serviceIterator.hasNext()) {
-		Service s = (Service)serviceIterator.next();
-		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-		    continue;
-		}
-		try {
-		    Object obj = s.newInstance(null);
-		    if (obj instanceof SecretKeyFactorySpi == false) {
-			continue;
-		    }
-		    SecretKeyFactorySpi spi = (SecretKeyFactorySpi)obj;
-		    provider = s.getProvider();
-		    this.spi = spi;
-		    return spi;
-		} catch (NoSuchAlgorithmException e) {
-		    // ignore
-		}
-	    }
-	    serviceIterator = null;
-	    return null;
-	}
+        synchronized (lock) {
+            // somebody else did a failover concurrently
+            // try that spi now
+            if ((oldSpi != null) && (oldSpi != spi)) {
+                return spi;
+            }
+            if (serviceIterator == null) {
+                return null;
+            }
+            while (serviceIterator.hasNext()) {
+                Service s = (Service)serviceIterator.next();
+                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+                    continue;
+                }
+                try {
+                    Object obj = s.newInstance(null);
+                    if (obj instanceof SecretKeyFactorySpi == false) {
+                        continue;
+                    }
+                    SecretKeyFactorySpi spi = (SecretKeyFactorySpi)obj;
+                    provider = s.getProvider();
+                    this.spi = spi;
+                    return spi;
+                } catch (NoSuchAlgorithmException e) {
+                    // ignore
+                }
+            }
+            serviceIterator = null;
+            return null;
+        }
     }
 
     /**
@@ -311,27 +311,27 @@ public class SecretKeyFactory {
      * is inappropriate for this secret-key factory to produce a secret key.
      */
     public final SecretKey generateSecret(KeySpec keySpec)
-	    throws InvalidKeySpecException {
-	if (serviceIterator == null) {
-	    return spi.engineGenerateSecret(keySpec);
-	}
-	Exception failure = null;
-	SecretKeyFactorySpi mySpi = spi;
-	do {
-	    try {
-		return mySpi.engineGenerateSecret(keySpec);
-	    } catch (Exception e) {
-		if (failure == null) {
-		    failure = e;
-		}
-		mySpi = nextSpi(mySpi);
-	    }
-	} while (mySpi != null);
-	if (failure instanceof InvalidKeySpecException) {
-	    throw (InvalidKeySpecException)failure;
-	}
-	throw new InvalidKeySpecException
-		("Could not generate secret key", failure);
+            throws InvalidKeySpecException {
+        if (serviceIterator == null) {
+            return spi.engineGenerateSecret(keySpec);
+        }
+        Exception failure = null;
+        SecretKeyFactorySpi mySpi = spi;
+        do {
+            try {
+                return mySpi.engineGenerateSecret(keySpec);
+            } catch (Exception e) {
+                if (failure == null) {
+                    failure = e;
+                }
+                mySpi = nextSpi(mySpi);
+            }
+        } while (mySpi != null);
+        if (failure instanceof InvalidKeySpecException) {
+            throw (InvalidKeySpecException)failure;
+        }
+        throw new InvalidKeySpecException
+                ("Could not generate secret key", failure);
     }
 
     /**
@@ -355,27 +355,27 @@ public class SecretKeyFactory {
      * secret-key factory).
      */
     public final KeySpec getKeySpec(SecretKey key, Class keySpec)
-	    throws InvalidKeySpecException {
-	if (serviceIterator == null) {
-	    return spi.engineGetKeySpec(key, keySpec);
-	}
-	Exception failure = null;
-	SecretKeyFactorySpi mySpi = spi;
-	do {
-	    try {
-		return mySpi.engineGetKeySpec(key, keySpec);
-	    } catch (Exception e) {
-		if (failure == null) {
-		    failure = e;
-		}
-		mySpi = nextSpi(mySpi);
-	    }
-	} while (mySpi != null);
-	if (failure instanceof InvalidKeySpecException) {
-	    throw (InvalidKeySpecException)failure;
-	}
-	throw new InvalidKeySpecException
-		("Could not get key spec", failure);
+            throws InvalidKeySpecException {
+        if (serviceIterator == null) {
+            return spi.engineGetKeySpec(key, keySpec);
+        }
+        Exception failure = null;
+        SecretKeyFactorySpi mySpi = spi;
+        do {
+            try {
+                return mySpi.engineGetKeySpec(key, keySpec);
+            } catch (Exception e) {
+                if (failure == null) {
+                    failure = e;
+                }
+                mySpi = nextSpi(mySpi);
+            }
+        } while (mySpi != null);
+        if (failure instanceof InvalidKeySpecException) {
+            throw (InvalidKeySpecException)failure;
+        }
+        throw new InvalidKeySpecException
+                ("Could not get key spec", failure);
     }
 
     /**
@@ -390,26 +390,26 @@ public class SecretKeyFactory {
      * by this secret-key factory.
      */
     public final SecretKey translateKey(SecretKey key)
-	    throws InvalidKeyException {
-	if (serviceIterator == null) {
-	    return spi.engineTranslateKey(key);
-	}
-	Exception failure = null;
-	SecretKeyFactorySpi mySpi = spi;
-	do {
-	    try {
-		return mySpi.engineTranslateKey(key);
-	    } catch (Exception e) {
-		if (failure == null) {
-		    failure = e;
-		}
-		mySpi = nextSpi(mySpi);
-	    }
-	} while (mySpi != null);
-	if (failure instanceof InvalidKeyException) {
-	    throw (InvalidKeyException)failure;
-	}
-	throw new InvalidKeyException
-		("Could not translate key", failure);
+            throws InvalidKeyException {
+        if (serviceIterator == null) {
+            return spi.engineTranslateKey(key);
+        }
+        Exception failure = null;
+        SecretKeyFactorySpi mySpi = spi;
+        do {
+            try {
+                return mySpi.engineTranslateKey(key);
+            } catch (Exception e) {
+                if (failure == null) {
+                    failure = e;
+                }
+                mySpi = nextSpi(mySpi);
+            }
+        } while (mySpi != null);
+        if (failure instanceof InvalidKeyException) {
+            throw (InvalidKeyException)failure;
+        }
+        throw new InvalidKeyException
+                ("Could not translate key", failure);
     }
 }

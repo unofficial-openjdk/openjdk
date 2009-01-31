@@ -24,7 +24,7 @@
  */
 
 struct unpacker;
- 
+
 #define INT_MAX_VALUE ((int)0x7FFFFFFF)
 #define INT_MIN_VALUE ((int)0x80000000)
 
@@ -211,9 +211,9 @@ struct coding_method {
   // The defc and N are the incoming parameters to a meta-coding.
   // The value sink is used to collect output values, when desired.
   void init(byte* &band_rp, byte* band_limit,
-	    byte* &meta_rp, int mode,
-	    coding* defc, int N,
-	    intlist* valueSink);
+            byte* &meta_rp, int mode,
+            coding* defc, int N,
+            intlist* valueSink);
 
   // error handling
   void abort(const char* msg) { unpack_abort(msg, u); }

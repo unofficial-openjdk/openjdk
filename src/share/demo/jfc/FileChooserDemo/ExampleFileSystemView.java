@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +40,6 @@ import javax.swing.filechooser.FileSystemView;
  * You can provide a superclass of the FileSystemView class with your own functionality.
  *
  * @author Pavel Porvatov
- * @version %I% %G%
  */
 public class ExampleFileSystemView extends FileSystemView {
     /**

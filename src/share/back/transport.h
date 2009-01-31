@@ -39,4 +39,3 @@ void transport_waitForConnection(void);
 void transport_close(void);
 
 #endif
-

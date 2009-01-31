@@ -23,10 +23,10 @@
 
 /* @test
    @bug 4089062
-   @summary A String created from a StringBuffer can be overwritten 
-   if setLength() to a value less than the buffer length is called 
+   @summary A String created from a StringBuffer can be overwritten
+   if setLength() to a value less than the buffer length is called
    on the StringBuffer and then the StringBuffer is appended to.
-   @author Robert Field 
+   @author Robert Field
 */
 
 public class SetLength {

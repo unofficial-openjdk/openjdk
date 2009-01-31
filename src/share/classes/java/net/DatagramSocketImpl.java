@@ -39,7 +39,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
 
     /**
      * The local port number.
-     */   
+     */
     protected int localPort;
 
     /**
@@ -49,8 +49,8 @@ public abstract class DatagramSocketImpl implements SocketOptions {
 
     /**
      * Creates a datagram socket.
-     * @exception SocketException if there is an error in the 
-     * underlying protocol, such as a TCP error. 
+     * @exception SocketException if there is an error in the
+     * underlying protocol, such as a TCP error.
      */
     protected abstract void create() throws SocketException;
 
@@ -67,10 +67,10 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * Sends a datagram packet. The packet contains the data and the
      * destination address to send the packet to.
      * @param p the packet to be sent.
-     * @exception IOException if an I/O exception occurs while sending the 
+     * @exception IOException if an I/O exception occurs while sending the
      * datagram packet.
      * @exception  PortUnreachableException may be thrown if the socket is connected
-     * to a currently unreachable destination. Note, there is no guarantee that 
+     * to a currently unreachable destination. Note, there is no guarantee that
      * the exception will be thrown.
      */
     protected abstract void send(DatagramPacket p) throws IOException;
@@ -79,12 +79,12 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * Connects a datagram socket to a remote destination. This associates the remote
      * address with the local socket so that datagrams may only be sent to this destination
      * and received from this destination. This may be overridden to call a native
-     * system connect. 
+     * system connect.
      *
      * <p>If the remote destination to which the socket is connected does not
      * exist, or is otherwise unreachable, and if an ICMP destination unreachable
-     * packet has been received for that address, then a subsequent call to 
-     * send or receive may throw a PortUnreachableException. 
+     * packet has been received for that address, then a subsequent call to
+     * send or receive may throw a PortUnreachableException.
      * Note, there is no guarantee that the exception will be thrown.
      * @param address the remote InetAddress to connect to
      * @param port the remote port number
@@ -95,7 +95,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
     protected void connect(InetAddress address, int port) throws SocketException {}
 
     /**
-     * Disconnects a datagram socket from its remote destination. 
+     * Disconnects a datagram socket from its remote destination.
      * @since 1.4
      */
     protected void disconnect() {}
@@ -103,7 +103,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
     /**
      * Peek at the packet to see who it is from. Updates the specified <code>InetAddress</code>
      * to the address which the packet came from.
-     * @param i an InetAddress object 
+     * @param i an InetAddress object
      * @return the port number which the packet came from.
      * @exception IOException if an I/O exception occurs
      * @exception  PortUnreachableException may be thrown if the socket is connected
@@ -115,7 +115,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
     /**
      * Peek at the packet to see who it is from. The data is copied into the specified
      * <code>DatagramPacket</code>. The data is returned,
-     * but not consumed, so that a subsequent peekData/receive operation 
+     * but not consumed, so that a subsequent peekData/receive operation
      * will see the same data.
      * @param p the Packet Received.
      * @return the port number which the packet came from.
@@ -205,8 +205,8 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * @since 1.4
      */
     protected abstract void joinGroup(SocketAddress mcastaddr,
-				      NetworkInterface netIf) 
-	throws IOException;
+                                      NetworkInterface netIf)
+        throws IOException;
 
     /**
      * Leave the multicast group.
@@ -216,9 +216,9 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * the multicast group
      * @since 1.4
      */
-    protected abstract void leaveGroup(SocketAddress mcastaddr, 
-				       NetworkInterface netIf) 
-	throws IOException;
+    protected abstract void leaveGroup(SocketAddress mcastaddr,
+                                       NetworkInterface netIf)
+        throws IOException;
 
     /**
      * Close the socket.
@@ -230,7 +230,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * @return an <tt>int</tt> representing the local port value
      */
     protected int getLocalPort() {
-	return localPort;
+        return localPort;
     }
 
     /**
@@ -239,6 +239,6 @@ public abstract class DatagramSocketImpl implements SocketOptions {
      * file descriptor
      */
     protected FileDescriptor getFileDescriptor() {
-	return fd;
+        return fd;
     }
 }

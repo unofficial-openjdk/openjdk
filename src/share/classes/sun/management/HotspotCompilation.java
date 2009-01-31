@@ -48,7 +48,7 @@ class HotspotCompilation
 
     /**
      * Constructor of HotspotRuntime class.
-     */ 
+     */
     HotspotCompilation(VMManagement vm) {
         jvm = vm;
         initCompilerCounters();
@@ -112,11 +112,11 @@ class HotspotCompilation
     private CompilerThreadInfo[] threads;
     private int numActiveThreads; // number of active compiler threads
 
-    private Map<String, Counter> counters; 
+    private Map<String, Counter> counters;
     private Counter lookup(String name) {
         Counter c = null;
 
-        // Only one counter exists with the specified name in the 
+        // Only one counter exists with the specified name in the
         // current implementation.  We first look up in the SUN_CI namespace
         // since most counters are in SUN_CI namespace.
 
@@ -130,24 +130,24 @@ class HotspotCompilation
             return c;
         }
 
-        // FIXME: should tolerate if counter doesn't exist 
+        // FIXME: should tolerate if counter doesn't exist
         throw new InternalError("Counter " + name + " does not exist");
     }
 
     private void initCompilerCounters() {
-        // Build a tree map of the current list of performance counters 
-        ListIterator iter = getInternalCompilerCounters().listIterator(); 
+        // Build a tree map of the current list of performance counters
+        ListIterator iter = getInternalCompilerCounters().listIterator();
         counters = new TreeMap<String, Counter>();
         while (iter.hasNext()) {
             Counter c = (Counter) iter.next();
             counters.put(c.getName(), c);
         }
 
-        compilerThreads = (LongCounter) lookup("threads"); 
-        totalCompiles = (LongCounter) lookup("totalCompiles"); 
-        totalBailouts = (LongCounter) lookup("totalBailouts"); 
-        totalInvalidates = (LongCounter) lookup("totalInvalidates"); 
-        nmethodCodeSize = (LongCounter) lookup("nmethodCodeSize"); 
+        compilerThreads = (LongCounter) lookup("threads");
+        totalCompiles = (LongCounter) lookup("totalCompiles");
+        totalBailouts = (LongCounter) lookup("totalBailouts");
+        totalInvalidates = (LongCounter) lookup("totalInvalidates");
+        nmethodCodeSize = (LongCounter) lookup("nmethodCodeSize");
         nmethodSize = (LongCounter) lookup("nmethodSize");
         lastMethod = (StringCounter) lookup("lastMethod");
         lastSize = (LongCounter) lookup("lastSize");
@@ -164,7 +164,7 @@ class HotspotCompilation
 
         // AdaptorThread has index 0
         if (counters.containsKey(SUN_CI + "adapterThread.compiles")) {
-            threads[0] = new CompilerThreadInfo("adapterThread", 0); 
+            threads[0] = new CompilerThreadInfo("adapterThread", 0);
             numActiveThreads++;
         } else {
             threads[0] = null;
@@ -231,6 +231,6 @@ class HotspotCompilation
     }
 
     public java.util.List<Counter> getInternalCompilerCounters() {
-        return jvm.getInternalCounters(CI_COUNTER_NAME_PATTERN); 
-    } 
+        return jvm.getInternalCounters(CI_COUNTER_NAME_PATTERN);
+    }
 }

@@ -84,7 +84,7 @@ abstract class CMap {
 //         0x27a1, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd,
 //         0x27a9, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd,
 //         0xfffd, 0xfffd, 0xfffd, 0x2717, 0x2713, 0xfffd, 0xfffd, 0xfffd,
-//    }; 
+//    };
 
 //     static char Symbols_b2c[] = {
 //         0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd,
@@ -143,243 +143,243 @@ abstract class CMap {
 
     static CMap initialize(TrueTypeFont font) {
 
-	CMap cmap = null;
+        CMap cmap = null;
 
-	int offset, platformID, encodingID=-1;
+        int offset, platformID, encodingID=-1;
 
-	int three0=0, three1=0, three2=0, three3=0, three4=0, three5=0,
-	    three6=0, three10=0;
-	boolean threeStar = false;
+        int three0=0, three1=0, three2=0, three3=0, three4=0, three5=0,
+            three6=0, three10=0;
+        boolean threeStar = false;
 
-	ByteBuffer cmapBuffer = font.getTableBuffer(TrueTypeFont.cmapTag);
-	int cmapTableOffset = font.getTableSize(TrueTypeFont.cmapTag);
-	short numberSubTables = cmapBuffer.getShort(2);
+        ByteBuffer cmapBuffer = font.getTableBuffer(TrueTypeFont.cmapTag);
+        int cmapTableOffset = font.getTableSize(TrueTypeFont.cmapTag);
+        short numberSubTables = cmapBuffer.getShort(2);
 
-	/* locate the offsets of all 3,*  (ie Microsoft platform) encodings */
-	for (int i=0; i<numberSubTables; i++) {
-	    cmapBuffer.position(i * 8 + 4);
-	    platformID = cmapBuffer.getShort();
-	    if (platformID == 3) {
-		threeStar = true;
-		encodingID = cmapBuffer.getShort();
-		offset     = cmapBuffer.getInt();
-		switch (encodingID) {
-		case 0:  three0  = offset; break; // MS Symbol encoding
-		case 1:  three1  = offset; break; // MS Unicode cmap
-		case 2:  three2  = offset; break; // ShiftJIS cmap.
-		case 3:  three3  = offset; break; // GBK cmap
-		case 4:  three4  = offset; break; // Big 5 cmap
-		case 5:  three5  = offset; break; // Wansung
-		case 6:  three6  = offset; break; // Johab
-		case 10: three10 = offset; break; // MS Unicode surrogates
-		}
-	    }
-	}
+        /* locate the offsets of all 3,*  (ie Microsoft platform) encodings */
+        for (int i=0; i<numberSubTables; i++) {
+            cmapBuffer.position(i * 8 + 4);
+            platformID = cmapBuffer.getShort();
+            if (platformID == 3) {
+                threeStar = true;
+                encodingID = cmapBuffer.getShort();
+                offset     = cmapBuffer.getInt();
+                switch (encodingID) {
+                case 0:  three0  = offset; break; // MS Symbol encoding
+                case 1:  three1  = offset; break; // MS Unicode cmap
+                case 2:  three2  = offset; break; // ShiftJIS cmap.
+                case 3:  three3  = offset; break; // GBK cmap
+                case 4:  three4  = offset; break; // Big 5 cmap
+                case 5:  three5  = offset; break; // Wansung
+                case 6:  three6  = offset; break; // Johab
+                case 10: three10 = offset; break; // MS Unicode surrogates
+                }
+            }
+        }
 
-	/* This defines the preference order for cmap subtables */
-	if (threeStar) {
-	    if (three10 != 0) {
-		cmap = createCMap(cmapBuffer, three10, null);
-	    }
-	    else if  (three0 != 0) {
-		/* The special case treatment of these fonts leads to
-		 * anomalies where a user can view "wingdings" and "wingdings2"
-		 * and the latter shows all its code points in the unicode
-		 * private use area at 0xF000->0XF0FF and the former shows
-		 * a scattered subset of its glyphs that are known mappings to
-		 * unicode code points.
-		 * The primary purpose of these mappings was to facilitate
-		 * display of symbol chars etc in composite fonts, however
-		 * this is not needed as all these code points are covered
-		 * by Lucida Sans Regular.
-		 * Commenting this out reduces the role of these two files
-		 * (assuming that they continue to be used in font.properties)
-		 * to just one of contributing to the overall composite
-		 * font metrics, and also AWT can still access the fonts.
-		 * Clients which explicitly accessed these fonts as names
-		 * "Symbol" and "Wingdings" (ie as physical fonts) and
-		 * expected to see a scattering of these characters will
-		 * see them now as missing. How much of a problem is this?
-		 * Perhaps we could still support this mapping just for
-		 * "Symbol.ttf" but I suspect some users would prefer it
-		 * to be mapped in to the Latin range as that is how
-		 * the "symbol" font is used in native apps.
-		 */
-// 		String name = font.platName.toLowerCase(Locale.ENGLISH);
-// 		if (name.endsWith("symbol.ttf")) {
-// 		    cmap = createSymbolCMap(cmapBuffer, three0, Symbols_b2c);
-// 		} else if (name.endsWith("wingding.ttf")) {
-// 		    cmap = createSymbolCMap(cmapBuffer, three0, WingDings_b2c);
-// 		} else {
-		    cmap = createCMap(cmapBuffer, three0, null);
-// 		}
-	    }
-	    else if (three1 != 0) {
-		cmap = createCMap(cmapBuffer, three1, null);
-	    }
-	    else if (three2 != 0) {
-		cmap = createCMap(cmapBuffer, three2,
-				  getConverterMap(ShiftJISEncoding));
-	    }
-	    else if (three3 != 0) {
-		cmap = createCMap(cmapBuffer, three3,
-				  getConverterMap(GBKEncoding));
-	    }
-	    else if (three4 != 0) {
-		/* GB2312 TrueType fonts on Solaris have wrong encoding ID for
-		 * cmap table, these fonts have EncodingID 4 which is Big5
-		 * encoding according the TrueType spec, but actually the
-		 * fonts are using gb2312 encoding, have to use this
-		 * workaround to make Solaris zh_CN locale work.  -sherman
-		 */
-		if (FontManager.isSolaris && font.platName != null &&
-		    (font.platName.startsWith(
+        /* This defines the preference order for cmap subtables */
+        if (threeStar) {
+            if (three10 != 0) {
+                cmap = createCMap(cmapBuffer, three10, null);
+            }
+            else if  (three0 != 0) {
+                /* The special case treatment of these fonts leads to
+                 * anomalies where a user can view "wingdings" and "wingdings2"
+                 * and the latter shows all its code points in the unicode
+                 * private use area at 0xF000->0XF0FF and the former shows
+                 * a scattered subset of its glyphs that are known mappings to
+                 * unicode code points.
+                 * The primary purpose of these mappings was to facilitate
+                 * display of symbol chars etc in composite fonts, however
+                 * this is not needed as all these code points are covered
+                 * by Lucida Sans Regular.
+                 * Commenting this out reduces the role of these two files
+                 * (assuming that they continue to be used in font.properties)
+                 * to just one of contributing to the overall composite
+                 * font metrics, and also AWT can still access the fonts.
+                 * Clients which explicitly accessed these fonts as names
+                 * "Symbol" and "Wingdings" (ie as physical fonts) and
+                 * expected to see a scattering of these characters will
+                 * see them now as missing. How much of a problem is this?
+                 * Perhaps we could still support this mapping just for
+                 * "Symbol.ttf" but I suspect some users would prefer it
+                 * to be mapped in to the Latin range as that is how
+                 * the "symbol" font is used in native apps.
+                 */
+//              String name = font.platName.toLowerCase(Locale.ENGLISH);
+//              if (name.endsWith("symbol.ttf")) {
+//                  cmap = createSymbolCMap(cmapBuffer, three0, Symbols_b2c);
+//              } else if (name.endsWith("wingding.ttf")) {
+//                  cmap = createSymbolCMap(cmapBuffer, three0, WingDings_b2c);
+//              } else {
+                    cmap = createCMap(cmapBuffer, three0, null);
+//              }
+            }
+            else if (three1 != 0) {
+                cmap = createCMap(cmapBuffer, three1, null);
+            }
+            else if (three2 != 0) {
+                cmap = createCMap(cmapBuffer, three2,
+                                  getConverterMap(ShiftJISEncoding));
+            }
+            else if (three3 != 0) {
+                cmap = createCMap(cmapBuffer, three3,
+                                  getConverterMap(GBKEncoding));
+            }
+            else if (three4 != 0) {
+                /* GB2312 TrueType fonts on Solaris have wrong encoding ID for
+                 * cmap table, these fonts have EncodingID 4 which is Big5
+                 * encoding according the TrueType spec, but actually the
+                 * fonts are using gb2312 encoding, have to use this
+                 * workaround to make Solaris zh_CN locale work.  -sherman
+                 */
+                if (FontManager.isSolaris && font.platName != null &&
+                    (font.platName.startsWith(
                      "/usr/openwin/lib/locale/zh_CN.EUC/X11/fonts/TrueType") ||
-		     font.platName.startsWith(
+                     font.platName.startsWith(
                      "/usr/openwin/lib/locale/zh_CN/X11/fonts/TrueType") ||
-		     font.platName.startsWith(
+                     font.platName.startsWith(
                      "/usr/openwin/lib/locale/zh/X11/fonts/TrueType"))) {
-		    cmap = createCMap(cmapBuffer, three4, 
-				       getConverterMap(GBKEncoding));
-		}
-		else {
-		    cmap = createCMap(cmapBuffer, three4, 
-				      getConverterMap(Big5Encoding));
-		}
-	    }
-	    else if (three5 != 0) {
-		cmap = createCMap(cmapBuffer, three5, 
-				  getConverterMap(WansungEncoding));
-	    }
-	    else if (three6 != 0) {
-		cmap = createCMap(cmapBuffer, three6, 
-				  getConverterMap(JohabEncoding));
-	    }
-	} else {
-	    /* No 3,* subtable was found. Just use whatever is the first
-	     * table listed. Not very useful but maybe better than
-	     * rejecting the font entirely?
-	     */
-	    cmap = createCMap(cmapBuffer, cmapBuffer.getInt(8), null);
-	}
-	return cmap;
+                    cmap = createCMap(cmapBuffer, three4,
+                                       getConverterMap(GBKEncoding));
+                }
+                else {
+                    cmap = createCMap(cmapBuffer, three4,
+                                      getConverterMap(Big5Encoding));
+                }
+            }
+            else if (three5 != 0) {
+                cmap = createCMap(cmapBuffer, three5,
+                                  getConverterMap(WansungEncoding));
+            }
+            else if (three6 != 0) {
+                cmap = createCMap(cmapBuffer, three6,
+                                  getConverterMap(JohabEncoding));
+            }
+        } else {
+            /* No 3,* subtable was found. Just use whatever is the first
+             * table listed. Not very useful but maybe better than
+             * rejecting the font entirely?
+             */
+            cmap = createCMap(cmapBuffer, cmapBuffer.getInt(8), null);
+        }
+        return cmap;
     }
 
     /* speed up the converting by setting the range for double
      * byte characters;
      */
     static char[] getConverter(short encodingID) {
-	int dBegin = 0x8000;
-	int dEnd   = 0xffff;
-	String encoding;
+        int dBegin = 0x8000;
+        int dEnd   = 0xffff;
+        String encoding;
 
-	switch (encodingID) {
-	case ShiftJISEncoding:
-	    dBegin = 0x8140;
-	    dEnd   = 0xfcfc;
-	    encoding = "SJIS";
-	    break;
-	case GBKEncoding:
-	    dBegin = 0x8140;
-	    dEnd   = 0xfea0;
-	    encoding = "GBK";
-	    break;
-	case Big5Encoding:
-	    dBegin = 0xa140;
-	    dEnd   = 0xfefe;
-	    encoding = "Big5";
-	    break;
-	case WansungEncoding:
-	    dBegin = 0xa1a1;
-	    dEnd   = 0xfede;
-	    encoding = "EUC_KR";
-	    break;
-	case JohabEncoding:
-	    dBegin = 0x8141;
-	    dEnd   = 0xfdfe;
-	    encoding = "Johab";
-	    break;
-	default:
-	    return null;
-	}
-	
-	try {
-	    char[] convertedChars = new char[65536];
-	    for (int i=0; i<65536; i++) {
-		convertedChars[i] = noSuchChar;
-	    }
+        switch (encodingID) {
+        case ShiftJISEncoding:
+            dBegin = 0x8140;
+            dEnd   = 0xfcfc;
+            encoding = "SJIS";
+            break;
+        case GBKEncoding:
+            dBegin = 0x8140;
+            dEnd   = 0xfea0;
+            encoding = "GBK";
+            break;
+        case Big5Encoding:
+            dBegin = 0xa140;
+            dEnd   = 0xfefe;
+            encoding = "Big5";
+            break;
+        case WansungEncoding:
+            dBegin = 0xa1a1;
+            dEnd   = 0xfede;
+            encoding = "EUC_KR";
+            break;
+        case JohabEncoding:
+            dBegin = 0x8141;
+            dEnd   = 0xfdfe;
+            encoding = "Johab";
+            break;
+        default:
+            return null;
+        }
 
-	    byte[] inputBytes = new byte[(dEnd-dBegin+1)*2];
-	    char[] outputChars = new char[(dEnd-dBegin+1)];
+        try {
+            char[] convertedChars = new char[65536];
+            for (int i=0; i<65536; i++) {
+                convertedChars[i] = noSuchChar;
+            }
 
-	    int j = 0;
-	    int firstByte;
-	    if (encodingID == ShiftJISEncoding) {
-		for (int i = dBegin; i <= dEnd; i++) {
-		    firstByte = (i >> 8 & 0xff);
-		    if (firstByte >= 0xa1 && firstByte <= 0xdf) {
-			//sjis halfwidth katakana
-			inputBytes[j++] = (byte)0xff;
-			inputBytes[j++] = (byte)0xff;
-		    } else {
-			inputBytes[j++] = (byte)firstByte;
-			inputBytes[j++] = (byte)(i & 0xff);
-		    }
-		}
-	    } else {
-		for (int i = dBegin; i <= dEnd; i++) {
-		    inputBytes[j++] = (byte)(i>>8 & 0xff);
-		    inputBytes[j++] = (byte)(i & 0xff);
-		}
-	    }
+            byte[] inputBytes = new byte[(dEnd-dBegin+1)*2];
+            char[] outputChars = new char[(dEnd-dBegin+1)];
+
+            int j = 0;
+            int firstByte;
+            if (encodingID == ShiftJISEncoding) {
+                for (int i = dBegin; i <= dEnd; i++) {
+                    firstByte = (i >> 8 & 0xff);
+                    if (firstByte >= 0xa1 && firstByte <= 0xdf) {
+                        //sjis halfwidth katakana
+                        inputBytes[j++] = (byte)0xff;
+                        inputBytes[j++] = (byte)0xff;
+                    } else {
+                        inputBytes[j++] = (byte)firstByte;
+                        inputBytes[j++] = (byte)(i & 0xff);
+                    }
+                }
+            } else {
+                for (int i = dBegin; i <= dEnd; i++) {
+                    inputBytes[j++] = (byte)(i>>8 & 0xff);
+                    inputBytes[j++] = (byte)(i & 0xff);
+                }
+            }
 
             Charset.forName(encoding).newDecoder()
-	    .onMalformedInput(CodingErrorAction.REPLACE)
-	    .onUnmappableCharacter(CodingErrorAction.REPLACE)
-	    .replaceWith("\u0000")
-	    .decode(ByteBuffer.wrap(inputBytes, 0, inputBytes.length),
-		    CharBuffer.wrap(outputChars, 0, outputChars.length),
-		    true);
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+            .replaceWith("\u0000")
+            .decode(ByteBuffer.wrap(inputBytes, 0, inputBytes.length),
+                    CharBuffer.wrap(outputChars, 0, outputChars.length),
+                    true);
 
-	    // ensure single byte ascii
-	    for (int i = 0x20; i <= 0x7e; i++) {
-		convertedChars[i] = (char)i;
-	    }
+            // ensure single byte ascii
+            for (int i = 0x20; i <= 0x7e; i++) {
+                convertedChars[i] = (char)i;
+            }
 
-	    //sjis halfwidth katakana
-	    if (encodingID == ShiftJISEncoding) {
-		for (int i = 0xa1; i <= 0xdf; i++) {
-		    convertedChars[i] = (char)(i - 0xa1 + 0xff61);
-		}
-	    }
+            //sjis halfwidth katakana
+            if (encodingID == ShiftJISEncoding) {
+                for (int i = 0xa1; i <= 0xdf; i++) {
+                    convertedChars[i] = (char)(i - 0xa1 + 0xff61);
+                }
+            }
 
-	    /* It would save heap space (approx 60Kbytes for each of these
-	     * converters) if stored only valid ranges (ie returned
-	     * outputChars directly. But this is tricky since want to
-	     * include the ASCII range too.
-	     */
-// 	    System.err.println("oc.len="+outputChars.length);
-// 	    System.err.println("cc.len="+convertedChars.length);
-// 	    System.err.println("dbegin="+dBegin);
-	    System.arraycopy(outputChars, 0, convertedChars, dBegin,
-			     outputChars.length);
+            /* It would save heap space (approx 60Kbytes for each of these
+             * converters) if stored only valid ranges (ie returned
+             * outputChars directly. But this is tricky since want to
+             * include the ASCII range too.
+             */
+//          System.err.println("oc.len="+outputChars.length);
+//          System.err.println("cc.len="+convertedChars.length);
+//          System.err.println("dbegin="+dBegin);
+            System.arraycopy(outputChars, 0, convertedChars, dBegin,
+                             outputChars.length);
 
-	    //return convertedChars;
-	    /* invert this map as now want it to map from Unicode
-	     * to other encoding. 
-	     */
-	    char [] invertedChars = new char[65536];
-	    for (int i=0;i<65536;i++) {
-		if (convertedChars[i] != noSuchChar) {
-		    invertedChars[convertedChars[i]] = (char)i;
-		}
-	    }
-	    return invertedChars;
+            //return convertedChars;
+            /* invert this map as now want it to map from Unicode
+             * to other encoding.
+             */
+            char [] invertedChars = new char[65536];
+            for (int i=0;i<65536;i++) {
+                if (convertedChars[i] != noSuchChar) {
+                    invertedChars[convertedChars[i]] = (char)i;
+                }
+            }
+            return invertedChars;
 
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-	return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /*
@@ -388,49 +388,49 @@ abstract class CMap {
      * value is the corresponding unicode char.
      */
     static char[] getConverterMap(short encodingID) {
-	if (converterMaps[encodingID] == null) {
-	   converterMaps[encodingID] = getConverter(encodingID);
-	}
-	return converterMaps[encodingID];
+        if (converterMaps[encodingID] == null) {
+           converterMaps[encodingID] = getConverter(encodingID);
+        }
+        return converterMaps[encodingID];
     }
 
 
     static CMap createCMap(ByteBuffer buffer, int offset, char[] xlat) {
-	/* First do a sanity check that this cmap subtable is contained
-	 * within the cmap table.
-	 */
-	int subtableFormat = buffer.getChar(offset);
-	long subtableLength;
-	if (subtableFormat < 8) {
-	    subtableLength = buffer.getChar(offset+2);
-	} else {
+        /* First do a sanity check that this cmap subtable is contained
+         * within the cmap table.
+         */
+        int subtableFormat = buffer.getChar(offset);
+        long subtableLength;
+        if (subtableFormat < 8) {
+            subtableLength = buffer.getChar(offset+2);
+        } else {
             subtableLength = buffer.getInt(offset+4) & INTMASK;
-	}
-	if (offset+subtableLength > buffer.capacity()) {
-	    if (FontManager.logging) {
+        }
+        if (offset+subtableLength > buffer.capacity()) {
+            if (FontManager.logging) {
                 FontManager.logger.warning("Cmap subtable overflows buffer.");
-	    }
-	}
-	switch (subtableFormat) {
-	case 0:  return new CMapFormat0(buffer, offset);
-	case 2:  return new CMapFormat2(buffer, offset, xlat);
-	case 4:  return new CMapFormat4(buffer, offset, xlat);
+            }
+        }
+        switch (subtableFormat) {
+        case 0:  return new CMapFormat0(buffer, offset);
+        case 2:  return new CMapFormat2(buffer, offset, xlat);
+        case 4:  return new CMapFormat4(buffer, offset, xlat);
         case 6:  return new CMapFormat6(buffer, offset, xlat);
- 	case 8:  return new CMapFormat8(buffer, offset, xlat);
- 	case 10: return new CMapFormat10(buffer, offset, xlat);
-	case 12: return new CMapFormat12(buffer, offset, xlat);
-	default: throw new RuntimeException("Cmap format unimplemented: " +
-					    (int)buffer.getChar(offset));
-	}	    
+        case 8:  return new CMapFormat8(buffer, offset, xlat);
+        case 10: return new CMapFormat10(buffer, offset, xlat);
+        case 12: return new CMapFormat12(buffer, offset, xlat);
+        default: throw new RuntimeException("Cmap format unimplemented: " +
+                                            (int)buffer.getChar(offset));
+        }
     }
 
 /*
     final char charVal(byte[] cmap, int index) {
-	return (char)(((0xff & cmap[index]) << 8)+(0xff & cmap[index+1]));
+        return (char)(((0xff & cmap[index]) << 8)+(0xff & cmap[index+1]));
     }
 
     final short shortVal(byte[] cmap, int index) {
-	return (short)(((0xff & cmap[index]) << 8)+(0xff & cmap[index+1]));
+        return (short)(((0xff & cmap[index]) << 8)+(0xff & cmap[index+1]));
     }
 */
     abstract char getGlyph(int charCode);
@@ -451,20 +451,20 @@ abstract class CMap {
      * ushort glyphIdArray[]
      */
     static class CMapFormat4 extends CMap {
-	int segCount;
-	int entrySelector;
-	int rangeShift;
-	char[] endCount;
-	char[] startCount;
-	short[] idDelta;
-	char[] idRangeOffset;
-	char[] glyphIds;
+        int segCount;
+        int entrySelector;
+        int rangeShift;
+        char[] endCount;
+        char[] startCount;
+        short[] idDelta;
+        char[] idRangeOffset;
+        char[] glyphIds;
 
-	CMapFormat4(ByteBuffer bbuffer, int offset, char[] xlat) {
+        CMapFormat4(ByteBuffer bbuffer, int offset, char[] xlat) {
 
-	    this.xlat = xlat;
+            this.xlat = xlat;
 
-	    bbuffer.position(offset);
+            bbuffer.position(offset);
             CharBuffer buffer = bbuffer.asCharBuffer();
             buffer.get(); // skip, we already know format=4
             int subtableLength = buffer.get();
@@ -480,46 +480,46 @@ abstract class CMap {
                 subtableLength = bbuffer.capacity() - offset;
             }
             buffer.get(); // skip language
-	    segCount = buffer.get()/2;
-	    int searchRange = buffer.get();
-	    entrySelector = buffer.get();
-	    rangeShift    = buffer.get()/2;
-	    startCount = new char[segCount];
-	    endCount = new char[segCount];
-	    idDelta = new short[segCount];
-	    idRangeOffset = new char[segCount];
-	    
-	    for (int i=0; i<segCount; i++) {
-		endCount[i] = buffer.get();
-	    }
-	    buffer.get(); // 2 bytes for reserved pad
-	    for (int i=0; i<segCount; i++) {
-		startCount[i] = buffer.get();
-	    }
-	    
-	    for (int i=0; i<segCount; i++) {
-		idDelta[i] = (short)buffer.get();
-	    }
-	    
-	    for (int i=0; i<segCount; i++) {
-		char ctmp = buffer.get();
-		idRangeOffset[i] = (char)((ctmp>>1)&0xffff);
-	    }
-	    /* Can calculate the number of glyph IDs by subtracting
-	     * "pos" from the length of the cmap
-	     */
+            segCount = buffer.get()/2;
+            int searchRange = buffer.get();
+            entrySelector = buffer.get();
+            rangeShift    = buffer.get()/2;
+            startCount = new char[segCount];
+            endCount = new char[segCount];
+            idDelta = new short[segCount];
+            idRangeOffset = new char[segCount];
+
+            for (int i=0; i<segCount; i++) {
+                endCount[i] = buffer.get();
+            }
+            buffer.get(); // 2 bytes for reserved pad
+            for (int i=0; i<segCount; i++) {
+                startCount[i] = buffer.get();
+            }
+
+            for (int i=0; i<segCount; i++) {
+                idDelta[i] = (short)buffer.get();
+            }
+
+            for (int i=0; i<segCount; i++) {
+                char ctmp = buffer.get();
+                idRangeOffset[i] = (char)((ctmp>>1)&0xffff);
+            }
+            /* Can calculate the number of glyph IDs by subtracting
+             * "pos" from the length of the cmap
+             */
             int pos = (segCount*8+16)/2;
             buffer.position(pos);
-	    int numGlyphIds = (subtableLength/2 - pos);
-	    glyphIds = new char[numGlyphIds];
-	    for (int i=0;i<numGlyphIds;i++) {
-		glyphIds[i] = buffer.get();
-	    }
+            int numGlyphIds = (subtableLength/2 - pos);
+            glyphIds = new char[numGlyphIds];
+            for (int i=0;i<numGlyphIds;i++) {
+                glyphIds[i] = buffer.get();
+            }
 /*
             System.err.println("segcount="+segCount);
             System.err.println("entrySelector="+entrySelector);
             System.err.println("rangeShift="+rangeShift);
-            for (int j=0;j<segCount;j++) { 
+            for (int j=0;j<segCount;j++) {
               System.err.println("j="+j+ " sc="+(int)(startCount[j]&0xffff)+
                                  " ec="+(int)(endCount[j]&0xffff)+
                                  " delta="+idDelta[j] +
@@ -531,281 +531,281 @@ abstract class CMap {
                   System.err.println("gid["+i+"]="+(int)glyphIds[i]);
             }
 */
-	}
+        }
 
-	char getGlyph(int charCode) {
+        char getGlyph(int charCode) {
 
-	    int index = 0;
-	    char glyphCode = 0;
+            int index = 0;
+            char glyphCode = 0;
 
-	    int controlGlyph = getControlCodeGlyph(charCode, true);
-	    if (controlGlyph >= 0) {
-		return (char)controlGlyph;
-	    }
+            int controlGlyph = getControlCodeGlyph(charCode, true);
+            if (controlGlyph >= 0) {
+                return (char)controlGlyph;
+            }
 
-	    /* presence of translation array indicates that this
-	     * cmap is in some other (non-unicode encoding).
-	     * In order to look-up a char->glyph mapping we need to
-	     * translate the unicode code point to the encoding of
-	     * the cmap.
-	     * REMIND: VALID CHARCODES??
-	     */
-	    if (xlat != null) {
-		charCode = xlat[charCode];
-	    }
+            /* presence of translation array indicates that this
+             * cmap is in some other (non-unicode encoding).
+             * In order to look-up a char->glyph mapping we need to
+             * translate the unicode code point to the encoding of
+             * the cmap.
+             * REMIND: VALID CHARCODES??
+             */
+            if (xlat != null) {
+                charCode = xlat[charCode];
+            }
 
-	    /* 
-	     * Citation from the TrueType (and OpenType) spec:
-	     *   The segments are sorted in order of increasing endCode
-	     *   values, and the segment values are specified in four parallel
-	     *   arrays. You search for the first endCode that is greater than
-	     *   or equal to the character code you want to map. If the
-	     *   corresponding startCode is less than or equal to the
-	     *   character code, then you use the corresponding idDelta and
-	     *   idRangeOffset to map the character code to a glyph index
-	     *   (otherwise, the missingGlyph is returned).
-	     */
+            /*
+             * Citation from the TrueType (and OpenType) spec:
+             *   The segments are sorted in order of increasing endCode
+             *   values, and the segment values are specified in four parallel
+             *   arrays. You search for the first endCode that is greater than
+             *   or equal to the character code you want to map. If the
+             *   corresponding startCode is less than or equal to the
+             *   character code, then you use the corresponding idDelta and
+             *   idRangeOffset to map the character code to a glyph index
+             *   (otherwise, the missingGlyph is returned).
+             */
 
-	    /* 
-	     * CMAP format4 defines several fields for optimized search of
-	     * the segment list (entrySelector, searchRange, rangeShift). 
-	     * However, benefits are neglible and some fonts have incorrect
-	     * data - so we use straightforward binary search (see bug 6247425)
-	     */
-	    int left = 0, right = startCount.length;
-	    index = startCount.length >> 1;
-	    while (left < right) {
-		if (endCount[index] < charCode) {
-		    left = index + 1;
+            /*
+             * CMAP format4 defines several fields for optimized search of
+             * the segment list (entrySelector, searchRange, rangeShift).
+             * However, benefits are neglible and some fonts have incorrect
+             * data - so we use straightforward binary search (see bug 6247425)
+             */
+            int left = 0, right = startCount.length;
+            index = startCount.length >> 1;
+            while (left < right) {
+                if (endCount[index] < charCode) {
+                    left = index + 1;
                 } else {
-		    right = index;
-	        }
-		index = (left + right) >> 1;
-	    }
+                    right = index;
+                }
+                index = (left + right) >> 1;
+            }
 
-	    if (charCode >= startCount[index] && charCode <= endCount[index]) {
-		int rangeOffset = idRangeOffset[index];
-	    
-		if (rangeOffset == 0) {
-		    glyphCode = (char)(charCode + idDelta[index]);
-		} else {
-		    /* Calculate an index into the glyphIds array */
+            if (charCode >= startCount[index] && charCode <= endCount[index]) {
+                int rangeOffset = idRangeOffset[index];
+
+                if (rangeOffset == 0) {
+                    glyphCode = (char)(charCode + idDelta[index]);
+                } else {
+                    /* Calculate an index into the glyphIds array */
 
 /*
- 		    System.err.println("rangeoffset="+rangeOffset+
- 				       " charCode=" + charCode +
- 				       " scnt["+index+"]="+(int)startCount[index] +
- 				       " segCnt="+segCount);
+                    System.err.println("rangeoffset="+rangeOffset+
+                                       " charCode=" + charCode +
+                                       " scnt["+index+"]="+(int)startCount[index] +
+                                       " segCnt="+segCount);
 */
 
-		    int glyphIDIndex = rangeOffset - segCount + index 
-					 + (charCode - startCount[index]);
-		    glyphCode = glyphIds[glyphIDIndex];
-		    if (glyphCode != 0) {
-			glyphCode = (char)(glyphCode + idDelta[index]);
-		    }
-		}
-	    }
+                    int glyphIDIndex = rangeOffset - segCount + index
+                                         + (charCode - startCount[index]);
+                    glyphCode = glyphIds[glyphIDIndex];
+                    if (glyphCode != 0) {
+                        glyphCode = (char)(glyphCode + idDelta[index]);
+                    }
+                }
+            }
             if (glyphCode != 0) {
             //System.err.println("cc="+Integer.toHexString((int)charCode) + " gc="+(int)glyphCode);
             }
-	    return glyphCode;
-	}
+            return glyphCode;
+        }
     }
 
-    // Format 0: Byte Encoding table   
+    // Format 0: Byte Encoding table
     static class CMapFormat0 extends CMap {
-	byte [] cmap;
+        byte [] cmap;
 
-	CMapFormat0(ByteBuffer buffer, int offset) {
+        CMapFormat0(ByteBuffer buffer, int offset) {
 
-	    /* skip 6 bytes of format, length, and version */
-	    int len = buffer.getChar(offset+2);
-	    cmap = new byte[len-6];
-	    buffer.position(offset+6);
-	    buffer.get(cmap);
-	}
+            /* skip 6 bytes of format, length, and version */
+            int len = buffer.getChar(offset+2);
+            cmap = new byte[len-6];
+            buffer.position(offset+6);
+            buffer.get(cmap);
+        }
 
-	char getGlyph(int charCode) {
-	    if (charCode < 256) {
-		if (charCode < 0x0010) {
-		    switch (charCode) {
-		    case 0x0009:
-		    case 0x000a:
-		    case 0x000d: return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
-		    }
-		}
-		return (char)(0xff & cmap[charCode]);
-	    } else {
-		return 0;
-	    }
-	}
+        char getGlyph(int charCode) {
+            if (charCode < 256) {
+                if (charCode < 0x0010) {
+                    switch (charCode) {
+                    case 0x0009:
+                    case 0x000a:
+                    case 0x000d: return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
+                    }
+                }
+                return (char)(0xff & cmap[charCode]);
+            } else {
+                return 0;
+            }
+        }
     }
 
 //     static CMap createSymbolCMap(ByteBuffer buffer, int offset, char[] syms) {
-	
-// 	CMap cmap = createCMap(buffer, offset, null);
-// 	if (cmap == null) {
-// 	    return null;
-// 	} else {
-// 	    return new CMapFormatSymbol(cmap, syms);
-// 	}
+
+//      CMap cmap = createCMap(buffer, offset, null);
+//      if (cmap == null) {
+//          return null;
+//      } else {
+//          return new CMapFormatSymbol(cmap, syms);
+//      }
 //     }
 
 //     static class CMapFormatSymbol extends CMap {
-	
-// 	CMap cmap;
-// 	static final int NUM_BUCKETS = 128;
-// 	Bucket[] buckets = new Bucket[NUM_BUCKETS];
 
-// 	class Bucket {
-// 	    char unicode;
-// 	    char glyph;
-// 	    Bucket next;
+//      CMap cmap;
+//      static final int NUM_BUCKETS = 128;
+//      Bucket[] buckets = new Bucket[NUM_BUCKETS];
 
-// 	    Bucket(char u, char g) {
-// 		unicode = u;
-// 		glyph = g;
-// 	    }
-// 	}
+//      class Bucket {
+//          char unicode;
+//          char glyph;
+//          Bucket next;
 
-// 	CMapFormatSymbol(CMap cmap, char[] syms) {
+//          Bucket(char u, char g) {
+//              unicode = u;
+//              glyph = g;
+//          }
+//      }
 
-// 	    this.cmap = cmap;
+//      CMapFormatSymbol(CMap cmap, char[] syms) {
 
-// 	    for (int i=0;i<syms.length;i++) {
-// 		char unicode = syms[i];
-// 		if (unicode != noSuchChar) {
-// 		    char glyph = cmap.getGlyph(i + 0xf000);
-// 		    int hash = unicode % NUM_BUCKETS;
-// 		    Bucket bucket = new Bucket(unicode, glyph);
-// 		    if (buckets[hash] == null) {
-// 			buckets[hash] = bucket;
-// 		    } else {
-// 			Bucket b = buckets[hash];
-// 			while (b.next != null) {
-// 			    b = b.next;
-// 			}
-// 			b.next = bucket;
-// 		    }
-// 		}
-// 	    }
-// 	}
+//          this.cmap = cmap;
 
-// 	char getGlyph(int unicode) {
-// 	    if (unicode >= 0x1000) {
-// 		return 0;
-// 	    }
-// 	    else if (unicode >=0xf000 && unicode < 0xf100) {
-// 		return cmap.getGlyph(unicode);
-// 	    } else {
-// 		Bucket b = buckets[unicode % NUM_BUCKETS];
-// 		while (b != null) {
-// 		    if (b.unicode == unicode) {
-// 			return b.glyph;
-// 		    } else {
-// 			b = b.next;
-// 		    }
-// 		}
-// 		return 0;
-// 	    }
-// 	}
+//          for (int i=0;i<syms.length;i++) {
+//              char unicode = syms[i];
+//              if (unicode != noSuchChar) {
+//                  char glyph = cmap.getGlyph(i + 0xf000);
+//                  int hash = unicode % NUM_BUCKETS;
+//                  Bucket bucket = new Bucket(unicode, glyph);
+//                  if (buckets[hash] == null) {
+//                      buckets[hash] = bucket;
+//                  } else {
+//                      Bucket b = buckets[hash];
+//                      while (b.next != null) {
+//                          b = b.next;
+//                      }
+//                      b.next = bucket;
+//                  }
+//              }
+//          }
+//      }
+
+//      char getGlyph(int unicode) {
+//          if (unicode >= 0x1000) {
+//              return 0;
+//          }
+//          else if (unicode >=0xf000 && unicode < 0xf100) {
+//              return cmap.getGlyph(unicode);
+//          } else {
+//              Bucket b = buckets[unicode % NUM_BUCKETS];
+//              while (b != null) {
+//                  if (b.unicode == unicode) {
+//                      return b.glyph;
+//                  } else {
+//                      b = b.next;
+//                  }
+//              }
+//              return 0;
+//          }
+//      }
 //     }
 
     // Format 2: High-byte mapping through table
     static class CMapFormat2 extends CMap {
 
-	char[] subHeaderKey = new char[256];
-	 /* Store subheaders in individual arrays
-	  * A SubHeader entry theortically looks like {
-	  *   char firstCode;
-	  *   char entryCount;
-	  *   short idDelta;
-	  *   char idRangeOffset;
-	  * }
-	  */
-	char[] firstCodeArray;
-	char[] entryCountArray;
-	short[] idDeltaArray;
-	char[] idRangeOffSetArray;
+        char[] subHeaderKey = new char[256];
+         /* Store subheaders in individual arrays
+          * A SubHeader entry theortically looks like {
+          *   char firstCode;
+          *   char entryCount;
+          *   short idDelta;
+          *   char idRangeOffset;
+          * }
+          */
+        char[] firstCodeArray;
+        char[] entryCountArray;
+        short[] idDeltaArray;
+        char[] idRangeOffSetArray;
 
-	char[] glyphIndexArray;
+        char[] glyphIndexArray;
 
-	CMapFormat2(ByteBuffer buffer, int offset, char[] xlat) {
+        CMapFormat2(ByteBuffer buffer, int offset, char[] xlat) {
 
-	    this.xlat = xlat;
+            this.xlat = xlat;
 
-	    int tableLen = buffer.getChar(offset+2);
-	    buffer.position(offset+6);
-	    CharBuffer cBuffer = buffer.asCharBuffer();
-	    char maxSubHeader = 0;
-	    for (int i=0;i<256;i++) {
-		subHeaderKey[i] = cBuffer.get();
-		if (subHeaderKey[i] > maxSubHeader) {
-		    maxSubHeader = subHeaderKey[i];
-		}
-	    }
-	    /* The value of the subHeaderKey is 8 * the subHeader index,
-	     * so the number of subHeaders can be obtained by dividing
-	     * this value bv 8 and adding 1.
-	     */
-	    int numSubHeaders = (maxSubHeader >> 3) +1;
-	    firstCodeArray = new char[numSubHeaders];
-	    entryCountArray = new char[numSubHeaders];
-	    idDeltaArray  = new short[numSubHeaders];
-	    idRangeOffSetArray  = new char[numSubHeaders];
-	    for (int i=0; i<numSubHeaders; i++) {
-		firstCodeArray[i] = cBuffer.get();
-		entryCountArray[i] = cBuffer.get();
-		idDeltaArray[i] = (short)cBuffer.get();
-		idRangeOffSetArray[i] = cBuffer.get();
-// 		System.out.println("sh["+i+"]:fc="+(int)firstCodeArray[i]+
-// 				   " ec="+(int)entryCountArray[i]+
-// 				   " delta="+(int)idDeltaArray[i]+
-// 				   " offset="+(int)idRangeOffSetArray[i]);
-	    }
+            int tableLen = buffer.getChar(offset+2);
+            buffer.position(offset+6);
+            CharBuffer cBuffer = buffer.asCharBuffer();
+            char maxSubHeader = 0;
+            for (int i=0;i<256;i++) {
+                subHeaderKey[i] = cBuffer.get();
+                if (subHeaderKey[i] > maxSubHeader) {
+                    maxSubHeader = subHeaderKey[i];
+                }
+            }
+            /* The value of the subHeaderKey is 8 * the subHeader index,
+             * so the number of subHeaders can be obtained by dividing
+             * this value bv 8 and adding 1.
+             */
+            int numSubHeaders = (maxSubHeader >> 3) +1;
+            firstCodeArray = new char[numSubHeaders];
+            entryCountArray = new char[numSubHeaders];
+            idDeltaArray  = new short[numSubHeaders];
+            idRangeOffSetArray  = new char[numSubHeaders];
+            for (int i=0; i<numSubHeaders; i++) {
+                firstCodeArray[i] = cBuffer.get();
+                entryCountArray[i] = cBuffer.get();
+                idDeltaArray[i] = (short)cBuffer.get();
+                idRangeOffSetArray[i] = cBuffer.get();
+//              System.out.println("sh["+i+"]:fc="+(int)firstCodeArray[i]+
+//                                 " ec="+(int)entryCountArray[i]+
+//                                 " delta="+(int)idDeltaArray[i]+
+//                                 " offset="+(int)idRangeOffSetArray[i]);
+            }
 
-	    int glyphIndexArrSize = (tableLen-518-numSubHeaders*8)/2;
-	    glyphIndexArray = new char[glyphIndexArrSize];
-	    for (int i=0; i<glyphIndexArrSize;i++) {
-		glyphIndexArray[i] = cBuffer.get();
-	    }	    
-	}
+            int glyphIndexArrSize = (tableLen-518-numSubHeaders*8)/2;
+            glyphIndexArray = new char[glyphIndexArrSize];
+            for (int i=0; i<glyphIndexArrSize;i++) {
+                glyphIndexArray[i] = cBuffer.get();
+            }
+        }
 
-	char getGlyph(int charCode) {
-	    int controlGlyph = getControlCodeGlyph(charCode, true);
-	    if (controlGlyph >= 0) {
-		return (char)controlGlyph;
-	    }
+        char getGlyph(int charCode) {
+            int controlGlyph = getControlCodeGlyph(charCode, true);
+            if (controlGlyph >= 0) {
+                return (char)controlGlyph;
+            }
 
-	    if (xlat != null) {
-		charCode = xlat[charCode];
-	    }
+            if (xlat != null) {
+                charCode = xlat[charCode];
+            }
 
-	    char highByte = (char)(charCode >> 8);
-	    char lowByte = (char)(charCode & 0xff);
-	    int key = subHeaderKey[highByte]>>3; // index into subHeaders
-	    char mapMe;
+            char highByte = (char)(charCode >> 8);
+            char lowByte = (char)(charCode & 0xff);
+            int key = subHeaderKey[highByte]>>3; // index into subHeaders
+            char mapMe;
 
-	    if (key != 0) {
-		mapMe = lowByte;
-	    } else {
-		mapMe = highByte;
-		if (mapMe == 0) {
-		    mapMe = lowByte;
-		}
-	    }
+            if (key != 0) {
+                mapMe = lowByte;
+            } else {
+                mapMe = highByte;
+                if (mapMe == 0) {
+                    mapMe = lowByte;
+                }
+            }
 
-// 	    System.err.println("charCode="+Integer.toHexString(charCode)+
-// 			       " key="+key+ " mapMe="+Integer.toHexString(mapMe));
-	    char firstCode = firstCodeArray[key];
-	    if (mapMe < firstCode) {
-		return 0;
-	    } else {
-		mapMe -= firstCode;
-	    }
+//          System.err.println("charCode="+Integer.toHexString(charCode)+
+//                             " key="+key+ " mapMe="+Integer.toHexString(mapMe));
+            char firstCode = firstCodeArray[key];
+            if (mapMe < firstCode) {
+                return 0;
+            } else {
+                mapMe -= firstCode;
+            }
 
-	    if (mapMe < entryCountArray[key]) {
+            if (mapMe < entryCountArray[key]) {
                 /* "address" arithmetic is needed to calculate the offset
                  * into glyphIndexArray. "idRangeOffSetArray[key]" specifies
                  * the number of bytes from that location in the table where
@@ -820,24 +820,24 @@ abstract class CMap {
                  * get the (char) array index.
                  */
                 int glyphArrayOffset = ((idRangeOffSetArray.length-key)*8)-6;
-                int glyphSubArrayStart = 
-                        (idRangeOffSetArray[key] - glyphArrayOffset)/2; 
-		char glyphCode = glyphIndexArray[glyphSubArrayStart+mapMe];
-		if (glyphCode != 0) {
-		    glyphCode += idDeltaArray[key]; //idDelta
-		    return glyphCode;
-		}
-	    }
-	    return 0;
-	}
+                int glyphSubArrayStart =
+                        (idRangeOffSetArray[key] - glyphArrayOffset)/2;
+                char glyphCode = glyphIndexArray[glyphSubArrayStart+mapMe];
+                if (glyphCode != 0) {
+                    glyphCode += idDeltaArray[key]; //idDelta
+                    return glyphCode;
+                }
+            }
+            return 0;
+        }
     }
-   
+
     // Format 6: Trimmed table mapping
     static class CMapFormat6 extends CMap {
 
         char firstCode;
         char entryCount;
-        char[] glyphIdArray; 
+        char[] glyphIdArray;
 
         CMapFormat6(ByteBuffer bbuffer, int offset, char[] xlat) {
 
@@ -848,15 +848,15 @@ abstract class CMap {
              entryCount = buffer.get();
              glyphIdArray = new char[entryCount];
              for (int i=0; i< entryCount; i++) {
-                 glyphIdArray[i] = buffer.get(); 
+                 glyphIdArray[i] = buffer.get();
              }
          }
 
-	 char getGlyph(int charCode) {
-	    int controlGlyph = getControlCodeGlyph(charCode, true);
-	    if (controlGlyph >= 0) {
-		return (char)controlGlyph;
-	    }
+         char getGlyph(int charCode) {
+            int controlGlyph = getControlCodeGlyph(charCode, true);
+            if (controlGlyph >= 0) {
+                return (char)controlGlyph;
+            }
 
              if (xlat != null) {
                  charCode = xlat[charCode];
@@ -883,7 +883,7 @@ abstract class CMap {
          int[] startGlyphID;
 
          CMapFormat8(ByteBuffer bbuffer, int offset, char[] xlat) {
-        
+
              System.err.println("WARNING: CMapFormat8 is untested.");
              bbuffer.position(12);
              bbuffer.get(is32);
@@ -893,13 +893,13 @@ abstract class CMap {
              startGlyphID  = new int[nGroups];
          }
 
-	char getGlyph(int charCode) {
-	    if (xlat != null) {
-		throw new RuntimeException("xlat array for cmap fmt=8");
-	    }
-	    return 0;
-	}
-	
+        char getGlyph(int charCode) {
+            if (xlat != null) {
+                throw new RuntimeException("xlat array for cmap fmt=8");
+            }
+            return 0;
+        }
+
     }
 
 
@@ -928,9 +928,9 @@ abstract class CMap {
 
          char getGlyph(int charCode) {
 
-  	     if (xlat != null) {
-		 throw new RuntimeException("xlat array for cmap fmt=10");
-	     }
+             if (xlat != null) {
+                 throw new RuntimeException("xlat array for cmap fmt=10");
+             }
 
              int code = (int)(charCode - firstCode);
              if (code < 0 || code >= entryCount) {
@@ -944,122 +944,122 @@ abstract class CMap {
     // Format 12: Segmented coverage for UCS-4 (fonts supporting
     // surrogate pairs)
     static class CMapFormat12 extends CMap {
-	
-	int numGroups;
-	int highBit =0;
-	int power;
-	int extra;
-	long[] startCharCode;
-	long[] endCharCode;
-	int[] startGlyphID;
 
-	CMapFormat12(ByteBuffer buffer, int offset, char[] xlat) {
-	    if (xlat != null) {
-		throw new RuntimeException("xlat array for cmap fmt=12");
-	    }
+        int numGroups;
+        int highBit =0;
+        int power;
+        int extra;
+        long[] startCharCode;
+        long[] endCharCode;
+        int[] startGlyphID;
 
-	    numGroups = buffer.getInt(offset+12);
-	    startCharCode = new long[numGroups];
-	    endCharCode = new long[numGroups];
-	    startGlyphID = new int[numGroups];
-	    buffer.position(offset+16);
-	    buffer = buffer.slice();
-	    IntBuffer ibuffer = buffer.asIntBuffer();
-	    for (int i=0; i<numGroups; i++) {
-		startCharCode[i] = ibuffer.get() & INTMASK;
-		endCharCode[i] = ibuffer.get() & INTMASK;
-		startGlyphID[i] = ibuffer.get() & INTMASK;
-	    }
+        CMapFormat12(ByteBuffer buffer, int offset, char[] xlat) {
+            if (xlat != null) {
+                throw new RuntimeException("xlat array for cmap fmt=12");
+            }
 
-	    /* Finds the high bit by binary searching through the bits */
-	    int value = numGroups;
+            numGroups = buffer.getInt(offset+12);
+            startCharCode = new long[numGroups];
+            endCharCode = new long[numGroups];
+            startGlyphID = new int[numGroups];
+            buffer.position(offset+16);
+            buffer = buffer.slice();
+            IntBuffer ibuffer = buffer.asIntBuffer();
+            for (int i=0; i<numGroups; i++) {
+                startCharCode[i] = ibuffer.get() & INTMASK;
+                endCharCode[i] = ibuffer.get() & INTMASK;
+                startGlyphID[i] = ibuffer.get() & INTMASK;
+            }
 
-	    if (value >= 1 << 16) {
-		value >>= 16;
-		highBit += 16;
-	    }
+            /* Finds the high bit by binary searching through the bits */
+            int value = numGroups;
 
-	    if (value >= 1 << 8) {
-		value >>= 8;
-		highBit += 8;
-	    }
+            if (value >= 1 << 16) {
+                value >>= 16;
+                highBit += 16;
+            }
 
-	    if (value >= 1 << 4) {
-		value >>= 4;
-		highBit += 4;
-	    }
+            if (value >= 1 << 8) {
+                value >>= 8;
+                highBit += 8;
+            }
 
-	    if (value >= 1 << 2) {
-		value >>= 2;
-		highBit += 2;
-	    }
+            if (value >= 1 << 4) {
+                value >>= 4;
+                highBit += 4;
+            }
 
-	    if (value >= 1 << 1) {
-		value >>= 1;
-		highBit += 1;
-	    }
+            if (value >= 1 << 2) {
+                value >>= 2;
+                highBit += 2;
+            }
 
-	    power = 1 << highBit;
-	    extra = numGroups - power;
-	}
-	
-	char getGlyph(int charCode) {
-	    int controlGlyph = getControlCodeGlyph(charCode, false);
-	    if (controlGlyph >= 0) {
-		return (char)controlGlyph;
-	    }
-	    int probe = power;
-	    int range = 0;
+            if (value >= 1 << 1) {
+                value >>= 1;
+                highBit += 1;
+            }
 
-	    if (startCharCode[extra] <= charCode) {
-		range = extra;
-	    }
+            power = 1 << highBit;
+            extra = numGroups - power;
+        }
 
-	    while (probe > 1) {
-		probe >>= 1;
+        char getGlyph(int charCode) {
+            int controlGlyph = getControlCodeGlyph(charCode, false);
+            if (controlGlyph >= 0) {
+                return (char)controlGlyph;
+            }
+            int probe = power;
+            int range = 0;
 
-		if (startCharCode[range+probe] <= charCode) {
-		    range += probe;
-		}
-	    }
+            if (startCharCode[extra] <= charCode) {
+                range = extra;
+            }
 
-	    if (startCharCode[range] <= charCode &&
-	  	  endCharCode[range] >= charCode) {
-		return (char)
-		    (startGlyphID[range] + (charCode - startCharCode[range]));
-	    }
+            while (probe > 1) {
+                probe >>= 1;
 
-	    return 0;
-	}
+                if (startCharCode[range+probe] <= charCode) {
+                    range += probe;
+                }
+            }
+
+            if (startCharCode[range] <= charCode &&
+                  endCharCode[range] >= charCode) {
+                return (char)
+                    (startGlyphID[range] + (charCode - startCharCode[range]));
+            }
+
+            return 0;
+        }
 
     }
 
     /* Used to substitute for bad Cmaps. */
     static class NullCMapClass extends CMap {
-	
-	char getGlyph(int charCode) {
-	    return 0;
-	}
+
+        char getGlyph(int charCode) {
+            return 0;
+        }
     }
 
     public static final NullCMapClass theNullCmap = new NullCMapClass();
 
     final int getControlCodeGlyph(int charCode, boolean noSurrogates) {
-	if (charCode < 0x0010) {
-	    switch (charCode) {
-	    case 0x0009:
-	    case 0x000a:
-	    case 0x000d: return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
-	    }
-	} else if (charCode >= 0x200c) {
-	    if ((charCode <= 0x200f) ||
-		(charCode >= 0x2028 && charCode <= 0x202e) ||
-		(charCode >= 0x206a && charCode <= 0x206f)) {
-		return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
-	    } else if (noSurrogates && charCode >= 0xFFFF) {
-		return 0;
-	    }
-	}
-	return -1;
+        if (charCode < 0x0010) {
+            switch (charCode) {
+            case 0x0009:
+            case 0x000a:
+            case 0x000d: return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
+            }
+        } else if (charCode >= 0x200c) {
+            if ((charCode <= 0x200f) ||
+                (charCode >= 0x2028 && charCode <= 0x202e) ||
+                (charCode >= 0x206a && charCode <= 0x206f)) {
+                return CharToGlyphMapper.INVISIBLE_GLYPH_ID;
+            } else if (noSurrogates && charCode >= 0xFFFF) {
+                return 0;
+            }
+        }
+        return -1;
     }
 }

@@ -31,7 +31,6 @@ import java.awt.event.*;
  * The interface for objects which contain a set of items for
  * which zero or more can be selected.
  *
- * @version %I% %G%
  * @author Amy Fowler
  */
 
@@ -51,7 +50,7 @@ public interface ItemSelectable {
      *
      * @param    l the listener to receive events
      * @see ItemEvent
-     */    
+     */
     public void addItemListener(ItemListener l);
 
     /**
@@ -59,8 +58,8 @@ public interface ItemSelectable {
      * If <code>l</code> is <code>null</code>,
      * no exception is thrown and no action is performed.
      *
-     * @param 	l the listener being removed
+     * @param   l the listener being removed
      * @see ItemEvent
-     */ 
+     */
     public void removeItemListener(ItemListener l);
 }

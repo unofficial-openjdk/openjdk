@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,9 +39,9 @@ import java.util.Vector;
  * benchmarks.
  */
 public class Harness {
-    
+
     BenchInfo[] binfo;
-    
+
     /**
      * Create new benchmark harness with given configuration and reporter.
      * Throws ConfigFormatException if there was an error parsing the config
@@ -86,121 +86,121 @@ public class Harness {
         tokens.commentChar('#');
         tokens.quoteChar('"');
         tokens.eolIsSignificant(true);
-        
+
         tokens.nextToken();
         while (tokens.ttype != StreamTokenizer.TT_EOF) {
-	    switch (tokens.ttype) {
-		case StreamTokenizer.TT_WORD:
-		case '"':			// parse line
-		    bvec.add(parseBenchInfo(tokens));
-		    break;
-		    
-		default:			// ignore
-		    tokens.nextToken();
-		    break;
-	    }
-	}
-	binfo = (BenchInfo[]) bvec.toArray(new BenchInfo[bvec.size()]);
+            switch (tokens.ttype) {
+                case StreamTokenizer.TT_WORD:
+                case '"':                       // parse line
+                    bvec.add(parseBenchInfo(tokens));
+                    break;
+
+                default:                        // ignore
+                    tokens.nextToken();
+                    break;
+            }
+        }
+        binfo = (BenchInfo[]) bvec.toArray(new BenchInfo[bvec.size()]);
     }
-    
-    BenchInfo parseBenchInfo(StreamTokenizer tokens) 
-	throws IOException, ConfigFormatException
+
+    BenchInfo parseBenchInfo(StreamTokenizer tokens)
+        throws IOException, ConfigFormatException
     {
-	float weight = parseBenchWeight(tokens);
-	String name = parseBenchName(tokens);
-	Benchmark bench = parseBenchClass(tokens);
-	String[] args = parseBenchArgs(tokens);
-	if (tokens.ttype == StreamTokenizer.TT_EOL)
-	    tokens.nextToken();
-	return new BenchInfo(bench, name, weight, args);
+        float weight = parseBenchWeight(tokens);
+        String name = parseBenchName(tokens);
+        Benchmark bench = parseBenchClass(tokens);
+        String[] args = parseBenchArgs(tokens);
+        if (tokens.ttype == StreamTokenizer.TT_EOL)
+            tokens.nextToken();
+        return new BenchInfo(bench, name, weight, args);
     }
-    
+
     float parseBenchWeight(StreamTokenizer tokens)
-	throws IOException, ConfigFormatException
+        throws IOException, ConfigFormatException
     {
-	float weight;
-	switch (tokens.ttype) {
-	    case StreamTokenizer.TT_WORD:
-	    case '"':
-		try {
-		    weight = Float.parseFloat(tokens.sval);
-		} catch (NumberFormatException e) {
-		    throw new ConfigFormatException("illegal weight value \"" +
-			    tokens.sval + "\" on line " + tokens.lineno());
-		}
-		tokens.nextToken();
-		return weight;
-		
-	    default:
-		throw new ConfigFormatException("missing weight value on line "
-			+ tokens.lineno());
-	}
+        float weight;
+        switch (tokens.ttype) {
+            case StreamTokenizer.TT_WORD:
+            case '"':
+                try {
+                    weight = Float.parseFloat(tokens.sval);
+                } catch (NumberFormatException e) {
+                    throw new ConfigFormatException("illegal weight value \"" +
+                            tokens.sval + "\" on line " + tokens.lineno());
+                }
+                tokens.nextToken();
+                return weight;
+
+            default:
+                throw new ConfigFormatException("missing weight value on line "
+                        + tokens.lineno());
+        }
     }
-    
+
     String parseBenchName(StreamTokenizer tokens)
-	throws IOException, ConfigFormatException
+        throws IOException, ConfigFormatException
     {
-	String name;
-	switch (tokens.ttype) {
-	    case StreamTokenizer.TT_WORD:
-	    case '"':
-		name = tokens.sval;
-		tokens.nextToken();
-		return name;
-		
-	    default:
-		throw new ConfigFormatException("missing benchmark name on " +
-			"line " + tokens.lineno());
-	}
+        String name;
+        switch (tokens.ttype) {
+            case StreamTokenizer.TT_WORD:
+            case '"':
+                name = tokens.sval;
+                tokens.nextToken();
+                return name;
+
+            default:
+                throw new ConfigFormatException("missing benchmark name on " +
+                        "line " + tokens.lineno());
+        }
     }
-    
+
     Benchmark parseBenchClass(StreamTokenizer tokens)
-	throws IOException, ConfigFormatException
+        throws IOException, ConfigFormatException
     {
-	Benchmark bench;
-	switch (tokens.ttype) {
-	    case StreamTokenizer.TT_WORD:
-	    case '"':
-		try {
-		    Class cls = Class.forName(tokens.sval);
-		    bench = (Benchmark) cls.newInstance();
-		} catch (Exception e) {
-		    throw new ConfigFormatException("unable to instantiate " +
-			    "benchmark \"" + tokens.sval + "\" on line " +
-			    tokens.lineno());
-		}
-		tokens.nextToken();
-		return bench;
-		
-	    default:
-		throw new ConfigFormatException("missing benchmark class " +
-			"name on line " + tokens.lineno());
-	}
+        Benchmark bench;
+        switch (tokens.ttype) {
+            case StreamTokenizer.TT_WORD:
+            case '"':
+                try {
+                    Class cls = Class.forName(tokens.sval);
+                    bench = (Benchmark) cls.newInstance();
+                } catch (Exception e) {
+                    throw new ConfigFormatException("unable to instantiate " +
+                            "benchmark \"" + tokens.sval + "\" on line " +
+                            tokens.lineno());
+                }
+                tokens.nextToken();
+                return bench;
+
+            default:
+                throw new ConfigFormatException("missing benchmark class " +
+                        "name on line " + tokens.lineno());
+        }
     }
-    
+
     String[] parseBenchArgs(StreamTokenizer tokens)
-	throws IOException, ConfigFormatException
+        throws IOException, ConfigFormatException
     {
-	Vector vec = new Vector();
-	for (;;) {
-	    switch (tokens.ttype) {
-		case StreamTokenizer.TT_EOF:
-		case StreamTokenizer.TT_EOL:
-		    return (String[]) vec.toArray(new String[vec.size()]);
-		    
-		case StreamTokenizer.TT_WORD:
-		case '"':
-		    vec.add(tokens.sval);
-		    tokens.nextToken();
-		    break;
-		    
-		default:
-		    throw new ConfigFormatException("unrecognized arg token " +
-			    "on line " + tokens.lineno());
-	    }
-	}
+        Vector vec = new Vector();
+        for (;;) {
+            switch (tokens.ttype) {
+                case StreamTokenizer.TT_EOF:
+                case StreamTokenizer.TT_EOL:
+                    return (String[]) vec.toArray(new String[vec.size()]);
+
+                case StreamTokenizer.TT_WORD:
+                case '"':
+                    vec.add(tokens.sval);
+                    tokens.nextToken();
+                    break;
+
+                default:
+                    throw new ConfigFormatException("unrecognized arg token " +
+                            "on line " + tokens.lineno());
+            }
+        }
     }
-    
+
     /**
      * Run benchmarks, writing results to the given reporter.
      */
@@ -223,14 +223,13 @@ public class Harness {
             System.err.println("Error: failed to write benchmark report");
         }
     }
-    
+
     /**
      * Clean up method that is invoked after the completion of each benchmark.
      * The default implementation calls System.gc(); subclasses may override
      * this to perform additional cleanup measures.
      */
     protected void cleanup() {
-	System.gc();
+        System.gc();
     }
 }
-

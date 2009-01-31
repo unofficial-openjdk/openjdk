@@ -39,7 +39,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 import javax.imageio.ImageWriteParam;
-import javax.imageio.event.IIOWriteProgressListener; 
+import javax.imageio.event.IIOWriteProgressListener;
 import javax.imageio.stream.ImageOutputStream;
 
 
@@ -58,7 +58,7 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
         System.out.println("Test reset()....");
         t = new WritingInterruptionTest(new ResetAction());
         t.doTest();
- 
+
         System.out.println("Test dispose()....");
         t = new WritingInterruptionTest(new DisposeAction());
         t.doTest();
@@ -66,7 +66,7 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
 
     protected abstract static class Action implements Runnable {
         protected ImageWriter target;
-        
+
         public void setTarget(ImageWriter target) {
             this.target = target;
         }
@@ -119,10 +119,10 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
         this.action = action;
 
         w = ImageIO.getImageWritersByFormatName("JPEG").next();
-        
+
         this.action.setTarget(w);
     }
-    
+
     public void doTest() {
         try {
             w.addIIOWriteProgressListener(this);
@@ -134,7 +134,7 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
             Thread.sleep(70);
         } catch (Exception e) {
             /*
-             * we do expect that concurrent attempt to dispose this 
+             * we do expect that concurrent attempt to dispose this
              * instance of image writer will be blocked. So, this image
              * should be writen sucessfuly. Otherwise, something went wrong
              * and we need to report test failure.
@@ -154,7 +154,7 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
             } catch (IllegalStateException e) {
                 System.out.println("Expected exception was caught: " + e);
             } catch(Exception e) {
-                throw new RuntimeException("Test FAILED.", e);              
+                throw new RuntimeException("Test FAILED.", e);
             }
         }
         System.out.println("Test PASSED.");
@@ -178,7 +178,7 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
     public void thumbnailStarted(ImageWriter source,
                                  int imageIndex,
                                  int thumbnailIndex) {};
-    
+
     public void thumbnailProgress(ImageWriter source,
                                   float percentageDone) {};
 

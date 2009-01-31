@@ -79,7 +79,7 @@ import java.awt.image.BufferedImage;
  * <code>getSourceWidth</code>, and <code>getSourceHeight</code>.
  *
  * <p> The resulting region is then subsampled according to the
- * factors given in {@link IIOParam#setSourceSubsampling 
+ * factors given in {@link IIOParam#setSourceSubsampling
  * <code>IIOParam.setSourceSubsampling</code>}.  The first pixel,
  * the number of pixels per row, and the number of rows all depend
  * on the subsampling settings.
@@ -122,7 +122,6 @@ import java.awt.image.BufferedImage;
  * (<i>e.g.</i> source render size is optional, but subsampling must be
  * supported).
  *
- * @version 0.5
  *
  * @see ImageReader
  * @see ImageWriter
@@ -376,7 +375,7 @@ public class ImageReadParam extends IIOParam {
             throw new UnsupportedOperationException
                 ("Can't set source render size!");
         }
-        
+
         if (size == null) {
             this.sourceRenderSize = null;
         } else {

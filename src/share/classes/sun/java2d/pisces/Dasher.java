@@ -114,27 +114,27 @@ public class Dasher extends LineSink {
      */
     public void setParameters(int[] dash, int phase,
                               Transform4 transform) {
-	if (phase < 0) {
-	    throw new IllegalArgumentException("phase < 0 !");
-	}
+        if (phase < 0) {
+            throw new IllegalArgumentException("phase < 0 !");
+        }
 
-	// Normalize so 0 <= phase < dash[0]
-	int idx = 0;
+        // Normalize so 0 <= phase < dash[0]
+        int idx = 0;
         dashOn = false;
-	int d;
-	while (phase >= (d = dash[idx])) {
-	    phase -= d;
-	    idx = (idx + 1) % dash.length;
+        int d;
+        while (phase >= (d = dash[idx])) {
+            phase -= d;
+            idx = (idx + 1) % dash.length;
             dashOn = !dashOn;
-	}
+        }
 
-	this.dash = new int[dash.length];
-	for (int i = 0; i < dash.length; i++) {
-	    this.dash[i] = dash[i];
-	}
-	this.startPhase = this.phase = phase;
+        this.dash = new int[dash.length];
+        for (int i = 0; i < dash.length; i++) {
+            this.dash[i] = dash[i];
+        }
+        this.startPhase = this.phase = phase;
         this.startDashOn = dashOn;
-	this.startIdx = idx;
+        this.startIdx = idx;
 
         this.transform = transform;
 
@@ -147,12 +147,12 @@ public class Dasher extends LineSink {
     }
 
     public void moveTo(int x0, int y0) {
- 	output.moveTo(x0, y0);
-	this.idx = startIdx;
+        output.moveTo(x0, y0);
+        this.idx = startIdx;
         this.dashOn = this.startDashOn;
-	this.phase = this.startPhase;
-	this.sx = this.x0 = x0;
-	this.sy = this.y0 = y0;
+        this.phase = this.startPhase;
+        this.sx = this.x0 = x0;
+        this.sy = this.y0 = y0;
         this.starting = true;
     }
 
@@ -161,30 +161,30 @@ public class Dasher extends LineSink {
     }
 
     private void goTo(int x1, int y1) {
-	if (dashOn) {
+        if (dashOn) {
             if (starting) {
                 this.sx1 = x1;
                 this.sy1 = y1;
                 firstDashOn = true;
                 starting = false;
             }
-	    output.lineTo(x1, y1);
-	} else {
+            output.lineTo(x1, y1);
+        } else {
             if (starting) {
                 firstDashOn = false;
                 starting = false;
             }
-	    output.moveTo(x1, y1);
-	}
-	this.x0 = x1;
-	this.y0 = y1;
+            output.moveTo(x1, y1);
+        }
+        this.x0 = x1;
+        this.y0 = y1;
     }
 
     public void lineTo(int x1, int y1) {
-	while (true) {
-	    int d = dash[idx] - phase;
-	    int lx = x1 - x0;
-	    int ly = y1 - y0;
+        while (true) {
+            int d = dash[idx] - phase;
+            int lx = x1 - x0;
+            int ly = y1 - y0;
 
             // Compute segment length in the untransformed
             // coordinate system
@@ -198,14 +198,14 @@ public class Dasher extends LineSink {
                 long lb = ((long)ly*m01 - (long)lx*m11)/ldet;
                 l = (int)PiscesMath.hypot(la, lb);
             }
-	    
-	    if (l < d) {
-		goTo(x1, y1);
-		// Advance phase within current dash segment
-		phase += l;
-		return;
-	    }
-	    
+
+            if (l < d) {
+                goTo(x1, y1);
+                // Advance phase within current dash segment
+                phase += l;
+                return;
+            }
+
             long t;
             int xsplit, ysplit;
 //             // For zero length dashses, SE appears to move 1/8 unit
@@ -224,13 +224,13 @@ public class Dasher extends LineSink {
                 xsplit = x0 + (int)(t*(x1 - x0) >> 16);
                 ysplit = y0 + (int)(t*(y1 - y0) >> 16);
 //             }
-	    goTo(xsplit, ysplit);
-	    
-	    // Advance to next dash segment
-	    idx = (idx + 1) % dash.length;
+            goTo(xsplit, ysplit);
+
+            // Advance to next dash segment
+            idx = (idx + 1) % dash.length;
             dashOn = !dashOn;
-	    phase = 0;
-	}
+            phase = 0;
+        }
     }
 
     public void close() {

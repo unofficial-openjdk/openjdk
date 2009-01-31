@@ -44,7 +44,7 @@ import java.io.IOException;
  *   import static java.util.FormattableFlags.*;
  *
  *  ...
- * 
+ *
  *   public class StockName implements Formattable {
  *       private String symbol, companyName, frenchCompanyName;
  *       public StockName(String symbol, String companyName,
@@ -57,7 +57,7 @@ import java.io.IOException;
  *       public void formatTo(Formatter fmt, int f, int width, int precision) {
  *           StringBuilder sb = new StringBuilder();
  *
- *           // decide form of name 
+ *           // decide form of name
  *           String name = companyName;
  *           if (fmt.locale().equals(Locale.FRANCE))
  *               name = frenchCompanyName;
@@ -74,7 +74,7 @@ import java.io.IOException;
  *           }
  *
  *           // apply width and justification
- *           int len = sb.length(); 
+ *           int len = sb.length();
  *           if (len < width)
  *               for (int i = 0; i < width - len; i++)
  *                   if ((f & LEFT_JUSTIFY) == LEFT_JUSTIFY)
@@ -103,18 +103,17 @@ import java.io.IOException;
  *   fmt.format("%#s", sn);                  //   -> "HUGE"
  *   fmt.format("%-10.8s", sn);              //   -> "HUGE      "
  *   fmt.format("%.12s", sn);                //   -> "Huge Fruit,*"
- *   fmt.format(Locale.FRANCE, "%25s", sn);  //   -> "   Fruit Titanesque, Inc." 
+ *   fmt.format(Locale.FRANCE, "%25s", sn);  //   -> "   Fruit Titanesque, Inc."
  * </pre></blockquote>
  *
  * <p> Formattables are not necessarily safe for multithreaded access.  Thread
  * safety is optional and may be enforced by classes that extend and implement
- * this interface. 
+ * this interface.
  *
  * <p> Unless otherwise specified, passing a <tt>null</tt> argument to
  * any method in this interface will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since  1.5
  */
 public interface Formattable {
@@ -127,7 +126,7 @@ public interface Formattable {
      *         {@link Formatter#out() formatter.out()} or {@link
      *         Formatter#locale() formatter.locale()} to obtain the {@link
      *         Appendable} or {@link Locale} used by this
-     *         <tt>formatter</tt> respectively. 
+     *         <tt>formatter</tt> respectively.
      *
      * @param  flags
      *         The flags modify the output format.  The value is interpreted as

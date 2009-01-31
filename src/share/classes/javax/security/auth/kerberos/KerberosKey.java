@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
+
 package javax.security.auth.kerberos;
 
 import java.util.Arrays;
@@ -38,22 +38,21 @@ import javax.security.auth.DestroyFailedException;
  * generate the secret key from it should use this class. Where available,
  * the login module might even read this secret key directly from a
  * Kerberos "keytab". Sometimes, such as when authenticating a server in
- * the absence of user-to-user authentication, the login module will store 
+ * the absence of user-to-user authentication, the login module will store
  * an instance of this class in the private credential set of a
  * {@link javax.security.auth.Subject Subject} during the commit phase of the
  * authentication process.<p>
  *
  * It might be necessary for the application to be granted a
- * {@link javax.security.auth.PrivateCredentialPermission 
+ * {@link javax.security.auth.PrivateCredentialPermission
  * PrivateCredentialPermission} if it needs to access the KerberosKey
- * instance from a Subject. This permission is not needed when the 
- * application depends on the default JGSS Kerberos mechanism to access the 
- * KerberosKey. In that case, however, the application will need an 
- * appropriate 
+ * instance from a Subject. This permission is not needed when the
+ * application depends on the default JGSS Kerberos mechanism to access the
+ * KerberosKey. In that case, however, the application will need an
+ * appropriate
  * {@link javax.security.auth.kerberos.ServicePermission ServicePermission}.
  *
  * @author Mayank Upadhyay
- * @version %I%, %G%
  * @since 1.4
  */
 public class KerberosKey implements SecretKey, Destroyable {
@@ -75,13 +74,13 @@ public class KerberosKey implements SecretKey, Destroyable {
     private int versionNum;
 
    /**
-    * <code>KeyImpl</code> is serialized by writing out the ASN1 Encoded bytes 
-    * of the encryption key. 
+    * <code>KeyImpl</code> is serialized by writing out the ASN1 Encoded bytes
+    * of the encryption key.
     * The ASN1 encoding is defined in RFC4120 and as  follows:
     * <pre>
     * EncryptionKey   ::= SEQUENCE {
-    *		keytype	  [0] Int32 -- actually encryption type --,
-    *		keyvalue  [1] OCTET STRING
+    *           keytype   [0] Int32 -- actually encryption type --,
+    *           keyvalue  [1] OCTET STRING
     * }
     * </pre>
     *
@@ -95,7 +94,7 @@ public class KerberosKey implements SecretKey, Destroyable {
      * Constructs a KerberosKey from the given bytes when the key type and
      * key version number are known. This can be used when reading the secret
      * key information from a Kerberos "keytab".
-     * 
+     *
      * @param principal the principal that this secret key belongs to
      * @param keyBytes the raw bytes for the secret key
      * @param keyType the key type for the secret key as defined by the
@@ -103,12 +102,12 @@ public class KerberosKey implements SecretKey, Destroyable {
      * @param versionNum the version number of this secret key
      */
     public KerberosKey(KerberosPrincipal principal,
-		       byte[] keyBytes, 
-		       int keyType,
-		       int versionNum) {
-	this.principal = principal;
-	this.versionNum = versionNum;
-	key = new KeyImpl(keyBytes, keyType);
+                       byte[] keyBytes,
+                       int keyType,
+                       int versionNum) {
+        this.principal = principal;
+        this.versionNum = versionNum;
+        key = new KeyImpl(keyBytes, keyType);
     }
 
     /**
@@ -119,16 +118,16 @@ public class KerberosKey implements SecretKey, Destroyable {
      * @param algorithm the name for the algorithm that this key will be
      * used for. This parameter may be null in which case the default
      * algorithm "DES" will be assumed.
-     * @throws IllegalArgumentException if the name of the 
-     * algorithm passed is unsupported. 
+     * @throws IllegalArgumentException if the name of the
+     * algorithm passed is unsupported.
      */
     public KerberosKey(KerberosPrincipal principal,
-		       char[] password,
-		       String algorithm) {
+                       char[] password,
+                       String algorithm) {
 
-	this.principal = principal;
-	// Pass principal in for salt
-	key = new KeyImpl(principal, password, algorithm);
+        this.principal = principal;
+        // Pass principal in for salt
+        key = new KeyImpl(principal, password, algorithm);
     }
 
     /**
@@ -137,9 +136,9 @@ public class KerberosKey implements SecretKey, Destroyable {
      * @return the principal this key belongs to.
      */
     public final KerberosPrincipal getPrincipal() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return principal;
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return principal;
     }
 
     /**
@@ -148,9 +147,9 @@ public class KerberosKey implements SecretKey, Destroyable {
      * @return the key version number.
      */
     public final int getVersionNumber() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return versionNum;
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return versionNum;
     }
 
     /**
@@ -159,87 +158,87 @@ public class KerberosKey implements SecretKey, Destroyable {
      * @return the key type.
      */
     public final int getKeyType() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return key.getKeyType();
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return key.getKeyType();
     }
 
     /*
      * Methods from java.security.Key
      */
-    
-    /** 
-     * Returns the standard algorithm name for this key. For 
-     * example, "DES" would indicate that this key is a DES key. 
-     * See Appendix A in the <a href= 
-     * "../../../../../technotes/guides/security/crypto/CryptoSpec.html#AppA"> 
+
+    /**
+     * Returns the standard algorithm name for this key. For
+     * example, "DES" would indicate that this key is a DES key.
+     * See Appendix A in the <a href=
+     * "../../../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
      * Java Cryptography Architecture API Specification &amp; Reference
-     * </a> 
+     * </a>
      * for information about standard algorithm names.
-     * 
+     *
      * @return the name of the algorithm associated with this key.
      */
     public final String getAlgorithm() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return key.getAlgorithm();
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return key.getAlgorithm();
     }
-    
+
     /**
      * Returns the name of the encoding format for this secret key.
      *
      * @return the String "RAW"
      */
     public final String getFormat() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return key.getFormat();
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return key.getFormat();
     }
-    
+
     /**
      * Returns the key material of this secret key.
      *
      * @return the key material
      */
     public final byte[] getEncoded() {
-	if (destroyed)
-	    throw new IllegalStateException("This key is no longer valid");
-	return key.getEncoded();
+        if (destroyed)
+            throw new IllegalStateException("This key is no longer valid");
+        return key.getEncoded();
     }
 
     /**
      * Destroys this key. A call to any of its other methods after this
      * will cause an  IllegalStateException to be thrown.
      *
-     * @throws DestroyFailedException if some error occurs while destorying 
+     * @throws DestroyFailedException if some error occurs while destorying
      * this key.
      */
     public void destroy() throws DestroyFailedException {
-	if (!destroyed) {
-	    key.destroy();
-	    principal = null;
-	    destroyed = true;
-	}
+        if (!destroyed) {
+            key.destroy();
+            principal = null;
+            destroyed = true;
+        }
     }
 
 
     /** Determines if this key has been destroyed.*/
     public boolean isDestroyed() {
-	return destroyed;
+        return destroyed;
     }
-   
+
     public String toString() {
         if (destroyed) {
             return "Destroyed Principal";
         }
-	return "Kerberos Principal " + principal.toString() +
-		"Key Version " + versionNum +
-		"key "	+ key.toString();
+        return "Kerberos Principal " + principal.toString() +
+                "Key Version " + versionNum +
+                "key "  + key.toString();
     }
-    
+
     /**
-     * Returns a hashcode for this KerberosKey. 
-     * 
+     * Returns a hashcode for this KerberosKey.
+     *
      * @return a hashCode() for the <code>KerberosKey</code>
      * @since 1.6
      */
@@ -258,9 +257,9 @@ public class KerberosKey implements SecretKey, Destroyable {
 
     /**
      * Compares the specified Object with this KerberosKey for equality.
-     * Returns true if the given object is also a 
+     * Returns true if the given object is also a
      * <code>KerberosKey</code> and the two
-     * <code>KerberosKey</code> instances are equivalent. 
+     * <code>KerberosKey</code> instances are equivalent.
      *
      * @param other the Object to compare to
      * @return true if the specified object is equal to this KerberosKey,
@@ -270,13 +269,13 @@ public class KerberosKey implements SecretKey, Destroyable {
      */
     public boolean equals(Object other) {
 
-	if (other == this)
-	    return true;
+        if (other == this)
+            return true;
 
-	if (! (other instanceof KerberosKey)) {
-	    return false;
-	} 
-        
+        if (! (other instanceof KerberosKey)) {
+            return false;
+        }
+
         KerberosKey otherKey = ((KerberosKey) other);
         if (isDestroyed() || otherKey.isDestroyed()) {
             return false;
@@ -298,6 +297,6 @@ public class KerberosKey implements SecretKey, Destroyable {
             }
         }
 
-        return true;            
+        return true;
     }
 }

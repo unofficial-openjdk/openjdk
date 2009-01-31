@@ -41,7 +41,7 @@ import java.util.logging.*;
 class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
     private static final Logger log = Logger.getLogger("sun.awt.X11.XListPeer");
-    
+
     public final static int     MARGIN = 2;
     public final static int     SPACE = 1;
     public final static int     SCROLLBAR_AREA = 17;  // Area reserved for the
@@ -52,10 +52,10 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     public final static int     WINDOW = 0;
     public final static int     VERSCROLLBAR = 1;
     public final static int     HORSCROLLBAR = 2;
-    public final static int 	DEFAULT_VISIBLE_ROWS = 4; // From java.awt.List,
+    public final static int     DEFAULT_VISIBLE_ROWS = 4; // From java.awt.List,
     public final static int     HORIZ_SCROLL_AMT = 10;
 
-    final static int 
+    final static int
         PAINT_VSCROLL = 2,
         PAINT_HSCROLL = 4,
         PAINT_ITEMS = 8,
@@ -95,13 +95,13 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     // since 'focusIndex' and 'selected[0]' are equal for single-selection list
     int                         focusIndex;
 
-    int                         maxLength; 
+    int                         maxLength;
     boolean                     vsbVis;  // visibility of scrollbars
     boolean                     hsbVis;
     int                         listWidth;  // Width of list portion of List
     int                         listHeight; // Height of list portion of List
     // (i.e. without scrollbars)
-    
+
     private int firstTimeVisibleIndex = 0;
 
     // Motif Lists don't seem to inherit the background color from their
@@ -151,7 +151,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
     public void postInit(XCreateWindowParams params) {
         super.postInit(params);
-        initFontMetrics();        
+        initFontMetrics();
         // TODO: more efficient way?
         //       do we really want/need a copy of all the items?
         // get all items from target
@@ -161,13 +161,13 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             items.addElement(l.getItem(i));
         }
 
-	/* make the visible position visible. */
-	int index = l.getVisibleIndex();
-	if (index >= 0) {
+        /* make the visible position visible. */
+        int index = l.getVisibleIndex();
+        if (index >= 0) {
             // Can't call makeVisible since it check scroll bar,
             // initialize scroll bar instead
-	    vsb.setValues(index, 0, 0, items.size());
-	}
+            vsb.setValues(index, 0, 0, items.size());
+        }
 
         // NOTE: needs to have target set
         maxLength = maxLength();
@@ -201,7 +201,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         vsb = new XVerticalScrollbar(this);
         vsb.setValues(0, 0, 0, 0, 1, 1);
     }
-    
+
 
     /**
      * add Horizontal scrollbar
@@ -243,14 +243,14 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     public Dimension minimumSize() {
         return minimumSize(DEFAULT_VISIBLE_ROWS);
     }
-    
+
     /**
      * return the preferredSize
      */
     public Dimension preferredSize(int v) {
         return minimumSize(v);
     }
-    
+
     /**
      * return the minimumsize
      */
@@ -276,7 +276,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      * return the length of the largest item in the list
      */
     int maxLength() {
-        FontMetrics fm = getFontMetrics(getFont());      
+        FontMetrics fm = getFontMetrics(getFont());
         int m = 0;
         int end = items.size();
         for(int i = 0 ; i < end ; i++) {
@@ -285,12 +285,12 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         }
         return m;
     }
-    
-    /** 
+
+    /**
      * Calculates the width of item's label
      */
     int getItemWidth(int i) {
-        FontMetrics fm = getFontMetrics(getFont());      
+        FontMetrics fm = getFontMetrics(getFont());
         return fm.stringWidth((String)items.elementAt(i));
     }
 
@@ -298,7 +298,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      * return the on-screen width of the given string "str"
      */
     int stringLength(String str) {
-        FontMetrics fm = getFontMetrics(target.getFont());      
+        FontMetrics fm = getFontMetrics(target.getFont());
         return fm.stringWidth(str);
     }
 
@@ -314,7 +314,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
     /**
      * Returns the color that should be used to paint the background of
-     * the list of items.  Note that this is not the same as 
+     * the list of items.  Note that this is not the same as
      * target.getBackground() which is the color of the scrollbars, and the
      * lower-right corner of the Component when the scrollbars are displayed.
      */
@@ -370,7 +370,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             return new Area();
         }
         if (firstItem <= lastItem) {
-            int startY = getItemY(firstItem);            
+            int startY = getItemY(firstItem);
             int endY = getItemY(lastItem) + getItemHeight();
             // Account for focus rectangle, instead should be called twice - before change
             // of focusIndex and after
@@ -387,7 +387,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     Rectangle getItemRect(int item) {
         return new Rectangle(MARGIN, getItemY(item), getItemWidth(), getItemHeight());
     }
-    
+
     Area getItemArea(int item) {
         return new Area(getItemRect(item));
     }
@@ -414,7 +414,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     public void repaint(int options) {
         repaint(getFirstVisibleItem(), getLastVisibleItem(), options);
     }
-    
+
     public void repaint(int firstItem, int lastItem, int options) {
         Graphics g = getGraphics();
         try {
@@ -431,12 +431,12 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     public boolean isFocusable() { return true; }
 
     // TODO: share/promote the Focus methods?
-    public void focusGained(FocusEvent e) { 
+    public void focusGained(FocusEvent e) {
         super.focusGained(e);
         repaint(PAINT_FOCUS);
     }
 
-    public void focusLost(FocusEvent e) { 
+    public void focusLost(FocusEvent e) {
         super.focusLost(e);
         repaint(PAINT_FOCUS);
     }
@@ -463,8 +463,8 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         maximum = items.size() < vis ? vis : items.size();
         vsb.setValues(vsb.getValue(), vis, vsb.getMinimum(), maximum);
         vsbVis = vsbWasVisible = vsbIsVisible(false);
-        listHeight = height; 
-        
+        listHeight = height;
+
         // now see if we need a horizontal scrollbar
         listWidth = getListWidth();
         vis = listWidth - ((2 * SPACE) + (2 * MARGIN));
@@ -477,8 +477,8 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             // vertical s crollbar
             listHeight = height - SCROLLBAR_AREA;
             vis = itemsInWindow(true);
-            maximum = items.size() < vis ? vis : items.size();            
-            vsb.setValues(origVSBVal, vis, vsb.getMinimum(), maximum);            
+            maximum = items.size() < vis ? vis : items.size();
+            vsb.setValues(origVSBVal, vis, vsb.getMinimum(), maximum);
             vsbVis = vsbIsVisible(true);
         }
 
@@ -487,7 +487,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         // recalculate horizontal scrollbar width - then we're done...
         if (vsbWasVisible != vsbVis) {
             listWidth = getListWidth();
-            vis = listWidth - ((2 * SPACE) + (2 * MARGIN));            
+            vis = listWidth - ((2 * SPACE) + (2 * MARGIN));
             maximum = maxLength < vis ? 0 : maxLength;
             hsb.setValues(hsb.getValue(), vis, hsb.getMinimum(), maximum);
             hsbVis = hsbIsVisible(vsbVis);
@@ -564,7 +564,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         super.handleJavaMouseEvent(e);
         int i = e.getID();
         switch (i) {
-          case MouseEvent.MOUSE_PRESSED: 
+          case MouseEvent.MOUSE_PRESSED:
               mousePressed(e);
               break;
           case MouseEvent.MOUSE_RELEASED:
@@ -805,7 +805,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
     void handleJavaKeyEvent(KeyEvent e) {
         switch(e.getID()) {
           case KeyEvent.KEY_PRESSED:
-              if (!isMousePressed){              
+              if (!isMousePressed){
                   keyPressed(e);
               }
               break;
@@ -863,7 +863,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
               int previousValue = vsb.getValue();
               vsb.setValue(vsb.getValue() - vsb.getBlockIncrement());
               int currentValue = vsb.getValue();
-              // 6190768 pressing pg-up on AWT multiple selection lists the items but no item event is triggered, on XToolkit 
+              // 6190768 pressing pg-up on AWT multiple selection lists the items but no item event is triggered, on XToolkit
               // Restoring Motif behavior
               if (previousValue!=currentValue) {
                   setFocusIndex(Math.max(getFocusIndex()-itemsInWindow(), 0));
@@ -883,7 +883,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
               int previousValue = vsb.getValue();
               vsb.setValue(vsb.getValue() + vsb.getBlockIncrement());
               int currentValue = vsb.getValue();
-              // 6190768 pressing pg-down on AWT multiple selection list selects the items but no item event is triggered, on XToolkit 
+              // 6190768 pressing pg-down on AWT multiple selection list selects the items but no item event is triggered, on XToolkit
               // Restoring Motif behavior
               if (previousValue!=currentValue) {
                   setFocusIndex(Math.min(getFocusIndex() + itemsInWindow(), items.size()-1));
@@ -965,7 +965,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
               }
               else if (!isSelected) { // Note: this changes the Solaris/Linux
                   // behavior to match that of win32.
-                  // That is, pressing space bar on a 
+                  // That is, pressing space bar on a
                   // single-select list when the focused
                   // item is already selected does NOT
                   // send an ItemEvent.SELECTED event.
@@ -1010,7 +1010,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             if (mouseDraggedOutVertically && !isSelected(newSel)){
                 selectItem(newSel);
                 eventIndex = newSel;
-                repaint(oldSel, eventIndex, PAINT_ITEMS);                
+                repaint(oldSel, eventIndex, PAINT_ITEMS);
                 // Scrolling select() should also set the focus index
                 // Otherwise, the updating of the 'focusIndex' variable will be incorrect
                 // if user drag mouse out of the area of the list
@@ -1020,7 +1020,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
         } else if ((XHorizontalScrollbar)obj == hsb) {
             scrollHorizontal(v - value);
-        }    
+        }
 
     }
 
@@ -1028,11 +1028,11 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      * deselect all items in List
      */
     private void deselectAllItems() {
-	selected = new int [0];
-	repaint(PAINT_ITEMS);
+        selected = new int [0];
+        repaint(PAINT_ITEMS);
     }
-    
-    /** 
+
+    /**
      * set multiple selections
      */
     public void setMultipleSelections(boolean v) {
@@ -1047,10 +1047,10 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             multipleSelections = v;
         }
     }
-     
+
     /**
      * add an item
-     * if the index of the item is < 0 or >= than items.size() 
+     * if the index of the item is < 0 or >= than items.size()
      * then add the item to the end of the list
      */
     public void addItem(String item, int i) {
@@ -1070,9 +1070,9 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         currentIndex = -1;
 
         if (i == -1) {
-            items.addElement(item);     
+            items.addElement(item);
             i = 0;              // fix the math for the paintItems test
-            addedIndex = items.size() - 1; 
+            addedIndex = items.size() - 1;
         } else {
             items.insertElementAt(item, i);
             addedIndex = i;
@@ -1080,7 +1080,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 if (selected[j] >= i) {
                     selected[j] += 1;
                 }
-            }   
+            }
         }
         if (log.isLoggable(Level.FINER)) log.finer("Adding item '" + item + "' to " + addedIndex);
 
@@ -1105,12 +1105,12 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         repaint(addedIndex, getLastVisibleItem(), options);
     }
 
-    /** 
+    /**
      * delete items starting with s (start position) to e (end position) including s and e
      * if s < 0 then s = 0
-     * if e >= items.size() then e = items.size() - 1 
+     * if e >= items.size() then e = items.size() - 1
      */
-    public void delItems(int s, int e) { 
+    public void delItems(int s, int e) {
         // save the current state of the scrollbars
         boolean hsbWasVisible = hsbVis;
         boolean vsbWasVisible = vsbVis;
@@ -1118,7 +1118,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
         if (log.isLoggable(Level.FINE)) log.fine("Deleting from " + s + " to " + e);
 
-        if (log.isLoggable(Level.FINEST)) log.finest("Last displayed item: " + oldLastDisplayed + ", items in window " + itemsInWindow() + 
+        if (log.isLoggable(Level.FINEST)) log.finest("Last displayed item: " + oldLastDisplayed + ", items in window " + itemsInWindow() +
                                                      ", size " + items.size());
 
         if (items.size() == 0) {
@@ -1141,14 +1141,14 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         if (e >= items.size()) {
             e = items.size() - 1;
         }
-        
+
         // determine whether we're going to delete any visible elements
         // repaint must also be done if scrollbars appear/disappear, which
         // can happen from removing a non-showing list item
         /*
-          boolean repaintNeeded = 
+          boolean repaintNeeded =
           ((s <= lastItemDisplayed()) && (e >= vsb.getValue()));
-        */ 
+        */
         boolean repaintNeeded = (s >= getFirstVisibleItem() && s <= getLastVisibleItem());
 
         // delete the items out of the items list and out of the selected list
@@ -1161,7 +1161,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 System.arraycopy(selected, j + 1, newsel, j, selected.length - (j + 1));
                 selected = newsel;
             }
-            
+
         }
 
         // update the indexes in the selected array
@@ -1171,7 +1171,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 selected[i] -= diff;
             }
         }
-        
+
         int options = PAINT_VSCROLL;
         // focusedIndex updating according to native (Window, Motif) behaviour
         if (getFocusIndex() > e) {
@@ -1179,7 +1179,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             options |= PAINT_FOCUS;
         } else if (getFocusIndex() >= s && getFocusIndex() <= e) {
             // Fixed 6299858: PIT. Focused border not shown on List if selected item is removed, XToolkit
-            // We should set focus to new first item if the current first item was removed 
+            // We should set focus to new first item if the current first item was removed
             // except if the list is empty
             int focusBound = (items.size() > 0) ? 0 : -1;
             setFocusIndex(Math.max(s-1, focusBound));
@@ -1195,11 +1195,11 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             } else {
                 vsb.setValue(vsb.getValue() - diff);
             }
-        }   
+        }
 
         int oldMaxLength = maxLength;
         maxLength = maxLength();
-        if (maxLength != oldMaxLength) { 
+        if (maxLength != oldMaxLength) {
             // Width of the items changed affecting the range of
             // horizontal scrollbar
             options |= PAINT_HSCROLL;
@@ -1211,7 +1211,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         }
         repaint(s, oldLastDisplayed, options);
     }
-    
+
     /**
      * ListPeer method
      */
@@ -1262,7 +1262,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             newsel[i] = index;
             System.arraycopy(selected, i, newsel, i+1, selected.length - i);
             selected = newsel;
-        }       
+        }
         if (!isItemHidden(index)) {
             // Only bother painting if item is visible (4895367)
             repaint(index, index, PAINT_ITEMS);
@@ -1301,8 +1301,8 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             // Only bother repainting if item is visible
             repaint(index, index, PAINT_ITEMS);
         }
-    }   
-  
+    }
+
     /**
      * ensure that the given index is visible, scrolling the List
      * if necessary, or doing nothing if the item is already visible.
@@ -1322,11 +1322,11 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 int val = index - lastItemDisplayed();
                 scrollVertical(val);
             }
-        }  
+        }
     }
-    
+
     /**
-     * clear 
+     * clear
      */
     public void clear() {
         selected = new int[0];
@@ -1368,7 +1368,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
         int shown = itemsDisplayed();
         int lastY = shown * getItemHeight() + MARGIN;
- 
+
         if (shown == itemsInWindow()) {
             lastY += MARGIN;
         }
@@ -1376,7 +1376,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         if (y < 0 || y >= lastY) {
             return false;
         }
- 
+
         return true;
     }
 
@@ -1443,13 +1443,13 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         int itemsInWin = itemsInWindow();
         int h = getItemHeight();
         int pixelsToScroll = y * h;
-        
+
         if (vsb.getValue() < -y) {
             y = -vsb.getValue();
         }
         vsb.setValue(vsb.getValue() + y);
 
-        if (y > 0) { 
+        if (y > 0) {
             // Fixed 6308295: XAWTduplicate list item is displayed
             // Window resizing leads to the buffer flushing
             // That's why the repainting with the PAINT_HIDEFOCUS option is the repainting with PAINT_ALL option
@@ -1457,19 +1457,19 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             if (y < itemsInWin && painter.isBuffer()) {
                 if (log.isLoggable(Level.FINEST)) {
                     log.finest("Copying " + "" + MARGIN + "," + ( MARGIN + pixelsToScroll)
-                               + "," +  (width - SCROLLBAR_AREA) + "," +  (h * (itemsInWin - y)-1) + 
+                               + "," +  (width - SCROLLBAR_AREA) + "," +  (h * (itemsInWin - y)-1) +
                                "," + 0 + "," + (-pixelsToScroll));
                 }
                 // Unpaint focus before copying
                 repaint(PAINT_HIDEFOCUS);
-                painter.copyArea(MARGIN, MARGIN + pixelsToScroll, width - SCROLLBAR_AREA, h * (itemsInWin - y - 1)-1, 0, -pixelsToScroll);  
+                painter.copyArea(MARGIN, MARGIN + pixelsToScroll, width - SCROLLBAR_AREA, h * (itemsInWin - y - 1)-1, 0, -pixelsToScroll);
             }
             repaint(vsb.getValue() + (itemsInWin - y)-1, (vsb.getValue() + itemsInWin) - 1, PAINT_ITEMS | PAINT_VSCROLL | PAINT_FOCUS);
         } else if (y < 0 && painter.isBuffer()) {
             if (y + itemsInWindow() > 0) {
                 if (log.isLoggable(Level.FINEST)) {
-                    log.finest("Copying " + MARGIN + "," + MARGIN +"," + 
-                               (width - SCROLLBAR_AREA) + "," +  
+                    log.finest("Copying " + MARGIN + "," + MARGIN +"," +
+                               (width - SCROLLBAR_AREA) + "," +
                                (h * (itemsInWin + y)) + "," + "0" +"," +(-pixelsToScroll));
                 }
                 repaint(PAINT_HIDEFOCUS);
@@ -1490,17 +1490,17 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         w -= ((2 * SPACE) + (2 * MARGIN));
         int h = height - (SCROLLBAR_AREA + (2 * MARGIN));
         hsb.setValue(hsb.getValue() + x);
-        
+
         if (x < 0 && painter.isBuffer()) {
             painter.copyArea(MARGIN + SPACE, MARGIN, w + x, h, -x, 0);
         } else if (x > 0 && painter.isBuffer()) {
             painter.copyArea(MARGIN + SPACE + x, MARGIN, w - x, h, -x, 0);
         }
         repaint(vsb.getValue(), lastItemDisplayed(), PAINT_ITEMS | PAINT_HSCROLL);
-    }   
+    }
 
     /**
-     * return the index 
+     * return the index
      */
     int y2index(int y) {
         if (!validY(y)) {
@@ -1532,9 +1532,9 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         }
         return false;
     }
-        
+
     /**
-     * return the number of items that can fit 
+     * return the number of items that can fit
      * in the current window
      */
     int itemsInWindow(boolean scrollbarVisible) {
@@ -1546,7 +1546,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         }
         return (h / getItemHeight());
     }
-                
+
     int itemsInWindow() {
         return itemsInWindow(hsbVis);
     }
@@ -1556,7 +1556,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      */
     boolean inHorizontalScrollbar(int x, int y) {
         int w = getListWidth();
-        int h = height - SCROLLBAR_WIDTH; 
+        int h = height - SCROLLBAR_WIDTH;
         return (hsbVis &&  (x >= 0) && (x <= w) && (y > h));
     }
 
@@ -1614,38 +1614,38 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      * - don't post: MOUSE_PRESSED, MOUSE_RELEASED, MOUSE_CLICKED, MOUSE_DRAGGED
      */
     boolean prePostMouseEvent(final MouseEvent me){
-	if (getToplevelXWindow().isModalBlocked()) {
-	    return false;
-	}
+        if (getToplevelXWindow().isModalBlocked()) {
+            return false;
+        }
 
         int eventId = me.getID();
-        
-        if (eventId == MouseEvent.MOUSE_MOVED) 
+
+        if (eventId == MouseEvent.MOUSE_MOVED)
         {
-            // only for performance improvement 
-        }else if((eventId == MouseEvent.MOUSE_DRAGGED ||  
-                  eventId == MouseEvent.MOUSE_RELEASED) && 
-                 isScrollBarOriginated) 
-        { 
-            if (eventId == MouseEvent.MOUSE_RELEASED) { 
-                isScrollBarOriginated = false; 
-            } 
-            handleJavaMouseEventOnEDT(me); 
-            return true; 
-        }else if ((eventId == MouseEvent.MOUSE_PRESSED ||  
-                   eventId == MouseEvent.MOUSE_CLICKED) && 
-                  (inVerticalScrollbar(me.getX(), me.getY()) ||  
-                   inHorizontalScrollbar(me.getX(), me.getY()))) 
-        { 
-            if (eventId == MouseEvent.MOUSE_PRESSED) { 
-                isScrollBarOriginated = true; 
-            } 
-            handleJavaMouseEventOnEDT(me); 
+            // only for performance improvement
+        }else if((eventId == MouseEvent.MOUSE_DRAGGED ||
+                  eventId == MouseEvent.MOUSE_RELEASED) &&
+                 isScrollBarOriginated)
+        {
+            if (eventId == MouseEvent.MOUSE_RELEASED) {
+                isScrollBarOriginated = false;
+            }
+            handleJavaMouseEventOnEDT(me);
+            return true;
+        }else if ((eventId == MouseEvent.MOUSE_PRESSED ||
+                   eventId == MouseEvent.MOUSE_CLICKED) &&
+                  (inVerticalScrollbar(me.getX(), me.getY()) ||
+                   inHorizontalScrollbar(me.getX(), me.getY())))
+        {
+            if (eventId == MouseEvent.MOUSE_PRESSED) {
+                isScrollBarOriginated = true;
+            }
+            handleJavaMouseEventOnEDT(me);
             return true;
         }
         return false;
     }
-    
+
     /*
      * Do handleJavaMouseEvent on EDT
      */
@@ -1656,7 +1656,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 }
             });
     }
-    
+
     /*
      * Fixed 5010944: List's rows overlap one another
      * The bug is due to incorrent caching of the list item size
@@ -1726,7 +1726,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 if (buffer == null) {
                     buffer = localBuffer;
                     return true;
-                } 
+                }
             } finally {
                 XToolkit.awtUnlock();
             }
@@ -1776,11 +1776,11 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 }
                 Graphics g = localBuffer.createGraphics();
 
-                try {            
+                try {
                     g.setFont(getFont());
                     if ((options & PAINT_BACKGROUND) != 0) {
                         g.setColor(SystemColor.window);
-                        g.fillRect(0, 0, width, height);                    
+                        g.fillRect(0, 0, width, height);
                         g.setColor(getListBackground());
                         g.fillRect(0, 0, listWidth, listHeight);
                         draw3DRect(g, getSystemColors(), 0, 0, listWidth - 1, listHeight - 1, false);
@@ -1811,17 +1811,17 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
 
         private void paintItems(Graphics g, int firstItem, int lastItem, int options) {
             if (log.isLoggable(Level.FINER)) log.finer("Painting items from " + firstItem + " to " + lastItem + ", focused " + focusIndex + ", first " + getFirstVisibleItem() + ", last " + getLastVisibleItem());
-                                                       
-            firstItem = Math.max(getFirstVisibleItem(), firstItem);            
+
+            firstItem = Math.max(getFirstVisibleItem(), firstItem);
             if (firstItem > lastItem) {
                 int t = lastItem;
                 lastItem = firstItem;
                 firstItem = t;
             }
-            firstItem = Math.max(getFirstVisibleItem(), firstItem);            
+            firstItem = Math.max(getFirstVisibleItem(), firstItem);
             lastItem = Math.min(lastItem, items.size()-1);
 
-            if (log.isLoggable(Level.FINER)) log.finer("Actually painting items from " + firstItem + " to " + lastItem + 
+            if (log.isLoggable(Level.FINER)) log.finer("Actually painting items from " + firstItem + " to " + lastItem +
                                                        ", items in window " + itemsInWindow());
             for (int i = firstItem; i <= lastItem; i++) {
                 paintItem(g, i);
@@ -1852,8 +1852,8 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                 g.fillRect(x, y, w, h);
 
                 if (index <= getLastVisibleItem() && index < items.size()) {
-                    if (!isEnabled()){ 
-                        g.setColor(getDisabledColor()); 
+                    if (!isEnabled()){
+                        g.setColor(getDisabledColor());
                     } else if (isSelected(index)) {
                         g.setColor(getListBackground());
                     } else {
@@ -1868,11 +1868,11 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                     g.fillRect(x, y, listWidth, h);
                 }
                 g.setClip(clip);
-            }    
+            }
         }
 
         void paintScrollBar(XScrollbar scr, Graphics g, int x, int y, int width, int height, boolean paintAll) {
-            if (log.isLoggable(Level.FINEST)) log.finest("Painting scrollbar " + scr + " width " + 
+            if (log.isLoggable(Level.FINEST)) log.finest("Painting scrollbar " + scr + " width " +
                                                          width + " height " + height + ", paintAll " + paintAll);
             g.translate(x, y);
             scr.paint(g, getSystemColors(), paintAll);
@@ -1889,7 +1889,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         void paintHorScrollbar(Graphics g, boolean paintAll) {
             int w = getListWidth();
             paintScrollBar(hsb, g, 0, height - (SCROLLBAR_WIDTH), w, SCROLLBAR_WIDTH, paintAll);
-        }       
+        }
 
         /**
          * Paint the vertical scrollbar to the screen
@@ -1910,7 +1910,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
             if (paintFocus && !hasFocus()) {
                 paintFocus = false;
             }
-            if (log.isLoggable(Level.FINE)) log.fine("Painting focus, focus index " + getFocusIndex() + ", focus is " + 
+            if (log.isLoggable(Level.FINE)) log.fine("Painting focus, focus index " + getFocusIndex() + ", focus is " +
                                                      (isItemHidden(getFocusIndex())?("invisible"):("visible")) + ", paint focus is " + paintFocus);
             Shape clip = g.getClip();
             g.setClip(0, 0, listWidth, listHeight);
@@ -1943,7 +1943,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                     if (createBuffer()) {
                         // Newly created buffer should be painted over at full
                         repaint(PAINT_ALL);
-                        return;                        
+                        return;
                     }
                     localBuffer = buffer;
                 } finally {
@@ -1956,7 +1956,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
                       // Since we've lost the content we can't just scroll - we should paint again
                       repaint(PAINT_ALL);
                       return;
-                }                
+                }
                 Graphics g = localBuffer.createGraphics();
                 try {
                     g.copyArea(x, y, width, height, dx, dy);

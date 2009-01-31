@@ -53,12 +53,12 @@ public class D3DBackBufferSurfaceData extends D3DSurfaceData {
     }
 
     private native void restoreDepthBuffer();
-    
+
     @Override
     public void restoreSurface() {
         parentData.restoreSurface();
         // The above call restores the primary surface
-        // to which this backbuffer is attached. But 
+        // to which this backbuffer is attached. But
         // we need to explicitly restore the depth buffer
         // associated with this backbuffer surface, because it's not
         // part of a 'complex' primary surface, and thus will not be
@@ -68,7 +68,7 @@ public class D3DBackBufferSurfaceData extends D3DSurfaceData {
 
     public static D3DBackBufferSurfaceData
         createData(int width, int height,
-                   ColorModel cm, GraphicsConfiguration gc, 
+                   ColorModel cm, GraphicsConfiguration gc,
                    Image image,
                    Win32SurfaceData parentData)
     {
@@ -77,9 +77,9 @@ public class D3DBackBufferSurfaceData extends D3DSurfaceData {
             return null;
         }
         SurfaceType sType = getSurfaceType(cm, Transparency.OPAQUE);
-        return new 
-            D3DBackBufferSurfaceData(width, height, 
-                 getSurfaceType(gc, cm, 
+        return new
+            D3DBackBufferSurfaceData(width, height,
+                 getSurfaceType(gc, cm,
                                 D3DSurfaceData.D3D_ATTACHED_SURFACE),
                  cm, gc, image,
                  gd.getScreen(), parentData);

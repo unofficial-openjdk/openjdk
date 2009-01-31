@@ -34,7 +34,6 @@ import java.awt.event.PaintEvent;
  * class it'll ignore it.  This class is used by Swing.
  * Look at <code>javax.swing.SwingPaintEventDispatcher</code> for more.
  *
- * @version %I%, %G%
  */
 public class IgnorePaintEvent extends PaintEvent {
     public IgnorePaintEvent(Component source, int id, Rectangle updateRect) {

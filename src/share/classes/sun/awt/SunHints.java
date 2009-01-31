@@ -42,48 +42,48 @@ public class SunHints {
      * of the more expensive equals() method.
      */
     public static class Key extends RenderingHints.Key {
-	String description;
+        String description;
 
-	/**
-	 * Construct a key using the indicated private key.  Each
-	 * subclass of Key maintains its own unique domain of integer
-	 * keys.  No two objects with the same integer key and of the
-	 * same specific subclass can be constructed.  An exception
-	 * will be thrown if an attempt is made to construct another
-	 * object of a given class with the same integer key as a
-	 * pre-existing instance of that subclass of Key.
-	 */
-	public Key(int privatekey, String description) {
-	    super(privatekey);
-	    this.description = description;
-	}
+        /**
+         * Construct a key using the indicated private key.  Each
+         * subclass of Key maintains its own unique domain of integer
+         * keys.  No two objects with the same integer key and of the
+         * same specific subclass can be constructed.  An exception
+         * will be thrown if an attempt is made to construct another
+         * object of a given class with the same integer key as a
+         * pre-existing instance of that subclass of Key.
+         */
+        public Key(int privatekey, String description) {
+            super(privatekey);
+            this.description = description;
+        }
 
-	/**
-	 * Returns the numeric index associated with this Key.  This
-	 * is useful for use in switch statements and quick lookups
-	 * of the setting of a particular key.
-	 */
-	public final int getIndex() {
-	    return intKey();
-	}
+        /**
+         * Returns the numeric index associated with this Key.  This
+         * is useful for use in switch statements and quick lookups
+         * of the setting of a particular key.
+         */
+        public final int getIndex() {
+            return intKey();
+        }
 
-	/**
-	 * Returns a string representation of the Key.
-	 */
-	public final String toString() {
-	    return description;
-	}
+        /**
+         * Returns a string representation of the Key.
+         */
+        public final String toString() {
+            return description;
+        }
 
-	/**
-	 * Returns true if the specified object is a valid value
-	 * for this Key.
-	 */
-	public boolean isCompatibleValue(Object val) {
-	    if (val instanceof Value) {
-		return ((Value)val).isCompatibleKey(this);
-	    }
-	    return false;
-	}
+        /**
+         * Returns true if the specified object is a valid value
+         * for this Key.
+         */
+        public boolean isCompatibleValue(Object val) {
+            if (val instanceof Value) {
+                return ((Value)val).isCompatibleKey(this);
+            }
+            return false;
+        }
     }
 
     /**
@@ -94,81 +94,81 @@ public class SunHints {
      * of the more expensive equals() method.
      */
     public static class Value {
-	private SunHints.Key myKey;
-	private int index;
-	private String description;
+        private SunHints.Key myKey;
+        private int index;
+        private String description;
 
-	private static Value[][] ValueObjects =
-	    new Value[NUM_KEYS][VALS_PER_KEY];
+        private static Value[][] ValueObjects =
+            new Value[NUM_KEYS][VALS_PER_KEY];
 
-	private synchronized static void register(SunHints.Key key,
-						  Value value) {
-	    int kindex = key.getIndex();
-	    int vindex = value.getIndex();
-	    if (ValueObjects[kindex][vindex] != null) {
-		throw new InternalError("duplicate index: "+vindex);
-	    }
-	    ValueObjects[kindex][vindex] = value;
-	}
+        private synchronized static void register(SunHints.Key key,
+                                                  Value value) {
+            int kindex = key.getIndex();
+            int vindex = value.getIndex();
+            if (ValueObjects[kindex][vindex] != null) {
+                throw new InternalError("duplicate index: "+vindex);
+            }
+            ValueObjects[kindex][vindex] = value;
+        }
 
-	public static Value get(int keyindex, int valueindex) {
-	    return ValueObjects[keyindex][valueindex];
-	}
+        public static Value get(int keyindex, int valueindex) {
+            return ValueObjects[keyindex][valueindex];
+        }
 
-	/**
-	 * Construct a value using the indicated private index.  Each
-	 * subclass of Value maintains its own unique domain of integer
-	 * indices.  Enforcing the uniqueness of the integer indices
-	 * is left to the subclass.
-	 */
-	public Value(SunHints.Key key, int index, String description) {
-	    this.myKey = key;
-	    this.index = index;
-	    this.description = description;
+        /**
+         * Construct a value using the indicated private index.  Each
+         * subclass of Value maintains its own unique domain of integer
+         * indices.  Enforcing the uniqueness of the integer indices
+         * is left to the subclass.
+         */
+        public Value(SunHints.Key key, int index, String description) {
+            this.myKey = key;
+            this.index = index;
+            this.description = description;
 
-	    register(key, this);
-	}
+            register(key, this);
+        }
 
-	/**
-	 * Returns the numeric index associated with this Key.  This
-	 * is useful for use in switch statements and quick lookups
-	 * of the setting of a particular key.
-	 */
-	public final int getIndex() {
-	    return index;
-	}
+        /**
+         * Returns the numeric index associated with this Key.  This
+         * is useful for use in switch statements and quick lookups
+         * of the setting of a particular key.
+         */
+        public final int getIndex() {
+            return index;
+        }
 
-	/**
-	 * Returns a string representation of this Value.
-	 */
-	public final String toString() {
-	    return description;
-	}
+        /**
+         * Returns a string representation of this Value.
+         */
+        public final String toString() {
+            return description;
+        }
 
-	/**
-	 * Returns true if the specified object is a valid Key
-	 * for this Value.
-	 */
-	public final boolean isCompatibleKey(Key k) {
-	    return myKey == k;
-	}
+        /**
+         * Returns true if the specified object is a valid Key
+         * for this Value.
+         */
+        public final boolean isCompatibleKey(Key k) {
+            return myKey == k;
+        }
 
-	/**
-	 * The hash code for all SunHints.Value objects will be the same
-	 * as the system identity code of the object as defined by the
-	 * System.identityHashCode() method.
-	 */
-	public final int hashCode() {
-	    return System.identityHashCode(this);
-	}
+        /**
+         * The hash code for all SunHints.Value objects will be the same
+         * as the system identity code of the object as defined by the
+         * System.identityHashCode() method.
+         */
+        public final int hashCode() {
+            return System.identityHashCode(this);
+        }
 
-	/**
-	 * The equals method for all SunHints.Value objects will return
-	 * the same result as the equality operator '=='.
-	 */
-	public final boolean equals(Object o) {
-	    return this == o;
-	}
+        /**
+         * The equals method for all SunHints.Value objects will return
+         * the same result as the equality operator '=='.
+         */
+        public final boolean equals(Object o) {
+            return this == o;
+        }
     }
 
     private static final int NUM_KEYS = 9;
@@ -262,211 +262,211 @@ public class SunHints {
      * Rendering hint key and value objects
      */
     public static final Key KEY_RENDERING =
-	new SunHints.Key(SunHints.INTKEY_RENDERING,
-			 "Global rendering quality key");
+        new SunHints.Key(SunHints.INTKEY_RENDERING,
+                         "Global rendering quality key");
     public static final Object VALUE_RENDER_SPEED =
-	new SunHints.Value(KEY_RENDERING,
-			   SunHints.INTVAL_RENDER_SPEED,
-			   "Fastest rendering methods");
+        new SunHints.Value(KEY_RENDERING,
+                           SunHints.INTVAL_RENDER_SPEED,
+                           "Fastest rendering methods");
     public static final Object VALUE_RENDER_QUALITY =
-	new SunHints.Value(KEY_RENDERING,
-			   SunHints.INTVAL_RENDER_QUALITY,
-			   "Highest quality rendering methods");
+        new SunHints.Value(KEY_RENDERING,
+                           SunHints.INTVAL_RENDER_QUALITY,
+                           "Highest quality rendering methods");
     public static final Object VALUE_RENDER_DEFAULT =
-	new SunHints.Value(KEY_RENDERING,
-			   SunHints.INTVAL_RENDER_DEFAULT,
-			   "Default rendering methods");
+        new SunHints.Value(KEY_RENDERING,
+                           SunHints.INTVAL_RENDER_DEFAULT,
+                           "Default rendering methods");
 
     /**
      * Antialiasing hint key and value objects
      */
     public static final Key KEY_ANTIALIASING =
-	new SunHints.Key(SunHints.INTKEY_ANTIALIASING,
-			 "Global antialiasing enable key");
+        new SunHints.Key(SunHints.INTKEY_ANTIALIASING,
+                         "Global antialiasing enable key");
     public static final Object VALUE_ANTIALIAS_ON =
-	new SunHints.Value(KEY_ANTIALIASING,
-			   SunHints.INTVAL_ANTIALIAS_ON,
-			   "Antialiased rendering mode");
+        new SunHints.Value(KEY_ANTIALIASING,
+                           SunHints.INTVAL_ANTIALIAS_ON,
+                           "Antialiased rendering mode");
     public static final Object VALUE_ANTIALIAS_OFF =
-	new SunHints.Value(KEY_ANTIALIASING,
-			   SunHints.INTVAL_ANTIALIAS_OFF,
-			   "Nonantialiased rendering mode");
+        new SunHints.Value(KEY_ANTIALIASING,
+                           SunHints.INTVAL_ANTIALIAS_OFF,
+                           "Nonantialiased rendering mode");
     public static final Object VALUE_ANTIALIAS_DEFAULT =
-	new SunHints.Value(KEY_ANTIALIASING,
-			   SunHints.INTVAL_ANTIALIAS_DEFAULT,
-			   "Default antialiasing rendering mode");
+        new SunHints.Value(KEY_ANTIALIASING,
+                           SunHints.INTVAL_ANTIALIAS_DEFAULT,
+                           "Default antialiasing rendering mode");
 
     /**
      * Text antialiasing hint key and value objects
      */
     public static final Key KEY_TEXT_ANTIALIASING =
-	new SunHints.Key(SunHints.INTKEY_TEXT_ANTIALIASING,
-			 "Text-specific antialiasing enable key");
+        new SunHints.Key(SunHints.INTKEY_TEXT_ANTIALIASING,
+                         "Text-specific antialiasing enable key");
     public static final Object VALUE_TEXT_ANTIALIAS_ON =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING, 
-			   SunHints.INTVAL_TEXT_ANTIALIAS_ON,
-			   "Antialiased text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_ON,
+                           "Antialiased text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_OFF =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING, 
-			   SunHints.INTVAL_TEXT_ANTIALIAS_OFF,
-			   "Nonantialiased text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_OFF,
+                           "Nonantialiased text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_DEFAULT =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING, 
-			   SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT,
-			   "Default antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT,
+                           "Default antialiasing text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_GASP =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING,
-			   SunHints.INTVAL_TEXT_ANTIALIAS_GASP,
-			   "gasp antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_GASP,
+                           "gasp antialiasing text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_HRGB =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING,
-			   SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB,
-			   "LCD HRGB antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB,
+                           "LCD HRGB antialiasing text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_HBGR =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING,
-			   SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HBGR,
-			   "LCD HBGR antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HBGR,
+                           "LCD HBGR antialiasing text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_VRGB =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING,
-			   SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB,
-			   "LCD VRGB antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB,
+                           "LCD VRGB antialiasing text mode");
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_VBGR =
-	new SunHints.Value(KEY_TEXT_ANTIALIASING,
-			   SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VBGR,
-			   "LCD VBGR antialiasing text mode");
+        new SunHints.Value(KEY_TEXT_ANTIALIASING,
+                           SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VBGR,
+                           "LCD VBGR antialiasing text mode");
 
     /**
      * Font fractional metrics hint key and value objects
      */
     public static final Key KEY_FRACTIONALMETRICS =
-	new SunHints.Key(SunHints.INTKEY_FRACTIONALMETRICS,
-			 "Fractional metrics enable key");
+        new SunHints.Key(SunHints.INTKEY_FRACTIONALMETRICS,
+                         "Fractional metrics enable key");
     public static final Object VALUE_FRACTIONALMETRICS_ON =
-	new SunHints.Value(KEY_FRACTIONALMETRICS, 
-			   SunHints.INTVAL_FRACTIONALMETRICS_ON,
-			   "Fractional text metrics mode");
+        new SunHints.Value(KEY_FRACTIONALMETRICS,
+                           SunHints.INTVAL_FRACTIONALMETRICS_ON,
+                           "Fractional text metrics mode");
     public static final Object VALUE_FRACTIONALMETRICS_OFF =
-	new SunHints.Value(KEY_FRACTIONALMETRICS, 
-			   SunHints.INTVAL_FRACTIONALMETRICS_OFF,
-			   "Integer text metrics mode");
+        new SunHints.Value(KEY_FRACTIONALMETRICS,
+                           SunHints.INTVAL_FRACTIONALMETRICS_OFF,
+                           "Integer text metrics mode");
     public static final Object VALUE_FRACTIONALMETRICS_DEFAULT =
-	new SunHints.Value(KEY_FRACTIONALMETRICS, 
-			   SunHints.INTVAL_FRACTIONALMETRICS_DEFAULT,
-			   "Default fractional text metrics mode");
+        new SunHints.Value(KEY_FRACTIONALMETRICS,
+                           SunHints.INTVAL_FRACTIONALMETRICS_DEFAULT,
+                           "Default fractional text metrics mode");
 
     /**
      * Dithering hint key and value objects
      */
     public static final Key KEY_DITHERING =
-	new SunHints.Key(SunHints.INTKEY_DITHERING,
-			 "Dithering quality key");
+        new SunHints.Key(SunHints.INTKEY_DITHERING,
+                         "Dithering quality key");
     public static final Object VALUE_DITHER_ENABLE =
-	new SunHints.Value(KEY_DITHERING, 
-			   SunHints.INTVAL_DITHER_ENABLE,
-			   "Dithered rendering mode");
+        new SunHints.Value(KEY_DITHERING,
+                           SunHints.INTVAL_DITHER_ENABLE,
+                           "Dithered rendering mode");
     public static final Object VALUE_DITHER_DISABLE =
-	new SunHints.Value(KEY_DITHERING,
-			   SunHints.INTVAL_DITHER_DISABLE,
-			   "Nondithered rendering mode");
+        new SunHints.Value(KEY_DITHERING,
+                           SunHints.INTVAL_DITHER_DISABLE,
+                           "Nondithered rendering mode");
     public static final Object VALUE_DITHER_DEFAULT =
-	new SunHints.Value(KEY_DITHERING, 
-			   SunHints.INTVAL_DITHER_DEFAULT,
-			   "Default dithering mode");
+        new SunHints.Value(KEY_DITHERING,
+                           SunHints.INTVAL_DITHER_DEFAULT,
+                           "Default dithering mode");
 
     /**
      * Interpolation hint key and value objects
      */
     public static final Key KEY_INTERPOLATION =
-	new SunHints.Key(SunHints.INTKEY_INTERPOLATION,
-			 "Image interpolation method key");
+        new SunHints.Key(SunHints.INTKEY_INTERPOLATION,
+                         "Image interpolation method key");
     public static final Object VALUE_INTERPOLATION_NEAREST_NEIGHBOR =
-	new SunHints.Value(KEY_INTERPOLATION, 
-			   SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR,
-			   "Nearest Neighbor image interpolation mode");
+        new SunHints.Value(KEY_INTERPOLATION,
+                           SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR,
+                           "Nearest Neighbor image interpolation mode");
     public static final Object VALUE_INTERPOLATION_BILINEAR =
-	new SunHints.Value(KEY_INTERPOLATION, 
-			   SunHints.INTVAL_INTERPOLATION_BILINEAR,
-			   "Bilinear image interpolation mode");
+        new SunHints.Value(KEY_INTERPOLATION,
+                           SunHints.INTVAL_INTERPOLATION_BILINEAR,
+                           "Bilinear image interpolation mode");
     public static final Object VALUE_INTERPOLATION_BICUBIC =
-	new SunHints.Value(KEY_INTERPOLATION, 
-			   SunHints.INTVAL_INTERPOLATION_BICUBIC,
-			   "Bicubic image interpolation mode");
+        new SunHints.Value(KEY_INTERPOLATION,
+                           SunHints.INTVAL_INTERPOLATION_BICUBIC,
+                           "Bicubic image interpolation mode");
 
     /**
      * Alpha interpolation hint key and value objects
      */
     public static final Key KEY_ALPHA_INTERPOLATION =
-	new SunHints.Key(SunHints.INTKEY_ALPHA_INTERPOLATION,
-			 "Alpha blending interpolation method key");
+        new SunHints.Key(SunHints.INTKEY_ALPHA_INTERPOLATION,
+                         "Alpha blending interpolation method key");
     public static final Object VALUE_ALPHA_INTERPOLATION_SPEED =
-	new SunHints.Value(KEY_ALPHA_INTERPOLATION, 
-			   SunHints.INTVAL_ALPHA_INTERPOLATION_SPEED,
-			   "Fastest alpha blending methods");
+        new SunHints.Value(KEY_ALPHA_INTERPOLATION,
+                           SunHints.INTVAL_ALPHA_INTERPOLATION_SPEED,
+                           "Fastest alpha blending methods");
     public static final Object VALUE_ALPHA_INTERPOLATION_QUALITY =
-	new SunHints.Value(KEY_ALPHA_INTERPOLATION, 
-			   SunHints.INTVAL_ALPHA_INTERPOLATION_QUALITY,
-			   "Highest quality alpha blending methods");
+        new SunHints.Value(KEY_ALPHA_INTERPOLATION,
+                           SunHints.INTVAL_ALPHA_INTERPOLATION_QUALITY,
+                           "Highest quality alpha blending methods");
     public static final Object VALUE_ALPHA_INTERPOLATION_DEFAULT =
-	new SunHints.Value(KEY_ALPHA_INTERPOLATION, 
-			   SunHints.INTVAL_ALPHA_INTERPOLATION_DEFAULT,
-			   "Default alpha blending methods");
+        new SunHints.Value(KEY_ALPHA_INTERPOLATION,
+                           SunHints.INTVAL_ALPHA_INTERPOLATION_DEFAULT,
+                           "Default alpha blending methods");
 
     /**
      * Color rendering hint key and value objects
      */
     public static final Key KEY_COLOR_RENDERING =
-	new SunHints.Key(SunHints.INTKEY_COLOR_RENDERING,
-			 "Color rendering quality key");
+        new SunHints.Key(SunHints.INTKEY_COLOR_RENDERING,
+                         "Color rendering quality key");
     public static final Object VALUE_COLOR_RENDER_SPEED =
-	new SunHints.Value(KEY_COLOR_RENDERING, 
-			   SunHints.INTVAL_COLOR_RENDER_SPEED,
-			   "Fastest color rendering mode");
+        new SunHints.Value(KEY_COLOR_RENDERING,
+                           SunHints.INTVAL_COLOR_RENDER_SPEED,
+                           "Fastest color rendering mode");
     public static final Object VALUE_COLOR_RENDER_QUALITY =
-	new SunHints.Value(KEY_COLOR_RENDERING, 
-			   SunHints.INTVAL_COLOR_RENDER_QUALITY,
-			   "Highest quality color rendering mode");
+        new SunHints.Value(KEY_COLOR_RENDERING,
+                           SunHints.INTVAL_COLOR_RENDER_QUALITY,
+                           "Highest quality color rendering mode");
     public static final Object VALUE_COLOR_RENDER_DEFAULT =
-	new SunHints.Value(KEY_COLOR_RENDERING, 
-			   SunHints.INTVAL_COLOR_RENDER_DEFAULT,
-			   "Default color rendering mode");
+        new SunHints.Value(KEY_COLOR_RENDERING,
+                           SunHints.INTVAL_COLOR_RENDER_DEFAULT,
+                           "Default color rendering mode");
 
     /**
      * Stroke normalization control hint key and value objects
      */
     public static final Key KEY_STROKE_CONTROL =
-	new SunHints.Key(SunHints.INTKEY_STROKE_CONTROL,
-			 "Stroke normalization control key");
+        new SunHints.Key(SunHints.INTKEY_STROKE_CONTROL,
+                         "Stroke normalization control key");
     public static final Object VALUE_STROKE_DEFAULT =
-	new SunHints.Value(KEY_STROKE_CONTROL,
-			   SunHints.INTVAL_STROKE_DEFAULT,
-			   "Default stroke normalization");
+        new SunHints.Value(KEY_STROKE_CONTROL,
+                           SunHints.INTVAL_STROKE_DEFAULT,
+                           "Default stroke normalization");
     public static final Object VALUE_STROKE_NORMALIZE =
-	new SunHints.Value(KEY_STROKE_CONTROL,
-			   SunHints.INTVAL_STROKE_NORMALIZE,
-			   "Normalize strokes for consistent rendering");
+        new SunHints.Value(KEY_STROKE_CONTROL,
+                           SunHints.INTVAL_STROKE_NORMALIZE,
+                           "Normalize strokes for consistent rendering");
     public static final Object VALUE_STROKE_PURE =
-	new SunHints.Value(KEY_STROKE_CONTROL,
-			   SunHints.INTVAL_STROKE_PURE,
-			   "Pure stroke conversion for accurate paths");
+        new SunHints.Value(KEY_STROKE_CONTROL,
+                           SunHints.INTVAL_STROKE_PURE,
+                           "Pure stroke conversion for accurate paths");
 
 
     public static class LCDContrastKey extends Key {
 
-	public LCDContrastKey(int privatekey, String description) {
-	    super(privatekey, description);
-	}
+        public LCDContrastKey(int privatekey, String description) {
+            super(privatekey, description);
+        }
 
-	/**
-	 * Returns true if the specified object is a valid value
-	 * for this Key. The allowable range is 100 to 250.
-	 */
-	public final boolean isCompatibleValue(Object val) {
-	    if (val instanceof Integer) {
-		int ival = ((Integer)val).intValue();
-		return ival >= 100 && ival <= 250;
-	    }
-	    return false;
-	}
+        /**
+         * Returns true if the specified object is a valid value
+         * for this Key. The allowable range is 100 to 250.
+         */
+        public final boolean isCompatibleValue(Object val) {
+            if (val instanceof Integer) {
+                int ival = ((Integer)val).intValue();
+                return ival >= 100 && ival <= 250;
+            }
+            return false;
+        }
 
     }
 
@@ -474,7 +474,7 @@ public class SunHints {
      * LCD text contrast hint key
      */
     public static final RenderingHints.Key
-	KEY_TEXT_ANTIALIAS_LCD_CONTRAST =
-	new LCDContrastKey(SunHints.INTKEY_AATEXT_LCD_CONTRAST,
-			   "Text-specific LCD contrast key");
+        KEY_TEXT_ANTIALIAS_LCD_CONTRAST =
+        new LCDContrastKey(SunHints.INTKEY_AATEXT_LCD_CONTRAST,
+                           "Text-specific LCD contrast key");
 }

@@ -32,7 +32,6 @@ import java.security.GeneralSecurityException;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see KeySpec
  *
@@ -49,18 +48,18 @@ public class InvalidKeySpecException extends GeneralSecurityException {
      * exception.
      */
     public InvalidKeySpecException() {
-	super();
+        super();
     }
 
     /**
      * Constructs an InvalidKeySpecException with the specified detail
      * message. A detail message is a String that describes this
-     * particular exception.  
+     * particular exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public InvalidKeySpecException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**

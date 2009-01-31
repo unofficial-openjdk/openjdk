@@ -38,7 +38,7 @@ import java.io.*;
 
 class VMConnection {
 
-    private VirtualMachine vm;    
+    private VirtualMachine vm;
     private Process process = null;
     private int outputCompleteCount = 0;
 
@@ -146,12 +146,12 @@ class VMConnection {
         if (connector == null) {
             throw new IllegalArgumentException
                 (MessageOutput.format("No connector named:", nameString));
-        } 
+        }
 
         connectorArgs = parseConnectorArgs(connector, argString);
         this.traceFlags = traceFlags;
     }
-        
+
     synchronized VirtualMachine open() {
         if (connector instanceof LaunchingConnector) {
             vm = launchTarget();
@@ -217,7 +217,7 @@ class VMConnection {
         } else {
             return vm;
         }
-    }         
+    }
 
     boolean isOpen() {
         return (vm != null);
@@ -268,12 +268,12 @@ class VMConnection {
     }
 
     private void dumpStream(InputStream stream) throws IOException {
-        BufferedReader in = 
+        BufferedReader in =
             new BufferedReader(new InputStreamReader(stream));
         int i;
         try {
             while ((i = in.read()) != -1) {
-                   MessageOutput.printDirect((char)i);// Special case: use 
+                   MessageOutput.printDirect((char)i);// Special case: use
                                                       //   printDirect()
             }
         } catch (IOException ex) {
@@ -287,14 +287,14 @@ class VMConnection {
         }
     }
 
-    /**	
-     *	Create a Thread that will retrieve and display any output.
-     *	Needs to be high priority, else debugger may exit before
-     *	it can be displayed.
+    /**
+     *  Create a Thread that will retrieve and display any output.
+     *  Needs to be high priority, else debugger may exit before
+     *  it can be displayed.
      */
     private void displayRemoteOutput(final InputStream stream) {
-	Thread thr = new Thread("output reader") { 
-	    public void run() {
+        Thread thr = new Thread("output reader") {
+            public void run() {
                 try {
                     dumpStream(stream);
                 } catch (IOException ex) {
@@ -302,10 +302,10 @@ class VMConnection {
                 } finally {
                     notifyOutputComplete();
                 }
-	    }
-	};
-	thr.setPriority(Thread.MAX_PRIORITY-1);
-	thr.start();
+            }
+        };
+        thr.setPriority(Thread.MAX_PRIORITY-1);
+        thr.start();
     }
 
     private void dumpFailedLaunchInfo(Process process) {

@@ -56,7 +56,7 @@ import java.io.Serializable;
  * drawbacks of overriding these methods.
  *
  * <p>
- * 
+ *
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
  * future Swing releases. The current serialization support is
@@ -66,7 +66,6 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Philip Milne
  * @author Hans Muller
  */
@@ -76,20 +75,20 @@ public class DefaultListCellRenderer extends JLabel
 
    /**
     * An empty <code>Border</code>. This field might not be used. To change the
-    * <code>Border</code> used by this renderer override the 
+    * <code>Border</code> used by this renderer override the
     * <code>getListCellRendererComponent</code> method and set the border
     * of the returned component directly.
     */
     protected static Border noFocusBorder = new EmptyBorder(1, 1, 1, 1);
     private static final Border SAFE_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
-    
+
     /**
      * Constructs a default renderer object for an item
      * in a list.
      */
     public DefaultListCellRenderer() {
-	super();
-	setOpaque(true);
+        super();
+        setOpaque(true);
         setBorder(getNoFocusBorder());
     }
 
@@ -104,7 +103,7 @@ public class DefaultListCellRenderer extends JLabel
 
     public Component getListCellRendererComponent(
         JList list,
-	Object value,
+        Object value,
         int index,
         boolean isSelected,
         boolean cellHasFocus)
@@ -125,26 +124,26 @@ public class DefaultListCellRenderer extends JLabel
             isSelected = true;
         }
 
-	if (isSelected) {
+        if (isSelected) {
             setBackground(bg == null ? list.getSelectionBackground() : bg);
-	    setForeground(fg == null ? list.getSelectionForeground() : fg);
-	}
-	else {
-	    setBackground(list.getBackground());
-	    setForeground(list.getForeground());
-	}
+            setForeground(fg == null ? list.getSelectionForeground() : fg);
+        }
+        else {
+            setBackground(list.getBackground());
+            setForeground(list.getForeground());
+        }
 
-	if (value instanceof Icon) {
-	    setIcon((Icon)value);
-	    setText("");
-	}
-	else {
-	    setIcon(null);
-	    setText((value == null) ? "" : value.toString());
-	}
+        if (value instanceof Icon) {
+            setIcon((Icon)value);
+            setText("");
+        }
+        else {
+            setIcon(null);
+            setText((value == null) ? "" : value.toString());
+        }
 
-	setEnabled(list.isEnabled());
-	setFont(list.getFont());
+        setEnabled(list.isEnabled());
+        setFont(list.getFont());
 
         Border border = null;
         if (cellHasFocus) {
@@ -157,15 +156,15 @@ public class DefaultListCellRenderer extends JLabel
         } else {
             border = getNoFocusBorder();
         }
-	setBorder(border);
+        setBorder(border);
 
-	return this;
+        return this;
     }
 
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a> 
+     * See the <a href="#override">Implementation Note</a>
      * for more information.
      *
      * @since 1.5
@@ -173,17 +172,17 @@ public class DefaultListCellRenderer extends JLabel
      *         and differs from the JList's background;
      *         <code>false</code> otherwise
      */
-    public boolean isOpaque() { 
-	Color back = getBackground();
-	Component p = getParent(); 
-	if (p != null) { 
-	    p = p.getParent(); 
-	}
-	// p should now be the JList. 
-	boolean colorMatch = (back != null) && (p != null) && 
-	    back.equals(p.getBackground()) && 
-			p.isOpaque();
-	return !colorMatch && super.isOpaque(); 
+    public boolean isOpaque() {
+        Color back = getBackground();
+        Component p = getParent();
+        if (p != null) {
+            p = p.getParent();
+        }
+        // p should now be the JList.
+        boolean colorMatch = (back != null) && (p != null) &&
+            back.equals(p.getBackground()) &&
+                        p.isOpaque();
+        return !colorMatch && super.isOpaque();
     }
 
    /**
@@ -237,13 +236,13 @@ public class DefaultListCellRenderer extends JLabel
     * for more information.
     */
     protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-	// Strings get interned...
-	if (propertyName == "text"
+        // Strings get interned...
+        if (propertyName == "text"
                 || ((propertyName == "font" || propertyName == "foreground")
                     && oldValue != newValue
                     && getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey) != null)) {
 
-	    super.firePropertyChange(propertyName, oldValue, newValue);
+            super.firePropertyChange(propertyName, oldValue, newValue);
         }
     }
 

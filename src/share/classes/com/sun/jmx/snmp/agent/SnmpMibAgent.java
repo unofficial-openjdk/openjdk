@@ -95,8 +95,8 @@ public abstract class SnmpMibAgent
      * @exception java.lang.Exception
      */
     public abstract ObjectName preRegister(MBeanServer server,
-					   ObjectName name)
-	throws java.lang.Exception;
+                                           ObjectName name)
+        throws java.lang.Exception;
 
     /**
      * Not used in this context.
@@ -128,7 +128,7 @@ public abstract class SnmpMibAgent
      * @exception SnmpStatusException An error occured during the operation.
      */
     public abstract void get(SnmpMibRequest req)
-	throws SnmpStatusException;
+        throws SnmpStatusException;
 
     /**
      * Processes a <CODE>getNext</CODE> operation.
@@ -142,7 +142,7 @@ public abstract class SnmpMibAgent
      * @exception SnmpStatusException An error occured during the operation.
      */
     public abstract void getNext(SnmpMibRequest req)
-	throws SnmpStatusException;
+        throws SnmpStatusException;
 
     /**
      * Processes a <CODE>getBulk</CODE> operation.
@@ -165,8 +165,8 @@ public abstract class SnmpMibAgent
      * @exception SnmpStatusException An error occured during the operation.
      */
     public abstract void getBulk(SnmpMibRequest req, int nonRepeat,
-				 int maxRepeat)
-	throws SnmpStatusException;
+                                 int maxRepeat)
+        throws SnmpStatusException;
 
     /**
      * Processes a <CODE>set</CODE> operation.
@@ -186,7 +186,7 @@ public abstract class SnmpMibAgent
      *            method instead.
      */
     public abstract void set(SnmpMibRequest req)
-	throws SnmpStatusException;
+        throws SnmpStatusException;
 
 
     /**
@@ -204,7 +204,7 @@ public abstract class SnmpMibAgent
      *    cannot be performed.
      */
     public abstract void check(SnmpMibRequest req)
-	throws SnmpStatusException;
+        throws SnmpStatusException;
 
     /**
      * Gets the root object identifier of the MIB.
@@ -310,8 +310,8 @@ public abstract class SnmpMibAgent
      * @since 1.5
      */
     public void setSnmpAdaptor(SnmpMibHandler stack,
-			       String contextName,
-			       SnmpOid[] oids) {
+                               String contextName,
+                               SnmpOid[] oids) {
         if (adaptor != null) {
             adaptor.removeMib(this, contextName);
         }
@@ -345,7 +345,7 @@ public abstract class SnmpMibAgent
      *     in the MBean server or the requested service is not supported.
      */
     public void setSnmpAdaptorName(ObjectName name)
-	throws InstanceNotFoundException, ServiceNotFoundException {
+        throws InstanceNotFoundException, ServiceNotFoundException {
 
         if (server == null) {
             throw new ServiceNotFoundException(mibName + " is not registered in the MBean server");
@@ -362,7 +362,7 @@ public abstract class SnmpMibAgent
         String[] signature = {"com.sun.jmx.snmp.agent.SnmpMibAgent"};
         try {
             adaptor = (SnmpMibHandler)(server.invoke(name, "addMib", params,
-						     signature));
+                                                     signature));
         } catch (InstanceNotFoundException e) {
             throw new InstanceNotFoundException(name.toString());
         } catch (ReflectionException e) {
@@ -390,7 +390,7 @@ public abstract class SnmpMibAgent
      * @since 1.5
      */
     public void setSnmpAdaptorName(ObjectName name, SnmpOid[] oids)
-	throws InstanceNotFoundException, ServiceNotFoundException {
+        throws InstanceNotFoundException, ServiceNotFoundException {
 
         if (server == null) {
             throw new ServiceNotFoundException(mibName + " is not registered in the MBean server");
@@ -405,10 +405,10 @@ public abstract class SnmpMibAgent
         //
         Object[] params = {this, oids};
         String[] signature = {"com.sun.jmx.snmp.agent.SnmpMibAgent",
-	oids.getClass().getName()};
+        oids.getClass().getName()};
         try {
             adaptor = (SnmpMibHandler)(server.invoke(name, "addMib", params,
-						     signature));
+                                                     signature));
         } catch (InstanceNotFoundException e) {
             throw new InstanceNotFoundException(name.toString());
         } catch (ReflectionException e) {
@@ -435,7 +435,7 @@ public abstract class SnmpMibAgent
      * @since 1.5
      */
     public void setSnmpAdaptorName(ObjectName name, String contextName)
-	throws InstanceNotFoundException, ServiceNotFoundException {
+        throws InstanceNotFoundException, ServiceNotFoundException {
 
         if (server == null) {
             throw new ServiceNotFoundException(mibName + " is not registered in the MBean server");
@@ -453,7 +453,7 @@ public abstract class SnmpMibAgent
         String[] signature = {"com.sun.jmx.snmp.agent.SnmpMibAgent", "java.lang.String"};
         try {
             adaptor = (SnmpMibHandler)(server.invoke(name, "addMib", params,
-						     signature));
+                                                     signature));
         } catch (InstanceNotFoundException e) {
             throw new InstanceNotFoundException(name.toString());
         } catch (ReflectionException e) {
@@ -482,8 +482,8 @@ public abstract class SnmpMibAgent
      * @since 1.5
      */
     public void setSnmpAdaptorName(ObjectName name,
-				   String contextName, SnmpOid[] oids)
-	throws InstanceNotFoundException, ServiceNotFoundException {
+                                   String contextName, SnmpOid[] oids)
+        throws InstanceNotFoundException, ServiceNotFoundException {
 
         if (server == null) {
             throw new ServiceNotFoundException(mibName + " is not registered in the MBean server");
@@ -501,7 +501,7 @@ public abstract class SnmpMibAgent
         String[] signature = {"com.sun.jmx.snmp.agent.SnmpMibAgent", "java.lang.String", oids.getClass().getName()};
         try {
             adaptor = (SnmpMibHandler)(server.invoke(name, "addMib", params,
-						     signature));
+                                                     signature));
         } catch (InstanceNotFoundException e) {
             throw new InstanceNotFoundException(name.toString());
         } catch (ReflectionException e) {
@@ -551,19 +551,19 @@ public abstract class SnmpMibAgent
      * @since 1.5
      **/
     public static SnmpMibRequest newMibRequest(SnmpPdu reqPdu,
-					       Vector<SnmpVarBind> vblist,
-					       int version,
-					       Object userData)
+                                               Vector<SnmpVarBind> vblist,
+                                               int version,
+                                               Object userData)
     {
-	return new SnmpMibRequestImpl(null,
-				      reqPdu,
-				      vblist,
-				      version,
-				      userData,
-				      null,
-				      SnmpDefinitions.noAuthNoPriv,
-				      getSecurityModel(version),
-				      null,null);
+        return new SnmpMibRequestImpl(null,
+                                      reqPdu,
+                                      vblist,
+                                      version,
+                                      userData,
+                                      null,
+                                      SnmpDefinitions.noAuthNoPriv,
+                                      getSecurityModel(version),
+                                      null,null);
     }
     /**
      * This is a factory method for creating new SnmpMibRequest objects.
@@ -579,25 +579,25 @@ public abstract class SnmpMibAgent
      * @since 1.5
      **/
     public static SnmpMibRequest newMibRequest(SnmpEngine engine,
-					       SnmpPdu reqPdu,
-					       Vector<SnmpVarBind> vblist,
-					       int version,
-					       Object userData,
-					       String principal,
-					       int securityLevel,
-					       int securityModel,
-					       byte[] contextName,
-					       byte[] accessContextName) {
-	return new SnmpMibRequestImpl(engine,
-				      reqPdu,
-				      vblist,
-				      version,
-				      userData,
-				      principal,
-				      securityLevel,
-				      securityModel,
-				      contextName,
-				      accessContextName);
+                                               SnmpPdu reqPdu,
+                                               Vector<SnmpVarBind> vblist,
+                                               int version,
+                                               Object userData,
+                                               String principal,
+                                               int securityLevel,
+                                               int securityModel,
+                                               byte[] contextName,
+                                               byte[] accessContextName) {
+        return new SnmpMibRequestImpl(engine,
+                                      reqPdu,
+                                      vblist,
+                                      version,
+                                      userData,
+                                      principal,
+                                      securityLevel,
+                                      securityModel,
+                                      contextName,
+                                      accessContextName);
     }
     // ---------------------------------------------------------------------
     // PACKAGE METHODS
@@ -626,8 +626,8 @@ public abstract class SnmpMibAgent
      * @exception SnmpStatusException An error occured during the operation.
      */
     void getBulkWithGetNext(SnmpMibRequest req, int nonRepeat, int maxRepeat)
-	throws SnmpStatusException {
-	final Vector<SnmpVarBind> list = req.getSubList();
+        throws SnmpStatusException {
+        final Vector<SnmpVarBind> list = req.getSubList();
 
         // RFC 1905, Section 4.2.3, p14
         final int L = list.size() ;
@@ -648,17 +648,17 @@ public abstract class SnmpMibAgent
             // Now the remaining repeaters
             //
             Vector<SnmpVarBind> repeaters= splitFrom(list, N);
-	    SnmpMibRequestImpl repeatedReq =
-		new SnmpMibRequestImpl(req.getEngine(),
-				       req.getPdu(),
-				       repeaters,
-				       SnmpDefinitions.snmpVersionTwo,
-				       req.getUserData(),
-				       req.getPrincipal(),
-				       req.getSecurityLevel(),
-				       req.getSecurityModel(),
-				       req.getContextName(),
-				       req.getAccessContextName());
+            SnmpMibRequestImpl repeatedReq =
+                new SnmpMibRequestImpl(req.getEngine(),
+                                       req.getPdu(),
+                                       repeaters,
+                                       SnmpDefinitions.snmpVersionTwo,
+                                       req.getUserData(),
+                                       req.getPrincipal(),
+                                       req.getSecurityLevel(),
+                                       req.getSecurityModel(),
+                                       req.getContextName(),
+                                       req.getAccessContextName());
             for (int i = 2 ; i <= M ; i++) {
                 getNext(repeatedReq);
                 concatVector(req, repeaters);
@@ -685,8 +685,8 @@ public abstract class SnmpMibAgent
         int i= limit;
 
         // Ok the loop looks a bit strange. But in order to improve the
-	// perf, we try to avoid reference to the limit variable from
-	// within the loop ...
+        // perf, we try to avoid reference to the limit variable from
+        // within the loop ...
         //
         for(Enumeration<SnmpVarBind> e= original.elements(); e.hasMoreElements(); --i) {
             SnmpVarBind var= e.nextElement();
@@ -701,7 +701,7 @@ public abstract class SnmpMibAgent
         for(Enumeration e= source.elements(); e.hasMoreElements(); ) {
             SnmpVarBind var= (SnmpVarBind) e.nextElement();
             // We need to duplicate the SnmpVarBind otherwise it is going
-	    // to be overloaded by the next get Next ...
+            // to be overloaded by the next get Next ...
             req.addVarBind(new SnmpVarBind(var.oid, var.value));
         }
     }
@@ -710,18 +710,18 @@ public abstract class SnmpMibAgent
         for(Enumeration<SnmpVarBind> e= source.elements(); e.hasMoreElements(); ) {
             SnmpVarBind var= e.nextElement();
             // We need to duplicate the SnmpVarBind otherwise it is going
-	    // to be overloaded by the next get Next ...
+            // to be overloaded by the next get Next ...
             target.addElement(new SnmpVarBind(var.oid, var.value));
         }
     }
 
     private static int getSecurityModel(int version) {
-	switch(version) {
-	case SnmpDefinitions.snmpVersionOne:
-	    return SnmpDefinitions.snmpV1SecurityModel;
-	default:
-	    return SnmpDefinitions.snmpV2SecurityModel;
-	}
+        switch(version) {
+        case SnmpDefinitions.snmpVersionOne:
+            return SnmpDefinitions.snmpV1SecurityModel;
+        default:
+            return SnmpDefinitions.snmpV2SecurityModel;
+        }
     }
 
     // ---------------------------------------------------------------------

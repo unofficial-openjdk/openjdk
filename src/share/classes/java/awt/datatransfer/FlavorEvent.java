@@ -34,7 +34,6 @@ import java.util.EventObject;
  *
  * @see FlavorListener
  *
- * @version %I% %G%
  * @author Alexander Gerasimov
  * @since 1.5
  */

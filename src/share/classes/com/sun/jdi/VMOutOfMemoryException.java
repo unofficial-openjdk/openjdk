@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be 
+ * Thrown to indicate that the requested operation cannot be
  * completed because the target VM has run out of memory.
  *
  * @author Gordon Hirsch
@@ -34,10 +34,10 @@ package com.sun.jdi;
  */
 public class VMOutOfMemoryException extends RuntimeException {
     public VMOutOfMemoryException() {
-	super();
+        super();
     }
 
     public VMOutOfMemoryException(String s) {
-	super(s);
+        super(s);
     }
 }

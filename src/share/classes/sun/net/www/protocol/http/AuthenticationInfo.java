@@ -43,14 +43,13 @@ import sun.net.www.HeaderParser;
  * @author Jon Payne
  * @author Herb Jellinek
  * @author Bill Foote
- * @version %I%, %G% 
  */
 // REMIND:  It would be nice if this class understood about partial matching.
-//	If you're authorized for foo.com, chances are high you're also
-//	authorized for baz.foo.com.
+//      If you're authorized for foo.com, chances are high you're also
+//      authorized for baz.foo.com.
 // NB:  When this gets implemented, be careful about the uncaching
-//	policy in HttpURLConnection.  A failure on baz.foo.com shouldn't
-//	uncache foo.com!
+//      policy in HttpURLConnection.  A failure on baz.foo.com shouldn't
+//      uncache foo.com!
 
 abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
 
@@ -59,7 +58,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     static final char SERVER_AUTHENTICATION = 's';
     static final char PROXY_AUTHENTICATION = 'p';
 
-    /** 
+    /**
      * If true, then simultaneous authentication requests to the same realm/proxy
      * are serialized, in order to avoid a user having to type the same username/passwords
      * repeatedly, via the Authenticator. Default is false, which means that this
@@ -68,9 +67,9 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     static boolean serializeAuth;
 
     static {
-	serializeAuth = java.security.AccessController.doPrivileged(
-	    new sun.security.action.GetBooleanAction(
-		"http.auth.serializeRequests")).booleanValue();
+        serializeAuth = java.security.AccessController.doPrivileged(
+            new sun.security.action.GetBooleanAction(
+                "http.auth.serializeRequests")).booleanValue();
     }
 
     /* AuthCacheValue: */
@@ -78,30 +77,30 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
     transient protected PasswordAuthentication pw;
 
     public PasswordAuthentication credentials() {
-	return pw;
+        return pw;
     }
 
     public AuthCacheValue.Type getAuthType() {
-	return type == SERVER_AUTHENTICATION ?
-	    AuthCacheValue.Type.Server: 
-	    AuthCacheValue.Type.Proxy;
+        return type == SERVER_AUTHENTICATION ?
+            AuthCacheValue.Type.Server:
+            AuthCacheValue.Type.Proxy;
     }
     public String getHost() {
-	return host;
+        return host;
     }
     public int getPort() {
-	return port;
+        return port;
     }
     public String getRealm() {
-	return realm;
+        return realm;
     }
     public String getPath() {
-	return path;
+        return path;
     }
     public String getProtocolScheme() {
-	return protocol;
+        return protocol;
     }
-  
+
     /**
      * requests is used to ensure that interaction with the
      * Authenticator for a particular realm is single threaded.
@@ -116,47 +115,47 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * request is finished and return true
      */
     static private boolean requestIsInProgress (String key) {
-	if (!serializeAuth) {
-	    /* behavior is disabled. Revert to concurrent requests */
-	    return false;
-	}
-	synchronized (requests) {
-	    Thread t, c;
-	    c = Thread.currentThread();
+        if (!serializeAuth) {
+            /* behavior is disabled. Revert to concurrent requests */
+            return false;
+        }
+        synchronized (requests) {
+            Thread t, c;
+            c = Thread.currentThread();
             if ((t=(Thread)requests.get(key))==null) {
-	    	requests.put (key, c);
-		return false;
+                requests.put (key, c);
+                return false;
             }
-	    if (t == c) {
-		return false;
-	    }
+            if (t == c) {
+                return false;
+            }
             while (requests.containsKey(key)) {
-		try {
+                try {
                     requests.wait ();
-		} catch (InterruptedException e) {}
+                } catch (InterruptedException e) {}
             }
-	}
+        }
         /* entry may be in cache now. */
-	return true;
+        return true;
     }
 
-    /* signal completion of an authentication (whether it succeeded or not) 
-     * so that other threads can continue. 
+    /* signal completion of an authentication (whether it succeeded or not)
+     * so that other threads can continue.
      */
     static private void requestCompleted (String key) {
-	synchronized (requests) {
-	    boolean waspresent = requests.remove (key) != null;
-	    assert waspresent;
-	    requests.notifyAll();
-	}
+        synchronized (requests) {
+            boolean waspresent = requests.remove (key) != null;
+            assert waspresent;
+            requests.notifyAll();
+        }
     }
 
     //public String toString () {
-	//return ("{"+type+":"+authType+":"+protocol+":"+host+":"+port+":"+realm+":"+path+"}");
+        //return ("{"+type+":"+authType+":"+protocol+":"+host+":"+port+":"+realm+":"+path+"}");
     //}
 
     // REMIND:  This cache just grows forever.  We should put in a bounded
-    //		cache, or maybe something using WeakRef's.
+    //          cache, or maybe something using WeakRef's.
 
     /** The type (server/proxy) of authentication this is.  Used for key lookup */
     char type;
@@ -185,22 +184,22 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
 
     /** Use this constructor only for proxy entries */
     AuthenticationInfo(char type, char authType, String host, int port, String realm) {
-	this.type = type;
-    	this.authType = authType;
-	this.protocol = "";
-	this.host = host.toLowerCase();
-	this.port = port;
-	this.realm = realm;
-	this.path = null;
+        this.type = type;
+        this.authType = authType;
+        this.protocol = "";
+        this.host = host.toLowerCase();
+        this.port = port;
+        this.realm = realm;
+        this.path = null;
     }
 
     public Object clone() {
-	try {
-	    return super.clone ();
-	} catch (CloneNotSupportedException e) {
-	    // Cannot happen because Cloneable implemented by AuthenticationInfo
-	    return null;
-	}
+        try {
+            return super.clone ();
+        } catch (CloneNotSupportedException e) {
+            // Cannot happen because Cloneable implemented by AuthenticationInfo
+            return null;
+        }
     }
 
     /*
@@ -208,22 +207,22 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * the URL. Use this constructor for origin server entries.
      */
     AuthenticationInfo(char type, char authType, URL url, String realm) {
-    	this.type = type;
-    	this.authType = authType;
-	this.protocol = url.getProtocol().toLowerCase();
-	this.host = url.getHost().toLowerCase();
-	this.port = url.getPort();
-	if (this.port == -1) {
-	    this.port = url.getDefaultPort();
-	}
-	this.realm = realm;
+        this.type = type;
+        this.authType = authType;
+        this.protocol = url.getProtocol().toLowerCase();
+        this.host = url.getHost().toLowerCase();
+        this.port = url.getPort();
+        if (this.port == -1) {
+            this.port = url.getDefaultPort();
+        }
+        this.realm = realm;
 
-	String urlPath = url.getPath();
-	if (urlPath.length() == 0)
-	    this.path = urlPath;
-	else {
-	    this.path = reducePath (urlPath);
-	}
+        String urlPath = url.getPath();
+        if (urlPath.length() == 0)
+            this.path = urlPath;
+        else {
+            this.path = reducePath (urlPath);
+        }
 
     }
 
@@ -236,48 +235,48 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
         int sepIndex = urlPath.lastIndexOf('/');
         int targetSuffixIndex = urlPath.lastIndexOf('.');
         if (sepIndex != -1)
-	    if (sepIndex < targetSuffixIndex)
-	        return urlPath.substring(0, sepIndex+1);
-	    else
-	        return urlPath;
+            if (sepIndex < targetSuffixIndex)
+                return urlPath.substring(0, sepIndex+1);
+            else
+                return urlPath;
         else
-	    return urlPath;
+            return urlPath;
     }
 
     /**
-     * Returns info for the URL, for an HTTP server auth.  Used when we 
+     * Returns info for the URL, for an HTTP server auth.  Used when we
      * don't yet know the realm
      * (i.e. when we're preemptively setting the auth).
      */
     static AuthenticationInfo getServerAuth(URL url) {
-	int port = url.getPort();
-	if (port == -1) {
-	    port = url.getDefaultPort();
-	}
-	String key = SERVER_AUTHENTICATION + ":" + url.getProtocol().toLowerCase()
-		+ ":" + url.getHost().toLowerCase() + ":" + port;
-	return getAuth(key, url);
+        int port = url.getPort();
+        if (port == -1) {
+            port = url.getDefaultPort();
+        }
+        String key = SERVER_AUTHENTICATION + ":" + url.getProtocol().toLowerCase()
+                + ":" + url.getHost().toLowerCase() + ":" + port;
+        return getAuth(key, url);
     }
 
     /**
-     * Returns info for the URL, for an HTTP server auth.  Used when we 
+     * Returns info for the URL, for an HTTP server auth.  Used when we
      * do know the realm (i.e. when we're responding to a challenge).
      * In this case we do not use the path because the protection space
      * is identified by the host:port:realm only
      */
     static AuthenticationInfo getServerAuth(URL url, String realm, char atype) {
-	int port = url.getPort();
-	if (port == -1) {
-	    port = url.getDefaultPort();
-	}
-	String key = SERVER_AUTHENTICATION + ":" + atype + ":" + url.getProtocol().toLowerCase()
-		     + ":" + url.getHost().toLowerCase() + ":" + port + ":" + realm;
-	AuthenticationInfo cached = getAuth(key, null);
-	if ((cached == null) && requestIsInProgress (key)) {
-	    /* check the cache again, it might contain an entry */
-	    cached = getAuth(key, null);
-	}
-	return cached;
+        int port = url.getPort();
+        if (port == -1) {
+            port = url.getDefaultPort();
+        }
+        String key = SERVER_AUTHENTICATION + ":" + atype + ":" + url.getProtocol().toLowerCase()
+                     + ":" + url.getHost().toLowerCase() + ":" + port + ":" + realm;
+        AuthenticationInfo cached = getAuth(key, null);
+        if ((cached == null) && requestIsInProgress (key)) {
+            /* check the cache again, it might contain an entry */
+            cached = getAuth(key, null);
+        }
+        return cached;
     }
 
 
@@ -286,11 +285,11 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * a substring of the supplied URLs path.
      */
     static AuthenticationInfo getAuth(String key, URL url) {
-	if (url == null) {
-	    return (AuthenticationInfo)cache.get (key, null);
-	} else {
-	    return (AuthenticationInfo)cache.get (key, url.getPath());
-	}
+        if (url == null) {
+            return (AuthenticationInfo)cache.get (key, null);
+        } else {
+            return (AuthenticationInfo)cache.get (key, url.getPath());
+        }
     }
 
     /**
@@ -299,9 +298,9 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * blank for proxies.
      */
     static AuthenticationInfo getProxyAuth(String host, int port) {
-	String key = PROXY_AUTHENTICATION + "::" + host.toLowerCase() + ":" + port;
-	AuthenticationInfo result = (AuthenticationInfo) cache.get(key, null);
-	return result;
+        String key = PROXY_AUTHENTICATION + "::" + host.toLowerCase() + ":" + port;
+        AuthenticationInfo result = (AuthenticationInfo) cache.get(key, null);
+        return result;
     }
 
     /**
@@ -310,14 +309,14 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * blank for proxies.
      */
     static AuthenticationInfo getProxyAuth(String host, int port, String realm, char atype) {
-	String key = PROXY_AUTHENTICATION + ":" + atype + "::" + host.toLowerCase() 
-			+ ":" + port + ":" + realm;
-	AuthenticationInfo cached = (AuthenticationInfo) cache.get(key, null);
-	if ((cached == null) && requestIsInProgress (key)) {
-	    /* check the cache again, it might contain an entry */
-	    cached = (AuthenticationInfo) cache.get(key, null);
-	}
-	return cached;
+        String key = PROXY_AUTHENTICATION + ":" + atype + "::" + host.toLowerCase()
+                        + ":" + port + ":" + realm;
+        AuthenticationInfo cached = (AuthenticationInfo) cache.get(key, null);
+        if ((cached == null) && requestIsInProgress (key)) {
+            /* check the cache again, it might contain an entry */
+            cached = (AuthenticationInfo) cache.get(key, null);
+        }
+        return cached;
     }
 
 
@@ -325,30 +324,30 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * Add this authentication to the cache
      */
     void addToCache() {
-	cache.put (cacheKey(true), this);
-	if (supportsPreemptiveAuthorization()) {
-	    cache.put (cacheKey(false), this);
-	}
-	endAuthRequest();
+        cache.put (cacheKey(true), this);
+        if (supportsPreemptiveAuthorization()) {
+            cache.put (cacheKey(false), this);
+        }
+        endAuthRequest();
     }
 
     void endAuthRequest () {
-	if (!serializeAuth) {
-	    return;
-	}
-    	synchronized (requests) {
-	    requestCompleted (cacheKey(true));
-	}
+        if (!serializeAuth) {
+            return;
+        }
+        synchronized (requests) {
+            requestCompleted (cacheKey(true));
+        }
     }
 
     /**
      * Remove this authentication from the cache
      */
     void removeFromCache() {
-	cache.remove(cacheKey(true), this);
-	if (supportsPreemptiveAuthorization()) {
-	    cache.remove(cacheKey(false), this);
-	}
+        cache.remove(cacheKey(true), this);
+        if (supportsPreemptiveAuthorization()) {
+            cache.remove(cacheKey(false), this);
+        }
     }
 
     /**
@@ -358,7 +357,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
 
     /**
      * @return the name of the HTTP header this authentication wants set.
-     *		This is used for preemptive authorization.
+     *          This is used for preemptive authorization.
      */
     abstract String getHeaderName();
 
@@ -369,7 +368,7 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * @param url The URL
      * @param method The request method
      * @return the value of the HTTP header this authentication wants set.
-     *		Used for preemptive authorization.
+     *          Used for preemptive authorization.
      */
     abstract String getHeaderValue(URL url, String method);
 
@@ -398,40 +397,40 @@ abstract class AuthenticationInfo extends AuthCacheValue implements Cloneable {
      * Check for any expected authentication information in the response
      * from the server
      */
-    abstract void checkResponse (String header, String method, URL url) 
-					throws IOException;
+    abstract void checkResponse (String header, String method, URL url)
+                                        throws IOException;
 
-    /** 
+    /**
      * Give a key for hash table lookups.
      * @param includeRealm if you want the realm considered.  Preemptively
-     *		setting an authorization is done before the realm is known.
+     *          setting an authorization is done before the realm is known.
      */
     String cacheKey(boolean includeRealm) {
-     	// This must be kept in sync with the getXXXAuth() methods in this
-	// class.
-	if (includeRealm) {
-	    return type + ":" + authType + ":" + protocol + ":"
-			+ host + ":" + port + ":" + realm;
-	} else {
-	    return type + ":" + protocol + ":" + host + ":" + port;
-	}
+        // This must be kept in sync with the getXXXAuth() methods in this
+        // class.
+        if (includeRealm) {
+            return type + ":" + authType + ":" + protocol + ":"
+                        + host + ":" + port + ":" + realm;
+        } else {
+            return type + ":" + protocol + ":" + host + ":" + port;
+        }
     }
 
     String s1, s2;  /* used for serialization of pw */
 
-    private void readObject(ObjectInputStream s) 
-	throws IOException, ClassNotFoundException 
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException
     {
-	s.defaultReadObject ();
-	pw = new PasswordAuthentication (s1, s2.toCharArray());
-	s1 = null; s2= null;
+        s.defaultReadObject ();
+        pw = new PasswordAuthentication (s1, s2.toCharArray());
+        s1 = null; s2= null;
     }
 
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
-  	s1 = pw.getUserName();
-	s2 = new String (pw.getPassword());
-	s.defaultWriteObject ();
+        s1 = pw.getUserName();
+        s2 = new String (pw.getPassword());
+        s.defaultWriteObject ();
     }
 }

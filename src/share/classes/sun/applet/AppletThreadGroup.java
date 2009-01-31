@@ -28,13 +28,12 @@ package sun.applet;
 /**
  * This class defines an applet thread group.
  *
- * @version 	%I%, %G%
- * @author 	Arthur van Hoff
+ * @author      Arthur van Hoff
  */
 public class AppletThreadGroup extends ThreadGroup {
 
     /**
-     * Constructs a new thread group for an applet. 
+     * Constructs a new thread group for an applet.
      * The parent of this new group is the thread
      * group of the currently running thread.
      *
@@ -45,8 +44,8 @@ public class AppletThreadGroup extends ThreadGroup {
     }
 
     /**
-     * Creates a new thread group for an applet. 
-     * The parent of this new group is the specified 
+     * Creates a new thread group for an applet.
+     * The parent of this new group is the specified
      * thread group.
      *
      * @param     parent   the parent thread group.
@@ -59,7 +58,7 @@ public class AppletThreadGroup extends ThreadGroup {
      * @since   JDK1.1.1
      */
     public AppletThreadGroup(ThreadGroup parent, String name) {
-	super(parent, name);
-	setMaxPriority(Thread.NORM_PRIORITY - 1);
+        super(parent, name);
+        setMaxPriority(Thread.NORM_PRIORITY - 1);
     }
 }

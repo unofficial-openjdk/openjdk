@@ -48,52 +48,52 @@ import java.net.MalformedURLException;
  *
  * <p> The format of an absolute URI (see the RFCs mentioned above) is:
  * <p><blockquote><pre>
- *	absoluteURI   = scheme ":" ( hier_part | opaque_part )
- *	
- *	scheme        = alpha *( alpha | digit | "+" | "-" | "." )
- *	
- *	hier_part     = ( net_path | abs_path ) [ "?" query ]
- *	opaque_part   = uric_no_slash *uric
- *	
- *	net_path      = "//" authority [ abs_path ]
- *	abs_path      = "/"  path_segments
- *	
- *	authority     = server | reg_name
- *	reg_name      = 1*( unreserved | escaped | "$" | "," |
- *			    ";" | ":" | "@" | "&" | "=" | "+" )
- *	server        = [ [ userinfo "@" ] hostport ]
- *	userinfo      = *( unreserved | escaped |
- *			   ";" | ":" | "&" | "=" | "+" | "$" | "," )
- *	
- *	hostport      = host [ ":" port ]
- *	host          = hostname | IPv4address | IPv6reference
- *	port          = *digit
+ *      absoluteURI   = scheme ":" ( hier_part | opaque_part )
  *
- *	IPv6reference = "[" IPv6address "]"
- *	IPv6address   = hexpart [ ":" IPv4address ]
- *	IPv4address   = 1*3digit "." 1*3digit "." 1*3digit "." 1*3digit
- *	hexpart       = hexseq | hexseq "::" [ hexseq ] | "::" [ hexseq ]
- *	hexseq        = hex4 *( ":" hex4)
- *	hex4          = 1*4hex
- *	
- *	path          = [ abs_path | opaque_part ]
- *	path_segments = segment *( "/" segment )
- *	segment       = *pchar *( ";" param )
- *	param         = *pchar
- *	pchar         = unreserved | escaped |
- *			":" | "@" | "&" | "=" | "+" | "$" | ","
- *	
- *	query         = *uric
- *	
- *	uric          = reserved | unreserved | escaped
- *	uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
- *			"&" | "=" | "+" | "$" | ","
- *	reserved      = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
- *			"$" | "," | "[" | "]"
- *	unreserved    = alphanum | mark
- *	mark          = "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")"
- *	escaped       = "%" hex hex
- *	unwise        = "{" | "}" | "|" | "\" | "^" | "`"
+ *      scheme        = alpha *( alpha | digit | "+" | "-" | "." )
+ *
+ *      hier_part     = ( net_path | abs_path ) [ "?" query ]
+ *      opaque_part   = uric_no_slash *uric
+ *
+ *      net_path      = "//" authority [ abs_path ]
+ *      abs_path      = "/"  path_segments
+ *
+ *      authority     = server | reg_name
+ *      reg_name      = 1*( unreserved | escaped | "$" | "," |
+ *                          ";" | ":" | "@" | "&" | "=" | "+" )
+ *      server        = [ [ userinfo "@" ] hostport ]
+ *      userinfo      = *( unreserved | escaped |
+ *                         ";" | ":" | "&" | "=" | "+" | "$" | "," )
+ *
+ *      hostport      = host [ ":" port ]
+ *      host          = hostname | IPv4address | IPv6reference
+ *      port          = *digit
+ *
+ *      IPv6reference = "[" IPv6address "]"
+ *      IPv6address   = hexpart [ ":" IPv4address ]
+ *      IPv4address   = 1*3digit "." 1*3digit "." 1*3digit "." 1*3digit
+ *      hexpart       = hexseq | hexseq "::" [ hexseq ] | "::" [ hexseq ]
+ *      hexseq        = hex4 *( ":" hex4)
+ *      hex4          = 1*4hex
+ *
+ *      path          = [ abs_path | opaque_part ]
+ *      path_segments = segment *( "/" segment )
+ *      segment       = *pchar *( ";" param )
+ *      param         = *pchar
+ *      pchar         = unreserved | escaped |
+ *                      ":" | "@" | "&" | "=" | "+" | "$" | ","
+ *
+ *      query         = *uric
+ *
+ *      uric          = reserved | unreserved | escaped
+ *      uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
+ *                      "&" | "=" | "+" | "$" | ","
+ *      reserved      = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
+ *                      "$" | "," | "[" | "]"
+ *      unreserved    = alphanum | mark
+ *      mark          = "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")"
+ *      escaped       = "%" hex hex
+ *      unwise        = "{" | "}" | "|" | "\" | "^" | "`"
  * </pre></blockquote>
  *
  * <p> Currently URIs containing <tt>userinfo</tt> or <tt>reg_name</tt>
@@ -118,7 +118,7 @@ public class Uri {
      * Creates a Uri object given a URI string.
      */
     public Uri(String uri) throws MalformedURLException {
-	init(uri);
+        init(uri);
     }
 
     /**
@@ -127,22 +127,22 @@ public class Uri {
      */
     protected Uri() {
     }
- 
+
     /**
      * Initializes a Uri object given a URI string.
      * This method must be called exactly once, and before any other Uri
      * methods.
      */
     protected void init(String uri) throws MalformedURLException {
-	this.uri = uri;
-	parse(uri);
+        this.uri = uri;
+        parse(uri);
     }
 
     /**
      * Returns the URI's scheme.
      */
     public String getScheme() {
-	return scheme;
+        return scheme;
     }
 
     /**
@@ -152,7 +152,7 @@ public class Uri {
      * {@link java.net.URI#getHost}).
      */
     public String getHost() {
-	return host;
+        return host;
     }
 
     /**
@@ -160,7 +160,7 @@ public class Uri {
      * no port is provided.
      */
     public int getPort() {
-	return port;
+        return port;
     }
 
     /**
@@ -170,7 +170,7 @@ public class Uri {
      * of "http://host/a/b" is "/a/b".
      */
     public String getPath() {
-	return path;
+        return path;
     }
 
     /**
@@ -178,87 +178,87 @@ public class Uri {
      * Note that a query always begins with a leading "?".
      */
     public String getQuery() {
-	return query;
+        return query;
     }
 
     /**
      * Returns the URI as a string.
      */
     public String toString() {
-	return uri;
+        return uri;
     }
 
     /*
      * Parses a URI string and sets this object's fields accordingly.
      */
     private void parse(String uri) throws MalformedURLException {
-	int i;	// index into URI
+        int i;  // index into URI
 
-	i = uri.indexOf(':');				// parse scheme
-	if (i < 0) {
-	    throw new MalformedURLException("Invalid URI: " + uri);
-	}
-	scheme = uri.substring(0, i);
-	i++;						// skip past ":"
+        i = uri.indexOf(':');                           // parse scheme
+        if (i < 0) {
+            throw new MalformedURLException("Invalid URI: " + uri);
+        }
+        scheme = uri.substring(0, i);
+        i++;                                            // skip past ":"
 
-	hasAuthority = uri.startsWith("//", i);
-	if (hasAuthority) {				// parse "//host:port"
-	    i += 2;					// skip past "//"
-	    int slash = uri.indexOf('/', i);
-	    if (slash < 0) {
-		slash = uri.length();
-	    }
-	    if (uri.startsWith("[", i)) {		// at IPv6 literal
-		int brac = uri.indexOf(']', i + 1);
-		if (brac < 0 || brac > slash) {
-		    throw new MalformedURLException("Invalid URI: " + uri);
-		}
-		host = uri.substring(i, brac + 1);	// include brackets
-		i = brac + 1;				// skip past "[...]"
-	    } else {					// at host name or IPv4
-		int colon = uri.indexOf(':', i);
-		int hostEnd = (colon < 0 || colon > slash)
-		    ? slash
-		    : colon;
-		if (i < hostEnd) {
-		    host = uri.substring(i, hostEnd);
-		}
-		i = hostEnd;				// skip past host
-	    }
+        hasAuthority = uri.startsWith("//", i);
+        if (hasAuthority) {                             // parse "//host:port"
+            i += 2;                                     // skip past "//"
+            int slash = uri.indexOf('/', i);
+            if (slash < 0) {
+                slash = uri.length();
+            }
+            if (uri.startsWith("[", i)) {               // at IPv6 literal
+                int brac = uri.indexOf(']', i + 1);
+                if (brac < 0 || brac > slash) {
+                    throw new MalformedURLException("Invalid URI: " + uri);
+                }
+                host = uri.substring(i, brac + 1);      // include brackets
+                i = brac + 1;                           // skip past "[...]"
+            } else {                                    // at host name or IPv4
+                int colon = uri.indexOf(':', i);
+                int hostEnd = (colon < 0 || colon > slash)
+                    ? slash
+                    : colon;
+                if (i < hostEnd) {
+                    host = uri.substring(i, hostEnd);
+                }
+                i = hostEnd;                            // skip past host
+            }
 
-	    if ((i + 1 < slash) &&
-			uri.startsWith(":", i)) {	// parse port
-		i++;					// skip past ":"
-		port = Integer.parseInt(uri.substring(i, slash));
-	    }
-	    i = slash;					// skip to path
-	}
-	int qmark = uri.indexOf('?', i);		// look for query
-	if (qmark < 0) {
-	    path = uri.substring(i);
-	} else {
-	    path = uri.substring(i, qmark);
-	    query = uri.substring(qmark);
-	}
+            if ((i + 1 < slash) &&
+                        uri.startsWith(":", i)) {       // parse port
+                i++;                                    // skip past ":"
+                port = Integer.parseInt(uri.substring(i, slash));
+            }
+            i = slash;                                  // skip to path
+        }
+        int qmark = uri.indexOf('?', i);                // look for query
+        if (qmark < 0) {
+            path = uri.substring(i);
+        } else {
+            path = uri.substring(i, qmark);
+            query = uri.substring(qmark);
+        }
     }
 
 /*
     // Debug
     public static void main(String args[]) throws MalformedURLException {
-	for (int i = 0; i < args.length; i++) {
-	    Uri uri = new Uri(args[i]);
+        for (int i = 0; i < args.length; i++) {
+            Uri uri = new Uri(args[i]);
 
-	    String h = (uri.getHost() != null) ? uri.getHost() : "";
-	    String p = (uri.getPort() != -1) ? (":" + uri.getPort()) : "";
-	    String a = uri.hasAuthority ? ("//" + h + p) : "";
-	    String q = (uri.getQuery() != null) ? uri.getQuery() : "";
+            String h = (uri.getHost() != null) ? uri.getHost() : "";
+            String p = (uri.getPort() != -1) ? (":" + uri.getPort()) : "";
+            String a = uri.hasAuthority ? ("//" + h + p) : "";
+            String q = (uri.getQuery() != null) ? uri.getQuery() : "";
 
-	    String str = uri.getScheme() + ":" + a + uri.getPath() + q;
-	    if (! uri.toString().equals(str)) {
-		System.out.println(str);
-	    }
-	    System.out.println(h);
-	}
+            String str = uri.getScheme() + ":" + a + uri.getPath() + q;
+            if (! uri.toString().equals(str)) {
+                System.out.println(str);
+            }
+            System.out.println(h);
+        }
     }
 */
 }

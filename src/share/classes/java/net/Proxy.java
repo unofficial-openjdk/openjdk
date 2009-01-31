@@ -27,10 +27,9 @@ package java.net;
 
 /**
  * This class represents a proxy setting, typically a type (http, socks) and
- * a socket address. 
+ * a socket address.
  * A <code>Proxy</code> is an immutable object.
  *
- * @version 1.3, 08/09/03
  * @see     java.net.ProxySelector
  * @author Yingxian Wang
  * @author Jean-Christophe Collet
@@ -44,18 +43,18 @@ public class Proxy {
      * @since 1.5
      */
     public enum Type {
-	/**
-	 * Represents a direct connection, or the absence of a proxy.
-	 */
-	DIRECT,
-	/**
-	 * Represents proxy for high level protocols such as HTTP or FTP.
-	 */
-	HTTP,
-	/**
-	 * Represents a SOCKS (V4 or V5) proxy.
-	 */
-	SOCKS
+        /**
+         * Represents a direct connection, or the absence of a proxy.
+         */
+        DIRECT,
+        /**
+         * Represents proxy for high level protocols such as HTTP or FTP.
+         */
+        HTTP,
+        /**
+         * Represents a SOCKS (V4 or V5) proxy.
+         */
+        SOCKS
     };
 
     private Type type;
@@ -74,14 +73,14 @@ public class Proxy {
 
     // Creates the proxy that represents a <code>DIRECT</code> connection.
     private Proxy() {
-	type = type.DIRECT;
-	sa = null;
+        type = type.DIRECT;
+        sa = null;
     }
 
     /**
      * Creates an entry representing a PROXY connection.
      * Certain combinations are illegal. For instance, for types Http, and
-     * Socks, a SocketAddress <b>must</b> be provided. 
+     * Socks, a SocketAddress <b>must</b> be provided.
      * <P>
      * Use the <code>Proxy.NO_PROXY</code> constant
      * for representing a direct connection.
@@ -92,30 +91,30 @@ public class Proxy {
      * incompatible
      */
     public Proxy(Type type, SocketAddress sa) {
-	if ((type == Type.DIRECT) || !(sa instanceof InetSocketAddress))
-	    throw new IllegalArgumentException("type " + type + " is not compatible with address " + sa);
-	this.type = type;
-	this.sa = sa;
+        if ((type == Type.DIRECT) || !(sa instanceof InetSocketAddress))
+            throw new IllegalArgumentException("type " + type + " is not compatible with address " + sa);
+        this.type = type;
+        this.sa = sa;
     }
 
     /**
      * Returns the proxy type.
      *
-     * @return a Type representing the proxy type 
+     * @return a Type representing the proxy type
      */
     public Type type() {
-	return type;
+        return type;
     }
 
     /**
-     * Returns the socket address of the proxy, or 
+     * Returns the socket address of the proxy, or
      * <code>null</code> if its a direct connection.
      *
      * @return a <code>SocketAddress</code> representing the socket end
      *         point of the proxy
      */
     public SocketAddress address() {
-	return sa;
+        return sa;
     }
 
     /**
@@ -127,9 +126,9 @@ public class Proxy {
      * @return  a string representation of this object.
      */
     public String toString() {
-	if (type() == Type.DIRECT)
-	    return "DIRECT";
-	return type() + " @ " + address();
+        if (type() == Type.DIRECT)
+            return "DIRECT";
+        return type() + " @ " + address();
     }
 
         /**
@@ -147,16 +146,16 @@ public class Proxy {
      * @see java.net.InetSocketAddress#equals(java.lang.Object)
      */
     public final boolean equals(Object obj) {
-	if (obj == null || !(obj instanceof Proxy))
-	    return false;
-	Proxy p = (Proxy) obj;
-	if (p.type() == type()) {
-	    if (address() == null) {
-		return (p.address() == null);
-	    } else
-		return address().equals(p.address());
-	}
-	return false;
+        if (obj == null || !(obj instanceof Proxy))
+            return false;
+        Proxy p = (Proxy) obj;
+        if (p.type() == type()) {
+            if (address() == null) {
+                return (p.address() == null);
+            } else
+                return address().equals(p.address());
+        }
+        return false;
     }
 
     /**
@@ -165,8 +164,8 @@ public class Proxy {
      * @return  a hash code value for this Proxy.
      */
     public final int hashCode() {
-	if (address() == null)
-	    return type().hashCode();
-	return type().hashCode() + address().hashCode();
+        if (address() == null)
+            return type().hashCode();
+        return type().hashCode() + address().hashCode();
     }
 }

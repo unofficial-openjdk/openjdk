@@ -40,7 +40,7 @@ jfieldID AwtEvent::yID;
 
 extern "C" {
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_awt_Event_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 

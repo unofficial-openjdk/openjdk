@@ -51,7 +51,7 @@ class VarargsTarg {
     static VarargsTarg vt2 = new VarargsTarg("vt2", "");
 
     String iname;
-    
+
     VarargsTarg(String ... name) {
         iname = "";
         for (int ii = 0; ii < name.length; ii++) {
@@ -112,7 +112,7 @@ class VarargsTarg {
         }
         return retVal;
     }
-    
+
     static String varString(String... ss) {
         if (ss == null) {
             return "-null-";
@@ -124,7 +124,7 @@ class VarargsTarg {
         }
         return retVal;
     }
-    
+
     static String varString2(int p1, String... ss) {
         return p1 + varString(ss);
     }
@@ -132,7 +132,7 @@ class VarargsTarg {
     static String fixedString(String ss) {
         return "-fixed-";
     }
-    
+
     String varStringInstance(VarargsTarg... args) {
         if (args == null) {
             return "-null-";
@@ -157,14 +157,14 @@ public class VarargsTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new VarargsTest(args).startTests();
     }
-    
+
     void fail(String reason) {
         failure(reason);
     }
-    
+
     /*
      * Call a method in the debuggee and verify the return value.
      */
@@ -176,9 +176,9 @@ public class VarargsTest extends TestScaffold {
             fail("failure: invokeMethod got exception : " + ee);
             ee.printStackTrace();
             return;
-        }            
+        }
         if (!returnValue.value().equals(expected)) {
-            fail("failure: expected \"" + expected + "\", got \"" + 
+            fail("failure: expected \"" + expected + "\", got \"" +
                  returnValue.value() + "\"");
         }
     }
@@ -203,7 +203,7 @@ public class VarargsTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("VarargsTarg");
@@ -211,7 +211,7 @@ public class VarargsTest extends TestScaffold {
         mainThread = bpe.thread();
 
         /*
-         * Run past the calls the debuggee makes 
+         * Run past the calls the debuggee makes
          * just to see what they do.
          */
         bpe = resumeTo("VarargsTarg", "bkpt", "()V");
@@ -247,7 +247,7 @@ public class VarargsTest extends TestScaffold {
         if (!varString2.isVarArgs()) {
             fail("failure: varString2 is not flagged as being var args");
         }
-        
+
         /*
          * Setup arg lists for both varString and varString2 that
          * have null in the varargs position.
@@ -297,7 +297,7 @@ public class VarargsTest extends TestScaffold {
 
             // call varString2(9, "1");
             doInvoke(targetClass, varString2, args2, "91");
-            
+
             // call varString2(9, "1", "2");
             args2.add(vm().mirrorOf("2"));
             doInvoke(targetClass, varString2, args2, "912");
@@ -340,9 +340,9 @@ public class VarargsTest extends TestScaffold {
                 fail("failure: an array and a String didn't cause an exception");
             }
         }
-            
+
         {
-            /* 
+            /*
              * Test calling instance method instead of static method,
              * and passing non-String objects
              */
@@ -400,7 +400,7 @@ public class VarargsTest extends TestScaffold {
 
             mlist = rt.methodsByName("varInt");
             mm = (Method)mlist.get(0);
-                        
+
             // call varInt( new int[] {1, 2});
             Field ff = targetClass.fieldByName("intArray");
             Value vv1 = targetClass.getValue(ff);
@@ -414,13 +414,13 @@ public class VarargsTest extends TestScaffold {
 
             mlist = rt.methodsByName("varInteger");
             mm = (Method)mlist.get(0);
-            
+
             // call varInteger(1, 2)
             // autoboxing is not implemented.
             //doInvoke(targetClass, mm, ll, "2122");
         }
-        
-        /* 
+
+        /*
          * We don't really need this for the test, but
          * but without it, we sometimes hit 4728096.
          */
@@ -436,4 +436,3 @@ public class VarargsTest extends TestScaffold {
         }
     }
 }
-

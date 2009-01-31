@@ -34,12 +34,12 @@ import java.util.logging.Level;
 import sun.awt.image.SunWritableRaster;
 
 /**
- * The splash screen can be created at application startup, before the 
- * Java Virtual Machine (JVM) starts. The splash screen is displayed as an 
+ * The splash screen can be created at application startup, before the
+ * Java Virtual Machine (JVM) starts. The splash screen is displayed as an
  * undecorated window containing an image. You can use GIF, JPEG, and PNG files
  * for the image. Animation (for GIF) and transparency (for GIF, PNG) are
  * supported. The window is positioned at the center of the screen (the
- * position on multi-monitor systems is not specified - it is platform and 
+ * position on multi-monitor systems is not specified - it is platform and
  * implementation dependent).
  * The window is closed automatically as soon as the first window is displayed by
  * Swing/AWT (may be also closed manually using the Java API, see below).
@@ -50,7 +50,7 @@ import sun.awt.image.SunWritableRaster;
  * <LI>If your application is run from the command line or from a shortcut,
  * use the "-splash:" Java application  launcher option to show a splash screen.
  * <BR>
- * For example: 
+ * For example:
  * <PRE>
  * java -splash:filename.gif Test
  * </PRE>
@@ -65,11 +65,11 @@ import sun.awt.image.SunWritableRaster;
  * Main-Class: Test
  * SplashScreen-Image: filename.gif
  * </PRE>
- * The command line interface has higher precedence over the manifest 
+ * The command line interface has higher precedence over the manifest
  * setting.
  * </UL>
  * <p>
- * The {@code SplashScreen} class provides the API for controlling the splash 
+ * The {@code SplashScreen} class provides the API for controlling the splash
  * screen. This class may be used to close the splash screen, change the splash
  * screen image, get the image position/size and paint in the splash screen. It
  * cannot be used to create the splash screen; you should use the command line or manifest
@@ -232,7 +232,7 @@ public final class SplashScreen {
     }
 
     /**
-     * Returns the size of the splash screen window as a {@link Dimension}. 
+     * Returns the size of the splash screen window as a {@link Dimension}.
      * This may be useful if, for example,
      * you want to draw on the splash screen overlay surface.
      * <p>
@@ -272,7 +272,7 @@ public final class SplashScreen {
     /**
      * Updates the splash window with current contents of the overlay image.
      *
-     * @throws IllegalStateException if the overlay image does not exist; 
+     * @throws IllegalStateException if the overlay image does not exist;
      *         for example, if {@code createGraphics} has never been called,
      *         or if the splash screen has already been closed
      */
@@ -367,4 +367,3 @@ public final class SplashScreen {
     private native static boolean _setImageData(long SplashPtr, byte[] data);
 
 };
-

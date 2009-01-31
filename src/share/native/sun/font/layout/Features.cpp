@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)Features.cpp	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
  *
@@ -70,7 +69,7 @@ const FeatureTable *FeatureListTable::getFeatureTable(LETag featureTag) const
     return (const FeatureTable *) ((char *) this + SWAPW(featureTableOffset));
 #else
     int count = SWAPW(featureCount);
-    
+
     for (int i = 0; i < count; i += 1) {
         if (SWAPT(featureRecordArray[i].featureTag) == featureTag) {
             return (const FeatureTable *) ((char *) this + SWAPW(featureRecordArray[i].featureTableOffset));

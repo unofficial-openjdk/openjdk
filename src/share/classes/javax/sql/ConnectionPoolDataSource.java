@@ -53,7 +53,7 @@ public interface ConnectionPoolDataSource  extends CommonDataSource {
    * @since 1.4
    */
   PooledConnection getPooledConnection() throws SQLException;
-      
+
   /**
    * Attempts to establish a physical database connection that can
    * be used as a pooled connection.
@@ -68,11 +68,6 @@ public interface ConnectionPoolDataSource  extends CommonDataSource {
    * this method
    * @since 1.4
    */
-  PooledConnection getPooledConnection(String user, String password) 
-    throws SQLException;        
- } 
-
-
-
-
-
+  PooledConnection getPooledConnection(String user, String password)
+    throws SQLException;
+ }

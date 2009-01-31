@@ -29,7 +29,7 @@ import sun.security.jgss.spi.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**  
+/**
  * This interface encapsulates the GSS-API security context and provides
  * the security services that are available over the context.  Security
  * contexts are established between peers using locally acquired
@@ -108,19 +108,19 @@ import java.io.OutputStream;
  * application data, and finally context deletion.<p>
  *
  * <pre>
- *    // Create a context using default credentials 
+ *    // Create a context using default credentials
  *    // and the implementation specific default mechanism
  *    GSSManager manager ...
  *    GSSName targetName ...
  *    GSSContext context = manager.createContext(targetName, null, null,
  *                                           GSSContext.INDEFINITE_LIFETIME);
- * 
+ *
  *    // set desired context options prior to context establishment
  *    context.requestConf(true);
  *    context.requestMutualAuth(true);
  *    context.requestReplayDet(true);
  *    context.requestSequenceDet(true);
- *    
+ *
  *    // establish a context between peers
  *
  *    byte []inToken = new byte[0];
@@ -129,47 +129,46 @@ import java.io.OutputStream;
  *
  *    while (!context.isEstablished()) {
  *
- *        byte[] outToken 
+ *        byte[] outToken
  *            = context.initSecContext(inToken, 0, inToken.length);
- *        
+ *
  *        // send the output token if generated
  *        if (outToken != null)
  *            sendToken(outToken);
- *  
+ *
  *        if (!context.isEstablished()) {
  *            inToken = readToken();
  *    }
- *    
+ *
  *     // display context information
- *     System.out.println("Remaining lifetime in seconds = " 
+ *     System.out.println("Remaining lifetime in seconds = "
  *                                          + context.getLifetime());
  *     System.out.println("Context mechanism = " + context.getMech());
  *     System.out.println("Initiator = " + context.getSrcName());
  *     System.out.println("Acceptor = " + context.getTargName());
- *  
+ *
  *     if (context.getConfState())
  *             System.out.println("Confidentiality (i.e., privacy) is available");
- *  
+ *
  *     if (context.getIntegState())
  *             System.out.println("Integrity is available");
- *  
+ *
  *     // perform wrap on an application supplied message, appMsg,
  *     // using QOP = 0, and requesting privacy service
  *     byte [] appMsg ...
- *  
+ *
  *     MessageProp mProp = new MessageProp(0, true);
- *  
+ *
  *     byte []tok = context.wrap(appMsg, 0, appMsg.length, mProp);
- *  
+ *
  *     sendToken(tok);
- *  
+ *
  *     // release the local-end of the context
  *     context.dispose();
  *
  * </pre>
  *
  * @author Mayank Upadhyay
- * @version %I%, %G%
  * @since 1.4
  */
 public interface GSSContext {
@@ -179,15 +178,15 @@ public interface GSSContext {
      * value is set to 0.
      */
     public static final int DEFAULT_LIFETIME = 0;
-    
-    /**   
+
+    /**
      * A lifetime constant representing indefinite context lifetime.
      * This value must is set to the maximum integer value in Java -
      * {@link java.lang.Integer#MAX_VALUE Integer.MAX_VALUE}.
      */
     public static final int INDEFINITE_LIFETIME = Integer.MAX_VALUE;
-    
-    /**    
+
+    /**
      * Called by the context initiator to start the context creation
      * phase and process any tokens generated
      * by the peer's <code>acceptSecContext</code> method.
@@ -209,7 +208,7 @@ public interface GSSContext {
      * established.<p>
      *
      * Some mechanism providers might require that the caller be granted
-     * permission to initiate a security context. A failed permission check 
+     * permission to initiate a security context. A failed permission check
      * might cause a {@link java.lang.SecurityException SecurityException}
      * to be thrown from this method.<p>
      *
@@ -220,12 +219,12 @@ public interface GSSContext {
      * @param offset the offset within the inputBuf where the token begins.
      * @param len the length of the token.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#NO_CRED GSSException.NO_CRED},
-     *   {@link GSSException#CREDENTIALS_EXPIRED 
+     *   {@link GSSException#CREDENTIALS_EXPIRED
      *                                  GSSException.CREDENTIALS_EXPIRED},
      *   {@link GSSException#BAD_BINDINGS GSSException.BAD_BINDINGS},
      *   {@link GSSException#OLD_TOKEN GSSException.OLD_TOKEN},
@@ -235,9 +234,9 @@ public interface GSSContext {
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte[] initSecContext(byte inputBuf[], int offset, int len)
-	throws GSSException;
-    
-    /**    
+        throws GSSException;
+
+    /**
      * Called by the context initiator to start the context creation
      * phase and process any tokens generated
      * by the peer's <code>acceptSecContext</code> method using
@@ -251,7 +250,7 @@ public interface GSSContext {
      * determine if a token is written to the OutputStream from the return
      * value of this method. A return value of <code>0</code> indicates that
      * no token was written. The application can call
-     * {@link #isEstablished() isEstablished} to determine if the context 
+     * {@link #isEstablished() isEstablished} to determine if the context
      * establishment phase is complete on this side of the context. A
      * return  value of <code>false</code> from <code>isEstablished</code>
      * indicates that more tokens are expected to be supplied to
@@ -273,7 +272,7 @@ public interface GSSContext {
      * initSecContext}.<p>
      *
      * Some mechanism providers might require that the caller be granted
-     * permission to initiate a security context. A failed permission check 
+     * permission to initiate a security context. A failed permission check
      * might cause a {@link java.lang.SecurityException SecurityException}
      * to be thrown from this method.<p>
      *
@@ -294,9 +293,9 @@ public interface GSSContext {
      *         os.flush();
      *     }
      * </pre>
-     * 
      *
-     * @return the number of bytes written to the OutputStream as part of the 
+     *
+     * @return the number of bytes written to the OutputStream as part of the
      * token to be sent to the peer. A value of 0 indicates that no token
      * needs to be sent.
      * @param inStream an InputStream that contains the token generated by
@@ -306,8 +305,8 @@ public interface GSSContext {
      * written. During the final stage of context establishment, there may be
      * no bytes written.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#NO_CRED GSSException.NO_CRED},
@@ -320,9 +319,9 @@ public interface GSSContext {
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public int initSecContext(InputStream inStream,
-			      OutputStream outStream) throws GSSException;
-    
-    /**    
+                              OutputStream outStream) throws GSSException;
+
+    /**
      * Called by the context acceptor upon receiving a token from the
      * peer. This method may return an output token which the application
      * will need to send to the peer for further processing by its
@@ -343,7 +342,7 @@ public interface GSSContext {
      * established.<p>
      *
      * Some mechanism providers might require that the caller be granted
-     * permission to accept a security context. A failed permission check 
+     * permission to accept a security context. A failed permission check
      * might cause a {@link java.lang.SecurityException SecurityException}
      * to be thrown from this method.<p>
      *
@@ -365,7 +364,7 @@ public interface GSSContext {
      *             sendToken(outToken);
      *     }
      * </pre>
-     * 
+     *
      *
      * @return a byte[] containing the token to be sent to the
      * peer. <code>null</code> indicates that no token is generated.
@@ -373,23 +372,23 @@ public interface GSSContext {
      * @param offset the offset within the inToken where the token begins.
      * @param len the length of the token.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#NO_CRED GSSException.NO_CRED},
-     *   {@link GSSException#CREDENTIALS_EXPIRED 
+     *   {@link GSSException#CREDENTIALS_EXPIRED
      *                               GSSException.CREDENTIALS_EXPIRED},
      *   {@link GSSException#BAD_BINDINGS GSSException.BAD_BINDINGS},
      *   {@link GSSException#OLD_TOKEN GSSException.OLD_TOKEN},
      *   {@link GSSException#DUPLICATE_TOKEN GSSException.DUPLICATE_TOKEN},
      *   {@link GSSException#BAD_MECH GSSException.BAD_MECH},
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte[] acceptSecContext(byte inToken[], int offset, int len)
-	throws GSSException;
-    
-    /**    
+        throws GSSException;
+
+    /**
      * Called by the context acceptor to process a token from the peer using
      * streams.   It may write an output token to the
      * <code>OutputStream</code>, which the application
@@ -402,7 +401,7 @@ public interface GSSContext {
      * establishment phase is complete on this side of the context. A
      * return  value of <code>false</code> from <code>isEstablished</code>
      * indicates that more tokens are expected to be supplied to
-     * <code>acceptSecContext</code>. 
+     * <code>acceptSecContext</code>.
      * Upon completion of the context establishment, the available context
      * options may be queried through the get methods.<p>
      *
@@ -420,7 +419,7 @@ public interface GSSContext {
      * acceptSecContext}.<p>
      *
      * Some mechanism providers might require that the caller be granted
-     * permission to accept a security context. A failed permission check 
+     * permission to accept a security context. A failed permission check
      * might cause a {@link java.lang.SecurityException SecurityException}
      * to be thrown from this method.<p>
      *
@@ -441,26 +440,26 @@ public interface GSSContext {
      *         os.flush();
      *     }
      * </pre>
-     * 
-     * 
+     *
+     *
      * @param inStream an InputStream that contains the token generated by
      * the peer.
      * @param outStream an OutputStream where the output token will be
      * written. During the final stage of context establishment, there may be
      * no bytes written.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#NO_CRED GSSException.NO_CRED},
-     *   {@link GSSException#CREDENTIALS_EXPIRED 
+     *   {@link GSSException#CREDENTIALS_EXPIRED
      *                           GSSException.CREDENTIALS_EXPIRED},
      *   {@link GSSException#BAD_BINDINGS GSSException.BAD_BINDINGS},
      *   {@link GSSException#OLD_TOKEN GSSException.OLD_TOKEN},
      *   {@link GSSException#DUPLICATE_TOKEN GSSException.DUPLICATE_TOKEN},
      *   {@link GSSException#BAD_MECH GSSException.BAD_MECH},
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     /* Missing return value in RFC. int should have been returned.
      * -----------------------------------------------------------
@@ -475,8 +474,8 @@ public interface GSSContext {
      * sent.</strong>
      */
     public void acceptSecContext(InputStream inStream,
-				 OutputStream outStream) throws GSSException;
-    
+                                 OutputStream outStream) throws GSSException;
+
     /**
      * Used during context establishment to determine the state of the
      * context.
@@ -485,20 +484,20 @@ public interface GSSContext {
      * the caller's side and no more tokens are needed from the peer.
      */
     public boolean isEstablished();
-  
+
     /**
-     * Releases any system resources and cryptographic information stored in 
+     * Releases any system resources and cryptographic information stored in
      * the context object and invalidates the context.
      *
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void dispose() throws GSSException;
 
-    /**    
-     * Used to determine limits on the size of the message 
+    /**
+     * Used to determine limits on the size of the message
      * that can be passed to <code>wrap</code>. Returns the maximum
      * message size that, if presented to the <code>wrap</code> method with
      * the same <code>confReq</code> and <code>qop</code> parameters, will
@@ -522,15 +521,15 @@ public interface GSSContext {
      * @return the maximum size of the input token for the given output
      * token size
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#BAD_QOP GSSException.BAD_QOP},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public int getWrapSizeLimit(int qop, boolean confReq,
-				int maxTokenSize) throws GSSException;
-    
+                                int maxTokenSize) throws GSSException;
+
     /**
      * Applies per-message security services over the established security
      * context. The method will return a token with the
@@ -564,15 +563,15 @@ public interface GSSContext {
      * was applied to the message by the underlying mechanism.
      * @return a byte[] containing the token to be sent to the peer.
      *
-     * @throws GSSException containing the following major error codes: 
+     * @throws GSSException containing the following major error codes:
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#BAD_QOP GSSException.BAD_QOP},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte[] wrap(byte inBuf[], int offset, int len,
-		       MessageProp msgProp) throws GSSException;
-    
-    /**     
+                       MessageProp msgProp) throws GSSException;
+
+    /**
      * Applies per-message security services over the established security
      * context using streams. The method will return a
      * token with the application supplied data and a cryptographic MIC over it.
@@ -610,16 +609,16 @@ public interface GSSContext {
      * method, this object will contain the the actual privacy state that
      * was applied to the message by the underlying mechanism.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#BAD_QOP GSSException.BAD_QOP},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void wrap(InputStream inStream, OutputStream outStream,
-		     MessageProp msgProp) throws GSSException;
+                     MessageProp msgProp) throws GSSException;
 
-    /**     
+    /**
      * Used to process tokens generated by the <code>wrap</code> method on
      * the other side of the context. The method will return the message
      * supplied by the peer application to its wrap call, while at the same
@@ -645,22 +644,22 @@ public interface GSSContext {
      * @return a byte[] containing the message unwrapped from the input
      * token.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte [] unwrap(byte[] inBuf, int offset, int len,
-			  MessageProp msgProp) throws GSSException;
-    
-    /**     
+                          MessageProp msgProp) throws GSSException;
+
+    /**
      * Uses streams to process tokens generated by the <code>wrap</code>
      * method on the other side of the context. The method will return the
      * message supplied by the peer application to its wrap call, while at
      * the same time verifying the embedded MIC for that message.<p>
-     * 
+     *
      * The MessageProp object is instantiated by the application and is
      * used by the underlying mechanism to return information to the caller
      * such as the QOP, whether confidentiality was applied to the message,
@@ -692,22 +691,22 @@ public interface GSSContext {
      * information stating if the token was a duplicate, old, out of
      * sequence or arriving after a gap.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN},
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC},
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void unwrap(InputStream inStream, OutputStream outStream,
-		       MessageProp msgProp) throws GSSException;
+                       MessageProp msgProp) throws GSSException;
 
-    /**     
+    /**
      * Returns a token containing a cryptographic Message Integrity Code
      * (MIC) for the supplied message,  for transfer to the peer
      * application.  Unlike wrap, which encapsulates the user message in the
      * returned token, only the message MIC is returned in the output
-     * token.<p> 
+     * token.<p>
      *
      * Note that privacy can only be applied through the wrap call.<p>
      *
@@ -725,16 +724,16 @@ public interface GSSContext {
      * to request the default QOP.
      * @return a byte[] containing the token to be sent to the peer.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#BAD_QOP GSSException.BAD_QOP},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte[] getMIC(byte []inMsg, int offset, int len,
-			 MessageProp msgProp) throws GSSException;
-    
-    /**     
+                         MessageProp msgProp) throws GSSException;
+
+    /**
      * Uses streams to produce a token containing a cryptographic MIC for
      * the supplied message, for transfer to the peer application.
      * Unlike wrap, which encapsulates the user message in the returned
@@ -748,7 +747,7 @@ public interface GSSContext {
      * by getMIC to provide "secure framing", implementations should support
      * derivation of MICs from zero-length messages.
      *
-     * @param inStream an InputStream containing the message to generate the 
+     * @param inStream an InputStream containing the message to generate the
      * MIC over. All of the data that is available in
      * inStream is used.
      * @param outStream an OutputStream to write the output token to.
@@ -758,16 +757,16 @@ public interface GSSContext {
      * QOP. Alternatively pass in <code>null</code> for <code>msgProp</code>
      * to request the default QOP.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#BAD_QOP GSSException.BAD_QOP},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void getMIC(InputStream inStream, OutputStream outStream,
-		       MessageProp msgProp) throws GSSException;
-    
-    /**     
+                       MessageProp msgProp) throws GSSException;
+
+    /**
      * Verifies the cryptographic MIC, contained in the token parameter,
      * over the supplied message.<p>
      *
@@ -792,21 +791,21 @@ public interface GSSContext {
      * the applied QOP and supplementary information stating if the token
      * was a duplicate, old, out of sequence or arriving after a gap.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN}
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC}
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED}
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void verifyMIC(byte[] inToken, int tokOffset, int tokLen,
-			  byte[] inMsg, int msgOffset, int msgLen,
-			  MessageProp msgProp) throws GSSException;
-    
-    /**     
+                          byte[] inMsg, int msgOffset, int msgLen,
+                          MessageProp msgProp) throws GSSException;
+
+    /**
      * Uses streams to verify the cryptographic MIC, contained in the token
      * parameter, over the supplied message.  This method is equivalent to
-     * the byte array based {@link #verifyMIC(byte[], int, int, byte[], int, 
+     * the byte array based {@link #verifyMIC(byte[], int, int, byte[], int,
      * int, MessageProp) verifyMIC} method.
      *
      * The MessageProp object is instantiated by the application and is used
@@ -831,7 +830,7 @@ public interface GSSContext {
      * method is equivalent to the byte array based {@link #verifyMIC(byte[],
      * int, int, byte[], int, int, MessageProp) verifyMIC} method.<p>
      *
-     * @param tokStream an InputStream containing the token generated by the 
+     * @param tokStream an InputStream containing the token generated by the
      * peer's getMIC method.
      * @param msgStream an InputStream containing the application message to
      * verify the cryptographic MIC over. All of the data
@@ -840,17 +839,17 @@ public interface GSSContext {
      * the applied QOP and supplementary information stating if the token
      * was a duplicate, old, out of sequence or arriving after a gap.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#DEFECTIVE_TOKEN GSSException.DEFECTIVE_TOKEN}
      *   {@link GSSException#BAD_MIC GSSException.BAD_MIC}
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED}
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void verifyMIC(InputStream tokStream, InputStream msgStream,
-			  MessageProp msgProp) throws GSSException;
-    
-    /**     
+                          MessageProp msgProp) throws GSSException;
+
+    /**
      * Exports this context so that another process may
      * import it.. Provided to support the sharing of work between
      * multiple processes. This routine will typically be used by the
@@ -888,24 +887,24 @@ public interface GSSContext {
      * isTransferable} method will indicate if the context object is
      * transferable.<p>
      *
-     * Calling this method on a context that 
+     * Calling this method on a context that
      * is not exportable will result in this exception being thrown with
      * the error code {@link GSSException#UNAVAILABLE
-     * GSSException.UNAVAILABLE}. 
+     * GSSException.UNAVAILABLE}.
      *
      * @return a byte[] containing the exported context
      * @see GSSManager#createContext(byte[])
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#UNAVAILABLE GSSException.UNAVAILABLE},
      *   {@link GSSException#CONTEXT_EXPIRED GSSException.CONTEXT_EXPIRED},
      *   {@link GSSException#NO_CONTEXT GSSException.NO_CONTEXT},
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public byte [] export() throws GSSException;
-    
-    /**     
+
+    /**
      * Requests that mutual authentication be done during
      * context establishment. This request can only be made on the context
      * initiator's side and it has to be done prior to the first call to
@@ -921,12 +920,12 @@ public interface GSSContext {
      * authentication shouls be used or not.
      * @see #getMutualAuthState()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestMutualAuth(boolean state) throws GSSException;
-    
+
     /**
      * Requests that replay detection be enabled for the
      * per-message security services after context establishemnt. This
@@ -942,7 +941,7 @@ public interface GSSContext {
      * request was honored with the {@link #getReplayDetState()
      * getReplayDetState} method. If replay detection is enabled then the
      * {@link MessageProp#isDuplicateToken() MessageProp.isDuplicateToken} and {@link
-     * MessageProp#isOldToken() MessageProp.isOldToken} methods will return 
+     * MessageProp#isOldToken() MessageProp.isOldToken} methods will return
      * valid results for the <code>MessageProp</code> object that is passed
      * in to the <code>unwrap</code> method or the <code>verifyMIC</code>
      * method.<p>
@@ -951,13 +950,13 @@ public interface GSSContext {
      * should be enabled over the established context or not.
      * @see #getReplayDetState()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestReplayDet(boolean state) throws GSSException;
-    
-    /**     
+
+    /**
      * Requests that sequence checking be enabled for the
      * per-message security services after context establishemnt. This
      * request can only be made on the context initiator's side and it has
@@ -971,7 +970,7 @@ public interface GSSContext {
      * doesn't. Therefore, the application should check to see if the
      * request was honored with the {@link #getSequenceDetState()
      * getSequenceDetState} method. If sequence checking is enabled then the
-     * {@link MessageProp#isDuplicateToken() MessageProp.isDuplicateToken}, 
+     * {@link MessageProp#isDuplicateToken() MessageProp.isDuplicateToken},
      * {@link MessageProp#isOldToken() MessageProp.isOldToken},
      * {@link MessageProp#isUnseqToken() MessageProp.isUnseqToken}, and
      * {@link MessageProp#isGapToken() MessageProp.isGapToken} methods will return
@@ -983,13 +982,13 @@ public interface GSSContext {
      * should be enabled over the established context or not.
      * @see #getSequenceDetState()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestSequenceDet(boolean state) throws GSSException;
-    
-    /**     
+
+    /**
      * Requests that the initiator's credentials be
      * delegated to the acceptor during context establishment. This
      * request can only be made on the context initiator's side and it has
@@ -1002,20 +1001,20 @@ public interface GSSContext {
      * getCredDelegState} method. If the application indicates that
      * delegation must not be used, then the mechanism will honor the
      * request and delegation will not occur. This is an exception
-     * to the general rule that a mechanism may enable a service even if it 
+     * to the general rule that a mechanism may enable a service even if it
      * is not requested.<p>
      *
      * @param state a boolean value indicating whether the credentials
      * should be delegated or not.
      * @see #getCredDelegState()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestCredDeleg(boolean state) throws GSSException;
-    
-    /**     
+
+    /**
      * Requests that the initiator's identity not be
      * disclosed to the acceptor. This request can only be made on the
      * context initiator's side and it has to be done prior to the first
@@ -1025,16 +1024,16 @@ public interface GSSContext {
      * application should check to see if the request was honored with the
      * {@link #getAnonymityState() getAnonymityState} method.<p>
      *
-     * @param state a boolean value indicating if the initiator should 
+     * @param state a boolean value indicating if the initiator should
      * be authenticated to the acceptor as an anonymous principal.
      * @see #getAnonymityState
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestAnonymity(boolean state) throws GSSException;
-    
+
     /**
      * Requests that data confidentiality be enabled
      * for the <code>wrap</code> method. This request can only be made on
@@ -1045,7 +1044,7 @@ public interface GSSContext {
      * might enable it even if the application doesn't request
      * it. The application may check to see if the request was honored with
      * the {@link #getConfState() getConfState} method. If confidentiality
-     * is enabled, only then will the mechanism honor a request for privacy 
+     * is enabled, only then will the mechanism honor a request for privacy
      * in the {@link MessageProp#MessageProp(int, boolean) MessageProp}
      * object that is passed in to the <code>wrap</code> method.<p>
      *
@@ -1059,13 +1058,13 @@ public interface GSSContext {
      * @see #requestInteg(boolean)
      * @see MessageProp
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestConf(boolean state) throws GSSException;
-    
-    /**     
+
+    /**
      * Requests that data integrity be enabled
      * for the <code>wrap</code> and <code>getMIC</code>methods. This
      * request can only be made on the context initiator's side and it has
@@ -1083,19 +1082,19 @@ public interface GSSContext {
      * should be enabled or not.
      * @see #getIntegState()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestInteg(boolean state) throws GSSException;
-    
+
     /**
      * Requests a lifetime in seconds for the
      * context. This method can only be called on the context initiator's
      * side  and it has to be done prior to the first call to
      * <code>initSecContext</code>.<p>
      *
-     * The actual lifetime of the context will depend on the capabilites of 
+     * The actual lifetime of the context will depend on the capabilites of
      * the underlying mechanism and the application should call the {@link
      * #getLifetime() getLifetime} method to determine this.<p>
      *
@@ -1104,47 +1103,47 @@ public interface GSSContext {
      * and <code>DEFAULT_LIFETIME</code> to request a default lifetime.
      * @see #getLifetime()
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void requestLifetime(int lifetime) throws GSSException;
-    
-    /**     
+
+    /**
      * Sets the channel bindings to be used during context
      * establishment. This method can be called on both
-     * the context initiator's and the context acceptor's side, but it must 
+     * the context initiator's and the context acceptor's side, but it must
      * be called before context establishment begins. This means that an
      * initiator must call it before the first call to
-     * <code>initSecContext</code> and the acceptor must call it before the 
+     * <code>initSecContext</code> and the acceptor must call it before the
      * first call to <code>acceptSecContext</code>.
      *
      * @param cb the channel bindings to use.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public void setChannelBinding(ChannelBinding cb) throws GSSException;
-    
+
     /**
      * Determines if credential delegation is enabled on
-     * this context. It can be called by both the context initiator and the 
+     * this context. It can be called by both the context initiator and the
      * context acceptor. For a definitive answer this method must be
-     * called only after context establishment is complete. Note that if an 
+     * called only after context establishment is complete. Note that if an
      * initiator requests that delegation not be allowed the {@link
      * #requestCredDeleg(boolean) requestCredDeleg} method will honor that
-     * request and this method will return <code>false</code> on the 
+     * request and this method will return <code>false</code> on the
      * initiator's side from that point onwards. <p>
      *
      * @return true if delegation is enabled, false otherwise.
      * @see #requestCredDeleg(boolean)
      */
     public boolean getCredDelegState();
-    
-    /**     
+
+    /**
      * Determines if mutual authentication is enabled on
-     * this context. It can be called by both the context initiator and the 
+     * this context. It can be called by both the context initiator and the
      * context acceptor. For a definitive answer this method must be
      * called only after context establishment is complete. An initiator
      * that requests mutual authentication can call this method after
@@ -1155,8 +1154,8 @@ public interface GSSContext {
      * @see #requestMutualAuth(boolean)
      */
     public boolean getMutualAuthState();
-    
-    /**     
+
+    /**
      * Determines if replay detection is enabled for the
      * per-message security services from this context. It can be called by
      * both the context initiator and the context acceptor. For a
@@ -1169,8 +1168,8 @@ public interface GSSContext {
      * @see #requestReplayDet(boolean)
      */
     public boolean getReplayDetState();
-    
-    /**     
+
+    /**
      * Determines if sequence checking is enabled for the
      * per-message security services from this context. It can be called by
      * both the context initiator and the context acceptor. For a
@@ -1183,19 +1182,19 @@ public interface GSSContext {
      * @see #requestSequenceDet(boolean)
      */
     public boolean getSequenceDetState();
-    
-    /**     
+
+    /**
      * Determines if the context initiator is
      * anonymously authenticated to the context acceptor. It can be called by
      * both the context initiator and the context acceptor, and at any
      * time. <strong>On the initiator side, a call to this method determines
      * if the identity of the initiator has been disclosed in any of the
-     * context establishment tokens that might have been generated thus far 
+     * context establishment tokens that might have been generated thus far
      * by <code>initSecContext</code>. An initiator that absolutely must be
-     * authenticated anonymously should call this method after each call to 
+     * authenticated anonymously should call this method after each call to
      * <code>initSecContext</code> to determine if the generated token
      * should be sent to the peer or the context aborted.</strong> On the
-     * acceptor side, a call to this method determines if any of the tokens 
+     * acceptor side, a call to this method determines if any of the tokens
      * processed by <code>acceptSecContext</code> thus far have divulged
      * the identity of the initiator.<p>
      *
@@ -1204,33 +1203,33 @@ public interface GSSContext {
      * @see #requestAnonymity(boolean)
      */
     public boolean getAnonymityState();
-    
-    /**     
+
+    /**
      * Determines if the context is transferable to other processes
      * through the use of the {@link #export() export} method.  This call
      * is only valid on fully established contexts.
      *
      * @return true if this context can be exported, false otherwise.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public boolean isTransferable() throws GSSException;
-    
-    /**     
+
+    /**
      * Determines if the context is ready for per message operations to be
      * used over it.  Some mechanisms may allow the usage of the
      * per-message operations before the context is fully established.
      *
-     * @return true if methods like <code>wrap</code>, <code>unwrap</code>, 
+     * @return true if methods like <code>wrap</code>, <code>unwrap</code>,
      * <code>getMIC</code>, and <code>verifyMIC</code> can be used with
      * this context at the current stage of context establishment, false
      * otherwise.
      */
     public boolean isProtReady();
-    
-    /**     
+
+    /**
      * Determines if data confidentiality is available
      * over the context. This method can be called by both the context
      * initiator and the context acceptor, but only after one of {@link
@@ -1244,8 +1243,8 @@ public interface GSSContext {
      * @see #requestConf(boolean)
      */
     public boolean getConfState();
-    
-    /**     
+
+    /**
      * Determines if data integrity is available
      * over the context. This method can be called by both the context
      * initiator and the context acceptor, but only after one of {@link
@@ -1258,8 +1257,8 @@ public interface GSSContext {
      * @see #requestInteg(boolean)
      */
     public boolean getIntegState();
-    
-    /**     
+
+    /**
      * Determines what the remaining lifetime for this
      * context is. It can be called by both the context initiator and the
      * context acceptor, but for a definitive answer it should be called
@@ -1270,7 +1269,7 @@ public interface GSSContext {
      * @see #requestLifetime(int)
      */
     public int getLifetime();
-    
+
     /**
      * Returns the name of the context initiator. This call is valid only
      * after one of {@link #isProtReady() isProtReady} or {@link
@@ -1280,12 +1279,12 @@ public interface GSSContext {
      * initiator.
      * @see GSSName
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public GSSName getSrcName() throws GSSException;
-    
+
     /**
      * Returns the name of the context acceptor. This call is valid only
      * after one of {@link #isProtReady() isProtReady} or {@link
@@ -1294,12 +1293,12 @@ public interface GSSContext {
      * @return a GSSName that is an MN containing the name of the context
      * acceptor.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public GSSName getTargName() throws GSSException;
-    
+
     /**
      * Determines what mechanism is being used for this
      * context. This method may be called before the context is fully
@@ -1308,31 +1307,31 @@ public interface GSSContext {
      *
      * @return the Oid of the mechanism being used
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public Oid getMech() throws GSSException;
-    
+
     /**
      * Obtains the credentials delegated by the context
      * initiator to the context acceptor. It should be called only on the
      * context acceptor's side, and once the context is fully
      * established. The caller can use the method {@link
      * #getCredDelegState() getCredDelegState} to determine if there are
-     * any delegated credentials. 
+     * any delegated credentials.
      *
      * @return a GSSCredential containing the initiator's delegated
      * credentials, or <code>null</code> is no credentials
      * were delegated.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
+     * @throws GSSException containing the following
+     * major error codes:
      *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public GSSCredential getDelegCred() throws GSSException;
-    
-    /**     
+
+    /**
      * Determines if this is the context initiator. This
      * can be called on both the context initiator's and context acceptor's
      * side.
@@ -1340,9 +1339,9 @@ public interface GSSContext {
      * @return true if this is the context initiator, false if it is the
      * context acceptor.
      *
-     * @throws GSSException containing the following 
-     * major error codes: 
-     *   {@link GSSException#FAILURE GSSException.FAILURE}     
+     * @throws GSSException containing the following
+     * major error codes:
+     *   {@link GSSException#FAILURE GSSException.FAILURE}
      */
     public boolean isInitiator() throws GSSException;
 }

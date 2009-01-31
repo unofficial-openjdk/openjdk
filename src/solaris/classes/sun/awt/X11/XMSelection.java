@@ -23,11 +23,11 @@
  * have any questions.
  */
 
- /* 
-   * This code is ported to XAWT from MAWT based on awt_mgrsel.c 
-   * code written originally by Valeriy Ushakov 
-   * Author : Bino George 
-   */ 
+ /*
+   * This code is ported to XAWT from MAWT based on awt_mgrsel.c
+   * code written originally by Valeriy Ushakov
+   * Author : Bino George
+   */
 
 package sun.awt.X11;
 
@@ -35,13 +35,13 @@ import java.util.*;
 import java.util.logging.*;
 
 
-public class  XMSelection { 
+public class  XMSelection {
 
     /*
      * A method for a subsytem to express its interest in a certain
      * manager selection.
      *
-     * If owner changes, the ownerChanged of the XMSelectionListener 
+     * If owner changes, the ownerChanged of the XMSelectionListener
      * will be called with the screen
      * number and the new owning window when onwership is established, or
      * None if the owner is gone.
@@ -49,7 +49,7 @@ public class  XMSelection {
      * Events in extra_mask are selected for on owning windows (exsiting
      * ones and on new owners when established) and otherEvent of the
      * XMWSelectionListener will be called with the screen number and an event.
-     * 
+     *
      * The function returns an array of current owners.  The size of the
      * array is ScreenCount(awt_display).  The array is "owned" by this
      * module and should be considered by the caller as read-only.
@@ -63,7 +63,7 @@ public class  XMSelection {
     /* list of listeners to be called for events */
     Vector listeners;
 
-    /* X atom array (one per screen) for this selection */ 
+    /* X atom array (one per screen) for this selection */
     XAtom atoms[];
 
     /* Window ids of selection owners */
@@ -79,7 +79,7 @@ public class  XMSelection {
     static HashMap selectionMap;
 
     static {
-        long display = XToolkit.getDisplay(); 
+        long display = XToolkit.getDisplay();
         XToolkit.awtLock();
         try {
             numScreens = XlibWrapper.ScreenCount(display);
@@ -88,7 +88,7 @@ public class  XMSelection {
         }
         XA_MANAGER = XAtom.get("MANAGER");
         for (int screen = 0; screen < numScreens ; screen ++) {
-            initScreen(display,screen); 
+            initScreen(display,screen);
         }
 
         selectionMap = new HashMap();
@@ -99,7 +99,7 @@ public class  XMSelection {
         try {
             long root = XlibWrapper.RootWindow(display,screen);
             XlibWrapper.XSelectInput(display, root, XlibWrapper.StructureNotifyMask);
-            XToolkit.addEventDispatcher(root, 
+            XToolkit.addEventDispatcher(root,
                     new XEventDispatcher() {
                         public void dispatchEvent(XEvent ev) {
                                 processRootEvent(ev, screen);
@@ -126,12 +126,12 @@ public class  XMSelection {
     void resetOwner(long owner, final int screen) {
         XToolkit.awtLock();
         try {
-            long display = XToolkit.getDisplay(); 
+            long display = XToolkit.getDisplay();
             synchronized(this) {
-                setOwner(owner, screen); 
+                setOwner(owner, screen);
                 if (log.isLoggable(Level.FINE)) log.fine("New Selection Owner for screen " + screen + " = " + owner );
                 XlibWrapper.XSelectInput(display, owner, XlibWrapper.StructureNotifyMask | eventMask);
-                XToolkit.addEventDispatcher(owner, 
+                XToolkit.addEventDispatcher(owner,
                         new XEventDispatcher() {
                             public void dispatchEvent(XEvent ev) {
                                 dispatchSelectionEvent(ev, screen);
@@ -142,13 +142,13 @@ public class  XMSelection {
         } finally {
             XToolkit.awtUnlock();
         }
-    } 
+    }
 
     void selectPerScreen(final int screen, long extra_mask) {
         XToolkit.awtLock();
         try {
-            try {  
-                long display = XToolkit.getDisplay(); 
+            try {
+                long display = XToolkit.getDisplay();
                 if (log.isLoggable(Level.FINE)) log.fine("Grabbing XServer");
                 XlibWrapper.XGrabServer(display);
 
@@ -160,10 +160,10 @@ public class  XMSelection {
                     setAtom(atom,screen);
                     long owner = XlibWrapper.XGetSelectionOwner(display, atom.getAtom());
                     if (owner != 0) {
-                        setOwner(owner, screen); 
+                        setOwner(owner, screen);
                         if (log.isLoggable(Level.FINE)) log.fine("Selection Owner for screen " + screen + " = " + owner );
                         XlibWrapper.XSelectInput(display, owner, XlibWrapper.StructureNotifyMask | extra_mask);
-                        XToolkit.addEventDispatcher(owner, 
+                        XToolkit.addEventDispatcher(owner,
                                 new XEventDispatcher() {
                                         public void dispatchEvent(XEvent ev) {
                                             dispatchSelectionEvent(ev, screen);
@@ -210,7 +210,7 @@ public class  XMSelection {
             }
         }
 
-        return false; 
+        return false;
 
     }
 
@@ -220,15 +220,15 @@ public class  XMSelection {
     }
 
 
-    /* 
+    /*
      * Default constructor specifies PropertyChangeMask as well
      */
 
     public XMSelection (String selname) {
-        this(selname, XlibWrapper.PropertyChangeMask);  
+        this(selname, XlibWrapper.PropertyChangeMask);
     }
 
-   
+
    /*
     * Some users may not need to know about selection changes,
     * just owner ship changes, They would specify a zero extra mask.
@@ -241,14 +241,14 @@ public class  XMSelection {
             atoms = new XAtom[getNumberOfScreens()];
             owners = new long[getNumberOfScreens()];
         }
-        select(extraMask);  
+        select(extraMask);
     }
 
- 
+
 
     public synchronized void addSelectionListener(XMSelectionListener listener) {
         if (listeners == null) {
-            listeners = new Vector(); 
+            listeners = new Vector();
         }
         listeners.add(listener);
     }
@@ -260,7 +260,7 @@ public class  XMSelection {
     }
 
     synchronized Collection getListeners() {
-        return listeners; 
+        return listeners;
     }
 
     synchronized XAtom getAtom(int screen) {
@@ -290,7 +290,7 @@ public class  XMSelection {
     }
 
     synchronized String getName() {
-        return selectionName; 
+        return selectionName;
     }
 
 
@@ -321,11 +321,11 @@ public class  XMSelection {
         if (log.isLoggable(Level.FINE)) log.fine("Event =" + xev);
         if (xev.get_type() == XlibWrapper.DestroyNotify) {
             XDestroyWindowEvent de = xev.get_xdestroywindow();
-            dispatchOwnerDeath( de, screen);  
+            dispatchOwnerDeath( de, screen);
         }
         else if (xev.get_type() == XlibWrapper.PropertyNotify)  {
             XPropertyEvent xpe = xev.get_xproperty();
-            dispatchSelectionChanged( xpe, screen);  
+            dispatchSelectionChanged( xpe, screen);
         }
     }
 
@@ -342,5 +342,3 @@ public class  XMSelection {
 
 
 }
-
-

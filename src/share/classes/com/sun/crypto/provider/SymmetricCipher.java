@@ -42,10 +42,10 @@ import java.security.InvalidKeyException;
  * @see BlowfishCrypt
  * @see FeedbackCipher
  */
-abstract class SymmetricCipher { 
-    
+abstract class SymmetricCipher {
+
     SymmetricCipher() {
-	// empty
+        // empty
     }
 
     /**
@@ -66,11 +66,11 @@ abstract class SymmetricCipher {
      * initializing this cipher
      */
     abstract void init(boolean decrypting, String algorithm, byte[] key)
-	throws InvalidKeyException;
+        throws InvalidKeyException;
 
     /**
      * Encrypt one cipher block.
-     * 
+     *
      * <p>The input <code>plain</code>, starting at <code>plainOffset</code>
      * and ending at <code>(plainOffset+blockSize-1)</code>, is encrypted.
      * The result is stored in <code>cipher</code>, starting at
@@ -82,7 +82,7 @@ abstract class SymmetricCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      */
     abstract void encryptBlock(byte[] plain, int plainOffset,
-			  byte[] cipher, int cipherOffset);
+                          byte[] cipher, int cipherOffset);
 
     /**
      * Decrypt one cipher block.
@@ -96,7 +96,7 @@ abstract class SymmetricCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      * @param plain the buffer for the decryption result
      * @param plainOffset the offset in <code>plain</code>
-     */    
+     */
     abstract void decryptBlock(byte[] cipher, int cipherOffset,
-			  byte[] plain, int plainOffset);
+                          byte[] plain, int plainOffset);
 }

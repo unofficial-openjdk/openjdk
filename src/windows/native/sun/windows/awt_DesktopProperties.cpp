@@ -51,7 +51,7 @@ static SHGetSettingsType fn_SHGetSettings;
 AwtDesktopProperties::AwtDesktopProperties(jobject self) {
     this->self = GetEnv()->NewGlobalRef(self);
     GetEnv()->SetLongField( self, AwtDesktopProperties::pDataID,
-			    ptr_to_jlong(this) );
+                            ptr_to_jlong(this) );
 }
 
 AwtDesktopProperties::~AwtDesktopProperties() {
@@ -62,10 +62,10 @@ AwtDesktopProperties::~AwtDesktopProperties() {
 // Reads Windows parameters and sets the corresponding values
 // in WDesktopProperties
 //
-void AwtDesktopProperties::GetWindowsParameters() {    
+void AwtDesktopProperties::GetWindowsParameters() {
     if (GetEnv()->EnsureLocalCapacity(MAX_PROPERTIES) < 0) {
-	DASSERT(0);
-	return;
+        DASSERT(0);
+        return;
     }
     // this number defines the set of properties available, it is incremented
     // whenever more properties are added (in a public release of course)
@@ -78,7 +78,7 @@ void AwtDesktopProperties::GetWindowsParameters() {
     GetSoundEvents();
     GetSystemProperties();
     if (IS_WINXP) {
-	GetXPStyleProperties();
+        GetXPStyleProperties();
     }
 }
 
@@ -108,7 +108,7 @@ void AwtDesktopProperties::GetSystemProperties() {
 static LPTSTR resolveShellDialogFont(LPTSTR fontName, HKEY handle) {
     DWORD valueType, valueSize;
     if (RegQueryValueEx((HKEY)handle, fontName, NULL,
-			&valueType, NULL, &valueSize) != 0) {
+                        &valueType, NULL, &valueSize) != 0) {
         // Couldn't find it
         return NULL;
     }
@@ -118,10 +118,10 @@ static LPTSTR resolveShellDialogFont(LPTSTR fontName, HKEY handle) {
     }
     LPTSTR buffer = (LPTSTR)safe_Malloc(valueSize);
     if (RegQueryValueEx((HKEY)handle, fontName, NULL,
-			&valueType, (unsigned char *)buffer, &valueSize) != 0) {
+                        &valueType, (unsigned char *)buffer, &valueSize) != 0) {
         // Error fetching
-	free(buffer);
-	return NULL;
+        free(buffer);
+        return NULL;
     }
     return buffer;
 }
@@ -135,7 +135,7 @@ static LPTSTR resolveShellDialogFont() {
 
     HKEY handle;
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &handle) != 0) {
-	return NULL;
+        return NULL;
     }
     // Prefer MS Shell Dlg 2.
     LPTSTR font = resolveShellDialogFont(TEXT("MS Shell Dlg 2"), handle);
@@ -153,45 +153,45 @@ static LPTSTR resolveShellDialogFont() {
 static LPTSTR getWindowsPropFromReg(LPTSTR subKey, LPTSTR valueName, DWORD *valueType) {
     HKEY handle;
     if (RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_READ, &handle) != 0) {
-	return NULL;
+        return NULL;
     }
     // valueSize is in bytes, while valueChar is in characters.
     DWORD valueSize, valueChar;
     if (RegQueryValueEx((HKEY)handle, valueName, NULL,
-			valueType, NULL, &valueSize) != 0) {
+                        valueType, NULL, &valueSize) != 0) {
         RegCloseKey(handle);
-	return NULL;
+        return NULL;
     }
     LPTSTR buffer = (LPTSTR)safe_Malloc(valueSize);
     if (RegQueryValueEx((HKEY)handle, valueName, NULL,
-			valueType, (unsigned char *)buffer, &valueSize) != 0) {
-	free(buffer);
+                        valueType, (unsigned char *)buffer, &valueSize) != 0) {
+        free(buffer);
         RegCloseKey(handle);
-	return NULL;
+        return NULL;
     }
     RegCloseKey(handle);
 
-    if (*valueType == REG_EXPAND_SZ) {  
-	// Pending: buffer must be null-terminated at this point
-	valueChar = ExpandEnvironmentStrings(buffer, NULL, 0);
-	LPTSTR buffer2 = (LPTSTR)safe_Malloc(valueChar*sizeof(TCHAR));
-	ExpandEnvironmentStrings(buffer, buffer2, valueChar);
-	free(buffer);
-	return buffer2;
-    } else if (*valueType == REG_SZ) {  
-	return buffer;
-    } else if (*valueType == REG_DWORD) {  
-	return buffer;
+    if (*valueType == REG_EXPAND_SZ) {
+        // Pending: buffer must be null-terminated at this point
+        valueChar = ExpandEnvironmentStrings(buffer, NULL, 0);
+        LPTSTR buffer2 = (LPTSTR)safe_Malloc(valueChar*sizeof(TCHAR));
+        ExpandEnvironmentStrings(buffer, buffer2, valueChar);
+        free(buffer);
+        return buffer2;
+    } else if (*valueType == REG_SZ) {
+        return buffer;
+    } else if (*valueType == REG_DWORD) {
+        return buffer;
     } else {
-	free(buffer);
-	return NULL;
+        free(buffer);
+        return NULL;
     }
 }
 
 static LPTSTR getXPStylePropFromReg(LPTSTR valueName) {
     DWORD valueType;
     return getWindowsPropFromReg(TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\ThemeManager"),
-				 valueName, &valueType);
+                                 valueName, &valueType);
 }
 
 
@@ -211,22 +211,22 @@ void AwtDesktopProperties::GetXPStyleProperties() {
     value = getXPStylePropFromReg(TEXT("ThemeActive"));
     SetBooleanProperty(TEXT("win.xpstyle.themeActive"), (value != NULL && *value == _T('1')));
     if (value != NULL) {
-	free(value);
+        free(value);
     }
     value = getXPStylePropFromReg(TEXT("DllName"));
     if (value != NULL) {
-	SetStringProperty(TEXT("win.xpstyle.dllName"), value);
-	free(value);
+        SetStringProperty(TEXT("win.xpstyle.dllName"), value);
+        free(value);
     }
     value = getXPStylePropFromReg(TEXT("SizeName"));
     if (value != NULL) {
-	SetStringProperty(TEXT("win.xpstyle.sizeName"), value);
-	free(value);
+        SetStringProperty(TEXT("win.xpstyle.sizeName"), value);
+        free(value);
     }
     value = getXPStylePropFromReg(TEXT("ColorName"));
     if (value != NULL) {
-	SetStringProperty(TEXT("win.xpstyle.colorName"), value);
-	free(value);
+        SetStringProperty(TEXT("win.xpstyle.colorName"), value);
+        free(value);
     }
 }
 
@@ -235,7 +235,7 @@ void AwtDesktopProperties::GetNonClientParameters() {
     //
     // general window properties
     //
-    NONCLIENTMETRICS	ncmetrics;
+    NONCLIENTMETRICS    ncmetrics;
 
     ncmetrics.cbSize = sizeof(ncmetrics);
     VERIFY( SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncmetrics.cbSize, &ncmetrics, FALSE) );
@@ -249,16 +249,16 @@ void AwtDesktopProperties::GetNonClientParameters() {
     SetIntegerProperty( TEXT("win.frame.smallCaptionButtonWidth"), ncmetrics.iSmCaptionWidth );
     SetIntegerProperty( TEXT("win.frame.smallCaptionButtonHeight"), ncmetrics.iSmCaptionHeight );
     SetIntegerProperty( TEXT("win.frame.sizingBorderWidth"), ncmetrics.iBorderWidth );
-    
+
     // menu properties
     SetFontProperty( TEXT("win.menu.font"), ncmetrics.lfMenuFont );
     SetIntegerProperty( TEXT("win.menu.height"), ncmetrics.iMenuHeight );
     SetIntegerProperty( TEXT("win.menu.buttonWidth"), ncmetrics.iMenuWidth );
-    
+
     // scrollbar properties
     SetIntegerProperty( TEXT("win.scrollbar.width"), ncmetrics.iScrollWidth );
     SetIntegerProperty( TEXT("win.scrollbar.height"), ncmetrics.iScrollHeight );
-    
+
     // status bar and tooltip properties
     SetFontProperty( TEXT("win.status.font"), ncmetrics.lfStatusFont );
     SetFontProperty( TEXT("win.tooltip.font"), ncmetrics.lfStatusFont );
@@ -271,7 +271,7 @@ void AwtDesktopProperties::GetIconParameters() {
     //
     // icon properties
     //
-    ICONMETRICS	iconmetrics;
+    ICONMETRICS iconmetrics;
 
     iconmetrics.cbSize = sizeof(iconmetrics);
     VERIFY( SystemParametersInfo(SPI_GETICONMETRICS, iconmetrics.cbSize, &iconmetrics, FALSE) );
@@ -289,10 +289,10 @@ void AwtDesktopProperties::GetIconParameters() {
  HKCU\Control Panel\Desktop\FontSmoothingType: 1=Standard, 2=LCD
  HKCU\Control Panel\Desktop\FontSmoothingGamma: 1000->2200
  HKCU\Control Panel\Desktop\FontSmoothingOrientation: 0=BGR, 1=RGB
- 
+
  SystemParametersInfo supplies the first three of these but does not
  however expose the Orientation. That has to come from the registry.
- 
+
  We go to some small lengths in here to not make queries we don't need.
  Eg if we previously were using standard font smoothing and we still are
  then its unlikely that any change in gamma will have occurred except
@@ -320,17 +320,17 @@ int GetLCDSubPixelOrder() {
     HKEY hkeyDesktop;
     static LPCTSTR DESKTOPKEY = TEXT("Control Panel\\Desktop");
     LONG ret = RegOpenKeyEx(HKEY_CURRENT_USER,
-			    DESKTOPKEY, 0L, KEY_READ, &hkeyDesktop);
+                            DESKTOPKEY, 0L, KEY_READ, &hkeyDesktop);
     if (ret != ERROR_SUCCESS) {
-	return LCD_RGB_ORDER;
+        return LCD_RGB_ORDER;
     }
     ret = RegQueryValueEx(hkeyDesktop, TEXT("FontSmoothingOrientation"),
-			  NULL, NULL, (LPBYTE)&order, (LPDWORD)&bufferSize);
+                          NULL, NULL, (LPBYTE)&order, (LPDWORD)&bufferSize);
     RegCloseKey(hkeyDesktop);
     if (ret != ERROR_SUCCESS) {
-	return LCD_RGB_ORDER;
+        return LCD_RGB_ORDER;
     } else {
-	return (int)order;
+        return (int)order;
     }
 }
 
@@ -357,88 +357,88 @@ void CheckFontSmoothingSettings(HWND hWnd) {
     if (hWnd != NULL) {
         RECT r;
         if (!::GetUpdateRect(hWnd, &r, FALSE) || r.top != 0 || r.left != 0) {
-	    return;
-	}
+            return;
+        }
     }
 
     BOOL fontSmoothing = FALSE, settingsChanged;
     UINT fontSmoothingType=0, fontSmoothingContrast=0, subPixelOrder;
 
     if (firstTime) {
-	SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &fontSmoothing, 0);
-	if (IS_WINXP) {
-	    SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0,
-				 &fontSmoothingType, 0);
-	    SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0,
-				 &fontSmoothingContrast, 0);
-	}
-	lastFontSmoothing = fontSmoothing;
-	lastFontSmoothingType = fontSmoothingType;
-	lastFontSmoothingContrast = fontSmoothingContrast;
-	firstTime = FALSE;
-	return;
+        SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &fontSmoothing, 0);
+        if (IS_WINXP) {
+            SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0,
+                                 &fontSmoothingType, 0);
+            SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0,
+                                 &fontSmoothingContrast, 0);
+        }
+        lastFontSmoothing = fontSmoothing;
+        lastFontSmoothingType = fontSmoothingType;
+        lastFontSmoothingContrast = fontSmoothingContrast;
+        firstTime = FALSE;
+        return;
     } else {
-	SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &fontSmoothing, 0);
-	settingsChanged = fontSmoothing != lastFontSmoothing;
-	if (!settingsChanged && fontSmoothing == FONTSMOOTHING_OFF) {
-	    /* no need to check the other settings in this case. */	    
-	    return;
-	}
-	if (IS_WINXP) {
-	    SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0,
-				 &fontSmoothingType, 0);
-	    settingsChanged |= fontSmoothingType != lastFontSmoothingType;
-	    if (!settingsChanged &&
-		fontSmoothingType == FONTSMOOTHING_STANDARD) {
-		/* No need to check any LCD specific settings */
-		return;
-	    } else {
-		SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0,
-				     &fontSmoothingContrast, 0);
-		settingsChanged |=
-		    fontSmoothingContrast != lastFontSmoothingContrast;	
-		if (fontSmoothingType == FONTSMOOTHING_LCD) {
-		    // Order is a registry entry so more expensive to check.x
-		    subPixelOrder = GetLCDSubPixelOrder();
-		    settingsChanged |= subPixelOrder != lastSubpixelOrder;
-		}
-	    }
-	} else {
-	    if (settingsChanged && fontSmoothing == FONTSMOOTHING_ON) {
-		fontSmoothingType = FONTSMOOTHING_STANDARD;
-	    }
-	}
+        SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &fontSmoothing, 0);
+        settingsChanged = fontSmoothing != lastFontSmoothing;
+        if (!settingsChanged && fontSmoothing == FONTSMOOTHING_OFF) {
+            /* no need to check the other settings in this case. */
+            return;
+        }
+        if (IS_WINXP) {
+            SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0,
+                                 &fontSmoothingType, 0);
+            settingsChanged |= fontSmoothingType != lastFontSmoothingType;
+            if (!settingsChanged &&
+                fontSmoothingType == FONTSMOOTHING_STANDARD) {
+                /* No need to check any LCD specific settings */
+                return;
+            } else {
+                SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0,
+                                     &fontSmoothingContrast, 0);
+                settingsChanged |=
+                    fontSmoothingContrast != lastFontSmoothingContrast;
+                if (fontSmoothingType == FONTSMOOTHING_LCD) {
+                    // Order is a registry entry so more expensive to check.x
+                    subPixelOrder = GetLCDSubPixelOrder();
+                    settingsChanged |= subPixelOrder != lastSubpixelOrder;
+                }
+            }
+        } else {
+            if (settingsChanged && fontSmoothing == FONTSMOOTHING_ON) {
+                fontSmoothingType = FONTSMOOTHING_STANDARD;
+            }
+        }
     }
     if (settingsChanged) {
-	/* Some of these values may not have been queried, but it shouldn't
-	 * matter as what's important is to track changes in values we are
-	 * actually using. The up-call we make here will cause the actual
-	 * values for everything to get queried and set into the desktop
-	 * properties.
-	 */
-	lastFontSmoothing = fontSmoothing;
-	lastFontSmoothingType = fontSmoothingType;
-	lastFontSmoothingContrast = fontSmoothingContrast;
-	lastSubpixelOrder = subPixelOrder;
+        /* Some of these values may not have been queried, but it shouldn't
+         * matter as what's important is to track changes in values we are
+         * actually using. The up-call we make here will cause the actual
+         * values for everything to get queried and set into the desktop
+         * properties.
+         */
+        lastFontSmoothing = fontSmoothing;
+        lastFontSmoothingType = fontSmoothingType;
+        lastFontSmoothingContrast = fontSmoothingContrast;
+        lastSubpixelOrder = subPixelOrder;
 
-	jobject peer = AwtToolkit::GetInstance().GetPeer();
-	if (peer != NULL) {
-	    AwtToolkit::GetEnv()->CallVoidMethod(peer,
-				     AwtToolkit::windowsSettingChangeMID);
-	}
+        jobject peer = AwtToolkit::GetInstance().GetPeer();
+        if (peer != NULL) {
+            AwtToolkit::GetEnv()->CallVoidMethod(peer,
+                                     AwtToolkit::windowsSettingChangeMID);
+        }
     }
 }
 
 void AwtDesktopProperties::GetColorParameters() {
 
     if (IS_WIN98 || IS_WIN2000) {
-        SetColorProperty(TEXT("win.frame.activeCaptionGradientColor"), 
+        SetColorProperty(TEXT("win.frame.activeCaptionGradientColor"),
                               GetSysColor(COLOR_GRADIENTACTIVECAPTION));
-        SetColorProperty(TEXT("win.frame.inactiveCaptionGradientColor"), 
+        SetColorProperty(TEXT("win.frame.inactiveCaptionGradientColor"),
                               GetSysColor(COLOR_GRADIENTINACTIVECAPTION));
-        SetColorProperty(TEXT("win.item.hotTrackedColor"), 
+        SetColorProperty(TEXT("win.item.hotTrackedColor"),
                               GetSysColor(COLOR_HOTLIGHT));
-    }    
+    }
     SetColorProperty(TEXT("win.3d.darkShadowColor"), GetSysColor(COLOR_3DDKSHADOW));
     SetColorProperty(TEXT("win.3d.backgroundColor"), GetSysColor(COLOR_3DFACE));
     SetColorProperty(TEXT("win.3d.highlightColor"), GetSysColor(COLOR_3DHIGHLIGHT));
@@ -448,11 +448,11 @@ void AwtDesktopProperties::GetColorParameters() {
     SetColorProperty(TEXT("win.desktop.backgroundColor"), GetSysColor(COLOR_DESKTOP));
     SetColorProperty(TEXT("win.frame.activeCaptionColor"), GetSysColor(COLOR_ACTIVECAPTION));
     SetColorProperty(TEXT("win.frame.activeBorderColor"), GetSysColor(COLOR_ACTIVEBORDER));
-    
+
     // ?? ?? ??
     SetColorProperty(TEXT("win.frame.color"), GetSysColor(COLOR_WINDOWFRAME)); // ?? WHAT THE HECK DOES THIS MEAN ??
     // ?? ?? ??
-    
+
     SetColorProperty(TEXT("win.frame.backgroundColor"), GetSysColor(COLOR_WINDOW));
     SetColorProperty(TEXT("win.frame.captionTextColor"), GetSysColor(COLOR_CAPTIONTEXT));
     SetColorProperty(TEXT("win.frame.inactiveBorderColor"), GetSysColor(COLOR_INACTIVEBORDER));
@@ -470,7 +470,7 @@ void AwtDesktopProperties::GetColorParameters() {
 #define COLOR_MENUBAR 30
 #endif
     SetColorProperty(TEXT("win.menubar.backgroundColor"),
-				GetSysColor(IS_WINXP ? COLOR_MENUBAR : COLOR_MENU));
+                                GetSysColor(IS_WINXP ? COLOR_MENUBAR : COLOR_MENU));
     SetColorProperty(TEXT("win.scrollbar.backgroundColor"), GetSysColor(COLOR_SCROLLBAR));
     SetColorProperty(TEXT("win.text.grayedTextColor"), GetSysColor(COLOR_GRAYTEXT));
     SetColorProperty(TEXT("win.tooltip.backgroundColor"), GetSysColor(COLOR_INFOBK));
@@ -486,9 +486,9 @@ void AwtDesktopProperties::GetOtherParameters() {
     // TODO END
 
     if (IS_WINXP) {
-        SetIntegerProperty(TEXT("win.text.fontSmoothingType"), 
+        SetIntegerProperty(TEXT("win.text.fontSmoothingType"),
                            GetIntegerParameter(SPI_GETFONTSMOOTHINGTYPE));
-        SetIntegerProperty(TEXT("win.text.fontSmoothingContrast"), 
+        SetIntegerProperty(TEXT("win.text.fontSmoothingContrast"),
                            GetIntegerParameter(SPI_GETFONTSMOOTHINGCONTRAST));
         SetIntegerProperty(TEXT("win.text.fontSmoothingOrientation"),
                            GetLCDSubPixelOrder());
@@ -534,9 +534,9 @@ void AwtDesktopProperties::GetOtherParameters() {
     // END cross-platform properties
 
     if (IS_WIN98 || IS_WIN2000) {
-      //DWORD	menuShowDelay;
+      //DWORD   menuShowDelay;
         //SystemParametersInfo(SPI_GETMENUSHOWDELAY, 0, &menuShowDelay, 0);
-	// SetIntegerProperty(TEXT("win.menu.showDelay"), menuShowDelay);
+        // SetIntegerProperty(TEXT("win.menu.showDelay"), menuShowDelay);
         SetBooleanProperty(TEXT("win.frame.captionGradientsOn"), GetBooleanParameter(SPI_GETGRADIENTCAPTIONS));
         SetBooleanProperty(TEXT("win.item.hotTrackingOn"), GetBooleanParameter(SPI_GETHOTTRACKING));
     }
@@ -549,14 +549,14 @@ void AwtDesktopProperties::GetOtherParameters() {
     HIGHCONTRAST contrast;
     contrast.cbSize = sizeof(HIGHCONTRAST);
     if (SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(HIGHCONTRAST),
-			     &contrast, 0) != 0 &&
-	      (contrast.dwFlags & HCF_HIGHCONTRASTON) == HCF_HIGHCONTRASTON) {
+                             &contrast, 0) != 0 &&
+              (contrast.dwFlags & HCF_HIGHCONTRASTON) == HCF_HIGHCONTRASTON) {
       SetBooleanProperty(TEXT("win.highContrast.on"), TRUE);
     }
     else {
       SetBooleanProperty(TEXT("win.highContrast.on"), FALSE);
     }
-    
+
     if (fn_SHGetSettings != NULL) {
         SHELLFLAGSTATE sfs;
         fn_SHGetSettings(&sfs, SSF_SHOWALLOBJECTS | SSF_SHOWATTRIBCOL);
@@ -579,12 +579,12 @@ void AwtDesktopProperties::GetOtherParameters() {
 
     // Shell Icon BPP - only honored on platforms before XP
     value = getWindowsPropFromReg(TEXT("Control Panel\\Desktop\\WindowMetrics"),
-				  TEXT("Shell Icon BPP"), &valueType);
+                                  TEXT("Shell Icon BPP"), &valueType);
     if (value != NULL) {
-	if (valueType == REG_SZ) {
-	    SetStringProperty(TEXT("win.icon.shellIconBPP"), value);
-	}
-	free(value);
+        if (valueType == REG_SZ) {
+            SetStringProperty(TEXT("win.icon.shellIconBPP"), value);
+        }
+        free(value);
     }
 
 
@@ -595,12 +595,12 @@ void AwtDesktopProperties::GetOtherParameters() {
 
     // NoPlacesBar is a REG_DWORD, with values 0 or 1
     value = getWindowsPropFromReg(TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\comdlg32"),
-				  TEXT("NoPlacesBar"), &valueType);
+                                  TEXT("NoPlacesBar"), &valueType);
     if (value != NULL) {
-	if (valueType == REG_DWORD) {
-	    SetBooleanProperty(TEXT("win.comdlg.noPlacesBar"), (BOOL)((int)*value != 0));
-	}
-	free(value);
+        if (valueType == REG_DWORD) {
+            SetBooleanProperty(TEXT("win.comdlg.noPlacesBar"), (BOOL)((int)*value != 0));
+        }
+        free(value);
     }
 
     LPTSTR valueName = TEXT("PlaceN");
@@ -613,20 +613,20 @@ void AwtDesktopProperties::GetOtherParameters() {
 
     int i = 0;
     do {
-	valueNameBuf[5] = _T('0' + i++);
-	propKeyBuf[25] = valueNameBuf[5];
+        valueNameBuf[5] = _T('0' + i++);
+        propKeyBuf[25] = valueNameBuf[5];
 
-	LPTSTR key = TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\comdlg32\\PlacesBar");
-	if ((value = getWindowsPropFromReg(key, valueNameBuf, &valueType)) != NULL) {
-	    if (valueType == REG_DWORD) {
-		// Value is a CSIDL
-		SetIntegerProperty(propKeyBuf, (int)*value);
-	    } else {
-		// Value is a path
-		SetStringProperty(propKeyBuf, value);
-	    }
-	    free(value);
-	}
+        LPTSTR key = TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\comdlg32\\PlacesBar");
+        if ((value = getWindowsPropFromReg(key, valueNameBuf, &valueType)) != NULL) {
+            if (valueType == REG_DWORD) {
+                // Value is a CSIDL
+                SetIntegerProperty(propKeyBuf, (int)*value);
+            } else {
+                // Value is a path
+                SetStringProperty(propKeyBuf, value);
+            }
+            free(value);
+        }
     } while (value != NULL);
 
     free(valueNameBuf);
@@ -654,7 +654,7 @@ void AwtDesktopProperties::GetSoundEvents() {
 }
 
 BOOL AwtDesktopProperties::GetBooleanParameter(UINT spi) {
-    BOOL	flag;
+    BOOL        flag;
     SystemParametersInfo(spi, 0, &flag, 0);
     DASSERT(flag == TRUE || flag == FALSE); // should be simple boolean value
     return flag;
@@ -669,33 +669,33 @@ UINT AwtDesktopProperties::GetIntegerParameter(UINT spi) {
 void AwtDesktopProperties::SetStringProperty(LPCTSTR propName, LPTSTR value) {
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     GetEnv()->CallVoidMethod(self,
-			     AwtDesktopProperties::setStringPropertyID,
-			     key, JNU_NewStringPlatform(GetEnv(), value));
+                             AwtDesktopProperties::setStringPropertyID,
+                             key, JNU_NewStringPlatform(GetEnv(), value));
     GetEnv()->DeleteLocalRef(key);
 }
 
 void AwtDesktopProperties::SetIntegerProperty(LPCTSTR propName, int value) {
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     GetEnv()->CallVoidMethod(self,
-			     AwtDesktopProperties::setIntegerPropertyID,
-			     key, (jint)value);
+                             AwtDesktopProperties::setIntegerPropertyID,
+                             key, (jint)value);
     GetEnv()->DeleteLocalRef(key);
 }
 
 void AwtDesktopProperties::SetBooleanProperty(LPCTSTR propName, BOOL value) {
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     GetEnv()->CallVoidMethod(self,
-			     AwtDesktopProperties::setBooleanPropertyID,
-			     key, value ? JNI_TRUE : JNI_FALSE);
+                             AwtDesktopProperties::setBooleanPropertyID,
+                             key, value ? JNI_TRUE : JNI_FALSE);
     GetEnv()->DeleteLocalRef(key);
 }
 
-void AwtDesktopProperties::SetColorProperty(LPCTSTR propName, DWORD value) {    
+void AwtDesktopProperties::SetColorProperty(LPCTSTR propName, DWORD value) {
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     GetEnv()->CallVoidMethod(self,
-			     AwtDesktopProperties::setColorPropertyID,
-			     key, GetRValue(value), GetGValue(value),
-			     GetBValue(value));
+                             AwtDesktopProperties::setColorPropertyID,
+                             key, GetRValue(value), GetGValue(value),
+                             GetBValue(value));
     GetEnv()->DeleteLocalRef(key);
 }
 
@@ -733,7 +733,7 @@ void AwtDesktopProperties::SetFontProperty(HDC dc, int fontID,
                         fontName = JNU_NewStringPlatform(GetEnv(), face);
                     }
                     jint pointSize = metrics.tmHeight -
-		                     metrics.tmInternalLeading;
+                                     metrics.tmInternalLeading;
                     jint style = java_awt_Font_PLAIN;
 
                     if (metrics.tmWeight >= FW_BOLD) {
@@ -764,13 +764,13 @@ void AwtDesktopProperties::SetFontProperty(LPCTSTR propName, const LOGFONT & fon
     fontName = JNU_NewStringPlatform(GetEnv(), font.lfFaceName);
 
 #if 0
-    HDC		hdc;
-    int		pixelsPerInch = GetDeviceCaps(hdc, LOGPIXELSY);
+    HDC         hdc;
+    int         pixelsPerInch = GetDeviceCaps(hdc, LOGPIXELSY);
     // convert font size specified in pixels to font size in points
     hdc = GetDC(NULL);
     pointSize = (-font.lfHeight)*72/pixelsPerInch;
     ReleaseDC(NULL, hdc);
-#endif    
+#endif
     // Java uses point sizes, but assumes 1 pixel = 1 point
     pointSize = -font.lfHeight;
 
@@ -778,15 +778,15 @@ void AwtDesktopProperties::SetFontProperty(LPCTSTR propName, const LOGFONT & fon
     style = java_awt_Font_PLAIN;
     DTRACE_PRINTLN1("weight=%d", font.lfWeight);
     if ( font.lfWeight >= FW_BOLD ) {
-	style =  java_awt_Font_BOLD;
+        style =  java_awt_Font_BOLD;
     }
     if ( font.lfItalic ) {
-	style |= java_awt_Font_ITALIC;
+        style |= java_awt_Font_ITALIC;
     }
 
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     GetEnv()->CallVoidMethod(self, AwtDesktopProperties::setFontPropertyID,
-			     key, fontName, style, pointSize);
+                             key, fontName, style, pointSize);
 
     GetEnv()->DeleteLocalRef(fontName);
     GetEnv()->DeleteLocalRef(key);
@@ -796,14 +796,14 @@ void AwtDesktopProperties::SetSoundProperty(LPCTSTR propName, LPCTSTR winEventNa
     jstring key = JNU_NewStringPlatform(GetEnv(), propName);
     jstring event = JNU_NewStringPlatform(GetEnv(), winEventName);
     GetEnv()->CallVoidMethod(self,
-			     AwtDesktopProperties::setSoundPropertyID,
-			     key, event);
+                             AwtDesktopProperties::setSoundPropertyID,
+                             key, event);
 
     GetEnv()->DeleteLocalRef(key);
     GetEnv()->DeleteLocalRef(event);
 }
 
-void AwtDesktopProperties::PlayWindowsSound(LPCTSTR event) {    
+void AwtDesktopProperties::PlayWindowsSound(LPCTSTR event) {
     // stop any currently playing sounds
     AwtWinMM::PlaySoundWrapper(NULL, NULL, SND_PURGE);
     // play the sound for the given event name
@@ -829,7 +829,7 @@ Java_sun_awt_windows_WDesktopProperties_initIDs(JNIEnv *env, jclass cls) {
 
     AwtDesktopProperties::setBooleanPropertyID = env->GetMethodID(cls, "setBooleanProperty", "(Ljava/lang/String;Z)V");
     DASSERT(AwtDesktopProperties::setBooleanPropertyID != 0);
-    
+
     AwtDesktopProperties::setIntegerPropertyID = env->GetMethodID(cls, "setIntegerProperty", "(Ljava/lang/String;I)V");
     DASSERT(AwtDesktopProperties::setIntegerPropertyID != 0);
 
@@ -883,11 +883,10 @@ Java_sun_awt_windows_WDesktopProperties_playWindowsSound(JNIEnv *env, jobject se
     LPCTSTR winEventName;
     winEventName = JNU_GetStringPlatformChars(env, event, NULL);
     if ( winEventName == NULL ) {
-	return;
+        return;
     }
     GetCppThis(env, self)->PlayWindowsSound(winEventName);
     JNU_ReleaseStringPlatformChars(env, event, winEventName);
 
     CATCH_BAD_ALLOC;
 }
-

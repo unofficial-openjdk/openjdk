@@ -28,7 +28,6 @@ package javax.security.auth.login;
 /**
  * A generic credential exception.
  *
- * @version %I%, %G%
  * @since 1.5
  */
 public class CredentialException extends LoginException {
@@ -40,7 +39,7 @@ public class CredentialException extends LoginException {
      * message is a String that describes this particular exception.
      */
     public CredentialException() {
-	super();
+        super();
     }
 
     /**
@@ -53,6 +52,6 @@ public class CredentialException extends LoginException {
      * @param msg the detail message.
      */
     public CredentialException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

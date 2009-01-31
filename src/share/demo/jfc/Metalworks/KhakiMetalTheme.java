@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 
 import javax.swing.plaf.*;
@@ -43,7 +41,6 @@ import java.awt.*;
 /**
  * This class describes a theme using "khaki" colors.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public class KhakiMetalTheme extends DefaultMetalTheme {

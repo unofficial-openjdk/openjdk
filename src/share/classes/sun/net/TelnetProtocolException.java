@@ -30,13 +30,12 @@ import java.io.*;
 /**
  * An unexpected result was received by the client when talking to the
  * telnet server.
- * 
- * @version     %I%,%G%
- * @author      Jonathan Payne 
+ *
+ * @author      Jonathan Payne
  */
 
 public class TelnetProtocolException extends IOException {
     public TelnetProtocolException(String s) {
-	super(s);
+        super(s);
     }
 }

@@ -38,27 +38,27 @@
  */
 JNIEXPORT jstring JNICALL
 Java_sun_tools_attach_WindowsAttachProvider_tempPath(JNIEnv *env, jclass cls)
-{    
+{
     char buf[256];
     DWORD bufLen, actualLen;
     jstring result = NULL;
-    
+
     bufLen = sizeof(buf) / sizeof(char);
-    actualLen = GetTempPath(bufLen, buf);    
+    actualLen = GetTempPath(bufLen, buf);
     if (actualLen > 0) {
-        char* bufP = buf;        
+        char* bufP = buf;
         if (actualLen > bufLen) {
-            actualLen += sizeof(char);            
+            actualLen += sizeof(char);
             bufP = (char*)malloc(actualLen * sizeof(char));
             actualLen = GetTempPath(actualLen, bufP);
         }
         if (actualLen > 0) {
             result = JNU_NewStringPlatform(env, bufP);
         }
-        if (bufP != buf) { 
-            free((void*)bufP);                                   
+        if (bufP != buf) {
+            free((void*)bufP);
         }
-    }        
+    }
     return result;
 }
 
@@ -69,27 +69,27 @@ Java_sun_tools_attach_WindowsAttachProvider_tempPath(JNIEnv *env, jclass cls)
  */
 JNIEXPORT jlong JNICALL
 Java_sun_tools_attach_WindowsAttachProvider_volumeFlags(JNIEnv *env, jclass cls, jstring str)
-{    
+{
     jboolean isCopy;
     const char* volume;
     DWORD result = 0;
-    
+
     volume = JNU_GetStringPlatformChars(env, str, &isCopy);
     if (volume != NULL) {
-        DWORD componentLen, flags;        
+        DWORD componentLen, flags;
         BOOL res = GetVolumeInformation(volume,
                                         NULL,
                                         0,
-                                        NULL,	
+                                        NULL,
                                         &componentLen,
                                         &flags,
-                                        NULL,    
-                                        0);	 
+                                        NULL,
+                                        0);
        if (res != 0) {
            result = flags;
        }
        if (isCopy) {
-	    JNU_ReleaseStringPlatformChars(env, str, volume);
+            JNU_ReleaseStringPlatformChars(env, str, volume);
        }
     }
     return result;
@@ -102,7 +102,7 @@ Java_sun_tools_attach_WindowsAttachProvider_volumeFlags(JNIEnv *env, jclass cls,
 static BOOL  (WINAPI *_EnumProcesses)     (DWORD *, DWORD, DWORD *);
 static BOOL  (WINAPI *_EnumProcessModules)(HANDLE, HMODULE *, DWORD, LPDWORD);
 static DWORD (WINAPI *_GetModuleBaseName) (HANDLE, HMODULE, LPTSTR, DWORD);
- 
+
 
 /*
  * Class:     sun_tools_attach_WindowsAttachProvider
@@ -115,14 +115,14 @@ Java_sun_tools_attach_WindowsAttachProvider_initializeProcessStatusHelper(JNIEnv
     HINSTANCE psapi = LoadLibrary("PSAPI.DLL") ;
     if (psapi != NULL) {
         _EnumProcesses = (BOOL(WINAPI *)(DWORD *, DWORD, DWORD *))
-            GetProcAddress(psapi, "EnumProcesses") ;            
+            GetProcAddress(psapi, "EnumProcesses") ;
         _EnumProcessModules = (BOOL(WINAPI *)(HANDLE, HMODULE *, DWORD, LPDWORD))
-            GetProcAddress(psapi, "EnumProcessModules");         
+            GetProcAddress(psapi, "EnumProcessModules");
         _GetModuleBaseName = (DWORD(WINAPI *)(HANDLE, HMODULE, LPTSTR, DWORD))
             GetProcAddress(psapi, "GetModuleBaseNameA");
     }
-    
-    if ((_EnumProcesses == NULL) || 
+
+    if ((_EnumProcesses == NULL) ||
         (_EnumProcessModules == NULL) ||
         (_GetModuleBaseName == NULL))
     {
@@ -143,17 +143,17 @@ Java_sun_tools_attach_WindowsAttachProvider_enumProcesses(JNIEnv *env, jclass cl
     DWORD size, bytesReturned;
     DWORD* ptr;
     jint result = 0;
-    
+
     size = max * sizeof(DWORD);
     ptr = (DWORD*)malloc(size);
     if (ptr != NULL) {
-        BOOL res = (*_EnumProcesses)(ptr, size, &bytesReturned); 
+        BOOL res = (*_EnumProcesses)(ptr, size, &bytesReturned);
         if (res != 0) {
-            result = (jint)(bytesReturned / sizeof(DWORD));                   
-            (*env)->SetIntArrayRegion(env, arr, 0, (jsize)result, (jint*)ptr);            
+            result = (jint)(bytesReturned / sizeof(DWORD));
+            (*env)->SetIntArrayRegion(env, arr, 0, (jsize)result, (jint*)ptr);
         }
         free((void*)ptr);
-    }    
+    }
     return result;
 }
 
@@ -172,41 +172,41 @@ Java_sun_tools_attach_WindowsAttachProvider_isLibraryLoadedByProcess(JNIEnv *env
     DWORD size, bytesReturned;
     HMODULE* ptr;
     jboolean result = JNI_FALSE;
-    
+
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
                            PROCESS_VM_READ,
                            FALSE, (DWORD)processId);
-    if (hProcess == NULL) {        
+    if (hProcess == NULL) {
         return JNI_FALSE;
-    }    
+    }
     lib = JNU_GetStringPlatformChars(env, str, &isCopy);
     if (lib == NULL) {
         CloseHandle(hProcess);
-        return JNI_FALSE;  
+        return JNI_FALSE;
     }
-    
+
     /*
-     * Enumerate the modules that the process has opened and see if we have a 
+     * Enumerate the modules that the process has opened and see if we have a
      * match.
      */
-    size = 1024 * sizeof(HMODULE);    
+    size = 1024 * sizeof(HMODULE);
     ptr = (HMODULE*)malloc(size);
     if (ptr != NULL) {
         BOOL res = (*_EnumProcessModules)(hProcess, ptr, size, &bytesReturned);
         if (res != 0) {
             int count = bytesReturned / sizeof(HMODULE);
             int i = 0;
-            while (i < count) {           
-                char base[256];                
-                BOOL res = (*_GetModuleBaseName)(hProcess, ptr[i], base, sizeof(base));                
-                if (res != 0) {         
+            while (i < count) {
+                char base[256];
+                BOOL res = (*_GetModuleBaseName)(hProcess, ptr[i], base, sizeof(base));
+                if (res != 0) {
                     if (strcmp(base, lib) == 0) {
-                      result = JNI_TRUE;                  
+                      result = JNI_TRUE;
                       break;
                     }
                 }
                 i++;
-            }   
+            }
         }
         free((void*)ptr);
     }
@@ -214,7 +214,6 @@ Java_sun_tools_attach_WindowsAttachProvider_isLibraryLoadedByProcess(JNIEnv *env
         JNU_ReleaseStringPlatformChars(env, str, lib);
     }
     CloseHandle(hProcess);
-    
+
     return result;
 }
-

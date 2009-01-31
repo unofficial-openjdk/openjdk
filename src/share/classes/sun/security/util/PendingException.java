@@ -29,7 +29,6 @@ package sun.security.util;
  * An exception that denotes that an operation is pending.
  * Currently used by LoginContext.
  *
- * @version %I%
  */
 public class PendingException extends RuntimeException {
 

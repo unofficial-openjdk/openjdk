@@ -31,50 +31,50 @@
 import java.net.*;
 public class ProxyCons {
     class Server extends Thread {
-	ServerSocket server;
-	Server (ServerSocket server) {
-	    super ();
-	    this.server = server;
-	}
-	public void run () {
-	    try {
-	    	Socket s = server.accept ();
-	        while (!finished ()) {
-		    Thread.sleep (500);
-	        }
-	    } catch (Exception e) {
-	    }
-	}
-	boolean isFinished = false;
+        ServerSocket server;
+        Server (ServerSocket server) {
+            super ();
+            this.server = server;
+        }
+        public void run () {
+            try {
+                Socket s = server.accept ();
+                while (!finished ()) {
+                    Thread.sleep (500);
+                }
+            } catch (Exception e) {
+            }
+        }
+        boolean isFinished = false;
 
-	synchronized boolean finished () {
-	    return (isFinished);
-	}
-	synchronized void done () {
-	    isFinished = true;
-	}
+        synchronized boolean finished () {
+            return (isFinished);
+        }
+        synchronized void done () {
+            isFinished = true;
+        }
     }
 
     public ProxyCons() {
     }
 
     void test() {
-	try {
-	    ServerSocket ss = new ServerSocket();
-	    ss.bind(new InetSocketAddress(0));
-	    Server s = new Server(ss);
-	    s.start();
-	    Socket sock = new Socket(Proxy.NO_PROXY);
-	    sock.connect(new InetSocketAddress("localhost", ss.getLocalPort()));
-	    s.done();
-	    sock.close();
-	} catch (java.io.IOException e) {
-	    throw new RuntimeException(e);
-	}
+        try {
+            ServerSocket ss = new ServerSocket();
+            ss.bind(new InetSocketAddress(0));
+            Server s = new Server(ss);
+            s.start();
+            Socket sock = new Socket(Proxy.NO_PROXY);
+            sock.connect(new InetSocketAddress("localhost", ss.getLocalPort()));
+            s.done();
+            sock.close();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {
         ProxyCons c = new ProxyCons();
-	c.test();
+        c.test();
     }
 }

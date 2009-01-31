@@ -32,7 +32,7 @@ import com.sun.jdi.request.*;
 import java.util.*;
 
 public abstract class AbstractEventSet extends EventObject implements EventSet {
-    
+
     private final EventSet jdiEventSet;
     final Event oneEvent;
 
@@ -94,11 +94,11 @@ public abstract class AbstractEventSet extends EventObject implements EventSet {
     /**
      * Returns the policy used to suspend threads in the target VM
      * for this event set. This policy is selected from the suspend
-     * policies for each event's request. The one that suspends the 
+     * policies for each event's request. The one that suspends the
      * most threads is chosen when the event occurs in the target VM
-     * and that policy is returned here. See 
+     * and that policy is returned here. See
      * com.sun.jdi.request.EventRequest for the possible policy values.
-     * 
+     *
      * @return the integer suspendPolicy
      */
     public int getSuspendPolicy() {
@@ -194,10 +194,10 @@ public abstract class AbstractEventSet extends EventObject implements EventSet {
      * contract of the <tt>Collection.toArray(Object[])</tt> method.
      *
      * @param a the array into which the elements of this set are to
-     *		be stored, if it is big enough {
+     *          be stored, if it is big enough {
         return jdiEventSet.XXX();
     } otherwise, a new array of the
-     * 		same runtime type is allocated for this purpose.
+     *          same runtime type is allocated for this purpose.
      * @return an array containing the elements of this set.
      * @throws    ArrayStoreException the runtime type of a is not a supertype
      * of the runtime type of every element in this set.
@@ -215,7 +215,7 @@ public abstract class AbstractEventSet extends EventObject implements EventSet {
      *
      * @param c collection to be checked for containment in this set.
      * @return <tt>true</tt> if this set contains all of the elements of the
-     * 	       specified collection.
+     *         specified collection.
      */
     public boolean containsAll(Collection<?> c) {
         return jdiEventSet.containsAll(c);
@@ -243,4 +243,3 @@ public abstract class AbstractEventSet extends EventObject implements EventSet {
         throw new UnsupportedOperationException();
     }
 }
-

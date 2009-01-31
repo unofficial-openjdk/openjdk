@@ -31,9 +31,9 @@
  * LoopMacros.h to manipulate a surface of type "AnyInt".
  */
 
-typedef jint	AnyIntDataType;
+typedef jint    AnyIntDataType;
 
-#define AnyIntPixelStride	4
+#define AnyIntPixelStride       4
 
 #define DeclareAnyIntLoadVars(PREFIX)
 #define DeclareAnyIntStoreVars(PREFIX)

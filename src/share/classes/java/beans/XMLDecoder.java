@@ -34,17 +34,17 @@ import java.lang.ref.WeakReference;
 
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.SAXParserFactory;  
-import javax.xml.parsers.ParserConfigurationException;  
-import javax.xml.parsers.SAXParser;  
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
 
 /**
- * The <code>XMLDecoder</code> class is used to read XML documents 
- * created using the <code>XMLEncoder</code> and is used just like 
- * the <code>ObjectInputStream</code>. For example, one can use 
- * the following fragment to read the first object defined 
- * in an XML document written by the <code>XMLEncoder</code> 
- * class: 
+ * The <code>XMLDecoder</code> class is used to read XML documents
+ * created using the <code>XMLEncoder</code> and is used just like
+ * the <code>ObjectInputStream</code>. For example, one can use
+ * the following fragment to read the first object defined
+ * in an XML document written by the <code>XMLEncoder</code>
+ * class:
  * <pre>
  *       XMLDecoder d = new XMLDecoder(
  *                          new BufferedInputStream(
@@ -52,7 +52,7 @@ import javax.xml.parsers.SAXParser;
  *       Object result = d.readObject();
  *       d.close();
  * </pre>
- * 
+ *
  *<p>
  * For more information you might also want to check out
  * <a
@@ -62,57 +62,56 @@ import javax.xml.parsers.SAXParser;
  * @see java.io.ObjectInputStream
  *
  * @since 1.4
- * 
- * @version %I% %G%
+ *
  * @author Philip Milne
  */
-public class XMLDecoder { 
-    private InputStream in; 
-    private Object owner; 
-    private ExceptionListener exceptionListener; 
-    private ObjectHandler handler; 
+public class XMLDecoder {
+    private InputStream in;
+    private Object owner;
+    private ExceptionListener exceptionListener;
+    private ObjectHandler handler;
     private Reference clref;
-    
-    /** 
-     * Creates a new input stream for reading archives  
-     * created by the <code>XMLEncoder</code> class. 
+
+    /**
+     * Creates a new input stream for reading archives
+     * created by the <code>XMLEncoder</code> class.
      *
-     * @param in The underlying stream. 
+     * @param in The underlying stream.
      *
      * @see XMLEncoder#XMLEncoder(java.io.OutputStream)
-     */ 
-    public XMLDecoder(InputStream in) { 
-        this(in, null); 
-    } 
-    
-    /** 
-     * Creates a new input stream for reading archives  
-     * created by the <code>XMLEncoder</code> class. 
-     *
-     * @param in The underlying stream. 
-     * @param owner The owner of this stream. 
-     *
-     */ 
-    public XMLDecoder(InputStream in, Object owner) { 
-        this(in, owner, null); 
-    } 
-    
-    /** 
-     * Creates a new input stream for reading archives  
-     * created by the <code>XMLEncoder</code> class. 
-     *
-     * @param in the underlying stream. 
-     * @param owner the owner of this stream. 
-     * @param exceptionListener the exception handler for the stream;
-     *        if <code>null</code> the default exception listener will be used.
-     */ 
-    public XMLDecoder(InputStream in, Object owner, ExceptionListener exceptionListener) { 
-	this(in, owner, exceptionListener, null);
+     */
+    public XMLDecoder(InputStream in) {
+        this(in, null);
     }
 
-    /** 
-     * Creates a new input stream for reading archives  
-     * created by the <code>XMLEncoder</code> class. 
+    /**
+     * Creates a new input stream for reading archives
+     * created by the <code>XMLEncoder</code> class.
+     *
+     * @param in The underlying stream.
+     * @param owner The owner of this stream.
+     *
+     */
+    public XMLDecoder(InputStream in, Object owner) {
+        this(in, owner, null);
+    }
+
+    /**
+     * Creates a new input stream for reading archives
+     * created by the <code>XMLEncoder</code> class.
+     *
+     * @param in the underlying stream.
+     * @param owner the owner of this stream.
+     * @param exceptionListener the exception handler for the stream;
+     *        if <code>null</code> the default exception listener will be used.
+     */
+    public XMLDecoder(InputStream in, Object owner, ExceptionListener exceptionListener) {
+        this(in, owner, exceptionListener, null);
+    }
+
+    /**
+     * Creates a new input stream for reading archives
+     * created by the <code>XMLEncoder</code> class.
      *
      * @param in the underlying stream.  <code>null</code> may be passed without
      *        error, though the resulting XMLDecoder will be useless
@@ -120,125 +119,125 @@ public class XMLDecoder {
      *        value
      * @param exceptionListener the exception handler for the stream, or
      *        <code>null</code> to use the default
-     * @param cl the class loader used for instantiating objects.  
+     * @param cl the class loader used for instantiating objects.
      *        <code>null</code> indicates that the default class loader should
      *        be used
      * @since 1.5
-     */ 
-    public XMLDecoder(InputStream in, Object owner, 
-                      ExceptionListener exceptionListener, ClassLoader cl) { 
-        this.in = in;  
-        setOwner(owner);  
-        setExceptionListener(exceptionListener); 
+     */
+    public XMLDecoder(InputStream in, Object owner,
+                      ExceptionListener exceptionListener, ClassLoader cl) {
+        this.in = in;
+        setOwner(owner);
+        setExceptionListener(exceptionListener);
         setClassLoader(cl);
-    } 
+    }
 
-    
+
     /**
-     * Set the class loader used to instantiate objects for this stream. 
-     * 
+     * Set the class loader used to instantiate objects for this stream.
+     *
      * @param cl a classloader to use; if null then the default class loader
      *           will be used
      */
     private void setClassLoader(ClassLoader cl) {
-	if (cl != null) {
-	    this.clref = new WeakReference(cl);
-	}
+        if (cl != null) {
+            this.clref = new WeakReference(cl);
+        }
     }
 
     /**
-     * Return the class loader used to instantiate objects. If the class loader 
+     * Return the class loader used to instantiate objects. If the class loader
      * has not been explicitly set then null is returned.
-     * 
-     * @return the class loader used to instantiate objects 
-     */ 
-    private ClassLoader getClassLoader() { 
+     *
+     * @return the class loader used to instantiate objects
+     */
+    private ClassLoader getClassLoader() {
         if (clref != null) {
             return (ClassLoader)clref.get();
         }
-        return null; 
-    } 
+        return null;
+    }
 
     /**
-     * This method closes the input stream associated 
-     * with this stream. 
+     * This method closes the input stream associated
+     * with this stream.
      */
-    public void close() { 
+    public void close() {
         if (in != null) {
             getHandler();
-            try { 
-                in.close(); 
-            } 
-            catch (IOException e) { 
-                getExceptionListener().exceptionThrown(e); 
+            try {
+                in.close();
+            }
+            catch (IOException e) {
+                getExceptionListener().exceptionThrown(e);
             }
         }
     }
-    
-    /** 
-     * Sets the exception handler for this stream to <code>exceptionListener</code>. 
-     * The exception handler is notified when this stream catches recoverable 
+
+    /**
+     * Sets the exception handler for this stream to <code>exceptionListener</code>.
+     * The exception handler is notified when this stream catches recoverable
      * exceptions.
-     * 
+     *
      * @param exceptionListener The exception handler for this stream;
-     * if <code>null</code> the default exception listener will be used. 
+     * if <code>null</code> the default exception listener will be used.
      *
      * @see #getExceptionListener
-     */ 
-    public void setExceptionListener(ExceptionListener exceptionListener) { 
-        this.exceptionListener = exceptionListener; 
-    } 
-    
+     */
+    public void setExceptionListener(ExceptionListener exceptionListener) {
+        this.exceptionListener = exceptionListener;
+    }
+
     /**
-     * Gets the exception handler for this stream. 
-     * 
-     * @return The exception handler for this stream. 
+     * Gets the exception handler for this stream.
+     *
+     * @return The exception handler for this stream.
      *     Will return the default exception listener if this has not explicitly been set.
      *
      * @see #setExceptionListener
-     */ 
-    public ExceptionListener getExceptionListener() { 
-        return (exceptionListener != null) ? exceptionListener : 
-	    Statement.defaultExceptionListener;
-    } 
-    
-    /** 
-     * Reads the next object from the underlying input stream. 
+     */
+    public ExceptionListener getExceptionListener() {
+        return (exceptionListener != null) ? exceptionListener :
+            Statement.defaultExceptionListener;
+    }
+
+    /**
+     * Reads the next object from the underlying input stream.
      *
      * @return the next object read
      *
-     * @throws ArrayIndexOutOfBoundsException if the stream contains no objects 
+     * @throws ArrayIndexOutOfBoundsException if the stream contains no objects
      *         (or no more objects)
      *
      * @see XMLEncoder#writeObject
-     */ 
-    public Object readObject() { 
-	if (in == null) {
-	    return null;
-	}
+     */
+    public Object readObject() {
+        if (in == null) {
+            return null;
+        }
         return getHandler().dequeueResult();
-    } 
-	
-    /** 
-     * Sets the owner of this decoder to <code>owner</code>. 
-     * 
-     * @param owner The owner of this decoder. 
+    }
+
+    /**
+     * Sets the owner of this decoder to <code>owner</code>.
+     *
+     * @param owner The owner of this decoder.
      *
      * @see #getOwner
-     */ 
-    public void setOwner(Object owner) { 
-        this.owner = owner; 
+     */
+    public void setOwner(Object owner) {
+        this.owner = owner;
     }
-	    
+
     /**
-     * Gets the owner of this decoder. 
-     * 
-     * @return The owner of this decoder. 
+     * Gets the owner of this decoder.
+     *
+     * @return The owner of this decoder.
      *
      * @see #setOwner
-     */ 
+     */
     public Object getOwner() {
-	return owner; 
+        return owner;
     }
 
     /**

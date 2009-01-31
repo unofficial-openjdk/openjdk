@@ -54,13 +54,12 @@ import sun.swing.plaf.synth.*;
  * <code>setStyleFactory</code>.
  * <p>
  * <strong>Warning:</strong>
- * This class implements {@link Serializable} as a side effect of it 
+ * This class implements {@link Serializable} as a side effect of it
  * extending {@link BasicLookAndFeel}. It is not intended to be serialized.
- * An attempt to serialize it will 
+ * An attempt to serialize it will
  * result in {@link NotSerializableException}.
- * 
- * @serial exclude 
- * @version 1.48, 05/24/05
+ *
+ * @serial exclude
  * @since 1.5
  * @author Scott Violet
  */
@@ -115,7 +114,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     /**
      * Used by the renderers. For the most part the renderers are implemented
      * as Labels, which is problematic in so far as they are never selected.
-     * To accomodate this SynthLabelUI checks if the current 
+     * To accomodate this SynthLabelUI checks if the current
      * UI matches that of <code>selectedUI</code> (which this methods sets), if
      * it does, then a state as set by this method is returned. This provides
      * a way for labels to have a state other than selected.
@@ -584,11 +583,11 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
         if (defaultsMap == null) {
             defaultsMap = new HashMap();
         }
-        
+
         new SynthParser().parse(input, (DefaultSynthStyleFactory) factory,
                                 null, resourceBase, defaultsMap);
     }
-    
+
     /**
      * Loads the set of <code>SynthStyle</code>s that will be used by
      * this <code>SynthLookAndFeel</code>. Path based resources are resolved
@@ -614,7 +613,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
         if (defaultsMap == null) {
             defaultsMap = new HashMap();
         }
-        
+
         InputStream input = url.openStream();
         new SynthParser().parse(input, (DefaultSynthStyleFactory) factory,
                                 url, null, defaultsMap);
@@ -650,7 +649,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
      */
     public UIDefaults getDefaults() {
         UIDefaults table = new UIDefaults(60, 0.75f);
-    
+
         Region.registerUIs(table);
         table.setDefaultLocale(Locale.getDefault());
         table.addResourceBundle(
@@ -659,7 +658,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
 
         // SynthTabbedPaneUI supports rollover on tabs, GTK does not
         table.put("TabbedPane.isTabRollover", Boolean.TRUE);
-        
+
         // These need to be defined for JColorChooser to work.
         table.put("ColorChooser.swatchesRecentSwatchSize",
                   new Dimension(10, 10));
@@ -668,26 +667,26 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
 
         // These are needed for PopupMenu.
         table.put("PopupMenu.selectedWindowInputMapBindings", new Object[] {
-		  "ESCAPE", "cancel",
+                  "ESCAPE", "cancel",
                     "DOWN", "selectNext",
-		 "KP_DOWN", "selectNext",
-		      "UP", "selectPrevious",
-		   "KP_UP", "selectPrevious",
-		    "LEFT", "selectParent",
-		 "KP_LEFT", "selectParent",
-		   "RIGHT", "selectChild",
-		"KP_RIGHT", "selectChild",
-		   "ENTER", "return",
-		   "SPACE", "return"
+                 "KP_DOWN", "selectNext",
+                      "UP", "selectPrevious",
+                   "KP_UP", "selectPrevious",
+                    "LEFT", "selectParent",
+                 "KP_LEFT", "selectParent",
+                   "RIGHT", "selectChild",
+                "KP_RIGHT", "selectChild",
+                   "ENTER", "return",
+                   "SPACE", "return"
         });
         table.put("PopupMenu.selectedWindowInputMapBindings.RightToLeft",
                   new Object[] {
-		    "LEFT", "selectChild",
-		 "KP_LEFT", "selectChild",
-		   "RIGHT", "selectParent",
-		"KP_RIGHT", "selectParent",
+                    "LEFT", "selectChild",
+                 "KP_LEFT", "selectChild",
+                   "RIGHT", "selectParent",
+                "KP_RIGHT", "selectParent",
                   });
-        
+
         // enabled antialiasing depending on desktop settings
         flushUnreferenced();
         Object aaTextInfo = getAATextInfo();
@@ -760,33 +759,33 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
     public boolean shouldUpdateStyleOnAncestorChanged() {
         return false;
     }
-    
+
     /**
      * Returns the antialiasing information as specified by the host desktop.
      * Antialiasing might be forced off if the desktop is GNOME and the user
      * has set his locale to Chinese, Japanese or Korean. This is consistent
      * with what GTK does. See com.sun.java.swing.plaf.gtk.GtkLookAndFeel
      * for more information about CJK and antialiased fonts.
-     * 
-     * @return the text antialiasing information associated to the desktop 
+     *
+     * @return the text antialiasing information associated to the desktop
      */
     private static Object getAATextInfo() {
         String language = Locale.getDefault().getLanguage();
         String desktop = (String)
             AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
-        
+
         boolean isCjkLocale = (Locale.CHINESE.getLanguage().equals(language) ||
                 Locale.JAPANESE.getLanguage().equals(language) ||
                 Locale.KOREAN.getLanguage().equals(language));
         boolean isGnome = "gnome".equals(desktop);
         boolean isLocal = SwingUtilities2.isLocalDisplay();
-        
+
         boolean setAA = isLocal && (!isGnome || !isCjkLocale);
 
         Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(setAA);
         return aaTextInfo;
     }
-    
+
     private static ReferenceQueue queue = new ReferenceQueue();
 
     private static void flushUnreferenced() {
@@ -795,24 +794,24 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
             aatl.dispose();
         }
     }
-    
+
     private static class AATextListener
         extends WeakReference implements PropertyChangeListener {
         private String key = SunToolkit.DESKTOPFONTHINTS;
-    
+
         AATextListener(LookAndFeel laf) {
             super(laf, queue);
             Toolkit tk = Toolkit.getDefaultToolkit();
             tk.addPropertyChangeListener(key, this);
         }
-    
+
         public void propertyChange(PropertyChangeEvent pce) {
             UIDefaults defaults = UIManager.getLookAndFeelDefaults();
             if (defaults.getBoolean("Synth.doNotSetTextAA")) {
                 dispose();
                 return;
             }
-            
+
             LookAndFeel laf = (LookAndFeel) get();
             if (laf == null || laf != UIManager.getLookAndFeel()) {
                 dispose();
@@ -824,12 +823,12 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
 
             updateUI();
         }
-    
+
         void dispose() {
             Toolkit tk = Toolkit.getDefaultToolkit();
             tk.removePropertyChangeListener(key, this);
         }
-    
+
         /**
          * Updates the UI of the passed in window and all its children.
          */
@@ -840,7 +839,7 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
                 updateWindowUI(ownedWins[i]);
             }
         }
-    
+
         /**
          * Updates the UIs of all the known Frames.
          */
@@ -850,26 +849,26 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
                 updateWindowUI(appFrames[i]);
             }
         }
-    
+
         /**
          * Indicates if an updateUI call is pending.
          */
         private static boolean updatePending;
-    
+
         /**
          * Sets whether or not an updateUI call is pending.
          */
         private static synchronized void setUpdatePending(boolean update) {
             updatePending = update;
         }
-    
+
         /**
          * Returns true if a UI update is pending.
          */
         private static synchronized boolean isUpdatePending() {
             return updatePending;
         }
-    
+
         protected void updateUI() {
             if (!isUpdatePending()) {
                 setUpdatePending(true);
@@ -883,8 +882,8 @@ public class SynthLookAndFeel extends BasicLookAndFeel {
             }
         }
     }
-    
-    private void writeObject(java.io.ObjectOutputStream out) 
+
+    private void writeObject(java.io.ObjectOutputStream out)
             throws IOException {
         throw new NotSerializableException(this.getClass().getName());
     }

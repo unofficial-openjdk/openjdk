@@ -31,9 +31,8 @@ import java.security.spec.AlgorithmParameterSpec;
 /**
  * This class specifies the set of parameters used to generate an RSA
  * key pair.
- * 
+ *
  * @author Jan Luehe
- * @version %I% %G%
  *
  * @see java.security.KeyPairGenerator#initialize(java.security.spec.AlgorithmParameterSpec)
  *
@@ -63,8 +62,8 @@ public class RSAKeyGenParameterSpec implements AlgorithmParameterSpec {
      * @param publicExponent the public exponent
      */
     public RSAKeyGenParameterSpec(int keysize, BigInteger publicExponent) {
-	this.keysize = keysize;
-	this.publicExponent = publicExponent;
+        this.keysize = keysize;
+        this.publicExponent = publicExponent;
     }
 
     /**
@@ -73,7 +72,7 @@ public class RSAKeyGenParameterSpec implements AlgorithmParameterSpec {
      * @return the keysize.
      */
     public int getKeysize() {
-	return keysize;
+        return keysize;
     }
 
     /**
@@ -82,6 +81,6 @@ public class RSAKeyGenParameterSpec implements AlgorithmParameterSpec {
      * @return the public-exponent value.
      */
     public BigInteger getPublicExponent() {
-	return publicExponent;
+        return publicExponent;
     }
 }

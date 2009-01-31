@@ -32,7 +32,6 @@ package java.util;
  * any method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class UnknownFormatConversionException extends IllegalFormatException {
@@ -48,9 +47,9 @@ public class UnknownFormatConversionException extends IllegalFormatException {
      *         Unknown conversion
      */
     public UnknownFormatConversionException(String s) {
-	if (s == null)
-	    throw new NullPointerException();
-	this.s = s;
+        if (s == null)
+            throw new NullPointerException();
+        this.s = s;
     }
 
     /**
@@ -59,11 +58,11 @@ public class UnknownFormatConversionException extends IllegalFormatException {
      * @return  The unknown conversion.
      */
     public String getConversion() {
-	return s;
+        return s;
     }
 
     // javadoc inherited from Throwable.java
     public String getMessage() {
-	return String.format("Conversion = '%s'", s);
+        return String.format("Conversion = '%s'", s);
     }
 }

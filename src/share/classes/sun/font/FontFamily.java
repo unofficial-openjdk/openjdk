@@ -49,7 +49,7 @@ public class FontFamily {
     }
 
     public static String[] getAllFamilyNames() {
-	return null;
+        return null;
     }
 
     /* Only for use by FontManager.deRegisterBadFont(..).
@@ -57,34 +57,34 @@ public class FontFamily {
      * from the map
      */
     static void remove(Font2D font2D) {
-	
-	String name = font2D.getFamilyName(Locale.ENGLISH);
-	FontFamily family = getFamily(name);
-	if (family == null) {
-	    return;
-	}
-	if (family.plain == font2D) {
-	    family.plain = null;
-	}
-	if (family.bold == font2D) {
-	    family.bold = null;
-	}
-	if (family.italic == font2D) {
-	    family.italic = null;
-	}
-	if (family.bolditalic == font2D) {
-	    family.bolditalic = null;
-	}
-	if (family.plain == null && family.bold == null &&
-	    family.plain == null && family.bold == null) {
+
+        String name = font2D.getFamilyName(Locale.ENGLISH);
+        FontFamily family = getFamily(name);
+        if (family == null) {
+            return;
+        }
+        if (family.plain == font2D) {
+            family.plain = null;
+        }
+        if (family.bold == font2D) {
+            family.bold = null;
+        }
+        if (family.italic == font2D) {
+            family.italic = null;
+        }
+        if (family.bolditalic == font2D) {
+            family.bolditalic = null;
+        }
+        if (family.plain == null && family.bold == null &&
+            family.plain == null && family.bold == null) {
             familyNameMap.remove(name);
-	}
+        }
     }
 
     public FontFamily(String name, boolean isLogFont, int rank) {
-	logicalFont = isLogFont;
-	familyName = name;
-	familyRank = rank;
+        logicalFont = isLogFont;
+        familyName = name;
+        familyRank = rank;
         familyNameMap.put(name.toLowerCase(Locale.ENGLISH), this);
     }
 
@@ -98,66 +98,66 @@ public class FontFamily {
     }
 
     public String getFamilyName() {
-	return familyName;
+        return familyName;
     }
 
     public int getRank() {
-	return familyRank;
+        return familyRank;
     }
 
     public void setFont(Font2D font, int style) {
-	if (font.getRank() > familyRank) {
-	    if (FontManager.logging) {
-		FontManager.logger.warning("Rejecting adding " + font +
-					   " of lower rank " + font.getRank() +
-					   " to family " + this +
-					   " of rank " + familyRank);
-	    }
-	    return;
-	}
+        if (font.getRank() > familyRank) {
+            if (FontManager.logging) {
+                FontManager.logger.warning("Rejecting adding " + font +
+                                           " of lower rank " + font.getRank() +
+                                           " to family " + this +
+                                           " of rank " + familyRank);
+            }
+            return;
+        }
 
-	switch (style) {
+        switch (style) {
 
-	case Font.PLAIN:
-	    plain = font;
-	    break;
+        case Font.PLAIN:
+            plain = font;
+            break;
 
-	case Font.BOLD:
-	    bold = font;
-	    break;
+        case Font.BOLD:
+            bold = font;
+            break;
 
-	case Font.ITALIC:
-	    italic = font;
-	    break;
-	    
-	case Font.BOLD|Font.ITALIC:
-	    bolditalic = font;
-	    break;
+        case Font.ITALIC:
+            italic = font;
+            break;
 
-	default:
-	    break;
-	}
+        case Font.BOLD|Font.ITALIC:
+            bolditalic = font;
+            break;
+
+        default:
+            break;
+        }
     }
 
     public Font2D getFontWithExactStyleMatch(int style) {
 
-	switch (style) {
+        switch (style) {
 
-	case Font.PLAIN:
-	    return plain;
+        case Font.PLAIN:
+            return plain;
 
-	case Font.BOLD:
-	    return bold;
+        case Font.BOLD:
+            return bold;
 
-	case Font.ITALIC:
-	    return italic;
-   
-	case Font.BOLD|Font.ITALIC:
-	    return bolditalic;
+        case Font.ITALIC:
+            return italic;
 
-	default:
-	    return null;
-	}
+        case Font.BOLD|Font.ITALIC:
+            return bolditalic;
+
+        default:
+            return null;
+        }
     }
 
     /* REMIND: if the callers of this method are operating in an
@@ -170,44 +170,44 @@ public class FontFamily {
      */
     public Font2D getFont(int style) {
 
-	switch (style) {
+        switch (style) {
 
-	case Font.PLAIN:
-	    return plain;
+        case Font.PLAIN:
+            return plain;
 
-	case Font.BOLD:
-	    if (bold != null) {
-		return bold;
-	    } else if (plain != null && plain.canDoStyle(style)) {
-		    return plain;
-	    } else {
-		return null;
-	    }
+        case Font.BOLD:
+            if (bold != null) {
+                return bold;
+            } else if (plain != null && plain.canDoStyle(style)) {
+                    return plain;
+            } else {
+                return null;
+            }
 
-	case Font.ITALIC:
-	    if (italic != null) {
-		return italic;
-	    } else if (plain != null && plain.canDoStyle(style)) {
-		    return plain;
-	    } else {
-		return null;
-	    }
-   
-	case Font.BOLD|Font.ITALIC:
-	    if (bolditalic != null) {
-		return bolditalic;
-	    } else if (italic != null && italic.canDoStyle(style)) {
-		    return italic;
-	    } else if (bold != null && bold.canDoStyle(style)) {
-		    return italic;
-	    } else if (plain != null && plain.canDoStyle(style)) {
-		    return plain;
-	    } else {
-		return null;
-	    }
-	default:
-	    return null;
-	}
+        case Font.ITALIC:
+            if (italic != null) {
+                return italic;
+            } else if (plain != null && plain.canDoStyle(style)) {
+                    return plain;
+            } else {
+                return null;
+            }
+
+        case Font.BOLD|Font.ITALIC:
+            if (bolditalic != null) {
+                return bolditalic;
+            } else if (italic != null && italic.canDoStyle(style)) {
+                    return italic;
+            } else if (bold != null && bold.canDoStyle(style)) {
+                    return italic;
+            } else if (plain != null && plain.canDoStyle(style)) {
+                    return plain;
+            } else {
+                return null;
+            }
+        default:
+            return null;
+        }
     }
 
     /* Only to be called if getFont(style) returns null
@@ -218,79 +218,79 @@ public class FontFamily {
      */
      Font2D getClosestStyle(int style) {
 
-	switch (style) {
-	    /* if you ask for a plain font try to return a non-italic one,
-	     * then a italic one, finally a bold italic one */
+        switch (style) {
+            /* if you ask for a plain font try to return a non-italic one,
+             * then a italic one, finally a bold italic one */
         case Font.PLAIN:
-	    if (bold != null) {
-		return bold;
-	    } else if (italic != null) {
-		return italic;
-	    } else {
-		return bolditalic;
-	    }
-	    
-	    /* if you ask for a bold font try to return a non-italic one,
-	     * then a bold italic one, finally an italic one */
-	case Font.BOLD:
-	    if (plain != null) {
-		return plain;
-	    } else if (bolditalic != null) {
-		return bolditalic;
-	    } else {
-		return italic;
-	    }
-	    
-	    /* if you ask for a italic font try to return a  bold italic one,
-	     * then a plain one, finally an bold one */
-	case Font.ITALIC:
-	    if (bolditalic != null) {
-		return bolditalic;
-	    } else if (plain != null) {
-		return plain;
-	    } else {
-		return bold;
-	    }
-	
-	case Font.BOLD|Font.ITALIC:
-	    if (italic != null) {
-		return italic;
-	    } else if (bold != null) {
-		return bold;
-	    } else {
-		return plain;
-	    }
-	}
-	return null;
+            if (bold != null) {
+                return bold;
+            } else if (italic != null) {
+                return italic;
+            } else {
+                return bolditalic;
+            }
+
+            /* if you ask for a bold font try to return a non-italic one,
+             * then a bold italic one, finally an italic one */
+        case Font.BOLD:
+            if (plain != null) {
+                return plain;
+            } else if (bolditalic != null) {
+                return bolditalic;
+            } else {
+                return italic;
+            }
+
+            /* if you ask for a italic font try to return a  bold italic one,
+             * then a plain one, finally an bold one */
+        case Font.ITALIC:
+            if (bolditalic != null) {
+                return bolditalic;
+            } else if (plain != null) {
+                return plain;
+            } else {
+                return bold;
+            }
+
+        case Font.BOLD|Font.ITALIC:
+            if (italic != null) {
+                return italic;
+            } else if (bold != null) {
+                return bold;
+            } else {
+                return plain;
+            }
+        }
+        return null;
     }
 
     /* Font may have localized names. Store these in a separate map, so
      * that only clients who use these names need be affected.
      */
     static synchronized void addLocaleNames(FontFamily family, String[] names){
-	if (allLocaleNames == null) {
+        if (allLocaleNames == null) {
             allLocaleNames = new HashMap<String, FontFamily>();
-	}
-	for (int i=0; i<names.length; i++) {
-	    allLocaleNames.put(names[i].toLowerCase(), family);
-	}
+        }
+        for (int i=0; i<names.length; i++) {
+            allLocaleNames.put(names[i].toLowerCase(), family);
+        }
     }
 
     public static synchronized FontFamily getLocaleFamily(String name) {
-	if (allLocaleNames == null) {
-	    return null;
-	}
+        if (allLocaleNames == null) {
+            return null;
+        }
         return allLocaleNames.get(name.toLowerCase());
     }
 
     public String toString() {
-	return
-	    "Font family: " + familyName +
-	    " plain="+plain+
-	    " bold=" + bold +
-	    " italic=" + italic +
-	    " bolditalic=" + bolditalic;
-	    
+        return
+            "Font family: " + familyName +
+            " plain="+plain+
+            " bold=" + bold +
+            " italic=" + italic +
+            " bolditalic=" + bolditalic;
+
     }
 
 }

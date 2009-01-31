@@ -39,7 +39,7 @@ package java.io;
  * package fields.  The subtype may assume this responsibility only if
  * the class it extends has an accessible no-arg constructor to
  * initialize the class's state.  It is an error to declare a class
- * Serializable if this is not the case.  The error will be detected at 
+ * Serializable if this is not the case.  The error will be detected at
  * runtime. <p>
  *
  * During deserialization, the fields of non-serializable classes will
@@ -62,7 +62,7 @@ package java.io;
  *     throws IOException
  * private void readObject(java.io.ObjectInputStream in)
  *     throws IOException, ClassNotFoundException;
- * private void readObjectNoData() 
+ * private void readObjectNoData()
  *     throws ObjectStreamException;
  * </PRE>
  *
@@ -78,11 +78,11 @@ package java.io;
  *
  * <p>The readObject method is responsible for reading from the stream and
  * restoring the classes fields. It may call in.defaultReadObject to invoke
- * the default mechanism for restoring the object's non-static and 
- * non-transient fields.  The defaultReadObject method uses information in 
- * the stream to assign the fields of the object saved in the stream with the 
- * correspondingly named fields in the current object.  This handles the case 
- * when the class has evolved to add new fields. The method does not need to 
+ * the default mechanism for restoring the object's non-static and
+ * non-transient fields.  The defaultReadObject method uses information in
+ * the stream to assign the fields of the object saved in the stream with the
+ * correspondingly named fields in the current object.  This handles the case
+ * when the class has evolved to add new fields. The method does not need to
  * concern itself with the state belonging to its superclasses or subclasses.
  * State is saved by writing the individual fields to the
  * ObjectOutputStream using the writeObject method or by using the
@@ -159,7 +159,6 @@ package java.io;
  * serialVersionUID values is waived for array classes.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see java.io.ObjectOutputStream
  * @see java.io.ObjectInputStream
  * @see java.io.ObjectOutput

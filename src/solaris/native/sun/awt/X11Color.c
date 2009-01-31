@@ -24,7 +24,7 @@
  */
 
 /*
- *	Image dithering and rendering code for X11.
+ *      Image dithering and rendering code for X11.
  */
 
 #include <stdio.h>
@@ -63,15 +63,15 @@ static int debug_colormap = 0;
 /* returns the absolute value x */
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
-#define CLIP(val,min,max)	((val < min) ? min : ((val > max) ? max : val))
+#define CLIP(val,min,max)       ((val < min) ? min : ((val > max) ? max : val))
 
 #define RGBTOGRAY(r, g, b) ((int) (.299 * r + .587 * g + .114 * b + 0.5))
 
 enum {
-    FREE_COLOR		= 0,
-    LIKELY_COLOR	= 1,
-    UNAVAILABLE_COLOR	= 2,
-    ALLOCATED_COLOR	= 3
+    FREE_COLOR          = 0,
+    LIKELY_COLOR        = 1,
+    UNAVAILABLE_COLOR   = 2,
+    ALLOCATED_COLOR     = 3
 };
 
 /*
@@ -86,9 +86,9 @@ enum {
  * Under no circumstances will the colormap be filled to more than
  * CMAP_ALLOC_MAX colors.
  */
-#define CMAP_ALLOC_MIN		100	/* minimum number of colors to "add" */
-#define CMAP_ALLOC_DEFAULT	200	/* default number of colors in cmap */
-#define CMAP_ALLOC_MAX		245	/* maximum number of colors in cmap */
+#define CMAP_ALLOC_MIN          100     /* minimum number of colors to "add" */
+#define CMAP_ALLOC_DEFAULT      200     /* default number of colors in cmap */
+#define CMAP_ALLOC_MAX          245     /* maximum number of colors in cmap */
 
 #ifdef __solaris__
 #include <sys/utsname.h>
@@ -104,7 +104,7 @@ struct {
     { "sun4u", LOOKUPSIZE / 1 },
 };
 
-#define MACHMAPSIZE	(sizeof(machinemap) / sizeof(machinemap[0]))
+#define MACHMAPSIZE     (sizeof(machinemap) / sizeof(machinemap[0]))
 
 int getVirtCubeSize() {
     struct utsname name;
@@ -114,34 +114,34 @@ int getVirtCubeSize() {
     if (ret < 0) {
 #ifdef DEBUG
 #include <errno.h>
-	jio_fprintf(stderr, "uname errno = %d, using default cubesize %d\n",
-		    errno, LOOKUPSIZE);
+        jio_fprintf(stderr, "uname errno = %d, using default cubesize %d\n",
+                    errno, LOOKUPSIZE);
 #endif
-	return LOOKUPSIZE;
+        return LOOKUPSIZE;
     }
 
     for (i = 0; i < MACHMAPSIZE; i++) {
-	if (strcmp(name.machine, machinemap[i].machine) == 0) {
+        if (strcmp(name.machine, machinemap[i].machine) == 0) {
 #ifdef DEBUG
-	    if (debug_colormap) {
-		jio_fprintf(stderr, "'%s'.cubesize = '%d'\n",
-			    machinemap[i].machine, machinemap[i].cubesize);
-	    }
+            if (debug_colormap) {
+                jio_fprintf(stderr, "'%s'.cubesize = '%d'\n",
+                            machinemap[i].machine, machinemap[i].cubesize);
+            }
 #endif
-	    return machinemap[i].cubesize;
-	}
+            return machinemap[i].cubesize;
+        }
     }
 
 #ifdef DEBUG
     if (debug_colormap) {
-	jio_fprintf(stderr, "unknown machine '%s' using cubesize %d\n",
-		    name.machine, LOOKUPSIZE);
+        jio_fprintf(stderr, "unknown machine '%s' using cubesize %d\n",
+                    name.machine, LOOKUPSIZE);
     }
 #endif
     return LOOKUPSIZE;
 }
 #else /* __solaris__ */
-#define getVirtCubeSize()	(LOOKUPSIZE)
+#define getVirtCubeSize()       (LOOKUPSIZE)
 #endif /* __solaris__ */
 
 unsigned char img_bwgamma[256];
@@ -181,12 +181,12 @@ awt_color_matchTC(int r, int g, int b, AwtGraphicsConfigDataPtr awt_data)
     r = CLIP(r, 0, 255);
     g = CLIP(g, 0, 255);
     b = CLIP(b, 0, 255);
-    return (((r >> awt_data->awtImage->clrdata.rScale) 
-		<< awt_data->awtImage->clrdata.rOff) |
-	    ((g >> awt_data->awtImage->clrdata.gScale) 
-		<< awt_data->awtImage->clrdata.gOff) |
-	    ((b >> awt_data->awtImage->clrdata.bScale) 
-		<< awt_data->awtImage->clrdata.bOff));
+    return (((r >> awt_data->awtImage->clrdata.rScale)
+                << awt_data->awtImage->clrdata.rOff) |
+            ((g >> awt_data->awtImage->clrdata.gScale)
+                << awt_data->awtImage->clrdata.gOff) |
+            ((b >> awt_data->awtImage->clrdata.bScale)
+                << awt_data->awtImage->clrdata.bOff));
 }
 
 int
@@ -230,26 +230,26 @@ awt_color_match(int r, int g, int b, AwtGraphicsConfigDataPtr awt_data)
     /* look for non-pure gray match */
     mindist = 256 * 256 * 256;
     for (i = 0 ; i < awt_data->awt_num_colors ; i++, p++)
-	if (p->flags == ALLOCATED_COLOR) {
-	    t = p->r - r;
-	    d = t * t;
-	    if (d >= mindist)
-		continue;
-	    t = p->g - g;
-	    d += t * t;
-	    if (d >= mindist)
-		continue;
-	    t = p->b - b;
-	    d += t * t;
-	    if (d >= mindist)
-		continue;
-	    if (d == 0)
-		return i;
-	    if (d < mindist) {
-		besti = i;
-		mindist = d;
-	    }
-	}
+        if (p->flags == ALLOCATED_COLOR) {
+            t = p->r - r;
+            d = t * t;
+            if (d >= mindist)
+                continue;
+            t = p->g - g;
+            d += t * t;
+            if (d >= mindist)
+                continue;
+            t = p->b - b;
+            d += t * t;
+            if (d >= mindist)
+                continue;
+            if (d == 0)
+                return i;
+            if (d < mindist) {
+                besti = i;
+                mindist = d;
+            }
+        }
     return besti;
 }
 
@@ -264,7 +264,7 @@ awt_color_match(int r, int g, int b, AwtGraphicsConfigDataPtr awt_data)
  */
 static int
 alloc_col(Display *dpy, Colormap cm, int r, int g, int b, int pixel,
-	  AwtGraphicsConfigDataPtr awt_data)
+          AwtGraphicsConfigDataPtr awt_data)
 {
     XColor col;
 
@@ -278,76 +278,76 @@ alloc_col(Display *dpy, Colormap cm, int r, int g, int b, int pixel,
     col.blue  = (b << 8) | b;
     if (XAllocColor(dpy, cm, &col)) {
 #ifdef DEBUG
-	if (debug_colormap)
-	    jio_fprintf(stdout, "allocated %d (%d,%d, %d)\n", col.pixel, r, g, b);
+        if (debug_colormap)
+            jio_fprintf(stdout, "allocated %d (%d,%d, %d)\n", col.pixel, r, g, b);
 #endif
-	if (pixel >= 0 && col.pixel != (unsigned long)pixel) {
-	    /*
-	     * If we were trying to allocate a shareable "ReadOnly"
-	     * color then we would have gotten back the expected
-	     * pixel.  If the returned pixel was different, then
-	     * the source color that we were attempting to gain
-	     * access to must be some other application's ReadWrite
-	     * private color.  We free the returned pixel so that
-	     * we won't waste precious colormap entries by duplicating
-	     * that color in the as yet unallocated entries.  We
-	     * return -1 here to indicate the failure to get the
-	     * expected pixel.
-	     */
+        if (pixel >= 0 && col.pixel != (unsigned long)pixel) {
+            /*
+             * If we were trying to allocate a shareable "ReadOnly"
+             * color then we would have gotten back the expected
+             * pixel.  If the returned pixel was different, then
+             * the source color that we were attempting to gain
+             * access to must be some other application's ReadWrite
+             * private color.  We free the returned pixel so that
+             * we won't waste precious colormap entries by duplicating
+             * that color in the as yet unallocated entries.  We
+             * return -1 here to indicate the failure to get the
+             * expected pixel.
+             */
 #ifdef DEBUG
-	    if (debug_colormap)
-		jio_fprintf(stdout, "   used by other app, freeing\n");
+            if (debug_colormap)
+                jio_fprintf(stdout, "   used by other app, freeing\n");
 #endif
-	    awt_data->color_data->awt_Colors[pixel].flags = UNAVAILABLE_COLOR;
-	    XFreeColors(dpy, cm, &col.pixel, 1, 0);
-	    return -1;
-	}
-	/*
-	 * Our current implementation doesn't support pixels which
-	 * don't fit in 8 bit (even for 12-bit visuals)
-	 */
-	if (col.pixel > 255) {
+            awt_data->color_data->awt_Colors[pixel].flags = UNAVAILABLE_COLOR;
+            XFreeColors(dpy, cm, &col.pixel, 1, 0);
+            return -1;
+        }
+        /*
+         * Our current implementation doesn't support pixels which
+         * don't fit in 8 bit (even for 12-bit visuals)
+         */
+        if (col.pixel > 255) {
 #ifdef DEBUG
-	    if (debug_colormap)
-		jio_fprintf(stdout, "pixel %d for (%d,%d, %d) is > 8 bit, releasing.\n",
-			    col.pixel, r, g, b);
+            if (debug_colormap)
+                jio_fprintf(stdout, "pixel %d for (%d,%d, %d) is > 8 bit, releasing.\n",
+                            col.pixel, r, g, b);
 #endif
-	    XFreeColors(dpy, cm, &col.pixel, 1, 0);
-	    return awt_color_match(r, g, b, awt_data);
-	}
+            XFreeColors(dpy, cm, &col.pixel, 1, 0);
+            return awt_color_match(r, g, b, awt_data);
+        }
 
-	awt_data->color_data->awt_Colors[col.pixel].flags = ALLOCATED_COLOR;
-	awt_data->color_data->awt_Colors[col.pixel].r = col.red   >> 8;
-	awt_data->color_data->awt_Colors[col.pixel].g = col.green >> 8;
-	awt_data->color_data->awt_Colors[col.pixel].b = col.blue  >> 8;
-	if (awt_data->color_data->awt_icmLUT != 0) {
+        awt_data->color_data->awt_Colors[col.pixel].flags = ALLOCATED_COLOR;
+        awt_data->color_data->awt_Colors[col.pixel].r = col.red   >> 8;
+        awt_data->color_data->awt_Colors[col.pixel].g = col.green >> 8;
+        awt_data->color_data->awt_Colors[col.pixel].b = col.blue  >> 8;
+        if (awt_data->color_data->awt_icmLUT != 0) {
             awt_data->color_data->awt_icmLUT2Colors[col.pixel] = col.pixel;
             awt_data->color_data->awt_icmLUT[col.pixel] =
-		0xff000000 |
+                0xff000000 |
                 (awt_data->color_data->awt_Colors[col.pixel].r<<16) |
                 (awt_data->color_data->awt_Colors[col.pixel].g<<8) |
                 (awt_data->color_data->awt_Colors[col.pixel].b);
-	}
-	return col.pixel;
+        }
+        return col.pixel;
 #ifdef DEBUG
     } else if (debug_colormap) {
-	jio_fprintf(stdout, "can't allocate (%d,%d, %d)\n", r, g, b);
+        jio_fprintf(stdout, "can't allocate (%d,%d, %d)\n", r, g, b);
 #endif
     }
 
     return awt_color_match(r, g, b, awt_data);
 }
 
-void 
+void
 awt_allocate_systemcolors(XColor *colorsPtr, int num_pixels, AwtGraphicsConfigDataPtr awtData) {
     int i;
     int r, g, b, pixel;
 
     for (i=0; i < num_pixels; i++) {
-	r = colorsPtr[i].red   >> 8;
-	g = colorsPtr[i].green >> 8;
-	b = colorsPtr[i].blue  >> 8;
-	pixel = alloc_col(awt_display, awtData->awt_cmap, r, g, b, -1, awtData);
+        r = colorsPtr[i].red   >> 8;
+        g = colorsPtr[i].green >> 8;
+        b = colorsPtr[i].blue  >> 8;
+        pixel = alloc_col(awt_display, awtData->awt_cmap, r, g, b, -1, awtData);
     }
 }
 #endif /* !HEADLESS */
@@ -358,15 +358,15 @@ awt_fill_imgcv(ImgConvertFcn **array, int mask, int value, ImgConvertFcn fcn)
     int i;
 
     for (i = 0; i < NUM_IMGCV; i++) {
-	if ((i & mask) == value) {
-	    array[i] = fcn;
-	}
+        if ((i & mask) == value) {
+            array[i] = fcn;
+        }
     }
 }
 
 #ifndef HEADLESS
 /*
- * called from X11Server_create() in xlib.c 
+ * called from X11Server_create() in xlib.c
  */
 int
 awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
@@ -392,7 +392,7 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
     forcemono = getenv("FORCEMONO");
     forcegray = getenv("FORCEGRAY");
     if (forcemono && !forcegray)
-	forcegray = forcemono;
+        forcegray = forcemono;
 
     /*
      * Get the colormap and make sure we have the right visual
@@ -406,175 +406,175 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
 
     pPFV = XListPixmapFormats(dpy, &numpfv);
     if (pPFV) {
-	for (i = 0; i < numpfv; i++) {
-	    if (pPFV[i].depth == depth) {
-		awt_data->awtImage->wsImageFormat = pPFV[i];
-		break;
-	    }
-	}
-	XFree(pPFV);
+        for (i = 0; i < numpfv; i++) {
+            if (pPFV[i].depth == depth) {
+                awt_data->awtImage->wsImageFormat = pPFV[i];
+                break;
+            }
+        }
+        XFree(pPFV);
     }
     bpp = awt_data->awtImage->wsImageFormat.bits_per_pixel;
     if (bpp == 24) {
-	bpp = 32;
+        bpp = 32;
     }
     awt_data->awtImage->clrdata.bitsperpixel = bpp;
     awt_data->awtImage->Depth = depth;
 
     if ((bpp == 32 || bpp == 16) && pVI->class == TrueColor && depth >= 15) {
-	awt_data->AwtColorMatch = awt_color_matchTC;
-	awt_data->awtImage->clrdata.rOff = 0;
-	for (i = pVI->red_mask; (i & 1) == 0; i >>= 1) {
-	    awt_data->awtImage->clrdata.rOff++;
-	}
-	awt_data->awtImage->clrdata.rScale = 0;
-	while (i < 0x80) {
-	    awt_data->awtImage->clrdata.rScale++;
-	    i <<= 1;
-	}
-	awt_data->awtImage->clrdata.gOff = 0;
-	for (i = pVI->green_mask; (i & 1) == 0; i >>= 1) {
-	    awt_data->awtImage->clrdata.gOff++;
-	}
-	awt_data->awtImage->clrdata.gScale = 0;
-	while (i < 0x80) {
-	    awt_data->awtImage->clrdata.gScale++;
-	    i <<= 1;
-	}
-	awt_data->awtImage->clrdata.bOff = 0;
-	for (i = pVI->blue_mask; (i & 1) == 0; i >>= 1) {
-	    awt_data->awtImage->clrdata.bOff++;
-	}
-	awt_data->awtImage->clrdata.bScale = 0;
-	while (i < 0x80) {
-	    awt_data->awtImage->clrdata.bScale++;
-	    i <<= 1;
-	}
-#ifdef NEED_IMAGE_CONVERT        
-	awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, DirectImageConvert);
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_BYTEIN
-			| IMGCV_OPAQUE | IMGCV_ICM),
-		       (bpp == 32
-			? Dir32IcmOpqUnsImageConvert
-			: Dir16IcmOpqUnsImageConvert));
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_BYTEIN
-			| IMGCV_ALPHA | IMGCV_ICM),
-		       (bpp == 32
-			? Dir32IcmTrnUnsImageConvert
-			: Dir16IcmTrnUnsImageConvert));
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_SCALED | IMGCV_BYTEIN
-			| IMGCV_OPAQUE | IMGCV_ICM),
-		       (bpp == 32
-			? Dir32IcmOpqSclImageConvert
-			: Dir16IcmOpqSclImageConvert));
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_INTIN
-			| IMGCV_OPAQUE | IMGCV_DCM8),
-		       (bpp == 32
-			? Dir32DcmOpqUnsImageConvert
-			: Dir16DcmOpqUnsImageConvert));
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_INTIN
-			| IMGCV_ALPHA | IMGCV_DCM8),
-		       (bpp == 32
-			? Dir32DcmTrnUnsImageConvert
-			: Dir16DcmTrnUnsImageConvert));
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			| IMGCV_ALPHABITS | IMGCV_CMBITS),
-		       (IMGCV_SCALED | IMGCV_INTIN
-			| IMGCV_OPAQUE | IMGCV_DCM8),
-		       (bpp == 32
-			? Dir32DcmOpqSclImageConvert
-			: Dir16DcmOpqSclImageConvert));
-#endif /* NEED_IMAGE_CONVERT */        
+        awt_data->AwtColorMatch = awt_color_matchTC;
+        awt_data->awtImage->clrdata.rOff = 0;
+        for (i = pVI->red_mask; (i & 1) == 0; i >>= 1) {
+            awt_data->awtImage->clrdata.rOff++;
+        }
+        awt_data->awtImage->clrdata.rScale = 0;
+        while (i < 0x80) {
+            awt_data->awtImage->clrdata.rScale++;
+            i <<= 1;
+        }
+        awt_data->awtImage->clrdata.gOff = 0;
+        for (i = pVI->green_mask; (i & 1) == 0; i >>= 1) {
+            awt_data->awtImage->clrdata.gOff++;
+        }
+        awt_data->awtImage->clrdata.gScale = 0;
+        while (i < 0x80) {
+            awt_data->awtImage->clrdata.gScale++;
+            i <<= 1;
+        }
+        awt_data->awtImage->clrdata.bOff = 0;
+        for (i = pVI->blue_mask; (i & 1) == 0; i >>= 1) {
+            awt_data->awtImage->clrdata.bOff++;
+        }
+        awt_data->awtImage->clrdata.bScale = 0;
+        while (i < 0x80) {
+            awt_data->awtImage->clrdata.bScale++;
+            i <<= 1;
+        }
+#ifdef NEED_IMAGE_CONVERT
+        awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, DirectImageConvert);
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_BYTEIN
+                        | IMGCV_OPAQUE | IMGCV_ICM),
+                       (bpp == 32
+                        ? Dir32IcmOpqUnsImageConvert
+                        : Dir16IcmOpqUnsImageConvert));
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_BYTEIN
+                        | IMGCV_ALPHA | IMGCV_ICM),
+                       (bpp == 32
+                        ? Dir32IcmTrnUnsImageConvert
+                        : Dir16IcmTrnUnsImageConvert));
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_SCALED | IMGCV_BYTEIN
+                        | IMGCV_OPAQUE | IMGCV_ICM),
+                       (bpp == 32
+                        ? Dir32IcmOpqSclImageConvert
+                        : Dir16IcmOpqSclImageConvert));
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_INTIN
+                        | IMGCV_OPAQUE | IMGCV_DCM8),
+                       (bpp == 32
+                        ? Dir32DcmOpqUnsImageConvert
+                        : Dir16DcmOpqUnsImageConvert));
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_INTIN
+                        | IMGCV_ALPHA | IMGCV_DCM8),
+                       (bpp == 32
+                        ? Dir32DcmTrnUnsImageConvert
+                        : Dir16DcmTrnUnsImageConvert));
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                        | IMGCV_ALPHABITS | IMGCV_CMBITS),
+                       (IMGCV_SCALED | IMGCV_INTIN
+                        | IMGCV_OPAQUE | IMGCV_DCM8),
+                       (bpp == 32
+                        ? Dir32DcmOpqSclImageConvert
+                        : Dir16DcmOpqSclImageConvert));
+#endif /* NEED_IMAGE_CONVERT */
     } else if (bpp <= 16 && (pVI->class == StaticGray
-			    || pVI->class == GrayScale
-			    || (pVI->class == PseudoColor && forcegray))) {
-	awt_data->AwtColorMatch = awt_color_matchGS;
-	awt_data->awtImage->clrdata.grayscale = 1;
-	awt_data->awtImage->clrdata.bitsperpixel = MAX(bpp, 8);
-#ifdef NEED_IMAGE_CONVERT        
-	awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, PseudoImageConvert);
-	if (getenv("NOFSDITHER") == NULL) {
-	    awt_fill_imgcv(awt_data->awtImage->convert,
-			   IMGCV_ORDERBITS, IMGCV_TDLRORDER,
-			   PseudoFSImageConvert);
-	}
-#endif /* NEED_IMAGE_CONVERT */        
+                            || pVI->class == GrayScale
+                            || (pVI->class == PseudoColor && forcegray))) {
+        awt_data->AwtColorMatch = awt_color_matchGS;
+        awt_data->awtImage->clrdata.grayscale = 1;
+        awt_data->awtImage->clrdata.bitsperpixel = MAX(bpp, 8);
+#ifdef NEED_IMAGE_CONVERT
+        awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, PseudoImageConvert);
+        if (getenv("NOFSDITHER") == NULL) {
+            awt_fill_imgcv(awt_data->awtImage->convert,
+                           IMGCV_ORDERBITS, IMGCV_TDLRORDER,
+                           PseudoFSImageConvert);
+        }
+#endif /* NEED_IMAGE_CONVERT */
     } else if (depth <= 12 && (pVI->class == PseudoColor
-			     || pVI->class == TrueColor
-			     || pVI->class == StaticColor)) {
-	if (pVI->class == TrueColor)
-	   awt_data->awt_num_colors = (1 << pVI->depth);
-	awt_data->AwtColorMatch = awt_color_match;
-	awt_data->awtImage->clrdata.bitsperpixel = MAX(bpp, 8);
-#ifdef NEED_IMAGE_CONVERT        
-	awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, PseudoImageConvert);
-	if (getenv("NOFSDITHER") == NULL) {
-	    awt_fill_imgcv(awt_data->awtImage->convert, IMGCV_ORDERBITS, 
-			   IMGCV_TDLRORDER, PseudoFSImageConvert);
-	    awt_fill_imgcv(awt_data->awtImage->convert,
-			   (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			    | IMGCV_ALPHABITS | IMGCV_ORDERBITS
-			    | IMGCV_CMBITS),
-			   (IMGCV_UNSCALED | IMGCV_BYTEIN
-			    | IMGCV_OPAQUE | IMGCV_TDLRORDER
-			    | IMGCV_ICM),
-			   FSColorIcmOpqUnsImageConvert);
-	    awt_fill_imgcv(awt_data->awtImage->convert,
-			   (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
-			    | IMGCV_ALPHABITS | IMGCV_ORDERBITS
-			    | IMGCV_CMBITS),
-			   (IMGCV_UNSCALED | IMGCV_INTIN
-			    | IMGCV_OPAQUE | IMGCV_TDLRORDER
-			    | IMGCV_DCM8),
-			   FSColorDcmOpqUnsImageConvert);
-	}
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS | IMGCV_ALPHABITS
-			| IMGCV_ORDERBITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_BYTEIN | IMGCV_OPAQUE
-			| IMGCV_RANDORDER | IMGCV_ICM),
-		       OrdColorIcmOpqUnsImageConvert);
-	awt_fill_imgcv(awt_data->awtImage->convert,
-		       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS | IMGCV_ALPHABITS
-			| IMGCV_ORDERBITS | IMGCV_CMBITS),
-		       (IMGCV_UNSCALED | IMGCV_INTIN | IMGCV_OPAQUE
-			| IMGCV_RANDORDER | IMGCV_DCM8),
-		       OrdColorDcmOpqUnsImageConvert);
-#endif /* NEED_IMAGE_CONVERT */        
+                             || pVI->class == TrueColor
+                             || pVI->class == StaticColor)) {
+        if (pVI->class == TrueColor)
+           awt_data->awt_num_colors = (1 << pVI->depth);
+        awt_data->AwtColorMatch = awt_color_match;
+        awt_data->awtImage->clrdata.bitsperpixel = MAX(bpp, 8);
+#ifdef NEED_IMAGE_CONVERT
+        awt_fill_imgcv(awt_data->awtImage->convert, 0, 0, PseudoImageConvert);
+        if (getenv("NOFSDITHER") == NULL) {
+            awt_fill_imgcv(awt_data->awtImage->convert, IMGCV_ORDERBITS,
+                           IMGCV_TDLRORDER, PseudoFSImageConvert);
+            awt_fill_imgcv(awt_data->awtImage->convert,
+                           (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                            | IMGCV_ALPHABITS | IMGCV_ORDERBITS
+                            | IMGCV_CMBITS),
+                           (IMGCV_UNSCALED | IMGCV_BYTEIN
+                            | IMGCV_OPAQUE | IMGCV_TDLRORDER
+                            | IMGCV_ICM),
+                           FSColorIcmOpqUnsImageConvert);
+            awt_fill_imgcv(awt_data->awtImage->convert,
+                           (IMGCV_SCALEBITS | IMGCV_INSIZEBITS
+                            | IMGCV_ALPHABITS | IMGCV_ORDERBITS
+                            | IMGCV_CMBITS),
+                           (IMGCV_UNSCALED | IMGCV_INTIN
+                            | IMGCV_OPAQUE | IMGCV_TDLRORDER
+                            | IMGCV_DCM8),
+                           FSColorDcmOpqUnsImageConvert);
+        }
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS | IMGCV_ALPHABITS
+                        | IMGCV_ORDERBITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_BYTEIN | IMGCV_OPAQUE
+                        | IMGCV_RANDORDER | IMGCV_ICM),
+                       OrdColorIcmOpqUnsImageConvert);
+        awt_fill_imgcv(awt_data->awtImage->convert,
+                       (IMGCV_SCALEBITS | IMGCV_INSIZEBITS | IMGCV_ALPHABITS
+                        | IMGCV_ORDERBITS | IMGCV_CMBITS),
+                       (IMGCV_UNSCALED | IMGCV_INTIN | IMGCV_OPAQUE
+                        | IMGCV_RANDORDER | IMGCV_DCM8),
+                       OrdColorDcmOpqUnsImageConvert);
+#endif /* NEED_IMAGE_CONVERT */
     } else {
- 	free (awt_data->awtImage);
-	return 0;
+        free (awt_data->awtImage);
+        return 0;
     }
 
     if (depth > 12) {
-	return 1;
+        return 1;
     }
 
     if (depth == 12) {
-	paletteSize = MAX_PALETTE12_SIZE;
+        paletteSize = MAX_PALETTE12_SIZE;
     } else {
-	paletteSize = MAX_PALETTE8_SIZE;
+        paletteSize = MAX_PALETTE8_SIZE;
     }
 
     if (awt_data->awt_num_colors > paletteSize) {
-	free (awt_data->awtImage);
-	return 0;
+        free (awt_data->awtImage);
+        return 0;
     }
 
     /* Allocate ColorData structure */
@@ -590,18 +590,18 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
      * Initialize colors array
      */
     for (i = 0; i < awt_data->awt_num_colors; i++) {
-	cols[i].pixel = i;
+        cols[i].pixel = i;
     }
 
-    awt_data->color_data->awt_Colors = 
-	(ColorEntry *)calloc(paletteSize, sizeof (ColorEntry));
+    awt_data->color_data->awt_Colors =
+        (ColorEntry *)calloc(paletteSize, sizeof (ColorEntry));
 
     XQueryColors(dpy, cm, cols, awt_data->awt_num_colors);
     for (i = 0; i < awt_data->awt_num_colors; i++) {
-	awt_data->color_data->awt_Colors[i].r = cols[i].red >> 8;
-	awt_data->color_data->awt_Colors[i].g = cols[i].green >> 8;
-	awt_data->color_data->awt_Colors[i].b = cols[i].blue >> 8;
-	awt_data->color_data->awt_Colors[i].flags = LIKELY_COLOR;
+        awt_data->color_data->awt_Colors[i].r = cols[i].red >> 8;
+        awt_data->color_data->awt_Colors[i].g = cols[i].green >> 8;
+        awt_data->color_data->awt_Colors[i].b = cols[i].blue >> 8;
+        awt_data->color_data->awt_Colors[i].flags = LIKELY_COLOR;
     }
 
     /*
@@ -610,19 +610,19 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
      */
     nfree = 0;
     for (i = (paletteSize / 2); i > 0; i >>= 1) {
-	if (XAllocColorCells(dpy, cm, False, plane_masks, 0,
-			     freecolors + nfree, i)) {
-	    nfree += i;
-	}
+        if (XAllocColorCells(dpy, cm, False, plane_masks, 0,
+                             freecolors + nfree, i)) {
+            nfree += i;
+        }
     }
 
     for (i = 0; i < nfree; i++) {
-	awt_data->color_data->awt_Colors[freecolors[i]].flags = FREE_COLOR;
+        awt_data->color_data->awt_Colors[freecolors[i]].flags = FREE_COLOR;
     }
 
 #ifdef DEBUG
     if (debug_colormap) {
-	jio_fprintf(stdout, "%d free.\n", nfree);
+        jio_fprintf(stdout, "%d free.\n", nfree);
     }
 #endif
 
@@ -633,17 +633,17 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
      * applications
      */
     for (i = 0; i < awt_data->awt_num_colors; i++) {
-	if (awt_data->color_data->awt_Colors[i].flags == LIKELY_COLOR) {
-	    awt_data->color_data->awt_Colors[i].flags = FREE_COLOR;
-	    alloc_col(dpy, cm,
-		      awt_data->color_data->awt_Colors[i].r,
-		      awt_data->color_data->awt_Colors[i].g,
-		      awt_data->color_data->awt_Colors[i].b, i, awt_data);
-	}
+        if (awt_data->color_data->awt_Colors[i].flags == LIKELY_COLOR) {
+            awt_data->color_data->awt_Colors[i].flags = FREE_COLOR;
+            alloc_col(dpy, cm,
+                      awt_data->color_data->awt_Colors[i].r,
+                      awt_data->color_data->awt_Colors[i].g,
+                      awt_data->color_data->awt_Colors[i].b, i, awt_data);
+        }
     }
 #ifdef DEBUG
     if (debug_colormap) {
-	jio_fprintf(stdout, "got the already allocated ones\n");
+        jio_fprintf(stdout, "got the already allocated ones\n");
     }
 #endif
 
@@ -655,90 +655,90 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
     alloc_col(dpy, cm, 0, 0, 0, -1, awt_data);
 
     if (awt_data->awtImage->clrdata.grayscale) {
-	int g;
-	ColorEntry *p;
+        int g;
+        ColorEntry *p;
 
-	if (!forcemono) {
-	    for (i = 128; i > 0; i >>= 1) {
-		for (g = i; g < 256; g += (i * 2)) {
-		    alloc_col(dpy, cm, g, g, g, -1, awt_data);
-		}
-	    }
-	}
+        if (!forcemono) {
+            for (i = 128; i > 0; i >>= 1) {
+                for (g = i; g < 256; g += (i * 2)) {
+                    alloc_col(dpy, cm, g, g, g, -1, awt_data);
+                }
+            }
+        }
 
-	awt_data->color_data->img_grays = 
-	    (unsigned char *)calloc(256, sizeof(unsigned char));
-	for (g = 0; g < 256; g++) {
-	    int mindist, besti;
-	    int d;
+        awt_data->color_data->img_grays =
+            (unsigned char *)calloc(256, sizeof(unsigned char));
+        for (g = 0; g < 256; g++) {
+            int mindist, besti;
+            int d;
 
-	    p = awt_data->color_data->awt_Colors;
-	    mindist = 256;
-	    besti = 0;
-	    for (i = 0 ; i < awt_data->awt_num_colors ; i++, p++) {
-		if (forcegray && (p->r != p->g || p->g != p->b))
-		    continue;
-		if (forcemono && p->g != 0 && p->g != 255)
-		    continue;
-		if (p->flags == ALLOCATED_COLOR) {
-		    d = p->g - g;
-		    if (d < 0) d = -d;
-		    if (d < mindist) {
-			besti = i;
-			if (d == 0) {
-			    break;
-			}
-			mindist = d;
-		    }
-		}
-	    }
+            p = awt_data->color_data->awt_Colors;
+            mindist = 256;
+            besti = 0;
+            for (i = 0 ; i < awt_data->awt_num_colors ; i++, p++) {
+                if (forcegray && (p->r != p->g || p->g != p->b))
+                    continue;
+                if (forcemono && p->g != 0 && p->g != 255)
+                    continue;
+                if (p->flags == ALLOCATED_COLOR) {
+                    d = p->g - g;
+                    if (d < 0) d = -d;
+                    if (d < mindist) {
+                        besti = i;
+                        if (d == 0) {
+                            break;
+                        }
+                        mindist = d;
+                    }
+                }
+            }
 
-	    awt_data->color_data->img_grays[g] = besti;
-	}
+            awt_data->color_data->img_grays[g] = besti;
+        }
 
 
-	if (forcemono || (depth == 1)) {
-	    char *gammastr = getenv("HJGAMMA");
-	    double gamma = atof(gammastr ? gammastr : "1.6");
-	    if (gamma < 0.01) gamma = 1.0;
+        if (forcemono || (depth == 1)) {
+            char *gammastr = getenv("HJGAMMA");
+            double gamma = atof(gammastr ? gammastr : "1.6");
+            if (gamma < 0.01) gamma = 1.0;
 #ifdef DEBUG
-	    if (debug_colormap) {
-		jio_fprintf(stderr, "gamma = %f\n", gamma);
-	    }
+            if (debug_colormap) {
+                jio_fprintf(stderr, "gamma = %f\n", gamma);
+            }
 #endif
-	    for (i = 0; i < 256; i++) {
-		img_bwgamma[i] = (int) (pow(i/255.0, gamma) * 255);
+            for (i = 0; i < 256; i++) {
+                img_bwgamma[i] = (int) (pow(i/255.0, gamma) * 255);
 #ifdef DEBUG
-		if (debug_colormap) {
-		    jio_fprintf(stderr, "%3d ", img_bwgamma[i]);
-		    if ((i & 7) == 7)
-			jio_fprintf(stderr, "\n");
-		}
+                if (debug_colormap) {
+                    jio_fprintf(stderr, "%3d ", img_bwgamma[i]);
+                    if ((i & 7) == 7)
+                        jio_fprintf(stderr, "\n");
+                }
 #endif
-	    }
-	} else {
-	    for (i = 0; i < 256; i++) {
-		img_bwgamma[i] = i;
-	    }
-	}
+            }
+        } else {
+            for (i = 0; i < 256; i++) {
+                img_bwgamma[i] = i;
+            }
+        }
 
 #ifdef DEBUG
-	if (debug_colormap) {
-	    jio_fprintf(stderr, "GrayScale initialized\n");
-	    jio_fprintf(stderr, "color table:\n");
-	    for (i = 0; i < awt_data->awt_num_colors; i++) {
-		jio_fprintf(stderr, "%3d: %3d %3d %3d\n",
-			i, awt_data->color_data->awt_Colors[i].r, 
-			awt_data->color_data->awt_Colors[i].g, 
-			awt_data->color_data->awt_Colors[i].b);
-	    }
-	    jio_fprintf(stderr, "gray table:\n");
-	    for (i = 0; i < 256; i++) {
-		jio_fprintf(stderr, "%3d ", awt_data->color_data->img_grays[i]);
-		if ((i & 7) == 7)
-		    jio_fprintf(stderr, "\n");
-	    }
-	}
+        if (debug_colormap) {
+            jio_fprintf(stderr, "GrayScale initialized\n");
+            jio_fprintf(stderr, "color table:\n");
+            for (i = 0; i < awt_data->awt_num_colors; i++) {
+                jio_fprintf(stderr, "%3d: %3d %3d %3d\n",
+                        i, awt_data->color_data->awt_Colors[i].r,
+                        awt_data->color_data->awt_Colors[i].g,
+                        awt_data->color_data->awt_Colors[i].b);
+            }
+            jio_fprintf(stderr, "gray table:\n");
+            for (i = 0; i < 256; i++) {
+                jio_fprintf(stderr, "%3d ", awt_data->color_data->img_grays[i]);
+                if ((i & 7) == 7)
+                    jio_fprintf(stderr, "\n");
+            }
+        }
 #endif
 
     } else {
@@ -763,66 +763,66 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
     /* we do not support more than 256 entries in the colormap
        even for 12-bit PseudoColor visuals */
     for (i = 0; i < MAX_PALETTE8_SIZE; i++) {
-	if (awt_data->color_data->awt_Colors[i].flags == ALLOCATED_COLOR)
-	{
-	    reds[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].r;
-	    greens[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].g;
-	    blues[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].b;
-	    allocatedColorsNum++;
-	} else if (awt_data->color_data->awt_Colors[i].flags == 
-		   					UNAVAILABLE_COLOR) {
-	    unavailableColorsNum++;
-	}
+        if (awt_data->color_data->awt_Colors[i].flags == ALLOCATED_COLOR)
+        {
+            reds[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].r;
+            greens[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].g;
+            blues[allocatedColorsNum] = awt_data->color_data->awt_Colors[i].b;
+            allocatedColorsNum++;
+        } else if (awt_data->color_data->awt_Colors[i].flags ==
+                                                        UNAVAILABLE_COLOR) {
+            unavailableColorsNum++;
+        }
     }
 
     if (depth > 8) {
-	cmapsize = MAX_PALETTE8_SIZE - unavailableColorsNum;
+        cmapsize = MAX_PALETTE8_SIZE - unavailableColorsNum;
     } else {
-	cmapsize = 0;
-	if (getenv("CMAPSIZE") != 0) {
-	    cmapsize = atoi(getenv("CMAPSIZE"));
-	}
+        cmapsize = 0;
+        if (getenv("CMAPSIZE") != 0) {
+            cmapsize = atoi(getenv("CMAPSIZE"));
+        }
 
-	if (cmapsize <= 0) {
-	    cmapsize = CMAP_ALLOC_DEFAULT;
-	}
+        if (cmapsize <= 0) {
+            cmapsize = CMAP_ALLOC_DEFAULT;
+        }
 
-	if (cmapsize < allocatedColorsNum + unavailableColorsNum + CMAP_ALLOC_MIN) {
-	    cmapsize = allocatedColorsNum + unavailableColorsNum + CMAP_ALLOC_MIN;
-	}
+        if (cmapsize < allocatedColorsNum + unavailableColorsNum + CMAP_ALLOC_MIN) {
+            cmapsize = allocatedColorsNum + unavailableColorsNum + CMAP_ALLOC_MIN;
+        }
 
-	if (cmapsize > CMAP_ALLOC_MAX) {
-	    cmapsize = CMAP_ALLOC_MAX;
-	}
+        if (cmapsize > CMAP_ALLOC_MAX) {
+            cmapsize = CMAP_ALLOC_MAX;
+        }
 
-	if (cmapsize < allocatedColorsNum) {
-	    cmapsize = allocatedColorsNum;
-	}
-	cmapsize -= unavailableColorsNum;
+        if (cmapsize < allocatedColorsNum) {
+            cmapsize = allocatedColorsNum;
+        }
+        cmapsize -= unavailableColorsNum;
     }
 
     k = 0;
     if (getenv("VIRTCUBESIZE") != 0) {
-	k = atoi(getenv("VIRTCUBESIZE"));
+        k = atoi(getenv("VIRTCUBESIZE"));
     }
     if (k == 0 || (k & (k - 1)) != 0 || k > 32) {
-	k = getVirtCubeSize();
+        k = getVirtCubeSize();
     }
-    awt_data->color_data->img_clr_tbl = 
-	(unsigned char *)calloc(LOOKUPSIZE * LOOKUPSIZE * LOOKUPSIZE, 
-				sizeof(unsigned char));
+    awt_data->color_data->img_clr_tbl =
+        (unsigned char *)calloc(LOOKUPSIZE * LOOKUPSIZE * LOOKUPSIZE,
+                                sizeof(unsigned char));
     img_makePalette(cmapsize, k, LOOKUPSIZE, 50, 250,
-		    allocatedColorsNum, TRUE, reds, greens, blues, 
-		    awt_data->color_data->img_clr_tbl); 
-		    /*img_clr_tbl);*/
+                    allocatedColorsNum, TRUE, reds, greens, blues,
+                    awt_data->color_data->img_clr_tbl);
+                    /*img_clr_tbl);*/
 
     for (i = 0; i < cmapsize; i++) {
-	indices[i] = alloc_col(dpy, cm, reds[i], greens[i], blues[i], -1,
-			       awt_data);
+        indices[i] = alloc_col(dpy, cm, reds[i], greens[i], blues[i], -1,
+                               awt_data);
     }
-    for (i = 0; i < LOOKUPSIZE * LOOKUPSIZE * LOOKUPSIZE  ; i++) { 
-	awt_data->color_data->img_clr_tbl[i] = 
-	    indices[awt_data->color_data->img_clr_tbl[i]];
+    for (i = 0; i < LOOKUPSIZE * LOOKUPSIZE * LOOKUPSIZE  ; i++) {
+        awt_data->color_data->img_clr_tbl[i] =
+            indices[awt_data->color_data->img_clr_tbl[i]];
     }
 
     awt_data->color_data->img_oda_red   = &(std_img_oda_red[0][0]);
@@ -833,57 +833,57 @@ awt_allocate_colors(AwtGraphicsConfigDataPtr awt_data)
 
 #ifdef DEBUG
     if (debug_colormap) {
-	int alloc_count = 0;
-	int reuse_count = 0;
-	int free_count = 0;
-	for (i = 0; i < awt_data->awt_num_colors; i++) {
-	    switch (awt_data->color_data->awt_Colors[i].flags) {
-	      case ALLOCATED_COLOR:
-		alloc_count++;
-		break;
-	      case LIKELY_COLOR:
-		reuse_count++;
-		break;
-	      case FREE_COLOR:
-		free_count++;
-		break;
-	    }
-	}
-	jio_fprintf(stdout, "%d total, %d allocated, %d reused, %d still free.\n",
-		    awt_data->awt_num_colors, alloc_count, reuse_count, free_count);
+        int alloc_count = 0;
+        int reuse_count = 0;
+        int free_count = 0;
+        for (i = 0; i < awt_data->awt_num_colors; i++) {
+            switch (awt_data->color_data->awt_Colors[i].flags) {
+              case ALLOCATED_COLOR:
+                alloc_count++;
+                break;
+              case LIKELY_COLOR:
+                reuse_count++;
+                break;
+              case FREE_COLOR:
+                free_count++;
+                break;
+            }
+        }
+        jio_fprintf(stdout, "%d total, %d allocated, %d reused, %d still free.\n",
+                    awt_data->awt_num_colors, alloc_count, reuse_count, free_count);
     }
 #endif
 
     /* Fill in the ICM lut and lut2cmap mapping */
     awt_data->color_data->awt_numICMcolors = 0;
-    awt_data->color_data->awt_icmLUT2Colors = 
-	(unsigned char *)calloc(paletteSize, sizeof (unsigned char));
+    awt_data->color_data->awt_icmLUT2Colors =
+        (unsigned char *)calloc(paletteSize, sizeof (unsigned char));
     awt_data->color_data->awt_icmLUT = (int *)calloc(paletteSize, sizeof(int));
     for (i=0; i < paletteSize; i++) {
-	/* Keep the mapping between this lut and the actual cmap */
-	awt_data->color_data->awt_icmLUT2Colors
-	    [awt_data->color_data->awt_numICMcolors] = i;
+        /* Keep the mapping between this lut and the actual cmap */
+        awt_data->color_data->awt_icmLUT2Colors
+            [awt_data->color_data->awt_numICMcolors] = i;
 
         if (awt_data->color_data->awt_Colors[i].flags == ALLOCATED_COLOR) {
             /* Screen IndexColorModel LUTS are always xRGB */
             awt_data->color_data->awt_icmLUT
-		    [awt_data->color_data->awt_numICMcolors++] = 0xff000000 |
+                    [awt_data->color_data->awt_numICMcolors++] = 0xff000000 |
                 (awt_data->color_data->awt_Colors[i].r<<16) |
                 (awt_data->color_data->awt_Colors[i].g<<8) |
                 (awt_data->color_data->awt_Colors[i].b);
-	} else {
+        } else {
             /* Screen IndexColorModel LUTS are always xRGB */
             awt_data->color_data->awt_icmLUT
-			[awt_data->color_data->awt_numICMcolors++] = 0;
+                        [awt_data->color_data->awt_numICMcolors++] = 0;
         }
     }
     return 1;
 }
 #endif /* !HEADLESS */
 
-#define red(v)		(((v) >> 16) & 0xFF)
-#define green(v)	(((v) >>  8) & 0xFF)
-#define blue(v)		(((v) >>  0) & 0xFF)
+#define red(v)          (((v) >> 16) & 0xFF)
+#define green(v)        (((v) >>  8) & 0xFF)
+#define blue(v)         (((v) >>  0) & 0xFF)
 
 #ifndef HEADLESS
 jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
@@ -891,21 +891,21 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
     jobject awt_colormodel = NULL;
     jclass clazz;
     jmethodID mid;
-    
+
     if ((*env)->PushLocalFrame(env, 16) < 0)
         return NULL;
 
     if ((aData->awt_visInfo.class == TrueColor) &&
-	(aData->awt_depth >= 15)) 
+        (aData->awt_depth >= 15))
     {
         clazz = (*env)->FindClass(env,"java/awt/image/DirectColorModel");
 
         mid = (*env)->GetMethodID(env,clazz,"<init>","(IIIII)V");
-        
+
         if (mid == NULL) {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
-	}
+        }
 
         awt_colormodel = (*env)->NewObject(env,clazz, mid,
                                            aData->awt_visInfo.depth,
@@ -916,7 +916,7 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
 
         if(awt_colormodel == NULL)
         {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
 
@@ -933,24 +933,24 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
         mid = (*env)->GetStaticMethodID(env, clazz1, "getInstance",
               "(I)Ljava/awt/color/ColorSpace;");
         if (mid == NULL) {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
-	}
-	/* SECURITY: This is safe, because static methods cannot
-	 *           be overridden, and this method does not invoke
-	 *           client code
+        }
+        /* SECURITY: This is safe, because static methods cannot
+         *           be overridden, and this method does not invoke
+         *           client code
          */
         cspace = (*env)->CallStaticObjectMethod(env, clazz1, mid,
             java_awt_color_ColorSpace_CS_GRAY);
         if (cspace == NULL) {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
 
         bits[0] = 8;
         bitsArray = (*env)->NewIntArray(env, 1);
         if (bitsArray == NULL) {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         } else {
             (*env)->SetIntArrayRegion(env, bitsArray, 0, 1, bits);
@@ -960,11 +960,11 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
 
         mid = (*env)->GetMethodID(env,clazz,"<init>",
             "(Ljava/awt/color/ColorSpace;[IZZII)V");
-        
+
         if (mid == NULL) {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
-	}
+        }
 
         awt_colormodel = (*env)->NewObject(env,clazz, mid,
                                            cspace,
@@ -976,50 +976,50 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
 
         if(awt_colormodel == NULL)
         {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
 
     } else {
-	jint rgb[MAX_PALETTE_SIZE];
-	jbyte valid[MAX_PALETTE_SIZE / 8], *pValid;
-	jintArray hArray;
-	jobject validBits = NULL;
+        jint rgb[MAX_PALETTE_SIZE];
+        jbyte valid[MAX_PALETTE_SIZE / 8], *pValid;
+        jintArray hArray;
+        jobject validBits = NULL;
         ColorEntry *c;
-	int i, allocAllGray, b, allvalid, paletteSize;
+        int i, allocAllGray, b, allvalid, paletteSize;
         jlong pData;
 
-	if (aData->awt_visInfo.depth == 12) {
-	    paletteSize = MAX_PALETTE12_SIZE;
-	} else {
-	    paletteSize = MAX_PALETTE8_SIZE;
-	}
-        
+        if (aData->awt_visInfo.depth == 12) {
+            paletteSize = MAX_PALETTE12_SIZE;
+        } else {
+            paletteSize = MAX_PALETTE8_SIZE;
+        }
+
         c = aData->color_data->awt_Colors;
-	pValid = &valid[sizeof(valid)];
+        pValid = &valid[sizeof(valid)];
         allocAllGray = 1;
-	b = 0;
-	allvalid = 1;
+        b = 0;
+        allvalid = 1;
 
         for (i = 0; i < paletteSize; i++, c++) {
             if (c->flags == ALLOCATED_COLOR) {
-		rgb[i] = (0xff000000 |
-			  (c->r << 16) |
-			  (c->g <<  8) |
-			  (c->b <<  0));
+                rgb[i] = (0xff000000 |
+                          (c->r << 16) |
+                          (c->g <<  8) |
+                          (c->b <<  0));
                 if (c->r != c->g || c->g != c->b) {
                     allocAllGray = 0;
                 }
-		b |= (1 << (i % 8));
+                b |= (1 << (i % 8));
             } else {
-		rgb[i] = 0;
-		b &= ~(1 << (i % 8));
-		allvalid = 0;
+                rgb[i] = 0;
+                b &= ~(1 << (i % 8));
+                allvalid = 0;
             }
-	    if ((i % 8) == 7) {
-		*--pValid = b;
-		/* b = 0; not needed as each bit is explicitly set */
-	    }
+            if ((i % 8) == 7) {
+                *--pValid = b;
+                /* b = 0; not needed as each bit is explicitly set */
+            }
         }
 
         if (allocAllGray && (aData->awtImage->clrdata.grayscale == 0)) {
@@ -1047,43 +1047,43 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
 
             aData->awtImage->clrdata.grayscale = 1;
 
-	    aData->color_data->img_grays =
+            aData->color_data->img_grays =
                 (unsigned char *)calloc(256, sizeof(unsigned char));
 
             if (aData->color_data->img_grays == NULL) {
-	        (*env)->PopLocalFrame(env, 0);
+                (*env)->PopLocalFrame(env, 0);
                 return NULL;
             }
 
-	    for (g = 0; g < 256; g++) {
-	        int mindist, besti;
-	        int d;
+            for (g = 0; g < 256; g++) {
+                int mindist, besti;
+                int d;
 
-	        p = aData->color_data->awt_Colors;
-	        mindist = 256;
-	        besti = 0;
-	        for (i = 0 ; i < paletteSize; i++, p++) {
-		    if (p->flags == ALLOCATED_COLOR) {
-		        d = p->g - g;
-		        if (d < 0) d = -d;
-		        if (d < mindist) {
-			    besti = i;
-			    if (d == 0) {
-			        break;
-			    }
-			    mindist = d;
-		        }
-		    }
-	        }
+                p = aData->color_data->awt_Colors;
+                mindist = 256;
+                besti = 0;
+                for (i = 0 ; i < paletteSize; i++, p++) {
+                    if (p->flags == ALLOCATED_COLOR) {
+                        d = p->g - g;
+                        if (d < 0) d = -d;
+                        if (d < mindist) {
+                            besti = i;
+                            if (d == 0) {
+                                break;
+                            }
+                            mindist = d;
+                        }
+                    }
+                }
 
-	        aData->color_data->img_grays[g] = besti;
+                aData->color_data->img_grays[g] = besti;
             }
 
-	    for (i = 0; i < 256; i++) {
-		img_bwgamma[i] = i;    /* REMIND: what is img_bwgamma?
+            for (i = 0; i < 256; i++) {
+                img_bwgamma[i] = i;    /* REMIND: what is img_bwgamma?
                                         *         is it still used anywhere?
                                         */
-	    }
+            }
         }
 
         if (aData->awtImage->clrdata.grayscale) {
@@ -1094,22 +1094,22 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
                transparent black for non-allocated or non-gray colors.
              */
             p = aData->color_data->awt_Colors;
-	    b = 0;
-	    pValid = &valid[sizeof(valid)];
+            b = 0;
+            pValid = &valid[sizeof(valid)];
             for (i = 0; i < paletteSize; i++, p++) {
                 if ((p->flags != ALLOCATED_COLOR) ||
-		    (p->r != p->g || p->g != p->b))
-		{
-		    rgb[i] = 0;
-		    b &= ~(1 << (i % 8));
-		    allvalid = 0;
-		} else {
-		    b |= (1 << (i % 8));
+                    (p->r != p->g || p->g != p->b))
+                {
+                    rgb[i] = 0;
+                    b &= ~(1 << (i % 8));
+                    allvalid = 0;
+                } else {
+                    b |= (1 << (i % 8));
                 }
-		if ((i % 8) == 7) {
-		    *--pValid = b;
-		    /* b = 0; not needed as each bit is explicitly set */
-		}
+                if ((i % 8) == 7) {
+                    *--pValid = b;
+                    /* b = 0; not needed as each bit is explicitly set */
+                }
             }
 
             if (aData->color_data->pGrayInverseLutData == NULL) {
@@ -1121,32 +1121,32 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
             }
         }
 
-	if (!allvalid) {
-	    jobject bArray = (*env)->NewByteArray(env, sizeof(valid));
-	    if (bArray == NULL)
-	    {
-		(*env)->PopLocalFrame(env, 0);
-		return NULL;
-	    }
-	    else
-	    {
-		(*env)->SetByteArrayRegion(env, bArray, 0, sizeof(valid),
-					   valid);
-	    }
-	    validBits = JNU_NewObjectByName(env,
-					    "java/math/BigInteger",
-					    "([B)V", bArray);
-	    if (validBits == NULL)
-	    {
-		(*env)->PopLocalFrame(env, 0);
-		return NULL;
-	    }
-	}
+        if (!allvalid) {
+            jobject bArray = (*env)->NewByteArray(env, sizeof(valid));
+            if (bArray == NULL)
+            {
+                (*env)->PopLocalFrame(env, 0);
+                return NULL;
+            }
+            else
+            {
+                (*env)->SetByteArrayRegion(env, bArray, 0, sizeof(valid),
+                                           valid);
+            }
+            validBits = JNU_NewObjectByName(env,
+                                            "java/math/BigInteger",
+                                            "([B)V", bArray);
+            if (validBits == NULL)
+            {
+                (*env)->PopLocalFrame(env, 0);
+                return NULL;
+            }
+        }
 
         hArray = (*env)->NewIntArray(env, paletteSize);
         if (hArray == NULL)
         {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
         else
@@ -1154,33 +1154,33 @@ jobject awtJNI_GetColorModel(JNIEnv *env, AwtGraphicsConfigDataPtr aData)
             (*env)->SetIntArrayRegion(env, hArray, 0, paletteSize, rgb);
         }
 
-	if (aData->awt_visInfo.depth == 8) {
-	    awt_colormodel =
-		JNU_NewObjectByName(env,
-				    "java/awt/image/IndexColorModel",
-				    "(II[IIILjava/math/BigInteger;)V",
-				    8, 256, hArray, 0,
-				    java_awt_image_DataBuffer_TYPE_BYTE,
-				    validBits);
-	} else {
-	    awt_colormodel =
-		JNU_NewObjectByName(env,
-				    "java/awt/image/IndexColorModel",
-				    "(II[IIILjava/math/BigInteger;)V",
-				    12, 4096, hArray, 0,
-				    java_awt_image_DataBuffer_TYPE_USHORT,
-				    validBits);
-	}
+        if (aData->awt_visInfo.depth == 8) {
+            awt_colormodel =
+                JNU_NewObjectByName(env,
+                                    "java/awt/image/IndexColorModel",
+                                    "(II[IIILjava/math/BigInteger;)V",
+                                    8, 256, hArray, 0,
+                                    java_awt_image_DataBuffer_TYPE_BYTE,
+                                    validBits);
+        } else {
+            awt_colormodel =
+                JNU_NewObjectByName(env,
+                                    "java/awt/image/IndexColorModel",
+                                    "(II[IIILjava/math/BigInteger;)V",
+                                    12, 4096, hArray, 0,
+                                    java_awt_image_DataBuffer_TYPE_USHORT,
+                                    validBits);
+        }
 
         if (awt_colormodel == NULL)
         {
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
 
-	/* Set pData field of ColorModel to point to ColorData */
-	JNU_SetLongFieldFromPtr(env, awt_colormodel, g_CMpDataID,
-				aData->color_data);
+        /* Set pData field of ColorModel to point to ColorData */
+        JNU_SetLongFieldFromPtr(env, awt_colormodel, g_CMpDataID,
+                                aData->color_data);
 
     }
 
@@ -1204,31 +1204,31 @@ int awtJNI_GetColorForVis (JNIEnv *env,jobject this, AwtGraphicsConfigDataPtr aw
 
     if (!JNU_IsNull(env,this))
     {
-	SYSCLR_class = (*env)->FindClass(env, "java/awt/SystemColor");
+        SYSCLR_class = (*env)->FindClass(env, "java/awt/SystemColor");
 
-	if ((*env)->IsInstanceOf(env, this, SYSCLR_class)) {
-		/* SECURITY: This is safe, because there is no way
-		 *           for client code to insert an object
-		 *           that is a subclass of SystemColor
+        if ((*env)->IsInstanceOf(env, this, SYSCLR_class)) {
+                /* SECURITY: This is safe, because there is no way
+                 *           for client code to insert an object
+                 *           that is a subclass of SystemColor
                  */
-		col = (int) JNU_CallMethodByName(env
+                col = (int) JNU_CallMethodByName(env
                                           ,NULL
                                           ,this
                                           ,"getRGB"
                                           ,"()I").i;
-	} else {
-		col = (int)(*env)->GetIntField(env,this,colorValueID);
-	}
+        } else {
+                col = (int)(*env)->GetIntField(env,this,colorValueID);
+        }
 
-	if (awt_data->awt_cmap == (Colormap) NULL) {
-	    awtJNI_CreateColorData (env, awt_data, 1);
-	}
+        if (awt_data->awt_cmap == (Colormap) NULL) {
+            awtJNI_CreateColorData (env, awt_data, 1);
+        }
 
-	col = awt_data->AwtColorMatch(red(col), green(col), blue(col), 
-				      awt_data);
-	return col;
+        col = awt_data->AwtColorMatch(red(col), green(col), blue(col),
+                                      awt_data);
+        return col;
     }
-    
+
     return 0;
 }
 
@@ -1237,8 +1237,8 @@ awt_allocate_systemrgbcolors (jint *rgbColors, int num_colors,
                               AwtGraphicsConfigDataPtr awtData) {
     int i, pixel;
     for (i = 0; i < num_colors; i++)
-	pixel = alloc_col (awt_display, awtData->awt_cmap, red (rgbColors [i]),
-			   green (rgbColors [i]), blue (rgbColors [i]), -1,
+        pixel = alloc_col (awt_display, awtData->awt_cmap, red (rgbColors [i]),
+                           green (rgbColors [i]), blue (rgbColors [i]), -1,
                            awtData);
 }
 
@@ -1248,56 +1248,56 @@ awtCreateX11Colormap(AwtGraphicsConfigDataPtr adata) {
     Colormap cmap = (Colormap)NULL;
 
     if (adata->awt_visInfo.visual == DefaultVisual(awt_display, screen)) {
-	cmap = DefaultColormap(awt_display, screen);
+        cmap = DefaultColormap(awt_display, screen);
     } else {
-	Window root = RootWindow(awt_display, screen);
+        Window root = RootWindow(awt_display, screen);
 
-	if (adata->awt_visInfo.visual->class % 2) {
-	    Atom actual_type;
-	    int actual_format;
-	    unsigned long nitems, bytes_after;
-	    XStandardColormap *scm;
-   
-	    XGetWindowProperty (awt_display, root, XA_RGB_DEFAULT_MAP, 
-				0L, 1L, False, AnyPropertyType, &actual_type,
+        if (adata->awt_visInfo.visual->class % 2) {
+            Atom actual_type;
+            int actual_format;
+            unsigned long nitems, bytes_after;
+            XStandardColormap *scm;
+
+            XGetWindowProperty (awt_display, root, XA_RGB_DEFAULT_MAP,
+                                0L, 1L, False, AnyPropertyType, &actual_type,
                                 &actual_format, &nitems, &bytes_after,
                                 (unsigned char **) &scm);
 
             XGetWindowProperty (awt_display, root, XA_RGB_DEFAULT_MAP, 0L,
-                                bytes_after/4 + 1, False, AnyPropertyType, 
-			        &actual_type, &actual_format, &nitems, 
-				&bytes_after, (unsigned char **) &scm);
+                                bytes_after/4 + 1, False, AnyPropertyType,
+                                &actual_type, &actual_format, &nitems,
+                                &bytes_after, (unsigned char **) &scm);
 
             nitems /= (sizeof (XStandardColormap)/4);
             for (; nitems > 0; ++scm, --nitems)
                 if (scm->visualid == adata->awt_visInfo.visualid) {
                     cmap = scm->colormap;
-		    break;
+                    break;
                 }
         }
-	if (!cmap) {
-	    cmap = XCreateColormap (awt_display, root, 
-				    adata->awt_visInfo.visual, 
-				    AllocNone);
-	}
+        if (!cmap) {
+            cmap = XCreateColormap (awt_display, root,
+                                    adata->awt_visInfo.visual,
+                                    AllocNone);
+        }
     }
 
     adata->awt_cmap = cmap;
     if (!awt_allocate_colors(adata)) {
-	XFreeColormap(awt_display, adata->awt_cmap);
-	adata->awt_cmap = (Colormap)NULL;
-	return 0;
+        XFreeColormap(awt_display, adata->awt_cmap);
+        adata->awt_cmap = (Colormap)NULL;
+        return 0;
     }
     return 1;
 }
 
 void
 awtJNI_CreateColorData(JNIEnv *env, AwtGraphicsConfigDataPtr adata,
-		       int lock) {
+                       int lock) {
 
     /* Create Colormap */
     if (lock) {
-	AWT_LOCK ();
+        AWT_LOCK ();
     }
 
     awtCreateX11Colormap(adata);
@@ -1309,40 +1309,40 @@ awtJNI_CreateColorData(JNIEnv *env, AwtGraphicsConfigDataPtr adata,
      * and alloc-ing a pixel that is already allocated won't
      * hurt. */
 
-    if (adata->awt_depth == 8 || 
-	(adata->awt_depth == 12 && adata->awt_visInfo.class == PseudoColor)) 
+    if (adata->awt_depth == 8 ||
+        (adata->awt_depth == 12 && adata->awt_visInfo.class == PseudoColor))
     {
-	jint colorVals [java_awt_SystemColor_NUM_COLORS];
-	jclass sysColors;
-	jfieldID colorID;
-	jintArray colors;
+        jint colorVals [java_awt_SystemColor_NUM_COLORS];
+        jclass sysColors;
+        jfieldID colorID;
+        jintArray colors;
 
-	/* Unlock now to initialize the SystemColor class */
-	if (lock) {
-	    AWT_UNLOCK ();
-	}
-	sysColors = (*env)->FindClass (env, "java/awt/SystemColor");
-	if (lock) {
-	    AWT_LOCK (); 
-	}
-	colorID = (*env)->GetStaticFieldID (env, sysColors, 
-						   "systemColors",
-						   "[I");
-	  
-	colors = (jintArray) (*env)->GetStaticObjectField 
-						(env, sysColors, colorID);
+        /* Unlock now to initialize the SystemColor class */
+        if (lock) {
+            AWT_UNLOCK ();
+        }
+        sysColors = (*env)->FindClass (env, "java/awt/SystemColor");
+        if (lock) {
+            AWT_LOCK ();
+        }
+        colorID = (*env)->GetStaticFieldID (env, sysColors,
+                                                   "systemColors",
+                                                   "[I");
 
-	(*env)->GetIntArrayRegion (env, colors, 0,
-				     java_awt_SystemColor_NUM_COLORS,
-				     (jint *) colorVals);
+        colors = (jintArray) (*env)->GetStaticObjectField
+                                                (env, sysColors, colorID);
 
-	awt_allocate_systemrgbcolors (colorVals, 
-			(java_awt_SystemColor_NUM_COLORS - 1), adata); 
+        (*env)->GetIntArrayRegion (env, colors, 0,
+                                     java_awt_SystemColor_NUM_COLORS,
+                                     (jint *) colorVals);
 
-    }	
+        awt_allocate_systemrgbcolors (colorVals,
+                        (java_awt_SystemColor_NUM_COLORS - 1), adata);
+
+    }
 
     if (lock) {
-	AWT_UNLOCK ();
+        AWT_UNLOCK ();
     }
 }
 

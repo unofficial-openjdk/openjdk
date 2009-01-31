@@ -64,7 +64,7 @@ public class XFocusProxyWindow extends XBaseWindow {
     }
 
     public void dispatchEvent(XEvent ev) {
-        int type = ev.get_type();  
+        int type = ev.get_type();
         switch (type)
         {
           case XlibWrapper.FocusIn:
@@ -73,7 +73,7 @@ public class XFocusProxyWindow extends XBaseWindow {
               break;
         }
         super.dispatchEvent(ev);
-    }    
+    }
 
     public void handleFocusEvent(XEvent xev) {
         owner.handleFocusEvent(xev);

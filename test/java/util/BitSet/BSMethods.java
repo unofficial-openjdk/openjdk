@@ -40,69 +40,69 @@ public class BSMethods {
     private static boolean failure = false;
 
     private static void fail(String diagnostic) {
-	new Error(diagnostic).printStackTrace();
-	failure = true;
+        new Error(diagnostic).printStackTrace();
+        failure = true;
     }
 
     private static void check(boolean condition) {
-	check(condition, "something's fishy");
+        check(condition, "something's fishy");
     }
 
     private static void check(boolean condition, String diagnostic) {
-	if (! condition)
-	    fail(diagnostic);
+        if (! condition)
+            fail(diagnostic);
     }
 
     private static void checkEmpty(BitSet s) {
-	check(s.isEmpty(), "isEmpty");
-	check(s.length() == 0, "length");
-	check(s.cardinality() == 0, "cardinality");
-	check(s.equals(new BitSet())   , "equals");
-	check(s.equals(new BitSet(0))  , "equals");
-	check(s.equals(new BitSet(127)), "equals");
-	check(s.equals(new BitSet(128)), "equals");
-	check(s.nextSetBit(0)   == -1, "nextSetBit");
-	check(s.nextSetBit(127) == -1, "nextSetBit");
-	check(s.nextSetBit(128) == -1, "nextSetBit");
-	check(s.nextClearBit(0)   == 0,   "nextClearBit");
-	check(s.nextClearBit(127) == 127, "nextClearBit");
-	check(s.nextClearBit(128) == 128, "nextClearBit");
-	check(s.toString().equals("{}"), "toString");
-	check(! s.get(0), "get");
+        check(s.isEmpty(), "isEmpty");
+        check(s.length() == 0, "length");
+        check(s.cardinality() == 0, "cardinality");
+        check(s.equals(new BitSet())   , "equals");
+        check(s.equals(new BitSet(0))  , "equals");
+        check(s.equals(new BitSet(127)), "equals");
+        check(s.equals(new BitSet(128)), "equals");
+        check(s.nextSetBit(0)   == -1, "nextSetBit");
+        check(s.nextSetBit(127) == -1, "nextSetBit");
+        check(s.nextSetBit(128) == -1, "nextSetBit");
+        check(s.nextClearBit(0)   == 0,   "nextClearBit");
+        check(s.nextClearBit(127) == 127, "nextClearBit");
+        check(s.nextClearBit(128) == 128, "nextClearBit");
+        check(s.toString().equals("{}"), "toString");
+        check(! s.get(0), "get");
     }
 
     private static BitSet makeSet(int... elts) {
-	BitSet s = new BitSet();
-	for (int elt : elts)
-	    s.set(elt);
-	return s;
+        BitSet s = new BitSet();
+        for (int elt : elts)
+            s.set(elt);
+        return s;
     }
 
     private static void checkEquality(BitSet s, BitSet t) {
-	checkSanity(s, t);
-	check(s.equals(t), "equals");
-	check(s.toString().equals(t.toString()), "equal strings");
-	check(s.length() == t.length(), "equal lengths");
-	check(s.cardinality() == t.cardinality(), "equal cardinalities");
+        checkSanity(s, t);
+        check(s.equals(t), "equals");
+        check(s.toString().equals(t.toString()), "equal strings");
+        check(s.length() == t.length(), "equal lengths");
+        check(s.cardinality() == t.cardinality(), "equal cardinalities");
     }
 
     private static void checkSanity(BitSet... sets) {
-	for (BitSet s : sets) {
-	    int len = s.length();
-	    int cardinality1 = s.cardinality();
-	    int cardinality2 = 0;
-	    for (int i = s.nextSetBit(0); i >= 0; i = s.nextSetBit(i+1)) {
-		check(s.get(i));
-		cardinality2++;
-	    }
-	    check(s.nextSetBit(len) == -1, "last set bit");
-	    check(s.nextClearBit(len) == len, "last set bit");
-	    check(s.isEmpty() == (len == 0), "emptiness");
-	    check(cardinality1 == cardinality2, "cardinalities");
-	    check(len <= s.size(), "length <= size");
-	    check(len >= 0, "length >= 0");
-	    check(cardinality1 >= 0, "cardinality >= 0");
-	}
+        for (BitSet s : sets) {
+            int len = s.length();
+            int cardinality1 = s.cardinality();
+            int cardinality2 = 0;
+            for (int i = s.nextSetBit(0); i >= 0; i = s.nextSetBit(i+1)) {
+                check(s.get(i));
+                cardinality2++;
+            }
+            check(s.nextSetBit(len) == -1, "last set bit");
+            check(s.nextClearBit(len) == len, "last set bit");
+            check(s.isEmpty() == (len == 0), "emptiness");
+            check(cardinality1 == cardinality2, "cardinalities");
+            check(len <= s.size(), "length <= size");
+            check(len >= 0, "length >= 0");
+            check(cardinality1 >= 0, "cardinality >= 0");
+        }
     }
 
     public static void main(String[] args) {
@@ -133,17 +133,17 @@ public class BSMethods {
         testIntersects();
         testCardinality();
         testEmpty();
-	testEmpty2();
-	testToString();
+        testEmpty2();
+        testToString();
         testLogicalIdentities();
 
         if (failure)
-	    throw new RuntimeException("One or more BitSet failures.");
+            throw new RuntimeException("One or more BitSet failures.");
     }
 
     private static void report(String testName, int failCount) {
-	System.err.println(testName+": " +
-			   (failCount==0 ? "Passed":"Failed("+failCount+")"));
+        System.err.println(testName+": " +
+                           (failCount==0 ? "Passed":"Failed("+failCount+")"));
         if (failCount > 0)
             failure = true;
     }
@@ -192,7 +192,7 @@ public class BSMethods {
                     failCount++;
             }
 
-	    checkSanity(testSet);
+            checkSanity(testSet);
         }
 
         report("NextSetBit                  ", failCount);
@@ -224,7 +224,7 @@ public class BSMethods {
                     failCount++;
             }
 
-	    checkSanity(b);
+            checkSanity(b);
         }
 
         // regression test for 4350178
@@ -237,7 +237,7 @@ public class BSMethods {
                 failCount++;
         }
 
-	checkSanity(bs);
+        checkSanity(bs);
 
         report("NextClearBit                ", failCount);
     }
@@ -334,7 +334,7 @@ public class BSMethods {
             if(testSet.length() != 0)
                 failCount++;
 
-	    checkSanity(testSet);
+            checkSanity(testSet);
         }
 
         report("SetGetClearFlip             ", failCount);
@@ -368,7 +368,7 @@ public class BSMethods {
                 if (!(bit3 == (bit1 & (!bit2))))
                     failCount++;
             }
-	    checkSanity(b1, b2, b3);
+            checkSanity(b1, b2, b3);
         }
 
         report("AndNot                      ", failCount);
@@ -402,15 +402,15 @@ public class BSMethods {
                 if (!(bit3 == (bit1 & bit2)))
                     failCount++;
             }
-	    checkSanity(b1, b2, b3);
+            checkSanity(b1, b2, b3);
         }
 
-	// `and' that happens to clear the last word
-	BitSet b4 = makeSet(2, 127);
-	b4.and(makeSet(2, 64));
-	checkSanity(b4);
-	if (!(b4.equals(makeSet(2))))
-	    failCount++;
+        // `and' that happens to clear the last word
+        BitSet b4 = makeSet(2, 127);
+        b4.and(makeSet(2, 64));
+        checkSanity(b4);
+        if (!(b4.equals(makeSet(2))))
+            failCount++;
 
         report("And                         ", failCount);
     }
@@ -457,7 +457,7 @@ public class BSMethods {
                 if (!(bit3 == (bit1 | bit2)))
                     failCount++;
             }
-	    checkSanity(b1, b2, b3);
+            checkSanity(b1, b2, b3);
         }
 
         report("Or                          ", failCount);
@@ -491,16 +491,16 @@ public class BSMethods {
                 if (!(bit3 == (bit1 ^ bit2)))
                     failCount++;
             }
-	    checkSanity(b1, b2, b3);
-	    b3.xor(b3); checkEmpty(b3);
+            checkSanity(b1, b2, b3);
+            b3.xor(b3); checkEmpty(b3);
         }
 
-	// xor that happens to clear the last word
-	BitSet b4 = makeSet(2, 64, 127);
-	b4.xor(makeSet(64, 127));
-	checkSanity(b4);
-	if (!(b4.equals(makeSet(2))))
-	    failCount++;
+        // xor that happens to clear the last word
+        BitSet b4 = makeSet(2, 64, 127);
+        b4.xor(makeSet(64, 127));
+        checkSanity(b4);
+        if (!(b4.equals(makeSet(2))))
+            failCount++;
 
         report("Xor                         ", failCount);
     }
@@ -524,7 +524,7 @@ public class BSMethods {
             // Verify their equality despite different storage sizes
             if (!b1.equals(b2))
                 failCount++;
-	    checkEquality(b1,b2);
+            checkEquality(b1,b2);
         }
 
         report("Equals                      ", failCount);
@@ -546,7 +546,7 @@ public class BSMethods {
                 if (b1.length() != highestSetBit + 1)
                     failCount++;
             }
-	    checkSanity(b1);
+            checkSanity(b1);
         }
 
         // Test length after flip
@@ -565,7 +565,7 @@ public class BSMethods {
                 if (b1.length() != 0)
                     failCount++;
             }
-	    checkSanity(b1);
+            checkSanity(b1);
         }
 
         // Test length after or
@@ -580,7 +580,7 @@ public class BSMethods {
             b1.or(b2);
             if (b1.length() != highestSetBit + 1)
                 failCount++;
-	    checkSanity(b1, b2);
+            checkSanity(b1, b2);
         }
 
         report("Length                      ", failCount);
@@ -614,13 +614,13 @@ public class BSMethods {
 
             // Verify their equality
             if (!b1.equals(b2)) {
-		System.out.println("rangeStart = " + rangeStart);
-		System.out.println("rangeEnd = " + rangeEnd);
-		System.out.println("b1 = " + b1);
-		System.out.println("b2 = " + b2);
+                System.out.println("rangeStart = " + rangeStart);
+                System.out.println("rangeEnd = " + rangeEnd);
+                System.out.println("b1 = " + b1);
+                System.out.println("b2 = " + b2);
                 failCount++;
-	    }
-	    checkEquality(b1,b2);
+            }
+            checkEquality(b1,b2);
         }
 
         report("Clear                       ", failCount);
@@ -655,14 +655,14 @@ public class BSMethods {
 
             // Verify their equality
             if (!b1.equals(b2)) {
-		System.out.println("Set 1");
-		System.out.println("rangeStart = " + rangeStart);
-		System.out.println("rangeEnd = " + rangeEnd);
-		System.out.println("b1 = " + b1);
-		System.out.println("b2 = " + b2);
+                System.out.println("Set 1");
+                System.out.println("rangeStart = " + rangeStart);
+                System.out.println("rangeEnd = " + rangeEnd);
+                System.out.println("b1 = " + b1);
+                System.out.println("b2 = " + b2);
                 failCount++;
-	    }
-	    checkEquality(b1,b2);
+            }
+            checkEquality(b1,b2);
         }
 
         // Test set(int, int, boolean)
@@ -692,12 +692,12 @@ public class BSMethods {
 
             // Verify their equality
             if (!b1.equals(b2)) {
-		System.out.println("Set 2");
-		System.out.println("b1 = " + b1);
-		System.out.println("b2 = " + b2);
+                System.out.println("Set 2");
+                System.out.println("b1 = " + b1);
+                System.out.println("b2 = " + b2);
                 failCount++;
-	    }
-	    checkEquality(b1,b2);
+            }
+            checkEquality(b1,b2);
         }
 
         report("Set                         ", failCount);
@@ -732,7 +732,7 @@ public class BSMethods {
             // Verify their equality
             if (!b1.equals(b2))
                 failCount++;
-	    checkEquality(b1,b2);
+            checkEquality(b1,b2);
         }
 
         report("Flip                        ", failCount);
@@ -770,7 +770,7 @@ public class BSMethods {
                 System.out.println(b3);
                 failCount++;
             }
-	    checkEquality(b2,b3);
+            checkEquality(b2,b3);
         }
 
         report("Get                         ", failCount);
@@ -812,7 +812,7 @@ public class BSMethods {
             if (b1.intersects(b2))
                 failCount++;
 
-	    checkSanity(b1, b2);
+            checkSanity(b1, b2);
         }
 
         report("Intersects                  ", failCount);
@@ -838,7 +838,7 @@ public class BSMethods {
                 failCount++;
             }
 
-	    checkSanity(b1);
+            checkSanity(b1);
         }
 
         report("Cardinality                 ", failCount);
@@ -868,35 +868,35 @@ public class BSMethods {
     }
 
     private static void testEmpty2() {
-	{BitSet t = new BitSet(); t.set(100); t.clear(3,600); checkEmpty(t);}
-	checkEmpty(new BitSet(0));
-	checkEmpty(new BitSet(342));
-	BitSet s = new BitSet(0);
-	checkEmpty(s);
-	s.clear(92);      checkEmpty(s);
-	s.clear(127,127); checkEmpty(s);
-	s.set(127,127);   checkEmpty(s);
-	s.set(128,128);   checkEmpty(s);
-	BitSet empty = new BitSet();
-	{BitSet t = new BitSet(); t.and   (empty);     checkEmpty(t);}
-	{BitSet t = new BitSet(); t.or    (empty);     checkEmpty(t);}
-	{BitSet t = new BitSet(); t.xor   (empty);     checkEmpty(t);}
-	{BitSet t = new BitSet(); t.andNot(empty);     checkEmpty(t);}
-	{BitSet t = new BitSet(); t.and   (t);         checkEmpty(t);}
-	{BitSet t = new BitSet(); t.or    (t);         checkEmpty(t);}
-	{BitSet t = new BitSet(); t.xor   (t);         checkEmpty(t);}
-	{BitSet t = new BitSet(); t.andNot(t);         checkEmpty(t);}
-	{BitSet t = new BitSet(); t.and(makeSet(1));   checkEmpty(t);}
-	{BitSet t = new BitSet(); t.and(makeSet(127)); checkEmpty(t);}
-	{BitSet t = new BitSet(); t.and(makeSet(128)); checkEmpty(t);}
-	{BitSet t = new BitSet(); t.flip(7);t.flip(7); checkEmpty(t);}
-	{BitSet t = new BitSet(); checkEmpty(t.get(200,300));}
-	{BitSet t = makeSet(2,5); check(t.get(2,6).equals(makeSet(0,3)),"");}
+        {BitSet t = new BitSet(); t.set(100); t.clear(3,600); checkEmpty(t);}
+        checkEmpty(new BitSet(0));
+        checkEmpty(new BitSet(342));
+        BitSet s = new BitSet(0);
+        checkEmpty(s);
+        s.clear(92);      checkEmpty(s);
+        s.clear(127,127); checkEmpty(s);
+        s.set(127,127);   checkEmpty(s);
+        s.set(128,128);   checkEmpty(s);
+        BitSet empty = new BitSet();
+        {BitSet t = new BitSet(); t.and   (empty);     checkEmpty(t);}
+        {BitSet t = new BitSet(); t.or    (empty);     checkEmpty(t);}
+        {BitSet t = new BitSet(); t.xor   (empty);     checkEmpty(t);}
+        {BitSet t = new BitSet(); t.andNot(empty);     checkEmpty(t);}
+        {BitSet t = new BitSet(); t.and   (t);         checkEmpty(t);}
+        {BitSet t = new BitSet(); t.or    (t);         checkEmpty(t);}
+        {BitSet t = new BitSet(); t.xor   (t);         checkEmpty(t);}
+        {BitSet t = new BitSet(); t.andNot(t);         checkEmpty(t);}
+        {BitSet t = new BitSet(); t.and(makeSet(1));   checkEmpty(t);}
+        {BitSet t = new BitSet(); t.and(makeSet(127)); checkEmpty(t);}
+        {BitSet t = new BitSet(); t.and(makeSet(128)); checkEmpty(t);}
+        {BitSet t = new BitSet(); t.flip(7);t.flip(7); checkEmpty(t);}
+        {BitSet t = new BitSet(); checkEmpty(t.get(200,300));}
+        {BitSet t = makeSet(2,5); check(t.get(2,6).equals(makeSet(0,3)),"");}
     }
 
     private static void testToString() {
-	check(new BitSet().toString().equals("{}"));
-	check(makeSet(2,3,42,43,234).toString().equals("{2, 3, 42, 43, 234}"));
+        check(new BitSet().toString().equals("{}"));
+        check(makeSet(2,3,42,43,234).toString().equals("{2, 3, 42, 43, 234}"));
     }
 
     private static void testLogicalIdentities() {
@@ -929,7 +929,7 @@ public class BSMethods {
                 b3.flip(x);
             if (!b1.equals(b3))
                 failCount++;
-	    checkSanity(b1, b2, b3, b4);
+            checkSanity(b1, b2, b3, b4);
         }
 
         // Verify that (b1&(!b2)|(b2&(!b1) == b1^b2
@@ -961,7 +961,7 @@ public class BSMethods {
             b5.xor(b6);
             if (!b1.equals(b5))
                 failCount++;
-	    checkSanity(b1, b2, b3, b4, b5, b6);
+            checkSanity(b1, b2, b3, b4, b5, b6);
         }
         report("Logical Identities          ", failCount);
     }

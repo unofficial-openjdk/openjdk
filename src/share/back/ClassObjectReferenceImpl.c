@@ -28,7 +28,7 @@
 #include "inStream.h"
 #include "outStream.h"
 
-static jboolean 
+static jboolean
 reflectedType(PacketInputStream *in, PacketOutputStream *out)
 {
     jbyte tag;
@@ -36,7 +36,7 @@ reflectedType(PacketInputStream *in, PacketOutputStream *out)
     JNIEnv *env;
 
     env = getEnv();
-    
+
     object = inStream_readObjectRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -47,15 +47,14 @@ reflectedType(PacketInputStream *in, PacketOutputStream *out)
      * class object id, so we bounce it right back.
      *
      */
-    
+
     tag = referenceTypeTag(object);
     (void)outStream_writeByte(out, tag);
     (void)outStream_writeObjectRef(env, out, object);
-    
+
     return JNI_TRUE;
 }
 
 void *ClassObjectReference_Cmds[] = { (void *)1
     ,(void *)reflectedType
 };
-

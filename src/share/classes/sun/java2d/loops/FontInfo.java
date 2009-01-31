@@ -58,32 +58,32 @@ public class FontInfo implements Cloneable {
     public boolean lcdSubPixPos;
 
     public String mtx(double[] matrix) {
-    	return ("["+
-		matrix[0]+", "+
-		matrix[1]+", "+
-		matrix[2]+", "+
-		matrix[3]+
-		"]");
+        return ("["+
+                matrix[0]+", "+
+                matrix[1]+", "+
+                matrix[2]+", "+
+                matrix[3]+
+                "]");
     }
 
     public Object clone() {
-	try {
-	    return super.clone();
-	} catch (CloneNotSupportedException e) {
-	    return null;
-	}
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
     }
 
     public String toString() {
-	return ("FontInfo["+
-		"font="+font+", "+
-		"devTx="+mtx(devTx)+", "+
-		"glyphTx="+mtx(glyphTx)+", "+
-		"pixelHeight="+pixelHeight+", "+
-		"origin=("+originX+","+originY+"), "+
-		"aaHint="+aaHint+", "+
-		"lcdRGBOrder="+(lcdRGBOrder ? "RGB" : "BGR")+
-		"lcdSubPixPos="+lcdSubPixPos+
-		"]");
+        return ("FontInfo["+
+                "font="+font+", "+
+                "devTx="+mtx(devTx)+", "+
+                "glyphTx="+mtx(glyphTx)+", "+
+                "pixelHeight="+pixelHeight+", "+
+                "origin=("+originX+","+originY+"), "+
+                "aaHint="+aaHint+", "+
+                "lcdRGBOrder="+(lcdRGBOrder ? "RGB" : "BGR")+
+                "lcdSubPixPos="+lcdSubPixPos+
+                "]");
     }
 }

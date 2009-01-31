@@ -35,14 +35,14 @@ import java.io.*;
 public class Applet extends java.applet.Applet {
 
     void go(String fn) {
-	File f = new File(fn);
-	System.err.println(fn + ": " + f.isDirectory());
+        File f = new File(fn);
+        System.err.println(fn + ": " + f.isDirectory());
     }
 
     public void init() {
-	String nxdir = "non_EX_is_TENT_dir_EC_tory";
-	go(nxdir);
-	go(nxdir + File.separator + "bar" + File.separator + "baz");
+        String nxdir = "non_EX_is_TENT_dir_EC_tory";
+        go(nxdir);
+        go(nxdir + File.separator + "bar" + File.separator + "baz");
     }
 
 }

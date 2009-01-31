@@ -39,7 +39,7 @@ public class Semaphore {
     public Semaphore(int initialCount) {
         semaCount = initialCount;
     }
-  
+
     public void semaP() {
         synchronized (go) {
             waiters++;

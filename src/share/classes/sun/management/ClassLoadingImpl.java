@@ -28,7 +28,7 @@ package sun.management;
 import java.lang.management.ClassLoadingMXBean;
 
 /**
- * Implementation class for the class loading subsystem. 
+ * Implementation class for the class loading subsystem.
  * Standard and committed hotspot-specific metrics if any.
  *
  * ManagementFactory.getClassLoadingMXBean() returns an instance
@@ -40,7 +40,7 @@ class ClassLoadingImpl implements ClassLoadingMXBean {
 
     /**
      * Constructor of ClassLoadingImpl class.
-     */ 
+     */
     ClassLoadingImpl(VMManagement vm) {
         this.jvm = vm;
     }

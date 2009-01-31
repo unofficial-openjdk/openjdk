@@ -35,7 +35,6 @@ import javax.swing.plaf.UIResource;
  * the variants that take a SynthContext, but must be prepared for the
  * SynthContext to be null.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 public abstract class SynthIcon implements Icon {
@@ -104,7 +103,7 @@ public abstract class SynthIcon implements Icon {
     public void paintIcon(Component c, Graphics g, int x, int y) {
         paintIcon(null, g, x, y, 0, 0);
     }
-    
+
     /**
      * Returns the icon's width. This is a cover methods for
      * <code>getIconWidth(null)</code>.

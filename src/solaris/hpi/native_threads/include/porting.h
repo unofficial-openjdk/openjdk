@@ -50,30 +50,30 @@
 
 #undef BOUND_THREADS
 
-#define thread_t		pthread_t
+#define thread_t                pthread_t
 
-#define mutex_t			pthread_mutex_t
-#define mutex_lock		pthread_mutex_lock
-#define mutex_trylock		pthread_mutex_trylock
-#define mutex_unlock		pthread_mutex_unlock
-#define mutex_destroy		pthread_mutex_destroy
+#define mutex_t                 pthread_mutex_t
+#define mutex_lock              pthread_mutex_lock
+#define mutex_trylock           pthread_mutex_trylock
+#define mutex_unlock            pthread_mutex_unlock
+#define mutex_destroy           pthread_mutex_destroy
 
-#define cond_t			pthread_cond_t
-#define cond_destroy		pthread_cond_destroy
-#define cond_wait		pthread_cond_wait
-#define cond_timedwait		pthread_cond_timedwait
-#define cond_signal		pthread_cond_signal
-#define cond_broadcast		pthread_cond_broadcast
+#define cond_t                  pthread_cond_t
+#define cond_destroy            pthread_cond_destroy
+#define cond_wait               pthread_cond_wait
+#define cond_timedwait          pthread_cond_timedwait
+#define cond_signal             pthread_cond_signal
+#define cond_broadcast          pthread_cond_broadcast
 
-#define thread_key_t		pthread_key_t
-#define thr_setspecific		pthread_setspecific
-#define thr_keycreate		pthread_key_create
+#define thread_key_t            pthread_key_t
+#define thr_setspecific         pthread_setspecific
+#define thr_keycreate           pthread_key_create
 
-#define thr_sigsetmask		pthread_sigmask
-#define thr_self		pthread_self
-#define thr_yield		sched_yield
-#define thr_kill		pthread_kill
-#define thr_exit		pthread_exit
+#define thr_sigsetmask          pthread_sigmask
+#define thr_self                pthread_self
+#define thr_yield               sched_yield
+#define thr_kill                pthread_kill
+#define thr_exit                pthread_exit
 #ifdef __linux__
 void intrHandler(void*);
 #endif

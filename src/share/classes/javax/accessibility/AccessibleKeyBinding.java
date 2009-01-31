@@ -43,8 +43,7 @@ package javax.accessibility;
  * @see AccessibleContext
  * @see AccessibleContext#getAccessibleKeyBinding
  *
- * @version     %I% %G%
- * @author	Lynn Monsanto
+ * @author      Lynn Monsanto
  * @since 1.4
  */
 public interface AccessibleKeyBinding {

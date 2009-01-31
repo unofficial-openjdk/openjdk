@@ -26,9 +26,9 @@ package java.net;
 public class MyDatagramSocketImplFactory implements DatagramSocketImplFactory {
   public DatagramSocketImpl createDatagramSocketImpl() {
     try {
-	return DefaultDatagramSocketImplFactory.createDatagramSocketImpl(false);
+        return DefaultDatagramSocketImplFactory.createDatagramSocketImpl(false);
     } catch (SocketException se) {
-	assert false;
+        assert false;
     }
 
     return null;

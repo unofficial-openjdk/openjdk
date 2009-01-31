@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,22 +31,22 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
@@ -58,9 +58,9 @@
 
 static
 LPcmsNAMEDCOLORLIST GrowNamedColorList(LPcmsNAMEDCOLORLIST v, int ByElements)
-{           
+{
     if (ByElements > v ->Allocated) {
-        
+
         LPcmsNAMEDCOLORLIST TheNewList;
         int NewElements;
         size_t size;
@@ -72,10 +72,10 @@ LPcmsNAMEDCOLORLIST GrowNamedColorList(LPcmsNAMEDCOLORLIST v, int ByElements)
 
         while (ByElements > NewElements)
                 NewElements *= 2;
-        
+
         size = sizeof(cmsNAMEDCOLORLIST) + (sizeof(cmsNAMEDCOLOR) * NewElements);
         TheNewList = (LPcmsNAMEDCOLORLIST) malloc(size);
-        
+
 
         if (TheNewList == NULL) {
             cmsSignalError(LCMS_ERRC_ABORTED, "Out of memory reallocating named color list");
@@ -90,7 +90,7 @@ LPcmsNAMEDCOLORLIST GrowNamedColorList(LPcmsNAMEDCOLORLIST v, int ByElements)
               return TheNewList;
         }
     }
-    
+
     return v;
 }
 
@@ -100,7 +100,7 @@ LPcmsNAMEDCOLORLIST cmsAllocNamedColorList(int n)
     size_t size = sizeof(cmsNAMEDCOLORLIST) + (n - 1) * sizeof(cmsNAMEDCOLOR);
 
     LPcmsNAMEDCOLORLIST v = (LPcmsNAMEDCOLORLIST) malloc(size);
-    
+
 
     if (v == NULL) {
         cmsSignalError(LCMS_ERRC_ABORTED, "Out of memory creating named color list");
@@ -110,10 +110,10 @@ LPcmsNAMEDCOLORLIST cmsAllocNamedColorList(int n)
     ZeroMemory(v, size);
 
     v ->nColors   = n;
-    v ->Allocated = n;  
+    v ->Allocated = n;
     v ->Prefix[0] = 0;
-    v ->Suffix[0] = 0;  
-           
+    v ->Suffix[0] = 0;
+
     return v;
 }
 
@@ -123,9 +123,9 @@ void cmsFreeNamedColorList(LPcmsNAMEDCOLORLIST v)
         cmsSignalError(LCMS_ERRC_RECOVERABLE, "Couldn't free a NULL named color list");
         return;
     }
-                    
+
     free(v);
-}   
+}
 
 BOOL cmsAppendNamedColor(cmsHTRANSFORM xform, const char* Name, WORD PCS[3], WORD Colorant[MAXCHANNELS])
 {
@@ -136,7 +136,7 @@ BOOL cmsAppendNamedColor(cmsHTRANSFORM xform, const char* Name, WORD PCS[3], WOR
     if (v ->NamedColorList == NULL) return FALSE;
 
     v ->NamedColorList = GrowNamedColorList(v ->NamedColorList, v->NamedColorList ->nColors + 1);
-    
+
     List = v ->NamedColorList;
 
     for (i=0; i < MAXCHANNELS; i++)
@@ -153,7 +153,7 @@ BOOL cmsAppendNamedColor(cmsHTRANSFORM xform, const char* Name, WORD PCS[3], WOR
 
 
 
-// Returns named color count 
+// Returns named color count
 
 int LCMSEXPORT cmsNamedColorCount(cmsHTRANSFORM xform)
 {
@@ -183,7 +183,7 @@ BOOL LCMSEXPORT cmsNamedColorInfo(cmsHTRANSFORM xform, int nColor, char* Name, c
 
 int  LCMSEXPORT cmsNamedColorIndex(cmsHTRANSFORM xform, const char* Name)
 {
-    _LPcmsTRANSFORM v = (_LPcmsTRANSFORM) xform;    
+    _LPcmsTRANSFORM v = (_LPcmsTRANSFORM) xform;
     int i, n;
 
          if (v ->NamedColorList == NULL) return -1;
@@ -196,5 +196,3 @@ int  LCMSEXPORT cmsNamedColorIndex(cmsHTRANSFORM xform, const char* Name)
 
         return -1;
 }
-
-

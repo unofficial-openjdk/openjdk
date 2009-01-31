@@ -54,123 +54,123 @@ public class GeneralWin32 extends General {
     /* Pathnames relative to working directory */
 
     private static void checkCaseLookup(String ud) throws IOException {
-	/* Use long names here to avoid 8.3 format, which Samba servers often
-	   force to lowercase */
-	File d = new File("XyZzY0123", "FOO_bar_BAZ");
-	File f = new File(d, "GLORPified");
-	if (!f.exists()) {
-	    if (!d.exists()) {
-		if (!d.mkdirs()) {
-		    throw new RuntimeException("Can't create directory " + d);
-		}
-	    }
-	    OutputStream o = new FileOutputStream(f);
-	    o.close();
-	}
-	File f2 = new File(d.getParent(), "mumble"); /* For later ud tests */
-	if (!f2.exists()) {
-	    OutputStream o = new FileOutputStream(f2);
-	    o.close();
-	}
+        /* Use long names here to avoid 8.3 format, which Samba servers often
+           force to lowercase */
+        File d = new File("XyZzY0123", "FOO_bar_BAZ");
+        File f = new File(d, "GLORPified");
+        if (!f.exists()) {
+            if (!d.exists()) {
+                if (!d.mkdirs()) {
+                    throw new RuntimeException("Can't create directory " + d);
+                }
+            }
+            OutputStream o = new FileOutputStream(f);
+            o.close();
+        }
+        File f2 = new File(d.getParent(), "mumble"); /* For later ud tests */
+        if (!f2.exists()) {
+            OutputStream o = new FileOutputStream(f2);
+            o.close();
+        }
 
-	/* Computing the canonical path of a Win32 file should expose the true
-	   case of filenames, rather than just using the input case */
-	File y = new File(ud, f.getPath());
-	String ans = y.getPath();
-	check(ans, "XyZzY0123\\FOO_bar_BAZ\\GLORPified");
-	check(ans, "xyzzy0123\\foo_bar_baz\\glorpified");
-	check(ans, "XYZZY0123\\FOO_BAR_BAZ\\GLORPIFIED");
+        /* Computing the canonical path of a Win32 file should expose the true
+           case of filenames, rather than just using the input case */
+        File y = new File(ud, f.getPath());
+        String ans = y.getPath();
+        check(ans, "XyZzY0123\\FOO_bar_BAZ\\GLORPified");
+        check(ans, "xyzzy0123\\foo_bar_baz\\glorpified");
+        check(ans, "XYZZY0123\\FOO_BAR_BAZ\\GLORPIFIED");
     }
 
     private static void checkWild(File f) throws Exception {
-	try {
-	    f.getCanonicalPath();
-	} catch (IOException x) {
-	    return;
-	}
-	throw new Exception("Wildcard path not rejected: " + f);
+        try {
+            f.getCanonicalPath();
+        } catch (IOException x) {
+            return;
+        }
+        throw new Exception("Wildcard path not rejected: " + f);
     }
 
     private static void checkWildCards(String ud) throws Exception {
-	File d = new File(ud).getCanonicalFile();
-	checkWild(new File(d, "*.*"));
-	checkWild(new File(d, "*.???"));
-	checkWild(new File(new File(d, "*.*"), "foo"));
+        File d = new File(ud).getCanonicalFile();
+        checkWild(new File(d, "*.*"));
+        checkWild(new File(d, "*.???"));
+        checkWild(new File(new File(d, "*.*"), "foo"));
     }
 
     private static void checkRelativePaths() throws Exception {
-	String ud = System.getProperty("user.dir").replace('/', '\\');
-	checkCaseLookup(ud);
-	checkWildCards(ud);
-	checkNames(3, true, ud + "\\", "");
+        String ud = System.getProperty("user.dir").replace('/', '\\');
+        checkCaseLookup(ud);
+        checkWildCards(ud);
+        checkNames(3, true, ud + "\\", "");
     }
 
-
+
     /* Pathnames with drive specifiers */
 
     private static char findInactiveDrive() {
-	for (char d = 'Z'; d >= 'E'; d--) {
-	    File df = new File(d + ":\\");
-	    if (!df.exists()) {
-		return d;
-	    }
-	}
-	throw new RuntimeException("Can't find an inactive drive");
+        for (char d = 'Z'; d >= 'E'; d--) {
+            File df = new File(d + ":\\");
+            if (!df.exists()) {
+                return d;
+            }
+        }
+        throw new RuntimeException("Can't find an inactive drive");
     }
 
     private static char findActiveDrive() {
-	for (char d = 'C'; d <= 'Z'; d--) {
-	    File df = new File(d + ":\\");
-	    if (df.exists()) return d;
-	}
-	throw new RuntimeException("Can't find an active drive");
+        for (char d = 'C'; d <= 'Z'; d--) {
+            File df = new File(d + ":\\");
+            if (df.exists()) return d;
+        }
+        throw new RuntimeException("Can't find an active drive");
     }
 
     private static void checkDrive(int depth, char drive, boolean exists)
-	throws Exception
+        throws Exception
     {
-	String d = drive + ":";
-	File df = new File(d);
-	String ans = exists ? df.getAbsolutePath() : d;
-	if (!ans.endsWith("\\"))
-	    ans = ans + "\\";
-	checkNames(depth, false, ans, d);
+        String d = drive + ":";
+        File df = new File(d);
+        String ans = exists ? df.getAbsolutePath() : d;
+        if (!ans.endsWith("\\"))
+            ans = ans + "\\";
+        checkNames(depth, false, ans, d);
     }
 
     private static void checkDrivePaths() throws Exception {
-	checkDrive(2, findActiveDrive(), true);
-	checkDrive(2, findInactiveDrive(), false);
+        checkDrive(2, findActiveDrive(), true);
+        checkDrive(2, findInactiveDrive(), false);
     }
 
 
     /* UNC pathnames */
 
     private static void checkUncPaths() throws Exception {
-	String s = ("\\\\" + NONEXISTENT_UNC_HOST
-		    + "\\" + NONEXISTENT_UNC_SHARE);
-	ensureNon(s);
-	checkSlashes(2, false, s, s);
+        String s = ("\\\\" + NONEXISTENT_UNC_HOST
+                    + "\\" + NONEXISTENT_UNC_SHARE);
+        ensureNon(s);
+        checkSlashes(2, false, s, s);
 
-	s = "\\\\" + EXISTENT_UNC_HOST + "\\" + EXISTENT_UNC_SHARE;
-	if (!(new File(s)).exists()) {
-	    System.err.println("WARNING: " + s +
-			       " does not exist, unable to test UNC pathnames");
-	    return;
-	}
+        s = "\\\\" + EXISTENT_UNC_HOST + "\\" + EXISTENT_UNC_SHARE;
+        if (!(new File(s)).exists()) {
+            System.err.println("WARNING: " + s +
+                               " does not exist, unable to test UNC pathnames");
+            return;
+        }
 
-	checkSlashes(2, false, s, s);
+        checkSlashes(2, false, s, s);
     }
 
 
     public static void main(String[] args) throws Exception {
-	if (File.separatorChar != '\\') {
-	    /* This test is only valid on win32 systems */
-	    return;
-	}
-	if (args.length > 0) debug = true;
-	checkRelativePaths();
-	checkDrivePaths();
-	checkUncPaths();
+        if (File.separatorChar != '\\') {
+            /* This test is only valid on win32 systems */
+            return;
+        }
+        if (args.length > 0) debug = true;
+        checkRelativePaths();
+        checkDrivePaths();
+        checkUncPaths();
     }
 
 }

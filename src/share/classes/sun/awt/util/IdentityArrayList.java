@@ -95,20 +95,20 @@ import java.util.RandomAccess;
 public class IdentityArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess
 {
-    
+
     /**
      * The array buffer into which the elements of the IdentityArrayList are stored.
      * The capacity of the IdentityArrayList is the length of this array buffer.
      */
     private transient Object[] elementData;
-    
+
     /**
      * The size of the IdentityArrayList (the number of elements it contains).
      *
      * @serial
      */
     private int size;
-    
+
     /**
      * Constructs an empty list with the specified initial capacity.
      *
@@ -123,14 +123,14 @@ public class IdentityArrayList<E> extends AbstractList<E>
                     initialCapacity);
         this.elementData = new Object[initialCapacity];
     }
-    
+
     /**
      * Constructs an empty list with an initial capacity of ten.
      */
     public IdentityArrayList() {
         this(10);
     }
-    
+
     /**
      * Constructs a list containing the elements of the specified
      * collection, in the order they are returned by the collection's
@@ -146,7 +146,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         if (elementData.getClass() != Object[].class)
             elementData = Arrays.copyOf(elementData, size, Object[].class);
     }
-    
+
     /**
      * Trims the capacity of this <tt>IdentityArrayList</tt> instance to be the
      * list's current size.  An application can use this operation to minimize
@@ -159,7 +159,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
             elementData = Arrays.copyOf(elementData, size);
         }
     }
-    
+
     /**
      * Increases the capacity of this <tt>IdentityArrayList</tt> instance, if
      * necessary, to ensure that it can hold at least the number of elements
@@ -179,7 +179,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
             elementData = Arrays.copyOf(elementData, newCapacity);
         }
     }
-    
+
     /**
      * Returns the number of elements in this list.
      *
@@ -188,7 +188,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
     public int size() {
         return size;
     }
-    
+
     /**
      * Returns <tt>true</tt> if this list contains no elements.
      *
@@ -197,7 +197,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
     public boolean isEmpty() {
         return size == 0;
     }
-    
+
     /**
      * Returns <tt>true</tt> if this list contains the specified element.
      * More formally, returns <tt>true</tt> if and only if this list contains
@@ -210,7 +210,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
     public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
-    
+
     /**
      * Returns the index of the first occurrence of the specified element
      * in this list, or -1 if this list does not contain the element.
@@ -226,7 +226,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         }
         return -1;
     }
-    
+
     /**
      * Returns the index of the last occurrence of the specified element
      * in this list, or -1 if this list does not contain the element.
@@ -242,7 +242,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         }
         return -1;
     }
-    
+
     /**
      * Returns an array containing all of the elements in this list
      * in proper sequence (from first to last element).
@@ -260,7 +260,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
     public Object[] toArray() {
         return Arrays.copyOf(elementData, size);
     }
-    
+
     /**
      * Returns an array containing all of the elements in this list in proper
      * sequence (from first to last element); the runtime type of the returned
@@ -294,9 +294,9 @@ public class IdentityArrayList<E> extends AbstractList<E>
             a[size] = null;
         return a;
     }
-    
+
     // Positional Access Operations
-    
+
     /**
      * Returns the element at the specified position in this list.
      *
@@ -306,10 +306,10 @@ public class IdentityArrayList<E> extends AbstractList<E>
      */
     public E get(int index) {
         rangeCheck(index);
-        
+
         return (E) elementData[index];
     }
-    
+
     /**
      * Replaces the element at the specified position in this list with
      * the specified element.
@@ -321,12 +321,12 @@ public class IdentityArrayList<E> extends AbstractList<E>
      */
     public E set(int index, E element) {
         rangeCheck(index);
-        
+
         E oldValue = (E) elementData[index];
         elementData[index] = element;
         return oldValue;
     }
-    
+
     /**
      * Appends the specified element to the end of this list.
      *
@@ -338,7 +338,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         elementData[size++] = e;
         return true;
     }
-    
+
     /**
      * Inserts the specified element at the specified position in this
      * list. Shifts the element currently at that position (if any) and
@@ -350,14 +350,14 @@ public class IdentityArrayList<E> extends AbstractList<E>
      */
     public void add(int index, E element) {
         rangeCheckForAdd(index);
-        
+
         ensureCapacity(size+1);  // Increments modCount!!
         System.arraycopy(elementData, index, elementData, index + 1,
                 size - index);
         elementData[index] = element;
         size++;
     }
-    
+
     /**
      * Removes the element at the specified position in this list.
      * Shifts any subsequent elements to the left (subtracts one from their
@@ -369,19 +369,19 @@ public class IdentityArrayList<E> extends AbstractList<E>
      */
     public E remove(int index) {
         rangeCheck(index);
-        
+
         modCount++;
         E oldValue = (E) elementData[index];
-        
+
         int numMoved = size - index - 1;
         if (numMoved > 0)
             System.arraycopy(elementData, index+1, elementData, index,
                     numMoved);
         elementData[--size] = null; // Let gc do its work
-        
+
         return oldValue;
     }
-    
+
     /**
      * Removes the first occurrence of the specified element from this list,
      * if it is present.  If the list does not contain the element, it is
@@ -404,7 +404,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         }
         return false;
     }
-    
+
     /*
      * Private remove method that skips bounds checking and does not
      * return the value removed.
@@ -417,21 +417,21 @@ public class IdentityArrayList<E> extends AbstractList<E>
                     numMoved);
         elementData[--size] = null; // Let gc do its work
     }
-    
+
     /**
      * Removes all of the elements from this list.  The list will
      * be empty after this call returns.
      */
     public void clear() {
         modCount++;
-        
+
         // Let gc do its work
         for (int i = 0; i < size; i++)
             elementData[i] = null;
-        
+
         size = 0;
     }
-    
+
     /**
      * Appends all of the elements in the specified collection to the end of
      * this list, in the order that they are returned by the
@@ -453,7 +453,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         size += numNew;
         return numNew != 0;
     }
-    
+
     /**
      * Inserts all of the elements in the specified collection into this
      * list, starting at the specified position.  Shifts the element
@@ -471,21 +471,21 @@ public class IdentityArrayList<E> extends AbstractList<E>
      */
     public boolean addAll(int index, Collection<? extends E> c) {
         rangeCheckForAdd(index);
-        
+
         Object[] a = c.toArray();
         int numNew = a.length;
         ensureCapacity(size + numNew);  // Increments modCount
-        
+
         int numMoved = size - index;
         if (numMoved > 0) {
             System.arraycopy(elementData, index, elementData, index + numNew, numMoved);
         }
-        
+
         System.arraycopy(a, 0, elementData, index, numNew);
         size += numNew;
         return numNew != 0;
     }
-    
+
     /**
      * Removes from this list all of the elements whose index is between
      * <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
@@ -504,13 +504,13 @@ public class IdentityArrayList<E> extends AbstractList<E>
         int numMoved = size - toIndex;
         System.arraycopy(elementData, toIndex, elementData, fromIndex,
                 numMoved);
-        
+
         // Let gc do its work
         int newSize = size - (toIndex-fromIndex);
         while (size != newSize)
             elementData[--size] = null;
     }
-    
+
     /**
      * Checks if the given index is in range.  If not, throws an appropriate
      * runtime exception.  This method does *not* check if the index is
@@ -521,7 +521,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         if (index >= size)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
-    
+
     /**
      * A version of rangeCheck used by add and addAll.
      */
@@ -529,7 +529,7 @@ public class IdentityArrayList<E> extends AbstractList<E>
         if (index > size || index < 0)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
-    
+
     /**
      * Constructs an IndexOutOfBoundsException detail message.
      * Of the many possible refactorings of the error handling code,

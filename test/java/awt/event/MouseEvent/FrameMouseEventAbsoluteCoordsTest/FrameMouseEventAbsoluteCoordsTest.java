@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   test
   @bug 4992908
   @summary Need way to get location of MouseEvent in screen  coordinates (Unit-test)
@@ -47,9 +47,9 @@ public class FrameMouseEventAbsoluteCoordsTest extends Applet implements MouseLi
     Point mousePositionAbsolute;
     Point mousePosition;
 
-    public void init() 
+    public void init()
     {
-      
+
         this.setLayout (new BorderLayout ());
         button.addMouseListener(this);
         frame.add(button);
@@ -62,7 +62,7 @@ public class FrameMouseEventAbsoluteCoordsTest extends Applet implements MouseLi
         frame.setVisible(true);
         validate();
         Util.waitForIdle(robot);
-        
+
         try {
             robot = new Robot();
             robot.setAutoWaitForIdle(true);
@@ -115,4 +115,3 @@ public class FrameMouseEventAbsoluteCoordsTest extends Applet implements MouseLi
     }
 
 }// class
-

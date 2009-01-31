@@ -42,61 +42,61 @@ public class TestRSA {
     private final static char[] hexDigits = "0123456789abcdef".toCharArray();
 
     public static String toString(byte[] b) {
-	if (b == null) {
-	    return "(null)";
-	}
-	StringBuffer sb = new StringBuffer(b.length * 3);
-	for (int i = 0; i < b.length; i++) {
-	    int k = b[i] & 0xff;
-	    if (i != 0) {
-		sb.append(':');
-	    }
-	    sb.append(hexDigits[k >>> 4]);
-	    sb.append(hexDigits[k & 0xf]);
-	}
-	return sb.toString();
+        if (b == null) {
+            return "(null)";
+        }
+        StringBuffer sb = new StringBuffer(b.length * 3);
+        for (int i = 0; i < b.length; i++) {
+            int k = b[i] & 0xff;
+            if (i != 0) {
+                sb.append(':');
+            }
+            sb.append(hexDigits[k >>> 4]);
+            sb.append(hexDigits[k & 0xf]);
+        }
+        return sb.toString();
     }
 
     public static byte[] parse(String s) {
-	try {
-	    int n = s.length();
-	    ByteArrayOutputStream out = new ByteArrayOutputStream(n / 3);
-	    StringReader r = new StringReader(s);
-	    while (true) {
-		int b1 = nextNibble(r);
-		if (b1 < 0) {
-		    break;
-		}
-		int b2 = nextNibble(r);
-		if (b2 < 0) {
-		    throw new RuntimeException("Invalid string " + s);
-		}
-		int b = (b1 << 4) | b2;
-		out.write(b);
-	    }
-	    return out.toByteArray();
-	} catch (IOException e) {
-	    throw new RuntimeException(e);
-	}
+        try {
+            int n = s.length();
+            ByteArrayOutputStream out = new ByteArrayOutputStream(n / 3);
+            StringReader r = new StringReader(s);
+            while (true) {
+                int b1 = nextNibble(r);
+                if (b1 < 0) {
+                    break;
+                }
+                int b2 = nextNibble(r);
+                if (b2 < 0) {
+                    throw new RuntimeException("Invalid string " + s);
+                }
+                int b = (b1 << 4) | b2;
+                out.write(b);
+            }
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static byte[] b(String s) {
-	return parse(s);
+        return parse(s);
     }
 
     private static int nextNibble(StringReader r) throws IOException {
-	while (true) {
-	    int ch = r.read();
-	    if (ch == -1) {
-		return -1;
-	    } else if ((ch >= '0') && (ch <= '9')) {
-		return ch - '0';
-	    } else if ((ch >= 'a') && (ch <= 'f')) {
-		return ch - 'a' + 10;
-	    } else if ((ch >= 'A') && (ch <= 'F')) {
-		return ch - 'A' + 10;
-	    }
-	}
+        while (true) {
+            int ch = r.read();
+            if (ch == -1) {
+                return -1;
+            } else if ((ch >= '0') && (ch <= '9')) {
+                return ch - '0';
+            } else if ((ch >= 'a') && (ch <= 'f')) {
+                return ch - 'a' + 10;
+            } else if ((ch >= 'A') && (ch <= 'F')) {
+                return ch - 'A' + 10;
+            }
+        }
     }
 
     private final static BigInteger N = new BigInteger
@@ -120,36 +120,36 @@ public class TestRSA {
     private static Provider p;
 
     private static void testEncDec(String alg, int len, Key encKey, Key decKey) throws Exception {
-	System.out.println("Testing en/decryption using " + alg + "...");
-	Cipher c = Cipher.getInstance(alg, p);
+        System.out.println("Testing en/decryption using " + alg + "...");
+        Cipher c = Cipher.getInstance(alg, p);
 
-	byte[] b = new byte[len];
-	RANDOM.nextBytes(b);
-	b[0] &= 0x3f;
-	b[0] |= 1;
+        byte[] b = new byte[len];
+        RANDOM.nextBytes(b);
+        b[0] &= 0x3f;
+        b[0] |= 1;
 
-	c.init(Cipher.ENCRYPT_MODE, encKey);
-	byte[] enc = c.doFinal(b);
+        c.init(Cipher.ENCRYPT_MODE, encKey);
+        byte[] enc = c.doFinal(b);
 
-	c.init(Cipher.DECRYPT_MODE, decKey);
-	byte[] dec = c.doFinal(enc);
+        c.init(Cipher.DECRYPT_MODE, decKey);
+        byte[] dec = c.doFinal(enc);
 
-	if (Arrays.equals(b, dec) == false) {
-	    System.out.println("in:  " + toString(b));
-	    System.out.println("dec: " + toString(dec));
-	    throw new Exception("Failure");
-	}
+        if (Arrays.equals(b, dec) == false) {
+            System.out.println("in:  " + toString(b));
+            System.out.println("dec: " + toString(dec));
+            throw new Exception("Failure");
+        }
     }
 
     public static void testKat(String alg, int mode, Key key, String in, String out, boolean result) throws Exception {
-	System.out.println("Testing known values for " + alg + "...");
-	Cipher c = Cipher.getInstance(alg, p);
-	c.init(mode, key);
-	byte[] r = c.doFinal(parse(in));
-	byte[] s = parse(out);
-	if (Arrays.equals(r, s) != result) {
-	    throw new Exception("Unexpected test result");
-	}
+        System.out.println("Testing known values for " + alg + "...");
+        Cipher c = Cipher.getInstance(alg, p);
+        c.init(mode, key);
+        byte[] r = c.doFinal(parse(in));
+        byte[] s = parse(out);
+        if (Arrays.equals(r, s) != result) {
+            throw new Exception("Unexpected test result");
+        }
     }
 
     private final static String in2  = "0f:7d:6c:20:75:99:a5:bc:c1:53:b0:4e:8d:ef:98:fb:cf:2d:e5:1d:d4:bf:71:56:12:b7:a3:c3:e4:53:1b:07:d3:bb:94:a7:a7:28:75:1e:83:46:c9:80:4e:3f:ac:b2:47:06:9f:1b:68:38:73:b8:69:9e:6b:8b:8b:23:60:31:ae:ea:36:24:6f:85:af:de:a5:2a:88:7d:6a:9f:8a:9f:61:f6:59:3f:a8:ce:91:75:49:e9:34:b8:9f:b6:21:8c";
@@ -165,73 +165,72 @@ public class TestRSA {
     private final static String rout2 = "65:28:b9:48:8d:68:3f:5e:9a:85:e7:09:78:4c:0c:0e:60:6c:89:43:3c:d3:72:b9:2f:5a:eb:4f:15:77:93:9d:47:05:a6:52:48:72:ee:ce:e8:5a:6d:28:b0:06:5a:a1:93:58:a1:61:3f:9b:42:0d:c1:ec:32:0a:7a:1e:38:45:47:87:52:16:62:c9:44:c6:04:4d:82:64:01:f4:b1:26:dc:7f:61:82:52:7a:f6:6b:ab:22:98:87:93:63:4c:3f:92:c7:5b:cc:e5:2b:15:db:f7:d3:c7:b5:38:6f:15:3b:1e:88:3d:31:0c:b4:f9:6d:66:41:b7:1b:a0:4a:b8:16";
 
     public static void main(String[] args) throws Exception {
-	long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
-	p = Security.getProvider("SunJCE");
-	System.out.println("Testing provider " + p.getName() + "...");
+        p = Security.getProvider("SunJCE");
+        System.out.println("Testing provider " + p.getName() + "...");
 
-	KeyFactory kf;
-	try {
-	    kf = KeyFactory.getInstance("RSA", p);
-	} catch (NoSuchAlgorithmException e) {
-	    kf = KeyFactory.getInstance("RSA");
-	}
+        KeyFactory kf;
+        try {
+            kf = KeyFactory.getInstance("RSA", p);
+        } catch (NoSuchAlgorithmException e) {
+            kf = KeyFactory.getInstance("RSA");
+        }
 
-	RSAPublicKeySpec pubSpec = new RSAPublicKeySpec(N, E);
-	PublicKey publicKey = kf.generatePublic(pubSpec);
+        RSAPublicKeySpec pubSpec = new RSAPublicKeySpec(N, E);
+        PublicKey publicKey = kf.generatePublic(pubSpec);
 
-	RSAPrivateKeySpec privSpec = new RSAPrivateKeySpec(N, D);
-	PrivateKey privateKey = kf.generatePrivate(privSpec);
+        RSAPrivateKeySpec privSpec = new RSAPrivateKeySpec(N, D);
+        PrivateKey privateKey = kf.generatePrivate(privSpec);
 
-	// blocktype 2
-	testEncDec("RSA/ECB/PKCS1Padding", 96, publicKey, privateKey);
-	// blocktype 1
-	testEncDec("RSA/ECB/PKCS1Padding", 96, privateKey, publicKey);
+        // blocktype 2
+        testEncDec("RSA/ECB/PKCS1Padding", 96, publicKey, privateKey);
+        // blocktype 1
+        testEncDec("RSA/ECB/PKCS1Padding", 96, privateKey, publicKey);
 
-	testEncDec("RSA/ECB/NoPadding", 128, publicKey, privateKey);
-	testEncDec("RSA/ECB/NoPadding", 128, privateKey, publicKey);
+        testEncDec("RSA/ECB/NoPadding", 128, publicKey, privateKey);
+        testEncDec("RSA/ECB/NoPadding", 128, privateKey, publicKey);
 
-	// expected failure, blocktype 2 random padding bytes are different
-	testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, publicKey, in2, out2, false);
-	testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, out2, in2, true);
+        // expected failure, blocktype 2 random padding bytes are different
+        testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, publicKey, in2, out2, false);
+        testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, out2, in2, true);
 
-	testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, privateKey, in1, out1, true);
-	testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, publicKey, out1, in1, true);
+        testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, privateKey, in1, out1, true);
+        testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, publicKey, out1, in1, true);
 
-	testKat("RSA/ECB/NoPadding", Cipher.ENCRYPT_MODE, publicKey, rin1, rout1, true);
-	testKat("RSA/ECB/NoPadding", Cipher.DECRYPT_MODE, privateKey, rout1, rin1, true);
+        testKat("RSA/ECB/NoPadding", Cipher.ENCRYPT_MODE, publicKey, rin1, rout1, true);
+        testKat("RSA/ECB/NoPadding", Cipher.DECRYPT_MODE, privateKey, rout1, rin1, true);
 
-	testKat("RSA/ECB/NoPadding", Cipher.ENCRYPT_MODE, privateKey, rin2, rout2, true);
-	testKat("RSA/ECB/NoPadding", Cipher.DECRYPT_MODE, publicKey, rout2, rin2, true);
+        testKat("RSA/ECB/NoPadding", Cipher.ENCRYPT_MODE, privateKey, rin2, rout2, true);
+        testKat("RSA/ECB/NoPadding", Cipher.DECRYPT_MODE, publicKey, rout2, rin2, true);
 
-	System.out.println("Testing error cases...");
-	try {
-	    // decrypt something not PKCS#1 formatted
-	    testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, rout1, rin1, true);
-	    throw new Exception("Unexpected success");
-	} catch (BadPaddingException e) {
-	    // ok
-	}
+        System.out.println("Testing error cases...");
+        try {
+            // decrypt something not PKCS#1 formatted
+            testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, rout1, rin1, true);
+            throw new Exception("Unexpected success");
+        } catch (BadPaddingException e) {
+            // ok
+        }
 
-	try {
-	    // decrypt with wrong key
-	    testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, out1, in1, true);
-	    throw new Exception("Unexpected success");
-	} catch (BadPaddingException e) {
-	    // ok
-	}
+        try {
+            // decrypt with wrong key
+            testKat("RSA/ECB/PKCS1Padding", Cipher.DECRYPT_MODE, privateKey, out1, in1, true);
+            throw new Exception("Unexpected success");
+        } catch (BadPaddingException e) {
+            // ok
+        }
 
-	try {
-	    // encrypt data that is too long
-	    testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, privateKey, out1, in1, true);
-	    throw new Exception("Unexpected success");
-	} catch (IllegalBlockSizeException e) {
-	    // ok
-	}
+        try {
+            // encrypt data that is too long
+            testKat("RSA/ECB/PKCS1Padding", Cipher.ENCRYPT_MODE, privateKey, out1, in1, true);
+            throw new Exception("Unexpected success");
+        } catch (IllegalBlockSizeException e) {
+            // ok
+        }
 
-	long stop = System.currentTimeMillis();
-	System.out.println("Done (" + (stop - start) + " ms).");
+        long stop = System.currentTimeMillis();
+        System.out.println("Done (" + (stop - start) + " ms).");
     }
 
 }
-

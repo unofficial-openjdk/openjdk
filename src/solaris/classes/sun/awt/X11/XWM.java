@@ -51,7 +51,7 @@ class XWM implements MWMConstants, XUtilConstants {
     private final static Logger stateLog = Logger.getLogger("sun.awt.X11.states.XWM");
 
     static final XAtom XA_MWM_HINTS = new XAtom();
-    
+
     private static Unsafe unsafe = XlibWrapper.unsafe;
 
 
@@ -144,7 +144,7 @@ class XWM implements MWMConstants, XUtilConstants {
     int getID() {
         return WMID;
     }
-    
+
 
     static Insets normalize(Insets insets) {
         if (insets.top > 64 || insets.top < 0) {
@@ -308,14 +308,14 @@ class XWM implements MWMConstants, XUtilConstants {
      * The property is ENLIGHTENMENT_COMMS, STRING/8 and the string format
      * is "WINID %8x".  Gee, I haven't been using scanf for *ages*... :-)
      */
-    static long getECommsWindowIDProperty(long window) {        
+    static long getECommsWindowIDProperty(long window) {
 
         if (!XA_ENLIGHTENMENT_COMMS.isInterned()) {
             return 0;
         }
 
-        WindowPropertyGetter getter = 
-            new WindowPropertyGetter(window, XA_ENLIGHTENMENT_COMMS, 0, 14, false, 
+        WindowPropertyGetter getter =
+            new WindowPropertyGetter(window, XA_ENLIGHTENMENT_COMMS, 0, 14, false,
                                      XAtom.XA_STRING);
         try {
             int status = getter.execute(XToolkit.IgnoreBadWindowHandler);
@@ -323,13 +323,13 @@ class XWM implements MWMConstants, XUtilConstants {
                 return 0;
             }
 
-            if (getter.getActualType() != XAtom.XA_STRING 
+            if (getter.getActualType() != XAtom.XA_STRING
                 || getter.getActualFormat() != 8
-                || getter.getNumberOfItems() != 14 || getter.getBytesAfter() != 0) 
+                || getter.getNumberOfItems() != 14 || getter.getBytesAfter() != 0)
             {
                 return 0;
             }
-            
+
             // Convert data to String, ASCII
             byte[] bytes = XlibWrapper.getStringBytes(getter.getData());
             String id = new String(bytes);
@@ -367,12 +367,12 @@ class XWM implements MWMConstants, XUtilConstants {
      * uses STRING property peculiar to Enlightenment.
      */
     static boolean isEnlightenment() {
-        
+
         long root_xref = getECommsWindowIDProperty(XToolkit.getDefaultRootWindow());
         if (root_xref == 0) {
             return false;
         }
-        
+
         long self_xref = getECommsWindowIDProperty(root_xref);
         if (self_xref != root_xref) {
             return false;
@@ -391,7 +391,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * second element of the property and check for presence of
      * _DT_SM_STATE_INFO(_DT_SM_STATE_INFO) on that window.
      *
-     * XXX: Any header that defines this structures???     
+     * XXX: Any header that defines this structures???
      */
     static final XAtom XA_DT_SM_WINDOW_INFO = new XAtom("_DT_SM_WINDOW_INFO", false);
     static final XAtom XA_DT_SM_STATE_INFO = new XAtom("_DT_SM_STATE_INFO", false);
@@ -402,8 +402,8 @@ class XWM implements MWMConstants, XUtilConstants {
             return false;
         }
 
-        WindowPropertyGetter getter = 
-            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(), 
+        WindowPropertyGetter getter =
+            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(),
                                      XA_DT_SM_WINDOW_INFO, 0, 2,
                                      false, XA_DT_SM_WINDOW_INFO);
         try {
@@ -412,45 +412,45 @@ class XWM implements MWMConstants, XUtilConstants {
                 log.finer("Getting of _DT_SM_WINDOW_INFO is not successfull");
                 return false;
             }
-            if (getter.getActualType() != XA_DT_SM_WINDOW_INFO.getAtom() 
+            if (getter.getActualType() != XA_DT_SM_WINDOW_INFO.getAtom()
                 || getter.getActualFormat() != 32
-                || getter.getNumberOfItems() != 2 || getter.getBytesAfter() != 0) 
+                || getter.getNumberOfItems() != 2 || getter.getBytesAfter() != 0)
             {
                 log.finer("Wrong format of _DT_SM_WINDOW_INFO");
                 return false;
             }
-        
+
             long wmwin = Native.getWindow(getter.getData(), 1); //unsafe.getInt(getter.getData()+4);
 
             if (wmwin == 0) {
                 log.fine("WARNING: DT_SM_WINDOW_INFO exists but returns zero windows");
                 return false;
             }
-                
+
             /* Now check that this window has _DT_SM_STATE_INFO (ignore contents) */
             if (!XA_DT_SM_STATE_INFO.isInterned()) {
-                log.log(Level.FINER, "{0} is not interned", new Object[] {XA_DT_SM_STATE_INFO});            
+                log.log(Level.FINER, "{0} is not interned", new Object[] {XA_DT_SM_STATE_INFO});
                 return false;
             }
-            WindowPropertyGetter getter2 = 
+            WindowPropertyGetter getter2 =
                 new WindowPropertyGetter(wmwin, XA_DT_SM_STATE_INFO, 0, 1,
                                          false, XA_DT_SM_STATE_INFO);
             try {
                 status = getter2.execute(XToolkit.IgnoreBadWindowHandler);
-        
-        
+
+
                 if (status != XlibWrapper.Success || getter2.getData() == 0) {
                     log.finer("Getting of _DT_SM_STATE_INFO is not successfull");
                     return false;
                 }
-                if (getter2.getActualType() != XA_DT_SM_STATE_INFO.getAtom() 
-                    || getter2.getActualFormat() != 32) 
+                if (getter2.getActualType() != XA_DT_SM_STATE_INFO.getAtom()
+                    || getter2.getActualFormat() != 32)
                 {
                     log.finer("Wrong format of _DT_SM_STATE_INFO");
                     return false;
                 }
 
-                return true;                
+                return true;
             } finally {
                 getter2.dispose();
             }
@@ -461,7 +461,7 @@ class XWM implements MWMConstants, XUtilConstants {
 
     /*
      * Is MWM running?  (Note that CDE will test positive as well).
-     * 
+     *
      * Check for _MOTIF_WM_INFO(_MOTIF_WM_INFO) on root.  Take the
      * second element of the property and check for presence of
      * _DT_SM_STATE_INFO(_DT_SM_STATE_INFO) on that window.
@@ -474,9 +474,9 @@ class XWM implements MWMConstants, XUtilConstants {
             return false;
         }
 
-        WindowPropertyGetter getter = 
-            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(), 
-                                     XA_MOTIF_WM_INFO, 0, 
+        WindowPropertyGetter getter =
+            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(),
+                                     XA_MOTIF_WM_INFO, 0,
                                      PROP_MOTIF_WM_INFO_ELEMENTS,
                                      false, XA_MOTIF_WM_INFO);
         try {
@@ -486,14 +486,14 @@ class XWM implements MWMConstants, XUtilConstants {
                 return false;
             }
 
-            if (getter.getActualType() != XA_MOTIF_WM_INFO.getAtom() 
+            if (getter.getActualType() != XA_MOTIF_WM_INFO.getAtom()
                 || getter.getActualFormat() != 32
-                || getter.getNumberOfItems() != PROP_MOTIF_WM_INFO_ELEMENTS 
-                || getter.getBytesAfter() != 0) 
+                || getter.getNumberOfItems() != PROP_MOTIF_WM_INFO_ELEMENTS
+                || getter.getBytesAfter() != 0)
             {
                 return false;
             }
-        
+
             long wmwin = Native.getLong(getter.getData(), 1);
             if (wmwin != 0) {
                 if (XA_DT_WORKSPACE_CURRENT.isInterned()) {
@@ -507,15 +507,15 @@ class XWM implements MWMConstants, XUtilConstants {
                     // No DT_WORKSPACE, however in our tests MWM sometimes can be without desktop -
                     // and that is still MWM.  So simply check for the validity of this window
                     // (through WM_STATE property).
-                    WindowPropertyGetter state_getter = 
+                    WindowPropertyGetter state_getter =
                         new WindowPropertyGetter(wmwin,
                                                  XA_WM_STATE,
-                                                 0, 1, false, 
+                                                 0, 1, false,
                                                  XA_WM_STATE);
                     try {
                         if (state_getter.execute() == XlibWrapper.Success &&
                             state_getter.getData() != 0 &&
-                            state_getter.getActualType() == XA_WM_STATE.getAtom()) 
+                            state_getter.getActualType() == XA_WM_STATE.getAtom())
                         {
                             return true;
                         }
@@ -592,7 +592,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * But messing with PropertyNotify here is way too much trouble, so
      * approximate the check by setting the property in this function and
      * checking if it still exists later on.
-     * 
+     *
      * Gaa, dirty dances...
      */
     static final XAtom XA_ICEWM_WINOPTHINT = new XAtom("_ICEWM_WINOPTHINT", false);
@@ -606,7 +606,7 @@ class XWM implements MWMConstants, XUtilConstants {
          * Choose something innocuous: "AWT_ICEWM_TEST allWorkspaces 0".
          * IceWM expects "class\0option\0arg\0" with zero bytes as delimiters.
          */
-        
+
         if (!XA_ICEWM_WINOPTHINT.isInterned()) {
             log.log(Level.FINER, "{0} is not interned", new Object[] {XA_ICEWM_WINOPTHINT});
             return false;
@@ -616,9 +616,9 @@ class XWM implements MWMConstants, XUtilConstants {
         try {
             XToolkit.WITH_XERROR_HANDLER(VerifyChangePropertyHandler);
             XlibWrapper.XChangePropertyS(XToolkit.getDisplay(), XToolkit.getDefaultRootWindow(),
-                                         XA_ICEWM_WINOPTHINT.getAtom(), 
                                          XA_ICEWM_WINOPTHINT.getAtom(),
-                                         8, XlibWrapper.PropModeReplace, 
+                                         XA_ICEWM_WINOPTHINT.getAtom(),
+                                         8, XlibWrapper.PropModeReplace,
                                          new String(opt));
             XToolkit.RESTORE_XERROR_HANDLER();
 
@@ -632,7 +632,7 @@ class XWM implements MWMConstants, XUtilConstants {
             XToolkit.awtUnlock();
         }
     }
-    
+
     /*
      * Is IceWM running?
      *
@@ -645,8 +645,8 @@ class XWM implements MWMConstants, XUtilConstants {
             return false;
         }
 
-        WindowPropertyGetter getter = 
-            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(), 
+        WindowPropertyGetter getter =
+            new WindowPropertyGetter(XToolkit.getDefaultRootWindow(),
                                      XA_ICEWM_WINOPTHINT, 0, 0xFFFF,
                                      true, XA_ICEWM_WINOPTHINT);
         try {
@@ -661,7 +661,7 @@ class XWM implements MWMConstants, XUtilConstants {
 
     /*
      * Is OpenLook WM running?
-     * 
+     *
      * This one is pretty lame, but the only property peculiar to OLWM is
      * _SUN_WM_PROTOCOLS(ATOM[]).  Fortunately, olwm deletes it on exit.
      */
@@ -683,8 +683,8 @@ class XWM implements MWMConstants, XUtilConstants {
     static XToolkit.XErrorHandler DetectWMHandler = new XToolkit.XErrorHandler() {
             public int handleError(long display, XErrorEvent err) {
                 XToolkit.XERROR_SAVE(err);
-                if (err.get_request_code() == XlibWrapper.X_ChangeWindowAttributes 
-                    && err.get_error_code() == XlibWrapper.BadAccess) 
+                if (err.get_request_code() == XlibWrapper.X_ChangeWindowAttributes
+                    && err.get_error_code() == XlibWrapper.BadAccess)
                 {
                     winmgr_running = true;
                     return 0;
@@ -803,7 +803,7 @@ class XWM implements MWMConstants, XUtilConstants {
     static void removeSizeHints(XDecoratedPeer window, long mask) {
         mask &= PMaxSize | PMinSize;
 
-        XToolkit.awtLock();        
+        XToolkit.awtLock();
         try {
             XSizeHints hints = window.getHints();
             if ((hints.get_flags() & mask) == 0) {
@@ -812,13 +812,13 @@ class XWM implements MWMConstants, XUtilConstants {
 
             hints.set_flags(hints.get_flags() & ~mask);
             if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, flags " + XlibWrapper.hintsToString(hints.get_flags()));
-            XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(), 
+            XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(),
                                           window.getWindow(),
                                           hints.pData);
         } finally {
             XToolkit.awtUnlock();
         }
-    }    
+    }
 
     /*
      * If MWM_DECOR_ALL bit is set, then the rest of the bit-mask is taken
@@ -830,14 +830,14 @@ class XWM implements MWMConstants, XUtilConstants {
         if ((decorations & MWM_DECOR_ALL) == 0) {
             return decorations;
         }
-        int d = MWM_DECOR_BORDER | MWM_DECOR_RESIZEH 
-            | MWM_DECOR_TITLE 
-            | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE 
+        int d = MWM_DECOR_BORDER | MWM_DECOR_RESIZEH
+            | MWM_DECOR_TITLE
+            | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE
             | MWM_DECOR_MAXIMIZE;
         d &= ~decorations;
         return d;
     }
-    
+
     /*
      * If MWM_FUNC_ALL bit is set, then the rest of the bit-mask is taken
      * to be subtracted from the functions.  Normalize function spec
@@ -856,7 +856,7 @@ class XWM implements MWMConstants, XUtilConstants {
         f &= ~functions;
         return f;
     }
-    
+
     /*
      * Infer OL properties from MWM decorations.
      * Use _OL_DECOR_DEL(ATOM[]) to remove unwanted ones.
@@ -875,9 +875,9 @@ class XWM implements MWMConstants, XUtilConstants {
         if ((decorations & (MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE)) == 0) {
             decorDel.add(XA_OL_DECOR_RESIZE);
         }
-        if ((decorations & (MWM_DECOR_MENU | 
+        if ((decorations & (MWM_DECOR_MENU |
                             MWM_DECOR_MAXIMIZE |
-                            MWM_DECOR_MINIMIZE)) == 0) 
+                            MWM_DECOR_MINIMIZE)) == 0)
         {
             decorDel.add(XA_OL_DECOR_CLOSE);
         }
@@ -887,7 +887,7 @@ class XWM implements MWMConstants, XUtilConstants {
         } else {
             if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting OL_DECOR to " + decorDel);
             XA_OL_DECOR_DEL.setAtomListProperty(window, decorDel);
-        }        
+        }
     }
 
     /*
@@ -895,18 +895,18 @@ class XWM implements MWMConstants, XUtilConstants {
      */
     static void setMotifDecor(XWindowPeer window, boolean resizable, int decorations, int functions) {
         /* Apparently some WMs don't implement MWM_*_ALL semantic correctly */
-        if ((decorations & MWM_DECOR_ALL) != 0 
-            && (decorations != MWM_DECOR_ALL)) 
+        if ((decorations & MWM_DECOR_ALL) != 0
+            && (decorations != MWM_DECOR_ALL))
         {
             decorations = normalizeMotifDecor(decorations);
         }
-        if ((functions & MWM_FUNC_ALL) != 0 
-            && (functions != MWM_FUNC_ALL)) 
+        if ((functions & MWM_FUNC_ALL) != 0
+            && (functions != MWM_FUNC_ALL))
         {
             functions = normalizeMotifFunc(functions);
         }
 
-        PropMwmHints hints = window.getMWMHints();        
+        PropMwmHints hints = window.getMWMHints();
         hints.set_flags(hints.get_flags() | MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS);
         hints.set_functions(functions);
         hints.set_decorations(decorations);
@@ -919,7 +919,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * Under some window managers if shell is already mapped, we MUST
      * unmap and later remap in order to effect the changes we make in the
      * window manager decorations.
-     * 
+     *
      * N.B.  This unmapping / remapping of the shell exposes a bug in
      * X/Motif or the Motif Window Manager.  When you attempt to map a
      * widget which is positioned (partially) off-screen, the window is
@@ -980,7 +980,7 @@ class XWM implements MWMConstants, XUtilConstants {
             shellBounds.translate(-window.currentInsets.left, -window.currentInsets.top);
             window.updateSizeHints(window.getDimensions());
             requestWMExtents(window.getWindow());
-            XlibWrapper.XMoveResizeWindow(XToolkit.getDisplay(), window.getShell(), 
+            XlibWrapper.XMoveResizeWindow(XToolkit.getDisplay(), window.getShell(),
                                           shellBounds.x, shellBounds.y, shellBounds.width, shellBounds.height);
             /* REMINDER: will need to revisit when setExtendedStateBounds is added */
             //Fix for 4320050: Minimum size for java.awt.Frame is not being enforced.
@@ -1001,9 +1001,9 @@ class XWM implements MWMConstants, XUtilConstants {
      * @param shellBounds bounds of the shell window
      */
     static void setShellNotResizable(XDecoratedPeer window, WindowDimensions newDimensions, Rectangle shellBounds,
-                                     boolean justChangeSize) 
+                                     boolean justChangeSize)
     {
-        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting non-resizable shell " + window + ", dimensions " + newDimensions + 
+        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting non-resizable shell " + window + ", dimensions " + newDimensions +
                                                        ", shellBounds " + shellBounds +", just change size: " + justChangeSize);
         XToolkit.awtLock();
         try {
@@ -1012,7 +1012,7 @@ class XWM implements MWMConstants, XUtilConstants {
                 window.updateSizeHints(newDimensions);
                 requestWMExtents(window.getWindow());
                 XToolkit.XSync();
-                XlibWrapper.XMoveResizeWindow(XToolkit.getDisplay(), window.getShell(), 
+                XlibWrapper.XMoveResizeWindow(XToolkit.getDisplay(), window.getShell(),
                                               shellBounds.x, shellBounds.y, shellBounds.width, shellBounds.height);
             }
             if (!justChangeSize) {  /* update decorations */
@@ -1025,7 +1025,7 @@ class XWM implements MWMConstants, XUtilConstants {
 
 /*****************************************************************************\
  * Protocols support
- */ 
+ */
     HashMap<Class<?>, Collection<XProtocol>> protocolsMap = new HashMap<Class<?>, Collection<XProtocol>>();
     /**
      * Returns all protocols supporting given protocol interface
@@ -1048,7 +1048,7 @@ class XWM implements MWMConstants, XUtilConstants {
     boolean supportsDynamicLayout() {
         int wm = getWMID();
         switch (wm) {
-          case XWM.ENLIGHTEN_WM: 
+          case XWM.ENLIGHTEN_WM:
           case XWM.KDE2_WM:
           case XWM.SAWFISH_WM:
           case XWM.ICE_WM:
@@ -1066,8 +1066,8 @@ class XWM implements MWMConstants, XUtilConstants {
 
     /**
      * Check if state is supported.
-     * Note that a compound state is always reported as not supported. 
-     * Note also that MAXIMIZED_BOTH is considered not a compound state. 
+     * Note that a compound state is always reported as not supported.
+     * Note also that MAXIMIZED_BOTH is considered not a compound state.
      * Therefore, a compound state is just ICONIFIED | anything else.
      *
      */
@@ -1096,7 +1096,7 @@ class XWM implements MWMConstants, XUtilConstants {
               return false;
         }
     }
-    
+
 /*****************************************************************************\
  *
  * Reading state from different protocols
@@ -1117,7 +1117,7 @@ class XWM implements MWMConstants, XUtilConstants {
             return Frame.NORMAL;
         }
     }
-    
+
 /*****************************************************************************\
  *
  * Notice window state change when WM changes a property on the window ...
@@ -1182,9 +1182,9 @@ class XWM implements MWMConstants, XUtilConstants {
     void setLayer(XWindowPeer window, int layer) {
         Iterator iter = getProtocols(XLayerProtocol.class).iterator();
         while (iter.hasNext()) {
-            XLayerProtocol proto = (XLayerProtocol)iter.next();            
+            XLayerProtocol proto = (XLayerProtocol)iter.next();
             if (proto.supportsLayer(layer)) {
-                proto.setLayer(window, layer);                
+                proto.setLayer(window, layer);
             }
         }
         XToolkit.XSync();
@@ -1199,7 +1199,7 @@ class XWM implements MWMConstants, XUtilConstants {
                 break;
             }
         }
-        
+
         if (!window.isShowing()) {
             /*
              * Purge KWM bits.
@@ -1207,11 +1207,11 @@ class XWM implements MWMConstants, XUtilConstants {
              */
             XToolkit.awtLock();
             try {
-                XlibWrapper.XDeleteProperty(XToolkit.getDisplay(), 
-                                            window.getWindow(), 
+                XlibWrapper.XDeleteProperty(XToolkit.getDisplay(),
+                                            window.getWindow(),
                                             XA_KWM_WIN_ICONIFIED.getAtom());
-                XlibWrapper.XDeleteProperty(XToolkit.getDisplay(), 
-                                            window.getWindow(), 
+                XlibWrapper.XDeleteProperty(XToolkit.getDisplay(),
+                                            window.getWindow(),
                                             XA_KWM_WIN_MAXIMIZED.getAtom());
             }
             finally {
@@ -1252,7 +1252,7 @@ class XWM implements MWMConstants, XUtilConstants {
         if (inited) {
             return;
         }
-        
+
         initAtoms();
         getWM();
         inited = true;
@@ -1315,7 +1315,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * ConfigureRequest and position window as if the gravity is Static.
      * We work around this in MWindowPeer.pReshape().
      *
-     * Starting with 1.5 we have introduced an Environment variable 
+     * Starting with 1.5 we have introduced an Environment variable
      * _JAVA_AWT_WM_STATIC_GRAVITY that can be set to indicate to Java
      * explicitly that the WM has this behaviour, example is FVWM.
      */
@@ -1324,13 +1324,13 @@ class XWM implements MWMConstants, XUtilConstants {
     static boolean configureGravityBuggy() {
 
         if (awtWMStaticGravity == -1) {
-            awtWMStaticGravity = (XToolkit.getEnv("_JAVA_AWT_WM_STATIC_GRAVITY") != null) ? 1 : 0; 
+            awtWMStaticGravity = (XToolkit.getEnv("_JAVA_AWT_WM_STATIC_GRAVITY") != null) ? 1 : 0;
         }
-        
+
         if (awtWMStaticGravity == 1) {
             return true;
         }
-        
+
         switch(getWMID()) {
           case XWM.ICE_WM:
               /*
@@ -1470,7 +1470,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * reparenting
      */
     boolean syncTopLevelPos(long window, XWindowAttributes attrs) {
-        int tries = 0;        
+        int tries = 0;
         XToolkit.awtLock();
         try {
             do {
@@ -1479,14 +1479,14 @@ class XWM implements MWMConstants, XUtilConstants {
                     return true;
                 }
                 tries++;
-                XToolkit.XSync();                
+                XToolkit.XSync();
             } while (tries < 50);
         }
         finally {
             XToolkit.awtUnlock();
         }
         return false;
-    } 
+    }
 
     Insets getInsets(XDecoratedPeer win, long window, long parent) {
         /*
@@ -1497,18 +1497,18 @@ class XWM implements MWMConstants, XUtilConstants {
          * window, so we check if we can get away with just
          * peeking at it.  [Future versions of wm-spec might add a
          * standardized hint for this].
-         * 
+         *
          * Otherwise we do some special casing.  Actually the
          * fallback code ("default" case) seems to cover most of
          * the existing WMs (modulo Reparent/Configure order
          * perhaps?).
-         * 
+         *
          * Fallback code tries to account for the two most common cases:
-         * 
+         *
          * . single reparenting
          *       parent window is the WM frame
          *       [twm, olwm, sawfish]
-         * 
+         *
          * . double reparenting
          *       parent is a lining exactly the size of the client
          *       grandpa is the WM frame
@@ -1564,7 +1564,7 @@ class XWM implements MWMConstants, XUtilConstants {
                       }
                       break;
                   }
-                  case XWM.SAWFISH_WM: 
+                  case XWM.SAWFISH_WM:
                   case XWM.OPENLOOK_WM: {
                       /* single reparenting */
                       syncTopLevelPos(window, lwinAttr);
@@ -1590,12 +1590,12 @@ class XWM implements MWMConstants, XUtilConstants {
 
                       /*
                        * Check for double-reparenting WM.
-                       * 
+                       *
                        * If the parent is exactly the same size as the
                        * top-level assume taht it's the "lining" window and
                        * that the grandparent is the actual frame (NB: we
                        * have already handled undecorated windows).
-                       * 
+                       *
                        * XXX: what about timing issues that syncTopLevelPos
                        * is supposed to work around?
                        */
@@ -1667,7 +1667,7 @@ class XWM implements MWMConstants, XUtilConstants {
      * Sets _NET_WN_ICON property on the window using the arrays of
      * raster-data for icons. If icons is null, removes _NET_WM_ICON
      * property.
-     * This method invokes XNETProtocol.setWMIcon() for WMs that 
+     * This method invokes XNETProtocol.setWMIcon() for WMs that
      * support NET protocol.
      *
      * @return true if hint was modified successfully, false otherwise

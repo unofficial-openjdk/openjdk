@@ -32,8 +32,8 @@ import javax.crypto.SecretKey;
  * contains protocol version information that is used to detect version
  * rollback attacks during the SSL/TLS handshake.
  *
- * <p>Implementation of this interface are returned by the 
- * <code>generateKey()</code> method of KeyGenerators of the type 
+ * <p>Implementation of this interface are returned by the
+ * <code>generateKey()</code> method of KeyGenerators of the type
  * "TlsMasterSecret".
  *
  * @since   1.6
@@ -42,9 +42,9 @@ import javax.crypto.SecretKey;
  */
 @Deprecated
 public interface TlsMasterSecret extends SecretKey {
-    
+
     public static final long serialVersionUID = -461748105810469773L;
-    
+
     /**
      * Returns the major version number encapsulated in the premaster secret
      * this master secret was derived from, or -1 if it is not available.
@@ -55,7 +55,7 @@ public interface TlsMasterSecret extends SecretKey {
      * @return the major version number, or -1 if it is not available
      */
     public int getMajorVersion();
-    
+
     /**
      * Returns the minor version number encapsulated in the premaster secret
      * this master secret was derived from, or -1 if it is not available.
@@ -66,5 +66,5 @@ public interface TlsMasterSecret extends SecretKey {
      * @return the major version number, or -1 if it is not available
      */
     public int getMinorVersion();
-    
+
 }

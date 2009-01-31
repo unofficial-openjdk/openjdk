@@ -29,7 +29,7 @@ package javax.naming;
   * This is the superclass of all exceptions thrown by
   * operations in the Context and DirContext interfaces.
   * The nature of the failure is described by the name of the subclass.
-  * This exception captures the information pinpointing where the operation 
+  * This exception captures the information pinpointing where the operation
   * failed, such as where resolution last proceeded to.
   * <ul>
   * <li> Resolved Name. Portion of name that has been resolved.
@@ -37,12 +37,12 @@ package javax.naming;
   * <li> Remaining Name. Portion of name that has not been resolved.
   * <li> Explanation. Detail explaining why name resolution failed.
   * <li> Root Exception. The exception that caused this naming exception
-  *			to be thrown.
+  *                     to be thrown.
   *</ul>
   * null is an acceptable value for any of these fields. When null,
   * it means that no such information has been recorded for that field.
   *<p>
-  * A NamingException instance is not synchronized against concurrent 
+  * A NamingException instance is not synchronized against concurrent
   * multithreaded access. Multiple threads trying to access and modify
   * a single NamingException instance should lock the object.
   *<p>
@@ -53,7 +53,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   * @since 1.3
   */
 
@@ -71,8 +70,8 @@ public class NamingException extends Exception {
      */
     protected Name resolvedName;
     /**
-      * Contains the object to which resolution of the part of the name was 
-      * successful. Can be null. 
+      * Contains the object to which resolution of the part of the name was
+      * successful. Can be null.
       * This field is initialized by the constructors.
       * You should access and manipulate this field
       * through its get and set methods.
@@ -83,7 +82,7 @@ public class NamingException extends Exception {
     protected Object resolvedObj;
     /**
      * Contains the remaining name that has not been resolved yet.
-     * It is a composite name and can be null. 
+     * It is a composite name and can be null.
      * This field is initialized by the constructors.
      * You should access and manipulate this field
      * through its get, set, "append" methods.
@@ -119,14 +118,14 @@ public class NamingException extends Exception {
      * Constructs a new NamingException with an explanation.
      * All unspecified fields are set to null.
      *
-     * @param	explanation	A possibly null string containing
-     * 				additional detail about this exception.
+     * @param   explanation     A possibly null string containing
+     *                          additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public NamingException(String explanation) {
-	super(explanation);
-	resolvedName = remainingName = null;
-	resolvedObj = null;
+        super(explanation);
+        resolvedName = remainingName = null;
+        resolvedObj = null;
     }
 
     /**
@@ -134,36 +133,36 @@ public class NamingException extends Exception {
       * All fields are set to null.
       */
     public NamingException() {
-	super();
-	resolvedName = remainingName = null;
-	resolvedObj = null;
+        super();
+        resolvedName = remainingName = null;
+        resolvedObj = null;
     }
 
     /**
      * Retrieves the leading portion of the name that was resolved
-     * successfully. 
+     * successfully.
      *
-     * @return The part of the name that was resolved successfully. 
-     * 		It is a composite name. It can be null, which means
-     *		the resolved name field has not been set.
+     * @return The part of the name that was resolved successfully.
+     *          It is a composite name. It can be null, which means
+     *          the resolved name field has not been set.
      * @see #getResolvedObj
      * @see #setResolvedName
      */
     public Name getResolvedName() {
-	return resolvedName;
+        return resolvedName;
     }
-    
+
     /**
      * Retrieves the remaining unresolved portion of the name.
-     * @return The part of the name that has not been resolved. 
-     * 		It is a composite name. It can be null, which means
-     *		the remaining name field has not been set.
+     * @return The part of the name that has not been resolved.
+     *          It is a composite name. It can be null, which means
+     *          the remaining name field has not been set.
      * @see #setRemainingName
      * @see #appendRemainingName
      * @see #appendRemainingComponent
      */
     public Name getRemainingName() {
-	return remainingName;
+        return remainingName;
     }
 
     /**
@@ -171,32 +170,32 @@ public class NamingException extends Exception {
      * This is the object to which the resolved name is bound.
      *
      * @return The possibly null object that was resolved so far.
-     *	null means that the resolved object field has not been set.
+     *  null means that the resolved object field has not been set.
      * @see #getResolvedName
      * @see #setResolvedObj
      */
     public Object getResolvedObj() {
-	return resolvedObj;
+        return resolvedObj;
     }
 
     /**
       * Retrieves the explanation associated with this exception.
-      * 
-      * @return The possibly null detail string explaining more 
-      * 	about this exception. If null, it means there is no
-      *		detail message for this exception.
+      *
+      * @return The possibly null detail string explaining more
+      *         about this exception. If null, it means there is no
+      *         detail message for this exception.
       *
       * @see java.lang.Throwable#getMessage
       */
     public String getExplanation() {
-	return getMessage();
+        return getMessage();
     }
 
     /**
      * Sets the resolved name field of this exception.
      *<p>
      * <tt>name</tt> is a composite name. If the intent is to set
-     * this field using a compound name or string, you must 
+     * this field using a compound name or string, you must
      * "stringify" the compound name, and create a composite
      * name with a single component using the string. You can then
      * invoke this method using the resulting composite name.
@@ -206,21 +205,21 @@ public class NamingException extends Exception {
      * affect the copy in this NamingException and vice versa.
      *
      * @param name The possibly null name to set resolved name to.
-     *		If null, it sets the resolved name field to null.
+     *          If null, it sets the resolved name field to null.
      * @see #getResolvedName
      */
     public void setResolvedName(Name name) {
-	if (name != null)
-	    resolvedName = (Name)(name.clone());
-	else
-	    resolvedName = null;
+        if (name != null)
+            resolvedName = (Name)(name.clone());
+        else
+            resolvedName = null;
     }
 
     /**
      * Sets the remaining name field of this exception.
      *<p>
      * <tt>name</tt> is a composite name. If the intent is to set
-     * this field using a compound name or string, you must 
+     * this field using a compound name or string, you must
      * "stringify" the compound name, and create a composite
      * name with a single component using the string. You can then
      * invoke this method using the resulting composite name.
@@ -229,51 +228,51 @@ public class NamingException extends Exception {
      * Subsequent changes to <code>name</code> does not
      * affect the copy in this NamingException and vice versa.
      * @param name The possibly null name to set remaining name to.
-     *		If null, it sets the remaining name field to null.
+     *          If null, it sets the remaining name field to null.
      * @see #getRemainingName
      * @see #appendRemainingName
      * @see #appendRemainingComponent
      */
     public void setRemainingName(Name name) {
-	if (name != null)
-	    remainingName = (Name)(name.clone());
-	else
-	    remainingName = null;
+        if (name != null)
+            remainingName = (Name)(name.clone());
+        else
+            remainingName = null;
     }
 
     /**
      * Sets the resolved object field of this exception.
      * @param obj The possibly null object to set resolved object to.
-     *		  If null, the resolved object field is set to null.
+     *            If null, the resolved object field is set to null.
      * @see #getResolvedObj
      */
     public void setResolvedObj(Object obj) {
-	resolvedObj = obj;
+        resolvedObj = obj;
     }
 
     /**
       * Add name as the last component in remaining name.
       * @param name The component to add.
-      *   	If name is null, this method does not do anything.
+      *         If name is null, this method does not do anything.
       * @see #setRemainingName
       * @see #getRemainingName
       * @see #appendRemainingName
       */
     public void appendRemainingComponent(String name) {
-	if (name != null) {
-	    try {
-		if (remainingName == null) {
-		    remainingName = new CompositeName();
-		}
-		remainingName.add(name);
-	    } catch (NamingException e) {
-		throw new IllegalArgumentException(e.toString());
-	    }
-	}
+        if (name != null) {
+            try {
+                if (remainingName == null) {
+                    remainingName = new CompositeName();
+                }
+                remainingName.add(name);
+            } catch (NamingException e) {
+                throw new IllegalArgumentException(e.toString());
+            }
+        }
     }
 
     /**
-      * Add components from 'name' as the last components in 
+      * Add components from 'name' as the last components in
       * remaining name.
       *<p>
       * <tt>name</tt> is a composite name. If the intent is to append
@@ -283,24 +282,24 @@ public class NamingException extends Exception {
       * Subsequent changes to <code>name</code> does not
       * affect the remaining name field in this NamingException and vice versa.
       * @param name The possibly null name containing ordered components to add.
-      * 		If name is null, this method does not do anything.
+      *                 If name is null, this method does not do anything.
       * @see #setRemainingName
       * @see #getRemainingName
       * @see #appendRemainingComponent
       */
     public void appendRemainingName(Name name) {
-	if (name == null) {
-	    return;
-	}
-	if (remainingName != null) {
-	    try {
-		remainingName.addAll(name);
-	    } catch (NamingException e) {
-		throw new IllegalArgumentException(e.toString());
-	    }
-	} else {
-	    remainingName = (Name)(name.clone());
-	}
+        if (name == null) {
+            return;
+        }
+        if (remainingName != null) {
+            try {
+                remainingName.addAll(name);
+            } catch (NamingException e) {
+                throw new IllegalArgumentException(e.toString());
+            }
+        } else {
+            remainingName = (Name)(name.clone());
+        }
     }
 
     /**
@@ -314,15 +313,15 @@ public class NamingException extends Exception {
       * The {@link #getCause()} method is now the preferred means of obtaining
       * this information.
       *
-      * @return The possibly null exception that caused this naming 
+      * @return The possibly null exception that caused this naming
       *    exception. If null, it means no root cause has been
-      *	   set for this naming exception.
+      *    set for this naming exception.
       * @see #setRootCause
       * @see #rootException
       * @see #getCause
       */
     public Throwable getRootCause() {
-	return rootException;
+        return rootException;
     }
 
     /**
@@ -333,17 +332,17 @@ public class NamingException extends Exception {
       * The {@link #initCause(Throwable)} method is now the preferred means
       * of recording this information.
       *
-      * @param e The possibly null exception that caused the naming 
-      * 	 operation to fail. If null, it means this naming
-      * 	 exception has no root cause.
+      * @param e The possibly null exception that caused the naming
+      *          operation to fail. If null, it means this naming
+      *          exception has no root cause.
       * @see #getRootCause
       * @see #rootException
       * @see #initCause
       */
     public void setRootCause(Throwable e) {
-	if (e != this) {
-	    rootException = e;
-	}
+        if (e != this) {
+            rootException = e;
+        }
     }
 
     /**
@@ -358,7 +357,7 @@ public class NamingException extends Exception {
       * @since 1.4
       */
     public Throwable getCause() {
-	return getRootCause();
+        return getRootCause();
     }
 
     /**
@@ -368,7 +367,7 @@ public class NamingException extends Exception {
       *<p>
       * This method may be called at most once.
       *
-      * @param  cause	the cause, which is saved for later retrieval by
+      * @param  cause   the cause, which is saved for later retrieval by
       *         the {@link #getCause()} method.  A <tt>null</tt> value
       *         indicates that the cause is nonexistent or unknown.
       * @return a reference to this <code>NamingException</code> instance.
@@ -380,33 +379,33 @@ public class NamingException extends Exception {
       * @since 1.4
       */
     public Throwable initCause(Throwable cause) {
-	super.initCause(cause);
-	setRootCause(cause);
-	return this;
+        super.initCause(cause);
+        setRootCause(cause);
+        return this;
     }
 
     /**
      * Generates the string representation of this exception.
-     * The string representation consists of this exception's class name, 
+     * The string representation consists of this exception's class name,
      * its detailed message, and if it has a root cause, the string
      * representation of the root cause exception, followed by
-     * the remaining name (if it is not null). 
+     * the remaining name (if it is not null).
      * This string is used for debugging and not meant to be interpreted
      * programmatically.
      *
-     * @return The non-null string containing the string representation 
+     * @return The non-null string containing the string representation
      * of this exception.
      */
     public String toString() {
-	String answer = super.toString();
+        String answer = super.toString();
 
-	if (rootException != null) {
-	    answer += " [Root exception is " + rootException + "]";
-	}
-	if (remainingName != null) {
-	    answer += "; remaining name '" + remainingName + "'";
-	}
-	return answer;
+        if (rootException != null) {
+            answer += " [Root exception is " + rootException + "]";
+        }
+        if (remainingName != null) {
+            answer += "; remaining name '" + remainingName + "'";
+        }
+        return answer;
     }
 
     /**
@@ -418,15 +417,15 @@ public class NamingException extends Exception {
       * programmatically.
       *
       * @param detail If true, include details about the resolved object
-      *			in addition to the other information.
-      * @return The non-null string containing the string representation. 
+      *                 in addition to the other information.
+      * @return The non-null string containing the string representation.
       */
     public String toString(boolean detail) {
-	if (!detail || resolvedObj == null) {
-	    return toString();
-	} else {
-	    return (toString() + "; resolved object " + resolvedObj);
-	}
+        if (!detail || resolvedObj == null) {
+            return toString();
+        } else {
+            return (toString() + "; resolved object " + resolvedObj);
+        }
     }
 
     /**

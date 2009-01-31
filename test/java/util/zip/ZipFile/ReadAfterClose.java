@@ -22,8 +22,8 @@
  */
 
 /* @test
-   @bug 4528128 
-   @summary Test if reading InputStream of a closed ZipFile crashes VM  
+   @bug 4528128
+   @summary Test if reading InputStream of a closed ZipFile crashes VM
    @author kladko
    */
 
@@ -34,12 +34,12 @@ import java.util.*;
 
 public class ReadAfterClose {
     public static void main(String[] argv) throws Exception {
-	ZipFile zf = new ZipFile(new File(System.getProperty("test.src","."),"crash.jar"));
-	ZipEntry zent = zf.getEntry("Test.java");
-	InputStream in = zf.getInputStream(zent);
-	zf.close();
-        try { 
-	    in.read();
+        ZipFile zf = new ZipFile(new File(System.getProperty("test.src","."),"crash.jar"));
+        ZipEntry zent = zf.getEntry("Test.java");
+        InputStream in = zf.getInputStream(zent);
+        zf.close();
+        try {
+            in.read();
         } catch (ZipException e) {
             return;
         }

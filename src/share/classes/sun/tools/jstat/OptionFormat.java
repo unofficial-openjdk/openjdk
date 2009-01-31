@@ -33,7 +33,6 @@ import sun.jvmstat.monitor.MonitorException;
  * line option that was parsed from an option description file.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class OptionFormat {
@@ -103,7 +102,7 @@ public class OptionFormat {
         System.out.println(indent + name + " {");
 
         // iterate over all children and call their printFormat() methods
-        for (OptionFormat of : children) { 
+        for (OptionFormat of : children) {
             of.printFormat(indentLevel+1);
         }
         System.out.println(indent + "}");

@@ -35,7 +35,6 @@ import java.nio.charset.Charset;
  * Class for monitoring a PerfData String instrument.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class PerfStringMonitor extends PerfByteArrayMonitor
@@ -100,7 +99,7 @@ public class PerfStringMonitor extends PerfByteArrayMonitor
 
         int i;
         for (i = 0; i < b.length && b[i] != (byte)0; i++);
- 
+
         return new String(b, 0, i, defaultCharset);
     }
 }

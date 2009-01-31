@@ -55,7 +55,7 @@ public class ThreadDump {
         for (int i = 0; i < stacktrace.length; i++) {
             StackTraceElement ste = stacktrace[i];
             System.out.println(INDENT + "at " + ste.toString());
- 
+
             for (MonitorInfo mi : monitors) {
                 if (mi.getLockedStackDepth() == i) {
                     System.out.println(INDENT + "  - locked " + mi);

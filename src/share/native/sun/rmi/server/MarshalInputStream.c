@@ -33,7 +33,7 @@
  * Class:     sun_rmi_server_MarshalInputStream
  * Method:    latestUserDefinedLoader
  * Signature: ()Ljava/lang/ClassLoader;
- * 
+ *
  * Returns the first non-null class loader up the execution stack, or null
  * if only code from the null class loader is on the stack.
  */

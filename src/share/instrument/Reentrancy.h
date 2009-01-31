@@ -49,10 +49,10 @@ extern jboolean
 tryToAcquireReentrancyToken(    jvmtiEnv *  jvmtienv,
                                 jthread     thread);
 
-/* release the token; assumes we already hold it */                         
+/* release the token; assumes we already hold it */
 extern void
 releaseReentrancyToken(         jvmtiEnv *  jvmtienv,
-                                jthread     thread);    
+                                jthread     thread);
 
 
 #ifdef __cplusplus
@@ -61,4 +61,3 @@ releaseReentrancyToken(         jvmtiEnv *  jvmtienv,
 
 
 #endif
-

@@ -73,7 +73,6 @@ import sun.misc.SharedSecrets;
  * Java Collections Framework</a>.
  *
  * @author Josh Bloch
- * @version %I%, %G%
  * @since 1.5
  * @see EnumMap
  * @serial exclude
@@ -386,7 +385,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E>
      */
     private static <E extends Enum<E>> E[] getUniverse(Class<E> elementType) {
         return SharedSecrets.getJavaLangAccess()
-					.getEnumConstantsShared(elementType);
+                                        .getEnumConstantsShared(elementType);
     }
 
     /**

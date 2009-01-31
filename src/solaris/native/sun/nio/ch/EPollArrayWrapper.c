@@ -35,7 +35,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
 
@@ -53,7 +53,7 @@ struct epoll_event {
     epoll_data_t data;  /* User data variable */
 } __attribute__ ((__packed__));
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 }
 #endif
 
@@ -77,7 +77,7 @@ static epoll_ctl_t    epoll_ctl_func;
 static epoll_wait_t   epoll_wait_func;
 
 static int
-iepoll(int epfd, struct epoll_event *events, int numfds, jlong timeout) 
+iepoll(int epfd, struct epoll_event *events, int numfds, jlong timeout)
 {
     jlong start, now;
     int remaining = timeout;
@@ -107,12 +107,12 @@ iepoll(int epfd, struct epoll_event *events, int numfds, jlong timeout)
 }
 
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_EPollArrayWrapper_init(JNIEnv *env, jclass this) 
+Java_sun_nio_ch_EPollArrayWrapper_init(JNIEnv *env, jclass this)
 {
     epoll_create_func = (epoll_create_t) dlsym(RTLD_DEFAULT, "epoll_create");
     epoll_ctl_func    = (epoll_ctl_t)    dlsym(RTLD_DEFAULT, "epoll_ctl");
     epoll_wait_func   = (epoll_wait_t)   dlsym(RTLD_DEFAULT, "epoll_wait");
-                                                                                                   
+
     if ((epoll_create_func == NULL) || (epoll_ctl_func == NULL) ||
         (epoll_wait_func == NULL)) {
         JNU_ThrowInternalError(env, "unable to get address of epoll functions, pre-2.6 kernel?");
@@ -155,7 +155,7 @@ Java_sun_nio_ch_EPollArrayWrapper_epollCtl(JNIEnv *env, jobject this, jint epfd,
 
     RESTARTABLE((*epoll_ctl_func)(epfd, (int)opcode, (int)fd, &event), res);
 
-    /* 
+    /*
      * A channel may be registered with several Selectors. When each Selector
      * is polled a EPOLL_CTL_DEL op will be inserted into its pending update
      * list to remove the file descriptor from epoll. The "last" Selector will
@@ -170,7 +170,7 @@ Java_sun_nio_ch_EPollArrayWrapper_epollCtl(JNIEnv *env, jobject this, jint epfd,
     }
 }
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_sun_nio_ch_EPollArrayWrapper_epollWait(JNIEnv *env, jobject this,
                                             jlong address, jint numfds,
                                             jlong timeout, jint epfd)
@@ -183,7 +183,7 @@ Java_sun_nio_ch_EPollArrayWrapper_epollWait(JNIEnv *env, jobject this,
     } else {                      /* Bounded wait; bounded restarts */
         res = iepoll(epfd, events, numfds, timeout);
     }
-    
+
     if (res < 0) {
         JNU_ThrowIOExceptionWithLastError(env, "epoll_wait failed");
     }
@@ -199,4 +199,3 @@ Java_sun_nio_ch_EPollArrayWrapper_interrupt(JNIEnv *env, jobject this, jint fd)
         JNU_ThrowIOExceptionWithLastError(env,"write to interrupt fd failed");
     }
 }
-

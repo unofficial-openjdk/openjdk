@@ -269,7 +269,7 @@ Java_sun_awt_image_ImageRepresentation_setDiffICM(JNIEnv *env, jclass cls,
     srcLUT = (unsigned int *) (*env)->GetPrimitiveArrayCritical(env, jlut,
                                                                 NULL);
     if (srcLUT == NULL) {
-	/* out of memory error already thrown */
+        /* out of memory error already thrown */
         return 0;
     }
 
@@ -278,7 +278,7 @@ Java_sun_awt_image_ImageRepresentation_setDiffICM(JNIEnv *env, jclass cls,
     if (newLUT == NULL) {
         (*env)->ReleasePrimitiveArrayCritical(env, jlut, srcLUT,
                                               JNI_ABORT);
-	/* out of memory error already thrown */
+        /* out of memory error already thrown */
         return 0;
     }
 
@@ -309,7 +309,7 @@ Java_sun_awt_image_ImageRepresentation_setDiffICM(JNIEnv *env, jclass cls,
     srcData = (unsigned char *) (*env)->GetPrimitiveArrayCritical(env, jpix,
                                                                   NULL);
     if (srcData == NULL) {
-	/* out of memory error already thrown */
+        /* out of memory error already thrown */
         return 0;
     }
 
@@ -317,7 +317,7 @@ Java_sun_awt_image_ImageRepresentation_setDiffICM(JNIEnv *env, jclass cls,
                                                                   NULL);
     if (dstData == NULL) {
         (*env)->ReleasePrimitiveArrayCritical(env, jpix, srcData, JNI_ABORT);
-	/* out of memory error already thrown */
+        /* out of memory error already thrown */
         return 0;
     }
 
@@ -360,7 +360,7 @@ static int compareLUTs(unsigned int *lut1, int numLut1, int transIdx,
     }
 
     for (i=0; i < numLut2; i++) {
-        /* If this slot in new palette is different from the 
+        /* If this slot in new palette is different from the
          * same slot in current palette, then we try to find
          * this color in other slots. On failure, add this color
          * to current palette.
@@ -429,4 +429,3 @@ static int findIdx(unsigned int rgb, unsigned int *lut, int numLut) {
     }
     return -1;
 }
-

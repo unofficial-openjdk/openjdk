@@ -34,7 +34,6 @@ import sun.awt.SunToolkit;
  * event even if it is currently blocked waiting for a SequencedEvent or
  * another SentEvent to be handled.
  *
- * @version %I%, %G%
  * @author David Mendenhall
  */
 class SentEvent extends AWTEvent implements ActiveEvent {
@@ -44,25 +43,25 @@ class SentEvent extends AWTEvent implements ActiveEvent {
     private static final long serialVersionUID = -383615247028828931L;
 
     static final int ID =
-	java.awt.event.FocusEvent.FOCUS_LAST + 2;
+        java.awt.event.FocusEvent.FOCUS_LAST + 2;
 
     boolean dispatched;
     private AWTEvent nested;
     private AppContext toNotify;
 
     SentEvent() {
-	this(null);
+        this(null);
     }
     SentEvent(AWTEvent nested) {
-	this(nested, null);
+        this(nested, null);
     }
     SentEvent(AWTEvent nested, AppContext toNotify) {
-	super((nested != null)
-	          ? nested.getSource()
-	          : Toolkit.getDefaultToolkit(),
-	      ID);
-	this.nested = nested;
-	this.toNotify = toNotify;
+        super((nested != null)
+                  ? nested.getSource()
+                  : Toolkit.getDefaultToolkit(),
+              ID);
+        this.nested = nested;
+        this.toNotify = toNotify;
     }
 
     public void dispatch() {
@@ -87,6 +86,6 @@ class SentEvent extends AWTEvent implements ActiveEvent {
         }
         synchronized (this) {
             notifyAll();
-        }        
+        }
     }
 }

@@ -45,7 +45,7 @@ Java_sun_misc_VMSupport_initAgentProperties(JNIEnv *env, jclass cls, jobject pro
             JNU_ThrowInternalError(env,
                  "Handle for JVM not found for symbol lookup");
         }
-        InitAgentProperties_fp = (INIT_AGENT_PROPERTIES_FN) 
+        InitAgentProperties_fp = (INIT_AGENT_PROPERTIES_FN)
             JDK_FindJvmEntry("JVM_InitAgentProperties");
         if (InitAgentProperties_fp == NULL) {
             JNU_ThrowInternalError(env,
@@ -55,4 +55,3 @@ Java_sun_misc_VMSupport_initAgentProperties(JNIEnv *env, jclass cls, jobject pro
     }
     return (*InitAgentProperties_fp)(env, props);
 }
-

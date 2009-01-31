@@ -37,7 +37,7 @@ import java.util.Hashtable;
 public class ReadProfileTest implements Runnable {
     /* Location of the tag sig counter in 4-byte words */
     final static int TAG_COUNT_OFFSET = 32;
-    
+
     /* Location of the tag sig table in 4-byte words */
     final static int TAG_ELEM_OFFSET = 33;
 
@@ -45,13 +45,13 @@ public class ReadProfileTest implements Runnable {
     static int [][] tagSigs;
     static Hashtable [] tags;
     boolean status;
-    
-    static int [] cspaces = {ColorSpace.CS_sRGB, ColorSpace.CS_PYCC, 
+
+    static int [] cspaces = {ColorSpace.CS_sRGB, ColorSpace.CS_PYCC,
                              ColorSpace.CS_LINEAR_RGB, ColorSpace.CS_CIEXYZ,
                              ColorSpace.CS_GRAY};
 
     static String [] csNames = {"sRGB", "PYCC", "LINEAR_RGB", "CIEXYZ", "GRAY"};
-    
+
     static void getProfileTags(byte [] data, Hashtable tags) {
         ByteBuffer byteBuf = ByteBuffer.wrap(data);
         IntBuffer intBuf = byteBuf.asIntBuffer();
@@ -68,11 +68,11 @@ public class ReadProfileTest implements Runnable {
             tags.put(tagSig, tagData);
         }
     }
-    
+
     static {
         profiles = new byte[cspaces.length][];
         tags = new Hashtable[cspaces.length];
-        
+
         for (int i = 0; i < cspaces.length; i++) {
             ICC_Profile pf = ICC_Profile.getInstance(cspaces[i]);
             profiles[i] = pf.getData();
@@ -80,11 +80,11 @@ public class ReadProfileTest implements Runnable {
             getProfileTags(profiles[i], tags[i]);
         }
     }
-    
+
     public ReadProfileTest() {
         status = true;
     }
-    
+
     public void run() {
         for (int i = 0; i < cspaces.length; i++) {
             ICC_Profile pf = ICC_Profile.getInstance(cspaces[i]);
@@ -95,31 +95,31 @@ public class ReadProfileTest implements Runnable {
                                    csNames[i] + " profile");
                 throw new RuntimeException("Incorrect result of getData()");
             }
-            
+
             Iterator<Integer> iter = tags[i].keySet().iterator();
             while(iter.hasNext()) {
                 int tagSig = iter.next();
                 byte [] tagData = pf.getData(tagSig);
-                if (!Arrays.equals(tagData, 
-                                   (byte[]) tags[i].get(tagSig))) 
+                if (!Arrays.equals(tagData,
+                                   (byte[]) tags[i].get(tagSig)))
                 {
                     status = false;
                     System.err.println("Incorrect result of getData(int) with" +
-                                       " tag " + 
-                                       Integer.toHexString(tagSig) + 
+                                       " tag " +
+                                       Integer.toHexString(tagSig) +
                                        " of " + csNames[i] + " profile");
 
-                    throw new RuntimeException("Incorrect result of " + 
+                    throw new RuntimeException("Incorrect result of " +
                                                "getData(int)");
                 }
             }
         }
     }
-    
+
     public boolean getStatus() {
         return status;
     }
-     
+
     public static void main(String [] args) {
         ReadProfileTest test = new ReadProfileTest();
         test.run();

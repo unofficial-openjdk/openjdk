@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -30,7 +30,7 @@
  *
  * minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -43,7 +43,6 @@
  * or in pipe mode.
  */
 
-/* @(#) $Id$ */
 
 #include <stdio.h>
 #include "zlib.h"
@@ -177,7 +176,7 @@ int gz_compress_mmap(in, out)
     if (buf_len <= 0) return Z_ERRNO;
 
     /* Now do the actual mmap: */
-    buf = mmap((caddr_t) 0, buf_len, PROT_READ, MAP_SHARED, ifd, (off_t)0); 
+    buf = mmap((caddr_t) 0, buf_len, PROT_READ, MAP_SHARED, ifd, (off_t)0);
     if (buf == (caddr_t)(-1)) return Z_ERRNO;
 
     /* Compress the whole file at once: */
@@ -209,8 +208,8 @@ void gz_uncompress(in, out)
         if (len == 0) break;
 
         if ((int)fwrite(buf, 1, (unsigned)len, out) != len) {
-	    error("failed fwrite");
-	}
+            error("failed fwrite");
+        }
     }
     if (fclose(out)) error("failed fclose");
 
@@ -312,16 +311,16 @@ int main(argc, argv)
 
     while (argc > 0) {
       if (strcmp(*argv, "-d") == 0)
-	uncompr = 1;
+        uncompr = 1;
       else if (strcmp(*argv, "-f") == 0)
-	outmode[3] = 'f';
+        outmode[3] = 'f';
       else if (strcmp(*argv, "-h") == 0)
-	outmode[3] = 'h';
+        outmode[3] = 'h';
       else if ((*argv)[0] == '-' && (*argv)[1] >= '1' && (*argv)[1] <= '9' &&
-	       (*argv)[2] == 0)
-	outmode[2] = (*argv)[1];
+               (*argv)[2] == 0)
+        outmode[2] = (*argv)[1];
       else
-	break;
+        break;
       argc--, argv++;
     }
     if (argc == 0) {

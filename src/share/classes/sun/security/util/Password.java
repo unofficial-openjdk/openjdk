@@ -33,15 +33,14 @@ import java.util.Arrays;
 /**
  * A utility class for reading passwords
  *
- * @version 1.3
  */
 public class Password {
     /** Reads user password from given input stream. */
     public static char[] readPassword(InputStream in) throws IOException {
-	
+
         char[] consoleEntered = null;
         byte[] consoleBytes = null;
-        
+
         try {
             // Use the new java.io.Console class
             Console con = null;
@@ -120,9 +119,9 @@ public class Password {
             }
         }
     }
-    
+
     /**
-     * Change a password read from Console.readPassword() into 
+     * Change a password read from Console.readPassword() into
      * its original bytes.
      *
      * @param pass a char[]
@@ -149,5 +148,4 @@ public class Password {
         return ba;
     }
     private static volatile CharsetEncoder enc;
-} 
-
+}

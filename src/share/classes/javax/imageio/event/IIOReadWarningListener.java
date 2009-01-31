@@ -42,10 +42,9 @@ import javax.imageio.ImageReader;
  * @see javax.imageio.ImageReader#addIIOReadWarningListener
  * @see javax.imageio.ImageReader#removeIIOReadWarningListener
  *
- * @version 0.5
  */
 public interface IIOReadWarningListener extends EventListener {
-    
+
     /**
      * Reports the occurence of a non-fatal error in decoding.  Decoding
      * will continue following the call to this method.  The application

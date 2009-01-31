@@ -46,7 +46,7 @@ public class ConversionBufferFullException
      * A detail message is a String that describes this particular exception.
      */
     public ConversionBufferFullException() {
-	super();
+        super();
     }
 
     /**
@@ -55,6 +55,6 @@ public class ConversionBufferFullException
      * @param s the String containing a detail message
      */
     public ConversionBufferFullException(String s) {
-	super(s);
+        super(s);
     }
 }

@@ -28,11 +28,11 @@ package sun.awt.motif;
 import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
 import sun.awt.SunToolkit;
 
-final class MToolkitThreadBlockedHandler implements 
+final class MToolkitThreadBlockedHandler implements
                                  ToolkitThreadBlockedHandler {
     private static ToolkitThreadBlockedHandler priveleged_lock = null;
     static {
-        priveleged_lock = new MToolkitThreadBlockedHandler();    
+        priveleged_lock = new MToolkitThreadBlockedHandler();
     }
     private MToolkitThreadBlockedHandler() {}
     static ToolkitThreadBlockedHandler getToolkitThreadBlockedHandler() {

@@ -87,34 +87,34 @@ public class Lock {
                 // Correct result
             }
         }
-        
+
         // Exec the tamperer
         String command = System.getProperty("java.home") +
             File.separator + "bin" + File.separator + "java Lock " + str + " " + blah;
         Process p = Runtime.getRuntime().exec(command);
 
-	BufferedReader in = new BufferedReader
-	    (new InputStreamReader(p.getInputStream()));
+        BufferedReader in = new BufferedReader
+            (new InputStreamReader(p.getInputStream()));
 
-	String s;
-	int count = 0;
-	while ((s = in.readLine()) != null) {
-	    if (!s.equals("good")) {
+        String s;
+        int count = 0;
+        while ((s = in.readLine()) != null) {
+            if (!s.equals("good")) {
                 if (File.separatorChar == '/') {
                     // Fails on windows over NFS...
                     throw new RuntimeException("Failed: "+s);
                 }
-	    }
-	    count++;
-	}
+            }
+            count++;
+        }
 
-	if (count == 0) {
-	    in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-	    while ((s = in.readLine()) != null) {
-		System.err.println("Error output: " + s);
-	    }
-	    throw new RuntimeException("Failed, no output");
-	}
+        if (count == 0) {
+            in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            while ((s = in.readLine()) != null) {
+                System.err.println("Error output: " + s);
+            }
+            throw new RuntimeException("Failed, no output");
+        }
 
         // Clean up
         if (lock != null) {
@@ -126,7 +126,7 @@ public class Lock {
         fis.close();
     }
 
-    // The overlap check for file locks should be JVM-wide 
+    // The overlap check for file locks should be JVM-wide
     private static void test3(File blah) throws Exception {
         FileChannel fc1 = new RandomAccessFile(blah, "rw").getChannel();
         FileChannel fc2 = new RandomAccessFile(blah, "rw").getChannel();
@@ -165,9 +165,9 @@ class MadWriter {
         File f = new File(s);
         RandomAccessFile fos = new RandomAccessFile(f, "rw");
         FileChannel fc = fos.getChannel();
-	if (fc.tryLock(10, 10, false) == null) {
-	    System.out.println("bad: Failed to grab adjacent lock");
-	}
+        if (fc.tryLock(10, 10, false) == null) {
+            System.out.println("bad: Failed to grab adjacent lock");
+        }
         FileLock lock = fc.tryLock(0, 10, false);
         if (lock == null) {
             if (b)

@@ -146,9 +146,9 @@ public class XPathFilterCHGPContainer extends ElementProxy
 
       if ((xp.length() > 2) && (!Character.isWhitespace(xp.charAt(0)))) {
          return "\n" + xp + "\n";
-      } 
+      }
       return xp;
-      
+
    }
 
    /**

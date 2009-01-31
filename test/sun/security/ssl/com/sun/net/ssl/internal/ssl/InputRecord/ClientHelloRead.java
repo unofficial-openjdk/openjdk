@@ -61,8 +61,8 @@ public class ClientHelloRead {
      */
     static class TestServer extends OriginServer {
         public TestServer(ServerSocket ss) throws Exception {
-	    super(ss);
-    	}
+            super(ss);
+        }
 
         /*
          * Returns an array of bytes containing the bytes for
@@ -70,10 +70,10 @@ public class ClientHelloRead {
          *
          * @return bytes for the data in the response
          */
-    	public byte[] getBytes() {
-	    return "SSL V2 Client Hello read was successful..".
-			getBytes();
-    	}
+        public byte[] getBytes() {
+            return "SSL V2 Client Hello read was successful..".
+                        getBytes();
+        }
     }
 
     /*
@@ -81,7 +81,7 @@ public class ClientHelloRead {
      */
     public static void main(String args[]) throws Exception
     {
-	String keyFilename =
+        String keyFilename =
             System.getProperty("test.src", "./") + "/" + pathToStores +
                 "/" + keyStoreFile;
         String trustFilename =
@@ -93,34 +93,34 @@ public class ClientHelloRead {
         System.setProperty("javax.net.ssl.trustStore", trustFilename);
         System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	boolean useSSL = true;
+        boolean useSSL = true;
         /*
          * setup the server
-	 */
-	try {
-	    ServerSocketFactory ssf =
-		ClientHelloRead.getServerSocketFactory(useSSL);
-	    ServerSocket ss = ssf.createServerSocket(serverPort);
-	    serverPort = ss.getLocalPort();
-	    new TestServer(ss);
-	} catch (Exception e) {
-	    System.out.println("Server side failed:" +
-				e.getMessage());
-	    throw e;
-	}
-	// trigger the client
-	try {
+         */
+        try {
+            ServerSocketFactory ssf =
+                ClientHelloRead.getServerSocketFactory(useSSL);
+            ServerSocket ss = ssf.createServerSocket(serverPort);
+            serverPort = ss.getLocalPort();
+            new TestServer(ss);
+        } catch (Exception e) {
+            System.out.println("Server side failed:" +
+                                e.getMessage());
+            throw e;
+        }
+        // trigger the client
+        try {
             doClientSide();
-	} catch (Exception e) {
-	    System.out.println("Client side failed: " +
-				e.getMessage());
-	    throw e;
-	  }
+        } catch (Exception e) {
+            System.out.println("Client side failed: " +
+                                e.getMessage());
+            throw e;
+          }
     }
 
     private static ServerSocketFactory getServerSocketFactory
-		   (boolean useSSL) throws Exception {
-	if (useSSL) {
+                   (boolean useSSL) throws Exception {
+        if (useSSL) {
             SSLServerSocketFactory ssf = null;
             // set up key manager to do server authentication
             SSLContext ctx;
@@ -133,7 +133,7 @@ public class ClientHelloRead {
             ks = KeyStore.getInstance("JKS");
 
             ks.load(new FileInputStream(System.getProperty(
-			"javax.net.ssl.keyStore")), passphrase);
+                        "javax.net.ssl.keyStore")), passphrase);
             kmf.init(ks, passphrase);
             ctx.init(kmf.getKeyManagers(), null, null);
 
@@ -141,42 +141,42 @@ public class ClientHelloRead {
             return ssf;
         } else {
             return ServerSocketFactory.getDefault();
-	}
+        }
     }
 
     static void doClientSide() throws Exception {
-	/*
-	 * setup up a proxy
-	 */
+        /*
+         * setup up a proxy
+         */
         setupProxy();
 
         /*
          * we want to avoid URLspoofCheck failures in cases where the cert
-	 * DN name does not match the hostname in the URL.
+         * DN name does not match the hostname in the URL.
          */
-	HttpsURLConnection.setDefaultHostnameVerifier(
+        HttpsURLConnection.setDefaultHostnameVerifier(
                                       new NameVerifier());
-	URL url = new URL("https://" + "localhost:" + serverPort
-				+ "/index.html");
-	BufferedReader in = null;
-       	try {
-	    in = new BufferedReader(new InputStreamReader(
+        URL url = new URL("https://" + "localhost:" + serverPort
+                                + "/index.html");
+        BufferedReader in = null;
+        try {
+            in = new BufferedReader(new InputStreamReader(
                                url.openStream()));
-	    String inputLine;
-	    System.out.print("Client recieved from the server: ");
-	    while ((inputLine = in.readLine()) != null)
-		System.out.println(inputLine);
-	    in.close();
-	} catch (SSLException e) {
-	    if (in != null)
-		in.close();
-	    throw e;
-	}
+            String inputLine;
+            System.out.print("Client recieved from the server: ");
+            while ((inputLine = in.readLine()) != null)
+                System.out.println(inputLine);
+            in.close();
+        } catch (SSLException e) {
+            if (in != null)
+                in.close();
+            throw e;
+        }
     }
 
     static class NameVerifier implements HostnameVerifier {
         public boolean verify(String hostname, SSLSession session) {
-	    return true;
+            return true;
         }
     }
 

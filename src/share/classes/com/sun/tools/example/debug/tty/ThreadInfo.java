@@ -36,8 +36,8 @@ import java.util.Iterator;
 import java.io.*;
 
 class ThreadInfo {
-    // This is a list of all known ThreadInfo objects. It survives 
-    // ThreadInfo.invalidateAll, unlike the other static fields below. 
+    // This is a list of all known ThreadInfo objects. It survives
+    // ThreadInfo.invalidateAll, unlike the other static fields below.
     private static List<ThreadInfo> threads = Collections.synchronizedList(new ArrayList<ThreadInfo>());
     private static boolean gotInitialThreads = false;
 
@@ -69,7 +69,7 @@ class ThreadInfo {
         synchronized (threads) {
             initThreads();
             ThreadInfo ti = new ThreadInfo(thread);
-            // Guard against duplicates. Duplicates can happen during 
+            // Guard against duplicates. Duplicates can happen during
             // initialization when a particular thread might be added both
             // by a thread start event and by the initial call to threads()
             if (getThreadInfo(thread) == null) {
@@ -83,7 +83,7 @@ class ThreadInfo {
             // Current thread has died.
 
             // Be careful getting the thread name. If its death happens
-            // as part of VM termination, it may be too late to get the 
+            // as part of VM termination, it may be too late to get the
             // information, and an exception will be thrown.
             String currentThreadName;
             try {
@@ -91,7 +91,7 @@ class ThreadInfo {
             } catch (Exception e) {
                currentThreadName = "";
             }
-                 
+
             setCurrentThread(null);
 
             MessageOutput.println();
@@ -121,10 +121,10 @@ class ThreadInfo {
         }
     }
 
-    static void setThreadGroup(ThreadGroupReference tg) {	
+    static void setThreadGroup(ThreadGroupReference tg) {
         group = tg;
     }
-    
+
     static void setCurrentThread(ThreadReference tr) {
         if (tr == null) {
             setCurrentThreadInfo(null);
@@ -134,7 +134,7 @@ class ThreadInfo {
         }
     }
 
-    static void setCurrentThreadInfo(ThreadInfo tinfo) { 
+    static void setCurrentThreadInfo(ThreadInfo tinfo) {
         current = tinfo;
         if (current != null) {
             current.invalidate();
@@ -149,7 +149,7 @@ class ThreadInfo {
     static ThreadInfo getCurrentThreadInfo() {
         return current;
     }
-    
+
     /**
      * Get the thread from this ThreadInfo object.
      *
@@ -160,15 +160,15 @@ class ThreadInfo {
     }
 
     static ThreadGroupReference group() {
-	if (group == null) {
+        if (group == null) {
             // Current thread group defaults to the first top level
             // thread group.
-	    setThreadGroup((ThreadGroupReference)
+            setThreadGroup((ThreadGroupReference)
                            Env.vm().topLevelThreadGroups().get(0));
-	}
+        }
         return group;
     }
-    
+
     static ThreadInfo getThreadInfo(long id) {
         ThreadInfo retInfo = null;
 
@@ -251,11 +251,11 @@ class ThreadInfo {
     /**
      * Set the current stackframe to a specific frame.
      *
-     * @param nFrame	the number of the desired stackframe.  Frame zero is the
+     * @param nFrame    the number of the desired stackframe.  Frame zero is the
      * closest to the current program counter
-     * @exception IllegalAccessError when the thread isn't 
+     * @exception IllegalAccessError when the thread isn't
      * suspended or waiting at a breakpoint
-     * @exception ArrayIndexOutOfBoundsException when the 
+     * @exception ArrayIndexOutOfBoundsException when the
      * requested frame is beyond the stack boundary
      */
     void setCurrentFrameIndex(int nFrame) throws IncompatibleThreadStateException {
@@ -270,10 +270,10 @@ class ThreadInfo {
      * Change the current stackframe to be one or more frames higher
      * (as in, away from the current program counter).
      *
-     * @param nFrames	the number of stackframes
-     * @exception IllegalAccessError when the thread isn't 
+     * @param nFrames   the number of stackframes
+     * @exception IllegalAccessError when the thread isn't
      * suspended or waiting at a breakpoint
-     * @exception ArrayIndexOutOfBoundsException when the 
+     * @exception ArrayIndexOutOfBoundsException when the
      * requested frame is beyond the stack boundary
      */
     void up(int nFrames) throws IncompatibleThreadStateException {
@@ -283,10 +283,10 @@ class ThreadInfo {
     /**
      * Change the current stackframe to be one or more frames lower
      * (as in, toward the current program counter).     *
-     * @param nFrames	the number of stackframes
-     * @exception IllegalAccessError when the thread isn't 
+     * @param nFrames   the number of stackframes
+     * @exception IllegalAccessError when the thread isn't
      * suspended or waiting at a breakpoint
-     * @exception ArrayIndexOutOfBoundsException when the 
+     * @exception ArrayIndexOutOfBoundsException when the
      * requested frame is beyond the stack boundary
      */
     void down(int nFrames) throws IncompatibleThreadStateException {
@@ -294,4 +294,3 @@ class ThreadInfo {
     }
 
 }
-                            

@@ -41,7 +41,6 @@ import javax.swing.plaf.*;
  * and <code>clone</code> methods, these are used when the Styles are being
  * merged into a resulting style.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 public class DefaultSynthStyle extends SynthStyle implements Cloneable {
@@ -69,7 +68,7 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
      * define one.
      */
     private Font font;
-    
+
     /**
      * SynthGraphics, may be null.
      */
@@ -362,7 +361,7 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
     }
 
     /**
-     * Sets style specific values. This does NOT copy the data, it 
+     * Sets style specific values. This does NOT copy the data, it
      * assigns it directly to this Style.
      *
      * @param data Style specific values
@@ -388,25 +387,25 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
      * @return Value of the named property
      */
     public Object get(SynthContext state, Object key) {
-        // Look for the best match          
+        // Look for the best match
         StateInfo si = getStateInfo(state.getComponentState());
         if (si != null && si.getData() != null && getKeyFromData(si.getData(), key) != null) {
-            return getKeyFromData(si.getData(), key); 
-        } 
+            return getKeyFromData(si.getData(), key);
+        }
         si = getStateInfo(0);
         if (si != null && si.getData() != null && getKeyFromData(si.getData(), key) != null) {
             return getKeyFromData(si.getData(), key);
-        } 
+        }
         if(getKeyFromData(data, key) != null)
-          return getKeyFromData(data, key); 
+          return getKeyFromData(data, key);
         return getDefaultValue(state, key);
     }
-    
-    
+
+
     private Object getKeyFromData(Map stateData, Object key) {
           Object value = null;
           if (stateData != null) {
-            
+
             synchronized(stateData) {
                 value = stateData.get(key);
             }
@@ -606,7 +605,7 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
      */
     public StateInfo getStateInfo(int state) {
         // Use the StateInfo with the most bits that matches that of state.
-        // If there is none, than fallback to 
+        // If there is none, than fallback to
         // the StateInfo with a state of 0, indicating it'll match anything.
 
         // Consider if we have 3 StateInfos a, b and c with states:
@@ -619,7 +618,7 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
         // MOUSE_OVER                     c
         // SELECTED | ENABLED | FOCUSED   b
         // ENABLED                        c
-          
+
         if (states != null) {
             int bestCount = 0;
             int bestIndex = -1;
@@ -737,7 +736,7 @@ public class DefaultSynthStyle extends SynthStyle implements Cloneable {
         }
 
         /**
-         * Creates a new StateInfo that is a copy of the passed in 
+         * Creates a new StateInfo that is a copy of the passed in
          * StateInfo.
          *
          * @param info StateInfo to copy.

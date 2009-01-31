@@ -31,14 +31,14 @@ import java.util.List;
 import java.util.Stack;
 import java.util.ArrayList;
 import java.util.Iterator;
-            
+
 /**
  * Descend the tree of thread groups.
  * @author Robert G. Field
  */
 public class ThreadGroupIterator implements Iterator {
-    private final Stack<Iterator<ThreadGroupReference>> stack 
-			= new Stack<Iterator<ThreadGroupReference>>();
+    private final Stack<Iterator<ThreadGroupReference>> stack
+                        = new Stack<Iterator<ThreadGroupReference>>();
 
     public ThreadGroupIterator(List<ThreadGroupReference> tgl) {
         push(tgl);
@@ -62,7 +62,7 @@ public class ThreadGroupIterator implements Iterator {
 
     /**
      * The invariant in this class is that the top iterator
-     * on the stack has more elements.  If the stack is 
+     * on the stack has more elements.  If the stack is
      * empty, there is no top.  This method assures
      * this invariant.
      */
@@ -104,4 +104,3 @@ public class ThreadGroupIterator implements Iterator {
     }
 */
 }
-            

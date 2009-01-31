@@ -27,7 +27,6 @@
 #define __MLIB_IMAGECOPY_H
 
 #ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageCopy.h	1.2	03/01/30 SMI"
 #endif /* __SUNPRO_C */
 
 #include <mlib_types.h>

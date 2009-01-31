@@ -31,19 +31,19 @@ import java.net.*;
 
 public class ProtocolRedirect {
     public static void main(String [] args) throws Exception {
-	int localPort;
-	new Thread(new Redirect()).start();
-	while ((localPort = Redirect.listenPort) == -1) {
-	    Thread.sleep(1000);
-	}
+        int localPort;
+        new Thread(new Redirect()).start();
+        while ((localPort = Redirect.listenPort) == -1) {
+            Thread.sleep(1000);
+        }
 
         String page = "http://localhost:"+localPort+"/";
         URL url = new URL(page);
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.connect();
-	if (conn.getResponseCode() != 302) {
-	    throw new RuntimeException("Test failed. Should get RespCode: 302. Got:"+conn.getResponseCode());
-	}
+        if (conn.getResponseCode() != 302) {
+            throw new RuntimeException("Test failed. Should get RespCode: 302. Got:"+conn.getResponseCode());
+        }
     }
 }
 
@@ -56,7 +56,7 @@ class Redirect implements Runnable {
         OutputStream out = sock.getOutputStream();
         StringBuffer reply = new StringBuffer();
         reply.append("HTTP/1.0 302 Found\r\n"
-		     + "Location: https://" + sock.getLocalAddress().getHostAddress()
+                     + "Location: https://" + sock.getLocalAddress().getHostAddress()
                      + "/\r\n\r\n");
         out.write(reply.toString().getBytes());
     }
@@ -65,14 +65,14 @@ class Redirect implements Runnable {
     public void run() {
         try {
             ServerSocket ssock = new ServerSocket();
-	    ssock.bind(null);
-	    listenPort = ssock.getLocalPort();
-	    sock = ssock.accept();
-	    sock.setTcpNoDelay(true);
-	    sendReply();
-	    sock.shutdownOutput();
+            ssock.bind(null);
+            listenPort = ssock.getLocalPort();
+            sock = ssock.accept();
+            sock.setTcpNoDelay(true);
+            sendReply();
+            sock.shutdownOutput();
         } catch(IOException io) {
-	    throw new RuntimeException(io.getCause());
+            throw new RuntimeException(io.getCause());
         }
     }
 

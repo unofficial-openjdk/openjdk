@@ -62,9 +62,9 @@ public class BMPSubsamplingTest {
     private static final int TYPE_USHORT_555_BGR = 0x107;
     private static final int TYPE_USHORT_565_BGR = 0x108;
     private static final int TYPE_4BPP_INDEXED = 0x109;
-    
+
     private String format = "BMP";
-    
+
     private int[] img_types = new int[] {
         BufferedImage.TYPE_INT_RGB,
         BufferedImage.TYPE_INT_BGR,
@@ -92,27 +92,27 @@ public class BMPSubsamplingTest {
     int h = 300;
     int w = dx * colors.length + srcXSubsampling;
 
-    
-    
+
+
     public BMPSubsamplingTest() throws IOException {
         ImageWriter writer =
             ImageIO.getImageWritersByFormatName(format).next();
-        
+
         ImageWriteParam wparam = writer.getDefaultWriteParam();
         wparam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         String[] types = wparam.getCompressionTypes();
         for (int t = 0; t < img_types.length; t++) {
-            int img_type = img_types[t]; 
+            int img_type = img_types[t];
             System.out.println("Test for " + getImageTypeName(img_type));
             BufferedImage image = getTestImage(img_type);
-        
+
             ImageTypeSpecifier specifier = new ImageTypeSpecifier(image);
-        
+
             if (!writer.getOriginatingProvider().canEncodeImage(specifier)) {
                 System.out.println("Writer does not support encoding this buffered image type.");
                 continue;
             }
-            
+
             for(int i=0; i<types.length; i++) {
                 if ("BI_JPEG".equals(types[i])) {
                     // exclude BI_JPEG from automatic test
@@ -129,38 +129,38 @@ public class BMPSubsamplingTest {
                     continue;
                 }
                 ImageWriteParam imageWriteParam = getImageWriteParam(writer, types[i]);
-            
+
                 imageWriteParam.setSourceSubsampling(srcXSubsampling,
                                                      srcYSubsampling,
                                                      0, 0);
-                File outputFile = new File("subsampling_test_" + 
+                File outputFile = new File("subsampling_test_" +
                     getImageTypeName(img_type) + "__" +
                     types[i] + ".bmp");
                 ImageOutputStream ios =
                     ImageIO.createImageOutputStream(outputFile);
                 writer.setOutput(ios);
-                
+
                 IIOImage iioImg = new IIOImage(image, null, null);
-                
+
                 writer.write(null, iioImg, imageWriteParam);
-                
+
                 ios.flush();
                 ios.close();
-            
+
                 BufferedImage outputImage = ImageIO.read(outputFile);
-                checkTestImage(outputImage);               
+                checkTestImage(outputImage);
             }
         }
     }
-    
+
     private ImageWriteParam getImageWriteParam(ImageWriter writer, String value) {
         ImageWriteParam imageWriteParam = writer.getDefaultWriteParam();
         imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         imageWriteParam.setCompressionType(value);
         return imageWriteParam;
     }
-    
-    
+
+
     private boolean canEncodeImage(String compression,
                                    ImageTypeSpecifier imgType, int rawType)
     {
@@ -171,7 +171,7 @@ public class BMPSubsamplingTest {
         {
             return false;
         }
-        
+
         int bpp = imgType.getColorModel().getPixelSize();
         if (compression.equals("BI_RLE4") && bpp != 4) {
             // only 4bpp images can be encoded as BI_RLE4
@@ -184,14 +184,14 @@ public class BMPSubsamplingTest {
 
         if (compression.equals("BI_PNG") &&
             ((rawType == TYPE_USHORT_555_GRB) ||
-             (rawType == TYPE_USHORT_555_BGR))) 
+             (rawType == TYPE_USHORT_555_BGR)))
         {
             return false;
         }
-        
+
         return true;
     }
-    
+
     private String getImageTypeName(int t) {
         switch(t) {
           case BufferedImage.TYPE_INT_RGB:
@@ -230,8 +230,8 @@ public class BMPSubsamplingTest {
               throw new IllegalArgumentException("Unknown image type: " + t);
         }
     }
-    
-    private BufferedImage getTestImage(int type) {         
+
+    private BufferedImage getTestImage(int type) {
         BufferedImage dst = null;
         ColorModel colorModel = null;
         WritableRaster raster = null;
@@ -308,21 +308,21 @@ public class BMPSubsamplingTest {
     private BufferedImage createIndexImage(int bpp) {
         // calculate palette size
         int psize = (1 << bpp);
-        
+
         // prepare palette;
         byte[] r = new byte[psize];
         byte[] g = new byte[psize];
         byte[] b = new byte[psize];
-        
+
         for (int i = 0; i < colors.length; i++) {
             r[i] = (byte)(0xff & colors[i].getRed());
             g[i] = (byte)(0xff & colors[i].getGreen());
             b[i] = (byte)(0xff & colors[i].getBlue());
         }
-        
+
         // now prepare appropriate index clor model
         IndexColorModel icm = new IndexColorModel(bpp, psize, r, g, b);
-        
+
         return new BufferedImage(w, h, BufferedImage.TYPE_BYTE_INDEXED, icm);
     }
 
@@ -340,7 +340,7 @@ public class BMPSubsamplingTest {
                                            bOffs, null);
         return new BufferedImage(colorModel, raster, false, null);
     }
-     
+
     private void checkTestImage(BufferedImage dst) {
         // NB: do not forget about subsampling factor.
         int x = dx / (2 * srcXSubsampling);
@@ -359,7 +359,7 @@ public class BMPSubsamplingTest {
             x += dx / srcXSubsampling;
         }
     }
-    
+
     public static void main(String args[]) throws IOException {
         BMPSubsamplingTest test = new BMPSubsamplingTest();
     }

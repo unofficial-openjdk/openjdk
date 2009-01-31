@@ -39,7 +39,6 @@ import java.util.EventListener;
  * peer identity and a new SSL cipher suite.
  *
  * @since 1.4
- * @version %I%
  * @author David Brownell
  */
 public interface HandshakeCompletedListener extends EventListener
@@ -49,7 +48,7 @@ public interface HandshakeCompletedListener extends EventListener
      * when a SSL handshake is completed.
      *
      * @param event the event identifying when the SSL Handshake
-     *		completed on a given SSL connection
+     *          completed on a given SSL connection
      */
     void handshakeCompleted(HandshakeCompletedEvent event);
 }

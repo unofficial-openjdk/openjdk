@@ -27,47 +27,47 @@ import java.io.*;
  * @bug 4135031
  * @summary Test boostrap problem when a URLStreamHandlerFactory is loaded
  *          by the application class loader.
- * 
+ *
  */
 import java.net.*;
 
 public class HandlerLoop {
 
     public static void main(String args[]) throws Exception {
-	URL.setURLStreamHandlerFactory(
-	    new HandlerFactory("sun.net.www.protocol"));
-	URL url = new URL("file://bogus/index.html");
-	System.out.println("url = " + url);
-	url.openConnection();
+        URL.setURLStreamHandlerFactory(
+            new HandlerFactory("sun.net.www.protocol"));
+        URL url = new URL("file://bogus/index.html");
+        System.out.println("url = " + url);
+        url.openConnection();
     }
 
     private static class HandlerFactory implements URLStreamHandlerFactory {
-	private String pkg;
+        private String pkg;
 
-	HandlerFactory(String pkg) {
-	    this.pkg = pkg;
-	}
+        HandlerFactory(String pkg) {
+            this.pkg = pkg;
+        }
 
-	public URLStreamHandler createURLStreamHandler(String protocol) {
-	    String name = pkg + "." + protocol + ".Handler";
-	    System.out.println("Loading handler class: " + name);
-	    // Loading this dummy class demonstrates the bootstrap
-	    // problem as the stream handler factory will be reentered
-	    // over and over again if the application class loader
-	    // shares the same stream handler factory.
-	    new Dummy();
-	    try {
-	        Class c = Class.forName(name);
-		return (URLStreamHandler)c.newInstance();
-	    } catch (ClassNotFoundException e) {
-		e.printStackTrace();
-	    } catch (IllegalAccessException e) {
-		e.printStackTrace();
-	    } catch (InstantiationException e) {
-		e.printStackTrace();
-	    }
-	    return null;
-	}
+        public URLStreamHandler createURLStreamHandler(String protocol) {
+            String name = pkg + "." + protocol + ".Handler";
+            System.out.println("Loading handler class: " + name);
+            // Loading this dummy class demonstrates the bootstrap
+            // problem as the stream handler factory will be reentered
+            // over and over again if the application class loader
+            // shares the same stream handler factory.
+            new Dummy();
+            try {
+                Class c = Class.forName(name);
+                return (URLStreamHandler)c.newInstance();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 
     private static class Dummy {

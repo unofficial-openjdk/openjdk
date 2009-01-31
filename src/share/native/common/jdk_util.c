@@ -34,14 +34,14 @@
    #define JDK_UPDATE_VERSION "00"
 #endif
 
-JNIEXPORT void 
+JNIEXPORT void
 JDK_GetVersionInfo0(jdk_version_info* info, size_t info_size) {
     /* These JDK_* macros are set at Makefile or the command line */
-    const unsigned int jdk_major_version = 
+    const unsigned int jdk_major_version =
         (unsigned int) atoi(JDK_MAJOR_VERSION);
-    const unsigned int jdk_minor_version = 
+    const unsigned int jdk_minor_version =
         (unsigned int) atoi(JDK_MINOR_VERSION);
-    const unsigned int jdk_micro_version = 
+    const unsigned int jdk_micro_version =
         (unsigned int) atoi(JDK_MICRO_VERSION);
 
     const char* jdk_build_string = JDK_BUILD_NUMBER;
@@ -85,4 +85,3 @@ JDK_GetVersionInfo0(jdk_version_info* info, size_t info_size) {
     info->special_update_version = (unsigned int) jdk_special_version;
     info->thread_park_blocker = 1;
 }
-

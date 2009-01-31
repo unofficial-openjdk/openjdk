@@ -22,18 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package com.sun.tools.example.debug.bdi;
 
 public class AmbiguousMethodException extends Exception
 {
     public AmbiguousMethodException()
     {
-	super();
+        super();
     }
 
     public AmbiguousMethodException(String s)
     {
-	super(s);
+        super(s);
     }
 }

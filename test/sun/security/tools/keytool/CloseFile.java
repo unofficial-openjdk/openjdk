@@ -24,9 +24,9 @@
 /*
  * @test
  * @bug 6489721
- * @summary keytool has not closed several file streams 
+ * @summary keytool has not closed several file streams
  * @author weijun.wang
- * 
+ *
  * This test is only useful on Windows, which fails before the fix and succeeds
  * after it. On other platforms, it always passes.
  */
@@ -52,12 +52,12 @@ public class CloseFile {
         remove("f2", true);
         remove("f0", true);
         run("-keystore f0 -storepass changeit -keypass changeit -genkeypair -dname CN=Haha");
-        run("-importkeystore -srckeystore f0 -destkeystore f1 -srcstorepass changeit -deststorepass changeit");        
+        run("-importkeystore -srckeystore f0 -destkeystore f1 -srcstorepass changeit -deststorepass changeit");
         remove("f0", true);
         remove("f1", true);
     }
-    
-    static void run(String s) throws Exception {        
+
+    static void run(String s) throws Exception {
         KeyTool.main((s+" -debug").split(" "));
     }
     static void remove(String filename, boolean check) {

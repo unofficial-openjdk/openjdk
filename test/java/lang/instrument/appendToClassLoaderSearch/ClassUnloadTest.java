@@ -28,7 +28,7 @@
  * test does the following:
  *
  * 1. Creates a class loader to load class Foo. Execute Foo.doSomething
- *    which references a missing class Bar. The doSomething method 
+ *    which references a missing class Bar. The doSomething method
  *    should fail with NoClassDefFoundError.
  *
  * 2. Add Bar.jar to the system class path. Bar.jar contains Bar.
@@ -53,64 +53,64 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.jar.JarFile;
 
 public class ClassUnloadTest {
-	
+
     static Instrumentation ins;
-    
+
     public static void main(String args[]) throws Exception {
-	String dir = args[0] + File.separator;
-	String jar = dir + args[1];
+        String dir = args[0] + File.separator;
+        String jar = dir + args[1];
 
-	System.out.println(jar);
-	    
-        URL u = (new File(dir)).toURL();	
-	URL urls[] = { u };
+        System.out.println(jar);
 
-	// This should fail as Bar is not available
-	Invoker i1 = new Invoker(urls, "Foo", "doSomething");
-	Boolean result = (Boolean)i1.invoke((Object)null);
-	if (result.booleanValue()) {
-	    throw new RuntimeException("Test configuration error - doSomething should not succeed");
-	}
+        URL u = (new File(dir)).toURL();
+        URL urls[] = { u };
 
-	// put Bar on the system class path
-	ins.appendToSystemClassLoaderSearch( new JarFile(jar) );
-
-	// This should fail even though Bar is now available
-	result = (Boolean)i1.invoke((Object)null);
+        // This should fail as Bar is not available
+        Invoker i1 = new Invoker(urls, "Foo", "doSomething");
+        Boolean result = (Boolean)i1.invoke((Object)null);
         if (result.booleanValue()) {
             throw new RuntimeException("Test configuration error - doSomething should not succeed");
         }
 
-	// This should succeed because this is a different Foo
-	Invoker i2 = new Invoker(urls, "Foo", "doSomething");
-	result = (Boolean)i2.invoke((Object)null);
+        // put Bar on the system class path
+        ins.appendToSystemClassLoaderSearch( new JarFile(jar) );
+
+        // This should fail even though Bar is now available
+        result = (Boolean)i1.invoke((Object)null);
+        if (result.booleanValue()) {
+            throw new RuntimeException("Test configuration error - doSomething should not succeed");
+        }
+
+        // This should succeed because this is a different Foo
+        Invoker i2 = new Invoker(urls, "Foo", "doSomething");
+        result = (Boolean)i2.invoke((Object)null);
         if (!result.booleanValue()) {
             throw new RuntimeException("Test configuration error - doSomething did not succeed");
         }
 
-	// Exercise some class unloading
-	i1 = i2 = null;
-	System.gc();
+        // Exercise some class unloading
+        i1 = i2 = null;
+        System.gc();
     }
 
     static class Invoker {
 
-	URLClassLoader cl;
-	Method m;
+        URLClassLoader cl;
+        Method m;
 
-	public Invoker(URL urls[], String cn, String mn, Class ... params) 
-	    throws ClassNotFoundException, NoSuchMethodException
-  	{
-	    cl = new URLClassLoader(urls);
-	    Class c = Class.forName("Foo", true, cl);
-	    m = c.getDeclaredMethod(mn, params);
-  	}
+        public Invoker(URL urls[], String cn, String mn, Class ... params)
+            throws ClassNotFoundException, NoSuchMethodException
+        {
+            cl = new URLClassLoader(urls);
+            Class c = Class.forName("Foo", true, cl);
+            m = c.getDeclaredMethod(mn, params);
+        }
 
- 	public Object invoke(Object ... args) 
-	    throws IllegalAccessException, InvocationTargetException
- 	{
-	    return m.invoke(args);
-	}
+        public Object invoke(Object ... args)
+            throws IllegalAccessException, InvocationTargetException
+        {
+            return m.invoke(args);
+        }
     }
 
     public static void premain(String args, Instrumentation i) {

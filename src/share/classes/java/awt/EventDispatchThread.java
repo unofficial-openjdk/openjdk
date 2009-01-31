@@ -56,8 +56,7 @@ import sun.awt.dnd.SunDragSourceContextPeer;
  * @author Amy Fowler
  * @author Fred Ecks
  * @author David Mendenhall
- * 
- * @version %I%, %G%
+ *
  * @since 1.1
  */
 class EventDispatchThread extends Thread {
@@ -94,7 +93,7 @@ class EventDispatchThread extends Thread {
             // Calling SunToolkit.flushPendingEvents in this case could
             // lead to deadlock.
             theQueue.postEventPrivate(stopEvent);
-                
+
             if (wait) {
                 try {
                     join();
@@ -135,47 +134,47 @@ class EventDispatchThread extends Thread {
     }
 
     public void run() {
-	try {
-	    pumpEvents(new Conditional() {
-		public boolean evaluate() {
-		    return true;
-		}
-	    });	    
-	} finally {
-	    /*
-	     * This synchronized block is to secure that the event dispatch 
-	     * thread won't die in the middle of posting a new event to the
-	     * associated event queue. It is important because we notify
-	     * that the event dispatch thread is busy after posting a new event
-	     * to its queue, so the EventQueue.dispatchThread reference must
-	     * be valid at that point.
-	     */
-	    synchronized (theQueue) {
+        try {
+            pumpEvents(new Conditional() {
+                public boolean evaluate() {
+                    return true;
+                }
+            });
+        } finally {
+            /*
+             * This synchronized block is to secure that the event dispatch
+             * thread won't die in the middle of posting a new event to the
+             * associated event queue. It is important because we notify
+             * that the event dispatch thread is busy after posting a new event
+             * to its queue, so the EventQueue.dispatchThread reference must
+             * be valid at that point.
+             */
+            synchronized (theQueue) {
                 if (theQueue.getDispatchThread() == this) {
                     theQueue.detachDispatchThread();
                 }
                 /*
-                 * Event dispatch thread dies in case of an uncaught exception. 
+                 * Event dispatch thread dies in case of an uncaught exception.
                  * A new event dispatch thread for this queue will be started
                  * only if a new event is posted to it. In case if no more
-                 * events are posted after this thread died all events that 
+                 * events are posted after this thread died all events that
                  * currently are in the queue will never be dispatched.
                  */
                 /*
                  * Fix for 4648733. Check both the associated java event
                  * queue and the PostEventQueue.
                  */
-                if (theQueue.peekEvent() != null || 
-                    !SunToolkit.isPostEventQueueEmpty()) { 
+                if (theQueue.peekEvent() != null ||
+                    !SunToolkit.isPostEventQueueEmpty()) {
                     theQueue.initDispatchThread();
                 }
-		AWTAutoShutdown.getInstance().notifyThreadFree(this);
-	    }
-	}
+                AWTAutoShutdown.getInstance().notifyThreadFree(this);
+            }
+        }
     }
 
     void pumpEvents(Conditional cond) {
-	pumpEvents(ANY_EVENT, cond);
+        pumpEvents(ANY_EVENT, cond);
     }
 
     void pumpEventsForHierarchy(Conditional cond, Component modalComponent) {
@@ -268,7 +267,7 @@ class EventDispatchThread extends Thread {
                 }
             }
             while (eventOK == false);
-                      
+
             if (eventLog.isLoggable(Level.FINEST)) {
                 eventLog.log(Level.FINEST, "Dispatching: " + event);
             }
@@ -403,7 +402,7 @@ class EventDispatchThread extends Thread {
     }
 
     boolean isDispatching(EventQueue eq) {
-	return theQueue.equals(eq);
+        return theQueue.equals(eq);
     }
 
     EventQueue getEventQueue() { return theQueue; }

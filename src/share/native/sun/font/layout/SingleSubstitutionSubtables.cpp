@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)SingleSubstitutionSubtables.cpp	1.11 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -99,4 +98,3 @@ le_uint32 SingleSubstitutionFormat2Subtable::process(GlyphIterator *glyphIterato
 
     return 0;
 }
-

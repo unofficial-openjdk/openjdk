@@ -46,4 +46,3 @@ Java_java_awt_Event_initIDs(JNIEnv *env, jclass cls)
     eventIDs.consumed = (*env)->GetFieldID(env, cls, "consumed", "Z");
     eventIDs.id = (*env)->GetFieldID(env, cls, "id", "I");
 }
-

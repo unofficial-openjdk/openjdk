@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package javax.swing.plaf.metal;
 
 import javax.swing.plaf.*;
@@ -38,12 +38,12 @@ import javax.swing.*;
  * {@code MetalLookAndFeel} maintains the current theme that the
  * the {@code ComponentUI} implementations for metal use. Refer to
  * {@link MetalLookAndFeel#setCurrentTheme
- * MetalLookAndFeel.setCurrentTheme(MetalTheme)} for details on changing 
+ * MetalLookAndFeel.setCurrentTheme(MetalTheme)} for details on changing
  * the current theme.
  * <p>
  * {@code MetalTheme} provides a number of public methods for getting
  * colors. These methods are implemented in terms of a
- * handful of protected abstract methods. A subclass need only override 
+ * handful of protected abstract methods. A subclass need only override
  * the protected abstract methods ({@code getPrimary1},
  * {@code getPrimary2}, {@code getPrimary3}, {@code getSecondary1},
  * {@code getSecondary2}, and {@code getSecondary3}); although a subclass
@@ -61,7 +61,6 @@ import javax.swing.*;
  * @see OceanTheme
  * @see MetalLookAndFeel#setCurrentTheme
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public abstract class MetalTheme {
@@ -206,7 +205,7 @@ public abstract class MetalTheme {
      *
      * @return the control color
      */
-    public ColorUIResource getControl() { return getSecondary3(); }  
+    public ColorUIResource getControl() { return getSecondary3(); }
 
     /**
      * Returns the control shadow color. This returns
@@ -214,7 +213,7 @@ public abstract class MetalTheme {
      *
      * @return the control shadow color
      */
-    public ColorUIResource getControlShadow() { return getSecondary2(); }  
+    public ColorUIResource getControlShadow() { return getSecondary2(); }
 
     /**
      * Returns the control dark shadow color. This returns
@@ -222,7 +221,7 @@ public abstract class MetalTheme {
      *
      * @return the control dark shadow color
      */
-    public ColorUIResource getControlDarkShadow() { return getSecondary1(); }  
+    public ColorUIResource getControlDarkShadow() { return getSecondary1(); }
 
     /**
      * Returns the control info color. This returns
@@ -230,7 +229,7 @@ public abstract class MetalTheme {
      *
      * @return the control info color
      */
-    public ColorUIResource getControlInfo() { return getBlack(); } 
+    public ColorUIResource getControlInfo() { return getBlack(); }
 
     /**
      * Returns the control highlight color. This returns
@@ -238,7 +237,7 @@ public abstract class MetalTheme {
      *
      * @return the control highlight color
      */
-    public ColorUIResource getControlHighlight() { return getWhite(); }  
+    public ColorUIResource getControlHighlight() { return getWhite(); }
 
     /**
      * Returns the control disabled color. This returns
@@ -246,7 +245,7 @@ public abstract class MetalTheme {
      *
      * @return the control disabled color
      */
-    public ColorUIResource getControlDisabled() { return getSecondary2(); }  
+    public ColorUIResource getControlDisabled() { return getSecondary2(); }
 
     /**
      * Returns the primary control color. This returns
@@ -254,7 +253,7 @@ public abstract class MetalTheme {
      *
      * @return the primary control color
      */
-    public ColorUIResource getPrimaryControl() { return getPrimary3(); }  
+    public ColorUIResource getPrimaryControl() { return getPrimary3(); }
 
     /**
      * Returns the primary control shadow color. This returns
@@ -262,30 +261,30 @@ public abstract class MetalTheme {
      *
      * @return the primary control shadow color
      */
-    public ColorUIResource getPrimaryControlShadow() { return getPrimary2(); }  
+    public ColorUIResource getPrimaryControlShadow() { return getPrimary2(); }
     /**
-     * Returns the primary control dark shadow color. This 
+     * Returns the primary control dark shadow color. This
      * returns the value of {@code getPrimary1()}.
      *
      * @return the primary control dark shadow color
      */
-    public ColorUIResource getPrimaryControlDarkShadow() { return getPrimary1(); }  
+    public ColorUIResource getPrimaryControlDarkShadow() { return getPrimary1(); }
 
     /**
-     * Returns the primary control info color. This 
+     * Returns the primary control info color. This
      * returns the value of {@code getBlack()}.
      *
      * @return the primary control info color
      */
-    public ColorUIResource getPrimaryControlInfo() { return getBlack(); } 
+    public ColorUIResource getPrimaryControlInfo() { return getBlack(); }
 
     /**
-     * Returns the primary control highlight color. This 
+     * Returns the primary control highlight color. This
      * returns the value of {@code getWhite()}.
      *
      * @return the primary control highlight color
      */
-    public ColorUIResource getPrimaryControlHighlight() { return getWhite(); }  
+    public ColorUIResource getPrimaryControlHighlight() { return getWhite(); }
 
     /**
      * Returns the system text color. This returns the value of
@@ -301,7 +300,7 @@ public abstract class MetalTheme {
      *
      * @return the control text color
      */
-    public ColorUIResource getControlTextColor() { return getControlInfo(); }  
+    public ColorUIResource getControlTextColor() { return getControlInfo(); }
 
     /**
      * Returns the inactive control text color. This returns the value of
@@ -309,7 +308,7 @@ public abstract class MetalTheme {
      *
      * @return the inactive control text color
      */
-    public ColorUIResource getInactiveControlTextColor() { return getControlDisabled(); }  
+    public ColorUIResource getInactiveControlTextColor() { return getControlDisabled(); }
 
     /**
      * Returns the inactive system text color. This returns the value of
@@ -365,7 +364,7 @@ public abstract class MetalTheme {
      *
      * @return the window title foreground color
      */
-    public ColorUIResource getWindowTitleForeground() { return getBlack(); }  
+    public ColorUIResource getWindowTitleForeground() { return getBlack(); }
 
     /**
      * Returns the window title inactive background color. This

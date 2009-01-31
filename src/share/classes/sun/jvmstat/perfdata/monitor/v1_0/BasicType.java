@@ -33,7 +33,6 @@ package sun.jvmstat.perfdata.monitor.v1_0;
  * globalsDefinitions.hpp file in the HotSpot source base.</p>
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class BasicType {

@@ -53,8 +53,8 @@ public abstract class KeyManagerFactorySpi {
      * @param password the password for recovering keys
      */
     protected abstract void engineInit(KeyStore ks, char[] password)
-	throws KeyStoreException, NoSuchAlgorithmException,
-	    UnrecoverableKeyException;
+        throws KeyStoreException, NoSuchAlgorithmException,
+            UnrecoverableKeyException;
 
     /**
      * Returns one trust manager for each type of trust material.

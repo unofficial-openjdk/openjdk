@@ -71,4 +71,3 @@
  * IO helper function(s)
  */
 void fileClose(JNIEnv *env, jobject this, jfieldID fid);
-

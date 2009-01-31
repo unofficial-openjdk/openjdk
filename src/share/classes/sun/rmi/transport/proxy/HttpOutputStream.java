@@ -45,34 +45,34 @@ class HttpOutputStream extends ByteArrayOutputStream {
      * @param out the OutputStream to send response to
      */
     public HttpOutputStream(OutputStream out) {
-	super();
-	this.out = out;
+        super();
+        this.out = out;
     }
 
     /**
      * On close, send HTTP-packaged response.
      */
     public synchronized void close() throws IOException {
-	if (!responseSent) {
-	    /*
-	     * If response would have zero content length, then make it
-	     * have some arbitrary data so that certain clients will not
-	     * fail because the "document contains no data".
-	     */
-	    if (size() == 0)
-		write(emptyData);
+        if (!responseSent) {
+            /*
+             * If response would have zero content length, then make it
+             * have some arbitrary data so that certain clients will not
+             * fail because the "document contains no data".
+             */
+            if (size() == 0)
+                write(emptyData);
 
-	    DataOutputStream dos = new DataOutputStream(out);
-	    dos.writeBytes("Content-type: application/octet-stream\r\n");
-	    dos.writeBytes("Content-length: " + size() + "\r\n");
-	    dos.writeBytes("\r\n");
-	    writeTo(dos);
-	    dos.flush();
-	    // Do not close the underlying stream here, because that would
-	    // close the underlying socket and prevent reading a response.
-	    reset(); // reset byte array
-	    responseSent = true;
-	}
+            DataOutputStream dos = new DataOutputStream(out);
+            dos.writeBytes("Content-type: application/octet-stream\r\n");
+            dos.writeBytes("Content-length: " + size() + "\r\n");
+            dos.writeBytes("\r\n");
+            writeTo(dos);
+            dos.flush();
+            // Do not close the underlying stream here, because that would
+            // close the underlying socket and prevent reading a response.
+            reset(); // reset byte array
+            responseSent = true;
+        }
     }
 
     /** data to send if the response would otherwise be empty */

@@ -32,7 +32,7 @@ package java.util;
  * All Events are constructed with a reference to the object, the "source",
  * that is logically deemed to be the object upon which the Event in question
  * initially occurred upon.
- * 
+ *
  * @since JDK1.1
  */
 
@@ -52,8 +52,8 @@ public class EventObject implements java.io.Serializable {
      * @exception  IllegalArgumentException  if source is null.
      */
     public EventObject(Object source) {
-	if (source == null)
-	    throw new IllegalArgumentException("null source");
+        if (source == null)
+            throw new IllegalArgumentException("null source");
 
         this.source = source;
     }

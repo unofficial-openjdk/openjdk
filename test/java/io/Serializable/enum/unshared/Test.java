@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4838379
  * @summary Verify that unshared write and read operations work properly with
- *	    enum constants.
+ *          enum constants.
  *
  * @compile -source 1.5 Test.java
  * @run main Test
@@ -40,97 +40,97 @@ abstract class WriteReadTest {
     abstract void read(ObjectInputStream in) throws Exception;
 
     void run() throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new ObjectOutputStream(bout);
-	write(oout);
-	oout.close();
-	read(new ObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray())));
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);
+        write(oout);
+        oout.close();
+        read(new ObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray())));
     }
 }
 
 public class Test {
     public static void main(String[] args) throws Exception {
-	WriteReadTest[] tests = {
-	    new WriteReadTest() {
-		void write(ObjectOutputStream out) throws Exception {
-		    out.writeObject(Foo.foo);
-		    out.writeObject(Foo.foo);
-		}
-		void read(ObjectInputStream in) throws Exception {
-		    Object obj = in.readObject();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		    try {
-			obj = in.readUnshared();
-			throw new Error(
-			    "read of " + obj + " should not have succeeded");
-		    } catch (ObjectStreamException e) {
-			System.out.println("caught expected exception " + e);
-		    }
-		}
-	    },
-	    new WriteReadTest() {
-		void write(ObjectOutputStream out) throws Exception {
-		    out.writeObject(Foo.foo);
-		    out.writeObject(Foo.foo);
-		}
-		void read(ObjectInputStream in) throws Exception {
-		    Object obj = in.readUnshared();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		    try {
-			obj = in.readObject();
-			throw new Error(
-			    "read of " + obj + " should not have succeeded");
-		    } catch (ObjectStreamException e) {
-			System.out.println("caught expected exception " + e);
-		    }
-		}
-	    },
-	    new WriteReadTest() {
-		void write(ObjectOutputStream out) throws Exception {
-		    out.writeObject(Foo.foo);
-		    out.writeUnshared(Foo.foo);
-		}
-		void read(ObjectInputStream in) throws Exception {
-		    Object obj = in.readUnshared();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		    obj = in.readUnshared();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		}
-	    },
-	    new WriteReadTest() {
-		void write(ObjectOutputStream out) throws Exception {
-		    out.writeUnshared(Foo.foo);
-		    out.writeObject(Foo.foo);
-		}
-		void read(ObjectInputStream in) throws Exception {
-		    Object obj = in.readUnshared();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		    obj = in.readUnshared();
-		    if (obj != Foo.foo) {
-			throw new Error(
-			    "expected " + Foo.foo + " instead of " + obj);
-		    }
-		}
-	    }
-	};
-	for (int i = 0; i < tests.length; i++) {
-	    tests[i].run();
-	}
+        WriteReadTest[] tests = {
+            new WriteReadTest() {
+                void write(ObjectOutputStream out) throws Exception {
+                    out.writeObject(Foo.foo);
+                    out.writeObject(Foo.foo);
+                }
+                void read(ObjectInputStream in) throws Exception {
+                    Object obj = in.readObject();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                    try {
+                        obj = in.readUnshared();
+                        throw new Error(
+                            "read of " + obj + " should not have succeeded");
+                    } catch (ObjectStreamException e) {
+                        System.out.println("caught expected exception " + e);
+                    }
+                }
+            },
+            new WriteReadTest() {
+                void write(ObjectOutputStream out) throws Exception {
+                    out.writeObject(Foo.foo);
+                    out.writeObject(Foo.foo);
+                }
+                void read(ObjectInputStream in) throws Exception {
+                    Object obj = in.readUnshared();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                    try {
+                        obj = in.readObject();
+                        throw new Error(
+                            "read of " + obj + " should not have succeeded");
+                    } catch (ObjectStreamException e) {
+                        System.out.println("caught expected exception " + e);
+                    }
+                }
+            },
+            new WriteReadTest() {
+                void write(ObjectOutputStream out) throws Exception {
+                    out.writeObject(Foo.foo);
+                    out.writeUnshared(Foo.foo);
+                }
+                void read(ObjectInputStream in) throws Exception {
+                    Object obj = in.readUnshared();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                    obj = in.readUnshared();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                }
+            },
+            new WriteReadTest() {
+                void write(ObjectOutputStream out) throws Exception {
+                    out.writeUnshared(Foo.foo);
+                    out.writeObject(Foo.foo);
+                }
+                void read(ObjectInputStream in) throws Exception {
+                    Object obj = in.readUnshared();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                    obj = in.readUnshared();
+                    if (obj != Foo.foo) {
+                        throw new Error(
+                            "expected " + Foo.foo + " instead of " + obj);
+                    }
+                }
+            }
+        };
+        for (int i = 0; i < tests.length; i++) {
+            tests[i].run();
+        }
     }
 }

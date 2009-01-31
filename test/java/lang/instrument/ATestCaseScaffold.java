@@ -36,40 +36,40 @@
  *  The Sun framework relies on each test case being a separate class with a separate main,
  *  which throws if the test fails and does not throw if the test succeeds.
  */
- 
- 
+
+
 public abstract class ATestCaseScaffold {
     private String      fName;
     private boolean     fVerbose;
-    
+
 
     protected
     ATestCaseScaffold(String name) {
         fName = name;
         fVerbose = false;
     }
-    
+
     public final void
-    runTest() 
+    runTest()
         throws Throwable {
         Throwable toRethrow = null;
-       
+
         setUp();
-        
+
         try {
             doRunTest();
         }
         finally {
             tearDown();
         }
-    
+
     }
-     
+
     protected void
     setUp()
         throws Exception {
     }
-    
+
     protected void
     tearDown()
         throws Exception {
@@ -78,58 +78,58 @@ public abstract class ATestCaseScaffold {
     protected abstract void
     doRunTest()
         throws Throwable;
-     
+
     /**
      * Be verbose: print out what happens after this
      */
-    public void 
+    public void
     beVerbose()
     {
         fVerbose = true;
-    }   
+    }
 
     /**
      * Print a string, if and only if verbose printing is enabled.
      */
-    public void 
+    public void
     verbosePrint(String message)
     {
         if (fVerbose)
         {
             System.out.println("Debugging message: " + message);
         }
-    }   
+    }
 
     /*
      *  Replacement verification methods
      *  Shaped the same as the JUnit ones to make reusing the JUnit test possible
      *  Didn't implement them all, only the ones our existing tests use.
-     */ 
-     
+     */
+
     public final void
     fail() {
         throw new TestCaseScaffoldException();
     }
-    
+
     public final void
     fail(String message) {
         throw new TestCaseScaffoldException(message);
     }
-    
+
     public final void
     assertTrue(boolean condition) {
         if ( !condition ) {
             fail();
         }
     }
-     
+
     public final void
     assertTrue(String message, boolean condition) {
         if ( !condition ) {
             fail(message);
         }
     }
-     
+
     public final void
     assertNotNull(Object o) {
         assertTrue(o != null);
@@ -163,7 +163,7 @@ public abstract class ATestCaseScaffold {
     assertEquals(String message, int expected, int actual) {
         assertEquals(message, new Integer(expected), new Integer(actual));
     }
- 
+
     public final void
     assertEquals(int expected, int actual) {
         assertEquals("Expected equality", expected, actual);
@@ -175,12 +175,12 @@ public abstract class ATestCaseScaffold {
         TestCaseScaffoldException() {
             super();
         }
-       
+
         public
         TestCaseScaffoldException(String m) {
             super(m);
         }
-    
+
     }
 
 }

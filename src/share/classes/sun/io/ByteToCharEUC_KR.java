@@ -32,7 +32,6 @@ import sun.nio.cs.ext.EUC_KR;
  * Tables and data to convert EUC_KR to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharEUC_KR extends ByteToCharDoubleByte {

@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be 
+ * Thrown to indicate that the requested operation cannot be
  * completed because the specified line number is not valid.
  *
  * @deprecated This exception is no longer thrown
@@ -37,10 +37,10 @@ package com.sun.jdi;
 @Deprecated
 public class InvalidLineNumberException extends RuntimeException {
     public InvalidLineNumberException() {
-	super();
+        super();
     }
 
     public InvalidLineNumberException(String s) {
-	super(s);
+        super(s);
     }
 }

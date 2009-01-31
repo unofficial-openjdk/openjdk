@@ -47,5 +47,5 @@ typedef struct {
     MlibCreateStructFP_t createStructFP;
     MlibDeleteFP_t deleteImageFP;
 } mlibSysFnS_t;
-    
+
 #endif /* _AWT_IMAGINGLIB_H */

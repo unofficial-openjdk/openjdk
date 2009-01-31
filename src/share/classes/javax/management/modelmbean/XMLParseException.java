@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * %Z%author    IBM Corp.
- * 
+ * @author    IBM Corp.
+ *
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
 
@@ -79,20 +79,20 @@ extends Exception
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-	try {
-	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-	    String form = AccessController.doPrivileged(act);
-	    compat = (form != null && form.equals("1.0"));
-	} catch (Exception e) {
-	    // OK: No compat with 1.0
-	}
-	if (compat) {
-	    serialPersistentFields = oldSerialPersistentFields;
-	    serialVersionUID = oldSerialVersionUID;
-	} else {
-	    serialPersistentFields = newSerialPersistentFields;
-	    serialVersionUID = newSerialVersionUID;
-	}
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK: No compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
     }
     //
     // END Serialization compatibility stuff
@@ -129,7 +129,7 @@ extends Exception
      * Deserializes an {@link XMLParseException} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-	    throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
       // New serial form ignores extra field "msgStr"
       in.defaultReadObject();
     }
@@ -139,14 +139,14 @@ extends Exception
      * Serializes an {@link XMLParseException} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-	    throws IOException {
+            throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-	fields.put("msgStr", getMessage());
-	out.writeFields();
+        fields.put("msgStr", getMessage());
+        out.writeFields();
       }
       else
       {
@@ -156,7 +156,3 @@ extends Exception
       }
     }
 }
-
-
-
-

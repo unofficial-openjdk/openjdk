@@ -74,7 +74,7 @@ public abstract class HttpContext {
     /**
      * returns a mutable Map, which can be used to pass
      * configuration and other data to Filter modules
-     * and to the context's exchange handler. 
+     * and to the context's exchange handler.
      * <p>
      * Every attribute stored in this Map will be visible to
      * every HttpExchange processed by this context

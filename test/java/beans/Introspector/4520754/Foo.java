@@ -24,7 +24,7 @@
 import java.beans.BeanDescriptor;
 import java.beans.SimpleBeanInfo;
 
-// The foo bean is it's own beaninfo 
+// The foo bean is it's own beaninfo
 public class Foo extends SimpleBeanInfo {
     public BeanDescriptor getBeanDescriptor() {
         BeanDescriptor bd = new BeanDescriptor(Foo.class);

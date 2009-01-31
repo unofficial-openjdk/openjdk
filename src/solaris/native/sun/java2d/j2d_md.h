@@ -34,10 +34,8 @@
 #include <stdint.h>
 #endif /* __linux__ */
 
-typedef unsigned char	jubyte;
-typedef unsigned short	jushort;
-typedef unsigned int	juint;
+typedef unsigned char   jubyte;
+typedef unsigned short  jushort;
+typedef unsigned int    juint;
 
 #endif /* j2d_md_h_Included */
-
-

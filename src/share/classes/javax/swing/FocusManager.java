@@ -42,7 +42,6 @@ import java.awt.*;
  *
  * @see <a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
  *
- * @version %I%, %G%
  * @author Arnaud Weber
  * @author David Mendenhall
  */
@@ -59,7 +58,7 @@ public abstract class FocusManager extends DefaultKeyboardFocusManager {
      * @see java.awt.KeyboardFocusManager#getCurrentKeyboardFocusManager
      * @see <a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
      */
-    public static final String FOCUS_MANAGER_CLASS_PROPERTY = 
+    public static final String FOCUS_MANAGER_CLASS_PROPERTY =
         "FocusManagerClassName";
 
     private static boolean enabled = true;
@@ -72,13 +71,13 @@ public abstract class FocusManager extends DefaultKeyboardFocusManager {
      * @see #setCurrentManager
      */
     public static FocusManager getCurrentManager() {
-	KeyboardFocusManager manager =
-	    KeyboardFocusManager.getCurrentKeyboardFocusManager();
-	if (manager instanceof FocusManager) {
-	    return (FocusManager)manager;
-	} else {
-	    return new DelegatingDefaultFocusManager(manager);
-	}
+        KeyboardFocusManager manager =
+            KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        if (manager instanceof FocusManager) {
+            return (FocusManager)manager;
+        } else {
+            return new DelegatingDefaultFocusManager(manager);
+        }
     }
 
     /**
@@ -106,11 +105,11 @@ public abstract class FocusManager extends DefaultKeyboardFocusManager {
     public static void setCurrentManager(FocusManager aFocusManager)
         throws SecurityException
     {
-	// Note: This method is not backward-compatible with 1.3 and earlier
-	// releases. It now throws a SecurityException in an applet, whereas
-	// in previous releases, it did not. This issue was discussed at
-	// length, and ultimately approved by Hans.
-        KeyboardFocusManager toSet = 
+        // Note: This method is not backward-compatible with 1.3 and earlier
+        // releases. It now throws a SecurityException in an applet, whereas
+        // in previous releases, it did not. This issue was discussed at
+        // length, and ultimately approved by Hans.
+        KeyboardFocusManager toSet =
             (aFocusManager instanceof DelegatingDefaultFocusManager)
                 ? ((DelegatingDefaultFocusManager)aFocusManager).getDelegate()
                 : aFocusManager;
@@ -124,17 +123,17 @@ public abstract class FocusManager extends DefaultKeyboardFocusManager {
      *
      * @see java.awt.DefaultFocusTraversalPolicy
      * @see java.awt.KeyboardFocusManager#setDefaultFocusTraversalPolicy
-     * @deprecated as of 1.4, replaced by 
+     * @deprecated as of 1.4, replaced by
      * <code>KeyboardFocusManager.setDefaultFocusTraversalPolicy(FocusTraversalPolicy)</code>
      */
     @Deprecated
     public static void disableSwingFocusManager() {
-	if (enabled) {
-	    enabled = false;
-	    KeyboardFocusManager.getCurrentKeyboardFocusManager().
-		setDefaultFocusTraversalPolicy(
+        if (enabled) {
+            enabled = false;
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                setDefaultFocusTraversalPolicy(
                     new DefaultFocusTraversalPolicy());
-	}
+        }
     }
 
     /**
@@ -147,7 +146,6 @@ public abstract class FocusManager extends DefaultKeyboardFocusManager {
      */
     @Deprecated
     public static boolean isFocusManagerEnabled() {
-	return enabled;
+        return enabled;
     }
 }
-

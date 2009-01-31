@@ -58,17 +58,17 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
      * "Indicates whether the Java virtual machine supports the
      * boot class path mechanism used by the system class loader
      * to search for class files.
-     * 
+     *
      * See java.management.RuntimeMXBean.isBootClassPathSupported()
      * "
      *
      */
-    static final EnumJvmRTBootClassPathSupport 
-	JvmRTBootClassPathSupportSupported = 
-	new EnumJvmRTBootClassPathSupport("supported");
-    static final EnumJvmRTBootClassPathSupport 
-	JvmRTBootClassPathSupportUnSupported = 
-	new EnumJvmRTBootClassPathSupport("unsupported");
+    static final EnumJvmRTBootClassPathSupport
+        JvmRTBootClassPathSupportSupported =
+        new EnumJvmRTBootClassPathSupport("supported");
+    static final EnumJvmRTBootClassPathSupport
+        JvmRTBootClassPathSupportUnSupported =
+        new EnumJvmRTBootClassPathSupport("unsupported");
 
     /**
      * Constructor for the "JvmRuntime" group.
@@ -76,7 +76,7 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
      * will not be registered in Java DMK.
      */
     public JvmRuntimeImpl(SnmpMib myMib) {
-     
+
     }
 
 
@@ -86,108 +86,108 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
      * will be AUTOMATICALLY REGISTERED in Java DMK.
      */
     public JvmRuntimeImpl(SnmpMib myMib, MBeanServer server) {
-	
+
     }
 
     static RuntimeMXBean getRuntimeMXBean() {
-	return ManagementFactory.getRuntimeMXBean();
+        return ManagementFactory.getRuntimeMXBean();
     }
-    
+
     private static String validDisplayStringTC(String str) {
-	return JVM_MANAGEMENT_MIB_IMPL.validDisplayStringTC(str);
+        return JVM_MANAGEMENT_MIB_IMPL.validDisplayStringTC(str);
     }
 
     private static String validPathElementTC(String str) {
-	return JVM_MANAGEMENT_MIB_IMPL.validPathElementTC(str);
+        return JVM_MANAGEMENT_MIB_IMPL.validPathElementTC(str);
     }
-    
+
     private static String validJavaObjectNameTC(String str) {
-	return JVM_MANAGEMENT_MIB_IMPL.validJavaObjectNameTC(str);
+        return JVM_MANAGEMENT_MIB_IMPL.validJavaObjectNameTC(str);
     }
-    
-    
+
+
     static String[] splitPath(String path) {
-	final String[] items = path.split(java.io.File.pathSeparator);
-	// for (int i=0;i<items.length;i++) {
-	//    items[i]=validPathElementTC(items[i]);
-	// }
-	return items;
+        final String[] items = path.split(java.io.File.pathSeparator);
+        // for (int i=0;i<items.length;i++) {
+        //    items[i]=validPathElementTC(items[i]);
+        // }
+        return items;
     }
 
     static String[] getClassPath(Object userData) {
-	final Map<Object, Object> m =
+        final Map<Object, Object> m =
                 Util.cast((userData instanceof Map)?userData:null);
-	final String tag = "JvmRuntime.getClassPath";
+        final String tag = "JvmRuntime.getClassPath";
 
-	// If the list is in the cache, simply return it.
-	//
-	if (m != null) {
-	    final String[] cached = (String[])m.get(tag);
-	    if (cached != null) return cached;
-	}
+        // If the list is in the cache, simply return it.
+        //
+        if (m != null) {
+            final String[] cached = (String[])m.get(tag);
+            if (cached != null) return cached;
+        }
 
         final String[] args = splitPath(getRuntimeMXBean().getClassPath());
-	
-	if (m != null) m.put(tag,args);
-	return args;
+
+        if (m != null) m.put(tag,args);
+        return args;
     }
 
     static String[] getBootClassPath(Object userData) {
-	if (!getRuntimeMXBean().isBootClassPathSupported()) 
-	return new String[0];
-	
-	final Map<Object, Object> m =
-                Util.cast((userData instanceof Map)?userData:null);
-	final String tag = "JvmRuntime.getBootClassPath";
+        if (!getRuntimeMXBean().isBootClassPathSupported())
+        return new String[0];
 
-	// If the list is in the cache, simply return it.
-	//
-	if (m != null) {
-	    final String[] cached = (String[])m.get(tag);
-	    if (cached != null) return cached;
-	}
+        final Map<Object, Object> m =
+                Util.cast((userData instanceof Map)?userData:null);
+        final String tag = "JvmRuntime.getBootClassPath";
+
+        // If the list is in the cache, simply return it.
+        //
+        if (m != null) {
+            final String[] cached = (String[])m.get(tag);
+            if (cached != null) return cached;
+        }
 
         final String[] args = splitPath(getRuntimeMXBean().getBootClassPath());
-	
-	if (m != null) m.put(tag,args);
-	return args;
+
+        if (m != null) m.put(tag,args);
+        return args;
     }
 
     static String[] getLibraryPath(Object userData) {
-	final Map<Object, Object> m =
+        final Map<Object, Object> m =
                 Util.cast((userData instanceof Map)?userData:null);
-	final String tag = "JvmRuntime.getLibraryPath";
+        final String tag = "JvmRuntime.getLibraryPath";
 
-	// If the list is in the cache, simply return it.
-	//
-	if (m != null) {
-	    final String[] cached = (String[])m.get(tag);
-	    if (cached != null) return cached;
-	}
+        // If the list is in the cache, simply return it.
+        //
+        if (m != null) {
+            final String[] cached = (String[])m.get(tag);
+            if (cached != null) return cached;
+        }
 
         final String[] args = splitPath(getRuntimeMXBean().getLibraryPath());
-	
-	if (m != null) m.put(tag,args);
-	return args;
+
+        if (m != null) m.put(tag,args);
+        return args;
     }
 
     static String[] getInputArguments(Object userData) {
-	final Map<Object, Object> m =
+        final Map<Object, Object> m =
                 Util.cast((userData instanceof Map)?userData:null);
-	final String tag = "JvmRuntime.getInputArguments";
+        final String tag = "JvmRuntime.getInputArguments";
 
-	// If the list is in the cache, simply return it.
-	//
-	if (m != null) {
-	    final String[] cached = (String[])m.get(tag);
-	    if (cached != null) return cached;
-	}
+        // If the list is in the cache, simply return it.
+        //
+        if (m != null) {
+            final String[] cached = (String[])m.get(tag);
+            if (cached != null) return cached;
+        }
 
         final List<String> l = getRuntimeMXBean().getInputArguments();
         final String[] args = l.toArray(new String[0]);
-	
-	if (m != null) m.put(tag,args);
-	return args;
+
+        if (m != null) m.put(tag,args);
+        return args;
     }
 
     /**
@@ -203,7 +203,7 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
     public String getJvmRTSpecName() throws SnmpStatusException {
         return validDisplayStringTC(getRuntimeMXBean().getSpecName());
     }
-    
+
     /**
      * Getter for the "JvmRTVersion" variable.
      */
@@ -223,7 +223,7 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
      */
     public String getJvmRTManagementSpecVersion() throws SnmpStatusException {
         return validDisplayStringTC(getRuntimeMXBean().
-				    getManagementSpecVersion());
+                                    getManagementSpecVersion());
     }
 
     /**
@@ -240,19 +240,19 @@ public class JvmRuntimeImpl implements JvmRuntimeMBean {
     public Integer getJvmRTInputArgsCount() throws SnmpStatusException {
 
         final String[] args = getInputArguments(JvmContextFactory.
-						getUserData());
-	return new Integer(args.length);
+                                                getUserData());
+        return new Integer(args.length);
     }
-    
+
     /**
      * Getter for the "JvmRTBootClassPathSupport" variable.
      */
-    public EnumJvmRTBootClassPathSupport getJvmRTBootClassPathSupport() 
-	throws SnmpStatusException {
-	if(getRuntimeMXBean().isBootClassPathSupported())
-	    return JvmRTBootClassPathSupportSupported;
-	else
-	    return JvmRTBootClassPathSupportUnSupported;
+    public EnumJvmRTBootClassPathSupport getJvmRTBootClassPathSupport()
+        throws SnmpStatusException {
+        if(getRuntimeMXBean().isBootClassPathSupported())
+            return JvmRTBootClassPathSupportSupported;
+        else
+            return JvmRTBootClassPathSupportUnSupported;
     }
 
     /**

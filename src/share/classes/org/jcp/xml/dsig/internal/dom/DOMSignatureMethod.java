@@ -51,25 +51,25 @@ import org.jcp.xml.dsig.internal.SignerOutputStream;
  *
  * @author Sean Mullan
  */
-public abstract class DOMSignatureMethod extends DOMStructure 
+public abstract class DOMSignatureMethod extends DOMStructure
     implements SignatureMethod {
 
-    private static Logger log = 
-	Logger.getLogger("org.jcp.xml.dsig.internal.dom");
+    private static Logger log =
+        Logger.getLogger("org.jcp.xml.dsig.internal.dom");
 
     // see RFC 4051 for these algorithm definitions
     final static String RSA_SHA256 =
-	"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
+        "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
     final static String RSA_SHA384 =
-	"http://www.w3.org/2001/04/xmldsig-more#rsa-sha384";
+        "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384";
     final static String RSA_SHA512 =
-	"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512";
+        "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512";
     final static String HMAC_SHA256 =
-	"http://www.w3.org/2001/04/xmldsig-more#hmac-sha256";
+        "http://www.w3.org/2001/04/xmldsig-more#hmac-sha256";
     final static String HMAC_SHA384 =
-	"http://www.w3.org/2001/04/xmldsig-more#hmac-sha384";
+        "http://www.w3.org/2001/04/xmldsig-more#hmac-sha384";
     final static String HMAC_SHA512 =
-	"http://www.w3.org/2001/04/xmldsig-more#hmac-sha512";
+        "http://www.w3.org/2001/04/xmldsig-more#hmac-sha512";
 
     private SignatureMethodParameterSpec params;
     private Signature signature;
@@ -81,15 +81,15 @@ public abstract class DOMSignatureMethod extends DOMStructure
      * @throws InvalidAlgorithmParameterException if the parameters are not
      *    appropriate for this signature method
      */
-    DOMSignatureMethod(AlgorithmParameterSpec params) 
-	throws InvalidAlgorithmParameterException {
-	if (params != null && 
-	    !(params instanceof SignatureMethodParameterSpec)) {
-	    throw new InvalidAlgorithmParameterException
-		("params must be of type SignatureMethodParameterSpec");
-	}
+    DOMSignatureMethod(AlgorithmParameterSpec params)
+        throws InvalidAlgorithmParameterException {
+        if (params != null &&
+            !(params instanceof SignatureMethodParameterSpec)) {
+            throw new InvalidAlgorithmParameterException
+                ("params must be of type SignatureMethodParameterSpec");
+        }
         checkParams((SignatureMethodParameterSpec) params);
-	this.params = (SignatureMethodParameterSpec) params;
+        this.params = (SignatureMethodParameterSpec) params;
     }
 
     /**
@@ -100,15 +100,15 @@ public abstract class DOMSignatureMethod extends DOMStructure
      * @param smElem a SignatureMethod element
      */
     DOMSignatureMethod(Element smElem) throws MarshalException {
-	Element paramsElem = DOMUtils.getFirstChildElement(smElem);
-	if (paramsElem != null) {
-	    params = unmarshalParams(paramsElem);
-	}
-	try {
-	    checkParams(params);
-	} catch (InvalidAlgorithmParameterException iape) {
-	    throw new MarshalException(iape);
-	}
+        Element paramsElem = DOMUtils.getFirstChildElement(smElem);
+        if (paramsElem != null) {
+            params = unmarshalParams(paramsElem);
+        }
+        try {
+            checkParams(params);
+        } catch (InvalidAlgorithmParameterException iape) {
+            throw new MarshalException(iape);
+        }
     }
 
     static SignatureMethod unmarshal(Element smElem) throws MarshalException {
@@ -133,7 +133,7 @@ public abstract class DOMSignatureMethod extends DOMStructure
             return new DOMHMACSignatureMethod.SHA512(smElem);
         } else {
             throw new MarshalException
-		("unsupported SignatureMethod algorithm: " + alg);
+                ("unsupported SignatureMethod algorithm: " + alg);
         }
     }
 
@@ -147,8 +147,8 @@ public abstract class DOMSignatureMethod extends DOMStructure
      * @throws InvalidAlgorithmParameterException if the parameters are not
      *    appropriate for this signature method
      */
-    void checkParams(SignatureMethodParameterSpec params) 
-	throws InvalidAlgorithmParameterException {
+    void checkParams(SignatureMethodParameterSpec params)
+        throws InvalidAlgorithmParameterException {
         if (params != null) {
             throw new InvalidAlgorithmParameterException("no parameters " +
                 "should be specified for the " + getSignatureAlgorithm()
@@ -157,11 +157,11 @@ public abstract class DOMSignatureMethod extends DOMStructure
     }
 
     public final AlgorithmParameterSpec getParameterSpec() {
-	return params;
+        return params;
     }
 
     /**
-     * Unmarshals <code>SignatureMethodParameterSpec</code> from the specified 
+     * Unmarshals <code>SignatureMethodParameterSpec</code> from the specified
      * <code>Element</code>. By default, this method throws an exception since
      * most SignatureMethod algorithms do not have parameters. Subclasses should
      * override it if they have parameters.
@@ -170,27 +170,27 @@ public abstract class DOMSignatureMethod extends DOMStructure
      * @return the algorithm-specific <code>SignatureMethodParameterSpec</code>
      * @throws MarshalException if the parameters cannot be unmarshalled
      */
-    SignatureMethodParameterSpec 
-	unmarshalParams(Element paramsElem) throws MarshalException {
+    SignatureMethodParameterSpec
+        unmarshalParams(Element paramsElem) throws MarshalException {
         throw new MarshalException("no parameters should " +
             "be specified for the " + getSignatureAlgorithm() +
             " SignatureMethod algorithm");
     }
 
     /**
-     * This method invokes the abstract {@link #marshalParams marshalParams} 
+     * This method invokes the abstract {@link #marshalParams marshalParams}
      * method to marshal any algorithm-specific parameters.
      */
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-	throws MarshalException {
+        throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element smElem = DOMUtils.createElement
-	    (ownerDoc, "SignatureMethod", XMLSignature.XMLNS, dsPrefix);
+            (ownerDoc, "SignatureMethod", XMLSignature.XMLNS, dsPrefix);
         DOMUtils.setAttribute(smElem, "Algorithm", getAlgorithm());
 
         if (params != null) {
-	    marshalParams(smElem, dsPrefix);
+            marshalParams(smElem, dsPrefix);
         }
 
         parent.appendChild(smElem);
@@ -214,9 +214,9 @@ public abstract class DOMSignatureMethod extends DOMStructure
      *    as the passed in signature is improperly encoded
      * @throws XMLSignatureException if an unexpected error occurs
      */
-    boolean verify(Key key, DOMSignedInfo si, byte[] sig, 
-	XMLValidateContext context) throws InvalidKeyException, 
-	SignatureException, XMLSignatureException {
+    boolean verify(Key key, DOMSignedInfo si, byte[] sig,
+        XMLValidateContext context) throws InvalidKeyException,
+        SignatureException, XMLSignatureException {
         if (key == null || si == null || sig == null) {
             throw new NullPointerException();
         }
@@ -229,24 +229,24 @@ public abstract class DOMSignatureMethod extends DOMStructure
                 signature = Signature.getInstance(getSignatureAlgorithm());
             } catch (NoSuchAlgorithmException nsae) {
                 throw new XMLSignatureException(nsae);
-	    }
+            }
         }
         signature.initVerify((PublicKey) key);
         if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "Signature provider:"+ signature.getProvider());
-	    log.log(Level.FINE, "verifying with key: " + key);
+            log.log(Level.FINE, "verifying with key: " + key);
         }
         si.canonicalize(context, new SignerOutputStream(signature));
 
-	if (getAlgorithm().equals(SignatureMethod.DSA_SHA1)) {
-	    try {
+        if (getAlgorithm().equals(SignatureMethod.DSA_SHA1)) {
+            try {
                 return signature.verify(convertXMLDSIGtoASN1(sig));
-	    } catch (IOException ioe) {
-		throw new XMLSignatureException(ioe);
-	    }
-	} else {
+            } catch (IOException ioe) {
+                throw new XMLSignatureException(ioe);
+            }
+        } else {
             return signature.verify(sig);
-	}
+        }
     }
 
     /**
@@ -263,8 +263,8 @@ public abstract class DOMSignatureMethod extends DOMStructure
      *    the wrong type, or parameters are missing, etc
      * @throws XMLSignatureException if an unexpected error occurs
      */
-    byte[] sign(Key key, DOMSignedInfo si, XMLSignContext context) 
-	throws InvalidKeyException, XMLSignatureException {
+    byte[] sign(Key key, DOMSignedInfo si, XMLSignContext context)
+        throws InvalidKeyException, XMLSignatureException {
         if (key == null || si == null) {
             throw new NullPointerException();
         }
@@ -282,21 +282,21 @@ public abstract class DOMSignatureMethod extends DOMStructure
         signature.initSign((PrivateKey) key);
         if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "Signature provider:" +signature.getProvider());
-	    log.log(Level.FINE, "Signing with key: " + key);
+            log.log(Level.FINE, "Signing with key: " + key);
         }
 
         si.canonicalize(context, new SignerOutputStream(signature));
 
         try {
-	    if (getAlgorithm().equals(SignatureMethod.DSA_SHA1)) {
-		return convertASN1toXMLDSIG(signature.sign());
-	    } else {
+            if (getAlgorithm().equals(SignatureMethod.DSA_SHA1)) {
+                return convertASN1toXMLDSIG(signature.sign());
+            } else {
                 return signature.sign();
-	    }
+            }
         } catch (SignatureException se) {
             throw new XMLSignatureException(se);
         } catch (IOException ioe) {
-	    throw new XMLSignatureException(ioe);
+            throw new XMLSignatureException(ioe);
         }
     }
 
@@ -311,7 +311,7 @@ public abstract class DOMSignatureMethod extends DOMStructure
      * @throws MarshalException if the parameters cannot be marshalled
      */
     void marshalParams(Element parent, String paramsPrefix)
-	throws MarshalException {
+        throws MarshalException {
         throw new MarshalException("no parameters should " +
             "be specified for the " + getSignatureAlgorithm() +
             " SignatureMethod algorithm");
@@ -333,17 +333,17 @@ public abstract class DOMSignatureMethod extends DOMStructure
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof SignatureMethod)) {
             return false;
-	}
+        }
         SignatureMethod osm = (SignatureMethod) o;
 
-	return (getAlgorithm().equals(osm.getAlgorithm()) && 
-	    paramsEqual(osm.getParameterSpec()));
+        return (getAlgorithm().equals(osm.getAlgorithm()) &&
+            paramsEqual(osm.getParameterSpec()));
     }
 
     /**

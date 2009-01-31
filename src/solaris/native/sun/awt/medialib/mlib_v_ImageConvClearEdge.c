@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageConvClearEdge.c	1.11	02/04/23 SMI"
+
 
 /*
  * FUNCTIONS
@@ -372,7 +371,7 @@ void mlib_ImageConvClearEdge_U8_1(mlib_image     *dst,
 {
   mlib_u32 color0 = color[0] & 0xFF;
   mlib_d64 dcolor;
- 
+
   VERT_EDGES(1, mlib_u8, 1);
 
   if (dst_width < 16)
@@ -421,7 +420,7 @@ void mlib_ImageConvClearEdge_U8_2(mlib_image     *dst,
   mlib_d64 dcolor0;
   mlib_s32 tmask = cmask & 3, mask1, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(2, mlib_u8, cmask);
 
   if (dst_width < 8)
@@ -480,7 +479,7 @@ void mlib_ImageConvClearEdge_U8_3(mlib_image     *dst,
   mlib_d64 dcolor1, dcolor2, dcolor00, dcolor11, dcolor22;
   mlib_s32 tmask = cmask & 7, mask0, mask1, mask2, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(3, mlib_u8, cmask);
 
   if (dst_width < 16)
@@ -595,7 +594,7 @@ void mlib_ImageConvClearEdge_U8_4(mlib_image     *dst,
   mlib_d64 dcolor0;
   mlib_s32 tmask = cmask & 0xF, mask1, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(4, mlib_u8, cmask);
 
   if (dst_width < 4)
@@ -650,7 +649,7 @@ void mlib_ImageConvClearEdge_S16_1(mlib_image     *dst,
 {
   mlib_u32 color0 = color[0] & 0xFFFF;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(1, mlib_s16, 1);
 
   if (dst_width < 8)
@@ -698,7 +697,7 @@ void mlib_ImageConvClearEdge_S16_2(mlib_image     *dst,
   mlib_d64 dcolor0;
   mlib_s32 tmask = cmask & 3, mask1, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(2, mlib_s16, cmask);
 
   if (dst_width < 4)
@@ -755,7 +754,7 @@ void mlib_ImageConvClearEdge_S16_3(mlib_image     *dst,
   mlib_d64 dcolor1, dcolor2, dcolor00, dcolor11, dcolor22;
   mlib_s32 tmask = cmask & 7, mask0, mask1, mask2, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(3, mlib_s16, cmask);
 
   if (dst_width < 8)
@@ -869,7 +868,7 @@ void mlib_ImageConvClearEdge_S16_4(mlib_image     *dst,
   mlib_d64 dcolor0;
   mlib_s32 tmask = cmask & 0xF, mask1, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(4, mlib_s16, cmask);
 
   if (dst_width < 4)
@@ -924,7 +923,7 @@ void mlib_ImageConvClearEdge_S32_1(mlib_image     *dst,
 {
   mlib_s32 color0 = color[0];
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(1, mlib_s32, 1);
 
   if (dst_width < 8)
@@ -971,7 +970,7 @@ void mlib_ImageConvClearEdge_S32_2(mlib_image     *dst,
   mlib_d64 dcolor0;
   mlib_s32 tmask = cmask & 3, mask1, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(2, mlib_s32, cmask);
 
   if (dst_width < 4)
@@ -1025,7 +1024,7 @@ void mlib_ImageConvClearEdge_S32_3(mlib_image     *dst,
   mlib_d64 dcolor1, dcolor2, dcolor00, dcolor11, dcolor22;
   mlib_s32 tmask = cmask & 7, mask0, mask1, mask2, offset;
   mlib_d64 dcolor;
-  
+
   VERT_EDGES(3, mlib_s32, cmask);
 
   if (dst_width < 8)
@@ -1133,7 +1132,7 @@ void mlib_ImageConvClearEdge_S32_4(mlib_image     *dst,
   mlib_u32 color0 = color[0], color1 = color[1], color2 = color[2], color3 = color[3];
   mlib_d64 dcolor0, dcolor1, dcolor00, dcolor11;
   mlib_s32 tmask = cmask & 0xF, mask0, mask1, offset;
-  
+
   VERT_EDGES(4, mlib_s32, cmask);
 
   if (dst_width < 4)

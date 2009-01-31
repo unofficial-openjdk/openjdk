@@ -48,18 +48,18 @@ public class TransformerManagementThreadRemoveTests
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new TransformerManagementThreadRemoveTests(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testMultiThreadAddsAndRemoves();
     }
-    
+
     public void
     testMultiThreadAddsAndRemoves()
     {
@@ -70,13 +70,13 @@ public class TransformerManagementThreadRemoveTests
             int index = i - MIN_TRANS;
             threadList.add(new TransformerThread("Trans"+prettyNum(index,2), i));
         }
-        
+
         int factor = (int)Math.floor(TOTAL_THREADS / REMOVE_THREADS);
         for (int i = 0; i < REMOVE_THREADS; i++)
         {
             threadList.add(factor * i, new RemoveThread("Remove"+i));
         }
-        
+
         Thread[] threads = (Thread[])threadList.toArray(new Thread[size]);
         setExecThread(new ExecuteTransformersThread());
         getExecThread().start();
@@ -84,16 +84,16 @@ public class TransformerManagementThreadRemoveTests
         {
             threads[i].start();
         }
-        
+
         while (!testCompleted())
         {
             Thread.currentThread().yield();
         }
         assertTrue(finalCheck());
-        
+
         //printTransformers();
     }
-    
+
     /**
      * Method removeTransformer.
      */
@@ -101,7 +101,7 @@ public class TransformerManagementThreadRemoveTests
     removeTransformer(Thread t)
     {
         ThreadTransformer tt = null;
-        
+
         synchronized (fAddedTransformers)
         {
             int size = fAddedTransformers.size();
@@ -112,23 +112,23 @@ public class TransformerManagementThreadRemoveTests
             }
             //System.out.println("removed("+tt+") size("+size+") chose("+choose+") by("+t+")");
         }
-        
+
         if (tt != null)
         {
             getInstrumentation().removeTransformer(tt);
         }
     }
-    
+
     private class
     RemoveThread
         extends Thread
     {
-        
+
         RemoveThread(String name)
         {
             super(name);
         }
-            
+
         public void
         run()
         {
@@ -138,5 +138,5 @@ public class TransformerManagementThreadRemoveTests
             }
         }
     }
-    
+
 }

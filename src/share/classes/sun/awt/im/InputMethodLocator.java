@@ -53,7 +53,7 @@ final class InputMethodLocator {
         this.loader = loader;
         this.locale = locale;
     }
-    
+
     public boolean equals(Object other) {
         if (other == this) {
             return true;
@@ -61,7 +61,7 @@ final class InputMethodLocator {
         if (other == null || this.getClass() != other.getClass()) {
             return false;
         }
-        
+
         InputMethodLocator otherLocator = (InputMethodLocator) other;
         if (!descriptor.getClass().equals(otherLocator.descriptor.getClass())) {
             return false;
@@ -76,7 +76,7 @@ final class InputMethodLocator {
         }
         return true;
     }
-    
+
     public int hashCode() {
         int result = descriptor.hashCode();
         if (loader != null) {
@@ -99,7 +99,7 @@ final class InputMethodLocator {
     Locale getLocale() {
         return locale;
     }
-    
+
     /**
      * Returns whether support for locale is available from
      * the input method.
@@ -131,7 +131,7 @@ final class InputMethodLocator {
             return new InputMethodLocator(descriptor, loader, forLocale);
         }
     }
-    
+
     /**
      * Returns whether this and other describe the same input method
      * engine, ignoring the locale setting.
@@ -153,7 +153,7 @@ final class InputMethodLocator {
         }
         return true;
     }
-    
+
     /**
      * Returns a string that can be used as an action command string.
      * The first part of the string identifies the input method; it does

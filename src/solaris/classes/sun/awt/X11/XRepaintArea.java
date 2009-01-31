@@ -32,20 +32,19 @@ import sun.awt.RepaintArea;
 import java.awt.peer.ComponentPeer;
 
 /**
- * The <code>RepaintArea</code> is a geometric construct created for the 
- * purpose of holding the geometry of several coalesced paint events.  
- * This geometry is accessed synchronously, although it is written such 
- * that painting may still be executed asynchronously.  
+ * The <code>RepaintArea</code> is a geometric construct created for the
+ * purpose of holding the geometry of several coalesced paint events.
+ * This geometry is accessed synchronously, although it is written such
+ * that painting may still be executed asynchronously.
  *
- * @author 	Eric Hawkes
- * @version 	%I% %G%
+ * @author      Eric Hawkes
  */
 class XRepaintArea extends RepaintArea {
 
     /**
-     * Constructs a new <code>XRepaintArea</code> 
-     * @since 	1.3
-     */ 
+     * Constructs a new <code>XRepaintArea</code>
+     * @since   1.3
+     */
     public XRepaintArea() {
     }
 

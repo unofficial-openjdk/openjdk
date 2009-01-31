@@ -30,14 +30,13 @@ package sun.io;
  * Convert arrays containing Unicode characters into arrays of bytes, using
  * big-endian byte order.
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
+ * @author      Mark Reinhold
  */
 
 public class CharToByteUnicodeBig extends CharToByteUnicode {
 
     public CharToByteUnicodeBig () {
-	byteOrder = BIG;
+        byteOrder = BIG;
     }
 
 }

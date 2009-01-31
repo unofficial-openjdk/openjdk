@@ -61,13 +61,12 @@ int openPCMfromDeviceID(int deviceID, snd_pcm_t** handle, int isSource, int hard
 
 // returns 1 if successful
 // enc: 0 for PCM, 1 for ULAW, 2 for ALAW (see DirectAudio.h)
-int getFormatFromAlsaFormat(snd_pcm_format_t alsaFormat, 
-			    int* sampleSizeInBytes, int* significantBits, 
-			    int* isSigned, int* isBigEndian, int* enc);
+int getFormatFromAlsaFormat(snd_pcm_format_t alsaFormat,
+                            int* sampleSizeInBytes, int* significantBits,
+                            int* isSigned, int* isBigEndian, int* enc);
 
-int getAlsaFormatFromFormat(snd_pcm_format_t* alsaFormat, 
-			    int sampleSizeInBytes, int significantBits, 
-			    int isSigned, int isBigEndian, int enc);
+int getAlsaFormatFromFormat(snd_pcm_format_t* alsaFormat,
+                            int sampleSizeInBytes, int significantBits,
+                            int isSigned, int isBigEndian, int enc);
 
 #endif // PLATFORM_API_LINUXOS_ALSA_PCMUTILS_H_INCLUDED
-

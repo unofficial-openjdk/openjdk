@@ -26,7 +26,6 @@
 #ifndef __MLIB_V_IMAGECLEAR_F_H
 #define __MLIB_V_IMAGECLEAR_F_H
 
-#pragma ident	"@(#)mlib_v_ImageClear_f.h	1.4	03/01/31 SMI"
 
 #include <mlib_types.h>
 #include <mlib_image_types.h>

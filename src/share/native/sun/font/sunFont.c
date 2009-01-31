@@ -39,7 +39,7 @@ static void *theNullScalerContext = NULL;
 JNIEXPORT jlong JNICALL
 Java_sun_font_NullFontScaler_getNullScalerContext
     (JNIEnv *env, jclass scalerClass) {
-    
+
     if (theNullScalerContext == NULL) {
         theNullScalerContext = malloc(1);
     }
@@ -52,16 +52,16 @@ int isNullScalerContext(void *context) {
 
 /* Eventually we may rework it to be a singleton.
  * This will require additional checks in freeLongMemory/freeIntMemory
- * and on other hand malformed fonts (main source of null glyph images) 
- * are supposed to be collected fast. 
+ * and on other hand malformed fonts (main source of null glyph images)
+ * are supposed to be collected fast.
  * But perhaps it is still right thing to do.
- * Even better is to eliminate the need to have this native method 
- * but for this it is necessary to rework Strike and drawing logic 
+ * Even better is to eliminate the need to have this native method
+ * but for this it is necessary to rework Strike and drawing logic
  * to be able to live with NULL pointers without performance hit.
  */
 JNIEXPORT jlong JNICALL Java_sun_font_NullFontScaler_getGlyphImage
   (JNIEnv *env, jobject scaler, jlong pContext, jint glyphCode) {
-    void *nullscaler = calloc(sizeof(GlyphInfo), 1);    
+    void *nullscaler = calloc(sizeof(GlyphInfo), 1);
     return ptr_to_jlong(nullscaler);
 }
 
@@ -127,7 +127,7 @@ Java_sun_font_FontManager_initIDs
 
      tmpClass = (*env)->FindClass(env, "sun/font/StrikeMetrics");
      sunFontIDs.strikeMetricsClass=(jclass)(*env)->NewGlobalRef(env, tmpClass);
-     
+
      sunFontIDs.strikeMetricsCtr =
          (*env)->GetMethodID(env, sunFontIDs.strikeMetricsClass,
                              "<init>", "(FFFFFFFFFF)V");
@@ -137,7 +137,7 @@ Java_sun_font_FontManager_initIDs
      sunFontIDs.rect2DFloatCtr =
        (*env)->GetMethodID(env, sunFontIDs.rect2DFloatClass, "<init>", "()V");
      sunFontIDs.rect2DFloatCtr4 =
-       (*env)->GetMethodID(env, sunFontIDs.rect2DFloatClass, 
+       (*env)->GetMethodID(env, sunFontIDs.rect2DFloatClass,
                            "<init>", "(FFFF)V");
      sunFontIDs.rectF2DX =
          (*env)->GetFieldID(env, sunFontIDs.rect2DFloatClass, "x", "F");
@@ -166,7 +166,7 @@ Java_sun_font_FontManager_initIDs
      sunFontIDs.canDisplayMID =
          (*env)->GetMethodID(env, tmpClass, "canDisplay", "(C)Z");
 
-     tmpClass = (*env)->FindClass(env, "sun/font/CharToGlyphMapper");    
+     tmpClass = (*env)->FindClass(env, "sun/font/CharToGlyphMapper");
      sunFontIDs.charToGlyphMID =
         (*env)->GetMethodID(env, tmpClass, "charToGlyph", "(I)I");
 
@@ -191,11 +191,11 @@ Java_sun_font_FontManager_initIDs
          (*env)->GetFieldID(env, tmpClass, "images", "[J");
      sunFontIDs.glyphListUsePos =
          (*env)->GetFieldID(env, tmpClass, "usePositions", "Z");
-     sunFontIDs.glyphListPos = 
+     sunFontIDs.glyphListPos =
          (*env)->GetFieldID(env, tmpClass, "positions", "[F");
-     sunFontIDs.lcdRGBOrder = 
+     sunFontIDs.lcdRGBOrder =
          (*env)->GetFieldID(env, tmpClass, "lcdRGBOrder", "Z");
-     sunFontIDs.lcdSubPixPos = 
+     sunFontIDs.lcdSubPixPos =
          (*env)->GetFieldID(env, tmpClass, "lcdSubPixPos", "Z");
 
      initLCDGammaTables();
@@ -396,4 +396,3 @@ JNIEXPORT void freeLayoutTableCache(TTLayoutTableCache* ltc) {
     free(ltc);
   }
 }
-

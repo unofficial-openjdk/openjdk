@@ -36,30 +36,30 @@ public class Basic {
     };
 
     public static void main(String args[]) throws Exception {
-	int threadCount = 100;
-	Thread th[] = new Thread[threadCount];
+        int threadCount = 100;
+        Thread th[] = new Thread[threadCount];
         final int x[] = new int[threadCount];
 
-	// Start the threads
-	for(int i=0; i<threadCount; i++) {
-	    th[i] = new Thread() {
-		public void run() {
+        // Start the threads
+        for(int i=0; i<threadCount; i++) {
+            th[i] = new Thread() {
+                public void run() {
                     int threadId = ((Integer)(n.get())).intValue();
                     for (int j=0; j<threadId; j++) {
                         x[threadId]++;
                         Thread.currentThread().yield();
                     }
-		}
-	    };
-	    th[i].start();
-	}
+                }
+            };
+            th[i].start();
+        }
 
         // Wait for the threads to finish
         for(int i=0; i<threadCount; i++)
             th[i].join();
 
         // Check results
-	for(int i=0; i<threadCount; i++)
+        for(int i=0; i<threadCount; i++)
             if (x[i] != i)
                 throw(new Exception("x[" + i + "] =" + x[i]));
     }

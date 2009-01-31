@@ -815,65 +815,65 @@ AnyFunc* MapAccelFunction(AnyFunc *func_c)
     jint i, j;
 
     if (!initialized) {
-	struct utsname name;
+        struct utsname name;
 
-	/*
-	 * Only use the vis loops if the environment variable is set.
-	 * Find out the machine name. If it is an SUN ultra, we
-	 * can use the vis library
-	 */
-	if (uname(&name) < 0 || strcmp(name.machine, ULTRA_CHIP) != 0) {
-	    usevis = JNI_FALSE;
-	} else {
-	    char *vis_env = getenv("J2D_USE_VIS_LOOPS");
-	    if (vis_env != 0) {
-		switch (*vis_env) {
-		case 'T':
-		    fprintf(stderr, "VIS loops enabled\n");
-		case 't':
-		    usevis = JNI_TRUE;
-		    break;
+        /*
+         * Only use the vis loops if the environment variable is set.
+         * Find out the machine name. If it is an SUN ultra, we
+         * can use the vis library
+         */
+        if (uname(&name) < 0 || strcmp(name.machine, ULTRA_CHIP) != 0) {
+            usevis = JNI_FALSE;
+        } else {
+            char *vis_env = getenv("J2D_USE_VIS_LOOPS");
+            if (vis_env != 0) {
+                switch (*vis_env) {
+                case 'T':
+                    fprintf(stderr, "VIS loops enabled\n");
+                case 't':
+                    usevis = JNI_TRUE;
+                    break;
 
-		case 'F':
-		    fprintf(stderr, "VIS loops disabled\n");
-		case 'f':
-		    usevis = JNI_FALSE;
-		    break;
+                case 'F':
+                    fprintf(stderr, "VIS loops disabled\n");
+                case 'f':
+                    usevis = JNI_FALSE;
+                    break;
 
-		default:
-		    fprintf(stderr, "VIS loops %s by default\n",
-			    usevis ? "enabled" : "disabled");
-		    break;
-		}
-	    }
-	}
-	initialized = 1;
-	if (usevis) {
-	    /* fill hash table */
-	    memset(hash_table, 0, sizeof(hash_table));
-	    for (i = 0; i < NUM_VIS_FUNCS; i++) {
-		AnyFunc* func = vis_func_pair_array[i].func_c;
-		j = HASH_FUNC(func);
-		while (hash_table[j] != NULL) {
-		    j = NEXT_INDEX(j);
-		}
-		hash_table[j] = func;
-		hash_table_vis[j] = vis_func_pair_array[i].func_vis;
-	    }
-	    pBilinearFunc = vis_BilinearBlend;
-	    pBicubicFunc = vis_BicubicBlend;
-	}
+                default:
+                    fprintf(stderr, "VIS loops %s by default\n",
+                            usevis ? "enabled" : "disabled");
+                    break;
+                }
+            }
+        }
+        initialized = 1;
+        if (usevis) {
+            /* fill hash table */
+            memset(hash_table, 0, sizeof(hash_table));
+            for (i = 0; i < NUM_VIS_FUNCS; i++) {
+                AnyFunc* func = vis_func_pair_array[i].func_c;
+                j = HASH_FUNC(func);
+                while (hash_table[j] != NULL) {
+                    j = NEXT_INDEX(j);
+                }
+                hash_table[j] = func;
+                hash_table_vis[j] = vis_func_pair_array[i].func_vis;
+            }
+            pBilinearFunc = vis_BilinearBlend;
+            pBicubicFunc = vis_BicubicBlend;
+        }
     }
     if (!usevis) {
-	return func_c;
+        return func_c;
     }
 
     j = HASH_FUNC(func_c);
     while (hash_table[j] != NULL) {
-	if (hash_table[j] == func_c) {
-	    return hash_table_vis[j];
-	}
-	j = NEXT_INDEX(j);
+        if (hash_table[j] == func_c) {
+            return hash_table_vis[j];
+        }
+        j = NEXT_INDEX(j);
     }
 
     return func_c;

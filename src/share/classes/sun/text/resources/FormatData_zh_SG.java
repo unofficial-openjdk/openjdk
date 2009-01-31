@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_zh_SG extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "DayAbbreviations", 
+            { "DayAbbreviations",
                 new String[] {
                     "\u5468\u65e5",
                     "\u5468\u4e00",
@@ -58,14 +58,14 @@ public class FormatData_zh_SG extends ListResourceBundle {
                     "\u5468\u516d",
                 }
             },
-            { "NumberPatterns", 
+            { "NumberPatterns",
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00",
                     "#,##0%",
                 }
             },
-            { "NumberElements", 
+            { "NumberElements",
                 new String[] {
                     ".",
                     ",",
@@ -80,7 +80,7 @@ public class FormatData_zh_SG extends ListResourceBundle {
                     "NaN",
                 }
             },
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "a hh:mm:ss",
                     "a hh:mm:ss",

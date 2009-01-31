@@ -42,7 +42,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   * @since 1.3
   */
 
@@ -51,11 +50,11 @@ public class InsufficientResourcesException extends NamingException {
      * Constructs a new instance of InsufficientResourcesException using an
      * explanation. All other fields default to null.
      *
-     * @param	explanation	Possibly null additional detail about this exception.
+     * @param   explanation     Possibly null additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public InsufficientResourcesException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -63,7 +62,7 @@ public class InsufficientResourcesException extends NamingException {
       * all name resolution fields and explanation initialized to null.
       */
     public InsufficientResourcesException() {
-	super();
+        super();
     }
 
     /**

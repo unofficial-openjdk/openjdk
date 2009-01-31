@@ -35,18 +35,18 @@ import java.security.InvalidKeyException;
  * <i>plugged-in</i> using the constructor.
  *
  * <p>NOTE: This class does not deal with buffering or padding.
- *  
+ *
  * @author Andreas Sterbenz
  * @since 1.4.2
  */
 final class CounterMode extends FeedbackCipher {
-    
+
     // current counter value
     private final byte[] counter;
-    
+
     // encrypted bytes of the previous counter value
     private final byte[] encryptedCounter;
-    
+
     // number of bytes in encryptedCounter already used up
     private int used;
 
@@ -56,9 +56,9 @@ final class CounterMode extends FeedbackCipher {
     private int usedSave = 0;
 
     CounterMode(SymmetricCipher embeddedCipher) {
-	super(embeddedCipher);
-	counter = new byte[blockSize];
-	encryptedCounter = new byte[blockSize];
+        super(embeddedCipher);
+        counter = new byte[blockSize];
+        encryptedCounter = new byte[blockSize];
     }
 
     /**
@@ -67,41 +67,41 @@ final class CounterMode extends FeedbackCipher {
      * @return the name of the feedback mechanism
      */
     String getFeedback() {
-	return "CTR";
+        return "CTR";
     }
-    
+
     /**
      * Resets the iv to its original value.
      * This is used when doFinal is called in the Cipher class, so that the
      * cipher can be reused (with its original iv).
      */
     void reset() {
-	System.arraycopy(iv, 0, counter, 0, blockSize);
-	used = blockSize;
+        System.arraycopy(iv, 0, counter, 0, blockSize);
+        used = blockSize;
     }
-    
+
     /**
      * Save the current content of this cipher.
      */
     void save() {
-	if (counterSave == null) {
-	    counterSave = new byte[blockSize];
-	    encryptedCounterSave = new byte[blockSize];
-	}
-	System.arraycopy(counter, 0, counterSave, 0, blockSize);
-        System.arraycopy(encryptedCounter, 0, encryptedCounterSave, 0, 
-	    blockSize);
-	usedSave = used;
+        if (counterSave == null) {
+            counterSave = new byte[blockSize];
+            encryptedCounterSave = new byte[blockSize];
+        }
+        System.arraycopy(counter, 0, counterSave, 0, blockSize);
+        System.arraycopy(encryptedCounter, 0, encryptedCounterSave, 0,
+            blockSize);
+        usedSave = used;
     }
 
     /**
      * Restores the content of this cipher to the previous saved one.
      */
     void restore() {
-	System.arraycopy(counterSave, 0, counter, 0, blockSize);
-	System.arraycopy(encryptedCounterSave, 0, encryptedCounter, 0, 
-	    blockSize);
-	used = usedSave;
+        System.arraycopy(counterSave, 0, counter, 0, blockSize);
+        System.arraycopy(encryptedCounterSave, 0, encryptedCounter, 0,
+            blockSize);
+        used = usedSave;
     }
 
     /**
@@ -117,19 +117,19 @@ final class CounterMode extends FeedbackCipher {
      * initializing this cipher
      */
     void init(boolean decrypting, String algorithm, byte[] key, byte[] iv)
-	    throws InvalidKeyException {
-	if ((key == null) || (iv == null) || (iv.length != blockSize)) {
-	    throw new InvalidKeyException("Internal error");
-	}
-	this.iv = iv;
-	reset();
-	// always encrypt mode for embedded cipher
-	embeddedCipher.init(false, algorithm, key);
+            throws InvalidKeyException {
+        if ((key == null) || (iv == null) || (iv.length != blockSize)) {
+            throw new InvalidKeyException("Internal error");
+        }
+        this.iv = iv;
+        reset();
+        // always encrypt mode for embedded cipher
+        embeddedCipher.init(false, algorithm, key);
     }
 
     /**
      * Performs encryption operation.
-     * 
+     *
      * <p>The input plain text <code>plain</code>, starting at
      * <code>plainOffset</code> and ending at
      * <code>(plainOffset + len - 1)</code>, is encrypted.
@@ -151,12 +151,12 @@ final class CounterMode extends FeedbackCipher {
      * @param outOff the offset in <code>cipher</code>
      */
     void encrypt(byte[] in, int inOff, int len, byte[] out, int outOff) {
-	crypt(in, inOff, len, out, outOff);
+        crypt(in, inOff, len, out, outOff);
     }
 
     /**
      * Performs decryption operation.
-     * 
+     *
      * <p>The input cipher text <code>cipher</code>, starting at
      * <code>cipherOffset</code> and ending at
      * <code>(cipherOffset + len - 1)</code>, is decrypted.
@@ -178,17 +178,17 @@ final class CounterMode extends FeedbackCipher {
      * @param outOff the offset in <code>plain</code>
      */
     void decrypt(byte[] in, int inOff, int len, byte[] out, int outOff) {
-	crypt(in, inOff, len, out, outOff);
+        crypt(in, inOff, len, out, outOff);
     }
-    
+
     /**
      * Increment the counter value.
      */
     private static void increment(byte[] b) {
-	int n = b.length - 1;
-	while ((n >= 0) && (++b[n] == 0)) {
-	    n--;
-	}
+        int n = b.length - 1;
+        while ((n >= 0) && (++b[n] == 0)) {
+            n--;
+        }
     }
 
     /**
@@ -198,13 +198,13 @@ final class CounterMode extends FeedbackCipher {
      * are encrypted on demand.
      */
     private void crypt(byte[] in, int inOff, int len, byte[] out, int outOff) {
-	while (len-- > 0) {
-	    if (used >= blockSize) {
-		embeddedCipher.encryptBlock(counter, 0, encryptedCounter, 0);
-		increment(counter);
-		used = 0;
-	    }
-	    out[outOff++] = (byte)(in[inOff++] ^ encryptedCounter[used++]);
-	}
+        while (len-- > 0) {
+            if (used >= blockSize) {
+                embeddedCipher.encryptBlock(counter, 0, encryptedCounter, 0);
+                increment(counter);
+                used = 0;
+            }
+            out[outOff++] = (byte)(in[inOff++] ^ encryptedCounter[used++]);
+        }
     }
 }

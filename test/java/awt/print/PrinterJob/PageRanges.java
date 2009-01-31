@@ -71,7 +71,7 @@ public class PageRanges implements Printable {
         }
 
         g.drawString("Page : " + (pi+1), 200, 200);
-    
+
         return PAGE_EXISTS;
     }
 }

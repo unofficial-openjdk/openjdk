@@ -21,12 +21,12 @@
  * have any questions.
  */
 
-/* 
+/*
    @test
    @bug 4370316
    @summary GridLayout does not fill its Container
    @library ../../regtesthelpers
-   @build Util        
+   @build Util
    @author Andrei Dmitriev : area=awt.layout
    @run main LayoutExtraGaps
 */
@@ -42,7 +42,7 @@ public class LayoutExtraGaps extends Frame {
         super("GridLayoutTest");
         Panel yellowPanel = new Panel(new GridLayout(compCount, 1, 3, 3));
         yellowPanel.setBackground(Color.yellow);
-        
+
         for(int i = 0; i < compCount ; i++) {
             Label redLabel = new Label(""+i);
             redLabel.setBackground(Color.red);
@@ -62,7 +62,7 @@ public class LayoutExtraGaps extends Frame {
         Panel blackPanel = new Panel(new GridLayout(compCount, 1, 3, 3));
         blackPanel.setBackground(Color.black);
         blackPanel.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        
+
         for(int i = 0; i < compCount ; i++) {
             Label redLabel = new Label(""+i);
             redLabel.setBackground(Color.red);
@@ -80,7 +80,7 @@ public class LayoutExtraGaps extends Frame {
         }
 
         setLayout(new GridLayout(2, 2, 20, 20));
-    
+
         add(yellowPanel);
         add(bluePanel);
         add(redPanel);
@@ -94,7 +94,7 @@ public class LayoutExtraGaps extends Frame {
         Rectangle r2 = bluePanel.getComponent(0).getBounds();
         Rectangle r3 = blackPanel.getComponent(0).getBounds();
         Rectangle r4 = redPanel.getComponent(0).getBounds();
-        
+
         System.out.println("firstHorizLabel bounds  ="+r1);
         System.out.println("firstVertLabel bounds ="+r2);
         System.out.println("firstHorizLabel_RTL bounds ="+r3);
@@ -103,7 +103,7 @@ public class LayoutExtraGaps extends Frame {
             (r2.getX() == 0 && r2.getY() == 0) ||
             (r3.getX() == 0 && r3.getY() == 0) ||
             // RTL only affects horizontal positioning and components lays out from top right corner
-            (r4.getX() == blackPanel.getWidth() && r4.getY() == 0)) 
+            (r4.getX() == blackPanel.getWidth() && r4.getY() == 0))
         {
             throw new RuntimeException("Test failed. GridLayout doesn't center component.");
         } else {

@@ -33,4 +33,3 @@ FrameNumber getFrameNumber(FrameID frame);
 jdwpError validateFrameID(jthread thread, FrameID frame);
 
 #endif
-

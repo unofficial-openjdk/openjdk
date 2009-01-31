@@ -32,7 +32,7 @@
 #include "jlong.h"
 
 #include "awt_DataTransferer.h"
-#include "awt_MToolkit.h" 
+#include "awt_MToolkit.h"
 
 #include "java_awt_dnd_DnDConstants.h"
 #include "java_awt_event_MouseEvent.h"
@@ -48,27 +48,27 @@ extern struct ComponentIDs componentIDs;
 extern struct MComponentPeerIDs mComponentPeerIDs;
 
 /**************************** XEmbed server DnD support ***********************/
-extern void 
+extern void
 set_xembed_drop_target(JNIEnv* env, jobject server);
-extern void 
+extern void
 remove_xembed_drop_target(JNIEnv* env, jobject server);
-extern Boolean 
+extern Boolean
 is_xembed_client(Window window);
 
 DECLARE_JAVA_CLASS(MEmbedCanvasPeerClass, "sun/awt/motif/MEmbedCanvasPeer");
 /******************************************************************************/
 
-typedef enum { 
+typedef enum {
     EventSuccess,    /* Event is successfully processed. */
     EventFailure     /* Failed to process the event. */
 } EventStatus;
 
-typedef enum { 
+typedef enum {
     EnterEvent,    /* XdndEnter, TOP_LEVEL_ENTER */
     MotionEvent,   /* XdndPosition, DRAG_MOTION, OPERATION_CHANGED */
     LeaveEvent,    /* XdndLeave, TOP_LEVEL_LEAVE */
     DropEvent,     /* XdndDrop, DROP_START */
-    UnknownEvent 
+    UnknownEvent
 } EventType;
 
 static Protocol source_protocol = NO_PROTOCOL;
@@ -77,7 +77,7 @@ static Window source_window = None;
 static Atom source_atom = None;
 static long source_window_mask = None;
 static jint source_actions = java_awt_dnd_DnDConstants_ACTION_NONE;
-/* 
+/*
  * According to XDnD protocol, XdndActionList is optional.
  * In case if XdndActionList is not set on the source, the list of drop actions
  * supported by the source is constructed as follows:
@@ -100,10 +100,10 @@ static jobject target_component = NULL;
 /*
  * The Motif DnD protocol prescribes that DROP_START message should always be
  * preceeded with TOP_LEVEL_LEAVE message. We need to cleanup on TOP_LEVEL_LEAVE
- * message, but DROP_START wouldn't be processed properly.  
+ * message, but DROP_START wouldn't be processed properly.
  * To resolve this issue we postpone cleanup using a boolean flag this flag is
- * set when we receive the TOP_LEVEL_LEAVE message and cleared when the next 
- * client message arrives if that message is not DROP_START. If that message is 
+ * set when we receive the TOP_LEVEL_LEAVE message and cleared when the next
+ * client message arrives if that message is not DROP_START. If that message is
  * a DROP_START message, the flag is cleared after the DROP_START is processed.
  */
 static Boolean motif_top_level_leave_postponed = False;
@@ -117,74 +117,74 @@ static Window get_root_for_window(Window window);
 static Window get_outer_canvas_for_window(Window window);
 static Boolean register_drop_site(Widget outer_canvas, XtPointer componentRef);
 static Boolean is_xdnd_drag_message_type(unsigned long message_type);
-static Boolean register_xdnd_drop_site(Display* dpy, Window toplevel, 
-				       Window window);
+static Boolean register_xdnd_drop_site(Display* dpy, Window toplevel,
+                                       Window window);
 
 /**************************** JNI stuff ***************************************/
 
 DECLARE_JAVA_CLASS(dtcp_clazz, "sun/awt/motif/X11DropTargetContextPeer")
 
-static void 
-dt_postDropTargetEvent(JNIEnv* env, jobject component, int x, int y, 
-		       jint dropAction, jint event_id, 
-		       XClientMessageEvent* event) {
-    DECLARE_STATIC_VOID_JAVA_METHOD(dtcp_postDropTargetEventToPeer, dtcp_clazz, 
-				    "postDropTargetEventToPeer",
-				    "(Ljava/awt/Component;IIII[JJI)V");
+static void
+dt_postDropTargetEvent(JNIEnv* env, jobject component, int x, int y,
+                       jint dropAction, jint event_id,
+                       XClientMessageEvent* event) {
+    DECLARE_STATIC_VOID_JAVA_METHOD(dtcp_postDropTargetEventToPeer, dtcp_clazz,
+                                    "postDropTargetEventToPeer",
+                                    "(Ljava/awt/Component;IIII[JJI)V");
 
     {
-	void* copy = NULL;
+        void* copy = NULL;
 
-	if (event != NULL) {
-	    /* 
-	     * For XDnD messages we append the information from the latest 
-	     * XdndEnter to the context. It is done to be able to reconstruct 
-	     * XdndEnter for an XEmbed client.
-	     */
-	    Boolean isXDnDMessage = 
-		is_xdnd_drag_message_type(event->message_type);
+        if (event != NULL) {
+            /*
+             * For XDnD messages we append the information from the latest
+             * XdndEnter to the context. It is done to be able to reconstruct
+             * XdndEnter for an XEmbed client.
+             */
+            Boolean isXDnDMessage =
+                is_xdnd_drag_message_type(event->message_type);
 
-	    if (isXDnDMessage) {
-		copy = malloc(sizeof(XClientMessageEvent) + 
-						 4 * sizeof(long));
-	    } else {
-		copy = malloc(sizeof(XClientMessageEvent));
-	    }
+            if (isXDnDMessage) {
+                copy = malloc(sizeof(XClientMessageEvent) +
+                                                 4 * sizeof(long));
+            } else {
+                copy = malloc(sizeof(XClientMessageEvent));
+            }
 
-	    if (copy == NULL) {
-		DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
-		return;
-	    }
+            if (copy == NULL) {
+                DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
+                return;
+            }
 
-	    memcpy(copy, event, sizeof(XClientMessageEvent));	
+            memcpy(copy, event, sizeof(XClientMessageEvent));
 
-	    if (isXDnDMessage) {
-		size_t msgSize = sizeof(XClientMessageEvent);
-		long data1 = source_protocol_version << XDND_PROTOCOL_SHIFT;
-		long * appended_data;
-		if (source_data_types_native != NULL && 
-		    source_data_types_count > 3) {
-		    
-		    data1 |= XDND_DATA_TYPES_BIT;
-		}
+            if (isXDnDMessage) {
+                size_t msgSize = sizeof(XClientMessageEvent);
+                long data1 = source_protocol_version << XDND_PROTOCOL_SHIFT;
+                long * appended_data;
+                if (source_data_types_native != NULL &&
+                    source_data_types_count > 3) {
 
-		appended_data = (long*)((char*)copy + msgSize);
-		appended_data[0] = data1;
-		appended_data[1] = source_data_types_count > 0 ? 
-		    source_data_types_native[0] : 0;
-		appended_data[2] = source_data_types_count > 1 ? 
-		    source_data_types_native[1] : 0;
-		appended_data[3] = source_data_types_count > 2 ? 
-		    source_data_types_native[2] : 0;
-	    }
-	}
+                    data1 |= XDND_DATA_TYPES_BIT;
+                }
 
-	DASSERT(!JNU_IsNull(env, component));
+                appended_data = (long*)((char*)copy + msgSize);
+                appended_data[0] = data1;
+                appended_data[1] = source_data_types_count > 0 ?
+                    source_data_types_native[0] : 0;
+                appended_data[2] = source_data_types_count > 1 ?
+                    source_data_types_native[1] : 0;
+                appended_data[3] = source_data_types_count > 2 ?
+                    source_data_types_native[2] : 0;
+            }
+        }
 
-	(*env)->CallStaticVoidMethod(env, clazz, dtcp_postDropTargetEventToPeer, 
-				     component, x, y, dropAction, 
-				     source_actions, source_data_types, 
-				     ptr_to_jlong(copy), event_id); 
+        DASSERT(!JNU_IsNull(env, component));
+
+        (*env)->CallStaticVoidMethod(env, clazz, dtcp_postDropTargetEventToPeer,
+                                     component, x, y, dropAction,
+                                     source_actions, source_data_types,
+                                     ptr_to_jlong(copy), event_id);
     }
 }
 
@@ -218,7 +218,7 @@ typedef struct EmbeddedDropSiteProtocolListEntryRec EmbeddedDropSiteProtocolList
 struct EmbeddedDropSiteProtocolListEntryRec {
     Window window;
     Window proxy;
-    /* 
+    /*
      * We override the XdndAware property on the toplevel, so we should keep its
      * original contents - the XDnD protocol version supported by the browser.
      * This is needed to adjust XDnD messages forwarded to the browser.
@@ -233,7 +233,7 @@ struct EmbeddedDropSiteProtocolListEntryRec {
 static EmbeddedDropSiteProtocolListEntry* embedded_motif_protocol_list = NULL;
 static EmbeddedDropSiteProtocolListEntry* embedded_xdnd_protocol_list = NULL;
 
-typedef enum { 
+typedef enum {
     RegFailure, /* Proxy registration failed */
     RegSuccess, /* The new drop site is registered with the new proxy */
     RegOverride, /* The new proxy is set for the existing drop site */
@@ -241,9 +241,9 @@ typedef enum {
 } ProxyRegistrationStatus;
 
 /* Forward declarations. */
-static EmbeddedDropSiteProtocolListEntry* 
+static EmbeddedDropSiteProtocolListEntry*
 get_xdnd_protocol_entry_for_toplevel(Window toplevel);
-static EmbeddedDropSiteProtocolListEntry* 
+static EmbeddedDropSiteProtocolListEntry*
 get_motif_protocol_entry_for_toplevel(Window toplevel);
 static void remove_xdnd_protocol_entry_for_toplevel(Window toplevel);
 static void remove_motif_protocol_entry_for_toplevel(Window toplevel);
@@ -271,84 +271,84 @@ set_motif_proxy(Display* dpy, Window toplevel, Window new_proxy, Window *old_pro
 
     data = NULL;
     ret = checked_XGetWindowProperty(dpy, toplevel,
-				     _XA_MOTIF_DRAG_RECEIVER_INFO, 0, 0xFFFF,
-				     False, AnyPropertyType, &type, &format,
-				     &nitems, &after, &data);
+                                     _XA_MOTIF_DRAG_RECEIVER_INFO, 0, 0xFFFF,
+                                     False, AnyPropertyType, &type, &format,
+                                     &nitems, &after, &data);
 
     /* Check if toplevel is a valid window. */
     if (ret != Success) {
-	return RegFailure;
+        return RegFailure;
     }
 
-    if (ret == Success && data != NULL && type != None && format == 8 
-	&& nitems >= MOTIF_RECEIVER_INFO_SIZE) {  
-	unsigned char byte_order = read_card8((char*)data, 0);
-	void* p = (char*)data + 4;
+    if (ret == Success && data != NULL && type != None && format == 8
+        && nitems >= MOTIF_RECEIVER_INFO_SIZE) {
+        unsigned char byte_order = read_card8((char*)data, 0);
+        void* p = (char*)data + 4;
 
-	/* Browser and plugin have different byte orders - report failure for now. */
-	if (MOTIF_BYTE_ORDER != byte_order) {
-	    XFree(data);
-	    return RegFailure;
-	}
+        /* Browser and plugin have different byte orders - report failure for now. */
+        if (MOTIF_BYTE_ORDER != byte_order) {
+            XFree(data);
+            return RegFailure;
+        }
 
-	*old_proxy = read_card32((char*)data, 4, byte_order);
+        *old_proxy = read_card32((char*)data, 4, byte_order);
 
-	/* If the proxy is already set to the specified window - return. */
-	if (*old_proxy == new_proxy) {
-	    XFree(data);
-	    return RegAlreadyRegistered;
-	}
+        /* If the proxy is already set to the specified window - return. */
+        if (*old_proxy == new_proxy) {
+            XFree(data);
+            return RegAlreadyRegistered;
+        }
 
-	/* replace the proxy window */
-	write_card32(&p, new_proxy); 
+        /* replace the proxy window */
+        write_card32(&p, new_proxy);
 
-	override = True;
+        override = True;
     } else {
-	void* p;
+        void* p;
 
-	if (ret == Success) {
-	    XFree(data);
-	    data = NULL;
-	}
+        if (ret == Success) {
+            XFree(data);
+            data = NULL;
+        }
 
-	data = malloc(MOTIF_RECEIVER_INFO_SIZE);
+        data = malloc(MOTIF_RECEIVER_INFO_SIZE);
 
-	if (data == NULL) {
-	    DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
-	    return RegFailure;
-	}
+        if (data == NULL) {
+            DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
+            return RegFailure;
+        }
 
-	p = data;
-	    
-	write_card8(&p, MOTIF_BYTE_ORDER);
-	write_card8(&p, MOTIF_DND_PROTOCOL_VERSION); /* protocol version */
-	write_card8(&p, MOTIF_DYNAMIC_STYLE); /* protocol style */
-	write_card8(&p, 0); /* pad */
-	write_card32(&p, new_proxy); /* proxy window */
-	write_card16(&p, 0); /* num_drop_sites */
-	write_card16(&p, 0); /* pad */
-	write_card32(&p, MOTIF_RECEIVER_INFO_SIZE);
+        p = data;
+
+        write_card8(&p, MOTIF_BYTE_ORDER);
+        write_card8(&p, MOTIF_DND_PROTOCOL_VERSION); /* protocol version */
+        write_card8(&p, MOTIF_DYNAMIC_STYLE); /* protocol style */
+        write_card8(&p, 0); /* pad */
+        write_card32(&p, new_proxy); /* proxy window */
+        write_card16(&p, 0); /* num_drop_sites */
+        write_card16(&p, 0); /* pad */
+        write_card32(&p, MOTIF_RECEIVER_INFO_SIZE);
     }
 
     ret = checked_XChangeProperty(dpy, toplevel,
-				  _XA_MOTIF_DRAG_RECEIVER_INFO,  
-				  _XA_MOTIF_DRAG_RECEIVER_INFO, 8,
-				  PropModeReplace, (unsigned char*)data,
-				  MOTIF_RECEIVER_INFO_SIZE);
+                                  _XA_MOTIF_DRAG_RECEIVER_INFO,
+                                  _XA_MOTIF_DRAG_RECEIVER_INFO, 8,
+                                  PropModeReplace, (unsigned char*)data,
+                                  MOTIF_RECEIVER_INFO_SIZE);
 
     if (data != NULL) {
-	XFree(data);
-	data = NULL;
+        XFree(data);
+        data = NULL;
     }
 
     if (ret == Success) {
-	if (override) {
-	    return RegOverride;
-	} else {
-	    return RegSuccess;
-	}
+        if (override) {
+            return RegOverride;
+        } else {
+            return RegSuccess;
+        }
     } else {
-	return RegFailure;
+        return RegFailure;
     }
 }
 
@@ -360,8 +360,8 @@ set_motif_proxy(Display* dpy, Window toplevel, Window new_proxy, Window *old_pro
  * Returns the completion status.
  */
 static ProxyRegistrationStatus
-set_xdnd_proxy(Display* dpy, Window toplevel, Window new_proxy, 
-	       Window* old_proxy, unsigned int* old_version) {
+set_xdnd_proxy(Display* dpy, Window toplevel, Window new_proxy,
+               Window* old_proxy, unsigned int* old_version) {
     Atom version_atom = XDND_PROTOCOL_VERSION;
     Window xdnd_proxy = None;
     Boolean override = False;
@@ -379,128 +379,128 @@ set_xdnd_proxy(Display* dpy, Window toplevel, Window new_proxy,
 
     data = NULL;
     ret = checked_XGetWindowProperty(dpy, toplevel, XA_XdndAware, 0, 1,
-				     False, AnyPropertyType, &type, &format,
-				     &nitems, &after, &data);
+                                     False, AnyPropertyType, &type, &format,
+                                     &nitems, &after, &data);
 
     if (ret != Success) {
-	return RegFailure;
+        return RegFailure;
     }
-	
+
     if (ret == Success && data != NULL && type == XA_ATOM) {
-	unsigned int protocol_version = *((unsigned int*)data);
+        unsigned int protocol_version = *((unsigned int*)data);
 
-	override = True;
-	*old_version = protocol_version;
+        override = True;
+        *old_version = protocol_version;
 
-	/* XdndProxy is not supported for prior to XDnD version 4 */
-	if (protocol_version >= 4) {
-	    int status;
+        /* XdndProxy is not supported for prior to XDnD version 4 */
+        if (protocol_version >= 4) {
+            int status;
 
-	    XFree(data);
-		
-	    data = NULL;
-	    status = XGetWindowProperty(dpy, toplevel, XA_XdndProxy, 0, 1, 
-					False, XA_WINDOW, &type, &format,
-					&nitems, &after, &data);
-		
-	    if (status == Success && data != NULL && type == XA_WINDOW) {
-		xdnd_proxy = *((Window*)data);
+            XFree(data);
 
-		if (xdnd_proxy != None) {
-		    XFree(data);
+            data = NULL;
+            status = XGetWindowProperty(dpy, toplevel, XA_XdndProxy, 0, 1,
+                                        False, XA_WINDOW, &type, &format,
+                                        &nitems, &after, &data);
 
-		    data = NULL;
-		    status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndProxy,
-						0, 1, False, XA_WINDOW, &type,
-						&format, &nitems, &after, &data);
+            if (status == Success && data != NULL && type == XA_WINDOW) {
+                xdnd_proxy = *((Window*)data);
 
-		    if (status != Success || data == NULL || type != XA_WINDOW || 
-			*((Window*)data) != xdnd_proxy) {
-			/* Ignore invalid proxy. */
-			xdnd_proxy = None;
-		    }
-		}
+                if (xdnd_proxy != None) {
+                    XFree(data);
 
-		if (xdnd_proxy != None) {
-		    XFree(data);
+                    data = NULL;
+                    status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndProxy,
+                                                0, 1, False, XA_WINDOW, &type,
+                                                &format, &nitems, &after, &data);
 
-		    data = NULL;
-		    status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndAware,
-						0, 1, False, AnyPropertyType,
-						&type, &format, &nitems, &after,
-						&data);
+                    if (status != Success || data == NULL || type != XA_WINDOW ||
+                        *((Window*)data) != xdnd_proxy) {
+                        /* Ignore invalid proxy. */
+                        xdnd_proxy = None;
+                    }
+                }
 
-		    if (status == Success && data != NULL && type == XA_ATOM) {
-			unsigned int proxy_version = *((unsigned int*)data);
-			
-			if (proxy_version != protocol_version) {			
-			    /* Ignore invalid proxy. */
-			    xdnd_proxy = None;
-			}
-		    } else {
-			/* Ignore invalid proxy. */
-			xdnd_proxy = None;
-		    }
-		}
-	    }
-		
-	    *old_proxy = xdnd_proxy;
-	}
+                if (xdnd_proxy != None) {
+                    XFree(data);
+
+                    data = NULL;
+                    status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndAware,
+                                                0, 1, False, AnyPropertyType,
+                                                &type, &format, &nitems, &after,
+                                                &data);
+
+                    if (status == Success && data != NULL && type == XA_ATOM) {
+                        unsigned int proxy_version = *((unsigned int*)data);
+
+                        if (proxy_version != protocol_version) {
+                            /* Ignore invalid proxy. */
+                            xdnd_proxy = None;
+                        }
+                    } else {
+                        /* Ignore invalid proxy. */
+                        xdnd_proxy = None;
+                    }
+                }
+            }
+
+            *old_proxy = xdnd_proxy;
+        }
     }
 
     XFree(data);
 
     /* If the proxy is already set to the specified window - return. */
     if (xdnd_proxy == new_proxy) {
-	return RegAlreadyRegistered;
+        return RegAlreadyRegistered;
     }
 
     /* The proxy window must have the XdndAware set, as XDnD protocol prescribes
        to check the proxy window for XdndAware. */
     ret = checked_XChangeProperty(dpy, new_proxy, XA_XdndAware, XA_ATOM, 32,
-				  PropModeReplace, 
-				  (unsigned char*)&version_atom, 1);   
+                                  PropModeReplace,
+                                  (unsigned char*)&version_atom, 1);
 
     if (ret != Success) {
-	return RegFailure;
+        return RegFailure;
     }
 
     /* The proxy window must have the XdndProxy set to point to itself. */
     ret = checked_XChangeProperty(dpy, new_proxy, XA_XdndProxy, XA_WINDOW, 32,
-				  PropModeReplace, 
-				  (unsigned char*)&new_proxy, 1);   
+                                  PropModeReplace,
+                                  (unsigned char*)&new_proxy, 1);
 
     if (ret != Success) {
-	return RegFailure;
+        return RegFailure;
     }
 
     ret = checked_XChangeProperty(dpy, toplevel, XA_XdndAware, XA_ATOM, 32,
-				  PropModeReplace, 
-				  (unsigned char*)&version_atom, 1); 
+                                  PropModeReplace,
+                                  (unsigned char*)&version_atom, 1);
 
     if (ret != Success) {
-	return RegFailure;
+        return RegFailure;
     }
 
     ret = checked_XChangeProperty(dpy, toplevel, XA_XdndProxy, XA_WINDOW, 32,
-				  PropModeReplace, 
-				  (unsigned char*)&new_proxy, 1);  
+                                  PropModeReplace,
+                                  (unsigned char*)&new_proxy, 1);
 
     if (ret == Success) {
-	if (override) {
-	    return RegOverride;
-	} else {
-	    return RegSuccess;
-	}
+        if (override) {
+            return RegOverride;
+        } else {
+            return RegSuccess;
+        }
     } else {
-	return RegFailure;
+        return RegFailure;
     }
 }
 
 /*
  * 'toplevel' is the browser toplevel window. To register a drop site on the
  * plugin window we set the proxy for the browser toplevel window to point to
- * the awt_root_shell window. 
+ * the awt_root_shell window.
  *
  * We assume that only one JVM per browser instance is possible. This
  * assumption is true with the current plugin implementation - it creates a
@@ -510,12 +510,12 @@ set_xdnd_proxy(Display* dpy, Window toplevel, Window new_proxy,
  * will iterate over drop sites registered with this toplevel and determine if
  * the mouse pointer is currently over one of them (there could be several
  * plugin windows in one browser window - for example if an HTML page contains
- * frames and several frames contain a plugin object). 
- * 
+ * frames and several frames contain a plugin object).
+ *
  * If the pointer is not over any of the plugin drop sites the client message
- * will be resent to the browser, otherwise it will be processed normally.   
+ * will be resent to the browser, otherwise it will be processed normally.
  */
-static EmbeddedDropSiteListEntry* 
+static EmbeddedDropSiteListEntry*
 awt_dnd_dt_init_proxy(Display* dpy, Window root, Window toplevel, Window window) {
     Window         awt_root_window = get_awt_root_window();
     Window         motif_proxy = None;
@@ -523,7 +523,7 @@ awt_dnd_dt_init_proxy(Display* dpy, Window root, Window toplevel, Window window)
     unsigned long  event_mask = 0;
 
     if (awt_root_window == None) {
-	return NULL;
+        return NULL;
     }
 
     /* Grab server, since we are working with the window that belongs to
@@ -531,37 +531,37 @@ awt_dnd_dt_init_proxy(Display* dpy, Window root, Window toplevel, Window window)
     XGrabServer(dpy);
 
     {
-	ProxyRegistrationStatus motif_status = RegFailure;
+        ProxyRegistrationStatus motif_status = RegFailure;
 
-	motif_status = set_motif_proxy(dpy, toplevel, awt_root_window, &motif_proxy); 
+        motif_status = set_motif_proxy(dpy, toplevel, awt_root_window, &motif_proxy);
 
-	switch (motif_status) {
-	case RegFailure:
-	case RegAlreadyRegistered:
-	    XUngrabServer(dpy);
-	    /* Workaround for bug 5039226 */
-	    XSync(dpy, False);
-	    return NULL;
-	case RegOverride:
-	    motif_override = True;
-	    break;
-	case RegSuccess:
-	    motif_override = False;
-	    break;
-	default: 
-	    DASSERT(False);
-	}
+        switch (motif_status) {
+        case RegFailure:
+        case RegAlreadyRegistered:
+            XUngrabServer(dpy);
+            /* Workaround for bug 5039226 */
+            XSync(dpy, False);
+            return NULL;
+        case RegOverride:
+            motif_override = True;
+            break;
+        case RegSuccess:
+            motif_override = False;
+            break;
+        default:
+            DASSERT(False);
+        }
 
 
     }
 
     {
-	XWindowAttributes xwa;
-	XGetWindowAttributes(dpy, toplevel, &xwa);
-	event_mask = xwa.your_event_mask;
-	if ((event_mask & PropertyChangeMask) == 0) {
-	    XSelectInput(dpy, toplevel, event_mask | PropertyChangeMask);
-	}
+        XWindowAttributes xwa;
+        XGetWindowAttributes(dpy, toplevel, &xwa);
+        event_mask = xwa.your_event_mask;
+        if ((event_mask & PropertyChangeMask) == 0) {
+            XSelectInput(dpy, toplevel, event_mask | PropertyChangeMask);
+        }
     }
 
     XUngrabServer(dpy);
@@ -570,54 +570,54 @@ awt_dnd_dt_init_proxy(Display* dpy, Window root, Window toplevel, Window window)
 
     /* Add protocol specific entries for the toplevel. */
     {
-	EmbeddedDropSiteProtocolListEntry* motif_entry = NULL;
+        EmbeddedDropSiteProtocolListEntry* motif_entry = NULL;
 
-	motif_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
+        motif_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
 
-	if (motif_entry == NULL) {
-	    return NULL;
-	}
+        if (motif_entry == NULL) {
+            return NULL;
+        }
 
-	motif_entry->window = toplevel;
-	motif_entry->proxy = motif_proxy;
-	motif_entry->protocol_version = 0;
-	motif_entry->overriden = motif_override;
-	motif_entry->next = embedded_motif_protocol_list;
-	embedded_motif_protocol_list = motif_entry;
+        motif_entry->window = toplevel;
+        motif_entry->proxy = motif_proxy;
+        motif_entry->protocol_version = 0;
+        motif_entry->overriden = motif_override;
+        motif_entry->next = embedded_motif_protocol_list;
+        embedded_motif_protocol_list = motif_entry;
     }
 
     {
-	EmbeddedDropSiteListEntry* entry = NULL;
-	Window* sites = NULL;
-    
-	entry = malloc(sizeof(EmbeddedDropSiteListEntry));
+        EmbeddedDropSiteListEntry* entry = NULL;
+        Window* sites = NULL;
 
-	if (entry == NULL) {
-	    return NULL;
-	}
+        entry = malloc(sizeof(EmbeddedDropSiteListEntry));
 
-	sites = malloc(sizeof(Window));
+        if (entry == NULL) {
+            return NULL;
+        }
 
-	if (sites == NULL) {
-	    free(entry);
-	    return NULL;
-	}
+        sites = malloc(sizeof(Window));
 
-	sites[0] = window;
+        if (sites == NULL) {
+            free(entry);
+            return NULL;
+        }
 
-	entry->toplevel = toplevel;
-	entry->root = root;
-	entry->event_mask = event_mask;
-	entry->embedded_sites_count = 1;
-	entry->embedded_sites = sites;
-	entry->next = NULL;
-	
-	return entry;
+        sites[0] = window;
+
+        entry->toplevel = toplevel;
+        entry->root = root;
+        entry->event_mask = event_mask;
+        entry->embedded_sites_count = 1;
+        entry->embedded_sites = sites;
+        entry->next = NULL;
+
+        return entry;
     }
 }
 
 static void
-register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long window) { 
+register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long window) {
     Window         awt_root_window = get_awt_root_window();
     Window         toplevel = entry->toplevel;
     Window         xdnd_proxy = None;
@@ -628,11 +628,11 @@ register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long wind
 
     EmbeddedDropSiteProtocolListEntry* motif_entry = embedded_motif_protocol_list;
     while (motif_entry != NULL) {
-	if (motif_entry->window == toplevel) {
-	    motif_overriden = motif_entry->overriden;
-	    break;
-	}
-	motif_entry = motif_entry->next;
+        if (motif_entry->window == toplevel) {
+            motif_overriden = motif_entry->overriden;
+            break;
+        }
+        motif_entry = motif_entry->next;
     }
 
     /*
@@ -641,8 +641,8 @@ register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long wind
      * instead we register the XDnD drop site on the embedded window.
      */
     if (isXEmbedActiveByWindow(window)) {
-	register_xdnd_drop_site(dpy, toplevel, window);
-	return;
+        register_xdnd_drop_site(dpy, toplevel, window);
+        return;
     }
 
     /*
@@ -651,73 +651,73 @@ register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long wind
      * scenario if the browser doesn't support XDnD. If we forcibly set
      * XdndAware on the browser toplevel, any drag source that supports both
      * protocols and prefers XDnD will be unable to drop anything on the
-     * browser. 
-     * The solution for this problem is not to register XDnD drop site 
+     * browser.
+     * The solution for this problem is not to register XDnD drop site
      * if the browser supports only Motif DnD.
      */
     if (motif_overriden) {
-	int            status;
-	Atom           type;
-	int            format;
-	unsigned long  nitems;
-	unsigned long  after;
-	unsigned char* data;
+        int            status;
+        Atom           type;
+        int            format;
+        unsigned long  nitems;
+        unsigned long  after;
+        unsigned char* data;
 
-	data = NULL;
-	status = XGetWindowProperty(dpy, toplevel, XA_XdndAware, 0, 1,
-				    False, AnyPropertyType, &type, &format,
-				    &nitems, &after, &data);
-	
-	XFree(data);
-	data = NULL;
-	
-	if (type != XA_ATOM) {
-	    register_xdnd = False;
-	}
+        data = NULL;
+        status = XGetWindowProperty(dpy, toplevel, XA_XdndAware, 0, 1,
+                                    False, AnyPropertyType, &type, &format,
+                                    &nitems, &after, &data);
+
+        XFree(data);
+        data = NULL;
+
+        if (type != XA_ATOM) {
+            register_xdnd = False;
+        }
     }
 
     if (register_xdnd) {
-	ProxyRegistrationStatus xdnd_status;
-	/* Grab server, since we are working with the window that belongs to
-	   another client. REMIND: ungrab when done!!! */
-	XGrabServer(dpy);
+        ProxyRegistrationStatus xdnd_status;
+        /* Grab server, since we are working with the window that belongs to
+           another client. REMIND: ungrab when done!!! */
+        XGrabServer(dpy);
 
-	xdnd_status = 
-	    set_xdnd_proxy(dpy, toplevel, awt_root_window, &xdnd_proxy, 
-			   &xdnd_protocol_version);
-	
-	XUngrabServer(dpy);
+        xdnd_status =
+            set_xdnd_proxy(dpy, toplevel, awt_root_window, &xdnd_proxy,
+                           &xdnd_protocol_version);
 
-	switch (xdnd_status) {
-	case RegFailure:
-	case RegAlreadyRegistered:
-	    return;
-	case RegOverride:
-	    xdnd_override = True;
-	    break;
-	case RegSuccess:
-	    xdnd_override = False;
-	    break;
-	default: 
-	    DASSERT(False);
-	}
+        XUngrabServer(dpy);
 
-	{
-	    EmbeddedDropSiteProtocolListEntry* xdnd_entry = NULL;
+        switch (xdnd_status) {
+        case RegFailure:
+        case RegAlreadyRegistered:
+            return;
+        case RegOverride:
+            xdnd_override = True;
+            break;
+        case RegSuccess:
+            xdnd_override = False;
+            break;
+        default:
+            DASSERT(False);
+        }
 
-	    xdnd_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
+        {
+            EmbeddedDropSiteProtocolListEntry* xdnd_entry = NULL;
 
-	    if (xdnd_entry == NULL) {
-		return;
-	    }
+            xdnd_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
 
-	    xdnd_entry->window = toplevel;
-	    xdnd_entry->proxy = xdnd_proxy;
-	    xdnd_entry->protocol_version = xdnd_protocol_version;
-	    xdnd_entry->overriden = xdnd_override;
-	    xdnd_entry->next = embedded_xdnd_protocol_list;
-	    embedded_xdnd_protocol_list = xdnd_entry;
-	}
+            if (xdnd_entry == NULL) {
+                return;
+            }
+
+            xdnd_entry->window = toplevel;
+            xdnd_entry->proxy = xdnd_proxy;
+            xdnd_entry->protocol_version = xdnd_protocol_version;
+            xdnd_entry->overriden = xdnd_override;
+            xdnd_entry->next = embedded_xdnd_protocol_list;
+            embedded_xdnd_protocol_list = xdnd_entry;
+        }
     }
 }
 
@@ -726,36 +726,36 @@ register_xdnd_embedder(Display* dpy, EmbeddedDropSiteListEntry* entry, long wind
  * 'toplevel', the method registers the specified 'window' as an embedded drop
  * site for this 'toplevel' and returns True.
  * Otherwise, it checks if the 'toplevel' is a registered drop site for adds
- * (window, component) pair to the list and returns True  
+ * (window, component) pair to the list and returns True
  * if completes successfully.
  */
 static Boolean
 add_to_embedded_drop_site_list(Display* dpy, Window root, Window toplevel,
-			       Window window) {
+                               Window window) {
     EmbeddedDropSiteListEntry* entry = embedded_drop_site_list;
 
     while (entry != NULL) {
-	if (entry->toplevel == toplevel) {
-	    void* p = realloc(entry->embedded_sites,
-			      sizeof(Window) *
-			      (entry->embedded_sites_count + 1));
-	    if (p == NULL) {
-		return False;
-	    }
-	    entry->embedded_sites = p;
-	    entry->embedded_sites[entry->embedded_sites_count++] = window;
+        if (entry->toplevel == toplevel) {
+            void* p = realloc(entry->embedded_sites,
+                              sizeof(Window) *
+                              (entry->embedded_sites_count + 1));
+            if (p == NULL) {
+                return False;
+            }
+            entry->embedded_sites = p;
+            entry->embedded_sites[entry->embedded_sites_count++] = window;
 
-	    register_xdnd_embedder(dpy, entry, window);
+            register_xdnd_embedder(dpy, entry, window);
 
-	    return True;
-	}
-	entry = entry->next;
+            return True;
+        }
+        entry = entry->next;
     }
 
     entry = awt_dnd_dt_init_proxy(dpy, root, toplevel, window);
 
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     register_xdnd_embedder(dpy, entry, window);
@@ -767,7 +767,7 @@ add_to_embedded_drop_site_list(Display* dpy, Window root, Window toplevel,
 }
 
 /*
- * Removes the window from the list of embedded drop sites for the toplevel. 
+ * Removes the window from the list of embedded drop sites for the toplevel.
  * Returns True if the window was successfully removed, False otherwise.
  */
 static Boolean
@@ -776,209 +776,209 @@ remove_from_embedded_drop_site_list(Display* dpy, Window toplevel, Window window
     EmbeddedDropSiteListEntry* prev = NULL;
 
     while (entry != NULL) {
-	if (entry->toplevel == toplevel) {
-	    unsigned int idx;
+        if (entry->toplevel == toplevel) {
+            unsigned int idx;
 
-	    for (idx = 0; idx < entry->embedded_sites_count; idx++) {
-		if (entry->embedded_sites[idx] == window) {
-		    int tail = entry->embedded_sites_count - idx - 1;
-		    if (tail > 0) {
-			memmove(entry->embedded_sites + idx, 
-				entry->embedded_sites + idx + 1,
-				tail * sizeof(Window));
-		    }
-		    entry->embedded_sites_count--;
+            for (idx = 0; idx < entry->embedded_sites_count; idx++) {
+                if (entry->embedded_sites[idx] == window) {
+                    int tail = entry->embedded_sites_count - idx - 1;
+                    if (tail > 0) {
+                        memmove(entry->embedded_sites + idx,
+                                entry->embedded_sites + idx + 1,
+                                tail * sizeof(Window));
+                    }
+                    entry->embedded_sites_count--;
 
-		    /* If the list of embedded drop sites for this toplevel
-		       becomes empty - restore the original proxies and remove
-		       the entry. */ 
-		    if (entry->embedded_sites_count == 0) {
-			Widget w = XtWindowToWidget(dpy, toplevel);
-	
-			if (w != NULL) {
-			    JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
-			    Widget copy = w;
-			    jobject peer = findPeer(&w);
+                    /* If the list of embedded drop sites for this toplevel
+                       becomes empty - restore the original proxies and remove
+                       the entry. */
+                    if (entry->embedded_sites_count == 0) {
+                        Widget w = XtWindowToWidget(dpy, toplevel);
 
-			    if (!JNU_IsNull(env, peer) &&
-				(*env)->IsInstanceOf(env, peer, 
-						     get_MEmbedCanvasPeerClass(env)) == JNI_TRUE) {
-				remove_xembed_drop_target(env, peer);
-			    }
-			} else {
-			    EmbeddedDropSiteProtocolListEntry* xdnd_entry = 
-				get_xdnd_protocol_entry_for_toplevel(toplevel);
-			    EmbeddedDropSiteProtocolListEntry* motif_entry = 
-				get_motif_protocol_entry_for_toplevel(toplevel);
+                        if (w != NULL) {
+                            JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
+                            Widget copy = w;
+                            jobject peer = findPeer(&w);
 
-			    if (xdnd_entry != NULL) {
-				if (xdnd_entry->overriden == True) {
-				    XChangeProperty(dpy, toplevel, XA_XdndAware,
-						    XA_ATOM, 32,
-						    PropModeReplace,
-						    (unsigned char*)&xdnd_entry->protocol_version, 
-						    1);   
+                            if (!JNU_IsNull(env, peer) &&
+                                (*env)->IsInstanceOf(env, peer,
+                                                     get_MEmbedCanvasPeerClass(env)) == JNI_TRUE) {
+                                remove_xembed_drop_target(env, peer);
+                            }
+                        } else {
+                            EmbeddedDropSiteProtocolListEntry* xdnd_entry =
+                                get_xdnd_protocol_entry_for_toplevel(toplevel);
+                            EmbeddedDropSiteProtocolListEntry* motif_entry =
+                                get_motif_protocol_entry_for_toplevel(toplevel);
 
-				    XChangeProperty(dpy, toplevel, XA_XdndProxy,
-						    XA_WINDOW, 32,
-						    PropModeReplace,
-						    (unsigned char*)&xdnd_entry->proxy, 1);   
-				} else {
-				    XDeleteProperty(dpy, toplevel, XA_XdndAware);   
-				    XDeleteProperty(dpy, toplevel, XA_XdndProxy);
-				}
-				remove_xdnd_protocol_entry_for_toplevel(toplevel);
-			    }
+                            if (xdnd_entry != NULL) {
+                                if (xdnd_entry->overriden == True) {
+                                    XChangeProperty(dpy, toplevel, XA_XdndAware,
+                                                    XA_ATOM, 32,
+                                                    PropModeReplace,
+                                                    (unsigned char*)&xdnd_entry->protocol_version,
+                                                    1);
 
-			    if (motif_entry != NULL) {
-				if (motif_entry->overriden == True) {
-				    /* Request status */
-				    int status;
-				
-				    Atom           type;
-				    int            format;
-				    unsigned long  nitems;
-				    unsigned long  after;
-				    unsigned char* data;
-				
-				    data = NULL;
-				    status = XGetWindowProperty(dpy, toplevel,
-								_XA_MOTIF_DRAG_RECEIVER_INFO, 0, 0xFFFF,
-								False, AnyPropertyType, &type, &format,
-								&nitems, &after, &data);
+                                    XChangeProperty(dpy, toplevel, XA_XdndProxy,
+                                                    XA_WINDOW, 32,
+                                                    PropModeReplace,
+                                                    (unsigned char*)&xdnd_entry->proxy, 1);
+                                } else {
+                                    XDeleteProperty(dpy, toplevel, XA_XdndAware);
+                                    XDeleteProperty(dpy, toplevel, XA_XdndProxy);
+                                }
+                                remove_xdnd_protocol_entry_for_toplevel(toplevel);
+                            }
 
-				    if (status == Success && data != NULL && type != None &&
-					format == 8 && nitems >= MOTIF_RECEIVER_INFO_SIZE) {  
-					unsigned char byte_order = read_card8((char*)data, 0);
-					void* p = (char*)data + 4;
-				    
-					DASSERT(MOTIF_BYTE_ORDER == byte_order);
-				    
-					if (MOTIF_BYTE_ORDER == byte_order) {
-					    /* restore the original proxy window */
-					    write_card32(&p, motif_entry->proxy);
-					
-					    XChangeProperty(dpy, toplevel,
-							    _XA_MOTIF_DRAG_RECEIVER_INFO,  
-							    _XA_MOTIF_DRAG_RECEIVER_INFO, 8,
-							    PropModeReplace, 
-							    (unsigned char*)data,
-							    MOTIF_RECEIVER_INFO_SIZE);
-					}
-				    }
-				
-				    if (status == Success) {
-					XFree(data);
-				    }
-				} else {
-				    XDeleteProperty(dpy, toplevel, _XA_MOTIF_DRAG_RECEIVER_INFO);
-				}
+                            if (motif_entry != NULL) {
+                                if (motif_entry->overriden == True) {
+                                    /* Request status */
+                                    int status;
 
-				remove_motif_protocol_entry_for_toplevel(toplevel);
-			    }
+                                    Atom           type;
+                                    int            format;
+                                    unsigned long  nitems;
+                                    unsigned long  after;
+                                    unsigned char* data;
+
+                                    data = NULL;
+                                    status = XGetWindowProperty(dpy, toplevel,
+                                                                _XA_MOTIF_DRAG_RECEIVER_INFO, 0, 0xFFFF,
+                                                                False, AnyPropertyType, &type, &format,
+                                                                &nitems, &after, &data);
+
+                                    if (status == Success && data != NULL && type != None &&
+                                        format == 8 && nitems >= MOTIF_RECEIVER_INFO_SIZE) {
+                                        unsigned char byte_order = read_card8((char*)data, 0);
+                                        void* p = (char*)data + 4;
+
+                                        DASSERT(MOTIF_BYTE_ORDER == byte_order);
+
+                                        if (MOTIF_BYTE_ORDER == byte_order) {
+                                            /* restore the original proxy window */
+                                            write_card32(&p, motif_entry->proxy);
+
+                                            XChangeProperty(dpy, toplevel,
+                                                            _XA_MOTIF_DRAG_RECEIVER_INFO,
+                                                            _XA_MOTIF_DRAG_RECEIVER_INFO, 8,
+                                                            PropModeReplace,
+                                                            (unsigned char*)data,
+                                                            MOTIF_RECEIVER_INFO_SIZE);
+                                        }
+                                    }
+
+                                    if (status == Success) {
+                                        XFree(data);
+                                    }
+                                } else {
+                                    XDeleteProperty(dpy, toplevel, _XA_MOTIF_DRAG_RECEIVER_INFO);
+                                }
+
+                                remove_motif_protocol_entry_for_toplevel(toplevel);
+                            }
 
                             if ((entry->event_mask & PropertyChangeMask) == 0) {
                                 XSelectInput(dpy, toplevel, entry->event_mask);
                             }
-			}
+                        }
 
-			if (prev == NULL) {
-			    embedded_drop_site_list = entry->next;
-			} else {
-			    prev->next = entry->next;
-			}
+                        if (prev == NULL) {
+                            embedded_drop_site_list = entry->next;
+                        } else {
+                            prev->next = entry->next;
+                        }
 
-			free(entry);
-		    }
-		    return True;
-		}
-	    }
-	    return False;
-	}
-	prev = entry;
-	entry = entry->next;
+                        free(entry);
+                    }
+                    return True;
+                }
+            }
+            return False;
+        }
+        prev = entry;
+        entry = entry->next;
     }
     return False;
 }
 
-static EmbeddedDropSiteListEntry* 
+static EmbeddedDropSiteListEntry*
 get_entry_for_toplevel(Window toplevel) {
     EmbeddedDropSiteListEntry* entry = embedded_drop_site_list;
 
     while (entry != NULL) {
-	if (entry->toplevel == toplevel) {
-	    return entry;
-	}
-	entry = entry->next;
+        if (entry->toplevel == toplevel) {
+            return entry;
+        }
+        entry = entry->next;
     }
     return NULL;
 }
 
-static EmbeddedDropSiteProtocolListEntry* 
+static EmbeddedDropSiteProtocolListEntry*
 get_motif_protocol_entry_for_toplevel(Window toplevel) {
     EmbeddedDropSiteProtocolListEntry* entry = embedded_motif_protocol_list;
 
     while (entry != NULL) {
-	if (entry->window == toplevel) {
-	    return entry;
-	}
-	entry = entry->next;
+        if (entry->window == toplevel) {
+            return entry;
+        }
+        entry = entry->next;
     }
     return NULL;
 }
 
-static EmbeddedDropSiteProtocolListEntry* 
+static EmbeddedDropSiteProtocolListEntry*
 get_xdnd_protocol_entry_for_toplevel(Window toplevel) {
     EmbeddedDropSiteProtocolListEntry* entry = embedded_xdnd_protocol_list;
 
     while (entry != NULL) {
-	if (entry->window == toplevel) {
-	    return entry;
-	}
-	entry = entry->next;
+        if (entry->window == toplevel) {
+            return entry;
+        }
+        entry = entry->next;
     }
     return NULL;
 }
 
-static void 
+static void
 remove_motif_protocol_entry_for_toplevel(Window toplevel) {
     EmbeddedDropSiteProtocolListEntry* entry = embedded_motif_protocol_list;
     EmbeddedDropSiteProtocolListEntry* prev_entry = NULL;
 
     while (entry != NULL) {
-	if (entry->window == toplevel) {
-	    if (prev_entry != NULL) {
-		prev_entry->next = entry->next;
-	    } else {
-		embedded_motif_protocol_list = entry->next;
-	    }
-	    free(entry);
-	}
-	entry = entry->next;
-	prev_entry = entry;
+        if (entry->window == toplevel) {
+            if (prev_entry != NULL) {
+                prev_entry->next = entry->next;
+            } else {
+                embedded_motif_protocol_list = entry->next;
+            }
+            free(entry);
+        }
+        entry = entry->next;
+        prev_entry = entry;
     }
 }
 
-static void 
+static void
 remove_xdnd_protocol_entry_for_toplevel(Window toplevel) {
     EmbeddedDropSiteProtocolListEntry* entry = embedded_xdnd_protocol_list;
     EmbeddedDropSiteProtocolListEntry* prev_entry = NULL;
 
     while (entry != NULL) {
-	if (entry->window == toplevel) {
-	    if (prev_entry != NULL) {
-		prev_entry->next = entry->next;
-	    } else {
-		embedded_xdnd_protocol_list = entry->next;
-	    }
-	    free(entry);
-	}
-	entry = entry->next;
+        if (entry->window == toplevel) {
+            if (prev_entry != NULL) {
+                prev_entry->next = entry->next;
+            } else {
+                embedded_xdnd_protocol_list = entry->next;
+            }
+            free(entry);
+        }
+        entry = entry->next;
     }
 }
 
 static Boolean
-is_embedding_toplevel(Window toplevel) {     
+is_embedding_toplevel(Window toplevel) {
     return get_entry_for_toplevel(toplevel) != NULL;
 }
 
@@ -987,25 +987,25 @@ get_embedded_window(Display* dpy, Window toplevel, int x, int y) {
     EmbeddedDropSiteListEntry* entry = get_entry_for_toplevel(toplevel);
 
     if (entry != NULL) {
-	unsigned int idx;
+        unsigned int idx;
 
-	for (idx = 0; idx < entry->embedded_sites_count; idx++) {
-	    Window site = entry->embedded_sites[idx];
-	    Window child = None;
-	    int x_return, y_return;
+        for (idx = 0; idx < entry->embedded_sites_count; idx++) {
+            Window site = entry->embedded_sites[idx];
+            Window child = None;
+            int x_return, y_return;
 
-	    if (XTranslateCoordinates(dpy, entry->root, site, x, y,
-				      &x_return, &y_return, &child)) {
-		if (x_return >= 0 && y_return >= 0) {
-		    XWindowAttributes xwa;
-		    XGetWindowAttributes(dpy, site, &xwa);
-		    if (xwa.map_state != IsUnmapped && 
-			x_return < xwa.width && y_return < xwa.height) {
-			return site;
-		    }
-		}
-	    }
-	}
+            if (XTranslateCoordinates(dpy, entry->root, site, x, y,
+                                      &x_return, &y_return, &child)) {
+                if (x_return >= 0 && y_return >= 0) {
+                    XWindowAttributes xwa;
+                    XGetWindowAttributes(dpy, site, &xwa);
+                    if (xwa.map_state != IsUnmapped &&
+                        x_return < xwa.width && y_return < xwa.height) {
+                        return site;
+                    }
+                }
+            }
+        }
     }
 
     return None;
@@ -1017,19 +1017,19 @@ get_embedded_window(Display* dpy, Window toplevel, int x, int y) {
  * xdnd_protocol_version to 'version', xdnd_override to 'override', returns True.
  */
 static Boolean
-set_xdnd_proxy_for_toplevel(Window toplevel, Window proxy_window, 
-			    unsigned int version, Boolean override) {
-    EmbeddedDropSiteProtocolListEntry* entry = 
-	get_xdnd_protocol_entry_for_toplevel(toplevel);
+set_xdnd_proxy_for_toplevel(Window toplevel, Window proxy_window,
+                            unsigned int version, Boolean override) {
+    EmbeddedDropSiteProtocolListEntry* entry =
+        get_xdnd_protocol_entry_for_toplevel(toplevel);
 
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     entry->proxy = proxy_window;
     entry->protocol_version = version;
     entry->overriden = override;
-	
+
     return True;
 }
 
@@ -1040,11 +1040,11 @@ set_xdnd_proxy_for_toplevel(Window toplevel, Window proxy_window,
  */
 static Boolean
 set_motif_proxy_for_toplevel(Window toplevel, Window proxy_window, Boolean override) {
-    EmbeddedDropSiteProtocolListEntry* entry = 
-	get_motif_protocol_entry_for_toplevel(toplevel);
+    EmbeddedDropSiteProtocolListEntry* entry =
+        get_motif_protocol_entry_for_toplevel(toplevel);
 
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     entry->proxy = proxy_window;
@@ -1054,8 +1054,8 @@ set_motif_proxy_for_toplevel(Window toplevel, Window proxy_window, Boolean overr
 }
 
 /*
- * Forwards a drag notification to the embedding toplevel modifying the event 
- * to match the protocol version supported by the toplevel. 
+ * Forwards a drag notification to the embedding toplevel modifying the event
+ * to match the protocol version supported by the toplevel.
  * Returns True if the event is sent, False otherwise.
  */
 static Boolean
@@ -1064,33 +1064,33 @@ forward_client_message_to_toplevel(Window toplevel, XClientMessageEvent* event) 
     Window proxy = None;
 
     if (event->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	protocol_entry = get_motif_protocol_entry_for_toplevel(toplevel);
+        protocol_entry = get_motif_protocol_entry_for_toplevel(toplevel);
     } else {
-	/* Assume XDnD */
-	protocol_entry = get_xdnd_protocol_entry_for_toplevel(toplevel);
-	if (protocol_entry != NULL) {
-	    /* Adjust the event to match the XDnD protocol version. */
-	    unsigned int version = protocol_entry->protocol_version;
-	    if (event->message_type == XA_XdndEnter) {
-		unsigned int min_version = source_protocol_version < version ?
-		    source_protocol_version : version;
-		event->data.l[1] = min_version << XDND_PROTOCOL_SHIFT;
-		event->data.l[1] |= source_data_types_count > 3 ? XDND_DATA_TYPES_BIT : 0;
-	    }
-	}
+        /* Assume XDnD */
+        protocol_entry = get_xdnd_protocol_entry_for_toplevel(toplevel);
+        if (protocol_entry != NULL) {
+            /* Adjust the event to match the XDnD protocol version. */
+            unsigned int version = protocol_entry->protocol_version;
+            if (event->message_type == XA_XdndEnter) {
+                unsigned int min_version = source_protocol_version < version ?
+                    source_protocol_version : version;
+                event->data.l[1] = min_version << XDND_PROTOCOL_SHIFT;
+                event->data.l[1] |= source_data_types_count > 3 ? XDND_DATA_TYPES_BIT : 0;
+            }
+        }
     }
 
     if (protocol_entry == NULL) {
-	return False;
+        return False;
     }
 
     if (!protocol_entry->overriden) {
-	return False;
+        return False;
     }
     proxy = protocol_entry->proxy;
 
     if (proxy == None) {
-	proxy = toplevel;
+        proxy = toplevel;
     }
 
     event->window = toplevel;
@@ -1121,7 +1121,7 @@ struct DropSiteListEntryRec {
      * Java top-level position is the outer canvas position, not the shell
      * window position. We need to keep the outer canvas ID (and the root ID) to
      * translate from mouse position root coordinates to the Java component
-     * coordinates.  
+     * coordinates.
      */
     Window             outer_canvas;
     jobject            component;
@@ -1133,25 +1133,25 @@ static DropSiteListEntry* drop_site_list = NULL;
 /*
  * If drop_site_list already contains an entry with the same window,
  * does nothing and returns False.
- * Otherwise, adds a new entry the list and returns True 
+ * Otherwise, adds a new entry the list and returns True
  * if completes successfully.
  */
 static Boolean
-add_to_drop_site_list(Window window, Window root, Window toplevel, 
-		      Window outer_canvas, jobject component) {        
+add_to_drop_site_list(Window window, Window root, Window toplevel,
+                      Window outer_canvas, jobject component) {
     DropSiteListEntry* entry = drop_site_list;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    return False;
-	}
-	entry = entry->next;
+        if (entry->window == window) {
+            return False;
+        }
+        entry = entry->next;
     }
 
     entry = malloc(sizeof(DropSiteListEntry));
-    
+
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     entry->window = window;
@@ -1175,17 +1175,17 @@ remove_from_drop_site_list(Window window) {
     DropSiteListEntry* prev = NULL;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    if (prev != NULL) {
-		prev->next = entry->next;
-	    } else {
-		drop_site_list = entry->next;
-	    }
-	    free(entry);
-	    return True;
-	}
-	prev = entry;
-	entry = entry->next;
+        if (entry->window == window) {
+            if (prev != NULL) {
+                prev->next = entry->next;
+            } else {
+                drop_site_list = entry->next;
+            }
+            free(entry);
+            return True;
+        }
+        prev = entry;
+        entry = entry->next;
     }
 
     return False;
@@ -1196,10 +1196,10 @@ get_component_for_window(Window window) {
     DropSiteListEntry* entry = drop_site_list;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    return entry->component;
-	}
-	entry = entry->next;
+        if (entry->window == window) {
+            return entry->component;
+        }
+        entry = entry->next;
     }
 
     return NULL;
@@ -1210,10 +1210,10 @@ get_root_for_window(Window window) {
     DropSiteListEntry* entry = drop_site_list;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    return entry->root;
-	}
-	entry = entry->next;
+        if (entry->window == window) {
+            return entry->root;
+        }
+        entry = entry->next;
     }
 
     return None;
@@ -1224,10 +1224,10 @@ get_toplevel_for_window(Window window) {
     DropSiteListEntry* entry = drop_site_list;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    return entry->toplevel;
-	}
-	entry = entry->next;
+        if (entry->window == window) {
+            return entry->toplevel;
+        }
+        entry = entry->next;
     }
 
     return None;
@@ -1238,10 +1238,10 @@ get_outer_canvas_for_window(Window window) {
     DropSiteListEntry* entry = drop_site_list;
 
     while (entry != NULL) {
-	if (entry->window == window) {
-	    return entry->outer_canvas;
-	}
-	entry = entry->next;
+        if (entry->window == window) {
+            return entry->outer_canvas;
+        }
+        entry = entry->next;
     }
 
     return None;
@@ -1265,7 +1265,7 @@ static DelayedRegistrationEntry* delayed_registration_list = NULL;
 static const int DELAYED_REGISTRATION_PERIOD = 500;
 
 /* Timer callback. */
-static void 
+static void
 register_drop_site_later(XtPointer client_data, XtIntervalId* id);
 
 /*
@@ -1273,7 +1273,7 @@ register_drop_site_later(XtPointer client_data, XtIntervalId* id);
  * registration. If this widget has already been registered, does nothing and
  * returns False. Otherwise, schedules a timer callback that will repeatedly
  * attempt to register the drop site until the registration succeeds.
- * To remove this widget from the queue of delayed registration call 
+ * To remove this widget from the queue of delayed registration call
  * remove_delayed_registration_entry().
  *
  * The caller must own AWT_LOCK.
@@ -1283,27 +1283,27 @@ add_delayed_registration_entry(Widget outer_canvas, XtPointer componentRef) {
     DelayedRegistrationEntry* entry = delayed_registration_list;
 
     if (outer_canvas == NULL || componentRef == NULL) {
-	return False;
+        return False;
     }
 
     while (entry != NULL && entry->outer_canvas != outer_canvas) {
-	entry = entry->next;
+        entry = entry->next;
     }
 
     if (entry != NULL) {
-	return False;
+        return False;
     }
 
     entry = malloc(sizeof(DelayedRegistrationEntry));
-    
+
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     entry->outer_canvas = outer_canvas;
     entry->component = componentRef;
     entry->timer = XtAppAddTimeOut(awt_appContext, DELAYED_REGISTRATION_PERIOD,
-				   register_drop_site_later, entry); 
+                                   register_drop_site_later, entry);
     entry->next = delayed_registration_list;
     delayed_registration_list = entry;
 
@@ -1322,27 +1322,27 @@ remove_delayed_registration_entry(Widget outer_canvas) {
     DelayedRegistrationEntry* prev = NULL;
 
     if (outer_canvas == NULL) {
-	return False;
+        return False;
     }
 
     while (entry != NULL && entry->outer_canvas != outer_canvas) {
-	prev = entry;
-	entry = entry->next;
+        prev = entry;
+        entry = entry->next;
     }
 
     if (entry == NULL) {
-	return False;
+        return False;
     }
 
     if (prev != NULL) {
-	prev->next = entry->next;
+        prev->next = entry->next;
     } else {
-	delayed_registration_list = entry->next;
+        delayed_registration_list = entry->next;
     }
 
     if (entry->timer) {
-	XtRemoveTimeOut(entry->timer);
-	entry->timer = (XtIntervalId)0;
+        XtRemoveTimeOut(entry->timer);
+        entry->timer = (XtIntervalId)0;
     }
 
     free(entry);
@@ -1350,16 +1350,16 @@ remove_delayed_registration_entry(Widget outer_canvas) {
     return True;
 }
 
-static void 
-register_drop_site_later(XtPointer client_data, XtIntervalId* id) {    
+static void
+register_drop_site_later(XtPointer client_data, XtIntervalId* id) {
     DelayedRegistrationEntry* entry = (DelayedRegistrationEntry*)client_data;
 
-    if (XtIsRealized(entry->outer_canvas) && 
-	register_drop_site(entry->outer_canvas, entry->component)) { 
-	remove_delayed_registration_entry(entry->outer_canvas);
+    if (XtIsRealized(entry->outer_canvas) &&
+        register_drop_site(entry->outer_canvas, entry->component)) {
+        remove_delayed_registration_entry(entry->outer_canvas);
     } else {
-	entry->timer = XtAppAddTimeOut(awt_appContext, DELAYED_REGISTRATION_PERIOD,
-				       register_drop_site_later, entry); 
+        entry->timer = XtAppAddTimeOut(awt_appContext, DELAYED_REGISTRATION_PERIOD,
+                                       register_drop_site_later, entry);
     }
 }
 /******************************************************************************/
@@ -1369,29 +1369,29 @@ awt_dnd_cleanup() {
     JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
 
     if (!JNU_IsNull(env, target_component)) {
-	/* Trigger dragExit */
-	/* 
-	 * Note: we pass NULL native context. This indicates that response
-	 * shouldn't be sent to the source.
-	 */
-	dt_postDropTargetEvent(env, target_component, 0, 0,
-			       java_awt_dnd_DnDConstants_ACTION_NONE,
-			       java_awt_event_MouseEvent_MOUSE_EXITED,
-			       NULL);
+        /* Trigger dragExit */
+        /*
+         * Note: we pass NULL native context. This indicates that response
+         * shouldn't be sent to the source.
+         */
+        dt_postDropTargetEvent(env, target_component, 0, 0,
+                               java_awt_dnd_DnDConstants_ACTION_NONE,
+                               java_awt_event_MouseEvent_MOUSE_EXITED,
+                               NULL);
     }
 
     if (motif_top_level_leave_postponed) {
-	XClientMessageEvent* leave = &motif_top_level_leave_postponed_event;
-	if (leave->type == ClientMessage) {
-	    Window win = leave->window;
-	    if (is_embedding_toplevel(win)) {
-		forward_client_message_to_toplevel(win, leave);
-	    }
-	}
+        XClientMessageEvent* leave = &motif_top_level_leave_postponed_event;
+        if (leave->type == ClientMessage) {
+            Window win = leave->window;
+            if (is_embedding_toplevel(win)) {
+                forward_client_message_to_toplevel(win, leave);
+            }
+        }
     }
 
     if (source_window != None) {
-	XSelectInput(awt_display, source_window, source_window_mask);
+        XSelectInput(awt_display, source_window, source_window_mask);
     }
 
     source_protocol = NO_PROTOCOL;
@@ -1404,16 +1404,16 @@ awt_dnd_cleanup() {
     (*env)->DeleteGlobalRef(env, source_data_types);
     source_data_types = NULL;
     if (source_data_types_native != NULL) {
-	free(source_data_types_native);
-	source_data_types_native = NULL;
+        free(source_data_types_native);
+        source_data_types_native = NULL;
     }
     source_data_types_count = 0;
     source_x = 0;
     source_y = 0;
     target_component = NULL;
     motif_top_level_leave_postponed = False;
-    memset(&motif_top_level_leave_postponed_event, 0, 
-	   sizeof(XClientMessageEvent));
+    memset(&motif_top_level_leave_postponed_event, 0,
+           sizeof(XClientMessageEvent));
 }
 
 static jlongArray
@@ -1426,48 +1426,48 @@ get_data_types_array(JNIEnv* env, Atom* types, unsigned int types_count) {
 #endif
 
     if ((*env)->PushLocalFrame(env, 1) < 0) {
-	return NULL;
+        return NULL;
     }
 
     array = (*env)->NewLongArray(env, types_count);
 
     if (JNU_IsNull(env, array)) {
-	return NULL;
+        return NULL;
     }
 
     if (types_count == 0) {
-	return array;
+        return array;
     }
 
     jTargets = (*env)->GetLongArrayElements(env, array, &isCopy);
     if (jTargets == NULL) {
-	(*env)->PopLocalFrame(env, NULL);
-	return NULL;
+        (*env)->PopLocalFrame(env, NULL);
+        return NULL;
     }
 
 #ifdef _LP64
     memcpy(jTargets, types, types_count * sizeof(Atom));
 #else
     for (i = 0; i < types_count; i++) {
-	jTargets[i] = (types[i] & 0xFFFFFFFFLU);
+        jTargets[i] = (types[i] & 0xFFFFFFFFLU);
     }
-#endif        
+#endif
 
     (*env)->ReleaseLongArrayElements(env, array, jTargets, 0);
 
     array = (*env)->NewGlobalRef(env, array);
-    
+
     (*env)->PopLocalFrame(env, NULL);
 
     return array;
 }
 
-static Boolean 
+static Boolean
 is_xdnd_drag_message_type(unsigned long message_type) {
     return message_type == XA_XdndEnter ||
-	message_type == XA_XdndPosition ||
-	message_type == XA_XdndLeave ||
-	message_type == XA_XdndDrop ? True : False;
+        message_type == XA_XdndPosition ||
+        message_type == XA_XdndLeave ||
+        message_type == XA_XdndDrop ? True : False;
 }
 
 /*
@@ -1488,139 +1488,139 @@ handle_xdnd_enter(XClientMessageEvent* event) {
     jint actions = java_awt_dnd_DnDConstants_ACTION_NONE;
     Boolean track = False;
 
-    DTRACE_PRINTLN5("%s:%d XdndEnter comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d XdndEnter comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
-    if (!JNU_IsNull(env, target_component) || source_window != None || 
-	source_protocol != NO_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+    if (!JNU_IsNull(env, target_component) || source_window != None ||
+        source_protocol != NO_PROTOCOL) {
+        DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     /*
      * NOTE: the component can be NULL if the event was sent to the embedding
-     * toplevel. 
+     * toplevel.
      */
-    if (JNU_IsNull(env, get_component_for_window(event->window)) && 
-	!is_embedding_toplevel(event->window)) {
-	DTRACE_PRINTLN2("%s:%d XdndEnter rejected - window is not a registered drop site.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+    if (JNU_IsNull(env, get_component_for_window(event->window)) &&
+        !is_embedding_toplevel(event->window)) {
+        DTRACE_PRINTLN2("%s:%d XdndEnter rejected - window is not a registered drop site.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
-    protocol_version = 
-	(event_data[1] & XDND_PROTOCOL_MASK) >> XDND_PROTOCOL_SHIFT;
+    protocol_version =
+        (event_data[1] & XDND_PROTOCOL_MASK) >> XDND_PROTOCOL_SHIFT;
 
     /* XDnD compliance only requires supporting version 3 and up. */
     if (protocol_version < XDND_MIN_PROTOCOL_VERSION) {
-	DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid protocol version.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid protocol version.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     /* Ignore the source if the protocol version is higher than we support. */
     if (protocol_version > XDND_PROTOCOL_VERSION) {
-	DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid protocol version.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid protocol version.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     source_win = event_data[0];
 
     /* Extract the list of supported actions. */
     if (protocol_version < 2) {
-	/* Prior to XDnD version 2 only COPY action was supported. */
-	actions = java_awt_dnd_DnDConstants_ACTION_COPY;
+        /* Prior to XDnD version 2 only COPY action was supported. */
+        actions = java_awt_dnd_DnDConstants_ACTION_COPY;
     } else {
-	unsigned char  ret;
-	Atom           type;
-	int            format;
-	unsigned long  nitems;
-	unsigned long  after;
-	unsigned char  *data;
+        unsigned char  ret;
+        Atom           type;
+        int            format;
+        unsigned long  nitems;
+        unsigned long  after;
+        unsigned char  *data;
 
-	data = NULL;
-	ret = checked_XGetWindowProperty(dpy, source_win, XA_XdndActionList, 
-					 0, 0xFFFF, False, XA_ATOM, &type, 
-					 &format, &nitems, &after, &data);
+        data = NULL;
+        ret = checked_XGetWindowProperty(dpy, source_win, XA_XdndActionList,
+                                         0, 0xFFFF, False, XA_ATOM, &type,
+                                         &format, &nitems, &after, &data);
 
-	/* Ignore the source if the window is destroyed. */
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.", 
-			    __FILE__, __LINE__);
-	    return EventFailure;
-	}
-	
-	if (ret == Success) {
-	    if (type == XA_ATOM && format == 32) {
-		unsigned int i;
-		Atom* action_atoms = (Atom*)data;
+        /* Ignore the source if the window is destroyed. */
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.",
+                            __FILE__, __LINE__);
+            return EventFailure;
+        }
 
-		for (i = 0; i < nitems; i++) {
-		    actions |= xdnd_to_java_action(action_atoms[i]);
-		}
-	    }
-	    
-	    /* 
-	     * According to XDnD protocol, XdndActionList is optional.
-	     * If XdndActionList is not set we try to guess which actions are
-	     * supported.
-	     */
-	    if (type == None) {
-		actions = java_awt_dnd_DnDConstants_ACTION_COPY;
-		track = True;
-	    }
+        if (ret == Success) {
+            if (type == XA_ATOM && format == 32) {
+                unsigned int i;
+                Atom* action_atoms = (Atom*)data;
 
-	    XFree(data);
-	}
+                for (i = 0; i < nitems; i++) {
+                    actions |= xdnd_to_java_action(action_atoms[i]);
+                }
+            }
+
+            /*
+             * According to XDnD protocol, XdndActionList is optional.
+             * If XdndActionList is not set we try to guess which actions are
+             * supported.
+             */
+            if (type == None) {
+                actions = java_awt_dnd_DnDConstants_ACTION_COPY;
+                track = True;
+            }
+
+            XFree(data);
+        }
     }
 
     /* Extract the available data types. */
     if (event_data[1] & XDND_DATA_TYPES_BIT) {
-	unsigned char  ret;
-	Atom           type;
-	int            format;
-	unsigned long  nitems;
-	unsigned long  after;
-	unsigned char  *data;
+        unsigned char  ret;
+        Atom           type;
+        int            format;
+        unsigned long  nitems;
+        unsigned long  after;
+        unsigned char  *data;
 
-	data = NULL;
-	ret = checked_XGetWindowProperty(dpy, source_win, XA_XdndTypeList, 
-					 0, 0xFFFF, False, XA_ATOM, &type, 
-					 &format, &nitems, &after, &data);
+        data = NULL;
+        ret = checked_XGetWindowProperty(dpy, source_win, XA_XdndTypeList,
+                                         0, 0xFFFF, False, XA_ATOM, &type,
+                                         &format, &nitems, &after, &data);
 
-	/* Ignore the source if the window is destroyed. */
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.", 
-			    __FILE__, __LINE__);
-	    return EventFailure;
-	}
-	
-	if (ret == Success) {
-	    if (type == XA_ATOM && format == 32 && nitems > 0) {
-		data_types_count = nitems;
-		data_types = (Atom*)malloc(data_types_count * sizeof(Atom));
+        /* Ignore the source if the window is destroyed. */
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.",
+                            __FILE__, __LINE__);
+            return EventFailure;
+        }
 
-		if (data_types == NULL) {
-		    XFree(data);
-		    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - malloc fails.", 
-				    __FILE__, __LINE__);
-		    return EventFailure;
-		}
+        if (ret == Success) {
+            if (type == XA_ATOM && format == 32 && nitems > 0) {
+                data_types_count = nitems;
+                data_types = (Atom*)malloc(data_types_count * sizeof(Atom));
 
-		memcpy((void *)data_types, (void *)data, 
-		       data_types_count * sizeof(Atom));
-	    }
+                if (data_types == NULL) {
+                    XFree(data);
+                    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - malloc fails.",
+                                    __FILE__, __LINE__);
+                    return EventFailure;
+                }
 
-	    XFree(data);
-	}
+                memcpy((void *)data_types, (void *)data,
+                       data_types_count * sizeof(Atom));
+            }
+
+            XFree(data);
+        }
     } else {
         int i;
         data_types = (Atom*)malloc(3 * sizeof (Atom));
         if (data_types == NULL) {
-            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - malloc fails.", 
+            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - malloc fails.",
                             __FILE__, __LINE__);
             return EventFailure;
         }
@@ -1635,34 +1635,34 @@ handle_xdnd_enter(XClientMessageEvent* event) {
     java_data_types = get_data_types_array(env, data_types, data_types_count);
 
     if (JNU_IsNull(env, java_data_types)) {
-	DTRACE_PRINTLN2("%s:%d XdndEnter rejected - cannot create types array.", 
-			__FILE__, __LINE__);
-	free((char*)data_types);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndEnter rejected - cannot create types array.",
+                        __FILE__, __LINE__);
+        free((char*)data_types);
+        return EventFailure;
     }
 
-    /* 
+    /*
      * Select for StructureNotifyMask to receive DestroyNotify in case of source
      * crash.
      */
     {
-	unsigned char ret;
-	XWindowAttributes xwa;
+        unsigned char ret;
+        XWindowAttributes xwa;
 
-	XGetWindowAttributes(dpy, source_win, &xwa);
+        XGetWindowAttributes(dpy, source_win, &xwa);
 
-	source_win_mask = xwa.your_event_mask;
+        source_win_mask = xwa.your_event_mask;
 
-	ret = checked_XSelectInput(dpy, source_win, 
-				   (source_win_mask | StructureNotifyMask)); 
+        ret = checked_XSelectInput(dpy, source_win,
+                                   (source_win_mask | StructureNotifyMask));
 
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.", 
-			    __FILE__, __LINE__);
-	    free((char*)data_types);
-	    (*env)->DeleteGlobalRef(env, java_data_types);
-	    return EventFailure;
-	}
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.",
+                            __FILE__, __LINE__);
+            free((char*)data_types);
+            (*env)->DeleteGlobalRef(env, java_data_types);
+            return EventFailure;
+        }
     }
 
     /* Update the global state. */
@@ -1676,9 +1676,9 @@ handle_xdnd_enter(XClientMessageEvent* event) {
     source_data_types_native = data_types;
     source_data_types_count = data_types_count;
 
-    DTRACE_PRINTLN5("%s:%d XdndEnter handled src_win=%ld protocol=%d fmt=%d.", 
-		    __FILE__, __LINE__, 
-		    source_window, source_protocol, data_types_count);
+    DTRACE_PRINTLN5("%s:%d XdndEnter handled src_win=%ld protocol=%d fmt=%d.",
+                    __FILE__, __LINE__,
+                    source_window, source_protocol, data_types_count);
 
     return EventSuccess;
 }
@@ -1701,23 +1701,23 @@ handle_xdnd_position(XClientMessageEvent* event) {
     jobject component = NULL;
     Window receiver = None;
 
-    DTRACE_PRINTLN5("%s:%d XdndPosition comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d XdndPosition comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
     if (source_protocol != XDND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d XdndPosition rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndPosition rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     source_win = event_data[0];
 
     /* Ignore XDnD messages from all other windows. */
     if (source_window != source_win) {
-	DTRACE_PRINTLN4("%s:%d XdndPosition rejected - invalid source window cur=%ld this=%ld.", 
-			__FILE__, __LINE__, source_window, source_win);
-	return EventFailure;
+        DTRACE_PRINTLN4("%s:%d XdndPosition rejected - invalid source window cur=%ld this=%ld.",
+                        __FILE__, __LINE__, source_window, source_win);
+        return EventFailure;
     }
 
     x = event_data[2] >> 16;
@@ -1726,66 +1726,66 @@ handle_xdnd_position(XClientMessageEvent* event) {
     component = get_component_for_window(event->window);
 
     if (JNU_IsNull(env, component)) {
-	/*
-	 * The window must be the embedding toplevel, since otherwise we would reject the
-	 * XdndEnter and never get to this point.
-	 */
-	DASSERT(is_embedding_toplevel(event->window));
+        /*
+         * The window must be the embedding toplevel, since otherwise we would reject the
+         * XdndEnter and never get to this point.
+         */
+        DASSERT(is_embedding_toplevel(event->window));
 
-	receiver = get_embedded_window(event->display, event->window, x, y);
+        receiver = get_embedded_window(event->display, event->window, x, y);
 
-	if (receiver != None) {
-	    component = get_component_for_window(receiver);
-	}
+        if (receiver != None) {
+            component = get_component_for_window(receiver);
+        }
     } else {
-	receiver = event->window;
+        receiver = event->window;
     }
 
-    /* Translate mouse position from root coordinates 
+    /* Translate mouse position from root coordinates
        to the target window coordinates. */
-    if (receiver != None) { 
-	Window child = None;
-	XTranslateCoordinates(event->display,
-			      get_root_for_window(receiver), 
-			      get_outer_canvas_for_window(receiver), 
-			      x, y, &x, &y, &child);
+    if (receiver != None) {
+        Window child = None;
+        XTranslateCoordinates(event->display,
+                              get_root_for_window(receiver),
+                              get_outer_canvas_for_window(receiver),
+                              x, y, &x, &y, &child);
     }
 
     /* Time stamp - new in XDnD version 1. */
     if (source_protocol_version > 0) {
-	time_stamp = event_data[3];
+        time_stamp = event_data[3];
     }
 
     /* User action - new in XDnD version 1. */
     if (source_protocol_version > 1) {
-	action_atom = event_data[4];
+        action_atom = event_data[4];
     } else {
-	/* The default action is XdndActionCopy */
-	action_atom = XA_XdndActionCopy;
+        /* The default action is XdndActionCopy */
+        action_atom = XA_XdndActionCopy;
     }
 
     action = xdnd_to_java_action(action_atom);
 
     if (track_source_actions) {
-	source_actions |= action;
+        source_actions |= action;
     }
 
     if (JNU_IsNull(env, component)) {
-	if (!JNU_IsNull(env, target_component)) {
-	    dt_postDropTargetEvent(env, target_component, x, y,
-				   java_awt_dnd_DnDConstants_ACTION_NONE,
-				   java_awt_event_MouseEvent_MOUSE_EXITED,
-				   NULL);
-	}
+        if (!JNU_IsNull(env, target_component)) {
+            dt_postDropTargetEvent(env, target_component, x, y,
+                                   java_awt_dnd_DnDConstants_ACTION_NONE,
+                                   java_awt_event_MouseEvent_MOUSE_EXITED,
+                                   NULL);
+        }
     } else {
-	if (JNU_IsNull(env, target_component)) {
-	    java_event_id = java_awt_event_MouseEvent_MOUSE_ENTERED;
-	} else {
-	    java_event_id = java_awt_event_MouseEvent_MOUSE_DRAGGED;
-	}
+        if (JNU_IsNull(env, target_component)) {
+            java_event_id = java_awt_event_MouseEvent_MOUSE_ENTERED;
+        } else {
+            java_event_id = java_awt_event_MouseEvent_MOUSE_DRAGGED;
+        }
 
-	dt_postDropTargetEvent(env, component, x, y, action, 
-			       java_event_id, event);
+        dt_postDropTargetEvent(env, component, x, y, action,
+                               java_event_id, event);
     }
 
     user_action = action;
@@ -1807,18 +1807,18 @@ handle_xdnd_leave(XClientMessageEvent* event) {
     Window source_win = None;
 
     if (source_protocol != XDND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d XdndLeave rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndLeave rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     source_win = event_data[0];
 
     /* Ignore XDnD messages from all other windows. */
     if (source_window != source_win) {
-	DTRACE_PRINTLN4("%s:%d XdndLeave rejected - invalid source window cur=%ld this=%ld.", 
-			__FILE__, __LINE__, source_window, source_win);
-	return EventFailure;
+        DTRACE_PRINTLN4("%s:%d XdndLeave rejected - invalid source window cur=%ld this=%ld.",
+                        __FILE__, __LINE__, source_window, source_win);
+        return EventFailure;
     }
 
     awt_dnd_cleanup();
@@ -1836,28 +1836,28 @@ handle_xdnd_drop(XClientMessageEvent* event) {
     long* event_data = event->data.l;
     Window source_win = None;
 
-    DTRACE_PRINTLN5("%s:%d XdndDrop comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d XdndDrop comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
     if (source_protocol != XDND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d XdndDrop rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d XdndDrop rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     source_win = event_data[0];
 
     /* Ignore XDnD messages from all other windows. */
     if (source_window != source_win) {
-	DTRACE_PRINTLN4("%s:%d XdndDrop rejected - invalid source window cur=%ld this=%ld.", 
-			__FILE__, __LINE__, source_window, source_win);
-	return EventFailure;
+        DTRACE_PRINTLN4("%s:%d XdndDrop rejected - invalid source window cur=%ld this=%ld.",
+                        __FILE__, __LINE__, source_window, source_win);
+        return EventFailure;
     }
 
     if (!JNU_IsNull(env, target_component)) {
-	dt_postDropTargetEvent(env, target_component, source_x, source_y, user_action,
-			       java_awt_event_MouseEvent_MOUSE_RELEASED, event);
+        dt_postDropTargetEvent(env, target_component, source_x, source_y, user_action,
+                               java_awt_event_MouseEvent_MOUSE_RELEASED, event);
     }
 
     return EventSuccess;
@@ -1868,7 +1868,7 @@ handle_xdnd_drop(XClientMessageEvent* event) {
  * TOP_LEVEL_ENTER should be passed to the original proxy only if the event is
  * invalid.
  */
-static EventStatus 
+static EventStatus
 handle_motif_top_level_enter(XClientMessageEvent* event) {
     JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
     Display* dpy = event->display;
@@ -1882,22 +1882,22 @@ handle_motif_top_level_enter(XClientMessageEvent* event) {
     Atom* data_types = NULL;
     jlongArray java_data_types = NULL;
 
-    DTRACE_PRINTLN5("%s:%d TOP_LEVEL_ENTER comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d TOP_LEVEL_ENTER comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
-    if (!JNU_IsNull(env, target_component) || source_window != None || 
-	source_protocol != NO_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+    if (!JNU_IsNull(env, target_component) || source_window != None ||
+        source_protocol != NO_PROTOCOL) {
+        DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     if (JNU_IsNull(env, get_component_for_window(event->window)) &&
-	!is_embedding_toplevel(event->window)) {
-	DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - window is not a registered drop site.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        !is_embedding_toplevel(event->window)) {
+        DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - window is not a registered drop site.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     event_byte_order = read_card8(event_data, 1);
@@ -1906,85 +1906,85 @@ handle_motif_top_level_enter(XClientMessageEvent* event) {
 
     /* Extract the available data types. */
     {
-	unsigned char  ret;
-	Atom           type;
-	int            format;
-	unsigned long  nitems;
-	unsigned long  after;
-	unsigned char  *data;
+        unsigned char  ret;
+        Atom           type;
+        int            format;
+        unsigned long  nitems;
+        unsigned long  after;
+        unsigned char  *data;
 
-	data = NULL;
-	ret = checked_XGetWindowProperty(dpy, source_win, property_atom, 0,
-					 0xFFFF, False, 
-					 _XA_MOTIF_DRAG_INITIATOR_INFO, &type, 
-					 &format, &nitems, &after, &data);
+        data = NULL;
+        ret = checked_XGetWindowProperty(dpy, source_win, property_atom, 0,
+                                         0xFFFF, False,
+                                         _XA_MOTIF_DRAG_INITIATOR_INFO, &type,
+                                         &format, &nitems, &after, &data);
 
-	/* Ignore the source if the window is destroyed. */
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid window.", 
-			    __FILE__, __LINE__);
-	    return EventFailure;
-	}
+        /* Ignore the source if the window is destroyed. */
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid window.",
+                            __FILE__, __LINE__);
+            return EventFailure;
+        }
 
-	if (ret == BadAtom) {
-	    DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid property atom.", 
-			    __FILE__, __LINE__);
-	    return EventFailure;
-	}
-	
-	if (ret == Success) {
-	    if (type == _XA_MOTIF_DRAG_INITIATOR_INFO && format == 8 && 
-		nitems == MOTIF_INITIATOR_INFO_SIZE) {
-		unsigned char property_byte_order = read_card8((char*)data, 0);
-		int index = read_card16((char*)data, 2, property_byte_order);
+        if (ret == BadAtom) {
+            DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - invalid property atom.",
+                            __FILE__, __LINE__);
+            return EventFailure;
+        }
 
-		protocol_version = read_card8((char*)data, 1);
+        if (ret == Success) {
+            if (type == _XA_MOTIF_DRAG_INITIATOR_INFO && format == 8 &&
+                nitems == MOTIF_INITIATOR_INFO_SIZE) {
+                unsigned char property_byte_order = read_card8((char*)data, 0);
+                int index = read_card16((char*)data, 2, property_byte_order);
 
-		if (protocol_version > MOTIF_DND_PROTOCOL_VERSION) {
-		    DTRACE_PRINTLN3("%s:%d TOP_LEVEL_ENTER rejected - invalid protocol version: %d.", 
-				    __FILE__, __LINE__, protocol_version);
-		    XFree(data);
-		    return EventFailure;
-		}
+                protocol_version = read_card8((char*)data, 1);
 
-		get_target_list_for_index(dpy, index, &data_types, &data_types_count);
-	    }
+                if (protocol_version > MOTIF_DND_PROTOCOL_VERSION) {
+                    DTRACE_PRINTLN3("%s:%d TOP_LEVEL_ENTER rejected - invalid protocol version: %d.",
+                                    __FILE__, __LINE__, protocol_version);
+                    XFree(data);
+                    return EventFailure;
+                }
 
-	    XFree(data);
-	}
+                get_target_list_for_index(dpy, index, &data_types, &data_types_count);
+            }
+
+            XFree(data);
+        }
     }
 
     java_data_types = get_data_types_array(env, data_types, data_types_count);
 
     if (JNU_IsNull(env, java_data_types)) {
-	DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - cannot create types array.", 
-			__FILE__, __LINE__);
-	free((char*)data_types);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d TOP_LEVEL_ENTER rejected - cannot create types array.",
+                        __FILE__, __LINE__);
+        free((char*)data_types);
+        return EventFailure;
     }
 
-    /* 
+    /*
      * Select for StructureNotifyMask to receive DestroyNotify in case of source
      * crash.
      */
     {
-	unsigned char ret;
-	XWindowAttributes xwa;
+        unsigned char ret;
+        XWindowAttributes xwa;
 
-	XGetWindowAttributes(dpy, source_win, &xwa);
+        XGetWindowAttributes(dpy, source_win, &xwa);
 
-	source_win_mask = xwa.your_event_mask;
+        source_win_mask = xwa.your_event_mask;
 
-	ret = checked_XSelectInput(dpy, source_win, 
-				   (source_win_mask | StructureNotifyMask)); 
+        ret = checked_XSelectInput(dpy, source_win,
+                                   (source_win_mask | StructureNotifyMask));
 
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.", 
-			    __FILE__, __LINE__);
-	    free((char*)data_types);
-	    (*env)->DeleteGlobalRef(env, java_data_types);
-	    return EventFailure;
-	}
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d XdndEnter rejected - invalid window.",
+                            __FILE__, __LINE__);
+            free((char*)data_types);
+            (*env)->DeleteGlobalRef(env, java_data_types);
+            return EventFailure;
+        }
     }
 
     source_protocol = MOTIF_DND_PROTOCOL;
@@ -1992,8 +1992,8 @@ handle_motif_top_level_enter(XClientMessageEvent* event) {
     source_window = source_win;
     source_atom = property_atom;
     source_window_mask = source_win_mask;
-    /* 
-     * TOP_LEVEL_ENTER doesn't communicate the list of supported actions 
+    /*
+     * TOP_LEVEL_ENTER doesn't communicate the list of supported actions
      * They are provided in DRAG_MOTION.
      */
     source_actions = java_awt_dnd_DnDConstants_ACTION_NONE;
@@ -2001,20 +2001,20 @@ handle_motif_top_level_enter(XClientMessageEvent* event) {
     source_data_types = java_data_types;
     source_data_types_native = data_types;
     source_data_types_count = data_types_count;
-    DTRACE_PRINTLN6("%s:%d TOP_LEVEL_ENTER comp=%d src_win=%ld protocol=%d fmt=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol, data_types_count);
+    DTRACE_PRINTLN6("%s:%d TOP_LEVEL_ENTER comp=%d src_win=%ld protocol=%d fmt=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol, data_types_count);
 
     return EventSuccess;
 }
 
 /*
- * Returns EventPassAlong if the event should be passed to the original proxy. 
- * DRAG_MOTION event shouldn't be passed to the original proxy only if it is 
- * a valid event and the mouse coordinates passed in it specify the point over 
- * a Java component in this JVM. 
+ * Returns EventPassAlong if the event should be passed to the original proxy.
+ * DRAG_MOTION event shouldn't be passed to the original proxy only if it is
+ * a valid event and the mouse coordinates passed in it specify the point over
+ * a Java component in this JVM.
  */
-static EventStatus 
+static EventStatus
 handle_motif_drag_motion(XClientMessageEvent* event) {
     JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
     char* event_data = event->data.b;
@@ -2031,14 +2031,14 @@ handle_motif_drag_motion(XClientMessageEvent* event) {
     jint java_event_id = 0;
     jobject component = NULL;
 
-    DTRACE_PRINTLN5("%s:%d DRAG_MOTION comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d DRAG_MOTION comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
     if (source_protocol != MOTIF_DND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d DRAG_MOTION rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d DRAG_MOTION rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     event_reason = read_card8(event_data, 0) & MOTIF_MESSAGE_REASON_MASK;
@@ -2055,77 +2055,77 @@ handle_motif_drag_motion(XClientMessageEvent* event) {
     /* Append source window id to the event data, so that we can send the
        response properly. */
     {
-	Window win = source_window;
-	void* p = &event->data.b[12];
-	if (event_byte_order != MOTIF_BYTE_ORDER) {
-	    SWAP4BYTES(win);
-	}
-	write_card32(&p, (CARD32)win);
+        Window win = source_window;
+        void* p = &event->data.b[12];
+        if (event_byte_order != MOTIF_BYTE_ORDER) {
+            SWAP4BYTES(win);
+        }
+        write_card32(&p, (CARD32)win);
     }
 
     component = get_component_for_window(event->window);
 
     if (event_reason == OPERATION_CHANGED) {
-	/* OPERATION_CHANGED event doesn't provide coordinates, so we use
-	   previously stored position and component ref. */
-	x = source_x;
-	y = source_y;
+        /* OPERATION_CHANGED event doesn't provide coordinates, so we use
+           previously stored position and component ref. */
+        x = source_x;
+        y = source_y;
 
-	if (JNU_IsNull(env, component)) {
-	    component = target_component;
-	}
+        if (JNU_IsNull(env, component)) {
+            component = target_component;
+        }
     } else {
-	Window receiver = None;
+        Window receiver = None;
 
-	x = read_card16(event_data, 8, event_byte_order);
-	y = read_card16(event_data, 10, event_byte_order);
+        x = read_card16(event_data, 8, event_byte_order);
+        y = read_card16(event_data, 10, event_byte_order);
 
-	if (JNU_IsNull(env, component)) {
-	    /*
-	     * The window must be the embedding toplevel, since otherwise we
-	     * would reject the TOP_LEVEL_ENTER and never get to this point.
-	     */
-	    DASSERT(is_embedding_toplevel(event->window));
+        if (JNU_IsNull(env, component)) {
+            /*
+             * The window must be the embedding toplevel, since otherwise we
+             * would reject the TOP_LEVEL_ENTER and never get to this point.
+             */
+            DASSERT(is_embedding_toplevel(event->window));
 
-	    receiver = get_embedded_window(event->display, event->window, x, y);
+            receiver = get_embedded_window(event->display, event->window, x, y);
 
-	    if (receiver != None) {
-		component = get_component_for_window(receiver);
-	    }
-	} else {
-	    receiver = event->window;
-	}
+            if (receiver != None) {
+                component = get_component_for_window(receiver);
+            }
+        } else {
+            receiver = event->window;
+        }
 
-	/* Translate mouse position from root coordinates 
-	   to the target window coordinates. */
-	if (receiver != None) { 
-	    Window child = None;
-	    XTranslateCoordinates(event->display, 
-				  get_root_for_window(receiver), 
-				  get_outer_canvas_for_window(receiver), 
-				  x, y, &x, &y, &child);
-	}
+        /* Translate mouse position from root coordinates
+           to the target window coordinates. */
+        if (receiver != None) {
+            Window child = None;
+            XTranslateCoordinates(event->display,
+                                  get_root_for_window(receiver),
+                                  get_outer_canvas_for_window(receiver),
+                                  x, y, &x, &y, &child);
+        }
     }
 
     if (JNU_IsNull(env, component)) {
-	if (!JNU_IsNull(env, target_component)) {
-	    /* Triggers dragExit */
-	    dt_postDropTargetEvent(env, target_component, x, y,
-				   java_awt_dnd_DnDConstants_ACTION_NONE,
-				   java_awt_event_MouseEvent_MOUSE_EXITED,
-				   NULL);
-	}
+        if (!JNU_IsNull(env, target_component)) {
+            /* Triggers dragExit */
+            dt_postDropTargetEvent(env, target_component, x, y,
+                                   java_awt_dnd_DnDConstants_ACTION_NONE,
+                                   java_awt_event_MouseEvent_MOUSE_EXITED,
+                                   NULL);
+        }
     } else {
-	if (JNU_IsNull(env, target_component)) {
-	    /* Triggers dragEnter */
-	    java_event_id = java_awt_event_MouseEvent_MOUSE_ENTERED;
-	} else {
-	    /* Triggers dragOver */
-	    java_event_id = java_awt_event_MouseEvent_MOUSE_DRAGGED;
-	}
+        if (JNU_IsNull(env, target_component)) {
+            /* Triggers dragEnter */
+            java_event_id = java_awt_event_MouseEvent_MOUSE_ENTERED;
+        } else {
+            /* Triggers dragOver */
+            java_event_id = java_awt_event_MouseEvent_MOUSE_DRAGGED;
+        }
 
-	dt_postDropTargetEvent(env, component, x, y, java_action, java_event_id,
-			       event);
+        dt_postDropTargetEvent(env, component, x, y, java_action, java_event_id,
+                               event);
     }
 
     source_actions = java_actions;
@@ -2139,25 +2139,25 @@ handle_motif_drag_motion(XClientMessageEvent* event) {
 }
 
 /*
- * Returns EventPassAlong if the event should be passed to the original proxy. 
+ * Returns EventPassAlong if the event should be passed to the original proxy.
  * TOP_LEVEL_LEAVE should be passed to the original proxy only if the event
  * is invalid.
  */
-static EventStatus 
+static EventStatus
 handle_motif_top_level_leave(XClientMessageEvent* event) {
     JNIEnv *env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_4);
     char* event_data = event->data.b;
     unsigned char event_byte_order = 0;
     Window source_win = None;
 
-    DTRACE_PRINTLN5("%s:%d TOP_LEVEL_LEAVE comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d TOP_LEVEL_LEAVE comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
     if (source_protocol != MOTIF_DND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d TOP_LEVEL_LEAVE rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d TOP_LEVEL_LEAVE rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     event_byte_order = read_card8(event_data, 1);
@@ -2165,52 +2165,52 @@ handle_motif_top_level_leave(XClientMessageEvent* event) {
 
     /* Ignore Motif DnD messages from all other windows. */
     if (source_window != source_win) {
-	DTRACE_PRINTLN4("%s:%d TOP_LEVEL_LEAVE rejected - invalid source window cur=%ld this=%ld.", 
-			__FILE__, __LINE__, source_window, source_win);
-	return EventFailure;
+        DTRACE_PRINTLN4("%s:%d TOP_LEVEL_LEAVE rejected - invalid source window cur=%ld this=%ld.",
+                        __FILE__, __LINE__, source_window, source_win);
+        return EventFailure;
     }
 
     /*
      * Postpone upcall to java, so that we can abort it in case
      * if drop immediatelly follows (see BugTraq ID 4395290).
      * Send a dummy ClientMessage event to guarantee that a postponed java
-     * upcall will be processed. 
+     * upcall will be processed.
      */
     motif_top_level_leave_postponed = True;
     {
-	XClientMessageEvent dummy;
-	Window proxy;
-	
-	dummy.display      = event->display;
-	dummy.type         = ClientMessage;
-	dummy.window       = event->window;
-	dummy.format       = 32;
-	dummy.message_type = None;
+        XClientMessageEvent dummy;
+        Window proxy;
 
-	/*
-	 * If this is an embedded drop site, the event should go to the
-	 * awt_root_window as this is a proxy for all embedded drop sites.
-	 * Otherwise the event should go to the event->window, as we don't use
-	 * proxies for normal drop sites.  
-	 */
-	if (is_embedding_toplevel(event->window)) {
-	    proxy = get_awt_root_window();
-	} else {
-	    proxy = event->window;
-	}
+        dummy.display      = event->display;
+        dummy.type         = ClientMessage;
+        dummy.window       = event->window;
+        dummy.format       = 32;
+        dummy.message_type = None;
 
-	XSendEvent(event->display, proxy, False, NoEventMask,
-		   (XEvent*)&dummy);
+        /*
+         * If this is an embedded drop site, the event should go to the
+         * awt_root_window as this is a proxy for all embedded drop sites.
+         * Otherwise the event should go to the event->window, as we don't use
+         * proxies for normal drop sites.
+         */
+        if (is_embedding_toplevel(event->window)) {
+            proxy = get_awt_root_window();
+        } else {
+            proxy = event->window;
+        }
+
+        XSendEvent(event->display, proxy, False, NoEventMask,
+                   (XEvent*)&dummy);
     }
 
     return EventSuccess;
 }
 
 /*
- * Returns EventPassAlong if the event should be passed to the original proxy. 
- * DROP_START event shouldn't be passed to the original proxy only if it is 
- * a valid event and the mouse coordinates passed in it specify the point over 
- * a Java component in this JVM. 
+ * Returns EventPassAlong if the event should be passed to the original proxy.
+ * DROP_START event shouldn't be passed to the original proxy only if it is
+ * a valid event and the mouse coordinates passed in it specify the point over
+ * a Java component in this JVM.
  */
 static EventStatus
 handle_motif_drop_start(XClientMessageEvent* event) {
@@ -2229,14 +2229,14 @@ handle_motif_drop_start(XClientMessageEvent* event) {
     jobject component = NULL;
     Window receiver = None;
 
-    DTRACE_PRINTLN5("%s:%d DROP_START comp=%X src_win=%ld protocol=%d.", 
-		    __FILE__, __LINE__, 
-		    target_component, source_window, source_protocol);
+    DTRACE_PRINTLN5("%s:%d DROP_START comp=%X src_win=%ld protocol=%d.",
+                    __FILE__, __LINE__,
+                    target_component, source_window, source_protocol);
 
     if (source_protocol != MOTIF_DND_PROTOCOL) {
-	DTRACE_PRINTLN2("%s:%d DROP_START rejected - invalid state.", 
-			__FILE__, __LINE__);
-	return EventFailure;
+        DTRACE_PRINTLN2("%s:%d DROP_START rejected - invalid state.",
+                        __FILE__, __LINE__);
+        return EventFailure;
     }
 
     event_byte_order = read_card8(event_data, 1);
@@ -2244,9 +2244,9 @@ handle_motif_drop_start(XClientMessageEvent* event) {
 
     /* Ignore Motif DnD messages from all other windows. */
     if (source_window != source_win) {
-	DTRACE_PRINTLN4("%s:%d DROP_START rejected - invalid source window cur=%ld this=%ld.", 
-			__FILE__, __LINE__, source_window, source_win);
-	return EventFailure;
+        DTRACE_PRINTLN4("%s:%d DROP_START rejected - invalid source window cur=%ld this=%ld.",
+                        __FILE__, __LINE__, source_window, source_win);
+        return EventFailure;
     }
 
     property_atom = read_card32(event_data, 12, event_byte_order);
@@ -2267,43 +2267,43 @@ handle_motif_drop_start(XClientMessageEvent* event) {
     component = get_component_for_window(event->window);
 
     if (JNU_IsNull(env, component)) {
-	/*
-	 * The window must be the embedding toplevel, since otherwise we would reject the
-	 * TOP_LEVEL_ENTER and never get to this point.
-	 */
-	DASSERT(is_embedding_toplevel(event->window));
+        /*
+         * The window must be the embedding toplevel, since otherwise we would reject the
+         * TOP_LEVEL_ENTER and never get to this point.
+         */
+        DASSERT(is_embedding_toplevel(event->window));
 
-	receiver = get_embedded_window(event->display, event->window, x, y);
+        receiver = get_embedded_window(event->display, event->window, x, y);
 
-	if (receiver != None) {
-	    component = get_component_for_window(receiver);
-	}
+        if (receiver != None) {
+            component = get_component_for_window(receiver);
+        }
     } else {
-	receiver = event->window;
+        receiver = event->window;
     }
 
-    /* Translate mouse position from root coordinates 
+    /* Translate mouse position from root coordinates
        to the target window coordinates. */
-    if (receiver != None) { 
-	Window child = None;
-	XTranslateCoordinates(event->display,
-			      get_root_for_window(receiver), 
-			      get_outer_canvas_for_window(receiver), 
-			      x, y, &x, &y, &child);
+    if (receiver != None) {
+        Window child = None;
+        XTranslateCoordinates(event->display,
+                              get_root_for_window(receiver),
+                              get_outer_canvas_for_window(receiver),
+                              x, y, &x, &y, &child);
     }
 
     if (JNU_IsNull(env, component)) {
-	if (!JNU_IsNull(env, target_component)) {
-	    /* Triggers dragExit */
-	    dt_postDropTargetEvent(env, target_component, x, y,
-				   java_awt_dnd_DnDConstants_ACTION_NONE,
-				   java_awt_event_MouseEvent_MOUSE_EXITED,
-				   NULL);
-	}
+        if (!JNU_IsNull(env, target_component)) {
+            /* Triggers dragExit */
+            dt_postDropTargetEvent(env, target_component, x, y,
+                                   java_awt_dnd_DnDConstants_ACTION_NONE,
+                                   java_awt_event_MouseEvent_MOUSE_EXITED,
+                                   NULL);
+        }
     } else {
-	dt_postDropTargetEvent(env, component, x, y, java_action, 
-			       java_awt_event_MouseEvent_MOUSE_RELEASED, 
-			       event);
+        dt_postDropTargetEvent(env, component, x, y, java_action,
+                               java_awt_event_MouseEvent_MOUSE_RELEASED,
+                               event);
     }
 
     return EventSuccess;
@@ -2314,57 +2314,57 @@ send_enter_message_to_toplevel(Window toplevel, XClientMessageEvent* xclient) {
     XClientMessageEvent enter;
 
     if (source_protocol == XDND_PROTOCOL) {
-	enter.display = xclient->display;
-	enter.type = ClientMessage;
-	enter.window = toplevel;
-	enter.format = 32;
-	enter.message_type = XA_XdndEnter;
-	enter.data.l[0] = xclient->data.l[0]; /* XID of the source window */
-	enter.data.l[1] = source_protocol_version << XDND_PROTOCOL_SHIFT;
-	enter.data.l[1] |= source_data_types_count > 3 ? XDND_DATA_TYPES_BIT : 0;
-	enter.data.l[2] = 
-	    source_data_types_count > 0 ? source_data_types_native[0] : None;
-	enter.data.l[3] = 
-	    source_data_types_count > 1 ? source_data_types_native[1] : None;
-	enter.data.l[4] = 
-	    source_data_types_count > 2 ? source_data_types_native[2] : None;
+        enter.display = xclient->display;
+        enter.type = ClientMessage;
+        enter.window = toplevel;
+        enter.format = 32;
+        enter.message_type = XA_XdndEnter;
+        enter.data.l[0] = xclient->data.l[0]; /* XID of the source window */
+        enter.data.l[1] = source_protocol_version << XDND_PROTOCOL_SHIFT;
+        enter.data.l[1] |= source_data_types_count > 3 ? XDND_DATA_TYPES_BIT : 0;
+        enter.data.l[2] =
+            source_data_types_count > 0 ? source_data_types_native[0] : None;
+        enter.data.l[3] =
+            source_data_types_count > 1 ? source_data_types_native[1] : None;
+        enter.data.l[4] =
+            source_data_types_count > 2 ? source_data_types_native[2] : None;
     } else if (source_protocol == MOTIF_DND_PROTOCOL) {
-	int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
-	unsigned char byte_order = xclient->data.b[1];
+        int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
+        unsigned char byte_order = xclient->data.b[1];
 
-	enter.display = xclient->display;
-	enter.type = ClientMessage;
-	enter.window = toplevel;
-	enter.format = 8;
-	enter.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
+        enter.display = xclient->display;
+        enter.type = ClientMessage;
+        enter.window = toplevel;
+        enter.format = 8;
+        enter.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
 
-	{
-	    void* p = &enter.data.b[0];
-	    int flags = 0;
+        {
+            void* p = &enter.data.b[0];
+            int flags = 0;
 
-	    flags |= java_to_motif_actions(user_action) << MOTIF_DND_ACTION_SHIFT;
-	    flags |= java_to_motif_actions(source_actions) << MOTIF_DND_ACTIONS_SHIFT;
+            flags |= java_to_motif_actions(user_action) << MOTIF_DND_ACTION_SHIFT;
+            flags |= java_to_motif_actions(source_actions) << MOTIF_DND_ACTIONS_SHIFT;
 
-	    write_card8(&p, TOP_LEVEL_ENTER | MOTIF_MESSAGE_FROM_INITIATOR);
-	    write_card8(&p, byte_order);
-	    write_card16(&p, flags);
-	    {
-		Time time_stamp = read_card32(xclient->data.b, 4, byte_order); 
-		Window src_window = source_window;
-		Atom motif_atom = _XA_MOTIF_ATOM_0;
+            write_card8(&p, TOP_LEVEL_ENTER | MOTIF_MESSAGE_FROM_INITIATOR);
+            write_card8(&p, byte_order);
+            write_card16(&p, flags);
+            {
+                Time time_stamp = read_card32(xclient->data.b, 4, byte_order);
+                Window src_window = source_window;
+                Atom motif_atom = _XA_MOTIF_ATOM_0;
 
-		if (byte_order != MOTIF_BYTE_ORDER) {
-		    SWAP4BYTES(time_stamp);
-		    SWAP4BYTES(src_window);
-		    SWAP4BYTES(motif_atom);
-		}
-		write_card32(&p, time_stamp);
-		write_card32(&p, src_window);
-		write_card32(&p, motif_atom);
-	    }
-	}
+                if (byte_order != MOTIF_BYTE_ORDER) {
+                    SWAP4BYTES(time_stamp);
+                    SWAP4BYTES(src_window);
+                    SWAP4BYTES(motif_atom);
+                }
+                write_card32(&p, time_stamp);
+                write_card32(&p, src_window);
+                write_card32(&p, motif_atom);
+            }
+        }
     } else {
-	return;
+        return;
     }
 
     forward_client_message_to_toplevel(toplevel, &enter);
@@ -2375,44 +2375,44 @@ send_leave_message_to_toplevel(Window toplevel, XClientMessageEvent* xclient) {
     XClientMessageEvent leave;
 
     if (source_protocol == XDND_PROTOCOL) {
-	leave.display = xclient->display;
-	leave.type = ClientMessage;
-	leave.window = toplevel;
-	leave.format = 32;
-	leave.message_type = XA_XdndLeave;
-	leave.data.l[0] = xclient->data.l[0]; /* XID of the source window */
-	leave.data.l[1] = 0; /* flags */
+        leave.display = xclient->display;
+        leave.type = ClientMessage;
+        leave.window = toplevel;
+        leave.format = 32;
+        leave.message_type = XA_XdndLeave;
+        leave.data.l[0] = xclient->data.l[0]; /* XID of the source window */
+        leave.data.l[1] = 0; /* flags */
     } else if (source_protocol == MOTIF_DND_PROTOCOL) {
-	int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
-	unsigned char byte_order = xclient->data.b[1];
+        int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
+        unsigned char byte_order = xclient->data.b[1];
 
-	leave.display = xclient->display;
-	leave.type = ClientMessage;
-	leave.window = toplevel;
-	leave.format = 8;
-	leave.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
+        leave.display = xclient->display;
+        leave.type = ClientMessage;
+        leave.window = toplevel;
+        leave.format = 8;
+        leave.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
 
-	{
-	    void* p = &leave.data.b[0];
-	    int flags = 0;
+        {
+            void* p = &leave.data.b[0];
+            int flags = 0;
 
-	    write_card8(&p, TOP_LEVEL_LEAVE | MOTIF_MESSAGE_FROM_INITIATOR);
-	    write_card8(&p, byte_order);
+            write_card8(&p, TOP_LEVEL_LEAVE | MOTIF_MESSAGE_FROM_INITIATOR);
+            write_card8(&p, byte_order);
 
-	    {
-		Time time_stamp = read_card32(xclient->data.b, 4, byte_order); 
-		Window src_window = source_window;
+            {
+                Time time_stamp = read_card32(xclient->data.b, 4, byte_order);
+                Window src_window = source_window;
 
-		if (byte_order != MOTIF_BYTE_ORDER) {
-		    SWAP4BYTES(time_stamp);
-		    SWAP4BYTES(src_window);
-		}
-		write_card32(&p, time_stamp);
-		write_card32(&p, src_window);
-	    }
-	}
+                if (byte_order != MOTIF_BYTE_ORDER) {
+                    SWAP4BYTES(time_stamp);
+                    SWAP4BYTES(src_window);
+                }
+                write_card32(&p, time_stamp);
+                write_card32(&p, src_window);
+            }
+        }
     } else {
-	return;
+        return;
     }
 
     forward_client_message_to_toplevel(toplevel, &leave);
@@ -2420,99 +2420,99 @@ send_leave_message_to_toplevel(Window toplevel, XClientMessageEvent* xclient) {
 
 static void
 post_process_client_message(XClientMessageEvent* xclient, EventStatus status,
-			    EventType type) {
+                            EventType type) {
     Window win = xclient->window;
     Boolean postponed_leave = motif_top_level_leave_postponed;
 
     motif_top_level_leave_postponed = False;
 
     if (is_embedding_toplevel(win)) {
-	Boolean server_grabbed = False;
+        Boolean server_grabbed = False;
 
-	if (postponed_leave) {
-	    XClientMessageEvent* leave = &motif_top_level_leave_postponed_event;
-	    DASSERT(leave->type == ClientMessage && type == DropEvent);
-	    /* Grab the server to ensure that no event is sent between 
-	       the TOP_LEVEL_LEAVE and the next message. */
-	    XGrabServer(awt_display);
-	    forward_client_message_to_toplevel(leave->window, leave);
-	    memset(&motif_top_level_leave_postponed_event, 0, 
-		   sizeof(XClientMessageEvent));
-	}
+        if (postponed_leave) {
+            XClientMessageEvent* leave = &motif_top_level_leave_postponed_event;
+            DASSERT(leave->type == ClientMessage && type == DropEvent);
+            /* Grab the server to ensure that no event is sent between
+               the TOP_LEVEL_LEAVE and the next message. */
+            XGrabServer(awt_display);
+            forward_client_message_to_toplevel(leave->window, leave);
+            memset(&motif_top_level_leave_postponed_event, 0,
+                   sizeof(XClientMessageEvent));
+        }
 
-	/*
-	 * This code forwards drag notifications to the browser according to the
-	 * following rules:
-	 *  - the messages that we failed to process are always forwarded to the
-	 *    browser;
-	 *  - MotionEvents and DropEvents are forwarded if and only if the drag
-	 *    is not over a plugin window; 
-	 *  - XDnD: EnterEvents and LeaveEvents are never forwarded, instead, we
-	 *    send synthesized EnterEvents or LeaveEvents when the drag 
-	 *    respectively exits or enters plugin windows;
-	 *  - Motif DnD: EnterEvents and LeaveEvents are always forwarded.
-	 * Synthetic EnterEvents and LeaveEvents are needed, because the XDnD drop
-	 * site implemented Netscape 6.2 has a nice feature: when it receives
-	 * the first XdndPosition it continuously sends XdndStatus messages to
-	 * the source (every 100ms) until the drag terminates or leaves the drop
-	 * site. When the mouse is dragged over plugin window embedded in the
-	 * browser frame, these XdndStatus messages are mixed with the XdndStatus
-	 * messages sent from the plugin.
-	 * For Motif DnD, synthetic events cause Motif warnings being displayed,
-	 * so these events are always forwarded. However, Motif DnD drop site in
-	 * Netscape 6.2 is implemented in the same way, so there could be similar
-	 * problems if the drag source choose Motif DnD for communication.
-	 */
-	switch (status) {
-	case EventFailure:
-	    forward_client_message_to_toplevel(win, xclient);
-	    break;
-	case EventSuccess: 
-	{
-	    /* True iff the previous notification was MotionEvent and it was
-	       forwarded to the browser. */
-	    static Boolean motion_passed_along = False;
+        /*
+         * This code forwards drag notifications to the browser according to the
+         * following rules:
+         *  - the messages that we failed to process are always forwarded to the
+         *    browser;
+         *  - MotionEvents and DropEvents are forwarded if and only if the drag
+         *    is not over a plugin window;
+         *  - XDnD: EnterEvents and LeaveEvents are never forwarded, instead, we
+         *    send synthesized EnterEvents or LeaveEvents when the drag
+         *    respectively exits or enters plugin windows;
+         *  - Motif DnD: EnterEvents and LeaveEvents are always forwarded.
+         * Synthetic EnterEvents and LeaveEvents are needed, because the XDnD drop
+         * site implemented Netscape 6.2 has a nice feature: when it receives
+         * the first XdndPosition it continuously sends XdndStatus messages to
+         * the source (every 100ms) until the drag terminates or leaves the drop
+         * site. When the mouse is dragged over plugin window embedded in the
+         * browser frame, these XdndStatus messages are mixed with the XdndStatus
+         * messages sent from the plugin.
+         * For Motif DnD, synthetic events cause Motif warnings being displayed,
+         * so these events are always forwarded. However, Motif DnD drop site in
+         * Netscape 6.2 is implemented in the same way, so there could be similar
+         * problems if the drag source choose Motif DnD for communication.
+         */
+        switch (status) {
+        case EventFailure:
+            forward_client_message_to_toplevel(win, xclient);
+            break;
+        case EventSuccess:
+        {
+            /* True iff the previous notification was MotionEvent and it was
+               forwarded to the browser. */
+            static Boolean motion_passed_along = False;
 
-	    Boolean motif_protocol = 
-		xclient->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
+            Boolean motif_protocol =
+                xclient->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
 
-	    switch (type) {
-	    case MotionEvent:
-		if (JNU_IsNull(env, target_component)) {
-		    if (!motion_passed_along && !motif_protocol) {
-			send_enter_message_to_toplevel(win, xclient); 
-		    }
-		    forward_client_message_to_toplevel(win, xclient);
-		    motion_passed_along = True;
-		} else {
-		    if (motion_passed_along && !motif_protocol) {
-			send_leave_message_to_toplevel(win, xclient); 
-		    }
-		    motion_passed_along = False;
-		}
-		break;
-	    case DropEvent:
-		if (JNU_IsNull(env, target_component)) {
-		    forward_client_message_to_toplevel(win, xclient);
-		    /* The last chance to cleanup. */
-		    awt_dnd_cleanup();
-		}
-		motion_passed_along = False;
-		break;
-	    case EnterEvent:
-	    case LeaveEvent:
-		if (motif_protocol) {
-		    forward_client_message_to_toplevel(win, xclient);
-		}
-		motion_passed_along = False;
-		break;
-	    }
-	}
-	}
+            switch (type) {
+            case MotionEvent:
+                if (JNU_IsNull(env, target_component)) {
+                    if (!motion_passed_along && !motif_protocol) {
+                        send_enter_message_to_toplevel(win, xclient);
+                    }
+                    forward_client_message_to_toplevel(win, xclient);
+                    motion_passed_along = True;
+                } else {
+                    if (motion_passed_along && !motif_protocol) {
+                        send_leave_message_to_toplevel(win, xclient);
+                    }
+                    motion_passed_along = False;
+                }
+                break;
+            case DropEvent:
+                if (JNU_IsNull(env, target_component)) {
+                    forward_client_message_to_toplevel(win, xclient);
+                    /* The last chance to cleanup. */
+                    awt_dnd_cleanup();
+                }
+                motion_passed_along = False;
+                break;
+            case EnterEvent:
+            case LeaveEvent:
+                if (motif_protocol) {
+                    forward_client_message_to_toplevel(win, xclient);
+                }
+                motion_passed_along = False;
+                break;
+            }
+        }
+        }
 
-	if (postponed_leave) {
-	    XUngrabServer(awt_display);	
-	}
+        if (postponed_leave) {
+            XUngrabServer(awt_display);
+        }
     }
 }
 
@@ -2520,135 +2520,135 @@ post_process_client_message(XClientMessageEvent* xclient, EventStatus status,
  * Returns True if the event is processed and shouldn't be passed along to Java.
  * Otherwise, return False.
  */
-Boolean 
+Boolean
 awt_dnd_dt_process_event(XEvent* event) {
     Display* dpy = event->xany.display;
     EventStatus status = EventFailure;
     EventType type = UnknownEvent;
 
     if (event->type == DestroyNotify) {
-	if (event->xany.window == source_window) {
-	    awt_dnd_cleanup();
-	}
-	/* pass along */
-	return False;
+        if (event->xany.window == source_window) {
+            awt_dnd_cleanup();
+        }
+        /* pass along */
+        return False;
     }
 
     if (event->type == PropertyNotify) {
-	if (is_embedding_toplevel(event->xany.window)) {
-	    Atom atom = event->xproperty.atom;
-	    /*
-	     * If some other client replaced the XDnD or Motif DnD proxy with
-	     * another window we set the proxy back to the awt_root_window
-	     * and update the entry in the embedded_drop_site_list.
-	     * This code is needed, as for example Netscape 4.7 resets the proxy
-	     * when the browser shell is resized. 
-	     */
-	    if (atom == _XA_MOTIF_DRAG_RECEIVER_INFO) {
-		Window prev_motif_proxy;
-		ProxyRegistrationStatus status;
-		status = set_motif_proxy(event->xany.display, event->xany.window, 
-					 get_awt_root_window(), &prev_motif_proxy);
-		if (status != RegFailure && status != RegAlreadyRegistered) {
-		    set_motif_proxy_for_toplevel(event->xany.window, 
-						 prev_motif_proxy,
-						 status == RegOverride);
-		}
-	    }
+        if (is_embedding_toplevel(event->xany.window)) {
+            Atom atom = event->xproperty.atom;
+            /*
+             * If some other client replaced the XDnD or Motif DnD proxy with
+             * another window we set the proxy back to the awt_root_window
+             * and update the entry in the embedded_drop_site_list.
+             * This code is needed, as for example Netscape 4.7 resets the proxy
+             * when the browser shell is resized.
+             */
+            if (atom == _XA_MOTIF_DRAG_RECEIVER_INFO) {
+                Window prev_motif_proxy;
+                ProxyRegistrationStatus status;
+                status = set_motif_proxy(event->xany.display, event->xany.window,
+                                         get_awt_root_window(), &prev_motif_proxy);
+                if (status != RegFailure && status != RegAlreadyRegistered) {
+                    set_motif_proxy_for_toplevel(event->xany.window,
+                                                 prev_motif_proxy,
+                                                 status == RegOverride);
+                }
+            }
 
-	    if (atom == XA_XdndAware || atom == XA_XdndProxy) {
-		Window prev_xdnd_proxy;
-		unsigned int prev_protocol_version;
-		ProxyRegistrationStatus status;
-		status = set_xdnd_proxy(event->xany.display, event->xany.window, 
-					get_awt_root_window(), &prev_xdnd_proxy, 
-					&prev_protocol_version);
-		if (status != RegFailure && status != RegAlreadyRegistered) {
-		    set_xdnd_proxy_for_toplevel(event->xany.window,
-						prev_xdnd_proxy,
-						prev_protocol_version,
-						status == RegOverride);
-		}
-	    }
-	}
-	/* pass along */
-	return False;
+            if (atom == XA_XdndAware || atom == XA_XdndProxy) {
+                Window prev_xdnd_proxy;
+                unsigned int prev_protocol_version;
+                ProxyRegistrationStatus status;
+                status = set_xdnd_proxy(event->xany.display, event->xany.window,
+                                        get_awt_root_window(), &prev_xdnd_proxy,
+                                        &prev_protocol_version);
+                if (status != RegFailure && status != RegAlreadyRegistered) {
+                    set_xdnd_proxy_for_toplevel(event->xany.window,
+                                                prev_xdnd_proxy,
+                                                prev_protocol_version,
+                                                status == RegOverride);
+                }
+            }
+        }
+        /* pass along */
+        return False;
     }
 
     if (event->type != ClientMessage) {
-	return False;
+        return False;
     }
 
     if (get_component_for_window(event->xany.window) == NULL &&
-	!is_embedding_toplevel(event->xany.window)) {
-	return False;
+        !is_embedding_toplevel(event->xany.window)) {
+        return False;
     }
 
     if (motif_top_level_leave_postponed) {
-	/* Sanity check. */
-	if (source_protocol != MOTIF_DND_PROTOCOL) {
-	    DTRACE_PRINTLN2("%s:%d TOP_LEVEL_LEAVE rejected - invalid state.", 
-			    __FILE__, __LINE__);
-	    awt_dnd_cleanup();
-	} else if (event->xclient.message_type ==
-		   _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	    unsigned char first_byte = event->xclient.data.b[0];
-	    unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
-	    unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
-	
-	    if (origin == MOTIF_MESSAGE_FROM_INITIATOR &&
-		reason != DROP_START) {
-		awt_dnd_cleanup();
-	    }
-	} else {
-	    awt_dnd_cleanup();
-	}
+        /* Sanity check. */
+        if (source_protocol != MOTIF_DND_PROTOCOL) {
+            DTRACE_PRINTLN2("%s:%d TOP_LEVEL_LEAVE rejected - invalid state.",
+                            __FILE__, __LINE__);
+            awt_dnd_cleanup();
+        } else if (event->xclient.message_type ==
+                   _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
+            unsigned char first_byte = event->xclient.data.b[0];
+            unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
+            unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
+
+            if (origin == MOTIF_MESSAGE_FROM_INITIATOR &&
+                reason != DROP_START) {
+                awt_dnd_cleanup();
+            }
+        } else {
+            awt_dnd_cleanup();
+        }
     }
 
     if (event->xclient.message_type == XA_XdndEnter) {
-	status = handle_xdnd_enter(&event->xclient);
-	type = EnterEvent;
+        status = handle_xdnd_enter(&event->xclient);
+        type = EnterEvent;
     } else if (event->xclient.message_type == XA_XdndPosition) {
-	status = handle_xdnd_position(&event->xclient);
-	type = MotionEvent;
+        status = handle_xdnd_position(&event->xclient);
+        type = MotionEvent;
     } else if (event->xclient.message_type == XA_XdndLeave) {
-	status = handle_xdnd_leave(&event->xclient);
-	type = LeaveEvent;
+        status = handle_xdnd_leave(&event->xclient);
+        type = LeaveEvent;
     } else if (event->xclient.message_type == XA_XdndDrop) {
-	status = handle_xdnd_drop(&event->xclient);
-	type = DropEvent;
+        status = handle_xdnd_drop(&event->xclient);
+        type = DropEvent;
     } else if (event->xclient.message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	unsigned char reason = event->xclient.data.b[0] & MOTIF_MESSAGE_REASON_MASK;
-	unsigned char origin = event->xclient.data.b[0] & MOTIF_MESSAGE_SENDER_MASK;
-	
-	/* Only initiator messages should be handled. */
-	if (origin == MOTIF_MESSAGE_FROM_INITIATOR) {
-	    switch (reason) {
-	    case DRAG_MOTION:
-	    case OPERATION_CHANGED:
-		status = handle_motif_drag_motion(&event->xclient); 
-		type = MotionEvent;
-		break;
-	    case TOP_LEVEL_ENTER:
-		status = handle_motif_top_level_enter(&event->xclient); 
-		type = EnterEvent;
-		break;
-	    case TOP_LEVEL_LEAVE:
-		status = handle_motif_top_level_leave(&event->xclient); 
-		type = LeaveEvent;
-		break;
-	    case DROP_START:
-		status = handle_motif_drop_start(&event->xclient); 
-		type = DropEvent;
-		break;
-	    }
-	}
+        unsigned char reason = event->xclient.data.b[0] & MOTIF_MESSAGE_REASON_MASK;
+        unsigned char origin = event->xclient.data.b[0] & MOTIF_MESSAGE_SENDER_MASK;
+
+        /* Only initiator messages should be handled. */
+        if (origin == MOTIF_MESSAGE_FROM_INITIATOR) {
+            switch (reason) {
+            case DRAG_MOTION:
+            case OPERATION_CHANGED:
+                status = handle_motif_drag_motion(&event->xclient);
+                type = MotionEvent;
+                break;
+            case TOP_LEVEL_ENTER:
+                status = handle_motif_top_level_enter(&event->xclient);
+                type = EnterEvent;
+                break;
+            case TOP_LEVEL_LEAVE:
+                status = handle_motif_top_level_leave(&event->xclient);
+                type = LeaveEvent;
+                break;
+            case DROP_START:
+                status = handle_motif_drop_start(&event->xclient);
+                type = DropEvent;
+                break;
+            }
+        }
     } else {
-	/* Unknown message type. */
-	return False;
+        /* Unknown message type. */
+        return False;
     }
 
-    /* 
+    /*
      * We need to handle a special case here: Motif DnD protocol prescribed that
      * DROP_START message should always be preceeded with TOP_LEVEL_LEAVE
      * message. We need to cleanup on TOP_LEVEL_LEAVE message, but DROP_START
@@ -2664,31 +2664,31 @@ awt_dnd_dt_process_event(XEvent* event) {
      * until the next client message is about to be forwarded.
      */
     if (motif_top_level_leave_postponed && type == LeaveEvent) {
-	/* motif_top_level_leave_postponed can be set only if the latest client 
-	   message has been processed successfully. */
-	DASSERT(status == EventSuccess);
-	memcpy(&motif_top_level_leave_postponed_event, &event->xclient, 
-	       sizeof(XClientMessageEvent));	
+        /* motif_top_level_leave_postponed can be set only if the latest client
+           message has been processed successfully. */
+        DASSERT(status == EventSuccess);
+        memcpy(&motif_top_level_leave_postponed_event, &event->xclient,
+               sizeof(XClientMessageEvent));
     } else {
-	post_process_client_message(&event->xclient, status, type);
+        post_process_client_message(&event->xclient, status, type);
     }
 
     return True;
 }
 
-static Boolean 
+static Boolean
 register_xdnd_drop_site(Display* dpy, Window toplevel, Window window) {
     unsigned char ret;
     Atom version_atom = XDND_PROTOCOL_VERSION;
 
     ret = checked_XChangeProperty(dpy, window, XA_XdndAware, XA_ATOM, 32,
-				  PropModeReplace, 
-				  (unsigned char*)&version_atom, 1);  
+                                  PropModeReplace,
+                                  (unsigned char*)&version_atom, 1);
 
     return (ret == Success);
 }
 
-static Boolean 
+static Boolean
 register_motif_drop_site(Display* dpy, Window toplevel, Window window) {
     unsigned char status;
     size_t data_size = MOTIF_RECEIVER_INFO_SIZE;
@@ -2696,8 +2696,8 @@ register_motif_drop_site(Display* dpy, Window toplevel, Window window) {
     void* p = data;
 
     if (data == NULL) {
-	DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
-	return False;
+        DTRACE_PRINTLN2("%s:%d malloc failed.", __FILE__, __LINE__);
+        return False;
     }
 
     write_card8(&p, MOTIF_BYTE_ORDER);
@@ -2709,23 +2709,23 @@ register_motif_drop_site(Display* dpy, Window toplevel, Window window) {
     write_card16(&p, 0); /* pad */
     write_card32(&p, data_size);
 
-    status = checked_XChangeProperty(dpy, window, _XA_MOTIF_DRAG_RECEIVER_INFO, 
-				     _XA_MOTIF_DRAG_RECEIVER_INFO, 8, PropModeReplace,
-				     (unsigned char*)data, data_size);
+    status = checked_XChangeProperty(dpy, window, _XA_MOTIF_DRAG_RECEIVER_INFO,
+                                     _XA_MOTIF_DRAG_RECEIVER_INFO, 8, PropModeReplace,
+                                     (unsigned char*)data, data_size);
 
     free(data);
 
-    return (status == Success);    
+    return (status == Success);
 }
 
-static Window 
+static Window
 find_toplevel_window(Display* dpy, Window window) {
     Window         ret = None;
     Window         root = None;
     Window         parent = None;
     Window         *children;
     unsigned int   nchildren;
-    
+
     int            status;
 
     Atom           type;
@@ -2734,37 +2734,37 @@ find_toplevel_window(Display* dpy, Window window) {
     unsigned long  after;
     unsigned char  *data;
 
-    /* Traverse the ancestor tree from window up to the root and find 
+    /* Traverse the ancestor tree from window up to the root and find
        the top-level client window nearest to the root. */
     do {
-	type = None;
+        type = None;
 
-	data = NULL;
-	status = XGetWindowProperty(dpy, window, XA_WM_STATE, 0, 0, False, 
-				    AnyPropertyType, &type, &format, &nitems,
-				    &after, &data);
+        data = NULL;
+        status = XGetWindowProperty(dpy, window, XA_WM_STATE, 0, 0, False,
+                                    AnyPropertyType, &type, &format, &nitems,
+                                    &after, &data);
 
-	if (status == Success) {
-	    XFree(data);
-	}
+        if (status == Success) {
+            XFree(data);
+        }
 
-	if (type != None) {
-	    ret = window;
-	}
+        if (type != None) {
+            ret = window;
+        }
 
-	if (!XQueryTree(dpy, window, &root, &parent, &children, &nchildren)) {
-	    return None;
-	}
+        if (!XQueryTree(dpy, window, &root, &parent, &children, &nchildren)) {
+            return None;
+        }
 
-	XFree(children);
+        XFree(children);
 
-	window = parent;
+        window = parent;
     } while (window != root);
 
     return ret;
 }
 
-static Boolean 
+static Boolean
 register_drop_site(Widget outer_canvas, XtPointer componentRef) {
     Display* dpy = XtDisplay(outer_canvas);
     Widget shell = NULL;
@@ -2773,36 +2773,36 @@ register_drop_site(Widget outer_canvas, XtPointer componentRef) {
     Window root = None;
     Window toplevel = None;
 
-    for (shell = outer_canvas; shell != NULL && !XtIsShell(shell); 
-	 shell = XtParent(shell));
+    for (shell = outer_canvas; shell != NULL && !XtIsShell(shell);
+         shell = XtParent(shell));
 
     if (shell == NULL || !XtIsRealized(shell)) {
-	DTRACE_PRINTLN2("%s:%d Cannot find a realized shell for the widget.",
-		       __FILE__, __LINE__);
-	return False;
+        DTRACE_PRINTLN2("%s:%d Cannot find a realized shell for the widget.",
+                       __FILE__, __LINE__);
+        return False;
     }
 
     window = XtWindow(shell);
 
     if (!awt_dnd_init(dpy)) {
-	DTRACE_PRINTLN2("%s:%d Fail to initialize.", __FILE__, __LINE__);
-	return False;
+        DTRACE_PRINTLN2("%s:%d Fail to initialize.", __FILE__, __LINE__);
+        return False;
     }
 
     {
-	XWindowAttributes xwa;
+        XWindowAttributes xwa;
 
-	if (!XGetWindowAttributes(dpy, window, &xwa)) {
-	    DTRACE_PRINTLN2("%s:%d XGetWindowAttributes failed.", __FILE__, __LINE__);
-	    return False;
-	}
+        if (!XGetWindowAttributes(dpy, window, &xwa)) {
+            DTRACE_PRINTLN2("%s:%d XGetWindowAttributes failed.", __FILE__, __LINE__);
+            return False;
+        }
 
-	root = xwa.root;
+        root = xwa.root;
 
-	if (root == None) {
-	    DTRACE_PRINTLN2("%s:%d Bad root.", __FILE__, __LINE__);
-	    return False;
-	}
+        if (root == None) {
+            DTRACE_PRINTLN2("%s:%d Bad root.", __FILE__, __LINE__);
+            return False;
+        }
     }
 
     toplevel = find_toplevel_window(dpy, window);
@@ -2813,53 +2813,53 @@ register_drop_site(Widget outer_canvas, XtPointer componentRef) {
      * toplevel, we cannot determine which window will eventually have WM_STATE
      * property set. So we schedule a timer callback that will periodically
      * attempt to find an ancestor with WM_STATE and register the drop site
-     * appropriately. 
+     * appropriately.
      */
     if (toplevel == None) {
-	add_delayed_registration_entry(outer_canvas, componentRef);
-	return False;
+        add_delayed_registration_entry(outer_canvas, componentRef);
+        return False;
     }
 
     if (toplevel == window) {
-	Boolean xdnd_registered = False;
-	Boolean motif_registered = False;
+        Boolean xdnd_registered = False;
+        Boolean motif_registered = False;
 
-	xdnd_registered = register_xdnd_drop_site(dpy, toplevel, window);
+        xdnd_registered = register_xdnd_drop_site(dpy, toplevel, window);
 
-	motif_registered = register_motif_drop_site(dpy, toplevel, window);
+        motif_registered = register_motif_drop_site(dpy, toplevel, window);
 
-	if (!xdnd_registered && !motif_registered) {
-	    DTRACE_PRINTLN2("%s:%d Failed to register.", __FILE__, __LINE__);
-	    return False;
-	}
+        if (!xdnd_registered && !motif_registered) {
+            DTRACE_PRINTLN2("%s:%d Failed to register.", __FILE__, __LINE__);
+            return False;
+        }
     } else {
-	if (!add_to_embedded_drop_site_list(dpy, root, toplevel, window)) {
-	    DTRACE_PRINTLN2("%s:%d Failed to init proxy.", __FILE__, __LINE__);
-	    return False;
-	}
+        if (!add_to_embedded_drop_site_list(dpy, root, toplevel, window)) {
+            DTRACE_PRINTLN2("%s:%d Failed to init proxy.", __FILE__, __LINE__);
+            return False;
+        }
     }
 
     /* There is no need to update the window for the component later, since the
        window is destroyed only when the component is disposed in which case the
        drop site will be unregistered as well. */
-    if (add_to_drop_site_list(window, root, toplevel, XtWindow(outer_canvas), 
-			      (jobject)componentRef)) {      
-	DTRACE_PRINTLN2("%s:%d Drop site registered.", __FILE__, __LINE__);
-	return True;
+    if (add_to_drop_site_list(window, root, toplevel, XtWindow(outer_canvas),
+                              (jobject)componentRef)) {
+        DTRACE_PRINTLN2("%s:%d Drop site registered.", __FILE__, __LINE__);
+        return True;
     } else {
-	DTRACE_PRINTLN2("%s:%d Failed to register.", __FILE__, __LINE__);
-	return False;
+        DTRACE_PRINTLN2("%s:%d Failed to register.", __FILE__, __LINE__);
+        return False;
     }
 }
 
-static void 
+static void
 register_drop_site_when_realized(Widget outer_canvas, XtPointer client_data,
-				 XEvent *event, Boolean *dontSwallow) {    
+                                 XEvent *event, Boolean *dontSwallow) {
     if (XtIsRealized(outer_canvas)) {
-	XtRemoveEventHandler(outer_canvas, StructureNotifyMask, False,
-			     register_drop_site_when_realized, client_data);
-	
-	register_drop_site(outer_canvas, client_data);
+        XtRemoveEventHandler(outer_canvas, StructureNotifyMask, False,
+                             register_drop_site_when_realized, client_data);
+
+        register_drop_site(outer_canvas, client_data);
     }
 }
 
@@ -2871,19 +2871,19 @@ register_drop_site_when_realized(Widget outer_canvas, XtPointer client_data,
  *
  * Returns True if the drop site is registered successfully.
  */
-static Boolean 
+static Boolean
 awt_dnd_register_drop_site(Widget outer_canvas, XtPointer componentRef) {
     if (XtIsRealized(outer_canvas)) {
-	return register_drop_site(outer_canvas, componentRef);
+        return register_drop_site(outer_canvas, componentRef);
     } else {
-	XtAddEventHandler(outer_canvas, StructureNotifyMask, False,
-			  register_drop_site_when_realized, 
-			  componentRef);
+        XtAddEventHandler(outer_canvas, StructureNotifyMask, False,
+                          register_drop_site_when_realized,
+                          componentRef);
 
-	DTRACE_PRINTLN2("%s:%d Unrealized shell. Register later.",
-			__FILE__, __LINE__);
+        DTRACE_PRINTLN2("%s:%d Unrealized shell. Register later.",
+                        __FILE__, __LINE__);
 
-	return True;
+        return True;
     }
 }
 
@@ -2893,33 +2893,33 @@ awt_dnd_register_drop_site(Widget outer_canvas, XtPointer componentRef) {
  *
  * Returns True if completes successfully, False otherwise.
  */
-static Boolean 
+static Boolean
 awt_dnd_unregister_drop_site(Widget outer_canvas, XtPointer componentRef) {
     Widget shell = NULL;
 
     XtRemoveEventHandler(outer_canvas, StructureNotifyMask, False,
-			 register_drop_site_when_realized, componentRef);
+                         register_drop_site_when_realized, componentRef);
 
     remove_delayed_registration_entry(outer_canvas);
 
-    for (shell = outer_canvas; shell != NULL && !XtIsShell(shell); 
-	 shell = XtParent(shell));
+    for (shell = outer_canvas; shell != NULL && !XtIsShell(shell);
+         shell = XtParent(shell));
 
     if (shell != NULL && XtIsShell(shell) && XtIsRealized(shell)) {
-	Window win = XtWindow(shell);
-	Window toplevel = get_toplevel_for_window(win);
-	/* 
-	 * Cleanup the global state if this drop site participate in the current
-	 * drag operation. Particularly, this allows to delete global ref to the
-	 * component safely.
-	 */
-	if (get_component_for_window(win) == target_component) {
-	    awt_dnd_cleanup();
-	}
-	if (toplevel != win) {
-	    remove_from_embedded_drop_site_list(awt_display, toplevel, win);
-	}
-	return remove_from_drop_site_list(win);
+        Window win = XtWindow(shell);
+        Window toplevel = get_toplevel_for_window(win);
+        /*
+         * Cleanup the global state if this drop site participate in the current
+         * drag operation. Particularly, this allows to delete global ref to the
+         * component safely.
+         */
+        if (get_component_for_window(win) == target_component) {
+            awt_dnd_cleanup();
+        }
+        if (toplevel != win) {
+            remove_from_embedded_drop_site_list(awt_display, toplevel, win);
+        }
+        return remove_from_drop_site_list(win);
     }
 
     return True;
@@ -2928,12 +2928,12 @@ awt_dnd_unregister_drop_site(Widget outer_canvas, XtPointer componentRef) {
 /**************************** XEmbed server DnD support ***********************/
 
 /*
- * 
+ *
  *
  */
 Boolean
-register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server, 
-			  Window serverHandle, Window clientHandle) {
+register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
+                          Window serverHandle, Window clientHandle) {
     Atom           type;
     int            format;
     unsigned long  nitems;
@@ -2947,21 +2947,21 @@ register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
     Boolean        xdnd_override = False;
 
     if (!awt_dnd_init(dpy)) {
-	DTRACE_PRINTLN2("%s:%d Fail to initialize.", __FILE__, __LINE__);
-	return False;
+        DTRACE_PRINTLN2("%s:%d Fail to initialize.", __FILE__, __LINE__);
+        return False;
     }
 
     /* Get the XDnD protocol version and XDnD proxy of the XEmbed client. */
     data = NULL;
     ret = checked_XGetWindowProperty(dpy, clientHandle, XA_XdndAware, 0, 1,
-				     False, AnyPropertyType, &type, &format,
-				     &nitems, &after, &data);
+                                     False, AnyPropertyType, &type, &format,
+                                     &nitems, &after, &data);
 
-    /* XEmbed client doesn't have an associated XDnD drop site - 
+    /* XEmbed client doesn't have an associated XDnD drop site -
        do nothing and return True to indicate success. */
     if (ret != Success || data == NULL || nitems == 0 || type != XA_ATOM) {
-	XFree(data);
-	return False;
+        XFree(data);
+        return False;
     }
 
     protocol_version = *((unsigned int*)data);
@@ -2969,119 +2969,119 @@ register_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
     XFree(data);
 
     if (protocol_version < XDND_MIN_PROTOCOL_VERSION) {
-	return False;
+        return False;
     }
 
     xdnd_protocol_version = protocol_version;
 
     /* XdndProxy is not supported prior to XDnD version 4 */
     if (protocol_version >= 4) {
-	int status;
-	    
-	data = NULL;
-	status = XGetWindowProperty(dpy, clientHandle, XA_XdndProxy, 0, 1,
-				    False, XA_WINDOW, &type, &format, 
-				    &nitems, &after, &data);
-		
-	if (status == Success && data != NULL && type == XA_WINDOW) {
-	    xdnd_proxy = *((Window*)data);
+        int status;
 
-	    if (xdnd_proxy != None) {
-		XFree(data);
+        data = NULL;
+        status = XGetWindowProperty(dpy, clientHandle, XA_XdndProxy, 0, 1,
+                                    False, XA_WINDOW, &type, &format,
+                                    &nitems, &after, &data);
 
-		data = NULL;
-		status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndProxy,
-					    0, 1, False, XA_WINDOW, &type, 
-					    &format, &nitems, &after,
-					    &data);
+        if (status == Success && data != NULL && type == XA_WINDOW) {
+            xdnd_proxy = *((Window*)data);
 
-		if (status != Success || data == NULL || type != XA_WINDOW || 
-		    *((Window*)data) != xdnd_proxy) {
-		    /* Ignore invalid proxy. */
-		    xdnd_proxy = None;
-		}
-	    }
+            if (xdnd_proxy != None) {
+                XFree(data);
 
-	    if (xdnd_proxy != None) {
-		XFree(data);
+                data = NULL;
+                status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndProxy,
+                                            0, 1, False, XA_WINDOW, &type,
+                                            &format, &nitems, &after,
+                                            &data);
 
-		data = NULL;
-		status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndAware, 0, 1,
-					    False, AnyPropertyType, &type,
-					    &format, &nitems, &after, &data);
+                if (status != Success || data == NULL || type != XA_WINDOW ||
+                    *((Window*)data) != xdnd_proxy) {
+                    /* Ignore invalid proxy. */
+                    xdnd_proxy = None;
+                }
+            }
 
-		if (status == Success && data != NULL && type == XA_ATOM) {
-		    unsigned int proxy_version = *((unsigned int*)data);
-			
-		    if (proxy_version != protocol_version) {			
-			/* Ignore invalid proxy. */
-			xdnd_proxy = None;
-		    }
-		} else {
-		    /* Ignore invalid proxy. */
-		    xdnd_proxy = None;
-		}
-	    }
-	}
+            if (xdnd_proxy != None) {
+                XFree(data);
 
-	XFree(data);
+                data = NULL;
+                status = XGetWindowProperty(dpy, xdnd_proxy, XA_XdndAware, 0, 1,
+                                            False, AnyPropertyType, &type,
+                                            &format, &nitems, &after, &data);
+
+                if (status == Success && data != NULL && type == XA_ATOM) {
+                    unsigned int proxy_version = *((unsigned int*)data);
+
+                    if (proxy_version != protocol_version) {
+                        /* Ignore invalid proxy. */
+                        xdnd_proxy = None;
+                    }
+                } else {
+                    /* Ignore invalid proxy. */
+                    xdnd_proxy = None;
+                }
+            }
+        }
+
+        XFree(data);
     }
-	
+
     set_xembed_drop_target(env, server);
 
     /* Add protocol specific entries for the embedded window. */
     /* Only XDnD protocol is supported for XEmbed clients. */
     {
-	EmbeddedDropSiteProtocolListEntry* xdnd_entry = NULL;
+        EmbeddedDropSiteProtocolListEntry* xdnd_entry = NULL;
 
-	xdnd_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
-	
-	if (xdnd_entry == NULL) {
-	    return False;
-	}
+        xdnd_entry = malloc(sizeof(EmbeddedDropSiteProtocolListEntry));
 
-	xdnd_entry->window = clientHandle;
-	xdnd_entry->proxy = xdnd_proxy;
-	xdnd_entry->protocol_version = xdnd_protocol_version;
-	xdnd_entry->overriden = True;
-	xdnd_entry->next = embedded_xdnd_protocol_list;
-	embedded_xdnd_protocol_list = xdnd_entry;
+        if (xdnd_entry == NULL) {
+            return False;
+        }
+
+        xdnd_entry->window = clientHandle;
+        xdnd_entry->proxy = xdnd_proxy;
+        xdnd_entry->protocol_version = xdnd_protocol_version;
+        xdnd_entry->overriden = True;
+        xdnd_entry->next = embedded_xdnd_protocol_list;
+        embedded_xdnd_protocol_list = xdnd_entry;
     }
 
     {
-	EmbeddedDropSiteListEntry* entry = NULL;
-	Window* sites = NULL;
-    
-	entry = malloc(sizeof(EmbeddedDropSiteListEntry));
+        EmbeddedDropSiteListEntry* entry = NULL;
+        Window* sites = NULL;
 
-	if (entry == NULL) {
-	    return False;
-	}
+        entry = malloc(sizeof(EmbeddedDropSiteListEntry));
 
-	sites = malloc(sizeof(Window));
+        if (entry == NULL) {
+            return False;
+        }
 
-	if (sites == NULL) {
-	    free(entry);
-	    return False;
-	}
+        sites = malloc(sizeof(Window));
 
-	sites[0] = clientHandle;
+        if (sites == NULL) {
+            free(entry);
+            return False;
+        }
 
-	entry->toplevel = serverHandle;
-	entry->root = None;
-	entry->event_mask = 0;
-	entry->embedded_sites_count = 1;
-	entry->embedded_sites = sites;
-	entry->next = embedded_drop_site_list;
-	embedded_drop_site_list = entry;
+        sites[0] = clientHandle;
+
+        entry->toplevel = serverHandle;
+        entry->root = None;
+        entry->event_mask = 0;
+        entry->embedded_sites_count = 1;
+        entry->embedded_sites = sites;
+        entry->next = embedded_drop_site_list;
+        embedded_drop_site_list = entry;
     }
 
     return True;
 }
 
 Boolean
-unregister_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server, 
-			    Window serverHandle, Window clientHandle) {
+unregister_xembed_drop_site(JNIEnv* env, Display* dpy, jobject server,
+                            Window serverHandle, Window clientHandle) {
     remove_from_embedded_drop_site_list(dpy, serverHandle, clientHandle);
     return True;
 }
@@ -3092,128 +3092,128 @@ forward_event_to_embedded(Window embedded, jlong ctxt, jint eventID) {
     static Boolean overXEmbedClient = False;
 
     XClientMessageEvent* xclient =
-	(XClientMessageEvent*)jlong_to_ptr(ctxt);
+        (XClientMessageEvent*)jlong_to_ptr(ctxt);
 
     if (xclient == NULL && prevMessage == NULL) {
-	return;
+        return;
     }
 
     if (xclient != NULL) {
-	/* 
-	 * NOTE: this check guarantees that prevMessage will always be an XDnD
-	 * drag message.
-	 */
-	if (!is_xdnd_drag_message_type(xclient->message_type)) {
-	    return;
-	}
+        /*
+         * NOTE: this check guarantees that prevMessage will always be an XDnD
+         * drag message.
+         */
+        if (!is_xdnd_drag_message_type(xclient->message_type)) {
+            return;
+        }
 
-	if (!overXEmbedClient) {
-	    long* appended_data = jlong_to_ptr(ctxt) + 
-		sizeof(XClientMessageEvent);
+        if (!overXEmbedClient) {
+            long* appended_data = jlong_to_ptr(ctxt) +
+                sizeof(XClientMessageEvent);
 
-	    /* Copy XdndTypeList from source to proxy. */
-	    if ((appended_data[0] & XDND_DATA_TYPES_BIT) != 0) {
-		unsigned char  ret;
-		Atom           type;
-		int            format;
-		unsigned long  nitems;
-		unsigned long  after;
-		unsigned char  *data;
+            /* Copy XdndTypeList from source to proxy. */
+            if ((appended_data[0] & XDND_DATA_TYPES_BIT) != 0) {
+                unsigned char  ret;
+                Atom           type;
+                int            format;
+                unsigned long  nitems;
+                unsigned long  after;
+                unsigned char  *data;
 
-		data = NULL;
-		ret = checked_XGetWindowProperty(xclient->display, 
-						 xclient->data.l[0], 
-						 XA_XdndTypeList, 0, 0xFFFF,
-						 False, XA_ATOM, &type, &format,
-						 &nitems, &after, &data);
+                data = NULL;
+                ret = checked_XGetWindowProperty(xclient->display,
+                                                 xclient->data.l[0],
+                                                 XA_XdndTypeList, 0, 0xFFFF,
+                                                 False, XA_ATOM, &type, &format,
+                                                 &nitems, &after, &data);
 
-		/* Ignore the source if the window is destroyed. */
-		if (ret == BadWindow) {
-		    return;
-		}
-	
-		if (ret == Success) {
-		    if (type == XA_ATOM && format == 32) {
-			ret = checked_XChangeProperty(xclient->display, 
-						      xclient->window,
-						      XA_XdndTypeList, XA_ATOM,
-						      32, PropModeReplace, data,
-						      nitems);
-		    }
+                /* Ignore the source if the window is destroyed. */
+                if (ret == BadWindow) {
+                    return;
+                }
 
-		    XFree(data);
-		}
-	    }
+                if (ret == Success) {
+                    if (type == XA_ATOM && format == 32) {
+                        ret = checked_XChangeProperty(xclient->display,
+                                                      xclient->window,
+                                                      XA_XdndTypeList, XA_ATOM,
+                                                      32, PropModeReplace, data,
+                                                      nitems);
+                    }
 
-	    set_proxy_mode_source_window(xclient->data.l[0]);
+                    XFree(data);
+                }
+            }
 
-	    {
-		XClientMessageEvent enter;
-		enter.display = xclient->display;
-		enter.type = ClientMessage;
-		enter.window = embedded;
-		enter.format = 32;
-		enter.message_type = XA_XdndEnter;
+            set_proxy_mode_source_window(xclient->data.l[0]);
 
-		enter.data.l[0] = xclient->window; /* XID of the source window */
-		enter.data.l[1] = appended_data[0];
-		enter.data.l[2] = appended_data[1];
-		enter.data.l[3] = appended_data[2];
-		enter.data.l[4] = appended_data[3];
+            {
+                XClientMessageEvent enter;
+                enter.display = xclient->display;
+                enter.type = ClientMessage;
+                enter.window = embedded;
+                enter.format = 32;
+                enter.message_type = XA_XdndEnter;
 
-		forward_client_message_to_toplevel(embedded, &enter);
-	    }
+                enter.data.l[0] = xclient->window; /* XID of the source window */
+                enter.data.l[1] = appended_data[0];
+                enter.data.l[2] = appended_data[1];
+                enter.data.l[3] = appended_data[2];
+                enter.data.l[4] = appended_data[3];
 
-	    overXEmbedClient = True;
-	}
+                forward_client_message_to_toplevel(embedded, &enter);
+            }
 
-	/* Make a copy of the original event, since we are going to modify the
-	   event while it still can be referenced from other Java events. */
-	{
-	    XClientMessageEvent copy;
-	    memcpy(&copy, xclient, sizeof(XClientMessageEvent));
-	    copy.data.l[0] = xclient->window;
+            overXEmbedClient = True;
+        }
 
-	    forward_client_message_to_toplevel(embedded, &copy);
-	}
+        /* Make a copy of the original event, since we are going to modify the
+           event while it still can be referenced from other Java events. */
+        {
+            XClientMessageEvent copy;
+            memcpy(&copy, xclient, sizeof(XClientMessageEvent));
+            copy.data.l[0] = xclient->window;
+
+            forward_client_message_to_toplevel(embedded, &copy);
+        }
     }
 
     if (eventID == java_awt_event_MouseEvent_MOUSE_EXITED) {
-	if (overXEmbedClient) {
-	    if (xclient != NULL || prevMessage != NULL) {
-		/* Last chance to send XdndLeave to the XEmbed client. */
-		XClientMessageEvent leave;
+        if (overXEmbedClient) {
+            if (xclient != NULL || prevMessage != NULL) {
+                /* Last chance to send XdndLeave to the XEmbed client. */
+                XClientMessageEvent leave;
 
-		leave.display = xclient != NULL ?
-		    xclient->display : prevMessage->display;
-		leave.type = ClientMessage;
-		leave.window = embedded;
-		leave.format = 32;
-		leave.message_type = XA_XdndLeave;
-		leave.data.l[0] = xclient != NULL ? 
-		    xclient->window : prevMessage->window; /* XID of the source window */
-		leave.data.l[1] = 0; /* flags */
+                leave.display = xclient != NULL ?
+                    xclient->display : prevMessage->display;
+                leave.type = ClientMessage;
+                leave.window = embedded;
+                leave.format = 32;
+                leave.message_type = XA_XdndLeave;
+                leave.data.l[0] = xclient != NULL ?
+                    xclient->window : prevMessage->window; /* XID of the source window */
+                leave.data.l[1] = 0; /* flags */
 
-		forward_client_message_to_toplevel(embedded, &leave);
-	    }
-	    overXEmbedClient = False;
-	}
+                forward_client_message_to_toplevel(embedded, &leave);
+            }
+            overXEmbedClient = False;
+        }
     }
 
     if (eventID == java_awt_event_MouseEvent_MOUSE_RELEASED) {
-	overXEmbedClient = False;
-	awt_dnd_cleanup();
+        overXEmbedClient = False;
+        awt_dnd_cleanup();
     }
 
     if (prevMessage != 0) {
-	free(prevMessage);
-	prevMessage = 0;
+        free(prevMessage);
+        prevMessage = 0;
     }
 
     if (xclient != 0 && overXEmbedClient) {
-	prevMessage = malloc(sizeof(XClientMessageEvent));
-	
-	memcpy(prevMessage, xclient, sizeof(XClientMessageEvent));
+        prevMessage = malloc(sizeof(XClientMessageEvent));
+
+        memcpy(prevMessage, xclient, sizeof(XClientMessageEvent));
     }
 }
 
@@ -3225,9 +3225,9 @@ forward_event_to_embedded(Window embedded, jlong ctxt, jint eventID) {
  * Signature: (Ljava/awt/Component;)V
  */
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MWindowPeer_registerX11DropTarget(JNIEnv *env, jobject this,
-						     jobject target) {
+                                                     jobject target) {
     struct FrameData* wdata = NULL;
     DropSitePtr dsi = NULL;
 
@@ -3249,10 +3249,10 @@ Java_sun_awt_motif_MWindowPeer_registerX11DropTarget(JNIEnv *env, jobject this,
     dsi = (DropSitePtr)calloc(1, sizeof(struct DropSiteInfo));
 
     if (dsi == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "");
-	return;
+        JNU_ThrowOutOfMemoryError(env, "");
+        return;
     }
-    
+
     dsi->component = (*env)->NewGlobalRef(env, target);
     dsi->isComposite = False;
 
@@ -3260,22 +3260,22 @@ Java_sun_awt_motif_MWindowPeer_registerX11DropTarget(JNIEnv *env, jobject this,
 
     AWT_LOCK();
 
-    awt_dnd_register_drop_site(wdata->winData.comp.widget, 
-			       dsi->component);
+    awt_dnd_register_drop_site(wdata->winData.comp.widget,
+                               dsi->component);
 
     AWT_UNLOCK();
 }
- 
+
 /*
  * Class:     sun_awt_motif_MWindowPeer
  * Method:    unregisterX11DropTarget
  * Signature: (Ljava/awt/Component;)V
  */
 
-JNIEXPORT void JNICALL 
-Java_sun_awt_motif_MWindowPeer_unregisterX11DropTarget(JNIEnv *env, 
-						       jobject this,
-						       jobject target) {
+JNIEXPORT void JNICALL
+Java_sun_awt_motif_MWindowPeer_unregisterX11DropTarget(JNIEnv *env,
+                                                       jobject this,
+                                                       jobject target) {
     struct FrameData* wdata = NULL;
     DropSitePtr dsi = NULL;
 
@@ -3316,22 +3316,22 @@ static void
 dt_send_event_to_source(XClientMessageEvent* xclient) {
     /* Shortcut if the source is in the same JVM. */
     if (xclient->window == awt_dnd_ds_get_source_window()) {
-	awt_dnd_ds_process_event((XEvent*)xclient);
+        awt_dnd_ds_process_event((XEvent*)xclient);
     } else {
-	unsigned char ret;
+        unsigned char ret;
 
-	ret = checked_XSendEvent(xclient->display, xclient->window, False,
-				 NoEventMask, (XEvent*)xclient);
+        ret = checked_XSendEvent(xclient->display, xclient->window, False,
+                                 NoEventMask, (XEvent*)xclient);
 
-	if (ret == BadWindow) {
-	    DTRACE_PRINTLN2("%s:%d XSendEvent - invalid window.", 
-			    __FILE__, __LINE__);
+        if (ret == BadWindow) {
+            DTRACE_PRINTLN2("%s:%d XSendEvent - invalid window.",
+                            __FILE__, __LINE__);
 
-	    /* Cleanup if we are still communicating with this window. */
-	    if (source_window == xclient->window) {
-		awt_dnd_cleanup();
-	    }
-	}
+            /* Cleanup if we are still communicating with this window. */
+            if (source_window == xclient->window) {
+                awt_dnd_cleanup();
+            }
+        }
     }
 }
 
@@ -3341,110 +3341,110 @@ dt_send_response(XClientMessageEvent* xclient, jint eventID, jint action) {
     XClientMessageEvent response;
 
     if (xclient->message_type == XA_XdndPosition) {
-	long* event_data = xclient->data.l;
+        long* event_data = xclient->data.l;
 
-	if (eventID == java_awt_event_MouseEvent_MOUSE_EXITED) {
-	    action = java_awt_dnd_DnDConstants_ACTION_NONE;
-	}	
+        if (eventID == java_awt_event_MouseEvent_MOUSE_EXITED) {
+            action = java_awt_dnd_DnDConstants_ACTION_NONE;
+        }
 
-	response.display = dpy;
-	response.type = ClientMessage;
-	response.window = event_data[0];
-	response.format = 32;
-	response.message_type = XA_XdndStatus;
-	/* target window */
-	response.data.l[0] = xclient->window; 
-	/* flags */
-	response.data.l[1] = 0; 
-	if (action != java_awt_dnd_DnDConstants_ACTION_NONE) {
-	    response.data.l[1] |= XDND_ACCEPT_DROP_FLAG;
-	}
-	/* specify an empty rectangle */
-	response.data.l[2] = 0; /* x, y */
-	response.data.l[3] = 0; /* w, h */
-	/* action accepted by the target */
-	response.data.l[4] = java_to_xdnd_action(action);
+        response.display = dpy;
+        response.type = ClientMessage;
+        response.window = event_data[0];
+        response.format = 32;
+        response.message_type = XA_XdndStatus;
+        /* target window */
+        response.data.l[0] = xclient->window;
+        /* flags */
+        response.data.l[1] = 0;
+        if (action != java_awt_dnd_DnDConstants_ACTION_NONE) {
+            response.data.l[1] |= XDND_ACCEPT_DROP_FLAG;
+        }
+        /* specify an empty rectangle */
+        response.data.l[2] = 0; /* x, y */
+        response.data.l[3] = 0; /* w, h */
+        /* action accepted by the target */
+        response.data.l[4] = java_to_xdnd_action(action);
     } else if (xclient->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
-	int origin = (int)(xclient->data.b[0] & MOTIF_MESSAGE_SENDER_MASK);
-	unsigned char byte_order = xclient->data.b[1];
-	CARD16 response_flags = 0;
-	CARD8 response_reason = 0;
-	void* p = &response.data.b;
+        int reason = (int)(xclient->data.b[0] & MOTIF_MESSAGE_REASON_MASK);
+        int origin = (int)(xclient->data.b[0] & MOTIF_MESSAGE_SENDER_MASK);
+        unsigned char byte_order = xclient->data.b[1];
+        CARD16 response_flags = 0;
+        CARD8 response_reason = 0;
+        void* p = &response.data.b;
 
-	/* Only initiator messages should be handled. */
-	if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
-	    DTRACE_PRINTLN2("%s:%d Receiver message.", __FILE__, __LINE__);
-	    return;
-	}
+        /* Only initiator messages should be handled. */
+        if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
+            DTRACE_PRINTLN2("%s:%d Receiver message.", __FILE__, __LINE__);
+            return;
+        }
 
         switch (reason) {
-	case DRAG_MOTION:
-	    switch (eventID) {
-	    case java_awt_event_MouseEvent_MOUSE_ENTERED: 
-		response_reason = DROP_SITE_ENTER;
-		break;
-	    case java_awt_event_MouseEvent_MOUSE_DRAGGED: 
-		response_reason = DRAG_MOTION;
-		break;
-	    case java_awt_event_MouseEvent_MOUSE_EXITED: 
-		response_reason = DROP_SITE_LEAVE;
-		break;
-	    }
-	}
+        case DRAG_MOTION:
+            switch (eventID) {
+            case java_awt_event_MouseEvent_MOUSE_ENTERED:
+                response_reason = DROP_SITE_ENTER;
+                break;
+            case java_awt_event_MouseEvent_MOUSE_DRAGGED:
+                response_reason = DRAG_MOTION;
+                break;
+            case java_awt_event_MouseEvent_MOUSE_EXITED:
+                response_reason = DROP_SITE_LEAVE;
+                break;
+            }
+        }
 
-	response.display = dpy;
-	response.type = ClientMessage;
-	response.window = read_card32(xclient->data.b, 12, byte_order);
-	response.format = 8;
-	response.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
+        response.display = dpy;
+        response.type = ClientMessage;
+        response.window = read_card32(xclient->data.b, 12, byte_order);
+        response.format = 8;
+        response.message_type = _XA_MOTIF_DRAG_AND_DROP_MESSAGE;
 
-	write_card8(&p, response_reason | MOTIF_MESSAGE_FROM_RECEIVER);
-	write_card8(&p, MOTIF_BYTE_ORDER);
+        write_card8(&p, response_reason | MOTIF_MESSAGE_FROM_RECEIVER);
+        write_card8(&p, MOTIF_BYTE_ORDER);
 
-	if (response_reason != DROP_SITE_LEAVE) {
-	    CARD16 flags = read_card16(xclient->data.b, 2, byte_order);
-	    unsigned char drop_site_status = 
-		(action == java_awt_dnd_DnDConstants_ACTION_NONE) ? 
-		MOTIF_INVALID_DROP_SITE : MOTIF_VALID_DROP_SITE;
+        if (response_reason != DROP_SITE_LEAVE) {
+            CARD16 flags = read_card16(xclient->data.b, 2, byte_order);
+            unsigned char drop_site_status =
+                (action == java_awt_dnd_DnDConstants_ACTION_NONE) ?
+                MOTIF_INVALID_DROP_SITE : MOTIF_VALID_DROP_SITE;
 
-	    /* Clear action and drop site status bits. */
-	    response_flags = 
-		flags & ~MOTIF_DND_ACTION_MASK & ~MOTIF_DND_STATUS_MASK;
+            /* Clear action and drop site status bits. */
+            response_flags =
+                flags & ~MOTIF_DND_ACTION_MASK & ~MOTIF_DND_STATUS_MASK;
 
-	    /* Fill in new action and drop site status. */
-	    response_flags |= 
-		java_to_motif_actions(action) << MOTIF_DND_ACTION_SHIFT;
-	    response_flags |= 
-		drop_site_status << MOTIF_DND_STATUS_SHIFT;
-	} else {
-	    response_flags = 0;
-	}
+            /* Fill in new action and drop site status. */
+            response_flags |=
+                java_to_motif_actions(action) << MOTIF_DND_ACTION_SHIFT;
+            response_flags |=
+                drop_site_status << MOTIF_DND_STATUS_SHIFT;
+        } else {
+            response_flags = 0;
+        }
 
-	write_card16(&p, response_flags);
+        write_card16(&p, response_flags);
 
-	/* Write time stamp. */
-	write_card32(&p, read_card32(xclient->data.b, 4, byte_order));
-	
-	/* Write coordinates. */
-	if (response_reason != DROP_SITE_LEAVE) {
-	    write_card16(&p, read_card16(xclient->data.b, 8, byte_order));
-	    write_card16(&p, read_card16(xclient->data.b, 10, byte_order));
-	} else {
-	    write_card16(&p, 0);
-	    write_card16(&p, 0);
-	}
+        /* Write time stamp. */
+        write_card32(&p, read_card32(xclient->data.b, 4, byte_order));
+
+        /* Write coordinates. */
+        if (response_reason != DROP_SITE_LEAVE) {
+            write_card16(&p, read_card16(xclient->data.b, 8, byte_order));
+            write_card16(&p, read_card16(xclient->data.b, 10, byte_order));
+        } else {
+            write_card16(&p, 0);
+            write_card16(&p, 0);
+        }
     } else {
-	return;
+        return;
     }
 
     dt_send_event_to_source(&response);
 }
 
-static void 
-dummy_selection_callback(Widget w, XtPointer client_data, Atom* selection, 
-			 Atom* type, XtPointer value, unsigned long *length, 
-			 int32_t *format) {
+static void
+dummy_selection_callback(Widget w, XtPointer client_data, Atom* selection,
+                         Atom* type, XtPointer value, unsigned long *length,
+                         int32_t *format) {
     /* The selection callback is responsible for freeing the data. */
     if (value != NULL) {
         XtFree(value);
@@ -3454,80 +3454,80 @@ dummy_selection_callback(Widget w, XtPointer client_data, Atom* selection,
 
 static void
 dt_notify_drop_done(JNIEnv* env, XClientMessageEvent* xclient, jboolean success,
-		    jint action) {
+                    jint action) {
     if (xclient->message_type == XA_XdndDrop) {
-	Display* dpy = xclient->display;
-	XClientMessageEvent finished;
-	long* event_data = xclient->data.l;
+        Display* dpy = xclient->display;
+        XClientMessageEvent finished;
+        long* event_data = xclient->data.l;
 
-	/*
-	 * The XDnD protocol recommends that the target requests the special
-	 * target DELETE in case if the drop action is XdndActionMove. 
-	 */
-	if (action == java_awt_dnd_DnDConstants_ACTION_MOVE && 
-	    success == JNI_TRUE) {
+        /*
+         * The XDnD protocol recommends that the target requests the special
+         * target DELETE in case if the drop action is XdndActionMove.
+         */
+        if (action == java_awt_dnd_DnDConstants_ACTION_MOVE &&
+            success == JNI_TRUE) {
 
-	    Time time_stamp = event_data[2];
+            Time time_stamp = event_data[2];
 
-	    XtGetSelectionValue(awt_root_shell, XA_XdndSelection, XA_DELETE,
-				dummy_selection_callback, NULL, time_stamp);
-	}
+            XtGetSelectionValue(awt_root_shell, XA_XdndSelection, XA_DELETE,
+                                dummy_selection_callback, NULL, time_stamp);
+        }
 
-	finished.display = dpy;
-	finished.type = ClientMessage;
-	finished.window = event_data[0];
-	finished.format = 32;
-	finished.message_type = XA_XdndFinished;
-	finished.data.l[0] = xclient->window;
-	finished.data.l[1] = 0; /* flags */
-	finished.data.l[2] = None;
-	if (source_protocol_version >= 5) {
-	    if (success == JNI_TRUE) {
-		finished.data.l[1] |= XDND_ACCEPT_DROP_FLAG;
-	    }
-	    finished.data.l[2] = java_to_xdnd_action(action);
-	}
+        finished.display = dpy;
+        finished.type = ClientMessage;
+        finished.window = event_data[0];
+        finished.format = 32;
+        finished.message_type = XA_XdndFinished;
+        finished.data.l[0] = xclient->window;
+        finished.data.l[1] = 0; /* flags */
+        finished.data.l[2] = None;
+        if (source_protocol_version >= 5) {
+            if (success == JNI_TRUE) {
+                finished.data.l[1] |= XDND_ACCEPT_DROP_FLAG;
+            }
+            finished.data.l[2] = java_to_xdnd_action(action);
+        }
 
-	dt_send_event_to_source(&finished);
+        dt_send_event_to_source(&finished);
     } else if (xclient->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	char* event_data = xclient->data.b;
-	unsigned char event_byte_order = read_card8(event_data, 1);
-	unsigned char first_byte = read_card8(event_data, 0);
-	unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
-	unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
-	Atom selection = None;
-	Time time_stamp = CurrentTime;
-	Atom status_atom = None;
-	
-	if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
-	    DTRACE_PRINTLN2("%s:%d Invalid origin.", __FILE__, __LINE__);
-	    return;
-	}
+        char* event_data = xclient->data.b;
+        unsigned char event_byte_order = read_card8(event_data, 1);
+        unsigned char first_byte = read_card8(event_data, 0);
+        unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
+        unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
+        Atom selection = None;
+        Time time_stamp = CurrentTime;
+        Atom status_atom = None;
 
-	if (reason != DROP_START) {
-	    DTRACE_PRINTLN2("%s:%d Invalid reason.", __FILE__, __LINE__);
-	    return;
-	}
+        if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
+            DTRACE_PRINTLN2("%s:%d Invalid origin.", __FILE__, __LINE__);
+            return;
+        }
 
-	selection = read_card32(event_data, 12, event_byte_order);
-	time_stamp = read_card32(event_data, 4, event_byte_order);
+        if (reason != DROP_START) {
+            DTRACE_PRINTLN2("%s:%d Invalid reason.", __FILE__, __LINE__);
+            return;
+        }
 
-	if (success == JNI_TRUE) {
-	    status_atom = XA_XmTRANSFER_SUCCESS;
-	} else {
-	    status_atom = XA_XmTRANSFER_FAILURE;
-	}
+        selection = read_card32(event_data, 12, event_byte_order);
+        time_stamp = read_card32(event_data, 4, event_byte_order);
 
-	/*
-	 * This is just the way to communicate the drop completion status back
-	 * to the initiator as prescribed by the Motif DnD protocol. 
-	 */
-	XtGetSelectionValue(awt_root_shell, selection, status_atom,
-			    dummy_selection_callback, NULL, time_stamp);
+        if (success == JNI_TRUE) {
+            status_atom = XA_XmTRANSFER_SUCCESS;
+        } else {
+            status_atom = XA_XmTRANSFER_FAILURE;
+        }
+
+        /*
+         * This is just the way to communicate the drop completion status back
+         * to the initiator as prescribed by the Motif DnD protocol.
+         */
+        XtGetSelectionValue(awt_root_shell, selection, status_atom,
+                            dummy_selection_callback, NULL, time_stamp);
     }
 
     /*
-     * Flush the buffer to guarantee that the drop completion event is sent 
+     * Flush the buffer to guarantee that the drop completion event is sent
      * to the source before the method returns.
      */
     XFlush(awt_display);
@@ -3545,32 +3545,32 @@ dt_notify_drop_done(JNIEnv* env, XClientMessageEvent* xclient, jboolean success,
  * Signature: (IIJZ)V
  */
 
-JNIEXPORT void JNICALL 
-Java_sun_awt_motif_X11DropTargetContextPeer_sendResponse(JNIEnv *env, 
-							 jobject this,
-							 jint eventID,
-							 jint action,
-							 jlong nativeCtxt,
-							 jboolean dispatcherDone,
-							 jboolean consumed) {
+JNIEXPORT void JNICALL
+Java_sun_awt_motif_X11DropTargetContextPeer_sendResponse(JNIEnv *env,
+                                                         jobject this,
+                                                         jint eventID,
+                                                         jint action,
+                                                         jlong nativeCtxt,
+                                                         jboolean dispatcherDone,
+                                                         jboolean consumed) {
     XClientMessageEvent* xclient =
-	(XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
+        (XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
 
     AWT_LOCK();
 
     if (consumed == JNI_FALSE) {
-	dt_send_response(xclient, eventID, action);
+        dt_send_response(xclient, eventID, action);
     }
 
-    /* 
+    /*
      * Free the native context only if all copies of the original event are
      * processed.
-     */ 
+     */
     if (dispatcherDone == JNI_TRUE) {
-	XtFree((char*)xclient);
+        XtFree((char*)xclient);
     }
 
-    AWT_UNLOCK();    
+    AWT_UNLOCK();
 }
 
 /*
@@ -3579,14 +3579,14 @@ Java_sun_awt_motif_X11DropTargetContextPeer_sendResponse(JNIEnv *env,
  * Signature: (JZI)V
  */
 
-JNIEXPORT void JNICALL 
-Java_sun_awt_motif_X11DropTargetContextPeer_dropDone(JNIEnv *env, 
-						     jobject this,
-						     jlong nativeCtxt,
-						     jboolean success,
-						     jint action) {
+JNIEXPORT void JNICALL
+Java_sun_awt_motif_X11DropTargetContextPeer_dropDone(JNIEnv *env,
+                                                     jobject this,
+                                                     jlong nativeCtxt,
+                                                     jboolean success,
+                                                     jint action) {
     XClientMessageEvent* xclient =
-	(XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
+        (XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
 
     AWT_LOCK();
 
@@ -3603,99 +3603,98 @@ Java_sun_awt_motif_X11DropTargetContextPeer_dropDone(JNIEnv *env,
  * Signature: (IJ)Ljava/lang/Object;
  */
 
-JNIEXPORT jobject JNICALL 
-Java_sun_awt_motif_X11DropTargetContextPeer_getData(JNIEnv *env, 
-						    jobject this,
-						    jlong nativeCtxt,
-						    jlong formatAtom) {
+JNIEXPORT jobject JNICALL
+Java_sun_awt_motif_X11DropTargetContextPeer_getData(JNIEnv *env,
+                                                    jobject this,
+                                                    jlong nativeCtxt,
+                                                    jlong formatAtom) {
     XClientMessageEvent* xclient =
-	(XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
+        (XClientMessageEvent*)jlong_to_ptr(nativeCtxt);
 
     Atom selection    = None;
     Time time_stamp   = CurrentTime;
     Atom target       = (Atom)formatAtom;
 
-    if (xclient->message_type == XA_XdndDrop || 
-	xclient->message_type == XA_XdndPosition) {
-	Display* dpy = xclient->display;
-	Window source_win = xclient->data.l[0];
-	Atom protocol_version = 0;
+    if (xclient->message_type == XA_XdndDrop ||
+        xclient->message_type == XA_XdndPosition) {
+        Display* dpy = xclient->display;
+        Window source_win = xclient->data.l[0];
+        Atom protocol_version = 0;
 
-	int            status;
+        int            status;
 
-	Atom           type;
-	int            format;
-	unsigned long  nitems;
-	unsigned long  after;
-	unsigned char  *data;
+        Atom           type;
+        int            format;
+        unsigned long  nitems;
+        unsigned long  after;
+        unsigned char  *data;
 
-	AWT_LOCK();
+        AWT_LOCK();
 
-	data = NULL;
-	status = XGetWindowProperty(dpy, source_win, XA_XdndAware, 0, 0xFFFF,
-				    False, XA_ATOM, &type, &format, &nitems,
-				    &after, &data);
+        data = NULL;
+        status = XGetWindowProperty(dpy, source_win, XA_XdndAware, 0, 0xFFFF,
+                                    False, XA_ATOM, &type, &format, &nitems,
+                                    &after, &data);
 
-	if (status == Success && data != NULL && type == XA_ATOM && format == 32
-	    && nitems > 0) {
-	    protocol_version = (protocol_version > XDND_PROTOCOL_VERSION) ?
-		XDND_PROTOCOL_VERSION : protocol_version;
-		
-	    if (protocol_version > 0) {
-		if (xclient->message_type == XA_XdndDrop) {
-		    time_stamp = xclient->data.l[2];
-		} else if (xclient->message_type == XA_XdndPosition) {
-		    time_stamp = xclient->data.l[3];
-		}
-	    }
-	}
+        if (status == Success && data != NULL && type == XA_ATOM && format == 32
+            && nitems > 0) {
+            protocol_version = (protocol_version > XDND_PROTOCOL_VERSION) ?
+                XDND_PROTOCOL_VERSION : protocol_version;
 
-	if (status == Success) {
-	    XFree(data);
-	    data = NULL;
-	}
+            if (protocol_version > 0) {
+                if (xclient->message_type == XA_XdndDrop) {
+                    time_stamp = xclient->data.l[2];
+                } else if (xclient->message_type == XA_XdndPosition) {
+                    time_stamp = xclient->data.l[3];
+                }
+            }
+        }
 
-	AWT_FLUSH_UNLOCK();
+        if (status == Success) {
+            XFree(data);
+            data = NULL;
+        }
 
-	selection = XA_XdndSelection;
-	if (time_stamp == CurrentTime) {
-	    time_stamp = awt_util_getCurrentServerTime();
-	}
+        AWT_FLUSH_UNLOCK();
+
+        selection = XA_XdndSelection;
+        if (time_stamp == CurrentTime) {
+            time_stamp = awt_util_getCurrentServerTime();
+        }
 
     } else if (xclient->message_type == _XA_MOTIF_DRAG_AND_DROP_MESSAGE) {
-	char* event_data = xclient->data.b;
-	unsigned char event_byte_order = read_card8(event_data, 1);
-	unsigned char first_byte = read_card8(event_data, 0);
-	unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
-	unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
-	
-	if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
-	    DTRACE_PRINTLN2("%s:%d Invalid origin.", __FILE__, __LINE__);
-	    return NULL;
-	}
+        char* event_data = xclient->data.b;
+        unsigned char event_byte_order = read_card8(event_data, 1);
+        unsigned char first_byte = read_card8(event_data, 0);
+        unsigned char reason = first_byte & MOTIF_MESSAGE_REASON_MASK;
+        unsigned char origin = first_byte & MOTIF_MESSAGE_SENDER_MASK;
 
-	switch (reason) {
-	case DROP_START:
-	    selection = read_card32(event_data, 12, event_byte_order);
-	    break;
-	case DRAG_MOTION:
-	case OPERATION_CHANGED:
-	    selection = source_atom;
-	    break;
-	default:
-	    DTRACE_PRINTLN2("%s:%d Invalid reason.", __FILE__, __LINE__);
-	    return NULL;
-	}
+        if (origin != MOTIF_MESSAGE_FROM_INITIATOR) {
+            DTRACE_PRINTLN2("%s:%d Invalid origin.", __FILE__, __LINE__);
+            return NULL;
+        }
 
-	if (selection == None) {
-	    return NULL;
-	}
+        switch (reason) {
+        case DROP_START:
+            selection = read_card32(event_data, 12, event_byte_order);
+            break;
+        case DRAG_MOTION:
+        case OPERATION_CHANGED:
+            selection = source_atom;
+            break;
+        default:
+            DTRACE_PRINTLN2("%s:%d Invalid reason.", __FILE__, __LINE__);
+            return NULL;
+        }
 
-	time_stamp = read_card32(event_data, 4, event_byte_order);
+        if (selection == None) {
+            return NULL;
+        }
+
+        time_stamp = read_card32(event_data, 4, event_byte_order);
     } else {
-	return NULL;
+        return NULL;
     }
 
     return get_selection_data(env, selection, target, time_stamp);
 }
-

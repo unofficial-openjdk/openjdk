@@ -27,8 +27,8 @@
 #define _JAVASOFT_WIN32_TIMEVAL_H_
 
 typedef struct {
-	long tv_sec;
-	long tv_usec;
+        long tv_sec;
+        long tv_usec;
 } timeval_t;
 
 /*

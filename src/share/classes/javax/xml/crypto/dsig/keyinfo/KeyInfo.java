@@ -36,16 +36,16 @@ import javax.xml.crypto.XMLStructure;
  * A representation of the XML <code>KeyInfo</code> element as defined in
  * the <a href="http://www.w3.org/TR/xmldsig-core/">
  * W3C Recommendation for XML-Signature Syntax and Processing</a>.
- * A <code>KeyInfo</code> contains a list of {@link XMLStructure}s, each of 
- * which contain information that enables the recipient(s) to obtain the key 
+ * A <code>KeyInfo</code> contains a list of {@link XMLStructure}s, each of
+ * which contain information that enables the recipient(s) to obtain the key
  * needed to validate an XML signature. The XML Schema Definition is defined as:
  *
  * <pre>
- * &lt;element name="KeyInfo" type="ds:KeyInfoType"/&gt; 
+ * &lt;element name="KeyInfo" type="ds:KeyInfoType"/&gt;
  * &lt;complexType name="KeyInfoType" mixed="true"&gt;
- *   &lt;choice maxOccurs="unbounded"&gt;     
- *     &lt;element ref="ds:KeyName"/&gt; 
- *     &lt;element ref="ds:KeyValue"/&gt; 
+ *   &lt;choice maxOccurs="unbounded"&gt;
+ *     &lt;element ref="ds:KeyName"/&gt;
+ *     &lt;element ref="ds:KeyValue"/&gt;
  *     &lt;element ref="ds:RetrievalMethod"/&gt;
  *     &lt;element ref="ds:X509Data"/&gt;
  *     &lt;element ref="ds:PGPData"/&gt;
@@ -54,19 +54,19 @@ import javax.xml.crypto.XMLStructure;
  *     &lt;any processContents="lax" namespace="##other"/&gt;
  *     &lt;!-- (1,1) elements from (0,unbounded) namespaces --&gt;
  *   &lt;/choice&gt;
- *   &lt;attribute name="Id" type="ID" use="optional"/&gt; 
+ *   &lt;attribute name="Id" type="ID" use="optional"/&gt;
  * &lt;/complexType&gt;
  * </pre>
- * 
- * A <code>KeyInfo</code> instance may be created by invoking one of the 
+ *
+ * A <code>KeyInfo</code> instance may be created by invoking one of the
  * {@link KeyInfoFactory#newKeyInfo newKeyInfo} methods of the
- * {@link KeyInfoFactory} class, and passing it a list of one or more 
+ * {@link KeyInfoFactory} class, and passing it a list of one or more
  * <code>XMLStructure</code>s and an optional id parameter;
  * for example:
  * <pre>
  *   KeyInfoFactory factory = KeyInfoFactory.getInstance("DOM");
  *   KeyInfo keyInfo = factory.newKeyInfo
- *	(Collections.singletonList(factory.newKeyName("Alice"), "keyinfo-1"));
+ *      (Collections.singletonList(factory.newKeyName("Alice"), "keyinfo-1"));
  * </pre>
  *
  * <p><code>KeyInfo</code> objects can also be marshalled to XML by invoking
@@ -81,16 +81,16 @@ import javax.xml.crypto.XMLStructure;
 public interface KeyInfo extends XMLStructure {
 
     /**
-     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable 
-     * list} containing the key information. Each entry of the list is 
+     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable
+     * list} containing the key information. Each entry of the list is
      * an {@link XMLStructure}.
      *
-     * <p>If there is a public subclass representing the type of 
+     * <p>If there is a public subclass representing the type of
      * <code>XMLStructure</code>, it is returned as an instance of that
      * class (ex: an <code>X509Data</code> element would be returned as an
      * instance of {@link javax.xml.crypto.dsig.keyinfo.X509Data}).
      *
-     * @return an unmodifiable list of one or more <code>XMLStructure</code>s 
+     * @return an unmodifiable list of one or more <code>XMLStructure</code>s
      *    in this <code>KeyInfo</code>. Never returns <code>null</code> or an
      *    empty list.
      */
@@ -98,10 +98,10 @@ public interface KeyInfo extends XMLStructure {
 
     /**
      * Return the optional Id attribute of this <code>KeyInfo</code>, which
-     * may be useful for referencing this <code>KeyInfo</code> from other 
+     * may be useful for referencing this <code>KeyInfo</code> from other
      * XML structures.
      *
-     * @return the Id attribute of this <code>KeyInfo</code> (may be 
+     * @return the Id attribute of this <code>KeyInfo</code> (may be
      *    <code>null</code> if not specified)
      */
     String getId();

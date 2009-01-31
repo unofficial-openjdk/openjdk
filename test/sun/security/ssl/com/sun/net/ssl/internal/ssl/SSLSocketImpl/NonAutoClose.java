@@ -86,13 +86,13 @@ public class NonAutoClose {
      */
 
     void expectValue(int got, int expected, String msg) throws IOException {
-	if (VERBOSE) {
-	    System.out.println(msg + ": read (" + got + ")");
-	}
-	if (got != expected) {
-	    throw new IOException(msg + ": read (" + got 
-	        + ") but expecting(" + expected + ")");
-	}
+        if (VERBOSE) {
+            System.out.println(msg + ": read (" + got + ")");
+        }
+        if (got != expected) {
+            throw new IOException(msg + ": read (" + got
+                + ") but expecting(" + expected + ")");
+        }
     }
 
 
@@ -104,73 +104,73 @@ public class NonAutoClose {
      */
 
      void doServerSide() throws Exception {
-	if (VERBOSE) {
-	    System.out.println("Starting server");
-	}
+        if (VERBOSE) {
+            System.out.println("Starting server");
+        }
 
-	/*
-	 * Setup the SSL stuff
-	 */
-	SSLSocketFactory sslsf = 
-	     (SSLSocketFactory) SSLSocketFactory.getDefault();
+        /*
+         * Setup the SSL stuff
+         */
+        SSLSocketFactory sslsf =
+             (SSLSocketFactory) SSLSocketFactory.getDefault();
 
-	ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
-	
-	SERVER_PORT = serverSocket.getLocalPort();
+        ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        SERVER_PORT = serverSocket.getLocalPort();
+
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
         Socket plainSocket = serverSocket.accept();
-	InputStream is = plainSocket.getInputStream();  
-	OutputStream os = plainSocket.getOutputStream();
+        InputStream is = plainSocket.getInputStream();
+        OutputStream os = plainSocket.getOutputStream();
 
-	expectValue(is.read(), PLAIN_CLIENT_VAL, "Server");
+        expectValue(is.read(), PLAIN_CLIENT_VAL, "Server");
 
-	os.write(PLAIN_SERVER_VAL);
-	os.flush();
+        os.write(PLAIN_SERVER_VAL);
+        os.flush();
 
-	for (int i = 1; i <= NUM_ITERATIONS; i++) {
-	    if (VERBOSE) {
-	        System.out.println("=================================");
-	        System.out.println("Server Iteration #" + i);
+        for (int i = 1; i <= NUM_ITERATIONS; i++) {
+            if (VERBOSE) {
+                System.out.println("=================================");
+                System.out.println("Server Iteration #" + i);
             }
 
             SSLSocket ssls = (SSLSocket) sslsf.createSocket(plainSocket,
-	        SERVER_NAME, plainSocket.getPort(), false);
+                SERVER_NAME, plainSocket.getPort(), false);
 
             ssls.setUseClientMode(false);
             InputStream sslis = ssls.getInputStream();
             OutputStream sslos = ssls.getOutputStream();
-            
-	    expectValue(sslis.read(), TLS_CLIENT_VAL, "Server");
 
-            sslos.write(TLS_SERVER_VAL); 
+            expectValue(sslis.read(), TLS_CLIENT_VAL, "Server");
+
+            sslos.write(TLS_SERVER_VAL);
             sslos.flush();
-             
+
             sslis.close();
             sslos.close();
             ssls.close();
 
             if (VERBOSE) {
-	        System.out.println("TLS socket is closed");
-	    }
-	}
+                System.out.println("TLS socket is closed");
+            }
+        }
 
-	expectValue(is.read(), PLAIN_CLIENT_VAL, "Server");
+        expectValue(is.read(), PLAIN_CLIENT_VAL, "Server");
 
-	os.write(PLAIN_SERVER_VAL);
-	os.flush();
+        os.write(PLAIN_SERVER_VAL);
+        os.flush();
 
-	is.close();
-	os.close();
-	plainSocket.close();
+        is.close();
+        os.close();
+        plainSocket.close();
 
         if (VERBOSE) {
-	    System.out.println("Server plain socket is closed");
-	}
+            System.out.println("Server plain socket is closed");
+        }
     }
 
     /*
@@ -180,72 +180,72 @@ public class NonAutoClose {
      * to avoid infinite hangs.
      */
     private void doClientSide() throws Exception {
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
-	if (VERBOSE) {
-	    System.out.println("Starting client");
-	}
+        if (VERBOSE) {
+            System.out.println("Starting client");
+        }
 
-	/*
-	 * Setup the SSL stuff
-	 */
-	SSLSocketFactory sslsf = 
-	     (SSLSocketFactory) SSLSocketFactory.getDefault();
+        /*
+         * Setup the SSL stuff
+         */
+        SSLSocketFactory sslsf =
+             (SSLSocketFactory) SSLSocketFactory.getDefault();
 
-	Socket plainSocket = new Socket(SERVER_NAME, SERVER_PORT);
-	InputStream is = plainSocket.getInputStream();
-	OutputStream os = plainSocket.getOutputStream();
+        Socket plainSocket = new Socket(SERVER_NAME, SERVER_PORT);
+        InputStream is = plainSocket.getInputStream();
+        OutputStream os = plainSocket.getOutputStream();
 
-	os.write(PLAIN_CLIENT_VAL);
-	os.flush();
+        os.write(PLAIN_CLIENT_VAL);
+        os.flush();
 
-	expectValue(is.read(), PLAIN_SERVER_VAL, "Client");
+        expectValue(is.read(), PLAIN_SERVER_VAL, "Client");
 
-	for (int i = 1; i <= NUM_ITERATIONS; i++) {
-	    if (VERBOSE) {
-	        System.out.println("===================================");
-	        System.out.println("Client Iteration #" + i);
-	      }
+        for (int i = 1; i <= NUM_ITERATIONS; i++) {
+            if (VERBOSE) {
+                System.out.println("===================================");
+                System.out.println("Client Iteration #" + i);
+              }
 
-	    SSLSocket ssls = (SSLSocket) sslsf.createSocket(plainSocket,  
-	       SERVER_NAME, plainSocket.getPort(), false); 
+            SSLSocket ssls = (SSLSocket) sslsf.createSocket(plainSocket,
+               SERVER_NAME, plainSocket.getPort(), false);
 
-	    ssls.setUseClientMode(true);
-	
-	    InputStream sslis = ssls.getInputStream();
-	    OutputStream sslos = ssls.getOutputStream();
+            ssls.setUseClientMode(true);
 
-	    sslos.write(TLS_CLIENT_VAL);
-	    sslos.flush();
+            InputStream sslis = ssls.getInputStream();
+            OutputStream sslos = ssls.getOutputStream();
 
-	    expectValue(sslis.read(), TLS_SERVER_VAL, "Client");
+            sslos.write(TLS_CLIENT_VAL);
+            sslos.flush();
 
-	    sslis.close();
-	    sslos.close();
-	    ssls.close();
+            expectValue(sslis.read(), TLS_SERVER_VAL, "Client");
 
-	    if (VERBOSE) {
-	        System.out.println("Client TLS socket is closed");
-	    }
-	}
+            sslis.close();
+            sslos.close();
+            ssls.close();
 
-	os.write(PLAIN_CLIENT_VAL);
-	os.flush();
+            if (VERBOSE) {
+                System.out.println("Client TLS socket is closed");
+            }
+        }
 
-	expectValue(is.read(), PLAIN_SERVER_VAL, "Client");
+        os.write(PLAIN_CLIENT_VAL);
+        os.flush();
 
-	is.close();
-	os.close();
-	plainSocket.close();
+        expectValue(is.read(), PLAIN_SERVER_VAL, "Client");
 
-	if (VERBOSE) {
-	    System.out.println("Client plain socket is closed");
-	}
+        is.close();
+        os.close();
+        plainSocket.close();
+
+        if (VERBOSE) {
+            System.out.println("Client plain socket is closed");
+        }
     }
 
     /*
@@ -260,26 +260,26 @@ public class NonAutoClose {
     private volatile Exception clientException = null;
 
     private final static String keyFilename =
-	System.getProperty("test.src", ".") + "/" + pathToStores +
-	"/" + keyStoreFile;
+        System.getProperty("test.src", ".") + "/" + pathToStores +
+        "/" + keyStoreFile;
     private final static String trustFilename =
-	System.getProperty("test.src", ".") + "/" + pathToStores +
-	"/" + trustStoreFile;
+        System.getProperty("test.src", ".") + "/" + pathToStores +
+        "/" + trustStoreFile;
 
 
    // Used for running test standalone
     public static void main(String[] args) throws Exception {
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (DEBUG)
-	    System.setProperty("javax.net.debug", "all");
+        if (DEBUG)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
+        /*
+         * Start the tests.
+         */
         new NonAutoClose();
     }
 
@@ -292,83 +292,82 @@ public class NonAutoClose {
      * Fork off the other side, then do your work.
      */
     NonAutoClose() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null) {
-	    System.err.print("Server Exception:");
-	    throw serverException;
-	}
-	if (clientException != null) {
-	    System.err.print("Client Exception:");
-	    throw clientException;
-	}
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null) {
+            System.err.print("Server Exception:");
+            throw serverException;
+        }
+        if (clientException != null) {
+            System.err.print("Client Exception:");
+            throw clientException;
+        }
     }
 
     private void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     private void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }
-

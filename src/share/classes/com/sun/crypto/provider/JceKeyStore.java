@@ -66,21 +66,21 @@ public final class JceKeyStore extends KeyStoreSpi {
 
     // Private key and supporting certificate chain
     private static final class PrivateKeyEntry {
-	Date date; // the creation date of this entry
-	byte[] protectedKey;
-	Certificate chain[];
+        Date date; // the creation date of this entry
+        byte[] protectedKey;
+        Certificate chain[];
     };
 
     // Secret key
     private static final class SecretKeyEntry {
-	Date date; // the creation date of this entry
-	SealedObject sealedKey;
+        Date date; // the creation date of this entry
+        SealedObject sealedKey;
     }
 
     // Trusted certificate
     private static final class TrustedCertEntry {
-	Date date; // the creation date of this entry
-	Certificate cert;
+        Date date; // the creation date of this entry
+        Certificate cert;
     };
 
     /**
@@ -105,36 +105,36 @@ public final class JceKeyStore extends KeyStoreSpi {
      * (e.g., the given password is wrong).
      */
     public Key engineGetKey(String alias, char[] password)
-	throws NoSuchAlgorithmException, UnrecoverableKeyException
+        throws NoSuchAlgorithmException, UnrecoverableKeyException
     {
-	Key key = null;
+        Key key = null;
 
-	Object entry = entries.get(alias.toLowerCase());
+        Object entry = entries.get(alias.toLowerCase());
 
-	if (!((entry instanceof PrivateKeyEntry) || 
-	      (entry instanceof SecretKeyEntry))) {
-	    return null;
-	}
+        if (!((entry instanceof PrivateKeyEntry) ||
+              (entry instanceof SecretKeyEntry))) {
+            return null;
+        }
 
-	KeyProtector keyProtector = new KeyProtector(password);
+        KeyProtector keyProtector = new KeyProtector(password);
 
-	if (entry instanceof PrivateKeyEntry) {
-	    byte[] encrBytes = ((PrivateKeyEntry)entry).protectedKey;
-	    EncryptedPrivateKeyInfo encrInfo;
-	    try {
-		encrInfo = new EncryptedPrivateKeyInfo(encrBytes);
-	    } catch (IOException ioe) {
-		throw new UnrecoverableKeyException("Private key not stored "
-						    + "as PKCS #8 " +
-						    "EncryptedPrivateKeyInfo");
-	    }
-	    key = keyProtector.recover(encrInfo);
-	} else {
-	    key =
-		keyProtector.unseal(((SecretKeyEntry)entry).sealedKey);
-	}
+        if (entry instanceof PrivateKeyEntry) {
+            byte[] encrBytes = ((PrivateKeyEntry)entry).protectedKey;
+            EncryptedPrivateKeyInfo encrInfo;
+            try {
+                encrInfo = new EncryptedPrivateKeyInfo(encrBytes);
+            } catch (IOException ioe) {
+                throw new UnrecoverableKeyException("Private key not stored "
+                                                    + "as PKCS #8 " +
+                                                    "EncryptedPrivateKeyInfo");
+            }
+            key = keyProtector.recover(encrInfo);
+        } else {
+            key =
+                keyProtector.unseal(((SecretKeyEntry)entry).sealedKey);
+        }
 
-	return key;
+        return key;
     }
 
     /**
@@ -144,22 +144,22 @@ public final class JceKeyStore extends KeyStoreSpi {
      *
      * @return the certificate chain (ordered with the user's certificate first
      * and the root certificate authority last), or null if the given alias
-     * does not exist or does not contain a certificate chain (i.e., the given 
+     * does not exist or does not contain a certificate chain (i.e., the given
      * alias identifies either a <i>trusted certificate entry</i> or a
      * <i>key entry</i> without a certificate chain).
      */
     public Certificate[] engineGetCertificateChain(String alias)
     {
-	Certificate[] chain = null;
+        Certificate[] chain = null;
 
-	Object entry = entries.get(alias.toLowerCase());
+        Object entry = entries.get(alias.toLowerCase());
 
-	if ((entry instanceof PrivateKeyEntry) 
-	    && (((PrivateKeyEntry)entry).chain != null)) {
-	    chain = (Certificate[])((PrivateKeyEntry)entry).chain.clone();
-	}
+        if ((entry instanceof PrivateKeyEntry)
+            && (((PrivateKeyEntry)entry).chain != null)) {
+            chain = (Certificate[])((PrivateKeyEntry)entry).chain.clone();
+        }
 
-	return chain;
+        return chain;
     }
 
     /**
@@ -178,21 +178,21 @@ public final class JceKeyStore extends KeyStoreSpi {
      * does not contain a certificate.
      */
     public Certificate engineGetCertificate(String alias) {
-	Certificate cert = null;
+        Certificate cert = null;
 
-	Object entry = entries.get(alias.toLowerCase());
+        Object entry = entries.get(alias.toLowerCase());
 
-	if (entry != null) {
-	    if (entry instanceof TrustedCertEntry) {
-		cert = ((TrustedCertEntry)entry).cert;
-	    } else if ((entry instanceof PrivateKeyEntry) &&
-		       (((PrivateKeyEntry)entry).chain != null)) {
-		cert = ((PrivateKeyEntry)entry).chain[0];
-	    }
-	}
+        if (entry != null) {
+            if (entry instanceof TrustedCertEntry) {
+                cert = ((TrustedCertEntry)entry).cert;
+            } else if ((entry instanceof PrivateKeyEntry) &&
+                       (((PrivateKeyEntry)entry).chain != null)) {
+                cert = ((PrivateKeyEntry)entry).chain[0];
+            }
+        }
 
-	return cert;
-    }	
+        return cert;
+    }
 
     /**
      * Returns the creation date of the entry identified by the given alias.
@@ -203,23 +203,23 @@ public final class JceKeyStore extends KeyStoreSpi {
      * not exist
      */
     public Date engineGetCreationDate(String alias) {
-	Date date = null;
+        Date date = null;
 
-	Object entry = entries.get(alias.toLowerCase());
+        Object entry = entries.get(alias.toLowerCase());
 
-	if (entry != null) {
-	    // We have to create a new instance of java.util.Date because
-	    // dates are not immutable
-	    if (entry instanceof TrustedCertEntry) {
-		date = new Date(((TrustedCertEntry)entry).date.getTime());
-	    } else if (entry instanceof PrivateKeyEntry) {
-		date = new Date(((PrivateKeyEntry)entry).date.getTime());
-	    } else {
-		date = new Date(((SecretKeyEntry)entry).date.getTime());
-	    }
-	}
+        if (entry != null) {
+            // We have to create a new instance of java.util.Date because
+            // dates are not immutable
+            if (entry instanceof TrustedCertEntry) {
+                date = new Date(((TrustedCertEntry)entry).date.getTime());
+            } else if (entry instanceof PrivateKeyEntry) {
+                date = new Date(((PrivateKeyEntry)entry).date.getTime());
+            } else {
+                date = new Date(((SecretKeyEntry)entry).date.getTime());
+            }
+        }
 
-	return date;
+        return date;
     }
 
     /**
@@ -245,50 +245,50 @@ public final class JceKeyStore extends KeyStoreSpi {
      * this operation fails for some other reason
      */
     public void engineSetKeyEntry(String alias, Key key, char[] password,
-				  Certificate[] chain)
-	throws KeyStoreException
+                                  Certificate[] chain)
+        throws KeyStoreException
     {
-	synchronized(entries) {
-	    try {
-		KeyProtector keyProtector = new KeyProtector(password);
+        synchronized(entries) {
+            try {
+                KeyProtector keyProtector = new KeyProtector(password);
 
-		if (key instanceof PrivateKey) {
-		    PrivateKeyEntry entry = new PrivateKeyEntry();
-		    entry.date = new Date();
+                if (key instanceof PrivateKey) {
+                    PrivateKeyEntry entry = new PrivateKeyEntry();
+                    entry.date = new Date();
 
-		    // protect the private key
-		    entry.protectedKey = keyProtector.protect((PrivateKey)key);
+                    // protect the private key
+                    entry.protectedKey = keyProtector.protect((PrivateKey)key);
 
-		    // clone the chain
-		    if ((chain != null) &&
-			(chain.length !=0)) {
-			entry.chain = (Certificate[])chain.clone();
-		    } else {
-			entry.chain = null;
-		    }
+                    // clone the chain
+                    if ((chain != null) &&
+                        (chain.length !=0)) {
+                        entry.chain = (Certificate[])chain.clone();
+                    } else {
+                        entry.chain = null;
+                    }
 
-		    // store the entry
-		    entries.put(alias.toLowerCase(), entry);
-		
-		} else {
-		    SecretKeyEntry entry = new SecretKeyEntry();
-		    entry.date = new Date();
-		    
-		    // seal and store the key
-		    entry.sealedKey = keyProtector.seal(key);
-		    entries.put(alias.toLowerCase(), entry);
-		}
+                    // store the entry
+                    entries.put(alias.toLowerCase(), entry);
 
-	    } catch (Exception e) {
-		throw new KeyStoreException(e.getMessage());
-	    }
-	}
+                } else {
+                    SecretKeyEntry entry = new SecretKeyEntry();
+                    entry.date = new Date();
+
+                    // seal and store the key
+                    entry.sealedKey = keyProtector.seal(key);
+                    entries.put(alias.toLowerCase(), entry);
+                }
+
+            } catch (Exception e) {
+                throw new KeyStoreException(e.getMessage());
+            }
+        }
     }
 
     /**
      * Assigns the given key (that has already been protected) to the given
      * alias.
-     * 
+     *
      * <p>If the protected key is of type
      * <code>java.security.PrivateKey</code>,
      * it must be accompanied by a certificate chain certifying the
@@ -307,25 +307,25 @@ public final class JceKeyStore extends KeyStoreSpi {
      * @exception KeyStoreException if this operation fails.
      */
     public void engineSetKeyEntry(String alias, byte[] key,
-				  Certificate[] chain)
-	throws KeyStoreException
+                                  Certificate[] chain)
+        throws KeyStoreException
     {
-	synchronized(entries) {
-	    // We assume it's a private key, because there is no standard
-	    // (ASN.1) encoding format for wrapped secret keys
-	    PrivateKeyEntry entry = new PrivateKeyEntry();
-	    entry.date = new Date();
+        synchronized(entries) {
+            // We assume it's a private key, because there is no standard
+            // (ASN.1) encoding format for wrapped secret keys
+            PrivateKeyEntry entry = new PrivateKeyEntry();
+            entry.date = new Date();
 
-	    entry.protectedKey = (byte[])key.clone();
-	    if ((chain != null) &&
-		(chain.length != 0)) {
-		entry.chain = (Certificate[])chain.clone();
-	    } else {
-		entry.chain = null;
-	    }
+            entry.protectedKey = (byte[])key.clone();
+            if ((chain != null) &&
+                (chain.length != 0)) {
+                entry.chain = (Certificate[])chain.clone();
+            } else {
+                entry.chain = null;
+            }
 
-	    entries.put(alias.toLowerCase(), entry);
-	}
+            entries.put(alias.toLowerCase(), entry);
+        }
     }
 
     /**
@@ -343,25 +343,25 @@ public final class JceKeyStore extends KeyStoreSpi {
      * fails for some other reason.
      */
     public void engineSetCertificateEntry(String alias, Certificate cert)
-	throws KeyStoreException
+        throws KeyStoreException
     {
-	synchronized(entries) {
+        synchronized(entries) {
 
-	    Object entry = entries.get(alias.toLowerCase());
-	    if (entry != null) {
-		if (entry instanceof PrivateKeyEntry) {
-		    throw new KeyStoreException("Cannot overwrite own "
-						+ "certificate");
-		} else if (entry instanceof SecretKeyEntry) {
-		    throw new KeyStoreException("Cannot overwrite secret key");
-		}
-	    }
+            Object entry = entries.get(alias.toLowerCase());
+            if (entry != null) {
+                if (entry instanceof PrivateKeyEntry) {
+                    throw new KeyStoreException("Cannot overwrite own "
+                                                + "certificate");
+                } else if (entry instanceof SecretKeyEntry) {
+                    throw new KeyStoreException("Cannot overwrite secret key");
+                }
+            }
 
-	    TrustedCertEntry trustedCertEntry = new TrustedCertEntry();
-	    trustedCertEntry.cert = cert;
-	    trustedCertEntry.date = new Date();
-	    entries.put(alias.toLowerCase(), trustedCertEntry);
-	}
+            TrustedCertEntry trustedCertEntry = new TrustedCertEntry();
+            trustedCertEntry.cert = cert;
+            trustedCertEntry.date = new Date();
+            entries.put(alias.toLowerCase(), trustedCertEntry);
+        }
     }
 
     /**
@@ -372,11 +372,11 @@ public final class JceKeyStore extends KeyStoreSpi {
      * @exception KeyStoreException if the entry cannot be removed.
      */
     public void engineDeleteEntry(String alias)
-	throws KeyStoreException
+        throws KeyStoreException
     {
-	synchronized(entries) {
-	    entries.remove(alias.toLowerCase());
-	}
+        synchronized(entries) {
+            entries.remove(alias.toLowerCase());
+        }
     }
 
     /**
@@ -385,7 +385,7 @@ public final class JceKeyStore extends KeyStoreSpi {
      * @return enumeration of the alias names
      */
     public Enumeration engineAliases() {
-	return entries.keys();
+        return entries.keys();
     }
 
     /**
@@ -396,7 +396,7 @@ public final class JceKeyStore extends KeyStoreSpi {
      * @return true if the alias exists, false otherwise
      */
     public boolean engineContainsAlias(String alias) {
-	return entries.containsKey(alias.toLowerCase());
+        return entries.containsKey(alias.toLowerCase());
     }
 
     /**
@@ -405,7 +405,7 @@ public final class JceKeyStore extends KeyStoreSpi {
      * @return the number of entries in this keystore
      */
     public int engineSize() {
-	return entries.size();
+        return entries.size();
     }
 
     /**
@@ -416,15 +416,15 @@ public final class JceKeyStore extends KeyStoreSpi {
      * <i>key entry</i>, false otherwise.
      */
     public boolean engineIsKeyEntry(String alias) {
-	boolean isKey = false;
+        boolean isKey = false;
 
-	Object entry = entries.get(alias.toLowerCase());
-	if ((entry instanceof PrivateKeyEntry)
-	    || (entry instanceof SecretKeyEntry)) {
-	    isKey = true;
-	}
+        Object entry = entries.get(alias.toLowerCase());
+        if ((entry instanceof PrivateKeyEntry)
+            || (entry instanceof SecretKeyEntry)) {
+            isKey = true;
+        }
 
-	return isKey;
+        return isKey;
     }
 
     /**
@@ -435,12 +435,12 @@ public final class JceKeyStore extends KeyStoreSpi {
      * <i>trusted certificate entry</i>, false otherwise.
      */
     public boolean engineIsCertificateEntry(String alias) {
-	boolean isCert = false;
-	Object entry = entries.get(alias.toLowerCase());
-	if (entry instanceof TrustedCertEntry) {
-	    isCert = true;
-	}
-	return isCert;
+        boolean isCert = false;
+        Object entry = entries.get(alias.toLowerCase());
+        if (entry instanceof TrustedCertEntry) {
+            isCert = true;
+        }
+        return isCert;
     }
 
     /**
@@ -460,25 +460,25 @@ public final class JceKeyStore extends KeyStoreSpi {
      * or null if no such entry exists in this keystore.
      */
     public String engineGetCertificateAlias(Certificate cert) {
-	Certificate certElem;
+        Certificate certElem;
 
-	Enumeration e = entries.keys();
-	while (e.hasMoreElements()) {
-	    String alias = (String)e.nextElement();
-	    Object entry = entries.get(alias);
-	    if (entry instanceof TrustedCertEntry) {
-		certElem = ((TrustedCertEntry)entry).cert;
-	    } else if ((entry instanceof PrivateKeyEntry) &&
-		       (((PrivateKeyEntry)entry).chain != null)) {
-		certElem = ((PrivateKeyEntry)entry).chain[0];
-	    } else {
-		continue;
-	    }
-	    if (certElem.equals(cert)) {
-		return alias;
-	    }
-	}
-	return null;
+        Enumeration e = entries.keys();
+        while (e.hasMoreElements()) {
+            String alias = (String)e.nextElement();
+            Object entry = entries.get(alias);
+            if (entry instanceof TrustedCertEntry) {
+                certElem = ((TrustedCertEntry)entry).cert;
+            } else if ((entry instanceof PrivateKeyEntry) &&
+                       (((PrivateKeyEntry)entry).chain != null)) {
+                certElem = ((PrivateKeyEntry)entry).chain[0];
+            } else {
+                continue;
+            }
+            if (certElem.equals(cert)) {
+                return alias;
+            }
+        }
+        return null;
     }
 
     /**
@@ -495,162 +495,162 @@ public final class JceKeyStore extends KeyStoreSpi {
      * the keystore data could not be stored
      */
     public void engineStore(OutputStream stream, char[] password)
-	throws IOException, NoSuchAlgorithmException, CertificateException
+        throws IOException, NoSuchAlgorithmException, CertificateException
     {
-	synchronized(entries) {
-	    /*
-	     * KEYSTORE FORMAT:
-	     *
-	     * Magic number (big-endian integer),
-	     * Version of this file format (big-endian integer),
-	     *
-	     * Count (big-endian integer),
-	     * followed by "count" instances of either:
-	     *
-	     *     {
-	     *      tag=1 (big-endian integer)
-	     *      alias (UTF string)
-	     *      timestamp
-	     *	    encrypted private-key info according to PKCS #8
-	     *          (integer length followed by encoding)
-	     *	    cert chain (integer count followed by certs;
-	     *          for each cert: type UTF string, followed by integer
-	     *              length, followed by encoding)
-	     *     }
-	     *
-	     * or:
-	     *
-	     *     {
-	     *      tag=2 (big-endian integer)
-	     *      alias (UTF string)
-	     *      timestamp
-	     *      cert (type UTF string, followed by integer length,
-	     *          followed by encoding)
-	     *     }
-	     *
-	     * or:
-	     *
-	     *     {
-	     *      tag=3 (big-endian integer)
-	     *      alias (UTF string)
-	     *      timestamp
-	     *      sealed secret key (in serialized form)
-	     *     }
-	     *
-	     * ended by a keyed SHA1 hash (bytes only) of
-	     *     { password + whitener + preceding body }
-	     */
-	    
-	    // password is mandatory when storing
-	    if (password == null) {
-		throw new IllegalArgumentException("password can't be null");
-	    }
+        synchronized(entries) {
+            /*
+             * KEYSTORE FORMAT:
+             *
+             * Magic number (big-endian integer),
+             * Version of this file format (big-endian integer),
+             *
+             * Count (big-endian integer),
+             * followed by "count" instances of either:
+             *
+             *     {
+             *      tag=1 (big-endian integer)
+             *      alias (UTF string)
+             *      timestamp
+             *      encrypted private-key info according to PKCS #8
+             *          (integer length followed by encoding)
+             *      cert chain (integer count followed by certs;
+             *          for each cert: type UTF string, followed by integer
+             *              length, followed by encoding)
+             *     }
+             *
+             * or:
+             *
+             *     {
+             *      tag=2 (big-endian integer)
+             *      alias (UTF string)
+             *      timestamp
+             *      cert (type UTF string, followed by integer length,
+             *          followed by encoding)
+             *     }
+             *
+             * or:
+             *
+             *     {
+             *      tag=3 (big-endian integer)
+             *      alias (UTF string)
+             *      timestamp
+             *      sealed secret key (in serialized form)
+             *     }
+             *
+             * ended by a keyed SHA1 hash (bytes only) of
+             *     { password + whitener + preceding body }
+             */
 
-	    byte[] encoded; // the certificate encoding
+            // password is mandatory when storing
+            if (password == null) {
+                throw new IllegalArgumentException("password can't be null");
+            }
 
-	    MessageDigest md = getPreKeyedHash(password);
-	    DataOutputStream dos
-		= new DataOutputStream(new DigestOutputStream(stream, md));
-	    // NOTE: don't pass dos to oos at this point or it'll corrupt
-	    // the keystore!!!
-	    ObjectOutputStream oos = null; 
-	    try {
-		dos.writeInt(JCEKS_MAGIC);
-		dos.writeInt(VERSION_2); // always write the latest version
-		
-		dos.writeInt(entries.size());
-		
-		Enumeration e = entries.keys();
-		while (e.hasMoreElements()) {
-		    
-		    String alias = (String)e.nextElement();
-		    Object entry = entries.get(alias);
-		    
-		    if (entry instanceof PrivateKeyEntry) {
-			
-			PrivateKeyEntry pentry = (PrivateKeyEntry)entry;
-			
-			// write PrivateKeyEntry tag
-			dos.writeInt(1);
-			
-			// write the alias
-			dos.writeUTF(alias);
+            byte[] encoded; // the certificate encoding
 
-			// write the (entry creation) date
-			dos.writeLong(pentry.date.getTime());
-			
-			// write the protected private key
-			dos.writeInt(pentry.protectedKey.length);
-			dos.write(pentry.protectedKey);
-			
-			// write the certificate chain
-			int chainLen;
-			if (pentry.chain == null) {
-			    chainLen = 0;
-			} else {
-			    chainLen = pentry.chain.length;
-			}
-			dos.writeInt(chainLen);
-			for (int i = 0; i < chainLen; i++) {
-			    encoded = pentry.chain[i].getEncoded();
-			    dos.writeUTF(pentry.chain[i].getType());
-			    dos.writeInt(encoded.length);
-			    dos.write(encoded);
-			}
-			
-		    } else if (entry instanceof TrustedCertEntry) {
-			
-			// write TrustedCertEntry tag
-			dos.writeInt(2);
-			
-			// write the alias
-			dos.writeUTF(alias);
-			
-			// write the (entry creation) date
-			dos.writeLong(((TrustedCertEntry)entry).date.getTime());
-			
-			// write the trusted certificate
-			encoded = ((TrustedCertEntry)entry).cert.getEncoded();
-			dos.writeUTF(((TrustedCertEntry)entry).cert.getType());
-			dos.writeInt(encoded.length);    
-			dos.write(encoded);
-			
-		    } else {
-			
-			// write SecretKeyEntry tag
-			dos.writeInt(3);
-			
-			// write the alias
-			dos.writeUTF(alias);
-			
-			// write the (entry creation) date
-			dos.writeLong(((SecretKeyEntry)entry).date.getTime());
-			
-			// write the sealed key
-			oos = new ObjectOutputStream(dos);
-			oos.writeObject(((SecretKeyEntry)entry).sealedKey);
-			// NOTE: don't close oos here since we are still
-			// using dos!!!
-		    }
-		}
-		
-		/*
-		 * Write the keyed hash which is used to detect tampering with
-		 * the keystore (such as deleting or modifying key or
-		 * certificate entries).
-		 */
-		byte digest[] = md.digest();
-		
-		dos.write(digest);
-		dos.flush();
-	    } finally {
-		if (oos != null) {
-		    oos.close();
-		} else {
-		    dos.close();
-		}
-	    }
-	}
+            MessageDigest md = getPreKeyedHash(password);
+            DataOutputStream dos
+                = new DataOutputStream(new DigestOutputStream(stream, md));
+            // NOTE: don't pass dos to oos at this point or it'll corrupt
+            // the keystore!!!
+            ObjectOutputStream oos = null;
+            try {
+                dos.writeInt(JCEKS_MAGIC);
+                dos.writeInt(VERSION_2); // always write the latest version
+
+                dos.writeInt(entries.size());
+
+                Enumeration e = entries.keys();
+                while (e.hasMoreElements()) {
+
+                    String alias = (String)e.nextElement();
+                    Object entry = entries.get(alias);
+
+                    if (entry instanceof PrivateKeyEntry) {
+
+                        PrivateKeyEntry pentry = (PrivateKeyEntry)entry;
+
+                        // write PrivateKeyEntry tag
+                        dos.writeInt(1);
+
+                        // write the alias
+                        dos.writeUTF(alias);
+
+                        // write the (entry creation) date
+                        dos.writeLong(pentry.date.getTime());
+
+                        // write the protected private key
+                        dos.writeInt(pentry.protectedKey.length);
+                        dos.write(pentry.protectedKey);
+
+                        // write the certificate chain
+                        int chainLen;
+                        if (pentry.chain == null) {
+                            chainLen = 0;
+                        } else {
+                            chainLen = pentry.chain.length;
+                        }
+                        dos.writeInt(chainLen);
+                        for (int i = 0; i < chainLen; i++) {
+                            encoded = pentry.chain[i].getEncoded();
+                            dos.writeUTF(pentry.chain[i].getType());
+                            dos.writeInt(encoded.length);
+                            dos.write(encoded);
+                        }
+
+                    } else if (entry instanceof TrustedCertEntry) {
+
+                        // write TrustedCertEntry tag
+                        dos.writeInt(2);
+
+                        // write the alias
+                        dos.writeUTF(alias);
+
+                        // write the (entry creation) date
+                        dos.writeLong(((TrustedCertEntry)entry).date.getTime());
+
+                        // write the trusted certificate
+                        encoded = ((TrustedCertEntry)entry).cert.getEncoded();
+                        dos.writeUTF(((TrustedCertEntry)entry).cert.getType());
+                        dos.writeInt(encoded.length);
+                        dos.write(encoded);
+
+                    } else {
+
+                        // write SecretKeyEntry tag
+                        dos.writeInt(3);
+
+                        // write the alias
+                        dos.writeUTF(alias);
+
+                        // write the (entry creation) date
+                        dos.writeLong(((SecretKeyEntry)entry).date.getTime());
+
+                        // write the sealed key
+                        oos = new ObjectOutputStream(dos);
+                        oos.writeObject(((SecretKeyEntry)entry).sealedKey);
+                        // NOTE: don't close oos here since we are still
+                        // using dos!!!
+                    }
+                }
+
+                /*
+                 * Write the keyed hash which is used to detect tampering with
+                 * the keystore (such as deleting or modifying key or
+                 * certificate entries).
+                 */
+                byte digest[] = md.digest();
+
+                dos.write(digest);
+                dos.flush();
+            } finally {
+                if (oos != null) {
+                    oos.close();
+                } else {
+                    dos.close();
+                }
+            }
+        }
     }
 
     /**
@@ -671,211 +671,211 @@ public final class JceKeyStore extends KeyStoreSpi {
      * keystore could not be loaded
      */
     public void engineLoad(InputStream stream, char[] password)
-	throws IOException, NoSuchAlgorithmException, CertificateException
+        throws IOException, NoSuchAlgorithmException, CertificateException
     {
-	synchronized(entries) {
-	    DataInputStream dis;
-	    MessageDigest md = null;
-	    CertificateFactory cf = null;
-	    Hashtable cfs = null;
-	    ByteArrayInputStream bais = null;
-	    byte[] encoded = null;
+        synchronized(entries) {
+            DataInputStream dis;
+            MessageDigest md = null;
+            CertificateFactory cf = null;
+            Hashtable cfs = null;
+            ByteArrayInputStream bais = null;
+            byte[] encoded = null;
 
-	    if (stream == null)
-		return;
+            if (stream == null)
+                return;
 
-	    if (password != null) {
-		md = getPreKeyedHash(password);
-		dis = new DataInputStream(new DigestInputStream(stream, md));
-	    } else {
-		dis = new DataInputStream(stream);
-	    }
-	    // NOTE: don't pass dis to ois at this point or it'll fail to load
-	    // the keystore!!!
-	    ObjectInputStream ois = null;
+            if (password != null) {
+                md = getPreKeyedHash(password);
+                dis = new DataInputStream(new DigestInputStream(stream, md));
+            } else {
+                dis = new DataInputStream(stream);
+            }
+            // NOTE: don't pass dis to ois at this point or it'll fail to load
+            // the keystore!!!
+            ObjectInputStream ois = null;
 
-	    try { 
-		// Body format: see store method
-	     
-		int xMagic = dis.readInt();
-		int xVersion = dis.readInt();
-		
-		// Accept the following keystore implementations:
-		// - JCEKS (this implementation), versions 1 and 2
-		// - JKS (Sun's keystore implementation in JDK 1.2),
-		//   versions 1 and 2
-		if (((xMagic != JCEKS_MAGIC) && (xMagic != JKS_MAGIC)) ||
-		    ((xVersion != VERSION_1) && (xVersion != VERSION_2))) {
-		    throw new IOException("Invalid keystore format");
-		}
+            try {
+                // Body format: see store method
 
-		if (xVersion == VERSION_1) {
-		    cf = CertificateFactory.getInstance("X509");
-		} else {
-		    // version 2
-		    cfs = new Hashtable(3);
-		}
-		
-		entries.clear();
-		int count = dis.readInt();
-		
-		for (int i = 0; i < count; i++) {
-		    int tag;
-		    String alias;
-		    
-		    tag = dis.readInt();
-		    
-		    if (tag == 1) { // private-key entry
-			
-			PrivateKeyEntry entry = new PrivateKeyEntry();
-			
-			// read the alias
-			alias = dis.readUTF();
-			
-			// read the (entry creation) date
-			entry.date = new Date(dis.readLong());
-			
-			// read the private key
-			try {
-			    entry.protectedKey = new byte[dis.readInt()];
-			} catch (OutOfMemoryError e) {
-			    throw new IOException("Keysize too big");
-			}
-			dis.readFully(entry.protectedKey);
-			
-			// read the certificate chain
-			int numOfCerts = dis.readInt();
-			try {
-			    if (numOfCerts > 0) {
-				entry.chain = new Certificate[numOfCerts];
-			    }
-			} catch (OutOfMemoryError e) {
-			    throw new IOException("Too many certificates in "
-						  + "chain");
-			}
-			for (int j = 0; j < numOfCerts; j++) {
-			    if (xVersion == 2) {
-				// read the certificate type, and instantiate a
-				// certificate factory of that type (reuse
-				// existing factory if possible)
-				String certType = dis.readUTF();
-				if (cfs.containsKey(certType)) {
-				// reuse certificate factory
-				    cf = (CertificateFactory)cfs.get(certType);
-				} else {
-				// create new certificate factory
-				    cf = CertificateFactory.getInstance(certType);
-				// store the certificate factory so we can
-				// reuse it later
-				    cfs.put(certType, cf);
-				}
-			    }
-			    // instantiate the certificate
-			    try {
-				encoded = new byte[dis.readInt()];
-			    } catch (OutOfMemoryError e) {
-				throw new IOException("Certificate too big");
-			    }
-			    dis.readFully(encoded);
-			    bais = new ByteArrayInputStream(encoded);
-			    entry.chain[j] = cf.generateCertificate(bais);
-			}
-			
-			// Add the entry to the list
-			entries.put(alias, entry);
-			
-		    } else if (tag == 2) { // trusted certificate entry
-			
-			TrustedCertEntry entry = new TrustedCertEntry();
-			
-			// read the alias
-			alias = dis.readUTF();
-			
-			// read the (entry creation) date
-			entry.date = new Date(dis.readLong());
-			
-			// read the trusted certificate
-			if (xVersion == 2) {
-			    // read the certificate type, and instantiate a
-			    // certificate factory of that type (reuse
-			    // existing factory if possible)
-			    String certType = dis.readUTF();
-			    if (cfs.containsKey(certType)) {
-				// reuse certificate factory
-				cf = (CertificateFactory)cfs.get(certType);
-			    } else {
-				// create new certificate factory
-				cf = CertificateFactory.getInstance(certType);
-				// store the certificate factory so we can
-				// reuse it later
-				cfs.put(certType, cf);
-			    }
-			}
-			try {
-			    encoded = new byte[dis.readInt()];
-			} catch (OutOfMemoryError e) {
-			    throw new IOException("Certificate too big");
-			}
-			dis.readFully(encoded);
-			bais = new ByteArrayInputStream(encoded);
-			entry.cert = cf.generateCertificate(bais);
-			
-			// Add the entry to the list
-			entries.put(alias, entry);
-			
-		    } else if (tag == 3) { // secret-key entry
-			
-			SecretKeyEntry entry = new SecretKeyEntry();
-			
-			// read the alias
-			alias = dis.readUTF();
-			
-			// read the (entry creation) date
-			entry.date = new Date(dis.readLong());
-			
-			// read the sealed key
-			try {
-			    ois = new ObjectInputStream(dis);
-			    entry.sealedKey = (SealedObject)ois.readObject();
-			    // NOTE: don't close ois here since we are still
-			    // using dis!!!
-			} catch (ClassNotFoundException cnfe) {
-			    throw new IOException(cnfe.getMessage());
-			}
-			
-			// Add the entry to the list
-			entries.put(alias, entry);
-			
-		    } else {
-			throw new IOException("Unrecognized keystore entry");
-		    }
-		}
-		
-		/*
-		 * If a password has been provided, we check the keyed digest
-		 * at the end. If this check fails, the store has been tampered
-		 * with
-		 */
-		if (password != null) {
-		    byte computed[], actual[];
-		    computed = md.digest();
-		    actual = new byte[computed.length];
-		    dis.readFully(actual);
-		    for (int i = 0; i < computed.length; i++) {
-			if (computed[i] != actual[i]) {
-			    throw new IOException("Keystore was tampered with, or "
-						  + "password was incorrect");
-			}
-		    }
-		}
-	    }  finally {
-		if (ois != null) {
-		    ois.close();
-		} else {
-		    dis.close();
-		}
-	    }
-	}
+                int xMagic = dis.readInt();
+                int xVersion = dis.readInt();
+
+                // Accept the following keystore implementations:
+                // - JCEKS (this implementation), versions 1 and 2
+                // - JKS (Sun's keystore implementation in JDK 1.2),
+                //   versions 1 and 2
+                if (((xMagic != JCEKS_MAGIC) && (xMagic != JKS_MAGIC)) ||
+                    ((xVersion != VERSION_1) && (xVersion != VERSION_2))) {
+                    throw new IOException("Invalid keystore format");
+                }
+
+                if (xVersion == VERSION_1) {
+                    cf = CertificateFactory.getInstance("X509");
+                } else {
+                    // version 2
+                    cfs = new Hashtable(3);
+                }
+
+                entries.clear();
+                int count = dis.readInt();
+
+                for (int i = 0; i < count; i++) {
+                    int tag;
+                    String alias;
+
+                    tag = dis.readInt();
+
+                    if (tag == 1) { // private-key entry
+
+                        PrivateKeyEntry entry = new PrivateKeyEntry();
+
+                        // read the alias
+                        alias = dis.readUTF();
+
+                        // read the (entry creation) date
+                        entry.date = new Date(dis.readLong());
+
+                        // read the private key
+                        try {
+                            entry.protectedKey = new byte[dis.readInt()];
+                        } catch (OutOfMemoryError e) {
+                            throw new IOException("Keysize too big");
+                        }
+                        dis.readFully(entry.protectedKey);
+
+                        // read the certificate chain
+                        int numOfCerts = dis.readInt();
+                        try {
+                            if (numOfCerts > 0) {
+                                entry.chain = new Certificate[numOfCerts];
+                            }
+                        } catch (OutOfMemoryError e) {
+                            throw new IOException("Too many certificates in "
+                                                  + "chain");
+                        }
+                        for (int j = 0; j < numOfCerts; j++) {
+                            if (xVersion == 2) {
+                                // read the certificate type, and instantiate a
+                                // certificate factory of that type (reuse
+                                // existing factory if possible)
+                                String certType = dis.readUTF();
+                                if (cfs.containsKey(certType)) {
+                                // reuse certificate factory
+                                    cf = (CertificateFactory)cfs.get(certType);
+                                } else {
+                                // create new certificate factory
+                                    cf = CertificateFactory.getInstance(certType);
+                                // store the certificate factory so we can
+                                // reuse it later
+                                    cfs.put(certType, cf);
+                                }
+                            }
+                            // instantiate the certificate
+                            try {
+                                encoded = new byte[dis.readInt()];
+                            } catch (OutOfMemoryError e) {
+                                throw new IOException("Certificate too big");
+                            }
+                            dis.readFully(encoded);
+                            bais = new ByteArrayInputStream(encoded);
+                            entry.chain[j] = cf.generateCertificate(bais);
+                        }
+
+                        // Add the entry to the list
+                        entries.put(alias, entry);
+
+                    } else if (tag == 2) { // trusted certificate entry
+
+                        TrustedCertEntry entry = new TrustedCertEntry();
+
+                        // read the alias
+                        alias = dis.readUTF();
+
+                        // read the (entry creation) date
+                        entry.date = new Date(dis.readLong());
+
+                        // read the trusted certificate
+                        if (xVersion == 2) {
+                            // read the certificate type, and instantiate a
+                            // certificate factory of that type (reuse
+                            // existing factory if possible)
+                            String certType = dis.readUTF();
+                            if (cfs.containsKey(certType)) {
+                                // reuse certificate factory
+                                cf = (CertificateFactory)cfs.get(certType);
+                            } else {
+                                // create new certificate factory
+                                cf = CertificateFactory.getInstance(certType);
+                                // store the certificate factory so we can
+                                // reuse it later
+                                cfs.put(certType, cf);
+                            }
+                        }
+                        try {
+                            encoded = new byte[dis.readInt()];
+                        } catch (OutOfMemoryError e) {
+                            throw new IOException("Certificate too big");
+                        }
+                        dis.readFully(encoded);
+                        bais = new ByteArrayInputStream(encoded);
+                        entry.cert = cf.generateCertificate(bais);
+
+                        // Add the entry to the list
+                        entries.put(alias, entry);
+
+                    } else if (tag == 3) { // secret-key entry
+
+                        SecretKeyEntry entry = new SecretKeyEntry();
+
+                        // read the alias
+                        alias = dis.readUTF();
+
+                        // read the (entry creation) date
+                        entry.date = new Date(dis.readLong());
+
+                        // read the sealed key
+                        try {
+                            ois = new ObjectInputStream(dis);
+                            entry.sealedKey = (SealedObject)ois.readObject();
+                            // NOTE: don't close ois here since we are still
+                            // using dis!!!
+                        } catch (ClassNotFoundException cnfe) {
+                            throw new IOException(cnfe.getMessage());
+                        }
+
+                        // Add the entry to the list
+                        entries.put(alias, entry);
+
+                    } else {
+                        throw new IOException("Unrecognized keystore entry");
+                    }
+                }
+
+                /*
+                 * If a password has been provided, we check the keyed digest
+                 * at the end. If this check fails, the store has been tampered
+                 * with
+                 */
+                if (password != null) {
+                    byte computed[], actual[];
+                    computed = md.digest();
+                    actual = new byte[computed.length];
+                    dis.readFully(actual);
+                    for (int i = 0; i < computed.length; i++) {
+                        if (computed[i] != actual[i]) {
+                            throw new IOException("Keystore was tampered with, or "
+                                                  + "password was incorrect");
+                        }
+                    }
+                }
+            }  finally {
+                if (ois != null) {
+                    ois.close();
+                } else {
+                    dis.close();
+                }
+            }
+        }
     }
 
     /**
@@ -884,18 +884,18 @@ public final class JceKeyStore extends KeyStoreSpi {
      */
     private MessageDigest getPreKeyedHash(char[] password)
     throws NoSuchAlgorithmException, UnsupportedEncodingException {
-	int i, j;
+        int i, j;
 
-	MessageDigest md = MessageDigest.getInstance("SHA");
-	byte[] passwdBytes = new byte[password.length * 2];
-	for (i=0, j=0; i<password.length; i++) {
-	    passwdBytes[j++] = (byte)(password[i] >> 8);
-	    passwdBytes[j++] = (byte)password[i];
-	}
-	md.update(passwdBytes);
-	for (i=0; i<passwdBytes.length; i++)
-	    passwdBytes[i] = 0;
-	md.update("Mighty Aphrodite".getBytes("UTF8"));
-	return md;
+        MessageDigest md = MessageDigest.getInstance("SHA");
+        byte[] passwdBytes = new byte[password.length * 2];
+        for (i=0, j=0; i<password.length; i++) {
+            passwdBytes[j++] = (byte)(password[i] >> 8);
+            passwdBytes[j++] = (byte)password[i];
+        }
+        md.update(passwdBytes);
+        for (i=0; i<passwdBytes.length; i++)
+            passwdBytes[i] = 0;
+        md.update("Mighty Aphrodite".getBytes("UTF8"));
+        return md;
     }
 }

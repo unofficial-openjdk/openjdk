@@ -34,15 +34,15 @@ class MPanelPeer extends MCanvasPeer implements PanelPeer {
     MPanelPeer() {}
 
     MPanelPeer(Component target) {
-	super(target);
+        super(target);
     }
 
     MPanelPeer(Component target, Object arg) {
-	super(target, arg);
+        super(target, arg);
     }
 
     public Insets getInsets() {
-	return new Insets(0, 0, 0, 0);
+        return new Insets(0, 0, 0, 0);
     }
 
     public void paint(Graphics g) {
@@ -61,64 +61,64 @@ class MPanelPeer extends MCanvasPeer implements PanelPeer {
     }
 
     public void setBackground(Color c) {
-	Component comp;
-	int i;
+        Component comp;
+        int i;
 
-	Container cont = (Container) target;
-	synchronized(target.getTreeLock()) {
-	    int n = cont.getComponentCount();
-	    for(i=0; i < n; i++) {
-	        comp = cont.getComponent(i);
-	        MComponentPeer peer = (MComponentPeer) MToolkit.targetToPeer(comp);
-	        if (peer != null) {
-		    Color color = comp.getBackground();
+        Container cont = (Container) target;
+        synchronized(target.getTreeLock()) {
+            int n = cont.getComponentCount();
+            for(i=0; i < n; i++) {
+                comp = cont.getComponent(i);
+                MComponentPeer peer = (MComponentPeer) MToolkit.targetToPeer(comp);
+                if (peer != null) {
+                    Color color = comp.getBackground();
                     if (color == null || color.equals(c)) {
-			peer.setBackground(c);
-		        peer.pSetBackground(c);
-		    }
-		    if ((comp instanceof java.awt.List) ||
-			   (comp instanceof java.awt.TextArea) ||
-			   (comp instanceof java.awt.ScrollPane)) {
-		        peer.pSetScrollbarBackground(c);
-		    }
- 		}
-	    }
-	}
-	pSetBackground(c);
+                        peer.setBackground(c);
+                        peer.pSetBackground(c);
+                    }
+                    if ((comp instanceof java.awt.List) ||
+                           (comp instanceof java.awt.TextArea) ||
+                           (comp instanceof java.awt.ScrollPane)) {
+                        peer.pSetScrollbarBackground(c);
+                    }
+                }
+            }
+        }
+        pSetBackground(c);
     }
 
     public void setForeground(Color c) {
-	Component comp;
-	int i;
+        Component comp;
+        int i;
 
-	Container cont = (Container) target;
-	synchronized(target.getTreeLock()) {
-	    int n = cont.getComponentCount();
-	    for(i=0; i < n; i++) {
-	        comp = cont.getComponent(i);
-	        MComponentPeer peer = (MComponentPeer) MToolkit.targetToPeer(comp);
-	        if (peer != null) {
-		    Color color = comp.getForeground();
+        Container cont = (Container) target;
+        synchronized(target.getTreeLock()) {
+            int n = cont.getComponentCount();
+            for(i=0; i < n; i++) {
+                comp = cont.getComponent(i);
+                MComponentPeer peer = (MComponentPeer) MToolkit.targetToPeer(comp);
+                if (peer != null) {
+                    Color color = comp.getForeground();
                     if (color == null || color.equals(c)) {
-			peer.setForeground(c);
-		        peer.pSetForeground(c);
-		    }
-		    if ((comp instanceof java.awt.List) ||
-			   (comp instanceof java.awt.TextArea) ||
-			   (comp instanceof java.awt.ScrollPane)) {
-		        peer.pSetInnerForeground(c);
-		    }
- 		}
-	    }
-	}
-	pSetForeground(c);
+                        peer.setForeground(c);
+                        peer.pSetForeground(c);
+                    }
+                    if ((comp instanceof java.awt.List) ||
+                           (comp instanceof java.awt.TextArea) ||
+                           (comp instanceof java.awt.ScrollPane)) {
+                        peer.pSetInnerForeground(c);
+                    }
+                }
+            }
+        }
+        pSetForeground(c);
     }
 
     /**
      * DEPRECATED:  Replaced by getInsets().
      */
     public Insets insets() {
-	return getInsets();
+        return getInsets();
     }
 
     /**
@@ -153,7 +153,7 @@ class MPanelPeer extends MCanvasPeer implements PanelPeer {
        // Don't do super call because MWindowPeer has already updated its GC
 
        Component children[] = ((Container)target).getComponents();
-        
+
        for (int i = 0; i < children.length; i++) {
            recursiveDisplayChanged(children[i], screenNum);
        }
@@ -199,4 +199,3 @@ class MPanelPeer extends MCanvasPeer implements PanelPeer {
         return true;
     }
 }
-

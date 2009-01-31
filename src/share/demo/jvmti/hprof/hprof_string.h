@@ -39,4 +39,4 @@ int         string_get_len(StringIndex index);
 void        string_list(void);
 void        string_cleanup(void);
 
-#endif 
+#endif

@@ -23,8 +23,6 @@
  * have any questions.
  */
 /*
- * %W% %E%
- *
  * (C) Copyright IBM Corp. 1998-2003- All Rights Reserved.
  */
 
@@ -118,7 +116,7 @@ public abstract class ExtendedTextLabel extends TextLabel
 
   public abstract TextLineComponent getSubset(int start, int limit, int dir);
 
-  /** 
+  /**
    * Return the number of justification records this uses.
    */
   public abstract int getNumJustificationInfos();
@@ -133,14 +131,14 @@ public abstract class ExtendedTextLabel extends TextLabel
   public abstract void getJustificationInfos(GlyphJustificationInfo[] infos, int infoStart, int charStart, int charLimit);
 
   /**
-   * Apply deltas to the data in this component, starting at offset 
+   * Apply deltas to the data in this component, starting at offset
    * deltaStart, and return the new component.  There are two floats
    * for each justification info, for a total of 2 * getNumJustificationInfos.
-   * The first delta is the left adjustment, the second is the right 
+   * The first delta is the left adjustment, the second is the right
    * adjustment.
    * <p>
    * If flags[0] is true on entry, rejustification is allowed.  If
-   * the new component requires rejustification (ligatures were 
+   * the new component requires rejustification (ligatures were
    * formed or split), flags[0] will be set on exit.
    */
   public abstract TextLineComponent applyJustificationDeltas(float[] deltas, int deltaStart, boolean[] flags);

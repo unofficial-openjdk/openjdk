@@ -42,7 +42,7 @@ public class TransportConstants {
     public static final byte ProtocolAck = 0x4e;
     /** Negative ack for transport protocol (protocol not supported) */
     public static final byte ProtocolNack = 0x4f;
-    
+
     /** RMI call */
     public static final byte Call = 0x50;
     /** RMI return */
@@ -59,4 +59,3 @@ public class TransportConstants {
     /** Exceptional return */
     public static final byte ExceptionalReturn = 0x02;
 }
-

@@ -31,7 +31,6 @@ package javax.net.ssl;
  * this indicates a flaw in one of the protocol implementations.
  *
  * @since 1.4
- * @version %I%
  * @author David Brownell
  */
 public

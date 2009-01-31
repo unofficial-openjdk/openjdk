@@ -27,16 +27,16 @@
  * @bug 6427403
  *
  * @summary java.net.MulticastSocket.joinGroup() reports 'socket closed'
- * 
+ *
  */
 import java.net.*;
 import java.io.*;
 import java.util.*;
 public class B6427403 {
     public static void main( String[] args ) throws IOException {
-	InetAddress lh = InetAddress.getLocalHost();
-	MulticastSocket ms = new MulticastSocket( new InetSocketAddress(lh, 0) );
-	ms.joinGroup( InetAddress.getByName("224.80.80.80") );
-	ms.close();
+        InetAddress lh = InetAddress.getLocalHost();
+        MulticastSocket ms = new MulticastSocket( new InetSocketAddress(lh, 0) );
+        ms.joinGroup( InetAddress.getByName("224.80.80.80") );
+        ms.close();
     }
 }

@@ -40,12 +40,11 @@ import org.w3c.dom.Node;
  * represent child element of KeyInfo.
  *
  * @author $Author: raul $
- * @version %I%, %G%
  */
 public class KeyResolver {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(KeyResolver.class.getName());
 
    /** Field _alreadyInitialized */
@@ -93,7 +92,7 @@ public class KeyResolver {
     */
    public static KeyResolver item(int i) throws KeyResolverException {
 
-	   KeyResolver resolver = (KeyResolver) KeyResolver._resolverVector.get(i);
+           KeyResolver resolver = (KeyResolver) KeyResolver._resolverVector.get(i);
       if (resolver==null) {
          throw new KeyResolverException("utils.resolver.noClass");
       }
@@ -108,7 +107,7 @@ public class KeyResolver {
     * @param BaseURI
     * @param storage
     * @return the instance that happends to implement the thing.
-    * 
+    *
     * @throws KeyResolverException
     */
    public static final KeyResolver getInstance(
@@ -116,10 +115,10 @@ public class KeyResolver {
               throws KeyResolverException {
 
       for (int i = 0; i < KeyResolver._resolverVector.size(); i++) {
-		  KeyResolver resolver=
+                  KeyResolver resolver=
             (KeyResolver) KeyResolver._resolverVector.get(i);
 
-		  if (resolver==null) {
+                  if (resolver==null) {
             Object exArgs[] = {
                (((element != null)
                  && (element.getNodeType() == Node.ELEMENT_NODE))
@@ -129,7 +128,7 @@ public class KeyResolver {
             throw new KeyResolverException("utils.resolver.noClass", exArgs);
          }
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "check resolvability by class " + resolver.getClass());
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "check resolvability by class " + resolver.getClass());
 
          if (resolver.canResolve(element, BaseURI, storage)) {
             return resolver;
@@ -159,13 +158,13 @@ public class KeyResolver {
     * This method is used for registering {@link KeyResolverSpi}s which are
     * available to <I>all</I> {@link com.sun.org.apache.xml.internal.security.keys.KeyInfo} objects. This means that
     * personalized {@link KeyResolverSpi}s should only be registered directly
-    * to the {@link com.sun.org.apache.xml.internal.security.keys.KeyInfo} using 
+    * to the {@link com.sun.org.apache.xml.internal.security.keys.KeyInfo} using
     * {@link com.sun.org.apache.xml.internal.security.keys.KeyInfo#registerInternalKeyResolver}.
     *
     * @param className
- * @throws InstantiationException 
- * @throws IllegalAccessException 
- * @throws ClassNotFoundException 
+ * @throws InstantiationException
+ * @throws IllegalAccessException
+ * @throws ClassNotFoundException
     */
    public static void register(String className) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
       KeyResolver._resolverVector.add(new KeyResolver(className));
@@ -198,7 +197,7 @@ public class KeyResolver {
     * @param BaseURI
     * @param storage
     * @return resolve from the static register an element
-    * 
+    *
     * @throws KeyResolverException
     */
    public static PublicKey resolveStatic(
@@ -216,9 +215,9 @@ public class KeyResolver {
     *
     * @param element
     * @param BaseURI
-    * @param storage 
+    * @param storage
     * @return resolved public key from the registered from the elements
-    * 
+    *
     * @throws KeyResolverException
     */
    public PublicKey resolvePublicKey(
@@ -234,7 +233,7 @@ public class KeyResolver {
     * @param BaseURI
     * @param storage
     * @return resolved X509certificate key from the registered from the elements
-    * 
+    *
     * @throws KeyResolverException
     */
    public X509Certificate resolveX509Certificate(

@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 typedef struct {
-  
+
     /* Used to save handle to our own dynamicly loaded library */
     void *libhandle;
 
@@ -56,35 +56,35 @@ typedef struct {
 
     /* UTF interfaces, see utf.c */
     struct UtfInst* (JNICALL *utfInitialize)
-		         (char *options);
+                         (char *options);
     void     (JNICALL *utfTerminate)
-		         (struct UtfInst *utf, char *options);
+                         (struct UtfInst *utf, char *options);
     int      (JNICALL *utf8ToPlatform)
-		         (struct UtfInst *utf, jbyte *utf8, int len, 
-		          char *output, int outputMaxLen);
+                         (struct UtfInst *utf, jbyte *utf8, int len,
+                          char *output, int outputMaxLen);
     int      (JNICALL *utf8FromPlatform)
-		         (struct UtfInst *utf, char *str, int len, 
-		          jbyte *output, int outputMaxLen);
+                         (struct UtfInst *utf, char *str, int len,
+                          jbyte *output, int outputMaxLen);
     int      (JNICALL *utf8ToUtf16)
-		         (struct UtfInst *utf, jbyte *utf8, int len, 
-		          jchar *output, int outputMaxLen);
+                         (struct UtfInst *utf, jbyte *utf8, int len,
+                          jchar *output, int outputMaxLen);
     int      (JNICALL *utf16ToUtf8m)
-		         (struct UtfInst *utf, jchar *utf16, int len, 
-		          jbyte *output, int outputMaxLen);
+                         (struct UtfInst *utf, jchar *utf16, int len,
+                          jbyte *output, int outputMaxLen);
     int      (JNICALL *utf16ToUtf8s)
-		         (struct UtfInst *utf, jchar *utf16, int len, 
-		          jbyte *output, int outputMaxLen);
+                         (struct UtfInst *utf, jchar *utf16, int len,
+                          jbyte *output, int outputMaxLen);
     int      (JNICALL *utf8sToUtf8mLength)
-		         (struct UtfInst *utf, jbyte *string, int length);
+                         (struct UtfInst *utf, jbyte *string, int length);
     void     (JNICALL *utf8sToUtf8m)
-		         (struct UtfInst *utf, jbyte *string, int length, 
-		          jbyte *newString, int newLength);
+                         (struct UtfInst *utf, jbyte *string, int length,
+                          jbyte *newString, int newLength);
     int      (JNICALL *utf8mToUtf8sLength)
-		         (struct UtfInst *utf, jbyte *string, int length);
+                         (struct UtfInst *utf, jbyte *string, int length);
     void     (JNICALL *utf8mToUtf8s)
-		         (struct UtfInst *utf, jbyte *string, int length, 
-		          jbyte *newString, int newLength);
-    
+                         (struct UtfInst *utf, jbyte *string, int length,
+                          jbyte *newString, int newLength);
+
 } NptEnv;
 
 /* Typedefs for the only 2 'extern' functions in npt library:
@@ -93,18 +93,17 @@ typedef struct {
  */
 
 JNIEXPORT void JNICALL nptInitialize
-		       (NptEnv **pnpt, char *nptVersion, char *options);
+                       (NptEnv **pnpt, char *nptVersion, char *options);
 typedef JNIEXPORT void (JNICALL *NptInitialize)
-		       (NptEnv **pnpt, char *nptVersion, char *options);
+                       (NptEnv **pnpt, char *nptVersion, char *options);
 
 JNIEXPORT void JNICALL nptTerminate
-		       (NptEnv* npt, char *options);
+                       (NptEnv* npt, char *options);
 typedef JNIEXPORT void (JNICALL *NptTerminate)
-		       (NptEnv* npt, char *options);
+                       (NptEnv* npt, char *options);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
 #endif
-

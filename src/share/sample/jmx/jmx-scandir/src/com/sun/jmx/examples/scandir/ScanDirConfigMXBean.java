@@ -37,11 +37,11 @@ import java.io.IOException;
 import javax.management.InstanceNotFoundException;
 
 /**
- * <p>The <code>ScanDirConfigMXBean</code> is in charge of the 
+ * <p>The <code>ScanDirConfigMXBean</code> is in charge of the
  * <i>scandir</i> application configuration.
  * </p>
  * <p>The <code>ScanDirConfigMXBean</code> is an MBean which is able to
- * load and save the <i>scandir</i> application configuration to and from an 
+ * load and save the <i>scandir</i> application configuration to and from an
  * XML file.
  * </p>
  * <p>
@@ -52,20 +52,20 @@ import javax.management.InstanceNotFoundException;
  * <p>
  * There can be as many <code>ScanDirConfigMXBean</code> registered
  * in the MBeanServer as you like, but only one of them will be identified as
- * the current configuration of the {@link ScanManagerMXBean}. 
- * You can switch to another configuration by calling {@link 
- * ScanManagerMXBean#setConfigurationMBean 
+ * the current configuration of the {@link ScanManagerMXBean}.
+ * You can switch to another configuration by calling {@link
+ * ScanManagerMXBean#setConfigurationMBean
  * ScanManagerMXBean.setConfigurationMBean}.
  * </p>
  * <p>
  * Once the current configuration has been loaded (by calling {@link #load})
- * or modified (by calling one of {@link #addDirectoryScanner 
- * addDirectoryScanner}, {@link #removeDirectoryScanner removeDirectoryScanner} 
+ * or modified (by calling one of {@link #addDirectoryScanner
+ * addDirectoryScanner}, {@link #removeDirectoryScanner removeDirectoryScanner}
  * or {@link #setConfiguration setConfiguration}) it can be pushed
- * to the {@link ScanManagerMXBean} by calling {@link 
- * ScanManagerMXBean#applyConfiguration 
- * ScanManagerMXBean.applyConfiguration(true)} - 
- * <code>true</code> means that we apply the configuration from memory, 
+ * to the {@link ScanManagerMXBean} by calling {@link
+ * ScanManagerMXBean#applyConfiguration
+ * ScanManagerMXBean.applyConfiguration(true)} -
+ * <code>true</code> means that we apply the configuration from memory,
  * without first reloading the file.
  * </p>
  *
@@ -74,52 +74,52 @@ import javax.management.InstanceNotFoundException;
 public interface ScanDirConfigMXBean {
     /**
      * This state tells whether the configuration reflected by the
-     * {@link ScanDirConfigMXBean} was loaded in memory, saved to the 
+     * {@link ScanDirConfigMXBean} was loaded in memory, saved to the
      * configuration file, or modified since last saved.
      * Note that this state doesn't tell whether the configuration was
      * applied by the {@link ScanManagerMXBean}.
      **/
     public enum SaveState {
-        /** 
+        /**
          * Initial state: the {@link ScanDirConfigMXBean} is created, but
          * neither {@link #load} or  {@link #save} was yet called.
          **/
-        CREATED, 
-        
+        CREATED,
+
         /**
          * The configuration reflected by the {@link ScanDirConfigMXBean} has
          * been loaded, but not modified yet.
          **/
-        LOADED, 
-        
+        LOADED,
+
         /**
          * The configuration was modified. The modifications are held in memory.
          * Call {@link #save} to save them to the file, or {@link #load} to
          * reload the file and discard them.
          **/
-        MODIFIED, 
-        
+        MODIFIED,
+
         /**
-         * The configuration was saved. 
+         * The configuration was saved.
          **/
         SAVED
     };
-    
+
     /**
-     * Loads the configuration from the {@link 
+     * Loads the configuration from the {@link
      * #getConfigFilename configuration file}.
      * <p>Any unsaved modification will be lost. The {@link #getSaveState state}
      * is switched to {@link SaveState#LOADED LOADED}.
      * </p>
      * <p>
      * This action has no effect on the {@link ScanManagerMXBean} until
-     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean} 
-     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration 
+     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean}
+     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration
      * ScanManagerMXBean.applyConfiguration} is called.
      * </p>
      * @see #getSaveState()
      * @throws IOException The configuration couldn't be loaded from the file,
-     *                     e.g. because the file doesn't exist or isn't 
+     *                     e.g. because the file doesn't exist or isn't
      *                     readable.
      * @throws IOException A connection problem occurred when accessing
      *                     the underlying resource.
@@ -128,9 +128,9 @@ public interface ScanDirConfigMXBean {
      **/
     public void load()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Saves the configuration to the {@link 
+     * Saves the configuration to the {@link
      * #getConfigFilename configuration file}.
      *
      * <p>If the configuration file doesn't exists, this method will
@@ -144,7 +144,7 @@ public interface ScanDirConfigMXBean {
      * This action has no effect on the {@link ScanManagerMXBean}.
      * </p>
      * @see #getSaveState()
-     * 
+     *
      * @throws IOException The configuration couldn't be saved to the file,
      *                     e.g. because the file couldn't be created.
      * @throws IOException A connection problem occurred when accessing
@@ -154,13 +154,13 @@ public interface ScanDirConfigMXBean {
      **/
     public void save()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Gets the name of the configuration file. 
+     * Gets the name of the configuration file.
      * <p>If the configuration file doesn't exists, {@link #load} will fail
      * and {@link #save} will attempt to create the file.
      * </p>
-     * 
+     *
      * @return The configuration file name for this MBean.
      * @throws IOException A connection problem occurred when accessing
      *                     the underlying resource.
@@ -169,12 +169,12 @@ public interface ScanDirConfigMXBean {
      **/
     public String getConfigFilename()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Gets the current configuration data. 
+     * Gets the current configuration data.
      * <p>
      * This method returns the configuration data which is currently held
-     * in memory. 
+     * in memory.
      * </p>
      * <p>Call {@link #load} to reload the data from the configuration
      *    file, and {@link #save} to save the data to the configuration
@@ -189,23 +189,23 @@ public interface ScanDirConfigMXBean {
      **/
     public ScanManagerConfig getConfiguration()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Sets the current configuration data. 
+     * Sets the current configuration data.
      * <p>
-     * This method replaces the configuration data in memory. 
-     * The {@link #getSaveState state} is switched to {@link 
+     * This method replaces the configuration data in memory.
+     * The {@link #getSaveState state} is switched to {@link
      * SaveState#MODIFIED MODIFIED}.
      * </p>
      * <p>Calling {@link #load} will reload the data from the configuration
-     *    file, and all modifications will be lost. 
+     *    file, and all modifications will be lost.
      *    Calling {@link #save} will save the modified data to the configuration
      *    file.
      * </p>
      * <p>
      * This action has no effect on the {@link ScanManagerMXBean} until
-     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean} 
-     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration 
+     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean}
+     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration
      * ScanManagerMXBean.applyConfiguration} is called.
      * </p>
      * @param config The new configuration data.
@@ -217,25 +217,25 @@ public interface ScanDirConfigMXBean {
      */
     public void setConfiguration(ScanManagerConfig config)
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Adds a new directory scanner to the current configuration data. 
+     * Adds a new directory scanner to the current configuration data.
      * <p>
-     * This method updates the configuration data in memory, adding 
-     * a {@link DirectoryScannerConfig} to the {@link 
-     * ScanManagerConfig#getScanList directory scanner list}. 
-     * The {@link #getSaveState state} is switched to {@link 
+     * This method updates the configuration data in memory, adding
+     * a {@link DirectoryScannerConfig} to the {@link
+     * ScanManagerConfig#getScanList directory scanner list}.
+     * The {@link #getSaveState state} is switched to {@link
      * SaveState#MODIFIED MODIFIED}.
      * </p>
      * <p>Calling {@link #load} will reload the data from the configuration
-     *    file, and all modifications will be lost. 
+     *    file, and all modifications will be lost.
      *    Calling {@link #save} will save the modified data to the configuration
      *    file.
      * </p>
      * <p>
      * This action has no effect on the {@link ScanManagerMXBean} until
-     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean} 
-     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration 
+     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean}
+     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration
      * ScanManagerMXBean.applyConfiguration} is called.
      * </p>
      * @param name A name for the new directory scanner. This is the value
@@ -245,13 +245,13 @@ public interface ScanDirConfigMXBean {
      * @param filePattern A {@link java.util.regex.Pattern regular expression}
      *        to match against a selected file name.
      * @param sizeExceedsMaxBytes Only file whose size exceeds that limit will
-     *        be selected. <code.0</code> or  a 
+     *        be selected. <code.0</code> or  a
      *        negative value means no limit.
-     * @param sinceLastModified Select files which haven't been modified for 
-     *        that number of milliseconds - i.e. 
+     * @param sinceLastModified Select files which haven't been modified for
+     *        that number of milliseconds - i.e.
      *        {@code sinceLastModified=3600000} will exclude files which
      *        have been modified in the last hour.
-     *        The date of last modification is ignored if <code>0</code> or  a 
+     *        The date of last modification is ignored if <code>0</code> or  a
      *        negative value is provided.
      * @see #getSaveState()
      * @return The added <code>DirectoryScannerConfig</code>.
@@ -260,29 +260,29 @@ public interface ScanDirConfigMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public DirectoryScannerConfig 
-            addDirectoryScanner(String name, String dir, String filePattern, 
+    public DirectoryScannerConfig
+            addDirectoryScanner(String name, String dir, String filePattern,
                                 long sizeExceedsMaxBytes, long sinceLastModified)
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Removes a directory scanner from the current configuration data. 
+     * Removes a directory scanner from the current configuration data.
      * <p>
-     * This method updates the configuration data in memory, removing 
-     * a {@link DirectoryScannerConfig} from the {@link 
-     * ScanManagerConfig#getScanList directory scanner list}. 
-     * The {@link #getSaveState state} is switched to {@link 
+     * This method updates the configuration data in memory, removing
+     * a {@link DirectoryScannerConfig} from the {@link
+     * ScanManagerConfig#getScanList directory scanner list}.
+     * The {@link #getSaveState state} is switched to {@link
      * SaveState#MODIFIED MODIFIED}.
      * </p>
      * <p>Calling {@link #load} will reload the data from the configuration
-     *    file, and all modifications will be lost. 
+     *    file, and all modifications will be lost.
      *    Calling {@link #save} will save the modified data to the configuration
      *    file.
      * </p>
      * <p>
      * This action has no effect on the {@link ScanManagerMXBean} until
-     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean} 
-     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration 
+     * {@link ScanManagerMXBean#getConfigurationMBean ScanManagerMXBean}
+     * points to this MBean and {@link ScanManagerMXBean#applyConfiguration
      * ScanManagerMXBean.applyConfiguration} is called.
      * </p>
      * @param name The name of the new directory scanner. This is the value
@@ -296,10 +296,10 @@ public interface ScanDirConfigMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public DirectoryScannerConfig 
+    public DirectoryScannerConfig
             removeDirectoryScanner(String name)
         throws IOException, InstanceNotFoundException;
-    
+
     /**
      * Gets the save state of the current configuration data.
      * <p>
@@ -325,7 +325,7 @@ public interface ScanDirConfigMXBean {
      * {@link SaveState#SAVED SAVED} means that the configuration data
      * was saved to the configuration file.
      * </p>
-     * <p> 
+     * <p>
      * This state doesn't indicate whether this MBean configuration data
      * was {@link ScanManagerMXBean#applyConfiguration applied} by the
      * {@link ScanManagerMXBean}.
@@ -338,7 +338,5 @@ public interface ScanDirConfigMXBean {
      */
     public SaveState getSaveState()
         throws IOException, InstanceNotFoundException;
-    
+
 }
-
-

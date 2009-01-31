@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)CursiveAttachmentSubtables.h	1.4 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -55,4 +54,3 @@ struct CursiveAttachmentSubtable : GlyphPositioningSubtable
 };
 
 #endif
-

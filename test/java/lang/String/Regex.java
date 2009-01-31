@@ -30,22 +30,22 @@
 public class Regex {
 
     static void ck(boolean x, boolean ans) throws Exception {
-	if (x != ans)
-	    throw new Exception("Test failed");
+        if (x != ans)
+            throw new Exception("Test failed");
     }
 
     static void ck(String x, String ans) throws Exception {
-	if (!x.equals(ans))
-	    throw new Exception("Test failed");
+        if (!x.equals(ans))
+            throw new Exception("Test failed");
     }
 
     static void ck(String[] x, String[] ans) throws Exception {
-	if (x.length != ans.length)
-	    throw new Exception("Test failed");
-	for (int i = 0; i < x.length; i++) {
-	    if (!x[i].equals(ans[i]))
-		throw new Exception("Test failed");
-	}
+        if (x.length != ans.length)
+            throw new Exception("Test failed");
+        for (int i = 0; i < x.length; i++) {
+            if (!x[i].equals(ans[i]))
+                throw new Exception("Test failed");
+        }
     }
 
     static void testLiteralReplacement() throws Exception {
@@ -70,26 +70,26 @@ public class Regex {
 
     public static void main(String[] args) throws Exception {
 
-	// These don't need to be thorough, they just need to check
-	// that we're properly hooked up to java.util.regex
+        // These don't need to be thorough, they just need to check
+        // that we're properly hooked up to java.util.regex
 
-	String foo = "boo:and:foo";
+        String foo = "boo:and:foo";
 
-	ck(foo.matches("b+"), false);
-	ck(foo.matches("o+"), false);
-	ck(foo.matches("b..:and:f.*"), true);
+        ck(foo.matches("b+"), false);
+        ck(foo.matches("o+"), false);
+        ck(foo.matches("b..:and:f.*"), true);
 
-	ck(foo.replaceAll("oo", "uu"), "buu:and:fuu");
-	ck(foo.replaceAll("o+", "<$0>"), "b<oo>:and:f<oo>");
+        ck(foo.replaceAll("oo", "uu"), "buu:and:fuu");
+        ck(foo.replaceAll("o+", "<$0>"), "b<oo>:and:f<oo>");
 
-	ck(foo.replaceFirst("oo", "uu"), "buu:and:foo");
-	ck(foo.replaceFirst("o+", "<$0>"), "b<oo>:and:foo");
+        ck(foo.replaceFirst("oo", "uu"), "buu:and:foo");
+        ck(foo.replaceFirst("o+", "<$0>"), "b<oo>:and:foo");
 
-	ck(foo.split(":"), new String[] { "boo", "and", "foo" });
-	ck(foo.split("o"), new String[] { "b", "", ":and:f" });
+        ck(foo.split(":"), new String[] { "boo", "and", "foo" });
+        ck(foo.split("o"), new String[] { "b", "", ":and:f" });
 
-	ck(foo.split(":", 2), new String[] { "boo", "and:foo" });
-	ck(foo.split("o", -2), new String[] { "b", "", ":and:f", "", "" });
+        ck(foo.split(":", 2), new String[] { "boo", "and:foo" });
+        ck(foo.split("o", -2), new String[] { "b", "", ":and:f", "", "" });
 
         testLiteralReplacement();
     }

@@ -30,10 +30,9 @@ import java.io.IOException;
 /**
  * An applet IO exception.
  *
- * @version 	%E%
- * @author 	Koji Uno
+ * @author      Koji Uno
  */
-public 
+public
 class AppletIOException extends IOException {
     private String key = null;
     private Object msgobj = null;
@@ -41,7 +40,7 @@ class AppletIOException extends IOException {
     public AppletIOException(String key) {
         super(key);
         this.key = key;
-        
+
     }
     public AppletIOException(String key, Object arg) {
         this(key);

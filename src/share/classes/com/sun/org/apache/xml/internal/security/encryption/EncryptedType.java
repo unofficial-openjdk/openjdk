@@ -193,4 +193,3 @@ public interface EncryptedType {
      */
     void setEncryptionProperties(EncryptionProperties properties);
 }
-

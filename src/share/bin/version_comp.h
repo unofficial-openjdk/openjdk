@@ -24,7 +24,7 @@
  */
 
 #ifndef _VERSION_COMP_H
-#define	_VERSION_COMP_H
+#define _VERSION_COMP_H
 
 /*
  * Function prototypes.

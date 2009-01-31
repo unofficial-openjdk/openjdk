@@ -66,7 +66,7 @@ public class IndentingWriter extends BufferedWriter {
      * given Writer.  Use the default indent step of four spaces.
      */
     public IndentingWriter(Writer out) {
-	super(out);
+        super(out);
     }
 
     /**
@@ -74,12 +74,12 @@ public class IndentingWriter extends BufferedWriter {
      * given Writer and uses the supplied indent step.
      */
     public IndentingWriter(Writer out, int step) {
-	this(out);
+        this(out);
 
-	if (indentStep < 0)
-	    throw new IllegalArgumentException("negative indent step");
+        if (indentStep < 0)
+            throw new IllegalArgumentException("negative indent step");
 
-	indentStep = step;
+        indentStep = step;
     }
 
     /**
@@ -87,41 +87,41 @@ public class IndentingWriter extends BufferedWriter {
      * given Writer and uses the supplied indent step and tab size.
      */
     public IndentingWriter(Writer out, int step, int tabSize) {
-	this(out);
+        this(out);
 
-	if (indentStep < 0)
-	    throw new IllegalArgumentException("negative indent step");
+        if (indentStep < 0)
+            throw new IllegalArgumentException("negative indent step");
 
-	indentStep = step;
-	this.tabSize = tabSize;
+        indentStep = step;
+        this.tabSize = tabSize;
     }
 
     /**
      * Write a single character.
      */
     public void write(int c) throws IOException {
-	checkWrite();
-	super.write(c);
+        checkWrite();
+        super.write(c);
     }
 
     /**
      * Write a portion of an array of characters.
      */
     public void write(char[] cbuf, int off, int len) throws IOException {
-	if (len > 0) {
-	    checkWrite();
-	}
-	super.write(cbuf, off, len);
+        if (len > 0) {
+            checkWrite();
+        }
+        super.write(cbuf, off, len);
     }
 
     /**
      * Write a portion of a String.
      */
     public void write(String s, int off, int len) throws IOException {
-	if (len > 0) {
-	    checkWrite();
-	}
-	super.write(s, off, len);
+        if (len > 0) {
+            checkWrite();
+        }
+        super.write(s, off, len);
     }
 
     /**
@@ -129,8 +129,8 @@ public class IndentingWriter extends BufferedWriter {
      * preceded by an indent.
      */
     public void newLine() throws IOException {
-	super.newLine();
-	beginningOfLine = true;
+        super.newLine();
+        beginningOfLine = true;
     }
 
     /**
@@ -142,95 +142,95 @@ public class IndentingWriter extends BufferedWriter {
      * into tab characters.
      */
     protected void checkWrite() throws IOException {
-	if (beginningOfLine) {
-	    beginningOfLine = false;	
-	    int i = currentIndent;
-	    while (i >= tabSize) {
-		super.write('\t');
-		i -= tabSize;
-	    }
-	    while (i > 0) {
-		super.write(' ');
-		-- i;
-	    }
-	}
+        if (beginningOfLine) {
+            beginningOfLine = false;
+            int i = currentIndent;
+            while (i >= tabSize) {
+                super.write('\t');
+                i -= tabSize;
+            }
+            while (i > 0) {
+                super.write(' ');
+                -- i;
+            }
+        }
     }
 
     /**
      * Increase the current indent by the indent step.
      */
     protected void indentIn() {
-	currentIndent += indentStep;
+        currentIndent += indentStep;
     }
 
     /**
      * Decrease the current indent by the indent step.
      */
     protected void indentOut() {
-	currentIndent -= indentStep;
-	if (currentIndent < 0)
-	    currentIndent = 0;
+        currentIndent -= indentStep;
+        if (currentIndent < 0)
+            currentIndent = 0;
     }
 
     /**
      * Indent in.
      */
     public void pI() {
-	indentIn();
+        indentIn();
     }
 
     /**
      * Indent out.
      */
     public void pO() {
-	indentOut();
+        indentOut();
     }
 
     /**
      * Write string.
      */
     public void p(String s) throws IOException {
-	write(s);
+        write(s);
     }
 
     /**
      * End current line.
      */
     public void pln() throws IOException {
-	newLine();
+        newLine();
     }
 
     /**
      * Write string; end current line.
      */
     public void pln(String s) throws IOException {
-	p(s);
-	pln();
+        p(s);
+        pln();
     }
 
     /**
      * Write string; end current line; indent in.
      */
     public void plnI(String s) throws IOException {
-	p(s);
-	pln();
-	pI();
+        p(s);
+        pln();
+        pI();
     }
 
     /**
      * Indent out; write string.
      */
     public void pO(String s) throws IOException {
-	pO();
-	p(s);
+        pO();
+        p(s);
     }
 
     /**
      * Indent out; write string; end current line.
      */
     public void pOln(String s) throws IOException {
-	pO(s);
-	pln();
+        pO(s);
+        pln();
     }
 
     /**
@@ -240,48 +240,48 @@ public class IndentingWriter extends BufferedWriter {
      * end and begin nested blocks, like "} else {".
      */
     public void pOlnI(String s) throws IOException {
-	pO(s);
-	pln();
-	pI();
+        pO(s);
+        pln();
+        pI();
     }
 
     /**
      * Write Object.
      */
     public void p(Object o) throws IOException {
-	write(o.toString());
+        write(o.toString());
     }
     /**
      * Write Object; end current line.
      */
     public void pln(Object o) throws IOException {
-	p(o.toString());
-	pln();
+        p(o.toString());
+        pln();
     }
 
     /**
      * Write Object; end current line; indent in.
      */
     public void plnI(Object o) throws IOException {
-	p(o.toString());
-	pln();
-	pI();
+        p(o.toString());
+        pln();
+        pI();
     }
 
     /**
      * Indent out; write Object.
      */
     public void pO(Object o) throws IOException {
-	pO();
-	p(o.toString());
+        pO();
+        p(o.toString());
     }
 
     /**
      * Indent out; write Object; end current line.
      */
     public void pOln(Object o) throws IOException {
-	pO(o.toString());
-	pln();
+        pO(o.toString());
+        pln();
     }
 
     /**
@@ -291,9 +291,9 @@ public class IndentingWriter extends BufferedWriter {
      * end and begin nested blocks, like "} else {".
      */
     public void pOlnI(Object o) throws IOException {
-	pO(o.toString());
-	pln();
-	pI();
+        pO(o.toString());
+        pln();
+        pI();
     }
 
 }

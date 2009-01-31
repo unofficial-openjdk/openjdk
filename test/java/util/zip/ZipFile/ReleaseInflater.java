@@ -33,7 +33,7 @@ import java.util.zip.*;
 public class ReleaseInflater {
 
     public static void main(String[] args) throws Exception {
-        ZipFile zf = new ZipFile(new File(System.getProperty("test.src"), 
+        ZipFile zf = new ZipFile(new File(System.getProperty("test.src"),
                                           "input.jar"));
         ZipEntry e = zf.getEntry("ReleaseInflater.java");
 
@@ -46,7 +46,7 @@ public class ReleaseInflater {
         // create two new streams, allocating inflaters
         InputStream in2 = zf.getInputStream(e);
         InputStream in3 = zf.getInputStream(e);
-        
+
         // check to see if they influence each other
         if (in2.read() != in3.read()) {
             throw new Exception("Stream is corrupted!");

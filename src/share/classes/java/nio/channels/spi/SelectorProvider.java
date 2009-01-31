@@ -65,7 +65,6 @@ import sun.security.action.GetPropertyAction;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
@@ -82,51 +81,51 @@ public abstract class SelectorProvider {
      *          {@link RuntimePermission}<tt>("selectorProvider")</tt>
      */
     protected SelectorProvider() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null)
-	    sm.checkPermission(new RuntimePermission("selectorProvider"));
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkPermission(new RuntimePermission("selectorProvider"));
     }
 
     private static boolean loadProviderFromProperty() {
-	String cn = System.getProperty("java.nio.channels.spi.SelectorProvider");
-	if (cn == null)
-	    return false;
-	try {
-	    Class c = Class.forName(cn, true,
-				    ClassLoader.getSystemClassLoader());
-	    provider = (SelectorProvider)c.newInstance();
-	    return true;
-	} catch (ClassNotFoundException x) {
-	    throw new ServiceConfigurationError(null, x);
-	} catch (IllegalAccessException x) {
-	    throw new ServiceConfigurationError(null, x);
-	} catch (InstantiationException x) {
-	    throw new ServiceConfigurationError(null, x);
-	} catch (SecurityException x) {
-	    throw new ServiceConfigurationError(null, x);
-	}
+        String cn = System.getProperty("java.nio.channels.spi.SelectorProvider");
+        if (cn == null)
+            return false;
+        try {
+            Class c = Class.forName(cn, true,
+                                    ClassLoader.getSystemClassLoader());
+            provider = (SelectorProvider)c.newInstance();
+            return true;
+        } catch (ClassNotFoundException x) {
+            throw new ServiceConfigurationError(null, x);
+        } catch (IllegalAccessException x) {
+            throw new ServiceConfigurationError(null, x);
+        } catch (InstantiationException x) {
+            throw new ServiceConfigurationError(null, x);
+        } catch (SecurityException x) {
+            throw new ServiceConfigurationError(null, x);
+        }
     }
 
     private static boolean loadProviderAsService() {
 
-	ServiceLoader<SelectorProvider> sl = 
-	    ServiceLoader.load(SelectorProvider.class,
-			       ClassLoader.getSystemClassLoader());
-	Iterator<SelectorProvider> i = sl.iterator();
-	for (;;) {
-	    try {
-		if (!i.hasNext())
-		    return false;
-		provider = i.next();
-		return true;
-	    } catch (ServiceConfigurationError sce) {
-		if (sce.getCause() instanceof SecurityException) {
-		    // Ignore the security exception, try the next provider
-		    continue;
-		}
-		throw sce;
-	    }
-	}
+        ServiceLoader<SelectorProvider> sl =
+            ServiceLoader.load(SelectorProvider.class,
+                               ClassLoader.getSystemClassLoader());
+        Iterator<SelectorProvider> i = sl.iterator();
+        for (;;) {
+            try {
+                if (!i.hasNext())
+                    return false;
+                provider = i.next();
+                return true;
+            } catch (ServiceConfigurationError sce) {
+                if (sce.getCause() instanceof SecurityException) {
+                    // Ignore the security exception, try the next provider
+                    continue;
+                }
+                throw sce;
+            }
+        }
     }
 
     /**
@@ -165,21 +164,21 @@ public abstract class SelectorProvider {
      * @return  The system-wide default selector provider
      */
     public static SelectorProvider provider() {
-	synchronized (lock) {
-	    if (provider != null)
-		return provider;
-	    return (SelectorProvider)AccessController
-		.doPrivileged(new PrivilegedAction() {
-			public Object run() {
-			    if (loadProviderFromProperty())
-				return provider;
-			    if (loadProviderAsService())
-				return provider;
-			    provider = sun.nio.ch.DefaultSelectorProvider.create();
-			    return provider;
-			}
-		    });
-	}
+        synchronized (lock) {
+            if (provider != null)
+                return provider;
+            return (SelectorProvider)AccessController
+                .doPrivileged(new PrivilegedAction() {
+                        public Object run() {
+                            if (loadProviderFromProperty())
+                                return provider;
+                            if (loadProviderAsService())
+                                return provider;
+                            provider = sun.nio.ch.DefaultSelectorProvider.create();
+                            return provider;
+                        }
+                    });
+        }
     }
 
     /**
@@ -188,7 +187,7 @@ public abstract class SelectorProvider {
      * @return  The new channel
      */
     public abstract DatagramChannel openDatagramChannel()
-	throws IOException;
+        throws IOException;
 
     /**
      * Opens a pipe.  </p>
@@ -196,7 +195,7 @@ public abstract class SelectorProvider {
      * @return  The new pipe
      */
     public abstract Pipe openPipe()
-	throws IOException;
+        throws IOException;
 
     /**
      * Opens a selector.  </p>
@@ -204,7 +203,7 @@ public abstract class SelectorProvider {
      * @return  The new selector
      */
     public abstract AbstractSelector openSelector()
-	throws IOException;
+        throws IOException;
 
     /**
      * Opens a server-socket channel.  </p>
@@ -212,7 +211,7 @@ public abstract class SelectorProvider {
      * @return  The new channel
      */
     public abstract ServerSocketChannel openServerSocketChannel()
-	throws IOException;
+        throws IOException;
 
     /**
      * Opens a socket channel. </p>
@@ -220,7 +219,7 @@ public abstract class SelectorProvider {
      * @return  The new channel
      */
     public abstract SocketChannel openSocketChannel()
-	throws IOException;
+        throws IOException;
 
     /**
      * Returns the channel inherited from the entity that created this
@@ -231,15 +230,15 @@ public abstract class SelectorProvider {
      * inherit a channel from the entity that created the process. The
      * manner in which this is done is system dependent, as are the
      * possible entities to which the channel may be connected. For example,
-     * on UNIX systems, the Internet services daemon (<i>inetd</i>) is used to 
-     * start programs to service requests when a request arrives on an 
-     * associated network port. In this example, the process that is started, 
-     * inherits a channel representing a network socket. 
+     * on UNIX systems, the Internet services daemon (<i>inetd</i>) is used to
+     * start programs to service requests when a request arrives on an
+     * associated network port. In this example, the process that is started,
+     * inherits a channel representing a network socket.
      *
      * <p> In cases where the inherited channel represents a network socket
-     * then the {@link java.nio.channels.Channel Channel} type returned 
+     * then the {@link java.nio.channels.Channel Channel} type returned
      * by this method is determined as follows:
-     *     
+     *
      * <ul>
      *
      *  <li><p> If the inherited channel represents a stream-oriented connected
@@ -249,39 +248,39 @@ public abstract class SelectorProvider {
      *  </p></li>
      *
      *  <li><p> If the inherited channel represents a stream-oriented listening
-     *  socket then a {@link java.nio.channels.ServerSocketChannel 
-     *  ServerSocketChannel} is returned. The server-socket channel is, at 
+     *  socket then a {@link java.nio.channels.ServerSocketChannel
+     *  ServerSocketChannel} is returned. The server-socket channel is, at
      *  least initially, in blocking mode, and bound to a socket address.
-     *  </p></li>     
-     *
-     *  <li><p> If the inherited channel is a datagram-oriented socket 
-     *  then a {@link java.nio.channels.DatagramChannel DatagramChannel} is    
-     *  returned. The datagram channel is, at least initially, in blocking
-     *  mode, and bound to a socket address. 
      *  </p></li>
-     * 
+     *
+     *  <li><p> If the inherited channel is a datagram-oriented socket
+     *  then a {@link java.nio.channels.DatagramChannel DatagramChannel} is
+     *  returned. The datagram channel is, at least initially, in blocking
+     *  mode, and bound to a socket address.
+     *  </p></li>
+     *
      * </ul>
      *
      * <p> In addition to the network-oriented channels described, this method
      * may return other kinds of channels in the future.
      *
-     * <p> The first invocation of this method creates the channel that is 
-     * returned. Subsequent invocations of this method return the same 
+     * <p> The first invocation of this method creates the channel that is
+     * returned. Subsequent invocations of this method return the same
      * channel. </p>
      *
      * @return  The inherited channel, if any, otherwise <tt>null</tt>.
-     * 
-     * @throws  IOException
-     *		If an I/O error occurs
      *
-     * @throws	SecurityException
-     *	 	If a security manager has been installed and it denies
-     *		{@link RuntimePermission}<tt>("inheritedChannel")</tt>
+     * @throws  IOException
+     *          If an I/O error occurs
+     *
+     * @throws  SecurityException
+     *          If a security manager has been installed and it denies
+     *          {@link RuntimePermission}<tt>("inheritedChannel")</tt>
      *
      * @since 1.5
      */
    public Channel inheritedChannel() throws IOException {
-	return null;
+        return null;
    }
 
 }

@@ -40,47 +40,47 @@ public class BlockingTaskExecutor {
     static void realMain(String[] args) throws Throwable {
         for (int i = 1; i <= 100; i++) {
             System.out.print(".");
-	    test();
-	}
+            test();
+        }
     }
 
     static void test() throws Throwable {
-	final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executor = Executors.newCachedThreadPool();
 
-	final NotificationReceiver notifiee1 = new NotificationReceiver();
-	final NotificationReceiver notifiee2 = new NotificationReceiver();
+        final NotificationReceiver notifiee1 = new NotificationReceiver();
+        final NotificationReceiver notifiee2 = new NotificationReceiver();
 
-	final Collection<Callable<Object>> tasks =
-	    new ArrayList<Callable<Object>>();
-	tasks.add(new BlockingTask(notifiee1));
-	tasks.add(new BlockingTask(notifiee2));
-	tasks.add(new NonBlockingTask());
+        final Collection<Callable<Object>> tasks =
+            new ArrayList<Callable<Object>>();
+        tasks.add(new BlockingTask(notifiee1));
+        tasks.add(new BlockingTask(notifiee2));
+        tasks.add(new NonBlockingTask());
 
-	// start a thread to invoke the tasks
-	Thread thread = new Thread() { public void run() {
-	    try { executor.invokeAll(tasks); }
-	    catch (RejectedExecutionException t) {/* OK */}
-	    catch (Throwable t) { unexpected(t); }}};
-	thread.start();
+        // start a thread to invoke the tasks
+        Thread thread = new Thread() { public void run() {
+            try { executor.invokeAll(tasks); }
+            catch (RejectedExecutionException t) {/* OK */}
+            catch (Throwable t) { unexpected(t); }}};
+        thread.start();
 
-	// Wait until tasks begin execution
-	notifiee1.waitForNotification();
-	notifiee2.waitForNotification();
+        // Wait until tasks begin execution
+        notifiee1.waitForNotification();
+        notifiee2.waitForNotification();
 
-	// Now try to shutdown the executor service while tasks
-	// are blocked.  This should cause the tasks to be
-	// interrupted.
-	executor.shutdownNow();
-	if (! executor.awaitTermination(5, TimeUnit.SECONDS))
-	    throw new Error("Executor stuck");
+        // Now try to shutdown the executor service while tasks
+        // are blocked.  This should cause the tasks to be
+        // interrupted.
+        executor.shutdownNow();
+        if (! executor.awaitTermination(5, TimeUnit.SECONDS))
+            throw new Error("Executor stuck");
 
-	// Wait for the invocation thread to complete.
-	thread.join(1000);
-	if (thread.isAlive()) {
-	    thread.interrupt();
-	    thread.join(1000);
-	    throw new Error("invokeAll stuck");
-	}
+        // Wait for the invocation thread to complete.
+        thread.join(1000);
+        if (thread.isAlive()) {
+            thread.interrupt();
+            thread.join(1000);
+            throw new Error("invokeAll stuck");
+        }
     }
 
     /**
@@ -90,27 +90,27 @@ public class BlockingTaskExecutor {
      * <code>sendNotification</code> method.
      */
     static class NotificationReceiver {
-	/** Has the notifiee been notified? */
-	boolean notified = false;
+        /** Has the notifiee been notified? */
+        boolean notified = false;
 
-	/**
-	 * Notify the notification receiver.
-	 */
-	public synchronized void sendNotification() {
-	    notified = true;
-	    notifyAll();
-	}
+        /**
+         * Notify the notification receiver.
+         */
+        public synchronized void sendNotification() {
+            notified = true;
+            notifyAll();
+        }
 
-	/**
-	 * Waits until a notification has been received.
-	 *
-	 * @throws InterruptedException if the wait is interrupted
-	 */
-	public synchronized void waitForNotification()
-	    throws InterruptedException {
-	    while (! notified)
-		wait();
-	}
+        /**
+         * Waits until a notification has been received.
+         *
+         * @throws InterruptedException if the wait is interrupted
+         */
+        public synchronized void waitForNotification()
+            throws InterruptedException {
+            while (! notified)
+                wait();
+        }
     }
 
     /**
@@ -119,31 +119,31 @@ public class BlockingTaskExecutor {
      * it is first called.
      */
     static class BlockingTask implements Callable<Object> {
-	private final NotificationReceiver notifiee;
+        private final NotificationReceiver notifiee;
 
-	BlockingTask(NotificationReceiver notifiee) {
-	    this.notifiee = notifiee;
-	}
+        BlockingTask(NotificationReceiver notifiee) {
+            this.notifiee = notifiee;
+        }
 
-	public Object call() throws InterruptedException {
-	    notifiee.sendNotification();
+        public Object call() throws InterruptedException {
+            notifiee.sendNotification();
 
-	    // wait indefinitely until task is interrupted
-	    while (true) {
-		synchronized (this) {
-		    wait();
-		}
-	    }
-	}
+            // wait indefinitely until task is interrupted
+            while (true) {
+                synchronized (this) {
+                    wait();
+                }
+            }
+        }
     }
 
     /**
      * A callable task that simply returns a string result.
      */
     static class NonBlockingTask implements Callable<Object> {
-	public Object call() {
-	    return "NonBlockingTaskResult";
-	}
+        public Object call() {
+            return "NonBlockingTaskResult";
+        }
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -154,10 +154,10 @@ public class BlockingTaskExecutor {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	try {realMain(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {realMain(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

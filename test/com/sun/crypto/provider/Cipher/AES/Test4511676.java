@@ -42,31 +42,30 @@ public class Test4511676 {
 
     public boolean execute() throws Exception {
 
-	Cipher ci = Cipher.getInstance(ALGO, "SunJCE");
+        Cipher ci = Cipher.getInstance(ALGO, "SunJCE");
 
-	// TEST FIX 4511676
-	KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
-	kg.init(KEYSIZE*8);
-	SecretKey key = kg.generateKey();
-	try {
-	    ci.init(Cipher.ENCRYPT_MODE, key);
-	} catch (InvalidKeyException ex) {
-	    throw new Exception("key length is mis-intepreted!");
-	}
+        // TEST FIX 4511676
+        KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
+        kg.init(KEYSIZE*8);
+        SecretKey key = kg.generateKey();
+        try {
+            ci.init(Cipher.ENCRYPT_MODE, key);
+        } catch (InvalidKeyException ex) {
+            throw new Exception("key length is mis-intepreted!");
+        }
 
-	// passed all tests...hooray!
-	return true;
+        // passed all tests...hooray!
+        return true;
     }
 
     public static void main (String[] args) throws Exception {
-	Security.addProvider(new com.sun.crypto.provider.SunJCE());
+        Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-	Test4511676 test = new Test4511676();
-	String testName = test.getClass().getName() + "[" + ALGO +
-	    "]";
-	if (test.execute()) {
-	    System.out.println(testName + ": Passed!");
-	}
+        Test4511676 test = new Test4511676();
+        String testName = test.getClass().getName() + "[" + ALGO +
+            "]";
+        if (test.execute()) {
+            System.out.println(testName + ": Passed!");
+        }
     }
 }
-

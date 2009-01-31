@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,13 +28,13 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	int matherr(struct exception *x)
+        int matherr(struct exception *x)
 #else
-	int matherr(x)
-	struct exception *x;
+        int matherr(x)
+        struct exception *x;
 #endif
 {
-	int n=0;
-	if(x->arg1!=x->arg1) return 0;
-	return n;
+        int n=0;
+        if(x->arg1!=x->arg1) return 0;
+        return n;
 }

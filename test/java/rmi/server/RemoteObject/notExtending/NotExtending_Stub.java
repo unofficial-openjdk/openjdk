@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,37 +29,37 @@ public final class NotExtending_Stub
     implements java.rmi.Remote
 {
     private static java.rmi.server.Operation[] operations = {
-	
+
     };
-    
+
     private static final long interfaceHash = 3103311997983563335L;
-    
+
     private static final long serialVersionUID = 2;
-    
+
     private static boolean useNewInvoke;
-    
+
     static {
-	try {
-	    java.rmi.server.RemoteRef.class.getMethod("invoke",
-		new java.lang.Class[] {
-		    java.rmi.Remote.class,
-		    java.lang.reflect.Method.class,
-		    java.lang.Object[].class,
-		    long.class
-		});
-	    useNewInvoke = true;
-	} catch (java.lang.NoSuchMethodException e) {
-	    useNewInvoke = false;
-	}
+        try {
+            java.rmi.server.RemoteRef.class.getMethod("invoke",
+                new java.lang.Class[] {
+                    java.rmi.Remote.class,
+                    java.lang.reflect.Method.class,
+                    java.lang.Object[].class,
+                    long.class
+                });
+            useNewInvoke = true;
+        } catch (java.lang.NoSuchMethodException e) {
+            useNewInvoke = false;
+        }
     }
-    
+
     // constructors
     public NotExtending_Stub() {
-	super();
+        super();
     }
     public NotExtending_Stub(java.rmi.server.RemoteRef ref) {
-	super(ref);
+        super(ref);
     }
-    
+
     // methods from remote interfaces
 }

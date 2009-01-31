@@ -36,8 +36,8 @@ class OldSocketImpl extends SocketImpl  {
 
     public void setOption(int optID, Object value) throws SocketException { }
 
-    public Object getOption(int optID) throws SocketException { 
-	return null; 
+    public Object getOption(int optID) throws SocketException {
+        return null;
     }
 
     protected void create(boolean stream) throws IOException { }
@@ -55,16 +55,16 @@ class OldSocketImpl extends SocketImpl  {
 
     protected void accept(SocketImpl s) throws IOException { }
 
-    protected InputStream getInputStream() throws IOException { 
-	return null;
+    protected InputStream getInputStream() throws IOException {
+        return null;
     }
 
-    protected OutputStream getOutputStream() throws IOException { 
-	return null;
+    protected OutputStream getOutputStream() throws IOException {
+        return null;
     }
 
-    protected int available() throws IOException { 
-	return 0;
+    protected int available() throws IOException {
+        return 0;
     }
 
     protected void close() throws IOException { }

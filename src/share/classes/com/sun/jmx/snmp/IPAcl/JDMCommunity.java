@@ -48,6 +48,6 @@ class JDMCommunity extends SimpleNode {
   }
 
   public String getCommunity(){
-	return communityString;
+        return communityString;
   }
 }

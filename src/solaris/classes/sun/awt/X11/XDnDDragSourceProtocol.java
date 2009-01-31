@@ -42,7 +42,7 @@ import sun.misc.Unsafe;
  * @since 1.5
  */
 class XDnDDragSourceProtocol extends XDragSourceProtocol {
-    private static final Logger logger = 
+    private static final Logger logger =
         Logger.getLogger("sun.awt.X11.xembed.xdnd.XDnDDragSourceProtocol");
 
     private static final Unsafe unsafe = XlibWrapper.unsafe;
@@ -60,7 +60,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
         return new XDnDDragSourceProtocol(listener);
     }
 
-    public String getProtocolName() { 
+    public String getProtocolName() {
         return XDragAndDropProtocols.XDnD;
     }
 
@@ -70,39 +70,39 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
      * @returns true if the initialized successfully.
      */
     protected void initializeDragImpl(int actions, Transferable contents,
-                                         Map formatMap, long[] formats) 
-      throws InvalidDnDOperationException, 
+                                         Map formatMap, long[] formats)
+      throws InvalidDnDOperationException,
         IllegalArgumentException, XException {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
         long window = XDragSourceProtocol.getDragSourceWindow();
-        
+
         long data = Native.allocateLongArray(3);
         int action_count = 0;
         try {
             if ((actions & DnDConstants.ACTION_COPY) != 0) {
-                Native.putLong(data, action_count, 
+                Native.putLong(data, action_count,
                                XDnDConstants.XA_XdndActionCopy.getAtom());
                 action_count++;
             }
             if ((actions & DnDConstants.ACTION_MOVE) != 0) {
-                Native.putLong(data, action_count, 
+                Native.putLong(data, action_count,
                                XDnDConstants.XA_XdndActionMove.getAtom());
                 action_count++;
             }
             if ((actions & DnDConstants.ACTION_LINK) != 0) {
-                Native.putLong(data, action_count, 
+                Native.putLong(data, action_count,
                                XDnDConstants.XA_XdndActionLink.getAtom());
                 action_count++;
             }
-            
+
             XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
             XDnDConstants.XA_XdndActionList.setAtomData(window,
                                                         XAtom.XA_ATOM,
                                                         data, action_count);
             XToolkit.RESTORE_XERROR_HANDLER();
-            
-            if (XToolkit.saved_error != null && 
+
+            if (XToolkit.saved_error != null &&
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                 cleanup();
                 throw new XException("Cannot write XdndActionList property");
@@ -122,8 +122,8 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
                                                       XAtom.XA_ATOM,
                                                       data, formats.length);
             XToolkit.RESTORE_XERROR_HANDLER();
-            
-            if (XToolkit.saved_error != null && 
+
+            if (XToolkit.saved_error != null &&
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                 cleanup();
                 throw new XException("Cannot write XdndActionList property");
@@ -133,7 +133,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             data = 0;
         }
 
-        if (!XDnDConstants.XDnDSelection.setOwner(contents, formatMap, formats, 
+        if (!XDnDConstants.XDnDSelection.setOwner(contents, formatMap, formats,
                                                   XlibWrapper.CurrentTime)) {
             cleanup();
             throw new InvalidDnDOperationException("Cannot acquire selection ownership");
@@ -158,7 +158,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
 
         return true;
     }
-     
+
     private boolean processXdndFinished(XClientMessageEvent xclient) {
         /* Ignore XDnD messages from all other windows. */
         if (xclient.get_data(0) != getTargetWindow()) {
@@ -174,7 +174,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
         }
 
         finalizeDrop();
-        
+
         return true;
     }
 
@@ -191,13 +191,13 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
     public TargetWindowInfo getTargetWindowInfo(long window) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
-        WindowPropertyGetter wpg1 = 
+        WindowPropertyGetter wpg1 =
             new WindowPropertyGetter(window, XDnDConstants.XA_XdndAware, 0, 1,
                                      false, XlibWrapper.AnyPropertyType);
 
         int status = wpg1.execute(XToolkit.IgnoreBadWindowHandler);
 
-        if (status == XlibWrapper.Success && 
+        if (status == XlibWrapper.Success &&
             wpg1.getData() != 0 && wpg1.getActualType() == XAtom.XA_ATOM) {
 
             int targetVersion = (int)Native.getLong(wpg1.getData());
@@ -206,19 +206,19 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
 
             if (targetVersion >= XDnDConstants.XDND_MIN_PROTOCOL_VERSION) {
                 long proxy = 0;
-                int protocolVersion = 
-                    targetVersion < XDnDConstants.XDND_PROTOCOL_VERSION ?  
+                int protocolVersion =
+                    targetVersion < XDnDConstants.XDND_PROTOCOL_VERSION ?
                     targetVersion : XDnDConstants.XDND_PROTOCOL_VERSION;
 
-                WindowPropertyGetter wpg2 = 
+                WindowPropertyGetter wpg2 =
                     new WindowPropertyGetter(window, XDnDConstants.XA_XdndProxy,
                                              0, 1, false, XAtom.XA_WINDOW);
 
                 try {
                     status = wpg2.execute(XToolkit.IgnoreBadWindowHandler);
-    
-                    if (status == XlibWrapper.Success && 
-                        wpg2.getData() != 0 && 
+
+                    if (status == XlibWrapper.Success &&
+                        wpg2.getData() != 0 &&
                         wpg2.getActualType() == XAtom.XA_WINDOW) {
 
                         proxy = Native.getLong(wpg2.getData());
@@ -228,7 +228,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
                 }
 
                 if (proxy != 0) {
-                    WindowPropertyGetter wpg3 = 
+                    WindowPropertyGetter wpg3 =
                         new WindowPropertyGetter(proxy, XDnDConstants.XA_XdndProxy,
                                                  0, 1, false, XAtom.XA_WINDOW);
 
@@ -242,24 +242,24 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
 
                             proxy = 0;
                         } else {
-                            WindowPropertyGetter wpg4 = 
+                            WindowPropertyGetter wpg4 =
                                 new WindowPropertyGetter(proxy,
-                                                         XDnDConstants.XA_XdndAware, 
+                                                         XDnDConstants.XA_XdndAware,
                                                          0, 1, false,
                                                          XlibWrapper.AnyPropertyType);
 
                             try {
                                 status = wpg4.execute(XToolkit.IgnoreBadWindowHandler);
 
-                                if (status != XlibWrapper.Success || 
-                                    wpg4.getData() == 0 || 
+                                if (status != XlibWrapper.Success ||
+                                    wpg4.getData() == 0 ||
                                     wpg4.getActualType() != XAtom.XA_ATOM) {
-                                    
+
                                     proxy = 0;
                                 }
                             } finally {
                                 wpg4.dispose();
-                            } 
+                            }
                         }
                     } finally {
                         wpg3.dispose();
@@ -275,7 +275,7 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
         return null;
     }
 
-    public void sendEnterMessage(long[] formats, 
+    public void sendEnterMessage(long[] formats,
                                  int sourceAction, int sourceActions, long time) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
         assert getTargetWindow() != 0;
@@ -288,23 +288,23 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             msg.set_format(32);
             msg.set_message_type(XDnDConstants.XA_XdndEnter.getAtom());
             msg.set_data(0, XDragSourceProtocol.getDragSourceWindow());
-            long data1 = 
+            long data1 =
                 getTargetProtocolVersion() << XDnDConstants.XDND_PROTOCOL_SHIFT;
             data1 |= formats.length > 3 ? XDnDConstants.XDND_DATA_TYPES_BIT : 0;
             msg.set_data(1, data1);
             msg.set_data(2, formats.length > 0 ? formats[0] : 0);
             msg.set_data(3, formats.length > 1 ? formats[1] : 0);
             msg.set_data(4, formats.length > 2 ? formats[2] : 0);
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                   getTargetProxyWindow(), 
-                                   false, XlibWrapper.NoEventMask, 
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                   getTargetProxyWindow(),
+                                   false, XlibWrapper.NoEventMask,
                                    msg.pData);
         } finally {
             msg.dispose();
         }
     }
 
-    public void sendMoveMessage(int xRoot, int yRoot, 
+    public void sendMoveMessage(int xRoot, int yRoot,
                                 int sourceAction, int sourceActions, long time) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
         assert getTargetWindow() != 0;
@@ -320,9 +320,9 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             msg.set_data(2, xRoot << 16 | yRoot);
             msg.set_data(3, time);
             msg.set_data(4, XDnDConstants.getXDnDActionForJavaAction(sourceAction));
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                   getTargetProxyWindow(), 
-                                   false, XlibWrapper.NoEventMask, 
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                   getTargetProxyWindow(),
+                                   false, XlibWrapper.NoEventMask,
                                    msg.pData);
         } finally {
             msg.dispose();
@@ -344,16 +344,16 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             msg.set_data(2, 0);
             msg.set_data(3, 0);
             msg.set_data(4, 0);
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                   getTargetProxyWindow(), 
-                                   false, XlibWrapper.NoEventMask, 
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                   getTargetProxyWindow(),
+                                   false, XlibWrapper.NoEventMask,
                                    msg.pData);
         } finally {
             msg.dispose();
         }
     }
 
-    public void sendDropMessage(int xRoot, int yRoot, 
+    public void sendDropMessage(int xRoot, int yRoot,
                                 int sourceAction, int sourceActions,
                                 long time) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
@@ -370,9 +370,9 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             msg.set_data(2, time);
             msg.set_data(3, 0);
             msg.set_data(4, 0);
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                   getTargetProxyWindow(), 
-                                   false, XlibWrapper.NoEventMask, 
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                   getTargetProxyWindow(),
+                                   false, XlibWrapper.NoEventMask,
                                    msg.pData);
         } finally {
             msg.dispose();
@@ -396,8 +396,8 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
             }
 
             if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("        sourceWindow=" + sourceWindow + 
-                              " get_window=" + xclient.get_window() + 
+                logger.finest("        sourceWindow=" + sourceWindow +
+                              " get_window=" + xclient.get_window() +
                               " xclient=" + xclient);
             }
             xclient.set_data(0, xclient.get_window());
@@ -405,13 +405,13 @@ class XDnDDragSourceProtocol extends XDragSourceProtocol {
 
             assert XToolkit.isAWTLockHeldByCurrentThread();
 
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), sourceWindow, 
-                                   false, XlibWrapper.NoEventMask, 
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(), sourceWindow,
+                                   false, XlibWrapper.NoEventMask,
                                    xclient.pData);
 
             return true;
         }
-        
+
         return false;
     }
 

@@ -32,7 +32,6 @@ import sun.jvmstat.monitor.MonitoredHost;
  * Base class for events emitted by a {@link MonitoredHost}.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class HostEvent extends EventObject {

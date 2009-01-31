@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -55,129 +55,129 @@ public class Recovery
     implements Serializable //, Test
 {
     static private final String dir = "./recovery_tmp";
-    
+
     static public void main (String[] argv)
     {
-	Recovery test = new Recovery();
-	//Status status = test.run (argv, System.err, System.out);
-	//status.exit();
-	test.run (argv, System.err, System.out);
+        Recovery test = new Recovery();
+        //Status status = test.run (argv, System.err, System.out);
+        //status.exit();
+        test.run (argv, System.err, System.out);
     }
 
     //public Status run (String argv[], PrintStream log, PrintStream out)
     public void run (String argv[], PrintStream lg, PrintStream out)
     {
-	try {
-	    int size;
-	    int deathpoint;
-	    for (size = 1; size < 256; size *= 2) {
-		for (deathpoint = 0; deathpoint <= 8; deathpoint++) {
-		    // Trash the log directory
-		    try {
-			(new File(dir,"Version_Number")).delete();
-		    } catch (Exception e) {
-		    }
-		    try {
-			(new File(dir,"New_Version_Number")).delete();
-		    } catch (Exception e) {
-		    }
-		    try {
-			(new File(dir,"Old_Version_Number")).delete();
-		    } catch (Exception e) {
-		    }
+        try {
+            int size;
+            int deathpoint;
+            for (size = 1; size < 256; size *= 2) {
+                for (deathpoint = 0; deathpoint <= 8; deathpoint++) {
+                    // Trash the log directory
+                    try {
+                        (new File(dir,"Version_Number")).delete();
+                    } catch (Exception e) {
+                    }
+                    try {
+                        (new File(dir,"New_Version_Number")).delete();
+                    } catch (Exception e) {
+                    }
+                    try {
+                        (new File(dir,"Old_Version_Number")).delete();
+                    } catch (Exception e) {
+                    }
 
-		    Recovery handler = new Recovery();
-		    ReliableLog log;
-		    if (size == 4 && deathpoint == 6) {
-			Runtime.getRuntime().traceMethodCalls(true);
-		    }
-		    log = new ReliableLog(dir, handler);
-		    if (size == 4 && deathpoint == 6) {
-			Runtime.getRuntime().traceMethodCalls(false);
-		    }
+                    Recovery handler = new Recovery();
+                    ReliableLog log;
+                    if (size == 4 && deathpoint == 6) {
+                        Runtime.getRuntime().traceMethodCalls(true);
+                    }
+                    log = new ReliableLog(dir, handler);
+                    if (size == 4 && deathpoint == 6) {
+                        Runtime.getRuntime().traceMethodCalls(false);
+                    }
 
-		    // Generate a number of updates (size - 1) until failing
-		    int i;
-		    StringBuffer writ = new StringBuffer();
-		    char[] u = new char[1];
-		    for (i = 1; i < size; i++) {
-			u[0] = (char)(64 + (i % 26));
-			String update = new String(u);
-			handler.basicUpdate(update);
-			log.update(update, true);
-			writ.append(update);
-		    }
+                    // Generate a number of updates (size - 1) until failing
+                    int i;
+                    StringBuffer writ = new StringBuffer();
+                    char[] u = new char[1];
+                    for (i = 1; i < size; i++) {
+                        u[0] = (char)(64 + (i % 26));
+                        String update = new String(u);
+                        handler.basicUpdate(update);
+                        log.update(update, true);
+                        writ.append(update);
+                    }
 
-		    // Fail
-		    String f = ("FALL" + deathpoint);
-		    boolean failed_as_desired = false;
-		    try {
-			ReliableLog.fallOverPoint = deathpoint;
-			handler.basicUpdate(f);
-			log.update(f, true);
-			log.snapshot(handler);
-		    } catch (InternalError e) {
-			if (!e.getMessage().equals(f))
-			    throw e; // oops, not ours
-			failed_as_desired = true;
-		    } finally {
-			ReliableLog.fallOverPoint = 0;
-			try {
-			    log.close();
-			} catch (IOException ign) {
-			}
-		    }
+                    // Fail
+                    String f = ("FALL" + deathpoint);
+                    boolean failed_as_desired = false;
+                    try {
+                        ReliableLog.fallOverPoint = deathpoint;
+                        handler.basicUpdate(f);
+                        log.update(f, true);
+                        log.snapshot(handler);
+                    } catch (InternalError e) {
+                        if (!e.getMessage().equals(f))
+                            throw e; // oops, not ours
+                        failed_as_desired = true;
+                    } finally {
+                        ReliableLog.fallOverPoint = 0;
+                        try {
+                            log.close();
+                        } catch (IOException ign) {
+                        }
+                    }
 
-		    // deathpoint == 0 means that there is no deathpoint and we are testing
-		    // undisastered behaviour.
-		    if (!failed_as_desired && deathpoint != 0) {
-			System.err.println ("sun.rmi.log.ReliableLog is not instrumented for" +
-					    " this test; test skipped");
-			return;
-		    }
+                    // deathpoint == 0 means that there is no deathpoint and we are testing
+                    // undisastered behaviour.
+                    if (!failed_as_desired && deathpoint != 0) {
+                        System.err.println ("sun.rmi.log.ReliableLog is not instrumented for" +
+                                            " this test; test skipped");
+                        return;
+                    }
 
-		    // Now try to recover.
-		    Recovery laz = new Recovery();
-		    ReliableLog carbon = new ReliableLog(dir, laz);
-		    Recovery thingy;
-		    thingy = (Recovery)carbon.recover();
-		    try {
-			carbon.close();
-		    } catch (IOException ign) {
-		    }
+                    // Now try to recover.
+                    Recovery laz = new Recovery();
+                    ReliableLog carbon = new ReliableLog(dir, laz);
+                    Recovery thingy;
+                    thingy = (Recovery)carbon.recover();
+                    try {
+                        carbon.close();
+                    } catch (IOException ign) {
+                    }
 
-		    // Recovered thingy must be equal to writ or to writ + f, but nothing
-		    // else (or in between).
-		    String recovered = thingy.contents;
-		    String sacr = writ.toString();
-		    if (recovered.length() == sacr.length()
-			&& recovered.compareTo(sacr) == 0)
-		    {
-			lg.println("Passed test " + size + "/" + deathpoint
-				   + ": rolled back to v1");
-		    } else if (recovered.length() == (sacr.length() + f.length())
-			       && recovered.compareTo(sacr + f) == 0)
-		    {
-			lg.println("Passed test " + size + "/" + deathpoint
-				   + ": committed to v2");
-		    } else {
-			final String q = "\"";
-			lg.println("Wrote " + sacr.length() + ": " + q + sacr + q);
-			lg.println("Simulated failure during write "
-				   + f.length() + ": " + q + f + q);
-			lg.println("Recovered " + recovered.length() + ": " + q + recovered + q);
-			throw new InternalError("Failed test " + size + "/" + deathpoint
-				   + " (size/deathpoint):");
-		    }
-		}
-	    }
-	} catch (Exception e) {
-	    e.printStackTrace(lg);
-	    //return (Status.failed
-	    throw (new RuntimeException
-		    ("Exception in sanity test for sun.rmi.log.ReliableLog"));
-	}
-	//return (Status.passed ("OKAY"));
+                    // Recovered thingy must be equal to writ or to writ + f, but nothing
+                    // else (or in between).
+                    String recovered = thingy.contents;
+                    String sacr = writ.toString();
+                    if (recovered.length() == sacr.length()
+                        && recovered.compareTo(sacr) == 0)
+                    {
+                        lg.println("Passed test " + size + "/" + deathpoint
+                                   + ": rolled back to v1");
+                    } else if (recovered.length() == (sacr.length() + f.length())
+                               && recovered.compareTo(sacr + f) == 0)
+                    {
+                        lg.println("Passed test " + size + "/" + deathpoint
+                                   + ": committed to v2");
+                    } else {
+                        final String q = "\"";
+                        lg.println("Wrote " + sacr.length() + ": " + q + sacr + q);
+                        lg.println("Simulated failure during write "
+                                   + f.length() + ": " + q + f + q);
+                        lg.println("Recovered " + recovered.length() + ": " + q + recovered + q);
+                        throw new InternalError("Failed test " + size + "/" + deathpoint
+                                   + " (size/deathpoint):");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace(lg);
+            //return (Status.failed
+            throw (new RuntimeException
+                    ("Exception in sanity test for sun.rmi.log.ReliableLog"));
+        }
+        //return (Status.passed ("OKAY"));
     }
 
     private String contents;
@@ -185,31 +185,31 @@ public class Recovery
 
     public Recovery()
     {
-	super();
-	if (this.contents == null)
-	    this.contents = "?";
+        super();
+        if (this.contents == null)
+            this.contents = "?";
     }
 
     // implements LogHandler.initialSnapshot()
     public Object initialSnapshot()
-	throws Exception
+        throws Exception
     {
-	this.contents = "";
-	return (this);
+        this.contents = "";
+        return (this);
     }
 
     // implements LogHandler.applyUpdate()
     public Object applyUpdate (Object update, Object state)
-	throws Exception
+        throws Exception
     {
-	// basicUpdate appends the string
-	((Recovery)state).basicUpdate ((String)update);
-	return (state);
+        // basicUpdate appends the string
+        ((Recovery)state).basicUpdate ((String)update);
+        return (state);
     }
 
     // an "update" is a short string to append to this.contents (must ignore state)
     public void basicUpdate (String extra)
     {
-	this.contents = this.contents + extra;
+        this.contents = this.contents + extra;
     }
 }

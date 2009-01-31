@@ -45,36 +45,36 @@ Java_java_lang_ProcessEnvironment_environ(JNIEnv *env, jclass ign)
     jclass byteArrCls = (*env)->FindClass(env, "[B");
 
     for (i = 0; environ[i]; i++) {
-	/* Ignore corrupted environment variables */
-	if (strchr(environ[i], '=') != NULL)
-	    count++;
+        /* Ignore corrupted environment variables */
+        if (strchr(environ[i], '=') != NULL)
+            count++;
     }
 
     result = (*env)->NewObjectArray(env, 2*count, byteArrCls, 0);
     if (result == NULL) return NULL;
 
     for (i = 0, j = 0; environ[i]; i++) {
-	const char * varEnd = strchr(environ[i], '=');
-	/* Ignore corrupted environment variables */
-	if (varEnd != NULL) {
-	    jbyteArray var, val;
-	    const char * valBeg = varEnd + 1;
-	    jsize varLength = varEnd - environ[i];
-	    jsize valLength = strlen(valBeg);
-	    var = (*env)->NewByteArray(env, varLength);
-	    if (var == NULL) return NULL;
-	    val = (*env)->NewByteArray(env, valLength);
-	    if (val == NULL) return NULL;
-	    (*env)->SetByteArrayRegion(env, var, 0, varLength,
-				       (jbyte*) environ[i]);
-	    (*env)->SetByteArrayRegion(env, val, 0, valLength,
-				       (jbyte*) valBeg);
-	    (*env)->SetObjectArrayElement(env, result, 2*j  , var);
-	    (*env)->SetObjectArrayElement(env, result, 2*j+1, val);
-	    (*env)->DeleteLocalRef(env, var);
-	    (*env)->DeleteLocalRef(env, val);
-	    j++;
-	}
+        const char * varEnd = strchr(environ[i], '=');
+        /* Ignore corrupted environment variables */
+        if (varEnd != NULL) {
+            jbyteArray var, val;
+            const char * valBeg = varEnd + 1;
+            jsize varLength = varEnd - environ[i];
+            jsize valLength = strlen(valBeg);
+            var = (*env)->NewByteArray(env, varLength);
+            if (var == NULL) return NULL;
+            val = (*env)->NewByteArray(env, valLength);
+            if (val == NULL) return NULL;
+            (*env)->SetByteArrayRegion(env, var, 0, varLength,
+                                       (jbyte*) environ[i]);
+            (*env)->SetByteArrayRegion(env, val, 0, valLength,
+                                       (jbyte*) valBeg);
+            (*env)->SetObjectArrayElement(env, result, 2*j  , var);
+            (*env)->SetObjectArrayElement(env, result, 2*j+1, val);
+            (*env)->DeleteLocalRef(env, var);
+            (*env)->DeleteLocalRef(env, val);
+            j++;
+        }
     }
 
     return result;

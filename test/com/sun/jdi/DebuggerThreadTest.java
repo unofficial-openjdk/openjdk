@@ -59,7 +59,7 @@ public class DebuggerThreadTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new DebuggerThreadTest(args).startTests();
     }
 
@@ -84,7 +84,7 @@ public class DebuggerThreadTest extends TestScaffold {
                                groupName +
                                "' name = '" + t.getName() +
                                "' daemon = " + t.isDaemon());
-            
+
             if (groupName.startsWith("JDI ") &&
                 (! t.isDaemon())) {
                 failure("FAIL: non-daemon thread '" + t.getName() +
@@ -97,14 +97,14 @@ public class DebuggerThreadTest extends TestScaffold {
     protected void runTests() throws Exception {
         try {
             /*
-             * Get to the top of ready() 
+             * Get to the top of ready()
              */
             startTo("DebuggerThreadTarg", "ready", "()V");
-        
+
             dumpThreads();
 
             listenUntilVMDisconnect();
-        
+
         } finally {
             /*
              * deal with results of test

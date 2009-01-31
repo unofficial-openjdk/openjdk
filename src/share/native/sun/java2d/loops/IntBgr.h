@@ -35,10 +35,10 @@
  * LoopMacros.h to manipulate a surface of type "IntBgr".
  */
 
-typedef jint	IntBgrPixelType;
-typedef jint	IntBgrDataType;
+typedef jint    IntBgrPixelType;
+typedef jint    IntBgrDataType;
 
-#define IntBgrPixelStride	4
+#define IntBgrPixelStride       4
 
 #define DeclareIntBgrLoadVars(PREFIX)
 #define DeclareIntBgrStoreVars(PREFIX)
@@ -50,8 +50,8 @@ typedef jint	IntBgrDataType;
 #define NextIntBgrStoreVarsX(PREFIX)
 #define NextIntBgrStoreVarsY(PREFIX)
 
-#define IntBgrXparLutEntry		-1
-#define IntBgrIsXparLutEntry(pix)	(pix < 0)
+#define IntBgrXparLutEntry              -1
+#define IntBgrIsXparLutEntry(pix)       (pix < 0)
 #define StoreIntBgrNonXparFromArgb(pRas, PREFIX, x, argb) \
     (pRas)[x] = SwapIntDcmComponentsX123ToC321(argb)
 
@@ -72,26 +72,26 @@ typedef jint	IntBgrDataType;
 
 #define LoadIntBgrTo1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-	jint pixel = (pRas)[x]; \
-	(rgb) = SwapIntDcmComponentsX123ToX321(pixel); \
+        jint pixel = (pRas)[x]; \
+        (rgb) = SwapIntDcmComponentsX123ToX321(pixel); \
     } while (0)
 
 #define LoadIntBgrTo1IntArgb(pRas, PREFIX, x, argb) \
     do { \
-	jint pixel = (pRas)[x]; \
-	(argb) = SwapIntDcmComponentsX123ToS321(pixel); \
+        jint pixel = (pRas)[x]; \
+        (argb) = SwapIntDcmComponentsX123ToS321(pixel); \
     } while (0)
 
 #define LoadIntBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-	jint pixel = (pRas)[x]; \
-	ExtractIntDcmComponentsX123(pixel, b, g, r); \
+        jint pixel = (pRas)[x]; \
+        ExtractIntDcmComponentsX123(pixel, b, g, r); \
     } while (0)
 
 #define LoadIntBgrTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-	LoadIntBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-	(a) = 0xff; \
+        LoadIntBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+        (a) = 0xff; \
     } while (0)
 
 #define StoreIntBgrFrom1IntRgb(pRas, PREFIX, x, rgb) \
@@ -121,7 +121,7 @@ typedef jint	IntBgrDataType;
                          COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 
-#define IntBgrIsPremultiplied	0
+#define IntBgrIsPremultiplied   0
 
 #define DeclareIntBgrBlendFillVars(PREFIX) \
     jint PREFIX;

@@ -289,8 +289,8 @@ import sun.util.resources.LocaleData;
  *
  * <h4>Rounding</h4>
  *
- * <code>DecimalFormat</code> provides rounding modes defined in 
- * {@link java.math.RoundingMode} for formatting.  By default, it uses 
+ * <code>DecimalFormat</code> provides rounding modes defined in
+ * {@link java.math.RoundingMode} for formatting.  By default, it uses
  * {@link java.math.RoundingMode#HALF_EVEN RoundingMode.HALF_EVEN}.
  *
  * <h4>Digits</h4>
@@ -303,12 +303,12 @@ import sun.util.resources.LocaleData;
  *
  * <h4>Special Values</h4>
  *
- * <p><code>NaN</code> is formatted as a string, which typically has a single character 
+ * <p><code>NaN</code> is formatted as a string, which typically has a single character
  * <code>&#92;uFFFD</code>.  This string is determined by the
  * <code>DecimalFormatSymbols</code> object.  This is the only value for which
  * the prefixes and suffixes are not used.
  *
- * <p>Infinity is formatted as a string, which typically has a single character 
+ * <p>Infinity is formatted as a string, which typically has a single character
  * <code>&#92;u221E</code>, with the positive or negative prefixes and suffixes
  * applied.  The infinity string is determined by the
  * <code>DecimalFormatSymbols</code> object.
@@ -371,7 +371,6 @@ import sun.util.resources.LocaleData;
  * @see          NumberFormat
  * @see          DecimalFormatSymbols
  * @see          ParsePosition
- * @version      %I% %G%
  * @author       Mark Davis
  * @author       Alan Liu
  */
@@ -466,7 +465,7 @@ public class DecimalFormat extends NumberFormat {
 
     // Overrides
     /**
-     * Formats a number and appends the resulting text to the given string 
+     * Formats a number and appends the resulting text to the given string
      * buffer.
      * The number can be of any subclass of {@link java.lang.Number}.
      * <p>
@@ -479,7 +478,7 @@ public class DecimalFormat extends NumberFormat {
      * @return           the value passed in as <code>toAppendTo</code>
      * @exception        IllegalArgumentException if <code>number</code> is
      *                   null or not an instance of <code>Number</code>.
-     * @exception        NullPointerException if <code>toAppendTo</code> or 
+     * @exception        NullPointerException if <code>toAppendTo</code> or
      *                   <code>pos</code> is null
      * @exception        ArithmeticException if rounding is needed with rounding
      *                   mode being set to RoundingMode.UNNECESSARY
@@ -805,7 +804,7 @@ public class DecimalFormat extends NumberFormat {
                 }
             }
 
-            digitList.set(isNegative, number, 
+            digitList.set(isNegative, number,
                           useExponentialNotation ? maximumDigits : 0);
 
             return subformat(result, delegate, isNegative, true,
@@ -946,7 +945,7 @@ public class DecimalFormat extends NumberFormat {
             // place the decimal point after the "integer" digits, which
             // are the first (decimalAt - exponent) digits.
             int minimumDigits = minIntDigits + minFraDigits;
-            if (minimumDigits < 0) {	// overflow?
+            if (minimumDigits < 0) {    // overflow?
                 minimumDigits = Integer.MAX_VALUE;
             }
 
@@ -1232,7 +1231,7 @@ public class DecimalFormat extends NumberFormat {
      *       such as <code>"-9,223,372,036,854,775,808.00"</code>, from being
      *       parsed accurately.
      *       <p>
-     *       Callers may use the <code>Number</code> methods 
+     *       Callers may use the <code>Number</code> methods
      *       <code>doubleValue</code>, <code>longValue</code>, etc., to obtain
      *       the type they want.
      *   <li>If <code>isParseBigDecimal()</code> is true, values are returned
@@ -1826,7 +1825,7 @@ public class DecimalFormat extends NumberFormat {
     /**
      * Return the grouping size. Grouping size is the number of digits between
      * grouping separators in the integer portion of a number.  For example,
-     * in the number "123,456.78", the grouping size is 3. 
+     * in the number "123,456.78", the grouping size is 3.
      * @see #setGroupingSize
      * @see java.text.NumberFormat#isGroupingUsed
      * @see java.text.DecimalFormatSymbols#getGroupingSeparator
@@ -1879,7 +1878,7 @@ public class DecimalFormat extends NumberFormat {
 
     /**
      * Sets whether the {@link #parse(java.lang.String, java.text.ParsePosition)}
-     * method returns <code>BigDecimal</code>. 
+     * method returns <code>BigDecimal</code>.
      * @see #isParseBigDecimal
      * @since 1.5
      */
@@ -2124,7 +2123,7 @@ public class DecimalFormat extends NumberFormat {
      * or the literal affix, if the internal affix pattern is null.  The
      * appended string will generate the same affix pattern (or literal affix)
      * when passed to toPattern().
-     * 
+     *
      * @param buffer the affix string is appended to this
      * @param affixPattern a pattern such as posPrefixPattern; may be null
      * @param expAffix a corresponding expanded affix, such as positivePrefix.
@@ -2549,12 +2548,12 @@ public class DecimalFormat extends NumberFormat {
 
                         // Use lookahead to parse out the exponential part
                         // of the pattern, then jump into phase 2.
- 	   		pos = pos+exponent.length();
+                        pos = pos+exponent.length();
                          while (pos < pattern.length() &&
                                pattern.charAt(pos) == zeroDigit) {
                             ++minExponentDigits;
                             ++phaseOneLength;
- 			    ++pos; 
+                            ++pos;
                         }
 
                         if ((digitLeftCount + zeroDigitCount) < 1 ||
@@ -2801,7 +2800,7 @@ public class DecimalFormat extends NumberFormat {
     public Currency getCurrency() {
         return symbols.getCurrency();
     }
-    
+
     /**
      * Sets the currency used by this number format when formatting
      * currency values. This does not update the minimum or maximum
@@ -2833,7 +2832,7 @@ public class DecimalFormat extends NumberFormat {
     public RoundingMode getRoundingMode() {
         return roundingMode;
     }
- 
+
     /**
      * Sets the {@link java.math.RoundingMode} used in this DecimalFormat.
      *
@@ -2848,9 +2847,9 @@ public class DecimalFormat extends NumberFormat {
         }
 
         this.roundingMode = roundingMode;
-	digitList.setRoundingMode(roundingMode);
+        digitList.setRoundingMode(roundingMode);
     }
-     
+
     /**
      * Adjusts the minimum and maximum fraction digits to values that
      * are reasonable for the currency's default fraction digits.
@@ -3049,7 +3048,7 @@ public class DecimalFormat extends NumberFormat {
      * @see #getMultiplier
      */
     private int     multiplier = 1;
-    
+
     /**
      * The number of digits between grouping separators in the integer
      * portion of a number.  Must be greater than 0 if
@@ -3060,7 +3059,7 @@ public class DecimalFormat extends NumberFormat {
      * @see java.text.NumberFormat#isGroupingUsed
      */
     private byte    groupingSize = 3;  // invariant, > 0 if useThousands
-    
+
     /**
      * If true, forces the decimal separator to always appear in a formatted
      * number, even if the fractional part of the number is zero.
@@ -3079,13 +3078,13 @@ public class DecimalFormat extends NumberFormat {
      */
     private boolean parseBigDecimal = false;
 
-    
+
     /**
      * True if this object represents a currency format.  This determines
      * whether the monetary decimal separator is used instead of the normal one.
      */
     private transient boolean isCurrencyFormat = false;
-    
+
     /**
      * The <code>DecimalFormatSymbols</code> object used by this format.
      * It contains the symbols used to format numbers, e.g. the grouping separator,
@@ -3199,7 +3198,7 @@ public class DecimalFormat extends NumberFormat {
      * @since 1.6
      */
     private RoundingMode roundingMode = RoundingMode.HALF_EVEN;
- 
+
     //----------------------------------------------------------------------
 
     static final int currentSerialVersion = 4;

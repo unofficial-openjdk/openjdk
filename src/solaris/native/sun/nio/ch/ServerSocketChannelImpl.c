@@ -33,7 +33,7 @@
 #endif
 
 #if defined(__solaris__) && !defined(_SOCKLEN_T)
-typedef size_t socklen_t;	/* New in SunOS 5.7, so need this for 5.6 */
+typedef size_t socklen_t;       /* New in SunOS 5.7, so need this for 5.6 */
 #endif
 
 #include "jni.h"
@@ -46,12 +46,12 @@ typedef size_t socklen_t;	/* New in SunOS 5.7, so need this for 5.6 */
 #include "nio_util.h"
 
 
-static jfieldID fd_fdID;	/* java.io.FileDescriptor.fd */
-static jclass isa_class;	/* java.net.InetSocketAddress */
-static jmethodID isa_ctorID;	/*   .InetSocketAddress(InetAddress, int) */
+static jfieldID fd_fdID;        /* java.io.FileDescriptor.fd */
+static jclass isa_class;        /* java.net.InetSocketAddress */
+static jmethodID isa_ctorID;    /*   .InetSocketAddress(InetAddress, int) */
 
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_nio_ch_ServerSocketChannelImpl_initIDs(JNIEnv *env, jclass c)
 {
     jclass cls;
@@ -62,21 +62,21 @@ Java_sun_nio_ch_ServerSocketChannelImpl_initIDs(JNIEnv *env, jclass c)
     cls = (*env)->FindClass(env, "java/net/InetSocketAddress");
     isa_class = (*env)->NewGlobalRef(env, cls);
     isa_ctorID = (*env)->GetMethodID(env, cls, "<init>",
-				     "(Ljava/net/InetAddress;I)V");
+                                     "(Ljava/net/InetAddress;I)V");
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_nio_ch_ServerSocketChannelImpl_listen(JNIEnv *env, jclass cl,
-					       jobject fdo, jint backlog)
+                                               jobject fdo, jint backlog)
 {
     if (listen(fdval(env, fdo), backlog) < 0)
-	handleSocketError(env, errno);
+        handleSocketError(env, errno);
 }
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_sun_nio_ch_ServerSocketChannelImpl_accept0(JNIEnv *env, jobject this,
-						jobject ssfdo, jobject newfdo,
-						jobjectArray isaa)
+                                                jobject ssfdo, jobject newfdo,
+                                                jobjectArray isaa)
 {
     jint ssfd = (*env)->GetIntField(env, ssfdo, fd_fdID);
     jint newfd;
@@ -88,37 +88,37 @@ Java_sun_nio_ch_ServerSocketChannelImpl_accept0(JNIEnv *env, jobject this,
 
     NET_AllocSockaddr(&sa, &sa_len);
 
-    /* 
+    /*
      * accept connection but ignore ECONNABORTED indicating that
      * a connection was eagerly accepted but was reset before
      * accept() was called.
      */
     for (;;) {
         newfd = accept(ssfd, sa, &sa_len);
-	if (newfd >= 0) {
-	    break;
-	}
-	if (errno != ECONNABORTED) {
-	    break;
-	}
-	/* ECONNABORTED => restart accept */
+        if (newfd >= 0) {
+            break;
+        }
+        if (errno != ECONNABORTED) {
+            break;
+        }
+        /* ECONNABORTED => restart accept */
     }
 
     if (newfd < 0) {
-	free((void *)sa);
-	if (errno == EAGAIN)
-	    return IOS_UNAVAILABLE;
-	if (errno == EINTR)
-	    return IOS_INTERRUPTED;
-	JNU_ThrowIOExceptionWithLastError(env, "Accept failed");
-	return IOS_THROWN;
+        free((void *)sa);
+        if (errno == EAGAIN)
+            return IOS_UNAVAILABLE;
+        if (errno == EINTR)
+            return IOS_INTERRUPTED;
+        JNU_ThrowIOExceptionWithLastError(env, "Accept failed");
+        return IOS_THROWN;
     }
 
     (*env)->SetIntField(env, newfdo, fd_fdID, newfd);
     remote_ia = NET_SockaddrToInetAddress(env, sa, (int *)&remote_port);
     free((void *)sa);
     isa = (*env)->NewObject(env, isa_class, isa_ctorID,
-			    remote_ia, remote_port);
+                            remote_ia, remote_port);
     (*env)->SetObjectArrayElement(env, isaa, 0, isa);
     return 1;
 }

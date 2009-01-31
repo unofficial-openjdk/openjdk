@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4294991
- * @summary Test that Observer.notifyObservers calls clearChanged 
+ * @summary Test that Observer.notifyObservers calls clearChanged
  */
 
 import java.util.*;
@@ -33,7 +33,7 @@ public class ClearChanged extends Observable {
 
     boolean clearChangedCalled = false;
 
-    public static void main(String[] args) {   
+    public static void main(String[] args) {
         ClearChanged test = new ClearChanged();
         test.setChanged();
         test.notifyObservers(new Object());

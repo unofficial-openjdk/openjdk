@@ -51,13 +51,13 @@ public class ListTypeCheckTest {
         for (Class c : classes)
             test((Class<? extends ArrayList>) c);
     }
-    
+
     private static void test(Class<? extends ArrayList> c) throws Exception {
         System.out.println("Testing " + c.getName());
         ArrayList al = c.newInstance();
         test(al);
     }
-    
+
     private static void test(ArrayList al) throws Exception {
         test(al, true);
         al.clear();
@@ -65,7 +65,7 @@ public class ListTypeCheckTest {
         m.invoke(al);
         test(al, false);
     }
-    
+
     private static void test(ArrayList al, boolean allowsBogus) throws Exception {
         for (int i = 0; i < 5; i++) {
             try {
@@ -94,6 +94,6 @@ public class ListTypeCheckTest {
                 if (allowsBogus)
                     throw new Exception("got exception but should not", e);
             }
-        }            
+        }
     }
 }

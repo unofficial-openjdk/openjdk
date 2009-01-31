@@ -34,7 +34,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  */
 public class CertificatePolicyMap {
     private CertificatePolicyId issuerDomain;

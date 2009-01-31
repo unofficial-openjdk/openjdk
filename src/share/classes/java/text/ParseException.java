@@ -44,7 +44,6 @@ package java.text;
  * @see java.lang.Exception
  * @see java.text.Format
  * @see java.text.FieldPosition
- * @version     %I%, %G%
  * @author      Mark Davis
  */
 public

@@ -36,22 +36,21 @@ import java.security.PrivilegedAction;
  *
  * @see sun.security.rsa.SunRsaSign
  * @author  Andreas Sterbenz
- * @version %I%, %G%
  * @since   1.5
  */
 public class PutAllAction implements PrivilegedAction<Void> {
-    
+
     private final Provider provider;
     private final Map map;
-    
+
     public PutAllAction(Provider provider, Map map) {
-	this.provider = provider;
-	this.map = map;
+        this.provider = provider;
+        this.map = map;
     }
-    
+
     public Void run() {
-	provider.putAll(map);
-	return null;
+        provider.putAll(map);
+        return null;
     }
-    
+
 }

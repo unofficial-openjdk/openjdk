@@ -77,7 +77,6 @@ import sun.awt.image.ImagingLib;
  * <p>
  * Note that in-place operation is allowed (i.e. the source and destination can
  * be the same object).
- * @version 10 Feb 1997
  * @see java.awt.RenderingHints#KEY_COLOR_RENDERING
  * @see java.awt.RenderingHints#KEY_DITHERING
  */
@@ -90,7 +89,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
     private int srcNbits;
     private int dstNbits;
 
-    
+
     /**
      * Constructs a new RescaleOp with the desired scale factors
      * and offsets.  The length of the scaleFactor and offset arrays
@@ -135,11 +134,11 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
         this.hints = hints;
     }
 
-    /** 
+    /**
      * Returns the scale factors in the given array. The array is also
      * returned for convenience.  If scaleFactors is null, a new array
      * will be allocated.
-     * @param scaleFactors the array to contain the scale factors of 
+     * @param scaleFactors the array to contain the scale factors of
      *        this <code>RescaleOp</code>
      * @return the scale factors of this <code>RescaleOp</code>.
      */
@@ -157,7 +156,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
      * Returns the offsets in the given array. The array is also returned
      * for convenience.  If offsets is null, a new array
      * will be allocated.
-     * @param offsets the array to contain the offsets of 
+     * @param offsets the array to contain the offsets of
      *        this <code>RescaleOp</code>
      * @return the offsets of this <code>RescaleOp</code>.
      */
@@ -166,7 +165,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
             return (float[]) this.offsets.clone();
         }
 
-        System.arraycopy (this.offsets, 0, offsets, 0, 
+        System.arraycopy (this.offsets, 0, offsets, 0,
                           Math.min(this.offsets.length, offsets.length));
         return offsets;
     }
@@ -174,13 +173,13 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
     /**
      * Returns the number of scaling factors and offsets used in this
      * RescaleOp.
-     * @return the number of scaling factors and offsets of this 
+     * @return the number of scaling factors and offsets of this
      *         <code>RescaleOp</code>.
      */
     final public int getNumFactors() {
         return length;
     }
-     
+
 
     /**
      * Creates a ByteLookupTable to implement the rescale.
@@ -193,9 +192,9 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                                           float off[],
                                           int   nBands,
                                           int   nElems) {
- 
+
         byte[][]        lutData = new byte[scale.length][nElems];
- 
+
         for (int band=0; band<scale.length; band++) {
             float  bandScale   = scale[band];
             float  bandOff     = off[band];
@@ -207,16 +206,16 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                         val = 0;
                     } else {
                         val = 255;
-                    } 
+                    }
                 }
                 bandLutData[i] = (byte)val;
             }
 
         }
- 
+
         return new ByteLookupTable(0, lutData);
     }
- 
+
     /**
      * Creates a ShortLookupTable to implement the rescale.
      * The table may have either a SHORT or BYTE input.
@@ -228,9 +227,9 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                                             float off[],
                                             int   nBands,
                                             int   nElems) {
- 
+
         short[][]        lutData = new short[scale.length][nElems];
- 
+
         for (int band=0; band<scale.length; band++) {
             float   bandScale   = scale[band];
             float   bandOff     = off[band];
@@ -247,11 +246,11 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                 bandLutData[i] = (short)val;
             }
         }
- 
+
         return new ShortLookupTable(0, lutData);
     }
- 
- 
+
+
     /**
      * Determines if the rescale can be performed as a lookup.
      * The dst must be a byte or short type.
@@ -269,7 +268,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
            datatype != DataBuffer.TYPE_USHORT) {
             return false;
         }
- 
+
         //
         // Check dst sample sizes. All must be 8 or 16 bits.
         //
@@ -285,9 +284,9 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                 return false;
             }
         }
- 
+
         //
-        // Check src sample sizes. All must be the same size 
+        // Check src sample sizes. All must be the same size
         //
         SampleModel srcSM = src.getSampleModel();
         srcNbits = srcSM.getSampleSize(0);
@@ -300,12 +299,12 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                 return false;
             }
         }
- 
+
         return true;
     }
- 
+
     /**
-     * Rescales the source BufferedImage.  
+     * Rescales the source BufferedImage.
      * If the color model in the source image is not the same as that
      * in the destination image, the pixels will be converted
      * in the destination.  If the destination image is null,
@@ -315,13 +314,13 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
      * restrictions stated in the class comments above, or if the
      * source image has an IndexColorModel.
      * @param src the <code>BufferedImage</code> to be filtered
-     * @param dst the destination for the filtering operation 
+     * @param dst the destination for the filtering operation
      *            or <code>null</code>
      * @return the filtered <code>BufferedImage</code>.
      * @throws IllegalArgumentException if the <code>ColorModel</code>
-     *         of <code>src</code> is an <code>IndexColorModel</code>,  
+     *         of <code>src</code> is an <code>IndexColorModel</code>,
      *         or if the number of scaling factors and offsets in this
-     *         <code>RescaleOp</code> do not meet the requirements 
+     *         <code>RescaleOp</code> do not meet the requirements
      *         stated in the class comments.
      */
     public final BufferedImage filter (BufferedImage src, BufferedImage dst) {
@@ -329,7 +328,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
         ColorModel dstCM;
         int numBands = srcCM.getNumColorComponents();
 
-        
+
         if (srcCM instanceof IndexColorModel) {
             throw new
                 IllegalArgumentException("Rescaling cannot be "+
@@ -343,14 +342,14 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                                                " of color or color/alpha "+
                                                " components");
         }
-        
+
         boolean needToConvert = false;
 
         // Include alpha
         if (length > numBands && srcCM.hasAlpha()) {
             length = numBands+1;
         }
-        
+
         int width = src.getWidth();
         int height = src.getHeight();
 
@@ -380,7 +379,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
             }
 
         }
-        
+
         BufferedImage origDst = dst;
 
         //
@@ -431,9 +430,9 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
             // Call the raster filter method
             //
             filter(srcRaster, dstRaster);
-            
+
         }
-        
+
         if (needToConvert) {
             // ColorModels are not the same
             ColorConvertOp ccop = new ColorConvertOp(hints);
@@ -452,13 +451,13 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
      * meet the restrictions stated in the class comments above.
      * Otherwise, an IllegalArgumentException is thrown.
      * @param src the <code>Raster</code> to be filtered
-     * @param dst the destination for the filtering operation 
+     * @param dst the destination for the filtering operation
      *            or <code>null</code>
      * @return the filtered <code>WritableRaster</code>.
      * @throws IllegalArgumentException if <code>src</code> and
-     *         <code>dst</code> do not have the same number of bands,  
+     *         <code>dst</code> do not have the same number of bands,
      *         or if the number of scaling factors and offsets in this
-     *         <code>RescaleOp</code> do not meet the requirements 
+     *         <code>RescaleOp</code> do not meet the requirements
      *         stated in the class comments.
      */
     public final WritableRaster filter (Raster src, WritableRaster dst)  {
@@ -481,7 +480,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
         else if (numBands != dst.getNumBands()) {
             // Make sure that the number of bands are equal
             throw new IllegalArgumentException("Number of bands in src "
-                            + numBands 
+                            + numBands
                             + " does not equal number of bands in dest "
                             + dst.getNumBands());
         }
@@ -493,7 +492,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
                                                " of bands in the src raster");
         }
 
-        
+
         //
         // Try for a native raster rescale first
         //
@@ -537,7 +536,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
 
             //
             //  Determine bits per band to determine maxval for clamps.
-            //  The min is assumed to be zero. 
+            //  The min is assumed to be zero.
             //  REMIND: This must change if we ever support signed data types.
             //
             int nbits;
@@ -598,7 +597,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
      * @return the bounds of the specified <code>Raster</code>.
      */
     public final Rectangle2D getBounds2D (Raster src) {
-	return src.getBounds();
+        return src.getBounds();
     }
 
     /**
@@ -629,9 +628,9 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
 
         return image;
     }
-    
+
     /**
-     * Creates a zeroed-destination <code>Raster</code> with the correct 
+     * Creates a zeroed-destination <code>Raster</code> with the correct
      * size and number of bands, given this source.
      * @param src       the source <code>Raster</code>
      * @return the zeroed-destination <code>Raster</code>.
@@ -639,7 +638,7 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
     public WritableRaster createCompatibleDestRaster (Raster src) {
         return src.createCompatibleWritableRaster(src.getWidth(), src.getHeight());
     }
-    
+
     /**
      * Returns the location of the destination point given a
      * point in the source.  If dstPt is non-null, it will
@@ -653,10 +652,10 @@ public class RescaleOp implements BufferedImageOp, RasterOp {
         if (dstPt == null) {
             dstPt = new Point2D.Float();
         }
-	dstPt.setLocation(srcPt.getX(), srcPt.getY());
+        dstPt.setLocation(srcPt.getX(), srcPt.getY());
         return dstPt;
     }
-    
+
     /**
      * Returns the rendering hints for this op.
      * @return the rendering hints of this <code>RescaleOp</code>.

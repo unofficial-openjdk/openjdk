@@ -36,62 +36,62 @@ public class KeywordMap {
 
     public static void main(String[] args) throws Exception {
 
-	X500Principal p = null;
-	Map<String, String> m = null;
+        X500Principal p = null;
+        Map<String, String> m = null;
 
-	// test null keywordMap
-	try {
-	    p = new X500Principal("CN=user", null);
-	    throw new Exception
-		("expected NullPointerException for null keywordMap");
-	} catch (NullPointerException npe) {}
+        // test null keywordMap
+        try {
+            p = new X500Principal("CN=user", null);
+            throw new Exception
+                ("expected NullPointerException for null keywordMap");
+        } catch (NullPointerException npe) {}
 
-	// test improperly specified OID
-	m = Collections.singletonMap("FOO", "FOO");
-	try {
+        // test improperly specified OID
+        m = Collections.singletonMap("FOO", "FOO");
+        try {
             p = new X500Principal("FOO=user", m);
-	    throw new Exception
-		("expected IllegalArgumentException for bad OID");
-	} catch (IllegalArgumentException iae) {}
+            throw new Exception
+                ("expected IllegalArgumentException for bad OID");
+        } catch (IllegalArgumentException iae) {}
 
-	// ignore improperly specified keyword
-	m = Collections.singletonMap("?*&", "FOO");
-	p = new X500Principal("CN=user", m); 
+        // ignore improperly specified keyword
+        m = Collections.singletonMap("?*&", "FOO");
+        p = new X500Principal("CN=user", m);
 
-	// throw exception if no mapping for keyword
-	m = Collections.singletonMap("BAR", "1.2.3");
-	try {
-	    p = new X500Principal("FOO=user", m); 
-	    throw new Exception
-		("expected IllegalArgumentExc for keyword with no mapping");
-	} catch (IllegalArgumentException iae) {}
-
-	// don't match keyword in lower-case
-	m = Collections.singletonMap("foo", "1.2.3");
-	try {
+        // throw exception if no mapping for keyword
+        m = Collections.singletonMap("BAR", "1.2.3");
+        try {
             p = new X500Principal("FOO=user", m);
-	    throw new Exception
-		("expected IllegalArgumentExc for wrong-case keyword mapping");
-	} catch (IllegalArgumentException iae) {}
+            throw new Exception
+                ("expected IllegalArgumentExc for keyword with no mapping");
+        } catch (IllegalArgumentException iae) {}
 
-	// allow duplicate OID mappings
+        // don't match keyword in lower-case
+        m = Collections.singletonMap("foo", "1.2.3");
+        try {
+            p = new X500Principal("FOO=user", m);
+            throw new Exception
+                ("expected IllegalArgumentExc for wrong-case keyword mapping");
+        } catch (IllegalArgumentException iae) {}
+
+        // allow duplicate OID mappings
         m = new HashMap<String, String>();
-	m.put("FOO", "1.2.3");
-	m.put("BAR", "1.2.3");
+        m.put("FOO", "1.2.3");
+        m.put("BAR", "1.2.3");
         p = new X500Principal("BAR=user", m);
 
-	// override builtin keywords
-	m = Collections.singletonMap("CN", "1.2.3");
+        // override builtin keywords
+        m = Collections.singletonMap("CN", "1.2.3");
         p = new X500Principal("CN=user", m);
-	if (!p.getName().startsWith("1.2.3")) {
-	    throw new Exception("mapping did not override builtin keyword");
-	}
+        if (!p.getName().startsWith("1.2.3")) {
+            throw new Exception("mapping did not override builtin keyword");
+        }
 
-	// override builtin OIDs
-	m = Collections.singletonMap("FOO", "2.5.4.3");
+        // override builtin OIDs
+        m = Collections.singletonMap("FOO", "2.5.4.3");
         p = new X500Principal("FOO=sean", m);
-	if (!p.getName().startsWith("CN")) {
-	    throw new Exception("mapping did not override builtin OID");
-	}
+        if (!p.getName().startsWith("CN")) {
+            throw new Exception("mapping did not override builtin OID");
+        }
     }
 }

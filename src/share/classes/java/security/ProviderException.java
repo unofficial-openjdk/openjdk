@@ -25,13 +25,12 @@
 
 package java.security;
 
-/** 
+/**
  * A runtime exception for Provider exceptions (such as
- * misconfiguration errors or unrecoverable internal errors), 
+ * misconfiguration errors or unrecoverable internal errors),
  * which may be subclassed by Providers to
  * throw specialized, provider-specific runtime errors.
  *
- * @version %I%, %G%
  * @author Benjamin Renaud
  */
 public class ProviderException extends RuntimeException {
@@ -44,18 +43,18 @@ public class ProviderException extends RuntimeException {
      * exception.
      */
     public ProviderException() {
-	super();
+        super();
     }
 
     /**
      * Constructs a ProviderException with the specified detail
      * message. A detail message is a String that describes this
-     * particular exception.  
+     * particular exception.
      *
-     * @param s the detail message.  
+     * @param s the detail message.
      */
     public ProviderException(String s) {
-	super(s);
+        super(s);
     }
 
     /**

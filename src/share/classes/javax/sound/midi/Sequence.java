@@ -50,7 +50,6 @@ import com.sun.media.sound.MidiUtils;
  * @see Track#add(MidiEvent)
  * @see MidiFileFormat
  *
- * @version %I%, %E%
  * @author Kara Kytle
  */
 public class Sequence {
@@ -62,31 +61,31 @@ public class Sequence {
      * The tempo-based timing type, for which the resolution is expressed in pulses (ticks) per quarter note.
      * @see #Sequence(float, int)
      */
-    public static final float PPQ							= 0.0f;
+    public static final float PPQ                                                       = 0.0f;
 
     /**
      * The SMPTE-based timing type with 24 frames per second (resolution is expressed in ticks per frame).
      * @see #Sequence(float, int)
      */
-    public static final float SMPTE_24						= 24.0f;
+    public static final float SMPTE_24                                          = 24.0f;
 
     /**
      * The SMPTE-based timing type with 25 frames per second (resolution is expressed in ticks per frame).
      * @see #Sequence(float, int)
      */
-    public static final float SMPTE_25						= 25.0f;
+    public static final float SMPTE_25                                          = 25.0f;
 
     /**
      * The SMPTE-based timing type with 29.97 frames per second (resolution is expressed in ticks per frame).
      * @see #Sequence(float, int)
      */
-    public static final float SMPTE_30DROP					= 29.97f;
+    public static final float SMPTE_30DROP                                      = 29.97f;
 
     /**
      * The SMPTE-based timing type with 30 frames per second (resolution is expressed in ticks per frame).
      * @see #Sequence(float, int)
      */
-    public static final float SMPTE_30						= 30.0f;
+    public static final float SMPTE_30                                          = 30.0f;
 
 
     // Variables
@@ -142,19 +141,19 @@ public class Sequence {
      */
     public Sequence(float divisionType, int resolution) throws InvalidMidiDataException {
 
-	if (divisionType == PPQ)
-	    this.divisionType = PPQ;
-	else if (divisionType == SMPTE_24)
-	    this.divisionType = SMPTE_24;
-	else if (divisionType == SMPTE_25)
-	    this.divisionType = SMPTE_25;
-	else if (divisionType == SMPTE_30DROP)
-	    this.divisionType = SMPTE_30DROP;
-	else if (divisionType == SMPTE_30)
-	    this.divisionType = SMPTE_30;
-	else throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
+        if (divisionType == PPQ)
+            this.divisionType = PPQ;
+        else if (divisionType == SMPTE_24)
+            this.divisionType = SMPTE_24;
+        else if (divisionType == SMPTE_25)
+            this.divisionType = SMPTE_25;
+        else if (divisionType == SMPTE_30DROP)
+            this.divisionType = SMPTE_30DROP;
+        else if (divisionType == SMPTE_30)
+            this.divisionType = SMPTE_30;
+        else throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
 
-	this.resolution = resolution;
+        this.resolution = resolution;
     }
 
 
@@ -188,23 +187,23 @@ public class Sequence {
      */
     public Sequence(float divisionType, int resolution, int numTracks) throws InvalidMidiDataException {
 
-	if (divisionType == PPQ)
-	    this.divisionType = PPQ;
-	else if (divisionType == SMPTE_24)
-	    this.divisionType = SMPTE_24;
-	else if (divisionType == SMPTE_25)
-	    this.divisionType = SMPTE_25;
-	else if (divisionType == SMPTE_30DROP)
-	    this.divisionType = SMPTE_30DROP;
-	else if (divisionType == SMPTE_30)
-	    this.divisionType = SMPTE_30;
-	else throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
+        if (divisionType == PPQ)
+            this.divisionType = PPQ;
+        else if (divisionType == SMPTE_24)
+            this.divisionType = SMPTE_24;
+        else if (divisionType == SMPTE_25)
+            this.divisionType = SMPTE_25;
+        else if (divisionType == SMPTE_30DROP)
+            this.divisionType = SMPTE_30DROP;
+        else if (divisionType == SMPTE_30)
+            this.divisionType = SMPTE_30;
+        else throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
 
-	this.resolution = resolution;
+        this.resolution = resolution;
 
-	for (int i = 0; i < numTracks; i++) {
-	    tracks.addElement(new Track());
-	}
+        for (int i = 0; i < numTracks; i++) {
+            tracks.addElement(new Track());
+        }
     }
 
 
@@ -221,7 +220,7 @@ public class Sequence {
      * @see MidiFileFormat#getDivisionType()
      */
     public float getDivisionType() {
-	return divisionType;
+        return divisionType;
     }
 
 
@@ -236,7 +235,7 @@ public class Sequence {
      * @see MidiFileFormat#getResolution()
      */
     public int getResolution() {
-	return resolution;
+        return resolution;
     }
 
 
@@ -250,10 +249,10 @@ public class Sequence {
      */
     public Track createTrack() {
 
-	Track track = new Track();
-	tracks.addElement(track);
+        Track track = new Track();
+        tracks.addElement(track);
 
-	return track;
+        return track;
     }
 
 
@@ -268,10 +267,10 @@ public class Sequence {
      */
     public boolean deleteTrack(Track track) {
 
-	synchronized(tracks) {
+        synchronized(tracks) {
 
-	    return tracks.removeElement(track);
-	}
+            return tracks.removeElement(track);
+        }
     }
 
 
@@ -285,7 +284,7 @@ public class Sequence {
      */
     public Track[] getTracks() {
 
-	return (Track[]) tracks.toArray(new Track[tracks.size()]);
+        return (Track[]) tracks.toArray(new Track[tracks.size()]);
     }
 
 
@@ -295,7 +294,7 @@ public class Sequence {
      */
     public long getMicrosecondLength() {
 
-    	return com.sun.media.sound.MidiUtils.tick2microsecond(this, getTickLength(), null);
+        return com.sun.media.sound.MidiUtils.tick2microsecond(this, getTickLength(), null);
     }
 
 
@@ -308,18 +307,18 @@ public class Sequence {
      */
     public long getTickLength() {
 
-	long length = 0;
+        long length = 0;
 
-	synchronized(tracks) {
+        synchronized(tracks) {
 
-	    for(int i=0; i<tracks.size(); i++ ) {
-		long temp = ((Track)tracks.elementAt(i)).ticks();
-		if( temp>length ) {
-		    length = temp;
-		}
-	    }
-	    return length;
-	}
+            for(int i=0; i<tracks.size(); i++ ) {
+                long temp = ((Track)tracks.elementAt(i)).ticks();
+                if( temp>length ) {
+                    length = temp;
+                }
+            }
+            return length;
+        }
     }
 
 
@@ -335,7 +334,7 @@ public class Sequence {
      */
     public Patch[] getPatchList() {
 
-	// $$kk: 04.09.99: need to implement!!
-	return new Patch[0];
+        // $$kk: 04.09.99: need to implement!!
+        return new Patch[0];
     }
 }

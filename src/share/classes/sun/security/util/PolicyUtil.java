@@ -37,7 +37,6 @@ import sun.net.www.ParseUtil;
  * A utility class for getting a KeyStore instance from policy information.
  * In addition, a supporting getInputStream method.
  *
- * @version %I%
  */
 public class PolicyUtil {
 
@@ -55,13 +54,13 @@ public class PolicyUtil {
      * start up time noticeably for the new launcher. -- DAC
      */
     public static InputStream getInputStream(URL url) throws IOException {
-	if ("file".equals(url.getProtocol())) {
-	    String path = url.getFile().replace('/', File.separatorChar);
-	    path = ParseUtil.decode(path);
-	    return new FileInputStream(path);
-	} else {
-	    return url.openStream();
-	}
+        if ("file".equals(url.getProtocol())) {
+            String path = url.getFile().replace('/', File.separatorChar);
+            path = ParseUtil.decode(path);
+            return new FileInputStream(path);
+        } else {
+            return url.openStream();
+        }
     }
 
     /**
@@ -69,18 +68,18 @@ public class PolicyUtil {
      * instantiate a KeyStore from the information in the GUI/policy file
      */
     public static KeyStore getKeyStore
-		(URL policyUrl,			// URL of policy file
-		String keyStoreName,		// input: keyStore URL
-		String keyStoreType,		// input: keyStore type
-		String keyStoreProvider,	// input: keyStore provider
-		String storePassURL,		// input: keyStore password
-		Debug debug)
-	throws KeyStoreException, MalformedURLException, IOException,
-		NoSuchProviderException, NoSuchAlgorithmException,
-		java.security.cert.CertificateException {
+                (URL policyUrl,                 // URL of policy file
+                String keyStoreName,            // input: keyStore URL
+                String keyStoreType,            // input: keyStore type
+                String keyStoreProvider,        // input: keyStore provider
+                String storePassURL,            // input: keyStore password
+                Debug debug)
+        throws KeyStoreException, MalformedURLException, IOException,
+                NoSuchProviderException, NoSuchAlgorithmException,
+                java.security.cert.CertificateException {
 
         if (keyStoreName == null) {
-	    throw new IllegalArgumentException("null KeyStore name");
+            throw new IllegalArgumentException("null KeyStore name");
         }
 
         char[] keyStorePassword = null;
@@ -115,9 +114,9 @@ public class PolicyUtil {
                     // absolute URL
                 } catch (MalformedURLException e) {
                     // relative URL
-		    if (policyUrl == null) {
-			throw e;
-		    }
+                    if (policyUrl == null) {
+                        throw e;
+                    }
                     passURL = new URL(policyUrl, storePassURL);
                 }
 
@@ -126,14 +125,14 @@ public class PolicyUtil {
                 }
 
                 InputStream in = null;
-        	try {
+                try {
                     in = passURL.openStream();
                     keyStorePassword = Password.readPassword(in);
-        	} finally {
-        	    if (in != null) {
+                } finally {
+                    if (in != null) {
                         in.close();
                     }
-        	}
+                }
             }
 
             if (NONE.equals(keyStoreName)) {
@@ -150,9 +149,9 @@ public class PolicyUtil {
                     // absolute URL
                 } catch (MalformedURLException e) {
                     // relative URL
-		    if (policyUrl == null) {
-			throw e;
-		    }
+                    if (policyUrl == null) {
+                        throw e;
+                    }
                     keyStoreUrl = new URL(policyUrl, keyStoreName);
                 }
 
@@ -176,4 +175,4 @@ public class PolicyUtil {
             }
         }
     }
-} 
+}

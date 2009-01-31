@@ -42,7 +42,7 @@ public class MXBeanException {
     private static MemoryPoolMXBean pool;
 
     public static void main(String[] argv) throws Exception {
-        List<MemoryPoolMXBean> pools = 
+        List<MemoryPoolMXBean> pools =
             ManagementFactory.getMemoryPoolMXBeans();
         for (MemoryPoolMXBean p : pools) {
             if (!p.isUsageThresholdSupported()) {
@@ -50,7 +50,7 @@ public class MXBeanException {
                 break;
             }
         }
-        
+
         // check if UnsupportedOperationException is thrown
         try {
             pool.setUsageThreshold(1000);
@@ -63,7 +63,7 @@ public class MXBeanException {
         // check if UnsupportedOperationException is thrown
         // when calling through MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName on = new ObjectName(MEMORY_POOL_MXBEAN_DOMAIN_TYPE + 
+        ObjectName on = new ObjectName(MEMORY_POOL_MXBEAN_DOMAIN_TYPE +
                                        ",name=" + pool.getName());
         Attribute att = new Attribute("UsageThreshold", 1000);
         try {
@@ -87,7 +87,7 @@ public class MXBeanException {
         } catch (UnsupportedOperationException e) {
             // expected
         }
-        
+
         System.out.println("Test passed");
     }
 

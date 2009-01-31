@@ -32,8 +32,8 @@ import javax.sql.RowSetReader;
 import javax.sql.rowset.*;
 
 /**
- * A specialized interface that facilitates an extension of the 
- * <code>SyncProvider</code> abstract class for XML orientated 
+ * A specialized interface that facilitates an extension of the
+ * <code>SyncProvider</code> abstract class for XML orientated
  * synchronization providers.
  * <P>
  * <code>SyncProvider</code>  implementations that supply XML data reader
@@ -41,13 +41,13 @@ import javax.sql.rowset.*;
  * interface to provider standard <code>XmlReader</code> objects to
  * <code>WebRowSet</code> implementations.
  * <p>
- * An <code>XmlReader</code> object is registered as the 
+ * An <code>XmlReader</code> object is registered as the
  * XML reader for a <code>WebRowSet</code> by being assigned to the
  * rowset's <code>xmlReader</code> field. When the <code>WebRowSet</code>
  * object's <code>readXml</code> method is invoked, it in turn invokes
  * its XML reader's <code>readXML</code> method.
  */
-public interface XmlReader extends RowSetReader { 
+public interface XmlReader extends RowSetReader {
 
   /**
    * Reads and parses the given <code>WebRowSet</code> object from the given
@@ -68,7 +68,7 @@ public interface XmlReader extends RowSetReader {
    *            this <code>XmlReader</code> object is not the reader
    *            for the given rowset
    */
-  public void readXML(WebRowSet caller, java.io.Reader reader) 
+  public void readXML(WebRowSet caller, java.io.Reader reader)
     throws SQLException;
 
 }

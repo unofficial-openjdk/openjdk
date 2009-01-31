@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  * (C) Copyright IBM Corp. 2005 - All Rights Reserved
  *
  * The original version of this source code and documentation is
@@ -74,7 +72,7 @@ public final class AttributeValues implements Cloneable {
     private Paint foreground; // null
     private Paint background; // null
     private float justification = 1f;
-    private Object imHighlight; // null 
+    private Object imHighlight; // null
     // (can be either Attribute wrapping IMH, or IMH itself
     private Font font; // here for completeness, don't actually use
     private byte imUnderline = -1; // same default as underline
@@ -109,23 +107,23 @@ public final class AttributeValues implements Cloneable {
     public void setSize(float f) { this.size = f; update(ESIZE); }
 
     public AffineTransform getTransform() { return transform; }
-    public void setTransform(AffineTransform f) { 
-        this.transform = (f == null || f.isIdentity()) 
-            ? DEFAULT.transform 
+    public void setTransform(AffineTransform f) {
+        this.transform = (f == null || f.isIdentity())
+            ? DEFAULT.transform
             : new AffineTransform(f);
         updateDerivedTransforms();
-        update(ETRANSFORM); 
+        update(ETRANSFORM);
     }
-    public void setTransform(TransformAttribute f) { 
-        this.transform = (f == null || f.isIdentity()) 
+    public void setTransform(TransformAttribute f) {
+        this.transform = (f == null || f.isIdentity())
             ? DEFAULT.transform
-            : f.getTransform(); 
+            : f.getTransform();
         updateDerivedTransforms();
-        update(ETRANSFORM); 
+        update(ETRANSFORM);
     }
 
     public int getSuperscript() { return superscript; }
-    public void setSuperscript(int f) { 
+    public void setSuperscript(int f) {
       this.superscript = (byte)f; update(ESUPERSCRIPT); }
 
     public Font getFont() { return font; }
@@ -144,19 +142,19 @@ public final class AttributeValues implements Cloneable {
       this.background = f; update(EBACKGROUND); }
 
     public int getUnderline() { return underline; }
-    public void setUnderline(int f) { 
+    public void setUnderline(int f) {
       this.underline = (byte)f; update(EUNDERLINE); }
 
     public boolean getStrikethrough() { return strikethrough; }
-    public void setStrikethrough(boolean f) { 
+    public void setStrikethrough(boolean f) {
       this.strikethrough = f; update(ESTRIKETHROUGH); }
 
     public int getRunDirection() { return runDirection; }
-    public void setRunDirection(int f) { 
+    public void setRunDirection(int f) {
       this.runDirection = (byte)f; update(ERUN_DIRECTION); }
 
     public int getBidiEmbedding() { return bidiEmbedding; }
-    public void setBidiEmbedding(int f) { 
+    public void setBidiEmbedding(int f) {
       this.bidiEmbedding = (byte)f; update(EBIDI_EMBEDDING); }
 
     public float getJustification() { return justification; }
@@ -164,9 +162,9 @@ public final class AttributeValues implements Cloneable {
       this.justification = f; update(EJUSTIFICATION); }
 
     public Object getInputMethodHighlight() { return imHighlight; }
-    public void setInputMethodHighlight(Annotation f) { 
+    public void setInputMethodHighlight(Annotation f) {
       this.imHighlight = f; update(EINPUT_METHOD_HIGHLIGHT); }
-    public void setInputMethodHighlight(InputMethodHighlight f) { 
+    public void setInputMethodHighlight(InputMethodHighlight f) {
       this.imHighlight = f; update(EINPUT_METHOD_HIGHLIGHT); }
 
     public int getInputMethodUnderline() { return imUnderline; }
@@ -174,23 +172,23 @@ public final class AttributeValues implements Cloneable {
       this.imUnderline = (byte)f; update(EINPUT_METHOD_UNDERLINE); }
 
     public boolean getSwapColors() { return swapColors; }
-    public void setSwapColors(boolean f) { 
+    public void setSwapColors(boolean f) {
       this.swapColors = f; update(ESWAP_COLORS); }
 
     public NumericShaper getNumericShaping() { return numericShaping; }
-    public void setNumericShaping(NumericShaper f) { 
+    public void setNumericShaping(NumericShaper f) {
       this.numericShaping = f; update(ENUMERIC_SHAPING); }
 
     public int getKerning() { return kerning; }
-    public void setKerning(int f) { 
+    public void setKerning(int f) {
       this.kerning = (byte)f; update(EKERNING); }
 
     public float getTracking() { return tracking; }
-    public void setTracking(float f) { 
+    public void setTracking(float f) {
       this.tracking = (byte)f; update(ETRACKING); }
 
     public int getLigatures() { return ligatures; }
-    public void setLigatures(int f) { 
+    public void setLigatures(int f) {
       this.ligatures = (byte)f; update(ELIGATURES); }
 
 
@@ -220,8 +218,8 @@ public final class AttributeValues implements Cloneable {
 
     public void defineAll(int mask) {
         defined |= mask;
-        if ((defined & EBASELINE_TRANSFORM.mask) != 0) { 
-            throw new InternalError("can't define derived attribute"); 
+        if ((defined & EBASELINE_TRANSFORM.mask) != 0) {
+            throw new InternalError("can't define derived attribute");
         }
     }
 
@@ -248,8 +246,8 @@ public final class AttributeValues implements Cloneable {
     }
 
     public void setDefault(EAttribute a) {
-        if (a.att == null) { 
-            throw new InternalError("can't set default derived attribute: " + a); 
+        if (a.att == null) {
+            throw new InternalError("can't set default derived attribute: " + a);
         }
         i_set(a, DEFAULT);
         defined |= a.mask;
@@ -257,8 +255,8 @@ public final class AttributeValues implements Cloneable {
     }
 
     public void unset(EAttribute a) {
-        if (a.att == null) { 
-            throw new InternalError("can't unset derived attribute: " + a); 
+        if (a.att == null) {
+            throw new InternalError("can't unset derived attribute: " + a);
         }
         i_set(a, DEFAULT);
         defined &= ~a.mask;
@@ -266,8 +264,8 @@ public final class AttributeValues implements Cloneable {
     }
 
     public void set(EAttribute a, AttributeValues src) {
-        if (a.att == null) { 
-            throw new InternalError("can't set derived attribute: " + a); 
+        if (a.att == null) {
+            throw new InternalError("can't set derived attribute: " + a);
         }
         if (src == null || src == DEFAULT) {
             setDefault(a);
@@ -280,8 +278,8 @@ public final class AttributeValues implements Cloneable {
     }
 
     public void set(EAttribute a, Object o) {
-        if (a.att == null) { 
-            throw new InternalError("can't set derived attribute: " + a); 
+        if (a.att == null) {
+            throw new InternalError("can't set derived attribute: " + a);
         }
         if (o != null) {
             try {
@@ -295,8 +293,8 @@ public final class AttributeValues implements Cloneable {
     }
 
     public Object get(EAttribute a) {
-        if (a.att == null) { 
-            throw new InternalError("can't get derived attribute: " + a); 
+        if (a.att == null) {
+            throw new InternalError("can't get derived attribute: " + a);
         }
         if ((nondefault & a.mask) != 0) {
             return i_get(a);
@@ -310,9 +308,9 @@ public final class AttributeValues implements Cloneable {
         return merge(map, MASK_ALL);
     }
 
-    public AttributeValues merge(Map<? extends Attribute, ?>map, 
+    public AttributeValues merge(Map<? extends Attribute, ?>map,
                                  int mask) {
-        if (map instanceof AttributeMap && 
+        if (map instanceof AttributeMap &&
             ((AttributeMap) map).getValues() != null) {
             merge(((AttributeMap)map).getValues(), mask);
         } else if (map != null && !map.isEmpty()) {
@@ -360,7 +358,7 @@ public final class AttributeValues implements Cloneable {
         if (fill == null) {
             fill = new HashMap<TextAttribute, Object>();
         }
-        
+
         for (int m = defined, i = 0; m != 0; ++i) {
             EAttribute ea = EAttribute.atts[i];
             if ((m & ea.mask) != 0) {
@@ -373,15 +371,15 @@ public final class AttributeValues implements Cloneable {
     }
 
     // key must be serializable, so use String, not Object
-    private static final String DEFINED_KEY = 
+    private static final String DEFINED_KEY =
         "sun.font.attributevalues.defined_key";
 
     public static boolean is16Hashtable(Hashtable<Object, Object> ht) {
         return ht.containsKey(DEFINED_KEY);
     }
 
-    public static AttributeValues 
-    fromSerializableHashtable(Hashtable<Object, Object> ht) 
+    public static AttributeValues
+    fromSerializableHashtable(Hashtable<Object, Object> ht)
     {
         AttributeValues result = new AttributeValues();
         if (ht != null && !ht.isEmpty()) {
@@ -444,13 +442,13 @@ public final class AttributeValues implements Cloneable {
 
     public boolean equals(AttributeValues rhs) {
         // test in order of most likely to differ and easiest to compare
-        // also assumes we're generally calling this only if family, 
+        // also assumes we're generally calling this only if family,
         // size, weight, posture are the same
 
         if (rhs == null) return false;
         if (rhs == this) return true;
 
-        return defined == rhs.defined 
+        return defined == rhs.defined
             && nondefault == rhs.nondefault
             && underline == rhs.underline
             && strikethrough == rhs.strikethrough
@@ -484,7 +482,7 @@ public final class AttributeValues implements Cloneable {
                 result.transform = new AffineTransform(transform);
                 result.updateDerivedTransforms();
             }
-            // if transform is null, derived transforms are null 
+            // if transform is null, derived transforms are null
             // so there's nothing to do
             return result;
         }
@@ -507,8 +505,8 @@ public final class AttributeValues implements Cloneable {
                 b.append(ea);
                 b.append('=');
                 switch (ea) {
-                case EFAMILY: b.append('"'); 
-                  b.append(family); 
+                case EFAMILY: b.append('"');
+                  b.append(family);
                   b.append('"'); break;
                 case EWEIGHT: b.append(weight); break;
                 case EWIDTH: b.append(width); break;
@@ -655,7 +653,7 @@ public final class AttributeValues implements Cloneable {
                 runDirection = (byte)(TextAttribute.RUN_DIRECTION_LTR.equals(o) ? 0 : 1);
             } else {
                 runDirection = (byte)((Integer)o).intValue();
-            } 
+            }
         } break;
         case EBIDI_EMBEDDING: bidiEmbedding = (byte)((Integer)o).intValue(); break;
         case EJUSTIFICATION: justification = ((Number)o).floatValue(); break;
@@ -667,7 +665,7 @@ public final class AttributeValues implements Cloneable {
                 imHighlight = (InputMethodHighlight)o;
             }
         } break;
-        case EINPUT_METHOD_UNDERLINE: imUnderline = (byte)((Integer)o).intValue(); 
+        case EINPUT_METHOD_UNDERLINE: imUnderline = (byte)((Integer)o).intValue();
           break;
         case ESWAP_COLORS: swapColors = ((Boolean)o).booleanValue(); break;
         case ENUMERIC_SHAPING: numericShaping = (NumericShaper)o; break;
@@ -677,7 +675,7 @@ public final class AttributeValues implements Cloneable {
         default: throw new InternalError();
         }
     }
-    
+
     private Object i_get(EAttribute a) {
         switch (a) {
         case EFAMILY: return family;
@@ -686,8 +684,8 @@ public final class AttributeValues implements Cloneable {
         case EPOSTURE: return Float.valueOf(posture);
         case ESIZE: return Float.valueOf(size);
         case ETRANSFORM:
-            return transform == null 
-                ? TransformAttribute.IDENTITY 
+            return transform == null
+                ? TransformAttribute.IDENTITY
                 : new TransformAttribute(transform);
         case ESUPERSCRIPT: return Integer.valueOf(superscript);
         case EFONT: return font;
@@ -696,7 +694,7 @@ public final class AttributeValues implements Cloneable {
         case EBACKGROUND: return background;
         case EUNDERLINE: return Integer.valueOf(underline);
         case ESTRIKETHROUGH: return Boolean.valueOf(strikethrough);
-        case ERUN_DIRECTION: { 
+        case ERUN_DIRECTION: {
             switch (runDirection) {
                 // todo: figure out a way to indicate this value
                 // case -1: return Integer.valueOf(runDirection);
@@ -720,7 +718,7 @@ public final class AttributeValues implements Cloneable {
 
     private boolean i_validate(EAttribute a) {
         switch (a) {
-        case EFAMILY: if (family == null || family.length() == 0) 
+        case EFAMILY: if (family == null || family.length() == 0)
           family = DEFAULT.family; return true;
         case EWEIGHT: return weight > 0 && weight < 10;
         case EWIDTH: return width >= .5f && width < 10;
@@ -737,7 +735,7 @@ public final class AttributeValues implements Cloneable {
         case ESTRIKETHROUGH: return true;
         case ERUN_DIRECTION: return runDirection >= -2 && runDirection <= 1;
         case EBIDI_EMBEDDING: return bidiEmbedding >= -61 && bidiEmbedding < 62;
-        case EJUSTIFICATION: justification = max(0, min (justification, 1)); 
+        case EJUSTIFICATION: justification = max(0, min (justification, 1));
             return true;
         case EINPUT_METHOD_HIGHLIGHT: return true;
         case EINPUT_METHOD_UNDERLINE: return imUnderline >= -1 && imUnderline < 6;
@@ -751,12 +749,12 @@ public final class AttributeValues implements Cloneable {
     }
 
     // Until textlayout is fixed to use AttributeValues, we'll end up
-    // creating a map from the values for it.  This is a compromise between 
-    // creating the whole map and just checking a particular value. 
+    // creating a map from the values for it.  This is a compromise between
+    // creating the whole map and just checking a particular value.
     // Plan to remove these.
     public static float getJustification(Map<?, ?> map) {
         if (map != null) {
-            if (map instanceof AttributeMap && 
+            if (map instanceof AttributeMap &&
                 ((AttributeMap) map).getValues() != null) {
                 return ((AttributeMap)map).getValues().justification;
             }
@@ -770,7 +768,7 @@ public final class AttributeValues implements Cloneable {
 
     public static NumericShaper getNumericShaping(Map<?, ?> map) {
         if (map != null) {
-            if (map instanceof AttributeMap && 
+            if (map instanceof AttributeMap &&
                 ((AttributeMap) map).getValues() != null) {
                 return ((AttributeMap)map).getValues().numericShaping;
             }
@@ -812,7 +810,7 @@ public final class AttributeValues implements Cloneable {
     public static AffineTransform getBaselineTransform(Map<?, ?> map) {
         if (map != null) {
             AttributeValues av = null;
-            if (map instanceof AttributeMap && 
+            if (map instanceof AttributeMap &&
                 ((AttributeMap) map).getValues() != null) {
                 av = ((AttributeMap)map).getValues();
             } else if (map.get(TextAttribute.TRANSFORM) != null) {
@@ -828,7 +826,7 @@ public final class AttributeValues implements Cloneable {
     public static AffineTransform getCharTransform(Map<?, ?> map) {
         if (map != null) {
             AttributeValues av = null;
-            if (map instanceof AttributeMap && 
+            if (map instanceof AttributeMap &&
                 ((AttributeMap) map).getValues() != null) {
                 av = ((AttributeMap)map).getValues();
             } else if (map.get(TextAttribute.TRANSFORM) != null) {
@@ -866,17 +864,17 @@ public final class AttributeValues implements Cloneable {
         }
     }
 
-    public static AffineTransform extractXRotation(AffineTransform tx, 
+    public static AffineTransform extractXRotation(AffineTransform tx,
                                                    boolean andTranslation) {
         return extractRotation(new Point2D.Double(1, 0), tx, andTranslation);
     }
 
-    public static AffineTransform extractYRotation(AffineTransform tx, 
+    public static AffineTransform extractYRotation(AffineTransform tx,
                                                    boolean andTranslation) {
         return extractRotation(new Point2D.Double(0, 1), tx, andTranslation);
     }
 
-    private static AffineTransform extractRotation(Point2D.Double pt, 
+    private static AffineTransform extractRotation(Point2D.Double pt,
         AffineTransform tx, boolean andTranslation) {
 
         tx.deltaTransform(pt, pt);
@@ -889,9 +887,9 @@ public final class AttributeValues implements Cloneable {
                 double dx = tx.getTranslateX();
                 double dy = tx.getTranslateY();
                 if (dx != 0 || dy != 0) {
-                    tx.setTransform(tx.getScaleX(), tx.getShearY(), 
+                    tx.setTransform(tx.getScaleX(), tx.getShearY(),
                                     tx.getShearX(), tx.getScaleY(), 0, 0);
-                    rtx.setTransform(rtx.getScaleX(), rtx.getShearY(), 
+                    rtx.setTransform(rtx.getScaleX(), rtx.getShearY(),
                                      rtx.getShearX(), rtx.getScaleY(), dx, dy);
                 }
             }

@@ -36,11 +36,10 @@ package java.lang;
  * has as its detail message the <i>string conversion</i> of
  * <i>expression</i> (as defined in <a
  * href="http://java.sun.com/docs/books/jls/second_edition/html/j.title.doc.html">
- * <i>The Java Language Specification, Second Edition</i></a>, 
+ * <i>The Java Language Specification, Second Edition</i></a>,
  * <a href="http://java.sun.com/docs/books/jls/second_edition/html/expressions.doc.html#40220">
  * Section  15.18.1.1</a>), regardless of the type of <i>expression</i>.
  *
- * @version %I%, %G%
  * @since   1.4
  */
 public class AssertionError extends Error {

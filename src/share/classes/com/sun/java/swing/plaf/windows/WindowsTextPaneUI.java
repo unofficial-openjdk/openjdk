@@ -65,4 +65,3 @@ public class WindowsTextPaneUI extends BasicTextPaneUI
         return new WindowsTextUI.WindowsCaret();
     }
 }
-

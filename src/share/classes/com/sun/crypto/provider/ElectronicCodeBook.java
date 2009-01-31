@@ -35,14 +35,14 @@ import java.security.InvalidKeyException;
  * <i>plugged-in</i> using the constructor.
  *
  * <p>NOTE: This class does not deal with buffering or padding.
- *  
+ *
  * @author Gigi Ankeny
  */
 
 final class ElectronicCodeBook extends FeedbackCipher {
 
     ElectronicCodeBook(SymmetricCipher embeddedCipher) {
-	super(embeddedCipher);
+        super(embeddedCipher);
     }
 
     /**
@@ -51,18 +51,18 @@ final class ElectronicCodeBook extends FeedbackCipher {
      * @return the name of the feedback mechanism
      */
     String getFeedback() {
-	return "ECB";
+        return "ECB";
     }
-    
+
     /**
      * Resets the iv to its original value.
      * This is used when doFinal is called in the Cipher class, so that the
      * cipher can be reused (with its original iv).
      */
     void reset() {
-	// empty
+        // empty
     }
-    
+
     /**
      * Save the current content of this cipher.
      */
@@ -86,16 +86,16 @@ final class ElectronicCodeBook extends FeedbackCipher {
      * initializing this cipher
      */
     void init(boolean decrypting, String algorithm, byte[] key, byte[] iv)
-	    throws InvalidKeyException {
-	if ((key == null) || (iv != null)) {
-	    throw new InvalidKeyException("Internal error");
-	}
-	embeddedCipher.init(decrypting, algorithm, key);
+            throws InvalidKeyException {
+        if ((key == null) || (iv != null)) {
+            throw new InvalidKeyException("Internal error");
+        }
+        embeddedCipher.init(decrypting, algorithm, key);
     }
 
     /**
      * Performs encryption operation.
-     * 
+     *
      * <p>The input plain text <code>plain</code>, starting at
      * <code>plainOffset</code> and ending at
      * <code>(plainOffset + len - 1)</code>, is encrypted.
@@ -117,17 +117,17 @@ final class ElectronicCodeBook extends FeedbackCipher {
      * @param outOff the offset in <code>cipher</code>
      */
     void encrypt(byte[] in, int inOff, int len, byte[] out, int outOff) {
-	while (len >= blockSize) {
-	    embeddedCipher.encryptBlock(in, inOff, out, outOff);
-	    len -= blockSize;
-	    inOff += blockSize;
-	    outOff += blockSize;
-	}
+        while (len >= blockSize) {
+            embeddedCipher.encryptBlock(in, inOff, out, outOff);
+            len -= blockSize;
+            inOff += blockSize;
+            outOff += blockSize;
+        }
     }
 
     /**
      * Performs decryption operation.
-     * 
+     *
      * <p>The input cipher text <code>cipher</code>, starting at
      * <code>cipherOffset</code> and ending at
      * <code>(cipherOffset + len - 1)</code>, is decrypted.
@@ -149,12 +149,12 @@ final class ElectronicCodeBook extends FeedbackCipher {
      * @param outOff the offset in <code>plain</code>
      */
     void decrypt(byte[] in, int inOff, int len, byte[] out, int outOff) {
-	while (len >= blockSize) {
-	    embeddedCipher.decryptBlock(in, inOff, out, outOff);
-	    len -= blockSize;
-	    inOff += blockSize;
-	    outOff += blockSize;
-	}
+        while (len >= blockSize) {
+            embeddedCipher.decryptBlock(in, inOff, out, outOff);
+            len -= blockSize;
+            inOff += blockSize;
+            outOff += blockSize;
+        }
     }
 
 }

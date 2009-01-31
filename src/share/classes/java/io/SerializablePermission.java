@@ -82,7 +82,6 @@ import java.util.StringTokenizer;
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
- * @version %I%, %G%
  *
  * @author Joe Fialli
  * @since 1.2
@@ -111,7 +110,7 @@ public final class SerializablePermission extends BasicPermission {
      */
     public SerializablePermission(String name)
     {
-	super(name);
+        super(name);
     }
 
     /**
@@ -128,6 +127,6 @@ public final class SerializablePermission extends BasicPermission {
 
     public SerializablePermission(String name, String actions)
     {
-	super(name, actions);
+        super(name, actions);
     }
 }

@@ -39,10 +39,9 @@ import sun.java2d.DisposerRecord;
  *
  * <p> In general, it is preferable to use a
  * <code>FileCacheImageInputStream</code> when reading from a regular
- * <code>InputStream</code>.  This class is provided for cases where 
+ * <code>InputStream</code>.  This class is provided for cases where
  * it is not possible to create a writable temporary file.
  *
- * @version 0.5
  */
 public class MemoryCacheImageInputStream extends ImageInputStreamImpl {
 
@@ -68,7 +67,7 @@ public class MemoryCacheImageInputStream extends ImageInputStreamImpl {
     public MemoryCacheImageInputStream(InputStream stream) {
         if (stream == null) {
             throw new IllegalArgumentException("stream == null!");
-        }        
+        }
         this.stream = stream;
 
         disposerRecord = new StreamDisposerRecord(cache);

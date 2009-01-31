@@ -37,7 +37,6 @@ import sun.jvmstat.monitor.remote.*;
  * to the contained data.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class RemoteVmImpl implements RemoteVm {

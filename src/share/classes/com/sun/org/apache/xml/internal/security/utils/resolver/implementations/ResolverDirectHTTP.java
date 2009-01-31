@@ -62,7 +62,7 @@ import org.w3c.dom.Attr;
 public class ResolverDirectHTTP extends ResourceResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                             ResolverDirectHTTP.class.getName());
 
@@ -98,7 +98,7 @@ public class ResolverDirectHTTP extends ResourceResolverSpi {
     * @param BaseURI
     *
     * @throws ResourceResolverException
-    * @return 
+    * @return
     * $todo$ calculate the correct URI from the attribute and the BaseURI
     */
    public XMLSignatureInput engineResolve(Attr uri, String BaseURI)
@@ -118,13 +118,13 @@ public class ResolverDirectHTTP extends ResourceResolverSpi {
          }
 
          // switch on proxy usage
-	 String oldProxySet = null;
-	 String oldProxyHost = null;
-	 String oldProxyPort = null;
+         String oldProxySet = null;
+         String oldProxyHost = null;
+         String oldProxyPort = null;
          if (useProxy) {
             if (log.isLoggable(java.util.logging.Level.FINE)) {
-	       log.log(java.util.logging.Level.FINE, 
-	          "Use of HTTP proxy enabled: " + proxyHost + ":"
+               log.log(java.util.logging.Level.FINE,
+                  "Use of HTTP proxy enabled: " + proxyHost + ":"
                   + proxyPort);
             }
             oldProxySet = System.getProperty("http.proxySet");
@@ -215,11 +215,11 @@ public class ResolverDirectHTTP extends ResourceResolverSpi {
             summarized += read;
          }
 
-	 if (log.isLoggable(java.util.logging.Level.FINE)) {
-	    log.log(java.util.logging.Level.FINE, 
-	       "Fetched " + summarized + " bytes from URI "
+         if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE,
+               "Fetched " + summarized + " bytes from URI "
                + uriNew.toString());
-	 }
+         }
 
          XMLSignatureInput result = new XMLSignatureInput(baos.toByteArray());
 
@@ -253,44 +253,44 @@ public class ResolverDirectHTTP extends ResourceResolverSpi {
     */
    public boolean engineCanResolve(Attr uri, String BaseURI) {
       if (uri == null) {
-	 if (log.isLoggable(java.util.logging.Level.FINE)) {
+         if (log.isLoggable(java.util.logging.Level.FINE)) {
             log.log(java.util.logging.Level.FINE, "quick fail, uri == null");
-	 }
+         }
          return false;
       }
 
       String uriNodeValue = uri.getNodeValue();
 
       if (uriNodeValue.equals("") || (uriNodeValue.charAt(0)=='#')) {
-	 if (log.isLoggable(java.util.logging.Level.FINE)) {
-	    log.log(java.util.logging.Level.FINE, 
-	       "quick fail for empty URIs and local ones");
-	 }
+         if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE,
+               "quick fail for empty URIs and local ones");
+         }
          return false;
       }
 
       if (log.isLoggable(java.util.logging.Level.FINE)) {
-         log.log(java.util.logging.Level.FINE, 
-	       "I was asked whether I can resolve " + uriNodeValue);
+         log.log(java.util.logging.Level.FINE,
+               "I was asked whether I can resolve " + uriNodeValue);
       }
       if ( uriNodeValue.startsWith("http:") ||
-				 BaseURI.startsWith("http:")) {
+                                 BaseURI.startsWith("http:")) {
          if (log.isLoggable(java.util.logging.Level.FINE)) {
-	    log.log(java.util.logging.Level.FINE, 
-		  "I state that I can resolve " + uriNodeValue);
-	 }
+            log.log(java.util.logging.Level.FINE,
+                  "I state that I can resolve " + uriNodeValue);
+         }
          return true;
       }
 
       if (log.isLoggable(java.util.logging.Level.FINE)) {
-         log.log(java.util.logging.Level.FINE, 
-	    "I state that I can't resolve " + uriNodeValue);
+         log.log(java.util.logging.Level.FINE,
+            "I state that I can't resolve " + uriNodeValue);
       }
       return false;
    }
 
    /**
-    * @inheritDoc 
+    * @inheritDoc
     */
    public String[] engineGetPropertyKeys() {
       return (String[]) ResolverDirectHTTP.properties.clone();

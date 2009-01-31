@@ -40,7 +40,6 @@ import javax.swing.plaf.basic.BasicPasswordFieldUI;
  * long term persistence.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class MotifPasswordFieldUI extends BasicPasswordFieldUI {
 
@@ -63,12 +62,7 @@ public class MotifPasswordFieldUI extends BasicPasswordFieldUI {
      * @return the caret object
      */
     protected Caret createCaret() {
-	return MotifTextUI.createCaret();
+        return MotifTextUI.createCaret();
     }
 
 }
-
-
-
-
-

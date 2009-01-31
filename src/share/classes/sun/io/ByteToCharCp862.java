@@ -32,7 +32,6 @@ import sun.nio.cs.IBM862;
  * A table to convert to Cp862 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp862 extends ByteToCharSingleByte {

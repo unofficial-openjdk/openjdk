@@ -52,9 +52,9 @@ public class XContentWindow extends XWindow implements XConstants {
         super((Component)parentFrame.getTarget(), parentFrame.getShell(), bounds);
         this.parentFrame = parentFrame;
     }
-    
+
     void preInit(XCreateWindowParams params) {
-        super.preInit(params);        
+        super.preInit(params);
         params.putIfNull(BIT_GRAVITY, Integer.valueOf(NorthWestGravity));
         Long eventMask = (Long)params.get(EVENT_MASK);
         if (eventMask != null) {
@@ -62,10 +62,10 @@ public class XContentWindow extends XWindow implements XConstants {
             params.put(EVENT_MASK, eventMask);
         }
     }
-    
+
     void initialize() {
         xSetVisible(true);
-    }    
+    }
     protected String getWMName() {
         return "Content window";
     }
@@ -98,7 +98,7 @@ public class XContentWindow extends XWindow implements XConstants {
             if (in != null) {
                 newBounds.setLocation(-in.left, -in.top);
             }
-            if (insLog.isLoggable(Level.FINE)) insLog.log(Level.FINE, "Setting content bounds {0}, old bounds {1}", 
+            if (insLog.isLoggable(Level.FINE)) insLog.log(Level.FINE, "Setting content bounds {0}, old bounds {1}",
                                                           new Object[] {newBounds, getBounds()});
             // Fix for 5023533:
             // Change in the size of the content window means, well, change of the size
@@ -125,7 +125,7 @@ public class XContentWindow extends XWindow implements XConstants {
 
 
     public void handleExposeEvent(Component target, int x, int y, int w, int h) {
-        // TODO: ? 
+        // TODO: ?
         // get rid of 'istanceof' by subclassing:
         // XContentWindow -> XFrameContentWindow
 
@@ -135,7 +135,7 @@ public class XContentWindow extends XWindow implements XConstants {
         // that come when the frame is iconified. Then we
         // actually handle saved expose events on deiconification.
 
-        if (parentFrame instanceof XFramePeer && 
+        if (parentFrame instanceof XFramePeer &&
                 (((XFramePeer)parentFrame).getState() & java.awt.Frame.ICONIFIED) != 0) {
             // Save expose events if the frame is iconified
             // in order to handle them on deiconification.

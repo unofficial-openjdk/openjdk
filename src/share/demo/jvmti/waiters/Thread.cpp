@@ -42,11 +42,11 @@
 
 /* Implementation of the Thread class */
 
-Thread::Thread(jvmtiEnv *jvmti, JNIEnv *env, jthread thread) 
+Thread::Thread(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 {
     jvmtiError      err;
     jvmtiThreadInfo info;
-    
+
     /* Get and save the name of the thread */
     info.name = NULL;
     (void)strcpy(name, "Unknown");
@@ -54,8 +54,8 @@ Thread::Thread(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
     check_jvmti_error(jvmti, err, "get thread info");
     if ( info.name != NULL ) {
         (void)strncpy(name, info.name, (int)sizeof(name)-1);
-	name[(int)sizeof(name)-1] = 0;
-	deallocate(jvmti, info.name);
+        name[(int)sizeof(name)-1] = 0;
+        deallocate(jvmti, info.name);
     }
 
     /* Clear thread counters */
@@ -64,30 +64,29 @@ Thread::Thread(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
     timeouts = 0;
 }
 
-Thread::~Thread() 
+Thread::~Thread()
 {
     /* Send out summary message */
     stdout_message("Thread %s summary: %d waits plus %d contended\n",
-	name, waits, contends);
+        name, waits, contends);
 }
 
-void Thread::monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env, 
-	     jthread thread, jobject object) 
+void Thread::monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env,
+             jthread thread, jobject object)
 {
     contends++;
 }
 
 void Thread::monitor_wait(jvmtiEnv* jvmti, JNIEnv *env,
-	       jthread thread, jobject object, jlong timeout) 
+               jthread thread, jobject object, jlong timeout)
 {
     waits++;
 }
 
 void Thread::monitor_waited(jvmtiEnv* jvmti, JNIEnv *env,
-	       jthread thread, jobject object, jboolean timed_out) 
+               jthread thread, jobject object, jboolean timed_out)
 {
     if ( timed_out ) {
-	timeouts++;
+        timeouts++;
     }
 }
-

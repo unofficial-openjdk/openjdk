@@ -47,7 +47,6 @@ import sun.awt.datatransfer.DataTransferer;
  * @author David Mendenhall
  * @author Danila Sinopalnikov
  * @author Alexander Gerasimov
- * @version %I%, %G%
  *
  * @since JDK1.1
  */
@@ -83,7 +82,7 @@ public class WClipboard extends SunClipboard {
                 Long lFormat = (Long)iter.next();
                 long format = lFormat.longValue();
                 DataFlavor flavor = (DataFlavor)formatMap.get(lFormat);
-                
+
                 try {
                     byte[] bytes = WDataTransferer.getInstance().
                         translateTransferable(contents, flavor, format);
@@ -92,7 +91,7 @@ public class WClipboard extends SunClipboard {
                     // Fix 4696186: don't print exception if data with
                     // javaJVMLocalObjectMimeType failed to serialize.
                     // May remove this if-check when 5078787 is fixed.
-                    if (!(flavor.isMimeTypeEqual(DataFlavor.javaJVMLocalObjectMimeType) && 
+                    if (!(flavor.isMimeTypeEqual(DataFlavor.javaJVMLocalObjectMimeType) &&
                           e instanceof java.io.NotSerializableException)) {
                         e.printStackTrace();
                     }
@@ -106,7 +105,7 @@ public class WClipboard extends SunClipboard {
     private void lostSelectionOwnershipImpl() {
         lostOwnershipImpl();
     }
-          
+
     /**
      * Currently delayed data rendering is not used for the Windows clipboard,
      * so there is no native context to clear.
@@ -201,7 +200,7 @@ public class WClipboard extends SunClipboard {
         final byte[] localeDataFinal = localeData;
 
         return new Transferable() {
-                public DataFlavor[] getTransferDataFlavors() { 
+                public DataFlavor[] getTransferDataFlavors() {
                     return new DataFlavor[] { DataTransferer.javaTextEncodingFlavor };
                 }
                 public boolean isDataFlavorSupported(DataFlavor flavor) {

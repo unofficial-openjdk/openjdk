@@ -56,8 +56,8 @@ DECLARE_XPAR_SCALE_BLIT(ByteIndexedBm, Ushort555Rgbx);
 DECLARE_XPAR_SCALE_BLIT(IntArgbBm, Ushort555Rgbx);
 DECLARE_XPAR_BLITBG(ByteIndexedBm, Ushort555Rgbx);
 DECLARE_XOR_BLIT(IntArgb, Ushort555Rgbx);
-DECLARE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx); 
-DECLARE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx); 
+DECLARE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx);
+DECLARE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx);
 
 NativePrimitive Ushort555RgbxPrimitives[] = {
     REGISTER_ANYSHORT_ISOCOPY_BLIT(Ushort555Rgbx),
@@ -66,14 +66,14 @@ NativePrimitive Ushort555RgbxPrimitives[] = {
     REGISTER_CONVERT_BLIT(Ushort555Rgbx, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, Ushort555Rgbx),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, Ushort555Rgbx,
-				NAME_CONVERT_BLIT(IntArgb, Ushort555Rgbx)),
+                                NAME_CONVERT_BLIT(IntArgb, Ushort555Rgbx)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, Ushort555Rgbx),
     REGISTER_CONVERT_BLIT(ByteGray, Ushort555Rgbx),
     REGISTER_CONVERT_BLIT(ByteIndexed, Ushort555Rgbx),
     REGISTER_SCALE_BLIT(Ushort555Rgbx, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, Ushort555Rgbx),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, Ushort555Rgbx,
-			      NAME_SCALE_BLIT(IntArgb, Ushort555Rgbx)),
+                              NAME_SCALE_BLIT(IntArgb, Ushort555Rgbx)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, Ushort555Rgbx),
     REGISTER_SCALE_BLIT(ByteGray, Ushort555Rgbx),
     REGISTER_SCALE_BLIT(ByteIndexed, Ushort555Rgbx),
@@ -82,14 +82,14 @@ NativePrimitive Ushort555RgbxPrimitives[] = {
     REGISTER_XPAR_SCALE_BLIT(IntArgbBm, Ushort555Rgbx),
     REGISTER_XPAR_BLITBG(ByteIndexedBm, Ushort555Rgbx),
     REGISTER_XOR_BLIT(IntArgb, Ushort555Rgbx),
-    REGISTER_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx), 
-    REGISTER_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx), 
+    REGISTER_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx),
+    REGISTER_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx),
 };
 
 jboolean RegisterUshort555Rgbx(JNIEnv *env)
 {
     return RegisterPrimitives(env, Ushort555RgbxPrimitives,
-			      ArraySize(Ushort555RgbxPrimitives));
+                              ArraySize(Ushort555RgbxPrimitives));
 }
 
 jint PixelForUshort555Rgbx(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -127,6 +127,6 @@ DEFINE_XPAR_BLITBG_LUT8(ByteIndexedBm, Ushort555Rgbx, PreProcessLut)
 
 DEFINE_XOR_BLIT(IntArgb, Ushort555Rgbx, AnyShort)
 
-DEFINE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx, 3ByteRgb) 
+DEFINE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgbx, 3ByteRgb)
 
-DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx, 3ByteRgb) 
+DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgbx, 3ByteRgb)

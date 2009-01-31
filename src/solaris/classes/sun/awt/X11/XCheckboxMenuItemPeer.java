@@ -87,7 +87,7 @@ class XCheckboxMenuItemPeer extends XMenuItemPeer implements CheckboxMenuItemPee
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return false; 
+        return false;
     }
 
     /************************************************
@@ -95,7 +95,7 @@ class XCheckboxMenuItemPeer extends XMenuItemPeer implements CheckboxMenuItemPee
      * Utility functions
      *
      ************************************************/
-    
+
     /**
      * Toggles state and generates ItemEvent
      */
@@ -107,7 +107,7 @@ class XCheckboxMenuItemPeer extends XMenuItemPeer implements CheckboxMenuItemPee
             });
     }
 
-    
+
     /************************************************
      *
      * Private
@@ -117,14 +117,14 @@ class XCheckboxMenuItemPeer extends XMenuItemPeer implements CheckboxMenuItemPee
         CheckboxMenuItem cb = (CheckboxMenuItem)getTarget();
         boolean newState = !getTargetState();
         cb.setState(newState);
-        ItemEvent e = new ItemEvent(cb, 
+        ItemEvent e = new ItemEvent(cb,
                                     ItemEvent.ITEM_STATE_CHANGED,
-                                    getTargetLabel(), 
+                                    getTargetLabel(),
                                     getTargetState() ? ItemEvent.SELECTED : ItemEvent.DESELECTED);
         XWindow.postEventStatic(e);
         //WToolkit does not post ActionEvent when clicking on menu item
         //MToolkit _does_ post.
-        //Fix for 5005195 MAWT: CheckboxMenuItem fires action events  
+        //Fix for 5005195 MAWT: CheckboxMenuItem fires action events
         //Events should not be fired
         //XWindow.postEventStatic(new ActionEvent(cb, ActionEvent.ACTION_PERFORMED,
         //                                        getTargetActionCommand(), when,

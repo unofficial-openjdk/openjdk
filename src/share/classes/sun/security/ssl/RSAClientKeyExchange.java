@@ -46,10 +46,9 @@ import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
  * of this server's public key modulus size, but the pre-master secret is
  * always exactly 48 bytes.
  *
- * @version %I% %G%
  */
 final class RSAClientKeyExchange extends HandshakeMessage {
-    
+
     /**
      * The TLS spec says that the version in the RSA premaster secret must
      * be the maximum version supported by the client (i.e. the version it
@@ -60,13 +59,13 @@ final class RSAClientKeyExchange extends HandshakeMessage {
      * Default is "false" (old behavior) for compatibility reasons. This
      * will be changed in the future.
      */
-    private final static String PROP_NAME = 
-    				"com.sun.net.ssl.rsaPreMasterSecretFix";
-    
-    private final static boolean rsaPreMasterSecretFix = 
-    				Debug.getBooleanProperty(PROP_NAME, false);
+    private final static String PROP_NAME =
+                                "com.sun.net.ssl.rsaPreMasterSecretFix";
 
-    int	messageType() {
+    private final static boolean rsaPreMasterSecretFix =
+                                Debug.getBooleanProperty(PROP_NAME, false);
+
+    int messageType() {
         return ht_client_key_exchange;
     }
 
@@ -77,7 +76,7 @@ final class RSAClientKeyExchange extends HandshakeMessage {
      */
     private ProtocolVersion protocolVersion; // preMaster [0,1]
     SecretKey preMaster;
-    private byte[] encrypted;		// same size as public modulus
+    private byte[] encrypted;           // same size as public modulus
 
 
     /*
@@ -87,114 +86,113 @@ final class RSAClientKeyExchange extends HandshakeMessage {
      * server's public key, and uses PKCS #1 block format 02.
      */
     RSAClientKeyExchange(ProtocolVersion protocolVersion, ProtocolVersion maxVersion,
-	    SecureRandom generator, PublicKey publicKey) throws IOException {
-	if (publicKey.getAlgorithm().equals("RSA") == false) {
-	    throw new SSLKeyException("Public key not of type RSA");
-	}
-	this.protocolVersion = protocolVersion;
-	
-	int major, minor;
-	
-	if (rsaPreMasterSecretFix) {
-	    major = maxVersion.major;
-	    minor = maxVersion.minor;
-	} else {
-	    major = protocolVersion.major;
-	    minor = protocolVersion.minor;
-	}
+            SecureRandom generator, PublicKey publicKey) throws IOException {
+        if (publicKey.getAlgorithm().equals("RSA") == false) {
+            throw new SSLKeyException("Public key not of type RSA");
+        }
+        this.protocolVersion = protocolVersion;
 
-	try {
-	    KeyGenerator kg = JsseJce.getKeyGenerator("SunTlsRsaPremasterSecret");
-	    kg.init(new TlsRsaPremasterSecretParameterSpec(major, minor));
-	    preMaster = kg.generateKey();
+        int major, minor;
 
-	    Cipher cipher = JsseJce.getCipher(JsseJce.CIPHER_RSA_PKCS1);
-	    cipher.init(Cipher.WRAP_MODE, publicKey, generator);
-	    encrypted = cipher.wrap(preMaster);
-	} catch (GeneralSecurityException e) {
-	    throw (SSLKeyException)new SSLKeyException
-	    			("RSA premaster secret error").initCause(e);
-	}
+        if (rsaPreMasterSecretFix) {
+            major = maxVersion.major;
+            minor = maxVersion.minor;
+        } else {
+            major = protocolVersion.major;
+            minor = protocolVersion.minor;
+        }
+
+        try {
+            KeyGenerator kg = JsseJce.getKeyGenerator("SunTlsRsaPremasterSecret");
+            kg.init(new TlsRsaPremasterSecretParameterSpec(major, minor));
+            preMaster = kg.generateKey();
+
+            Cipher cipher = JsseJce.getCipher(JsseJce.CIPHER_RSA_PKCS1);
+            cipher.init(Cipher.WRAP_MODE, publicKey, generator);
+            encrypted = cipher.wrap(preMaster);
+        } catch (GeneralSecurityException e) {
+            throw (SSLKeyException)new SSLKeyException
+                                ("RSA premaster secret error").initCause(e);
+        }
     }
-    
+
     /*
      * Server gets the PKCS #1 (block format 02) data, decrypts
      * it with its private key.
      */
-    RSAClientKeyExchange(ProtocolVersion currentVersion, HandshakeInStream input, 
-	    int messageSize, PrivateKey privateKey) throws IOException {
+    RSAClientKeyExchange(ProtocolVersion currentVersion, HandshakeInStream input,
+            int messageSize, PrivateKey privateKey) throws IOException {
 
-	if (privateKey.getAlgorithm().equals("RSA") == false) {
-	    throw new SSLKeyException("Private key not of type RSA");
-	}
-	
-	this.protocolVersion = currentVersion;
-	if (currentVersion.v >= ProtocolVersion.TLS10.v) {
-	    encrypted = input.getBytes16();
-	} else {
-	    encrypted = new byte [messageSize];
-	    if (input.read(encrypted) != messageSize) {
-	        throw new SSLProtocolException
-			("SSL: read PreMasterSecret: short read");
-	    }
-	}
+        if (privateKey.getAlgorithm().equals("RSA") == false) {
+            throw new SSLKeyException("Private key not of type RSA");
+        }
 
-	try {
-	    Cipher cipher = JsseJce.getCipher(JsseJce.CIPHER_RSA_PKCS1);
-	    cipher.init(Cipher.UNWRAP_MODE, privateKey);
-	    preMaster = (SecretKey)cipher.unwrap(encrypted, 
-				"TlsRsaPremasterSecret", Cipher.SECRET_KEY);
-	} catch (Exception e) {
-	    /*
-	     * Bogus decrypted ClientKeyExchange? If so, conjure a
-	     * a random preMaster secret that will fail later during
-	     * Finished message processing. This is a countermeasure against
-	     * the "interactive RSA PKCS#1 encryption envelop attack" reported
-	     * in June 1998. Preserving the executation path will
-	     * mitigate timing attacks and force consistent error handling
-	     * that will prevent an attacking client from differentiating
-	     * different kinds of decrypted ClientKeyExchange bogosities.
-	     */
-	    if (debug != null && Debug.isOn("handshake")) {
-		System.out.println("Error decrypting premaster secret:");
-		e.printStackTrace(System.out);
-		System.out.println("Generating random secret");
-	    }
-	    preMaster = generateDummySecret(currentVersion);
-	}
+        this.protocolVersion = currentVersion;
+        if (currentVersion.v >= ProtocolVersion.TLS10.v) {
+            encrypted = input.getBytes16();
+        } else {
+            encrypted = new byte [messageSize];
+            if (input.read(encrypted) != messageSize) {
+                throw new SSLProtocolException
+                        ("SSL: read PreMasterSecret: short read");
+            }
+        }
+
+        try {
+            Cipher cipher = JsseJce.getCipher(JsseJce.CIPHER_RSA_PKCS1);
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            preMaster = (SecretKey)cipher.unwrap(encrypted,
+                                "TlsRsaPremasterSecret", Cipher.SECRET_KEY);
+        } catch (Exception e) {
+            /*
+             * Bogus decrypted ClientKeyExchange? If so, conjure a
+             * a random preMaster secret that will fail later during
+             * Finished message processing. This is a countermeasure against
+             * the "interactive RSA PKCS#1 encryption envelop attack" reported
+             * in June 1998. Preserving the executation path will
+             * mitigate timing attacks and force consistent error handling
+             * that will prevent an attacking client from differentiating
+             * different kinds of decrypted ClientKeyExchange bogosities.
+             */
+            if (debug != null && Debug.isOn("handshake")) {
+                System.out.println("Error decrypting premaster secret:");
+                e.printStackTrace(System.out);
+                System.out.println("Generating random secret");
+            }
+            preMaster = generateDummySecret(currentVersion);
+        }
     }
 
     // generate a premaster secret with the specified version number
     static SecretKey generateDummySecret(ProtocolVersion version) {
-	try {
-	    KeyGenerator kg = 
-		    JsseJce.getKeyGenerator("SunTlsRsaPremasterSecret");
-	    kg.init(new TlsRsaPremasterSecretParameterSpec
-		    (version.major, version.minor));
-	    return kg.generateKey();
-	} catch (GeneralSecurityException e) {
-	    throw new RuntimeException("Could not generate dummy secret", e);
-	}
+        try {
+            KeyGenerator kg =
+                    JsseJce.getKeyGenerator("SunTlsRsaPremasterSecret");
+            kg.init(new TlsRsaPremasterSecretParameterSpec
+                    (version.major, version.minor));
+            return kg.generateKey();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Could not generate dummy secret", e);
+        }
     }
 
     int messageLength() {
-	if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
-	    return encrypted.length + 2;
-	} else {
-	    return encrypted.length;
-	}
+        if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
+            return encrypted.length + 2;
+        } else {
+            return encrypted.length;
+        }
     }
 
     void send(HandshakeOutStream s) throws IOException {
-	if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
-	    s.putBytes16(encrypted);
-	} else {
-	    s.write(encrypted);
-	}
+        if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
+            s.putBytes16(encrypted);
+        } else {
+            s.write(encrypted);
+        }
     }
 
     void print(PrintStream s) throws IOException {
-	s.println("*** ClientKeyExchange, RSA PreMasterSecret, " + protocolVersion);
+        s.println("*** ClientKeyExchange, RSA PreMasterSecret, " + protocolVersion);
     }
 }
-

@@ -27,7 +27,7 @@ package javax.swing;
 
 import javax.swing.event.*;
 import java.io.Serializable;
-import java.util.EventListener; 
+import java.util.EventListener;
 
 /**
  * A generic implementation of SingleSelectionModel.
@@ -41,10 +41,9 @@ import java.util.EventListener;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Dave Moore
  */
-public class DefaultSingleSelectionModel implements SingleSelectionModel, 
+public class DefaultSingleSelectionModel implements SingleSelectionModel,
 Serializable {
     /* Only one ModelChangeEvent is needed per model instance since the
      * event's only (read-only) state is the source property.  The source
@@ -65,7 +64,7 @@ Serializable {
     public void setSelectedIndex(int index) {
         if (this.index != index) {
             this.index = index;
-	    fireStateChanged();
+            fireStateChanged();
         }
     }
 
@@ -76,38 +75,38 @@ Serializable {
 
     // implements javax.swing.SingleSelectionModel
     public boolean isSelected() {
-	boolean ret = false;
-	if (getSelectedIndex() != -1) {
-	    ret = true;
-	}
-	return ret;
+        boolean ret = false;
+        if (getSelectedIndex() != -1) {
+            ret = true;
+        }
+        return ret;
     }
 
     /**
      * Adds a <code>ChangeListener</code> to the button.
      */
     public void addChangeListener(ChangeListener l) {
-	listenerList.add(ChangeListener.class, l);
+        listenerList.add(ChangeListener.class, l);
     }
-    
+
     /**
      * Removes a <code>ChangeListener</code> from the button.
      */
     public void removeChangeListener(ChangeListener l) {
-	listenerList.remove(ChangeListener.class, l);
+        listenerList.remove(ChangeListener.class, l);
     }
 
     /**
-     * Returns an array of all the change listeners 
+     * Returns an array of all the change listeners
      * registered on this <code>DefaultSingleSelectionModel</code>.
      *
-     * @return all of this model's <code>ChangeListener</code>s 
+     * @return all of this model's <code>ChangeListener</code>s
      *         or an empty
      *         array if no change listeners are currently registered
-     * 
+     *
      * @see #addChangeListener
      * @see #removeChangeListener
-     * 
+     *
      * @since 1.4
      */
     public ChangeListener[] getChangeListeners() {
@@ -117,24 +116,24 @@ Serializable {
 
     /**
      * Notifies all listeners that have registered interest for
-     * notification on this event type.  The event instance 
+     * notification on this event type.  The event instance
      * is created lazily.
      * @see EventListenerList
      */
     protected void fireStateChanged() {
-	// Guaranteed to return a non-null array
-	Object[] listeners = listenerList.getListenerList();
-	// Process the listeners last to first, notifying
-	// those that are interested in this event
-	for (int i = listeners.length-2; i>=0; i-=2) {
-	    if (listeners[i]==ChangeListener.class) {
-		// Lazily create the event:
-		if (changeEvent == null)
-		    changeEvent = new ChangeEvent(this);
-		((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
-	    }	       
-	}
-    }	
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
 
     /**
      * Returns an array of all the objects currently registered as
@@ -171,9 +170,7 @@ Serializable {
      *
      * @since 1.3
      */
-    public <T extends EventListener> T[] getListeners(Class<T> listenerType) { 
-	return listenerList.getListeners(listenerType); 
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        return listenerList.getListeners(listenerType);
     }
 }
-
-

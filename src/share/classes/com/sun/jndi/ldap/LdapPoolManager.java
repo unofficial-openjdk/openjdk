@@ -41,11 +41,11 @@ import com.sun.jndi.ldap.pool.Pool;
 
 /**
  * Contains utilities for managing connection pools of LdapClient.
- * Contains method for 
+ * Contains method for
  * - checking whether attempted connection creation may be pooled
  * - creating a pooled connection
  * - closing idle connections.
- * 
+ *
  * If a timeout period has been configured, then it will automatically
  * close and remove idle connections (those that have not been
  * used for the duration of the timeout period).
@@ -54,10 +54,10 @@ import com.sun.jndi.ldap.pool.Pool;
  */
 
 public final class LdapPoolManager {
-    private static final String DEBUG = 
+    private static final String DEBUG =
         "com.sun.jndi.ldap.connect.pool.debug";
 
-    public static final boolean debug = 
+    public static final boolean debug =
         "all".equalsIgnoreCase(getProperty(DEBUG, null));
 
     public static final boolean trace = debug ||
@@ -66,31 +66,31 @@ public final class LdapPoolManager {
     // ---------- System properties for connection pooling
 
     // Authentication mechanisms of connections that may be pooled
-    private static final String POOL_AUTH = 
+    private static final String POOL_AUTH =
         "com.sun.jndi.ldap.connect.pool.authentication";
 
     // Protocol types of connections that may be pooled
-    private static final String POOL_PROTOCOL = 
+    private static final String POOL_PROTOCOL =
         "com.sun.jndi.ldap.connect.pool.protocol";
 
     // Maximum number of identical connections per pool
-    private static final String MAX_POOL_SIZE = 
+    private static final String MAX_POOL_SIZE =
         "com.sun.jndi.ldap.connect.pool.maxsize";
 
     // Preferred number of identical connections per pool
-    private static final String PREF_POOL_SIZE = 
+    private static final String PREF_POOL_SIZE =
         "com.sun.jndi.ldap.connect.pool.prefsize";
 
     // Initial number of identical connections per pool
-    private static final String INIT_POOL_SIZE = 
+    private static final String INIT_POOL_SIZE =
         "com.sun.jndi.ldap.connect.pool.initsize";
 
     // Milliseconds to wait before closing idle connections
-    private static final String POOL_TIMEOUT = 
+    private static final String POOL_TIMEOUT =
         "com.sun.jndi.ldap.connect.pool.timeout";
 
     // Properties for DIGEST
-    private static final String SASL_CALLBACK = 
+    private static final String SASL_CALLBACK =
         "java.naming.security.sasl.callback";
 
     // --------- Constants
@@ -118,56 +118,56 @@ public final class LdapPoolManager {
     private static final Pool[] pools = new Pool[3];
 
     static {
-	maxSize = getInteger(MAX_POOL_SIZE, DEFAULT_MAX_POOL_SIZE);
+        maxSize = getInteger(MAX_POOL_SIZE, DEFAULT_MAX_POOL_SIZE);
 
-	prefSize = getInteger(PREF_POOL_SIZE, DEFAULT_PREF_POOL_SIZE);
+        prefSize = getInteger(PREF_POOL_SIZE, DEFAULT_PREF_POOL_SIZE);
 
-	initSize = getInteger(INIT_POOL_SIZE, DEFAULT_INIT_POOL_SIZE);
+        initSize = getInteger(INIT_POOL_SIZE, DEFAULT_INIT_POOL_SIZE);
 
-	idleTimeout = getLong(POOL_TIMEOUT, DEFAULT_TIMEOUT);
+        idleTimeout = getLong(POOL_TIMEOUT, DEFAULT_TIMEOUT);
 
-	// Determine supported authentication mechanisms
-	String str = getProperty(POOL_AUTH, DEFAULT_AUTH_MECHS);
-	StringTokenizer parser = new StringTokenizer(str);
-	int count = parser.countTokens();
-	String mech;
-	int p;
-	for (int i = 0; i < count; i++) {
-	    mech = parser.nextToken().toLowerCase();
-	    if (mech.equals("anonymous")) {
-		mech = "none";
-	    }
+        // Determine supported authentication mechanisms
+        String str = getProperty(POOL_AUTH, DEFAULT_AUTH_MECHS);
+        StringTokenizer parser = new StringTokenizer(str);
+        int count = parser.countTokens();
+        String mech;
+        int p;
+        for (int i = 0; i < count; i++) {
+            mech = parser.nextToken().toLowerCase();
+            if (mech.equals("anonymous")) {
+                mech = "none";
+            }
 
-	    p = findPool(mech);
-	    if (p >= 0 && pools[p] == null) {
-		pools[p] = new Pool(initSize, prefSize, maxSize);
-	    }
-	}
+            p = findPool(mech);
+            if (p >= 0 && pools[p] == null) {
+                pools[p] = new Pool(initSize, prefSize, maxSize);
+            }
+        }
 
-	// Determine supported protocols
-	str= getProperty(POOL_PROTOCOL, DEFAULT_PROTOCOLS);
-	parser = new StringTokenizer(str);
-	count = parser.countTokens();
-	String proto;
-	for (int i = 0; i < count; i++) {
-	    proto = parser.nextToken();
-	    if ("plain".equalsIgnoreCase(proto)) {
-		supportPlainProtocol = true;
-	    } else if ("ssl".equalsIgnoreCase(proto)) {
-		supportSslProtocol = true;
-	    } else {
-		// ignore
-	    }
-	}
+        // Determine supported protocols
+        str= getProperty(POOL_PROTOCOL, DEFAULT_PROTOCOLS);
+        parser = new StringTokenizer(str);
+        count = parser.countTokens();
+        String proto;
+        for (int i = 0; i < count; i++) {
+            proto = parser.nextToken();
+            if ("plain".equalsIgnoreCase(proto)) {
+                supportPlainProtocol = true;
+            } else if ("ssl".equalsIgnoreCase(proto)) {
+                supportSslProtocol = true;
+            } else {
+                // ignore
+            }
+        }
 
-	if (idleTimeout > 0) {
-	    // Create cleaner to expire idle connections
-	    new PoolCleaner(idleTimeout, pools).start();
-	}
+        if (idleTimeout > 0) {
+            // Create cleaner to expire idle connections
+            new PoolCleaner(idleTimeout, pools).start();
+        }
 
-	if (debug) {
-	    showStats(System.err);
-	}
+        if (debug) {
+            showStats(System.err);
+        }
     }
 
     // Cannot instantiate one of these
@@ -181,14 +181,14 @@ public final class LdapPoolManager {
      * @param mech mechanism type
      */
     private static int findPool(String mech) {
-	if ("none".equalsIgnoreCase(mech)) {
-	    return NONE;
-	} else if ("simple".equalsIgnoreCase(mech)) {
-	    return SIMPLE;
-	} else if ("digest-md5".equalsIgnoreCase(mech)) {
-	    return DIGEST;
-	}
-	return -1;
+        if ("none".equalsIgnoreCase(mech)) {
+            return NONE;
+        } else if ("simple".equalsIgnoreCase(mech)) {
+            return SIMPLE;
+        } else if ("digest-md5".equalsIgnoreCase(mech)) {
+            return DIGEST;
+        }
+        return -1;
     }
 
     /**
@@ -196,10 +196,10 @@ public final class LdapPoolManager {
      * the connection will be used.
      *
      * Non-configurable rejections:
-     * - nonstandard socketFactory has been specified: the pool manager 
-     *   cannot track input or parameters used by the socket factory and 
-     *   thus has no way of determining whether two connection requests 
-     *   are equivalent. Maybe in the future it might add a list of allowed 
+     * - nonstandard socketFactory has been specified: the pool manager
+     *   cannot track input or parameters used by the socket factory and
+     *   thus has no way of determining whether two connection requests
+     *   are equivalent. Maybe in the future it might add a list of allowed
      *   socket factories to be configured
      * - trace enabled (except when debugging)
      * - for Digest authentication, if a callback handler has been specified:
@@ -214,66 +214,66 @@ public final class LdapPoolManager {
      *
      */
     static boolean isPoolingAllowed(String socketFactory, OutputStream trace,
-	String authMech, String protocol, Hashtable env)
-		throws NamingException {
-	
- 	if (trace != null && !debug
+        String authMech, String protocol, Hashtable env)
+                throws NamingException {
 
-	        // Requesting plain protocol but it is not supported
-	    	|| (protocol == null && !supportPlainProtocol)
+        if (trace != null && !debug
 
-	    	// Requesting ssl protocol but it is not supported
-	    	|| ("ssl".equalsIgnoreCase(protocol) && !supportSslProtocol)) {
+                // Requesting plain protocol but it is not supported
+                || (protocol == null && !supportPlainProtocol)
 
-	    d("Pooling disallowed due to tracing or unsupported pooling of protocol");
-	    return false;
-	}
-	// pooling of custom socket factory is possible only if the
-	// socket factory interface implements java.util.comparator
-	String COMPARATOR = "java.util.Comparator";
-	boolean foundSockCmp = false;
-	if ((socketFactory != null) && 
-	     !socketFactory.equals(LdapCtx.DEFAULT_SSL_FACTORY)) {
-	    try {
-		Class socketFactoryClass = Obj.helper.loadClass(socketFactory);
-	    	Class[] interfaces = socketFactoryClass.getInterfaces();
-	    	for (int i = 0; i < interfaces.length; i++) {
-		    if (interfaces[i].getCanonicalName().equals(COMPARATOR)) {
-		    	foundSockCmp = true;
-		    }
-	    	}
-	    } catch (Exception e) {
-                CommunicationException ce = 
-		    new CommunicationException("Loading the socket factory");
-		ce.setRootCause(e);
-		throw ce;
-	    }
-	    if (!foundSockCmp) {
-		return false;
-	    }
-	}
-	// Cannot use pooling if authMech is not a supported mechs
-	// Cannot use pooling if authMech contains multiple mechs
-	int p = findPool(authMech);
-	if (p < 0 || pools[p] == null) {
-	    d("authmech not found: ", authMech);
+                // Requesting ssl protocol but it is not supported
+                || ("ssl".equalsIgnoreCase(protocol) && !supportSslProtocol)) {
 
-	    return false;
-	}
+            d("Pooling disallowed due to tracing or unsupported pooling of protocol");
+            return false;
+        }
+        // pooling of custom socket factory is possible only if the
+        // socket factory interface implements java.util.comparator
+        String COMPARATOR = "java.util.Comparator";
+        boolean foundSockCmp = false;
+        if ((socketFactory != null) &&
+             !socketFactory.equals(LdapCtx.DEFAULT_SSL_FACTORY)) {
+            try {
+                Class socketFactoryClass = Obj.helper.loadClass(socketFactory);
+                Class[] interfaces = socketFactoryClass.getInterfaces();
+                for (int i = 0; i < interfaces.length; i++) {
+                    if (interfaces[i].getCanonicalName().equals(COMPARATOR)) {
+                        foundSockCmp = true;
+                    }
+                }
+            } catch (Exception e) {
+                CommunicationException ce =
+                    new CommunicationException("Loading the socket factory");
+                ce.setRootCause(e);
+                throw ce;
+            }
+            if (!foundSockCmp) {
+                return false;
+            }
+        }
+        // Cannot use pooling if authMech is not a supported mechs
+        // Cannot use pooling if authMech contains multiple mechs
+        int p = findPool(authMech);
+        if (p < 0 || pools[p] == null) {
+            d("authmech not found: ", authMech);
 
-	d("using authmech: ", authMech);
+            return false;
+        }
 
-	switch (p) {
-	case NONE:
-	case SIMPLE:
-	    return true;
+        d("using authmech: ", authMech);
 
-	case DIGEST:
-	    // Provider won't be able to determine connection identity
-	    // if an alternate callback handler is used
-	    return (env == null || env.get(SASL_CALLBACK) == null);
-	}
-	return false;
+        switch (p) {
+        case NONE:
+        case SIMPLE:
+            return true;
+
+        case DIGEST:
+            // Provider won't be able to determine connection identity
+            // if an alternate callback handler is used
+            return (env == null || env.get(SASL_CALLBACK) == null);
+        }
+        return false;
     }
 
     /**
@@ -292,68 +292,68 @@ public final class LdapPoolManager {
      * @return an LdapClient that is pooled.
      */
     static LdapClient getLdapClient(String host, int port, String socketFactory,
-	int connTimeout, int readTimeout, OutputStream trace, int version,
-	String authMech, Control[] ctls, String protocol, String user,
-	Object passwd, Hashtable env) throws NamingException {
+        int connTimeout, int readTimeout, OutputStream trace, int version,
+        String authMech, Control[] ctls, String protocol, String user,
+        Object passwd, Hashtable env) throws NamingException {
 
-	// Create base identity for LdapClient
-	ClientId id = null;
-	Pool pool;
+        // Create base identity for LdapClient
+        ClientId id = null;
+        Pool pool;
 
-	int p = findPool(authMech);
-	if (p < 0 || (pool=pools[p]) == null) {
-	    throw new IllegalArgumentException(
-		"Attempting to use pooling for an unsupported mechanism: " + 
-		authMech);
-	}
-	switch (p) {
-	case NONE:
-	    id = new ClientId(version, host, port, protocol,
-			ctls, trace, socketFactory);
-	    break;
+        int p = findPool(authMech);
+        if (p < 0 || (pool=pools[p]) == null) {
+            throw new IllegalArgumentException(
+                "Attempting to use pooling for an unsupported mechanism: " +
+                authMech);
+        }
+        switch (p) {
+        case NONE:
+            id = new ClientId(version, host, port, protocol,
+                        ctls, trace, socketFactory);
+            break;
 
-	case SIMPLE:
-	    // Add identity information used in simple authentication
-	    id = new SimpleClientId(version, host, port, protocol,
-		ctls, trace, socketFactory, user, passwd);
-	    break;
+        case SIMPLE:
+            // Add identity information used in simple authentication
+            id = new SimpleClientId(version, host, port, protocol,
+                ctls, trace, socketFactory, user, passwd);
+            break;
 
-	case DIGEST:
-	    // Add user/passwd/realm/authzid/qop/strength/maxbuf/mutual/policy*
-	    id = new DigestClientId(version, host, port, protocol,
-		ctls, trace, socketFactory, user, passwd, env);
-	    break;
-	}
+        case DIGEST:
+            // Add user/passwd/realm/authzid/qop/strength/maxbuf/mutual/policy*
+            id = new DigestClientId(version, host, port, protocol,
+                ctls, trace, socketFactory, user, passwd, env);
+            break;
+        }
 
-	return (LdapClient) pool.getPooledConnection(id, connTimeout, 
-	    new LdapClientFactory(host, port, socketFactory, connTimeout,
-				readTimeout, trace));
+        return (LdapClient) pool.getPooledConnection(id, connTimeout,
+            new LdapClientFactory(host, port, socketFactory, connTimeout,
+                                readTimeout, trace));
     }
 
     public static void showStats(PrintStream out) {
-	out.println("***** start *****");
-	out.println("idle timeout: " + idleTimeout);
-	out.println("maximum pool size: " + maxSize);
-	out.println("preferred pool size: " + prefSize);
-	out.println("initial pool size: " + initSize);
-	out.println("protocol types: " + (supportPlainProtocol ? "plain " : "") +
-	    (supportSslProtocol ? "ssl" : ""));
-	out.println("authentication types: " + 
-	    (pools[NONE] != null ? "none " : "") +
-	    (pools[SIMPLE] != null ? "simple " : "") +
-	    (pools[DIGEST] != null ? "DIGEST-MD5 " : ""));
+        out.println("***** start *****");
+        out.println("idle timeout: " + idleTimeout);
+        out.println("maximum pool size: " + maxSize);
+        out.println("preferred pool size: " + prefSize);
+        out.println("initial pool size: " + initSize);
+        out.println("protocol types: " + (supportPlainProtocol ? "plain " : "") +
+            (supportSslProtocol ? "ssl" : ""));
+        out.println("authentication types: " +
+            (pools[NONE] != null ? "none " : "") +
+            (pools[SIMPLE] != null ? "simple " : "") +
+            (pools[DIGEST] != null ? "DIGEST-MD5 " : ""));
 
-	for (int i = 0; i < pools.length; i++) {
-	    if (pools[i] != null) {
-		out.println(
-		    (i == NONE ? "anonymous pools" :
-			i == SIMPLE ? "simple auth pools" :
-			i == DIGEST ? "digest pools" : "")
-			    + ":");
-		pools[i].showStats(out);
-	    }
-	}
-	out.println("***** end *****");
+        for (int i = 0; i < pools.length; i++) {
+            if (pools[i] != null) {
+                out.println(
+                    (i == NONE ? "anonymous pools" :
+                        i == SIMPLE ? "simple auth pools" :
+                        i == DIGEST ? "digest pools" : "")
+                            + ":");
+                pools[i].showStats(out);
+            }
+        }
+        out.println("***** end *****");
     }
 
     /**
@@ -364,66 +364,66 @@ public final class LdapPoolManager {
      * @see java.util.Date
      */
     public static void expire(long threshold) {
-	for (int i = 0; i < pools.length; i++) {
-	    if (pools[i] != null) {
-		pools[i].expire(threshold);
-	    }
-	}
+        for (int i = 0; i < pools.length; i++) {
+            if (pools[i] != null) {
+                pools[i].expire(threshold);
+            }
+        }
     }
 
     private static void d(String msg) {
-	if (debug) {
-	    System.err.println("LdapPoolManager: " + msg);
-	}
+        if (debug) {
+            System.err.println("LdapPoolManager: " + msg);
+        }
     }
 
     private static void d(String msg, String o) {
-	if (debug) {
-	    System.err.println("LdapPoolManager: " + msg + o);
-	}
+        if (debug) {
+            System.err.println("LdapPoolManager: " + msg + o);
+        }
     }
 
-    private static final String getProperty(final String propName, 
-	final String defVal) {
-	return (String) AccessController.doPrivileged(
-	    new PrivilegedAction() {
-	    public Object run() {
-		try {
-		    return System.getProperty(propName, defVal);
-		} catch (SecurityException e) {
-		    return defVal;
-		}
-	    }
-	});
+    private static final String getProperty(final String propName,
+        final String defVal) {
+        return (String) AccessController.doPrivileged(
+            new PrivilegedAction() {
+            public Object run() {
+                try {
+                    return System.getProperty(propName, defVal);
+                } catch (SecurityException e) {
+                    return defVal;
+                }
+            }
+        });
     }
 
-    private static final int getInteger(final String propName, 
-	final int defVal) {
-	Integer val = (Integer) AccessController.doPrivileged(
-	    new PrivilegedAction() {
-	    public Object run() {
-		try {
-		    return Integer.getInteger(propName, defVal);
-		} catch (SecurityException e) {
-		    return new Integer(defVal);
-		}
-	    }
-	});
-	return val.intValue();
+    private static final int getInteger(final String propName,
+        final int defVal) {
+        Integer val = (Integer) AccessController.doPrivileged(
+            new PrivilegedAction() {
+            public Object run() {
+                try {
+                    return Integer.getInteger(propName, defVal);
+                } catch (SecurityException e) {
+                    return new Integer(defVal);
+                }
+            }
+        });
+        return val.intValue();
     }
 
-    private static final long getLong(final String propName, 
-	final long defVal) {
-	Long val = (Long) AccessController.doPrivileged(
-	    new PrivilegedAction() {
-	    public Object run() {
-		try {
-		    return Long.getLong(propName, defVal);
-		} catch (SecurityException e) {
-		    return new Long(defVal);
-		}
-	    }
-	});
-	return val.longValue();
+    private static final long getLong(final String propName,
+        final long defVal) {
+        Long val = (Long) AccessController.doPrivileged(
+            new PrivilegedAction() {
+            public Object run() {
+                try {
+                    return Long.getLong(propName, defVal);
+                } catch (SecurityException e) {
+                    return new Long(defVal);
+                }
+            }
+        });
+        return val.longValue();
     }
 }

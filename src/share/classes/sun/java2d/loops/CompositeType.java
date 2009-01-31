@@ -90,9 +90,9 @@ public final class CompositeType {
      * is not extraAlpha.
      */
     public static final String
-	DESC_SRC_NO_EA      = "Porter-Duff Src, No Extra Alpha";
+        DESC_SRC_NO_EA      = "Porter-Duff Src, No Extra Alpha";
     public static final String
-	DESC_SRC_OVER_NO_EA = "Porter-Duff SrcOverDst, No Extra Alpha";
+        DESC_SRC_OVER_NO_EA = "Porter-Duff SrcOverDst, No Extra Alpha";
 
     /**
      * constant used to describe an algorithm that implements all 8 of
@@ -108,49 +108,49 @@ public final class CompositeType {
      * The root CompositeType object for all chains of algorithm descriptions.
      */
     public static final CompositeType
-	Any           = new CompositeType(null, DESC_ANY);
+        Any           = new CompositeType(null, DESC_ANY);
 
     /*
      * START OF CompositeeType OBJECTS FOR THE VARIOUS CONSTANTS
      */
 
     public static final CompositeType
-	General       = Any;
+        General       = Any;
 
     public static final CompositeType
-	AnyAlpha      = General.deriveSubType(DESC_ANY_ALPHA);  
+        AnyAlpha      = General.deriveSubType(DESC_ANY_ALPHA);
     public static final CompositeType
-	Xor           = General.deriveSubType(DESC_XOR); 
+        Xor           = General.deriveSubType(DESC_XOR);
 
     public static final CompositeType
-	Clear         = AnyAlpha.deriveSubType(DESC_CLEAR); 
+        Clear         = AnyAlpha.deriveSubType(DESC_CLEAR);
     public static final CompositeType
-	Src           = AnyAlpha.deriveSubType(DESC_SRC); 
+        Src           = AnyAlpha.deriveSubType(DESC_SRC);
     public static final CompositeType
-	Dst           = AnyAlpha.deriveSubType(DESC_DST); 
+        Dst           = AnyAlpha.deriveSubType(DESC_DST);
     public static final CompositeType
-	SrcOver       = AnyAlpha.deriveSubType(DESC_SRC_OVER); 
+        SrcOver       = AnyAlpha.deriveSubType(DESC_SRC_OVER);
     public static final CompositeType
-	DstOver       = AnyAlpha.deriveSubType(DESC_DST_OVER); 
+        DstOver       = AnyAlpha.deriveSubType(DESC_DST_OVER);
     public static final CompositeType
-	SrcIn         = AnyAlpha.deriveSubType(DESC_SRC_IN); 
+        SrcIn         = AnyAlpha.deriveSubType(DESC_SRC_IN);
     public static final CompositeType
-	DstIn         = AnyAlpha.deriveSubType(DESC_DST_IN); 
+        DstIn         = AnyAlpha.deriveSubType(DESC_DST_IN);
     public static final CompositeType
-	SrcOut        = AnyAlpha.deriveSubType(DESC_SRC_OUT); 
+        SrcOut        = AnyAlpha.deriveSubType(DESC_SRC_OUT);
     public static final CompositeType
-	DstOut        = AnyAlpha.deriveSubType(DESC_DST_OUT); 
+        DstOut        = AnyAlpha.deriveSubType(DESC_DST_OUT);
     public static final CompositeType
-	SrcAtop       = AnyAlpha.deriveSubType(DESC_SRC_ATOP); 
+        SrcAtop       = AnyAlpha.deriveSubType(DESC_SRC_ATOP);
     public static final CompositeType
-	DstAtop       = AnyAlpha.deriveSubType(DESC_DST_ATOP); 
+        DstAtop       = AnyAlpha.deriveSubType(DESC_DST_ATOP);
     public static final CompositeType
-	AlphaXor      = AnyAlpha.deriveSubType(DESC_ALPHA_XOR); 
+        AlphaXor      = AnyAlpha.deriveSubType(DESC_ALPHA_XOR);
 
     public static final CompositeType
-	SrcNoEa       = Src.deriveSubType(DESC_SRC_NO_EA); 
+        SrcNoEa       = Src.deriveSubType(DESC_SRC_NO_EA);
     public static final CompositeType
-	SrcOverNoEa   = SrcOver.deriveSubType(DESC_SRC_OVER_NO_EA); 
+        SrcOverNoEa   = SrcOver.deriveSubType(DESC_SRC_OVER_NO_EA);
 
     /*
      * END OF CompositeType OBJECTS FOR THE VARIOUS CONSTANTS
@@ -164,7 +164,7 @@ public final class CompositeType {
      * compositing algorithm that can be used instead.
      */
     public CompositeType deriveSubType(String desc) {
-	return new CompositeType(this, desc);
+        return new CompositeType(this, desc);
     }
 
     /**
@@ -172,97 +172,97 @@ public final class CompositeType {
      * rule.
      */
     public static CompositeType forAlphaComposite(AlphaComposite ac) {
-	switch (ac.getRule()) {
-	case AlphaComposite.CLEAR:
-	    return Clear;
-	case AlphaComposite.SRC:
-	    if (ac.getAlpha() >= 1.0f) {
-		return SrcNoEa;
-	    } else {
-		return Src;
-	    }
-	case AlphaComposite.DST:
-	    return Dst;
-	case AlphaComposite.SRC_OVER:
-	    if (ac.getAlpha() >= 1.0f) {
-		return SrcOverNoEa;
-	    } else {
-		return SrcOver;
-	    }
-	case AlphaComposite.DST_OVER:
-	    return DstOver;
-	case AlphaComposite.SRC_IN:
-	    return SrcIn;
-	case AlphaComposite.DST_IN:
-	    return DstIn;
-	case AlphaComposite.SRC_OUT:
-	    return SrcOut;
-	case AlphaComposite.DST_OUT:
-	    return DstOut;
-	case AlphaComposite.SRC_ATOP:
-	    return SrcAtop;
-	case AlphaComposite.DST_ATOP:
-	    return DstAtop;
-	case AlphaComposite.XOR:
-	    return AlphaXor;
-	default:
-	    throw new InternalError("Unrecognized alpha rule");
-	}
+        switch (ac.getRule()) {
+        case AlphaComposite.CLEAR:
+            return Clear;
+        case AlphaComposite.SRC:
+            if (ac.getAlpha() >= 1.0f) {
+                return SrcNoEa;
+            } else {
+                return Src;
+            }
+        case AlphaComposite.DST:
+            return Dst;
+        case AlphaComposite.SRC_OVER:
+            if (ac.getAlpha() >= 1.0f) {
+                return SrcOverNoEa;
+            } else {
+                return SrcOver;
+            }
+        case AlphaComposite.DST_OVER:
+            return DstOver;
+        case AlphaComposite.SRC_IN:
+            return SrcIn;
+        case AlphaComposite.DST_IN:
+            return DstIn;
+        case AlphaComposite.SRC_OUT:
+            return SrcOut;
+        case AlphaComposite.DST_OUT:
+            return DstOut;
+        case AlphaComposite.SRC_ATOP:
+            return SrcAtop;
+        case AlphaComposite.DST_ATOP:
+            return DstAtop;
+        case AlphaComposite.XOR:
+            return AlphaXor;
+        default:
+            throw new InternalError("Unrecognized alpha rule");
+        }
     }
-    
-    private static int unusedUID = 1; 
-    private int uniqueID; 
+
+    private static int unusedUID = 1;
+    private int uniqueID;
     private String desc;
     private CompositeType next;
 
     private CompositeType(CompositeType parent, String desc) {
-	next = parent;
-	this.desc = desc;
-	this.uniqueID = makeUniqueID();
+        next = parent;
+        this.desc = desc;
+        this.uniqueID = makeUniqueID();
     }
 
     private synchronized static final int makeUniqueID() {
-	if (unusedUID > 255) {
-	    throw new InternalError("composite type id overflow"); 
-	} 
-	return unusedUID++;
+        if (unusedUID > 255) {
+            throw new InternalError("composite type id overflow");
+        }
+        return unusedUID++;
     }
 
     public int getUniqueID() {
-	return uniqueID; 
+        return uniqueID;
     }
-    
+
     public String getDescriptor() {
-	return desc;
+        return desc;
     }
 
     public CompositeType getSuperType() {
-	return next;
+        return next;
     }
 
     public int hashCode() {
-	return desc.hashCode();
+        return desc.hashCode();
     }
 
     public boolean isDerivedFrom(CompositeType other) {
-	CompositeType comptype = this;
-	do {
-	    if (comptype.desc == other.desc) {
-		return true;
-	    }
-	    comptype = comptype.next;
-	} while (comptype != null);
-	return false;
+        CompositeType comptype = this;
+        do {
+            if (comptype.desc == other.desc) {
+                return true;
+            }
+            comptype = comptype.next;
+        } while (comptype != null);
+        return false;
     }
 
     public boolean equals(Object o) {
-	if (o instanceof CompositeType) {
-	    return (((CompositeType) o).uniqueID == this.uniqueID);
-	}
-	return false;
+        if (o instanceof CompositeType) {
+            return (((CompositeType) o).uniqueID == this.uniqueID);
+        }
+        return false;
     }
 
     public String toString() {
-	return desc;
+        return desc;
     }
 }

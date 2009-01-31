@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,11 +30,11 @@
 
 public class B extends A implements Runnable {
     public B() { super(0xDEADBEEF); }
-    
+
     // verify superclass data still present
     public void run() {
-	if (i != 0xDEADBEEF) {
-	    throw new Error("superclass data erased");
-	}
+        if (i != 0xDEADBEEF) {
+            throw new Error("superclass data erased");
+        }
     }
 }

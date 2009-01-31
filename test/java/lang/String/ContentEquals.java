@@ -80,7 +80,7 @@ public class ContentEquals {
         }
     }
 
-    // Test a String as a CharSequence. This takes a different codepath in 
+    // Test a String as a CharSequence. This takes a different codepath in
     // the new method in 1.5
     public static void testString() throws Exception {
         for (int i=0; i<ITERATIONS; i++) {

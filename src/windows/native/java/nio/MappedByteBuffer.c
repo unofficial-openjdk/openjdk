@@ -30,7 +30,7 @@
 #include "java_nio_MappedByteBuffer.h"
 #include <stdlib.h>
 
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj,
                                         jlong address, jlong len)
 {
@@ -71,15 +71,15 @@ Java_java_nio_MappedByteBuffer_force0(JNIEnv *env, jobject obj, jlong address,
 
     /*
      * FlushViewOfFile can fail with ERROR_LOCK_VIOLATION if the memory
-     * system is writing dirty pages to disk. As there is no way to 
+     * system is writing dirty pages to disk. As there is no way to
      * synchronize the flushing then we retry a limited number of times.
      */
     retry = 0;
     do {
         result = FlushViewOfFile(a, (DWORD)len);
         if ((result != 0) || (GetLastError() != ERROR_LOCK_VIOLATION))
-            break;	
-	retry++;
+            break;
+        retry++;
     } while (retry < 3);
 
     if (result == 0) {

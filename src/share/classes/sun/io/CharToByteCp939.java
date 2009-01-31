@@ -36,7 +36,7 @@ public class CharToByteCp939
 
 {
 
-	private final static IBM939 nioCoder = new IBM939();
+        private final static IBM939 nioCoder = new IBM939();
 
         // Return the character set id
         public String getCharacterEncoding()

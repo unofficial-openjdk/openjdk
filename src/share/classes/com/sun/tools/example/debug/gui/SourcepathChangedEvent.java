@@ -30,6 +30,6 @@ import java.util.EventObject;
 public class SourcepathChangedEvent extends EventObject {
 
     public SourcepathChangedEvent(Object source) {
-	super(source);
+        super(source);
     }
 }

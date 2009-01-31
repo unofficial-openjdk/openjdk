@@ -45,7 +45,6 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Tim Prinzing
  */
 public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cloneable
@@ -104,7 +103,7 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return true if the attribute is defined
      */
     public boolean isDefined(Object attrName) {
-	return table.containsKey(attrName);
+        return table.containsKey(attrName);
     }
 
     /**
@@ -114,8 +113,8 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return true if the sets are equal, false otherwise
      */
     public boolean isEqual(AttributeSet attr) {
-	return ((getAttributeCount() == attr.getAttributeCount()) &&
-		containsAttributes(attr));
+        return ((getAttributeCount() == attr.getAttributeCount()) &&
+                containsAttributes(attr));
     }
 
     /**
@@ -124,7 +123,7 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return the copy
      */
     public AttributeSet copyAttributes() {
-	return (AttributeSet) clone();
+        return (AttributeSet) clone();
     }
 
     /**
@@ -144,13 +143,13 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      */
     public Object getAttribute(Object name) {
         Object value = table.get(name);
-	if (value == null) {
-	    AttributeSet parent = getResolveParent();
-	    if (parent != null) {
-		value = parent.getAttribute(name);
-	    }
-	}
-	return value;
+        if (value == null) {
+            AttributeSet parent = getResolveParent();
+            if (parent != null) {
+                value = parent.getAttribute(name);
+            }
+        }
+        return value;
     }
 
     /**
@@ -232,18 +231,18 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @param attributes the set of attributes to remove
      */
     public void removeAttributes(AttributeSet attributes) {
-	if (attributes == this) {
-	    table.clear();
-	}
-	else {
-	    Enumeration names = attributes.getAttributeNames();
-	    while (names.hasMoreElements()) {
-		Object name = names.nextElement();
-		Object value = attributes.getAttribute(name);
-		if (value.equals(getAttribute(name)))
-		    removeAttribute(name);
-	    }
-	}
+        if (attributes == this) {
+            table.clear();
+        }
+        else {
+            Enumeration names = attributes.getAttributeNames();
+            while (names.hasMoreElements()) {
+                Object name = names.nextElement();
+                Object value = attributes.getAttribute(name);
+                if (value.equals(getAttribute(name)))
+                    removeAttribute(name);
+            }
+        }
     }
 
     /**
@@ -256,7 +255,7 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return the parent
      */
     public AttributeSet getResolveParent() {
-	return (AttributeSet) table.get(StyleConstants.ResolveAttribute);
+        return (AttributeSet) table.get(StyleConstants.ResolveAttribute);
     }
 
     /**
@@ -265,7 +264,7 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @param parent the parent
      */
     public void setResolveParent(AttributeSet parent) {
-	addAttribute(StyleConstants.ResolveAttribute, parent);
+        addAttribute(StyleConstants.ResolveAttribute, parent);
     }
 
     // --- Object methods ---------------------------------
@@ -276,13 +275,13 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return the new set of attributes
      */
     public Object clone() {
-	SimpleAttributeSet attr;
-	try {
-	    attr = (SimpleAttributeSet) super.clone();
-	    attr.table = (Hashtable) table.clone();
-	} catch (CloneNotSupportedException cnse) {
-	    attr = null;
-	}
+        SimpleAttributeSet attr;
+        try {
+            attr = (SimpleAttributeSet) super.clone();
+            attr.table = (Hashtable) table.clone();
+        } catch (CloneNotSupportedException cnse) {
+            attr = null;
+        }
         return attr;
     }
 
@@ -291,7 +290,7 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return     a hashcode value for this set of attributes.
      */
     public int hashCode() {
-	return table.hashCode();
+        return table.hashCode();
     }
 
     /**
@@ -303,14 +302,14 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      *            <code>false</code> otherwise
      */
     public boolean equals(Object obj) {
-	if (this == obj) {
-	    return true;
-	}
-	if (obj instanceof AttributeSet) {
-	    AttributeSet attrs = (AttributeSet) obj;
-	    return isEqual(attrs);
-	}
-	return false;
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof AttributeSet) {
+            AttributeSet attrs = (AttributeSet) obj;
+            return isEqual(attrs);
+        }
+        return false;
     }
 
     /**
@@ -319,79 +318,79 @@ public class SimpleAttributeSet implements MutableAttributeSet, Serializable, Cl
      * @return the string
      */
     public String toString() {
-	String s = "";
+        String s = "";
         Enumeration names = getAttributeNames();
         while (names.hasMoreElements()) {
             Object key = names.nextElement();
             Object value = getAttribute(key);
-	    if (value instanceof AttributeSet) {
-		// don't go recursive
-		s = s + key + "=**AttributeSet** ";
-	    } else {
-		s = s + key + "=" + value + " ";
-	    }
-	}
-	return s;
+            if (value instanceof AttributeSet) {
+                // don't go recursive
+                s = s + key + "=**AttributeSet** ";
+            } else {
+                s = s + key + "=" + value + " ";
+            }
+        }
+        return s;
     }
 
     private void writeObject(java.io.ObjectOutputStream s) throws IOException {
         s.defaultWriteObject();
-	StyleContext.writeAttributeSet(s, this);
+        StyleContext.writeAttributeSet(s, this);
     }
 
     private void readObject(ObjectInputStream s)
       throws ClassNotFoundException, IOException {
         s.defaultReadObject();
-	table = new Hashtable(3);
-	StyleContext.readAttributeSet(s, this);
+        table = new Hashtable(3);
+        StyleContext.readAttributeSet(s, this);
     }
 
     /**
      * An AttributeSet that is always empty.
      */
     static class EmptyAttributeSet implements AttributeSet, Serializable {
-	static final long serialVersionUID = -8714803568785904228L;
+        static final long serialVersionUID = -8714803568785904228L;
 
-	public int getAttributeCount() {
-	    return 0;
-	}
-	public boolean isDefined(Object attrName) {
-	    return false;
-	}
-	public boolean isEqual(AttributeSet attr) {
-	    return (attr.getAttributeCount() == 0);
-	}
-	public AttributeSet copyAttributes() {
-	    return this;
-	}
-	public Object getAttribute(Object key) {
-	    return null;
-	}
-	public Enumeration getAttributeNames() {
-	    return new Enumeration() {
-		    public boolean hasMoreElements() { return false; }
-		    public Object nextElement() { throw new java.util.NoSuchElementException(); }
-		};
-	}
+        public int getAttributeCount() {
+            return 0;
+        }
+        public boolean isDefined(Object attrName) {
+            return false;
+        }
+        public boolean isEqual(AttributeSet attr) {
+            return (attr.getAttributeCount() == 0);
+        }
+        public AttributeSet copyAttributes() {
+            return this;
+        }
+        public Object getAttribute(Object key) {
+            return null;
+        }
+        public Enumeration getAttributeNames() {
+            return new Enumeration() {
+                    public boolean hasMoreElements() { return false; }
+                    public Object nextElement() { throw new java.util.NoSuchElementException(); }
+                };
+        }
 
-	public boolean containsAttribute(Object name, Object value) {
-	    return false;
-	}
-	public boolean containsAttributes(AttributeSet attributes) {
-	    return (attributes.getAttributeCount() == 0);
-	}
-	public AttributeSet getResolveParent() {
-	    return null;
-	}
-	public boolean equals(Object obj) {
-	    if (this == obj) {
-		return true;
-	    }
-	    return ((obj instanceof AttributeSet) &&
-		    (((AttributeSet)obj).getAttributeCount() == 0));
-	}
-	public int hashCode() {
-	    return 0;
-	}
+        public boolean containsAttribute(Object name, Object value) {
+            return false;
+        }
+        public boolean containsAttributes(AttributeSet attributes) {
+            return (attributes.getAttributeCount() == 0);
+        }
+        public AttributeSet getResolveParent() {
+            return null;
+        }
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            return ((obj instanceof AttributeSet) &&
+                    (((AttributeSet)obj).getAttributeCount() == 0));
+        }
+        public int hashCode() {
+            return 0;
+        }
     }
 }

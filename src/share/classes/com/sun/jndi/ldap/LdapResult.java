@@ -34,7 +34,7 @@ import javax.naming.directory.BasicAttributes;
   */
 public final class LdapResult {
     int msgId;
-    public int status;			// %%% public for use by LdapSasl
+    public int status;                  // %%% public for use by LdapSasl
     String matchedDN;
     String errorMessage;
     Vector referrals = null;
@@ -42,8 +42,8 @@ public final class LdapResult {
     Vector entries = null;
     Vector resControls = null;
     public byte[] serverCreds = null;   // %%% public for use by LdapSasl
-    String extensionId = null;		// string OID
-    byte[] extensionValue = null;	// BER OCTET STRING
+    String extensionId = null;          // string OID
+    byte[] extensionValue = null;       // BER OCTET STRING
 
 
     // This function turns an LdapResult that came from a compare operation
@@ -55,27 +55,26 @@ public final class LdapResult {
         boolean successful = false;
 
         switch (status) {
-	    case LdapClient.LDAP_COMPARE_TRUE:
-	        status = LdapClient.LDAP_SUCCESS;
-	        entries = new Vector(1,1);
-		Attributes attrs = new BasicAttributes(LdapClient.caseIgnore);
-		LdapEntry entry = new LdapEntry( name, attrs );
-	        entries.addElement(entry);
-		successful = true;
-		break;
+            case LdapClient.LDAP_COMPARE_TRUE:
+                status = LdapClient.LDAP_SUCCESS;
+                entries = new Vector(1,1);
+                Attributes attrs = new BasicAttributes(LdapClient.caseIgnore);
+                LdapEntry entry = new LdapEntry( name, attrs );
+                entries.addElement(entry);
+                successful = true;
+                break;
 
             case LdapClient.LDAP_COMPARE_FALSE:
-	        status = LdapClient.LDAP_SUCCESS;
-		entries = new Vector(0);
-		successful = true;
-		break;
-		
-            default:
-	        successful = false;
-		break;
-   	}
+                status = LdapClient.LDAP_SUCCESS;
+                entries = new Vector(0);
+                successful = true;
+                break;
 
-	return successful;
+            default:
+                successful = false;
+                break;
+        }
+
+        return successful;
     }
 }
-

@@ -32,13 +32,12 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class FormatterClosedException extends IllegalStateException {
 
     private static final long serialVersionUID = 18111216L;
-    
+
     /**
      * Constructs an instance of this class.
      */

@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -33,13 +33,13 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	int finite(double x)
+        int finite(double x)
 #else
-	int finite(x)
-	double x;
+        int finite(x)
+        double x;
 #endif
 {
-	int hx; 
-	hx = __HI(x);
-	return  (unsigned)((hx&0x7fffffff)-0x7ff00000)>>31;
+        int hx;
+        hx = __HI(x);
+        return  (unsigned)((hx&0x7fffffff)-0x7ff00000)>>31;
 }

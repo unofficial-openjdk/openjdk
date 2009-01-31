@@ -31,7 +31,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * This class defines the <i>Service Provider Interface</i> (<b>SPI</b>)
  * for the <code>KeyFactory</code> class.
- * All the abstract methods in this class must be implemented by each 
+ * All the abstract methods in this class must be implemented by each
  * cryptographic service provider who wishes to supply the implementation
  * of a key factory for a particular algorithm.
  *
@@ -55,7 +55,6 @@ import java.security.spec.InvalidKeySpecException;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see KeyFactory
  * @see Key
@@ -101,15 +100,15 @@ public abstract class KeyFactorySpi {
     /**
      * Returns a specification (key material) of the given key
      * object.
-     * <code>keySpec</code> identifies the specification class in which 
+     * <code>keySpec</code> identifies the specification class in which
      * the key material should be returned. It could, for example, be
      * <code>DSAPublicKeySpec.class</code>, to indicate that the
-     * key material should be returned in an instance of the 
+     * key material should be returned in an instance of the
      * <code>DSAPublicKeySpec</code> class.
      *
      * @param key the key.
      *
-     * @param keySpec the specification class in which 
+     * @param keySpec the specification class in which
      * the key material should be returned.
      *
      * @return the underlying key specification (key material) in an instance
@@ -120,8 +119,8 @@ public abstract class KeyFactorySpi {
      * (e.g., the given key has an unrecognized format).
      */
     protected abstract <T extends KeySpec>
-	T engineGetKeySpec(Key key, Class<T> keySpec)
-	throws InvalidKeySpecException;
+        T engineGetKeySpec(Key key, Class<T> keySpec)
+        throws InvalidKeySpecException;
 
     /**
      * Translates a key object, whose provider may be unknown or
@@ -136,6 +135,6 @@ public abstract class KeyFactorySpi {
      * by this key factory.
      */
     protected abstract Key engineTranslateKey(Key key)
-	throws InvalidKeyException;
+        throws InvalidKeyException;
 
 }

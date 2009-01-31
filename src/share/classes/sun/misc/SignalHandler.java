@@ -30,7 +30,6 @@ package sun.misc;
  *
  * @author   Sheng Liang
  * @author   Bill Shannon
- * @version  %W% %E%
  * @see      sun.misc.Signal
  * @since    1.2
  */

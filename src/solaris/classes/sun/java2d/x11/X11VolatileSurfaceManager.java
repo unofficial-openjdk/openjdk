@@ -39,7 +39,7 @@ import sun.java2d.SurfaceData;
  * The class attempts to create and use a pixmap-based SurfaceData
  * object (X11PixmapSurfaceData).
  * If this object cannot be created or re-created as necessary, the
- * class falls back to a system memory based SurfaceData object 
+ * class falls back to a system memory based SurfaceData object
  * (BufImgSurfaceData) that will be used until the accelerated
  * SurfaceData can be restored.
  */
@@ -49,10 +49,10 @@ public class X11VolatileSurfaceManager extends VolatileSurfaceManager {
 
     public X11VolatileSurfaceManager(SunVolatileImage vImg, Object context) {
         super(vImg, context);
-	
-	// We only accelerated opaque vImages currently
-	accelerationEnabled = X11SurfaceData.isAccelerationEnabled() &&
-	    (vImg.getTransparency() == Transparency.OPAQUE);
+
+        // We only accelerated opaque vImages currently
+        accelerationEnabled = X11SurfaceData.isAccelerationEnabled() &&
+            (vImg.getTransparency() == Transparency.OPAQUE);
 
         if ((context != null) && !accelerationEnabled) {
             // if we're wrapping a backbuffer drawable, we must ensure that
@@ -77,39 +77,39 @@ public class X11VolatileSurfaceManager extends VolatileSurfaceManager {
     }
 
     /**
-     * Create a pixmap-based SurfaceData object  
+     * Create a pixmap-based SurfaceData object
      */
     protected SurfaceData initAcceleratedSurface() {
         SurfaceData sData;
 
-	try {
+        try {
             X11GraphicsConfig gc = (X11GraphicsConfig)vImg.getGraphicsConfig();
             ColorModel cm = gc.getColorModel();
             long drawable = 0;
             if (context instanceof Long) {
                 drawable = ((Long)context).longValue();
-	    }
-	    sData = X11SurfaceData.createData(gc,
+            }
+            sData = X11SurfaceData.createData(gc,
                                               vImg.getWidth(),
                                               vImg.getHeight(),
                                               cm, vImg, drawable,
                                               Transparency.OPAQUE);
-	} catch (NullPointerException ex) {
+        } catch (NullPointerException ex) {
             sData = null;
-	} catch (OutOfMemoryError er) {
+        } catch (OutOfMemoryError er) {
             sData = null;
-	}
+        }
 
         return sData;
     }
 
     protected boolean isConfigValid(GraphicsConfiguration gc) {
-	// REMIND: we might be too paranoid here, requiring that
-	// the GC be exactly the same as the original one.  The
-	// real answer is one that guarantees that pixmap copies
-	// will be correct (which requires like bit depths and
-	// formats).
-	return ((gc == null) || (gc == vImg.getGraphicsConfig()));
+        // REMIND: we might be too paranoid here, requiring that
+        // the GC be exactly the same as the original one.  The
+        // real answer is one that guarantees that pixmap copies
+        // will be correct (which requires like bit depths and
+        // formats).
+        return ((gc == null) || (gc == vImg.getGraphicsConfig()));
     }
 
     /**

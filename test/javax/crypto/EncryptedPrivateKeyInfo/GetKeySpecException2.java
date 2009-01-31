@@ -43,36 +43,36 @@ public class GetKeySpecException2 {
 
     public static void main(String[] argv) throws Exception {
 
-	// use random data
-	byte[] encryptedData = new byte[30];
-	encryptedData[20] = (byte) 8;
+        // use random data
+        byte[] encryptedData = new byte[30];
+        encryptedData[20] = (byte) 8;
 
-	// generate encrypted data and EncryptedPrivateKeyInfo objects
-	EncryptedPrivateKeyInfo epki =
-	    new EncryptedPrivateKeyInfo(cipherAlg, encryptedData);
+        // generate encrypted data and EncryptedPrivateKeyInfo objects
+        EncryptedPrivateKeyInfo epki =
+            new EncryptedPrivateKeyInfo(cipherAlg, encryptedData);
 
-	// TEST#1: getKeySpec(Cipher) with Cipher in an illegal state,
-	// i.e. WRAP_MODE, UNWRAP_MODE.
-	System.out.println("Testing getKeySpec(Cipher) with WRAP_MODE...");
-	Cipher c = Cipher.getInstance(cipherAlg, "SunJCE");
-	MyPBEKey key = new MyPBEKey(passwd);
-	c.init(Cipher.WRAP_MODE, key);
-	try {
-	    epki.getKeySpec(c);
-	    throw new Exception("Should throw InvalidKeyException");
-	} catch (InvalidKeySpecException npe) {
-	    System.out.println("Expected IKE thrown");
-	}
-	AlgorithmParameters params = c.getParameters();
-	System.out.println("Testing getKeySpec(Cipher) with UNWRAP_MODE...");
-	c.init(Cipher.UNWRAP_MODE, key, params);
-	try {
-	    epki.getKeySpec(c);
-	    throw new Exception("Should throw InvalidKeyException");
-	} catch (InvalidKeySpecException npe) {
-	    System.out.println("Expected IKE thrown");
-	}
-	System.out.println("All Tests Passed");
+        // TEST#1: getKeySpec(Cipher) with Cipher in an illegal state,
+        // i.e. WRAP_MODE, UNWRAP_MODE.
+        System.out.println("Testing getKeySpec(Cipher) with WRAP_MODE...");
+        Cipher c = Cipher.getInstance(cipherAlg, "SunJCE");
+        MyPBEKey key = new MyPBEKey(passwd);
+        c.init(Cipher.WRAP_MODE, key);
+        try {
+            epki.getKeySpec(c);
+            throw new Exception("Should throw InvalidKeyException");
+        } catch (InvalidKeySpecException npe) {
+            System.out.println("Expected IKE thrown");
+        }
+        AlgorithmParameters params = c.getParameters();
+        System.out.println("Testing getKeySpec(Cipher) with UNWRAP_MODE...");
+        c.init(Cipher.UNWRAP_MODE, key, params);
+        try {
+            epki.getKeySpec(c);
+            throw new Exception("Should throw InvalidKeyException");
+        } catch (InvalidKeySpecException npe) {
+            System.out.println("Expected IKE thrown");
+        }
+        System.out.println("All Tests Passed");
     }
 }
 
@@ -81,24 +81,24 @@ class MyPBEKey implements PBEKey {
     private char[] password = null;
 
     MyPBEKey(char[] password) {
-	this.password = (char[]) password.clone();
+        this.password = (char[]) password.clone();
     }
     public int getIterationCount() {
-	return 0;
+        return 0;
     }
     public char[] getPassword() {
-	return (char[]) password.clone();
+        return (char[]) password.clone();
     }
     public byte[] getSalt() {
-	return null;
+        return null;
     }
     public String getAlgorithm() {
-	return "PBE";
+        return "PBE";
     }
     public String getFormat() {
-	return "RAW";
+        return "RAW";
     }
     public byte[] getEncoded() {
-	return new byte[8];
+        return new byte[8];
     }
 }

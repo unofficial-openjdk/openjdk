@@ -79,11 +79,11 @@ public class LUTCompareTest implements ImageObserver {
     }
 
     private static Object lock = new Object();
-    
+
     Image image;
-    
-    boolean isReady = false; 
-        
+
+    boolean isReady = false;
+
     public LUTCompareTest(Image img) {
         this.image = img;
     }
@@ -105,11 +105,11 @@ public class LUTCompareTest implements ImageObserver {
             return true;
         }
     }
-        
+
     public synchronized boolean isImageReady() {
         return isReady;
     }
-    
+
     private static void checkResults(Image image) {
         BufferedImage buf = new BufferedImage(w, h,
                                               BufferedImage.TYPE_INT_RGB);
@@ -138,7 +138,7 @@ public class LUTCompareTest implements ImageObserver {
 
     private static int w = 100;
     private static int h = 100;
-    
+
     /* Create test image with two frames:
      *  1) with {red, red} palette
      *  2) with {blue, red } palette
@@ -146,7 +146,7 @@ public class LUTCompareTest implements ImageObserver {
     private static Image createTestImage() throws IOException  {
         BufferedImage frame1 = createFrame(new int[] { 0xffff0000, 0xffff0000 });
         BufferedImage frame2 = createFrame(new int[] { 0xff0000ff, 0xffff0000 });
-       
+
         ImageWriter writer = ImageIO.getImageWritersByFormatName("GIF").next();
         ImageOutputStream ios = ImageIO.createImageOutputStream(new File("lut_test.gif"));
         ImageWriteParam param = writer.getDefaultWriteParam();
@@ -157,13 +157,13 @@ public class LUTCompareTest implements ImageObserver {
         writer.endWriteSequence();
         writer.reset();
         writer.dispose();
-        
+
         ios.flush();
         ios.close();
-        
+
         return Toolkit.getDefaultToolkit().createImage("lut_test.gif");
     }
-    
+
     private static BufferedImage createFrame(int[] palette) {
         IndexColorModel icm = new IndexColorModel(getNumBits(palette.length),
             palette.length, palette, 0, false, -1, DataBuffer.TYPE_BYTE);
@@ -171,11 +171,11 @@ public class LUTCompareTest implements ImageObserver {
         int[] samples = new int[w * h];
         Arrays.fill(samples, 0);
         wr.setSamples(0, 0, w, h, 0, samples);
-        
+
         BufferedImage img = new BufferedImage(icm, wr, false, null);
         return img;
     }
-    
+
     private static int getNumBits(int size) {
         if (size < 0) {
             throw new RuntimeException("Invalid palette size: " + size);
@@ -192,7 +192,7 @@ public class LUTCompareTest implements ImageObserver {
         "WIDTH", "HEIGHT", "PROPERTIES", "SOMEBITS",
         "FRAMEBITS", "ALLBITS", "ERROR", "ABORT"
     };
-    
+
     private static String dump(int info) {
         String res = "";
         int count = 0;
@@ -203,7 +203,7 @@ public class LUTCompareTest implements ImageObserver {
                 if ((info >> 1) != 0) {
                     res += " ";
                 }
-                
+
             }
             count ++;
             info = (info >> 1);

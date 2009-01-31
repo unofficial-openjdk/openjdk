@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.swing.colorchooser; 
+package javax.swing.colorchooser;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +36,6 @@ import java.io.Serializable;
 /**
   * A better GridLayout class
   *
-  * @version %I% %G%
   * @author Steve Wilson
   */
 class SmartGridLayout implements LayoutManager, Serializable {
@@ -63,7 +62,7 @@ class SmartGridLayout implements LayoutManager, Serializable {
 
     int[] rowHeights = new int[rows];
     int[] columnWidths = new int[columns];
-    
+
     for (int row = 0; row < rows; row++) {
         rowHeights[row] = computeRowHeight(row);
     }
@@ -79,33 +78,33 @@ class SmartGridLayout implements LayoutManager, Serializable {
         int horizLoc = insets.left;
         for (int column = 0; column < columns; column++) {
           int vertLoc = insets.top;
-      
+
           for (int row = 0; row < rows; row++) {
             Component current = layoutGrid[column][row];
 
             current.setBounds(horizLoc, vertLoc, columnWidths[column], rowHeights[row]);
-            //	System.out.println(current.getBounds());
+            //  System.out.println(current.getBounds());
             vertLoc += (rowHeights[row] + yGap);
           }
           horizLoc += (columnWidths[column] + xGap );
         }
-    } else {  
+    } else {
         int horizLoc = c.getWidth() - insets.right;
         for (int column = 0; column < columns; column++) {
           int vertLoc = insets.top;
           horizLoc -= columnWidths[column];
-      
+
           for (int row = 0; row < rows; row++) {
             Component current = layoutGrid[column][row];
 
             current.setBounds(horizLoc, vertLoc, columnWidths[column], rowHeights[row]);
-            //	System.out.println(current.getBounds());
+            //  System.out.println(current.getBounds());
             vertLoc += (rowHeights[row] + yGap);
           }
           horizLoc -= xGap;
         }
     }
-      
+
 
 
   }
@@ -114,12 +113,12 @@ class SmartGridLayout implements LayoutManager, Serializable {
 
     buildLayoutGrid(c);
     Insets insets = c.getInsets();
-    
+
 
 
     int height = 0;
     int width = 0;
-    
+
     for (int row = 0; row < rows; row++) {
         height += computeRowHeight(row);
     }
@@ -135,11 +134,11 @@ class SmartGridLayout implements LayoutManager, Serializable {
 
 
   }
-  
+
   public Dimension preferredLayoutSize(Container c) {
       return minimumLayoutSize(c);
   }
-   
+
 
   public void addLayoutComponent(String s, Component c) {}
 
@@ -151,18 +150,18 @@ class SmartGridLayout implements LayoutManager, Serializable {
       Component[] children = c.getComponents();
 
       for (int componentCount = 0; componentCount < children.length; componentCount++) {
-	//	System.out.println("Children: " +componentCount);
-	int row = 0;
-	int column = 0;
+        //      System.out.println("Children: " +componentCount);
+        int row = 0;
+        int column = 0;
 
-	if (componentCount != 0) {
-	  column = componentCount % columns;
-	  row = (componentCount - column) / columns;
-	}
+        if (componentCount != 0) {
+          column = componentCount % columns;
+          row = (componentCount - column) / columns;
+        }
 
-	//	System.out.println("inserting into: "+ column +  " " + row);
-      
-	layoutGrid[column][row] = children[componentCount];
+        //      System.out.println("inserting into: "+ column +  " " + row);
+
+        layoutGrid[column][row] = children[componentCount];
       }
   }
 
@@ -171,7 +170,7 @@ class SmartGridLayout implements LayoutManager, Serializable {
     for (int row = 0; row < rows; row++) {
       int width = layoutGrid[columnNum][row].getPreferredSize().width;
       if (width > maxWidth) {
-	maxWidth = width;
+        maxWidth = width;
       }
     }
     return maxWidth;
@@ -182,7 +181,7 @@ class SmartGridLayout implements LayoutManager, Serializable {
     for (int column = 0; column < columns; column++) {
       int height = layoutGrid[column][rowNum].getPreferredSize().height;
       if (height > maxHeight) {
-	maxHeight = height;
+        maxHeight = height;
       }
     }
     return maxHeight;

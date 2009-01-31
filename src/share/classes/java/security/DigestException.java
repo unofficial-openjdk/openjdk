@@ -26,30 +26,29 @@
 package java.security;
 
 /**
- * This is the generic Message Digest exception. 
- * 
- * @version %I%, %E%
- * @author Benjamin Renaud 
+ * This is the generic Message Digest exception.
+ *
+ * @author Benjamin Renaud
  */
 public class DigestException extends GeneralSecurityException {
 
     private static final long serialVersionUID = 5821450303093652515L;
 
-    /** 
+    /**
      * Constructs a DigestException with no detail message.  (A
      * detail message is a String that describes this particular
-     * exception.)  
+     * exception.)
      */
     public DigestException() {
-	super();
+        super();
     }
 
-    /** 
+    /**
      * Constructs a DigestException with the specified detail
      * message.  (A detail message is a String that describes this
      * particular exception.)
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
    public DigestException(String msg) {
        super(msg);

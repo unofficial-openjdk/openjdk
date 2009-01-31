@@ -64,12 +64,12 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
     public HttpReceiveSocket(Socket socket, InputStream in, OutputStream out)
         throws IOException
     {
-	super(socket, in, out);
+        super(socket, in, out);
 
-	this.in = new HttpInputStream(in != null ? in :
-	                                           socket.getInputStream());
-	this.out = (out != null ? out :
-	            socket.getOutputStream());
+        this.in = new HttpInputStream(in != null ? in :
+                                                   socket.getInputStream());
+        this.out = (out != null ? out :
+                    socket.getOutputStream());
     }
 
     /**
@@ -77,7 +77,7 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
      */
     public boolean isReusable()
     {
-	return false;
+        return false;
     }
 
     /**
@@ -91,7 +91,7 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
      * "client host" of a remote call; see bugid 4399040).
      */
     public InetAddress getInetAddress() {
-	return null;
+        return null;
     }
 
     /**
@@ -99,14 +99,14 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
      */
     public OutputStream getOutputStream() throws IOException
     {
-	if (!headerSent) { // could this be done in constructor??
-	    DataOutputStream dos = new DataOutputStream(out);
-	    dos.writeBytes("HTTP/1.0 200 OK\r\n");
-	    dos.flush();
-	    headerSent = true;
-	    out = new HttpOutputStream(out);
-	}
-	return out;
+        if (!headerSent) { // could this be done in constructor??
+            DataOutputStream dos = new DataOutputStream(out);
+            dos.writeBytes("HTTP/1.0 200 OK\r\n");
+            dos.flush();
+            headerSent = true;
+            out = new HttpOutputStream(out);
+        }
+        return out;
     }
 
     /**
@@ -114,8 +114,8 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
      */
     public synchronized void close() throws IOException
     {
-	getOutputStream().close(); // make sure response is sent
-	socket.close();
+        getOutputStream().close(); // make sure response is sent
+        socket.close();
     }
 
     /**
@@ -123,6 +123,6 @@ public class HttpReceiveSocket extends WrappedSocket implements RMISocketInfo {
      */
     public String toString()
     {
-	return "HttpReceive" + socket.toString();
+        return "HttpReceive" + socket.toString();
     }
 }

@@ -34,7 +34,7 @@ public class CharsetString {
      * Offset within charsetChars of first character
     **/
     public int offset;
-    
+
     /**
      * Length of the string we represent.
     **/
@@ -49,11 +49,11 @@ public class CharsetString {
      * Creates a new CharsetString
      */
     public CharsetString(char charsetChars[], int offset, int length,
-			 FontDescriptor fontDescriptor){
+                         FontDescriptor fontDescriptor){
 
-	this.charsetChars = charsetChars;
-	this.offset = offset;
-	this.length = length;
-	this.fontDescriptor = fontDescriptor;
+        this.charsetChars = charsetChars;
+        this.offset = offset;
+        this.length = length;
+        this.fontDescriptor = fontDescriptor;
     }
 }

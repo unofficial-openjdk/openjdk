@@ -74,7 +74,7 @@ class Env {
                 connection.disposeVM();
             } catch (VMDisconnectedException e) {
                 // Shutting down after the VM has gone away. This is
-                // not an error, and we just ignore it. 
+                // not an error, and we just ignore it.
             }
         }
         if (message != null) {
@@ -152,7 +152,7 @@ class Env {
     static Method atExitMethod() {
         return atExitMethod;
     }
-        
+
     static void setAtExitMethod(Method mmm) {
         atExitMethod = mmm;
     }
@@ -166,7 +166,7 @@ class Env {
         return sourceMapper.sourceReader(location);
     }
 
-    static synchronized String sourceLine(Location location, int lineNumber) 
+    static synchronized String sourceLine(Location location, int lineNumber)
                                           throws IOException {
         if (lineNumber == -1) {
             throw new IllegalArgumentException();
@@ -174,7 +174,7 @@ class Env {
 
         try {
             String fileName = location.sourceName();
-    
+
             Iterator iter = sourceCache.iterator();
             SourceCode code = null;
             while (iter.hasNext()) {
@@ -205,7 +205,7 @@ class Env {
     /** Return a description of an object. */
     static String description(ObjectReference ref) {
         ReferenceType clazz = ref.referenceType();
-        long id = ref.uniqueID();  
+        long id = ref.uniqueID();
         if (clazz == null) {
             return toHex(id);
         } else {
@@ -217,55 +217,55 @@ class Env {
 
     /** Convert a long to a hexadecimal string. */
     static String toHex(long n) {
-	char s1[] = new char[16];
-	char s2[] = new char[18];
+        char s1[] = new char[16];
+        char s2[] = new char[18];
 
-	/* Store digits in reverse order. */
-	int i = 0;
-	do {
-	    long d = n & 0xf;
-	    s1[i++] = (char)((d < 10) ? ('0' + d) : ('a' + d - 10));
-	} while ((n >>>= 4) > 0);
+        /* Store digits in reverse order. */
+        int i = 0;
+        do {
+            long d = n & 0xf;
+            s1[i++] = (char)((d < 10) ? ('0' + d) : ('a' + d - 10));
+        } while ((n >>>= 4) > 0);
 
-	/* Now reverse the array. */
-	s2[0] = '0';
-	s2[1] = 'x';
-	int j = 2;
-	while (--i >= 0) {
-	    s2[j++] = s1[i];
-	}
-	return new String(s2, 0, j);
+        /* Now reverse the array. */
+        s2[0] = '0';
+        s2[1] = 'x';
+        int j = 2;
+        while (--i >= 0) {
+            s2[j++] = s1[i];
+        }
+        return new String(s2, 0, j);
     }
 
     /** Convert hexadecimal strings to longs. */
     static long fromHex(String hexStr) {
-	String str = hexStr.startsWith("0x") ?
-	    hexStr.substring(2).toLowerCase() : hexStr.toLowerCase();
-	if (hexStr.length() == 0) {
-	    throw new NumberFormatException();
-	}
-	
-	long ret = 0;
-	for (int i = 0; i < str.length(); i++) {
-	    int c = str.charAt(i);
-	    if (c >= '0' && c <= '9') {
-		ret = (ret * 16) + (c - '0');
-	    } else if (c >= 'a' && c <= 'f') {
-		ret = (ret * 16) + (c - 'a' + 10);
-	    } else {
-		throw new NumberFormatException();
-	    }
-	}
-	return ret;
+        String str = hexStr.startsWith("0x") ?
+            hexStr.substring(2).toLowerCase() : hexStr.toLowerCase();
+        if (hexStr.length() == 0) {
+            throw new NumberFormatException();
+        }
+
+        long ret = 0;
+        for (int i = 0; i < str.length(); i++) {
+            int c = str.charAt(i);
+            if (c >= '0' && c <= '9') {
+                ret = (ret * 16) + (c - '0');
+            } else if (c >= 'a' && c <= 'f') {
+                ret = (ret * 16) + (c - 'a' + 10);
+            } else {
+                throw new NumberFormatException();
+            }
+        }
+        return ret;
     }
-    
+
     static ReferenceType getReferenceTypeFromToken(String idToken) {
         ReferenceType cls = null;
         if (Character.isDigit(idToken.charAt(0))) {
             cls = null;
         } else if (idToken.startsWith("*.")) {
         // This notation saves typing by letting the user omit leading
-        // package names. The first 
+        // package names. The first
         // loaded class whose name matches this limited regular
         // expression is selected.
         idToken = idToken.substring(1);
@@ -327,7 +327,7 @@ class Env {
             if (index >= sourceLines.size()) {
                 return null;
             } else {
-                return (String)sourceLines.get(index);  
+                return (String)sourceLines.get(index);
             }
         }
     }

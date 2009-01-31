@@ -31,19 +31,19 @@ import java.io.*;
 import javax.script.*;
 
 public class Test7 {
-	public static void main(String[] args) throws Exception {
+        public static void main(String[] args) throws Exception {
             System.out.println("\nTest7\n");
             File file =
                 new File(System.getProperty("test.src", "."), "Test7.js");
-	    Reader r = new FileReader(file);
+            Reader r = new FileReader(file);
             ScriptEngineManager m = new ScriptEngineManager();
-	    ScriptEngine eng = m.getEngineByName("js");
+            ScriptEngine eng = m.getEngineByName("js");
             eng.put("filename", file.getAbsolutePath());
-	    eng.eval(r);
+            eng.eval(r);
             String str = (String)eng.get("firstLine");
             // do not change first line in Test7.js -- we check it here!
             if (!str.equals("//this is the first line of Test7.js")) {
                 throw new RuntimeException("unexpected first line");
             }
-	}
+        }
 }

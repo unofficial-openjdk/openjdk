@@ -27,7 +27,7 @@ package com.sun.jdi;
 
 /**
  * The type of all primitive double values accessed in
- * the target VM. Calls to {@link Value#type} will return an 
+ * the target VM. Calls to {@link Value#type} will return an
  * implementor of this interface.
  *
  * @see DoubleValue
@@ -38,4 +38,3 @@ package com.sun.jdi;
 public interface DoubleType extends PrimitiveType
 {
 }
-

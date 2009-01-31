@@ -62,5 +62,3 @@ abstract class ValueImpl extends MirrorImpl implements Value {
 
     abstract byte typeValueKey();
 }
-
-

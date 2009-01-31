@@ -37,9 +37,9 @@ import sun.java2d.pipe.DrawImage;
 
 public class D3DDrawImage extends DrawImage {
     protected void renderImageXform(SunGraphics2D sg, Image img,
-				    AffineTransform tx, int interpType,
-				    int sx1, int sy1, int sx2, int sy2,
-				    Color bgColor)
+                                    AffineTransform tx, int interpType,
+                                    int sx1, int sy1, int sx2, int sy2,
+                                    Color bgColor)
     {
         // punt to the MediaLib-based transformImage() in the superclass if:
         //     - bicubic interpolation is specified
@@ -48,33 +48,33 @@ public class D3DDrawImage extends DrawImage {
         //     - an appropriate TransformBlit primitive could not be found
         if (interpType != AffineTransformOp.TYPE_BICUBIC) {
             SurfaceData dstData = sg.surfaceData;
-	    SurfaceData srcData =
-		dstData.getSourceSurfaceData(img,
+            SurfaceData srcData =
+                dstData.getSourceSurfaceData(img,
                                              sg.TRANSFORM_GENERIC,
                                              sg.imageComp,
                                              bgColor);
 
-	    if (srcData != null &&
-		!isBgOperation(srcData, bgColor) &&
-		srcData.getSurfaceType() == D3DSurfaceData.D3DTexture)
-	    {
+            if (srcData != null &&
+                !isBgOperation(srcData, bgColor) &&
+                srcData.getSurfaceType() == D3DSurfaceData.D3DTexture)
+            {
                 SurfaceType srcType = srcData.getSurfaceType();
                 SurfaceType dstType = dstData.getSurfaceType();
-		TransformBlit blit = TransformBlit.getFromCache(srcType,
-								sg.imageComp,
-								dstType);
+                TransformBlit blit = TransformBlit.getFromCache(srcType,
+                                                                sg.imageComp,
+                                                                dstType);
 
-		if (blit != null) {
-		    blit.Transform(srcData, dstData,
-				   sg.composite, sg.getCompClip(),
-				   tx, interpType,
-				   sx1, sy1, 0, 0, sx2-sx1, sy2-sy1);
-		    return;
-		}
-	    }
-	}
+                if (blit != null) {
+                    blit.Transform(srcData, dstData,
+                                   sg.composite, sg.getCompClip(),
+                                   tx, interpType,
+                                   sx1, sy1, 0, 0, sx2-sx1, sy2-sy1);
+                    return;
+                }
+            }
+        }
 
-	super.renderImageXform(sg, img, tx, interpType,
-			       sx1, sy1, sx2, sy2, bgColor);
+        super.renderImageXform(sg, img, tx, interpType,
+                               sx1, sy1, sx2, sy2, bgColor);
     }
 }

@@ -33,10 +33,10 @@
 /*
  * Header signatures
  */
-#define LOCSIG 0x04034b50L	    /* "PK\003\004" */
-#define EXTSIG 0x08074b50L	    /* "PK\007\008" */
-#define CENSIG 0x02014b50L	    /* "PK\001\002" */
-#define ENDSIG 0x06054b50L	    /* "PK\005\006" */
+#define LOCSIG 0x04034b50L          /* "PK\003\004" */
+#define EXTSIG 0x08074b50L          /* "PK\007\008" */
+#define CENSIG 0x02014b50L          /* "PK\001\002" */
+#define ENDSIG 0x06054b50L          /* "PK\005\006" */
 
 /*
  * Header sizes including signatures
@@ -60,55 +60,55 @@
 /*
  * Macros for getting local file (LOC) header fields
  */
-#define LOCVER(b) SH(b, 4)	    /* version needed to extract */
-#define LOCFLG(b) SH(b, 6)	    /* general purpose bit flags */
-#define LOCHOW(b) SH(b, 8)	    /* compression method */
-#define LOCTIM(b) LG(b, 10)	    /* modification time */
-#define LOCCRC(b) LG(b, 14)	    /* crc of uncompressed data */
-#define LOCSIZ(b) LG(b, 18)	    /* compressed data size */
-#define LOCLEN(b) LG(b, 22)	    /* uncompressed data size */
-#define LOCNAM(b) SH(b, 26)	    /* filename length */
-#define LOCEXT(b) SH(b, 28)	    /* extra field length */
+#define LOCVER(b) SH(b, 4)          /* version needed to extract */
+#define LOCFLG(b) SH(b, 6)          /* general purpose bit flags */
+#define LOCHOW(b) SH(b, 8)          /* compression method */
+#define LOCTIM(b) LG(b, 10)         /* modification time */
+#define LOCCRC(b) LG(b, 14)         /* crc of uncompressed data */
+#define LOCSIZ(b) LG(b, 18)         /* compressed data size */
+#define LOCLEN(b) LG(b, 22)         /* uncompressed data size */
+#define LOCNAM(b) SH(b, 26)         /* filename length */
+#define LOCEXT(b) SH(b, 28)         /* extra field length */
 
 /*
  * Macros for getting extra local (EXT) header fields
  */
-#define EXTCRC(b) LG(b, 4)	    /* crc of uncompressed data */
-#define EXTSIZ(b) LG(b, 8)	    /* compressed size */
+#define EXTCRC(b) LG(b, 4)          /* crc of uncompressed data */
+#define EXTSIZ(b) LG(b, 8)          /* compressed size */
 #define EXTLEN(b) LG(b, 12)         /* uncompressed size */
 
 /*
  * Macros for getting central directory header (CEN) fields
  */
-#define CENVEM(b) SH(b, 4)	    /* version made by */
-#define CENVER(b) SH(b, 6)	    /* version needed to extract */
-#define CENFLG(b) SH(b, 8)	    /* general purpose bit flags */
-#define CENHOW(b) SH(b, 10)	    /* compression method */
-#define CENTIM(b) LG(b, 12)	    /* modification time */
-#define CENCRC(b) LG(b, 16)	    /* crc of uncompressed data */
-#define CENSIZ(b) LG(b, 20)	    /* compressed size */
-#define CENLEN(b) LG(b, 24)	    /* uncompressed size */
-#define CENNAM(b) SH(b, 28)	    /* length of filename */
-#define CENEXT(b) SH(b, 30)	    /* length of extra field */
-#define CENCOM(b) SH(b, 32)	    /* file comment length */
-#define CENDSK(b) SH(b, 34)	    /* disk number start */
-#define CENATT(b) SH(b, 36)	    /* internal file attributes */
-#define CENATX(b) LG(b, 38)	    /* external file attributes */
-#define CENOFF(b) LG(b, 42)	    /* offset of local header */
+#define CENVEM(b) SH(b, 4)          /* version made by */
+#define CENVER(b) SH(b, 6)          /* version needed to extract */
+#define CENFLG(b) SH(b, 8)          /* general purpose bit flags */
+#define CENHOW(b) SH(b, 10)         /* compression method */
+#define CENTIM(b) LG(b, 12)         /* modification time */
+#define CENCRC(b) LG(b, 16)         /* crc of uncompressed data */
+#define CENSIZ(b) LG(b, 20)         /* compressed size */
+#define CENLEN(b) LG(b, 24)         /* uncompressed size */
+#define CENNAM(b) SH(b, 28)         /* length of filename */
+#define CENEXT(b) SH(b, 30)         /* length of extra field */
+#define CENCOM(b) SH(b, 32)         /* file comment length */
+#define CENDSK(b) SH(b, 34)         /* disk number start */
+#define CENATT(b) SH(b, 36)         /* internal file attributes */
+#define CENATX(b) LG(b, 38)         /* external file attributes */
+#define CENOFF(b) LG(b, 42)         /* offset of local header */
 
 /*
  * Macros for getting end of central directory header (END) fields
  */
-#define ENDSUB(b) SH(b, 8)	    /* number of entries on this disk */
-#define ENDTOT(b) SH(b, 10)	    /* total number of entries */
-#define ENDSIZ(b) LG(b, 12)	    /* central directory size */
-#define ENDOFF(b) LG(b, 16)	    /* central directory offset */
-#define ENDCOM(b) SH(b, 20)	    /* size of zip file comment */
+#define ENDSUB(b) SH(b, 8)          /* number of entries on this disk */
+#define ENDTOT(b) SH(b, 10)         /* total number of entries */
+#define ENDSIZ(b) LG(b, 12)         /* central directory size */
+#define ENDOFF(b) LG(b, 16)         /* central directory offset */
+#define ENDCOM(b) SH(b, 20)         /* size of zip file comment */
 
 /*
  * Supported compression methods
  */
-#define STORED	    0
+#define STORED      0
 #define DEFLATED    8
 
 /*
@@ -126,14 +126,14 @@
  */
 
 typedef struct jzentry {  /* Zip file entry */
-    char *name;		  /* entry name */
-    jlong time;		  /* modification time */
-    jlong size;		  /* size of uncompressed data */
-    jlong csize;	  /* size of compressed data (zero if uncompressed) */
-    jint crc;		  /* crc of uncompressed data */
-    char *comment;	  /* optional zip file comment */
-    jbyte *extra;	  /* optional extra data */
-    jlong pos;		  /* position of LOC header or entry data */
+    char *name;           /* entry name */
+    jlong time;           /* modification time */
+    jlong size;           /* size of uncompressed data */
+    jlong csize;          /* size of compressed data (zero if uncompressed) */
+    jint crc;             /* crc of uncompressed data */
+    char *comment;        /* optional zip file comment */
+    jbyte *extra;         /* optional extra data */
+    jlong pos;            /* position of LOC header or entry data */
 } jzentry;
 
 /*
@@ -150,7 +150,7 @@ typedef struct jzcell {
 } jzcell;
 
 typedef struct cencache {
-    char *data;		  /* A cached page of CEN headers */
+    char *data;           /* A cached page of CEN headers */
     jlong pos;            /* file offset of data */
 } cencache;
 
@@ -168,33 +168,33 @@ typedef struct cencache {
  * Descriptor for a ZIP file.
  */
 typedef struct jzfile {   /* Zip file */
-    char *name;	  	  /* zip file name */
-    jint refs;		  /* number of active references */
-    jlong len;		  /* length (in bytes) of zip file */
+    char *name;           /* zip file name */
+    jint refs;            /* number of active references */
+    jlong len;            /* length (in bytes) of zip file */
 #ifdef USE_MMAP
     unsigned char *maddr; /* beginning address of the CEN & ENDHDR */
     jlong mlen;           /* length (in bytes) mmaped */
-    off_t offset;         /* offset of the mmapped region from the 
-			     start of the file. */
+    off_t offset;         /* offset of the mmapped region from the
+                             start of the file. */
 #else
-    cencache cencache;	  /* CEN header cache */
+    cencache cencache;    /* CEN header cache */
 #endif
-    ZFILE zfd;		  /* open file descriptor */
-    void *lock;		  /* read lock */
-    char *comment; 	  /* zip file comment */
-    char *msg;		  /* zip error message */
+    ZFILE zfd;            /* open file descriptor */
+    void *lock;           /* read lock */
+    char *comment;        /* zip file comment */
+    char *msg;            /* zip error message */
     jzcell *entries;      /* array of hash cells */
-    jint total;	  	  /* total number of entries */
-    jint *table;	  /* Hash chain heads: indexes into entries */
-    jint tablelen;	  /* number of hash heads */
+    jint total;           /* total number of entries */
+    jint *table;          /* Hash chain heads: indexes into entries */
+    jint tablelen;        /* number of hash heads */
     struct jzfile *next;  /* next zip file in search list */
     jzentry *cache;       /* we cache the most recently freed jzentry */
     /* Information on metadata names in META-INF directory */
     char **metanames;     /* array of meta names (may have null names) */
     jint metacurrent;     /* the next empty slot in metanames array */
-    jint metacount;	  /* number of slots in metanames array */
+    jint metacount;       /* number of slots in metanames array */
     jlong lastModified;   /* last modified time */
-    jlong locpos;	  /* position of first LOC header (usually 0) */
+    jlong locpos;         /* position of first LOC header (usually 0) */
 } jzfile;
 
 /*
@@ -226,7 +226,7 @@ ZIP_Put_In_Cache(const char *name, ZFILE zfd, char **pmsg, jlong lastModified);
 void JNICALL
 ZIP_Close(jzfile *zip);
 
-jzentry * ZIP_GetEntry(jzfile *zip, char *name, jint ulen); 
+jzentry * ZIP_GetEntry(jzfile *zip, char *name, jint ulen);
 void ZIP_Lock(jzfile *zip);
 void ZIP_Unlock(jzfile *zip);
 jint ZIP_Read(jzfile *zip, jzentry *entry, jlong pos, void *buf, jint len);

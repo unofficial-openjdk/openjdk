@@ -32,7 +32,6 @@ import java.util.EventListener;
  * CellEditorListener defines the interface for an object that listens
  * to changes in a CellEditor
  *
- * @version %I% %G%
  * @author Alan Chung
  */
 
@@ -44,4 +43,3 @@ public interface CellEditorListener extends java.util.EventListener {
     /** This tells the listeners the editor has canceled editing */
     public void editingCanceled(ChangeEvent e);
 }
-

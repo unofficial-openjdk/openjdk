@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   @test
   @bug 6502358
   @summary focus is not restored after programmatic iconification and restoring
@@ -56,4 +56,3 @@ public class FrameMinimizeTest {
         }
     }
 }
-

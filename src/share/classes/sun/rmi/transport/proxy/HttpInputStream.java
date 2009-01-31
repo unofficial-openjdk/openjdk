@@ -47,55 +47,55 @@ class HttpInputStream extends FilterInputStream {
      */
     public HttpInputStream(InputStream in) throws IOException
     {
-	super(in);
+        super(in);
 
-	if (in.markSupported())
-	    in.mark(0); // prevent resetting back to old marks
+        if (in.markSupported())
+            in.mark(0); // prevent resetting back to old marks
 
-	// pull out header, looking for content length
+        // pull out header, looking for content length
 
-	DataInputStream dis = new DataInputStream(in);
-	String key = "Content-length:".toLowerCase();
-	boolean contentLengthFound = false;
-	String line;
-	do {
-	    line = dis.readLine();
+        DataInputStream dis = new DataInputStream(in);
+        String key = "Content-length:".toLowerCase();
+        boolean contentLengthFound = false;
+        String line;
+        do {
+            line = dis.readLine();
 
-	    if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
-		RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-		    "received header line: \"" + line + "\"");
-	    }
+            if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
+                RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                    "received header line: \"" + line + "\"");
+            }
 
-	    if (line == null)
-		throw new EOFException();
+            if (line == null)
+                throw new EOFException();
 
-	    if (line.toLowerCase().startsWith(key)) {
-		if (contentLengthFound)
-		    ; // what would we want to do in this case??
-		bytesLeft =
-		    Integer.parseInt(line.substring(key.length()).trim());
-		contentLengthFound = true;
-	    }
+            if (line.toLowerCase().startsWith(key)) {
+                if (contentLengthFound)
+                    ; // what would we want to do in this case??
+                bytesLeft =
+                    Integer.parseInt(line.substring(key.length()).trim());
+                contentLengthFound = true;
+            }
 
-	    // The idea here is to go past the first blank line.
-	    // Some DataInputStream.readLine() documentation specifies that
-	    // it does include the line-terminating character(s) in the
-	    // returned string, but it actually doesn't, so we'll cover
-	    // all cases here...
-	} while ((line.length() != 0) &&
-	         (line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
+            // The idea here is to go past the first blank line.
+            // Some DataInputStream.readLine() documentation specifies that
+            // it does include the line-terminating character(s) in the
+            // returned string, but it actually doesn't, so we'll cover
+            // all cases here...
+        } while ((line.length() != 0) &&
+                 (line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
 
-	if (!contentLengthFound || bytesLeft < 0) {
-	    // This really shouldn't happen, but if it does, shoud we fail??
-	    // For now, just give up and let a whole lot of bytes through...
-	    bytesLeft = Integer.MAX_VALUE;
-	}
-	bytesLeftAtMark = bytesLeft;
+        if (!contentLengthFound || bytesLeft < 0) {
+            // This really shouldn't happen, but if it does, shoud we fail??
+            // For now, just give up and let a whole lot of bytes through...
+            bytesLeft = Integer.MAX_VALUE;
+        }
+        bytesLeftAtMark = bytesLeft;
 
-	if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-		"content length: " + bytesLeft);
-	}
+        if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
+            RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                "content length: " + bytesLeft);
+        }
     }
 
     /**
@@ -105,11 +105,11 @@ class HttpInputStream extends FilterInputStream {
      */
     public int available() throws IOException
     {
-	int bytesAvailable = in.available();
-	if (bytesAvailable > bytesLeft)
-	    bytesAvailable = bytesLeft;
+        int bytesAvailable = in.available();
+        if (bytesAvailable > bytesLeft)
+            bytesAvailable = bytesLeft;
 
-	return bytesAvailable;
+        return bytesAvailable;
     }
 
     /**
@@ -119,47 +119,47 @@ class HttpInputStream extends FilterInputStream {
      */
     public int read() throws IOException
     {
-	if (bytesLeft > 0) {
-	    int data = in.read();
-	    if (data != -1)
-		-- bytesLeft;
+        if (bytesLeft > 0) {
+            int data = in.read();
+            if (data != -1)
+                -- bytesLeft;
 
-	    if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
-		RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-		   "received byte: '" +
-		    ((data & 0x7F) < ' ' ? " " : String.valueOf((char) data)) +
-		    "' " + data);
-	    }
+            if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
+                RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                   "received byte: '" +
+                    ((data & 0x7F) < ' ' ? " " : String.valueOf((char) data)) +
+                    "' " + data);
+            }
 
-	    return data;	
-	}
-	else {
-	    RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-						"read past content length");
+            return data;
+        }
+        else {
+            RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                                                "read past content length");
 
-	    return -1;
-	}
+            return -1;
+        }
     }
 
     public int read(byte b[], int off, int len) throws IOException
     {
-	if (bytesLeft == 0 && len > 0) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-						"read past content length");
+        if (bytesLeft == 0 && len > 0) {
+            RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                                                "read past content length");
 
-	    return -1;
-	}
-	if (len > bytesLeft)
-	    len = bytesLeft;
-	int bytesRead = in.read(b, off, len);
-	bytesLeft -= bytesRead;
+            return -1;
+        }
+        if (len > bytesLeft)
+            len = bytesLeft;
+        int bytesRead = in.read(b, off, len);
+        bytesLeft -= bytesRead;
 
-	if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
-		"read " + bytesRead + " bytes, " + bytesLeft + " remaining");
-	}
+        if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.VERBOSE)) {
+            RMIMasterSocketFactory.proxyLog.log(Log.VERBOSE,
+                "read " + bytesRead + " bytes, " + bytesLeft + " remaining");
+        }
 
-	return bytesRead;
+        return bytesRead;
     }
 
     /**
@@ -170,9 +170,9 @@ class HttpInputStream extends FilterInputStream {
      */
     public void mark(int readlimit)
     {
-	in.mark(readlimit);
-	if (in.markSupported())
-	    bytesLeftAtMark = bytesLeft;
+        in.mark(readlimit);
+        if (in.markSupported())
+            bytesLeftAtMark = bytesLeft;
     }
 
     /**
@@ -181,8 +181,8 @@ class HttpInputStream extends FilterInputStream {
      */
     public void reset() throws IOException
     {
-	in.reset();
-	bytesLeft = bytesLeftAtMark;
+        in.reset();
+        bytesLeft = bytesLeftAtMark;
     }
 
     /**
@@ -192,10 +192,10 @@ class HttpInputStream extends FilterInputStream {
      */
     public long skip(long n) throws IOException
     {
-	if (n > bytesLeft)
-	    n = bytesLeft;
-	long bytesSkipped = in.skip(n);
-	bytesLeft -= bytesSkipped;
-	return bytesSkipped;
+        if (n > bytesLeft)
+            n = bytesLeft;
+        long bytesSkipped = in.skip(n);
+        bytesLeft -= bytesSkipped;
+        return bytesSkipped;
     }
 }

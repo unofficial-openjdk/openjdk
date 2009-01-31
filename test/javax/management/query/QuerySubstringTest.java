@@ -145,7 +145,7 @@ public class QuerySubstringTest {
         System.out.println(
           "\n--- Test javax.management.Query.{initial|any|final}SubString ---");
 
-	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         error += query(mbs, 1, pattern, data);
 
@@ -154,10 +154,10 @@ public class QuerySubstringTest {
         error += query(mbs, 3, pattern, data);
 
         if (error > 0) {
-	    System.out.println("\nTest failed! " + error + " errors.\n");
+            System.out.println("\nTest failed! " + error + " errors.\n");
             throw new IllegalArgumentException("Test failed");
-	} else {
-	    System.out.println("\nTest passed!\n");            
+        } else {
+            System.out.println("\nTest passed!\n");
         }
     }
 }

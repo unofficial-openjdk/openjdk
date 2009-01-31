@@ -93,7 +93,6 @@ package java.util;
  * @param <V> the type of mapped values
  *
  * @author  Josh Bloch and Doug Lea
- * @version 1.73, 05/10/06
  * @see Map
  * @see HashMap
  * @see Hashtable
@@ -237,7 +236,7 @@ public class TreeMap<K,V>
      *
      * @param value value whose presence in this map is to be tested
      * @return <tt>true</tt> if a mapping to <tt>value</tt> exists;
-     *	       <tt>false</tt> otherwise
+     *         <tt>false</tt> otherwise
      * @since 1.2
      */
     public boolean containsValue(Object value) {
@@ -309,14 +308,14 @@ public class TreeMap<K,V>
         if (size==0 && mapSize!=0 && map instanceof SortedMap) {
             Comparator c = ((SortedMap)map).comparator();
             if (c == comparator || (c != null && c.equals(comparator))) {
-		++modCount;
-		try {
-		    buildFromSorted(mapSize, map.entrySet().iterator(),
-				    null, null);
-		} catch (java.io.IOException cannotHappen) {
-		} catch (ClassNotFoundException cannotHappen) {
-		}
-		return;
+                ++modCount;
+                try {
+                    buildFromSorted(mapSize, map.entrySet().iterator(),
+                                    null, null);
+                } catch (java.io.IOException cannotHappen) {
+                } catch (ClassNotFoundException cannotHappen) {
+                }
+                return;
             }
         }
         super.putAll(map);
@@ -340,7 +339,7 @@ public class TreeMap<K,V>
             return getEntryUsingComparator(key);
         if (key == null)
             throw new NullPointerException();
-	Comparable<? super K> k = (Comparable<? super K>) key;
+        Comparable<? super K> k = (Comparable<? super K>) key;
         Entry<K,V> p = root;
         while (p != null) {
             int cmp = k.compareTo(p.key);
@@ -361,7 +360,7 @@ public class TreeMap<K,V>
      * worthwhile here.)
      */
     final Entry<K,V> getEntryUsingComparator(Object key) {
-	K k = (K) key;
+        K k = (K) key;
         Comparator<? super K> cpr = comparator;
         if (cpr != null) {
             Entry<K,V> p = root;
@@ -528,11 +527,11 @@ public class TreeMap<K,V>
     public V put(K key, V value) {
         Entry<K,V> t = root;
         if (t == null) {
-	    // TBD:
-	    // 5045147: (coll) Adding null to an empty TreeSet should
-	    // throw NullPointerException
-	    //
-	    // compare(key, key); // type check
+            // TBD:
+            // 5045147: (coll) Adding null to an empty TreeSet should
+            // throw NullPointerException
+            //
+            // compare(key, key); // type check
             root = new Entry<K,V>(key, value, null);
             size = 1;
             modCount++;
@@ -1110,7 +1109,7 @@ public class TreeMap<K,V>
             return next != null;
         }
 
-	final Entry<K,V> nextEntry() {
+        final Entry<K,V> nextEntry() {
             Entry<K,V> e = next;
             if (e == null)
                 throw new NoSuchElementException();
@@ -1318,7 +1317,7 @@ public class TreeMap<K,V>
          */
 
         final TreeMap.Entry<K,V> absLowest() {
-	    TreeMap.Entry<K,V> e =
+            TreeMap.Entry<K,V> e =
                 (fromStart ?  m.getFirstEntry() :
                  (loInclusive ? m.getCeilingEntry(lo) :
                                 m.getHigherEntry(lo)));
@@ -1326,7 +1325,7 @@ public class TreeMap<K,V>
         }
 
         final TreeMap.Entry<K,V> absHighest() {
-	    TreeMap.Entry<K,V> e =
+            TreeMap.Entry<K,V> e =
                 (toEnd ?  m.getLastEntry() :
                  (hiInclusive ?  m.getFloorEntry(hi) :
                                  m.getLowerEntry(hi)));
@@ -1336,28 +1335,28 @@ public class TreeMap<K,V>
         final TreeMap.Entry<K,V> absCeiling(K key) {
             if (tooLow(key))
                 return absLowest();
-	    TreeMap.Entry<K,V> e = m.getCeilingEntry(key);
+            TreeMap.Entry<K,V> e = m.getCeilingEntry(key);
             return (e == null || tooHigh(e.key)) ? null : e;
         }
 
         final TreeMap.Entry<K,V> absHigher(K key) {
             if (tooLow(key))
                 return absLowest();
-	    TreeMap.Entry<K,V> e = m.getHigherEntry(key);
+            TreeMap.Entry<K,V> e = m.getHigherEntry(key);
             return (e == null || tooHigh(e.key)) ? null : e;
         }
 
         final TreeMap.Entry<K,V> absFloor(K key) {
             if (tooHigh(key))
                 return absHighest();
-	    TreeMap.Entry<K,V> e = m.getFloorEntry(key);
+            TreeMap.Entry<K,V> e = m.getFloorEntry(key);
             return (e == null || tooLow(e.key)) ? null : e;
         }
 
         final TreeMap.Entry<K,V> absLower(K key) {
             if (tooHigh(key))
                 return absHighest();
-	    TreeMap.Entry<K,V> e = m.getLowerEntry(key);
+            TreeMap.Entry<K,V> e = m.getLowerEntry(key);
             return (e == null || tooLow(e.key)) ? null : e;
         }
 
@@ -1468,7 +1467,7 @@ public class TreeMap<K,V>
         }
 
         public final Map.Entry<K,V> pollFirstEntry() {
-	    TreeMap.Entry<K,V> e = subLowest();
+            TreeMap.Entry<K,V> e = subLowest();
             Map.Entry<K,V> result = exportEntry(e);
             if (e != null)
                 m.deleteEntry(e);
@@ -1476,7 +1475,7 @@ public class TreeMap<K,V>
         }
 
         public final Map.Entry<K,V> pollLastEntry() {
-	    TreeMap.Entry<K,V> e = subHighest();
+            TreeMap.Entry<K,V> e = subHighest();
             Map.Entry<K,V> result = exportEntry(e);
             if (e != null)
                 m.deleteEntry(e);
@@ -1595,7 +1594,7 @@ public class TreeMap<K,V>
                 if (m.modCount != expectedModCount)
                     throw new ConcurrentModificationException();
                 next = successor(e);
-		lastReturned = e;
+                lastReturned = e;
                 return e;
             }
 
@@ -1606,7 +1605,7 @@ public class TreeMap<K,V>
                 if (m.modCount != expectedModCount)
                     throw new ConcurrentModificationException();
                 next = predecessor(e);
-		lastReturned = e;
+                lastReturned = e;
                 return e;
             }
 
@@ -1859,7 +1858,7 @@ public class TreeMap<K,V>
      * @serial include
      */
     private class SubMap extends AbstractMap<K,V>
-	implements SortedMap<K,V>, java.io.Serializable {
+        implements SortedMap<K,V>, java.io.Serializable {
         private static final long serialVersionUID = -6520786458950516097L;
         private boolean fromStart = false, toEnd = false;
         private K fromKey, toKey;
@@ -1889,7 +1888,7 @@ public class TreeMap<K,V>
      */
 
     static final class Entry<K,V> implements Map.Entry<K,V> {
-	K key;
+        K key;
         V value;
         Entry<K,V> left = null;
         Entry<K,V> right = null;
@@ -2044,7 +2043,7 @@ public class TreeMap<K,V>
 
     private static <K,V> void setColor(Entry<K,V> p, boolean c) {
         if (p != null)
-	    p.color = c;
+            p.color = c;
     }
 
     private static <K,V> Entry<K,V> leftOf(Entry<K,V> p) {
@@ -2300,11 +2299,11 @@ public class TreeMap<K,V>
 
     /** Intended to be called only from TreeSet.addAll */
     void addAllForTreeSet(SortedSet<? extends K> set, V defaultVal) {
-	try {
-	    buildFromSorted(set.size(), set.iterator(), null, defaultVal);
-	} catch (java.io.IOException cannotHappen) {
-	} catch (ClassNotFoundException cannotHappen) {
-	}
+        try {
+            buildFromSorted(set.size(), set.iterator(), null, defaultVal);
+        } catch (java.io.IOException cannotHappen) {
+        } catch (ClassNotFoundException cannotHappen) {
+        }
     }
 
 
@@ -2339,12 +2338,12 @@ public class TreeMap<K,V>
      *         This cannot occur if str is null.
      */
     private void buildFromSorted(int size, Iterator it,
-				 java.io.ObjectInputStream str,
-				 V defaultVal)
+                                 java.io.ObjectInputStream str,
+                                 V defaultVal)
         throws  java.io.IOException, ClassNotFoundException {
         this.size = size;
         root = buildFromSorted(0, 0, size-1, computeRedLevel(size),
-			       it, str, defaultVal);
+                               it, str, defaultVal);
     }
 
     /**
@@ -2362,10 +2361,10 @@ public class TreeMap<K,V>
      *        Must be equal to computeRedLevel for tree of this size.
      */
     private final Entry<K,V> buildFromSorted(int level, int lo, int hi,
-					     int redLevel,
-					     Iterator it,
-					     java.io.ObjectInputStream str,
-					     V defaultVal)
+                                             int redLevel,
+                                             Iterator it,
+                                             java.io.ObjectInputStream str,
+                                             V defaultVal)
         throws  java.io.IOException, ClassNotFoundException {
         /*
          * Strategy: The root is the middlemost element. To get to it, we
@@ -2386,7 +2385,7 @@ public class TreeMap<K,V>
         Entry<K,V> left  = null;
         if (lo < mid)
             left = buildFromSorted(level+1, lo, mid - 1, redLevel,
-				   it, str, defaultVal);
+                                   it, str, defaultVal);
 
         // extract key and/or value from iterator or stream
         K key;
@@ -2418,7 +2417,7 @@ public class TreeMap<K,V>
 
         if (mid < hi) {
             Entry<K,V> right = buildFromSorted(level+1, mid+1, hi, redLevel,
-					       it, str, defaultVal);
+                                               it, str, defaultVal);
             middle.right = right;
             right.parent = middle;
         }

@@ -25,8 +25,8 @@
  * @test
  * @bug 6266377
  * @summary Test to ensure that BufferedWriter releases
- *	resources if flushing the buffer results in an
- *	exception during a call to close().
+ *      resources if flushing the buffer results in an
+ *      exception during a call to close().
  */
 
 import java.io.*;
@@ -38,61 +38,61 @@ public class Cleanup extends Thread {
     static boolean isWriterClosed = false;
 
     public void run() {
-	try {
-	    System.out.println("Reader reading...");
+        try {
+            System.out.println("Reader reading...");
             r.read(new char[2048], 0, 2048);
 
             // Close abruptly before reading all the bytes
-	    System.out.println("Reader closing stream...");
+            System.out.println("Reader closing stream...");
             r.close();
 
             Thread.sleep(3000);
         } catch (Throwable e) {
-	    System.out.println("Reader exception:");
-	    e.printStackTrace();
-	}
+            System.out.println("Reader exception:");
+            e.printStackTrace();
+        }
     }
 
     public static void main(String args[]) throws Exception {
-	r = new PipedReader();
-      	w = new PipedWriter(r);
+        r = new PipedReader();
+        w = new PipedWriter(r);
 
-	Cleanup reader  = new Cleanup();
-	reader.start();
+        Cleanup reader  = new Cleanup();
+        reader.start();
 
-	BufferedWriter bw = new BufferedWriter(w);
+        BufferedWriter bw = new BufferedWriter(w);
 
-	boolean isWriterClosed = false;
+        boolean isWriterClosed = false;
 
         try {
-	    System.out.println("Writer started.");
+            System.out.println("Writer started.");
 
-	    for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 3; i++) {
               bw.write(new char[1024], 0, (1024));
-	    }
+            }
 
-	    // This call to close() will raise an exception during
-	    // flush() since the reader is already closed
-	    bw.close();
+            // This call to close() will raise an exception during
+            // flush() since the reader is already closed
+            bw.close();
 
         } catch (Throwable e) {
-	    try {
+            try {
                 e.printStackTrace();
 
-		// Make sure that the BufferedWriter releases the resources
-		// A write to a properly closed Writer should raise an exception
-	        bw.write('a');
+                // Make sure that the BufferedWriter releases the resources
+                // A write to a properly closed Writer should raise an exception
+                bw.write('a');
 
-	    } catch (IOException ex) {
+            } catch (IOException ex) {
                 ex.printStackTrace();
-		isWriterClosed = true;
-	    }
+                isWriterClosed = true;
+            }
         } finally {
             System.out.println("Writer done.");
-	    reader.join();
-	    if (!isWriterClosed) {
-		throw new Exception("BufferedWriter is not closed properly");
-	    }
-    	}
+            reader.join();
+            if (!isWriterClosed) {
+                throw new Exception("BufferedWriter is not closed properly");
+            }
+        }
     }
 }

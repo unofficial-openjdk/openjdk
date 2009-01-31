@@ -35,7 +35,7 @@ typedef int (*SplashLoadMemory_t)(void* pdata, int size);
 typedef int (*SplashLoadFile_t)(const char* filename);
 typedef void (*SplashInit_t)(void);
 typedef void (*SplashClose_t)(void);
-typedef void (*SplashSetFileJarName_t)(const char* fileName, 
+typedef void (*SplashSetFileJarName_t)(const char* fileName,
                                        const char* jarName);
 
 /*

@@ -47,7 +47,6 @@ import java.util.EventListener;
  *
  * @author Chet Haase
  * @author Brent Christian
- * @version %W% %E%
  * @since 1.4
  */
 public interface DisplayChangedListener extends EventListener {

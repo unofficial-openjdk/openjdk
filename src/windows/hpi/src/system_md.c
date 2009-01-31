@@ -55,10 +55,10 @@ static int lookupSignal()
     EnterCriticalSection(&userSigMon);
     for (i = 0; i < NSIG; i++) {
         if (pending_signals[i]) {
-	    pending_signals[i]--;
-	    LeaveCriticalSection(&userSigMon);
-	    return i;
-	}
+            pending_signals[i]--;
+            LeaveCriticalSection(&userSigMon);
+            return i;
+        }
     }
     LeaveCriticalSection(&userSigMon);
     return -1;
@@ -174,28 +174,28 @@ sysGetLastErrorString(char *buf, int len)
     long errval;
 
     if ((errval = GetLastError()) != 0) {
-	/* DOS error */
-	int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
-			      NULL, errval,
-			      0, buf, len, NULL);
-	if (n > 3) {
-	    /* Drop final '.', CR, LF */
-	    if (buf[n - 1] == '\n') n--;
-	    if (buf[n - 1] == '\r') n--;
-	    if (buf[n - 1] == '.') n--;
-	    buf[n] = '\0';
-	}
-	return n;
+        /* DOS error */
+        int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+                              NULL, errval,
+                              0, buf, len, NULL);
+        if (n > 3) {
+            /* Drop final '.', CR, LF */
+            if (buf[n - 1] == '\n') n--;
+            if (buf[n - 1] == '\r') n--;
+            if (buf[n - 1] == '.') n--;
+            buf[n] = '\0';
+        }
+        return n;
     }
 
     if (errno != 0) {
-	/* C runtime error that has no corresponding DOS error code */
-	const char *s = strerror(errno);
-	int n = strlen(s);
-	if (n >= len) n = len - 1;
-	strncpy(buf, s, n);
-	buf[n] = '\0';
-	return n;
+        /* C runtime error that has no corresponding DOS error code */
+        const char *s = strerror(errno);
+        int n = strlen(s);
+        if (n >= len) n = len - 1;
+        strncpy(buf, s, n);
+        buf[n] = '\0';
+        return n;
     }
 
     return 0;

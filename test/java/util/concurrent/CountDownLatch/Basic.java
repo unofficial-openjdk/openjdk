@@ -44,48 +44,48 @@ abstract class Awaiter extends Thread {
 public class Basic {
 
     private void toTheStartingGate(CountDownLatch gate) {
-	try {
-	    gate.await();
+        try {
+            gate.await();
         }
-	catch (Throwable t) { fail(t); }
+        catch (Throwable t) { fail(t); }
     }
 
     private Awaiter awaiter(final CountDownLatch latch,
-			    final CountDownLatch gate) {
-	return new Awaiter() { public void run() {
+                            final CountDownLatch gate) {
+        return new Awaiter() { public void run() {
             System.out.println("without millis: " + latch.toString());
             gate.countDown();
 
-	    try {
+            try {
                 latch.await();
                 System.out.println("without millis - ComingOut");
             }
-	    catch (Throwable result) { result(result); }}};
+            catch (Throwable result) { result(result); }}};
     }
 
     private Awaiter awaiter(final CountDownLatch latch,
                             final CountDownLatch gate,
-			    final long millis) {
-	return new Awaiter() { public void run() {
+                            final long millis) {
+        return new Awaiter() { public void run() {
             System.out.println("with millis: "+latch.toString());
             gate.countDown();
 
-	    try {
+            try {
                 latch.await(millis, TimeUnit.MILLISECONDS);
                 System.out.println("with millis - ComingOut");
             }
-	    catch (Throwable result) { result(result); }}};
+            catch (Throwable result) { result(result); }}};
     }
 
     private AwaiterFactory awaiterFactories(final CountDownLatch latch,
                                             final CountDownLatch gate,
-					    final int i) {
+                                            final int i) {
         if (i == 1)
             return new AwaiterFactory() { public Awaiter getAwaiter() {
-		return awaiter(latch, gate); }};
+                return awaiter(latch, gate); }};
 
         return new AwaiterFactory() { public Awaiter getAwaiter() {
-	    return awaiter(latch, gate, 10000); }};
+            return awaiter(latch, gate, 10000); }};
     }
 
     //----------------------------------------------------------------
@@ -144,8 +144,8 @@ public class Basic {
             a[i].join();
 
         for (int i = 0; i < 12; i++)
-	    checkResult(a[i],
-			(i % 4) == 3 ? InterruptedException.class : null);
+            checkResult(a[i],
+                        (i % 4) == 3 ? InterruptedException.class : null);
     }
 
     //----------------------------------------------------------------
@@ -176,39 +176,39 @@ public class Basic {
             a[i].join();
 
         for (int i = 0; i < 12; i++)
-	    checkResult(a[i], null);
+            checkResult(a[i], null);
     }
 
     public static void main(String[] args) throws Throwable {
         normalUse();
         threadInterrupted();
         timeOut();
-	if (failures.get() > 0L)
-	    throw new AssertionError(failures.get() + " failures");
+        if (failures.get() > 0L)
+            throw new AssertionError(failures.get() + " failures");
     }
 
     private static final AtomicInteger failures = new AtomicInteger(0);
 
     private static void fail(String msg) {
-	fail(new AssertionError(msg));
+        fail(new AssertionError(msg));
     }
 
     private static void fail(Throwable t) {
-	t.printStackTrace();
-	failures.getAndIncrement();
+        t.printStackTrace();
+        failures.getAndIncrement();
     }
 
     private static void checkCount(CountDownLatch b, int expected) {
-	if (b.getCount() != expected)
-	    fail("Count = " + b.getCount() +
-		 ", expected = " + expected);
+        if (b.getCount() != expected)
+            fail("Count = " + b.getCount() +
+                 ", expected = " + expected);
     }
 
     private static void checkResult(Awaiter a, Class c) {
-	Throwable t = a.result();
-	if (! ((t == null && c == null) || c.isInstance(t))) {
-	    System.out.println("Mismatch: " + t + ", " + c.getName());
-	    failures.getAndIncrement();
-	}
+        Throwable t = a.result();
+        if (! ((t == null && c == null) || c.isInstance(t))) {
+            System.out.println("Mismatch: " + t + ", " + c.getName());
+            failures.getAndIncrement();
+        }
     }
 }

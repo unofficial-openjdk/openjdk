@@ -122,7 +122,6 @@ import sun.util.LocaleServiceProviderPool;
  * @see         CollationKey
  * @see         CollationElementIterator
  * @see         Locale
- * @version     %I%, %G%
  * @author      Helena Shih, Laura Werner, Richard Gillam
  */
 
@@ -174,7 +173,7 @@ public abstract class Collator
     /**
      * Decomposition mode value. With NO_DECOMPOSITION
      * set, accented characters will not be decomposed for collation. This
-     * is the default setting and provides the fastest collation but 
+     * is the default setting and provides the fastest collation but
      * will only produce correct results for languages that do not use accents.
      * @see java.text.Collator#getDecomposition
      * @see java.text.Collator#setDecomposition
@@ -183,13 +182,13 @@ public abstract class Collator
 
     /**
      * Decomposition mode value. With CANONICAL_DECOMPOSITION
-     * set, characters that are canonical variants according to Unicode 
-     * standard will be decomposed for collation. This should be used to get 
+     * set, characters that are canonical variants according to Unicode
+     * standard will be decomposed for collation. This should be used to get
      * correct collation of accented characters.
      * <p>
      * CANONICAL_DECOMPOSITION corresponds to Normalization Form D as
-     * described in 
-     * <a href="http://www.unicode.org/unicode/reports/tr15/tr15-23.html">Unicode 
+     * described in
+     * <a href="http://www.unicode.org/unicode/reports/tr15/tr15-23.html">Unicode
      * Technical Report #15</a>.
      * @see java.text.Collator#getDecomposition
      * @see java.text.Collator#setDecomposition
@@ -207,8 +206,8 @@ public abstract class Collator
      * decomposition mode.
      * <p>
      * FULL_DECOMPOSITION corresponds to Normalization Form KD as
-     * described in 
-     * <a href="http://www.unicode.org/unicode/reports/tr15/tr15-23.html">Unicode 
+     * described in
+     * <a href="http://www.unicode.org/unicode/reports/tr15/tr15-23.html">Unicode
      * Technical Report #15</a>.
      * @see java.text.Collator#getDecomposition
      * @see java.text.Collator#setDecomposition
@@ -240,14 +239,14 @@ public abstract class Collator
                  return (Collator)result.clone();  // make the world safe
         }
 
-        // Check whether a provider can provide an implementation that's closer 
+        // Check whether a provider can provide an implementation that's closer
         // to the requested locale than what the Java runtime itself can provide.
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CollatorProvider.class);
         if (pool.hasProviders()) {
             Collator providersInstance = pool.getLocalizedObject(
                                             CollatorGetter.INSTANCE,
-                                            desiredLocale, 
+                                            desiredLocale,
                                             desiredLocale);
             if (providersInstance != null) {
                 return providersInstance;
@@ -283,7 +282,7 @@ public abstract class Collator
         // into their decomposed equivalents, the default collators don't need
         // to have decomposition turned on.  Laura, 5/5/98, bug 4114077
         result.setDecomposition(NO_DECOMPOSITION);
-        
+
         cache.put(desiredLocale,result);
         return (Collator)result.clone();
     }
@@ -316,10 +315,10 @@ public abstract class Collator
      * <p>
      * This implementation merely returns
      *  <code> compare((String)o1, (String)o2) </code>.
-     * 
+     *
      * @return a negative integer, zero, or a positive integer as the
      *         first argument is less than, equal to, or greater than the
-     *         second. 
+     *         second.
      * @exception ClassCastException the arguments cannot be cast to Strings.
      * @see java.util.Comparator
      * @since   1.2
@@ -439,19 +438,19 @@ public abstract class Collator
      * Returns an array of all locales for which the
      * <code>getInstance</code> methods of this class can return
      * localized instances.
-     * The returned array represents the union of locales supported 
-     * by the Java runtime and by installed 
-     * {@link java.text.spi.CollatorProvider CollatorProvider} implementations.  
-     * It must contain at least a Locale instance equal to 
+     * The returned array represents the union of locales supported
+     * by the Java runtime and by installed
+     * {@link java.text.spi.CollatorProvider CollatorProvider} implementations.
+     * It must contain at least a Locale instance equal to
      * {@link java.util.Locale#US Locale.US}.
      *
      * @return An array of locales for which localized
      *         <code>Collator</code> instances are available.
      */
     public static synchronized Locale[] getAvailableLocales() {
-        LocaleServiceProviderPool pool = 
+        LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CollatorProvider.class);
-	return pool.getAvailableLocales();
+        return pool.getAvailableLocales();
     }
 
     /**
@@ -526,15 +525,15 @@ public abstract class Collator
     final static int GREATER = 1;
 
     /**
-     * Obtains a Collator instance from a CollatorProvider 
+     * Obtains a Collator instance from a CollatorProvider
      * implementation.
      */
-    private static class CollatorGetter 
+    private static class CollatorGetter
         implements LocaleServiceProviderPool.LocalizedObjectGetter<CollatorProvider, Collator> {
         private static final CollatorGetter INSTANCE = new CollatorGetter();
 
         public Collator getObject(CollatorProvider collatorProvider,
-                                Locale locale, 
+                                Locale locale,
                                 String key,
                                 Object... params) {
             assert params.length == 1;
@@ -547,7 +546,7 @@ public abstract class Collator
                 cache.put(locale, result);
                 return (Collator)result.clone();
             }
-            
+
             return null;
         }
     }

@@ -44,13 +44,13 @@ static JNINativeMethod methods[] = {
 JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_registerNatives(JNIEnv *env, jclass cls)
 {
-    (*env)->RegisterNatives(env, cls, methods, 
-			    sizeof(methods)/sizeof(JNINativeMethod));
+    (*env)->RegisterNatives(env, cls, methods,
+                            sizeof(methods)/sizeof(JNINativeMethod));
 }
 
-/* Convert java string to UTF char*. Use local buffer if possible, 
+/* Convert java string to UTF char*. Use local buffer if possible,
    otherwise malloc new memory. Returns null IFF malloc failed. */
-static char* 
+static char*
 getUTF(JNIEnv *env, jstring str, char* localBuf, int bufSize)
 {
     char* utfStr = NULL;
@@ -58,13 +58,13 @@ getUTF(JNIEnv *env, jstring str, char* localBuf, int bufSize)
     int len = (*env)->GetStringUTFLength(env, str);
     int unicode_len = (*env)->GetStringLength(env, str);
     if (len >= bufSize) {
-	utfStr = malloc(len + 1);
-	if (utfStr == NULL) {
-	    JNU_ThrowOutOfMemoryError(env, NULL);
-	    return NULL;
-	}
+        utfStr = malloc(len + 1);
+        if (utfStr == NULL) {
+            JNU_ThrowOutOfMemoryError(env, NULL);
+            return NULL;
+        }
     } else {
-	utfStr = localBuf;
+        utfStr = localBuf;
     }
     (*env)->GetStringUTFRegion(env, str, 0, unicode_len, utfStr);
 
@@ -75,25 +75,25 @@ getUTF(JNIEnv *env, jstring str, char* localBuf, int bufSize)
 // supports a private method.  This method will be changed in 1.7.
 JNIEXPORT jclass JNICALL
 Java_java_lang_ClassLoader_defineClass0(JNIEnv *env,
-					jobject loader,
-					jstring name,
-					jbyteArray data,
-					jint offset,
-					jint length,
-					jobject pd)
+                                        jobject loader,
+                                        jstring name,
+                                        jbyteArray data,
+                                        jint offset,
+                                        jint length,
+                                        jobject pd)
 {
     return Java_java_lang_ClassLoader_defineClass1(env, loader, name, data, offset,
-						   length, pd, NULL);
+                                                   length, pd, NULL);
 }
 
 JNIEXPORT jclass JNICALL
 Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
-					jobject loader,
-					jstring name,
-					jbyteArray data,
-					jint offset,
-					jint length,
-					jobject pd,
+                                        jobject loader,
+                                        jstring name,
+                                        jbyteArray data,
+                                        jint offset,
+                                        jint length,
+                                        jobject pd,
                                         jstring source)
 {
     jbyte *body;
@@ -104,8 +104,8 @@ Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
     char sourceBuf[1024];
 
     if (data == NULL) {
-	JNU_ThrowNullPointerException(env, 0);
-	return 0;
+        JNU_ThrowNullPointerException(env, 0);
+        return 0;
     }
 
     /* Work around 4153825. malloc crashes on Solaris when passed a
@@ -113,14 +113,14 @@ Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
      */
     if (length < 0) {
         JNU_ThrowArrayIndexOutOfBoundsException(env, 0);
-	return 0;
+        return 0;
     }
 
     body = (jbyte *)malloc(length);
 
     if (body == 0) {
         JNU_ThrowOutOfMemoryError(env, 0);
-	return 0;
+        return 0;
     }
 
     (*env)->GetByteArrayRegion(env, data, offset, length, body);
@@ -129,32 +129,32 @@ Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
         goto free_body;
 
     if (name != NULL) {
-	utfName = getUTF(env, name, buf, sizeof(buf));
-	if (utfName == NULL) {
-	    JNU_ThrowOutOfMemoryError(env, NULL);
-	    goto free_body;
-	}
-	VerifyFixClassname(utfName);
+        utfName = getUTF(env, name, buf, sizeof(buf));
+        if (utfName == NULL) {
+            JNU_ThrowOutOfMemoryError(env, NULL);
+            goto free_body;
+        }
+        VerifyFixClassname(utfName);
     } else {
-	utfName = NULL;
+        utfName = NULL;
     }
 
     if (source != NULL) {
         utfSource = getUTF(env, source, sourceBuf, sizeof(sourceBuf));
-	if (utfSource == NULL) {
-	    JNU_ThrowOutOfMemoryError(env, NULL);
-	    goto free_utfName;
-	}
+        if (utfSource == NULL) {
+            JNU_ThrowOutOfMemoryError(env, NULL);
+            goto free_utfName;
+        }
     } else {
-	utfSource = NULL;
+        utfSource = NULL;
     }
-    result = JVM_DefineClassWithSource(env, utfName, loader, body, length, pd, utfSource); 
+    result = JVM_DefineClassWithSource(env, utfName, loader, body, length, pd, utfSource);
 
-    if (utfSource && utfSource != sourceBuf) 
+    if (utfSource && utfSource != sourceBuf)
         free(utfSource);
 
  free_utfName:
-    if (utfName && utfName != buf) 
+    if (utfName && utfName != buf)
         free(utfName);
 
  free_body:
@@ -164,13 +164,13 @@ Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
 
 JNIEXPORT jclass JNICALL
 Java_java_lang_ClassLoader_defineClass2(JNIEnv *env,
-					jobject loader,
-					jstring name,
-					jobject data,
-					jint offset,
-					jint length,
-					jobject pd,
-					jstring source)
+                                        jobject loader,
+                                        jstring name,
+                                        jobject data,
+                                        jint offset,
+                                        jint length,
+                                        jobject pd,
+                                        jstring source)
 {
     jbyte *body;
     char *utfName;
@@ -182,44 +182,44 @@ Java_java_lang_ClassLoader_defineClass2(JNIEnv *env,
     assert(data != NULL); // caller fails if data is null.
     assert(length >= 0);  // caller passes ByteBuffer.remaining() for length, so never neg.
     // caller passes ByteBuffer.position() for offset, and capacity() >= position() + remaining()
-    assert((*env)->GetDirectBufferCapacity(env, data) >= (offset + length));  
+    assert((*env)->GetDirectBufferCapacity(env, data) >= (offset + length));
 
     body = (*env)->GetDirectBufferAddress(env, data);
 
     if (body == 0) {
         JNU_ThrowNullPointerException(env, 0);
-	return 0;
+        return 0;
     }
 
     body += offset;
 
     if (name != NULL) {
-	utfName = getUTF(env, name, buf, sizeof(buf));
-	if (utfName == NULL) {
-	    JNU_ThrowOutOfMemoryError(env, NULL);
-	    return result;
-	}
-	VerifyFixClassname(utfName);
+        utfName = getUTF(env, name, buf, sizeof(buf));
+        if (utfName == NULL) {
+            JNU_ThrowOutOfMemoryError(env, NULL);
+            return result;
+        }
+        VerifyFixClassname(utfName);
     } else {
-	utfName = NULL;
+        utfName = NULL;
     }
 
     if (source != NULL) {
         utfSource = getUTF(env, source, sourceBuf, sizeof(sourceBuf));
-	if (utfSource == NULL) {
-	    JNU_ThrowOutOfMemoryError(env, NULL);
-	    goto free_utfName;
-	}
+        if (utfSource == NULL) {
+            JNU_ThrowOutOfMemoryError(env, NULL);
+            goto free_utfName;
+        }
     } else {
-	utfSource = NULL;
+        utfSource = NULL;
     }
-    result = JVM_DefineClassWithSource(env, utfName, loader, body, length, pd, utfSource); 
+    result = JVM_DefineClassWithSource(env, utfName, loader, body, length, pd, utfSource);
 
-    if (utfSource && utfSource != sourceBuf) 
+    if (utfSource && utfSource != sourceBuf)
         free(utfSource);
 
  free_utfName:
-    if (utfName && utfName != buf) 
+    if (utfName && utfName != buf)
         free(utfName);
 
     return result;
@@ -227,19 +227,19 @@ Java_java_lang_ClassLoader_defineClass2(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_resolveClass0(JNIEnv *env, jobject this,
-					 jclass cls)
+                                         jclass cls)
 {
     if (cls == NULL) {
-	JNU_ThrowNullPointerException(env, 0);
-	return;
+        JNU_ThrowNullPointerException(env, 0);
+        return;
     }
 
     JVM_ResolveClass(env, cls);
 }
 
 JNIEXPORT jclass JNICALL
-Java_java_lang_ClassLoader_findBootstrapClass(JNIEnv *env, jobject loader, 
-					      jstring classname)
+Java_java_lang_ClassLoader_findBootstrapClass(JNIEnv *env, jobject loader,
+                                              jstring classname)
 {
     char *clname;
     jclass cls = 0;
@@ -247,37 +247,37 @@ Java_java_lang_ClassLoader_findBootstrapClass(JNIEnv *env, jobject loader,
 
     if (classname == NULL) {
         JNU_ThrowClassNotFoundException(env, 0);
-	return 0;
+        return 0;
     }
 
     clname = getUTF(env, classname, buf, sizeof(buf));
     if (clname == NULL) {
-	JNU_ThrowOutOfMemoryError(env, NULL);
-	return NULL;
+        JNU_ThrowOutOfMemoryError(env, NULL);
+        return NULL;
     }
     VerifyFixClassname(clname);
 
     if (!VerifyClassname(clname, JNI_TRUE)) {  /* expects slashed name */
         JNU_ThrowClassNotFoundException(env, clname);
-	goto done;
+        goto done;
     }
 
     cls = JVM_FindClassFromClassLoader(env, clname, JNI_FALSE, 0, JNI_FALSE);
 
  done:
     if (clname != buf) {
-    	free(clname);
+        free(clname);
     }
 
     return cls;
 }
 
 JNIEXPORT jclass JNICALL
-Java_java_lang_ClassLoader_findLoadedClass0(JNIEnv *env, jobject loader, 
-					   jstring name)
+Java_java_lang_ClassLoader_findLoadedClass0(JNIEnv *env, jobject loader,
+                                           jstring name)
 {
     if (name == NULL) {
-	return 0;
+        return 0;
     } else {
         return JVM_FindLoadedClass(env, loader, name);
     }
@@ -289,16 +289,16 @@ static jfieldID jniVersionID;
 static jboolean initIDs(JNIEnv *env)
 {
     if (handleID == 0) {
-        jclass this = 
-	    (*env)->FindClass(env, "java/lang/ClassLoader$NativeLibrary");
-	if (this == 0)
-	    return JNI_FALSE;
+        jclass this =
+            (*env)->FindClass(env, "java/lang/ClassLoader$NativeLibrary");
+        if (this == 0)
+            return JNI_FALSE;
         handleID = (*env)->GetFieldID(env, this, "handle", "J");
-	if (handleID == 0)
-	    return JNI_FALSE;
-	jniVersionID = (*env)->GetFieldID(env, this, "jniVersion", "I");
-	if (jniVersionID == 0)
-	    return JNI_FALSE;
+        if (handleID == 0)
+            return JNI_FALSE;
+        jniVersionID = (*env)->GetFieldID(env, this, "jniVersion", "I");
+        if (jniVersionID == 0)
+            return JNI_FALSE;
     }
     return JNI_TRUE;
 }
@@ -311,7 +311,7 @@ typedef void (JNICALL *JNI_OnUnload_t)(JavaVM *, void *);
  * Method:    load
  * Signature: (Ljava/lang/String;)J
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_00024NativeLibrary_load
   (JNIEnv *env, jobject this, jstring name)
 {
@@ -330,48 +330,48 @@ Java_java_lang_ClassLoader_00024NativeLibrary_load
     if (handle) {
         const char *onLoadSymbols[] = JNI_ONLOAD_SYMBOLS;
         JNI_OnLoad_t JNI_OnLoad;
-	int i;
-	for (i = 0; i < sizeof(onLoadSymbols) / sizeof(char *); i++) {
-	    JNI_OnLoad = (JNI_OnLoad_t) 
-	        JVM_FindLibraryEntry(handle, onLoadSymbols[i]);
-	    if (JNI_OnLoad) {
-	        break;
-	    }
-	}
-	if (JNI_OnLoad) {
-	    JavaVM *jvm;
-	    (*env)->GetJavaVM(env, &jvm);
-	    jniVersion = (*JNI_OnLoad)(jvm, NULL);
-	} else {
-	    jniVersion = 0x00010001;
-	}
+        int i;
+        for (i = 0; i < sizeof(onLoadSymbols) / sizeof(char *); i++) {
+            JNI_OnLoad = (JNI_OnLoad_t)
+                JVM_FindLibraryEntry(handle, onLoadSymbols[i]);
+            if (JNI_OnLoad) {
+                break;
+            }
+        }
+        if (JNI_OnLoad) {
+            JavaVM *jvm;
+            (*env)->GetJavaVM(env, &jvm);
+            jniVersion = (*JNI_OnLoad)(jvm, NULL);
+        } else {
+            jniVersion = 0x00010001;
+        }
 
-	cause = (*env)->ExceptionOccurred(env);
-	if (cause) {
- 	    (*env)->ExceptionClear(env);
-	    (*env)->Throw(env, cause);
-	    JVM_UnloadLibrary(handle);
-	    goto done;
-	}
-   
-	if (!JVM_IsSupportedJNIVersion(jniVersion)) {
-	    char msg[256];
-	    jio_snprintf(msg, sizeof(msg),
-			 "unsupported JNI version 0x%08X required by %s",
-			 jniVersion, cname);
-	    JNU_ThrowByName(env, "java/lang/UnsatisfiedLinkError", msg);
-	    JVM_UnloadLibrary(handle);
-	    goto done;
-	}
-	(*env)->SetIntField(env, this, jniVersionID, jniVersion);
+        cause = (*env)->ExceptionOccurred(env);
+        if (cause) {
+            (*env)->ExceptionClear(env);
+            (*env)->Throw(env, cause);
+            JVM_UnloadLibrary(handle);
+            goto done;
+        }
+
+        if (!JVM_IsSupportedJNIVersion(jniVersion)) {
+            char msg[256];
+            jio_snprintf(msg, sizeof(msg),
+                         "unsupported JNI version 0x%08X required by %s",
+                         jniVersion, cname);
+            JNU_ThrowByName(env, "java/lang/UnsatisfiedLinkError", msg);
+            JVM_UnloadLibrary(handle);
+            goto done;
+        }
+        (*env)->SetIntField(env, this, jniVersionID, jniVersion);
     } else {
-	cause = (*env)->ExceptionOccurred(env);
-	if (cause) {
-	    (*env)->ExceptionClear(env);
-	    (*env)->SetLongField(env, this, handleID, (jlong)NULL);
-	    (*env)->Throw(env, cause);
-	}
-	goto done;
+        cause = (*env)->ExceptionOccurred(env);
+        if (cause) {
+            (*env)->ExceptionClear(env);
+            (*env)->SetLongField(env, this, handleID, (jlong)NULL);
+            (*env)->Throw(env, cause);
+        }
+        goto done;
     }
     (*env)->SetLongField(env, this, handleID, ptr_to_jlong(handle));
 
@@ -384,7 +384,7 @@ Java_java_lang_ClassLoader_00024NativeLibrary_load
  * Method:    unload
  * Signature: ()V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_00024NativeLibrary_unload
   (JNIEnv *env, jobject this)
 {
@@ -399,15 +399,15 @@ Java_java_lang_ClassLoader_00024NativeLibrary_unload
     handle = jlong_to_ptr((*env)->GetLongField(env, this, handleID));
     for (i = 0; i < sizeof(onUnloadSymbols) / sizeof(char *); i++) {
         JNI_OnUnload = (JNI_OnUnload_t )
-	    JVM_FindLibraryEntry(handle, onUnloadSymbols[i]);
-	if (JNI_OnUnload) {
-	    break;
-	}
+            JVM_FindLibraryEntry(handle, onUnloadSymbols[i]);
+        if (JNI_OnUnload) {
+            break;
+        }
     }
 
     if (JNI_OnUnload) {
         JavaVM *jvm;
-	(*env)->GetJavaVM(env, &jvm);
+        (*env)->GetJavaVM(env, &jvm);
         (*JNI_OnUnload)(jvm, NULL);
     }
     JVM_UnloadLibrary(handle);
@@ -418,7 +418,7 @@ Java_java_lang_ClassLoader_00024NativeLibrary_unload
  * Method:    find
  * Signature: (Ljava/lang/String;J)J
  */
-JNIEXPORT jlong JNICALL 
+JNIEXPORT jlong JNICALL
 Java_java_lang_ClassLoader_00024NativeLibrary_find
   (JNIEnv *env, jobject this, jstring name)
 {

@@ -37,50 +37,50 @@ public class B6449504 {
 
     public static void main (String[] args) throws Exception {
 
-	boolean caching = args[0].equals ("caching");
+        boolean caching = args[0].equals ("caching");
 
-	String dirname = System.getProperty ("test.classes");
-	File f = new File (dirname);
-	dirname = f.toURI().toString();
+        String dirname = System.getProperty ("test.classes");
+        File f = new File (dirname);
+        dirname = f.toURI().toString();
 
-	String u = "jar:"+ dirname + "/bar.jar";
-	URL url = new URL (u+"!/DoesNotExist.txt");
-	System.out.println ("url = " + url);
-	JarURLConnection j1 = (JarURLConnection)url.openConnection();
+        String u = "jar:"+ dirname + "/bar.jar";
+        URL url = new URL (u+"!/DoesNotExist.txt");
+        System.out.println ("url = " + url);
+        JarURLConnection j1 = (JarURLConnection)url.openConnection();
 
-	URL url2 = new URL (u+"!/test.txt");
-	System.out.println ("url2 = " + url2);
-	JarURLConnection j2 = (JarURLConnection)url2.openConnection();
+        URL url2 = new URL (u+"!/test.txt");
+        System.out.println ("url2 = " + url2);
+        JarURLConnection j2 = (JarURLConnection)url2.openConnection();
 
-    	j1.setUseCaches (caching);
-    	j2.setUseCaches (caching);
-	
-	/* connecting to j2 opens the jar file but does not read it */
+        j1.setUseCaches (caching);
+        j2.setUseCaches (caching);
 
-    	j2.connect ();
+        /* connecting to j2 opens the jar file but does not read it */
 
-	try {
-	    /* attempt to read a non-existing entry in the jar file
-	     * shows the bug, where the jar file is closed after the
-	     * attempt fails.
-	     */
-	    InputStream is = j1.getInputStream ();
-	} catch (IOException e) {
-	    System.out.println ("Got expected exception from j1 ");
-	}
+        j2.connect ();
 
-	/* If bug present, this will fail because we think the jar
-	 * is ready to be read, after the connect() above, but we
-	 * get a ZipException because it has been closed
-	 */
-    	InputStream is = j2.getInputStream ();
-    	readAndClose (is);
-    	System.out.println ("OK");
+        try {
+            /* attempt to read a non-existing entry in the jar file
+             * shows the bug, where the jar file is closed after the
+             * attempt fails.
+             */
+            InputStream is = j1.getInputStream ();
+        } catch (IOException e) {
+            System.out.println ("Got expected exception from j1 ");
+        }
+
+        /* If bug present, this will fail because we think the jar
+         * is ready to be read, after the connect() above, but we
+         * get a ZipException because it has been closed
+         */
+        InputStream is = j2.getInputStream ();
+        readAndClose (is);
+        System.out.println ("OK");
     }
 
     static void readAndClose (InputStream is) throws IOException {
-	while (is.read() != -1) ;
- 	is.close();
+        while (is.read() != -1) ;
+        is.close();
     }
 
 }

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/* 
+/*
  * eventFilter
  *
  * This module handles event filteration and the enabling/disabling
@@ -130,8 +130,8 @@ typedef struct EventFilterPrivate_HandlerNode_ {
 } EventFilterPrivate_HandlerNode;
 
 /**
- * The following macros extract filter info (EventFilters) from private 
- * data at the end of a HandlerNode 
+ * The following macros extract filter info (EventFilters) from private
+ * data at the end of a HandlerNode
  */
 #define EVENT_FILTERS(node) (&(((EventFilterPrivate_HandlerNode*)(void*)node)->ef))
 #define FILTER_COUNT(node)  (EVENT_FILTERS(node)->filterCount)
@@ -149,23 +149,23 @@ HandlerNode *
 eventFilterRestricted_alloc(jint filterCount)
 {
     /*LINTED*/
-    size_t size = offsetof(EventFilterPrivate_HandlerNode, ef) + 
-                  offsetof(EventFilters, filters) + 
+    size_t size = offsetof(EventFilterPrivate_HandlerNode, ef) +
+                  offsetof(EventFilters, filters) +
                   (filterCount * (int)sizeof(Filter));
     HandlerNode *node = jvmtiAllocate((jint)size);
 
     if (node != NULL) {
-        int i;        
+        int i;
         Filter *filter;
 
         (void)memset(node, 0, size);
-        
+
         FILTER_COUNT(node) = filterCount;
-        
+
         /* Initialize all modifiers
          */
-        for (i = 0, filter = FILTERS_ARRAY(node); 
-                                    i < filterCount; 
+        for (i = 0, filter = FILTERS_ARRAY(node);
+                                    i < filterCount;
                                     i++, filter++) {
             filter->modifier = JDWP_REQUEST_NONE;
         }
@@ -174,9 +174,9 @@ eventFilterRestricted_alloc(jint filterCount)
     return node;
 }
 
-/** 
- * Free up global refs held by the filter. 
- * free things up at the JNI level if needed. 
+/**
+ * Free up global refs held by the filter.
+ * free things up at the JNI level if needed.
  */
 static jvmtiError
 clearFilters(HandlerNode *node)
@@ -242,7 +242,7 @@ clearFilters(HandlerNode *node)
  * Match a string against a wildcard
  * string pattern.
  */
-static jboolean 
+static jboolean
 patternStringMatch(char *classname, const char *pattern)
 {
     int pattLen;
@@ -256,8 +256,8 @@ patternStringMatch(char *classname, const char *pattern)
     pattLen = (int)strlen(pattern);
 
     if ((pattern[0] != '*') && (pattern[pattLen-1] != '*')) {
-        /* An exact match is required when there is no *: bug 4331522 */ 
-        return strcmp(pattern, classname) == 0; 
+        /* An exact match is required when there is no *: bug 4331522 */
+        return strcmp(pattern, classname) == 0;
     } else {
         compLen = pattLen - 1;
         offset = (int)strlen(classname) - compLen;
@@ -294,7 +294,7 @@ eventInstance(EventInfo *evinfo)
         case EI_METHOD_EXIT:
         case EI_EXCEPTION:
         case EI_EXCEPTION_CATCH:
-        case EI_MONITOR_CONTENDED_ENTER: 
+        case EI_MONITOR_CONTENDED_ENTER:
         case EI_MONITOR_CONTENDED_ENTERED:
         case EI_MONITOR_WAIT:
         case EI_MONITOR_WAITED:
@@ -310,7 +310,7 @@ eventInstance(EventInfo *evinfo)
     }
 
     error = methodModifiers(method, &modifiers);
-    
+
     /* fail if error or static (0x8) */
     if (error == JVMTI_ERROR_NONE && thread!=NULL && (modifiers & 0x8) == 0) {
         FrameNumber fnum            = 0;
@@ -320,27 +320,27 @@ eventInstance(EventInfo *evinfo)
         if (error != JVMTI_ERROR_NONE)
             object = NULL;
     }
-    
+
     return object;
 }
 
 /*
  * Determine if this event is interesting to this handler.
  * Do so by checking each of the handler's filters.
- * Return false if any of the filters fail, 
+ * Return false if any of the filters fail,
  * true if the handler wants this event.
- * Anyone modifying this function should check 
- * eventFilterRestricted_passesUnloadFilter and 
+ * Anyone modifying this function should check
+ * eventFilterRestricted_passesUnloadFilter and
  * eventFilter_predictFiltering as well.
  *
  * If shouldDelete is returned true, a count filter has expired
  * and the corresponding node should be deleted.
  */
-jboolean 
+jboolean
 eventFilterRestricted_passesFilter(JNIEnv *env,
                                    char *classname,
-                                   EventInfo *evinfo, 
-                                   HandlerNode *node, 
+                                   EventInfo *evinfo,
+                                   HandlerNode *node,
                                    jboolean *shouldDelete)
 {
     jthread thread;
@@ -371,55 +371,55 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                     return JNI_FALSE;
                 }
                 break;
-        
+
             case JDWP_REQUEST_MODIFIER(ClassOnly):
                 /* Class filters catch events in the specified
-                 * class and any subclass/subinterface.  
+                 * class and any subclass/subinterface.
                  */
                 if (!JNI_FUNC_PTR(env,IsAssignableFrom)(env, clazz,
                                filter->u.ClassOnly.clazz)) {
                     return JNI_FALSE;
                 }
                 break;
-        
+
             /* This is kinda cheating assumming the event
              * fields will be in the same locations, but it is
-             * true now. 
+             * true now.
              */
             case JDWP_REQUEST_MODIFIER(LocationOnly):
-                if  (evinfo->method != 
+                if  (evinfo->method !=
                           filter->u.LocationOnly.method ||
-                     evinfo->location != 
+                     evinfo->location !=
                           filter->u.LocationOnly.location ||
                      !isSameObject(env, clazz, filter->u.LocationOnly.clazz)) {
                     return JNI_FALSE;
                 }
                 break;
 
-            case JDWP_REQUEST_MODIFIER(FieldOnly): 
+            case JDWP_REQUEST_MODIFIER(FieldOnly):
                 /* Field watchpoints can be triggered from the
-                 * declared class or any subclass/subinterface. 
+                 * declared class or any subclass/subinterface.
                  */
-                if ((evinfo->u.field_access.field != 
+                if ((evinfo->u.field_access.field !=
                      filter->u.FieldOnly.field) ||
                     !isSameObject(env, evinfo->u.field_access.field_clazz,
                                filter->u.FieldOnly.clazz)) {
                     return JNI_FALSE;
                 }
                 break;
-            
-            case JDWP_REQUEST_MODIFIER(ExceptionOnly): 
+
+            case JDWP_REQUEST_MODIFIER(ExceptionOnly):
                 /* do we want caught/uncaught exceptions */
-                if (!((evinfo->u.exception.catch_clazz == NULL)? 
-                      filter->u.ExceptionOnly.uncaught : 
+                if (!((evinfo->u.exception.catch_clazz == NULL)?
+                      filter->u.ExceptionOnly.uncaught :
                       filter->u.ExceptionOnly.caught)) {
                     return JNI_FALSE;
                 }
-    
+
                 /* do we care about exception class */
                 if (filter->u.ExceptionOnly.exception != NULL) {
                     jclass exception = evinfo->object;
-        
+
                     /* do we want this exception class */
                     if (!JNI_FUNC_PTR(env,IsInstanceOf)(env, exception,
                             filter->u.ExceptionOnly.exception)) {
@@ -427,12 +427,12 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                     }
                 }
                 break;
-            
+
             case JDWP_REQUEST_MODIFIER(InstanceOnly): {
                 jobject eventInst = eventInstance(evinfo);
                 jobject filterInst = filter->u.InstanceOnly.instance;
                 /* if no error and doesn't match, don't pass
-                 * filter 
+                 * filter
                  */
                 if (eventInst != NULL &&
                       !isSameObject(env, eventInst, filterInst)) {
@@ -448,8 +448,8 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                 *shouldDelete = JNI_TRUE;
                 break;
             }
-                
-            case JDWP_REQUEST_MODIFIER(Conditional): 
+
+            case JDWP_REQUEST_MODIFIER(Conditional):
 /***
                 if (...  filter->u.Conditional.exprID ...) {
                     return JNI_FALSE;
@@ -457,7 +457,7 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
 ***/
                 break;
 
-        case JDWP_REQUEST_MODIFIER(ClassMatch): {              
+        case JDWP_REQUEST_MODIFIER(ClassMatch): {
             if (!patternStringMatch(classname,
                        filter->u.ClassMatch.classPattern)) {
                 return JNI_FALSE;
@@ -465,15 +465,15 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
             break;
         }
 
-        case JDWP_REQUEST_MODIFIER(ClassExclude): {              
-            if (patternStringMatch(classname, 
+        case JDWP_REQUEST_MODIFIER(ClassExclude): {
+            if (patternStringMatch(classname,
                       filter->u.ClassExclude.classPattern)) {
                 return JNI_FALSE;
             }
             break;
         }
 
-        case JDWP_REQUEST_MODIFIER(Step): 
+        case JDWP_REQUEST_MODIFIER(Step):
                 if (!isSameObject(env, thread, filter->u.Step.thread)) {
                     return JNI_FALSE;
                 }
@@ -481,12 +481,12 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                     return JNI_FALSE;
                 }
                 break;
-                
+
           case JDWP_REQUEST_MODIFIER(SourceNameMatch): {
               char* desiredNamePattern = filter->u.SourceNameOnly.sourceNamePattern;
-              if (!searchAllSourceNames(env, clazz, 
+              if (!searchAllSourceNames(env, clazz,
                            desiredNamePattern) == 1) {
-                  /* The name isn't in the SDE; try the sourceName in the ref 
+                  /* The name isn't in the SDE; try the sourceName in the ref
                    * type
                    */
                   char *sourceName = 0;
@@ -503,8 +503,8 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
               }
               break;
           }
-       
-        default: 
+
+        default:
             EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"Invalid filter modifier");
             return JNI_FALSE;
         }
@@ -516,15 +516,15 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
  * by checking each of the handler's filters.  Return false if any
  * of the filters fail, true if the handler wants this event.
  * Special version of filter for unloads since they don't have an
- * event structure or a jclass.  
+ * event structure or a jclass.
  *
  * If shouldDelete is returned true, a count filter has expired
  * and the corresponding node should be deleted.
  */
-jboolean 
+jboolean
 eventFilterRestricted_passesUnloadFilter(JNIEnv *env,
-                                         char *classname, 
-                                         HandlerNode *node, 
+                                         char *classname,
+                                         HandlerNode *node,
                                          jboolean *shouldDelete)
 {
     Filter *filter = FILTERS_ARRAY(node);
@@ -533,7 +533,7 @@ eventFilterRestricted_passesUnloadFilter(JNIEnv *env,
     *shouldDelete = JNI_FALSE;
     for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
         switch (filter->modifier) {
-           
+
             case JDWP_REQUEST_MODIFIER(Count): {
                 JDI_ASSERT(filter->u.Count.count > 0);
                 if (--filter->u.Count.count > 0) {
@@ -542,24 +542,24 @@ eventFilterRestricted_passesUnloadFilter(JNIEnv *env,
                 *shouldDelete = JNI_TRUE;
                 break;
             }
-                
-            case JDWP_REQUEST_MODIFIER(ClassMatch): {       
-                if (!patternStringMatch(classname, 
+
+            case JDWP_REQUEST_MODIFIER(ClassMatch): {
+                if (!patternStringMatch(classname,
                         filter->u.ClassMatch.classPattern)) {
                     return JNI_FALSE;
                 }
                 break;
             }
-            
+
             case JDWP_REQUEST_MODIFIER(ClassExclude): {
-                if (patternStringMatch(classname, 
+                if (patternStringMatch(classname,
                        filter->u.ClassExclude.classPattern)) {
                     return JNI_FALSE;
                 }
                 break;
             }
-            
-            default: 
+
+            default:
                 EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"Invalid filter modifier");
                 return JNI_FALSE;
         }
@@ -591,7 +591,7 @@ eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname)
     filter         = FILTERS_ARRAY(node);
     count          = FILTER_COUNT(node);
     done           = JNI_FALSE;
-    
+
     for (i = 0; (i < count) && (!done); ++i, ++filter) {
         switch (filter->modifier) {
             case JDWP_REQUEST_MODIFIER(ClassOnly):
@@ -604,8 +604,8 @@ eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname)
                     done = JNI_TRUE;
                 }
                 break;
-        
-            case JDWP_REQUEST_MODIFIER(Count): {   
+
+            case JDWP_REQUEST_MODIFIER(Count): {
                 /*
                  * If preceeding filters have determined that events will
                  * be filtered out, that is fine and we won't get here.
@@ -616,8 +616,8 @@ eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname)
                 done = JNI_TRUE;
                 break;
             }
-                
-            case JDWP_REQUEST_MODIFIER(ClassMatch): {              
+
+            case JDWP_REQUEST_MODIFIER(ClassMatch): {
                 if (!patternStringMatch(classname,
                         filter->u.ClassMatch.classPattern)) {
                     willBeFiltered = JNI_TRUE;
@@ -625,7 +625,7 @@ eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname)
                 }
                 break;
             }
-    
+
             case JDWP_REQUEST_MODIFIER(ClassExclude): {
                 if (patternStringMatch(classname,
                        filter->u.ClassExclude.classPattern)) {
@@ -643,9 +643,9 @@ eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname)
 /**
  * Determine if the given breakpoint node is in the specified class.
  */
-jboolean 
-eventFilterRestricted_isBreakpointInClass(JNIEnv *env, jclass clazz, 
-                                          HandlerNode *node) 
+jboolean
+eventFilterRestricted_isBreakpointInClass(JNIEnv *env, jclass clazz,
+                                          HandlerNode *node)
 {
     Filter *filter = FILTERS_ARRAY(node);
     int i;
@@ -662,7 +662,7 @@ eventFilterRestricted_isBreakpointInClass(JNIEnv *env, jclass clazz,
 /***** filter set-up *****/
 
 jvmtiError
-eventFilter_setConditionalFilter(HandlerNode *node, jint index, 
+eventFilter_setConditionalFilter(HandlerNode *node, jint index,
                                  jint exprID)
 {
     ConditionalFilter *filter = &FILTER(node, index).u.Conditional;
@@ -675,7 +675,7 @@ eventFilter_setConditionalFilter(HandlerNode *node, jint index,
 }
 
 jvmtiError
-eventFilter_setCountFilter(HandlerNode *node, jint index, 
+eventFilter_setCountFilter(HandlerNode *node, jint index,
                            jint count)
 {
     CountFilter *filter = &FILTER(node, index).u.Count;
@@ -691,7 +691,7 @@ eventFilter_setCountFilter(HandlerNode *node, jint index,
     }
 }
 
-jvmtiError 
+jvmtiError
 eventFilter_setThreadOnlyFilter(HandlerNode *node, jint index,
                                 jthread thread)
 {
@@ -702,8 +702,8 @@ eventFilter_setThreadOnlyFilter(HandlerNode *node, jint index,
     }
     if (NODE_EI(node) == EI_GC_FINISH) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
-    } 
-    
+    }
+
     /* Create a thread ref that will live beyond */
     /* the end of this call */
     saveGlobalRef(env, thread, &(filter->thread));
@@ -711,8 +711,8 @@ eventFilter_setThreadOnlyFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setLocationOnlyFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setLocationOnlyFilter(HandlerNode *node, jint index,
                                   jclass clazz, jmethodID method,
                                   jlocation location)
 {
@@ -721,10 +721,10 @@ eventFilter_setLocationOnlyFilter(HandlerNode *node, jint index,
     if (index >= FILTER_COUNT(node)) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
-    if ((NODE_EI(node) != EI_BREAKPOINT) && 
-        (NODE_EI(node) != EI_FIELD_ACCESS) && 
-        (NODE_EI(node) != EI_FIELD_MODIFICATION) && 
-        (NODE_EI(node) != EI_SINGLE_STEP) && 
+    if ((NODE_EI(node) != EI_BREAKPOINT) &&
+        (NODE_EI(node) != EI_FIELD_ACCESS) &&
+        (NODE_EI(node) != EI_FIELD_MODIFICATION) &&
+        (NODE_EI(node) != EI_SINGLE_STEP) &&
         (NODE_EI(node) != EI_EXCEPTION)) {
 
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
@@ -739,8 +739,8 @@ eventFilter_setLocationOnlyFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setFieldOnlyFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setFieldOnlyFilter(HandlerNode *node, jint index,
                                jclass clazz, jfieldID field)
 {
     JNIEnv *env = getEnv();
@@ -748,7 +748,7 @@ eventFilter_setFieldOnlyFilter(HandlerNode *node, jint index,
     if (index >= FILTER_COUNT(node)) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
-    if ((NODE_EI(node) != EI_FIELD_ACCESS) && 
+    if ((NODE_EI(node) != EI_FIELD_ACCESS) &&
         (NODE_EI(node) != EI_FIELD_MODIFICATION)) {
 
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
@@ -762,8 +762,8 @@ eventFilter_setFieldOnlyFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setClassOnlyFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setClassOnlyFilter(HandlerNode *node, jint index,
                                jclass clazz)
 {
     JNIEnv *env = getEnv();
@@ -786,9 +786,9 @@ eventFilter_setClassOnlyFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setExceptionOnlyFilter(HandlerNode *node, jint index, 
-                                   jclass exceptionClass, 
+jvmtiError
+eventFilter_setExceptionOnlyFilter(HandlerNode *node, jint index,
+                                   jclass exceptionClass,
                                    jboolean caught,
                                    jboolean uncaught)
 {
@@ -797,7 +797,7 @@ eventFilter_setExceptionOnlyFilter(HandlerNode *node, jint index,
     if (index >= FILTER_COUNT(node)) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
-    if (NODE_EI(node) != EI_EXCEPTION) { 
+    if (NODE_EI(node) != EI_EXCEPTION) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
@@ -807,15 +807,15 @@ eventFilter_setExceptionOnlyFilter(HandlerNode *node, jint index,
         /* the end of this call */
         saveGlobalRef(env, exceptionClass, &(filter->exception));
     }
-    FILTER(node, index).modifier = 
+    FILTER(node, index).modifier =
                        JDWP_REQUEST_MODIFIER(ExceptionOnly);
     filter->caught = caught;
     filter->uncaught = uncaught;
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setInstanceOnlyFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setInstanceOnlyFilter(HandlerNode *node, jint index,
                                   jobject instance)
 {
     JNIEnv *env = getEnv();
@@ -826,7 +826,7 @@ eventFilter_setInstanceOnlyFilter(HandlerNode *node, jint index,
 
     filter->instance = NULL;
     if (instance != NULL) {
-        /* Create an object ref that will live beyond 
+        /* Create an object ref that will live beyond
          * the end of this call
          */
         saveGlobalRef(env, instance, &(filter->instance));
@@ -836,8 +836,8 @@ eventFilter_setInstanceOnlyFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setClassMatchFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setClassMatchFilter(HandlerNode *node, jint index,
                                 char *classPattern)
 {
     MatchFilter *filter = &FILTER(node, index).u.ClassMatch;
@@ -851,14 +851,14 @@ eventFilter_setClassMatchFilter(HandlerNode *node, jint index,
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    FILTER(node, index).modifier = 
+    FILTER(node, index).modifier =
                        JDWP_REQUEST_MODIFIER(ClassMatch);
     filter->classPattern = classPattern;
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setClassExcludeFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setClassExcludeFilter(HandlerNode *node, jint index,
                                   char *classPattern)
 {
     MatchFilter *filter = &FILTER(node, index).u.ClassExclude;
@@ -872,14 +872,14 @@ eventFilter_setClassExcludeFilter(HandlerNode *node, jint index,
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    FILTER(node, index).modifier = 
+    FILTER(node, index).modifier =
                        JDWP_REQUEST_MODIFIER(ClassExclude);
     filter->classPattern = classPattern;
     return JVMTI_ERROR_NONE;
 }
 
-jvmtiError 
-eventFilter_setStepFilter(HandlerNode *node, jint index, 
+jvmtiError
+eventFilter_setStepFilter(HandlerNode *node, jint index,
                           jthread thread, jint size, jint depth)
 {
     jvmtiError error;
@@ -888,7 +888,7 @@ eventFilter_setStepFilter(HandlerNode *node, jint index,
     if (index >= FILTER_COUNT(node)) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
-    if (NODE_EI(node) != EI_SINGLE_STEP) { 
+    if (NODE_EI(node) != EI_SINGLE_STEP) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
@@ -907,9 +907,9 @@ eventFilter_setStepFilter(HandlerNode *node, jint index,
 }
 
 
-jvmtiError 
-eventFilter_setSourceNameMatchFilter(HandlerNode *node, 
-                                    jint index, 
+jvmtiError
+eventFilter_setSourceNameMatchFilter(HandlerNode *node,
+                                    jint index,
                                     char *sourceNamePattern) {
     SourceNameFilter *filter = &FILTER(node, index).u.SourceNameOnly;
     if (index >= FILTER_COUNT(node)) {
@@ -919,7 +919,7 @@ eventFilter_setSourceNameMatchFilter(HandlerNode *node,
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    FILTER(node, index).modifier = 
+    FILTER(node, index).modifier =
                        JDWP_REQUEST_MODIFIER(SourceNameMatch);
     filter->sourceNamePattern = sourceNamePattern;
     return JVMTI_ERROR_NONE;
@@ -937,8 +937,8 @@ findFilter(HandlerNode *node, jint modifier)
 {
     int i;
     Filter *filter;
-    for (i = 0, filter = FILTERS_ARRAY(node); 
-                      i <FILTER_COUNT(node); 
+    for (i = 0, filter = FILTERS_ARRAY(node);
+                      i <FILTER_COUNT(node);
                       i++, filter++) {
         if (filter->modifier == modifier) {
             return filter;
@@ -960,7 +960,7 @@ matchBreakpoint(JNIEnv *env, HandlerNode *node, void *arg)
     LocationFilter *goal = (LocationFilter *)arg;
     Filter *filter = FILTERS_ARRAY(node);
     int i;
-        
+
     for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
         switch (filter->modifier) {
         case JDWP_REQUEST_MODIFIER(LocationOnly): {
@@ -988,11 +988,11 @@ setBreakpoint(HandlerNode *node)
     filter = findFilter(node, JDWP_REQUEST_MODIFIER(LocationOnly));
     if (filter == NULL) {
         /* bp event with no location filter */
-        error = AGENT_ERROR_INTERNAL; 
+        error = AGENT_ERROR_INTERNAL;
     } else {
         LocationFilter *lf = &(filter->u.LocationOnly);
 
-        /* if this is the first handler for this 
+        /* if this is the first handler for this
          * location, set bp at JVMTI level
          */
         if (!eventHandlerRestricted_iterator(
@@ -1018,11 +1018,11 @@ clearBreakpoint(HandlerNode *node)
     filter = findFilter(node, JDWP_REQUEST_MODIFIER(LocationOnly));
     if (filter == NULL) {
         /* bp event with no location filter */
-        error = AGENT_ERROR_INTERNAL; 
+        error = AGENT_ERROR_INTERNAL;
     } else {
         LocationFilter *lf = &(filter->u.LocationOnly);
 
-        /* if this is the last handler for this 
+        /* if this is the last handler for this
          * location, clear bp at JVMTI level
          */
         if (!eventHandlerRestricted_iterator(
@@ -1065,7 +1065,7 @@ matchWatchpoint(JNIEnv *env, HandlerNode *node, void *arg)
     FieldFilter *goal = (FieldFilter *)arg;
     Filter *filter = FILTERS_ARRAY(node);
     int i;
-        
+
     for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
         switch (filter->modifier) {
         case JDWP_REQUEST_MODIFIER(FieldOnly): {
@@ -1092,11 +1092,11 @@ setWatchpoint(HandlerNode *node)
     filter = findFilter(node, JDWP_REQUEST_MODIFIER(FieldOnly));
     if (filter == NULL) {
         /* event with no field filter */
-        error = AGENT_ERROR_INTERNAL; 
+        error = AGENT_ERROR_INTERNAL;
     } else {
         FieldFilter *ff = &(filter->u.FieldOnly);
 
-        /* if this is the first handler for this 
+        /* if this is the first handler for this
          * field, set wp at JVMTI level
          */
         if (!eventHandlerRestricted_iterator(
@@ -1123,11 +1123,11 @@ clearWatchpoint(HandlerNode *node)
     filter = findFilter(node, JDWP_REQUEST_MODIFIER(FieldOnly));
     if (filter == NULL) {
         /* event with no field filter */
-        error = AGENT_ERROR_INTERNAL; 
+        error = AGENT_ERROR_INTERNAL;
     } else {
         FieldFilter *ff = &(filter->u.FieldOnly);
 
-        /* if this is the last handler for this 
+        /* if this is the last handler for this
          * field, clear wp at JVMTI level
          */
         if (!eventHandlerRestricted_iterator(
@@ -1146,8 +1146,8 @@ clearWatchpoint(HandlerNode *node)
  * Determine the thread this node is filtered on.
  * NULL if not thread filtered.
  */
-static jthread 
-requestThread(HandlerNode *node) 
+static jthread
+requestThread(HandlerNode *node)
 {
     int i;
     Filter *filter = FILTERS_ARRAY(node);
@@ -1192,12 +1192,12 @@ enableEvents(HandlerNode *node)
 
     switch (NODE_EI(node)) {
         /* The stepping code directly enables/disables stepping as
-         * necessary 
+         * necessary
          */
         case EI_SINGLE_STEP:
         /* Internal thread event handlers are always present
          * (hardwired in the event hook), so we don't change the
-         * notification mode here.  
+         * notification mode here.
          */
         case EI_THREAD_START:
         case EI_THREAD_END:
@@ -1215,7 +1215,7 @@ enableEvents(HandlerNode *node)
         case EI_BREAKPOINT:
             error = setBreakpoint(node);
             break;
-        
+
         default:
             break;
     }
@@ -1230,7 +1230,7 @@ enableEvents(HandlerNode *node)
          */
         if (!eventHandlerRestricted_iterator(
                 NODE_EI(node), matchThread, thread)) {
-            error = threadControl_setEventMode(JVMTI_ENABLE, 
+            error = threadControl_setEventMode(JVMTI_ENABLE,
                                                NODE_EI(node), thread);
         }
     }
@@ -1251,12 +1251,12 @@ disableEvents(HandlerNode *node)
 
     switch (NODE_EI(node)) {
         /* The stepping code directly enables/disables stepping as
-         * necessary 
+         * necessary
          */
         case EI_SINGLE_STEP:
         /* Internal thread event handlers are always present
          * (hardwired in the event hook), so we don't change the
-         * notification mode here.  
+         * notification mode here.
          */
         case EI_THREAD_START:
         case EI_THREAD_END:
@@ -1274,7 +1274,7 @@ disableEvents(HandlerNode *node)
         case EI_BREAKPOINT:
             error = clearBreakpoint(node);
             break;
-        
+
         default:
             break;
     }
@@ -1288,7 +1288,7 @@ disableEvents(HandlerNode *node)
      * Disable even if the above caused an error
      */
     if (!eventHandlerRestricted_iterator(NODE_EI(node), matchThread, thread)) {
-        error2 = threadControl_setEventMode(JVMTI_DISABLE, 
+        error2 = threadControl_setEventMode(JVMTI_DISABLE,
                                             NODE_EI(node), thread);
     }
     return error != JVMTI_ERROR_NONE? error : error2;
@@ -1316,10 +1316,9 @@ jvmtiError
 eventFilterRestricted_deinstall(HandlerNode *node)
 {
     jvmtiError error1, error2;
-    
+
     error1 = disableEvents(node);
     error2 = clearFilters(node);
 
     return error1 != JVMTI_ERROR_NONE? error1 : error2;
 }
-

@@ -41,21 +41,21 @@ import sun.java2d.SunGraphics2D;
  */
 public interface PixelFillPipe {
     public void fillRect(SunGraphics2D sg,
-			 int x, int y, int width, int height);
+                         int x, int y, int width, int height);
 
 
     public void fillRoundRect(SunGraphics2D sg,
-			      int x, int y, int width, int height,
-			      int arcWidth, int arcHeight);
+                              int x, int y, int width, int height,
+                              int arcWidth, int arcHeight);
 
     public void fillOval(SunGraphics2D sg,
-			 int x, int y, int width, int height);
+                         int x, int y, int width, int height);
 
     public void fillArc(SunGraphics2D sg,
-			int x, int y, int width, int height,
-			int startAngle, int arcAngle);
+                        int x, int y, int width, int height,
+                        int startAngle, int arcAngle);
 
     public void fillPolygon(SunGraphics2D sg,
-			    int xPoints[], int yPoints[],
-			    int nPoints);
+                            int xPoints[], int yPoints[],
+                            int nPoints);
 }

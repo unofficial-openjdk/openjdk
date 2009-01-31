@@ -31,7 +31,7 @@ import java.io.*;
 import java.util.zip.*;
 
 public class ConstructDeflaterInput {
-    
+
     static class MyDeflater extends Deflater {
         private boolean ended = false;
         boolean getEnded() { return ended; }
@@ -117,7 +117,7 @@ public class ConstructDeflaterInput {
         } catch (IllegalArgumentException ex) {
             pass();
         }
-        
+
         // Check unsupported operations
         //
         check(!dis.markSupported());
@@ -134,14 +134,14 @@ public class ConstructDeflaterInput {
         //
         dis.close();
         check(!def.getEnded());
-        
+
         try {
             dis.available();
             fail();
         } catch (IOException ex) {
             pass();
         }
-        
+
         try {
             int x = dis.read();
             fail();

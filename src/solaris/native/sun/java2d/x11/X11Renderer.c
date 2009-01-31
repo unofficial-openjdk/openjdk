@@ -35,8 +35,8 @@
 #include <jlong.h>
 
 #ifndef HEADLESS
-#define POLYTEMPSIZE	(int)(256 / sizeof(XPoint))
-#define ABS(n)		(((n) < 0) ? -(n) : (n))
+#define POLYTEMPSIZE    (int)(256 / sizeof(XPoint))
+#define ABS(n)          (((n) < 0) ? -(n) : (n))
 
 #define MAX_SHORT 32767
 #define MIN_SHORT (-32768)
@@ -145,20 +145,20 @@ awt_drawArc(JNIEnv * env, jint drawable, GC xgc,
 static XPoint *
 transformPoints(JNIEnv * env,
                 jintArray xcoordsArray, jintArray ycoordsArray,
-		jint transx, jint transy,
+                jint transx, jint transy,
                 XPoint * points, int *pNpoints, int close)
 {
     int npoints = *pNpoints;
     jint *xcoords, *ycoords;
 
     xcoords = (jint *)
-	(*env)->GetPrimitiveArrayCritical(env, xcoordsArray, NULL);
+        (*env)->GetPrimitiveArrayCritical(env, xcoordsArray, NULL);
     if (xcoords == NULL) {
         return 0;
     }
-    
+
     ycoords = (jint *)
-	(*env)->GetPrimitiveArrayCritical(env, ycoordsArray, NULL);
+        (*env)->GetPrimitiveArrayCritical(env, ycoordsArray, NULL);
     if (ycoords == NULL) {
         (*env)->ReleasePrimitiveArrayCritical(env, xcoordsArray, xcoords,
                                               JNI_ABORT);
@@ -167,7 +167,7 @@ transformPoints(JNIEnv * env,
 
     if (close) {
         close = (xcoords[npoints - 1] != xcoords[0] ||
-		 ycoords[npoints - 1] != ycoords[0]);
+                 ycoords[npoints - 1] != ycoords[0]);
         if (close) {
             npoints++;
         }
@@ -176,33 +176,33 @@ transformPoints(JNIEnv * env,
         points = (XPoint *) malloc(sizeof(XPoint) * npoints);
     }
     if (points != NULL) {
-	int in, out;
-	int oldx = CLAMP_TO_SHORT(xcoords[0] + transx);
-	int oldy = CLAMP_TO_SHORT(ycoords[0] + transy);
-	points[0].x = oldx;
-	points[0].y = oldy;
-	if (close) {
-	    npoints--;
-	}
-	for (in = 1, out = 1; in < npoints; in++) {
-	    int newx = CLAMP_TO_SHORT(xcoords[in] + transx);
-	    int newy = CLAMP_TO_SHORT(ycoords[in] + transy);
-	    if (newx != oldx || newy != oldy) {
-		points[out].x = newx;
-		points[out].y = newy;
-		out++;
-		oldx = newx;
-		oldy = newy;
-	    }
-	}
-	if (out == 1) {
-	    points[1].x = oldx;
-	    points[1].y = oldy;
-	    out = 2;
-	} else if (close) {
-	    points[out++] = points[0];
-	}
-	*pNpoints = out;
+        int in, out;
+        int oldx = CLAMP_TO_SHORT(xcoords[0] + transx);
+        int oldy = CLAMP_TO_SHORT(ycoords[0] + transy);
+        points[0].x = oldx;
+        points[0].y = oldy;
+        if (close) {
+            npoints--;
+        }
+        for (in = 1, out = 1; in < npoints; in++) {
+            int newx = CLAMP_TO_SHORT(xcoords[in] + transx);
+            int newy = CLAMP_TO_SHORT(ycoords[in] + transy);
+            if (newx != oldx || newy != oldy) {
+                points[out].x = newx;
+                points[out].y = newy;
+                out++;
+                oldx = newx;
+                oldy = newy;
+            }
+        }
+        if (out == 1) {
+            points[1].x = oldx;
+            points[1].y = oldy;
+            out = 2;
+        } else if (close) {
+            points[out++] = points[0];
+        }
+        *pNpoints = out;
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, xcoordsArray, xcoords,
@@ -228,12 +228,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawLine
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
-    XDrawLine(awt_display, xsdo->drawable, (GC) xgc, 
-	      CLAMP_TO_SHORT(x1), CLAMP_TO_SHORT(y1), 
-	      CLAMP_TO_SHORT(x2), CLAMP_TO_SHORT(y2));
+    XDrawLine(awt_display, xsdo->drawable, (GC) xgc,
+              CLAMP_TO_SHORT(x1), CLAMP_TO_SHORT(y1),
+              CLAMP_TO_SHORT(x2), CLAMP_TO_SHORT(y2));
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
 }
@@ -256,20 +256,20 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawRect
     }
 
     if (w < 2 || h < 2) {
-	/* REMIND: This optimization assumes thin lines. */
-	/*
-	 * This optimization not only simplifies the processing
-	 * of a particular degenerate case, but it protects against
-	 * the anomalies of various X11 implementations that draw
-	 * nothing for degenerate Polygons and Rectangles.
-	 */
-	XFillRectangle(awt_display, xsdo->drawable, (GC) xgc, 
-		       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
-		       CLAMP_TO_USHORT(w+1), CLAMP_TO_USHORT(h+1));
+        /* REMIND: This optimization assumes thin lines. */
+        /*
+         * This optimization not only simplifies the processing
+         * of a particular degenerate case, but it protects against
+         * the anomalies of various X11 implementations that draw
+         * nothing for degenerate Polygons and Rectangles.
+         */
+        XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
+                       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
+                       CLAMP_TO_USHORT(w+1), CLAMP_TO_USHORT(h+1));
     } else {
-	XDrawRectangle(awt_display, xsdo->drawable, (GC) xgc, 
-		       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
-		       CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
+        XDrawRectangle(awt_display, xsdo->drawable, (GC) xgc,
+                       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
+                       CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
     }
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
@@ -324,7 +324,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawRoundRect
     tx2 = CLAMP_TO_SHORT(x + w - halfW - 1);
     ty1 = CLAMP_TO_SHORT(y + halfH + 1);
     ty2 = CLAMP_TO_SHORT(y + h - halfH - 1);
-    
+
     /*
      * recalculate heightes and widthes of round parts
      * to minimize distortions in visible area
@@ -381,24 +381,24 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawOval
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     if (w < 2 || h < 2) {
-	/*
-	 * Fix for 4205762 - 1x1 ovals do not draw on Ultra1, Creator3d
-	 * (related to 4411814 on Windows platform)
-	 * Really small ovals degenerate to simple rectangles as they
-	 * have no curvature or enclosed area.  Use XFillRectangle
-	 * for speed and to deal better with degenerate sizes.
-	 */
-	if (w >= 0 && h >= 0) {
-	    XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
-			   x, y, w+1, h+1);
-	}
+        /*
+         * Fix for 4205762 - 1x1 ovals do not draw on Ultra1, Creator3d
+         * (related to 4411814 on Windows platform)
+         * Really small ovals degenerate to simple rectangles as they
+         * have no curvature or enclosed area.  Use XFillRectangle
+         * for speed and to deal better with degenerate sizes.
+         */
+        if (w >= 0 && h >= 0) {
+            XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
+                           x, y, w+1, h+1);
+        }
     } else {
-	awt_drawArc(env, xsdo->drawable, (GC) xgc,
-		    x, y, w, h, 0, 360, JNI_FALSE);
+        awt_drawArc(env, xsdo->drawable, (GC) xgc,
+                    x, y, w, h, 0, 360, JNI_FALSE);
     }
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
@@ -419,11 +419,11 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawArc
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     awt_drawArc(env, xsdo->drawable, (GC) xgc,
-		x, y, w, h, angleStart, angleExtent, JNI_FALSE);
+                x, y, w, h, angleStart, angleExtent, JNI_FALSE);
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
 }
@@ -445,7 +445,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawPoly
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     if (JNU_IsNull(env, xcoordsArray) || JNU_IsNull(env, ycoordsArray)) {
@@ -453,14 +453,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawPoly
         return;
     }
     if ((*env)->GetArrayLength(env, ycoordsArray) < npoints ||
-	(*env)->GetArrayLength(env, xcoordsArray) < npoints)
+        (*env)->GetArrayLength(env, xcoordsArray) < npoints)
     {
         JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
         return;
     }
 
     if (npoints < 2) {
-	return;
+        return;
     }
 
     points = transformPoints(env, xcoordsArray, ycoordsArray, transx, transy,
@@ -468,27 +468,27 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XDrawPoly
     if (points == 0) {
         JNU_ThrowOutOfMemoryError(env, "translated coordinate array");
     } else {
-	if (npoints == 2) {
-	    /*
-	     * Some X11 implementations fail to draw anything for
-	     * simple 2 point polygons where the vertices are the
-	     * same point even though this violates the X11
-	     * specification.  For simplicity we will dispatch all
-	     * 2 point polygons through XDrawLine even if they are
-	     * non-degenerate as this may invoke less processing
-	     * down the line than a Poly primitive anyway.
-	     */
-	    XDrawLine(awt_display, xsdo->drawable, (GC) xgc,
-		      points[0].x, points[0].y,
-		      points[1].x, points[1].y);
-	} else {
-	    XDrawLines(awt_display, xsdo->drawable, (GC) xgc,
-		       points, npoints, CoordModeOrigin);
-	}
-	if (points != pTmp) {
-	    free(points);
-	}
-	X11SD_DirectRenderNotify(env, xsdo);
+        if (npoints == 2) {
+            /*
+             * Some X11 implementations fail to draw anything for
+             * simple 2 point polygons where the vertices are the
+             * same point even though this violates the X11
+             * specification.  For simplicity we will dispatch all
+             * 2 point polygons through XDrawLine even if they are
+             * non-degenerate as this may invoke less processing
+             * down the line than a Poly primitive anyway.
+             */
+            XDrawLine(awt_display, xsdo->drawable, (GC) xgc,
+                      points[0].x, points[0].y,
+                      points[1].x, points[1].y);
+        } else {
+            XDrawLines(awt_display, xsdo->drawable, (GC) xgc,
+                       points, npoints, CoordModeOrigin);
+        }
+        if (points != pTmp) {
+            free(points);
+        }
+        X11SD_DirectRenderNotify(env, xsdo);
     }
 #endif /* !HEADLESS */
 }
@@ -567,7 +567,7 @@ static void drawScanline(DrawHandler* hnd, jint x0, jint x1, jint y0)
  */
 JNIEXPORT void JNICALL
 Java_sun_java2d_x11_X11Renderer_XDoPath
-    (JNIEnv *env, jobject self, jobject sg2d, jlong pXSData, jlong xgc, 
+    (JNIEnv *env, jobject self, jobject sg2d, jlong pXSData, jlong xgc,
      jint transX, jint transY, jobject p2df, jboolean isFill)
 {
 #ifndef HEADLESS
@@ -613,7 +613,7 @@ Java_sun_java2d_x11_X11Renderer_XDoPath
     XDHD_INIT(&dHData, (GC)xgc, xsdo->drawable);
     drawHandler.pData = &dHData;
 
-    stroke = (((*env)->GetIntField(env, sg2d, sg2dStrokeHintID) == 
+    stroke = (((*env)->GetIntField(env, sg2d, sg2dStrokeHintID) ==
                sunHints_INTVAL_STROKE_PURE)
               ? PH_STROKE_PURE
               : PH_STROKE_DEFAULT);
@@ -632,7 +632,7 @@ Java_sun_java2d_x11_X11Renderer_XDoPath
                 ok = doFillPath(&drawHandler,
                                 transX, transY,
                                 coords, maxCoords,
-                                types, numTypes, 
+                                types, numTypes,
                                 stroke, fillRule);
             } else {
                 drawHandler.pDrawLine = &storeLine;
@@ -672,12 +672,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillRect
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
-    XFillRectangle(awt_display, xsdo->drawable, (GC) xgc, 
-		   CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
-		   CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
+    XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
+                   CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
+                   CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
 }
@@ -786,48 +786,48 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillOval
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     if (w < 3 || h < 3) {
-	/*
-	 * Fix for 4205762 - 1x1 ovals do not draw on Ultra1, Creator3d
-	 * (related to 4411814 on Windows platform)
-	 * Most X11 servers drivers have poor rendering
-	 * for thin ellipses and the rendering is most strikingly
-	 * different from our theoretical arcs.  Ideally we should
-	 * trap all ovals less than some fairly large size and
-	 * try to draw aesthetically pleasing ellipses, but that
-	 * would require considerably more work to get the corresponding
-	 * drawArc variants to match pixel for pixel.
-	 * Thin ovals of girth 1 pixel are simple rectangles.
-	 * Thin ovals of girth 2 pixels are simple rectangles with
-	 * potentially smaller lengths.  Determine the correct length
-	 * by calculating .5*.5 + scaledlen*scaledlen == 1.0 which
-	 * means that scaledlen is the sqrt(0.75).  Scaledlen is
-	 * relative to the true length (w or h) and needs to be
-	 * adjusted by half a pixel in different ways for odd or
-	 * even lengths.
-	 */
+        /*
+         * Fix for 4205762 - 1x1 ovals do not draw on Ultra1, Creator3d
+         * (related to 4411814 on Windows platform)
+         * Most X11 servers drivers have poor rendering
+         * for thin ellipses and the rendering is most strikingly
+         * different from our theoretical arcs.  Ideally we should
+         * trap all ovals less than some fairly large size and
+         * try to draw aesthetically pleasing ellipses, but that
+         * would require considerably more work to get the corresponding
+         * drawArc variants to match pixel for pixel.
+         * Thin ovals of girth 1 pixel are simple rectangles.
+         * Thin ovals of girth 2 pixels are simple rectangles with
+         * potentially smaller lengths.  Determine the correct length
+         * by calculating .5*.5 + scaledlen*scaledlen == 1.0 which
+         * means that scaledlen is the sqrt(0.75).  Scaledlen is
+         * relative to the true length (w or h) and needs to be
+         * adjusted by half a pixel in different ways for odd or
+         * even lengths.
+         */
 #define SQRT_3_4 0.86602540378443864676
-	if (w > 2 && h > 1) {
-	    int adjw = (int) ((SQRT_3_4 * w - ((w&1)-1)) * 0.5);
-	    adjw = adjw * 2 + (w&1);
-	    x += (w-adjw)/2;
-	    w = adjw;
-	} else if (h > 2 && w > 1) {
-	    int adjh = (int) ((SQRT_3_4 * h - ((h&1)-1)) * 0.5);
-	    adjh = adjh * 2 + (h&1);
-	    y += (h-adjh)/2;
-	    h = adjh;
-	}
+        if (w > 2 && h > 1) {
+            int adjw = (int) ((SQRT_3_4 * w - ((w&1)-1)) * 0.5);
+            adjw = adjw * 2 + (w&1);
+            x += (w-adjw)/2;
+            w = adjw;
+        } else if (h > 2 && w > 1) {
+            int adjh = (int) ((SQRT_3_4 * h - ((h&1)-1)) * 0.5);
+            adjh = adjh * 2 + (h&1);
+            y += (h-adjh)/2;
+            h = adjh;
+        }
 #undef SQRT_3_4
-	if (w > 0 && h > 0) {
-	    XFillRectangle(awt_display, xsdo->drawable, (GC) xgc, x, y, w, h);
-	}
+        if (w > 0 && h > 0) {
+            XFillRectangle(awt_display, xsdo->drawable, (GC) xgc, x, y, w, h);
+        }
     } else {
-	awt_drawArc(env, xsdo->drawable, (GC) xgc,
-		    x, y, w, h, 0, 360, JNI_TRUE);
+        awt_drawArc(env, xsdo->drawable, (GC) xgc,
+                    x, y, w, h, 0, 360, JNI_TRUE);
     }
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
@@ -848,11 +848,11 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillArc
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     awt_drawArc(env, xsdo->drawable, (GC) xgc,
-		x, y, w, h, angleStart, angleExtent, JNI_TRUE);
+                x, y, w, h, angleStart, angleExtent, JNI_TRUE);
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */
 }
@@ -873,7 +873,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillPoly
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     if (JNU_IsNull(env, xcoordsArray) || JNU_IsNull(env, ycoordsArray)) {
@@ -881,14 +881,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillPoly
         return;
     }
     if ((*env)->GetArrayLength(env, ycoordsArray) < npoints ||
-	(*env)->GetArrayLength(env, xcoordsArray) < npoints)
+        (*env)->GetArrayLength(env, xcoordsArray) < npoints)
     {
         JNU_ThrowArrayIndexOutOfBoundsException(env, "coordinate array");
         return;
     }
 
     if (npoints < 3) {
-	return;
+        return;
     }
 
     points = transformPoints(env, xcoordsArray, ycoordsArray, transx, transy,
@@ -896,14 +896,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillPoly
     if (points == 0) {
         JNU_ThrowOutOfMemoryError(env, "translated coordinate array");
     } else {
-	if (npoints > 2) {
-	    XFillPolygon(awt_display, xsdo->drawable, (GC) xgc,
-			 points, npoints, Complex, CoordModeOrigin);
-	    X11SD_DirectRenderNotify(env, xsdo);
-	}
-	if (points != pTmp) {
-	    free(points);
-	}
+        if (npoints > 2) {
+            XFillPolygon(awt_display, xsdo->drawable, (GC) xgc,
+                         points, npoints, Complex, CoordModeOrigin);
+            X11SD_DirectRenderNotify(env, xsdo);
+        }
+        if (points != pTmp) {
+            free(points);
+        }
     }
 #endif /* !HEADLESS */
 }
@@ -927,27 +927,27 @@ JNIEXPORT void JNICALL Java_sun_java2d_x11_X11Renderer_XFillSpans
     X11SDOps *xsdo = (X11SDOps *) pXSData;
 
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     if (JNU_IsNull(env, si)) {
-	JNU_ThrowNullPointerException(env, "span iterator");
-	return;
+        JNU_ThrowNullPointerException(env, "span iterator");
+        return;
     }
     if (pFuncs == NULL) {
-	JNU_ThrowNullPointerException(env, "native iterator not supplied");
-	return;
+        JNU_ThrowNullPointerException(env, "native iterator not supplied");
+        return;
     }
 
     srData = (*pFuncs->open)(env, si);
     while ((*pFuncs->nextSpan)(srData, spanbox)) {
-	x = spanbox[0] + transx;
-	y = spanbox[1] + transy;
-	w = spanbox[2] - spanbox[0];
-	h = spanbox[3] - spanbox[1];
-	XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
-		       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
-		       CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
+        x = spanbox[0] + transx;
+        y = spanbox[1] + transy;
+        w = spanbox[2] - spanbox[0];
+        h = spanbox[3] - spanbox[1];
+        XFillRectangle(awt_display, xsdo->drawable, (GC) xgc,
+                       CLAMP_TO_SHORT(x),  CLAMP_TO_SHORT(y),
+                       CLAMP_TO_USHORT(w), CLAMP_TO_USHORT(h));
     }
     (*pFuncs->close)(env, srData);
     X11SD_DirectRenderNotify(env, xsdo);
@@ -973,16 +973,16 @@ Java_sun_java2d_x11_X11Renderer_devCopyArea
 
     xsdo = (X11SDOps *)jlong_to_ptr(xsd);
     if (xsdo == NULL) {
-	return;
+        return;
     }
 
     xgc = (GC)gc;
     if (xgc == NULL) {
-	return;
+        return;
     }
 
     XCopyArea(awt_display, xsdo->drawable, xsdo->drawable, xgc,
-	      srcx, srcy, width, height, dstx, dsty);
+              srcx, srcy, width, height, dstx, dsty);
 
     X11SD_DirectRenderNotify(env, xsdo);
 #endif /* !HEADLESS */

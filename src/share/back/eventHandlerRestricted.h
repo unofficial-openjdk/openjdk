@@ -32,7 +32,7 @@
  */
 
 typedef jboolean (*IteratorFunction)(JNIEnv *env,
-                                     HandlerNode *node, 
+                                     HandlerNode *node,
                                      void *arg);
 jboolean eventHandlerRestricted_iterator(EventIndex ei,
                               IteratorFunction func, void *arg);
@@ -64,4 +64,3 @@ typedef struct EventHandlerRestricted_HandlerNode_ {
 } EventHandlerRestricted_HandlerNode;
 
 #endif
-

@@ -70,36 +70,36 @@ Java_java_util_zip_ZipEntry_initFields(JNIEnv *env, jobject obj, jlong zentry)
 
     if (name == 0) {
         name = (*env)->NewStringUTF(env, ze->name);
-	if (name == 0) {
-	    return;
-	}
-	(*env)->SetObjectField(env, obj, nameID, name);
+        if (name == 0) {
+            return;
+        }
+        (*env)->SetObjectField(env, obj, nameID, name);
     }
     (*env)->SetLongField(env, obj, timeID, (jlong)ze->time & 0xffffffffUL);
     (*env)->SetLongField(env, obj, crcID, (jlong)ze->crc & 0xffffffffUL);
     (*env)->SetLongField(env, obj, sizeID, (jlong)ze->size);
     if (ze->csize == 0) {
-	(*env)->SetLongField(env, obj, csizeID, (jlong)ze->size);
-	(*env)->SetIntField(env, obj, methodID, STORED);
+        (*env)->SetLongField(env, obj, csizeID, (jlong)ze->size);
+        (*env)->SetIntField(env, obj, methodID, STORED);
     } else {
-	(*env)->SetLongField(env, obj, csizeID, (jlong)ze->csize);
-	(*env)->SetIntField(env, obj, methodID, DEFLATED);
+        (*env)->SetLongField(env, obj, csizeID, (jlong)ze->csize);
+        (*env)->SetIntField(env, obj, methodID, DEFLATED);
     }
     if (ze->extra != 0) {
-	unsigned char *bp = (unsigned char *)&ze->extra[0];
-	jsize len = (bp[0] | (bp[1] << 8));
-	jbyteArray extra = (*env)->NewByteArray(env, len);
-	if (extra == 0) {
-	    return;
-	}
-	(*env)->SetByteArrayRegion(env, extra, 0, len, &ze->extra[2]);
-	(*env)->SetObjectField(env, obj, extraID, extra);
+        unsigned char *bp = (unsigned char *)&ze->extra[0];
+        jsize len = (bp[0] | (bp[1] << 8));
+        jbyteArray extra = (*env)->NewByteArray(env, len);
+        if (extra == 0) {
+            return;
+        }
+        (*env)->SetByteArrayRegion(env, extra, 0, len, &ze->extra[2]);
+        (*env)->SetObjectField(env, obj, extraID, extra);
     }
     if (ze->comment != 0) {
-	jstring comment = (*env)->NewStringUTF(env, ze->comment);
-	if (comment == 0) {
-	    return;
-	}
-	(*env)->SetObjectField(env, obj, commentID, comment);
+        jstring comment = (*env)->NewStringUTF(env, ze->comment);
+        if (comment == 0) {
+            return;
+        }
+        (*env)->SetObjectField(env, obj, commentID, comment);
     }
 }

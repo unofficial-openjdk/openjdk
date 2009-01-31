@@ -23,7 +23,7 @@
 # have any questions.
 #
 
-#  @test @(#)DeoptimizeWalk.sh	1.4 02/08/12
+#  @test
 #  @bug 4525714
 #  @summary jtreg test PopAsynchronousTest fails in build 85 with -Xcomp
 #  @author Jim Holmlund/Swamy Venkataramanappa

@@ -28,7 +28,7 @@ package com.sun.tools.example.debug.event;
 import com.sun.jdi.event.*;
 
 public class VMDeathEventSet extends AbstractEventSet {
-    
+
     VMDeathEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -37,4 +37,3 @@ public class VMDeathEventSet extends AbstractEventSet {
         listener.vmDeath(this);
     }
 }
-

@@ -35,9 +35,9 @@
  * This module is an implementation of the Java Debug Wire Protocol Transport
  * Service Provider Interface - see src/share/javavm/export/jdwpTransport.h.
  */
- 
-static SharedMemoryTransport *transport = NULL;  /* maximum of 1 transport */ 
-static SharedMemoryConnection *connection = NULL;  /* maximum of 1 connection */ 
+
+static SharedMemoryTransport *transport = NULL;  /* maximum of 1 transport */
+static SharedMemoryConnection *connection = NULL;  /* maximum of 1 connection */
 static jdwpTransportCallback *callbacks;
 static jboolean initialized;
 static struct jdwpTransportNativeInterface_ interface;
@@ -50,20 +50,20 @@ static int tlsIndex;
 
 /*
  * Return an error and record the error message associated with
- * the error. Note the if (1==1) { } usage here is to avoid 
+ * the error. Note the if (1==1) { } usage here is to avoid
  * compilers complaining that a statement isn't reached which
  * will arise if the semicolon (;) appears after the macro,
  */
-#define RETURN_ERROR(err, msg)		\
-	if (1==1) {			\
-            setLastError(err, msg);	\
-            return err;			\
+#define RETURN_ERROR(err, msg)          \
+        if (1==1) {                     \
+            setLastError(err, msg);     \
+            return err;                 \
         }
 
 /*
  * Return an I/O error and record the error message.
  */
-#define RETURN_IO_ERROR(msg)	RETURN_ERROR(JDWPTRANSPORT_ERROR_IO_ERROR, msg);
+#define RETURN_IO_ERROR(msg)    RETURN_ERROR(JDWPTRANSPORT_ERROR_IO_ERROR, msg);
 
 
 /*
@@ -75,12 +75,12 @@ static void
 setLastError(int err, char *newmsg) {
     char buf[255];
     char *msg;
-    
+
     /* get any I/O first in case any system calls override errno */
     if (err == JDWPTRANSPORT_ERROR_IO_ERROR) {
-	if (shmemBase_getlasterror(buf, sizeof(buf)) != SYS_OK) {
-	    buf[0] = '\0';
-	}
+        if (shmemBase_getlasterror(buf, sizeof(buf)) != SYS_OK) {
+            buf[0] = '\0';
+        }
     }
 
     /* free any current error */
@@ -89,53 +89,53 @@ setLastError(int err, char *newmsg) {
         (*callbacks->free)(msg);
     }
 
-    /* 
+    /*
      * For I/O errors append the I/O error message with to the
      * supplied message. For all other errors just use the supplied
      * message.
      */
     if (err == JDWPTRANSPORT_ERROR_IO_ERROR) {
-	char *join_str = ": ";
-	int msg_len = strlen(newmsg) + strlen(join_str) + strlen(buf) + 3;	
-	msg = (*callbacks->alloc)(msg_len);
-	if (msg != NULL) {
-	    strcpy(msg, newmsg);
-	    strcat(msg, join_str);
-	    strcat(msg, buf);
-	}
-    } else {
-	msg = (*callbacks->alloc)(strlen(newmsg)+1);
+        char *join_str = ": ";
+        int msg_len = strlen(newmsg) + strlen(join_str) + strlen(buf) + 3;
+        msg = (*callbacks->alloc)(msg_len);
         if (msg != NULL) {
-            strcpy(msg, newmsg); 
+            strcpy(msg, newmsg);
+            strcat(msg, join_str);
+            strcat(msg, buf);
+        }
+    } else {
+        msg = (*callbacks->alloc)(strlen(newmsg)+1);
+        if (msg != NULL) {
+            strcpy(msg, newmsg);
         }
     }
-    
-    /* Put a pointer to the message in TLS */    
-    sysTlsPut(tlsIndex, msg);    
+
+    /* Put a pointer to the message in TLS */
+    sysTlsPut(tlsIndex, msg);
 }
 
 static jdwpTransportError
-handshake() 
+handshake()
 {
     char *hello = "JDWP-Handshake";
     unsigned int i;
 
     for (i=0; i<strlen(hello); i++) {
-	jbyte b;
-	int rv = shmemBase_receiveByte(connection, &b);
-	if (rv != 0) {
-	    RETURN_IO_ERROR("receive failed during handshake");
-	}
-	if ((char)b != hello[i]) {
-	    RETURN_IO_ERROR("handshake failed - debugger sent unexpected message");
-	}
+        jbyte b;
+        int rv = shmemBase_receiveByte(connection, &b);
+        if (rv != 0) {
+            RETURN_IO_ERROR("receive failed during handshake");
+        }
+        if ((char)b != hello[i]) {
+            RETURN_IO_ERROR("handshake failed - debugger sent unexpected message");
+        }
     }
 
     for (i=0; i<strlen(hello); i++) {
-	int rv = shmemBase_sendByte(connection, (jbyte)hello[i]);
-	if (rv != 0) {
-	    RETURN_IO_ERROR("write failed during handshake");
-	}
+        int rv = shmemBase_sendByte(connection, (jbyte)hello[i]);
+        if (rv != 0) {
+            RETURN_IO_ERROR("write failed during handshake");
+        }
     }
 
     return JDWPTRANSPORT_ERROR_NONE;
@@ -167,18 +167,18 @@ static jdwpTransportError JNICALL
 shmemStartListening(jdwpTransportEnv* env, const char *address, char **actualAddress)
 {
     jint rc;
-    
+
     if (connection != NULL || transport != NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected or already listening");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected or already listening");
     }
-    
+
     rc = shmemBase_listen(address, &transport);
 
     /*
      * If a name was selected by the function above, find it and return
-     * it in place of the original arg. 
+     * it in place of the original arg.
      */
-    if (rc == SYS_OK) { 
+    if (rc == SYS_OK) {
         char *name;
         char *name2;
         rc = shmemBase_name(transport, &name);
@@ -192,46 +192,46 @@ shmemStartListening(jdwpTransportEnv* env, const char *address, char **actualAdd
             }
         }
     } else {
-	RETURN_IO_ERROR("failed to create shared memory listener");
+        RETURN_IO_ERROR("failed to create shared memory listener");
     }
     return JDWPTRANSPORT_ERROR_NONE;
 }
 
 static jdwpTransportError JNICALL
-shmemAccept(jdwpTransportEnv* env, jlong acceptTimeout, jlong handshakeTimeout) 
+shmemAccept(jdwpTransportEnv* env, jlong acceptTimeout, jlong handshakeTimeout)
 {
     jint rc;
 
     if (connection != NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected");
     }
     if (transport == NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "transport not listening");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "transport not listening");
     }
-    
+
     rc = shmemBase_accept(transport, (long)acceptTimeout, &connection);
     if (rc != SYS_OK) {
         if (rc == SYS_TIMEOUT) {
-	    RETURN_ERROR(JDWPTRANSPORT_ERROR_TIMEOUT, "Timed out waiting for connection");
-	} else {
-	    RETURN_IO_ERROR("failed to accept shared memory connection");
-	}
+            RETURN_ERROR(JDWPTRANSPORT_ERROR_TIMEOUT, "Timed out waiting for connection");
+        } else {
+            RETURN_IO_ERROR("failed to accept shared memory connection");
+        }
     }
 
     rc = handshake();
     if (rc != JDWPTRANSPORT_ERROR_NONE) {
-	shmemBase_closeConnection(connection);
-	connection = NULL;
+        shmemBase_closeConnection(connection);
+        connection = NULL;
     }
     return rc;
 }
 
 static jdwpTransportError JNICALL
-shmemStopListening(jdwpTransportEnv* env) 
+shmemStopListening(jdwpTransportEnv* env)
 {
     if (transport != NULL) {
-	shmemBase_closeTransport(transport);
-	transport = NULL;
+        shmemBase_closeTransport(transport);
+        transport = NULL;
     }
     return JDWPTRANSPORT_ERROR_NONE;
 }
@@ -242,59 +242,59 @@ shmemAttach(jdwpTransportEnv* env, const char *address, jlong attachTimeout, jlo
     jint rc;
 
     if (connection != NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected");
-    }    
-    rc = shmemBase_attach(address, (long)attachTimeout, &connection);    
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "already connected");
+    }
+    rc = shmemBase_attach(address, (long)attachTimeout, &connection);
     if (rc != SYS_OK) {
         if (rc == SYS_NOMEM) {
-	    RETURN_ERROR(JDWPTRANSPORT_ERROR_OUT_OF_MEMORY, "out of memory");
-	}
-	if (rc == SYS_TIMEOUT) {
+            RETURN_ERROR(JDWPTRANSPORT_ERROR_OUT_OF_MEMORY, "out of memory");
+        }
+        if (rc == SYS_TIMEOUT) {
             RETURN_ERROR(JDWPTRANSPORT_ERROR_TIMEOUT, "Timed out waiting to attach");
-	}
-	RETURN_IO_ERROR("failed to attach to shared memory connection");
+        }
+        RETURN_IO_ERROR("failed to attach to shared memory connection");
     }
 
     rc = handshake();
     if (rc != JDWPTRANSPORT_ERROR_NONE) {
-	shmemBase_closeConnection(connection);
-	connection = NULL;
+        shmemBase_closeConnection(connection);
+        connection = NULL;
     }
     return rc;
 }
 
 static jdwpTransportError JNICALL
-shmemWritePacket(jdwpTransportEnv* env, const jdwpPacket *packet) 
+shmemWritePacket(jdwpTransportEnv* env, const jdwpPacket *packet)
 {
     if (packet == NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "packet is null");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "packet is null");
     }
     if (packet->type.cmd.len < 11) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "invalid length");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "invalid length");
     }
     if (connection == NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "not connected");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "not connected");
     }
     if (shmemBase_sendPacket(connection, packet) == SYS_OK) {
-	return JDWPTRANSPORT_ERROR_NONE;
+        return JDWPTRANSPORT_ERROR_NONE;
     } else {
-	RETURN_IO_ERROR("write packet failed");
+        RETURN_IO_ERROR("write packet failed");
     }
 }
 
 static jdwpTransportError JNICALL
-shmemReadPacket(jdwpTransportEnv* env, jdwpPacket *packet) 
+shmemReadPacket(jdwpTransportEnv* env, jdwpPacket *packet)
 {
     if (packet == NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "packet is null");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_ARGUMENT, "packet is null");
     }
     if (connection == NULL) {
-	RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "not connected");
+        RETURN_ERROR(JDWPTRANSPORT_ERROR_ILLEGAL_STATE, "not connected");
     }
     if (shmemBase_receivePacket(connection, packet) == SYS_OK) {
-	return JDWPTRANSPORT_ERROR_NONE;
+        return JDWPTRANSPORT_ERROR_NONE;
     } else {
-	RETURN_IO_ERROR("receive packet failed");
+        RETURN_IO_ERROR("receive packet failed");
     }
 }
 
@@ -302,19 +302,19 @@ static jboolean JNICALL
 shmemIsOpen(jdwpTransportEnv* env)
 {
     if (connection != NULL) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     } else {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 }
 
 static jdwpTransportError JNICALL
-shmemClose(jdwpTransportEnv* env) 
+shmemClose(jdwpTransportEnv* env)
 {
     SharedMemoryConnection* current_connection = connection;
     if (current_connection != NULL) {
         connection = NULL;
-	shmemBase_closeConnection(current_connection);
+        shmemBase_closeConnection(current_connection);
     }
     return JDWPTRANSPORT_ERROR_NONE;
 }
@@ -323,32 +323,32 @@ shmemClose(jdwpTransportEnv* env)
  * Return the error message for this thread.
  */
 static jdwpTransportError  JNICALL
-shmemGetLastError(jdwpTransportEnv* env, char **msgP) 
+shmemGetLastError(jdwpTransportEnv* env, char **msgP)
 {
     char *msg = (char *)sysTlsGet(tlsIndex);
     if (msg == NULL) {
-	return JDWPTRANSPORT_ERROR_MSG_NOT_AVAILABLE;
+        return JDWPTRANSPORT_ERROR_MSG_NOT_AVAILABLE;
     }
     *msgP = (*callbacks->alloc)(strlen(msg)+1);
     if (*msgP == NULL) {
-	return JDWPTRANSPORT_ERROR_OUT_OF_MEMORY;
+        return JDWPTRANSPORT_ERROR_OUT_OF_MEMORY;
     }
     strcpy(*msgP, msg);
-    return JDWPTRANSPORT_ERROR_NONE;  
+    return JDWPTRANSPORT_ERROR_NONE;
 }
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 jdwpTransport_OnLoad(JavaVM *vm, jdwpTransportCallback* cbTablePtr,
-		     jint version, jdwpTransportEnv** result)
+                     jint version, jdwpTransportEnv** result)
 {
     if (version != JDWPTRANSPORT_VERSION_1_0) {
-	return JNI_EVERSION;
+        return JNI_EVERSION;
     }
     if (initialized) {
-	/* 
-	 * This library doesn't support multiple environments (yet)
-	 */
-	return JNI_EEXIST;
+        /*
+         * This library doesn't support multiple environments (yet)
+         */
+        return JNI_EEXIST;
     }
     initialized = JNI_TRUE;
 

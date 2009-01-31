@@ -34,7 +34,7 @@ import sun.misc.DoubleConsts;
  * {@code double} in an object. An object of type
  * {@code Double} contains a single field whose type is
  * {@code double}.
- * 
+ *
  * <p>In addition, this class provides several methods for converting a
  * {@code double} to a {@code String} and a
  * {@code String} to a {@code double}, as well as other
@@ -44,7 +44,6 @@ import sun.misc.DoubleConsts;
  * @author  Lee Boynton
  * @author  Arthur van Hoff
  * @author  Joseph D. Darcy
- * @version %I%, %G%
  * @since JDK1.0
  */
 public final class Double extends Number implements Comparable<Double> {
@@ -62,7 +61,7 @@ public final class Double extends Number implements Comparable<Double> {
      */
     public static final double NEGATIVE_INFINITY = -1.0 / 0.0;
 
-    /** 
+    /**
      * A constant holding a Not-a-Number (NaN) value of type
      * {@code double}. It is equivalent to the value returned by
      * {@code Double.longBitsToDouble(0x7ff8000000000000L)}.
@@ -88,7 +87,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @since 1.6
      */
     public static final double MIN_NORMAL = 0x1.0p-1022; // 2.2250738585072014E-308
- 
+
     /**
      * A constant holding the smallest positive nonzero value of type
      * {@code double}, 2<sup>-1074</sup>. It is equal to the
@@ -106,7 +105,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @since 1.6
      */
     public static final int MAX_EXPONENT = 1023;
- 
+
     /**
      * Minimum exponent a normalized {@code double} variable may
      * have.  It is equal to the value returned by
@@ -127,37 +126,37 @@ public final class Double extends Number implements Comparable<Double> {
      * The {@code Class} instance representing the primitive type
      * {@code double}.
      *
-     * @since JDK1.1 
+     * @since JDK1.1
      */
-    public static final Class<Double>	TYPE = (Class<Double>) Class.getPrimitiveClass("double");
+    public static final Class<Double>   TYPE = (Class<Double>) Class.getPrimitiveClass("double");
 
     /**
-     * Returns a string representation of the {@code double} 
+     * Returns a string representation of the {@code double}
      * argument. All characters mentioned below are ASCII characters.
      * <ul>
      * <li>If the argument is NaN, the result is the string
      *     "{@code NaN}".
-     * <li>Otherwise, the result is a string that represents the sign and 
-     * magnitude (absolute value) of the argument. If the sign is negative, 
-     * the first character of the result is '{@code -}' 
-     * (<code>'&#92;u002D'</code>); if the sign is positive, no sign character 
+     * <li>Otherwise, the result is a string that represents the sign and
+     * magnitude (absolute value) of the argument. If the sign is negative,
+     * the first character of the result is '{@code -}'
+     * (<code>'&#92;u002D'</code>); if the sign is positive, no sign character
      * appears in the result. As for the magnitude <i>m</i>:
      * <ul>
-     * <li>If <i>m</i> is infinity, it is represented by the characters 
-     * {@code "Infinity"}; thus, positive infinity produces the result 
-     * {@code "Infinity"} and negative infinity produces the result 
+     * <li>If <i>m</i> is infinity, it is represented by the characters
+     * {@code "Infinity"}; thus, positive infinity produces the result
+     * {@code "Infinity"} and negative infinity produces the result
      * {@code "-Infinity"}.
      *
-     * <li>If <i>m</i> is zero, it is represented by the characters 
-     * {@code "0.0"}; thus, negative zero produces the result 
-     * {@code "-0.0"} and positive zero produces the result 
-     * {@code "0.0"}. 
+     * <li>If <i>m</i> is zero, it is represented by the characters
+     * {@code "0.0"}; thus, negative zero produces the result
+     * {@code "-0.0"} and positive zero produces the result
+     * {@code "0.0"}.
      *
-     * <li>If <i>m</i> is greater than or equal to 10<sup>-3</sup> but less 
-     * than 10<sup>7</sup>, then it is represented as the integer part of 
-     * <i>m</i>, in decimal form with no leading zeroes, followed by 
-     * '{@code .}' (<code>'&#92;u002E'</code>), followed by one or 
-     * more decimal digits representing the fractional part of <i>m</i>. 
+     * <li>If <i>m</i> is greater than or equal to 10<sup>-3</sup> but less
+     * than 10<sup>7</sup>, then it is represented as the integer part of
+     * <i>m</i>, in decimal form with no leading zeroes, followed by
+     * '{@code .}' (<code>'&#92;u002E'</code>), followed by one or
+     * more decimal digits representing the fractional part of <i>m</i>.
      *
      * <li>If <i>m</i> is less than 10<sup>-3</sup> or greater than or
      * equal to 10<sup>7</sup>, then it is represented in so-called
@@ -175,18 +174,18 @@ public final class Double extends Number implements Comparable<Double> {
      * produced by the method {@link Integer#toString(int)}.
      * </ul>
      * </ul>
-     * How many digits must be printed for the fractional part of 
-     * <i>m</i> or <i>a</i>? There must be at least one digit to represent 
-     * the fractional part, and beyond that as many, but only as many, more 
+     * How many digits must be printed for the fractional part of
+     * <i>m</i> or <i>a</i>? There must be at least one digit to represent
+     * the fractional part, and beyond that as many, but only as many, more
      * digits as are needed to uniquely distinguish the argument value from
-     * adjacent values of type {@code double}. That is, suppose that 
-     * <i>x</i> is the exact mathematical value represented by the decimal 
-     * representation produced by this method for a finite nonzero argument 
-     * <i>d</i>. Then <i>d</i> must be the {@code double} value nearest 
-     * to <i>x</i>; or if two {@code double} values are equally close 
+     * adjacent values of type {@code double}. That is, suppose that
+     * <i>x</i> is the exact mathematical value represented by the decimal
+     * representation produced by this method for a finite nonzero argument
+     * <i>d</i>. Then <i>d</i> must be the {@code double} value nearest
+     * to <i>x</i>; or if two {@code double} values are equally close
      * to <i>x</i>, then <i>d</i> must be one of them and the least
      * significant bit of the significand of <i>d</i> must be {@code 0}.
-     * 
+     *
      * <p>To create localized string representations of a floating-point
      * value, use subclasses of {@link java.text.NumberFormat}.
      *
@@ -194,7 +193,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @return a string representation of the argument.
      */
     public static String toString(double d) {
-	return new FloatingDecimal(d).toJavaFormatString();
+        return new FloatingDecimal(d).toJavaFormatString();
     }
 
     /**
@@ -211,7 +210,7 @@ public final class Double extends Number implements Comparable<Double> {
      * (<code>'&#92;u002D'</code>); if the sign is positive, no sign
      * character appears in the result. As for the magnitude <i>m</i>:
      *
-     * <ul> 
+     * <ul>
      * <li>If <i>m</i> is infinity, it is represented by the string
      * {@code "Infinity"}; thus, positive infinity produces the
      * result {@code "Infinity"} and negative infinity produces
@@ -245,18 +244,18 @@ public final class Double extends Number implements Comparable<Double> {
      * least one nonzero digit in a subnormal significand.
      *
      * </ul>
-     * 
+     *
      * </ul>
      *
      * <table border>
      * <caption><h3>Examples</h3></caption>
      * <tr><th>Floating-point Value</th><th>Hexadecimal String</th>
-     * <tr><td>{@code 1.0}</td>	<td>{@code 0x1.0p0}</td>
-     * <tr><td>{@code -1.0}</td>	<td>{@code -0x1.0p0}</td>
-     * <tr><td>{@code 2.0}</td>	<td>{@code 0x1.0p1}</td>
-     * <tr><td>{@code 3.0}</td>	<td>{@code 0x1.8p1}</td>
-     * <tr><td>{@code 0.5}</td>	<td>{@code 0x1.0p-1}</td>
-     * <tr><td>{@code 0.25}</td>	<td>{@code 0x1.0p-2}</td>
+     * <tr><td>{@code 1.0}</td> <td>{@code 0x1.0p0}</td>
+     * <tr><td>{@code -1.0}</td>        <td>{@code -0x1.0p0}</td>
+     * <tr><td>{@code 2.0}</td> <td>{@code 0x1.0p1}</td>
+     * <tr><td>{@code 3.0}</td> <td>{@code 0x1.8p1}</td>
+     * <tr><td>{@code 0.5}</td> <td>{@code 0x1.0p-1}</td>
+     * <tr><td>{@code 0.25}</td>        <td>{@code 0x1.0p-2}</td>
      * <tr><td>{@code Double.MAX_VALUE}</td>
      *     <td>{@code 0x1.fffffffffffffp1023}</td>
      * <tr><td>{@code Minimum Normal Value}</td>
@@ -272,69 +271,69 @@ public final class Double extends Number implements Comparable<Double> {
      * @author Joseph D. Darcy
      */
     public static String toHexString(double d) {
-	/*
-	 * Modeled after the "a" conversion specifier in C99, section
-	 * 7.19.6.1; however, the output of this method is more
-	 * tightly specified.
-	 */
-	if (!FpUtils.isFinite(d) )
-	    // For infinity and NaN, use the decimal output.
-	    return Double.toString(d);
-	else {
-	    // Initialized to maximum size of output.
-	    StringBuffer answer = new StringBuffer(24); 
- 	    
-	    if (FpUtils.rawCopySign(1.0, d) == -1.0) // value is negative,
-		answer.append("-");		     // so append sign info
+        /*
+         * Modeled after the "a" conversion specifier in C99, section
+         * 7.19.6.1; however, the output of this method is more
+         * tightly specified.
+         */
+        if (!FpUtils.isFinite(d) )
+            // For infinity and NaN, use the decimal output.
+            return Double.toString(d);
+        else {
+            // Initialized to maximum size of output.
+            StringBuffer answer = new StringBuffer(24);
 
-	    answer.append("0x"); 
+            if (FpUtils.rawCopySign(1.0, d) == -1.0) // value is negative,
+                answer.append("-");                  // so append sign info
 
-	    d = Math.abs(d);
+            answer.append("0x");
 
-	    if(d == 0.0) {
-		answer.append("0.0p0");
-	    }
-	    else {
-		boolean subnormal = (d < DoubleConsts.MIN_NORMAL);
+            d = Math.abs(d);
 
-		// Isolate significand bits and OR in a high-order bit
-		// so that the string representation has a known
-		// length.
-		long signifBits = (Double.doubleToLongBits(d) 
-				   & DoubleConsts.SIGNIF_BIT_MASK) |
-		    0x1000000000000000L;
+            if(d == 0.0) {
+                answer.append("0.0p0");
+            }
+            else {
+                boolean subnormal = (d < DoubleConsts.MIN_NORMAL);
 
-		// Subnormal values have a 0 implicit bit; normal
-		// values have a 1 implicit bit.
-		answer.append(subnormal ? "0." : "1.");
+                // Isolate significand bits and OR in a high-order bit
+                // so that the string representation has a known
+                // length.
+                long signifBits = (Double.doubleToLongBits(d)
+                                   & DoubleConsts.SIGNIF_BIT_MASK) |
+                    0x1000000000000000L;
 
-		// Isolate the low-order 13 digits of the hex
-		// representation.  If all the digits are zero,
-		// replace with a single 0; otherwise, remove all
-		// trailing zeros.
-		String signif = Long.toHexString(signifBits).substring(3,16);
-		answer.append(signif.equals("0000000000000") ? // 13 zeros
-			      "0":
-			      signif.replaceFirst("0{1,12}$", ""));
+                // Subnormal values have a 0 implicit bit; normal
+                // values have a 1 implicit bit.
+                answer.append(subnormal ? "0." : "1.");
 
-		// If the value is subnormal, use the E_min exponent
-		// value for double; otherwise, extract and report d's
-		// exponent (the representation of a subnormal uses
-		// E_min -1).
-		answer.append("p" + (subnormal ?
-			       DoubleConsts.MIN_EXPONENT:
-			       FpUtils.getExponent(d) ));
-	    }
-	    return answer.toString();
-	}
+                // Isolate the low-order 13 digits of the hex
+                // representation.  If all the digits are zero,
+                // replace with a single 0; otherwise, remove all
+                // trailing zeros.
+                String signif = Long.toHexString(signifBits).substring(3,16);
+                answer.append(signif.equals("0000000000000") ? // 13 zeros
+                              "0":
+                              signif.replaceFirst("0{1,12}$", ""));
+
+                // If the value is subnormal, use the E_min exponent
+                // value for double; otherwise, extract and report d's
+                // exponent (the representation of a subnormal uses
+                // E_min -1).
+                answer.append("p" + (subnormal ?
+                               DoubleConsts.MIN_EXPONENT:
+                               FpUtils.getExponent(d) ));
+            }
+            return answer.toString();
+        }
     }
-    
+
     /**
      * Returns a {@code Double} object holding the
      * {@code double} value represented by the argument string
      * {@code s}.
-     * 
-     * <p>If {@code s} is {@code null}, then a 
+     *
+     * <p>If {@code s} is {@code null}, then a
      * {@code NullPointerException} is thrown.
      *
      * <p>Leading and trailing whitespace characters in {@code s}
@@ -367,9 +366,9 @@ public final class Double extends Number implements Comparable<Double> {
      * <dt><i>HexSignificand:</i>
      * <dd><i>HexNumeral</i>
      * <dd><i>HexNumeral</i> {@code .}
-     * <dd>{@code 0x} <i>HexDigits<sub>opt</sub> 
+     * <dd>{@code 0x} <i>HexDigits<sub>opt</sub>
      *     </i>{@code .}<i> HexDigits</i>
-     * <dd>{@code 0X}<i> HexDigits<sub>opt</sub> 
+     * <dd>{@code 0X}<i> HexDigits<sub>opt</sub>
      *     </i>{@code .} <i>HexDigits</i>
      * </dl>
      *
@@ -436,32 +435,32 @@ public final class Double extends Number implements Comparable<Double> {
      *
      * <code>
      * <pre>
-     *	final String Digits	= "(\\p{Digit}+)";
+     *  final String Digits     = "(\\p{Digit}+)";
      *  final String HexDigits  = "(\\p{XDigit}+)";
-     *	// an exponent is 'e' or 'E' followed by an optionally 
-     *	// signed decimal integer.
-     *	final String Exp	= "[eE][+-]?"+Digits;
-     *	final String fpRegex	=
-     *	    ("[\\x00-\\x20]*"+	// Optional leading "whitespace"
-     *	     "[+-]?(" +	// Optional sign character
-     *	     "NaN|" +		// "NaN" string
-     *	     "Infinity|" +	// "Infinity" string
+     *  // an exponent is 'e' or 'E' followed by an optionally
+     *  // signed decimal integer.
+     *  final String Exp        = "[eE][+-]?"+Digits;
+     *  final String fpRegex    =
+     *      ("[\\x00-\\x20]*"+  // Optional leading "whitespace"
+     *       "[+-]?(" + // Optional sign character
+     *       "NaN|" +           // "NaN" string
+     *       "Infinity|" +      // "Infinity" string
      *
-     *	     // A decimal floating-point string representing a finite positive
-     *	     // number without a leading sign has at most five basic pieces:
-     *	     // Digits . Digits ExponentPart FloatTypeSuffix
-     *	     // 
-     *	     // Since this method allows integer-only strings as input
-     *	     // in addition to strings of floating-point literals, the
-     *	     // two sub-patterns below are simplifications of the grammar
-     *	     // productions from the Java Language Specification, 2nd 
-     *	     // edition, section 3.10.2.
+     *       // A decimal floating-point string representing a finite positive
+     *       // number without a leading sign has at most five basic pieces:
+     *       // Digits . Digits ExponentPart FloatTypeSuffix
+     *       //
+     *       // Since this method allows integer-only strings as input
+     *       // in addition to strings of floating-point literals, the
+     *       // two sub-patterns below are simplifications of the grammar
+     *       // productions from the Java Language Specification, 2nd
+     *       // edition, section 3.10.2.
      *
-     *	     // Digits ._opt Digits_opt ExponentPart_opt FloatTypeSuffix_opt
-     *	     "((("+Digits+"(\\.)?("+Digits+"?)("+Exp+")?)|"+
+     *       // Digits ._opt Digits_opt ExponentPart_opt FloatTypeSuffix_opt
+     *       "((("+Digits+"(\\.)?("+Digits+"?)("+Exp+")?)|"+
      *
-     *	     // . Digits ExponentPart_opt FloatTypeSuffix_opt
-     *	     "(\\.("+Digits+")("+Exp+")?)|"+
+     *       // . Digits ExponentPart_opt FloatTypeSuffix_opt
+     *       "(\\.("+Digits+")("+Exp+")?)|"+
      *
      *       // Hexadecimal strings
      *       "((" +
@@ -472,14 +471,14 @@ public final class Double extends Number implements Comparable<Double> {
      *        "(0[xX]" + HexDigits + "?(\\.)" + HexDigits + ")" +
      *
      *        ")[pP][+-]?" + Digits + "))" +
-     *	     "[fFdD]?))" +
-     *	     "[\\x00-\\x20]*");// Optional trailing "whitespace"
-     *	    
+     *       "[fFdD]?))" +
+     *       "[\\x00-\\x20]*");// Optional trailing "whitespace"
+     *
      *  if (Pattern.matches(fpRegex, myString))
-     *	    Double.valueOf(myString); // Will not throw NumberFormatException
-     *	else {
-     *	    // Perform suitable alternative action
-     *	}
+     *      Double.valueOf(myString); // Will not throw NumberFormatException
+     *  else {
+     *      // Perform suitable alternative action
+     *  }
      * </pre>
      * </code>
      *
@@ -490,7 +489,7 @@ public final class Double extends Number implements Comparable<Double> {
      *             parsable number.
      */
     public static Double valueOf(String s) throws NumberFormatException {
-	return new Double(FloatingDecimal.readJavaFormatString(s).doubleValue());
+        return new Double(FloatingDecimal.readJavaFormatString(s).doubleValue());
     }
 
     /**
@@ -525,7 +524,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @since 1.2
      */
     public static double parseDouble(String s) throws NumberFormatException {
-	return FloatingDecimal.readJavaFormatString(s).doubleValue();
+        return FloatingDecimal.readJavaFormatString(s).doubleValue();
     }
 
     /**
@@ -537,7 +536,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          {@code false} otherwise.
      */
     static public boolean isNaN(double v) {
-	return (v != v);
+        return (v != v);
     }
 
     /**
@@ -549,7 +548,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          infinity or negative infinity; {@code false} otherwise.
      */
     static public boolean isInfinite(double v) {
-	return (v == POSITIVE_INFINITY) || (v == NEGATIVE_INFINITY);
+        return (v == POSITIVE_INFINITY) || (v == NEGATIVE_INFINITY);
     }
 
     /**
@@ -566,7 +565,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @param   value   the value to be represented by the {@code Double}.
      */
     public Double(double value) {
-	this.value = value;
+        this.value = value;
     }
 
     /**
@@ -581,8 +580,8 @@ public final class Double extends Number implements Comparable<Double> {
      * @see       java.lang.Double#valueOf(java.lang.String)
      */
     public Double(String s) throws NumberFormatException {
-	// REMIND: this is inefficient
-	this(valueOf(s).doubleValue());
+        // REMIND: this is inefficient
+        this(valueOf(s).doubleValue());
     }
 
     /**
@@ -593,7 +592,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          NaN; {@code false} otherwise.
      */
     public boolean isNaN() {
-	return isNaN(value);
+        return isNaN(value);
     }
 
     /**
@@ -605,7 +604,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          {@code false} otherwise.
      */
     public boolean isInfinite() {
-	return isInfinite(value);
+        return isInfinite(value);
     }
 
     /**
@@ -618,7 +617,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @see java.lang.Double#toString(double)
      */
     public String toString() {
-	return String.valueOf(value);
+        return String.valueOf(value);
     }
 
     /**
@@ -627,10 +626,10 @@ public final class Double extends Number implements Comparable<Double> {
      *
      * @return  the {@code double} value represented by this object
      *          converted to type {@code byte}
-     * @since JDK1.1 
+     * @since JDK1.1
      */
     public byte byteValue() {
-	return (byte)value;
+        return (byte)value;
     }
 
     /**
@@ -639,10 +638,10 @@ public final class Double extends Number implements Comparable<Double> {
      *
      * @return  the {@code double} value represented by this object
      *          converted to type {@code short}
-     * @since JDK1.1 
+     * @since JDK1.1
      */
     public short shortValue() {
-	return (short)value;
+        return (short)value;
     }
 
     /**
@@ -653,7 +652,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          converted to type {@code int}
      */
     public int intValue() {
-	return (int)value;
+        return (int)value;
     }
 
     /**
@@ -664,7 +663,7 @@ public final class Double extends Number implements Comparable<Double> {
      *          converted to type {@code long}
      */
     public long longValue() {
-	return (long)value;
+        return (long)value;
     }
 
     /**
@@ -673,10 +672,10 @@ public final class Double extends Number implements Comparable<Double> {
      *
      * @return  the {@code double} value represented by this object
      *          converted to type {@code float}
-     * @since JDK1.0 
+     * @since JDK1.0
      */
     public float floatValue() {
-	return (float)value;
+        return (float)value;
     }
 
     /**
@@ -686,7 +685,7 @@ public final class Double extends Number implements Comparable<Double> {
      * @return the {@code double} value represented by this object
      */
     public double doubleValue() {
-	return (double)value;
+        return (double)value;
     }
 
     /**
@@ -702,7 +701,7 @@ public final class Double extends Number implements Comparable<Double> {
      *  {@code (int)(v^(v>>>32))}
      * </blockquote>
      *
-     * where {@code v} is defined by: 
+     * where {@code v} is defined by:
      *
      * <blockquote>
      *  {@code long v = Double.doubleToLongBits(this.doubleValue());}
@@ -711,8 +710,8 @@ public final class Double extends Number implements Comparable<Double> {
      * @return  a {@code hash code} value for this object.
      */
     public int hashCode() {
-	long bits = doubleToLongBits(value);
-	return (int)(bits ^ (bits >>> 32));
+        long bits = doubleToLongBits(value);
+        return (int)(bits ^ (bits >>> 32));
     }
 
     /**
@@ -725,7 +724,7 @@ public final class Double extends Number implements Comparable<Double> {
      * the same if and only if the method {@link
      * #doubleToLongBits(double)} returns the identical
      * {@code long} value when applied to each.
-     * 
+     *
      * <p>Note that in most cases, for two instances of class
      * {@code Double}, {@code d1} and {@code d2}, the
      * value of {@code d1.equals(d2)} is {@code true} if and
@@ -734,7 +733,7 @@ public final class Double extends Number implements Comparable<Double> {
      * <blockquote>
      *  {@code d1.doubleValue() == d2.doubleValue()}
      * </blockquote>
-     * 
+     *
      * <p>also has the value {@code true}. However, there are two
      * exceptions:
      * <ul>
@@ -755,81 +754,81 @@ public final class Double extends Number implements Comparable<Double> {
      * @see java.lang.Double#doubleToLongBits(double)
      */
     public boolean equals(Object obj) {
-	return (obj instanceof Double)
-	       && (doubleToLongBits(((Double)obj).value) ==
-		      doubleToLongBits(value));
+        return (obj instanceof Double)
+               && (doubleToLongBits(((Double)obj).value) ==
+                      doubleToLongBits(value));
     }
 
     /**
      * Returns a representation of the specified floating-point value
      * according to the IEEE 754 floating-point "double
      * format" bit layout.
-     * 
-     * <p>Bit 63 (the bit that is selected by the mask 
-     * {@code 0x8000000000000000L}) represents the sign of the 
-     * floating-point number. Bits 
-     * 62-52 (the bits that are selected by the mask 
-     * {@code 0x7ff0000000000000L}) represent the exponent. Bits 51-0 
-     * (the bits that are selected by the mask 
-     * {@code 0x000fffffffffffffL}) represent the significand 
-     * (sometimes called the mantissa) of the floating-point number. 
-     * 
+     *
+     * <p>Bit 63 (the bit that is selected by the mask
+     * {@code 0x8000000000000000L}) represents the sign of the
+     * floating-point number. Bits
+     * 62-52 (the bits that are selected by the mask
+     * {@code 0x7ff0000000000000L}) represent the exponent. Bits 51-0
+     * (the bits that are selected by the mask
+     * {@code 0x000fffffffffffffL}) represent the significand
+     * (sometimes called the mantissa) of the floating-point number.
+     *
      * <p>If the argument is positive infinity, the result is
      * {@code 0x7ff0000000000000L}.
-     * 
+     *
      * <p>If the argument is negative infinity, the result is
      * {@code 0xfff0000000000000L}.
-     * 
-     * <p>If the argument is NaN, the result is 
-     * {@code 0x7ff8000000000000L}. 
-     * 
-     * <p>In all cases, the result is a {@code long} integer that, when 
-     * given to the {@link #longBitsToDouble(long)} method, will produce a 
-     * floating-point value the same as the argument to 
+     *
+     * <p>If the argument is NaN, the result is
+     * {@code 0x7ff8000000000000L}.
+     *
+     * <p>In all cases, the result is a {@code long} integer that, when
+     * given to the {@link #longBitsToDouble(long)} method, will produce a
+     * floating-point value the same as the argument to
      * {@code doubleToLongBits} (except all NaN values are
      * collapsed to a single "canonical" NaN value).
      *
      * @param   value   a {@code double} precision floating-point number.
-     * @return the bits that represent the floating-point number.  
+     * @return the bits that represent the floating-point number.
      */
     public static long doubleToLongBits(double value) {
-	long result = doubleToRawLongBits(value);
-	// Check for NaN based on values of bit fields, maximum
-	// exponent and nonzero significand.
-	if ( ((result & DoubleConsts.EXP_BIT_MASK) == 
-	      DoubleConsts.EXP_BIT_MASK) &&
-	     (result & DoubleConsts.SIGNIF_BIT_MASK) != 0L)
-	    result = 0x7ff8000000000000L;
-	return result;
+        long result = doubleToRawLongBits(value);
+        // Check for NaN based on values of bit fields, maximum
+        // exponent and nonzero significand.
+        if ( ((result & DoubleConsts.EXP_BIT_MASK) ==
+              DoubleConsts.EXP_BIT_MASK) &&
+             (result & DoubleConsts.SIGNIF_BIT_MASK) != 0L)
+            result = 0x7ff8000000000000L;
+        return result;
     }
 
     /**
      * Returns a representation of the specified floating-point value
      * according to the IEEE 754 floating-point "double
      * format" bit layout, preserving Not-a-Number (NaN) values.
-     * 
-     * <p>Bit 63 (the bit that is selected by the mask 
-     * {@code 0x8000000000000000L}) represents the sign of the 
-     * floating-point number. Bits 
-     * 62-52 (the bits that are selected by the mask 
-     * {@code 0x7ff0000000000000L}) represent the exponent. Bits 51-0 
-     * (the bits that are selected by the mask 
-     * {@code 0x000fffffffffffffL}) represent the significand 
-     * (sometimes called the mantissa) of the floating-point number. 
-     * 
+     *
+     * <p>Bit 63 (the bit that is selected by the mask
+     * {@code 0x8000000000000000L}) represents the sign of the
+     * floating-point number. Bits
+     * 62-52 (the bits that are selected by the mask
+     * {@code 0x7ff0000000000000L}) represent the exponent. Bits 51-0
+     * (the bits that are selected by the mask
+     * {@code 0x000fffffffffffffL}) represent the significand
+     * (sometimes called the mantissa) of the floating-point number.
+     *
      * <p>If the argument is positive infinity, the result is
      * {@code 0x7ff0000000000000L}.
-     * 
+     *
      * <p>If the argument is negative infinity, the result is
      * {@code 0xfff0000000000000L}.
-     * 
+     *
      * <p>If the argument is NaN, the result is the {@code long}
      * integer representing the actual NaN value.  Unlike the
      * {@code doubleToLongBits} method,
      * {@code doubleToRawLongBits} does not collapse all the bit
      * patterns encoding a NaN to a single "canonical" NaN
      * value.
-     * 
+     *
      * <p>In all cases, the result is a {@code long} integer that,
      * when given to the {@link #longBitsToDouble(long)} method, will
      * produce a floating-point value the same as the argument to
@@ -847,13 +846,13 @@ public final class Double extends Number implements Comparable<Double> {
      * The argument is considered to be a representation of a
      * floating-point value according to the IEEE 754 floating-point
      * "double format" bit layout.
-     * 
-     * <p>If the argument is {@code 0x7ff0000000000000L}, the result 
-     * is positive infinity. 
-     * 
-     * <p>If the argument is {@code 0xfff0000000000000L}, the result 
-     * is negative infinity. 
-     * 
+     *
+     * <p>If the argument is {@code 0x7ff0000000000000L}, the result
+     * is positive infinity.
+     *
+     * <p>If the argument is {@code 0xfff0000000000000L}, the result
+     * is negative infinity.
+     *
      * <p>If the argument is any value in the range
      * {@code 0x7ff0000000000001L} through
      * {@code 0x7fffffffffffffffL} or in the range
@@ -863,9 +862,9 @@ public final class Double extends Number implements Comparable<Double> {
      * between two NaN values of the same type with different bit
      * patterns.  Distinct values of NaN are only distinguishable by
      * use of the {@code Double.doubleToRawLongBits} method.
-     * 
-     * <p>In all other cases, let <i>s</i>, <i>e</i>, and <i>m</i> be three 
-     * values that can be computed from the argument: 
+     *
+     * <p>In all other cases, let <i>s</i>, <i>e</i>, and <i>m</i> be three
+     * values that can be computed from the argument:
      *
      * <blockquote><pre>
      * int s = ((bits &gt;&gt; 63) == 0) ? 1 : -1;
@@ -875,9 +874,9 @@ public final class Double extends Number implements Comparable<Double> {
      *                 (bits & 0xfffffffffffffL) | 0x10000000000000L;
      * </pre></blockquote>
      *
-     * Then the floating-point result equals the value of the mathematical 
+     * Then the floating-point result equals the value of the mathematical
      * expression <i>s</i>&middot;<i>m</i>&middot;2<sup><i>e</i>-1075</sup>.
-     * 
+     *
      * <p>Note that this method may not be able to return a
      * {@code double} NaN with exactly same bit pattern as the
      * {@code long} argument.  IEEE 754 distinguishes between two
@@ -911,13 +910,13 @@ public final class Double extends Number implements Comparable<Double> {
      * comparison operators ({@code <, <=, ==, >=, >})
      * when applied to primitive {@code double} values:
      * <ul><li>
-     *		{@code Double.NaN} is considered by this method
-     *		to be equal to itself and greater than all other
-     *		{@code double} values (including
-     *		{@code Double.POSITIVE_INFINITY}).
+     *          {@code Double.NaN} is considered by this method
+     *          to be equal to itself and greater than all other
+     *          {@code double} values (including
+     *          {@code Double.POSITIVE_INFINITY}).
      * <li>
-     *		{@code 0.0d} is considered by this method to be greater
-     *		than {@code -0.0d}.
+     *          {@code 0.0d} is considered by this method to be greater
+     *          than {@code -0.0d}.
      * </ul>
      * This ensures that the <i>natural ordering</i> of
      * {@code Double} objects imposed by this method is <i>consistent
@@ -925,13 +924,13 @@ public final class Double extends Number implements Comparable<Double> {
      *
      * @param   anotherDouble   the {@code Double} to be compared.
      * @return  the value {@code 0} if {@code anotherDouble} is
-     *		numerically equal to this {@code Double}; a value
-     *		less than {@code 0} if this {@code Double}
-     *		is numerically less than {@code anotherDouble};
-     *		and a value greater than {@code 0} if this
-     *		{@code Double} is numerically greater than
-     *		{@code anotherDouble}.
-     *		
+     *          numerically equal to this {@code Double}; a value
+     *          less than {@code 0} if this {@code Double}
+     *          is numerically less than {@code anotherDouble};
+     *          and a value greater than {@code 0} if this
+     *          {@code Double} is numerically greater than
+     *          {@code anotherDouble}.
+     *
      * @since   1.2
      */
     public int compareTo(Double anotherDouble) {
@@ -949,18 +948,18 @@ public final class Double extends Number implements Comparable<Double> {
      * @param   d1        the first {@code double} to compare
      * @param   d2        the second {@code double} to compare
      * @return  the value {@code 0} if {@code d1} is
-     *		numerically equal to {@code d2}; a value less than
+     *          numerically equal to {@code d2}; a value less than
      *          {@code 0} if {@code d1} is numerically less than
-     *		{@code d2}; and a value greater than {@code 0}
-     *		if {@code d1} is numerically greater than
-     *		{@code d2}.
+     *          {@code d2}; and a value greater than {@code 0}
+     *          if {@code d1} is numerically greater than
+     *          {@code d2}.
      * @since 1.4
      */
     public static int compare(double d1, double d2) {
         if (d1 < d2)
-            return -1;		 // Neither val is NaN, thisVal is smaller
+            return -1;           // Neither val is NaN, thisVal is smaller
         if (d1 > d2)
-            return 1;		 // Neither val is NaN, thisVal is larger
+            return 1;            // Neither val is NaN, thisVal is larger
 
         long thisBits = Double.doubleToLongBits(d1);
         long anotherBits = Double.doubleToLongBits(d2);

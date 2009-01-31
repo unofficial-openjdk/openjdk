@@ -49,7 +49,7 @@ public class XMenuItemPeer implements MenuItemPeer {
      * Primary members
      */
 
-    /** 
+    /**
      * Window that this item belongs to.
      */
     private XBaseMenuWindow container;
@@ -66,7 +66,7 @@ public class XMenuItemPeer implements MenuItemPeer {
      * Mapping to window
      */
 
-    /** 
+    /**
      * Rectange occupied by menu item in container's
      * coordinates. Filled by map(...) function from
      * XBaseMenuWindow.map()
@@ -197,7 +197,7 @@ public class XMenuItemPeer implements MenuItemPeer {
     public void enable() {
         setEnabled( true );
     }
-    
+
     /**
      * DEPRECATED:  Replaced by setEnabled(boolean).
      * @see java.awt.peer.MenuItemPeer
@@ -227,7 +227,7 @@ public class XMenuItemPeer implements MenuItemPeer {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        return XWindow.defaultFont; 
+        return XWindow.defaultFont;
     }
 
     String getTargetLabel() {
@@ -240,9 +240,9 @@ public class XMenuItemPeer implements MenuItemPeer {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return ""; 
+        return "";
     }
-    
+
     boolean isTargetEnabled() {
         if (target == null) {
             return false;
@@ -252,12 +252,12 @@ public class XMenuItemPeer implements MenuItemPeer {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return false; 
+        return false;
     }
 
     /**
      * Returns true if item and all its parents are enabled
-     * This function is used to fix 
+     * This function is used to fix
      * 6184485: Popup menu is not disabled on XToolkit even when calling setEnabled (false)
      */
     boolean isTargetItemEnabled() {
@@ -271,9 +271,9 @@ public class XMenuItemPeer implements MenuItemPeer {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        return false; 
+        return false;
     }
-    
+
     String getTargetActionCommand() {
         if (target == null) {
             return "";
@@ -297,7 +297,7 @@ public class XMenuItemPeer implements MenuItemPeer {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return null; 
+        return null;
     }
 
     String getShortcutText() {
@@ -381,7 +381,7 @@ public class XMenuItemPeer implements MenuItemPeer {
 
     /**
      * This function is invoked when the user clicks
-     * on menu item. 
+     * on menu item.
      * @param when the timestamp of action event
      */
     void action(long when) {
@@ -399,7 +399,7 @@ public class XMenuItemPeer implements MenuItemPeer {
 
     /**
      * Returns text metrics of menu item.
-     * This function does not use any locks 
+     * This function does not use any locks
      * and is guaranteed to return some value
      * (possibly actual, possibly expired)
      */
@@ -414,7 +414,7 @@ public class XMenuItemPeer implements MenuItemPeer {
 
     /**
      * Returns dimensions of item's label.
-     * This function does not use any locks 
+     * This function does not use any locks
      * Returns actual or expired  value
      * or null if error occurs
      */
@@ -428,11 +428,11 @@ public class XMenuItemPeer implements MenuItemPeer {
         }*/
 
     /**
-     * Returns width of item's shortcut label, 
+     * Returns width of item's shortcut label,
      * 0 if item has no shortcut.
      * The height of shortcut can be deternimed
      * from text dimensions.
-     * This function does not use any locks 
+     * This function does not use any locks
      * and is guaranteed to return some value
      * (possibly actual, possibly expired)
      */

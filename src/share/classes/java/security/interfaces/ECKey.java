@@ -31,14 +31,13 @@ import java.security.spec.ECParameterSpec;
  *
  * @author Valerie Peng
  *
- * @version %I%, %G%
  * @since 1.5
  */
 public interface ECKey {
     /**
      * Returns the domain parameters associated
-     * with this key. The domain parameters are 
-     * either explicitly specified or implicitly 
+     * with this key. The domain parameters are
+     * either explicitly specified or implicitly
      * created during key generation.
      * @return the associated domain parameters.
      */

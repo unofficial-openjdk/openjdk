@@ -31,7 +31,6 @@ import sun.nio.cs.ext.MacIceland;
  * Tables and data to convert Unicode to MacIceland
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteMacIceland extends CharToByteSingleByte {

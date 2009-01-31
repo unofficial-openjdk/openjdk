@@ -28,25 +28,25 @@
  * @author Andreas Sterbenz
  * @run main/othervm/timeout=300 ClientJSSEServerJSSE
  */
- 
+
 public class ClientJSSEServerJSSE {
-    
+
     public static void main(String[] args) throws Exception {
-	CipherTest.main(new JSSEFactory(), args);
+        CipherTest.main(new JSSEFactory(), args);
     }
-    
+
     private static class JSSEFactory extends CipherTest.PeerFactory {
-	
-	String getName() {
-	    return "Client JSSE - Server JSSE";
-	}
-	
+
+        String getName() {
+            return "Client JSSE - Server JSSE";
+        }
+
         CipherTest.Client newClient(CipherTest cipherTest) throws Exception {
-	    return new JSSEClient(cipherTest);
-	}
-	
-	CipherTest.Server newServer(CipherTest cipherTest) throws Exception {
-	    return new JSSEServer(cipherTest);
-	}
+            return new JSSEClient(cipherTest);
+        }
+
+        CipherTest.Server newServer(CipherTest cipherTest) throws Exception {
+            return new JSSEServer(cipherTest);
+        }
     }
 }

@@ -39,12 +39,12 @@ import javax.sql.rowset.*;
  * interface providing an SQL <code>JOIN</code> between <code>RowSet</code>
  * objects.
  * <P>
- * The implementation provides an ANSI-style <code>JOIN</code> providing an 
+ * The implementation provides an ANSI-style <code>JOIN</code> providing an
  * inner join between two tables. Any unmatched rows in either table of the
  * join are  discarded.
  * <p>
  * Typically, a <code>JoinRowSet</code> implementation is leveraged by
- * <code>RowSet</code> instances that are in a disconnected environment and 
+ * <code>RowSet</code> instances that are in a disconnected environment and
  * thus do not have the luxury of an open connection to the data source to
  * establish logical relationships between themselves. In other words, it is
  * largely <code>CachedRowSet</code> objects and implementations derived from
@@ -57,19 +57,19 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     /**
      * A <code>Vector</code> object that contains the <code>RowSet</code> objects
      * that have been added to this <code>JoinRowSet</code> object.
-	 */
+         */
     private Vector vecRowSetsInJOIN;
 
     /**
      * The <code>CachedRowSet</code> object that encapsulates this
-     * <code>JoinRowSet</code> object. 
+     * <code>JoinRowSet</code> object.
      * When <code>RowSet</code> objects are added to this <code>JoinRowSet</code>
      * object, they are also added to <i>crsInternal</i> to form the same kind of
-     * SQL <code>JOIN</code>.  As a result, methods for making updates to this 
-     * <code>JoinRowSet</code> object can use <i>crsInternal</i> methods in their 
+     * SQL <code>JOIN</code>.  As a result, methods for making updates to this
+     * <code>JoinRowSet</code> object can use <i>crsInternal</i> methods in their
      * implementations.
      */
-    private CachedRowSetImpl crsInternal; 
+    private CachedRowSetImpl crsInternal;
 
     /**
      * A <code>Vector</code> object containing the types of join that have been set
@@ -79,7 +79,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     private Vector vecJoinType;
 
     /**
-     * A <code>Vector</code> object containing the names of all the tables entering 
+     * A <code>Vector</code> object containing the names of all the tables entering
      * the join.
      */
     private Vector vecTableNames;
@@ -93,13 +93,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * A <code>String</code> object that stores the name of the match column.
      */
     private String strMatchKey ;
-    
+
     /**
-     * An array of <code>boolean</code> values indicating the types of joins supported   
-     * by this <code>JoinRowSet</code> implementation. 
+     * An array of <code>boolean</code> values indicating the types of joins supported
+     * by this <code>JoinRowSet</code> implementation.
      */
     boolean[] supportedJOINs;
-    
+
     /**
      * The <code>WebRowSet</code> object that encapsulates this <code>JoinRowSet</code>
      * object. This <code>WebRowSet</code> object allows this <code>JoinRowSet</code>
@@ -107,31 +107,31 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * object.
      */
     private WebRowSet wrs;
-    
-   
+
+
     /**
      * Constructor for <code>JoinRowSetImpl</code> class. Configures various internal data
      * structures to provide mechanisms required for <code>JoinRowSet</code> interface
      * implementation.
-     * 
-     * @throws SQLException if an error occurs in instantiating an instance of 
+     *
+     * @throws SQLException if an error occurs in instantiating an instance of
      * <code>JoinRowSetImpl</code>
      */
     public JoinRowSetImpl() throws SQLException {
-    
+
         vecRowSetsInJOIN = new Vector();
         crsInternal = new CachedRowSetImpl();
-	vecJoinType = new Vector();
-	vecTableNames = new Vector();
-	iMatchKey = -1;
-	strMatchKey = null;
+        vecJoinType = new Vector();
+        vecTableNames = new Vector();
+        iMatchKey = -1;
+        strMatchKey = null;
         supportedJOINs =
               new boolean[] {false, true, false, false, false};
 
     }
 
     /**
-     * Adds the given <code>RowSet</code> object to this 
+     * Adds the given <code>RowSet</code> object to this
      * <code>JoinRowSet</code> object.  If this
      * rowset is the first to be added to the <code>JoinRowSet</code>
      * object, it forms the basis for the <code>JOIN</code>
@@ -149,26 +149,26 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @see CachedRowSet#setMatchColumn
      */
     public void addRowSet(Joinable rowset) throws SQLException {
-	boolean boolColId, boolColName;
+        boolean boolColId, boolColName;
 
-	boolColId = false;
-	boolColName = false;
-	CachedRowSetImpl cRowset;
-	
+        boolColId = false;
+        boolColName = false;
+        CachedRowSetImpl cRowset;
+
         if(!(rowset instanceof RowSet)) {
             throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notinstance").toString());
-        } 
+        }
 
-	if(rowset instanceof JdbcRowSetImpl ) {
-	    cRowset = new CachedRowSetImpl();
-	    cRowset.populate((RowSet)rowset);
+        if(rowset instanceof JdbcRowSetImpl ) {
+            cRowset = new CachedRowSetImpl();
+            cRowset.populate((RowSet)rowset);
             if(cRowset.size() == 0){
                 throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.emptyrowset").toString());
             }
 
-	    
-	    try {
-	        int matchColumnCount = 0;
+
+            try {
+                int matchColumnCount = 0;
                 for(int i=0; i< rowset.getMatchColumnIndexes().length; i++) {
                     if(rowset.getMatchColumnIndexes()[i] != -1)
                         ++ matchColumnCount;
@@ -179,44 +179,44 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
                 for(int i=0; i<matchColumnCount; i++)
                    pCol[i] = rowset.getMatchColumnIndexes()[i];
                 cRowset.setMatchColumn(pCol);
-	    } catch(SQLException sqle) {
-	    
-	    }
-	    	    	    
-	} else {
-       	     cRowset = (CachedRowSetImpl)rowset;
+            } catch(SQLException sqle) {
+
+            }
+
+        } else {
+             cRowset = (CachedRowSetImpl)rowset;
              if(cRowset.size() == 0){
                  throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.emptyrowset").toString());
              }
-    	}
-    	
-	// Either column id or column name will be set
-	// If both not set throw exception.
+        }
 
-	try {
-	     iMatchKey = (cRowset.getMatchColumnIndexes())[0];
-	} catch(SQLException sqle) {
-	   //if not set catch the exception but do nothing now.
-	     boolColId = true;
-	}
+        // Either column id or column name will be set
+        // If both not set throw exception.
 
-	try {
-	     strMatchKey = (cRowset.getMatchColumnNames())[0];
-	} catch(SQLException sqle) {
-	   //if not set catch the exception but do nothing now.
-	   boolColName = true;
-	}
+        try {
+             iMatchKey = (cRowset.getMatchColumnIndexes())[0];
+        } catch(SQLException sqle) {
+           //if not set catch the exception but do nothing now.
+             boolColId = true;
+        }
 
-	if(boolColId && boolColName) {
-	   // neither setter methods have been used to set
-	   throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.matchnotset").toString());
-	} else {
-	   //if(boolColId || boolColName)
-	   // either of the setter methods have been set.
-	   if(boolColId){
-	      //
+        try {
+             strMatchKey = (cRowset.getMatchColumnNames())[0];
+        } catch(SQLException sqle) {
+           //if not set catch the exception but do nothing now.
+           boolColName = true;
+        }
+
+        if(boolColId && boolColName) {
+           // neither setter methods have been used to set
+           throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.matchnotset").toString());
+        } else {
+           //if(boolColId || boolColName)
+           // either of the setter methods have been set.
+           if(boolColId){
+              //
               ArrayList indices = new ArrayList();
-	      for(int i=0;i<cRowset.getMatchColumnNames().length;i++) {
+              for(int i=0;i<cRowset.getMatchColumnNames().length;i++) {
                   if( (strMatchKey = (cRowset.getMatchColumnNames())[i]) != null) {
                       iMatchKey = cRowset.findColumn(strMatchKey);
                       indices.add(iMatchKey);
@@ -228,75 +228,75 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
               for(int i=0; i<indices.size();i++)
                   indexes[i] = ((Integer)indices.get(i)).intValue();
               cRowset.setMatchColumn(indexes);
-	      // Set the match column here because join will be
-	      // based on columnId,
-	      // (nested for loop in initJOIN() checks for equality
-	      //  based on columnIndex) 
-	   } else {
-	      //do nothing, iMatchKey is set.
-	   }
-	   // Now both iMatchKey and strMatchKey have been set pointing
+              // Set the match column here because join will be
+              // based on columnId,
+              // (nested for loop in initJOIN() checks for equality
+              //  based on columnIndex)
+           } else {
+              //do nothing, iMatchKey is set.
+           }
+           // Now both iMatchKey and strMatchKey have been set pointing
            // to the same column
-	}
-	
-	// Till first rowset setJoinType may not be set because 
-	// default type is JoinRowSet.INNER_JOIN which should 
-	// be set and for subsequent additions of rowset, if not set 
-	// keep on adding join type as JoinRowSet.INNER_JOIN
-	// to vecJoinType.
-	
-	initJOIN(cRowset);
+        }
+
+        // Till first rowset setJoinType may not be set because
+        // default type is JoinRowSet.INNER_JOIN which should
+        // be set and for subsequent additions of rowset, if not set
+        // keep on adding join type as JoinRowSet.INNER_JOIN
+        // to vecJoinType.
+
+        initJOIN(cRowset);
     }
 
     /**
      * Adds the given <code>RowSet</code> object to the <code>JOIN</code> relation
-     * and sets the designated column as the match column. 
-     * If the given <code>RowSet</code> 
+     * and sets the designated column as the match column.
+     * If the given <code>RowSet</code>
      * object is the first to be added to this <code>JoinRowSet</code>
      * object, it forms the basis of the <code>JOIN</code> relationship to be formed
      * when other <code>RowSet</code> objects are added .
-     * <P> 
+     * <P>
      * This method should be used when the given <code>RowSet</code> object
      * does not already have a match column set.
      *
      * @param rowset a <code>RowSet</code> object to be added to
      *         the <code>JOIN</code> relation; must implement the <code>Joinable</code>
-     *         interface  
+     *         interface
      * @param columnIdx an <code>int</code> giving the index of the column to be set as
      *         the match column
-     * @throws SQLException if (1) an empty <code>RowSet</code> object is added to this 
+     * @throws SQLException if (1) an empty <code>RowSet</code> object is added to this
      *         <code>JoinRowSet</code> object, (2) a match column has not been set,
-     *         or (3) the <code>RowSet</code> object being added violates the active 
+     *         or (3) the <code>RowSet</code> object being added violates the active
      *         <code>JOIN</code>
      * @see CachedRowSet#unsetMatchColumn
      */
     public void addRowSet(RowSet rowset, int columnIdx) throws SQLException {
         //passing the rowset as well as the columnIdx to form the joinrowset.
-        
+
         ((CachedRowSetImpl)rowset).setMatchColumn(columnIdx);
-        
+
         addRowSet((Joinable)rowset);
     }
 
     /**
      * Adds the given <code>RowSet</code> object to the <code>JOIN</code> relationship
      * and sets the designated column as the match column. If the given
-     * <code>RowSet</code> 
+     * <code>RowSet</code>
      * object is the first to be added to this <code>JoinRowSet</code>
      * object, it forms the basis of the <code>JOIN</code> relationship to be formed
      * when other <code>RowSet</code> objects are added .
-     * <P> 
+     * <P>
      * This method should be used when the given <code>RowSet</code> object
      * does not already have a match column set.
      *
      * @param rowset a <code>RowSet</code> object to be added to
      *         the <code>JOIN</code> relation
-     * @param columnName a <code>String</code> object giving the name of the column 
+     * @param columnName a <code>String</code> object giving the name of the column
      *        to be set as the match column; must implement the <code>Joinable</code>
-     *        interface 
-     * @throws SQLException if (1) an empty <code>RowSet</code> object is added to this 
+     *        interface
+     * @throws SQLException if (1) an empty <code>RowSet</code> object is added to this
      *         <code>JoinRowSet</code> object, (2) a match column has not been set,
-     *         or (3) the <code>RowSet</code> object being added violates the active 
+     *         or (3) the <code>RowSet</code> object being added violates the active
      *         <code>JOIN</code>
      */
     public void addRowSet(RowSet rowset, String columnName) throws SQLException {
@@ -311,14 +311,14 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * <code>RowSet</code> object in the array of <code>RowSet</code> objects
      * is the first to be added to this <code>JoinRowSet</code>
      * object, it forms the basis of the <code>JOIN</code> relationship to be formed
-     * when other <code>RowSet</code> objects are added. 
+     * when other <code>RowSet</code> objects are added.
      * <P>
      * The first <code>int</code>
      * in <i>columnIdx</i> is used to set the match column for the first
      * <code>RowSet</code> object in <i>rowset</i>, the second <code>int</code>
      * in <i>columnIdx</i> is used to set the match column for the second
      * <code>RowSet</code> object in <i>rowset</i>, and so on.
-     * <P> 
+     * <P>
      * This method should be used when the given <code>RowSet</code> objects
      * do not already have match columns set.
      *
@@ -327,10 +327,10 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *         implement the <code>Joinable</code> interface
      * @param columnIdx an array of <code>int</code> values designating the columns
      *        to be set as the
-     *        match columns for the <code>RowSet</code> objects in <i>rowset</i> 
+     *        match columns for the <code>RowSet</code> objects in <i>rowset</i>
      * @throws SQLException if the number of <code>RowSet</code> objects in
      *         <i>rowset</i> is not equal to the number of <code>int</code> values
-     *         in <i>columnIdx</i>  
+     *         in <i>columnIdx</i>
      */
     public void addRowSet(RowSet[] rowset,
                           int[] columnIdx) throws SQLException {
@@ -339,10 +339,10 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
         throw new SQLException
              (resBundle.handleGetObject("joinrowsetimpl.numnotequal").toString());
      } else {
-     	for(int i=0; i< rowset.length; i++) {
-     	   ((CachedRowSetImpl)rowset[i]).setMatchColumn(columnIdx[i]);
-     	   addRowSet((Joinable)rowset[i]);
-     	} //end for
+        for(int i=0; i< rowset.length; i++) {
+           ((CachedRowSetImpl)rowset[i]).setMatchColumn(columnIdx[i]);
+           addRowSet((Joinable)rowset[i]);
+        } //end for
      } //end if
 
    }
@@ -354,28 +354,28 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * <code>RowSet</code> object in the array of <code>RowSet</code> objects
      * is the first to be added to this <code>JoinRowSet</code>
      * object, it forms the basis of the <code>JOIN</code> relationship to be formed
-     * when other <code>RowSet</code> objects are added. 
+     * when other <code>RowSet</code> objects are added.
      * <P>
      * The first <code>String</code> object
      * in <i>columnName</i> is used to set the match column for the first
      * <code>RowSet</code> object in <i>rowset</i>, the second <code>String</code>
      * object in <i>columnName</i> is used to set the match column for the second
      * <code>RowSet</code> object in <i>rowset</i>, and so on.
-     * <P> 
+     * <P>
      * This method should be used when the given <code>RowSet</code> objects
      * do not already have match columns set.
      *
      * @param rowset an array of <code>RowSet</code> objects to be added to
      *         the <code>JOIN</code> relation; each <code>RowSet</code> object must
-     *         implement the <code>Joinable</code> interface 
+     *         implement the <code>Joinable</code> interface
      * @param columnName an array of <code>String</code> objects designating the columns
      *        to be set as the
-     *        match columns for the <code>RowSet</code> objects in <i>rowset</i> 
+     *        match columns for the <code>RowSet</code> objects in <i>rowset</i>
      * @throws SQLException if the number of <code>RowSet</code> objects in
      *         <i>rowset</i> is not equal to the number of <code>String</code> objects
      *         in <i>columnName</i>, an empty <code>JdbcRowSet</code> is added to the
      *         <code>JoinRowSet</code>, if a match column is not set,
-     *         or one or the <code>RowSet</code> objects in <i>rowset</i> violates the 
+     *         or one or the <code>RowSet</code> objects in <i>rowset</i> violates the
      *         active <code>JOIN</code>
      */
     public void addRowSet(RowSet[] rowset,
@@ -386,10 +386,10 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
         throw new SQLException
                  (resBundle.handleGetObject("joinrowsetimpl.numnotequal").toString());
      } else {
-     	for(int i=0; i< rowset.length; i++) {
-     	   ((CachedRowSetImpl)rowset[i]).setMatchColumn(columnName[i]);
-     	   addRowSet((Joinable)rowset[i]);
-     	} //end for
+        for(int i=0; i< rowset.length; i++) {
+           ((CachedRowSetImpl)rowset[i]).setMatchColumn(columnName[i]);
+           addRowSet((Joinable)rowset[i]);
+        } //end for
      } //end if
 
     }
@@ -421,11 +421,11 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     public String[] getRowSetNames() throws SQLException {
         Object [] arr = vecTableNames.toArray();
         String []strArr = new String[arr.length];
-        
+
         for( int i = 0;i < arr.length; i++) {
            strArr[i] = arr[i].toString();
         }
-        
+
         return strArr;
     }
 
@@ -434,13 +434,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * in this <code>JoinRowSet</code> object.
      * <P>
      * If any updates or modifications have been applied to this <code>JoinRowSet</code>
-     * object, the <code>CachedRowSet</code> object returned by this method will 
+     * object, the <code>CachedRowSet</code> object returned by this method will
      * not be able to persist
      * the changes back to the originating rows and tables in the
      * data source because the data may be from different tables. The
      * <code>CachedRowSet</code> instance returned should not
      * contain modification data, such as whether a row has been updated or what the
-     * original values are.  Also, the <code>CachedRowSet</code> object should clear 
+     * original values are.  Also, the <code>CachedRowSet</code> object should clear
      * its  properties pertaining to
      * its originating SQL statement. An application should reset the
      * SQL statement using the <code>RowSet.setCommand</code> method.
@@ -454,13 +454,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @return a <code>CachedRowSet</code> object containing the contents of this
      *         <code>JoinRowSet</code> object
      * @throws SQLException if an error occurs assembling the <code>CachedRowSet</code>
-     *         object 
+     *         object
      * @see javax.sql.RowSet
      * @see javax.sql.rowset.CachedRowSet
      * @see javax.sql.rowset.spi.SyncProvider
      */
     public CachedRowSet toCachedRowSet() throws SQLException {
-	return crsInternal;
+        return crsInternal;
     }
 
     /**
@@ -471,7 +471,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *         otherwise
      */
     public boolean supportsCrossJoin() {
-	return supportedJOINs[JoinRowSet.CROSS_JOIN];
+        return supportedJOINs[JoinRowSet.CROSS_JOIN];
     }
 
     /**
@@ -481,7 +481,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @return true is the INNER_JOIN is supported; false otherwise
      */
     public boolean supportsInnerJoin() {
-	return supportedJOINs[JoinRowSet.INNER_JOIN];
+        return supportedJOINs[JoinRowSet.INNER_JOIN];
     }
 
     /**
@@ -491,7 +491,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @return true is the LEFT_OUTER_JOIN is supported; false otherwise
      */
     public boolean supportsLeftOuterJoin() {
-	return supportedJOINs[JoinRowSet.LEFT_OUTER_JOIN];
+        return supportedJOINs[JoinRowSet.LEFT_OUTER_JOIN];
     }
 
     /**
@@ -501,7 +501,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @return true is the RIGHT_OUTER_JOIN is supported; false otherwise
      */
     public boolean supportsRightOuterJoin() {
-	return supportedJOINs[JoinRowSet.RIGHT_OUTER_JOIN];
+        return supportedJOINs[JoinRowSet.RIGHT_OUTER_JOIN];
     }
 
     /**
@@ -511,7 +511,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @return true is the FULL_JOIN is supported; false otherwise
      */
     public boolean supportsFullJoin() {
-	return supportedJOINs[JoinRowSet.FULL_JOIN];
+        return supportedJOINs[JoinRowSet.FULL_JOIN];
 
     }
 
@@ -520,14 +520,14 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * object will use. This method
      * allows an application to adjust the type of <code>JOIN</code> imposed
      * on tables contained within this <code>JoinRowSet</code> object and to do it
-     * on the fly. The last <code>JOIN</code> type set determines the type of 
+     * on the fly. The last <code>JOIN</code> type set determines the type of
      * <code>JOIN</code> to be performed.
      * <P>
      * Implementations should throw an <code>SQLException</code> if they do
      * not support the given <code>JOIN</code> type.
      *
      * @param type one of the standard <code>JoinRowSet</code> constants
-     *        indicating the type of <code>JOIN</code>.  Must be one of the 
+     *        indicating the type of <code>JOIN</code>.  Must be one of the
      *        following:
      *            <code>JoinRowSet.CROSS_JOIN</code>
      *            <code>JoinRowSet.INNER_JOIN</code>
@@ -537,17 +537,17 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws SQLException if an unsupported <code>JOIN</code> type is set
      */
     public void setJoinType(int type) throws SQLException {
-	// The join which governs the join of two rowsets is the last
-	// join set, using setJoinType
-	
-       if (type >= JoinRowSet.CROSS_JOIN && type <= JoinRowSet.FULL_JOIN) {	   
-	   if (type != JoinRowSet.INNER_JOIN) {
-	       // This 'if' will be removed after all joins are implemented.
-	       throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notsupported").toString());	       
-	   } else {
-	      Integer Intgr = new Integer(JoinRowSet.INNER_JOIN);
-	      vecJoinType.add(Intgr);
-	   }
+        // The join which governs the join of two rowsets is the last
+        // join set, using setJoinType
+
+       if (type >= JoinRowSet.CROSS_JOIN && type <= JoinRowSet.FULL_JOIN) {
+           if (type != JoinRowSet.INNER_JOIN) {
+               // This 'if' will be removed after all joins are implemented.
+               throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notsupported").toString());
+           } else {
+              Integer Intgr = new Integer(JoinRowSet.INNER_JOIN);
+              vecJoinType.add(Intgr);
+           }
        } else {
           throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notdefined").toString());
        }  //end if
@@ -555,10 +555,10 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
 
 
     /**
-     * This checks for a match column for 
+     * This checks for a match column for
      * whether it exists or not.
-     * 
-     * @param <code>CachedRowSet</code> object whose match column needs to be checked. 
+     *
+     * @param <code>CachedRowSet</code> object whose match column needs to be checked.
      * @throws SQLException if MatchColumn is not set.
      */
     private boolean checkforMatchColumn(Joinable rs) throws SQLException {
@@ -573,101 +573,101 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * Internal initialization of <code>JoinRowSet</code>.
      */
     private void initJOIN(CachedRowSet rowset) throws SQLException {
-	try {
-	    
-	    CachedRowSetImpl cRowset = (CachedRowSetImpl)rowset;
-	    // Create a new CachedRowSet object local to this function.	    
-	    CachedRowSetImpl crsTemp = new CachedRowSetImpl();	    
-	    RowSetMetaDataImpl rsmd = new RowSetMetaDataImpl();
+        try {
 
-	    /* The following 'if block' seems to be always going true.
-	       commenting this out for present
-	       
-	    if (!supportedJOINs[1]) {
-		throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notsupported").toString());
-	    }
-	    
-	    */
-	    
-	    if (vecRowSetsInJOIN.isEmpty() ) {
+            CachedRowSetImpl cRowset = (CachedRowSetImpl)rowset;
+            // Create a new CachedRowSet object local to this function.
+            CachedRowSetImpl crsTemp = new CachedRowSetImpl();
+            RowSetMetaDataImpl rsmd = new RowSetMetaDataImpl();
 
-		// implies first cRowset to be added to the Join
-		// simply add this as a CachedRowSet.
-		// Also add it to the class variable of type vector
-		// do not need to check "type" of Join but it should be set.						
-		crsInternal = (CachedRowSetImpl)rowset.createCopy();				   				
-		crsInternal.setMetaData((RowSetMetaDataImpl)cRowset.getMetaData());
-		// metadata will also set the MatchColumn.
+            /* The following 'if block' seems to be always going true.
+               commenting this out for present
 
-		vecRowSetsInJOIN.add(cRowset);
-		
-	    } else {
-		// At this point we are ready to add another rowset to 'this' object
-		// Check the size of vecJoinType and vecRowSetsInJoin
+            if (!supportedJOINs[1]) {
+                throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.notsupported").toString());
+            }
 
-		// If nothing is being set, internally call setJoinType()
-		// to set to JoinRowSet.INNER_JOIN.
-	
-		// For two rowsets one (valid) entry should be there in vecJoinType
-		// For three rowsets two (valid) entries should be there in vecJoinType
+            */
 
-		// Maintain vecRowSetsInJoin = vecJoinType + 1
-				
-		
-		if( (vecRowSetsInJOIN.size() - vecJoinType.size() ) == 2 ) {
-		   // we are going to add next rowset and setJoinType has not been set
-		   // recently, so set it to setJoinType() to JoinRowSet.INNER_JOIN.
-		   // the default join type
-		   
-			setJoinType(JoinRowSet.INNER_JOIN); 			
-		} else if( (vecRowSetsInJOIN.size() - vecJoinType.size() ) == 1  ) {
-		   // do nothing setjoinType() has been set by programmer
-		}
-		
-		// Add the table names to the class variable of type vector.
-		vecTableNames.add(crsInternal.getTableName());
-		vecTableNames.add(cRowset.getTableName());
-		// Now we have two rowsets crsInternal and cRowset which need
-		// to be INNER JOIN'ED to form a new rowset
-		// Compare table1.MatchColumn1.value1 == { table2.MatchColumn2.value1
-		//                              ... upto table2.MatchColumn2.valueN }
-		//     ...
-		// Compare table1.MatchColumn1.valueM == { table2.MatchColumn2.value1
-		//                              ... upto table2.MatchColumn2.valueN }
-		//
-		// Assuming first rowset has M rows and second N rows.
-		
-		int rowCount2 = cRowset.size();		
-		int rowCount1 = crsInternal.size();		
-				
-		// total columns in the new CachedRowSet will be sum of both -1
-		// (common column)
-		int matchColumnCount = 0;
+            if (vecRowSetsInJOIN.isEmpty() ) {
+
+                // implies first cRowset to be added to the Join
+                // simply add this as a CachedRowSet.
+                // Also add it to the class variable of type vector
+                // do not need to check "type" of Join but it should be set.
+                crsInternal = (CachedRowSetImpl)rowset.createCopy();
+                crsInternal.setMetaData((RowSetMetaDataImpl)cRowset.getMetaData());
+                // metadata will also set the MatchColumn.
+
+                vecRowSetsInJOIN.add(cRowset);
+
+            } else {
+                // At this point we are ready to add another rowset to 'this' object
+                // Check the size of vecJoinType and vecRowSetsInJoin
+
+                // If nothing is being set, internally call setJoinType()
+                // to set to JoinRowSet.INNER_JOIN.
+
+                // For two rowsets one (valid) entry should be there in vecJoinType
+                // For three rowsets two (valid) entries should be there in vecJoinType
+
+                // Maintain vecRowSetsInJoin = vecJoinType + 1
+
+
+                if( (vecRowSetsInJOIN.size() - vecJoinType.size() ) == 2 ) {
+                   // we are going to add next rowset and setJoinType has not been set
+                   // recently, so set it to setJoinType() to JoinRowSet.INNER_JOIN.
+                   // the default join type
+
+                        setJoinType(JoinRowSet.INNER_JOIN);
+                } else if( (vecRowSetsInJOIN.size() - vecJoinType.size() ) == 1  ) {
+                   // do nothing setjoinType() has been set by programmer
+                }
+
+                // Add the table names to the class variable of type vector.
+                vecTableNames.add(crsInternal.getTableName());
+                vecTableNames.add(cRowset.getTableName());
+                // Now we have two rowsets crsInternal and cRowset which need
+                // to be INNER JOIN'ED to form a new rowset
+                // Compare table1.MatchColumn1.value1 == { table2.MatchColumn2.value1
+                //                              ... upto table2.MatchColumn2.valueN }
+                //     ...
+                // Compare table1.MatchColumn1.valueM == { table2.MatchColumn2.value1
+                //                              ... upto table2.MatchColumn2.valueN }
+                //
+                // Assuming first rowset has M rows and second N rows.
+
+                int rowCount2 = cRowset.size();
+                int rowCount1 = crsInternal.size();
+
+                // total columns in the new CachedRowSet will be sum of both -1
+                // (common column)
+                int matchColumnCount = 0;
                 for(int i=0; i< crsInternal.getMatchColumnIndexes().length; i++) {
                     if(crsInternal.getMatchColumnIndexes()[i] != -1)
                         ++ matchColumnCount;
                     else
                         break;
                 }
-                
+
                 rsmd.setColumnCount
-		    (crsInternal.getMetaData().getColumnCount() +
-		     cRowset.getMetaData().getColumnCount() - matchColumnCount);		     
-		
-		crsTemp.setMetaData(rsmd);				
-		crsInternal.beforeFirst();		
-		cRowset.beforeFirst();		
-		for (int i = 1 ; i <= rowCount1 ; i++) {		 
-		  if(crsInternal.isAfterLast() ) {		                            
+                    (crsInternal.getMetaData().getColumnCount() +
+                     cRowset.getMetaData().getColumnCount() - matchColumnCount);
+
+                crsTemp.setMetaData(rsmd);
+                crsInternal.beforeFirst();
+                cRowset.beforeFirst();
+                for (int i = 1 ; i <= rowCount1 ; i++) {
+                  if(crsInternal.isAfterLast() ) {
                     break;
-                  }  		 
-		  if(crsInternal.next()) {		  	          
-		    cRowset.beforeFirst();
-		    for(int j = 1 ; j <= rowCount2 ; j++) {		         
-		         if( cRowset.isAfterLast()) {                   	       
+                  }
+                  if(crsInternal.next()) {
+                    cRowset.beforeFirst();
+                    for(int j = 1 ; j <= rowCount2 ; j++) {
+                         if( cRowset.isAfterLast()) {
                             break;
-                   	 }
-		         if(cRowset.next()) {
+                         }
+                         if(cRowset.next()) {
                              boolean match = true;
                              for(int k=0; k<matchColumnCount; k++) {
                                  if (!crsInternal.getObject( crsInternal.getMatchColumnIndexes()[k]).equals
@@ -677,17 +677,17 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
                                  }
                              }
                              if (match) {
-			    
+
                                 int p;
-                                int colc = 0; 	// reset this variable everytime you loop
+                                int colc = 0;   // reset this variable everytime you loop
                                 // re create a JoinRowSet in crsTemp object
                                 crsTemp.moveToInsertRow();
 
                                 // create a new rowset crsTemp with data from first rowset
-			    for( p=1;
-				p<=crsInternal.getMetaData().getColumnCount();p++) {
-  	                  
-				match = false;
+                            for( p=1;
+                                p<=crsInternal.getMetaData().getColumnCount();p++) {
+
+                                match = false;
                                 for(int k=0; k<matchColumnCount; k++) {
                                  if (p == crsInternal.getMatchColumnIndexes()[k] ) {
                                      match = true;
@@ -696,68 +696,68 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
                                 }
                                     if ( !match ) {
 
-				    crsTemp.updateObject(++colc, crsInternal.getObject(p));
-				    // column type also needs to be passed.
+                                    crsTemp.updateObject(++colc, crsInternal.getObject(p));
+                                    // column type also needs to be passed.
 
-				    rsmd.setColumnName
-					(colc, crsInternal.getMetaData().getColumnName(p));
-				    rsmd.setTableName(colc, crsInternal.getTableName());
+                                    rsmd.setColumnName
+                                        (colc, crsInternal.getMetaData().getColumnName(p));
+                                    rsmd.setTableName(colc, crsInternal.getTableName());
 
-		                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
-		                    rsmd.setAutoIncrement(p, crsInternal.getMetaData().isAutoIncrement(p));
-		                    rsmd.setCaseSensitive(p, crsInternal.getMetaData().isCaseSensitive(p));
-		                    rsmd.setCatalogName(p, crsInternal.getMetaData().getCatalogName(p));
-		                    rsmd.setColumnDisplaySize(p, crsInternal.getMetaData().getColumnDisplaySize(p));
-		                    rsmd.setColumnLabel(p, crsInternal.getMetaData().getColumnLabel(p));
-		                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
-		                    rsmd.setColumnTypeName(p, crsInternal.getMetaData().getColumnTypeName(p));
-		                    rsmd.setCurrency(p,crsInternal.getMetaData().isCurrency(p) );
-		                    rsmd.setNullable(p, crsInternal.getMetaData().isNullable(p));
-		                    rsmd.setPrecision(p, crsInternal.getMetaData().getPrecision(p));
-		                    rsmd.setScale(p, crsInternal.getMetaData().getScale(p));
-		                    rsmd.setSchemaName(p, crsInternal.getMetaData().getSchemaName(p));
-		                    rsmd.setSearchable(p, crsInternal.getMetaData().isSearchable(p));
-		                    rsmd.setSigned(p, crsInternal.getMetaData().isSigned(p));
-				    
-				} else {
-				    // will happen only once, for that  merged column pass
-				    // the types as OBJECT, if types not equal
-				    
-				    crsTemp.updateObject(++colc, crsInternal.getObject(p));
+                                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
+                                    rsmd.setAutoIncrement(p, crsInternal.getMetaData().isAutoIncrement(p));
+                                    rsmd.setCaseSensitive(p, crsInternal.getMetaData().isCaseSensitive(p));
+                                    rsmd.setCatalogName(p, crsInternal.getMetaData().getCatalogName(p));
+                                    rsmd.setColumnDisplaySize(p, crsInternal.getMetaData().getColumnDisplaySize(p));
+                                    rsmd.setColumnLabel(p, crsInternal.getMetaData().getColumnLabel(p));
+                                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
+                                    rsmd.setColumnTypeName(p, crsInternal.getMetaData().getColumnTypeName(p));
+                                    rsmd.setCurrency(p,crsInternal.getMetaData().isCurrency(p) );
+                                    rsmd.setNullable(p, crsInternal.getMetaData().isNullable(p));
+                                    rsmd.setPrecision(p, crsInternal.getMetaData().getPrecision(p));
+                                    rsmd.setScale(p, crsInternal.getMetaData().getScale(p));
+                                    rsmd.setSchemaName(p, crsInternal.getMetaData().getSchemaName(p));
+                                    rsmd.setSearchable(p, crsInternal.getMetaData().isSearchable(p));
+                                    rsmd.setSigned(p, crsInternal.getMetaData().isSigned(p));
 
-				    rsmd.setColumnName(colc, crsInternal.getMetaData().getColumnName(p));
-				    rsmd.setTableName
-					(colc, crsInternal.getTableName()+
-					 "#"+
-					 cRowset.getTableName());
+                                } else {
+                                    // will happen only once, for that  merged column pass
+                                    // the types as OBJECT, if types not equal
 
-		                    
-		                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
-		                    rsmd.setAutoIncrement(p, crsInternal.getMetaData().isAutoIncrement(p));
-		                    rsmd.setCaseSensitive(p, crsInternal.getMetaData().isCaseSensitive(p));
-		                    rsmd.setCatalogName(p, crsInternal.getMetaData().getCatalogName(p));
-		                    rsmd.setColumnDisplaySize(p, crsInternal.getMetaData().getColumnDisplaySize(p));
-		                    rsmd.setColumnLabel(p, crsInternal.getMetaData().getColumnLabel(p));
-		                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
-		                    rsmd.setColumnTypeName(p, crsInternal.getMetaData().getColumnTypeName(p));
-		                    rsmd.setCurrency(p,crsInternal.getMetaData().isCurrency(p) );
-		                    rsmd.setNullable(p, crsInternal.getMetaData().isNullable(p));
-		                    rsmd.setPrecision(p, crsInternal.getMetaData().getPrecision(p));
-		                    rsmd.setScale(p, crsInternal.getMetaData().getScale(p));
-		                    rsmd.setSchemaName(p, crsInternal.getMetaData().getSchemaName(p));
-		                    rsmd.setSearchable(p, crsInternal.getMetaData().isSearchable(p));
-		                    rsmd.setSigned(p, crsInternal.getMetaData().isSigned(p));
-		                    			 
-				    //don't do ++colc in the above statement
-				} //end if
-			    } //end for
-			    			   
-			    
-			    // append the rowset crsTemp, with data from second rowset
-			    for(int q=1;
-				q<= cRowset.getMetaData().getColumnCount();q++) {
-			   
-				match = false;
+                                    crsTemp.updateObject(++colc, crsInternal.getObject(p));
+
+                                    rsmd.setColumnName(colc, crsInternal.getMetaData().getColumnName(p));
+                                    rsmd.setTableName
+                                        (colc, crsInternal.getTableName()+
+                                         "#"+
+                                         cRowset.getTableName());
+
+
+                                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
+                                    rsmd.setAutoIncrement(p, crsInternal.getMetaData().isAutoIncrement(p));
+                                    rsmd.setCaseSensitive(p, crsInternal.getMetaData().isCaseSensitive(p));
+                                    rsmd.setCatalogName(p, crsInternal.getMetaData().getCatalogName(p));
+                                    rsmd.setColumnDisplaySize(p, crsInternal.getMetaData().getColumnDisplaySize(p));
+                                    rsmd.setColumnLabel(p, crsInternal.getMetaData().getColumnLabel(p));
+                                    rsmd.setColumnType(p, crsInternal.getMetaData().getColumnType(p));
+                                    rsmd.setColumnTypeName(p, crsInternal.getMetaData().getColumnTypeName(p));
+                                    rsmd.setCurrency(p,crsInternal.getMetaData().isCurrency(p) );
+                                    rsmd.setNullable(p, crsInternal.getMetaData().isNullable(p));
+                                    rsmd.setPrecision(p, crsInternal.getMetaData().getPrecision(p));
+                                    rsmd.setScale(p, crsInternal.getMetaData().getScale(p));
+                                    rsmd.setSchemaName(p, crsInternal.getMetaData().getSchemaName(p));
+                                    rsmd.setSearchable(p, crsInternal.getMetaData().isSearchable(p));
+                                    rsmd.setSigned(p, crsInternal.getMetaData().isSigned(p));
+
+                                    //don't do ++colc in the above statement
+                                } //end if
+                            } //end for
+
+
+                            // append the rowset crsTemp, with data from second rowset
+                            for(int q=1;
+                                q<= cRowset.getMetaData().getColumnCount();q++) {
+
+                                match = false;
                                 for(int k=0; k<matchColumnCount; k++) {
                                  if (q == cRowset.getMatchColumnIndexes()[k] ) {
                                      match = true;
@@ -765,92 +765,92 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
                                  }
                                 }
                                     if ( !match ) {
-				    
-				    crsTemp.updateObject(++colc, cRowset.getObject(q));
-				    
-				    rsmd.setColumnName
-					(colc, cRowset.getMetaData().getColumnName(q));
-				    rsmd.setTableName(colc, cRowset.getTableName());
-				    
-				    /**
-				      * This will happen for a special case scenario. The value of 'p'
-				      * will always be one more than the number of columns in the first
-				      * rowset in the join. So, for a value of 'q' which is the number of
-				      * columns in the second rowset that participates in the join. 
-				      * So decrement value of 'p' by 1 else `p+q-1` will be out of range.
-				      **/
-				      
-				    //if((p+q-1) > ((crsInternal.getMetaData().getColumnCount()) +
-				      //            (cRowset.getMetaData().getColumnCount())     - 1)) {				    
-				      // --p;
-				    //}
-		                    rsmd.setColumnType(p+q-1, cRowset.getMetaData().getColumnType(q));
-		                    rsmd.setAutoIncrement(p+q-1, cRowset.getMetaData().isAutoIncrement(q));
-		                    rsmd.setCaseSensitive(p+q-1, cRowset.getMetaData().isCaseSensitive(q));
-		                    rsmd.setCatalogName(p+q-1, cRowset.getMetaData().getCatalogName(q));
-		                    rsmd.setColumnDisplaySize(p+q-1, cRowset.getMetaData().getColumnDisplaySize(q));
-		                    rsmd.setColumnLabel(p+q-1, cRowset.getMetaData().getColumnLabel(q));
-		                    rsmd.setColumnType(p+q-1, cRowset.getMetaData().getColumnType(q));
-		                    rsmd.setColumnTypeName(p+q-1, cRowset.getMetaData().getColumnTypeName(q));
-		                    rsmd.setCurrency(p+q-1,cRowset.getMetaData().isCurrency(q) );
-		                    rsmd.setNullable(p+q-1, cRowset.getMetaData().isNullable(q));
-		                    rsmd.setPrecision(p+q-1, cRowset.getMetaData().getPrecision(q));
-		                    rsmd.setScale(p+q-1, cRowset.getMetaData().getScale(q));
-		                    rsmd.setSchemaName(p+q-1, cRowset.getMetaData().getSchemaName(q));
-		                    rsmd.setSearchable(p+q-1, cRowset.getMetaData().isSearchable(q));
-		                    rsmd.setSigned(p+q-1, cRowset.getMetaData().isSigned(q));
-				}
+
+                                    crsTemp.updateObject(++colc, cRowset.getObject(q));
+
+                                    rsmd.setColumnName
+                                        (colc, cRowset.getMetaData().getColumnName(q));
+                                    rsmd.setTableName(colc, cRowset.getTableName());
+
+                                    /**
+                                      * This will happen for a special case scenario. The value of 'p'
+                                      * will always be one more than the number of columns in the first
+                                      * rowset in the join. So, for a value of 'q' which is the number of
+                                      * columns in the second rowset that participates in the join.
+                                      * So decrement value of 'p' by 1 else `p+q-1` will be out of range.
+                                      **/
+
+                                    //if((p+q-1) > ((crsInternal.getMetaData().getColumnCount()) +
+                                      //            (cRowset.getMetaData().getColumnCount())     - 1)) {
+                                      // --p;
+                                    //}
+                                    rsmd.setColumnType(p+q-1, cRowset.getMetaData().getColumnType(q));
+                                    rsmd.setAutoIncrement(p+q-1, cRowset.getMetaData().isAutoIncrement(q));
+                                    rsmd.setCaseSensitive(p+q-1, cRowset.getMetaData().isCaseSensitive(q));
+                                    rsmd.setCatalogName(p+q-1, cRowset.getMetaData().getCatalogName(q));
+                                    rsmd.setColumnDisplaySize(p+q-1, cRowset.getMetaData().getColumnDisplaySize(q));
+                                    rsmd.setColumnLabel(p+q-1, cRowset.getMetaData().getColumnLabel(q));
+                                    rsmd.setColumnType(p+q-1, cRowset.getMetaData().getColumnType(q));
+                                    rsmd.setColumnTypeName(p+q-1, cRowset.getMetaData().getColumnTypeName(q));
+                                    rsmd.setCurrency(p+q-1,cRowset.getMetaData().isCurrency(q) );
+                                    rsmd.setNullable(p+q-1, cRowset.getMetaData().isNullable(q));
+                                    rsmd.setPrecision(p+q-1, cRowset.getMetaData().getPrecision(q));
+                                    rsmd.setScale(p+q-1, cRowset.getMetaData().getScale(q));
+                                    rsmd.setSchemaName(p+q-1, cRowset.getMetaData().getSchemaName(q));
+                                    rsmd.setSearchable(p+q-1, cRowset.getMetaData().isSearchable(q));
+                                    rsmd.setSigned(p+q-1, cRowset.getMetaData().isSigned(q));
+                                }
                                 else {
                                     --p;
                                 }
-			    }
-			    crsTemp.insertRow();
-			    crsTemp.moveToCurrentRow();
-			    
-			} else {
-			    // since not equa12
-			    // so do nothing
-			} //end if
-		    	 // bool1 = cRowset.next();		    	                    	                     	
-		    	 } 
-                   	
-		    } // end inner for
-                     //bool2 = crsInternal.next();                                        	
-                   } 
-                                    	  
-		} //end outer for
-		crsTemp.setMetaData(rsmd);
-		crsTemp.setOriginal();
+                            }
+                            crsTemp.insertRow();
+                            crsTemp.moveToCurrentRow();
 
-		// Now the join is done.
-	       // Make crsInternal = crsTemp, to be ready for next merge, if at all.
+                        } else {
+                            // since not equa12
+                            // so do nothing
+                        } //end if
+                         // bool1 = cRowset.next();
+                         }
 
-		int[] pCol = new int[matchColumnCount];
+                    } // end inner for
+                     //bool2 = crsInternal.next();
+                   }
+
+                } //end outer for
+                crsTemp.setMetaData(rsmd);
+                crsTemp.setOriginal();
+
+                // Now the join is done.
+               // Make crsInternal = crsTemp, to be ready for next merge, if at all.
+
+                int[] pCol = new int[matchColumnCount];
                 for(int i=0; i<matchColumnCount; i++)
                    pCol[i] = crsInternal.getMatchColumnIndexes()[i];
-                
-		crsInternal = (CachedRowSetImpl)crsTemp.createCopy();
 
-		// Because we add the first rowset as crsInternal to the
-		// merged rowset, so pCol will point to the Match column.
-		// until reset, am not sure we should set this or not(?)
-		// if this is not set next inner join won't happen
-		// if we explicitly do not set a set MatchColumn of
-		// the new crsInternal.
+                crsInternal = (CachedRowSetImpl)crsTemp.createCopy();
 
-		crsInternal.setMatchColumn(pCol);
-		// Add the merged rowset to the class variable of type vector.
-		crsInternal.setMetaData(rsmd);
-		vecRowSetsInJOIN.add(cRowset);
-	    } //end if	 
-	} catch(SQLException sqle) {
-	    // %%% Exception should not dump here:
-	    sqle.printStackTrace();
-	    throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.initerror").toString() + sqle);
-	} catch (Exception e) {
+                // Because we add the first rowset as crsInternal to the
+                // merged rowset, so pCol will point to the Match column.
+                // until reset, am not sure we should set this or not(?)
+                // if this is not set next inner join won't happen
+                // if we explicitly do not set a set MatchColumn of
+                // the new crsInternal.
+
+                crsInternal.setMatchColumn(pCol);
+                // Add the merged rowset to the class variable of type vector.
+                crsInternal.setMetaData(rsmd);
+                vecRowSetsInJOIN.add(cRowset);
+            } //end if
+        } catch(SQLException sqle) {
+            // %%% Exception should not dump here:
+            sqle.printStackTrace();
+            throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.initerror").toString() + sqle);
+        } catch (Exception e) {
             e.printStackTrace();
-	    throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.genericerr").toString() + e);
-	}
+            throw new SQLException(resBundle.handleGetObject("joinrowsetimpl.genericerr").toString() + e);
+        }
     }
 
     /**
@@ -866,7 +866,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * of the <code>WHERE</code> clause.
      */
     public String getWhereClause() throws SQLException {
-       
+
        String strWhereClause = "Select ";
        String whereClause;
        String tabName= null;
@@ -874,16 +874,16 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
        int sz,cols;
        int j;
        CachedRowSetImpl crs;
-       
+
        // get all the column(s) names from each rowset.
        // append them with their tablenames i.e. tableName.columnName
        // Select tableName1.columnName1,..., tableNameX.columnNameY
-       // from tableName1,...tableNameX where 
-       // tableName1.(rowset1.getMatchColumnName()) == 
+       // from tableName1,...tableNameX where
+       // tableName1.(rowset1.getMatchColumnName()) ==
        // tableName2.(rowset2.getMatchColumnName()) + "and" +
        // tableNameX.(rowsetX.getMatchColumnName()) ==
        // tableNameZ.(rowsetZ.getMatchColumnName()));
-       
+
        tabName = new String();
        strTabName  = new String();
        sz = vecRowSetsInJOIN.size();
@@ -894,44 +894,44 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
           strTabName = strTabName.concat(tabName+", ");
           j = 1;
           while(j<cols) {
-            
+
             strWhereClause = strWhereClause.concat
-                (tabName+"."+crs.getMetaData().getColumnName(j++));            
-            strWhereClause = strWhereClause.concat(", ");            
-          } //end while 
+                (tabName+"."+crs.getMetaData().getColumnName(j++));
+            strWhereClause = strWhereClause.concat(", ");
+          } //end while
         } //end for
-               
-        
+
+
         // now remove the last ","
         strWhereClause = strWhereClause.substring
-             (0, strWhereClause.lastIndexOf(","));   
+             (0, strWhereClause.lastIndexOf(","));
 
         // Add from clause
-        strWhereClause = strWhereClause.concat(" from ");        
-        
+        strWhereClause = strWhereClause.concat(" from ");
+
         // Add the table names.
-        strWhereClause = strWhereClause.concat(strTabName);        
-        
+        strWhereClause = strWhereClause.concat(strTabName);
+
         //Remove the last ","
         strWhereClause = strWhereClause.substring
-             (0, strWhereClause.lastIndexOf(","));  
-        
+             (0, strWhereClause.lastIndexOf(","));
+
         // Add the where clause
-        strWhereClause = strWhereClause.concat(" where ");        
-        
+        strWhereClause = strWhereClause.concat(" where ");
+
         // Get the match columns
         // rowset1.getMatchColumnName() == rowset2.getMatchColumnName()
          for(int i=0;i<sz; i++) {
-	     strWhereClause = strWhereClause.concat( 
-	       ((CachedRowSetImpl)vecRowSetsInJOIN.get(i)).getMatchColumnNames()[0]);
-	     if(i%2!=0) {
-	       strWhereClause = strWhereClause.concat("=");
-	     }  else {
-	       strWhereClause = strWhereClause.concat(" and");
-	     }
+             strWhereClause = strWhereClause.concat(
+               ((CachedRowSetImpl)vecRowSetsInJOIN.get(i)).getMatchColumnNames()[0]);
+             if(i%2!=0) {
+               strWhereClause = strWhereClause.concat("=");
+             }  else {
+               strWhereClause = strWhereClause.concat(" and");
+             }
           strWhereClause = strWhereClause.concat(" ");
-	 }
-	         
+         }
+
         return strWhereClause;
     }
 
@@ -1044,8 +1044,8 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>JoinRowSetImpl</code> object as a
-	     * <code>short</code> value.
-	     *
+             * <code>short</code> value.
+             *
      * @param columnIndex the first column is <code>1</code>, the second
      *        is <code>2</code>, and so on; must be <code>1</code> or larger
      *        and equal to or less than the number of columns in the rowset
@@ -1712,9 +1712,9 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *         from SQL type names to classes in the Java programming
      *         language
      * @return a <code>java.lang.Object</code> holding the column value;
-     *         if the value is SQL <code>NULL</code>, the result is 
+     *         if the value is SQL <code>NULL</code>, the result is
      *         <code>null</code>
-     * @throws SQLException if (1) the given column name does not match 
+     * @throws SQLException if (1) the given column name does not match
      *         one of this rowset's column names, (2) the cursor is not
      *         on a valid row, or (3) there is a problem getting
      *         the <code>Class</code> object for a custom mapping
@@ -1750,7 +1750,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnName a <code>String</code> object that must match the
      *        SQL name of a column in this rowset, ignoring case
      * @return a <code>java.lang.Object</code> holding the column value;
-     *        if the value is SQL <code>NULL</code>, the result is 
+     *        if the value is SQL <code>NULL</code>, the result is
      *        <code>null</code>
      * @throws SQLException if (1) the given column name does not match
      *        one of this rowset's column names, (2) the cursor is not
@@ -2147,12 +2147,12 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnName a <code>String</code> object giving the name of the
      *        column for which the index will be returned; the name must
      *        match the SQL name of a column in this <code>JoinRowSet</code>
-     *        object, ignoring case 
+     *        object, ignoring case
      * @throws SQLException if the given column name does not match one of the
      *         column names for this <code>JoinRowSet</code> object
      */
     public int findColumn(String columnName) throws SQLException {
-	return crsInternal.findColumn(columnName);
+        return crsInternal.findColumn(columnName);
     }
 
     /**
@@ -2170,7 +2170,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean rowUpdated() throws SQLException {
-	return crsInternal.rowUpdated();
+        return crsInternal.rowUpdated();
     }
 
     /**
@@ -2180,13 +2180,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * <code>false</code> will always be returned if it does not detect updates.
      *
      * @return <code>true</code> if the column updated
-     *		<code>false</code> otherwse
+     *          <code>false</code> otherwse
      * @throws SQLException if the cursor is on the insert row or not
-     *		on a valid row
+     *          on a valid row
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean columnUpdated(int indexColumn) throws SQLException {
-	return crsInternal.columnUpdated(indexColumn);
+        return crsInternal.columnUpdated(indexColumn);
     }
 
     /**
@@ -2201,7 +2201,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @see DatabaseMetaData#insertsAreDetected
      */
     public boolean rowInserted() throws SQLException {
-	return crsInternal.rowInserted();
+        return crsInternal.rowInserted();
     }
 
     /**
@@ -2218,7 +2218,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @see DatabaseMetaData#deletesAreDetected
      */
     public boolean rowDeleted() throws SQLException {
-	return crsInternal.rowDeleted();
+        return crsInternal.rowDeleted();
     }
 
     /**
@@ -2248,7 +2248,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateNull(int columnIndex) throws SQLException {
-	crsInternal.updateNull(columnIndex);
+        crsInternal.updateNull(columnIndex);
     }
 
     /**
@@ -2275,7 +2275,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-	crsInternal.updateBoolean(columnIndex, x);
+        crsInternal.updateBoolean(columnIndex, x);
     }
 
     /**
@@ -2302,7 +2302,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateByte(int columnIndex, byte x) throws SQLException {
-	crsInternal.updateByte(columnIndex, x);
+        crsInternal.updateByte(columnIndex, x);
     }
 
     /**
@@ -2329,7 +2329,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateShort(int columnIndex, short x) throws SQLException {
-	crsInternal.updateShort(columnIndex, x);
+        crsInternal.updateShort(columnIndex, x);
     }
 
     /**
@@ -2356,7 +2356,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateInt(int columnIndex, int x) throws SQLException {
-	crsInternal.updateInt(columnIndex, x);
+        crsInternal.updateInt(columnIndex, x);
     }
 
     /**
@@ -2383,7 +2383,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateLong(int columnIndex, long x) throws SQLException {
-	crsInternal.updateLong(columnIndex, x);
+        crsInternal.updateLong(columnIndex, x);
     }
 
     /**
@@ -2410,7 +2410,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateFloat(int columnIndex, float x) throws SQLException {
-	crsInternal.updateFloat(columnIndex, x);
+        crsInternal.updateFloat(columnIndex, x);
     }
 
     /**
@@ -2437,7 +2437,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateDouble(int columnIndex, double x) throws SQLException {
-	crsInternal.updateDouble(columnIndex, x);
+        crsInternal.updateDouble(columnIndex, x);
     }
 
     /**
@@ -2464,7 +2464,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
-	crsInternal.updateBigDecimal(columnIndex, x);
+        crsInternal.updateBigDecimal(columnIndex, x);
     }
 
     /**
@@ -2494,7 +2494,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateString(int columnIndex, String x) throws SQLException {
-	crsInternal.updateString(columnIndex, x);
+        crsInternal.updateString(columnIndex, x);
     }
 
     /**
@@ -2521,7 +2521,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBytes(int columnIndex, byte x[]) throws SQLException {
-	crsInternal.updateBytes(columnIndex, x);
+        crsInternal.updateBytes(columnIndex, x);
     }
 
     /**
@@ -2549,7 +2549,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
-	crsInternal.updateDate(columnIndex, x);
+        crsInternal.updateDate(columnIndex, x);
     }
 
     /**
@@ -2577,7 +2577,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
-	crsInternal.updateTime(columnIndex, x);
+        crsInternal.updateTime(columnIndex, x);
     }
 
     /**
@@ -2606,7 +2606,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
-	crsInternal.updateTimestamp(columnIndex, x);
+        crsInternal.updateTimestamp(columnIndex, x);
     }
 
     /*
@@ -2631,7 +2631,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws UnsupportedOperationException if this method is invoked
      */
     public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-	crsInternal.updateAsciiStream(columnIndex, x, length);
+        crsInternal.updateAsciiStream(columnIndex, x, length);
     }
 
     /**
@@ -2661,7 +2661,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            (4) this rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-	crsInternal.updateBinaryStream(columnIndex, x, length);
+        crsInternal.updateBinaryStream(columnIndex, x, length);
     }
 
     /**
@@ -2693,7 +2693,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-	crsInternal.updateCharacterStream(columnIndex, x, length);
+        crsInternal.updateCharacterStream(columnIndex, x, length);
     }
 
     /**
@@ -2725,7 +2725,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-	crsInternal.updateObject(columnIndex, x, scale);
+        crsInternal.updateObject(columnIndex, x, scale);
     }
 
     /**
@@ -2752,7 +2752,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateObject(int columnIndex, Object x) throws SQLException {
-	crsInternal.updateObject(columnIndex, x);
+        crsInternal.updateObject(columnIndex, x);
     }
 
     // columnName updates
@@ -2778,7 +2778,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateNull(String columnName) throws SQLException {
-	crsInternal.updateNull(columnName);
+        crsInternal.updateNull(columnName);
     }
 
     /**
@@ -2804,7 +2804,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBoolean(String columnName, boolean x) throws SQLException {
-	crsInternal.updateBoolean(columnName, x);
+        crsInternal.updateBoolean(columnName, x);
     }
 
     /**
@@ -2830,7 +2830,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateByte(String columnName, byte x) throws SQLException {
-	crsInternal.updateByte(columnName, x);
+        crsInternal.updateByte(columnName, x);
     }
 
     /**
@@ -2856,7 +2856,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateShort(String columnName, short x) throws SQLException {
-	crsInternal.updateShort(columnName, x);
+        crsInternal.updateShort(columnName, x);
     }
 
     /**
@@ -2882,7 +2882,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateInt(String columnName, int x) throws SQLException {
-	crsInternal.updateInt(columnName, x);
+        crsInternal.updateInt(columnName, x);
     }
 
     /**
@@ -2908,7 +2908,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateLong(String columnName, long x) throws SQLException {
-	crsInternal.updateLong(columnName, x);
+        crsInternal.updateLong(columnName, x);
     }
 
     /**
@@ -2934,7 +2934,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateFloat(String columnName, float x) throws SQLException {
-	crsInternal.updateFloat(columnName, x);
+        crsInternal.updateFloat(columnName, x);
     }
 
     /**
@@ -2960,7 +2960,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateDouble(String columnName, double x) throws SQLException {
-	crsInternal.updateDouble(columnName, x);
+        crsInternal.updateDouble(columnName, x);
     }
 
     /**
@@ -2986,7 +2986,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
-	crsInternal.updateBigDecimal(columnName, x);
+        crsInternal.updateBigDecimal(columnName, x);
     }
 
     /**
@@ -3012,7 +3012,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateString(String columnName, String x) throws SQLException {
-	crsInternal.updateString(columnName, x);
+        crsInternal.updateString(columnName, x);
     }
 
     /**
@@ -3038,7 +3038,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBytes(String columnName, byte x[]) throws SQLException {
-	crsInternal.updateBytes(columnName, x);
+        crsInternal.updateBytes(columnName, x);
     }
 
     /**
@@ -3066,7 +3066,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateDate(String columnName, java.sql.Date x) throws SQLException {
-	crsInternal.updateDate(columnName, x);
+        crsInternal.updateDate(columnName, x);
     }
 
     /**
@@ -3094,7 +3094,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateTime(String columnName, java.sql.Time x) throws SQLException {
-	crsInternal.updateTime(columnName, x);
+        crsInternal.updateTime(columnName, x);
     }
 
     /**
@@ -3125,7 +3125,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
-	crsInternal.updateTimestamp(columnName, x);
+        crsInternal.updateTimestamp(columnName, x);
     }
 
     /**
@@ -3152,7 +3152,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws UnsupportedOperationException if this method is invoked
      */
     public void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-	crsInternal.updateAsciiStream(columnName, x, length);
+        crsInternal.updateAsciiStream(columnName, x, length);
     }
 
     /**
@@ -3182,7 +3182,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-	crsInternal.updateBinaryStream(columnName, x, length);
+        crsInternal.updateBinaryStream(columnName, x, length);
     }
 
     /**
@@ -3213,7 +3213,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateCharacterStream(String columnName, java.io.Reader x, int length) throws SQLException {
-	crsInternal.updateCharacterStream(columnName, x, length);
+        crsInternal.updateCharacterStream(columnName, x, length);
     }
 
     /**
@@ -3247,7 +3247,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateObject(String columnName, Object x, int scale) throws SQLException {
-	crsInternal.updateObject(columnName, x, scale);
+        crsInternal.updateObject(columnName, x, scale);
     }
 
     /**
@@ -3273,7 +3273,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateObject(String columnName, Object x) throws SQLException {
-	crsInternal.updateObject(columnName, x);
+        crsInternal.updateObject(columnName, x);
     }
 
     /**
@@ -3292,7 +3292,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void insertRow() throws SQLException {
-	crsInternal.insertRow();
+        crsInternal.insertRow();
     }
 
     /**
@@ -3309,7 +3309,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            rowset is <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateRow() throws SQLException {
-	crsInternal.updateRow();
+        crsInternal.updateRow();
     }
 
     /**
@@ -3328,7 +3328,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void deleteRow() throws SQLException {
-	crsInternal.deleteRow();
+        crsInternal.deleteRow();
     }
 
     /**
@@ -3342,7 +3342,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            first row, or after the last row
      */
     public void refreshRow() throws SQLException {
-	crsInternal.refreshRow();
+        crsInternal.refreshRow();
     }
 
     /**
@@ -3363,7 +3363,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            first row, or after the last row
      */
     public void cancelRowUpdates() throws SQLException {
-	crsInternal.cancelRowUpdates();
+        crsInternal.cancelRowUpdates();
     }
 
     /**
@@ -3393,7 +3393,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void moveToInsertRow() throws SQLException {
-	crsInternal.moveToInsertRow();
+        crsInternal.moveToInsertRow();
     }
 
     /**
@@ -3407,7 +3407,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws SQLException if an error occurs
      */
     public void moveToCurrentRow() throws SQLException {
-	crsInternal.moveToCurrentRow();
+        crsInternal.moveToCurrentRow();
     }
 
     /**
@@ -3417,7 +3417,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws SQLException if an error occurs
      */
     public Statement getStatement() throws SQLException {
-	return crsInternal.getStatement();
+        return crsInternal.getStatement();
     }
 
     /**
@@ -3435,7 +3435,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            SQL <code>REF</code> value
      */
     public Ref getRef(int columnIndex) throws SQLException {
-	return crsInternal.getRef(columnIndex);
+        return crsInternal.getRef(columnIndex);
     }
 
     /**
@@ -3453,7 +3453,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            SQL <code>BLOB</code> value
      */
     public Blob getBlob(int columnIndex) throws SQLException {
-	return crsInternal.getBlob(columnIndex);
+        return crsInternal.getBlob(columnIndex);
     }
 
     /**
@@ -3471,7 +3471,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            SQL <code>CLOB</code> value
      */
     public Clob getClob(int columnIndex) throws SQLException {
-	return crsInternal.getClob(columnIndex);
+        return crsInternal.getClob(columnIndex);
     }
 
     /**
@@ -3490,7 +3490,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            SQL <code>ARRAY</code> value
      */
      public Array getArray(int columnIndex) throws SQLException {
-	return crsInternal.getArray(columnIndex);
+        return crsInternal.getArray(columnIndex);
     }
 
     // ColumnName
@@ -3503,13 +3503,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnName a <code>String</code> object that must match the
      *        SQL name of a column in this rowset, ignoring case
      * @return a <code>Ref</code> object representing an SQL<code> REF</code> value
-     * @throws SQLException  if (1) the given column name is not the name 
+     * @throws SQLException  if (1) the given column name is not the name
      *         of a column in this rowset, (2) the cursor is not on one of
      *         this rowset's rows or its insert row, or (3) the column value
      *         is not an SQL <code>REF</code> value
      */
     public Ref getRef(String columnName) throws SQLException {
-	return crsInternal.getRef(columnName);
+        return crsInternal.getRef(columnName);
     }
 
     /**
@@ -3519,7 +3519,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @param columnName a <code>String</code> object that must match the
      *        SQL name of a column in this rowset, ignoring case
-     * @return a <code>Blob</code> object representing an SQL 
+     * @return a <code>Blob</code> object representing an SQL
      *        <code>BLOB</code> value
      * @throws SQLException if (1) the given column name is not the name of
      *        a column in this rowset, (2) the cursor is not on one of
@@ -3527,7 +3527,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *        column does not store an SQL <code>BLOB</code> value
      */
     public Blob getBlob(String columnName) throws SQLException {
-	return crsInternal.getBlob(columnName);
+        return crsInternal.getBlob(columnName);
     }
 
     /**
@@ -3545,7 +3545,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            column does not store an SQL <code>CLOB</code> value
      */
     public Clob getClob(String columnName) throws SQLException {
-	return crsInternal.getClob(columnName);
+        return crsInternal.getClob(columnName);
     }
 
     /**
@@ -3563,7 +3563,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *        column does not store an SQL <code>ARRAY</code> value
      */
     public Array getArray(String columnName) throws SQLException {
-	return crsInternal.getArray(columnName);
+        return crsInternal.getArray(columnName);
     }
 
     /**
@@ -3586,7 +3586,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIMESTAMP</code> value
      */
     public java.sql.Date getDate(int columnIndex, Calendar cal) throws SQLException {
-	return crsInternal.getDate(columnIndex, cal);
+        return crsInternal.getDate(columnIndex, cal);
     }
 
     /**
@@ -3608,7 +3608,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIMESTAMP</code> value
      */
     public java.sql.Date getDate(String columnName, Calendar cal) throws SQLException {
-	return crsInternal.getDate(columnName, cal);
+        return crsInternal.getDate(columnName, cal);
     }
 
     /**
@@ -3631,7 +3631,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIMESTAMP</code> value
      */
     public java.sql.Time getTime(int columnIndex, Calendar cal) throws SQLException {
-	return crsInternal.getTime(columnIndex, cal);
+        return crsInternal.getTime(columnIndex, cal);
     }
 
     /**
@@ -3653,7 +3653,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIMESTAMP</code> value
      */
     public java.sql.Time getTime(String columnName, Calendar cal) throws SQLException {
-	return crsInternal.getTime(columnName, cal);
+        return crsInternal.getTime(columnName, cal);
     }
 
     /**
@@ -3676,7 +3676,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIMESTAMP</code> value
      */
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-	return crsInternal.getTimestamp(columnIndex, cal);
+        return crsInternal.getTimestamp(columnIndex, cal);
     }
 
     /**
@@ -3699,7 +3699,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>TIME</code>, or <code>TIMESTAMP</code> value
      */
     public java.sql.Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
-	return crsInternal.getTimestamp(columnName, cal);
+        return crsInternal.getTimestamp(columnName, cal);
     }
 
    /**
@@ -3712,11 +3712,11 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     *            rowset
     */
     public void setMetaData(RowSetMetaData md) throws SQLException {
-	crsInternal.setMetaData(md);
+        crsInternal.setMetaData(md);
     }
 
     public ResultSet getOriginal() throws SQLException {
-	return crsInternal.getOriginal();
+        return crsInternal.getOriginal();
     }
 
    /**
@@ -3730,7 +3730,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     *           <code>ResultSet</code> object
     */
     public ResultSet getOriginalRow() throws SQLException {
-	return crsInternal.getOriginalRow();
+        return crsInternal.getOriginalRow();
     }
 
    /**
@@ -3742,42 +3742,42 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     * @see #setOriginalRow
     */
     public void setOriginalRow() throws SQLException {
-	crsInternal.setOriginalRow();
+        crsInternal.setOriginalRow();
     }
 
    /**
-    * Returns the columns that make a key to uniquely identify a 
+    * Returns the columns that make a key to uniquely identify a
     * row in this <code>JoinRowSetImpl</code> object.
     *
-    * @return an array of column number that constites a primary 
+    * @return an array of column number that constites a primary
     *           key for this rowset. This array should be empty
     *           if no columns is representitive of a primary key
     * @throws SQLException if the rowset is empty or no columns
     *           are designated as primary keys
     * @see #setKeyColumns
-    */    
+    */
     public int[] getKeyColumns() throws SQLException {
-	return crsInternal.getKeyColumns();
+        return crsInternal.getKeyColumns();
     }
 
     /**
-     * Sets this <code>JoinRowSetImpl</code> object's 
-     * <code>keyCols</code> field with the given array of column 
-     * numbers, which forms a key for uniquely identifying a row 
+     * Sets this <code>JoinRowSetImpl</code> object's
+     * <code>keyCols</code> field with the given array of column
+     * numbers, which forms a key for uniquely identifying a row
      * in this rowset.
      *
-     * @param cols an array of <code>int</code> indicating the 
-     *        columns that form a primary key for this 
+     * @param cols an array of <code>int</code> indicating the
+     *        columns that form a primary key for this
      *        <code>JoinRowSetImpl</code> object; every
-     *        element in the array must be greater than 
-     *        <code>0</code> and less than or equal to the number 
+     *        element in the array must be greater than
+     *        <code>0</code> and less than or equal to the number
      *        of columns in this rowset
-     * @throws SQLException if any of the numbers in the 
+     * @throws SQLException if any of the numbers in the
      *            given array is not valid for this rowset
      * @see #getKeyColumns
-     */    
+     */
     public void setKeyColumns(int[] cols) throws SQLException {
-	crsInternal.setKeyColumns(cols);
+        crsInternal.setKeyColumns(cols);
     }
 
     /**
@@ -3797,7 +3797,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnIndex the first column is <code>1</code>, the second
      *        is <code>2</code>, and so on; must be <code>1</code> or larger
      *        and equal to or less than the number of columns in this rowset
-     * @param ref the <code>java.sql.Ref</code> object that will be set as 
+     * @param ref the <code>java.sql.Ref</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column index is out of bounds,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3805,7 +3805,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateRef(int columnIndex, java.sql.Ref ref) throws SQLException {
-	crsInternal.updateRef(columnIndex, ref);
+        crsInternal.updateRef(columnIndex, ref);
     }
 
     /**
@@ -3824,8 +3824,8 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @param columnName a <code>String</code> object giving the name of the column
      *        to be updated; must match one of the column names in this
-     *        <code>JoinRowSetImpl</code> object 
-     * @param ref the <code>java.sql.Ref</code> object that will be set as 
+     *        <code>JoinRowSetImpl</code> object
+     * @param ref the <code>java.sql.Ref</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column name is not valid,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3853,7 +3853,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnIndex the first column is <code>1</code>, the second
      *        is <code>2</code>, and so on; must be <code>1</code> or larger
      *        and equal to or less than the number of columns in this rowset
-     * @param c the <code>java.sql.Clob</code> object that will be set as 
+     * @param c the <code>java.sql.Clob</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column index is out of bounds,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3880,8 +3880,8 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @param columnName a <code>String</code> object giving the name of the column
      *        to be updated; must match one of the column names in this
-     *        <code>JoinRowSetImpl</code> object 
-     * @param c the <code>java.sql.Clob</code> object that will be set as 
+     *        <code>JoinRowSetImpl</code> object
+     * @param c the <code>java.sql.Clob</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column name is not valid,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3909,7 +3909,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnIndex the first column is <code>1</code>, the second
      *        is <code>2</code>, and so on; must be <code>1</code> or larger
      *        and equal to or less than the number of columns in this rowset
-     * @param b the <code>java.sql.Blob</code> object that will be set as 
+     * @param b the <code>java.sql.Blob</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column index is out of bounds,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3936,8 +3936,8 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @param columnName a <code>String</code> object giving the name of the column
      *        to be updated; must match one of the column names in this
-     *        <code>JoinRowSetImpl</code> object 
-     * @param b the <code>java.sql.Blob</code> object that will be set as 
+     *        <code>JoinRowSetImpl</code> object
+     * @param b the <code>java.sql.Blob</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column name is not valid,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3965,7 +3965,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @param columnIndex the first column is <code>1</code>, the second
      *        is <code>2</code>, and so on; must be <code>1</code> or larger
      *        and equal to or less than the number of columns in this rowset
-     * @param a the <code>java.sql.Array</code> object that will be set as 
+     * @param a the <code>java.sql.Array</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column index is out of bounds,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -3973,7 +3973,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *            <code>ResultSet.CONCUR_READ_ONLY</code>
      */
     public void updateArray(int columnIndex, Array a) throws SQLException {
-	 crsInternal.updateArray(columnIndex, a);
+         crsInternal.updateArray(columnIndex, a);
     }
 
     /**
@@ -3992,8 +3992,8 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @param columnName a <code>String</code> object giving the name of the column
      *        to be updated; must match one of the column names in this
-     *        <code>JoinRowSetImpl</code> object 
-     * @param a the <code>java.sql.Array</code> object that will be set as 
+     *        <code>JoinRowSetImpl</code> object
+     * @param a the <code>java.sql.Array</code> object that will be set as
      *         the new column value
      * @throws SQLException if (1) the given column name is not valid,
      *            (2) the cursor is not on one of this rowset's rows or its
@@ -4007,9 +4007,9 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     /**
      * Populates this <code>JoinRowSetImpl</code> object with data.
      * This form of the method uses the rowset's user, password, and url or
-     * data source name properties to create a database 
+     * data source name properties to create a database
      * connection.  If properties that are needed
-     * have not been set, this method will throw an exception. 
+     * have not been set, this method will throw an exception.
      * <P>
      * Another form of this method uses an existing JDBC <code>Connection</code>
      * object instead of creating a new one; therefore, it ignores the
@@ -4017,29 +4017,29 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * <P>
      * The query specified by the command property is executed to create a
      * <code>ResultSet</code> object from which to retrieve data.
-     * The current contents of the rowset are discarded, and the 
-     * rowset's metadata is also (re)set.  If there are outstanding updates, 
-     * they are also ignored.   
+     * The current contents of the rowset are discarded, and the
+     * rowset's metadata is also (re)set.  If there are outstanding updates,
+     * they are also ignored.
      * <P>
-     * The method <code>execute</code> closes any database connections that it 
+     * The method <code>execute</code> closes any database connections that it
      * creates.
      *
      * @throws SQLException if an error occurs or the
      *                         necessary properties have not been set
-     */ 
+     */
     public void execute() throws SQLException {
         crsInternal.execute();
     }
 
     /**
-     * Populates this <code>JoinRowSetImpl</code> object with data, 
-     * using the given connection to produce the result set from 
+     * Populates this <code>JoinRowSetImpl</code> object with data,
+     * using the given connection to produce the result set from
      * which data will be read.  A second form of this method,
      * which takes no arguments, uses the values from this rowset's
-     * user, password, and either url or data source properties to 
+     * user, password, and either url or data source properties to
      * create a new database connection. The form of <code>execute</code>
      * that is given a connection ignores these properties.
-     * 
+     *
      *  @param conn A standard JDBC <code>Connection</code> object with valid
      *           properties that the <code>JoinRowSet</code> implementation
      *           can pass to a synchronization provider to establish a
@@ -4059,7 +4059,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     public java.net.URL getURL(int columnIndex) throws SQLException {
         return crsInternal.getURL(columnIndex);
     }
-    
+
     /**
      * Provide interface coverage for getURL(String) in ResultSet->RowSet
      */
@@ -4075,13 +4075,13 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     * @throws SQLException if an error occurs writing out the rowset
     *          contents to XML
     */
-    public void writeXml(ResultSet rs, java.io.Writer writer) 
+    public void writeXml(ResultSet rs, java.io.Writer writer)
         throws SQLException {
              wrs = new WebRowSetImpl();
              wrs.populate(rs);
              wrs.writeXml(writer);
     }
-    
+
     /**
      * Writes this <code>JoinRowSet</code> object to the given
      * <code>java.io.Writer</code> object in XML format. In
@@ -4089,21 +4089,21 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * are also included.
      *
      * @throws SQLException if an error occurs writing out the rowset
-     * 		contents to XML 
-     */			
+     *          contents to XML
+     */
     public void writeXml(java.io.Writer writer) throws SQLException {
-	createWebRowSet().writeXml(writer);
+        createWebRowSet().writeXml(writer);
 }
-  
+
     /**
      * Reads this <code>JoinRowSet</code> object in its XML format.
      *
-     * @throws SQLException if a database access error occurs 
+     * @throws SQLException if a database access error occurs
      */
     public void readXml(java.io.Reader reader) throws SQLException {
-	wrs = new WebRowSetImpl();	
-	wrs.readXml(reader);
-	crsInternal = (CachedRowSetImpl)wrs;
+        wrs = new WebRowSetImpl();
+        wrs.readXml(reader);
+        crsInternal = (CachedRowSetImpl)wrs;
     }
 
     // Stream based methods
@@ -4114,24 +4114,24 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @throws IOException if a IO exception occurs
      */
     public void readXml(java.io.InputStream iStream) throws SQLException, IOException {
-	 wrs = new WebRowSetImpl();
-	 wrs.readXml(iStream); 
-	 crsInternal = (CachedRowSetImpl)wrs;  
+         wrs = new WebRowSetImpl();
+         wrs.readXml(iStream);
+         crsInternal = (CachedRowSetImpl)wrs;
     }
 
     /**
-     * Creates an an output stream of the internal state and contents of a 
+     * Creates an an output stream of the internal state and contents of a
      * <code>WebRowSet</code> for XML proceessing
      *
      * @throws SQLException if a datasource access occurs
      * @throws IOException if an IO exception occurs
      */
     public void writeXml(java.io.OutputStream oStream) throws SQLException, IOException {
-	 createWebRowSet().writeXml(oStream);   
+         createWebRowSet().writeXml(oStream);
     }
 
     /**
-     * Creates a new <code>WebRowSet</code> object, populates it with 
+     * Creates a new <code>WebRowSet</code> object, populates it with
      * the contents of the <code>ResultSet</code> and creates an output
      * streams the internal state and contents of the rowset for XML processing.
      *
@@ -4143,7 +4143,7 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
              wrs.populate(rs);
              wrs.writeXml(oStream);
     }
-    
+
     /**
      * %%% Javadoc comments to be added here
      */
@@ -4153,12 +4153,12 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
            return wrs;
        } else {
          wrs = new WebRowSetImpl();
-	  crsInternal.beforeFirst();
-	  wrs.populate(crsInternal);
+          crsInternal.beforeFirst();
+          wrs.populate(crsInternal);
           return wrs;
        }
     }
-   
+
     /**
      * Returns the last set SQL <code>JOIN</code> type in this JoinRowSetImpl
      * object
@@ -4170,11 +4170,11 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
         if (vecJoinType == null) {
             // Default JoinRowSet type
             this.setJoinType(JoinRowSet.INNER_JOIN);
-        }        
-        Integer i = (Integer)(vecJoinType.get(vecJoinType.size()-1));        
-        return i.intValue();                
+        }
+        Integer i = (Integer)(vecJoinType.get(vecJoinType.size()-1));
+        return i.intValue();
     }
-    
+
     /**
     * The listener will be notified whenever an event occurs on this <code>JoinRowSet</code>
     * object.
@@ -4183,12 +4183,12 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     * be updated in order to accurately reflect the current state of
     * the <code>RowSet</code> object.
     * <p>
-    * <b>Note</b>: if the <code>RowSetListener</code> object is 
+    * <b>Note</b>: if the <code>RowSetListener</code> object is
     * <code>null</code>, this method silently discards the <code>null</code>
-    * value and does not add a null reference to the set of listeners. 
+    * value and does not add a null reference to the set of listeners.
     * <p>
-    * <b>Note</b>: if the listener is already set, and the new <code>RowSetListerner</code> 
-    * instance is added to the set of listeners already registered to receive  
+    * <b>Note</b>: if the listener is already set, and the new <code>RowSetListerner</code>
+    * instance is added to the set of listeners already registered to receive
     * event notifications from this <code>RowSet</code>.
     *
     * @param listener an object that has implemented the
@@ -4198,26 +4198,26 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
     * @see #removeRowSetListener
     */
     public void addRowSetListener(RowSetListener listener) {
-	crsInternal.addRowSetListener(listener);
+        crsInternal.addRowSetListener(listener);
     }
-    
+
     /**
     * Removes the designated object from this <code>JoinRowSet</code> object's list of listeners.
     * If the given argument is not a registered listener, this method
     * does nothing.
     *
-    *  <b>Note</b>: if the <code>RowSetListener</code> object is 
+    *  <b>Note</b>: if the <code>RowSetListener</code> object is
     * <code>null</code>, this method silently discards the <code>null</code>
     * value.
     *
-    * @param listener a <code>RowSetListener</code> object that is on the list 
+    * @param listener a <code>RowSetListener</code> object that is on the list
     *        of listeners for this <code>JoinRowSet</code> object
     * @see #addRowSetListener
     */
      public void removeRowSetListener(RowSetListener listener) {
-	crsInternal.removeRowSetListener(listener);  
+        crsInternal.removeRowSetListener(listener);
     }
-        
+
     /**
      * Converts this <code>JoinRowSetImpl</code> object to a collection
      * of tables. The sample implementation utilitizes the <code>TreeMap</code>
@@ -4232,11 +4232,11 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      * @see #toCollection(int)
      * @see #toCollection(String)
      * @see java.util.TreeMap
-     */ 
+     */
      public Collection<?> toCollection() throws SQLException {
         return crsInternal.toCollection();
     }
-   
+
     /**
      * Returns the specified column of this <code>JoinRowSetImpl</code> object
      * as a <code>Collection</code> object.  This method makes a copy of the
@@ -4247,18 +4247,18 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @return a <code>Collection</code> object that contains the value(s)
      *         stored in the specified column of this
-     * 	       <code>JoinRowSetImpl</code>
+     *         <code>JoinRowSetImpl</code>
      *         object
      * @throws SQLException if an error occurs generated the collection; or
-     * 		an invalid column is provided.
+     *          an invalid column is provided.
      * @see #toCollection()
      * @see #toCollection(String)
      * @see java.util.Vector
      */
-    public Collection<?> toCollection(int column) throws SQLException { 
-        return crsInternal.toCollection(column);     
-    }    
-       
+    public Collection<?> toCollection(int column) throws SQLException {
+        return crsInternal.toCollection(column);
+    }
+
     /**
      * Returns the specified column of this <code>JoinRowSetImpl</code> object
      * as a <code>Collection</code> object.  This method makes a copy of the
@@ -4269,18 +4269,18 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      *
      * @return a <code>Collection</code> object that contains the value(s)
      *         stored in the specified column of this
-     * 	       <code>JoinRowSetImpl</code>
+     *         <code>JoinRowSetImpl</code>
      *         object
      * @throws SQLException if an error occurs generated the collection; or
-     * 		an invalid column is provided.
+     *          an invalid column is provided.
      * @see #toCollection()
      * @see #toCollection(int)
      * @see java.util.Vector
      */
-    public Collection<?> toCollection(String column) throws SQLException {  
-        return crsInternal.toCollection(column);     
+    public Collection<?> toCollection(String column) throws SQLException {
+        return crsInternal.toCollection(column);
     }
-       
+
     /**
      * Creates a <code>RowSet</code> object that is a copy of
      * this <code>JoinRowSetImpl</code> object's table structure
@@ -4306,6 +4306,6 @@ public class JoinRowSetImpl extends WebRowSetImpl implements JoinRowSet {
      public CachedRowSet createCopySchema() throws SQLException {
          return crsInternal.createCopySchema();
      }
-     
-	static final long serialVersionUID = -5590501621560008453L;
+
+        static final long serialVersionUID = -5590501621560008453L;
 }

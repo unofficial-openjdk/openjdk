@@ -33,38 +33,38 @@ import java.util.*;
 import java.security.*;
 
 public class RemoveProviders {
-    
-    public static void main(String[] args) throws Exception {
-	Provider[] providers = Security.getProviders();
-	System.out.println("Providers: " + Arrays.asList(providers));
-	
-	// remove each provider and add it back in at the end of the list
-	for (int i = 0; i < providers.length; i++) {
-	    Provider p = providers[i];
-	    String name = p.getName();
-	    Security.removeProvider(name);
-	    if (Security.getProvider(name) != null) {
-		throw new Exception("Provider not removed: " + name);
-	    }
-	    Security.addProvider(p);
-	}
-	if (Arrays.equals(providers, Security.getProviders()) == false) {
-	    throw new Exception("Provider mismatch: " + Arrays.asList(Security.getProviders()));
-	}
 
-	// remove non-existing provider
-	Security.removeProvider("foo");
-	if (Arrays.equals(providers, Security.getProviders()) == false) {
-	    throw new Exception("Provider mismatch: " + Arrays.asList(Security.getProviders()));
-	}
-	
-	// remove from the middle of the list
-	Security.removeProvider("SunJCE");
-	if (Security.getProvider("SunJCE") != null) {
-	    throw new Exception("not removed");
-	}
-	
-	System.out.println("Done.");
+    public static void main(String[] args) throws Exception {
+        Provider[] providers = Security.getProviders();
+        System.out.println("Providers: " + Arrays.asList(providers));
+
+        // remove each provider and add it back in at the end of the list
+        for (int i = 0; i < providers.length; i++) {
+            Provider p = providers[i];
+            String name = p.getName();
+            Security.removeProvider(name);
+            if (Security.getProvider(name) != null) {
+                throw new Exception("Provider not removed: " + name);
+            }
+            Security.addProvider(p);
+        }
+        if (Arrays.equals(providers, Security.getProviders()) == false) {
+            throw new Exception("Provider mismatch: " + Arrays.asList(Security.getProviders()));
+        }
+
+        // remove non-existing provider
+        Security.removeProvider("foo");
+        if (Arrays.equals(providers, Security.getProviders()) == false) {
+            throw new Exception("Provider mismatch: " + Arrays.asList(Security.getProviders()));
+        }
+
+        // remove from the middle of the list
+        Security.removeProvider("SunJCE");
+        if (Security.getProvider("SunJCE") != null) {
+            throw new Exception("not removed");
+        }
+
+        System.out.println("Done.");
     }
 
 }

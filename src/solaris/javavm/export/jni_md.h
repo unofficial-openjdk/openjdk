@@ -26,7 +26,7 @@
 #ifndef _JAVASOFT_JNI_MD_H_
 #define _JAVASOFT_JNI_MD_H_
 
-#define JNIEXPORT 
+#define JNIEXPORT
 #define JNIIMPORT
 #define JNICALL
 

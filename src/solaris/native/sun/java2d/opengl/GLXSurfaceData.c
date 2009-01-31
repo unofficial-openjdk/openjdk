@@ -56,14 +56,14 @@ Java_sun_java2d_opengl_GLXSurfaceData_initOps(JNIEnv *env, jobject glxsd,
                                               jobject peer, jlong aData)
 {
 #ifndef HEADLESS
-    OGLSDOps *oglsdo = (OGLSDOps *)SurfaceData_InitOps(env, glxsd, 
+    OGLSDOps *oglsdo = (OGLSDOps *)SurfaceData_InitOps(env, glxsd,
                                                        sizeof(OGLSDOps));
     GLXSDOps *glxsdo = (GLXSDOps *)malloc(sizeof(GLXSDOps));
 
     J2dTraceLn(J2D_TRACE_INFO, "GLXSurfaceData_initOps");
 
     if (glxsdo == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "creating native GLX ops");
+        JNU_ThrowOutOfMemoryError(env, "creating native GLX ops");
         return;
     }
 
@@ -87,37 +87,37 @@ Java_sun_java2d_opengl_GLXSurfaceData_initOps(JNIEnv *env, jobject glxsd,
     }
 #else
     if (peer != NULL) {
-	struct ComponentData *cdata;
-	cdata = (struct ComponentData *)
-	    JNU_GetLongFieldAsPtr(env, peer, mComponentPeerIDs.pData);
-	if (cdata == NULL) {
+        struct ComponentData *cdata;
+        cdata = (struct ComponentData *)
+            JNU_GetLongFieldAsPtr(env, peer, mComponentPeerIDs.pData);
+        if (cdata == NULL) {
             free(glxsdo);
-	    JNU_ThrowNullPointerException(env, "Component data missing");
-	    return;
-	}
-	if (cdata->widget == NULL) {
+            JNU_ThrowNullPointerException(env, "Component data missing");
+            return;
+        }
+        if (cdata->widget == NULL) {
             free(glxsdo);
-	    JNU_ThrowInternalError(env, "Widget is NULL in initOps");
-	    return;
-	}
+            JNU_ThrowInternalError(env, "Widget is NULL in initOps");
+            return;
+        }
         glxsdo->widget = cdata->widget;
     } else {
-	glxsdo->widget = NULL;
+        glxsdo->widget = NULL;
     }
 #endif
 
     glxsdo->configData = (AwtGraphicsConfigDataPtr)jlong_to_ptr(aData);
     if (glxsdo->configData == NULL) {
         free(glxsdo);
-	JNU_ThrowNullPointerException(env, 
+        JNU_ThrowNullPointerException(env,
                                  "Native GraphicsConfig data block missing");
-	return;
+        return;
     }
 
     if (glxsdo->configData->glxInfo == NULL) {
         free(glxsdo);
-	JNU_ThrowNullPointerException(env, "GLXGraphicsConfigInfo missing");
-	return;
+        JNU_ThrowNullPointerException(env, "GLXGraphicsConfigInfo missing");
+        return;
     }
 #endif /* HEADLESS */
 }
@@ -140,7 +140,7 @@ OGLSD_DestroyOGLSurface(JNIEnv *env, OGLSDOps *oglsdo)
     if (oglsdo->drawableType == OGLSD_PBUFFER) {
         if (glxsdo->drawable != 0) {
             j2d_glXDestroyPbuffer(awt_display, glxsdo->drawable);
-	    glxsdo->drawable = 0;
+            glxsdo->drawable = 0;
         }
     } else if (oglsdo->drawableType == OGLSD_WINDOW) {
         // X Window is free'd later by AWT code...
@@ -390,9 +390,9 @@ GLXSD_BadAllocXErrHandler(Display *display, XErrorEvent *xerr)
 {
     int ret = 0;
     if (xerr->error_code == BadAlloc) {
-	surfaceCreationFailed = JNI_TRUE;
+        surfaceCreationFailed = JNI_TRUE;
     } else {
-	ret = (*xerror_saved_handler)(display, xerr);
+        ret = (*xerror_saved_handler)(display, xerr);
     }
     return ret;
 }
@@ -427,7 +427,7 @@ Java_sun_java2d_opengl_GLXSurfaceData_initPbuffer
     if (glxsdo == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "GLXSurfaceData_initPbuffer: glx ops are null");
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     if (glxinfo == NULL) {

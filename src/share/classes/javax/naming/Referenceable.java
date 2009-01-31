@@ -40,7 +40,6 @@ package javax.naming;
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author R. Vasudevan
-  * @version %I% %E%
   *
   * @see Context#bind
   * @see javax.naming.spi.NamingManager#getObjectInstance
@@ -53,7 +52,7 @@ public interface Referenceable {
       *
       * @return The non-null Reference of this object.
       * @exception NamingException If a naming exception was encountered
-      *		while retrieving the reference.
+      *         while retrieving the reference.
       */
     Reference getReference() throws NamingException;
 }

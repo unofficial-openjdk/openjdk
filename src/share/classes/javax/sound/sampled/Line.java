@@ -66,7 +66,6 @@ package javax.sound.sampled;
  * resource.
  *
  * @author Kara Kytle
- * @version %I%, %E%
  *
  * @see LineEvent
  * @since 1.3
@@ -224,7 +223,6 @@ public interface Line {
      * are available and to obtain them.
      *
      * @author Kara Kytle
-     * @version %I%, %E%
      *
      * @see Line#getLineInfo
      * @see Mixer#getSourceLineInfo
@@ -241,120 +239,120 @@ public interface Line {
      */
     public static class Info {
 
-	/**
-	 * The class of the line described by the info object.
-	 */
-	private final Class lineClass;
+        /**
+         * The class of the line described by the info object.
+         */
+        private final Class lineClass;
 
 
-	/**
-	 * Constructs an info object that describes a line of the specified class.
-	 * This constructor is typically used by an application to
-	 * describe a desired line.
-	 * @param lineClass the class of the line that the new Line.Info object describes
-	 */
-	public Info(Class<?> lineClass) {
+        /**
+         * Constructs an info object that describes a line of the specified class.
+         * This constructor is typically used by an application to
+         * describe a desired line.
+         * @param lineClass the class of the line that the new Line.Info object describes
+         */
+        public Info(Class<?> lineClass) {
 
-	    if (lineClass == null) {
-		this.lineClass = Line.class;
-	    } else {
-		this.lineClass = lineClass;
-	    }
-	}
-
-
-
-	/**
-	 * Obtains the class of the line that this Line.Info object describes.
-	 * @return the described line's class
-	 */
-	public Class<?> getLineClass() {
-	    return lineClass;
-	}
+            if (lineClass == null) {
+                this.lineClass = Line.class;
+            } else {
+                this.lineClass = lineClass;
+            }
+        }
 
 
-	/**
-	 * Indicates whether the specified info object matches this one.
-	 * To match, the specified object must be identical to or
-	 * a special case of this one.  The specified info object
-	 * must be either an instance of the same class as this one,
-	 * or an instance of a sub-type of this one.  In addition, the
-	 * attributes of the specified object must be compatible with the
-	 * capabilities of this one.  Specifically, the routing configuration
-	 * for the specified info object must be compatible with that of this
-	 * one.
-	 * Subclasses may add other criteria to determine whether the two objects
-	 * match.
-	 *
-	 * @param info the info object which is being compared to this one
-	 * @return <code>true</code> if the specified object matches this one,
-	 * <code>false</code> otherwise
-	 */
-	public boolean matches(Info info) {
 
-	    // $$kk: 08.30.99: is this backwards?
-	    // dataLine.matches(targetDataLine) == true: targetDataLine is always dataLine
-	    // targetDataLine.matches(dataLine) == false
-	    // so if i want to make sure i get a targetDataLine, i need:
-	    // targetDataLine.matches(prospective_match) == true
-	    // => prospective_match may be other things as well, but it is at least a targetDataLine
-	    // targetDataLine defines the requirements which prospective_match must meet.
+        /**
+         * Obtains the class of the line that this Line.Info object describes.
+         * @return the described line's class
+         */
+        public Class<?> getLineClass() {
+            return lineClass;
+        }
 
 
-	    // "if this Class object represents a declared class, this method returns
-	    // true if the specified Object argument is an instance of the represented
-	    // class (or of any of its subclasses)"
-	    // GainControlClass.isInstance(MyGainObj) => true
-	    // GainControlClass.isInstance(MySpecialGainInterfaceObj) => true
+        /**
+         * Indicates whether the specified info object matches this one.
+         * To match, the specified object must be identical to or
+         * a special case of this one.  The specified info object
+         * must be either an instance of the same class as this one,
+         * or an instance of a sub-type of this one.  In addition, the
+         * attributes of the specified object must be compatible with the
+         * capabilities of this one.  Specifically, the routing configuration
+         * for the specified info object must be compatible with that of this
+         * one.
+         * Subclasses may add other criteria to determine whether the two objects
+         * match.
+         *
+         * @param info the info object which is being compared to this one
+         * @return <code>true</code> if the specified object matches this one,
+         * <code>false</code> otherwise
+         */
+        public boolean matches(Info info) {
 
-	    // this_class.isInstance(that_object)	=> that object can by cast to this class
-	    //										=> that_object's class may be a subtype of this_class
-	    //										=> that may be more specific (subtype) of this
-
-	    // "If this Class object represents an interface, this method returns true
-	    // if the class or any superclass of the specified Object argument implements
-	    // this interface"
-	    // GainControlClass.isInstance(MyGainObj) => true
-	    // GainControlClass.isInstance(GenericControlObj) => may be false
-	    // => that may be more specific
-
-	    if (! (this.getClass().isInstance(info)) ) {
-		return false;
-	    }
-
-
-	    // this.isAssignableFrom(that)  =>  this is same or super to that
-	    //								=>	this is at least as general as that
-	    //								=>	that may be subtype of this
-
-	    if (! (getLineClass().isAssignableFrom(info.getLineClass())) ) {
-		return false;
-	    }
-
-	    return true;
-	}
+            // $$kk: 08.30.99: is this backwards?
+            // dataLine.matches(targetDataLine) == true: targetDataLine is always dataLine
+            // targetDataLine.matches(dataLine) == false
+            // so if i want to make sure i get a targetDataLine, i need:
+            // targetDataLine.matches(prospective_match) == true
+            // => prospective_match may be other things as well, but it is at least a targetDataLine
+            // targetDataLine defines the requirements which prospective_match must meet.
 
 
-	/**
-	 * Obtains a textual description of the line info.
-	 * @return a string description
-	 */
-	public String toString() {
+            // "if this Class object represents a declared class, this method returns
+            // true if the specified Object argument is an instance of the represented
+            // class (or of any of its subclasses)"
+            // GainControlClass.isInstance(MyGainObj) => true
+            // GainControlClass.isInstance(MySpecialGainInterfaceObj) => true
 
-	    String fullPackagePath = "javax.sound.sampled.";
-	    String initialString = new String(getLineClass().toString());
-	    String finalString;
+            // this_class.isInstance(that_object)       => that object can by cast to this class
+            //                                                                          => that_object's class may be a subtype of this_class
+            //                                                                          => that may be more specific (subtype) of this
 
-	    int index = initialString.indexOf(fullPackagePath);
+            // "If this Class object represents an interface, this method returns true
+            // if the class or any superclass of the specified Object argument implements
+            // this interface"
+            // GainControlClass.isInstance(MyGainObj) => true
+            // GainControlClass.isInstance(GenericControlObj) => may be false
+            // => that may be more specific
 
-	    if (index != -1) {
-		finalString = initialString.substring(0, index) + initialString.substring( (index + fullPackagePath.length()), initialString.length() );
-	    } else {
-		finalString = initialString;
-	    }
+            if (! (this.getClass().isInstance(info)) ) {
+                return false;
+            }
 
-	    return finalString;
-	}
+
+            // this.isAssignableFrom(that)  =>  this is same or super to that
+            //                                                          =>      this is at least as general as that
+            //                                                          =>      that may be subtype of this
+
+            if (! (getLineClass().isAssignableFrom(info.getLineClass())) ) {
+                return false;
+            }
+
+            return true;
+        }
+
+
+        /**
+         * Obtains a textual description of the line info.
+         * @return a string description
+         */
+        public String toString() {
+
+            String fullPackagePath = "javax.sound.sampled.";
+            String initialString = new String(getLineClass().toString());
+            String finalString;
+
+            int index = initialString.indexOf(fullPackagePath);
+
+            if (index != -1) {
+                finalString = initialString.substring(0, index) + initialString.substring( (index + fullPackagePath.length()), initialString.length() );
+            } else {
+                finalString = initialString;
+            }
+
+            return finalString;
+        }
 
     } // class Info
 

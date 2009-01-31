@@ -25,12 +25,12 @@
 package com.sun.jmx.snmp.internal;
 /**
  * Interface that every SNMP model must implement in order to be integrated in the engine framework.
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */
 public interface SnmpModel {
-    
+
     /**
      * Returns the sub system that manages this model.
      * @return The sub system.

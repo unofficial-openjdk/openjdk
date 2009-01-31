@@ -34,7 +34,7 @@ import java.util.Map;
  * <a href="http://java.sun.com/docs/books/jls/">
  * Java<sup><font size=-2>TM</font></sup> Language Specification</a>.
  * All ReferenceType objects belong to one of the following
- * subinterfaces: 
+ * subinterfaces:
  * {@link ClassType} for classes,
  * {@link InterfaceType} for interfaces, and
  * {@link ArrayType} for arrays.
@@ -45,13 +45,13 @@ import java.util.Map;
  * The VM creates Class objects for all three, so from the VM perspective,
  * each ReferenceType maps to a distinct Class object.
  * <p>
- * ReferenceTypes can 
+ * ReferenceTypes can
  * be obtained by querying a particular {@link ObjectReference} for its
- * type or by getting a list of all reference types from the 
+ * type or by getting a list of all reference types from the
  * {@link VirtualMachine}.
  * <p>
- * ReferenceType provides access to static type information such as 
- * methods and fields and provides access to dynamic type 
+ * ReferenceType provides access to static type information such as
+ * methods and fields and provides access to dynamic type
  * information such as the corresponding Class object and the classloader.
  * <p>
  * Any method on <code>ReferenceType</code> which directly or
@@ -65,7 +65,7 @@ import java.util.Map;
  * {@link com.sun.jdi.VMOutOfMemoryException} if the target VM has run out of memory.
  * <p>
  * Any method on <code>ReferenceType</code> or which directly or indirectly takes
- * <code>ReferenceType</code> as parameter may throw 
+ * <code>ReferenceType</code> as parameter may throw
  * {@link com.sun.jdi.ObjectCollectedException} if the mirrored type has been unloaded.
  *
  * @see ObjectReference
@@ -84,7 +84,7 @@ public interface ReferenceType
 
     /**
      * Gets the fully qualified name of this type. The returned name
-     * is formatted as it might appear in a Java programming langauge 
+     * is formatted as it might appear in a Java programming langauge
      * declaration for objects of this type.
      * <p>
      * For primitive classes
@@ -111,7 +111,7 @@ public interface ReferenceType
 
     /**
      * Gets the classloader object which loaded the class corresponding
-     * to this type. 
+     * to this type.
      *
      * @return a {@link ClassLoaderReference} which mirrors the classloader,
      * or <code>null</code> if the class was loaded through the bootstrap class
@@ -120,14 +120,14 @@ public interface ReferenceType
     ClassLoaderReference classLoader();
 
     /**
-     * Gets an identifying name for the source corresponding to the 
-     * declaration of this type. Interpretation of this string is 
+     * Gets an identifying name for the source corresponding to the
+     * declaration of this type. Interpretation of this string is
      * the responsibility of the source repository mechanism.
      * <P>
      * The returned name is dependent on VM's default stratum
      * ({@link VirtualMachine#getDefaultStratum()}).
      * In the reference implementation, when using the base stratum,
-     * the returned string is the 
+     * the returned string is the
      * unqualified name of the source file containing the declaration
      * of this type.  In other strata the returned source name is
      * the first source name for that stratum.  Since other languages
@@ -135,7 +135,7 @@ public interface ReferenceType
      * the use of {@link Location#sourceName()} or
      * {@link #sourceNames(String)} is preferred.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * AbsentInformationException is always thrown.
      *
      * @return the string source file name
@@ -145,21 +145,21 @@ public interface ReferenceType
     String sourceName() throws AbsentInformationException;
 
     /**
-     * Gets the identifying names for all the source corresponding to the 
-     * declaration of this type. Interpretation of these names is 
+     * Gets the identifying names for all the source corresponding to the
+     * declaration of this type. Interpretation of these names is
      * the responsibility of the source repository mechanism.
      * <P>
      * The returned names are for the specified stratum
-     * (see {@link Location} for a description of strata). 
+     * (see {@link Location} for a description of strata).
      * In the reference implementation, when using the Java
      * programming language stratum,
-     * the returned List contains one element: a String which is the 
+     * the returned List contains one element: a String which is the
      * unqualified name of the source file containing the declaration
      * of this type.  In other strata the returned source names are
-     * all the source names defined for that stratum.  
+     * all the source names defined for that stratum.
      *
      * @param stratum The stratum to retrieve information from
-     * or <code>null</code> for the declaring type's 
+     * or <code>null</code> for the declaring type's
      * default stratum.
      *
      * @return a List of String objects each representing a source name
@@ -167,7 +167,7 @@ public interface ReferenceType
      * @throws AbsentInformationException if the source names are not
      * known.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * AbsentInformationException is always thrown.
      *
      * @since 1.4
@@ -175,25 +175,25 @@ public interface ReferenceType
     List<String> sourceNames(String stratum) throws AbsentInformationException;
 
     /**
-     * Gets the paths to the source corresponding to the 
-     * declaration of this type. Interpretation of these paths is 
+     * Gets the paths to the source corresponding to the
+     * declaration of this type. Interpretation of these paths is
      * the responsibility of the source repository mechanism.
      * <P>
      * The returned paths are for the specified stratum
-     * (see {@link Location} for a description of strata). 
-     * In the reference implementation, for strata which 
+     * (see {@link Location} for a description of strata).
+     * In the reference implementation, for strata which
      * do not explicitly specify source path (the Java
      * programming language stratum never does), the returned
      * strings are the {@link #sourceNames(String)} prefixed by
      * the package name of this ReferenceType
      * converted to a platform dependent path.
-     * For example, on a Windows platform, 
+     * For example, on a Windows platform,
      * <CODE>java.lang.Thread</CODE>
-     * would return a List containing one element: 
+     * would return a List containing one element:
      * <CODE>"java\lang\Thread.java"</CODE>.
      *
      * @param stratum The stratum to retrieve information from
-     * or <code>null</code> for the declaring type's 
+     * or <code>null</code> for the declaring type's
      * default stratum.
      *
      * @return a List of String objects each representing a source path
@@ -201,7 +201,7 @@ public interface ReferenceType
      * @throws AbsentInformationException if the source names are not
      * known.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * AbsentInformationException is always thrown.
      *
      * @since 1.4
@@ -211,23 +211,23 @@ public interface ReferenceType
     /**
      * Get the source debug extension of this type.
      * <p>
-     * Not all target virtual machines support this operation. 
-     * Use 
+     * Not all target virtual machines support this operation.
+     * Use
      * {@link VirtualMachine#canGetSourceDebugExtension() canGetSourceDebugExtension()}
      * to determine if the operation is supported.
      * @return as a string the source debug extension attribute
      * @throws AbsentInformationException if the extension is not
      * specified
-     * @throws java.lang.UnsupportedOperationException if 
-     * the target virtual machine does not support this 
-     * operation - see 
+     * @throws java.lang.UnsupportedOperationException if
+     * the target virtual machine does not support this
+     * operation - see
      * {@link VirtualMachine#canGetSourceDebugExtension() canGetSourceDebugExtension()},
      */
     String sourceDebugExtension() throws AbsentInformationException;
 
     /**
-     * Determines if this type was declared static. Only nested types, 
-     * can be declared static, so <code>false</code> is returned 
+     * Determines if this type was declared static. Only nested types,
+     * can be declared static, so <code>false</code> is returned
      * for any package-level type, array type, or primitive class.
      *
      * @return <code>true</code> if this type is static; false otherwise.
@@ -235,9 +235,9 @@ public interface ReferenceType
     boolean isStatic();
 
     /**
-     * Determines if this type was declared abstract. 
+     * Determines if this type was declared abstract.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is undefined.
      *
      * @return <code>true</code> if this type is abstract; false otherwise.
@@ -247,7 +247,7 @@ public interface ReferenceType
     /**
      * Determines if this type was declared final.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is always true.
      *
      * @return <code>true</code> if this type is final; false otherwise.
@@ -255,10 +255,10 @@ public interface ReferenceType
     boolean isFinal();
 
     /**
-     * Determines if this type has been prepared. See the JVM 
-     * specification for a definition of class preparation. 
+     * Determines if this type has been prepared. See the JVM
+     * specification for a definition of class preparation.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is undefined.
      *
      * @return <code>true</code> if this type is prepared; false otherwise.
@@ -266,10 +266,10 @@ public interface ReferenceType
     boolean isPrepared();
 
     /**
-     * Determines if this type has been verified. See the JVM 
+     * Determines if this type has been verified. See the JVM
      * specification for a definition of class verification.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is undefined.
      *
      * @return <code>true</code> if this type is verified; false otherwise.
@@ -277,12 +277,12 @@ public interface ReferenceType
     boolean isVerified();
 
     /**
-     * Determines if this type has been initialized. See the JVM 
-     * specification for a definition of class verification.  
+     * Determines if this type has been initialized. See the JVM
+     * specification for a definition of class verification.
      * For {@link InterfaceType}, this method always returns the
      * same value as {@link #isPrepared()}.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is undefined.
      *
      * @return <code>true</code> if this type is initialized; false otherwise.
@@ -290,10 +290,10 @@ public interface ReferenceType
     boolean isInitialized();
 
     /**
-     * Determines if initialization failed for this class. See the JVM 
+     * Determines if initialization failed for this class. See the JVM
      * specification for details on class initialization.
      * <p>
-     * For arrays ({@link ArrayType}) and primitive classes, 
+     * For arrays ({@link ArrayType}) and primitive classes,
      * the return value is undefined.
      *
      * @return <code>true</code> if initialization was attempted and
@@ -302,7 +302,7 @@ public interface ReferenceType
     boolean failedToInitialize();
 
     /**
-     * Returns a list containing each {@link Field} declared in this type. 
+     * Returns a list containing each {@link Field} declared in this type.
      * Inherited fields are not included. Any synthetic fields created
      * by the compiler are included in the list.
      * <p>
@@ -310,15 +310,15 @@ public interface ReferenceType
      * list is always empty.
      *
      * @return a list {@link Field} objects; the list has length 0
-     * if no fields exist. 
-     * @throws ClassNotPreparedException if this class not yet been 
+     * if no fields exist.
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Field> fields();
 
     /**
      * Returns a list containing each unhidden and unambiguous {@link Field}
-     * in this type.  
+     * in this type.
      * Each field that can be accessed from the class
      * or its instances with its simple name is included. Fields that
      * are ambiguously multiply inherited or fields that are hidden by
@@ -333,7 +333,7 @@ public interface ReferenceType
      *
      * @return a List of {@link Field} objects; the list has length
      * 0 if no visible fields exist.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Field> visibleFields();
@@ -342,7 +342,7 @@ public interface ReferenceType
      * Returns a list containing each {@link Field} declared in this type,
      * and its superclasses, implemented interfaces, and/or superinterfaces.
      * All declared and inherited
-     * fields are included, regardless of whether they are hidden or 
+     * fields are included, regardless of whether they are hidden or
      * multiply inherited.
      * <p>
      * For arrays ({@link ArrayType}) and primitive classes, the returned
@@ -350,33 +350,33 @@ public interface ReferenceType
      *
      * @return a List of {@link Field} objects; the list has length
      * 0 if no fields exist.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Field> allFields();
 
     /**
-     * Finds the visible {@link Field} with the given 
-     * non-ambiguous name. This method follows the 
+     * Finds the visible {@link Field} with the given
+     * non-ambiguous name. This method follows the
      * inheritance rules specified in the JLS (8.3.3) to determine
-     * visibility. 
+     * visibility.
      * <p>
      * For arrays ({@link ArrayType}) and primitive classes, the returned
      * value is always null.
      *
      * @param fieldName a String containing the name of desired field.
      * @return a {@link Field} object which mirrors the found field, or
-     * null if there is no field with the given name or if the given 
+     * null if there is no field with the given name or if the given
      * name is ambiguous.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     Field fieldByName(String fieldName);
 
     /**
-     * Returns a list containing each {@link Method} declared 
-     * directly in this type. 
-     * Inherited methods are not included. Constructors, 
+     * Returns a list containing each {@link Method} declared
+     * directly in this type.
+     * Inherited methods are not included. Constructors,
      * the initialization method if any, and any synthetic methods created
      * by the compiler are included in the list.
      * <p>
@@ -384,8 +384,8 @@ public interface ReferenceType
      * list is always empty.
      *
      * @return a list {@link Method} objects; the list has length 0
-     * if no methods exist. 
-     * @throws ClassNotPreparedException if this class not yet been 
+     * if no methods exist.
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Method> methods();
@@ -394,9 +394,9 @@ public interface ReferenceType
      * Returns a list containing each {@link Method}
      * declared or inherited by this type. Methods from superclasses
      * or superinterfaces that that have been hidden or overridden
-     * are not included. 
+     * are not included.
      * <p>
-     * Note that despite this exclusion, multiple inherited methods 
+     * Note that despite this exclusion, multiple inherited methods
      * with the same signature can be present in the returned list, but
      * at most one can be a member of a {@link ClassType}.
      * See JLS section 8.4.6 for details.
@@ -406,7 +406,7 @@ public interface ReferenceType
      *
      * @return a List of {@link Method} objects; the list has length
      * 0 if no visible methods exist.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Method> visibleMethods();
@@ -415,7 +415,7 @@ public interface ReferenceType
      * Returns a list containing each {@link Method} declared in this type,
      * and its superclasses, implemented interfaces, and/or superinterfaces.
      * All declared and inherited
-     * methods are included, regardless of whether they are hidden or 
+     * methods are included, regardless of whether they are hidden or
      * overridden.
      * <p>
      * For arrays ({@link ArrayType}) and primitive classes, the returned
@@ -423,13 +423,13 @@ public interface ReferenceType
      *
      * @return a List of {@link Method} objects; the list has length
      * 0 if no methods exist.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Method> allMethods();
 
     /**
-     * Returns a List containing each visible {@link Method} that 
+     * Returns a List containing each visible {@link Method} that
      * has the given name.  This is most commonly used to
      * find overloaded methods.
      * <p>
@@ -442,27 +442,27 @@ public interface ReferenceType
      * @param name the name of the method to find.
      * @return a List of {@link Method} objects that match the given
      * name; the list has length 0 if no matching methods are found.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Method> methodsByName(String name);
 
     /**
-     * Returns a List containing each visible {@link Method} that 
+     * Returns a List containing each visible {@link Method} that
      * has the given name and signature.
      * The signature string is the
      * JNI signature for the target method:
      * <ul>
      * <li><code>()V</code>
-     * <li><code>([Ljava/lang/String;)V</code> 
+     * <li><code>([Ljava/lang/String;)V</code>
      * <li><code>(IIII)Z</code>
      * </ul>
      * This method follows the inheritance rules specified
      * in the JLS (8.4.6) to determine visibility.
      * <p>
-     * At most one method in the list is a concrete method and a 
+     * At most one method in the list is a concrete method and a
      * component of {@link ClassType}; any other methods in the list
-     * are abstract. Use {@link ClassType#concreteMethodByName} to 
+     * are abstract. Use {@link ClassType#concreteMethodByName} to
      * retrieve only the matching concrete method.
      * <p>
      * For arrays ({@link ArrayType}) and primitive classes, the returned
@@ -471,9 +471,9 @@ public interface ReferenceType
      * @param name the name of the method to find.
      * @param signature the signature of the method to find
      * @return a List of {@link Method} objects that match the given
-     * name and signature; the list has length 0 if no matching methods 
+     * name and signature; the list has length 0 if no matching methods
      * are found.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<Method> methodsByName(String name, String signature);
@@ -483,7 +483,7 @@ public interface ReferenceType
      * declared within this type and are currently loaded into the Virtual
      * Machine.  Both static nested types and non-static nested
      * types (that is, inner types) are included. Local inner types
-     * (declared within a code block somewhere in this reference type) are 
+     * (declared within a code block somewhere in this reference type) are
      * also included in the returned list.
      * <p>
      * For arrays ({@link ArrayType}) and primitive classes, the returned
@@ -508,7 +508,7 @@ public interface ReferenceType
     Value getValue(Field field);
 
     /**
-     * Returns a map containing the {@link Value} of each 
+     * Returns a map containing the {@link Value} of each
      * static {@link Field} in the given list.
      * The Fields must be valid for this type;
      * that is, they must be declared in this type, a superclass, a
@@ -516,7 +516,7 @@ public interface ReferenceType
      *
      * @param fields a list of {@link Field} objects containing the
      * requested values.
-     * @return a Map of the requested {@link Field} objects with 
+     * @return a Map of the requested {@link Field} objects with
      * their {@link Value}.
      * @throws java.lang.IllegalArgumentException if any field is not valid for
      * this object's class.
@@ -526,8 +526,8 @@ public interface ReferenceType
     Map<Field,Value> getValues(List<? extends Field> fields);
 
     /**
-     * Returns the class object that corresponds to this type in the 
-     * target VM. The VM creates class objects for every kind of 
+     * Returns the class object that corresponds to this type in the
+     * target VM. The VM creates class objects for every kind of
      * ReferenceType: classes, interfaces, and array types.
      * @return the {@link ClassObjectReference} for this reference type
      * in the target VM.
@@ -548,7 +548,7 @@ public interface ReferenceType
      * non-abstract executable members of this class.
      *
      * @throws ClassNotPreparedException if this class not yet
-     * been prepared. 
+     * been prepared.
      */
     List<Location> allLineLocations() throws AbsentInformationException;
 
@@ -563,7 +563,7 @@ public interface ReferenceType
      * compiler and/or VM has mapped that line to two or more
      * disjoint code index ranges.  Note that it is possible for
      * the same source line to represent different code index
-     * ranges in <i>different</i> methods. 
+     * ranges in <i>different</i> methods.
      * <P>
      * For arrays ({@link ArrayType}) and primitive classes, the
      * returned list is always empty.  For interfaces ({@link
@@ -572,7 +572,7 @@ public interface ReferenceType
      * initialization.
      * <P>
      * Returned list is for the specified <i>stratum</i>
-     * (see {@link Location} for a description of strata). 
+     * (see {@link Location} for a description of strata).
      *
      * @param stratum The stratum to retrieve information from
      * or <code>null</code> for the {@link #defaultStratum()}.
@@ -589,7 +589,7 @@ public interface ReferenceType
      * and source name information is not present.
      *
      * @throws ClassNotPreparedException if this class not yet
-     * been prepared. 
+     * been prepared.
      *
      * @since 1.4
      */
@@ -616,16 +616,16 @@ public interface ReferenceType
      * number information for this class.
      *
      * @throws ClassNotPreparedException if this class not yet
-     * been prepared. 
+     * been prepared.
      *
      * @see VirtualMachine#getDefaultStratum()
      */
     List<Location> locationsOfLine(int lineNumber)
-	throws AbsentInformationException;
-    
+        throws AbsentInformationException;
+
     /**
      * Returns a List containing all {@link Location} objects
-     * that map to the given line number. 
+     * that map to the given line number.
      * <P>
      * For arrays ({@link ArrayType}) and primitive classes, the
      * returned list is always empty.
@@ -636,9 +636,9 @@ public interface ReferenceType
      * code at the specified line number.
      * <p>
      * Returned list is for the specified <i>stratum</i>
-     * (see {@link Location} for a description of strata). 
+     * (see {@link Location} for a description of strata).
      *
-     * @param stratum the stratum to use for comparing line number 
+     * @param stratum the stratum to use for comparing line number
      *                and source name, or <code>null</code> to
      *                use the {@link #defaultStratum()}.
      *
@@ -649,7 +649,7 @@ public interface ReferenceType
      * @param lineNumber the line number
      *
      * @return a List of all {@link Location} objects that map
-     *         to the given line.  
+     *         to the given line.
      *
      * @throws AbsentInformationException if there is no line
      *         number information for this class.
@@ -662,14 +662,14 @@ public interface ReferenceType
      * @since 1.4
      */
     List<Location> locationsOfLine(String stratum,
-				   String sourceName,
-				   int lineNumber)
+                                   String sourceName,
+                                   int lineNumber)
                      throws AbsentInformationException;
-    
+
     /**
      * Return the available strata for this reference type.
      * <P>
-     * See the {@link Location} for a description of strata. 
+     * See the {@link Location} for a description of strata.
      *
      * @return List of <CODE>java.lang.String</CODE>, each
      * representing a stratum
@@ -677,15 +677,15 @@ public interface ReferenceType
      * @since 1.4
      */
     List<String> availableStrata();
-    
+
     /**
      * Returns the default stratum for this reference type.
      * This value is specified in the class file and cannot
      * be set by the user.  If the class file does not
-     * specify a default stratum the base stratum 
+     * specify a default stratum the base stratum
      * (<code>"Java"</code>) will be returned.
      * <P>
-     * See the {@link Location} for a description of strata. 
+     * See the {@link Location} for a description of strata.
      *
      * @since 1.4
      */
@@ -705,12 +705,12 @@ public interface ReferenceType
      *
      * @param maxInstances the maximum number of instances to return.
      *        Must be non-negative.  If zero, all instances are returned.
-     * @return a List of {@link ObjectReference} objects.  If there are 
+     * @return a List of {@link ObjectReference} objects.  If there are
      * no instances of this ReferenceType, a zero-length list is returned.
      *
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see 
+     * operation - see
      * {@link VirtualMachine#canGetInstanceInfo() canGetInstanceInfo()}
      * @throws java.lang.IllegalArgumentException if maxInstances is less
      *         than zero.
@@ -721,7 +721,7 @@ public interface ReferenceType
     /**
      * Compares the specified Object with this ReferenceType for equality.
      *
-     * @return  true if the Object is a {@link ReferenceType}, if the 
+     * @return  true if the Object is a {@link ReferenceType}, if the
      * ReferenceTypes belong to the same VM, and if they mirror classes
      * which correspond to the same instance of java.lang.Class in that VM.
      */
@@ -749,14 +749,14 @@ public interface ReferenceType
      *
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see 
+     * operation - see
      * {@link VirtualMachine#canGetClassFileVersion() canGetClassFileVersion()}
      *
      * @since 1.6
      */
     int majorVersion();
 
-    
+
     /**
      * Returns the class minor version number, as defined in the class file format
      * of the Java Virtual Machine Specification.
@@ -772,7 +772,7 @@ public interface ReferenceType
      *
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see 
+     * operation - see
      * {@link VirtualMachine#canGetClassFileVersion() canGetClassFileVersion()}
      *
      * @since 1.6
@@ -795,14 +795,14 @@ public interface ReferenceType
      *
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see 
+     * operation - see
      * {@link VirtualMachine#canGetConstantPool() canGetConstantPool()}
      *
      * @see #constantPool()
      * @since 1.6
      */
     int constantPoolCount();
-    
+
     /**
      * Returns the raw bytes of the constant pool in the format of the
      * constant_pool item of the Class File Format in the Java Virtual
@@ -822,7 +822,7 @@ public interface ReferenceType
      *
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see 
+     * operation - see
      * {@link VirtualMachine#canGetConstantPool() canGetConstantPool()}
      *
      * @see #constantPoolCount()
@@ -831,4 +831,3 @@ public interface ReferenceType
      byte[] constantPool();
 
 }
-

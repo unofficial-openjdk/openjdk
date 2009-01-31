@@ -45,15 +45,15 @@ class TestClassLoader extends ClassLoader {
     public TestClassLoader() {
         super();
     }
-        
+
     public TestClassLoader(ClassLoader parent) {
         super(parent);
     }
-    
+
     public Package defineEmptyPackage(String name) {
         return definePackage(name, null, null, null, null, null, null, null);
     }
-    
+
     /* test to see if getPackage() and getPackages()
      * are consistent.
      */

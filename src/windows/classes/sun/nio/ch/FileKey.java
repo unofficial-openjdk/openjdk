@@ -36,8 +36,8 @@ public class FileKey {
     private long dwVolumeSerialNumber;
     private long nFileIndexHigh;
     private long nFileIndexLow;
-    
-    private FileKey() { }    
+
+    private FileKey() { }
 
     public static FileKey create(FileDescriptor fd) {
         FileKey fk = new FileKey();
@@ -58,7 +58,7 @@ public class FileKey {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (!(obj instanceof FileKey)) 
+        if (!(obj instanceof FileKey))
             return false;
         FileKey other = (FileKey)obj;
         if ((this.dwVolumeSerialNumber != other.dwVolumeSerialNumber) ||
@@ -68,12 +68,11 @@ public class FileKey {
         }
         return true;
     }
-     
+
     private native void init(FileDescriptor fd) throws IOException;
     private static native void initIDs();
-    
+
     static {
         initIDs();
     }
 }
-

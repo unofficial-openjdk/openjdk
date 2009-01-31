@@ -42,19 +42,19 @@ import javax.naming.Binding;
   * </ul>
   * <p>
   * Note that the event source is always the same <tt>EventContext</tt>
-  * <em>instance</em>  that the listener has registered with.  
+  * <em>instance</em>  that the listener has registered with.
   * Furthermore, the names of the bindings in
   * the <tt>NamingEvent</tt> are always relative to that instance.
   * For example, suppose a listener makes the following registration:
   *<blockquote><pre>
-  *	NamespaceChangeListener listener = ...;
-  *	src.addNamingListener("x", SUBTREE_SCOPE, listener);
+  *     NamespaceChangeListener listener = ...;
+  *     src.addNamingListener("x", SUBTREE_SCOPE, listener);
   *</pre></blockquote>
   * When an object named "x/y" is subsequently deleted, the corresponding
   * <tt>NamingEvent</tt> (<tt>evt</tt>) must contain:
   *<blockquote><pre>
-  *	evt.getEventContext() == src
-  *	evt.getOldBinding().getName().equals("x/y")
+  *     evt.getEventContext() == src
+  *     evt.getOldBinding().getName().equals("x/y")
   *</pre></blockquote>
   *
   * Care must be taken when multiple threads are accessing the same
@@ -62,10 +62,9 @@ import javax.naming.Binding;
   * See the
   * <a href=package-summary.html#THREADING>package description</a>
   * for more information on threading issues.
-  * 
+  *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see NamingListener
   * @see EventContext
@@ -92,7 +91,7 @@ public class NamingEvent extends java.util.EventObject {
      * the old binding.
      *<p>
      * The old/new binding in <tt>NamingEvent</tt> may be null if the old
-     * name or new name is outside of the scope for which the listener 
+     * name or new name is outside of the scope for which the listener
      * has registered.
      *<p>
      * When an interior node in the namespace tree has been renamed, the
@@ -118,13 +117,13 @@ public class NamingEvent extends java.util.EventObject {
      * The value of this constant is <tt>3</tt>.
      */
     public static final int OBJECT_CHANGED = 3;
-    
+
     /**
      * Contains information about the change that generated this event.
      * @serial
      */
     protected Object changeInfo;
-    
+
     /**
      * Contains the type of this event.
      * @see #OBJECT_ADDED
@@ -140,7 +139,7 @@ public class NamingEvent extends java.util.EventObject {
      * @serial
      */
     protected Binding oldBinding;
-    
+
     /**
      * Contains information about the object after the change.
      * @serial
@@ -155,7 +154,7 @@ public class NamingEvent extends java.util.EventObject {
      *
      * For an <tt>OBJECT_ADDED</tt> event type, <tt>newBd</tt> must not be null.
      * For an <tt>OBJECT_REMOVED</tt> event type, <tt>oldBd</tt> must not be null.
-     * For an <tt>OBJECT_CHANGED</tt> event type,  <tt>newBd</tt> and 
+     * For an <tt>OBJECT_CHANGED</tt> event type,  <tt>newBd</tt> and
      * <tt>oldBd</tt> must not be null. For  an <tt>OBJECT_RENAMED</tt> event type,
      * one of <tt>newBd</tt> or <tt>oldBd</tt> may be null if the new or old
      * binding is outside of the scope for which the listener has registered.
@@ -171,12 +170,12 @@ public class NamingEvent extends java.util.EventObject {
      * @see #OBJECT_CHANGED
      */
     public NamingEvent(EventContext source, int type,
-	Binding newBd, Binding oldBd, Object changeInfo) {
-	super(source);
-	this.type = type;
-	oldBinding = oldBd;
-	newBinding = newBd;
-	this.changeInfo = changeInfo;
+        Binding newBd, Binding oldBd, Object changeInfo) {
+        super(source);
+        this.type = type;
+        oldBinding = oldBd;
+        newBinding = newBd;
+        this.changeInfo = changeInfo;
     }
 
     /**
@@ -188,14 +187,14 @@ public class NamingEvent extends java.util.EventObject {
      * @see #OBJECT_CHANGED
      */
     public int getType() {
-	return type;
+        return type;
     }
 
     /**
      * Retrieves the event source that fired this event.
      * This returns the same object as <tt>EventObject.getSource()</tt>.
      *<p>
-     * If the result of this method is used to access the 
+     * If the result of this method is used to access the
      * event source, for example, to look up the object or get its attributes,
      * then it needs to be locked  because implementations of <tt>Context</tt>
      * are not guaranteed to be thread-safe
@@ -207,7 +206,7 @@ public class NamingEvent extends java.util.EventObject {
      * @return The non-null context that fired this event.
      */
     public EventContext getEventContext() {
-	return (EventContext)getSource();
+        return (EventContext)getSource();
     }
 
     /**
@@ -226,10 +225,10 @@ public class NamingEvent extends java.util.EventObject {
      * The object returned by <tt>Binding.getObject()</tt> may be null if
      * such information is unavailable.
      *
-     * @return The possibly null binding of the object before the change. 
+     * @return The possibly null binding of the object before the change.
      */
     public Binding getOldBinding() {
-	return oldBinding;
+        return oldBinding;
     }
 
     /**
@@ -248,10 +247,10 @@ public class NamingEvent extends java.util.EventObject {
      * The object returned by <tt>Binding.getObject()</tt> may be null if
      * such information is unavailable.
      *
-     * @return The possibly null binding of the object after the change. 
+     * @return The possibly null binding of the object after the change.
      */
     public Binding getNewBinding() {
-	return newBinding;
+        return newBinding;
     }
 
     /**
@@ -262,14 +261,14 @@ public class NamingEvent extends java.util.EventObject {
      * @return The possibly null change information of this event.
      */
     public Object getChangeInfo() {
-	return changeInfo;
+        return changeInfo;
     }
 
     /**
      * Invokes the appropriate listener method on this event.
      * The default implementation of
      * this method handles the following event types:
-     * <tt>OBJECT_ADDED</TT>, <TT>OBJECT_REMOVED</TT>, 
+     * <tt>OBJECT_ADDED</TT>, <TT>OBJECT_REMOVED</TT>,
      * <TT>OBJECT_RENAMED</TT>, <TT>OBJECT_CHANGED</TT>.
      *<p>
      * The listener method is executed in the same thread
@@ -279,23 +278,23 @@ public class NamingEvent extends java.util.EventObject {
      * @param listener The nonnull listener.
      */
     public void dispatch(NamingListener listener) {
-	switch (type) {
-	case OBJECT_ADDED:
-	    ((NamespaceChangeListener)listener).objectAdded(this);
-	    break;
+        switch (type) {
+        case OBJECT_ADDED:
+            ((NamespaceChangeListener)listener).objectAdded(this);
+            break;
 
-	case OBJECT_REMOVED:
-	    ((NamespaceChangeListener)listener).objectRemoved(this);
-	    break;
+        case OBJECT_REMOVED:
+            ((NamespaceChangeListener)listener).objectRemoved(this);
+            break;
 
-	case OBJECT_RENAMED:
-	    ((NamespaceChangeListener)listener).objectRenamed(this);
-	    break;
+        case OBJECT_RENAMED:
+            ((NamespaceChangeListener)listener).objectRenamed(this);
+            break;
 
-	case OBJECT_CHANGED:
-	    ((ObjectChangeListener)listener).objectChanged(this);
-	    break;
-	}
+        case OBJECT_CHANGED:
+            ((ObjectChangeListener)listener).objectChanged(this);
+            break;
+        }
     }
     private static final long serialVersionUID = -7126752885365133499L;
 }

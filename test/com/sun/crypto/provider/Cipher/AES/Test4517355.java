@@ -25,7 +25,7 @@
  * @test
  * @bug 4517355
  * @summary Verify that AES cipher.doFinal method does NOT need more
- *	than necessary bytes in decrypt mode
+ *      than necessary bytes in decrypt mode
  * @author Valerie Peng
  */
 import java.io.PrintStream;
@@ -46,55 +46,55 @@ public class Test4517355 {
     private static final int KEYSIZE = 16; // in bytes
 
     public boolean execute() throws Exception {
-	Random rdm = new Random();
-	byte[] plainText=new byte[125];
-	rdm.nextBytes(plainText);
+        Random rdm = new Random();
+        byte[] plainText=new byte[125];
+        rdm.nextBytes(plainText);
 
-	Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
-	KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
-	kg.init(KEYSIZE*8);
-	SecretKey key = kg.generateKey();
+        Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
+        KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
+        kg.init(KEYSIZE*8);
+        SecretKey key = kg.generateKey();
 
-	// TEST FIX 4517355
-	ci.init(Cipher.ENCRYPT_MODE, key);
-	byte[] cipherText = ci.doFinal(plainText);
+        // TEST FIX 4517355
+        ci.init(Cipher.ENCRYPT_MODE, key);
+        byte[] cipherText = ci.doFinal(plainText);
 
-	byte[] iv = ci.getIV();
-	AlgorithmParameterSpec aps = new IvParameterSpec(iv);
-	ci.init(Cipher.DECRYPT_MODE, key, aps);
-	byte[] recoveredText = new byte[plainText.length];
-	try {
-	    int len = ci.doFinal(cipherText, 0, cipherText.length,
-				 recoveredText);
-	} catch (ShortBufferException ex) {
-	    throw new Exception("output buffer is the right size!");
-	}
+        byte[] iv = ci.getIV();
+        AlgorithmParameterSpec aps = new IvParameterSpec(iv);
+        ci.init(Cipher.DECRYPT_MODE, key, aps);
+        byte[] recoveredText = new byte[plainText.length];
+        try {
+            int len = ci.doFinal(cipherText, 0, cipherText.length,
+                                 recoveredText);
+        } catch (ShortBufferException ex) {
+            throw new Exception("output buffer is the right size!");
+        }
 
-	// BONUS TESTS
-	// 1. make sure the recoveredText is the same as the plainText
-	if (!Arrays.equals(plainText, recoveredText)) {
-	    throw new Exception("encryption/decryption does not work!");
-	}
-	// 2. make sure encryption does happen
-	if (Arrays.equals(plainText, cipherText)) {
-	    throw new Exception("encryption does not work!");
-	}
-	// 3. make sure padding is working
-	if ((cipherText.length/16)*16 != cipherText.length) {
-	    throw new Exception("padding does not work!");
-	}
-	// passed all tests...hooray!
-	return true;
+        // BONUS TESTS
+        // 1. make sure the recoveredText is the same as the plainText
+        if (!Arrays.equals(plainText, recoveredText)) {
+            throw new Exception("encryption/decryption does not work!");
+        }
+        // 2. make sure encryption does happen
+        if (Arrays.equals(plainText, cipherText)) {
+            throw new Exception("encryption does not work!");
+        }
+        // 3. make sure padding is working
+        if ((cipherText.length/16)*16 != cipherText.length) {
+            throw new Exception("padding does not work!");
+        }
+        // passed all tests...hooray!
+        return true;
     }
 
     public static void main (String[] args) throws Exception {
-	Security.addProvider(new com.sun.crypto.provider.SunJCE());
+        Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-	Test4517355 test = new Test4517355();
-	String testName = test.getClass().getName() + "[" + ALGO +
-	    "/" + MODE + "/" + PADDING + "]";
-	if (test.execute()) {
-	    System.out.println(testName + ": Passed!");
-	}
+        Test4517355 test = new Test4517355();
+        String testName = test.getClass().getName() + "[" + ALGO +
+            "/" + MODE + "/" + PADDING + "]";
+        if (test.execute()) {
+            System.out.println(testName + ": Passed!");
+        }
     }
 }

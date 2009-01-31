@@ -37,21 +37,21 @@ public class Reflection {
 
     /** Used to filter out fields and methods from certain classes from public
         view, where they are sensitive or they may contain VM-internal objects.
-	These Maps are updated very rarely. Rather than synchronize on
-	each access, we use copy-on-write */
+        These Maps are updated very rarely. Rather than synchronize on
+        each access, we use copy-on-write */
     private static volatile Map<Class,String[]> fieldFilterMap;
     private static volatile Map<Class,String[]> methodFilterMap;
-    
+
     static {
-	Map<Class,String[]> map = new HashMap<Class,String[]>();
-	map.put(Reflection.class, 
-	    new String[] {"fieldFilterMap", "methodFilterMap"});
-	map.put(System.class, new String[] {"security"});
-	fieldFilterMap = map;
-	
-	methodFilterMap = new HashMap<Class,String[]>();
+        Map<Class,String[]> map = new HashMap<Class,String[]>();
+        map.put(Reflection.class,
+            new String[] {"fieldFilterMap", "methodFilterMap"});
+        map.put(System.class, new String[] {"security"});
+        fieldFilterMap = map;
+
+        methodFilterMap = new HashMap<Class,String[]>();
     }
-    
+
     /** Returns the class of the method <code>realFramesToSkip</code>
         frames up the stack (zero-based), ignoring frames associated
         with java.lang.reflect.Method.invoke() and its implementation.
@@ -178,7 +178,7 @@ public class Reflection {
 
         return true;
     }
-                                    
+
     private static boolean isSameClassPackage(Class c1, Class c2) {
         return isSameClassPackage(c1.getClassLoader(), c1.getName(),
                                   c2.getClassLoader(), c2.getName());
@@ -245,30 +245,30 @@ public class Reflection {
         }
         return false;
     }
-    
+
     // fieldNames must contain only interned Strings
     public static synchronized void registerFieldsToFilter(Class containingClass,
                                               String ... fieldNames) {
-	fieldFilterMap = 
-	    registerFilter(fieldFilterMap, containingClass, fieldNames);
+        fieldFilterMap =
+            registerFilter(fieldFilterMap, containingClass, fieldNames);
     }
 
     // methodNames must contain only interned Strings
     public static synchronized void registerMethodsToFilter(Class containingClass,
                                               String ... methodNames) {
-	methodFilterMap = 
-	    registerFilter(methodFilterMap, containingClass, methodNames);
+        methodFilterMap =
+            registerFilter(methodFilterMap, containingClass, methodNames);
     }
 
     private static Map<Class,String[]> registerFilter(Map<Class,String[]> map,
-	    Class containingClass, String ... names) {
-	if (map.get(containingClass) != null) {
-	    throw new IllegalArgumentException
-			    ("Filter already registered: " + containingClass);
-	}
-	map = new HashMap<Class,String[]>(map);
-	map.put(containingClass, names);
-	return map;
+            Class containingClass, String ... names) {
+        if (map.get(containingClass) != null) {
+            throw new IllegalArgumentException
+                            ("Filter already registered: " + containingClass);
+        }
+        map = new HashMap<Class,String[]>(map);
+        map.put(containingClass, names);
+        return map;
     }
 
     public static Field[] filterFields(Class containingClass,
@@ -277,15 +277,15 @@ public class Reflection {
             // Bootstrapping
             return fields;
         }
-	return (Field[])filter(fields, fieldFilterMap.get(containingClass));
+        return (Field[])filter(fields, fieldFilterMap.get(containingClass));
     }
-    
+
     public static Method[] filterMethods(Class containingClass, Method[] methods) {
         if (methodFilterMap == null) {
             // Bootstrapping
             return methods;
         }
-	return (Method[])filter(methods, methodFilterMap.get(containingClass));
+        return (Method[])filter(methods, methodFilterMap.get(containingClass));
     }
 
     private static Member[] filter(Member[] members, String[] filteredNames) {
@@ -295,7 +295,7 @@ public class Reflection {
         int numNewMembers = 0;
         for (Member member : members) {
             boolean shouldSkip = false;
-	    for (String filteredName : filteredNames) {
+            for (String filteredName : filteredNames) {
                 if (member.getName() == filteredName) {
                     shouldSkip = true;
                     break;
@@ -305,12 +305,12 @@ public class Reflection {
                 ++numNewMembers;
             }
         }
-	Member[] newMembers = 
-	    (Member[])Array.newInstance(members[0].getClass(), numNewMembers);
+        Member[] newMembers =
+            (Member[])Array.newInstance(members[0].getClass(), numNewMembers);
         int destIdx = 0;
         for (Member member : members) {
             boolean shouldSkip = false;
-	    for (String filteredName : filteredNames) {
+            for (String filteredName : filteredNames) {
                 if (member.getName() == filteredName) {
                     shouldSkip = true;
                     break;

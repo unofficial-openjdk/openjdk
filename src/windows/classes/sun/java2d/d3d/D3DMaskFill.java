@@ -62,51 +62,51 @@ public class D3DMaskFill extends MaskFill {
     public static void register() {
         GraphicsPrimitive[] primitives = {
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             IntRgbD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             IntRgbD3D),
-                    
+
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             Ushort565RgbD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             Ushort565RgbD3D),
-                    
+
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             IntRgbxD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             IntRgbxD3D),
 
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             Ushort555RgbD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             Ushort555RgbD3D),
-                    
+
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             Ushort555RgbxD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             Ushort555RgbxD3D),
-                    
+
             new D3DMaskFill(SurfaceType.AnyColor,
-                            CompositeType.SrcOver, 
+                            CompositeType.SrcOver,
                             ThreeByteBgrD3D),
-            new D3DMaskFill(SurfaceType.OpaqueColor, 
-                            CompositeType.SrcNoEa, 
+            new D3DMaskFill(SurfaceType.OpaqueColor,
+                            CompositeType.SrcNoEa,
                             ThreeByteBgrD3D),
-	};
-	GraphicsPrimitiveMgr.register(primitives);
+        };
+        GraphicsPrimitiveMgr.register(primitives);
     }
 
-    D3DMaskFill(SurfaceType srcType, CompositeType compType, 
+    D3DMaskFill(SurfaceType srcType, CompositeType compType,
                 SurfaceType dstType) {
         super(srcType, compType, dstType);
     }
@@ -125,7 +125,7 @@ public class D3DMaskFill extends MaskFill {
         if (acomp.getRule() != AlphaComposite.SRC_OVER) {
             comp = AlphaComposite.SrcOver;
         }
-        
+
         synchronized (D3DContext.LOCK) {
             long pCtx = D3DContext.getContext(sData, sData,
                                               sg2d.getCompClip(), comp,

@@ -80,8 +80,8 @@ static void sigMonitorEnter()
         userSigMon.count++;
     } else {
         mutex_lock(&userSigMon.mutex);
-	userSigMon.owner = self;
-	userSigMon.count = 1;
+        userSigMon.owner = self;
+        userSigMon.count = 1;
     }
 }
 
@@ -92,7 +92,7 @@ static void sigMonitorExit()
     sysAssert(userSigMon.owner == self);
     sysAssert(userSigMon.count > 0);
     if (--userSigMon.count == 0) {
-	userSigMon.owner = 0;
+        userSigMon.owner = 0;
         mutex_unlock(&userSigMon.mutex);
     }
 }
@@ -108,7 +108,7 @@ static void sigMonitorNotify()
 
 static void sigMonitorWait()
 {
-    thread_t self = thr_self(); 
+    thread_t self = thr_self();
 
     unsigned int saved_count = userSigMon.count;
 
@@ -127,9 +127,9 @@ static void sigMonitorWait()
     userSigMon.owner = self;
 }
 
-static int							
-my_sigignore(int sig)		
-{				
+static int
+my_sigignore(int sig)
+{
 #ifndef HAVE_SIGIGNORE
     struct sigaction action;
     sigset_t set;
@@ -139,10 +139,10 @@ my_sigignore(int sig)
     sigemptyset(&action.sa_mask);
 
     if (sigaction(sig, &action, (struct sigaction *)0) < 0)
-	return -1;
+        return -1;
     sigemptyset(&set);
     if (sigaddset(&set, sig) < 0)
-	return -1;
+        return -1;
     return sigprocmask(SIG_UNBLOCK, &set, (sigset_t *)0);
 #else
     return sigignore(sig);
@@ -167,7 +167,7 @@ intrInitMD()
 void
 #ifdef SA_SIGINFO
 intrDispatchMD(int sig, siginfo_t *info, void *uc)
-#else 
+#else
 intrDispatchMD(int sig)
 #endif /* SA_SIGINFO */
 {
@@ -180,7 +180,7 @@ intrDispatchMD(int sig)
     info = (siginfo_t *)(((char *)uc) + 0x60);
 #endif
     intrDispatch(sig, info, uc);
-#else 
+#else
     intrDispatch(sig, 0, 0);
 #endif /* SA_SIGINFO */
 
@@ -210,9 +210,9 @@ static int lookupSignal()
     int i;
     for (i = 0; i < N_INTERRUPTS; i++) {
         if (pending_signals[i]) {
-	    pending_signals[i]--;
-	    return i;
-	}
+            pending_signals[i]--;
+            return i;
+        }
     }
     return -1;
 }

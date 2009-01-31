@@ -40,27 +40,26 @@ import com.sun.jndi.toolkit.ctx.*;
  * A DnsContext is a directory context representing a DNS node.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 public class DnsContext extends ComponentDirContext {
 
-    DnsName domain;		// fully-qualified domain name of this context,
-				// with a root (empty) label at position 0
+    DnsName domain;             // fully-qualified domain name of this context,
+                                // with a root (empty) label at position 0
     Hashtable environment;
-    private boolean envShared;	// true if environment is possibly shared
-				// and so must be copied on write
-    private boolean parentIsDns;	// was this DnsContext created by
-					// another?  see composeName()
+    private boolean envShared;  // true if environment is possibly shared
+                                // and so must be copied on write
+    private boolean parentIsDns;        // was this DnsContext created by
+                                        // another?  see composeName()
     private String[] servers;
     private Resolver resolver;
 
-    private boolean authoritative;	// must all responses be authoritative?
-    private boolean recursion;		// request recursion on queries?
-    private int timeout;		// initial timeout on UDP queries in ms
-    private int retries;		// number of UDP retries
-    
+    private boolean authoritative;      // must all responses be authoritative?
+    private boolean recursion;          // request recursion on queries?
+    private int timeout;                // initial timeout on UDP queries in ms
+    private int retries;                // number of UDP retries
+
     static final NameParser nameParser = new DnsNameParser();
 
     // Timeouts for UDP queries use exponential backoff:  each retry
@@ -71,7 +70,7 @@ public class DnsContext extends ComponentDirContext {
     private static final int DEFAULT_INIT_TIMEOUT = 1000;
     private static final int DEFAULT_RETRIES = 4;
     private static final String INIT_TIMEOUT =
-					  "com.sun.jndi.dns.timeout.initial";
+                                          "com.sun.jndi.dns.timeout.initial";
     private static final String RETRIES = "com.sun.jndi.dns.timeout.retries";
 
     // The resource record type and class to use for lookups, and the
@@ -97,18 +96,18 @@ public class DnsContext extends ComponentDirContext {
      * The environment must not be null; it is cloned before being stored.
      */
     public DnsContext(String domain, String[] servers, Hashtable environment)
-	    throws NamingException {
+            throws NamingException {
 
-	this.domain = new DnsName(domain.endsWith(".")
-				  ? domain
-				  : domain + ".");
-	this.servers = servers;
-	this.environment = (Hashtable) environment.clone();
-	envShared = false;
-	parentIsDns = false;
-	resolver = null;
+        this.domain = new DnsName(domain.endsWith(".")
+                                  ? domain
+                                  : domain + ".");
+        this.servers = servers;
+        this.environment = (Hashtable) environment.clone();
+        envShared = false;
+        parentIsDns = false;
+        resolver = null;
 
-	initFromEnvironment();
+        initFromEnvironment();
     }
 
     /*
@@ -116,9 +115,9 @@ public class DnsContext extends ComponentDirContext {
      * but with a different domain name and with parentIsDns set to true.
      */
     DnsContext(DnsContext ctx, DnsName domain) {
-	this(ctx);
-	this.domain = domain;
-	parentIsDns = true;
+        this(ctx);
+        this.domain = domain;
+        parentIsDns = true;
     }
 
     /*
@@ -129,24 +128,24 @@ public class DnsContext extends ComponentDirContext {
      * no conflict.
      */
     private DnsContext(DnsContext ctx) {
-	environment = ctx.environment;
-	envShared = ctx.envShared = true;
-	parentIsDns = ctx.parentIsDns;
-	domain = ctx.domain;
-	servers = ctx.servers;
-	resolver = ctx.resolver;
-	authoritative = ctx.authoritative;
-	recursion = ctx.recursion;
-	timeout = ctx.timeout;
-	retries = ctx.retries;
-	lookupCT = ctx.lookupCT;
+        environment = ctx.environment;
+        envShared = ctx.envShared = true;
+        parentIsDns = ctx.parentIsDns;
+        domain = ctx.domain;
+        servers = ctx.servers;
+        resolver = ctx.resolver;
+        authoritative = ctx.authoritative;
+        recursion = ctx.recursion;
+        timeout = ctx.timeout;
+        retries = ctx.retries;
+        lookupCT = ctx.lookupCT;
     }
 
     public void close() {
-	if (resolver != null) {
-	    resolver.close();
-	    resolver = null;
-	}
+        if (resolver != null) {
+            resolver.close();
+            resolver = null;
+        }
     }
 
 
@@ -156,79 +155,79 @@ public class DnsContext extends ComponentDirContext {
      * Override default with a noncloning version.
      */
     protected Hashtable p_getEnvironment() {
-	return environment;
+        return environment;
     }
 
     public Hashtable getEnvironment() throws NamingException {
-	return (Hashtable) environment.clone();
+        return (Hashtable) environment.clone();
     }
 
     public Object addToEnvironment(String propName, Object propVal)
-	    throws NamingException {
+            throws NamingException {
 
-	if (propName.equals(LOOKUP_ATTR)) {
-	    lookupCT = getLookupCT((String) propVal);
-	} else if (propName.equals(Context.AUTHORITATIVE)) {
-	    authoritative = "true".equalsIgnoreCase((String) propVal);
-	} else if (propName.equals(RECURSION)) {
-	    recursion = "true".equalsIgnoreCase((String) propVal);
-	} else if (propName.equals(INIT_TIMEOUT)) {
-	    int val = Integer.parseInt((String) propVal);
-	    if (timeout != val) {
-		timeout = val;
-		resolver = null;
-	    }
-	} else if (propName.equals(RETRIES)) {
-	    int val = Integer.parseInt((String) propVal);
-	    if (retries != val) {
-		retries = val;
-		resolver = null;
-	    }
-	}
+        if (propName.equals(LOOKUP_ATTR)) {
+            lookupCT = getLookupCT((String) propVal);
+        } else if (propName.equals(Context.AUTHORITATIVE)) {
+            authoritative = "true".equalsIgnoreCase((String) propVal);
+        } else if (propName.equals(RECURSION)) {
+            recursion = "true".equalsIgnoreCase((String) propVal);
+        } else if (propName.equals(INIT_TIMEOUT)) {
+            int val = Integer.parseInt((String) propVal);
+            if (timeout != val) {
+                timeout = val;
+                resolver = null;
+            }
+        } else if (propName.equals(RETRIES)) {
+            int val = Integer.parseInt((String) propVal);
+            if (retries != val) {
+                retries = val;
+                resolver = null;
+            }
+        }
 
-	if (!envShared) {
-	    return environment.put(propName, propVal);
-	} else if (environment.get(propName) != propVal) {
-	    // copy on write
-	    environment = (Hashtable) environment.clone();
-	    envShared = false;
-	    return environment.put(propName, propVal);
-	} else {
-	    return propVal;
-	}
+        if (!envShared) {
+            return environment.put(propName, propVal);
+        } else if (environment.get(propName) != propVal) {
+            // copy on write
+            environment = (Hashtable) environment.clone();
+            envShared = false;
+            return environment.put(propName, propVal);
+        } else {
+            return propVal;
+        }
     }
 
     public Object removeFromEnvironment(String propName)
-	    throws NamingException {
+            throws NamingException {
 
-	if (propName.equals(LOOKUP_ATTR)) {
-	    lookupCT = getLookupCT(null);
-	} else if (propName.equals(Context.AUTHORITATIVE)) {
-	    authoritative = false;
-	} else if (propName.equals(RECURSION)) {
-	    recursion = true;
-	} else if (propName.equals(INIT_TIMEOUT)) {
-	    if (timeout != DEFAULT_INIT_TIMEOUT) {
-		timeout = DEFAULT_INIT_TIMEOUT;
-		resolver = null;
-	    }
-	} else if (propName.equals(RETRIES)) {
-	    if (retries != DEFAULT_RETRIES) {
-		retries = DEFAULT_RETRIES;
-		resolver = null;
-	    }
-	}
+        if (propName.equals(LOOKUP_ATTR)) {
+            lookupCT = getLookupCT(null);
+        } else if (propName.equals(Context.AUTHORITATIVE)) {
+            authoritative = false;
+        } else if (propName.equals(RECURSION)) {
+            recursion = true;
+        } else if (propName.equals(INIT_TIMEOUT)) {
+            if (timeout != DEFAULT_INIT_TIMEOUT) {
+                timeout = DEFAULT_INIT_TIMEOUT;
+                resolver = null;
+            }
+        } else if (propName.equals(RETRIES)) {
+            if (retries != DEFAULT_RETRIES) {
+                retries = DEFAULT_RETRIES;
+                resolver = null;
+            }
+        }
 
-	if (!envShared) {
-	    return environment.remove(propName);
-	} else if (environment.get(propName) != null) {
-	    // copy-on-write
-	    environment = (Hashtable) environment.clone();
-	    envShared = false;
-	    return environment.remove(propName);
-	} else {
-	    return null;
-	}
+        if (!envShared) {
+            return environment.remove(propName);
+        } else if (environment.get(propName) != null) {
+            // copy-on-write
+            environment = (Hashtable) environment.clone();
+            envShared = false;
+            return environment.remove(propName);
+        } else {
+            return null;
+        }
     }
 
     /*
@@ -236,327 +235,327 @@ public class DnsContext extends ComponentDirContext {
      * is not being shared.
      */
     void setProviderUrl(String url) {
-	// assert !envShared;
-	environment.put(Context.PROVIDER_URL, url);
+        // assert !envShared;
+        environment.put(Context.PROVIDER_URL, url);
     }
 
     /*
      * Read environment properties and set parameters.
      */
     private void initFromEnvironment()
-	    throws InvalidAttributeIdentifierException {
+            throws InvalidAttributeIdentifierException {
 
-	lookupCT = getLookupCT((String) environment.get(LOOKUP_ATTR));
-	authoritative = "true".equalsIgnoreCase((String)
-				       environment.get(Context.AUTHORITATIVE));
-	String val = (String) environment.get(RECURSION);
-	recursion = ((val == null) ||
-		     "true".equalsIgnoreCase(val));
-	val = (String) environment.get(INIT_TIMEOUT);
-	timeout = (val == null)
-	    ? DEFAULT_INIT_TIMEOUT
-	    : Integer.parseInt(val);
-	val = (String) environment.get(RETRIES);
-	retries = (val == null)
-	    ? DEFAULT_RETRIES
-	    : Integer.parseInt(val);
+        lookupCT = getLookupCT((String) environment.get(LOOKUP_ATTR));
+        authoritative = "true".equalsIgnoreCase((String)
+                                       environment.get(Context.AUTHORITATIVE));
+        String val = (String) environment.get(RECURSION);
+        recursion = ((val == null) ||
+                     "true".equalsIgnoreCase(val));
+        val = (String) environment.get(INIT_TIMEOUT);
+        timeout = (val == null)
+            ? DEFAULT_INIT_TIMEOUT
+            : Integer.parseInt(val);
+        val = (String) environment.get(RETRIES);
+        retries = (val == null)
+            ? DEFAULT_RETRIES
+            : Integer.parseInt(val);
     }
 
     private CT getLookupCT(String attrId)
-	    throws InvalidAttributeIdentifierException {
-	return (attrId == null)
-	    ? new CT(ResourceRecord.CLASS_INTERNET, ResourceRecord.TYPE_TXT)
-	    : fromAttrId(attrId);
+            throws InvalidAttributeIdentifierException {
+        return (attrId == null)
+            ? new CT(ResourceRecord.CLASS_INTERNET, ResourceRecord.TYPE_TXT)
+            : fromAttrId(attrId);
     }
 
 
     //---------- Naming operations
 
     public Object c_lookup(Name name, Continuation cont)
-	    throws NamingException {
+            throws NamingException {
 
-	cont.setSuccess();
-	if (name.isEmpty()) {
-	    DnsContext ctx = new DnsContext(this);
-	    ctx.resolver = new Resolver(servers, timeout, retries);
-						// clone for parallelism
-	    return ctx;
-	}
-	try {
-	    DnsName fqdn = fullyQualify(name);
-	    ResourceRecords rrs =
-		getResolver().query(fqdn, lookupCT.rrclass, lookupCT.rrtype,
-				    recursion, authoritative);
-	    Attributes attrs = rrsToAttrs(rrs, null);
-	    DnsContext ctx = new DnsContext(this, fqdn);
-	    return DirectoryManager.getObjectInstance(ctx, name, this,
-						      environment, attrs);
-	} catch (NamingException e) {
-	    cont.setError(this, name);
-	    throw cont.fillInException(e);
-	} catch (Exception e) {
-	    cont.setError(this, name);
-	    NamingException ne = new NamingException(
-		    "Problem generating object using object factory");
-	    ne.setRootCause(e);
-	    throw cont.fillInException(ne);
-	}
+        cont.setSuccess();
+        if (name.isEmpty()) {
+            DnsContext ctx = new DnsContext(this);
+            ctx.resolver = new Resolver(servers, timeout, retries);
+                                                // clone for parallelism
+            return ctx;
+        }
+        try {
+            DnsName fqdn = fullyQualify(name);
+            ResourceRecords rrs =
+                getResolver().query(fqdn, lookupCT.rrclass, lookupCT.rrtype,
+                                    recursion, authoritative);
+            Attributes attrs = rrsToAttrs(rrs, null);
+            DnsContext ctx = new DnsContext(this, fqdn);
+            return DirectoryManager.getObjectInstance(ctx, name, this,
+                                                      environment, attrs);
+        } catch (NamingException e) {
+            cont.setError(this, name);
+            throw cont.fillInException(e);
+        } catch (Exception e) {
+            cont.setError(this, name);
+            NamingException ne = new NamingException(
+                    "Problem generating object using object factory");
+            ne.setRootCause(e);
+            throw cont.fillInException(ne);
+        }
     }
 
     public Object c_lookupLink(Name name, Continuation cont)
-	    throws NamingException {
-	return c_lookup(name, cont);
+            throws NamingException {
+        return c_lookup(name, cont);
     }
 
     public NamingEnumeration c_list(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setSuccess();
-	try {
-	    DnsName fqdn = fullyQualify(name);
-	    NameNode nnode = getNameNode(fqdn);
-	    DnsContext ctx = new DnsContext(this, fqdn);
-	    return new NameClassPairEnumeration(ctx, nnode.getChildren());
+            throws NamingException {
+        cont.setSuccess();
+        try {
+            DnsName fqdn = fullyQualify(name);
+            NameNode nnode = getNameNode(fqdn);
+            DnsContext ctx = new DnsContext(this, fqdn);
+            return new NameClassPairEnumeration(ctx, nnode.getChildren());
 
-	} catch (NamingException e) {
-	    cont.setError(this, name);
-	    throw cont.fillInException(e);
-	}
+        } catch (NamingException e) {
+            cont.setError(this, name);
+            throw cont.fillInException(e);
+        }
     }
 
     public NamingEnumeration c_listBindings(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setSuccess();
-	try {
-	    DnsName fqdn = fullyQualify(name);
-	    NameNode nnode = getNameNode(fqdn);
-	    DnsContext ctx = new DnsContext(this, fqdn);
-	    return new BindingEnumeration(ctx, nnode.getChildren());
+            throws NamingException {
+        cont.setSuccess();
+        try {
+            DnsName fqdn = fullyQualify(name);
+            NameNode nnode = getNameNode(fqdn);
+            DnsContext ctx = new DnsContext(this, fqdn);
+            return new BindingEnumeration(ctx, nnode.getChildren());
 
-	} catch (NamingException e) {
-	    cont.setError(this, name);
-	    throw cont.fillInException(e);
-	}
+        } catch (NamingException e) {
+            cont.setError(this, name);
+            throw cont.fillInException(e);
+        }
     }
 
     public void c_bind(Name name, Object obj, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public void c_rebind(Name name, Object obj, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public void c_unbind(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public void c_rename(Name oldname, Name newname, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, oldname);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, oldname);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public Context c_createSubcontext(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public void c_destroySubcontext(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public NameParser c_getNameParser(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setSuccess();
-	return nameParser;
+            throws NamingException {
+        cont.setSuccess();
+        return nameParser;
     }
 
 
     //---------- Directory operations
 
     public void c_bind(Name name,
-		       Object obj, 
-		       Attributes attrs, 
-		       Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+                       Object obj,
+                       Attributes attrs,
+                       Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public void c_rebind(Name name,
-			 Object obj, 
-			 Attributes attrs, 
-			 Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+                         Object obj,
+                         Attributes attrs,
+                         Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
-    public DirContext c_createSubcontext(Name name, 
-					 Attributes attrs, 
-					 Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+    public DirContext c_createSubcontext(Name name,
+                                         Attributes attrs,
+                                         Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public Attributes c_getAttributes(Name name,
-				      String[] attrIds,
-				      Continuation cont) 
-	    throws NamingException {
+                                      String[] attrIds,
+                                      Continuation cont)
+            throws NamingException {
 
-	cont.setSuccess();
-	try {
-	    DnsName fqdn = fullyQualify(name);
-	    CT[] cts = attrIdsToClassesAndTypes(attrIds);
-	    CT ct = getClassAndTypeToQuery(cts);
-	    ResourceRecords rrs =
-		getResolver().query(fqdn, ct.rrclass, ct.rrtype,
-				    recursion, authoritative);
-	    return rrsToAttrs(rrs, cts);
+        cont.setSuccess();
+        try {
+            DnsName fqdn = fullyQualify(name);
+            CT[] cts = attrIdsToClassesAndTypes(attrIds);
+            CT ct = getClassAndTypeToQuery(cts);
+            ResourceRecords rrs =
+                getResolver().query(fqdn, ct.rrclass, ct.rrtype,
+                                    recursion, authoritative);
+            return rrsToAttrs(rrs, cts);
 
-	} catch (NamingException e) {
-	    cont.setError(this, name);
-	    throw cont.fillInException(e);
-	}
+        } catch (NamingException e) {
+            cont.setError(this, name);
+            throw cont.fillInException(e);
+        }
     }
 
     public void c_modifyAttributes(Name name,
-				   int mod_op,
-				   Attributes attrs,
-				   Continuation cont) 
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+                                   int mod_op,
+                                   Attributes attrs,
+                                   Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
-    public void c_modifyAttributes(Name name, 
-				   ModificationItem[] mods,
-				   Continuation cont) 
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
-    }
-
-    public NamingEnumeration c_search(Name name, 
-				      Attributes matchingAttributes,
-				      String[] attributesToReturn,
-				      Continuation cont)
-	    throws NamingException {
-	throw new OperationNotSupportedException();
-    }
-
-    public NamingEnumeration c_search(Name name, 
-				      String filter,
-				      SearchControls cons, 
-				      Continuation cont)
-	    throws NamingException {
-	throw new OperationNotSupportedException();
+    public void c_modifyAttributes(Name name,
+                                   ModificationItem[] mods,
+                                   Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public NamingEnumeration c_search(Name name,
-				      String filterExpr,
-				      Object[] filterArgs,
-				      SearchControls cons, 
-				      Continuation cont)
-	    throws NamingException {
-	throw new OperationNotSupportedException();
+                                      Attributes matchingAttributes,
+                                      String[] attributesToReturn,
+                                      Continuation cont)
+            throws NamingException {
+        throw new OperationNotSupportedException();
     }
 
-    public DirContext c_getSchema(Name name, Continuation cont) 
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+    public NamingEnumeration c_search(Name name,
+                                      String filter,
+                                      SearchControls cons,
+                                      Continuation cont)
+            throws NamingException {
+        throw new OperationNotSupportedException();
+    }
+
+    public NamingEnumeration c_search(Name name,
+                                      String filterExpr,
+                                      Object[] filterArgs,
+                                      SearchControls cons,
+                                      Continuation cont)
+            throws NamingException {
+        throw new OperationNotSupportedException();
+    }
+
+    public DirContext c_getSchema(Name name, Continuation cont)
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
     public DirContext c_getSchemaClassDefinition(Name name, Continuation cont)
-	    throws NamingException {
-	cont.setError(this, name);
-	throw cont.fillInException(
-		new OperationNotSupportedException());
+            throws NamingException {
+        cont.setError(this, name);
+        throw cont.fillInException(
+                new OperationNotSupportedException());
     }
 
 
     //---------- Name-related operations
 
     public String getNameInNamespace() {
-	return domain.toString();
+        return domain.toString();
     }
 
     public Name composeName(Name name, Name prefix) throws NamingException {
-	Name result;
+        Name result;
 
-	// Any name that's not a CompositeName is assumed to be a DNS
-	// compound name.  Convert each to a DnsName for syntax checking.
-	if (!(prefix instanceof DnsName || prefix instanceof CompositeName)) {
-	    prefix = (new DnsName()).addAll(prefix);
-	}
-	if (!(name instanceof DnsName || name instanceof CompositeName)) {
-	    name = (new DnsName()).addAll(name);
-	}
+        // Any name that's not a CompositeName is assumed to be a DNS
+        // compound name.  Convert each to a DnsName for syntax checking.
+        if (!(prefix instanceof DnsName || prefix instanceof CompositeName)) {
+            prefix = (new DnsName()).addAll(prefix);
+        }
+        if (!(name instanceof DnsName || name instanceof CompositeName)) {
+            name = (new DnsName()).addAll(name);
+        }
 
-	// Each of prefix and name is now either a DnsName or a CompositeName.
+        // Each of prefix and name is now either a DnsName or a CompositeName.
 
-	// If we have two DnsNames, simply join them together.
-	if ((prefix instanceof DnsName) && (name instanceof DnsName)) {
-	    result = (DnsName) (prefix.clone());
-	    result.addAll(name);
-	    return new CompositeName().add(result.toString());
-	}
+        // If we have two DnsNames, simply join them together.
+        if ((prefix instanceof DnsName) && (name instanceof DnsName)) {
+            result = (DnsName) (prefix.clone());
+            result.addAll(name);
+            return new CompositeName().add(result.toString());
+        }
 
-	// Wrap compound names in composite names.
-	Name prefixC = (prefix instanceof CompositeName)
-	    ? prefix
-	    : new CompositeName().add(prefix.toString());
-	Name nameC = (name instanceof CompositeName)
-	    ? name
-	    : new CompositeName().add(name.toString());
-	int prefixLast = prefixC.size() - 1;
+        // Wrap compound names in composite names.
+        Name prefixC = (prefix instanceof CompositeName)
+            ? prefix
+            : new CompositeName().add(prefix.toString());
+        Name nameC = (name instanceof CompositeName)
+            ? name
+            : new CompositeName().add(name.toString());
+        int prefixLast = prefixC.size() - 1;
 
-	// Let toolkit do the work at namespace boundaries.
-	if (nameC.isEmpty() || nameC.get(0).equals("") ||
-		prefixC.isEmpty() || prefixC.get(prefixLast).equals("")) {
-	    return super.composeName(nameC, prefixC);
-	}
+        // Let toolkit do the work at namespace boundaries.
+        if (nameC.isEmpty() || nameC.get(0).equals("") ||
+                prefixC.isEmpty() || prefixC.get(prefixLast).equals("")) {
+            return super.composeName(nameC, prefixC);
+        }
 
-	result = (prefix == prefixC)
-	    ? (CompositeName) prefixC.clone()
-	    : prefixC;			// prefixC is already a clone
-	result.addAll(nameC);
+        result = (prefix == prefixC)
+            ? (CompositeName) prefixC.clone()
+            : prefixC;                  // prefixC is already a clone
+        result.addAll(nameC);
 
-	if (parentIsDns) {
-	    DnsName dnsComp = (prefix instanceof DnsName)
-			   ? (DnsName) prefix.clone()
-			   : new DnsName(prefixC.get(prefixLast));
-	    dnsComp.addAll((name instanceof DnsName)
-			   ? name
-			   : new DnsName(nameC.get(0)));
-	    result.remove(prefixLast + 1);
-	    result.remove(prefixLast);
-	    result.add(prefixLast, dnsComp.toString());
-	}
-	return result;
+        if (parentIsDns) {
+            DnsName dnsComp = (prefix instanceof DnsName)
+                           ? (DnsName) prefix.clone()
+                           : new DnsName(prefixC.get(prefixLast));
+            dnsComp.addAll((name instanceof DnsName)
+                           ? name
+                           : new DnsName(nameC.get(0)));
+            result.remove(prefixLast + 1);
+            result.remove(prefixLast);
+            result.add(prefixLast, dnsComp.toString());
+        }
+        return result;
     }
 
 
@@ -567,10 +566,10 @@ public class DnsContext extends ComponentDirContext {
      * to the environment.
      */
     private synchronized Resolver getResolver() throws NamingException {
-	if (resolver == null) {
-	    resolver = new Resolver(servers, timeout, retries);
-	}
-	return resolver;
+        if (resolver == null) {
+            resolver = new Resolver(servers, timeout, retries);
+        }
+        return resolver;
     }
 
     /*
@@ -579,23 +578,23 @@ public class DnsContext extends ComponentDirContext {
      * empty component at position 0).
      */
     DnsName fullyQualify(Name name) throws NamingException {
-	if (name.isEmpty()) {
-	    return domain;
-	}
-	DnsName dnsName = (name instanceof CompositeName)
-	    ? new DnsName(name.get(0))			// parse name
-	    : (DnsName) (new DnsName()).addAll(name);	// clone & check syntax
+        if (name.isEmpty()) {
+            return domain;
+        }
+        DnsName dnsName = (name instanceof CompositeName)
+            ? new DnsName(name.get(0))                  // parse name
+            : (DnsName) (new DnsName()).addAll(name);   // clone & check syntax
 
-	if (dnsName.hasRootLabel()) {
-	    // Be overly generous and allow root label if we're in root domain.
-	    if (domain.size() == 1) {
-		return dnsName;
-	    } else {
-		throw new InvalidNameException(
-		       "DNS name " + dnsName + " not relative to " + domain);
-	    }
-	}
-	return (DnsName) dnsName.addAll(0, domain);
+        if (dnsName.hasRootLabel()) {
+            // Be overly generous and allow root label if we're in root domain.
+            if (domain.size() == 1) {
+                return dnsName;
+            } else {
+                throw new InvalidNameException(
+                       "DNS name " + dnsName + " not relative to " + domain);
+            }
+        }
+        return (DnsName) dnsName.addAll(0, domain);
     }
 
     /*
@@ -606,26 +605,26 @@ public class DnsContext extends ComponentDirContext {
      */
     private static Attributes rrsToAttrs(ResourceRecords rrs, CT[] cts) {
 
-	BasicAttributes attrs = new BasicAttributes(true);
+        BasicAttributes attrs = new BasicAttributes(true);
 
-	for (int i = 0; i < rrs.answer.size(); i++) {
-	    ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
-	    int rrtype  = rr.getType();
-	    int rrclass = rr.getRrclass();
+        for (int i = 0; i < rrs.answer.size(); i++) {
+            ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
+            int rrtype  = rr.getType();
+            int rrclass = rr.getRrclass();
 
-	    if (!classAndTypeMatch(rrclass, rrtype, cts)) {
-		continue;
-	    }
+            if (!classAndTypeMatch(rrclass, rrtype, cts)) {
+                continue;
+            }
 
-	    String attrId = toAttrId(rrclass, rrtype);
-	    Attribute attr = attrs.get(attrId);
-	    if (attr == null) {
-		attr = new BasicAttribute(attrId);
-		attrs.put(attr);
-	    }
-	    attr.add(rr.getRdata());
-	}
-	return attrs;
+            String attrId = toAttrId(rrclass, rrtype);
+            Attribute attr = attrs.get(attrId);
+            if (attr == null) {
+                attr = new BasicAttribute(attrId);
+                attrs.put(attr);
+            }
+            attr.add(rr.getRdata());
+        }
+        return attrs;
     }
 
     /*
@@ -635,21 +634,21 @@ public class DnsContext extends ComponentDirContext {
      * and type match.
      */
     private static boolean classAndTypeMatch(int rrclass, int rrtype,
-					     CT[] cts) {
-	if (cts == null) {
-	    return true;
-	}
-	for (int i = 0; i < cts.length; i++) {
-	    CT ct = cts[i];
-	    boolean classMatch = (ct.rrclass == ANY) ||
-				 (ct.rrclass == rrclass);
-	    boolean typeMatch  = (ct.rrtype == ANY) ||
-				 (ct.rrtype == rrtype);
-	    if (classMatch && typeMatch) {
-		return true;
-	    }
-	}
-	return false;
+                                             CT[] cts) {
+        if (cts == null) {
+            return true;
+        }
+        for (int i = 0; i < cts.length; i++) {
+            CT ct = cts[i];
+            boolean classMatch = (ct.rrclass == ANY) ||
+                                 (ct.rrclass == rrclass);
+            boolean typeMatch  = (ct.rrtype == ANY) ||
+                                 (ct.rrtype == rrtype);
+            if (classMatch && typeMatch) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /*
@@ -667,11 +666,11 @@ public class DnsContext extends ComponentDirContext {
      * record of any class.
      */
     private static String toAttrId(int rrclass, int rrtype) {
-	String attrId = ResourceRecord.getTypeName(rrtype);
-	if (rrclass != ResourceRecord.CLASS_INTERNET) {
-	    attrId = ResourceRecord.getRrclassName(rrclass) + " " + attrId;
-	}
-	return attrId;
+        String attrId = ResourceRecord.getTypeName(rrtype);
+        if (rrclass != ResourceRecord.CLASS_INTERNET) {
+            attrId = ResourceRecord.getRrclassName(rrclass) + " " + attrId;
+        }
+        return attrId;
     }
 
     /*
@@ -680,40 +679,40 @@ public class DnsContext extends ComponentDirContext {
      * toAttrId() for the format of attribute IDs.
      *
      * @throws InvalidAttributeIdentifierException
-     *		if class or type is unknown
+     *          if class or type is unknown
      */
     private static CT fromAttrId(String attrId)
-	    throws InvalidAttributeIdentifierException {
+            throws InvalidAttributeIdentifierException {
 
-	if (attrId.equals("")) {
-	    throw new InvalidAttributeIdentifierException(
-		    "Attribute ID cannot be empty");
-	}
-	int rrclass;
-	int rrtype;
-	int space = attrId.indexOf(' ');
+        if (attrId.equals("")) {
+            throw new InvalidAttributeIdentifierException(
+                    "Attribute ID cannot be empty");
+        }
+        int rrclass;
+        int rrtype;
+        int space = attrId.indexOf(' ');
 
-	// class
-	if (space < 0) {
-	    rrclass = ResourceRecord.CLASS_INTERNET;
-	} else {
-	    String className = attrId.substring(0, space);
-	    rrclass = ResourceRecord.getRrclass(className);
-	    if (rrclass < 0) {
-		throw new InvalidAttributeIdentifierException(
-			"Unknown resource record class '" + className + '\'');
-	    }
-	}
+        // class
+        if (space < 0) {
+            rrclass = ResourceRecord.CLASS_INTERNET;
+        } else {
+            String className = attrId.substring(0, space);
+            rrclass = ResourceRecord.getRrclass(className);
+            if (rrclass < 0) {
+                throw new InvalidAttributeIdentifierException(
+                        "Unknown resource record class '" + className + '\'');
+            }
+        }
 
-	// type
-	String typeName = attrId.substring(space + 1);
-	rrtype = ResourceRecord.getType(typeName);
-	if (rrtype < 0) {
-	    throw new InvalidAttributeIdentifierException(
-		    "Unknown resource record type '" + typeName + '\'');
-	}
+        // type
+        String typeName = attrId.substring(space + 1);
+        rrtype = ResourceRecord.getType(typeName);
+        if (rrtype < 0) {
+            throw new InvalidAttributeIdentifierException(
+                    "Unknown resource record type '" + typeName + '\'');
+        }
 
-	return new CT(rrclass, rrtype);
+        return new CT(rrclass, rrtype);
     }
 
     /*
@@ -723,16 +722,16 @@ public class DnsContext extends ComponentDirContext {
      * array returned.
      */
     private static CT[] attrIdsToClassesAndTypes(String[] attrIds)
-	    throws InvalidAttributeIdentifierException {
-	if (attrIds == null) {
-	    return null;
-	}
-	CT[] cts = new CT[attrIds.length];
+            throws InvalidAttributeIdentifierException {
+        if (attrIds == null) {
+            return null;
+        }
+        CT[] cts = new CT[attrIds.length];
 
-	for (int i = 0; i < attrIds.length; i++) {
-	    cts[i] = fromAttrId(attrIds[i]);
-	}
-	return cts;
+        for (int i = 0; i < attrIds.length; i++) {
+            cts[i] = fromAttrId(attrIds[i]);
+        }
+        return cts;
     }
 
     /*
@@ -741,30 +740,30 @@ public class DnsContext extends ComponentDirContext {
      * See classAndTypeMatch() for matching rules.
      */
     private static CT getClassAndTypeToQuery(CT[] cts) {
-	int rrclass;
-	int rrtype;
+        int rrclass;
+        int rrtype;
 
-	if (cts == null) {
-	    // Query all records.
-	    rrclass = ANY;
-	    rrtype  = ANY;
-	} else if (cts.length == 0) {
-	    // No records are requested, but we need to ask for something.
-	    rrclass = ResourceRecord.CLASS_INTERNET;
-	    rrtype  = ANY;
-	} else {
-	    rrclass = cts[0].rrclass;
-	    rrtype  = cts[0].rrtype;
-	    for (int i = 1; i < cts.length; i++) {
-		if (rrclass != cts[i].rrclass) {
-		    rrclass = ANY;
-		}
-		if (rrtype != cts[i].rrtype) {
-		    rrtype = ANY;
-		}
-	    }
-	}
-	return new CT(rrclass, rrtype);
+        if (cts == null) {
+            // Query all records.
+            rrclass = ANY;
+            rrtype  = ANY;
+        } else if (cts.length == 0) {
+            // No records are requested, but we need to ask for something.
+            rrclass = ResourceRecord.CLASS_INTERNET;
+            rrtype  = ANY;
+        } else {
+            rrclass = cts[0].rrclass;
+            rrtype  = cts[0].rrtype;
+            for (int i = 1; i < cts.length; i++) {
+                if (rrclass != cts[i].rrclass) {
+                    rrclass = ANY;
+                }
+                if (rrtype != cts[i].rrtype) {
+                    rrtype = ANY;
+                }
+            }
+        }
+        return new CT(rrclass, rrtype);
     }
 
 
@@ -795,83 +794,83 @@ public class DnsContext extends ComponentDirContext {
      * transfer is done to populate the tree.
      */
     private NameNode getNameNode(DnsName fqdn) throws NamingException {
-	dprint("getNameNode(" + fqdn + ")");
+        dprint("getNameNode(" + fqdn + ")");
 
-	// Find deepest related zone in zone tree.
-	ZoneNode znode;
-	DnsName zone;
-	synchronized (zoneTree) {
-	    znode = zoneTree.getDeepestPopulated(fqdn);
-	}
-	dprint("Deepest related zone in zone tree: " +
-	       ((znode != null) ? znode.getLabel() : "[none]"));
+        // Find deepest related zone in zone tree.
+        ZoneNode znode;
+        DnsName zone;
+        synchronized (zoneTree) {
+            znode = zoneTree.getDeepestPopulated(fqdn);
+        }
+        dprint("Deepest related zone in zone tree: " +
+               ((znode != null) ? znode.getLabel() : "[none]"));
 
-	NameNode topOfZone;
-	NameNode nnode;
+        NameNode topOfZone;
+        NameNode nnode;
 
-	if (znode != null) {
-	    synchronized (znode) {
-		topOfZone = znode.getContents();
-	    }
-	    // If fqdn is in znode's zone, is not at a zone cut, and
-	    // is current, we're done.
-	    if (topOfZone != null) {
-		nnode = topOfZone.get(fqdn, znode.depth() + 1);	// +1 for root
+        if (znode != null) {
+            synchronized (znode) {
+                topOfZone = znode.getContents();
+            }
+            // If fqdn is in znode's zone, is not at a zone cut, and
+            // is current, we're done.
+            if (topOfZone != null) {
+                nnode = topOfZone.get(fqdn, znode.depth() + 1); // +1 for root
 
-		if ((nnode != null) && !nnode.isZoneCut()) {
-		    dprint("Found node " + fqdn + " in zone tree");
-		    zone = (DnsName)
-			fqdn.getPrefix(znode.depth() + 1);	// +1 for root
-		    boolean current = isZoneCurrent(znode, zone);
-		    boolean restart = false;
+                if ((nnode != null) && !nnode.isZoneCut()) {
+                    dprint("Found node " + fqdn + " in zone tree");
+                    zone = (DnsName)
+                        fqdn.getPrefix(znode.depth() + 1);      // +1 for root
+                    boolean current = isZoneCurrent(znode, zone);
+                    boolean restart = false;
 
-		    synchronized (znode) {
-			if (topOfZone != znode.getContents()) {
-			    // Zone was modified while we were examining it.
-			    // All bets are off.
-			    restart = true;
-			} else if (!current) {
-			    znode.depopulate();
-			} else {
-			    return nnode;			// cache hit!
-			}
-		    }
-		    dprint("Zone not current; discarding node");
-		    if (restart) {
-			return getNameNode(fqdn);
-		    }
-		}
-	    }
-	}
+                    synchronized (znode) {
+                        if (topOfZone != znode.getContents()) {
+                            // Zone was modified while we were examining it.
+                            // All bets are off.
+                            restart = true;
+                        } else if (!current) {
+                            znode.depopulate();
+                        } else {
+                            return nnode;                       // cache hit!
+                        }
+                    }
+                    dprint("Zone not current; discarding node");
+                    if (restart) {
+                        return getNameNode(fqdn);
+                    }
+                }
+            }
+        }
 
-	// Cache miss...  do it the expensive way.
-	dprint("Adding node " + fqdn + " to zone tree");
+        // Cache miss...  do it the expensive way.
+        dprint("Adding node " + fqdn + " to zone tree");
 
-	// Find fqdn's zone and add it to the tree.
-	zone = getResolver().findZoneName(fqdn, ResourceRecord.CLASS_INTERNET,
-					  recursion);
-	dprint("Node's zone is " + zone);
-	synchronized (zoneTree) {
-	    znode = (ZoneNode) zoneTree.add(zone, 1);	// "1" to skip root
-	}
+        // Find fqdn's zone and add it to the tree.
+        zone = getResolver().findZoneName(fqdn, ResourceRecord.CLASS_INTERNET,
+                                          recursion);
+        dprint("Node's zone is " + zone);
+        synchronized (zoneTree) {
+            znode = (ZoneNode) zoneTree.add(zone, 1);   // "1" to skip root
+        }
 
-	// If znode is now populated we know -- because the first half of
-	// getNodeName() didn't find it -- that it was populated by another
-	// thread during this method call.  Assume then that it's current.
+        // If znode is now populated we know -- because the first half of
+        // getNodeName() didn't find it -- that it was populated by another
+        // thread during this method call.  Assume then that it's current.
 
-	synchronized (znode) {
-	    topOfZone = znode.isPopulated()
-		? znode.getContents()
-		: populateZone(znode, zone);
-	}
-	// Desired node should now be in znode's populated zone.  Find it.
-	nnode = topOfZone.get(fqdn, zone.size());
-	if (nnode == null) {
-	    throw new ConfigurationException(
-		    "DNS error: node not found in its own zone");
-	}
-	dprint("Found node in newly-populated zone");
-	return nnode;
+        synchronized (znode) {
+            topOfZone = znode.isPopulated()
+                ? znode.getContents()
+                : populateZone(znode, zone);
+        }
+        // Desired node should now be in znode's populated zone.  Find it.
+        nnode = topOfZone.get(fqdn, zone.size());
+        if (nnode == null) {
+            throw new ConfigurationException(
+                    "DNS error: node not found in its own zone");
+        }
+        dprint("Found node in newly-populated zone");
+        return nnode;
     }
 
     /*
@@ -879,14 +878,14 @@ public class DnsContext extends ComponentDirContext {
      * Returns the zone's new contents.
      */
     private NameNode populateZone(ZoneNode znode, DnsName zone)
-	    throws NamingException {
-	dprint("Populating zone " + zone);
-	// assert Thread.holdsLock(znode);
-	ResourceRecords rrs =
-	    getResolver().queryZone(zone,
-				    ResourceRecord.CLASS_INTERNET, recursion);
-	dprint("zone xfer complete: " + rrs.answer.size() + " records");
-	return znode.populate(zone, rrs);
+            throws NamingException {
+        dprint("Populating zone " + zone);
+        // assert Thread.holdsLock(znode);
+        ResourceRecords rrs =
+            getResolver().queryZone(zone,
+                                    ResourceRecord.CLASS_INTERNET, recursion);
+        dprint("zone xfer complete: " + rrs.answer.size() + " records");
+        return znode.populate(zone, rrs);
     }
 
     /*
@@ -902,22 +901,22 @@ public class DnsContext extends ComponentDirContext {
      * result may be outdated by the time this method returns.
      */
     private boolean isZoneCurrent(ZoneNode znode, DnsName zone)
-	    throws NamingException {
-	// former version:  return !znode.isExpired();
+            throws NamingException {
+        // former version:  return !znode.isExpired();
 
-	if (!znode.isPopulated()) {
-	    return false;
-	}
-	ResourceRecord soa =
-	    getResolver().findSoa(zone, ResourceRecord.CLASS_INTERNET,
-				  recursion);
-	synchronized (znode) {
-	    if (soa == null) {
-		znode.depopulate();
-	    }
-	    return (znode.isPopulated() &&
-		    znode.compareSerialNumberTo(soa) >= 0);
-	}
+        if (!znode.isPopulated()) {
+            return false;
+        }
+        ResourceRecord soa =
+            getResolver().findSoa(zone, ResourceRecord.CLASS_INTERNET,
+                                  recursion);
+        synchronized (znode) {
+            if (soa == null) {
+                znode.depopulate();
+            }
+            return (znode.isPopulated() &&
+                    znode.compareSerialNumberTo(soa) >= 0);
+        }
     }
 
 
@@ -926,9 +925,9 @@ public class DnsContext extends ComponentDirContext {
     public static boolean debug = false;
 
     private static final void dprint(String msg) {
-	if (debug) {
-	    System.err.println("** " + msg);
-	}
+        if (debug) {
+            System.err.println("** " + msg);
+        }
     }
 }
 
@@ -944,8 +943,8 @@ class CT {
     int rrtype;
 
     CT(int rrclass, int rrtype) {
-	this.rrclass = rrclass;
-	this.rrtype = rrtype;
+        this.rrclass = rrclass;
+        this.rrtype = rrtype;
     }
 }
 
@@ -963,65 +962,65 @@ class CT {
 class NameClassPairEnumeration implements NamingEnumeration {
 
     protected Enumeration nodes;    // nodes to be enumerated, or null if none
-    protected DnsContext ctx;	    // context being enumerated
+    protected DnsContext ctx;       // context being enumerated
 
     NameClassPairEnumeration(DnsContext ctx, Hashtable nodes) {
-	this.ctx = ctx;
-	this.nodes = (nodes != null)
-	    ? nodes.elements()
-	    : null;
+        this.ctx = ctx;
+        this.nodes = (nodes != null)
+            ? nodes.elements()
+            : null;
     }
 
     /*
      * ctx will be closed when no longer needed by the enumeration.
      */
     public void close () {
-	nodes = null;
-	if (ctx != null) {
-	    ctx.close();
-	    ctx = null;
-	}
+        nodes = null;
+        if (ctx != null) {
+            ctx.close();
+            ctx = null;
+        }
     }
 
     public boolean hasMore() {
-	boolean more = ((nodes != null) && nodes.hasMoreElements());
-	if (!more) {
-	    close();
-	}
-	return more;
+        boolean more = ((nodes != null) && nodes.hasMoreElements());
+        if (!more) {
+            close();
+        }
+        return more;
     }
 
     public Object next() throws NamingException {
-	if (!hasMore()) {
-	    throw new java.util.NoSuchElementException();
-	}
-	NameNode nnode = (NameNode) nodes.nextElement();
-	String className = (nnode.isZoneCut() ||
-			    (nnode.getChildren() != null))
-	    ? "javax.naming.directory.DirContext"
-	    : "java.lang.Object";
+        if (!hasMore()) {
+            throw new java.util.NoSuchElementException();
+        }
+        NameNode nnode = (NameNode) nodes.nextElement();
+        String className = (nnode.isZoneCut() ||
+                            (nnode.getChildren() != null))
+            ? "javax.naming.directory.DirContext"
+            : "java.lang.Object";
 
-	String label = nnode.getLabel();
-	Name compName = (new DnsName()).add(label);
-	Name cname = (new CompositeName()).add(compName.toString());
+        String label = nnode.getLabel();
+        Name compName = (new DnsName()).add(label);
+        Name cname = (new CompositeName()).add(compName.toString());
 
-	NameClassPair ncp = new NameClassPair(cname.toString(), className);
-	ncp.setNameInNamespace(ctx.fullyQualify(cname).toString());
-	return ncp;
+        NameClassPair ncp = new NameClassPair(cname.toString(), className);
+        ncp.setNameInNamespace(ctx.fullyQualify(cname).toString());
+        return ncp;
     }
 
     public boolean hasMoreElements() {
-	return hasMore();
+        return hasMore();
     }
 
     public Object nextElement() {
-	try {
-	    return next();
-	} catch (NamingException e) {
-	    throw (new java.util.NoSuchElementException(
-		    "javax.naming.NamingException was thrown: " +
-		    e.getMessage()));
-	}
+        try {
+            return next();
+        } catch (NamingException e) {
+            throw (new java.util.NoSuchElementException(
+                    "javax.naming.NamingException was thrown: " +
+                    e.getMessage()));
+        }
     }
 }
 
@@ -1031,42 +1030,42 @@ class NameClassPairEnumeration implements NamingEnumeration {
 class BindingEnumeration extends NameClassPairEnumeration {
 
     BindingEnumeration(DnsContext ctx, Hashtable nodes) {
-	super(ctx, nodes);
+        super(ctx, nodes);
     }
 
     // Finalizer not needed since it's safe to leave ctx unclosed.
 //  protected void finalize() {
-//	close();
+//      close();
 //  }
 
     public Object next() throws NamingException {
-	if (!hasMore()) {
-	    throw (new java.util.NoSuchElementException());
-	}
-	NameNode nnode = (NameNode) nodes.nextElement();
+        if (!hasMore()) {
+            throw (new java.util.NoSuchElementException());
+        }
+        NameNode nnode = (NameNode) nodes.nextElement();
 
-	String label = nnode.getLabel();
-	Name compName = (new DnsName()).add(label);
-	String compNameStr = compName.toString();
-	Name cname = (new CompositeName()).add(compNameStr);
-	String cnameStr = cname.toString();
+        String label = nnode.getLabel();
+        Name compName = (new DnsName()).add(label);
+        String compNameStr = compName.toString();
+        Name cname = (new CompositeName()).add(compNameStr);
+        String cnameStr = cname.toString();
 
-	DnsName fqdn = ctx.fullyQualify(compName);
+        DnsName fqdn = ctx.fullyQualify(compName);
 
-	// Clone ctx to create the child context.
-	DnsContext child = new DnsContext(ctx, fqdn);
+        // Clone ctx to create the child context.
+        DnsContext child = new DnsContext(ctx, fqdn);
 
-	try {
-	    Object obj = DirectoryManager.getObjectInstance(
-		    child, cname, ctx, child.environment, null);
-	    Binding binding = new Binding(cnameStr, obj);
-	    binding.setNameInNamespace(ctx.fullyQualify(cname).toString());
-	    return binding;
-	} catch (Exception e) {
-	    NamingException ne = new NamingException(
-		    "Problem generating object using object factory");
-	    ne.setRootCause(e);
-	    throw ne;
-	}
+        try {
+            Object obj = DirectoryManager.getObjectInstance(
+                    child, cname, ctx, child.environment, null);
+            Binding binding = new Binding(cnameStr, obj);
+            binding.setNameInNamespace(ctx.fullyQualify(cname).toString());
+            return binding;
+        } catch (Exception e) {
+            NamingException ne = new NamingException(
+                    "Problem generating object using object factory");
+            ne.setRootCause(e);
+            throw ne;
+        }
     }
 }

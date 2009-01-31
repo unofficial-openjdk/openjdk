@@ -69,10 +69,10 @@ public final class SimpleDoc implements Doc {
     private InputStream inStream;
 
     /**
-     * Constructs a <code>SimpleDoc</code> with the specified 
+     * Constructs a <code>SimpleDoc</code> with the specified
      * print data, doc flavor and doc attribute set.
-     * @param printData the print data object 
-     * @param flavor the <code>DocFlavor</code> object 
+     * @param printData the print data object
+     * @param flavor the <code>DocFlavor</code> object
      * @param attributes a <code>DocAttributeSet</code>, which can
      *                   be <code>null</code>
      * @throws IllegalArgumentException if <code>flavor</code> or
@@ -95,7 +95,7 @@ public final class SimpleDoc implements Doc {
        } catch (Throwable e) {
            throw new IllegalArgumentException("unknown representation class");
        }
-  
+
        if (!repClass.isInstance(printData)) {
            throw new IllegalArgumentException("data is not of declared type");
        }
@@ -109,48 +109,48 @@ public final class SimpleDoc implements Doc {
 
    /**
      * Determines the doc flavor in which this doc object will supply its
-     * piece of print data. 
+     * piece of print data.
      *
      * @return  Doc flavor.
      */
-    public DocFlavor getDocFlavor() { 
+    public DocFlavor getDocFlavor() {
         return flavor;
     }
 
     /**
-     * Obtains the set of printing attributes for this doc object. If the 
-     * returned attribute set includes an instance of a particular attribute 
-     * <I>X,</I> the printer must use that attribute value for this doc, 
-     * overriding any value of attribute <I>X</I> in the job's attribute set. 
-     * If the returned attribute set does not include an instance 
-     * of a particular attribute <I>X</I> or if null is returned, the printer 
-     * must consult the job's attribute set to obtain the value for 
-     * attribute <I>X,</I> and if not found there, the printer must use an 
-     * implementation-dependent default value. The returned attribute set is 
-     * unmodifiable. 
+     * Obtains the set of printing attributes for this doc object. If the
+     * returned attribute set includes an instance of a particular attribute
+     * <I>X,</I> the printer must use that attribute value for this doc,
+     * overriding any value of attribute <I>X</I> in the job's attribute set.
+     * If the returned attribute set does not include an instance
+     * of a particular attribute <I>X</I> or if null is returned, the printer
+     * must consult the job's attribute set to obtain the value for
+     * attribute <I>X,</I> and if not found there, the printer must use an
+     * implementation-dependent default value. The returned attribute set is
+     * unmodifiable.
      *
      * @return  Unmodifiable set of printing attributes for this doc, or null
-     *          to obtain all attribute values from the job's attribute 
-     *          set. 
+     *          to obtain all attribute values from the job's attribute
+     *          set.
      */
     public DocAttributeSet getAttributes() {
         return attributes;
     }
 
     /*
-     * Obtains the print data representation object that contains this doc 
+     * Obtains the print data representation object that contains this doc
      * object's piece of print data in the format corresponding to the
      * supported doc flavor.
-     * The <CODE>getPrintData()</CODE> method returns an instance of 
-     * the representation class whose name is given by 
+     * The <CODE>getPrintData()</CODE> method returns an instance of
+     * the representation class whose name is given by
      * {@link DocFlavor#getRepresentationClassName() getRepresentationClassName},
-     * and the return value can be cast 
+     * and the return value can be cast
      * from class Object to that representation class.
      *
-     * @return  Print data representation object. 
+     * @return  Print data representation object.
      *
      * @exception  IOException if the representation class is a stream and
-     *     there was an I/O error while constructing the stream. 
+     *     there was an I/O error while constructing the stream.
      */
     public Object getPrintData() throws IOException {
         return printData;
@@ -160,7 +160,7 @@ public final class SimpleDoc implements Doc {
      * Obtains a reader for extracting character print data from this doc.
      * The <code>Doc</code> implementation is required to support this
      * method if the <code>DocFlavor</code> has one of the following print
-     * data representation classes, and return <code>null</code> 
+     * data representation classes, and return <code>null</code>
      * otherwise:
      * <UL>
      * <LI> <code>char[]</code>
@@ -170,28 +170,28 @@ public final class SimpleDoc implements Doc {
      * The doc's print data representation object is used to construct and
      * return a <code>Reader</code> for reading the print data as a stream
      * of characters from the print data representation object.
-     * However, if the print data representation object is itself a 
+     * However, if the print data representation object is itself a
      * <code>Reader</code> then the print data representation object is
      * simply returned.
      * <P>
      * @return  a <code>Reader</code> for reading the print data
      *          characters from this doc.
      *          If a reader cannot be provided because this doc does not meet
-     *          the criteria stated above, <code>null</code> is returned. 
+     *          the criteria stated above, <code>null</code> is returned.
      *
      * @exception  IOException if there was an I/O error while creating
      *             the reader.
      */
     public Reader getReaderForText() throws IOException {
-    
+
         if (printData instanceof Reader) {
-            return (Reader)printData; 
+            return (Reader)printData;
         }
 
         synchronized (this) {
             if (reader != null) {
                 return reader;
-            } 
+            }
 
             if (printData instanceof char[]) {
                reader = new CharArrayReader((char[])printData);
@@ -208,7 +208,7 @@ public final class SimpleDoc implements Doc {
      * this doc.
      * The <code>Doc</code> implementation is required to support this
      * method if the <code>DocFlavor</code> has one of the following print
-     * data representation classes; otherwise this method 
+     * data representation classes; otherwise this method
      * returns <code>null</code>:
      * <UL>
      * <LI> <code>byte[]</code>
@@ -225,21 +225,21 @@ public final class SimpleDoc implements Doc {
      * @return  an <code>InputStream</code> for reading the print data
      *          bytes from this doc.  If an input stream cannot be
      *          provided because this doc does not meet
-     *          the criteria stated above, <code>null</code> is returned. 
+     *          the criteria stated above, <code>null</code> is returned.
      *
      * @exception  IOException
      *     if there was an I/O error while creating the input stream.
      */
     public InputStream getStreamForBytes() throws IOException {
-      
+
         if (printData instanceof InputStream) {
-            return (InputStream)printData; 
+            return (InputStream)printData;
         }
 
         synchronized (this) {
             if (inStream != null) {
                 return inStream;
-            } 
+            }
 
             if (printData instanceof byte[]) {
                inStream = new ByteArrayInputStream((byte[])printData);

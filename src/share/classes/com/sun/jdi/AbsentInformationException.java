@@ -35,11 +35,11 @@ public class AbsentInformationException extends Exception
 {
     public AbsentInformationException()
     {
-	super();
+        super();
     }
 
     public AbsentInformationException(String s)
     {
-	super(s);
+        super(s);
     }
 }

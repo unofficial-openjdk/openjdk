@@ -79,7 +79,7 @@ NativePrimitive ByteBinary2BitPrimitives[] = {
 jboolean RegisterByteBinary2Bit(JNIEnv *env)
 {
     return RegisterPrimitives(env, ByteBinary2BitPrimitives,
-			      ArraySize(ByteBinary2BitPrimitives));
+                              ArraySize(ByteBinary2BitPrimitives));
 }
 
 DEFINE_BYTE_BINARY_SOLID_FILLRECT(ByteBinary2Bit)

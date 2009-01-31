@@ -37,7 +37,7 @@ import javax.imageio.ImageTypeSpecifier;
 
 
 /**
- * This class implements the octree quantization method 
+ * This class implements the octree quantization method
  *  as it is described in the "Graphics Gems"
  *  (ISBN 0-12-286166-3, Chapter 4, pages 297-293)
  */
@@ -71,10 +71,10 @@ public class PaletteBuilder {
     /**
      * Creates an image representing given image
      * <code>src</code> using <code>IndexColorModel</code>.
-     * 
+     *
      * Lossless conversion is not always possible (e.g. if number
      * of colors in the  given image exceeds maximum palette size).
-     * Result image then is an approximation constructed by octree 
+     * Result image then is an approximation constructed by octree
      * quantization method.
      *
      * @exception IllegalArgumentException if <code>src</code> is
@@ -97,7 +97,7 @@ public class PaletteBuilder {
 
     /**
      * Creates an palette representing colors from given image
-     * <code>img</code>. If number of colors in the given image exceeds 
+     * <code>img</code>. If number of colors in the given image exceeds
      * maximum palette size closest colors would be merged.
      *
      * @exception IllegalArgumentException if <code>img</code> is
@@ -132,9 +132,9 @@ public class PaletteBuilder {
      * is <code>null</code>.
      */
     public static boolean canCreatePalette(ImageTypeSpecifier type) {
-	if (type == null) {
-	    throw new IllegalArgumentException("type == null");
-	}
+        if (type == null) {
+            throw new IllegalArgumentException("type == null");
+        }
         return true;
     }
 
@@ -152,29 +152,29 @@ public class PaletteBuilder {
      * is <code>null</code>.
      */
     public static boolean canCreatePalette(RenderedImage image) {
-	if (image == null) {
-	    throw new IllegalArgumentException("image == null");
-	}
-	ImageTypeSpecifier type = new ImageTypeSpecifier(image);
-	return canCreatePalette(type);
+        if (image == null) {
+            throw new IllegalArgumentException("image == null");
+        }
+        ImageTypeSpecifier type = new ImageTypeSpecifier(image);
+        return canCreatePalette(type);
     }
 
     protected RenderedImage getIndexedImage() {
         IndexColorModel icm = getIndexColorModel();
 
         BufferedImage dst =
-	    new BufferedImage(src.getWidth(), src.getHeight(),
-			      BufferedImage.TYPE_BYTE_INDEXED, icm);
+            new BufferedImage(src.getWidth(), src.getHeight(),
+                              BufferedImage.TYPE_BYTE_INDEXED, icm);
 
-	WritableRaster wr = dst.getRaster();
-	for (int y =0; y < dst.getHeight(); y++) {
-	    for (int x = 0; x < dst.getWidth(); x++) {
-		Color aColor = getSrcColor(x,y);
-		wr.setSample(x, y, 0, findColorIndex(root, aColor));
-	    }
-	}
-	
-	return dst;
+        WritableRaster wr = dst.getRaster();
+        for (int y =0; y < dst.getHeight(); y++) {
+            for (int x = 0; x < dst.getWidth(); x++) {
+                Color aColor = getSrcColor(x,y);
+                wr.setSample(x, y, 0, findColorIndex(root, aColor));
+            }
+        }
+
+        return dst;
     }
 
 
@@ -184,24 +184,24 @@ public class PaletteBuilder {
 
     protected PaletteBuilder(RenderedImage src, int size) {
         this.src = src;
-	this.srcColorModel = src.getColorModel();
-	this.srcRaster = src.getData();
+        this.srcColorModel = src.getColorModel();
+        this.srcRaster = src.getData();
 
         this.transparency =
-	    srcColorModel.getTransparency();
+            srcColorModel.getTransparency();
 
         this.requiredSize = size;
     }
 
     private Color getSrcColor(int x, int y) {
-	int argb = srcColorModel.getRGB(srcRaster.getDataElements(x, y, null));
-	return new Color(argb, transparency != Transparency.OPAQUE);
+        int argb = srcColorModel.getRGB(srcRaster.getDataElements(x, y, null));
+        return new Color(argb, transparency != Transparency.OPAQUE);
     }
 
     protected int findColorIndex(ColorNode aNode, Color aColor) {
         if (transparency != Transparency.OPAQUE &&
-	    aColor.getAlpha() != 0xff)
-	{
+            aColor.getAlpha() != 0xff)
+        {
             return 0; // default transparnt pixel
         }
 
@@ -209,44 +209,44 @@ public class PaletteBuilder {
             return aNode.paletteIndex;
         } else {
             int childIndex = getBranchIndex(aColor, aNode.level);
-	
+
             return findColorIndex(aNode.children[childIndex], aColor);
         }
     }
 
     protected void buildPalette() {
         reduceList = new ColorNode[MAXLEVEL + 1];
-	for (int i = 0; i < reduceList.length; i++) {
-	    reduceList[i] = null;
-	}
-	
-	numNodes = 0;
-	maxNodes = 0;
-	root = null;
-	currSize = 0;
-	currLevel = MAXLEVEL;
+        for (int i = 0; i < reduceList.length; i++) {
+            reduceList[i] = null;
+        }
+
+        numNodes = 0;
+        maxNodes = 0;
+        root = null;
+        currSize = 0;
+        currLevel = MAXLEVEL;
 
         /*
           from the book
 
         */
-	
+
         int w = src.getWidth();
         int h = src.getHeight();
-	for (int y = 0; y < h; y++) {
-	    for (int x = 0; x < w; x++) {
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
 
                 Color aColor = getSrcColor(w - x - 1, h - y - 1);
                 /*
-                 * If transparency of given image is not opaque we assume all 
+                 * If transparency of given image is not opaque we assume all
                  * colors with alpha less than 1.0 as fully transparent.
                  */
                 if (transparency != Transparency.OPAQUE &&
-		    aColor.getAlpha() != 0xff)
-		{
+                    aColor.getAlpha() != 0xff)
+                {
                     if (transColor == null) {
                         this.requiredSize --; // one slot for transparent color
-                
+
                         transColor = new ColorNode();
                         transColor.isLeaf = true;
                     }
@@ -257,42 +257,42 @@ public class PaletteBuilder {
                 if (currSize > requiredSize) {
                     reduceTree();
                 }
-	    }
+            }
         }
     }
 
     protected ColorNode insertNode(ColorNode aNode, Color aColor, int aLevel) {
 
         if (aNode == null) {
-	    aNode = new ColorNode();
-	    numNodes++;
-	    if (numNodes > maxNodes) {
-		maxNodes = numNodes;
-	    }
-	    aNode.level = aLevel;
-	    aNode.isLeaf = (aLevel > MAXLEVEL);
-	    if (aNode.isLeaf) {
-		currSize++;
-	    }
-	}
-	aNode.colorCount++;
-	aNode.red   += aColor.getRed();
-	aNode.green += aColor.getGreen();
-	aNode.blue  += aColor.getBlue();
-	
-	if (!aNode.isLeaf) {
-	    int branchIndex = getBranchIndex(aColor, aLevel);
-	    if (aNode.children[branchIndex] == null) {
-		aNode.childCount++;
-		if (aNode.childCount == 2) {
-		    aNode.nextReducible = reduceList[aLevel];
-		    reduceList[aLevel] = aNode;
-		}
-	    }
-	    aNode.children[branchIndex] =
-		insertNode(aNode.children[branchIndex], aColor, aLevel + 1);
-	}
-	return aNode;
+            aNode = new ColorNode();
+            numNodes++;
+            if (numNodes > maxNodes) {
+                maxNodes = numNodes;
+            }
+            aNode.level = aLevel;
+            aNode.isLeaf = (aLevel > MAXLEVEL);
+            if (aNode.isLeaf) {
+                currSize++;
+            }
+        }
+        aNode.colorCount++;
+        aNode.red   += aColor.getRed();
+        aNode.green += aColor.getGreen();
+        aNode.blue  += aColor.getBlue();
+
+        if (!aNode.isLeaf) {
+            int branchIndex = getBranchIndex(aColor, aLevel);
+            if (aNode.children[branchIndex] == null) {
+                aNode.childCount++;
+                if (aNode.childCount == 2) {
+                    aNode.nextReducible = reduceList[aLevel];
+                    reduceList[aLevel] = aNode;
+                }
+            }
+            aNode.children[branchIndex] =
+                insertNode(aNode.children[branchIndex], aColor, aLevel + 1);
+        }
+        return aNode;
     }
 
     protected IndexColorModel getIndexColorModel() {
@@ -314,7 +314,7 @@ public class PaletteBuilder {
         if (root != null) {
             findPaletteEntry(root, index, red, green, blue);
         }
-        
+
         IndexColorModel icm = null;
         if (transColor  != null) {
             icm = new IndexColorModel(8, size, red, green, blue, 0);
@@ -325,7 +325,7 @@ public class PaletteBuilder {
     }
 
     protected int findPaletteEntry(ColorNode aNode, int index,
-				   byte[] red, byte[] green, byte[] blue)
+                                   byte[] red, byte[] green, byte[] blue)
         {
             if (aNode.isLeaf) {
                 red[index]   = (byte)(aNode.red/aNode.colorCount);
@@ -350,7 +350,7 @@ public class PaletteBuilder {
     protected int getBranchIndex(Color aColor, int aLevel) {
         if (aLevel > MAXLEVEL || aLevel < 0) {
             throw new IllegalArgumentException("Invalid octree node depth: " +
-					       aLevel);
+                                               aLevel);
         }
 
         int shift = MAXLEVEL - aLevel;
@@ -363,15 +363,15 @@ public class PaletteBuilder {
 
     protected void reduceTree() {
         int level = reduceList.length - 1;
-	while (reduceList[level] == null && level >= 0) {
-	    level--;
-	}
+        while (reduceList[level] == null && level >= 0) {
+            level--;
+        }
 
         ColorNode thisNode = reduceList[level];
-	if (thisNode == null) {
+        if (thisNode == null) {
             // nothing to reduce
             return;
-	}
+        }
 
         // look for element with lower color count
         ColorNode pList = thisNode;
@@ -396,7 +396,7 @@ public class PaletteBuilder {
             thisNode.nextReducible = pList.nextReducible;
             thisNode = pList;
         }
-	
+
         if (thisNode.isLeaf) {
             return;
         }
@@ -413,15 +413,15 @@ public class PaletteBuilder {
     }
 
     protected ColorNode freeTree(ColorNode aNode) {
-	if (aNode == null) {
-	    return null;
-	}
-	for (int i = 0; i < 8; i++) {
-	    aNode.children[i] = freeTree(aNode.children[i]);
-	}
+        if (aNode == null) {
+            return null;
+        }
+        for (int i = 0; i < 8; i++) {
+            aNode.children[i] = freeTree(aNode.children[i]);
+        }
 
         numNodes--;
-	return null;
+        return null;
     }
 
     /**

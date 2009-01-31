@@ -26,10 +26,6 @@
 #
 
 #
-# %W% %E%
-#
-
-#
 # This script executes the Java interpreter, defines properties
 # that correspond to the CGI 1.0 environment variables, and executes
 # the class "sun.rmi.transport.proxy.CGIHandler".  It should be

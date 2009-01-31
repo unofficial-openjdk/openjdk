@@ -37,7 +37,7 @@
 /**
  * This module contains utility routines for manipulating Java throwables
  * and JNIEnv throwable state from native code.
- */ 
+ */
 
 static jthrowable   sFallbackInternalError  = NULL;
 
@@ -48,11 +48,11 @@ static jthrowable   sFallbackInternalError  = NULL;
 /* insist on having a throwable. If we already have one, return it.
  * If not, map to fallback
  */
-jthrowable 
+jthrowable
 forceFallback(jthrowable potentialException);
 
 
-jthrowable 
+jthrowable
 forceFallback(jthrowable potentialException) {
     if ( potentialException == NULL ) {
         return sFallbackInternalError;
@@ -82,7 +82,7 @@ mapAllCheckedToInternalErrorMapper( JNIEnv *    jnienv,
                                     jthrowable  throwableToMap) {
     jthrowable  mappedThrowable = NULL;
     jstring     message         = NULL;
-    
+
     jplis_assert(throwableToMap != NULL);
     jplis_assert(isSafeForJNICalls(jnienv));
     jplis_assert(!isUnchecked(jnienv, throwableToMap));
@@ -127,30 +127,30 @@ createThrowable(    JNIEnv *        jnienv,
     jmethodID   constructor         = NULL;
     jclass      exceptionClass      = NULL;
     jboolean    errorOutstanding    = JNI_FALSE;
-    
+
     jplis_assert(className != NULL);
     jplis_assert(isSafeForJNICalls(jnienv));
-    
+
     /* create new VMError with message from exception */
     exceptionClass = (*jnienv)->FindClass(jnienv, className);
     errorOutstanding = checkForAndClearThrowable(jnienv);
     jplis_assert(!errorOutstanding);
-        
+
     if (!errorOutstanding) {
-        constructor = (*jnienv)->GetMethodID(   jnienv, 
+        constructor = (*jnienv)->GetMethodID(   jnienv,
                                                 exceptionClass,
                                                 "<init>",
                                                 "(Ljava/lang/String;)V");
         errorOutstanding = checkForAndClearThrowable(jnienv);
         jplis_assert(!errorOutstanding);
     }
-    
+
     if (!errorOutstanding) {
         exception = (*jnienv)->NewObject(jnienv, exceptionClass, constructor, message);
         errorOutstanding = checkForAndClearThrowable(jnienv);
         jplis_assert(!errorOutstanding);
     }
-    
+
     jplis_assert(isSafeForJNICalls(jnienv));
     return exception;
 }
@@ -159,7 +159,7 @@ jthrowable
 createInternalError(JNIEnv * jnienv, jstring message) {
     return createThrowable( jnienv,
                             "java/lang/InternalError",
-                            message);   
+                            message);
 }
 
 jthrowable
@@ -167,20 +167,20 @@ createThrowableFromJVMTIErrorCode(JNIEnv * jnienv, jvmtiError errorCode) {
     const char * throwableClassName = NULL;
     const char * message            = NULL;
     jstring messageString           = NULL;
-    
+
     switch ( errorCode ) {
         case JVMTI_ERROR_NULL_POINTER:
                 throwableClassName = "java/lang/NullPointerException";
                 break;
-                
+
         case JVMTI_ERROR_ILLEGAL_ARGUMENT:
                 throwableClassName = "java/lang/IllegalArgumentException";
                 break;
-                
+
         case JVMTI_ERROR_OUT_OF_MEMORY:
                 throwableClassName = "java/lang/OutOfMemoryError";
                 break;
-        
+
         case JVMTI_ERROR_CIRCULAR_CLASS_DEFINITION:
                 throwableClassName = "java/lang/ClassCircularityError";
                 break;
@@ -193,65 +193,65 @@ createThrowableFromJVMTIErrorCode(JNIEnv * jnienv, jvmtiError errorCode) {
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to add a method";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED:
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to change the schema (add/remove fields)";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED:
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to change superclass or interfaces";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED:
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to delete a method";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED:
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to change the class modifiers";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED:
                 throwableClassName = "java/lang/UnsupportedOperationException";
                 message = "class redefinition failed: attempted to change method modifiers";
                 break;
-        
+
         case JVMTI_ERROR_UNSUPPORTED_VERSION:
                 throwableClassName = "java/lang/UnsupportedClassVersionError";
                 break;
-        
+
         case JVMTI_ERROR_NAMES_DONT_MATCH:
                 throwableClassName = "java/lang/NoClassDefFoundError";
                 message = "class names don't match";
                 break;
-        
+
         case JVMTI_ERROR_INVALID_CLASS_FORMAT:
                 throwableClassName = "java/lang/ClassFormatError";
                 break;
-        
+
         case JVMTI_ERROR_UNMODIFIABLE_CLASS:
                 throwableClassName = "java/lang/instrument/UnmodifiableClassException";
                 break;
-        
+
         case JVMTI_ERROR_INVALID_CLASS:
                 throwableClassName = "java/lang/InternalError";
                 message = "class redefinition failed: invalid class";
                 break;
 
- 	case JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED:
-		throwableClassName = "java/lang/UnsupportedOperationException";
-		message = "unsupported operation";
-		break;
+        case JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED:
+                throwableClassName = "java/lang/UnsupportedOperationException";
+                message = "unsupported operation";
+                break;
 
         case JVMTI_ERROR_INTERNAL:
         default:
                 throwableClassName = "java/lang/InternalError";
                 break;
         }
-    
+
     if ( message != NULL ) {
         jboolean errorOutstanding;
 
@@ -261,7 +261,7 @@ createThrowableFromJVMTIErrorCode(JNIEnv * jnienv, jvmtiError errorCode) {
     }
     return createThrowable( jnienv,
                             throwableClassName,
-                            messageString); 
+                            messageString);
 
 }
 
@@ -279,12 +279,12 @@ getMessageFromThrowable(    JNIEnv*     jnienv,
     jboolean    errorOutstanding    = JNI_FALSE;
 
     jplis_assert(isSafeForJNICalls(jnienv));
-    
+
     /* call getMessage on exception */
     exceptionClass = (*jnienv)->GetObjectClass(jnienv, exception);
     errorOutstanding = checkForAndClearThrowable(jnienv);
     jplis_assert(!errorOutstanding);
-    
+
     if (!errorOutstanding) {
         method = (*jnienv)->GetMethodID(jnienv,
                                         exceptionClass,
@@ -293,15 +293,15 @@ getMessageFromThrowable(    JNIEnv*     jnienv,
         errorOutstanding = checkForAndClearThrowable(jnienv);
         jplis_assert(!errorOutstanding);
     }
-    
+
     if (!errorOutstanding) {
         message = (*jnienv)->CallObjectMethod(jnienv, exception, method);
         errorOutstanding = checkForAndClearThrowable(jnienv);
         jplis_assert(!errorOutstanding);
-    }       
+    }
 
     jplis_assert(isSafeForJNICalls(jnienv));
-    
+
     return message;
 }
 
@@ -312,7 +312,7 @@ getMessageFromThrowable(    JNIEnv*     jnienv,
  */
 jboolean
 isUnchecked(    JNIEnv*     jnienv,
-                jthrowable  exception) {    
+                jthrowable  exception) {
     jboolean result = JNI_FALSE;
 
     jplis_assert(isSafeForJNICalls(jnienv));
@@ -346,7 +346,7 @@ restoreThrowable(   JNIEnv *    jnienv,
     throwThrowable( jnienv,
                     preservedException);
     return;
-}                   
+}
 
 void
 throwThrowable(     JNIEnv *    jnienv,
@@ -372,7 +372,7 @@ checkForAndClearThrowable(  JNIEnv *    jnienv) {
     return result;
 }
 
-/* creates a java.lang.InternalError and installs it into the JNIEnv */         
+/* creates a java.lang.InternalError and installs it into the JNIEnv */
 void
 createAndThrowInternalError(JNIEnv * jnienv) {
     jthrowable internalError = createInternalError( jnienv, NULL);
@@ -405,11 +405,10 @@ mapThrownThrowableIfNecessary(  JNIEnv *                jnienv,
             resultThrowable = (*mapper) (jnienv, originalThrowable);
         }
     }
-    
+
     /* re-establish the correct throwable */
-    if ( resultThrowable != NULL ) { 
+    if ( resultThrowable != NULL ) {
         throwThrowable(jnienv, forceFallback(resultThrowable));
     }
-    
-}
 
+}

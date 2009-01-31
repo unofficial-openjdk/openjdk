@@ -33,7 +33,7 @@ package java.nio;
  * java.nio.channels.FileChannel#map FileChannel.map} method.  This class
  * extends the {@link ByteBuffer} class with operations that are specific to
  * memory-mapped file regions.
- * 
+ *
  * <p> A mapped byte buffer and the file mapping that it represents remain
  * valid until the buffer itself is garbage-collected.
  *
@@ -41,7 +41,7 @@ package java.nio;
  * if the content of the corresponding region of the mapped file is changed by
  * this program or another.  Whether or not such changes occur, and when they
  * occur, is operating-system dependent and therefore unspecified.
- * 
+ *
  * <a name="inaccess"><p> All or part of a mapped byte buffer may become
  * inaccessible at any time, for example if the mapped file is truncated.  An
  * attempt to access an inaccessible region of a mapped byte buffer will not
@@ -57,7 +57,6 @@ package java.nio;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
@@ -72,26 +71,26 @@ public abstract class MappedByteBuffer
 
     // Volatile to make sure that the finalization thread sees the current
     // value of this so that a region is not accidentally unmapped again later.
-    volatile boolean isAMappedBuffer;			// package-private
+    volatile boolean isAMappedBuffer;                   // package-private
 
     // This should only be invoked by the DirectByteBuffer constructors
     //
     MappedByteBuffer(int mark, int pos, int lim, int cap, // package-private
-		     boolean mapped)
+                     boolean mapped)
     {
-	super(mark, pos, lim, cap);
-	isAMappedBuffer = mapped;
+        super(mark, pos, lim, cap);
+        isAMappedBuffer = mapped;
     }
 
     MappedByteBuffer(int mark, int pos, int lim, int cap) { // package-private
-	super(mark, pos, lim, cap);
-	isAMappedBuffer = false;
+        super(mark, pos, lim, cap);
+        isAMappedBuffer = false;
     }
 
     private void checkMapped() {
-	if (!isAMappedBuffer)
-	    // Can only happen if a luser explicitly casts a direct byte buffer
-	    throw new UnsupportedOperationException();
+        if (!isAMappedBuffer)
+            // Can only happen if a luser explicitly casts a direct byte buffer
+            throw new UnsupportedOperationException();
     }
 
     /**
@@ -113,10 +112,10 @@ public abstract class MappedByteBuffer
      *          is resident in physical memory
      */
     public final boolean isLoaded() {
-	checkMapped();
+        checkMapped();
         if ((address == 0) || (capacity() == 0))
             return true;
-	return isLoaded0(((DirectByteBuffer)this).address(), capacity());
+        return isLoaded0(((DirectByteBuffer)this).address(), capacity());
     }
 
     /**
@@ -130,11 +129,11 @@ public abstract class MappedByteBuffer
      * @return  This buffer
      */
     public final MappedByteBuffer load() {
-	checkMapped();
+        checkMapped();
         if ((address == 0) || (capacity() == 0))
             return this;
-	load0(((DirectByteBuffer)this).address(), capacity(), Bits.pageSize());
-	return this;
+        load0(((DirectByteBuffer)this).address(), capacity(), Bits.pageSize());
+        return this;
     }
 
     /**
@@ -156,11 +155,11 @@ public abstract class MappedByteBuffer
      * @return  This buffer
      */
     public final MappedByteBuffer force() {
-	checkMapped();
+        checkMapped();
         if ((address == 0) || (capacity() == 0))
             return this;
-	force0(((DirectByteBuffer)this).address(), capacity());
-	return this;
+        force0(((DirectByteBuffer)this).address(), capacity());
+        return this;
     }
 
     private native boolean isLoaded0(long address, long length);

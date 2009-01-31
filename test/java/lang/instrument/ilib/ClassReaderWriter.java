@@ -56,7 +56,7 @@ class ClassReaderWriter implements RuntimeConstants {
             genSectionPos[section] = section * sectionLength;
         }
     }
- 
+
     int setSection(int section) {
         int prevSection = currentSection;
         genSectionPos[prevSection] = genPos;
@@ -97,12 +97,12 @@ class ClassReaderWriter implements RuntimeConstants {
         int res = readU1();
         return (res << 8) + readU1();
     }
-    
+
     short readS2() {
         int res = readU1();
         return (short)((res << 8) + readU1());
     }
-    
+
     int readU4() {
         int res = readU2();
         return (res << 16) + readU2();
@@ -121,7 +121,7 @@ class ClassReaderWriter implements RuntimeConstants {
         writeU2(val >> 16);
         writeU2(val & 0xFFFF);
     }
-    
+
     int copyU1() {
         int value = readU1();
         writeU1(value);
@@ -145,11 +145,11 @@ class ClassReaderWriter implements RuntimeConstants {
             gen[genPos++] = orig[inputPos++];
         }
     }
-    
+
     void skip(int count) {
         inputPos += count;
     }
-    
+
     byte[] readBytes(int count) {
         byte[] bytes = new byte[count];
         for (int i = 0; i < count; ++i) {
@@ -157,13 +157,13 @@ class ClassReaderWriter implements RuntimeConstants {
         }
         return bytes;
     }
-    
+
     void writeBytes(byte[] bytes) {
         for (int i = 0; i < bytes.length; ++i) {
             gen[genPos++] = bytes[i];
         }
     }
-    
+
     byte[] inputBytes() {
         return orig;
     }
@@ -218,25 +218,25 @@ class ClassReaderWriter implements RuntimeConstants {
             int tag = readU1();
             writeU1(tag);
             switch (tag) {
-                case CONSTANT_CLASS: 
-                case CONSTANT_STRING:  
-                    copy(2); 
+                case CONSTANT_CLASS:
+                case CONSTANT_STRING:
+                    copy(2);
                     break;
-                case CONSTANT_FIELD: 
-                case CONSTANT_METHOD: 
-                case CONSTANT_INTERFACEMETHOD: 
-                case CONSTANT_INTEGER:  
-                case CONSTANT_FLOAT:  
-                case CONSTANT_NAMEANDTYPE: 
-                    copy(4); 
+                case CONSTANT_FIELD:
+                case CONSTANT_METHOD:
+                case CONSTANT_INTERFACEMETHOD:
+                case CONSTANT_INTEGER:
+                case CONSTANT_FLOAT:
+                case CONSTANT_NAMEANDTYPE:
+                    copy(4);
                     break;
-                case CONSTANT_LONG:  
-                case CONSTANT_DOUBLE: 
-                    copy(8); 
+                case CONSTANT_LONG:
+                case CONSTANT_DOUBLE:
+                    copy(8);
                     ++i;  // these take two CP entries - duh!
                     break;
-                case CONSTANT_UTF8:  
-                    int len = copyU2(); 
+                case CONSTANT_UTF8:
+                    int len = copyU2();
                     byte[] utf8 = readBytes(len);
                     String str = null; // null to shut the compiler up
                     try {
@@ -254,8 +254,8 @@ class ClassReaderWriter implements RuntimeConstants {
                     }
                     writeBytes(utf8);
                     break;
-                default: 
-                    throw new Error(i + " unexpected CP tag: " + tag); 
+                default:
+                    throw new Error(i + " unexpected CP tag: " + tag);
             }
         }
     }

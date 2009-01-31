@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -32,7 +32,7 @@
  *      6414459 6455680 6498742 6558863 6488119 6547501 6497154 6558856 6481177
  *      6379214 6485516 6486607 4225362 4494727 6533691 6531591 6531593 6570259
  * @summary Verify locale data
- * 
+ *
  */
 
 /*
@@ -272,7 +272,7 @@ public class LocaleDataTest
                 fullName = "sun.text.resources." + rbName;
             }
             ResourceBundle bundle = ResourceBundle.getBundle(fullName,
-                           new Locale(language, country, variant), 
+                           new Locale(language, country, variant),
                            ResourceBundle.Control.getNoFallbackControl(Control.FORMAT_DEFAULT));
             resource = bundle.getObject(resTag);
         }
@@ -422,4 +422,3 @@ class EscapeWriter extends FilterWriter {
 
     private static String zeros = "0000";
 }
-

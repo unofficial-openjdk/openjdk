@@ -45,7 +45,6 @@ import java.awt.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Shannon Hickey
- * @version %I% %G%
  */
 class SynthTextPaneUI extends SynthEditorPaneUI {
 
@@ -123,7 +122,7 @@ class SynthTextPaneUI extends SynthEditorPaneUI {
             StyleConstants.setForeground(style, color);
         }
     }
-    
+
     /**
      * Update the font in the default style of the document.
      *

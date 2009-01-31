@@ -50,64 +50,64 @@ final class NullCipherSpi extends CipherSpi {
     public void engineSetPadding(String padding) {}
 
     protected int engineGetBlockSize() {
-	return 1;
+        return 1;
     }
 
     protected int engineGetOutputSize(int inputLen) {
-	return inputLen;
+        return inputLen;
     }
 
     protected byte[] engineGetIV() {
-	byte[] x = new byte[8];
-	return x;
+        byte[] x = new byte[8];
+        return x;
     }
 
     protected AlgorithmParameters engineGetParameters() {
-	return null;
+        return null;
     }
 
     protected void engineInit(int mode, Key key, SecureRandom random) {}
 
     protected void engineInit(int mode, Key key,
-			      AlgorithmParameterSpec params,
-			      SecureRandom random) {}
+                              AlgorithmParameterSpec params,
+                              SecureRandom random) {}
 
     protected void engineInit(int mode, Key key,
-			      AlgorithmParameters params,
-			      SecureRandom random) {}
+                              AlgorithmParameters params,
+                              SecureRandom random) {}
 
     protected byte[] engineUpdate(byte[] input, int inputOffset,
-				  int inputLen) {
-	if (input == null) return null;
-	byte[] x = new byte[inputLen];
-	System.arraycopy(input, inputOffset, x, 0, inputLen);
-	return x;
+                                  int inputLen) {
+        if (input == null) return null;
+        byte[] x = new byte[inputLen];
+        System.arraycopy(input, inputOffset, x, 0, inputLen);
+        return x;
     }
 
     protected int engineUpdate(byte[] input, int inputOffset,
-			       int inputLen, byte[] output,
-			       int outputOffset) {
-	if (input == null) return 0;
-	System.arraycopy(input, inputOffset, output, outputOffset, inputLen);
-	return inputLen;
+                               int inputLen, byte[] output,
+                               int outputOffset) {
+        if (input == null) return 0;
+        System.arraycopy(input, inputOffset, output, outputOffset, inputLen);
+        return inputLen;
     }
 
     protected byte[] engineDoFinal(byte[] input, int inputOffset,
-				   int inputLen)
+                                   int inputLen)
     {
-	return engineUpdate(input, inputOffset, inputLen);
+        return engineUpdate(input, inputOffset, inputLen);
     }
 
     protected int engineDoFinal(byte[] input, int inputOffset,
-				int inputLen, byte[] output,
-				int outputOffset)
+                                int inputLen, byte[] output,
+                                int outputOffset)
     {
-	return engineUpdate(input, inputOffset, inputLen,
-			    output, outputOffset);
+        return engineUpdate(input, inputOffset, inputLen,
+                            output, outputOffset);
     }
 
     protected int engineGetKeySize(Key key)
     {
-	return 0;
+        return 0;
     }
 }

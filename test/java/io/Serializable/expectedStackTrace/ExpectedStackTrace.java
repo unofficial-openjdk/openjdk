@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -64,13 +64,13 @@ public class ExpectedStackTrace {
     }
 
     private static Object getObject() throws Exception {
-	ObjectStreamClass osc =
-	    ObjectStreamClass.lookup(SerializableObject.class);
-	SerializableObject initObj =
-	    (SerializableObject) osc.forClass().newInstance();      
-	return initObj;            
+        ObjectStreamClass osc =
+            ObjectStreamClass.lookup(SerializableObject.class);
+        SerializableObject initObj =
+            (SerializableObject) osc.forClass().newInstance();
+        return initObj;
     }
-            
+
     private static void checkSerializable(Object initObj) throws Exception {
         try {
             // Serialize to a byte array
@@ -90,18 +90,18 @@ public class ExpectedStackTrace {
             throw new Error();
         } catch(ObjectStreamException ex) {
             StackTraceElement[] stes = ex.getStackTrace();
-	    boolean found = false;
+            boolean found = false;
             for (int i = 0; i<stes.length-1; i++) {
                 StackTraceElement ste = stes[i];
                 String nme = ste.getMethodName();
                 if (nme.equals(SER_METHOD_NAME)) {
-		    found = true;
-		}    
+                    found = true;
+                }
             }
-	    if (found) {
-		System.err.println("\nTEST PASSED");
+            if (found) {
+                System.err.println("\nTEST PASSED");
             } else {
-		throw new Error();                    
+                throw new Error();
             }
         }
     }

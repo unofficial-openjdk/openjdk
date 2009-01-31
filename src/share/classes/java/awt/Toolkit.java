@@ -93,7 +93,7 @@ import sun.util.CoreResourceBundleControl;
  * <p>
  * <li>Setting the size or location of a top-level container.
  * <br>Calls to <code>setSize</code>, <code>setBounds</code> or
- *     <code>setLocation</code> on a <code>Window</code>, 
+ *     <code>setLocation</code> on a <code>Window</code>,
  *     <code>Frame</code> or <code>Dialog</code> are forwarded
  *     to the underlying window management system and may be
  *     ignored or modified.  See {@link java.awt.Window} for
@@ -107,10 +107,9 @@ import sun.util.CoreResourceBundleControl;
  * <code>java.awt.peer</code>. Some methods defined by
  * <code>Toolkit</code> query the native operating system directly.
  *
- * @version 	1.203, 12/19/03
- * @author	Sami Shaio
- * @author	Arthur van Hoff
- * @author	Fred Ecks
+ * @author      Sami Shaio
+ * @author      Arthur van Hoff
+ * @author      Fred Ecks
  * @since       JDK1.0
  */
 public abstract class Toolkit {
@@ -280,7 +279,7 @@ public abstract class Toolkit {
      * @see       java.awt.Canvas
      * @see       java.awt.peer.CanvasPeer
      */
-    protected abstract CanvasPeer 	createCanvas(Canvas target);
+    protected abstract CanvasPeer       createCanvas(Canvas target);
 
     /**
      * Creates this toolkit's implementation of <code>Panel</code> using
@@ -290,7 +289,7 @@ public abstract class Toolkit {
      * @see       java.awt.Panel
      * @see       java.awt.peer.PanelPeer
      */
-    protected abstract PanelPeer  	createPanel(Panel target);
+    protected abstract PanelPeer        createPanel(Panel target);
 
     /**
      * Creates this toolkit's implementation of <code>Window</code> using
@@ -406,7 +405,7 @@ public abstract class Toolkit {
         CheckboxMenuItem target) throws HeadlessException;
 
     /**
-     * Obtains this toolkit's implementation of helper class for 
+     * Obtains this toolkit's implementation of helper class for
      * <code>MouseInfo</code> operations.
      * @return    this toolkit's implementation of  helper for <code>MouseInfo</code>
      * @throws    UnsupportedOperationException if this operation is not implemented
@@ -594,7 +593,7 @@ public abstract class Toolkit {
             return new Insets(0, 0, 0, 0);
         }
     }
-    
+
     /**
      * Determines the color model of this toolkit's screen.
      * <p>
@@ -640,7 +639,7 @@ public abstract class Toolkit {
      * @param     font   a font
      * @return    the screen metrics of the specified font in this toolkit
      * @deprecated  As of JDK version 1.2, replaced by the <code>Font</code>
-     *		method <code>getLineMetrics</code>.
+     *          method <code>getLineMetrics</code>.
      * @see java.awt.font.LineMetrics
      * @see java.awt.Font#getLineMetrics
      * @see java.awt.GraphicsEnvironment#getScreenDevices
@@ -681,73 +680,73 @@ public abstract class Toolkit {
      */
     private static void initAssistiveTechnologies() {
 
-	// Get accessibility properties 
+        // Get accessibility properties
         final String sep = File.separator;
         final Properties properties = new Properties();
 
 
-	atNames = (String)java.security.AccessController.doPrivileged(
-	    new java.security.PrivilegedAction() {
-	    public Object run() {
+        atNames = (String)java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction() {
+            public Object run() {
 
-		// Try loading the per-user accessibility properties file.
-		try {
-		    File propsFile = new File(
-		      System.getProperty("user.home") +
-		      sep + ".accessibility.properties");
-		    FileInputStream in =
-			new FileInputStream(propsFile);
+                // Try loading the per-user accessibility properties file.
+                try {
+                    File propsFile = new File(
+                      System.getProperty("user.home") +
+                      sep + ".accessibility.properties");
+                    FileInputStream in =
+                        new FileInputStream(propsFile);
 
                     // Inputstream has been buffered in Properties class
-		    properties.load(in);
-		    in.close();
-		} catch (Exception e) {
-		    // Per-user accessibility properties file does not exist
-		}
+                    properties.load(in);
+                    in.close();
+                } catch (Exception e) {
+                    // Per-user accessibility properties file does not exist
+                }
 
-		// Try loading the system-wide accessibility properties
-		// file only if a per-user accessibility properties
-		// file does not exist or is empty.
-		if (properties.size() == 0) {
-		    try {
-			File propsFile = new File(
-			    System.getProperty("java.home") + sep + "lib" +
-			    sep + "accessibility.properties");
-			FileInputStream in =
-			    new FileInputStream(propsFile);
-			
-			// Inputstream has been buffered in Properties class
-			properties.load(in);
-			in.close();
-		    } catch (Exception e) {
-			// System-wide accessibility properties file does 
-			// not exist;
-		    }
-		}
-		
-		// Get whether a screen magnifier is present.  First check
-		// the system property and then check the properties file.
-		String magPresent = System.getProperty("javax.accessibility.screen_magnifier_present");
-		if (magPresent == null) {
-		    magPresent = properties.getProperty("screen_magnifier_present", null);
-		    if (magPresent != null) {
-			System.setProperty("javax.accessibility.screen_magnifier_present", magPresent);
-		    }
-		}
+                // Try loading the system-wide accessibility properties
+                // file only if a per-user accessibility properties
+                // file does not exist or is empty.
+                if (properties.size() == 0) {
+                    try {
+                        File propsFile = new File(
+                            System.getProperty("java.home") + sep + "lib" +
+                            sep + "accessibility.properties");
+                        FileInputStream in =
+                            new FileInputStream(propsFile);
 
-		// Get the names of any assistive technolgies to load.  First 
-		// check the system property and then check the properties 
-		// file.
-		String classNames = System.getProperty("javax.accessibility.assistive_technologies");
-		if (classNames == null) {
-		    classNames = properties.getProperty("assistive_technologies", null);
-		    if (classNames != null) {
-			System.setProperty("javax.accessibility.assistive_technologies", classNames);
-		    }
-		}
-		return classNames;
-	    }
-	});
+                        // Inputstream has been buffered in Properties class
+                        properties.load(in);
+                        in.close();
+                    } catch (Exception e) {
+                        // System-wide accessibility properties file does
+                        // not exist;
+                    }
+                }
+
+                // Get whether a screen magnifier is present.  First check
+                // the system property and then check the properties file.
+                String magPresent = System.getProperty("javax.accessibility.screen_magnifier_present");
+                if (magPresent == null) {
+                    magPresent = properties.getProperty("screen_magnifier_present", null);
+                    if (magPresent != null) {
+                        System.setProperty("javax.accessibility.screen_magnifier_present", magPresent);
+                    }
+                }
+
+                // Get the names of any assistive technolgies to load.  First
+                // check the system property and then check the properties
+                // file.
+                String classNames = System.getProperty("javax.accessibility.assistive_technologies");
+                if (classNames == null) {
+                    classNames = properties.getProperty("assistive_technologies", null);
+                    if (classNames != null) {
+                        System.setProperty("javax.accessibility.assistive_technologies", classNames);
+                    }
+                }
+                return classNames;
+            }
+        });
     }
 
     /**
@@ -770,33 +769,33 @@ public abstract class Toolkit {
      * extensions).
      */
     private static void loadAssistiveTechnologies() {
-	// Load any assistive technologies
+        // Load any assistive technologies
         if (atNames != null) {
-	    ClassLoader cl = ClassLoader.getSystemClassLoader();
+            ClassLoader cl = ClassLoader.getSystemClassLoader();
             StringTokenizer parser = new StringTokenizer(atNames," ,");
-	    String atName;
+            String atName;
             while (parser.hasMoreTokens()) {
-		atName = parser.nextToken();
+                atName = parser.nextToken();
                 try {
-		    Class clazz;
-		    if (cl != null) {
-			clazz = cl.loadClass(atName);
-		    } else {
-			clazz = Class.forName(atName);
-		    }
-		    clazz.newInstance();
+                    Class clazz;
+                    if (cl != null) {
+                        clazz = cl.loadClass(atName);
+                    } else {
+                        clazz = Class.forName(atName);
+                    }
+                    clazz.newInstance();
                 } catch (ClassNotFoundException e) {
                     throw new AWTError("Assistive Technology not found: "
-			    + atName);
+                            + atName);
                 } catch (InstantiationException e) {
                     throw new AWTError("Could not instantiate Assistive"
-			    + " Technology: " + atName);
+                            + " Technology: " + atName);
                 } catch (IllegalAccessException e) {
                     throw new AWTError("Could not access Assistive"
-			    + " Technology: " + atName);
+                            + " Technology: " + atName);
                 } catch (Exception e) {
                     throw new AWTError("Error trying to install Assistive"
-			    + " Technology: " + atName + " " + e);
+                            + " Technology: " + atName + " " + e);
                 }
             }
         }
@@ -838,7 +837,7 @@ public abstract class Toolkit {
                 // tends to touch lots of classes that aren't needed again
                 // later and therefore JITing is counter-productiive.
                 java.lang.Compiler.disable();
-                
+
                 java.security.AccessController.doPrivileged(
                         new java.security.PrivilegedAction() {
                     public Object run() {
@@ -1036,7 +1035,7 @@ public abstract class Toolkit {
      * @see       java.awt.image.ImageObserver
      */
     public abstract boolean prepareImage(Image image, int width, int height,
-					 ImageObserver observer);
+                                         ImageObserver observer);
 
     /**
      * Indicates the construction status of a specified image that is
@@ -1077,7 +1076,7 @@ public abstract class Toolkit {
      * @see       java.awt.image.ImageObserver
      */
     public abstract int checkImage(Image image, int width, int height,
-				   ImageObserver observer);
+                                   ImageObserver observer);
 
     /**
      * Creates an image with the specified image producer.
@@ -1101,7 +1100,7 @@ public abstract class Toolkit {
      * @since     JDK1.1
      */
     public Image createImage(byte[] imagedata) {
-	return createImage(imagedata, 0, imagedata.length);
+        return createImage(imagedata, 0, imagedata.length);
     }
 
     /**
@@ -1118,14 +1117,14 @@ public abstract class Toolkit {
      * @since     JDK1.1
      */
     public abstract Image createImage(byte[] imagedata,
-				      int imageoffset,
-				      int imagelength);
+                                      int imageoffset,
+                                      int imagelength);
 
     /**
      * Gets a <code>PrintJob</code> object which is the result of initiating
      * a print operation on the toolkit's platform.
      * <p>
-     * Each actual implementation of this method should first check if there 
+     * Each actual implementation of this method should first check if there
      * is a security manager installed. If there is, the method should call
      * the security manager's <code>checkPrintJobAccess</code> method to
      * ensure initiation of a print operation is allowed. If the default
@@ -1134,37 +1133,37 @@ public abstract class Toolkit {
      * security manager's <code>checkPermission</code> method with a <code>
      * RuntimePermission("queuePrintJob")</code> permission.
      *
-     * @param	frame the parent of the print dialog. May not be null.
-     * @param	jobtitle the title of the PrintJob. A null title is equivalent
-     *		to "".
-     * @param	props a Properties object containing zero or more properties.
-     *		Properties are not standardized and are not consistent across
-     *		implementations. Because of this, PrintJobs which require job
-     *		and page control should use the version of this function which
-     *		takes JobAttributes and PageAttributes objects. This object
-     *		may be updated to reflect the user's job choices on exit. May
-     *		be null.
+     * @param   frame the parent of the print dialog. May not be null.
+     * @param   jobtitle the title of the PrintJob. A null title is equivalent
+     *          to "".
+     * @param   props a Properties object containing zero or more properties.
+     *          Properties are not standardized and are not consistent across
+     *          implementations. Because of this, PrintJobs which require job
+     *          and page control should use the version of this function which
+     *          takes JobAttributes and PageAttributes objects. This object
+     *          may be updated to reflect the user's job choices on exit. May
+     *          be null.
      *
-     * @return	a <code>PrintJob</code> object, or <code>null</code> if the
-     *		user cancelled the print job.
-     * @throws	NullPointerException if frame is null.  This exception is
+     * @return  a <code>PrintJob</code> object, or <code>null</code> if the
+     *          user cancelled the print job.
+     * @throws  NullPointerException if frame is null.  This exception is
      *          always thrown when GraphicsEnvironment.isHeadless() returns
      *          true.
-     * @throws	SecurityException if this thread is not allowed to initiate a
-     *		print job request
+     * @throws  SecurityException if this thread is not allowed to initiate a
+     *          print job request
      * @see     java.awt.GraphicsEnvironment#isHeadless
-     * @see	java.awt.PrintJob
-     * @see	java.lang.RuntimePermission
-     * @since	JDK1.1
+     * @see     java.awt.PrintJob
+     * @see     java.lang.RuntimePermission
+     * @since   JDK1.1
      */
     public abstract PrintJob getPrintJob(Frame frame, String jobtitle,
-					 Properties props);
+                                         Properties props);
 
     /**
      * Gets a <code>PrintJob</code> object which is the result of initiating
      * a print operation on the toolkit's platform.
      * <p>
-     * Each actual implementation of this method should first check if there 
+     * Each actual implementation of this method should first check if there
      * is a security manager installed. If there is, the method should call
      * the security manager's <code>checkPrintJobAccess</code> method to
      * ensure initiation of a print operation is allowed. If the default
@@ -1173,27 +1172,27 @@ public abstract class Toolkit {
      * security manager's <code>checkPermission</code> method with a <code>
      * RuntimePermission("queuePrintJob")</code> permission.
      *
-     * @param	frame the parent of the print dialog. May be null if and only
-     *		if jobAttributes is not null and jobAttributes.getDialog()
-     *		returns	JobAttributes.DialogType.NONE or
-     *		JobAttributes.DialogType.COMMON.
-     * @param	jobtitle the title of the PrintJob. A null title is equivalent
-     *		to "".
-     * @param	jobAttributes a set of job attributes which will control the
-     *		PrintJob. The attributes will be updated to reflect the user's
-     *		choices as outlined in the JobAttributes documentation. May be
-     *		null.
-     * @param	pageAttributes a set of page attributes which will control the
-     *		PrintJob. The attributes will be applied to every page in the
-     *		job. The attributes will be updated to reflect the user's
-     *		choices as outlined in the PageAttributes documentation. May be
-     *		null.
+     * @param   frame the parent of the print dialog. May be null if and only
+     *          if jobAttributes is not null and jobAttributes.getDialog()
+     *          returns JobAttributes.DialogType.NONE or
+     *          JobAttributes.DialogType.COMMON.
+     * @param   jobtitle the title of the PrintJob. A null title is equivalent
+     *          to "".
+     * @param   jobAttributes a set of job attributes which will control the
+     *          PrintJob. The attributes will be updated to reflect the user's
+     *          choices as outlined in the JobAttributes documentation. May be
+     *          null.
+     * @param   pageAttributes a set of page attributes which will control the
+     *          PrintJob. The attributes will be applied to every page in the
+     *          job. The attributes will be updated to reflect the user's
+     *          choices as outlined in the PageAttributes documentation. May be
+     *          null.
      *
-     * @return	a <code>PrintJob</code> object, or <code>null</code> if the
-     *		user cancelled the print job.
-     * @throws	NullPointerException if frame is null and either jobAttributes
-     *		is null or jobAttributes.getDialog() returns
-     *		JobAttributes.DialogType.NATIVE.
+     * @return  a <code>PrintJob</code> object, or <code>null</code> if the
+     *          user cancelled the print job.
+     * @throws  NullPointerException if frame is null and either jobAttributes
+     *          is null or jobAttributes.getDialog() returns
+     *          JobAttributes.DialogType.NATIVE.
      * @throws  IllegalArgumentException if pageAttributes specifies differing
      *          cross feed and feed resolutions. Also if this thread has
      *          access to the file system and jobAttributes specifies
@@ -1205,35 +1204,35 @@ public abstract class Toolkit {
      *          opportunity to select a file and proceed with printing.
      *          The dialog will ensure that the selected output file
      *          is valid before returning from this method.
-     *          <p>   
+     *          <p>
      *          This exception is always thrown when GraphicsEnvironment.isHeadless()
      *          returns true.
-     * @throws	SecurityException if this thread is not allowed to initiate a
-     *		print job request, or if jobAttributes specifies print to file,
-     *		and this thread is not allowed to access the file system
-     * @see	java.awt.PrintJob
+     * @throws  SecurityException if this thread is not allowed to initiate a
+     *          print job request, or if jobAttributes specifies print to file,
+     *          and this thread is not allowed to access the file system
+     * @see     java.awt.PrintJob
      * @see     java.awt.GraphicsEnvironment#isHeadless
-     * @see	java.lang.RuntimePermission
-     * @see	java.awt.JobAttributes
-     * @see	java.awt.PageAttributes
-     * @since	1.3
+     * @see     java.lang.RuntimePermission
+     * @see     java.awt.JobAttributes
+     * @see     java.awt.PageAttributes
+     * @since   1.3
      */
     public PrintJob getPrintJob(Frame frame, String jobtitle,
-				JobAttributes jobAttributes,
-				PageAttributes pageAttributes) {
+                                JobAttributes jobAttributes,
+                                PageAttributes pageAttributes) {
         // Override to add printing support with new job/page control classes
 
         if (GraphicsEnvironment.isHeadless()) {
             throw new IllegalArgumentException();
         }
 
-	if (this != Toolkit.getDefaultToolkit()) {
-	    return Toolkit.getDefaultToolkit().getPrintJob(frame, jobtitle,
-							   jobAttributes,
-							   pageAttributes);
-	} else {
-	    return getPrintJob(frame, jobtitle, null);
-	}
+        if (this != Toolkit.getDefaultToolkit()) {
+            return Toolkit.getDefaultToolkit().getPrintJob(frame, jobtitle,
+                                                           jobAttributes,
+                                                           pageAttributes);
+        } else {
+            return getPrintJob(frame, jobtitle, null);
+        }
     }
 
     /**
@@ -1244,7 +1243,7 @@ public abstract class Toolkit {
 
     /**
      * Gets the singleton instance of the system Clipboard which interfaces
-     * with clipboard facilities provided by the native platform. This 
+     * with clipboard facilities provided by the native platform. This
      * clipboard enables data transfer between Java programs and native
      * applications which use native clipboard facilities.
      * <p>
@@ -1274,7 +1273,7 @@ public abstract class Toolkit {
      * is, that method is not overriden), then this results in a call to the
      * security manager's <code>checkPermission</code> method with an <code>
      * AWTPermission("accessClipboard")</code> permission.
-     * 
+     *
      * @return    the system Clipboard
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
@@ -1324,7 +1323,7 @@ public abstract class Toolkit {
      * is not overridden), then this results in a call to the
      * <code>SecurityManager</code>'s <code>checkPermission</code> method with
      * an <code>AWTPermission("accessClipboard")</code> permission.
-     * 
+     *
      * @return the system selection as a <code>Clipboard</code>, or
      *         <code>null</code> if the native platform does not support a
      *         system selection <code>Clipboard</code>
@@ -1438,13 +1437,13 @@ public abstract class Toolkit {
      * given a native component (eg the direct parent may be lightweight).
      */
     protected static Container getNativeContainer(Component c) {
-	return c.getNativeContainer();
+        return c.getNativeContainer();
     }
 
     /**
      * Creates a new custom cursor object.
      * If the image to display is invalid, the cursor will be hidden (made
-     * completely transparent), and the hotspot will be set to (0, 0). 
+     * completely transparent), and the hotspot will be set to (0, 0).
      *
      * <p>Note that multi-frame images are invalid and may cause this
      * method to hang.
@@ -1466,11 +1465,11 @@ public abstract class Toolkit {
     {
         // Override to implement custom cursor support.
         if (this != Toolkit.getDefaultToolkit()) {
-	    return Toolkit.getDefaultToolkit().
-	        createCustomCursor(cursor, hotSpot, name);
-	} else {
-	    return new Cursor(Cursor.DEFAULT_CURSOR);
-	}
+            return Toolkit.getDefaultToolkit().
+                createCustomCursor(cursor, hotSpot, name);
+        } else {
+            return new Cursor(Cursor.DEFAULT_CURSOR);
+        }
     }
 
     /**
@@ -1501,11 +1500,11 @@ public abstract class Toolkit {
         int preferredHeight) throws HeadlessException {
         // Override to implement custom cursor support.
         if (this != Toolkit.getDefaultToolkit()) {
-	    return Toolkit.getDefaultToolkit().
-	        getBestCursorSize(preferredWidth, preferredHeight);
-	} else {
-	    return new Dimension(0, 0);
-	}
+            return Toolkit.getDefaultToolkit().
+                getBestCursorSize(preferredWidth, preferredHeight);
+        } else {
+            return new Dimension(0, 0);
+        }
     }
 
     /**
@@ -1528,12 +1527,12 @@ public abstract class Toolkit {
     public int getMaximumCursorColors() throws HeadlessException {
         // Override to implement custom cursor support.
         if (this != Toolkit.getDefaultToolkit()) {
-	    return Toolkit.getDefaultToolkit().getMaximumCursorColors();
-	} else {
-	    return 0;
-	}
+            return Toolkit.getDefaultToolkit().getMaximumCursorColors();
+        } else {
+            return 0;
+        }
     }
-    
+
     /**
      * Returns whether Toolkit supports this state for
      * <code>Frame</code>s.  This method tells whether the <em>UI
@@ -1549,21 +1548,21 @@ public abstract class Toolkit {
      * @exception HeadlessException
      *     if <code>GraphicsEnvironment.isHeadless()</code>
      *     returns <code>true</code>.
-     * @see	java.awt.Frame#setExtendedState
-     * @since	1.4
+     * @see     java.awt.Frame#setExtendedState
+     * @since   1.4
      */
-    public boolean isFrameStateSupported(int state) 
-	throws HeadlessException
+    public boolean isFrameStateSupported(int state)
+        throws HeadlessException
     {
         if (GraphicsEnvironment.isHeadless()){
             throw new HeadlessException();
         }
         if (this != Toolkit.getDefaultToolkit()) {
-	    return Toolkit.getDefaultToolkit().
-		isFrameStateSupported(state);
-	} else {
-	    return (state == Frame.NORMAL); // others are not guaranteed
-	}
+            return Toolkit.getDefaultToolkit().
+                isFrameStateSupported(state);
+        } else {
+            return (state == Frame.NORMAL); // others are not guaranteed
+        }
     }
 
     /**
@@ -1587,7 +1586,7 @@ public abstract class Toolkit {
      *
      * Since the use and storage of these ids is done by the
      * implementation libraries, the implementation of these method is
-     * provided by the particular AWT implementations (for example, 
+     * provided by the particular AWT implementations (for example,
      * "Toolkit"s/Peer), such as Motif, Microsoft Windows, or Tiny. The
      * problem is that this means that the native libraries must be
      * loaded by the java.* classes, which do not necessarily know the
@@ -1607,31 +1606,31 @@ public abstract class Toolkit {
      */
     private static boolean loaded = false;
     static void loadLibraries() {
-	if (!loaded) {
-	    java.security.AccessController.doPrivileged(
-			  new sun.security.action.LoadLibraryAction("awt"));
-	    loaded = true;
+        if (!loaded) {
+            java.security.AccessController.doPrivileged(
+                          new sun.security.action.LoadLibraryAction("awt"));
+            loaded = true;
         }
     }
 
     static {
-	java.security.AccessController.doPrivileged(
-				 new java.security.PrivilegedAction() {
-	    public Object run() {
-		try {
-		    resources =
-			ResourceBundle.getBundle("sun.awt.resources.awt", 
-						 CoreResourceBundleControl.getRBControlInstance());
-		} catch (MissingResourceException e) {
-		    // No resource file; defaults will be used.
-		}
-		return null;
-	    }
-	});
+        java.security.AccessController.doPrivileged(
+                                 new java.security.PrivilegedAction() {
+            public Object run() {
+                try {
+                    resources =
+                        ResourceBundle.getBundle("sun.awt.resources.awt",
+                                                 CoreResourceBundleControl.getRBControlInstance());
+                } catch (MissingResourceException e) {
+                    // No resource file; defaults will be used.
+                }
+                return null;
+            }
+        });
 
-	// ensure that the proper libraries are loaded
+        // ensure that the proper libraries are loaded
         loadLibraries();
-	initAssistiveTechnologies();
+        initAssistiveTechnologies();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -1643,13 +1642,13 @@ public abstract class Toolkit {
      */
     public static String getProperty(String key, String defaultValue) {
         if (resources != null) {
-	    try {
-	        return resources.getString(key);
-	    }
-	    catch (MissingResourceException e) {}
+            try {
+                return resources.getString(key);
+            }
+            catch (MissingResourceException e) {}
         }
 
-	return defaultValue;
+        return defaultValue;
     }
 
     /**
@@ -1658,15 +1657,15 @@ public abstract class Toolkit {
      * may be returned for different applets.  Applets should
      * therefore not assume that the EventQueue instance returned
      * by this method will be shared by other applets or the system.
-     * 
-     * <p>First, if there is a security manager, its 
-     * <code>checkAwtEventQueueAccess</code> 
-     * method is called. 
-     * If  the default implementation of <code>checkAwtEventQueueAccess</code> 
+     *
+     * <p>First, if there is a security manager, its
+     * <code>checkAwtEventQueueAccess</code>
+     * method is called.
+     * If  the default implementation of <code>checkAwtEventQueueAccess</code>
      * is used (that is, that method is not overriden), then this results in
      * a call to the security manager's <code>checkPermission</code> method
      * with an <code>AWTPermission("accessEventQueue")</code> permission.
-     * 
+     *
      * @return    the <code>EventQueue</code> object
      * @throws  SecurityException
      *          if a security manager exists and its <code>{@link
@@ -1677,7 +1676,7 @@ public abstract class Toolkit {
     public final EventQueue getSystemEventQueue() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-	  security.checkAwtEventQueueAccess();
+          security.checkAwtEventQueueAccess();
         }
         return getSystemEventQueueImpl();
     }
@@ -1685,7 +1684,7 @@ public abstract class Toolkit {
     /**
      * Gets the application's or applet's <code>EventQueue</code>
      * instance, without checking access.  For security reasons,
-     * this can only be called from a <code>Toolkit</code> subclass. 
+     * this can only be called from a <code>Toolkit</code> subclass.
      * @return the <code>EventQueue</code> object
      */
     protected abstract EventQueue getSystemEventQueueImpl();
@@ -1706,33 +1705,33 @@ public abstract class Toolkit {
     /**
      * Creates a concrete, platform dependent, subclass of the abstract
      * DragGestureRecognizer class requested, and associates it with the
-     * DragSource, Component and DragGestureListener specified. 
+     * DragSource, Component and DragGestureListener specified.
      *
      * subclasses should override this to provide their own implementation
      *
      * @param abstractRecognizerClass The abstract class of the required recognizer
-     * @param ds		      The DragSource
-     * @param c			      The Component target for the DragGestureRecognizer
-     * @param srcActions	      The actions permitted for the gesture
-     * @param dgl		      The DragGestureListener
+     * @param ds                      The DragSource
+     * @param c                       The Component target for the DragGestureRecognizer
+     * @param srcActions              The actions permitted for the gesture
+     * @param dgl                     The DragGestureListener
      *
      * @return the new object or null.  Always returns null if
      * GraphicsEnvironment.isHeadless() returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public <T extends DragGestureRecognizer> T
-	createDragGestureRecognizer(Class<T> abstractRecognizerClass,
-				    DragSource ds, Component c, int srcActions,
-				    DragGestureListener dgl)
+        createDragGestureRecognizer(Class<T> abstractRecognizerClass,
+                                    DragSource ds, Component c, int srcActions,
+                                    DragGestureListener dgl)
     {
-	return null;
+        return null;
     }
 
     /**
      * Obtains a value for the specified desktop property.
      *
      * A desktop property is a uniquely named value for a resource that
-     * is Toolkit global in nature. Usually it also is an abstract 
+     * is Toolkit global in nature. Usually it also is an abstract
      * representation for an underlying platform dependent desktop setting.
      * For more information on desktop properties supported by the AWT see
      * <a href="doc-files/DesktopProperties.html">AWT Desktop Properties</a>.
@@ -1747,9 +1746,9 @@ public abstract class Toolkit {
                 .getDesktopProperty(propertyName);
         }
 
-	if (desktopProperties.isEmpty()) {
-	    initializeDesktopProperties();
-	}
+        if (desktopProperties.isEmpty()) {
+            initializeDesktopProperties();
+        }
 
         Object value;
 
@@ -1759,27 +1758,27 @@ public abstract class Toolkit {
             return value;
         }
 
-	value = desktopProperties.get(propertyName);
+        value = desktopProperties.get(propertyName);
 
-	if (value == null) {
-	    value = lazilyLoadDesktopProperty(propertyName);
+        if (value == null) {
+            value = lazilyLoadDesktopProperty(propertyName);
 
-	    if (value != null) {
-		setDesktopProperty(propertyName, value);
-	    }
-	}
+            if (value != null) {
+                setDesktopProperty(propertyName, value);
+            }
+        }
 
         /* for property "awt.font.desktophints" */
         if (value instanceof RenderingHints) {
             value = ((RenderingHints)value).clone();
         }
 
-	return value;
+        return value;
     }
 
     /**
      * Sets the named desktop property to the specified value and fires a
-     * property change event to notify any listeners that the value has changed. 
+     * property change event to notify any listeners that the value has changed.
      */
     protected final void setDesktopProperty(String name, Object newValue) {
         // This is a workaround for headless toolkits.  It would be
@@ -1805,7 +1804,7 @@ public abstract class Toolkit {
      * an opportunity to lazily evaluate desktop property values.
      */
     protected Object lazilyLoadDesktopProperty(String name) {
-	return null;
+        return null;
     }
 
     /**
@@ -1815,29 +1814,29 @@ public abstract class Toolkit {
     }
 
     /**
-     * Adds the specified property change listener for the named desktop 
-     * property.  
+     * Adds the specified property change listener for the named desktop
+     * property.
      * If pcl is null, no exception is thrown and no action is performed.
      *
-     * @param 	name The name of the property to listen for
-     * @param	pcl The property change listener
-     * @since	1.2
+     * @param   name The name of the property to listen for
+     * @param   pcl The property change listener
+     * @since   1.2
      */
     public void addPropertyChangeListener(String name, PropertyChangeListener pcl) {
-	desktopPropsSupport.addPropertyChangeListener(name, pcl);
+        desktopPropsSupport.addPropertyChangeListener(name, pcl);
     }
 
     /**
-     * Removes the specified property change listener for the named 
-     * desktop property. 
+     * Removes the specified property change listener for the named
+     * desktop property.
      * If pcl is null, no exception is thrown and no action is performed.
      *
-     * @param 	name The name of the property to remove
-     * @param	pcl The property change listener
-     * @since	1.2
+     * @param   name The name of the property to remove
+     * @param   pcl The property change listener
+     * @since   1.2
      */
     public void removePropertyChangeListener(String name, PropertyChangeListener pcl) {
-	desktopPropsSupport.removePropertyChangeListener(name, pcl);
+        desktopPropsSupport.removePropertyChangeListener(name, pcl);
     }
 
     /**
@@ -1845,7 +1844,7 @@ public abstract class Toolkit {
      * registered on this toolkit.
      *
      * @return all of this toolkit's <code>PropertyChangeListener</code>s
-     *         or an empty array if no property change 
+     *         or an empty array if no property change
      *         listeners are currently registered
      *
      * @since 1.4
@@ -1935,7 +1934,7 @@ public abstract class Toolkit {
      * Extracts a "pure" AWTEventListener from a AWTEventListenerProxy,
      * if the listener is proxied.
      */
-    static private AWTEventListener deProxyAWTEventListener(AWTEventListener l) 
+    static private AWTEventListener deProxyAWTEventListener(AWTEventListener l)
     {
         AWTEventListener localL = l;
 
@@ -1954,10 +1953,10 @@ public abstract class Toolkit {
      * Adds an AWTEventListener to receive all AWTEvents dispatched
      * system-wide that conform to the given <code>eventMask</code>.
      * <p>
-     * First, if there is a security manager, its <code>checkPermission</code> 
-     * method is called with an 
+     * First, if there is a security manager, its <code>checkPermission</code>
+     * method is called with an
      * <code>AWTPermission("listenToAllAWTEvents")</code> permission.
-     * This may result in a SecurityException. 
+     * This may result in a SecurityException.
      * <p>
      * <code>eventMask</code> is a bitmask of event types to receive.
      * It is constructed by bitwise OR-ing together the event masks
@@ -1973,7 +1972,7 @@ public abstract class Toolkit {
      * @param    listener   the event listener.
      * @param    eventMask  the bitmask of event types to receive
      * @throws SecurityException
-     *        if a security manager exists and its 
+     *        if a security manager exists and its
      *        <code>checkPermission</code> method doesn't allow the operation.
      * @see      #removeAWTEventListener
      * @see      #getAWTEventListeners
@@ -1985,7 +1984,7 @@ public abstract class Toolkit {
      * @since    1.2
      */
     public void addAWTEventListener(AWTEventListener listener, long eventMask) {
-        AWTEventListener localL = deProxyAWTEventListener(listener); 
+        AWTEventListener localL = deProxyAWTEventListener(listener);
 
         if (localL == null) {
             return;
@@ -2001,16 +2000,16 @@ public abstract class Toolkit {
             if (selectiveListener == null) {
                 // Create a new selectiveListener.
                 selectiveListener = new SelectiveAWTEventListener(localL,
-                                                                 eventMask); 
+                                                                 eventMask);
                 listener2SelectiveListener.put(localL, selectiveListener);
                 eventListener = ToolkitEventMulticaster.add(eventListener,
                                                             selectiveListener);
             }
             // OR the eventMask into the selectiveListener's event mask.
             selectiveListener.orEventMasks(eventMask);
-            
+
             enabledOnToolkitMask |= eventMask;
-            
+
             long mask = eventMask;
             for (int i=0; i<LONG_BITS; i++) {
                 // If no bits are set, break out of loop.
@@ -2028,10 +2027,10 @@ public abstract class Toolkit {
     /**
      * Removes an AWTEventListener from receiving dispatched AWTEvents.
      * <p>
-     * First, if there is a security manager, its <code>checkPermission</code> 
-     * method is called with an 
+     * First, if there is a security manager, its <code>checkPermission</code>
+     * method is called with an
      * <code>AWTPermission("listenToAllAWTEvents")</code> permission.
-     * This may result in a SecurityException. 
+     * This may result in a SecurityException.
      * <p>
      * Note:  event listener use is not recommended for normal
      * application use, but are intended solely to support special
@@ -2042,7 +2041,7 @@ public abstract class Toolkit {
      *
      * @param    listener   the event listener.
      * @throws SecurityException
-     *        if a security manager exists and its 
+     *        if a security manager exists and its
      *        <code>checkPermission</code> method doesn't allow the operation.
      * @see      #addAWTEventListener
      * @see      #getAWTEventListeners
@@ -2074,7 +2073,7 @@ public abstract class Toolkit {
                 for (int i=0; i<LONG_BITS; i++) {
                     calls[i] -= listenerCalls[i];
                     assert calls[i] >= 0: "Negative Listeners count";
-                    
+
                     if (calls[i] == 0) {
                         enabledOnToolkitMask &= ~(1L<<i);
                     }
@@ -2103,22 +2102,22 @@ public abstract class Toolkit {
         return calls[ci];
     }
     /**
-     * Returns an array of all the <code>AWTEventListener</code>s 
+     * Returns an array of all the <code>AWTEventListener</code>s
      * registered on this toolkit.
-     * If there is a security manager, its {@code checkPermission} 
-     * method is called with an 
+     * If there is a security manager, its {@code checkPermission}
+     * method is called with an
      * {@code AWTPermission("listenToAllAWTEvents")} permission.
-     * This may result in a SecurityException. 
-     * Listeners can be returned 
-     * within <code>AWTEventListenerProxy</code> objects, which also contain 
+     * This may result in a SecurityException.
+     * Listeners can be returned
+     * within <code>AWTEventListenerProxy</code> objects, which also contain
      * the event mask for the given listener.
      * Note that listener objects
      * added multiple times appear only once in the returned array.
      *
      * @return all of the <code>AWTEventListener</code>s or an empty
-     *         array if no listeners are currently registered 
+     *         array if no listeners are currently registered
      * @throws SecurityException
-     *        if a security manager exists and its 
+     *        if a security manager exists and its
      *        <code>checkPermission</code> method doesn't allow the operation.
      * @see      #addAWTEventListener
      * @see      #removeAWTEventListener
@@ -2132,32 +2131,32 @@ public abstract class Toolkit {
     public AWTEventListener[] getAWTEventListeners() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-	    security.checkPermission(SecurityConstants.ALL_AWT_EVENTS_PERMISSION);
+            security.checkPermission(SecurityConstants.ALL_AWT_EVENTS_PERMISSION);
         }
         synchronized (this) {
-            EventListener[] la = ToolkitEventMulticaster.getListeners(eventListener,AWTEventListener.class); 
+            EventListener[] la = ToolkitEventMulticaster.getListeners(eventListener,AWTEventListener.class);
 
             AWTEventListener[] ret = new AWTEventListener[la.length];
-            for (int i = 0; i < la.length; i++) { 
-                SelectiveAWTEventListener sael = (SelectiveAWTEventListener)la[i]; 
-                AWTEventListener tempL = sael.getListener(); 
-                //assert tempL is not an AWTEventListenerProxy - we should 
-                // have weeded them all out 
-                // don't want to wrap a proxy inside a proxy 
-                ret[i] = new AWTEventListenerProxy(sael.getEventMask(), tempL); 
-            } 
-            return ret; 
+            for (int i = 0; i < la.length; i++) {
+                SelectiveAWTEventListener sael = (SelectiveAWTEventListener)la[i];
+                AWTEventListener tempL = sael.getListener();
+                //assert tempL is not an AWTEventListenerProxy - we should
+                // have weeded them all out
+                // don't want to wrap a proxy inside a proxy
+                ret[i] = new AWTEventListenerProxy(sael.getEventMask(), tempL);
+            }
+            return ret;
         }
     }
 
     /**
-     * Returns an array of all the <code>AWTEventListener</code>s 
+     * Returns an array of all the <code>AWTEventListener</code>s
      * registered on this toolkit which listen to all of the event
      * types specified in the {@code eventMask} argument.
-     * If there is a security manager, its {@code checkPermission} 
-     * method is called with an 
+     * If there is a security manager, its {@code checkPermission}
+     * method is called with an
      * {@code AWTPermission("listenToAllAWTEvents")} permission.
-     * This may result in a SecurityException. 
+     * This may result in a SecurityException.
      * Listeners can be returned
      * within <code>AWTEventListenerProxy</code> objects, which also contain
      * the event mask for the given listener.
@@ -2170,7 +2169,7 @@ public abstract class Toolkit {
      *         event types, or an empty array if no such listeners
      *         are currently registered
      * @throws SecurityException
-     *        if a security manager exists and its 
+     *        if a security manager exists and its
      *        <code>checkPermission</code> method doesn't allow the operation.
      * @see      #addAWTEventListener
      * @see      #removeAWTEventListener
@@ -2184,7 +2183,7 @@ public abstract class Toolkit {
     public AWTEventListener[] getAWTEventListeners(long eventMask) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-	    security.checkPermission(SecurityConstants.ALL_AWT_EVENTS_PERMISSION);
+            security.checkPermission(SecurityConstants.ALL_AWT_EVENTS_PERMISSION);
         }
         synchronized (this) {
             EventListener[] la = ToolkitEventMulticaster.getListeners(eventListener,AWTEventListener.class);
@@ -2220,9 +2219,9 @@ public abstract class Toolkit {
             return;
         }
 
-	AWTEventListener eventListener = this.eventListener;
+        AWTEventListener eventListener = this.eventListener;
         if (eventListener != null) {
-	    eventListener.eventDispatched(theEvent);
+            eventListener.eventDispatched(theEvent);
         }
     }
 
@@ -2234,33 +2233,33 @@ public abstract class Toolkit {
             super(a, b);
         }
 
-        static AWTEventListener add(AWTEventListener a, 
+        static AWTEventListener add(AWTEventListener a,
                                     AWTEventListener b) {
-	    if (a == null)  return b;
-	    if (b == null)  return a;
-	    return new ToolkitEventMulticaster(a, b);
+            if (a == null)  return b;
+            if (b == null)  return a;
+            return new ToolkitEventMulticaster(a, b);
         }
 
-        static AWTEventListener remove(AWTEventListener l, 
+        static AWTEventListener remove(AWTEventListener l,
                                        AWTEventListener oldl) {
             return (AWTEventListener) removeInternal(l, oldl);
         }
 
-	// #4178589: must overload remove(EventListener) to call our add()
-	// instead of the static addInternal() so we allocate a
-	// ToolkitEventMulticaster instead of an AWTEventMulticaster.
-	// Note: this method is called by AWTEventListener.removeInternal(),
-	// so its method signature must match AWTEventListener.remove().
-	protected EventListener remove(EventListener oldl) {
-	    if (oldl == a)  return b;
-	    if (oldl == b)  return a;
-	    AWTEventListener a2 = (AWTEventListener)removeInternal(a, oldl);
-	    AWTEventListener b2 = (AWTEventListener)removeInternal(b, oldl);
-	    if (a2 == a && b2 == b) {
-		return this;	// it's not here
-	    }
-	    return add(a2, b2);
-	}
+        // #4178589: must overload remove(EventListener) to call our add()
+        // instead of the static addInternal() so we allocate a
+        // ToolkitEventMulticaster instead of an AWTEventMulticaster.
+        // Note: this method is called by AWTEventListener.removeInternal(),
+        // so its method signature must match AWTEventListener.remove().
+        protected EventListener remove(EventListener oldl) {
+            if (oldl == a)  return b;
+            if (oldl == b)  return a;
+            AWTEventListener a2 = (AWTEventListener)removeInternal(a, oldl);
+            AWTEventListener b2 = (AWTEventListener)removeInternal(b, oldl);
+            if (a2 == a && b2 == b) {
+                return this;    // it's not here
+            }
+            return add(a2, b2);
+        }
 
         public void eventDispatched(AWTEvent event) {
             ((AWTEventListener)a).eventDispatched(event);
@@ -2269,8 +2268,8 @@ public abstract class Toolkit {
     }
 
     private class SelectiveAWTEventListener implements AWTEventListener {
-	AWTEventListener listener;
-	private long eventMask;
+        AWTEventListener listener;
+        private long eventMask;
         // This array contains the number of times to call the eventlistener
         // for each event type.
         int[] calls = new int[Toolkit.LONG_BITS];
@@ -2294,62 +2293,62 @@ public abstract class Toolkit {
             }
         }
 
-	SelectiveAWTEventListener(AWTEventListener l, long mask) {
-	    listener = l;
-	    eventMask = mask;
-	}
+        SelectiveAWTEventListener(AWTEventListener l, long mask) {
+            listener = l;
+            eventMask = mask;
+        }
 
         public void eventDispatched(AWTEvent event) {
             long eventBit = 0; // Used to save the bit of the event type.
-	    if (((eventBit = eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0 &&
-		 event.id >= ComponentEvent.COMPONENT_FIRST &&
-		 event.id <= ComponentEvent.COMPONENT_LAST)
-	     || ((eventBit = eventMask & AWTEvent.CONTAINER_EVENT_MASK) != 0 &&
-		 event.id >= ContainerEvent.CONTAINER_FIRST &&
-		 event.id <= ContainerEvent.CONTAINER_LAST)
-	     || ((eventBit = eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0 &&
-		 event.id >= FocusEvent.FOCUS_FIRST &&
-		 event.id <= FocusEvent.FOCUS_LAST)
-	     || ((eventBit = eventMask & AWTEvent.KEY_EVENT_MASK) != 0 &&
-		 event.id >= KeyEvent.KEY_FIRST &&
-		 event.id <= KeyEvent.KEY_LAST)
-	     || ((eventBit = eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0 &&
-	         event.id == MouseEvent.MOUSE_WHEEL)
+            if (((eventBit = eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0 &&
+                 event.id >= ComponentEvent.COMPONENT_FIRST &&
+                 event.id <= ComponentEvent.COMPONENT_LAST)
+             || ((eventBit = eventMask & AWTEvent.CONTAINER_EVENT_MASK) != 0 &&
+                 event.id >= ContainerEvent.CONTAINER_FIRST &&
+                 event.id <= ContainerEvent.CONTAINER_LAST)
+             || ((eventBit = eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0 &&
+                 event.id >= FocusEvent.FOCUS_FIRST &&
+                 event.id <= FocusEvent.FOCUS_LAST)
+             || ((eventBit = eventMask & AWTEvent.KEY_EVENT_MASK) != 0 &&
+                 event.id >= KeyEvent.KEY_FIRST &&
+                 event.id <= KeyEvent.KEY_LAST)
+             || ((eventBit = eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0 &&
+                 event.id == MouseEvent.MOUSE_WHEEL)
              || ((eventBit = eventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0 &&
-	         (event.id == MouseEvent.MOUSE_MOVED ||
-	          event.id == MouseEvent.MOUSE_DRAGGED))
-	     || ((eventBit = eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0 &&
-	         event.id != MouseEvent.MOUSE_MOVED &&
-	         event.id != MouseEvent.MOUSE_DRAGGED &&
-	         event.id != MouseEvent.MOUSE_WHEEL &&
-		 event.id >= MouseEvent.MOUSE_FIRST &&
-		 event.id <= MouseEvent.MOUSE_LAST)
-	     || ((eventBit = eventMask & AWTEvent.WINDOW_EVENT_MASK) != 0 &&
-		 (event.id >= WindowEvent.WINDOW_FIRST &&
-		 event.id <= WindowEvent.WINDOW_LAST))
-	     || ((eventBit = eventMask & AWTEvent.ACTION_EVENT_MASK) != 0 &&
-		 event.id >= ActionEvent.ACTION_FIRST &&
-		 event.id <= ActionEvent.ACTION_LAST)
-	     || ((eventBit = eventMask & AWTEvent.ADJUSTMENT_EVENT_MASK) != 0 &&
-		 event.id >= AdjustmentEvent.ADJUSTMENT_FIRST &&
-		 event.id <= AdjustmentEvent.ADJUSTMENT_LAST)
-	     || ((eventBit = eventMask & AWTEvent.ITEM_EVENT_MASK) != 0 &&
-		 event.id >= ItemEvent.ITEM_FIRST &&
-		 event.id <= ItemEvent.ITEM_LAST)
-	     || ((eventBit = eventMask & AWTEvent.TEXT_EVENT_MASK) != 0 &&
-		 event.id >= TextEvent.TEXT_FIRST &&
-		 event.id <= TextEvent.TEXT_LAST)
-	     || ((eventBit = eventMask & AWTEvent.INPUT_METHOD_EVENT_MASK) != 0 &&
-		 event.id >= InputMethodEvent.INPUT_METHOD_FIRST &&
-		 event.id <= InputMethodEvent.INPUT_METHOD_LAST)
-	     || ((eventBit = eventMask & AWTEvent.PAINT_EVENT_MASK) != 0 &&
-		 event.id >= PaintEvent.PAINT_FIRST &&
-		 event.id <= PaintEvent.PAINT_LAST)
-	     || ((eventBit = eventMask & AWTEvent.INVOCATION_EVENT_MASK) != 0 &&
-		 event.id >= InvocationEvent.INVOCATION_FIRST &&
-		 event.id <= InvocationEvent.INVOCATION_LAST)
-	     || ((eventBit = eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 &&
-		 event.id == HierarchyEvent.HIERARCHY_CHANGED)
+                 (event.id == MouseEvent.MOUSE_MOVED ||
+                  event.id == MouseEvent.MOUSE_DRAGGED))
+             || ((eventBit = eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0 &&
+                 event.id != MouseEvent.MOUSE_MOVED &&
+                 event.id != MouseEvent.MOUSE_DRAGGED &&
+                 event.id != MouseEvent.MOUSE_WHEEL &&
+                 event.id >= MouseEvent.MOUSE_FIRST &&
+                 event.id <= MouseEvent.MOUSE_LAST)
+             || ((eventBit = eventMask & AWTEvent.WINDOW_EVENT_MASK) != 0 &&
+                 (event.id >= WindowEvent.WINDOW_FIRST &&
+                 event.id <= WindowEvent.WINDOW_LAST))
+             || ((eventBit = eventMask & AWTEvent.ACTION_EVENT_MASK) != 0 &&
+                 event.id >= ActionEvent.ACTION_FIRST &&
+                 event.id <= ActionEvent.ACTION_LAST)
+             || ((eventBit = eventMask & AWTEvent.ADJUSTMENT_EVENT_MASK) != 0 &&
+                 event.id >= AdjustmentEvent.ADJUSTMENT_FIRST &&
+                 event.id <= AdjustmentEvent.ADJUSTMENT_LAST)
+             || ((eventBit = eventMask & AWTEvent.ITEM_EVENT_MASK) != 0 &&
+                 event.id >= ItemEvent.ITEM_FIRST &&
+                 event.id <= ItemEvent.ITEM_LAST)
+             || ((eventBit = eventMask & AWTEvent.TEXT_EVENT_MASK) != 0 &&
+                 event.id >= TextEvent.TEXT_FIRST &&
+                 event.id <= TextEvent.TEXT_LAST)
+             || ((eventBit = eventMask & AWTEvent.INPUT_METHOD_EVENT_MASK) != 0 &&
+                 event.id >= InputMethodEvent.INPUT_METHOD_FIRST &&
+                 event.id <= InputMethodEvent.INPUT_METHOD_LAST)
+             || ((eventBit = eventMask & AWTEvent.PAINT_EVENT_MASK) != 0 &&
+                 event.id >= PaintEvent.PAINT_FIRST &&
+                 event.id <= PaintEvent.PAINT_LAST)
+             || ((eventBit = eventMask & AWTEvent.INVOCATION_EVENT_MASK) != 0 &&
+                 event.id >= InvocationEvent.INVOCATION_FIRST &&
+                 event.id <= InvocationEvent.INVOCATION_LAST)
+             || ((eventBit = eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 &&
+                 event.id == HierarchyEvent.HIERARCHY_CHANGED)
              || ((eventBit = eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0 &&
                  (event.id == HierarchyEvent.ANCESTOR_MOVED ||
                   event.id == HierarchyEvent.ANCESTOR_RESIZED))
@@ -2359,7 +2358,7 @@ public abstract class Toolkit {
                  (event.id == WindowEvent.WINDOW_GAINED_FOCUS ||
                   event.id == WindowEvent.WINDOW_LOST_FOCUS))
                 || ((eventBit = eventMask & sun.awt.SunToolkit.GRAB_EVENT_MASK) != 0 &&
-                    (event instanceof sun.awt.UngrabEvent))) {  
+                    (event instanceof sun.awt.UngrabEvent))) {
                 // Get the index of the call count for this event type.
                 // Instead of using Math.log(...) we will calculate it with
                 // bit shifts. That's what previous implementation looked like:
@@ -2372,12 +2371,12 @@ public abstract class Toolkit {
                 // Call the listener as many times as it was added for this
                 // event type.
                 for (int i=0; i<calls[ci]; i++) {
-		    listener.eventDispatched(event);
+                    listener.eventDispatched(event);
                 }
-	    }
+            }
         }
     }
-    
+
     /**
      * Returns a map of visual attributes for the abstract level description
      * of the given input method highlight, or null if no mapping is found.
@@ -2391,8 +2390,8 @@ public abstract class Toolkit {
      * @since 1.3
      */
     public abstract Map<java.awt.font.TextAttribute,?>
-	mapInputMethodHighlight(InputMethodHighlight highlight)
-	throws HeadlessException;
+        mapInputMethodHighlight(InputMethodHighlight highlight)
+        throws HeadlessException;
 
     private static PropertyChangeSupport createPropertyChangeSupport(Toolkit toolkit) {
         if (toolkit instanceof SunToolkit || toolkit instanceof HeadlessToolkit) {

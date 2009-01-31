@@ -41,8 +41,8 @@ import java.util.*;
  * It can be represented :
  *  - as an integer
  *  - as a string
- * 
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 
@@ -62,12 +62,12 @@ abstract public class Enumerated  implements Serializable {
       throw new IllegalArgumentException() ;
     }
   }
- 
+
   /**
    * Construct an enumerated from its integer form.
-   * 
+   *
    * @param valueIndex The integer form.
-   * @exception IllegalArgumentException One of the arguments passed to 
+   * @exception IllegalArgumentException One of the arguments passed to
    *            the method is illegal or inappropriate.
    */
   public Enumerated(int valueIndex) throws IllegalArgumentException {
@@ -76,12 +76,12 @@ abstract public class Enumerated  implements Serializable {
     }
     value = valueIndex ;
   }
- 
+
   /**
    * Construct an enumerated from its Integer form.
-   * 
+   *
    * @param valueIndex The Integer form.
-   * @exception IllegalArgumentException One of the arguments passed to 
+   * @exception IllegalArgumentException One of the arguments passed to
    *            the method is illegal or inappropriate.
    */
   public Enumerated(Integer valueIndex) throws IllegalArgumentException {
@@ -90,13 +90,13 @@ abstract public class Enumerated  implements Serializable {
     }
     value = valueIndex.intValue() ;
   }
- 
- 
+
+
   /**
    * Construct an enumerated from its string form.
-   * 
+   *
    * @param valueString The string form.
-   * @exception IllegalArgumentException One of the arguments passed 
+   * @exception IllegalArgumentException One of the arguments passed
    *  to the method is illegal or inappropriate.
    */
   public Enumerated(String valueString) throws IllegalArgumentException {
@@ -112,7 +112,7 @@ abstract public class Enumerated  implements Serializable {
 
   /**
    * Return the integer form of the enumerated.
-   * 
+   *
    * @return The integer form
    */
 
@@ -130,8 +130,8 @@ abstract public class Enumerated  implements Serializable {
   public Enumeration valueIndexes() {
     return getIntTable().keys() ;
   }
-  
-  
+
+
   /**
    * Returns an Java enumeration of the permitted strings.
    *
@@ -148,22 +148,22 @@ abstract public class Enumerated  implements Serializable {
    *
    * The result is true if and only if the argument is not null
    * and is of the same class.
-   * 
+   *
    * @param obj The object to compare with.
    *
    * @return True if this and obj are the same; false otherwise
    */
   public boolean equals(Object obj) {
-    
+
     return ((obj != null) &&
             (getClass() == obj.getClass()) &&
             (value == ((Enumerated)obj).value)) ;
   }
- 
- 
+
+
   /**
    * Returns the hash code for this enumerated.
-   * 
+   *
    * @return A hash code value for this object.
    */
   public int hashCode() {
@@ -174,7 +174,7 @@ abstract public class Enumerated  implements Serializable {
 
   /**
    * Returns the string form of this enumerated.
-   * 
+   *
    * @return The string for for this object.
    */
 
@@ -194,9 +194,9 @@ abstract public class Enumerated  implements Serializable {
    */
 
   protected abstract Hashtable getIntTable() ;
-  
-  
-  
+
+
+
   /**
    * Returns the hashtable of the string forms.
    * getStringTable().get(s) returns the integer form associated
@@ -208,12 +208,12 @@ abstract public class Enumerated  implements Serializable {
    */
 
   protected abstract Hashtable getStringTable() ;
- 
- 
+
+
   /**
    * This variable keeps the integer form of the enumerated.
    * The string form is retreived using getIntTable().
-   */  
+   */
   protected int value ;
-  
+
 }

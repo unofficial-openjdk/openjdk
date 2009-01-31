@@ -39,7 +39,7 @@ public class PutAndPutAll {
             throw new Exception("put should check for non Attributes.Name names");
         } catch (ClassCastException e) {
         }
-        
+
         try{
             at.put(new Attributes.Name("name"), new Integer(0));
             throw new Exception("put should check for non String values");

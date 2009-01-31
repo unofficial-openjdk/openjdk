@@ -43,7 +43,6 @@ import java.awt.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Rich Schiavi
  */
 public class MotifRadioButtonUI extends BasicRadioButtonUI {
@@ -53,44 +52,44 @@ public class MotifRadioButtonUI extends BasicRadioButtonUI {
     protected Color focusColor;
 
     private boolean defaults_initialized = false;
-    
+
     // ********************************
     //         Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent c) {
-	return motifRadioButtonUI;
+        return motifRadioButtonUI;
     }
 
     // ********************************
     //          Install Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
+            defaults_initialized = true;
+        }
     }
 
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
-    
+
     // ********************************
     //          Default Accessors
     // ********************************
 
     protected Color getFocusColor() {
-	return focusColor;
+        return focusColor;
     }
-    
+
     // ********************************
     //         Paint Methods
     // ********************************
     protected void paintFocus(Graphics g, Rectangle t, Dimension d){
-	g.setColor(getFocusColor());
-	g.drawRect(0,0,d.width-1,d.height-1);
-    } 
-    
-} 
+        g.setColor(getFocusColor());
+        g.drawRect(0,0,d.width-1,d.height-1);
+    }
+
+}

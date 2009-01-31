@@ -172,7 +172,7 @@ public class ThreadPoolAccTest {
                     monitor[i].stop();
         }
 
-	return 0;
+        return 0;
     }
 
     /*
@@ -190,12 +190,12 @@ public class ThreadPoolAccTest {
     public static void main (String args[]) throws Exception {
         ThreadPoolAccTest test = new ThreadPoolAccTest();
         int error = test.runTest();
-	if (error > 0) {
-	    echo(">>> Unhappy Bye, Bye!");
-	    throw new IllegalStateException(
+        if (error > 0) {
+            echo(">>> Unhappy Bye, Bye!");
+            throw new IllegalStateException(
                 "Test FAILED: Monitor task ran on wrong security context!");
-	} else {
-	    echo(">>> Happy Bye, Bye!");
-	}
+        } else {
+            echo(">>> Happy Bye, Bye!");
+        }
     }
 }

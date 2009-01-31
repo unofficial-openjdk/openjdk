@@ -26,8 +26,8 @@
 package com.sun.jdi;
 
 /**
- * The type of all primitive <code>void</code> values 
- * accessed in the target VM. Calls to {@link Value#type} will return an 
+ * The type of all primitive <code>void</code> values
+ * accessed in the target VM. Calls to {@link Value#type} will return an
  * implementor of this interface.
  *
  * @see VoidValue
@@ -37,4 +37,3 @@ package com.sun.jdi;
  */
 public interface VoidType extends Type {
 }
-

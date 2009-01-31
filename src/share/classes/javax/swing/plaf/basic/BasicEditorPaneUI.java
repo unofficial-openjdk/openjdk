@@ -49,7 +49,6 @@ import javax.swing.border.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public class BasicEditorPaneUI extends BasicTextUI {
 
@@ -67,7 +66,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
      * Creates a new BasicEditorPaneUI.
      */
     public BasicEditorPaneUI() {
-	super();
+        super();
     }
 
     /**
@@ -78,7 +77,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
      * @return the name ("EditorPane")
      */
     protected String getPropertyPrefix() {
-	return "EditorPane";
+        return "EditorPane";
     }
 
     /**
@@ -101,7 +100,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
         cleanDisplayProperties();
         super.uninstallUI(c);
     }
-    
+
     /**
      * Fetches the EditorKit for the UI.  This is whatever is
      * currently set in the associated JEditorPane.
@@ -110,8 +109,8 @@ public class BasicEditorPaneUI extends BasicTextUI {
      * @see TextUI#getEditorKit
      */
     public EditorKit getEditorKit(JTextComponent tc) {
-	JEditorPane pane = (JEditorPane) getComponent();
-	return pane.getEditorKit();
+        JEditorPane pane = (JEditorPane) getComponent();
+        return pane.getEditorKit();
     }
 
     /**
@@ -121,20 +120,20 @@ public class BasicEditorPaneUI extends BasicTextUI {
     ActionMap getActionMap() {
         ActionMap am = new ActionMapUIResource();
         am.put("requestFocus", new FocusAction());
-	EditorKit editorKit = getEditorKit(getComponent());
-	if (editorKit != null) {
-	    Action[] actions = editorKit.getActions();
-	    if (actions != null) {
-		addActions(am, actions);
-	    }
-	}
+        EditorKit editorKit = getEditorKit(getComponent());
+        if (editorKit != null) {
+            Action[] actions = editorKit.getActions();
+            if (actions != null) {
+                addActions(am, actions);
+            }
+        }
         am.put(TransferHandler.getCutAction().getValue(Action.NAME),
                 TransferHandler.getCutAction());
         am.put(TransferHandler.getCopyAction().getValue(Action.NAME),
                 TransferHandler.getCopyAction());
         am.put(TransferHandler.getPasteAction().getValue(Action.NAME),
                 TransferHandler.getPasteAction());
-	return am;
+        return am;
     }
 
     /**
@@ -150,28 +149,28 @@ public class BasicEditorPaneUI extends BasicTextUI {
     protected void propertyChange(PropertyChangeEvent evt) {
         super.propertyChange(evt);
         String name = evt.getPropertyName();
-	if ("editorKit".equals(name)) {
-	    ActionMap map = SwingUtilities.getUIActionMap(getComponent());
-	    if (map != null) {
-		Object oldValue = evt.getOldValue();
-		if (oldValue instanceof EditorKit) {
-		    Action[] actions = ((EditorKit)oldValue).getActions();
-		    if (actions != null) {
-			removeActions(map, actions);
-		    }
-		}
-		Object newValue = evt.getNewValue();
-		if (newValue instanceof EditorKit) {
-		    Action[] actions = ((EditorKit)newValue).getActions();
-		    if (actions != null) {
-			addActions(map, actions);
-		    }
-		}
-	    }
-	    updateFocusTraversalKeys();
-	} else if ("editable".equals(name)) {
-	    updateFocusTraversalKeys();
-	} else if ("foreground".equals(name)
+        if ("editorKit".equals(name)) {
+            ActionMap map = SwingUtilities.getUIActionMap(getComponent());
+            if (map != null) {
+                Object oldValue = evt.getOldValue();
+                if (oldValue instanceof EditorKit) {
+                    Action[] actions = ((EditorKit)oldValue).getActions();
+                    if (actions != null) {
+                        removeActions(map, actions);
+                    }
+                }
+                Object newValue = evt.getNewValue();
+                if (newValue instanceof EditorKit) {
+                    Action[] actions = ((EditorKit)newValue).getActions();
+                    if (actions != null) {
+                        addActions(map, actions);
+                    }
+                }
+            }
+            updateFocusTraversalKeys();
+        } else if ("editable".equals(name)) {
+            updateFocusTraversalKeys();
+        } else if ("foreground".equals(name)
                    || "font".equals(name)
                    || "document".equals(name)
                    || JEditorPane.W3C_LENGTH_UNITS.equals(name)
@@ -188,7 +187,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
                     getClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES);
                 boolean honorDisplayProperties = false;
                 if (honorDisplayPropertiesObject instanceof Boolean) {
-                    honorDisplayProperties = 
+                    honorDisplayProperties =
                         ((Boolean)honorDisplayPropertiesObject).booleanValue();
                 }
                 if (honorDisplayProperties) {
@@ -196,24 +195,24 @@ public class BasicEditorPaneUI extends BasicTextUI {
                 }
             }
 
-               
+
         }
     }
 
     void removeActions(ActionMap map, Action[] actions) {
-	int n = actions.length;
-	for (int i = 0; i < n; i++) {
-	    Action a = actions[i];
-	    map.remove(a.getValue(Action.NAME));
-	}
+        int n = actions.length;
+        for (int i = 0; i < n; i++) {
+            Action a = actions[i];
+            map.remove(a.getValue(Action.NAME));
+        }
     }
 
     void addActions(ActionMap map, Action[] actions) {
-	int n = actions.length;
-	for (int i = 0; i < n; i++) {
-	    Action a = actions[i];
-	    map.put(a.getValue(Action.NAME), a);
-	}
+        int n = actions.length;
+        for (int i = 0; i < n; i++) {
+            Action a = actions[i];
+            map.put(a.getValue(Action.NAME), a);
+        }
     }
 
     void updateDisplayProperties(Font font, Color fg) {
@@ -225,7 +224,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
                                                           W3C_LENGTH_UNITS);
         boolean w3cLengthUnits = false;
         if (honorDisplayPropertiesObject instanceof Boolean) {
-            honorDisplayProperties = 
+            honorDisplayProperties =
                 ((Boolean)honorDisplayPropertiesObject).booleanValue();
         }
         if (w3cLengthUnitsObject instanceof Boolean) {
@@ -249,21 +248,21 @@ public class BasicEditorPaneUI extends BasicTextUI {
         if ( w3cLengthUnits ) {
             Document doc = getComponent().getDocument();
             if (doc instanceof HTMLDocument) {
-                StyleSheet documentStyleSheet = 
+                StyleSheet documentStyleSheet =
                     ((HTMLDocument)doc).getStyleSheet();
                 documentStyleSheet.addRule("W3C_LENGTH_UNITS_ENABLE");
             }
         } else {
             Document doc = getComponent().getDocument();
             if (doc instanceof HTMLDocument) {
-                StyleSheet documentStyleSheet = 
+                StyleSheet documentStyleSheet =
                     ((HTMLDocument)doc).getStyleSheet();
                 documentStyleSheet.addRule("W3C_LENGTH_UNITS_DISABLE");
             }
 
         }
     }
-    
+
     /**
      * Attribute key to reference the default font.
      * used in javax.swing.text.StyleContext.getFont
@@ -274,7 +273,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
     void cleanDisplayProperties() {
         Document document = getComponent().getDocument();
         if (document instanceof HTMLDocument) {
-            StyleSheet documentStyleSheet = 
+            StyleSheet documentStyleSheet =
                 ((HTMLDocument)document).getStyleSheet();
             StyleSheet[] styleSheets = documentStyleSheet.getStyleSheets();
             if (styleSheets != null) {
@@ -292,16 +291,16 @@ public class BasicEditorPaneUI extends BasicTextUI {
             }
         }
     }
-    
+
     static class StyleSheetUIResource extends StyleSheet implements UIResource {
     }
-    
+
     private void updateCSS(Font font, Color fg) {
         JTextComponent component = getComponent();
         Document document = component.getDocument();
         if (document instanceof HTMLDocument) {
             StyleSheet styleSheet = new StyleSheetUIResource();
-            StyleSheet documentStyleSheet = 
+            StyleSheet documentStyleSheet =
                 ((HTMLDocument)document).getStyleSheet();
             StyleSheet[] styleSheets = documentStyleSheet.getStyleSheets();
             if (styleSheets != null) {
@@ -316,7 +315,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
                                                        fg);
             styleSheet.addRule(cssRule);
             documentStyleSheet.addStyleSheet(styleSheet);
-            documentStyleSheet.addRule("BASE_SIZE " + 
+            documentStyleSheet.addRule("BASE_SIZE " +
                                        component.getFont().getSize());
             Style style = ((StyledDocument) document).getStyle(StyleContext.DEFAULT_STYLE);
             if (! font.equals(style.getAttribute(FONT_ATTRIBUTE_KEY))) {
@@ -354,7 +353,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
             }
         }
     }
-    
+
     /**
      * Update the font in the default style of the document.
      *
@@ -369,7 +368,7 @@ public class BasicEditorPaneUI extends BasicTextUI {
             return;
         }
 
-        String fontFamily = (String) style.getAttribute(StyleConstants.FontFamily); 
+        String fontFamily = (String) style.getAttribute(StyleConstants.FontFamily);
         Integer fontSize = (Integer) style.getAttribute(StyleConstants.FontSize);
         Boolean isBold = (Boolean) style.getAttribute(StyleConstants.Bold);
         Boolean isItalic = (Boolean) style.getAttribute(StyleConstants.Italic);
@@ -389,20 +388,20 @@ public class BasicEditorPaneUI extends BasicTextUI {
             }
             if (fontAttribute != null) {
                 style.removeAttribute(FONT_ATTRIBUTE_KEY);
-           } 
+           }
         } else {
             if (! font.getName().equals(fontFamily)) {
                 StyleConstants.setFontFamily(style, font.getName());
             }
-            if (fontSize == null 
+            if (fontSize == null
                   || fontSize.intValue() != font.getSize()) {
                 StyleConstants.setFontSize(style, font.getSize());
             }
-            if (isBold == null 
+            if (isBold == null
                   || isBold.booleanValue() != font.isBold()) {
                 StyleConstants.setBold(style, font.isBold());
             }
-            if (isItalic == null 
+            if (isItalic == null
                   || isItalic.booleanValue() != font.isItalic()) {
                 StyleConstants.setItalic(style, font.isItalic());
             }
@@ -412,5 +411,3 @@ public class BasicEditorPaneUI extends BasicTextUI {
         }
     }
 }
-
-

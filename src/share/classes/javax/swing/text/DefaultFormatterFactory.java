@@ -70,7 +70,6 @@ import javax.swing.JFormattedTextField;
  *
  * @see javax.swing.JFormattedTextField
  *
- * @version %I% %G%
  * @since 1.4
  */
 public class DefaultFormatterFactory extends JFormattedTextField.AbstractFormatterFactory implements Serializable {
@@ -206,7 +205,7 @@ public class DefaultFormatterFactory extends JFormattedTextField.AbstractFormatt
     /**
      * Sets the <code>JFormattedTextField.AbstractFormatter</code> to use if
      * the <code>JFormattedTextField</code> is not being edited and either
-     * the value is not-null, or the value is null and a null formatter has 
+     * the value is not-null, or the value is null and a null formatter has
      * has not been specified.
      *
      * @param atf JFormattedTextField.AbstractFormatter to use when the
@@ -219,7 +218,7 @@ public class DefaultFormatterFactory extends JFormattedTextField.AbstractFormatt
     /**
      * Returns the <code>JFormattedTextField.AbstractFormatter</code> to use
      * if the <code>JFormattedTextField</code> is not being edited and either
-     * the value is not-null, or the value is null and a null formatter has 
+     * the value is not-null, or the value is null and a null formatter has
      * has not been specified.
      *
      * @return JFormattedTextField.AbstractFormatter to use when the
@@ -232,7 +231,7 @@ public class DefaultFormatterFactory extends JFormattedTextField.AbstractFormatt
     /**
      * Sets the <code>JFormattedTextField.AbstractFormatter</code> to use if
      * the <code>JFormattedTextField</code> is being edited and either
-     * the value is not-null, or the value is null and a null formatter has 
+     * the value is not-null, or the value is null and a null formatter has
      * has not been specified.
      *
      * @param atf JFormattedTextField.AbstractFormatter to use when the
@@ -245,7 +244,7 @@ public class DefaultFormatterFactory extends JFormattedTextField.AbstractFormatt
     /**
      * Returns the <code>JFormattedTextField.AbstractFormatter</code> to use
      * if the <code>JFormattedTextField</code> is being edited and either
-     * the value is not-null, or the value is null and a null formatter has 
+     * the value is not-null, or the value is null and a null formatter has
      * has not been specified.
      *
      * @return JFormattedTextField.AbstractFormatter to use when the

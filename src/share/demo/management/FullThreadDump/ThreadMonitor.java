@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import static java.lang.management.ManagementFactory.*;
 import java.lang.management.ThreadMXBean;
@@ -47,7 +45,6 @@ import java.util.*;
  * and to perform deadlock detection.
  *
  * @author  Mandy Chung
- * @version %% %G%
  */
 public class ThreadMonitor {
     private MBeanServerConnection server;
@@ -75,7 +72,7 @@ public class ThreadMonitor {
             ie.initCause(e);
             throw ie;
        }
-       parseMBeanInfo(); 
+       parseMBeanInfo();
     }
 
     /**
@@ -93,9 +90,9 @@ public class ThreadMonitor {
         if (canDumpLocks) {
             if (tmbean.isObjectMonitorUsageSupported() &&
                 tmbean.isSynchronizerUsageSupported()) {
-                // Print lock info if both object monitor usage 
+                // Print lock info if both object monitor usage
                 // and synchronizer usage are supported.
-                // This sample code can be modified to handle if 
+                // This sample code can be modified to handle if
                 // either monitor usage or synchronizer usage is supported.
                 dumpThreadInfoWithLocks();
             }
@@ -148,7 +145,7 @@ public class ThreadMonitor {
        }
        System.out.println();
     }
-                                                                                
+
     private void printThread(ThreadInfo ti) {
        StringBuilder sb = new StringBuilder("\"" + ti.getThreadName() + "\"" +
                                             " Id=" + ti.getThreadId() +
@@ -177,7 +174,7 @@ public class ThreadMonitor {
                               " " + mi.getLockedStackFrame());
        }
     }
-                                                                                
+
     private void printLockInfo(LockInfo[] locks) {
        System.out.println(INDENT + "Locked synchronizers: count = " + locks.length);
        for (LockInfo li : locks) {
@@ -192,10 +189,10 @@ public class ThreadMonitor {
      */
     public boolean findDeadlock() {
        long[] tids;
-       if (findDeadlocksMethodName.equals("findDeadlockedThreads") && 
+       if (findDeadlocksMethodName.equals("findDeadlockedThreads") &&
                tmbean.isSynchronizerUsageSupported()) {
            tids = tmbean.findDeadlockedThreads();
-           if (tids == null) { 
+           if (tids == null) {
                return false;
            }
 
@@ -208,7 +205,7 @@ public class ThreadMonitor {
            }
        } else {
            tids = tmbean.findMonitorDeadlockedThreads();
-           if (tids == null) { 
+           if (tids == null) {
                return false;
            }
            ThreadInfo[] infos = tmbean.getThreadInfo(tids, Integer.MAX_VALUE);
@@ -240,7 +237,7 @@ public class ThreadMonitor {
                 // synchronizers and locks cannot be dumped.
                 findDeadlocksMethodName = "findMonitorDeadlockedThreads";
                 canDumpLocks = false;
-            }   
+            }
         } catch (IntrospectionException e) {
             InternalError ie = new InternalError(e.getMessage());
             ie.initCause(e);

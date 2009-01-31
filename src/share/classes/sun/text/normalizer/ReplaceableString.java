@@ -82,7 +82,7 @@ public class ReplaceableString implements Replaceable {
      * Return the number of characters contained in this object.
      * <code>Replaceable</code> API.
      * @stable ICU 2.0
-     */ 
+     */
     public int length() {
         return buf.length();
     }

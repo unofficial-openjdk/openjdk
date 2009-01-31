@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -58,13 +58,13 @@ Java_sun_font_SunLayoutEngine_initGVIDs
     (JNIEnv *env, jclass cls) {
     gvdClass = env->FindClass(gvdClassName);
     if (!gvdClass) {
-	JNU_ThrowClassNotFoundException(env, gvdClassName);
-	return;
+        JNU_ThrowClassNotFoundException(env, gvdClassName);
+        return;
     }
     gvdClass = (jclass)env->NewGlobalRef(gvdClass);
       if (!gvdClass) {
-	JNU_ThrowInternalError(env, "could not create global ref");
-	return;
+        JNU_ThrowInternalError(env, "could not create global ref");
+        return;
     }
     gvdCountFID = env->GetFieldID(gvdClass, "_count", "I");
     if (!gvdCountFID) {
@@ -126,7 +126,7 @@ int putGV(JNIEnv* env, jint gmask, jint baseIndex, jobject gvdata, const LayoutE
       JNU_ThrowInternalError(env, "indices array null");
       return 0;
     }
-      
+
     int countDelta = 0;
 
     // le_uint32 is the same size as jint... forever, we hope
@@ -141,12 +141,12 @@ int putGV(JNIEnv* env, jint gmask, jint baseIndex, jobject gvdata, const LayoutE
           engine->getGlyphPositions(positions + (count * 2), status);
           engine->getCharIndices((le_int32*)(indices + count), baseIndex, status);
 
-	  countDelta = glyphCount;
+          countDelta = glyphCount;
 
           // !!! need engine->getFlags to signal positions, indices data
-	  /* "0" arg used instead of JNI_COMMIT as we want the carray
-	   * to be freed by any VM that actually passes us a copy.
-	   */
+          /* "0" arg used instead of JNI_COMMIT as we want the carray
+           * to be freed by any VM that actually passes us a copy.
+           */
           env->ReleasePrimitiveArrayCritical(inxArray, indices, 0);
         }
         env->ReleasePrimitiveArrayCritical(posArray, positions, 0);
@@ -169,9 +169,9 @@ int putGV(JNIEnv* env, jint gmask, jint baseIndex, jobject gvdata, const LayoutE
  */
 JNIEXPORT void JNICALL Java_sun_font_SunLayoutEngine_nativeLayout
    (JNIEnv *env, jclass cls, jobject font2d, jobject strike, jfloatArray matrix, jint gmask,
-   jint baseIndex, jcharArray text, jint start, jint limit, jint min, jint max, 
+   jint baseIndex, jcharArray text, jint start, jint limit, jint min, jint max,
    jint script, jint lang, jint typo_flags, jobject pt, jobject gvdata,
-   jlong upem, jlong layoutTables) 
+   jlong upem, jlong layoutTables)
 {
     //  fprintf(stderr, "nl font: %x strike: %x script: %d\n", font2d, strike, script); fflush(stderr);
   float mat[4];

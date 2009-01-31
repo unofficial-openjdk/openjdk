@@ -47,9 +47,9 @@ import javax.accessibility.*;
  * A single line input field that lets the user select a
  * number or an object value from an ordered sequence. Spinners typically
  * provide a pair of tiny arrow buttons for stepping through the elements
- * of the sequence. The keyboard up/down arrow keys also cycle through the 
- * elements. The user may also be allowed to type a (legal) value directly 
- * into the spinner. Although combo boxes provide similar functionality, 
+ * of the sequence. The keyboard up/down arrow keys also cycle through the
+ * elements. The user may also be allowed to type a (legal) value directly
+ * into the spinner. Although combo boxes provide similar functionality,
  * spinners are sometimes preferred because they don't require a drop down list
  * that can obscure important data.
  * <p>
@@ -62,11 +62,11 @@ import javax.accessibility.*;
  * <p>
  * A <code>JSpinner</code> has a single child component that's
  * responsible for displaying
- * and potentially changing the current element or <i>value</i> of 
+ * and potentially changing the current element or <i>value</i> of
  * the model, which is called the <code>editor</code>.  The editor is created
- * by the <code>JSpinner</code>'s constructor and can be changed with the 
+ * by the <code>JSpinner</code>'s constructor and can be changed with the
  * <code>editor</code> property.  The <code>JSpinner</code>'s editor stays
- * in sync with the model by listening for <code>ChangeEvent</code>s. If the 
+ * in sync with the model by listening for <code>ChangeEvent</code>s. If the
  * user has changed the value displayed by the <code>editor</code> it is
  * possible for the <code>model</code>'s value to differ from that of
  * the <code>editor</code>. To make sure the <code>model</code> has the same
@@ -107,20 +107,19 @@ import javax.accessibility.*;
  * of all JavaBeans<sup><font size="-2">TM</font></sup>
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
- * 
+ *
  * @beaninfo
  *   attribute: isContainer false
- * description: A single line input field that lets the user select a 
- *     number or an object value from an ordered set.  
- * 
+ * description: A single line input field that lets the user select a
+ *     number or an object value from an ordered set.
+ *
  * @see SpinnerModel
  * @see AbstractSpinnerModel
  * @see SpinnerListModel
  * @see SpinnerNumberModel
  * @see SpinnerDateModel
  * @see JFormattedTextField
- * 
- * @version %I% %G%
+ *
  * @author Hans Muller
  * @author Lynn Monsanto (accessibility)
  * @since 1.4
@@ -144,12 +143,12 @@ public class JSpinner extends JComponent implements Accessible
 
     /**
      * Constructs a complete spinner with pair of next/previous buttons
-     * and an editor for the <code>SpinnerModel</code>. 
+     * and an editor for the <code>SpinnerModel</code>.
      */
     public JSpinner(SpinnerModel model) {
-	this.model = model;
-	this.editor = createEditor(model);
-	setOpaque(true);
+        this.model = model;
+        this.editor = createEditor(model);
+        setOpaque(true);
         updateUI();
     }
 
@@ -159,7 +158,7 @@ public class JSpinner extends JComponent implements Accessible
      * with initial value 0 and no minimum or maximum limits.
      */
     public JSpinner() {
-	this(new SpinnerNumberModel());
+        this(new SpinnerNumberModel());
     }
 
 
@@ -185,7 +184,7 @@ public class JSpinner extends JComponent implements Accessible
 
 
     /**
-     * Returns the suffix used to construct the name of the look and feel 
+     * Returns the suffix used to construct the name of the look and feel
      * (L&F) class used to render this component.
      *
      * @return the string "SpinnerUI"
@@ -210,11 +209,11 @@ public class JSpinner extends JComponent implements Accessible
 
 
     /**
-     * This method is called by the constructors to create the 
+     * This method is called by the constructors to create the
      * <code>JComponent</code>
-     * that displays the current value of the sequence.  The editor may 
+     * that displays the current value of the sequence.  The editor may
      * also allow the user to enter an element of the sequence directly.
-     * An editor must listen for <code>ChangeEvents</code> on the 
+     * An editor must listen for <code>ChangeEvents</code> on the
      * <code>model</code> and keep the value it displays
      * in sync with the value of the model.
      * <p>
@@ -228,31 +227,31 @@ public class JSpinner extends JComponent implements Accessible
      * <li> <code>SpinnerListModel =&gt; JSpinner.ListEditor</code>
      * <li> <i>all others</i> =&gt; <code>JSpinner.DefaultEditor</code>
      * </ul>
-     * 
+     *
      * @return a component that displays the current value of the sequence
      * @param model the value of getModel
      * @see #getModel
      * @see #setEditor
      */
     protected JComponent createEditor(SpinnerModel model) {
-	if (model instanceof SpinnerDateModel) {
-	    return new DateEditor(this);
-	}
-	else if (model instanceof SpinnerListModel) {
-	    return new ListEditor(this);
-	}
-	else if (model instanceof SpinnerNumberModel) {
-	    return new NumberEditor(this);
-	}
-	else {
-	    return new DefaultEditor(this);
-	}
+        if (model instanceof SpinnerDateModel) {
+            return new DateEditor(this);
+        }
+        else if (model instanceof SpinnerListModel) {
+            return new ListEditor(this);
+        }
+        else if (model instanceof SpinnerNumberModel) {
+            return new NumberEditor(this);
+        }
+        else {
+            return new DefaultEditor(this);
+        }
     }
 
 
     /**
-     * Changes the model that represents the value of this spinner.  
-     * If the editor property has not been explicitly set, 
+     * Changes the model that represents the value of this spinner.
+     * If the editor property has not been explicitly set,
      * the editor property is (implicitly) set after the <code>"model"</code>
      * <code>PropertyChangeEvent</code> has been fired.  The editor
      * property is set to the value returned by <code>createEditor</code>,
@@ -260,120 +259,120 @@ public class JSpinner extends JComponent implements Accessible
      * <pre>
      * setEditor(createEditor(model));
      * </pre>
-     * 
+     *
      * @param model the new <code>SpinnerModel</code>
      * @see #getModel
      * @see #getEditor
      * @see #setEditor
      * @throws IllegalArgumentException if model is <code>null</code>
-     * 
+     *
      * @beaninfo
      *        bound: true
      *    attribute: visualUpdate true
      *  description: Model that represents the value of this spinner.
      */
     public void setModel(SpinnerModel model) {
-	if (model == null) {
-	    throw new IllegalArgumentException("null model");
-	}
-	if (!model.equals(this.model)) {
-	    SpinnerModel oldModel = this.model;
-	    this.model = model;
-	    if (modelListener != null) {
+        if (model == null) {
+            throw new IllegalArgumentException("null model");
+        }
+        if (!model.equals(this.model)) {
+            SpinnerModel oldModel = this.model;
+            this.model = model;
+            if (modelListener != null) {
                 oldModel.removeChangeListener(modelListener);
-		this.model.addChangeListener(modelListener);
-	    }
-	    firePropertyChange("model", oldModel, model);
-	    if (!editorExplicitlySet) {
-		setEditor(createEditor(model)); // sets editorExplicitlySet true
-		editorExplicitlySet = false;
-	    }
-	    repaint();
-	    revalidate();
-	}
+                this.model.addChangeListener(modelListener);
+            }
+            firePropertyChange("model", oldModel, model);
+            if (!editorExplicitlySet) {
+                setEditor(createEditor(model)); // sets editorExplicitlySet true
+                editorExplicitlySet = false;
+            }
+            repaint();
+            revalidate();
+        }
     }
 
 
     /**
      * Returns the <code>SpinnerModel</code> that defines
      * this spinners sequence of values.
-     * 
+     *
      * @return the value of the model property
      * @see #setModel
      */
     public SpinnerModel getModel() {
-	return model;
+        return model;
     }
 
 
     /**
      * Returns the current value of the model, typically
-     * this value is displayed by the <code>editor</code>. If the 
+     * this value is displayed by the <code>editor</code>. If the
      * user has changed the value displayed by the <code>editor</code> it is
      * possible for the <code>model</code>'s value to differ from that of
      * the <code>editor</code>, refer to the class level javadoc for examples
      * of how to deal with this.
      * <p>
-     * This method simply delegates to the <code>model</code>.  
+     * This method simply delegates to the <code>model</code>.
      * It is equivalent to:
      * <pre>
      * getModel().getValue()
      * </pre>
-     * 
+     *
      * @see #setValue
      * @see SpinnerModel#getValue
      */
     public Object getValue() {
-	return getModel().getValue();
+        return getModel().getValue();
     }
 
 
     /**
      * Changes current value of the model, typically
      * this value is displayed by the <code>editor</code>.
-     * If the <code>SpinnerModel</code> implementation 
+     * If the <code>SpinnerModel</code> implementation
      * doesn't support the specified value then an
-     * <code>IllegalArgumentException</code> is thrown.  
+     * <code>IllegalArgumentException</code> is thrown.
      * <p>
-     * This method simply delegates to the <code>model</code>.  
+     * This method simply delegates to the <code>model</code>.
      * It is equivalent to:
      * <pre>
      * getModel().setValue(value)
      * </pre>
-     * 
+     *
      * @throws IllegalArgumentException if <code>value</code> isn't allowed
      * @see #getValue
      * @see SpinnerModel#setValue
      */
     public void setValue(Object value) {
-	getModel().setValue(value);
+        getModel().setValue(value);
     }
 
 
     /**
-     * Returns the object in the sequence that comes after the object returned 
-     * by <code>getValue()</code>. If the end of the sequence has been reached 
-     * then return <code>null</code>.  
+     * Returns the object in the sequence that comes after the object returned
+     * by <code>getValue()</code>. If the end of the sequence has been reached
+     * then return <code>null</code>.
      * Calling this method does not effect <code>value</code>.
      * <p>
-     * This method simply delegates to the <code>model</code>.  
+     * This method simply delegates to the <code>model</code>.
      * It is equivalent to:
      * <pre>
      * getModel().getNextValue()
      * </pre>
-     * 
+     *
      * @return the next legal value or <code>null</code> if one doesn't exist
      * @see #getValue
      * @see #getPreviousValue
      * @see SpinnerModel#getNextValue
      */
     public Object getNextValue() {
-	return getModel().getNextValue();
+        return getModel().getNextValue();
     }
 
 
     /**
-     * We pass <code>Change</code> events along to the listeners with the 
+     * We pass <code>Change</code> events along to the listeners with the
      * the slider (instead of the model itself) as the event source.
      */
     private class ModelListener implements ChangeListener, Serializable {
@@ -385,14 +384,14 @@ public class JSpinner extends JComponent implements Accessible
 
     /**
      * Adds a listener to the list that is notified each time a change
-     * to the model occurs.  The source of <code>ChangeEvents</code> 
-     * delivered to <code>ChangeListeners</code> will be this 
+     * to the model occurs.  The source of <code>ChangeEvents</code>
+     * delivered to <code>ChangeListeners</code> will be this
      * <code>JSpinner</code>.  Note also that replacing the model
-     * will not affect listeners added directly to JSpinner. 
-     * Applications can add listeners to  the model directly.  In that 
-     * case is that the source of the event would be the 
-     * <code>SpinnerModel</code>.  
-     * 
+     * will not affect listeners added directly to JSpinner.
+     * Applications can add listeners to  the model directly.  In that
+     * case is that the source of the event would be the
+     * <code>SpinnerModel</code>.
+     *
      * @param listener the <code>ChangeListener</code> to add
      * @see #removeChangeListener
      * @see #getModel
@@ -434,12 +433,12 @@ public class JSpinner extends JComponent implements Accessible
 
 
     /**
-     * Sends a <code>ChangeEvent</code>, whose source is this 
-     * <code>JSpinner</code>, to each <code>ChangeListener</code>.  
-     * When a <code>ChangeListener</code> has been added 
-     * to the spinner, this method method is called each time 
+     * Sends a <code>ChangeEvent</code>, whose source is this
+     * <code>JSpinner</code>, to each <code>ChangeListener</code>.
+     * When a <code>ChangeListener</code> has been added
+     * to the spinner, this method method is called each time
      * a <code>ChangeEvent</code> is received from the model.
-     * 
+     *
      * @see #addChangeListener
      * @see #removeChangeListener
      * @see EventListenerList
@@ -454,22 +453,22 @@ public class JSpinner extends JComponent implements Accessible
                 ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
             }
         }
-    }   
+    }
 
 
     /**
      * Returns the object in the sequence that comes
      * before the object returned by <code>getValue()</code>.
-     * If the end of the sequence has been reached then 
+     * If the end of the sequence has been reached then
      * return <code>null</code>. Calling this method does
      * not effect <code>value</code>.
      * <p>
-     * This method simply delegates to the <code>model</code>.  
+     * This method simply delegates to the <code>model</code>.
      * It is equivalent to:
      * <pre>
      * getModel().getPreviousValue()
      * </pre>
-     * 
+     *
      * @return the previous legal value or <code>null</code>
      *   if one doesn't exist
      * @see #getValue
@@ -477,58 +476,58 @@ public class JSpinner extends JComponent implements Accessible
      * @see SpinnerModel#getPreviousValue
      */
     public Object getPreviousValue() {
-	return getModel().getPreviousValue();
+        return getModel().getPreviousValue();
     }
 
 
     /**
-     * Changes the <code>JComponent</code> that displays the current value 
-     * of the <code>SpinnerModel</code>.  It is the responsibility of this 
+     * Changes the <code>JComponent</code> that displays the current value
+     * of the <code>SpinnerModel</code>.  It is the responsibility of this
      * method to <i>disconnect</i> the old editor from the model and to
      * connect the new editor.  This may mean removing the
      * old editors <code>ChangeListener</code> from the model or the
      * spinner itself and adding one for the new editor.
-     * 
+     *
      * @param editor the new editor
      * @see #getEditor
      * @see #createEditor
      * @see #getModel
      * @throws IllegalArgumentException if editor is <code>null</code>
-     * 
+     *
      * @beaninfo
      *        bound: true
      *    attribute: visualUpdate true
      *  description: JComponent that displays the current value of the model
      */
     public void setEditor(JComponent editor) {
-	if (editor == null) {
-	    throw new IllegalArgumentException("null editor");
-	}
-	if (!editor.equals(this.editor)) {
-	    JComponent oldEditor = this.editor;
-	    this.editor = editor;
-	    if (oldEditor instanceof DefaultEditor) {
-		((DefaultEditor)oldEditor).dismiss(this);
-	    }
-	    editorExplicitlySet = true;
-	    firePropertyChange("editor", oldEditor, editor);
-	    revalidate();
-	    repaint();
-	}
+        if (editor == null) {
+            throw new IllegalArgumentException("null editor");
+        }
+        if (!editor.equals(this.editor)) {
+            JComponent oldEditor = this.editor;
+            this.editor = editor;
+            if (oldEditor instanceof DefaultEditor) {
+                ((DefaultEditor)oldEditor).dismiss(this);
+            }
+            editorExplicitlySet = true;
+            firePropertyChange("editor", oldEditor, editor);
+            revalidate();
+            repaint();
+        }
     }
 
 
     /**
-     * Returns the component that displays and potentially 
+     * Returns the component that displays and potentially
      * changes the model's value.
-     * 
+     *
      * @return the component that displays and potentially
      *    changes the model's value
      * @see #setEditor
      * @see #createEditor
      */
     public JComponent getEditor() {
-	return editor;
+        return editor;
     }
 
 
@@ -550,7 +549,7 @@ public class JSpinner extends JComponent implements Accessible
 
 
     /*
-     * See readObject and writeObject in JComponent for more 
+     * See readObject and writeObject in JComponent for more
      * information about serialization in Swing.
      *
      * @param s Stream to write to
@@ -574,7 +573,7 @@ public class JSpinner extends JComponent implements Accessible
         }
     }
 
-    private void readObject(ObjectInputStream s) 
+    private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         s.defaultReadObject();
 
@@ -599,7 +598,7 @@ public class JSpinner extends JComponent implements Accessible
      * that it's part of.   The <code>setEditor</code> method knows about
      * <code>DefaultEditor.dismiss</code>, so if the developer
      * replaces an editor that's derived from <code>JSpinner.DefaultEditor</code>
-     * its <code>ChangeListener</code> connection back to the 
+     * its <code>ChangeListener</code> connection back to the
      * <code>JSpinner</code> will be removed.  However after that,
      * it's up to the developer to manage their editor listeners.
      * Similarly, if a subclass overrides <code>createEditor</code>,
@@ -614,40 +613,40 @@ public class JSpinner extends JComponent implements Accessible
      * child is just centered with the parents insets.
      * @since 1.4
      */
-    public static class DefaultEditor extends JPanel 
-	implements ChangeListener, PropertyChangeListener, LayoutManager 
+    public static class DefaultEditor extends JPanel
+        implements ChangeListener, PropertyChangeListener, LayoutManager
     {
-	/**
-	 * Constructs an editor component for the specified <code>JSpinner</code>.
-	 * This <code>DefaultEditor</code> is it's own layout manager and 
-	 * it is added to the spinner's <code>ChangeListener</code> list.
-	 * The constructor creates a single <code>JFormattedTextField</code> child,
-	 * initializes it's value to be the spinner model's current value
-	 * and adds it to <code>this</code> <code>DefaultEditor</code>.  
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @see #getTextField
-	 * @see JSpinner#addChangeListener
-	 */
-	public DefaultEditor(JSpinner spinner) {
-	    super(null);
+        /**
+         * Constructs an editor component for the specified <code>JSpinner</code>.
+         * This <code>DefaultEditor</code> is it's own layout manager and
+         * it is added to the spinner's <code>ChangeListener</code> list.
+         * The constructor creates a single <code>JFormattedTextField</code> child,
+         * initializes it's value to be the spinner model's current value
+         * and adds it to <code>this</code> <code>DefaultEditor</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @see #getTextField
+         * @see JSpinner#addChangeListener
+         */
+        public DefaultEditor(JSpinner spinner) {
+            super(null);
 
-	    JFormattedTextField ftf = new JFormattedTextField();
+            JFormattedTextField ftf = new JFormattedTextField();
             ftf.setName("Spinner.formattedTextField");
-	    ftf.setValue(spinner.getValue());
-	    ftf.addPropertyChangeListener(this);
-	    ftf.setEditable(false);
+            ftf.setValue(spinner.getValue());
+            ftf.addPropertyChangeListener(this);
+            ftf.setEditable(false);
             ftf.setInheritsPopupMenu(true);
 
-	    String toolTipText = spinner.getToolTipText();
-	    if (toolTipText != null) {
-		ftf.setToolTipText(toolTipText);
-	    }
+            String toolTipText = spinner.getToolTipText();
+            if (toolTipText != null) {
+                ftf.setToolTipText(toolTipText);
+            }
 
-	    add(ftf);
-	    
-	    setLayout(this);
-	    spinner.addChangeListener(this);
+            add(ftf);
+
+            setLayout(this);
+            spinner.addChangeListener(this);
 
             // We want the spinner's increment/decrement actions to be
             // active vs those of the JFormattedTextField. As such we
@@ -660,92 +659,92 @@ public class JSpinner extends JComponent implements Accessible
                 ftfMap.put("increment", DISABLED_ACTION);
                 ftfMap.put("decrement", DISABLED_ACTION);
             }
-	}
+        }
 
 
-	/**
-	 * Disconnect <code>this</code> editor from the specified 
-	 * <code>JSpinner</code>.  By default, this method removes 
-	 * itself from the spinners <code>ChangeListener</code> list.
-	 * 
-	 * @param spinner the <code>JSpinner</code> to disconnect this 
-	 *    editor from; the same spinner as was passed to the constructor.
-	 */
-	public void dismiss(JSpinner spinner) {
-	    spinner.removeChangeListener(this);
-	}
+        /**
+         * Disconnect <code>this</code> editor from the specified
+         * <code>JSpinner</code>.  By default, this method removes
+         * itself from the spinners <code>ChangeListener</code> list.
+         *
+         * @param spinner the <code>JSpinner</code> to disconnect this
+         *    editor from; the same spinner as was passed to the constructor.
+         */
+        public void dismiss(JSpinner spinner) {
+            spinner.removeChangeListener(this);
+        }
 
-	
-	/**
+
+        /**
          * Returns the <code>JSpinner</code> ancestor of this editor or
          * <code>null</code> if none of the ancestors are a
          * <code>JSpinner</code>.
-	 * Typically the editor's parent is a <code>JSpinner</code> however 
-	 * subclasses of <code>JSpinner</code> may override the
-	 * the <code>createEditor</code> method and insert one or more containers
-	 * between the <code>JSpinner</code> and it's editor.
-	 * 
+         * Typically the editor's parent is a <code>JSpinner</code> however
+         * subclasses of <code>JSpinner</code> may override the
+         * the <code>createEditor</code> method and insert one or more containers
+         * between the <code>JSpinner</code> and it's editor.
+         *
          * @return <code>JSpinner</code> ancestor; <code>null</code>
          *         if none of the ancestors are a <code>JSpinner</code>
-         * 
-	 * @see JSpinner#createEditor
-	 */
-	public JSpinner getSpinner() {
-	    for (Component c = this; c != null; c = c.getParent()) {
-		if (c instanceof JSpinner) {
-		    return (JSpinner)c;
-		}
-	    }
-	    return null;
-	}
-	
-
-	/**
-	 * Returns the <code>JFormattedTextField</code> child of this 
-	 * editor.  By default the text field is the first and only 
-	 * child of editor.
-	 * 
-	 * @return the <code>JFormattedTextField</code> that gives the user
-	 *     access to the <code>SpinnerDateModel's</code> value.
-	 * @see #getSpinner
-	 * @see #getModel
-	 */
-	public JFormattedTextField getTextField() {
-	    return (JFormattedTextField)getComponent(0);
-	}
+         *
+         * @see JSpinner#createEditor
+         */
+        public JSpinner getSpinner() {
+            for (Component c = this; c != null; c = c.getParent()) {
+                if (c instanceof JSpinner) {
+                    return (JSpinner)c;
+                }
+            }
+            return null;
+        }
 
 
-	/**
-	 * This method is called when the spinner's model's state changes.
-	 * It sets the <code>value</code> of the text field to the current
-	 * value of the spinners model.
-	 * 
-	 * @param e the <code>ChangeEvent</code> whose source is the
-	 * <code>JSpinner</code> whose model has changed.
-	 * @see #getTextField
-	 * @see JSpinner#getValue
-	 */
-	public void stateChanged(ChangeEvent e) {
-	    JSpinner spinner = (JSpinner)(e.getSource());
-	    getTextField().setValue(spinner.getValue());
-	}
+        /**
+         * Returns the <code>JFormattedTextField</code> child of this
+         * editor.  By default the text field is the first and only
+         * child of editor.
+         *
+         * @return the <code>JFormattedTextField</code> that gives the user
+         *     access to the <code>SpinnerDateModel's</code> value.
+         * @see #getSpinner
+         * @see #getModel
+         */
+        public JFormattedTextField getTextField() {
+            return (JFormattedTextField)getComponent(0);
+        }
 
 
-	/**
-	 * Called by the <code>JFormattedTextField</code> 
-	 * <code>PropertyChangeListener</code>.  When the <code>"value"</code>
-	 * property changes, which implies that the user has typed a new
-	 * number, we set the value of the spinners model.
-	 * <p>
-	 * This class ignores <code>PropertyChangeEvents</code> whose
-	 * source is not the <code>JFormattedTextField</code>, so subclasses
-	 * may safely make <code>this</code> <code>DefaultEditor</code> a 
-	 * <code>PropertyChangeListener</code> on other objects.
-	 * 
-	 * @param e the <code>PropertyChangeEvent</code> whose source is
-	 *    the <code>JFormattedTextField</code> created by this class.
-	 * @see #getTextField
-	 */
+        /**
+         * This method is called when the spinner's model's state changes.
+         * It sets the <code>value</code> of the text field to the current
+         * value of the spinners model.
+         *
+         * @param e the <code>ChangeEvent</code> whose source is the
+         * <code>JSpinner</code> whose model has changed.
+         * @see #getTextField
+         * @see JSpinner#getValue
+         */
+        public void stateChanged(ChangeEvent e) {
+            JSpinner spinner = (JSpinner)(e.getSource());
+            getTextField().setValue(spinner.getValue());
+        }
+
+
+        /**
+         * Called by the <code>JFormattedTextField</code>
+         * <code>PropertyChangeListener</code>.  When the <code>"value"</code>
+         * property changes, which implies that the user has typed a new
+         * number, we set the value of the spinners model.
+         * <p>
+         * This class ignores <code>PropertyChangeEvents</code> whose
+         * source is not the <code>JFormattedTextField</code>, so subclasses
+         * may safely make <code>this</code> <code>DefaultEditor</code> a
+         * <code>PropertyChangeListener</code> on other objects.
+         *
+         * @param e the <code>PropertyChangeEvent</code> whose source is
+         *    the <code>JFormattedTextField</code> created by this class.
+         * @see #getTextField
+         */
         public void propertyChange(PropertyChangeEvent e)
         {
             JSpinner spinner = getSpinner();
@@ -755,9 +754,9 @@ public class JSpinner extends JComponent implements Accessible
                 return;
             }
 
-	    Object source = e.getSource();
-	    String name = e.getPropertyName();
-	    if ((source instanceof JFormattedTextField) && "value".equals(name)) {
+            Object source = e.getSource();
+            String name = e.getPropertyName();
+            if ((source instanceof JFormattedTextField) && "value".equals(name)) {
                 Object lastValue = spinner.getValue();
 
                 // Try to set the new value
@@ -773,93 +772,93 @@ public class JSpinner extends JComponent implements Accessible
                         // of sync.
                     }
                 }
-	    }
-	}
+            }
+        }
 
 
-	/**
-	 * This <code>LayoutManager</code> method does nothing.  We're 
-	 * only managing a single child and there's no support 
-	 * for layout constraints.
-	 * 
-	 * @param name ignored
-	 * @param child ignored
-	 */
-	public void addLayoutComponent(String name, Component child) {
-	}
+        /**
+         * This <code>LayoutManager</code> method does nothing.  We're
+         * only managing a single child and there's no support
+         * for layout constraints.
+         *
+         * @param name ignored
+         * @param child ignored
+         */
+        public void addLayoutComponent(String name, Component child) {
+        }
 
 
-	/**
-	 * This <code>LayoutManager</code> method does nothing.  There
-	 * isn't any per-child state.
-	 * 
-	 * @param child ignored
-	 */
-	public void removeLayoutComponent(Component child) {
-	}
+        /**
+         * This <code>LayoutManager</code> method does nothing.  There
+         * isn't any per-child state.
+         *
+         * @param child ignored
+         */
+        public void removeLayoutComponent(Component child) {
+        }
 
 
-	/**
-	 * Returns the size of the parents insets.
-	 */
-	private Dimension insetSize(Container parent) {
-	    Insets insets = parent.getInsets();
-	    int w = insets.left + insets.right;
-	    int h = insets.top + insets.bottom;
-	    return new Dimension(w, h);
-	}
+        /**
+         * Returns the size of the parents insets.
+         */
+        private Dimension insetSize(Container parent) {
+            Insets insets = parent.getInsets();
+            int w = insets.left + insets.right;
+            int h = insets.top + insets.bottom;
+            return new Dimension(w, h);
+        }
 
 
-	/**
-	 * Returns the preferred size of first (and only) child plus the
-	 * size of the parents insets.
-	 * 
-	 * @param parent the Container that's managing the layout
+        /**
+         * Returns the preferred size of first (and only) child plus the
+         * size of the parents insets.
+         *
+         * @param parent the Container that's managing the layout
          * @return the preferred dimensions to lay out the subcomponents
          *          of the specified container.
-	 */
-	public Dimension preferredLayoutSize(Container parent) {
-	    Dimension preferredSize = insetSize(parent);
-	    if (parent.getComponentCount() > 0) {
-		Dimension childSize = getComponent(0).getPreferredSize();
-		preferredSize.width += childSize.width;
-		preferredSize.height += childSize.height;
-	    }
-	    return preferredSize;
-	}
+         */
+        public Dimension preferredLayoutSize(Container parent) {
+            Dimension preferredSize = insetSize(parent);
+            if (parent.getComponentCount() > 0) {
+                Dimension childSize = getComponent(0).getPreferredSize();
+                preferredSize.width += childSize.width;
+                preferredSize.height += childSize.height;
+            }
+            return preferredSize;
+        }
 
 
-	/**
-	 * Returns the minimum size of first (and only) child plus the
-	 * size of the parents insets.
-	 * 
-	 * @param parent the Container that's managing the layout
+        /**
+         * Returns the minimum size of first (and only) child plus the
+         * size of the parents insets.
+         *
+         * @param parent the Container that's managing the layout
          * @return  the minimum dimensions needed to lay out the subcomponents
          *          of the specified container.
-	 */
-	public Dimension minimumLayoutSize(Container parent) {
-	    Dimension minimumSize = insetSize(parent);
-	    if (parent.getComponentCount() > 0) {
-		Dimension childSize = getComponent(0).getMinimumSize();
-		minimumSize.width += childSize.width;
-		minimumSize.height += childSize.height;
-	    }
-	    return minimumSize;
-	}
+         */
+        public Dimension minimumLayoutSize(Container parent) {
+            Dimension minimumSize = insetSize(parent);
+            if (parent.getComponentCount() > 0) {
+                Dimension childSize = getComponent(0).getMinimumSize();
+                minimumSize.width += childSize.width;
+                minimumSize.height += childSize.height;
+            }
+            return minimumSize;
+        }
 
 
-	/**
-	 * Resize the one (and only) child to completely fill the area
-	 * within the parents insets.
-	 */
-	public void layoutContainer(Container parent) {
-	    if (parent.getComponentCount() > 0) {
-		Insets insets = parent.getInsets();
-		int w = parent.getWidth() - (insets.left + insets.right);
-		int h = parent.getHeight() - (insets.top + insets.bottom);
-		getComponent(0).setBounds(insets.left, insets.top, w, h);
-	    }
-	}
+        /**
+         * Resize the one (and only) child to completely fill the area
+         * within the parents insets.
+         */
+        public void layoutContainer(Container parent) {
+            if (parent.getComponentCount() > 0) {
+                Insets insets = parent.getInsets();
+                int w = parent.getWidth() - (insets.left + insets.right);
+                int h = parent.getHeight() - (insets.top + insets.bottom);
+                getComponent(0).setBounds(insets.left, insets.top, w, h);
+            }
+        }
 
         /**
          * Pushes the currently edited value to the <code>SpinnerModel</code>.
@@ -920,173 +919,173 @@ public class JSpinner extends JComponent implements Accessible
      * properties to te start/end properties of a SpinnerDateModel.
      */
     private static class DateEditorFormatter extends DateFormatter {
-	private final SpinnerDateModel model;
+        private final SpinnerDateModel model;
 
-	DateEditorFormatter(SpinnerDateModel model, DateFormat format) {
-	    super(format);
-	    this.model = model;
-	}
+        DateEditorFormatter(SpinnerDateModel model, DateFormat format) {
+            super(format);
+            this.model = model;
+        }
 
-	public void setMinimum(Comparable min) {
-	    model.setStart(min);
-	}
+        public void setMinimum(Comparable min) {
+            model.setStart(min);
+        }
 
-	public Comparable getMinimum() {
-	    return  model.getStart();
-	}
+        public Comparable getMinimum() {
+            return  model.getStart();
+        }
 
-	public void setMaximum(Comparable max) {
-	    model.setEnd(max);
-	}
+        public void setMaximum(Comparable max) {
+            model.setEnd(max);
+        }
 
-	public Comparable getMaximum() {
-	    return model.getEnd();
-	}
+        public Comparable getMaximum() {
+            return model.getEnd();
+        }
     }
 
 
     /**
-     * An editor for a <code>JSpinner</code> whose model is a 
-     * <code>SpinnerDateModel</code>.  The value of the editor is 
-     * displayed with a <code>JFormattedTextField</code> whose format 
+     * An editor for a <code>JSpinner</code> whose model is a
+     * <code>SpinnerDateModel</code>.  The value of the editor is
+     * displayed with a <code>JFormattedTextField</code> whose format
      * is defined by a <code>DateFormatter</code> instance whose
      * <code>minimum</code> and <code>maximum</code> properties
      * are mapped to the <code>SpinnerDateModel</code>.
      * @since 1.4
      */
     // PENDING(hmuller): more example javadoc
-    public static class DateEditor extends DefaultEditor 
+    public static class DateEditor extends DefaultEditor
     {
         // This is here until SimpleDateFormat gets a constructor that
         // takes a Locale: 4923525
         private static String getDefaultPattern(Locale loc) {
             ResourceBundle r = LocaleData.getDateFormatData(loc);
             String[] dateTimePatterns = r.getStringArray("DateTimePatterns");
-	    Object[] dateTimeArgs = {dateTimePatterns[DateFormat.SHORT],
-				     dateTimePatterns[DateFormat.SHORT + 4]};
+            Object[] dateTimeArgs = {dateTimePatterns[DateFormat.SHORT],
+                                     dateTimePatterns[DateFormat.SHORT + 4]};
             return MessageFormat.format(dateTimePatterns[8], dateTimeArgs);
         }
 
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerDateModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinners model and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerDateModel</code>
-	 * 
-	 * @see #getModel
-	 * @see #getFormat
-	 * @see SpinnerDateModel
-	 */
-	public DateEditor(JSpinner spinner) {
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerDateModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinners model and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerDateModel</code>
+         *
+         * @see #getModel
+         * @see #getFormat
+         * @see SpinnerDateModel
+         */
+        public DateEditor(JSpinner spinner) {
             this(spinner, getDefaultPattern(spinner.getLocale()));
-	}
-
-
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerDateModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @param dateFormatPattern the initial pattern for the 
-	 *     <code>SimpleDateFormat</code> object that's used to display
-	 *     and parse the value of the text field.
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerDateModel</code>
-	 * 
-	 * @see #getModel
-	 * @see #getFormat
-	 * @see SpinnerDateModel
-         * @see java.text.SimpleDateFormat
-	 */
-	public DateEditor(JSpinner spinner, String dateFormatPattern) {
-	    this(spinner, new SimpleDateFormat(dateFormatPattern,
-                                               spinner.getLocale()));
-	}
-
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerDateModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor
-         *        will monitor
-	 * @param format <code>DateFormat</code> object that's used to display
-	 *     and parse the value of the text field.
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerDateModel</code>
-	 * 
-	 * @see #getModel
-	 * @see #getFormat
-	 * @see SpinnerDateModel
-         * @see java.text.SimpleDateFormat
-	 */
-	private DateEditor(JSpinner spinner, DateFormat format) {
-	    super(spinner);
-	    if (!(spinner.getModel() instanceof SpinnerDateModel)) {
-		throw new IllegalArgumentException(
-                                 "model not a SpinnerDateModel");
-	    }
-
-	    SpinnerDateModel model = (SpinnerDateModel)spinner.getModel();
-	    DateFormatter formatter = new DateEditorFormatter(model, format);
-	    DefaultFormatterFactory factory = new DefaultFormatterFactory(
-                                                  formatter);
-	    JFormattedTextField ftf = getTextField();
-	    ftf.setEditable(true);
-	    ftf.setFormatterFactory(factory);
-
-	    /* TBD - initializing the column width of the text field
-	     * is imprecise and doing it here is tricky because 
-	     * the developer may configure the formatter later.
-	     */
-	    try {
-		String maxString = formatter.valueToString(model.getStart());
-		String minString = formatter.valueToString(model.getEnd());
-		ftf.setColumns(Math.max(maxString.length(),
-                                        minString.length()));
-	    }
-	    catch (ParseException e) {
-                // PENDING: hmuller
-	    }
         }
 
-	/**
-	 * Returns the <code>java.text.SimpleDateFormat</code> object the
-	 * <code>JFormattedTextField</code> uses to parse and format
-	 * numbers.  
-	 * 
-	 * @return the value of <code>getTextField().getFormatter().getFormat()</code>.
-	 * @see #getTextField
+
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerDateModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @param dateFormatPattern the initial pattern for the
+         *     <code>SimpleDateFormat</code> object that's used to display
+         *     and parse the value of the text field.
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerDateModel</code>
+         *
+         * @see #getModel
+         * @see #getFormat
+         * @see SpinnerDateModel
          * @see java.text.SimpleDateFormat
-	 */
-	public SimpleDateFormat getFormat() {
-	    return (SimpleDateFormat)((DateFormatter)(getTextField().getFormatter())).getFormat();
-	}
+         */
+        public DateEditor(JSpinner spinner, String dateFormatPattern) {
+            this(spinner, new SimpleDateFormat(dateFormatPattern,
+                                               spinner.getLocale()));
+        }
+
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerDateModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>DateEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor
+         *        will monitor
+         * @param format <code>DateFormat</code> object that's used to display
+         *     and parse the value of the text field.
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerDateModel</code>
+         *
+         * @see #getModel
+         * @see #getFormat
+         * @see SpinnerDateModel
+         * @see java.text.SimpleDateFormat
+         */
+        private DateEditor(JSpinner spinner, DateFormat format) {
+            super(spinner);
+            if (!(spinner.getModel() instanceof SpinnerDateModel)) {
+                throw new IllegalArgumentException(
+                                 "model not a SpinnerDateModel");
+            }
+
+            SpinnerDateModel model = (SpinnerDateModel)spinner.getModel();
+            DateFormatter formatter = new DateEditorFormatter(model, format);
+            DefaultFormatterFactory factory = new DefaultFormatterFactory(
+                                                  formatter);
+            JFormattedTextField ftf = getTextField();
+            ftf.setEditable(true);
+            ftf.setFormatterFactory(factory);
+
+            /* TBD - initializing the column width of the text field
+             * is imprecise and doing it here is tricky because
+             * the developer may configure the formatter later.
+             */
+            try {
+                String maxString = formatter.valueToString(model.getStart());
+                String minString = formatter.valueToString(model.getEnd());
+                ftf.setColumns(Math.max(maxString.length(),
+                                        minString.length()));
+            }
+            catch (ParseException e) {
+                // PENDING: hmuller
+            }
+        }
+
+        /**
+         * Returns the <code>java.text.SimpleDateFormat</code> object the
+         * <code>JFormattedTextField</code> uses to parse and format
+         * numbers.
+         *
+         * @return the value of <code>getTextField().getFormatter().getFormat()</code>.
+         * @see #getTextField
+         * @see java.text.SimpleDateFormat
+         */
+        public SimpleDateFormat getFormat() {
+            return (SimpleDateFormat)((DateFormatter)(getTextField().getFormatter())).getFormat();
+        }
 
 
-	/**
-	 * Return our spinner ancestor's <code>SpinnerDateModel</code>.
-	 * 
-	 * @return <code>getSpinner().getModel()</code>
-	 * @see #getSpinner
-	 * @see #getTextField
-	 */
-	public SpinnerDateModel getModel() {
-	    return (SpinnerDateModel)(getSpinner().getModel());
-	}
+        /**
+         * Return our spinner ancestor's <code>SpinnerDateModel</code>.
+         *
+         * @return <code>getSpinner().getModel()</code>
+         * @see #getSpinner
+         * @see #getTextField
+         */
+        public SpinnerDateModel getModel() {
+            return (SpinnerDateModel)(getSpinner().getModel());
+        }
     }
 
 
@@ -1096,44 +1095,44 @@ public class JSpinner extends JComponent implements Accessible
      * of the NumberFormatter to match the type of the initial models value.
      */
     private static class NumberEditorFormatter extends NumberFormatter {
-	private final SpinnerNumberModel model;
+        private final SpinnerNumberModel model;
 
-	NumberEditorFormatter(SpinnerNumberModel model, NumberFormat format) {
-	    super(format);
-	    this.model = model;
-	    setValueClass(model.getValue().getClass());
-	}
+        NumberEditorFormatter(SpinnerNumberModel model, NumberFormat format) {
+            super(format);
+            this.model = model;
+            setValueClass(model.getValue().getClass());
+        }
 
-	public void setMinimum(Comparable min) {
-	    model.setMinimum(min);
-	}
+        public void setMinimum(Comparable min) {
+            model.setMinimum(min);
+        }
 
-	public Comparable getMinimum() {
-	    return  model.getMinimum();
-	}
+        public Comparable getMinimum() {
+            return  model.getMinimum();
+        }
 
-	public void setMaximum(Comparable max) {
-	    model.setMaximum(max);
-	}
+        public void setMaximum(Comparable max) {
+            model.setMaximum(max);
+        }
 
-	public Comparable getMaximum() {
-	    return model.getMaximum();
-	}
+        public Comparable getMaximum() {
+            return model.getMaximum();
+        }
     }
 
 
 
     /**
-     * An editor for a <code>JSpinner</code> whose model is a 
-     * <code>SpinnerNumberModel</code>.  The value of the editor is 
-     * displayed with a <code>JFormattedTextField</code> whose format 
+     * An editor for a <code>JSpinner</code> whose model is a
+     * <code>SpinnerNumberModel</code>.  The value of the editor is
+     * displayed with a <code>JFormattedTextField</code> whose format
      * is defined by a <code>NumberFormatter</code> instance whose
      * <code>minimum</code> and <code>maximum</code> properties
      * are mapped to the <code>SpinnerNumberModel</code>.
      * @since 1.4
      */
     // PENDING(hmuller): more example javadoc
-    public static class NumberEditor extends DefaultEditor 
+    public static class NumberEditor extends DefaultEditor
     {
         // This is here until DecimalFormat gets a constructor that
         // takes a Locale: 4923525
@@ -1144,174 +1143,174 @@ public class JSpinner extends JComponent implements Accessible
             return all[0];
         }
 
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerNumberModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerNumberModel</code>
-	 * 
-	 * @see #getModel
-	 * @see #getFormat
-	 * @see SpinnerNumberModel
-	 */
-	public NumberEditor(JSpinner spinner) {
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerNumberModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerNumberModel</code>
+         *
+         * @see #getModel
+         * @see #getFormat
+         * @see SpinnerNumberModel
+         */
+        public NumberEditor(JSpinner spinner) {
             this(spinner, getDefaultPattern(spinner.getLocale()));
         }
 
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerNumberModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @param decimalFormatPattern the initial pattern for the 
-	 *     <code>DecimalFormat</code> object that's used to display
-	 *     and parse the value of the text field.
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerNumberModel</code> or if
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerNumberModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @param decimalFormatPattern the initial pattern for the
+         *     <code>DecimalFormat</code> object that's used to display
+         *     and parse the value of the text field.
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerNumberModel</code> or if
          *     <code>decimalFormatPattern</code> is not a legal
          *     argument to <code>DecimalFormat</code>
-	 * 
-	 * @see #getTextField
-	 * @see SpinnerNumberModel
+         *
+         * @see #getTextField
+         * @see SpinnerNumberModel
          * @see java.text.DecimalFormat
-	 */
-	public NumberEditor(JSpinner spinner, String decimalFormatPattern) {
-	    this(spinner, new DecimalFormat(decimalFormatPattern));
-	}
+         */
+        public NumberEditor(JSpinner spinner, String decimalFormatPattern) {
+            this(spinner, new DecimalFormat(decimalFormatPattern));
+        }
 
 
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerNumberModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @param decimalFormatPattern the initial pattern for the 
-	 *     <code>DecimalFormat</code> object that's used to display
-	 *     and parse the value of the text field.
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerNumberModel</code>
-	 * 
-	 * @see #getTextField
-	 * @see SpinnerNumberModel
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerNumberModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>NumberEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @param decimalFormatPattern the initial pattern for the
+         *     <code>DecimalFormat</code> object that's used to display
+         *     and parse the value of the text field.
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerNumberModel</code>
+         *
+         * @see #getTextField
+         * @see SpinnerNumberModel
          * @see java.text.DecimalFormat
-	 */
-	private NumberEditor(JSpinner spinner, DecimalFormat format) {
-	    super(spinner);
-	    if (!(spinner.getModel() instanceof SpinnerNumberModel)) {
-		throw new IllegalArgumentException(
+         */
+        private NumberEditor(JSpinner spinner, DecimalFormat format) {
+            super(spinner);
+            if (!(spinner.getModel() instanceof SpinnerNumberModel)) {
+                throw new IllegalArgumentException(
                           "model not a SpinnerNumberModel");
-	    }
+            }
 
-	    SpinnerNumberModel model = (SpinnerNumberModel)spinner.getModel();
-	    NumberFormatter formatter = new NumberEditorFormatter(model,
+            SpinnerNumberModel model = (SpinnerNumberModel)spinner.getModel();
+            NumberFormatter formatter = new NumberEditorFormatter(model,
                                                                   format);
-	    DefaultFormatterFactory factory = new DefaultFormatterFactory(
+            DefaultFormatterFactory factory = new DefaultFormatterFactory(
                                                   formatter);
-	    JFormattedTextField ftf = getTextField();
-	    ftf.setEditable(true);
-	    ftf.setFormatterFactory(factory);
+            JFormattedTextField ftf = getTextField();
+            ftf.setEditable(true);
+            ftf.setFormatterFactory(factory);
             ftf.setHorizontalAlignment(JTextField.RIGHT);
 
-	    /* TBD - initializing the column width of the text field
-	     * is imprecise and doing it here is tricky because 
-	     * the developer may configure the formatter later.
-	     */
-	    try {
-		String maxString = formatter.valueToString(model.getMinimum());
-		String minString = formatter.valueToString(model.getMaximum());
-		ftf.setColumns(Math.max(maxString.length(),
+            /* TBD - initializing the column width of the text field
+             * is imprecise and doing it here is tricky because
+             * the developer may configure the formatter later.
+             */
+            try {
+                String maxString = formatter.valueToString(model.getMinimum());
+                String minString = formatter.valueToString(model.getMaximum());
+                ftf.setColumns(Math.max(maxString.length(),
                                         minString.length()));
-	    }
-	    catch (ParseException e) {
-		// TBD should throw a chained error here
-	    }
+            }
+            catch (ParseException e) {
+                // TBD should throw a chained error here
+            }
 
-	}
+        }
 
 
-	/**
-	 * Returns the <code>java.text.DecimalFormat</code> object the
-	 * <code>JFormattedTextField</code> uses to parse and format
-	 * numbers.  
-	 * 
-	 * @return the value of <code>getTextField().getFormatter().getFormat()</code>.
-	 * @see #getTextField
+        /**
+         * Returns the <code>java.text.DecimalFormat</code> object the
+         * <code>JFormattedTextField</code> uses to parse and format
+         * numbers.
+         *
+         * @return the value of <code>getTextField().getFormatter().getFormat()</code>.
+         * @see #getTextField
          * @see java.text.DecimalFormat
-	 */
-	public DecimalFormat getFormat() {
-	    return (DecimalFormat)((NumberFormatter)(getTextField().getFormatter())).getFormat();
-	}
+         */
+        public DecimalFormat getFormat() {
+            return (DecimalFormat)((NumberFormatter)(getTextField().getFormatter())).getFormat();
+        }
 
 
-	/**
-	 * Return our spinner ancestor's <code>SpinnerNumberModel</code>.
-	 * 
-	 * @return <code>getSpinner().getModel()</code>
-	 * @see #getSpinner
-	 * @see #getTextField
-	 */
-	public SpinnerNumberModel getModel() {
-	    return (SpinnerNumberModel)(getSpinner().getModel());
-	}
+        /**
+         * Return our spinner ancestor's <code>SpinnerNumberModel</code>.
+         *
+         * @return <code>getSpinner().getModel()</code>
+         * @see #getSpinner
+         * @see #getTextField
+         */
+        public SpinnerNumberModel getModel() {
+            return (SpinnerNumberModel)(getSpinner().getModel());
+        }
     }
 
 
     /**
-     * An editor for a <code>JSpinner</code> whose model is a 
-     * <code>SpinnerListModel</code>.  
+     * An editor for a <code>JSpinner</code> whose model is a
+     * <code>SpinnerListModel</code>.
      * @since 1.4
      */
-    public static class ListEditor extends DefaultEditor 
+    public static class ListEditor extends DefaultEditor
     {
-	/**
-	 * Construct a <code>JSpinner</code> editor that supports displaying
-	 * and editing the value of a <code>SpinnerListModel</code> 
-	 * with a <code>JFormattedTextField</code>.  <code>This</code>
-	 * <code>ListEditor</code> becomes both a <code>ChangeListener</code>
-	 * on the spinner and a <code>PropertyChangeListener</code>
-	 * on the new <code>JFormattedTextField</code>.
-	 * 
-	 * @param spinner the spinner whose model <code>this</code> editor will monitor
-	 * @exception IllegalArgumentException if the spinners model is not 
-	 *     an instance of <code>SpinnerListModel</code>
-	 * 
-	 * @see #getModel
-	 * @see SpinnerListModel
-	 */
-	public ListEditor(JSpinner spinner) {
-	    super(spinner);
-	    if (!(spinner.getModel() instanceof SpinnerListModel)) {
-		throw new IllegalArgumentException("model not a SpinnerListModel");
-	    }
-	    getTextField().setEditable(true);
-            getTextField().setFormatterFactory(new 
+        /**
+         * Construct a <code>JSpinner</code> editor that supports displaying
+         * and editing the value of a <code>SpinnerListModel</code>
+         * with a <code>JFormattedTextField</code>.  <code>This</code>
+         * <code>ListEditor</code> becomes both a <code>ChangeListener</code>
+         * on the spinner and a <code>PropertyChangeListener</code>
+         * on the new <code>JFormattedTextField</code>.
+         *
+         * @param spinner the spinner whose model <code>this</code> editor will monitor
+         * @exception IllegalArgumentException if the spinners model is not
+         *     an instance of <code>SpinnerListModel</code>
+         *
+         * @see #getModel
+         * @see SpinnerListModel
+         */
+        public ListEditor(JSpinner spinner) {
+            super(spinner);
+            if (!(spinner.getModel() instanceof SpinnerListModel)) {
+                throw new IllegalArgumentException("model not a SpinnerListModel");
+            }
+            getTextField().setEditable(true);
+            getTextField().setFormatterFactory(new
                               DefaultFormatterFactory(new ListFormatter()));
-	}
+        }
 
-	/**
-	 * Return our spinner ancestor's <code>SpinnerNumberModel</code>.
-	 * 
-	 * @return <code>getSpinner().getModel()</code>
-	 * @see #getSpinner
-	 * @see #getTextField
-	 */
-	public SpinnerListModel getModel() {
-	    return (SpinnerListModel)(getSpinner().getModel());
-	}
+        /**
+         * Return our spinner ancestor's <code>SpinnerNumberModel</code>.
+         *
+         * @return <code>getSpinner().getModel()</code>
+         * @see #getSpinner
+         * @see #getTextField
+         */
+        public SpinnerListModel getModel() {
+            return (SpinnerListModel)(getSpinner().getModel());
+        }
 
 
         /**
@@ -1401,12 +1400,12 @@ public class JSpinner extends JComponent implements Accessible
     /////////////////
     // Accessibility support
     ////////////////
-	
+
     /**
      * Gets the <code>AccessibleContext</code> for the <code>JSpinner</code>
      *
      * @return the <code>AccessibleContext</code> for the <code>JSpinner</code>
-     * @since 1.5 
+     * @since 1.5
      */
     public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
@@ -1414,634 +1413,634 @@ public class JSpinner extends JComponent implements Accessible
         }
         return accessibleContext;
     }
-    
+
     /**
-     * <code>AccessibleJSpinner</code> implements accessibility 
-     * support for the <code>JSpinner</code> class. 
-     * @since 1.5 
+     * <code>AccessibleJSpinner</code> implements accessibility
+     * support for the <code>JSpinner</code> class.
+     * @since 1.5
      */
     protected class AccessibleJSpinner extends AccessibleJComponent
-        implements AccessibleValue, AccessibleAction, AccessibleText, 
-		   AccessibleEditableText, ChangeListener {
+        implements AccessibleValue, AccessibleAction, AccessibleText,
+                   AccessibleEditableText, ChangeListener {
 
-	private Object oldModelValue = null;
+        private Object oldModelValue = null;
 
-	/**
-	 * AccessibleJSpinner constructor
-	 */
-	protected AccessibleJSpinner() {
-	    // model is guaranteed to be non-null
-	    oldModelValue = model.getValue();
-	    JSpinner.this.addChangeListener(this);
-	}
+        /**
+         * AccessibleJSpinner constructor
+         */
+        protected AccessibleJSpinner() {
+            // model is guaranteed to be non-null
+            oldModelValue = model.getValue();
+            JSpinner.this.addChangeListener(this);
+        }
 
-	/**
+        /**
          * Invoked when the target of the listener has changed its state.
          *
          * @param e  a <code>ChangeEvent</code> object. Must not be null.
-	 * @throws NullPointerException if the parameter is null.
-	 */  
-	public void stateChanged(ChangeEvent e) {
-	    if (e == null) {
-		throw new NullPointerException();
-	    }
-	    Object newModelValue = model.getValue();
-	    firePropertyChange(ACCESSIBLE_VALUE_PROPERTY, 
-			       oldModelValue, 
-			       newModelValue);
-	    firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, 
-			       null, 
-			       0); // entire text may have changed
-	    
-	    oldModelValue = newModelValue;
-	}
+         * @throws NullPointerException if the parameter is null.
+         */
+        public void stateChanged(ChangeEvent e) {
+            if (e == null) {
+                throw new NullPointerException();
+            }
+            Object newModelValue = model.getValue();
+            firePropertyChange(ACCESSIBLE_VALUE_PROPERTY,
+                               oldModelValue,
+                               newModelValue);
+            firePropertyChange(ACCESSIBLE_TEXT_PROPERTY,
+                               null,
+                               0); // entire text may have changed
 
-	/* ===== Begin AccessibleContext methods ===== */
+            oldModelValue = newModelValue;
+        }
 
-	/**
-	 * Gets the role of this object.  The role of the object is the generic
-	 * purpose or use of the class of this object.  For example, the role
-	 * of a push button is AccessibleRole.PUSH_BUTTON.  The roles in 
-	 * AccessibleRole are provided so component developers can pick from
-	 * a set of predefined roles.  This enables assistive technologies to
-	 * provide a consistent interface to various tweaked subclasses of 
-	 * components (e.g., use AccessibleRole.PUSH_BUTTON for all components
-	 * that act like a push button) as well as distinguish between sublasses
-	 * that behave differently (e.g., AccessibleRole.CHECK_BOX for check boxes
-	 * and AccessibleRole.RADIO_BUTTON for radio buttons).
-	 * <p>Note that the AccessibleRole class is also extensible, so 
-	 * custom component developers can define their own AccessibleRole's
-	 * if the set of predefined roles is inadequate.
-	 *
-	 * @return an instance of AccessibleRole describing the role of the object
-	 * @see AccessibleRole
-	 */
-	public AccessibleRole getAccessibleRole() {
-	    return AccessibleRole.SPIN_BOX;
-	}
-    
-	/**
-	 * Returns the number of accessible children of the object.
-	 *
-	 * @return the number of accessible children of the object.
-	 */
-	public int getAccessibleChildrenCount() {
-	    // the JSpinner has one child, the editor
-	    if (editor.getAccessibleContext() != null) {
-		return 1;
-	    }
-	    return 0;
-	}
+        /* ===== Begin AccessibleContext methods ===== */
 
-	/**
-	 * Returns the specified Accessible child of the object.  The Accessible
-	 * children of an Accessible object are zero-based, so the first child 
-	 * of an Accessible child is at index 0, the second child is at index 1,
-	 * and so on.
-	 *
-	 * @param i zero-based index of child
-	 * @return the Accessible child of the object
-	 * @see #getAccessibleChildrenCount
-	 */
-	public Accessible getAccessibleChild(int i) {
-	    // the JSpinner has one child, the editor
-	    if (i != 0) {
-		return null;
-	    }
-	    if (editor.getAccessibleContext() != null) {
-		return (Accessible)editor;
-	    } 
-	    return null;
-	}
+        /**
+         * Gets the role of this object.  The role of the object is the generic
+         * purpose or use of the class of this object.  For example, the role
+         * of a push button is AccessibleRole.PUSH_BUTTON.  The roles in
+         * AccessibleRole are provided so component developers can pick from
+         * a set of predefined roles.  This enables assistive technologies to
+         * provide a consistent interface to various tweaked subclasses of
+         * components (e.g., use AccessibleRole.PUSH_BUTTON for all components
+         * that act like a push button) as well as distinguish between sublasses
+         * that behave differently (e.g., AccessibleRole.CHECK_BOX for check boxes
+         * and AccessibleRole.RADIO_BUTTON for radio buttons).
+         * <p>Note that the AccessibleRole class is also extensible, so
+         * custom component developers can define their own AccessibleRole's
+         * if the set of predefined roles is inadequate.
+         *
+         * @return an instance of AccessibleRole describing the role of the object
+         * @see AccessibleRole
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.SPIN_BOX;
+        }
 
-	/* ===== End AccessibleContext methods ===== */
+        /**
+         * Returns the number of accessible children of the object.
+         *
+         * @return the number of accessible children of the object.
+         */
+        public int getAccessibleChildrenCount() {
+            // the JSpinner has one child, the editor
+            if (editor.getAccessibleContext() != null) {
+                return 1;
+            }
+            return 0;
+        }
 
-	/**
-	 * Gets the AccessibleAction associated with this object that supports
-	 * one or more actions. 
-	 *
-	 * @return AccessibleAction if supported by object; else return null
-	 * @see AccessibleAction
-	 */
-	public AccessibleAction getAccessibleAction() {
-	    return this;
-	}
-	
-	/**
-	 * Gets the AccessibleText associated with this object presenting 
-	 * text on the display.
-	 *
-	 * @return AccessibleText if supported by object; else return null
-	 * @see AccessibleText
-	 */
-	public AccessibleText getAccessibleText() {
-	    return this;
-	}
+        /**
+         * Returns the specified Accessible child of the object.  The Accessible
+         * children of an Accessible object are zero-based, so the first child
+         * of an Accessible child is at index 0, the second child is at index 1,
+         * and so on.
+         *
+         * @param i zero-based index of child
+         * @return the Accessible child of the object
+         * @see #getAccessibleChildrenCount
+         */
+        public Accessible getAccessibleChild(int i) {
+            // the JSpinner has one child, the editor
+            if (i != 0) {
+                return null;
+            }
+            if (editor.getAccessibleContext() != null) {
+                return (Accessible)editor;
+            }
+            return null;
+        }
 
-	/*
-	 * Returns the AccessibleContext for the JSpinner editor
-	 */
-	private AccessibleContext getEditorAccessibleContext() {
-	    if (editor instanceof DefaultEditor) {
-		JTextField textField = ((DefaultEditor)editor).getTextField();
-		if (textField != null) {
-		    return textField.getAccessibleContext();
-		}
-	    } else if (editor instanceof Accessible) {
-		return ((Accessible)editor).getAccessibleContext();
-	    }
-	    return null;
-	}
+        /* ===== End AccessibleContext methods ===== */
 
-	/*
-	 * Returns the AccessibleText for the JSpinner editor
-	 */
-	private AccessibleText getEditorAccessibleText() {
-	    AccessibleContext ac = getEditorAccessibleContext();
-	    if (ac != null) {
-		return ac.getAccessibleText();
-	    }
-	    return null;
-	}
+        /**
+         * Gets the AccessibleAction associated with this object that supports
+         * one or more actions.
+         *
+         * @return AccessibleAction if supported by object; else return null
+         * @see AccessibleAction
+         */
+        public AccessibleAction getAccessibleAction() {
+            return this;
+        }
 
-	/*
-	 * Returns the AccessibleEditableText for the JSpinner editor
-	 */
-	private AccessibleEditableText getEditorAccessibleEditableText() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at instanceof AccessibleEditableText) {
-		return (AccessibleEditableText)at;
-	    }
-	    return null;
-	}
+        /**
+         * Gets the AccessibleText associated with this object presenting
+         * text on the display.
+         *
+         * @return AccessibleText if supported by object; else return null
+         * @see AccessibleText
+         */
+        public AccessibleText getAccessibleText() {
+            return this;
+        }
 
-	/**
-	 * Gets the AccessibleValue associated with this object. 
-	 * 
-	 * @return AccessibleValue if supported by object; else return null 
-	 * @see AccessibleValue
-	 *
-	 */
-	public AccessibleValue getAccessibleValue() {
-	    return this;
-	}
+        /*
+         * Returns the AccessibleContext for the JSpinner editor
+         */
+        private AccessibleContext getEditorAccessibleContext() {
+            if (editor instanceof DefaultEditor) {
+                JTextField textField = ((DefaultEditor)editor).getTextField();
+                if (textField != null) {
+                    return textField.getAccessibleContext();
+                }
+            } else if (editor instanceof Accessible) {
+                return ((Accessible)editor).getAccessibleContext();
+            }
+            return null;
+        }
 
-	/* ===== Begin AccessibleValue impl ===== */
+        /*
+         * Returns the AccessibleText for the JSpinner editor
+         */
+        private AccessibleText getEditorAccessibleText() {
+            AccessibleContext ac = getEditorAccessibleContext();
+            if (ac != null) {
+                return ac.getAccessibleText();
+            }
+            return null;
+        }
 
-	/**
-	 * Get the value of this object as a Number.  If the value has not been
-	 * set, the return value will be null.
-	 *
-	 * @return value of the object
-	 * @see #setCurrentAccessibleValue
-	 */
-	public Number getCurrentAccessibleValue() {
-	    Object o = model.getValue();
-	    if (o instanceof Number) {
-		return (Number)o;
-	    }
-	    return null;
-	}
-	
-	/**
-	 * Set the value of this object as a Number.
-	 *
-	 * @param n the value to set for this object
-	 * @return true if the value was set; else False
-	 * @see #getCurrentAccessibleValue
-	 */
-	public boolean setCurrentAccessibleValue(Number n) {
-	    // try to set the new value
-	    try {
-		model.setValue(n);
-		return true;
-	    } catch (IllegalArgumentException iae) {
-		// SpinnerModel didn't like new value
-	    }
-	    return false;
-	}
-	
-	/**
-	 * Get the minimum value of this object as a Number.
-	 *
-	 * @return Minimum value of the object; null if this object does not 
-	 * have a minimum value
-	 * @see #getMaximumAccessibleValue
-	 */
-	public Number getMinimumAccessibleValue() {
-	    if (model instanceof SpinnerNumberModel) {
-		SpinnerNumberModel numberModel = (SpinnerNumberModel)model;
-		Object o = numberModel.getMinimum();
-		if (o instanceof Number) {
-		    return (Number)o;
-		}
-	    }
-	    return null;		
-	}
-	
-	/**
-	 * Get the maximum value of this object as a Number.
-	 *
-	 * @return Maximum value of the object; null if this object does not 
-	 * have a maximum value
-	 * @see #getMinimumAccessibleValue
-	 */
-	public Number getMaximumAccessibleValue() {
-	    if (model instanceof SpinnerNumberModel) {
-		SpinnerNumberModel numberModel = (SpinnerNumberModel)model;
-		Object o = numberModel.getMaximum();
-		if (o instanceof Number) {
-		    return (Number)o;
-		}
-	    }
-	    return null;
-	}
-	
-	/* ===== End AccessibleValue impl ===== */
+        /*
+         * Returns the AccessibleEditableText for the JSpinner editor
+         */
+        private AccessibleEditableText getEditorAccessibleEditableText() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at instanceof AccessibleEditableText) {
+                return (AccessibleEditableText)at;
+            }
+            return null;
+        }
 
-	/* ===== Begin AccessibleAction impl ===== */
+        /**
+         * Gets the AccessibleValue associated with this object.
+         *
+         * @return AccessibleValue if supported by object; else return null
+         * @see AccessibleValue
+         *
+         */
+        public AccessibleValue getAccessibleValue() {
+            return this;
+        }
 
-	/**
-	 * Returns the number of accessible actions available in this object
-	 * If there are more than one, the first one is considered the "default"
-	 * action of the object.
-	 *
-	 * Two actions are supported: AccessibleAction.INCREMENT which
-	 * increments the spinner value and AccessibleAction.DECREMENT 
-	 * which decrements the spinner value
-	 *
-	 * @return the zero-based number of Actions in this object
-	 */
-	public int getAccessibleActionCount() {
-	    return 2;
-	}
-	
-	/**
-	 * Returns a description of the specified action of the object.
-	 *
-	 * @param i zero-based index of the actions
-	 * @return a String description of the action
-	 * @see #getAccessibleActionCount
-	 */
-	public String getAccessibleActionDescription(int i) {
-	    if (i == 0) {
-		return AccessibleAction.INCREMENT;
-	    } else if (i == 1) {
-		return AccessibleAction.DECREMENT;
-	    }
-	    return null;
-	}
-	
-	/**
-	 * Performs the specified Action on the object
-	 *
-	 * @param i zero-based index of actions. The first action
-	 * (index 0) is AccessibleAction.INCREMENT and the second
-	 * action (index 1) is AccessibleAction.DECREMENT.
-	 * @return true if the action was performed; otherwise false.
-	 * @see #getAccessibleActionCount
-	 */
-	public boolean doAccessibleAction(int i) {
-	    if (i < 0 || i > 1) {
-		return false;
-	    }
-	    Object o = null;
-	    if (i == 0) {
-		o = getNextValue(); // AccessibleAction.INCREMENT
-	    } else {
-		o = getPreviousValue();	// AccessibleAction.DECREMENT
-	    }
-	    // try to set the new value
-	    try {
-		model.setValue(o);
-		return true;
-	    } catch (IllegalArgumentException iae) {
-		// SpinnerModel didn't like new value
-	    }
-	    return false;
-	}
+        /* ===== Begin AccessibleValue impl ===== */
 
-	/* ===== End AccessibleAction impl ===== */
+        /**
+         * Get the value of this object as a Number.  If the value has not been
+         * set, the return value will be null.
+         *
+         * @return value of the object
+         * @see #setCurrentAccessibleValue
+         */
+        public Number getCurrentAccessibleValue() {
+            Object o = model.getValue();
+            if (o instanceof Number) {
+                return (Number)o;
+            }
+            return null;
+        }
 
-	/* ===== Begin AccessibleText impl ===== */
+        /**
+         * Set the value of this object as a Number.
+         *
+         * @param n the value to set for this object
+         * @return true if the value was set; else False
+         * @see #getCurrentAccessibleValue
+         */
+        public boolean setCurrentAccessibleValue(Number n) {
+            // try to set the new value
+            try {
+                model.setValue(n);
+                return true;
+            } catch (IllegalArgumentException iae) {
+                // SpinnerModel didn't like new value
+            }
+            return false;
+        }
 
-	/*
-	 * Returns whether source and destination components have the
-	 * same window ancestor
-	 */
-	private boolean sameWindowAncestor(Component src, Component dest) {
-	    if (src == null || dest == null) {
-		return false;
-	    }
-	    return SwingUtilities.getWindowAncestor(src) ==
-		SwingUtilities.getWindowAncestor(dest);
-	}
+        /**
+         * Get the minimum value of this object as a Number.
+         *
+         * @return Minimum value of the object; null if this object does not
+         * have a minimum value
+         * @see #getMaximumAccessibleValue
+         */
+        public Number getMinimumAccessibleValue() {
+            if (model instanceof SpinnerNumberModel) {
+                SpinnerNumberModel numberModel = (SpinnerNumberModel)model;
+                Object o = numberModel.getMinimum();
+                if (o instanceof Number) {
+                    return (Number)o;
+                }
+            }
+            return null;
+        }
 
-	/**
-	 * Given a point in local coordinates, return the zero-based index
-	 * of the character under that Point.  If the point is invalid,
-	 * this method returns -1.
-	 *
-	 * @param p the Point in local coordinates
-	 * @return the zero-based index of the character under Point p; if 
-	 * Point is invalid return -1.
-	 */
-	public int getIndexAtPoint(Point p) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null && sameWindowAncestor(JSpinner.this, editor)) {
-		// convert point from the JSpinner bounds (source) to 
-		// editor bounds (destination)
-		Point editorPoint = SwingUtilities.convertPoint(JSpinner.this,
-								p,
-								editor);
-		if (editorPoint != null) {
-		    return at.getIndexAtPoint(editorPoint);
-		}
-	    }
-	    return -1;
-	}
+        /**
+         * Get the maximum value of this object as a Number.
+         *
+         * @return Maximum value of the object; null if this object does not
+         * have a maximum value
+         * @see #getMinimumAccessibleValue
+         */
+        public Number getMaximumAccessibleValue() {
+            if (model instanceof SpinnerNumberModel) {
+                SpinnerNumberModel numberModel = (SpinnerNumberModel)model;
+                Object o = numberModel.getMaximum();
+                if (o instanceof Number) {
+                    return (Number)o;
+                }
+            }
+            return null;
+        }
 
-	/**
-	 * Determines the bounding box of the character at the given 
-	 * index into the string.  The bounds are returned in local
-	 * coordinates.  If the index is invalid an empty rectangle is 
-	 * returned.
-	 *
-	 * @param i the index into the String
-	 * @return the screen coordinates of the character's bounding box,
-	 * if index is invalid return an empty rectangle.
-	 */
-	public Rectangle getCharacterBounds(int i) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null ) {
-		Rectangle editorRect = at.getCharacterBounds(i);
-		if (editorRect != null && 
-		    sameWindowAncestor(JSpinner.this, editor)) {
-		    // return rectangle in the the JSpinner bounds
-		    return SwingUtilities.convertRectangle(editor,
-							   editorRect,
-							   JSpinner.this);
-		}
-	    }
-	    return null;
-	}
+        /* ===== End AccessibleValue impl ===== */
 
-	/**
-	 * Returns the number of characters (valid indicies) 
-	 *
-	 * @return the number of characters
-	 */
-	public int getCharCount() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getCharCount();
-	    }
-	    return -1;
-	}
+        /* ===== Begin AccessibleAction impl ===== */
 
-	/**
-	 * Returns the zero-based offset of the caret.
-	 *
-	 * Note: That to the right of the caret will have the same index
-	 * value as the offset (the caret is between two characters).
-	 * @return the zero-based offset of the caret.
-	 */
-	public int getCaretPosition() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getCaretPosition();
-	    }
-	    return -1;
-	}
+        /**
+         * Returns the number of accessible actions available in this object
+         * If there are more than one, the first one is considered the "default"
+         * action of the object.
+         *
+         * Two actions are supported: AccessibleAction.INCREMENT which
+         * increments the spinner value and AccessibleAction.DECREMENT
+         * which decrements the spinner value
+         *
+         * @return the zero-based number of Actions in this object
+         */
+        public int getAccessibleActionCount() {
+            return 2;
+        }
 
-	/**
-	 * Returns the String at a given index. 
-	 *
-	 * @param part the CHARACTER, WORD, or SENTENCE to retrieve
-	 * @param index an index within the text
-	 * @return the letter, word, or sentence
-	 */
-	public String getAtIndex(int part, int index) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getAtIndex(part, index);
-	    }
-	    return null;
-	}
+        /**
+         * Returns a description of the specified action of the object.
+         *
+         * @param i zero-based index of the actions
+         * @return a String description of the action
+         * @see #getAccessibleActionCount
+         */
+        public String getAccessibleActionDescription(int i) {
+            if (i == 0) {
+                return AccessibleAction.INCREMENT;
+            } else if (i == 1) {
+                return AccessibleAction.DECREMENT;
+            }
+            return null;
+        }
 
-	/**
-	 * Returns the String after a given index.
-	 *
-	 * @param part the CHARACTER, WORD, or SENTENCE to retrieve
-	 * @param index an index within the text
-	 * @return the letter, word, or sentence
-	 */
-	public String getAfterIndex(int part, int index) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getAfterIndex(part, index);
-	    }
-	    return null;
-	}
+        /**
+         * Performs the specified Action on the object
+         *
+         * @param i zero-based index of actions. The first action
+         * (index 0) is AccessibleAction.INCREMENT and the second
+         * action (index 1) is AccessibleAction.DECREMENT.
+         * @return true if the action was performed; otherwise false.
+         * @see #getAccessibleActionCount
+         */
+        public boolean doAccessibleAction(int i) {
+            if (i < 0 || i > 1) {
+                return false;
+            }
+            Object o = null;
+            if (i == 0) {
+                o = getNextValue(); // AccessibleAction.INCREMENT
+            } else {
+                o = getPreviousValue(); // AccessibleAction.DECREMENT
+            }
+            // try to set the new value
+            try {
+                model.setValue(o);
+                return true;
+            } catch (IllegalArgumentException iae) {
+                // SpinnerModel didn't like new value
+            }
+            return false;
+        }
 
-	/**
-	 * Returns the String before a given index.
-	 *
-	 * @param part the CHARACTER, WORD, or SENTENCE to retrieve
-	 * @param index an index within the text
-	 * @return the letter, word, or sentence
-	 */
-	public String getBeforeIndex(int part, int index) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getBeforeIndex(part, index);
-	    }
-	    return null;
-	}
+        /* ===== End AccessibleAction impl ===== */
 
-	/**
-	 * Returns the AttributeSet for a given character at a given index
-	 *
-	 * @param i the zero-based index into the text 
-	 * @return the AttributeSet of the character
-	 */
-	public AttributeSet getCharacterAttribute(int i) {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getCharacterAttribute(i);
-	    } 
-	    return null;
-	}
+        /* ===== Begin AccessibleText impl ===== */
 
-	/**
-	 * Returns the start offset within the selected text.
-	 * If there is no selection, but there is
-	 * a caret, the start and end offsets will be the same.
-	 *
-	 * @return the index into the text of the start of the selection
-	 */
-	public int getSelectionStart() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getSelectionStart();
-	    }
-	    return -1;
-	}
+        /*
+         * Returns whether source and destination components have the
+         * same window ancestor
+         */
+        private boolean sameWindowAncestor(Component src, Component dest) {
+            if (src == null || dest == null) {
+                return false;
+            }
+            return SwingUtilities.getWindowAncestor(src) ==
+                SwingUtilities.getWindowAncestor(dest);
+        }
 
-	/**
-	 * Returns the end offset within the selected text.
-	 * If there is no selection, but there is
-	 * a caret, the start and end offsets will be the same.
-	 *
-	 * @return the index into teh text of the end of the selection
-	 */
-	public int getSelectionEnd() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getSelectionEnd();
-	    } 
-	    return -1;
-	}
+        /**
+         * Given a point in local coordinates, return the zero-based index
+         * of the character under that Point.  If the point is invalid,
+         * this method returns -1.
+         *
+         * @param p the Point in local coordinates
+         * @return the zero-based index of the character under Point p; if
+         * Point is invalid return -1.
+         */
+        public int getIndexAtPoint(Point p) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null && sameWindowAncestor(JSpinner.this, editor)) {
+                // convert point from the JSpinner bounds (source) to
+                // editor bounds (destination)
+                Point editorPoint = SwingUtilities.convertPoint(JSpinner.this,
+                                                                p,
+                                                                editor);
+                if (editorPoint != null) {
+                    return at.getIndexAtPoint(editorPoint);
+                }
+            }
+            return -1;
+        }
 
-	/**
-	 * Returns the portion of the text that is selected. 
-	 *
-	 * @return the String portion of the text that is selected
-	 */
-	public String getSelectedText() {
-	    AccessibleText at = getEditorAccessibleText();
-	    if (at != null) {
-		return at.getSelectedText();
-	    }
-	    return null;
-	}
+        /**
+         * Determines the bounding box of the character at the given
+         * index into the string.  The bounds are returned in local
+         * coordinates.  If the index is invalid an empty rectangle is
+         * returned.
+         *
+         * @param i the index into the String
+         * @return the screen coordinates of the character's bounding box,
+         * if index is invalid return an empty rectangle.
+         */
+        public Rectangle getCharacterBounds(int i) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null ) {
+                Rectangle editorRect = at.getCharacterBounds(i);
+                if (editorRect != null &&
+                    sameWindowAncestor(JSpinner.this, editor)) {
+                    // return rectangle in the the JSpinner bounds
+                    return SwingUtilities.convertRectangle(editor,
+                                                           editorRect,
+                                                           JSpinner.this);
+                }
+            }
+            return null;
+        }
 
-	/* ===== End AccessibleText impl ===== */
+        /**
+         * Returns the number of characters (valid indicies)
+         *
+         * @return the number of characters
+         */
+        public int getCharCount() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getCharCount();
+            }
+            return -1;
+        }
+
+        /**
+         * Returns the zero-based offset of the caret.
+         *
+         * Note: That to the right of the caret will have the same index
+         * value as the offset (the caret is between two characters).
+         * @return the zero-based offset of the caret.
+         */
+        public int getCaretPosition() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getCaretPosition();
+            }
+            return -1;
+        }
+
+        /**
+         * Returns the String at a given index.
+         *
+         * @param part the CHARACTER, WORD, or SENTENCE to retrieve
+         * @param index an index within the text
+         * @return the letter, word, or sentence
+         */
+        public String getAtIndex(int part, int index) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getAtIndex(part, index);
+            }
+            return null;
+        }
+
+        /**
+         * Returns the String after a given index.
+         *
+         * @param part the CHARACTER, WORD, or SENTENCE to retrieve
+         * @param index an index within the text
+         * @return the letter, word, or sentence
+         */
+        public String getAfterIndex(int part, int index) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getAfterIndex(part, index);
+            }
+            return null;
+        }
+
+        /**
+         * Returns the String before a given index.
+         *
+         * @param part the CHARACTER, WORD, or SENTENCE to retrieve
+         * @param index an index within the text
+         * @return the letter, word, or sentence
+         */
+        public String getBeforeIndex(int part, int index) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getBeforeIndex(part, index);
+            }
+            return null;
+        }
+
+        /**
+         * Returns the AttributeSet for a given character at a given index
+         *
+         * @param i the zero-based index into the text
+         * @return the AttributeSet of the character
+         */
+        public AttributeSet getCharacterAttribute(int i) {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getCharacterAttribute(i);
+            }
+            return null;
+        }
+
+        /**
+         * Returns the start offset within the selected text.
+         * If there is no selection, but there is
+         * a caret, the start and end offsets will be the same.
+         *
+         * @return the index into the text of the start of the selection
+         */
+        public int getSelectionStart() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getSelectionStart();
+            }
+            return -1;
+        }
+
+        /**
+         * Returns the end offset within the selected text.
+         * If there is no selection, but there is
+         * a caret, the start and end offsets will be the same.
+         *
+         * @return the index into teh text of the end of the selection
+         */
+        public int getSelectionEnd() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getSelectionEnd();
+            }
+            return -1;
+        }
+
+        /**
+         * Returns the portion of the text that is selected.
+         *
+         * @return the String portion of the text that is selected
+         */
+        public String getSelectedText() {
+            AccessibleText at = getEditorAccessibleText();
+            if (at != null) {
+                return at.getSelectedText();
+            }
+            return null;
+        }
+
+        /* ===== End AccessibleText impl ===== */
 
 
-	/* ===== Begin AccessibleEditableText impl ===== */
+        /* ===== Begin AccessibleEditableText impl ===== */
 
-	/**
-	 * Sets the text contents to the specified string.
-	 *
-	 * @param s the string to set the text contents
-	 */
-	public void setTextContents(String s) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.setTextContents(s);
-	    }
-	}
+        /**
+         * Sets the text contents to the specified string.
+         *
+         * @param s the string to set the text contents
+         */
+        public void setTextContents(String s) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.setTextContents(s);
+            }
+        }
 
-	/**
-	 * Inserts the specified string at the given index/
-	 *
-	 * @param index the index in the text where the string will 
-	 * be inserted
-	 * @param s the string to insert in the text
-	 */
-	public void insertTextAtIndex(int index, String s) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.insertTextAtIndex(index, s);
-	    }
-	}
+        /**
+         * Inserts the specified string at the given index/
+         *
+         * @param index the index in the text where the string will
+         * be inserted
+         * @param s the string to insert in the text
+         */
+        public void insertTextAtIndex(int index, String s) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.insertTextAtIndex(index, s);
+            }
+        }
 
-	/**
-	 * Returns the text string between two indices.
-	 * 
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 * @return the text string between the indices
-	 */
-	public String getTextRange(int startIndex, int endIndex) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		return at.getTextRange(startIndex, endIndex);
-	    }
-	    return null;
-	}
+        /**
+         * Returns the text string between two indices.
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         * @return the text string between the indices
+         */
+        public String getTextRange(int startIndex, int endIndex) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                return at.getTextRange(startIndex, endIndex);
+            }
+            return null;
+        }
 
-	/**
-	 * Deletes the text between two indices
-	 *
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 */
-	public void delete(int startIndex, int endIndex) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.delete(startIndex, endIndex);
-	    }
-	}
+        /**
+         * Deletes the text between two indices
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         */
+        public void delete(int startIndex, int endIndex) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.delete(startIndex, endIndex);
+            }
+        }
 
-	/**
-	 * Cuts the text between two indices into the system clipboard.
-	 *
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 */
-	public void cut(int startIndex, int endIndex) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.cut(startIndex, endIndex);
-	    }
-	}
+        /**
+         * Cuts the text between two indices into the system clipboard.
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         */
+        public void cut(int startIndex, int endIndex) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.cut(startIndex, endIndex);
+            }
+        }
 
-	/**
-	 * Pastes the text from the system clipboard into the text
-	 * starting at the specified index.
-	 *
-	 * @param startIndex the starting index in the text
-	 */
-	public void paste(int startIndex) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.paste(startIndex);
-	    }
-	}
+        /**
+         * Pastes the text from the system clipboard into the text
+         * starting at the specified index.
+         *
+         * @param startIndex the starting index in the text
+         */
+        public void paste(int startIndex) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.paste(startIndex);
+            }
+        }
 
-	/**
-	 * Replaces the text between two indices with the specified
-	 * string.
-	 *
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 * @param s the string to replace the text between two indices
-	 */
-	public void replaceText(int startIndex, int endIndex, String s) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.replaceText(startIndex, endIndex, s);
-	    }
-	}
+        /**
+         * Replaces the text between two indices with the specified
+         * string.
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         * @param s the string to replace the text between two indices
+         */
+        public void replaceText(int startIndex, int endIndex, String s) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.replaceText(startIndex, endIndex, s);
+            }
+        }
 
-	/**
-	 * Selects the text between two indices.
-	 *
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 */
-	public void selectText(int startIndex, int endIndex) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.selectText(startIndex, endIndex);
-	    }
-	}
+        /**
+         * Selects the text between two indices.
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         */
+        public void selectText(int startIndex, int endIndex) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.selectText(startIndex, endIndex);
+            }
+        }
 
-	/**
-	 * Sets attributes for the text between two indices.
-	 *
-	 * @param startIndex the starting index in the text
-	 * @param endIndex the ending index in the text
-	 * @param as the attribute set
-	 * @see AttributeSet
-	 */
-	public void setAttributes(int startIndex, int endIndex, AttributeSet as) {
-	    AccessibleEditableText at = getEditorAccessibleEditableText();
-	    if (at != null) {
-		at.setAttributes(startIndex, endIndex, as);
-	    }
-	}
+        /**
+         * Sets attributes for the text between two indices.
+         *
+         * @param startIndex the starting index in the text
+         * @param endIndex the ending index in the text
+         * @param as the attribute set
+         * @see AttributeSet
+         */
+        public void setAttributes(int startIndex, int endIndex, AttributeSet as) {
+            AccessibleEditableText at = getEditorAccessibleEditableText();
+            if (at != null) {
+                at.setAttributes(startIndex, endIndex, as);
+            }
+        }
     }  /* End AccessibleJSpinner */
 }

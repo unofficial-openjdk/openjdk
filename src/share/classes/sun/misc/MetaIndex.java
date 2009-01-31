@@ -99,7 +99,7 @@ sun/
  * <LI> It is versioned, and optional, to prevent strong dependencies
  * between the JVM and JDK. It is also potentially applicable to more
  * than just the boot and extension class paths.
- * 
+ *
  * <LI> Precisely speaking, it plays different role in JVM and J2SE
  * side.  On the JVM side, meta-index file is used to speed up locating the
  * class files only while on the J2SE side, meta-index file is used to speed
@@ -145,85 +145,85 @@ public class MetaIndex {
     // is extended for user-provided jar files in future.
 
     public static MetaIndex forJar(File jar) {
-	return getJarMap().get(jar);
+        return getJarMap().get(jar);
     }
 
     // 'synchronized' is added to protect the jarMap from being modified
     // by multiple threads.
     public static synchronized void registerDirectory(File dir) {
-	// Note that this does not currently check to see whether the
-	// directory has previously been registered, since the meta-index
-	// in a particular directory creates multiple entries in the
-	// jarMap. If this mechanism is extended beyond the boot and
-	// extension class paths (for example, automatically searching for
-	// meta-index files in directories containing jars which have been
-	// explicitly opened) then this code should be generalized.
-	//
-	// This method must be called from a privileged context.
-	File indexFile = new File(dir, "meta-index");
-	if (indexFile.exists()) {
-	    try {
-		BufferedReader reader = new BufferedReader(new FileReader(indexFile));
-		String line = null;
-		String curJarName = null;
-		boolean isCurJarContainClassOnly = false;
-		List<String> contents = new ArrayList<String>();
-		Map<File, MetaIndex> map = getJarMap();
-	
-		/* Convert dir into canonical form. */
-		dir = dir.getCanonicalFile();
-		/* Note: The first line should contain the version of
-		 * the meta-index file. We have to match the right version
-		 * before trying to parse this file. */
-		line = reader.readLine();
-		if (line == null ||
-		    !line.equals("% VERSION 2")) {
-		    reader.close();
-		    return;
-		}
-		while ((line = reader.readLine()) != null) {
-		    switch (line.charAt(0)) {
-		    case '!':
-		    case '#': 
-		    case '@': {
-			// Store away current contents, if any
-			if ((curJarName != null) && (contents.size() > 0)) {			   
-			    map.put(new File(dir, curJarName), 
-				    new MetaIndex(contents, 
-						  isCurJarContainClassOnly));
-			
-			    contents.clear();
-			}
-			// Fetch new current jar file name
-			curJarName = line.substring(2);
-			if (line.charAt(0) == '!') {
-			    isCurJarContainClassOnly = true;
-			} else if (isCurJarContainClassOnly) {
-			    isCurJarContainClassOnly = false;
-			}
+        // Note that this does not currently check to see whether the
+        // directory has previously been registered, since the meta-index
+        // in a particular directory creates multiple entries in the
+        // jarMap. If this mechanism is extended beyond the boot and
+        // extension class paths (for example, automatically searching for
+        // meta-index files in directories containing jars which have been
+        // explicitly opened) then this code should be generalized.
+        //
+        // This method must be called from a privileged context.
+        File indexFile = new File(dir, "meta-index");
+        if (indexFile.exists()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(indexFile));
+                String line = null;
+                String curJarName = null;
+                boolean isCurJarContainClassOnly = false;
+                List<String> contents = new ArrayList<String>();
+                Map<File, MetaIndex> map = getJarMap();
 
-			break;
-		    }
-		    case '%':
-			break;
-		    default: {
-			contents.add(line);
-		    }
-		    }
-		}
-		// Store away current contents, if any
-		if ((curJarName != null) && (contents.size() > 0)) {
-		    map.put(new File(dir, curJarName), 
-			    new MetaIndex(contents, isCurJarContainClassOnly)); 
-		}
+                /* Convert dir into canonical form. */
+                dir = dir.getCanonicalFile();
+                /* Note: The first line should contain the version of
+                 * the meta-index file. We have to match the right version
+                 * before trying to parse this file. */
+                line = reader.readLine();
+                if (line == null ||
+                    !line.equals("% VERSION 2")) {
+                    reader.close();
+                    return;
+                }
+                while ((line = reader.readLine()) != null) {
+                    switch (line.charAt(0)) {
+                    case '!':
+                    case '#':
+                    case '@': {
+                        // Store away current contents, if any
+                        if ((curJarName != null) && (contents.size() > 0)) {
+                            map.put(new File(dir, curJarName),
+                                    new MetaIndex(contents,
+                                                  isCurJarContainClassOnly));
 
-		reader.close();
-		
-	    } catch (IOException e) {
-		// Silently fail for now (similar behavior to elsewhere in
-		// extension and core loaders)
-	    } 
-	}
+                            contents.clear();
+                        }
+                        // Fetch new current jar file name
+                        curJarName = line.substring(2);
+                        if (line.charAt(0) == '!') {
+                            isCurJarContainClassOnly = true;
+                        } else if (isCurJarContainClassOnly) {
+                            isCurJarContainClassOnly = false;
+                        }
+
+                        break;
+                    }
+                    case '%':
+                        break;
+                    default: {
+                        contents.add(line);
+                    }
+                    }
+                }
+                // Store away current contents, if any
+                if ((curJarName != null) && (contents.size() > 0)) {
+                    map.put(new File(dir, curJarName),
+                            new MetaIndex(contents, isCurJarContainClassOnly));
+                }
+
+                reader.close();
+
+            } catch (IOException e) {
+                // Silently fail for now (similar behavior to elsewhere in
+                // extension and core loaders)
+            }
+        }
     }
 
     //----------------------------------------------------------------------
@@ -231,45 +231,45 @@ public class MetaIndex {
     //
 
     public boolean mayContain(String entry) {
-	// Ask non-class file from class only jar returns false
-	// This check is important to avoid some class only jar
-	// files such as rt.jar are opened for resource request.
-	if  (isClassOnlyJar && !entry.endsWith(".class")){
-	    return false;
-	}
+        // Ask non-class file from class only jar returns false
+        // This check is important to avoid some class only jar
+        // files such as rt.jar are opened for resource request.
+        if  (isClassOnlyJar && !entry.endsWith(".class")){
+            return false;
+        }
 
-	String[] conts = contents;
-	for (int i = 0; i < conts.length; i++) {
-	    if (entry.startsWith(conts[i])) {
-		return true;
-	    }
-	}
-	return false;
+        String[] conts = contents;
+        for (int i = 0; i < conts.length; i++) {
+            if (entry.startsWith(conts[i])) {
+                return true;
+            }
+        }
+        return false;
     }
-    
+
 
     //----------------------------------------------------------------------
     // Implementation only below this point
     // @IllegalArgumentException if entries is null.
-    private MetaIndex(List<String> entries, boolean isClassOnlyJar) 
-	throws IllegalArgumentException {
-	if (entries == null) {
-	    throw new IllegalArgumentException();
-	}
+    private MetaIndex(List<String> entries, boolean isClassOnlyJar)
+        throws IllegalArgumentException {
+        if (entries == null) {
+            throw new IllegalArgumentException();
+        }
 
-	contents = entries.toArray(new String[0]);
-	this.isClassOnlyJar = isClassOnlyJar;
+        contents = entries.toArray(new String[0]);
+        this.isClassOnlyJar = isClassOnlyJar;
     }
 
     private static Map<File, MetaIndex> getJarMap() {
-	if (jarMap == null) {
-	    synchronized (MetaIndex.class) {
-		if (jarMap == null) {
-		    jarMap = new HashMap<File, MetaIndex>();
-		}
-	    }
-	}
-	assert jarMap != null;
-	return jarMap;
+        if (jarMap == null) {
+            synchronized (MetaIndex.class) {
+                if (jarMap == null) {
+                    jarMap = new HashMap<File, MetaIndex>();
+                }
+            }
+        }
+        assert jarMap != null;
+        return jarMap;
     }
 }

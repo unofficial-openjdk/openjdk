@@ -33,7 +33,6 @@ import java.util.Locale;
  * method of a <code>CallbackHandler</code> to retrieve the <code>Locale</code>
  * used for localizing text.
  *
- * @version %I%, %G%
  * @see javax.security.auth.callback.CallbackHandler
  */
 public class LanguageCallback implements Callback, java.io.Serializable {
@@ -61,20 +60,20 @@ public class LanguageCallback implements Callback, java.io.Serializable {
      * @see #getLocale
      */
     public void setLocale(Locale locale) {
-	this.locale = locale;
+        this.locale = locale;
     }
- 
+
     /**
      * Get the retrieved <code>Locale</code>.
      *
      * <p>
      *
      * @return the retrieved <code>Locale</code>, or null
-     *		if no <code>Locale</code> could be retrieved.
+     *          if no <code>Locale</code> could be retrieved.
      *
      * @see #setLocale
      */
     public Locale getLocale() {
-	return locale;
+        return locale;
     }
 }

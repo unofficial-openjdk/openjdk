@@ -36,13 +36,13 @@ public class MethodScope extends AbstractScope<Method> {
 
     // constructor is private to enforce use of factory method
     private MethodScope(Method m){
-	super(m);
+        super(m);
     }
 
     // utility method; computes enclosing class, from which we can
     // derive enclosing scope.
-    private Class<?> getEnclosingClass(){ 
-	return getRecvr().getDeclaringClass();
+    private Class<?> getEnclosingClass(){
+        return getRecvr().getDeclaringClass();
     }
 
     /**
@@ -50,9 +50,9 @@ public class MethodScope extends AbstractScope<Method> {
      * @return the enclosing scope
      */
     protected Scope computeEnclosingScope() {
-	// the enclosing scope of a (generic) method is the scope of the
-	// class in which it was declared.
-	return ClassScope.make(getEnclosingClass());
+        // the enclosing scope of a (generic) method is the scope of the
+        // class in which it was declared.
+        return ClassScope.make(getEnclosingClass());
     }
 
     /**
@@ -61,7 +61,7 @@ public class MethodScope extends AbstractScope<Method> {
      * @param m - A Method whose scope we want to obtain
      * @return The type-variable scope for the method m
      */
-    public static MethodScope make(Method m) { 
-	return new MethodScope(m);
+    public static MethodScope make(Method m) {
+        return new MethodScope(m);
     }
 }

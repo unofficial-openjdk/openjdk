@@ -78,11 +78,11 @@ import com.sun.jmx.remote.internal.RMIExporter;
 import com.sun.jmx.remote.security.JMXPluggableAuthenticator;
 
 /**
- * This class initializes and starts the RMIConnectorServer for JSR 163 
+ * This class initializes and starts the RMIConnectorServer for JSR 163
  * JMX Monitoring.
  **/
 public final class ConnectorBootstrap {
-    
+
     /**
      * Default values for JMX configuration properties.
      **/
@@ -203,8 +203,8 @@ public final class ConnectorBootstrap {
             final Set principals = subject.getPrincipals();
             for (Iterator i = principals.iterator(); i.hasNext(); ) {
                 final Principal p = (Principal) i.next();
-		if (properties.containsKey(p.getName()))
-		    return;
+                if (properties.containsKey(p.getName()))
+                    return;
             }
             final Set<String> principalsStr = new HashSet<String>();
             for (Iterator i = principals.iterator(); i.hasNext(); ) {
@@ -220,8 +220,8 @@ public final class ConnectorBootstrap {
         private static Properties propertiesFromFile(String fname)
             throws IOException {
             Properties p = new Properties();
-	    if (fname == null)
-		return p;
+            if (fname == null)
+                return p;
             FileInputStream fin = new FileInputStream(fname);
             p.load(fin);
             fin.close();
@@ -249,7 +249,7 @@ public final class ConnectorBootstrap {
         final String portStr = props.getProperty(PropertyNames.PORT);
 
 
-        // System.out.println("initializing: {port=" + portStr + ", 
+        // System.out.println("initializing: {port=" + portStr + ",
         //                     properties="+props+"}");
         return initialize(portStr,props);
     }
@@ -258,7 +258,7 @@ public final class ConnectorBootstrap {
      * Initializes and starts a JMX Connector Server for remote
      * monitoring and management.
      **/
-    public static synchronized 
+    public static synchronized
         JMXConnectorServer initialize(String portStr, Properties props) {
 
         // Get port number
@@ -273,24 +273,24 @@ public final class ConnectorBootstrap {
         }
 
         // Do we use authentication?
-        final String  useAuthenticationStr = 
+        final String  useAuthenticationStr =
             props.getProperty(PropertyNames.USE_AUTHENTICATION,
                               DefaultValues.USE_AUTHENTICATION);
-        final boolean useAuthentication = 
+        final boolean useAuthentication =
             Boolean.valueOf(useAuthenticationStr).booleanValue();
 
         // Do we use SSL?
-        final String  useSslStr = 
+        final String  useSslStr =
             props.getProperty(PropertyNames.USE_SSL,
                               DefaultValues.USE_SSL);
-        final boolean useSsl = 
+        final boolean useSsl =
             Boolean.valueOf(useSslStr).booleanValue();
 
         // Do we use RMI Registry SSL?
-        final String  useRegistrySslStr = 
+        final String  useRegistrySslStr =
             props.getProperty(PropertyNames.USE_REGISTRY_SSL,
                               DefaultValues.USE_REGISTRY_SSL);
-        final boolean useRegistrySsl = 
+        final boolean useRegistrySsl =
             Boolean.valueOf(useRegistrySslStr).booleanValue();
 
         final String enabledCipherSuites =
@@ -331,7 +331,7 @@ public final class ConnectorBootstrap {
         if (useAuthentication) {
 
             // Get non-default login configuration
-            loginConfigName = 
+            loginConfigName =
                 props.getProperty(PropertyNames.LOGIN_CONFIG_NAME);
 
             if (loginConfigName == null) {
@@ -360,7 +360,7 @@ public final class ConnectorBootstrap {
                       enabledProtocols +
                       "\n\t" + PropertyNames.SSL_NEED_CLIENT_AUTH + "=" +
                       sslNeedClientAuth +
-                      "\n\t" + PropertyNames.USE_AUTHENTICATION + "=" + 
+                      "\n\t" + PropertyNames.USE_AUTHENTICATION + "=" +
                       useAuthentication +
                       (useAuthentication ?
                         (loginConfigName == null ?
@@ -399,8 +399,8 @@ public final class ConnectorBootstrap {
     }
 
     /*
-     * Creates and starts a RMI Connector Server for "local" monitoring 
-     * and management. 
+     * Creates and starts a RMI Connector Server for "local" monitoring
+     * and management.
      */
     public static JMXConnectorServer startLocalConnectorServer() {
         // Ensure cryptographically strong random number generater used
@@ -412,7 +412,7 @@ public final class ConnectorBootstrap {
         env.put(RMIExporter.EXPORTER_ATTRIBUTE, new PermanentExporter());
 
         // The local connector server need only be available via the
-        // loopback connection. 
+        // loopback connection.
         String localhost = "localhost";
         InetAddress lh = null;
         try {
@@ -459,7 +459,7 @@ public final class ConnectorBootstrap {
                     final String msg=Agent.getText("jmxremote.ConnectorBootstrap.initialize.password.readonly",
                         passwordFileName);
                     log.config("initialize",msg);
-                    throw new AgentConfigurationError(PASSWORD_FILE_ACCESS_NOT_RESTRICTED, 
+                    throw new AgentConfigurationError(PASSWORD_FILE_ACCESS_NOT_RESTRICTED,
                         passwordFileName);
                 }
             }
@@ -490,7 +490,7 @@ public final class ConnectorBootstrap {
      **/
     private static String getDefaultFileName(String basename) {
         final String fileSeparator = File.separator;
-        return System.getProperty("java.home") + fileSeparator + "lib" + 
+        return System.getProperty("java.home") + fileSeparator + "lib" +
             fileSeparator + "management" + fileSeparator +
             basename;
     }
@@ -506,7 +506,7 @@ public final class ConnectorBootstrap {
                           boolean useAuthentication,
                           String loginConfigName,
                           String passwordFileName,
-                          String accessFileName) 
+                          String accessFileName)
         throws IOException, MalformedURLException {
 
         /* Make sure we use non-guessable RMI object IDs.  Otherwise
@@ -519,7 +519,7 @@ public final class ConnectorBootstrap {
         Map<String, Object> env = new HashMap<String, Object>();
 
         PermanentExporter exporter = new PermanentExporter();
-        
+
         env.put(RMIExporter.EXPORTER_ATTRIBUTE, exporter);
 
         if (useAuthentication) {
@@ -563,10 +563,10 @@ public final class ConnectorBootstrap {
             connServer.start();
         } catch (IOException e) {
             if (connServer == null) {
-                throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR, 
+                throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR,
                     e, url.toString());
             } else {
-                throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR, 
+                throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR,
                     e, connServer.getAddress().toString());
             }
         }
@@ -599,7 +599,7 @@ public final class ConnectorBootstrap {
     }
 
     // XXX Revisit: should probably clone this MibLogger....
-    private static final MibLogger log = 
+    private static final MibLogger log =
         new MibLogger(ConnectorBootstrap.class);
 
 }

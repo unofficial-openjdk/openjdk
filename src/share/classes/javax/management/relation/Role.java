@@ -89,20 +89,20 @@ public class Role implements Serializable {
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-	try {
-	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-	    String form = AccessController.doPrivileged(act);
-	    compat = (form != null && form.equals("1.0"));
-	} catch (Exception e) {
-	    // OK : Too bad, no compat with 1.0
-	}
-	if (compat) {
-	    serialPersistentFields = oldSerialPersistentFields;
-	    serialVersionUID = oldSerialVersionUID;
-	} else {
-	    serialPersistentFields = newSerialPersistentFields;
-	    serialVersionUID = newSerialVersionUID;
-	}
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK : Too bad, no compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
     }
     //
     // END Serialization compatibility stuff
@@ -137,18 +137,18 @@ public class Role implements Serializable {
      * @exception IllegalArgumentException  if null parameter
      */
     public Role(String roleName,
-		List<ObjectName> roleValue)
-	throws IllegalArgumentException {
+                List<ObjectName> roleValue)
+        throws IllegalArgumentException {
 
-	if (roleName == null || roleValue == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (roleName == null || roleValue == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	setRoleName(roleName);
-	setRoleValue(roleValue);
+        setRoleName(roleName);
+        setRoleValue(roleValue);
 
-	return;
+        return;
     }
 
     //
@@ -163,7 +163,7 @@ public class Role implements Serializable {
      * @see #setRoleName
      */
     public String getRoleName() {
-	return name;
+        return name;
     }
 
     /**
@@ -174,7 +174,7 @@ public class Role implements Serializable {
      * @see #setRoleValue
      */
     public List<ObjectName> getRoleValue() {
-	return objectNameList;
+        return objectNameList;
     }
 
     /**
@@ -187,15 +187,15 @@ public class Role implements Serializable {
      * @see #getRoleName
      */
     public void setRoleName(String roleName)
-	throws IllegalArgumentException {
+        throws IllegalArgumentException {
 
-	if (roleName == null) {
-	    String excMsg = "Invalid parameter.";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	name = roleName;
-	return;
+        name = roleName;
+        return;
     }
 
     /**
@@ -209,15 +209,15 @@ public class Role implements Serializable {
      * @see #getRoleValue
      */
     public void setRoleValue(List<ObjectName> roleValue)
-	throws IllegalArgumentException {
+        throws IllegalArgumentException {
 
-	if (roleValue == null) {
-	    String excMsg = "Invalid parameter.";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (roleValue == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	objectNameList = new ArrayList<ObjectName>(roleValue);
-	return;
+        objectNameList = new ArrayList<ObjectName>(roleValue);
+        return;
     }
 
     /**
@@ -226,17 +226,17 @@ public class Role implements Serializable {
      * @return the description of the role.
      */
     public String toString() {
-	StringBuilder result = new StringBuilder();
-	result.append("role name: " + name + "; role value: ");
-	for (Iterator objNameIter = objectNameList.iterator();
-	     objNameIter.hasNext();) {
-	    ObjectName currObjName = (ObjectName)(objNameIter.next());
-	    result.append(currObjName.toString());
-	    if (objNameIter.hasNext()) {
-		result.append(", ");
-	    }
-	}
-	return result.toString();
+        StringBuilder result = new StringBuilder();
+        result.append("role name: " + name + "; role value: ");
+        for (Iterator objNameIter = objectNameList.iterator();
+             objNameIter.hasNext();) {
+            ObjectName currObjName = (ObjectName)(objNameIter.next());
+            result.append(currObjName.toString());
+            if (objNameIter.hasNext()) {
+                result.append(", ");
+            }
+        }
+        return result.toString();
     }
 
     //
@@ -250,11 +250,11 @@ public class Role implements Serializable {
      */
     public Object clone() {
 
-	try {
-	    return new Role(name, objectNameList);
-	} catch (IllegalArgumentException exc) {
-	    return null; // can't happen
-	}
+        try {
+            return new Role(name, objectNameList);
+        } catch (IllegalArgumentException exc) {
+            return null; // can't happen
+        }
     }
 
     /**
@@ -268,39 +268,39 @@ public class Role implements Serializable {
      * @exception IllegalArgumentException  if null parameter
      */
     public static String roleValueToString(List<ObjectName> roleValue)
-	throws IllegalArgumentException {
+        throws IllegalArgumentException {
 
-	if (roleValue == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (roleValue == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	StringBuilder result = new StringBuilder();
-	for (ObjectName currObjName : roleValue) {
-	    if (result.length() > 0)
-		result.append("\n");
-	    result.append(currObjName.toString());
-	}
-	return result.toString();
+        StringBuilder result = new StringBuilder();
+        for (ObjectName currObjName : roleValue) {
+            if (result.length() > 0)
+                result.append("\n");
+            result.append(currObjName.toString());
+        }
+        return result.toString();
     }
 
     /**
      * Deserializes a {@link Role} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-	    throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
       if (compat)
       {
         // Read an object serialized in the old serial form
         //
         ObjectInputStream.GetField fields = in.readFields();
-	name = (String) fields.get("myName", null);
-	if (fields.defaulted("myName"))
+        name = (String) fields.get("myName", null);
+        if (fields.defaulted("myName"))
         {
           throw new NullPointerException("myName");
         }
-	objectNameList = cast(fields.get("myObjNameList", null));
-	if (fields.defaulted("myObjNameList"))
+        objectNameList = cast(fields.get("myObjNameList", null));
+        if (fields.defaulted("myObjNameList"))
         {
           throw new NullPointerException("myObjNameList");
         }
@@ -318,15 +318,15 @@ public class Role implements Serializable {
      * Serializes a {@link Role} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-	    throws IOException {
+            throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-	fields.put("myName", name);
-	fields.put("myObjNameList", (ArrayList)objectNameList);
-	out.writeFields();
+        fields.put("myName", name);
+        fields.put("myObjNameList", (ArrayList)objectNameList);
+        out.writeFields();
       }
       else
       {

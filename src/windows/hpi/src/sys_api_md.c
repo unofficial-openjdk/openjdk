@@ -43,8 +43,8 @@ sysOpen(const char *path, int oflag, int mode)
     char pathbuf[MAX_PATH];
 
     if (strlen(path) > MAX_PATH - 1) {
-	errno = ENAMETOOLONG;
-	return -1;
+        errno = ENAMETOOLONG;
+        return -1;
     }
     return open(sysNativePath(strcpy(pathbuf, path)),
                 oflag | O_BINARY | O_NOINHERIT, mode);
@@ -62,27 +62,27 @@ sysAvailable(int fd, jlong *pbytes) {
     struct _stati64 stbuf64;
 
     if (_fstati64(fd, &stbuf64) >= 0) {
-	int mode = stbuf64.st_mode;
-	if (S_ISCHR(mode) || S_ISFIFO(mode)) {
-	    int ret;
-	    long lpbytes;
-	    if (fd == 0) {
-	        ret = stdinAvailable(fd, &lpbytes);
-	    } else {
-	        ret = nonSeekAvailable(fd, &lpbytes);
-	    }
-	    (*pbytes) = (jlong)(lpbytes);
-	    return ret;
-	}
-	if ((cur = _lseeki64(fd, 0L, SEEK_CUR)) == -1) {
-	    return FALSE;
-	} else if ((end = _lseeki64(fd, 0L, SEEK_END)) == -1) {
-	    return FALSE;
-	} else if (_lseeki64(fd, cur, SEEK_SET) == -1) {
-	    return FALSE;
-	}
-	*pbytes = end - cur;
-	return TRUE;
+        int mode = stbuf64.st_mode;
+        if (S_ISCHR(mode) || S_ISFIFO(mode)) {
+            int ret;
+            long lpbytes;
+            if (fd == 0) {
+                ret = stdinAvailable(fd, &lpbytes);
+            } else {
+                ret = nonSeekAvailable(fd, &lpbytes);
+            }
+            (*pbytes) = (jlong)(lpbytes);
+            return ret;
+        }
+        if ((cur = _lseeki64(fd, 0L, SEEK_CUR)) == -1) {
+            return FALSE;
+        } else if ((end = _lseeki64(fd, 0L, SEEK_END)) == -1) {
+            return FALSE;
+        } else if (_lseeki64(fd, cur, SEEK_SET) == -1) {
+            return FALSE;
+        }
+        *pbytes = end - cur;
+        return TRUE;
     } else {
         return FALSE;
     }
@@ -99,20 +99,20 @@ nonSeekAvailable(int fd, long *pbytes) {
     HANDLE han;
 
     if ((han = (HANDLE) _get_osfhandle(fd)) == (HANDLE)(-1)) {
-	return FALSE;
+        return FALSE;
     }
 
     if (! PeekNamedPipe(han, NULL, 0, NULL, pbytes, NULL)) {
-	/* PeekNamedPipe fails when at EOF.  In that case we
-	 * simply make *pbytes = 0 which is consistent with the
-	 * behavior we get on Solaris when an fd is at EOF.
-	 * The only alternative is to raise an Exception,
-	 * which isn't really warranted.
-	 */
-	if (GetLastError() != ERROR_BROKEN_PIPE) {
-	    return FALSE;
-	}
-	*pbytes = 0;
+        /* PeekNamedPipe fails when at EOF.  In that case we
+         * simply make *pbytes = 0 which is consistent with the
+         * behavior we get on Solaris when an fd is at EOF.
+         * The only alternative is to raise an Exception,
+         * which isn't really warranted.
+         */
+        if (GetLastError() != ERROR_BROKEN_PIPE) {
+            return FALSE;
+        }
+        *pbytes = 0;
     }
     return TRUE;
 }
@@ -120,16 +120,16 @@ nonSeekAvailable(int fd, long *pbytes) {
 static int
 stdinAvailable(int fd, long *pbytes) {
     HANDLE han;
-    DWORD numEventsRead = 0;	/* Number of events read from buffer */
-    DWORD numEvents = 0;	/* Number of events in buffer */
-    DWORD i = 0;		/* Loop index */
-    DWORD curLength = 0;	/* Position marker */
-    DWORD actualLength = 0;	/* Number of bytes readable */
+    DWORD numEventsRead = 0;    /* Number of events read from buffer */
+    DWORD numEvents = 0;        /* Number of events in buffer */
+    DWORD i = 0;                /* Loop index */
+    DWORD curLength = 0;        /* Position marker */
+    DWORD actualLength = 0;     /* Number of bytes readable */
     BOOL error = FALSE;         /* Error holder */
     INPUT_RECORD *lpBuffer;     /* Pointer to records of input events */
 
     if ((han = GetStdHandle(STD_INPUT_HANDLE)) == INVALID_HANDLE_VALUE) {
-		return FALSE;
+                return FALSE;
     }
 
     /* Construct an array of input records in the console buffer */
@@ -145,30 +145,30 @@ stdinAvailable(int fd, long *pbytes) {
 
     lpBuffer = sysMalloc(numEvents * sizeof(INPUT_RECORD));
     if (lpBuffer == NULL) {
-     	return FALSE;
+        return FALSE;
     }
 
     error = PeekConsoleInput(han, lpBuffer, numEvents, &numEventsRead);
     if (error == 0) {
-	sysFree(lpBuffer);
-	return FALSE;
+        sysFree(lpBuffer);
+        return FALSE;
     }
 
     /* Examine input records for the number of bytes available */
     for(i=0; i<numEvents; i++) {
-	if (lpBuffer[i].EventType == KEY_EVENT) {
+        if (lpBuffer[i].EventType == KEY_EVENT) {
             KEY_EVENT_RECORD *keyRecord = (KEY_EVENT_RECORD *)
                                           &(lpBuffer[i].Event);
-	    if (keyRecord->bKeyDown == TRUE) {
+            if (keyRecord->bKeyDown == TRUE) {
                 CHAR *keyPressed = (CHAR *) &(keyRecord->uChar);
-	       	curLength++;
-	       	if (*keyPressed == '\r')
+                curLength++;
+                if (*keyPressed == '\r')
                     actualLength = curLength;
             }
         }
     }
     if(lpBuffer != NULL)
-       	sysFree(lpBuffer);
+        sysFree(lpBuffer);
     *pbytes = (long) actualLength;
     return TRUE;
 }
@@ -185,10 +185,10 @@ sysSync(int fd) {
     /*
      * From the documentation:
      *
-     *	   On Windows NT, the function FlushFileBuffers fails if hFile
-     *	   is a handle to console output. That is because console
-     *	   output is not buffered. The function returns FALSE, and
-     *	   GetLastError returns ERROR_INVALID_HANDLE.
+     *     On Windows NT, the function FlushFileBuffers fails if hFile
+     *     is a handle to console output. That is because console
+     *     output is not buffered. The function returns FALSE, and
+     *     GetLastError returns ERROR_INVALID_HANDLE.
      *
      * On the other hand, on Win95, it returns without error.  I cannot
      * assume that 0, 1, and 2 are console, because if someone closes
@@ -202,9 +202,9 @@ sysSync(int fd) {
     HANDLE handle = (HANDLE)_get_osfhandle(fd);
 
     if (!FlushFileBuffers(handle)) {
-	if (GetLastError() != ERROR_ACCESS_DENIED) {	/* from winerror.h */
-	    return -1;
-	}
+        if (GetLastError() != ERROR_ACCESS_DENIED) {    /* from winerror.h */
+            return -1;
+        }
     }
     return 0;
 }
@@ -240,10 +240,10 @@ sysFileSizeFD(int fd, jlong *size)
          * On Win98 accessing a non-local file we have observed a
          * bogus file size of 0x100000000.  So if upper 32 bits
          * are non-zero we re-calculate the size using lseek.  This
-         * should work for any file size, but it might have a 
+         * should work for any file size, but it might have a
          * performance impact relative to fstati64.  Note: Hotspot
-	 * doesn't have this problem because it uses stat rather
-	 * than fstat or fstati64.
+         * doesn't have this problem because it uses stat rather
+         * than fstat or fstati64.
          */
 
         jlong curpos;

@@ -28,8 +28,7 @@ package sun.applet;
 /**
  * An applet security exception.
  *
- * @version 	%I%, %G%
- * @author 	Arthur van Hoff
+ * @author      Arthur van Hoff
  */
 public
 class AppletSecurityException extends SecurityException {

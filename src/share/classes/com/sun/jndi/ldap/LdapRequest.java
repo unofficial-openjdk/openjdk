@@ -32,7 +32,7 @@ import javax.naming.CommunicationException;
 final class LdapRequest {
 
     LdapRequest next;   // Set/read in synchronized Connection methods
-    int msgId;    	// read-only
+    int msgId;          // read-only
 
     private int gotten = 0;
     private Vector replies = new Vector(3);
@@ -41,55 +41,55 @@ final class LdapRequest {
     private boolean completed = false;
 
     LdapRequest(int msgId, boolean pause) {
-	this.msgId = msgId;
-	this.pauseAfterReceipt = pause;
+        this.msgId = msgId;
+        this.pauseAfterReceipt = pause;
     }
 
     synchronized void cancel() {
-	cancelled = true;
+        cancelled = true;
 
-	// Unblock reader of pending request
-	// Should only ever have atmost one waiter
-	notify();   
+        // Unblock reader of pending request
+        // Should only ever have atmost one waiter
+        notify();
     }
 
     synchronized boolean addReplyBer(BerDecoder ber) {
-	if (cancelled) {
-	    return false;
-	}
-	replies.addElement(ber);
+        if (cancelled) {
+            return false;
+        }
+        replies.addElement(ber);
 
-	// peek at the BER buffer to check if it is a SearchResultDone PDU
-	try {
-	    ber.parseSeq(null);
-	    ber.parseInt();
-	    completed = (ber.peekByte() == LdapClient.LDAP_REP_RESULT);
-	} catch (IOException e) {
-	    // ignore
-	}
-	ber.reset();
+        // peek at the BER buffer to check if it is a SearchResultDone PDU
+        try {
+            ber.parseSeq(null);
+            ber.parseInt();
+            completed = (ber.peekByte() == LdapClient.LDAP_REP_RESULT);
+        } catch (IOException e) {
+            // ignore
+        }
+        ber.reset();
 
-	notify(); // notify anyone waiting for reply
-	return pauseAfterReceipt;
+        notify(); // notify anyone waiting for reply
+        return pauseAfterReceipt;
     }
 
     synchronized BerDecoder getReplyBer() throws CommunicationException {
-	if (cancelled) {
-	    throw new CommunicationException("Request: " + msgId +
-		" cancelled");
-	}
+        if (cancelled) {
+            throw new CommunicationException("Request: " + msgId +
+                " cancelled");
+        }
 
-	if (gotten < replies.size()) {
-	    BerDecoder answer = (BerDecoder)replies.elementAt(gotten);
-	    replies.setElementAt(null, gotten); // remove reference
-	    ++gotten; // skip to next
-	    return answer;
-	} else {
-	    return null;
-	}
+        if (gotten < replies.size()) {
+            BerDecoder answer = (BerDecoder)replies.elementAt(gotten);
+            replies.setElementAt(null, gotten); // remove reference
+            ++gotten; // skip to next
+            return answer;
+        } else {
+            return null;
+        }
     }
 
     synchronized boolean hasSearchCompleted() {
-	return completed;
+        return completed;
     }
 }

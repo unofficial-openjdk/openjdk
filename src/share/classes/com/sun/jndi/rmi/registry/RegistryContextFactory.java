@@ -50,12 +50,11 @@ import com.sun.jndi.url.rmi.rmiURLContextFactory;
  * same logical resource.  The order of the addresses is not significant.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 public class RegistryContextFactory
-	implements ObjectFactory, InitialContextFactory
+        implements ObjectFactory, InitialContextFactory
 {
     /**
      * The type of each address in an RMI registry reference.
@@ -64,56 +63,56 @@ public class RegistryContextFactory
 
     public Context getInitialContext(Hashtable<?,?> env) throws NamingException {
 
-	if (env != null) {
-	    env = (Hashtable) env.clone();
-	}
-	return URLToContext(getInitCtxURL(env), env);
+        if (env != null) {
+            env = (Hashtable) env.clone();
+        }
+        return URLToContext(getInitCtxURL(env), env);
     }
 
     public Object getObjectInstance(Object ref, Name name, Context nameCtx,
-				    Hashtable<?,?> env)
-	    throws NamingException
+                                    Hashtable<?,?> env)
+            throws NamingException
     {
-	if (!isRegistryRef(ref)) {
-	    return null;
-	}
-	/*
-	 * No need to clone env here.  If getObjectInstance()
-	 * returns something other than a RegistryContext (which
-	 * happens if you're looking up an object bound in the
-	 * registry, as opposed to looking up the registry itself),
-	 * then the context is GCed right away and there's no need to
-	 * clone the environment.  If getObjectInstance() returns a
-	 * RegistryContext, then it still goes through
-	 * GenericURLContext, which calls RegistryContext.lookup()
-	 * with an empty name, which clones the environment.
-	 */
-	Object obj = URLsToObject(getURLs((Reference)ref), env);
-	if (obj instanceof RegistryContext) {
-	    RegistryContext ctx = (RegistryContext)obj;
-	    ctx.reference = (Reference)ref;
-	}
-	return obj;
+        if (!isRegistryRef(ref)) {
+            return null;
+        }
+        /*
+         * No need to clone env here.  If getObjectInstance()
+         * returns something other than a RegistryContext (which
+         * happens if you're looking up an object bound in the
+         * registry, as opposed to looking up the registry itself),
+         * then the context is GCed right away and there's no need to
+         * clone the environment.  If getObjectInstance() returns a
+         * RegistryContext, then it still goes through
+         * GenericURLContext, which calls RegistryContext.lookup()
+         * with an empty name, which clones the environment.
+         */
+        Object obj = URLsToObject(getURLs((Reference)ref), env);
+        if (obj instanceof RegistryContext) {
+            RegistryContext ctx = (RegistryContext)obj;
+            ctx.reference = (Reference)ref;
+        }
+        return obj;
     }
 
     private static Context URLToContext(String url, Hashtable env)
-	    throws NamingException
+            throws NamingException
     {
-	rmiURLContextFactory factory = new rmiURLContextFactory();
-	Object obj = factory.getObjectInstance(url, null, null, env);
+        rmiURLContextFactory factory = new rmiURLContextFactory();
+        Object obj = factory.getObjectInstance(url, null, null, env);
 
-	if (obj instanceof Context) {
-	    return (Context)obj;
-	} else {
-	    throw (new NotContextException(url));
-	}
+        if (obj instanceof Context) {
+            return (Context)obj;
+        } else {
+            throw (new NotContextException(url));
+        }
     }
 
     private static Object URLsToObject(String[] urls, Hashtable env)
-	    throws NamingException
+            throws NamingException
     {
-	rmiURLContextFactory factory = new rmiURLContextFactory();
-	return factory.getObjectInstance(urls, null, null, env);
+        rmiURLContextFactory factory = new rmiURLContextFactory();
+        return factory.getObjectInstance(urls, null, null, env);
     }
 
     /**
@@ -122,13 +121,13 @@ public class RegistryContextFactory
      */
     private static String getInitCtxURL(Hashtable env) {
 
-	final String defaultURL = "rmi:";
+        final String defaultURL = "rmi:";
 
-	String url = null;
-	if (env != null) {
-	    url = (String)env.get(Context.PROVIDER_URL);
-	}
-	return ((url != null) ? url : defaultURL);
+        String url = null;
+        if (env != null) {
+            url = (String)env.get(Context.PROVIDER_URL);
+        }
+        return ((url != null) ? url : defaultURL);
     }
 
     /**
@@ -136,13 +135,13 @@ public class RegistryContextFactory
      */
     private static boolean isRegistryRef(Object obj) {
 
-	if (!(obj instanceof Reference)) {
-	    return false;
-	}
-	String thisClassName = RegistryContextFactory.class.getName();
-	Reference ref = (Reference)obj;
+        if (!(obj instanceof Reference)) {
+            return false;
+        }
+        String thisClassName = RegistryContextFactory.class.getName();
+        Reference ref = (Reference)obj;
 
-	return thisClassName.equals(ref.getFactoryClassName());
+        return thisClassName.equals(ref.getFactoryClassName());
     }
 
     /**
@@ -150,30 +149,30 @@ public class RegistryContextFactory
      */
     private static String[] getURLs(Reference ref) throws NamingException {
 
-	int size = 0;	// number of URLs
-	String[] urls = new String[ref.size()];
+        int size = 0;   // number of URLs
+        String[] urls = new String[ref.size()];
 
-	Enumeration addrs = ref.getAll();
-	while (addrs.hasMoreElements()) {
-	    RefAddr addr = (RefAddr)addrs.nextElement();
+        Enumeration addrs = ref.getAll();
+        while (addrs.hasMoreElements()) {
+            RefAddr addr = (RefAddr)addrs.nextElement();
 
-	    if ((addr instanceof StringRefAddr) &&
-		addr.getType().equals(ADDRESS_TYPE)) {
+            if ((addr instanceof StringRefAddr) &&
+                addr.getType().equals(ADDRESS_TYPE)) {
 
-		urls[size++] = (String)addr.getContent();
-	    }
-	}
-	if (size == 0) {
-	    throw (new ConfigurationException(
-		    "Reference contains no valid addresses"));
-	}
+                urls[size++] = (String)addr.getContent();
+            }
+        }
+        if (size == 0) {
+            throw (new ConfigurationException(
+                    "Reference contains no valid addresses"));
+        }
 
-	// Trim URL array down to size.
-	if (size == ref.size()) {
-	    return urls;
-	}
-	String[] urls2 = new String[size];
-	System.arraycopy(urls, 0, urls2, 0, size);
-	return urls2;
+        // Trim URL array down to size.
+        if (size == ref.size()) {
+            return urls;
+        }
+        String[] urls2 = new String[size];
+        System.arraycopy(urls, 0, urls2, 0, size);
+        return urls2;
     }
 }

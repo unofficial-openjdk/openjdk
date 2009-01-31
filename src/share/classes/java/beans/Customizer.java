@@ -51,7 +51,7 @@ public interface Customizer {
      * refreshed.
      *
      * @param listener  An object to be invoked when a PropertyChange
-     *		event is fired.
+     *          event is fired.
      */
      void addPropertyChangeListener(PropertyChangeListener listener);
 
@@ -63,4 +63,3 @@ public interface Customizer {
     void removePropertyChangeListener(PropertyChangeListener listener);
 
 }
-

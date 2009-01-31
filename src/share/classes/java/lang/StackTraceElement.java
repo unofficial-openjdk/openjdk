@@ -29,7 +29,7 @@ package java.lang;
  * An element in a stack trace, as returned by {@link
  * Throwable#getStackTrace()}.  Each element represents a single stack frame.
  * All stack frames except for the one at the top of the stack represent
- * a method invocation.  The frame at the top of the stack represents the 
+ * a method invocation.  The frame at the top of the stack represents the
  * execution point at which the stack trace was generated.  Typically,
  * this is the point at which the throwable corresponding to the stack trace
  * was created.
@@ -70,7 +70,7 @@ public final class StackTraceElement implements java.io.Serializable {
             throw new NullPointerException("Declaring class is null");
         if (methodName == null)
             throw new NullPointerException("Method name is null");
- 
+
         this.declaringClass = declaringClass;
         this.methodName     = methodName;
         this.fileName       = fileName;
@@ -196,7 +196,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *         return a==b || (a != null && a.equals(b));
      *     }
      * </pre>
-     * 
+     *
      * @param  obj the object to be compared with this stack trace element.
      * @return true if the specified object is another
      *         <tt>StackTraceElement</tt> instance representing the same

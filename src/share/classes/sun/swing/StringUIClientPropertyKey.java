@@ -29,7 +29,6 @@ package sun.swing;
  * An implementation of {@code UIClientPropertyKey} that wraps a {@code String}.
  *
  * @author Shannon Hickey
- * @version %I% %G%
  */
 public class StringUIClientPropertyKey implements UIClientPropertyKey {
 

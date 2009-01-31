@@ -32,7 +32,6 @@ import sun.nio.cs.ext.GBK;
  * Tables and data to convert GBK to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharGBK extends ByteToCharDoubleByte {

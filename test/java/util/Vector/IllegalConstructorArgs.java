@@ -54,5 +54,5 @@ public class IllegalConstructorArgs {
              throw new RuntimeException("Wrong exception thrown.");
 
      }
-       
+
 }

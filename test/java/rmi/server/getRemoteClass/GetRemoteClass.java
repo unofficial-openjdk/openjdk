@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -56,43 +56,43 @@ public class GetRemoteClass {
 
     public static void main(String[] argv) {
 
-	System.err.println("\nregression test for 4152295\n");
+        System.err.println("\nregression test for 4152295\n");
 
-	Method utilGetRemoteClass = null;
+        Method utilGetRemoteClass = null;
 
-	try {
-	    /** 
-	     * Use reflection to set access overrides so that the test
-	     * can call protected method, getRemoteClass 
-	     */
-	    Class[] args = new Class[1];
-	    args[0] = Class.class;
-	    utilGetRemoteClass = 
-		Util.class.getDeclaredMethod("getRemoteClass", args);
-	    utilGetRemoteClass.setAccessible(true);
-	
-	    // getRemoteClass can be invoked without exception
-	    utilGetRemoteClass.invoke
-		 (null , new Object [] {TestRemote.class});
-	    System.err.println("remote class flagged as remote");
+        try {
+            /**
+             * Use reflection to set access overrides so that the test
+             * can call protected method, getRemoteClass
+             */
+            Class[] args = new Class[1];
+            args[0] = Class.class;
+            utilGetRemoteClass =
+                Util.class.getDeclaredMethod("getRemoteClass", args);
+            utilGetRemoteClass.setAccessible(true);
 
-	    ClassNotFoundException cnfe = null;
-	    try {
-		// getRemoteClass can be invoked without exception
-		utilGetRemoteClass.invoke
-		    (null , new Object [] {OnlySerializable.class});
-	    } catch (InvocationTargetException e) {
-		System.err.println("got ClassNotFoundException; remote " + 
-				   "class flagged as nonremote");
-		cnfe = (ClassNotFoundException) e.getTargetException();
-	    }
-	    if (cnfe == null) {
-		TestLibrary.bomb("Serializable class flagged as remote?");
-	    }
+            // getRemoteClass can be invoked without exception
+            utilGetRemoteClass.invoke
+                 (null , new Object [] {TestRemote.class});
+            System.err.println("remote class flagged as remote");
 
-	    System.err.println("Test passed.");
-	} catch (Exception e) {
-	    TestLibrary.bomb("Unexpected exception", e);
-	}
+            ClassNotFoundException cnfe = null;
+            try {
+                // getRemoteClass can be invoked without exception
+                utilGetRemoteClass.invoke
+                    (null , new Object [] {OnlySerializable.class});
+            } catch (InvocationTargetException e) {
+                System.err.println("got ClassNotFoundException; remote " +
+                                   "class flagged as nonremote");
+                cnfe = (ClassNotFoundException) e.getTargetException();
+            }
+            if (cnfe == null) {
+                TestLibrary.bomb("Serializable class flagged as remote?");
+            }
+
+            System.err.println("Test passed.");
+        } catch (Exception e) {
+            TestLibrary.bomb("Unexpected exception", e);
+        }
     }
 }

@@ -163,4 +163,3 @@ Java_java_lang_StrictMath_expm1(JNIEnv *env, jclass unused, jdouble d)
 {
     return (jdouble) jexpm1((double)d);
 }
-

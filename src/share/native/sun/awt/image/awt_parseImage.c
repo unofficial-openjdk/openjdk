@@ -70,7 +70,7 @@ int awt_parseImage(JNIEnv *env, jobject jimage, BufImageS_t **imagePP,
         return -1;
     }
     imageP->jimage = jimage;
-    
+
     /* Retrieve the raster */
     if ((jraster = (*env)->GetObjectField(env, jimage,
                                           g_BImgRasterID)) == NULL) {
@@ -78,7 +78,7 @@ int awt_parseImage(JNIEnv *env, jobject jimage, BufImageS_t **imagePP,
         JNU_ThrowNullPointerException(env, "null Raster object");
         return 0;
     }
-    
+
     /* Retrieve the image type */
     imageP->imageType = (*env)->GetIntField(env, jimage, g_BImgTypeID);
 
@@ -94,7 +94,7 @@ int awt_parseImage(JNIEnv *env, jobject jimage, BufImageS_t **imagePP,
         JNU_ThrowNullPointerException(env, "null Raster object");
         return 0;
     }
-    
+
     /* Parse the color model */
     if ((status = awt_parseColorModel(env, jcmodel, imageP->imageType,
                                       &imageP->cmodel)) <= 0) {
@@ -108,9 +108,9 @@ int awt_parseImage(JNIEnv *env, jobject jimage, BufImageS_t **imagePP,
         awt_freeParsedImage(imageP, TRUE);
         return 0;
     }
-    
+
     *imagePP = imageP;
-    
+
     return status;
 }
 
@@ -189,12 +189,12 @@ int awt_parseRaster(JNIEnv *env, jobject jraster, RasterS_t *rasterP) {
                                   rasterP->numBands, rasterP->sppsm.offsets);
         (*env)->GetIntArrayRegion(env, jnbits, 0,
                                   rasterP->numBands, rasterP->sppsm.nBits);
-        
+
     }
-    rasterP->baseRasterWidth = (*env)->GetIntField(env, rasterP->jsampleModel, 
+    rasterP->baseRasterWidth = (*env)->GetIntField(env, rasterP->jsampleModel,
                                                    g_SMWidthID);
     rasterP->baseRasterHeight = (*env)->GetIntField(env,
-                                                    rasterP->jsampleModel, 
+                                                    rasterP->jsampleModel,
                                                     g_SMHeightID);
 
     if ((*env)->IsInstanceOf(env, jraster,
@@ -252,7 +252,7 @@ int awt_parseRaster(JNIEnv *env, jobject jraster, RasterS_t *rasterP) {
             JNU_ThrowOutOfMemoryError(env, "Out of memory");
             return -1;
         }
-	rasterP->chanOffsets[0] = (*env)->GetIntField(env, jraster, g_BPRdataBitOffsetID);
+        rasterP->chanOffsets[0] = (*env)->GetIntField(env, jraster, g_BPRdataBitOffsetID);
         rasterP->dataType = BYTE_DATA_TYPE;
         isDiscrete = FALSE;
     }
@@ -277,7 +277,7 @@ int awt_parseRaster(JNIEnv *env, jobject jraster, RasterS_t *rasterP) {
             return -1;
         }
         (*env)->GetIntArrayRegion(env, joffs, 0, rasterP->numDataElements,
- 				  rasterP->chanOffsets);
+                                  rasterP->chanOffsets);
     }
 
 #if 0
@@ -305,14 +305,14 @@ int awt_parseColorModel (JNIEnv *env, jobject jcmodel, int imageType,
     jobject jnBits;
     int i;
     static jobject s_jdefCM = NULL;
-    
+
     if (JNU_IsNull(env, jcmodel)) {
         JNU_ThrowNullPointerException(env, "null ColorModel object");
         return -1;
     }
 
     cmP->jcmodel = jcmodel;
-    
+
     cmP->jcspace = (*env)->GetObjectField(env, jcmodel, g_CMcspaceID);
 
     cmP->numComponents = (*env)->GetIntField(env, jcmodel,
@@ -326,14 +326,14 @@ int awt_parseColorModel (JNIEnv *env, jobject jcmodel, int imageType,
 
     if (imageType == java_awt_image_BufferedImage_TYPE_INT_ARGB) {
         cmP->isDefaultCM = TRUE;
-        cmP->isDefaultCompatCM = TRUE; 
+        cmP->isDefaultCompatCM = TRUE;
     } else if (imageType == java_awt_image_BufferedImage_TYPE_INT_ARGB_PRE ||
              imageType == java_awt_image_BufferedImage_TYPE_INT_RGB) {
-        cmP->isDefaultCompatCM = TRUE; 
+        cmP->isDefaultCompatCM = TRUE;
     } else if (imageType == java_awt_image_BufferedImage_TYPE_INT_BGR ||
                imageType == java_awt_image_BufferedImage_TYPE_4BYTE_ABGR ||
                imageType == java_awt_image_BufferedImage_TYPE_4BYTE_ABGR_PRE){
-        cmP->isDefaultCompatCM = TRUE; 
+        cmP->isDefaultCompatCM = TRUE;
     }
     else {
         /* Figure out if this is the default CM */
@@ -360,7 +360,7 @@ int awt_parseColorModel (JNIEnv *env, jobject jcmodel, int imageType,
         cmP->maxNbits = 8;
         cmP->is_sRGB = TRUE;
         cmP->csType  = java_awt_color_ColorSpace_TYPE_RGB;
-        
+
         return 1;
     }
 
@@ -386,11 +386,11 @@ int awt_parseColorModel (JNIEnv *env, jobject jcmodel, int imageType,
             cmP->maxNbits = cmP->nBits[i];
         }
     }
-    
+
     cmP->is_sRGB = (*env)->GetBooleanField(env, cmP->jcmodel, g_CMis_sRGBID);
 
     cmP->csType = (*env)->GetIntField(env, cmP->jcmodel, g_CMcsTypeID);
-    
+
     /* Find out what type of colol model */
     if (imageType == java_awt_image_BufferedImage_TYPE_BYTE_INDEXED ||
         (*env)->IsInstanceOf(env, jcmodel,
@@ -446,8 +446,8 @@ int awt_parseColorModel (JNIEnv *env, jobject jcmodel, int imageType,
     else {
         cmP->cmType = UNKNOWN_CM_TYPE;
     }
-                               
-    
+
+
     return 1;
 }
 
@@ -460,32 +460,32 @@ void awt_freeParsedRaster(RasterS_t *rasterP, int freeRasterP) {
         free((void *) rasterP);
     }
 }
-    
+
 void awt_freeParsedImage(BufImageS_t *imageP, int freeImageP) {
     if (imageP->hints.colorOrder) {
         free ((void *) imageP->hints.colorOrder);
     }
-    
+
     if (imageP->cmodel.nBits) {
         free ((void *) imageP->cmodel.nBits);
     }
 
     /* Free the raster */
     awt_freeParsedRaster(&imageP->raster, FALSE);
-    
+
     if (freeImageP) {
         free((void *) imageP);
     }
 }
-        
-    
+
+
 static int
 setHints(JNIEnv *env, BufImageS_t *imageP) {
     HintS_t *hintP = &imageP->hints;
     RasterS_t *rasterP = &imageP->raster;
     ColorModelS_t *cmodelP = &imageP->cmodel;
     int imageType = imageP->imageType;
-    
+
     hintP->numChans = imageP->cmodel.numComponents;
     hintP->colorOrder = NULL;
     if (SAFE_TO_ALLOC_2(hintP->numChans, sizeof(int))) {
@@ -659,14 +659,14 @@ setHints(JNIEnv *env, BufImageS_t *imageP) {
         }
         else {
             hintP->packing = BYTE_INTERLEAVED;
-            
+
         }
     }
     else {
         /* REMIND: Need to handle more cases */
         return -1;
     }
-    
+
     return 1;
 }
 
@@ -699,7 +699,7 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
         JNU_ThrowOutOfMemoryError(env, "Out of Memory");
         return -1;
     }
-    
+
     /* Here is the generic code */
     if (band >= 0) {
         int dOff;
@@ -711,7 +711,7 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
         off = 0;
         for (y=0; y < h; ) {
             (*env)->CallObjectMethod(env, jsm, g_SMGetPixelsMID,
-                                     0, y, w, 
+                                     0, y, w,
                                      maxLines, jdata, jdatabuffer);
             dataP = (int *) (*env)->GetPrimitiveArrayCritical(env, jdata,
                                                               NULL);
@@ -726,7 +726,7 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             if (y+maxLines < h) {
                 y += maxLines;
             }
@@ -741,7 +741,7 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
         maxBytes *= numBands;
         for (y=0; y < h; ) {
             (*env)->CallObjectMethod(env, jsm, g_SMGetPixelsMID,
-                                     0, y, w, 
+                                     0, y, w,
                                      maxLines, jdata, jdatabuffer);
             dataP = (int *) (*env)->GetPrimitiveArrayCritical(env, jdata,
                                                               NULL);
@@ -755,7 +755,7 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             if (y+maxLines < h) {
                 y += maxLines;
             }
@@ -764,10 +764,10 @@ int awt_getPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
                 maxBytes = w*numBands;
             }
         }
-        
+
     }
     (*env)->DeleteLocalRef(env, jdata);
-    
+
     return 0;
 }
 int awt_setPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
@@ -820,9 +820,9 @@ int awt_setPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             (*env)->CallVoidMethod(env, jsm, g_SMSetPixelsMID,
-                                   0, y, w, 
+                                   0, y, w,
                                    maxLines, jdata, jdatabuffer);
         }
     }
@@ -846,16 +846,16 @@ int awt_setPixelByte(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             (*env)->CallVoidMethod(env, jsm, g_SMSetPixelsMID,
-                                     0, y, w, 
+                                     0, y, w,
                                      maxLines, jdata, jdatabuffer);
         }
-        
+
     }
-    
+
     (*env)->DeleteLocalRef(env, jdata);
-    
+
     return 0;
 }
 int awt_getPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
@@ -896,7 +896,7 @@ int awt_getPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
                 maxLines = h - y;
             }
             (*env)->CallObjectMethod(env, jsm, g_SMGetPixelsMID,
-                                     0, y, w, 
+                                     0, y, w,
                                      maxLines, jdata, jdatabuffer);
             dataP = (int *) (*env)->GetPrimitiveArrayCritical(env, jdata,
                                                               NULL);
@@ -923,7 +923,7 @@ int awt_getPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
                 maxLines = h - y;
             }
             (*env)->CallObjectMethod(env, jsm, g_SMGetPixelsMID,
-                                     0, y, w, 
+                                     0, y, w,
                                      maxLines, jdata, jdatabuffer);
             dataP = (int *) (*env)->GetPrimitiveArrayCritical(env, jdata,
                                                               NULL);
@@ -938,9 +938,9 @@ int awt_getPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
         }
-        
+
     }
-    
+
     (*env)->DeleteLocalRef(env, jdata);
     return 0;
 }
@@ -994,9 +994,9 @@ int awt_setPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             (*env)->CallVoidMethod(env, jsm, g_SMSetPixelsMID,
-                                   0, y, w, 
+                                   0, y, w,
                                    maxLines, jdata, jdatabuffer);
         }
     }
@@ -1020,14 +1020,14 @@ int awt_setPixelShort(JNIEnv *env, int band, RasterS_t *rasterP,
 
             (*env)->ReleasePrimitiveArrayCritical(env, jdata, dataP,
                                                   JNI_ABORT);
-            
+
             (*env)->CallVoidMethod(env, jsm, g_SMSetPixelsMID,
-                                   0, y, w, 
+                                   0, y, w,
                                    maxLines, jdata, jdatabuffer);
         }
-        
+
     }
-    
+
     (*env)->DeleteLocalRef(env, jdata);
     return 0;
 }

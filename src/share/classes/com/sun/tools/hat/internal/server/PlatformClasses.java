@@ -29,12 +29,12 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- * 
+ *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- * 
+ *
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
  */
@@ -56,7 +56,6 @@ import java.io.IOException;
  * class or not.  It's a platform class if its name starts with one of
  * the prefixes to be found in /com/sun/tools/hat/resources/platform_names.txt.
  *
- * @version ? [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -66,36 +65,36 @@ public class PlatformClasses  {
 
 
     public static synchronized String[] getNames() {
-	if (names == null) {
-	    LinkedList<String> list = new LinkedList<String>();
-	    InputStream str 
-		= PlatformClasses.class
-		    .getResourceAsStream("/com/sun/tools/hat/resources/platform_names.txt");
-	    if (str != null) {
-		try {
-		    BufferedReader rdr 
-			= new BufferedReader(new InputStreamReader(str));
-		    for (;;) {
-			String s = rdr.readLine();
-			if (s == null) {
-			    break;
-			} else if (s.length() > 0) {
-			    list.add(s);
-			}
-		    }
-		    rdr.close();
-		    str.close();
-		} catch (IOException ex) {
-		    ex.printStackTrace();
-		    // Shouldn't happen, and if it does, continuing
-		    // is the right thing to do anyway.
-		}
-	    }
-	    int num = list.size();
-	    names = new String[num];
-	    names = (String[]) list.toArray(names);
-	}
-	return names;
+        if (names == null) {
+            LinkedList<String> list = new LinkedList<String>();
+            InputStream str
+                = PlatformClasses.class
+                    .getResourceAsStream("/com/sun/tools/hat/resources/platform_names.txt");
+            if (str != null) {
+                try {
+                    BufferedReader rdr
+                        = new BufferedReader(new InputStreamReader(str));
+                    for (;;) {
+                        String s = rdr.readLine();
+                        if (s == null) {
+                            break;
+                        } else if (s.length() > 0) {
+                            list.add(s);
+                        }
+                    }
+                    rdr.close();
+                    str.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    // Shouldn't happen, and if it does, continuing
+                    // is the right thing to do anyway.
+                }
+            }
+            int num = list.size();
+            names = new String[num];
+            names = (String[]) list.toArray(names);
+        }
+        return names;
     }
 
 
@@ -120,12 +119,12 @@ public class PlatformClasses  {
                 name = name.substring(index + 2);
             }
         }
-	String[] nms = getNames();
-	for (int i = 0; i < nms.length; i++) {
-	    if (name.startsWith(nms[i])) {
-		return true;
-	    }
-	}
-	return false;
+        String[] nms = getNames();
+        for (int i = 0; i < nms.length; i++) {
+            if (name.startsWith(nms[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 }

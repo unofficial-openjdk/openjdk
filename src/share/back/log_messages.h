@@ -34,14 +34,14 @@ void finish_logging(int);
 #define LOG_NULL ((void)0)
 
 #ifdef JDWP_LOGGING
-   
-    
+
+
     #define _LOG(flavor,args) \
                 (log_message_begin(flavor,__FILE__,__LINE__), \
                  log_message_end args)
-    
+
     #define LOG_TEST(flag)  (gdata->log_flags & (flag))
-    
+
     #define LOG_JVM(args)   \
         (LOG_TEST(JDWP_LOG_JVM)  ?_LOG("JVM",  args):LOG_NULL)
     #define LOG_JNI(args)   \
@@ -58,16 +58,16 @@ void finish_logging(int);
         (LOG_TEST(JDWP_LOG_CB)?_LOG("CB",args):LOG_NULL)
     #define LOG_ERROR(args) \
         (LOG_TEST(JDWP_LOG_ERROR)?_LOG("ERROR",args):LOG_NULL)
-    
-    
+
+
     /* DO NOT USE THESE DIRECTLY */
     void log_message_begin(const char *, const char *, int);
     void log_message_end(const char *, ...);
 
 #else
-    
-    #define LOG_TEST(flag)      0    
-    
+
+    #define LOG_TEST(flag)      0
+
     #define LOG_JVM(args)       LOG_NULL
     #define LOG_JNI(args)       LOG_NULL
     #define LOG_JVMTI(args)     LOG_NULL
@@ -90,4 +90,3 @@ void finish_logging(int);
 #define    JDWP_LOG_ALL         0xffffffff
 
 #endif
-

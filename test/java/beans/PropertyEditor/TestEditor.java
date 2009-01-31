@@ -77,6 +77,10 @@ final class TestEditor {
         if (!areEqual(value, this.editor.getValue()))
             throw new Error("value should be " + value);
 
+        // getAsText don't return null
+        if (text == null) {
+            text = "null";
+        }
         if (!areEqual(text, this.editor.getAsText()))
             throw new Error("text should be " + text);
     }

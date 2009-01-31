@@ -44,17 +44,16 @@ import sun.security.jca.JCAUtil;
  * @author Benjamin Renaud
  * @author Andreas Sterbenz
  *
- * @version %I%, %G%
  */
-public class DSAKeyPairGenerator extends KeyPairGenerator 
+public class DSAKeyPairGenerator extends KeyPairGenerator
 implements java.security.interfaces.DSAKeyPairGenerator {
-    
+
     /* The modulus length */
     private int modlen;
-    
+
     /* whether to force new parameters to be generated for each KeyPair */
     private boolean forceNewParameters;
-    
+
     /* preset algorithm parameters. */
     private DSAParameterSpec params;
 
@@ -62,24 +61,24 @@ implements java.security.interfaces.DSAKeyPairGenerator {
     private SecureRandom random;
 
     public DSAKeyPairGenerator() {
-	super("DSA");
-	initialize(1024, null);
+        super("DSA");
+        initialize(1024, null);
     }
-    
+
     private static void checkStrength(int strength) {
-	if ((strength < 512) || (strength > 1024) || (strength % 64 != 0)) {
-	    throw new InvalidParameterException
-		("Modulus size must range from 512 to 1024 "
-		 + "and be a multiple of 64");
-	}
+        if ((strength < 512) || (strength > 1024) || (strength % 64 != 0)) {
+            throw new InvalidParameterException
+                ("Modulus size must range from 512 to 1024 "
+                 + "and be a multiple of 64");
+        }
     }
 
     public void initialize(int modlen, SecureRandom random) {
-	checkStrength(modlen);
-	this.random = random;
-	this.modlen = modlen;
-	this.params = null;
-	this.forceNewParameters = false;
+        checkStrength(modlen);
+        this.random = random;
+        this.modlen = modlen;
+        this.params = null;
+        this.forceNewParameters = false;
     }
 
     /**
@@ -87,20 +86,20 @@ implements java.security.interfaces.DSAKeyPairGenerator {
      * is false, a set of pre-computed parameters is used.
      */
     public void initialize(int modlen, boolean genParams, SecureRandom random) {
-	checkStrength(modlen);
-	if (genParams) {
-	    params = null;
-	} else {
-	    params = ParameterCache.getCachedDSAParameterSpec(modlen);
-	    if (params == null) {
-		throw new InvalidParameterException
-		    ("No precomputed parameters for requested modulus size "
-		     + "available");
-	    }
-	}
-	this.modlen = modlen;
-	this.random = random;
-	this.forceNewParameters = genParams;
+        checkStrength(modlen);
+        if (genParams) {
+            params = null;
+        } else {
+            params = ParameterCache.getCachedDSAParameterSpec(modlen);
+            if (params == null) {
+                throw new InvalidParameterException
+                    ("No precomputed parameters for requested modulus size "
+                     + "available");
+            }
+        }
+        this.modlen = modlen;
+        this.random = random;
+        this.forceNewParameters = genParams;
     }
 
     /**
@@ -109,12 +108,12 @@ implements java.security.interfaces.DSAKeyPairGenerator {
      * @param params a fully initialized DSA parameter object.
      */
     public void initialize(DSAParams params, SecureRandom random) {
-	if (params == null) {
-	    throw new InvalidParameterException("Params must not be null");
-	}
-	DSAParameterSpec spec = new DSAParameterSpec
-				(params.getP(), params.getQ(), params.getG());
-	initialize0(spec, random);
+        if (params == null) {
+            throw new InvalidParameterException("Params must not be null");
+        }
+        DSAParameterSpec spec = new DSAParameterSpec
+                                (params.getP(), params.getQ(), params.getG());
+        initialize0(spec, random);
     }
 
     /**
@@ -128,93 +127,93 @@ implements java.security.interfaces.DSAKeyPairGenerator {
      * are inappropriate for this key pair generator
      */
     public void initialize(AlgorithmParameterSpec params, SecureRandom random)
-	    throws InvalidAlgorithmParameterException {
-	if (!(params instanceof DSAParameterSpec)) {
-	    throw new InvalidAlgorithmParameterException
-		("Inappropriate parameter");
-	}
-	initialize0((DSAParameterSpec)params, random);
+            throws InvalidAlgorithmParameterException {
+        if (!(params instanceof DSAParameterSpec)) {
+            throw new InvalidAlgorithmParameterException
+                ("Inappropriate parameter");
+        }
+        initialize0((DSAParameterSpec)params, random);
     }
-	
+
     private void initialize0(DSAParameterSpec params, SecureRandom random) {
-	int modlen = params.getP().bitLength();
-	checkStrength(modlen);
-	this.modlen = modlen;
-	this.params = params;
-	this.random = random;
-	this.forceNewParameters = false;
+        int modlen = params.getP().bitLength();
+        checkStrength(modlen);
+        this.modlen = modlen;
+        this.params = params;
+        this.random = random;
+        this.forceNewParameters = false;
     }
-    
+
     /**
      * Generates a pair of keys usable by any JavaSecurity compliant
      * DSA implementation.
      */
     public KeyPair generateKeyPair() {
-	if (random == null) {
-	    random = JCAUtil.getSecureRandom();
-	}
-	DSAParameterSpec spec;
-	try {
-	    if (forceNewParameters) {
-		// generate new parameters each time
-		spec = ParameterCache.getNewDSAParameterSpec(modlen, random);
-	    } else {
-		if (params == null) {
-		    params = 
-		    	ParameterCache.getDSAParameterSpec(modlen, random);
-		}
-		spec = params;
-	    }
-	} catch (GeneralSecurityException e) {
-	    throw new ProviderException(e);
-	}
-	return generateKeyPair(spec.getP(), spec.getQ(), spec.getG(), random);
+        if (random == null) {
+            random = JCAUtil.getSecureRandom();
+        }
+        DSAParameterSpec spec;
+        try {
+            if (forceNewParameters) {
+                // generate new parameters each time
+                spec = ParameterCache.getNewDSAParameterSpec(modlen, random);
+            } else {
+                if (params == null) {
+                    params =
+                        ParameterCache.getDSAParameterSpec(modlen, random);
+                }
+                spec = params;
+            }
+        } catch (GeneralSecurityException e) {
+            throw new ProviderException(e);
+        }
+        return generateKeyPair(spec.getP(), spec.getQ(), spec.getG(), random);
     }
 
     public KeyPair generateKeyPair(BigInteger p, BigInteger q, BigInteger g,
-				   SecureRandom random) {
+                                   SecureRandom random) {
 
-	BigInteger x = generateX(random, q);
-	BigInteger y = generateY(x, p, g);
+        BigInteger x = generateX(random, q);
+        BigInteger y = generateY(x, p, g);
 
-	try {
+        try {
 
-	    // See the comments in DSAKeyFactory, 4532506, and 6232513.
+            // See the comments in DSAKeyFactory, 4532506, and 6232513.
 
-	    DSAPublicKey pub;
-	    if (DSAKeyFactory.SERIAL_INTEROP) {
-		pub = new DSAPublicKey(y, p, q, g);
-	    } else {
-		pub = new DSAPublicKeyImpl(y, p, q, g);
-	    }
-	    DSAPrivateKey priv = new DSAPrivateKey(x, p, q, g);
-	    
-	    KeyPair pair = new KeyPair(pub, priv);
-	    return pair;
-	} catch (InvalidKeyException e) {
-	    throw new ProviderException(e);
-	}
+            DSAPublicKey pub;
+            if (DSAKeyFactory.SERIAL_INTEROP) {
+                pub = new DSAPublicKey(y, p, q, g);
+            } else {
+                pub = new DSAPublicKeyImpl(y, p, q, g);
+            }
+            DSAPrivateKey priv = new DSAPrivateKey(x, p, q, g);
+
+            KeyPair pair = new KeyPair(pub, priv);
+            return pair;
+        } catch (InvalidKeyException e) {
+            throw new ProviderException(e);
+        }
     }
 
     /**
      * Generate the private key component of the key pair using the
      * provided source of random bits. This method uses the random but
      * source passed to generate a seed and then calls the seed-based
-     * generateX method.  
+     * generateX method.
      */
     private BigInteger generateX(SecureRandom random, BigInteger q) {
-	BigInteger x = null;
-	while (true) {
-	    int[] seed = new int[5];
-	    for (int i = 0; i < 5; i++) {
-		seed[i] = random.nextInt();
-	    }
-	    x = generateX(seed, q);
-	    if (x.signum() > 0 && (x.compareTo(q) < 0)) {
-		break;
-	    }
-	}
-	return x;
+        BigInteger x = null;
+        while (true) {
+            int[] seed = new int[5];
+            for (int i = 0; i < 5; i++) {
+                seed[i] = random.nextInt();
+            }
+            x = generateX(seed, q);
+            if (x.signum() > 0 && (x.compareTo(q) < 0)) {
+                break;
+            }
+        }
+        return x;
     }
 
     /**
@@ -222,37 +221,37 @@ implements java.security.interfaces.DSAKeyPairGenerator {
      * pair. In the terminology used in the DSA specification
      * (FIPS-186) seed is the XSEED quantity.
      *
-     * @param seed the seed to use to generate the private key.  
+     * @param seed the seed to use to generate the private key.
      */
     BigInteger generateX(int[] seed, BigInteger q) {
 
-	// check out t in the spec.
-	int[] t = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 
-		    0x10325476, 0xC3D2E1F0 };
-	//
+        // check out t in the spec.
+        int[] t = { 0x67452301, 0xEFCDAB89, 0x98BADCFE,
+                    0x10325476, 0xC3D2E1F0 };
+        //
 
-	int[] tmp = DSA.SHA_7(seed, t);
-	byte[] tmpBytes = new byte[tmp.length * 4];
-	for (int i = 0; i < tmp.length; i++) {
-	    int k = tmp[i];
-	    for (int j = 0; j < 4; j++) {
-		tmpBytes[(i * 4) + j] = (byte) (k >>> (24 - (j * 8)));
-	    }
-	}
-	BigInteger x = new BigInteger(1, tmpBytes).mod(q);
-	return x;
+        int[] tmp = DSA.SHA_7(seed, t);
+        byte[] tmpBytes = new byte[tmp.length * 4];
+        for (int i = 0; i < tmp.length; i++) {
+            int k = tmp[i];
+            for (int j = 0; j < 4; j++) {
+                tmpBytes[(i * 4) + j] = (byte) (k >>> (24 - (j * 8)));
+            }
+        }
+        BigInteger x = new BigInteger(1, tmpBytes).mod(q);
+        return x;
     }
 
     /**
      * Generate the public key component y of the key pair.
      *
      * @param x the private key component.
-     * 
+     *
      * @param p the base parameter.
      */
     BigInteger generateY(BigInteger x, BigInteger p, BigInteger g) {
-	BigInteger y = g.modPow(x, p);
-	return y;
+        BigInteger y = g.modPow(x, p);
+        return y;
     }
-    
+
 }

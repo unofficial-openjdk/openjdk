@@ -35,27 +35,27 @@ public class CurrentFrameChangedEvent extends EventObject {
     private int index;
     private boolean invalidate;
 
-    public CurrentFrameChangedEvent(Object source, ThreadInfo tinfo, 
+    public CurrentFrameChangedEvent(Object source, ThreadInfo tinfo,
                                     int index, boolean invalidate) {
-	super(source);
-	this.tinfo = tinfo;
-	this.index = index;
-	this.invalidate = invalidate;
+        super(source);
+        this.tinfo = tinfo;
+        this.index = index;
+        this.invalidate = invalidate;
     }
 
     public ThreadReference getThread() {
-	return tinfo == null? null : tinfo.thread();
+        return tinfo == null? null : tinfo.thread();
     }
 
     public ThreadInfo getThreadInfo() {
-	return tinfo;
+        return tinfo;
     }
 
     public int getIndex() {
-	return index;
+        return index;
     }
 
     public boolean getInvalidate() {
-	return invalidate;
+        return invalidate;
     }
 }

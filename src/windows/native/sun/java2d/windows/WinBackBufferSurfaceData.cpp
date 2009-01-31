@@ -46,7 +46,7 @@ DisposeFunc Win32BBSD_Dispose;
  * Signature: (IIILsun/awt/windows/WinBackBufferSurfaceData;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_java2d_windows_WinBackBufferSurfaceData_initSurface(JNIEnv *env, 
+Java_sun_java2d_windows_WinBackBufferSurfaceData_initSurface(JNIEnv *env,
     jobject sData, jint depth, jint width, jint height, jint screen,
     jobject parentData)
 {
@@ -55,19 +55,19 @@ Java_sun_java2d_windows_WinBackBufferSurfaceData_initSurface(JNIEnv *env,
     J2dTraceLn(J2D_TRACE_INFO, "Win32BBSD_initSurface");
     /* Set the correct dispose method */
     wsdo->sdOps.Dispose = Win32BBSD_Dispose;
-    jboolean status = 
+    jboolean status =
         initOSSD_WSDO(env, wsdo, width, height, screen, JNI_FALSE);
     if (status == JNI_FALSE || parentData == NULL) {
-        SurfaceData_ThrowInvalidPipeException(env, 
+        SurfaceData_ThrowInvalidPipeException(env,
             "Error initalizing back-buffer surface");
         return;
     }
     Win32SDOps *wsdo_parent = (Win32SDOps*)SurfaceData_GetOps(env, parentData);
     if (!DDGetAttachedSurface(env, wsdo_parent, wsdo)) {
-        SurfaceData_ThrowInvalidPipeException(env, 
+        SurfaceData_ThrowInvalidPipeException(env,
             "Can't create attached surface");
     }
-    J2dTraceLn1(J2D_TRACE_VERBOSE, 
+    J2dTraceLn1(J2D_TRACE_VERBOSE,
                 "Win32BackBufferSurfaceData_initSurface: "\
                 "completed wsdo->lpSurface=0x%x", wsdo->lpSurface);
 }
@@ -78,7 +78,7 @@ Java_sun_java2d_windows_WinBackBufferSurfaceData_initSurface(JNIEnv *env,
  * Signature: (Lsun/awt/windows/WinBackBufferSurfaceData;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_java2d_windows_WinBackBufferSurfaceData_restoreSurface(JNIEnv *env, 
+Java_sun_java2d_windows_WinBackBufferSurfaceData_restoreSurface(JNIEnv *env,
     jobject sData, jobject parentData)
 {
     // Noop: back buffer restoration implicit in primary restore
@@ -94,8 +94,8 @@ Win32BBSD_Dispose(JNIEnv *env, SurfaceDataOps *ops)
     Win32SDOps *wsdo = (Win32SDOps*)ops;
     J2dTraceLn(J2D_TRACE_INFO, "Win32BBSD_Dispose");
     if (wsdo->lpSurface != NULL && !wsdo->surfaceLost) {
-	delete wsdo->lpSurface;
-	wsdo->lpSurface = NULL;
+        delete wsdo->lpSurface;
+        wsdo->lpSurface = NULL;
     }
     disposeOSSD_WSDO(env, wsdo);
 }

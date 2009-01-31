@@ -70,15 +70,15 @@ public class MemoryNotifInfoCompositeData {
 
     public static void createGoodCompositeData() throws Exception {
 
-        // get the CompositeType for MemoryUsage 
+        // get the CompositeType for MemoryUsage
         validItemTypes[USAGE] = OpenTypeConverter.toOpenType(MemoryUsage.class);
-        CompositeType ct = 
+        CompositeType ct =
             new CompositeType("MyCompositeType",
                               "CompositeType for MemoryNotificationInfo",
                               validItemNames,
                               validItemNames,
                               validItemTypes);
-        CompositeData cd = 
+        CompositeData cd =
             new CompositeDataSupport(ct,
                                      validItemNames,
                                      values);
@@ -93,22 +93,22 @@ public class MemoryNotifInfoCompositeData {
                " expected = " + values[COUNT]);
         }
         if (info.getUsage().getInit() != 0) {
-            throw new RuntimeException("usage init = " + 
+            throw new RuntimeException("usage init = " +
                info.getUsage().getInit() +
                " expected = 0");
         }
         if (info.getUsage().getUsed() != 100) {
-            throw new RuntimeException("usage used = " + 
+            throw new RuntimeException("usage used = " +
                info.getUsage().getUsed() +
                " expected = 100");
         }
         if (info.getUsage().getCommitted () != 1000) {
-            throw new RuntimeException("usage committed = " + 
+            throw new RuntimeException("usage committed = " +
                info.getUsage().getCommitted() +
                " expected = 1000");
         }
         if (info.getUsage().getMax() != 5000) {
-            throw new RuntimeException("usage max = " + 
+            throw new RuntimeException("usage max = " +
                info.getUsage().getMax() +
                " expected = 5000");
         }
@@ -118,13 +118,13 @@ public class MemoryNotifInfoCompositeData {
     }
 
     public static void badNameCompositeData() throws Exception {
-        CompositeType ct = 
+        CompositeType ct =
             new CompositeType("MyCompositeType",
                               "CompositeType for MemoryNotificationInfo",
                               badItemNames,
                               badItemNames,
                               validItemTypes);
-        CompositeData cd = 
+        CompositeData cd =
             new CompositeDataSupport(ct,
                                      badItemNames,
                                      values);
@@ -138,10 +138,10 @@ public class MemoryNotifInfoCompositeData {
         }
         throw new RuntimeException(
             "IllegalArgumentException not thrown");
-    } 
+    }
 
     public static void badTypeCompositeData() throws Exception {
-        CompositeType ct = 
+        CompositeType ct =
             new CompositeType("MyCompositeType",
                               "CompositeType for MemoryNotificationInfo",
                               validItemNames,
@@ -156,7 +156,7 @@ public class MemoryNotifInfoCompositeData {
             "Dummy",
         };
 
-        CompositeData cd = 
+        CompositeData cd =
             new CompositeDataSupport(ct,
                                      validItemNames,
                                      values1);
@@ -170,7 +170,7 @@ public class MemoryNotifInfoCompositeData {
         }
         throw new RuntimeException(
             "IllegalArgumentException not thrown");
-    } 
+    }
 
     private static OpenType[] validItemTypes = {
         SimpleType.STRING,

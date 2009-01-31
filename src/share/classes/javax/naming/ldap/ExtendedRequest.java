@@ -51,18 +51,18 @@ import javax.naming.NamingException;
   *<blockquote><pre>
   * public class GetTimeRequest implements ExtendedRequest {
   *     public GetTimeRequest() {... };
-  *     public ExtendedResponse createExtendedResponse(String id, 
-  * 	    byte[] berValue, int offset, int length) 
-  *	    throws NamingException {
+  *     public ExtendedResponse createExtendedResponse(String id,
+  *         byte[] berValue, int offset, int length)
+  *         throws NamingException {
   *         return new GetTimeResponse(id, berValue, offset, length);
   *     }
   *     ...
   * }
   * public class GetTimeResponse implements ExtendedResponse {
   *     long time;
-  *     public GetTimeResponse(String id, byte[] berValue, int offset, 
-  * 	    int length) throws NamingException {
-  *         time =	... // decode berValue to get time
+  *     public GetTimeResponse(String id, byte[] berValue, int offset,
+  *         int length) throws NamingException {
+  *         time =      ... // decode berValue to get time
   *     }
   *     public java.util.Date getDate() { return new java.util.Date(time) };
   *     public long getTime() { return time };
@@ -72,14 +72,13 @@ import javax.naming.NamingException;
   * A program would use then these classes as follows:
   *<blockquote><pre>
   * GetTimeResponse resp =
-  * 	(GetTimeResponse) ectx.extendedOperation(new GetTimeRequest());
+  *     (GetTimeResponse) ectx.extendedOperation(new GetTimeRequest());
   * long time = resp.getTime();
   *</pre></blockquote>
-  * 
+  *
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
-  * @version %I% %E%
   *
   * @see ExtendedResponse
   * @see LdapContext#extendedOperation
@@ -91,7 +90,7 @@ public interface ExtendedRequest extends java.io.Serializable {
       * Retrieves the object identifier of the request.
       *
       * @return The non-null object identifier string representing the LDAP
-      *		<tt>ExtendedRequest.requestName</tt> component.
+      *         <tt>ExtendedRequest.requestName</tt> component.
       */
     public String getID();
 
@@ -128,22 +127,22 @@ public interface ExtendedRequest extends java.io.Serializable {
       * how to process a Start TLS extended response. It does this by creating
       * a class that implements ExtendedResponse.
       *
-      * @param id	The possibly null object identifier of the response
-      *			control.
-      * @param berValue	The possibly null ASN.1 BER encoded value of the
-      *			response control. 
+      * @param id       The possibly null object identifier of the response
+      *                 control.
+      * @param berValue The possibly null ASN.1 BER encoded value of the
+      *                 response control.
       * This is the raw BER bytes including the tag and length of
       * the response value. It does not include the response OID.
       * @param offset   The starting position in berValue of the bytes to use.
       * @param length   The number of bytes in berValue to use.
       *
       * @return A non-null object.
-      * @exception NamingException if cannot create extended response 
+      * @exception NamingException if cannot create extended response
       *     due to an error.
       * @see ExtendedResponse
       */
     public ExtendedResponse createExtendedResponse(String id,
-		byte[] berValue, int offset, int length) throws NamingException;
+                byte[] berValue, int offset, int length) throws NamingException;
 
     // static final long serialVersionUID = -7560110759229059814L;
 }

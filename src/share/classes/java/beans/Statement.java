@@ -47,7 +47,6 @@ import sun.reflect.misc.MethodUtil;
  *
  * @since 1.4
  *
- * @version %I% %G%
  * @author Philip Milne
  */
 public class Statement {
@@ -76,7 +75,7 @@ public class Statement {
      *
      */
     public Statement(Object target, String methodName, Object[] arguments) {
-	this.target = target;
+        this.target = target;
         this.methodName = methodName;
         this.arguments = (arguments == null) ? emptyArray : arguments;
     }
@@ -145,10 +144,10 @@ public class Statement {
         Object target = getTarget();
         String methodName = getMethodName();
 
-	if (target == null || methodName == null) {
-	    throw new NullPointerException((target == null ? "target" : 
-					    "methodName") + " should not be null");
-	}
+        if (target == null || methodName == null) {
+            throw new NullPointerException((target == null ? "target" :
+                                            "methodName") + " should not be null");
+        }
 
         Object[] arguments = getArguments();
         // Class.forName() won't load classes outside
@@ -177,13 +176,13 @@ public class Statement {
             if (methodName.equals("new")) {
                 methodName = "newInstance";
             }
-            // Provide a short form for array instantiation by faking an nary-constructor. 
+            // Provide a short form for array instantiation by faking an nary-constructor.
             if (methodName.equals("newInstance") && ((Class)target).isArray()) {
-                Object result = Array.newInstance(((Class)target).getComponentType(), arguments.length); 
-                for(int i = 0; i < arguments.length; i++) { 
-                    Array.set(result, i, arguments[i]); 
+                Object result = Array.newInstance(((Class)target).getComponentType(), arguments.length);
+                for(int i = 0; i < arguments.length; i++) {
+                    Array.set(result, i, arguments[i]);
                 }
-                return result; 
+                return result;
             }
             if (methodName.equals("newInstance") && arguments.length != 0) {
                 // The Character class, as of 1.4, does not have a constructor
@@ -191,17 +190,17 @@ public class Statement {
                 // for Java's primitive types have a String constructor so we
                 // fake such a constructor here so that this special case can be
                 // ignored elsewhere.
-                if (target == Character.class && arguments.length == 1 && 
-		    argClasses[0] == String.class) {
+                if (target == Character.class && arguments.length == 1 &&
+                    argClasses[0] == String.class) {
                     return new Character(((String)arguments[0]).charAt(0));
                 }
-		m = ReflectionUtils.getConstructor((Class)target, argClasses);
+                m = ReflectionUtils.getConstructor((Class)target, argClasses);
             }
             if (m == null && target != Class.class) {
                 m = ReflectionUtils.getMethod((Class)target, methodName, argClasses);
             }
             if (m == null) {
-		m = ReflectionUtils.getMethod(Class.class, methodName, argClasses);
+                m = ReflectionUtils.getMethod(Class.class, methodName, argClasses);
             }
         }
         else {
@@ -213,8 +212,8 @@ public class Statement {
             effects on objects are instance methods of the objects themselves
             and we reinstate this rule (perhaps temporarily) by special-casing arrays.
             */
-            if (target.getClass().isArray() && 
-		(methodName.equals("set") || methodName.equals("get"))) {
+            if (target.getClass().isArray() &&
+                (methodName.equals("set") || methodName.equals("get"))) {
                 int index = ((Integer)arguments[0]).intValue();
                 if (methodName.equals("get")) {
                     return Array.get(target, index);
@@ -230,15 +229,15 @@ public class Statement {
             try {
                 if (m instanceof Method) {
                     return MethodUtil.invoke((Method)m, target, arguments);
-		}
+                }
                 else {
                     return ((Constructor)m).newInstance(arguments);
                 }
             }
             catch (IllegalAccessException iae) {
-                throw new Exception("Statement cannot invoke: " + 
-				    methodName + " on " + target.getClass(),
-				    iae);
+                throw new Exception("Statement cannot invoke: " +
+                                    methodName + " on " + target.getClass(),
+                                    iae);
             }
             catch (InvocationTargetException ite) {
                 Throwable te = ite.getTargetException();
@@ -253,20 +252,20 @@ public class Statement {
         throw new NoSuchMethodException(toString());
     }
 
-    String instanceName(Object instance) { 
-	if (instance == null) {
-	    return "null";
-	} else if (instance.getClass() == String.class) {
-	    return "\""+(String)instance + "\"";
-	} else {
-	    // Note: there is a minor problem with using the non-caching
-	    // NameGenerator method. The return value will not have 
-	    // specific information about the inner class name. For example,
-	    // In 1.4.2 an inner class would be represented as JList$1 now
-	    // would be named Class.
+    String instanceName(Object instance) {
+        if (instance == null) {
+            return "null";
+        } else if (instance.getClass() == String.class) {
+            return "\""+(String)instance + "\"";
+        } else {
+            // Note: there is a minor problem with using the non-caching
+            // NameGenerator method. The return value will not have
+            // specific information about the inner class name. For example,
+            // In 1.4.2 an inner class would be represented as JList$1 now
+            // would be named Class.
 
-	    return NameGenerator.unqualifiedClassName(instance.getClass());
-	}
+            return NameGenerator.unqualifiedClassName(instance.getClass());
+        }
     }
 
     /**

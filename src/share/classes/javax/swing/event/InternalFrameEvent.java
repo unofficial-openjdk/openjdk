@@ -33,7 +33,7 @@ import javax.swing.JInternalFrame;
  * same event types as <code>WindowEvent</code>,
  * although different IDs are used.
  * Help on handling internal frame events
- * is in 
+ * is in
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/events/internalframelistener.html" target="_top">How to Write an Internal Frame Listener</a>,
  * a section in <em>The Java Tutorial</em>.
  * <p>
@@ -51,7 +51,6 @@ import javax.swing.JInternalFrame;
  * @see JInternalFrame
  * @see InternalFrameListener
  *
- * @version %I% %G%
  * @author Thomas Ball
  */
 public class InternalFrameEvent extends AWTEvent {
@@ -72,40 +71,40 @@ public class InternalFrameEvent extends AWTEvent {
      *
      * @see JInternalFrame#show
      */
-    public static final int INTERNAL_FRAME_OPENED	= INTERNAL_FRAME_FIRST;
+    public static final int INTERNAL_FRAME_OPENED       = INTERNAL_FRAME_FIRST;
 
     /**
      * The "window is closing" event. This event is delivered when
      * the user attempts to close the internal frame, such as by
      * clicking the internal frame's close button,
-     * or when a program attempts to close the internal frame 
+     * or when a program attempts to close the internal frame
      * by invoking the <code>setClosed</code> method.
      *
      * @see JInternalFrame#setDefaultCloseOperation
      * @see JInternalFrame#doDefaultCloseAction
      * @see JInternalFrame#setClosed
      */
-    public static final int INTERNAL_FRAME_CLOSING	= 1 + INTERNAL_FRAME_FIRST;
+    public static final int INTERNAL_FRAME_CLOSING      = 1 + INTERNAL_FRAME_FIRST;
 
     /**
      * The "window closed" event. This event is delivered after
-     * the internal frame has been closed as the result of a call to 
+     * the internal frame has been closed as the result of a call to
      * the <code>setClosed</code> or
      * <code>dispose</code> method.
      *
      * @see JInternalFrame#setClosed
      * @see JInternalFrame#dispose
      */
-    public static final int INTERNAL_FRAME_CLOSED	= 2 + INTERNAL_FRAME_FIRST;
+    public static final int INTERNAL_FRAME_CLOSED       = 2 + INTERNAL_FRAME_FIRST;
 
     /**
      * The "window iconified" event.
      * This event indicates that the internal frame
      * was shrunk down to a small icon.
-     * 
+     *
      * @see JInternalFrame#setIcon
      */
-    public static final int INTERNAL_FRAME_ICONIFIED	= 3 + INTERNAL_FRAME_FIRST;
+    public static final int INTERNAL_FRAME_ICONIFIED    = 3 + INTERNAL_FRAME_FIRST;
 
     /**
      * The "window deiconified" event type. This event indicates that the
@@ -130,7 +129,7 @@ public class InternalFrameEvent extends AWTEvent {
      *
      * @see JInternalFrame#setSelected
      */
-    public static final int INTERNAL_FRAME_DEACTIVATED	= 6 + INTERNAL_FRAME_FIRST;
+    public static final int INTERNAL_FRAME_DEACTIVATED  = 6 + INTERNAL_FRAME_FIRST;
 
     /**
      * Constructs an <code>InternalFrameEvent</code> object.
@@ -188,6 +187,6 @@ public class InternalFrameEvent extends AWTEvent {
     public JInternalFrame getInternalFrame () {
       return (source instanceof JInternalFrame)? (JInternalFrame)source : null;
     }
-    
+
 
 }

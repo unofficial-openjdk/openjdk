@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4804972
- * @summary Ensure JKS keystore implementation fail early when users 
+ * @summary Ensure JKS keystore implementation fail early when users
  * attempt to store SecretKeys.
  */
 import javax.crypto.SecretKey;
@@ -33,25 +33,24 @@ import java.security.KeyStore;
 import java.security.Security;
 import java.security.Key;
 import java.security.KeyStoreException;
-     
-public class TestJKSWithSecretKey { 
- 
+
+public class TestJKSWithSecretKey {
+
     private static char[] passwd = { 'p','a','s','s','w','d'};
 
     public static void main (String[] args) throws Exception {
-	SecretKey key = new SecretKeySpec(new byte[8], "DES");
- 
-        KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(null, passwd);
+        SecretKey key = new SecretKeySpec(new byte[8], "DES");
 
-	try {
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(null, passwd);
+
+        try {
             // store the SecretKey
             ks.setKeyEntry("test_encrypt_key", key, passwd, null);
-	    throw new Exception("Should throw KeyStoreException when " + 
-		"storing SecretKey into JKS keystores");
-	} catch (KeyStoreException kse) {
-	    // expected exception thrown; swallow
-	}
+            throw new Exception("Should throw KeyStoreException when " +
+                "storing SecretKey into JKS keystores");
+        } catch (KeyStoreException kse) {
+            // expected exception thrown; swallow
+        }
     }
-} 
-
+}

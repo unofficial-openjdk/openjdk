@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * BasicAuthenticator provides an implementation of HTTP Basic
  * authentication. It is an abstract class and must be extended
- * to provide an implementation of {@link #checkCredentials(String,String)} 
+ * to provide an implementation of {@link #checkCredentials(String,String)}
  * which is called to verify each incoming request.
  */
 public abstract class BasicAuthenticator extends Authenticator {
@@ -44,7 +44,7 @@ public abstract class BasicAuthenticator extends Authenticator {
      * @throws NullPointerException if the realm is an empty string
      */
     public BasicAuthenticator (String realm) {
-	this.realm = realm;
+        this.realm = realm;
     }
 
     /**
@@ -52,45 +52,45 @@ public abstract class BasicAuthenticator extends Authenticator {
      * @return the authenticator's realm string.
      */
     public String getRealm () {
-	return realm;
+        return realm;
     }
 
     public Result authenticate (HttpExchange t)
     {
-	HttpContext context = t.getHttpContext();
-	Headers rmap = (Headers) t.getRequestHeaders();
-	/*
- 	 * look for auth token
- 	 */
-	String auth = rmap.getFirst ("Authorization");
-	if (auth == null) {
-	    Headers map = (Headers) t.getResponseHeaders();
-	    map.set ("WWW-Authenticate", "Basic realm=" + "\""+realm+"\"");
-	    return new Authenticator.Retry (401); 
-	}
-	int sp = auth.indexOf (' ');
-	if (sp == -1 || !auth.substring(0, sp).equals ("Basic")) {
-	    return new Authenticator.Failure (401); 
-	}
-	byte[] b = Base64.base64ToByteArray (auth.substring(sp+1));
-	String userpass = new String (b);
-    	int colon = userpass.indexOf (':');
-    	String uname = userpass.substring (0, colon);
-    	String pass = userpass.substring (colon+1);
+        HttpContext context = t.getHttpContext();
+        Headers rmap = (Headers) t.getRequestHeaders();
+        /*
+         * look for auth token
+         */
+        String auth = rmap.getFirst ("Authorization");
+        if (auth == null) {
+            Headers map = (Headers) t.getResponseHeaders();
+            map.set ("WWW-Authenticate", "Basic realm=" + "\""+realm+"\"");
+            return new Authenticator.Retry (401);
+        }
+        int sp = auth.indexOf (' ');
+        if (sp == -1 || !auth.substring(0, sp).equals ("Basic")) {
+            return new Authenticator.Failure (401);
+        }
+        byte[] b = Base64.base64ToByteArray (auth.substring(sp+1));
+        String userpass = new String (b);
+        int colon = userpass.indexOf (':');
+        String uname = userpass.substring (0, colon);
+        String pass = userpass.substring (colon+1);
 
-	if (checkCredentials (uname, pass)) {
-	    return new Authenticator.Success (
-		new HttpPrincipal (
-		    uname, realm
-		)
-	    );
-	} else {
-    	    /* reject the request again with 401 */
+        if (checkCredentials (uname, pass)) {
+            return new Authenticator.Success (
+                new HttpPrincipal (
+                    uname, realm
+                )
+            );
+        } else {
+            /* reject the request again with 401 */
 
-    	    Headers map = (Headers) t.getResponseHeaders();
-	    map.set ("WWW-Authenticate", "Basic realm=" + "\""+realm+"\"");
-	    return new Authenticator.Failure(401);
-	}
+            Headers map = (Headers) t.getResponseHeaders();
+            map.set ("WWW-Authenticate", "Basic realm=" + "\""+realm+"\"");
+            return new Authenticator.Failure(401);
+        }
     }
 
     /**
@@ -168,7 +168,7 @@ class Base64 {
 
     /**
      * This array is a lookup table that translates 6-bit positive integer
-     * index values into their "Base64 Alphabet" equivalents as specified 
+     * index values into their "Base64 Alphabet" equivalents as specified
      * in Table 1 of RFC 2045.
      */
     private static final char intToBase64[] = {
@@ -197,7 +197,7 @@ class Base64 {
     /**
      * Translates the specified Base64 string (as per Preferences.get(byte[]))
      * into a byte array.
-     * 
+     *
      * @throw IllegalArgumentException if <tt>s</tt> is not a valid Base64
      *        string.
      */
@@ -208,7 +208,7 @@ class Base64 {
     /**
      * Translates the specified "aternate representation" Base64 string
      * into a byte array.
-     * 
+     *
      * @throw IllegalArgumentException or ArrayOutOfBoundsException
      *        if <tt>s</tt> is not a valid alternate representation
      *        Base64 string.
@@ -309,5 +309,5 @@ class Base64 {
         34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
         51, 22, 23, 24, 25
     };
-    
+
 }

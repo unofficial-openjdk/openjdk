@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)LookupTables.cpp	1.10 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -38,7 +37,7 @@
 /*
     These are the rolled-up versions of the uniform binary search.
     Someday, if we need more performance, we can un-roll them.
-    
+
     Note: I put these in the base class, so they only have to
     be written once. Since the base class doesn't define the
     segment table, these routines assume that it's right after
@@ -47,7 +46,7 @@
     Another way to do this is to put each of these routines in one
     of the derived classes, and implement it in the others by casting
     the "this" pointer to the type that has the implementation.
-*/ 
+*/
 const LookupSegment *BinarySearchLookupTable::lookupSegment(const LookupSegment *segments, LEGlyphID glyph) const
 {
     le_int16  unity = SWAPW(unitSize);

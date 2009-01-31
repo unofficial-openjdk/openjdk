@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package com.sun.java.swing.plaf.motif;
 
 import java.awt.*;
@@ -44,76 +44,73 @@ import javax.swing.plaf.basic.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Rich Schiavi
  */
-public class MotifToggleButtonUI extends BasicToggleButtonUI 
+public class MotifToggleButtonUI extends BasicToggleButtonUI
 {
     private final static MotifToggleButtonUI motifToggleButtonUI = new MotifToggleButtonUI();
 
     protected Color selectColor;
 
     private boolean defaults_initialized = false;
-    
+
     // ********************************
     //         Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent b) {
-	return motifToggleButtonUI;
+        return motifToggleButtonUI;
     }
 
     // ********************************
     //          Install Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-	super.installDefaults(b);
-	if(!defaults_initialized) {
-	    selectColor = UIManager.getColor(getPropertyPrefix() + "select");
-	    defaults_initialized = true;
-	}
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            selectColor = UIManager.getColor(getPropertyPrefix() + "select");
+            defaults_initialized = true;
+        }
         LookAndFeel.installProperty(b, "opaque", Boolean.FALSE);
     }
 
     protected void uninstallDefaults(AbstractButton b) {
-	super.uninstallDefaults(b);
-	defaults_initialized = false;
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
     }
-    
+
     // ********************************
     //          Default Accessors
     // ********************************
 
     protected Color getSelectColor() {
-	return selectColor;
+        return selectColor;
     }
-    
+
     // ********************************
     //         Paint Methods
     // ********************************
     protected void paintButtonPressed(Graphics g, AbstractButton b) {
         if (b.isContentAreaFilled()) {
-	    Color oldColor = g.getColor();
-	    Dimension size = b.getSize();
-	    Insets insets = b.getInsets();
-	    Insets margin = b.getMargin();
+            Color oldColor = g.getColor();
+            Dimension size = b.getSize();
+            Insets insets = b.getInsets();
+            Insets margin = b.getMargin();
 
-	    if(b.getBackground() instanceof UIResource) {
-		g.setColor(getSelectColor());
-	    }
-	    g.fillRect(insets.left - margin.left,
-		       insets.top - margin.top, 
-		       size.width - (insets.left-margin.left) - (insets.right - margin.right),
-		       size.height - (insets.top-margin.top) - (insets.bottom - margin.bottom));
-	    g.setColor(oldColor);
-	}
-    }
-    
-    public Insets getInsets(JComponent c) { 
-	Border border = c.getBorder();
-	Insets i = border != null? border.getBorderInsets(c) : new Insets(0,0,0,0);
-	return i;
+            if(b.getBackground() instanceof UIResource) {
+                g.setColor(getSelectColor());
+            }
+            g.fillRect(insets.left - margin.left,
+                       insets.top - margin.top,
+                       size.width - (insets.left-margin.left) - (insets.right - margin.right),
+                       size.height - (insets.top-margin.top) - (insets.bottom - margin.bottom));
+            g.setColor(oldColor);
+        }
     }
 
-} 
+    public Insets getInsets(JComponent c) {
+        Border border = c.getBorder();
+        Insets i = border != null? border.getBorderInsets(c) : new Insets(0,0,0,0);
+        return i;
+    }
 
-
+}

@@ -35,10 +35,10 @@ class NotBound {
         test1(false);
         test1(true);
     }
-   
+
     static void test1(boolean blocking) throws Exception {
         ByteBuffer bb = ByteBuffer.allocateDirect(256);
-	DatagramChannel dc1 = DatagramChannel.open();
+        DatagramChannel dc1 = DatagramChannel.open();
         dc1.configureBlocking(false);
         SocketAddress isa = dc1.receive(bb);
         if (isa != null)

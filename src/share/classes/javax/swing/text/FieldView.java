@@ -30,7 +30,7 @@ import javax.swing.event.*;
 
 /**
  * Extends the multi-line plain text view to be suitable
- * for a single-line editor view.  If the view is 
+ * for a single-line editor view.  If the view is
  * allocated extra space, the field must adjust for it.
  * If the hosting component is a JTextField, this view
  * will manage the ranges of the associated BoundedRangeModel
@@ -38,7 +38,6 @@ import javax.swing.event.*;
  * current visibility settings of the JTextField.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  * @see     View
  */
 public class FieldView extends PlainView {
@@ -49,7 +48,7 @@ public class FieldView extends PlainView {
      * @param elem the element
      */
     public FieldView(Element elem) {
-	super(elem);
+        super(elem);
     }
 
     /**
@@ -59,14 +58,14 @@ public class FieldView extends PlainView {
      * @return the metrics
      */
     protected FontMetrics getFontMetrics() {
-	Component c = getContainer();
-	return c.getFontMetrics(c.getFont());
+        Component c = getContainer();
+        return c.getFontMetrics(c.getFont());
     }
 
     /**
      * Adjusts the allocation given to the view
      * to be a suitable allocation for a text field.
-     * If the view has been allocated more than the 
+     * If the view has been allocated more than the
      * preferred span vertically, the allocation is
      * changed to be centered vertically.  Horizontally
      * the view is adjusted according to the horizontal
@@ -78,70 +77,70 @@ public class FieldView extends PlainView {
      * @return the allocation that the superclass should use.
      */
     protected Shape adjustAllocation(Shape a) {
-	if (a != null) {
-	    Rectangle bounds = a.getBounds();
-	    int vspan = (int) getPreferredSpan(Y_AXIS);
-	    int hspan = (int) getPreferredSpan(X_AXIS);
-	    if (bounds.height != vspan) {
-		int slop = bounds.height - vspan;
-		bounds.y += slop / 2;
-		bounds.height -= slop;
-	    }
+        if (a != null) {
+            Rectangle bounds = a.getBounds();
+            int vspan = (int) getPreferredSpan(Y_AXIS);
+            int hspan = (int) getPreferredSpan(X_AXIS);
+            if (bounds.height != vspan) {
+                int slop = bounds.height - vspan;
+                bounds.y += slop / 2;
+                bounds.height -= slop;
+            }
 
-	    // horizontal adjustments
-	    Component c = getContainer();
-	    if (c instanceof JTextField) {
-		JTextField field = (JTextField) c;
-		BoundedRangeModel vis = field.getHorizontalVisibility();
-		int max = Math.max(hspan, bounds.width);
-		int value = vis.getValue();
-		int extent = Math.min(max, bounds.width - 1);
-		if ((value + extent) > max) {
-		    value = max - extent;
-		}
-		vis.setRangeProperties(value, extent, vis.getMinimum(),
-				       max, false);
-		if (hspan < bounds.width) {
-		    // horizontally align the interior
-		    int slop = bounds.width - 1 - hspan;
+            // horizontal adjustments
+            Component c = getContainer();
+            if (c instanceof JTextField) {
+                JTextField field = (JTextField) c;
+                BoundedRangeModel vis = field.getHorizontalVisibility();
+                int max = Math.max(hspan, bounds.width);
+                int value = vis.getValue();
+                int extent = Math.min(max, bounds.width - 1);
+                if ((value + extent) > max) {
+                    value = max - extent;
+                }
+                vis.setRangeProperties(value, extent, vis.getMinimum(),
+                                       max, false);
+                if (hspan < bounds.width) {
+                    // horizontally align the interior
+                    int slop = bounds.width - 1 - hspan;
 
-		    int align = ((JTextField)c).getHorizontalAlignment();
-		    if(Utilities.isLeftToRight(c)) {
-		        if(align==LEADING) {
-			    align = LEFT;
-			}
-			else if(align==TRAILING) {
-			    align = RIGHT;
-			}
-		    }
-		    else {
-		        if(align==LEADING) {
-			    align = RIGHT;
-			}
-			else if(align==TRAILING) {
-			    align = LEFT;
-			}
-		    }
+                    int align = ((JTextField)c).getHorizontalAlignment();
+                    if(Utilities.isLeftToRight(c)) {
+                        if(align==LEADING) {
+                            align = LEFT;
+                        }
+                        else if(align==TRAILING) {
+                            align = RIGHT;
+                        }
+                    }
+                    else {
+                        if(align==LEADING) {
+                            align = RIGHT;
+                        }
+                        else if(align==TRAILING) {
+                            align = LEFT;
+                        }
+                    }
 
-		    switch (align) {
-		    case SwingConstants.CENTER:
-			bounds.x += slop / 2;
-			bounds.width -= slop;
-			break;
-		    case SwingConstants.RIGHT:
-			bounds.x += slop;
-			bounds.width -= slop;
-			break;
-		    }
-		} else {
-		    // adjust the allocation to match the bounded range.
-		    bounds.width = hspan;
-		    bounds.x -= vis.getValue();
-		}
-	    }
-	    return bounds;
-	}
-	return null;
+                    switch (align) {
+                    case SwingConstants.CENTER:
+                        bounds.x += slop / 2;
+                        bounds.width -= slop;
+                        break;
+                    case SwingConstants.RIGHT:
+                        bounds.x += slop;
+                        bounds.width -= slop;
+                        break;
+                    }
+                } else {
+                    // adjust the allocation to match the bounded range.
+                    bounds.width = hspan;
+                    bounds.x -= vis.getValue();
+                }
+            }
+            return bounds;
+        }
+        return null;
     }
 
     /**
@@ -153,22 +152,22 @@ public class FieldView extends PlainView {
      * until determined otherwise.
      */
     void updateVisibilityModel() {
-	Component c = getContainer();
-	if (c instanceof JTextField) {
-	    JTextField field = (JTextField) c;
-	    BoundedRangeModel vis = field.getHorizontalVisibility();
-	    int hspan = (int) getPreferredSpan(X_AXIS);
-	    int extent = vis.getExtent();
-	    int maximum = Math.max(hspan, extent);
-	    extent = (extent == 0) ? maximum : extent;
-	    int value = maximum - extent;
-	    int oldValue = vis.getValue();
-	    if ((oldValue + extent) > maximum) {
-		oldValue = maximum - extent;
-	    }
-	    value = Math.max(0, Math.min(value, oldValue));
-	    vis.setRangeProperties(value, extent, 0, maximum, false);
-	}
+        Component c = getContainer();
+        if (c instanceof JTextField) {
+            JTextField field = (JTextField) c;
+            BoundedRangeModel vis = field.getHorizontalVisibility();
+            int hspan = (int) getPreferredSpan(X_AXIS);
+            int extent = vis.getExtent();
+            int maximum = Math.max(hspan, extent);
+            extent = (extent == 0) ? maximum : extent;
+            int value = maximum - extent;
+            int oldValue = vis.getValue();
+            if ((oldValue + extent) > maximum) {
+                oldValue = maximum - extent;
+            }
+            value = Math.max(0, Math.min(value, oldValue));
+            vis.setRangeProperties(value, extent, 0, maximum, false);
+        }
     }
 
     // --- View methods -------------------------------------------
@@ -184,16 +183,16 @@ public class FieldView extends PlainView {
      * @see View#paint
      */
     public void paint(Graphics g, Shape a) {
-	Rectangle r = (Rectangle) a;
-	g.clipRect(r.x, r.y, r.width, r.height);
-	super.paint(g, a);
+        Rectangle r = (Rectangle) a;
+        g.clipRect(r.x, r.y, r.width, r.height);
+        super.paint(g, a);
     }
 
     /**
      * Adjusts <code>a</code> based on the visible region and returns it.
      */
     Shape adjustPaintRegion(Shape a) {
-	return adjustAllocation(a);
+        return adjustAllocation(a);
     }
 
     /**
@@ -203,19 +202,19 @@ public class FieldView extends PlainView {
      * @param axis may be either View.X_AXIS or View.Y_AXIS
      * @return   the span the view would like to be rendered into >= 0.
      *           Typically the view is told to render into the span
-     *           that is returned, although there is no guarantee.  
+     *           that is returned, although there is no guarantee.
      *           The parent may choose to resize or break the view.
      */
     public float getPreferredSpan(int axis) {
-	switch (axis) {
-	case View.X_AXIS:
-	    Segment buff = SegmentCache.getSharedSegment();
-	    Document doc = getDocument();
-	    int width;
-	    try {
+        switch (axis) {
+        case View.X_AXIS:
+            Segment buff = SegmentCache.getSharedSegment();
+            Document doc = getDocument();
+            int width;
+            try {
                 FontMetrics fm = getFontMetrics();
-		doc.getText(0, doc.getLength(), buff);
-		width = Utilities.getTabbedTextWidth(buff, fm, 0, this, 0);
+                doc.getText(0, doc.getLength(), buff);
+                width = Utilities.getTabbedTextWidth(buff, fm, 0, this, 0);
                 if (buff.count > 0) {
                     Component c = getContainer();
                     firstLineOffset = sun.swing.SwingUtilities2.
@@ -227,14 +226,14 @@ public class FieldView extends PlainView {
                 else {
                     firstLineOffset = 0;
                 }
-	    } catch (BadLocationException bl) {
-		width = 0; 
-	    }
+            } catch (BadLocationException bl) {
+                width = 0;
+            }
             SegmentCache.releaseSharedSegment(buff);
-	    return width + firstLineOffset;
-	default:
-	    return super.getPreferredSpan(axis);
-	}
+            return width + firstLineOffset;
+        default:
+            return super.getPreferredSpan(axis);
+        }
     }
 
     /**
@@ -245,10 +244,10 @@ public class FieldView extends PlainView {
      * @return the weight -> 1 for View.X_AXIS, else 0
      */
     public int getResizeWeight(int axis) {
-	if (axis == View.X_AXIS) {
-	    return 1;
-	}
-	return 0;
+        if (axis == View.X_AXIS) {
+            return 1;
+        }
+        return 0;
     }
 
     /**
@@ -263,7 +262,7 @@ public class FieldView extends PlainView {
      * @see View#modelToView
      */
     public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-	return super.modelToView(pos, adjustAllocation(a), b);
+        return super.modelToView(pos, adjustAllocation(a), b);
     }
 
     /**
@@ -278,7 +277,7 @@ public class FieldView extends PlainView {
      * @see View#viewToModel
      */
     public int viewToModel(float fx, float fy, Shape a, Position.Bias[] bias) {
-	return super.viewToModel(fx, fy, adjustAllocation(a), bias);
+        return super.viewToModel(fx, fy, adjustAllocation(a), bias);
     }
 
     /**
@@ -291,8 +290,8 @@ public class FieldView extends PlainView {
      * @see View#insertUpdate
      */
     public void insertUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
-	super.insertUpdate(changes, adjustAllocation(a), f);
-	updateVisibilityModel();
+        super.insertUpdate(changes, adjustAllocation(a), f);
+        updateVisibilityModel();
     }
 
     /**
@@ -305,8 +304,8 @@ public class FieldView extends PlainView {
      * @see View#removeUpdate
      */
     public void removeUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
-	super.removeUpdate(changes, adjustAllocation(a), f);
-	updateVisibilityModel();
+        super.removeUpdate(changes, adjustAllocation(a), f);
+        updateVisibilityModel();
     }
 
 }

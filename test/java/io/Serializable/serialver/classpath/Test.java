@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  *
  *  @bug 4035147
- *  @sumary	Simple java class for test purposes
+ *  @sumary     Simple java class for test purposes
  */
 
 package serialver;

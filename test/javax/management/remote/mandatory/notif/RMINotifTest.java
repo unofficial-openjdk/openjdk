@@ -52,107 +52,107 @@ import javax.management.remote.JMXServiceURL;
 public class RMINotifTest {
 
     public static void main(String[] args) {
-	try {
-	    // create a rmi registry
-	    Registry reg = null;
-	    int port = 6666;
-	    final Random r = new Random();
-	    
-	    while(port++<7000) {
-		try {
-		    reg = LocateRegistry.createRegistry(++port);
-		    System.out.println("Creation of rmi registry succeeded. Running on port " + port);
-		    break;
-		} catch (RemoteException re) {
-		// no problem
-		}
-	    }
-	    
-	    if (reg == null) {
-		System.out.println("Failed to create a RMI registry, "+
-				   "the ports from 6666 to 6999 are all occupied.");
-		System.exit(1);
-	    }
-	    
-	    // create a MBeanServer
-	    MBeanServer server = MBeanServerFactory.createMBeanServer();
-	    
-	    // create a notif emitter mbean
-	    ObjectName mbean = new ObjectName ("Default:name=NotificationEmitter");
+        try {
+            // create a rmi registry
+            Registry reg = null;
+            int port = 6666;
+            final Random r = new Random();
 
-	    server.registerMBean(new NotificationEmitter(), mbean);
+            while(port++<7000) {
+                try {
+                    reg = LocateRegistry.createRegistry(++port);
+                    System.out.println("Creation of rmi registry succeeded. Running on port " + port);
+                    break;
+                } catch (RemoteException re) {
+                // no problem
+                }
+            }
 
-	    // create a rmi server
-	    JMXServiceURL url =
-		new JMXServiceURL("rmi", null, port,
-				  "/jndi/rmi://:" + port + "/server" + port);
-	    System.out.println("RMIConnectorServer address " + url);
+            if (reg == null) {
+                System.out.println("Failed to create a RMI registry, "+
+                                   "the ports from 6666 to 6999 are all occupied.");
+                System.exit(1);
+            }
 
-	    JMXConnectorServer sServer =
-		JMXConnectorServerFactory.newJMXConnectorServer(url, null,
-								null);
-	    
-	    ObjectInstance ss = server.registerMBean(sServer, new ObjectName("Default:name=RmiConnectorServer"));
-	    
-	    sServer.start();
+            // create a MBeanServer
+            MBeanServer server = MBeanServerFactory.createMBeanServer();
 
-	    // create a rmi client
-	    JMXConnector rmiConnection =
-		JMXConnectorFactory.newJMXConnector(url, null);
-	    rmiConnection.connect(null);
-	    MBeanServerConnection client = rmiConnection.getMBeanServerConnection();
+            // create a notif emitter mbean
+            ObjectName mbean = new ObjectName ("Default:name=NotificationEmitter");
 
-	    // add listener at the client side
-	    client.addNotificationListener(mbean, listener, null, null);
+            server.registerMBean(new NotificationEmitter(), mbean);
 
-	    //ask to send notifs
-	    Object[] params = new Object[1];
-	    String[] signatures = new String[1];
+            // create a rmi server
+            JMXServiceURL url =
+                new JMXServiceURL("rmi", null, port,
+                                  "/jndi/rmi://:" + port + "/server" + port);
+            System.out.println("RMIConnectorServer address " + url);
 
-	    params[0] = new Integer(nb);
-	    signatures[0] = "java.lang.Integer";
+            JMXConnectorServer sServer =
+                JMXConnectorServerFactory.newJMXConnectorServer(url, null,
+                                                                null);
 
-	    client.invoke(mbean, "sendNotifications", params, signatures);
+            ObjectInstance ss = server.registerMBean(sServer, new ObjectName("Default:name=RmiConnectorServer"));
 
-	    // waiting ...
-	    synchronized (lock) {
-		if (receivedNotifs != nb) {
-		    lock.wait(10000);
-		    System.out.println(">>> Received notifications..."+receivedNotifs);
-	    
-		}
-	    }
+            sServer.start();
 
-	    // check
-	    if (receivedNotifs != nb) {
-		System.exit(1);
-	    } else {
-		System.out.println("The client received all notifications.");
-	    }
+            // create a rmi client
+            JMXConnector rmiConnection =
+                JMXConnectorFactory.newJMXConnector(url, null);
+            rmiConnection.connect(null);
+            MBeanServerConnection client = rmiConnection.getMBeanServerConnection();
 
-	    // remove listener
-	    client.removeNotificationListener(mbean, listener);
+            // add listener at the client side
+            client.addNotificationListener(mbean, listener, null, null);
 
-	    // more test 
-	    NotificationFilterSupport filter = new NotificationFilterSupport();
-	    Object o = new Object();
-	    client.addNotificationListener(mbean, listener, filter, o);
-	    client.removeNotificationListener(mbean, listener, filter, o);
+            //ask to send notifs
+            Object[] params = new Object[1];
+            String[] signatures = new String[1];
 
-	    sServer.stop();
+            params[0] = new Integer(nb);
+            signatures[0] = "java.lang.Integer";
 
-// 	    // clean
-// 	    client.unregisterMBean(mbean);
-// 	    rmiConnection.close();
+            client.invoke(mbean, "sendNotifications", params, signatures);
 
-// 	    Thread.sleep(2000);
+            // waiting ...
+            synchronized (lock) {
+                if (receivedNotifs != nb) {
+                    lock.wait(10000);
+                    System.out.println(">>> Received notifications..."+receivedNotifs);
+
+                }
+            }
+
+            // check
+            if (receivedNotifs != nb) {
+                System.exit(1);
+            } else {
+                System.out.println("The client received all notifications.");
+            }
+
+            // remove listener
+            client.removeNotificationListener(mbean, listener);
+
+            // more test
+            NotificationFilterSupport filter = new NotificationFilterSupport();
+            Object o = new Object();
+            client.addNotificationListener(mbean, listener, filter, o);
+            client.removeNotificationListener(mbean, listener, filter, o);
+
+            sServer.stop();
+
+//          // clean
+//          client.unregisterMBean(mbean);
+//          rmiConnection.close();
+
+//          Thread.sleep(2000);
 
 
 
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    System.exit(1);
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
 //--------------------------
@@ -160,65 +160,65 @@ public class RMINotifTest {
 //--------------------------
 
     private static class Listener implements NotificationListener {
-	public void handleNotification(Notification notif, Object handback) {
-	    if(++receivedNotifs == nb) {
-		synchronized(lock) {
-		    lock.notifyAll();
-		}
-	    }
-	}
+        public void handleNotification(Notification notif, Object handback) {
+            if(++receivedNotifs == nb) {
+                synchronized(lock) {
+                    lock.notifyAll();
+                }
+            }
+        }
     }
 
     public static class NotificationEmitter extends NotificationBroadcasterSupport implements NotificationEmitterMBean {
-// 	public NotificationEmitter() {
-// 		super();
+//      public NotificationEmitter() {
+//              super();
 // System.out.println("===NotificationEmitter: new instance.");
-// 	}
+//      }
 
-	/**    
-	 * Returns a NotificationInfo object containing the name of the Java class of the notification
-	 * and the notification types sent by this notification broadcaster.  
-	 */
-	public MBeanNotificationInfo[] getNotificationInfo() {
-	    
-	    MBeanNotificationInfo[] ntfInfoArray  = new MBeanNotificationInfo[1];
-	    
-	    String[] ntfTypes = new String[1];
-	    ntfTypes[0] = myType;
-	    
-	    ntfInfoArray[0] = new MBeanNotificationInfo(ntfTypes,
-							"javax.management.Notification", 
-							"Notifications sent by the NotificationEmitter");
-	    return ntfInfoArray;
-	}  
-	
-// 	public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) {
-// 	    super.addNotificationListener(listener, filter, handback);
-	    
-// 	    System.out.println("============NotificationEmitter: add new listener");
-// 	}
-	
-	/**
-	 * Send a Notification object with the specified times.
-	 * The sequence number will be from zero to times-1.
-	 *
-	 * @param nb The number of notifications to send
-	 */
-	public void sendNotifications(Integer nb) {
-	    System.out.println("===NotificationEmitter: be asked to send notifications: "+nb);
-	    
-	    Notification notif;
-	    for (int i=1; i<=nb.intValue(); i++) {
-		notif = new Notification(myType, this, i);
-		sendNotification(notif);
-	    }
-	}
-    
-	private String myType = "notification.my_notification";
+        /**
+         * Returns a NotificationInfo object containing the name of the Java class of the notification
+         * and the notification types sent by this notification broadcaster.
+         */
+        public MBeanNotificationInfo[] getNotificationInfo() {
+
+            MBeanNotificationInfo[] ntfInfoArray  = new MBeanNotificationInfo[1];
+
+            String[] ntfTypes = new String[1];
+            ntfTypes[0] = myType;
+
+            ntfInfoArray[0] = new MBeanNotificationInfo(ntfTypes,
+                                                        "javax.management.Notification",
+                                                        "Notifications sent by the NotificationEmitter");
+            return ntfInfoArray;
+        }
+
+//      public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) {
+//          super.addNotificationListener(listener, filter, handback);
+
+//          System.out.println("============NotificationEmitter: add new listener");
+//      }
+
+        /**
+         * Send a Notification object with the specified times.
+         * The sequence number will be from zero to times-1.
+         *
+         * @param nb The number of notifications to send
+         */
+        public void sendNotifications(Integer nb) {
+            System.out.println("===NotificationEmitter: be asked to send notifications: "+nb);
+
+            Notification notif;
+            for (int i=1; i<=nb.intValue(); i++) {
+                notif = new Notification(myType, this, i);
+                sendNotification(notif);
+            }
+        }
+
+        private String myType = "notification.my_notification";
     }
-    
+
     public interface NotificationEmitterMBean {
-	public void sendNotifications(Integer nb);
+        public void sendNotifications(Integer nb);
     }
 
     private static NotificationListener listener = new Listener();

@@ -51,35 +51,35 @@ import java.util.zip.*;
  */
 public class DataDescriptor {
     static void copyZip(ZipInputStream in, ZipOutputStream out) throws IOException {
-	byte[] buffer = new byte[1 << 14];
-	for (ZipEntry ze; (ze = in.getNextEntry()) != null; ) {
-	    out.putNextEntry(ze);
+        byte[] buffer = new byte[1 << 14];
+        for (ZipEntry ze; (ze = in.getNextEntry()) != null; ) {
+            out.putNextEntry(ze);
             // When the bug is present, it shows up here.  The second call to
             // copyZip will throw an exception while reading data.
-	    for (int nr; 0 < (nr = in.read(buffer)); ) {
-		out.write(buffer, 0, nr);
-	    }
-	}
-	in.close();
+            for (int nr; 0 < (nr = in.read(buffer)); ) {
+                out.write(buffer, 0, nr);
+            }
+        }
+        in.close();
     }
-   
+
     private static void realMain(String[] args) throws Throwable {
         // Create zip output in byte array zipbytes
-	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	ZipOutputStream zos = new ZipOutputStream(baos);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
         ZipEntry e = new ZipEntry("testdir/foo");
-	byte[] data = "entry data".getBytes("ASCII");
-	zos.putNextEntry(e);
-	zos.write(data);
-	zos.close();
+        byte[] data = "entry data".getBytes("ASCII");
+        zos.putNextEntry(e);
+        zos.write(data);
+        zos.close();
         byte[] zipbytes1 = baos.toByteArray();
         int length1 = zipbytes1.length;
         System.out.println("zip bytes pre-copy length=" + length1);
 
         // Make a ZipInputStream around zipbytes, and use
         // copyZip to get a new byte array.
-	ZipInputStream zis =
-	    new ZipInputStream(
+        ZipInputStream zis =
+            new ZipInputStream(
                 new ByteArrayInputStream(zipbytes1));
         baos.reset();
         zos = new ZipOutputStream(baos);
@@ -116,10 +116,10 @@ public class DataDescriptor {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	try {realMain(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {realMain(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

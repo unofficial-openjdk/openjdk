@@ -24,8 +24,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -41,12 +39,11 @@ import java.io.IOException;
  * of data from underlying data stream.
  *
  * @author Yanni Zhang
- * @version 1.00
  *
  */
 public class KrbDataInputStream extends BufferedInputStream{
     private boolean bigEndian = true;
-    
+
     public void setNativeByteOrder() {
         if (java.nio.ByteOrder.nativeOrder().
                 equals(java.nio.ByteOrder.BIG_ENDIAN)) {
@@ -56,7 +53,7 @@ public class KrbDataInputStream extends BufferedInputStream{
         }
     }
     public KrbDataInputStream(InputStream is){
-	super(is);
+        super(is);
     }
     /**
      * Reads up to the specific number of bytes from this input stream.
@@ -65,23 +62,22 @@ public class KrbDataInputStream extends BufferedInputStream{
      * @exception IOException.
      */
     public int read(int num) throws IOException{
-	byte[] bytes = new byte[num];
-	read(bytes, 0, num);
-	int result = 0;
-	for (int i = 0; i < num; i++) {
+        byte[] bytes = new byte[num];
+        read(bytes, 0, num);
+        int result = 0;
+        for (int i = 0; i < num; i++) {
             if (bigEndian) {
                 result |= (bytes[i] & 0xff) << (num - i - 1) * 8;
             } else {
                 result |= (bytes[i] & 0xff) << i * 8;
             }
-	}
-	return result;
+        }
+        return result;
     }
-    
+
     public int readVersion() throws IOException {
         // always read in big-endian mode
-	int result = (read() & 0xff) << 8;
+        int result = (read() & 0xff) << 8;
         return result | (read() & 0xff);
     }
 }
-	

@@ -1,23 +1,23 @@
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -46,12 +46,12 @@ import sun.security.jgss.GSSUtil;
 public class NegotiatorImpl extends Negotiator {
 
     private static final boolean DEBUG =
-	java.security.AccessController.doPrivileged( 
-	      new sun.security.action.GetBooleanAction("sun.security.krb5.debug"));
-            
+        java.security.AccessController.doPrivileged(
+              new sun.security.action.GetBooleanAction("sun.security.krb5.debug"));
+
     private GSSContext context;
     private byte[] oneToken;
-   
+
     /**
      * Initialize the object, which includes:<ul>
      * <li>Find out what GSS mechanism to use from <code>http.negotiate.mechanism.oid</code>,
@@ -67,12 +67,12 @@ public class NegotiatorImpl extends Negotiator {
         // "1.2.840.113554.1.2.2" Kerberos
         // "1.3.6.1.5.5.2" SPNEGO
         final Oid oid;
-        
+
         if (scheme.equalsIgnoreCase("Kerberos")) {
             // we can only use Kerberos mech when the scheme is kerberos
             oid = GSSUtil.GSS_KRB5_MECH_OID;
         } else {
-            String pref = java.security.AccessController.doPrivileged( 
+            String pref = java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction<String>() {
                         public String run() {
                             return System.getProperty(
@@ -87,7 +87,7 @@ public class NegotiatorImpl extends Negotiator {
                 oid = GSSUtil.GSS_SPNEGO_MECH_OID;
             }
         }
-        
+
         GSSManagerImpl manager = new GSSManagerImpl(
                 GSSUtil.CALLER_HTTP_NEGOTIATE);
 
@@ -98,12 +98,12 @@ public class NegotiatorImpl extends Negotiator {
                                         oid,
                                         null,
                                         GSSContext.DEFAULT_LIFETIME);
-        
+
         // In order to support credential delegation in HTTP/SPNEGO,
         // we always request it before initSecContext. The current
         // implementation will check the OK-AS-DELEGATE flag inside
         // the service ticket of the web server, and only enable
-        // delegation when this flag is set. This check is only 
+        // delegation when this flag is set. This check is only
         // performed when the GSS caller is CALLER_HTTP_NEGOTIATE,
         // so all other normal GSS-API calls are not affected.
 
@@ -126,19 +126,19 @@ public class NegotiatorImpl extends Negotiator {
                 e.printStackTrace();
             }
             IOException ioe = new IOException("Negotiate support not initiated");
-            ioe.initCause(e); 
+            ioe.initCause(e);
             throw ioe;
         }
     }
-    
+
     /**
      * Return the first token of GSS, in SPNEGO, it's called NegTokenInit
      * @return the first token
      */
     public byte[] firstToken() {
-	return oneToken;
+        return oneToken;
     }
-    
+
     /**
      * Return the rest tokens of GSS, in SPNEGO, it's called NegTokenTarg
      * @param token the token received from server
@@ -154,7 +154,7 @@ public class NegotiatorImpl extends Negotiator {
                 e.printStackTrace();
             }
             IOException ioe = new IOException("Negotiate support cannot continue");
-            ioe.initCause(e); 
+            ioe.initCause(e);
             throw ioe;
         }
     }

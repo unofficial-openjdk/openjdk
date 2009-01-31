@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)LigatureSubstProc.cpp	1.4 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -64,7 +63,7 @@ void LigatureSubstitutionProcessor::beginStateTable()
     m = -1;
 }
 
-ByteOffset LigatureSubstitutionProcessor::processStateEntry(LEGlyphStorage &glyphStorage, 
+ByteOffset LigatureSubstitutionProcessor::processStateEntry(LEGlyphStorage &glyphStorage,
     le_int32 &currGlyph, EntryTableIndex index)
 {
     const LigatureSubstitutionStateEntry *entry = &entryTable[index];

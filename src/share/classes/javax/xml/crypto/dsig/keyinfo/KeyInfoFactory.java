@@ -48,12 +48,12 @@ import sun.security.jca.GetInstance.Instance;
 
 /**
  * A factory for creating {@link KeyInfo} objects from scratch or for
- * unmarshalling a <code>KeyInfo</code> object from a corresponding XML 
+ * unmarshalling a <code>KeyInfo</code> object from a corresponding XML
  * representation.
  *
  * <p>Each instance of <code>KeyInfoFactory</code> supports a specific
  * XML mechanism type. To create a <code>KeyInfoFactory</code>, call one of the
- * static {@link #getInstance getInstance} methods, passing in the XML 
+ * static {@link #getInstance getInstance} methods, passing in the XML
  * mechanism type desired, for example:
  *
  * <blockquote><code>
@@ -65,7 +65,7 @@ import sun.security.jca.GetInstance.Instance;
  * <a href="../../../../../../technotes/guides/security/xmldsig/overview.html#DOM Mechanism Requirements">
  * DOM Mechanism Requirements</a> section of the API overview. See the
  * <a href="../../../../../../technotes/guides/security/xmldsig/overview.html#Service Provider">
- * Service Providers</a> section of the API overview for a list of standard 
+ * Service Providers</a> section of the API overview for a list of standard
  * mechanism types.
  *
  * <p><code>KeyInfoFactory</code> implementations are registered and loaded
@@ -84,20 +84,20 @@ import sun.security.jca.GetInstance.Instance;
  *
  * <p>Note that a caller must use the same <code>KeyInfoFactory</code>
  * instance to create the <code>XMLStructure</code>s of a particular
- * <code>KeyInfo</code> object. The behavior is undefined if 
- * <code>XMLStructure</code>s from different providers or different mechanism 
+ * <code>KeyInfo</code> object. The behavior is undefined if
+ * <code>XMLStructure</code>s from different providers or different mechanism
  * types are used together.
  *
  * <p><b>Concurrent Access</b>
- * <p>The static methods of this class are guaranteed to be thread-safe. 
- * Multiple threads may concurrently invoke the static methods defined in this 
+ * <p>The static methods of this class are guaranteed to be thread-safe.
+ * Multiple threads may concurrently invoke the static methods defined in this
  * class with no ill effects.
  *
- * <p>However, this is not true for the non-static methods defined by this 
- * class. Unless otherwise documented by a specific provider, threads that 
- * need to access a single <code>KeyInfoFactory</code> instance concurrently 
- * should synchronize amongst themselves and provide the necessary locking. 
- * Multiple threads each manipulating a different <code>KeyInfoFactory</code> 
+ * <p>However, this is not true for the non-static methods defined by this
+ * class. Unless otherwise documented by a specific provider, threads that
+ * need to access a single <code>KeyInfoFactory</code> instance concurrently
+ * should synchronize amongst themselves and provide the necessary locking.
+ * Multiple threads each manipulating a different <code>KeyInfoFactory</code>
  * instance need not synchronize.
  *
  * @author Sean Mullan
@@ -118,21 +118,21 @@ public abstract class KeyInfoFactory {
      * Returns a <code>KeyInfoFactory</code> that supports the
      * specified XML processing mechanism and representation type (ex: "DOM").
      *
-     * <p>This method uses the standard JCA provider lookup mechanism to 
-     * locate and instantiate a <code>KeyInfoFactory</code> implementation of 
-     * the desired mechanism type. It traverses the list of registered security 
-     * <code>Provider</code>s, starting with the most preferred 
-     * <code>Provider</code>. A new <code>KeyInfoFactory</code> object 
-     * from the first <code>Provider</code> that supports the specified 
-     * mechanism is returned. 
-     * 
-     * <p> Note that the list of registered providers may be retrieved via 
-     * the {@link Security#getProviders() Security.getProviders()} method. 
+     * <p>This method uses the standard JCA provider lookup mechanism to
+     * locate and instantiate a <code>KeyInfoFactory</code> implementation of
+     * the desired mechanism type. It traverses the list of registered security
+     * <code>Provider</code>s, starting with the most preferred
+     * <code>Provider</code>. A new <code>KeyInfoFactory</code> object
+     * from the first <code>Provider</code> that supports the specified
+     * mechanism is returned.
+     *
+     * <p> Note that the list of registered providers may be retrieved via
+     * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @param mechanismType the type of the XML processing mechanism and
-     *    representation. See the <a 
+     *    representation. See the <a
      *    href="../../../../../../technotes/guides/security/xmldsig/overview.html#Service Provider">
-     *    Service Providers</a> section of the API overview for a list of 
+     *    Service Providers</a> section of the API overview for a list of
      *    standard mechanism types.
      * @return a new <code>KeyInfoFactory</code>
      * @throws NullPointerException if <code>mechanismType</code> is
@@ -142,9 +142,9 @@ public abstract class KeyInfoFactory {
      * @see Provider
      */
     public static KeyInfoFactory getInstance(String mechanismType) {
-	if (mechanismType == null) {
+        if (mechanismType == null) {
             throw new NullPointerException("mechanismType cannot be null");
-	}
+        }
         Instance instance;
         try {
             instance = GetInstance.getInstance
@@ -161,31 +161,31 @@ public abstract class KeyInfoFactory {
     /**
      * Returns a <code>KeyInfoFactory</code> that supports the
      * requested XML processing mechanism and representation type (ex: "DOM"),
-     * as supplied by the specified provider. Note that the specified 
-     * <code>Provider</code> object does not have to be registered in the 
-     * provider list. 
+     * as supplied by the specified provider. Note that the specified
+     * <code>Provider</code> object does not have to be registered in the
+     * provider list.
      *
      * @param mechanismType the type of the XML processing mechanism and
-     *    representation. See the <a 
+     *    representation. See the <a
      *    href="../../../../../../technotes/guides/security/xmldsig/overview.html#Service Provider">
-     *    Service Providers</a> section of the API overview for a list of 
+     *    Service Providers</a> section of the API overview for a list of
      *    standard mechanism types.
      * @param provider the <code>Provider</code> object
      * @return a new <code>KeyInfoFactory</code>
      * @throws NullPointerException if <code>mechanismType</code> or
      *    <code>provider</code> are <code>null</code>
-     * @throws NoSuchMechanismException if a <code>KeyInfoFactory</code> 
-     *    implementation for the specified mechanism is not available from the 
+     * @throws NoSuchMechanismException if a <code>KeyInfoFactory</code>
+     *    implementation for the specified mechanism is not available from the
      *    specified <code>Provider</code> object
      * @see Provider
      */
     public static KeyInfoFactory getInstance(String mechanismType,
-	Provider provider) {
-	if (mechanismType == null) {
+        Provider provider) {
+        if (mechanismType == null) {
             throw new NullPointerException("mechanismType cannot be null");
-	} else if (provider == null) {
-	    throw new NullPointerException("provider cannot be null");
-	}
+        } else if (provider == null) {
+            throw new NullPointerException("provider cannot be null");
+        }
 
         Instance instance;
         try {
@@ -203,37 +203,37 @@ public abstract class KeyInfoFactory {
     /**
      * Returns a <code>KeyInfoFactory</code> that supports the
      * requested XML processing mechanism and representation type (ex: "DOM"),
-     * as supplied by the specified provider. The specified provider must be 
-     * registered in the security provider list. 
+     * as supplied by the specified provider. The specified provider must be
+     * registered in the security provider list.
      *
-     * <p>Note that the list of registered providers may be retrieved via 
-     * the {@link Security#getProviders() Security.getProviders()} method. 
+     * <p>Note that the list of registered providers may be retrieved via
+     * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @param mechanismType the type of the XML processing mechanism and
-     *    representation. See the <a 
+     *    representation. See the <a
      *    href="../../../../../../technotes/guides/security/xmldsig/overview.html#Service Provider">
-     *    Service Providers</a> section of the API overview for a list of 
+     *    Service Providers</a> section of the API overview for a list of
      *    standard mechanism types.
      * @param provider the string name of the provider
      * @return a new <code>KeyInfoFactory</code>
-     * @throws NoSuchProviderException if the specified provider is not 
+     * @throws NoSuchProviderException if the specified provider is not
      *    registered in the security provider list
      * @throws NullPointerException if <code>mechanismType</code> or
      *    <code>provider</code> are <code>null</code>
-     * @throws NoSuchMechanismException if a <code>KeyInfoFactory</code> 
-     *    implementation for the specified mechanism is not available from the 
+     * @throws NoSuchMechanismException if a <code>KeyInfoFactory</code>
+     *    implementation for the specified mechanism is not available from the
      *    specified provider
      * @see Provider
      */
     public static KeyInfoFactory getInstance(String mechanismType,
-	String provider) throws NoSuchProviderException {
-	if (mechanismType == null) {
+        String provider) throws NoSuchProviderException {
+        if (mechanismType == null) {
             throw new NullPointerException("mechanismType cannot be null");
-	} else if (provider == null) {
+        } else if (provider == null) {
             throw new NullPointerException("provider cannot be null");
-	} else if (provider.length() == 0) {
-	    throw new NoSuchProviderException();
-	}
+        } else if (provider.length() == 0) {
+            throw new NoSuchProviderException();
+        }
 
         Instance instance;
         try {
@@ -252,19 +252,19 @@ public abstract class KeyInfoFactory {
      * Returns a <code>KeyInfoFactory</code> that supports the
      * default XML processing mechanism and representation type ("DOM").
      *
-     * <p>This method uses the standard JCA provider lookup mechanism to 
-     * locate and instantiate a <code>KeyInfoFactory</code> implementation of 
-     * the default mechanism type. It traverses the list of registered security 
+     * <p>This method uses the standard JCA provider lookup mechanism to
+     * locate and instantiate a <code>KeyInfoFactory</code> implementation of
+     * the default mechanism type. It traverses the list of registered security
      * <code>Provider</code>s, starting with the most preferred
      * <code>Provider</code>.  A new <code>KeyInfoFactory</code> object
-     * from the first <code>Provider</code> that supports the DOM mechanism is 
-     * returned. 
-     * 
-     * <p> Note that the list of registered providers may be retrieved via 
-     * the {@link Security#getProviders() Security.getProviders()} method. 
+     * from the first <code>Provider</code> that supports the DOM mechanism is
+     * returned.
+     *
+     * <p> Note that the list of registered providers may be retrieved via
+     * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @return a new <code>KeyInfoFactory</code>
-     * @throws NoSuchMechanismException if no <code>Provider</code> supports a 
+     * @throws NoSuchMechanismException if no <code>Provider</code> supports a
      *    <code>KeyInfoFactory</code> implementation for the DOM mechanism
      * @see Provider
      */
@@ -289,14 +289,14 @@ public abstract class KeyInfoFactory {
      * @return the provider of this <code>KeyInfoFactory</code>
      */
     public final Provider getProvider() {
-	return provider;
+        return provider;
     }
 
     /**
      * Creates a <code>KeyInfo</code> containing the specified list of
      * key information types.
      *
-     * @param content a list of one or more {@link XMLStructure}s representing 
+     * @param content a list of one or more {@link XMLStructure}s representing
      *    key information types. The list is defensively copied to protect
      *    against subsequent modification.
      * @return a <code>KeyInfo</code>
@@ -312,9 +312,9 @@ public abstract class KeyInfoFactory {
      * information types and optional id. The
      * <code>id</code> parameter represents the value of an XML
      * <code>ID</code> attribute and is useful for referencing
-     * the <code>KeyInfo</code> from other XML structures. 
+     * the <code>KeyInfo</code> from other XML structures.
      *
-     * @param content a list of one or more {@link XMLStructure}s representing 
+     * @param content a list of one or more {@link XMLStructure}s representing
      *    key information types. The list is defensively copied to protect
      *    against subsequent modification.
      * @param id the value of an XML <code>ID</code> (may be <code>null</code>)
@@ -340,7 +340,7 @@ public abstract class KeyInfoFactory {
      *
      * @param key the public key
      * @return a <code>KeyValue</code>
-     * @throws KeyException if the <code>key</code>'s algorithm is not 
+     * @throws KeyException if the <code>key</code>'s algorithm is not
      *    recognized or supported by this <code>KeyInfoFactory</code>
      * @throws NullPointerException if <code>key</code> is <code>null</code>
      */
@@ -362,7 +362,7 @@ public abstract class KeyInfoFactory {
 
     /**
      * Creates a <code>PGPData</code> from the specified PGP public key
-     * identifier, and optional key material packet and list of external 
+     * identifier, and optional key material packet and list of external
      * elements.
      *
      * @param keyId a PGP public key identifier as defined in <a href=
@@ -370,23 +370,23 @@ public abstract class KeyInfoFactory {
      *    The array is cloned to protect against subsequent modification.
      * @param keyPacket a PGP key material packet as defined in <a href=
      *    "http://www.ietf.org/rfc/rfc2440.txt">RFC 2440</a>, section 5.5.
-     *    The array is cloned to protect against subsequent modification. May 
+     *    The array is cloned to protect against subsequent modification. May
      *    be <code>null</code>.
      * @param other a list of {@link XMLStructure}s representing elements from
      *    an external namespace. The list is defensively copied to protect
      *    against subsequent modification. May be <code>null</code> or empty.
      * @return a <code>PGPData</code>
      * @throws NullPointerException if <code>keyId</code> is <code>null</code>
-     * @throws IllegalArgumentException if the <code>keyId</code> or 
-     *    <code>keyPacket</code> is not in the correct format. For 
-     *    <code>keyPacket</code>, the format of the packet header is 
+     * @throws IllegalArgumentException if the <code>keyId</code> or
+     *    <code>keyPacket</code> is not in the correct format. For
+     *    <code>keyPacket</code>, the format of the packet header is
      *    checked and the tag is verified that it is of type key material. The
      *    contents and format of the packet body are not checked.
      * @throws ClassCastException if <code>other</code> contains any
      *    entries that are not of type {@link XMLStructure}
      */
     public abstract PGPData newPGPData(byte[] keyId, byte[] keyPacket,
-	List other);
+        List other);
 
     /**
      * Creates a <code>PGPData</code> from the specified PGP key material
@@ -396,14 +396,14 @@ public abstract class KeyInfoFactory {
      *    "http://www.ietf.org/rfc/rfc2440.txt">RFC 2440</a>, section 5.5.
      *    The array is cloned to protect against subsequent modification.
      * @param other a list of {@link XMLStructure}s representing elements from
-     *    an external namespace. The list is defensively copied to protect 
+     *    an external namespace. The list is defensively copied to protect
      *    against subsequent modification. May be <code>null</code> or empty.
      * @return a <code>PGPData</code>
-     * @throws NullPointerException if <code>keyPacket</code> is 
+     * @throws NullPointerException if <code>keyPacket</code> is
      *    <code>null</code>
-     * @throws IllegalArgumentException if <code>keyPacket</code> is not in the 
-     *    correct format. For <code>keyPacket</code>, the format of the packet 
-     *    header is checked and the tag is verified that it is of type key 
+     * @throws IllegalArgumentException if <code>keyPacket</code> is not in the
+     *    correct format. For <code>keyPacket</code>, the format of the packet
+     *    header is checked and the tag is verified that it is of type key
      *    material. The contents and format of the packet body are not checked.
      * @throws ClassCastException if <code>other</code> contains any
      *    entries that are not of type {@link XMLStructure}
@@ -413,7 +413,7 @@ public abstract class KeyInfoFactory {
     /**
      * Creates a <code>RetrievalMethod</code> from the specified URI.
      *
-     * @param uri the URI that identifies the <code>KeyInfo</code> information 
+     * @param uri the URI that identifies the <code>KeyInfo</code> information
      *    to be retrieved
      * @return a <code>RetrievalMethod</code>
      * @throws NullPointerException if <code>uri</code> is <code>null</code>
@@ -425,12 +425,12 @@ public abstract class KeyInfoFactory {
     /**
      * Creates a <code>RetrievalMethod</code> from the specified parameters.
      *
-     * @param uri the URI that identifies the <code>KeyInfo</code> information 
+     * @param uri the URI that identifies the <code>KeyInfo</code> information
      *    to be retrieved
-     * @param type a URI that identifies the type of <code>KeyInfo</code> 
+     * @param type a URI that identifies the type of <code>KeyInfo</code>
      *    information to be retrieved (may be <code>null</code>)
      * @param transforms a list of {@link Transform}s. The list is defensively
-     *    copied to protect against subsequent modification. May be 
+     *    copied to protect against subsequent modification. May be
      *    <code>null</code> or empty.
      * @return a <code>RetrievalMethod</code>
      * @throws NullPointerException if <code>uri</code> is <code>null</code>
@@ -440,7 +440,7 @@ public abstract class KeyInfoFactory {
      *    entries that are not of type {@link Transform}
      */
     public abstract RetrievalMethod newRetrievalMethod(String uri, String type,
-	List transforms);
+        List transforms);
 
     /**
      * Creates a <code>X509Data</code> containing the specified list of
@@ -450,16 +450,16 @@ public abstract class KeyInfoFactory {
      *    {@link String} (subject names), <code>byte[]</code> (subject key ids),
      *    {@link java.security.cert.X509Certificate}, {@link X509CRL},
      *    or {@link XMLStructure} ({@link X509IssuerSerial}
-     *    objects or elements from an external namespace). Subject names are 
-     *    distinguished names in RFC 2253 String format. Implementations MUST 
-     *    support the attribute type keywords defined in RFC 2253 (CN, L, ST, 
-     *    O, OU, C, STREET, DC and UID). Implementations MAY support additional 
-     *    keywords. The list is defensively copied to protect against 
+     *    objects or elements from an external namespace). Subject names are
+     *    distinguished names in RFC 2253 String format. Implementations MUST
+     *    support the attribute type keywords defined in RFC 2253 (CN, L, ST,
+     *    O, OU, C, STREET, DC and UID). Implementations MAY support additional
+     *    keywords. The list is defensively copied to protect against
      *    subsequent modification.
      * @return a <code>X509Data</code>
      * @throws NullPointerException if <code>content</code> is <code>null</code>
      * @throws IllegalArgumentException if <code>content</code> is empty, or
-     *    if a subject name is not RFC 2253 compliant or one of the attribute 
+     *    if a subject name is not RFC 2253 compliant or one of the attribute
      *    type keywords is not recognized.
      * @throws ClassCastException if <code>content</code> contains any entries
      *    that are not of one of the valid types mentioned above
@@ -471,12 +471,12 @@ public abstract class KeyInfoFactory {
      * distinguished name and serial number.
      *
      * @param issuerName the issuer's distinguished name in RFC 2253 String
-     *    format. Implementations MUST support the attribute type keywords 
-     *    defined in RFC 2253 (CN, L, ST, O, OU, C, STREET, DC and UID). 
+     *    format. Implementations MUST support the attribute type keywords
+     *    defined in RFC 2253 (CN, L, ST, O, OU, C, STREET, DC and UID).
      *    Implementations MAY support additional keywords.
      * @param serialNumber the serial number
      * @return an <code>X509IssuerSerial</code>
-     * @throws NullPointerException if <code>issuerName</code> or 
+     * @throws NullPointerException if <code>issuerName</code> or
      *    <code>serialNumber</code> are <code>null</code>
      * @throws IllegalArgumentException if the issuer name is not RFC 2253
      *    compliant or one of the attribute type keywords is not recognized.
@@ -495,7 +495,7 @@ public abstract class KeyInfoFactory {
     public abstract boolean isFeatureSupported(String feature);
 
     /**
-     * Returns a reference to the <code>URIDereferencer</code> that is used by 
+     * Returns a reference to the <code>URIDereferencer</code> that is used by
      * default to dereference URIs in {@link RetrievalMethod} objects.
      *
      * @return a reference to the default <code>URIDereferencer</code>
@@ -503,20 +503,20 @@ public abstract class KeyInfoFactory {
     public abstract URIDereferencer getURIDereferencer();
 
     /**
-     * Unmarshals a new <code>KeyInfo</code> instance from a 
-     * mechanism-specific <code>XMLStructure</code> (ex: {@link DOMStructure}) 
+     * Unmarshals a new <code>KeyInfo</code> instance from a
+     * mechanism-specific <code>XMLStructure</code> (ex: {@link DOMStructure})
      * instance.
      *
-     * @param xmlStructure a mechanism-specific XML structure from which to 
+     * @param xmlStructure a mechanism-specific XML structure from which to
      *   unmarshal the keyinfo from
      * @return the <code>KeyInfo</code>
-     * @throws NullPointerException if <code>xmlStructure</code> is 
+     * @throws NullPointerException if <code>xmlStructure</code> is
      *   <code>null</code>
      * @throws ClassCastException if the type of <code>xmlStructure</code> is
      *   inappropriate for this factory
-     * @throws MarshalException if an unrecoverable exception occurs during 
+     * @throws MarshalException if an unrecoverable exception occurs during
      *   unmarshalling
      */
     public abstract KeyInfo unmarshalKeyInfo(XMLStructure xmlStructure)
-	throws MarshalException;
+        throws MarshalException;
 }

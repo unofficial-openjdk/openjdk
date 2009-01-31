@@ -49,7 +49,6 @@ import javax.swing.plaf.UIResource;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @see javax.swing.plaf.UIResource
- * @version %I% %G%
  * @author Amy Fowler
  *
  */
@@ -69,7 +68,7 @@ public class IconUIResource implements Icon, UIResource, Serializable
         this.delegate = delegate;
     }
 
-    public void paintIcon(Component c, Graphics g, int x, int y) {        
+    public void paintIcon(Component c, Graphics g, int x, int y) {
         delegate.paintIcon(c, g, x, y);
     }
 
@@ -80,5 +79,5 @@ public class IconUIResource implements Icon, UIResource, Serializable
     public int getIconHeight() {
         return delegate.getIconHeight();
     }
- 
+
 }

@@ -30,7 +30,7 @@
 import java.io.*;
 
 public class NullConstruct {
-  
+
     public static void main(String[] args) throws Exception {
         try {
             Reader in = null;
@@ -41,4 +41,3 @@ public class NullConstruct {
         }
     }
 }
-

@@ -53,7 +53,7 @@ class HotspotThread
     public Map<String, Long> getInternalThreadCpuTimes() {
         int count = getInternalThreadCount();
         if (count == 0) {
-            return java.util.Collections.emptyMap(); 
+            return java.util.Collections.emptyMap();
         }
         String[] names = new String[count];
         long[] times = new long[count];

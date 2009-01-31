@@ -34,20 +34,19 @@ import java.awt.*;
  * Unix, and will be deleted when WindowsLookAndFeel is no longer built
  * on Unix.
  *
- * @version %I% %G%
  * @author Leif Samuelsson
  */
 public class ThemeReader {
     public static boolean isThemed() {
-	return false;
+        return false;
     }
 
     public static void paintBackground(int[] buffer, String widget,
-           int part, int state, int x, int y, int w, int h, int stride)	{
+           int part, int state, int x, int y, int w, int h, int stride) {
     }
-    
+
     public static Insets getThemeMargins(String widget, int part, int state, int marginType) {
-	return null;
+        return null;
     }
 
     public static boolean isThemePartDefined(String widget, int part, int state) {
@@ -55,37 +54,37 @@ public class ThemeReader {
     }
 
     public static Color getColor(String widget, int part, int state, int property) {
-	return null;
+        return null;
     }
-    
+
     public static int getInt(String widget, int part, int state, int property) {
-	return 0;
+        return 0;
     }
-    
+
     public static int getEnum(String widget, int part, int state, int property) {
-	return 0;
+        return 0;
     }
-    
+
     public static boolean getBoolean(String widget, int part, int state, int property) {
-	return false;
+        return false;
     }
 
     public static boolean getSysBoolean(String widget, int property) {
-	return false;
+        return false;
     }
 
     public static Point getPoint(String widget, int part, int state, int property) {
-	return null;
+        return null;
     }
-    
+
     public static Dimension getPosition(String widget, int part, int state, int property) {
-	return null;
+        return null;
     }
 
     public static Dimension getPartSize(String widget, int part, int state) {
-	return null;
+        return null;
     }
-    public static long getThemeTransitionDuration(String widget, int part, 
+    public static long getThemeTransitionDuration(String widget, int part,
                                        int stateFrom, int stateTo, int propId) {
         return 0;
     }

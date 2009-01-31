@@ -62,9 +62,9 @@ char* SplashConvertStringAlloc(const char* in, int* size) {
     }
     old_locale = setlocale(LC_ALL, "");
 
-    codeset = nl_langinfo(CODESET);  
+    codeset = nl_langinfo(CODESET);
     if ( codeset == NULL || codeset[0] == 0 ) {
-	goto done;
+        goto done;
     }
     /* we don't need BOM in output so we choose native BE or LE encoding here */
     codeset_out = (platformByteOrder()==BYTE_ORDER_MSBFIRST) ?
@@ -75,7 +75,7 @@ char* SplashConvertStringAlloc(const char* in, int* size) {
         goto done;
     }
     inSize = strlen(in);
-    bufSize = inSize*2; // need 2 bytes per char for UCS-2, this is 
+    bufSize = inSize*2; // need 2 bytes per char for UCS-2, this is
                         // 2 bytes per source byte max
     buf = malloc(bufSize);
     out = buf; outSize = bufSize;
@@ -110,10 +110,10 @@ SplashInitFrameShape(Splash * splash, int imageIndex) {
         return;
     if (!shapeSupported)
         return;
-    initRect(&maskRect, 0, 0, splash->width, splash->height, 1, 
-            splash->width * splash->imageFormat.depthBytes, 
+    initRect(&maskRect, 0, 0, splash->width, splash->height, 1,
+            splash->width * splash->imageFormat.depthBytes,
             splash->frames[imageIndex].bitmapBits, &splash->imageFormat);
-    rects = 
+    rects =
         malloc(sizeof(XRectangle) * (splash->width / 2 + 1) * splash->height);
 
     frame->numRects = BitmapToYXBandedRectangles(&maskRect, rects);
@@ -129,7 +129,7 @@ SplashTime(void) {
     unsigned long long msec;
 
     gettimeofday(&tv, &tz);
-    msec = (unsigned long long) tv.tv_sec * 1000 + 
+    msec = (unsigned long long) tv.tv_sec * 1000 +
         (unsigned long long) tv.tv_usec / 1000;
 
     return (unsigned) msec;
@@ -177,7 +177,7 @@ GetNumAvailableColors(Display * display, Screen * screen, unsigned map_entries) 
 }
 
 Colormap
-AllocColors(Display * display, Screen * screen, int numColors, 
+AllocColors(Display * display, Screen * screen, int numColors,
         unsigned long *pr) {
     unsigned long pmr[1];
     Colormap cmap = XDefaultColormapOfScreen(screen);
@@ -187,7 +187,7 @@ AllocColors(Display * display, Screen * screen, int numColors,
 }
 
 void
-FreeColors(Display * display, Screen * screen, int numColors, 
+FreeColors(Display * display, Screen * screen, int numColors,
         unsigned long *pr) {
     Colormap cmap = XDefaultColormapOfScreen(screen);
 
@@ -204,9 +204,9 @@ static void SplashCenter(Splash * splash) {
         if there's no hint, use the center of the screen */
     atom = XInternAtom(splash->display, "XINERAMA_CENTER_HINT", True);
     if (atom != None) {
-        status = XGetWindowProperty(splash->display, 
-            XRootWindowOfScreen(splash->screen), atom, 0, 1, False, XA_INTEGER, 
-            &actual_type, &actual_format, &nitems, 
+        status = XGetWindowProperty(splash->display,
+            XRootWindowOfScreen(splash->screen), atom, 0, 1, False, XA_INTEGER,
+            &actual_type, &actual_format, &nitems,
             &bytes_after, (unsigned char**)(&prop));
         if (status == Success && actual_type != None && prop != NULL) {
             splash->x = prop[0] - splash->width/2;
@@ -230,7 +230,7 @@ static void SplashUpdateSizeHints(Splash * splash) {
         sizeHints.width = sizeHints.base_width = sizeHints.min_width = sizeHints.max_width = splash->width;
         sizeHints.height = sizeHints.base_height = sizeHints.min_height = sizeHints.max_height = splash->height;
         sizeHints.win_gravity = NorthWestGravity;
-        
+
         XSetWMNormalHints(splash->display, splash->window, &sizeHints);
     }
 }
@@ -255,7 +255,7 @@ SplashCreateWindow(Splash * splash) {
         &attr);
     SplashUpdateSizeHints(splash);
 
-    
+
     splash->wmHints = XAllocWMHints();
     if (splash->wmHints) {
         splash->wmHints->flags = InputHint | StateHint;
@@ -273,11 +273,11 @@ SplashUpdateShape(Splash * splash) {
     if (!splash->maskRequired) {
         return;
     }
-    XShapeCombineRectangles(splash->display, splash->window, ShapeClip, 0, 0, 
-            splash->frames[splash->currentFrame].rects, 
+    XShapeCombineRectangles(splash->display, splash->window, ShapeClip, 0, 0,
+            splash->frames[splash->currentFrame].rects,
             splash->frames[splash->currentFrame].numRects, ShapeSet, YXBanded);
-    XShapeCombineRectangles(splash->display, splash->window, ShapeBounding, 
-            0, 0, splash->frames[splash->currentFrame].rects, 
+    XShapeCombineRectangles(splash->display, splash->window, ShapeBounding,
+            0, 0, splash->frames[splash->currentFrame].rects,
             splash->frames[splash->currentFrame].numRects, ShapeSet, YXBanded);
 }
 
@@ -316,18 +316,18 @@ SplashRedrawWindow(Splash * splash) {
     // making this method redraw a part of the image does not make
     // much sense as SplashUpdateScreenData always re-generates
     // the image completely, so whole window is always redrawn
-    
+
     SplashUpdateScreenData(splash);
-    ximage = XCreateImage(splash->display, splash->visual, 
-            splash->screenFormat.depthBytes * 8, ZPixmap, 0, (char *) NULL, 
+    ximage = XCreateImage(splash->display, splash->visual,
+            splash->screenFormat.depthBytes * 8, ZPixmap, 0, (char *) NULL,
             splash->width, splash->height, 8, 0);
     ximage->data = (char *) splash->screenData;
     ximage->bits_per_pixel = ximage->depth;
     ximage->bytes_per_line = ximage->depth * ximage->width / 8;
     ximage->byte_order = ByteOrderToX(splash->screenFormat.byteOrder);
     ximage->bitmap_unit = 8;
-    XPutImage(splash->display, splash->window, 
-            XDefaultGCOfScreen(splash->screen), ximage, 0, 0, 0, 0, 
+    XPutImage(splash->display, splash->window,
+            XDefaultGCOfScreen(splash->screen), ximage, 0, 0, 0, 0,
             splash->width, splash->height);
     ximage->data = NULL;
     XDestroyImage(ximage);
@@ -339,7 +339,7 @@ void SplashReconfigureNow(Splash * splash) {
     SplashCenter(splash);
     if (splash->window) {
         XUnmapWindow(splash->display, splash->window);
-        XMoveResizeWindow(splash->display, splash->window, 
+        XMoveResizeWindow(splash->display, splash->window,
             splash->x, splash->y,
             splash->width, splash->height);
         SplashUpdateSizeHints(splash);
@@ -368,7 +368,7 @@ HandleError(Display * disp, XErrorEvent * err) {
     char msg[0x1000];
     char buf[0x1000];
     XGetErrorText(disp, err->error_code, msg, sizeof(msg));
-    fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid, 
+    fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid,
         err->serial);
     sprintf(buf, "%d", err->request_code);
     XGetErrorDatabaseText(disp, "XRequest", buf, "Unknown", msg, sizeof(msg));
@@ -392,7 +392,7 @@ void
 SplashInitPlatform(Splash * splash) {
     int shapeVersionMajor, shapeVersionMinor;
 
-    // This setting enables the synchronous Xlib mode! 
+    // This setting enables the synchronous Xlib mode!
     // Don't use it == 1 in production builds!
 #if (defined DEBUG)
     _Xdebug = 1;
@@ -410,10 +410,10 @@ SplashInitPlatform(Splash * splash) {
         return;
     }
 
-    shapeSupported = XShapeQueryExtension(splash->display, &shapeEventBase, 
+    shapeSupported = XShapeQueryExtension(splash->display, &shapeEventBase,
             &shapeErrorBase);
     if (shapeSupported) {
-        XShapeQueryVersion(splash->display, &shapeVersionMajor, 
+        XShapeQueryVersion(splash->display, &shapeVersionMajor,
                 &shapeVersionMinor);
     }
 
@@ -425,10 +425,10 @@ SplashInitPlatform(Splash * splash) {
 
             splash->byteAlignment = 1;
             splash->maskRequired = shapeSupported;
-            initFormat(&splash->screenFormat, splash->visual->red_mask, 
+            initFormat(&splash->screenFormat, splash->visual->red_mask,
                     splash->visual->green_mask, splash->visual->blue_mask, 0);
-            splash->screenFormat.byteOrder = 
-                (XImageByteOrder(splash->display) == LSBFirst ? 
+            splash->screenFormat.byteOrder =
+                (XImageByteOrder(splash->display) == LSBFirst ?
                  BYTE_ORDER_LSBFIRST : BYTE_ORDER_MSBFIRST);
             splash->screenFormat.depthBytes = (depth + 7) / 8;
             // TrueColor depth probably can't be less
@@ -444,23 +444,23 @@ SplashInitPlatform(Splash * splash) {
             int depth = XDefaultDepthOfScreen(splash->screen);
             int scale = 65535 / MAX_COLOR_VALUE;
 
-            numColors = GetNumAvailableColors(splash->display, splash->screen, 
+            numColors = GetNumAvailableColors(splash->display, splash->screen,
                     splash->visual->map_entries);
             numColors = quantizeColors(numColors, numComponents);
-            splash->cmap = AllocColors(splash->display, splash->screen, 
+            splash->cmap = AllocColors(splash->display, splash->screen,
                     numColors, colorIndex);
             for (i = 0; i < numColors; i++) {
                 splash->colorIndex[i] = colorIndex[i];
             }
-            initColorCube(numComponents, splash->colorMap, splash->dithers, 
+            initColorCube(numComponents, splash->colorMap, splash->dithers,
                     splash->colorIndex);
             for (i = 0; i < numColors; i++) {
                 xColors[i].pixel = colorIndex[i];
-                xColors[i].red = (unsigned short) 
+                xColors[i].red = (unsigned short)
                     QUAD_RED(splash->colorMap[colorIndex[i]]) * scale;
-                xColors[i].green = (unsigned short) 
+                xColors[i].green = (unsigned short)
                     QUAD_GREEN(splash->colorMap[colorIndex[i]]) * scale;
-                xColors[i].blue = (unsigned short) 
+                xColors[i].blue = (unsigned short)
                     QUAD_BLUE(splash->colorMap[colorIndex[i]]) * scale;
                 xColors[i].flags = DoRed | DoGreen | DoBlue;
             }
@@ -505,7 +505,7 @@ SplashDonePlatform(Splash * splash) {
         for (i = 0; i < splash->screenFormat.numColors; i++) {
             colorIndex[i] = splash->colorIndex[i];
         }
-        FreeColors(splash->display, splash->screen, 
+        FreeColors(splash->display, splash->screen,
                 splash->screenFormat.numColors, colorIndex);
     }
     if (splash->window)
@@ -545,7 +545,7 @@ SplashEventLoop(Splash * splash) {
             n = ctl+1;
         errno = 0;
         if (splash->isVisible>0 && SplashIsStillLooping(splash)) {
-            time = splash->time + splash->frames[splash->currentFrame].delay 
+            time = splash->time + splash->frames[splash->currentFrame].delay
                 - SplashTime();
             if (time < 0)
                 time = 0;
@@ -557,7 +557,7 @@ SplashEventLoop(Splash * splash) {
         SplashUnlock(splash);
         rc = select(n, fds, NULL, NULL, ptv);
         SplashLock(splash);
-        if (splash->isVisible>0 && SplashTime() >= splash->time + 
+        if (splash->isVisible>0 && SplashTime() >= splash->time +
                 splash->frames[splash->currentFrame].delay) {
             SplashNextFrame(splash);
             SplashUpdateShape(splash);
@@ -589,7 +589,7 @@ SplashEventLoop(Splash * splash) {
                     return;
                 }
             }
-            // we're not using "while(XPending)", processing one event 
+            // we're not using "while(XPending)", processing one event
             // at a time to avoid control pipe starvation
             if (XPending(splash->display)) {
                 XEvent evt;
@@ -601,8 +601,8 @@ SplashEventLoop(Splash * splash) {
                         if (splash->isVisible>0) {
                             // we're doing full redraw so we just
                             // skip the remaining painting events in the queue
-                            while(XCheckTypedEvent(splash->display, Expose, 
-                                &evt)); 
+                            while(XCheckTypedEvent(splash->display, Expose,
+                                &evt));
                             SplashRedrawWindow(splash);
                         }
                         break;
@@ -615,14 +615,14 @@ SplashEventLoop(Splash * splash) {
 
 /*  we can't use OverrideRedirect for the window as the window should not be
     always-on-top, so we must set appropriate wm hints
- 
-    this functions sets olwm, mwm and EWMH hints for undecorated window at once 
-  
-    It works for: mwm, openbox, wmaker, metacity, KWin (FIXME: test more wm's) 
+
+    this functions sets olwm, mwm and EWMH hints for undecorated window at once
+
+    It works for: mwm, openbox, wmaker, metacity, KWin (FIXME: test more wm's)
     Should work for: fvwm2.5.x, blackbox, olwm
-    Maybe works for: enlightenment, icewm 
-    Does not work for: twm, fvwm2.4.7 
- 
+    Maybe works for: enlightenment, icewm
+    Does not work for: twm, fvwm2.4.7
+
 */
 
 void
@@ -644,15 +644,15 @@ SplashRemoveDecoration(Splash * splash) {
         unsigned long   status;
     }
     mwm_hints;
-    
+
     /* WM_TAKE_FOCUS hint to avoid wm's transfer of focus to this window */
     /* WM_DELETE_WINDOW hint to avoid closing this window with Alt-F4. See bug 6474035 */
     atom_set = XInternAtom(splash->display, "WM_PROTOCOLS", True);
     if (atom_set != None) {
         atom_list[0] = XInternAtom(splash->display, "WM_TAKE_FOCUS", True);
         atom_list[1] = XInternAtom(splash->display, "WM_DELETE_WINDOW", True);
-        
-        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32, 
+
+        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32,
                 PropModeReplace, (unsigned char *) atom_list, 2);
     }
 
@@ -660,10 +660,10 @@ SplashRemoveDecoration(Splash * splash) {
     atom_set = XInternAtom(splash->display, "_MOTIF_WM_HINTS", True);
     if (atom_set != None) {
         /* flags for decoration and functions */
-        mwm_hints.flags = (1L << 1) | (1L << 0);      
+        mwm_hints.flags = (1L << 1) | (1L << 0);
         mwm_hints.decorations = 0;
         mwm_hints.functions = 0;
-        XChangeProperty(splash->display, splash->window, atom_set, atom_set, 
+        XChangeProperty(splash->display, splash->window, atom_set, atom_set,
                 32, PropModeReplace, (unsigned char *) &mwm_hints, 5);
     }
 
@@ -674,7 +674,7 @@ SplashRemoveDecoration(Splash * splash) {
         atom_list[1] = XInternAtom(splash->display, "_OL_DECOR_HEADER", True);
         atom_list[2] = XInternAtom(splash->display, "_OL_DECOR_PIN", True);
         atom_list[3] = XInternAtom(splash->display, "_OL_DECOR_CLOSE", True);
-        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32, 
+        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32,
                 PropModeReplace, (unsigned char *) atom_list, 4);
     }
 
@@ -686,16 +686,16 @@ SplashRemoveDecoration(Splash * splash) {
        _NET_WM_ALLOWED_ACTIONS: disable all actions */
     atom_set = XInternAtom(splash->display, "_NET_WM_STATE", True);
     if (atom_set != None) {
-        atom_list[0] = XInternAtom(splash->display, 
+        atom_list[0] = XInternAtom(splash->display,
                 "_NET_WM_STATE_SKIP_TASKBAR", True);
-        atom_list[1] = XInternAtom(splash->display, 
+        atom_list[1] = XInternAtom(splash->display,
                 "_NET_WM_STATE_SKIP_PAGER", True);
-        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32, 
+        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32,
                 PropModeReplace, (unsigned char *) atom_list, 2);
     }
     atom_set = XInternAtom(splash->display, "_NET_WM_ALLOWED_ACTIONS", True);
     if (atom_set != None) {
-        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32, 
+        XChangeProperty(splash->display, splash->window, atom_set, XA_ATOM, 32,
                 PropModeReplace, (unsigned char *) atom_list, 0);
     }
 }
@@ -770,7 +770,7 @@ SplashUpdate(Splash * splash) {
     sendctl(splash, SPLASHCTL_UPDATE);
 }
 
-void 
+void
 SplashReconfigure(Splash * splash) {
     sendctl(splash, SPLASHCTL_RECONFIGURE);
 }

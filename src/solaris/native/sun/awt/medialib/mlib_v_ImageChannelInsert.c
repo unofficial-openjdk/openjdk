@@ -22,41 +22,40 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageChannelInsert.c	1.13	98/10/20 SMI"
+
 
 
 /*
  * FUNCTIONS
- *      mlib_ImageChannelInsert	  - Copy the source image into the selected
- *				                          channels of the destination image
+ *      mlib_ImageChannelInsert   - Copy the source image into the selected
+ *                                                        channels of the destination image
  *
  * SYNOPSIS
  *      mlib_status mlib_ImageChannelInsert(mlib_image *dst,
- *                              					  mlib_image *src,
- *        					                        mlib_s32   cmask);
+ *                                                                        mlib_image *src,
+ *                                                                      mlib_s32   cmask);
  *
  * ARGUMENT
  *  dst     Pointer to destination image.
  *  src     Pointer to source image.
  *  cmask   Destination channel selection mask.
- *	        The least significant bit (LSB) is corresponding to the
- *	        last channel in the destination image data.
- *	        The bits with value 1 stand for the channels selected.
- *	        If more than N channels are selected, the leftmost N
- *	        channels are inserted, where N is the number of channels
- *	        in the source image.
+ *              The least significant bit (LSB) is corresponding to the
+ *              last channel in the destination image data.
+ *              The bits with value 1 stand for the channels selected.
+ *              If more than N channels are selected, the leftmost N
+ *              channels are inserted, where N is the number of channels
+ *              in the source image.
  *
  * RESTRICTION
- *	        The src and dst must have the same width, height and data type.
- *	        The src and dst can have 1, 2, 3 or 4 channels.
- *	        The src and dst can be either MLIB_BYTE, MLIB_SHORT, MLIB_INT,
+ *              The src and dst must have the same width, height and data type.
+ *              The src and dst can have 1, 2, 3 or 4 channels.
+ *              The src and dst can be either MLIB_BYTE, MLIB_SHORT, MLIB_INT,
  *          MLIB_FLOAT or MLIB_DOUBLE.
  *
  * DESCRIPTION
  *          Copy the source image into the selected channels of the destination
- *	        image
+ *              image
  */
 
 #include <stdlib.h>
@@ -96,192 +95,192 @@ mlib_v_ImageChannelInsert_S32(mlib_s32 *src,  mlib_s32 slb,
                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_12_A8D1X8(mlib_u8  *src,
-				                               mlib_u8  *dst,
-			                                 mlib_s32 dsize,
-                        			         mlib_s32 cmask);
+                                                               mlib_u8  *dst,
+                                                         mlib_s32 dsize,
+                                                         mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_12_A8D2X8(mlib_u8  *src,  mlib_s32 slb,
-				                               mlib_u8  *dst,  mlib_s32 dlb,
-                  			               mlib_s32 xsize, mlib_s32 ysize,
-                        				       mlib_s32 cmask);
+                                                               mlib_u8  *dst,  mlib_s32 dlb,
+                                                       mlib_s32 xsize, mlib_s32 ysize,
+                                                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_12_D1(mlib_u8  *src,
-                        				   mlib_u8  *dst,
-                  			           mlib_s32 dsize,
-                        				   mlib_s32 cmask);
+                                                           mlib_u8  *dst,
+                                                   mlib_s32 dsize,
+                                                           mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_12(mlib_u8  *src,  mlib_s32 slb,
-				                        mlib_u8  *dst,  mlib_s32 dlb,
-                  			        mlib_s32 xsize, mlib_s32 ysize,
-                        				mlib_s32 cmask);
+                                                        mlib_u8  *dst,  mlib_s32 dlb,
+                                                mlib_s32 xsize, mlib_s32 ysize,
+                                                        mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_13_A8D1X8(mlib_u8  *src,
-				                               mlib_u8  *dst,
-                  			               mlib_s32 dsize,
-                        				       mlib_s32 cmask);
+                                                               mlib_u8  *dst,
+                                                       mlib_s32 dsize,
+                                                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_13_A8D2X8(mlib_u8  *src,  mlib_s32 slb,
-				                               mlib_u8  *dst,  mlib_s32 dlb,
-			                                 mlib_s32 xsize, mlib_s32 ysize,
-                        				       mlib_s32 cmask);
+                                                               mlib_u8  *dst,  mlib_s32 dlb,
+                                                         mlib_s32 xsize, mlib_s32 ysize,
+                                                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_13_D1(mlib_u8  *src,
-				                           mlib_u8  *dst,
-			                             mlib_s32 dsize,
-				                           mlib_s32 cmask);
+                                                           mlib_u8  *dst,
+                                                     mlib_s32 dsize,
+                                                           mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_13(mlib_u8  *src,  mlib_s32 slb,
-				                        mlib_u8  *dst,  mlib_s32 dlb,
-                 			          mlib_s32 xsize, mlib_s32 ysize,
-				                        mlib_s32 cmask);
+                                                        mlib_u8  *dst,  mlib_s32 dlb,
+                                                  mlib_s32 xsize, mlib_s32 ysize,
+                                                        mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_14_A8D1X8(mlib_u8  *src,
-				                               mlib_u8  *dst,
-                  			               mlib_s32 dsize,
-                        				       mlib_s32 cmask);
+                                                               mlib_u8  *dst,
+                                                       mlib_s32 dsize,
+                                                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_14_A8D2X8(mlib_u8  *src,  mlib_s32 slb,
-				                               mlib_u8  *dst,  mlib_s32 dlb,
-                  			               mlib_s32 xsize, mlib_s32 ysize,
-                        				       mlib_s32 cmask);
+                                                               mlib_u8  *dst,  mlib_s32 dlb,
+                                                       mlib_s32 xsize, mlib_s32 ysize,
+                                                               mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_14_D1(mlib_u8  *src,
-				                           mlib_u8  *dst,
-                  			           mlib_s32 dsize,
-                        				   mlib_s32 cmask);
+                                                           mlib_u8  *dst,
+                                                   mlib_s32 dsize,
+                                                           mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_U8_14(mlib_u8  *src,  mlib_s32 slb,
-				                        mlib_u8  *dst,  mlib_s32 dlb,
-                  			        mlib_s32 xsize, mlib_s32 ysize,
-                        				mlib_s32 cmask);
+                                                        mlib_u8  *dst,  mlib_s32 dlb,
+                                                mlib_s32 xsize, mlib_s32 ysize,
+                                                        mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_12_A8D1X4(mlib_s16 *src,
-					                              mlib_s16 *dst,
-                  			                mlib_s32 dsize,
-                              					mlib_s32 cmask);
+                                                                      mlib_s16 *dst,
+                                                        mlib_s32 dsize,
+                                                                mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_12_A8D2X4(mlib_s16 *src,  mlib_s32 slb,
-					                              mlib_s16 *dst,  mlib_s32 dlb,
-                  			                mlib_s32 xsize, mlib_s32 ysize,
-                              					mlib_s32 cmask);
+                                                                      mlib_s16 *dst,  mlib_s32 dlb,
+                                                        mlib_s32 xsize, mlib_s32 ysize,
+                                                                mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_12_D1(mlib_s16 *src,
-				                            mlib_s16 *dst,
-                  			            mlib_s32 dsize,
-                        				    mlib_s32 cmask);
+                                                            mlib_s16 *dst,
+                                                    mlib_s32 dsize,
+                                                            mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_12(mlib_s16 *src,  mlib_s32 slb,
-				                        mlib_s16 *dst,  mlib_s32 dlb,
-                			          mlib_s32 xsize, mlib_s32 ysize,
-                      				  mlib_s32 cmask);
+                                                        mlib_s16 *dst,  mlib_s32 dlb,
+                                                  mlib_s32 xsize, mlib_s32 ysize,
+                                                  mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_13_A8D1X4(mlib_s16 *src,
-					                              mlib_s16 *dst,
-                  			                mlib_s32 dsize,
-                              					mlib_s32 cmask);
+                                                                      mlib_s16 *dst,
+                                                        mlib_s32 dsize,
+                                                                mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_13_A8D2X4(mlib_s16 *src,  mlib_s32 slb,
-					                              mlib_s16 *dst,  mlib_s32 dlb,
-                  			                mlib_s32 xsize, mlib_s32 ysize,
-                              					mlib_s32 cmask);
+                                                                      mlib_s16 *dst,  mlib_s32 dlb,
+                                                        mlib_s32 xsize, mlib_s32 ysize,
+                                                                mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_13_D1(mlib_s16 *src,
-                        				    mlib_s16 *dst,
-                  			            mlib_s32 dsize,
-                        				    mlib_s32 cmask);
+                                                            mlib_s16 *dst,
+                                                    mlib_s32 dsize,
+                                                            mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_13(mlib_s16 *src,  mlib_s32 slb,
-				                         mlib_s16 *dst,  mlib_s32 dlb,
-                  			         mlib_s32 xsize, mlib_s32 ysize,
-                        				 mlib_s32 cmask);
+                                                         mlib_s16 *dst,  mlib_s32 dlb,
+                                                 mlib_s32 xsize, mlib_s32 ysize,
+                                                         mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_14_A8D1X4(mlib_s16 *src,
-					                              mlib_s16 *dst,
-			                                  mlib_s32 dsize,
-					                              mlib_s32 cmask);
+                                                                      mlib_s16 *dst,
+                                                          mlib_s32 dsize,
+                                                                      mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_14_A8D2X4(mlib_s16 *src,  mlib_s32 slb,
-					                              mlib_s16 *dst,  mlib_s32 dlb,
-			                                  mlib_s32 xsize, mlib_s32 ysize,
-					                              mlib_s32 cmask);
+                                                                      mlib_s16 *dst,  mlib_s32 dlb,
+                                                          mlib_s32 xsize, mlib_s32 ysize,
+                                                                      mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_14_D1(mlib_s16 *src,
-                        				    mlib_s16 *dst,
-                  			            mlib_s32 dsize,
-                        				    mlib_s32 cmask);
+                                                            mlib_s16 *dst,
+                                                    mlib_s32 dsize,
+                                                            mlib_s32 cmask);
 void
 mlib_v_ImageChannelInsert_S16_14(mlib_s16 *src,  mlib_s32 slb,
-				                         mlib_s16 *dst,  mlib_s32 dlb,
-                  			         mlib_s32 xsize, mlib_s32 ysize,
-                        				 mlib_s32 cmask);
+                                                         mlib_s16 *dst,  mlib_s32 dlb,
+                                                 mlib_s32 xsize, mlib_s32 ysize,
+                                                         mlib_s32 cmask);
 
 /***************************************************************/
 /* functions defined in mlib_v_ImageChannelInsert_34.c */
 
 void
 mlib_v_ImageChannelInsert_U8_34R_A8D1X8(mlib_u8  *src,
-                        				        mlib_u8  *dst,
-                        				        mlib_s32 dsize);
+                                                                mlib_u8  *dst,
+                                                                mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_U8_34R_A8D2X8(mlib_u8  *src,  mlib_s32 slb,
-                        				        mlib_u8  *dst,  mlib_s32 dlb,
-                        				        mlib_s32 xsize, mlib_s32 ysize);
+                                                                mlib_u8  *dst,  mlib_s32 dlb,
+                                                                mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_U8_34R_D1(mlib_u8  *src,
-                        				    mlib_u8  *dst,
-                        				    mlib_s32 dsize);
+                                                            mlib_u8  *dst,
+                                                            mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_U8_34R(mlib_u8  *src,  mlib_s32 slb,
-                          			 mlib_u8  *dst,  mlib_s32 dlb,
-                        				 mlib_s32 xsize, mlib_s32 ysize);
+                                                 mlib_u8  *dst,  mlib_s32 dlb,
+                                                         mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_S16_34R_A8D1X4(mlib_s16 *src,
-				                                 mlib_s16 *dst,
-				                                 mlib_s32 dsize);
+                                                                 mlib_s16 *dst,
+                                                                 mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_S16_34R_A8D2X4(mlib_s16 *src,  mlib_s32 slb,
-				                                 mlib_s16 *dst,  mlib_s32 dlb,
-				                                 mlib_s32 xsize, mlib_s32 ysize);
+                                                                 mlib_s16 *dst,  mlib_s32 dlb,
+                                                                 mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_S16_34R_D1(mlib_s16 *src,
-				                             mlib_s16 *dst,
-                        				     mlib_s32 dsize);
+                                                             mlib_s16 *dst,
+                                                             mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_S16_34R(mlib_s16 *src,  mlib_s32 slb,
-				                          mlib_s16 *dst,  mlib_s32 dlb,
-                        				  mlib_s32 xsize, mlib_s32 ysize);
+                                                          mlib_s16 *dst,  mlib_s32 dlb,
+                                                          mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_U8_34L_A8D1X8(mlib_u8  *src,
-				                                mlib_u8  *dst,
-                        				        mlib_s32 dsize);
+                                                                mlib_u8  *dst,
+                                                                mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_U8_34L_A8D2X8(mlib_u8  *src,  mlib_s32 slb,
-                        				        mlib_u8  *dst,  mlib_s32 dlb,
-                          			        mlib_s32 xsize, mlib_s32 ysize);
+                                                                mlib_u8  *dst,  mlib_s32 dlb,
+                                                        mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_U8_34L_D1(mlib_u8  *src,
-                        				    mlib_u8  *dst,
-                        				    mlib_s32 dsize);
+                                                            mlib_u8  *dst,
+                                                            mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_U8_34L(mlib_u8  *src,  mlib_s32 slb,
-                        				 mlib_u8  *dst,  mlib_s32 dlb,
-                        				 mlib_s32 xsize, mlib_s32 ysize);
+                                                         mlib_u8  *dst,  mlib_s32 dlb,
+                                                         mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_S16_34L_A8D1X4(mlib_s16 *src,
-				                                 mlib_s16 *dst,
-                        				         mlib_s32 dsize);
+                                                                 mlib_s16 *dst,
+                                                                 mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_S16_34L_A8D2X4(mlib_s16 *src,  mlib_s32 slb,
-				                                 mlib_s16 *dst,  mlib_s32 dlb,
-                        				         mlib_s32 xsize, mlib_s32 ysize);
+                                                                 mlib_s16 *dst,  mlib_s32 dlb,
+                                                                 mlib_s32 xsize, mlib_s32 ysize);
 void
 mlib_v_ImageChannelInsert_S16_34L_D1(mlib_s16 *src,
-				                             mlib_s16 *dst,
-                        				     mlib_s32 dsize);
+                                                             mlib_s16 *dst,
+                                                             mlib_s32 dsize);
 void
 mlib_v_ImageChannelInsert_S16_34L(mlib_s16 *src,  mlib_s32 slb,
-				                          mlib_s16 *dst,  mlib_s32 dlb,
-                        				  mlib_s32 xsize, mlib_s32 ysize);
+                                                          mlib_s16 *dst,  mlib_s32 dlb,
+                                                          mlib_s32 xsize, mlib_s32 ysize);
 
 
 /***************************************************************/
@@ -289,13 +288,13 @@ mlib_v_ImageChannelInsert_S16_34L(mlib_s16 *src,  mlib_s32 slb,
 #ifdef MLIB_TEST
 mlib_status
 mlib_v_ImageChannelInsert(mlib_image *dst,
-			                    mlib_image *src,
-                  			  mlib_s32   cmask)
+                                            mlib_image *src,
+                                          mlib_s32   cmask)
 #else
 mlib_status
 mlib_ImageChannelInsert(mlib_image *dst,
-                  			mlib_image *src,
-                  			mlib_s32   cmask)
+                                        mlib_image *src,
+                                        mlib_s32   cmask)
 #endif
 {
   const mlib_s32  X8 = 0x7;
@@ -306,18 +305,18 @@ mlib_ImageChannelInsert(mlib_image *dst,
   const mlib_s32  A8D2X4 = MLIB_IMAGE_ALIGNED8 | MLIB_IMAGE_STRIDE8X | MLIB_IMAGE_WIDTH4X;
   const mlib_s32  A8D2X2 = MLIB_IMAGE_ALIGNED8 | MLIB_IMAGE_STRIDE8X | MLIB_IMAGE_WIDTH2X;
 
-  void      *sp;		      /* pointer for pixel in src */
-  void      *dp; 		      /* pointer for pixel in dst */
-  mlib_s32  ncmask = 0;		/* normalized channel mask */
-  mlib_s32  channels;		  /* number of channels for src */
-  mlib_s32  channeld;		  /* number of channels for dst */
+  void      *sp;                      /* pointer for pixel in src */
+  void      *dp;                      /* pointer for pixel in dst */
+  mlib_s32  ncmask = 0;         /* normalized channel mask */
+  mlib_s32  channels;             /* number of channels for src */
+  mlib_s32  channeld;             /* number of channels for dst */
   mlib_s32  width, height;/* for src and dst */
-  mlib_s32  strides;		  /* strides in bytes for src */
-  mlib_s32  strided;	  	/* strides in bytes for dst */
+  mlib_s32  strides;              /* strides in bytes for src */
+  mlib_s32  strided;            /* strides in bytes for dst */
   mlib_s32  flags;
   mlib_s32  flagd;
   mlib_s32  dsize;
-  int	      i, bit1count = 0;
+  int         i, bit1count = 0;
 
   MLIB_IMAGE_CHECK(src);
   MLIB_IMAGE_CHECK(dst);
@@ -360,103 +359,103 @@ mlib_ImageChannelInsert(mlib_image *dst,
   switch (mlib_ImageGetType(src)) {
     case MLIB_BYTE:
       if (channels == 1) {
-	switch (channeld) {
-	  case 2:
+        switch (channeld) {
+          case 2:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X8)   == 0)) {
                 mlib_v_ImageChannelInsert_U8_12_A8D1X8((mlib_u8 *)sp,
-	                            			             	     (mlib_u8 *)dp,
-                          				                     dsize,
-                                      						     ncmask);
-	    }
-	    else if (((flags & A8D2X8) == 0) &&
+                                                                             (mlib_u8 *)dp,
+                                                                             dsize,
+                                                                                     ncmask);
+            }
+            else if (((flags & A8D2X8) == 0) &&
               ((flagd & A8D2X8) == 0)) {
               mlib_v_ImageChannelInsert_U8_12_A8D2X8((mlib_u8 *)sp, strides,
-                          				             	     (mlib_u8 *)dp, strided,
-				                                             width, height,
-                                    						     ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                             (mlib_u8 *)dp, strided,
+                                                                             width, height,
+                                                                                     ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
                 mlib_v_ImageChannelInsert_U8_12_D1((mlib_u8 *)sp,
-	                                			         	 (mlib_u8 *)dp,
-                                				        	 dsize,
-                                      						 ncmask);
-	    }
-	    else {
+                                                                                 (mlib_u8 *)dp,
+                                                                                 dsize,
+                                                                                 ncmask);
+            }
+            else {
                 mlib_v_ImageChannelInsert_U8_12((mlib_u8 *)sp, strides,
-	                          			              (mlib_u8 *)dp, strided,
-                          				              width, height,
-                                					      ncmask);
-	    }
-	    break;
+                                                                      (mlib_u8 *)dp, strided,
+                                                                      width, height,
+                                                                              ncmask);
+            }
+            break;
 
-	  case 3:
+          case 3:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X8)   == 0)) {
                 mlib_v_ImageChannelInsert_U8_13_A8D1X8((mlib_u8 *)sp,
-				             	                                 (mlib_u8 *)dp,
-				                                               dsize,
-						                                           ncmask);
-	    }
-	    else if (((flags & A8D2X8) == 0) &&
+                                                                                 (mlib_u8 *)dp,
+                                                                               dsize,
+                                                                                           ncmask);
+            }
+            else if (((flags & A8D2X8) == 0) &&
               ((flagd & A8D2X8) == 0)) {
                 mlib_v_ImageChannelInsert_U8_13_A8D2X8((mlib_u8 *)sp, strides,
-				                                         	     (mlib_u8 *)dp, strided,
-                          				                     width, height,
-                                      						     ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                                     (mlib_u8 *)dp, strided,
+                                                                             width, height,
+                                                                                     ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
                 mlib_v_ImageChannelInsert_U8_13_D1((mlib_u8 *)sp,
-	                                			         	 (mlib_u8 *)dp,
-                                				        	 dsize,
-                                      						 ncmask);
-	    }
-	    else {
+                                                                                 (mlib_u8 *)dp,
+                                                                                 dsize,
+                                                                                 ncmask);
+            }
+            else {
               mlib_v_ImageChannelInsert_U8_13((mlib_u8 *)sp, strides,
-                        				              (mlib_u8 *)dp, strided,
-                        				              width, height,
-                              					      ncmask);
-	    }
-	    break;
+                                                                      (mlib_u8 *)dp, strided,
+                                                                      width, height,
+                                                                      ncmask);
+            }
+            break;
 
-	  case 4:
+          case 4:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X8)   == 0)) {
                   mlib_v_ImageChannelInsert_U8_14_A8D1X8((mlib_u8 *)sp,
-				             	                                   (mlib_u8 *)dp,
-				                                                 dsize,
-                                        						     ncmask);
-	    }
-	    else if (((flags & A8D2X8) == 0) &&
+                                                                                   (mlib_u8 *)dp,
+                                                                                 dsize,
+                                                                                             ncmask);
+            }
+            else if (((flags & A8D2X8) == 0) &&
                ((flagd & A8D2X8) == 0)) {
                mlib_v_ImageChannelInsert_U8_14_A8D2X8((mlib_u8 *)sp, strides,
-	                             		             	      (mlib_u8 *)dp, strided,
-				                                              width, height,
-						                                          ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                      (mlib_u8 *)dp, strided,
+                                                                              width, height,
+                                                                                          ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
               ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
                 mlib_v_ImageChannelInsert_U8_14_D1((mlib_u8 *)sp,
-				                                         	 (mlib_u8 *)dp,
-                                				        	 dsize,
-                                      						 ncmask);
-	    }
-	    else {
+                                                                                 (mlib_u8 *)dp,
+                                                                                 dsize,
+                                                                                 ncmask);
+            }
+            else {
               mlib_v_ImageChannelInsert_U8_14((mlib_u8 *)sp, strides,
-                        				              (mlib_u8 *)dp, strided,
-                        				              width, height,
-                              					      ncmask);
-	    }
-	    break;
+                                                                      (mlib_u8 *)dp, strided,
+                                                                      width, height,
+                                                                      ncmask);
+            }
+            break;
 
-	  default:
-	    return MLIB_FAILURE;
-  	}
+          default:
+            return MLIB_FAILURE;
+        }
       }
       else {
         if ((channels == 3) && (channeld == 4) && (ncmask == 7)) {
@@ -464,219 +463,219 @@ mlib_ImageChannelInsert(mlib_image *dst,
             ((flagd & A8D1) == 0) &&
             ((dsize & X8)   == 0)) {
             mlib_v_ImageChannelInsert_U8_34R_A8D1X8((mlib_u8 *)sp,
-				                                          (mlib_u8 *)dp,
-				                                          dsize);
-      	  }
-    	else if (((flags & A8D2X8) == 0) &&
+                                                                          (mlib_u8 *)dp,
+                                                                          dsize);
+          }
+        else if (((flags & A8D2X8) == 0) &&
                ((flagd & A8D2X8) == 0)) {
               mlib_v_ImageChannelInsert_U8_34R_A8D2X8((mlib_u8 *)sp, strides,
-				                 	                            (mlib_u8 *)dp, strided,
-				                                              width, height);
-    	}
-    	else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                                    (mlib_u8 *)dp, strided,
+                                                                              width, height);
+        }
+        else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
               mlib_v_ImageChannelInsert_U8_34R_D1((mlib_u8 *)sp,
-				                                          (mlib_u8 *)dp,
-				                                          dsize);
-    	}
-    	else {
+                                                                          (mlib_u8 *)dp,
+                                                                          dsize);
+        }
+        else {
               mlib_v_ImageChannelInsert_U8_34R((mlib_u8 *)sp, strides,
-				                                      (mlib_u8 *)dp, strided,
-				                                      width, height);
-    	}
+                                                                      (mlib_u8 *)dp, strided,
+                                                                      width, height);
+        }
       }
       else if ((channels == 3) && (channeld == 4) && (ncmask == 14)) {
         if (((flags & A8D1) == 0) &&
             ((flagd & A8D1) == 0) &&
             ((dsize & X8)   == 0)) {
             mlib_v_ImageChannelInsert_U8_34L_A8D1X8((mlib_u8 *)sp,
-				                                            (mlib_u8 *)dp,
-                          				                  dsize);
-	      }
-      	else if (((flags & A8D2X8) == 0) &&
+                                                                            (mlib_u8 *)dp,
+                                                                          dsize);
+              }
+        else if (((flags & A8D2X8) == 0) &&
                  ((flagd & A8D2X8) == 0)) {
                  mlib_v_ImageChannelInsert_U8_34L_A8D2X8((mlib_u8 *)sp, strides,
-				                                        	  (mlib_u8 *)dp, strided,
-                          				                  width, height);
-      	}
-      	else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                                  (mlib_u8 *)dp, strided,
+                                                                          width, height);
+        }
+        else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                  ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
                  mlib_v_ImageChannelInsert_U8_34L_D1((mlib_u8 *)sp,
-			                              	              (mlib_u8 *)dp,
-                              				              dsize);
-      	}
-      	else mlib_v_ImageChannelInsert_U8_34L((mlib_u8 *)sp, strides,
-		                          		           (mlib_u8 *)dp, strided,
-                           				           width, height);
+                                                                      (mlib_u8 *)dp,
+                                                                      dsize);
+        }
+        else mlib_v_ImageChannelInsert_U8_34L((mlib_u8 *)sp, strides,
+                                                                   (mlib_u8 *)dp, strided,
+                                                                   width, height);
         }
       else {
 
       mlib_v_ImageChannelInsert_U8((mlib_u8 *)sp, strides,
-                      				     (mlib_u8 *)dp, strided,
-                      				     channels, channeld,
-                      				     width, height,
-                      				     ncmask);
+                                                     (mlib_u8 *)dp, strided,
+                                                     channels, channeld,
+                                                     width, height,
+                                                     ncmask);
       }
   }
   break;
 
     case MLIB_SHORT:
       if (channels == 1) {
-	switch (channeld) {
-	  case 2:
+        switch (channeld) {
+          case 2:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X4)   == 0)) {
               mlib_v_ImageChannelInsert_S16_12_A8D1X4((mlib_s16 *)sp,
-				         	                                    (mlib_s16 *)dp,
-                                    						      dsize,
-                                    						      ncmask);
-	    }	
-	    else if (((flags & A8D2X4) == 0) &&
+                                                                                    (mlib_s16 *)dp,
+                                                                                      dsize,
+                                                                                      ncmask);
+            }
+            else if (((flags & A8D2X4) == 0) &&
                ((flagd & A8D2X4) == 0)) {
               mlib_v_ImageChannelInsert_S16_12_A8D2X4((mlib_s16 *)sp, strides,
-				                                      	      (mlib_s16 *)dp, strided,
-                              				        	      width, height,
-                                    						      ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                              (mlib_s16 *)dp, strided,
+                                                                              width, height,
+                                                                                      ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
              mlib_v_ImageChannelInsert_S16_12_D1((mlib_s16 *)sp,
-                             				         	   (mlib_s16 *)dp,
-                              				        	  dsize,
-                                    						  ncmask);
-	    }
-	    else {
+                                                                           (mlib_s16 *)dp,
+                                                                          dsize,
+                                                                                  ncmask);
+            }
+            else {
               mlib_v_ImageChannelInsert_S16_12((mlib_s16 *)sp, strides,
-                        				               (mlib_s16 *)dp, strided,
-                        				               width, height,
-                              					       ncmask);
-	    }
-	    break;
+                                                                       (mlib_s16 *)dp, strided,
+                                                                       width, height,
+                                                                       ncmask);
+            }
+            break;
 
-	  case 3:
+          case 3:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X4)   == 0)) {
               mlib_v_ImageChannelInsert_S16_13_A8D1X4((mlib_s16 *)sp,
-                              				         	      (mlib_s16 *)dp,
-                                    						      dsize,
-                                    						      ncmask);
-	    }	
-	    else if (((flags & A8D2X4) == 0) &&
+                                                                              (mlib_s16 *)dp,
+                                                                                      dsize,
+                                                                                      ncmask);
+            }
+            else if (((flags & A8D2X4) == 0) &&
                ((flagd & A8D2X4) == 0)) {
               mlib_v_ImageChannelInsert_S16_13_A8D2X4((mlib_s16 *)sp, strides,
-				                                      	      (mlib_s16 *)dp, strided,
-                              				        	      width, height,
-                                    						      ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                              (mlib_s16 *)dp, strided,
+                                                                              width, height,
+                                                                                      ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
                 mlib_v_ImageChannelInsert_S16_13_D1((mlib_s16 *)sp,
-	                                			         	  (mlib_s16 *)dp,
-                                				        	  dsize,
-                                      						  ncmask);
-	    }
-	    else {
+                                                                                  (mlib_s16 *)dp,
+                                                                                  dsize,
+                                                                                  ncmask);
+            }
+            else {
               mlib_v_ImageChannelInsert_S16_13((mlib_s16 *)sp, strides,
-                        				               (mlib_s16 *)dp, strided,
-                        				               width, height,
-                              					       ncmask);
-	    }
-	    break;
+                                                                       (mlib_s16 *)dp, strided,
+                                                                       width, height,
+                                                                       ncmask);
+            }
+            break;
 
-	  case 4:
+          case 4:
             if (((flags & A8D1) == 0) &&
                 ((flagd & A8D1) == 0) &&
                 ((dsize & X4)   == 0)) {
               mlib_v_ImageChannelInsert_S16_14_A8D1X4((mlib_s16 *)sp,
-				         	                                    (mlib_s16 *)dp,
-						      dsize,
-						      ncmask);
-	    }	
-	    else if (((flags & A8D2X4) == 0) &&
+                                                                                    (mlib_s16 *)dp,
+                                                      dsize,
+                                                      ncmask);
+            }
+            else if (((flags & A8D2X4) == 0) &&
                ((flagd & A8D2X4) == 0)) {
               mlib_v_ImageChannelInsert_S16_14_A8D2X4((mlib_s16 *)sp, strides,
-                              				         	      (mlib_s16 *)dp, strided,
-                              				        	      width, height,
-                                    						      ncmask);
-	    }
-	    else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                              (mlib_s16 *)dp, strided,
+                                                                              width, height,
+                                                                                      ncmask);
+            }
+            else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
                ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
               mlib_v_ImageChannelInsert_S16_14_D1((mlib_s16 *)sp,
-				                                      	  (mlib_s16 *)dp,
-                              				        	  dsize,
-                                    						  ncmask);
-	    }
-	    else {
+                                                                          (mlib_s16 *)dp,
+                                                                          dsize,
+                                                                                  ncmask);
+            }
+            else {
               mlib_v_ImageChannelInsert_S16_14((mlib_s16 *)sp, strides,
-                        				               (mlib_s16 *)dp, strided,
-                        				               width, height,
-                              					       ncmask);
-	    }
-	    break;
-	  default:
-	    return MLIB_FAILURE;
-	}
+                                                                       (mlib_s16 *)dp, strided,
+                                                                       width, height,
+                                                                       ncmask);
+            }
+            break;
+          default:
+            return MLIB_FAILURE;
+        }
       }
       else if ((channels == 3) && (channeld == 4) && (ncmask == 7)) {
         if (((flags & A8D1) == 0) &&
             ((flagd & A8D1) == 0) &&
             ((dsize & X4)   == 0)) {
           mlib_v_ImageChannelInsert_S16_34R_A8D1X4((mlib_s16 *)sp,
-				                                           (mlib_s16 *)dp,
-                        				                   dsize);
-	}
-	else if (((flags & A8D2X4) == 0) &&
+                                                                           (mlib_s16 *)dp,
+                                                                           dsize);
+        }
+        else if (((flags & A8D2X4) == 0) &&
            ((flagd & A8D2X4) == 0)) {
           mlib_v_ImageChannelInsert_S16_34R_A8D2X4((mlib_s16 *)sp, strides,
-                        				                   (mlib_s16 *)dp, strided,
-                        				                   width, height);
-	}
-	else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                           (mlib_s16 *)dp, strided,
+                                                                           width, height);
+        }
+        else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
            ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
           mlib_v_ImageChannelInsert_S16_34R_D1((mlib_s16 *)sp,
-				                                       (mlib_s16 *)dp,
-                        				               dsize);
-	}
-	else {
+                                                                       (mlib_s16 *)dp,
+                                                                       dsize);
+        }
+        else {
           mlib_v_ImageChannelInsert_S16_34R((mlib_s16 *)sp, strides,
-				                                    (mlib_s16 *)dp, strided,
-                        				             width, height);
-	}
+                                                                    (mlib_s16 *)dp, strided,
+                                                                     width, height);
+        }
       }
       else if ((channels == 3) && (channeld == 4) && (ncmask == 14)) {
         if (((flags & A8D1) == 0) &&
             ((flagd & A8D1) == 0) &&
             ((dsize & X4)   == 0)) {
           mlib_v_ImageChannelInsert_S16_34L_A8D1X4((mlib_s16 *)sp,
-				                                           (mlib_s16 *)dp,
-                        				                   dsize);
-	}
-	else if (((flags & A8D2X4) == 0) &&
+                                                                           (mlib_s16 *)dp,
+                                                                           dsize);
+        }
+        else if (((flags & A8D2X4) == 0) &&
            ((flagd & A8D2X4) == 0)) {
           mlib_v_ImageChannelInsert_S16_34L_A8D2X4((mlib_s16 *)sp, strides,
-                        				                   (mlib_s16 *)dp, strided,
-				                                           width, height);
-	}
-	else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
+                                                                           (mlib_s16 *)dp, strided,
+                                                                           width, height);
+        }
+        else if (((flags & MLIB_IMAGE_ONEDVECTOR) == 0) &&
            ((flagd & MLIB_IMAGE_ONEDVECTOR) == 0)) {
           mlib_v_ImageChannelInsert_S16_34L_D1((mlib_s16 *)sp,
-				                                       (mlib_s16 *)dp,
-                        				               dsize);
-	}
-	else {
+                                                                       (mlib_s16 *)dp,
+                                                                       dsize);
+        }
+        else {
           mlib_v_ImageChannelInsert_S16_34L((mlib_s16 *)sp, strides,
-                        				            (mlib_s16 *)dp, strided,
-                        				            width, height);
-	}
+                                                                    (mlib_s16 *)dp, strided,
+                                                                    width, height);
+        }
       }
       else {
         mlib_v_ImageChannelInsert_S16((mlib_s16 *)sp, strides,
-                        				      (mlib_s16 *)dp, strided,
-                        				      channels,  channeld,
-                        				      width, height,
-                        				      ncmask);
+                                                              (mlib_s16 *)dp, strided,
+                                                              channels,  channeld,
+                                                              width, height,
+                                                              ncmask);
       }
       break;
 
@@ -708,7 +707,7 @@ mlib_ImageChannelInsert(mlib_image *dst,
 
     case MLIB_BIT:
     default:
-        return MLIB_FAILURE;	/* MLIB_BIT is not supported here */
+        return MLIB_FAILURE;    /* MLIB_BIT is not supported here */
   }
 
   return MLIB_SUCCESS;

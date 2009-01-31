@@ -61,13 +61,13 @@ initDither(DitherSettings * pDither, int numColors, int scale)
 
     pDither->numColors = numColors;
     for (i = 0; i < (MAX_COLOR_VALUE + 1) * 2; i++) {
-        pDither->colorTable[i] = 
-            (((i > MAX_COLOR_VALUE) ? MAX_COLOR_VALUE : i) * 
+        pDither->colorTable[i] =
+            (((i > MAX_COLOR_VALUE) ? MAX_COLOR_VALUE : i) *
              (numColors - 1) / MAX_COLOR_VALUE) * scale;
     }
     for (i = 0; i < DITHER_SIZE; i++)
         for (j = 0; j < DITHER_SIZE; j++)
-            pDither->matrix[i][j] = 
+            pDither->matrix[i][j] =
                 (int) baseDitherMatrix[i][j] / (numColors - 1);
 }
 
@@ -77,7 +77,7 @@ initDither(DitherSettings * pDither, int numColors, int scale)
 INLINE int
 scaleColor(int color, int numColorsIn, int numColorsOut)
 {
-    return (color * (numColorsOut - 1) + (numColorsIn - 1) / 2) 
+    return (color * (numColorsOut - 1) + (numColorsIn - 1) / 2)
         / (numColorsIn - 1);
 }
 
@@ -106,13 +106,13 @@ quantizeColors(int maxNumColors, int *numColors)
         SORT(1, 2);
         SORT(0, 1);
         /* try increasing numColors for the first color */
-        if ((numColors[idx[0]] + 1) * numColors[idx[1]] * 
+        if ((numColors[idx[0]] + 1) * numColors[idx[1]] *
             numColors[idx[2]] <= maxNumColors) {
                 numColors[idx[0]]++;
-        } else if (numColors[idx[0]] * (numColors[idx[1]] + 1) * 
+        } else if (numColors[idx[0]] * (numColors[idx[1]] + 1) *
             numColors[idx[2]] <= maxNumColors) {
             numColors[idx[1]]++;
-        } else if (numColors[idx[0]] * numColors[idx[1]] * 
+        } else if (numColors[idx[0]] * numColors[idx[1]] *
             (numColors[idx[2]] + 1) <= maxNumColors) {
             numColors[idx[2]]++;
         } else {
@@ -123,7 +123,7 @@ quantizeColors(int maxNumColors, int *numColors)
 }
 
 void
-initColorCube(int *numColors, rgbquad_t * pColorMap, DitherSettings * pDithers, 
+initColorCube(int *numColors, rgbquad_t * pColorMap, DitherSettings * pDithers,
               rgbquad_t * colorIndex)
 {
     int r, g, b, n;
@@ -132,9 +132,9 @@ initColorCube(int *numColors, rgbquad_t * pColorMap, DitherSettings * pDithers,
     for (r = 0; r < numColors[2]; r++) {
         for (g = 0; g < numColors[1]; g++)
             for (b = 0; b < numColors[0]; b++) {
-                pColorMap[colorIndex[n++]] = 
-                    scaleColor(b, numColors[0], MAX_COLOR_VALUE) + 
-                    (scaleColor(g, numColors[1], MAX_COLOR_VALUE) << 8) + 
+                pColorMap[colorIndex[n++]] =
+                    scaleColor(b, numColors[0], MAX_COLOR_VALUE) +
+                    (scaleColor(g, numColors[1], MAX_COLOR_VALUE) << 8) +
                     (scaleColor(r, numColors[2], MAX_COLOR_VALUE) << 16);
             }
     }
@@ -143,10 +143,10 @@ initColorCube(int *numColors, rgbquad_t * pColorMap, DitherSettings * pDithers,
     initDither(pDithers + 2, numColors[2], numColors[1] * numColors[0]);
 }
 
-/*	
-    the function below is a line conversion loop 
+/*
+    the function below is a line conversion loop
 
-    incSrc and incDst are pSrc and pDst increment values for the loop, in bytes 
+    incSrc and incDst are pSrc and pDst increment values for the loop, in bytes
     mode defines how the pixels should be processed
 
     mode==CVT_COPY means the pixels should be copied as is
@@ -155,9 +155,9 @@ initColorCube(int *numColors, rgbquad_t * pColorMap, DitherSettings * pDithers,
     destination alpha should be retained. source alpha is used for blending.
 */
 void
-convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int numSamples, 
-            ImageFormat * srcFormat, ImageFormat * dstFormat, int doAlpha, 
-            void *pSrc2, int incSrc2, ImageFormat * srcFormat2, 
+convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int numSamples,
+            ImageFormat * srcFormat, ImageFormat * dstFormat, int doAlpha,
+            void *pSrc2, int incSrc2, ImageFormat * srcFormat2,
             int row, int col)
 {
     int i;
@@ -165,7 +165,7 @@ convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int numSamples,
     switch (doAlpha) {
     case CVT_COPY:
         for (i = 0; i < numSamples; ++i) {
-            putRGBADither(getRGBA(pSrc, srcFormat), pDst, dstFormat, 
+            putRGBADither(getRGBA(pSrc, srcFormat), pDst, dstFormat,
                 row, col++);
             INCPN(byte_t, pSrc, incSrc);
             INCPN(byte_t, pDst, incDst);
@@ -187,8 +187,8 @@ convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int numSamples,
             rgbquad_t src = getRGBA(pSrc, srcFormat);
             rgbquad_t src2 = getRGBA(pSrc2, srcFormat);
 
-            putRGBADither(blendRGB(src, src2, 
-                QUAD_ALPHA(src2)) | (src & QUAD_ALPHA_MASK), pDst, dstFormat, 
+            putRGBADither(blendRGB(src, src2,
+                QUAD_ALPHA(src2)) | (src & QUAD_ALPHA_MASK), pDst, dstFormat,
                 row, col++);
             INCPN(byte_t, pSrc, incSrc);
             INCPN(byte_t, pDst, incDst);
@@ -200,7 +200,7 @@ convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int numSamples,
 
 /* initialize ImageRect structure according to function arguments */
 void
-initRect(ImageRect * pRect, int x, int y, int width, int height, int jump, 
+initRect(ImageRect * pRect, int x, int y, int width, int height, int jump,
          int stride, void *pBits, ImageFormat * format)
 {
     int depthBytes = format->depthBytes;
@@ -226,7 +226,7 @@ convertRect(ImageRect * pSrcRect, ImageRect * pDstRect, int mode)
 }
 
 int
-convertRect2(ImageRect * pSrcRect, ImageRect * pDstRect, int mode, 
+convertRect2(ImageRect * pSrcRect, ImageRect * pDstRect, int mode,
              ImageRect * pSrcRect2)
 {
     int numLines = pSrcRect->numLines;
@@ -252,9 +252,9 @@ convertRect2(ImageRect * pSrcRect, ImageRect * pDstRect, int mode,
     }
     row = pDstRect->row;
     for (j = 0; j < numLines; j++) {
-        convertLine(pSrc, pSrcRect->depthBytes, pDst, pDstRect->depthBytes, 
-            numSamples, pSrcRect->format, pDstRect->format, mode, 
-            pSrc2, pSrcRect2 ? pSrcRect2->depthBytes : 0, 
+        convertLine(pSrc, pSrcRect->depthBytes, pDst, pDstRect->depthBytes,
+            numSamples, pSrcRect->format, pDstRect->format, mode,
+            pSrc2, pSrcRect2 ? pSrcRect2->depthBytes : 0,
             pSrcRect2 ? pSrcRect2->format : 0, row, pDstRect->col);
         INCPN(byte_t, pSrc, pSrcRect->stride);
         INCPN(byte_t, pDst, pDstRect->stride);
@@ -276,7 +276,7 @@ fillRect(rgbquad_t color, ImageRect * pDstRect)
 
     row = pDstRect->row;
     for (j = 0; j < numLines; j++) {
-        fillLine(color, pDst, pDstRect->depthBytes, numSamples, 
+        fillLine(color, pDst, pDstRect->depthBytes, numSamples,
             pDstRect->format, row, pDstRect->col);
         INCPN(byte_t, pDst, pDstRect->stride);
         row += pDstRect->jump;
@@ -286,7 +286,7 @@ fillRect(rgbquad_t color, ImageRect * pDstRect)
 
 /* init the masks; all other parameters are initialized to default values */
 void
-initFormat(ImageFormat * format, int redMask, int greenMask, int blueMask, 
+initFormat(ImageFormat * format, int redMask, int greenMask, int blueMask,
            int alphaMask)
 {
     int i, shift, numBits;
@@ -313,11 +313,11 @@ dumpFormat(ImageFormat * format)
 #ifdef _DEBUG
     int i;
 
-    printf("byteorder=%d colormap=%08x depthBytes=%d fixedBits=%08x transparentColor=%u ", 
-        format->byteOrder, (unsigned) format->colorMap, format->depthBytes, 
+    printf("byteorder=%d colormap=%08x depthBytes=%d fixedBits=%08x transparentColor=%u ",
+        format->byteOrder, (unsigned) format->colorMap, format->depthBytes,
         (unsigned) format->fixedBits, (unsigned) format->transparentColor);
     for (i = 0; i < 4; i++) {
-        printf("mask[%d]=%08x shift[%d]=%d\n", i, (unsigned) format->mask[i], i, 
+        printf("mask[%d]=%08x shift[%d]=%d\n", i, (unsigned) format->mask[i], i,
             format->shift[i]);
     }
     printf("\n");

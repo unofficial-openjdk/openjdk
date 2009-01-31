@@ -68,13 +68,13 @@ public final class ShapeSpanIterator
     long pData;
 
     static {
-	initIDs();
+        initIDs();
     }
 
     public static native void initIDs();
 
     public ShapeSpanIterator(boolean adjust) {
-	setNormalize(adjust);
+        setNormalize(adjust);
     }
 
     /*
@@ -82,21 +82,21 @@ public final class ShapeSpanIterator
      * path iterator.
      */
     public void appendPath(PathIterator pi) {
-	float coords[] = new float[6];
+        float coords[] = new float[6];
 
-	setRule(pi.getWindingRule());
-	while (!pi.isDone()) {
-	    addSegment(pi.currentSegment(coords), coords);
-	    pi.next();
-	}
-	pathDone();
+        setRule(pi.getWindingRule());
+        while (!pi.isDone()) {
+            addSegment(pi.currentSegment(coords), coords);
+            pi.next();
+        }
+        pathDone();
     }
 
     /*
      * Appends the geometry from the indicated set of polygon points.
      */
     public native void appendPoly(int xPoints[], int yPoints[], int nPoints,
-				  int xoff, int yoff);
+                                  int xoff, int yoff);
 
     /*
      * Sets the normalization flag so that incoming data is
@@ -109,7 +109,7 @@ public final class ShapeSpanIterator
      * span segments.
      */
     public void setOutputAreaXYWH(int x, int y, int w, int h) {
-	setOutputAreaXYXY(x, y, Region.dimAdd(x, w), Region.dimAdd(y, h));
+        setOutputAreaXYXY(x, y, Region.dimAdd(x, w), Region.dimAdd(y, h));
     }
 
     /*
@@ -123,7 +123,7 @@ public final class ShapeSpanIterator
      * span segments to the specified Rectangle.
      */
     public void setOutputArea(Rectangle r) {
-	setOutputAreaXYWH(r.x, r.y, r.width, r.height);
+        setOutputAreaXYWH(r.x, r.y, r.width, r.height);
     }
 
     /*
@@ -131,7 +131,7 @@ public final class ShapeSpanIterator
      * span segments to the bounds of the specified Region.
      */
     public void setOutputArea(Region r) {
-	setOutputAreaXYXY(r.lox, r.loy, r.hix, r.hiy);
+        setOutputAreaXYXY(r.lox, r.loy, r.hix, r.hiy);
     }
 
     /*
@@ -157,7 +157,7 @@ public final class ShapeSpanIterator
      * altogether if they lie outside it.
      */
     public native void intersectClipBox(int lox, int loy, int hix, int hiy);
-    
+
     /*
      * Fetches the next span that needs to be operated on.
      * If the return value is false then there are no more spans.

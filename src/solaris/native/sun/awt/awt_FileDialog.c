@@ -113,21 +113,21 @@ FileDialog_OK(Widget w,
         return;
 
     if (!XmStringInitContext(&stringContext, call_data->value))
-	return;
+        return;
 
     if (!XmStringGetNextSegment(stringContext, &file, &charset,
-				&direction, &separator))
-	file = NULL;
+                                &direction, &separator))
+        file = NULL;
 
     if (file == NULL)
-	jstr = NULL;
+        jstr = NULL;
     else
-	jstr = JNU_NewStringPlatform(env, (const char *) file);
+        jstr = JNU_NewStringPlatform(env, (const char *) file);
 
     if (jstr != 0) {
-	JNU_CallMethodByName(env, NULL, this, "handleSelected",
-			     "(Ljava/lang/String;)V", jstr);
-	(*env)->DeleteLocalRef(env, jstr);
+        JNU_CallMethodByName(env, NULL, this, "handleSelected",
+                             "(Ljava/lang/String;)V", jstr);
+        (*env)->DeleteLocalRef(env, jstr);
     }
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
@@ -136,7 +136,7 @@ FileDialog_OK(Widget w,
 
     XmStringFreeContext(stringContext);
     if (file != NULL)
-	XtFree(file);
+        XtFree(file);
 }
 
 /*
@@ -200,7 +200,7 @@ setDeleteCallback(jobject this, struct FrameData *wdata)
 
 void
 setFSBDirAndFile(Widget w, char *dir, char *file,
-		 XmString *ffiles, int count)
+                 XmString *ffiles, int count)
 {
     Widget textField, list;
     char dirbuf[MAX_DIR_PATH_LEN];
@@ -226,10 +226,10 @@ setFSBDirAndFile(Widget w, char *dir, char *file,
     XtVaSetValues(w, XmNdirMask, xim, NULL);
 
     if (ffiles != NULL)
-      XtVaSetValues(w, 
-		    XmNfileListItems, (count > 0) ? ffiles : NULL, 
-		    XmNfileListItemCount, count,
-		    XmNlistUpdated, True, NULL);
+      XtVaSetValues(w,
+                    XmNfileListItems, (count > 0) ? ffiles : NULL,
+                    XmNfileListItemCount, count,
+                    XmNlistUpdated, True, NULL);
 
     XmStringFree(xim);
 
@@ -245,29 +245,29 @@ setFSBDirAndFile(Widget w, char *dir, char *file,
         XtVaSetValues(textField, XmNvalue, file, NULL);
         XmTextFieldSetSelection(textField, 0, lastSelect, CurrentTime);
 
-	item = XmStringCreateLocalized(file);
-	XmListSelectItem(list, item, NULL);
-	XmStringFree(item);
+        item = XmStringCreateLocalized(file);
+        XmListSelectItem(list, item, NULL);
+        XmStringFree(item);
     }
 }
 
 static void
 changeBackground(Widget w, void *bg)
 {
-    /* 
-    ** This is a work-around for bug 4325443, caused by motif bug 4345559, 
-    ** XmCombobox dosn't return all children, so give it some help ... 
-    */ 
+    /*
+    ** This is a work-around for bug 4325443, caused by motif bug 4345559,
+    ** XmCombobox dosn't return all children, so give it some help ...
+    */
     Widget grabShell;
     grabShell = XtNameToWidget(w, "GrabShell");
     if (grabShell != NULL) {
         awt_util_mapChildren(grabShell, changeBackground, 0, (void *) bg);
-    } 
+    }
 
     XmChangeColor(w, (Pixel) bg);
 }
 
-void 
+void
 ourSearchProc(Widget w, XtPointer p) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     struct FrameData *wdata;
@@ -306,7 +306,7 @@ ourSearchProc(Widget w, XtPointer p) {
            we need to do this to have the widget that works as we expect.
          */
         XtSetMappedWhenManaged(w, False);
-        /* Call the default Motif search procedure to take the 
+        /* Call the default Motif search procedure to take the
            native filtered file list.
          */
         DefaultSearchProc(w, vals);
@@ -348,9 +348,9 @@ ourSearchProc(Widget w, XtPointer p) {
 
     XmStringGetLtoR(vals->dir, XmFONTLIST_DEFAULT_TAG, &dir);
     dir_o = JNU_NewStringPlatform(env, dir);
-    res = JNU_CallMethodByName(env, NULL, this, 
-                               "proceedFiltering", 
-                               "(Ljava/lang/String;[Ljava/lang/String;Z)Z", 
+    res = JNU_CallMethodByName(env, NULL, this,
+                               "proceedFiltering",
+                               "(Ljava/lang/String;[Ljava/lang/String;Z)Z",
                                dir_o, nffiles,
                                awt_currentThreadIsPrivileged(env)).z;
 
@@ -362,7 +362,7 @@ ourSearchProc(Widget w, XtPointer p) {
     XtVaSetValues(w,
                   XmNlistUpdated, res,
                   NULL);
-    (*env)->DeleteLocalRef(env, dir_o);   
+    (*env)->DeleteLocalRef(env, dir_o);
     free(dir);
 }
 
@@ -400,9 +400,9 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_create
     AWT_LOCK();
 
     adata = copyGraphicsConfigToPeer(env, this);
-    
+
     wdata = (struct CanvasData *) JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
-    
+
     fdata = ZALLOC(FrameData);
     JNU_SetLongFieldFromPtr(env,this,mComponentPeerIDs.pData,fdata);
 
@@ -454,7 +454,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_create
                                                              argc);
     fdata->winData.shell = XtParent(fdata->winData.comp.widget);
     awt_util_mapChildren(fdata->winData.shell, changeBackground, 0,
-			 (void *) bg);
+                         (void *) bg);
     child = XmFileSelectionBoxGetChild(fdata->winData.comp.widget,
                                        XmDIALOG_HELP_BUTTON);
 
@@ -462,10 +462,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_create
        to do some things that we cannot do else. For instance,
        apply the native pattern.
      */
-    XtVaGetValues(fdata->winData.comp.widget, 
-                  XmNfileSearchProc, &DefaultSearchProc, 
+    XtVaGetValues(fdata->winData.comp.widget,
+                  XmNfileSearchProc, &DefaultSearchProc,
                   NULL);
-    XtVaSetValues(fdata->winData.comp.widget, 
+    XtVaSetValues(fdata->winData.comp.widget,
                   XmNfileSearchProc, ourSearchProc,
                   NULL);
 
@@ -473,12 +473,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_create
      * Get textfield in FileDialog.
      */
     textField = XmFileSelectionBoxGetChild(fdata->winData.comp.widget,
-					   XmDIALOG_TEXT);
+                                           XmDIALOG_TEXT);
     if (child != NULL) {
         /*
          * Workaround for Bug Id 4415659.
          * If the dialog child is unmanaged before the dialog is managed,
-         * the Motif drop site hierarchy may be broken if we associate 
+         * the Motif drop site hierarchy may be broken if we associate
          * a drop target with the dialog before it is shown.
          */
         XtSetMappedWhenManaged(fdata->winData.shell, False);
@@ -536,14 +536,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_create
     setDeleteCallback(globalRef, fdata);
 
     if (textField != NULL)  {
-	/*
-	 * Insert event handler to correctly process cut/copy/paste keys 
-	 * such that interaction with our own clipboard mechanism will work 
-	 * properly.
-	 *
- 	 * The Text_handlePaste() event handler is also used by both 
-	 * TextField/TextArea.
-	 */
+        /*
+         * Insert event handler to correctly process cut/copy/paste keys
+         * such that interaction with our own clipboard mechanism will work
+         * properly.
+         *
+         * The Text_handlePaste() event handler is also used by both
+         * TextField/TextArea.
+         */
         XtInsertEventHandler(textField,
                          KeyPressMask,
                          False, Text_handlePaste, (XtPointer) globalRef,
@@ -731,18 +731,18 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_setFileEntry
     jstring jf;
 
     AWT_LOCK();
-    wdata = (struct FrameData *) 
+    wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (wdata == NULL || wdata->winData.comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         return;
     }
 
-    cdir = (JNU_IsNull(env, dir)) 
+    cdir = (JNU_IsNull(env, dir))
                ? NULL
                : (char *) JNU_GetStringPlatformChars(env, dir, NULL);
 
-    cfile = (JNU_IsNull(env, file)) 
+    cfile = (JNU_IsNull(env, file))
                ? NULL
                : (char *) JNU_GetStringPlatformChars(env, file, NULL);
 
@@ -750,33 +750,33 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_setFileEntry
         length = (*env)->GetArrayLength(env, ffiles);
         files = (XmString*)calloc(length, sizeof(XmString));
 
-	for (i = 0; i < length; i++) {
-	    jf = (jstring)(*env)->GetObjectArrayElement(env, ffiles, i);
-	    cf = (char *) JNU_GetStringPlatformChars(env, jf, NULL);
+        for (i = 0; i < length; i++) {
+            jf = (jstring)(*env)->GetObjectArrayElement(env, ffiles, i);
+            cf = (char *) JNU_GetStringPlatformChars(env, jf, NULL);
 
-	    if ((*env)->GetStringLength(env, jf) == 0 && length == 1) {
-	      length = 0;
-	      files[0] = NULL;
-	    }
-	    else
-	      files[i] = XmStringCreateLocalized(cf);
+            if ((*env)->GetStringLength(env, jf) == 0 && length == 1) {
+              length = 0;
+              files[0] = NULL;
+            }
+            else
+              files[i] = XmStringCreateLocalized(cf);
 
-	    if (cf)
-	        JNU_ReleaseStringPlatformChars(env, jf, (const char *) cf);
-	}
+            if (cf)
+                JNU_ReleaseStringPlatformChars(env, jf, (const char *) cf);
+        }
 
-	setFSBDirAndFile(wdata->winData.comp.widget, (cdir) ? cdir : "",
-			 (cfile) ? cfile : "", files, length);
-	while(i > 0) {
-	    XmStringFree(files[--i]);
-	}
+        setFSBDirAndFile(wdata->winData.comp.widget, (cdir) ? cdir : "",
+                         (cfile) ? cfile : "", files, length);
+        while(i > 0) {
+            XmStringFree(files[--i]);
+        }
         if (files != NULL) {
             free(files);
         }
     }
-    else 
-      setFSBDirAndFile(wdata->winData.comp.widget, (cdir) ? cdir : "", 
-		       (cfile) ? cfile : "", NULL, -1);
+    else
+      setFSBDirAndFile(wdata->winData.comp.widget, (cdir) ? cdir : "",
+                       (cfile) ? cfile : "", NULL, -1);
 
     if (cdir) {
         JNU_ReleaseStringPlatformChars(env, dir, (const char *) cdir);
@@ -835,13 +835,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_setFont
                                               XmFONT_IS_FONTSET,
                                               (XtPointer) (fdata->xfs));
             fontlist = XmFontListAppendEntry(NULL, fontentry);
-	    /*
-	     * Some versions of motif have a bug in 
-	     * XmFontListEntryFree() which causes it to free more than it
-	     * should.  Use XtFree() instead.  See O'Reilly's
-	     * Motif Reference Manual for more information.
-	     */
-	    XmFontListEntryFree(&fontentry);
+            /*
+             * Some versions of motif have a bug in
+             * XmFontListEntryFree() which causes it to free more than it
+             * should.  Use XtFree() instead.  See O'Reilly's
+             * Motif Reference Manual for more information.
+             */
+            XmFontListEntryFree(&fontentry);
         } else {
             fontlist = XmFontListCreate(fdata->xfont, "labelFont");
         }
@@ -867,7 +867,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_setFont
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_insertReplaceFileDialogText
-  (JNIEnv *env, jobject this, jstring l) 
+  (JNIEnv *env, jobject this, jstring l)
 {
     struct ComponentData *cdata;
     char *cl;
@@ -923,4 +923,3 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFileDialogPeer_insertReplaceFileDialo
     }
     AWT_FLUSH_UNLOCK();
 }
-

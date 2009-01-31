@@ -87,7 +87,7 @@ NativePrimitive IntArgbPrimitives[] = {
 jboolean RegisterIntArgb(JNIEnv *env)
 {
     return RegisterPrimitives(env, IntArgbPrimitives,
-			      ArraySize(IntArgbPrimitives));
+                              ArraySize(IntArgbPrimitives));
 }
 
 DEFINE_CONVERT_BLIT_LUT8(ByteIndexed, IntArgb, ConvertOnTheFly)

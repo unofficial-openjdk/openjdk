@@ -37,22 +37,22 @@
  * (eventFilter) to the HandlerNode (eventHandler).
  */
 static jdwpError
-readAndSetFilters(JNIEnv *env, PacketInputStream *in, HandlerNode *node, 
+readAndSetFilters(JNIEnv *env, PacketInputStream *in, HandlerNode *node,
                   jint filterCount)
 {
     int i;
     jdwpError serror = JDWP_ERROR(NONE);
 
     for (i = 0; i < filterCount; ++i) {
-        
+
         jbyte modifier;
-        
+
         modifier = inStream_readByte(in);
         if ( (serror = inStream_error(in)) != JDWP_ERROR(NONE) )
             break;
-        
+
         switch (modifier) {
-            
+
             case JDWP_REQUEST_MODIFIER(Conditional): {
                 jint exprID;
                 exprID = inStream_readInt(in);
@@ -224,11 +224,11 @@ readAndSetFilters(JNIEnv *env, PacketInputStream *in, HandlerNode *node,
  * Allocate the event request handler (eventHandler).
  * Add any filters (explicit or implicit).
  * Install the handler.
- * Return the handlerID which is used to map subsequent 
+ * Return the handlerID which is used to map subsequent
  * events to the EventRequest that created it.
  */
-static jboolean 
-setCommand(PacketInputStream *in, PacketOutputStream *out) 
+static jboolean
+setCommand(PacketInputStream *in, PacketOutputStream *out)
 {
     jdwpError serror;
     HandlerNode *node;
@@ -258,9 +258,9 @@ setCommand(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (ei == EI_VM_INIT) {     
-        /* 
-         * VM is already initialized so there's no need to install a handler 
+    if (ei == EI_VM_INIT) {
+        /*
+         * VM is already initialized so there's no need to install a handler
          * for this event. However we need to allocate a requestID to send in
          * the reply to the debugger.
          */
@@ -303,7 +303,7 @@ setCommand(PacketInputStream *in, PacketOutputStream *out)
  * (what are at the JDI level) EventRequests.
  */
 static jboolean
-clearCommand(PacketInputStream *in, PacketOutputStream *out) 
+clearCommand(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     jdwpEvent eventType;
@@ -334,11 +334,11 @@ clearCommand(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean 
-clearAllBreakpoints(PacketInputStream *in, PacketOutputStream *out) 
+static jboolean
+clearAllBreakpoints(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
-    
+
     error = eventHandler_freeAll(EI_BREAKPOINT);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -350,4 +350,3 @@ void *EventRequest_Cmds[] = { (void *)0x3
     ,(void *)setCommand
     ,(void *)clearCommand
     ,(void *)clearAllBreakpoints};
-

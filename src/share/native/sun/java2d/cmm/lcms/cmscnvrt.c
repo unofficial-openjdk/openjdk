@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,22 +31,22 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "lcms.h"
@@ -80,10 +80,10 @@ transform intent. Input data of any stage is taked as relative colorimetric
 always.
 
 
-NOTES: V4 states than perceptual & saturation intents between mixed v2 & v4 profiles should 
+NOTES: V4 states than perceptual & saturation intents between mixed v2 & v4 profiles should
 scale PCS from a black point equal to ZERO in v2 profiles to the reference media black of
-perceptual v4 PCS. Since I found many v2 profiles to be using a perceptual intent with black 
-point not zero at all, I'm implementing that as a black point compensation from whatever 
+perceptual v4 PCS. Since I found many v2 profiles to be using a perceptual intent with black
+point not zero at all, I'm implementing that as a black point compensation from whatever
 black from perceptal intent to the reference media black for v4 profiles.
 
 */
@@ -131,8 +131,8 @@ LCMSAPI LPcmsCIExyY LCMSEXPORT cmsD50_xyY(void)
 // ---------------- From LUT to LUT --------------------------
 
 
-// Calculate m, offset Relativ -> Absolute undoing any chromatic 
-// adaptation done by the profile. 
+// Calculate m, offset Relativ -> Absolute undoing any chromatic
+// adaptation done by the profile.
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4100 4505)
@@ -158,14 +158,14 @@ void Rel2RelStepAbsCoefs(double AdaptationState,
 
                          LPMAT3 m, LPVEC3 of)
 {
-       
+
        VEC3 WtPtIn, WtPtInAdapted;
        VEC3 WtPtOut, WtPtOutAdapted;
        MAT3 Scale, m1, m2, m3;
-       
+
        VEC3init(&WtPtIn, WhitePointIn->X, WhitePointIn->Y, WhitePointIn->Z);
        MAT3eval(&WtPtInAdapted, ChromaticAdaptationMatrixIn, &WtPtIn);
-                  
+
        VEC3init(&WtPtOut, WhitePointOut->X, WhitePointOut->Y, WhitePointOut->Z);
        MAT3eval(&WtPtOutAdapted, ChromaticAdaptationMatrixOut, &WtPtOut);
 
@@ -178,7 +178,7 @@ void Rel2RelStepAbsCoefs(double AdaptationState,
 
        if (AdaptationState == 1.0) {
 
-           // Observer is fully adapted. Keep chromatic adaptation 
+           // Observer is fully adapted. Keep chromatic adaptation
 
            CopyMemory(m, &Scale, sizeof(MAT3));
 
@@ -188,14 +188,14 @@ void Rel2RelStepAbsCoefs(double AdaptationState,
             // Observer is not adapted, undo the chromatic adaptation
             m1 = *ChromaticAdaptationMatrixIn;
             MAT3inverse(&m1, &m2);
-       
+
             MAT3per(&m3, &m2, &Scale);
             MAT3per(m, &m3, ChromaticAdaptationMatrixOut);
        }
 
-            
+
        VEC3init(of, 0.0, 0.0, 0.0);
-                    
+
 }
 
 
@@ -211,16 +211,16 @@ void ComputeBlackPointCompensationFactors(LPcmsCIEXYZ BlackPointIn,
                       LPcmsCIEXYZ IlluminantOut,
                       LPMAT3 m, LPVEC3 of)
 {
-    
+
 
    cmsCIEXYZ RelativeBlackPointIn, RelativeBlackPointOut;
    double ax, ay, az, bx, by, bz, tx, ty, tz;
-   
+
    // At first, convert both black points to relative.
 
    cmsAdaptToIlluminant(&RelativeBlackPointIn,  WhitePointIn, IlluminantIn, BlackPointIn);
    cmsAdaptToIlluminant(&RelativeBlackPointOut, WhitePointOut, IlluminantOut, BlackPointOut);
-   
+
    // Now we need to compute a matrix plus an offset m and of such of
    // [m]*bpin + off = bpout
    // [m]*D50  + off = D50
@@ -257,7 +257,7 @@ void ComputeBlackPointCompensationFactors(LPcmsCIEXYZ BlackPointIn,
 
 static
 BOOL IdentityParameters(LPWMAT3 m, LPWVEC3 of)
-{   
+{
     WVEC3 wv0;
 
     VEC3initF(&wv0, 0, 0, 0);
@@ -375,7 +375,7 @@ int FromXYZRelLUT(int Absolute,
                             }
                             else
                             {
-                                   // XYZ Relative to XYZ relative, no op required                                   
+                                   // XYZ Relative to XYZ relative, no op required
                                    *fn1 = NULL;
                                    if (DoBlackPointCompensation) {
 
@@ -392,7 +392,7 @@ int FromXYZRelLUT(int Absolute,
                             }
                             break;
 
-                    
+
                      // From relative XYZ to Relative Lab
 
                      case LabRel:
@@ -402,7 +402,7 @@ int FromXYZRelLUT(int Absolute,
                             // to prepare the "to Lab" conversion.
 
                             if (Absolute)
-                            {   
+                            {
 
                                 Rel2RelStepAbsCoefs(AdaptationState,
                                                     BlackPointIn,
@@ -414,7 +414,7 @@ int FromXYZRelLUT(int Absolute,
                                                     IlluminantOut,
                                                     ChromaticAdaptationMatrixOut,
                                                     m, of);
-                                
+
                                 *fn1 = XYZ2Lab;
 
                             }
@@ -439,7 +439,7 @@ int FromXYZRelLUT(int Absolute,
                             }
                             break;
 
-                    
+
                      default: return FALSE;
                      }
 
@@ -498,7 +498,7 @@ int FromLabRelLUT(int Absolute,
                      else
                      {
                             // From Lab relative, to XYZ relative.
-                            
+
                             *fn1 = Lab2XYZ;
                             if (DoBlackPointCompensation) {
 
@@ -525,10 +525,10 @@ int FromLabRelLUT(int Absolute,
                              // to relative, but for input
 
                              Rel2RelStepAbsCoefs(AdaptationState,
-                                                 BlackPointIn, 
+                                                 BlackPointIn,
                                                  WhitePointIn, IlluminantIn,
                                                  ChromaticAdaptationMatrixIn,
-                                                 BlackPointOut, 
+                                                 BlackPointOut,
                                                  WhitePointOut, cmsD50_XYZ(),
                                                  ChromaticAdaptationMatrixOut,
                                                  m, of);
@@ -550,7 +550,7 @@ int FromLabRelLUT(int Absolute,
                                                                       IlluminantOut,
                                                                       m, of);
 
-                                
+
                             }
                      }
                      break;
@@ -618,7 +618,7 @@ int cmsChooseCnvrt(int Absolute,
                                           fn1, &m, &of);
                      break;
 
-       
+
 
        // Input LUT is giving Lab relative values
 
@@ -638,7 +638,7 @@ int cmsChooseCnvrt(int Absolute,
                      break;
 
 
-       
+
 
        // Unrecognized combination
 
@@ -658,9 +658,6 @@ int cmsChooseCnvrt(int Absolute,
                *fn1 = NULL;
        }
 
-       
+
        return rc;
 }
-
-
-      

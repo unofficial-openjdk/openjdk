@@ -52,7 +52,7 @@ public class JavaProcess {
         this.classname = classname;
         this.javaOptions = new StringBuilder(javaOptions);
         this.classArgs = new StringBuilder(classArgs);
-    }    
+    }
 
     /**
      * add java options to the java command
@@ -101,7 +101,7 @@ public class JavaProcess {
 
         process = Runtime.getRuntime().exec(javaCommand);
     }
-    
+
     /**
      * destroy the java process
      */

@@ -32,13 +32,13 @@
 #include "GraphicsPrimitiveMgr.h"
 #include "AlphaMacros.h"
 
-static char *InitName =	"<init>";
-static char *InitSig =	("(JLsun/java2d/loops/SurfaceType;"
-			 "Lsun/java2d/loops/CompositeType;"
-			 "Lsun/java2d/loops/SurfaceType;)V");
+static char *InitName = "<init>";
+static char *InitSig =  ("(JLsun/java2d/loops/SurfaceType;"
+                         "Lsun/java2d/loops/CompositeType;"
+                         "Lsun/java2d/loops/SurfaceType;)V");
 
-static char *RegisterName =	"register";
-static char *RegisterSig =	"([Lsun/java2d/loops/GraphicsPrimitive;)V";
+static char *RegisterName =     "register";
+static char *RegisterSig =      "([Lsun/java2d/loops/GraphicsPrimitive;)V";
 
 static jclass GraphicsPrimitiveMgr;
 static jclass GraphicsPrimitive;
@@ -94,26 +94,26 @@ Java_sun_java2d_loops_GraphicsPrimitiveMgr_initIDs
     GraphicsPrimitiveMgr = (*env)->NewGlobalRef(env, GPMgr);
     GraphicsPrimitive = (*env)->NewGlobalRef(env, GP);
     if (GraphicsPrimitiveMgr == NULL || GraphicsPrimitive == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "creating global refs");
-	return;
+        JNU_ThrowOutOfMemoryError(env, "creating global refs");
+        return;
     }
     if (!InitPrimTypes(env) ||
-	!InitSurfaceTypes(env, ST) ||
-	!InitCompositeTypes(env, CT))
+        !InitSurfaceTypes(env, ST) ||
+        !InitCompositeTypes(env, CT))
     {
-	return;
+        return;
     }
     RegisterID = (*env)->GetStaticMethodID(env, GPMgr,
-					   RegisterName, RegisterSig);
+                                           RegisterName, RegisterSig);
     pNativePrimID = (*env)->GetFieldID(env, GP, "pNativePrim", "J");
     pixelID = (*env)->GetFieldID(env, SG2D, "pixel", "I");
     eargbID = (*env)->GetFieldID(env, SG2D, "eargb", "I");
     clipRegionID = (*env)->GetFieldID(env, SG2D, "clipRegion",
-				      "Lsun/java2d/pipe/Region;");
-    compositeID = (*env)->GetFieldID(env, SG2D, "composite", 
+                                      "Lsun/java2d/pipe/Region;");
+    compositeID = (*env)->GetFieldID(env, SG2D, "composite",
                                      "Ljava/awt/Composite;");
     lcdTextContrastID =
-	(*env)->GetFieldID(env, SG2D, "lcdTextContrast", "I");
+        (*env)->GetFieldID(env, SG2D, "lcdTextContrast", "I");
     valueID = (*env)->GetFieldID(env, Color, "value", "I");
     xorPixelID = (*env)->GetFieldID(env, XORComp, "xorPixel", "I");
     xorColorID = (*env)->GetFieldID(env, XORComp, "xorColor",
@@ -137,7 +137,7 @@ Java_sun_java2d_loops_GraphicsPrimitiveMgr_initIDs
                                              "floatCoords", "[F");
     sg2dStrokeHintID = (*env)->GetFieldID(env, SG2D, "strokeHint", "I");
     fid = (*env)->GetStaticFieldID(env, SHints, "INTVAL_STROKE_PURE", "I");
-    sunHints_INTVAL_STROKE_PURE = (*env)->GetStaticIntField(env, SHints, fid); 
+    sunHints_INTVAL_STROKE_PURE = (*env)->GetStaticIntField(env, SHints, fid);
 
 }
 
@@ -234,18 +234,18 @@ Java_sun_java2d_loops_GraphicsPrimitiveMgr_registerNativeLoops
     RegisterFourByteAbgrPre(env);
 }
 
-#define _StartOf(T)	((T *) (&T##s))
-#define _NumberOf(T)	(sizeof(T##s) / sizeof(T))
-#define _EndOf(T)	(_StartOf(T) + _NumberOf(T))
+#define _StartOf(T)     ((T *) (&T##s))
+#define _NumberOf(T)    (sizeof(T##s) / sizeof(T))
+#define _EndOf(T)       (_StartOf(T) + _NumberOf(T))
 
-#define PrimTypeStart	_StartOf(PrimitiveType)
-#define PrimTypeEnd	_EndOf(PrimitiveType)
+#define PrimTypeStart   _StartOf(PrimitiveType)
+#define PrimTypeEnd     _EndOf(PrimitiveType)
 
-#define SurfTypeStart	_StartOf(SurfaceType)
-#define SurfTypeEnd	_EndOf(SurfaceType)
+#define SurfTypeStart   _StartOf(SurfaceType)
+#define SurfTypeEnd     _EndOf(SurfaceType)
 
-#define CompTypeStart	_StartOf(CompositeType)
-#define CompTypeEnd	_EndOf(CompositeType)
+#define CompTypeStart   _StartOf(CompositeType)
+#define CompTypeEnd     _EndOf(CompositeType)
 
 /*
  * This function initializes the global collection of PrimitiveType
@@ -261,32 +261,32 @@ static jboolean InitPrimTypes(JNIEnv *env)
     jclass cl;
 
     for (pPrimType = PrimTypeStart; pPrimType < PrimTypeEnd; pPrimType++) {
-	cl = (*env)->FindClass(env, pPrimType->ClassName);
-	if (cl == NULL) {
-	    ok = JNI_FALSE;
-	    break;
-	}
-	pPrimType->ClassObject = (*env)->NewGlobalRef(env, cl);
-	pPrimType->Constructor =
-	    (*env)->GetMethodID(env, cl, InitName, InitSig);
+        cl = (*env)->FindClass(env, pPrimType->ClassName);
+        if (cl == NULL) {
+            ok = JNI_FALSE;
+            break;
+        }
+        pPrimType->ClassObject = (*env)->NewGlobalRef(env, cl);
+        pPrimType->Constructor =
+            (*env)->GetMethodID(env, cl, InitName, InitSig);
 
-	(*env)->DeleteLocalRef(env, cl);
-	if (pPrimType->ClassObject == NULL ||
-	    pPrimType->Constructor == NULL)
-	{
-	    ok = JNI_FALSE;
-	    break;
-	}
+        (*env)->DeleteLocalRef(env, cl);
+        if (pPrimType->ClassObject == NULL ||
+            pPrimType->Constructor == NULL)
+        {
+            ok = JNI_FALSE;
+            break;
+        }
     }
 
     if (!ok) {
-	for (pPrimType = PrimTypeStart; pPrimType < PrimTypeEnd; pPrimType++) {
-	    if (pPrimType->ClassObject != NULL) {
-		(*env)->DeleteGlobalRef(env, pPrimType->ClassObject);
-		pPrimType->ClassObject = NULL;
-	    }
-	    pPrimType->Constructor = NULL;
-	}
+        for (pPrimType = PrimTypeStart; pPrimType < PrimTypeEnd; pPrimType++) {
+            if (pPrimType->ClassObject != NULL) {
+                (*env)->DeleteGlobalRef(env, pPrimType->ClassObject);
+                pPrimType->ClassObject = NULL;
+            }
+            pPrimType->Constructor = NULL;
+        }
     }
 
     return ok;
@@ -310,34 +310,34 @@ static jboolean InitSimpleTypes
     jobject obj;
 
     for (pHdr = pStart; pHdr < pEnd; pHdr = PtrAddBytes(pHdr, size)) {
-	field = (*env)->GetStaticFieldID(env,
-					 SimpleClass,
-					 pHdr->Name,
-					 SimpleSig);
-	if (field == NULL) {
-	    ok = JNI_FALSE;
-	    break;
-	}
-	obj = (*env)->GetStaticObjectField(env, SimpleClass, field);
-	if (obj == NULL) {
-	    ok = JNI_FALSE;
-	    break;
-	}
-	pHdr->Object = (*env)->NewGlobalRef(env, obj);
-	(*env)->DeleteLocalRef(env, obj);
-	if (pHdr->Object == NULL) {
-	    ok = JNI_FALSE;
-	    break;
-	}
+        field = (*env)->GetStaticFieldID(env,
+                                         SimpleClass,
+                                         pHdr->Name,
+                                         SimpleSig);
+        if (field == NULL) {
+            ok = JNI_FALSE;
+            break;
+        }
+        obj = (*env)->GetStaticObjectField(env, SimpleClass, field);
+        if (obj == NULL) {
+            ok = JNI_FALSE;
+            break;
+        }
+        pHdr->Object = (*env)->NewGlobalRef(env, obj);
+        (*env)->DeleteLocalRef(env, obj);
+        if (pHdr->Object == NULL) {
+            ok = JNI_FALSE;
+            break;
+        }
     }
 
     if (!ok) {
-	for (pHdr = pStart; pHdr < pEnd; pHdr = PtrAddBytes(pHdr, size)) {
-	    if (pHdr->Object != NULL) {
-		(*env)->DeleteGlobalRef(env, pHdr->Object);
-		pHdr->Object = NULL;
-	    }
-	}
+        for (pHdr = pStart; pHdr < pEnd; pHdr = PtrAddBytes(pHdr, size)) {
+            if (pHdr->Object != NULL) {
+                (*env)->DeleteGlobalRef(env, pHdr->Object);
+                pHdr->Object = NULL;
+            }
+        }
     }
 
     return ok;
@@ -346,17 +346,17 @@ static jboolean InitSimpleTypes
 static jboolean InitSurfaceTypes(JNIEnv *env, jclass ST)
 {
     return InitSimpleTypes(env, ST, "Lsun/java2d/loops/SurfaceType;",
-			   (SurfCompHdr *) SurfTypeStart,
-			   (SurfCompHdr *) SurfTypeEnd,
-			   sizeof(SurfaceType));
+                           (SurfCompHdr *) SurfTypeStart,
+                           (SurfCompHdr *) SurfTypeEnd,
+                           sizeof(SurfaceType));
 }
 
 static jboolean InitCompositeTypes(JNIEnv *env, jclass CT)
 {
     return InitSimpleTypes(env, CT, "Lsun/java2d/loops/CompositeType;",
-			   (SurfCompHdr *) CompTypeStart,
-			   (SurfCompHdr *) CompTypeEnd,
-			   sizeof(CompositeType));
+                           (SurfCompHdr *) CompTypeStart,
+                           (SurfCompHdr *) CompTypeEnd,
+                           sizeof(CompositeType));
 }
 
 /*
@@ -364,72 +364,72 @@ static jboolean InitCompositeTypes(JNIEnv *env, jclass CT)
  * based on information stored in an array of NativePrimitive structures.
  */
 jboolean RegisterPrimitives(JNIEnv *env,
-			    NativePrimitive *pPrim,
-			    jint NumPrimitives)
+                            NativePrimitive *pPrim,
+                            jint NumPrimitives)
 {
     jarray primitives;
     int i;
 
     primitives = (*env)->NewObjectArray(env, NumPrimitives,
-					GraphicsPrimitive, NULL);
+                                        GraphicsPrimitive, NULL);
     if (primitives == NULL) {
-	return JNI_FALSE;
+        return JNI_FALSE;
     }
 
     for (i = 0; i < NumPrimitives; i++, pPrim++) {
-	jint srcflags, dstflags;
-	jobject prim;
-	PrimitiveType *pType = pPrim->pPrimType;
-	SurfaceType *pSrc = pPrim->pSrcType;
-	CompositeType *pComp = pPrim->pCompType;
-	SurfaceType *pDst = pPrim->pDstType;
+        jint srcflags, dstflags;
+        jobject prim;
+        PrimitiveType *pType = pPrim->pPrimType;
+        SurfaceType *pSrc = pPrim->pSrcType;
+        CompositeType *pComp = pPrim->pCompType;
+        SurfaceType *pDst = pPrim->pDstType;
 
-	pPrim->funcs.initializer = MapAccelFunction(pPrim->funcs_c.initializer);
+        pPrim->funcs.initializer = MapAccelFunction(pPrim->funcs_c.initializer);
 
-	/*
-	 * Calculate the necessary SurfaceData lock flags for the
-	 * source and destination surfaces based on the information
-	 * stored in the PrimitiveType, SurfaceType, and CompositeType
-	 * structures.  The starting point is the values that are
-	 * already stored in the NativePrimitive structure.  These
-	 * flags are usually left as 0, but can be filled in by
-	 * native primitive loops that have special needs that are
-	 * not deducible from their declared attributes.
-	 */
-	srcflags = pPrim->srcflags;
-	dstflags = pPrim->dstflags;
-	srcflags |= pType->srcflags;
-	dstflags |= pType->dstflags;
-	dstflags |= pComp->dstflags;
-	if (srcflags & SD_LOCK_READ) srcflags |= pSrc->readflags;
-	/* if (srcflags & SD_LOCK_WRITE) srcflags |= pSrc->writeflags; */
-	if (dstflags & SD_LOCK_READ) dstflags |= pDst->readflags;
-	if (dstflags & SD_LOCK_WRITE) dstflags |= pDst->writeflags;
-	pPrim->srcflags = srcflags;
-	pPrim->dstflags = dstflags;
+        /*
+         * Calculate the necessary SurfaceData lock flags for the
+         * source and destination surfaces based on the information
+         * stored in the PrimitiveType, SurfaceType, and CompositeType
+         * structures.  The starting point is the values that are
+         * already stored in the NativePrimitive structure.  These
+         * flags are usually left as 0, but can be filled in by
+         * native primitive loops that have special needs that are
+         * not deducible from their declared attributes.
+         */
+        srcflags = pPrim->srcflags;
+        dstflags = pPrim->dstflags;
+        srcflags |= pType->srcflags;
+        dstflags |= pType->dstflags;
+        dstflags |= pComp->dstflags;
+        if (srcflags & SD_LOCK_READ) srcflags |= pSrc->readflags;
+        /* if (srcflags & SD_LOCK_WRITE) srcflags |= pSrc->writeflags; */
+        if (dstflags & SD_LOCK_READ) dstflags |= pDst->readflags;
+        if (dstflags & SD_LOCK_WRITE) dstflags |= pDst->writeflags;
+        pPrim->srcflags = srcflags;
+        pPrim->dstflags = dstflags;
 
-	prim = (*env)->NewObject(env,
-				 pType->ClassObject,
-				 pType->Constructor,
-				 ptr_to_jlong(pPrim),
-				 pSrc->hdr.Object,
-				 pComp->hdr.Object,
-				 pDst->hdr.Object);
-	if (prim == NULL) {
-	    break;
-	}
-	(*env)->SetObjectArrayElement(env, primitives, i, prim);
-	(*env)->DeleteLocalRef(env, prim);
-	if ((*env)->ExceptionCheck(env)) {
-	    break;
-	}
+        prim = (*env)->NewObject(env,
+                                 pType->ClassObject,
+                                 pType->Constructor,
+                                 ptr_to_jlong(pPrim),
+                                 pSrc->hdr.Object,
+                                 pComp->hdr.Object,
+                                 pDst->hdr.Object);
+        if (prim == NULL) {
+            break;
+        }
+        (*env)->SetObjectArrayElement(env, primitives, i, prim);
+        (*env)->DeleteLocalRef(env, prim);
+        if ((*env)->ExceptionCheck(env)) {
+            break;
+        }
     }
 
     if (i >= NumPrimitives) {
-	/* No error - upcall to GraphicsPrimitiveMgr to register the
-	 * new primitives... */
-	(*env)->CallStaticVoidMethod(env, GraphicsPrimitiveMgr, RegisterID,
-				     primitives);
+        /* No error - upcall to GraphicsPrimitiveMgr to register the
+         * new primitives... */
+        (*env)->CallStaticVoidMethod(env, GraphicsPrimitiveMgr, RegisterID,
+                                     primitives);
     }
     (*env)->DeleteLocalRef(env, primitives);
 
@@ -443,18 +443,18 @@ GetNativePrim(JNIEnv *env, jobject gp)
 
     pPrim = (NativePrimitive *) JNU_GetLongFieldAsPtr(env, gp, pNativePrimID);
     if (pPrim == NULL) {
-	JNU_ThrowInternalError(env, "Non-native Primitive invoked natively");
+        JNU_ThrowInternalError(env, "Non-native Primitive invoked natively");
     }
 
     return pPrim;
 }
 
 JNIEXPORT void JNICALL
-GrPrim_Sg2dGetCompInfo(JNIEnv *env, jobject sg2d, 
+GrPrim_Sg2dGetCompInfo(JNIEnv *env, jobject sg2d,
                        NativePrimitive *pPrim, CompositeInfo *pCompInfo)
 {
     jobject comp;
-    
+
     comp = (*env)->GetObjectField(env, sg2d, compositeID);
     (*pPrim->pCompType->getCompInfo)(env, pCompInfo, comp);
     (*env)->DeleteLocalRef(env, comp);
@@ -465,7 +465,7 @@ GrPrim_CompGetXorColor(JNIEnv *env, jobject comp)
 {
     jobject color;
     jint rgb;
-    
+
     color = (*env)->GetObjectField(env, comp, xorColorID);
     rgb = (*env)->GetIntField(env, color, valueID);
     (*env)->DeleteLocalRef(env, color);
@@ -521,9 +521,9 @@ JNIEXPORT void JNICALL
 GrPrim_CompGetAlphaInfo(JNIEnv *env, CompositeInfo *pCompInfo, jobject comp)
 {
     pCompInfo->rule =
-	(*env)->GetIntField(env, comp, ruleID);
+        (*env)->GetIntField(env, comp, ruleID);
     pCompInfo->details.extraAlpha =
-	(*env)->GetFloatField(env, comp, extraAlphaID);
+        (*env)->GetFloatField(env, comp, extraAlphaID);
 }
 
 JNIEXPORT void JNICALL
@@ -586,8 +586,8 @@ struct _PrimitiveTypes PrimitiveTypes = {
     { "sun/java2d/loops/FillPath", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
     { "sun/java2d/loops/MaskBlit", SD_LOCK_READ, SD_LOCK_RD_WR, NULL, NULL},
     { "sun/java2d/loops/MaskFill", 0, SD_LOCK_RD_WR, NULL, NULL},
-    { "sun/java2d/loops/DrawGlyphList", 0, SD_LOCK_PARTIAL_WRITE | 
-					   SD_LOCK_FASTEST, NULL, NULL},
+    { "sun/java2d/loops/DrawGlyphList", 0, SD_LOCK_PARTIAL_WRITE |
+                                           SD_LOCK_FASTEST, NULL, NULL},
     { "sun/java2d/loops/DrawGlyphListAA", 0, SD_LOCK_RD_WR | SD_LOCK_FASTEST, NULL, NULL},
     { "sun/java2d/loops/DrawGlyphListLCD", 0, SD_LOCK_RD_WR | SD_LOCK_FASTEST, NULL, NULL},
     { "sun/java2d/loops/TransformHelper", SD_LOCK_READ, 0, NULL, NULL}
@@ -600,11 +600,11 @@ struct _SurfaceTypes SurfaceTypes = {
     { { "OpaqueColor", NULL}, NULL, 0, 0 },
     { { "AnyColor", NULL}, NULL, 0, 0 },
     { { "AnyByte", NULL}, NULL, 0, 0 },
-    { { "ByteBinary1Bit", NULL}, 
+    { { "ByteBinary1Bit", NULL},
       PixelForByteBinary, SD_LOCK_LUT, SD_LOCK_INVCOLOR },
-    { { "ByteBinary2Bit", NULL},  
+    { { "ByteBinary2Bit", NULL},
       PixelForByteBinary, SD_LOCK_LUT, SD_LOCK_INVCOLOR },
-    { { "ByteBinary4Bit", NULL},  
+    { { "ByteBinary4Bit", NULL},
       PixelForByteBinary, SD_LOCK_LUT, SD_LOCK_INVCOLOR },
     { { "ByteIndexed", NULL},
       PixelForByteIndexed, SD_LOCK_LUT, SD_LOCK_INVCOLOR },

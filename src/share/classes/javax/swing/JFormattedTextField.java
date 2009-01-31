@@ -71,7 +71,7 @@ import javax.swing.text.*;
  *            <td>Do nothing, don't obtain a new
  *                <code>AbstractFormatter</code>, and don't update the value.
  * </table>
- * The default is <code>JFormattedTextField.COMMIT_OR_REVERT</code>, 
+ * The default is <code>JFormattedTextField.COMMIT_OR_REVERT</code>,
  * refer to {@link #setFocusLostBehavior} for more information on this.
  * <p>
  * <code>JFormattedTextField</code> allows the focus to leave, even if
@@ -175,7 +175,6 @@ import javax.swing.text.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @since 1.4
  */
 public class JFormattedTextField extends JTextField {
@@ -575,9 +574,9 @@ public class JFormattedTextField extends JTextField {
      * implementation beeps.
      */
     protected void invalidEdit() {
-	UIManager.getLookAndFeel().provideErrorFeedback(JFormattedTextField.this);
+        UIManager.getLookAndFeel().provideErrorFeedback(JFormattedTextField.this);
     }
-    
+
     /**
      * Processes any input method events, such as
      * <code>InputMethodEvent.INPUT_METHOD_TEXT_CHANGED</code> or
@@ -587,19 +586,19 @@ public class JFormattedTextField extends JTextField {
      * @see InputMethodEvent
      */
     protected void processInputMethodEvent(InputMethodEvent e) {
-	AttributedCharacterIterator text = e.getText();
-	int commitCount = e.getCommittedCharacterCount();
+        AttributedCharacterIterator text = e.getText();
+        int commitCount = e.getCommittedCharacterCount();
 
-	// Keep track of the composed text
-	if (text != null) {
-	    int begin = text.getBeginIndex();
-	    int end = text.getEndIndex();
-	    composedTextExists = ((end - begin) > commitCount);
-	} else {
-	    composedTextExists = false;
-	}
+        // Keep track of the composed text
+        if (text != null) {
+            int begin = text.getBeginIndex();
+            int end = text.getEndIndex();
+            composedTextExists = ((end - begin) > commitCount);
+        } else {
+            composedTextExists = false;
+        }
 
-	super.processInputMethodEvent(e);
+        super.processInputMethodEvent(e);
     }
 
     /**
@@ -613,24 +612,24 @@ public class JFormattedTextField extends JTextField {
     protected void processFocusEvent(FocusEvent e) {
         super.processFocusEvent(e);
 
-	// ignore temporary focus event
-	if (e.isTemporary()) {
-	    return;
-	}
+        // ignore temporary focus event
+        if (e.isTemporary()) {
+            return;
+        }
 
         if (isEdited() && e.getID() == FocusEvent.FOCUS_LOST) {
-	    InputContext ic = getInputContext();
-	    if (focusLostHandler == null) {
-		focusLostHandler = new FocusLostHandler();
-	    }
-	    
-	    // if there is a composed text, process it first
-	    if ((ic != null) && composedTextExists) {
-		ic.endComposition();
-		EventQueue.invokeLater(focusLostHandler);
-	    } else {
-		focusLostHandler.run();
-	    }
+            InputContext ic = getInputContext();
+            if (focusLostHandler == null) {
+                focusLostHandler = new FocusLostHandler();
+            }
+
+            // if there is a composed text, process it first
+            if ((ic != null) && composedTextExists) {
+                ic.endComposition();
+                EventQueue.invokeLater(focusLostHandler);
+            } else {
+                focusLostHandler.run();
+            }
         }
         else if (!isEdited()) {
             // reformat
@@ -642,27 +641,27 @@ public class JFormattedTextField extends JTextField {
      * FOCUS_LOST behavior implementation
      */
     private class FocusLostHandler implements Runnable, Serializable {
-	public void run() {
+        public void run() {
             int fb = JFormattedTextField.this.getFocusLostBehavior();
-            if (fb == JFormattedTextField.COMMIT || 
-	        fb == JFormattedTextField.COMMIT_OR_REVERT) {
+            if (fb == JFormattedTextField.COMMIT ||
+                fb == JFormattedTextField.COMMIT_OR_REVERT) {
                 try {
                     JFormattedTextField.this.commitEdit();
                     // Give it a chance to reformat.
                     JFormattedTextField.this.setValue(
-		        JFormattedTextField.this.getValue(), true, true);
+                        JFormattedTextField.this.getValue(), true, true);
                 } catch (ParseException pe) {
                     if (fb == JFormattedTextField.this.COMMIT_OR_REVERT) {
                         JFormattedTextField.this.setValue(
-			    JFormattedTextField.this.getValue(), true, true);
+                            JFormattedTextField.this.getValue(), true, true);
                     }
                 }
             }
             else if (fb == JFormattedTextField.REVERT) {
                 JFormattedTextField.this.setValue(
-		    JFormattedTextField.this.getValue(), true, true);
+                    JFormattedTextField.this.getValue(), true, true);
             }
-	}
+        }
     }
 
     /**
@@ -713,7 +712,7 @@ public class JFormattedTextField extends JTextField {
     }
 
     /*
-     * See readObject and writeObject in JComponent for more 
+     * See readObject and writeObject in JComponent for more
      * information about serialization in Swing.
      *
      * @param s Stream to write to
@@ -796,9 +795,9 @@ public class JFormattedTextField extends JTextField {
 
         setEdited(false);
 
-	if (firePC) {
-	    firePropertyChange("value", oldValue, value);
-	}
+        if (firePC) {
+            firePropertyChange("value", oldValue, value);
+        }
     }
 
     /**
@@ -837,10 +836,10 @@ public class JFormattedTextField extends JTextField {
         }
         if (type instanceof Number) {
             AbstractFormatter displayFormatter = new NumberFormatter();
-	    ((NumberFormatter)displayFormatter).setValueClass(type.getClass());
+            ((NumberFormatter)displayFormatter).setValueClass(type.getClass());
             AbstractFormatter editFormatter = new NumberFormatter(
                                   new DecimalFormat("#.#"));
-	    ((NumberFormatter)editFormatter).setValueClass(type.getClass());
+            ((NumberFormatter)editFormatter).setValueClass(type.getClass());
 
             return new DefaultFormatterFactory(displayFormatter,
                                                displayFormatter,editFormatter);
@@ -897,7 +896,7 @@ public class JFormattedTextField extends JTextField {
      * they can override <code>getActions</code>,
      * <code>getNavigationFilter</code> and <code>getDocumentFilter</code>
      * to restrict the <code>JFormattedTextField</code> in a particular
-     * way. 
+     * way.
      * <p>
      * Subclasses that allow the <code>JFormattedTextField</code> to be in
      * a temporarily invalid state should invoke <code>setEditValid</code>
@@ -1044,7 +1043,7 @@ public class JFormattedTextField extends JTextField {
         }
 
         /**
-         * Subclass and override if you wish to provide a 
+         * Subclass and override if you wish to provide a
          * <code>DocumentFilter</code> to restrict what can be input.
          * <code>install</code> will install the returned value onto
          * the <code>JFormattedTextField</code>.
@@ -1116,7 +1115,7 @@ public class JFormattedTextField extends JTextField {
                 try {
                     ((JFormattedTextField)target).commitEdit();
                 } catch (ParseException pe) {
-		    ((JFormattedTextField)target).invalidEdit();
+                    ((JFormattedTextField)target).invalidEdit();
                     // value not commited, don't notify ActionListeners
                     return;
                 }
@@ -1128,10 +1127,10 @@ public class JFormattedTextField extends JTextField {
         public boolean isEnabled() {
             JTextComponent target = getFocusedComponent();
             if (target instanceof JFormattedTextField) {
-		JFormattedTextField ftf = (JFormattedTextField)target;
-		if (!ftf.isEdited()) {
-		    return false;
-		}
+                JFormattedTextField ftf = (JFormattedTextField)target;
+                if (!ftf.isEdited()) {
+                    return false;
+                }
                 return true;
             }
             return super.isEnabled();
@@ -1162,10 +1161,10 @@ public class JFormattedTextField extends JTextField {
         public boolean isEnabled() {
             JTextComponent target = getFocusedComponent();
             if (target instanceof JFormattedTextField) {
-		JFormattedTextField ftf = (JFormattedTextField)target;
-		if (!ftf.isEdited()) {
-		    return false;
-		}
+                JFormattedTextField ftf = (JFormattedTextField)target;
+                if (!ftf.isEdited()) {
+                    return false;
+                }
                 return true;
             }
             return super.isEnabled();

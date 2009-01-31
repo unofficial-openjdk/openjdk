@@ -34,7 +34,6 @@ import java.awt.*;
  * when the JTextComponent the view is contained in is editable.
  *
  * @author  Sunita Mani
- * @version %I% %G%
  */
 class NoFramesView extends BlockView {
 
@@ -48,31 +47,31 @@ class NoFramesView extends BlockView {
      * @param axis either View.X_AXIS or View.Y_AXIS
      */
     public NoFramesView(Element elem, int axis) {
-	super(elem, axis);
-	visible = false;
+        super(elem, axis);
+        visible = false;
     }
 
 
     /**
      * If this view is not visible, then it returns.
      * Otherwise it invokes the superclass.
-     * 
+     *
      * @param g the rendering surface to use
      * @param allocation the allocated region to render into
      * @see #isVisible
      * @see text.ParagraphView#paint
      */
     public void paint(Graphics g, Shape allocation) {
-	Container host = getContainer();
-	if (host != null &&
-	    visible != ((JTextComponent)host).isEditable()) {
-	    visible = ((JTextComponent)host).isEditable();
-	}
+        Container host = getContainer();
+        if (host != null &&
+            visible != ((JTextComponent)host).isEditable()) {
+            visible = ((JTextComponent)host).isEditable();
+        }
 
-	if (!isVisible()) {
-	    return;
-	}
-	super.paint(g, allocation);
+        if (!isVisible()) {
+            return;
+        }
+        super.paint(g, allocation);
     }
 
 
@@ -84,16 +83,16 @@ class NoFramesView extends BlockView {
      * is invoked to continue processing.
      *
      * @param p the parent View.
-     * @see BlockView#setParent 
+     * @see BlockView#setParent
      */
     public void setParent(View p) {
-	if (p != null) {
-	    Container host = p.getContainer();
-	    if (host != null) {
-		visible = ((JTextComponent)host).isEditable();
-	    }
-	}
-	super.setParent(p);  
+        if (p != null) {
+            Container host = p.getContainer();
+            if (host != null) {
+                visible = ((JTextComponent)host).isEditable();
+            }
+        }
+        super.setParent(p);
     }
 
     /**
@@ -101,7 +100,7 @@ class NoFramesView extends BlockView {
      * whether the view is visible or not.
      */
     public boolean isVisible() {
-	return visible;
+        return visible;
     }
 
 
@@ -110,12 +109,12 @@ class NoFramesView extends BlockView {
      * invoke the superclass to perform layout.
      */
     protected void layout(int width, int height) {
-	if (!isVisible()) {
-	    return;
-	}
-	super.layout(width, height);   
+        if (!isVisible()) {
+            return;
+        }
+        super.layout(width, height);
     }
-        
+
     /**
      * Determines the preferred span for this view.  Returns
      * 0 if the view is not visible, otherwise it calls the
@@ -125,32 +124,32 @@ class NoFramesView extends BlockView {
      * @param axis may be either View.X_AXIS or View.Y_AXIS
      * @return   the span the view would like to be rendered into;
      *           typically the view is told to render into the span
-     *           that is returned, although there is no guarantee;  
+     *           that is returned, although there is no guarantee;
      *           the parent may choose to resize or break the view
      * @see text.ParagraphView#getPreferredSpan
      */
     public float getPreferredSpan(int axis) {
-       	if (!visible) {
-	    return 0;
-	}
-	return super.getPreferredSpan(axis);
+        if (!visible) {
+            return 0;
+        }
+        return super.getPreferredSpan(axis);
     }
 
     /**
      * Determines the minimum span for this view along an
-     * axis.  Returns 0 if the view is not visible, otherwise 
+     * axis.  Returns 0 if the view is not visible, otherwise
      * it calls the superclass method to get the minimum span.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or 
-     *		<code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *          <code>View.Y_AXIS</code>
      * @return  the minimum span the view can be rendered into
      * @see text.ParagraphView#getMinimumSpan
      */
     public float getMinimumSpan(int axis) {
-	if (!visible) {
-	    return 0;
-	}
-	return super.getMinimumSpan(axis);
+        if (!visible) {
+            return 0;
+        }
+        return super.getMinimumSpan(axis);
     }
 
     /**
@@ -158,16 +157,16 @@ class NoFramesView extends BlockView {
      * axis.  Returns 0 if the view is not visible, otherwise
      * it calls the superclass method ot get the maximum span.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or 
-     *	<code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or
+     *  <code>View.Y_AXIS</code>
      * @return  the maximum span the view can be rendered into
      * @see text.ParagraphView#getMaximumSpan
      */
     public float getMaximumSpan(int axis) {
-	if (!visible) {
-	    return 0;
-	}
-	return super.getMaximumSpan(axis);
+        if (!visible) {
+            return 0;
+        }
+        return super.getMaximumSpan(axis);
     }
 
     boolean visible;

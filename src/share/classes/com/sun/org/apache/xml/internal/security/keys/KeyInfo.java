@@ -93,7 +93,7 @@ import org.w3c.dom.NodeList;
 public class KeyInfo extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(KeyInfo.class.getName());
 
 
@@ -312,22 +312,22 @@ public class KeyInfo extends SignatureElementProxy {
       }
    }
 
-	/**
-	 * Method addEncryptedKey
-	 *
-	 * @param encryptedKey
-	 * @throws XMLEncryptionException
-	 */
+        /**
+         * Method addEncryptedKey
+         *
+         * @param encryptedKey
+         * @throws XMLEncryptionException
+         */
 
-	public void add(EncryptedKey encryptedKey) 
-		throws XMLEncryptionException {
+        public void add(EncryptedKey encryptedKey)
+                throws XMLEncryptionException {
 
-		if (this._state == MODE_SIGN) {
-			XMLCipher cipher = XMLCipher.getInstance();
-			this._constructionElement.appendChild(cipher.martial(encryptedKey));
-		}
+                if (this._state == MODE_SIGN) {
+                        XMLCipher cipher = XMLCipher.getInstance();
+                        this._constructionElement.appendChild(cipher.martial(encryptedKey));
+                }
 
-	}
+        }
 
    /**
     * Method addUnknownElement
@@ -447,8 +447,8 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new KeyName(e, this._baseURI);
-      } 
-      return null;      
+      }
+      return null;
    }
 
    /**
@@ -465,8 +465,8 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new KeyValue(e, this._baseURI);
-      } 
-      return null;      
+      }
+      return null;
    }
 
    /**
@@ -483,8 +483,8 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new MgmtData(e, this._baseURI);
-      } 
-       return null;      
+      }
+       return null;
    }
 
    /**
@@ -501,8 +501,8 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new PGPData(e, this._baseURI);
-      } 
-      return null;      
+      }
+      return null;
    }
 
    /**
@@ -520,7 +520,7 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new RetrievalMethod(e, this._baseURI);
-      } 
+      }
       return null;
    }
 
@@ -538,8 +538,8 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new SPKIData(e, this._baseURI);
-      } 
-      return null;     
+      }
+      return null;
    }
 
    /**
@@ -556,30 +556,30 @@ public class KeyInfo extends SignatureElementProxy {
 
       if (e != null) {
          return new X509Data(e, this._baseURI);
-      } 
+      }
       return null;
    }
 
    /**
-	* Method itemEncryptedKey
-	*
-	* @param i
-	* @return the asked EncryptedKey element, null if the index is too big
-	* @throws XMLSecurityException
-	*/
+        * Method itemEncryptedKey
+        *
+        * @param i
+        * @return the asked EncryptedKey element, null if the index is too big
+        * @throws XMLSecurityException
+        */
 
-	public EncryptedKey itemEncryptedKey(int i) throws XMLSecurityException {
+        public EncryptedKey itemEncryptedKey(int i) throws XMLSecurityException {
 
-		Element e = 
-			XMLUtils.selectXencNode(this._constructionElement.getFirstChild(),
-										  EncryptionConstants._TAG_ENCRYPTEDKEY,i);
+                Element e =
+                        XMLUtils.selectXencNode(this._constructionElement.getFirstChild(),
+                                                                                  EncryptionConstants._TAG_ENCRYPTEDKEY,i);
 
-		if (e != null) {
-			XMLCipher cipher = XMLCipher.getInstance();
-			cipher.init(XMLCipher.UNWRAP_MODE, null);
-			return cipher.loadEncryptedKey(e);
-		}
-		return null;
+                if (e != null) {
+                        XMLCipher cipher = XMLCipher.getInstance();
+                        cipher.init(XMLCipher.UNWRAP_MODE, null);
+                        return cipher.loadEncryptedKey(e);
+                }
+                return null;
    }
 
    /**
@@ -710,8 +710,8 @@ public class KeyInfo extends SignatureElementProxy {
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I could find a key using the per-KeyInfo key resolvers");
 
          return pk;
-      } 
-      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a key using the per-KeyInfo key resolvers");      
+      }
+      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a key using the per-KeyInfo key resolvers");
 
       pk = this.getPublicKeyFromStaticResolvers();
 
@@ -720,7 +720,7 @@ public class KeyInfo extends SignatureElementProxy {
 
          return pk;
       }
-      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a key using the system-wide key resolvers");      
+      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a key using the system-wide key resolvers");
 
       return null;
    }
@@ -736,7 +736,7 @@ public class KeyInfo extends SignatureElementProxy {
       for (int i = 0; i < KeyResolver.length(); i++) {
          KeyResolver keyResolver = KeyResolver.item(i);
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {       
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 
@@ -771,10 +771,10 @@ public class KeyInfo extends SignatureElementProxy {
                         }
                      }
                   }
-               }               
+               }
             }
             currentChild=currentChild.getNextSibling();
-         }      
+         }
       }
       return null;
    }
@@ -790,10 +790,10 @@ public class KeyInfo extends SignatureElementProxy {
       for (int i = 0; i < this.lengthInternalKeyResolver(); i++) {
          KeyResolverSpi keyResolver = this.itemInternalKeyResolver(i);
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
 
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {    
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 
@@ -850,27 +850,27 @@ public class KeyInfo extends SignatureElementProxy {
       X509Certificate cert = this.getX509CertificateFromInternalResolvers();
 
       if (cert != null) {
-         if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, 
+         if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE,
             "I could find a X509Certificate using the per-KeyInfo key resolvers");
 
          return cert;
-      } 
-      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, 
+      }
+      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE,
             "I couldn't find a X509Certificate using the per-KeyInfo key resolvers");
-      
+
 
       // Then use the system-wide Resolvers
       cert = this.getX509CertificateFromStaticResolvers();
 
       if (cert != null) {
-         if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, 
+         if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE,
             "I could find a X509Certificate using the system-wide key resolvers");
 
          return cert;
-      } 
-      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, 
+      }
+      if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE,
             "I couldn't find a X509Certificate using the system-wide key resolvers");
-      
+
 
       return null;
    }
@@ -886,13 +886,13 @@ public class KeyInfo extends SignatureElementProxy {
    X509Certificate getX509CertificateFromStaticResolvers()
            throws KeyResolverException {
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Start getX509CertificateFromStaticResolvers() with "
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Start getX509CertificateFromStaticResolvers() with "
                 + KeyResolver.length() + " resolvers");
 
       for (int i = 0; i < KeyResolver.length(); i++) {
          KeyResolver keyResolver = KeyResolver.item(i);
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {       
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 
@@ -926,10 +926,10 @@ public class KeyInfo extends SignatureElementProxy {
                         }
                      }
                   }
-               }               
+               }
             }
             currentChild=currentChild.getNextSibling();
-         }      
+         }
       }
       return null;
    }
@@ -943,16 +943,16 @@ public class KeyInfo extends SignatureElementProxy {
    X509Certificate getX509CertificateFromInternalResolvers()
            throws KeyResolverException {
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Start getX509CertificateFromInternalResolvers() with "
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Start getX509CertificateFromInternalResolvers() with "
                 + this.lengthInternalKeyResolver() + " resolvers");
 
       for (int i = 0; i < this.lengthInternalKeyResolver(); i++) {
          KeyResolverSpi keyResolver = this.itemInternalKeyResolver(i);
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
 
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {    
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 
@@ -1009,9 +1009,9 @@ public class KeyInfo extends SignatureElementProxy {
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I could find a secret key using the per-KeyInfo key resolvers");
 
          return sk;
-      } 
+      }
       if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a secret key using the per-KeyInfo key resolvers");
-      
+
 
       sk = this.getSecretKeyFromStaticResolvers();
 
@@ -1019,9 +1019,9 @@ public class KeyInfo extends SignatureElementProxy {
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I could find a secret key using the system-wide key resolvers");
 
          return sk;
-      } 
+      }
       if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I couldn't find a secret key using the system-wide key resolvers");
-      
+
 
       return null;
    }
@@ -1039,7 +1039,7 @@ public class KeyInfo extends SignatureElementProxy {
          KeyResolver keyResolver = KeyResolver.item(i);
 
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {    
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 
@@ -1094,10 +1094,10 @@ public class KeyInfo extends SignatureElementProxy {
       for (int i = 0; i < this.lengthInternalKeyResolver(); i++) {
          KeyResolverSpi keyResolver = this.itemInternalKeyResolver(i);
          if (true)
-         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
 
          Node currentChild=this._constructionElement.getFirstChild();
-         while (currentChild!=null)      {    
+         while (currentChild!=null)      {
             if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
                if (this._storageResolvers.size() == 0) {
 

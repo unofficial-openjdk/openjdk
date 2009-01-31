@@ -42,50 +42,50 @@ typedef unsigned char MaskBits;
 
 extern uns_ordered_dither_array img_oda_alpha;
 
-#define BufComplete(cvdata, dstX1, dstY1, dstX2, dstY2)		\
+#define BufComplete(cvdata, dstX1, dstY1, dstX2, dstY2)         \
     (((AwtImage *)cvdata)->BufDone(dstX1, dstY1, dstX2, dstY2))
 
 #define SendRow(cvdata, dstY, dstX1, dstX2)
 
-#define ImgInitMask(cvdata, x1, y1, x2, y2)			\
+#define ImgInitMask(cvdata, x1, y1, x2, y2)                     \
     (((AwtImage *) cvdata)->GetMaskBuf(TRUE, x1, y1, x2, y2))
 
-#define ScanBytes(cvdata)	(((AwtImage *) cvdata)->GetBufScan())
+#define ScanBytes(cvdata)       (((AwtImage *) cvdata)->GetBufScan())
 
-#define MaskScan(cvdata)					\
+#define MaskScan(cvdata)                                        \
     MaskOffset((((AwtImage *) cvdata)->GetWidth() + 31) & (~31))
 
-#define MaskOffset(x)		((x) >> 3)
+#define MaskOffset(x)           ((x) >> 3)
 
-#define MaskInit(x)		(0x80 >> ((x) & 7))
+#define MaskInit(x)             (0x80 >> ((x) & 7))
 
-#define SetOpaqueBit(mask, bit)		((mask) &= ~(bit))
-#define SetTransparentBit(mask, bit)	((mask) |= (bit))
+#define SetOpaqueBit(mask, bit)         ((mask) &= ~(bit))
+#define SetTransparentBit(mask, bit)    ((mask) |= (bit))
 
-#define ColorCubeFSMap(r, g, b)		AwtImage::CubeMap(r, g, b)
+#define ColorCubeFSMap(r, g, b)         AwtImage::CubeMap(r, g, b)
 
-#define ColorCubeOrdMapSgn(r, g, b)	AwtImage::CubeMap(r, g, b);
+#define ColorCubeOrdMapSgn(r, g, b)     AwtImage::CubeMap(r, g, b);
 
-#define GetPixelRGB(pixel, red, green, blue)			\
-    do {							\
-	RGBQUAD *cp = AwtImage::PixelColor(pixel);		\
-	red = cp->rgbRed;					\
-	green = cp->rgbGreen;					\
-	blue = cp->rgbBlue;					\
+#define GetPixelRGB(pixel, red, green, blue)                    \
+    do {                                                        \
+        RGBQUAD *cp = AwtImage::PixelColor(pixel);              \
+        red = cp->rgbRed;                                       \
+        green = cp->rgbGreen;                                   \
+        blue = cp->rgbBlue;                                     \
     } while (0)
 
 #ifdef DEBUG
 #undef img_check
-#define img_check(condition)					\
-    do {							\
-	if (!(condition)) {					\
-	    SignalError(0, JAVAPKG "InternalError",		\
-			"assertion failed:  " #condition);	\
-	    return SCALEFAILURE;				\
-	}							\
+#define img_check(condition)                                    \
+    do {                                                        \
+        if (!(condition)) {                                     \
+            SignalError(0, JAVAPKG "InternalError",             \
+                        "assertion failed:  " #condition);      \
+            return SCALEFAILURE;                                \
+        }                                                       \
     } while (0)
 #else /* DEBUG */
-#define img_check(condition)	do {} while (0)
+#define img_check(condition)    do {} while (0)
 #endif /* DEBUG */
 
 void color_init();

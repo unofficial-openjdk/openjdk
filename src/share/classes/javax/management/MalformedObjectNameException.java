@@ -32,7 +32,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class MalformedObjectNameException extends OperationsException   { 
+public class MalformedObjectNameException extends OperationsException   {
 
     /* Serial version */
     private static final long serialVersionUID = -572689714442915824L;
@@ -41,18 +41,15 @@ public class MalformedObjectNameException extends OperationsException   {
      * Default constructor.
      */
     public MalformedObjectNameException() {
-	super();
+        super();
     }
-    
+
     /**
      * Constructor that allows a specific error message to be specified.
      *
      * @param message the detail message.
      */
     public MalformedObjectNameException(String message) {
-	super(message);
+        super(message);
     }
 }
-
-
-

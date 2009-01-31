@@ -36,29 +36,29 @@ public class ClosedWriter implements Runnable {
     static PipedOutputStream os;
 
     public void run() {
-	try {
-	    os.write(0);
-	    os.write(0);
-	    os.write(0);
-	    os.write(0);
-	    os.write(0);
-	    os.close();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        try {
+            os.write(0);
+            os.write(0);
+            os.write(0);
+            os.write(0);
+            os.write(0);
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws Exception {
-	is = new PipedInputStream();
-	os = new PipedOutputStream();
-	is.connect(os);
+        is = new PipedInputStream();
+        os = new PipedOutputStream();
+        is.connect(os);
 
-	Thread t = new Thread(new ClosedWriter());
-	t.start();
+        Thread t = new Thread(new ClosedWriter());
+        t.start();
 
-	// this should just exit cleanly but the bug causes an exception
-	// to be thrown on the last read.
-	while (is.read() != -1) {
-	}
+        // this should just exit cleanly but the bug causes an exception
+        // to be thrown on the last read.
+        while (is.read() != -1) {
+        }
     }
 }

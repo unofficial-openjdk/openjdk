@@ -81,28 +81,28 @@ public class UnconnectedSocketWrongExceptions {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	    
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        serverPort = sslServerSocket.getLocalPort();
 
-	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
 
-	sslIS.read();
-	sslOS.write(85);
-	sslOS.flush();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	sslSocket.close();
+        sslIS.read();
+        sslOS.write(85);
+        sslOS.flush();
+
+        sslSocket.close();
     }
 
     /*
@@ -113,56 +113,56 @@ public class UnconnectedSocketWrongExceptions {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
-	SSLSocketFactory sslsf =
-	    (SSLSocketFactory) SSLSocketFactory.getDefault();
-	SSLSocket sslSocket = (SSLSocket)
-	    sslsf.createSocket();
+        SSLSocketFactory sslsf =
+            (SSLSocketFactory) SSLSocketFactory.getDefault();
+        SSLSocket sslSocket = (SSLSocket)
+            sslsf.createSocket();
 
-	InputStream sslIS;
-	OutputStream sslOS;
+        InputStream sslIS;
+        OutputStream sslOS;
 
-	try {
-	    System.out.print("getInputStream()...");
-	    sslIS = sslSocket.getInputStream();
-	    throw new Exception("getInputStream didn't throw properly");
-	} catch (SocketException e) {
-	    System.out.println("Caught proper exception:  " + e.toString());
-	}
+        try {
+            System.out.print("getInputStream()...");
+            sslIS = sslSocket.getInputStream();
+            throw new Exception("getInputStream didn't throw properly");
+        } catch (SocketException e) {
+            System.out.println("Caught proper exception:  " + e.toString());
+        }
 
-	try {
-	    System.out.print("getOutputStream()...");
-	    sslOS = sslSocket.getOutputStream();
-	    throw new Exception("getOutputStream didn't throw properly");
-	} catch (SocketException e) {
-	    System.out.println("Caught proper exception:  " + e.toString());
-	}
+        try {
+            System.out.print("getOutputStream()...");
+            sslOS = sslSocket.getOutputStream();
+            throw new Exception("getOutputStream didn't throw properly");
+        } catch (SocketException e) {
+            System.out.println("Caught proper exception:  " + e.toString());
+        }
 
-	try {
-	    System.out.print("startHandshake()...");
-	    sslSocket.startHandshake();
-	    throw new Exception("startHandshake() didn't throw properly");
-	} catch (SocketException e) {
-	    System.out.println("Caught proper exception:  " + e.toString());
-	}
+        try {
+            System.out.print("startHandshake()...");
+            sslSocket.startHandshake();
+            throw new Exception("startHandshake() didn't throw properly");
+        } catch (SocketException e) {
+            System.out.println("Caught proper exception:  " + e.toString());
+        }
 
-	InetSocketAddress addr = new InetSocketAddress(
-	    "localhost", serverPort); 
-	sslSocket.connect(addr, 2000); 
-	sslOS = sslSocket.getOutputStream();
-	sslIS = sslSocket.getInputStream();
+        InetSocketAddress addr = new InetSocketAddress(
+            "localhost", serverPort);
+        sslSocket.connect(addr, 2000);
+        sslOS = sslSocket.getOutputStream();
+        sslIS = sslSocket.getInputStream();
 
-	sslOS.write(280);
-	sslOS.flush();
-	System.out.println("reading: " + sslIS.read());
+        sslOS.write(280);
+        sslOS.flush();
+        System.out.println("reading: " + sslIS.read());
 
-	sslSocket.close();
+        sslSocket.close();
     }
 
     /*
@@ -177,24 +177,24 @@ public class UnconnectedSocketWrongExceptions {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
+        /*
+         * Start the tests.
+         */
         new UnconnectedSocketWrongExceptions();
     }
 
@@ -207,82 +207,82 @@ public class UnconnectedSocketWrongExceptions {
      * Fork off the other side, then do your work.
      */
     UnconnectedSocketWrongExceptions() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null) {
-	    System.out.print("Server Exception:");
-	    throw serverException;
-	}
-	if (clientException != null) {
-	    System.out.print("Client Exception:");
-	    throw clientException;
-	}
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null) {
+            System.out.print("Server Exception:");
+            throw serverException;
+        }
+        if (clientException != null) {
+            System.out.print("Client Exception:");
+            throw clientException;
+        }
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

@@ -31,7 +31,6 @@ import sun.nio.cs.IBM857;
  * Tables and data to convert Unicode to Cp857
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp857 extends CharToByteSingleByte {

@@ -28,15 +28,15 @@ package com.sun.jdi;
 import java.util.List;
 
 /**
- * A mirror of an interface in the target VM. An InterfaceType is 
+ * A mirror of an interface in the target VM. An InterfaceType is
  * a refinement of {@link ReferenceType} that applies to true interfaces
- * in the JLS  sense of the definition (not a class, not an array type). 
- * An interface type will never be returned by 
+ * in the JLS  sense of the definition (not a class, not an array type).
+ * An interface type will never be returned by
  * {@link ObjectReference#referenceType}, but it may be in the list
- * of implemented interfaces for a {@link ClassType} that is returned 
+ * of implemented interfaces for a {@link ClassType} that is returned
  * by that method.
  *
- * @see ObjectReference 
+ * @see ObjectReference
  *
  * @author Robert Field
  * @author Gordon Hirsch
@@ -52,7 +52,7 @@ public interface InterfaceType extends ReferenceType {
      * @return a List of {@link InterfaceType} objects each mirroring
      * an interface extended by this interface.
      * If none exist, returns a zero length List.
-     * @throws ClassNotPreparedException if this class not yet been 
+     * @throws ClassNotPreparedException if this class not yet been
      * prepared.
      */
     List<InterfaceType> superinterfaces();
@@ -79,4 +79,3 @@ public interface InterfaceType extends ReferenceType {
      */
     List<ClassType> implementors();
 }
-

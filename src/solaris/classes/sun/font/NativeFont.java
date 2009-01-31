@@ -67,51 +67,51 @@ public class NativeFont extends PhysicalFont {
      * @throws FontFormatException - if the font can't be located.
      */
     public NativeFont(String platName, boolean bitmapDelegate)
-	throws FontFormatException {
-	super(platName, null);
+        throws FontFormatException {
+        super(platName, null);
 
-	/* This is set true if this is an instance of a NativeFont
-	 * created by some other font, to get native bitmaps.
-	 * The delegating font will call this font only for "basic"
-	 * cases - ie non-rotated, uniform scale, monochrome bitmaps.
-	 * If this is false, then this instance may need to itself
-	 * delegate to another font for non-basic cases. Since
-	 * NativeFonts are used in that way only for symbol and dingbats
-	 * we know its safe to delegate these to the JRE's default
-	 * physical font (Lucida Sans Regular).
-	 */
-	isBitmapDelegate = bitmapDelegate;
+        /* This is set true if this is an instance of a NativeFont
+         * created by some other font, to get native bitmaps.
+         * The delegating font will call this font only for "basic"
+         * cases - ie non-rotated, uniform scale, monochrome bitmaps.
+         * If this is false, then this instance may need to itself
+         * delegate to another font for non-basic cases. Since
+         * NativeFonts are used in that way only for symbol and dingbats
+         * we know its safe to delegate these to the JRE's default
+         * physical font (Lucida Sans Regular).
+         */
+        isBitmapDelegate = bitmapDelegate;
 
-	if (GraphicsEnvironment.isHeadless()) {
-	    throw new FontFormatException("Native font in headless toolkit");
-	}
-	fontRank = Font2D.NATIVE_RANK;
-	initNames();
-	if (getNumGlyphs() == 0) {
-	  throw new FontFormatException("Couldn't locate font" + platName);  
-	}
+        if (GraphicsEnvironment.isHeadless()) {
+            throw new FontFormatException("Native font in headless toolkit");
+        }
+        fontRank = Font2D.NATIVE_RANK;
+        initNames();
+        if (getNumGlyphs() == 0) {
+          throw new FontFormatException("Couldn't locate font" + platName);
+        }
     }
 
     private void initNames() throws FontFormatException {
-	/* Valid XLFD has exactly 14 "-" chars. 
-	 * First run over the string to verify have at least this many
-	 * At the same time record the locations of the hyphens
-	 * so we can just pick the right substring later on
-	 */
-	int[] hPos = new int[14];
-	int hyphenCnt = 1;
-	int pos = 1;
+        /* Valid XLFD has exactly 14 "-" chars.
+         * First run over the string to verify have at least this many
+         * At the same time record the locations of the hyphens
+         * so we can just pick the right substring later on
+         */
+        int[] hPos = new int[14];
+        int hyphenCnt = 1;
+        int pos = 1;
 
-	String xlfd = platName.toLowerCase(Locale.ENGLISH);
-	if (xlfd.startsWith("-")) {
+        String xlfd = platName.toLowerCase(Locale.ENGLISH);
+        if (xlfd.startsWith("-")) {
             while (pos != -1 && hyphenCnt < 14) {
-		pos = xlfd.indexOf('-', pos);
-		if (pos != -1) {
+                pos = xlfd.indexOf('-', pos);
+                if (pos != -1) {
                     hPos[hyphenCnt++] = pos;
                     pos++;
-		}
+                }
             }
-	}
+        }
 
         if (hyphenCnt == 14 && pos != -1) {
 
@@ -121,10 +121,10 @@ public class NativeFont extends PhysicalFont {
             char ch = Character.toUpperCase(sBuffer.charAt(0));
             sBuffer.replace(0, 1, String.valueOf(ch));
             for (int i=1;i<sBuffer.length()-1; i++) {
-		if (sBuffer.charAt(i) == ' ') {
+                if (sBuffer.charAt(i) == ' ') {
                     ch = Character.toUpperCase(sBuffer.charAt(i+1));
                     sBuffer.replace(i+1, i+2, String.valueOf(ch));
-		}
+                }
             }
             familyName = sBuffer.toString();
 
@@ -134,57 +134,57 @@ public class NativeFont extends PhysicalFont {
             String styleStr = null;
 
             if (tmpWeight.indexOf("bold") >= 0 ||
-		tmpWeight.indexOf("demi") >= 0) {
-		style |= Font.BOLD;
-		styleStr = "Bold";
+                tmpWeight.indexOf("demi") >= 0) {
+                style |= Font.BOLD;
+                styleStr = "Bold";
             }
 
             if (tmpSlant.equals("i") ||
-		tmpSlant.indexOf("italic") >= 0) {
-		style |= Font.ITALIC;
+                tmpSlant.indexOf("italic") >= 0) {
+                style |= Font.ITALIC;
 
-		if (styleStr == null) {
+                if (styleStr == null) {
                     styleStr = "Italic";
-		} else {
+                } else {
                     styleStr = styleStr + " Italic";
-		}
+                }
             }
             else if (tmpSlant.equals("o") ||
-		tmpSlant.indexOf("oblique") >= 0) {
-		style |= Font.ITALIC;
-		if (styleStr == null) {
+                tmpSlant.indexOf("oblique") >= 0) {
+                style |= Font.ITALIC;
+                if (styleStr == null) {
                     styleStr = "Oblique";
-		} else {
+                } else {
                     styleStr = styleStr + " Oblique";
-		}
+                }
             }
 
             if (styleStr == null) {
-		fullName = familyName;
+                fullName = familyName;
             } else {
-		fullName = familyName + " " + styleStr;
+                fullName = familyName + " " + styleStr;
             }
 
             encoding = xlfd.substring(hPos[12]+1);
             if (encoding.startsWith("-")) {
-		encoding = xlfd.substring(hPos[13]+1);
+                encoding = xlfd.substring(hPos[13]+1);
             }
             if (encoding.indexOf("fontspecific") >= 0) {
-		if (tmpFamily.indexOf("dingbats") >= 0) {
-		    encoding = "dingbats";
-		} else if (tmpFamily.indexOf("symbol") >= 0) {
-		    encoding = "symbol";
-		} else {
-		    encoding = "iso8859-1";
-		}
+                if (tmpFamily.indexOf("dingbats") >= 0) {
+                    encoding = "dingbats";
+                } else if (tmpFamily.indexOf("symbol") >= 0) {
+                    encoding = "symbol";
+                } else {
+                    encoding = "iso8859-1";
+                }
             }
-	} else {
-	    throw new FontFormatException("Bad native name " + platName);
+        } else {
+            throw new FontFormatException("Bad native name " + platName);
 //             familyName = "Unknown";
 //             fullName = "Unknown";
 //             style = Font.PLAIN;
 //             encoding = "iso8859-1";
-	}
+        }
     }
 
     /* Wildcard all the size fields in the XLFD and retrieve a list of
@@ -202,73 +202,73 @@ public class NativeFont extends PhysicalFont {
      * there are external bitmaps.
      */
     static boolean hasExternalBitmaps(String platName) {
-	/* Turn -monotype-arial-bold-i-normal--0-0-0-0-p-0-iso8859-1
-	 * into -monotype-arial-bold-i-normal--*-*-*-*-p-*-iso8859-1
-	 * by replacing all -0- substrings with -*-
-	 */
-	StringBuilder sb = new StringBuilder(platName);
-	int pos = sb.indexOf("-0-");
-        while (pos >=0) { 
+        /* Turn -monotype-arial-bold-i-normal--0-0-0-0-p-0-iso8859-1
+         * into -monotype-arial-bold-i-normal--*-*-*-*-p-*-iso8859-1
+         * by replacing all -0- substrings with -*-
+         */
+        StringBuilder sb = new StringBuilder(platName);
+        int pos = sb.indexOf("-0-");
+        while (pos >=0) {
             sb.replace(pos+1, pos+2, "*");
-	    pos = sb.indexOf("-0-", pos);
-	};
-	String xlfd = sb.toString();
-	byte[] bytes = null;
-	try {
-	    bytes = xlfd.getBytes("UTF-8");
-	} catch (UnsupportedEncodingException e) {
-	    bytes = xlfd.getBytes();
-	}
-	return haveBitmapFonts(bytes);
+            pos = sb.indexOf("-0-", pos);
+        };
+        String xlfd = sb.toString();
+        byte[] bytes = null;
+        try {
+            bytes = xlfd.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = xlfd.getBytes();
+        }
+        return haveBitmapFonts(bytes);
     }
 
     public static boolean fontExists(String xlfd) {
-	byte[] bytes = null;
-	try {
-	    bytes = xlfd.getBytes("UTF-8");
-	} catch (UnsupportedEncodingException e) {
-	    bytes = xlfd.getBytes();
-	}
-	return fontExists(bytes);	
+        byte[] bytes = null;
+        try {
+            bytes = xlfd.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = xlfd.getBytes();
+        }
+        return fontExists(bytes);
     }
 
     private static native boolean haveBitmapFonts(byte[] xlfd);
     private static native boolean fontExists(byte[] xlfd);
 
     public CharToGlyphMapper getMapper() {
-	if (mapper == null) {
-	    if (isBitmapDelegate) {
-		/* we are a delegate */
-		mapper = new NativeGlyphMapper(this);
-	    } else {
-		/* we need to delegate */
-		delegateFont = FontManager.getDefaultPhysicalFont();
-		mapper = delegateFont.getMapper();
-	    }
-	}
-	return mapper;
+        if (mapper == null) {
+            if (isBitmapDelegate) {
+                /* we are a delegate */
+                mapper = new NativeGlyphMapper(this);
+            } else {
+                /* we need to delegate */
+                delegateFont = FontManager.getDefaultPhysicalFont();
+                mapper = delegateFont.getMapper();
+            }
+        }
+        return mapper;
     }
 
     FontStrike createStrike(FontStrikeDesc desc) {
-	if (isBitmapDelegate) {
-	    return new NativeStrike(this, desc);
-	} else {
-	    if (delegateFont == null) {
-		delegateFont = FontManager.getDefaultPhysicalFont();
-	    }
+        if (isBitmapDelegate) {
+            return new NativeStrike(this, desc);
+        } else {
+            if (delegateFont == null) {
+                delegateFont = FontManager.getDefaultPhysicalFont();
+            }
             /* If no FileFont's are found, delegate font may be
              * a NativeFont, so we need to avoid recursing here.
              */
             if (delegateFont instanceof NativeFont) {
                 return new NativeStrike((NativeFont)delegateFont, desc);
             }
-	    FontStrike delegate = delegateFont.createStrike(desc);
-	    return new DelegateStrike(this, desc, delegate);
-	}
+            FontStrike delegate = delegateFont.createStrike(desc);
+            return new DelegateStrike(this, desc, delegate);
+        }
     }
 
     public Rectangle2D getMaxCharBounds(FontRenderContext frc) {
-	    return null;
+            return null;
     }
 
     native StrikeMetrics getFontMetrics(long pScalerContext);
@@ -276,15 +276,15 @@ public class NativeFont extends PhysicalFont {
     native float getGlyphAdvance(long pContext, int glyphCode);
 
     Rectangle2D.Float getGlyphOutlineBounds(long pScalerContext,
-					    int glyphCode) {
-	return new Rectangle2D.Float(0f, 0f, 0f, 0f);
+                                            int glyphCode) {
+        return new Rectangle2D.Float(0f, 0f, 0f, 0f);
     }
 
     public GeneralPath getGlyphOutline(long pScalerContext,
-				       int glyphCode,
-				       float x,
-				       float y) {
-	return null;
+                                       int glyphCode,
+                                       float x,
+                                       float y) {
+        return null;
     }
 
     native long getGlyphImage(long pScalerContext, int glyphCode);
@@ -292,31 +292,31 @@ public class NativeFont extends PhysicalFont {
     native long getGlyphImageNoDefault(long pScalerContext, int glyphCode);
 
     void getGlyphMetrics(long pScalerContext, int glyphCode,
-			Point2D.Float metrics) {
-	throw new RuntimeException("this should be called on the strike");
+                        Point2D.Float metrics) {
+        throw new RuntimeException("this should be called on the strike");
     }
 
     public  GeneralPath getGlyphVectorOutline(long pScalerContext,
-					      int[] glyphs, int numGlyphs,
-					      float x,  float y) {
-	return null;
+                                              int[] glyphs, int numGlyphs,
+                                              float x,  float y) {
+        return null;
     }
 
     private native int countGlyphs(byte[] platformNameBytes, int ptSize);
 
     public int getNumGlyphs() {
-	if (numGlyphs == -1) {
-	    byte[] bytes = getPlatformNameBytes(8);
-	    numGlyphs = countGlyphs(bytes, 8);
-	}
-	return numGlyphs;
+        if (numGlyphs == -1) {
+            byte[] bytes = getPlatformNameBytes(8);
+            numGlyphs = countGlyphs(bytes, 8);
+        }
+        return numGlyphs;
     }
-    
+
     PhysicalFont getDelegateFont() {
-	if (delegateFont == null) {
-	    delegateFont = FontManager.getDefaultPhysicalFont();
-	}
-	return delegateFont;
+        if (delegateFont == null) {
+            delegateFont = FontManager.getDefaultPhysicalFont();
+        }
+        return delegateFont;
     }
 
     /* Specify that the dpi is 72x72, as this corresponds to JDK's
@@ -327,66 +327,66 @@ public class NativeFont extends PhysicalFont {
      * font configuration files). Wild card the other numeric fields.
      * ie to request 12 pt Times New Roman italic font, use an XLFD like :
      * -monotype-times new roman-regular-i---*-120-72-72-p-*-iso8859-1
-     */ 
+     */
     byte[] getPlatformNameBytes(int ptSize) {
-	int[] hPos = new int[14];
-	int hyphenCnt = 1;
-	int pos = 1;
- 	
-	while (pos != -1 && hyphenCnt < 14) {
-	    pos = platName.indexOf('-', pos);
-	    if (pos != -1) {
-		hPos[hyphenCnt++] = pos;
-		    pos++;
-	    }
-	}
-	String sizeStr = Integer.toString((int)Math.abs(ptSize)*10);
-	StringBuilder sb = new StringBuilder(platName);
-	/* work backwards so as to not invalidate the positions. */
-	sb.replace(hPos[11]+1, hPos[12], "*");
+        int[] hPos = new int[14];
+        int hyphenCnt = 1;
+        int pos = 1;
 
-	sb.replace(hPos[9]+1, hPos[10], "72");
+        while (pos != -1 && hyphenCnt < 14) {
+            pos = platName.indexOf('-', pos);
+            if (pos != -1) {
+                hPos[hyphenCnt++] = pos;
+                    pos++;
+            }
+        }
+        String sizeStr = Integer.toString((int)Math.abs(ptSize)*10);
+        StringBuilder sb = new StringBuilder(platName);
+        /* work backwards so as to not invalidate the positions. */
+        sb.replace(hPos[11]+1, hPos[12], "*");
 
- 	sb.replace(hPos[8]+1, hPos[9], "72");
+        sb.replace(hPos[9]+1, hPos[10], "72");
 
-	/* replace the 3 lines above with the next 3 lines to get the 1.4.2
-	 * behaviour
-	 */
-// 	sb.replace(hPos[11]+1, hPos[12], "0");
-// 	sb.replace(hPos[9]+1, hPos[10], "0");
-//  	sb.replace(hPos[8]+1, hPos[9], "0");
+        sb.replace(hPos[8]+1, hPos[9], "72");
 
- 	sb.replace(hPos[7]+1, hPos[8], sizeStr);
+        /* replace the 3 lines above with the next 3 lines to get the 1.4.2
+         * behaviour
+         */
+//      sb.replace(hPos[11]+1, hPos[12], "0");
+//      sb.replace(hPos[9]+1, hPos[10], "0");
+//      sb.replace(hPos[8]+1, hPos[9], "0");
 
- 	sb.replace(hPos[6]+1, hPos[7], "*");
+        sb.replace(hPos[7]+1, hPos[8], sizeStr);
 
-	/* replace the 1 line above with the next line to get the 1.4.2
-	 * behaviour
-	 */
-//  	sb.replace(hPos[6]+1, hPos[7], "0");
-	
-	/* comment out this block to the the 1.4.2 behaviour */
-	if (hPos[0] == 0 && hPos[1] == 1) {
-	    /* null foundry name : some linux font configuration files have
-	     * symbol font entries like this and its just plain wrong.
-	     * Replace with a wild card. (Although those fonts should be
-	     * located via disk access rather than X11).
-	     */
-	   sb.replace(hPos[0]+1, hPos[1], "*"); 
-	}
+        sb.replace(hPos[6]+1, hPos[7], "*");
 
-	String xlfd = sb.toString();
-	byte[] bytes = null;
-	try {
-	    bytes = xlfd.getBytes("UTF-8");
-	} catch (UnsupportedEncodingException e) {
-	    bytes = xlfd.getBytes();
-	}
-	return bytes;
+        /* replace the 1 line above with the next line to get the 1.4.2
+         * behaviour
+         */
+//      sb.replace(hPos[6]+1, hPos[7], "0");
+
+        /* comment out this block to the the 1.4.2 behaviour */
+        if (hPos[0] == 0 && hPos[1] == 1) {
+            /* null foundry name : some linux font configuration files have
+             * symbol font entries like this and its just plain wrong.
+             * Replace with a wild card. (Although those fonts should be
+             * located via disk access rather than X11).
+             */
+           sb.replace(hPos[0]+1, hPos[1], "*");
+        }
+
+        String xlfd = sb.toString();
+        byte[] bytes = null;
+        try {
+            bytes = xlfd.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = xlfd.getBytes();
+        }
+        return bytes;
     }
 
     public String toString() {
-	return " ** Native Font: Family="+familyName+ " Name="+fullName+
-	    " style="+style+" nativeName="+platName;
+        return " ** Native Font: Family="+familyName+ " Name="+fullName+
+            " style="+style+" nativeName="+platName;
     }
 }

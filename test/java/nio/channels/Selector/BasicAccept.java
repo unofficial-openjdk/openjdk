@@ -37,101 +37,101 @@ import java.util.*;
 public class BasicAccept {
 
     public static int TEST_PORT = 40170;
-	
+
     static void server() throws Exception {
-	Selector acceptSelector = Selector.open();
-	ServerSocketChannel ssc = ServerSocketChannel.open();
-	ssc.configureBlocking(false);
-	InetAddress lh = InetAddress.getLocalHost();
-	InetSocketAddress isa
-	    = new InetSocketAddress(lh, SelectorTest.TEST_PORT);
-	ssc.socket().bind(isa);
-	SelectionKey acceptKey
-	    = ssc.register(acceptSelector, SelectionKey.OP_ACCEPT);
-	for (;;) {
-	    if (acceptSelector.select() == 0)
-		continue;
-	    Set readyKeys = acceptSelector.selectedKeys();
-	    Iterator i = readyKeys.iterator();
-	    while (i.hasNext()) {
-		SelectionKey sk = (SelectionKey)i.next();
-		i.remove();
-		ServerSocketChannel nextReady
-		    = (ServerSocketChannel)sk.channel();
-		SocketChannel sc = nextReady.accept();
-		ByteBuffer bb = ByteBuffer.wrap(new byte[] { 42 });
-		sc.write(bb);
-	    }
-	}
+        Selector acceptSelector = Selector.open();
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.configureBlocking(false);
+        InetAddress lh = InetAddress.getLocalHost();
+        InetSocketAddress isa
+            = new InetSocketAddress(lh, SelectorTest.TEST_PORT);
+        ssc.socket().bind(isa);
+        SelectionKey acceptKey
+            = ssc.register(acceptSelector, SelectionKey.OP_ACCEPT);
+        for (;;) {
+            if (acceptSelector.select() == 0)
+                continue;
+            Set readyKeys = acceptSelector.selectedKeys();
+            Iterator i = readyKeys.iterator();
+            while (i.hasNext()) {
+                SelectionKey sk = (SelectionKey)i.next();
+                i.remove();
+                ServerSocketChannel nextReady
+                    = (ServerSocketChannel)sk.channel();
+                SocketChannel sc = nextReady.accept();
+                ByteBuffer bb = ByteBuffer.wrap(new byte[] { 42 });
+                sc.write(bb);
+            }
+        }
     }
 
     private static class Server extends TestThread {
-	Server() {
-	    super("Server", System.err);
-	}
-	void go() throws Exception {
-	    server();
-	}
+        Server() {
+            super("Server", System.err);
+        }
+        void go() throws Exception {
+            server();
+        }
     }
 
     static void client() throws Exception {
-	// Get a connection from the server
-	InetAddress lh = InetAddress.getLocalHost();
-	InetSocketAddress isa
-	    = new InetSocketAddress(lh, SelectorTest.TEST_PORT);
-	int connectFailures = 0;
-	boolean result = false;
-	SocketChannel sc = SocketChannel.open();
-	for (;;) {
-	    try {
-		result = sc.connect(isa);
-		break;
-	    } catch (java.net.ConnectException e) {
-		connectFailures++;
-		if (connectFailures > 30)
-		    throw new RuntimeException("Cannot connect");
-		Thread.currentThread().sleep(100);
-		sc = SocketChannel.open();
-	    }
-	}
-	if (result) {
-	    System.err.println("Connected");
-	} else {
-	    // Only happens when server and client are on separate machines
-	    System.err.println("Connection pending...");
-	    connectFailures = 0;
-	    while (!result) {
-		try {
-		    result = sc.finishConnect();
-		    if (!result)
-			System.err.println("Not finished");
-		    Thread.sleep(50);
-		} catch (java.net.ConnectException e) {
-		    Thread.sleep(100);
-		    connectFailures++;
-		    if (connectFailures > 30)
-			throw new RuntimeException("Cannot finish connecting");
-		}
-	    }
-	    System.err.println("Finished connecting");
-	}
+        // Get a connection from the server
+        InetAddress lh = InetAddress.getLocalHost();
+        InetSocketAddress isa
+            = new InetSocketAddress(lh, SelectorTest.TEST_PORT);
+        int connectFailures = 0;
+        boolean result = false;
+        SocketChannel sc = SocketChannel.open();
+        for (;;) {
+            try {
+                result = sc.connect(isa);
+                break;
+            } catch (java.net.ConnectException e) {
+                connectFailures++;
+                if (connectFailures > 30)
+                    throw new RuntimeException("Cannot connect");
+                Thread.currentThread().sleep(100);
+                sc = SocketChannel.open();
+            }
+        }
+        if (result) {
+            System.err.println("Connected");
+        } else {
+            // Only happens when server and client are on separate machines
+            System.err.println("Connection pending...");
+            connectFailures = 0;
+            while (!result) {
+                try {
+                    result = sc.finishConnect();
+                    if (!result)
+                        System.err.println("Not finished");
+                    Thread.sleep(50);
+                } catch (java.net.ConnectException e) {
+                    Thread.sleep(100);
+                    connectFailures++;
+                    if (connectFailures > 30)
+                        throw new RuntimeException("Cannot finish connecting");
+                }
+            }
+            System.err.println("Finished connecting");
+        }
 
-	ByteBuffer bb = ByteBuffer.allocateDirect(1024);
-	if (sc.read(bb) < 0)
-	    throw new RuntimeException("Failed to read from server");
-	if (bb.get(0) != 42)
-	    throw new RuntimeException("Read wrong byte from server");
-	System.err.println("Read from server");
+        ByteBuffer bb = ByteBuffer.allocateDirect(1024);
+        if (sc.read(bb) < 0)
+            throw new RuntimeException("Failed to read from server");
+        if (bb.get(0) != 42)
+            throw new RuntimeException("Read wrong byte from server");
+        System.err.println("Read from server");
     }
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-	    Server server = new Server();
-	    server.start();
-	    client();
+            Server server = new Server();
+            server.start();
+            client();
         } else if (args[0].equals("client")) {
-	    client();
-	} else if (args[0].equals("server")) {
+            client();
+        } else if (args[0].equals("server")) {
             server();
         }
     }

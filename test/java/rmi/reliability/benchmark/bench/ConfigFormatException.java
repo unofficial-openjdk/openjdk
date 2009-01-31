@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,7 +36,7 @@ public class ConfigFormatException extends Exception {
      */
     public ConfigFormatException() {
     }
-    
+
     /**
      * Construct new ConfigFormatException with the given error string.
      */
@@ -44,4 +44,3 @@ public class ConfigFormatException extends Exception {
         super(s);
     }
 }
-

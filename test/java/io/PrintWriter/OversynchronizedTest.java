@@ -22,7 +22,7 @@
  */
 
 /* @test
-   @bug 4905777 
+   @bug 4905777
    @summary PrintWriter.println(Object) oversynchronized, can deadlock
 */
 
@@ -45,8 +45,8 @@ public class OversynchronizedTest extends Thread {
     }
 
     public static void main(String args[]) throws Exception {
-	// should no NullPointerException
-	writer.println((Object)null);
+        // should no NullPointerException
+        writer.println((Object)null);
 
         int num = 5;
 
@@ -56,8 +56,8 @@ public class OversynchronizedTest extends Thread {
             t[i].start();
         }
 
-	for(int i=0; i <num; i++) {
-	    t[i].join();
+        for(int i=0; i <num; i++) {
+            t[i].join();
         }
 
         System.out.println("Test completed");
@@ -69,7 +69,7 @@ class TestObj {
 
     TestObj(String str, PrintWriter writer) {
         mStr = str;
-	this.writer = writer;
+        this.writer = writer;
     }
 
     synchronized void test() {
@@ -77,8 +77,8 @@ class TestObj {
             long t = Math.round(Math.random()*10);
             Thread.currentThread().sleep(t);
         } catch (InterruptedException e) {
-	    // jtreg timeout? 
-	    // Only jtreg will interrupt this thread so it knows what to do:
+            // jtreg timeout?
+            // Only jtreg will interrupt this thread so it knows what to do:
             e.printStackTrace();
         }
 
@@ -88,7 +88,7 @@ class TestObj {
     }
 
     synchronized public String toString() {
-	writer.println("Calling toString\n");
+        writer.println("Calling toString\n");
         return mStr;
     }
 

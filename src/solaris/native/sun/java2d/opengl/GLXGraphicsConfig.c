@@ -274,7 +274,7 @@ GLXGC_InitFBConfig(JNIEnv *env, jint screennum, VisualID visualid)
                                      GLX_DOUBLEBUFFER, &db);
             j2d_glXGetFBConfigAttrib(awt_display, fbc,
                                      GLX_ALPHA_SIZE, &alpha);
-        
+
             J2dRlsTrace5(J2D_TRACE_VERBOSE,
                 "[V]     id=0x%x db=%d alpha=%d depth=%d stencil=%d valid=",
                          fbvisualid, db, alpha, depth, stencil);
@@ -405,7 +405,7 @@ GLXGC_InitScratchPbuffer(GLXFBConfig fbconfig)
 
     J2dTraceLn(J2D_TRACE_INFO, "GLXGC_InitScratchPbuffer");
 
-    return j2d_glXCreatePbuffer(awt_display, fbconfig, pbattrlist);    
+    return j2d_glXCreatePbuffer(awt_display, fbconfig, pbattrlist);
 }
 
 /**
@@ -635,15 +635,15 @@ Java_sun_java2d_opengl_GLXGraphicsConfig_initConfig(JNIEnv *env,
     J2dTraceLn(J2D_TRACE_INFO, "GLXGraphicsConfig_initConfig");
 
     if (configData == NULL) {
-	JNU_ThrowNullPointerException(env, "Native GraphicsConfig missing");
-	return;
+        JNU_ThrowNullPointerException(env, "Native GraphicsConfig missing");
+        return;
     }
 
     glxinfo = (GLXGraphicsConfigInfo *)jlong_to_ptr(configInfo);
     if (glxinfo == NULL) {
-	JNU_ThrowNullPointerException(env,
+        JNU_ThrowNullPointerException(env,
                                       "GLXGraphicsConfigInfo data missing");
-	return;
+        return;
     }
 
     configData->glxInfo = glxinfo;

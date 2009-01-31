@@ -34,11 +34,11 @@ package sun.io;
 public class ByteToCharUTF16 extends ByteToCharUnicode {
 
     public ByteToCharUTF16() {
-	super(AUTO, true);
+        super(AUTO, true);
     }
 
     public String getCharacterEncoding() {
-	return "UTF-16";
+        return "UTF-16";
     }
 
 }

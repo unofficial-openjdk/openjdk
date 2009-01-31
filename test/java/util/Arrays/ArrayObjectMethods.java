@@ -35,93 +35,93 @@ public class ArrayObjectMethods {
     int[] sizes = {0, 10, 100, 200, 1000};
 
     void test(String[] args) throws Throwable {
-	equal(Arrays.deepToString(null), "null");
-	equal(Arrays.deepToString(new Object[]{}), "[]");
-	equal(Arrays.deepToString(new Object[]{null}), "[null]");
-	equal(Arrays.deepToString(new Object[]{null, 1}), "[null, 1]");
-	equal(Arrays.deepToString(new Object[]{1, null}), "[1, null]");
-	equal(Arrays.deepToString(new Object[]{new Object[]{}, null}), "[[], null]");
+        equal(Arrays.deepToString(null), "null");
+        equal(Arrays.deepToString(new Object[]{}), "[]");
+        equal(Arrays.deepToString(new Object[]{null}), "[null]");
+        equal(Arrays.deepToString(new Object[]{null, 1}), "[null, 1]");
+        equal(Arrays.deepToString(new Object[]{1, null}), "[1, null]");
+        equal(Arrays.deepToString(new Object[]{new Object[]{}, null}), "[[], null]");
 
-	{
-	    Object[] a = {1, null};
-	    a[1] = a;
-	    equal(Arrays.deepToString(a), "[1, [...]]");
-	    a[0] = a;
-	    equal(Arrays.deepToString(a), "[[...], [...]]");
-	    a[0] = a[1] = new Object[]{1, null, a};
-	    equal(Arrays.deepToString(a), "[[1, null, [...]], [1, null, [...]]]");
-	}
-	
+        {
+            Object[] a = {1, null};
+            a[1] = a;
+            equal(Arrays.deepToString(a), "[1, [...]]");
+            a[0] = a;
+            equal(Arrays.deepToString(a), "[[...], [...]]");
+            a[0] = a[1] = new Object[]{1, null, a};
+            equal(Arrays.deepToString(a), "[[1, null, [...]], [1, null, [...]]]");
+        }
+
         for (int size : sizes) {
-	    {
-		long[] a = Rnd.longArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		int[] a = Rnd.intArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		short[] a = Rnd.shortArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		char[] a = Rnd.charArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		byte[] a = Rnd.byteArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		boolean[] a = Rnd.booleanArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		double[] a = Rnd.doubleArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		float[] a = Rnd.floatArray(size);
-		equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
-		equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
-	    }
-	    {
-		Object[] a = Rnd.flatObjectArray(size);
-		equal(Arrays.toString(a), Arrays.asList(a).toString());
-		equal(Arrays.deepToString(a), Arrays.asList(a).toString());
-		equal(Arrays.hashCode(a), Arrays.asList(a).hashCode());
-	    }
+            {
+                long[] a = Rnd.longArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                int[] a = Rnd.intArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                short[] a = Rnd.shortArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                char[] a = Rnd.charArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                byte[] a = Rnd.byteArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                boolean[] a = Rnd.booleanArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                double[] a = Rnd.doubleArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                float[] a = Rnd.floatArray(size);
+                equal(Arrays.toString(a), PrimitiveArrays.asList(a).toString());
+                equal(Arrays.hashCode(a), PrimitiveArrays.asList(a).hashCode());
+            }
+            {
+                Object[] a = Rnd.flatObjectArray(size);
+                equal(Arrays.toString(a), Arrays.asList(a).toString());
+                equal(Arrays.deepToString(a), Arrays.asList(a).toString());
+                equal(Arrays.hashCode(a), Arrays.asList(a).hashCode());
+            }
 
-	    if (size <= 200) {
-		Object[] a = Rnd.nestedObjectArray(size);
-		List aList = deepToList(a);
-		equal(Arrays.toString(a), Arrays.asList(a).toString());
-		equal(Arrays.deepToString(a), aList.toString());
-		equal(Arrays.deepHashCode(a), aList.hashCode());
-		equal(Arrays.hashCode(a), Arrays.asList(a).hashCode());
+            if (size <= 200) {
+                Object[] a = Rnd.nestedObjectArray(size);
+                List aList = deepToList(a);
+                equal(Arrays.toString(a), Arrays.asList(a).toString());
+                equal(Arrays.deepToString(a), aList.toString());
+                equal(Arrays.deepHashCode(a), aList.hashCode());
+                equal(Arrays.hashCode(a), Arrays.asList(a).hashCode());
 
-		Object[] deepCopy = (Object[]) deepCopy(a);
-		check(Arrays.deepEquals(a, deepCopy));
-		check(Arrays.deepEquals(deepCopy, a));
+                Object[] deepCopy = (Object[]) deepCopy(a);
+                check(Arrays.deepEquals(a, deepCopy));
+                check(Arrays.deepEquals(deepCopy, a));
 
-		// Make deepCopy != a
-		if (size == 0)
-		    deepCopy = new Object[] {"foo"};
-		else if (deepCopy[deepCopy.length - 1] == null)
-		    deepCopy[deepCopy.length - 1] = "baz";
-		else
-		    deepCopy[deepCopy.length - 1] = null;
-		check(! Arrays.deepEquals(a, deepCopy));
-		check(! Arrays.deepEquals(deepCopy, a));
-	    }
+                // Make deepCopy != a
+                if (size == 0)
+                    deepCopy = new Object[] {"foo"};
+                else if (deepCopy[deepCopy.length - 1] == null)
+                    deepCopy[deepCopy.length - 1] = "baz";
+                else
+                    deepCopy[deepCopy.length - 1] = null;
+                check(! Arrays.deepEquals(a, deepCopy));
+                check(! Arrays.deepEquals(deepCopy, a));
+            }
         }
     }
 
@@ -179,14 +179,14 @@ public class ArrayObjectMethods {
     void unexpected(Throwable t) {failed++; t.printStackTrace();}
     void check(boolean cond) {if (cond) pass(); else fail();}
     void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	new ArrayObjectMethods().instanceMain(args);}
+        new ArrayObjectMethods().instanceMain(args);}
     void instanceMain(String[] args) throws Throwable {
-	try {test(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {test(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }
 
 /**

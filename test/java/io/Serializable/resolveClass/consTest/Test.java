@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,18 +32,17 @@ import java.lang.reflect.*;
 
 public class Test implements Serializable {
     public static void main(String[] args) throws Exception {
-	Constructor cons = Boot.class.getConstructor(
-	    new Class[] { ObjectInputStream.class });
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new ObjectOutputStream(bout);
-	oout.writeObject(new Test());
-	oout.close();
+        Constructor cons = Boot.class.getConstructor(
+            new Class[] { ObjectInputStream.class });
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);
+        oout.writeObject(new Test());
+        oout.close();
 
-	for (int i = 0; i < 100; i++) {
-	    ObjectInputStream oin = new ObjectInputStream(
-		new ByteArrayInputStream(bout.toByteArray()));
-	    cons.newInstance(new Object[]{ oin });
-	}
+        for (int i = 0; i < 100; i++) {
+            ObjectInputStream oin = new ObjectInputStream(
+                new ByteArrayInputStream(bout.toByteArray()));
+            cons.newInstance(new Object[]{ oin });
+        }
     }
 }
-

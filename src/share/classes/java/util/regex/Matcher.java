@@ -51,12 +51,12 @@ package java.util.regex;
  * More information about a successful match can be obtained by querying the
  * state of the matcher.
  *
- * <p> A matcher finds matches in a subset of its input called the 
- * <i>region</i>. By default, the region contains all of the matcher's input. 
+ * <p> A matcher finds matches in a subset of its input called the
+ * <i>region</i>. By default, the region contains all of the matcher's input.
  * The region can be modified via the{@link #region region} method and queried
- * via the {@link #regionStart regionStart} and {@link #regionEnd regionEnd} 
+ * via the {@link #regionStart regionStart} and {@link #regionEnd regionEnd}
  * methods. The way that the region boundaries interact with some pattern
- * constructs can be changed. See {@link #useAnchoringBounds 
+ * constructs can be changed. See {@link #useAnchoringBounds
  * useAnchoringBounds} and {@link #useTransparentBounds useTransparentBounds}
  * for more details.
  *
@@ -95,10 +95,9 @@ package java.util.regex;
  *
  *
  * @author      Mike McCloskey
- * @author	Mark Reinhold
- * @author	JSR-51 Expert Group
- * @version 	%I%, %E%
- * @since	1.4
+ * @author      Mark Reinhold
+ * @author      JSR-51 Expert Group
+ * @since       1.4
  * @spec        JSR-51
  */
 
@@ -169,8 +168,8 @@ public final class Matcher implements MatchResult {
 
     /**
      * Boolean indicating whether or not more input could change
-     * the results of the last match. 
-     * 
+     * the results of the last match.
+     *
      * If hitEnd is true, and a match was found, then more input
      * might cause a different match to be found.
      * If hitEnd is true and a match was not found, then more
@@ -202,7 +201,7 @@ public final class Matcher implements MatchResult {
     boolean transparentBounds = false;
 
     /**
-     * If anchoringBounds is true then the boundaries of this 
+     * If anchoringBounds is true then the boundaries of this
      * matcher's region match anchors such as ^ and $.
      */
     boolean anchoringBounds = true;
@@ -274,7 +273,7 @@ public final class Matcher implements MatchResult {
         if (newPattern == null)
             throw new IllegalArgumentException("Pattern cannot be null");
         parentPattern = newPattern;
-     
+
         // Reallocate state storage
         int parentGroupCount = Math.max(newPattern.capturingGroupCount, 10);
         groups = new int[parentGroupCount * 2];
@@ -307,7 +306,7 @@ public final class Matcher implements MatchResult {
         lastAppendPosition = 0;
         from = 0;
         to = getTextLength();
-	return this;
+        return this;
     }
 
     /**
@@ -315,8 +314,8 @@ public final class Matcher implements MatchResult {
      *
      * <p> Resetting a matcher discards all of its explicit state information
      * and sets its append position to zero.  The matcher's region is set to
-     * the default region, which is its entire character sequence.  The 
-     * anchoring and transparency of this matcher's region boundaries are 
+     * the default region, which is its entire character sequence.  The
+     * anchoring and transparency of this matcher's region boundaries are
      * unaffected.
      *
      * @param  input
@@ -426,7 +425,7 @@ public final class Matcher implements MatchResult {
     /**
      * Returns the input subsequence matched by the previous match.
      *
-     * <p> For a matcher <i>m</i> with input sequence <i>s</i>, 
+     * <p> For a matcher <i>m</i> with input sequence <i>s</i>,
      * the expressions <i>m.</i><tt>group()</tt> and
      * <i>s.</i><tt>substring(</tt><i>m.</i><tt>start(),</tt>&nbsp;<i>m.</i><tt>end())</tt>
      * are equivalent.  </p>
@@ -454,7 +453,7 @@ public final class Matcher implements MatchResult {
      * <i>g</i>, the expressions <i>m.</i><tt>group(</tt><i>g</i><tt>)</tt> and
      * <i>s.</i><tt>substring(</tt><i>m.</i><tt>start(</tt><i>g</i><tt>),</tt>&nbsp;<i>m.</i><tt>end(</tt><i>g</i><tt>))</tt>
      * are equivalent.  </p>
-     * 
+     *
      * <p> <a href="Pattern.html#cg">Capturing groups</a> are indexed from left
      * to right, starting at one.  Group zero denotes the entire pattern, so
      * the expression <tt>m.group(0)</tt> is equivalent to <tt>m.group()</tt>.
@@ -525,7 +524,7 @@ public final class Matcher implements MatchResult {
      * the pattern.
      *
      * <p> This method starts at the beginning of this matcher's region, or, if
-     * a previous invocation of the method was successful and the matcher has 
+     * a previous invocation of the method was successful and the matcher has
      * not since been reset, at the first character not matched by the previous
      * match.
      *
@@ -580,7 +579,7 @@ public final class Matcher implements MatchResult {
     }
 
     /**
-     * Attempts to match the input sequence, starting at the beginning of the 
+     * Attempts to match the input sequence, starting at the beginning of the
      * region, against the pattern.
      *
      * <p> Like the {@link #matches matches} method, this method always starts
@@ -651,7 +650,7 @@ public final class Matcher implements MatchResult {
      * <p> The replacement string may contain references to subsequences
      * captured during the previous match: Each occurrence of
      * <tt>$</tt><i>g</i><tt></tt> will be replaced by the result of
-     * evaluating {@link #group(int) group}<tt>(</tt><i>g</i><tt>)</tt>. 
+     * evaluating {@link #group(int) group}<tt>(</tt><i>g</i><tt>)</tt>.
      * The first number after the <tt>$</tt> is always treated as part of
      * the group reference. Subsequent numbers are incorporated into g if
      * they would form a legal group reference. Only the numerals '0'
@@ -759,7 +758,7 @@ public final class Matcher implements MatchResult {
         sb.append(result);
 
         lastAppendPosition = last;
-	return this;
+        return this;
     }
 
     /**
@@ -778,7 +777,7 @@ public final class Matcher implements MatchResult {
      */
     public StringBuffer appendTail(StringBuffer sb) {
         sb.append(text, lastAppendPosition, getTextLength());
-	return sb;
+        return sb;
     }
 
     /**
@@ -870,7 +869,7 @@ public final class Matcher implements MatchResult {
         if (!find())
             return text.toString();
         StringBuffer sb = new StringBuffer();
-	appendReplacement(sb, replacement);
+        appendReplacement(sb, replacement);
         appendTail(sb);
         return sb.toString();
     }
@@ -883,7 +882,7 @@ public final class Matcher implements MatchResult {
      * index specified by the <code>end</code> parameter.
      *
      * <p>Depending on the transparency and anchoring being used (see
-     * {@link #useTransparentBounds useTransparentBounds} and 
+     * {@link #useTransparentBounds useTransparentBounds} and
      * {@link #useAnchoringBounds useAnchoringBounds}), certain constructs such
      * as anchors may behave differently at or around the boundaries of the
      * region.
@@ -946,7 +945,7 @@ public final class Matcher implements MatchResult {
      * <i>transparent</i> bounds, <tt>false</tt> if it uses <i>opaque</i>
      * bounds.
      *
-     * <p> See {@link #useTransparentBounds useTransparentBounds} for a 
+     * <p> See {@link #useTransparentBounds useTransparentBounds} for a
      * description of transparent and opaque bounds.
      *
      * <p> By default, a matcher uses opaque region boundaries.
@@ -964,16 +963,16 @@ public final class Matcher implements MatchResult {
      * Sets the transparency of region bounds for this matcher.
      *
      * <p> Invoking this method with an argument of <tt>true</tt> will set this
-     * matcher to use <i>transparent</i> bounds. If the boolean 
+     * matcher to use <i>transparent</i> bounds. If the boolean
      * argument is <tt>false</tt>, then <i>opaque</i> bounds will be used.
-     * 
-     * <p> Using transparent bounds, the boundaries of this 
+     *
+     * <p> Using transparent bounds, the boundaries of this
      * matcher's region are transparent to lookahead, lookbehind,
-     * and boundary matching constructs. Those constructs can see beyond the 
+     * and boundary matching constructs. Those constructs can see beyond the
      * boundaries of the region to see if a match is appropriate.
      *
-     * <p> Using opaque bounds, the boundaries of this matcher's 
-     * region are opaque to lookahead, lookbehind, and boundary matching 
+     * <p> Using opaque bounds, the boundaries of this matcher's
+     * region are opaque to lookahead, lookbehind, and boundary matching
      * constructs that may try to see beyond them. Those constructs cannot
      * look past the boundaries so they will fail to match anything outside
      * of the region.
@@ -990,14 +989,14 @@ public final class Matcher implements MatchResult {
         transparentBounds = b;
         return this;
     }
- 
+
     /**
      * Queries the anchoring of region bounds for this matcher.
      *
      * <p> This method returns <tt>true</tt> if this matcher uses
      * <i>anchoring</i> bounds, <tt>false</tt> otherwise.
      *
-     * <p> See {@link #useAnchoringBounds useAnchoringBounds} for a 
+     * <p> See {@link #useAnchoringBounds useAnchoringBounds} for a
      * description of anchoring bounds.
      *
      * <p> By default, a matcher uses anchoring region boundaries.
@@ -1015,14 +1014,14 @@ public final class Matcher implements MatchResult {
      * Sets the anchoring of region bounds for this matcher.
      *
      * <p> Invoking this method with an argument of <tt>true</tt> will set this
-     * matcher to use <i>anchoring</i> bounds. If the boolean 
-     * argument is <tt>false</tt>, then <i>non-anchoring</i> bounds will be 
+     * matcher to use <i>anchoring</i> bounds. If the boolean
+     * argument is <tt>false</tt>, then <i>non-anchoring</i> bounds will be
      * used.
-     * 
-     * <p> Using anchoring bounds, the boundaries of this 
+     *
+     * <p> Using anchoring bounds, the boundaries of this
      * matcher's region match anchors such as ^ and $.
      *
-     * <p> Without anchoring bounds, the boundaries of this 
+     * <p> Without anchoring bounds, the boundaries of this
      * matcher's region will not match anchors such as ^ and $.
      *
      * <p> By default, a matcher uses anchoring region boundaries.
@@ -1047,23 +1046,23 @@ public final class Matcher implements MatchResult {
      */
     public String toString() {
         StringBuilder sb = new StringBuilder();
-	sb.append("java.util.regex.Matcher");
-	sb.append("[pattern=" + pattern());
-	sb.append(" region=");
-	sb.append(regionStart() + "," + regionEnd());
+        sb.append("java.util.regex.Matcher");
+        sb.append("[pattern=" + pattern());
+        sb.append(" region=");
+        sb.append(regionStart() + "," + regionEnd());
         sb.append(" lastmatch=");
         if ((first >= 0) && (group() != null)) {
             sb.append(group());
         }
-	sb.append("]");
-	return sb.toString();
+        sb.append("]");
+        return sb.toString();
     }
 
     /**
      * <p>Returns true if the end of input was hit by the search engine in
      * the last match operation performed by this matcher.
      *
-     * <p>When this method returns true, then it is possible that more input 
+     * <p>When this method returns true, then it is possible that more input
      * would have changed the result of the last search.
      *
      * @return  true iff the end of input was hit in the last match; false
@@ -1075,16 +1074,16 @@ public final class Matcher implements MatchResult {
     }
 
     /**
-     * <p>Returns true if more input could change a positive match into a 
+     * <p>Returns true if more input could change a positive match into a
      * negative one.
      *
      * <p>If this method returns true, and a match was found, then more
-     * input could cause the match to be lost. If this method returns false 
-     * and a match was found, then more input might change the match but the 
-     * match won't be lost. If a match was not found, then requireEnd has no 
+     * input could cause the match to be lost. If this method returns false
+     * and a match was found, then more input might change the match but the
+     * match won't be lost. If a match was not found, then requireEnd has no
      * meaning.
      *
-     * @return  true iff more input could change a positive match into a 
+     * @return  true iff more input could change a positive match into a
      *          negative one.
      * @since 1.5
      */
@@ -1097,7 +1096,7 @@ public final class Matcher implements MatchResult {
      * The groups are filled with default values and the match of the root
      * of the state machine is called. The state machine will hold the state
      * of the match as it proceeds in this matcher.
-     * 
+     *
      * Matcher.from is not set here, because it is the "hard" boundary
      * of the start of the search which anchors will set to. The from param
      * is the "soft" boundary of the start of the search, meaning that the

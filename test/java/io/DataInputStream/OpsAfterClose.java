@@ -32,223 +32,223 @@ import java.io.*;
 
 public enum OpsAfterClose {
 
-	READ { boolean check(DataInputStream is) {
-		    try {
-			int read = is.read();
-		        System.out.println("read returns: " + read);
+        READ { boolean check(DataInputStream is) {
+                    try {
+                        int read = is.read();
+                        System.out.println("read returns: " + read);
                     } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                         return true;
                     }
-		    return false;
-	     } }, 
+                    return false;
+             } },
 
-	READ_BUF { boolean check(DataInputStream is) {
-		    try {
-			byte buf[] = new byte[2];
-			int read = is.read(buf);
-		        System.out.println("read(buf) returns: " + read);
+        READ_BUF { boolean check(DataInputStream is) {
+                    try {
+                        byte buf[] = new byte[2];
+                        int read = is.read(buf);
+                        System.out.println("read(buf) returns: " + read);
                     } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                         return true;
                     }
-		    return false;
-	    } },
-	READ_BUF_OFF { boolean check(DataInputStream is) {
-		    try {
-			byte buf[] = new byte[2];
-			int len = 1;
-			int read = is.read(buf, 0, len);
-		        System.out.println("read(buf, 0, len) returns: " + read);
+                    return false;
+            } },
+        READ_BUF_OFF { boolean check(DataInputStream is) {
+                    try {
+                        byte buf[] = new byte[2];
+                        int len = 1;
+                        int read = is.read(buf, 0, len);
+                        System.out.println("read(buf, 0, len) returns: " + read);
                     } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                         return true;
                     }
-		    return false;
-	     } }, 
+                    return false;
+             } },
         AVAILABLE { boolean check(DataInputStream is) {
-		    try {
-		        int avail = is.available();
-		        System.out.println("available() returns: " + avail);
+                    try {
+                        int avail = is.available();
+                        System.out.println("available() returns: " + avail);
                         return false;
-		    } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
-		        return true;
-		    }
-	     } }, 
+                    } catch (IOException io) {
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        return true;
+                    }
+             } },
         SKIP { boolean check(DataInputStream is) {
-		    try {
-			long skipped = is.skip(1);
-		        System.out.println("skip() returns: " + skipped);
+                    try {
+                        long skipped = is.skip(1);
+                        System.out.println("skip() returns: " + skipped);
                     } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                         return true;
                     }
-		    return false;
-	     } }, 
+                    return false;
+             } },
         MARK { boolean check(DataInputStream is) {
-		    is.mark(20);
-		    return true;
-	     } }, 
+                    is.mark(20);
+                    return true;
+             } },
         RESET { boolean check(DataInputStream is) {
-		    try {
-			is.reset();
+                    try {
+                        is.reset();
                     } catch (IOException io) {
-			System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                        System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                         return true;
                     }
-		    return false;
-	     } }, 
+                    return false;
+             } },
         MARK_SUPPORTED { boolean check(DataInputStream is) {
-		    is.markSupported();
-		    return true;
-	     } }, 
-	CLOSE { boolean check(DataInputStream is) {
-		try {
-		    is.close();
-		    return true; // No Exception thrown on windows
-		} catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
-		    return true; // Exception thrown on solaris and linux
-	        }
-	    }},
-	READ_BYTE { boolean check(DataInputStream is) {
-		try {
-		    is.readByte();
+                    is.markSupported();
+                    return true;
+             } },
+        CLOSE { boolean check(DataInputStream is) {
+                try {
+                    is.close();
+                    return true; // No Exception thrown on windows
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    return true; // Exception thrown on solaris and linux
+                }
+            }},
+        READ_BYTE { boolean check(DataInputStream is) {
+                try {
+                    is.readByte();
+                } catch (IOException io) {
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_CHAR { boolean check(DataInputStream is) {
-		try {
-		    is.readChar();
+                return false;
+             } },
+        READ_CHAR { boolean check(DataInputStream is) {
+                try {
+                    is.readChar();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_DOUBLE { boolean check(DataInputStream is) {
-		try {
-		    is.readDouble();
+                return false;
+             } },
+        READ_DOUBLE { boolean check(DataInputStream is) {
+                try {
+                    is.readDouble();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
+                return false;
+             } },
 
-	READ_FLOAT { boolean check(DataInputStream is) {
-		try {
-		    is.readFloat();
+        READ_FLOAT { boolean check(DataInputStream is) {
+                try {
+                    is.readFloat();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_INT { boolean check(DataInputStream is) {
-		try {
-		    is.readInt();
+                return false;
+             } },
+        READ_INT { boolean check(DataInputStream is) {
+                try {
+                    is.readInt();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_LONG { boolean check(DataInputStream is) {
-		try {
-		    is.readLong();
+                return false;
+             } },
+        READ_LONG { boolean check(DataInputStream is) {
+                try {
+                    is.readLong();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_SHORT { boolean check(DataInputStream is) {
-		try {
-		    is.readShort();
+                return false;
+             } },
+        READ_SHORT { boolean check(DataInputStream is) {
+                try {
+                    is.readShort();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_UnsignedByte { boolean check(DataInputStream is) {
-		try {
-		    is.readUnsignedByte();
+                return false;
+             } },
+        READ_UnsignedByte { boolean check(DataInputStream is) {
+                try {
+                    is.readUnsignedByte();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_UnsignedShort { boolean check(DataInputStream is) {
-		try {
-		    is.readUnsignedShort();
+                return false;
+             } },
+        READ_UnsignedShort { boolean check(DataInputStream is) {
+                try {
+                    is.readUnsignedShort();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_UTF { boolean check(DataInputStream is) {
-		try {
-		    is.readUTF();
+                return false;
+             } },
+        READ_UTF { boolean check(DataInputStream is) {
+                try {
+                    is.readUTF();
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	SKIP_BYTES { boolean check(DataInputStream is) {
-		try {
-		    is.skipBytes(1);
+                return false;
+             } },
+        SKIP_BYTES { boolean check(DataInputStream is) {
+                try {
+                    is.skipBytes(1);
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_FULLY { boolean check(DataInputStream is) {
-		try {
-		    is.readFully(new byte[1]);
+                return false;
+             } },
+        READ_FULLY { boolean check(DataInputStream is) {
+                try {
+                    is.readFully(new byte[1]);
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } },
-	READ_FULLY_BUF { boolean check(DataInputStream is) {
-		try {
-		    is.readFully(new byte[1], 0, 1);
+                return false;
+             } },
+        READ_FULLY_BUF { boolean check(DataInputStream is) {
+                try {
+                    is.readFully(new byte[1], 0, 1);
                 } catch (IOException io) {
-		    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
+                    System.out.print("Excep Msg: "+ io.getMessage() + ", ");
                     return true;
                 }
-		return false;
-	     } };
-	
+                return false;
+             } };
+
 
     abstract boolean check(DataInputStream is);
 
     public static void main(String args[]) throws Exception {
 
-	boolean failed = false;
+        boolean failed = false;
 
-	File f = new File(System.getProperty("test.dir", "."),
+        File f = new File(System.getProperty("test.dir", "."),
                           "f.txt");
-	f.createNewFile();
-	f.deleteOnExit();
+        f.createNewFile();
+        f.deleteOnExit();
 
-	FileInputStream fis = new FileInputStream(f);
+        FileInputStream fis = new FileInputStream(f);
 
-	DataInputStream dis = new DataInputStream(
-				new FileInputStream(f));
-	if (testDataInputStream(dis)) {
-	    failed = true;
+        DataInputStream dis = new DataInputStream(
+                                new FileInputStream(f));
+        if (testDataInputStream(dis)) {
+            failed = true;
         }
 
     }
@@ -256,21 +256,21 @@ public enum OpsAfterClose {
     private static boolean testDataInputStream(DataInputStream is)
             throws Exception {
         is.close();
-	boolean failed = false;
-	boolean result;
-	System.out.println("Testing :" + is);
-	for (OpsAfterClose op : OpsAfterClose.values()) {
+        boolean failed = false;
+        boolean result;
+        System.out.println("Testing :" + is);
+        for (OpsAfterClose op : OpsAfterClose.values()) {
 
-	    result = op.check(is);
-	    if (!result) {
-		failed = true;
-	    }
-	   System.out.println(op + ":" + result);
-	}
-	if (failed) {
-	    System.out.println("Test failed for the failed operation{s}" +
-			" above for :" + is);
-	}
-	return failed;
+            result = op.check(is);
+            if (!result) {
+                failed = true;
+            }
+           System.out.println(op + ":" + result);
+        }
+        if (failed) {
+            System.out.println("Test failed for the failed operation{s}" +
+                        " above for :" + is);
+        }
+        return failed;
     }
 }

@@ -49,7 +49,6 @@ import java.awt.event.KeyEvent;
  * not recommended.)
  *
  * @author David Mendenhall
- * @version %I%, %G%
  *
  * @see KeyboardFocusManager#addKeyEventPostProcessor
  * @see KeyboardFocusManager#removeKeyEventPostProcessor

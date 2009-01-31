@@ -47,9 +47,9 @@ static jweak curComp = 0;
  * Method:    initIDs
  * Signature: ()V
  */
-/* 
+/*
  * This function gets called from the static initializer for Cursor.java
- * to initialize the fieldIDs for fields that may be accessed from C 
+ * to initialize the fieldIDs for fields that may be accessed from C
  */
 JNIEXPORT void JNICALL
 Java_java_awt_Cursor_initIDs(JNIEnv *env, jclass cls)
@@ -61,69 +61,69 @@ Java_java_awt_Cursor_initIDs(JNIEnv *env, jclass cls)
 
 /*
  * A utility to retrieve cursor from java.awt.Cursor
- * Create and save the cursor first if it is not yet 
+ * Create and save the cursor first if it is not yet
  */
 Cursor getCursor(JNIEnv *env, jobject jCur)
 {
     int32_t cursorType = 0;
     Cursor  xcursor;
-    
+
     xcursor = (Cursor)(*env)->GetLongField(env, jCur, cursorIDs.pData);
-    
+
     if (xcursor != None) {
-	return xcursor;
+        return xcursor;
     }
-    
+
     cursorType = (*env)->GetIntField(env, jCur, cursorIDs.type);
-    
+
     DASSERT(cursorType != java_awt_Cursor_CUSTOM_CURSOR);
-    
+
     switch (cursorType) {
     case java_awt_Cursor_DEFAULT_CURSOR:
-	cursorType = XC_left_ptr;
+        cursorType = XC_left_ptr;
         break;
     case java_awt_Cursor_CROSSHAIR_CURSOR:
-	cursorType = XC_crosshair;
+        cursorType = XC_crosshair;
         break;
     case java_awt_Cursor_TEXT_CURSOR:
-	cursorType = XC_xterm;
+        cursorType = XC_xterm;
         break;
     case java_awt_Cursor_WAIT_CURSOR:
-	cursorType = XC_watch;
+        cursorType = XC_watch;
         break;
     case java_awt_Cursor_SW_RESIZE_CURSOR:
-	cursorType = XC_bottom_left_corner;
+        cursorType = XC_bottom_left_corner;
         break;
     case java_awt_Cursor_NW_RESIZE_CURSOR:
-	cursorType = XC_top_left_corner;
+        cursorType = XC_top_left_corner;
         break;
     case java_awt_Cursor_SE_RESIZE_CURSOR:
-	cursorType = XC_bottom_right_corner;
+        cursorType = XC_bottom_right_corner;
         break;
     case java_awt_Cursor_NE_RESIZE_CURSOR:
-	cursorType = XC_top_right_corner;
+        cursorType = XC_top_right_corner;
         break;
     case java_awt_Cursor_S_RESIZE_CURSOR:
-	cursorType = XC_bottom_side;
+        cursorType = XC_bottom_side;
         break;
     case java_awt_Cursor_N_RESIZE_CURSOR:
-	cursorType = XC_top_side;
+        cursorType = XC_top_side;
         break;
     case java_awt_Cursor_W_RESIZE_CURSOR:
-	cursorType = XC_left_side;
+        cursorType = XC_left_side;
         break;
     case java_awt_Cursor_E_RESIZE_CURSOR:
-	cursorType = XC_right_side;
+        cursorType = XC_right_side;
         break;
     case java_awt_Cursor_HAND_CURSOR:
-	cursorType = XC_hand2;
+        cursorType = XC_hand2;
         break;
     case java_awt_Cursor_MOVE_CURSOR:
-	cursorType = XC_fleur;
+        cursorType = XC_fleur;
         break;
     }
     xcursor = XCreateFontCursor(awt_display, cursorType);
-    
+
     (*env)->CallVoidMethod(env, jCur, cursorIDs.mSetPData, xcursor);
     return xcursor;
 }
@@ -137,11 +137,11 @@ JNIEXPORT void JNICALL
 Java_java_awt_Cursor_finalizeImpl(JNIEnv *env, jclass clazz, jlong pData)
 {
     Cursor xcursor;
-    
+
     xcursor = (Cursor)pData;
     if (xcursor != None) {
         AWT_LOCK();
-	XFreeCursor(awt_display, xcursor);
+        XFreeCursor(awt_display, xcursor);
         AWT_UNLOCK();
     }
 }
@@ -149,64 +149,64 @@ Java_java_awt_Cursor_finalizeImpl(JNIEnv *env, jclass clazz, jlong pData)
 /*
  *  normal replace : CACHE_UDPATE  => update curComp and updateCursor
  *  not replace    : UPDATE_ONLY   => intact curComp but updateCursor
- *  only replace   : CACHE_ONLY    => update curComp only, not updateCursor 
+ *  only replace   : CACHE_ONLY    => update curComp only, not updateCursor
  *
  *  This function should only be called under AWT_LOCK(). Otherwise
  *  multithreaded access can corrupt the value of curComp variable.
  */
-void updateCursor(XPointer client_data, int32_t replace) { 
-    
+void updateCursor(XPointer client_data, int32_t replace) {
+
     static jclass globalCursorManagerClass = NULL;
     static jmethodID updateCursorID = NULL;
-    
+
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject peer = (jobject) client_data;
-    jobject target; 
-    
+    jobject target;
+
     if ((*env)->PushLocalFrame(env, 16) < 0)
-	return;
-    
+        return;
+
     target = (*env)->GetObjectField(env, peer, mComponentPeerIDs.target);
     if (replace != UPDATE_ONLY) {
-	if (!JNU_IsNull(env, curComp)) {
-	    (*env)->DeleteWeakGlobalRef(env, curComp);
-	}
-	curComp = (*env)->NewWeakGlobalRef(env, target);
-	if (replace == CACHE_ONLY) {
-	    (*env)->PopLocalFrame(env, 0);
-	    return;
-	}
+        if (!JNU_IsNull(env, curComp)) {
+            (*env)->DeleteWeakGlobalRef(env, curComp);
+        }
+        curComp = (*env)->NewWeakGlobalRef(env, target);
+        if (replace == CACHE_ONLY) {
+            (*env)->PopLocalFrame(env, 0);
+            return;
+        }
     }
-    
+
     /* Initialize our java identifiers once. Checking before locking
      * is a huge performance win.
      */
     if (globalCursorManagerClass == NULL) {
-	jobject sysClass = (*env)->FindClass(env, "sun/awt/motif/MGlobalCursorManager");
+        jobject sysClass = (*env)->FindClass(env, "sun/awt/motif/MGlobalCursorManager");
         if (sysClass != NULL) {
-	    /* Make this class 'sticky', we don't want it GC'd */
+            /* Make this class 'sticky', we don't want it GC'd */
             globalCursorManagerClass = (*env)->NewGlobalRef(env, sysClass);
-	    
+
             updateCursorID = (*env)->GetStaticMethodID(env,
-						       globalCursorManagerClass,
-						       "nativeUpdateCursor",
-						       "(Ljava/awt/Component;)V"
-						       );
+                                                       globalCursorManagerClass,
+                                                       "nativeUpdateCursor",
+                                                       "(Ljava/awt/Component;)V"
+                                                       );
         }
-	if (JNU_IsNull(env, globalCursorManagerClass) || updateCursorID == NULL) {
+        if (JNU_IsNull(env, globalCursorManagerClass) || updateCursorID == NULL) {
             JNU_ThrowClassNotFoundException(env, "sun/awt/motif/MGlobalCursorManager");
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return;
         }
     } /* globalCursorManagerClass == NULL*/
-    
+
     (*env)->CallStaticVoidMethod(env, globalCursorManagerClass,
-				 updateCursorID, target);
+                                 updateCursorID, target);
     DASSERT(!((*env)->ExceptionOccurred(env)));
     (*env)->PopLocalFrame(env, 0);
 }
 
-/* 
+/*
  * Only call this function under AWT_LOCK(). Otherwise multithreaded
  * access can corrupt the value of curComp variable.
  */
@@ -214,5 +214,3 @@ jobject getCurComponent() {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     return (*env)->NewLocalRef(env, curComp);
 }
-
-

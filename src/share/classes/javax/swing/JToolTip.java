@@ -63,7 +63,6 @@ import java.io.IOException;
  *
  * @see JComponent#setToolTipText
  * @see JComponent#createToolTip
- * @version %I% %G%
  * @author Dave Moore
  * @author Rich Shiavi
  */
@@ -173,18 +172,18 @@ public class JToolTip extends JComponent implements Accessible {
     }
 
     /**
-     * Always returns true since tooltips, by definition, 
+     * Always returns true since tooltips, by definition,
      * should always be on top of all other windows.
      */
     // package private
     boolean alwaysOnTop() {
-	return true;
+        return true;
     }
 
 
-    /** 
+    /**
      * See <code>readObject</code> and <code>writeObject</code>
-     * in <code>JComponent</code> for more 
+     * in <code>JComponent</code> for more
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -201,17 +200,17 @@ public class JToolTip extends JComponent implements Accessible {
 
     /**
      * Returns a string representation of this <code>JToolTip</code>.
-     * This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>JToolTip</code>
      */
     protected String paramString() {
         String tipTextString = (tipText != null ?
-				tipText : "");
+                                tipText : "");
 
         return super.paramString() +
         ",tipText=" + tipTextString;
@@ -223,12 +222,12 @@ public class JToolTip extends JComponent implements Accessible {
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JToolTip. 
-     * For tool tips, the AccessibleContext takes the form of an 
-     * AccessibleJToolTip. 
+     * Gets the AccessibleContext associated with this JToolTip.
+     * For tool tips, the AccessibleContext takes the form of an
+     * AccessibleJToolTip.
      * A new AccessibleJToolTip instance is created if necessary.
      *
-     * @return an AccessibleJToolTip that serves as the 
+     * @return an AccessibleJToolTip that serves as the
      *         AccessibleContext of this JToolTip
      */
     public AccessibleContext getAccessibleContext() {
@@ -239,8 +238,8 @@ public class JToolTip extends JComponent implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JToolTip</code> class.  It provides an implementation of the 
+     * This class implements accessibility support for the
+     * <code>JToolTip</code> class.  It provides an implementation of the
      * Java Accessibility API appropriate to tool tip user-interface elements.
      * <p>
      * <strong>Warning:</strong>
@@ -275,7 +274,7 @@ public class JToolTip extends JComponent implements Accessible {
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          */
         public AccessibleRole getAccessibleRole() {

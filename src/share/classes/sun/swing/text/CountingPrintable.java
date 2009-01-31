@@ -31,8 +31,7 @@ import java.awt.print.*;
  * Printable which counts the number of pages.
  *
  * @author Igor Kushnirskiy
- * @version %I% %G%
- * 
+ *
  * @since 1.6
  */
 

@@ -44,13 +44,12 @@ Java_java_util_zip_Adler32_update(JNIEnv *env, jclass cls, jint adler, jint b)
 
 JNIEXPORT jint JNICALL
 Java_java_util_zip_Adler32_updateBytes(JNIEnv *env, jclass cls, jint adler,
-				       jarray b, jint off, jint len)
+                                       jarray b, jint off, jint len)
 {
     Bytef *buf = (*env)->GetPrimitiveArrayCritical(env, b, 0);
     if (buf) {
         adler = adler32(adler, buf + off, len);
-	(*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
+        (*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
     }
     return adler;
 }
-

@@ -58,8 +58,7 @@ import java.io.IOException;
  *
  * @beaninfo
  * description: A generic lightweight container.
- * 
- * @version %I% %G%
+ *
  * @author Arnaud Weber
  * @author Steve Wilson
  */
@@ -77,7 +76,7 @@ public class JPanel extends JComponent implements Accessible
      *
      * @param layout  the LayoutManager to use
      * @param isDoubleBuffered  a boolean, true for double-buffering, which
-     *        uses additional memory space to achieve fast, flicker-free 
+     *        uses additional memory space to achieve fast, flicker-free
      *        updates
      */
     public JPanel(LayoutManager layout, boolean isDoubleBuffered) {
@@ -103,7 +102,7 @@ public class JPanel extends JComponent implements Accessible
      * will use a double buffer.
      *
      * @param isDoubleBuffered  a boolean, true for double-buffering, which
-     *        uses additional memory space to achieve fast, flicker-free 
+     *        uses additional memory space to achieve fast, flicker-free
      *        updates
      */
     public JPanel(boolean isDoubleBuffered) {
@@ -148,7 +147,7 @@ public class JPanel extends JComponent implements Accessible
      *        bound: true
      *       hidden: true
      *    attribute: visualUpdate true
-     *  description: The UI object that implements the Component's LookAndFeel. 
+     *  description: The UI object that implements the Component's LookAndFeel.
      */
     public void setUI(PanelUI ui) {
         super.setUI(ui);
@@ -170,8 +169,8 @@ public class JPanel extends JComponent implements Accessible
     }
 
 
-    /** 
-     * See readObject() and writeObject() in JComponent for more 
+    /**
+     * See readObject() and writeObject() in JComponent for more
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -187,16 +186,16 @@ public class JPanel extends JComponent implements Accessible
 
 
     /**
-     * Returns a string representation of this JPanel. This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * Returns a string representation of this JPanel. This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this JPanel.
      */
     protected String paramString() {
-	return super.paramString();
+        return super.paramString();
     }
 
 /////////////////
@@ -204,12 +203,12 @@ public class JPanel extends JComponent implements Accessible
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JPanel. 
-     * For JPanels, the AccessibleContext takes the form of an 
-     * AccessibleJPanel. 
+     * Gets the AccessibleContext associated with this JPanel.
+     * For JPanels, the AccessibleContext takes the form of an
+     * AccessibleJPanel.
      * A new AccessibleJPanel instance is created if necessary.
      *
-     * @return an AccessibleJPanel that serves as the 
+     * @return an AccessibleJPanel that serves as the
      *         AccessibleContext of this JPanel
      */
     public AccessibleContext getAccessibleContext() {
@@ -220,9 +219,9 @@ public class JPanel extends JComponent implements Accessible
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JPanel</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to panel user-interface 
+     * This class implements accessibility support for the
+     * <code>JPanel</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to panel user-interface
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -239,7 +238,7 @@ public class JPanel extends JComponent implements Accessible
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          */
         public AccessibleRole getAccessibleRole() {
@@ -247,4 +246,3 @@ public class JPanel extends JComponent implements Accessible
         }
     }
 }
-

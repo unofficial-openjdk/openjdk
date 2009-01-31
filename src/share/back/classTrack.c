@@ -32,7 +32,7 @@
  * this module, any classes no longer present are known to
  * have been unloaded.
  *
- * For efficient access, classes are keep in a hash table.  
+ * For efficient access, classes are keep in a hash table.
  * Each slot in the hash table has a linked list of KlassNode.
  *
  * Comparing current set of classes is compared with previous
@@ -63,55 +63,55 @@ static KlassNode **table;
 /*
  * Return slot in hash table to use for this class.
  */
-static jint 
-hashKlass(jclass klass) 
+static jint
+hashKlass(jclass klass)
 {
     jint hashCode = objectHashCode(klass);
     return abs(hashCode) % CT_HASH_SLOT_COUNT;
 }
 
 /*
- * Transfer a node (which represents klass) from the current 
+ * Transfer a node (which represents klass) from the current
  * table to the new table.
  */
-static void 
+static void
 transferClass(JNIEnv *env, jclass klass, KlassNode **newTable) {
     jint slot = hashKlass(klass);
     KlassNode **head = &table[slot];
     KlassNode **newHead = &newTable[slot];
     KlassNode **nodePtr;
     KlassNode *node;
-    
+
     /* Search the node list of the current table for klass */
     for (nodePtr = head; node = *nodePtr, node != NULL; nodePtr = &(node->next)) {
         if (isSameObject(env, klass, node->klass)) {
             /* Match found transfer node */
 
             /* unlink from old list */
-            *nodePtr = node->next;  
+            *nodePtr = node->next;
 
             /* insert in new list */
-            node->next = *newHead;   
+            node->next = *newHead;
             *newHead = node;
 
             return;
         }
     }
 
-    /* we haven't found the class, only unloads should have happenned, 
+    /* we haven't found the class, only unloads should have happenned,
      * so the only reason a class should not have been found is
      * that it is not prepared yet, in which case we don't want it.
      * Asset that the above is true.
      */
 /**** the HotSpot VM doesn't create prepare events for some internal classes ***
-    JDI_ASSERT_MSG((classStatus(klass) & 
+    JDI_ASSERT_MSG((classStatus(klass) &
                 (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY))==0,
                classSignature(klass));
 ***/
 }
 
-/* 
- * Delete a hash table of classes. 
+/*
+ * Delete a hash table of classes.
  * The signatures of classes in the table are returned.
  */
 static struct bag *
@@ -126,18 +126,18 @@ deleteTable(JNIEnv *env, KlassNode *oldTable[])
 
     for (slot = 0; slot < CT_HASH_SLOT_COUNT; slot++) {
         KlassNode *node = oldTable[slot];
-        
+
         while (node != NULL) {
             KlassNode *next;
             char **sigSpot;
 
             /* Add signature to the signature bag */
-            sigSpot = bagAdd(signatures);   
+            sigSpot = bagAdd(signatures);
             if (sigSpot == NULL) {
                 EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"signature bag");
             }
             *sigSpot = node->signature;
-            
+
             /* Free weak ref and the node itself */
             JNI_FUNC_PTR(env,DeleteWeakGlobalRef)(env, node->klass);
             next = node->next;
@@ -151,9 +151,9 @@ deleteTable(JNIEnv *env, KlassNode *oldTable[])
     return signatures;
 }
 
-/* 
+/*
  * Called after class unloads have occurred.  Creates a new hash table
- * of currently loaded prepared classes. 
+ * of currently loaded prepared classes.
  * The signatures of classes which were unloaded (not present in the
  * new table) are returned.
  */
@@ -168,16 +168,16 @@ classTrack_processUnloads(JNIEnv *env)
     if (newTable == NULL) {
         EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY, "classTrack table");
     } else {
-        
+
         (void)memset(newTable, 0, CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
-        
+
         WITH_LOCAL_REFS(env, 1) {
-        
-            jint classCount;    
+
+            jint classCount;
             jclass *classes;
             jvmtiError error;
             int i;
-            
+
             error = allLoadedClasses(&classes, &classCount);
             if ( error != JVMTI_ERROR_NONE ) {
                 jvmtiDeallocate(newTable);
@@ -195,9 +195,9 @@ classTrack_processUnloads(JNIEnv *env)
                 unloadedSignatures = deleteTable(env, table);
                 table = newTable;
             }
-        
+
         } END_WITH_LOCAL_REFS(env)
-    
+
     }
 
     return unloadedSignatures;
@@ -224,7 +224,7 @@ classTrack_addPreparedClass(JNIEnv *env, jclass klass)
             }
         }
     }
-       
+
     node = jvmtiAllocate(sizeof(KlassNode));
     if (node == NULL) {
         EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"KlassNode");
@@ -252,12 +252,12 @@ void
 classTrack_initialize(JNIEnv *env)
 {
     WITH_LOCAL_REFS(env, 1) {
-        
-        jint classCount;    
+
+        jint classCount;
         jclass *classes;
         jvmtiError error;
         jint i;
-        
+
         error = allLoadedClasses(&classes, &classCount);
         if ( error == JVMTI_ERROR_NONE ) {
             table = jvmtiAllocate(CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
@@ -268,7 +268,7 @@ classTrack_initialize(JNIEnv *env)
                     jint status;
                     jint wanted =
                         (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY);
-                    
+
                     /* We only want prepared classes and arrays */
                     status = classStatus(klass);
                     if ( (status & wanted) != 0 ) {
@@ -283,7 +283,7 @@ classTrack_initialize(JNIEnv *env)
         } else {
             EXIT_ERROR(error,"loaded classes array");
         }
-    
+
     } END_WITH_LOCAL_REFS(env)
 
 }
@@ -292,4 +292,3 @@ void
 classTrack_reset(void)
 {
 }
-

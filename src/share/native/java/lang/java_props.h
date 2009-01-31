@@ -55,15 +55,15 @@ typedef struct {
     char *graphics_env;
     char *awt_toolkit;
 
-    char *unicode_encoding;	/* The default endianness of unicode
-				    i.e. UnicodeBig or UnicodeLittle   */
+    char *unicode_encoding;     /* The default endianness of unicode
+                                    i.e. UnicodeBig or UnicodeLittle   */
 
-    const char *cpu_isalist;	/* list of supported instruction sets */
+    const char *cpu_isalist;    /* list of supported instruction sets */
 
     char *cpu_endian;           /* endianness of platform */
-    
+
     char *data_model;           /* 32 or 64 bit data model */
- 
+
     char *patch_level;          /* patches/service packs installed */
 
     char *desktop;              /* Desktop name. */

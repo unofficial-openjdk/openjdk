@@ -34,8 +34,8 @@ import java.io.PrintWriter;
  * Indicates an exceptional condition that occured during the XML
  * signature generation or validation process.
  *
- * <p>An <code>XMLSignatureException</code> can contain a cause: another 
- * throwable that caused this <code>XMLSignatureException</code> to get thrown. 
+ * <p>An <code>XMLSignatureException</code> can contain a cause: another
+ * throwable that caused this <code>XMLSignatureException</code> to get thrown.
  *
  * @since 1.6
  */
@@ -46,14 +46,14 @@ public class XMLSignatureException extends Exception {
     /**
      * The throwable that caused this exception to get thrown, or null if this
      * exception was not caused by another throwable or if the causative
-     * throwable is unknown. 
+     * throwable is unknown.
      *
      * @serial
      */
     private Throwable cause;
 
     /**
-     * Constructs a new <code>XMLSignatureException</code> with 
+     * Constructs a new <code>XMLSignatureException</code> with
      * <code>null</code> as its detail message.
      */
     public XMLSignatureException() {
@@ -61,8 +61,8 @@ public class XMLSignatureException extends Exception {
     }
 
     /**
-     * Constructs a new <code>XMLSignatureException</code> with the specified 
-     * detail message. 
+     * Constructs a new <code>XMLSignatureException</code> with the specified
+     * detail message.
      *
      * @param message the detail message
      */
@@ -71,15 +71,15 @@ public class XMLSignatureException extends Exception {
     }
 
     /**
-     * Constructs a new <code>XMLSignatureException</code> with the 
-     * specified detail message and cause.  
+     * Constructs a new <code>XMLSignatureException</code> with the
+     * specified detail message and cause.
      * <p>Note that the detail message associated with
      * <code>cause</code> is <i>not</i> automatically incorporated in
      * this exception's detail message.
      *
-     * @param message the detail message 
-     * @param cause the cause (A <tt>null</tt> value is permitted, and 
-     *	      indicates that the cause is nonexistent or unknown.)
+     * @param message the detail message
+     * @param cause the cause (A <tt>null</tt> value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
      */
     public XMLSignatureException(String message, Throwable cause) {
         super(message);
@@ -87,13 +87,13 @@ public class XMLSignatureException extends Exception {
     }
 
     /**
-     * Constructs a new <code>XMLSignatureException</code> with the specified 
-     * cause and a detail message of 
+     * Constructs a new <code>XMLSignatureException</code> with the specified
+     * cause and a detail message of
      * <code>(cause==null ? null : cause.toString())</code>
-     * (which typically contains the class and detail message of 
+     * (which typically contains the class and detail message of
      * <code>cause</code>).
      *
-     * @param cause the cause (A <tt>null</tt> value is permitted, and 
+     * @param cause the cause (A <tt>null</tt> value is permitted, and
      *        indicates that the cause is nonexistent or unknown.)
      */
     public XMLSignatureException(Throwable cause) {
@@ -102,12 +102,12 @@ public class XMLSignatureException extends Exception {
     }
 
     /**
-     * Returns the cause of this <code>XMLSignatureException</code> or 
-     * <code>null</code> if the cause is nonexistent or unknown.  (The 
-     * cause is the throwable that caused this 
+     * Returns the cause of this <code>XMLSignatureException</code> or
+     * <code>null</code> if the cause is nonexistent or unknown.  (The
+     * cause is the throwable that caused this
      * <code>XMLSignatureException</code> to get thrown.)
      *
-     * @return the cause of this <code>XMLSignatureException</code> or 
+     * @return the cause of this <code>XMLSignatureException</code> or
      *         <code>null</code> if the cause is nonexistent or unknown.
      */
     public Throwable getCause() {
@@ -119,10 +119,10 @@ public class XMLSignatureException extends Exception {
      * the cause's backtrace to the standard error stream.
      */
     public void printStackTrace() {
-	super.printStackTrace();
-	if (cause != null) {
-	    cause.printStackTrace();
-	}
+        super.printStackTrace();
+        if (cause != null) {
+            cause.printStackTrace();
+        }
     }
 
     /**
@@ -132,10 +132,10 @@ public class XMLSignatureException extends Exception {
      * @param s <code>PrintStream</code> to use for output
      */
     public void printStackTrace(PrintStream s) {
-	super.printStackTrace(s);
-	if (cause != null) {
-	    cause.printStackTrace(s);
-	}
+        super.printStackTrace(s);
+        if (cause != null) {
+            cause.printStackTrace(s);
+        }
     }
 
     /**
@@ -146,8 +146,8 @@ public class XMLSignatureException extends Exception {
      */
     public void printStackTrace(PrintWriter s) {
         super.printStackTrace(s);
-	if (cause != null) {
-	    cause.printStackTrace(s);
-	}
+        if (cause != null) {
+            cause.printStackTrace(s);
+        }
     }
 }

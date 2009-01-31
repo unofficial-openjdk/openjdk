@@ -37,7 +37,7 @@ public class ClassScope extends AbstractScope<Class<?>> implements Scope {
 
     // constructor is private to enforce use of factory method
     private ClassScope(Class<?> c){
-	super(c);
+        super(c);
     }
 
     /**
@@ -45,31 +45,31 @@ public class ClassScope extends AbstractScope<Class<?>> implements Scope {
      * @return the enclosing scope
      */
     protected Scope computeEnclosingScope() {
-	Class<?> receiver = getRecvr();
-	
-	Method m = receiver.getEnclosingMethod();
-	if (m != null)
-	    // Receiver is a local or anonymous class enclosed in a
-	    // method.
-	    return MethodScope.make(m);
+        Class<?> receiver = getRecvr();
 
-	Constructor<?> cnstr = receiver.getEnclosingConstructor();
-	if (cnstr != null)
-	    // Receiver is a local or anonymous class enclosed in a
-	    // constructor.
-	    return ConstructorScope.make(cnstr);
+        Method m = receiver.getEnclosingMethod();
+        if (m != null)
+            // Receiver is a local or anonymous class enclosed in a
+            // method.
+            return MethodScope.make(m);
 
-	Class<?> c = receiver.getEnclosingClass();
-	// if there is a declaring class, recvr is a member class
-	// and its enclosing scope is that of the declaring class
-	if (c != null)
-	    // Receiver is a local class, an anonymous class, or a
-	    // member class (static or not).
-	    return ClassScope.make(c);
+        Constructor<?> cnstr = receiver.getEnclosingConstructor();
+        if (cnstr != null)
+            // Receiver is a local or anonymous class enclosed in a
+            // constructor.
+            return ConstructorScope.make(cnstr);
 
-	// otherwise, recvr is a top level class, and it has no real
-	// enclosing scope.
-	return DummyScope.make();
+        Class<?> c = receiver.getEnclosingClass();
+        // if there is a declaring class, recvr is a member class
+        // and its enclosing scope is that of the declaring class
+        if (c != null)
+            // Receiver is a local class, an anonymous class, or a
+            // member class (static or not).
+            return ClassScope.make(c);
+
+        // otherwise, recvr is a top level class, and it has no real
+        // enclosing scope.
+        return DummyScope.make();
     }
 
     /**

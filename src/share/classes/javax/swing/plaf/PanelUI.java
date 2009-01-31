@@ -29,9 +29,7 @@ package javax.swing.plaf;
 /**
  * Pluggable look and feel interface for Panel.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public abstract class PanelUI extends ComponentUI {
 }
-

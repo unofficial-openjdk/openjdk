@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.sound.midi.spi;	
+package javax.sound.midi.spi;
 
 import java.io.File;
 import java.io.InputStream;
@@ -40,20 +40,19 @@ import javax.sound.midi.InvalidMidiDataException;
  * MIDI file, and can produce a <code>Sequence</code> object from files of these types.
  *
  * @author Kara Kytle
- * @version %I% %E%
  * @since 1.3
  */
 public abstract class MidiFileReader {
 
     /**
      * Obtains the MIDI file format of the input stream provided.  The stream must
-     * point to valid MIDI file data.  In general, MIDI file readers may 
+     * point to valid MIDI file data.  In general, MIDI file readers may
      * need to read some data from the stream before determining whether they
      * support it.  These parsers must
-     * be able to mark the stream, read enough data to determine whether they 
-     * support the stream, and, if not, reset the stream's read pointer to its original 
+     * be able to mark the stream, read enough data to determine whether they
+     * support the stream, and, if not, reset the stream's read pointer to its original
      * position.  If the input stream does not support this, this method may fail
-     * with an <code>IOException</code>. 
+     * with an <code>IOException</code>.
      * @param stream the input stream from which file format information should be
      * extracted
      * @return a <code>MidiFileFormat</code> object describing the MIDI file format
@@ -80,7 +79,7 @@ public abstract class MidiFileReader {
 
 
     /**
-     * Obtains the MIDI file format of the <code>File</code> provided.  
+     * Obtains the MIDI file format of the <code>File</code> provided.
      * The <code>File</code> must point to valid MIDI file data.
      * @param file the <code>File</code> from which file format information should be
      * extracted
@@ -94,13 +93,13 @@ public abstract class MidiFileReader {
 
     /**
      * Obtains a MIDI sequence from the input stream provided.  The stream must
-     * point to valid MIDI file data.  In general, MIDI file readers may 
+     * point to valid MIDI file data.  In general, MIDI file readers may
      * need to read some data from the stream before determining whether they
      * support it.  These parsers must
-     * be able to mark the stream, read enough data to determine whether they 
-     * support the stream, and, if not, reset the stream's read pointer to its original 
+     * be able to mark the stream, read enough data to determine whether they
+     * support the stream, and, if not, reset the stream's read pointer to its original
      * position.  If the input stream does not support this, this method may fail
-     * with an IOException. 
+     * with an IOException.
      * @param stream the input stream from which the <code>Sequence</code> should be
      * constructed
      * @return a <code>Sequence</code> object based on the MIDI file data contained

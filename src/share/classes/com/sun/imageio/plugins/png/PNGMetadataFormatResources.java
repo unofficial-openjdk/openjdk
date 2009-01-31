@@ -144,7 +144,7 @@ public class PNGMetadataFormatResources extends ListResourceBundle {
             "The number of vertical pixels per unit, multiplied by 1e5" },
         { "pHYS/unitSpecifier",
             "The unit specifier for this chunk (i.e., meters)" },
-        
+
         { "sBIT_Grayscale/gray",
             "The number of significant bits of the gray samples" },
         { "sBIT_GrayAlpha/gray",

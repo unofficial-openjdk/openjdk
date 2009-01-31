@@ -35,18 +35,18 @@ import com.sun.imageio.plugins.bmp.BMPConstants;
  * the BMP format.
  *
  * <p> This class allows for the specification of various parameters
- * while writing a BMP format image file.  By default, the data layout 
- * is bottom-up, such that the pixels are stored in bottom-up order, 
+ * while writing a BMP format image file.  By default, the data layout
+ * is bottom-up, such that the pixels are stored in bottom-up order,
  * the first scanline being stored last.
  *
  * <p>The particular compression scheme to be used can be specified by using
  * the <code>setCompressionType()</code> method with the appropriate type
  * string.  The compression scheme specified will be honored if and only if it
- * is compatible with the type of image being written. If the specified 
+ * is compatible with the type of image being written. If the specified
  * compression scheme is not compatible with the type of image being written
  * then the <code>IOException</code> will be thrown by the BMP image writer.
  * If the compression type is not set explicitly then <code>getCompressionType()</code>
- * will return <code>null</code>. In this case the BMP image writer will select 
+ * will return <code>null</code>. In this case the BMP image writer will select
  * a compression type that supports encoding of the given image without loss
  * of the color resolution.
  * <p>The compression type strings and the image type(s) each supports are
@@ -101,7 +101,7 @@ public class BMPImageWriteParam extends ImageWriteParam {
      * @param topDown whether the data are written in top-down order.
      */
     public void setTopDown(boolean topDown) {
-	this.topDown = topDown;
+        this.topDown = topDown;
     }
 
     /**
@@ -111,6 +111,6 @@ public class BMPImageWriteParam extends ImageWriteParam {
      * @return whether the data are written in top-down order.
      */
     public boolean isTopDown() {
-	return topDown;
+        return topDown;
     }
 }

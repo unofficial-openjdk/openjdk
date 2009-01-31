@@ -32,11 +32,11 @@ import javax.net.ssl.SSLEngineResult.*;
 import java.security.*;
 
 /**
- * This class implements a simple HTTPS server. It uses multiple threads to 
+ * This class implements a simple HTTPS server. It uses multiple threads to
  * handle connections in parallel, and will spin off a new thread to handle
  * each request. (this is easier to implement with SSLEngine)
  * <p>
- * It must be instantiated with a {@link HttpCallback} object to which 
+ * It must be instantiated with a {@link HttpCallback} object to which
  * requests are given and must be handled.
  * <p>
  * Simple synchronization between the client(s) and server can be done
@@ -45,7 +45,7 @@ import java.security.*;
  *
  * NOTE NOTE NOTE NOTE NOTE NOTE NOTE
  *
- * If you make a change in here, please don't forget to make the 
+ * If you make a change in here, please don't forget to make the
  * corresponding change in the J2SE equivalent.
  *
  * NOTE NOTE NOTE NOTE NOTE NOTE NOTE
@@ -64,9 +64,9 @@ public class HttpServer {
 
     /**
      * Create a <code>HttpServer<code> instance with the specified callback object
-     * for handling requests. One thread is created to handle requests, 
+     * for handling requests. One thread is created to handle requests,
      * and up to ten TCP connections will be handled simultaneously.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *  incoming request
      */
 
@@ -75,14 +75,14 @@ public class HttpServer {
     }
 
     /**
-     * Create a <code>HttpServer<code> instance with the specified number of 
-     * threads and maximum number of connections per thread. This functions 
+     * Create a <code>HttpServer<code> instance with the specified number of
+     * threads and maximum number of connections per thread. This functions
      * the same as the 4 arg constructor, where the port argument is set to zero.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *     incoming request
-     * @param threads the number of threads to create to handle requests 
+     * @param threads the number of threads to create to handle requests
      *     in parallel
-     * @param cperthread the number of simultaneous TCP connections to 
+     * @param cperthread the number of simultaneous TCP connections to
      *     handle per thread
      */
 
@@ -92,18 +92,18 @@ public class HttpServer {
     }
 
     /**
-     * Create a <code>HttpServer<code> instance with the specified number 
-     * of threads and maximum number of connections per thread and running on 
-     * the specified port. The specified number of threads are created to 
+     * Create a <code>HttpServer<code> instance with the specified number
+     * of threads and maximum number of connections per thread and running on
+     * the specified port. The specified number of threads are created to
      * handle incoming requests, and each thread is allowed
      * to handle a number of simultaneous TCP connections.
-     * @param cb the callback object which is invoked to handle 
+     * @param cb the callback object which is invoked to handle
      *  each incoming request
-     * @param threads the number of threads to create to handle 
+     * @param threads the number of threads to create to handle
      *  requests in parallel
-     * @param cperthread the number of simultaneous TCP connections 
+     * @param cperthread the number of simultaneous TCP connections
      *  to handle per thread
-     * @param port the port number to bind the server to. <code>Zero</code> 
+     * @param port the port number to bind the server to. <code>Zero</code>
      *  means choose any free port.
      */
 
@@ -116,33 +116,33 @@ public class HttpServer {
         this.cb = cb;
         this.cperthread = cperthread;
 
-	try {
-	    // create and initialize a SSLContext
-	    KeyStore ks = KeyStore.getInstance("JKS");
-	    KeyStore ts = KeyStore.getInstance("JKS");
-	    char[] passphrase = "passphrase".toCharArray();
-	    
-	    ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), passphrase);
-	    ts.load(new FileInputStream(System.getProperty("javax.net.ssl.trustStore")), passphrase);
-	    
-	    KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-	    kmf.init(ks, passphrase);
-	    
-	    TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-	    tmf.init(ts);
-	    
-	    sslCtx = SSLContext.getInstance("TLS");
-	    
-	    sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+        try {
+            // create and initialize a SSLContext
+            KeyStore ks = KeyStore.getInstance("JKS");
+            KeyStore ts = KeyStore.getInstance("JKS");
+            char[] passphrase = "passphrase".toCharArray();
 
-	    servers = new Server [threads];
-	    for (int i=0; i<threads; i++) {
-		servers[i] = new Server (cb, schan, cperthread);
-		servers[i].start();
-	    }
-	} catch (Exception ex) {
-	    throw new RuntimeException("test failed. cause: "+ex.getMessage());
-	}
+            ks.load(new FileInputStream(System.getProperty("javax.net.ssl.keyStore")), passphrase);
+            ts.load(new FileInputStream(System.getProperty("javax.net.ssl.trustStore")), passphrase);
+
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(ks, passphrase);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(ts);
+
+            sslCtx = SSLContext.getInstance("TLS");
+
+            sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+            servers = new Server [threads];
+            for (int i=0; i<threads; i++) {
+                servers[i] = new Server (cb, schan, cperthread);
+                servers[i].start();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("test failed. cause: "+ex.getMessage());
+        }
     }
 
     /** Tell all threads in the server to exit within 5 seconds.
@@ -215,9 +215,9 @@ public class HttpServer {
                                 continue;
                             }
                             sock.configureBlocking (true);
-			    SSLEngine sslEng = sslCtx.createSSLEngine();
-			    sslEng.setUseClientMode(false);
-			    new ServerWorker(cb, sock, sslEng).start();
+                            SSLEngine sslEng = sslCtx.createSSLEngine();
+                            sslEng.setUseClientMode(false);
+                            new ServerWorker(cb, sock, sslEng).start();
                             nconn ++;
                             if (nconn == maxconn) {
                                 /* deregister */
@@ -229,15 +229,15 @@ public class HttpServer {
                                 boolean closed = false;
                                 SocketChannel chan = (SocketChannel) key.channel();
                                 if (key.attachment() != null) {
-    				    closed = consume (chan);
+                                    closed = consume (chan);
                                 }
 
                                 if (closed) {
-				    chan.close ();
-				    key.cancel ();
-				    if (nconn == maxconn) {
-        				listenerKey = schan.register (selector, SelectionKey.OP_ACCEPT);
-    				    }
+                                    chan.close ();
+                                    key.cancel ();
+                                    if (nconn == maxconn) {
+                                        listenerKey = schan.register (selector, SelectionKey.OP_ACCEPT);
+                                    }
                                     nconn --;
                                 }
                             }
@@ -246,12 +246,12 @@ public class HttpServer {
                     }
                     clist.check();
 
-		    synchronized (this) {
+                    synchronized (this) {
                         if (shutdown) {
                             clist.terminate ();
                             return;
                         }
-		    }
+                    }
                 }
             } catch (IOException e) {
                 System.out.println ("Server exception: " + e);
@@ -259,8 +259,8 @@ public class HttpServer {
             }
         }
 
-        /* read all the data off the channel without looking at it 
-             * return true if connection closed 
+        /* read all the data off the channel without looking at it
+             * return true if connection closed
              */
         boolean consume (SocketChannel chan) {
             try {
@@ -276,158 +276,158 @@ public class HttpServer {
     }
 
     static class ServerWorker extends Thread {
-	private ByteBuffer inNetBB;
-	private ByteBuffer outNetBB;
-	private ByteBuffer inAppBB;
-	private ByteBuffer outAppBB;
+        private ByteBuffer inNetBB;
+        private ByteBuffer outNetBB;
+        private ByteBuffer inAppBB;
+        private ByteBuffer outAppBB;
 
-	SSLEngine sslEng;
+        SSLEngine sslEng;
         SocketChannel schan;
-	HttpCallback cb;
-	HandshakeStatus currentHSStatus;
-	boolean initialHSComplete;
-	/*
-	 * All inbound data goes through this buffer.
-	 *
-	 * It might be nice to use a cache of ByteBuffers so we're
-	 * not alloc/dealloc'ing all over the place.
-	 */
+        HttpCallback cb;
+        HandshakeStatus currentHSStatus;
+        boolean initialHSComplete;
+        /*
+         * All inbound data goes through this buffer.
+         *
+         * It might be nice to use a cache of ByteBuffers so we're
+         * not alloc/dealloc'ing all over the place.
+         */
 
-	/*
-	 * Application buffers, also used for handshaking
-	 */
-	private int appBBSize;
+        /*
+         * Application buffers, also used for handshaking
+         */
+        private int appBBSize;
 
-	ServerWorker (HttpCallback cb, SocketChannel schan, SSLEngine sslEng) {
-	    this.sslEng = sslEng;
+        ServerWorker (HttpCallback cb, SocketChannel schan, SSLEngine sslEng) {
+            this.sslEng = sslEng;
             this.schan = schan;
-	    this.cb = cb;
-	    currentHSStatus = HandshakeStatus.NEED_UNWRAP;
-	    initialHSComplete = false;
-	    int netBBSize = sslEng.getSession().getPacketBufferSize();
-	    inNetBB =  ByteBuffer.allocate(netBBSize);
-	    outNetBB = ByteBuffer.allocate(netBBSize);
-	    appBBSize = sslEng.getSession().getApplicationBufferSize();
-	    inAppBB = ByteBuffer.allocate(appBBSize);
-	    outAppBB = ByteBuffer.allocate(appBBSize);
-	}
+            this.cb = cb;
+            currentHSStatus = HandshakeStatus.NEED_UNWRAP;
+            initialHSComplete = false;
+            int netBBSize = sslEng.getSession().getPacketBufferSize();
+            inNetBB =  ByteBuffer.allocate(netBBSize);
+            outNetBB = ByteBuffer.allocate(netBBSize);
+            appBBSize = sslEng.getSession().getApplicationBufferSize();
+            inAppBB = ByteBuffer.allocate(appBBSize);
+            outAppBB = ByteBuffer.allocate(appBBSize);
+        }
 
-	public SSLEngine getSSLEngine() {
-	    return sslEng;
-	}
+        public SSLEngine getSSLEngine() {
+            return sslEng;
+        }
 
-	public ByteBuffer outNetBB() {
-	    return outNetBB;
-	}
+        public ByteBuffer outNetBB() {
+            return outNetBB;
+        }
 
-	public ByteBuffer outAppBB() {
-	    return outAppBB;
-	}
+        public ByteBuffer outAppBB() {
+            return outAppBB;
+        }
 
-	public void run () {
-	    try {
-		SSLEngineResult result;
-		
-		while (!initialHSComplete) {
+        public void run () {
+            try {
+                SSLEngineResult result;
 
-		    switch (currentHSStatus) {
-			
-		    case NEED_UNWRAP:
-			int bytes = schan.read(inNetBB);
+                while (!initialHSComplete) {
+
+                    switch (currentHSStatus) {
+
+                    case NEED_UNWRAP:
+                        int bytes = schan.read(inNetBB);
 
 needIO:
-			while (currentHSStatus == HandshakeStatus.NEED_UNWRAP) {
-			    /*
-			     * Don't need to resize requestBB, since no app data should
-			     * be generated here.
-			     */
-			    inNetBB.flip();
-			    result = sslEng.unwrap(inNetBB, inAppBB);
-			    inNetBB.compact();
-			    currentHSStatus = result.getHandshakeStatus();
+                        while (currentHSStatus == HandshakeStatus.NEED_UNWRAP) {
+                            /*
+                             * Don't need to resize requestBB, since no app data should
+                             * be generated here.
+                             */
+                            inNetBB.flip();
+                            result = sslEng.unwrap(inNetBB, inAppBB);
+                            inNetBB.compact();
+                            currentHSStatus = result.getHandshakeStatus();
 
-			    switch (result.getStatus()) {
-				
-			    case OK:
-				switch (currentHSStatus) {
-				case NOT_HANDSHAKING:
-				    throw new IOException(
-							  "Not handshaking during initial handshake");
-				    
-				case NEED_TASK:
-				    Runnable task;
-				    while ((task = sslEng.getDelegatedTask()) != null) {
-					task.run();
-					currentHSStatus = sslEng.getHandshakeStatus();
-				    }
-				    break;
-				}
-				
-				break;
-				
-			    case BUFFER_UNDERFLOW:
-				break needIO;
+                            switch (result.getStatus()) {
 
-			    default: // BUFFER_OVERFLOW/CLOSED:
-				throw new IOException("Received" + result.getStatus() +
-						      "during initial handshaking");
-			    }
-			}
+                            case OK:
+                                switch (currentHSStatus) {
+                                case NOT_HANDSHAKING:
+                                    throw new IOException(
+                                                          "Not handshaking during initial handshake");
 
-			/*
-			 * Just transitioned from read to write.
-			 */
-			if (currentHSStatus != HandshakeStatus.NEED_WRAP) {
-			    break;
-			}
+                                case NEED_TASK:
+                                    Runnable task;
+                                    while ((task = sslEng.getDelegatedTask()) != null) {
+                                        task.run();
+                                        currentHSStatus = sslEng.getHandshakeStatus();
+                                    }
+                                    break;
+                                }
 
-			// Fall through and fill the write buffer.
-			
-		    case NEED_WRAP:
-			/*
-			 * The flush above guarantees the out buffer to be empty
-			 */
-			outNetBB.clear();
-			result = sslEng.wrap(inAppBB, outNetBB);
-			outNetBB.flip();
-			schan.write (outNetBB);
-			outNetBB.compact();
-			currentHSStatus = result.getHandshakeStatus();
-			
-			switch (result.getStatus()) {
-			case OK:
-			    
-			    if (currentHSStatus == HandshakeStatus.NEED_TASK) {
-				Runnable task;
-				while ((task = sslEng.getDelegatedTask()) != null) {
-				    task.run();
-				    currentHSStatus = sslEng.getHandshakeStatus();
-				}
-			    }
-			    
-			    break;
-			    
-			default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
-			    throw new IOException("Received" + result.getStatus() +
-						  "during initial handshaking");
-			}
-			break;
-		    
-		    case FINISHED:
-			initialHSComplete = true;
-			break;
-		    default: // NOT_HANDSHAKING/NEED_TASK
-			throw new RuntimeException("Invalid Handshaking State" +
-						   currentHSStatus);
-		    } // switch
-		}
-		// read the application data; using non-blocking mode
-		schan.configureBlocking(false);
-		read(schan, sslEng);
-	    } catch (Exception ex) {
-		throw new RuntimeException(ex);
-	    }
-	}
+                                break;
+
+                            case BUFFER_UNDERFLOW:
+                                break needIO;
+
+                            default: // BUFFER_OVERFLOW/CLOSED:
+                                throw new IOException("Received" + result.getStatus() +
+                                                      "during initial handshaking");
+                            }
+                        }
+
+                        /*
+                         * Just transitioned from read to write.
+                         */
+                        if (currentHSStatus != HandshakeStatus.NEED_WRAP) {
+                            break;
+                        }
+
+                        // Fall through and fill the write buffer.
+
+                    case NEED_WRAP:
+                        /*
+                         * The flush above guarantees the out buffer to be empty
+                         */
+                        outNetBB.clear();
+                        result = sslEng.wrap(inAppBB, outNetBB);
+                        outNetBB.flip();
+                        schan.write (outNetBB);
+                        outNetBB.compact();
+                        currentHSStatus = result.getHandshakeStatus();
+
+                        switch (result.getStatus()) {
+                        case OK:
+
+                            if (currentHSStatus == HandshakeStatus.NEED_TASK) {
+                                Runnable task;
+                                while ((task = sslEng.getDelegatedTask()) != null) {
+                                    task.run();
+                                    currentHSStatus = sslEng.getHandshakeStatus();
+                                }
+                            }
+
+                            break;
+
+                        default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
+                            throw new IOException("Received" + result.getStatus() +
+                                                  "during initial handshaking");
+                        }
+                        break;
+
+                    case FINISHED:
+                        initialHSComplete = true;
+                        break;
+                    default: // NOT_HANDSHAKING/NEED_TASK
+                        throw new RuntimeException("Invalid Handshaking State" +
+                                                   currentHSStatus);
+                    } // switch
+                }
+                // read the application data; using non-blocking mode
+                schan.configureBlocking(false);
+                read(schan, sslEng);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
 
         /* return true if the connection is closed, false otherwise */
 
@@ -446,10 +446,10 @@ needIO:
                 else if (clen != null)
                     data = new String (readNormalData (is, Integer.parseInt (clen)));
                 String[] req = requestline.split (" ");
-		if (req.length < 2) {
-		    /* invalid request line */
-		    return false;
-		}
+                if (req.length < 2) {
+                    /* invalid request line */
+                    return false;
+                }
                 String cmd = req[0];
                 URI uri = null;
                 try {
@@ -479,15 +479,15 @@ needIO:
         }
 
         private void readCRLF(InputStream is) throws IOException {
-	    int cr = is.read();
-	    int lf = is.read();
+            int cr = is.read();
+            int lf = is.read();
 
-	    if (((cr & 0xff) != 0x0d) ||
-		((lf & 0xff) != 0x0a)) {
-		throw new IOException(
-		    "Expected <CR><LF>:  got '" + cr + "/" + lf + "'");
-	    }
-	}
+            if (((cr & 0xff) != 0x0d) ||
+                ((lf & 0xff) != 0x0a)) {
+                throw new IOException(
+                    "Expected <CR><LF>:  got '" + cr + "/" + lf + "'");
+            }
+        }
 
         byte[] readChunkedData (InputStream is) throws IOException {
             LinkedList l = new LinkedList ();
@@ -495,9 +495,9 @@ needIO:
             for (int len=readChunkLen(is); len!=0; len=readChunkLen(is)) {
                 l.add (readNormalData(is, len));
                 total += len;
-		readCRLF(is); // CRLF at end of chunk
+                readCRLF(is); // CRLF at end of chunk
             }
-	    readCRLF(is); // CRLF at end of Chunked Stream.
+            readCRLF(is); // CRLF at end of Chunked Stream.
             byte[] buf = new byte [total];
             Iterator i = l.iterator();
             int x = 0;
@@ -520,15 +520,15 @@ needIO:
                     if (c == '\r' && !readCR) {
                         readCR = true;
                     } else {
-			int x=0;
-			if (c >= 'a' && c <= 'f') {
-			    x = c - 'a' + 10;
-			} else if (c >= 'A' && c <= 'F') {
-			    x = c - 'A' + 10;
-			} else if (c >= '0' && c <= '9') {
-			    x = c - '0';
-			}
-		    	len = len * 16 + x;
+                        int x=0;
+                        if (c >= 'a' && c <= 'f') {
+                            x = c - 'a' + 10;
+                        } else if (c >= 'A' && c <= 'F') {
+                            x = c - 'A' + 10;
+                        } else if (c >= '0' && c <= '9') {
+                            x = c - '0';
+                        }
+                        len = len * 16 + x;
                     }
                 }
             }
@@ -566,9 +566,9 @@ needIO:
         }
 
         synchronized void abortiveCloseChannel (SocketChannel ch) throws IOException {
-	    Socket s = ch.socket ();
-	    s.setSoLinger (true, 0);
-	    ch.close();
+            Socket s = ch.socket ();
+            s.setSoLinger (true, 0);
+            ch.close();
         }
     }
 
@@ -578,11 +578,11 @@ needIO:
      */
 
     static class NioInputStream extends InputStream {
-	SSLEngine sslEng;
+        SSLEngine sslEng;
         SocketChannel channel;
         Selector selector;
         ByteBuffer inNetBB;
-	ByteBuffer inAppBB;
+        ByteBuffer inAppBB;
         SelectionKey key;
         int available;
         byte[] one;
@@ -593,11 +593,11 @@ needIO:
         int readlimit;
 
         public NioInputStream (SocketChannel chan, SSLEngine sslEng, ByteBuffer inNetBB, ByteBuffer inAppBB) throws IOException {
-	    this.sslEng = sslEng;
+            this.sslEng = sslEng;
             this.channel = chan;
             selector = Selector.open();
             this.inNetBB = inNetBB;
-	    this.inAppBB = inAppBB;
+            this.inAppBB = inAppBB;
             key = chan.register (selector, SelectionKey.OP_READ);
             available = 0;
             one = new byte[1];
@@ -658,16 +658,16 @@ needIO:
                 return available;
 
             inAppBB.clear ();
-	    int bytes = channel.read (inNetBB);
+            int bytes = channel.read (inNetBB);
 
-	    int needed = sslEng.getSession().getApplicationBufferSize();
-	    if (needed > inAppBB.remaining()) {
-	        inAppBB = ByteBuffer.allocate(needed);
-	    }
-	    inNetBB.flip();
-	    SSLEngineResult result = sslEng.unwrap(inNetBB, inAppBB);
-	    inNetBB.compact();
-	    available = result.bytesProduced();
+            int needed = sslEng.getSession().getApplicationBufferSize();
+            if (needed > inAppBB.remaining()) {
+                inAppBB = ByteBuffer.allocate(needed);
+            }
+            inNetBB.flip();
+            SSLEngineResult result = sslEng.unwrap(inNetBB, inAppBB);
+            inNetBB.compact();
+            available = result.bytesProduced();
 
             if (available > 0)
                 inAppBB.flip();
@@ -677,7 +677,7 @@ needIO:
         }
 
         /**
-         * block() only called when available==0 and buf is empty 
+         * block() only called when available==0 and buf is empty
          */
         private synchronized void block () throws IOException {
             //assert available == 0;
@@ -715,20 +715,20 @@ needIO:
     }
 
     static class NioOutputStream extends OutputStream {
-	SSLEngine sslEng;
+        SSLEngine sslEng;
         SocketChannel channel;
         ByteBuffer outNetBB;
-	ByteBuffer outAppBB;
+        ByteBuffer outAppBB;
         SelectionKey key;
         Selector selector;
         boolean closed;
         byte[] one;
 
         public NioOutputStream (SocketChannel channel, SSLEngine sslEng, ByteBuffer outNetBB, ByteBuffer outAppBB) throws IOException {
-	    this.sslEng = sslEng;
+            this.sslEng = sslEng;
             this.channel = channel;
-	    this.outNetBB = outNetBB;
-	    this.outAppBB = outAppBB;
+            this.outNetBB = outNetBB;
+            this.outAppBB = outAppBB;
             selector = Selector.open ();
             key = channel.register (selector, SelectionKey.OP_WRITE);
             closed = false;
@@ -752,14 +752,14 @@ needIO:
             outAppBB.put (b, off, len);
             outAppBB.flip ();
             int n;
-	    outNetBB.clear();
-	    int needed = sslEng.getSession().getPacketBufferSize();
-	    if (outNetBB.capacity() < needed) {
-		outNetBB = ByteBuffer.allocate(needed);
-	    }
-	    SSLEngineResult ret = sslEng.wrap(outAppBB, outNetBB);
-	    outNetBB.flip();
-	    int newLen = ret.bytesProduced();
+            outNetBB.clear();
+            int needed = sslEng.getSession().getPacketBufferSize();
+            if (outNetBB.capacity() < needed) {
+                outNetBB = ByteBuffer.allocate(needed);
+            }
+            SSLEngineResult ret = sslEng.wrap(outAppBB, outNetBB);
+            outNetBB.flip();
+            int newLen = ret.bytesProduced();
             while ((n = channel.write (outNetBB)) < newLen) {
                 newLen -= n;
                 if (newLen == 0)
@@ -778,11 +778,11 @@ needIO:
     }
 
     /**
-     * Utilities for synchronization. A condition is 
+     * Utilities for synchronization. A condition is
      * identified by a string name, and is initialized
-     * upon first use (ie. setCondition() or waitForCondition()). Threads 
+     * upon first use (ie. setCondition() or waitForCondition()). Threads
      * are blocked until some thread calls (or has called) setCondition() for the same
-     * condition. 
+     * condition.
      * <P>
      * A rendezvous built on a condition is also provided for synchronizing
      * N threads.
@@ -863,7 +863,7 @@ needIO:
     /**
      * Force N threads to rendezvous (ie. wait for each other) before proceeding.
      * The first thread(s) to call are blocked until the last
-     * thread makes the call. Then all threads continue. 
+     * thread makes the call. Then all threads continue.
      * <p>
      * All threads that call with the same condition name, must use the same value
      * for N (or the results may be not be as expected).

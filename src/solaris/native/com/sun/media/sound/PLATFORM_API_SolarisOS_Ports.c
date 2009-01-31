@@ -98,7 +98,7 @@ static int sourcePortJavaSoundMapping[ALL_SOURCE_PORT_COUNT] = {
     PORT_SRC_UNKNOWN,
     PORT_SRC_UNKNOWN,
     PORT_SRC_UNKNOWN,
-    PORT_SRC_UNKNOWN    
+    PORT_SRC_UNKNOWN
 };
 
 struct tag_PortControlID;
@@ -147,16 +147,16 @@ INT32 PORT_GetPortMixerDescription(INT32 mixerIndex, PortMixerDescription* descr
     AudioDeviceDescription desc;
 
     if (getAudioDeviceDescriptionByIndex(mixerIndex, &desc, TRUE)) {
-	strncpy(description->name, desc.name, PORT_STRING_LENGTH-1);
-	description->name[PORT_STRING_LENGTH-1] = 0;
-	strncpy(description->vendor, desc.vendor, PORT_STRING_LENGTH-1);
-	description->vendor[PORT_STRING_LENGTH-1] = 0;
-	strncpy(description->version, desc.version, PORT_STRING_LENGTH-1);
-	description->version[PORT_STRING_LENGTH-1] = 0;
-	/*strncpy(description->description, desc.description, PORT_STRING_LENGTH-1);*/
-	strncpy(description->description, "Solaris Ports", PORT_STRING_LENGTH-1);
-	description->description[PORT_STRING_LENGTH-1] = 0;
-	return TRUE;
+        strncpy(description->name, desc.name, PORT_STRING_LENGTH-1);
+        description->name[PORT_STRING_LENGTH-1] = 0;
+        strncpy(description->vendor, desc.vendor, PORT_STRING_LENGTH-1);
+        description->vendor[PORT_STRING_LENGTH-1] = 0;
+        strncpy(description->version, desc.version, PORT_STRING_LENGTH-1);
+        description->version[PORT_STRING_LENGTH-1] = 0;
+        /*strncpy(description->description, desc.description, PORT_STRING_LENGTH-1);*/
+        strncpy(description->description, "Solaris Ports", PORT_STRING_LENGTH-1);
+        description->description[PORT_STRING_LENGTH-1] = 0;
+        return TRUE;
     }
     return FALSE;
 }
@@ -170,25 +170,25 @@ void* PORT_Open(INT32 mixerIndex) {
 
     TRACE0("PORT_Open\n");
     if (getAudioDeviceDescriptionByIndex(mixerIndex, &desc, FALSE)) {
-	fd = open(desc.pathctl, O_RDWR);
+        fd = open(desc.pathctl, O_RDWR);
     }
     if (fd < 0) {
-	ERROR1("Couldn't open audio device ctl for device %d!\n", mixerIndex);
-	return NULL;
+        ERROR1("Couldn't open audio device ctl for device %d!\n", mixerIndex);
+        return NULL;
     }
 
     info = (PortInfo*) malloc(sizeof(PortInfo));
     if (info != NULL) {
-	memset(info, 0, sizeof(PortInfo));
-	info->fd = fd;
-	success = TRUE;
+        memset(info, 0, sizeof(PortInfo));
+        info->fd = fd;
+        success = TRUE;
     }
     if (!success) {
-	if (fd >= 0) {
-	    close(fd);
-	}
-	PORT_Close((void*) info);
-	info = NULL;
+        if (fd >= 0) {
+            close(fd);
+        }
+        PORT_Close((void*) info);
+        info = NULL;
     }
     return info;
 }
@@ -196,16 +196,16 @@ void* PORT_Open(INT32 mixerIndex) {
 void PORT_Close(void* id) {
     TRACE0("PORT_Close\n");
     if (id != NULL) {
-	PortInfo* info = (PortInfo*) id;
-	if (info->fd >= 0) {
-	    close(info->fd);
-	    info->fd = -1;
-	}
-	if (info->controlIDs) {
-	    free(info->controlIDs);
-	    info->controlIDs = NULL;
-	}
-	free(info);
+        PortInfo* info = (PortInfo*) id;
+        if (info->fd >= 0) {
+            close(info->fd);
+            info->fd = -1;
+        }
+        if (info->controlIDs) {
+            free(info->controlIDs);
+            info->controlIDs = NULL;
+        }
+        free(info);
     }
 }
 
@@ -215,41 +215,41 @@ INT32 PORT_GetPortCount(void* id) {
     int ret = 0;
     PortInfo* info = (PortInfo*) id;
     if (info != NULL) {
-	if (!info->targetPortCount && !info->sourcePortCount) {
-	    int i;
-	    AUDIO_INITINFO(&info->audioInfo);
-	    if (ioctl(info->fd, AUDIO_GETINFO, &info->audioInfo) >= 0) {
-		for (i = 0; i < ALL_TARGET_PORT_COUNT; i++) {
-		    if (info->audioInfo.play.avail_ports & targetPorts[i]) {
-			info->ports[info->targetPortCount] = i;
-			info->targetPortCount++;
-		    }
+        if (!info->targetPortCount && !info->sourcePortCount) {
+            int i;
+            AUDIO_INITINFO(&info->audioInfo);
+            if (ioctl(info->fd, AUDIO_GETINFO, &info->audioInfo) >= 0) {
+                for (i = 0; i < ALL_TARGET_PORT_COUNT; i++) {
+                    if (info->audioInfo.play.avail_ports & targetPorts[i]) {
+                        info->ports[info->targetPortCount] = i;
+                        info->targetPortCount++;
+                    }
 #ifdef SOLARIS7_COMPATIBLE
-		    TRACE3("Target %d %s: avail=%d\n", i, targetPortNames[i], 
-			   info->audioInfo.play.avail_ports & targetPorts[i]);
+                    TRACE3("Target %d %s: avail=%d\n", i, targetPortNames[i],
+                           info->audioInfo.play.avail_ports & targetPorts[i]);
 #else
-		    TRACE4("Target %d %s: avail=%d  mod=%d\n", i, targetPortNames[i], 
-			   info->audioInfo.play.avail_ports & targetPorts[i], 
-			   info->audioInfo.play.mod_ports & targetPorts[i]);
+                    TRACE4("Target %d %s: avail=%d  mod=%d\n", i, targetPortNames[i],
+                           info->audioInfo.play.avail_ports & targetPorts[i],
+                           info->audioInfo.play.mod_ports & targetPorts[i]);
 #endif
-		}
-		for (i = 0; i < ALL_SOURCE_PORT_COUNT; i++) {
-		    if (info->audioInfo.record.avail_ports & sourcePorts[i]) {
-			info->ports[info->targetPortCount + info->sourcePortCount] = i;
-			info->sourcePortCount++;
-		    }
+                }
+                for (i = 0; i < ALL_SOURCE_PORT_COUNT; i++) {
+                    if (info->audioInfo.record.avail_ports & sourcePorts[i]) {
+                        info->ports[info->targetPortCount + info->sourcePortCount] = i;
+                        info->sourcePortCount++;
+                    }
 #ifdef SOLARIS7_COMPATIBLE
-		    TRACE3("Source %d %s: avail=%d\n", i, sourcePortNames[i], 
-			   info->audioInfo.record.avail_ports & sourcePorts[i]);
+                    TRACE3("Source %d %s: avail=%d\n", i, sourcePortNames[i],
+                           info->audioInfo.record.avail_ports & sourcePorts[i]);
 #else
-		    TRACE4("Source %d %s: avail=%d  mod=%d\n", i, sourcePortNames[i], 
-			   info->audioInfo.record.avail_ports & sourcePorts[i], 
-			   info->audioInfo.record.mod_ports & sourcePorts[i]);
-#endif		
-		}
-	    }
-	}
-	ret = info->targetPortCount + info->sourcePortCount;
+                    TRACE4("Source %d %s: avail=%d  mod=%d\n", i, sourcePortNames[i],
+                           info->audioInfo.record.avail_ports & sourcePorts[i],
+                           info->audioInfo.record.mod_ports & sourcePorts[i]);
+#endif
+                }
+            }
+        }
+        ret = info->targetPortCount + info->sourcePortCount;
     }
     return ret;
 }
@@ -261,11 +261,11 @@ int isSourcePort(PortInfo* info, INT32 portIndex) {
 INT32 PORT_GetPortType(void* id, INT32 portIndex) {
     PortInfo* info = (PortInfo*) id;
     if ((portIndex >= 0) && (portIndex < PORT_GetPortCount(id))) {
-	if (isSourcePort(info, portIndex)) {
-	    return sourcePortJavaSoundMapping[info->ports[portIndex]];
-	} else {
-	    return targetPortJavaSoundMapping[info->ports[portIndex]];
-	}
+        if (isSourcePort(info, portIndex)) {
+            return sourcePortJavaSoundMapping[info->ports[portIndex]];
+        } else {
+            return targetPortJavaSoundMapping[info->ports[portIndex]];
+        }
     }
     return 0;
 }
@@ -275,9 +275,9 @@ char* getPortName(PortInfo* info, INT32 portIndex) {
     char* ret = NULL;
 
     if (isSourcePort(info, portIndex)) {
-	ret = sourcePortNames[info->ports[portIndex]];
+        ret = sourcePortNames[info->ports[portIndex]];
     } else {
-	ret = targetPortNames[info->ports[portIndex]];
+        ret = targetPortNames[info->ports[portIndex]];
     }
     return ret;
 }
@@ -287,12 +287,12 @@ INT32 PORT_GetPortName(void* id, INT32 portIndex, char* name, INT32 len) {
     char* n;
 
     if ((portIndex >= 0) && (portIndex < PORT_GetPortCount(id))) {
-	n = getPortName(info, portIndex);
-	if (n) {
-	    strncpy(name, n, len-1);
-	    name[len-1] = 0;
-	    return TRUE;
-	}
+        n = getPortName(info, portIndex);
+        if (n) {
+            strncpy(name, n, len-1);
+            name[len-1] = 0;
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -309,47 +309,47 @@ void createPortControl(PortInfo* info, PortControlCreator* creator, INT32 portIn
 
     // fill the ControlID structure and add this control
     if (info->usedControlIDs >= info->maxControlCount) {
-	ERROR1("not enough free controlIDs !! maxControlIDs = %d\n", info->maxControlCount);
-	return;
+        ERROR1("not enough free controlIDs !! maxControlIDs = %d\n", info->maxControlCount);
+        return;
     }
     controlID = &(info->controlIDs[info->usedControlIDs]);
     controlID->portInfo = info;
     controlID->controlType = type;
     controlIndex = info->ports[portIndex];
     if (isSourcePort(info, portIndex)) {
-	controlID->port = sourcePorts[controlIndex];
+        controlID->port = sourcePorts[controlIndex];
     } else {
-	controlID->port = targetPorts[controlIndex];
+        controlID->port = targetPorts[controlIndex];
     }
     switch (type & PORT_CONTROL_TYPE_MASK) {
     case PORT_CONTROL_TYPE_SELECT_PORT:
-	jsType = CONTROL_TYPE_SELECT; isBoolean = TRUE; break;
+        jsType = CONTROL_TYPE_SELECT; isBoolean = TRUE; break;
     case PORT_CONTROL_TYPE_GAIN:
-	jsType = CONTROL_TYPE_VOLUME;  break;
+        jsType = CONTROL_TYPE_VOLUME;  break;
     case PORT_CONTROL_TYPE_BALANCE:
-	jsType = CONTROL_TYPE_BALANCE; break;
+        jsType = CONTROL_TYPE_BALANCE; break;
     case PORT_CONTROL_TYPE_MONITOR_GAIN:
-	jsType = CONTROL_TYPE_VOLUME; break;
+        jsType = CONTROL_TYPE_VOLUME; break;
     case PORT_CONTROL_TYPE_OUTPUT_MUTED:
-	jsType = CONTROL_TYPE_MUTE; isBoolean = TRUE; break;
+        jsType = CONTROL_TYPE_MUTE; isBoolean = TRUE; break;
     }
     if (isBoolean) {
-	TRACE0(" PORT_CONTROL_TYPE_BOOLEAN\n");
-	newControl = (creator->newBooleanControl)(creator, controlID, jsType);
-    } 
+        TRACE0(" PORT_CONTROL_TYPE_BOOLEAN\n");
+        newControl = (creator->newBooleanControl)(creator, controlID, jsType);
+    }
     else if (jsType == CONTROL_TYPE_BALANCE) {
-	TRACE0(" PORT_CONTROL_TYPE_BALANCE\n");
-	newControl = (creator->newFloatControl)(creator, controlID, jsType,
-						-1.0f, 1.0f, 2.0f / 65.0f, "");
+        TRACE0(" PORT_CONTROL_TYPE_BALANCE\n");
+        newControl = (creator->newFloatControl)(creator, controlID, jsType,
+                                                -1.0f, 1.0f, 2.0f / 65.0f, "");
     } else {
-	TRACE0(" PORT_CONTROL_TYPE_FLOAT\n");
-	newControl = (creator->newFloatControl)(creator, controlID, jsType,
-						0.0f, 1.0f, 1.0f / 256.0f, "");
+        TRACE0(" PORT_CONTROL_TYPE_FLOAT\n");
+        newControl = (creator->newFloatControl)(creator, controlID, jsType,
+                                                0.0f, 1.0f, 1.0f / 256.0f, "");
     }
     if (newControl) {
-	controlObjects[*controlCount] = newControl;
-	(*controlCount)++;
-	info->usedControlIDs++;
+        controlObjects[*controlCount] = newControl;
+        (*controlCount)++;
+        info->usedControlIDs++;
     }
     TRACE0("<createPortControl\n");
 }
@@ -360,13 +360,13 @@ void addCompoundControl(PortInfo* info, PortControlCreator* creator, char* name,
 
     TRACE1(">addCompoundControl %d controls\n", *controlCount);
     if (*controlCount) {
-	// create compound control and add it to the vector
-	compControl = (creator->newCompoundControl)(creator, name, controlObjects, *controlCount);
-	if (compControl) {
-	    TRACE1(" addCompoundControl: calling addControl %p\n", compControl);
-	    (creator->addControl)(creator, compControl);
-	}
-	*controlCount = 0;
+        // create compound control and add it to the vector
+        compControl = (creator->newCompoundControl)(creator, name, controlObjects, *controlCount);
+        if (compControl) {
+            TRACE1(" addCompoundControl: calling addControl %p\n", compControl);
+            (creator->addControl)(creator, compControl);
+        }
+        *controlCount = 0;
     }
     TRACE0("<addCompoundControl\n");
 }
@@ -377,7 +377,7 @@ void addAllControls(PortInfo* info, PortControlCreator* creator, void** controlO
     TRACE0(">addAllControl\n");
     // go through all controls and add them to the vector
     for (i = 0; i < *controlCount; i++) {
-	(creator->addControl)(creator, controlObjects[i]);
+        (creator->addControl)(creator, controlObjects[i]);
     }
     *controlCount = 0;
     TRACE0("<addAllControl\n");
@@ -391,66 +391,66 @@ void PORT_GetControls(void* id, INT32 portIndex, PortControlCreator* creator) {
     INT32 type;
     int selectable = 1;
 
-    TRACE4(">PORT_GetControls(id=%p, portIndex=%d). controlIDs=%p, maxControlCount=%d\n", 
-	   id, portIndex, info->controlIDs, info->maxControlCount);
+    TRACE4(">PORT_GetControls(id=%p, portIndex=%d). controlIDs=%p, maxControlCount=%d\n",
+           id, portIndex, info->controlIDs, info->maxControlCount);
     if ((portIndex >= 0) && (portIndex < portCount)) {
-	// if the memory isn't reserved for the control structures, allocate it
-	if (!info->controlIDs) {
-	    int maxCount = 0;
-	    TRACE0("getControl: allocate mem\n");
-	    // get a maximum number of controls:
-	    // each port has a select, balance, and volume control.
-	    maxCount = 3 * portCount;
-	    // then there is monitorGain and outputMuted
-	    maxCount += (2 * info->targetPortCount);
-	    info->maxControlCount = maxCount;
-	    info->controlIDs = (PortControlID*) malloc(sizeof(PortControlID) * maxCount);
-	}
-	if (!isSourcePort(info, portIndex)) {
-	    type = PORT_CONTROL_TYPE_PLAY;
-	    // add master mute control
-	    createPortControl(info, creator, portIndex, 
-			      type | PORT_CONTROL_TYPE_OUTPUT_MUTED,
-			      controls, &controlCount);
-	    addAllControls(info, creator, controls, &controlCount);
+        // if the memory isn't reserved for the control structures, allocate it
+        if (!info->controlIDs) {
+            int maxCount = 0;
+            TRACE0("getControl: allocate mem\n");
+            // get a maximum number of controls:
+            // each port has a select, balance, and volume control.
+            maxCount = 3 * portCount;
+            // then there is monitorGain and outputMuted
+            maxCount += (2 * info->targetPortCount);
+            info->maxControlCount = maxCount;
+            info->controlIDs = (PortControlID*) malloc(sizeof(PortControlID) * maxCount);
+        }
+        if (!isSourcePort(info, portIndex)) {
+            type = PORT_CONTROL_TYPE_PLAY;
+            // add master mute control
+            createPortControl(info, creator, portIndex,
+                              type | PORT_CONTROL_TYPE_OUTPUT_MUTED,
+                              controls, &controlCount);
+            addAllControls(info, creator, controls, &controlCount);
 #ifdef SOLARIS7_COMPATIBLE
-	    selectable = info->audioInfo.play.avail_ports & targetPorts[info->ports[portIndex]];
+            selectable = info->audioInfo.play.avail_ports & targetPorts[info->ports[portIndex]];
 #else
-	    selectable = info->audioInfo.play.mod_ports & targetPorts[info->ports[portIndex]];
+            selectable = info->audioInfo.play.mod_ports & targetPorts[info->ports[portIndex]];
 #endif
-	} else {
-	    type = PORT_CONTROL_TYPE_RECORD;
+        } else {
+            type = PORT_CONTROL_TYPE_RECORD;
 #ifdef SOLARIS7_COMPATIBLE
-	    selectable = info->audioInfo.record.avail_ports & sourcePorts[info->ports[portIndex]];
+            selectable = info->audioInfo.record.avail_ports & sourcePorts[info->ports[portIndex]];
 #else
-	    selectable = info->audioInfo.record.mod_ports & sourcePorts[info->ports[portIndex]];
+            selectable = info->audioInfo.record.mod_ports & sourcePorts[info->ports[portIndex]];
 #endif
-	}
-	// add a mixer strip with volume, ...
-	createPortControl(info, creator, portIndex, 
-			  type | PORT_CONTROL_TYPE_GAIN,
-			  controls, &controlCount);
-	// ... balance, ...
-	createPortControl(info, creator, portIndex, 
-			  type | PORT_CONTROL_TYPE_BALANCE,
-			  controls, &controlCount);
-	// ... and select control (if not always on)...
-	if (selectable) {
-	    createPortControl(info, creator, portIndex, 
-			      type | PORT_CONTROL_TYPE_SELECT_PORT,
-			      controls, &controlCount);
-	}
-	// ... packaged in a compound control.
-	addCompoundControl(info, creator, getPortName(info, portIndex), controls, &controlCount);
+        }
+        // add a mixer strip with volume, ...
+        createPortControl(info, creator, portIndex,
+                          type | PORT_CONTROL_TYPE_GAIN,
+                          controls, &controlCount);
+        // ... balance, ...
+        createPortControl(info, creator, portIndex,
+                          type | PORT_CONTROL_TYPE_BALANCE,
+                          controls, &controlCount);
+        // ... and select control (if not always on)...
+        if (selectable) {
+            createPortControl(info, creator, portIndex,
+                              type | PORT_CONTROL_TYPE_SELECT_PORT,
+                              controls, &controlCount);
+        }
+        // ... packaged in a compound control.
+        addCompoundControl(info, creator, getPortName(info, portIndex), controls, &controlCount);
 
-	if (type == PORT_CONTROL_TYPE_PLAY) {
-	    // add a single strip for source ports with monitor gain
-	    createPortControl(info, creator, portIndex, 
-			      type | PORT_CONTROL_TYPE_MONITOR_GAIN,
-			      controls, &controlCount);
-	    // also in a compound control
-	    addCompoundControl(info, creator, MONITOR_GAIN_STRING, controls, &controlCount);
-	}
+        if (type == PORT_CONTROL_TYPE_PLAY) {
+            // add a single strip for source ports with monitor gain
+            createPortControl(info, creator, portIndex,
+                              type | PORT_CONTROL_TYPE_MONITOR_GAIN,
+                              controls, &controlCount);
+            // also in a compound control
+            addCompoundControl(info, creator, MONITOR_GAIN_STRING, controls, &controlCount);
+        }
     }
     TRACE0("< PORT_getControls\n");
 }
@@ -462,19 +462,19 @@ INT32 PORT_GetIntValue(void* controlIDV) {
 
     AUDIO_INITINFO(&audioInfo);
     if (ioctl(controlID->portInfo->fd, AUDIO_GETINFO, &audioInfo) >= 0) {
-	if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
-	    prinfo = &(audioInfo.play);
-	} else {
-	    prinfo = &(audioInfo.record);
-	}
-	switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
-	case PORT_CONTROL_TYPE_SELECT_PORT:
-	    return (prinfo->port & controlID->port)?TRUE:FALSE;
-	case PORT_CONTROL_TYPE_OUTPUT_MUTED:
-	    return (audioInfo.output_muted)?TRUE:FALSE;
-	default:
-	    ERROR1("PORT_GetIntValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
-	}
+        if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
+            prinfo = &(audioInfo.play);
+        } else {
+            prinfo = &(audioInfo.record);
+        }
+        switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
+        case PORT_CONTROL_TYPE_SELECT_PORT:
+            return (prinfo->port & controlID->port)?TRUE:FALSE;
+        case PORT_CONTROL_TYPE_OUTPUT_MUTED:
+            return (audioInfo.output_muted)?TRUE:FALSE;
+        default:
+            ERROR1("PORT_GetIntValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
+        }
     }
     ERROR0("PORT_GetIntValue: Could not ioctl!\n");
     return 0;
@@ -487,48 +487,48 @@ void PORT_SetIntValue(void* controlIDV, INT32 value) {
     int setPort;
 
     if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
-	prinfo = &(audioInfo.play);
+        prinfo = &(audioInfo.play);
     } else {
-	prinfo = &(audioInfo.record);
+        prinfo = &(audioInfo.record);
     }
     switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
     case PORT_CONTROL_TYPE_SELECT_PORT:
-	// first try to just add this port. if that fails, set ONLY to this port.
-	AUDIO_INITINFO(&audioInfo);
-	if (ioctl(controlID->portInfo->fd, AUDIO_GETINFO, &audioInfo) >= 0) {
-	    if (value) {
-		setPort = (prinfo->port | controlID->port);
-	    } else {
-		setPort = (prinfo->port - controlID->port);
-	    }
-	    AUDIO_INITINFO(&audioInfo);
-	    prinfo->port = setPort;
-	    if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
-		// didn't work. Either this line doesn't support to select several
-		// ports at once (e.g. record), or a real error
-		if (value) {
-		    // set to ONLY this port (and disable any other currently selected ports)
-		    AUDIO_INITINFO(&audioInfo);
-		    prinfo->port = controlID->port;
-		    if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
-			ERROR2("Error setting output select port %d to port %d!\n", controlID->port, controlID->port);
-		    }
-		} else {
-		    // assume it's an error
-		    ERROR2("Error setting output select port %d to port %d!\n", controlID->port, setPort);
-		}
-	    }
-	    break;
-	case PORT_CONTROL_TYPE_OUTPUT_MUTED:
-	    AUDIO_INITINFO(&audioInfo);
-	    audioInfo.output_muted = (value?TRUE:FALSE);
-	    if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
-		ERROR2("Error setting output muted on port %d to %d!\n", controlID->port, value);
-	    }
-	    break;
-	default:
-	    ERROR1("PORT_SetIntValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
-	}
+        // first try to just add this port. if that fails, set ONLY to this port.
+        AUDIO_INITINFO(&audioInfo);
+        if (ioctl(controlID->portInfo->fd, AUDIO_GETINFO, &audioInfo) >= 0) {
+            if (value) {
+                setPort = (prinfo->port | controlID->port);
+            } else {
+                setPort = (prinfo->port - controlID->port);
+            }
+            AUDIO_INITINFO(&audioInfo);
+            prinfo->port = setPort;
+            if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
+                // didn't work. Either this line doesn't support to select several
+                // ports at once (e.g. record), or a real error
+                if (value) {
+                    // set to ONLY this port (and disable any other currently selected ports)
+                    AUDIO_INITINFO(&audioInfo);
+                    prinfo->port = controlID->port;
+                    if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
+                        ERROR2("Error setting output select port %d to port %d!\n", controlID->port, controlID->port);
+                    }
+                } else {
+                    // assume it's an error
+                    ERROR2("Error setting output select port %d to port %d!\n", controlID->port, setPort);
+                }
+            }
+            break;
+        case PORT_CONTROL_TYPE_OUTPUT_MUTED:
+            AUDIO_INITINFO(&audioInfo);
+            audioInfo.output_muted = (value?TRUE:FALSE);
+            if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
+                ERROR2("Error setting output muted on port %d to %d!\n", controlID->port, value);
+            }
+            break;
+        default:
+            ERROR1("PORT_SetIntValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
+        }
     }
 }
 
@@ -539,24 +539,24 @@ float PORT_GetFloatValue(void* controlIDV) {
 
     AUDIO_INITINFO(&audioInfo);
     if (ioctl(controlID->portInfo->fd, AUDIO_GETINFO, &audioInfo) >= 0) {
-	if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
-	    prinfo = &(audioInfo.play);
-	} else {
-	    prinfo = &(audioInfo.record);
-	}
-	switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
-	case PORT_CONTROL_TYPE_GAIN:
-	    return ((float) (prinfo->gain - AUDIO_MIN_GAIN))
-		/ ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN));
-	case PORT_CONTROL_TYPE_BALANCE:
-	    return ((float) ((prinfo->balance - AUDIO_LEFT_BALANCE - AUDIO_MID_BALANCE) << 1))
-		/ ((float) (AUDIO_RIGHT_BALANCE - AUDIO_LEFT_BALANCE));
-	case PORT_CONTROL_TYPE_MONITOR_GAIN:
-	    return ((float) (audioInfo.monitor_gain - AUDIO_MIN_GAIN))
-		/ ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN));
-	default:
-	    ERROR1("PORT_GetFloatValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
-	}
+        if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
+            prinfo = &(audioInfo.play);
+        } else {
+            prinfo = &(audioInfo.record);
+        }
+        switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
+        case PORT_CONTROL_TYPE_GAIN:
+            return ((float) (prinfo->gain - AUDIO_MIN_GAIN))
+                / ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN));
+        case PORT_CONTROL_TYPE_BALANCE:
+            return ((float) ((prinfo->balance - AUDIO_LEFT_BALANCE - AUDIO_MID_BALANCE) << 1))
+                / ((float) (AUDIO_RIGHT_BALANCE - AUDIO_LEFT_BALANCE));
+        case PORT_CONTROL_TYPE_MONITOR_GAIN:
+            return ((float) (audioInfo.monitor_gain - AUDIO_MIN_GAIN))
+                / ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN));
+        default:
+            ERROR1("PORT_GetFloatValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
+        }
     }
     ERROR0("PORT_GetFloatValue: Could not ioctl!\n");
     return 0.0f;
@@ -570,29 +570,29 @@ void PORT_SetFloatValue(void* controlIDV, float value) {
     AUDIO_INITINFO(&audioInfo);
 
     if (controlID->controlType & PORT_CONTROL_TYPE_PLAY) {
-	prinfo = &(audioInfo.play);
+        prinfo = &(audioInfo.play);
     } else {
-	prinfo = &(audioInfo.record);
+        prinfo = &(audioInfo.record);
     }
     switch (controlID->controlType & PORT_CONTROL_TYPE_MASK) {
     case PORT_CONTROL_TYPE_GAIN:
-	prinfo->gain = AUDIO_MIN_GAIN 
-	    + (int) ((value * ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN))) + 0.5f);
-	break;
+        prinfo->gain = AUDIO_MIN_GAIN
+            + (int) ((value * ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN))) + 0.5f);
+        break;
     case PORT_CONTROL_TYPE_BALANCE:
-	prinfo->balance =  AUDIO_LEFT_BALANCE + AUDIO_MID_BALANCE
-	    + ((int) (value * ((float) ((AUDIO_RIGHT_BALANCE - AUDIO_LEFT_BALANCE) >> 1))) + 0.5f);
-	break;
+        prinfo->balance =  AUDIO_LEFT_BALANCE + AUDIO_MID_BALANCE
+            + ((int) (value * ((float) ((AUDIO_RIGHT_BALANCE - AUDIO_LEFT_BALANCE) >> 1))) + 0.5f);
+        break;
     case PORT_CONTROL_TYPE_MONITOR_GAIN:
-	audioInfo.monitor_gain = AUDIO_MIN_GAIN 
-	    + (int) ((value * ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN))) + 0.5f);
-	break;
+        audioInfo.monitor_gain = AUDIO_MIN_GAIN
+            + (int) ((value * ((float) (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN))) + 0.5f);
+        break;
     default:
-	ERROR1("PORT_SetFloatValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
-	return;
+        ERROR1("PORT_SetFloatValue: Wrong type %d !\n", controlID->controlType & PORT_CONTROL_TYPE_MASK);
+        return;
     }
     if (ioctl(controlID->portInfo->fd, AUDIO_SETINFO, &audioInfo) < 0) {
-	ERROR0("PORT_SetFloatValue: Could not ioctl!\n");
+        ERROR0("PORT_SetFloatValue: Could not ioctl!\n");
     }
 }
 

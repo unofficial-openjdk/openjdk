@@ -33,20 +33,19 @@ import java.io.IOException;
 /**
  * Translator for native audio formats (not implemented in this release).
  *
- * @version %I% %E%
  */
 public
     class AudioTranslatorStream extends NativeAudioStream {
-    
-	private int length = 0;
-    
-	public AudioTranslatorStream(InputStream in) throws IOException {
-	    super(in);
-	    // No translators supported yet.
-	    throw new InvalidAudioFormatException();
-	}
-    
-	public int getLength() {
-	    return length;
-	}
+
+        private int length = 0;
+
+        public AudioTranslatorStream(InputStream in) throws IOException {
+            super(in);
+            // No translators supported yet.
+            throw new InvalidAudioFormatException();
+        }
+
+        public int getLength() {
+            return length;
+        }
     }

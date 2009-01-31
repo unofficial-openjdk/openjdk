@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import static java.lang.management.ManagementFactory.*;
 import java.lang.management.*;
@@ -40,18 +38,17 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Example of using the java.lang.management API to monitor 
+ * Example of using the java.lang.management API to monitor
  * the memory usage and garbage collection statistics.
  *
  * @author  Mandy Chung
- * @version %% %G%
  */
 public class PrintGCStat {
     private RuntimeMXBean rmbean;
     private MemoryMXBean mmbean;
     private List<MemoryPoolMXBean> pools;
     private List<GarbageCollectorMXBean> gcmbeans;
-    
+
     /**
      * Constructs a PrintGCStat object to monitor a remote JVM.
      */
@@ -79,7 +76,7 @@ public class PrintGCStat {
             Iterator iterator = mbeans.iterator();
             while (iterator.hasNext()) {
                 ObjectName objName = (ObjectName) iterator.next();
-                MemoryPoolMXBean p = 
+                MemoryPoolMXBean p =
                     newPlatformMXBeanProxy(server,
                                            objName.getCanonicalName(),
                                            MemoryPoolMXBean.class);
@@ -93,7 +90,7 @@ public class PrintGCStat {
             Iterator iterator = mbeans.iterator();
             while (iterator.hasNext()) {
                 ObjectName objName = (ObjectName) iterator.next();
-                GarbageCollectorMXBean gc = 
+                GarbageCollectorMXBean gc =
                     newPlatformMXBeanProxy(server,
                                            objName.getCanonicalName(),
                                            GarbageCollectorMXBean.class);
@@ -115,7 +112,7 @@ public class PrintGCStat {
 
     /**
      * Prints the verbose GC log to System.out to list the memory usage
-     * of all memory pools as well as the GC statistics. 
+     * of all memory pools as well as the GC statistics.
      */
     public void printVerboseGc() {
         System.out.print("Uptime: " + formatMillis(rmbean.getUptime()));
@@ -143,6 +140,6 @@ public class PrintGCStat {
         if (bytes > 0) {
             kb = bytes / 1024;
         }
-        return kb + "K"; 
+        return kb + "K";
     }
 }

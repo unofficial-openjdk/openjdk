@@ -40,7 +40,7 @@ import java.net.*;
  * 5. <bug>The client forgets to re-send the body with the POST
  *    The server hangs waiting for the body</bug>
  *
- *    <bugfixed>The client sends the body. The server reads it and the 
+ *    <bugfixed>The client sends the body. The server reads it and the
  *     test terminates normally </bugfixed>
  */
 
@@ -48,70 +48,70 @@ public class ResendPostBody {
 
     static class Server extends Thread {
 
-        InputStream	in;
+        InputStream     in;
         OutputStream out;
-        Socket	sock;
+        Socket  sock;
         StringBuffer response;
         ServerSocket server;
 
-        Server (ServerSocket s) throws IOException 
+        Server (ServerSocket s) throws IOException
         {
-    	    server = s;
+            server = s;
         }
 
         void waitFor (String s) throws IOException
         {
-	    byte[] w = s.getBytes ();
-	    for(int c=0; c<w.length; c++ ) {
-	        byte expected = w[c];
-	        int b = in.read();
-	        if (b == -1) {
-		    acceptConn ();
-	        }
-	        if ((byte)b != expected) {
-		    c = 0;
-	        }
-	    }
+            byte[] w = s.getBytes ();
+            for(int c=0; c<w.length; c++ ) {
+                byte expected = w[c];
+                int b = in.read();
+                if (b == -1) {
+                    acceptConn ();
+                }
+                if ((byte)b != expected) {
+                    c = 0;
+                }
+            }
         }
-	    
+
         boolean done = false;
 
         public synchronized boolean finished () {
-	    return done;
+            return done;
         }
 
         public synchronized void setFinished (boolean b) {
-	    done = b;
+            done = b;
         }
 
-        void acceptConn () throws IOException 
+        void acceptConn () throws IOException
         {
-	    sock = server.accept ();
-    	    in = sock.getInputStream ();
-    	    out = sock.getOutputStream ();
+            sock = server.accept ();
+            in = sock.getInputStream ();
+            out = sock.getOutputStream ();
         }
-    
+
         public void run () {
-	    try {
-	        response = new StringBuffer (1024);
-	        acceptConn ();
-	        waitFor ("POST");
-	        waitFor ("ZZZ");
-	        Thread.sleep (500);
-	        sock.close ();
-	        acceptConn ();
-	        waitFor ("POST");
-	        waitFor ("ZZZ");
-	        response.append ("HTTP/1.1 200 OK\r\n");
-	        response.append ("Server: Microsoft-IIS/5.0");
-	        response.append ("Date: Wed, 26 Jul 2000 14:17:04 GMT\r\n\r\n");
-	        out.write (response.toString().getBytes());
-	        while (!finished()) {
-		    Thread.sleep (1000);
-	        }
-	    } catch (Exception e) {
-	        System.err.println ("Server Exception: " + e);
-	    }
+            try {
+                response = new StringBuffer (1024);
+                acceptConn ();
+                waitFor ("POST");
+                waitFor ("ZZZ");
+                Thread.sleep (500);
+                sock.close ();
+                acceptConn ();
+                waitFor ("POST");
+                waitFor ("ZZZ");
+                response.append ("HTTP/1.1 200 OK\r\n");
+                response.append ("Server: Microsoft-IIS/5.0");
+                response.append ("Date: Wed, 26 Jul 2000 14:17:04 GMT\r\n\r\n");
+                out.write (response.toString().getBytes());
+                while (!finished()) {
+                    Thread.sleep (1000);
+                }
+            } catch (Exception e) {
+                System.err.println ("Server Exception: " + e);
+            }
         }
     }
 
@@ -119,26 +119,26 @@ public class ResendPostBody {
     Server server;
 
     public static void main(String[] args) throws Exception {
-  	try { 
-	    if (args.length == 1 && args[0].equals ("-i")) {
-	    	System.out.println ("Press return when ready");
-	    	System.in.read ();
-	    	System.out.println ("Done");
-	    }
-	    ResendPostBody t = new ResendPostBody ();
-	    t. execute ();
-	} catch (IOException  e) {
-	    System.out.println ("IOException");
-	}
+        try {
+            if (args.length == 1 && args[0].equals ("-i")) {
+                System.out.println ("Press return when ready");
+                System.in.read ();
+                System.out.println ("Done");
+            }
+            ResendPostBody t = new ResendPostBody ();
+            t. execute ();
+        } catch (IOException  e) {
+            System.out.println ("IOException");
+        }
     }
 
     public void execute () throws Exception {
 
      byte b[] = "X=ABCDEFGHZZZ".getBytes();
 
-     	ss = new ServerSocket (0);
-    	server = new Server (ss);
-	server.start ();
+        ss = new ServerSocket (0);
+        server = new Server (ss);
+        server.start ();
         /* Get the URL */
 
         String s = "http://localhost:"+ss.getLocalPort()+"/test";
@@ -156,7 +156,7 @@ public class ResendPostBody {
         /* POST some data */
 
         DataOutputStream OutStream = new DataOutputStream(conURL.getOutputStream());
-			  OutStream.write(b, 0, b.length);
+                          OutStream.write(b, 0, b.length);
         OutStream.flush();
         OutStream.close();
 
@@ -164,7 +164,7 @@ public class ResendPostBody {
 
         int resp = conURL.getResponseCode ();
         if (resp != 200)
-	    throw new RuntimeException ("Response code was not 200: " + resp);
+            throw new RuntimeException ("Response code was not 200: " + resp);
       server.setFinished (true);
   }
-} 
+}

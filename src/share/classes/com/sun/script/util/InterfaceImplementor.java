@@ -33,20 +33,19 @@ import java.security.*;
  * java.lang.reflect.Proxy based interface implementor. This is meant
  * to be used to implement Invocable.getInterface.
  *
- * @version 1.0
  * @author Mike Grogan
  * @since 1.6
  */
 public class InterfaceImplementor {
-    
+
     private Invocable engine;
-    
+
     /** Creates a new instance of Invocable */
     public InterfaceImplementor(Invocable engine) {
         this.engine = engine;
     }
-    
-    private final class InterfaceImplementorInvocationHandler 
+
+    private final class InterfaceImplementorInvocationHandler
                         implements InvocationHandler {
         private Object thiz;
         private AccessControlContext accCtxt;
@@ -77,7 +76,7 @@ public class InterfaceImplementor {
             return convertResult(method, result);
         }
     }
-    
+
     public <T> T getInterface(Object thiz, Class<T> iface)
     throws ScriptException {
         if (iface == null || !iface.isInterface()) {
@@ -90,7 +89,7 @@ public class InterfaceImplementor {
     }
 
     // called to convert method result after invoke
-    protected Object convertResult(Method method, Object res) 
+    protected Object convertResult(Method method, Object res)
                                    throws ScriptException {
         // default is identity conversion
         return res;

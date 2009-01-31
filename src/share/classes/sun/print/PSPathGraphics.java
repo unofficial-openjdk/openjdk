@@ -69,20 +69,20 @@ class PSPathGraphics extends PathGraphics {
     PSPathGraphics(Graphics2D graphics, PrinterJob printerJob,
                    Printable painter, PageFormat pageFormat, int pageIndex,
                    boolean canRedraw) {
-	super(graphics, printerJob, painter, pageFormat, pageIndex, canRedraw);
+        super(graphics, printerJob, painter, pageFormat, pageIndex, canRedraw);
     }
 
     /**
-     * Creates a new <code>Graphics</code> object that is 
+     * Creates a new <code>Graphics</code> object that is
      * a copy of this <code>Graphics</code> object.
-     * @return     a new graphics context that is a copy of 
+     * @return     a new graphics context that is a copy of
      *                       this graphics context.
      * @since      JDK1.0
      */
     public Graphics create() {
 
-	return new PSPathGraphics((Graphics2D) getDelegate().create(),
-				  getPrinterJob(),
+        return new PSPathGraphics((Graphics2D) getDelegate().create(),
+                                  getPrinterJob(),
                                   getPrintable(),
                                   getPageFormat(),
                                   getPageIndex(),
@@ -138,21 +138,21 @@ class PSPathGraphics extends PathGraphics {
      * @see #setClip
      */
      public void drawString(String str, float x, float y) {
-	 drawString(str, x, y, getFont(), getFontRenderContext(), 0f);
+         drawString(str, x, y, getFont(), getFontRenderContext(), 0f);
      }
-    
+
 
     protected boolean canDrawStringToWidth() {
-	return true;
+        return true;
     }
 
     protected int platformFontCount(Font font, String str) {
-	PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();   
-	return psPrinterJob.platformFontCount(font,  str);
+        PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();
+        return psPrinterJob.platformFontCount(font,  str);
     }
 
     protected void drawString(String str, float x, float y,
-			      Font font, FontRenderContext frc, float w) {
+                              Font font, FontRenderContext frc, float w) {
         if (str.length() == 0) {
             return;
         }
@@ -171,12 +171,12 @@ class PSPathGraphics extends PathGraphics {
             return;
         }
 
-    	Font oldFont = getFont();
-	if (!oldFont.equals(font)) {
-	    setFont(font);
-	} else {
-	    oldFont = null;
-	}
+        Font oldFont = getFont();
+        if (!oldFont.equals(font)) {
+            setFont(font);
+        } else {
+            oldFont = null;
+        }
 
         boolean drawnWithPS = false;
 
@@ -188,7 +188,7 @@ class PSPathGraphics extends PathGraphics {
             int transformType = fontTx.getType();
             /* TYPE_TRANSLATION is a flag bit but we can do "==" here
              * because we want to detect when its just that bit set and
-             * 
+             *
              */
             if (transformType == AffineTransform.TYPE_TRANSLATION) {
                 translateX = (float)(fontTx.getTranslateX());
@@ -216,9 +216,9 @@ class PSPathGraphics extends PathGraphics {
                 try {
                     psPrinterJob.setColor((Color)getPaint());
                 } catch (ClassCastException e) {
-		    if (oldFont != null) {
-			setFont(oldFont);
-		    }
+                    if (oldFont != null) {
+                        setFont(oldFont);
+                    }
                     throw new IllegalArgumentException(
                                                 "Expected a Color instance");
                 }
@@ -228,7 +228,7 @@ class PSPathGraphics extends PathGraphics {
 
                 drawnWithPS = psPrinterJob.textOut(this, str,
                                                    x+translateX, y+translateY,
-						   font, frc, w);
+                                                   font, frc, w);
             }
         }
 
@@ -236,16 +236,16 @@ class PSPathGraphics extends PathGraphics {
          * calls so decompose the text into a shape.
          */
         if (drawnWithPS == false) {
-	    if (oldFont != null) {
-		setFont(oldFont);
-		oldFont = null;
-	    }
+            if (oldFont != null) {
+                setFont(oldFont);
+                oldFont = null;
+            }
             super.drawString(str, x, y, font, frc, w);
         }
 
-	if (oldFont != null) {
-	    setFont(oldFont);
-	}
+        if (oldFont != null) {
+            setFont(oldFont);
+        }
     }
 
     /**
@@ -256,39 +256,39 @@ class PSPathGraphics extends PathGraphics {
      * <code>srcX, srcY, srcWidth, and srcHeight</code>
      * is transformed by the supplied AffineTransform and
      * drawn using PS to the printer context.
-     * 
-     * @param	img	The image to be drawn.
-     *                  This method does nothing if <code>img</code> is null.
-     * @param	xform	Used to tranform the image before drawing.
-     *			This can be null.
-     * @param	bgcolor	This color is drawn where the image has transparent
-     *			pixels. If this parameter is null then the
-     *			pixels already in the destination should show
-     *			through.
-     * @param	srcX	With srcY this defines the upper-left corner
-     *			of the portion of the image to be drawn.
      *
-     * @param	srcY	With srcX this defines the upper-left corner
-     *			of the portion of the image to be drawn.
-     * @param	srcWidth    The width of the portion of the image to
-     *			    be drawn.
-     * @param	srcHeight   The height of the portion of the image to
-     *			    be drawn.
+     * @param   img     The image to be drawn.
+     *                  This method does nothing if <code>img</code> is null.
+     * @param   xform   Used to tranform the image before drawing.
+     *                  This can be null.
+     * @param   bgcolor This color is drawn where the image has transparent
+     *                  pixels. If this parameter is null then the
+     *                  pixels already in the destination should show
+     *                  through.
+     * @param   srcX    With srcY this defines the upper-left corner
+     *                  of the portion of the image to be drawn.
+     *
+     * @param   srcY    With srcX this defines the upper-left corner
+     *                  of the portion of the image to be drawn.
+     * @param   srcWidth    The width of the portion of the image to
+     *                      be drawn.
+     * @param   srcHeight   The height of the portion of the image to
+     *                      be drawn.
      * @param   handlingTransparency if being recursively called to
      *                    print opaque region of transparent image
      */
     protected boolean drawImageToPlatform(Image image, AffineTransform xform,
-					  Color bgcolor,
-					  int srcX, int srcY,
-					  int srcWidth, int srcHeight,
-					  boolean handlingTransparency) {
+                                          Color bgcolor,
+                                          int srcX, int srcY,
+                                          int srcWidth, int srcHeight,
+                                          boolean handlingTransparency) {
 
-	BufferedImage img = getBufferedImage(image);
-	if (img == null) {
-	    return true;
-	}
+        BufferedImage img = getBufferedImage(image);
+        if (img == null) {
+            return true;
+        }
 
-	PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();
+        PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();
 
         /* The full transform to be applied to the image is the
          * caller's transform concatenated on to the transform
@@ -388,12 +388,12 @@ class PSPathGraphics extends PathGraphics {
 
             Shape rotShape = rotTransform.createTransformedShape(srcRect);
             Rectangle2D rotBounds = rotShape.getBounds2D();
-	    
-	    /* add a fudge factor as some fp precision problems have
+
+            /* add a fudge factor as some fp precision problems have
              * been observed which caused pixels to be rounded down and
              * out of the image.
              */
-	    rotBounds.setRect(rotBounds.getX(), rotBounds.getY(),
+            rotBounds.setRect(rotBounds.getX(), rotBounds.getY(),
                               rotBounds.getWidth()+0.001,
                               rotBounds.getHeight()+0.001);
 
@@ -408,14 +408,14 @@ class PSPathGraphics extends PathGraphics {
                  * the portion of the page covered by the image.
                  * This will be done in a later call to print using the
                  * saved graphics state.
-  		 * However several special cases can be handled otherwise:
+                 * However several special cases can be handled otherwise:
                  * - bitmask transparency with a solid background colour
                  * - images which have transparency color models but no
                  * transparent pixels
                  * - images with bitmask transparency and an IndexColorModel
                  * (the common transparent GIF case) can be handled by
                  * rendering just the opaque pixels.
-		 */
+                 */
                 boolean drawOpaque = true;
                 if (!handlingTransparency && hasTransparentPixels(img)) {
                     drawOpaque = false;
@@ -436,18 +436,18 @@ class PSPathGraphics extends PathGraphics {
                         drawOpaque = true;
                     }
                 } else {
-		    // if there's no transparent pixels there's no need
-		    // for a background colour. This can avoid edge artifacts
-		    // in rotation cases.
-		    bgcolor = null;
-		}
-		// if src region extends beyond the image, the "opaque" path
-		// may blit b/g colour (including white) where it shoudn't.
-		if ((srcX+srcWidth > img.getWidth(null) ||
-		     srcY+srcHeight > img.getHeight(null))
-		    && canDoRedraws()) {
-		    drawOpaque = false;
-		}
+                    // if there's no transparent pixels there's no need
+                    // for a background colour. This can avoid edge artifacts
+                    // in rotation cases.
+                    bgcolor = null;
+                }
+                // if src region extends beyond the image, the "opaque" path
+                // may blit b/g colour (including white) where it shoudn't.
+                if ((srcX+srcWidth > img.getWidth(null) ||
+                     srcY+srcHeight > img.getHeight(null))
+                    && canDoRedraws()) {
+                    drawOpaque = false;
+                }
                 if (drawOpaque == false) {
 
                     fullTransform.getMatrix(fullMatrix);
@@ -467,12 +467,12 @@ class PSPathGraphics extends PathGraphics {
                     // Region isn't user space because its potentially
                     // been rotated for landscape.
                     Rectangle2D region = shape.getBounds2D();
-    
+
                     region.setRect(region.getX(), region.getY(),
                                    region.getWidth()+0.001,
                                    region.getHeight()+0.001);
 
-                    // Try to limit the amount of memory used to 8Mb, so 
+                    // Try to limit the amount of memory used to 8Mb, so
                     // if at device resolution this exceeds a certain
                     // image size then scale down the region to fit in
                     // that memory, but never to less than 72 dpi.
@@ -552,7 +552,7 @@ class PSPathGraphics extends PathGraphics {
                         bgcolor = Color.white;
                     }
 
-		    /* REMIND: no need to use scaling here. */
+                    /* REMIND: no need to use scaling here. */
                     imageGraphics.drawImage(img,
                                             srcX, srcY,
                                             srcX + srcWidth, srcY + srcHeight,
@@ -561,23 +561,23 @@ class PSPathGraphics extends PathGraphics {
                                             bgcolor, null);
 
                     /* In PSPrinterJob images are printed in device space
-		     * and therefore we need to set a device space clip.
-		     * FIX: this is an overly tight coupling of these
-		     * two classes.
+                     * and therefore we need to set a device space clip.
+                     * FIX: this is an overly tight coupling of these
+                     * two classes.
                      * The temporary clip set needs to be an intersection
-		     * with the previous user clip.
-		     * REMIND: two xfms may lose accuracy in clip path.
+                     * with the previous user clip.
+                     * REMIND: two xfms may lose accuracy in clip path.
                      */
                     Shape holdClip = getClip();
-		    Shape oldClip =
-			getTransform().createTransformedShape(holdClip);
+                    Shape oldClip =
+                        getTransform().createTransformedShape(holdClip);
                     AffineTransform sat = AffineTransform.getScaleInstance(
-						             scaleX, scaleY);
+                                                             scaleX, scaleY);
                     Shape imgClip = sat.createTransformedShape(rotShape);
-		    Area imgArea = new Area(imgClip);
+                    Area imgArea = new Area(imgClip);
                     Area oldArea = new Area(oldClip);
                     imgArea.intersect(oldArea);
-        	    psPrinterJob.setClip(imgArea);
+                    psPrinterJob.setClip(imgArea);
 
                     /* Scale the bounding rectangle by the scale transform.
                      * Because the scaling transform has only x and y
@@ -597,20 +597,20 @@ class PSPathGraphics extends PathGraphics {
                     /* Pull the raster data from the buffered image
                      * and pass it along to PS.
                      */
-		    ByteComponentRaster tile =
+                    ByteComponentRaster tile =
                                    (ByteComponentRaster)deepImage.getRaster();
 
                     psPrinterJob.drawImageBGR(tile.getDataStorage(),
                                 scaledBounds.x, scaledBounds.y,
-				(float)Math.rint(scaledBounds.width+0.5),
-				(float)Math.rint(scaledBounds.height+0.5),
+                                (float)Math.rint(scaledBounds.width+0.5),
+                                (float)Math.rint(scaledBounds.height+0.5),
                                 0f, 0f,
                                 deepImage.getWidth(), deepImage.getHeight(),
                                 deepImage.getWidth(), deepImage.getHeight());
 
-		    /* Reset the device clip to match user clip */
-		    psPrinterJob.setClip(
-			       getTransform().createTransformedShape(holdClip));
+                    /* Reset the device clip to match user clip */
+                    psPrinterJob.setClip(
+                               getTransform().createTransformedShape(holdClip));
 
 
                     imageGraphics.dispose();
@@ -622,7 +622,7 @@ class PSPathGraphics extends PathGraphics {
         return true;
     }
 
-    /** Redraw a rectanglular area using a proxy graphics 
+    /** Redraw a rectanglular area using a proxy graphics
       * To do this we need to know the rectangular area to redraw and
       * the transform & clip in effect at the time of the original drawImage
       *
@@ -730,36 +730,36 @@ class PSPathGraphics extends PathGraphics {
      */
     protected void deviceFill(PathIterator pathIter, Color color) {
 
-	PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();
-	psPrinterJob.deviceFill(pathIter, color, getTransform(), getClip());
+        PSPrinterJob psPrinterJob = (PSPrinterJob) getPrinterJob();
+        psPrinterJob.deviceFill(pathIter, color, getTransform(), getClip());
     }
 
     /*
-     * Draw the bounding rectangle using path by calling draw() 
+     * Draw the bounding rectangle using path by calling draw()
      * function and passing a rectangle shape.
      */
     protected void deviceFrameRect(int x, int y, int width, int height,
-				   Color color) {
+                                   Color color) {
 
-	draw(new Rectangle2D.Float(x, y, width, height));
+        draw(new Rectangle2D.Float(x, y, width, height));
     }
 
     /*
      * Draw a line using path by calling draw() function and passing
      * a line shape.
      */
-    protected void deviceDrawLine(int xBegin, int yBegin, 
-				  int xEnd, int yEnd, Color color) {
+    protected void deviceDrawLine(int xBegin, int yBegin,
+                                  int xEnd, int yEnd, Color color) {
 
-	draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
+        draw(new Line2D.Float(xBegin, yBegin, xEnd, yEnd));
     }
 
     /*
      * Fill the rectangle with the specified color by calling fill().
      */
     protected void deviceFillRect(int x, int y, int width, int height,
-				  Color color) {
-	fill(new Rectangle2D.Float(x, y, width, height));
+                                  Color color) {
+        fill(new Rectangle2D.Float(x, y, width, height));
     }
 
 

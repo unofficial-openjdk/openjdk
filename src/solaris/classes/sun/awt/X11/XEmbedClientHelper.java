@@ -38,7 +38,7 @@ import java.awt.Container;
  */
 public class XEmbedClientHelper extends XEmbedHelper implements XEventDispatcher {
     private static final Logger xembedLog = Logger.getLogger("sun.awt.X11.xembed.XEmbedClientHelper");
-    
+
     private XEmbeddedFramePeer embedded;
     private boolean active;
     private long server;
@@ -54,7 +54,7 @@ public class XEmbedClientHelper extends XEmbedHelper implements XEventDispatcher
         if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Installing xembedder on " + embedded);
         XToolkit.addEventDispatcher(embedded.getWindow(), this);
         long[] info = new long[] { XEMBED_VERSION, XEMBED_MAPPED };
-        long data = Native.card32ToData(info);        
+        long data = Native.card32ToData(info);
         try {
             XEmbedInfo.setAtomData(embedded.getWindow(), data, 2);
         } finally {
@@ -76,7 +76,7 @@ public class XEmbedClientHelper extends XEmbedHelper implements XEventDispatcher
         }
         notifyReady();
     }
-    
+
     void handleClientMessage(XEvent xev) {
         XClientMessageEvent msg = xev.get_xclient();
         if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine(msg.toString());
@@ -195,7 +195,7 @@ public class XEmbedClientHelper extends XEmbedHelper implements XEventDispatcher
             sendMessage(server, XEMBED_FOCUS_NEXT);
         }
     }
-    
+
     void traverseOutBackward() {
         if (active) {
             sendMessage(server, XEMBED_FOCUS_PREV);
@@ -209,7 +209,7 @@ public class XEmbedClientHelper extends XEmbedHelper implements XEventDispatcher
     }
     void unregisterAccelerator(int id) {
         sendMessage(server, XEMBED_UNREGISTER_ACCELERATOR, id, 0, 0);
-    }        
+    }
 
     long getX11KeySym(AWTKeyStroke stroke) {
         XToolkit.awtLock();

@@ -31,7 +31,6 @@ import java.io.*;
  * StreamRedirectThread is a thread which copies it's input to
  * it's output and terminates when it completes.
  *
- * @version     %Z% %M% %I% %E% %T%
  * @author Robert Field
  */
 class StreamRedirectThread extends Thread {
@@ -48,10 +47,10 @@ class StreamRedirectThread extends Thread {
      * @param out   Stream to copy to
      */
     StreamRedirectThread(String name, InputStream in, OutputStream out) {
-	super(name);
-	this.in = new InputStreamReader(in);
-	this.out = new OutputStreamWriter(out);
-	setPriority(Thread.MAX_PRIORITY-1);
+        super(name);
+        this.in = new InputStreamReader(in);
+        this.out = new OutputStreamWriter(out);
+        setPriority(Thread.MAX_PRIORITY-1);
     }
 
     /**
@@ -59,14 +58,14 @@ class StreamRedirectThread extends Thread {
      */
     public void run() {
         try {
-	    char[] cbuf = new char[BUFFER_SIZE];
-	    int count;
-	    while ((count = in.read(cbuf, 0, BUFFER_SIZE)) >= 0) {
-		out.write(cbuf, 0, count);
-	    }
+            char[] cbuf = new char[BUFFER_SIZE];
+            int count;
+            while ((count = in.read(cbuf, 0, BUFFER_SIZE)) >= 0) {
+                out.write(cbuf, 0, count);
+            }
             out.flush();
-	} catch(IOException exc) {
-	    System.err.println("Child I/O Transfer - " + exc);
-	}
+        } catch(IOException exc) {
+            System.err.println("Child I/O Transfer - " + exc);
+        }
     }
 }

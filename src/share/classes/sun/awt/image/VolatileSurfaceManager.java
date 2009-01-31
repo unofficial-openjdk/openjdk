@@ -68,7 +68,7 @@ public abstract class VolatileSurfaceManager
     protected SurfaceData sdBackup;
 
     /**
-     * The current SurfaceData object. 
+     * The current SurfaceData object.
      */
     protected SurfaceData sdCurrent;
 
@@ -95,7 +95,7 @@ public abstract class VolatileSurfaceManager
         this.vImg = vImg;
         this.context = context;
 
-        GraphicsEnvironment ge = 
+        GraphicsEnvironment ge =
             GraphicsEnvironment.getLocalGraphicsEnvironment();
         // We could have a HeadlessGE at this point, so double-check before
         // assuming anything.
@@ -110,7 +110,7 @@ public abstract class VolatileSurfaceManager
      * Otherwise, we end up calling into a subclass' overridden method
      * during construction, before that subclass is completely constructed.
      */
-    public void initialize() {	
+    public void initialize() {
         if (isAccelerationEnabled()) {
             sdAccel = initAcceleratedSurface();
             if (sdAccel != null) {
@@ -121,7 +121,7 @@ public abstract class VolatileSurfaceManager
             sdCurrent = getBackupSurface();
         }
     }
-    
+
     public SurfaceData getPrimarySurfaceData() {
         return sdCurrent;
     }
@@ -136,7 +136,7 @@ public abstract class VolatileSurfaceManager
     /**
      * Get the image ready for rendering.  This method is called to make
      * sure that the accelerated SurfaceData exists and is
-     * ready to be used.  Users call this method prior to any set of 
+     * ready to be used.  Users call this method prior to any set of
      * rendering to or from the image, to make sure the image is ready
      * and compatible with the given GraphicsConfiguration.
      *
@@ -145,62 +145,62 @@ public abstract class VolatileSurfaceManager
      * the surface became lost (e.g., some other app or the OS caused
      * vram surfaces to be removed).
      *
-     * Note that we want to return RESTORED in any situation where the 
+     * Note that we want to return RESTORED in any situation where the
      * SurfaceData is different than it was last time.  So whether it's
-     * software or hardware, if we have a different SurfaceData object, 
-     * then the contents have been altered and we must reflect that 
+     * software or hardware, if we have a different SurfaceData object,
+     * then the contents have been altered and we must reflect that
      * change to the user.
      */
     public int validate(GraphicsConfiguration gc) {
-	int returnCode = VolatileImage.IMAGE_OK;
-	boolean lostSurfaceTmp = lostSurface;
-	lostSurface = false;
+        int returnCode = VolatileImage.IMAGE_OK;
+        boolean lostSurfaceTmp = lostSurface;
+        lostSurface = false;
 
-	if (isAccelerationEnabled()) {
-	    if (!isConfigValid(gc)) {
-		// If we're asked to render to a different device than the
-		// one we were created under, return INCOMPATIBLE error code.
-		// Note that a null gc simply ignores the incompatibility 
-		// issue
-		returnCode = VolatileImage.IMAGE_INCOMPATIBLE;
-	    } else if (sdAccel == null) {
-		// We either had problems creating the surface or the display
-		// mode changed and we nullified the old one.  Try it again.
-		sdAccel = initAcceleratedSurface();
-		if (sdAccel != null) {
-		    // set the current SurfaceData to accelerated version
+        if (isAccelerationEnabled()) {
+            if (!isConfigValid(gc)) {
+                // If we're asked to render to a different device than the
+                // one we were created under, return INCOMPATIBLE error code.
+                // Note that a null gc simply ignores the incompatibility
+                // issue
+                returnCode = VolatileImage.IMAGE_INCOMPATIBLE;
+            } else if (sdAccel == null) {
+                // We either had problems creating the surface or the display
+                // mode changed and we nullified the old one.  Try it again.
+                sdAccel = initAcceleratedSurface();
+                if (sdAccel != null) {
+                    // set the current SurfaceData to accelerated version
                     sdCurrent = sdAccel;
                     // we don't need the system memory surface anymore, so
                     // let's release it now (it can always be restored later)
                     sdBackup = null;
-		    returnCode = VolatileImage.IMAGE_RESTORED;
-		} else {
+                    returnCode = VolatileImage.IMAGE_RESTORED;
+                } else {
                     sdCurrent = getBackupSurface();
                 }
-	    } else if (sdAccel.isSurfaceLost()) {
-		try {
-		    restoreAcceleratedSurface();
-		    // set the current SurfaceData to accelerated version
-		    sdCurrent = sdAccel;
-		    // restoration successful: accel surface no longer lost
-		    sdAccel.setSurfaceLost(false);
+            } else if (sdAccel.isSurfaceLost()) {
+                try {
+                    restoreAcceleratedSurface();
+                    // set the current SurfaceData to accelerated version
+                    sdCurrent = sdAccel;
+                    // restoration successful: accel surface no longer lost
+                    sdAccel.setSurfaceLost(false);
                     // we don't need the system memory surface anymore, so
                     // let's release it now (it can always be restored later)
                     sdBackup = null;
-		    returnCode = VolatileImage.IMAGE_RESTORED;
-		} catch (sun.java2d.InvalidPipeException e) {
-		    // Set the current SurfaceData to software version so that
+                    returnCode = VolatileImage.IMAGE_RESTORED;
+                } catch (sun.java2d.InvalidPipeException e) {
+                    // Set the current SurfaceData to software version so that
                     // drawing can continue.  Note that we still have
-		    // the lostAccelSurface flag set so that we will continue
+                    // the lostAccelSurface flag set so that we will continue
                     // to attempt to restore the accelerated surface.
                     sdCurrent = getBackupSurface();
-		}
-	    } else if (lostSurfaceTmp) {
-		// Something else triggered this loss/restoration.  Could
-		// be a palette change that didn't require a SurfaceData
-		// recreation but merely a re-rendering of the pixels.
-		returnCode = VolatileImage.IMAGE_RESTORED;
-	    }
+                }
+            } else if (lostSurfaceTmp) {
+                // Something else triggered this loss/restoration.  Could
+                // be a palette change that didn't require a SurfaceData
+                // recreation but merely a re-rendering of the pixels.
+                returnCode = VolatileImage.IMAGE_RESTORED;
+            }
         } else if (sdAccel != null) {
             // if the "acceleration enabled" state changed to disabled,
             // switch to software surface
@@ -209,21 +209,21 @@ public abstract class VolatileSurfaceManager
             returnCode = VolatileImage.IMAGE_RESTORED;
         }
 
-	if ((returnCode != VolatileImage.IMAGE_INCOMPATIBLE) &&
-	    (sdCurrent != sdPrevious)) 
-	{
-	    // contents have changed - return RESTORED to user
-	    sdPrevious = sdCurrent;
-	    returnCode = VolatileImage.IMAGE_RESTORED;
-	}
+        if ((returnCode != VolatileImage.IMAGE_INCOMPATIBLE) &&
+            (sdCurrent != sdPrevious))
+        {
+            // contents have changed - return RESTORED to user
+            sdPrevious = sdCurrent;
+            returnCode = VolatileImage.IMAGE_RESTORED;
+        }
 
         if (returnCode == VolatileImage.IMAGE_RESTORED) {
             // clear the current surface with the background color,
             // only if the surface has been restored
-            initContents();                
+            initContents();
         }
-        
-	return returnCode;
+
+        return returnCode;
     }
 
     /**
@@ -254,15 +254,15 @@ public abstract class VolatileSurfaceManager
      * albeit more slowly than they would otherwise.
      */
     protected SurfaceData getBackupSurface() {
-	if (sdBackup == null) {
-	    BufferedImage bImg = vImg.getBackupImage();
+        if (sdBackup == null) {
+            BufferedImage bImg = vImg.getBackupImage();
             // Sabotage the acceleration capabilities of the BufImg surface
             SunWritableRaster.stealTrackable(bImg
                                              .getRaster()
                                              .getDataBuffer()).setUntrackable();
-	    sdBackup = BufImgSurfaceData.createData(bImg);
-	}
-	return sdBackup;
+            sdBackup = BufImgSurfaceData.createData(bImg);
+        }
+        return sdBackup;
     }
 
     /**
@@ -270,9 +270,9 @@ public abstract class VolatileSurfaceManager
      * the background).
      */
     public void initContents() {
-	Graphics g = vImg.createGraphics();
-	g.clearRect(0, 0, vImg.getWidth(), vImg.getHeight());
-	g.dispose();
+        Graphics g = vImg.createGraphics();
+        g.clearRect(0, 0, vImg.getWidth(), vImg.getHeight());
+        g.dispose();
     }
 
     /**
@@ -282,7 +282,7 @@ public abstract class VolatileSurfaceManager
      * primary SurfaceData object.
      */
     public SurfaceData restoreContents() {
-	return getBackupSurface();
+        return getBackupSurface();
     }
 
     /**
@@ -290,13 +290,13 @@ public abstract class VolatileSurfaceManager
      * sets the variable lostSurface to true, which indicates that something
      * happened to the image under management.  This variable is used in the
      * validate method to tell the caller that the surface contents need to
-     * be restored. 
+     * be restored.
      */
     public void acceleratedSurfaceLost() {
         if (isAccelerationEnabled() && (sdCurrent == sdAccel)) {
             lostSurface = true;
         }
-    }	
+    }
 
     /**
      * Restore sdAccel in case it was lost.  Do nothing in this
@@ -337,7 +337,7 @@ public abstract class VolatileSurfaceManager
 
     /**
      * When device palette changes, need to force a new copy
-     * of the image into our hardware cache to update the 
+     * of the image into our hardware cache to update the
      * color indices of the pixels (indexed mode only).
      */
     public void paletteChanged() {
@@ -353,18 +353,18 @@ public abstract class VolatileSurfaceManager
      * appropriate.
      */
     protected boolean isConfigValid(GraphicsConfiguration gc) {
-	return ((gc == null) ||
+        return ((gc == null) ||
                 (gc.getDevice() == vImg.getGraphicsConfig().getDevice()));
     }
 
     @Override
     public ImageCapabilities getCapabilities(GraphicsConfiguration gc) {
-	if (isConfigValid(gc)) {
+        if (isConfigValid(gc)) {
             return isAccelerationEnabled() ?
                 new AcceleratedImageCapabilities() :
                 new ImageCapabilities(false);
-	}
-	return super.getCapabilities(gc);
+        }
+        return super.getCapabilities(gc);
     }
 
     private class AcceleratedImageCapabilities
@@ -390,11 +390,11 @@ public abstract class VolatileSurfaceManager
      * revalidate the image first.
      */
     public void flush() {
-	lostSurface = true;
-	SurfaceData oldSD = sdAccel;
-	sdAccel = null;
-	if (oldSD != null) {
-	    oldSD.flush();
-	}
+        lostSurface = true;
+        SurfaceData oldSD = sdAccel;
+        sdAccel = null;
+        if (oldSD != null) {
+            oldSD.flush();
+        }
     }
 }

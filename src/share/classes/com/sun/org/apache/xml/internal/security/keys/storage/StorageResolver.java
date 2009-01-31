@@ -41,7 +41,7 @@ import com.sun.org.apache.xml.internal.security.keys.storage.implementations.Sin
 public class StorageResolver {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(StorageResolver.class.getName());
 
    /** Field _storageResolvers */
@@ -159,12 +159,11 @@ public class StorageResolver {
     * Class StorageResolverIterator
     *
     * @author $Author: raul $
-    * @version $Revision: 1.10 $
     */
    class StorageResolverIterator implements Iterator {
 
       /** Field _resolvers */
-	   Iterator _resolvers = null;
+           Iterator _resolvers = null;
 
       /** Field _currentResolver */
       int _currentResolver = 0;
@@ -180,12 +179,12 @@ public class StorageResolver {
 
       /** @inheritDoc */
       public boolean hasNext() {
-		  return _resolvers.hasNext();
+                  return _resolvers.hasNext();
       }
 
       /** @inheritDoc */
       public Object next() {
-		  return _resolvers.next();
+                  return _resolvers.next();
       }
 
       /**

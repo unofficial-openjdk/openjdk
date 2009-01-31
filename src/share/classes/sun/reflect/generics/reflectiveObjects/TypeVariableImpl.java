@@ -33,7 +33,7 @@ import sun.reflect.generics.factory.GenericsFactory;
 import sun.reflect.generics.tree.FieldTypeSignature;
 import sun.reflect.generics.visitor.Reifier;
 
-/** 
+/**
  * Implementation of <tt>java.lang.reflect.TypeVariable</tt> interface
  * for core reflection.
  */
@@ -53,11 +53,11 @@ public class TypeVariableImpl<D extends GenericDeclaration>
 
     // constructor is private to enforce access through static factory
     private TypeVariableImpl(D decl, String n, FieldTypeSignature[] bs,
-			     GenericsFactory f) {
-	super(f);
-	genericDeclaration = decl;
+                             GenericsFactory f) {
+        super(f);
+        genericDeclaration = decl;
         name = n;
-	boundASTs = bs;
+        boundASTs = bs;
     }
 
     // Accessors
@@ -66,13 +66,13 @@ public class TypeVariableImpl<D extends GenericDeclaration>
     // bounds have been evaluated, because we might throw the ASTs
     // away (but that is not thread-safe, is it?)
     private FieldTypeSignature[] getBoundASTs() {
-	// check that bounds were not evaluated yet
-	assert(bounds == null);
+        // check that bounds were not evaluated yet
+        assert(bounds == null);
         return boundASTs;
     }
 
     /**
-     * Factory method. 
+     * Factory method.
      * @param decl - the reflective object that declared the type variable
      * that this method should create
      * @param name - the name of the type variable to be returned
@@ -83,16 +83,16 @@ public class TypeVariableImpl<D extends GenericDeclaration>
      * @return A type variable with name, bounds, declaration and factory
      * specified
      */
-    public static <T extends GenericDeclaration> 
-			     TypeVariableImpl<T> make(T decl, String name, 
-						      FieldTypeSignature[] bs,
-						      GenericsFactory f) {
-	return new TypeVariableImpl<T>(decl, name, bs, f);
+    public static <T extends GenericDeclaration>
+                             TypeVariableImpl<T> make(T decl, String name,
+                                                      FieldTypeSignature[] bs,
+                                                      GenericsFactory f) {
+        return new TypeVariableImpl<T>(decl, name, bs, f);
     }
-    
+
 
     /**
-     * Returns an array of <tt>Type</tt> objects representing the 
+     * Returns an array of <tt>Type</tt> objects representing the
      * upper bound(s) of this type variable.  Note that if no upper bound is
      * explicitly declared, the upper bound is <tt>Object</tt>.
      *
@@ -106,34 +106,34 @@ public class TypeVariableImpl<D extends GenericDeclaration>
      *
      * @throws <tt>TypeNotPresentException</tt>  if any of the
      *     bounds refers to a non-existent type declaration
-     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the 
-     *     bounds refer to a parameterized type that cannot be instantiated 
+     * @throws <tt>MalformedParameterizedTypeException</tt> if any of the
+     *     bounds refer to a parameterized type that cannot be instantiated
      *     for any reason
-     * @return an array of Types representing the upper bound(s) of this 
+     * @return an array of Types representing the upper bound(s) of this
      *     type variable
     */
-    public Type[] getBounds() { 
-	// lazily initialize bounds if necessary
-	if (bounds == null) {
-	    FieldTypeSignature[] fts = getBoundASTs(); // get AST
-	    // allocate result array; note that
-	    // keeping ts and bounds separate helps with threads
-	    Type[] ts = new Type[fts.length];
-	    // iterate over bound trees, reifying each in turn
-	    for ( int j = 0; j  < fts.length; j++) {
-		Reifier r = getReifier();
-		fts[j].accept(r);
-		ts[j] = r.getResult();
-	    }
-	    // cache result
-	    bounds = ts; 
-	    // could throw away bound ASTs here; thread safety?
-	}
-	return bounds.clone(); // return cached bounds
+    public Type[] getBounds() {
+        // lazily initialize bounds if necessary
+        if (bounds == null) {
+            FieldTypeSignature[] fts = getBoundASTs(); // get AST
+            // allocate result array; note that
+            // keeping ts and bounds separate helps with threads
+            Type[] ts = new Type[fts.length];
+            // iterate over bound trees, reifying each in turn
+            for ( int j = 0; j  < fts.length; j++) {
+                Reifier r = getReifier();
+                fts[j].accept(r);
+                ts[j] = r.getResult();
+            }
+            // cache result
+            bounds = ts;
+            // could throw away bound ASTs here; thread safety?
+        }
+        return bounds.clone(); // return cached bounds
     }
 
     /**
-     * Returns the <tt>GenericDeclaration</tt>  object representing the 
+     * Returns the <tt>GenericDeclaration</tt>  object representing the
      * generic declaration that declared this type variable.
      *
      * @return the generic declaration that declared this type variable.
@@ -141,7 +141,7 @@ public class TypeVariableImpl<D extends GenericDeclaration>
      * @since 1.5
      */
     public D getGenericDeclaration(){
-	return genericDeclaration;
+        return genericDeclaration;
     }
 
 
@@ -156,26 +156,26 @@ public class TypeVariableImpl<D extends GenericDeclaration>
 
     @Override
     public boolean equals(Object o) {
-	if (o instanceof TypeVariable) {
-	    TypeVariable that = (TypeVariable) o;
+        if (o instanceof TypeVariable) {
+            TypeVariable that = (TypeVariable) o;
 
-	    GenericDeclaration thatDecl = that.getGenericDeclaration();
-	    String thatName = that.getName();
+            GenericDeclaration thatDecl = that.getGenericDeclaration();
+            String thatName = that.getName();
 
-	    return
-		(genericDeclaration == null ?
-		 thatDecl == null :
-		 genericDeclaration.equals(thatDecl)) &&
-		(name == null ?
-		 thatName == null :
-		 name.equals(thatName));
+            return
+                (genericDeclaration == null ?
+                 thatDecl == null :
+                 genericDeclaration.equals(thatDecl)) &&
+                (name == null ?
+                 thatName == null :
+                 name.equals(thatName));
 
-	} else
-	    return false;
+        } else
+            return false;
     }
 
     @Override
     public int hashCode() {
-	return genericDeclaration.hashCode() ^ name.hashCode();
+        return genericDeclaration.hashCode() ^ name.hashCode();
     }
 }

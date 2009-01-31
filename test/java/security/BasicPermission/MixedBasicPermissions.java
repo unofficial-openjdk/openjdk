@@ -37,4 +37,3 @@ public class MixedBasicPermissions {
         throw new RuntimeException("Should not be here");
     }
 }
-

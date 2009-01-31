@@ -1,7 +1,7 @@
 /* /nodynamiccopyright/ hard coded linenumbers in other tests - DO NOT CHANGE
  * Debuggee which exercises various reference types
  */
-                
+
 abstract class AllAbstract {
     abstract void a();
     abstract void b();

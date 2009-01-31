@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)DeviceTables.cpp	1.11 06/12/13
  *
  * (C) Copyright IBM Corp. 1998 - 2005 - All Rights Reserved
  *
@@ -44,7 +43,7 @@ le_int16 DeviceTable::getAdjustment(le_uint16 ppem) const
     le_uint16 start = SWAPW(startSize);
     le_uint16 format = SWAPW(deltaFormat) - 1;
     le_int16 result = 0;
-    
+
     if (ppem >= start && ppem <= SWAPW(endSize)) {
         le_uint16 sizeIndex = ppem - start;
         le_uint16 bits = fieldBits[format];

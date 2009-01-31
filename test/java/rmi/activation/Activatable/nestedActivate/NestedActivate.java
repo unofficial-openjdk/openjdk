@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -43,8 +43,8 @@ import java.rmi.registry.*;
 import java.util.Properties;
 
 public class NestedActivate
-	extends Activatable
-	implements ActivateMe, Runnable
+        extends Activatable
+        implements ActivateMe, Runnable
 {
 
     private static Exception exception = null;
@@ -52,33 +52,33 @@ public class NestedActivate
     private ActivateMe obj = null;
 
     public NestedActivate(ActivationID id, MarshalledObject mobj)
-	throws Exception
+        throws Exception
     {
-	super(id, 0);
-	System.err.println("NestedActivate<>: activating object");
-	if (mobj != null) {
-	    System.err.println("NestedActivate<>: ping obj to activate");
-	    obj = (ActivateMe) mobj.get();
-	    obj.ping();
-	    System.err.println("NestedActivate<>: ping completed");
-	}
+        super(id, 0);
+        System.err.println("NestedActivate<>: activating object");
+        if (mobj != null) {
+            System.err.println("NestedActivate<>: ping obj to activate");
+            obj = (ActivateMe) mobj.get();
+            obj.ping();
+            System.err.println("NestedActivate<>: ping completed");
+        }
     }
 
     public void ping()
     {}
 
     public void unregister() throws Exception {
-	super.unregister(super.getID());
+        super.unregister(super.getID());
     }
-    
+
     /**
      * Spawns a thread to deactivate the object.
      */
     public void shutdown() throws Exception
     {
-	(new Thread(this,"NestedActivate")).start();
-	if (obj != null)
-	    obj.shutdown();
+        (new Thread(this,"NestedActivate")).start();
+        if (obj != null)
+            obj.shutdown();
     }
 
     /**
@@ -88,88 +88,88 @@ public class NestedActivate
      * unexport the object forcibly.
      */
     public void run() {
-	ActivationLibrary.deactivate(this, getID());
+        ActivationLibrary.deactivate(this, getID());
     }
 
     public static void main(String[] args) {
 
- 	System.err.println("\nRegression test for bug 4138056\n");
-	
-	TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+        System.err.println("\nRegression test for bug 4138056\n");
 
-	RMID rmid = null;
-	
-	try {
-	    RMID.removeLog();
-	    rmid = RMID.createRMID();
-	    rmid.start();
+        TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
 
-	    /* Cause activation groups to have a security policy that will
-	     * allow security managers to be downloaded and installed
-	     */
-	    final Properties p = new Properties();
-	    // this test must always set policies/managers in its
-	    // activation groups
-	    p.put("java.security.policy", 
-		  TestParams.defaultGroupPolicy);
-	    p.put("java.security.manager", 
-		  TestParams.defaultSecurityManager);
+        RMID rmid = null;
 
-	    Thread t = new Thread() {
-		public void run () {
-		    try {
-			System.err.println("Creating group descriptor");
-			ActivationGroupDesc groupDesc =
-			    new ActivationGroupDesc(p, null);
-			ActivationGroupID groupID =
-			    ActivationGroup.getSystem().
-			    registerGroup(groupDesc);
-			
-			System.err.println("Creating descriptor: object 1");
-			ActivationDesc desc1 =
-			    new ActivationDesc(groupID, "NestedActivate",
-					       null, null);
-	    
-			System.err.println("Registering descriptor: object 1");
-			ActivateMe obj1 =
-			    (ActivateMe) Activatable.register(desc1);
+        try {
+            RMID.removeLog();
+            rmid = RMID.createRMID();
+            rmid.start();
 
-			System.err.println("Creating descriptor: object 2");
-			ActivationDesc desc2 =
-			    new ActivationDesc(groupID, "NestedActivate", null,
-					       new MarshalledObject(obj1));
+            /* Cause activation groups to have a security policy that will
+             * allow security managers to be downloaded and installed
+             */
+            final Properties p = new Properties();
+            // this test must always set policies/managers in its
+            // activation groups
+            p.put("java.security.policy",
+                  TestParams.defaultGroupPolicy);
+            p.put("java.security.manager",
+                  TestParams.defaultSecurityManager);
 
-			System.err.println("Registering descriptor: object 2");
-			ActivateMe obj2 =
-			    (ActivateMe) Activatable.register(desc2);
-	    
-			System.err.println("Activating object 2");
-			obj2.ping();
+            Thread t = new Thread() {
+                public void run () {
+                    try {
+                        System.err.println("Creating group descriptor");
+                        ActivationGroupDesc groupDesc =
+                            new ActivationGroupDesc(p, null);
+                        ActivationGroupID groupID =
+                            ActivationGroup.getSystem().
+                            registerGroup(groupDesc);
 
-			System.err.println("Deactivating objects");
-			obj2.shutdown();
-		    } catch (Exception e) {
-			exception = e;
-		    }
-		    done = true;
-		}
-	    };
+                        System.err.println("Creating descriptor: object 1");
+                        ActivationDesc desc1 =
+                            new ActivationDesc(groupID, "NestedActivate",
+                                               null, null);
 
-	    t.start();
-	    t.join(35000);
+                        System.err.println("Registering descriptor: object 1");
+                        ActivateMe obj1 =
+                            (ActivateMe) Activatable.register(desc1);
 
-	    if (exception != null) {
-		TestLibrary.bomb("test failed", exception);
-	    } else if (!done) {
-		TestLibrary.bomb("test failed: not completed before timeout", null);
-	    } else {
-		System.err.println("Test passed");
-	    }
-	    
-	} catch (Exception e) {
-	    TestLibrary.bomb("test failed", e);
-	} finally {
-	    ActivationLibrary.rmidCleanup(rmid);
-	}
+                        System.err.println("Creating descriptor: object 2");
+                        ActivationDesc desc2 =
+                            new ActivationDesc(groupID, "NestedActivate", null,
+                                               new MarshalledObject(obj1));
+
+                        System.err.println("Registering descriptor: object 2");
+                        ActivateMe obj2 =
+                            (ActivateMe) Activatable.register(desc2);
+
+                        System.err.println("Activating object 2");
+                        obj2.ping();
+
+                        System.err.println("Deactivating objects");
+                        obj2.shutdown();
+                    } catch (Exception e) {
+                        exception = e;
+                    }
+                    done = true;
+                }
+            };
+
+            t.start();
+            t.join(35000);
+
+            if (exception != null) {
+                TestLibrary.bomb("test failed", exception);
+            } else if (!done) {
+                TestLibrary.bomb("test failed: not completed before timeout", null);
+            } else {
+                System.err.println("Test passed");
+            }
+
+        } catch (Exception e) {
+            TestLibrary.bomb("test failed", e);
+        } finally {
+            ActivationLibrary.rmidCleanup(rmid);
+        }
     }
 }

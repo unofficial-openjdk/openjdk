@@ -43,9 +43,9 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * <p>A trie is a kind of compressed, serializable table of values 
+ * <p>A trie is a kind of compressed, serializable table of values
  * associated with Unicode code points (0..0x10ffff).</p>
- * <p>This class defines the basic structure of a trie and provides methods 
+ * <p>This class defines the basic structure of a trie and provides methods
  * to <b>retrieve the offsets to the actual data</b>.</p>
  * <p>Data will be the form of an array of basic types, char or int.</p>
  * <p>The actual data format will have to be specified by the user in the
@@ -62,9 +62,9 @@ import java.util.Arrays;
  * to the fromOffsetTrail() methods.
  * To handle such supplementary codepoints, some offset information are kept
  * in the data.</p>
- * <p>Methods in com.ibm.icu.impl.Trie.DataManipulate are called to retrieve 
+ * <p>Methods in com.ibm.icu.impl.Trie.DataManipulate are called to retrieve
  * that offset from the folded value for the lead surrogate unit.</p>
- * <p>For examples of use, see com.ibm.icu.impl.CharTrie or 
+ * <p>For examples of use, see com.ibm.icu.impl.CharTrie or
  * com.ibm.icu.impl.IntTrie.</p>
  * @author synwee
  * @see com.ibm.icu.impl.CharTrie
@@ -74,19 +74,19 @@ import java.util.Arrays;
 public abstract class Trie
 {
     // public class declaration ----------------------------------------
-    
+
     /**
     * Character data in com.ibm.impl.Trie have different user-specified format
     * for different purposes.
     * This interface specifies methods to be implemented in order for
-    * com.ibm.impl.Trie, to surrogate offset information encapsulated within 
+    * com.ibm.impl.Trie, to surrogate offset information encapsulated within
     * the data.
     * @draft 2.1
     */
     public static interface DataManipulate
     {
         /**
-        * Called by com.ibm.icu.impl.Trie to extract from a lead surrogate's 
+        * Called by com.ibm.icu.impl.Trie to extract from a lead surrogate's
         * data
         * the index array offset of the indexes for that lead surrogate.
         * @param value data value for a surrogate from the trie, including the
@@ -94,7 +94,7 @@ public abstract class Trie
         * @return data offset or 0 if there is no data for the lead surrogate
         * @draft 2.1
         */
-        public int getFoldingOffset(int value); 
+        public int getFoldingOffset(int value);
     }
 
     // protected constructor -------------------------------------------
@@ -103,24 +103,24 @@ public abstract class Trie
     * Trie constructor for CharTrie use.
     * @param inputStream ICU data file input stream which contains the
     *                        trie
-    * @param dataManipulate object containing the information to parse the 
+    * @param dataManipulate object containing the information to parse the
     *                       trie data
     * @throws IOException thrown when input stream does not have the
     *                        right header.
     * @draft 2.1
     */
-    protected Trie(InputStream inputStream, 
+    protected Trie(InputStream inputStream,
                    DataManipulate  dataManipulate) throws IOException
     {
         DataInputStream input = new DataInputStream(inputStream);
         // Magic number to authenticate the data.
         int signature = input.readInt();
         m_options_    = input.readInt();
-        
+
         if (!checkHeader(signature)) {
             throw new IllegalArgumentException("ICU data file error: Trie header authentication failed, please check if you have the most updated ICU data file");
         }
-        
+
         m_dataManipulate_ = dataManipulate;
         m_isLatin1Linear_ = (m_options_ &
                              HEADER_OPTIONS_LATIN1_IS_LINEAR_MASK_) != 0;
@@ -128,12 +128,12 @@ public abstract class Trie
         m_dataLength_     = input.readInt();
         unserialize(inputStream);
     }
-    
+
     /**
     * Trie constructor
     * @param index array to be used for index
     * @param options used by the trie
-    * @param dataManipulate object containing the information to parse the 
+    * @param dataManipulate object containing the information to parse the
     *                       trie data
     * @draft 2.2
     */
@@ -183,7 +183,7 @@ public abstract class Trie
     * values
     * @draft 2.1
     */
-    protected static final int SURROGATE_MASK_ = 0x3FF;                                              
+    protected static final int SURROGATE_MASK_ = 0x3FF;
     /**
     * Index or UTF16 characters
     * @draft 2.1
@@ -196,18 +196,18 @@ public abstract class Trie
     */
     protected DataManipulate m_dataManipulate_;
     /**
-    * Start index of the data portion of the trie. CharTrie combines 
-    * index and data into a char array, so this is used to indicate the 
+    * Start index of the data portion of the trie. CharTrie combines
+    * index and data into a char array, so this is used to indicate the
     * initial offset to the data portion.
     * Note this index always points to the initial value.
     * @draft 2.1
     */
     protected int m_dataOffset_;
     /**
-    * Length of the data array 
+    * Length of the data array
     */
     protected int m_dataLength_;
-     
+
     // protected methods -----------------------------------------------
 
     /**
@@ -218,22 +218,22 @@ public abstract class Trie
     * @draft 2.1
     */
     protected abstract int getSurrogateOffset(char lead, char trail);
-    
+
     /**
     * Gets the value at the argument index
     * @param index value at index will be retrieved
-    * @return 32 bit value 
+    * @return 32 bit value
     * @draft 2.1
     */
     protected abstract int getValue(int index);
 
     /**
     * Gets the default initial value
-    * @return 32 bit value 
+    * @return 32 bit value
     * @draft 2.1
     */
     protected abstract int getInitialValue();
-    
+
     /**
     * Gets the offset to the data which the index ch after variable offset
     * points to.
@@ -251,11 +251,11 @@ public abstract class Trie
     */
     protected final int getRawOffset(int offset, char ch)
     {
-        return (m_index_[offset + (ch >> INDEX_STAGE_1_SHIFT_)] 
-                << INDEX_STAGE_2_SHIFT_) 
+        return (m_index_[offset + (ch >> INDEX_STAGE_1_SHIFT_)]
+                << INDEX_STAGE_2_SHIFT_)
                 + (ch & INDEX_STAGE_3_MASK_);
     }
-    
+
     /**
     * Gets the offset to data which the BMP character points to
     * Treats a lead surrogate as a normal code point.
@@ -265,10 +265,10 @@ public abstract class Trie
     */
     protected final int getBMPOffset(char ch)
     {
-        return (ch >= UTF16.LEAD_SURROGATE_MIN_VALUE 
-                && ch <= UTF16.LEAD_SURROGATE_MAX_VALUE) 
+        return (ch >= UTF16.LEAD_SURROGATE_MIN_VALUE
+                && ch <= UTF16.LEAD_SURROGATE_MAX_VALUE)
                 ? getRawOffset(LEAD_INDEX_OFFSET_, ch)
-                : getRawOffset(0, ch); 
+                : getRawOffset(0, ch);
                 // using a getRawOffset(ch) makes no diff
     }
 
@@ -298,20 +298,20 @@ public abstract class Trie
     protected final int getCodePointOffset(int ch)
     {
         // if ((ch >> 16) == 0) slower
-        if (ch >= UTF16.CODEPOINT_MIN_VALUE 
+        if (ch >= UTF16.CODEPOINT_MIN_VALUE
             && ch < UTF16.SUPPLEMENTARY_MIN_VALUE) {
             // BMP codepoint
-            return getBMPOffset((char)ch); 
+            return getBMPOffset((char)ch);
         }
         // for optimization
-        if (ch >= UTF16.CODEPOINT_MIN_VALUE 
+        if (ch >= UTF16.CODEPOINT_MIN_VALUE
             && ch <= UCharacter.MAX_VALUE) {
             // look at the construction of supplementary characters
             // trail forms the ends of it.
-            return getSurrogateOffset(UTF16.getLeadSurrogate(ch), 
+            return getSurrogateOffset(UTF16.getLeadSurrogate(ch),
                                       (char)(ch & SURROGATE_MASK_));
         }
-        // return -1 if there is an error, in this case we return 
+        // return -1 if there is an error, in this case we return
         return -1;
     }
 
@@ -388,12 +388,12 @@ public abstract class Trie
     private static final int HEADER_OPTIONS_SHIFT_MASK_ = 0xF;
     private static final int HEADER_OPTIONS_INDEX_SHIFT_ = 4;
     private static final int HEADER_OPTIONS_DATA_IS_32_BIT_ = 0x100;
-    
+
     /**
     * Flag indicator for Latin quick access data block
     */
     private boolean m_isLatin1Linear_;
-    
+
     /**
     * <p>Trie options field.</p>
     * <p>options bit field:<br>
@@ -403,9 +403,9 @@ public abstract class Trie
     * 3..0  INDEX_STAGE_2_SHIFT   // 1..9<br>
     */
     private int m_options_;
-    
+
     // private methods ---------------------------------------------------
-    
+
     /**
     * Authenticates raw data header.
     * Checking the header information, signature and options.
@@ -422,7 +422,7 @@ public abstract class Trie
             return false;
         }
 
-        if ((m_options_ & HEADER_OPTIONS_SHIFT_MASK_) != 
+        if ((m_options_ & HEADER_OPTIONS_SHIFT_MASK_) !=
                                                     INDEX_STAGE_1_SHIFT_ ||
             ((m_options_ >> HEADER_OPTIONS_INDEX_SHIFT_) &
                                                 HEADER_OPTIONS_SHIFT_MASK_)

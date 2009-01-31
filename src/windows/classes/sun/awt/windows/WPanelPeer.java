@@ -36,24 +36,24 @@ class WPanelPeer extends WCanvasPeer implements PanelPeer {
     // ComponentPeer overrides
 
     public void paint(Graphics g) {
-	super.paint(g);
-	SunGraphicsCallback.PaintHeavyweightComponentsCallback.getInstance().
-	    runComponents(((Container)target).getComponents(), g,
-			  SunGraphicsCallback.LIGHTWEIGHTS |
-			  SunGraphicsCallback.HEAVYWEIGHTS);
+        super.paint(g);
+        SunGraphicsCallback.PaintHeavyweightComponentsCallback.getInstance().
+            runComponents(((Container)target).getComponents(), g,
+                          SunGraphicsCallback.LIGHTWEIGHTS |
+                          SunGraphicsCallback.HEAVYWEIGHTS);
     }
     public void print(Graphics g) {
-	super.print(g);
-	SunGraphicsCallback.PrintHeavyweightComponentsCallback.getInstance().
-	    runComponents(((Container)target).getComponents(), g,
-			  SunGraphicsCallback.LIGHTWEIGHTS |
-			  SunGraphicsCallback.HEAVYWEIGHTS);
+        super.print(g);
+        SunGraphicsCallback.PrintHeavyweightComponentsCallback.getInstance().
+            runComponents(((Container)target).getComponents(), g,
+                          SunGraphicsCallback.LIGHTWEIGHTS |
+                          SunGraphicsCallback.HEAVYWEIGHTS);
     }
 
     // ContainerPeer (via PanelPeer) implementation
 
     public Insets getInsets() {
-	return insets_;
+        return insets_;
     }
 
     // Toolkit & peer internals
@@ -70,32 +70,32 @@ class WPanelPeer extends WCanvasPeer implements PanelPeer {
     private static native void initIDs();
 
     WPanelPeer(Component target) {
-	super(target);
+        super(target);
     }
 
     void initialize() {
         super.initialize();
-    	insets_ = new Insets(0,0,0,0);
+        insets_ = new Insets(0,0,0,0);
 
-	Color c = ((Component)target).getBackground();
-	if (c == null) {
+        Color c = ((Component)target).getBackground();
+        if (c == null) {
             c = WColor.getDefaultColor(WColor.WINDOW_BKGND);
-	    ((Component)target).setBackground(c);
-	    setBackground(c);
-	}
-	c = ((Component)target).getForeground();
-	if (c == null) {
+            ((Component)target).setBackground(c);
+            setBackground(c);
+        }
+        c = ((Component)target).getForeground();
+        if (c == null) {
             c = WColor.getDefaultColor(WColor.WINDOW_TEXT);
-	    ((Component)target).setForeground(c);
-	    setForeground(c);
-	}
+            ((Component)target).setForeground(c);
+            setForeground(c);
+        }
     }
 
     /**
      * DEPRECATED:  Replaced by getInsets().
      */
     public Insets insets() {
-	return getInsets();
+        return getInsets();
     }
 
     /*
@@ -150,7 +150,7 @@ class WPanelPeer extends WCanvasPeer implements PanelPeer {
         Container cont = (Container)target;
         restack(cont, peers);
         pRestack(peers.toArray());
-    }        
+    }
 
     /**
      * @see java.awt.peer.ContainerPeer#isRestackSupported

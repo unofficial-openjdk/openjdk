@@ -59,20 +59,20 @@ import java.beans.*;
  * <TABLE ALIGN="RIGHT" BORDER="0" SUMMARY="layout">
  *    <TR>
  *    <TD ALIGN="CENTER">
- *      <P ALIGN="CENTER"><IMG SRC="doc-files/JScrollPane-1.gif" 
- *      alt="The following text describes this image." 
+ *      <P ALIGN="CENTER"><IMG SRC="doc-files/JScrollPane-1.gif"
+ *      alt="The following text describes this image."
  *      WIDTH="256" HEIGHT="248" ALIGN="BOTTOM" BORDER="0">
  *    </TD>
  *    </TR>
  * </TABLE>
  * The <code>JViewport</code> provides a window,
- * or &quot;viewport&quot; onto a data 
- * source -- for example, a text file. That data source is the 
- * &quot;scrollable client&quot; (aka data model) displayed by the 
+ * or &quot;viewport&quot; onto a data
+ * source -- for example, a text file. That data source is the
+ * &quot;scrollable client&quot; (aka data model) displayed by the
  * <code>JViewport</code> view.
  * A <code>JScrollPane</code> basically consists of <code>JScrollBar</code>s,
  * a <code>JViewport</code>, and the wiring between them,
- * as shown in the diagram at right. 
+ * as shown in the diagram at right.
  * <p>
  * In addition to the scroll bars and viewport,
  * a <code>JScrollPane</code> can have a
@@ -112,7 +112,7 @@ import java.beans.*;
  * will ensure that the space for the corner component always exists.
  * <p>
  * To add a border around the main viewport,
- * you can use <code>setViewportBorder</code>. 
+ * you can use <code>setViewportBorder</code>.
  * (Of course, you can also add a border around the whole scroll pane using
  * <code>setBorder</code>.)
  * <p>
@@ -162,13 +162,12 @@ import java.beans.*;
  * @see #setColumnHeaderView
  * @see #setCorner
  * @see #setViewportBorder
- * 
+ *
  * @beaninfo
  *     attribute: isContainer true
  *     attribute: containerDelegate getViewport
  *   description: A specialized container that manages a viewport, optional scrollbars and headers
  *
- * @version %I% %W%
  * @author Hans Muller
  */
 public class JScrollPane extends JComponent implements ScrollPaneConstants, Accessible
@@ -181,7 +180,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      */
     private static final String uiClassID = "ScrollPaneUI";
 
-    /** 
+    /**
      * The display policy for the vertical scrollbar.
      * The default is
      * <code>ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED</code>.
@@ -199,8 +198,8 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
     protected int horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_AS_NEEDED;
 
 
-    /** 
-     * The scrollpane's viewport child.  Default is an empty 
+    /**
+     * The scrollpane's viewport child.  Default is an empty
      * <code>JViewport</code>.
      * @see #setViewport
      */
@@ -208,7 +207,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The scrollpane's vertical scrollbar child. 
+     * The scrollpane's vertical scrollbar child.
      * Default is a <code>JScrollBar</code>.
      * @see #setVerticalScrollBar
      */
@@ -216,21 +215,21 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The scrollpane's horizontal scrollbar child. 
+     * The scrollpane's horizontal scrollbar child.
      * Default is a <code>JScrollBar</code>.
      * @see #setHorizontalScrollBar
      */
     protected JScrollBar horizontalScrollBar;
 
 
-    /** 
+    /**
      * The row header child.  Default is <code>null</code>.
      * @see #setRowHeader
      */
     protected JViewport rowHeader;
 
 
-    /** 
+    /**
      * The column header child.  Default is <code>null</code>.
      * @see #setColumnHeader
      */
@@ -238,7 +237,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The component to display in the lower left corner.  
+     * The component to display in the lower left corner.
      * Default is <code>null</code>.
      * @see #setCorner
      */
@@ -246,7 +245,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The component to display in the lower right corner.  
+     * The component to display in the lower right corner.
      * Default is <code>null</code>.
      * @see #setCorner
      */
@@ -254,7 +253,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The component to display in the upper left corner. 
+     * The component to display in the upper left corner.
      * Default is <code>null</code>.
      * @see #setCorner
      */
@@ -262,7 +261,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * The component to display in the upper right corner.  
+     * The component to display in the upper right corner.
      * Default is <code>null</code>.
      * @see #setCorner
      */
@@ -277,39 +276,39 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * Creates a <code>JScrollPane</code> that displays the view
      * component in a viewport
      * whose view position can be controlled with a pair of scrollbars.
-     * The scrollbar policies specify when the scrollbars are displayed, 
+     * The scrollbar policies specify when the scrollbars are displayed,
      * For example, if <code>vsbPolicy</code> is
      * <code>VERTICAL_SCROLLBAR_AS_NEEDED</code>
      * then the vertical scrollbar only appears if the view doesn't fit
-     * vertically. The available policy settings are listed at 
+     * vertically. The available policy settings are listed at
      * {@link #setVerticalScrollBarPolicy} and
      * {@link #setHorizontalScrollBarPolicy}.
-     * 
+     *
      * @see #setViewportView
-     * 
+     *
      * @param view the component to display in the scrollpanes viewport
      * @param vsbPolicy an integer that specifies the vertical
-     *		scrollbar policy
+     *          scrollbar policy
      * @param hsbPolicy an integer that specifies the horizontal
-     *		scrollbar policy
+     *          scrollbar policy
      */
-    public JScrollPane(Component view, int vsbPolicy, int hsbPolicy) 
+    public JScrollPane(Component view, int vsbPolicy, int hsbPolicy)
     {
-	setLayout(new ScrollPaneLayout.UIResource());
+        setLayout(new ScrollPaneLayout.UIResource());
         setVerticalScrollBarPolicy(vsbPolicy);
         setHorizontalScrollBarPolicy(hsbPolicy);
-	setViewport(createViewport());
-	setVerticalScrollBar(createVerticalScrollBar());
-	setHorizontalScrollBar(createHorizontalScrollBar());
-	if (view != null) {
-	    setViewportView(view);
-	}
-	setOpaque(true);
+        setViewport(createViewport());
+        setVerticalScrollBar(createVerticalScrollBar());
+        setHorizontalScrollBar(createHorizontalScrollBar());
+        if (view != null) {
+            setViewportView(view);
+        }
+        setOpaque(true);
         updateUI();
 
-	if (!this.getComponentOrientation().isLeftToRight()) {
-	    viewport.setViewPosition(new Point(Integer.MAX_VALUE, 0));
-	}
+        if (!this.getComponentOrientation().isLeftToRight()) {
+            viewport.setViewPosition(new Point(Integer.MAX_VALUE, 0));
+        }
     }
 
 
@@ -318,7 +317,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * contents of the specified
      * component, where both horizontal and vertical scrollbars appear
      * whenever the component's contents are larger than the view.
-     * 
+     *
      * @see #setViewportView
      * @param view the component to display in the scrollpane's viewport
      */
@@ -329,17 +328,17 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
     /**
      * Creates an empty (no viewport view) <code>JScrollPane</code>
-     * with specified 
-     * scrollbar policies. The available policy settings are listed at 
+     * with specified
+     * scrollbar policies. The available policy settings are listed at
      * {@link #setVerticalScrollBarPolicy} and
      * {@link #setHorizontalScrollBarPolicy}.
-     * 
+     *
      * @see #setViewportView
-     * 
+     *
      * @param vsbPolicy an integer that specifies the vertical
-     *		scrollbar policy
+     *          scrollbar policy
      * @param hsbPolicy an integer that specifies the horizontal
-     *		scrollbar policy
+     *          scrollbar policy
      */
     public JScrollPane(int vsbPolicy, int hsbPolicy) {
         this(null, vsbPolicy, hsbPolicy);
@@ -359,13 +358,13 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * Returns the look and feel (L&F) object that renders this component.
      *
      * @return the <code>ScrollPaneUI</code> object that renders this
-     *				component
+     *                          component
      * @see #setUI
      * @beaninfo
      *        bound: true
      *       hidden: true
      *    attribute: visualUpdate true
-     *  description: The UI object that implements the Component's LookAndFeel. 
+     *  description: The UI object that implements the Component's LookAndFeel.
      */
     public ScrollPaneUI getUI() {
         return (ScrollPaneUI)ui;
@@ -385,7 +384,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * Replaces the current <code>ScrollPaneUI</code> object with a version 
+     * Replaces the current <code>ScrollPaneUI</code> object with a version
      * from the current default look and feel.
      * To be called when the default look and feel changes.
      *
@@ -400,11 +399,11 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
     /**
      * Returns the suffix used to construct the name of the L&F class used to
      * render this component.
-     * 
+     *
      * @return the string "ScrollPaneUI"
      * @see JComponent#getUIClassID
      * @see UIDefaults#getUI
-     * 
+     *
      * @beaninfo
      *    hidden: true
      */
@@ -414,7 +413,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
 
-    /** 
+    /**
      * Sets the layout manager for this <code>JScrollPane</code>.
      * This method overrides <code>setLayout</code> in
      * <code>java.awt.Container</code> to ensure that only
@@ -422,13 +421,13 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * are subclasses of <code>ScrollPaneLayout</code> can be used in a
      * <code>JScrollPane</code>. If <code>layout</code> is non-null, this
      * will invoke <code>syncWithScrollPane</code> on it.
-     * 
+     *
      * @param layout the specified layout manager
      * @exception ClassCastException if layout is not a
-     *			<code>ScrollPaneLayout</code>
+     *                  <code>ScrollPaneLayout</code>
      * @see java.awt.Container#getLayout
      * @see java.awt.Container#setLayout
-     * 
+     *
      * @beaninfo
      *    hidden: true
      */
@@ -440,10 +439,10 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         else if (layout == null) {
             super.setLayout(layout);
         }
-	else {
-	    String s = "layout of JScrollPane must be a ScrollPaneLayout";
-	    throw new ClassCastException(s);
-	}
+        else {
+            String s = "layout of JScrollPane must be a ScrollPaneLayout";
+            throw new ClassCastException(s);
+        }
     }
 
     /**
@@ -451,12 +450,12 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * on any descendants of this <code>JScrollPane</code> will cause the
      * entire tree beginning with this <code>JScrollPane</code> to be
      * validated.
-     * 
+     *
      * @return true
      * @see java.awt.Container#validate
      * @see JComponent#revalidate
      * @see JComponent#isValidateRoot
-     * 
+     *
      * @beaninfo
      *    hidden: true
      */
@@ -476,7 +475,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
 
     /**
-     * Determines when the vertical scrollbar appears in the scrollpane. 
+     * Determines when the vertical scrollbar appears in the scrollpane.
      * Legal values are:
      * <ul>
      * <li><code>ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED</code>
@@ -485,10 +484,10 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * </ul>
      *
      * @param policy one of the three values listed above
-     * @exception IllegalArgumentException if <code>policy</code> 
-     *				is not one of the legal values shown above
+     * @exception IllegalArgumentException if <code>policy</code>
+     *                          is not one of the legal values shown above
      * @see #getVerticalScrollBarPolicy
-     * 
+     *
      * @beaninfo
      *   preferred: true
      *       bound: true
@@ -498,19 +497,19 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      *              VERTICAL_SCROLLBAR_ALWAYS ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
      */
     public void setVerticalScrollBarPolicy(int policy) {
-	switch (policy) {
-	case VERTICAL_SCROLLBAR_AS_NEEDED:
-	case VERTICAL_SCROLLBAR_NEVER:
-	case VERTICAL_SCROLLBAR_ALWAYS:
-		break;
-	default:
-	    throw new IllegalArgumentException("invalid verticalScrollBarPolicy");
-	}
-	int old = verticalScrollBarPolicy;
-	verticalScrollBarPolicy = policy;
-	firePropertyChange("verticalScrollBarPolicy", old, policy);
-	revalidate();
-	repaint();
+        switch (policy) {
+        case VERTICAL_SCROLLBAR_AS_NEEDED:
+        case VERTICAL_SCROLLBAR_NEVER:
+        case VERTICAL_SCROLLBAR_ALWAYS:
+                break;
+        default:
+            throw new IllegalArgumentException("invalid verticalScrollBarPolicy");
+        }
+        int old = verticalScrollBarPolicy;
+        verticalScrollBarPolicy = policy;
+        firePropertyChange("verticalScrollBarPolicy", old, policy);
+        revalidate();
+        repaint();
     }
 
 
@@ -520,21 +519,21 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * @see #setHorizontalScrollBarPolicy
      */
     public int getHorizontalScrollBarPolicy() {
-	return horizontalScrollBarPolicy;
+        return horizontalScrollBarPolicy;
     }
 
 
     /**
-     * Determines when the horizontal scrollbar appears in the scrollpane. 
+     * Determines when the horizontal scrollbar appears in the scrollpane.
      * The options are:<ul>
      * <li><code>ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED</code>
      * <li><code>ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER</code>
      * <li><code>ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS</code>
      * </ul>
-     * 
+     *
      * @param policy one of the three values listed above
-     * @exception IllegalArgumentException if <code>policy</code> 
-     *				is not one of the legal values shown above
+     * @exception IllegalArgumentException if <code>policy</code>
+     *                          is not one of the legal values shown above
      * @see #getHorizontalScrollBarPolicy
      *
      * @beaninfo
@@ -546,19 +545,19 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      *              HORIZONTAL_SCROLLBAR_ALWAYS ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
      */
     public void setHorizontalScrollBarPolicy(int policy) {
-	switch (policy) {
-	case HORIZONTAL_SCROLLBAR_AS_NEEDED:
-	case HORIZONTAL_SCROLLBAR_NEVER:
-	case HORIZONTAL_SCROLLBAR_ALWAYS:
-		break;
-	default:
-	    throw new IllegalArgumentException("invalid horizontalScrollBarPolicy");
-	}
-	int old = horizontalScrollBarPolicy;
-	horizontalScrollBarPolicy = policy;
-	firePropertyChange("horizontalScrollBarPolicy", old, policy);
-	revalidate();
-	repaint();
+        switch (policy) {
+        case HORIZONTAL_SCROLLBAR_AS_NEEDED:
+        case HORIZONTAL_SCROLLBAR_NEVER:
+        case HORIZONTAL_SCROLLBAR_ALWAYS:
+                break;
+        default:
+            throw new IllegalArgumentException("invalid horizontalScrollBarPolicy");
+        }
+        int old = horizontalScrollBarPolicy;
+        horizontalScrollBarPolicy = policy;
+        firePropertyChange("horizontalScrollBarPolicy", old, policy);
+        revalidate();
+        repaint();
     }
 
 
@@ -575,8 +574,8 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
     /**
      * Adds a border around the viewport.  Note that the border isn't
-     * set on the viewport directly, <code>JViewport</code> doesn't support 
-     * the <code>JComponent</code> border property. 
+     * set on the viewport directly, <code>JViewport</code> doesn't support
+     * the <code>JComponent</code> border property.
      * Similarly setting the <code>JScrollPane</code>s
      * viewport doesn't affect the <code>viewportBorder</code> property.
      * <p>
@@ -606,61 +605,61 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      */
     public Rectangle getViewportBorderBounds()
     {
-	Rectangle borderR = new Rectangle(getSize());
+        Rectangle borderR = new Rectangle(getSize());
 
-	Insets insets = getInsets();
-	borderR.x = insets.left;
-	borderR.y = insets.top;
-	borderR.width -= insets.left + insets.right;
-	borderR.height -= insets.top + insets.bottom;
+        Insets insets = getInsets();
+        borderR.x = insets.left;
+        borderR.y = insets.top;
+        borderR.width -= insets.left + insets.right;
+        borderR.height -= insets.top + insets.bottom;
 
         boolean leftToRight = SwingUtilities.isLeftToRight(this);
 
-	/* If there's a visible column header remove the space it 
-	 * needs from the top of borderR.  
-	 */
+        /* If there's a visible column header remove the space it
+         * needs from the top of borderR.
+         */
 
-	JViewport colHead = getColumnHeader();
-	if ((colHead != null) && (colHead.isVisible())) {
-	    int colHeadHeight = colHead.getHeight();
-	    borderR.y += colHeadHeight;
-	    borderR.height -= colHeadHeight;
-	}
+        JViewport colHead = getColumnHeader();
+        if ((colHead != null) && (colHead.isVisible())) {
+            int colHeadHeight = colHead.getHeight();
+            borderR.y += colHeadHeight;
+            borderR.height -= colHeadHeight;
+        }
 
-	/* If there's a visible row header remove the space it needs
-	 * from the left of borderR.  
-	 */
+        /* If there's a visible row header remove the space it needs
+         * from the left of borderR.
+         */
 
-	JViewport rowHead = getRowHeader();
-	if ((rowHead != null) && (rowHead.isVisible())) {
-	    int rowHeadWidth = rowHead.getWidth();
+        JViewport rowHead = getRowHeader();
+        if ((rowHead != null) && (rowHead.isVisible())) {
+            int rowHeadWidth = rowHead.getWidth();
             if ( leftToRight ) {
-	        borderR.x += rowHeadWidth;
-	    }
-	    borderR.width -= rowHeadWidth;
-	}
+                borderR.x += rowHeadWidth;
+            }
+            borderR.width -= rowHeadWidth;
+        }
 
-	/* If there's a visible vertical scrollbar remove the space it needs
-	 * from the width of borderR.  
-	 */
-	JScrollBar vsb = getVerticalScrollBar();
-	if ((vsb != null) && (vsb.isVisible())) {
+        /* If there's a visible vertical scrollbar remove the space it needs
+         * from the width of borderR.
+         */
+        JScrollBar vsb = getVerticalScrollBar();
+        if ((vsb != null) && (vsb.isVisible())) {
             int vsbWidth = vsb.getWidth();
             if ( !leftToRight ) {
                 borderR.x += vsbWidth;
-	    }
-	    borderR.width -= vsbWidth;
-	}
+            }
+            borderR.width -= vsbWidth;
+        }
 
-	/* If there's a visible horizontal scrollbar remove the space it needs
-	 * from the height of borderR.  
-	 */
-	JScrollBar hsb = getHorizontalScrollBar();
-	if ((hsb != null) && (hsb.isVisible())) {
-	    borderR.height -= hsb.getHeight();
-	}
+        /* If there's a visible horizontal scrollbar remove the space it needs
+         * from the height of borderR.
+         */
+        JScrollBar hsb = getHorizontalScrollBar();
+        if ((hsb != null) && (hsb.isVisible())) {
+            borderR.height -= hsb.getHeight();
+        }
 
-	return borderR;
+        return borderR;
     }
 
 
@@ -688,20 +687,20 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      */
     protected class ScrollBar extends JScrollBar implements UIResource
     {
-	/** 
+        /**
          * Set to true when the unit increment has been explicitly set.
-	 * If this is false the viewport's view is obtained and if it
-	 * is an instance of <code>Scrollable</code> the unit increment
+         * If this is false the viewport's view is obtained and if it
+         * is an instance of <code>Scrollable</code> the unit increment
          * from it is used.
-	 */
-	private boolean unitIncrementSet;
-	/** 
+         */
+        private boolean unitIncrementSet;
+        /**
          * Set to true when the block increment has been explicitly set.
-	 * If this is false the viewport's view is obtained and if it
-	 * is an instance of <code>Scrollable</code> the block increment
+         * If this is false the viewport's view is obtained and if it
+         * is an instance of <code>Scrollable</code> the block increment
          * from it is used.
-	 */
-	private boolean blockIncrementSet;
+         */
+        private boolean blockIncrementSet;
 
         /**
          * Creates a scrollbar with the specified orientation.
@@ -712,8 +711,8 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
          * </ul>
          *
          * @param orientation  an integer specifying one of the legal
- 	 * 	orientation values shown above
-	 * @since 1.4
+         *      orientation values shown above
+         * @since 1.4
          */
         public ScrollBar(int orientation) {
             super(orientation);
@@ -727,7 +726,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
          *
          * @param unitIncrement the new unit increment value, in pixels
          */
-        public void setUnitIncrement(int unitIncrement) { 
+        public void setUnitIncrement(int unitIncrement) {
             unitIncrementSet = true;
             this.putClientProperty("JScrollBar.fastWheelScrolling", null);
             super.setUnitIncrement(unitIncrement);
@@ -735,18 +734,18 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
         /**
          * Computes the unit increment for scrolling if the viewport's
-    	 * view is a <code>Scrollable</code> object.
+         * view is a <code>Scrollable</code> object.
          * Otherwise return <code>super.getUnitIncrement</code>.
-         * 
+         *
          * @param direction less than zero to scroll up/left,
-         *	greater than zero for down/right
+         *      greater than zero for down/right
          * @return an integer, in pixels, containing the unit increment
          * @see Scrollable#getScrollableUnitIncrement
          */
         public int getUnitIncrement(int direction) {
             JViewport vp = getViewport();
             if (!unitIncrementSet && (vp != null) &&
-		(vp.getView() instanceof Scrollable)) {
+                (vp.getView() instanceof Scrollable)) {
                 Scrollable view = (Scrollable)(vp.getView());
                 Rectangle vr = vp.getViewRect();
                 return view.getScrollableUnitIncrement(vr, getOrientation(), direction);
@@ -769,15 +768,15 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         }
 
         /**
- 	 * Computes the block increment for scrolling if the viewport's
-	 * view is a <code>Scrollable</code> object.  Otherwise
+         * Computes the block increment for scrolling if the viewport's
+         * view is a <code>Scrollable</code> object.  Otherwise
          * the <code>blockIncrement</code> equals the viewport's width
-         * or height.  If there's no viewport return 
+         * or height.  If there's no viewport return
          * <code>super.getBlockIncrement</code>.
-         * 
+         *
          * @param direction less than zero to scroll up/left,
-         *	greater than zero for down/right
-  	 * @return an integer, in pixels, containing the block increment
+         *      greater than zero for down/right
+         * @return an integer, in pixels, containing the block increment
          * @see Scrollable#getScrollableBlockIncrement
          */
         public int getBlockIncrement(int direction) {
@@ -827,35 +826,35 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         return horizontalScrollBar;
     }
 
-    
+
     /**
-     * Adds the scrollbar that controls the viewport's horizontal view 
+     * Adds the scrollbar that controls the viewport's horizontal view
      * position to the scrollpane.
      * This is usually unnecessary, as <code>JScrollPane</code> creates
      * horizontal and vertical scrollbars by default.
-     * 
+     *
      * @param horizontalScrollBar the horizontal scrollbar to be added
      * @see #createHorizontalScrollBar
      * @see #getHorizontalScrollBar
-     * 
+     *
      * @beaninfo
      *        expert: true
      *         bound: true
      *   description: The horizontal scrollbar.
      */
     public void setHorizontalScrollBar(JScrollBar horizontalScrollBar) {
-	JScrollBar old = getHorizontalScrollBar();
-	this.horizontalScrollBar = horizontalScrollBar;
+        JScrollBar old = getHorizontalScrollBar();
+        this.horizontalScrollBar = horizontalScrollBar;
         if (horizontalScrollBar != null) {
             add(horizontalScrollBar, HORIZONTAL_SCROLLBAR);
         }
         else if (old != null) {
             remove(old);
         }
-	firePropertyChange("horizontalScrollBar", old, horizontalScrollBar);
+        firePropertyChange("horizontalScrollBar", old, horizontalScrollBar);
 
-	revalidate();
-	repaint();
+        revalidate();
+        repaint();
     }
 
 
@@ -863,8 +862,8 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * Returns a <code>JScrollPane.ScrollBar</code> by default.  Subclasses
      * may override this method to force <code>ScrollPaneUI</code>
      * implementations to use a <code>JScrollBar</code> subclass.
-     * Used by <code>ScrollPaneUI</code> implementations to create the 
-     * vertical scrollbar.  
+     * Used by <code>ScrollPaneUI</code> implementations to create the
+     * vertical scrollbar.
      *
      * @return a <code>JScrollBar</code> with a vertical orientation
      * @see JScrollBar
@@ -882,7 +881,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * @see #setVerticalScrollBar
      */
     public JScrollBar getVerticalScrollBar() {
-	return verticalScrollBar;
+        return verticalScrollBar;
     }
 
 
@@ -891,33 +890,33 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * to the scrollpane.  This is usually unnecessary,
      * as <code>JScrollPane</code> creates vertical and
      * horizontal scrollbars by default.
-     * 
+     *
      * @param verticalScrollBar the new vertical scrollbar to be added
      * @see #createVerticalScrollBar
      * @see #getVerticalScrollBar
-     * 
+     *
      * @beaninfo
      *        expert: true
      *         bound: true
      *   description: The vertical scrollbar.
      */
     public void setVerticalScrollBar(JScrollBar verticalScrollBar) {
-	JScrollBar old = getVerticalScrollBar();
-	this.verticalScrollBar = verticalScrollBar;
-	add(verticalScrollBar, VERTICAL_SCROLLBAR);
-	firePropertyChange("verticalScrollBar", old, verticalScrollBar);
+        JScrollBar old = getVerticalScrollBar();
+        this.verticalScrollBar = verticalScrollBar;
+        add(verticalScrollBar, VERTICAL_SCROLLBAR);
+        firePropertyChange("verticalScrollBar", old, verticalScrollBar);
 
-	revalidate();
-	repaint();
+        revalidate();
+        repaint();
     }
 
 
     /**
-     * Returns a new <code>JViewport</code> by default. 
+     * Returns a new <code>JViewport</code> by default.
      * Used to create the
      * viewport (as needed) in <code>setViewportView</code>,
      * <code>setRowHeaderView</code>, and <code>setColumnHeaderView</code>.
-     * Subclasses may override this method to return a subclass of 
+     * Subclasses may override this method to return a subclass of
      * <code>JViewport</code>.
      *
      * @return a new <code>JViewport</code>
@@ -937,7 +936,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         return viewport;
     }
 
-    
+
     /**
      * Removes the old viewport (if there is one); forces the
      * viewPosition of the new viewport to be in the +x,+y quadrant;
@@ -945,41 +944,41 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * new viewport; and finally syncs the scrollbars and
      * headers with the new viewport.
      * <p>
-     * Most applications will find it more convenient to use 
+     * Most applications will find it more convenient to use
      * <code>setViewportView</code>
      * to add a viewport and a view to the scrollpane.
-     * 
+     *
      * @param viewport the new viewport to be used; if viewport is
-     *		<code>null</code>, the old viewport is still removed
-     *		and the new viewport is set to <code>null</code>
+     *          <code>null</code>, the old viewport is still removed
+     *          and the new viewport is set to <code>null</code>
      * @see #createViewport
      * @see #getViewport
      * @see #setViewportView
-     * 
+     *
      * @beaninfo
      *       expert: true
      *        bound: true
      *    attribute: visualUpdate true
      *  description: The viewport child for this scrollpane
-     * 
+     *
      */
     public void setViewport(JViewport viewport) {
-	JViewport old = getViewport();
-	this.viewport = viewport;
-	if (viewport != null) {
-	    add(viewport, VIEWPORT);
-	}
-	else if (old != null) {
-	    remove(old);
-	}
-	firePropertyChange("viewport", old, viewport);
+        JViewport old = getViewport();
+        this.viewport = viewport;
+        if (viewport != null) {
+            add(viewport, VIEWPORT);
+        }
+        else if (old != null) {
+            remove(old);
+        }
+        firePropertyChange("viewport", old, viewport);
 
-	if (accessibleContext != null) {
-	    ((AccessibleJScrollPane)accessibleContext).resetViewPort();
-	}
+        if (accessibleContext != null) {
+            ((AccessibleJScrollPane)accessibleContext).resetViewPort();
+        }
 
-	revalidate();
-	repaint();
+        revalidate();
+        repaint();
     }
 
 
@@ -1024,33 +1023,33 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * viewPosition with
      * the viewport (if there is one) and then adds it to the scroll pane.
      * <p>
-     * Most applications will find it more convenient to use 
+     * Most applications will find it more convenient to use
      * <code>setRowHeaderView</code>
      * to add a row header component and its viewport to the scroll pane.
-     * 
+     *
      * @param rowHeader the new row header to be used; if <code>null</code>
-     *		the old row header is still removed and the new rowHeader
-     *		is set to <code>null</code>
+     *          the old row header is still removed and the new rowHeader
+     *          is set to <code>null</code>
      * @see #getRowHeader
      * @see #setRowHeaderView
-     * 
+     *
      * @beaninfo
      *        bound: true
      *       expert: true
      *  description: The row header child for this scrollpane
      */
     public void setRowHeader(JViewport rowHeader) {
-	JViewport old = getRowHeader();
-	this.rowHeader = rowHeader;	
-	if (rowHeader != null) {
-	    add(rowHeader, ROW_HEADER);
-	}
-	else if (old != null) {
-	    remove(old);
-	}
-	firePropertyChange("rowHeader", old, rowHeader);
-	revalidate();
-	repaint();
+        JViewport old = getRowHeader();
+        this.rowHeader = rowHeader;
+        if (rowHeader != null) {
+            add(rowHeader, ROW_HEADER);
+        }
+        else if (old != null) {
+            remove(old);
+        }
+        firePropertyChange("rowHeader", old, rowHeader);
+        revalidate();
+        repaint();
     }
 
 
@@ -1089,34 +1088,34 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
     /**
      * Removes the old columnHeader, if it exists; if the new columnHeader
-     * isn't <code>null</code>, syncs the x coordinate of its viewPosition 
+     * isn't <code>null</code>, syncs the x coordinate of its viewPosition
      * with the viewport (if there is one) and then adds it to the scroll pane.
      * <p>
-     * Most applications will find it more convenient to use 
+     * Most applications will find it more convenient to use
      * <code>setColumnHeaderView</code>
      * to add a column header component and its viewport to the scroll pane.
-     * 
+     *
      * @see #getColumnHeader
      * @see #setColumnHeaderView
-     * 
+     *
      * @beaninfo
      *        bound: true
      *  description: The column header child for this scrollpane
      *    attribute: visualUpdate true
      */
     public void setColumnHeader(JViewport columnHeader) {
-	JViewport old = getColumnHeader();
-	this.columnHeader = columnHeader;	
-	if (columnHeader != null) {
-	    add(columnHeader, COLUMN_HEADER);
-	}
-	else if (old != null) {
-	    remove(old);
-	}
-	firePropertyChange("columnHeader", old, columnHeader);
+        JViewport old = getColumnHeader();
+        this.columnHeader = columnHeader;
+        if (columnHeader != null) {
+            add(columnHeader, COLUMN_HEADER);
+        }
+        else if (old != null) {
+            remove(old);
+        }
+        firePropertyChange("columnHeader", old, columnHeader);
 
-	revalidate();
-	repaint();
+        revalidate();
+        repaint();
     }
 
 
@@ -1130,10 +1129,10 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * scrollpane.setViewportView(myBigComponentToScroll);
      * scrollpane.setColumnHeaderView(myBigComponentsColumnHeader);
      * </pre>
-     * 
+     *
      * @see #setColumnHeader
      * @see JViewport#setView
-     * 
+     *
      * @param view the component to display as the column header
      */
     public void setColumnHeaderView(Component view) {
@@ -1165,40 +1164,40 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * @see #setCorner
      */
     public Component getCorner(String key) {
-	boolean isLeftToRight = getComponentOrientation().isLeftToRight();
-	if (key.equals(LOWER_LEADING_CORNER)) {
-	    key = isLeftToRight ? LOWER_LEFT_CORNER : LOWER_RIGHT_CORNER;
-	} else if (key.equals(LOWER_TRAILING_CORNER)) {
-	    key = isLeftToRight ? LOWER_RIGHT_CORNER : LOWER_LEFT_CORNER;
-	} else if (key.equals(UPPER_LEADING_CORNER)) {
-	    key = isLeftToRight ? UPPER_LEFT_CORNER : UPPER_RIGHT_CORNER;
-	} else if (key.equals(UPPER_TRAILING_CORNER)) {
-	    key = isLeftToRight ? UPPER_RIGHT_CORNER : UPPER_LEFT_CORNER;
-	}
-	if (key.equals(LOWER_LEFT_CORNER)) {
-	    return lowerLeft;
-	}
-	else if (key.equals(LOWER_RIGHT_CORNER)) {
-	    return lowerRight;
-	}
-	else if (key.equals(UPPER_LEFT_CORNER)) {
-	    return upperLeft;
-	}
-	else if (key.equals(UPPER_RIGHT_CORNER)) {
-	    return upperRight;
-	}
-	else {
-	    return null;
-	}
+        boolean isLeftToRight = getComponentOrientation().isLeftToRight();
+        if (key.equals(LOWER_LEADING_CORNER)) {
+            key = isLeftToRight ? LOWER_LEFT_CORNER : LOWER_RIGHT_CORNER;
+        } else if (key.equals(LOWER_TRAILING_CORNER)) {
+            key = isLeftToRight ? LOWER_RIGHT_CORNER : LOWER_LEFT_CORNER;
+        } else if (key.equals(UPPER_LEADING_CORNER)) {
+            key = isLeftToRight ? UPPER_LEFT_CORNER : UPPER_RIGHT_CORNER;
+        } else if (key.equals(UPPER_TRAILING_CORNER)) {
+            key = isLeftToRight ? UPPER_RIGHT_CORNER : UPPER_LEFT_CORNER;
+        }
+        if (key.equals(LOWER_LEFT_CORNER)) {
+            return lowerLeft;
+        }
+        else if (key.equals(LOWER_RIGHT_CORNER)) {
+            return lowerRight;
+        }
+        else if (key.equals(UPPER_LEFT_CORNER)) {
+            return upperLeft;
+        }
+        else if (key.equals(UPPER_RIGHT_CORNER)) {
+            return upperRight;
+        }
+        else {
+            return null;
+        }
     }
 
 
     /**
      * Adds a child that will appear in one of the scroll panes
      * corners, if there's room.   For example with both scrollbars
-     * showing (on the right and bottom edges of the scrollpane) 
+     * showing (on the right and bottom edges of the scrollpane)
      * the lower left corner component will be shown in the space
-     * between ends of the two scrollbars. Legal values for 
+     * between ends of the two scrollbars. Legal values for
      * the <b>key</b> are:
      * <ul>
      * <li>ScrollPaneConstants.LOWER_LEFT_CORNER
@@ -1214,7 +1213,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * Although "corner" doesn't match any beans property
      * signature, <code>PropertyChange</code> events are generated with the
      * property name set to the corner key.
-     * 
+     *
      * @param key identifies which corner the component will appear in
      * @param corner one of the following components:
      * <ul>
@@ -1225,47 +1224,47 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * </ul>
      * @exception IllegalArgumentException if corner key is invalid
      */
-    public void setCorner(String key, Component corner) 
+    public void setCorner(String key, Component corner)
     {
-	Component old;
-	boolean isLeftToRight = getComponentOrientation().isLeftToRight();
-	if (key.equals(LOWER_LEADING_CORNER)) {
-	    key = isLeftToRight ? LOWER_LEFT_CORNER : LOWER_RIGHT_CORNER;
-	} else if (key.equals(LOWER_TRAILING_CORNER)) {
-	    key = isLeftToRight ? LOWER_RIGHT_CORNER : LOWER_LEFT_CORNER;
-	} else if (key.equals(UPPER_LEADING_CORNER)) {
-	    key = isLeftToRight ? UPPER_LEFT_CORNER : UPPER_RIGHT_CORNER;
-	} else if (key.equals(UPPER_TRAILING_CORNER)) {
-	    key = isLeftToRight ? UPPER_RIGHT_CORNER : UPPER_LEFT_CORNER;
-	}
-	if (key.equals(LOWER_LEFT_CORNER)) {
-	    old = lowerLeft;
-	    lowerLeft = corner;
-	}
-	else if (key.equals(LOWER_RIGHT_CORNER)) {
-	    old = lowerRight;
-	    lowerRight = corner;
-	}
-	else if (key.equals(UPPER_LEFT_CORNER)) {
-	    old = upperLeft;
-	    upperLeft = corner;
-	}
-	else if (key.equals(UPPER_RIGHT_CORNER)) {
-	    old = upperRight;
-	    upperRight = corner;
-	}
-	else {
-	    throw new IllegalArgumentException("invalid corner key");
-	}
-	if (old != null) {
-	    remove(old);
-	}
-	if (corner != null) {
-	    add(corner, key);
-	}
-	firePropertyChange(key, old, corner);
-	revalidate();
-	repaint();
+        Component old;
+        boolean isLeftToRight = getComponentOrientation().isLeftToRight();
+        if (key.equals(LOWER_LEADING_CORNER)) {
+            key = isLeftToRight ? LOWER_LEFT_CORNER : LOWER_RIGHT_CORNER;
+        } else if (key.equals(LOWER_TRAILING_CORNER)) {
+            key = isLeftToRight ? LOWER_RIGHT_CORNER : LOWER_LEFT_CORNER;
+        } else if (key.equals(UPPER_LEADING_CORNER)) {
+            key = isLeftToRight ? UPPER_LEFT_CORNER : UPPER_RIGHT_CORNER;
+        } else if (key.equals(UPPER_TRAILING_CORNER)) {
+            key = isLeftToRight ? UPPER_RIGHT_CORNER : UPPER_LEFT_CORNER;
+        }
+        if (key.equals(LOWER_LEFT_CORNER)) {
+            old = lowerLeft;
+            lowerLeft = corner;
+        }
+        else if (key.equals(LOWER_RIGHT_CORNER)) {
+            old = lowerRight;
+            lowerRight = corner;
+        }
+        else if (key.equals(UPPER_LEFT_CORNER)) {
+            old = upperLeft;
+            upperLeft = corner;
+        }
+        else if (key.equals(UPPER_RIGHT_CORNER)) {
+            old = upperRight;
+            upperRight = corner;
+        }
+        else {
+            throw new IllegalArgumentException("invalid corner key");
+        }
+        if (old != null) {
+            remove(old);
+        }
+        if (corner != null) {
+            add(corner, key);
+        }
+        firePropertyChange(key, old, corner);
+        revalidate();
+        repaint();
     }
 
     /**
@@ -1292,7 +1291,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
     /**
      * Indicates whether or not scrolling will take place in response to the
      * mouse wheel.  Wheel scrolling is enabled by default.
-     * 
+     *
      * @see #setWheelScrollingEnabled
      * @since 1.4
      * @beaninfo
@@ -1322,9 +1321,9 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         firePropertyChange("wheelScrollingEnabled", old, handleWheel);
     }
 
-    /** 
+    /**
      * See <code>readObject</code> and <code>writeObject</code> in
-     * <code>JComponent</code> for more 
+     * <code>JComponent</code> for more
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -1341,19 +1340,19 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 
     /**
      * Returns a string representation of this <code>JScrollPane</code>.
-     * This method 
-     * is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between      
-     * implementations. The returned string may be empty but may not 
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
      * be <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>JScrollPane</code>.
      */
     protected String paramString() {
         String viewportBorderString = (viewportBorder != null ?
-				       viewportBorder.toString() : "");
+                                       viewportBorder.toString() : "");
         String viewportString = (viewport != null ?
-				 viewport.toString() : "");
+                                 viewport.toString() : "");
         String verticalScrollBarPolicyString;
         if (verticalScrollBarPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
             verticalScrollBarPolicyString = "VERTICAL_SCROLLBAR_AS_NEEDED";
@@ -1371,22 +1370,22 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
             horizontalScrollBarPolicyString = "HORIZONTAL_SCROLLBAR_ALWAYS";
         } else horizontalScrollBarPolicyString = "";
         String horizontalScrollBarString = (horizontalScrollBar != null ?
-					    horizontalScrollBar.toString()
-					    : "");
+                                            horizontalScrollBar.toString()
+                                            : "");
         String verticalScrollBarString = (verticalScrollBar != null ?
-					  verticalScrollBar.toString() : "");
+                                          verticalScrollBar.toString() : "");
         String columnHeaderString = (columnHeader != null ?
-				     columnHeader.toString() : "");
+                                     columnHeader.toString() : "");
         String rowHeaderString = (rowHeader != null ?
-				  rowHeader.toString() : "");
+                                  rowHeader.toString() : "");
         String lowerLeftString = (lowerLeft != null ?
-				  lowerLeft.toString() : "");
+                                  lowerLeft.toString() : "");
         String lowerRightString = (lowerRight != null ?
-				  lowerRight.toString() : "");
+                                  lowerRight.toString() : "");
         String upperLeftString = (upperLeft != null ?
-				  upperLeft.toString() : "");
+                                  upperLeft.toString() : "");
         String upperRightString = (upperRight != null ?
-				  upperRight.toString() : "");
+                                  upperRight.toString() : "");
 
         return super.paramString() +
         ",columnHeader=" + columnHeaderString +
@@ -1408,12 +1407,12 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JScrollPane. 
-     * For scroll panes, the AccessibleContext takes the form of an 
-     * AccessibleJScrollPane. 
+     * Gets the AccessibleContext associated with this JScrollPane.
+     * For scroll panes, the AccessibleContext takes the form of an
+     * AccessibleJScrollPane.
      * A new AccessibleJScrollPane instance is created if necessary.
      *
-     * @return an AccessibleJScrollPane that serves as the 
+     * @return an AccessibleJScrollPane that serves as the
      *         AccessibleContext of this JScrollPane
      */
     public AccessibleContext getAccessibleContext() {
@@ -1424,9 +1423,9 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>JScrollPane</code> class.  It provides an implementation of the 
-     * Java Accessibility API appropriate to scroll pane user-interface 
+     * This class implements accessibility support for the
+     * <code>JScrollPane</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to scroll pane user-interface
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -1438,15 +1437,15 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * has been added to the <code>java.beans</code> package.
      * Please see {@link java.beans.XMLEncoder}.
      */
-    protected class AccessibleJScrollPane extends AccessibleJComponent 
+    protected class AccessibleJScrollPane extends AccessibleJComponent
         implements ChangeListener, PropertyChangeListener {
 
         protected JViewport viewPort = null;
 
-	/*
-	 * Resets the viewport ChangeListener and PropertyChangeListener
-	 */
-	public void resetViewPort() {
+        /*
+         * Resets the viewport ChangeListener and PropertyChangeListener
+         */
+        public void resetViewPort() {
             if (viewPort != null) {
                 viewPort.removeChangeListener(this);
                 viewPort.removePropertyChangeListener(this);
@@ -1456,7 +1455,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
                 viewPort.addChangeListener(this);
                 viewPort.addPropertyChangeListener(this);
             }
-        } 
+        }
 
         /**
          * AccessibleJScrollPane constructor
@@ -1464,24 +1463,24 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
         public AccessibleJScrollPane() {
             super();
 
-	    resetViewPort();
+            resetViewPort();
 
-	    // initialize the AccessibleRelationSets for the JScrollPane
-	    // and JScrollBar(s)
-	    JScrollBar scrollBar = getHorizontalScrollBar();
-	    if (scrollBar != null) {
-		setScrollBarRelations(scrollBar);
-	    }	    
-	    scrollBar = getVerticalScrollBar();
-	    if (scrollBar != null) {
-		setScrollBarRelations(scrollBar);
-	    }
+            // initialize the AccessibleRelationSets for the JScrollPane
+            // and JScrollBar(s)
+            JScrollBar scrollBar = getHorizontalScrollBar();
+            if (scrollBar != null) {
+                setScrollBarRelations(scrollBar);
+            }
+            scrollBar = getVerticalScrollBar();
+            if (scrollBar != null) {
+                setScrollBarRelations(scrollBar);
+            }
         }
 
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the 
+         * @return an instance of AccessibleRole describing the role of the
          * object
          * @see AccessibleRole
          */
@@ -1489,65 +1488,64 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
             return AccessibleRole.SCROLL_PANE;
         }
 
-	/**
+        /**
          * Invoked when the target of the listener has changed its state.
          *
          * @param e  a <code>ChangeEvent</code> object. Must not be null.
-	 *
-	 * @throws NullPointerException if the parameter is null.
-	 */  
+         *
+         * @throws NullPointerException if the parameter is null.
+         */
         public void stateChanged(ChangeEvent e) {
-	    if (e == null) {
-		throw new NullPointerException();
-	    }
-	    firePropertyChange(ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
-			       Boolean.valueOf(false), 
-			       Boolean.valueOf(true));
+            if (e == null) {
+                throw new NullPointerException();
+            }
+            firePropertyChange(ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                               Boolean.valueOf(false),
+                               Boolean.valueOf(true));
         }
 
-	/**
-	 * This method gets called when a bound property is changed.
-	 * @param e A <code>PropertyChangeEvent</code> object describing
-	 * the event source and the property that has changed. Must not be null.
-	 *
-	 * @throws NullPointerException if the parameter is null.
-	 * @since 1.5
-	 */
-	public void propertyChange(PropertyChangeEvent e) {
-	    String propertyName = e.getPropertyName();
-	    if (propertyName == "horizontalScrollBar" ||
-		propertyName == "verticalScrollBar") {
-		
-		if (e.getNewValue() instanceof JScrollBar) {
-		    setScrollBarRelations((JScrollBar)e.getNewValue());
-		}
-	    }
-	}
+        /**
+         * This method gets called when a bound property is changed.
+         * @param e A <code>PropertyChangeEvent</code> object describing
+         * the event source and the property that has changed. Must not be null.
+         *
+         * @throws NullPointerException if the parameter is null.
+         * @since 1.5
+         */
+        public void propertyChange(PropertyChangeEvent e) {
+            String propertyName = e.getPropertyName();
+            if (propertyName == "horizontalScrollBar" ||
+                propertyName == "verticalScrollBar") {
+
+                if (e.getNewValue() instanceof JScrollBar) {
+                    setScrollBarRelations((JScrollBar)e.getNewValue());
+                }
+            }
+        }
 
 
-	/*
-	 * Sets the CONTROLLER_FOR and CONTROLLED_BY AccessibleRelations for
-	 * the JScrollPane and JScrollBar. JScrollBar must not be null.
-	 */
-	void setScrollBarRelations(JScrollBar scrollBar) {
-	    /*
-	     * The JScrollBar is a CONTROLLER_FOR the JScrollPane.  
-	     * The JScrollPane is CONTROLLED_BY the JScrollBar.
-	     */
-	    AccessibleRelation controlledBy = 
-		new AccessibleRelation(AccessibleRelation.CONTROLLED_BY,
-				       scrollBar);
-	    AccessibleRelation controllerFor = 
-		new AccessibleRelation(AccessibleRelation.CONTROLLER_FOR,
-				       JScrollPane.this);
-	    
-	    // set the relation set for the scroll bar
-	    AccessibleContext ac = scrollBar.getAccessibleContext();
-	    ac.getAccessibleRelationSet().add(controllerFor);
+        /*
+         * Sets the CONTROLLER_FOR and CONTROLLED_BY AccessibleRelations for
+         * the JScrollPane and JScrollBar. JScrollBar must not be null.
+         */
+        void setScrollBarRelations(JScrollBar scrollBar) {
+            /*
+             * The JScrollBar is a CONTROLLER_FOR the JScrollPane.
+             * The JScrollPane is CONTROLLED_BY the JScrollBar.
+             */
+            AccessibleRelation controlledBy =
+                new AccessibleRelation(AccessibleRelation.CONTROLLED_BY,
+                                       scrollBar);
+            AccessibleRelation controllerFor =
+                new AccessibleRelation(AccessibleRelation.CONTROLLER_FOR,
+                                       JScrollPane.this);
 
-	    // set the relation set for the scroll pane
-	    getAccessibleRelationSet().add(controlledBy);
-	}
+            // set the relation set for the scroll bar
+            AccessibleContext ac = scrollBar.getAccessibleContext();
+            ac.getAccessibleRelationSet().add(controllerFor);
+
+            // set the relation set for the scroll pane
+            getAccessibleRelationSet().add(controlledBy);
+        }
     }
 }
-

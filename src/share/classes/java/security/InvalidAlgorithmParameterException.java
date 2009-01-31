@@ -30,7 +30,6 @@ package java.security;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see AlgorithmParameters
  * @see java.security.spec.AlgorithmParameterSpec
@@ -50,19 +49,19 @@ extends GeneralSecurityException {
      * exception.
      */
     public InvalidAlgorithmParameterException() {
-	super();
+        super();
     }
 
     /**
      * Constructs an InvalidAlgorithmParameterException with the specified
      * detail message.
      * A detail message is a String that describes this
-     * particular exception.  
+     * particular exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public InvalidAlgorithmParameterException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**

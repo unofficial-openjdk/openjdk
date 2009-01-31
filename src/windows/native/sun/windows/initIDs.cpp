@@ -83,4 +83,3 @@ Java_java_awt_TextField_initIDs(JNIEnv *env, jclass cls)
 }
 
 } /* extern "C" */
-

@@ -63,7 +63,7 @@ public final class StrikeCache {
 
     static final Unsafe unsafe = Unsafe.getUnsafe();
 
-    static ReferenceQueue refQueue = Disposer.getQueue();    
+    static ReferenceQueue refQueue = Disposer.getQueue();
 
     /* Reference objects may have their referents cleared when GC chooses.
      * During application client start-up there is typically at least one
@@ -128,77 +128,77 @@ public final class StrikeCache {
 
     static {
 
-	long[] nativeInfo = new long[11];
-	getGlyphCacheDescription(nativeInfo);
+        long[] nativeInfo = new long[11];
+        getGlyphCacheDescription(nativeInfo);
         //Can also get address size from Unsafe class :-
-	//nativeAddressSize = unsafe.addressSize();
-	nativeAddressSize = (int)nativeInfo[0];
-	glyphInfoSize     = (int)nativeInfo[1];
-	xAdvanceOffset    = (int)nativeInfo[2];
-	yAdvanceOffset    = (int)nativeInfo[3];
-	widthOffset       = (int)nativeInfo[4];
-	heightOffset      = (int)nativeInfo[5];
-	rowBytesOffset    = (int)nativeInfo[6];
-	topLeftXOffset    = (int)nativeInfo[7];
-	topLeftYOffset    = (int)nativeInfo[8];
-	pixelDataOffset   = (int)nativeInfo[9];
-	invisibleGlyphPtr = nativeInfo[10];
-	if (nativeAddressSize < 4) {
-	    throw new InternalError("Unexpected address size for font data: " +
-				    nativeAddressSize);
-	}
+        //nativeAddressSize = unsafe.addressSize();
+        nativeAddressSize = (int)nativeInfo[0];
+        glyphInfoSize     = (int)nativeInfo[1];
+        xAdvanceOffset    = (int)nativeInfo[2];
+        yAdvanceOffset    = (int)nativeInfo[3];
+        widthOffset       = (int)nativeInfo[4];
+        heightOffset      = (int)nativeInfo[5];
+        rowBytesOffset    = (int)nativeInfo[6];
+        topLeftXOffset    = (int)nativeInfo[7];
+        topLeftYOffset    = (int)nativeInfo[8];
+        pixelDataOffset   = (int)nativeInfo[9];
+        invisibleGlyphPtr = nativeInfo[10];
+        if (nativeAddressSize < 4) {
+            throw new InternalError("Unexpected address size for font data: " +
+                                    nativeAddressSize);
+        }
 
-	java.security.AccessController.doPrivileged(
+        java.security.AccessController.doPrivileged(
                                     new java.security.PrivilegedAction() {
             public Object run() {
 
-	       /* Allow a client to override the reference type used to
-		* cache strikes. The default is "soft" which hints to keep
-		* the strikes around. This property allows the client to
-		* override this to "weak" which hint to the GC to free
-		* memory more agressively.
-		*/
-	       String refType =
-		   System.getProperty("sun.java2d.font.reftype", "soft");
-	       cacheRefTypeWeak = refType.equals("weak");
+               /* Allow a client to override the reference type used to
+                * cache strikes. The default is "soft" which hints to keep
+                * the strikes around. This property allows the client to
+                * override this to "weak" which hint to the GC to free
+                * memory more agressively.
+                */
+               String refType =
+                   System.getProperty("sun.java2d.font.reftype", "soft");
+               cacheRefTypeWeak = refType.equals("weak");
 
-		String minStrikesStr =
-		    System.getProperty("sun.java2d.font.minstrikes");
-		if (minStrikesStr != null) {
-		    try {
-			MINSTRIKES = Integer.parseInt(minStrikesStr);
-			if (MINSTRIKES <= 0) {
-			    MINSTRIKES = 1;
-			}
-		    } catch (NumberFormatException e) {
-		    }
-		}
+                String minStrikesStr =
+                    System.getProperty("sun.java2d.font.minstrikes");
+                if (minStrikesStr != null) {
+                    try {
+                        MINSTRIKES = Integer.parseInt(minStrikesStr);
+                        if (MINSTRIKES <= 0) {
+                            MINSTRIKES = 1;
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                }
 
-		recentStrikes = new FontStrike[MINSTRIKES];
+                recentStrikes = new FontStrike[MINSTRIKES];
 
-		return null;
-	    }
+                return null;
+            }
         });
     }
 
 
     static void refStrike(FontStrike strike) {
-	int index = recentStrikeIndex;
-	recentStrikes[index] = strike;
-	index++;
-	if (index == MINSTRIKES) {
-	    index = 0;
-	}
-	recentStrikeIndex = index;
+        int index = recentStrikeIndex;
+        recentStrikes[index] = strike;
+        index++;
+        if (index == MINSTRIKES) {
+            index = 0;
+        }
+        recentStrikeIndex = index;
     }
 
     static void disposeStrike(FontStrikeDisposer disposer) {
-	if (disposer.intGlyphImages != null) {
-	    freeIntMemory(disposer.intGlyphImages,
-			  disposer.pScalerContext);
-	} else if (disposer.longGlyphImages != null) {
-	    freeLongMemory(disposer.longGlyphImages,
-			   disposer.pScalerContext);
+        if (disposer.intGlyphImages != null) {
+            freeIntMemory(disposer.intGlyphImages,
+                          disposer.pScalerContext);
+        } else if (disposer.longGlyphImages != null) {
+            freeLongMemory(disposer.longGlyphImages,
+                           disposer.pScalerContext);
         } else if (disposer.segIntGlyphImages != null) {
             /* NB Now making multiple JNI calls in this case.
              * But assuming that there's a reasonable amount of locality
@@ -241,66 +241,66 @@ public final class StrikeCache {
 
 
     public static Reference getStrikeRef(FontStrike strike) {
-	return getStrikeRef(strike, cacheRefTypeWeak);
+        return getStrikeRef(strike, cacheRefTypeWeak);
     }
 
     public static Reference getStrikeRef(FontStrike strike, boolean weak) {
-	/* Some strikes may have no disposer as there's nothing
-	 * for them to free, as they allocated no native resource
-	 * eg, if they did not allocate resources because of a problem,
-	 * or they never hold native resources. So they create no disposer.
-	 * But any strike that reaches here that has a null disposer is
-	 * a potential memory leak.
-	 */
-	if (strike.disposer == null) {
-	    if (weak) {
-		return new WeakReference(strike);
-	    } else {
-		return new SoftReference(strike);
-	    }
-	}
+        /* Some strikes may have no disposer as there's nothing
+         * for them to free, as they allocated no native resource
+         * eg, if they did not allocate resources because of a problem,
+         * or they never hold native resources. So they create no disposer.
+         * But any strike that reaches here that has a null disposer is
+         * a potential memory leak.
+         */
+        if (strike.disposer == null) {
+            if (weak) {
+                return new WeakReference(strike);
+            } else {
+                return new SoftReference(strike);
+            }
+        }
 
-	if (weak) {
-	    return new WeakDisposerRef(strike);
-	} else {
-	    return new SoftDisposerRef(strike);
-	}
+        if (weak) {
+            return new WeakDisposerRef(strike);
+        } else {
+            return new SoftDisposerRef(strike);
+        }
     }
 
     static interface DisposableStrike {
-	FontStrikeDisposer getDisposer();
+        FontStrikeDisposer getDisposer();
     }
 
     static class SoftDisposerRef
-	extends SoftReference implements DisposableStrike {
+        extends SoftReference implements DisposableStrike {
 
-	private FontStrikeDisposer disposer;
+        private FontStrikeDisposer disposer;
 
-	public FontStrikeDisposer getDisposer() {
-	    return disposer;
-	}
+        public FontStrikeDisposer getDisposer() {
+            return disposer;
+        }
 
-	SoftDisposerRef(FontStrike strike) {
-	    super(strike, StrikeCache.refQueue);
-	    disposer = strike.disposer;
-	    Disposer.addReference(this, disposer);
-	}
+        SoftDisposerRef(FontStrike strike) {
+            super(strike, StrikeCache.refQueue);
+            disposer = strike.disposer;
+            Disposer.addReference(this, disposer);
+        }
     }
 
     static class WeakDisposerRef
-	extends WeakReference implements DisposableStrike {
+        extends WeakReference implements DisposableStrike {
 
-	private FontStrikeDisposer disposer;
+        private FontStrikeDisposer disposer;
 
-	public FontStrikeDisposer getDisposer() {
-	    return disposer;
-	}
+        public FontStrikeDisposer getDisposer() {
+            return disposer;
+        }
 
-	WeakDisposerRef(FontStrike strike) {
-	    super(strike, StrikeCache.refQueue);
-	    disposer = strike.disposer;
-	    Disposer.addReference(this, disposer);
-	}
+        WeakDisposerRef(FontStrike strike) {
+            super(strike, StrikeCache.refQueue);
+            disposer = strike.disposer;
+            Disposer.addReference(this, disposer);
+        }
     }
 
 }

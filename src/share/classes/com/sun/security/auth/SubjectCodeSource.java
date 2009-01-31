@@ -42,26 +42,25 @@ import javax.security.auth.Subject;
  * or a linked list of Principals/PrincipalComparators
  * (that represent a "subject" in a <code>Policy</code>).
  *
- * @version %I%, %G%
  */
 class SubjectCodeSource extends CodeSource implements java.io.Serializable {
 
     private static final long serialVersionUID = 6039418085604715275L;
 
     private static final java.util.ResourceBundle rb =
-	java.security.AccessController.doPrivileged
-	(new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-	    public java.util.ResourceBundle run() {
-		return (java.util.ResourceBundle.getBundle
-			("sun.security.util.AuthResources"));
+        java.security.AccessController.doPrivileged
+        (new java.security.PrivilegedAction<java.util.ResourceBundle>() {
+            public java.util.ResourceBundle run() {
+                return (java.util.ResourceBundle.getBundle
+                        ("sun.security.util.AuthResources"));
             }
-	});
+        });
 
     private Subject subject;
     private LinkedList<PolicyParser.PrincipalEntry> principals;
     private static final Class[] PARAMS = { String.class };
     private static final sun.security.util.Debug debug =
-	sun.security.util.Debug.getInstance("auth", "\t[Auth Access]");
+        sun.security.util.Debug.getInstance("auth", "\t[Auth Access]");
     private ClassLoader sysClassLoader;
 
     /**
@@ -79,29 +78,29 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * <p>
      *
      * @param subject the <code>Subject</code> associated with this
-     *			<code>SubjectCodeSource</code> <p>
+     *                  <code>SubjectCodeSource</code> <p>
      *
      * @param url the <code>URL</code> associated with this
-     *			<code>SubjectCodeSource</code> <p>
+     *                  <code>SubjectCodeSource</code> <p>
      *
      * @param certs the signers associated with this
-     *			<code>SubjectCodeSource</code> <p>
+     *                  <code>SubjectCodeSource</code> <p>
      */
     SubjectCodeSource(Subject subject,
-	LinkedList<PolicyParser.PrincipalEntry> principals,
-	URL url, Certificate[] certs) {
+        LinkedList<PolicyParser.PrincipalEntry> principals,
+        URL url, Certificate[] certs) {
 
-	super(url, certs);
-	this.subject = subject;
-	this.principals = (principals == null ?
-		new LinkedList<PolicyParser.PrincipalEntry>() :
-		new LinkedList<PolicyParser.PrincipalEntry>(principals));
-	sysClassLoader = java.security.AccessController.doPrivileged
-	(new java.security.PrivilegedAction<ClassLoader>() {
-	    public ClassLoader run() {
-		    return ClassLoader.getSystemClassLoader();
-	    }
-	});
+        super(url, certs);
+        this.subject = subject;
+        this.principals = (principals == null ?
+                new LinkedList<PolicyParser.PrincipalEntry>() :
+                new LinkedList<PolicyParser.PrincipalEntry>(principals));
+        sysClassLoader = java.security.AccessController.doPrivileged
+        (new java.security.PrivilegedAction<ClassLoader>() {
+            public ClassLoader run() {
+                    return ClassLoader.getSystemClassLoader();
+            }
+        });
     }
 
     /**
@@ -112,11 +111,11 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * <p>
      *
      * @return the Principals associated with this
-     *		<code>SubjectCodeSource</code> as a <code>LinkedList</code>
-     *		of <code>PolicyParser.PrincipalEntry</code> objects.
+     *          <code>SubjectCodeSource</code> as a <code>LinkedList</code>
+     *          of <code>PolicyParser.PrincipalEntry</code> objects.
      */
     LinkedList<PolicyParser.PrincipalEntry> getPrincipals() {
-	return principals;
+        return principals;
     }
 
     /**
@@ -128,10 +127,10 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * <p>
      *
      * @return the <code>Subject</code> associated with this
-     *		<code>SubjectCodeSource</code>.
+     *          <code>SubjectCodeSource</code>.
      */
     Subject getSubject() {
-	return subject;
+        return subject;
     }
 
     /**
@@ -140,22 +139,22 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * More specifically, this method makes the following checks.
      * If any fail, it returns false.  If they all succeed, it returns true.
      *
-     * <p> 
+     * <p>
      * <ol>
      * <li> The provided codesource must not be <code>null</code>.
      * <li> codesource must be an instance of <code>SubjectCodeSource</code>.
      * <li> super.implies(codesource) must return true.
      * <li> for each principal in this codesource's principal list:
      * <ol>
-     * <li>	if the principal is an instanceof
-     *		<code>PrincipalComparator</code>, then the principal must
-     *		imply the provided codesource's <code>Subject</code>.
-     * <li>	if the principal is not an instanceof
-     *		<code>PrincipalComparator</code>, then the provided
-     *		codesource's <code>Subject</code> must have an
-     *		associated <code>Principal</code>, <i>P</i>, where
-     *		P.getClass().getName equals principal.principalClass,
-     *		and P.getName() equals principal.principalName.
+     * <li>     if the principal is an instanceof
+     *          <code>PrincipalComparator</code>, then the principal must
+     *          imply the provided codesource's <code>Subject</code>.
+     * <li>     if the principal is not an instanceof
+     *          <code>PrincipalComparator</code>, then the provided
+     *          codesource's <code>Subject</code> must have an
+     *          associated <code>Principal</code>, <i>P</i>, where
+     *          P.getClass().getName equals principal.principalClass,
+     *          and P.getName() equals principal.principalName.
      * </ol>
      * </ol>
      *
@@ -164,101 +163,101 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * @param codesource the <code>CodeSource</code> to compare against.
      *
      * @return true if this <code>SubjectCodeSource</code> implies the
-     *		the specified <code>CodeSource</code>.
+     *          the specified <code>CodeSource</code>.
      */
     public boolean implies(CodeSource codesource) {
 
-	LinkedList<PolicyParser.PrincipalEntry> subjectList = null;
+        LinkedList<PolicyParser.PrincipalEntry> subjectList = null;
 
-	if (codesource == null ||
-	    !(codesource instanceof SubjectCodeSource) ||
-	    !(super.implies(codesource))) {
+        if (codesource == null ||
+            !(codesource instanceof SubjectCodeSource) ||
+            !(super.implies(codesource))) {
 
-	    if (debug != null)
-		debug.println("\tSubjectCodeSource.implies: FAILURE 1");
-	    return false;
-	}
+            if (debug != null)
+                debug.println("\tSubjectCodeSource.implies: FAILURE 1");
+            return false;
+        }
 
-	SubjectCodeSource that = (SubjectCodeSource)codesource;
+        SubjectCodeSource that = (SubjectCodeSource)codesource;
 
-	// if the principal list in the policy "implies"
-	// the Subject associated with the current AccessControlContext,
-	// then return true
+        // if the principal list in the policy "implies"
+        // the Subject associated with the current AccessControlContext,
+        // then return true
 
-	if (this.principals == null) {
-	    if (debug != null)
-		debug.println("\tSubjectCodeSource.implies: PASS 1");
-	    return true;
-	}
+        if (this.principals == null) {
+            if (debug != null)
+                debug.println("\tSubjectCodeSource.implies: PASS 1");
+            return true;
+        }
 
-	if (that.getSubject() == null ||
-	    that.getSubject().getPrincipals().size() == 0) {
-	    if (debug != null)
-		debug.println("\tSubjectCodeSource.implies: FAILURE 2");
-	    return false;
-	}
+        if (that.getSubject() == null ||
+            that.getSubject().getPrincipals().size() == 0) {
+            if (debug != null)
+                debug.println("\tSubjectCodeSource.implies: FAILURE 2");
+            return false;
+        }
 
-	ListIterator<PolicyParser.PrincipalEntry> li =
-		this.principals.listIterator(0);
-	while (li.hasNext()) {
-	    PolicyParser.PrincipalEntry pppe = li.next();
-	    try {
+        ListIterator<PolicyParser.PrincipalEntry> li =
+                this.principals.listIterator(0);
+        while (li.hasNext()) {
+            PolicyParser.PrincipalEntry pppe = li.next();
+            try {
 
-		// handle PrincipalComparators
+                // handle PrincipalComparators
 
-		Class principalComparator = Class.forName(pppe.principalClass,
-							true,
-							sysClassLoader);
-		Constructor c = principalComparator.getConstructor(PARAMS);
-		PrincipalComparator pc =
-			(PrincipalComparator)c.newInstance
-			(new Object[] { pppe.principalName });
+                Class principalComparator = Class.forName(pppe.principalClass,
+                                                        true,
+                                                        sysClassLoader);
+                Constructor c = principalComparator.getConstructor(PARAMS);
+                PrincipalComparator pc =
+                        (PrincipalComparator)c.newInstance
+                        (new Object[] { pppe.principalName });
 
-		if (!pc.implies(that.getSubject())) {
-		    if (debug != null)
-			debug.println("\tSubjectCodeSource.implies: FAILURE 3");
-		    return false;
-		} else {
-		    if (debug != null)
-			debug.println("\tSubjectCodeSource.implies: PASS 2");
-		    return true;
-		}
-	    } catch (Exception e) {
+                if (!pc.implies(that.getSubject())) {
+                    if (debug != null)
+                        debug.println("\tSubjectCodeSource.implies: FAILURE 3");
+                    return false;
+                } else {
+                    if (debug != null)
+                        debug.println("\tSubjectCodeSource.implies: PASS 2");
+                    return true;
+                }
+            } catch (Exception e) {
 
-		// no PrincipalComparator, simply compare Principals
+                // no PrincipalComparator, simply compare Principals
 
-		if (subjectList == null) {
+                if (subjectList == null) {
 
-		    if (that.getSubject() == null) {
-			if (debug != null)
-			    debug.println("\tSubjectCodeSource.implies: " +
-					"FAILURE 4");
-			return false;
-		    }
-		    Iterator<Principal> i =
-				that.getSubject().getPrincipals().iterator();
+                    if (that.getSubject() == null) {
+                        if (debug != null)
+                            debug.println("\tSubjectCodeSource.implies: " +
+                                        "FAILURE 4");
+                        return false;
+                    }
+                    Iterator<Principal> i =
+                                that.getSubject().getPrincipals().iterator();
 
-		    subjectList = new LinkedList<PolicyParser.PrincipalEntry>();
-		    while (i.hasNext()) {
-			Principal p = i.next();
-			PolicyParser.PrincipalEntry spppe =
-				new PolicyParser.PrincipalEntry
-				(p.getClass().getName(), p.getName());
-			subjectList.add(spppe);
-		    }
-		}
-		
-		if (!subjectListImpliesPrincipalEntry(subjectList, pppe)) {
-		    if (debug != null)
-			debug.println("\tSubjectCodeSource.implies: FAILURE 5");
-		    return false;
-		}
-	    }
-	}
+                    subjectList = new LinkedList<PolicyParser.PrincipalEntry>();
+                    while (i.hasNext()) {
+                        Principal p = i.next();
+                        PolicyParser.PrincipalEntry spppe =
+                                new PolicyParser.PrincipalEntry
+                                (p.getClass().getName(), p.getName());
+                        subjectList.add(spppe);
+                    }
+                }
 
-	if (debug != null)
-	    debug.println("\tSubjectCodeSource.implies: PASS 3");
-	return true;
+                if (!subjectListImpliesPrincipalEntry(subjectList, pppe)) {
+                    if (debug != null)
+                        debug.println("\tSubjectCodeSource.implies: FAILURE 5");
+                    return false;
+                }
+            }
+        }
+
+        if (debug != null)
+            debug.println("\tSubjectCodeSource.implies: PASS 3");
+        return true;
     }
 
     /**
@@ -271,39 +270,39 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * which need to be considered.
      *
      * <p>
-     * 
+     *
      * @param subjectList a list of PolicyParser.PrincipalEntry objects
-     *		that correspond to all the Principals in the Subject currently
-     *		on this thread's AccessControlContext. <p>
+     *          that correspond to all the Principals in the Subject currently
+     *          on this thread's AccessControlContext. <p>
      *
      * @param pppe the Principals specified in a grant entry.
      *
      * @return true if the provided <i>subjectList</i> "contains"
-     *		the <code>Principal</code> specified in the provided
-     *		<i>pppe</i> argument.
+     *          the <code>Principal</code> specified in the provided
+     *          <i>pppe</i> argument.
      */
     private boolean subjectListImpliesPrincipalEntry(
-		LinkedList<PolicyParser.PrincipalEntry> subjectList,
-		PolicyParser.PrincipalEntry pppe) {
+                LinkedList<PolicyParser.PrincipalEntry> subjectList,
+                PolicyParser.PrincipalEntry pppe) {
 
-	ListIterator<PolicyParser.PrincipalEntry> li =
-					subjectList.listIterator(0);
-	while (li.hasNext()) {
-	    PolicyParser.PrincipalEntry listPppe = li.next();
+        ListIterator<PolicyParser.PrincipalEntry> li =
+                                        subjectList.listIterator(0);
+        while (li.hasNext()) {
+            PolicyParser.PrincipalEntry listPppe = li.next();
 
-	    if (pppe.principalClass.equals
-			(PolicyParser.PrincipalEntry.WILDCARD_CLASS) ||
-		pppe.principalClass.equals
-			(listPppe.principalClass)) {
+            if (pppe.principalClass.equals
+                        (PolicyParser.PrincipalEntry.WILDCARD_CLASS) ||
+                pppe.principalClass.equals
+                        (listPppe.principalClass)) {
 
-		if (pppe.principalName.equals
-			(PolicyParser.PrincipalEntry.WILDCARD_NAME) ||
-		    pppe.principalName.equals
-			(listPppe.principalName))
-		    return true;
-	    }
-	}
-	return false;
+                if (pppe.principalName.equals
+                        (PolicyParser.PrincipalEntry.WILDCARD_NAME) ||
+                    pppe.principalName.equals
+                        (listPppe.principalName))
+                    return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -324,37 +323,37 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      */
     public boolean equals(Object obj) {
 
-	if (obj == this)
-	    return true;
+        if (obj == this)
+            return true;
 
-	if (super.equals(obj) == false)
-	    return false;
+        if (super.equals(obj) == false)
+            return false;
 
-	if (!(obj instanceof SubjectCodeSource))
-	    return false;
+        if (!(obj instanceof SubjectCodeSource))
+            return false;
 
-	SubjectCodeSource that = (SubjectCodeSource)obj;
+        SubjectCodeSource that = (SubjectCodeSource)obj;
 
-	// the principal lists must match
-	try {
-	    if (this.getSubject() != that.getSubject())
-		return false;
-	} catch (SecurityException se) {
-	    return false;
-	}
+        // the principal lists must match
+        try {
+            if (this.getSubject() != that.getSubject())
+                return false;
+        } catch (SecurityException se) {
+            return false;
+        }
 
-	if ((this.principals == null && that.principals != null) ||
-	    (this.principals != null && that.principals == null))
-	    return false;
-	
-	if (this.principals != null && that.principals != null) {
-	    if (!this.principals.containsAll(that.principals) ||
-		!that.principals.containsAll(this.principals))
+        if ((this.principals == null && that.principals != null) ||
+            (this.principals != null && that.principals == null))
+            return false;
 
-		return false;
-	}
+        if (this.principals != null && that.principals != null) {
+            if (!this.principals.containsAll(that.principals) ||
+                !that.principals.containsAll(this.principals))
 
-	return true;
+                return false;
+        }
+
+        return true;
     }
 
     /**
@@ -365,7 +364,7 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * @return a hashcode for this <code>SubjectCodeSource</code>.
      */
     public int hashCode() {
-	return super.hashCode();
+        return super.hashCode();
     }
 
     /**
@@ -376,31 +375,31 @@ class SubjectCodeSource extends CodeSource implements java.io.Serializable {
      * @return a String representation of this <code>SubjectCodeSource</code>.
      */
     public String toString() {
-	String returnMe = super.toString();
-	if (getSubject() != null) {
-	    if (debug != null) {
-		final Subject finalSubject = getSubject();
-		returnMe = returnMe + "\n" +
-			java.security.AccessController.doPrivileged
-				(new java.security.PrivilegedAction<String>() {
-				public String run() {
-				    return finalSubject.toString();
-				}
-			});
-	    } else {
-		returnMe = returnMe + "\n" + getSubject().toString();
-	    }
-	}
-	if (principals != null) {
-	    ListIterator<PolicyParser.PrincipalEntry> li =
-					principals.listIterator();
-	    while (li.hasNext()) {
-		PolicyParser.PrincipalEntry pppe = li.next();
-		returnMe = returnMe + rb.getString("\n") +
-			pppe.principalClass + " " +
-			pppe.principalName;
-	    }
-	}
-	return returnMe;
+        String returnMe = super.toString();
+        if (getSubject() != null) {
+            if (debug != null) {
+                final Subject finalSubject = getSubject();
+                returnMe = returnMe + "\n" +
+                        java.security.AccessController.doPrivileged
+                                (new java.security.PrivilegedAction<String>() {
+                                public String run() {
+                                    return finalSubject.toString();
+                                }
+                        });
+            } else {
+                returnMe = returnMe + "\n" + getSubject().toString();
+            }
+        }
+        if (principals != null) {
+            ListIterator<PolicyParser.PrincipalEntry> li =
+                                        principals.listIterator();
+            while (li.hasNext()) {
+                PolicyParser.PrincipalEntry pppe = li.next();
+                returnMe = returnMe + rb.getString("\n") +
+                        pppe.principalClass + " " +
+                        pppe.principalName;
+            }
+        }
+        return returnMe;
     }
 }

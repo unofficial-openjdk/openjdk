@@ -30,14 +30,13 @@ package sun.security.provider;
  * not support a fully native PRNG on Windows.
  *
  * @since   1.5
- * @version %I%, %G%
  * @author  Andreas Sterbenz
  */
 public final class NativePRNG {
 
     // return whether the NativePRNG is available
     static boolean isAvailable() {
-	return false;
+        return false;
     }
-    
+
 }

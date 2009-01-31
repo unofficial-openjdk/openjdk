@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_in_ID extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "H:mm:ss",
                     "H:mm:ss",

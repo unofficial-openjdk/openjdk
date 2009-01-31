@@ -40,4 +40,3 @@ public class B4414825 {
             throw new RuntimeException("Test failed: Equaled SocketPermission instances should imply each other.");
     }
 }
-

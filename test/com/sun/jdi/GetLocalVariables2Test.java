@@ -52,7 +52,7 @@ class GetLocalVariables2Targ {
     public static void main(String[] args) {
         int i = 1;
         String command;
-        if (i == 0) {  
+        if (i == 0) {
             command = "0";
         } else if (bar(i)) {
             command = "1";
@@ -72,26 +72,26 @@ public class GetLocalVariables2Test extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new GetLocalVariables2Test(args).startTests();
     }
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("GetLocalVariables2Targ");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
-        
+
         bpe = resumeTo("GetLocalVariables2Targ", "bar", "(I)Z");
 
         /*
          * Inspect the stack frame for main(), not bar()...
          */
-        StackFrame frame = bpe.thread().frame(1); 
+        StackFrame frame = bpe.thread().frame(1);
         List localVars = frame.visibleVariables();
         System.out.println("    Visible variables at this point are: ");
         for (Iterator it = localVars.iterator(); it.hasNext();) {
@@ -116,7 +116,7 @@ public class GetLocalVariables2Test extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -128,4 +128,3 @@ public class GetLocalVariables2Test extends TestScaffold {
         }
     }
 }
-

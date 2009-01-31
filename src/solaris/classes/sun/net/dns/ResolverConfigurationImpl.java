@@ -57,46 +57,46 @@ public class ResolverConfigurationImpl
     // keyword.
     //
     private LinkedList resolvconf(String keyword, int maxperkeyword, int maxkeywords) {
-	LinkedList ll = new LinkedList();
+        LinkedList ll = new LinkedList();
 
-	try {
-            BufferedReader in = 
-	 	new BufferedReader(new FileReader("/etc/resolv.conf"));
+        try {
+            BufferedReader in =
+                new BufferedReader(new FileReader("/etc/resolv.conf"));
             String line;
             while ((line = in.readLine()) != null) {
-	 	int maxvalues = maxperkeyword;
+                int maxvalues = maxperkeyword;
                 if (line.length() == 0)
                    continue;
-                if (line.charAt(0) == '#' || line.charAt(0) == ';') 
+                if (line.charAt(0) == '#' || line.charAt(0) == ';')
                     continue;
-		if (!line.startsWith(keyword)) 
-		    continue;
-		String value = line.substring(keyword.length());
-		if (value.length() == 0) 
-		    continue;
-		if (value.charAt(0) != ' ' && value.charAt(0) != '\t') 
-		    continue;
-		StringTokenizer st = new StringTokenizer(value, " \t");
-		while (st.hasMoreTokens()) {
-		    String val = st.nextToken();
-		    if (val.charAt(0) == '#' || val.charAt(0) == ';') {
-			break;
-		    }
-            	    ll.add(val);
-		    if (--maxvalues == 0) {
-			break;
-		    }
-		}
-		if (--maxkeywords == 0) {
-		    break;
-		}
+                if (!line.startsWith(keyword))
+                    continue;
+                String value = line.substring(keyword.length());
+                if (value.length() == 0)
+                    continue;
+                if (value.charAt(0) != ' ' && value.charAt(0) != '\t')
+                    continue;
+                StringTokenizer st = new StringTokenizer(value, " \t");
+                while (st.hasMoreTokens()) {
+                    String val = st.nextToken();
+                    if (val.charAt(0) == '#' || val.charAt(0) == ';') {
+                        break;
+                    }
+                    ll.add(val);
+                    if (--maxvalues == 0) {
+                        break;
+                    }
+                }
+                if (--maxkeywords == 0) {
+                    break;
+                }
             }
-	    in.close();
-	} catch (IOException ioe) {
-	    // problem reading value 
-	}
+            in.close();
+        } catch (IOException ioe) {
+            // problem reading value
+        }
 
-	return ll;
+        return ll;
     }
 
     private LinkedList searchlist;
@@ -116,7 +116,7 @@ public class ResolverConfigurationImpl
             }
         }
 
-	// get the name servers from /etc/resolv.conf
+        // get the name servers from /etc/resolv.conf
         nameservers =
             (LinkedList)java.security.AccessController.doPrivileged(
                 new java.security.PrivilegedAction() {
@@ -127,10 +127,10 @@ public class ResolverConfigurationImpl
                     } /* run */
                 });
 
-	// get the search list (or domain)
-	searchlist = getSearchList();
+        // get the search list (or domain)
+        searchlist = getSearchList();
 
-	// update the timestamp on the configuration
+        // update the timestamp on the configuration
         lastRefresh = System.currentTimeMillis();
     }
 
@@ -139,9 +139,9 @@ public class ResolverConfigurationImpl
 
     private LinkedList getSearchList() {
 
-	LinkedList sl;
+        LinkedList sl;
 
-	// first try the search keyword in /etc/resolv.conf
+        // first try the search keyword in /etc/resolv.conf
 
         sl = (LinkedList)java.security.AccessController.doPrivileged(
                  new java.security.PrivilegedAction() {
@@ -159,25 +159,25 @@ public class ResolverConfigurationImpl
                     } /* run */
 
                 });
-	if (sl != null) {
-	    return sl;
-	}
+        if (sl != null) {
+            return sl;
+        }
 
-	// No search keyword so use local domain
+        // No search keyword so use local domain
 
 
-	// LOCALDOMAIN has absolute priority on Solaris
+        // LOCALDOMAIN has absolute priority on Solaris
 
-	String localDomain = localDomain0();
-	if (localDomain != null && localDomain.length() > 0) {
-	    sl = new LinkedList();
-	    sl.add(localDomain);
-	    return sl;
-	}
+        String localDomain = localDomain0();
+        if (localDomain != null && localDomain.length() > 0) {
+            sl = new LinkedList();
+            sl.add(localDomain);
+            return sl;
+        }
 
-	// try domain keyword in /etc/resolv.conf
+        // try domain keyword in /etc/resolv.conf
 
-	sl = (LinkedList)java.security.AccessController.doPrivileged(
+        sl = (LinkedList)java.security.AccessController.doPrivileged(
                  new java.security.PrivilegedAction() {
                     public Object run() {
                         LinkedList ll;
@@ -190,34 +190,34 @@ public class ResolverConfigurationImpl
 
                     } /* run */
                 });
-	if (sl != null) {
-	    return sl;
-	}
+        if (sl != null) {
+            return sl;
+        }
 
-	// no local domain so try fallback (RPC) domain or
-	// hostname
+        // no local domain so try fallback (RPC) domain or
+        // hostname
 
-	sl = new LinkedList();
-	String domain = fallbackDomain0();
-	if (domain != null && domain.length() > 0) {
+        sl = new LinkedList();
+        String domain = fallbackDomain0();
+        if (domain != null && domain.length() > 0) {
             sl.add(domain);
         }
 
-	return sl;
+        return sl;
     }
 
 
     // ----
 
     ResolverConfigurationImpl() {
-	opts = new OptionsImpl();
+        opts = new OptionsImpl();
     }
 
     public List searchlist() {
         synchronized (lock) {
             loadConfig();
 
-	    // List is mutable so return a shallow copy
+            // List is mutable so return a shallow copy
             return (List)searchlist.clone();
         }
     }
@@ -226,13 +226,13 @@ public class ResolverConfigurationImpl
         synchronized (lock) {
             loadConfig();
 
-	    // List is mutable so return a shallow copy
-	    return (List)nameservers.clone();
+            // List is mutable so return a shallow copy
+            return (List)nameservers.clone();
          }
     }
 
     public Options options() {
-	return opts;
+        return opts;
     }
 
 
@@ -243,13 +243,13 @@ public class ResolverConfigurationImpl
     static native String fallbackDomain0();
 
     static {
-	java.security.AccessController.doPrivileged(
+        java.security.AccessController.doPrivileged(
             new sun.security.action.LoadLibraryAction("net"));
     }
 
 }
 
-/** 
+/**
  * Implementation of {@link ResolverConfiguration.Options}
  */
 class OptionsImpl extends ResolverConfiguration.Options {

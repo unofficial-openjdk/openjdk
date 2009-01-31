@@ -35,12 +35,11 @@ import java.io.FilenameFilter;
  * <p>
  *
  * @author  Michael Colburn
- * @version %I%, %G%
- */ 
+ */
 public class JarFilter implements FilenameFilter {
 
     public boolean accept(File dir, String name) {
-	String lower = name.toLowerCase();
-	return lower.endsWith(".jar") || lower.endsWith(".zip");
+        String lower = name.toLowerCase();
+        return lower.endsWith(".jar") || lower.endsWith(".zip");
     }
 }

@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * %Z%author    IBM Corp.
- * 
+ * @author    IBM Corp.
+ *
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
 
@@ -83,20 +83,20 @@ public class InvalidTargetObjectTypeException  extends Exception
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-	try {
-	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-	    String form = AccessController.doPrivileged(act);
-	    compat = (form != null && form.equals("1.0"));
-	} catch (Exception e) {
-	    // OK: No compat with 1.0
-	}
-	if (compat) {
-	    serialPersistentFields = oldSerialPersistentFields;
-	    serialVersionUID = oldSerialVersionUID;
-	} else {
-	    serialPersistentFields = newSerialPersistentFields;
-	    serialVersionUID = newSerialVersionUID;
-	}
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK: No compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
     }
     //
     // END Serialization compatibility stuff
@@ -154,14 +154,14 @@ public class InvalidTargetObjectTypeException  extends Exception
      * Deserializes an {@link InvalidTargetObjectTypeException} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-	    throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
       if (compat)
       {
         // Read an object serialized in the old serial form
         //
         ObjectInputStream.GetField fields = in.readFields();
-	exception = (Exception) fields.get("relatedExcept", null);
-	if (fields.defaulted("relatedExcept"))
+        exception = (Exception) fields.get("relatedExcept", null);
+        if (fields.defaulted("relatedExcept"))
         {
           throw new NullPointerException("relatedExcept");
         }
@@ -179,15 +179,15 @@ public class InvalidTargetObjectTypeException  extends Exception
      * Serializes an {@link InvalidTargetObjectTypeException} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-	    throws IOException {
+            throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-	fields.put("relatedExcept", exception);
-	fields.put("msgStr", ((exception != null)?exception.getMessage():""));
-	out.writeFields();
+        fields.put("relatedExcept", exception);
+        fields.put("msgStr", ((exception != null)?exception.getMessage():""));
+        out.writeFields();
       }
       else
       {
@@ -197,4 +197,3 @@ public class InvalidTargetObjectTypeException  extends Exception
       }
     }
 }
-

@@ -46,4 +46,3 @@ JNIEXPORT void JNICALL
 Java_java_io_FileInputStream_close0(JNIEnv *env, jobject this) {
     fileClose(env, this, fis_fd);
 }
-

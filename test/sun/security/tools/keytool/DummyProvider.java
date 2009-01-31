@@ -35,54 +35,54 @@ import java.security.*;
 
 public class DummyProvider extends Provider {
     public DummyProvider() {
-	super("Dummy", 0.1, "Dummy Provider");
+        super("Dummy", 0.1, "Dummy Provider");
 
-	//
-	// KeyStore
-	//
-	put("KeyStore.DKS", "sun.security.provider.JavaKeyStore$JKS");
+        //
+        // KeyStore
+        //
+        put("KeyStore.DKS", "sun.security.provider.JavaKeyStore$JKS");
 
-	//
-	// Signature engines
-	//
-	put("Signature.SHA1withDSA",
-	    "sun.security.provider.DSA$SHA1withDSA");
-	put("Alg.Alias.Signature.DSA", "SHA1withDSA");
+        //
+        // Signature engines
+        //
+        put("Signature.SHA1withDSA",
+            "sun.security.provider.DSA$SHA1withDSA");
+        put("Alg.Alias.Signature.DSA", "SHA1withDSA");
 
-	//
-	// Key Pair Generator engines
-	//
-	put("KeyPairGenerator.DSA",
-	    "sun.security.provider.DSAKeyPairGenerator");
+        //
+        // Key Pair Generator engines
+        //
+        put("KeyPairGenerator.DSA",
+            "sun.security.provider.DSAKeyPairGenerator");
 
-	//
-	// Digest engines
-	//
-	put("MessageDigest.SHA", "sun.security.provider.SHA");
-	put("Alg.Alias.MessageDigest.SHA1", "SHA");
+        //
+        // Digest engines
+        //
+        put("MessageDigest.SHA", "sun.security.provider.SHA");
+        put("Alg.Alias.MessageDigest.SHA1", "SHA");
 
-	//
-	// Algorithm Parameter Generator engines
-	//
-	put("AlgorithmParameterGenerator.DSA",
+        //
+        // Algorithm Parameter Generator engines
+        //
+        put("AlgorithmParameterGenerator.DSA",
             "sun.security.provider.DSAParameterGenerator");
 
-	//
-	// Algorithm Parameter engines
-	//
-	put("AlgorithmParameters.DSA",
+        //
+        // Algorithm Parameter engines
+        //
+        put("AlgorithmParameters.DSA",
             "sun.security.provider.DSAParameters");
 
-	//
-	// Key factories
-	//
-	put("KeyFactory.DSA", "sun.security.provider.DSAKeyFactory");
+        //
+        // Key factories
+        //
+        put("KeyFactory.DSA", "sun.security.provider.DSAKeyFactory");
 
-	//
-	// Certificate factories
-	//
-	put("CertificateFactory.X.509",
+        //
+        // Certificate factories
+        //
+        put("CertificateFactory.X.509",
             "sun.security.provider.X509Factory");
-	put("Alg.Alias.CertificateFactory.X509", "X.509");
+        put("Alg.Alias.CertificateFactory.X509", "X.509");
     }
 }

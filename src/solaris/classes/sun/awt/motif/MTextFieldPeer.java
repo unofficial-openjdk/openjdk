@@ -55,52 +55,52 @@ public class MTextFieldPeer extends MComponentPeer implements TextFieldPeer {
     void initialize() {
         int start, end;
 
-	TextField txt = (TextField)target;
+        TextField txt = (TextField)target;
 
-	setText(txt.getText());
-	if (txt.echoCharIsSet()) {
-	    setEchoChar(txt.getEchoChar());
-	}
+        setText(txt.getText());
+        if (txt.echoCharIsSet()) {
+            setEchoChar(txt.getEchoChar());
+        }
 
-	start = txt.getSelectionStart();
-	end = txt.getSelectionEnd();
+        start = txt.getSelectionStart();
+        end = txt.getSelectionEnd();
 
-	if (end > start) {
-	    select(start, end);
-	} else {
-	    setCaretPosition(start);
-	}
+        if (end > start) {
+            select(start, end);
+        } else {
+            setCaretPosition(start);
+        }
 
-	if (!target.isBackgroundSet()) {
-	    // This is a way to set the background color of the TextArea 
-	    // without calling setBackground - go through native C code
-	    setTargetBackground(SystemColor.text);
-	}
-	if (!target.isForegroundSet()) {
-	    target.setForeground(SystemColor.textText);
-	}
+        if (!target.isBackgroundSet()) {
+            // This is a way to set the background color of the TextArea
+            // without calling setBackground - go through native C code
+            setTargetBackground(SystemColor.text);
+        }
+        if (!target.isForegroundSet()) {
+            target.setForeground(SystemColor.textText);
+        }
 
-	setEditable(txt.isEditable());
+        setEditable(txt.isEditable());
 
-//	oldSelectionStart = -1; // accessibility support
-//	oldSelectionEnd = -1;	// accessibility support
+//      oldSelectionStart = -1; // accessibility support
+//      oldSelectionEnd = -1;   // accessibility support
 
-	super.initialize();
+        super.initialize();
     }
 
     public MTextFieldPeer(TextField target) {
-	super(target);
+        super(target);
     }
 
     public void setEditable(boolean editable) {
-	pSetEditable(editable);
+        pSetEditable(editable);
 
-	/* 4136955 - Calling setBackground() here works around an Xt
-	 * bug by forcing Xt to flush an internal widget cache
-	 */
-	setBackground(target.getBackground());
+        /* 4136955 - Calling setBackground() here works around an Xt
+         * bug by forcing Xt to flush an internal widget cache
+         */
+        setBackground(target.getBackground());
     }
-     
+
     public native void pSetEditable(boolean editable);
     public native void select(int selStart, int selEnd);
     public native int getSelectionStart();
@@ -119,35 +119,35 @@ public class MTextFieldPeer extends MComponentPeer implements TextFieldPeer {
     private static final int padding = 16;
 
     public Dimension getMinimumSize() {
-	FontMetrics fm = getFontMetrics(target.getFont());
-	return new Dimension(fm.stringWidth(((TextField)target).getText())+20, 
-			     fm.getMaxDescent() + fm.getMaxAscent() + padding);
+        FontMetrics fm = getFontMetrics(target.getFont());
+        return new Dimension(fm.stringWidth(((TextField)target).getText())+20,
+                             fm.getMaxDescent() + fm.getMaxAscent() + padding);
     }
 
     public Dimension getPreferredSize(int cols) {
-	return getMinimumSize(cols);
+        return getMinimumSize(cols);
     }
 
     public Dimension getMinimumSize(int cols) {
-	FontMetrics fm = getFontMetrics(target.getFont());
-	return new Dimension(fm.charWidth('0') * cols + 20,
-			     fm.getMaxDescent() + fm.getMaxAscent() + padding);
+        FontMetrics fm = getFontMetrics(target.getFont());
+        return new Dimension(fm.charWidth('0') * cols + 20,
+                             fm.getMaxDescent() + fm.getMaxAscent() + padding);
     }
 
     public boolean isFocusable() {
-	return true;
+        return true;
     }
 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void action(final long when, final int modifiers) {
-	MToolkit.executeOnEventHandlerThread(target, new Runnable() {
-	    public void run() {
+        MToolkit.executeOnEventHandlerThread(target, new Runnable() {
+            public void run() {
                 postEvent(new ActionEvent(target, ActionEvent.ACTION_PERFORMED,
                                           ((TextField)target).getText(), when,
                                           modifiers));
-	    }
-	});
+            }
+        });
     }
 
     protected void disposeImpl() {
@@ -170,15 +170,15 @@ public class MTextFieldPeer extends MComponentPeer implements TextFieldPeer {
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void pasteFromClipboard() {
         Clipboard clipboard = target.getToolkit().getSystemClipboard();
-        
-	Transferable content = clipboard.getContents(this);
-	if (content != null) {
-	    try {
-		String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
+
+        Transferable content = clipboard.getContents(this);
+        if (content != null) {
+            try {
+                String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
                 insertReplaceText(data);
-                
-	    } catch (Exception e) {       
-	    }
+
+            } catch (Exception e) {
+            }
         }
     }
 
@@ -191,118 +191,118 @@ public class MTextFieldPeer extends MComponentPeer implements TextFieldPeer {
     public final static int MARGIN = 4;
 
     public void print(Graphics g) {
-	TextField txt = (TextField)target;
-	Dimension d = txt.size();
-	int w = d.width - (2 * BORDER); 
-	int h = d.height - (2 * BORDER);
-	Color bg = txt.getBackground();
-	Color fg = txt.getForeground();
-	Color highlight = bg.brighter();
-	String text = txt.getText();
-	int moved = 0;
-	int selStart = 0;
-	int selEnd = 0;
+        TextField txt = (TextField)target;
+        Dimension d = txt.size();
+        int w = d.width - (2 * BORDER);
+        int h = d.height - (2 * BORDER);
+        Color bg = txt.getBackground();
+        Color fg = txt.getForeground();
+        Color highlight = bg.brighter();
+        String text = txt.getText();
+        int moved = 0;
+        int selStart = 0;
+        int selEnd = 0;
 
-	g.setFont(txt.getFont());	
-	g.setColor(txt.isEditable() ? highlight : bg);
-	g.fillRect(BORDER, BORDER, w, h);
+        g.setFont(txt.getFont());
+        g.setColor(txt.isEditable() ? highlight : bg);
+        g.fillRect(BORDER, BORDER, w, h);
 
-	g.setColor(bg);
-	//g.drawRect(0, 0, d.width-1, d.height-1);
-	draw3DRect(g, bg, 1, 1, d.width-3, d.height-3, false);
-		
-	if (text != null) {
-	    g.clipRect(BORDER, MARGIN, w, d.height - (2 * MARGIN));
-	    FontMetrics fm = g.getFontMetrics();
-		
-	    w = d.width - BORDER; 
-	    h = d.height - (2 * MARGIN);
-	    int xs = pos2x(selStart) - moved;
-	    int xe = pos2x(selEnd) - moved;
+        g.setColor(bg);
+        //g.drawRect(0, 0, d.width-1, d.height-1);
+        draw3DRect(g, bg, 1, 1, d.width-3, d.height-3, false);
 
-	    if ((xs < MARGIN) && (xe > w)) {
-	        g.setColor(highlight);
+        if (text != null) {
+            g.clipRect(BORDER, MARGIN, w, d.height - (2 * MARGIN));
+            FontMetrics fm = g.getFontMetrics();
+
+            w = d.width - BORDER;
+            h = d.height - (2 * MARGIN);
+            int xs = pos2x(selStart) - moved;
+            int xe = pos2x(selEnd) - moved;
+
+            if ((xs < MARGIN) && (xe > w)) {
+                g.setColor(highlight);
                 g.fillRect(BORDER, MARGIN, w - BORDER, h);
-	    } else {
-	        g.setColor(bg);
+            } else {
+                g.setColor(bg);
                 //g.fillRect(BORDER, MARGIN, w - BORDER, h);
-	   
-	        if ((xs >= MARGIN) && (xs <= w)) {
-		    g.setColor(highlight); // selected text
-		
-		    if (xe > w) {
-		        g.fillRect(xs, MARGIN, w - xs, h);
-		    } else if (xs == xe) {
-		      //g.fillRect(xs, MARGIN, 1, h);
-		    } else {
-		        g.fillRect(xs, MARGIN, xe - xs, h);
-		    }
-	        } else if ((xe >= MARGIN) && (xe <= w)) {
-	            g.setColor(highlight);
-	            g.fillRect(BORDER, MARGIN, xe - BORDER, h);
-	        }
-	    }
-	   g.setColor(fg);  
-	   int x = MARGIN - moved;
-	   char echoChar = txt.getEchoChar();
-	   if (echoChar == 0) {
-	       g.drawString(text, x, BORDER + MARGIN + fm.getMaxAscent());
-	   } else {
-	       char data[] = new char[text.length()];
-	       for (int i = 0 ; i < data.length ; i++) {
-		   data[i] = echoChar;
-	       }
-	       g.drawChars(data, 0, data.length, x,
-			   BORDER + MARGIN + fm.getMaxAscent());
 
-	   }
-	}
+                if ((xs >= MARGIN) && (xs <= w)) {
+                    g.setColor(highlight); // selected text
 
-	target.print(g);
+                    if (xe > w) {
+                        g.fillRect(xs, MARGIN, w - xs, h);
+                    } else if (xs == xe) {
+                      //g.fillRect(xs, MARGIN, 1, h);
+                    } else {
+                        g.fillRect(xs, MARGIN, xe - xs, h);
+                    }
+                } else if ((xe >= MARGIN) && (xe <= w)) {
+                    g.setColor(highlight);
+                    g.fillRect(BORDER, MARGIN, xe - BORDER, h);
+                }
+            }
+           g.setColor(fg);
+           int x = MARGIN - moved;
+           char echoChar = txt.getEchoChar();
+           if (echoChar == 0) {
+               g.drawString(text, x, BORDER + MARGIN + fm.getMaxAscent());
+           } else {
+               char data[] = new char[text.length()];
+               for (int i = 0 ; i < data.length ; i++) {
+                   data[i] = echoChar;
+               }
+               g.drawChars(data, 0, data.length, x,
+                           BORDER + MARGIN + fm.getMaxAscent());
+
+           }
+        }
+
+        target.print(g);
     }
 
     int pos2x(int pos) {
         TextField txt = (TextField)target;
-	FontMetrics fm = getFontMetrics(txt.getFont());
-	int x = MARGIN, widths[] = fm.getWidths();
-	String text = txt.getText();
-	char echoChar = txt.getEchoChar();
-	if (echoChar == 0) {
-	    for (int i = 0 ; i < pos ; i++) {
-		x += widths[text.charAt(i)];
-	    }
-	} else {
-	    x += widths[echoChar] * pos;
-	}
-	return x;
+        FontMetrics fm = getFontMetrics(txt.getFont());
+        int x = MARGIN, widths[] = fm.getWidths();
+        String text = txt.getText();
+        char echoChar = txt.getEchoChar();
+        if (echoChar == 0) {
+            for (int i = 0 ; i < pos ; i++) {
+                x += widths[text.charAt(i)];
+            }
+        } else {
+            x += widths[echoChar] * pos;
+        }
+        return x;
     }
 
     /**
      * DEPRECATED
      */
     public void setEchoCharacter(char c) {
-    	setEchoChar(c);
+        setEchoChar(c);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-      	return getMinimumSize();
+        return getMinimumSize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize(int cols) {
-      	return getMinimumSize(cols);
+        return getMinimumSize(cols);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension preferredSize(int cols) {
-	return getPreferredSize(cols);
+        return getPreferredSize(cols);
     }
     void pShow(){
       super.pShow();
@@ -349,9 +349,8 @@ public class MTextFieldPeer extends MComponentPeer implements TextFieldPeer {
      * (Note: could be simply a change in the caret location)
      *
     public void selectionValuesChanged(int start, int end) {
-        return;  // Need to write implemetation of this.  
+        return;  // Need to write implemetation of this.
     }
 */
 
 }
-

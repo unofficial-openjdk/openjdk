@@ -54,7 +54,7 @@ import java.util.ResourceBundle;
   * There are four different orientations used in modern languages
   * as in the following table.<br>
   * <pre>
-  * LT          RT          TL          TR   
+  * LT          RT          TL          TR
   * A B C       C B A       A D G       G D A
   * D E F       F E D       B E H       H E B
   * G H I       I H G       C F I       I F C
@@ -151,8 +151,8 @@ public final class ComponentOrientation implements java.io.Serializable
         // are introduced however, the flexiblity isn't really needed.
         // So we choose efficiency instead.
         String lang = locale.getLanguage();
-        if( "iw".equals(lang) || "ar".equals(lang) 
-            || "fa".equals(lang) || "ur".equals(lang) ) 
+        if( "iw".equals(lang) || "ar".equals(lang)
+            || "fa".equals(lang) || "ur".equals(lang) )
         {
             return RIGHT_TO_LEFT;
         } else {

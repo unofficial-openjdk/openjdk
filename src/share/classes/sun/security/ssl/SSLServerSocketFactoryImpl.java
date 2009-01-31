@@ -33,8 +33,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 /**
  * This class creates SSL server sockets.
- * 
- * @version %I%, %G%
+ *
  * @author David Brownell
  */
 final
@@ -50,7 +49,7 @@ public class SSLServerSocketFactoryImpl extends SSLServerSocketFactory
      * java.security file is set.
      */
     public SSLServerSocketFactoryImpl() throws Exception {
-	this.context = DefaultSSLContextImpl.getDefaultImpl();
+        this.context = DefaultSSLContextImpl.getDefaultImpl();
     }
 
     /**
@@ -58,7 +57,7 @@ public class SSLServerSocketFactoryImpl extends SSLServerSocketFactory
      */
     SSLServerSocketFactoryImpl (SSLContextImpl context)
     {
-	this.context = context;
+        this.context = context;
     }
 
     /**
@@ -69,27 +68,27 @@ public class SSLServerSocketFactoryImpl extends SSLServerSocketFactory
      * @see java.net.Socket#bind(java.net.SocketAddress)
      */
     public ServerSocket createServerSocket() throws IOException {
-	return new SSLServerSocketImpl(context);
+        return new SSLServerSocketImpl(context);
     }
 
     public ServerSocket createServerSocket (int port)
     throws IOException
     {
-	return new SSLServerSocketImpl (port, DEFAULT_BACKLOG, context);
+        return new SSLServerSocketImpl (port, DEFAULT_BACKLOG, context);
     }
 
 
     public ServerSocket createServerSocket (int port, int backlog)
     throws IOException
     {
-	return new SSLServerSocketImpl (port, backlog, context);
+        return new SSLServerSocketImpl (port, backlog, context);
     }
 
     public ServerSocket
     createServerSocket (int port, int backlog, InetAddress ifAddress)
     throws IOException
     {
-	return new SSLServerSocketImpl (port, backlog, ifAddress, context);
+        return new SSLServerSocketImpl (port, backlog, ifAddress, context);
     }
 
     /**
@@ -98,10 +97,10 @@ public class SSLServerSocketFactoryImpl extends SSLServerSocketFactory
      * quality of service whereby the server authenticates itself
      * (preventing person-in-the-middle attacks) and where traffic
      * is encrypted to provide confidentiality.
-     */  
+     */
     public String[] getDefaultCipherSuites() {
-	CipherSuiteList.clearAvailableCache();
-	return CipherSuiteList.getDefault().toStringArray();
+        CipherSuiteList.clearAvailableCache();
+        return CipherSuiteList.getDefault().toStringArray();
     }
 
     /**
@@ -111,13 +110,12 @@ public class SSLServerSocketFactoryImpl extends SSLServerSocketFactory
      * do not support the mutual authentication of servers and clients, or
      * which do not protect data confidentiality.  Servers may also need
      * certain kinds of certificates to use certain cipher suites.
-     *   
+     *
      * @return an array of cipher suite names
-     */  
+     */
     public String[] getSupportedCipherSuites() {
-	CipherSuiteList.clearAvailableCache();
-	return CipherSuiteList.getSupported().toStringArray();
+        CipherSuiteList.clearAvailableCache();
+        return CipherSuiteList.getSupported().toStringArray();
     }
-    
-}
 
+}

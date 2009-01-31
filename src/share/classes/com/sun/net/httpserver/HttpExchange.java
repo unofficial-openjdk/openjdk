@@ -34,16 +34,16 @@ import java.util.*;
 import sun.net.www.MessageHeader;
 
 /**
- * This class encapsulates a HTTP request received and a 
- * response to be generated in one exchange. It provides methods 
- * for examining the request from the client, and for building and 
- * sending the response. 
+ * This class encapsulates a HTTP request received and a
+ * response to be generated in one exchange. It provides methods
+ * for examining the request from the client, and for building and
+ * sending the response.
  * <p>
  * The typical life-cycle of a HttpExchange is shown in the sequence
- * below. 
+ * below.
  * <ol><li>{@link #getRequestMethod()} to determine the command
  * <li>{@link #getRequestHeaders()} to examine the request headers (if needed)
- * <li>{@link #getRequestBody()} returns a {@link java.io.InputStream} for reading the request body. 
+ * <li>{@link #getRequestBody()} returns a {@link java.io.InputStream} for reading the request body.
  *     After reading the request body, the stream is close.
  * <li>{@link #getResponseHeaders()} to set any response headers, except content-length
  * <li>{@link #sendResponseHeaders(int,long)} to send the response headers. Must be called before
@@ -53,8 +53,8 @@ import sun.net.www.MessageHeader;
  * </ol>
  * <b>Terminating exchanges</b>
  * <br>
- * Exchanges are terminated when both the request InputStream and response OutputStream are closed. 
- * Closing the OutputStream, implicitly closes the InputStream (if it is not already closed). 
+ * Exchanges are terminated when both the request InputStream and response OutputStream are closed.
+ * Closing the OutputStream, implicitly closes the InputStream (if it is not already closed).
  * However, it is recommended
  * to consume all the data from the InputStream before closing it.
  * The convenience method {@link #close()} does all of these tasks.
@@ -71,12 +71,12 @@ public abstract class HttpExchange {
     }
 
     /**
-     * Returns an immutable Map containing the HTTP headers that were 
-     * included with this request. The keys in this Map will be the header 
-     * names, while the values will be a List of Strings containing each value 
-     * that was included (either for a header that was listed several times, 
-     * or one that accepts a comma-delimited list of values on a single line). 
-     * In either of these cases, the values for the header name will be 
+     * Returns an immutable Map containing the HTTP headers that were
+     * included with this request. The keys in this Map will be the header
+     * names, while the values will be a List of Strings containing each value
+     * that was included (either for a header that was listed several times,
+     * or one that accepts a comma-delimited list of values on a single line).
+     * In either of these cases, the values for the header name will be
      * presented in the order that they were included in the request.
      * <p>
      * The keys in Map are case-insensitive.
@@ -86,9 +86,9 @@ public abstract class HttpExchange {
 
     /**
      * Returns a mutable Map into which the HTTP response headers can be stored
-     * and which will be transmitted as part of this response. The keys in the 
+     * and which will be transmitted as part of this response. The keys in the
      * Map will be the header names, while the values must be a List of Strings
-     * containing each value that should be included multiple times 
+     * containing each value that should be included multiple times
      * (in the order that they should be included).
      * <p>
      * The keys in Map are case-insensitive.
@@ -99,7 +99,7 @@ public abstract class HttpExchange {
     /**
      * Get the request URI
      *
-     * @return the request URI 
+     * @return the request URI
      */
     public abstract URI getRequestURI () ;
 
@@ -128,7 +128,7 @@ public abstract class HttpExchange {
      * Multiple calls to this method will return the same stream.
      * It is recommended that applications should consume (read) all of the
      * data from this stream before closing it. If a stream is closed
-     * before all data has been read, then the close() call will 
+     * before all data has been read, then the close() call will
      * read and discard remaining data (up to an implementation specific
      * number of bytes).
      * @return the stream from which the request body can be read.
@@ -140,7 +140,7 @@ public abstract class HttpExchange {
      * written. {@link #sendResponseHeaders(int,long)}) must be called prior to calling
      * this method. Multiple calls to this method (for the same exchange)
      * will return the same stream. In order to correctly terminate
-     * each exchange, the output stream must be closed, even if no 
+     * each exchange, the output stream must be closed, even if no
      * response body is being sent.
      * <p>
      * Closing this stream implicitly
@@ -162,7 +162,7 @@ public abstract class HttpExchange {
      * Starts sending the response back to the client using the current set of response headers
      * and the numeric response code as specified in this method. The response body length is also specified
      * as follows. If the response length parameter is greater than zero, this specifies an exact
-     * number of bytes to send and the application must send that exact amount of data. 
+     * number of bytes to send and the application must send that exact amount of data.
      * If the response length parameter is <code>zero</code>, then chunked transfer encoding is
      * used and an arbitrary amount of data may be sent. The application terminates the
      * response body by closing the OutputStream. If response length has the value <code>-1</code>
@@ -174,11 +174,11 @@ public abstract class HttpExchange {
      * This method must be called prior to calling {@link #getResponseBody()}.
      * @param rCode the response code to send
      * @param responseLength if > 0, specifies a fixed response body length
-     * 	      and that exact number of bytes must be written
-     *        to the stream acquired from getResponseBody(), or else 
-     *        if equal to 0, then chunked encoding is used, 
+     *        and that exact number of bytes must be written
+     *        to the stream acquired from getResponseBody(), or else
+     *        if equal to 0, then chunked encoding is used,
      *        and an arbitrary number of bytes may be written.
-     *	      if <= -1, then no response body length is specified and
+     *        if <= -1, then no response body length is specified and
      *        no response body may be written.
      * @see HttpExchange#getResponseBody()
      */
@@ -203,7 +203,7 @@ public abstract class HttpExchange {
     public abstract InetSocketAddress getLocalAddress ();
 
     /**
-     * Returns the protocol string from the request in the form 
+     * Returns the protocol string from the request in the form
      * <i>protocol/majorVersion.minorVersion</i>. For example,
      * "HTTP/1.1"
      * @return the protocol string from the request
@@ -242,15 +242,15 @@ public abstract class HttpExchange {
      * and OutputStream, with the given filtered streams so
      * that subsequent calls to {@link #getRequestBody()} will
      * return the given {@link java.io.InputStream}, and calls to
-     * {@link #getResponseBody()} will return the given 
+     * {@link #getResponseBody()} will return the given
      * {@link java.io.OutputStream}. The streams provided to this
-     * call must wrap the original streams, and may be (but are not 
+     * call must wrap the original streams, and may be (but are not
      * required to be) sub-classes of {@link java.io.FilterInputStream}
      * and {@link java.io.FilterOutputStream}.
-     * @param i the filtered input stream to set as this object's inputstream, 
-     * 		or <code>null</code> if no change.
-     * @param o the filtered output stream to set as this object's outputstream, 
-     * 		or <code>null</code> if no change.
+     * @param i the filtered input stream to set as this object's inputstream,
+     *          or <code>null</code> if no change.
+     * @param o the filtered output stream to set as this object's outputstream,
+     *          or <code>null</code> if no change.
      */
     public abstract void setStreams (InputStream i, OutputStream o);
 

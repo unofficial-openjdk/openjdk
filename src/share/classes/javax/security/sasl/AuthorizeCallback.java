@@ -29,7 +29,7 @@ import javax.security.auth.callback.Callback;
 
 /**
   * This callback is used by <tt>SaslServer</tt> to determine whether
-  * one entity (identified by an authenticated authentication id) 
+  * one entity (identified by an authenticated authentication id)
   * can act on
   * behalf of another entity (identified by an authorization id).
   *
@@ -60,7 +60,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
 
     /**
      * A flag indicating whether the authentication id is allowed to
-     * act on behalf of the authorization id. 
+     * act on behalf of the authorization id.
      * @serial
      */
     private boolean authorized;
@@ -68,12 +68,12 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
     /**
      * Constructs an instance of <tt>AuthorizeCallback</tt>.
      *
-     * @param authnID	The (authenticated) authentication id.
+     * @param authnID   The (authenticated) authentication id.
      * @param authzID   The authorization id.
      */
     public AuthorizeCallback(String authnID, String authzID) {
-	authenticationID = authnID;
-	authorizationID = authzID;
+        authenticationID = authnID;
+        authorizationID = authzID;
     }
 
     /**
@@ -81,7 +81,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @return The authentication id to check.
      */
     public String getAuthenticationID() {
-	return authenticationID;
+        return authenticationID;
     }
 
     /**
@@ -89,7 +89,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @return The authentication id to check.
      */
     public String getAuthorizationID() {
-	return authorizationID;
+        return authorizationID;
     }
 
     /**
@@ -101,7 +101,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @see #getAuthorizedID()
      */
     public boolean isAuthorized() {
-	return authorized;
+        return authorized;
     }
 
     /**
@@ -111,7 +111,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @see #setAuthorizedID(java.lang.String)
      */
     public void setAuthorized(boolean ok) {
-	authorized = ok;
+        authorized = ok;
     }
 
     /**
@@ -122,10 +122,10 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @see #setAuthorizedID(java.lang.String)
      */
     public String getAuthorizedID() {
-	if (!authorized) {
-	    return null;
-	}
-	return (authorizedID == null) ? authorizationID : authorizedID;
+        if (!authorized) {
+            return null;
+        }
+        return (authorizedID == null) ? authorizationID : authorizedID;
     }
 
     /**
@@ -138,7 +138,7 @@ public class AuthorizeCallback implements Callback, java.io.Serializable {
      * @see #getAuthorizedID
      */
     public void setAuthorizedID(String id) {
-	authorizedID = id;
+        authorizedID = id;
     }
 
     private static final long serialVersionUID = -2353344186490470805L;

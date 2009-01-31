@@ -46,7 +46,7 @@ public abstract class AtomicContext extends ComponentContext {
     private static int debug = 0;
 
     protected AtomicContext () {
-	_contextType = _ATOMIC;
+        _contextType = _ATOMIC;
     }
 
 // ------ Abstract methods whose implementation are provided by subclasses
@@ -54,28 +54,28 @@ public abstract class AtomicContext extends ComponentContext {
 
     /* Equivalent to Context methods */
     protected abstract Object a_lookup(String name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract Object a_lookupLink(String name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
 
     protected abstract NamingEnumeration a_list(
-	Continuation cont) throws NamingException;
+        Continuation cont) throws NamingException;
     protected abstract NamingEnumeration a_listBindings(
-	Continuation cont) throws NamingException;
+        Continuation cont) throws NamingException;
     protected abstract void a_bind(String name, Object obj, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract void a_rebind(String name, Object obj, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract void a_unbind(String name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract void a_destroySubcontext(String name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract Context a_createSubcontext(String name,
-	Continuation cont) throws NamingException;
-    protected abstract void a_rename(String oldname, Name newname, 
-	Continuation cont) throws NamingException;
+        Continuation cont) throws NamingException;
+    protected abstract void a_rename(String oldname, Name newname,
+        Continuation cont) throws NamingException;
     protected abstract NameParser a_getNameParser(Continuation cont)
-	throws NamingException;
+        throws NamingException;
 
     /* Parsing */
     /**
@@ -86,8 +86,8 @@ public abstract class AtomicContext extends ComponentContext {
      * Subclasses should provide an implementation for this method
      * which parses inputName using its own name syntax.
      */
-    protected abstract StringHeadTail c_parseComponent(String inputName, 
-	Continuation cont) throws NamingException;
+    protected abstract StringHeadTail c_parseComponent(String inputName,
+        Continuation cont) throws NamingException;
 
 
 // ------ Methods that need to be overridden by subclass
@@ -97,13 +97,13 @@ public abstract class AtomicContext extends ComponentContext {
       * Resolves the nns for 'name' when the named context is acting
       * as an intermediate context.
       *
-      * For a system that supports junctions, this would be equilvalent to 
-      *		a_lookup(name, cont);
+      * For a system that supports junctions, this would be equilvalent to
+      *         a_lookup(name, cont);
       * because for junctions, an intermediate slash simply signifies
       * a syntactic separator.
       *
       * For a system that supports implicit nns, this would be equivalent to
-      * 	a_lookup_nns(name, cont);
+      *         a_lookup_nns(name, cont);
       * because for implicit nns, a slash always signifies the implicit nns,
       * regardless of whether it is intermediate or trailing.
       *
@@ -114,55 +114,55 @@ public abstract class AtomicContext extends ComponentContext {
       * appropriate override.
       */
     protected Object a_resolveIntermediate_nns(String name, Continuation cont)
-	throws NamingException {
-	    try {
-		final Object obj = a_lookup(name, cont);
+        throws NamingException {
+            try {
+                final Object obj = a_lookup(name, cont);
 
-		// Do not append "" to Continuation 'cont' even if set
-		// because the intention is to ignore the nns
+                // Do not append "" to Continuation 'cont' even if set
+                // because the intention is to ignore the nns
 
-		//
-		if (obj != null && getClass().isInstance(obj)) {
-		    // If "obj" is in the same type as this object, it must
-		    // not be a junction. Continue the lookup with "/".
+                //
+                if (obj != null && getClass().isInstance(obj)) {
+                    // If "obj" is in the same type as this object, it must
+                    // not be a junction. Continue the lookup with "/".
 
-		    cont.setContinueNNS(obj, name, this);
-		    return null;
+                    cont.setContinueNNS(obj, name, this);
+                    return null;
 
-		} else if (obj != null && !(obj instanceof Context)) {
-		    // obj is not even a context, so try to find its nns
-		    // dynamically by constructing a Reference containing obj.
-		    RefAddr addr = new RefAddr("nns") {
-			public Object getContent() {
-			    return obj;
-			}
-			private static final long serialVersionUID =
-			    -3399518522645918499L;
-		    };
-		    Reference ref = new Reference("java.lang.Object", addr);
+                } else if (obj != null && !(obj instanceof Context)) {
+                    // obj is not even a context, so try to find its nns
+                    // dynamically by constructing a Reference containing obj.
+                    RefAddr addr = new RefAddr("nns") {
+                        public Object getContent() {
+                            return obj;
+                        }
+                        private static final long serialVersionUID =
+                            -3399518522645918499L;
+                    };
+                    Reference ref = new Reference("java.lang.Object", addr);
 
-		    // Resolved name has trailing slash to indicate nns
-		    CompositeName resName = new CompositeName();
-		    resName.add(name);
-		    resName.add(""); // add trailing slash
+                    // Resolved name has trailing slash to indicate nns
+                    CompositeName resName = new CompositeName();
+                    resName.add(name);
+                    resName.add(""); // add trailing slash
 
-		    // Set continuation leave it to 
-		    // PartialCompositeContext.getPCContext() to throw CPE.
-		    // Do not use setContinueNNS() because we've already
-		    // consumed "/" (i.e., moved it to resName).
+                    // Set continuation leave it to
+                    // PartialCompositeContext.getPCContext() to throw CPE.
+                    // Do not use setContinueNNS() because we've already
+                    // consumed "/" (i.e., moved it to resName).
 
-		    cont.setContinue(ref, resName, this);
-		    return null;
+                    cont.setContinue(ref, resName, this);
+                    return null;
 
-		} else {
-		    return obj;
-		}
+                } else {
+                    return obj;
+                }
 
-	    } catch (NamingException e) {
-		e.appendRemainingComponent(""); // add nns back
-		throw e;
-	    }
-	}
+            } catch (NamingException e) {
+                e.appendRemainingComponent(""); // add nns back
+                throw e;
+            }
+        }
 
     /* Equivalent of Context Methods for supporting nns */
 
@@ -176,75 +176,75 @@ public abstract class AtomicContext extends ComponentContext {
     // the trailing slash is meaningless because a junction does not
     // have an implicit nns.  The default implementation here
     // throws a NameNotFoundException for such names.
-    // If a context wants to accept a trailing slash as having 
+    // If a context wants to accept a trailing slash as having
     // the same meaning as the same name without a trailing slash,
     // then it should override these a_*_nns methods.
 
-    
-    protected Object a_lookup_nns(String name, Continuation cont) 
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	    return null;
-	}
 
-    protected Object a_lookupLink_nns(String name, Continuation cont) 
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	    return null;
-	}
+    protected Object a_lookup_nns(String name, Continuation cont)
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+            return null;
+        }
 
-    protected NamingEnumeration a_list_nns(Continuation cont) 
-	throws NamingException {
-	    a_processJunction_nns(cont);
-	    return null;
-	}
+    protected Object a_lookupLink_nns(String name, Continuation cont)
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+            return null;
+        }
+
+    protected NamingEnumeration a_list_nns(Continuation cont)
+        throws NamingException {
+            a_processJunction_nns(cont);
+            return null;
+        }
     protected NamingEnumeration a_listBindings_nns(Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(cont);
-	    return null;
-	}
+        throws NamingException {
+            a_processJunction_nns(cont);
+            return null;
+        }
 
     protected void a_bind_nns(String name, Object obj, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	}
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+        }
 
     protected void a_rebind_nns(String name, Object obj, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	}
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+        }
 
     protected void a_unbind_nns(String name, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	}
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+        }
 
     protected Context a_createSubcontext_nns(String name, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	    return null;
-	}
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+            return null;
+        }
 
     protected void a_destroySubcontext_nns(String name, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(name, cont);
-	}
+        throws NamingException {
+            a_processJunction_nns(name, cont);
+        }
 
     protected void a_rename_nns(String oldname, Name newname, Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(oldname, cont);
-	}
+        throws NamingException {
+            a_processJunction_nns(oldname, cont);
+        }
 
     protected NameParser a_getNameParser_nns(Continuation cont)
-	throws NamingException {
-	    a_processJunction_nns(cont);
-	    return null;
-	}
+        throws NamingException {
+            a_processJunction_nns(cont);
+            return null;
+        }
 
 
-    
+
     protected boolean isEmpty(String name) {
-	return name == null || name.equals("");
+        return name == null || name.equals("");
     }
 
 // ------ implementations of c_  and c_*_nns methods using
@@ -253,282 +253,282 @@ public abstract class AtomicContext extends ComponentContext {
     /* Equivalent to methods in  Context interface */
 
     protected Object c_lookup(Name name, Continuation cont)
-	throws NamingException {
-	    Object ret = null;
-	    if (resolve_to_penultimate_context(name, cont)) {
-		ret = a_lookup(name.toString(), cont);
-		if (ret != null && ret instanceof LinkRef) {
-		    cont.setContinue(ret, name, this);
-		    ret = null;
-		}
-	    }
-	    return ret;
-	}
+        throws NamingException {
+            Object ret = null;
+            if (resolve_to_penultimate_context(name, cont)) {
+                ret = a_lookup(name.toString(), cont);
+                if (ret != null && ret instanceof LinkRef) {
+                    cont.setContinue(ret, name, this);
+                    ret = null;
+                }
+            }
+            return ret;
+        }
 
     protected Object c_lookupLink(Name name, Continuation cont)
-	throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont)) {
-		return a_lookupLink(name.toString(), cont);
-	    }
-	    return null;
-	}
+        throws NamingException {
+            if (resolve_to_penultimate_context(name, cont)) {
+                return a_lookupLink(name.toString(), cont);
+            }
+            return null;
+        }
 
     protected NamingEnumeration c_list(Name name,
-	Continuation cont) throws NamingException {
-	    if (resolve_to_context(name, cont)) {
-		return a_list(cont);
-	    }
-	    return null;
-	}
+        Continuation cont) throws NamingException {
+            if (resolve_to_context(name, cont)) {
+                return a_list(cont);
+            }
+            return null;
+        }
 
     protected NamingEnumeration c_listBindings(Name name,
-	Continuation cont) throws NamingException {
-	    if (resolve_to_context(name, cont)) {
-		return a_listBindings(cont);
-	    }
-	    return null;
-	}
+        Continuation cont) throws NamingException {
+            if (resolve_to_context(name, cont)) {
+                return a_listBindings(cont);
+            }
+            return null;
+        }
 
     protected void c_bind(Name name, Object obj, Continuation cont)
-	throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont))
-		a_bind(name.toString(), obj, cont);
-	}
+        throws NamingException {
+            if (resolve_to_penultimate_context(name, cont))
+                a_bind(name.toString(), obj, cont);
+        }
 
     protected void c_rebind(Name name, Object obj, Continuation cont)
-	throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont))
-		a_rebind(name.toString(), obj, cont);
-	}
+        throws NamingException {
+            if (resolve_to_penultimate_context(name, cont))
+                a_rebind(name.toString(), obj, cont);
+        }
 
     protected void c_unbind(Name name, Continuation cont)
-	throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont))
-		a_unbind(name.toString(), cont);
-	}
- 
+        throws NamingException {
+            if (resolve_to_penultimate_context(name, cont))
+                a_unbind(name.toString(), cont);
+        }
+
     protected void c_destroySubcontext(Name name, Continuation cont)
-	throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont))
-		a_destroySubcontext(name.toString(), cont);
-	}
+        throws NamingException {
+            if (resolve_to_penultimate_context(name, cont))
+                a_destroySubcontext(name.toString(), cont);
+        }
 
     protected Context c_createSubcontext(Name name,
-	Continuation cont) throws NamingException {
-	    if (resolve_to_penultimate_context(name, cont))
-		return a_createSubcontext(name.toString(), cont);
-	    else 
-		return null;
-	}
+        Continuation cont) throws NamingException {
+            if (resolve_to_penultimate_context(name, cont))
+                return a_createSubcontext(name.toString(), cont);
+            else
+                return null;
+        }
 
-    protected void c_rename(Name oldname, Name newname, 
-	Continuation cont) throws NamingException {
-	    if (resolve_to_penultimate_context(oldname, cont))
-		 a_rename(oldname.toString(), newname, cont);
-	}
+    protected void c_rename(Name oldname, Name newname,
+        Continuation cont) throws NamingException {
+            if (resolve_to_penultimate_context(oldname, cont))
+                 a_rename(oldname.toString(), newname, cont);
+        }
 
     protected NameParser c_getNameParser(Name name,
-	Continuation cont) throws NamingException {
-	    if (resolve_to_context(name, cont))
-		return a_getNameParser(cont);
-	    return null;
-	}
+        Continuation cont) throws NamingException {
+            if (resolve_to_context(name, cont))
+                return a_getNameParser(cont);
+            return null;
+        }
 
-    /* The following are overridden only for AtomicContexts. 
+    /* The following are overridden only for AtomicContexts.
      * AtomicContext is used by PartialCompositeDirContext and ComponentDirContext
-     * in the inheritance tree to make use of methods in 
+     * in the inheritance tree to make use of methods in
      * PartialCompositeContext and ComponentContext. We only want to use the
      * atomic forms when we're actually an atomic context.
      */
 
     /* From ComponentContext */
 
-    protected Object c_resolveIntermediate_nns(Name name, Continuation cont) 
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		Object ret = null;
-		if (resolve_to_penultimate_context_nns(name, cont)) {
-		    ret = a_resolveIntermediate_nns(name.toString(), cont);
-		    if (ret != null && ret instanceof LinkRef) {
-			cont.setContinue(ret, name, this);
-			ret = null;
-		    } 
-		}
-		return ret;
-	    } else {
-		// use ComponentContext
-		return super.c_resolveIntermediate_nns(name, cont);
-	    }
-	}
+    protected Object c_resolveIntermediate_nns(Name name, Continuation cont)
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                Object ret = null;
+                if (resolve_to_penultimate_context_nns(name, cont)) {
+                    ret = a_resolveIntermediate_nns(name.toString(), cont);
+                    if (ret != null && ret instanceof LinkRef) {
+                        cont.setContinue(ret, name, this);
+                        ret = null;
+                    }
+                }
+                return ret;
+            } else {
+                // use ComponentContext
+                return super.c_resolveIntermediate_nns(name, cont);
+            }
+        }
 
     /* Equivalent to methods in Context interface for nns */
 
-    protected Object c_lookup_nns(Name name, Continuation cont) 
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		Object ret = null;
-		if (resolve_to_penultimate_context_nns(name, cont)) {
-		    ret = a_lookup_nns(name.toString(), cont);
-		    if (ret != null && ret instanceof LinkRef) {
-			cont.setContinue(ret, name, this);
-			ret = null;
-		    } 
-		}
-		return ret;
-	    } else {
-		return super.c_lookup_nns(name, cont);
-	    }
-	}
+    protected Object c_lookup_nns(Name name, Continuation cont)
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                Object ret = null;
+                if (resolve_to_penultimate_context_nns(name, cont)) {
+                    ret = a_lookup_nns(name.toString(), cont);
+                    if (ret != null && ret instanceof LinkRef) {
+                        cont.setContinue(ret, name, this);
+                        ret = null;
+                    }
+                }
+                return ret;
+            } else {
+                return super.c_lookup_nns(name, cont);
+            }
+        }
 
-    protected Object c_lookupLink_nns(Name name, Continuation cont) 
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		// %%% check logic
-		resolve_to_nns_and_continue(name, cont);
-		return null;
-	    } else {
-		// use ComponentContext
-		return super.c_lookupLink_nns(name, cont);
-	    }
-	}
+    protected Object c_lookupLink_nns(Name name, Continuation cont)
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                // %%% check logic
+                resolve_to_nns_and_continue(name, cont);
+                return null;
+            } else {
+                // use ComponentContext
+                return super.c_lookupLink_nns(name, cont);
+            }
+        }
 
     protected NamingEnumeration c_list_nns(Name name,
-	Continuation cont) throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		resolve_to_nns_and_continue(name, cont);
-		return null;
-	    } else {
-		// use ComponentContext
-		return super.c_list_nns(name, cont);
-	    } 
-	}
+        Continuation cont) throws NamingException {
+            if (_contextType == _ATOMIC) {
+                resolve_to_nns_and_continue(name, cont);
+                return null;
+            } else {
+                // use ComponentContext
+                return super.c_list_nns(name, cont);
+            }
+        }
 
     protected NamingEnumeration c_listBindings_nns(Name name,
-	Continuation cont) throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		resolve_to_nns_and_continue(name, cont);
-		return null;
-	    } else {
-		// use ComponentContext
-		return super.c_list_nns(name, cont);
-	    }
-	}
+        Continuation cont) throws NamingException {
+            if (_contextType == _ATOMIC) {
+                resolve_to_nns_and_continue(name, cont);
+                return null;
+            } else {
+                // use ComponentContext
+                return super.c_list_nns(name, cont);
+            }
+        }
 
     protected void c_bind_nns(Name name, Object obj, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(name, cont))
-		    a_bind_nns(name.toString(), obj, cont);
-	    } else {
-		// use ComponentContext
-		super.c_bind_nns(name, obj, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(name, cont))
+                    a_bind_nns(name.toString(), obj, cont);
+            } else {
+                // use ComponentContext
+                super.c_bind_nns(name, obj, cont);
+            }
+        }
 
     protected void c_rebind_nns(Name name, Object obj, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(name, cont))
-		    a_rebind_nns(name.toString(), obj, cont);
-	    } else {
-		// use ComponentContext
-		super.c_rebind_nns(name, obj, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(name, cont))
+                    a_rebind_nns(name.toString(), obj, cont);
+            } else {
+                // use ComponentContext
+                super.c_rebind_nns(name, obj, cont);
+            }
+        }
 
     protected void c_unbind_nns(Name name, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(name, cont))
-		    a_unbind_nns(name.toString(), cont);
-	    } else {
-		// use ComponentContext
-		super.c_unbind_nns(name, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(name, cont))
+                    a_unbind_nns(name.toString(), cont);
+            } else {
+                // use ComponentContext
+                super.c_unbind_nns(name, cont);
+            }
+        }
 
     protected Context c_createSubcontext_nns(Name name,
-	Continuation cont) throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(name, cont))
-		    return a_createSubcontext_nns(name.toString(), cont);
-		else
-		    return null;
-	    } else {
-		// use ComponentContext
-		return super.c_createSubcontext_nns(name, cont);
-	    }
-	}
+        Continuation cont) throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(name, cont))
+                    return a_createSubcontext_nns(name.toString(), cont);
+                else
+                    return null;
+            } else {
+                // use ComponentContext
+                return super.c_createSubcontext_nns(name, cont);
+            }
+        }
 
     protected void c_destroySubcontext_nns(Name name, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(name, cont))
-		    a_destroySubcontext_nns(name.toString(), cont);
-	    } else {
-		// use ComponentContext
-		super.c_destroySubcontext_nns(name, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(name, cont))
+                    a_destroySubcontext_nns(name.toString(), cont);
+            } else {
+                // use ComponentContext
+                super.c_destroySubcontext_nns(name, cont);
+            }
+        }
 
     protected void c_rename_nns(Name oldname, Name newname, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		if (resolve_to_penultimate_context_nns(oldname, cont))
-		    a_rename_nns(oldname.toString(), newname, cont);
-	    } else {
-		// use ComponentContext
-		super.c_rename_nns(oldname, newname, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                if (resolve_to_penultimate_context_nns(oldname, cont))
+                    a_rename_nns(oldname.toString(), newname, cont);
+            } else {
+                // use ComponentContext
+                super.c_rename_nns(oldname, newname, cont);
+            }
+        }
 
     protected NameParser c_getNameParser_nns(Name name, Continuation cont)
-	throws NamingException {
-	    if (_contextType == _ATOMIC) {
-		resolve_to_nns_and_continue(name, cont);
-		return null;
-	    } else {
-		// use COmponentContext
-		return super.c_getNameParser_nns(name, cont);
-	    }
-	}
+        throws NamingException {
+            if (_contextType == _ATOMIC) {
+                resolve_to_nns_and_continue(name, cont);
+                return null;
+            } else {
+                // use COmponentContext
+                return super.c_getNameParser_nns(name, cont);
+            }
+        }
 
-// --------------    internal methods used by this class 
+// --------------    internal methods used by this class
 
     /* Handles nns for junctions */
     /**
       * This function is used when implementing a naming system that
       * supports junctions.  For example, when the a_bind_nns(name, newobj)
       * method is invoked, that means the caller is attempting to bind the
-      * object 'newobj' to the nns of 'name'.  For context that supports 
+      * object 'newobj' to the nns of 'name'.  For context that supports
       * junctions, 'name' names a junction and is pointing to the root
       * of another naming system, which in turn might have an nns.
       * This means that a_bind_nns() should first resolve 'name' and attempt to
       * continue the operation in the context named by 'name'.  (i.e. bind
-      * to the nns of the context named by 'name').  
+      * to the nns of the context named by 'name').
       * If name is already empty, then throw NameNotFoundException because
       * this context by default does not have any nns.
       */
-    protected void a_processJunction_nns(String name, Continuation cont) 
-	throws NamingException {
-	    if (name.equals("")) {
-		NameNotFoundException e = new NameNotFoundException();
-		cont.setErrorNNS(this, name);
-		throw cont.fillInException(e);
-	    }
-	    try {
-		// lookup name to continue operation in nns
-		Object target = a_lookup(name, cont);
-		if (cont.isContinue())
-		    cont.appendRemainingComponent("");  // add nns back
-		else {
-		    cont.setContinueNNS(target, name, this);
-		}
-	    } catch (NamingException e) {
-		e.appendRemainingComponent(""); // add nns back
-		throw e;
-	    }
-	}
+    protected void a_processJunction_nns(String name, Continuation cont)
+        throws NamingException {
+            if (name.equals("")) {
+                NameNotFoundException e = new NameNotFoundException();
+                cont.setErrorNNS(this, name);
+                throw cont.fillInException(e);
+            }
+            try {
+                // lookup name to continue operation in nns
+                Object target = a_lookup(name, cont);
+                if (cont.isContinue())
+                    cont.appendRemainingComponent("");  // add nns back
+                else {
+                    cont.setContinueNNS(target, name, this);
+                }
+            } catch (NamingException e) {
+                e.appendRemainingComponent(""); // add nns back
+                throw e;
+            }
+        }
 
     /**
       * This function is used when implementing a naming system that
@@ -540,20 +540,20 @@ public abstract class AtomicContext extends ComponentContext {
       */
     protected void a_processJunction_nns(Continuation cont) throws NamingException {
 
-	// Construct a new Reference that contains this context.
-	RefAddr addr = new RefAddr("nns") {
-	    public Object getContent() {
-		return AtomicContext.this;
-	    }
-	    private static final long serialVersionUID = 3449785852664978312L;
-	};
-	Reference ref = new Reference("java.lang.Object", addr);
+        // Construct a new Reference that contains this context.
+        RefAddr addr = new RefAddr("nns") {
+            public Object getContent() {
+                return AtomicContext.this;
+            }
+            private static final long serialVersionUID = 3449785852664978312L;
+        };
+        Reference ref = new Reference("java.lang.Object", addr);
 
-	// Set continuation leave it to PartialCompositeContext.getPCContext()
-	// to throw the exception. 
-	// Do not use setContinueNNS() because we've are
-	// setting relativeResolvedName to "/".
-	cont.setContinue(ref, _NNS_NAME, this);
+        // Set continuation leave it to PartialCompositeContext.getPCContext()
+        // to throw the exception.
+        // Do not use setContinueNNS() because we've are
+        // setting relativeResolvedName to "/".
+        cont.setContinue(ref, _NNS_NAME, this);
     }
 
     /* *********** core resolution routines ******************* */
@@ -565,41 +565,41 @@ public abstract class AtomicContext extends ComponentContext {
       */
     protected boolean resolve_to_context(Name name, Continuation cont)
     throws NamingException {
-	String target = name.toString();
+        String target = name.toString();
 
 
-	StringHeadTail ht = c_parseComponent(target, cont);
-	String tail = ht.getTail();
-	String head = ht.getHead();
+        StringHeadTail ht = c_parseComponent(target, cont);
+        String tail = ht.getTail();
+        String head = ht.getHead();
 
-	if (debug > 0)
-	    System.out.println("RESOLVE TO CONTEXT(" + target + ") = {" +
-			       head + ", " + tail + "}");
+        if (debug > 0)
+            System.out.println("RESOLVE TO CONTEXT(" + target + ") = {" +
+                               head + ", " + tail + "}");
 
-	if (head == null) {
-	    // something is wrong; no name at all
-	    InvalidNameException e = new InvalidNameException();
-	    throw cont.fillInException(e);
-	}
-	if (!isEmpty(head)) {
-	    // if there is head is a non-empty name
-	    // this means more resolution to be done
-	    try {
-		Object headCtx = a_lookup(head, cont);
-//		System.out.println("answer " + headCtx);
-		if (headCtx != null)
-		    cont.setContinue(headCtx, head, this, (tail == null ? "" : tail));
-		else if (cont.isContinue())
-		    cont.appendRemainingComponent(tail);
-	    } catch (NamingException e) {
-		e.appendRemainingComponent(tail);
-		throw e;
-	    }
-	} else {
-	    cont.setSuccess();  // clear
-	    return true;
-	}
-	return false;
+        if (head == null) {
+            // something is wrong; no name at all
+            InvalidNameException e = new InvalidNameException();
+            throw cont.fillInException(e);
+        }
+        if (!isEmpty(head)) {
+            // if there is head is a non-empty name
+            // this means more resolution to be done
+            try {
+                Object headCtx = a_lookup(head, cont);
+//              System.out.println("answer " + headCtx);
+                if (headCtx != null)
+                    cont.setContinue(headCtx, head, this, (tail == null ? "" : tail));
+                else if (cont.isContinue())
+                    cont.appendRemainingComponent(tail);
+            } catch (NamingException e) {
+                e.appendRemainingComponent(tail);
+                throw e;
+            }
+        } else {
+            cont.setSuccess();  // clear
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -611,38 +611,38 @@ public abstract class AtomicContext extends ComponentContext {
       */
     protected boolean resolve_to_penultimate_context(Name name, Continuation cont)
     throws NamingException {
-	String target = name.toString();
+        String target = name.toString();
 
-	if (debug > 0)
-	    System.out.println("RESOLVE TO PENULTIMATE" + target);
+        if (debug > 0)
+            System.out.println("RESOLVE TO PENULTIMATE" + target);
 
-	StringHeadTail ht = c_parseComponent(target, cont);
-	String tail = ht.getTail();
-	String head = ht.getHead();
-	if (head == null) {
-	    // something is wrong; no name at all
-	    InvalidNameException e = new InvalidNameException();
-	    throw cont.fillInException(e);
-	}
-	    
-	if (!isEmpty(tail)) {
-	    // more components; hence not at penultimate context yet
-	    try {
-		Object headCtx = a_lookup(head, cont);
-		if (headCtx != null)
-		    cont.setContinue(headCtx, head, this, tail);
-		else if (cont.isContinue())
-		    cont.appendRemainingComponent(tail);
-	    } catch (NamingException e) {
-		e.appendRemainingComponent(tail);
-		throw e;
-	    }
-	} else {
-	    // already at penultimate context
-	    cont.setSuccess();  // clear
-	    return true;
-	}
-	return false;
+        StringHeadTail ht = c_parseComponent(target, cont);
+        String tail = ht.getTail();
+        String head = ht.getHead();
+        if (head == null) {
+            // something is wrong; no name at all
+            InvalidNameException e = new InvalidNameException();
+            throw cont.fillInException(e);
+        }
+
+        if (!isEmpty(tail)) {
+            // more components; hence not at penultimate context yet
+            try {
+                Object headCtx = a_lookup(head, cont);
+                if (headCtx != null)
+                    cont.setContinue(headCtx, head, this, tail);
+                else if (cont.isContinue())
+                    cont.appendRemainingComponent(tail);
+            } catch (NamingException e) {
+                e.appendRemainingComponent(tail);
+                throw e;
+            }
+        } else {
+            // already at penultimate context
+            cont.setSuccess();  // clear
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -651,43 +651,43 @@ public abstract class AtomicContext extends ComponentContext {
       * This function fixes any exception or continuations so that
       * it will have the proper nns name.
       */
-    protected boolean resolve_to_penultimate_context_nns(Name name, 
-							 Continuation cont)
-	throws NamingException {
-	    try {
-	if (debug > 0)
-	    System.out.println("RESOLVE TO PENULTIMATE NNS" + name.toString());
-		boolean answer = resolve_to_penultimate_context(name, cont);
+    protected boolean resolve_to_penultimate_context_nns(Name name,
+                                                         Continuation cont)
+        throws NamingException {
+            try {
+        if (debug > 0)
+            System.out.println("RESOLVE TO PENULTIMATE NNS" + name.toString());
+                boolean answer = resolve_to_penultimate_context(name, cont);
 
-		// resolve_to_penultimate_context() only calls a_lookup().
-		// Any continuation it sets is lacking the nns, so 
-		// we need to add it back
-		if (cont.isContinue())
-		    cont.appendRemainingComponent("");
+                // resolve_to_penultimate_context() only calls a_lookup().
+                // Any continuation it sets is lacking the nns, so
+                // we need to add it back
+                if (cont.isContinue())
+                    cont.appendRemainingComponent("");
 
-		return answer;
-	    } catch (NamingException e) {
-		// resolve_to_penultimate_context() only calls a_lookup().
-		// Any exceptions it throws is lacking the nns, so
-		// we need to add it back.
-		e.appendRemainingComponent("");
-		throw e;
-	    }
-	}
+                return answer;
+            } catch (NamingException e) {
+                // resolve_to_penultimate_context() only calls a_lookup().
+                // Any exceptions it throws is lacking the nns, so
+                // we need to add it back.
+                e.appendRemainingComponent("");
+                throw e;
+            }
+        }
 
     /**
       * Resolves to nns associated with 'name' and set Continuation
       * to the result.
       */
-    protected void resolve_to_nns_and_continue(Name name, Continuation cont) 
-    	throws NamingException {
-	if (debug > 0)
-	    System.out.println("RESOLVE TO NNS AND CONTINUE" + name.toString());
+    protected void resolve_to_nns_and_continue(Name name, Continuation cont)
+        throws NamingException {
+        if (debug > 0)
+            System.out.println("RESOLVE TO NNS AND CONTINUE" + name.toString());
 
-	if (resolve_to_penultimate_context_nns(name, cont)) {
-	    Object nns = a_lookup_nns(name.toString(), cont);
-	    if (nns != null)
-		cont.setContinue(nns, name, this);
-	}
+        if (resolve_to_penultimate_context_nns(name, cont)) {
+            Object nns = a_lookup_nns(name.toString(), cont);
+            if (nns != null)
+                cont.setContinue(nns, name, this);
+        }
     }
 }

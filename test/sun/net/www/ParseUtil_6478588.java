@@ -33,9 +33,9 @@ import java.net.URL;
 public class ParseUtil_6478588 {
     public static void main(String[] args) throws Exception {
         try {
-	    URI uri = ParseUtil.toURI(new URL("http://localhost/%2"));
-	} catch ( StringIndexOutOfBoundsException e ) {
-	     throw new RuntimeException("Test failed: " + e);
-	}
+            URI uri = ParseUtil.toURI(new URL("http://localhost/%2"));
+        } catch ( StringIndexOutOfBoundsException e ) {
+             throw new RuntimeException("Test failed: " + e);
+        }
     }
 }

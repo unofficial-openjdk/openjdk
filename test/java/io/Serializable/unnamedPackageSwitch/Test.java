@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -37,30 +37,30 @@ class A implements Serializable {
 class TestObjectInputStream extends ObjectInputStream {
     TestObjectInputStream(InputStream in) throws IOException { super(in); }
     protected Class resolveClass(ObjectStreamClass desc)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	String name = desc.getName();
-	if (name.equals("A")) {
-	    return pkg.A.class;
-	} else if (name.equals("pkg.A")) {
-	    return A.class;
-	} else {
-	    return super.resolveClass(desc);
-	}
+        String name = desc.getName();
+        if (name.equals("A")) {
+            return pkg.A.class;
+        } else if (name.equals("pkg.A")) {
+            return A.class;
+        } else {
+            return super.resolveClass(desc);
+        }
     }
 }
 
 public class Test {
     public static void main(String[] args) throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new ObjectOutputStream(bout);
-	oout.writeObject(new A());
-	oout.writeObject(new pkg.A());
-	oout.close();
-	
-	ObjectInputStream oin = new TestObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()));
-	oin.readObject();
-	oin.readObject();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);
+        oout.writeObject(new A());
+        oout.writeObject(new pkg.A());
+        oout.close();
+
+        ObjectInputStream oin = new TestObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray()));
+        oin.readObject();
+        oin.readObject();
     }
 }

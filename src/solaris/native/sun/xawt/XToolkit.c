@@ -99,11 +99,11 @@ JNIEXPORT void JNICALL
 Java_sun_awt_X11_XToolkit_initIDs
   (JNIEnv *env, jclass clazz)
 {
-    jfieldID fid = (*env)->GetStaticFieldID(env, clazz, "numLockMask", "I"); 
-    awt_NumLockMask = (*env)->GetStaticIntField(env, clazz, fid); 
-    DTRACE_PRINTLN1("awt_NumLockMask = %u", awt_NumLockMask); 
-    fid = (*env)->GetStaticFieldID(env, clazz, "modLockIsShiftLock", "I"); 
-    awt_ModLockIsShiftLock = (*env)->GetStaticIntField(env, clazz, fid) != 0 ? True : False; 
+    jfieldID fid = (*env)->GetStaticFieldID(env, clazz, "numLockMask", "I");
+    awt_NumLockMask = (*env)->GetStaticIntField(env, clazz, fid);
+    DTRACE_PRINTLN1("awt_NumLockMask = %u", awt_NumLockMask);
+    fid = (*env)->GetStaticFieldID(env, clazz, "modLockIsShiftLock", "I");
+    awt_ModLockIsShiftLock = (*env)->GetStaticIntField(env, clazz, fid) != 0 ? True : False;
 }
 
 /*
@@ -112,11 +112,11 @@ Java_sun_awt_X11_XToolkit_initIDs
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_sun_awt_X11_XToolkit_getDefaultXColormap
-  (JNIEnv *env, jclass clazz) 
+  (JNIEnv *env, jclass clazz)
 {
     AwtGraphicsConfigDataPtr defaultConfig =
         getDefaultConfig(DefaultScreen(awt_display));
-    
+
     return (jlong) defaultConfig->awt_cmap;
 }
 
@@ -140,7 +140,7 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  * Signature: ([I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_X11_XToolkit_nativeLoadSystemColors
-  (JNIEnv *env, jobject this, jintArray systemColors) 
+  (JNIEnv *env, jobject this, jintArray systemColors)
 {
     AwtGraphicsConfigDataPtr defaultConfig =
         getDefaultConfig(DefaultScreen(awt_display));
@@ -166,7 +166,7 @@ Java_java_awt_Component_initIDs
     componentIDs.foreground =
       (*env)->GetFieldID(env, cls, "foreground", "Ljava/awt/Color;");
     componentIDs.graphicsConfig =
-        (*env)->GetFieldID(env, cls, "graphicsConfig", 
+        (*env)->GetFieldID(env, cls, "graphicsConfig",
                            "Ljava/awt/GraphicsConfiguration;");
     componentIDs.name =
       (*env)->GetFieldID(env, cls, "name", "Ljava/lang/String;");
@@ -174,26 +174,26 @@ Java_java_awt_Component_initIDs
     /* Use _NoClientCode() methods for trusted methods, so that we
      *  know that we are not invoking client code on trusted threads
      */
-    componentIDs.getParent = 
+    componentIDs.getParent =
       (*env)->GetMethodID(env, cls, "getParent_NoClientCode",
                          "()Ljava/awt/Container;");
 
-    componentIDs.getLocationOnScreen = 
+    componentIDs.getLocationOnScreen =
       (*env)->GetMethodID(env, cls, "getLocationOnScreen_NoTreeLock",
                          "()Ljava/awt/Point;");
 
-    componentIDs.resetGCMID = 
+    componentIDs.resetGCMID =
       (*env)->GetMethodID(env, cls, "resetGC", "()V");
 
     keyclass = (*env)->FindClass(env, "java/awt/event/KeyEvent");
     DASSERT (keyclass != NULL);
 
-    componentIDs.isProxyActive = 
-        (*env)->GetFieldID(env, keyclass, "isProxyActive", 
+    componentIDs.isProxyActive =
+        (*env)->GetFieldID(env, keyclass, "isProxyActive",
                            "Z");
 
     componentIDs.appContext =
-        (*env)->GetFieldID(env, cls, "appContext", 
+        (*env)->GetFieldID(env, cls, "appContext",
                            "Lsun/awt/AppContext;");
 
     (*env)->DeleteLocalRef(env, keyclass);
@@ -390,15 +390,15 @@ awt_pipe_init() {
 
     if ( pipe ( awt_pipe_fds ) == 0 )
     {
-        /* 
-        ** the write wakes us up from the infinite sleep, which 
-        ** then we cause a delay of AWT_FLUSHTIME and then we 
+        /*
+        ** the write wakes us up from the infinite sleep, which
+        ** then we cause a delay of AWT_FLUSHTIME and then we
         ** flush.
         */
         int32_t flags = 0;
         /* set the pipe to be non-blocking */
         flags = fcntl ( AWT_READPIPE, F_GETFL, 0 );
-        fcntl( AWT_READPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK ); 
+        fcntl( AWT_READPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK );
         flags = fcntl ( AWT_WRITEPIPE, F_GETFL, 0 );
         fcntl( AWT_WRITEPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK );
         awt_pipe_inited = True;
@@ -456,7 +456,7 @@ static void readEnv() {
 /**
  * Returns the amount of milliseconds similar to System.currentTimeMillis()
  */
-static jlong 
+static jlong
 awtJNI_TimeMillis(void)
 {
     struct timeval t;
@@ -478,7 +478,7 @@ static void update_poll_timeout(int timeout_control) {
     if (static_poll_timeout != 0) return;
 
     // Update it otherwise
-    if (timeout_control == TIMEOUT_TIMEDOUT) {        
+    if (timeout_control == TIMEOUT_TIMEDOUT) {
         /* add 1/4 (plus 1, in case the division truncates to 0) */
         curPollTimeout += ((curPollTimeout>>2) + 1);
         curPollTimeout = min(AWT_MAX_POLL_TIMEOUT, curPollTimeout);
@@ -513,19 +513,19 @@ static uint32_t get_poll_timeout(jlong nextTaskTime)
  * it is likely (but not definite) that there are events waiting to
  * be processed.
  *
- * This routine also flushes the outgoing X queue, when the 
+ * This routine also flushes the outgoing X queue, when the
  * awt_next_flush_time has been reached.
  *
- * If fdAWTPipe is greater or equal than zero the routine also 
+ * If fdAWTPipe is greater or equal than zero the routine also
  * checks if there are events pending on the putback queue.
  */
 void
 waitForEvents(JNIEnv *env, jlong nextTaskTime) {
     performPoll(env, nextTaskTime);
     if ((awt_next_flush_time > 0) && (awtJNI_TimeMillis() >= awt_next_flush_time)) {
-        XFlush(awt_display);                         
-        awt_last_flush_time = awt_next_flush_time;               
-        awt_next_flush_time = 0LL;                   
+        XFlush(awt_display);
+        awt_last_flush_time = awt_next_flush_time;
+        awt_next_flush_time = 0LL;
     }
 } /* waitForEvents() */
 
@@ -550,11 +550,11 @@ JNIEXPORT void JNICALL Java_sun_awt_X11_XToolkit_wakeup_1poll (JNIEnv *env, jcla
 
 /*
  * Polls both the X pipe and our AWT utility pipe. Returns
- * when there is data on one of the pipes, or the operation times 
+ * when there is data on one of the pipes, or the operation times
  * out.
  *
  * Not all Xt events come across the X pipe (e.g., timers
- * and alternate inputs), so we must time out every now and 
+ * and alternate inputs), so we must time out every now and
  * then to check the Xt event queue.
  *
  * The fdAWTPipe will be empty when this returns.
@@ -599,14 +599,14 @@ performPoll(JNIEnv *env, jlong nextTaskTime) {
     if (result == 0) {
         /* poll() timed out -- update timeout value */
         update_poll_timeout(TIMEOUT_TIMEDOUT);
-    } 
+    }
     if (pollFds[1].revents) {
         int count;
         PRINT("Woke up\n");
         /* There is data on the AWT pipe - empty it */
         do {
             count = read(AWT_READPIPE, read_buf, AWT_POLL_BUFSIZE );
-        } while (count == AWT_POLL_BUFSIZE ); 
+        } while (count == AWT_POLL_BUFSIZE );
     }
     if (pollFds[0].revents) {
         // Events in X pipe
@@ -648,9 +648,9 @@ void awt_output_flush() {
  * Wakes-up poll() in performPoll
  */
 static void wakeUp() {
-    static char wakeUp_char = 'p'; 
+    static char wakeUp_char = 'p';
     if (!isMainThread() && awt_pipe_inited) {
-        write ( AWT_WRITEPIPE, &wakeUp_char, 1 );   
+        write ( AWT_WRITEPIPE, &wakeUp_char, 1 );
     }
 }
 
@@ -678,7 +678,7 @@ JNIEXPORT jstring JNICALL Java_sun_awt_X11_XToolkit_getEnv
     char *ptr = NULL;
     const char *keystr = NULL;
     jstring ret = NULL;
-    
+
     keystr = JNU_GetStringPlatformChars(env, key, NULL);
     if (key) {
         ptr = getenv(keystr);
@@ -794,7 +794,7 @@ Java_sun_awt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
     char *c[1];
     int32_t status;
     Window xawt_root_window;
-    
+
     AWT_LOCK();
     xawt_root_window = get_xawt_root_shell(env);
 
@@ -848,7 +848,7 @@ Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jargv)
       AWT_UNLOCK();
       return;
     }
-    
+
     argc = (int)(*env)->GetArrayLength(env, jargv);
     if (argc == 0) {
         AWT_UNLOCK();
@@ -941,7 +941,7 @@ JNIEXPORT void JNICALL
 Java_java_awt_Cursor_finalizeImpl(JNIEnv *env, jclass clazz, jlong pData)
 {
     Cursor xcursor;
-    
+
     xcursor = (Cursor)pData;
     if (xcursor != None) {
         AWT_LOCK();

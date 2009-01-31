@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar NullTransformerAddTest NullTransformerAddTest
  */
-public class 
-NullTransformerAddTest 
+public class
+NullTransformerAddTest
     extends ATransformerManagementTestCase
 {
 
@@ -46,19 +46,19 @@ NullTransformerAddTest
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new NullTransformerAddTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testNullTransformerAdd();
     }
-        
-    
+
+
     /**
      * Add null transformers to the the manager and check it
      */
@@ -76,5 +76,5 @@ NullTransformerAddTest
             }
         assertTrue(caughtIt);
     }
-    
+
 }

@@ -53,7 +53,6 @@ import java.util.Enumeration;
  * @since 1.4
  * @author Nathan Abramson
  * @author David Brownell
- * @version %I%
  */
 public interface SSLSessionContext {
 
@@ -89,7 +88,7 @@ public interface SSLSessionContext {
      * the timeout limit is changed for this <code>SSLSessionContext</code>.
      *
      * @param seconds the new session timeout limit in seconds; zero means
-     *		there is no limit.
+     *          there is no limit.
      *
      * @exception IllegalArgumentException if the timeout specified is < 0.
      * @see #getSessionTimeout
@@ -140,4 +139,3 @@ public interface SSLSessionContext {
     public int getSessionCacheSize();
 
 }
-

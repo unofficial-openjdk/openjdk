@@ -43,7 +43,7 @@ public class XEmbeddingContainer extends XEmbedHelper implements XEventDispatche
         XToolkit.addEventDispatcher(embedder.getWindow(), this);
     }
     void deinstall() {
-        XToolkit.removeEventDispatcher(embedder.getWindow(), this);        
+        XToolkit.removeEventDispatcher(embedder.getWindow(), this);
     }
 
     void add(long child) {
@@ -87,7 +87,7 @@ public class XEmbeddingContainer extends XEmbedHelper implements XEventDispatche
         // structure. If this is the root window of the window's screen, then
         // the protocol is finished and there is no further interaction. If
         // it is a window other than the root window, then the protocol
-        // continues with the new parent acting as the embedder window.        
+        // continues with the new parent acting as the embedder window.
         XToolkit.awtLock();
         try {
             XlibWrapper.XUnmapWindow(XToolkit.getDisplay(), child);
@@ -157,4 +157,3 @@ public class XEmbeddingContainer extends XEmbedHelper implements XEventDispatche
         XlibWrapper.unsafe.freeMemory(data);
     }
 }
-

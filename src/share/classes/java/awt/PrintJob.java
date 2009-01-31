@@ -25,21 +25,20 @@
 
 package java.awt;
 
-/** 
+/**
  * An abstract class which initiates and executes a print job.
  * It provides access to a print graphics object which renders
  * to an appropriate print device.
  *
  * @see Toolkit#getPrintJob
  *
- * @version 	%I% %G%
- * @author 	Amy Fowler
+ * @author      Amy Fowler
  */
 public abstract class PrintJob {
 
     /**
      * Gets a Graphics object that will draw to the next page.
-     * The page is sent to the printer when the graphics 
+     * The page is sent to the printer when the graphics
      * object is disposed.  This graphics object will also implement
      * the PrintGraphics interface.
      * @see PrintGraphics
@@ -75,7 +74,7 @@ public abstract class PrintJob {
      * @see #end
      */
     public void finalize() {
-	end();
+        end();
     }
 
 }

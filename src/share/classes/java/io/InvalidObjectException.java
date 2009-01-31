@@ -33,7 +33,6 @@ package java.io;
  * @since JDK1.1
  *
  * @author  unascribed
- * @version %I%, %G%
  * @since   JDK1.1
  */
 public class InvalidObjectException extends ObjectStreamException {
@@ -47,6 +46,6 @@ public class InvalidObjectException extends ObjectStreamException {
      * @see ObjectInputValidation
      */
     public  InvalidObjectException(String reason) {
-	super(reason);
+        super(reason);
     }
 }

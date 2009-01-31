@@ -27,7 +27,7 @@ package javax.swing.text;
 import java.io.Serializable;
 
 /**
- * This class encapsulates a single tab stop (basically as tab stops  
+ * This class encapsulates a single tab stop (basically as tab stops
  * are thought of by RTF). A tab stop is at a specified distance from the
  * left margin, aligns text in a specified way, and has a specified leader.
  * TabStops are immutable, and usually contained in TabSets.
@@ -41,7 +41,6 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  */
 public class TabStop implements Serializable {
 
@@ -92,9 +91,9 @@ public class TabStop implements Serializable {
      * alignment <code>align</code> and leader <code>leader</code>.
      */
     public TabStop(float pos, int align, int leader) {
-	alignment = align;
-	this.leader = leader;
-	position = pos;
+        alignment = align;
+        this.leader = leader;
+        position = pos;
     }
 
     /**
@@ -102,7 +101,7 @@ public class TabStop implements Serializable {
      * @return the position of the tab
      */
     public float getPosition() {
-	return position;
+        return position;
     }
 
     /**
@@ -110,7 +109,7 @@ public class TabStop implements Serializable {
      * @return the alignment of the tab
      */
     public int getAlignment() {
-	return alignment;
+        return alignment;
     }
 
     /**
@@ -118,7 +117,7 @@ public class TabStop implements Serializable {
      * @return the leader of the tab
      */
     public int getLeader() {
-	return leader;
+        return leader;
     }
 
     /**
@@ -127,16 +126,16 @@ public class TabStop implements Serializable {
      */
     public boolean equals(Object other)
     {
-	if (other == this) {
-	    return true;
-	}
-	if (other instanceof TabStop) {
-	    TabStop o = (TabStop)other;
-	    return ( (alignment == o.alignment) &&
-		     (leader == o.leader) &&
-		     (position == o.position) );  /* TODO: epsilon */
-	}
-	return false;
+        if (other == this) {
+            return true;
+        }
+        if (other instanceof TabStop) {
+            TabStop o = (TabStop)other;
+            return ( (alignment == o.alignment) &&
+                     (leader == o.leader) &&
+                     (position == o.position) );  /* TODO: epsilon */
+        }
+        return false;
     }
 
     /**
@@ -145,35 +144,34 @@ public class TabStop implements Serializable {
      *
      * @return the hashCode for the object
      */
-    public int hashCode() { 
-	return alignment ^ leader ^ Math.round(position);
+    public int hashCode() {
+        return alignment ^ leader ^ Math.round(position);
     }
 
     /* This is for debugging; perhaps it should be removed before release */
     public String toString() {
-	String buf;
-	switch(alignment) {
-	  default:
-	  case ALIGN_LEFT:
-	    buf = "";
-	    break;
-	  case ALIGN_RIGHT:
-	    buf = "right ";
-	    break;
-	  case ALIGN_CENTER:
-	    buf = "center ";
-	    break;
-	  case ALIGN_DECIMAL:
-	    buf = "decimal ";
-	    break;
-	  case ALIGN_BAR:
-	    buf = "bar ";
-	    break;
-	}
-	buf = buf + "tab @" + String.valueOf(position);
-	if (leader != LEAD_NONE)
-	    buf = buf + " (w/leaders)";
-	return buf;
+        String buf;
+        switch(alignment) {
+          default:
+          case ALIGN_LEFT:
+            buf = "";
+            break;
+          case ALIGN_RIGHT:
+            buf = "right ";
+            break;
+          case ALIGN_CENTER:
+            buf = "center ";
+            break;
+          case ALIGN_DECIMAL:
+            buf = "decimal ";
+            break;
+          case ALIGN_BAR:
+            buf = "bar ";
+            break;
+        }
+        buf = buf + "tab @" + String.valueOf(position);
+        if (leader != LEAD_NONE)
+            buf = buf + " (w/leaders)";
+        return buf;
     }
 }
-

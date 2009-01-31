@@ -23,14 +23,14 @@
 
 /*
  *
- * 
+ *
  * Used by unresolvedExceptions.sh
  */
 
 public class UnresolvedExceptions  {
     public static void main(String[] argv) throws SomeException {
-	// main is invoked from a shell so calling exit won't stop all
-	// tests.
-	System.exit(0);
+        // main is invoked from a shell so calling exit won't stop all
+        // tests.
+        System.exit(0);
     }
 }

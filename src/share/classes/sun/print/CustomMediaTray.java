@@ -36,20 +36,20 @@ class CustomMediaTray extends MediaTray {
     private String choiceName;
 
     private CustomMediaTray(int x) {
-	super(x);
-	
+        super(x);
+
     }
 
     private synchronized static int nextValue(String name) {
-      customStringTable.add(name);     
+      customStringTable.add(name);
       return (customStringTable.size()-1);
     }
-    
+
 
     public CustomMediaTray(String name, String choice) {
-	super(nextValue(name));
-	choiceName = choice;
-	customEnumTable.add(this);
+        super(nextValue(name));
+        choiceName = choice;
+        customEnumTable.add(this);
     }
 
     /**
@@ -62,7 +62,7 @@ class CustomMediaTray extends MediaTray {
      * Returns the command string for this media tray.
      */
     public String getChoiceName() {
-	return choiceName;
+        return choiceName;
     }
 
 
@@ -77,20 +77,17 @@ class CustomMediaTray extends MediaTray {
     /**
      * Returns the string table for class CustomMediaTray.
      */
-    protected String[] getStringTable() {     
+    protected String[] getStringTable() {
       String[] nameTable = new String[customStringTable.size()];
       return (String[])customStringTable.toArray(nameTable);
     }
-  
+
     /**
      * Returns the enumeration value table for class CustomMediaTray.
      */
-    protected EnumSyntax[] getEnumValueTable() {     
+    protected EnumSyntax[] getEnumValueTable() {
       MediaTray[] enumTable = new MediaTray[customEnumTable.size()];
       return (MediaTray[])customEnumTable.toArray(enumTable);
     }
-    
+
 }
-
-
-

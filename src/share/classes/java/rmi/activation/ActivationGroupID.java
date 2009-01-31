@@ -40,11 +40,10 @@ import java.rmi.server.UID;
  * as one of the arguments to the activation group's special constructor
  * when an activation group is created/recreated.
  *
- * @author 	Ann Wollrath
- * @version	%I%, %G%
- * @see 	ActivationGroup
- * @see		ActivationGroupDesc
- * @since	1.2
+ * @author      Ann Wollrath
+ * @see         ActivationGroup
+ * @see         ActivationGroupDesc
+ * @since       1.2
  */
 public class ActivationGroupID implements java.io.Serializable {
     /**
@@ -67,7 +66,7 @@ public class ActivationGroupID implements java.io.Serializable {
      * @since 1.2
      */
     public ActivationGroupID(ActivationSystem system) {
-	this.system = system;
+        this.system = system;
     }
 
     /**
@@ -76,9 +75,9 @@ public class ActivationGroupID implements java.io.Serializable {
      * @since 1.2
      */
     public ActivationSystem getSystem() {
-	return system;
+        return system;
     }
-    
+
     /**
      * Returns a hashcode for the group's identifier.  Two group
      * identifiers that refer to the same remote group will have the
@@ -88,7 +87,7 @@ public class ActivationGroupID implements java.io.Serializable {
      * @since 1.2
      */
     public int hashCode() {
-	return uid.hashCode();
+        return uid.hashCode();
     }
 
     /**
@@ -98,19 +97,19 @@ public class ActivationGroupID implements java.io.Serializable {
      * 2) the activation system specified in each
      *    refers to the same remote object.
      *
-     * @param	obj	the Object to compare with
-     * @return	true if these Objects are equal; false otherwise.
-     * @see		java.util.Hashtable
+     * @param   obj     the Object to compare with
+     * @return  true if these Objects are equal; false otherwise.
+     * @see             java.util.Hashtable
      * @since 1.2
      */
     public boolean equals(Object obj) {
-	if (this == obj) {
-	    return true;
-	} else if (obj instanceof ActivationGroupID) {
-	    ActivationGroupID id = (ActivationGroupID)obj;
-	    return (uid.equals(id.uid) && system.equals(id.system));
-	} else {
-	    return false;
-	}
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ActivationGroupID) {
+            ActivationGroupID id = (ActivationGroupID)obj;
+            return (uid.equals(id.uid) && system.equals(id.system));
+        } else {
+            return false;
+        }
     }
 }

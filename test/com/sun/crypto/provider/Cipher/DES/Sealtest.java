@@ -35,41 +35,41 @@ public class Sealtest {
 
     public static void main(String[] args) throws Exception {
 
-	Security.addProvider(new com.sun.crypto.provider.SunJCE());
+        Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-	// create DSA keypair
-	KeyPairGenerator kpgen = KeyPairGenerator.getInstance("DSA");
-	kpgen.initialize(512);
-	KeyPair kp = kpgen.generateKeyPair();
+        // create DSA keypair
+        KeyPairGenerator kpgen = KeyPairGenerator.getInstance("DSA");
+        kpgen.initialize(512);
+        KeyPair kp = kpgen.generateKeyPair();
 
-	// create DES key
-	KeyGenerator kg = KeyGenerator.getInstance("DES");
-	SecretKey skey = kg.generateKey();
+        // create DES key
+        KeyGenerator kg = KeyGenerator.getInstance("DES");
+        SecretKey skey = kg.generateKey();
 
-	// create cipher
-	Cipher c = Cipher.getInstance("DES/CFB16/PKCS5Padding");
-	c.init(Cipher.ENCRYPT_MODE, skey);
+        // create cipher
+        Cipher c = Cipher.getInstance("DES/CFB16/PKCS5Padding");
+        c.init(Cipher.ENCRYPT_MODE, skey);
 
-	// seal the DSA private key
-	SealedObject sealed = new SealedObject(kp.getPrivate(), c);
+        // seal the DSA private key
+        SealedObject sealed = new SealedObject(kp.getPrivate(), c);
 
-	// serialize
-	FileOutputStream fos = new FileOutputStream("sealed");
-	ObjectOutputStream oos = new ObjectOutputStream(fos);
-	oos.writeObject(sealed);
+        // serialize
+        FileOutputStream fos = new FileOutputStream("sealed");
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(sealed);
 
-	// deserialize
-	FileInputStream fis = new FileInputStream("sealed");
-	ObjectInputStream ois = new ObjectInputStream(fis);
-	sealed = (SealedObject)ois.readObject();
+        // deserialize
+        FileInputStream fis = new FileInputStream("sealed");
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        sealed = (SealedObject)ois.readObject();
 
-	System.out.println(sealed.getAlgorithm());
+        System.out.println(sealed.getAlgorithm());
 
-	// compare unsealed private key with original
-	PrivateKey priv = (PrivateKey)sealed.getObject(skey);
-	if (!priv.equals(kp.getPrivate()))
-	    throw new Exception("TEST FAILED");
+        // compare unsealed private key with original
+        PrivateKey priv = (PrivateKey)sealed.getObject(skey);
+        if (!priv.equals(kp.getPrivate()))
+            throw new Exception("TEST FAILED");
 
-	System.out.println("TEST SUCCEEDED");
+        System.out.println("TEST SUCCEEDED");
     }
 }

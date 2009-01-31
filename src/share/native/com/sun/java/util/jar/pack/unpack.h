@@ -24,7 +24,7 @@
  */
 
 
- 
+
 // Global Structures
 struct jar;
 struct gunzip;
@@ -167,7 +167,7 @@ struct unpacker {
 
   // pointer to self, for U_NEW macro
   unpacker* u;
- 
+
   // private abort message string, allocated to PATH_MAX*2
   const char* abort_message;
   ptrlist mallocs;      // list of guys to free when we are all done
@@ -306,7 +306,7 @@ struct unpacker {
     const char* parseLayout(const char* lp,    band** &res, int curCble);
     const char* parseNumeral(const char* lp,   int    &res);
     const char* parseIntLayout(const char* lp, band*  &res, byte le_kind,
-			       bool can_be_signed = false);
+                               bool can_be_signed = false);
     band** popBody(int band_stack_base);  // pops a body off band_stack
 
     // Read data into the bands of the idx-th layout.
@@ -322,16 +322,16 @@ struct unpacker {
       assert(flag_limit == 0);  // not set up yet
       flag_limit = (z? X_ATTR_LIMIT_FLAGS_HI: X_ATTR_LIMIT_NO_FLAGS_HI);
     }
-    bool haveLongFlags() { 
+    bool haveLongFlags() {
      assert(flag_limit == X_ATTR_LIMIT_NO_FLAGS_HI ||
-	    flag_limit == X_ATTR_LIMIT_FLAGS_HI);
+            flag_limit == X_ATTR_LIMIT_FLAGS_HI);
       return flag_limit == X_ATTR_LIMIT_FLAGS_HI;
     }
 
     // Return flag_count if idx is predef and not redef, else zero.
     int predefCount(uint idx);
 
-    bool isRedefined(uint idx) { 
+    bool isRedefined(uint idx) {
      assert(idx < flag_limit);
       return ((redef >> idx) & 1);
     }
@@ -345,16 +345,16 @@ struct unpacker {
     bool isIndex(uint idx) {
       assert(flag_limit != 0);  // must be set up already
       if (idx < flag_limit)
-	return (((predef | redef) >> idx) & 1);
+        return (((predef | redef) >> idx) & 1);
       else
-	return (idx - flag_limit < overflow_count.length());
+        return (idx - flag_limit < overflow_count.length());
     }
     int& getCount(uint idx) {
       assert(isIndex(idx));
       if (idx < flag_limit)
-	return flag_count[idx];
+        return flag_count[idx];
       else
-	return overflow_count.get(idx - flag_limit);
+        return overflow_count.get(idx - flag_limit);
     }
     bool aborting()             { return u->aborting(); }
     void abort(const char* msg) { u->abort(msg); }
@@ -365,11 +365,11 @@ struct unpacker {
   // Initialization
   void         init(read_input_fn_t input_fn = null);
   // Resets to a known sane state
-  void	       reset();
+  void         reset();
   // Deallocates all storage.
-  void	       free();
+  void         free();
   // Deallocates temporary storage (volatile after next client call).
-  void	       free_temps() { tsmallbuf.init(); tmallocs.freeAll(); }
+  void         free_temps() { tsmallbuf.init(); tmallocs.freeAll(); }
 
   // Option management methods
   bool         set_option(const char* option, const char* value);
@@ -387,7 +387,7 @@ struct unpacker {
   static int   run(int argc, char **argv);   // Unix-style entry point.
   void         check_options();
   void         start(void* packptr = null, size_t len = 0);
-  void	       redirect_stdio();
+  void         redirect_stdio();
   void         write_file_to_jar(file* f);
   void         finish();
 
@@ -410,7 +410,7 @@ struct unpacker {
 #endif
   const char*  get_abort_message();
   void         abort(const char* s = null);
-  bool	       aborting() { return abort_message != null; }
+  bool         aborting() { return abort_message != null; }
   static unpacker* current();  // find current instance
 
   // Output management
@@ -444,9 +444,9 @@ struct unpacker {
   byte*  wp_at(size_t offset) { return wpbase + offset; }
   uint to_bci(uint bii);
   void get_code_header(int& max_stack,
-		       int& max_na_locals,
-		       int& handler_count,
-		       int& cflags);
+                       int& max_na_locals,
+                       int& handler_count,
+                       int& cflags);
   band* ref_band_for_self_op(int bc, bool& isAloadVar, int& origBCVar);
   band* ref_band_for_op(int bc);
 
@@ -488,5 +488,3 @@ struct unpacker {
 
 inline void cpool::abort(const char* msg) { u->abort(msg); }
 inline bool cpool::aborting()             { return u->aborting(); }
-
-

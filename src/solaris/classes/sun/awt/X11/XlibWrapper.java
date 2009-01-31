@@ -43,12 +43,12 @@ public class XlibWrapper implements XConstants, XUtilConstants, XProtocolConstan
     {
     }
 
-/* 
+/*
    Display *XOpenDisplay(display_name)
    char *display_name;
 
 */
-    public final static String eventToString[]= 
+    public final static String eventToString[]=
     {"<none:0>", "<none:1>", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
      "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
      "KeymapNotify", "Expose", "GraphicsExpose", "NoExpose", "VisibilityNotify",
@@ -94,7 +94,7 @@ public class XlibWrapper implements XConstants, XUtilConstants, XProtocolConstan
     static native int ScreenCount(long display);
 
 
-/* 
+/*
    Window XCreateWindow(display, parent, x, y, width, height,
    border_width, depth,
    class, visual, valuemask, attributes)
@@ -114,22 +114,22 @@ public class XlibWrapper implements XConstants, XUtilConstants, XProtocolConstan
 
     static native void XDestroyWindow(long display, long window);
 
-    static native int XGrabPointer(long display, long grab_window, 
+    static native int XGrabPointer(long display, long grab_window,
                                    int owner_events, int event_mask, int pointer_mode,
                                    int keyboard_mode, long confine_to, long cursor, long time);
 
     static native void XUngrabPointer(long display, long time);
 
-    static native int XGrabKeyboard(long display, long grab_window, 
+    static native int XGrabKeyboard(long display, long grab_window,
                                     int owner_events, int pointer_mode,
                                     int keyboard_mode, long time);
 
     static native void XUngrabKeyboard(long display, long time);
 
-    static native void XGrabServer(long display); 
-    static native void XUngrabServer(long display); 
+    static native void XGrabServer(long display);
+    static native void XUngrabServer(long display);
 
-/* 
+/*
 
 void XSetWMProperties(display, w, window_name, icon_name,
 argv, argc, normal_hints, wm_hints, class_hints)
@@ -144,8 +144,8 @@ XWMHints *wm_hints;
 XClassHint *class_hints;
 */
 
-/* 
-  
+/*
+
 XMapWindow(display, w)
 Display *display;
 Window w;
@@ -161,8 +161,8 @@ Window w;
     static native void XSetInputFocus2(long display, long window, long time);
     static native long XGetInputFocus(long display);
 
-/* 
-  
+/*
+
 XUnmapWindow(display, w)
 Display *display;
 Window w;
@@ -180,9 +180,9 @@ Window w;
   long event_mask;
 
 */
-    static  native void XSelectInput(long display, long window, long event_mask); 
+    static  native void XSelectInput(long display, long window, long event_mask);
 
-    /* 
+    /*
        XNextEvent(display, event_return)
        Display *display;
        XEvent *event_return;
@@ -221,12 +221,12 @@ static native String XSetLocaleModifiers(String modifier_list);
 
 
     static  native int XTranslateCoordinates(
-                                             long display, long src_w, long dest_w, 
+                                             long display, long src_w, long dest_w,
                                              long src_x, long src_y,
-                                             long dest_x_return, long dest_y_return, 
+                                             long dest_x_return, long dest_y_return,
                                              long child_return);
 
-    /* 
+    /*
        XPeekEvent(display, event_return)
        Display *display;
        XEvent *event_return;
@@ -283,7 +283,7 @@ static native String XSetLocaleModifiers(String modifier_list);
 
  static native void XFreeCursor(long display, long cursor);
 
-/* 
+/*
    XSetWindowBackground(display, w, background_pixel)
    Display *display;
    Window w;
@@ -304,7 +304,7 @@ static native String XSetLocaleModifiers(String modifier_list);
     static native int XInternAtoms(long display, String[] names, boolean only_if_exists, long atoms);
 
     static native void SetProperty(long display, long window, long atom, String str);
-    static native String GetProperty(long display ,long window, long atom); 
+    static native String GetProperty(long display ,long window, long atom);
     static native long InternAtom(long display, String string, int only_if_exists);
     static native int XGetWindowProperty(long display, long window, long atom,
                                          long long_offset, long long_length,
@@ -319,15 +319,15 @@ static native String XSetLocaleModifiers(String modifier_list);
                                 int nelements) {
         // TODO: handling of XChangePropertyImpl return value, if not Success - don't cache
         if (XPropertyCache.isCachingSupported() &&
-            XToolkit.windowToXWindow(window) != null && 
-            WindowPropertyGetter.isCacheableProperty(XAtom.get(atom)) && 
-            mode == PropModeReplace) 
+            XToolkit.windowToXWindow(window) != null &&
+            WindowPropertyGetter.isCacheableProperty(XAtom.get(atom)) &&
+            mode == PropModeReplace)
         {
             int length = (format / 8) * nelements;
-            XPropertyCache.storeCache(            
-                new XPropertyCache.PropertyCacheEntry(format, 
-                                                      nelements, 
-                                                      0, 
+            XPropertyCache.storeCache(
+                new XPropertyCache.PropertyCacheEntry(format,
+                                                      nelements,
+                                                      0,
                                                       data,
                                                       length),
                 window,
@@ -353,7 +353,7 @@ static native String XSetLocaleModifiers(String modifier_list);
     static native int VendorRelease(long display);
 
     static native void XBell(long display, int percent);
- 
+
  /*
           Cursor XCreateFontCursor(display, shape)
            Display *display;
@@ -376,14 +376,14 @@ static native String XSetLocaleModifiers(String modifier_list);
 
     static native long XCreateBitmapFromData(long display, long drawable, long data, int width, int height);
 
- /* 
+ /*
       XFreePixmap(display, pixmap)
            Display *display;
            Pixmap pixmap;
-  */ 
+  */
 
    static native void XFreePixmap(long display, long pixmap);
-  
+
   /*
      Cursor XCreatePixmapCursor(display, source, mask,
      foreground_color, background_color, x, y)
@@ -418,12 +418,12 @@ static native String XSetLocaleModifiers(String modifier_list);
   */
 
     static native boolean XAllocColor( long display, long colormap, long screen_in_out);
-  
+
 
     static native long SetToolkitErrorHandler();
     static native void XSetErrorHandler(long handler);
     static native int CallErrorHandler(long handler, long display, long event_ptr);
-    
+
  /*
       XChangeWindowAttributes(display, w, valuemask, attributes)
            Display *display;
@@ -431,7 +431,7 @@ static native String XSetLocaleModifiers(String modifier_list);
            unsigned long valuemask;
            XSetWindowAttributes *attributes;
   */
-    
+
     static native void XChangeWindowAttributes(long display, long window, long valuemask, long attributes);
     static native int XGetWindowAttributes(long display, long window, long attr_ptr);
     static native int XGetGeometry(long display, long drawable, long root_return, long x_return, long y_return,
@@ -448,11 +448,11 @@ static native String XSetLocaleModifiers(String modifier_list);
     static native long XGetVisualInfo(long display, long vinfo_mask, long vinfo_template, long nitems_return);
     static native void XReparentWindow(long display, long window, long parent, int x, int y);
 
-    static native void XConvertSelection(long display, long selection, 
+    static native void XConvertSelection(long display, long selection,
                                          long target, long property,
                                          long requestor, long time);
 
-    static native void XSetSelectionOwner(long display, long selection, 
+    static native void XSetSelectionOwner(long display, long selection,
                                           long owner, long time);
 
     static native long XGetSelectionOwner(long display, long selection);
@@ -467,7 +467,7 @@ static native String XSetLocaleModifiers(String modifier_list);
                                     int offset, long data, int width, int height, int bitmap_pad,
                                     int bytes_per_line);
     static native void XDestroyImage(long image);
-    static native void XPutImage(long display, long drawable, long gc, long image, 
+    static native void XPutImage(long display, long drawable, long gc, long image,
                                  int src_x, int src_y, int dest_x, int dest_y,
                                  int width, int height);
     static native long XCreateGC(long display, long drawable, long valuemask, long values);
@@ -490,16 +490,16 @@ static native String XSetLocaleModifiers(String modifier_list);
 
     static native int XKeysymToKeycode(long display, long keysym);
 
-    static native void XConvertCase(long keysym, 
-                                    long keysym_lowercase, 
-                                    long keysym_uppercase); 
-    
-    static native long XGetModifierMapping(long display);
-    
-    static native void XFreeModifiermap(long keymap);  
+    static native void XConvertCase(long keysym,
+                                    long keysym_lowercase,
+                                    long keysym_uppercase);
 
-    static native void XChangeActivePointerGrab(long display, int mask, 
-                                                long cursor, long time); 
+    static native long XGetModifierMapping(long display);
+
+    static native void XFreeModifiermap(long keymap);
+
+    static native void XChangeActivePointerGrab(long display, int mask,
+                                                long cursor, long time);
 
     /*
       int (*XSynchronize(Display *display, Bool onoff))();
@@ -520,9 +520,9 @@ static native String XSetLocaleModifiers(String modifier_list);
      */
     static native void ExitSecondaryLoop();
 
-    /** 
+    /**
      * Calls XTextPropertyToStringList on the specified byte array and returns
-     * the array of strings. 
+     * the array of strings.
      */
     static native String[] XTextPropertyToStringList(byte[] bytes, long encoding_atom);
 
@@ -530,8 +530,8 @@ static native String XSetLocaleModifiers(String modifier_list);
      * XSHAPE extension support.
      */
     static native boolean XShapeQueryExtension(long display, long event_base_return, long error_base_return);
-    static native void SetRectangularShape(long display, long window, 
-            int lox, int loy, int hix, int hiy, 
+    static native void SetRectangularShape(long display, long window,
+            int lox, int loy, int hix, int hiy,
             sun.java2d.pipe.Region region);
 
 /* Global memory area used for X lib parameter passing */
@@ -576,11 +576,11 @@ static native String XSetLocaleModifiers(String modifier_list);
 
         isBuildInternal = getBuildInternal();
 
-//      System.loadLibrary("mawt"); 
+//      System.loadLibrary("mawt");
     }
 
     static int getDataModel() {
-        return dataModel;  
+        return dataModel;
     }
 
     static String hintsToString(long flags) {

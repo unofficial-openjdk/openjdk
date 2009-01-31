@@ -39,13 +39,13 @@ class AssignRemainderExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignRemainderExpression(long where, Expression left, Expression right) {
-	super(ASGREM, where, left, right);
+        super(ASGREM, where, left, right);
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_irem + itype.getTypeCodeOffset());
+        asm.add(where, opc_irem + itype.getTypeCodeOffset());
     }
 }

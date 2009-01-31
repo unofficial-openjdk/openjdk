@@ -37,17 +37,17 @@ public class IsModifiableClassAgent
 {
     public static boolean fail = false;
     public static boolean completed = false;
-     
+
     public static void
-    premain(	String agentArgs,
+    premain(    String agentArgs,
                 Instrumentation instrumentation)
-	{
+        {
             System.out.println("IsModifiableClassAgent started");
 
             Class[] allClasses = instrumentation.getAllLoadedClasses();
             int modCount = 0;
             int unmodCount = 0;
-            
+
             for (int i = 0; i < allClasses.length; i++)
                 {
                     Class klass = allClasses[i];

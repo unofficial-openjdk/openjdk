@@ -40,7 +40,7 @@ import java.security.PrivilegedAction;
 import sun.security.action.GetPropertyAction;
 
 /**
- * Implementation of VMManagement interface that accesses the management 
+ * Implementation of VMManagement interface that accesses the management
  * attributes and operations locally within the same Java virtual
  * machine.
  */
@@ -50,7 +50,7 @@ class VMManagementImpl implements VMManagement {
 
     private static boolean compTimeMonitoringSupport;
     private static boolean threadContentionMonitoringSupport;
-    private static boolean currentThreadCpuTimeSupport; 
+    private static boolean currentThreadCpuTimeSupport;
     private static boolean otherThreadCpuTimeSupport;
     private static boolean bootClassPathSupport;
     private static boolean objectMonitorUsageSupport;
@@ -80,7 +80,7 @@ class VMManagementImpl implements VMManagement {
     }
 
     public boolean isOtherThreadCpuTimeSupported() {
-        return otherThreadCpuTimeSupport; 
+        return otherThreadCpuTimeSupport;
     }
 
     public boolean isBootClassPathSupported() {
@@ -95,7 +95,7 @@ class VMManagementImpl implements VMManagement {
         return synchronizerUsageSupport;
     }
 
-    public native boolean isThreadContentionMonitoringEnabled(); 
+    public native boolean isThreadContentionMonitoringEnabled();
     public native boolean isThreadCpuTimeEnabled();
 
 
@@ -125,7 +125,7 @@ class VMManagementImpl implements VMManagement {
         } catch (UnknownHostException e) {
             // ignore
         }
- 
+
         return pid + "@" + hostname;
     }
     private native int getProcessId();
@@ -167,9 +167,9 @@ class VMManagementImpl implements VMManagement {
     public synchronized List<String> getVmArguments() {
         if (vmArgs == null) {
             String[] args = getVmArguments0();
-            List<String> l = ((args != null && args.length != 0) ? Arrays.asList(args) : 
-					Collections.<String>emptyList());
-            vmArgs = Collections.unmodifiableList(l); 
+            List<String> l = ((args != null && args.length != 0) ? Arrays.asList(args) :
+                                        Collections.<String>emptyList());
+            vmArgs = Collections.unmodifiableList(l);
         }
         return vmArgs;
     }
@@ -225,12 +225,12 @@ class VMManagementImpl implements VMManagement {
     private PerfInstrumentation perfInstr = null;
     private boolean noPerfData = false;
 
-    private synchronized PerfInstrumentation getPerfInstrumentation() {  
+    private synchronized PerfInstrumentation getPerfInstrumentation() {
         if (noPerfData || perfInstr != null) {
              return perfInstr;
         }
 
-        // construct PerfInstrumentation object 
+        // construct PerfInstrumentation object
         Perf perf =  AccessController.doPrivileged(new Perf.GetPerfAction());
         try {
             ByteBuffer bb = perf.attach(0, "r");
@@ -240,7 +240,7 @@ class VMManagementImpl implements VMManagement {
             }
             perfInstr = new PerfInstrumentation(bb);
         } catch (IllegalArgumentException e) {
-            // If the shared memory doesn't exist e.g. if -XX:-UsePerfData 
+            // If the shared memory doesn't exist e.g. if -XX:-UsePerfData
             // was set
             noPerfData = true;
         } catch (IOException e) {

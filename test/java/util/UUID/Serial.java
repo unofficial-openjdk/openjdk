@@ -38,13 +38,13 @@ import java.util.*;
  */
 public class Serial {
     public static void main(String[] args) throws Exception {
-	UUID a = UUID.randomUUID();
-	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	ObjectOutputStream oos = new ObjectOutputStream(baos);
-	oos.writeObject(a);
-	ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-	ObjectInputStream ois = new ObjectInputStream(bais);
-	UUID b = (UUID)ois.readObject();
+        UUID a = UUID.randomUUID();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(a);
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        UUID b = (UUID)ois.readObject();
         if (!a.equals(b))
             throw new RuntimeException("UUIDs not equal");
         oos.close();

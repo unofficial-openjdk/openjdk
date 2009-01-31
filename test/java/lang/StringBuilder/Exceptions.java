@@ -33,11 +33,11 @@ public class Exceptions {
     private static void fail(Throwable ex, String s, Throwable got) {
         ok = false;
         System.err.println("expected "
-			   + ex.getClass().getName() + ": " + ex.getMessage()
-			   + " for " + s
-			   + " got "
-			   + got.getClass().getName() + ": " + got.getMessage() 
-			   + " - FAILED");
+                           + ex.getClass().getName() + ": " + ex.getMessage()
+                           + " for " + s
+                           + " got "
+                           + got.getClass().getName() + ": " + got.getMessage()
+                           + " - FAILED");
     }
 
     private static void pass(String s) {
@@ -49,19 +49,19 @@ public class Exceptions {
         try {
             thunk.run();
         } catch (Throwable x) {
-//          x.printStackTrace();	    
-	    if (ex.getClass().isAssignableFrom(x.getClass()))
+//          x.printStackTrace();
+            if (ex.getClass().isAssignableFrom(x.getClass()))
                 t = x;
             else
                 x.printStackTrace();
         }
         if ((t == null) && (ex != null))
             fail(ex, s, t);
-	
-	String msg = (ex == null ? null : ex.getMessage());
-	if ((msg != null) && !msg.equals(t.getMessage())) 
-	    fail(ex, s, t);
-	else
+
+        String msg = (ex == null ? null : ex.getMessage());
+        if ((msg != null) && !msg.equals(t.getMessage()))
+            fail(ex, s, t);
+        else
             pass(s);
     }
 
@@ -92,28 +92,28 @@ public class Exceptions {
                     new StringBuilder("foo");
                 }});
 
-	System.out.println("StringBuilder.replace(int start, int end, String str)");
-	tryCatch("  -1, 2, \" \"",
-		 new StringIndexOutOfBoundsException(-1),
-		 new Runnable() {
+        System.out.println("StringBuilder.replace(int start, int end, String str)");
+        tryCatch("  -1, 2, \" \"",
+                 new StringIndexOutOfBoundsException(-1),
+                 new Runnable() {
                 public void run() {
-		    StringBuilder sb = new StringBuilder("hilbert");
-		    sb.replace(-1, 2, " ");
-		}});
-	tryCatch("  7, 8, \" \"",
-		 new StringIndexOutOfBoundsException("start > length()"),
-		 new Runnable() {
+                    StringBuilder sb = new StringBuilder("hilbert");
+                    sb.replace(-1, 2, " ");
+                }});
+        tryCatch("  7, 8, \" \"",
+                 new StringIndexOutOfBoundsException("start > length()"),
+                 new Runnable() {
                 public void run() {
-		    StringBuilder sb = new StringBuilder("banach");
-		    sb.replace(7, 8, " ");
-		}});
-	tryCatch("  2, 1, \" \"",
-		 new StringIndexOutOfBoundsException("start > end"),
-		 new Runnable() {
+                    StringBuilder sb = new StringBuilder("banach");
+                    sb.replace(7, 8, " ");
+                }});
+        tryCatch("  2, 1, \" \"",
+                 new StringIndexOutOfBoundsException("start > end"),
+                 new Runnable() {
                 public void run() {
-		    StringBuilder sb = new StringBuilder("riemann");
-		    sb.replace(2, 1, " ");
-		}});
+                    StringBuilder sb = new StringBuilder("riemann");
+                    sb.replace(2, 1, " ");
+                }});
 
         if (!ok)
             throw new RuntimeException("Some tests FAILED");

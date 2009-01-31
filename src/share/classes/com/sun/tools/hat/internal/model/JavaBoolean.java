@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- * 
+ *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- * 
+ *
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- * 
+ *
  */
 
 package com.sun.tools.hat.internal.model;
@@ -46,7 +46,6 @@ package com.sun.tools.hat.internal.model;
 /**
  * Represents a boolean (i.e. a boolean field in an instance).
  *
- * @version     1.2, 03/06/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -56,11 +55,11 @@ public class JavaBoolean extends JavaValue {
     boolean value;
 
     public JavaBoolean(boolean value) {
-	this.value = value;
+        this.value = value;
     }
 
     public String toString() {
-	return "" + value;
+        return "" + value;
     }
 
 }

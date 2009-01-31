@@ -32,7 +32,6 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class FormatFlagsConversionMismatchException
@@ -55,10 +54,10 @@ public class FormatFlagsConversionMismatchException
      *         The conversion
      */
     public FormatFlagsConversionMismatchException(String f, char c) {
- 	if (f == null)
- 	    throw new NullPointerException();
-	this.f = f;
-	this.c = c;
+        if (f == null)
+            throw new NullPointerException();
+        this.f = f;
+        this.c = c;
     }
 
     /**
@@ -67,7 +66,7 @@ public class FormatFlagsConversionMismatchException
      * @return  The flag
      */
      public String getFlags() {
-	return f;
+        return f;
     }
 
     /**
@@ -76,10 +75,10 @@ public class FormatFlagsConversionMismatchException
      * @return  The conversion
      */
     public char getConversion() {
-	return c;
+        return c;
     }
 
     public String getMessage() {
-	return "Conversion = " + c + ", Flags = " + f;
+        return "Conversion = " + c + ", Flags = " + f;
     }
 }

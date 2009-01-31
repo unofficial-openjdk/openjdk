@@ -177,15 +177,15 @@ init_vis_bicubic_table(jdouble A)
 
 #define SAT(val, max) \
     do { \
-	val -= max;           /* only overflows are now positive */ \
-	val &= (val >> 31);   /* positives become 0 */ \
-	val += max;           /* range is now [0 -> max] */ \
+        val -= max;           /* only overflows are now positive */ \
+        val &= (val >> 31);   /* positives become 0 */ \
+        val += max;           /* range is now [0 -> max] */ \
     } while (0)
 
 void
 vis_BicubicBlend(jint *pRGB, jint numpix,
-		 jint xfract, jint dxfract,
-		 jint yfract, jint dyfract)
+                 jint xfract, jint dxfract,
+                 jint yfract, jint dyfract)
 {
   mlib_d64 *p_src = (void*)pRGB;
   union {
@@ -269,16 +269,16 @@ vis_BicubicBlend(jint *pRGB, jint numpix,
 
     p_dst.theF32 = vis_fpack16(a0);
     {
-	int a, r, g, b;
-	b = p_dst.theInt;
-	a = (b >> 24) & 0xff;
-	r = (b >> 16) & 0xff;
-	g = (b >>  8) & 0xff;
-	b = (b      ) & 0xff;
-	SAT(r, a);
-	SAT(g, a);
-	SAT(b, a);
-	*pRGB++ = ((a << 24) | (r << 16) | (g << 8) | (b));
+        int a, r, g, b;
+        b = p_dst.theInt;
+        a = (b >> 24) & 0xff;
+        r = (b >> 16) & 0xff;
+        g = (b >>  8) & 0xff;
+        b = (b      ) & 0xff;
+        SAT(r, a);
+        SAT(g, a);
+        SAT(b, a);
+        *pRGB++ = ((a << 24) | (r << 16) | (g << 8) | (b));
     }
   }
 }

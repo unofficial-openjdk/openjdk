@@ -38,7 +38,7 @@ import com.sun.jmx.snmp.SnmpUnknownMsgProcModelException;
 
 /**
  * Message processing sub system interface. To allow engine integration, a message processing sub system must implement this interface. This sub system is called by the dispatcher when receiving or sending calls.
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -53,7 +53,7 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The security sub system.
      */
     public SnmpSecuritySubSystem getSecuritySubSystem();
-    
+
     /**
      * This method is called when a call is received from the network.
      * @param model The model ID.
@@ -61,8 +61,8 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The object that will handle every steps of the receiving (mainly unmarshalling and security).
      */
     public SnmpIncomingRequest getIncomingRequest(int model,
-						  SnmpPduFactory factory) 
-	throws SnmpUnknownMsgProcModelException;	
+                                                  SnmpPduFactory factory)
+        throws SnmpUnknownMsgProcModelException;
     /**
      * This method is called when a call is to be sent to the network. The sub system routes the call to the dedicated model according to the model ID.
      * @param model The model ID.
@@ -70,7 +70,7 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The object that will handle every steps of the sending (mainly marshalling and security).
      */
     public SnmpOutgoingRequest getOutgoingRequest(int model,
-						  SnmpPduFactory factory) throws SnmpUnknownMsgProcModelException ;
+                                                  SnmpPduFactory factory) throws SnmpUnknownMsgProcModelException ;
     /**
      * This method is called to instantiate a pdu according to the passed pdu type and parameters. The sub system routes the call to the dedicated model according to the model ID.
      * @param model The model ID.
@@ -86,7 +86,7 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The object that will handle every steps of the receiving (mainly marshalling and security).
      */
     public SnmpIncomingResponse getIncomingResponse(int model,
-						    SnmpPduFactory factory) throws SnmpUnknownMsgProcModelException;
+                                                    SnmpPduFactory factory) throws SnmpUnknownMsgProcModelException;
     /**
      * This method is called to encode a full scoped pdu that as not been encrypted. <CODE>contextName</CODE>, <CODE>contextEngineID</CODE> and data are known. It will be routed to the dedicated model according to the version value.
      * <BR>The specified parameters are defined in RFC 2572 (see also the {@link com.sun.jmx.snmp.SnmpV3Message} class).
@@ -104,20 +104,20 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The encoded bytes number.
      */
     public int encode(int version,
-		      int msgID,
-		      int msgMaxSize,
-		      byte msgFlags,
-		      int msgSecurityModel,
-		      SnmpSecurityParameters params,
-		      byte[] contextEngineID,
-		      byte[] contextName,
-		      byte[] data,
-		      int dataLength,
-		      byte[] outputBytes) 
-	throws SnmpTooBigException, 
-	       SnmpUnknownMsgProcModelException ;
+                      int msgID,
+                      int msgMaxSize,
+                      byte msgFlags,
+                      int msgSecurityModel,
+                      SnmpSecurityParameters params,
+                      byte[] contextEngineID,
+                      byte[] contextName,
+                      byte[] data,
+                      int dataLength,
+                      byte[] outputBytes)
+        throws SnmpTooBigException,
+               SnmpUnknownMsgProcModelException ;
     /**
-     * This method is called to encode a full scoped pdu that as been encrypted. <CODE>contextName</CODE>, <CODE>contextEngineID</CODE> and data are not known. It will be routed to the dedicated model according to the version value. 
+     * This method is called to encode a full scoped pdu that as been encrypted. <CODE>contextName</CODE>, <CODE>contextEngineID</CODE> and data are not known. It will be routed to the dedicated model according to the version value.
      * <BR>The specified parameters are defined in RFC 2572 (see also the {@link com.sun.jmx.snmp.SnmpV3Message} class).
      * @param version The SNMP protocol version.
      * @param msgID The SNMP message ID.
@@ -130,35 +130,33 @@ public interface SnmpMsgProcessingSubSystem extends SnmpSubSystem {
      * @return The encoded bytes number.
      */
     public int encodePriv(int version,
-			  int msgID,
-			  int msgMaxSize,
-			  byte msgFlags,
-			  int msgSecurityModel,
-			  SnmpSecurityParameters params,
-			  byte[] encryptedPdu,
-			  byte[] outputBytes) throws SnmpTooBigException, SnmpUnknownMsgProcModelException;
+                          int msgID,
+                          int msgMaxSize,
+                          byte msgFlags,
+                          int msgSecurityModel,
+                          SnmpSecurityParameters params,
+                          byte[] encryptedPdu,
+                          byte[] outputBytes) throws SnmpTooBigException, SnmpUnknownMsgProcModelException;
 
      /**
-     * This method returns a decoded scoped pdu. This method decodes only the <CODE>contextEngineID</CODE>, <CODE>contextName</CODE> and data. It is needed by the <CODE>SnmpSecurityModel</CODE> after decryption. It will be routed to the dedicated model according to the version value. 
+     * This method returns a decoded scoped pdu. This method decodes only the <CODE>contextEngineID</CODE>, <CODE>contextName</CODE> and data. It is needed by the <CODE>SnmpSecurityModel</CODE> after decryption. It will be routed to the dedicated model according to the version value.
      * @param version The SNMP protocol version.
      * @param pdu The encoded pdu.
      * @return the partialy scoped pdu.
      */
     public SnmpDecryptedPdu decode(int version,
-				   byte[] pdu) 
-	throws SnmpStatusException, SnmpUnknownMsgProcModelException;
+                                   byte[] pdu)
+        throws SnmpStatusException, SnmpUnknownMsgProcModelException;
 
       /**
-     * This method returns an encoded scoped pdu. This method encodes only the <CODE>contextEngineID</CODE>, <CODE>contextName</CODE> and data. It is needed by the <CODE>SnmpSecurityModel</CODE> for decryption. It will be routed to the dedicated model according to the version value. 
+     * This method returns an encoded scoped pdu. This method encodes only the <CODE>contextEngineID</CODE>, <CODE>contextName</CODE> and data. It is needed by the <CODE>SnmpSecurityModel</CODE> for decryption. It will be routed to the dedicated model according to the version value.
      * @param version The SNMP protocol version.
      * @param pdu The pdu to encode.
      * @param outputBytes The partialy scoped pdu.
      * @return The encoded bytes number.
      */
     public int encode(int version,
-		      SnmpDecryptedPdu pdu,
-		      byte[] outputBytes) 
-	throws SnmpTooBigException, SnmpUnknownMsgProcModelException;
+                      SnmpDecryptedPdu pdu,
+                      byte[] outputBytes)
+        throws SnmpTooBigException, SnmpUnknownMsgProcModelException;
 }
-
-

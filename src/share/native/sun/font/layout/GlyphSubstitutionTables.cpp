@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)GlyphSubstitutionTables.cpp	1.18 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -44,12 +43,11 @@
 le_int32 GlyphSubstitutionTableHeader::process(LEGlyphStorage &glyphStorage,
     le_bool rightToLeft, LETag scriptTag, LETag languageTag,
     const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
-    const LEGlyphFilter *filter, const FeatureMap *featureMap, 
+    const LEGlyphFilter *filter, const FeatureMap *featureMap,
     le_int32 featureMapCount, le_bool featureOrder) const
 {
-    GlyphSubstitutionLookupProcessor processor(this, scriptTag, languageTag, filter, featureMap, 
+    GlyphSubstitutionLookupProcessor processor(this, scriptTag, languageTag, filter, featureMap,
         featureMapCount, featureOrder);
 
     return processor.process(glyphStorage, NULL, rightToLeft, glyphDefinitionTableHeader, NULL);
 }
-

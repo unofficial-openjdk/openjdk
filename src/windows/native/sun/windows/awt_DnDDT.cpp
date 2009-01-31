@@ -57,16 +57,16 @@ IDataObject* AwtDropTarget::sm_pCurrentDnDDataObject = (IDataObject*)NULL;
 AwtDropTarget::AwtDropTarget(JNIEnv* env, AwtComponent* component) {
 
     m_component     = component;
-    m_window	    = component->GetHWnd();
+    m_window        = component->GetHWnd();
     m_refs          = 1U;
-    m_target	    = env->NewGlobalRef(component->GetTarget(env));
+    m_target        = env->NewGlobalRef(component->GetTarget(env));
     m_registered    = 0;
     m_dataObject    = NULL;
-    m_formats	    = NULL;
-    m_nformats	    = 0;
-    m_dtcp    	    = NULL;
-    m_cfFormats	    = NULL;
-    m_mutex  	    = ::CreateMutex(NULL, FALSE, NULL);
+    m_formats       = NULL;
+    m_nformats      = 0;
+    m_dtcp          = NULL;
+    m_cfFormats     = NULL;
+    m_mutex         = ::CreateMutex(NULL, FALSE, NULL);
 }
 
 /**
@@ -76,7 +76,7 @@ AwtDropTarget::AwtDropTarget(JNIEnv* env, AwtComponent* component) {
 AwtDropTarget::~AwtDropTarget() {
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
-    // fix for 6212440: on application shutdown, this object's 
+    // fix for 6212440: on application shutdown, this object's
     // destruction might be suppressed due to dangling COM references.
     // On destruction, VM might be shut down already, so we should make
     // a null check on env.
@@ -95,8 +95,8 @@ AwtDropTarget::~AwtDropTarget() {
  */
 
 HRESULT __stdcall AwtDropTarget::QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) {
-    if ( IID_IUnknown == riid || 
-         IID_IDropTarget == riid ) 
+    if ( IID_IUnknown == riid ||
+         IID_IDropTarget == riid )
     {
         *ppvObject = static_cast<IDropTarget*>(this);
         AddRef();
@@ -140,54 +140,54 @@ HRESULT __stdcall AwtDropTarget::DragEnter(IDataObject __RPC_FAR *pDataObj, DWOR
     DWORD      retEffect = DROPEFFECT_NONE;
     jobject    dtcp = NULL;
 
-    if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(NULL)) || 
-	(IsLocalDnD()  && !IsLocalDataObject(pDataObj))) 
+    if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(NULL)) ||
+        (IsLocalDnD()  && !IsLocalDataObject(pDataObj)))
     {
-	*pdwEffect = retEffect;
-	return ret;
+        *pdwEffect = retEffect;
+        return ret;
     }
 
     dtcp = call_dTCcreate(env);
     if (dtcp) {
-	env->DeleteGlobalRef(m_dtcp);
-	m_dtcp = env->NewGlobalRef(dtcp);
-	env->DeleteLocalRef(dtcp);
+        env->DeleteGlobalRef(m_dtcp);
+        m_dtcp = env->NewGlobalRef(dtcp);
+        env->DeleteLocalRef(dtcp);
     }
 
     if (JNU_IsNull(env, m_dtcp) || !JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	return ret;
+        return ret;
     }
 
     LoadCache(pDataObj);
 
     {
         POINT cp;
-	RECT  wr;
+        RECT  wr;
 
-	::GetWindowRect(m_window, &wr);
-	
-    	cp.x = pt.x - wr.left;
-	cp.y = pt.y - wr.top;
+        ::GetWindowRect(m_window, &wr);
 
-        jint actions = call_dTCenter(env, m_dtcp, m_target, 
+        cp.x = pt.x - wr.left;
+        cp.y = pt.y - wr.top;
+
+        jint actions = call_dTCenter(env, m_dtcp, m_target,
                                      (jint)cp.x, (jint)cp.y,
                                      ::convertDROPEFFECTToActions(mapModsToDROPEFFECT(*pdwEffect, grfKeyState)),
                                      ::convertDROPEFFECTToActions(*pdwEffect),
                                      m_cfFormats, (jlong)this);
 
-	try {
-	    if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	        env->ExceptionDescribe();
-		env->ExceptionClear();
-		actions = java_awt_dnd_DnDConstants_ACTION_NONE;
-	    }
-	} catch (std::bad_alloc&) {
-	    retEffect = ::convertActionsToDROPEFFECT(actions);
-	    *pdwEffect = retEffect;
-	    throw;
-	}
+        try {
+            if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
+                env->ExceptionDescribe();
+                env->ExceptionClear();
+                actions = java_awt_dnd_DnDConstants_ACTION_NONE;
+            }
+        } catch (std::bad_alloc&) {
+            retEffect = ::convertActionsToDROPEFFECT(actions);
+            *pdwEffect = retEffect;
+            throw;
+        }
 
-	retEffect = ::convertActionsToDROPEFFECT(actions);
+        retEffect = ::convertActionsToDROPEFFECT(actions);
     }
 
     *pdwEffect = retEffect;
@@ -211,12 +211,12 @@ HRESULT __stdcall AwtDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD __
     POINT   cp;
     RECT    wr;
     jint    actions;
-	
+
     if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(m_dataObject)) ||
-	(IsLocalDnD()  && !IsLocalDataObject(m_dataObject))) 
+        (IsLocalDnD()  && !IsLocalDataObject(m_dataObject)))
     {
-	*pdwEffect = DROPEFFECT_NONE;
-	return ret;
+        *pdwEffect = DROPEFFECT_NONE;
+        return ret;
     }
 
     ::GetWindowRect(m_window, &wr);
@@ -231,13 +231,13 @@ HRESULT __stdcall AwtDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD __
 
     try {
         if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	    env->ExceptionDescribe();
-	    env->ExceptionClear();
-	    actions = java_awt_dnd_DnDConstants_ACTION_NONE;
-	}
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            actions = java_awt_dnd_DnDConstants_ACTION_NONE;
+        }
     } catch (std::bad_alloc&) {
         *pdwEffect = ::convertActionsToDROPEFFECT(actions);
-	throw;
+        throw;
     }
 
     *pdwEffect = ::convertActionsToDROPEFFECT(actions);
@@ -258,24 +258,24 @@ HRESULT __stdcall AwtDropTarget::DragLeave() {
 
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     HRESULT ret = S_OK;
-    
+
     if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(m_dataObject)) ||
-	(IsLocalDnD()  && !IsLocalDataObject(m_dataObject))) 
+        (IsLocalDnD()  && !IsLocalDataObject(m_dataObject)))
     {
         DragCleanup();
-	return ret;
+        return ret;
     }
 
     call_dTCexit(env, m_dtcp, m_target, (jlong)this);
 
     try {
         if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	    env->ExceptionDescribe();
-	    env->ExceptionClear();
-	}
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
     } catch (std::bad_alloc&) {
         DragCleanup();
-	throw;
+        throw;
     }
 
     DragCleanup();
@@ -291,20 +291,20 @@ HRESULT __stdcall AwtDropTarget::DragLeave() {
 
 HRESULT __stdcall AwtDropTarget::Drop(IDataObject __RPC_FAR *pDataObj, DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect) {
     TRY;
-    
+
     AwtInterfaceLocker _lk(this);
 
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     HRESULT ret = S_OK;
     POINT   cp;
     RECT    wr;
-	
-    if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(pDataObj)) || 
-	(IsLocalDnD()  && !IsLocalDataObject(pDataObj))) 
+
+    if ( (!IsLocalDnD() && !IsCurrentDnDDataObject(pDataObj)) ||
+        (IsLocalDnD()  && !IsLocalDataObject(pDataObj)))
     {
-	*pdwEffect = DROPEFFECT_NONE;
-	DragCleanup();
-	return ret;
+        *pdwEffect = DROPEFFECT_NONE;
+        DragCleanup();
+        return ret;
     }
 
     LoadCache(pDataObj);
@@ -323,23 +323,23 @@ HRESULT __stdcall AwtDropTarget::Drop(IDataObject __RPC_FAR *pDataObj, DWORD grf
 
     try {
         if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	    env->ExceptionDescribe();
-	    env->ExceptionClear();
-	    ret = E_FAIL;
-	}
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            ret = E_FAIL;
+        }
     } catch (std::bad_alloc&) {
         AwtToolkit::GetInstance().MessageLoop(AwtToolkit::SecondaryIdleFunc,
                                               AwtToolkit::CommonPeekMessageFunc);
-	*pdwEffect = ::convertActionsToDROPEFFECT(m_dropActions);
-	DragCleanup();
-	throw;
+        *pdwEffect = ::convertActionsToDROPEFFECT(m_dropActions);
+        DragCleanup();
+        throw;
     }
 
     /*
      * Fix for 4623377.
      * Dispatch all messages in the nested message loop running while the drop is
      * processed. This ensures that the modal dialog shown during drop receives
-     * all events and so it is able to close. This way the app won't deadlock. 
+     * all events and so it is able to close. This way the app won't deadlock.
      */
     AwtToolkit::GetInstance().MessageLoop(AwtToolkit::SecondaryIdleFunc,
                                           AwtToolkit::CommonPeekMessageFunc);
@@ -401,13 +401,13 @@ void AwtDropTarget::_RegisterTarget(void* param) {
 void AwtDropTarget::RegisterTarget(WORD show) {
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     HRESULT res;
- 
+
     if (!AwtToolkit::IsMainThread()) {
-	RegisterTargetRec rtr = { this, show };
+        RegisterTargetRec rtr = { this, show };
 
-	AwtToolkit::GetInstance().InvokeFunction(_RegisterTarget, &rtr);
+        AwtToolkit::GetInstance().InvokeFunction(_RegisterTarget, &rtr);
 
-	return;
+        return;
     }
 
     // if we are'nt yet visible, defer until the parent is!
@@ -415,7 +415,7 @@ void AwtDropTarget::RegisterTarget(WORD show) {
     if (show) {
         res = ::RegisterDragDrop(m_window, (IDropTarget*)this);
     } else {
-	res = ::RevokeDragDrop(m_window);
+        res = ::RevokeDragDrop(m_window);
     }
 
     if (res == S_OK) m_registered = show;
@@ -510,7 +510,7 @@ jobject AwtDropTarget::GetData(jlong fmt) {
     jbyteArray paletteDataLocal = NULL;
 
     switch (stgmedium.tymed) {
-	case TYMED_HGLOBAL: {
+        case TYMED_HGLOBAL: {
             if (fmt == CF_LOCALE) {
                 LCID *lcid = (LCID *)::GlobalLock(stgmedium.hGlobal);
                 if (lcid == NULL) {
@@ -528,8 +528,8 @@ jobject AwtDropTarget::GetData(jlong fmt) {
                 ::ReleaseStgMedium(&stgmedium);
             } else {
                 ::SetLastError(0); // clear error
-                // Warning C4244. 
-                // Cast SIZE_T (__int64 on 64-bit/unsigned int on 32-bit) 
+                // Warning C4244.
+                // Cast SIZE_T (__int64 on 64-bit/unsigned int on 32-bit)
                 // to jsize (long).
                 SIZE_T globalSize = ::GlobalSize(stgmedium.hGlobal);
                 jsize size = (globalSize <= INT_MAX) ? (jsize)globalSize : INT_MAX;
@@ -554,202 +554,202 @@ jobject AwtDropTarget::GetData(jlong fmt) {
             }
             break;
         }
-	case TYMED_FILE: {
-	    jobject local = JNU_NewStringPlatform(env, (LPCTSTR)
-						  stgmedium.lpszFileName);
-	    jstring fileName = (jstring)env->NewGlobalRef(local);
-	    env->DeleteLocalRef(local);
+        case TYMED_FILE: {
+            jobject local = JNU_NewStringPlatform(env, (LPCTSTR)
+                                                  stgmedium.lpszFileName);
+            jstring fileName = (jstring)env->NewGlobalRef(local);
+            env->DeleteLocalRef(local);
 
-	    STGMEDIUM *stgm = NULL;
-	    try {
-	        stgm = (STGMEDIUM *)safe_Malloc(sizeof(STGMEDIUM));
-	    } catch (std::bad_alloc&) {
-	        env->DeleteGlobalRef(fileName);
-		::ReleaseStgMedium(&stgmedium);
-		throw;
-	    }
-	    memcpy(stgm, &stgmedium, sizeof(STGMEDIUM));
+            STGMEDIUM *stgm = NULL;
+            try {
+                stgm = (STGMEDIUM *)safe_Malloc(sizeof(STGMEDIUM));
+            } catch (std::bad_alloc&) {
+                env->DeleteGlobalRef(fileName);
+                ::ReleaseStgMedium(&stgmedium);
+                throw;
+            }
+            memcpy(stgm, &stgmedium, sizeof(STGMEDIUM));
 
-            // Warning C4311. 
+            // Warning C4311.
             // Cast pointer to jlong (__int64).
             ret = call_dTCgetfs(env, fileName, (jlong)stgm);
-	    try {
-	        if (JNU_IsNull(env, ret) ||
-		        !JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-		    env->DeleteGlobalRef(fileName);
-		    free((void*)stgm);
-		    ::ReleaseStgMedium(&stgmedium);
-		    return (jobject)NULL;
-		}
-	    } catch (std::bad_alloc&) {
-	        env->DeleteGlobalRef(fileName);
-		free((void*)stgm);
-		::ReleaseStgMedium(&stgmedium);
-		throw;
-	    }
-	    break;
-	}
+            try {
+                if (JNU_IsNull(env, ret) ||
+                        !JNU_IsNull(env, safe_ExceptionOccurred(env))) {
+                    env->DeleteGlobalRef(fileName);
+                    free((void*)stgm);
+                    ::ReleaseStgMedium(&stgmedium);
+                    return (jobject)NULL;
+                }
+            } catch (std::bad_alloc&) {
+                env->DeleteGlobalRef(fileName);
+                free((void*)stgm);
+                ::ReleaseStgMedium(&stgmedium);
+                throw;
+            }
+            break;
+        }
 
-	case TYMED_ISTREAM: {
-	   WDTCPIStreamWrapper* istream = new WDTCPIStreamWrapper(&stgmedium);
+        case TYMED_ISTREAM: {
+           WDTCPIStreamWrapper* istream = new WDTCPIStreamWrapper(&stgmedium);
 
-           // Warning C4311. 
+           // Warning C4311.
            // Cast pointer to jlong (__int64).
            ret = call_dTCgetis(env, (jlong)istream);
-	   try {
-	       if (JNU_IsNull(env, ret) ||
-		       !JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-		   istream->Close();
-		   return (jobject)NULL;
-	       }
-	   } catch (std::bad_alloc&) {
-	       istream->Close();
-	       throw;
-	   }
-	   break;
-	}
+           try {
+               if (JNU_IsNull(env, ret) ||
+                       !JNU_IsNull(env, safe_ExceptionOccurred(env))) {
+                   istream->Close();
+                   return (jobject)NULL;
+               }
+           } catch (std::bad_alloc&) {
+               istream->Close();
+               throw;
+           }
+           break;
+        }
 
-	case TYMED_GDI:
-	    // Currently support only CF_PALETTE for TYMED_GDI.
-	    switch (fmt) {
-	    case CF_PALETTE: {
-		ret = AwtDataTransferer::GetPaletteBytes(stgmedium.hBitmap, 
-							 0, TRUE);
-		break;
-	    }
-	    }
-	    ::ReleaseStgMedium(&stgmedium);
-	    break;
-        case TYMED_MFPICT: 
+        case TYMED_GDI:
+            // Currently support only CF_PALETTE for TYMED_GDI.
+            switch (fmt) {
+            case CF_PALETTE: {
+                ret = AwtDataTransferer::GetPaletteBytes(stgmedium.hBitmap,
+                                                         0, TRUE);
+                break;
+            }
+            }
+            ::ReleaseStgMedium(&stgmedium);
+            break;
+        case TYMED_MFPICT:
         case TYMED_ENHMF: {
-	    HENHMETAFILE hEnhMetaFile = NULL;
-	    LPBYTE lpEmfBits = NULL;
-	    
-	    if (stgmedium.tymed == TYMED_MFPICT) {
-		LPMETAFILEPICT lpMetaFilePict = 
-		    (LPMETAFILEPICT)::GlobalLock(stgmedium.hMetaFilePict);
-		UINT uSize = ::GetMetaFileBitsEx(lpMetaFilePict->hMF, 0, NULL);
-		DASSERT(uSize != 0);
+            HENHMETAFILE hEnhMetaFile = NULL;
+            LPBYTE lpEmfBits = NULL;
 
-		try {
-		    LPBYTE lpMfBits = (LPBYTE)safe_Malloc(uSize);
-		    VERIFY(::GetMetaFileBitsEx(lpMetaFilePict->hMF, uSize, 
-					       lpMfBits) == uSize);
-		    hEnhMetaFile = ::SetWinMetaFileBits(uSize,
-							lpMfBits,
-							NULL,
-							lpMetaFilePict);
-		    free(lpMfBits);
-		} catch (...) {
-		    ::GlobalUnlock(stgmedium.hMetaFilePict);
-		    throw;
-		}
-		::GlobalUnlock(stgmedium.hMetaFilePict);
-	    } else {
-		hEnhMetaFile = stgmedium.hEnhMetaFile;
-	    }
+            if (stgmedium.tymed == TYMED_MFPICT) {
+                LPMETAFILEPICT lpMetaFilePict =
+                    (LPMETAFILEPICT)::GlobalLock(stgmedium.hMetaFilePict);
+                UINT uSize = ::GetMetaFileBitsEx(lpMetaFilePict->hMF, 0, NULL);
+                DASSERT(uSize != 0);
 
-	    try {
-		paletteDataLocal = 
-		    AwtDataTransferer::GetPaletteBytes(hEnhMetaFile,
-						       OBJ_ENHMETAFILE,
-						       FALSE);
-		    
-		UINT uEmfSize = ::GetEnhMetaFileBits(hEnhMetaFile, 0, NULL);
-		DASSERT(uEmfSize != 0);
+                try {
+                    LPBYTE lpMfBits = (LPBYTE)safe_Malloc(uSize);
+                    VERIFY(::GetMetaFileBitsEx(lpMetaFilePict->hMF, uSize,
+                                               lpMfBits) == uSize);
+                    hEnhMetaFile = ::SetWinMetaFileBits(uSize,
+                                                        lpMfBits,
+                                                        NULL,
+                                                        lpMetaFilePict);
+                    free(lpMfBits);
+                } catch (...) {
+                    ::GlobalUnlock(stgmedium.hMetaFilePict);
+                    throw;
+                }
+                ::GlobalUnlock(stgmedium.hMetaFilePict);
+            } else {
+                hEnhMetaFile = stgmedium.hEnhMetaFile;
+            }
 
-		lpEmfBits = (LPBYTE)safe_Malloc(uEmfSize);
-		VERIFY(::GetEnhMetaFileBits(hEnhMetaFile, uEmfSize, 
-					    lpEmfBits) == uEmfSize);
-		
-		if (stgmedium.tymed == TYMED_MFPICT) {
-		    ::DeleteEnhMetaFile(hEnhMetaFile);
-		} else {
-		    ::ReleaseStgMedium(&stgmedium);
-		}
-		hEnhMetaFile = NULL;
-	    
-		jbyteArray bytes = env->NewByteArray(uEmfSize);
-		if (bytes == NULL) {
-		    throw std::bad_alloc();
-		}
+            try {
+                paletteDataLocal =
+                    AwtDataTransferer::GetPaletteBytes(hEnhMetaFile,
+                                                       OBJ_ENHMETAFILE,
+                                                       FALSE);
 
-		env->SetByteArrayRegion(bytes, 0, uEmfSize, (jbyte*)lpEmfBits);
-		free(lpEmfBits);
-		lpEmfBits = NULL;
+                UINT uEmfSize = ::GetEnhMetaFileBits(hEnhMetaFile, 0, NULL);
+                DASSERT(uEmfSize != 0);
 
-		ret = bytes;
-	    } catch (...) {
-		if (!JNU_IsNull(env, paletteDataLocal)) {
-		    env->DeleteLocalRef(paletteDataLocal);
-		    paletteDataLocal = NULL;
-		}
-		if (hEnhMetaFile != NULL) {
-		    if (stgmedium.tymed == TYMED_MFPICT) {
-			::DeleteEnhMetaFile(hEnhMetaFile);
-		    } else {
-			::ReleaseStgMedium(&stgmedium);
-		    }
-		    hEnhMetaFile = NULL;
-		}
-		if (lpEmfBits != NULL) {
-		    free(lpEmfBits);
-		    lpEmfBits = NULL;
-		}
-		throw;
-	    }
-	    break;
-	}
-	case TYMED_ISTORAGE:
-	default:
-	    ::ReleaseStgMedium(&stgmedium);
-	    return (jobject)NULL;
+                lpEmfBits = (LPBYTE)safe_Malloc(uEmfSize);
+                VERIFY(::GetEnhMetaFileBits(hEnhMetaFile, uEmfSize,
+                                            lpEmfBits) == uEmfSize);
+
+                if (stgmedium.tymed == TYMED_MFPICT) {
+                    ::DeleteEnhMetaFile(hEnhMetaFile);
+                } else {
+                    ::ReleaseStgMedium(&stgmedium);
+                }
+                hEnhMetaFile = NULL;
+
+                jbyteArray bytes = env->NewByteArray(uEmfSize);
+                if (bytes == NULL) {
+                    throw std::bad_alloc();
+                }
+
+                env->SetByteArrayRegion(bytes, 0, uEmfSize, (jbyte*)lpEmfBits);
+                free(lpEmfBits);
+                lpEmfBits = NULL;
+
+                ret = bytes;
+            } catch (...) {
+                if (!JNU_IsNull(env, paletteDataLocal)) {
+                    env->DeleteLocalRef(paletteDataLocal);
+                    paletteDataLocal = NULL;
+                }
+                if (hEnhMetaFile != NULL) {
+                    if (stgmedium.tymed == TYMED_MFPICT) {
+                        ::DeleteEnhMetaFile(hEnhMetaFile);
+                    } else {
+                        ::ReleaseStgMedium(&stgmedium);
+                    }
+                    hEnhMetaFile = NULL;
+                }
+                if (lpEmfBits != NULL) {
+                    free(lpEmfBits);
+                    lpEmfBits = NULL;
+                }
+                throw;
+            }
+            break;
+        }
+        case TYMED_ISTORAGE:
+        default:
+            ::ReleaseStgMedium(&stgmedium);
+            return (jobject)NULL;
     }
 
     if (ret == NULL) {
-	return (jobject)NULL;
+        return (jobject)NULL;
     }
-	
+
     switch (fmt) {
     case CF_METAFILEPICT:
     case CF_ENHMETAFILE:
-	// If we failed to retrieve palette entries from metafile,
-	// fall through and try CF_PALETTE format.
+        // If we failed to retrieve palette entries from metafile,
+        // fall through and try CF_PALETTE format.
     case CF_DIB: {
-	if (JNU_IsNull(env, paletteDataLocal)) {
-	    jobject paletteData = GetData(CF_PALETTE);
-	    
-	    if (JNU_IsNull(env, paletteData)) {
-		paletteDataLocal = 
-		    AwtDataTransferer::GetPaletteBytes(NULL, 0, TRUE);
-	    } else {
-		// GetData() returns a global ref. 
-		// We want to deal with local ref.
-		paletteDataLocal = (jbyteArray)env->NewLocalRef(paletteData);
-		env->DeleteGlobalRef(paletteData);
-	    }
-	}
-	DASSERT(!JNU_IsNull(env, paletteDataLocal) && 
-		!JNU_IsNull(env, ret));
-	
+        if (JNU_IsNull(env, paletteDataLocal)) {
+            jobject paletteData = GetData(CF_PALETTE);
+
+            if (JNU_IsNull(env, paletteData)) {
+                paletteDataLocal =
+                    AwtDataTransferer::GetPaletteBytes(NULL, 0, TRUE);
+            } else {
+                // GetData() returns a global ref.
+                // We want to deal with local ref.
+                paletteDataLocal = (jbyteArray)env->NewLocalRef(paletteData);
+                env->DeleteGlobalRef(paletteData);
+            }
+        }
+        DASSERT(!JNU_IsNull(env, paletteDataLocal) &&
+                !JNU_IsNull(env, ret));
+
         jobject concat = AwtDataTransferer::ConcatData(env, paletteDataLocal, ret);
 
-	if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-	    env->ExceptionDescribe();
-	    env->ExceptionClear();
-	    env->DeleteLocalRef(ret);
-	    env->DeleteLocalRef(paletteDataLocal);
-	    return (jobject)NULL;
-	}
-	
-	env->DeleteLocalRef(ret);
-	env->DeleteLocalRef(paletteDataLocal);
-	ret = concat;
-	
-	break;
-    } 
+        if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            env->DeleteLocalRef(ret);
+            env->DeleteLocalRef(paletteDataLocal);
+            return (jobject)NULL;
+        }
+
+        env->DeleteLocalRef(ret);
+        env->DeleteLocalRef(paletteDataLocal);
+        ret = concat;
+
+        break;
     }
-    
+    }
+
     jobject global = env->NewGlobalRef(ret);
     env->DeleteLocalRef(ret);
     return global;
@@ -775,13 +775,13 @@ const unsigned int AwtDropTarget::CACHE_INCR = 16;
 void AwtDropTarget::LoadCache(IDataObject* pDataObj) {
     JNIEnv*      env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     unsigned int cnt = 0;
-    HRESULT  	 res;
+    HRESULT      res;
     IEnumFORMATETC* pEnumFormatEtc = NULL;
 
     if (m_dataObject != (IDataObject*)NULL) UnloadCache();
 
     if (!IsLocalDnD()) {
-	SetCurrentDnDDataObject(pDataObj);
+        SetCurrentDnDDataObject(pDataObj);
     }
 
     (m_dataObject = pDataObj)->AddRef();
@@ -790,39 +790,39 @@ void AwtDropTarget::LoadCache(IDataObject* pDataObj) {
 
     if (res == S_OK) {
     for (;;) {
-	
-	FORMATETC tmp;
-	ULONG	  actual = 1;
+
+        FORMATETC tmp;
+        ULONG     actual = 1;
 
             res = pEnumFormatEtc->Next((ULONG)1, &tmp, &actual);
 
-	if (res == S_FALSE) break;
+        if (res == S_FALSE) break;
 
-	if (!(tmp.cfFormat  >= 1                &&
-	      tmp.ptd       == NULL	        &&
-	      tmp.lindex    == -1   	        &&
-	      tmp.dwAspect  == DVASPECT_CONTENT &&
-	      (tmp.tymed    == TYMED_HGLOBAL    ||
-	       tmp.tymed    == TYMED_FILE       ||
-	       tmp.tymed    == TYMED_ISTREAM    ||
-	       tmp.tymed    == TYMED_GDI        ||
-	       tmp.tymed    == TYMED_MFPICT     ||
-	       tmp.tymed    == TYMED_ENHMF
-	      ) // but not ISTORAGE
-	     )
- 	) continue;
+        if (!(tmp.cfFormat  >= 1                &&
+              tmp.ptd       == NULL             &&
+              tmp.lindex    == -1               &&
+              tmp.dwAspect  == DVASPECT_CONTENT &&
+              (tmp.tymed    == TYMED_HGLOBAL    ||
+               tmp.tymed    == TYMED_FILE       ||
+               tmp.tymed    == TYMED_ISTREAM    ||
+               tmp.tymed    == TYMED_GDI        ||
+               tmp.tymed    == TYMED_MFPICT     ||
+               tmp.tymed    == TYMED_ENHMF
+              ) // but not ISTORAGE
+             )
+        ) continue;
 
-	if (m_dataObject->QueryGetData(&tmp) != S_OK) continue;
+        if (m_dataObject->QueryGetData(&tmp) != S_OK) continue;
 
-	if (m_nformats % CACHE_INCR == 0) {
-	    m_formats = (FORMATETC *)safe_Realloc(m_formats,
-						  (CACHE_INCR + m_nformats) *
-						  sizeof(FORMATETC));
-	}
+        if (m_nformats % CACHE_INCR == 0) {
+            m_formats = (FORMATETC *)safe_Realloc(m_formats,
+                                                  (CACHE_INCR + m_nformats) *
+                                                  sizeof(FORMATETC));
+        }
 
-	memcpy(m_formats + m_nformats, &tmp, sizeof(FORMATETC));
+        memcpy(m_formats + m_nformats, &tmp, sizeof(FORMATETC));
 
-	m_nformats++;
+        m_nformats++;
     }
 
         // We are responsible for releasing the enumerator.
@@ -830,8 +830,8 @@ void AwtDropTarget::LoadCache(IDataObject* pDataObj) {
     }
 
     if (m_nformats > 0) {
-	qsort((void*)m_formats, m_nformats, sizeof(FORMATETC),
-	      AwtDropTarget::_compar);
+        qsort((void*)m_formats, m_nformats, sizeof(FORMATETC),
+              AwtDropTarget::_compar);
     }
 
     if (m_cfFormats != NULL) {
@@ -868,7 +868,7 @@ void AwtDropTarget::UnloadCache() {
     m_formats  = (FORMATETC *)NULL;
     m_nformats = 0;
 
-    // fix for 6212440: on application shutdown, this object's 
+    // fix for 6212440: on application shutdown, this object's
     // destruction might be suppressed due to dangling COM references.
     // This method is called from the destructor.
     // On destruction, VM might be shut down already, so we should make
@@ -879,8 +879,8 @@ void AwtDropTarget::UnloadCache() {
     m_cfFormats = NULL;
 
     if (!IsLocalDnD()) {
-	DASSERT(IsCurrentDnDDataObject(m_dataObject));
-	SetCurrentDnDDataObject(NULL);
+        DASSERT(IsCurrentDnDDataObject(m_dataObject));
+        SetCurrentDnDDataObject(NULL);
     }
 
     m_dataObject->Release();
@@ -899,33 +899,33 @@ BOOL AwtDropTarget::IsLocalDataObject(IDataObject __RPC_FAR *pDataObject) {
     BOOL local = FALSE;
 
     if (pDataObject != NULL) {
-	FORMATETC format;
-	STGMEDIUM stgmedium;
+        FORMATETC format;
+        STGMEDIUM stgmedium;
 
-	format.cfFormat = AwtDragSource::PROCESS_ID_FORMAT;
-	format.ptd      = NULL;
-	format.dwAspect = DVASPECT_CONTENT;
-	format.lindex   = -1;
-	format.tymed    = TYMED_HGLOBAL;
+        format.cfFormat = AwtDragSource::PROCESS_ID_FORMAT;
+        format.ptd      = NULL;
+        format.dwAspect = DVASPECT_CONTENT;
+        format.lindex   = -1;
+        format.tymed    = TYMED_HGLOBAL;
 
-	if (pDataObject->GetData(&format, &stgmedium) == S_OK) {
+        if (pDataObject->GetData(&format, &stgmedium) == S_OK) {
             ::SetLastError(0); // clear error
-            // Warning C4244. 
-	    SIZE_T size = ::GlobalSize(stgmedium.hGlobal);
+            // Warning C4244.
+            SIZE_T size = ::GlobalSize(stgmedium.hGlobal);
             if (size < sizeof(DWORD) || ::GetLastError() != 0) {
-	        ::SetLastError(0); // clear error
-	    } else {
+                ::SetLastError(0); // clear error
+            } else {
 
-		DWORD id = ::CoGetCurrentProcess();
+                DWORD id = ::CoGetCurrentProcess();
 
-		LPVOID data = ::GlobalLock(stgmedium.hGlobal);
-		if (memcmp(data, &id, sizeof(id)) == 0) {
-		    local = TRUE;
-		}
-		::GlobalUnlock(stgmedium.hGlobal);
-	    }
-	    ::ReleaseStgMedium(&stgmedium);
-	}
+                LPVOID data = ::GlobalLock(stgmedium.hGlobal);
+                if (memcmp(data, &id, sizeof(id)) == 0) {
+                    local = TRUE;
+                }
+                ::GlobalUnlock(stgmedium.hGlobal);
+            }
+            ::ReleaseStgMedium(&stgmedium);
+        }
     }
 
     return local;
@@ -933,26 +933,26 @@ BOOL AwtDropTarget::IsLocalDataObject(IDataObject __RPC_FAR *pDataObject) {
 
 DECLARE_JAVA_CLASS(dTCClazz, "sun/awt/windows/WDropTargetContextPeer")
 
-jobject 
+jobject
 AwtDropTarget::call_dTCcreate(JNIEnv* env) {
-    DECLARE_STATIC_OBJECT_JAVA_METHOD(dTCcreate, dTCClazz, 
+    DECLARE_STATIC_OBJECT_JAVA_METHOD(dTCcreate, dTCClazz,
                                       "getWDropTargetContextPeer",
                                       "()Lsun/awt/windows/WDropTargetContextPeer;");
     return env->CallStaticObjectMethod(clazz, dTCcreate);
 }
 
-jint 
-AwtDropTarget::call_dTCenter(JNIEnv* env, jobject self, jobject component, jint x, jint y, 
-              jint dropAction, jint actions, jlongArray formats, 
+jint
+AwtDropTarget::call_dTCenter(JNIEnv* env, jobject self, jobject component, jint x, jint y,
+              jint dropAction, jint actions, jlongArray formats,
               jlong nativeCtxt) {
     DECLARE_JINT_JAVA_METHOD(dTCenter, dTCClazz, "handleEnterMessage",
                             "(Ljava/awt/Component;IIII[JJ)I");
     DASSERT(!JNU_IsNull(env, self));
     return env->CallIntMethod(self, dTCenter, component, x, y, dropAction,
-                              actions, formats, nativeCtxt); 
+                              actions, formats, nativeCtxt);
 }
 
-void 
+void
 AwtDropTarget::call_dTCexit(JNIEnv* env, jobject self, jobject component, jlong nativeCtxt) {
     DECLARE_VOID_JAVA_METHOD(dTCexit, dTCClazz, "handleExitMessage",
                             "(Ljava/awt/Component;J)V");
@@ -960,9 +960,9 @@ AwtDropTarget::call_dTCexit(JNIEnv* env, jobject self, jobject component, jlong 
     env->CallVoidMethod(self, dTCexit, component, nativeCtxt);
 }
 
-jint 
+jint
 AwtDropTarget::call_dTCmotion(JNIEnv* env, jobject self, jobject component, jint x, jint y,
-               jint dropAction, jint actions, jlongArray formats, 
+               jint dropAction, jint actions, jlongArray formats,
                jlong nativeCtxt) {
     DECLARE_JINT_JAVA_METHOD(dTCmotion, dTCClazz, "handleMotionMessage",
                             "(Ljava/awt/Component;IIII[JJ)I");
@@ -971,9 +971,9 @@ AwtDropTarget::call_dTCmotion(JNIEnv* env, jobject self, jobject component, jint
                                  dropAction, actions, formats, nativeCtxt);
 }
 
-void 
-AwtDropTarget::call_dTCdrop(JNIEnv* env, jobject self, jobject component, jint x, jint y, 
-             jint dropAction, jint actions, jlongArray formats, 
+void
+AwtDropTarget::call_dTCdrop(JNIEnv* env, jobject self, jobject component, jint x, jint y,
+             jint dropAction, jint actions, jlongArray formats,
              jlong nativeCtxt) {
     DECLARE_VOID_JAVA_METHOD(dTCdrop, dTCClazz, "handleDropMessage",
                             "(Ljava/awt/Component;IIII[JJ)V");
@@ -982,16 +982,16 @@ AwtDropTarget::call_dTCdrop(JNIEnv* env, jobject self, jobject component, jint x
                            dropAction, actions, formats, nativeCtxt);
 }
 
-jobject 
+jobject
 AwtDropTarget::call_dTCgetfs(JNIEnv* env, jstring fileName, jlong stgmedium) {
     DECLARE_STATIC_OBJECT_JAVA_METHOD(dTCgetfs, dTCClazz, "getFileStream",
                                       "(Ljava/lang/String;J)Ljava/io/FileInputStream;");
     return env->CallStaticObjectMethod(clazz, dTCgetfs, fileName, stgmedium);
 }
 
-jobject 
+jobject
 AwtDropTarget::call_dTCgetis(JNIEnv* env, jlong istream) {
-    DECLARE_STATIC_OBJECT_JAVA_METHOD(dTCgetis, dTCClazz, "getIStream", 
+    DECLARE_STATIC_OBJECT_JAVA_METHOD(dTCgetis, dTCClazz, "getIStream",
                                       "(J)Ljava/lang/Object;");
     return env->CallStaticObjectMethod(clazz, dTCgetis, istream);
 }
@@ -1012,13 +1012,13 @@ WDTCPIStreamWrapper::WDTCPIStreamWrapper(STGMEDIUM* stgmedium) {
     m_mutex     = ::CreateMutex(NULL, FALSE, NULL);
 
     if (javaIOExceptionClazz == (jclass)NULL) {
-	javaIOExceptionClazz = env->FindClass("java/io/IOException");
+        javaIOExceptionClazz = env->FindClass("java/io/IOException");
 
         if (JNU_IsNull(env, javaIOExceptionClazz)) {
             env->ThrowNew(env->FindClass("java/lang/ClassNotFoundException"),
-    		          "Cant find java/io/IOException"
+                          "Cant find java/io/IOException"
             );
-    	}
+        }
     }
 }
 
@@ -1068,13 +1068,13 @@ jint WDTCPIStreamWrapper::Available() {
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (m_istream->Stat(&m_statstg, STATFLAG_NONAME) != S_OK) {
-	env->ThrowNew(javaIOExceptionClazz, "IStream::Stat() failed");
-	return 0;
+        env->ThrowNew(javaIOExceptionClazz, "IStream::Stat() failed");
+        return 0;
     }
 
     if (m_statstg.cbSize.QuadPart > 0x7ffffffL) {
-	env->ThrowNew(javaIOExceptionClazz, "IStream::Stat() cbSize > 0x7ffffff");
-	return 0;
+        env->ThrowNew(javaIOExceptionClazz, "IStream::Stat() cbSize > 0x7ffffff");
+        return 0;
     }
 
     return (jint)m_statstg.cbSize.LowPart;
@@ -1119,14 +1119,14 @@ jint WDTCPIStreamWrapper::Read() {
     HRESULT res;
 
     switch (res = m_istream->Read((void *)&b, (ULONG)1, &actual)) {
-	case S_FALSE:
-	    return (jint)-1;
+        case S_FALSE:
+            return (jint)-1;
 
-	case S_OK:
-	    return (jint)(actual == 0 ? -1 : b);
+        case S_OK:
+            return (jint)(actual == 0 ? -1 : b);
 
-	default:
-	    env->ThrowNew(javaIOExceptionClazz, "IStream::Read failed");
+        default:
+            env->ThrowNew(javaIOExceptionClazz, "IStream::Read failed");
     }
     return (jint)-1;
 }
@@ -1156,8 +1156,8 @@ void WDTCPIStreamWrapper::_ReadBytes(void*  param) {
         (WDTCPIStreamWrapperReadBytesPtr)param;
 
     iswrbrp->ret = (iswrbrp->istream)->ReadBytes(iswrbrp->array,
-						 iswrbrp->off,
-						 iswrbrp->len);
+                                                 iswrbrp->off,
+                                                 iswrbrp->len);
     iswrbrp->istream->Signal();
 }
 
@@ -1173,17 +1173,17 @@ jint WDTCPIStreamWrapper::ReadBytes(jbyteArray buf, jint off, jint len) {
     HRESULT  res;
 
     switch (res = m_istream->Read((void *)(local + off), (ULONG)len, &actual)) {
-	case S_FALSE:
-	case S_OK: {
-	    int eof = (actual == 0);
+        case S_FALSE:
+        case S_OK: {
+            int eof = (actual == 0);
 
-       	    env->ReleaseByteArrayElements(buf, local, !eof ? 0 : JNI_ABORT);
-	    return (jint)(!eof ? actual : -1);
-	}
+            env->ReleaseByteArrayElements(buf, local, !eof ? 0 : JNI_ABORT);
+            return (jint)(!eof ? actual : -1);
+        }
 
-	default:
-       	    env->ReleaseByteArrayElements(buf, local, JNI_ABORT);
-	    env->ThrowNew(javaIOExceptionClazz, "IStream::Read failed");
+        default:
+            env->ReleaseByteArrayElements(buf, local, JNI_ABORT);
+            env->ThrowNew(javaIOExceptionClazz, "IStream::Read failed");
     }
 
     return (jint)-1;
@@ -1272,34 +1272,34 @@ DWORD mapModsToDROPEFFECT(DWORD effects, DWORD mods) {
      * Calculate the drop action to match Motif DnD behavior.
      * If the user selects an operation (by pressing a modifier key),
      * return the selected operation or DROPEFFECT_NONE if the selected
-     * operation is not supported by the drag source. 
+     * operation is not supported by the drag source.
      * If the user doesn't select an operation search the set of operations
-     * supported by the drag source for DROPEFFECT_MOVE, then for 
+     * supported by the drag source for DROPEFFECT_MOVE, then for
      * DROPEFFECT_COPY, then for DROPEFFECT_LINK and return the first operation
      * found.
      */
     switch (mods & (MK_CONTROL | MK_SHIFT)) {
-	case MK_CONTROL:
-	    ret = DROPEFFECT_COPY;
-	break;
+        case MK_CONTROL:
+            ret = DROPEFFECT_COPY;
+        break;
 
-	case MK_CONTROL | MK_SHIFT:
-	    ret = DROPEFFECT_LINK;
-	break;
+        case MK_CONTROL | MK_SHIFT:
+            ret = DROPEFFECT_LINK;
+        break;
 
-	case MK_SHIFT:
-	    ret = DROPEFFECT_MOVE;
-	break;
+        case MK_SHIFT:
+            ret = DROPEFFECT_MOVE;
+        break;
 
-	default:
-	    if (effects & DROPEFFECT_MOVE) {
-		ret = DROPEFFECT_MOVE;
-	    } else if (effects & DROPEFFECT_COPY) {
-		ret = DROPEFFECT_COPY;
-	    } else if (effects & DROPEFFECT_LINK) {
-		ret = DROPEFFECT_LINK;
-	    }
-	    break;
+        default:
+            if (effects & DROPEFFECT_MOVE) {
+                ret = DROPEFFECT_MOVE;
+            } else if (effects & DROPEFFECT_COPY) {
+                ret = DROPEFFECT_COPY;
+            } else if (effects & DROPEFFECT_LINK) {
+                ret = DROPEFFECT_LINK;
+            }
+            break;
     }
 
     return ret & effects;
@@ -1352,7 +1352,7 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WDropTargetContextPeerFileStream_fre
 }
 
 /**
- * 
+ *
  */
 
 JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_Available(JNIEnv* env, jobject self, jlong istream) {
@@ -1364,7 +1364,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_Availa
 }
 
 /**
- * 
+ *
  */
 
 JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_Read(JNIEnv* env, jobject self, jlong istream) {
@@ -1376,7 +1376,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_Read(J
 }
 
 /**
- * 
+ *
  */
 
 JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_ReadBytes(JNIEnv* env, jobject self, jlong istream, jbyteArray buf, jint off, jint len) {
@@ -1388,7 +1388,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_ReadBy
 }
 
 /**
- * 
+ *
  */
 
 JNIEXPORT void JNICALL Java_sun_awt_windows_WDropTargetContextPeerIStream_Close(JNIEnv* env, jobject self, jlong istream) {

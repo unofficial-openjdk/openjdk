@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/** 
+/**
  * This interface is implemented by classes that wish to handle incoming HTTP
  * requests and generate responses. This could be a general purpose HTTP server
  * or a test case that expects specific requests from a client.
@@ -32,7 +32,7 @@
 public interface HttpCallback {
     /**
      * handle the given request and generate an appropriate response.
-     * @param msg the transaction containing the request from the 
+     * @param msg the transaction containing the request from the
      *        client and used to send the response
      */
     void request (HttpTransaction msg);

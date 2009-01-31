@@ -29,10 +29,9 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 /**
- * Queue: implements a simple queue mechanism.  Allows for enumeration of the 
+ * Queue: implements a simple queue mechanism.  Allows for enumeration of the
  * elements.
  *
- * @version %I%, %G%
  * @author Herb Jellinek
  */
 
@@ -50,20 +49,20 @@ public class Queue {
      * Enqueue an object.
      */
     public synchronized void enqueue(Object obj) {
-	
-	QueueElement newElt = new QueueElement(obj);
 
-	if (head == null) {
-	    head = newElt;
-	    tail = newElt;
-	    length = 1;
-	} else {
-	    newElt.next = head;
-	    head.prev = newElt;
-	    head = newElt;
-	    length++;
-	}
-	notify();
+        QueueElement newElt = new QueueElement(obj);
+
+        if (head == null) {
+            head = newElt;
+            tail = newElt;
+            length = 1;
+        } else {
+            newElt.next = head;
+            head.prev = newElt;
+            head = newElt;
+            length++;
+        }
+        notify();
     }
 
     /**
@@ -74,12 +73,12 @@ public class Queue {
      *              interrupted this thread.
      */
     public Object dequeue() throws InterruptedException {
-	return dequeue(0L);
+        return dequeue(0L);
     }
 
     /**
      * Dequeue the oldest object on the queue.
-     * @param timeOut the number of milliseconds to wait for something 
+     * @param timeOut the number of milliseconds to wait for something
      * to arrive.
      *
      * @return    the oldest object on the queue.
@@ -88,19 +87,19 @@ public class Queue {
      */
     public synchronized Object dequeue(long timeOut)
         throws InterruptedException {
-	
-	while (tail == null) {
-	    wait(timeOut);
-	}
-	QueueElement elt = tail;
-	tail = elt.prev;
-	if (tail == null) {
-	    head = null;
-	} else {
-	    tail.next = null;
-	}
-	length--;
-	return elt.obj;
+
+        while (tail == null) {
+            wait(timeOut);
+        }
+        QueueElement elt = tail;
+        tail = elt.prev;
+        if (tail == null) {
+            head = null;
+        } else {
+            tail.next = null;
+        }
+        length--;
+        return elt.obj;
     }
 
     /**
@@ -108,7 +107,7 @@ public class Queue {
      * @return true if the queue is empty.
      */
     public synchronized boolean isEmpty() {
-	return (tail == null);
+        return (tail == null);
     }
 
     /**
@@ -117,7 +116,7 @@ public class Queue {
      * fetch the elements sequentially.
      */
     public final synchronized Enumeration elements() {
-	return new LIFOQueueEnumerator(this);
+        return new LIFOQueueEnumerator(this);
     }
 
     /**
@@ -126,25 +125,25 @@ public class Queue {
      * fetch the elements sequentially.
      */
     public final synchronized Enumeration reverseElements() {
-	return new FIFOQueueEnumerator(this);
+        return new FIFOQueueEnumerator(this);
     }
 
     public synchronized void dump(String msg) {
-	System.err.println(">> "+msg);
-	System.err.println("["+length+" elt(s); head = "+
-			   (head == null ? "null" : (head.obj)+"")+
-			   " tail = "+(tail == null ? "null" : (tail.obj)+""));
-	QueueElement cursor = head;
-	QueueElement last = null;
-	while (cursor != null) {
-	    System.err.println("  "+cursor);
-	    last = cursor;
-	    cursor = cursor.next;
-	}
-	if (last != tail) {
-	    System.err.println("  tail != last: "+tail+", "+last);
-	}
-	System.err.println("]");
+        System.err.println(">> "+msg);
+        System.err.println("["+length+" elt(s); head = "+
+                           (head == null ? "null" : (head.obj)+"")+
+                           " tail = "+(tail == null ? "null" : (tail.obj)+""));
+        QueueElement cursor = head;
+        QueueElement last = null;
+        while (cursor != null) {
+            System.err.println("  "+cursor);
+            last = cursor;
+            cursor = cursor.next;
+        }
+        if (last != tail) {
+            System.err.println("  tail != last: "+tail+", "+last);
+        }
+        System.err.println("]");
     }
 }
 
@@ -153,23 +152,23 @@ final class FIFOQueueEnumerator implements Enumeration {
     QueueElement cursor;
 
     FIFOQueueEnumerator(Queue q) {
-	queue = q;
-	cursor = q.tail;
+        queue = q;
+        cursor = q.tail;
     }
 
     public boolean hasMoreElements() {
-	return (cursor != null);
+        return (cursor != null);
     }
 
     public Object nextElement() {
-	synchronized (queue) {
-	    if (cursor != null) {
-		QueueElement result = cursor;
-		cursor = cursor.prev;
-		return result.obj;
-	    }
-	}
-	throw new NoSuchElementException("FIFOQueueEnumerator");
+        synchronized (queue) {
+            if (cursor != null) {
+                QueueElement result = cursor;
+                cursor = cursor.prev;
+                return result.obj;
+            }
+        }
+        throw new NoSuchElementException("FIFOQueueEnumerator");
     }
 }
 
@@ -178,23 +177,23 @@ final class LIFOQueueEnumerator implements Enumeration {
     QueueElement cursor;
 
     LIFOQueueEnumerator(Queue q) {
-	queue = q;
-	cursor = q.head;
+        queue = q;
+        cursor = q.head;
     }
 
     public boolean hasMoreElements() {
-	return (cursor != null);
+        return (cursor != null);
     }
 
     public Object nextElement() {
-	synchronized (queue) {
-	    if (cursor != null) {
-		QueueElement result = cursor;
-		cursor = cursor.next;
-		return result.obj;
-	    }
-	}
-	throw new NoSuchElementException("LIFOQueueEnumerator");
+        synchronized (queue) {
+            if (cursor != null) {
+                QueueElement result = cursor;
+                cursor = cursor.next;
+                return result.obj;
+            }
+        }
+        throw new NoSuchElementException("LIFOQueueEnumerator");
     }
 }
 
@@ -205,12 +204,11 @@ class QueueElement {
     Object obj = null;
 
     QueueElement(Object obj) {
-	this.obj = obj;
+        this.obj = obj;
     }
 
     public String toString() {
-	return "QueueElement[obj="+obj+(prev == null ? " null" : " prev")+
-	    (next == null ? " null" : " next")+"]";
+        return "QueueElement[obj="+obj+(prev == null ? " null" : " prev")+
+            (next == null ? " null" : " next")+"]";
     }
 }
-

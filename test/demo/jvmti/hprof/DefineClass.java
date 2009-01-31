@@ -28,43 +28,43 @@ import java.io.*;
 
 public class DefineClass extends ClassLoader {
     public static void main(String args[]) {
-	DefineClass t = new DefineClass();
-	t.run(args);
+        DefineClass t = new DefineClass();
+        t.run(args);
     }
     public void run(String args[]) {
-	Class n;
-	byte b[] = new byte[10000];
-	int len = 0;
-	String cdir;
-	String cfile;
+        Class n;
+        byte b[] = new byte[10000];
+        int len = 0;
+        String cdir;
+        String cfile;
 
-	/* Class is found here: */
-	cdir = System.getProperty("test.classes", ".");
-	cfile = cdir + java.io.File.separator + "HelloWorld.class";
+        /* Class is found here: */
+        cdir = System.getProperty("test.classes", ".");
+        cfile = cdir + java.io.File.separator + "HelloWorld.class";
 
-	try {
-	    /* Construct byte array with complete class image in it. */
-	    FileInputStream fis = new FileInputStream(cfile);
-	    int nbytes;
-	    do {
-	        nbytes = fis.read(b, len, b.length-len);
-		if ( nbytes > 0 ) {
-		    len += nbytes;
-		}
-	    } while ( nbytes > 0 );
+        try {
+            /* Construct byte array with complete class image in it. */
+            FileInputStream fis = new FileInputStream(cfile);
+            int nbytes;
+            do {
+                nbytes = fis.read(b, len, b.length-len);
+                if ( nbytes > 0 ) {
+                    len += nbytes;
+                }
+            } while ( nbytes > 0 );
         } catch ( Throwable x ) {
-	    System.err.println("Cannot find " + cfile);
-	    x.printStackTrace();
-	}
+            System.err.println("Cannot find " + cfile);
+            x.printStackTrace();
+        }
 
-	/* Define the class with null for the name */
-	n = defineClass(null, b, 0, len);
+        /* Define the class with null for the name */
+        n = defineClass(null, b, 0, len);
 
-	/* Try to create an instance of it */
-	try {
-	    n.newInstance();
+        /* Try to create an instance of it */
+        try {
+            n.newInstance();
         } catch ( Throwable x ) {
-	    x.printStackTrace();
-	}
+            x.printStackTrace();
+        }
     }
 }

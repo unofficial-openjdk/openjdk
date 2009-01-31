@@ -42,7 +42,7 @@ import com.sun.org.apache.xml.internal.security.utils.I18n;
 public class XMLSecurityRuntimeException
         extends RuntimeException {
    /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -146,8 +146,8 @@ public class XMLSecurityRuntimeException
 
       if (msgID == null) {
          return "Missing message ID";
-      } 
-      return msgID;      
+      }
+      return msgID;
    }
 
    /** @inheritDoc */

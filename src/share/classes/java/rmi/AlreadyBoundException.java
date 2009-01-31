@@ -28,8 +28,7 @@ package java.rmi;
  * An <code>AlreadyBoundException</code> is thrown if an attempt
  * is made to bind an object in the registry to a name that already
  * has an associated binding.
- * 
- * @version %I%, %G%
+ *
  * @since   JDK1.1
  * @author  Ann Wollrath
  * @author  Roger Riggs
@@ -47,7 +46,7 @@ public class AlreadyBoundException extends java.lang.Exception {
      * @since JDK1.1
      */
     public AlreadyBoundException() {
-	super();
+        super();
     }
 
     /**
@@ -58,6 +57,6 @@ public class AlreadyBoundException extends java.lang.Exception {
      * @since JDK1.1
      */
     public AlreadyBoundException(String s) {
-	super(s);
+        super(s);
     }
 }

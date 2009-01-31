@@ -76,7 +76,7 @@ import java.util.Locale;
  *        characters are desired, you can put them in single quotes
  *        (e.g. ampersand => '&'). Note that unquoted white space characters
  *        are ignored; e.g. <code>b c</code> is treated as <code>bc</code>.
- *    <LI><strong>Modifier</strong>: There are currently two modifiers that 
+ *    <LI><strong>Modifier</strong>: There are currently two modifiers that
  *        turn on special collation rules.
  *        <UL Type=square>
  *            <LI>'@' : Turns on backwards sorting of accents (secondary
@@ -123,7 +123,7 @@ import java.util.Locale;
  * </pre>
  * </blockquote>
  * Either the text-argument must already be present in the sequence, or some
- * initial substring of the text-argument must be present. (e.g. "a &lt; b &amp; ae &lt; 
+ * initial substring of the text-argument must be present. (e.g. "a &lt; b &amp; ae &lt;
  * e" is valid since "a" is present in the sequence before "ae" is reset). In
  * this latter case, "ae" is not entered and treated as a single character;
  * instead, "e" is sorted as if it were expanded to two characters: "a"
@@ -177,7 +177,7 @@ import java.util.Locale;
  * </UL>
  * If you produce one of these errors, a <code>RuleBasedCollator</code> throws
  * a <code>ParseException</code>.
- * 
+ *
  * <p><strong>Examples</strong>
  * <p>Simple:     "&lt; a &lt; b &lt; c &lt; d"
  * <p>Norwegian:  "&lt; a,A&lt; b,B&lt; c,C&lt; d,D&lt; e,E&lt; f,F&lt; g,G&lt; h,H&lt; i,I&lt; j,J
@@ -234,7 +234,6 @@ import java.util.Locale;
  *
  * @see        Collator
  * @see        CollationElementIterator
- * @version    1.25 07/24/98
  * @author     Helena Shih, Laura Werner, Richard Gillam
  */
 public class RuleBasedCollator extends Collator{
@@ -667,7 +666,7 @@ public class RuleBasedCollator extends Collator{
 
         if (getStrength() == IDENTICAL) {
             primResult.append((char)0);
-            int mode = getDecomposition(); 
+            int mode = getDecomposition();
             if (mode == CANONICAL_DECOMPOSITION) {
                 primResult.append(Normalizer.normalize(source, Normalizer.Form.NFD));
             } else if (mode == FULL_DECOMPOSITION) {
@@ -749,4 +748,3 @@ public class RuleBasedCollator extends Collator{
     private CollationElementIterator sourceCursor = null;
     private CollationElementIterator targetCursor = null;
 }
-

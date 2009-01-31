@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 #include <windows.h>
 #include <winsock2.h>
@@ -58,7 +56,7 @@ Java_sun_nio_ch_DatagramDispatcher_read0(JNIEnv *env, jclass clazz, jobject fdo,
     /* destination buffer and size */
     buf.buf = (char *)address;
     buf.len = (u_long)len;
-    
+
     /* read into the buffers */
     i = WSARecv((SOCKET)fd, /* Socket */
             &buf,           /* pointers to the buffers */
@@ -102,7 +100,7 @@ Java_sun_nio_ch_DatagramDispatcher_readv0(JNIEnv *env, jclass clazz,
         bufs[i].buf = (char *)iovp[i].iov_base;
         bufs[i].len = (u_long)iovp[i].iov_len;
     }
-    
+
     /* read into the buffers */
     i = WSARecv((SOCKET)fd, /* Socket */
             bufs,           /* pointers to the buffers */
@@ -146,7 +144,7 @@ Java_sun_nio_ch_DatagramDispatcher_write0(JNIEnv *env, jclass clazz,
     /* copy iovec into WSABUF */
     buf.buf = (char *)address;
     buf.len = (u_long)len;
-    
+
     /* read into the buffers */
     i = WSASend((SOCKET)fd, /* Socket */
             &buf,           /* pointers to the buffers */
@@ -189,7 +187,7 @@ Java_sun_nio_ch_DatagramDispatcher_writev0(JNIEnv *env, jclass clazz,
         bufs[i].buf = (char *)iovp[i].iov_base;
         bufs[i].len = (u_long)iovp[i].iov_len;
     }
-    
+
     /* read into the buffers */
     i = WSASend((SOCKET)fd, /* Socket */
             bufs,           /* pointers to the buffers */

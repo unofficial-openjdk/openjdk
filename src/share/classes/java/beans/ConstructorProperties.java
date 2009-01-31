@@ -39,16 +39,16 @@ import static java.lang.annotation.RetentionPolicy.*;
    public class Point {
        &#64;ConstructorProperties({"x", "y"})
        public Point(int x, int y) {
-       	   this.x = x;
+           this.x = x;
            this.y = y;
        }
 
        public int getX() {
-       	   return x;
+           return x;
        }
 
        public int getY() {
-       	   return y;
+           return y;
        }
 
        private final int x, y;

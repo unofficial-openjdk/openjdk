@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4400624 6321453
- * @summary Make sure all self-signed root cert signatures are valid 
+ * @summary Make sure all self-signed root cert signatures are valid
  */
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -33,31 +33,31 @@ import java.util.*;
 
 public class VerifyCACerts {
 
-    private final static String cacertsFileName = 
-	System.getProperty("java.home") +
-	System.getProperty("file.separator") + "lib" +
-	System.getProperty("file.separator") + "security" +
-	System.getProperty("file.separator") + "cacerts";
+    private final static String cacertsFileName =
+        System.getProperty("java.home") +
+        System.getProperty("file.separator") + "lib" +
+        System.getProperty("file.separator") + "security" +
+        System.getProperty("file.separator") + "cacerts";
 
     public static void main(String[] args) throws Exception {
 
-	// pull all the trusted self-signed CA certs out of the cacerts file
-	// and verify their signatures
-	KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(cacertsFileName), "changeit".toCharArray());
-	Enumeration<String> aliases = ks.aliases();
-	while (aliases.hasMoreElements()) {
-	    String alias = aliases.nextElement();
-	    System.out.println("Verifying " + alias);
-	    if (!ks.isCertificateEntry(alias))
-		throw new Exception(alias + " is not a trusted cert entry");
-	    Certificate cert = ks.getCertificate(alias);
-	    // remember the GTE CyberTrust CA cert for further tests
-	    if (alias.equals("gtecybertrustca")) {
-		throw new Exception
-		    ("gtecybertrustca is expired and should be deleted");
-	    }
-	    cert.verify(cert.getPublicKey());
-	}
+        // pull all the trusted self-signed CA certs out of the cacerts file
+        // and verify their signatures
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(cacertsFileName), "changeit".toCharArray());
+        Enumeration<String> aliases = ks.aliases();
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            System.out.println("Verifying " + alias);
+            if (!ks.isCertificateEntry(alias))
+                throw new Exception(alias + " is not a trusted cert entry");
+            Certificate cert = ks.getCertificate(alias);
+            // remember the GTE CyberTrust CA cert for further tests
+            if (alias.equals("gtecybertrustca")) {
+                throw new Exception
+                    ("gtecybertrustca is expired and should be deleted");
+            }
+            cert.verify(cert.getPublicKey());
+        }
     }
 }

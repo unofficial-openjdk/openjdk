@@ -55,7 +55,6 @@ import sun.security.util.SecurityConstants;
  * href="http://www.ietf.org/rfc/rfc2616.txt""><i>RFC&nbsp;2616: Hypertext
  * Transfer Protocol -- HTTP/1.1</i></a>
  *
- * @version 1.1, 03/09/22
  * @author Yingxian Wang
  * @since 1.5
  */
@@ -82,11 +81,11 @@ public abstract class ResponseCache {
      * @since 1.5
      */
     public synchronized  static ResponseCache getDefault() {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(SecurityConstants.GET_RESPONSECACHE_PERMISSION);
-	}
-	return theResponseCache;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.GET_RESPONSECACHE_PERMISSION);
+        }
+        return theResponseCache;
     }
 
     /**
@@ -95,7 +94,7 @@ public abstract class ResponseCache {
      * Note: non-standard procotol handlers may ignore this setting.
      *
      * @param responseCache The response cache, or
-     *		<code>null</code> to unset the cache.
+     *          <code>null</code> to unset the cache.
      *
      * @throws  SecurityException
      *          If a security manager has been installed and it denies
@@ -105,11 +104,11 @@ public abstract class ResponseCache {
      * @since 1.5
      */
     public synchronized static void setDefault(ResponseCache responseCache) {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(SecurityConstants.SET_RESPONSECACHE_PERMISSION);
-	}
-	theResponseCache = responseCache;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.SET_RESPONSECACHE_PERMISSION);
+        }
+        theResponseCache = responseCache;
     }
 
     /**
@@ -128,7 +127,7 @@ public abstract class ResponseCache {
      *            the current request headers
      * @return a <code>CacheResponse</code> instance if available
      *          from cache, or null otherwise
-     * @throws	IOException if an I/O error occurs 
+     * @throws  IOException if an I/O error occurs
      * @throws  IllegalArgumentException if any one of the arguments is null
      *
      * @see     java.net.URLConnection#setUseCaches(boolean)
@@ -137,8 +136,8 @@ public abstract class ResponseCache {
      * @see     java.net.URLConnection#getDefaultUseCaches()
      */
     public abstract CacheResponse
-	get(URI uri, String rqstMethod, Map<String, List<String>> rqstHeaders)
-	throws IOException;
+        get(URI uri, String rqstMethod, Map<String, List<String>> rqstHeaders)
+        throws IOException;
 
     /**
      * The protocol handler calls this method after a resource has

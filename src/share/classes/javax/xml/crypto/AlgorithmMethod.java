@@ -30,14 +30,14 @@ package javax.xml.crypto;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
- * An abstract representation of an algorithm defined in the XML Security 
+ * An abstract representation of an algorithm defined in the XML Security
  * specifications. Subclasses represent specific types of XML security
  * algorithms, such as a {@link javax.xml.crypto.dsig.Transform}.
  *
  * @author Sean Mullan
  * @author JSR 105 Expert Group
  * @since 1.6
- */ 
+ */
 public interface AlgorithmMethod {
 
     /**

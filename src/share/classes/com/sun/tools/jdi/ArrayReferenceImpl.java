@@ -77,7 +77,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
     public List<Value> getValues() {
         return getValues(0, -1);
     }
-    
+
     /**
      * Validate that the range to set/get is valid.
      * length of -1 (meaning rest of array) has been converted
@@ -96,14 +96,14 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         }
         if (index + length > length()) {
             throw new IndexOutOfBoundsException(
-                        "Invalid array range: " + 
+                        "Invalid array range: " +
                         index + " to " + (index + length - 1));
         }
     }
 
     @SuppressWarnings("unchecked")
     private static <T> T cast(Object x) {
-	return (T)x;
+        return (T)x;
     }
 
     public List<Value> getValues(int index, int length) {
@@ -117,7 +117,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
 
         List<Value> vals;
         try {
-	    vals = cast(JDWP.ArrayReference.GetValues.process(vm, this, index, length).values);
+            vals = cast(JDWP.ArrayReference.GetValues.process(vm, this, index, length).values);
         } catch (JDWPException exc) {
             throw exc.toJDIException();
         }
@@ -139,15 +139,15 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         setValues(0, values, 0, -1);
     }
 
-    public void setValues(int index, List<? extends Value> values, 
+    public void setValues(int index, List<? extends Value> values,
                           int srcIndex, int length)
             throws InvalidTypeException,
                    ClassNotLoadedException {
-        
+
         if (length == -1) { // -1 means the rest of the array
             // shorter of, the rest of the array and rest of
             // the source values
-            length = Math.min(length() - index, 
+            length = Math.min(length() - index,
                               values.size() - srcIndex);
         }
         validateMirrorsOrNulls(values);
@@ -159,7 +159,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         }
         if (srcIndex + length > values.size()) {
             throw new IndexOutOfBoundsException(
-                        "Invalid source range: " + 
+                        "Invalid source range: " +
                         srcIndex + " to " +
                         (srcIndex + length - 1));
         }
@@ -172,18 +172,18 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
 
             try {
                 // Validate and convert if necessary
-                setValues[i] = 
-                  ValueImpl.prepareForAssignment(value, 
+                setValues[i] =
+                  ValueImpl.prepareForAssignment(value,
                                                  new Component());
                 somethingToSet = true;
             } catch (ClassNotLoadedException e) {
                 /*
                  * Since we got this exception,
-                 * the component must be a reference type. 
+                 * the component must be a reference type.
                  * This means the class has not yet been loaded
                  * through the defining class's class loader.
-                 * If the value we're trying to set is null, 
-                 * then setting to null is essentially a 
+                 * If the value we're trying to set is null,
+                 * then setting to null is essentially a
                  * no-op, and we should allow it without an
                  * exception.
                  */
@@ -203,7 +203,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
     }
 
     public String toString() {
-        return "instance of " + arrayType().componentTypeName() + 
+        return "instance of " + arrayType().componentTypeName() +
                "[" + length() + "] (id=" + uniqueID() + ")";
     }
 
@@ -211,19 +211,19 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         return JDWP.Tag.ARRAY;
     }
 
-    void validateAssignment(ValueContainer destination) 
+    void validateAssignment(ValueContainer destination)
                             throws InvalidTypeException, ClassNotLoadedException {
         try {
             super.validateAssignment(destination);
         } catch (ClassNotLoadedException e) {
             /*
-             * An array can be used extensively without the 
-             * enclosing loader being recorded by the VM as an 
-             * initiating loader of the array type. In addition, the 
-             * load of an array class is fairly harmless as long as 
+             * An array can be used extensively without the
+             * enclosing loader being recorded by the VM as an
+             * initiating loader of the array type. In addition, the
+             * load of an array class is fairly harmless as long as
              * the component class is already loaded. So we relax the
-             * rules a bit and allow the assignment as long as the 
-             * ultimate component types are assignable. 
+             * rules a bit and allow the assignment as long as the
+             * ultimate component types are assignable.
              */
             boolean valid = false;
             JNITypeParser destParser = new JNITypeParser(
@@ -234,17 +234,17 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
             if (destDims <= srcParser.dimensionCount()) {
                 /*
                  * Remove all dimensions from the destination. Remove
-                 * the same number of dimensions from the source. 
-                 * Get types for both and check to see if they are 
-                 * compatible. 
+                 * the same number of dimensions from the source.
+                 * Get types for both and check to see if they are
+                 * compatible.
                  */
-                String destComponentSignature = 
+                String destComponentSignature =
                     destParser.componentSignature(destDims);
-                Type destComponentType = 
+                Type destComponentType =
                     destination.findType(destComponentSignature);
-                String srcComponentSignature = 
+                String srcComponentSignature =
                     srcParser.componentSignature(destDims);
-                Type srcComponentType = 
+                Type srcComponentType =
                     arrayType().findComponentType(srcComponentSignature);
                 valid = ArrayTypeImpl.isComponentAssignable(destComponentType,
                                                           srcComponentType);
@@ -252,7 +252,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
 
             if (!valid) {
                 throw new InvalidTypeException("Cannot assign " +
-                                               arrayType().name() + 
+                                               arrayType().name() +
                                                " to " +
                                                destination.typeName());
             }
@@ -260,10 +260,10 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
     }
 
     /*
-     * Represents an array component to other internal parts of this 
+     * Represents an array component to other internal parts of this
      * implementation. This is not exposed at the JDI level. Currently,
      * this class is needed only for type checking so it does not even
-     * reference a particular component - just a generic component 
+     * reference a particular component - just a generic component
      * of this array. In the future we may need to expand its use.
      */
     class Component implements ValueContainer {

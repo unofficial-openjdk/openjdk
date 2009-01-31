@@ -23,7 +23,6 @@
  * have any questions.
  */
 /*
- * @(#)TextSourceLabel.java     1.8 00/03/15
  *
  * (C) Copyright IBM Corp. 1998, 1999 - All Rights Reserved
  */
@@ -73,9 +72,9 @@ public class TextSourceLabel extends TextLabel {
     if (lb == null) {
       lb = createLogicalBounds();
     }
-    return new Rectangle2D.Float((float)(lb.getX() + x), 
-                                 (float)(lb.getY() + y), 
-                                 (float)lb.getWidth(), 
+    return new Rectangle2D.Float((float)(lb.getX() + x),
+                                 (float)(lb.getY() + y),
+                                 (float)lb.getWidth(),
                                  (float)lb.getHeight());
   }
 
@@ -84,9 +83,9 @@ public class TextSourceLabel extends TextLabel {
       vb = createVisualBounds();
 
     }
-    return new Rectangle2D.Float((float)(vb.getX() + x), 
-                                 (float)(vb.getY() + y), 
-                                 (float)vb.getWidth(), 
+    return new Rectangle2D.Float((float)(vb.getX() + x),
+                                 (float)(vb.getY() + y),
+                                 (float)vb.getWidth(),
                                  (float)vb.getHeight());
   }
 
@@ -94,8 +93,8 @@ public class TextSourceLabel extends TextLabel {
     if (ab == null) {
       ab = createAlignBounds();
     }
-    return new Rectangle2D.Float((float)(ab.getX() + x), 
-                                 (float)(ab.getY() + y), 
+    return new Rectangle2D.Float((float)(ab.getX() + x),
+                                 (float)(ab.getY() + y),
                                  (float)ab.getWidth(),
                                  (float)ab.getHeight());
   }

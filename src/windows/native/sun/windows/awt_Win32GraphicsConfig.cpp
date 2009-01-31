@@ -55,9 +55,9 @@ Java_sun_awt_Win32GraphicsConfig_initIDs
 {
     TRY;
     AwtWin32GraphicsConfig::win32GCVisualID = env->GetFieldID(thisCls,
-	 "visual", "I");
+         "visual", "I");
     DASSERT(AwtWin32GraphicsConfig::win32GCVisualID);
-	CATCH_BAD_ALLOC;
+        CATCH_BAD_ALLOC;
 }
 
 /*
@@ -89,7 +89,7 @@ JNIEXPORT jobject JNICALL
     jclass clazz;
     jmethodID mid;
     jobject bounds = NULL;
-    
+
     clazz = env->FindClass("java/awt/Rectangle");
     mid = env->GetMethodID(clazz, "<init>", "(IIII)V");
     if (mid != 0) {

@@ -36,19 +36,18 @@ package java.awt.image;
  * smaller than the native data size to be provided for a
  * constrained input.  If there is only one array in the lookup
  * table, it will be applied to all bands.
- * 
+ *
  * @see ByteLookupTable
  * @see LookupOp
- * @version 10 Feb 1997
  */
 public class ShortLookupTable extends LookupTable {
 
     /**
      * Constants
-     */  
- 
+     */
+
     short data[][];
-    
+
     /**
      * Constructs a ShortLookupTable object from an array of short
      * arrays representing a lookup table for each
@@ -104,19 +103,19 @@ public class ShortLookupTable extends LookupTable {
      * Returns an array of samples of a pixel, translated with the lookup
      * table. The source and destination array can be the same array.
      * Array <code>dst</code> is returned.
-     * 
-     * @param src the source array. 
-     * @param dst the destination array. This array must be at least as 
-     *         long as <code>src</code>.  If <code>dst</code> is 
-     *         <code>null</code>, a new array will be allocated having the 
+     *
+     * @param src the source array.
+     * @param dst the destination array. This array must be at least as
+     *         long as <code>src</code>.  If <code>dst</code> is
+     *         <code>null</code>, a new array will be allocated having the
      *         same length as <code>src</code>.
-     * @return the array <code>dst</code>, an <code>int</code> array of 
+     * @return the array <code>dst</code>, an <code>int</code> array of
      *         samples.
-     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is 
-     *            longer than <code>dst</code> or if for any element 
-     *            <code>i</code> of <code>src</code>, 
-     *            <code>(src[i]&0xffff)-offset</code> is either less than 
-     *            zero or greater than or equal to the length of the 
+     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is
+     *            longer than <code>dst</code> or if for any element
+     *            <code>i</code> of <code>src</code>,
+     *            <code>(src[i]&0xffff)-offset</code> is either less than
+     *            zero or greater than or equal to the length of the
      *            lookup table for any band.
      */
     public int[] lookupPixel(int[] src, int[] dst){
@@ -124,7 +123,7 @@ public class ShortLookupTable extends LookupTable {
             // Need to alloc a new destination array
             dst = new int[src.length];
         }
-        
+
         if (numComponents == 1) {
             // Apply one LUT to all channels
             for (int i=0; i < src.length; i++) {
@@ -155,19 +154,19 @@ public class ShortLookupTable extends LookupTable {
      * Returns an array of samples of a pixel, translated with the lookup
      * table. The source and destination array can be the same array.
      * Array <code>dst</code> is returned.
-     * 
-     * @param src the source array. 
-     * @param dst the destination array. This array must be at least as 
-     *         long as <code>src</code>.  If <code>dst</code> is 
-     *         <code>null</code>, a new array will be allocated having the 
+     *
+     * @param src the source array.
+     * @param dst the destination array. This array must be at least as
+     *         long as <code>src</code>.  If <code>dst</code> is
+     *         <code>null</code>, a new array will be allocated having the
      *         same length as <code>src</code>.
-     * @return the array <code>dst</code>, an <code>int</code> array of 
+     * @return the array <code>dst</code>, an <code>int</code> array of
      *         samples.
-     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is 
-     *            longer than <code>dst</code> or if for any element 
-     *            <code>i</code> of <code>src</code>, 
-     *            <code>(src[i]&0xffff)-offset</code> is either less than 
-     *            zero or greater than or equal to the length of the 
+     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is
+     *            longer than <code>dst</code> or if for any element
+     *            <code>i</code> of <code>src</code>,
+     *            <code>(src[i]&0xffff)-offset</code> is either less than
+     *            zero or greater than or equal to the length of the
      *            lookup table for any band.
      */
     public short[] lookupPixel(short[] src, short[] dst){
@@ -175,7 +174,7 @@ public class ShortLookupTable extends LookupTable {
             // Need to alloc a new destination array
             dst = new short[src.length];
         }
-        
+
         if (numComponents == 1) {
             // Apply one LUT to all channels
             for (int i=0; i < src.length; i++) {

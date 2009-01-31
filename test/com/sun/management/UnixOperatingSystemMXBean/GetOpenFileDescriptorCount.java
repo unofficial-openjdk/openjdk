@@ -41,7 +41,7 @@ import java.lang.management.*;
 public class GetOpenFileDescriptorCount {
 
     private static UnixOperatingSystemMXBean mbean =
-	(UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
+        (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
 
     // Careful with these values.
     private static final long MIN_COUNT_FOR_PASS = 1;
@@ -55,24 +55,24 @@ public class GetOpenFileDescriptorCount {
             trace = true;
         }
 
-	long max_count = mbean.getMaxFileDescriptorCount();
-	if (max_count > 0) {
-	    max_count_for_pass = max_count;
-	}
+        long max_count = mbean.getMaxFileDescriptorCount();
+        if (max_count > 0) {
+            max_count_for_pass = max_count;
+        }
 
-	long count = mbean.getOpenFileDescriptorCount();
+        long count = mbean.getOpenFileDescriptorCount();
 
-	if (trace) {
-	    System.out.println("Open file descriptor count: " + count);
-	}
+        if (trace) {
+            System.out.println("Open file descriptor count: " + count);
+        }
 
-	if (count < MIN_COUNT_FOR_PASS || count > max_count_for_pass) {
-	    throw new RuntimeException("Open file descriptor count " +
-				       "illegal value: " + count + " bytes " + 
-				       "(MIN = " + MIN_COUNT_FOR_PASS + "; " +
-				       "MAX = " + max_count_for_pass + ")");
-	}
-	
-	System.out.println("Test passed.");
+        if (count < MIN_COUNT_FOR_PASS || count > max_count_for_pass) {
+            throw new RuntimeException("Open file descriptor count " +
+                                       "illegal value: " + count + " bytes " +
+                                       "(MIN = " + MIN_COUNT_FOR_PASS + "; " +
+                                       "MAX = " + max_count_for_pass + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }

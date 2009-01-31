@@ -22,7 +22,7 @@
  */
 
 /**
- * @test 
+ * @test
  * @bug 4252108 6229507
  * @summary PrinterJob.validatePage() is unimplemented.
  * @author prr
@@ -53,26 +53,26 @@ Label myOrientationLabel;
     myWidthLabel.setText ("Format Width = " + drnd(myPageFormat.getWidth()));
     myHeightLabel.setText ("Format Height = " + drnd(myPageFormat.getHeight()));
     myImageableXLabel.setText
-    	("Format Left Margin = " + drnd(myPageFormat.getImageableX()));
+        ("Format Left Margin = " + drnd(myPageFormat.getImageableX()));
     myImageableRightLabel.setText
-    	("Format Right Margin = " + drnd(myPageFormat.getWidth() - 
+        ("Format Right Margin = " + drnd(myPageFormat.getWidth() -
         (myPageFormat.getImageableX() + myPageFormat.getImageableWidth())));
     myImageableWidthLabel.setText
-    	("Format ImageableWidth = " + drnd(myPageFormat.getImageableWidth()));
+        ("Format ImageableWidth = " + drnd(myPageFormat.getImageableWidth()));
     myImageableYLabel.setText
-    	("Format Top Margin = " + drnd(myPageFormat.getImageableY()));
+        ("Format Top Margin = " + drnd(myPageFormat.getImageableY()));
     myImageableBottomLabel.setText
-    	("Format Bottom Margin = " + drnd(myPageFormat.getHeight() - 
+        ("Format Bottom Margin = " + drnd(myPageFormat.getHeight() -
         (myPageFormat.getImageableY() + myPageFormat.getImageableHeight())));
     myImageableHeightLabel.setText
-    	("Format ImageableHeight = " + drnd(myPageFormat.getImageableHeight()));
+        ("Format ImageableHeight = " + drnd(myPageFormat.getImageableHeight()));
     int o = myPageFormat.getOrientation();
     myOrientationLabel.setText
-    	("Format Orientation = " +
-    		(o == PageFormat.PORTRAIT ? "PORTRAIT" :
-    		 o == PageFormat.LANDSCAPE ? "LANDSCAPE" :
-    		 o == PageFormat.REVERSE_LANDSCAPE ? "REVERSE_LANDSCAPE" :
-    		 "<invalid>"));
+        ("Format Orientation = " +
+                (o == PageFormat.PORTRAIT ? "PORTRAIT" :
+                 o == PageFormat.LANDSCAPE ? "LANDSCAPE" :
+                 o == PageFormat.REVERSE_LANDSCAPE ? "REVERSE_LANDSCAPE" :
+                 "<invalid>"));
     Paper p = myPageFormat.getPaper();
     pw.setText("Paper Width = " + drnd(p.getWidth()));
     ph.setText("Paper Height = " + drnd(p.getHeight()));
@@ -80,10 +80,10 @@ Label myOrientationLabel;
     pgiw.setText("Paper Imageable Width = " + drnd(p.getImageableWidth()));
     pgih.setText("Paper Imageable Height = " + drnd(p.getImageableHeight()));
 
-    pgrm.setText("Paper Right Margin = " + 
+    pgrm.setText("Paper Right Margin = " +
          drnd(p.getWidth() - (p.getImageableX()+p.getImageableWidth())));
     pgtm.setText("Paper Top Margin = " + drnd(p.getImageableY()));
-    pgbm.setText("Paper Bottom Margin = " + 
+    pgbm.setText("Paper Bottom Margin = " +
        drnd(p.getHeight() - (p.getImageableY()+p.getImageableHeight())));
   }
 
@@ -99,7 +99,7 @@ Label myOrientationLabel;
           return ds;
       }
   }
-     
+
   public ValidatePage() {
     super ("Validate Page Test");
     myPrinterJob = PrinterJob.getPrinterJob();
@@ -132,7 +132,7 @@ Label myOrientationLabel;
     pp.add (pgih = new Label());
     pp.add (pgrm = new Label());
     pp.add (pgbm = new Label());
-  
+
     add(pp);
 
     Panel epp = new Panel();
@@ -145,62 +145,62 @@ Label myOrientationLabel;
     epp.add(new Label("Left Margin:"));
     epp.add (tpglm = new TextField());
     epp.add(new Label("Top margin:"));
-    epp.add (tpgtm = new TextField());  
+    epp.add (tpgtm = new TextField());
     epp.add(new Label("Imageable Wid:"));
     epp.add (tpgiw = new TextField());
     epp.add(new Label("Imageable Hgt:"));
     epp.add (tpgih = new TextField());
-    
+
     add(epp);
        displayPageFormatAttributes();
 
     Panel panel = new Panel();
     Button defButton = new Button ("Default Page");
     defButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
-    			myPageFormat = myPrinterJob.defaultPage();
-    			displayPageFormatAttributes();
-		}
+                public void actionPerformed (ActionEvent e) {
+                        myPageFormat = myPrinterJob.defaultPage();
+                        displayPageFormatAttributes();
+                }
     });
 
     Button pageButton = new Button ("Page Setup..");
     pageButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
-    			myPageFormat = myPrinterJob.pageDialog (myPageFormat);
-    			displayPageFormatAttributes();
-		}
+                public void actionPerformed (ActionEvent e) {
+                        myPageFormat = myPrinterJob.pageDialog (myPageFormat);
+                        displayPageFormatAttributes();
+                }
     });
     Button printButton = new Button ("Print");
     printButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
+                public void actionPerformed (ActionEvent e) {
                     try {
                          //if (myPrinterJob.printDialog()) {
                              myPrinterJob.setPrintable(ValidatePage.this,
                                                        myPageFormat);
                              myPrinterJob.print();
                    // }
-                    } catch (PrinterException pe ) { 
+                    } catch (PrinterException pe ) {
                     }
-		}
+                }
     });
-    
+
     Button chooseButton = new Button ("Printer..");
     chooseButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
-                            myPrinterJob.printDialog();  
-		}
+                public void actionPerformed (ActionEvent e) {
+                            myPrinterJob.printDialog();
+                }
     });
 
     Button validateButton = new Button ("Validate Page");
     validateButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
-    			myPageFormat = myPrinterJob.validatePage(myPageFormat);
-    			displayPageFormatAttributes();
-		}
+                public void actionPerformed (ActionEvent e) {
+                        myPageFormat = myPrinterJob.validatePage(myPageFormat);
+                        displayPageFormatAttributes();
+                }
     });
     Button setButton = new Button ("Set Paper");
     setButton.addActionListener(new ActionListener() {
-    		public void actionPerformed (ActionEvent e) {
+                public void actionPerformed (ActionEvent e) {
                   try {
                       Paper p = new Paper();
                       double pwid = Double.parseDouble(tpw.getText());
@@ -212,10 +212,10 @@ Label myOrientationLabel;
                       p.setSize(pwid, phgt);
                       p.setImageableArea(pimx, pimy, pimwid, pimhgt);
                       myPageFormat.setPaper(p);
-    			    displayPageFormatAttributes();
+                            displayPageFormatAttributes();
                   } catch (NumberFormatException nfe) {
                   }
-		}
+                }
     });
     panel.add (setButton);
     panel.add (defButton);
@@ -234,7 +234,7 @@ Label myOrientationLabel;
         "imageable area to fit at that position. They will shrink by the minimum" + ls +
         "needed to accomodate the imageable area."+ls+ls+
         "To test 6229507, put the minimum margins (all 0s) in Page Setup dialog."+ls+
-	"Compare Imageable width, height, and margins of portrait against landscape.");
+        "Compare Imageable width, height, and margins of portrait against landscape.");
     ta.setEditable(false);
     add(ta);
 
@@ -243,11 +243,11 @@ Label myOrientationLabel;
             dispose();
             System.exit (0);
          }
-       
+
       });
       setSize (500, 630);
       setVisible (true);
-  } 
+  }
 
   public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
 
@@ -260,10 +260,10 @@ Label myOrientationLabel;
     int o = pageFormat.getOrientation();
 
      System.out.println("Format Orientation = " +
-    		(o == PageFormat.PORTRAIT ? "PORTRAIT" :
-    		 o == PageFormat.LANDSCAPE ? "LANDSCAPE" :
-    		 o == PageFormat.REVERSE_LANDSCAPE ? "REVERSE_LANDSCAPE" :
-    		 "<invalid>"));
+                (o == PageFormat.PORTRAIT ? "PORTRAIT" :
+                 o == PageFormat.LANDSCAPE ? "LANDSCAPE" :
+                 o == PageFormat.REVERSE_LANDSCAPE ? "REVERSE_LANDSCAPE" :
+                 "<invalid>"));
      System.out.println(g2d.getTransform());
      System.out.println("ix="+pageFormat.getImageableX()+
                        " iy="+pageFormat.getImageableY());
@@ -285,23 +285,23 @@ Label myOrientationLabel;
         {
          "You must have a printer available to perform this test",
          "This test is very flexible and requires much interaction.",
-	 "There are several buttons.",
-	 "Set Paper: if all fields are valid numbers it sets the Paper object.",
-	 "This is used to create arbitrary nonsensical paper sizes to help", 
-	 "test validatePage.",
-	 "Default Page: sets a default page. This should always be valid.",
-	 "Page Setup: brings up the page dialog. You must OK this dialog",
-	 "for it to have any effect. You can use this to set different size,",
-	 "orientation and margins - which of course affect imageable area.",
-	 "Printer: Used to set the current printer. Useful because current",
+         "There are several buttons.",
+         "Set Paper: if all fields are valid numbers it sets the Paper object.",
+         "This is used to create arbitrary nonsensical paper sizes to help",
+         "test validatePage.",
+         "Default Page: sets a default page. This should always be valid.",
+         "Page Setup: brings up the page dialog. You must OK this dialog",
+         "for it to have any effect. You can use this to set different size,",
+         "orientation and margins - which of course affect imageable area.",
+         "Printer: Used to set the current printer. Useful because current",
          "printer affects the choice of paper sizes available.",
          "You must OK this dialog for it to have any effect.",
-	 "Validate Page:",
+         "Validate Page:",
          "The most important button in the test. By setting nonsensical",
-	 "or valid papers with varying margins etc, this should always find",
+         "or valid papers with varying margins etc, this should always find",
          "the closest",
-	 "match within the limits of what is possible on the current printer.",
-	 "Print: to the current printer. Not vital for this test.",
+         "match within the limits of what is possible on the current printer.",
+         "Print: to the current printer. Not vital for this test.",
          "request."
        };
       Sysout.createDialog( );
@@ -425,4 +425,3 @@ class TestDialog extends Dialog {
     }
 
  }// TestDialog  class
-

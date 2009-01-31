@@ -43,7 +43,6 @@ import sun.swing.plaf.synth.DefaultSynthStyle;
 /**
  * Synth's ButtonUI implementation.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthButtonUI extends BasicButtonUI implements
@@ -84,7 +83,7 @@ class SynthButtonUI extends BasicButtonUI implements
 
             Object value = style.get(context, getPropertyPrefix() + "iconTextGap");
             if (value != null) {
-		        LookAndFeel.installProperty(b, "iconTextGap", value);
+                        LookAndFeel.installProperty(b, "iconTextGap", value);
             }
 
             value = style.get(context, getPropertyPrefix() + "contentAreaFilled");
@@ -192,7 +191,7 @@ class SynthButtonUI extends BasicButtonUI implements
         FontMetrics fm = context.getComponent().getFontMetrics(
             context.getStyle().getFont(context));
         context.getStyle().getGraphicsUtils(context).layoutText(
-            context, fm, b.getText(), b.getIcon(), 
+            context, fm, b.getText(), b.getIcon(),
             b.getHorizontalAlignment(), b.getVerticalAlignment(),
             b.getHorizontalTextPosition(), b.getVerticalTextPosition(),
             viewRect, iconRect, textRect, b.getIconTextGap());
@@ -264,16 +263,16 @@ class SynthButtonUI extends BasicButtonUI implements
      * to the JComponent.
      *
      * @param b AbstractButton the iocn is associated with
-     * @return default icon 
+     * @return default icon
      */
-   
+
     protected Icon getDefaultIcon(AbstractButton b) {
         SynthContext context = getContext(b);
         Icon icon = context.getStyle().getIcon(context, getPropertyPrefix() + "icon");
         context.dispose();
         return icon;
     }
-    
+
     /**
      * Returns the Icon to use in painting the button.
      */
@@ -328,14 +327,14 @@ class SynthButtonUI extends BasicButtonUI implements
     private Icon getSynthIcon(AbstractButton b, int synthConstant) {
         return style.getIcon(getContext(b, synthConstant), getPropertyPrefix() + "icon");
     }
-    
+
     private Icon getEnabledIcon(AbstractButton b, Icon defaultIcon) {
         if (defaultIcon == null) {
-            defaultIcon = getSynthIcon(b, SynthConstants.ENABLED); 
+            defaultIcon = getSynthIcon(b, SynthConstants.ENABLED);
         }
         return defaultIcon;
     }
-    
+
     private Icon getSelectedIcon(AbstractButton b, Icon defaultIcon) {
         return getIcon(b, b.getSelectedIcon(), defaultIcon,
                 SynthConstants.SELECTED);

@@ -68,7 +68,6 @@ import java.util.concurrent.FutureTask;
  * releases and even patch releases. You should not rely on this class even
  * existing.
  *
- * @version %I% %G%
  */
 public class SwingUtilities2 {
     /**
@@ -80,18 +79,18 @@ public class SwingUtilities2 {
 
     // Most of applications use 10 or less fonts simultaneously
     private static final int STRONG_BEARING_CACHE_SIZE = 10;
-    // Strong cache for the left and right side bearings 
+    // Strong cache for the left and right side bearings
     // for STRONG_BEARING_CACHE_SIZE most recently used fonts.
-    private static BearingCacheEntry[] strongBearingCache = 
+    private static BearingCacheEntry[] strongBearingCache =
             new BearingCacheEntry[STRONG_BEARING_CACHE_SIZE];
     // Next index to insert an entry into the strong bearing cache
     private static int strongBearingCacheNextIndex = 0;
-    // Soft cache for the left and right side bearings 
-    private static Set<SoftReference<BearingCacheEntry>> softBearingCache = 
+    // Soft cache for the left and right side bearings
+    private static Set<SoftReference<BearingCacheEntry>> softBearingCache =
             new HashSet<SoftReference<BearingCacheEntry>>();
 
     public static final FontRenderContext DEFAULT_FRC =
-	new FontRenderContext(null, false, false);
+        new FontRenderContext(null, false, false);
 
     /**
      * A JComponent client property is used to determine text aa settings.
@@ -114,7 +113,7 @@ public class SwingUtilities2 {
     public static class AATextInfo {
 
         private static AATextInfo getAATextInfoFromMap(Map hints) {
-        
+
             Object aaHint   = hints.get(KEY_TEXT_ANTIALIASING);
             Object contHint = hints.get(KEY_TEXT_LCD_CONTRAST);
 
@@ -138,28 +137,28 @@ public class SwingUtilities2 {
             }
         }
 
-	Object aaHint;
-	Integer lcdContrastHint;
-	FontRenderContext frc;
+        Object aaHint;
+        Integer lcdContrastHint;
+        FontRenderContext frc;
 
-	/* These are rarely constructed objects, and only when a complete
-	 * UI is being updated, so the cost of the tests here is minimal
-	 * and saves tests elsewhere.
-	 * We test that the values are ones we support/expect.
-	 */
-	public AATextInfo(Object aaHint, Integer lcdContrastHint) {
-	    if (aaHint == null) {
-		throw new InternalError("null not allowed here");
-	    }
-	    if (aaHint == VALUE_TEXT_ANTIALIAS_OFF ||
-		aaHint == VALUE_TEXT_ANTIALIAS_DEFAULT) {
-		throw new InternalError("AA must be on");
-	    }
-	    this.aaHint = aaHint;
-	    this.lcdContrastHint = lcdContrastHint;
-	    this.frc = new FontRenderContext(null, aaHint,
-					     VALUE_FRACTIONALMETRICS_DEFAULT);
-	}
+        /* These are rarely constructed objects, and only when a complete
+         * UI is being updated, so the cost of the tests here is minimal
+         * and saves tests elsewhere.
+         * We test that the values are ones we support/expect.
+         */
+        public AATextInfo(Object aaHint, Integer lcdContrastHint) {
+            if (aaHint == null) {
+                throw new InternalError("null not allowed here");
+            }
+            if (aaHint == VALUE_TEXT_ANTIALIAS_OFF ||
+                aaHint == VALUE_TEXT_ANTIALIAS_DEFAULT) {
+                throw new InternalError("AA must be on");
+            }
+            this.aaHint = aaHint;
+            this.lcdContrastHint = lcdContrastHint;
+            this.frc = new FontRenderContext(null, aaHint,
+                                             VALUE_FRACTIONALMETRICS_DEFAULT);
+        }
     }
 
     /**
@@ -168,14 +167,14 @@ public class SwingUtilities2 {
      */
     public static final Object COMPONENT_UI_PROPERTY_KEY =
                             new StringBuffer("ComponentUIPropertyKey");
-    
+
     /** Client Property key for the text maximal offsets for BasicMenuItemUI */
     public static final StringUIClientPropertyKey BASICMENUITEMUI_MAX_TEXT_OFFSET =
         new StringUIClientPropertyKey ("maxTextOffset");
 
     // security stuff
     private static Field inputEvent_CanAccessSystemClipboard_Field = null;
-    private static final String UntrustedClipboardAccess = 
+    private static final String UntrustedClipboardAccess =
         "UNTRUSTED_CLIPBOARD_ACCESS_KEY";
 
     //all access to  charsBuffer is to be synchronized on charsBufferLock
@@ -185,12 +184,12 @@ public class SwingUtilities2 {
 
     /**
      * checks whether TextLayout is required to handle characters.
-     * 
+     *
      * @param text characters to be tested
      * @param start start
      * @param limit limit
      * @return <tt>true</tt>  if TextLayout is required
-     *         <tt>false</tt> if TextLayout is not required               
+     *         <tt>false</tt> if TextLayout is not required
      */
     public static final boolean isComplexLayout(char[] text, int start, int limit) {
         return FontManager.isComplexText(text, start, limit);
@@ -198,7 +197,7 @@ public class SwingUtilities2 {
 
     //
     // WARNING WARNING WARNING WARNING WARNING WARNING
-    // Many of the following methods are invoked from older API. 
+    // Many of the following methods are invoked from older API.
     // As this older API was not passed a Component, a null Component may
     // now be passsed in.  For example, SwingUtilities.computeStringWidth
     // is implemented to call SwingUtilities2.stringWidth, the
@@ -216,12 +215,12 @@ public class SwingUtilities2 {
      *         specified component.
      */
     public static AATextInfo drawTextAntialiased(JComponent c) {
-	if (c != null) {
-	    /* a non-null property implies some form of AA requested */
-	    return (AATextInfo)c.getClientProperty(AA_TEXT_PROPERTY_KEY);
-	}
-	// No component, assume aa is off
-	return null;
+        if (c != null) {
+            /* a non-null property implies some form of AA requested */
+            return (AATextInfo)c.getClientProperty(AA_TEXT_PROPERTY_KEY);
+        }
+        // No component, assume aa is off
+        return null;
     }
 
     /**
@@ -252,10 +251,10 @@ public class SwingUtilities2 {
                                          char firstChar) {
         return getBearing(c, fm, firstChar, true);
     }
-    
+
     /**
      * Returns the right side bearing of the last character of string. The
-     * right side bearing is calculated from the passed in FontMetrics. 
+     * right side bearing is calculated from the passed in FontMetrics.
      *
      * @param c JComponent that will display the string
      * @param fm FontMetrics used to measure the String width
@@ -282,8 +281,8 @@ public class SwingUtilities2 {
         return getBearing(c, fm, lastChar, false);
     }
 
-    /* Calculates the left and right side bearing for a character. 
-     * Strongly caches bearings for STRONG_BEARING_CACHE_SIZE 
+    /* Calculates the left and right side bearing for a character.
+     * Strongly caches bearings for STRONG_BEARING_CACHE_SIZE
      * most recently used Fonts and softly caches as many as GC allows.
      */
     private static int getBearing(JComponent comp, FontMetrics fm, char c,
@@ -307,7 +306,7 @@ public class SwingUtilities2 {
             }
             // See if we already have an entry in the soft cache
             if (entry == null) {
-                Iterator<SoftReference<BearingCacheEntry>> iter = 
+                Iterator<SoftReference<BearingCacheEntry>> iter =
                         softBearingCache.iterator();
                 while (iter.hasNext()) {
                     BearingCacheEntry cacheEntry = iter.next().get();
@@ -333,10 +332,10 @@ public class SwingUtilities2 {
                     : entry.getRightSideBearing(c);
         }
     }
-    
+
     private synchronized static void cacheEntry(BearingCacheEntry entry) {
-        // Move the oldest entry from the strong cache into the soft cache  
-        BearingCacheEntry oldestEntry = 
+        // Move the oldest entry from the strong cache into the soft cache
+        BearingCacheEntry oldestEntry =
                 strongBearingCache[strongBearingCacheNextIndex];
         if (oldestEntry != null) {
             softBearingCache.add(new SoftReference<BearingCacheEntry>(oldestEntry));
@@ -344,13 +343,13 @@ public class SwingUtilities2 {
         // Put entry in the strong cache
         putEntryInStrongCache(entry);
     }
-    
+
     private synchronized static void putEntryInStrongCache(BearingCacheEntry entry) {
         strongBearingCache[strongBearingCacheNextIndex] = entry;
         strongBearingCacheNextIndex = (strongBearingCacheNextIndex + 1)
                 % STRONG_BEARING_CACHE_SIZE;
     }
-    
+
     /**
      * Returns the FontMetrics for the current Font of the passed
      * in Graphics.  This method is used when a Graphics
@@ -469,7 +468,7 @@ public class SwingUtilities2 {
             } else {
                 string.getChars(0, stringLength, charsBuffer, 0);
             }
-            needsTextLayout = 
+            needsTextLayout =
                 isComplexLayout(charsBuffer, 0, stringLength);
             if (!needsTextLayout) {
                 int width = 0;
@@ -485,11 +484,11 @@ public class SwingUtilities2 {
         if (needsTextLayout) {
             FontRenderContext frc = getFontRenderContext(c, fm);
             AttributedString aString = new AttributedString(string);
-            LineBreakMeasurer measurer = 
+            LineBreakMeasurer measurer =
                 new LineBreakMeasurer(aString.getIterator(), frc);
             int nChars = measurer.nextOffset(availTextWidth);
             string = string.substring(0, nChars);
-            
+
         }
         return string + clipString;
     }
@@ -536,41 +535,41 @@ public class SwingUtilities2 {
                 }
 
                 layout.draw(g2d, x, y);
-                
+
                 g2d.setColor(col);
 
                 return;
             }
-        } 
+        }
 
         // If we get here we're not printing
-	AATextInfo info = drawTextAntialiased(c);
+        AATextInfo info = drawTextAntialiased(c);
         if (info != null && (g instanceof Graphics2D)) {
             Graphics2D g2 = (Graphics2D)g;
 
-	    Object oldContrast = null;
+            Object oldContrast = null;
             Object oldAAValue = g2.getRenderingHint(KEY_TEXT_ANTIALIASING);
-	    if (info.aaHint != oldAAValue) {
-		g2.setRenderingHint(KEY_TEXT_ANTIALIASING, info.aaHint);
-	    } else {
-		oldAAValue = null;
-	    }
+            if (info.aaHint != oldAAValue) {
+                g2.setRenderingHint(KEY_TEXT_ANTIALIASING, info.aaHint);
+            } else {
+                oldAAValue = null;
+            }
             if (info.lcdContrastHint != null) {
                 oldContrast = g2.getRenderingHint(KEY_TEXT_LCD_CONTRAST);
                 if (info.lcdContrastHint.equals(oldContrast)) {
-		    oldContrast = null;
+                    oldContrast = null;
                 } else {
                     g2.setRenderingHint(KEY_TEXT_LCD_CONTRAST,
-					info.lcdContrastHint);
+                                        info.lcdContrastHint);
                 }
             }
 
             g.drawString(text, x, y);
 
-	    if (oldAAValue != null) {
-		g2.setRenderingHint(KEY_TEXT_ANTIALIASING, oldAAValue);
-	    }
-	    if (oldContrast != null) {
+            if (oldAAValue != null) {
+                g2.setRenderingHint(KEY_TEXT_ANTIALIASING, oldAAValue);
+            }
+            if (oldContrast != null) {
                 g2.setRenderingHint(KEY_TEXT_LCD_CONTRAST, oldContrast);
             }
         }
@@ -612,21 +611,21 @@ public class SwingUtilities2 {
                     } else {
                         text.getChars(0, textLength, charsBuffer, 0);
                     }
-                    needsTextLayout = 
+                    needsTextLayout =
                         isComplexLayout(charsBuffer, 0, textLength);
                 }
-            } 
+            }
             if (!needsTextLayout) {
                 FontMetrics fm = g.getFontMetrics();
-                underlineRectX = x + 
-                    SwingUtilities2.stringWidth(c,fm, 
+                underlineRectX = x +
+                    SwingUtilities2.stringWidth(c,fm,
                                         text.substring(0,underlinedIndex));
                 underlineRectWidth = fm.charWidth(text.
                                                   charAt(underlinedIndex));
             } else {
                 Graphics2D g2d = getGraphics2D(g);
                 if (g2d != null) {
-                    TextLayout layout = 
+                    TextLayout layout =
                         new TextLayout(text, g2d.getFont(),
                                        g2d.getFontRenderContext());
                     if (isPrinting) {
@@ -634,11 +633,11 @@ public class SwingUtilities2 {
                             getStringBounds(text, DEFAULT_FRC).getWidth();
                         layout = layout.getJustifiedLayout(screenWidth);
                     }
-                    TextHitInfo leading = 
+                    TextHitInfo leading =
                         TextHitInfo.leading(underlinedIndex);
-                    TextHitInfo trailing = 
+                    TextHitInfo trailing =
                         TextHitInfo.trailing(underlinedIndex);
-                    Shape shape = 
+                    Shape shape =
                         layout.getVisualHighlightShape(leading, trailing);
                     Rectangle rect = shape.getBounds();
                     underlineRectX = x + rect.x;
@@ -684,12 +683,12 @@ public class SwingUtilities2 {
                           value, index, false, false);
         Dimension itemSize = item.getPreferredSize();
         Rectangle cellBounds = list.getCellBounds(index, index);
-	if (!item.getComponentOrientation().isLeftToRight()) {
-	    cellBounds.x += (cellBounds.width - itemSize.width);
-	}
+        if (!item.getComponentOrientation().isLeftToRight()) {
+            cellBounds.x += (cellBounds.width - itemSize.width);
+        }
         cellBounds.width = itemSize.width;
 
-	return cellBounds.contains(point);
+        return cellBounds.contains(point);
     }
 
 
@@ -767,8 +766,8 @@ public class SwingUtilities2 {
 
     /**
      * The following draw functions have the same semantic as the
-     * Graphics methods with the same names. 
-     * 
+     * Graphics methods with the same names.
+     *
      * this is used for printing
      */
     public static int drawChars(JComponent c, Graphics g,
@@ -776,7 +775,7 @@ public class SwingUtilities2 {
                                  int offset,
                                  int length,
                                  int x,
-                                 int y) { 
+                                 int y) {
         if ( length <= 0 ) { //no need to paint empty strings
             return x;
         }
@@ -786,11 +785,11 @@ public class SwingUtilities2 {
             if (g2d != null) {
                 FontRenderContext deviceFontRenderContext = g2d.
                     getFontRenderContext();
-                FontRenderContext frc = getFontRenderContext(c);        
+                FontRenderContext frc = getFontRenderContext(c);
                 if (frc != null &&
                     !isFontRenderContextPrintCompatible
                     (deviceFontRenderContext, frc)) {
-                    TextLayout layout = 
+                    TextLayout layout =
                         new TextLayout(new String(data,offset,length),
                                        g2d.getFont(),
                                        deviceFontRenderContext);
@@ -810,38 +809,38 @@ public class SwingUtilities2 {
                     g2d.setColor(col);
 
                     return nextX;
-                }  
+                }
             }
-        } 
+        }
         // Assume we're not printing if we get here, or that we are invoked
         // via Swing text printing which is laid out for the printer.
-	AATextInfo info = drawTextAntialiased(c);
+        AATextInfo info = drawTextAntialiased(c);
         if (info != null && (g instanceof Graphics2D)) {
             Graphics2D g2 = (Graphics2D)g;
 
-	    Object oldContrast = null;
+            Object oldContrast = null;
             Object oldAAValue = g2.getRenderingHint(KEY_TEXT_ANTIALIASING);
-	    if (info.aaHint != null && info.aaHint != oldAAValue) {
-		g2.setRenderingHint(KEY_TEXT_ANTIALIASING, info.aaHint);
-	    } else {
-		oldAAValue = null;
-	    }
+            if (info.aaHint != null && info.aaHint != oldAAValue) {
+                g2.setRenderingHint(KEY_TEXT_ANTIALIASING, info.aaHint);
+            } else {
+                oldAAValue = null;
+            }
             if (info.lcdContrastHint != null) {
                 oldContrast = g2.getRenderingHint(KEY_TEXT_LCD_CONTRAST);
                 if (info.lcdContrastHint.equals(oldContrast)) {
-		    oldContrast = null;
+                    oldContrast = null;
                 } else {
                     g2.setRenderingHint(KEY_TEXT_LCD_CONTRAST,
-					info.lcdContrastHint);
+                                        info.lcdContrastHint);
                 }
             }
 
             g.drawChars(data, offset, length, x, y);
 
-	    if (oldAAValue != null) {
-		g2.setRenderingHint(KEY_TEXT_ANTIALIASING, oldAAValue);
-	    }
-	    if (oldContrast != null) {
+            if (oldAAValue != null) {
+                g2.setRenderingHint(KEY_TEXT_ANTIALIASING, oldAAValue);
+            }
+            if (oldContrast != null) {
                 g2.setRenderingHint(KEY_TEXT_LCD_CONTRAST, oldContrast);
             }
         }
@@ -851,7 +850,7 @@ public class SwingUtilities2 {
         return nextX;
     }
 
-    /* 
+    /*
      * see documentation for drawChars
      * returns the advance
      */
@@ -875,7 +874,7 @@ public class SwingUtilities2 {
         if (g2d == null) {
             g.drawString(iterator,x,y); //for the cases where advance
                                         //matters it should not happen
-            retVal = x;                   
+            retVal = x;
 
         } else {
             FontRenderContext frc;
@@ -885,7 +884,7 @@ public class SwingUtilities2 {
                     frc = new FontRenderContext(frc.getTransform(), false, false);
                 }
             } else if ((frc = getFRCProperty(c)) != null) {
-		/* frc = frc; ! */
+                /* frc = frc; ! */
             } else {
                 frc = g2d.getFontRenderContext();
             }
@@ -954,8 +953,8 @@ public class SwingUtilities2 {
             mat1[2] == mat2[2] &&
             mat1[3] == mat2[3];
     }
-    
-    /* 
+
+    /*
      * Tries it best to get Graphics2D out of the given Graphics
      * returns null if can not derive it.
      */
@@ -972,12 +971,12 @@ public class SwingUtilities2 {
     /*
      * Returns FontRenderContext associated with Component.
      * FontRenderContext from Component.getFontMetrics is associated
-     * with the component. 
+     * with the component.
      *
      * Uses Component.getFontMetrics to get the FontRenderContext from.
-     * see JComponent.getFontMetrics and TextLayoutStrategy.java 
-     */ 
-    public static FontRenderContext getFontRenderContext(Component c) { 
+     * see JComponent.getFontMetrics and TextLayoutStrategy.java
+     */
+    public static FontRenderContext getFontRenderContext(Component c) {
         assert c != null;
         if (c == null) {
             return DEFAULT_FRC;
@@ -993,7 +992,7 @@ public class SwingUtilities2 {
      */
     private static FontRenderContext getFontRenderContext(Component c, FontMetrics fm) {
         assert fm != null || c!= null;
-        return (fm != null) ? fm.getFontRenderContext() 
+        return (fm != null) ? fm.getFontRenderContext()
             : getFontRenderContext(c);
     }
 
@@ -1001,7 +1000,7 @@ public class SwingUtilities2 {
      * This method is to be used only for JComponent.getFontMetrics.
      * In all other places to get FontMetrics we need to use
      * JComponent.getFontMetrics.
-     * 
+     *
      */
     public static FontMetrics getFontMetrics(JComponent c, Font font) {
         FontRenderContext  frc = getFRCProperty(c);
@@ -1010,20 +1009,20 @@ public class SwingUtilities2 {
         }
         return FontDesignMetrics.getMetrics(font, frc);
     }
-    
+
 
     /* Get any FontRenderContext associated with a JComponent
      * - may return null
      */
     private static FontRenderContext getFRCProperty(JComponent c) {
-	if (c != null) {
-	    AATextInfo info =
-		(AATextInfo)c.getClientProperty(AA_TEXT_PROPERTY_KEY);
-	    if (info != null) {
-		return info.frc;
-	    }
-	}
-	return null;
+        if (c != null) {
+            AATextInfo info =
+                (AATextInfo)c.getClientProperty(AA_TEXT_PROPERTY_KEY);
+            if (info != null) {
+                return info.frc;
+            }
+        }
+        return null;
     }
 
     /*
@@ -1073,7 +1072,7 @@ public class SwingUtilities2 {
         private FontMetrics fontMetrics;
         private Font font;
         private FontRenderContext frc;
-        private Map<Character, Short> cache; 
+        private Map<Character, Short> cache;
         // Used for the creation of a GlyphVector
         private static final char[] oneChar = new char[1];
 
@@ -1088,21 +1087,21 @@ public class SwingUtilities2 {
         public int getLeftSideBearing(char aChar) {
             Short bearing = cache.get(aChar);
             if (bearing == null) {
-                bearing = calcBearing(aChar); 
+                bearing = calcBearing(aChar);
                 cache.put(aChar, bearing);
             }
             return ((0xFF00 & bearing) >>> 8) - 127;
         }
-        
+
         public int getRightSideBearing(char aChar) {
             Short bearing = cache.get(aChar);
             if (bearing == null) {
-                bearing = calcBearing(aChar); 
+                bearing = calcBearing(aChar);
                 cache.put(aChar, bearing);
             }
             return (0xFF & bearing) - 127;
         }
-        
+
         /* Calculates left and right side bearings for a character.
          * Makes an assumption that bearing is a value between -127 and +127.
          * Stores LSB and RSB as single two-byte number (short):
@@ -1112,13 +1111,13 @@ public class SwingUtilities2 {
             oneChar[0] = aChar;
             GlyphVector gv = font.createGlyphVector(frc, oneChar);
             Rectangle pixelBounds = gv.getGlyphPixelBounds(0, frc, 0f, 0f);
-            
+
             // Get bearings
             int lsb = pixelBounds.x;
             int rsb = pixelBounds.width - fontMetrics.charWidth(aChar);
 
             /* HRGB/HBGR LCD glyph images will always have a pixel
-             * on the left and a pixel on the right 
+             * on the left and a pixel on the right
              * used in colour fringe reduction.
              * Text rendering positions this correctly but here
              * we are using the glyph image to adjust that position
@@ -1138,7 +1137,7 @@ public class SwingUtilities2 {
                      rsb--;
                  }
             }
-            
+
             // Make sure that LSB and RSB are valid (see 6472972)
             if (lsb < -127 || lsb > 127) {
                 lsb = 0;
@@ -1146,8 +1145,8 @@ public class SwingUtilities2 {
             if (rsb < -127 || rsb > 127) {
                 rsb = 0;
             }
-            
-            int bearing = ((lsb + 127) << 8) + (rsb + 127); 
+
+            int bearing = ((lsb + 127) << 8) + (rsb + 127);
             return (short)bearing;
         }
 
@@ -1179,7 +1178,7 @@ public class SwingUtilities2 {
     /*
      * here goes the fix for 4856343 [Problem with applet interaction
      * with system selection clipboard]
-     * 
+     *
      * NOTE. In case isTrustedContext() no checking
      * are to be performed
      */
@@ -1187,7 +1186,7 @@ public class SwingUtilities2 {
 
     /**
      * checks the security permissions for accessing system clipboard
-     * 
+     *
      * for untrusted context (see isTrustedContext) checks the
      * permissions for the current event being handled
      *
@@ -1201,7 +1200,7 @@ public class SwingUtilities2 {
             } else {
                 try {
                     sm.checkSystemClipboardAccess();
-                    canAccess = true;  
+                    canAccess = true;
                 } catch (SecurityException e) {
                 }
                 if (canAccess && ! isTrustedContext()) {
@@ -1220,25 +1219,25 @@ public class SwingUtilities2 {
         return  isTrustedContext()
             || canCurrentEventAccessSystemClipboard(false);
     }
-    
+
     /**
      * Returns true if the given event has permissions to access the
      * system clipboard
-     * 
+     *
      * @param e AWTEvent to check
      */
     public static boolean canEventAccessSystemClipboard(AWTEvent e) {
-        return isTrustedContext() 
+        return isTrustedContext()
             || canEventAccessSystemClipboard(e, false);
     }
-    
+
     /**
      * returns canAccessSystemClipboard field from InputEvent
      *
-     * @param ie InputEvent to get the field from 
+     * @param ie InputEvent to get the field from
      */
     private static synchronized boolean inputEvent_canAccessSystemClipboard(InputEvent ie) {
-        if (inputEvent_CanAccessSystemClipboard_Field == null) { 
+        if (inputEvent_CanAccessSystemClipboard_Field == null) {
             inputEvent_CanAccessSystemClipboard_Field =
                 (Field)AccessController.doPrivileged(
                     new java.security.PrivilegedAction() {
@@ -1256,7 +1255,7 @@ public class SwingUtilities2 {
                         }
                     });
         }
-        if (inputEvent_CanAccessSystemClipboard_Field == null) { 
+        if (inputEvent_CanAccessSystemClipboard_Field == null) {
             return false;
         }
         boolean ret = false;
@@ -1264,14 +1263,14 @@ public class SwingUtilities2 {
             ret = inputEvent_CanAccessSystemClipboard_Field.
                 getBoolean(ie);
         } catch(IllegalAccessException e) {
-        } 
+        }
         return ret;
     }
 
     /**
      * Returns true if the given event is corrent gesture for
      * accessing clipboard
-     * 
+     *
      * @param ie InputEvent to check
      */
 
@@ -1300,7 +1299,7 @@ public class SwingUtilities2 {
                 allowedGesture = ( keyModifiers == InputEvent.SHIFT_MASK);
                 break;
             }
-        } 
+        }
         return allowedGesture;
     }
 
@@ -1312,17 +1311,17 @@ public class SwingUtilities2 {
      * @param e AWTEvent to check
      * @param checkGesture boolean
      */
-    private static boolean canEventAccessSystemClipboard(AWTEvent e, 
+    private static boolean canEventAccessSystemClipboard(AWTEvent e,
                                                         boolean checkGesture) {
-        if (EventQueue.isDispatchThread()) { 
+        if (EventQueue.isDispatchThread()) {
             /*
              * Checking event permissions makes sense only for event
-             * dispathing thread 
+             * dispathing thread
              */
-            if (e instanceof InputEvent 
+            if (e instanceof InputEvent
                 && (! checkGesture || isAccessClipboardGesture((InputEvent)e))) {
                 return inputEvent_canAccessSystemClipboard((InputEvent)e);
-            } else { 
+            } else {
                 return false;
             }
         } else {
@@ -1334,10 +1333,10 @@ public class SwingUtilities2 {
      * Returns true if EventQueue.getCurrentEvent() has the permissions to
      * access the system clipboard and if it is allowed gesture (if
      * checkGesture true)
-     * 
-     * @param checkGesture boolean 
+     *
+     * @param checkGesture boolean
      */
-    private static boolean canCurrentEventAccessSystemClipboard(boolean 
+    private static boolean canCurrentEventAccessSystemClipboard(boolean
                                                                checkGesture) {
         AWTEvent event = EventQueue.getCurrentEvent();
         return canEventAccessSystemClipboard(event, checkGesture);
@@ -1347,9 +1346,9 @@ public class SwingUtilities2 {
      * see RFE 5012841 [Per AppContect security permissions] for the
      * details
      *
-     */ 
+     */
     private static boolean isTrustedContext() {
-        return (System.getSecurityManager() == null) 
+        return (System.getSecurityManager() == null)
             || (AppContext.getAppContext().
                 get(UntrustedClipboardAccess) == null);
     }
@@ -1439,12 +1438,12 @@ public class SwingUtilities2 {
                             }
 
                             if (resource == null) {
-                                return null; 
+                                return null;
                             }
 
-                            BufferedInputStream in = 
+                            BufferedInputStream in =
                                 new BufferedInputStream(resource);
-                            ByteArrayOutputStream out = 
+                            ByteArrayOutputStream out =
                                 new ByteArrayOutputStream(1024);
                             byte[] buffer = new byte[1024];
                             int n;
@@ -1465,7 +1464,7 @@ public class SwingUtilities2 {
                     return null;
                 }
                 if (buffer.length == 0) {
-                    System.err.println("warning: " + imageFile + 
+                    System.err.println("warning: " + imageFile +
                                        " is zero-length");
                     return null;
                 }
@@ -1512,7 +1511,7 @@ public class SwingUtilities2 {
     public static int getUIDefaultsInt(Object key) {
         return getUIDefaultsInt(key, 0);
     }
-    
+
     /**
      * Returns an integer from the defaults table that is appropriate
      * for the given locale. If <code>key</code> does not map to a valid
@@ -1559,7 +1558,7 @@ public class SwingUtilities2 {
      */
     public static int getUIDefaultsInt(Object key, Locale l, int defaultValue) {
         Object value = UIManager.get(key, l);
-    
+
         if (value instanceof Integer) {
             return ((Integer)value).intValue();
         }
@@ -1588,7 +1587,7 @@ public class SwingUtilities2 {
             if (rootAncestor!=null) {
                 FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
                 Component comp = policy.getComponentAfter(rootAncestor, container);
-                
+
                 if (comp!=null && SwingUtilities.isDescendingFrom(comp, container)) {
                     comp.requestFocus();
                     return comp;
@@ -1658,7 +1657,7 @@ public class SwingUtilities2 {
         execute(future);
         return future;
     }
-    
+
     /**
      * Sends a Runnable to the EDT for the execution.
      */
@@ -1711,14 +1710,14 @@ public class SwingUtilities2 {
      * @see #liesIn
      */
     public enum Section {
-        
+
         /** The leading section */
         LEADING,
-        
+
         /** The middle section */
         MIDDLE,
 
-        /** The trailing section */ 
+        /** The trailing section */
         TRAILING
     }
 
@@ -1797,7 +1796,7 @@ public class SwingUtilities2 {
            } else if (pComp >= p0 + length - boundary) {
                return forward ? Section.TRAILING : Section.LEADING;
            }
-               
+
            return Section.MIDDLE;
         } else {
             int middle = p0 + length / 2;

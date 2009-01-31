@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 4402227
- * @summary Verify that ObjectStreamClass.lookup() functions properly 
+ * @summary Verify that ObjectStreamClass.lookup() functions properly
  *          for interfaces.
  */
 
@@ -42,22 +42,22 @@ interface Gub {
 
 public class LookupInterfaceDesc {
     public static void main(String[] args) throws Exception {
-	ObjectStreamClass desc = ObjectStreamClass.lookup(Foo.class);
-	if ((desc.getSerialVersionUID() != Foo.serialVersionUID) ||
-	    (desc.getFields().length != 0))
-	{
-	    throw new Error();
-	}
-	
-	desc = ObjectStreamClass.lookup(Bar.class);
-	if ((desc.getSerialVersionUID() != Bar.serialVersionUID) ||
-	    (desc.getFields().length != 0))
-	{
-	    throw new Error();
-	}
-	
-	if (ObjectStreamClass.lookup(Gub.class) != null) {
-	    throw new Error();
-	}
+        ObjectStreamClass desc = ObjectStreamClass.lookup(Foo.class);
+        if ((desc.getSerialVersionUID() != Foo.serialVersionUID) ||
+            (desc.getFields().length != 0))
+        {
+            throw new Error();
+        }
+
+        desc = ObjectStreamClass.lookup(Bar.class);
+        if ((desc.getSerialVersionUID() != Bar.serialVersionUID) ||
+            (desc.getFields().length != 0))
+        {
+            throw new Error();
+        }
+
+        if (ObjectStreamClass.lookup(Gub.class) != null) {
+            throw new Error();
+        }
     }
 }

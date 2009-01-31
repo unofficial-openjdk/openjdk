@@ -31,27 +31,26 @@ import java.util.jar.*;
 import java.util.zip.*;
 
 /**
- * This class is used to maintain mappings from packages, classes 
+ * This class is used to maintain mappings from packages, classes
  * and resources to their enclosing JAR files. Mappings are kept
- * at the package level except for class or resource files that 
+ * at the package level except for class or resource files that
  * are located at the root directory. URLClassLoader uses the mapping
- * information to determine where to fetch an extension class or 
- * resource from. 
+ * information to determine where to fetch an extension class or
+ * resource from.
  *
  * @author  Zhenghua Li
- * @version %I%, %G%
  * @since   1.3
  */
 
 public class JarIndex {
 
     /**
-     * The hash map that maintains mappings from 
+     * The hash map that maintains mappings from
      * package/classe/resource to jar file list(s)
      */
     private HashMap indexMap;
 
-    /** 
+    /**
      * The hash map that maintains mappings from
      * jar file to package/class/resource lists
      */
@@ -61,7 +60,7 @@ public class JarIndex {
      * An ordered list of jar file names.
      */
     private String[] jarFiles;
-    
+
     /**
      * The index file name.
      */
@@ -77,17 +76,17 @@ public class JarIndex {
 
     /**
      * Constructs a new index from the specified input stream.
-     * 
+     *
      * @param is the input stream containing the index data
      */
     public JarIndex(InputStream is) throws IOException {
         this();
-	read(is);
+        read(is);
     }
 
     /**
      * Constructs a new index for the specified list of jar files.
-     * 
+     *
      * @param files the list of jar files to construct the index from.
      */
     public JarIndex(String[] files) throws IOException {
@@ -95,7 +94,7 @@ public class JarIndex {
         this.jarFiles = files;
         parseJars(files);
     }
-    
+
     /**
      * Returns the jar index, or <code>null</code> if none.
      *
@@ -104,13 +103,13 @@ public class JarIndex {
      */
     public static JarIndex getJarIndex(JarFile jar, MetaIndex metaIndex) throws IOException {
         JarIndex index = null;
-	/* If metaIndex is not null, check the meta index to see
-	   if META-INF/INDEX.LIST is contained in jar file or not.
-	*/
-	if (metaIndex != null &&
-	    !metaIndex.mayContain(INDEX_NAME)) {
-	    return null;
-	}
+        /* If metaIndex is not null, check the meta index to see
+           if META-INF/INDEX.LIST is contained in jar file or not.
+        */
+        if (metaIndex != null &&
+            !metaIndex.mayContain(INDEX_NAME)) {
+            return null;
+        }
         JarEntry e = jar.getJarEntry(INDEX_NAME);
         // if found, then load the index
         if (e != null) {
@@ -125,7 +124,7 @@ public class JarIndex {
     public String[] getJarFiles() {
         return jarFiles;
     }
-    
+
     /*
      * Add the key, value pair to the hashmap, the value will
      * be put in a linked list which is created if necessary.
@@ -157,14 +156,14 @@ public class JarIndex {
         }
         return jarFiles;
     }
-    
+
     /**
      * Add the mapping from the specified file to the specified
-     * jar file. If there were no mapping for the package of the 
+     * jar file. If there were no mapping for the package of the
      * specified file before, a new linked list will be created,
-     * the jar file is added to the list and a new mapping from 
-     * the package to the jar file list is added to the hashmap. 
-     * Otherwise, the jar file will be added to the end of the 
+     * the jar file is added to the list and a new mapping from
+     * the package to the jar file list is added to the hashmap.
+     * Otherwise, the jar file will be added to the end of the
      * existing list.
      *
      * @param fileName the file name
@@ -182,11 +181,11 @@ public class JarIndex {
 
         // add the mapping to indexMap
         addToList(packageName, jarName, indexMap);
-        
+
         // add the mapping to jarMap
         addToList(jarName, packageName, jarMap);
     }
-    
+
     /**
      * Go through all the jar files and construct the
      * index table.
@@ -197,7 +196,7 @@ public class JarIndex {
         }
 
         String currentJar = null;
-        
+
         for (int i = 0; i < files.length; i++) {
             currentJar = files[i];
             ZipFile zrf = new ZipFile(currentJar.replace
@@ -206,13 +205,13 @@ public class JarIndex {
             Enumeration entries = zrf.entries();
             while(entries.hasMoreElements()) {
                 String fileName = ((ZipEntry)(entries.nextElement())).getName();
-		// Index the META-INF directory, but not the index or manifest.
+                // Index the META-INF directory, but not the index or manifest.
                 if (!fileName.startsWith("META-INF/") ||
-			!(fileName.equals("META-INF/") ||
-			  fileName.equals(INDEX_NAME) ||
-			  fileName.equals(JarFile.MANIFEST_NAME))) {
-		    add(fileName, currentJar);
-		}
+                        !(fileName.equals("META-INF/") ||
+                          fileName.equals(INDEX_NAME) ||
+                          fileName.equals(JarFile.MANIFEST_NAME))) {
+                    add(fileName, currentJar);
+                }
             }
             zrf.close();
         }
@@ -228,7 +227,7 @@ public class JarIndex {
         BufferedWriter bw = new BufferedWriter
             (new OutputStreamWriter(out, "UTF8"));
         bw.write("JarIndex-Version: 1.0\n\n");
-        
+
         if (jarFiles != null) {
             for (int i = 0; i < jarFiles.length; i++) {
                 /* print out the jar file name */
@@ -246,12 +245,12 @@ public class JarIndex {
             bw.flush();
         }
     }
-    
+
 
     /**
      * Reads the index from the specified InputStream.
      *
-     * @param is the input stream 
+     * @param is the input stream
      * @exception IOException if an I/O error has occurred
      */
     public void read(InputStream is) throws IOException {
@@ -259,13 +258,13 @@ public class JarIndex {
             (new InputStreamReader(is, "UTF8"));
         String line = null;
         String currentJar = null;
-        
+
         /* an ordered list of jar file names */
         Vector jars = new Vector();
-        
+
         /* read until we see a .jar line */
         while((line = br.readLine()) != null && !line.endsWith(".jar"));
-        
+
         for(;line != null; line = br.readLine()) {
             if (line.length() == 0)
                 continue;

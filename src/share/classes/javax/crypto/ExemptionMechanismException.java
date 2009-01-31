@@ -43,7 +43,7 @@ public class ExemptionMechanismException extends GeneralSecurityException {
      * exception.)
      */
     public ExemptionMechanismException() {
-	super();
+        super();
     }
 
     /**

@@ -24,12 +24,11 @@
  */
 
 /*
- * @(#)KhmerLayoutEngine.h	1.3 06/12/13
  *
- * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved 
+ * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
  * This file is a modification of the ICU file IndicLayoutEngine.h
- * by Jens Herden and Javier Sola for Khmer language 
+ * by Jens Herden and Javier Sola for Khmer language
  *
  */
 
@@ -83,8 +82,8 @@ public:
      *
      * @internal
      */
-    KhmerOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
-        le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags, 
+    KhmerOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+        le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags,
         const GlyphSubstitutionTableHeader *gsubTable);
 
     /**
@@ -101,7 +100,7 @@ public:
      *
      * @internal
      */
-    KhmerOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
+    KhmerOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
         le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags);
 
     /**
@@ -138,10 +137,9 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset, 
+    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset,
         le_int32 count, le_int32 max, le_bool rightToLeft,
         LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 };
 
 #endif
-

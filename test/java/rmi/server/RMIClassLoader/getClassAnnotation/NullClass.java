@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,17 +39,17 @@ public class NullClass {
 
     public static void main(String[] args) {
 
-	System.err.println("\nRegression test for bug 4518927\n");
+        System.err.println("\nRegression test for bug 4518927\n");
 
-	try {
-	    System.err.println("getting class annotation for null class...");
-	    String annotation = RMIClassLoader.getClassAnnotation(null);
-	    throw new RuntimeException(
-		"TEST FAILED: NullPointerException not caught!");
-	} catch (NullPointerException e) {
-	    System.err.println("TEST PASSED: NullPointerException caught");
-	} catch (Exception e) {
-	    TestLibrary.bomb(e);
-	}
+        try {
+            System.err.println("getting class annotation for null class...");
+            String annotation = RMIClassLoader.getClassAnnotation(null);
+            throw new RuntimeException(
+                "TEST FAILED: NullPointerException not caught!");
+        } catch (NullPointerException e) {
+            System.err.println("TEST PASSED: NullPointerException caught");
+        } catch (Exception e) {
+            TestLibrary.bomb(e);
+        }
     }
 }

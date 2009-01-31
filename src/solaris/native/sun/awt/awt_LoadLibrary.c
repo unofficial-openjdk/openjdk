@@ -73,7 +73,7 @@ JNIEXPORT jboolean JNICALL AWTIsHeadless() {
     return isHeadless;
 }
 
-jint 
+jint
 AWT_OnLoad(JavaVM *vm, void *reserved)
 {
     Dl_info dlinfo;
@@ -82,7 +82,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     char *p;
     JNI_OnLoad_type *JNI_OnLoad_ptr;
     int32_t motifVersion = 2;
-    struct utsname name; 
+    struct utsname name;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(vm, JNI_VERSION_1_2);
     void *v;
     char *envvar;
@@ -113,7 +113,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
 
     propname = (*env)->NewStringUTF(env, "awt.toolkit");
     /* Check if toolkit is specified in env variable */
-    envvar = getenv("AWT_TOOLKIT"); 
+    envvar = getenv("AWT_TOOLKIT");
     if (envvar) {
         if (strstr(envvar, "MToolkit")) {
             toolkit = (*env)->NewStringUTF(env, "sun.awt.motif.MToolkit");
@@ -131,7 +131,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
                                         propname,toolkit);
         }
     }
-    
+
     /* Calculate toolkit name, kind of toolkit (XAWT, Motif) and library to load */
     if (AWTIsHeadless()) {
         strcpy(p, "/headless/libmawt");
@@ -196,10 +196,10 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
 
             /* Determine desired Motif Version, and set appropriate properties
              * to load the correct version of libmawt.so
-             */  
-            else {  
-                uname(&name); 
-    
+             */
+            else {
+                uname(&name);
+
                 if ((strcmp(name.release, "5.5.1") == 0) ||
                     (strcmp(name.release, "5.6") == 0)) {
 #ifdef VERBOSE_AWT_DEBUG
@@ -225,7 +225,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
                 }
             }
         }
-    
+
         /* Update library name */
         if (toolkit) {
             const char* toolkit_name = (*env)->GetStringUTFChars(env, toolkit, 0);
@@ -259,7 +259,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
             return JNI_VERSION_1_2;
         }
     }
- 
+
     strcat(p, ".so");
 
     JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "load",
@@ -383,7 +383,7 @@ return_type name arglist                                                \
 
 REFLECT_VOID_FUNCTION(getAwtLockFunctions,
                       (void (**AwtLock)(JNIEnv *), void (**AwtUnlock)(JNIEnv *),
-                       void (**AwtNoFlushUnlock)(JNIEnv *), void *reserved), 
+                       void (**AwtNoFlushUnlock)(JNIEnv *), void *reserved),
                       (AwtLock, AwtUnlock, AwtNoFlushUnlock, reserved))
 
 REFLECT_VOID_FUNCTION(getAwtData,
@@ -393,6 +393,3 @@ REFLECT_VOID_FUNCTION(getAwtData,
                        awt_num_colors, pReserved))
 
 REFLECT_FUNCTION(Display *, getAwtDisplay, (void), ())
-
-    
-  

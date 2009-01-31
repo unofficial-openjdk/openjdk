@@ -68,7 +68,7 @@ public class AttributeList extends ArrayList<Object> {
      * Constructs an empty <CODE>AttributeList</CODE>.
      */
     public AttributeList() {
-	super();
+        super();
     }
 
     /**
@@ -80,7 +80,7 @@ public class AttributeList extends ArrayList<Object> {
      * ArrayList#ArrayList(int)}.
      */
     public AttributeList(int initialCapacity) {
-	super(initialCapacity);
+        super(initialCapacity);
     }
 
     /**
@@ -97,7 +97,7 @@ public class AttributeList extends ArrayList<Object> {
      * @see ArrayList#ArrayList(java.util.Collection)
      */
     public AttributeList(AttributeList list) {
-	super(list);
+        super(list);
     }
 
     /**
@@ -159,7 +159,7 @@ public class AttributeList extends ArrayList<Object> {
                 checkTypeSafe(this);
             typeSafe = true;
         }
-	return (List<Attribute>) (List) this;
+        return (List<Attribute>) (List) this;
     }
 
     /**
@@ -168,7 +168,7 @@ public class AttributeList extends ArrayList<Object> {
      * @param object  The attribute to be added.
      */
     public void add(Attribute object)  {
-	super.add(object);
+        super.add(object);
     }
 
     /**
@@ -183,13 +183,13 @@ public class AttributeList extends ArrayList<Object> {
      * object is to be inserted.
      */
     public void add(int index, Attribute object)  {
-	try {
-	    super.add(index, object);
-	}
-	catch (IndexOutOfBoundsException e) {
-	    throw new RuntimeOperationsException(e,
+        try {
+            super.add(index, object);
+        }
+        catch (IndexOutOfBoundsException e) {
+            throw new RuntimeOperationsException(e,
                 "The specified index is out of range");
-	}
+        }
     }
 
     /**
@@ -202,13 +202,13 @@ public class AttributeList extends ArrayList<Object> {
      * @param index  The position specified.
      */
     public void set(int index, Attribute object)  {
-	try {
-	    super.set(index, object);
-	}
-	catch (IndexOutOfBoundsException e) {
-	    throw new RuntimeOperationsException(e,
+        try {
+            super.set(index, object);
+        }
+        catch (IndexOutOfBoundsException e) {
+            throw new RuntimeOperationsException(e,
                 "The specified index is out of range");
-	}
+        }
     }
 
     /**
@@ -223,7 +223,7 @@ public class AttributeList extends ArrayList<Object> {
      * @see ArrayList#addAll(java.util.Collection)
      */
     public boolean addAll(AttributeList list)  {
-	return (super.addAll(list));
+        return (super.addAll(list));
     }
 
     /**
@@ -243,13 +243,13 @@ public class AttributeList extends ArrayList<Object> {
      * @see ArrayList#addAll(int, java.util.Collection)
      */
     public boolean addAll(int index, AttributeList list)  {
-	try {
-	    return super.addAll(index, list);
-	}
-	catch (IndexOutOfBoundsException e) {
-	    throw new RuntimeOperationsException(e,
+        try {
+            return super.addAll(index, list);
+        }
+        catch (IndexOutOfBoundsException e) {
+            throw new RuntimeOperationsException(e,
                 "The specified index is out of range");
-	}
+        }
     }
 
     /*

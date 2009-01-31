@@ -87,15 +87,15 @@ public class GetMBeanInfoExceptionTest {
         int error = 0;
 
         // Instantiate the MBean server
-	//
-	System.out.println("Create the MBean server");
-	MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+        //
+        System.out.println("Create the MBean server");
+        MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-	// Register the MBean
-	//
-	System.out.println("Create a TestDynamicMBean");
-	TestDynamicMBean obj = new TestDynamicMBean();
-	ObjectName n = new ObjectName("d:k=v");
+        // Register the MBean
+        //
+        System.out.println("Create a TestDynamicMBean");
+        TestDynamicMBean obj = new TestDynamicMBean();
+        ObjectName n = new ObjectName("d:k=v");
         try {
             mbs.registerMBean(obj, n);
             System.out.println("Didn't get expected NotCompliantMBeanException");
@@ -122,11 +122,11 @@ public class GetMBeanInfoExceptionTest {
             error++;
         }
 
-	if (error > 0) {
-	    System.out.println("Test failed");
+        if (error > 0) {
+            System.out.println("Test failed");
             throw new IllegalArgumentException("Test failed");
-	} else {
-	    System.out.println("Test passed");            
+        } else {
+            System.out.println("Test passed");
         }
     }
 }

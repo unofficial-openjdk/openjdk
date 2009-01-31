@@ -60,7 +60,7 @@ public class TemplateTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new TemplateTest(args).startTests();
     }
 
@@ -84,15 +84,15 @@ public class TemplateTest extends TestScaffold {
     public void exceptionThrown(ExceptionEvent event) {
         println("Got ExceptionEvent");
     }
-    
+
     public void stepCompleted(StepEvent event) {
         println("Got StepEvent");
     }
-    
+
     public void classPrepared(ClassPrepareEvent event) {
         println("Got ClassPrepareEvent");
     }
-    
+
     public void classUnloaded(ClassUnloadEvent event) {
         println("Got ClassUnloadEvent");
     }
@@ -100,15 +100,15 @@ public class TemplateTest extends TestScaffold {
     public void methodEntered(MethodEntryEvent event) {
         println("Got MethodEntryEvent");
     }
-    
+
     public void methodExited(MethodExitEvent event) {
         println("Got MethodExitEvent");
     }
-    
+
     public void fieldAccessed(AccessWatchpointEvent event) {
         println("Got AccessWatchpointEvent");
     }
-    
+
     public void fieldModified(ModificationWatchpointEvent event) {
         println("Got ModificationWatchpointEvent");
     }
@@ -116,42 +116,42 @@ public class TemplateTest extends TestScaffold {
     public void threadStarted(ThreadStartEvent event) {
         println("Got ThreadStartEvent");
     }
-    
+
     public void threadDied(ThreadDeathEvent event) {
         println("Got ThreadDeathEvent");
     }
-    
+
     public void vmStarted(VMStartEvent event) {
         println("Got VMStartEvent");
     }
-    
+
     public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
     }
-    
+
     public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("TemplateTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
-        
+
 // TEMPLATE: set things up
 
 // TEMPLATE: for example
         /*
          * Set event requests
          */
-        StepRequest request = erm.createStepRequest(mainThread, 
+        StepRequest request = erm.createStepRequest(mainThread,
                                                     StepRequest.STEP_LINE,
                                                     StepRequest.STEP_OVER);
         request.enable();
@@ -160,7 +160,7 @@ public class TemplateTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -172,4 +172,3 @@ public class TemplateTest extends TestScaffold {
         }
     }
 }
-

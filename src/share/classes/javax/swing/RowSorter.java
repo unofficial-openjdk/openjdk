@@ -68,7 +68,7 @@ import java.util.*;
  * </ul>
  * <code>RowSorter</code> implementations typically don't have a one-to-one
  * mapping with the underlying model, but they can.
- * For example, if a database does the sorting, 
+ * For example, if a database does the sorting,
  * <code>toggleSortOrder</code> might call through to the database
  * (on a background thread), and override the mapping methods to return the
  * argument that is passed in.
@@ -89,7 +89,6 @@ import java.util.*;
  * <code>rowsUpdated</code>.
  *
  * @param <M> the type of the underlying model
- * @version %I% %G%
  * @see javax.swing.table.TableRowSorter
  * @since 1.6
  */
@@ -243,7 +242,7 @@ public abstract class RowSorter<M> {
      * Invoked when rows have been deleted from the underlying model
      * in the specified range (inclusive).
      * <p>
-     * The arguments give the indices of the effected range and 
+     * The arguments give the indices of the effected range and
      * are in terms of the model <b>before</b> the change.
      * For example, if you have a 5-row model and delete 3 items from the end
      * of the model the indices are 2, 4.
@@ -286,7 +285,7 @@ public abstract class RowSorter<M> {
      * @param column the column that has changed, in terms of the underlying
      *        model
      * @throws IndexOutOfBoundsException if either argument is outside
-     *         the range of the underlying model after the change, 
+     *         the range of the underlying model after the change,
      *         <code>firstRow</code> &gt; <code>endRow</code>, or
      *         <code>column</code> is outside the range of the underlying
      *          model
@@ -303,7 +302,7 @@ public abstract class RowSorter<M> {
      * @param l the <code>RowSorterListener</code>
      */
     public void addRowSorterListener(RowSorterListener l) {
-	listenerList.add(RowSorterListener.class, l);
+        listenerList.add(RowSorterListener.class, l);
     }
 
     /**
@@ -313,7 +312,7 @@ public abstract class RowSorter<M> {
      * @param l the <code>RowSorterListener</code>
      */
     public void removeRowSorterListener(RowSorterListener l) {
-	listenerList.remove(RowSorterListener.class, l);
+        listenerList.remove(RowSorterListener.class, l);
     }
 
     /**
@@ -326,7 +325,7 @@ public abstract class RowSorter<M> {
     /**
      * Notifies listener that the mapping has changed.
      *
-     * @param lastRowIndexToModel the mapping from model indices to 
+     * @param lastRowIndexToModel the mapping from model indices to
      *        view indices prior to the sort, may be <code>null</code>
      */
     protected void fireRowSorterChanged(int[] lastRowIndexToModel) {

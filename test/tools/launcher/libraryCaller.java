@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,11 +36,11 @@
 
 class libraryCaller {
     static {
-	System.loadLibrary("library");
+        System.loadLibrary("library");
     }
     static native int number();
 
     public static void main(String argv[]) {
-	System.out.println(number());
+        System.out.println(number());
     }
 }

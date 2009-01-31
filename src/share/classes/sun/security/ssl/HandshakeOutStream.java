@@ -39,7 +39,6 @@ import java.security.MessageDigest;
  * have other threads reading/writing application data.  It's the
  * SSLSocketImpl class that synchronizes record writes.
  *
- * @version %I% %G%
  * @author  David Brownell
  */
 class HandshakeOutStream extends OutputStream {
@@ -50,26 +49,26 @@ class HandshakeOutStream extends OutputStream {
     OutputRecord r;
 
     HandshakeOutStream(ProtocolVersion protocolVersion,
-	    ProtocolVersion helloVersion, HandshakeHash handshakeHash,
-	    SSLSocketImpl socket) {
-	this.socket = socket;
-	r = new OutputRecord(Record.ct_handshake);
-	init(protocolVersion, helloVersion, handshakeHash);
+            ProtocolVersion helloVersion, HandshakeHash handshakeHash,
+            SSLSocketImpl socket) {
+        this.socket = socket;
+        r = new OutputRecord(Record.ct_handshake);
+        init(protocolVersion, helloVersion, handshakeHash);
     }
 
     HandshakeOutStream(ProtocolVersion protocolVersion,
-	    ProtocolVersion helloVersion, HandshakeHash handshakeHash,
-	    SSLEngineImpl engine) {
-	this.engine = engine;
-	r = new EngineOutputRecord(Record.ct_handshake, engine);
-	init(protocolVersion, helloVersion, handshakeHash);
+            ProtocolVersion helloVersion, HandshakeHash handshakeHash,
+            SSLEngineImpl engine) {
+        this.engine = engine;
+        r = new EngineOutputRecord(Record.ct_handshake, engine);
+        init(protocolVersion, helloVersion, handshakeHash);
     }
 
     private void init(ProtocolVersion protocolVersion,
-	    ProtocolVersion helloVersion, HandshakeHash handshakeHash) {
-	r.setVersion(protocolVersion);
-	r.setHelloVersion(helloVersion);
-	r.setHandshakeHash(handshakeHash);
+            ProtocolVersion helloVersion, HandshakeHash handshakeHash) {
+        r.setVersion(protocolVersion);
+        r.setHelloVersion(helloVersion);
+        r.setHandshakeHash(handshakeHash);
     }
 
 
@@ -80,7 +79,7 @@ class HandshakeOutStream extends OutputStream {
      * other cases, automatic hash calculation suffices.
      */
     void doHashes() {
-	r.doHashes();
+        r.doHashes();
     }
 
     /*
@@ -89,50 +88,50 @@ class HandshakeOutStream extends OutputStream {
      * network (e.g. a big cert message etc).
      */
     public void write(byte buf[], int off, int len) throws IOException {
-	while (len > 0) {
-	    int howmuch = Math.min(len, r.availableDataBytes());
+        while (len > 0) {
+            int howmuch = Math.min(len, r.availableDataBytes());
 
-	    if (howmuch == 0) {
-		flush();
-	    } else {
-		r.write(buf, off, howmuch);
-		off += howmuch;
-		len -= howmuch;
-	    }
-	}
+            if (howmuch == 0) {
+                flush();
+            } else {
+                r.write(buf, off, howmuch);
+                off += howmuch;
+                len -= howmuch;
+            }
+        }
     }
 
     /*
      * write-a-byte
      */
     public void write(int i) throws IOException {
-	if (r.availableDataBytes() < 1) {
-	    flush();
-	}
-	r.write(i);
+        if (r.availableDataBytes() < 1) {
+            flush();
+        }
+        r.write(i);
     }
 
     public void flush() throws IOException {
-	if (socket != null) {
-	    try {
-		socket.writeRecord(r);
-	    } catch (IOException e) {
-		// Had problems writing; check if there was an
-		// alert from peer. If alert received, waitForClose
-		// will throw an exception for the alert
-		socket.waitForClose(true);
+        if (socket != null) {
+            try {
+                socket.writeRecord(r);
+            } catch (IOException e) {
+                // Had problems writing; check if there was an
+                // alert from peer. If alert received, waitForClose
+                // will throw an exception for the alert
+                socket.waitForClose(true);
 
-		// No alert was received, just rethrow exception
-		throw e;
-	    }
-	} else {  // engine != null
-	    /*
-	     * Even if record might be empty, flush anyway in case
-	     * there is a finished handshake message that we need
-	     * to queue.
-	     */
-	    engine.writeRecord((EngineOutputRecord)r);
-	}
+                // No alert was received, just rethrow exception
+                throw e;
+            }
+        } else {  // engine != null
+            /*
+             * Even if record might be empty, flush anyway in case
+             * there is a finished handshake message that we need
+             * to queue.
+             */
+            engine.writeRecord((EngineOutputRecord)r);
+        }
     }
 
     /*
@@ -142,9 +141,9 @@ class HandshakeOutStream extends OutputStream {
      * that a finish message occured.
      */
     void setFinishedMsg() {
-	assert(socket == null);
+        assert(socket == null);
 
-	((EngineOutputRecord)r).setFinishedMsg();
+        ((EngineOutputRecord)r).setFinishedMsg();
     }
 
     /*
@@ -154,34 +153,34 @@ class HandshakeOutStream extends OutputStream {
      */
 
     void putInt8(int i) throws IOException {
-	r.write(i);
+        r.write(i);
     }
 
     void putInt16(int i) throws IOException {
-	if (r.availableDataBytes() < 2) {
-	    flush();
-	}
-	r.write(i >> 8);
-	r.write(i);
+        if (r.availableDataBytes() < 2) {
+            flush();
+        }
+        r.write(i >> 8);
+        r.write(i);
     }
 
     void putInt24(int i) throws IOException {
-	if (r.availableDataBytes() < 3) {
-	    flush();
-	}
-	r.write(i >> 16);
-	r.write(i >> 8);
-	r.write(i);
+        if (r.availableDataBytes() < 3) {
+            flush();
+        }
+        r.write(i >> 16);
+        r.write(i >> 8);
+        r.write(i);
     }
 
     void putInt32(int i) throws IOException {
-	if (r.availableDataBytes() < 4) {
-	    flush();
-	}
-	r.write(i >> 24);
-	r.write(i >> 16);
-	r.write(i >> 8);
-	r.write(i);
+        if (r.availableDataBytes() < 4) {
+            flush();
+        }
+        r.write(i >> 24);
+        r.write(i >> 16);
+        r.write(i >> 8);
+        r.write(i);
     }
 
     /*
@@ -189,29 +188,29 @@ class HandshakeOutStream extends OutputStream {
      * integers in big-endian format.
      */
     void putBytes8(byte b[]) throws IOException {
-	if (b == null) {
-	    putInt8(0);
-	    return;
-	}
-	putInt8(b.length);
-	write(b, 0, b.length);
+        if (b == null) {
+            putInt8(0);
+            return;
+        }
+        putInt8(b.length);
+        write(b, 0, b.length);
     }
 
     void putBytes16(byte b[]) throws IOException {
-	if (b == null) {
-	    putInt16(0);
-	    return;
-	}
-	putInt16(b.length);
-	write(b, 0, b.length);
+        if (b == null) {
+            putInt16(0);
+            return;
+        }
+        putInt16(b.length);
+        write(b, 0, b.length);
     }
 
     void putBytes24(byte b[]) throws IOException {
-	if (b == null) {
-	    putInt24(0);
-	    return;
-	}
-	putInt24(b.length);
-	write(b, 0, b.length);
+        if (b == null) {
+            putInt24(0);
+            return;
+        }
+        putInt24(b.length);
+        write(b, 0, b.length);
     }
 }

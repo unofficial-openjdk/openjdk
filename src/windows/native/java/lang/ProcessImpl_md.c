@@ -111,9 +111,9 @@ win32Error(JNIEnv *env, const char *functionName)
     const int errnum = GetLastError();
     const int n = JVM_GetLastErrorString(buf, sizeof(buf));
     if (n > 0)
-	sprintf(errmsg, format, functionName, errnum, buf);
+        sprintf(errmsg, format, functionName, errnum, buf);
     else
-	sprintf(errmsg, fallbackFormat, functionName, errnum);
+        sprintf(errmsg, fallbackFormat, functionName, errnum);
     JNU_ThrowIOException(env, errmsg);
 }
 
@@ -121,18 +121,18 @@ static void
 closeSafely(HANDLE handle)
 {
     if (handle)
-	CloseHandle(handle);
+        CloseHandle(handle);
 }
 
 JNIEXPORT jlong JNICALL
 Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
-				  jstring cmd,
-				  jstring envBlock,
-				  jstring dir,
-				  jboolean redirectErrorStream,
-				  jobject in_fd,
-				  jobject out_fd,
-				  jobject err_fd)
+                                  jstring cmd,
+                                  jstring envBlock,
+                                  jstring dir,
+                                  jboolean redirectErrorStream,
+                                  jobject in_fd,
+                                  jobject out_fd,
+                                  jobject err_fd)
 {
     HANDLE inRead   = 0;
     HANDLE inWrite  = 0;
@@ -162,9 +162,9 @@ Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
 
     if (!(CreatePipe(&inRead,  &inWrite,  &sa, PIPE_SIZE) &&
           CreatePipe(&outRead, &outWrite, &sa, PIPE_SIZE) &&
-	  CreatePipe(&errRead, &errWrite, &sa, PIPE_SIZE))) {
-	win32Error(env, "CreatePipe");
-	goto Catch;
+          CreatePipe(&errRead, &errWrite, &sa, PIPE_SIZE))) {
+        win32Error(env, "CreatePipe");
+        goto Catch;
     }
 
     assert(cmd != NULL);
@@ -172,16 +172,16 @@ Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
     if (pcmd == NULL) goto Catch;
 
     if (dir != 0) {
-	pdir = (LPCTSTR) JNU_GetStringPlatformChars(env, dir, NULL);
-	if (pdir == NULL) goto Catch;
+        pdir = (LPCTSTR) JNU_GetStringPlatformChars(env, dir, NULL);
+        if (pdir == NULL) goto Catch;
         pdir = (LPCTSTR) JVM_NativePath((char *)pdir);
     }
 
     if (envBlock != NULL) {
-	penvBlock = onNT
-	    ? (LPVOID) ((*env)->GetStringChars(env, envBlock, NULL))
-	    : (LPVOID) JNU_GetStringPlatformChars(env, envBlock, NULL);
-	if (penvBlock == NULL) goto Catch;
+        penvBlock = onNT
+            ? (LPVOID) ((*env)->GetStringChars(env, envBlock, NULL))
+            : (LPVOID) JNU_GetStringPlatformChars(env, envBlock, NULL);
+        if (penvBlock == NULL) goto Catch;
     }
 
     memset(&si, 0, sizeof(si));
@@ -196,10 +196,10 @@ Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
     SetHandleInformation(errRead, HANDLE_FLAG_INHERIT, FALSE);
 
     if (redirectErrorStream)
-	SetHandleInformation(errWrite, HANDLE_FLAG_INHERIT, FALSE);
+        SetHandleInformation(errWrite, HANDLE_FLAG_INHERIT, FALSE);
 
     if (onNT)
-	processFlag = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+        processFlag = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
     else
         processFlag = selectProcessFlag(env, cmd);
 
@@ -226,8 +226,8 @@ Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
                         &pi);        /* (out) process information */
 
     if (!ret) {
-	win32Error(env, "CreateProcess");
-	goto Catch;
+        win32Error(env, "CreateProcess");
+        goto Catch;
     }
 
     CloseHandle(pi.hThread);
@@ -243,14 +243,14 @@ Java_java_lang_ProcessImpl_create(JNIEnv *env, jclass ignored,
     closeSafely(errWrite);
 
     if (pcmd != NULL)
-	JNU_ReleaseStringPlatformChars(env, cmd, (char *) pcmd);
+        JNU_ReleaseStringPlatformChars(env, cmd, (char *) pcmd);
     if (pdir != NULL)
-	JNU_ReleaseStringPlatformChars(env, dir, (char *) pdir);
+        JNU_ReleaseStringPlatformChars(env, dir, (char *) pdir);
     if (penvBlock != NULL) {
-	if (onNT)
-	    (*env)->ReleaseStringChars(env, envBlock, (jchar *) penvBlock);
-	else
-	    JNU_ReleaseStringPlatformChars(env, dir, (char *) penvBlock);
+        if (onNT)
+            (*env)->ReleaseStringChars(env, envBlock, (jchar *) penvBlock);
+        else
+            JNU_ReleaseStringPlatformChars(env, dir, (char *) penvBlock);
     }
     return ret;
 
@@ -267,7 +267,7 @@ Java_java_lang_ProcessImpl_getExitCodeProcess(JNIEnv *env, jclass ignored, jlong
 {
     DWORD exit_code;
     if (GetExitCodeProcess((HANDLE) handle, &exit_code) == 0)
-	win32Error(env, "GetExitCodeProcess");
+        win32Error(env, "GetExitCodeProcess");
     return exit_code;
 }
 
@@ -285,10 +285,10 @@ Java_java_lang_ProcessImpl_waitForInterruptibly(JNIEnv *env, jclass ignored, jlo
     events[1] = JVM_GetThreadInterruptEvent();
 
     if (WaitForMultipleObjects(sizeof(events)/sizeof(events[0]), events,
-			       FALSE,    /* Wait for ANY event */
-			       INFINITE) /* Wait forever */
-	== WAIT_FAILED)
-	win32Error(env, "WaitForMultipleObjects");
+                               FALSE,    /* Wait for ANY event */
+                               INFINITE) /* Wait forever */
+        == WAIT_FAILED)
+        win32Error(env, "WaitForMultipleObjects");
 }
 
 JNIEXPORT void JNICALL

@@ -32,7 +32,6 @@ import sun.jvmstat.monitor.*;
  * of the available Instrumentation for a monitorable Java Virtual Machine.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class OptionOutputFormatter implements OutputFormatter {

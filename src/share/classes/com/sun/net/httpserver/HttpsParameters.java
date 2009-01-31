@@ -38,13 +38,13 @@ import javax.net.ssl.SSLParameters;
  * in order to determine the parameters to use.
  * <p>
  * The underlying SSL parameters may be established either
- * via the set/get methods of this class, or else via 
- * a {@link javax.net.ssl.SSLParameters} object. SSLParameters 
+ * via the set/get methods of this class, or else via
+ * a {@link javax.net.ssl.SSLParameters} object. SSLParameters
  * is the preferred method, because in the future,
  * additional configuration capabilities may be added to that class, and
  * it is easier to determine the set of supported parameters and their
- * default values with SSLParameters. Also, if an SSLParameters object is 
- * provided via 
+ * default values with SSLParameters. Also, if an SSLParameters object is
+ * provided via
  * {@link #setSSLParameters(SSLParameters)} then those parameter settings
  * are used, and any settings made in this object are ignored.
  * @since 1.6
@@ -98,8 +98,8 @@ public abstract class HttpsParameters {
      *
      * @param cipherSuites the array of ciphersuites (or null)
      */
-    public void setCipherSuites(String[] cipherSuites) { 
-	this.cipherSuites = cipherSuites;
+    public void setCipherSuites(String[] cipherSuites) {
+        this.cipherSuites = cipherSuites;
     }
 
     /**
@@ -118,8 +118,8 @@ public abstract class HttpsParameters {
      *
      * @param protocols the array of protocols (or null)
      */
-    public void setProtocols(String[] protocols) { 
-	this.protocols = protocols;
+    public void setProtocols(String[] protocols) {
+        this.protocols = protocols;
     }
 
     /**
@@ -137,8 +137,8 @@ public abstract class HttpsParameters {
      *
      * @param wantClientAuth whether client authentication should be requested
      */
-    public void setWantClientAuth(boolean wantClientAuth) { 
-	this.wantClientAuth = wantClientAuth;
+    public void setWantClientAuth(boolean wantClientAuth) {
+        this.wantClientAuth = wantClientAuth;
     }
 
     /**
@@ -156,7 +156,7 @@ public abstract class HttpsParameters {
      *
      * @param needClientAuth whether client authentication should be required
      */
-    public void setNeedClientAuth(boolean needClientAuth) { 
-	this.needClientAuth = needClientAuth;
+    public void setNeedClientAuth(boolean needClientAuth) {
+        this.needClientAuth = needClientAuth;
     }
 }

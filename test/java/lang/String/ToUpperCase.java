@@ -66,7 +66,7 @@ public class ToUpperCase {
         test("\uFB17AbCdEfi", turkish, "\u0544\u053DABCDEF\u0130");
         test("\uFB17AbCdEfi", az, "\u0544\u053DABCDEF\u0130");
 
-	// Remove DOT ABOVE after "i" in Lithuanian
+        // Remove DOT ABOVE after "i" in Lithuanian
         test("i\u0307", lt, "I");
         test("\u0307", lt, "\u0307");
         test("\u0307i", lt, "\u0307I");
@@ -77,7 +77,7 @@ public class ToUpperCase {
         test("i\u0307", Locale.US, "I\u0307");
         test("i\u0307", turkish, "\u0130\u0307");
 
-	// Supplementary character tests
+        // Supplementary character tests
         //
         // U+10400 ("\uD801\uDC00"): DESERET CAPITAL LETTER LONG I
         // U+10401 ("\uD801\uDC01"): DESERET CAPITAL LETTER LONG E

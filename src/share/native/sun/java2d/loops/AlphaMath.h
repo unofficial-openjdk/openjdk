@@ -47,7 +47,7 @@ extern void initAlphaTables();
 
 /*
  * Multiply and Divide macros for operations involving a single short (16-bit)
- * quantity and a single byte (8-bit) quantity.  Typically, promoting the 
+ * quantity and a single byte (8-bit) quantity.  Typically, promoting the
  * 8-bit value to 16 bits would lead to overflow when the operation occurs.
  * These macros have been modified somewhat so that overflow will not occur.
  * MUL8_16 multiplies an 8-bit value by a 16-bit value (the order of operands
@@ -56,22 +56,22 @@ extern void initAlphaTables();
  */
 
 #define MUL8_16(a,b) (((a) * (b)) / 255)
-#define DIV16_8(a,b) (((a) * 255) / (b)) 
+#define DIV16_8(a,b) (((a) * 255) / (b))
 
 /*
  * Multiply and Divide macros for single short (16-bit) quantities
  * representing the values 0.0 to 1.0 as 0x0000 to 0xffff.
  * MUL16 multiplies its operands using the standard multiplication operator
  *       and normalizes the result to the appropriate range
- * DIV16 divides the first operand by the second and normalizes the result 
+ * DIV16 divides the first operand by the second and normalizes the result
  *       to a 16-bit value
  */
 #define MUL16(a,b) (((a) * (b)) / 65535)
 #define DIV16(a,b) (((a) * 65535) / (b))
 
-/* 
- * Macro for the sum of two normalized (16-bit) products.  Refer to the 
- * following equation and note that the right side reduces the number of 
+/*
+ * Macro for the sum of two normalized (16-bit) products.  Refer to the
+ * following equation and note that the right side reduces the number of
  * divide operations in the left side and increases the precision of the
  * result:
  *   a*f1 + b*f2     a*f1 + b*f2
@@ -102,7 +102,7 @@ extern void initAlphaTables();
  */
 
 
-/* 
+/*
  * MaxValFor ## STRATEGY
  */
 #define MaxValFor4ByteArgb     0xff
@@ -128,7 +128,7 @@ extern void initAlphaTables();
 #define ComponentType1ShortGray    juint
 
 
-/* 
+/*
  * DeclareAlphaVarFor ## STRATEGY(VAR)
  *
  * jint a;
@@ -141,7 +141,7 @@ extern void initAlphaTables();
 
 #define DeclareAlphaVarFor1ByteGray(VAR) \
     AlphaType1ByteGray VAR;
- 
+
 #define DeclareAlphaVarFor1ShortGray(VAR) \
     AlphaType1ShortGray VAR;
 
@@ -156,7 +156,7 @@ extern void initAlphaTables();
 
 #define DeclareAndInitAlphaVarFor1ByteGray(VAR, initval) \
     AlphaType1ByteGray VAR = initval;
- 
+
 #define DeclareAndInitAlphaVarFor1ShortGray(VAR, initval) \
     AlphaType1ShortGray VAR = initval;
 
@@ -206,8 +206,8 @@ extern void initAlphaTables();
     DeclareAndInitAlphaVarFor1ShortGray(VAR, MaxValFor1ShortGray - invalpha)
 
 
-/* 
- * DeclareCompVarsFor ## STRATEGY(PREFIX) 
+/*
+ * DeclareCompVarsFor ## STRATEGY(PREFIX)
  *
  * jint c;
  */
@@ -251,7 +251,7 @@ extern void initAlphaTables();
     (a) = (((a) << 8) + (a))
 
 
-/* 
+/*
  * DeclareAndInitPathAlphaFor ## STRATEGY(VAR)
  *
  * jint pathA = *pMask++;
@@ -281,8 +281,8 @@ extern void initAlphaTables();
     MUL16(a, b)
 
 
-/* 
- * MultiplyAndStore ## STRATEGY ## Comps(PROD_PREFIX, M1, M2_PREFIX) 
+/*
+ * MultiplyAndStore ## STRATEGY ## Comps(PROD_PREFIX, M1, M2_PREFIX)
  *
  * c = m1 * m2;
  */
@@ -291,13 +291,13 @@ extern void initAlphaTables();
         PROD_PREFIX ## R = MUL ## PRECISION(M1, M2_PREFIX ## R); \
         PROD_PREFIX ## G = MUL ## PRECISION(M1, M2_PREFIX ## G); \
         PROD_PREFIX ## B = MUL ## PRECISION(M1, M2_PREFIX ## B); \
-    } while (0)    
+    } while (0)
 
 #define MultiplyAndStore1Component(PROD_PREFIX, M1, M2_PREFIX, PRECISION) \
     PROD_PREFIX ## G = MUL ## PRECISION(M1, M2_PREFIX ## G)
 
 #define MultiplyAndStore4ByteArgbComps(PROD_PREFIX, M1, M2_PREFIX) \
-    MultiplyAndStore3Components(PROD_PREFIX, M1, M2_PREFIX, 8) 
+    MultiplyAndStore3Components(PROD_PREFIX, M1, M2_PREFIX, 8)
 
 #define MultiplyAndStore1ByteGrayComps(PROD_PREFIX, M1, M2_PREFIX) \
     MultiplyAndStore1Component(PROD_PREFIX, M1, M2_PREFIX, 8)
@@ -306,8 +306,8 @@ extern void initAlphaTables();
     MultiplyAndStore1Component(PROD_PREFIX, M1, M2_PREFIX, 16)
 
 
-/* 
- * DivideAndStore ## STRATEGY ## Comps(QUOT_PREFIX, D1_PREFIX, D2) 
+/*
+ * DivideAndStore ## STRATEGY ## Comps(QUOT_PREFIX, D1_PREFIX, D2)
  *
  * c = d1 / d2;
  */
@@ -331,9 +331,9 @@ extern void initAlphaTables();
     DivideAndStore1Component(QUOT_PREFIX, D1_PREFIX, D2, 16)
 
 
-/* 
+/*
  * MultiplyAddAndStore ## STRATEGY ## Comps(RES_PREFIX, M1, \
- *                                          M2_PREFIX, A_PREFIX) 
+ *                                          M2_PREFIX, A_PREFIX)
  *
  * c = (m1 * m2) + a;
  */
@@ -346,7 +346,7 @@ extern void initAlphaTables();
                                                           A_PREFIX ## G; \
         RES_PREFIX ## B = MUL ## PRECISION(M1, M2_PREFIX ## B) + \
                                                           A_PREFIX ## B; \
-    } while (0) 
+    } while (0)
 
 #define MultiplyAddAndStore1Component(RES_PREFIX, M1, M2_PREFIX, A_PREFIX, \
                                       PRECISION) \
@@ -365,7 +365,7 @@ extern void initAlphaTables();
     MultiplyAddAndStore1Component(RES_PREFIX, M1, M2_PREFIX, A_PREFIX, 16)
 
 
-/* 
+/*
  * MultMultAddAndStore ## STRATEGY ## Comps(RES_PREFIX, M1, M2_PREFIX, \
  *                                          M3, M4_PREFIX)
  *
@@ -430,8 +430,8 @@ extern void initAlphaTables();
                                               M3, M4_PREFIX ## G)
 
 
-/* 
- * Store ## STRATEGY ## CompsUsingOp(L_PREFIX, OP, R_PREFIX) 
+/*
+ * Store ## STRATEGY ## CompsUsingOp(L_PREFIX, OP, R_PREFIX)
  *
  * l op r;  // where op can be something like = or +=
  */
@@ -455,8 +455,8 @@ extern void initAlphaTables();
     Store1ComponentUsingOp(L_PREFIX, OP, R_PREFIX)
 
 
-/* 
- * Set ## STRATEGY ## CompsToZero(PREFIX) 
+/*
+ * Set ## STRATEGY ## CompsToZero(PREFIX)
  *
  * c = 0;
  */

@@ -25,7 +25,7 @@
  * @test
  * @bug 4128326 4127567
  * @summary Test URL parsing
- * 
+ *
  */
 
 import java.net.*;
@@ -50,4 +50,3 @@ public class URLParsing {
 
     }
 }
-

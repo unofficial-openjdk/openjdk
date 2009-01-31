@@ -36,13 +36,13 @@ class InvalidAudioFormatException extends IOException {
      * Constructor.
      */
     public InvalidAudioFormatException() {
-	super();
+        super();
     }
 
     /**
      * Constructor with a detail message.
      */
     public InvalidAudioFormatException(String s) {
-	super(s);
+        super(s);
     }
 }

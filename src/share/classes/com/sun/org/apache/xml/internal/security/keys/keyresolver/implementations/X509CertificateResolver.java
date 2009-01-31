@@ -46,7 +46,7 @@ import org.w3c.dom.Element;
 public class X509CertificateResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(X509CertificateResolver.class.getName());
 
    /** Field _dsaKeyElement */
@@ -62,8 +62,8 @@ public class X509CertificateResolver extends KeyResolverSpi {
     */
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
-   	  if (true)
-   	  	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+          if (true)
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
 
       if (!XMLUtils.elementIsInSignatureSpace(element,
                  Constants._TAG_X509DATA)) {
@@ -71,7 +71,7 @@ public class X509CertificateResolver extends KeyResolverSpi {
 
          return false;
       }
-         
+
 
          this._x509CertKeyElements = XMLUtils.selectDsNodes(element.getFirstChild(),
                  Constants._TAG_X509CERTIFICATE);

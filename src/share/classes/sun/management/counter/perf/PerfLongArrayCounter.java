@@ -34,8 +34,8 @@ public class PerfLongArrayCounter extends AbstractCounter
        implements LongArrayCounter {
 
     LongBuffer lb;
-    
-    PerfLongArrayCounter(String name, Units u, Variability v, 
+
+    PerfLongArrayCounter(String name, Units u, Variability v,
                          int flags, int vectorLength,
                          LongBuffer lb) {
 

@@ -48,10 +48,10 @@ final class CryptoAllPermission extends CryptoPermission {
     // This class is similar to java.security.AllPermission.
     static final String ALG_NAME = "CryptoAllPermission";
     static final CryptoAllPermission INSTANCE =
-	new CryptoAllPermission();
+        new CryptoAllPermission();
 
     private CryptoAllPermission() {
-	super(ALG_NAME);
+        super(ALG_NAME);
     }
 
     /**
@@ -64,7 +64,7 @@ final class CryptoAllPermission extends CryptoPermission {
      * instance of CryptoPermission.
      */
     public boolean implies(Permission p) {
-	 return (p instanceof CryptoPermission);
+         return (p instanceof CryptoPermission);
     }
 
     /**
@@ -76,7 +76,7 @@ final class CryptoAllPermission extends CryptoPermission {
      * @return true if <i>obj</i> is a CryptoAllPermission object.
      */
     public boolean equals(Object obj) {
-	return (obj == INSTANCE);
+        return (obj == INSTANCE);
     }
 
     /**
@@ -86,7 +86,7 @@ final class CryptoAllPermission extends CryptoPermission {
      * @return a hash code value for this object.
      */
     public int hashCode() {
-	return 1;
+        return 1;
     }
 
     /**
@@ -98,7 +98,7 @@ final class CryptoAllPermission extends CryptoPermission {
      * storing CryptoAllPermissions.
      */
     public PermissionCollection newPermissionCollection() {
-	return new CryptoAllPermissionCollection();
+        return new CryptoAllPermissionCollection();
     }
 }
 
@@ -125,7 +125,7 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      * Create an empty CryptoAllPermissions object.
      */
     CryptoAllPermissionCollection() {
-	all_allowed = false;
+        all_allowed = false;
     }
 
     /**
@@ -138,14 +138,14 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      */
     public void add(Permission permission)
     {
-	if (isReadOnly())
-	    throw new SecurityException("attempt to add a Permission to " +
-					"a readonly PermissionCollection");
+        if (isReadOnly())
+            throw new SecurityException("attempt to add a Permission to " +
+                                        "a readonly PermissionCollection");
 
-	if (permission != CryptoAllPermission.INSTANCE)
-	    return;
+        if (permission != CryptoAllPermission.INSTANCE)
+            return;
 
-	all_allowed = true;
+        all_allowed = true;
     }
 
     /**
@@ -159,10 +159,10 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      */
     public boolean implies(Permission permission)
     {
-	if (!(permission instanceof CryptoPermission)) {
-	    return false;
-	}
-	return all_allowed;
+        if (!(permission instanceof CryptoPermission)) {
+            return false;
+        }
+        return all_allowed;
     }
 
     /**
@@ -172,9 +172,8 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      * @return an enumeration of all the CryptoAllPermission objects.
      */
     public Enumeration elements() {
-	Vector v = new Vector(1);
-	if (all_allowed) v.add(CryptoAllPermission.INSTANCE);
-	return v.elements();
+        Vector v = new Vector(1);
+        if (all_allowed) v.add(CryptoAllPermission.INSTANCE);
+        return v.elements();
     }
 }
-

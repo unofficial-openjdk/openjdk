@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * server.setAuthHandler(myAuthHandler);
  * server.start();
  * </code>
- * 
+ *
  */
 
 public class FtpServer extends Thread {
@@ -60,7 +60,7 @@ public class FtpServer extends Thread {
      * automatically select an available ephemeral port.
      */
     public FtpServer(int port) throws IOException {
-	listener = new ServerSocket(port);
+        listener = new ServerSocket(port);
     }
 
     /**
@@ -68,70 +68,70 @@ public class FtpServer extends Thread {
      * FTP port, usually 21.
      */
     public FtpServer() throws IOException {
-	this(21);
+        this(21);
     }
 
     public void setFileSystemHandler(FtpFileSystemHandler f) {
-	fsh = f;
+        fsh = f;
     }
-	
+
     public void setAuthHandler(FtpAuthHandler a) {
-	auth = a;
+        auth = a;
     }
-	
+
     public void terminate() {
-	done = true;
-	interrupt();
+        done = true;
+        interrupt();
     }
 
     public void killClients() {
-	synchronized (clients) {
-	    int c = clients.size();
-	    while (c > 0) {
-		c--;
-		FtpCommandHandler cl = clients.get(c);
-		cl.terminate();
-		cl.interrupt();
-	    }
-	}
+        synchronized (clients) {
+            int c = clients.size();
+            while (c > 0) {
+                c--;
+                FtpCommandHandler cl = clients.get(c);
+                cl.terminate();
+                cl.interrupt();
+            }
+        }
     }
 
     public int getLocalPort() {
-	return listener.getLocalPort();
+        return listener.getLocalPort();
     }
 
     void addClient(Socket client) {
-	FtpCommandHandler h = new FtpCommandHandler(client, this);
-	h.setHandlers(fsh, auth);
-	synchronized (clients) {
-	    clients.add(h);
-	}
-	h.start();
+        FtpCommandHandler h = new FtpCommandHandler(client, this);
+        h.setHandlers(fsh, auth);
+        synchronized (clients) {
+            clients.add(h);
+        }
+        h.start();
     }
 
     void removeClient(FtpCommandHandler cl) {
-	synchronized (clients) {
-	    clients.remove(cl);
-	}
+        synchronized (clients) {
+            clients.remove(cl);
+        }
     }
 
     public int activeClientsCount() {
-	synchronized (clients) {
-	    return clients.size();
-	}
+        synchronized (clients) {
+            return clients.size();
+        }
     }
 
     public void run() {
-	Socket client;
-		
-	try {
-	    while (!done) {
-		client = listener.accept();
-		addClient(client);
-	    }
-	    listener.close();
-	} catch (IOException e) {
-			
-	}
+        Socket client;
+
+        try {
+            while (!done) {
+                client = listener.accept();
+                addClient(client);
+            }
+            listener.close();
+        } catch (IOException e) {
+
+        }
     }
 }

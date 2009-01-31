@@ -34,15 +34,15 @@ public class SpecEvent extends EventObject {
     private EventRequestSpec eventRequestSpec;
 
     public SpecEvent(EventRequestSpec eventRequestSpec) {
-	super(eventRequestSpec.specs);
-	this.eventRequestSpec = eventRequestSpec;
+        super(eventRequestSpec.specs);
+        this.eventRequestSpec = eventRequestSpec;
     }
 
     public EventRequestSpec getEventRequestSpec() {
-	return eventRequestSpec;
+        return eventRequestSpec;
     }
 
-    public EventRequest getEventRequest() {  
+    public EventRequest getEventRequest() {
         return eventRequestSpec.getEventRequest();
     }
 }

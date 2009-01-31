@@ -47,7 +47,7 @@ public final class SecurityConstants {
     // Commonly used string constants for permission actions used by
     // SecurityManager. Declare here for shortcut when checking permissions
     // in FilePermission, SocketPermission, and PropertyPermission.
-    
+
     public static final String FILE_DELETE_ACTION = "delete";
     public static final String FILE_EXECUTE_ACTION = "execute";
     public static final String FILE_READ_ACTION = "read";
@@ -71,7 +71,7 @@ public final class SecurityConstants {
     public static final AllPermission ALL_PERMISSION = new AllPermission();
 
     // java.lang.SecurityManager
-    public static final AWTPermission TOPLEVEL_WINDOW_PERMISSION = 
+    public static final AWTPermission TOPLEVEL_WINDOW_PERMISSION =
         new AWTPermission("showWindowWithoutWarningBanner");
 
     // java.lang.SecurityManager
@@ -91,15 +91,15 @@ public final class SecurityConstants {
         new AWTPermission("readDisplayPixels");
 
     // java.awt.Robot
-    public static final AWTPermission CREATE_ROBOT_PERMISSION = 
+    public static final AWTPermission CREATE_ROBOT_PERMISSION =
         new AWTPermission("createRobot");
 
     // java.awt.MouseInfo
-    public static final AWTPermission WATCH_MOUSE_PERMISSION = 
+    public static final AWTPermission WATCH_MOUSE_PERMISSION =
         new AWTPermission("watchMousePointer");
 
     // java.awt.Window
-    public static final AWTPermission SET_WINDOW_ALWAYS_ON_TOP_PERMISSION = 
+    public static final AWTPermission SET_WINDOW_ALWAYS_ON_TOP_PERMISSION =
         new AWTPermission("setWindowAlwaysOnTop");
 
     // java.awt.Toolkit
@@ -144,10 +144,10 @@ public final class SecurityConstants {
 
     // java.lang.SecurityManager
     public static final RuntimePermission CHECK_MEMBER_ACCESS_PERMISSION =
-	new RuntimePermission("accessDeclaredMembers");
+        new RuntimePermission("accessDeclaredMembers");
 
     // java.lang.SecurityManager, sun.applet.AppletSecurity
-    public static final RuntimePermission MODIFY_THREAD_PERMISSION = 
+    public static final RuntimePermission MODIFY_THREAD_PERMISSION =
         new RuntimePermission("modifyThread");
 
     // java.lang.SecurityManager, sun.applet.AppletSecurity
@@ -184,12 +184,12 @@ public final class SecurityConstants {
 
     // java.lang.SecurityManager
     public static final SocketPermission LOCAL_LISTEN_PERMISSION =
-	new SocketPermission("localhost:1024-", SOCKET_LISTEN_ACTION);
+        new SocketPermission("localhost:1024-", SOCKET_LISTEN_ACTION);
 
     // javax.security.auth.Subject
     public static final AuthPermission DO_AS_PERMISSION =
         new AuthPermission("doAs");
-    
+
     // javax.security.auth.Subject
     public static final AuthPermission DO_AS_PRIVILEGED_PERMISSION =
         new AuthPermission("doAsPrivileged");

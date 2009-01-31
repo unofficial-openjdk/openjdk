@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)HebrewShaping.h	1.4 06/12/13
  *
  * (C) Copyright IBM Corp. 1998, 1999, 2000 - All Rights Reserved
  *

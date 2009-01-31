@@ -57,7 +57,6 @@ import javax.swing.*;
  * @see SynthStyleFactory
  * @see SynthStyle
  *
- * @version %I%, %G%
  * @since 1.5
  * @author Scott Violet
  */

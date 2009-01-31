@@ -59,7 +59,7 @@ NativePrimitive Any3BytePrimitives[] = {
 jboolean RegisterAny3Byte(JNIEnv *env)
 {
     return RegisterPrimitives(env, Any3BytePrimitives,
-			      ArraySize(Any3BytePrimitives));
+                              ArraySize(Any3BytePrimitives));
 }
 
 DEFINE_ISOCOPY_BLIT(Any3Byte)

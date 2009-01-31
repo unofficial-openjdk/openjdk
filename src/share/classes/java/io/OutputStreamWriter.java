@@ -55,12 +55,12 @@ import sun.nio.cs.StreamEncoder;
  * <p> A <i>surrogate pair</i> is a character represented by a sequence of two
  * <tt>char</tt> values: A <i>high</i> surrogate in the range '&#92;uD800' to
  * '&#92;uDBFF' followed by a <i>low</i> surrogate in the range '&#92;uDC00' to
- * '&#92;uDFFF'. 
+ * '&#92;uDFFF'.
  *
  * <p> A <i>malformed surrogate element</i> is a high surrogate that is not
  * followed by a low surrogate or a low surrogate that is not preceded by a
- * high surrogate.  
- * 
+ * high surrogate.
+ *
  * <p> This class always replaces malformed surrogate elements and unmappable
  * character sequences with the charset's default <i>substitution sequence</i>.
  * The {@linkplain java.nio.charset.CharsetEncoder} class should be used when more
@@ -70,9 +70,8 @@ import sun.nio.cs.StreamEncoder;
  * @see OutputStream
  * @see java.nio.charset.Charset
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
- * @since	JDK1.1
+ * @author      Mark Reinhold
+ * @since       JDK1.1
  */
 
 public class OutputStreamWriter extends Writer {
@@ -93,12 +92,12 @@ public class OutputStreamWriter extends Writer {
      *             If the named encoding is not supported
      */
     public OutputStreamWriter(OutputStream out, String charsetName)
-	throws UnsupportedEncodingException
+        throws UnsupportedEncodingException
     {
-	super(out);
-	if (charsetName == null)
-	    throw new NullPointerException("charsetName");
-	se = StreamEncoder.forOutputStreamWriter(out, this, charsetName);
+        super(out);
+        if (charsetName == null)
+            throw new NullPointerException("charsetName");
+        se = StreamEncoder.forOutputStreamWriter(out, this, charsetName);
     }
 
     /**
@@ -107,11 +106,11 @@ public class OutputStreamWriter extends Writer {
      * @param  out  An OutputStream
      */
     public OutputStreamWriter(OutputStream out) {
-	super(out);
-	try {
-	    se = StreamEncoder.forOutputStreamWriter(out, this, (String)null);
-	} catch (UnsupportedEncodingException e) {
-	    throw new Error(e);
+        super(out);
+        try {
+            se = StreamEncoder.forOutputStreamWriter(out, this, (String)null);
+        } catch (UnsupportedEncodingException e) {
+            throw new Error(e);
         }
     }
 
@@ -128,10 +127,10 @@ public class OutputStreamWriter extends Writer {
      * @spec JSR-51
      */
     public OutputStreamWriter(OutputStream out, Charset cs) {
-	super(out);
-	if (cs == null)
-	    throw new NullPointerException("charset");
-	se = StreamEncoder.forOutputStreamWriter(out, this, cs);
+        super(out);
+        if (cs == null)
+            throw new NullPointerException("charset");
+        se = StreamEncoder.forOutputStreamWriter(out, this, cs);
     }
 
     /**
@@ -147,10 +146,10 @@ public class OutputStreamWriter extends Writer {
      * @spec JSR-51
      */
     public OutputStreamWriter(OutputStream out, CharsetEncoder enc) {
-	super(out);
-	if (enc == null)
-	    throw new NullPointerException("charset encoder");
-	se = StreamEncoder.forOutputStreamWriter(out, this, enc);
+        super(out);
+        if (enc == null)
+            throw new NullPointerException("charset encoder");
+        se = StreamEncoder.forOutputStreamWriter(out, this, enc);
     }
 
     /**
@@ -174,7 +173,7 @@ public class OutputStreamWriter extends Writer {
      * @spec JSR-51
      */
     public String getEncoding() {
-	return se.getEncoding();
+        return se.getEncoding();
     }
 
     /**
@@ -183,7 +182,7 @@ public class OutputStreamWriter extends Writer {
      * be invoked by PrintStream.
      */
     void flushBuffer() throws IOException {
-	se.flushBuffer();
+        se.flushBuffer();
     }
 
     /**
@@ -192,7 +191,7 @@ public class OutputStreamWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(int c) throws IOException {
-	se.write(c);
+        se.write(c);
     }
 
     /**
@@ -205,7 +204,7 @@ public class OutputStreamWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(char cbuf[], int off, int len) throws IOException {
-	se.write(cbuf, off, len);
+        se.write(cbuf, off, len);
     }
 
     /**
@@ -218,7 +217,7 @@ public class OutputStreamWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
-	se.write(str, off, len);
+        se.write(str, off, len);
     }
 
     /**
@@ -227,10 +226,10 @@ public class OutputStreamWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void flush() throws IOException {
-	se.flush();
+        se.flush();
     }
 
     public void close() throws IOException {
-	se.close();
+        se.close();
     }
 }

@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -32,7 +30,7 @@
 package sun.security.krb5.internal;
 
 import sun.security.util.*;
-import sun.security.krb5.Asn1Exception; 
+import sun.security.krb5.Asn1Exception;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -51,12 +49,12 @@ public class MethodData {
     private byte[] methodData = null; //optional
 
     public MethodData(int type, byte[] data) {
-	methodType = type;
-	if (data != null) {
-	    methodData = data.clone();
-	}
+        methodType = type;
+        if (data != null) {
+            methodData = data.clone();
+        }
     }
-    
+
     /**
      * Constructs a MethodData object.
      * @param encoding a Der-encoded data.
@@ -66,26 +64,26 @@ public class MethodData {
     public MethodData(DerValue encoding) throws Asn1Exception, IOException {
         DerValue der;
         if (encoding.getTag() != DerValue.tag_Sequence) {
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	}
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        }
         der = encoding.getData().getDerValue();
         if ((der.getTag() & 0x1F) == 0x00) {
-	    BigInteger bint = der.getData().getBigInteger();
-	    methodType = bint.intValue();
-	}		
-	else
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	if (encoding.getData().available() > 0) {
-	    der = encoding.getData().getDerValue();
-	    if ((der.getTag() & 0x1F) == 0x01) {
-		methodData = der.getData().getOctetString();
-	    }
-	    else throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	}
-	if (encoding.getData().available() > 0) 
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+            BigInteger bint = der.getData().getBigInteger();
+            methodType = bint.intValue();
+        }
+        else
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        if (encoding.getData().available() > 0) {
+            der = encoding.getData().getDerValue();
+            if ((der.getTag() & 0x1F) == 0x01) {
+                methodData = der.getData().getOctetString();
+            }
+            else throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        }
+        if (encoding.getData().available() > 0)
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
     }
-    
+
     /**
      * Encodes an MethodData object.
      * @return the byte array of encoded MethodData object.
@@ -95,18 +93,18 @@ public class MethodData {
 
     public byte[] asn1Encode() throws Asn1Exception, IOException {
         DerOutputStream bytes = new DerOutputStream();
-	DerOutputStream temp = new DerOutputStream();
-	temp.putInteger(BigInteger.valueOf(methodType));
-	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x00), temp);
-	if (methodData != null) {
+        DerOutputStream temp = new DerOutputStream();
+        temp.putInteger(BigInteger.valueOf(methodType));
+        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x00), temp);
+        if (methodData != null) {
             temp = new DerOutputStream();
-	    temp.putOctetString(methodData);
+            temp.putOctetString(methodData);
             bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)0x01), temp);
-	}
+        }
 
         temp = new DerOutputStream();
-	temp.write(DerValue.tag_Sequence, bytes);
-	return temp.toByteArray();
+        temp.write(DerValue.tag_Sequence, bytes);
+        return temp.toByteArray();
     }
 
 }

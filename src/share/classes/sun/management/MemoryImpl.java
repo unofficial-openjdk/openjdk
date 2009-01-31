@@ -69,7 +69,7 @@ class MemoryImpl extends NotificationEmitterSupport
     public int getObjectPendingFinalizationCount() {
         return sun.misc.VM.getFinalRefCount();
     }
-    
+
     public void gc() {
         Runtime.getRuntime().gc();
     }
@@ -93,18 +93,18 @@ class MemoryImpl extends NotificationEmitterSupport
         setVerboseGC(value);
     }
 
-    // The current Hotspot implementation does not support 
+    // The current Hotspot implementation does not support
     // dynamically add or remove memory pools & managers.
     static synchronized MemoryPoolMXBean[] getMemoryPools() {
         if (pools == null) {
             pools = getMemoryPools0();
-        }  
+        }
         return pools;
     }
     static synchronized MemoryManagerMXBean[] getMemoryManagers() {
         if (mgrs == null) {
             mgrs = getMemoryManagers0();
-        }  
+        }
         return mgrs;
     }
     private static native MemoryPoolMXBean[] getMemoryPools0();
@@ -112,7 +112,7 @@ class MemoryImpl extends NotificationEmitterSupport
     private native MemoryUsage getMemoryUsage0(boolean heap);
     private native void setVerboseGC(boolean value);
 
-    private final static String notifName = 
+    private final static String notifName =
         "javax.management.Notification";
     private final static String[] notifTypes = {
         MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
@@ -140,7 +140,7 @@ class MemoryImpl extends NotificationEmitterSupport
         for (int i = 0; i < notifTypes.length; i++) {
             if (notifType == notifTypes[i]) {
                 return notifMsgs[i];
-            } 
+            }
         }
         return "Unknown message";
     }
@@ -173,21 +173,20 @@ class MemoryImpl extends NotificationEmitterSupport
             return;
         }
         long timestamp = System.currentTimeMillis();
-        String msg = getNotifMsg(notifType); 
+        String msg = getNotifMsg(notifType);
         Notification notif = new Notification(notifType,
                                               getObjectName(),
                                               getNextSeqNumber(),
                                               timestamp,
                                               msg);
-        MemoryNotificationInfo info = 
+        MemoryNotificationInfo info =
             new MemoryNotificationInfo(poolName,
                                        usage,
                                        count);
-        CompositeData cd = 
+        CompositeData cd =
             MemoryNotifInfoCompositeData.toCompositeData(info);
         notif.setUserData(cd);
         mbean.sendNotification(notif);
     }
 
 }
-

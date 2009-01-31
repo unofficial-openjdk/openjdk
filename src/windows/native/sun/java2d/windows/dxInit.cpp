@@ -33,7 +33,7 @@
 
 /**
  * This file holds the functions that handle the initialization
- * process for DirectX.  This process includes checking the 
+ * process for DirectX.  This process includes checking the
  * Windows Registry for information about the system and each display device,
  * running any necessary functionality tests, and storing information
  * out to the registry depending on the test results.
@@ -43,7 +43,7 @@
  * particular display device.  After that, we should just be able
  * to check the registry to see what the results of those tests were
  * and enable/disable DirectX support appropriately.  Startup tests
- * may be re-run in situations where we cannot check the display 
+ * may be re-run in situations where we cannot check the display
  * device information (it may fail on some OSs) or when the
  * display device we start up on is different from the devices
  * we have tested on before (eg, the user has switched video cards
@@ -56,11 +56,11 @@ WCHAR                       *j2dAccelKey;       // Name of java2d root key
 WCHAR                       *j2dAccelDriverKey; // Name of j2d per-device key
 int                         dxAcceleration;     // dx acceleration ability
                                                 // according to the Registry
-HINSTANCE	            hLibDDraw = NULL;   // DDraw Library handle
+HINSTANCE                   hLibDDraw = NULL;   // DDraw Library handle
 extern DDrawObjectStruct    **ddInstance;
-extern CriticalSection	    ddInstanceLock;
-extern int		    maxDDDevices;
-extern int		    currNumDevices;
+extern CriticalSection      ddInstanceLock;
+extern int                  maxDDDevices;
+extern int                  currNumDevices;
 extern char                 *javaVersion;
 
 
@@ -69,34 +69,34 @@ BOOL CheckDDCreationCaps(DDrawObjectStruct *tmpDdInstance,
 {
     J2dTraceLn(J2D_TRACE_INFO, "CheckDDCreationCaps");
     if (dxCaps == NULL) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "CheckDDCreationCaps: null dxCaps (new monitor?)");
         return FALSE;
     }
     // If we have not yet tested this configuration, test it now
     if (dxCaps->GetDdSurfaceCreationCap() == J2D_ACCEL_UNVERIFIED) {
-	// First, create a non-d3d offscreen surface
-	dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_TESTING);
-	DDrawSurface *lpSurface = 
-	    tmpDdInstance->ddObject->CreateDDOffScreenSurface(1, 1, 
-	    32, TR_OPAQUE, DDSCAPS_VIDEOMEMORY);
-	if (!lpSurface) {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        // First, create a non-d3d offscreen surface
+        dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_TESTING);
+        DDrawSurface *lpSurface =
+            tmpDdInstance->ddObject->CreateDDOffScreenSurface(1, 1,
+            32, TR_OPAQUE, DDSCAPS_VIDEOMEMORY);
+        if (!lpSurface) {
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "CheckDDCreationCaps: failed to create basic "\
                           "ddraw surface");
-	    // problems creating basic ddraw surface - log it and return FALSE
-	    dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_FAILURE);
-	    return FALSE;
-	}
-	// Success; log it and continue
-	dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_SUCCESS);
-	delete lpSurface;
+            // problems creating basic ddraw surface - log it and return FALSE
+            dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_FAILURE);
+            return FALSE;
+        }
+        // Success; log it and continue
+        dxCaps->SetDdSurfaceCreationCap(J2D_ACCEL_SUCCESS);
+        delete lpSurface;
     } else if (dxCaps->GetDdSurfaceCreationCap() != J2D_ACCEL_SUCCESS) {
-	// we have tested and failed previously; return FALSE
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        // we have tested and failed previously; return FALSE
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "CheckDDCreationCaps: previous surface creation "\
                       "failure detected");
-	return FALSE;
+        return FALSE;
     }
     return TRUE;
 }
@@ -127,7 +127,7 @@ void InitDirectX()
     J2dRlsTraceLn(J2D_TRACE_INFO, "InitDirectX");
     // Check registry state for all display devices
     CheckRegistry();
-    
+
     // Need to prevent multiple initializations of the DX objects/primaries.
     // CriticalSection ensures that this initialization will only happen once,
     // even if multiple threads call into this function at startup time.
@@ -135,95 +135,95 @@ void InitDirectX()
     initLock.Enter();
     static bool dxInitialized = false;
     if (dxInitialized) {
-	initLock.Leave();
-	return;
+        initLock.Leave();
+        return;
     }
     dxInitialized = true;
     initLock.Leave();
 
     // Check to make sure ddraw is not disabled globally
     if (useDD) {
-	if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
-	    RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
-				     J2D_ACCEL_TESTING, TRUE);
-	}
-	hLibDDraw = ::LoadLibrary(TEXT("ddraw.dll"));
-	if (!hLibDDraw) {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
+            RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
+                                     J2D_ACCEL_TESTING, TRUE);
+        }
+        hLibDDraw = ::LoadLibrary(TEXT("ddraw.dll"));
+        if (!hLibDDraw) {
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "InitDirectX: Could not load library");
-	    SetDDEnabledFlag(NULL, FALSE);
-	    if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
-		RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
-					 J2D_ACCEL_FAILURE, TRUE);
-	    }
-	    return;
-	}
-	if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
-	    RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
-				     J2D_ACCEL_SUCCESS, TRUE);
-	}
-	maxDDDevices = 1;
-	ddInstance = (DDrawObjectStruct**)safe_Malloc(maxDDDevices * 
-	    sizeof(DDrawObjectStruct*));
+            SetDDEnabledFlag(NULL, FALSE);
+            if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
+                RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
+                                         J2D_ACCEL_FAILURE, TRUE);
+            }
+            return;
+        }
+        if (dxAcceleration == J2D_ACCEL_UNVERIFIED) {
+            RegistryKey::SetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
+                                     J2D_ACCEL_SUCCESS, TRUE);
+        }
+        maxDDDevices = 1;
+        ddInstance = (DDrawObjectStruct**)safe_Malloc(maxDDDevices *
+            sizeof(DDrawObjectStruct*));
         memset(ddInstance, NULL, maxDDDevices * sizeof(DDrawObjectStruct*));
-	if (!DDCreateObject()) {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        if (!DDCreateObject()) {
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "InitDirectX: Could not create ddraw object");
-	    SetDDEnabledFlag(NULL, FALSE);
-	}
+            SetDDEnabledFlag(NULL, FALSE);
+        }
     }
-    
+
     if (checkRegistry) {
-	// diagnostic purposes: iterate through all of the registry
-	// settings we have just checked or set and print them out to
-	// the console
-	printf("Registry Settings:\n");
-	RegistryKey::PrintValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
-				L"  DxAcceleration");
-	// Now check the registry entries for all display devices on the system
-	int deviceNum = 0;
-	_DISPLAY_DEVICE displayDevice;
-	displayDevice.dwSize = sizeof(displayDevice);
-	while (EnumDisplayDevices(NULL, deviceNum, & displayDevice, 0) &&
-	       deviceNum < 20) // avoid infinite loop with buggy drivers
-	{ 
-	    DxCapabilities caps;
-	    if (displayDevice.dwFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) {
-		// We only care about actual display devices.  Devices without
-		// this flag could be virtual devices such as NetMeeting
+        // diagnostic purposes: iterate through all of the registry
+        // settings we have just checked or set and print them out to
+        // the console
+        printf("Registry Settings:\n");
+        RegistryKey::PrintValue(j2dAccelKey, J2D_ACCEL_DX_NAME,
+                                L"  DxAcceleration");
+        // Now check the registry entries for all display devices on the system
+        int deviceNum = 0;
+        _DISPLAY_DEVICE displayDevice;
+        displayDevice.dwSize = sizeof(displayDevice);
+        while (EnumDisplayDevices(NULL, deviceNum, & displayDevice, 0) &&
+               deviceNum < 20) // avoid infinite loop with buggy drivers
+        {
+            DxCapabilities caps;
+            if (displayDevice.dwFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) {
+                // We only care about actual display devices.  Devices without
+                // this flag could be virtual devices such as NetMeeting
                 Devices::InstanceAccess devices;
                 AwtWin32GraphicsDevice **devArray = devices->GetRawArray();
                 int numScreens = devices->GetNumDevices();
                 for (int i = 0; i < numScreens; ++i) {
-		    MONITOR_INFO_EXTENDED *pMonInfo =
-			(PMONITOR_INFO_EXTENDED) devArray[i]->GetMonitorInfo();
-		    if (wcscmp(pMonInfo->strDevice,
-			       displayDevice.strDevName) == 0) {
-			// this GraphicsDevice matches this DisplayDevice; check
-			// the bit depth and grab the appropriate values from
-			// the registry
-			int bitDepth = devArray[i]->GetBitDepth();
-			WCHAR driverKeyName[2048];
-			WCHAR fullKeyName[2048];
-			GetDeviceKeyName(&displayDevice, driverKeyName);
-			swprintf(fullKeyName, L"%s%s\\%d", j2dAccelDriverKey,
-				 driverKeyName, bitDepth);
-			printf("  Device\\Depth: %S\\%d\n", 
-			       driverKeyName, bitDepth);
-			caps.Initialize(fullKeyName);
-			caps.PrintCaps();
-		    }
-		}
-	    }
-	    deviceNum++;
-	}
-    }	
+                    MONITOR_INFO_EXTENDED *pMonInfo =
+                        (PMONITOR_INFO_EXTENDED) devArray[i]->GetMonitorInfo();
+                    if (wcscmp(pMonInfo->strDevice,
+                               displayDevice.strDevName) == 0) {
+                        // this GraphicsDevice matches this DisplayDevice; check
+                        // the bit depth and grab the appropriate values from
+                        // the registry
+                        int bitDepth = devArray[i]->GetBitDepth();
+                        WCHAR driverKeyName[2048];
+                        WCHAR fullKeyName[2048];
+                        GetDeviceKeyName(&displayDevice, driverKeyName);
+                        swprintf(fullKeyName, L"%s%s\\%d", j2dAccelDriverKey,
+                                 driverKeyName, bitDepth);
+                        printf("  Device\\Depth: %S\\%d\n",
+                               driverKeyName, bitDepth);
+                        caps.Initialize(fullKeyName);
+                        caps.PrintCaps();
+                    }
+                }
+            }
+            deviceNum++;
+        }
+    }
 }
 
 /**
  * Utility function that derives a unique name for this display
  * device.  We do this by combining the "name" and "string"
- * fields from the displayDevice structure.  Note that we 
+ * fields from the displayDevice structure.  Note that we
  * remove '\' characters from the dev name; since we're going
  * to use this as a registry key, we do not want all those '\'
  * characters to create extra registry key levels.
@@ -233,9 +233,9 @@ void GetDeviceKeyName(_DISPLAY_DEVICE *displayDevice, WCHAR *devName)
     WCHAR *strDevName = displayDevice->strDevName;
     int devNameIndex = 0;
     for (size_t i = 0; i < wcslen(strDevName); ++i) {
-	if (strDevName[i] != L'\\') {
-	    devName[devNameIndex++] = strDevName[i];
-	}
+        if (strDevName[i] != L'\\') {
+            devName[devNameIndex++] = strDevName[i];
+        }
     }
     devName[devNameIndex++] = L' ';
     devName[devNameIndex] = L'\0';
@@ -254,22 +254,22 @@ void CheckRegistry()
 {
     J2dTraceLn(J2D_TRACE_INFO, "CheckRegistry");
     if (accelReset) {
-	RegistryKey::DeleteKey(j2dAccelKey);
+        RegistryKey::DeleteKey(j2dAccelKey);
     }
     dxAcceleration = RegistryKey::GetIntValue(j2dAccelKey, J2D_ACCEL_DX_NAME);
     if (dxAcceleration == J2D_ACCEL_TESTING ||
-	dxAcceleration == J2D_ACCEL_FAILURE)
+        dxAcceleration == J2D_ACCEL_FAILURE)
     {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "CheckRegistry: previous ddraw initialization failure"\
                       " detected, ddraw is disabled");
-	// Disable ddraw if previous testing either crashed or failed
-	SetDDEnabledFlag(NULL, FALSE);
-	// Without DirectX, there is no point to the rest of the registry checks
-	// so just return
-	return;
+        // Disable ddraw if previous testing either crashed or failed
+        SetDDEnabledFlag(NULL, FALSE);
+        // Without DirectX, there is no point to the rest of the registry checks
+        // so just return
+        return;
     }
-    
+
     // First, get the list of current display devices
     int deviceNum = 0;  // all display devices (virtual and not)
     int numDesktopDevices = 0;  // actual display devices
@@ -277,32 +277,32 @@ void CheckRegistry()
     displayDevice.dwSize = sizeof(displayDevice);
     _DISPLAY_DEVICE displayDevices[20];
     while (deviceNum < 20 && // avoid infinite loop with buggy drivers
-	   EnumDisplayDevices(NULL, deviceNum, &displayDevice, 0))
+           EnumDisplayDevices(NULL, deviceNum, &displayDevice, 0))
     {
-	if (displayDevice.dwFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) 
-	{
-	    // We only care about actual display devices.  Devices without
-	    // this flag could be virtual devices such as NetMeeting
-            J2dRlsTraceLn2(J2D_TRACE_VERBOSE, 
+        if (displayDevice.dwFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+        {
+            // We only care about actual display devices.  Devices without
+            // this flag could be virtual devices such as NetMeeting
+            J2dRlsTraceLn2(J2D_TRACE_VERBOSE,
                            "CheckRegistry: Found Display Device %d: %S",
                            deviceNum, displayDevice.strDevString);
-	    displayDevices[numDesktopDevices] = displayDevice;
-	    ++numDesktopDevices;
-	}
-	deviceNum++;
+            displayDevices[numDesktopDevices] = displayDevice;
+            ++numDesktopDevices;
+        }
+        deviceNum++;
     }
     // Workaround for platforms that do not have the EnumDisplayDevices function
     // (i.e., NT4): just set up a single device that has the display name that
     // has already been assigned to the first (and only) graphics device.
     if (deviceNum == 0) {
         Devices::InstanceAccess devices;
-	MONITOR_INFO_EXTENDED *pMonInfo =
+        MONITOR_INFO_EXTENDED *pMonInfo =
             (PMONITOR_INFO_EXTENDED) devices->GetDevice(0)->GetMonitorInfo();
-	wcscpy(displayDevices[0].strDevName, pMonInfo->strDevice);
-	wcscpy(displayDevices[0].strDevString, L"DefaultDriver");
-        J2dRlsTraceLn(J2D_TRACE_VERBOSE, 
+        wcscpy(displayDevices[0].strDevName, pMonInfo->strDevice);
+        wcscpy(displayDevices[0].strDevString, L"DefaultDriver");
+        J2dRlsTraceLn(J2D_TRACE_VERBOSE,
                       "CheckRegistry: Single Default Display Device detected");
-	numDesktopDevices++;
+        numDesktopDevices++;
     }
 
     // Now, check the current display devices against the list stored
@@ -311,65 +311,65 @@ void CheckRegistry()
     WCHAR subKeyNames[20][1024];
     int numSubKeys = 0;
     {
-	RegistryKey hKey(j2dAccelDriverKey, KEY_ALL_ACCESS);
-	DWORD buffSize = 1024;
-	DWORD ret;
-	while (numSubKeys < 20 &&  // same limit as display devices above
-	       ((ret = hKey.EnumerateSubKeys(numSubKeys, subKeyNames[numSubKeys], 
-					    &buffSize)) ==
-	        ERROR_SUCCESS))
-	{
-	    ++numSubKeys;
-	    buffSize = 1024;
-	}
+        RegistryKey hKey(j2dAccelDriverKey, KEY_ALL_ACCESS);
+        DWORD buffSize = 1024;
+        DWORD ret;
+        while (numSubKeys < 20 &&  // same limit as display devices above
+               ((ret = hKey.EnumerateSubKeys(numSubKeys, subKeyNames[numSubKeys],
+                                            &buffSize)) ==
+                ERROR_SUCCESS))
+        {
+            ++numSubKeys;
+            buffSize = 1024;
+        }
     }
     // Now, compare the display devices to the registry display devices
     BOOL devicesDifferent = FALSE;
     // Check that each display device is in the registry
-    // Do this by checking each physical display device to see if it 
+    // Do this by checking each physical display device to see if it
     // is also in the registry.  If it is, do the same for the rest of
     // the physical devices.  If any device is not in the registry,
     // then there is a mis-match and we break out of the loop and
     // reset the registry.
     for (int i = 0; i < numDesktopDevices; ++i) {
-	// Assume the device is not in the registry until proven otherwise
-	devicesDifferent = TRUE;
-	WCHAR driverName[2048];
-	// Key name consists of (driver string) (driver name)
-	// but we must remove the "\" characters from the driver
-	// name to avoid creating too many levels
-	GetDeviceKeyName(&(displayDevices[i]), driverName);
-	for (int j = 0; j < numDesktopDevices; ++j) {
-	    if (wcscmp(driverName,
-		       subKeyNames[j]) == 0) 
-	    {
-		// Found a match for this device; time to move on
-		devicesDifferent = FALSE;
-		break;
-	    }
-	}
-	if (devicesDifferent) {
-            J2dTraceLn1(J2D_TRACE_VERBOSE, 
+        // Assume the device is not in the registry until proven otherwise
+        devicesDifferent = TRUE;
+        WCHAR driverName[2048];
+        // Key name consists of (driver string) (driver name)
+        // but we must remove the "\" characters from the driver
+        // name to avoid creating too many levels
+        GetDeviceKeyName(&(displayDevices[i]), driverName);
+        for (int j = 0; j < numDesktopDevices; ++j) {
+            if (wcscmp(driverName,
+                       subKeyNames[j]) == 0)
+            {
+                // Found a match for this device; time to move on
+                devicesDifferent = FALSE;
+                break;
+            }
+        }
+        if (devicesDifferent) {
+            J2dTraceLn1(J2D_TRACE_VERBOSE,
                         "CheckRegistry: Display device %S not in registry",
                         driverName);
-	    break;
-	}
+            break;
+        }
     }
     // Something was different in the runtime versus the registry; delete
     // the registry entries to force testing and writing the results to
     // the registry
     if (devicesDifferent) {
-	for (int i = 0; i < numSubKeys; ++i) {
-	    WCHAR driverKeyName[2048];
-	    swprintf(driverKeyName, L"%s%s", j2dAccelDriverKey,
-		     subKeyNames[i]);
-            J2dTraceLn1(J2D_TRACE_VERBOSE, 
-                        "CheckRegistry: Deleting registry key: %S", 
+        for (int i = 0; i < numSubKeys; ++i) {
+            WCHAR driverKeyName[2048];
+            swprintf(driverKeyName, L"%s%s", j2dAccelDriverKey,
+                     subKeyNames[i]);
+            J2dTraceLn1(J2D_TRACE_VERBOSE,
+                        "CheckRegistry: Deleting registry key: %S",
                         driverKeyName);
-	    RegistryKey::DeleteKey(driverKeyName);
-	}
+            RegistryKey::DeleteKey(driverKeyName);
+        }
     }
-    
+
     // Now that we have the display devices and the registry in a good
     // start state, get or initialize the dx capabilities in the registry
     // for each display device
@@ -378,27 +378,27 @@ void CheckRegistry()
         AwtWin32GraphicsDevice **devArray = devices->GetRawArray();
         int numScreens = devices->GetNumDevices();
         for (int i = 0; i < numScreens; ++i) {
-	    MONITOR_INFO_EXTENDED *pMonInfo = 
-		(PMONITOR_INFO_EXTENDED)devArray[i]->GetMonitorInfo();
-	    if (wcscmp(pMonInfo->strDevice,
-		       displayDevices[deviceNum].strDevName) == 0)
-	    {
-		// this GraphicsDevice matches this DisplayDevice; check
-		// the bit depth and grab the appropriate values from
-		// the registry
-		int bitDepth = devArray[i]->GetBitDepth();
-		WCHAR driverKeyName[2048];
-		WCHAR fullKeyName[2048];
-		// Key name consists of (driver string) (driver name)
-		// but we must remove the "\" characters from the driver
-		// name to avoid creating too many levels
-		GetDeviceKeyName(&(displayDevices[i]), driverKeyName);
-		swprintf(fullKeyName, L"%s%s\\%d", j2dAccelDriverKey,
-			 driverKeyName, bitDepth);
-		// - query registry for key with strDevString\\depth
-		devArray[i]->GetDxCaps()->Initialize(fullKeyName);
-	    }
-	}
+            MONITOR_INFO_EXTENDED *pMonInfo =
+                (PMONITOR_INFO_EXTENDED)devArray[i]->GetMonitorInfo();
+            if (wcscmp(pMonInfo->strDevice,
+                       displayDevices[deviceNum].strDevName) == 0)
+            {
+                // this GraphicsDevice matches this DisplayDevice; check
+                // the bit depth and grab the appropriate values from
+                // the registry
+                int bitDepth = devArray[i]->GetBitDepth();
+                WCHAR driverKeyName[2048];
+                WCHAR fullKeyName[2048];
+                // Key name consists of (driver string) (driver name)
+                // but we must remove the "\" characters from the driver
+                // name to avoid creating too many levels
+                GetDeviceKeyName(&(displayDevices[i]), driverKeyName);
+                swprintf(fullKeyName, L"%s%s\\%d", j2dAccelDriverKey,
+                         driverKeyName, bitDepth);
+                // - query registry for key with strDevString\\depth
+                devArray[i]->GetDxCaps()->Initialize(fullKeyName);
+            }
+        }
     }
 }
 
@@ -408,7 +408,7 @@ BOOL DDSetupDevice(DDrawObjectStruct *tmpDdInstance, DxCapabilities *dxCaps)
     J2dRlsTraceLn(J2D_TRACE_INFO, "DDSetupDevice");
     BOOL surfaceBasics = CheckDDCreationCaps(tmpDdInstance, dxCaps);
     if (!surfaceBasics) {
-	goto FAILURE;
+        goto FAILURE;
     }
     // create primary surface. There is one of these per ddraw object.
     // A D3DContext will be attempted to be created during the creation
@@ -416,56 +416,56 @@ BOOL DDSetupDevice(DDrawObjectStruct *tmpDdInstance, DxCapabilities *dxCaps)
     tmpDdInstance->primary = tmpDdInstance->ddObject->CreateDDPrimarySurface(
         (DWORD)tmpDdInstance->backBufferCount);
     if (!tmpDdInstance->primary) {
-	goto FAILURE;
+        goto FAILURE;
     }
-    J2dRlsTraceLn(J2D_TRACE_VERBOSE, 
+    J2dRlsTraceLn(J2D_TRACE_VERBOSE,
                   "DDSetupDevice: successfully created primary surface");
     if (!tmpDdInstance->capsSet) {
-	DDCAPS caps;
-	tmpDdInstance->ddObject->GetDDCaps(&caps);
-	tmpDdInstance->canBlt = (caps.dwCaps & DDCAPS_BLT);
-	BOOL canCreateOffscreen = tmpDdInstance->canBlt &&
-	    (caps.dwVidMemTotal > 0);
-	// Only register offscreen creation ok if we can Blt and if there
-	// is available video memory.  Otherwise it
-	// is useless functionality.  The Barco systems apparently allow
-	// offscreen creation but do not allow hardware Blt's
-	if ((caps.dwCaps & DDCAPS_NOHARDWARE) || !canCreateOffscreen) {
-	    AwtWin32GraphicsDevice::DisableOffscreenAccelerationForDevice(
-		tmpDdInstance->hMonitor);
-	 if (caps.dwCaps & DDCAPS_NOHARDWARE) {
-		// Does not have basic functionality we need; release
-		// ddraw instance and return FALSE for this device.
-                J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        DDCAPS caps;
+        tmpDdInstance->ddObject->GetDDCaps(&caps);
+        tmpDdInstance->canBlt = (caps.dwCaps & DDCAPS_BLT);
+        BOOL canCreateOffscreen = tmpDdInstance->canBlt &&
+            (caps.dwVidMemTotal > 0);
+        // Only register offscreen creation ok if we can Blt and if there
+        // is available video memory.  Otherwise it
+        // is useless functionality.  The Barco systems apparently allow
+        // offscreen creation but do not allow hardware Blt's
+        if ((caps.dwCaps & DDCAPS_NOHARDWARE) || !canCreateOffscreen) {
+            AwtWin32GraphicsDevice::DisableOffscreenAccelerationForDevice(
+                tmpDdInstance->hMonitor);
+         if (caps.dwCaps & DDCAPS_NOHARDWARE) {
+                // Does not have basic functionality we need; release
+                // ddraw instance and return FALSE for this device.
+                J2dRlsTraceLn(J2D_TRACE_ERROR,
                               "DDSetupDevice: Disabling ddraw on "\
                               "device: no hw support");
-		goto FAILURE;
-	    }
-	}
-	tmpDdInstance->capsSet = TRUE;
+                goto FAILURE;
+            }
+        }
+        tmpDdInstance->capsSet = TRUE;
     }
     // Do NOT create a clipper in full-screen mode
     if (tmpDdInstance->hwndFullScreen == NULL) {
-	if (!tmpDdInstance->clipper) {
-	    // May have already created a clipper
-	    tmpDdInstance->clipper = tmpDdInstance->ddObject->CreateDDClipper();
-	}
-	if (tmpDdInstance->clipper != NULL) {
-	    if (tmpDdInstance->primary->SetClipper(tmpDdInstance->clipper)
-		!= DD_OK) 
-	    {
-		goto FAILURE;
-	    }
-	} else {
-	    goto FAILURE;
-	}
+        if (!tmpDdInstance->clipper) {
+            // May have already created a clipper
+            tmpDdInstance->clipper = tmpDdInstance->ddObject->CreateDDClipper();
+        }
+        if (tmpDdInstance->clipper != NULL) {
+            if (tmpDdInstance->primary->SetClipper(tmpDdInstance->clipper)
+                != DD_OK)
+            {
+                goto FAILURE;
+            }
+        } else {
+            goto FAILURE;
+        }
     }
-    J2dRlsTraceLn(J2D_TRACE_VERBOSE, 
+    J2dRlsTraceLn(J2D_TRACE_VERBOSE,
                   "DDSetupDevice: successfully setup ddraw device");
     return TRUE;
-    
+
 FAILURE:
-    J2dRlsTraceLn(J2D_TRACE_ERROR, 
+    J2dRlsTraceLn(J2D_TRACE_ERROR,
                   "DDSetupDevice: Failed to setup ddraw device");
     AwtWin32GraphicsDevice::DisableOffscreenAccelerationForDevice(
         tmpDdInstance->hMonitor);
@@ -477,15 +477,15 @@ FAILURE:
     // when all DD resources are released.
     tmpDdInstance->accelerated = FALSE;
     ddInstanceLock.Leave();
-    return FALSE;    
+    return FALSE;
 }
 
 DDrawObjectStruct *CreateDevice(GUID *lpGUID, HMONITOR hMonitor)
 {
     J2dRlsTraceLn2(J2D_TRACE_INFO, "CreateDevice: lpGUID=0x%x hMon=0x%x",
                    lpGUID, hMonitor);
-    DDrawObjectStruct *tmpDdInstance = 
-	(DDrawObjectStruct*)safe_Calloc(1, sizeof(DDrawObjectStruct));
+    DDrawObjectStruct *tmpDdInstance =
+        (DDrawObjectStruct*)safe_Calloc(1, sizeof(DDrawObjectStruct));
     memset(tmpDdInstance, NULL, sizeof(DDrawObjectStruct));
     tmpDdInstance->valid = TRUE;
     tmpDdInstance->accelerated = TRUE;
@@ -496,68 +496,68 @@ DDrawObjectStruct *CreateDevice(GUID *lpGUID, HMONITOR hMonitor)
     tmpDdInstance->syncSurface = NULL;
     tmpDdInstance->context = CONTEXT_NORMAL;
     // Create ddraw object
-    DxCapabilities *dxCaps = 
+    DxCapabilities *dxCaps =
         AwtWin32GraphicsDevice::GetDxCapsForDevice(hMonitor);
     if (dxCaps->GetDdCreationCap() == J2D_ACCEL_UNVERIFIED) {
-	dxCaps->SetDdCreationCap(J2D_ACCEL_TESTING);
+        dxCaps->SetDdCreationCap(J2D_ACCEL_TESTING);
     } else if (dxCaps->GetDdCreationCap() != J2D_ACCEL_SUCCESS) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "CreateDevice: previous failure detected, "\
                       "no ddraw device created");
         free(tmpDdInstance);
-	return NULL;
+        return NULL;
     }
     tmpDdInstance->ddObject = DDraw::CreateDDrawObject(lpGUID, hMonitor);
     if (dxCaps->GetDdCreationCap() == J2D_ACCEL_TESTING) {
-	dxCaps->SetDdCreationCap(tmpDdInstance->ddObject ? J2D_ACCEL_SUCCESS :
-				                           J2D_ACCEL_FAILURE);
+        dxCaps->SetDdCreationCap(tmpDdInstance->ddObject ? J2D_ACCEL_SUCCESS :
+                                                           J2D_ACCEL_FAILURE);
     }
     if (!tmpDdInstance->ddObject) {
-	// REMIND: might want to shut down ddraw (useDD == FALSE?)
-	// if this error occurs
+        // REMIND: might want to shut down ddraw (useDD == FALSE?)
+        // if this error occurs
         free(tmpDdInstance);
-	return NULL;
+        return NULL;
     }
     if (DDSetupDevice(tmpDdInstance, dxCaps)) {
-	return tmpDdInstance;
+        return tmpDdInstance;
     } else {
         free(tmpDdInstance);
-	return NULL;
+        return NULL;
     }
 }
 
-BOOL CALLBACK EnumDeviceCallback(GUID FAR* lpGUID, LPSTR szName, LPSTR szDevice, 
-				 LPVOID lParam, HMONITOR hMonitor)
+BOOL CALLBACK EnumDeviceCallback(GUID FAR* lpGUID, LPSTR szName, LPSTR szDevice,
+                                 LPVOID lParam, HMONITOR hMonitor)
 {
     J2dTraceLn(J2D_TRACE_INFO, "EnumDeviceCallback");
     if (currNumDevices == maxDDDevices) {
-	maxDDDevices *= 2;
-	DDrawObjectStruct **tmpDDDevices = 
-	    (DDrawObjectStruct**)safe_Malloc(maxDDDevices * 
-	    sizeof(DDrawObjectStruct*));
+        maxDDDevices *= 2;
+        DDrawObjectStruct **tmpDDDevices =
+            (DDrawObjectStruct**)safe_Malloc(maxDDDevices *
+            sizeof(DDrawObjectStruct*));
         memset(tmpDDDevices, NULL, maxDDDevices * sizeof(DDrawObjectStruct*));
-	for (int i = 0; i < currNumDevices; ++i) {
-	    tmpDDDevices[i] = ddInstance[i];
-	}
-	DDrawObjectStruct **oldDDDevices = ddInstance;
-	ddInstance = tmpDDDevices;
-	free(oldDDDevices);
+        for (int i = 0; i < currNumDevices; ++i) {
+            tmpDDDevices[i] = ddInstance[i];
+        }
+        DDrawObjectStruct **oldDDDevices = ddInstance;
+        ddInstance = tmpDDDevices;
+        free(oldDDDevices);
     }
     if (hMonitor != NULL) {
-	DDrawObjectStruct    *tmpDdInstance;
+        DDrawObjectStruct    *tmpDdInstance;
         if (ddInstance[currNumDevices] != NULL) {
             DDFreeSyncSurface(ddInstance[currNumDevices]);
             free(ddInstance[currNumDevices]);
         }
-	tmpDdInstance = CreateDevice(lpGUID, hMonitor);
-	ddInstance[currNumDevices] = tmpDdInstance;
-        J2dTraceLn2(J2D_TRACE_VERBOSE, 
-                    "EnumDeviceCallback: ddInstance[%d]=0x%x", 
+        tmpDdInstance = CreateDevice(lpGUID, hMonitor);
+        ddInstance[currNumDevices] = tmpDdInstance;
+        J2dTraceLn2(J2D_TRACE_VERBOSE,
+                    "EnumDeviceCallback: ddInstance[%d]=0x%x",
                     currNumDevices, tmpDdInstance);
-	// Increment currNumDevices on success or failure; a null device
-	// is perfectly fine; we may have an unaccelerated device
-	// in the midst of our multimon configuration
-	currNumDevices++;
+        // Increment currNumDevices on success or failure; a null device
+        // is perfectly fine; we may have an unaccelerated device
+        // in the midst of our multimon configuration
+        currNumDevices++;
     }
     return TRUE;
 }
@@ -578,24 +578,23 @@ BOOL DDCreateObject() {
     currNumDevices = 0;
     // Note that we are hardcoding this call to the ANSI version and not
     // using the ANIS-or-UNICODE macro name.  This is because there is
-    // apparently a problem with the UNICODE function name not being 
+    // apparently a problem with the UNICODE function name not being
     // implemented under the win98 MSLU.  So we just use the ANSI version
     // on all flavors of Windows instead.
     lpDDEnum = (LPDIRECTDRAWENUMERATEEXA)
         GetProcAddress(hLibDDraw, "DirectDrawEnumerateExA");
     if (lpDDEnum) {
-        HRESULT ddResult = (lpDDEnum)(EnumDeviceCallback, 
+        HRESULT ddResult = (lpDDEnum)(EnumDeviceCallback,
             NULL, DDENUM_ATTACHEDSECONDARYDEVICES);
         if (ddResult != DD_OK) {
-            DebugPrintDirectDrawError(ddResult, 
+            DebugPrintDirectDrawError(ddResult,
                  "DDCreateObject: EnumDeviceCallback failed");
         }
-    } 
+    }
     if (currNumDevices == 0) {
-        // Either there was no ddEnumEx function or there was a problem during 
+        // Either there was no ddEnumEx function or there was a problem during
         // enumeration; just create a device on the primary.
         ddInstance[currNumDevices++] = CreateDevice(NULL, NULL);
     }
     return TRUE;
 }
-

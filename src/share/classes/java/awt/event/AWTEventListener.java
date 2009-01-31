@@ -50,7 +50,6 @@ import java.awt.AWTEvent;
  * @see java.awt.Toolkit#removeAWTEventListener
  *
  * @author Fred Ecks
- * @version %I%, %G%
  * @since 1.2
  */
 public interface AWTEventListener extends EventListener {

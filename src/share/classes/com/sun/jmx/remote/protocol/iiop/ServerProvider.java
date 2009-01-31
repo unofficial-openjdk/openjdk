@@ -38,14 +38,14 @@ import javax.management.remote.rmi.RMIConnectorServer;
 public class ServerProvider implements JMXConnectorServerProvider {
 
     public JMXConnectorServer newJMXConnectorServer(JMXServiceURL serviceURL,
-						    Map<String,?> environment,
-						    MBeanServer mbeanServer)
-	    throws IOException {
-	if (!serviceURL.getProtocol().equals("iiop")) {
-	    throw new MalformedURLException("Protocol not iiop: " +
-					    serviceURL.getProtocol());
-	}
-	return new RMIConnectorServer(serviceURL, environment, mbeanServer);
+                                                    Map<String,?> environment,
+                                                    MBeanServer mbeanServer)
+            throws IOException {
+        if (!serviceURL.getProtocol().equals("iiop")) {
+            throw new MalformedURLException("Protocol not iiop: " +
+                                            serviceURL.getProtocol());
+        }
+        return new RMIConnectorServer(serviceURL, environment, mbeanServer);
     }
 
 }

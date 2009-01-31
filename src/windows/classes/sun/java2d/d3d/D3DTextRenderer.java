@@ -54,7 +54,7 @@ public class D3DTextRenderer extends GlyphListPipe {
                                               null, sg2d.eargb,
                                               D3DContext.NO_CONTEXT_FLAGS);
 
-            doDrawGlyphList(dstData.getNativeOps(), pCtx, 
+            doDrawGlyphList(dstData.getNativeOps(), pCtx,
                             sg2d.getCompClip(), gl);
         }
     }
@@ -65,11 +65,11 @@ public class D3DTextRenderer extends GlyphListPipe {
 
     public static class Tracer extends D3DTextRenderer {
         @Override
-	protected void doDrawGlyphList(long pData, long pCtx,
+        protected void doDrawGlyphList(long pData, long pCtx,
                                        Region clip, GlyphList gl)
         {
-	    GraphicsPrimitive.tracePrimitive("D3DDrawGlyphs");
-	    super.doDrawGlyphList(pData, pCtx, clip, gl);
-	}
+            GraphicsPrimitive.tracePrimitive("D3DDrawGlyphs");
+            super.doDrawGlyphList(pData, pCtx, clip, gl);
+        }
     }
 }

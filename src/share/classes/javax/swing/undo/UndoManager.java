@@ -131,8 +131,7 @@ import java.util.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author Ray Ryan
- * @version %I%, %G%
- */ 
+ */
 public class UndoManager extends CompoundEdit implements UndoableEditListener {
     int indexOfNextAdd;
     int limit;
@@ -159,7 +158,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
     public synchronized int getLimit() {
         return limit;
     }
-     
+
     /**
      * Empties the undo manager sending each edit a <code>die</code> message
      * in the process.
@@ -190,7 +189,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
 //                           " size: " + size +
 //                           " indexOfNextAdd: " + indexOfNextAdd +
 //                           "\n");
-        
+
             if (size > limit) {
                 int halfLimit = limit/2;
                 int keepFrom = indexOfNextAdd - 1 - halfLimit;
@@ -225,14 +224,14 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
             }
         }
     }
-        
+
     /**
      * Removes edits in the specified range.
      * All edits in the given range (inclusive, and in reverse order)
      * will have <code>die</code> invoked on them and are removed from
      * the list of edits. This has no effect if
      * <code>from</code> &gt; <code>to</code>.
-     * 
+     *
      * @param from the minimum index to remove
      * @param to the maximum index to remove
      */
@@ -246,7 +245,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
 //                                 e.getUndoPresentationName());
                 e.die();
                 // PENDING(rjrjr) when Vector supports range deletion (JDK
-                // 1.2) , we can optimize the next line considerably. 
+                // 1.2) , we can optimize the next line considerably.
                 edits.removeElementAt(i);
             }
 
@@ -266,7 +265,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
      * Sets the maximum number of edits this <code>UndoManager</code>
      * holds. A value less than 0 indicates the number of edits is not
      * limited. If edits need to be discarded to shrink the limit,
-     * <code>die</code> will be invoked on them in the reverse 
+     * <code>die</code> will be invoked on them in the reverse
      * order they were added.  The default is 100.
      *
      * @param l the new limit
@@ -282,7 +281,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
         limit = l;
         trimForLimit();
     }
-     
+
 
     /**
      * Returns the the next significant edit to be undone if <code>undo</code>
@@ -505,16 +504,16 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
         trimEdits(indexOfNextAdd, edits.size()-1);
 
         retVal = super.addEdit(anEdit);
-	if (inProgress) {
-	  retVal = true;
-	}
+        if (inProgress) {
+          retVal = true;
+        }
 
         // Maybe super added this edit, maybe it didn't (perhaps
         // an in progress compound edit took it instead. Or perhaps
         // this UndoManager is no longer in progress). So make sure
         // the indexOfNextAdd is pointed at the right place.
         indexOfNextAdd = edits.size();
-        
+
         // Enforce the limit
         trimForLimit();
 
@@ -530,12 +529,12 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
      * @see CompoundEdit#end
      */
     public synchronized void end() {
-	super.end();
+        super.end();
         this.trimEdits(indexOfNextAdd, edits.size()-1);
     }
 
     /**
-     * Convenience method that returns either 
+     * Convenience method that returns either
      * <code>getUndoPresentationName</code> or
      * <code>getRedoPresentationName</code>.  If the index of the next
      * edit equals the size of the edits list,
@@ -621,7 +620,7 @@ public class UndoManager extends CompoundEdit implements UndoableEditListener {
      * @return a String representation of this object
      */
     public String toString() {
-        return super.toString() + " limit: " + limit + 
+        return super.toString() + " limit: " + limit +
             " indexOfNextAdd: " + indexOfNextAdd;
     }
 }

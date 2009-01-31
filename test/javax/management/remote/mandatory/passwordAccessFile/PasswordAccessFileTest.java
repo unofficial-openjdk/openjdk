@@ -305,9 +305,9 @@ public class PasswordAccessFileTest {
 
             System.out.println("Bye! Bye!");
         } catch (Exception e) {
-	    System.out.println("Got unexpected exception: " + e);
+            System.out.println("Got unexpected exception: " + e);
             e.printStackTrace();
-	    System.exit(1);
+            System.exit(1);
         }
     }
 }

@@ -39,29 +39,29 @@ public class AlphaColorPipe implements CompositePipe {
     }
 
     public Object startSequence(SunGraphics2D sg, Shape s, Rectangle dev,
-				int[] abox) {
-	return sg;
+                                int[] abox) {
+        return sg;
     }
 
     public boolean needTile(Object context, int x, int y, int w, int h) {
-	return true;
+        return true;
     }
 
     public void renderPathTile(Object context,
-			       byte[] atile, int offset, int tilesize,
-			       int x, int y, int w, int h) {
-	SunGraphics2D sg = (SunGraphics2D) context;
+                               byte[] atile, int offset, int tilesize,
+                               int x, int y, int w, int h) {
+        SunGraphics2D sg = (SunGraphics2D) context;
 
-	sg.alphafill.MaskFill(sg, sg.getSurfaceData(), sg.composite,
-			      x, y, w, h,
-			      atile, offset, tilesize);
+        sg.alphafill.MaskFill(sg, sg.getSurfaceData(), sg.composite,
+                              x, y, w, h,
+                              atile, offset, tilesize);
     }
 
     public void skipTile(Object context, int x, int y) {
-	return;
+        return;
     }
 
     public void endSequence(Object context) {
-	return;
+        return;
     }
 }

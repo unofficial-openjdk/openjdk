@@ -24,12 +24,12 @@
 package apackage;
 
 public class PrincipalExpansionErrorAction implements
-	java.security.PrivilegedExceptionAction {
+        java.security.PrivilegedExceptionAction {
 
     public Object run() throws Exception {
-	
-	// try something that will trigger a security check
-	java.io.FileInputStream fis = new java.io.FileInputStream ("/testFile");
-	return fis;
+
+        // try something that will trigger a security check
+        java.io.FileInputStream fis = new java.io.FileInputStream ("/testFile");
+        return fis;
     }
 }

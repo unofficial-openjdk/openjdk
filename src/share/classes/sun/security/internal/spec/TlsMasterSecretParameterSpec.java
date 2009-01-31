@@ -43,11 +43,11 @@ import javax.crypto.SecretKey;
  */
 @Deprecated
 public class TlsMasterSecretParameterSpec implements AlgorithmParameterSpec {
-    
+
     private final SecretKey premasterSecret;
     private final int majorVersion, minorVersion;
     private final byte[] clientRandom, serverRandom;
-    
+
     /**
      * Constructs a new TlsMasterSecretParameterSpec.
      *
@@ -67,67 +67,67 @@ public class TlsMasterSecretParameterSpec implements AlgorithmParameterSpec {
      *   negative or larger than 255
      */
     public TlsMasterSecretParameterSpec(SecretKey premasterSecret,
-	    int majorVersion, int minorVersion, byte[] clientRandom, byte[] serverRandom) {
-	if (premasterSecret == null) {
-	    throw new NullPointerException("premasterSecret must not be null");
-	}
-	this.premasterSecret = premasterSecret;
-	this.majorVersion = checkVersion(majorVersion);
-	this.minorVersion = checkVersion(minorVersion);
-	this.clientRandom = clientRandom.clone();
-	this.serverRandom = serverRandom.clone();
+            int majorVersion, int minorVersion, byte[] clientRandom, byte[] serverRandom) {
+        if (premasterSecret == null) {
+            throw new NullPointerException("premasterSecret must not be null");
+        }
+        this.premasterSecret = premasterSecret;
+        this.majorVersion = checkVersion(majorVersion);
+        this.minorVersion = checkVersion(minorVersion);
+        this.clientRandom = clientRandom.clone();
+        this.serverRandom = serverRandom.clone();
     }
-    
+
     static int checkVersion(int version) {
-	if ((version < 0) || (version > 255)) {
-	    throw new IllegalArgumentException("Version must be between 0 and 255");
-	}
-	return version;
+        if ((version < 0) || (version > 255)) {
+            throw new IllegalArgumentException("Version must be between 0 and 255");
+        }
+        return version;
     }
-    
+
     /**
      * Returns the premaster secret.
      *
      * @return the premaster secret.
      */
     public SecretKey getPremasterSecret() {
-	return premasterSecret;
+        return premasterSecret;
     }
-    
+
     /**
      * Returns the major version number.
      *
      * @return the major version number.
      */
     public int getMajorVersion() {
-	return majorVersion;
+        return majorVersion;
     }
-    
+
     /**
      * Returns the minor version number.
      *
      * @return the minor version number.
      */
     public int getMinorVersion() {
-	return minorVersion;
+        return minorVersion;
     }
-    
+
     /**
      * Returns a copy of the client's random value.
      *
      * @return a copy of the client's random value.
      */
     public byte[] getClientRandom() {
-	return clientRandom.clone();
+        return clientRandom.clone();
     }
-    
+
     /**
      * Returns a copy of the server's random value.
      *
      * @return a copy of the server's random value.
      */
     public byte[] getServerRandom() {
-	return serverRandom.clone();
+        return serverRandom.clone();
     }
 
 }

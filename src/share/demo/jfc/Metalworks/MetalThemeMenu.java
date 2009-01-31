@@ -29,10 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
- 
+
+
 
 import javax.swing.plaf.metal.*;
 import javax.swing.*;
@@ -43,7 +41,6 @@ import java.awt.event.*;
 /**
  * This class describes a theme using "green" colors.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public class MetalThemeMenu extends JMenu implements ActionListener{
@@ -55,12 +52,12 @@ public class MetalThemeMenu extends JMenu implements ActionListener{
     ButtonGroup group = new ButtonGroup();
     for (int i = 0; i < themes.length; i++) {
         JRadioButtonMenuItem item = new JRadioButtonMenuItem( themes[i].getName() );
-	group.add(item);
+        group.add(item);
         add( item );
-	item.setActionCommand(i+"");
-	item.addActionListener(this);
-	if ( i == 0)
-	    item.setSelected(true);
+        item.setActionCommand(i+"");
+        item.addActionListener(this);
+        if ( i == 0)
+            item.setSelected(true);
     }
 
   }
@@ -70,10 +67,10 @@ public class MetalThemeMenu extends JMenu implements ActionListener{
     MetalTheme selectedTheme = themes[ Integer.parseInt(numStr) ];
     MetalLookAndFeel.setCurrentTheme(selectedTheme);
     try {
-	UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
     } catch (Exception ex) {
         System.out.println("Failed loading Metal");
-	System.out.println(ex);
+        System.out.println(ex);
     }
 
   }

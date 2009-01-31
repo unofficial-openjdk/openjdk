@@ -44,7 +44,7 @@ import java.beans.PropertyChangeListener;
   * will return null.
   *
   * <p>
-  * 
+  *
   * A TreeSelectionModel can be configured to allow only one
   * path (<code>SINGLE_TREE_SELECTION</code>) a number of
   * continguous paths (<code>CONTIGUOUS_TREE_SELECTION</code>) or a number of
@@ -56,7 +56,7 @@ import java.beans.PropertyChangeListener;
   * allow any number of paths to be contained in the TreeSelectionModel.
   *
   * <p>
-  * 
+  *
   * For a selection model of <code>CONTIGUOUS_TREE_SELECTION</code> any
   * time the paths are changed (<code>setSelectionPath</code>,
   * <code>addSelectionPath</code> ...) the TreePaths are again checked to
@@ -83,7 +83,6 @@ import java.beans.PropertyChangeListener;
   * row is then the row that corresponds to the TreePath as determined
   * from the RowMapper.
   *
-  * @version %I% %G%
   * @author Scott Violet
   */
 
@@ -168,7 +167,7 @@ public interface TreeSelectionModel
     void removeSelectionPath(TreePath path);
 
     /**
-      * Removes paths from the selection.  If any of the paths in 
+      * Removes paths from the selection.  If any of the paths in
       * <code>paths</code>
       * are in the selection, the TreeSelectionListeners are notified.
       * This method has no effect if <code>paths</code> is null.
@@ -269,7 +268,7 @@ public interface TreeSelectionModel
     int getLeadSelectionRow();
 
     /**
-     * Returns the last path that was added. This may differ from the 
+     * Returns the last path that was added. This may differ from the
      * leadSelectionPath property maintained by the JTree.
      */
     TreePath getLeadSelectionPath();

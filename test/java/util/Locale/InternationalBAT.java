@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -45,7 +45,7 @@ public class InternationalBAT {
         if (!testRequiredEncodings()) {
             pass = false;
         }
-        
+
         if (!pass) {
             System.out.println("\nSome tests failed.\n"
                     + "If you installed the US-only J2RE for Windows, "
@@ -85,7 +85,7 @@ public class InternationalBAT {
         new Locale("sv", "SE"),
         new Locale("th", "TH"),
     };
-    
+
     // Date strings for May 10, 2001, for the required locales
     private static String[] requiredLocaleDates = {
         "10 \u0645\u0627\u064A\u0648, 2001",
@@ -109,7 +109,7 @@ public class InternationalBAT {
         "den 10 maj 2001",
         "\u0E27\u0E31\u0E19\u0E1E\u0E24\u0E2B\u0E31\u0E2A\u0E1A\u0E14\u0E35\u0E17\u0E35\u0E48 10 \u0E1E\u0E24\u0E29\u0E20\u0E32\u0E04\u0E21 \u0E1E.\u0E28. 2544",
     };
-    
+
     private static boolean testRequiredLocales() {
         boolean pass = true;
 
@@ -146,10 +146,10 @@ public class InternationalBAT {
         }
         return pass;
     }
-    
+
     // We require the encodings of the fully supported writing systems:
     // http://webwork.eng/j2se/1.4/docs/guide/intl/locale.doc.html#jfc
-    
+
     private static String[] requiredEncodings = {
         "Cp1256",
         "MS936",
@@ -172,9 +172,9 @@ public class InternationalBAT {
         "ISO8859_15",
         "TIS620",
     };
-    
+
     // one sample locale each for the required encodings
-    
+
     private static Locale[] sampleLocales = {
         new Locale("ar", "SA"),
         new Locale("zh", "CN"),
@@ -197,9 +197,9 @@ public class InternationalBAT {
         new Locale("it", "IT"),
         new Locale("th", "TH"),
     };
-    
+
     // expected conversion results for the date strings of the sample locales
-    
+
     private static byte[][] expectedBytes = {
         { 0x31, 0x30, 0x20, (byte) 0xE3, (byte) 0xC7, (byte) 0xED, (byte) 0xE6, 0x2C, 0x20, 0x32, 0x30, 0x30, 0x31, },
         { 0x32, 0x30, 0x30, 0x31, (byte) 0xC4, (byte) 0xEA, 0x35, (byte) 0xD4, (byte) 0xC2, 0x31, 0x30, (byte) 0xC8, (byte) 0xD5, 0x20, (byte) 0xD0, (byte) 0xC7, (byte) 0xC6, (byte) 0xDA, (byte) 0xCB, (byte) 0xC4},
@@ -222,11 +222,11 @@ public class InternationalBAT {
         { 0x67, 0x69, 0x6F, 0x76, 0x65, 0x64, (byte) 0xEC, 0x20, 0x31, 0x30, 0x20, 0x6D, 0x61, 0x67, 0x67, 0x69, 0x6F, 0x20, 0x32, 0x30, 0x30, 0x31, },
         { (byte) 0xC7, (byte) 0xD1, (byte) 0xB9, (byte) 0xBE, (byte) 0xC4, (byte) 0xCB, (byte) 0xD1, (byte) 0xCA, (byte) 0xBA, (byte) 0xB4, (byte) 0xD5, (byte) 0xB7, (byte) 0xD5, (byte) 0xE8, 0x20, 0x31, 0x30, 0x20, (byte) 0xBE, (byte) 0xC4, (byte) 0xC9, (byte) 0xC0, (byte) 0xD2, (byte) 0xA4, (byte) 0xC1, 0x20, (byte) 0xBE, 0x2E, (byte) 0xC8, 0x2E, 0x20, 0x32, 0x35, 0x34, 0x34, },
     };
-    
-    
+
+
     private static boolean testRequiredEncodings() {
         boolean pass = true;
-        
+
         for (int i = 0; i < requiredEncodings.length; i++) {
             String encoding = requiredEncodings[i];
             Locale sampleLocale = sampleLocales[i];
@@ -256,7 +256,7 @@ public class InternationalBAT {
         }
         return pass;
     }
-    
+
     private static void reportConversionError(String encoding,
             byte[] expected, byte[] actual) {
 
@@ -266,7 +266,7 @@ public class InternationalBAT {
         System.out.println("Actual output:");
         dumpBytes(actual);
     }
-    
+
     private static void dumpBytes(byte[] bytes) {
         System.out.print("        { ");
         for (int i = 0; i < bytes.length; i++) {
@@ -279,7 +279,7 @@ public class InternationalBAT {
         }
         System.out.println("},");
     }
-    
+
     private static char toHex(int i) {
         if (i <= 9) {
             return (char) ('0' + i);

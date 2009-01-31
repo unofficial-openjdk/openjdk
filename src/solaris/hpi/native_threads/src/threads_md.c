@@ -64,7 +64,7 @@ static void removeFromActiveQ(sys_thread_t *p);
 static void clear_onproc_flags(void);
 
 sys_thread_t *ThreadQueue;
-int ActiveThreadCount = 0;		/* All threads */
+int ActiveThreadCount = 0;              /* All threads */
 sys_mon_t *_sys_queue_lock;
 
 /* This is explained in linker_md.c. */
@@ -109,7 +109,7 @@ sigset_t sigusr1Mask = {{sigmask(SIGUSR1), 0, 0, 0}};
  * takes stack space to do, but that is weakly accounted for by the
  * previous stack redzone.  In general, where we can't predict stack
  * use by C, thread stack overflow checking doesn't really work.
- */ 
+ */
 
 #define STACK_REDZONE 4096
 
@@ -156,17 +156,17 @@ jdk_pthread_sigmask(int how , const sigset_t* newmask, sigset_t* oldmask) {
    of getting the tid more efficient */
 
 int
-sysThreadCheckStack() 
+sysThreadCheckStack()
 {
     sys_thread_t *tid = sysThreadSelf();
 
     /* Stacks grow toward lower addresses on Solaris... */
     if (!threads_initialized ||
-	(char *)(tid)->stack_bottom - (char *)&(tid) + STACK_REDZONE <
-	    tid->stack_size) {
-	return 1;
+        (char *)(tid)->stack_bottom - (char *)&(tid) + STACK_REDZONE <
+            tid->stack_size) {
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -175,7 +175,7 @@ static sigset_t squm = {{sigmask(SIGUSR1), 0, 0, 0}};
 #endif
 
 
-/* 
+/*
  * Allocate and initialize the sys_thread_t structure for an arbitary
  * native thread.
  */
@@ -192,18 +192,18 @@ sysThreadAlloc(sys_thread_t **tidP)
 #endif
 
     if (profiler_on) {
-	np_profiler_init(tid);
+        np_profiler_init(tid);
     }
 
     if (np_stackinfo(&tid->stack_bottom, &tid->stack_size) == SYS_ERR) {
-	return SYS_ERR;
+        return SYS_ERR;
     }
 #ifdef __linux__
     tid->stack_top = tid->stack_bottom - tid->stack_size;
 #else
     tid->stack_top = (void *)((char *)(tid->stack_bottom) - tid->stack_size);
 #endif
- 
+
     tid->primordial_thread = 0;
 #ifdef __linux__
     tid->interrupted = tid->pending_interrupt = FALSE;
@@ -227,7 +227,7 @@ sysThreadAlloc(sys_thread_t **tidP)
      * We update the thread-specific storage before locking the
      * queue because sysMonitorEnter will access sysThreadSelf.
      */
-    err = thr_setspecific(tid_key, tid); 
+    err = thr_setspecific(tid_key, tid);
                                 /* sys_thread_t * back pointer from native */
 #ifdef __linux__
     thr_setspecific(intrJmpbufkey, NULL); /* paranoid */
@@ -297,21 +297,21 @@ threadBootstrapMD(sys_thread_t **tidP, sys_mon_t **lockP, int nb)
     thr_keycreate(&sigusr1Jmpbufkey, NULL);
 #endif
 
-#ifndef NO_INTERRUPTIBLE_IO	
+#ifndef NO_INTERRUPTIBLE_IO
     {
         /* initialize SIGUSR1 handler for interruptable IO */
         struct sigaction sigAct;
-	
+
 #ifdef SA_SIGINFO
-	sigAct.sa_handler = NULL;
-	sigAct.sa_sigaction = sigusr1Handler;
-#else		
-	sigAct.sa_handler = sigusr1Handler;
-#endif /* SA_SIGINFO */	
-	memset((char *)&(sigAct.sa_mask), 0, sizeof (sigset_t));
-	/* we do not want the restart flag for SIGUSR1 */
-	sigAct.sa_flags = 0;
-	sigaction(SIGUSR1, &sigAct, (struct sigaction *)0);
+        sigAct.sa_handler = NULL;
+        sigAct.sa_sigaction = sigusr1Handler;
+#else
+        sigAct.sa_handler = sigusr1Handler;
+#endif /* SA_SIGINFO */
+        memset((char *)&(sigAct.sa_mask), 0, sizeof (sigset_t));
+        /* we do not want the restart flag for SIGUSR1 */
+        sigAct.sa_flags = 0;
+        sigaction(SIGUSR1, &sigAct, (struct sigaction *)0);
     }
 #endif /* NO_INTERRUPTIBLE_IO */
 
@@ -338,9 +338,9 @@ threadBootstrapMD(sys_thread_t **tidP, sys_mon_t **lockP, int nb)
     (*tidP)->primordial_thread = 1;
 
     if (np_initialize() == SYS_ERR) {
-	return SYS_ERR;
+        return SYS_ERR;
     }
-    
+
     return SYS_OK;
 }
 
@@ -355,13 +355,13 @@ sysThreadStackPointer(sys_thread_t * tid)
 
     if (tid == sysThreadSelf()) {
         /*
-	 * doing this assigment gets around a warning about returning
-	 * the address of a local variable
-	 */
+         * doing this assigment gets around a warning about returning
+         * the address of a local variable
+         */
         void *aStackAddress = &thread_info;
-	return aStackAddress;
+        return aStackAddress;
     } else {
-	return (void *) tid->sp;
+        return (void *) tid->sp;
     }
 }
 
@@ -418,19 +418,19 @@ _start(void *tid_)
     /* Wait for semaphore to be posted once thread has been suspended */
     sem_wait(&tid->sem);
     sem_destroy(&tid->sem);
-#else 
+#else
     /* I'm a new thread, and I must co-operate so I can be suspended. */
     pthread_mutex_lock(&tid->ntcond.m);
     tid->ntcond.state = NEW_THREAD_REQUESTED_SUSPEND;
     pthread_cond_signal(&tid->ntcond.c);
     while (tid->ntcond.state != NEW_THREAD_SUSPENDED)
-	pthread_cond_wait(&tid->ntcond.c, &tid->ntcond.m);
+        pthread_cond_wait(&tid->ntcond.c, &tid->ntcond.m);
     pthread_mutex_unlock(&tid->ntcond.m);
 #endif /* USE_MUTEX_HANDSHAKE */
 #endif /* USE_PTHREADS */
 #endif /* !linux */
     if (profiler_on) {
-	np_profiler_init(tid);
+        np_profiler_init(tid);
     }
 
 #ifndef __linux__
@@ -461,7 +461,7 @@ _start(void *tid_)
 
 int
 sysThreadCreate(sys_thread_t **tidP, long ss, void (*start)(void *), void *arg)
-{ 
+{
     size_t stack_size = ss;
     int err;
     sys_thread_t *tid = allocThreadBlock();
@@ -535,7 +535,7 @@ sysThreadCreate(sys_thread_t **tidP, long ss, void (*start)(void *), void *arg)
 #ifdef USE_PTHREADS
 
 #ifndef USE_MUTEX_HANDSHAKE
-    /* Semaphore used to block thread until np_suspend() is called */     
+    /* Semaphore used to block thread until np_suspend() is called */
     err = sem_init(&tid->sem, 0, 0);
     sysAssert(err == 0);
     /* Thread attributes */
@@ -546,7 +546,7 @@ sysThreadCreate(sys_thread_t **tidP, long ss, void (*start)(void *), void *arg)
     tid->ntcond.state = NEW_THREAD_MUST_REQUEST_SUSPEND;
     pthread_mutex_lock(&tid->ntcond.m);
 #endif /* USE_MUTEX_HANDSHAKE */
-    
+
     /* Create the new thread. */
     pthread_attr_init(&attr);
 #ifdef _POSIX_THREAD_ATTR_STACKSIZE
@@ -554,24 +554,24 @@ sysThreadCreate(sys_thread_t **tidP, long ss, void (*start)(void *), void *arg)
 #endif
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     if (profiler_on)
-	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+        pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
     err = pthread_create(&tid->sys_thread, &attr, _start, (void *)tid);
 
 #ifndef USE_MUTEX_HANDSHAKE
     if (err == 0) {
-       /* Suspend the thread */	
+       /* Suspend the thread */
        err = np_suspend(tid);
        if (err == SYS_OK) {
            /* Unblock the thread now that it has been suspended */
            err = sem_post(&tid->sem);
-           sysAssert(err == 0);	
-       }		
-    }		
-#else 
+           sysAssert(err == 0);
+       }
+    }
+#else
     /* Wait for the newly created thread to block. */
     while (tid->ntcond.state != NEW_THREAD_REQUESTED_SUSPEND)
-	pthread_cond_wait(&tid->ntcond.c, &tid->ntcond.m);
-    
+        pthread_cond_wait(&tid->ntcond.c, &tid->ntcond.m);
+
     /* So it blocked.  Now suspend it and _then_ get it out of the block. */
     np_suspend(tid->sys_thread);
     tid->ntcond.state = NEW_THREAD_SUSPENDED;
@@ -582,27 +582,27 @@ sysThreadCreate(sys_thread_t **tidP, long ss, void (*start)(void *), void *arg)
 #else
     /* Create the thread */
     err = thr_create(NULL, stack_size, _start, (void *)tid,
-		     THR_SUSPENDED|THR_DETACHED|
-		     (profiler_on ? THR_BOUND : 0),
-		     &tid->sys_thread);
+                     THR_SUSPENDED|THR_DETACHED|
+                     (profiler_on ? THR_BOUND : 0),
+                     &tid->sys_thread);
 #endif /* USE_PTHREADS */
 #endif /* !linux */
 
     tid->state = SUSPENDED;
-    sysAssert(err != EINVAL);	/* Invalid argument: shouldn't happen */
+    sysAssert(err != EINVAL);   /* Invalid argument: shouldn't happen */
     if (err == EAGAIN) {
-	err = SYS_NORESOURCE;	/* Will be treated as though SYS_NOMEM */
+        err = SYS_NORESOURCE;   /* Will be treated as though SYS_NOMEM */
     } else if (err == ENOMEM) {
-	err = SYS_NOMEM;
+        err = SYS_NOMEM;
     } else {
-	err = SYS_OK;
+        err = SYS_OK;
     }
 
     return err;
 }
 
 /*
- * Free a system thread block. 
+ * Free a system thread block.
  * Remove from the thread queue.
  */
 int
@@ -620,7 +620,7 @@ sysThreadFree()
     SYS_QUEUE_UNLOCK(tid);
 
     /* For invocation API: later sysThreadSelf() calls will return 0 */
-    thr_setspecific(tid_key, 0); 
+    thr_setspecific(tid_key, 0);
 
 #ifdef __linux__
     np_free_thread(tid);
@@ -695,8 +695,8 @@ sysThreadSetPriority(sys_thread_t * tid, int pri)
 #else
     err = thr_setprio(tid->sys_thread, pri);
 #endif /* USE_PTHREADS */
-    sysAssert(err != ESRCH);	    /* No such thread: shouldn't happen */
-    sysAssert(err != EINVAL);	    /* Invalid arguments: shouldn't happen */
+    sysAssert(err != ESRCH);        /* No such thread: shouldn't happen */
+    sysAssert(err != EINVAL);       /* Invalid arguments: shouldn't happen */
     return SYS_OK;
 }
 
@@ -709,7 +709,7 @@ sysThreadSuspend(sys_thread_t * tid)
     int err1 = 0;
     int err2 = 0;
     sys_thread_t *self = sysThreadSelf();
- 
+
     if (tid == self) {
         self->state = SUSPENDED;
     } else {
@@ -725,9 +725,9 @@ sysThreadSuspend(sys_thread_t * tid)
                 tid->cpending_suspend = 1;
                 break;
             case SUSPENDED:
-	    default:
-		err1 = -1;		/* Thread in inconsistent state */
-		break;
+            default:
+                err1 = -1;              /* Thread in inconsistent state */
+                break;
         }
 #ifndef __linux__
         mutexUnlock(&tid->mutex);
@@ -748,7 +748,7 @@ sysThreadResume(sys_thread_t * tid)
 {
     int err1 = 0;
     int err2 = 0;
- 
+
 #ifndef __linux__
     mutexLock(&tid->mutex);
 #endif
@@ -760,18 +760,18 @@ sysThreadResume(sys_thread_t * tid)
             case SUSPENDED:
                 tid->state = RUNNABLE;
                 break;
-	    case RUNNABLE:
-	    case CONDVAR_WAIT:
-	    default:
-		err1 = -1;		/* Thread in inconsistent state */
-		break;
+            case RUNNABLE:
+            case CONDVAR_WAIT:
+            default:
+                err1 = -1;              /* Thread in inconsistent state */
+                break;
         }
     }
 #ifndef __linux__
     mutexUnlock(&tid->mutex);
 #endif
     if (err1 == 0) {
-	err2 = np_continue(tid);
+        err2 = np_continue(tid);
     }
 
     return ((err1 == 0 && err2 == 0) ? SYS_OK : SYS_ERR);
@@ -790,11 +790,11 @@ sysThreadSelf()
     int err = thr_getspecific(tid_key, (void *) &tid);
 
     if (err == 0) {
-	return tid;
+        return tid;
     }
 
     sysAssert(tid_key == -1 || err != 0);
-    
+
     return NULL;
 #endif
 }
@@ -816,9 +816,9 @@ sysThreadEnumerateOver(int (*func)(sys_thread_t *, void *), void *arg)
 
     tid = ThreadQueue;
     for (i = 0; i < ActiveThreadCount && tid != 0; i++) {
-	if ((err = (*func)(tid, arg)) != SYS_OK) {
-	    break;
-	}
+        if ((err = (*func)(tid, arg)) != SYS_OK) {
+            break;
+        }
         tid = tid->next;
     }
 
@@ -835,7 +835,7 @@ sysThreadNativeID(sys_thread_t *tid)
  * Remove this thread from the list of Active threads.
  */
 static void
-removeFromActiveQ(sys_thread_t * t) 
+removeFromActiveQ(sys_thread_t * t)
 {
     sys_thread_t *prev;
     sys_thread_t *tid;
@@ -847,17 +847,17 @@ removeFromActiveQ(sys_thread_t * t)
     prev = 0;
     tid = ThreadQueue;
     while (tid) {
-	if (tid == t) {
-	    if (prev) {
-		prev->next = tid->next;
-	    } else {
-		ThreadQueue = tid->next;
-	    }
-	    tid->next = 0;
-	    break;
-	}
-	prev = tid;
-	tid = tid->next;
+        if (tid == t) {
+            if (prev) {
+                prev->next = tid->next;
+            } else {
+                ThreadQueue = tid->next;
+            }
+            tid->next = 0;
+            break;
+        }
+        prev = tid;
+        tid = tid->next;
     }
 }
 
@@ -932,8 +932,8 @@ sysThreadIsInterrupted(sys_thread_t *tid, int ClearInterrupted)
 #else
     interrupted = tid->interrupted;
     if (ClearInterrupted == 1) {
-	tid->interrupted = FALSE;
-	mutexUnlock(&tid->mutex);
+        tid->interrupted = FALSE;
+        mutexUnlock(&tid->mutex);
          if (interrupted) {
              sigset_t osigset;
              /*
@@ -942,7 +942,7 @@ sysThreadIsInterrupted(sys_thread_t *tid, int ClearInterrupted)
               * and the sigusr1Handler to catch and notice that the
               * interrupted flag is not set.
               */
-  
+
              thr_setspecific(sigusr1Jmpbufkey, NULL); /* paranoid */
              thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &osigset);
              thr_sigsetmask(SIG_SETMASK, &osigset, NULL);
@@ -967,20 +967,20 @@ sysThreadIsInterrupted(sys_thread_t *tid, int ClearInterrupted)
  * the HPI that needs to be done to safely run single-threaded.
  */
 int
-sysThreadSingle() 
+sysThreadSingle()
 {
     return np_single();
 }
 
 /*
  * Allow multi threaded execution to resume after a
- * sysThreadSingle() call.  
+ * sysThreadSingle() call.
  *
  * Note: When this routine is called the scheduler should already
  * have been locked by sysThreadSingle().
  */
 void
-sysThreadMulti() 
+sysThreadMulti()
 {
     np_multi();
 }
@@ -1011,7 +1011,7 @@ intrHandler(void* arg)
 }
 
 #else
-/* 
+/*
  * SIGUSR1 is used to interrupt the threads, i.e when an exception
  * is posted against the thread, SIGUSR1 is sent to the thread and the
  * thread gets the signal, executes the following handler
@@ -1019,7 +1019,7 @@ intrHandler(void* arg)
 
 static void
 #ifdef SA_SIGINFO
-sigusr1Handler(int sig, siginfo_t *info, void *uc) 
+sigusr1Handler(int sig, siginfo_t *info, void *uc)
 #else
 sigusr1Handler(int sig)
 #endif
@@ -1027,13 +1027,13 @@ sigusr1Handler(int sig)
     sys_thread_t *tid = sysThreadSelf();
 
     if (tid->interrupted) {
-    	sigjmp_buf *jmpbufp;
+        sigjmp_buf *jmpbufp;
 #ifdef USE_PTHREADS
-	jmpbufp = pthread_getspecific(sigusr1Jmpbufkey);
+        jmpbufp = pthread_getspecific(sigusr1Jmpbufkey);
 #else
-    	thr_getspecific(sigusr1Jmpbufkey, (void **)&jmpbufp);
+        thr_getspecific(sigusr1Jmpbufkey, (void **)&jmpbufp);
 #endif
-    	if (jmpbufp != NULL)
+        if (jmpbufp != NULL)
             siglongjmp(*jmpbufp, 1);
     }
 }
@@ -1046,13 +1046,13 @@ sysGetSysInfo()
 
     if (info.name == NULL) {
         /*
-	 * we want the number of processors configured not the number online
-	 * since processors may be turned on and off dynamically.
-	 */
+         * we want the number of processors configured not the number online
+         * since processors may be turned on and off dynamically.
+         */
         int cpus = (int) sysconf(_SC_NPROCESSORS_CONF);
 
-	info.isMP = (cpus < 0) ? 1 : (cpus > 1);
-	info.name = "native threads";
+        info.isMP = (cpus < 0) ? 1 : (cpus > 1);
+        info.name = "native threads";
     }
     return &info;
 }
@@ -1074,25 +1074,25 @@ sysThreadGetStatus(sys_thread_t *tid, sys_mon_t **monitorPtr)
     int status;
     switch (tid->state) {
       case RUNNABLE:
-	  if (tid->mon_enter) {
-	      status = SYS_THREAD_MONITOR_WAIT;
-	  } else {
+          if (tid->mon_enter) {
+              status = SYS_THREAD_MONITOR_WAIT;
+          } else {
               status = SYS_THREAD_RUNNABLE;
           }
           break;
       case SUSPENDED:
-	  if (tid->mon_enter)
-	      status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
-	  else if (tid->cpending_suspend)
-	      status = SYS_THREAD_SUSPENDED | SYS_THREAD_CONDVAR_WAIT;
-	  else
-	      status = SYS_THREAD_SUSPENDED;
+          if (tid->mon_enter)
+              status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
+          else if (tid->cpending_suspend)
+              status = SYS_THREAD_SUSPENDED | SYS_THREAD_CONDVAR_WAIT;
+          else
+              status = SYS_THREAD_SUSPENDED;
           break;
       case CONDVAR_WAIT:
-	  status = SYS_THREAD_CONDVAR_WAIT;
+          status = SYS_THREAD_CONDVAR_WAIT;
           break;
       default:
-	return SYS_ERR;
+        return SYS_ERR;
     }
     if (monitorPtr) {
         if (status & SYS_THREAD_MONITOR_WAIT) {

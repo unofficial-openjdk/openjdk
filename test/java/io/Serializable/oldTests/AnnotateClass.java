@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @summary it is new version of old test which was 
+ * @summary it is new version of old test which was
  *          /src/share/test/serialization/subtest.java
  *          This test verifies of invocation
  *          annotateClass/replaceObject methods
@@ -32,47 +32,47 @@ import java.io.*;
 
 public class AnnotateClass {
     public static void main (String argv[]) {
-	System.err.println("\nRegression test for verification " +
-			   "of invocation annotateClass/replaceObject " + 
-			   "methods \n");
-	try {
-	    FileOutputStream ostream = new FileOutputStream("subtest1.tmp");
-	    TestOutputStream p = new TestOutputStream(ostream);
+        System.err.println("\nRegression test for verification " +
+                           "of invocation annotateClass/replaceObject " +
+                           "methods \n");
+        try {
+            FileOutputStream ostream = new FileOutputStream("subtest1.tmp");
+            TestOutputStream p = new TestOutputStream(ostream);
 
-	    p.writeObject(System.out);
-	    p.writeObject(System.err);
-	    p.writeObject(new PrintStream(ostream));
-	    p.flush();
-	    ostream.close();
+            p.writeObject(System.out);
+            p.writeObject(System.err);
+            p.writeObject(new PrintStream(ostream));
+            p.flush();
+            ostream.close();
 
-	    FileInputStream istream = new FileInputStream("subtest1.tmp");
-	    TestInputStream q = new TestInputStream(istream);
+            FileInputStream istream = new FileInputStream("subtest1.tmp");
+            TestInputStream q = new TestInputStream(istream);
 
-	    PrintStream out = (PrintStream)q.readObject();
-	    PrintStream err = (PrintStream)q.readObject();
-	    Object other = q.readObject();
-	    if (out != System.out) {
-		System.err.println(
-		    "\nTEST FAILED: System.out not read correctly");
+            PrintStream out = (PrintStream)q.readObject();
+            PrintStream err = (PrintStream)q.readObject();
+            Object other = q.readObject();
+            if (out != System.out) {
+                System.err.println(
+                    "\nTEST FAILED: System.out not read correctly");
                 throw new Error();
-	    }
-	    if (err != System.err) {
-		System.err.println(
+            }
+            if (err != System.err) {
+                System.err.println(
                     "\nTEST FAILED: System.err not read correctly");
                 throw new Error();
-	    }
-	    if (other != null) {
+            }
+            if (other != null) {
                 System.err.println(
                     "\nTEST FAILED: Non-system PrintStream should have " +
                     "been written/read as null");
                 throw new Error();
-	    }
+            }
             System.err.println("\nTEST PASSED");
-	} catch (Exception e) {
-	    System.err.print("TEST FAILED: ");
-	    e.printStackTrace();
+        } catch (Exception e) {
+            System.err.print("TEST FAILED: ");
+            e.printStackTrace();
             throw new Error();
-	}
+        }
     }
 }
 
@@ -88,15 +88,15 @@ public class AnnotateClass {
 class TestOutputStream extends ObjectOutputStream {
     /* Construct a new test stream */
     TestOutputStream(OutputStream out)  throws IOException {
-	super(out);
-	enableReplaceObject(true);
+        super(out);
+        enableReplaceObject(true);
     }
 
     /* When any class is written, add a "magic" string
      * that must be verified by the TestInputStream.
      */
     protected void annotateClass(Class cl) throws IOException {
-	this.writeUTF("magic");
+        this.writeUTF("magic");
     }
 
     /* For each object of type PrintStream, substitute
@@ -105,13 +105,13 @@ class TestOutputStream extends ObjectOutputStream {
      * Other objects are written as themselves.
      */
     protected Object replaceObject(Object obj)
-	throws IOException
+        throws IOException
     {
-	/* For PrintStreams, like stdout and stderr, encode */
-	if (obj instanceof PrintStream) {
-	    return new StdStream((PrintStream)obj);
-	}
-	return obj;
+        /* For PrintStreams, like stdout and stderr, encode */
+        if (obj instanceof PrintStream) {
+            return new StdStream((PrintStream)obj);
+        }
+        return obj;
     }
 }
 
@@ -120,29 +120,29 @@ class TestOutputStream extends ObjectOutputStream {
 class TestInputStream extends ObjectInputStream {
 
     TestInputStream(InputStream in)  throws IOException  {
-	super(in);
-	enableResolveObject(true);
+        super(in);
+        enableResolveObject(true);
     }
 
     /** Verify that the magic string was written to the stream
      * Also use the default classname->class resolution.
      */
     protected Class<?> resolveClass(ObjectStreamClass classdesc)
-	throws ClassNotFoundException, IOException
+        throws ClassNotFoundException, IOException
     {
-	try {
-	    String s = readUTF();
-	    if (!(s.equals("magic"))) {
-		System.err.println(
+        try {
+            String s = readUTF();
+            if (!(s.equals("magic"))) {
+                System.err.println(
                     "\nTEST FAILED: Bad magic number");
                 throw new Error();
             }
-	} catch (IOException ee) {
+        } catch (IOException ee) {
             System.err.println(
                 "\nTEST FAILED: I/O Exception");
             throw new Error();
-	}
-	return super.resolveClass(classdesc);
+        }
+        return super.resolveClass(classdesc);
     }
 
     /** If the object in the stream is a StdStream,
@@ -151,10 +151,10 @@ class TestInputStream extends ObjectInputStream {
      * Other objects are returned as themselves.
      */
     protected Object resolveObject(Object obj) {
-	if (obj instanceof StdStream) {
-	    return ((StdStream)obj).getStream();
-	}
-	return obj;
+        if (obj instanceof StdStream) {
+            return ((StdStream)obj).getStream();
+        }
+        return obj;
     }
 }
 
@@ -165,20 +165,20 @@ class StdStream implements java.io.Serializable {
     private int stream = 0;
 
     public StdStream(PrintStream s) {
-	if (s == System.out) {
-	    stream = 1;
+        if (s == System.out) {
+            stream = 1;
         } else if (s == System.err) {
-	    stream = 2;
+            stream = 2;
         }
     }
 
     public PrintStream getStream() {
-	if (stream == 1) {
-	    return System.out;
+        if (stream == 1) {
+            return System.out;
         } else if (stream == 2) {
-	    return System.err;
+            return System.err;
         } else {
-	    return null;
+            return null;
         }
     }
 }

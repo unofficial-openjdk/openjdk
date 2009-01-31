@@ -45,7 +45,6 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Arnaud Weber
  */
 public class BasicComboBoxRenderer extends JLabel
@@ -64,7 +63,7 @@ implements ListCellRenderer, Serializable {
         setOpaque(true);
         setBorder(getNoFocusBorder());
     }
-    
+
     private static Border getNoFocusBorder() {
         if (System.getSecurityManager() != null) {
             return SAFE_NO_FOCUS_BORDER;
@@ -72,10 +71,10 @@ implements ListCellRenderer, Serializable {
             return noFocusBorder;
         }
     }
-    
+
     public Dimension getPreferredSize() {
         Dimension size;
-        
+
         if ((this.getText() == null) || (this.getText().equals( "" ))) {
             setText( " " );
             size = super.getPreferredSize();
@@ -84,15 +83,15 @@ implements ListCellRenderer, Serializable {
         else {
             size = super.getPreferredSize();
         }
-        
+
         return size;
     }
 
     public Component getListCellRendererComponent(
-                                                 JList list, 
+                                                 JList list,
                                                  Object value,
-                                                 int index, 
-                                                 boolean isSelected, 
+                                                 int index,
+                                                 boolean isSelected,
                                                  boolean cellHasFocus)
     {
 
@@ -143,5 +142,3 @@ implements ListCellRenderer, Serializable {
     public static class UIResource extends BasicComboBoxRenderer implements javax.swing.plaf.UIResource {
     }
 }
-
-

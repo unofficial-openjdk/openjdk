@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -41,125 +39,125 @@ class CardPanel extends Panel {
     ActionListener listener;
 
     Panel create(LayoutManager layout) {
-	Button b = null;
-	Panel p = new Panel();
+        Button b = null;
+        Panel p = new Panel();
 
-	p.setLayout(layout);
+        p.setLayout(layout);
 
-	b = new Button("one");
-	b.addActionListener(listener);
-	p.add("North", b);
+        b = new Button("one");
+        b.addActionListener(listener);
+        p.add("North", b);
 
-	b = new Button("two");
-	b.addActionListener(listener);
-	p.add("West", b);
+        b = new Button("two");
+        b.addActionListener(listener);
+        p.add("West", b);
 
-	b = new Button("three");
-	b.addActionListener(listener);
-	p.add("South", b);
+        b = new Button("three");
+        b.addActionListener(listener);
+        p.add("South", b);
 
-	b = new Button("four");
-	b.addActionListener(listener);
-	p.add("East", b);
+        b = new Button("four");
+        b.addActionListener(listener);
+        p.add("East", b);
 
-	b = new Button("five");
-	b.addActionListener(listener);
-	p.add("Center", b);
+        b = new Button("five");
+        b.addActionListener(listener);
+        p.add("Center", b);
 
-	b = new Button("six");
-	b.addActionListener(listener);
-	p.add("Center", b);
+        b = new Button("six");
+        b.addActionListener(listener);
+        p.add("Center", b);
 
-	return p;
+        return p;
     }
 
     CardPanel(ActionListener actionListener) {
-	listener = actionListener;
-	setLayout(new CardLayout());
-	add("one", create(new FlowLayout()));
-	add("two", create(new BorderLayout()));
-	add("three", create(new GridLayout(2, 2)));
-	add("four", create(new BorderLayout(10, 10)));
-	add("five", create(new FlowLayout(FlowLayout.LEFT, 10, 10)));
-	add("six", create(new GridLayout(2, 2, 10, 10)));
+        listener = actionListener;
+        setLayout(new CardLayout());
+        add("one", create(new FlowLayout()));
+        add("two", create(new BorderLayout()));
+        add("three", create(new GridLayout(2, 2)));
+        add("four", create(new BorderLayout(10, 10)));
+        add("five", create(new FlowLayout(FlowLayout.LEFT, 10, 10)));
+        add("six", create(new GridLayout(2, 2, 10, 10)));
     }
 
     public Dimension getPreferredSize() {
-	return new Dimension(200, 100);
+        return new Dimension(200, 100);
     }
 }
 
 public class CardTest extends Applet
-		      implements ActionListener,
-				 ItemListener {
+                      implements ActionListener,
+                                 ItemListener {
     CardPanel cards;
 
     public CardTest() {
-	setLayout(new BorderLayout());
-	add("Center", cards = new CardPanel(this));
-	Panel p = new Panel();
-	p.setLayout(new FlowLayout());
-	add("South", p);
+        setLayout(new BorderLayout());
+        add("Center", cards = new CardPanel(this));
+        Panel p = new Panel();
+        p.setLayout(new FlowLayout());
+        add("South", p);
 
-	Button b = new Button("first");
-	b.addActionListener(this);
-	p.add(b);
+        Button b = new Button("first");
+        b.addActionListener(this);
+        p.add(b);
 
-	b = new Button("next");
-	b.addActionListener(this);
-	p.add(b);
+        b = new Button("next");
+        b.addActionListener(this);
+        p.add(b);
 
-	b = new Button("previous");
-	b.addActionListener(this);
-	p.add(b);
+        b = new Button("previous");
+        b.addActionListener(this);
+        p.add(b);
 
-	b = new Button("last");
-	b.addActionListener(this);
-	p.add(b);
+        b = new Button("last");
+        b.addActionListener(this);
+        p.add(b);
 
-	Choice c = new Choice();
-	c.addItem("one");
-	c.addItem("two");
-	c.addItem("three");
-	c.addItem("four");
-	c.addItem("five");
-	c.addItem("six");
-	c.addItemListener(this);
-	p.add(c);
+        Choice c = new Choice();
+        c.addItem("one");
+        c.addItem("two");
+        c.addItem("three");
+        c.addItem("four");
+        c.addItem("five");
+        c.addItem("six");
+        c.addItemListener(this);
+        p.add(c);
     }
 
     public void itemStateChanged(ItemEvent e) {
-	((CardLayout)cards.getLayout()).show(cards,
-	                                     (String)(e.getItem()));
+        ((CardLayout)cards.getLayout()).show(cards,
+                                             (String)(e.getItem()));
     }
 
     public void actionPerformed(ActionEvent e) {
-	String arg = e.getActionCommand();
+        String arg = e.getActionCommand();
 
-	if ("first".equals(arg)) {
-	    ((CardLayout)cards.getLayout()).first(cards);
-	} else if ("next".equals(arg)) {
-	    ((CardLayout)cards.getLayout()).next(cards);
-	} else if ("previous".equals(arg)) {
-	    ((CardLayout)cards.getLayout()).previous(cards);
-	} else if ("last".equals(arg)) {
-	    ((CardLayout)cards.getLayout()).last(cards);
-	} else {
-	    ((CardLayout)cards.getLayout()).show(cards,(String)arg);
-	}
+        if ("first".equals(arg)) {
+            ((CardLayout)cards.getLayout()).first(cards);
+        } else if ("next".equals(arg)) {
+            ((CardLayout)cards.getLayout()).next(cards);
+        } else if ("previous".equals(arg)) {
+            ((CardLayout)cards.getLayout()).previous(cards);
+        } else if ("last".equals(arg)) {
+            ((CardLayout)cards.getLayout()).last(cards);
+        } else {
+            ((CardLayout)cards.getLayout()).show(cards,(String)arg);
+        }
     }
 
     public static void main(String args[]) {
-	Frame f = new Frame("CardTest");
-	CardTest cardTest = new CardTest();
-	cardTest.init();
-	cardTest.start();
+        Frame f = new Frame("CardTest");
+        CardTest cardTest = new CardTest();
+        cardTest.init();
+        cardTest.start();
 
-	f.add("Center", cardTest);
-	f.setSize(300, 300);
-	f.show();
+        f.add("Center", cardTest);
+        f.setSize(300, 300);
+        f.show();
     }
-    
+
     public String getAppletInfo() {
         return "Demonstrates the different types of layout managers.";
     }

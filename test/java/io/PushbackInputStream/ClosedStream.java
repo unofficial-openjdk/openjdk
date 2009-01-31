@@ -41,7 +41,7 @@ public class ClosedStream {
                                            new ByteArrayInputStream(data));
         in.unread(20);
         in.close();
-        
+
         try {
             in.read(); //IOException must be thrown here
             throw new RuntimeException("No exception during read on closed stream");

@@ -53,7 +53,7 @@ Java_sun_nio_ch_SocketDispatcher_read0(JNIEnv *env, jclass clazz, jobject fdo,
     /* destination buffer and size */
     buf.buf = (char *)address;
     buf.len = (u_long)len;
-    
+
     /* read into the buffers */
     i = WSARecv((SOCKET)fd, /* Socket */
             &buf,           /* pointers to the buffers */
@@ -101,7 +101,7 @@ Java_sun_nio_ch_SocketDispatcher_readv0(JNIEnv *env, jclass clazz, jobject fdo,
         bufs[i].buf = (char *)iovp[i].iov_base;
         bufs[i].len = (u_long)iovp[i].iov_len;
     }
-    
+
     /* read into the buffers */
     i = WSARecv((SOCKET)fd, /* Socket */
             bufs,           /* pointers to the buffers */
@@ -139,7 +139,7 @@ Java_sun_nio_ch_SocketDispatcher_write0(JNIEnv *env, jclass clazz, jobject fdo,
     /* copy iovec into WSABUF */
     buf.buf = (char *)address;
     buf.len = (u_long)len;
-    
+
     /* read into the buffers */
     i = WSASend((SOCKET)fd, /* Socket */
             &buf,           /* pointers to the buffers */
@@ -186,7 +186,7 @@ Java_sun_nio_ch_SocketDispatcher_writev0(JNIEnv *env, jclass clazz,
         bufs[i].buf = (char *)iovp[i].iov_base;
         bufs[i].len = (u_long)iovp[i].iov_len;
     }
-    
+
     /* read into the buffers */
     i = WSASend((SOCKET)fd, /* Socket */
             bufs,           /* pointers to the buffers */

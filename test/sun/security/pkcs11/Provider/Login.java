@@ -36,12 +36,12 @@ public class Login extends PKCS11Test {
     private static char[] password;
 
     public static void main(String[] args) throws Exception {
-	main(new Login());
+        main(new Login());
     }
 
     public void main(Provider p) throws Exception {
 
-	int testnum = 1;
+        int testnum = 1;
 
         KeyStore ks = KeyStore.getInstance(KS_TYPE, p);
 
@@ -58,12 +58,12 @@ public class Login extends PKCS11Test {
 
             // test app-provided callback
             System.out.println("*** enter [foo] as the password ***");
-	    password = new char[] { 'f', 'o', 'o' };
+            password = new char[] { 'f', 'o', 'o' };
 
             ap.login(new Subject(), new PasswordCallbackHandler());
-	    ap.logout();
+            ap.logout();
             throw new SecurityException("test failed, expected LoginException");
-	} catch (FailedLoginException fle) {
+        } catch (FailedLoginException fle) {
             System.out.println("test " + testnum++ + " passed");
         }
 
@@ -71,12 +71,12 @@ public class Login extends PKCS11Test {
 
             // test default callback
             System.out.println("*** enter [foo] as the password ***");
-	    password = new char[] { 'f', 'o', 'o' };
+            password = new char[] { 'f', 'o', 'o' };
 
             Security.setProperty("auth.login.defaultCallbackHandler",
                 "Login$PasswordCallbackHandler");
             ap.login(new Subject(), null);
-	    ap.logout();
+            ap.logout();
             throw new SecurityException("test failed, expected LoginException");
         } catch (FailedLoginException fle) {
             System.out.println("test " + testnum++ + " passed");
@@ -84,7 +84,7 @@ public class Login extends PKCS11Test {
 
         // test provider-set callback
         System.out.println("*** enter test12 (correct) password ***");
-	password = new char[] { 't', 'e', 's', 't', '1', '2' };
+        password = new char[] { 't', 'e', 's', 't', '1', '2' };
 
         Security.setProperty("auth.login.defaultCallbackHandler", "");
         ap.setCallbackHandler
@@ -93,17 +93,17 @@ public class Login extends PKCS11Test {
         ap.login(new Subject(), null);
         System.out.println("test " + testnum++ + " passed");
 
-	// test user already logged in
+        // test user already logged in
         ap.setCallbackHandler(null);
         ap.login(new Subject(), null);
         System.out.println("test " + testnum++ + " passed");
 
-	// logout
-	ap.logout();
+        // logout
+        ap.logout();
 
-	// call KeyStore.load with a NULL password, and get prompted for PIN
+        // call KeyStore.load with a NULL password, and get prompted for PIN
         ap.setCallbackHandler(new PasswordCallbackHandler());
-	ks.load(null, (char[])null);
+        ks.load(null, (char[])null);
         System.out.println("test " + testnum++ + " passed");
     }
 

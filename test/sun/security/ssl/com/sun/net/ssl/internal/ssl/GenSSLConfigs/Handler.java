@@ -34,27 +34,27 @@ import javax.net.ssl.*;
 abstract class Handler extends TestThread
     implements HandshakeCompletedListener
 {
-    protected SSLSocket		s;
-    protected boolean		roleIsClient;
+    protected SSLSocket         s;
+    protected boolean           roleIsClient;
 
     // generates the stream of test data
-    private Traffic		traffic;
+    private Traffic             traffic;
 
     // for optional use in renegotiation
-    private String		renegotiateSuites [];
+    private String              renegotiateSuites [];
 
     // Test flag:  did we pass this test?
-    private boolean		pass = false;
+    private boolean             pass = false;
 
 
     Handler (String name)
     {
-	super (name);
+        super (name);
     }
 
 
     public void setRenegotiateSuites (String suites [])
-	{ renegotiateSuites = suites; }
+        { renegotiateSuites = suites; }
 
 
     abstract public void setReverseRole (boolean flag);
@@ -66,126 +66,126 @@ abstract class Handler extends TestThread
 
     public void run ()
     {
-	try {
-	    traffic = new Traffic (s.getInputStream (), s.getOutputStream ());
-	} catch (IOException e) {
-	    e.printStackTrace ();
-	    return;
-	}
+        try {
+            traffic = new Traffic (s.getInputStream (), s.getOutputStream ());
+        } catch (IOException e) {
+            e.printStackTrace ();
+            return;
+        }
 
-	if (prng != null)
-	    traffic.setPRNG (prng);
+        if (prng != null)
+            traffic.setPRNG (prng);
 
-	if (listenHandshake || doRenegotiate)
-	    s.addHandshakeCompletedListener (this);
+        if (listenHandshake || doRenegotiate)
+            s.addHandshakeCompletedListener (this);
 
-	try {
-	    if (initiateHandshake)
-		s.startHandshake ();
+        try {
+            if (initiateHandshake)
+                s.startHandshake ();
 
-	    // XXX if use client auth ...
+            // XXX if use client auth ...
 
-	    doTraffic (0);
+            doTraffic (0);
 
-	    if (doRenegotiate)
-		s.startHandshake ();
+            if (doRenegotiate)
+                s.startHandshake ();
 
-	    doTraffic (iterations);
+            doTraffic (iterations);
 
-	    // XXX abortive shutdown should be a test option
+            // XXX abortive shutdown should be a test option
 
-	    s.close ();
+            s.close ();
 
-	    // XXX want a close-this-session-down option
+            // XXX want a close-this-session-down option
 
-	} catch (IOException e) {
-	    String	message = e.getMessage ();
+        } catch (IOException e) {
+            String      message = e.getMessage ();
 
-	    synchronized (out) {
-		if (message.equalsIgnoreCase ("no cipher suites in common")) {
-		    out.println ("%% " + getName () + " " + message);
+            synchronized (out) {
+                if (message.equalsIgnoreCase ("no cipher suites in common")) {
+                    out.println ("%% " + getName () + " " + message);
 
-		} else {
-		    out.println ("%% " + getName ());
-		    e.printStackTrace (out);
-		}
-	    }
+                } else {
+                    out.println ("%% " + getName ());
+                    e.printStackTrace (out);
+                }
+            }
 
-	} catch (Throwable t) {
-	    synchronized (out) {
-		out.println ("%% " + getName ());
-		t.printStackTrace (out);
-	    }
-	}
+        } catch (Throwable t) {
+            synchronized (out) {
+                out.println ("%% " + getName ());
+                t.printStackTrace (out);
+            }
+        }
     }
 
 
     public boolean passed ()
-	{ return pass; }
+        { return pass; }
 
 
     private void doTraffic (int n)
     throws IOException
     {
-	try {
-	    if (roleIsClient)
-		traffic.initiate (n);
-	    else
-		traffic.respond (n);
+        try {
+            if (roleIsClient)
+                traffic.initiate (n);
+            else
+                traffic.respond (n);
 
-	    pass = true;
+            pass = true;
 
-	} catch (SSLException e) {
-	    String	m = e.getMessage ();
+        } catch (SSLException e) {
+            String      m = e.getMessage ();
 
-	    //
-	    // As of this writing, self-signed certs won't be accepted
-	    // by the simple trust decider.  That rules out testing all
-	    // of the SSL_DHE_DSS_* flavors for now, and for testers
-	    // that don't have a Verisign cert, it also rules out testing
-	    // SSL_RSA_* flavors.
-	    //
-	    // XXX need two things to fix this "right":  (a) ability to
-	    // let the 'simple trust decider import arbitrary certs, as
-	    // exported by a keystore; (b) specialized exceptions, since
-	    // comparing message strings is bogus.
-	    //
-	    if (m.equalsIgnoreCase ("untrusted server cert chain")
-		    || m.equalsIgnoreCase (
-			"Received fatal alert: certificate_unknown")) {
-		System.out.println ("%% " + Thread.currentThread ().getName ()
-		    + ", " + m);
-		s.close ();
-	    } else
-		throw e;
+            //
+            // As of this writing, self-signed certs won't be accepted
+            // by the simple trust decider.  That rules out testing all
+            // of the SSL_DHE_DSS_* flavors for now, and for testers
+            // that don't have a Verisign cert, it also rules out testing
+            // SSL_RSA_* flavors.
+            //
+            // XXX need two things to fix this "right":  (a) ability to
+            // let the 'simple trust decider import arbitrary certs, as
+            // exported by a keystore; (b) specialized exceptions, since
+            // comparing message strings is bogus.
+            //
+            if (m.equalsIgnoreCase ("untrusted server cert chain")
+                    || m.equalsIgnoreCase (
+                        "Received fatal alert: certificate_unknown")) {
+                System.out.println ("%% " + Thread.currentThread ().getName ()
+                    + ", " + m);
+                s.close ();
+            } else
+                throw e;
 
-	} catch (SocketException e) {
-	    String	m = e.getMessage ();
+        } catch (SocketException e) {
+            String      m = e.getMessage ();
 
-	    if (m.equalsIgnoreCase ("Socket closed"))
-		System.out.println ("%% " + Thread.currentThread ().getName ()
-		    + ", " + m);
-	    else
-		throw e;
+            if (m.equalsIgnoreCase ("Socket closed"))
+                System.out.println ("%% " + Thread.currentThread ().getName ()
+                    + ", " + m);
+            else
+                throw e;
 
-	} catch (EOFException e) {
-	    // ignore
-	}
+        } catch (EOFException e) {
+            // ignore
+        }
     }
 
 
     public void handshakeCompleted (HandshakeCompletedEvent event)
     {
-	if (verbosity >= 1) {
-	    Socket	sock = (Socket) event.getSource ();
+        if (verbosity >= 1) {
+            Socket      sock = (Socket) event.getSource ();
 
-	    out.println ("%% " + getName ()
-		+ ", port " + sock.getLocalPort ()
-		+ " to " + sock.getInetAddress ().getHostName ()
-		+ ":" + sock.getPort ()
-		+ ", " + event.getCipherSuite ());
+            out.println ("%% " + getName ()
+                + ", port " + sock.getLocalPort ()
+                + " to " + sock.getInetAddress ().getHostName ()
+                + ":" + sock.getPort ()
+                + ", " + event.getCipherSuite ());
 
-	    // if more verbosity, give cert chain
-	}
+            // if more verbosity, give cert chain
+        }
     }
 }

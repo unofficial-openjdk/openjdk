@@ -48,63 +48,63 @@ class SwitchData {
      * Get a label
      */
     public Label get(int n) {
-	return (Label)tab.get(new Integer(n));
+        return (Label)tab.get(new Integer(n));
     }
-    
+
     /**
      * Get a label
      */
     public Label get(Integer n) {
-	return (Label)tab.get(n);
+        return (Label)tab.get(n);
     }
 
     /**
      * Add a label
      */
     public void add(int n, Label lbl) {
-	if (tab.size() == 0) {
-	    minValue = n;
-	    maxValue = n;
-	} else {
-	    if (n < minValue) {
-		minValue = n;
-	    }
-	    if (n > maxValue) {
-		maxValue = n;
-	    }
-	}
-	tab.put(new Integer(n), lbl);
+        if (tab.size() == 0) {
+            minValue = n;
+            maxValue = n;
+        } else {
+            if (n < minValue) {
+                minValue = n;
+            }
+            if (n > maxValue) {
+                maxValue = n;
+            }
+        }
+        tab.put(new Integer(n), lbl);
     }
 
     /**
      * Get the default label
      */
     public Label getDefaultLabel() {
-	return defaultLabel;
+        return defaultLabel;
     }
 
     /**
-     * Return the keys of this enumaration sorted in ascending order 
+     * Return the keys of this enumaration sorted in ascending order
      */
     public synchronized Enumeration sortedKeys() {
-	return new SwitchDataEnumeration(tab);
+        return new SwitchDataEnumeration(tab);
     }
 
 // JCOV
     public void initTableCase() {
-	whereCaseTab = new Hashtable();
+        whereCaseTab = new Hashtable();
     }
     public void addTableCase(int index, long where) {
-	if (whereCaseTab != null)
+        if (whereCaseTab != null)
             whereCaseTab.put(new Integer(index), new Long(where));
     }
     public void addTableDefault(long where) {
-	if (whereCaseTab != null)
-	    whereCaseTab.put("default", new Long(where));
+        if (whereCaseTab != null)
+            whereCaseTab.put("default", new Long(where));
     }
     public long whereCase(Object key) {
-	Long i = (Long) whereCaseTab.get(key);
-	return (i == null) ? 0 : i.longValue();
+        Long i = (Long) whereCaseTab.get(key);
+        return (i == null) ? 0 : i.longValue();
     }
     public boolean getDefault() {
          return (whereCase("default") != 0);
@@ -112,7 +112,7 @@ class SwitchData {
 // end JCOV
 }
 
-class SwitchDataEnumeration implements Enumeration { 
+class SwitchDataEnumeration implements Enumeration {
     private Integer table[];
     private int current_index = 0;
 
@@ -121,29 +121,27 @@ class SwitchDataEnumeration implements Enumeration {
      * hash table will be an Integer, with the value being a label.  The
      * enumeration returns the keys in sorted order.
      */
-    SwitchDataEnumeration(Hashtable tab) { 
-	table = new Integer[tab.size()];
-	int i = 0;
-	for (Enumeration e = tab.keys() ; e.hasMoreElements() ; ) {
-	    table[i++] = (Integer)e.nextElement();
-	}
-	Arrays.sort(table);
-	current_index = 0;
+    SwitchDataEnumeration(Hashtable tab) {
+        table = new Integer[tab.size()];
+        int i = 0;
+        for (Enumeration e = tab.keys() ; e.hasMoreElements() ; ) {
+            table[i++] = (Integer)e.nextElement();
+        }
+        Arrays.sort(table);
+        current_index = 0;
     }
 
     /**
      * Are there more keys to return?
      */
-    public boolean hasMoreElements() { 
-	return current_index < table.length;
+    public boolean hasMoreElements() {
+        return current_index < table.length;
     }
 
     /**
      * Return the next key.
      */
-    public Object nextElement() { 
-	return table[current_index++];
+    public Object nextElement() {
+        return table[current_index++];
     }
 }
-
-

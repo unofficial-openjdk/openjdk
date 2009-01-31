@@ -31,7 +31,6 @@ package java.io;
  * extends that interface to include objects, arrays, and Strings.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see java.io.InputStream
  * @see java.io.ObjectOutputStream
  * @see java.io.ObjectInputStream
@@ -52,7 +51,7 @@ public interface ObjectOutput extends DataOutput {
     /**
      * Writes a byte. This method will block until the byte is actually
      * written.
-     * @param b	the byte
+     * @param b the byte
      * @exception IOException If an I/O error has occurred.
      */
     public void write(int b) throws IOException;
@@ -60,16 +59,16 @@ public interface ObjectOutput extends DataOutput {
     /**
      * Writes an array of bytes. This method will block until the bytes
      * are actually written.
-     * @param b	the data to be written
+     * @param b the data to be written
      * @exception IOException If an I/O error has occurred.
      */
     public void write(byte b[]) throws IOException;
 
     /**
      * Writes a sub array of bytes.
-     * @param b	the data to be written
-     * @param off	the start offset in the data
-     * @param len	the number of bytes that are written
+     * @param b the data to be written
+     * @param off       the start offset in the data
+     * @param len       the number of bytes that are written
      * @exception IOException If an I/O error has occurred.
      */
     public void write(byte b[], int off, int len) throws IOException;

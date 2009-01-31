@@ -134,11 +134,11 @@ extern void load_rsrc32_procs();
 // You must call load_rsrc32_procs() before using this procedure.
 
 /*
- * NOTE: even after load_rsrc32_procs() you must check that 
- * the function pointer is valid before use. 
+ * NOTE: even after load_rsrc32_procs() you must check that
+ * the function pointer is valid before use.
  * It will be NULL in three cases:
  *  1.RSRC32.DLL not found. This means that Resource Meter
- *    isn't installed. 
+ *    isn't installed.
  *  2.RSRC32.DLL can't be loaded. This happens on WinNT.
  *  3.Unknown version of RSRC32.DLL. This is undocumented
  *    procedure, so the safest will be to use it only for

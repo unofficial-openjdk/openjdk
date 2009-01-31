@@ -29,7 +29,7 @@ package javax.management;
 
 /**
  * Defines the methods that should be implemented by
- * a Dynamic MBean (MBean that exposes a dynamic management interface). 
+ * a Dynamic MBean (MBean that exposes a dynamic management interface).
  *
  * @since 1.5
  */
@@ -45,29 +45,29 @@ public interface DynamicMBean {
      *
      * @exception AttributeNotFoundException
      * @exception MBeanException  Wraps a <CODE>java.lang.Exception</CODE> thrown by the MBean's getter.
-     * @exception ReflectionException  Wraps a <CODE>java.lang.Exception</CODE> thrown while trying to invoke the getter. 
+     * @exception ReflectionException  Wraps a <CODE>java.lang.Exception</CODE> thrown while trying to invoke the getter.
      *
      * @see #setAttribute
      */
     public Object getAttribute(String attribute) throws AttributeNotFoundException,
-	MBeanException, ReflectionException; 
-    
+        MBeanException, ReflectionException;
+
     /**
      * Set the value of a specific attribute of the Dynamic MBean.
      *
      * @param attribute The identification of the attribute to
      * be set and  the value it is to be set to.
      *
-     * @exception AttributeNotFoundException 
-     * @exception InvalidAttributeValueException 
+     * @exception AttributeNotFoundException
+     * @exception InvalidAttributeValueException
      * @exception MBeanException Wraps a <CODE>java.lang.Exception</CODE> thrown by the MBean's setter.
      * @exception ReflectionException Wraps a <CODE>java.lang.Exception</CODE> thrown while trying to invoke the MBean's setter.
      *
      * @see #getAttribute
      */
     public void setAttribute(Attribute attribute) throws AttributeNotFoundException,
-	InvalidAttributeValueException, MBeanException, ReflectionException ; 
-        
+        InvalidAttributeValueException, MBeanException, ReflectionException ;
+
     /**
      * Get the values of several attributes of the Dynamic MBean.
      *
@@ -78,7 +78,7 @@ public interface DynamicMBean {
      * @see #setAttributes
      */
     public AttributeList getAttributes(String[] attributes);
-        
+
     /**
      * Sets the values of several attributes of the Dynamic MBean.
      *
@@ -90,7 +90,7 @@ public interface DynamicMBean {
      * @see #getAttributes
      */
     public AttributeList setAttributes(AttributeList attributes);
-    
+
     /**
      * Allows an action to be invoked on the Dynamic MBean.
      *
@@ -108,15 +108,15 @@ public interface DynamicMBean {
      * @exception ReflectionException  Wraps a <CODE>java.lang.Exception</CODE> thrown while trying to invoke the method
      */
     public Object invoke(String actionName, Object params[], String signature[])
-	throws MBeanException, ReflectionException ;    
-    
+        throws MBeanException, ReflectionException ;
+
     /**
      * Provides the exposed attributes and actions of the Dynamic MBean using an MBeanInfo object.
      *
-     * @return  An instance of <CODE>MBeanInfo</CODE> allowing all attributes and actions 
+     * @return  An instance of <CODE>MBeanInfo</CODE> allowing all attributes and actions
      * exposed by this Dynamic MBean to be retrieved.
      *
      */
     public MBeanInfo getMBeanInfo();
-    
+
  }

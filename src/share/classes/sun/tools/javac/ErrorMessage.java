@@ -43,7 +43,7 @@ class ErrorMessage {
      * Constructor
      */
     ErrorMessage(long where, String message) {
-	this.where = where;
-	this.message = message;
+        this.where = where;
+        this.message = message;
     }
 }

@@ -25,7 +25,7 @@
  * @test
  * @bug 4391445
  * @summary JAAS KeyStoreLoginModule logout doesn't
- *		handle read-only subjects correctly
+ *              handle read-only subjects correctly
  *
  * XXX Note this test relies on the KeyStore used by OptionTest
  */
@@ -56,81 +56,81 @@ public class ReadOnly {
 
     private static final String ALIAS = "alias";
     private static final char[] STORE_PASS = new char[]
-	{ 's', 't', 'o', 'r', 'e', 'P', 'a', 's', 's' };  // sync with file
+        { 's', 't', 'o', 'r', 'e', 'P', 'a', 's', 's' };  // sync with file
     private static final char[] KEY_PASS =
-	{ 'k', 'e', 'y', 'P', 'a', 's', 's' };		  // sync with file
+        { 'k', 'e', 'y', 'P', 'a', 's', 's' };            // sync with file
 
     public static void main(String[] args) throws Exception {
-	init();
-	testReadOnly();
+        init();
+        testReadOnly();
     }
 
     private static void init() throws Exception {
-	File f = new File(System.getProperty("test.src", ".") +
-			File.separatorChar +
-			TEST +
-			".keystore");
-	URL = f.toURI().toURL().toString();
-	
-	f = new File(System.getProperty("test.src", ".") +
-			File.separatorChar +
-			TEST +
-			".storePass");
-	SPASS_URL = f.toURI().toURL().toString();
+        File f = new File(System.getProperty("test.src", ".") +
+                        File.separatorChar +
+                        TEST +
+                        ".keystore");
+        URL = f.toURI().toURL().toString();
 
-	f = new File(System.getProperty("test.src", ".") +
-			File.separatorChar +
-			TEST +
-			".keyPass");
-	KPASS_URL = f.toURI().toURL().toString();
+        f = new File(System.getProperty("test.src", ".") +
+                        File.separatorChar +
+                        TEST +
+                        ".storePass");
+        SPASS_URL = f.toURI().toURL().toString();
+
+        f = new File(System.getProperty("test.src", ".") +
+                        File.separatorChar +
+                        TEST +
+                        ".keyPass");
+        KPASS_URL = f.toURI().toURL().toString();
     }
 
     private static void testReadOnly() throws Exception {
 
-	// setup
+        // setup
 
-	KeyStoreLoginModule m = new KeyStoreLoginModule();
-	Subject s = new Subject();
-	Map options = new HashMap();
-	options.put(O_URL, URL);
-	options.put(O_ALIAS, ALIAS);
-	options.put(O_SPASS_URL, SPASS_URL);
-	options.put(O_KPASS_URL, KPASS_URL);
-	m.initialize(s, null, null, options);
+        KeyStoreLoginModule m = new KeyStoreLoginModule();
+        Subject s = new Subject();
+        Map options = new HashMap();
+        options.put(O_URL, URL);
+        options.put(O_ALIAS, ALIAS);
+        options.put(O_SPASS_URL, SPASS_URL);
+        options.put(O_KPASS_URL, KPASS_URL);
+        m.initialize(s, null, null, options);
 
-	// login first
-	m.login();
-	m.commit();
-	System.out.println("test " + testnum++ + " passed");
+        // login first
+        m.login();
+        m.commit();
+        System.out.println("test " + testnum++ + " passed");
 
-	// test regular logout
-	m.logout();
-	if (s.getPrincipals().size() != 0) {
-	    throw new SecurityException("expected no principals");
-	}
-	if (s.getPublicCredentials().size() != 0) {
-	    throw new SecurityException("expected no public creds");
-	}
-	if (s.getPrivateCredentials().size() != 0) {
-	    throw new SecurityException("expected no private creds");
-	}
-	System.out.println("test " + testnum++ + " passed");
+        // test regular logout
+        m.logout();
+        if (s.getPrincipals().size() != 0) {
+            throw new SecurityException("expected no principals");
+        }
+        if (s.getPublicCredentials().size() != 0) {
+            throw new SecurityException("expected no public creds");
+        }
+        if (s.getPrivateCredentials().size() != 0) {
+            throw new SecurityException("expected no private creds");
+        }
+        System.out.println("test " + testnum++ + " passed");
 
-	// login again
-	m.login();
-	m.commit();
-	System.out.println("test " + testnum++ + " passed");
+        // login again
+        m.login();
+        m.commit();
+        System.out.println("test " + testnum++ + " passed");
 
-	// set subject to read-only
-	s.setReadOnly();
+        // set subject to read-only
+        s.setReadOnly();
 
-	// try to logout
-	try {
-	    m.logout();
-	    throw new SecurityException("expected login exception");
-	} catch (LoginException le) {
-	    // good
-	    System.out.println("test " + testnum++ + " passed");
-	}
+        // try to logout
+        try {
+            m.logout();
+            throw new SecurityException("expected login exception");
+        } catch (LoginException le) {
+            // good
+            System.out.println("test " + testnum++ + " passed");
+        }
     }
 }

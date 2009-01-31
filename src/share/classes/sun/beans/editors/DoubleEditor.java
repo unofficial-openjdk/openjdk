@@ -39,4 +39,3 @@ public class DoubleEditor extends NumberEditor {
     }
 
 }
-

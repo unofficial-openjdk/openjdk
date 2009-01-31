@@ -76,22 +76,22 @@ public class PKCS11 {
     private static final String PKCS11_WRAPPER = "j2pkcs11";
 
     static {
-	// cannot use LoadLibraryAction because that would make the native
-	// library available to the bootclassloader, but we run in the
-	// extension classloader.
-	AccessController.doPrivileged(new PrivilegedAction<Object>() {
-	    public Object run() {
-		System.loadLibrary(PKCS11_WRAPPER);
-		return null;
-	    }
-	});
-	initializeLibrary();
+        // cannot use LoadLibraryAction because that would make the native
+        // library available to the bootclassloader, but we run in the
+        // extension classloader.
+        AccessController.doPrivileged(new PrivilegedAction<Object>() {
+            public Object run() {
+                System.loadLibrary(PKCS11_WRAPPER);
+                return null;
+            }
+        });
+        initializeLibrary();
     }
 
     public static void loadNative() {
-	// dummy method that can be called to make sure the native
-	// portion has been loaded. actual loading happens in the
-	// static initializer, hence this method is empty.
+        // dummy method that can be called to make sure the native
+        // portion has been loaded. actual loading happens in the
+        // static initializer, hence this method is empty.
     }
 
     /**
@@ -123,7 +123,7 @@ public class PKCS11 {
     private static native void finalizeLibrary();
 
     private static final Map<String,PKCS11> moduleMap =
-    	new HashMap<String,PKCS11>();
+        new HashMap<String,PKCS11>();
 
     /**
      * Connects to the PKCS#11 driver given. The filename must contain the
@@ -134,37 +134,37 @@ public class PKCS11 {
      * @postconditions
      */
     PKCS11(String pkcs11ModulePath, String functionListName) throws IOException {
-	connect(pkcs11ModulePath, functionListName);
-	this.pkcs11ModulePath = pkcs11ModulePath;
+        connect(pkcs11ModulePath, functionListName);
+        this.pkcs11ModulePath = pkcs11ModulePath;
     }
 
     public static synchronized PKCS11 getInstance(String pkcs11ModulePath, String functionList,
-	    CK_C_INITIALIZE_ARGS pInitArgs, boolean omitInitialize)
-	    throws IOException, PKCS11Exception {
-	// we may only call C_Initialize once per native .so/.dll
-	// so keep a cache using the (non-canonicalized!) path
-	PKCS11 pkcs11 = moduleMap.get(pkcs11ModulePath);
-	if (pkcs11 == null) {
-	    if ((pInitArgs != null)
-		    && ((pInitArgs.flags & CKF_OS_LOCKING_OK) != 0)) {
-		pkcs11 = new PKCS11(pkcs11ModulePath, functionList);
-	    } else {
-		pkcs11 = new SynchronizedPKCS11(pkcs11ModulePath, functionList);
-	    }
-	    if (omitInitialize == false) {
-		try {
-		    pkcs11.C_Initialize(pInitArgs);
-		} catch (PKCS11Exception e) {
-		    // ignore already-initialized error code
-		    // rethrow all other errors
-		    if (e.getErrorCode() != CKR_CRYPTOKI_ALREADY_INITIALIZED) {
-			throw e;
-		    }
-		}
-	    }
-	    moduleMap.put(pkcs11ModulePath, pkcs11);
-	}
-	return pkcs11;
+            CK_C_INITIALIZE_ARGS pInitArgs, boolean omitInitialize)
+            throws IOException, PKCS11Exception {
+        // we may only call C_Initialize once per native .so/.dll
+        // so keep a cache using the (non-canonicalized!) path
+        PKCS11 pkcs11 = moduleMap.get(pkcs11ModulePath);
+        if (pkcs11 == null) {
+            if ((pInitArgs != null)
+                    && ((pInitArgs.flags & CKF_OS_LOCKING_OK) != 0)) {
+                pkcs11 = new PKCS11(pkcs11ModulePath, functionList);
+            } else {
+                pkcs11 = new SynchronizedPKCS11(pkcs11ModulePath, functionList);
+            }
+            if (omitInitialize == false) {
+                try {
+                    pkcs11.C_Initialize(pInitArgs);
+                } catch (PKCS11Exception e) {
+                    // ignore already-initialized error code
+                    // rethrow all other errors
+                    if (e.getErrorCode() != CKR_CRYPTOKI_ALREADY_INITIALIZED) {
+                        throw e;
+                    }
+                }
+            }
+            moduleMap.put(pkcs11ModulePath, pkcs11);
+        }
+        return pkcs11;
     }
 
     /**
@@ -727,7 +727,7 @@ public class PKCS11 {
      *         (PKCS#11 param: CK_BYTE_PTR pPart, CK_ULONG ulPartLen)
      * @return the encrypted data part and the encrypted data part's length
      *         (PKCS#11 param: CK_BYTE_PTR pEncryptedPart,
-			     CK_ULONG_PTR pulEncryptedPartLen)
+                             CK_ULONG_PTR pulEncryptedPartLen)
      * @exception PKCS11Exception If function returns other value than CKR_OK.
      * @preconditions (pPart <> null)
      * @postconditions
@@ -744,7 +744,7 @@ public class PKCS11 {
      *         (PKCS#11 param: CK_SESSION_HANDLE hSession)
      * @return the last encrypted data part and the last data part's length
      *         (PKCS#11 param: CK_BYTE_PTR pLastEncryptedPart,
-			     CK_ULONG_PTR pulLastEncryptedPartLen)
+                             CK_ULONG_PTR pulLastEncryptedPartLen)
      * @exception PKCS11Exception If function returns other value than CKR_OK.
      * @preconditions
      * @postconditions (result <> null)
@@ -1280,9 +1280,9 @@ public class PKCS11 {
      * @postconditions (result <> null) and (result.length == 2)
      */
     public native long[] C_GenerateKeyPair(long hSession,
-				   CK_MECHANISM pMechanism,
-				   CK_ATTRIBUTE[] pPublicKeyTemplate,
-				   CK_ATTRIBUTE[] pPrivateKeyTemplate) throws PKCS11Exception;
+                                   CK_MECHANISM pMechanism,
+                                   CK_ATTRIBUTE[] pPublicKeyTemplate,
+                                   CK_ATTRIBUTE[] pPrivateKeyTemplate) throws PKCS11Exception;
 
 
 
@@ -1331,8 +1331,8 @@ public class PKCS11 {
      * @postconditions
      */
     public native long C_UnwrapKey(long hSession, CK_MECHANISM pMechanism,
-			  long hUnwrappingKey, byte[] pWrappedKey,
-			  CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception;
+                          long hUnwrappingKey, byte[] pWrappedKey,
+                          CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception;
 
 
     /**
@@ -1356,7 +1356,7 @@ public class PKCS11 {
      * @postconditions
      */
     public native long C_DeriveKey(long hSession, CK_MECHANISM pMechanism,
-			  long hBaseKey, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception;
+                          long hBaseKey, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception;
 
 
 
@@ -1458,7 +1458,7 @@ public class PKCS11 {
      * @return The string representation of object
      */
     public String toString() {
-	return "Module name: " + pkcs11ModulePath;
+        return "Module name: " + pkcs11ModulePath;
     }
 
     /**
@@ -1469,7 +1469,7 @@ public class PKCS11 {
      * @exception Throwable If finalization fails.
      */
     public void finalize() throws Throwable {
-	disconnect();
+        disconnect();
     }
 
 // PKCS11 subclass that has all methods synchronized and delegating to the
@@ -1477,228 +1477,227 @@ public class PKCS11 {
 static class SynchronizedPKCS11 extends PKCS11 {
 
     SynchronizedPKCS11(String pkcs11ModulePath, String functionListName) throws IOException {
-	super(pkcs11ModulePath, functionListName);
+        super(pkcs11ModulePath, functionListName);
     }
 
     synchronized void C_Initialize(Object pInitArgs) throws PKCS11Exception {
-	super.C_Initialize(pInitArgs);
+        super.C_Initialize(pInitArgs);
     }
 
     public synchronized void C_Finalize(Object pReserved) throws PKCS11Exception {
-	super.C_Finalize(pReserved);
+        super.C_Finalize(pReserved);
     }
 
     public synchronized CK_INFO C_GetInfo() throws PKCS11Exception {
-	return super.C_GetInfo();
+        return super.C_GetInfo();
     }
 
     public synchronized long[] C_GetSlotList(boolean tokenPresent) throws PKCS11Exception {
-	return super.C_GetSlotList(tokenPresent);
+        return super.C_GetSlotList(tokenPresent);
     }
 
     public synchronized CK_SLOT_INFO C_GetSlotInfo(long slotID) throws PKCS11Exception {
-	return super.C_GetSlotInfo(slotID);
+        return super.C_GetSlotInfo(slotID);
     }
 
     public synchronized CK_TOKEN_INFO C_GetTokenInfo(long slotID) throws PKCS11Exception {
-	return super.C_GetTokenInfo(slotID);
+        return super.C_GetTokenInfo(slotID);
     }
 
     public synchronized long[] C_GetMechanismList(long slotID) throws PKCS11Exception {
-	return super.C_GetMechanismList(slotID);
+        return super.C_GetMechanismList(slotID);
     }
 
     public synchronized CK_MECHANISM_INFO C_GetMechanismInfo(long slotID, long type) throws PKCS11Exception {
-	return super.C_GetMechanismInfo(slotID, type);
+        return super.C_GetMechanismInfo(slotID, type);
     }
 
     public synchronized long C_OpenSession(long slotID, long flags, Object pApplication, CK_NOTIFY Notify) throws PKCS11Exception {
-	return super.C_OpenSession(slotID, flags, pApplication, Notify);
+        return super.C_OpenSession(slotID, flags, pApplication, Notify);
     }
 
     public synchronized void C_CloseSession(long hSession) throws PKCS11Exception {
-	super.C_CloseSession(hSession);
+        super.C_CloseSession(hSession);
     }
 
     public synchronized CK_SESSION_INFO C_GetSessionInfo(long hSession) throws PKCS11Exception {
-	return super.C_GetSessionInfo(hSession);
+        return super.C_GetSessionInfo(hSession);
     }
 
     public synchronized void C_Login(long hSession, long userType, char[] pPin) throws PKCS11Exception {
-	super.C_Login(hSession, userType, pPin);
+        super.C_Login(hSession, userType, pPin);
     }
 
     public synchronized void C_Logout(long hSession) throws PKCS11Exception {
-	super.C_Logout(hSession);
+        super.C_Logout(hSession);
     }
 
     public synchronized long C_CreateObject(long hSession, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	return super.C_CreateObject(hSession, pTemplate);
+        return super.C_CreateObject(hSession, pTemplate);
     }
 
     public synchronized long C_CopyObject(long hSession, long hObject, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	return super.C_CopyObject(hSession, hObject, pTemplate);
+        return super.C_CopyObject(hSession, hObject, pTemplate);
     }
 
     public synchronized void C_DestroyObject(long hSession, long hObject) throws PKCS11Exception {
-	super.C_DestroyObject(hSession, hObject);
+        super.C_DestroyObject(hSession, hObject);
     }
 
     public synchronized void C_GetAttributeValue(long hSession, long hObject, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	super.C_GetAttributeValue(hSession, hObject, pTemplate);
+        super.C_GetAttributeValue(hSession, hObject, pTemplate);
     }
 
     public synchronized void C_SetAttributeValue(long hSession, long hObject, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	super.C_SetAttributeValue(hSession, hObject, pTemplate);
+        super.C_SetAttributeValue(hSession, hObject, pTemplate);
     }
 
     public synchronized void C_FindObjectsInit(long hSession, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	super.C_FindObjectsInit(hSession, pTemplate);
+        super.C_FindObjectsInit(hSession, pTemplate);
     }
 
     public synchronized long[] C_FindObjects(long hSession, long ulMaxObjectCount) throws PKCS11Exception {
-	return super.C_FindObjects(hSession, ulMaxObjectCount);
+        return super.C_FindObjects(hSession, ulMaxObjectCount);
     }
 
     public synchronized void C_FindObjectsFinal(long hSession) throws PKCS11Exception {
-	super.C_FindObjectsFinal(hSession);
+        super.C_FindObjectsFinal(hSession);
     }
 
     public synchronized void C_EncryptInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_EncryptInit(hSession, pMechanism, hKey);
+        super.C_EncryptInit(hSession, pMechanism, hKey);
     }
 
     public synchronized int C_Encrypt(long hSession, byte[] in, int inOfs, int inLen, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_Encrypt(hSession, in, inOfs, inLen, out, outOfs, outLen);
+        return super.C_Encrypt(hSession, in, inOfs, inLen, out, outOfs, outLen);
     }
 
     public synchronized int C_EncryptUpdate(long hSession, long directIn, byte[] in, int inOfs, int inLen, long directOut, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_EncryptUpdate(hSession, directIn, in, inOfs, inLen, directOut, out, outOfs, outLen);
+        return super.C_EncryptUpdate(hSession, directIn, in, inOfs, inLen, directOut, out, outOfs, outLen);
     }
 
     public synchronized int C_EncryptFinal(long hSession, long directOut, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_EncryptFinal(hSession, directOut, out, outOfs, outLen);
+        return super.C_EncryptFinal(hSession, directOut, out, outOfs, outLen);
     }
 
     public synchronized void C_DecryptInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_DecryptInit(hSession, pMechanism, hKey);
+        super.C_DecryptInit(hSession, pMechanism, hKey);
     }
 
     public synchronized int C_Decrypt(long hSession, byte[] in, int inOfs, int inLen, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_Decrypt(hSession, in, inOfs, inLen, out, outOfs, outLen);
+        return super.C_Decrypt(hSession, in, inOfs, inLen, out, outOfs, outLen);
     }
 
     public synchronized int C_DecryptUpdate(long hSession, long directIn, byte[] in, int inOfs, int inLen, long directOut, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_DecryptUpdate(hSession, directIn, in, inOfs, inLen, directOut, out, outOfs, outLen);
+        return super.C_DecryptUpdate(hSession, directIn, in, inOfs, inLen, directOut, out, outOfs, outLen);
     }
 
     public synchronized int C_DecryptFinal(long hSession, long directOut, byte[] out, int outOfs, int outLen) throws PKCS11Exception {
-	return super.C_DecryptFinal(hSession, directOut, out, outOfs, outLen);
+        return super.C_DecryptFinal(hSession, directOut, out, outOfs, outLen);
     }
 
     public synchronized void C_DigestInit(long hSession, CK_MECHANISM pMechanism) throws PKCS11Exception {
-	super.C_DigestInit(hSession, pMechanism);
+        super.C_DigestInit(hSession, pMechanism);
     }
 
     public synchronized int C_DigestSingle(long hSession, CK_MECHANISM pMechanism, byte[] in, int inOfs, int inLen, byte[] digest, int digestOfs, int digestLen) throws PKCS11Exception {
-	return super.C_DigestSingle(hSession, pMechanism, in, inOfs, inLen, digest, digestOfs, digestLen);
+        return super.C_DigestSingle(hSession, pMechanism, in, inOfs, inLen, digest, digestOfs, digestLen);
     }
 
     public synchronized void C_DigestUpdate(long hSession, long directIn, byte[] in, int inOfs, int inLen) throws PKCS11Exception {
-	super.C_DigestUpdate(hSession, directIn, in, inOfs, inLen);
+        super.C_DigestUpdate(hSession, directIn, in, inOfs, inLen);
     }
 
     public synchronized void C_DigestKey(long hSession, long hKey) throws PKCS11Exception {
-	super.C_DigestKey(hSession, hKey);
+        super.C_DigestKey(hSession, hKey);
     }
-    
+
     public synchronized int C_DigestFinal(long hSession, byte[] pDigest, int digestOfs, int digestLen) throws PKCS11Exception {
-	return super.C_DigestFinal(hSession, pDigest, digestOfs, digestLen);
+        return super.C_DigestFinal(hSession, pDigest, digestOfs, digestLen);
     }
 
     public synchronized void C_SignInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_SignInit(hSession, pMechanism, hKey);
+        super.C_SignInit(hSession, pMechanism, hKey);
     }
 
     public synchronized byte[] C_Sign(long hSession, byte[] pData) throws PKCS11Exception {
-	return super.C_Sign(hSession, pData);
+        return super.C_Sign(hSession, pData);
     }
 
     public synchronized void C_SignUpdate(long hSession, long directIn, byte[] in, int inOfs, int inLen) throws PKCS11Exception {
-	super.C_SignUpdate(hSession, directIn, in, inOfs, inLen);
+        super.C_SignUpdate(hSession, directIn, in, inOfs, inLen);
     }
 
     public synchronized byte[] C_SignFinal(long hSession, int expectedLen) throws PKCS11Exception {
-	return super.C_SignFinal(hSession, expectedLen);
+        return super.C_SignFinal(hSession, expectedLen);
     }
 
     public synchronized void C_SignRecoverInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_SignRecoverInit(hSession, pMechanism, hKey);
+        super.C_SignRecoverInit(hSession, pMechanism, hKey);
     }
 
     public synchronized int C_SignRecover(long hSession, byte[] in, int inOfs, int inLen, byte[] out, int outOufs, int outLen) throws PKCS11Exception {
-	return super.C_SignRecover(hSession, in, inOfs, inLen, out, outOufs, outLen);
+        return super.C_SignRecover(hSession, in, inOfs, inLen, out, outOufs, outLen);
     }
 
     public synchronized void C_VerifyInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_VerifyInit(hSession, pMechanism, hKey);
+        super.C_VerifyInit(hSession, pMechanism, hKey);
     }
 
     public synchronized void C_Verify(long hSession, byte[] pData, byte[] pSignature) throws PKCS11Exception {
-	super.C_Verify(hSession, pData, pSignature);
+        super.C_Verify(hSession, pData, pSignature);
     }
 
     public synchronized void C_VerifyUpdate(long hSession, long directIn, byte[] in, int inOfs, int inLen) throws PKCS11Exception {
-	super.C_VerifyUpdate(hSession, directIn, in, inOfs, inLen);
+        super.C_VerifyUpdate(hSession, directIn, in, inOfs, inLen);
     }
 
     public synchronized void C_VerifyFinal(long hSession, byte[] pSignature) throws PKCS11Exception {
-	super.C_VerifyFinal(hSession, pSignature);
+        super.C_VerifyFinal(hSession, pSignature);
     }
 
     public synchronized void C_VerifyRecoverInit(long hSession, CK_MECHANISM pMechanism, long hKey) throws PKCS11Exception {
-	super.C_VerifyRecoverInit(hSession, pMechanism, hKey);
+        super.C_VerifyRecoverInit(hSession, pMechanism, hKey);
     }
 
     public synchronized int C_VerifyRecover(long hSession, byte[] in, int inOfs, int inLen, byte[] out, int outOufs, int outLen) throws PKCS11Exception {
-	return super.C_VerifyRecover(hSession, in, inOfs, inLen, out, outOufs, outLen);
+        return super.C_VerifyRecover(hSession, in, inOfs, inLen, out, outOufs, outLen);
     }
 
     public synchronized long C_GenerateKey(long hSession, CK_MECHANISM pMechanism, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	return super.C_GenerateKey(hSession, pMechanism, pTemplate);
+        return super.C_GenerateKey(hSession, pMechanism, pTemplate);
     }
 
     public synchronized long[] C_GenerateKeyPair(long hSession,
-				   CK_MECHANISM pMechanism,
-				   CK_ATTRIBUTE[] pPublicKeyTemplate,
-				   CK_ATTRIBUTE[] pPrivateKeyTemplate) throws PKCS11Exception {
-	return super.C_GenerateKeyPair(hSession, pMechanism, pPublicKeyTemplate, pPrivateKeyTemplate);
+                                   CK_MECHANISM pMechanism,
+                                   CK_ATTRIBUTE[] pPublicKeyTemplate,
+                                   CK_ATTRIBUTE[] pPrivateKeyTemplate) throws PKCS11Exception {
+        return super.C_GenerateKeyPair(hSession, pMechanism, pPublicKeyTemplate, pPrivateKeyTemplate);
     }
 
     public synchronized byte[] C_WrapKey(long hSession, CK_MECHANISM pMechanism, long hWrappingKey, long hKey) throws PKCS11Exception {
-	return super.C_WrapKey(hSession, pMechanism, hWrappingKey, hKey);
+        return super.C_WrapKey(hSession, pMechanism, hWrappingKey, hKey);
     }
 
     public synchronized long C_UnwrapKey(long hSession, CK_MECHANISM pMechanism,
-			  long hUnwrappingKey, byte[] pWrappedKey,
-			  CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	return super.C_UnwrapKey(hSession, pMechanism, hUnwrappingKey, pWrappedKey, pTemplate);
+                          long hUnwrappingKey, byte[] pWrappedKey,
+                          CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
+        return super.C_UnwrapKey(hSession, pMechanism, hUnwrappingKey, pWrappedKey, pTemplate);
     }
 
     public synchronized long C_DeriveKey(long hSession, CK_MECHANISM pMechanism,
     long hBaseKey, CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
-	return super.C_DeriveKey(hSession, pMechanism, hBaseKey, pTemplate);
+        return super.C_DeriveKey(hSession, pMechanism, hBaseKey, pTemplate);
     }
 
     public synchronized void C_SeedRandom(long hSession, byte[] pSeed) throws PKCS11Exception {
-	super.C_SeedRandom(hSession, pSeed);
+        super.C_SeedRandom(hSession, pSeed);
     }
 
     public synchronized void C_GenerateRandom(long hSession, byte[] randomData) throws PKCS11Exception {
-	super.C_GenerateRandom(hSession, randomData);
+        super.C_GenerateRandom(hSession, randomData);
     }
 
 }
 
 }
-

@@ -46,7 +46,7 @@ import sun.security.action.GetBooleanAction;
 
 public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener, KeyEventPostProcessor, ModalityListener, WindowIDProvider {
     private static final Logger xembedLog = Logger.getLogger("sun.awt.X11.xembed.XEmbedCanvasPeer");
-    
+
     boolean applicationActive; // Whether the application is active(has focus)
     XEmbedServer xembed = new XEmbedServer(); // Helper object, contains XEmbed intrinsics
     Map<Long, AWTKeyStroke> accelerators = new HashMap<Long, AWTKeyStroke>(); // Maps accelerator ID into AWTKeyStroke
@@ -62,12 +62,12 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
     }
 
     XEmbedCanvasPeer(Component target) {
-        super(target);        
+        super(target);
     }
 
     protected void postInit(XCreateWindowParams params) {
         super.postInit(params);
-                
+
         installActivateListener();
         installAcceleratorListener();
         installModalityListener();
@@ -79,13 +79,13 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     protected void preInit(XCreateWindowParams params) {
         super.preInit(params);
-        
-        params.put(EVENT_MASK, 
+
+        params.put(EVENT_MASK,
                    KeyPressMask       | KeyReleaseMask
-                   | FocusChangeMask  | ButtonPressMask | ButtonReleaseMask 
-                   | EnterWindowMask  | LeaveWindowMask | PointerMotionMask 
+                   | FocusChangeMask  | ButtonPressMask | ButtonReleaseMask
+                   | EnterWindowMask  | LeaveWindowMask | PointerMotionMask
                    | ButtonMotionMask | ExposureMask    | StructureNotifyMask | SubstructureNotifyMask);
-        
+
     }
 
     void installModalityListener() {
@@ -94,12 +94,12 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     void deinstallModalityListener() {
         ((SunToolkit)Toolkit.getDefaultToolkit()).removeModalityListener(this);
-    }        
+    }
 
     void installAcceleratorListener() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(this);
     }
-    
+
     void deinstallAcceleratorListener() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventPostProcessor(this);
     }
@@ -108,16 +108,16 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         // FIXME: should watch for hierarchy changes
         Window toplevel = getTopLevel(target);
         if (toplevel != null) {
-            toplevel.addWindowFocusListener(this); 
+            toplevel.addWindowFocusListener(this);
             applicationActive = toplevel.isFocused();
         }
     }
-    
+
     void deinstallActivateListener() {
         Window toplevel = getTopLevel(target);
         if (toplevel != null) {
             toplevel.removeWindowFocusListener(this);
-        }        
+        }
     }
 
     boolean isXEmbedActive() {
@@ -133,7 +133,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         XToolkit.awtLock();
         try {
             XToolkit.addEventDispatcher(xembed.handle, xembed);
-            XlibWrapper.XSelectInput(XToolkit.getDisplay(), xembed.handle, 
+            XlibWrapper.XSelectInput(XToolkit.getDisplay(), xembed.handle,
                                      XlibWrapper.StructureNotifyMask | XlibWrapper.PropertyChangeMask);
 
             XDropTargetRegistry.getRegistry().registerXEmbedClient(getWindow(), xembed.handle);
@@ -175,7 +175,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         super.handleEvent(e);
         if (isXEmbedActive()) {
             switch (e.getID()) {
-              case FocusEvent.FOCUS_GAINED:                  
+              case FocusEvent.FOCUS_GAINED:
                   canvasFocusGained((FocusEvent)e);
                   break;
               case FocusEvent.FOCUS_LOST:
@@ -200,7 +200,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                   xembedLog.finest("Message on embedder: " + cr);
               }
               if (xembedLog.isLoggable(Level.FINER)) {
-                  xembedLog.finer("Create notify for parent " + Long.toHexString(cr.get_parent()) + 
+                  xembedLog.finer("Create notify for parent " + Long.toHexString(cr.get_parent()) +
                                   ", window " + Long.toHexString(cr.get_window()));
               }
               embedChild(cr.get_window());
@@ -221,8 +221,8 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                   xembedLog.finest("Message on embedder: " + rep);
               }
               if (xembedLog.isLoggable(Level.FINER)) {
-                  xembedLog.finer("Reparent notify for parent " + Long.toHexString(rep.get_parent()) + 
-                                  ", window " + Long.toHexString(rep.get_window()) + 
+                  xembedLog.finer("Reparent notify for parent " + Long.toHexString(rep.get_parent()) +
+                                  ", window " + Long.toHexString(rep.get_window()) +
                                   ", event " + Long.toHexString(rep.get_event()));
               }
               if (rep.get_parent() == getWindow()) {
@@ -232,11 +232,11 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                   // Reparented out of us - detach it
                   childDestroyed();
               }
-              break;            
+              break;
         }
     }
 
-    public Dimension getPreferredSize() {        
+    public Dimension getPreferredSize() {
         if (isXEmbedActive()) {
             XToolkit.awtLock();
             try {
@@ -259,7 +259,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
             try {
                 long p_hints = XlibWrapper.XAllocSizeHints();
                 XSizeHints hints = new XSizeHints(p_hints);
-                XlibWrapper.XGetWMNormalHints(XToolkit.getDisplay(), xembed.handle, p_hints, XlibWrapper.larg1);        
+                XlibWrapper.XGetWMNormalHints(XToolkit.getDisplay(), xembed.handle, p_hints, XlibWrapper.larg1);
                 Dimension res = new Dimension(hints.get_min_width(), hints.get_min_height());
                 XlibWrapper.XFree(p_hints);
                 return res;
@@ -270,7 +270,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
             return super.getMinimumSize();
         }
     }
-    public void dispose() { 
+    public void dispose() {
         if (isXEmbedActive()) {
             detachChild();
         }
@@ -296,7 +296,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         return (Window)comp;
     }
 
-    Rectangle getClientBounds() { 
+    Rectangle getClientBounds() {
         XToolkit.awtLock();
         try {
             XWindowAttributes wattr = new XWindowAttributes();
@@ -304,31 +304,31 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                 XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
                 int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                               xembed.handle, wattr.pData);
-                
+
                 XToolkit.RESTORE_XERROR_HANDLER();
 
-                if (status == 0 || 
-                    (XToolkit.saved_error != null && 
+                if (status == 0 ||
+                    (XToolkit.saved_error != null &&
                      XToolkit.saved_error.get_error_code() != XlibWrapper.Success)) {
                     return null;
                 }
-             
+
                 return new Rectangle(wattr.get_x(), wattr.get_y(), wattr.get_width(), wattr.get_height());
             } finally {
                 wattr.dispose();
             }
         } finally {
             XToolkit.awtUnlock();
-        }        
+        }
     }
 
-    void childResized() {        
+    void childResized() {
         if (xembedLog.isLoggable(Level.FINER)) {
             Rectangle bounds = getClientBounds();
             xembedLog.finer("Child resized: " + bounds);
             // It is not required to update embedder's size when client size changes
             // However, since there is no any means to get client size it seems to be the
-            // only way to provide it. However, it contradicts with Java layout concept - 
+            // only way to provide it. However, it contradicts with Java layout concept -
             // so it is disabled for now.
 //             Rectangle my_bounds = getBounds();
 //             setBounds(my_bounds.x, my_bounds.y, bounds.width, bounds.height, SET_BOUNDS);
@@ -336,7 +336,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         XToolkit.postEvent(XToolkit.targetToAppContext(target), new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED));
     }
 
-    void focusNext() { 
+    void focusNext() {
         if (isXEmbedActive()) {
             xembedLog.fine("Requesting focus for the next component after embedder");
             postEvent(new InvocationEvent(target, new Runnable() {
@@ -349,7 +349,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         }
     }
 
-    void focusPrev() { 
+    void focusPrev() {
         if (isXEmbedActive()) {
             xembedLog.fine("Requesting focus for the next component after embedder");
             postEvent(new InvocationEvent(target, new Runnable() {
@@ -384,7 +384,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                 xembedLog.fine("Sending FOCUS_GAINED during initialization");
                 xembed.sendMessage(xembed.handle, XEMBED_FOCUS_IN, XEMBED_FOCUS_CURRENT, 0, 0);
             }
-        }            
+        }
     }
 
     void detachChild() {
@@ -506,7 +506,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
      */
     void grabKey(final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {        
+                public void run() {
                     GrabbedKey grab = new GrabbedKey(keysym, modifiers);
                     if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Grabbing key: " + grab);
                     synchronized(GRAB_LOCK) {
@@ -518,7 +518,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     void ungrabKey(final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {        
+                public void run() {
                     GrabbedKey grab = new GrabbedKey(keysym, modifiers);
                     if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("UnGrabbing key: " + grab);
                     synchronized(GRAB_LOCK) {
@@ -530,7 +530,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     void registerAccelerator(final long accel_id, final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {        
+                public void run() {
                     AWTKeyStroke stroke = xembed.getKeyStrokeForKeySym(keysym, modifiers);
                     if (stroke != null) {
                         if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Registering accelerator " + accel_id + " for " + stroke);
@@ -546,7 +546,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     void unregisterAccelerator(final long accel_id) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {        
+                public void run() {
                     AWTKeyStroke stroke = null;
                     synchronized(ACCEL_LOCK) {
                         stroke = accelerators.get(accel_id);
@@ -580,7 +580,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
             embedded.unregisterAccelerator(stroke);
         }
     }
-    
+
     public boolean postProcessKeyEvent(KeyEvent e) {
         // Processing events only if we are in the focused window but
         // we are not focus owner since otherwise we will get
@@ -636,7 +636,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
 
     public void modalityPopped(ModalityEvent ev) {
         xembed.sendMessage(xembed.handle, XEMBED_MODALITY_OFF);
-    }    
+    }
 
     public void handleClientMessage(XEvent xev) {
         super.handleClientMessage(xev);
@@ -650,7 +650,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
               case _SUN_XEMBED_START:
                   // Child has finished initialization and waits for notify
                   xembed.processXEmbedInfo();
-                  
+
                   notifyChildEmbedded();
                   break;
               case XEMBED_REQUEST_FOCUS:
@@ -681,7 +681,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
     }
 
     private static class XEmbedDropTarget extends DropTarget {
-        public void addDropTargetListener(DropTargetListener dtl) 
+        public void addDropTargetListener(DropTargetListener dtl)
           throws TooManyListenersException {
             // Drop target listeners registered with this target will never be
             // notified, since all drag notifications are routed to the XEmbed
@@ -720,7 +720,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         }
         if (target.getDropTarget() instanceof XEmbedDropTarget) {
             AppContext appContext = XToolkit.targetToAppContext(getTarget());
-            XDropTargetContextPeer peer = 
+            XDropTargetContextPeer peer =
                 XDropTargetContextPeer.getPeer(appContext);
             peer.forwardEventToEmbedded(xembed.handle, ctxt, eventID);
             return true;
@@ -750,7 +750,7 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                 boolean new_mapped = (flags & XEMBED_MAPPED) != 0;
                 boolean currently_mapped = XlibUtil.getWindowMapState(handle) != XlibWrapper.IsUnmapped;
                 if (new_mapped != currently_mapped) {
-                    if (xembedLog.isLoggable(Level.FINER)) 
+                    if (xembedLog.isLoggable(Level.FINER))
                         xembedLog.fine("Mapping state of the client has changed, old state: " + currently_mapped + ", new state: " + new_mapped);
                     if (new_mapped) {
                         XToolkit.awtLock();
@@ -786,10 +786,10 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
                     processXEmbedInfo();
                 } else if (ev.get_atom() ==
                            XDnDConstants.XA_XdndAware.getAtom()) {
-                    XDropTargetRegistry.getRegistry().unregisterXEmbedClient(getWindow(), 
+                    XDropTargetRegistry.getRegistry().unregisterXEmbedClient(getWindow(),
                                                                              xembed.handle);
                     if (ev.get_state() == XConstants.PropertyNewValue) {
-                        XDropTargetRegistry.getRegistry().registerXEmbedClient(getWindow(), 
+                        XDropTargetRegistry.getRegistry().registerXEmbedClient(getWindow(),
                                                                                 xembed.handle);
                     }
                 }
@@ -842,8 +842,8 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
             }
             try {
                 XToolkit.awtLock();
-                try {                    
-                    keysym = XWindow.getKeySymForAWTKeyCode(e.getKeyCode()); 
+                try {
+                    keysym = XWindow.getKeySymForAWTKeyCode(e.getKeyCode());
                 } finally {
                     XToolkit.awtUnlock();
                 }
@@ -855,8 +855,8 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
             } finally {
                 XlibWrapper.unsafe.freeMemory(data);
             }
-        }            
-        
+        }
+
         public int hashCode() {
             return (int)keysym & 0xFFFFFFFF;
         }
@@ -872,5 +872,5 @@ public class XEmbedCanvasPeer extends XCanvasPeer implements WindowFocusListener
         public String toString() {
             return "Key combination[keysym=" + keysym + ", mods=" + modifiers + "]";
         }
-    }    
+    }
 }

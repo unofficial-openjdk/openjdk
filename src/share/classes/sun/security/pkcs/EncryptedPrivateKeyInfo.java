@@ -42,7 +42,6 @@ import sun.security.util.DerOutputStream;
  *
  * @author Jan Luehe
  *
- * @version %I%, %E%
  */
 
 public class EncryptedPrivateKeyInfo {
@@ -61,13 +60,13 @@ public class EncryptedPrivateKeyInfo {
      * its encoding.
      */
     public EncryptedPrivateKeyInfo(byte[] encoded)
-	throws IOException
+        throws IOException
     {
-	if (encoded == null) {
-	    throw new IllegalArgumentException("encoding must not be null");
-	}
+        if (encoded == null) {
+            throw new IllegalArgumentException("encoding must not be null");
+        }
 
-	DerValue val = new DerValue(encoded);
+        DerValue val = new DerValue(encoded);
 
         DerValue[] seq = new DerValue[2];
 
@@ -87,7 +86,7 @@ public class EncryptedPrivateKeyInfo {
         if (seq[1].data.available() != 0)
             throw new IOException("encryptedData field overrun");
 
-	this.encoded = encoded.clone();
+        this.encoded = encoded.clone();
     }
 
     /**
@@ -95,46 +94,46 @@ public class EncryptedPrivateKeyInfo {
      * encryption algorithm and the encrypted data.
      */
     public EncryptedPrivateKeyInfo(AlgorithmId algid, byte[] encryptedData) {
-	this.algid = algid;
-	this.encryptedData = encryptedData.clone();
+        this.algid = algid;
+        this.encryptedData = encryptedData.clone();
     }
 
     /**
      * Returns the encryption algorithm.
      */
     public AlgorithmId getAlgorithm() {
-	return this.algid;
+        return this.algid;
     }
 
     /**
      * Returns the encrypted data.
      */
     public byte[] getEncryptedData() {
-	return this.encryptedData.clone();
+        return this.encryptedData.clone();
     }
 
     /**
      * Returns the ASN.1 encoding of this class.
      */
     public byte[] getEncoded()
-	throws IOException
+        throws IOException
     {
-	if (this.encoded != null) return this.encoded.clone();
+        if (this.encoded != null) return this.encoded.clone();
 
-	DerOutputStream out = new DerOutputStream();
-	DerOutputStream tmp = new DerOutputStream();
+        DerOutputStream out = new DerOutputStream();
+        DerOutputStream tmp = new DerOutputStream();
 
-	// encode encryption algorithm
-	algid.encode(tmp);
+        // encode encryption algorithm
+        algid.encode(tmp);
 
-	// encode encrypted data
-	tmp.putOctetString(encryptedData);
+        // encode encrypted data
+        tmp.putOctetString(encryptedData);
 
-	// wrap everything into a SEQUENCE
-	out.write(DerValue.tag_Sequence, tmp);
-	this.encoded = out.toByteArray();
+        // wrap everything into a SEQUENCE
+        out.write(DerValue.tag_Sequence, tmp);
+        this.encoded = out.toByteArray();
 
-	return this.encoded.clone();
+        return this.encoded.clone();
     }
 
     public boolean equals(Object other) {
@@ -145,7 +144,7 @@ public class EncryptedPrivateKeyInfo {
         try {
             byte[] thisEncrInfo = this.getEncoded();
             byte[] otherEncrInfo
-		= ((EncryptedPrivateKeyInfo)other).getEncoded();
+                = ((EncryptedPrivateKeyInfo)other).getEncoded();
 
             if (thisEncrInfo.length != otherEncrInfo.length)
                 return false;
@@ -154,7 +153,7 @@ public class EncryptedPrivateKeyInfo {
                      return false;
             return true;
         } catch (IOException e) {
-	    return false;
+            return false;
         }
     }
 
@@ -164,10 +163,10 @@ public class EncryptedPrivateKeyInfo {
      * @return a hashcode for this EncryptedPrivateKeyInfo.
      */
     public int hashCode() {
-	int retval = 0;
+        int retval = 0;
 
-	for (int i = 0; i < this.encryptedData.length; i++)
-	    retval += this.encryptedData[i] * i;
-	return retval;
+        for (int i = 0; i < this.encryptedData.length; i++)
+            retval += this.encryptedData[i] * i;
+        return retval;
     }
 }

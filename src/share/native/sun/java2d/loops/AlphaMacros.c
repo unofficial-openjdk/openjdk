@@ -135,12 +135,12 @@
  * derived from these same values using a small amount of bit
  * shifting and replication.
  */
-#define AROP_ZERO	0x00
-#define AROP_ONE	0xff
-#define AROP_PLUS	0
-#define AROP_MINUS	-1
-#define AROP_NAUGHT	0x00
-#define AROP_ALPHA	0xff
+#define AROP_ZERO       0x00
+#define AROP_ONE        0xff
+#define AROP_PLUS       0
+#define AROP_MINUS      -1
+#define AROP_NAUGHT     0x00
+#define AROP_ALPHA      0xff
 
 /*
  * This macro constructs a single Fcomp equation table entry from the
@@ -157,10 +157,10 @@
  *    AROPS_ALPHA     Fblend = alpha
  *    AROPS_INVALPHA  Fblend = (1 - alpha)
  */
-#define AROPS_ZERO	MAKE_AROPS( ZERO, PLUS,  NAUGHT )
-#define AROPS_ONE	MAKE_AROPS( ONE,  PLUS,  NAUGHT )
-#define AROPS_ALPHA	MAKE_AROPS( ZERO, PLUS,  ALPHA  )
-#define AROPS_INVALPHA	MAKE_AROPS( ONE,  MINUS, ALPHA  )
+#define AROPS_ZERO      MAKE_AROPS( ZERO, PLUS,  NAUGHT )
+#define AROPS_ONE       MAKE_AROPS( ONE,  PLUS,  NAUGHT )
+#define AROPS_ALPHA     MAKE_AROPS( ZERO, PLUS,  ALPHA  )
+#define AROPS_INVALPHA  MAKE_AROPS( ONE,  MINUS, ALPHA  )
 
 /*
  * This table maps a given Porter-Duff blending rule index to a
@@ -169,17 +169,17 @@
  * Fk values needed for Fb.
  */
 AlphaFunc AlphaRules[] = {
-    {	{0, 0, 0},     	{0, 0, 0}      	},	/* 0 - Nothing */
-    {	AROPS_ZERO,	AROPS_ZERO	},	/* 1 - RULE_Clear */
-    {	AROPS_ONE,	AROPS_ZERO	},	/* 2 - RULE_Src */
-    {	AROPS_ONE,	AROPS_INVALPHA	},	/* 3 - RULE_SrcOver */
-    {	AROPS_INVALPHA,	AROPS_ONE	},	/* 4 - RULE_DstOver */
-    {	AROPS_ALPHA,	AROPS_ZERO	},	/* 5 - RULE_SrcIn */
-    {	AROPS_ZERO,	AROPS_ALPHA	},	/* 6 - RULE_DstIn */
-    {	AROPS_INVALPHA,	AROPS_ZERO	},	/* 7 - RULE_SrcOut */
-    {	AROPS_ZERO,	AROPS_INVALPHA	},	/* 8 - RULE_DstOut */
-    {	AROPS_ZERO,	AROPS_ONE	},	/* 9 - RULE_Dst */
-    {	AROPS_ALPHA,	AROPS_INVALPHA	},	/*10 - RULE_SrcAtop */
-    {	AROPS_INVALPHA,	AROPS_ALPHA	},	/*11 - RULE_DstAtop */
-    {	AROPS_INVALPHA,	AROPS_INVALPHA	},	/*12 - RULE_Xor */
+    {   {0, 0, 0},      {0, 0, 0}       },      /* 0 - Nothing */
+    {   AROPS_ZERO,     AROPS_ZERO      },      /* 1 - RULE_Clear */
+    {   AROPS_ONE,      AROPS_ZERO      },      /* 2 - RULE_Src */
+    {   AROPS_ONE,      AROPS_INVALPHA  },      /* 3 - RULE_SrcOver */
+    {   AROPS_INVALPHA, AROPS_ONE       },      /* 4 - RULE_DstOver */
+    {   AROPS_ALPHA,    AROPS_ZERO      },      /* 5 - RULE_SrcIn */
+    {   AROPS_ZERO,     AROPS_ALPHA     },      /* 6 - RULE_DstIn */
+    {   AROPS_INVALPHA, AROPS_ZERO      },      /* 7 - RULE_SrcOut */
+    {   AROPS_ZERO,     AROPS_INVALPHA  },      /* 8 - RULE_DstOut */
+    {   AROPS_ZERO,     AROPS_ONE       },      /* 9 - RULE_Dst */
+    {   AROPS_ALPHA,    AROPS_INVALPHA  },      /*10 - RULE_SrcAtop */
+    {   AROPS_INVALPHA, AROPS_ALPHA     },      /*11 - RULE_DstAtop */
+    {   AROPS_INVALPHA, AROPS_INVALPHA  },      /*12 - RULE_Xor */
 };

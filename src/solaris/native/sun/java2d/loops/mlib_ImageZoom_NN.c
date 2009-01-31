@@ -24,7 +24,6 @@
  */
 
 #ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageZoom_NN.c	1.19	03/02/05 SMI"
 #endif /* __SUNPRO_C */
 
 /*

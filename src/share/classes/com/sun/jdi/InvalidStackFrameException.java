@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be 
+ * Thrown to indicate that the requested operation cannot be
  * completed because the specified stack frame is no longer valid.
  *
  * @author Gordon Hirsch
@@ -34,10 +34,10 @@ package com.sun.jdi;
  */
 public class InvalidStackFrameException extends RuntimeException {
     public InvalidStackFrameException() {
-	super();
+        super();
     }
 
     public InvalidStackFrameException(String s) {
-	super(s);
+        super(s);
     }
 }

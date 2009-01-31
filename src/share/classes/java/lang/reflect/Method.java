@@ -59,17 +59,17 @@ import java.util.Map;
  * @author Nakul Saraiya
  */
 public final
-    class Method extends AccessibleObject implements GenericDeclaration, 
-						     Member {
-    private Class		clazz;
-    private int			slot;
+    class Method extends AccessibleObject implements GenericDeclaration,
+                                                     Member {
+    private Class               clazz;
+    private int                 slot;
     // This is guaranteed to be interned by the VM in the 1.4
     // reflection implementation
-    private String		name;
-    private Class		returnType;
-    private Class[]		parameterTypes;
-    private Class[]		exceptionTypes;
-    private int			modifiers;
+    private String              name;
+    private Class               returnType;
+    private Class[]             parameterTypes;
+    private Class[]             exceptionTypes;
+    private int                 modifiers;
     // Generics and annotations support
     private transient String              signature;
     // generic info repository; lazily initialized
@@ -89,10 +89,10 @@ public final
     private Class securityCheckTargetClassCache;
 
     // Modifiers that can be applied to a method in source code
-    private static final int LANGUAGE_MODIFIERS = 
-	Modifier.PUBLIC		| Modifier.PROTECTED	| Modifier.PRIVATE | 
-	Modifier.ABSTRACT	| Modifier.STATIC	| Modifier.FINAL   |  
-	Modifier.SYNCHRONIZED	| Modifier.NATIVE;
+    private static final int LANGUAGE_MODIFIERS =
+        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE |
+        Modifier.ABSTRACT       | Modifier.STATIC       | Modifier.FINAL   |
+        Modifier.SYNCHRONIZED   | Modifier.NATIVE;
 
    // Generics infrastructure
 
@@ -100,19 +100,19 @@ public final
 
     // Accessor for factory
     private GenericsFactory getFactory() {
-	// create scope and factory
-	return CoreReflectionFactory.make(this, MethodScope.make(this)); 
+        // create scope and factory
+        return CoreReflectionFactory.make(this, MethodScope.make(this));
     }
 
     // Accessor for generic info repository
     private MethodRepository getGenericInfo() {
-	// lazily initialize repository if necessary
-	if (genericInfo == null) {
-	    // create and cache generic info repository
-	    genericInfo = MethodRepository.make(getGenericSignature(), 
-						getFactory());
-	}
-	return genericInfo; //return cached repository
+        // lazily initialize repository if necessary
+        if (genericInfo == null) {
+            // create and cache generic info repository
+            genericInfo = MethodRepository.make(getGenericSignature(),
+                                                getFactory());
+        }
+        return genericInfo; //return cached repository
     }
 
     /**
@@ -172,15 +172,15 @@ public final
      * that declares the method represented by this {@code Method} object.
      */
     public Class<?> getDeclaringClass() {
-	return clazz;
+        return clazz;
     }
 
     /**
-     * Returns the name of the method represented by this {@code Method} 
+     * Returns the name of the method represented by this {@code Method}
      * object, as a {@code String}.
      */
     public String getName() {
-	return name;
+        return name;
     }
 
     /**
@@ -191,7 +191,7 @@ public final
      * @see Modifier
      */
     public int getModifiers() {
-	return modifiers;
+        return modifiers;
     }
 
     /**
@@ -210,34 +210,34 @@ public final
      * @since 1.5
      */
     public TypeVariable<Method>[] getTypeParameters() {
-	if (getGenericSignature() != null)
-	    return (TypeVariable<Method>[])getGenericInfo().getTypeParameters();
-	else
-	    return (TypeVariable<Method>[])new TypeVariable[0];
+        if (getGenericSignature() != null)
+            return (TypeVariable<Method>[])getGenericInfo().getTypeParameters();
+        else
+            return (TypeVariable<Method>[])new TypeVariable[0];
     }
 
     /**
      * Returns a {@code Class} object that represents the formal return type
      * of the method represented by this {@code Method} object.
-     * 
+     *
      * @return the return type for the method this object represents
      */
     public Class<?> getReturnType() {
-	return returnType;
+        return returnType;
     }
 
     /**
-     * Returns a {@code Type} object that represents the formal return 
+     * Returns a {@code Type} object that represents the formal return
      * type of the method represented by this {@code Method} object.
-     * 
+     *
      * <p>If the return type is a parameterized type,
      * the {@code Type} object returned must accurately reflect
      * the actual type parameters used in the source code.
-     * 
+     *
      * <p>If the return type is a type variable or a parameterized type, it
      * is created. Otherwise, it is resolved.
      *
-     * @return  a {@code Type} object that represents the formal return 
+     * @return  a {@code Type} object that represents the formal return
      *     type of the underlying  method
      * @throws GenericSignatureFormatError
      *     if the generic method signature does not conform to the format
@@ -251,7 +251,7 @@ public final
      */
     public Type getGenericReturnType() {
       if (getGenericSignature() != null) {
-	return getGenericInfo().getReturnType();
+        return getGenericInfo().getReturnType();
       } else { return getReturnType();}
     }
 
@@ -261,12 +261,12 @@ public final
      * parameter types, in declaration order, of the method
      * represented by this {@code Method} object.  Returns an array of length
      * 0 if the underlying method takes no parameters.
-     * 
+     *
      * @return the parameter types for the method this object
      * represents
      */
     public Class<?>[] getParameterTypes() {
-	return (Class<?>[]) parameterTypes.clone();
+        return (Class<?>[]) parameterTypes.clone();
     }
 
     /**
@@ -274,12 +274,12 @@ public final
      * parameter types, in declaration order, of the method represented by
      * this {@code Method} object. Returns an array of length 0 if the
      * underlying method takes no parameters.
-     * 
+     *
      * <p>If a formal parameter type is a parameterized type,
      * the {@code Type} object returned for it must accurately reflect
      * the actual type parameters used in the source code.
      *
-     * <p>If a formal parameter type is a type variable or a parameterized 
+     * <p>If a formal parameter type is a type variable or a parameterized
      * type, it is created. Otherwise, it is resolved.
      *
      * @return an array of Types that represent the formal
@@ -296,38 +296,38 @@ public final
      * @since 1.5
      */
     public Type[] getGenericParameterTypes() {
-	if (getGenericSignature() != null)
-	    return getGenericInfo().getParameterTypes();
-	else
-	    return getParameterTypes();
+        if (getGenericSignature() != null)
+            return getGenericInfo().getParameterTypes();
+        else
+            return getParameterTypes();
     }
 
 
     /**
-     * Returns an array of {@code Class} objects that represent 
+     * Returns an array of {@code Class} objects that represent
      * the types of the exceptions declared to be thrown
      * by the underlying method
      * represented by this {@code Method} object.  Returns an array of length
      * 0 if the method declares no exceptions in its {@code throws} clause.
-     * 
+     *
      * @return the exception types declared as being thrown by the
      * method this object represents
      */
     public Class<?>[] getExceptionTypes() {
-	return (Class<?>[]) exceptionTypes.clone();
+        return (Class<?>[]) exceptionTypes.clone();
     }
 
     /**
-     * Returns an array of {@code Type} objects that represent the 
-     * exceptions declared to be thrown by this {@code Method} object. 
+     * Returns an array of {@code Type} objects that represent the
+     * exceptions declared to be thrown by this {@code Method} object.
      * Returns an array of length 0 if the underlying method declares
-     * no exceptions in its {@code throws} clause.  
-     * 
+     * no exceptions in its {@code throws} clause.
+     *
      * <p>If an exception type is a parameterized type, the {@code Type}
      * object returned for it must accurately reflect the actual type
      * parameters used in the source code.
      *
-     * <p>If an exception type is a type variable or a parameterized 
+     * <p>If an exception type is a type variable or a parameterized
      * type, it is created. Otherwise, it is resolved.
      *
      * @return an array of Types that represent the exception types
@@ -343,12 +343,12 @@ public final
      * @since 1.5
      */
       public Type[] getGenericExceptionTypes() {
-	  Type[] result;
-	  if (getGenericSignature() != null &&
-	      ((result = getGenericInfo().getExceptionTypes()).length > 0))
-	      return result;
-	  else
-	      return getExceptionTypes();
+          Type[] result;
+          if (getGenericSignature() != null &&
+              ((result = getGenericInfo().getExceptionTypes()).length > 0))
+              return result;
+          else
+              return getExceptionTypes();
       }
 
     /**
@@ -358,25 +358,25 @@ public final
      * and formal parameter types and return type.
      */
     public boolean equals(Object obj) {
-	if (obj != null && obj instanceof Method) {
-	    Method other = (Method)obj;
-	    if ((getDeclaringClass() == other.getDeclaringClass())
-		&& (getName() == other.getName())) {
-		if (!returnType.equals(other.getReturnType()))
-		    return false;
-		/* Avoid unnecessary cloning */
-		Class[] params1 = parameterTypes;
-		Class[] params2 = other.parameterTypes;
-		if (params1.length == params2.length) {
-		    for (int i = 0; i < params1.length; i++) {
-			if (params1[i] != params2[i])
-			    return false;
-		    }
-		    return true;
-		}
-	    }
-	}
-	return false;
+        if (obj != null && obj instanceof Method) {
+            Method other = (Method)obj;
+            if ((getDeclaringClass() == other.getDeclaringClass())
+                && (getName() == other.getName())) {
+                if (!returnType.equals(other.getReturnType()))
+                    return false;
+                /* Avoid unnecessary cloning */
+                Class[] params1 = parameterTypes;
+                Class[] params2 = other.parameterTypes;
+                if (params1.length == params2.length) {
+                    for (int i = 0; i < params1.length; i++) {
+                        if (params1[i] != params2[i])
+                            return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -385,7 +385,7 @@ public final
      * method's declaring class name and the method's name.
      */
     public int hashCode() {
-	return getDeclaringClass().getName().hashCode() ^ getName().hashCode();
+        return getDeclaringClass().getName().hashCode() ^ getName().hashCode();
     }
 
     /**
@@ -411,35 +411,35 @@ public final
      * {@code synchronized}, {@code native}.
      */
     public String toString() {
-	try {
-	    StringBuffer sb = new StringBuffer();
-	    int mod = getModifiers() & LANGUAGE_MODIFIERS;
-	    if (mod != 0) {
-		sb.append(Modifier.toString(mod) + " ");
-	    }
-	    sb.append(Field.getTypeName(getReturnType()) + " ");
-	    sb.append(Field.getTypeName(getDeclaringClass()) + ".");
-	    sb.append(getName() + "(");
-	    Class[] params = parameterTypes; // avoid clone
-	    for (int j = 0; j < params.length; j++) {
-		sb.append(Field.getTypeName(params[j]));
-		if (j < (params.length - 1))
-		    sb.append(",");
-	    }
-	    sb.append(")");
-	    Class[] exceptions = exceptionTypes; // avoid clone
-	    if (exceptions.length > 0) {
-		sb.append(" throws ");
-		for (int k = 0; k < exceptions.length; k++) {
-		    sb.append(exceptions[k].getName());
-		    if (k < (exceptions.length - 1))
-			sb.append(",");
-		}
-	    }
-	    return sb.toString();
-	} catch (Exception e) {
-	    return "<" + e + ">";
-	}
+        try {
+            StringBuffer sb = new StringBuffer();
+            int mod = getModifiers() & LANGUAGE_MODIFIERS;
+            if (mod != 0) {
+                sb.append(Modifier.toString(mod) + " ");
+            }
+            sb.append(Field.getTypeName(getReturnType()) + " ");
+            sb.append(Field.getTypeName(getDeclaringClass()) + ".");
+            sb.append(getName() + "(");
+            Class[] params = parameterTypes; // avoid clone
+            for (int j = 0; j < params.length; j++) {
+                sb.append(Field.getTypeName(params[j]));
+                if (j < (params.length - 1))
+                    sb.append(",");
+            }
+            sb.append(")");
+            Class[] exceptions = exceptionTypes; // avoid clone
+            if (exceptions.length > 0) {
+                sb.append(" throws ");
+                for (int k = 0; k < exceptions.length; k++) {
+                    sb.append(exceptions[k].getName());
+                    if (k < (exceptions.length - 1))
+                        sb.append(",");
+                }
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "<" + e + ">";
+        }
     }
 
     /**
@@ -451,7 +451,7 @@ public final
      * space, followed by the class declaring the method, followed by
      * a period, followed by the method name, followed by a
      * parenthesized, comma-separated list of the method's generic
-     * formal parameter types. 
+     * formal parameter types.
      *
      * A space is used to separate access modifiers from one another
      * and from the type parameters or return type.  If there are no
@@ -476,69 +476,69 @@ public final
      * @since 1.5
      */
     public String toGenericString() {
-	try {
-	    StringBuilder sb = new StringBuilder();
-	    int mod = getModifiers() & LANGUAGE_MODIFIERS;
-	    if (mod != 0) {
-		sb.append(Modifier.toString(mod) + " ");
-	    }
-	    TypeVariable<?>[] typeparms = getTypeParameters();
-	    if (typeparms.length > 0) {
-		boolean first = true;
-		sb.append("<");
-		for(TypeVariable<?> typeparm: typeparms) {
-		    if (!first)
-			sb.append(",");
-		    // Class objects can't occur here; no need to test
-		    // and call Class.getName().
-		    sb.append(typeparm.toString());
-		    first = false;
-		}
-		sb.append("> ");
-	    }
+        try {
+            StringBuilder sb = new StringBuilder();
+            int mod = getModifiers() & LANGUAGE_MODIFIERS;
+            if (mod != 0) {
+                sb.append(Modifier.toString(mod) + " ");
+            }
+            TypeVariable<?>[] typeparms = getTypeParameters();
+            if (typeparms.length > 0) {
+                boolean first = true;
+                sb.append("<");
+                for(TypeVariable<?> typeparm: typeparms) {
+                    if (!first)
+                        sb.append(",");
+                    // Class objects can't occur here; no need to test
+                    // and call Class.getName().
+                    sb.append(typeparm.toString());
+                    first = false;
+                }
+                sb.append("> ");
+            }
 
-	    Type genRetType = getGenericReturnType();
-	    sb.append( ((genRetType instanceof Class<?>)?
-			Field.getTypeName((Class<?>)genRetType):genRetType.toString())  + " ");
+            Type genRetType = getGenericReturnType();
+            sb.append( ((genRetType instanceof Class<?>)?
+                        Field.getTypeName((Class<?>)genRetType):genRetType.toString())  + " ");
 
-	    sb.append(Field.getTypeName(getDeclaringClass()) + ".");
-	    sb.append(getName() + "(");
-	    Type[] params = getGenericParameterTypes();
-	    for (int j = 0; j < params.length; j++) {
-		String param = (params[j] instanceof Class)?
-		    Field.getTypeName((Class)params[j]):
-		    (params[j].toString());
-		sb.append(param);
-		if (j < (params.length - 1))
-		    sb.append(",");
-	    }
-	    sb.append(")");
-	    Type[] exceptions = getGenericExceptionTypes();
-	    if (exceptions.length > 0) {
-		sb.append(" throws ");
-		for (int k = 0; k < exceptions.length; k++) {
-		    sb.append((exceptions[k] instanceof Class)?
-			      ((Class)exceptions[k]).getName():
-			      exceptions[k].toString());
-		    if (k < (exceptions.length - 1))
-			sb.append(",");
-		}
-	    }
-	    return sb.toString();
-	} catch (Exception e) {
-	    return "<" + e + ">";
-	}
+            sb.append(Field.getTypeName(getDeclaringClass()) + ".");
+            sb.append(getName() + "(");
+            Type[] params = getGenericParameterTypes();
+            for (int j = 0; j < params.length; j++) {
+                String param = (params[j] instanceof Class)?
+                    Field.getTypeName((Class)params[j]):
+                    (params[j].toString());
+                sb.append(param);
+                if (j < (params.length - 1))
+                    sb.append(",");
+            }
+            sb.append(")");
+            Type[] exceptions = getGenericExceptionTypes();
+            if (exceptions.length > 0) {
+                sb.append(" throws ");
+                for (int k = 0; k < exceptions.length; k++) {
+                    sb.append((exceptions[k] instanceof Class)?
+                              ((Class)exceptions[k]).getName():
+                              exceptions[k].toString());
+                    if (k < (exceptions.length - 1))
+                        sb.append(",");
+                }
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "<" + e + ">";
+        }
     }
 
     /**
-     * Invokes the underlying method represented by this {@code Method} 
+     * Invokes the underlying method represented by this {@code Method}
      * object, on the specified object with the specified parameters.
      * Individual parameters are automatically unwrapped to match
      * primitive formal parameters, and both primitive and reference
      * parameters are subject to method invocation conversions as
      * necessary.
      *
-     * <p>If the underlying method is static, then the specified {@code obj} 
+     * <p>If the underlying method is static, then the specified {@code obj}
      * argument is ignored. It may be null.
      *
      * <p>If the number of formal parameters required by the underlying method is
@@ -588,7 +588,7 @@ public final
      * provoked by this method fails.
      */
     public Object invoke(Object obj, Object... args)
-	throws IllegalAccessException, IllegalArgumentException,
+        throws IllegalAccessException, IllegalArgumentException,
            InvocationTargetException
     {
         if (!override) {
@@ -598,18 +598,18 @@ public final
                                      ? clazz
                                      : obj.getClass());
 
-		boolean cached;
-		synchronized (this) {
-		    cached = (securityCheckCache == caller)
-			    && (securityCheckTargetClassCache == targetClass);
-		}
-		if (!cached) {
-		    Reflection.ensureMemberAccess(caller, clazz, obj, modifiers);
-		    synchronized (this) {
-			securityCheckCache = caller;
-			securityCheckTargetClassCache = targetClass;
-		    }
-		}
+                boolean cached;
+                synchronized (this) {
+                    cached = (securityCheckCache == caller)
+                            && (securityCheckTargetClassCache == targetClass);
+                }
+                if (!cached) {
+                    Reflection.ensureMemberAccess(caller, clazz, obj, modifiers);
+                    synchronized (this) {
+                        securityCheckCache = caller;
+                        securityCheckTargetClassCache = targetClass;
+                    }
+                }
             }
         }
         if (methodAccessor == null) acquireMethodAccessor();

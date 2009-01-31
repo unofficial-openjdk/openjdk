@@ -26,17 +26,16 @@
 package java.lang;
 
 /**
- * <code>RuntimeException</code> is the superclass of those 
- * exceptions that can be thrown during the normal operation of the 
- * Java Virtual Machine. 
+ * <code>RuntimeException</code> is the superclass of those
+ * exceptions that can be thrown during the normal operation of the
+ * Java Virtual Machine.
  * <p>
- * A method is not required to declare in its <code>throws</code> 
- * clause any subclasses of <code>RuntimeException</code> that might 
- * be thrown during the execution of the method but not caught. 
+ * A method is not required to declare in its <code>throws</code>
+ * clause any subclasses of <code>RuntimeException</code> that might
+ * be thrown during the execution of the method but not caught.
  *
  *
  * @author  Frank Yellin
- * @version %I%, %G%
  * @since   JDK1.0
  */
 public class RuntimeException extends Exception {
@@ -47,18 +46,18 @@ public class RuntimeException extends Exception {
      * initialized by a call to {@link #initCause}.
      */
     public RuntimeException() {
-	super();
+        super();
     }
 
     /** Constructs a new runtime exception with the specified detail message.
      * The cause is not initialized, and may subsequently be initialized by a
      * call to {@link #initCause}.
      *
-     * @param   message   the detail message. The detail message is saved for 
+     * @param   message   the detail message. The detail message is saved for
      *          later retrieval by the {@link #getMessage()} method.
      */
     public RuntimeException(String message) {
-	super(message);
+        super(message);
     }
 
     /**

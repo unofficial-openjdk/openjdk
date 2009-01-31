@@ -39,14 +39,14 @@
 
 #define DeclareDitherVars
 
-#define InitDither(cvdata, clrdata, dstTW)			\
+#define InitDither(cvdata, clrdata, dstTW)                      \
     do {} while (0)
 
-#define StartDitherLine(cvdata, dstX1, dstY)			\
+#define StartDitherLine(cvdata, dstX1, dstY)                    \
     do {} while (0)
 
-#define DitherPixel(dstX, dstY, pixel, red, green, blue) 	\
+#define DitherPixel(dstX, dstY, pixel, red, green, blue)        \
     do {} while (0)
 
-#define DitherBufComplete(cvdata, dstX1)			\
+#define DitherBufComplete(cvdata, dstX1)                        \
     do {} while (0)

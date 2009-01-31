@@ -34,7 +34,7 @@ import java.beans.*;
  * interface in cases where the same functionality may be accessed by
  * several controls.
  * <p>
- * In addition to the <code>actionPerformed</code> method defined by the 
+ * In addition to the <code>actionPerformed</code> method defined by the
  * <code>ActionListener</code> interface, this interface allows the
  * application to define, in a single place:
  * <ul>
@@ -48,7 +48,7 @@ import java.beans.*;
  *     to separately disable the menu item and the toolbar button, the
  *     application can disable the function that implements this interface.
  *     All components which are registered as listeners for the state change
- *     then know to disable event generation for that item and to modify the 
+ *     then know to disable event generation for that item and to modify the
  *     display accordingly.
  * </ul>
  * <p>
@@ -68,7 +68,7 @@ import java.beans.*;
  * you should take care to only use <code>Action</code>s where their benefits
  * are desired, and use simple <code>ActionListener</code>s elsewhere.
  * <p>
- * 
+ *
  * <h4><a name="buttonActions"></a>Swing Components Supporting <code>Action</code></h4>
  * <p>
  * Many of Swing's components have an <code>Action</code> property.  When
@@ -81,7 +81,7 @@ import java.beans.*;
  *      <code>Action</code>.
  * <li>The component installs a <code>PropertyChangeListener</code> on the
  *     <code>Action</code> so that the component can change its properties
- *     to reflect changes in the <code>Action</code>'s properties.        
+ *     to reflect changes in the <code>Action</code>'s properties.
  * </ul>
  * <p>
  * The following table describes the properties used by
@@ -94,7 +94,7 @@ import java.beans.*;
  * <code>Action</code> that is <code>null</code>) results in the
  * button's corresponding property being set to <code>null</code>.
  * <p>
- * <table border="1" cellpadding="1" cellspacing="0" 
+ * <table border="1" cellpadding="1" cellspacing="0"
  *         summary="Supported Action properties"
  *         valign="top" >
  *  <tr valign="top"  align="left">
@@ -178,7 +178,7 @@ import java.beans.*;
  *          you set an {@code Action} that has a {@code null}
  *          value for {@code SELECTED_KEY} on a {@code JToggleButton}, the
  *          {@code JToggleButton} will not update it's selected state in
- *          any way. Similarly, any time the {@code JToggleButton}'s 
+ *          any way. Similarly, any time the {@code JToggleButton}'s
  *          selected state changes it will only set the value back on
  *          the {@code Action} if the {@code Action} has a {@code non-null}
  *          value for {@code SELECTED_KEY}.
@@ -209,13 +209,12 @@ import java.beans.*;
  * <code>swing.actions.reconfigureOnNull</code> to the <code>String</code>
  * value <code>true</code>.
  *
- * @version %I% %G%
  * @author Georges Saab
  * @see AbstractAction
  */
 public interface Action extends ActionListener {
     /**
-     * Useful constants that can be used as the storage-retrieval key 
+     * Useful constants that can be used as the storage-retrieval key
      * when setting or getting one of this object's properties (text
      * or icon).
      */
@@ -223,7 +222,7 @@ public interface Action extends ActionListener {
      * Not currently used.
      */
     public static final String DEFAULT = "Default";
-    /** 
+    /**
      * The key used for storing the <code>String</code> name
      * for the action, used for a menu or button.
      */
@@ -267,7 +266,7 @@ public interface Action extends ActionListener {
      * @since 1.3
      */
     public static final String ACCELERATOR_KEY="AcceleratorKey";
-    
+
     /**
      * The key used for storing an <code>Integer</code> that corresponds to
      * one of the <code>KeyEvent</code> key codes.  The value is
@@ -319,7 +318,7 @@ public interface Action extends ActionListener {
 
     /**
      * The key used for storing an <code>Icon</code>.  This is typically
-     * used by buttons, such as <code>JButton</code> and 
+     * used by buttons, such as <code>JButton</code> and
      * <code>JToggleButton</code>.
      * <p>
      * If the same <code>Action</code> is used with menus and buttons you'll
@@ -372,7 +371,7 @@ public interface Action extends ActionListener {
 
     /**
      * Adds a <code>PropertyChange</code> listener. Containers and attached
-     * components use these methods to register interest in this 
+     * components use these methods to register interest in this
      * <code>Action</code> object. When its enabled state or other property
      * changes, the registered listeners are informed of the change.
      *

@@ -30,8 +30,8 @@ import java.io.*;
 
 public class EmptyPath {
     public static void main(String [] args) throws Exception {
-	File f = new File("");
-	f.mkdir();
+        File f = new File("");
+        f.mkdir();
         try {
             f.createNewFile();
             throw new RuntimeException("Expected exception not thrown");

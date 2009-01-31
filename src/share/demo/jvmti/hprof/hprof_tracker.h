@@ -34,9 +34,9 @@
 
 /* The internal qualified classname */
 
-#define OBJECT_CLASS_SIG	"Ljava/lang/Object;"
-#define OBJECT_INIT_NAME	"<init>"
-#define OBJECT_INIT_SIG		"()V"
+#define OBJECT_CLASS_SIG        "Ljava/lang/Object;"
+#define OBJECT_INIT_NAME        "<init>"
+#define OBJECT_INIT_SIG         "()V"
 
 #define TRACKER_PACKAGE         "com/sun/demo/jvmti/hprof"
 #define TRACKER_CLASS_NAME      TRACKER_PACKAGE "/Tracker"

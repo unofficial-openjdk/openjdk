@@ -32,33 +32,33 @@
  * 2. Add JAR file to boot class path which contains a "good"
  *    version of A.
  *
- * 3. Re-run the code for 1 again - it should fail with 
+ * 3. Re-run the code for 1 again - it should fail with
  *    ClassCircularityError again.
  */
 import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 
 public class CircularityErrorTest {
-	
+
     static Instrumentation ins;
-    
+
     static void resolve() {
-	try {
-	    Class c = A.class;
-	    throw new RuntimeException("Test failed - class A loaded by: " +
-		c.getClassLoader());
-	} catch (ClassCircularityError e) {
-	    System.err.println(e);
-	}
+        try {
+            Class c = A.class;
+            throw new RuntimeException("Test failed - class A loaded by: " +
+                c.getClassLoader());
+        } catch (ClassCircularityError e) {
+            System.err.println(e);
+        }
     }
 
     public static void main(String args[]) throws Exception {
-        resolve();	
-	ins.appendToBootstrapClassLoaderSearch(new JarFile("A.jar"));	
-	resolve();       
+        resolve();
+        ins.appendToBootstrapClassLoaderSearch(new JarFile("A.jar"));
+        resolve();
     }
-    
+
     public static void premain(String args, Instrumentation i) {
-	ins = i;
+        ins = i;
     }
 }

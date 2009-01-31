@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4838379
  * @summary Verify that TC_OBJECT followed by a class descriptor for an enum
- * 	    class results in an InvalidClassException, as does TC_ENUM followed
- * 	    by a class descriptor for a non-enum class.
+ *          class results in an InvalidClassException, as does TC_ENUM followed
+ *          by a class descriptor for a non-enum class.
  *
  * @compile -source 1.5 Test.java
  * @run main Test
@@ -39,50 +39,50 @@ class TestObjectOutputStream extends ObjectOutputStream {
 
     static ObjectStreamClass fooDesc = ObjectStreamClass.lookup(Foo.class);
     static ObjectStreamClass integerDesc =
-	ObjectStreamClass.lookup(Integer.class);
+        ObjectStreamClass.lookup(Integer.class);
 
     TestObjectOutputStream(OutputStream out) throws IOException {
-	super(out);
+        super(out);
     }
 
     protected void writeClassDescriptor(ObjectStreamClass desc)
-	throws IOException
+        throws IOException
     {
-	if (desc == fooDesc) {
-	    super.writeClassDescriptor(integerDesc);
-	} else if (desc == integerDesc) {
-	    super.writeClassDescriptor(fooDesc);
-	} else {
-	    super.writeClassDescriptor(desc);
-	}
+        if (desc == fooDesc) {
+            super.writeClassDescriptor(integerDesc);
+        } else if (desc == integerDesc) {
+            super.writeClassDescriptor(fooDesc);
+        } else {
+            super.writeClassDescriptor(desc);
+        }
     }
 }
 
 public class Test {
     public static void main(String[] args) throws Exception {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	ObjectOutputStream oout = new TestObjectOutputStream(bout);
-	oout.writeObject(Foo.bar);
-	oout.close();
-	ObjectInputStream oin = new ObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()));
-	try {
-	    Object obj = oin.readObject();
-	    throw new Error("read of " + obj + " should not have succeeded");
-	} catch (InvalidClassException e) {
-	    System.out.println("caught expected exception " + e);
-	}
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new TestObjectOutputStream(bout);
+        oout.writeObject(Foo.bar);
+        oout.close();
+        ObjectInputStream oin = new ObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray()));
+        try {
+            Object obj = oin.readObject();
+            throw new Error("read of " + obj + " should not have succeeded");
+        } catch (InvalidClassException e) {
+            System.out.println("caught expected exception " + e);
+        }
 
-	oout = new TestObjectOutputStream(bout = new ByteArrayOutputStream());
-	oout.writeObject(new Integer(5));
-	oout.close();
-	oin = new ObjectInputStream(
-	    new ByteArrayInputStream(bout.toByteArray()));
-	try {
-	    Object obj = oin.readObject();
-	    throw new Error("read of " + obj + " should not have succeeded");
-	} catch (InvalidClassException e) {
-	    System.out.println("caught expected exception " + e);
-	}
+        oout = new TestObjectOutputStream(bout = new ByteArrayOutputStream());
+        oout.writeObject(new Integer(5));
+        oout.close();
+        oin = new ObjectInputStream(
+            new ByteArrayInputStream(bout.toByteArray()));
+        try {
+            Object obj = oin.readObject();
+            throw new Error("read of " + obj + " should not have succeeded");
+        } catch (InvalidClassException e) {
+            System.out.println("caught expected exception " + e);
+        }
     }
 }

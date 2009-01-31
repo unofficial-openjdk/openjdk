@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,14 +23,14 @@
 
 /* @test
  * @bug 4313167
- * 
+ *
  * @clean Write Read A B C
  * @compile Write.java
  * @run main Write
  * @clean Write Read A B C
  * @compile Read.java
  * @run main Read
- * 
+ *
  * @summary Verify that ClassNotFoundExceptions caused by values referenced
  *          (perhaps transitively) by "skipped" fields will not cause
  *          deserialization failure.
@@ -51,15 +51,15 @@ class B implements Serializable {
     Object c = new C();
 }
 
-class C implements Serializable {	// class not present on reading side
+class C implements Serializable {       // class not present on reading side
     private static final long serialVersionUID = 0L;
 }
 
 public class Write {
     public static void main(String[] args) throws Exception {
-	ObjectOutputStream oout = 
-	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-	oout.writeObject(new A());
-	oout.close();
+        ObjectOutputStream oout =
+            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+        oout.writeObject(new A());
+        oout.close();
     }
 }

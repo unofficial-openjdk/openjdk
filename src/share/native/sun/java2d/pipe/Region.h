@@ -40,24 +40,24 @@ extern "C" {
  * included in a Java Region object.  The intended usage pattern should
  * comply with the following code sample:
  *
- * 	RegionData rgnInfo;
- *	Region_GetInfo(env, javaregion, &rgnInfo);
- *	// Calculate the area of interest for the graphics operation.
- *	Region_IntersectBounds(&rgnInfo, lox, loy, hix, hiy);
- *	if (!Region_IsEmpty(&rgnInfo)) {
- *		If (Region_IsRectangular(&rgnInfo)) {
- *			// Optional code optimized for a single rectangle
- *		} else {
- *			SurfaceDataBounds span;
- *			Region_StartIteration(env, &rgnInfo);
- *			// this next line is optional if the info is needed
- *			int numrects = Region_CountIterationRects(&rgnInfo);
- *			while (Region_NextIteration(&rgnInfo, &span)) {
- *				// Process span.x1, span.y1, span.x2, span.y2
- *			}
- *			Region_EndIteration(env, &rgnInfo);
- *		}
- *	}
+ *      RegionData rgnInfo;
+ *      Region_GetInfo(env, javaregion, &rgnInfo);
+ *      // Calculate the area of interest for the graphics operation.
+ *      Region_IntersectBounds(&rgnInfo, lox, loy, hix, hiy);
+ *      if (!Region_IsEmpty(&rgnInfo)) {
+ *              If (Region_IsRectangular(&rgnInfo)) {
+ *                      // Optional code optimized for a single rectangle
+ *              } else {
+ *                      SurfaceDataBounds span;
+ *                      Region_StartIteration(env, &rgnInfo);
+ *                      // this next line is optional if the info is needed
+ *                      int numrects = Region_CountIterationRects(&rgnInfo);
+ *                      while (Region_NextIteration(&rgnInfo, &span)) {
+ *                              // Process span.x1, span.y1, span.x2, span.y2
+ *                      }
+ *                      Region_EndIteration(env, &rgnInfo);
+ *              }
+ *      }
  */
 
 /*
@@ -66,12 +66,12 @@ extern "C" {
  * stack-allocate one of these structures for performance.
  */
 typedef struct {
-    SurfaceDataBounds	bounds;
-    jint		endIndex;
-    jobject		bands;
-    jint		index;
-    jint		numrects;
-    jint		*pBands;
+    SurfaceDataBounds   bounds;
+    jint                endIndex;
+    jobject             bands;
+    jint                index;
+    jint                numrects;
+    jint                *pBands;
 } RegionData;
 
 /*
@@ -79,9 +79,9 @@ typedef struct {
  * of type sun.java2d.pipe.Region.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  */
 JNIEXPORT jint JNICALL
 Region_GetInfo(JNIEnv *env, jobject region, RegionData *pRgnInfo);
@@ -91,9 +91,9 @@ Region_GetInfo(JNIEnv *env, jobject region, RegionData *pRgnInfo);
  * returns them in the specified SurfaceDataBounds structure.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  */
 JNIEXPORT void JNICALL
 Region_GetBounds(JNIEnv *env, jobject region, SurfaceDataBounds *b);
@@ -134,7 +134,7 @@ Region_GetBounds(JNIEnv *env, jobject region, SurfaceDataBounds *b);
 
 /*
  * Test whether the RegionData structure represents a single rectangle.
- * 
+ *
  * Note that this test only checks to see if the original Java Region
  * object is a simple rectangle and does not take into account the
  * subsetting of the list of rectangles that might occur if a given
@@ -150,9 +150,9 @@ Region_GetBounds(JNIEnv *env, jobject region, SurfaceDataBounds *b);
  * without loss of generality.
  *
  * Note to callers:
- *	This function may use JNI Critical methods so it is important
- *	that the caller not call any other JNI methods after this function
- *	returns until the RegionEndIteration function is called.
+ *      This function may use JNI Critical methods so it is important
+ *      that the caller not call any other JNI methods after this function
+ *      returns until the RegionEndIteration function is called.
  */
 JNIEXPORT void JNICALL
 Region_StartIteration(JNIEnv *env, RegionData *pRgnInfo);
@@ -164,9 +164,9 @@ Region_StartIteration(JNIEnv *env, RegionData *pRgnInfo);
  * interest will be included in the returned count.
  *
  * Note to callers:
- * 	This function may only be called after Region_StartIteration
- * 	and before Region_EndIteration are called on a given RegionData
- * 	structure.
+ *      This function may only be called after Region_StartIteration
+ *      and before Region_EndIteration are called on a given RegionData
+ *      structure.
  */
 JNIEXPORT jint JNICALL
 Region_CountIterationRects(RegionData *pRgnInfo);
@@ -179,9 +179,9 @@ Region_CountIterationRects(RegionData *pRgnInfo);
  * the bounds of the RegionData structure, then return 0.
  *
  * Note to callers:
- * 	This function may only be called after Region_StartIteration
- * 	and before Region_EndIteration are called on a given RegionData
- * 	structure.
+ *      This function may only be called after Region_StartIteration
+ *      and before Region_EndIteration are called on a given RegionData
+ *      structure.
  */
 JNIEXPORT jint JNICALL
 Region_NextIteration(RegionData *pRgnInfo, SurfaceDataBounds *pSpan);
@@ -191,9 +191,9 @@ Region_NextIteration(RegionData *pRgnInfo, SurfaceDataBounds *pSpan);
  * that was needed to iterate the list of subrectangles.
  *
  * Note to callers:
- *	This function will release any outstanding JNI Critical locks so
- *	it will once again be safe to use arbitrary JNI calls or return
- *	to the enclosing JNI native context.
+ *      This function will release any outstanding JNI Critical locks so
+ *      it will once again be safe to use arbitrary JNI calls or return
+ *      to the enclosing JNI native context.
  */
 JNIEXPORT void JNICALL
 Region_EndIteration(JNIEnv *env, RegionData *pRgnInfo);
@@ -202,12 +202,12 @@ Region_EndIteration(JNIEnv *env, RegionData *pRgnInfo);
 /*
  * Converts a sun.java2d.pipe.Region object to a list of
  * rectangles using platform specific native data representation
- * (see the src/$PLATFORM/native/sun/awt/utility/rect.h header 
+ * (see the src/$PLATFORM/native/sun/awt/utility/rect.h header
  * files.)
  */
 JNIEXPORT int JNICALL
-RegionToYXBandedRectangles(JNIEnv *env, 
-        jint x1, jint y1, jint x2, jint y2, jobject region, 
+RegionToYXBandedRectangles(JNIEnv *env,
+        jint x1, jint y1, jint x2, jint y2, jobject region,
         RECT_T ** pRect, unsigned int initialBufferSize);
 
 
@@ -216,4 +216,3 @@ RegionToYXBandedRectangles(JNIEnv *env,
 #endif
 
 #endif
-

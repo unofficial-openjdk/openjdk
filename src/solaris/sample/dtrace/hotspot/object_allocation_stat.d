@@ -32,10 +32,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. object_allocation_stat.d -c "java ..." TOP_RESULTS_COUNT INTERVAL_SECS
  *    2. object_allocation_stat.d -p JAVA_PID TOP_RESULTS_COUNT INTERVAL_SECS

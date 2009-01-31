@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package javax.swing.colorchooser;
 
 import java.awt.*;
@@ -37,10 +37,10 @@ import java.awt.image.*;
  *  <p>Normal usage looks something like this:
  *  <pre>&nbsp;Image i = createImage(new SyntheticImage(200, 100) {
  *  &nbsp;    protected void computeRow(int y, int[] row) {
- *  &nbsp;	for(int i = width; --i>=0; ) {
- *  &nbsp;	    int grey = i*255/(width-1);
- *  &nbsp;	    row[i] = (255<<24)|(grey<<16)|(grey<<8)|grey;
- *  &nbsp;	}
+ *  &nbsp;      for(int i = width; --i>=0; ) {
+ *  &nbsp;          int grey = i*255/(width-1);
+ *  &nbsp;          row[i] = (255<<24)|(grey<<16)|(grey<<8)|grey;
+ *  &nbsp;      }
  *  &nbsp;    }
  *  &nbsp;}
  *  </pre>This creates a image 200 pixels wide and 100 pixels high
@@ -52,7 +52,6 @@ import java.awt.image.*;
  *  frame has started.  It is acceptable (expected?) for computeRow(0,r)
  *  to pause until the appropriate time to start the next frame.
  *
- *  @version %I% %G%
  *  @author James Gosling
  */
 abstract class SyntheticImage implements ImageProducer {
@@ -99,7 +98,7 @@ abstract class SyntheticImage implements ImageProducer {
     protected boolean isStatic() { return true; }
     public void nextFrame(int param) {}//Override if !isStatic
     public void requestTopDownLeftRightResend(ImageConsumer ic){}
-    
+
     protected volatile boolean aborted = false;
 }
 
@@ -122,8 +121,8 @@ class SyntheticImageGenerator extends Thread {
         int w = parent.width;
         int h = parent.height;
         int hints = ic.SINGLEPASS|ic.COMPLETESCANLINES|ic.TOPDOWNLEFTRIGHT;
-        if (parent.isStatic()) 
-	    hints |= ic.SINGLEFRAME;
+        if (parent.isStatic())
+            hints |= ic.SINGLEFRAME;
         ic.setHints(hints);
         ic.setDimensions(w, h);
         ic.setProperties(null);
@@ -131,11 +130,11 @@ class SyntheticImageGenerator extends Thread {
 
         if (useful) {
             int[] row=new int[w];
-	    doPrivileged( new Runnable() {
-	        public void run() {
-		    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-		} 
-	    });
+            doPrivileged( new Runnable() {
+                public void run() {
+                    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+                }
+            });
 
             do {
                 for (int y = 0; y<h && useful; y++) {

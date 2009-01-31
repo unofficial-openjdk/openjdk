@@ -36,6 +36,6 @@ public class ShortSignature implements BaseType {
     public static ShortSignature make() {return singleton;}
 
     public void accept(TypeTreeVisitor<?> v){
-	v.visitShortSignature(this);
+        v.visitShortSignature(this);
     }
 }

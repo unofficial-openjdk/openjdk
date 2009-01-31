@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -32,10 +32,9 @@
  *
  * zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id$ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -48,39 +47,39 @@
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
  */
 #ifdef Z_PREFIX
-#  define deflateInit_	z_deflateInit_
-#  define deflate	z_deflate
-#  define deflateEnd	z_deflateEnd
-#  define inflateInit_ 	z_inflateInit_
-#  define inflate	z_inflate
-#  define inflateEnd	z_inflateEnd
-#  define deflateInit2_	z_deflateInit2_
+#  define deflateInit_  z_deflateInit_
+#  define deflate       z_deflate
+#  define deflateEnd    z_deflateEnd
+#  define inflateInit_  z_inflateInit_
+#  define inflate       z_inflate
+#  define inflateEnd    z_inflateEnd
+#  define deflateInit2_ z_deflateInit2_
 #  define deflateSetDictionary z_deflateSetDictionary
-#  define deflateCopy	z_deflateCopy
-#  define deflateReset	z_deflateReset
-#  define deflateParams	z_deflateParams
-#  define inflateInit2_	z_inflateInit2_
+#  define deflateCopy   z_deflateCopy
+#  define deflateReset  z_deflateReset
+#  define deflateParams z_deflateParams
+#  define inflateInit2_ z_inflateInit2_
 #  define inflateSetDictionary z_inflateSetDictionary
-#  define inflateSync	z_inflateSync
+#  define inflateSync   z_inflateSync
 #  define inflateSyncPoint z_inflateSyncPoint
-#  define inflateReset	z_inflateReset
-#  define compress	z_compress
-#  define compress2	z_compress2
-#  define uncompress	z_uncompress
-#  define adler32	z_adler32
-#  define crc32		z_crc32
+#  define inflateReset  z_inflateReset
+#  define compress      z_compress
+#  define compress2     z_compress2
+#  define uncompress    z_uncompress
+#  define adler32       z_adler32
+#  define crc32         z_crc32
 #  define get_crc_table z_get_crc_table
 
-#  define Byte		z_Byte
-#  define uInt		z_uInt
-#  define uLong		z_uLong
-#  define Bytef	        z_Bytef
-#  define charf		z_charf
-#  define intf		z_intf
-#  define uIntf		z_uIntf
-#  define uLongf	z_uLongf
-#  define voidpf	z_voidpf
-#  define voidp		z_voidp
+#  define Byte          z_Byte
+#  define uInt          z_uInt
+#  define uLong         z_uLong
+#  define Bytef         z_Bytef
+#  define charf         z_charf
+#  define intf          z_intf
+#  define uIntf         z_uIntf
+#  define uLongf        z_uLongf
+#  define voidpf        z_voidpf
+#  define voidp         z_voidp
 #endif
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32)

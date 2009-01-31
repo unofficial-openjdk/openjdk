@@ -41,13 +41,13 @@ import sun.security.util.*;
  * of the distinguished name, or by using the ASN.1 DER encoded byte
  * representation of the distinguished name.  The current specification
  * for the string representation of a distinguished name is defined in
- * <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253: Lightweight 
- * Directory Access Protocol (v3): UTF-8 String Representation of 
- * Distinguished Names</a>. This class, however, accepts string formats from 
+ * <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253: Lightweight
+ * Directory Access Protocol (v3): UTF-8 String Representation of
+ * Distinguished Names</a>. This class, however, accepts string formats from
  * both RFC 2253 and <a href="http://www.ietf.org/rfc/rfc1779.txt">RFC 1779:
- * A String Representation of Distinguished Names</a>, and also recognizes 
+ * A String Representation of Distinguished Names</a>, and also recognizes
  * attribute type keywords whose OIDs (Object Identifiers) are defined in
- * <a href="http://www.ietf.org/rfc/rfc3280.txt">RFC 3280: Internet X.509 
+ * <a href="http://www.ietf.org/rfc/rfc3280.txt">RFC 3280: Internet X.509
  * Public Key Infrastructure Certificate and CRL Profile</a>.
  *
  * <p> The string representation for this <code>X500Principal</code>
@@ -58,7 +58,6 @@ import sun.security.util.*;
  * <code>X509Certificate</code> return X500Principals representing the
  * issuer and subject fields of the certificate.
  *
- * @version %I%, %G%
  * @see java.security.cert.X509Certificate
  * @since 1.4
  */
@@ -67,11 +66,11 @@ public final class X500Principal implements Principal, java.io.Serializable {
     private static final long serialVersionUID = -500463348111345721L;
 
     /**
-     * RFC 1779 String format of Distinguished Names. 
+     * RFC 1779 String format of Distinguished Names.
      */
     public static final String RFC1779 = "RFC1779";
     /**
-     * RFC 2253 String format of Distinguished Names. 
+     * RFC 2253 String format of Distinguished Names.
      */
     public static final String RFC2253 = "RFC2253";
     /**
@@ -99,27 +98,27 @@ public final class X500Principal implements Principal, java.io.Serializable {
 
     /**
      * Creates an <code>X500Principal</code> from a string representation of
-     * an X.500 distinguished name (ex: 
+     * an X.500 distinguished name (ex:
      * "CN=Duke, OU=JavaSoft, O=Sun Microsystems, C=US").
      * The distinguished name must be specified using the grammar defined in
-     * RFC 1779 or RFC 2253 (either format is acceptable). 
+     * RFC 1779 or RFC 2253 (either format is acceptable).
      *
      * <p>This constructor recognizes the attribute type keywords
      * defined in RFC 1779 and RFC 2253
      * (and listed in {@link #getName(String format) getName(String format)}),
      * as well as the T, DNQ or DNQUALIFIER, SURNAME, GIVENNAME, INITIALS,
-     * GENERATION, EMAILADDRESS, and SERIALNUMBER keywords whose OIDs are 
+     * GENERATION, EMAILADDRESS, and SERIALNUMBER keywords whose OIDs are
      * defined in RFC 3280 and its successor.
      * Any other attribute type must be specified as an OID.
      *
      * @param name an X.500 distinguished name in RFC 1779 or RFC 2253 format
      * @exception NullPointerException if the <code>name</code>
-     *			is <code>null</code>
+     *                  is <code>null</code>
      * @exception IllegalArgumentException if the <code>name</code>
-     *			is improperly specified
+     *                  is improperly specified
      */
     public X500Principal(String name) {
-	this(name, (Map<String, String>) Collections.EMPTY_MAP);
+        this(name, (Map<String, String>) Collections.EMPTY_MAP);
     }
 
     /**
@@ -148,35 +147,35 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * @exception NullPointerException if <code>name</code> or
      *   <code>keywordMap</code> is <code>null</code>
      * @exception IllegalArgumentException if the <code>name</code> is
-     *   improperly specified or a keyword in the <code>name</code> maps to an 
+     *   improperly specified or a keyword in the <code>name</code> maps to an
      *   OID that is not in the correct form
      * @since 1.6
      */
     public X500Principal(String name, Map<String, String> keywordMap) {
-	if (name == null) {
-	    throw new NullPointerException
-		(sun.security.util.ResourcesMgr.getString
-		("provided null name"));
-	}
-	if (keywordMap == null) {
-	    throw new NullPointerException
-		(sun.security.util.ResourcesMgr.getString
-		("provided null keyword map"));
-	}
+        if (name == null) {
+            throw new NullPointerException
+                (sun.security.util.ResourcesMgr.getString
+                ("provided null name"));
+        }
+        if (keywordMap == null) {
+            throw new NullPointerException
+                (sun.security.util.ResourcesMgr.getString
+                ("provided null keyword map"));
+        }
 
-	try {
-	    thisX500Name = new X500Name(name, keywordMap);
-	} catch (Exception e) {
-	    IllegalArgumentException iae = new IllegalArgumentException
-			("improperly specified input name: " + name);
-	    iae.initCause(e);
-	    throw iae;
-	}
+        try {
+            thisX500Name = new X500Name(name, keywordMap);
+        } catch (Exception e) {
+            IllegalArgumentException iae = new IllegalArgumentException
+                        ("improperly specified input name: " + name);
+            iae.initCause(e);
+            throw iae;
+        }
     }
 
     /**
-     * Creates an <code>X500Principal</code> from a distinguished name in 
-     * ASN.1 DER encoded form. The ASN.1 notation for this structure is as 
+     * Creates an <code>X500Principal</code> from a distinguished name in
+     * ASN.1 DER encoded form. The ASN.1 notation for this structure is as
      * follows.
      * <pre><code>
      * Name ::= CHOICE {
@@ -203,20 +202,20 @@ public final class X500Principal implements Principal, java.io.Serializable {
      *       bmpString               BMPString (SIZE (1..MAX)) }
      * </code></pre>
      *
-     * @param name a byte array containing the distinguished name in ASN.1 
+     * @param name a byte array containing the distinguished name in ASN.1
      * DER encoded form
      * @throws IllegalArgumentException if an encoding error occurs
-     *		(incorrect form for DN)
+     *          (incorrect form for DN)
      */
     public X500Principal(byte[] name) {
-	try {
-	    thisX500Name = new X500Name(name);
-	} catch (Exception e) {
-	    IllegalArgumentException iae = new IllegalArgumentException
-			("improperly specified input name");
-	    iae.initCause(e);
-	    throw iae;
-	}
+        try {
+            thisX500Name = new X500Name(name);
+        } catch (Exception e) {
+            IllegalArgumentException iae = new IllegalArgumentException
+                        ("improperly specified input name");
+            iae.initCause(e);
+            throw iae;
+        }
     }
 
     /**
@@ -230,40 +229,40 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * to the next available byte after the encoded distinguished name.
      *
      * @param is an <code>InputStream</code> containing the distinguished
-     *		name in ASN.1 DER encoded form
+     *          name in ASN.1 DER encoded form
      *
      * @exception NullPointerException if the <code>InputStream</code>
-     *		is <code>null</code>
+     *          is <code>null</code>
      * @exception IllegalArgumentException if an encoding error occurs
-     *		(incorrect form for DN)
+     *          (incorrect form for DN)
      */
     public X500Principal(InputStream is) {
-	if (is == null) {
-	    throw new NullPointerException("provided null input stream");
-	}
+        if (is == null) {
+            throw new NullPointerException("provided null input stream");
+        }
 
-	try {
-	    if (is.markSupported())
-		is.mark(is.available() + 1);
-	    DerValue der = new DerValue(is);
-	    thisX500Name = new X500Name(der.data);
-	} catch (Exception e) {
-	    if (is.markSupported()) {
-		try {
-		    is.reset();
-		} catch (IOException ioe) {
-		    IllegalArgumentException iae = new IllegalArgumentException
-			("improperly specified input stream " +
-			("and unable to reset input stream"));
-		    iae.initCause(e);
-		    throw iae;
-		}
-	    }
-	    IllegalArgumentException iae = new IllegalArgumentException
-			("improperly specified input stream");
-	    iae.initCause(e);
-	    throw iae;
-	}
+        try {
+            if (is.markSupported())
+                is.mark(is.available() + 1);
+            DerValue der = new DerValue(is);
+            thisX500Name = new X500Name(der.data);
+        } catch (Exception e) {
+            if (is.markSupported()) {
+                try {
+                    is.reset();
+                } catch (IOException ioe) {
+                    IllegalArgumentException iae = new IllegalArgumentException
+                        ("improperly specified input stream " +
+                        ("and unable to reset input stream"));
+                    iae.initCause(e);
+                    throw iae;
+                }
+            }
+            IllegalArgumentException iae = new IllegalArgumentException
+                        ("improperly specified input stream");
+            iae.initCause(e);
+            throw iae;
+        }
     }
 
     /**
@@ -276,7 +275,7 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * @return the distinguished name of this <code>X500Principal</code>
      */
     public String getName() {
-	return getName(X500Principal.RFC2253);
+        return getName(X500Principal.RFC2253);
     }
 
     /**
@@ -303,33 +302,33 @@ public final class X500Principal implements Principal, java.io.Serializable {
      *
      * <p><ol>
      * <li> Leading zeros are removed from attribute types
-     *		that are encoded as dotted decimal OIDs
+     *          that are encoded as dotted decimal OIDs
      * <li> DirectoryString attribute values of type
-     *		PrintableString and UTF8String are not
-     *		output in hexadecimal format
+     *          PrintableString and UTF8String are not
+     *          output in hexadecimal format
      * <li> DirectoryString attribute values of types
-     *		other than PrintableString and UTF8String
-     *		are output in hexadecimal format
+     *          other than PrintableString and UTF8String
+     *          are output in hexadecimal format
      * <li> Leading and trailing white space characters
-     *		are removed from non-hexadecimal attribute values
-     *		(unless the value consists entirely of white space characters)
+     *          are removed from non-hexadecimal attribute values
+     *          (unless the value consists entirely of white space characters)
      * <li> Internal substrings of one or more white space characters are
-     *		converted to a single space in non-hexadecimal
-     *		attribute values
+     *          converted to a single space in non-hexadecimal
+     *          attribute values
      * <li> Relative Distinguished Names containing more than one
-     *		Attribute Value Assertion (AVA) are output in the
-     *		following order: an alphabetical ordering of AVAs
-     *		containing standard keywords, followed by a numeric
-     *		ordering of AVAs containing OID keywords.
+     *          Attribute Value Assertion (AVA) are output in the
+     *          following order: an alphabetical ordering of AVAs
+     *          containing standard keywords, followed by a numeric
+     *          ordering of AVAs containing OID keywords.
      * <li> The only characters in attribute values that are escaped are
-     *		those which section 2.4 of RFC 2253 states must be escaped
-     *		(they are escaped using a preceding backslash character)
+     *          those which section 2.4 of RFC 2253 states must be escaped
+     *          (they are escaped using a preceding backslash character)
      * <li> The entire name is converted to upper case
-     *		using <code>String.toUpperCase(Locale.US)</code>
+     *          using <code>String.toUpperCase(Locale.US)</code>
      * <li> The entire name is converted to lower case
-     *		using <code>String.toLowerCase(Locale.US)</code>
+     *          using <code>String.toLowerCase(Locale.US)</code>
      * <li> The name is finally normalized using normalization form KD,
-     *		as described in the Unicode Standard and UAX #15
+     *          as described in the Unicode Standard and UAX #15
      * </ol>
      *
      * <p> Additional standard formats may be introduced in the future.
@@ -337,20 +336,20 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * @param format the format to use
      *
      * @return a string representation of this <code>X500Principal</code>
-     *		using the specified format
+     *          using the specified format
      * @throws IllegalArgumentException if the specified format is invalid
      *          or null
      */
     public String getName(String format) {
-	if (format != null) {
-	    if (format.equalsIgnoreCase(RFC1779)) {
-		return thisX500Name.getRFC1779Name();
-	    } else if (format.equalsIgnoreCase(RFC2253)) {
-		return thisX500Name.getRFC2253Name();
-	    } else if (format.equalsIgnoreCase(CANONICAL)) {
-		return thisX500Name.getRFC2253CanonicalName();
-	    }
-	}
+        if (format != null) {
+            if (format.equalsIgnoreCase(RFC1779)) {
+                return thisX500Name.getRFC1779Name();
+            } else if (format.equalsIgnoreCase(RFC2253)) {
+                return thisX500Name.getRFC2253Name();
+            } else if (format.equalsIgnoreCase(CANONICAL)) {
+                return thisX500Name.getRFC2253CanonicalName();
+            }
+        }
         throw new IllegalArgumentException("invalid format specified");
     }
 
@@ -383,24 +382,24 @@ public final class X500Principal implements Principal, java.io.Serializable {
      *  The map may be empty but never <code>null</code>.
      * @return a string representation of this <code>X500Principal</code>
      *          using the specified format
-     * @throws IllegalArgumentException if the specified format is invalid, 
+     * @throws IllegalArgumentException if the specified format is invalid,
      *  null, or an OID in the name maps to an improperly specified keyword
      * @throws NullPointerException if <code>oidMap</code> is <code>null</code>
      * @since 1.6
      */
     public String getName(String format, Map<String, String> oidMap) {
-	if (oidMap == null) {
-	    throw new NullPointerException
-		(sun.security.util.ResourcesMgr.getString
-		("provided null OID map"));
-	}
-	if (format != null) {
-	    if (format.equalsIgnoreCase(RFC1779)) {
-		return thisX500Name.getRFC1779Name(oidMap);
-	    } else if (format.equalsIgnoreCase(RFC2253)) {
-		return thisX500Name.getRFC2253Name(oidMap);
-	    }
-	}
+        if (oidMap == null) {
+            throw new NullPointerException
+                (sun.security.util.ResourcesMgr.getString
+                ("provided null OID map"));
+        }
+        if (format != null) {
+            if (format.equalsIgnoreCase(RFC1779)) {
+                return thisX500Name.getRFC1779Name(oidMap);
+            } else if (format.equalsIgnoreCase(RFC2253)) {
+                return thisX500Name.getRFC2253Name(oidMap);
+            }
+        }
         throw new IllegalArgumentException("invalid format specified");
     }
 
@@ -412,15 +411,15 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * <p>Note that the byte array returned is cloned to protect against
      * subsequent modifications.
      *
-     * @return a byte array containing the distinguished name in ASN.1 DER 
+     * @return a byte array containing the distinguished name in ASN.1 DER
      * encoded form
      */
     public byte[] getEncoded() {
-	try {
-	    return thisX500Name.getEncoded();
-	} catch (IOException e) {
+        try {
+            return thisX500Name.getEncoded();
+        } catch (IOException e) {
             throw new RuntimeException("unable to get encoding", e);
-	}
+        }
     }
 
     /**
@@ -430,11 +429,11 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * @return a string representation of this <code>X500Principal</code>
      */
     public String toString() {
-	return thisX500Name.toString();
+        return thisX500Name.toString();
     }
 
     /**
-     * Compares the specified <code>Object</code> with this 
+     * Compares the specified <code>Object</code> with this
      * <code>X500Principal</code> for equality.
      *
      * <p> Specifically, this method returns <code>true</code> if
@@ -446,22 +445,22 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * <p> This implementation is compliant with the requirements of RFC 3280.
      *
      * @param o Object to be compared for equality with this
-     *		<code>X500Principal</code>
+     *          <code>X500Principal</code>
      *
-     * @return <code>true</code> if the specified <code>Object</code> is equal 
-     *		to this <code>X500Principal</code>, <code>false</code> otherwise
+     * @return <code>true</code> if the specified <code>Object</code> is equal
+     *          to this <code>X500Principal</code>, <code>false</code> otherwise
      */
     public boolean equals(Object o) {
         if (this == o) {
             return true;
-	}
-	if (o instanceof X500Principal == false) {
-	    return false;
-	}
-	X500Principal other = (X500Principal)o;
-	return this.thisX500Name.equals(other.thisX500Name);
+        }
+        if (o instanceof X500Principal == false) {
+            return false;
+        }
+        X500Principal other = (X500Principal)o;
+        return this.thisX500Name.equals(other.thisX500Name);
     }
- 
+
     /**
      * Return a hash code for this <code>X500Principal</code>.
      *
@@ -471,30 +470,30 @@ public final class X500Principal implements Principal, java.io.Serializable {
      * @return a hash code for this <code>X500Principal</code>
      */
     public int hashCode() {
-	return thisX500Name.hashCode();
+        return thisX500Name.hashCode();
     }
 
     /**
      * Save the X500Principal object to a stream.
      *
      * @serialData this <code>X500Principal</code> is serialized
-     *		by writing out its DER-encoded form
-     *		(the value of <code>getEncoded</code> is serialized).
-     */ 
+     *          by writing out its DER-encoded form
+     *          (the value of <code>getEncoded</code> is serialized).
+     */
     private void writeObject(java.io.ObjectOutputStream s)
-	throws IOException {
-	s.writeObject(thisX500Name.getEncodedInternal());
+        throws IOException {
+        s.writeObject(thisX500Name.getEncodedInternal());
     }
 
     /**
      * Reads this object from a stream (i.e., deserializes it).
      */
     private void readObject(java.io.ObjectInputStream s)
-	throws java.io.IOException,
-	       java.io.NotActiveException,
-	       ClassNotFoundException {
+        throws java.io.IOException,
+               java.io.NotActiveException,
+               ClassNotFoundException {
 
-	// re-create thisX500Name
-	thisX500Name = new X500Name((byte[])s.readObject());
+        // re-create thisX500Name
+        thisX500Name = new X500Name((byte[])s.readObject());
     }
 }

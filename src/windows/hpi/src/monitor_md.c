@@ -53,7 +53,7 @@ sysMonitorInit(sys_mon_t *mid)
     if (semaphore_init_mutex_p == NULL) {
         systemIsMP = sysGetSysInfo()->isMP;
         mutexInit(&semaphore_init_mutex);
-	semaphore_init_mutex_p = &semaphore_init_mutex;
+        semaphore_init_mutex_p = &semaphore_init_mutex;
     }
 
     mid->atomic_count = -1;     /* -1 for no thread, 0 means 1 thread */
@@ -272,7 +272,7 @@ OK_RET:
 ERR_RET:
         mov eax, 0FFFFFFFFH;
         ret;
-        
+
 RELEASE_SEMAPHORE:
         jmp sysMonitorExit2;        /* forwading call */
     }
@@ -353,7 +353,7 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
     }
 
     if ( sysThreadIsInterrupted(self, 1) ) {
-	return SYS_INTRPT;
+        return SYS_INTRPT;
     }
 
     entry_count = mid->entry_count;
@@ -373,7 +373,7 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
     }
 
     if ( millis == SYS_TIMEOUT_INFINITY ||
-	millis > (jlong)((unsigned int)0xffffffff) ) {
+        millis > (jlong)((unsigned int)0xffffffff) ) {
         timeout = INFINITE;
     } else {
         timeout = (long) millis;
@@ -425,7 +425,7 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
     if ( sysThreadIsInterrupted(self, 1) ) {
         return SYS_INTRPT;
     }
-    
+
     return SYS_OK;
 }
 
@@ -435,8 +435,8 @@ dumpWaitingQueue(sys_thread_t *tid, sys_thread_t **waiters, int sz)
     int n;
     for (n = 0; tid != 0; tid = tid->next_waiter, n++, sz--) {
         if (sz > 0) {
-	    waiters[n] = tid;
-	}
+            waiters[n] = tid;
+        }
     }
     return n;
 }
@@ -454,10 +454,10 @@ findWaitersHelper(sys_thread_t *t, void *arg)
     wait_info * winfo = (wait_info *) arg;
     if (t->enter_monitor == winfo->mid) {
         if (winfo->sz > 0) {
-	    winfo->waiters[winfo->nwaiters] = t;
-	}
-	winfo->sz--;
-	winfo->nwaiters++;
+            winfo->waiters[winfo->nwaiters] = t;
+        }
+        winfo->sz--;
+        winfo->nwaiters++;
     }
     return SYS_OK;
 }
@@ -481,8 +481,8 @@ sysMonitorGetInfo(sys_mon_t *mid, sys_mon_info *info)
     info->n_monitor_waiters = winfo.nwaiters;
 
     info->n_condvar_waiters = dumpWaitingQueue(mid->monitor_waiter,
-					       info->condvar_waiters,
-					       info->sz_condvar_waiters);
+                                               info->condvar_waiters,
+                                               info->sz_condvar_waiters);
 
     return SYS_OK;
 }

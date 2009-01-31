@@ -30,7 +30,7 @@ import com.sun.jdi.*;
 /**
  *
  *  Notification that a thread in the target VM is attempting
- *  to enter a monitor that is already acquired by another thread. 
+ *  to enter a monitor that is already acquired by another thread.
  * <P>
  *
  * @see EventQueue
@@ -43,11 +43,11 @@ import com.sun.jdi.*;
 public interface MonitorContendedEnterEvent extends LocatableEvent {
 
     /**
-     * Returns the thread in which this event has occurred. 
+     * Returns the thread in which this event has occurred.
      * <p>
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in 
-     * the target VM. 
+     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * the target VM.
      */
     public ThreadReference thread();
 

@@ -58,7 +58,7 @@ public class SunWritableRaster extends WritableRaster {
 
     public static void setDataStealer(DataStealer ds) {
         if (stealer != null) {
-	    throw new InternalError("Attempt to set DataStealer twice");
+            throw new InternalError("Attempt to set DataStealer twice");
         }
         stealer = ds;
     }
@@ -104,7 +104,7 @@ public class SunWritableRaster extends WritableRaster {
 
     public SunWritableRaster(SampleModel sampleModel,
                              DataBuffer dataBuffer,
-                             Point origin) 
+                             Point origin)
     {
         super(sampleModel, dataBuffer, origin);
         theTrackable = stealTrackable(dataBuffer);

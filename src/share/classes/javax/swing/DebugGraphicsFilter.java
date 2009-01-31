@@ -29,8 +29,7 @@ import java.awt.*;
 import java.awt.image.*;
 
 /** Color filter for DebugGraphics, used for images only.
-  * 
-  * @version %I% %G%
+  *
   * @author Dave Karlton
   */
 class DebugGraphicsFilter extends RGBImageFilter {

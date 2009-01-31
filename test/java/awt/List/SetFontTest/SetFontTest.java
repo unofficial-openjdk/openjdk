@@ -21,8 +21,8 @@
  * have any questions.
  */
 
-/* 
-  test @(#)SetFontTest.java	1.2 07/05/14  1.2, 05/14/07
+/*
+  test
   @bug 5010944 6248072
   @summary List's rows overlap one another
   @author Dmitry Cherepanov area=awt-list
@@ -39,7 +39,7 @@ public class SetFontTest extends Applet
     Button button1 = new Button("Enlarge font");
     Button button2 = new Button("Change mode");
 
-    public void init() 
+    public void init()
     {
         list.add("111");
         list.add("222");
@@ -67,7 +67,7 @@ public class SetFontTest extends Applet
 
         this.setLayout (new FlowLayout ());
 
-        String[] instructions = 
+        String[] instructions =
         {
             "1) Click on the 'Enlarge font' button to enlarge font of the list.",
             "2) If you see that the rows of the list overlap one another "+
@@ -95,11 +95,11 @@ public class SetFontTest extends Applet
 
 
 
-  
+
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -112,12 +112,12 @@ public class SetFontTest extends Applet
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
-{ 
+class Sysout
+{
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -127,7 +127,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
+
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -136,8 +136,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -165,20 +165,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-   
+
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name ) 
+    public TestDialog( Frame frame, String name )
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-      
+
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-      
+
         pack();
-      
+
         setVisible(true);
     }// TestDialog()
 
@@ -192,7 +192,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        { 
+        {
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -203,25 +203,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-               
+
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-               
+
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else 
-                { 
+                else
+                {
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-            
+
                 instructionsText.append( printStr + "\n" );
-            
+
             }// while
-         
+
         }// for
-      
+
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -229,7 +229,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }  
-   
-}// TestDialog  class    
-  
+    }
+
+}// TestDialog  class

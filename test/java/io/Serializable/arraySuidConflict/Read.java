@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @bug 4490677
  * @summary Verify that array serialVersionUID conflicts caused by changes in
- * 	    package scope do not cause deserialization to fail.
+ *          package scope do not cause deserialization to fail.
  */
 
 import java.io.*;
@@ -35,9 +35,9 @@ class Foo {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	Foo[] obj = (Foo[]) oin.readObject();
-	oin.close();
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        Foo[] obj = (Foo[]) oin.readObject();
+        oin.close();
     }
 }

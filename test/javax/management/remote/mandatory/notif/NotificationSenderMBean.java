@@ -21,11 +21,11 @@
  * have any questions.
  */
 
-/* 
- * build	@BUILD_TAG_PLACEHOLDER@
- * 
+/*
+ * build        @BUILD_TAG_PLACEHOLDER@
+ *
  * @COPYRIGHT_MINI_LEGAL_NOTICE_PLACEHOLDER@
- */ 
+ */
 
 public interface NotificationSenderMBean {
     public void sendNotifs(String type, int count);

@@ -28,7 +28,6 @@ package javax.security.auth.login;
 /**
  * A generic account exception.
  *
- * @version %I%, %G%
  * @since 1.5
  */
 public class AccountException extends LoginException {
@@ -40,7 +39,7 @@ public class AccountException extends LoginException {
      * message is a String that describes this particular exception.
      */
     public AccountException() {
-	super();
+        super();
     }
 
     /**
@@ -53,7 +52,6 @@ public class AccountException extends LoginException {
      * @param msg the detail message.
      */
     public AccountException(String msg) {
-	super(msg);
+        super(msg);
     }
 }
-

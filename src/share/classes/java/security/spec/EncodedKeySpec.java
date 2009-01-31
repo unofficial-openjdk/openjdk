@@ -30,7 +30,6 @@ package java.security.spec;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see java.security.Key
  * @see java.security.KeyFactory
@@ -48,13 +47,13 @@ public abstract class EncodedKeySpec implements KeySpec {
     /**
      * Creates a new EncodedKeySpec with the given encoded key.
      *
-     * @param encodedKey the encoded key. The contents of the 
+     * @param encodedKey the encoded key. The contents of the
      * array are copied to protect against subsequent modification.
      * @exception NullPointerException if <code>encodedKey</code>
      * is null.
      */
     public EncodedKeySpec(byte[] encodedKey) {
-	this.encodedKey = encodedKey.clone();
+        this.encodedKey = encodedKey.clone();
     }
 
     /**
@@ -64,7 +63,7 @@ public abstract class EncodedKeySpec implements KeySpec {
      * this method is called.
      */
     public byte[] getEncoded() {
-	return this.encodedKey.clone();
+        return this.encodedKey.clone();
     }
 
     /**

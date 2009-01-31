@@ -41,10 +41,10 @@ static void set_low(jlong* value, jint low) {
     *value |= (jlong)(julong)(juint)low;
 }
 
-static void set_high(jlong* value, jint high) { 
+static void set_high(jlong* value, jint high) {
     *value &= (jlong)(julong)(juint)0xffffffff;
     *value |= (jlong)high       << 32;
-} 
+}
 
 static jlong jlong_from(jint h, jint l) {
   jlong result = 0; // initialization to avoid warning
@@ -83,7 +83,7 @@ Java_com_sun_management_OperatingSystem_initialize
     switch(oi.dwPlatformId) {
         case VER_PLATFORM_WIN32_WINDOWS: is_nt = JNI_FALSE; break;
         case VER_PLATFORM_WIN32_NT:      is_nt = JNI_TRUE;  break;
-        default: 
+        default:
             throw_internal_error(env, "Unsupported Platform");
             return;
     }
@@ -104,7 +104,7 @@ Java_com_sun_management_OperatingSystem_getCommittedVirtualMemorySize0
     PROCESS_MEMORY_COUNTERS pmc;
 
     if (!is_nt) return -1;
-  
+
     if (!psapi_inited) {
         psapi_inited = JNI_TRUE;
         if ((hInstPsapi = LoadLibrary("PSAPI.DLL")) == NULL) return -1;
@@ -114,9 +114,9 @@ Java_com_sun_management_OperatingSystem_getCommittedVirtualMemorySize0
             return -1;
         }
     }
-  
+
     if (lpfnGetProcessMemoryInfo == NULL) return -1;
-  
+
     lpfnGetProcessMemoryInfo(main_process, &pmc,
                              sizeof(PROCESS_MEMORY_COUNTERS));
     return (jlong) pmc.PagefileUsage;
@@ -152,7 +152,7 @@ Java_com_sun_management_OperatingSystem_getProcessCpuTime
     if (is_nt) {
         // Using static variables declared above
         // Units are 100-ns intervals.  Convert to ns.
-        GetProcessTimes(main_process, &process_creation_time, 
+        GetProcessTimes(main_process, &process_creation_time,
                         &process_exit_time,
                         &process_kernel_time, &process_user_time);
         return (jlong_from(process_user_time.dwHighDateTime,
@@ -178,10 +178,9 @@ Java_com_sun_management_OperatingSystem_getTotalPhysicalMemorySize
   (JNIEnv *env, jobject mbean)
 {
     MEMORYSTATUS ms;
-    // also returns dwAvailPhys (free physical memory bytes), 
+    // also returns dwAvailPhys (free physical memory bytes),
     // dwTotalVirtual, dwAvailVirtual,
     // dwMemoryLoad (% of memory in use)
     GlobalMemoryStatus(&ms);
     return ms.dwTotalPhys;
 }
-

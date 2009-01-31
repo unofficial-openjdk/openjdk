@@ -51,7 +51,7 @@ public class ImmutableDescriptorSerialTest {
                     "deserialize identically");
         }
         System.out.println("...OK");
-        
+
         System.out.println("Test that serialization preserves case and " +
                 "that deserialized object is case-insensitive");
         Descriptor d = new ImmutableDescriptor("a=aval", "B=Bval", "cC=cCval");
@@ -75,7 +75,7 @@ public class ImmutableDescriptorSerialTest {
         }
         System.out.println("...OK");
     }
-    
+
     private static <T> T serialize(T x) throws Exception {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ObjectOutputStream oout = new ObjectOutputStream(bout);

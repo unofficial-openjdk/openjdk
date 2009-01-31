@@ -31,7 +31,6 @@ import javax.swing.undo.*;
  * Interface implemented by a class interested in hearing about
  * undoable operations.
  *
- * @version %I% %G%
  * @author Ray Ryan
  */
 

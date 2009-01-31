@@ -35,7 +35,7 @@
  * <code>JComponent</code>s may also produce unexpected results,
  * such as the wrong colors showing up, and is generally not
  * encouraged.
- * 
+ *
  */
 
 package com.sun.java.swing.plaf.windows;
@@ -80,7 +80,7 @@ import com.sun.java.swing.plaf.windows.WindowsIconFactory.VistaMenuItemCheckIcon
 /**
  * Implements the Windows95/98/NT/2000 Look and Feel.
  * UI classes not implemented specifically for Windows will
- * default to those implemented in Basic.  
+ * default to those implemented in Basic.
  * <p>
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -89,7 +89,6 @@ import com.sun.java.swing.plaf.windows.WindowsIconFactory.VistaMenuItemCheckIcon
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author unattributed
  */
 public class WindowsLookAndFeel extends BasicLookAndFeel
@@ -101,10 +100,10 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * alternate algorithm for creating disabled icons to produce icons
      * that appear similar to the native Windows file chooser
      */
-    static final Object HI_RES_DISABLED_ICON_CLIENT_KEY = 
+    static final Object HI_RES_DISABLED_ICON_CLIENT_KEY =
         new StringUIClientPropertyKey(
             "WindowsLookAndFeel.generateHiResDisabledIcon");
-    
+
     private Toolkit toolkit;
     private boolean updatePending = false;
 
@@ -139,7 +138,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     public String getID() {
         return "Windows";
     }
-    
+
     public boolean isNativeLookAndFeel() {
         return OSInfo.getOSType() == OSInfo.OSType.WINDOWS;
     }
@@ -150,11 +149,11 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
 
     public void initialize() {
         super.initialize();
-	toolkit = Toolkit.getDefaultToolkit();
+        toolkit = Toolkit.getDefaultToolkit();
 
-	// Set the flag which determines which version of Windows should
-	// be rendered. This flag only need to be set once.
-	// if version <= 4.0 then the classic LAF should be loaded.
+        // Set the flag which determines which version of Windows should
+        // be rendered. This flag only need to be set once.
+        // if version <= 4.0 then the classic LAF should be loaded.
         if (OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_95) <= 0) {
             isClassicWindows = true;
         } else {
@@ -162,13 +161,13 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             XPStyle.invalidateStyle();
         }
 
-	// Using the fonts set by the user can potentially cause
-	// performance and compatibility issues, so allow this feature
-	// to be switched off either at runtime or programmatically
-	//
-	String systemFonts = java.security.AccessController.doPrivileged(
+        // Using the fonts set by the user can potentially cause
+        // performance and compatibility issues, so allow this feature
+        // to be switched off either at runtime or programmatically
+        //
+        String systemFonts = java.security.AccessController.doPrivileged(
                new GetPropertyAction("swing.useSystemFontSettings"));
-	useSystemFontSettings = (systemFonts == null ||
+        useSystemFontSettings = (systemFonts == null ||
                                  Boolean.valueOf(systemFonts).booleanValue());
 
         if (useSystemFontSettings) {
@@ -181,14 +180,14 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             addKeyEventPostProcessor(WindowsRootPaneUI.altProcessor);
 
     }
-    
-    /** 
+
+    /**
      * Initialize the uiClassID to BasicComponentUI mapping.
      * The JComponent classes define their own uiClassID constants
      * (see AbstractComponent.getUIClassID).  This table must
      * map those constants to a BasicComponentUI class of the
      * appropriate type.
-     * 
+     *
      * @see BasicLookAndFeel#getDefaults
      */
     protected void initClassDefaults(UIDefaults table)
@@ -201,37 +200,37 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
               "ButtonUI", windowsPackageName + "WindowsButtonUI",
             "CheckBoxUI", windowsPackageName + "WindowsCheckBoxUI",
     "CheckBoxMenuItemUI", windowsPackageName + "WindowsCheckBoxMenuItemUI",
-	       "LabelUI", windowsPackageName + "WindowsLabelUI",
+               "LabelUI", windowsPackageName + "WindowsLabelUI",
          "RadioButtonUI", windowsPackageName + "WindowsRadioButtonUI",
  "RadioButtonMenuItemUI", windowsPackageName + "WindowsRadioButtonMenuItemUI",
         "ToggleButtonUI", windowsPackageName + "WindowsToggleButtonUI",
          "ProgressBarUI", windowsPackageName + "WindowsProgressBarUI",
-	      "SliderUI", windowsPackageName + "WindowsSliderUI",
-	   "SeparatorUI", windowsPackageName + "WindowsSeparatorUI",
+              "SliderUI", windowsPackageName + "WindowsSliderUI",
+           "SeparatorUI", windowsPackageName + "WindowsSeparatorUI",
            "SplitPaneUI", windowsPackageName + "WindowsSplitPaneUI",
-	     "SpinnerUI", windowsPackageName + "WindowsSpinnerUI",
-	  "TabbedPaneUI", windowsPackageName + "WindowsTabbedPaneUI",
+             "SpinnerUI", windowsPackageName + "WindowsSpinnerUI",
+          "TabbedPaneUI", windowsPackageName + "WindowsTabbedPaneUI",
             "TextAreaUI", windowsPackageName + "WindowsTextAreaUI",
            "TextFieldUI", windowsPackageName + "WindowsTextFieldUI",
        "PasswordFieldUI", windowsPackageName + "WindowsPasswordFieldUI",
             "TextPaneUI", windowsPackageName + "WindowsTextPaneUI",
           "EditorPaneUI", windowsPackageName + "WindowsEditorPaneUI",
                 "TreeUI", windowsPackageName + "WindowsTreeUI",
-	     "ToolBarUI", windowsPackageName + "WindowsToolBarUI",	      
+             "ToolBarUI", windowsPackageName + "WindowsToolBarUI",
     "ToolBarSeparatorUI", windowsPackageName + "WindowsToolBarSeparatorUI",
             "ComboBoxUI", windowsPackageName + "WindowsComboBoxUI",
-	 "TableHeaderUI", windowsPackageName + "WindowsTableHeaderUI",
+         "TableHeaderUI", windowsPackageName + "WindowsTableHeaderUI",
        "InternalFrameUI", windowsPackageName + "WindowsInternalFrameUI",
          "DesktopPaneUI", windowsPackageName + "WindowsDesktopPaneUI",
          "DesktopIconUI", windowsPackageName + "WindowsDesktopIconUI",
          "FileChooserUI", windowsPackageName + "WindowsFileChooserUI",
-	        "MenuUI", windowsPackageName + "WindowsMenuUI",
-	    "MenuItemUI", windowsPackageName + "WindowsMenuItemUI",
-	     "MenuBarUI", windowsPackageName + "WindowsMenuBarUI",
-	   "PopupMenuUI", windowsPackageName + "WindowsPopupMenuUI",
+                "MenuUI", windowsPackageName + "WindowsMenuUI",
+            "MenuItemUI", windowsPackageName + "WindowsMenuItemUI",
+             "MenuBarUI", windowsPackageName + "WindowsMenuBarUI",
+           "PopupMenuUI", windowsPackageName + "WindowsPopupMenuUI",
   "PopupMenuSeparatorUI", windowsPackageName + "WindowsPopupMenuSeparatorUI",
-	   "ScrollBarUI", windowsPackageName + "WindowsScrollBarUI",
-	    "RootPaneUI", windowsPackageName + "WindowsRootPaneUI"
+           "ScrollBarUI", windowsPackageName + "WindowsScrollBarUI",
+            "RootPaneUI", windowsPackageName + "WindowsRootPaneUI"
         };
 
         table.putDefaults(uiDefaults);
@@ -259,7 +258,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
            "windowBorder", "#000000", /* ??? */
              "windowText", "#000000", /* ??? */
                    "menu", "#C0C0C0", /* Background color for menus */
-       "menuPressedItemB", "#000080", /* LightShadow of menubutton highlight */ 
+       "menuPressedItemB", "#000080", /* LightShadow of menubutton highlight */
        "menuPressedItemF", "#FFFFFF", /* Default color for foreground "text" in menu item */
                "menuText", "#000000", /* Text color for menus  */
                    "text", "#C0C0C0", /* Text background color */
@@ -291,39 +290,39 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         table.addResourceBundle( "com.sun.java.swing.plaf.windows.resources.windows" );
     }
 
-    // XXX - there are probably a lot of redundant values that could be removed. 
+    // XXX - there are probably a lot of redundant values that could be removed.
     // ie. Take a look at RadioButtonBorder, etc...
-    protected void initComponentDefaults(UIDefaults table) 
+    protected void initComponentDefaults(UIDefaults table)
     {
         super.initComponentDefaults( table );
 
         initResourceBundle(table);
 
         // *** Shared Fonts
-	Integer twelve = new Integer(12);
-	Integer fontPlain = new Integer(Font.PLAIN);
-	Integer fontBold = new Integer(Font.BOLD);
+        Integer twelve = new Integer(12);
+        Integer fontPlain = new Integer(Font.PLAIN);
+        Integer fontBold = new Integer(Font.BOLD);
 
-	Object dialogPlain12 = new SwingLazyValue(
-			       "javax.swing.plaf.FontUIResource",
-			       null,
-			       new Object[] {Font.DIALOG, fontPlain, twelve});
+        Object dialogPlain12 = new SwingLazyValue(
+                               "javax.swing.plaf.FontUIResource",
+                               null,
+                               new Object[] {Font.DIALOG, fontPlain, twelve});
 
-	Object sansSerifPlain12 =  new SwingLazyValue(
-			  "javax.swing.plaf.FontUIResource",
-			  null,
-			  new Object[] {Font.SANS_SERIF, fontPlain, twelve});
-	Object monospacedPlain12 = new SwingLazyValue(
-			  "javax.swing.plaf.FontUIResource",
-			  null,
-			  new Object[] {Font.MONOSPACED, fontPlain, twelve});
-	Object dialogBold12 = new SwingLazyValue(
-			  "javax.swing.plaf.FontUIResource",
-			  null,
-			  new Object[] {Font.DIALOG, fontBold, twelve});
+        Object sansSerifPlain12 =  new SwingLazyValue(
+                          "javax.swing.plaf.FontUIResource",
+                          null,
+                          new Object[] {Font.SANS_SERIF, fontPlain, twelve});
+        Object monospacedPlain12 = new SwingLazyValue(
+                          "javax.swing.plaf.FontUIResource",
+                          null,
+                          new Object[] {Font.MONOSPACED, fontPlain, twelve});
+        Object dialogBold12 = new SwingLazyValue(
+                          "javax.swing.plaf.FontUIResource",
+                          null,
+                          new Object[] {Font.DIALOG, fontBold, twelve});
 
         // *** Colors
-	// XXX - some of these doens't seem to be used
+        // XXX - some of these doens't seem to be used
         ColorUIResource red = new ColorUIResource(Color.red);
         ColorUIResource black = new ColorUIResource(Color.black);
         ColorUIResource white = new ColorUIResource(Color.white);
@@ -331,40 +330,40 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         ColorUIResource darkGray = new ColorUIResource(Color.darkGray);
         ColorUIResource scrollBarTrackHighlight = darkGray;
 
-	// Set the flag which determines which version of Windows should
-	// be rendered. This flag only need to be set once.
-	// if version <= 4.0 then the classic LAF should be loaded.
+        // Set the flag which determines which version of Windows should
+        // be rendered. This flag only need to be set once.
+        // if version <= 4.0 then the classic LAF should be loaded.
         isClassicWindows = OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_95) <= 0;
 
-        // *** Tree 
+        // *** Tree
         Object treeExpandedIcon = WindowsTreeUI.ExpandedIcon.createExpandedIcon();
 
         Object treeCollapsedIcon = WindowsTreeUI.CollapsedIcon.createCollapsedIcon();
 
 
-	// *** Text
-	Object fieldInputMap = new UIDefaults.LazyInputMap(new Object[] {
-	              "control C", DefaultEditorKit.copyAction,
-	              "control V", DefaultEditorKit.pasteAction,
+        // *** Text
+        Object fieldInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                      "control C", DefaultEditorKit.copyAction,
+                      "control V", DefaultEditorKit.pasteAction,
                       "control X", DefaultEditorKit.cutAction,
-			   "COPY", DefaultEditorKit.copyAction,
-			  "PASTE", DefaultEditorKit.pasteAction,
-			    "CUT", DefaultEditorKit.cutAction,
+                           "COPY", DefaultEditorKit.copyAction,
+                          "PASTE", DefaultEditorKit.pasteAction,
+                            "CUT", DefaultEditorKit.cutAction,
                  "control INSERT", DefaultEditorKit.copyAction,
                    "shift INSERT", DefaultEditorKit.pasteAction,
-                   "shift DELETE", DefaultEditorKit.cutAction,	    
-	              "control A", DefaultEditorKit.selectAllAction,
-	     "control BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
-	             "shift LEFT", DefaultEditorKit.selectionBackwardAction,
-	            "shift RIGHT", DefaultEditorKit.selectionForwardAction,
-	           "control LEFT", DefaultEditorKit.previousWordAction,
-	          "control RIGHT", DefaultEditorKit.nextWordAction,
-	     "control shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                   "shift DELETE", DefaultEditorKit.cutAction,
+                      "control A", DefaultEditorKit.selectAllAction,
+             "control BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                     "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "control LEFT", DefaultEditorKit.previousWordAction,
+                  "control RIGHT", DefaultEditorKit.nextWordAction,
+             "control shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
             "control shift RIGHT", DefaultEditorKit.selectionNextWordAction,
-	                   "HOME", DefaultEditorKit.beginLineAction,
-	                    "END", DefaultEditorKit.endLineAction,
-	             "shift HOME", DefaultEditorKit.selectionBeginLineAction,
-	              "shift END", DefaultEditorKit.selectionEndLineAction,
+                           "HOME", DefaultEditorKit.beginLineAction,
+                            "END", DefaultEditorKit.endLineAction,
+                     "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                      "shift END", DefaultEditorKit.selectionEndLineAction,
                      "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                          "ctrl H", DefaultEditorKit.deletePrevCharAction,
@@ -375,9 +374,9 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                            "LEFT", DefaultEditorKit.backwardAction,
                        "KP_RIGHT", DefaultEditorKit.forwardAction,
                         "KP_LEFT", DefaultEditorKit.backwardAction,
-	                  "ENTER", JTextField.notifyAction,
+                          "ENTER", JTextField.notifyAction,
                 "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
-	});
+        });
 
         Object passwordInputMap = new UIDefaults.LazyInputMap(new Object[] {
                       "control C", DefaultEditorKit.copyAction,
@@ -413,34 +412,34 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
         });
 
-	Object multilineInputMap = new UIDefaults.LazyInputMap(new Object[] {
-		      "control C", DefaultEditorKit.copyAction,
-		      "control V", DefaultEditorKit.pasteAction,
-		      "control X", DefaultEditorKit.cutAction,
-			   "COPY", DefaultEditorKit.copyAction,
-			  "PASTE", DefaultEditorKit.pasteAction,
-			    "CUT", DefaultEditorKit.cutAction,
+        Object multilineInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                      "control C", DefaultEditorKit.copyAction,
+                      "control V", DefaultEditorKit.pasteAction,
+                      "control X", DefaultEditorKit.cutAction,
+                           "COPY", DefaultEditorKit.copyAction,
+                          "PASTE", DefaultEditorKit.pasteAction,
+                            "CUT", DefaultEditorKit.cutAction,
                  "control INSERT", DefaultEditorKit.copyAction,
                    "shift INSERT", DefaultEditorKit.pasteAction,
-                   "shift DELETE", DefaultEditorKit.cutAction,	    
-		     "shift LEFT", DefaultEditorKit.selectionBackwardAction,
-		    "shift RIGHT", DefaultEditorKit.selectionForwardAction,
-		   "control LEFT", DefaultEditorKit.previousWordAction,
-		  "control RIGHT", DefaultEditorKit.nextWordAction,
-	     "control shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
-	    "control shift RIGHT", DefaultEditorKit.selectionNextWordAction,
-		      "control A", DefaultEditorKit.selectAllAction,
-	     "control BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
-			   "HOME", DefaultEditorKit.beginLineAction,
-			    "END", DefaultEditorKit.endLineAction,
-		     "shift HOME", DefaultEditorKit.selectionBeginLineAction,
-		      "shift END", DefaultEditorKit.selectionEndLineAction,
-		   "control HOME", DefaultEditorKit.beginAction,
-		    "control END", DefaultEditorKit.endAction,
-	     "control shift HOME", DefaultEditorKit.selectionBeginAction,
-	      "control shift END", DefaultEditorKit.selectionEndAction,
-			     "UP", DefaultEditorKit.upAction,
-			   "DOWN", DefaultEditorKit.downAction,
+                   "shift DELETE", DefaultEditorKit.cutAction,
+                     "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "control LEFT", DefaultEditorKit.previousWordAction,
+                  "control RIGHT", DefaultEditorKit.nextWordAction,
+             "control shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+            "control shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+                      "control A", DefaultEditorKit.selectAllAction,
+             "control BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                           "HOME", DefaultEditorKit.beginLineAction,
+                            "END", DefaultEditorKit.endLineAction,
+                     "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                      "shift END", DefaultEditorKit.selectionEndLineAction,
+                   "control HOME", DefaultEditorKit.beginAction,
+                    "control END", DefaultEditorKit.endAction,
+             "control shift HOME", DefaultEditorKit.selectionBeginAction,
+              "control shift END", DefaultEditorKit.selectionEndAction,
+                             "UP", DefaultEditorKit.upAction,
+                           "DOWN", DefaultEditorKit.downAction,
                      "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                          "ctrl H", DefaultEditorKit.deletePrevCharAction,
@@ -451,75 +450,75 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                            "LEFT", DefaultEditorKit.backwardAction,
                        "KP_RIGHT", DefaultEditorKit.forwardAction,
                         "KP_LEFT", DefaultEditorKit.backwardAction,
-			"PAGE_UP", DefaultEditorKit.pageUpAction,
-		      "PAGE_DOWN", DefaultEditorKit.pageDownAction,
-		  "shift PAGE_UP", "selection-page-up",
- 	        "shift PAGE_DOWN", "selection-page-down",
-	     "ctrl shift PAGE_UP", "selection-page-left",
- 	   "ctrl shift PAGE_DOWN", "selection-page-right",
-		       "shift UP", DefaultEditorKit.selectionUpAction,
-		     "shift DOWN", DefaultEditorKit.selectionDownAction,
-			  "ENTER", DefaultEditorKit.insertBreakAction,
-			    "TAB", DefaultEditorKit.insertTabAction,
+                        "PAGE_UP", DefaultEditorKit.pageUpAction,
+                      "PAGE_DOWN", DefaultEditorKit.pageDownAction,
+                  "shift PAGE_UP", "selection-page-up",
+                "shift PAGE_DOWN", "selection-page-down",
+             "ctrl shift PAGE_UP", "selection-page-left",
+           "ctrl shift PAGE_DOWN", "selection-page-right",
+                       "shift UP", DefaultEditorKit.selectionUpAction,
+                     "shift DOWN", DefaultEditorKit.selectionDownAction,
+                          "ENTER", DefaultEditorKit.insertBreakAction,
+                            "TAB", DefaultEditorKit.insertTabAction,
                       "control T", "next-link-action",
                 "control shift T", "previous-link-action",
                   "control SPACE", "activate-link-action",
                 "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
-	});
+        });
 
-	Object menuItemAcceleratorDelimiter = "+";
+        Object menuItemAcceleratorDelimiter = "+";
 
-	Object ControlBackgroundColor = new DesktopProperty(
-                                                       "win.3d.backgroundColor", 
-						        table.get("control"),
+        Object ControlBackgroundColor = new DesktopProperty(
+                                                       "win.3d.backgroundColor",
+                                                        table.get("control"),
                                                        toolkit);
-	Object ControlLightColor      = new DesktopProperty(
-                                                       "win.3d.lightColor", 
-							table.get("controlHighlight"),
+        Object ControlLightColor      = new DesktopProperty(
+                                                       "win.3d.lightColor",
+                                                        table.get("controlHighlight"),
                                                        toolkit);
-	Object ControlHighlightColor  = new DesktopProperty(
-                                                       "win.3d.highlightColor", 
-							table.get("controlLtHighlight"),
+        Object ControlHighlightColor  = new DesktopProperty(
+                                                       "win.3d.highlightColor",
+                                                        table.get("controlLtHighlight"),
                                                        toolkit);
-	Object ControlShadowColor     = new DesktopProperty(
-                                                       "win.3d.shadowColor", 
-							table.get("controlShadow"),
+        Object ControlShadowColor     = new DesktopProperty(
+                                                       "win.3d.shadowColor",
+                                                        table.get("controlShadow"),
                                                        toolkit);
-	Object ControlDarkShadowColor = new DesktopProperty(
-                                                       "win.3d.darkShadowColor", 
-							table.get("controlDkShadow"),
+        Object ControlDarkShadowColor = new DesktopProperty(
+                                                       "win.3d.darkShadowColor",
+                                                        table.get("controlDkShadow"),
                                                        toolkit);
-	Object ControlTextColor       = new DesktopProperty(
-                                                       "win.button.textColor", 
-							table.get("controlText"),
+        Object ControlTextColor       = new DesktopProperty(
+                                                       "win.button.textColor",
+                                                        table.get("controlText"),
                                                        toolkit);
-	Object MenuBackgroundColor    = new DesktopProperty(
-                                                       "win.menu.backgroundColor", 
-							table.get("menu"),
+        Object MenuBackgroundColor    = new DesktopProperty(
+                                                       "win.menu.backgroundColor",
+                                                        table.get("menu"),
                                                        toolkit);
-	Object MenuBarBackgroundColor = new DesktopProperty(
-                                                       "win.menubar.backgroundColor", 
-							table.get("menu"),
+        Object MenuBarBackgroundColor = new DesktopProperty(
+                                                       "win.menubar.backgroundColor",
+                                                        table.get("menu"),
                                                        toolkit);
-	Object MenuTextColor          = new DesktopProperty(
-                                                       "win.menu.textColor", 
-							table.get("menuText"),
+        Object MenuTextColor          = new DesktopProperty(
+                                                       "win.menu.textColor",
+                                                        table.get("menuText"),
                                                        toolkit);
-	Object SelectionBackgroundColor = new DesktopProperty(
-                                                       "win.item.highlightColor", 
-							table.get("textHighlight"),
+        Object SelectionBackgroundColor = new DesktopProperty(
+                                                       "win.item.highlightColor",
+                                                        table.get("textHighlight"),
                                                        toolkit);
-	Object SelectionTextColor     = new DesktopProperty(
-                                                       "win.item.highlightTextColor", 
-							table.get("textHighlightText"),
+        Object SelectionTextColor     = new DesktopProperty(
+                                                       "win.item.highlightTextColor",
+                                                        table.get("textHighlightText"),
                                                        toolkit);
-	Object WindowBackgroundColor  = new DesktopProperty(
-                                                       "win.frame.backgroundColor", 
-							table.get("window"),
+        Object WindowBackgroundColor  = new DesktopProperty(
+                                                       "win.frame.backgroundColor",
+                                                        table.get("window"),
                                                        toolkit);
-	Object WindowTextColor        = new DesktopProperty(
-                                                       "win.frame.textColor", 
-							table.get("windowText"),
+        Object WindowTextColor        = new DesktopProperty(
+                                                       "win.frame.textColor",
+                                                        table.get("windowText"),
                                                        toolkit);
         Object WindowBorderWidth      = new DesktopProperty(
                                                        "win.frame.sizingBorderWidth",
@@ -537,17 +536,17 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                                                        "win.frame.captionButtonHeight",
                                                        new Integer(16),
                                                        toolkit);
-	Object InactiveTextColor      = new DesktopProperty(
-                                                       "win.text.grayedTextColor", 
-							table.get("textInactiveText"),
+        Object InactiveTextColor      = new DesktopProperty(
+                                                       "win.text.grayedTextColor",
+                                                        table.get("textInactiveText"),
                                                        toolkit);
-	Object ScrollbarBackgroundColor = new DesktopProperty(
-                                                       "win.scrollbar.backgroundColor", 
-							table.get("scrollbar"),
+        Object ScrollbarBackgroundColor = new DesktopProperty(
+                                                       "win.scrollbar.backgroundColor",
+                                                        table.get("scrollbar"),
                                                        toolkit);
 
-	Object TextBackground         = new XPColorValue(Part.EP_EDIT, null, Prop.FILLCOLOR,
-							 WindowBackgroundColor);
+        Object TextBackground         = new XPColorValue(Part.EP_EDIT, null, Prop.FILLCOLOR,
+                                                         WindowBackgroundColor);
         //The following four lines were commented out as part of bug 4991597
         //This code *is* correct, however it differs from WindowsXP and is, apparently
         //a Windows XP bug. Until Windows fixes this bug, we shall also exhibit the same
@@ -565,19 +564,19 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         Object MessageFont = dialogPlain12;
         Object WindowFont = dialogBold12;
         Object ToolTipFont = sansSerifPlain12;
-	Object IconFont = ControlFont;
+        Object IconFont = ControlFont;
 
-	Object scrollBarWidth = new DesktopProperty("win.scrollbar.width",
-						    new Integer(16), toolkit);
+        Object scrollBarWidth = new DesktopProperty("win.scrollbar.width",
+                                                    new Integer(16), toolkit);
 
-	Object menuBarHeight = new DesktopProperty("win.menu.height", 
-						   null, toolkit);
+        Object menuBarHeight = new DesktopProperty("win.menu.height",
+                                                   null, toolkit);
 
-	Object hotTrackingOn = new DesktopProperty("win.item.hotTrackingOn", 
-						   true, toolkit);
+        Object hotTrackingOn = new DesktopProperty("win.item.hotTrackingOn",
+                                                   true, toolkit);
 
-	Object showMnemonics = new DesktopProperty("win.menu.keyboardCuesOn",
-						     Boolean.TRUE, toolkit);
+        Object showMnemonics = new DesktopProperty("win.menu.keyboardCuesOn",
+                                                     Boolean.TRUE, toolkit);
 
         if (useSystemFontSettings) {
             MenuFont = getDesktopFontValue("win.menu.font", MenuFont, toolkit);
@@ -589,17 +588,17 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                                               MessageFont, toolkit);
             WindowFont = getDesktopFontValue("win.frame.captionFont",
                                              WindowFont, toolkit);
-	    IconFont    = getDesktopFontValue("win.icon.font",
-					      IconFont, toolkit);
+            IconFont    = getDesktopFontValue("win.icon.font",
+                                              IconFont, toolkit);
             ToolTipFont = getDesktopFontValue("win.tooltip.font", ToolTipFont,
                                               toolkit);
 
-	    /* Put the desktop AA settings in the defaults.
-	     * JComponent.setUI() retrieves this and makes it available
-	     * as a client property on the JComponent. Use the same key name
-	     * for both client property and UIDefaults.
-	     * Also need to set up listeners for changes in these settings.
-	     */
+            /* Put the desktop AA settings in the defaults.
+             * JComponent.setUI() retrieves this and makes it available
+             * as a client property on the JComponent. Use the same key name
+             * for both client property and UIDefaults.
+             * Also need to set up listeners for changes in these settings.
+             */
             Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(true);
             table.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
             this.aaSettings =
@@ -623,215 +622,215 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             ToolTipFont = new WindowsFontSizeProperty(
                               "win.tooltip.font.height", toolkit, Font.SANS_SERIF,
                               Font.PLAIN, 12);
-	    IconFont    = new WindowsFontSizeProperty(
-			      "win.icon.font.height", toolkit, Font.DIALOG,
-			      Font.PLAIN, 12);
+            IconFont    = new WindowsFontSizeProperty(
+                              "win.icon.font.height", toolkit, Font.DIALOG,
+                              Font.PLAIN, 12);
         }
 
 
-	if (!(this instanceof WindowsClassicLookAndFeel) &&
-	    (OSInfo.getOSType() == OSInfo.OSType.WINDOWS &&
-	     OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_XP) >= 0) &&
-	    AccessController.doPrivileged(new GetPropertyAction("swing.noxp")) == null) {
+        if (!(this instanceof WindowsClassicLookAndFeel) &&
+            (OSInfo.getOSType() == OSInfo.OSType.WINDOWS &&
+             OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_XP) >= 0) &&
+            AccessController.doPrivileged(new GetPropertyAction("swing.noxp")) == null) {
 
-	    // These desktop properties are not used directly, but are needed to
-	    // trigger realoading of UI's.
-	    this.themeActive = new TriggerDesktopProperty("win.xpstyle.themeActive");
-	    this.dllName     = new TriggerDesktopProperty("win.xpstyle.dllName");
-	    this.colorName   = new TriggerDesktopProperty("win.xpstyle.colorName");
-	    this.sizeName    = new TriggerDesktopProperty("win.xpstyle.sizeName");
-	}
+            // These desktop properties are not used directly, but are needed to
+            // trigger realoading of UI's.
+            this.themeActive = new TriggerDesktopProperty("win.xpstyle.themeActive");
+            this.dllName     = new TriggerDesktopProperty("win.xpstyle.dllName");
+            this.colorName   = new TriggerDesktopProperty("win.xpstyle.colorName");
+            this.sizeName    = new TriggerDesktopProperty("win.xpstyle.sizeName");
+        }
 
 
         Object[] defaults = {
-	    // *** Auditory Feedback
-	    // this key defines which of the various cues to render 
-	    // Overridden from BasicL&F. This L&F should play all sounds
-	    // all the time. The infrastructure decides what to play.
+            // *** Auditory Feedback
+            // this key defines which of the various cues to render
+            // Overridden from BasicL&F. This L&F should play all sounds
+            // all the time. The infrastructure decides what to play.
             // This is disabled until sound bugs can be resolved.
-	    "AuditoryCues.playList", null, // table.get("AuditoryCues.cueList"),
+            "AuditoryCues.playList", null, // table.get("AuditoryCues.cueList"),
 
-	    "Application.useSystemFontSettings", Boolean.valueOf(useSystemFontSettings),
+            "Application.useSystemFontSettings", Boolean.valueOf(useSystemFontSettings),
 
-	    "TextField.focusInputMap", fieldInputMap,
-	    "PasswordField.focusInputMap", passwordInputMap,
-	    "TextArea.focusInputMap", multilineInputMap,
-	    "TextPane.focusInputMap", multilineInputMap,
-	    "EditorPane.focusInputMap", multilineInputMap,
+            "TextField.focusInputMap", fieldInputMap,
+            "PasswordField.focusInputMap", passwordInputMap,
+            "TextArea.focusInputMap", multilineInputMap,
+            "TextPane.focusInputMap", multilineInputMap,
+            "EditorPane.focusInputMap", multilineInputMap,
 
-	    // Buttons
-	    "Button.font", ControlFont,
-	    "Button.background", ControlBackgroundColor,
+            // Buttons
+            "Button.font", ControlFont,
+            "Button.background", ControlBackgroundColor,
             // Button.foreground, Button.shadow, Button.darkShadow,
             // Button.disabledForground, and Button.disabledShadow are only
             // used for Windows Classic. Windows XP will use colors
             // from the current visual style.
-	    "Button.foreground", ControlTextColor,
-	    "Button.shadow", ControlShadowColor,
+            "Button.foreground", ControlTextColor,
+            "Button.shadow", ControlShadowColor,
             "Button.darkShadow", ControlDarkShadowColor,
             "Button.light", ControlLightColor,
             "Button.highlight", ControlHighlightColor,
-	    "Button.disabledForeground", InactiveTextColor,
-	    "Button.disabledShadow", ControlHighlightColor,
+            "Button.disabledForeground", InactiveTextColor,
+            "Button.disabledShadow", ControlHighlightColor,
             "Button.focus", black,
             "Button.dashedRectGapX", new XPValue(new Integer(3), new Integer(5)),
             "Button.dashedRectGapY", new XPValue(new Integer(3), new Integer(4)),
             "Button.dashedRectGapWidth", new XPValue(new Integer(6), new Integer(10)),
             "Button.dashedRectGapHeight", new XPValue(new Integer(6), new Integer(8)),
-	    "Button.textShiftOffset", new XPValue(new Integer(0),
+            "Button.textShiftOffset", new XPValue(new Integer(0),
                                                   new Integer(1)),
-	    // W2K keyboard navigation hidding.
-	    "Button.showMnemonics", showMnemonics, 
+            // W2K keyboard navigation hidding.
+            "Button.showMnemonics", showMnemonics,
             "Button.focusInputMap",
                new UIDefaults.LazyInputMap(new Object[] {
                             "SPACE", "pressed",
                    "released SPACE", "released"
                  }),
 
-	    "CheckBox.font", ControlFont,
+            "CheckBox.font", ControlFont,
             "CheckBox.interiorBackground", WindowBackgroundColor,
- 	    "CheckBox.background", ControlBackgroundColor,
+            "CheckBox.background", ControlBackgroundColor,
             "CheckBox.foreground", WindowTextColor,
             "CheckBox.shadow", ControlShadowColor,
             "CheckBox.darkShadow", ControlDarkShadowColor,
             "CheckBox.light", ControlLightColor,
             "CheckBox.highlight", ControlHighlightColor,
             "CheckBox.focus", black,
-	    "CheckBox.focusInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		            "SPACE", "pressed",
-                   "released SPACE", "released" 
-		 }),
+            "CheckBox.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                            "SPACE", "pressed",
+                   "released SPACE", "released"
+                 }),
             // margin is 2 all the way around, BasicBorders.RadioButtonBorder
             // (checkbox uses RadioButtonBorder) is 2 all the way around too.
             "CheckBox.totalInsets", new Insets(4, 4, 4, 4),
 
             "CheckBoxMenuItem.font", MenuFont,
-	    "CheckBoxMenuItem.background", MenuBackgroundColor,
-	    "CheckBoxMenuItem.foreground", MenuTextColor,
-	    "CheckBoxMenuItem.selectionForeground", SelectionTextColor,
-	    "CheckBoxMenuItem.selectionBackground", SelectionBackgroundColor,
-	    "CheckBoxMenuItem.acceleratorForeground", MenuTextColor,
-	    "CheckBoxMenuItem.acceleratorSelectionForeground", SelectionTextColor,
-	    "CheckBoxMenuItem.commandSound", "win.sound.menuCommand",
+            "CheckBoxMenuItem.background", MenuBackgroundColor,
+            "CheckBoxMenuItem.foreground", MenuTextColor,
+            "CheckBoxMenuItem.selectionForeground", SelectionTextColor,
+            "CheckBoxMenuItem.selectionBackground", SelectionBackgroundColor,
+            "CheckBoxMenuItem.acceleratorForeground", MenuTextColor,
+            "CheckBoxMenuItem.acceleratorSelectionForeground", SelectionTextColor,
+            "CheckBoxMenuItem.commandSound", "win.sound.menuCommand",
 
-	    "ComboBox.font", ControlFont,
-	    "ComboBox.background", WindowBackgroundColor,
-	    "ComboBox.foreground", WindowTextColor,
-	    "ComboBox.buttonBackground", ControlBackgroundColor,
-	    "ComboBox.buttonShadow", ControlShadowColor,
-	    "ComboBox.buttonDarkShadow", ControlDarkShadowColor,
-	    "ComboBox.buttonHighlight", ControlHighlightColor,
+            "ComboBox.font", ControlFont,
+            "ComboBox.background", WindowBackgroundColor,
+            "ComboBox.foreground", WindowTextColor,
+            "ComboBox.buttonBackground", ControlBackgroundColor,
+            "ComboBox.buttonShadow", ControlShadowColor,
+            "ComboBox.buttonDarkShadow", ControlDarkShadowColor,
+            "ComboBox.buttonHighlight", ControlHighlightColor,
             "ComboBox.selectionBackground", SelectionBackgroundColor,
             "ComboBox.selectionForeground", SelectionTextColor,
             "ComboBox.editorBorder", new XPValue(new EmptyBorder(1,2,1,1),
                                                  new EmptyBorder(1,4,1,4)),
-            "ComboBox.disabledBackground", 
+            "ComboBox.disabledBackground",
                         new XPColorValue(Part.CP_COMBOBOX, State.DISABLED,
                         Prop.FILLCOLOR, DisabledTextBackground),
-            "ComboBox.disabledForeground", 
+            "ComboBox.disabledForeground",
                         new XPColorValue(Part.CP_COMBOBOX, State.DISABLED,
                         Prop.TEXTCOLOR, InactiveTextColor),
-	    "ComboBox.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
-		   "ESCAPE", "hidePopup",
-		  "PAGE_UP", "pageUpPassThrough",
-		"PAGE_DOWN", "pageDownPassThrough",
-		     "HOME", "homePassThrough",
-		      "END", "endPassThrough",
-		     "DOWN", "selectNext2",
-		  "KP_DOWN", "selectNext2",
-		       "UP", "selectPrevious2",
-		    "KP_UP", "selectPrevious2",
-		    "ENTER", "enterPressed",
-                       "F4", "togglePopup", 
-                 "alt DOWN", "togglePopup", 
-              "alt KP_DOWN", "togglePopup", 
-                   "alt UP", "togglePopup", 
-                "alt KP_UP", "togglePopup" 
-	      }),
+            "ComboBox.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
+                   "ESCAPE", "hidePopup",
+                  "PAGE_UP", "pageUpPassThrough",
+                "PAGE_DOWN", "pageDownPassThrough",
+                     "HOME", "homePassThrough",
+                      "END", "endPassThrough",
+                     "DOWN", "selectNext2",
+                  "KP_DOWN", "selectNext2",
+                       "UP", "selectPrevious2",
+                    "KP_UP", "selectPrevious2",
+                    "ENTER", "enterPressed",
+                       "F4", "togglePopup",
+                 "alt DOWN", "togglePopup",
+              "alt KP_DOWN", "togglePopup",
+                   "alt UP", "togglePopup",
+                "alt KP_UP", "togglePopup"
+              }),
 
-	    // DeskTop.
-	    "Desktop.background", new DesktopProperty(
+            // DeskTop.
+            "Desktop.background", new DesktopProperty(
                                                  "win.desktop.backgroundColor",
-						  table.get("desktop"),
+                                                  table.get("desktop"),
                                                  toolkit),
-	    "Desktop.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		   "ctrl F5", "restore", 
-		   "ctrl F4", "close",
-		   "ctrl F7", "move", 
-		   "ctrl F8", "resize",
-		   "RIGHT", "right",
-		   "KP_RIGHT", "right",
-		   "LEFT", "left",
-		   "KP_LEFT", "left",
-		   "UP", "up",
-		   "KP_UP", "up",
-		   "DOWN", "down",
-		   "KP_DOWN", "down",
-		   "ESCAPE", "escape",
-		   "ctrl F9", "minimize", 
-		   "ctrl F10", "maximize",
-		   "ctrl F6", "selectNextFrame",
-		   "ctrl TAB", "selectNextFrame",
-		   "ctrl alt F6", "selectNextFrame",
-		   "shift ctrl alt F6", "selectPreviousFrame",
+            "Desktop.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                   "ctrl F5", "restore",
+                   "ctrl F4", "close",
+                   "ctrl F7", "move",
+                   "ctrl F8", "resize",
+                   "RIGHT", "right",
+                   "KP_RIGHT", "right",
+                   "LEFT", "left",
+                   "KP_LEFT", "left",
+                   "UP", "up",
+                   "KP_UP", "up",
+                   "DOWN", "down",
+                   "KP_DOWN", "down",
+                   "ESCAPE", "escape",
+                   "ctrl F9", "minimize",
+                   "ctrl F10", "maximize",
+                   "ctrl F6", "selectNextFrame",
+                   "ctrl TAB", "selectNextFrame",
+                   "ctrl alt F6", "selectNextFrame",
+                   "shift ctrl alt F6", "selectPreviousFrame",
                    "ctrl F12", "navigateNext",
                    "shift ctrl F12", "navigatePrevious"
-	       }),
+               }),
 
             // DesktopIcon
             "DesktopIcon.width", new Integer(160),
 
-	    "EditorPane.font", ControlFont,
-	    "EditorPane.background", WindowBackgroundColor,
-	    "EditorPane.foreground", WindowTextColor,
-	    "EditorPane.selectionBackground", SelectionBackgroundColor,
-	    "EditorPane.selectionForeground", SelectionTextColor,
-	    "EditorPane.caretForeground", WindowTextColor,
-	    "EditorPane.inactiveForeground", InactiveTextColor,
+            "EditorPane.font", ControlFont,
+            "EditorPane.background", WindowBackgroundColor,
+            "EditorPane.foreground", WindowTextColor,
+            "EditorPane.selectionBackground", SelectionBackgroundColor,
+            "EditorPane.selectionForeground", SelectionTextColor,
+            "EditorPane.caretForeground", WindowTextColor,
+            "EditorPane.inactiveForeground", InactiveTextColor,
             "EditorPane.inactiveBackground", WindowBackgroundColor,
             "EditorPane.disabledBackground", DisabledTextBackground,
 
-	    "FileChooser.homeFolderIcon",  new LazyWindowsIcon(null,
-							       "icons/HomeFolder.gif"),
-	    "FileChooser.listFont", IconFont,
-	    "FileChooser.listViewBackground", new XPColorValue(Part.LVP_LISTVIEW, null, Prop.FILLCOLOR,
-							       WindowBackgroundColor),
-	    "FileChooser.listViewBorder", new XPBorderValue(Part.LVP_LISTVIEW,
-						  new SwingLazyValue(
-							"javax.swing.plaf.BorderUIResource",
-							"getLoweredBevelBorderUIResource")),
-	    "FileChooser.listViewIcon",    new LazyWindowsIcon("fileChooserIcon ListView",
-							       "icons/ListView.gif"),
-	    "FileChooser.listViewWindowsStyle", Boolean.TRUE,
-	    "FileChooser.detailsViewIcon", new LazyWindowsIcon("fileChooserIcon DetailsView",
-							       "icons/DetailsView.gif"),
+            "FileChooser.homeFolderIcon",  new LazyWindowsIcon(null,
+                                                               "icons/HomeFolder.gif"),
+            "FileChooser.listFont", IconFont,
+            "FileChooser.listViewBackground", new XPColorValue(Part.LVP_LISTVIEW, null, Prop.FILLCOLOR,
+                                                               WindowBackgroundColor),
+            "FileChooser.listViewBorder", new XPBorderValue(Part.LVP_LISTVIEW,
+                                                  new SwingLazyValue(
+                                                        "javax.swing.plaf.BorderUIResource",
+                                                        "getLoweredBevelBorderUIResource")),
+            "FileChooser.listViewIcon",    new LazyWindowsIcon("fileChooserIcon ListView",
+                                                               "icons/ListView.gif"),
+            "FileChooser.listViewWindowsStyle", Boolean.TRUE,
+            "FileChooser.detailsViewIcon", new LazyWindowsIcon("fileChooserIcon DetailsView",
+                                                               "icons/DetailsView.gif"),
             "FileChooser.viewMenuIcon", new LazyWindowsIcon("fileChooserIcon ViewMenu",
                                                             "icons/ListView.gif"),
-	    "FileChooser.upFolderIcon",    new LazyWindowsIcon("fileChooserIcon UpFolder",
-							       "icons/UpFolder.gif"),
-	    "FileChooser.newFolderIcon",   new LazyWindowsIcon("fileChooserIcon NewFolder",
-							       "icons/NewFolder.gif"),
-	    "FileChooser.useSystemExtensionHiding", Boolean.TRUE,
+            "FileChooser.upFolderIcon",    new LazyWindowsIcon("fileChooserIcon UpFolder",
+                                                               "icons/UpFolder.gif"),
+            "FileChooser.newFolderIcon",   new LazyWindowsIcon("fileChooserIcon NewFolder",
+                                                               "icons/NewFolder.gif"),
+            "FileChooser.useSystemExtensionHiding", Boolean.TRUE,
 
             "FileChooser.lookInLabelMnemonic", new Integer(KeyEvent.VK_I),
             "FileChooser.fileNameLabelMnemonic", new Integer(KeyEvent.VK_N),
             "FileChooser.filesOfTypeLabelMnemonic", new Integer(KeyEvent.VK_T),
-	    "FileChooser.usesSingleFilePane", Boolean.TRUE,
-	    "FileChooser.noPlacesBar", new DesktopProperty("win.comdlg.noPlacesBar",
-							   Boolean.FALSE, toolkit),
-	    "FileChooser.ancestorInputMap", 
-	       new UIDefaults.LazyInputMap(new Object[] {
-		     "ESCAPE", "cancelSelection",
-		     "F2", "editFileName",
-		     "F5", "refresh",
-		     "BACK_SPACE", "Go Up",
-		     "ENTER", "approveSelection",
-		"ctrl ENTER", "approveSelection"
-		 }),
+            "FileChooser.usesSingleFilePane", Boolean.TRUE,
+            "FileChooser.noPlacesBar", new DesktopProperty("win.comdlg.noPlacesBar",
+                                                           Boolean.FALSE, toolkit),
+            "FileChooser.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancelSelection",
+                     "F2", "editFileName",
+                     "F5", "refresh",
+                     "BACK_SPACE", "Go Up",
+                     "ENTER", "approveSelection",
+                "ctrl ENTER", "approveSelection"
+                 }),
 
-	    "FileView.directoryIcon", SwingUtilities2.makeIcon(getClass(),
+            "FileView.directoryIcon", SwingUtilities2.makeIcon(getClass(),
                                                                WindowsLookAndFeel.class,
                                                                "icons/Directory.gif"),
             "FileView.fileIcon", SwingUtilities2.makeIcon(getClass(),
@@ -853,11 +852,11 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "InternalFrame.titleButtonWidth",  TitleButtonWidth,
             "InternalFrame.titleButtonHeight", TitleButtonHeight,
             "InternalFrame.titleButtonToolTipsOn", hotTrackingOn,
-	    "InternalFrame.borderColor", ControlBackgroundColor,
-	    "InternalFrame.borderShadow", ControlShadowColor,
-	    "InternalFrame.borderDarkShadow", ControlDarkShadowColor,
-	    "InternalFrame.borderHighlight", ControlHighlightColor,
-	    "InternalFrame.borderLight", ControlLightColor,
+            "InternalFrame.borderColor", ControlBackgroundColor,
+            "InternalFrame.borderShadow", ControlShadowColor,
+            "InternalFrame.borderDarkShadow", ControlDarkShadowColor,
+            "InternalFrame.borderHighlight", ControlHighlightColor,
+            "InternalFrame.borderLight", ControlLightColor,
             "InternalFrame.borderWidth", WindowBorderWidth,
             "InternalFrame.minimizeIconBackground", ControlBackgroundColor,
             "InternalFrame.resizeIconHighlight", ControlLightColor,
@@ -870,77 +869,77 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                                                        "win.frame.inactiveBorderColor",
                                                        table.get("windowBorder"),
                                                        toolkit),
-	    "InternalFrame.activeTitleBackground", new DesktopProperty(
+            "InternalFrame.activeTitleBackground", new DesktopProperty(
                                                         "win.frame.activeCaptionColor",
-							 table.get("activeCaption"),
+                                                         table.get("activeCaption"),
                                                         toolkit),
-	    "InternalFrame.activeTitleGradient", new DesktopProperty(
-		                                        "win.frame.activeCaptionGradientColor",
-							 table.get("activeCaption"),
+            "InternalFrame.activeTitleGradient", new DesktopProperty(
+                                                        "win.frame.activeCaptionGradientColor",
+                                                         table.get("activeCaption"),
                                                         toolkit),
-	    "InternalFrame.activeTitleForeground", new DesktopProperty(
+            "InternalFrame.activeTitleForeground", new DesktopProperty(
                                                         "win.frame.captionTextColor",
-							 table.get("activeCaptionText"),
+                                                         table.get("activeCaptionText"),
                                                         toolkit),
-	    "InternalFrame.inactiveTitleBackground", new DesktopProperty(
+            "InternalFrame.inactiveTitleBackground", new DesktopProperty(
                                                         "win.frame.inactiveCaptionColor",
-							 table.get("inactiveCaption"),
+                                                         table.get("inactiveCaption"),
                                                         toolkit),
-	    "InternalFrame.inactiveTitleGradient", new DesktopProperty(
+            "InternalFrame.inactiveTitleGradient", new DesktopProperty(
                                                         "win.frame.inactiveCaptionGradientColor",
-							 table.get("inactiveCaption"),
+                                                         table.get("inactiveCaption"),
                                                         toolkit),
-	    "InternalFrame.inactiveTitleForeground", new DesktopProperty(
+            "InternalFrame.inactiveTitleForeground", new DesktopProperty(
                                                         "win.frame.inactiveCaptionTextColor",
-							 table.get("inactiveCaptionText"),
+                                                         table.get("inactiveCaptionText"),
                                                         toolkit),
-            
-            "InternalFrame.maximizeIcon", 
+
+            "InternalFrame.maximizeIcon",
                 WindowsIconFactory.createFrameMaximizeIcon(),
-            "InternalFrame.minimizeIcon", 
+            "InternalFrame.minimizeIcon",
                 WindowsIconFactory.createFrameMinimizeIcon(),
-            "InternalFrame.iconifyIcon", 
+            "InternalFrame.iconifyIcon",
                 WindowsIconFactory.createFrameIconifyIcon(),
-            "InternalFrame.closeIcon", 
+            "InternalFrame.closeIcon",
                 WindowsIconFactory.createFrameCloseIcon(),
             "InternalFrame.icon",
-		new SwingLazyValue(
-	"com.sun.java.swing.plaf.windows.WindowsInternalFrameTitlePane$ScalableIconUIResource",
-		    // The constructor takes one arg: an array of UIDefaults.LazyValue
-		    // representing the icons
-		    new Object[][] { {
-			SwingUtilities2.makeIcon(getClass(), BasicLookAndFeel.class, "icons/JavaCup16.png"),
-			SwingUtilities2.makeIcon(getClass(), WindowsLookAndFeel.class, "icons/JavaCup32.png")
-		    } }),
+                new SwingLazyValue(
+        "com.sun.java.swing.plaf.windows.WindowsInternalFrameTitlePane$ScalableIconUIResource",
+                    // The constructor takes one arg: an array of UIDefaults.LazyValue
+                    // representing the icons
+                    new Object[][] { {
+                        SwingUtilities2.makeIcon(getClass(), BasicLookAndFeel.class, "icons/JavaCup16.png"),
+                        SwingUtilities2.makeIcon(getClass(), WindowsLookAndFeel.class, "icons/JavaCup32.png")
+                    } }),
 
-	    // Internal Frame Auditory Cue Mappings
+            // Internal Frame Auditory Cue Mappings
             "InternalFrame.closeSound", "win.sound.close",
             "InternalFrame.maximizeSound", "win.sound.maximize",
             "InternalFrame.minimizeSound", "win.sound.minimize",
             "InternalFrame.restoreDownSound", "win.sound.restoreDown",
             "InternalFrame.restoreUpSound", "win.sound.restoreUp",
 
-	    "InternalFrame.windowBindings", new Object[] {
-		"shift ESCAPE", "showSystemMenu",
-		  "ctrl SPACE", "showSystemMenu",
-		      "ESCAPE", "hideSystemMenu"},
-	    
-	    // Label
-	    "Label.font", ControlFont,
-	    "Label.background", ControlBackgroundColor,
-            "Label.foreground", WindowTextColor,
-	    "Label.disabledForeground", InactiveTextColor,
-	    "Label.disabledShadow", ControlHighlightColor,
+            "InternalFrame.windowBindings", new Object[] {
+                "shift ESCAPE", "showSystemMenu",
+                  "ctrl SPACE", "showSystemMenu",
+                      "ESCAPE", "hideSystemMenu"},
 
-	    // List.
-	    "List.font", ControlFont,
-	    "List.background", WindowBackgroundColor,
-	    "List.foreground", WindowTextColor,
-	    "List.selectionBackground", SelectionBackgroundColor,
-	    "List.selectionForeground", SelectionTextColor,
-	    "List.lockToPositionOnScroll", Boolean.TRUE,
-	    "List.focusInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+            // Label
+            "Label.font", ControlFont,
+            "Label.background", ControlBackgroundColor,
+            "Label.foreground", WindowTextColor,
+            "Label.disabledForeground", InactiveTextColor,
+            "Label.disabledShadow", ControlHighlightColor,
+
+            // List.
+            "List.font", ControlFont,
+            "List.background", WindowBackgroundColor,
+            "List.foreground", WindowTextColor,
+            "List.selectionBackground", SelectionBackgroundColor,
+            "List.selectionForeground", SelectionTextColor,
+            "List.lockToPositionOnScroll", Boolean.TRUE,
+            "List.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
                            "ctrl C", "copy",
                            "ctrl V", "paste",
                            "ctrl X", "cut",
@@ -950,96 +949,96 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                    "control INSERT", "copy",
                      "shift INSERT", "paste",
                      "shift DELETE", "cut",
-		               "UP", "selectPreviousRow",
-		            "KP_UP", "selectPreviousRow",
-		         "shift UP", "selectPreviousRowExtendSelection",
-		      "shift KP_UP", "selectPreviousRowExtendSelection",
+                               "UP", "selectPreviousRow",
+                            "KP_UP", "selectPreviousRow",
+                         "shift UP", "selectPreviousRowExtendSelection",
+                      "shift KP_UP", "selectPreviousRowExtendSelection",
                     "ctrl shift UP", "selectPreviousRowExtendSelection",
                  "ctrl shift KP_UP", "selectPreviousRowExtendSelection",
                           "ctrl UP", "selectPreviousRowChangeLead",
                        "ctrl KP_UP", "selectPreviousRowChangeLead",
-		             "DOWN", "selectNextRow",
-		          "KP_DOWN", "selectNextRow",
-		       "shift DOWN", "selectNextRowExtendSelection",
-		    "shift KP_DOWN", "selectNextRowExtendSelection",
+                             "DOWN", "selectNextRow",
+                          "KP_DOWN", "selectNextRow",
+                       "shift DOWN", "selectNextRowExtendSelection",
+                    "shift KP_DOWN", "selectNextRowExtendSelection",
                   "ctrl shift DOWN", "selectNextRowExtendSelection",
                "ctrl shift KP_DOWN", "selectNextRowExtendSelection",
                         "ctrl DOWN", "selectNextRowChangeLead",
                      "ctrl KP_DOWN", "selectNextRowChangeLead",
-		             "LEFT", "selectPreviousColumn",
-		          "KP_LEFT", "selectPreviousColumn",
-		       "shift LEFT", "selectPreviousColumnExtendSelection",
-		    "shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                             "LEFT", "selectPreviousColumn",
+                          "KP_LEFT", "selectPreviousColumn",
+                       "shift LEFT", "selectPreviousColumnExtendSelection",
+                    "shift KP_LEFT", "selectPreviousColumnExtendSelection",
                   "ctrl shift LEFT", "selectPreviousColumnExtendSelection",
                "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection",
                         "ctrl LEFT", "selectPreviousColumnChangeLead",
                      "ctrl KP_LEFT", "selectPreviousColumnChangeLead",
-		            "RIGHT", "selectNextColumn",
-		         "KP_RIGHT", "selectNextColumn",
-		      "shift RIGHT", "selectNextColumnExtendSelection",
-		   "shift KP_RIGHT", "selectNextColumnExtendSelection",
+                            "RIGHT", "selectNextColumn",
+                         "KP_RIGHT", "selectNextColumn",
+                      "shift RIGHT", "selectNextColumnExtendSelection",
+                   "shift KP_RIGHT", "selectNextColumnExtendSelection",
                  "ctrl shift RIGHT", "selectNextColumnExtendSelection",
               "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection",
                        "ctrl RIGHT", "selectNextColumnChangeLead",
                     "ctrl KP_RIGHT", "selectNextColumnChangeLead",
-		             "HOME", "selectFirstRow",
-		       "shift HOME", "selectFirstRowExtendSelection",
+                             "HOME", "selectFirstRow",
+                       "shift HOME", "selectFirstRowExtendSelection",
                   "ctrl shift HOME", "selectFirstRowExtendSelection",
                         "ctrl HOME", "selectFirstRowChangeLead",
-		              "END", "selectLastRow",
-		        "shift END", "selectLastRowExtendSelection",
+                              "END", "selectLastRow",
+                        "shift END", "selectLastRowExtendSelection",
                    "ctrl shift END", "selectLastRowExtendSelection",
                          "ctrl END", "selectLastRowChangeLead",
-		          "PAGE_UP", "scrollUp",
-		    "shift PAGE_UP", "scrollUpExtendSelection",
+                          "PAGE_UP", "scrollUp",
+                    "shift PAGE_UP", "scrollUpExtendSelection",
                "ctrl shift PAGE_UP", "scrollUpExtendSelection",
                      "ctrl PAGE_UP", "scrollUpChangeLead",
-		        "PAGE_DOWN", "scrollDown",
-		  "shift PAGE_DOWN", "scrollDownExtendSelection",
+                        "PAGE_DOWN", "scrollDown",
+                  "shift PAGE_DOWN", "scrollDownExtendSelection",
              "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
                    "ctrl PAGE_DOWN", "scrollDownChangeLead",
-		           "ctrl A", "selectAll",
-		       "ctrl SLASH", "selectAll",
-		  "ctrl BACK_SLASH", "clearSelection",
+                           "ctrl A", "selectAll",
+                       "ctrl SLASH", "selectAll",
+                  "ctrl BACK_SLASH", "clearSelection",
                             "SPACE", "addToSelection",
                        "ctrl SPACE", "toggleAndAnchor",
                       "shift SPACE", "extendTo",
                  "ctrl shift SPACE", "moveSelectionTo"
-		 }),
+                 }),
 
-	    // PopupMenu
-	    "PopupMenu.font", MenuFont,
-	    "PopupMenu.background", MenuBackgroundColor,
-	    "PopupMenu.foreground", MenuTextColor,
+            // PopupMenu
+            "PopupMenu.font", MenuFont,
+            "PopupMenu.background", MenuBackgroundColor,
+            "PopupMenu.foreground", MenuTextColor,
             "PopupMenu.popupSound", "win.sound.menuPopup",
 
-	    // Menus
+            // Menus
             "Menu.font", MenuFont,
             "Menu.foreground", MenuTextColor,
             "Menu.background", MenuBackgroundColor,
-	    "Menu.useMenuBarBackgroundForTopLevel", Boolean.TRUE,
+            "Menu.useMenuBarBackgroundForTopLevel", Boolean.TRUE,
             "Menu.selectionForeground", SelectionTextColor,
             "Menu.selectionBackground", SelectionBackgroundColor,
-	    "Menu.acceleratorForeground", MenuTextColor,
-	    "Menu.acceleratorSelectionForeground", SelectionTextColor,
-	    "Menu.menuPopupOffsetX", new Integer(0),
-	    "Menu.menuPopupOffsetY", new Integer(0),
-	    "Menu.submenuPopupOffsetX", new Integer(-4),
-	    "Menu.submenuPopupOffsetY", new Integer(-3),
+            "Menu.acceleratorForeground", MenuTextColor,
+            "Menu.acceleratorSelectionForeground", SelectionTextColor,
+            "Menu.menuPopupOffsetX", new Integer(0),
+            "Menu.menuPopupOffsetY", new Integer(0),
+            "Menu.submenuPopupOffsetX", new Integer(-4),
+            "Menu.submenuPopupOffsetY", new Integer(-3),
             "Menu.crossMenuMnemonic", Boolean.FALSE,
-            "Menu.preserveTopLevelSelection", Boolean.TRUE,   
+            "Menu.preserveTopLevelSelection", Boolean.TRUE,
 
             // MenuBar.
-	    "MenuBar.font", MenuFont,
-	    "MenuBar.background", new XPValue(MenuBarBackgroundColor,
-					      MenuBackgroundColor),
-	    "MenuBar.foreground", MenuTextColor,
-	    "MenuBar.shadow", ControlShadowColor,
-	    "MenuBar.highlight", ControlHighlightColor,
-	    "MenuBar.height", menuBarHeight,
-	    "MenuBar.rolloverEnabled", hotTrackingOn,
-	    "MenuBar.windowBindings", new Object[] {
-		"F10", "takeFocus" },
+            "MenuBar.font", MenuFont,
+            "MenuBar.background", new XPValue(MenuBarBackgroundColor,
+                                              MenuBackgroundColor),
+            "MenuBar.foreground", MenuTextColor,
+            "MenuBar.shadow", ControlShadowColor,
+            "MenuBar.highlight", ControlHighlightColor,
+            "MenuBar.height", menuBarHeight,
+            "MenuBar.rolloverEnabled", hotTrackingOn,
+            "MenuBar.windowBindings", new Object[] {
+                "F10", "takeFocus" },
 
             "MenuItem.font", MenuFont,
             "MenuItem.acceleratorFont", MenuFont,
@@ -1047,63 +1046,63 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "MenuItem.background", MenuBackgroundColor,
             "MenuItem.selectionForeground", SelectionTextColor,
             "MenuItem.selectionBackground", SelectionBackgroundColor,
-	    "MenuItem.disabledForeground", InactiveTextColor,
-	    "MenuItem.acceleratorForeground", MenuTextColor,
-	    "MenuItem.acceleratorSelectionForeground", SelectionTextColor,
-	    "MenuItem.acceleratorDelimiter", menuItemAcceleratorDelimiter,
-	         // Menu Item Auditory Cue Mapping
-	    "MenuItem.commandSound", "win.sound.menuCommand",
+            "MenuItem.disabledForeground", InactiveTextColor,
+            "MenuItem.acceleratorForeground", MenuTextColor,
+            "MenuItem.acceleratorSelectionForeground", SelectionTextColor,
+            "MenuItem.acceleratorDelimiter", menuItemAcceleratorDelimiter,
+                 // Menu Item Auditory Cue Mapping
+            "MenuItem.commandSound", "win.sound.menuCommand",
              // indicates that keyboard navigation won't skip disabled menu items
             "MenuItem.disabledAreNavigable", Boolean.TRUE,
 
-	    "RadioButton.font", ControlFont,
+            "RadioButton.font", ControlFont,
             "RadioButton.interiorBackground", WindowBackgroundColor,
             "RadioButton.background", ControlBackgroundColor,
             "RadioButton.foreground", WindowTextColor,
             "RadioButton.shadow", ControlShadowColor,
             "RadioButton.darkShadow", ControlDarkShadowColor,
             "RadioButton.light", ControlLightColor,
-	    "RadioButton.highlight", ControlHighlightColor,
+            "RadioButton.highlight", ControlHighlightColor,
             "RadioButton.focus", black,
-	    "RadioButton.focusInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+            "RadioButton.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
                           "SPACE", "pressed",
-                 "released SPACE", "released" 
-	      }),
+                 "released SPACE", "released"
+              }),
             // margin is 2 all the way around, BasicBorders.RadioButtonBorder
             // is 2 all the way around too.
             "RadioButton.totalInsets", new Insets(4, 4, 4, 4),
 
 
             "RadioButtonMenuItem.font", MenuFont,
-	    "RadioButtonMenuItem.foreground", MenuTextColor,
-	    "RadioButtonMenuItem.background", MenuBackgroundColor,
-	    "RadioButtonMenuItem.selectionForeground", SelectionTextColor,
-	    "RadioButtonMenuItem.selectionBackground", SelectionBackgroundColor,
-	    "RadioButtonMenuItem.disabledForeground", InactiveTextColor,
-	    "RadioButtonMenuItem.acceleratorForeground", MenuTextColor,
-	    "RadioButtonMenuItem.acceleratorSelectionForeground", SelectionTextColor,
-	    "RadioButtonMenuItem.commandSound", "win.sound.menuCommand",
+            "RadioButtonMenuItem.foreground", MenuTextColor,
+            "RadioButtonMenuItem.background", MenuBackgroundColor,
+            "RadioButtonMenuItem.selectionForeground", SelectionTextColor,
+            "RadioButtonMenuItem.selectionBackground", SelectionBackgroundColor,
+            "RadioButtonMenuItem.disabledForeground", InactiveTextColor,
+            "RadioButtonMenuItem.acceleratorForeground", MenuTextColor,
+            "RadioButtonMenuItem.acceleratorSelectionForeground", SelectionTextColor,
+            "RadioButtonMenuItem.commandSound", "win.sound.menuCommand",
 
-	    // OptionPane.
-	    "OptionPane.font", MessageFont,
-	    "OptionPane.messageFont", MessageFont,
-	    "OptionPane.buttonFont", MessageFont,
-	    "OptionPane.background", ControlBackgroundColor,
-	    "OptionPane.foreground", WindowTextColor,
+            // OptionPane.
+            "OptionPane.font", MessageFont,
+            "OptionPane.messageFont", MessageFont,
+            "OptionPane.buttonFont", MessageFont,
+            "OptionPane.background", ControlBackgroundColor,
+            "OptionPane.foreground", WindowTextColor,
             "OptionPane.buttonMinimumWidth", new XPDLUValue(50, 50, SwingConstants.EAST),
             "OptionPane.messageForeground", ControlTextColor,
-	    "OptionPane.errorIcon",       new LazyWindowsIcon("optionPaneIcon Error",
-							      "icons/Error.gif"),
-	    "OptionPane.informationIcon", new LazyWindowsIcon("optionPaneIcon Information",
-							      "icons/Inform.gif"),
-	    "OptionPane.questionIcon",    new LazyWindowsIcon("optionPaneIcon Question",
-							      "icons/Question.gif"),
-	    "OptionPane.warningIcon",     new LazyWindowsIcon("optionPaneIcon Warning",
-							      "icons/Warn.gif"),
-	    "OptionPane.windowBindings", new Object[] {
-		"ESCAPE", "close" },
-	         // Option Pane Auditory Cue Mappings
+            "OptionPane.errorIcon",       new LazyWindowsIcon("optionPaneIcon Error",
+                                                              "icons/Error.gif"),
+            "OptionPane.informationIcon", new LazyWindowsIcon("optionPaneIcon Information",
+                                                              "icons/Inform.gif"),
+            "OptionPane.questionIcon",    new LazyWindowsIcon("optionPaneIcon Question",
+                                                              "icons/Question.gif"),
+            "OptionPane.warningIcon",     new LazyWindowsIcon("optionPaneIcon Warning",
+                                                              "icons/Warn.gif"),
+            "OptionPane.windowBindings", new Object[] {
+                "ESCAPE", "close" },
+                 // Option Pane Auditory Cue Mappings
             "OptionPane.errorSound", "win.sound.hand", // Error
             "OptionPane.informationSound", "win.sound.asterisk", // Info Plain
             "OptionPane.questionSound", "win.sound.question", // Question
@@ -1111,32 +1110,32 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
 
             "FormattedTextField.focusInputMap",
               new UIDefaults.LazyInputMap(new Object[] {
-			   "ctrl C", DefaultEditorKit.copyAction,
-			   "ctrl V", DefaultEditorKit.pasteAction,
-			   "ctrl X", DefaultEditorKit.cutAction,
-			     "COPY", DefaultEditorKit.copyAction,
-			    "PASTE", DefaultEditorKit.pasteAction,
-			      "CUT", DefaultEditorKit.cutAction,
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
                    "control INSERT", DefaultEditorKit.copyAction,
                      "shift INSERT", DefaultEditorKit.pasteAction,
                      "shift DELETE", DefaultEditorKit.cutAction,
-		       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
                     "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
-		      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
-		   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
-			"ctrl LEFT", DefaultEditorKit.previousWordAction,
-		     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
-		       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
-		    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
-		  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
-	       "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
-		 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
-	      "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
-			   "ctrl A", DefaultEditorKit.selectAllAction,
-			     "HOME", DefaultEditorKit.beginLineAction,
-			      "END", DefaultEditorKit.endLineAction,
-		       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
-		        "shift END", DefaultEditorKit.selectionEndLineAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
                        "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                  "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
                            "ctrl H", DefaultEditorKit.deletePrevCharAction,
@@ -1147,8 +1146,8 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                              "LEFT", DefaultEditorKit.backwardAction,
                          "KP_RIGHT", DefaultEditorKit.forwardAction,
                           "KP_LEFT", DefaultEditorKit.backwardAction,
-			    "ENTER", JTextField.notifyAction,
-		  "ctrl BACK_SLASH", "unselect",
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect",
                    "control shift O", "toggle-componentOrientation",
                            "ESCAPE", "reset-field-edit",
                                "UP", "increment",
@@ -1159,165 +1158,165 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "FormattedTextField.inactiveBackground", ReadOnlyTextBackground,
             "FormattedTextField.disabledBackground", DisabledTextBackground,
 
-	    // *** Panel
-	    "Panel.font", ControlFont,
-	    "Panel.background", ControlBackgroundColor,
-	    "Panel.foreground", WindowTextColor,
+            // *** Panel
+            "Panel.font", ControlFont,
+            "Panel.background", ControlBackgroundColor,
+            "Panel.foreground", WindowTextColor,
 
-	    // *** PasswordField
+            // *** PasswordField
             "PasswordField.font", ControlFont,
-	    "PasswordField.background", TextBackground,
-	    "PasswordField.foreground", WindowTextColor,
-	    "PasswordField.inactiveForeground", InactiveTextColor,      // for disabled
-	    "PasswordField.inactiveBackground", ReadOnlyTextBackground, // for readonly
-	    "PasswordField.disabledBackground", DisabledTextBackground, // for disabled
-	    "PasswordField.selectionBackground", SelectionBackgroundColor,
-	    "PasswordField.selectionForeground", SelectionTextColor,
-	    "PasswordField.caretForeground",WindowTextColor,
+            "PasswordField.background", TextBackground,
+            "PasswordField.foreground", WindowTextColor,
+            "PasswordField.inactiveForeground", InactiveTextColor,      // for disabled
+            "PasswordField.inactiveBackground", ReadOnlyTextBackground, // for readonly
+            "PasswordField.disabledBackground", DisabledTextBackground, // for disabled
+            "PasswordField.selectionBackground", SelectionBackgroundColor,
+            "PasswordField.selectionForeground", SelectionTextColor,
+            "PasswordField.caretForeground",WindowTextColor,
             "PasswordField.echoChar", new XPValue(new Character((char)0x25CF),
                                                   new Character('*')),
 
-	    // *** ProgressBar
-	    "ProgressBar.font", ControlFont,
-	    "ProgressBar.foreground",  SelectionBackgroundColor,
-	    "ProgressBar.background", ControlBackgroundColor,
-	    "ProgressBar.shadow", ControlShadowColor,
-	    "ProgressBar.highlight", ControlHighlightColor,
-	    "ProgressBar.selectionForeground", ControlBackgroundColor,
-	    "ProgressBar.selectionBackground", SelectionBackgroundColor,
+            // *** ProgressBar
+            "ProgressBar.font", ControlFont,
+            "ProgressBar.foreground",  SelectionBackgroundColor,
+            "ProgressBar.background", ControlBackgroundColor,
+            "ProgressBar.shadow", ControlShadowColor,
+            "ProgressBar.highlight", ControlHighlightColor,
+            "ProgressBar.selectionForeground", ControlBackgroundColor,
+            "ProgressBar.selectionBackground", SelectionBackgroundColor,
             "ProgressBar.cellLength", new Integer(7),
             "ProgressBar.cellSpacing", new Integer(2),
             "ProgressBar.indeterminateInsets", new Insets(3, 3, 3, 3),
 
-	    // *** RootPane.
-	    // These bindings are only enabled when there is a default
-	    // button set on the rootpane.
-	    "RootPane.defaultButtonWindowKeyBindings", new Object[] {
-		             "ENTER", "press",
-		    "released ENTER", "release",
-		        "ctrl ENTER", "press",
-	       "ctrl released ENTER", "release"
-	      },
+            // *** RootPane.
+            // These bindings are only enabled when there is a default
+            // button set on the rootpane.
+            "RootPane.defaultButtonWindowKeyBindings", new Object[] {
+                             "ENTER", "press",
+                    "released ENTER", "release",
+                        "ctrl ENTER", "press",
+               "ctrl released ENTER", "release"
+              },
 
-	    // *** ScrollBar.
-	    "ScrollBar.background", ScrollbarBackgroundColor,
-	    "ScrollBar.foreground", ControlBackgroundColor,
-	    "ScrollBar.track", white,
-	    "ScrollBar.trackForeground", ScrollbarBackgroundColor,
-	    "ScrollBar.trackHighlight", black,
-	    "ScrollBar.trackHighlightForeground", scrollBarTrackHighlight,
-	    "ScrollBar.thumb", ControlBackgroundColor,
-	    "ScrollBar.thumbHighlight", ControlHighlightColor,
-	    "ScrollBar.thumbDarkShadow", ControlDarkShadowColor,
-	    "ScrollBar.thumbShadow", ControlShadowColor,
+            // *** ScrollBar.
+            "ScrollBar.background", ScrollbarBackgroundColor,
+            "ScrollBar.foreground", ControlBackgroundColor,
+            "ScrollBar.track", white,
+            "ScrollBar.trackForeground", ScrollbarBackgroundColor,
+            "ScrollBar.trackHighlight", black,
+            "ScrollBar.trackHighlightForeground", scrollBarTrackHighlight,
+            "ScrollBar.thumb", ControlBackgroundColor,
+            "ScrollBar.thumbHighlight", ControlHighlightColor,
+            "ScrollBar.thumbDarkShadow", ControlDarkShadowColor,
+            "ScrollBar.thumbShadow", ControlShadowColor,
             "ScrollBar.width", scrollBarWidth,
-	    "ScrollBar.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		       "RIGHT", "positiveUnitIncrement",
-		    "KP_RIGHT", "positiveUnitIncrement",
-		        "DOWN", "positiveUnitIncrement",
-		     "KP_DOWN", "positiveUnitIncrement",
-		   "PAGE_DOWN", "positiveBlockIncrement",
-	      "ctrl PAGE_DOWN", "positiveBlockIncrement",
-		        "LEFT", "negativeUnitIncrement",
-		     "KP_LEFT", "negativeUnitIncrement",
-		          "UP", "negativeUnitIncrement",
-		       "KP_UP", "negativeUnitIncrement",
-		     "PAGE_UP", "negativeBlockIncrement",
-	        "ctrl PAGE_UP", "negativeBlockIncrement",
-		        "HOME", "minScroll",
-		         "END", "maxScroll"
-		 }),
+            "ScrollBar.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "positiveUnitIncrement",
+                     "KP_DOWN", "positiveUnitIncrement",
+                   "PAGE_DOWN", "positiveBlockIncrement",
+              "ctrl PAGE_DOWN", "positiveBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "negativeUnitIncrement",
+                       "KP_UP", "negativeUnitIncrement",
+                     "PAGE_UP", "negativeBlockIncrement",
+                "ctrl PAGE_UP", "negativeBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+                 }),
 
-	    // *** ScrollPane.
-	    "ScrollPane.font", ControlFont,
-	    "ScrollPane.background", ControlBackgroundColor,
-	    "ScrollPane.foreground", ControlTextColor,
-	    "ScrollPane.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		           "RIGHT", "unitScrollRight",
-		        "KP_RIGHT", "unitScrollRight",
-		            "DOWN", "unitScrollDown",
-		         "KP_DOWN", "unitScrollDown",
-		            "LEFT", "unitScrollLeft",
-		         "KP_LEFT", "unitScrollLeft",
-		              "UP", "unitScrollUp",
-		           "KP_UP", "unitScrollUp",
-		         "PAGE_UP", "scrollUp",
-		       "PAGE_DOWN", "scrollDown",
-		    "ctrl PAGE_UP", "scrollLeft",
-		  "ctrl PAGE_DOWN", "scrollRight",
-		       "ctrl HOME", "scrollHome",
-		        "ctrl END", "scrollEnd"
-		 }),
+            // *** ScrollPane.
+            "ScrollPane.font", ControlFont,
+            "ScrollPane.background", ControlBackgroundColor,
+            "ScrollPane.foreground", ControlTextColor,
+            "ScrollPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                           "RIGHT", "unitScrollRight",
+                        "KP_RIGHT", "unitScrollRight",
+                            "DOWN", "unitScrollDown",
+                         "KP_DOWN", "unitScrollDown",
+                            "LEFT", "unitScrollLeft",
+                         "KP_LEFT", "unitScrollLeft",
+                              "UP", "unitScrollUp",
+                           "KP_UP", "unitScrollUp",
+                         "PAGE_UP", "scrollUp",
+                       "PAGE_DOWN", "scrollDown",
+                    "ctrl PAGE_UP", "scrollLeft",
+                  "ctrl PAGE_DOWN", "scrollRight",
+                       "ctrl HOME", "scrollHome",
+                        "ctrl END", "scrollEnd"
+                 }),
 
-	    // *** Separator
+            // *** Separator
             "Separator.background", ControlHighlightColor,
             "Separator.foreground", ControlShadowColor,
 
-	    // *** Slider.
-	    "Slider.font", ControlFont,
-	    "Slider.foreground", ControlBackgroundColor,
-	    "Slider.background", ControlBackgroundColor,
-	    "Slider.highlight", ControlHighlightColor,
-	    "Slider.shadow", ControlShadowColor,
-	    "Slider.focus", ControlDarkShadowColor,
-	    "Slider.focusInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		       "RIGHT", "positiveUnitIncrement",
-		    "KP_RIGHT", "positiveUnitIncrement",
-		        "DOWN", "negativeUnitIncrement",
-		     "KP_DOWN", "negativeUnitIncrement",
-		   "PAGE_DOWN", "negativeBlockIncrement",
-		        "LEFT", "negativeUnitIncrement",
-		     "KP_LEFT", "negativeUnitIncrement",
-		          "UP", "positiveUnitIncrement",
-		       "KP_UP", "positiveUnitIncrement",
-		     "PAGE_UP", "positiveBlockIncrement",
-		        "HOME", "minScroll",
-		         "END", "maxScroll"
-		 }),
+            // *** Slider.
+            "Slider.font", ControlFont,
+            "Slider.foreground", ControlBackgroundColor,
+            "Slider.background", ControlBackgroundColor,
+            "Slider.highlight", ControlHighlightColor,
+            "Slider.shadow", ControlShadowColor,
+            "Slider.focus", ControlDarkShadowColor,
+            "Slider.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "negativeUnitIncrement",
+                     "KP_DOWN", "negativeUnitIncrement",
+                   "PAGE_DOWN", "negativeBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "positiveUnitIncrement",
+                       "KP_UP", "positiveUnitIncrement",
+                     "PAGE_UP", "positiveBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+                 }),
 
             // Spinner
             "Spinner.font", ControlFont,
             "Spinner.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+               new UIDefaults.LazyInputMap(new Object[] {
                                "UP", "increment",
                             "KP_UP", "increment",
                              "DOWN", "decrement",
                           "KP_DOWN", "decrement",
                }),
 
-	    // *** SplitPane
+            // *** SplitPane
             "SplitPane.background", ControlBackgroundColor,
             "SplitPane.highlight", ControlHighlightColor,
             "SplitPane.shadow", ControlShadowColor,
-	    "SplitPane.darkShadow", ControlDarkShadowColor,
-	    "SplitPane.dividerSize", new Integer(5),
-	    "SplitPane.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		        "UP", "negativeIncrement",
-		      "DOWN", "positiveIncrement",
-		      "LEFT", "negativeIncrement",
-		     "RIGHT", "positiveIncrement",
-		     "KP_UP", "negativeIncrement",
-		   "KP_DOWN", "positiveIncrement",
-		   "KP_LEFT", "negativeIncrement",
-		  "KP_RIGHT", "positiveIncrement",
-		      "HOME", "selectMin",
-		       "END", "selectMax",
-		        "F8", "startResize",
-		        "F6", "toggleFocus",
-		  "ctrl TAB", "focusOutForward",
- 	    "ctrl shift TAB", "focusOutBackward"
-	       }),
+            "SplitPane.darkShadow", ControlDarkShadowColor,
+            "SplitPane.dividerSize", new Integer(5),
+            "SplitPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                        "UP", "negativeIncrement",
+                      "DOWN", "positiveIncrement",
+                      "LEFT", "negativeIncrement",
+                     "RIGHT", "positiveIncrement",
+                     "KP_UP", "negativeIncrement",
+                   "KP_DOWN", "positiveIncrement",
+                   "KP_LEFT", "negativeIncrement",
+                  "KP_RIGHT", "positiveIncrement",
+                      "HOME", "selectMin",
+                       "END", "selectMax",
+                        "F8", "startResize",
+                        "F6", "toggleFocus",
+                  "ctrl TAB", "focusOutForward",
+            "ctrl shift TAB", "focusOutBackward"
+               }),
 
-	    // *** TabbedPane
-	    "TabbedPane.tabsOverlapBorder", new XPValue(Boolean.TRUE, Boolean.FALSE),
-	    "TabbedPane.tabInsets",         new XPValue(new InsetsUIResource(1, 4, 1, 4),
-							new InsetsUIResource(0, 4, 1, 4)),
-	    "TabbedPane.tabAreaInsets",     new XPValue(new InsetsUIResource(3, 2, 2, 2),
-							new InsetsUIResource(3, 2, 0, 2)),
+            // *** TabbedPane
+            "TabbedPane.tabsOverlapBorder", new XPValue(Boolean.TRUE, Boolean.FALSE),
+            "TabbedPane.tabInsets",         new XPValue(new InsetsUIResource(1, 4, 1, 4),
+                                                        new InsetsUIResource(0, 4, 1, 4)),
+            "TabbedPane.tabAreaInsets",     new XPValue(new InsetsUIResource(3, 2, 2, 2),
+                                                        new InsetsUIResource(3, 2, 0, 2)),
             "TabbedPane.font", ControlFont,
             "TabbedPane.background", ControlBackgroundColor,
             "TabbedPane.foreground", ControlTextColor,
@@ -1326,44 +1325,44 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "TabbedPane.shadow", ControlShadowColor,
             "TabbedPane.darkShadow", ControlDarkShadowColor,
             "TabbedPane.focus", ControlTextColor,
-	    "TabbedPane.focusInputMap",
-	      new UIDefaults.LazyInputMap(new Object[] {
-		         "RIGHT", "navigateRight",
-	              "KP_RIGHT", "navigateRight",
-	                  "LEFT", "navigateLeft",
-	               "KP_LEFT", "navigateLeft",
-	                    "UP", "navigateUp",
-	                 "KP_UP", "navigateUp",
-	                  "DOWN", "navigateDown",
-	               "KP_DOWN", "navigateDown",
-	             "ctrl DOWN", "requestFocusForVisibleComponent",
-	          "ctrl KP_DOWN", "requestFocusForVisibleComponent",
-		}),
-	    "TabbedPane.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+            "TabbedPane.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                         "RIGHT", "navigateRight",
+                      "KP_RIGHT", "navigateRight",
+                          "LEFT", "navigateLeft",
+                       "KP_LEFT", "navigateLeft",
+                            "UP", "navigateUp",
+                         "KP_UP", "navigateUp",
+                          "DOWN", "navigateDown",
+                       "KP_DOWN", "navigateDown",
+                     "ctrl DOWN", "requestFocusForVisibleComponent",
+                  "ctrl KP_DOWN", "requestFocusForVisibleComponent",
+                }),
+            "TabbedPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
                          "ctrl TAB", "navigateNext",
                    "ctrl shift TAB", "navigatePrevious",
-		   "ctrl PAGE_DOWN", "navigatePageDown",
-	             "ctrl PAGE_UP", "navigatePageUp",
-	                  "ctrl UP", "requestFocus",
-	               "ctrl KP_UP", "requestFocus",
-		 }),
+                   "ctrl PAGE_DOWN", "navigatePageDown",
+                     "ctrl PAGE_UP", "navigatePageUp",
+                          "ctrl UP", "requestFocus",
+                       "ctrl KP_UP", "requestFocus",
+                 }),
 
-	    // *** Table
-	    "Table.font", ControlFont,
-	    "Table.foreground", ControlTextColor,  // cell text color
-	    "Table.background", WindowBackgroundColor,  // cell background color
+            // *** Table
+            "Table.font", ControlFont,
+            "Table.foreground", ControlTextColor,  // cell text color
+            "Table.background", WindowBackgroundColor,  // cell background color
             "Table.highlight", ControlHighlightColor,
             "Table.light", ControlLightColor,
             "Table.shadow", ControlShadowColor,
             "Table.darkShadow", ControlDarkShadowColor,
-	    "Table.selectionForeground", SelectionTextColor,
-	    "Table.selectionBackground", SelectionBackgroundColor,
-      	    "Table.gridColor", gray,  // grid line color
-            "Table.focusCellBackground", WindowBackgroundColor, 
-            "Table.focusCellForeground", ControlTextColor, 
-	    "Table.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+            "Table.selectionForeground", SelectionTextColor,
+            "Table.selectionBackground", SelectionBackgroundColor,
+            "Table.gridColor", gray,  // grid line color
+            "Table.focusCellBackground", WindowBackgroundColor,
+            "Table.focusCellForeground", ControlTextColor,
+            "Table.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
                                "ctrl C", "copy",
                                "ctrl V", "paste",
                                "ctrl X", "cut",
@@ -1435,134 +1434,134 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                           "shift SPACE", "extendTo",
                      "ctrl shift SPACE", "moveSelectionTo",
                                    "F8", "focusHeader"
-		 }),
+                 }),
             "Table.sortIconHighlight", ControlShadowColor,
             "Table.sortIconLight", white,
 
-	    "TableHeader.font", ControlFont,
-	    "TableHeader.foreground", ControlTextColor, // header text color
-	    "TableHeader.background", ControlBackgroundColor, // header background
+            "TableHeader.font", ControlFont,
+            "TableHeader.foreground", ControlTextColor, // header text color
+            "TableHeader.background", ControlBackgroundColor, // header background
             "TableHeader.focusCellBackground",
                 new XPValue(XPValue.NULL_VALUE,     // use default bg from XP styles
                             WindowBackgroundColor), // or white bg otherwise
 
-	    // *** TextArea
+            // *** TextArea
             "TextArea.font", FixedControlFont,
-	    "TextArea.background", WindowBackgroundColor,
-	    "TextArea.foreground", WindowTextColor,
-	    "TextArea.inactiveForeground", InactiveTextColor,
+            "TextArea.background", WindowBackgroundColor,
+            "TextArea.foreground", WindowTextColor,
+            "TextArea.inactiveForeground", InactiveTextColor,
             "TextArea.inactiveBackground", WindowBackgroundColor,
             "TextArea.disabledBackground", DisabledTextBackground,
-	    "TextArea.selectionBackground", SelectionBackgroundColor,
-	    "TextArea.selectionForeground", SelectionTextColor,
-	    "TextArea.caretForeground", WindowTextColor,
+            "TextArea.selectionBackground", SelectionBackgroundColor,
+            "TextArea.selectionForeground", SelectionTextColor,
+            "TextArea.caretForeground", WindowTextColor,
 
-	    // *** TextField
-	    "TextField.font", ControlFont,
-	    "TextField.background", TextBackground,
-	    "TextField.foreground", WindowTextColor,
-	    "TextField.shadow", ControlShadowColor,
-	    "TextField.darkShadow", ControlDarkShadowColor,
-	    "TextField.light", ControlLightColor,
-	    "TextField.highlight", ControlHighlightColor,
-	    "TextField.inactiveForeground", InactiveTextColor,      // for disabled
-	    "TextField.inactiveBackground", ReadOnlyTextBackground, // for readonly
-	    "TextField.disabledBackground", DisabledTextBackground, // for disabled
-	    "TextField.selectionBackground", SelectionBackgroundColor,
-	    "TextField.selectionForeground", SelectionTextColor,
-	    "TextField.caretForeground", WindowTextColor,
+            // *** TextField
+            "TextField.font", ControlFont,
+            "TextField.background", TextBackground,
+            "TextField.foreground", WindowTextColor,
+            "TextField.shadow", ControlShadowColor,
+            "TextField.darkShadow", ControlDarkShadowColor,
+            "TextField.light", ControlLightColor,
+            "TextField.highlight", ControlHighlightColor,
+            "TextField.inactiveForeground", InactiveTextColor,      // for disabled
+            "TextField.inactiveBackground", ReadOnlyTextBackground, // for readonly
+            "TextField.disabledBackground", DisabledTextBackground, // for disabled
+            "TextField.selectionBackground", SelectionBackgroundColor,
+            "TextField.selectionForeground", SelectionTextColor,
+            "TextField.caretForeground", WindowTextColor,
 
-	    // *** TextPane
-	    "TextPane.font", ControlFont,
-	    "TextPane.background", WindowBackgroundColor,
-	    "TextPane.foreground", WindowTextColor,
-	    "TextPane.selectionBackground", SelectionBackgroundColor,
-	    "TextPane.selectionForeground", SelectionTextColor,
+            // *** TextPane
+            "TextPane.font", ControlFont,
+            "TextPane.background", WindowBackgroundColor,
+            "TextPane.foreground", WindowTextColor,
+            "TextPane.selectionBackground", SelectionBackgroundColor,
+            "TextPane.selectionForeground", SelectionTextColor,
             "TextPane.inactiveBackground", WindowBackgroundColor,
             "TextPane.disabledBackground", DisabledTextBackground,
-	    "TextPane.caretForeground", WindowTextColor,
+            "TextPane.caretForeground", WindowTextColor,
 
-	    // *** TitledBorder
+            // *** TitledBorder
             "TitledBorder.font", ControlFont,
             "TitledBorder.titleColor",
-			new XPColorValue(Part.BP_GROUPBOX, null, Prop.TEXTCOLOR,
+                        new XPColorValue(Part.BP_GROUPBOX, null, Prop.TEXTCOLOR,
                                          WindowTextColor),
 
-	    // *** ToggleButton
-	    "ToggleButton.font", ControlFont,
+            // *** ToggleButton
+            "ToggleButton.font", ControlFont,
             "ToggleButton.background", ControlBackgroundColor,
             "ToggleButton.foreground", ControlTextColor,
-	    "ToggleButton.shadow", ControlShadowColor,
+            "ToggleButton.shadow", ControlShadowColor,
             "ToggleButton.darkShadow", ControlDarkShadowColor,
             "ToggleButton.light", ControlLightColor,
             "ToggleButton.highlight", ControlHighlightColor,
             "ToggleButton.focus", ControlTextColor,
-	    "ToggleButton.textShiftOffset", new Integer(1),
- 	    "ToggleButton.focusInputMap",
-	      new UIDefaults.LazyInputMap(new Object[] {
-		            "SPACE", "pressed",
+            "ToggleButton.textShiftOffset", new Integer(1),
+            "ToggleButton.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                            "SPACE", "pressed",
                    "released SPACE", "released"
-	        }),
+                }),
 
-	    // *** ToolBar
-	    "ToolBar.font", MenuFont,
-	    "ToolBar.background", ControlBackgroundColor,
-	    "ToolBar.foreground", ControlTextColor,
-	    "ToolBar.shadow", ControlShadowColor,
-	    "ToolBar.darkShadow", ControlDarkShadowColor,
-	    "ToolBar.light", ControlLightColor,
-	    "ToolBar.highlight", ControlHighlightColor,
-	    "ToolBar.dockingBackground", ControlBackgroundColor,
-	    "ToolBar.dockingForeground", red,
-	    "ToolBar.floatingBackground", ControlBackgroundColor,
-	    "ToolBar.floatingForeground", darkGray,
-	    "ToolBar.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		        "UP", "navigateUp",
-		     "KP_UP", "navigateUp",
-		      "DOWN", "navigateDown",
-		   "KP_DOWN", "navigateDown",
-		      "LEFT", "navigateLeft",
-		   "KP_LEFT", "navigateLeft",
-		     "RIGHT", "navigateRight",
-		  "KP_RIGHT", "navigateRight"
-		 }),
-	    "ToolBar.separatorSize", null,
+            // *** ToolBar
+            "ToolBar.font", MenuFont,
+            "ToolBar.background", ControlBackgroundColor,
+            "ToolBar.foreground", ControlTextColor,
+            "ToolBar.shadow", ControlShadowColor,
+            "ToolBar.darkShadow", ControlDarkShadowColor,
+            "ToolBar.light", ControlLightColor,
+            "ToolBar.highlight", ControlHighlightColor,
+            "ToolBar.dockingBackground", ControlBackgroundColor,
+            "ToolBar.dockingForeground", red,
+            "ToolBar.floatingBackground", ControlBackgroundColor,
+            "ToolBar.floatingForeground", darkGray,
+            "ToolBar.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                        "UP", "navigateUp",
+                     "KP_UP", "navigateUp",
+                      "DOWN", "navigateDown",
+                   "KP_DOWN", "navigateDown",
+                      "LEFT", "navigateLeft",
+                   "KP_LEFT", "navigateLeft",
+                     "RIGHT", "navigateRight",
+                  "KP_RIGHT", "navigateRight"
+                 }),
+            "ToolBar.separatorSize", null,
 
-	    // *** ToolTip
+            // *** ToolTip
             "ToolTip.font", ToolTipFont,
             "ToolTip.background", new DesktopProperty(
                                            "win.tooltip.backgroundColor",
-					    table.get("info"), toolkit),
+                                            table.get("info"), toolkit),
             "ToolTip.foreground", new DesktopProperty(
                                            "win.tooltip.textColor",
-					    table.get("infoText"), toolkit),
-                
+                                            table.get("infoText"), toolkit),
+
         // *** ToolTipManager
             "ToolTipManager.enableToolTipMode", "activeApplication",
 
         // *** Tree
-	    "Tree.selectionBorderColor", black,
-	    "Tree.drawDashedFocusIndicator", Boolean.TRUE,
-	    "Tree.lineTypeDashed", Boolean.TRUE,
-	    "Tree.font", ControlFont,
-	    "Tree.background", WindowBackgroundColor,
+            "Tree.selectionBorderColor", black,
+            "Tree.drawDashedFocusIndicator", Boolean.TRUE,
+            "Tree.lineTypeDashed", Boolean.TRUE,
+            "Tree.font", ControlFont,
+            "Tree.background", WindowBackgroundColor,
             "Tree.foreground", WindowTextColor,
-	    "Tree.hash", gray,
+            "Tree.hash", gray,
             "Tree.leftChildIndent", new Integer(8),
             "Tree.rightChildIndent", new Integer(11),
-	    "Tree.textForeground", WindowTextColor,
-	    "Tree.textBackground", WindowBackgroundColor,
-	    "Tree.selectionForeground", SelectionTextColor,
-	    "Tree.selectionBackground", SelectionBackgroundColor,
+            "Tree.textForeground", WindowTextColor,
+            "Tree.textBackground", WindowBackgroundColor,
+            "Tree.selectionForeground", SelectionTextColor,
+            "Tree.selectionBackground", SelectionBackgroundColor,
             "Tree.expandedIcon", treeExpandedIcon,
             "Tree.collapsedIcon", treeCollapsedIcon,
             "Tree.openIcon",   new ActiveWindowsIcon("win.icon.shellIconBPP", "shell32Icon 5",
-						     (Icon)table.get("Tree.openIcon")),
+                                                     (Icon)table.get("Tree.openIcon")),
             "Tree.closedIcon", new ActiveWindowsIcon("win.icon.shellIconBPP", "shell32Icon 4",
-						     (Icon)table.get("Tree.closedIcon")),
-	    "Tree.focusInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
+                                                     (Icon)table.get("Tree.closedIcon")),
+            "Tree.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
                                     "ADD", "expand",
                                "SUBTRACT", "collapse",
                                  "ctrl C", "copy",
@@ -1574,84 +1573,84 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                          "control INSERT", "copy",
                            "shift INSERT", "paste",
                            "shift DELETE", "cut",
-		                     "UP", "selectPrevious",
-		                  "KP_UP", "selectPrevious",
-		               "shift UP", "selectPreviousExtendSelection",
-		            "shift KP_UP", "selectPreviousExtendSelection",
+                                     "UP", "selectPrevious",
+                                  "KP_UP", "selectPrevious",
+                               "shift UP", "selectPreviousExtendSelection",
+                            "shift KP_UP", "selectPreviousExtendSelection",
                           "ctrl shift UP", "selectPreviousExtendSelection",
                        "ctrl shift KP_UP", "selectPreviousExtendSelection",
                                 "ctrl UP", "selectPreviousChangeLead",
                              "ctrl KP_UP", "selectPreviousChangeLead",
-		                   "DOWN", "selectNext",
-		                "KP_DOWN", "selectNext",
-		             "shift DOWN", "selectNextExtendSelection",
-		          "shift KP_DOWN", "selectNextExtendSelection",
+                                   "DOWN", "selectNext",
+                                "KP_DOWN", "selectNext",
+                             "shift DOWN", "selectNextExtendSelection",
+                          "shift KP_DOWN", "selectNextExtendSelection",
                         "ctrl shift DOWN", "selectNextExtendSelection",
                      "ctrl shift KP_DOWN", "selectNextExtendSelection",
                               "ctrl DOWN", "selectNextChangeLead",
                            "ctrl KP_DOWN", "selectNextChangeLead",
-		                  "RIGHT", "selectChild",
-		               "KP_RIGHT", "selectChild",
-		                   "LEFT", "selectParent",
-		                "KP_LEFT", "selectParent",
-		                "PAGE_UP", "scrollUpChangeSelection",
-		          "shift PAGE_UP", "scrollUpExtendSelection",
+                                  "RIGHT", "selectChild",
+                               "KP_RIGHT", "selectChild",
+                                   "LEFT", "selectParent",
+                                "KP_LEFT", "selectParent",
+                                "PAGE_UP", "scrollUpChangeSelection",
+                          "shift PAGE_UP", "scrollUpExtendSelection",
                      "ctrl shift PAGE_UP", "scrollUpExtendSelection",
                            "ctrl PAGE_UP", "scrollUpChangeLead",
-		              "PAGE_DOWN", "scrollDownChangeSelection",
-		        "shift PAGE_DOWN", "scrollDownExtendSelection",
+                              "PAGE_DOWN", "scrollDownChangeSelection",
+                        "shift PAGE_DOWN", "scrollDownExtendSelection",
                    "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
                          "ctrl PAGE_DOWN", "scrollDownChangeLead",
-		                   "HOME", "selectFirst",
-		             "shift HOME", "selectFirstExtendSelection",
+                                   "HOME", "selectFirst",
+                             "shift HOME", "selectFirstExtendSelection",
                         "ctrl shift HOME", "selectFirstExtendSelection",
                               "ctrl HOME", "selectFirstChangeLead",
-		                    "END", "selectLast",
-		              "shift END", "selectLastExtendSelection",
+                                    "END", "selectLast",
+                              "shift END", "selectLastExtendSelection",
                          "ctrl shift END", "selectLastExtendSelection",
                                "ctrl END", "selectLastChangeLead",
-		                     "F2", "startEditing",
-		                 "ctrl A", "selectAll",
-		             "ctrl SLASH", "selectAll",
-		        "ctrl BACK_SLASH", "clearSelection",
-		              "ctrl LEFT", "scrollLeft",
-		           "ctrl KP_LEFT", "scrollLeft",
-		             "ctrl RIGHT", "scrollRight",
-		          "ctrl KP_RIGHT", "scrollRight",
+                                     "F2", "startEditing",
+                                 "ctrl A", "selectAll",
+                             "ctrl SLASH", "selectAll",
+                        "ctrl BACK_SLASH", "clearSelection",
+                              "ctrl LEFT", "scrollLeft",
+                           "ctrl KP_LEFT", "scrollLeft",
+                             "ctrl RIGHT", "scrollRight",
+                          "ctrl KP_RIGHT", "scrollRight",
                                   "SPACE", "addToSelection",
                              "ctrl SPACE", "toggleAndAnchor",
                             "shift SPACE", "extendTo",
                        "ctrl shift SPACE", "moveSelectionTo"
-		 }),
-	    "Tree.ancestorInputMap",
-	       new UIDefaults.LazyInputMap(new Object[] {
-		     "ESCAPE", "cancel"
-		 }),
+                 }),
+            "Tree.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancel"
+                 }),
 
-	    // *** Viewport
-	    "Viewport.font", ControlFont,
-	    "Viewport.background", ControlBackgroundColor,
-	    "Viewport.foreground", WindowTextColor,
+            // *** Viewport
+            "Viewport.font", ControlFont,
+            "Viewport.background", ControlBackgroundColor,
+            "Viewport.foreground", WindowTextColor,
 
 
         };
 
         table.putDefaults(defaults);
-	table.putDefaults(getLazyValueDefaults());
+        table.putDefaults(getLazyValueDefaults());
         initVistaComponentDefaults(table);
     }
-    
+
     static boolean isOnVista() {
         return OSInfo.getOSType() == OSInfo.OSType.WINDOWS
                 && OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_VISTA) >= 0;
     }
-    
+
     private void initVistaComponentDefaults(UIDefaults table) {
         if (! isOnVista()) {
             return;
         }
         /* START handling menus for Vista */
-        String[] menuClasses = { "MenuItem", "Menu", 
+        String[] menuClasses = { "MenuItem", "Menu",
                 "CheckBoxMenuItem", "RadioButtonMenuItem",
         };
 
@@ -1662,20 +1661,20 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             String key = menuClasses[i] + ".opaque";
             Object oldValue = table.get(key);
             menuDefaults[j++] = key;
-            menuDefaults[j++] = 
+            menuDefaults[j++] =
                 new XPValue(Boolean.FALSE, oldValue);
         }
         table.putDefaults(menuDefaults);
 
-        /* 
-         * acceleratorSelectionForeground color is the same as 
-         * acceleratorForeground 
+        /*
+         * acceleratorSelectionForeground color is the same as
+         * acceleratorForeground
          */
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
             String key = menuClasses[i] + ".acceleratorSelectionForeground";
             Object oldValue = table.get(key);
-            menuDefaults[j++] = key; 
-            menuDefaults[j++] = 
+            menuDefaults[j++] = key;
+            menuDefaults[j++] =
                 new XPValue(
                     table.getColor(
                         menuClasses[i] + ".acceleratorForeground"),
@@ -1684,7 +1683,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         table.putDefaults(menuDefaults);
 
         /* they have the same MenuItemCheckIconFactory */
-        VistaMenuItemCheckIconFactory menuItemCheckIconFactory = 
+        VistaMenuItemCheckIconFactory menuItemCheckIconFactory =
             WindowsIconFactory.getMenuItemCheckIconFactory();
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
             String key = menuClasses[i] + ".checkIconFactory";
@@ -1694,17 +1693,17 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 new XPValue(menuItemCheckIconFactory, oldValue);
         }
         table.putDefaults(menuDefaults);
-        
+
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
             String key = menuClasses[i] + ".checkIcon";
             Object oldValue = table.get(key);
             menuDefaults[j++] = key;
             menuDefaults[j++] =
-                new XPValue(menuItemCheckIconFactory.getIcon(menuClasses[i]), 
+                new XPValue(menuItemCheckIconFactory.getIcon(menuClasses[i]),
                     oldValue);
         }
         table.putDefaults(menuDefaults);
-        
+
 
         /* height can be even */
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
@@ -1726,13 +1725,13 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         table.putDefaults(menuDefaults);
 
         /* set checkIcon offset */
-        Integer checkIconOffsetInteger = 
+        Integer checkIconOffsetInteger =
             Integer.valueOf(0);
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
             String key = menuClasses[i] + ".checkIconOffset";
             Object oldValue = table.get(key);
             menuDefaults[j++] = key;
-            menuDefaults[j++] = 
+            menuDefaults[j++] =
                 new XPValue(checkIconOffsetInteger, oldValue);
         }
         table.putDefaults(menuDefaults);
@@ -1756,7 +1755,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 return VistaMenuItemCheckIconFactory.getIconWidth()
                 + WindowsPopupMenuUI.getSpanBeforeGutter()
                 + WindowsPopupMenuUI.getGutterWidth()
-                + WindowsPopupMenuUI.getSpanAfterGutter(); 
+                + WindowsPopupMenuUI.getSpanAfterGutter();
             }
         };
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
@@ -1767,11 +1766,11 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         }
         table.putDefaults(menuDefaults);
 
-        /*  
+        /*
          * JPopupMenu has a bit of free space around menu items
          */
         String POPUP_MENU_BORDER = "PopupMenu.border";
-        
+
         Object popupMenuBorder = new XPBorderValue(Part.MENU,
                 new SwingLazyValue(
                   "javax.swing.plaf.basic.BasicBorders",
@@ -1793,7 +1792,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 null, new Object[] { Boolean.FALSE })));
         /* END table handling for Vista */
     }
-    
+
     /**
      * If we support loading of fonts from the desktop this will return
      * a DesktopProperty representing the font. If the font can't be
@@ -1814,150 +1813,150 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     //
     private Object[] getLazyValueDefaults() {
 
-	Object buttonBorder =
-	    new XPBorderValue(Part.BP_PUSHBUTTON,
-			      new SwingLazyValue(
-			       "javax.swing.plaf.basic.BasicBorders",
-			       "getButtonBorder"));
+        Object buttonBorder =
+            new XPBorderValue(Part.BP_PUSHBUTTON,
+                              new SwingLazyValue(
+                               "javax.swing.plaf.basic.BasicBorders",
+                               "getButtonBorder"));
 
-	Object textFieldBorder =
-	    new XPBorderValue(Part.EP_EDIT,
-			      new SwingLazyValue(
-			       "javax.swing.plaf.basic.BasicBorders", 
-			       "getTextFieldBorder"));
+        Object textFieldBorder =
+            new XPBorderValue(Part.EP_EDIT,
+                              new SwingLazyValue(
+                               "javax.swing.plaf.basic.BasicBorders",
+                               "getTextFieldBorder"));
 
-	Object textFieldMargin =
-	    new XPValue(new InsetsUIResource(2, 2, 2, 2),
-			new InsetsUIResource(1, 1, 1, 1));
+        Object textFieldMargin =
+            new XPValue(new InsetsUIResource(2, 2, 2, 2),
+                        new InsetsUIResource(1, 1, 1, 1));
 
-        Object spinnerBorder = 
+        Object spinnerBorder =
             new XPBorderValue(Part.EP_EDIT, textFieldBorder,
                               new EmptyBorder(2, 2, 2, 2));
 
-        Object spinnerArrowInsets = 
+        Object spinnerArrowInsets =
             new XPValue(new InsetsUIResource(1, 1, 1, 1),
                         null);
 
-	Object comboBoxBorder = new XPBorderValue(Part.CP_COMBOBOX, textFieldBorder);
+        Object comboBoxBorder = new XPBorderValue(Part.CP_COMBOBOX, textFieldBorder);
 
-	// For focus rectangle for cells and trees.
-	Object focusCellHighlightBorder = new SwingLazyValue(
-			  "com.sun.java.swing.plaf.windows.WindowsBorders",
-			  "getFocusCellHighlightBorder");
+        // For focus rectangle for cells and trees.
+        Object focusCellHighlightBorder = new SwingLazyValue(
+                          "com.sun.java.swing.plaf.windows.WindowsBorders",
+                          "getFocusCellHighlightBorder");
 
-	Object etchedBorder = new SwingLazyValue(
-			  "javax.swing.plaf.BorderUIResource",
-			  "getEtchedBorderUIResource");
+        Object etchedBorder = new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource",
+                          "getEtchedBorderUIResource");
 
-	Object internalFrameBorder = new SwingLazyValue(
-                "com.sun.java.swing.plaf.windows.WindowsBorders", 
-		"getInternalFrameBorder");
+        Object internalFrameBorder = new SwingLazyValue(
+                "com.sun.java.swing.plaf.windows.WindowsBorders",
+                "getInternalFrameBorder");
 
         Object loweredBevelBorder = new SwingLazyValue(
-			  "javax.swing.plaf.BorderUIResource",
-			  "getLoweredBevelBorderUIResource");
+                          "javax.swing.plaf.BorderUIResource",
+                          "getLoweredBevelBorderUIResource");
 
 
         Object marginBorder = new SwingLazyValue(
-			    "javax.swing.plaf.basic.BasicBorders$MarginBorder");
+                            "javax.swing.plaf.basic.BasicBorders$MarginBorder");
 
-	Object menuBarBorder = new SwingLazyValue(
-                "javax.swing.plaf.basic.BasicBorders", 
-		"getMenuBarBorder");
+        Object menuBarBorder = new SwingLazyValue(
+                "javax.swing.plaf.basic.BasicBorders",
+                "getMenuBarBorder");
 
 
-	Object popupMenuBorder = new XPBorderValue(Part.MENU,
-			new SwingLazyValue(
-			  "javax.swing.plaf.basic.BasicBorders",
-			  "getInternalFrameBorder"));
+        Object popupMenuBorder = new XPBorderValue(Part.MENU,
+                        new SwingLazyValue(
+                          "javax.swing.plaf.basic.BasicBorders",
+                          "getInternalFrameBorder"));
 
-	// *** ProgressBar
-	Object progressBarBorder = new SwingLazyValue(
-			      "com.sun.java.swing.plaf.windows.WindowsBorders", 
-			      "getProgressBarBorder");
+        // *** ProgressBar
+        Object progressBarBorder = new SwingLazyValue(
+                              "com.sun.java.swing.plaf.windows.WindowsBorders",
+                              "getProgressBarBorder");
 
-	Object radioButtonBorder = new SwingLazyValue(
-			       "javax.swing.plaf.basic.BasicBorders", 
-			       "getRadioButtonBorder");
+        Object radioButtonBorder = new SwingLazyValue(
+                               "javax.swing.plaf.basic.BasicBorders",
+                               "getRadioButtonBorder");
 
-	Object scrollPaneBorder =
-	    new XPBorderValue(Part.LBP_LISTBOX, textFieldBorder);
+        Object scrollPaneBorder =
+            new XPBorderValue(Part.LBP_LISTBOX, textFieldBorder);
 
-	Object tableScrollPaneBorder =
-	    new XPBorderValue(Part.LBP_LISTBOX, loweredBevelBorder);
+        Object tableScrollPaneBorder =
+            new XPBorderValue(Part.LBP_LISTBOX, loweredBevelBorder);
 
-	Object tableHeaderBorder = new SwingLazyValue(
-			  "com.sun.java.swing.plaf.windows.WindowsBorders",
-			  "getTableHeaderBorder");
+        Object tableHeaderBorder = new SwingLazyValue(
+                          "com.sun.java.swing.plaf.windows.WindowsBorders",
+                          "getTableHeaderBorder");
 
-	// *** ToolBar
-	Object toolBarBorder = new SwingLazyValue(
-			      "com.sun.java.swing.plaf.windows.WindowsBorders", 
-			      "getToolBarBorder");
+        // *** ToolBar
+        Object toolBarBorder = new SwingLazyValue(
+                              "com.sun.java.swing.plaf.windows.WindowsBorders",
+                              "getToolBarBorder");
 
         // *** ToolTips
         Object toolTipBorder = new SwingLazyValue(
                               "javax.swing.plaf.BorderUIResource",
-			      "getBlackLineBorderUIResource");
+                              "getBlackLineBorderUIResource");
 
 
 
         Object checkBoxIcon = new SwingLazyValue(
-		     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
-		     "getCheckBoxIcon");
+                     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
+                     "getCheckBoxIcon");
 
         Object radioButtonIcon = new SwingLazyValue(
-		     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
-		     "getRadioButtonIcon");
+                     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
+                     "getRadioButtonIcon");
 
         Object radioButtonMenuItemIcon = new SwingLazyValue(
                      "com.sun.java.swing.plaf.windows.WindowsIconFactory",
                      "getRadioButtonMenuItemIcon");
 
         Object menuItemCheckIcon = new SwingLazyValue(
-		     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
-		     "getMenuItemCheckIcon");
+                     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
+                     "getMenuItemCheckIcon");
 
         Object menuItemArrowIcon = new SwingLazyValue(
-		     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
-		     "getMenuItemArrowIcon");
+                     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
+                     "getMenuItemArrowIcon");
 
         Object menuArrowIcon = new SwingLazyValue(
-		     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
-		     "getMenuArrowIcon");
+                     "com.sun.java.swing.plaf.windows.WindowsIconFactory",
+                     "getMenuArrowIcon");
 
 
         Object[] lazyDefaults = {
-	    "Button.border", buttonBorder,
+            "Button.border", buttonBorder,
             "CheckBox.border", radioButtonBorder,
             "ComboBox.border", comboBoxBorder,
-	    "DesktopIcon.border", internalFrameBorder,
-	    "FormattedTextField.border", textFieldBorder,
-	    "FormattedTextField.margin", textFieldMargin,
-	    "InternalFrame.border", internalFrameBorder,
-	    "List.focusCellHighlightBorder", focusCellHighlightBorder,
-	    "Table.focusCellHighlightBorder", focusCellHighlightBorder,
-	    "Menu.border", marginBorder,
-	    "MenuBar.border", menuBarBorder,
+            "DesktopIcon.border", internalFrameBorder,
+            "FormattedTextField.border", textFieldBorder,
+            "FormattedTextField.margin", textFieldMargin,
+            "InternalFrame.border", internalFrameBorder,
+            "List.focusCellHighlightBorder", focusCellHighlightBorder,
+            "Table.focusCellHighlightBorder", focusCellHighlightBorder,
+            "Menu.border", marginBorder,
+            "MenuBar.border", menuBarBorder,
             "MenuItem.border", marginBorder,
             "PasswordField.border", textFieldBorder,
             "PasswordField.margin", textFieldMargin,
-	    "PopupMenu.border", popupMenuBorder,
-	    "ProgressBar.border", progressBarBorder,
+            "PopupMenu.border", popupMenuBorder,
+            "ProgressBar.border", progressBarBorder,
             "RadioButton.border", radioButtonBorder,
-	    "ScrollPane.border", scrollPaneBorder,
-	    "Spinner.border", spinnerBorder,
+            "ScrollPane.border", scrollPaneBorder,
+            "Spinner.border", spinnerBorder,
             "Spinner.arrowButtonInsets", spinnerArrowInsets,
             "Spinner.arrowButtonSize", new Dimension(17, 9),
-	    "Table.scrollPaneBorder", tableScrollPaneBorder,
-	    "TableHeader.cellBorder", tableHeaderBorder,
+            "Table.scrollPaneBorder", tableScrollPaneBorder,
+            "TableHeader.cellBorder", tableHeaderBorder,
             "TextArea.margin", textFieldMargin,
-	    "TextField.border", textFieldBorder,
-	    "TextField.margin", textFieldMargin,
+            "TextField.border", textFieldBorder,
+            "TextField.margin", textFieldMargin,
             "TitledBorder.border",
-			new XPBorderValue(Part.BP_GROUPBOX, etchedBorder),
+                        new XPBorderValue(Part.BP_GROUPBOX, etchedBorder),
             "ToggleButton.border", radioButtonBorder,
-	    "ToolBar.border", toolBarBorder,
+            "ToolBar.border", toolBarBorder,
             "ToolTip.border", toolTipBorder,
 
             "CheckBox.icon", checkBoxIcon,
@@ -1967,10 +1966,10 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "RadioButton.icon", radioButtonIcon,
             "RadioButtonMenuItem.checkIcon", radioButtonMenuItemIcon,
             "InternalFrame.layoutTitlePaneAtOrigin",
-			new XPValue(Boolean.TRUE, Boolean.FALSE),
+                        new XPValue(Boolean.TRUE, Boolean.FALSE),
             "Table.ascendingSortIcon", new XPValue(
                   new SwingLazyValue(
-		     "sun.swing.icon.SortArrowIcon",
+                     "sun.swing.icon.SortArrowIcon",
                      null, new Object[] { Boolean.TRUE,
                                           "Table.sortIconColor" }),
                   new SwingLazyValue(
@@ -1978,20 +1977,20 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                       null, new Object[] { Boolean.TRUE })),
             "Table.descendingSortIcon", new XPValue(
                   new SwingLazyValue(
-		     "sun.swing.icon.SortArrowIcon",
+                     "sun.swing.icon.SortArrowIcon",
                      null, new Object[] { Boolean.FALSE,
                                           "Table.sortIconColor" }),
                   new SwingLazyValue(
-		     "sun.swing.plaf.windows.ClassicSortArrowIcon",
+                     "sun.swing.plaf.windows.ClassicSortArrowIcon",
                      null, new Object[] { Boolean.FALSE })),
-	};
+        };
 
-	return lazyDefaults;
+        return lazyDefaults;
     }
 
     public void uninitialize() {
         super.uninitialize();
-	toolkit = null;
+        toolkit = null;
 
         if (WindowsPopupMenuUI.mnemonicListener != null) {
             MenuSelectionManager.defaultManager().
@@ -2011,25 +2010,25 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     private static boolean isClassicWindows = false;
 
     /**
-     * Sets the state of the hide mnemonic flag. This flag is used by the 
+     * Sets the state of the hide mnemonic flag. This flag is used by the
      * component UI delegates to determine if the mnemonic should be rendered.
      * This method is a non operation if the underlying operating system
      * does not support the mnemonic hiding feature.
-     * 
+     *
      * @param hide true if mnemonics should be hidden
      * @since 1.4
      */
     public static void setMnemonicHidden(boolean hide) {
-	if (UIManager.getBoolean("Button.showMnemonics") == true) {
-	    // Do not hide mnemonics if the UI defaults do not support this
-	    isMnemonicHidden = false;
-	} else {
-	    isMnemonicHidden = hide;
-	}
+        if (UIManager.getBoolean("Button.showMnemonics") == true) {
+            // Do not hide mnemonics if the UI defaults do not support this
+            isMnemonicHidden = false;
+        } else {
+            isMnemonicHidden = hide;
+        }
     }
 
     /**
-     * Gets the state of the hide mnemonic flag. This only has meaning 
+     * Gets the state of the hide mnemonic flag. This only has meaning
      * if this feature is supported by the underlying OS.
      *
      * @return true if mnemonics are hidden, otherwise, false
@@ -2037,11 +2036,11 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * @since 1.4
      */
     public static boolean isMnemonicHidden() {
-	if (UIManager.getBoolean("Button.showMnemonics") == true) {
-	    // Do not hide mnemonics if the UI defaults do not support this
-	    isMnemonicHidden = false;
-	}
-	return isMnemonicHidden;
+        if (UIManager.getBoolean("Button.showMnemonics") == true) {
+            // Do not hide mnemonics if the UI defaults do not support this
+            isMnemonicHidden = false;
+        }
+        return isMnemonicHidden;
     }
 
     /**
@@ -2055,13 +2054,13 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * @since 1.4
      */
     public static boolean isClassicWindows() {
-	return isClassicWindows;
+        return isClassicWindows;
     }
 
     /**
      * <p>
-     * Invoked when the user attempts an invalid operation, 
-     * such as pasting into an uneditable <code>JTextField</code> 
+     * Invoked when the user attempts an invalid operation,
+     * such as pasting into an uneditable <code>JTextField</code>
      * that has focus.
      * </p>
      * <p>
@@ -2072,15 +2071,15 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * results.
      * </p>
      *
-     * @param component Component the error occured in, may be 
-     *			null indicating the error condition is 
-     *			not directly associated with a 
-     *			<code>Component</code>.
-     * 
+     * @param component Component the error occured in, may be
+     *                  null indicating the error condition is
+     *                  not directly associated with a
+     *                  <code>Component</code>.
+     *
      * @see javax.swing.LookAndFeel#provideErrorFeedback
      */
      public void provideErrorFeedback(Component component) {
-	 super.provideErrorFeedback(component);
+         super.provideErrorFeedback(component);
      }
 
     /**
@@ -2102,10 +2101,10 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * <P>
      * This Action contains the information and logic to render an
      * auditory cue. The <code>Object</code> that is passed to this
-     * method contains the information needed to render the auditory 
-     * cue. Normally, this <code>Object</code> is a <code>String</code> 
+     * method contains the information needed to render the auditory
+     * cue. Normally, this <code>Object</code> is a <code>String</code>
      * that points to a <code>Toolkit</code> <code>desktopProperty</code>.
-     * This <code>desktopProperty</code> is resolved by AWT and the 
+     * This <code>desktopProperty</code> is resolved by AWT and the
      * Windows OS.
      * <P>
      * This <code>Action</code>'s <code>actionPerformed</code> method
@@ -2117,13 +2116,13 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * @since 1.4
      */
     protected Action createAudioAction(Object key) {
-	if (key != null) {
-	    String audioKey = (String)key;
-	    String audioValue = (String)UIManager.get(key);
-	    return new AudioAction(audioKey, audioValue);
-    	} else {
-	    return null;
-	}
+        if (key != null) {
+            String audioKey = (String)key;
+            String audioValue = (String)UIManager.get(key);
+            return new AudioAction(audioKey, audioValue);
+        } else {
+            return null;
+        }
     }
 
     static void repaintRootPane(Component c) {
@@ -2142,10 +2141,10 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     }
 
     /**
-     * Pass the name String to the super constructor. This is used 
-     * later to identify the Action and decide whether to play it or 
-     * not. Store the resource String. It is used to get the audio 
-     * resource. In this case, the resource is a <code>Runnable</code> 
+     * Pass the name String to the super constructor. This is used
+     * later to identify the Action and decide whether to play it or
+     * not. Store the resource String. It is used to get the audio
+     * resource. In this case, the resource is a <code>Runnable</code>
      * supplied by <code>Toolkit</code>. This <code>Runnable</code> is
      * effectively a pointer down into the Win32 OS that knows how to
      * play the right sound.
@@ -2153,26 +2152,26 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * @since 1.4
      */
     private static class AudioAction extends AbstractAction {
-	private Runnable audioRunnable;
-	private String audioResource;
-	/**
-	 * We use the String as the name of the Action and as a pointer to
-	 * the underlying OSes audio resource.
-	 */
-	public AudioAction(String name, String resource) {
-	    super(name);
-	    audioResource = resource;
-	}
-	public void actionPerformed(ActionEvent e) {
-	    if (audioRunnable == null) {
-		audioRunnable = (Runnable)Toolkit.getDefaultToolkit().getDesktopProperty(audioResource);
-	    }
-	    if (audioRunnable != null) {
+        private Runnable audioRunnable;
+        private String audioResource;
+        /**
+         * We use the String as the name of the Action and as a pointer to
+         * the underlying OSes audio resource.
+         */
+        public AudioAction(String name, String resource) {
+            super(name);
+            audioResource = resource;
+        }
+        public void actionPerformed(ActionEvent e) {
+            if (audioRunnable == null) {
+                audioRunnable = (Runnable)Toolkit.getDefaultToolkit().getDesktopProperty(audioResource);
+            }
+            if (audioRunnable != null) {
                 // Runnable appears to block until completed playing, hence
                 // start up another thread to handle playing.
                 new Thread(audioRunnable).start();
-	    }
-	}
+            }
+        }
     }
 
     /**
@@ -2180,25 +2179,25 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * otherwise gets it from an image resource file.
      */
     private static class LazyWindowsIcon implements UIDefaults.LazyValue {
-	private String nativeImage;
-	private String resource;
+        private String nativeImage;
+        private String resource;
 
-	LazyWindowsIcon(String nativeImage, String resource) {
-	    this.nativeImage = nativeImage;
-	    this.resource = resource;
-	}
+        LazyWindowsIcon(String nativeImage, String resource) {
+            this.nativeImage = nativeImage;
+            this.resource = resource;
+        }
 
-	public Object createValue(UIDefaults table) {
-	    if (nativeImage != null) {
-		Image image = (Image)ShellFolder.get(nativeImage);
-		if (image != null) {
-		    return new ImageIcon(image);
-		}
-	    }
-	    return SwingUtilities2.makeIcon(getClass(),
+        public Object createValue(UIDefaults table) {
+            if (nativeImage != null) {
+                Image image = (Image)ShellFolder.get(nativeImage);
+                if (image != null) {
+                    return new ImageIcon(image);
+                }
+            }
+            return SwingUtilities2.makeIcon(getClass(),
                                             WindowsLookAndFeel.class,
                                             resource);
-	}
+        }
     }
 
 
@@ -2207,43 +2206,43 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * A desktop property is used to trigger reloading the icon when needed.
      */
     private class ActiveWindowsIcon implements UIDefaults.ActiveValue {
-	private Icon icon;
-	private Icon fallback;
-	private String nativeImageName;
-	private DesktopProperty desktopProperty;
+        private Icon icon;
+        private Icon fallback;
+        private String nativeImageName;
+        private DesktopProperty desktopProperty;
 
-	ActiveWindowsIcon(String desktopPropertyName,
-			  String nativeImageName, Icon fallback) {
-	    this.nativeImageName = nativeImageName;
-	    this.fallback = fallback;
+        ActiveWindowsIcon(String desktopPropertyName,
+                          String nativeImageName, Icon fallback) {
+            this.nativeImageName = nativeImageName;
+            this.fallback = fallback;
 
             if (OSInfo.getOSType() == OSInfo.OSType.WINDOWS &&
                     OSInfo.getWindowsVersion().compareTo(OSInfo.WINDOWS_XP) < 0) {
-		// This desktop property is needed to trigger reloading the icon.
-		// It is kept in member variable to avoid GC.
-		this.desktopProperty = new TriggerDesktopProperty(desktopPropertyName) {
-		    protected void updateUI() {
-			icon = null;
-			super.updateUI();
-		    }		    
-		};
-	    }
-	}
+                // This desktop property is needed to trigger reloading the icon.
+                // It is kept in member variable to avoid GC.
+                this.desktopProperty = new TriggerDesktopProperty(desktopPropertyName) {
+                    protected void updateUI() {
+                        icon = null;
+                        super.updateUI();
+                    }
+                };
+            }
+        }
 
-	public Object createValue(UIDefaults table) {
-	    if (icon == null) {
-		Image image = (Image)ShellFolder.get(nativeImageName);
-		if (image != null) {
-		    icon = new ImageIconUIResource(image);
-		}
-	    }
-	    if (icon == null && fallback != null) {
-		icon = fallback;
-	    }
-	    return icon;
-	}
+        public Object createValue(UIDefaults table) {
+            if (icon == null) {
+                Image image = (Image)ShellFolder.get(nativeImageName);
+                if (image != null) {
+                    icon = new ImageIconUIResource(image);
+                }
+            }
+            if (icon == null && fallback != null) {
+                icon = fallback;
+            }
+            return icon;
+        }
     }
-    
+
     /**
      * Icon backed-up by XP Skin.
      */
@@ -2257,7 +2256,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
 
         /**
          * Draw the icon at the specified location.  Icon implementations
-         * may use the Component argument to get properties useful for 
+         * may use the Component argument to get properties useful for
          * painting, e.g. the foreground or background color.
          */
         public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -2268,7 +2267,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 skin.paintSkin(g, x, y, state);
             }
         }
-        
+
         /**
          * Returns the icon's width.
          *
@@ -2284,7 +2283,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             }
             return width;
         }
-        
+
         /**
          * Returns the icon's height.
          *
@@ -2299,7 +2298,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             }
             return height;
         }
-        
+
     }
 
     /**
@@ -2322,27 +2321,27 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             if (value instanceof Font) {
                 Font font = (Font)value;
                 if ("MS Sans Serif".equals(font.getName())) {
-		    int size = font.getSize();
-		    // 4950968: Workaround to mimic the way Windows maps the default
-		    // font size of 6 pts to the smallest available bitmap font size.
-		    // This happens mostly on Win 98/Me & NT.
-		    int dpi;
-		    try {
-			dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-		    } catch (HeadlessException ex) {
-			dpi = 96;
-		    }
-		    if (Math.round(size * 72F / dpi) < 8) {
-			size = Math.round(8 * dpi / 72F);
-		    }
+                    int size = font.getSize();
+                    // 4950968: Workaround to mimic the way Windows maps the default
+                    // font size of 6 pts to the smallest available bitmap font size.
+                    // This happens mostly on Win 98/Me & NT.
+                    int dpi;
+                    try {
+                        dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+                    } catch (HeadlessException ex) {
+                        dpi = 96;
+                    }
+                    if (Math.round(size * 72F / dpi) < 8) {
+                        size = Math.round(8 * dpi / 72F);
+                    }
                     Font msFont = new FontUIResource("Microsoft Sans Serif",
                                           font.getStyle(), size);
                     if (msFont.getName() != null &&
                         msFont.getName().equals(msFont.getFamily())) {
                         font = msFont;
-		    } else if (size != font.getSize()) {
-			font = new FontUIResource("MS Sans Serif",
-						  font.getStyle(), size);
+                    } else if (size != font.getSize()) {
+                        font = new FontUIResource("MS Sans Serif",
+                                                  font.getStyle(), size);
                     }
                 }
                 if (FontManager.fontSupportsDefaultEncoding(font)) {
@@ -2394,66 +2393,66 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     /**
      * A value wrapper that actively retrieves values from xp or falls back
      * to the classic value if not running XP styles.
-     */ 
+     */
     private static class XPValue implements UIDefaults.ActiveValue {
-	protected Object classicValue, xpValue;
-        
+        protected Object classicValue, xpValue;
+
         // A constant that lets you specify null when using XP styles.
         private final static Object NULL_VALUE = new Object();
 
-	XPValue(Object xpValue, Object classicValue) {
-	    this.xpValue = xpValue;
-	    this.classicValue = classicValue;
-	}
+        XPValue(Object xpValue, Object classicValue) {
+            this.xpValue = xpValue;
+            this.classicValue = classicValue;
+        }
 
-	public Object createValue(UIDefaults table) {
-	    Object value = null;
-	    if (XPStyle.getXP() != null) {
-		value = getXPValue(table);
-	    }
-            
+        public Object createValue(UIDefaults table) {
+            Object value = null;
+            if (XPStyle.getXP() != null) {
+                value = getXPValue(table);
+            }
+
             if (value == null) {
                 value = getClassicValue(table);
             } else if (value == NULL_VALUE) {
                 value = null;
             }
-            
-	    return value;
-	}
 
-	protected Object getXPValue(UIDefaults table) {
-	    return recursiveCreateValue(xpValue, table);
-	}
+            return value;
+        }
 
-	protected Object getClassicValue(UIDefaults table) {
-	    return recursiveCreateValue(classicValue, table);
-	}
+        protected Object getXPValue(UIDefaults table) {
+            return recursiveCreateValue(xpValue, table);
+        }
 
-	private Object recursiveCreateValue(Object value, UIDefaults table) {
-	    if (value instanceof UIDefaults.LazyValue) {
-		value = ((UIDefaults.LazyValue)value).createValue(table);
-	    }
-	    if (value instanceof UIDefaults.ActiveValue) {
-		return ((UIDefaults.ActiveValue)value).createValue(table);
-	    } else {
-		return value;
-	    }
-	}
+        protected Object getClassicValue(UIDefaults table) {
+            return recursiveCreateValue(classicValue, table);
+        }
+
+        private Object recursiveCreateValue(Object value, UIDefaults table) {
+            if (value instanceof UIDefaults.LazyValue) {
+                value = ((UIDefaults.LazyValue)value).createValue(table);
+            }
+            if (value instanceof UIDefaults.ActiveValue) {
+                return ((UIDefaults.ActiveValue)value).createValue(table);
+            } else {
+                return value;
+            }
+        }
     }
 
     private static class XPBorderValue extends XPValue {
         private final Border extraMargin;
 
-	XPBorderValue(Part xpValue, Object classicValue) {
+        XPBorderValue(Part xpValue, Object classicValue) {
             this(xpValue, classicValue, null);
-	}
+        }
 
         XPBorderValue(Part xpValue, Object classicValue, Border extraMargin) {
             super(xpValue, classicValue);
             this.extraMargin = extraMargin;
         }
 
-	public Object getXPValue(UIDefaults table) {
+        public Object getXPValue(UIDefaults table) {
             Border xpBorder = XPStyle.getXP().getBorder(null, (Part)xpValue);
             if (extraMargin != null) {
                 return new BorderUIResource.
@@ -2461,30 +2460,30 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             } else {
                 return xpBorder;
             }
-	}
+        }
     }
 
     private static class XPColorValue extends XPValue {
-	XPColorValue(Part part, State state, Prop prop, Object classicValue) {
-	    super(new XPColorValueKey(part, state, prop), classicValue);
-	}
+        XPColorValue(Part part, State state, Prop prop, Object classicValue) {
+            super(new XPColorValueKey(part, state, prop), classicValue);
+        }
 
-	public Object getXPValue(UIDefaults table) {
-	    XPColorValueKey key = (XPColorValueKey)xpValue;
-	    return XPStyle.getXP().getColor(key.skin, key.prop, null);
-	}
+        public Object getXPValue(UIDefaults table) {
+            XPColorValueKey key = (XPColorValueKey)xpValue;
+            return XPStyle.getXP().getColor(key.skin, key.prop, null);
+        }
 
-	private static class XPColorValueKey {
-	    Skin skin;
-	    Prop prop;
+        private static class XPColorValueKey {
+            Skin skin;
+            Prop prop;
 
-	    XPColorValueKey(Part part, State state, Prop prop) {
-		this.skin = new Skin(part, state);
-		this.prop = prop;
-	    }
-	}
+            XPColorValueKey(Part part, State state, Prop prop) {
+                this.skin = new Skin(part, state);
+                this.prop = prop;
+            }
+        }
     }
-    
+
     private class XPDLUValue extends XPValue {
         private int direction;
 
@@ -2492,12 +2491,12 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             super(new Integer(xpdlu), new Integer(classicdlu));
             this.direction = direction;
         }
-        
+
         public Object getXPValue(UIDefaults table) {
             int px = dluToPixels(((Integer)xpValue).intValue(), direction);
             return new Integer(px);
         }
-        
+
         public Object getClassicValue(UIDefaults table) {
             int px = dluToPixels(((Integer)classicValue).intValue(), direction);
             return new Integer(px);
@@ -2505,33 +2504,33 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
     }
 
     private class TriggerDesktopProperty extends DesktopProperty {
-	TriggerDesktopProperty(String key) {
-	    super(key, null, toolkit);
-	    // This call adds a property change listener for the property,
-	    // which triggers a call to updateUI(). The value returned
-	    // is not interesting here.
-	    getValueFromDesktop();
-	}
+        TriggerDesktopProperty(String key) {
+            super(key, null, toolkit);
+            // This call adds a property change listener for the property,
+            // which triggers a call to updateUI(). The value returned
+            // is not interesting here.
+            getValueFromDesktop();
+        }
 
-	protected void updateUI() {
-	    super.updateUI();
+        protected void updateUI() {
+            super.updateUI();
 
-	    // Make sure property change listener is readded each time
-	    getValueFromDesktop();
-	}
+            // Make sure property change listener is readded each time
+            getValueFromDesktop();
+        }
     }
 
     private class FontDesktopProperty extends TriggerDesktopProperty {
-	FontDesktopProperty(String key) {
-	    super(key);
-	}
+        FontDesktopProperty(String key) {
+            super(key);
+        }
 
-	protected void updateUI() {
+        protected void updateUI() {
             Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(true);
-	    UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-	    defaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
-	    super.updateUI();
-	}
+            UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+            defaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+            super.updateUI();
+        }
     }
 
     // Windows LayoutStyle.  From:
@@ -2628,18 +2627,18 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
      * {@inheritDoc}
      *
      * @since 1.6
-     */ 
+     */
     public Icon getDisabledIcon(JComponent component, Icon icon) {
         // if the component has a HI_RES_DISABLED_ICON_CLIENT_KEY
         // client property set to Boolean.TRUE, then use the new
         // hi res algorithm for creating the disabled icon (used
         // in particular by the WindowsFileChooserUI class)
-        if (icon != null 
+        if (icon != null
                 && component != null
                 && Boolean.TRUE.equals(component.getClientProperty(HI_RES_DISABLED_ICON_CLIENT_KEY))
                 && icon.getIconWidth() > 0
                 && icon.getIconHeight() > 0) {
-            BufferedImage img = new BufferedImage(icon.getIconWidth(), 
+            BufferedImage img = new BufferedImage(icon.getIconWidth(),
                     icon.getIconWidth(), BufferedImage.TYPE_INT_ARGB);
             icon.paintIcon(component, img.getGraphics(), 0, 0);
             ImageFilter filter = new RGBGrayFilter();
@@ -2649,7 +2648,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
         }
         return super.getDisabledIcon(component, icon);
     }
-    
+
     private static class RGBGrayFilter extends RGBImageFilter {
         public RGBGrayFilter() {
             canFilterIndexColorModel = true;
@@ -2670,6 +2669,6 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                          (int)(avg   * 255f);
             return rgbval;
         }
-    } 
+    }
 
 }

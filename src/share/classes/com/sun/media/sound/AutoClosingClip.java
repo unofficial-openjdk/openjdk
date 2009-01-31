@@ -30,11 +30,10 @@ import javax.sound.sampled.Clip;
 /**
  * Interface for Clip objects that close themselves automatically
  *
- * @version %I%, %E%
  * @author Florian Bomers
  */
 interface AutoClosingClip extends Clip {
-    
+
     /**
      * Indicates whether this clip instance is auto closing.
      * When the clip is auto closing, it calls the close()
@@ -44,7 +43,7 @@ interface AutoClosingClip extends Clip {
      * @return true if this clip is auto closing
      */
     boolean isAutoClosing();
-    
+
     /**
      * Sets whether this Clip instance is auto closing or not.
      * If true, the close() method will be called automatically

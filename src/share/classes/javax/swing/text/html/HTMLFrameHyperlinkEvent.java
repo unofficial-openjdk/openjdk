@@ -33,13 +33,12 @@ import java.net.URL;
  * parties that link was activated in a frame.
  *
  * @author Sunita Mani
- * @version %I%, %G%
  */
 
 public class HTMLFrameHyperlinkEvent extends HyperlinkEvent {
 
     /**
-     * Creates a new object representing a html frame 
+     * Creates a new object representing a html frame
      * hypertext link event.
      *
      * @param source the object responsible for the event
@@ -47,10 +46,10 @@ public class HTMLFrameHyperlinkEvent extends HyperlinkEvent {
      * @param targetURL the affected URL
      * @param targetFrame the Frame to display the document in
      */
-    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, 
-				   String targetFrame) {
+    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL,
+                                   String targetFrame) {
         super(source, type, targetURL);
-	this.targetFrame = targetFrame;
+        this.targetFrame = targetFrame;
     }
 
 
@@ -63,10 +62,10 @@ public class HTMLFrameHyperlinkEvent extends HyperlinkEvent {
      * @param desc a description
      * @param targetFrame the Frame to display the document in
      */
-    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, String desc,  
-				   String targetFrame) {
+    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, String desc,
+                                   String targetFrame) {
         super(source, type, targetURL, desc);
-	this.targetFrame = targetFrame;
+        this.targetFrame = targetFrame;
     }
 
     /**
@@ -79,10 +78,10 @@ public class HTMLFrameHyperlinkEvent extends HyperlinkEvent {
      *                      of the event
      * @param targetFrame the Frame to display the document in
      */
-    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, 
-				   Element sourceElement, String targetFrame) {
+    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL,
+                                   Element sourceElement, String targetFrame) {
         super(source, type, targetURL, null, sourceElement);
-	this.targetFrame = targetFrame;
+        this.targetFrame = targetFrame;
     }
 
 
@@ -97,17 +96,17 @@ public class HTMLFrameHyperlinkEvent extends HyperlinkEvent {
      *                      of the event
      * @param targetFrame the Frame to display the document in
      */
-    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, String desc,  
-				   Element sourceElement, String targetFrame) {
+    public HTMLFrameHyperlinkEvent(Object source, EventType type, URL targetURL, String desc,
+                                   Element sourceElement, String targetFrame) {
         super(source, type, targetURL, desc, sourceElement);
-	this.targetFrame = targetFrame;
+        this.targetFrame = targetFrame;
     }
 
     /**
      * returns the target for the link.
      */
     public String getTarget() {
-	return targetFrame;
+        return targetFrame;
     }
 
     private String targetFrame;

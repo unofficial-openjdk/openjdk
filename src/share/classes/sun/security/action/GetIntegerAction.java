@@ -58,14 +58,13 @@ package sun.security.action;
  * </pre>
  *
  * @author Roland Schemers
- * @version %I%, %G%
  * @see java.security.PrivilegedAction
  * @see java.security.AccessController
  * @since 1.2
  */
 
 public class GetIntegerAction
-	implements java.security.PrivilegedAction<Integer> {
+        implements java.security.PrivilegedAction<Integer> {
     private String theProp;
     private int defaultVal;
     private boolean defaultSet = false;
@@ -77,7 +76,7 @@ public class GetIntegerAction
      * @param theProp the name of the system property.
      */
     public GetIntegerAction(String theProp) {
-	this.theProp = theProp;
+        this.theProp = theProp;
     }
 
     /**
@@ -90,7 +89,7 @@ public class GetIntegerAction
     public GetIntegerAction(String theProp, int defaultVal) {
         this.theProp = theProp;
         this.defaultVal = defaultVal;
-	this.defaultSet = true;
+        this.defaultSet = true;
     }
 
     /**
@@ -108,7 +107,7 @@ public class GetIntegerAction
     public Integer run() {
         Integer value = Integer.getInteger(theProp);
         if ((value == null) && defaultSet)
-	    return new Integer(defaultVal);
-	return value;
+            return new Integer(defaultVal);
+        return value;
     }
 }

@@ -73,11 +73,11 @@ class ReflectionUtils {
      *
      * @param argClasses arguments to be tested
      * @param argTypes arguments from Method
-     * @return true if each class in argTypes is assignable from the 
+     * @return true if each class in argTypes is assignable from the
      *         corresponding class in argClasses.
      */
     private static boolean matchArguments(Class[] argClasses, Class[] argTypes) {
-	return matchArguments(argClasses, argTypes, false);
+        return matchArguments(argClasses, argTypes, false);
     }
 
     /**
@@ -85,35 +85,35 @@ class ReflectionUtils {
      *
      * @param argClasses arguments to be tested
      * @param argTypes arguments from Method
-     * @return true if each class in argTypes is equal to the 
+     * @return true if each class in argTypes is equal to the
      *         corresponding class in argClasses.
      */
     private static boolean matchExplicitArguments(Class[] argClasses, Class[] argTypes) {
-	return matchArguments(argClasses, argTypes, true);
+        return matchArguments(argClasses, argTypes, true);
     }
 
-    private static boolean matchArguments(Class[] argClasses, 
-					  Class[] argTypes, boolean explicit) {
-	
+    private static boolean matchArguments(Class[] argClasses,
+                                          Class[] argTypes, boolean explicit) {
+
         boolean match = (argClasses.length == argTypes.length);
-	for(int j = 0; j < argClasses.length && match; j++) {
-	    Class argType = argTypes[j];
-	    if (argType.isPrimitive()) {
-		argType = typeToClass(argType);
-	    }
-	    if (explicit) {
-		// Test each element for equality
-		if (argClasses[j] != argType) {
-		    match = false;
-		}
-	    } else {
-		// Consider null an instance of all classes.
-		if (argClasses[j] != null && 
-		    !(argType.isAssignableFrom(argClasses[j]))) {
-		    match = false;
-		}
-	    }
-	}
+        for(int j = 0; j < argClasses.length && match; j++) {
+            Class argType = argTypes[j];
+            if (argType.isPrimitive()) {
+                argType = typeToClass(argType);
+            }
+            if (explicit) {
+                // Test each element for equality
+                if (argClasses[j] != argType) {
+                    match = false;
+                }
+            } else {
+                // Consider null an instance of all classes.
+                if (argClasses[j] != null &&
+                    !(argType.isAssignableFrom(argClasses[j]))) {
+                    match = false;
+                }
+            }
+        }
         return match;
     }
 
@@ -121,22 +121,22 @@ class ReflectionUtils {
      * @return the method which best matches the signature or throw an exception
      *         if it can't be found or the method is ambiguous.
      */
-    static Method getPublicMethod(Class declaringClass, String methodName, 
-					   Class[] argClasses) throws NoSuchMethodException {
-	Method m;
+    static Method getPublicMethod(Class declaringClass, String methodName,
+                                           Class[] argClasses) throws NoSuchMethodException {
+        Method m;
 
-	m = findPublicMethod(declaringClass, methodName, argClasses);
-	if (m == null)
-	    throw new NoSuchMethodException(declaringClass.getName() + "." + methodName);
-	return m;
+        m = findPublicMethod(declaringClass, methodName, argClasses);
+        if (m == null)
+            throw new NoSuchMethodException(declaringClass.getName() + "." + methodName);
+        return m;
     }
 
     /**
-     * @return the method which best matches the signature or null if it cant be found or 
+     * @return the method which best matches the signature or null if it cant be found or
      *         the method is ambiguous.
      */
-    public static Method findPublicMethod(Class declaringClass, String methodName, 
-					   Class[] argClasses) {
+    public static Method findPublicMethod(Class declaringClass, String methodName,
+                                           Class[] argClasses) {
         // Many methods are "getters" which take no arguments.
         // This permits the following optimisation which
         // avoids the expensive call to getMethods().
@@ -145,106 +145,106 @@ class ReflectionUtils {
                 return MethodUtil.getMethod(declaringClass, methodName, argClasses);
             }
             catch (NoSuchMethodException e) {
-            	  return null;
+                  return null;
             } catch (SecurityException se) {
-		// fall through
-	    }
+                // fall through
+            }
         }
         Method[] methods = MethodUtil.getPublicMethods(declaringClass);
-	List list = new ArrayList();
+        List list = new ArrayList();
         for(int i = 0; i < methods.length; i++) {
-	    // Collect all the methods which match the signature.
+            // Collect all the methods which match the signature.
             Method method = methods[i];
             if (method.getName().equals(methodName)) {
                 if (matchArguments(argClasses, method.getParameterTypes())) {
-		    list.add(method);
+                    list.add(method);
                 }
             }
-	}
-	if (list.size() > 0) {
-	    if (list.size() == 1) {
-		return (Method)list.get(0);
-	    }
-	    else {
-		ListIterator iterator = list.listIterator();
-		Method method;
-		while (iterator.hasNext()) {
-		    method = (Method)iterator.next();
-		    if (matchExplicitArguments(argClasses, method.getParameterTypes())) {
-			return method;
-		    }
-		}
-		// There are more than one method which matches this signature.
-		// try to return the most specific method.
-		return getMostSpecificMethod(list, argClasses);
-	    }
-	}	    
+        }
+        if (list.size() > 0) {
+            if (list.size() == 1) {
+                return (Method)list.get(0);
+            }
+            else {
+                ListIterator iterator = list.listIterator();
+                Method method;
+                while (iterator.hasNext()) {
+                    method = (Method)iterator.next();
+                    if (matchExplicitArguments(argClasses, method.getParameterTypes())) {
+                        return method;
+                    }
+                }
+                // There are more than one method which matches this signature.
+                // try to return the most specific method.
+                return getMostSpecificMethod(list, argClasses);
+            }
+        }
         return null;
     }
 
     /**
-     * Return the most specific method from the list of methods which 
+     * Return the most specific method from the list of methods which
      * matches the args. The most specific method will have the most
      * number of equal parameters or will be closest in the inheritance
      * heirarchy to the runtime execution arguments.
      * <p>
      * See the JLS section 15.12
      * http://java.sun.com/docs/books/jls/second_edition/html/expressions.doc.html#20448
-     * 
+     *
      * @param methods List of methods which already have the same param length
      *                and arg types are assignable to param types
      * @param args an array of param types to match
      * @return method or null if a specific method cannot be determined
      */
     private static Method getMostSpecificMethod(List methods, Class[] args) {
-	Method method = null;
-	
-	int matches = 0;
-	int lastMatch = matches;
+        Method method = null;
 
-	ListIterator iterator = methods.listIterator();
-	while (iterator.hasNext()) {
-	    Method m = (Method)iterator.next();
-	    Class[] mArgs = m.getParameterTypes();
-	    matches = 0;
-	    for (int i = 0; i < args.length; i++) {
-		Class mArg = mArgs[i];
-		if (mArg.isPrimitive()) {
-		    mArg = typeToClass(mArg);
-		}
-		if (args[i] == mArg) {
-		    matches++;
-		}
-	    }
-	    if (matches == 0 && lastMatch == 0) {
-		if (method == null) {
-		    method = m;
-		} else {
-		    // Test existing method. We already know that the args can 
-		    // be assigned to all the method params. However, if the
-		    // current method parameters is higher in the inheritance 
-		    // hierarchy then replace it.
-		    if (!matchArguments(method.getParameterTypes(), 
-					m.getParameterTypes())) {
-			method = m;
-		    }
-		}
-	    } else if (matches > lastMatch) {
-		lastMatch = matches;
-		method = m;
-	    } else if (matches == lastMatch) {
-		// ambiguous method selection.
-		method = null;
-	    }
-	}
-	return method;
+        int matches = 0;
+        int lastMatch = matches;
+
+        ListIterator iterator = methods.listIterator();
+        while (iterator.hasNext()) {
+            Method m = (Method)iterator.next();
+            Class[] mArgs = m.getParameterTypes();
+            matches = 0;
+            for (int i = 0; i < args.length; i++) {
+                Class mArg = mArgs[i];
+                if (mArg.isPrimitive()) {
+                    mArg = typeToClass(mArg);
+                }
+                if (args[i] == mArg) {
+                    matches++;
+                }
+            }
+            if (matches == 0 && lastMatch == 0) {
+                if (method == null) {
+                    method = m;
+                } else {
+                    // Test existing method. We already know that the args can
+                    // be assigned to all the method params. However, if the
+                    // current method parameters is higher in the inheritance
+                    // hierarchy then replace it.
+                    if (!matchArguments(method.getParameterTypes(),
+                                        m.getParameterTypes())) {
+                        method = m;
+                    }
+                }
+            } else if (matches > lastMatch) {
+                lastMatch = matches;
+                method = m;
+            } else if (matches == lastMatch) {
+                // ambiguous method selection.
+                method = null;
+            }
+        }
+        return method;
     }
 
     /**
      * @return the method or null if it can't be found or is ambiguous.
      */
-    public static Method findMethod(Class targetClass, String methodName, 
-				    Class[] argClasses) {
+    public static Method findMethod(Class targetClass, String methodName,
+                                    Class[] argClasses) {
         Method m = findPublicMethod(targetClass, methodName, argClasses);
         if (m != null && Modifier.isPublic(m.getDeclaringClass().getModifiers())) {
             return m;
@@ -291,7 +291,7 @@ class ReflectionUtils {
         return null;
     }
 
-    /** 
+    /**
      * A class that represents the unique elements of a method that will be a
      * key in the method cache.
      */
@@ -300,7 +300,7 @@ class ReflectionUtils {
         private String methodName;
         private Class[] argClasses;
 
-	private volatile int hashCode = 0;
+        private volatile int hashCode = 0;
 
         public Signature(Class targetClass, String methodName, Class[] argClasses) {
             this.targetClass = targetClass;
@@ -309,9 +309,9 @@ class ReflectionUtils {
         }
 
         public boolean equals(Object o2) {
-	    if (this == o2) {
-		return true;
-	    }
+            if (this == o2) {
+                return true;
+            }
             Signature that = (Signature)o2;
             if (!(targetClass == that.targetClass)) {
                 return false;
@@ -330,57 +330,57 @@ class ReflectionUtils {
             return true;
         }
 
-	/**
-	 * Hash code computed using algorithm suggested in 
-	 * Effective Java, Item 8.
-	 */
+        /**
+         * Hash code computed using algorithm suggested in
+         * Effective Java, Item 8.
+         */
         public int hashCode() {
-	    if (hashCode == 0) {
-		int result = 17;
-		result = 37 * result + targetClass.hashCode();
-		result = 37 * result + methodName.hashCode();
-		if (argClasses != null) {
-		    for (int i = 0; i < argClasses.length; i++) {
-			result = 37 * result + ((argClasses[i] == null) ? 0 : 
-			    argClasses[i].hashCode());
-		    }
-		}
-		hashCode = result;
-	    }
+            if (hashCode == 0) {
+                int result = 17;
+                result = 37 * result + targetClass.hashCode();
+                result = 37 * result + methodName.hashCode();
+                if (argClasses != null) {
+                    for (int i = 0; i < argClasses.length; i++) {
+                        result = 37 * result + ((argClasses[i] == null) ? 0 :
+                            argClasses[i].hashCode());
+                    }
+                }
+                hashCode = result;
+            }
             return hashCode;
         }
     }
 
-    /** 
+    /**
      * A wrapper to findMethod(), which will search or populate the method
      * in a cache.
      * @throws exception if the method is ambiguios.
      */
-    public static synchronized Method getMethod(Class targetClass, 
-						String methodName, 
-						Class[] argClasses) {
-	Object signature = new Signature(targetClass, methodName, argClasses);
+    public static synchronized Method getMethod(Class targetClass,
+                                                String methodName,
+                                                Class[] argClasses) {
+        Object signature = new Signature(targetClass, methodName, argClasses);
 
-	Method method = null;
-	Map methodCache = null;
-	boolean cache = false;
-	if (ReflectUtil.isPackageAccessible(targetClass)) {
-	    cache = true;
-	}
+        Method method = null;
+        Map methodCache = null;
+        boolean cache = false;
+        if (ReflectUtil.isPackageAccessible(targetClass)) {
+            cache = true;
+        }
 
-	if (cache && methodCacheRef != null && 
-	    (methodCache = (Map)methodCacheRef.get()) != null) {
-	    method = (Method)methodCache.get(signature);
-	    if (method != null) {
-		return method;
-	    }
-	}
-	method = findMethod(targetClass, methodName, argClasses);
+        if (cache && methodCacheRef != null &&
+            (methodCache = (Map)methodCacheRef.get()) != null) {
+            method = (Method)methodCache.get(signature);
+            if (method != null) {
+                return method;
+            }
+        }
+        method = findMethod(targetClass, methodName, argClasses);
         if (cache && method != null) {
-	    if (methodCache == null) {
-		methodCache = new HashMap();
-		methodCacheRef = new SoftReference(methodCache);
-	    }
+            if (methodCache == null) {
+                methodCache = new HashMap();
+                methodCacheRef = new SoftReference(methodCache);
+            }
             methodCache.put(signature, method);
         }
         return method;
@@ -392,42 +392,42 @@ class ReflectionUtils {
      * @throws exception if the method is ambiguios.
      */
     public static Constructor getConstructor(Class cls, Class[] args) {
-	Constructor constructor = null;
+        Constructor constructor = null;
 
-	// PENDING: Implement the resolutuion of ambiguities properly.
-	Constructor[] ctors = ConstructorUtil.getConstructors(cls);
-	for(int i = 0; i < ctors.length; i++) {
-	    if (matchArguments(args, ctors[i].getParameterTypes())) {
-		constructor = ctors[i];
-	    }
-	}
-	return constructor;
+        // PENDING: Implement the resolutuion of ambiguities properly.
+        Constructor[] ctors = ConstructorUtil.getConstructors(cls);
+        for(int i = 0; i < ctors.length; i++) {
+            if (matchArguments(args, ctors[i].getParameterTypes())) {
+                constructor = ctors[i];
+            }
+        }
+        return constructor;
     }
 
     public static Object getPrivateField(Object instance, Class cls, String name) {
-	return getPrivateField(instance, cls, name, null);
+        return getPrivateField(instance, cls, name, null);
     }
 
     /**
-     * Returns the value of a private field. 
+     * Returns the value of a private field.
      *
-     * @param instance object instance 
-     * @param cls class 
+     * @param instance object instance
+     * @param cls class
      * @param name name of the field
      * @param el an exception listener to handle exceptions; or null
      * @return value of the field; null if not found or an error is encountered
      */
-    public static Object getPrivateField(Object instance, Class cls, 
-					 String name, ExceptionListener el) {
+    public static Object getPrivateField(Object instance, Class cls,
+                                         String name, ExceptionListener el) {
         try {
             Field f = cls.getDeclaredField(name);
             f.setAccessible(true);
             return f.get(instance);
         }
         catch (Exception e) {
-	    if (el != null) {
-		el.exceptionThrown(e);
-	    }
+            if (el != null) {
+                el.exceptionThrown(e);
+            }
         }
         return null;
     }

@@ -39,7 +39,7 @@ public class StringWidth extends Frame {
 
     PrintJob pj = getToolkit().getPrintJob(this, "", props);
     if (pj == null) {
-	return;
+        return;
     }
     Graphics  pg = pj.getGraphics();
 
@@ -49,7 +49,7 @@ public class StringWidth extends Frame {
     FontMetrics plainFm = pg.getFontMetrics(plain);
     FontMetrics boldFm = pg.getFontMetrics(bold);
     Dimension size = pj.getPageDimension();
-   
+
     // now right justify on the printed page
     int center = size.width/2;
     y = 150;

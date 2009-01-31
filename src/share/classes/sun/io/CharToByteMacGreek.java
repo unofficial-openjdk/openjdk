@@ -31,7 +31,6 @@ import sun.nio.cs.ext.MacGreek;
  * Tables and data to convert Unicode to MacGreek
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteMacGreek extends CharToByteSingleByte {

@@ -32,33 +32,33 @@ import java.io.*;
 
 public class WriteFromString {
 
-    
+
     public static void main(String argv[]) throws Exception {
         LocalStringWriter lsw = new LocalStringWriter();
-	boolean result = true;
+        boolean result = true;
 
-	String testString = "Testing of what gets written";
-	// Should write out at offset 2 for length 4 i.e."stin"
-	lsw.write(testString, 1, 4);
-	String res = lsw.toString();
-	if (!res.equals("esti")) {
-	    result = false;
-	    System.err.println("Writer.write is incorrect:" + res);
-	}
+        String testString = "Testing of what gets written";
+        // Should write out at offset 2 for length 4 i.e."stin"
+        lsw.write(testString, 1, 4);
+        String res = lsw.toString();
+        if (!res.equals("esti")) {
+            result = false;
+            System.err.println("Writer.write is incorrect:" + res);
+        }
 
-	// Same bug in stringwriter as well
-	StringWriter sw = new StringWriter();
-	sw.write(testString, 1, 4);
-	res = sw.toString();
-	String ss = testString.substring(1,4);
-	System.out.println("Substring = "+ss);
-	if (!res.equals("esti")) {
-	    System.err.println("StringWriter.write is incorrect:" + res);
-	    result = false;
-	}
-	if (!result) {
-	    throw new Exception("Writer.write method is incorrect.");
-	}
+        // Same bug in stringwriter as well
+        StringWriter sw = new StringWriter();
+        sw.write(testString, 1, 4);
+        res = sw.toString();
+        String ss = testString.substring(1,4);
+        System.out.println("Substring = "+ss);
+        if (!res.equals("esti")) {
+            System.err.println("StringWriter.write is incorrect:" + res);
+            result = false;
+        }
+        if (!result) {
+            throw new Exception("Writer.write method is incorrect.");
+        }
     }
 
 }
@@ -76,8 +76,8 @@ class LocalStringWriter extends Writer {
      * size.
      */
     public LocalStringWriter() {
-	buf = new StringBuffer();
-	lock = buf;
+        buf = new StringBuffer();
+        lock = buf;
     }
 
     /**
@@ -101,14 +101,14 @@ class LocalStringWriter extends Writer {
      * Write a string.
      */
     public void write(String str) {
-	buf.append(str);
+        buf.append(str);
     }
 
     /**
      * Return the buffer's current value as a string.
      */
     public String toString() {
-	return buf.toString();
+        return buf.toString();
     }
 
 

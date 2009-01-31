@@ -34,7 +34,7 @@ package sun.tools.java;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @see 
+ * @see
  */
 
 public
@@ -44,41 +44,41 @@ class IdentifierToken {
     Identifier id;
 
     public IdentifierToken(long where, Identifier id) {
-	this.where = where;
-	this.id = id;
+        this.where = where;
+        this.id = id;
     }
 
     /** Use this constructor when the identifier is synthesized.
      * The location will be 0.
      */
     public IdentifierToken(Identifier id) {
-	this.where = 0;
-	this.id = id;
+        this.where = 0;
+        this.id = id;
     }
 
     public IdentifierToken(long where, Identifier id, int modifiers) {
-	this.where = where;
-	this.id = id;
-	this.modifiers = modifiers;
+        this.where = where;
+        this.id = id;
+        this.modifiers = modifiers;
     }
 
     /** The source location of this identifier occurrence. */
     public long getWhere() {
-	return where;
+        return where;
     }
 
     /** The identifier itself (possibly qualified). */
     public Identifier getName() {
-	return id;
+        return id;
     }
 
     /** The modifiers associated with the occurrence, if any. */
     public int getModifiers() {
-	return modifiers;
+        return modifiers;
     }
 
     public String toString() {
-	return id.toString();
+        return id.toString();
     }
 
     /**
@@ -86,6 +86,6 @@ class IdentifierToken {
      * Otherwise, return id.where.
      */
     public static long getWhere(IdentifierToken id, long defaultWhere) {
-	return (id != null && id.where != 0) ? id.where : defaultWhere;
+        return (id != null && id.where != 0) ? id.where : defaultWhere;
     }
 }

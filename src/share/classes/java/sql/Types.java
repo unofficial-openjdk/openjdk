@@ -35,146 +35,146 @@ public class Types {
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>BIT</code>.
  */
-	public final static int BIT 		=  -7;
+        public final static int BIT             =  -7;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>TINYINT</code>.
  */
-	public final static int TINYINT 	=  -6;
+        public final static int TINYINT         =  -6;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>SMALLINT</code>.
  */
-	public final static int SMALLINT	=   5;
+        public final static int SMALLINT        =   5;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>INTEGER</code>.
  */
-	public final static int INTEGER 	=   4;
+        public final static int INTEGER         =   4;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>BIGINT</code>.
  */
-	public final static int BIGINT 		=  -5;
+        public final static int BIGINT          =  -5;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>FLOAT</code>.
  */
-	public final static int FLOAT 		=   6;
+        public final static int FLOAT           =   6;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>REAL</code>.
  */
-	public final static int REAL 		=   7;
+        public final static int REAL            =   7;
 
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>DOUBLE</code>.
  */
-	public final static int DOUBLE 		=   8;
+        public final static int DOUBLE          =   8;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>NUMERIC</code>.
  */
-	public final static int NUMERIC 	=   2;
+        public final static int NUMERIC         =   2;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>DECIMAL</code>.
  */
-	public final static int DECIMAL		=   3;
+        public final static int DECIMAL         =   3;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>CHAR</code>.
  */
-	public final static int CHAR		=   1;
+        public final static int CHAR            =   1;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>VARCHAR</code>.
  */
-	public final static int VARCHAR 	=  12;
+        public final static int VARCHAR         =  12;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>LONGVARCHAR</code>.
  */
-	public final static int LONGVARCHAR 	=  -1;
+        public final static int LONGVARCHAR     =  -1;
 
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>DATE</code>.
  */
-	public final static int DATE 		=  91;
+        public final static int DATE            =  91;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>TIME</code>.
  */
-	public final static int TIME 		=  92;
+        public final static int TIME            =  92;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>TIMESTAMP</code>.
  */
-	public final static int TIMESTAMP 	=  93;
+        public final static int TIMESTAMP       =  93;
 
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>BINARY</code>.
  */
-	public final static int BINARY		=  -2;
+        public final static int BINARY          =  -2;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>VARBINARY</code>.
  */
-	public final static int VARBINARY 	=  -3;
+        public final static int VARBINARY       =  -3;
 
 /**
  * <P>The constant in the Java programming language, sometimes referred
- * to as a type code, that identifies the generic SQL type 
+ * to as a type code, that identifies the generic SQL type
  * <code>LONGVARBINARY</code>.
  */
-	public final static int LONGVARBINARY 	=  -4;
+        public final static int LONGVARBINARY   =  -4;
 
 /**
  * <P>The constant in the Java programming language
- * that identifies the generic SQL value 
+ * that identifies the generic SQL value
  * <code>NULL</code>.
  */
-	public final static int NULL		=   0;
+        public final static int NULL            =   0;
 
     /**
      * The constant in the Java programming language that indicates
@@ -182,9 +182,9 @@ public class Types {
      * gets mapped to a Java object that can be accessed via
      * the methods <code>getObject</code> and <code>setObject</code>.
      */
-	public final static int OTHER		= 1111;
+        public final static int OTHER           = 1111;
 
-        
+
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -201,7 +201,7 @@ public class Types {
      * @since 1.2
      */
         public final static int DISTINCT            = 2001;
-	
+
     /**
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
@@ -241,7 +241,7 @@ public class Types {
      * @since 1.2
      */
         public final static int REF                 = 2006;
-        
+
     /**
      * The constant in the Java programming language, somtimes referred to
      * as a type code, that identifies the generic SQL type <code>DATALINK</code>.
@@ -257,13 +257,13 @@ public class Types {
      * @since 1.4
      */
     public final static int BOOLEAN = 16;
-    
+
     //------------------------- JDBC 4.0 -----------------------------------
-    
+
     /**
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type <code>ROWID</code>
-     * 
+     *
      * @since 1.6
      *
      */
@@ -305,12 +305,10 @@ public class Types {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type <code>XML</code>.
      *
-     * @since 1.6 
+     * @since 1.6
      */
     public static final int SQLXML = 2009;
 
     // Prevent instantiation
     private Types() {}
 }
-
-

@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   test
   @bug 6260676
   @summary FileDialog.setDirectory() does not work properly, XToolkit
@@ -50,11 +50,11 @@ public class FileDialogReturnTest extends Applet
         a.start();
     }
 
-    public void init() 
+    public void init()
     {
         this.setLayout (new BorderLayout ());
 
-        String[] instructions = 
+        String[] instructions =
         {
             " 1. The test shows the 'FileDialogReturnTest' applet which contains two text fields and one button, ",
             " 2. Input something into the 'File:' text field or just keep the field empty, ",
@@ -72,11 +72,11 @@ public class FileDialogReturnTest extends Applet
     final TextField fileField = new TextField("", 20);
     final TextField dirField = new TextField("", 20);
     final Button button = new Button("Show");
-    
+
     public void start ()
     {
         setLayout(new FlowLayout());
-        
+
         add(new Label("File:"));
         add(fileField);
         add(new Label("Dir:"));
@@ -88,7 +88,7 @@ public class FileDialogReturnTest extends Applet
                 showDialog();
             }
         });
-        
+
         setSize (200,200);
         setVisible(true);
         validate();
@@ -107,11 +107,11 @@ public class FileDialogReturnTest extends Applet
 
 }
 
-  
+
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -124,12 +124,12 @@ public class FileDialogReturnTest extends Applet
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
-{ 
+class Sysout
+{
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -139,7 +139,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
+
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -148,8 +148,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -177,20 +177,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 100;
-   
+
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name ) 
+    public TestDialog( Frame frame, String name )
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-      
+
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-      
+
         pack();
-      
+
         setVisible(true);
     }// TestDialog()
 
@@ -204,7 +204,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        { 
+        {
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -215,25 +215,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-               
+
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-               
+
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else 
-                { 
+                else
+                {
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-            
+
                 instructionsText.append( printStr + "\n" );
-            
+
             }// while
-         
+
         }// for
-      
+
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -241,7 +241,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }  
-   
-}// TestDialog  class    
-  
+    }
+
+}// TestDialog  class

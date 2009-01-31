@@ -43,48 +43,48 @@ public class Util {
     static <K, V> Map<K, V> newMap() {
         return new HashMap<K, V>();
     }
-    
+
     static <K, V> Map<K, V> newSynchronizedMap() {
         return Collections.synchronizedMap(Util.<K, V>newMap());
     }
-    
+
     static <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
         return new IdentityHashMap<K, V>();
     }
-    
+
     static <K, V> Map<K, V> newSynchronizedIdentityHashMap() {
         Map<K, V> map = newIdentityHashMap();
         return Collections.synchronizedMap(map);
     }
-    
+
     static <K, V> SortedMap<K, V> newSortedMap() {
         return new TreeMap<K, V>();
     }
-    
+
     static <K, V> SortedMap<K, V> newSortedMap(Comparator<? super K> comp) {
         return new TreeMap<K, V>(comp);
     }
-    
+
     static <K, V> Map<K, V> newInsertionOrderMap() {
         return new LinkedHashMap<K, V>();
     }
-    
+
     static <E> Set<E> newSet() {
         return new HashSet<E>();
     }
-    
+
     static <E> Set<E> newSet(Collection<E> c) {
         return new HashSet<E>(c);
     }
-    
+
     static <E> List<E> newList() {
         return new ArrayList<E>();
     }
-    
+
     static <E> List<E> newList(Collection<E> c) {
         return new ArrayList<E>(c);
     }
-    
+
     /* This method can be used by code that is deliberately violating the
      * allowed checked casts.  Rather than marking the whole method containing
      * the code with @SuppressWarnings, you can use a call to this method for

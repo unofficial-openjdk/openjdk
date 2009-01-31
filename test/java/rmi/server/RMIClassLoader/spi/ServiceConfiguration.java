@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,25 +30,25 @@ import java.io.IOException;
 
 public class ServiceConfiguration {
     public static void installServiceConfigurationFile() {
-	String filename = "java.rmi.server.RMIClassLoaderSpi";
+        String filename = "java.rmi.server.RMIClassLoaderSpi";
 
-	File dstDir = new File(TestLibrary.getProperty("test.classes", "."),
-			       "META-INF/services");
-	if (!dstDir.exists()) {
-	    if (!dstDir.mkdirs()) {
-		throw new RuntimeException(
-		    "could not create META-INF/services directory " + dstDir);
-	    }
-	}
-	File dstFile = new File(dstDir, filename);
+        File dstDir = new File(TestLibrary.getProperty("test.classes", "."),
+                               "META-INF/services");
+        if (!dstDir.exists()) {
+            if (!dstDir.mkdirs()) {
+                throw new RuntimeException(
+                    "could not create META-INF/services directory " + dstDir);
+            }
+        }
+        File dstFile = new File(dstDir, filename);
 
-	File srcDir = new File(TestLibrary.getProperty("test.src", "."));
-	File srcFile = new File(srcDir, filename);
+        File srcDir = new File(TestLibrary.getProperty("test.src", "."));
+        File srcFile = new File(srcDir, filename);
 
-	try {
-	    TestLibrary.copyFile(srcFile, dstFile);
-	} catch (IOException e) {
-	    throw new RuntimeException("could not install " + dstFile, e);
-	}
+        try {
+            TestLibrary.copyFile(srcFile, dstFile);
+        } catch (IOException e) {
+            throw new RuntimeException("could not install " + dstFile, e);
+        }
     }
 }

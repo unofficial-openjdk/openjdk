@@ -39,9 +39,8 @@ JNIEXPORT jboolean JNICALL
 Java_java_net_InetAddressImplFactory_isIPv6Supported(JNIEnv *env, jobject this)
 {
     if (ipv6_available()) {
-	return JNI_TRUE;
+        return JNI_TRUE;
     } else {
-    	return JNI_FALSE;
+        return JNI_FALSE;
     }
 }
-

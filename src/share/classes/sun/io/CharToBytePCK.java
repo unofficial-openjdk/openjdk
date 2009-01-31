@@ -31,7 +31,6 @@ import sun.nio.cs.ext.JIS_X_0208_Solaris_Encoder;
  * @author Limin Shi
  * @author Mark Son-Bell
  * @author Ian Little
- * @version %I%, %E%
  *
  * PCK char->byte converter for Solaris platform containing additional
  * mappings for vendor defined chars (NEC row 13 & IBM extension chars)
@@ -63,38 +62,35 @@ public class CharToBytePCK extends CharToByteSJIS {
     }
 
     protected int getNative(char ch) {
-	int result = 0;
+        int result = 0;
 
          switch (ch) {
-	    case '\u2015':
-		return (int)0x815C;
-	    case '\u2014':
-		return 0;
-	    default:
-		break;
-	}
+            case '\u2015':
+                return (int)0x815C;
+            case '\u2014':
+                return 0;
+            default:
+                break;
+        }
 
-	if ((result = super.getNative(ch)) != 0) {
-	    return result;
-	} else { 
-	    int offset = j0208Index1[ch >> 8] << 8;
-	    int pos = j0208Index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
+        if ((result = super.getNative(ch)) != 0) {
+            return result;
+        } else {
+            int offset = j0208Index1[ch >> 8] << 8;
+            int pos = j0208Index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
 
-	    if (pos != 0) {
-		/*
-		 * This algorithm for converting from JIS to SJIS comes from Ken Lunde's
-		 * "Understanding Japanese Information Processing", pg 163.
-		 */
-		int c1 = (pos >> 8) & 0xff;
-		int c2 = pos & 0xff;
-		int rowOffset = c1 < 0x5F ? 0x70 : 0xB0;
-		int cellOffset = (c1 % 2 == 1) ? (c2 > 0x5F ? 0x20 : 0x1F) : 0x7E;
-		result =  ((((c1 + 1 ) >> 1) + rowOffset) << 8) | (c2 + cellOffset);
-	    }
-	}
-	return result;
+            if (pos != 0) {
+                /*
+                 * This algorithm for converting from JIS to SJIS comes from Ken Lunde's
+                 * "Understanding Japanese Information Processing", pg 163.
+                 */
+                int c1 = (pos >> 8) & 0xff;
+                int c2 = pos & 0xff;
+                int rowOffset = c1 < 0x5F ? 0x70 : 0xB0;
+                int cellOffset = (c1 % 2 == 1) ? (c2 > 0x5F ? 0x20 : 0x1F) : 0x7E;
+                result =  ((((c1 + 1 ) >> 1) + rowOffset) << 8) | (c2 + cellOffset);
+            }
+        }
+        return result;
     }
 }
-
-
-

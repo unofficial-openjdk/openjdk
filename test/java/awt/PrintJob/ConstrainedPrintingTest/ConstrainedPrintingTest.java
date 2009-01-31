@@ -22,9 +22,9 @@
  */
 
 /*
-  @test 
+  @test
   @bug 4116029 4300383
-  @summary verify that child components can draw only inside their  
+  @summary verify that child components can draw only inside their
            visible bounds
   @author das@sparc.spb.su area=awt.print
   @run main/manual=yesno ConstrainedPrintingTest
@@ -37,7 +37,7 @@
 //  were valid as well as the html file.)
 // Also, note the area= after Your Name in the author tag.  Here, you
 //  should put which functional area the test falls in.  See the
-//  AWT-core home page -> test areas and/or -> AWT team  for a list of 
+//  AWT-core home page -> test areas and/or -> AWT team  for a list of
 //  areas.
 // There are several places where ManualYesNoTest appear.  It is
 //  recommended that these be changed by a global search and replace,
@@ -48,7 +48,7 @@
 /**
  * ConstrainedPrintingTest.java
  *
- * summary: verify that child components can draw only inside their 
+ * summary: verify that child components can draw only inside their
  *          visible bounds
  *
  */
@@ -87,7 +87,7 @@ public class ConstrainedPrintingTest implements ActionListener
     final Canvas testCanvas = new Canvas() {
         public void paint(Graphics g) {
             ConstrainedPrintingTest.paintOutsideBounds(this, g, Color.red);
-            // The frame is sized so that only the upper part of 
+            // The frame is sized so that only the upper part of
             // the canvas is visible. We draw on the lower part,
             // so that we can verify that the output is clipped
             // by the parent container bounds.
@@ -104,9 +104,9 @@ public class ConstrainedPrintingTest implements ActionListener
         }
     };
 
-   public void init() 
+   public void init()
     {
-      //Create instructions for the user here, as well as set up 
+      //Create instructions for the user here, as well as set up
       // the environment -- set the layout manager, add buttons,
       // etc.
         button.addActionListener(this);
@@ -117,15 +117,15 @@ public class ConstrainedPrintingTest implements ActionListener
         panel.add(testCanvas);
 
         frame.setLayout(new BorderLayout());
-        frame.add(button, BorderLayout.NORTH); 
-        frame.add(panel, BorderLayout.CENTER); 
+        frame.add(button, BorderLayout.NORTH);
+        frame.add(panel, BorderLayout.CENTER);
         frame.setSize(200, 250);
         frame.validate();
         frame.setResizable(false);
 
-      String[] instructions = 
+      String[] instructions =
        {
-	 "1.Look at the frame titled \"PrintTest\". If you see green or",
+         "1.Look at the frame titled \"PrintTest\". If you see green or",
          "  red lines on the white area below the \"Print\" button, the",
          "  test fails. Otherwise go to step 2.",
          "2.Press \"Print\" button. The print dialog will appear. Select",
@@ -165,9 +165,9 @@ public class ConstrainedPrintingTest implements ActionListener
     }
 
     public void actionPerformed(ActionEvent e) {
-        PageAttributes pa = new PageAttributes();            
+        PageAttributes pa = new PageAttributes();
         pa.setPrinterResolution(36);
-        PrintJob pjob = frame.getToolkit().getPrintJob(frame, "NewTest", 
+        PrintJob pjob = frame.getToolkit().getPrintJob(frame, "NewTest",
                                                        new JobAttributes(),
                                                        pa);
         if (pjob != null) {
@@ -181,7 +181,7 @@ public class ConstrainedPrintingTest implements ActionListener
         }
     }
 
-    public static void paintOutsideBounds(Component comp, 
+    public static void paintOutsideBounds(Component comp,
                                           Graphics g,
                                           Color color) {
         Dimension dim = comp.getSize();
@@ -206,8 +206,8 @@ public class ConstrainedPrintingTest implements ActionListener
     public static void main(String[] args) {
         ConstrainedPrintingTest c = new ConstrainedPrintingTest();
 
-	c.init();
-	c.start();
+        c.init();
+        c.start();
     }
 
  }// class ConstrainedPrintingTest
@@ -217,11 +217,11 @@ public class ConstrainedPrintingTest implements ActionListener
 
 
 
-  
+
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -234,12 +234,12 @@ public class ConstrainedPrintingTest implements ActionListener
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
- { 
+class Sysout
+ {
    private static TestDialog dialog;
 
    public static void createDialogWithInstructions( String[] instructions )
@@ -249,7 +249,7 @@ class Sysout
       dialog.show();
       println( "Any messages for the tester will display here." );
     }
-   
+
    public static void createDialog( )
     {
       dialog = new TestDialog( new Frame(), "Instructions" );
@@ -258,8 +258,8 @@ class Sysout
       dialog.show();
       println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
    public static void printInstructions( String[] instructions )
     {
       dialog.printInstructions( instructions );
@@ -287,20 +287,20 @@ class TestDialog extends Dialog
    TextArea instructionsText;
    TextArea messageText;
    int maxStringLength = 80;
-   
+
    //DO NOT call this directly, go through Sysout
-   public TestDialog( Frame frame, String name ) 
+   public TestDialog( Frame frame, String name )
     {
       super( frame, name );
       int scrollBoth = TextArea.SCROLLBARS_BOTH;
       instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
       add( "North", instructionsText );
-      
+
       messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
       add("South", messageText);
-      
+
       pack();
-      
+
       show();
     }// TestDialog()
 
@@ -314,43 +314,42 @@ class TestDialog extends Dialog
 
       String printStr, remainingStr;
       for( int i=0; i < instructions.length; i++ )
-       { 
-	 //chop up each into pieces maxSringLength long
-	 remainingStr = instructions[ i ];
-	 while( remainingStr.length() > 0 )
-	  {
-	    //if longer than max then chop off first max chars to print
-	    if( remainingStr.length() >= maxStringLength )
-	     {
-	       //Try to chop on a word boundary
-	       int posOfSpace = remainingStr.
-		  lastIndexOf( ' ', maxStringLength - 1 );
-	       
-	       if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-	       
-	       printStr = remainingStr.substring( 0, posOfSpace + 1 );
-	       remainingStr = remainingStr.substring( posOfSpace + 1 );
-	     }
-	    //else just print
-	    else 
-	     { 
-	       printStr = remainingStr;
-	       remainingStr = "";
-	     }
-	    
+       {
+         //chop up each into pieces maxSringLength long
+         remainingStr = instructions[ i ];
+         while( remainingStr.length() > 0 )
+          {
+            //if longer than max then chop off first max chars to print
+            if( remainingStr.length() >= maxStringLength )
+             {
+               //Try to chop on a word boundary
+               int posOfSpace = remainingStr.
+                  lastIndexOf( ' ', maxStringLength - 1 );
+
+               if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
+
+               printStr = remainingStr.substring( 0, posOfSpace + 1 );
+               remainingStr = remainingStr.substring( posOfSpace + 1 );
+             }
+            //else just print
+            else
+             {
+               printStr = remainingStr;
+               remainingStr = "";
+             }
+
             instructionsText.append( printStr + "\n" );
-	    
-	  }// while
-	 
+
+          }// while
+
        }// for
-      
+
     }//printInstructions()
 
    //DO NOT call this directly, go through Sysout
    public void displayMessage( String messageIn )
     {
       messageText.append( messageIn + "\n" );
-    }  
-   
- }// TestDialog  class    
-  
+    }
+
+ }// TestDialog  class

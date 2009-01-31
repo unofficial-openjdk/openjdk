@@ -37,7 +37,6 @@ import javax.naming.*;
  * The additional records section is currently ignored.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
@@ -65,12 +64,12 @@ class ResourceRecords {
      * Does not modify or store a reference to the msg array.
      */
     ResourceRecords(byte[] msg, int msgLen, Header hdr, boolean zoneXfer)
-	    throws NamingException {
-	if (zoneXfer) {
-	    answer.ensureCapacity(8192);	// an arbitrary "large" number
-	}
-	this.zoneXfer = zoneXfer;
-	add(msg, msgLen, hdr);
+            throws NamingException {
+        if (zoneXfer) {
+            answer.ensureCapacity(8192);        // an arbitrary "large" number
+        }
+        this.zoneXfer = zoneXfer;
+        add(msg, msgLen, hdr);
     }
 
     /*
@@ -78,10 +77,10 @@ class ResourceRecords {
      * there are no answer records.
      */
     int getFirstAnsType() {
-	if (answer.size() == 0) {
-	    return -1;
-	}
-	return ((ResourceRecord) answer.firstElement()).getType();
+        if (answer.size() == 0) {
+            return -1;
+        }
+        return ((ResourceRecord) answer.firstElement()).getType();
     }
 
     /*
@@ -89,10 +88,10 @@ class ResourceRecords {
      * there are no answer records.
      */
     int getLastAnsType() {
-	if (answer.size() == 0) {
-	    return -1;
-	}
-	return ((ResourceRecord) answer.lastElement()).getType();
+        if (answer.size() == 0) {
+            return -1;
+        }
+        return ((ResourceRecord) answer.lastElement()).getType();
     }
 
     /*
@@ -102,40 +101,40 @@ class ResourceRecords {
      */
     void add(byte[] msg, int msgLen, Header hdr) throws NamingException {
 
-	ResourceRecord rr;
-	int pos = Header.HEADER_SIZE;	// current offset into msg
+        ResourceRecord rr;
+        int pos = Header.HEADER_SIZE;   // current offset into msg
 
-	try {
-	    for (int i = 0; i < hdr.numQuestions; i++) {
-		rr = new ResourceRecord(msg, msgLen, pos, true, false);
-		if (!zoneXfer) {
-		    question.addElement(rr);
-		}
-		pos += rr.size();
-	    }
+        try {
+            for (int i = 0; i < hdr.numQuestions; i++) {
+                rr = new ResourceRecord(msg, msgLen, pos, true, false);
+                if (!zoneXfer) {
+                    question.addElement(rr);
+                }
+                pos += rr.size();
+            }
 
-	    for (int i = 0; i < hdr.numAnswers; i++) {
-		rr = new ResourceRecord(
-			msg, msgLen, pos, false, !zoneXfer);
-		answer.addElement(rr);
-		pos += rr.size();
-	    }
+            for (int i = 0; i < hdr.numAnswers; i++) {
+                rr = new ResourceRecord(
+                        msg, msgLen, pos, false, !zoneXfer);
+                answer.addElement(rr);
+                pos += rr.size();
+            }
 
-	    if (zoneXfer) {
-		return;
-	    }
+            if (zoneXfer) {
+                return;
+            }
 
-	    for (int i = 0; i < hdr.numAuthorities; i++) {
-		rr = new ResourceRecord(msg, msgLen, pos, false, true);
-		authority.addElement(rr);
-		pos += rr.size();
-	    }
+            for (int i = 0; i < hdr.numAuthorities; i++) {
+                rr = new ResourceRecord(msg, msgLen, pos, false, true);
+                authority.addElement(rr);
+                pos += rr.size();
+            }
 
-	    // The additional records section is currently ignored.
+            // The additional records section is currently ignored.
 
-	} catch (IndexOutOfBoundsException e) {
-	    throw new CommunicationException(
-		    "DNS error: corrupted message");
-	}
+        } catch (IndexOutOfBoundsException e) {
+            throw new CommunicationException(
+                    "DNS error: corrupted message");
+        }
     }
 }

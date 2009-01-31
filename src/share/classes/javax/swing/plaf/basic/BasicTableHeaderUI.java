@@ -38,13 +38,12 @@ import sun.swing.*;
 /**
  * BasicTableHeaderUI implementation
  *
- * @version %I% %G%
  * @author Alan Chung
  * @author Philip Milne
  */
 public class BasicTableHeaderUI extends TableHeaderUI {
 
-    private static Cursor resizeCursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR); 
+    private static Cursor resizeCursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
 
 //
 // Instance Variables
@@ -59,7 +58,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 
     // The column header over which the mouse currently is.
     private int rolloverColumn = -1;
-    
+
     // The column that should be highlighted when the table header has the focus.
     private int selectedColumnIndex = 0; // Read ONLY via getSelectedColumnIndex!
 
@@ -67,15 +66,15 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         public void focusGained(FocusEvent e) {
             repaintHeader(e.getSource());
         }
-        
+
         public void focusLost(FocusEvent e) {
             repaintHeader(e.getSource());
         }
-        
+
         private void repaintHeader(Object source) {
             if (source instanceof JTableHeader) {
                 JTableHeader th = (JTableHeader)source;
-                BasicTableHeaderUI ui = 
+                BasicTableHeaderUI ui =
                    (BasicTableHeaderUI)BasicLookAndFeel.
                                         getUIOfType(th.getUI(),
                                             BasicTableHeaderUI.class);
@@ -87,7 +86,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             }
         }
     };
-    
+
     /**
      * This inner class is marked &quot;public&quot; due to a compiler bug.
      * This class should be treated as a &quot;protected&quot; inner class.
@@ -95,8 +94,8 @@ public class BasicTableHeaderUI extends TableHeaderUI {
      */
     public class MouseInputHandler implements MouseInputListener {
 
-        private int mouseXOffset; 
-	private Cursor otherCursor = resizeCursor; 
+        private int mouseXOffset;
+        private Cursor otherCursor = resizeCursor;
 
         public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() % 2 == 1 &&
@@ -114,30 +113,30 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             }
         }
 
-        private TableColumn getResizingColumn(Point p) { 
-	    return getResizingColumn(p, header.columnAtPoint(p)); 
-	}
+        private TableColumn getResizingColumn(Point p) {
+            return getResizingColumn(p, header.columnAtPoint(p));
+        }
 
-        private TableColumn getResizingColumn(Point p, int column) { 
-            if (column == -1) { 
-                 return null; 
+        private TableColumn getResizingColumn(Point p, int column) {
+            if (column == -1) {
+                 return null;
             }
-	    Rectangle r = header.getHeaderRect(column); 
-	    r.grow(-3, 0); 
-	    if (r.contains(p)) { 
-		return null; 
-	    }
-	    int midPoint = r.x + r.width/2; 
-	    int columnIndex;
+            Rectangle r = header.getHeaderRect(column);
+            r.grow(-3, 0);
+            if (r.contains(p)) {
+                return null;
+            }
+            int midPoint = r.x + r.width/2;
+            int columnIndex;
             if( header.getComponentOrientation().isLeftToRight() ) {
-                columnIndex = (p.x < midPoint) ? column - 1 : column; 
+                columnIndex = (p.x < midPoint) ? column - 1 : column;
             } else {
-                columnIndex = (p.x < midPoint) ? column : column - 1; 
+                columnIndex = (p.x < midPoint) ? column : column - 1;
             }
-	    if (columnIndex == -1) { 
-		return null; 
-	    }
-	    return header.getColumnModel().getColumn(columnIndex); 
+            if (columnIndex == -1) {
+                return null;
+            }
+            return header.getColumnModel().getColumn(columnIndex);
         }
 
         public void mousePressed(MouseEvent e) {
@@ -153,19 +152,19 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 
             if (index != -1) {
                 // The last 3 pixels + 3 pixels of next column are for resizing
-                TableColumn resizingColumn = getResizingColumn(p, index); 
+                TableColumn resizingColumn = getResizingColumn(p, index);
                 if (canResize(resizingColumn, header)) {
-                    header.setResizingColumn(resizingColumn); 
+                    header.setResizingColumn(resizingColumn);
                     if( header.getComponentOrientation().isLeftToRight() ) {
-                        mouseXOffset = p.x - resizingColumn.getWidth(); 
+                        mouseXOffset = p.x - resizingColumn.getWidth();
                     } else {
-                        mouseXOffset = p.x + resizingColumn.getWidth(); 
+                        mouseXOffset = p.x + resizingColumn.getWidth();
                     }
                 }
                 else if (header.getReorderingAllowed()) {
                     TableColumn hitColumn = columnModel.getColumn(index);
                     header.setDraggedColumn(hitColumn);
-		    mouseXOffset = p.x; 
+                    mouseXOffset = p.x;
                 }
             }
 
@@ -176,15 +175,15 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             }
         }
 
-	private void swapCursor() { 
-	    Cursor tmp = header.getCursor(); 
-	    header.setCursor(otherCursor); 
-	    otherCursor = tmp; 
-	}
+        private void swapCursor() {
+            Cursor tmp = header.getCursor();
+            header.setCursor(otherCursor);
+            otherCursor = tmp;
+        }
 
-        public void mouseMoved(MouseEvent e) { 
-            if (canResize(getResizingColumn(e.getPoint()), header) != 
-		(header.getCursor() == resizeCursor)) {
+        public void mouseMoved(MouseEvent e) {
+            if (canResize(getResizingColumn(e.getPoint()), header) !=
+                (header.getCursor() == resizeCursor)) {
                 swapCursor();
             }
             updateRolloverColumn(e);
@@ -199,53 +198,53 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             boolean headerLeftToRight = header.getComponentOrientation().isLeftToRight();
 
             if (resizingColumn != null) {
-		int oldWidth = resizingColumn.getWidth();
-		int newWidth;
-		if (headerLeftToRight) {
+                int oldWidth = resizingColumn.getWidth();
+                int newWidth;
+                if (headerLeftToRight) {
                     newWidth = mouseX - mouseXOffset;
                 } else  {
                     newWidth = mouseXOffset - mouseX;
-		}
+                }
                 mouseXOffset += changeColumnWidth(resizingColumn, header,
                                                   oldWidth, newWidth);
             }
             else if (draggedColumn != null) {
-		TableColumnModel cm = header.getColumnModel();
-		int draggedDistance = mouseX - mouseXOffset;
-		int direction = (draggedDistance < 0) ? -1 : 1;
-		int columnIndex = viewIndexForColumn(draggedColumn);
-		int newColumnIndex = columnIndex + (headerLeftToRight ? direction : -direction); 
-		if (0 <= newColumnIndex && newColumnIndex < cm.getColumnCount()) {
-		    int width = cm.getColumn(newColumnIndex).getWidth();
-		    if (Math.abs(draggedDistance) > (width / 2)) {
+                TableColumnModel cm = header.getColumnModel();
+                int draggedDistance = mouseX - mouseXOffset;
+                int direction = (draggedDistance < 0) ? -1 : 1;
+                int columnIndex = viewIndexForColumn(draggedColumn);
+                int newColumnIndex = columnIndex + (headerLeftToRight ? direction : -direction);
+                if (0 <= newColumnIndex && newColumnIndex < cm.getColumnCount()) {
+                    int width = cm.getColumn(newColumnIndex).getWidth();
+                    if (Math.abs(draggedDistance) > (width / 2)) {
                         JTable table = header.getTable();
 
-			mouseXOffset = mouseXOffset + direction * width; 
-			header.setDraggedDistance(draggedDistance - direction * width);	
-                        
+                        mouseXOffset = mouseXOffset + direction * width;
+                        header.setDraggedDistance(draggedDistance - direction * width);
+
                         //Cache the selected column.
                         int selectedIndex = table.convertColumnIndexToModel(
                                                         getSelectedColumnIndex());
-                        
+
                         //Now do the move.
                         cm.moveColumn(columnIndex, newColumnIndex);
-                        
+
                         //Update the selected index.
                         selectColumn(
-                            table.convertColumnIndexToView(selectedIndex), 
+                            table.convertColumnIndexToView(selectedIndex),
                             false);
 
                         return;
-		    }
-		}
-		setDraggedDistance(draggedDistance, columnIndex); 
-	    }
+                    }
+                }
+                setDraggedDistance(draggedDistance, columnIndex);
+            }
 
             updateRolloverColumn(e);
         }
 
-        public void mouseReleased(MouseEvent e) { 
-	    setDraggedDistance(0, viewIndexForColumn(header.getDraggedColumn())); 
+        public void mouseReleased(MouseEvent e) {
+            setDraggedDistance(0, viewIndexForColumn(header.getDraggedColumn()));
 
             header.setResizingColumn(null);
             header.setDraggedColumn(null);
@@ -266,12 +265,12 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 // Protected & Private Methods
 //
 
-	private void setDraggedDistance(int draggedDistance, int column) { 
-            header.setDraggedDistance(draggedDistance);	
-	    if (column != -1) { 
-		header.getColumnModel().moveColumn(column, column); 
-	    }
-	}
+        private void setDraggedDistance(int draggedDistance, int column) {
+            header.setDraggedDistance(draggedDistance);
+            if (column != -1) {
+                header.getColumnModel().moveColumn(column, column);
+            }
+        }
     }
 
 //
@@ -284,7 +283,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     protected MouseInputListener createMouseInputListener() {
         return new MouseInputHandler();
     }
-    
+
 //
 //  The installation/uninstall procedures and support
 //
@@ -337,7 +336,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     protected void installKeyboardActions() {
         InputMap keyMap = (InputMap)DefaultLookup.get(header, this,
                 "TableHeader.ancestorInputMap");
-	SwingUtilities.replaceUIInputMap(header,                
+        SwingUtilities.replaceUIInputMap(header,
                                 JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, keyMap);
         LazyActionMap.installLazyActionMap(header, BasicTableHeaderUI.class,
                 "TableHeader.actionMap");
@@ -445,7 +444,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
         return newIndex;
     }
-    
+
     private int selectPreviousColumn(boolean doIt) {
         int newIndex = getSelectedColumnIndex();
         if (newIndex > 0) {
@@ -456,7 +455,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
         return newIndex;
     }
-    
+
     /**
      * Selects the specified column in the table header. Repaints the
      * affected header cells and makes sure the newly selected one is visible.
@@ -464,7 +463,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     void selectColumn(int newColIndex) {
         selectColumn(newColIndex, true);
     }
-    
+
     void selectColumn(int newColIndex, boolean doScroll) {
         Rectangle repaintRect = header.getHeaderRect(selectedColumnIndex);
         header.repaint(repaintRect);
@@ -483,7 +482,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     private void scrollToColumn(int col) {
         Container container;
         JTable table;
-        
+
         //Test whether the header is in a scroll pane and has a table.
         if ((header.getParent() == null) ||
             ((container = header.getParent().getParent()) == null) ||
@@ -499,7 +498,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         vis.width = cellBounds.width;
         table.scrollRectToVisible(vis);
     }
-    
+
     private int getSelectedColumnIndex() {
         int numCols = header.getColumnModel().getColumnCount();
         if (selectedColumnIndex >= numCols && numCols > 0) {
@@ -507,18 +506,18 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
         return selectedColumnIndex;
     }
-    
+
     private static boolean canResize(TableColumn column,
-                                     JTableHeader header) { 
+                                     JTableHeader header) {
         return (column != null) && header.getResizingAllowed()
-                                && column.getResizable(); 
+                                && column.getResizable();
     }
-    
+
     private int changeColumnWidth(TableColumn resizingColumn,
                                   JTableHeader th,
                                   int oldWidth, int newWidth) {
         resizingColumn.setWidth(newWidth);
-        
+
         Container container;
         JTable table;
 
@@ -574,9 +573,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         int baseline = -1;
         TableColumnModel columnModel = header.getColumnModel();
         for(int column = 0; column < columnModel.getColumnCount();
-            column++) { 
-            TableColumn aColumn = columnModel.getColumn(column); 
-            Component comp = getHeaderRenderer(column); 
+            column++) {
+            TableColumn aColumn = columnModel.getColumn(column);
+            Component comp = getHeaderRenderer(column);
             Dimension pref = comp.getPreferredSize();
             int columnBaseline = comp.getBaseline(pref.width, height);
             if (columnBaseline >= 0) {
@@ -597,95 +596,95 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 //
 
     public void paint(Graphics g, JComponent c) {
-	if (header.getColumnModel().getColumnCount() <= 0) { 
-	    return; 
-	}
+        if (header.getColumnModel().getColumnCount() <= 0) {
+            return;
+        }
         boolean ltr = header.getComponentOrientation().isLeftToRight();
 
-	Rectangle clip = g.getClipBounds(); 
+        Rectangle clip = g.getClipBounds();
         Point left = clip.getLocation();
         Point right = new Point( clip.x + clip.width - 1, clip.y );
-	TableColumnModel cm = header.getColumnModel(); 
+        TableColumnModel cm = header.getColumnModel();
         int cMin = header.columnAtPoint( ltr ? left : right );
         int cMax = header.columnAtPoint( ltr ? right : left );
-        // This should never happen. 
+        // This should never happen.
         if (cMin == -1) {
-	    cMin =  0;
+            cMin =  0;
         }
         // If the table does not have enough columns to fill the view we'll get -1.
         // Replace this with the index of the last column.
         if (cMax == -1) {
-	    cMax = cm.getColumnCount()-1;  
+            cMax = cm.getColumnCount()-1;
         }
 
-	TableColumn draggedColumn = header.getDraggedColumn(); 
-	int columnWidth;
-        Rectangle cellRect = header.getHeaderRect(ltr ? cMin : cMax); 
-	TableColumn aColumn;
-	if (ltr) {
-	    for(int column = cMin; column <= cMax ; column++) { 
-		aColumn = cm.getColumn(column); 
-		columnWidth = aColumn.getWidth();
-		cellRect.width = columnWidth;
-		if (aColumn != draggedColumn) {
-		    paintCell(g, cellRect, column);
-		} 
-		cellRect.x += columnWidth;
-	    }
-	} else {
-	    for(int column = cMax; column >= cMin; column--) {
-		aColumn = cm.getColumn(column);
-		columnWidth = aColumn.getWidth();
-		cellRect.width = columnWidth;
-		if (aColumn != draggedColumn) {
-		    paintCell(g, cellRect, column);
-		}
+        TableColumn draggedColumn = header.getDraggedColumn();
+        int columnWidth;
+        Rectangle cellRect = header.getHeaderRect(ltr ? cMin : cMax);
+        TableColumn aColumn;
+        if (ltr) {
+            for(int column = cMin; column <= cMax ; column++) {
+                aColumn = cm.getColumn(column);
+                columnWidth = aColumn.getWidth();
+                cellRect.width = columnWidth;
+                if (aColumn != draggedColumn) {
+                    paintCell(g, cellRect, column);
+                }
                 cellRect.x += columnWidth;
-	    }
-	} 
+            }
+        } else {
+            for(int column = cMax; column >= cMin; column--) {
+                aColumn = cm.getColumn(column);
+                columnWidth = aColumn.getWidth();
+                cellRect.width = columnWidth;
+                if (aColumn != draggedColumn) {
+                    paintCell(g, cellRect, column);
+                }
+                cellRect.x += columnWidth;
+            }
+        }
 
-        // Paint the dragged column if we are dragging. 
-        if (draggedColumn != null) { 
-            int draggedColumnIndex = viewIndexForColumn(draggedColumn); 
-	    Rectangle draggedCellRect = header.getHeaderRect(draggedColumnIndex); 
-            
-            // Draw a gray well in place of the moving column. 
+        // Paint the dragged column if we are dragging.
+        if (draggedColumn != null) {
+            int draggedColumnIndex = viewIndexForColumn(draggedColumn);
+            Rectangle draggedCellRect = header.getHeaderRect(draggedColumnIndex);
+
+            // Draw a gray well in place of the moving column.
             g.setColor(header.getParent().getBackground());
             g.fillRect(draggedCellRect.x, draggedCellRect.y,
                                draggedCellRect.width, draggedCellRect.height);
 
             draggedCellRect.x += header.getDraggedDistance();
 
-	    // Fill the background. 
-	    g.setColor(header.getBackground());
-	    g.fillRect(draggedCellRect.x, draggedCellRect.y,
-		       draggedCellRect.width, draggedCellRect.height);
- 
+            // Fill the background.
+            g.setColor(header.getBackground());
+            g.fillRect(draggedCellRect.x, draggedCellRect.y,
+                       draggedCellRect.width, draggedCellRect.height);
+
             paintCell(g, draggedCellRect, draggedColumnIndex);
         }
 
-	// Remove all components in the rendererPane. 
-	rendererPane.removeAll(); 
+        // Remove all components in the rendererPane.
+        rendererPane.removeAll();
     }
 
-    private Component getHeaderRenderer(int columnIndex) { 
-        TableColumn aColumn = header.getColumnModel().getColumn(columnIndex); 
-	TableCellRenderer renderer = aColumn.getHeaderRenderer(); 
-        if (renderer == null) { 
-	    renderer = header.getDefaultRenderer(); 
-	}
-        
+    private Component getHeaderRenderer(int columnIndex) {
+        TableColumn aColumn = header.getColumnModel().getColumn(columnIndex);
+        TableCellRenderer renderer = aColumn.getHeaderRenderer();
+        if (renderer == null) {
+            renderer = header.getDefaultRenderer();
+        }
+
         boolean hasFocus = !header.isPaintingForPrint()
                            && (columnIndex == getSelectedColumnIndex())
                            && header.hasFocus();
-        return renderer.getTableCellRendererComponent(header.getTable(), 
-						aColumn.getHeaderValue(),
-                                                false, hasFocus, 
+        return renderer.getTableCellRendererComponent(header.getTable(),
+                                                aColumn.getHeaderValue(),
+                                                false, hasFocus,
                                                 -1, columnIndex);
     }
 
     private void paintCell(Graphics g, Rectangle cellRect, int columnIndex) {
-        Component component = getHeaderRenderer(columnIndex); 
+        Component component = getHeaderRenderer(columnIndex);
         rendererPane.paintComponent(g, component, header, cellRect.x, cellRect.y,
                             cellRect.width, cellRect.height, true);
     }
@@ -705,17 +704,17 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 //
 
     private int getHeaderHeight() {
-        int height = 0; 
-	boolean accomodatedDefault = false; 
+        int height = 0;
+        boolean accomodatedDefault = false;
         TableColumnModel columnModel = header.getColumnModel();
-        for(int column = 0; column < columnModel.getColumnCount(); column++) { 
-	    TableColumn aColumn = columnModel.getColumn(column); 
+        for(int column = 0; column < columnModel.getColumnCount(); column++) {
+            TableColumn aColumn = columnModel.getColumn(column);
             boolean isDefault = (aColumn.getHeaderRenderer() == null);
 
-            if (!isDefault || !accomodatedDefault) { 
-		Component comp = getHeaderRenderer(column); 
-		int rendererHeight = comp.getPreferredSize().height; 
-		height = Math.max(height, rendererHeight); 
+            if (!isDefault || !accomodatedDefault) {
+                Component comp = getHeaderRenderer(column);
+                int rendererHeight = comp.getPreferredSize().height;
+                height = Math.max(height, rendererHeight);
 
                 // Configuring the header renderer to calculate its preferred size
                 // is expensive. Optimise this by assuming the default renderer
@@ -727,11 +726,11 @@ public class BasicTableHeaderUI extends TableHeaderUI {
                         headerValue = headerValue.toString();
 
                         if (headerValue != null && !headerValue.equals("")) {
-                            accomodatedDefault = true; 
+                            accomodatedDefault = true;
                         }
                     }
                 }
-	    }
+            }
         }
         return height;
     }
@@ -747,7 +746,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 
 
     /**
-     * Return the minimum size of the header. The minimum width is the sum 
+     * Return the minimum size of the header. The minimum width is the sum
      * of the minimum widths of each column (plus inter-cell spacing).
      */
     public Dimension getMinimumSize(JComponent c) {
@@ -761,9 +760,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     }
 
     /**
-     * Return the preferred size of the header. The preferred height is the 
-     * maximum of the preferred heights of all of the components provided 
-     * by the header renderers. The preferred width is the sum of the 
+     * Return the preferred size of the header. The preferred height is the
+     * maximum of the preferred heights of all of the components provided
+     * by the header renderers. The preferred width is the sum of the
      * preferred widths of each column (plus inter-cell spacing).
      */
     public Dimension getPreferredSize(JComponent c) {
@@ -777,7 +776,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
     }
 
     /**
-     * Return the maximum size of the header. The maximum width is the sum 
+     * Return the maximum size of the header. The maximum width is the sum
      * of the maximum widths of each column (plus inter-cell spacing).
      */
     public Dimension getMaximumSize(JComponent c) {
@@ -789,7 +788,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
         return createHeaderSize(width);
     }
-    
+
     private static class Actions extends UIAction {
         public static final String TOGGLE_SORT_ORDER =
             "toggleSortOrder";
@@ -807,11 +806,11 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             "resizeRight";
         public static final String FOCUS_TABLE =
             "focusTable";
-            
+
         public Actions(String name) {
             super(name);
         }
-        
+
         public boolean isEnabled(Object sender) {
             if (sender instanceof JTableHeader) {
                 JTableHeader th = (JTableHeader)sender;
@@ -821,10 +820,10 @@ public class BasicTableHeaderUI extends TableHeaderUI {
                 }
 
                 String key = getName();
-                BasicTableHeaderUI ui = 
+                BasicTableHeaderUI ui =
                     (BasicTableHeaderUI)BasicLookAndFeel.getUIOfType(th.getUI(),
-                                                      BasicTableHeaderUI.class);                
-                if (ui != null) {                
+                                                      BasicTableHeaderUI.class);
+                if (ui != null) {
                     if (key == MOVE_COLUMN_LEFT) {
                         return th.getReorderingAllowed()
                             && maybeMoveColumn(true, th, ui, false);
@@ -844,15 +843,15 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 
         public void actionPerformed(ActionEvent e) {
             JTableHeader th = (JTableHeader)e.getSource();
-            BasicTableHeaderUI ui = 
+            BasicTableHeaderUI ui =
                 (BasicTableHeaderUI)BasicLookAndFeel.
                                         getUIOfType(th.getUI(),
                                             BasicTableHeaderUI.class);
             if (ui == null) {
                 return;
             }
-            
-            String name = getName();            
+
+            String name = getName();
             if (TOGGLE_SORT_ORDER == name) {
                 JTable table = th.getTable();
                 RowSorter sorter = table.getRowSorter();
@@ -889,24 +888,24 @@ public class BasicTableHeaderUI extends TableHeaderUI {
                 }
             }
         }
-        
+
         private void moveColumn(boolean leftArrow, JTableHeader th,
                                 BasicTableHeaderUI ui) {
             maybeMoveColumn(leftArrow, th, ui, true);
         }
-        
+
         private boolean maybeMoveColumn(boolean leftArrow, JTableHeader th,
                                         BasicTableHeaderUI ui, boolean doIt) {
             int oldIndex = ui.getSelectedColumnIndex();
             int newIndex;
-                        
+
             if (th.getComponentOrientation().isLeftToRight()) {
                 newIndex = leftArrow ? ui.selectPreviousColumn(doIt)
                                      : ui.selectNextColumn(doIt);
             } else {
                 newIndex = leftArrow ? ui.selectNextColumn(doIt)
                                      : ui.selectPreviousColumn(doIt);
-            } 
+            }
 
             if (newIndex != oldIndex) {
                 if (doIt) {
@@ -915,10 +914,10 @@ public class BasicTableHeaderUI extends TableHeaderUI {
                     return true; // we'd do the move if asked
                 }
             }
-            
+
             return false;
         }
-        
+
         private void resize(boolean leftArrow, JTableHeader th,
                             BasicTableHeaderUI ui) {
             int columnIndex = ui.getSelectedColumnIndex();
@@ -928,13 +927,13 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             th.setResizingColumn(resizingColumn);
             int oldWidth = resizingColumn.getWidth();
             int newWidth = oldWidth;
-            
+
             if (th.getComponentOrientation().isLeftToRight()) {
                 newWidth = newWidth + (leftArrow ? -1 : 1);
             } else {
                 newWidth = newWidth + (leftArrow ? 1 : -1);
-            } 
-            
+            }
+
             ui.changeColumnWidth(resizingColumn, th, oldWidth, newWidth);
         }
     }

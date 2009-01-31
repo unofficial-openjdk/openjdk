@@ -33,7 +33,7 @@ public class ReadToArray {
         PipedWriter pw = new PipedWriter();
         PipedReader pr = new PipedReader(pw);
         char[] cbuf = {'a', 'a', 'a', 'a'};
-        
+
         pw.write('b');
         // read 'b' and put it to position 2
         pr.read(cbuf, 2, 1);
@@ -41,6 +41,6 @@ public class ReadToArray {
         if (cbuf[2] != 'b') {
             throw new Exception
             ("Read character to wrong position: 2nd character should be b");
-        } 
+        }
     }
 }

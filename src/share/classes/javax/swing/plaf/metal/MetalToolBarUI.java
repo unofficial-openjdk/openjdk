@@ -48,11 +48,10 @@ import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
 
 /**
- * A Metal Look and Feel implementation of ToolBarUI.  This implementation 
+ * A Metal Look and Feel implementation of ToolBarUI.  This implementation
  * is a "combined" view/controller.
  * <p>
  *
- * @version %I% %G%
  * @author Jeff Shapiro
  */
 public class MetalToolBarUI extends BasicToolBarUI
@@ -163,7 +162,7 @@ public class MetalToolBarUI extends BasicToolBarUI
 
     public static ComponentUI createUI( JComponent c )
     {
-	return new MetalToolBarUI();
+        return new MetalToolBarUI();
     }
 
     public void installUI( JComponent c )
@@ -175,37 +174,37 @@ public class MetalToolBarUI extends BasicToolBarUI
     public void uninstallUI( JComponent c )
     {
         super.uninstallUI( c );
-	nonRolloverBorder = null;
+        nonRolloverBorder = null;
         unregister(c);
     }
 
     protected void installListeners() {
         super.installListeners();
 
-	contListener = createContainerListener();
-	if (contListener != null) {
-	    toolBar.addContainerListener(contListener);
-	}
-	rolloverListener = createRolloverListener();
-	if (rolloverListener != null) {
-	    toolBar.addPropertyChangeListener(rolloverListener);
-	}
+        contListener = createContainerListener();
+        if (contListener != null) {
+            toolBar.addContainerListener(contListener);
+        }
+        rolloverListener = createRolloverListener();
+        if (rolloverListener != null) {
+            toolBar.addPropertyChangeListener(rolloverListener);
+        }
     }
 
     protected void uninstallListeners() {
         super.uninstallListeners();
 
-	if (contListener != null) {
-	    toolBar.removeContainerListener(contListener);
-	}
-	rolloverListener = createRolloverListener();
-	if (rolloverListener != null) {
-	    toolBar.removePropertyChangeListener(rolloverListener);
-	}
+        if (contListener != null) {
+            toolBar.removeContainerListener(contListener);
+        }
+        rolloverListener = createRolloverListener();
+        if (rolloverListener != null) {
+            toolBar.removePropertyChangeListener(rolloverListener);
+        }
     }
 
     protected Border createRolloverBorder() {
-	return super.createRolloverBorder();
+        return super.createRolloverBorder();
     }
 
     protected Border createNonRolloverBorder() {
@@ -217,68 +216,68 @@ public class MetalToolBarUI extends BasicToolBarUI
      * Creates a non rollover border for Toggle buttons in the toolbar.
      */
     private Border createNonRolloverToggleBorder() {
-	return createNonRolloverBorder();
+        return createNonRolloverBorder();
     }
-    
-    protected void setBorderToNonRollover(Component c) {
-	if (c instanceof JToggleButton && !(c instanceof JCheckBox)) {
-	    // 4735514, 4886944: The method createNonRolloverToggleBorder() is
-	    // private in BasicToolBarUI so we can't override it. We still need
-	    // to call super from this method so that it can save away the
-	    // original border and then we install ours.
 
-	    // Before calling super we get a handle to the old border, because
-	    // super will install a non-UIResource border that we can't
-	    // distinguish from one provided by an application.
-	    JToggleButton b = (JToggleButton)c;
-	    Border border = b.getBorder();
-	    super.setBorderToNonRollover(c);
-	    if (border instanceof UIResource) {
-		if (nonRolloverBorder == null) {
-		    nonRolloverBorder = createNonRolloverToggleBorder();
-		}
-		b.setBorder(nonRolloverBorder);
-	    }
-	} else {
-	    super.setBorderToNonRollover(c);
-	}
+    protected void setBorderToNonRollover(Component c) {
+        if (c instanceof JToggleButton && !(c instanceof JCheckBox)) {
+            // 4735514, 4886944: The method createNonRolloverToggleBorder() is
+            // private in BasicToolBarUI so we can't override it. We still need
+            // to call super from this method so that it can save away the
+            // original border and then we install ours.
+
+            // Before calling super we get a handle to the old border, because
+            // super will install a non-UIResource border that we can't
+            // distinguish from one provided by an application.
+            JToggleButton b = (JToggleButton)c;
+            Border border = b.getBorder();
+            super.setBorderToNonRollover(c);
+            if (border instanceof UIResource) {
+                if (nonRolloverBorder == null) {
+                    nonRolloverBorder = createNonRolloverToggleBorder();
+                }
+                b.setBorder(nonRolloverBorder);
+            }
+        } else {
+            super.setBorderToNonRollover(c);
+        }
     }
 
 
     /**
      * Creates a container listener that will be added to the JToolBar.
-     * If this method returns null then it will not be added to the 
+     * If this method returns null then it will not be added to the
      * toolbar.
      *
      * @return an instance of a <code>ContainerListener</code> or null
      */
     protected ContainerListener createContainerListener() {
-	return null;
+        return null;
     }
 
     /**
      * Creates a property change listener that will be added to the JToolBar.
-     * If this method returns null then it will not be added to the 
+     * If this method returns null then it will not be added to the
      * toolbar.
      *
      * @return an instance of a <code>PropertyChangeListener</code> or null
      */
     protected PropertyChangeListener createRolloverListener() {
-	return null;
+        return null;
     }
 
     protected MouseInputListener createDockingListener( )
     {
-	return new MetalDockingListener( toolBar );
+        return new MetalDockingListener( toolBar );
     }
 
     protected void setDragOffset(Point p) {
-	if (!GraphicsEnvironment.isHeadless()) {
-	    if (dragWindow == null) {
-		dragWindow = createDragWindow(toolBar);
-	    }
-	    dragWindow.setOffset(p);
-	}
+        if (!GraphicsEnvironment.isHeadless()) {
+            if (dragWindow == null) {
+                dragWindow = createDragWindow(toolBar);
+            }
+            dragWindow.setOffset(p);
+        }
     }
 
     /**
@@ -351,48 +350,48 @@ public class MetalToolBarUI extends BasicToolBarUI
 
     // No longer used. Cannot remove for compatibility reasons
     protected class MetalContainerListener
-	extends BasicToolBarUI.ToolBarContListener {}
+        extends BasicToolBarUI.ToolBarContListener {}
 
     // No longer used. Cannot remove for compatibility reasons
-    protected class MetalRolloverListener 
-	extends BasicToolBarUI.PropertyListener {}
+    protected class MetalRolloverListener
+        extends BasicToolBarUI.PropertyListener {}
 
     protected class MetalDockingListener extends DockingListener {
         private boolean pressedInBumps = false;
 
-	public MetalDockingListener(JToolBar t) {
-	    super(t);
-	} 
+        public MetalDockingListener(JToolBar t) {
+            super(t);
+        }
 
-	public void mousePressed(MouseEvent e) { 
-	    super.mousePressed(e);
+        public void mousePressed(MouseEvent e) {
+            super.mousePressed(e);
             if (!toolBar.isEnabled()) {
                 return;
             }
-	    pressedInBumps = false;
-	    Rectangle bumpRect = new Rectangle();
+            pressedInBumps = false;
+            Rectangle bumpRect = new Rectangle();
 
-	    if (toolBar.getOrientation() == JToolBar.HORIZONTAL) {
-		int x = MetalUtils.isLeftToRight(toolBar) ? 0 : toolBar.getSize().width-14;
-		bumpRect.setBounds(x, 0, 14, toolBar.getSize().height);
-	    } else {  // vertical
-		bumpRect.setBounds(0, 0, toolBar.getSize().width, 14);
-	    }
-	    if (bumpRect.contains(e.getPoint())) {
-	        pressedInBumps = true;
+            if (toolBar.getOrientation() == JToolBar.HORIZONTAL) {
+                int x = MetalUtils.isLeftToRight(toolBar) ? 0 : toolBar.getSize().width-14;
+                bumpRect.setBounds(x, 0, 14, toolBar.getSize().height);
+            } else {  // vertical
+                bumpRect.setBounds(0, 0, toolBar.getSize().width, 14);
+            }
+            if (bumpRect.contains(e.getPoint())) {
+                pressedInBumps = true;
                 Point dragOffset = e.getPoint();
                 if (!MetalUtils.isLeftToRight(toolBar)) {
-                    dragOffset.x -= (toolBar.getSize().width 
-				     - toolBar.getPreferredSize().width);
+                    dragOffset.x -= (toolBar.getSize().width
+                                     - toolBar.getPreferredSize().width);
                 }
                 setDragOffset(dragOffset);
-	    }
-	}
+            }
+        }
 
-	public void mouseDragged(MouseEvent e) {
-	    if (pressedInBumps) {
-	        super.mouseDragged(e);
-	    }
-	}
+        public void mouseDragged(MouseEvent e) {
+            if (pressedInBumps) {
+                super.mouseDragged(e);
+            }
+        }
     } // end class MetalDockingListener
 }

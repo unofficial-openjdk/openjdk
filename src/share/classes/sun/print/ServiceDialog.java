@@ -77,7 +77,6 @@ import java.net.URISyntaxException;
 /**
  * A class which implements a cross-platform print dialog.
  *
- * @version 1.4 02/03/01
  * @author  Chris Campbell
  */
 public class ServiceDialog extends JDialog implements ActionListener {
@@ -123,7 +122,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
     static {
         initResource();
-    }  
+    }
 
 
     /**
@@ -136,11 +135,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                          int defaultServiceIndex,
                          DocFlavor flavor,
                          PrintRequestAttributeSet attributes,
-			 Dialog dialog)
+                         Dialog dialog)
     {
-	super(dialog, getMsg("dialog.printtitle"), true, gc);
-	initPrintDialog(x, y, services, defaultServiceIndex, 
-			flavor, attributes);
+        super(dialog, getMsg("dialog.printtitle"), true, gc);
+        initPrintDialog(x, y, services, defaultServiceIndex,
+                        flavor, attributes);
     }
 
 
@@ -155,11 +154,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                          int defaultServiceIndex,
                          DocFlavor flavor,
                          PrintRequestAttributeSet attributes,
-			 Frame frame)
+                         Frame frame)
     {
-	super(frame, getMsg("dialog.printtitle"), true, gc);
-	initPrintDialog(x, y, services, defaultServiceIndex, 
-			flavor, attributes);
+        super(frame, getMsg("dialog.printtitle"), true, gc);
+        initPrintDialog(x, y, services, defaultServiceIndex,
+                        flavor, attributes);
     }
 
 
@@ -172,17 +171,17 @@ public class ServiceDialog extends JDialog implements ActionListener {
                          DocFlavor flavor,
                          PrintRequestAttributeSet attributes)
     {
-	this.services = services;
+        this.services = services;
         this.defaultServiceIndex = defaultServiceIndex;
         this.asOriginal = attributes;
         this.asCurrent = new HashPrintRequestAttributeSet(attributes);
         this.psCurrent = services[defaultServiceIndex];
         this.docFlavor = flavor;
-	SunPageSelection pages = 
-	    (SunPageSelection)attributes.get(SunPageSelection.class);
-	if (pages != null) {
-	    isAWT = true;
-	}
+        SunPageSelection pages =
+            (SunPageSelection)attributes.get(SunPageSelection.class);
+        if (pages != null) {
+            isAWT = true;
+        }
 
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
@@ -215,19 +214,19 @@ public class ServiceDialog extends JDialog implements ActionListener {
         JPanel pnlSouth = new JPanel(new FlowLayout(FlowLayout.TRAILING));
         btnApprove = createExitButton("button.print", this);
         pnlSouth.add(btnApprove);
-	getRootPane().setDefaultButton(btnApprove);
-        btnCancel = createExitButton("button.cancel", this); 
-	handleEscKey(btnCancel);
+        getRootPane().setDefaultButton(btnApprove);
+        btnCancel = createExitButton("button.cancel", this);
+        handleEscKey(btnCancel);
         pnlSouth.add(btnCancel);
         c.add(pnlSouth, BorderLayout.SOUTH);
- 
+
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent event) {
                 dispose(CANCEL);
             }
         });
 
-	getAccessibleContext().setAccessibleDescription(getMsg("dialog.printtitle"));
+        getAccessibleContext().setAccessibleDescription(getMsg("dialog.printtitle"));
         setResizable(false);
         setLocation(x, y);
         pack();
@@ -236,29 +235,29 @@ public class ServiceDialog extends JDialog implements ActionListener {
    /**
      * Constructor for the solitary "page setup" dialog
      */
-    public ServiceDialog(GraphicsConfiguration gc, 
+    public ServiceDialog(GraphicsConfiguration gc,
                          int x, int y,
                          PrintService ps,
                          DocFlavor flavor,
                          PrintRequestAttributeSet attributes,
-			 Dialog dialog)
+                         Dialog dialog)
     {
-	super(dialog, getMsg("dialog.pstitle"), true, gc);
-	initPageDialog(x, y, ps, flavor, attributes);
+        super(dialog, getMsg("dialog.pstitle"), true, gc);
+        initPageDialog(x, y, ps, flavor, attributes);
     }
 
     /**
      * Constructor for the solitary "page setup" dialog
      */
-    public ServiceDialog(GraphicsConfiguration gc, 
+    public ServiceDialog(GraphicsConfiguration gc,
                          int x, int y,
                          PrintService ps,
                          DocFlavor flavor,
                          PrintRequestAttributeSet attributes,
-			 Frame frame)
+                         Frame frame)
     {
-	super(frame, getMsg("dialog.pstitle"), true, gc);
-	initPageDialog(x, y, ps, flavor, attributes);
+        super(frame, getMsg("dialog.pstitle"), true, gc);
+        initPageDialog(x, y, ps, flavor, attributes);
     }
 
 
@@ -284,11 +283,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
         pnlPageSetup.updateInfo();
 
         JPanel pnlSouth = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-        btnApprove = createExitButton("button.ok", this); 
-	pnlSouth.add(btnApprove);
-	getRootPane().setDefaultButton(btnApprove);
-        btnCancel = createExitButton("button.cancel", this);	
-	handleEscKey(btnCancel);
+        btnApprove = createExitButton("button.ok", this);
+        pnlSouth.add(btnApprove);
+        getRootPane().setDefaultButton(btnApprove);
+        btnCancel = createExitButton("button.cancel", this);
+        handleEscKey(btnCancel);
         pnlSouth.add(btnCancel);
         c.add(pnlSouth, BorderLayout.SOUTH);
 
@@ -298,7 +297,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             }
         });
 
-	getAccessibleContext().setAccessibleDescription(getMsg("dialog.pstitle"));
+        getAccessibleContext().setAccessibleDescription(getMsg("dialog.pstitle"));
         setResizable(false);
         setLocation(x, y);
         pack();
@@ -308,23 +307,23 @@ public class ServiceDialog extends JDialog implements ActionListener {
      * Performs Cancel when Esc key is pressed.
      */
     private void handleEscKey(JButton btnCancel) {
-	Action cancelKeyAction = new AbstractAction() {
-	    public void actionPerformed(ActionEvent e) {
-		dispose(CANCEL);
-	    }
-	};
-	KeyStroke cancelKeyStroke = 
-	    KeyStroke.getKeyStroke((char)KeyEvent.VK_ESCAPE, 0);
-	InputMap inputMap = 
-	    btnCancel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-	ActionMap actionMap = btnCancel.getActionMap();
+        Action cancelKeyAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                dispose(CANCEL);
+            }
+        };
+        KeyStroke cancelKeyStroke =
+            KeyStroke.getKeyStroke((char)KeyEvent.VK_ESCAPE, 0);
+        InputMap inputMap =
+            btnCancel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = btnCancel.getActionMap();
 
-	if (inputMap != null && actionMap != null) {
-	    inputMap.put(cancelKeyStroke, "cancel");
-	    actionMap.put("cancel", cancelKeyAction);
-	}
+        if (inputMap != null && actionMap != null) {
+            inputMap.put(cancelKeyStroke, "cancel");
+            actionMap.put("cancel", cancelKeyAction);
+        }
     }
-                         
+
 
     /**
      * Returns the current status of the dialog (whether the user has selected
@@ -375,7 +374,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         boolean approved = false;
 
         if (source == btnApprove) {
-	    approved = true;
+            approved = true;
 
             if (pnlGeneral != null) {
                 if (pnlGeneral.isPrintToFileRequested()) {
@@ -384,9 +383,9 @@ public class ServiceDialog extends JDialog implements ActionListener {
                     asCurrent.remove(Destination.class);
                 }
             }
-	}
+        }
 
-	dispose(approved ? APPROVE : CANCEL);
+        dispose(approved ? APPROVE : CANCEL);
     }
 
     /**
@@ -395,36 +394,36 @@ public class ServiceDialog extends JDialog implements ActionListener {
      */
     private boolean showFileChooser() {
         Class dstCategory = Destination.class;
-        
+
         Destination dst = (Destination)asCurrent.get(dstCategory);
         if (dst == null) {
-	    dst = (Destination)asOriginal.get(dstCategory);
-	    if (dst == null) {
-		dst = (Destination)psCurrent.getDefaultAttributeValue(dstCategory);
-		// "dst" should not be null. The following code
-		// is only added to safeguard against a possible
-		// buggy implementation of a PrintService having a 
-		// null default Destination.
-		if (dst == null) {
-		    try {
-			dst = new Destination(new URI("file:out.prn"));
-		    } catch (URISyntaxException e) {
-		    }
-		}
-	    }
+            dst = (Destination)asOriginal.get(dstCategory);
+            if (dst == null) {
+                dst = (Destination)psCurrent.getDefaultAttributeValue(dstCategory);
+                // "dst" should not be null. The following code
+                // is only added to safeguard against a possible
+                // buggy implementation of a PrintService having a
+                // null default Destination.
+                if (dst == null) {
+                    try {
+                        dst = new Destination(new URI("file:out.prn"));
+                    } catch (URISyntaxException e) {
+                    }
+                }
+            }
         }
 
         File fileDest;
         if (dst != null) {
-	    try {
-		fileDest = new File(dst.getURI());
-	    } catch (Exception e) {
-		// all manner of runtime exceptions possible
-		fileDest = new File("out.prn");
-	    }
+            try {
+                fileDest = new File(dst.getURI());
+            } catch (Exception e) {
+                // all manner of runtime exceptions possible
+                fileDest = new File("out.prn");
+            }
         } else {
             fileDest = new File("out.prn");
-        } 
+        }
 
         ValidatingFileChooser jfc = new ValidatingFileChooser();
         jfc.setApproveButtonText(getMsg("button.ok"));
@@ -444,7 +443,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             asCurrent.remove(dstCategory);
         }
 
-	return (returnVal == JFileChooser.APPROVE_OPTION);
+        return (returnVal == JFileChooser.APPROVE_OPTION);
     }
 
     /**
@@ -516,14 +515,14 @@ public class ServiceDialog extends JDialog implements ActionListener {
      * Returns URL for image resource
      */
     private static URL getImageResource(final String key) {
-	URL url = (URL)java.security.AccessController.doPrivileged(
-		       new java.security.PrivilegedAction() {
-		public Object run() {
-		    URL url = ServiceDialog.class.getResource(
-						  "resources/" + key);
-		    return url;
-		}
-	});
+        URL url = (URL)java.security.AccessController.doPrivileged(
+                       new java.security.PrivilegedAction() {
+                public Object run() {
+                    URL url = ServiceDialog.class.getResource(
+                                                  "resources/" + key);
+                    return url;
+                }
+        });
 
         if (url == null) {
             throw new Error("Fatal: Resource for ServiceUI is broken; " +
@@ -548,10 +547,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
      * Creates a new JButton and sets its text, and ActionListener
      */
     private static JButton createExitButton(String key, ActionListener al) {
-	String str = getMsg(key);
+        String str = getMsg(key);
         JButton btn = new JButton(str);
         btn.addActionListener(al);
-	btn.getAccessibleContext().setAccessibleDescription(str);
+        btn.getAccessibleContext().setAccessibleDescription(str);
         return btn;
     }
 
@@ -567,11 +566,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
     }
 
     /**
-     * Creates a new JRadioButton and sets its text, mnemonic, 
+     * Creates a new JRadioButton and sets its text, mnemonic,
      * and ActionListener
      */
-    private static JRadioButton createRadioButton(String key, 
-                                                  ActionListener al) 
+    private static JRadioButton createRadioButton(String key,
+                                                  ActionListener al)
     {
         JRadioButton rb = new JRadioButton(getMsg(key));
         rb.setMnemonic(getMnemonic(key));
@@ -579,16 +578,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
         return rb;
     }
-  
+
   /**
    * Creates a  pop-up dialog for "no print service"
    */
-    public static void showNoPrintService(GraphicsConfiguration gc) 
-    {        
-	Frame dlgFrame = new Frame(gc);
-	JOptionPane.showMessageDialog(dlgFrame, 
-				      getMsg("dialog.noprintermsg"));
-	dlgFrame.dispose();
+    public static void showNoPrintService(GraphicsConfiguration gc)
+    {
+        Frame dlgFrame = new Frame(gc);
+        JOptionPane.showMessageDialog(dlgFrame,
+                                      getMsg("dialog.noprintermsg"));
+        dlgFrame.dispose();
     }
 
     /**
@@ -597,7 +596,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
      */
     private static void addToGB(Component comp, Container cont,
                                 GridBagLayout gridbag,
-                                GridBagConstraints constraints) 
+                                GridBagConstraints constraints)
     {
         gridbag.setConstraints(comp, constraints);
         cont.add(comp);
@@ -607,7 +606,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
      * Adds the AbstractButton to both the given ButtonGroup and Container
      */
     private static void addToBG(AbstractButton button, Container cont,
-                                ButtonGroup bg) 
+                                ButtonGroup bg)
     {
         bg.add(button);
         cont.add(button);
@@ -617,7 +616,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
 
     /**
-     * The "General" tab.  Includes the controls for PrintService, 
+     * The "General" tab.  Includes the controls for PrintService,
      * PageRange, and Copies/Collate.
      */
     private class GeneralPanel extends JPanel {
@@ -625,7 +624,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private PrintServicePanel pnlPrintService;
         private PrintRangePanel pnlPrintRange;
         private CopiesPanel pnlCopies;
-        
+
         public GeneralPanel() {
             super();
 
@@ -663,7 +662,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         }
     }
 
-    private class PrintServicePanel extends JPanel 
+    private class PrintServicePanel extends JPanel
         implements ActionListener, ItemListener, PopupMenuListener
     {
         private final String strTitle = getMsg("border.printservice");
@@ -673,14 +672,14 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private JComboBox cbName;
         private JLabel lblType, lblStatus, lblInfo;
         private ServiceUIFactory uiFactory;
-	private boolean changedService = false;
-	private boolean filePermission;
+        private boolean changedService = false;
+        private boolean filePermission;
 
         public PrintServicePanel() {
             super();
 
             uiFactory = psCurrent.getServiceUIFactory();
-            
+
             GridBagLayout gridbag = new GridBagLayout();
             GridBagConstraints c = new GridBagConstraints();
 
@@ -694,7 +693,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             cbName = new JComboBox(psnames);
             cbName.setSelectedIndex(defaultServiceIndex);
             cbName.addItemListener(this);
-	    cbName.addPopupMenuListener(this);
+            cbName.addPopupMenuListener(this);
 
             c.fill = GridBagConstraints.BOTH;
             c.insets = compInsets;
@@ -714,17 +713,17 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             c.weighty = 1.0;
             lblStatus = addLabel(getMsg("label.status"), gridbag, c);
-	    lblStatus.setLabelFor(null);
+            lblStatus.setLabelFor(null);
 
             lblType = addLabel(getMsg("label.pstype"), gridbag, c);
-	    lblType.setLabelFor(null);
+            lblType.setLabelFor(null);
 
             c.gridwidth = 1;
-            addToGB(new JLabel(getMsg("label.info"), JLabel.TRAILING), 
+            addToGB(new JLabel(getMsg("label.info"), JLabel.TRAILING),
                     this, gridbag, c);
             c.gridwidth = GridBagConstraints.RELATIVE;
             lblInfo = new JLabel();
-	    lblInfo.setLabelFor(null);
+            lblInfo.setLabelFor(null);
 
             addToGB(lblInfo, this, gridbag, c);
 
@@ -732,14 +731,14 @@ public class ServiceDialog extends JDialog implements ActionListener {
             cbPrintToFile = createCheckBox("checkbox.printtofile", this);
             addToGB(cbPrintToFile, this, gridbag, c);
 
-	    filePermission = allowedToPrintToFile();
+            filePermission = allowedToPrintToFile();
         }
 
         public boolean isPrintToFileSelected() {
             return cbPrintToFile.isSelected();
         }
 
-        private JLabel addLabel(String text, 
+        private JLabel addLabel(String text,
                                 GridBagLayout gridbag, GridBagConstraints c)
         {
             c.gridwidth = 1;
@@ -754,7 +753,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
-            
+
             if (source == btnProperties) {
                 if (uiFactory != null) {
                     JDialog dialog = (JDialog)uiFactory.getUI(
@@ -764,7 +763,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
                     if (dialog != null) {
                         dialog.show();
                     } else {
-                        // REMIND: may want to notify the user why we're 
+                        // REMIND: may want to notify the user why we're
                         //         disabling the button
                         btnProperties.setEnabled(false);
                     }
@@ -775,66 +774,66 @@ public class ServiceDialog extends JDialog implements ActionListener {
         public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 int index = cbName.getSelectedIndex();
-                
-                if ((index >= 0) && (index < services.length)) {
-		    if (!services[index].equals(psCurrent)) {
-			psCurrent = services[index];
-			uiFactory = psCurrent.getServiceUIFactory();
-			changedService = true;
 
-			Destination dest = 
-			    (Destination)asOriginal.get(Destination.class);
-			// to preserve the state of Print To File
-			if ((dest != null || isPrintToFileSelected())
-			    && psCurrent.isAttributeCategorySupported(
-							Destination.class)) {
-			    
-			    if (dest != null) {
-				asCurrent.add(dest);
-			    } else {
-				dest = (Destination)psCurrent.
-				    getDefaultAttributeValue(Destination.class);
-				// "dest" should not be null. The following code
-				// is only added to safeguard against a possible
-				// buggy implementation of a PrintService having a 
-				// null default Destination.
-				if (dest == null) {
-				    try {
-					dest = 
-					    new Destination(new URI("file:out.prn"));
-				    } catch (URISyntaxException ue) {
-				    }
-				}
-				
-				if (dest != null) {
-				    asCurrent.add(dest);
-				}
-			    }
-			} else {
-			    asCurrent.remove(Destination.class);
-			}
-		    }
+                if ((index >= 0) && (index < services.length)) {
+                    if (!services[index].equals(psCurrent)) {
+                        psCurrent = services[index];
+                        uiFactory = psCurrent.getServiceUIFactory();
+                        changedService = true;
+
+                        Destination dest =
+                            (Destination)asOriginal.get(Destination.class);
+                        // to preserve the state of Print To File
+                        if ((dest != null || isPrintToFileSelected())
+                            && psCurrent.isAttributeCategorySupported(
+                                                        Destination.class)) {
+
+                            if (dest != null) {
+                                asCurrent.add(dest);
+                            } else {
+                                dest = (Destination)psCurrent.
+                                    getDefaultAttributeValue(Destination.class);
+                                // "dest" should not be null. The following code
+                                // is only added to safeguard against a possible
+                                // buggy implementation of a PrintService having a
+                                // null default Destination.
+                                if (dest == null) {
+                                    try {
+                                        dest =
+                                            new Destination(new URI("file:out.prn"));
+                                    } catch (URISyntaxException ue) {
+                                    }
+                                }
+
+                                if (dest != null) {
+                                    asCurrent.add(dest);
+                                }
+                            }
+                        } else {
+                            asCurrent.remove(Destination.class);
+                        }
+                    }
                 }
-	    }
+            }
         }
 
-	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-	    changedService = false;
-	}
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            changedService = false;
+        }
 
-	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-	    if (changedService) {
-		changedService = false;
-		updatePanels();
-	    }
-	}
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            if (changedService) {
+                changedService = false;
+                updatePanels();
+            }
+        }
 
-	public void popupMenuCanceled(PopupMenuEvent e) {
-	}
+        public void popupMenuCanceled(PopupMenuEvent e) {
+        }
 
         /**
          * We disable the "Print To File" checkbox if this returns false
-         */ 
+         */
         private boolean allowedToPrintToFile() {
             try {
                 throwPrintToFile();
@@ -851,8 +850,8 @@ public class ServiceDialog extends JDialog implements ActionListener {
          */
         private void throwPrintToFile() {
             SecurityManager security = System.getSecurityManager();
-            if (security != null) {		
-		if (printToFilePermission == null) {
+            if (security != null) {
+                if (printToFilePermission == null) {
                     printToFilePermission =
                         new FilePermission("<<ALL FILES>>", "read,write");
                 }
@@ -864,9 +863,9 @@ public class ServiceDialog extends JDialog implements ActionListener {
             Class dstCategory = Destination.class;
             boolean dstSupported = false;
             boolean dstSelected = false;
-            boolean dstAllowed = filePermission ? 
-		allowedToPrintToFile() : false;
-	    
+            boolean dstAllowed = filePermission ?
+                allowedToPrintToFile() : false;
+
             // setup Destination (print-to-file) widgets
             if (psCurrent.isAttributeCategorySupported(dstCategory)) {
                 dstSupported = true;
@@ -876,16 +875,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 dstSelected = true;
             }
             cbPrintToFile.setEnabled(dstSupported && dstAllowed);
-            cbPrintToFile.setSelected(dstSelected && dstAllowed 
-				      && dstSupported);
+            cbPrintToFile.setSelected(dstSelected && dstAllowed
+                                      && dstSupported);
 
-            // setup PrintService information widgets	    
+            // setup PrintService information widgets
             Attribute type = psCurrent.getAttribute(PrinterMakeAndModel.class);
             if (type != null) {
                 lblType.setText(type.toString());
             }
             Attribute status =
-		psCurrent.getAttribute(PrinterIsAcceptingJobs.class);
+                psCurrent.getAttribute(PrinterIsAcceptingJobs.class);
             if (status != null) {
                 lblStatus.setText(getMsg(status.toString()));
             }
@@ -897,7 +896,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         }
     }
 
-    private class PrintRangePanel extends JPanel 
+    private class PrintRangePanel extends JPanel
         implements ActionListener, FocusListener
     {
         private final String strTitle = getMsg("border.printrange");
@@ -908,7 +907,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private boolean prSupported;
 
         public PrintRangePanel() {
-            super();	   
+            super();
 
             GridBagLayout gridbag = new GridBagLayout();
             GridBagConstraints c = new GridBagConstraints();
@@ -927,19 +926,19 @@ public class ServiceDialog extends JDialog implements ActionListener {
             bg.add(rbAll);
             pnlTop.add(rbAll);
             addToGB(pnlTop, this, gridbag, c);
-	    
-	    // Selection never seemed to work so I'm commenting this part.
-	    /*
-	    if (isAWT) { 
-		JPanel pnlMiddle  = 
-		    new JPanel(new FlowLayout(FlowLayout.LEADING));
-		rbSelect = 
-		    createRadioButton("radiobutton.selection", this);
-		bg.add(rbSelect);
-		pnlMiddle.add(rbSelect);
-		addToGB(pnlMiddle, this, gridbag, c);
-	    }
-	    */
+
+            // Selection never seemed to work so I'm commenting this part.
+            /*
+            if (isAWT) {
+                JPanel pnlMiddle  =
+                    new JPanel(new FlowLayout(FlowLayout.LEADING));
+                rbSelect =
+                    createRadioButton("radiobutton.selection", this);
+                bg.add(rbSelect);
+                pnlMiddle.add(rbSelect);
+                addToGB(pnlMiddle, this, gridbag, c);
+            }
+            */
 
             JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.LEADING));
             rbPages = createRadioButton("radiobutton.rangepages", this);
@@ -956,16 +955,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
             nf.setMinimum(new Integer(1));
             nf.setMaximum(new Integer(Integer.MAX_VALUE));
             nf.setAllowsInvalid(true);
-	    nf.setCommitsOnValidEdit(true);
+            nf.setCommitsOnValidEdit(true);
             tfRangeFrom = new JFormattedTextField(nf);
             tfRangeFrom.setColumns(4);
             tfRangeFrom.setEnabled(false);
             tfRangeFrom.addActionListener(this);
             tfRangeFrom.addFocusListener(this);
-	    tfRangeFrom.setFocusLostBehavior(
+            tfRangeFrom.setFocusLostBehavior(
                 JFormattedTextField.PERSIST);
-	    tfRangeFrom.getAccessibleContext().setAccessibleName(
-					  getMsg("radiobutton.rangepages"));
+            tfRangeFrom.getAccessibleContext().setAccessibleName(
+                                          getMsg("radiobutton.rangepages"));
             pnlBottom.add(tfRangeFrom);
             lblRangeTo = new JLabel(getMsg("label.rangeto"));
             lblRangeTo.setEnabled(false);
@@ -980,32 +979,32 @@ public class ServiceDialog extends JDialog implements ActionListener {
             tfRangeTo.setColumns(4);
             tfRangeTo.setEnabled(false);
             tfRangeTo.addFocusListener(this);
-	    tfRangeTo.getAccessibleContext().setAccessibleName(
-					  getMsg("label.rangeto"));
+            tfRangeTo.getAccessibleContext().setAccessibleName(
+                                          getMsg("label.rangeto"));
             pnlBottom.add(tfRangeTo);
             addToGB(pnlBottom, this, gridbag, c);
         }
 
         public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
-	    SunPageSelection select = SunPageSelection.ALL;
+            SunPageSelection select = SunPageSelection.ALL;
 
             setupRangeWidgets();
 
             if (source == rbAll) {
                 asCurrent.add(prAll);
-	    } else if (source == rbSelect) {
-		select = SunPageSelection.SELECTION;
+            } else if (source == rbSelect) {
+                select = SunPageSelection.SELECTION;
             } else if (source == rbPages ||
-		       source == tfRangeFrom ||
-		       source == tfRangeTo) {
+                       source == tfRangeFrom ||
+                       source == tfRangeTo) {
                 updateRangeAttribute();
-		select = SunPageSelection.RANGE;
+                select = SunPageSelection.RANGE;
             }
-	    
-	    if (isAWT) {
-		asCurrent.add(select);
-	    }
+
+            if (isAWT) {
+                asCurrent.add(select);
+            }
         }
 
         public void focusLost(FocusEvent e) {
@@ -1032,7 +1031,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             int min;
             int max;
 
-	    try {
+            try {
                 min = Integer.parseInt(strFrom);
             } catch (NumberFormatException e) {
                 min = 1;
@@ -1046,15 +1045,15 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             if (min < 1) {
                 min = 1;
-		tfRangeFrom.setValue(new Integer(1));
+                tfRangeFrom.setValue(new Integer(1));
             }
 
             if (max < min) {
                 max = min;
-		tfRangeTo.setValue(new Integer(min));
+                tfRangeTo.setValue(new Integer(min));
             }
 
-	    PageRanges pr = new PageRanges(min, max);
+            PageRanges pr = new PageRanges(min, max);
             asCurrent.add(pr);
         }
 
@@ -1063,46 +1062,46 @@ public class ServiceDialog extends JDialog implements ActionListener {
             prSupported = false;
 
             if (psCurrent.isAttributeCategorySupported(prCategory) ||
-		   isAWT) {
+                   isAWT) {
                 prSupported = true;
             }
 
-	    SunPageSelection select = SunPageSelection.ALL;
-	    int min = 1;
-	    int max = 1;
-	    
-	    PageRanges pr = (PageRanges)asCurrent.get(prCategory);
-	    if (pr != null) {
-		if (!pr.equals(prAll)) {
-		    select = SunPageSelection.RANGE;
-		    
-		    int[][] members = pr.getMembers();
-		    if ((members.length > 0) && 
-			(members[0].length > 1)) {
-			min = members[0][0];
-			max = members[0][1];
-		    }
-		}
-	    }
+            SunPageSelection select = SunPageSelection.ALL;
+            int min = 1;
+            int max = 1;
 
-	    if (isAWT) {		
-		select = (SunPageSelection)asCurrent.get(
-						SunPageSelection.class);
-	    } 
+            PageRanges pr = (PageRanges)asCurrent.get(prCategory);
+            if (pr != null) {
+                if (!pr.equals(prAll)) {
+                    select = SunPageSelection.RANGE;
 
-	    if (select == SunPageSelection.ALL) {
-		rbAll.setSelected(true);
-	    } else if (select == SunPageSelection.SELECTION) {
-		// Comment this for now -  rbSelect is not initialized
-		// because Selection button is not added.
-		// See PrintRangePanel above.
+                    int[][] members = pr.getMembers();
+                    if ((members.length > 0) &&
+                        (members[0].length > 1)) {
+                        min = members[0][0];
+                        max = members[0][1];
+                    }
+                }
+            }
 
-		//rbSelect.setSelected(true);
-	    } else { // RANGE
-		rbPages.setSelected(true);		
-	    }
-	    tfRangeFrom.setValue(new Integer(min));
-	    tfRangeTo.setValue(new Integer(max));
+            if (isAWT) {
+                select = (SunPageSelection)asCurrent.get(
+                                                SunPageSelection.class);
+            }
+
+            if (select == SunPageSelection.ALL) {
+                rbAll.setSelected(true);
+            } else if (select == SunPageSelection.SELECTION) {
+                // Comment this for now -  rbSelect is not initialized
+                // because Selection button is not added.
+                // See PrintRangePanel above.
+
+                //rbSelect.setSelected(true);
+            } else { // RANGE
+                rbPages.setSelected(true);
+            }
+            tfRangeFrom.setValue(new Integer(min));
+            tfRangeTo.setValue(new Integer(max));
             rbAll.setEnabled(prSupported);
             rbPages.setEnabled(prSupported);
             setupRangeWidgets();
@@ -1130,22 +1129,22 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             c.fill = GridBagConstraints.HORIZONTAL;
             c.insets = compInsets;
-            
+
             lblCopies = new JLabel(getMsg("label.numcopies"), JLabel.TRAILING);
             lblCopies.setDisplayedMnemonic(getMnemonic("label.numcopies"));
             lblCopies.getAccessibleContext().setAccessibleName(
-					     getMsg("label.numcopies"));
+                                             getMsg("label.numcopies"));
             addToGB(lblCopies, this, gridbag, c);
 
             snModel = new SpinnerNumberModel(1, 1, 999, 1);
             spinCopies = new JSpinner(snModel);
-	    lblCopies.setLabelFor(spinCopies);
+            lblCopies.setLabelFor(spinCopies);
             // REMIND
             ((JSpinner.NumberEditor)spinCopies.getEditor()).getTextField().setColumns(3);
             spinCopies.addChangeListener(this);
             c.gridwidth = GridBagConstraints.REMAINDER;
             addToGB(spinCopies, this, gridbag, c);
-            
+
             cbCollate = createCheckBox("checkbox.collate", this);
             cbCollate.setEnabled(false);
             addToGB(cbCollate, this, gridbag, c);
@@ -1167,11 +1166,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
         private void updateCollateCB() {
             int num = snModel.getNumber().intValue();
-	    if (isAWT) {
-		cbCollate.setEnabled(true);
-	    } else {
-		cbCollate.setEnabled((num > 1) && scSupported);
-	    }
+            if (isAWT) {
+                cbCollate.setEnabled(true);
+            } else {
+                cbCollate.setEnabled((num > 1) && scSupported);
+            }
         }
 
         public void updateInfo() {
@@ -1185,9 +1184,9 @@ public class ServiceDialog extends JDialog implements ActionListener {
             if (psCurrent.isAttributeCategorySupported(cpCategory)) {
                 cpSupported = true;
             }
-            CopiesSupported cs = 
-		(CopiesSupported)psCurrent.getSupportedAttributeValues(
-						       cpCategory, null, null);
+            CopiesSupported cs =
+                (CopiesSupported)psCurrent.getSupportedAttributeValues(
+                                                       cpCategory, null, null);
             if (cs == null) {
                 cs = new CopiesSupported(1, 999);
             }
@@ -1247,7 +1246,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private MediaPanel pnlMedia;
         private OrientationPanel pnlOrientation;
         private MarginsPanel pnlMargins;
-        
+
         public PageSetupPanel() {
             super();
 
@@ -1264,14 +1263,14 @@ public class ServiceDialog extends JDialog implements ActionListener {
             c.gridwidth = GridBagConstraints.REMAINDER;
             pnlMedia = new MediaPanel();
             addToGB(pnlMedia, this, gridbag, c);
-	   
-	    pnlOrientation = new OrientationPanel();
+
+            pnlOrientation = new OrientationPanel();
             c.gridwidth = GridBagConstraints.RELATIVE;
             addToGB(pnlOrientation, this, gridbag, c);
 
             pnlMargins = new MarginsPanel();
-	    pnlOrientation.addOrientationListener(pnlMargins);
-	    pnlMedia.addMediaListener(pnlMargins);
+            pnlOrientation.addOrientationListener(pnlMargins);
+            pnlMedia.addMediaListener(pnlMargins);
             c.gridwidth = GridBagConstraints.REMAINDER;
             addToGB(pnlMargins, this, gridbag, c);
         }
@@ -1279,22 +1278,22 @@ public class ServiceDialog extends JDialog implements ActionListener {
         public void updateInfo() {
             pnlMedia.updateInfo();
             pnlOrientation.updateInfo();
-	    pnlMargins.updateInfo();
+            pnlMargins.updateInfo();
         }
     }
 
-    private class MarginsPanel extends JPanel 
+    private class MarginsPanel extends JPanel
                                implements ActionListener, FocusListener {
 
         private final String strTitle = getMsg("border.margins");
         private JFormattedTextField leftMargin, rightMargin,
                                     topMargin, bottomMargin;
         private JLabel lblLeft, lblRight, lblTop, lblBottom;
-	private int units = MediaPrintableArea.MM;
-	// storage for the last margin values calculated, -ve is uninitialised
-	private float lmVal = -1f,rmVal = -1f, tmVal = -1f, bmVal = -1f;
-	// storage for margins as objects mapped into orientation for display
-	private Float lmObj,rmObj,tmObj,bmObj;
+        private int units = MediaPrintableArea.MM;
+        // storage for the last margin values calculated, -ve is uninitialised
+        private float lmVal = -1f,rmVal = -1f, tmVal = -1f, bmVal = -1f;
+        // storage for margins as objects mapped into orientation for display
+        private Float lmObj,rmObj,tmObj,bmObj;
 
         public MarginsPanel() {
             super();
@@ -1305,10 +1304,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
             c.weightx = 1.0;
             c.weighty = 0.0;
             c.insets = compInsets;
-            
-            setLayout(gridbag);            
+
+            setLayout(gridbag);
             setBorder(BorderFactory.createTitledBorder(strTitle));
-            
+
             String unitsKey = "label.millimetres";
             String defaultCountry = Locale.getDefault().getCountry();
             if (defaultCountry != null &&
@@ -1316,18 +1315,18 @@ public class ServiceDialog extends JDialog implements ActionListener {
                  defaultCountry.equals(Locale.US.getCountry()) ||
                  defaultCountry.equals(Locale.CANADA.getCountry()))) {
                 unitsKey = "label.inches";
-		units = MediaPrintableArea.INCH;
+                units = MediaPrintableArea.INCH;
             }
             String unitsMsg = getMsg(unitsKey);
 
             DecimalFormat format;
-	    if (units == MediaPrintableArea.MM) {
-		format = new DecimalFormat("###.##");
-		format.setMaximumIntegerDigits(3);		
-	    } else {
-		format = new DecimalFormat("##.##");
-		format.setMaximumIntegerDigits(2);		
-	    }
+            if (units == MediaPrintableArea.MM) {
+                format = new DecimalFormat("###.##");
+                format.setMaximumIntegerDigits(3);
+            } else {
+                format = new DecimalFormat("##.##");
+                format.setMaximumIntegerDigits(2);
+            }
 
             format.setMinimumFractionDigits(1);
             format.setMaximumFractionDigits(2);
@@ -1338,33 +1337,33 @@ public class ServiceDialog extends JDialog implements ActionListener {
             nf.setMinimum(new Float(0.0f));
             nf.setMaximum(new Float(999.0f));
             nf.setAllowsInvalid(true);
-	    nf.setCommitsOnValidEdit(true);
+            nf.setCommitsOnValidEdit(true);
 
             leftMargin = new JFormattedTextField(nf);
             leftMargin.addFocusListener(this);
             leftMargin.addActionListener(this);
-	    leftMargin.getAccessibleContext().setAccessibleName(
-					      getMsg("label.leftmargin"));
+            leftMargin.getAccessibleContext().setAccessibleName(
+                                              getMsg("label.leftmargin"));
             rightMargin = new JFormattedTextField(nf);
             rightMargin.addFocusListener(this);
             rightMargin.addActionListener(this);
-	    rightMargin.getAccessibleContext().setAccessibleName(
-					      getMsg("label.rightmargin"));
+            rightMargin.getAccessibleContext().setAccessibleName(
+                                              getMsg("label.rightmargin"));
             topMargin = new JFormattedTextField(nf);
             topMargin.addFocusListener(this);
             topMargin.addActionListener(this);
-	    topMargin.getAccessibleContext().setAccessibleName(
-					      getMsg("label.topmargin"));
+            topMargin.getAccessibleContext().setAccessibleName(
+                                              getMsg("label.topmargin"));
             topMargin = new JFormattedTextField(nf);
             bottomMargin = new JFormattedTextField(nf);
             bottomMargin.addFocusListener(this);
             bottomMargin.addActionListener(this);
-	    bottomMargin.getAccessibleContext().setAccessibleName(
-					      getMsg("label.bottommargin"));
+            bottomMargin.getAccessibleContext().setAccessibleName(
+                                              getMsg("label.bottommargin"));
             topMargin = new JFormattedTextField(nf);
-	    c.gridwidth = GridBagConstraints.RELATIVE;
+            c.gridwidth = GridBagConstraints.RELATIVE;
             lblLeft = new JLabel(getMsg("label.leftmargin") + " " + unitsMsg,
-				 JLabel.LEADING);
+                                 JLabel.LEADING);
             lblLeft.setDisplayedMnemonic(getMnemonic("label.leftmargin"));
             lblLeft.setLabelFor(leftMargin);
             addToGB(lblLeft, this, gridbag, c);
@@ -1376,155 +1375,155 @@ public class ServiceDialog extends JDialog implements ActionListener {
             lblRight.setLabelFor(rightMargin);
             addToGB(lblRight, this, gridbag, c);
 
-	    c.gridwidth = GridBagConstraints.RELATIVE;
+            c.gridwidth = GridBagConstraints.RELATIVE;
             addToGB(leftMargin, this, gridbag, c);
 
             c.gridwidth = GridBagConstraints.REMAINDER;
             addToGB(rightMargin, this, gridbag, c);
 
-	    // add an invisible spacing component.
+            // add an invisible spacing component.
             addToGB(new JPanel(), this, gridbag, c);
 
-	    c.gridwidth = GridBagConstraints.RELATIVE;
+            c.gridwidth = GridBagConstraints.RELATIVE;
             lblTop = new JLabel(getMsg("label.topmargin") + " " + unitsMsg,
-				JLabel.LEADING);
+                                JLabel.LEADING);
             lblTop.setDisplayedMnemonic(getMnemonic("label.topmargin"));
             lblTop.setLabelFor(topMargin);
             addToGB(lblTop, this, gridbag, c);
 
             c.gridwidth = GridBagConstraints.REMAINDER;
             lblBottom = new JLabel(getMsg("label.bottommargin") +
-				   " " + unitsMsg, JLabel.LEADING);
+                                   " " + unitsMsg, JLabel.LEADING);
             lblBottom.setDisplayedMnemonic(getMnemonic("label.bottommargin"));
             lblBottom.setLabelFor(bottomMargin);
             addToGB(lblBottom, this, gridbag, c);
 
-	    c.gridwidth = GridBagConstraints.RELATIVE;
+            c.gridwidth = GridBagConstraints.RELATIVE;
             addToGB(topMargin, this, gridbag, c);
- 	    
+
             c.gridwidth = GridBagConstraints.REMAINDER;
             addToGB(bottomMargin, this, gridbag, c);
 
-        }        
+        }
 
         public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
-	    updateMargins(source);
+            updateMargins(source);
         }
 
         public void focusLost(FocusEvent e) {
             Object source = e.getSource();
-	    updateMargins(source);
+            updateMargins(source);
         }
 
         public void focusGained(FocusEvent e) {}
 
-	/* Get the numbers, use to create a MPA.
-	 * If its valid, accept it and update the attribute set.
-	 * If its not valid, then reject it and call updateInfo()
-	 * to re-establish the previous entries.
-	 */
-	public void updateMargins(Object source) {
-	    if (!(source instanceof JFormattedTextField)) {
-		return;
-	    } else {
-		JFormattedTextField tf = (JFormattedTextField)source;
-		Float val = (Float)tf.getValue();
-		if (val == null) {
-		    return;
-		}
-		if (tf == leftMargin && val.equals(lmObj)) {
-		    return;
-		}
-		if (tf == rightMargin && val.equals(rmObj)) {
-		    return;
-		}
-		if (tf == topMargin && val.equals(tmObj)) {
-		    return;
-		}
-		if (tf == bottomMargin && val.equals(bmObj)) {
-		    return;
-		}
-	    }
+        /* Get the numbers, use to create a MPA.
+         * If its valid, accept it and update the attribute set.
+         * If its not valid, then reject it and call updateInfo()
+         * to re-establish the previous entries.
+         */
+        public void updateMargins(Object source) {
+            if (!(source instanceof JFormattedTextField)) {
+                return;
+            } else {
+                JFormattedTextField tf = (JFormattedTextField)source;
+                Float val = (Float)tf.getValue();
+                if (val == null) {
+                    return;
+                }
+                if (tf == leftMargin && val.equals(lmObj)) {
+                    return;
+                }
+                if (tf == rightMargin && val.equals(rmObj)) {
+                    return;
+                }
+                if (tf == topMargin && val.equals(tmObj)) {
+                    return;
+                }
+                if (tf == bottomMargin && val.equals(bmObj)) {
+                    return;
+                }
+            }
 
-	    Float lmTmpObj = (Float)leftMargin.getValue();
-	    Float rmTmpObj = (Float)rightMargin.getValue();
-	    Float tmTmpObj = (Float)topMargin.getValue();
-	    Float bmTmpObj = (Float)bottomMargin.getValue();
-	    
-	    float lm = lmTmpObj.floatValue();
-	    float rm = rmTmpObj.floatValue();
-	    float tm = tmTmpObj.floatValue();
-	    float bm = bmTmpObj.floatValue();
+            Float lmTmpObj = (Float)leftMargin.getValue();
+            Float rmTmpObj = (Float)rightMargin.getValue();
+            Float tmTmpObj = (Float)topMargin.getValue();
+            Float bmTmpObj = (Float)bottomMargin.getValue();
 
-	    /* adjust for orientation */
+            float lm = lmTmpObj.floatValue();
+            float rm = rmTmpObj.floatValue();
+            float tm = tmTmpObj.floatValue();
+            float bm = bmTmpObj.floatValue();
+
+            /* adjust for orientation */
             Class orCategory = OrientationRequested.class;
             OrientationRequested or =
                 (OrientationRequested)asCurrent.get(orCategory);
-            
+
             if (or == null) {
                 or = (OrientationRequested)
                      psCurrent.getDefaultAttributeValue(orCategory);
             }
 
-	    float tmp;
-	    if (or == OrientationRequested.REVERSE_PORTRAIT) {
-		tmp = lm; lm = rm; rm = tmp;
-		tmp = tm; tm = bm; bm = tmp;
-	    } else if (or == OrientationRequested.LANDSCAPE) {
-		tmp = lm;
-		lm = tm;
-		tm = rm;
-		rm = bm;
-		bm = tmp;		
-	    } else if (or == OrientationRequested.REVERSE_LANDSCAPE) {
-		tmp = lm;
-		lm = bm;
-		bm = rm;
-		rm = tm;
-		tm = tmp;
-	    }
-	    MediaPrintableArea mpa;
-	    if ((mpa = validateMargins(lm, rm, tm, bm)) != null) {
-		asCurrent.add(mpa);
-		lmVal = lm;
-		rmVal = rm;
-		tmVal = tm;
-		bmVal = bm;
-		lmObj = lmTmpObj;
-		rmObj = rmTmpObj;
-		tmObj = tmTmpObj;
-		bmObj = bmTmpObj;
-	    } else {
-		if (lmObj == null || rmObj == null ||
-		    tmObj == null || rmObj == null) {
-		    return;
-		} else {
-		    leftMargin.setValue(lmObj);
-		    rightMargin.setValue(rmObj);
-		    topMargin.setValue(tmObj);
-		    bottomMargin.setValue(bmObj);
+            float tmp;
+            if (or == OrientationRequested.REVERSE_PORTRAIT) {
+                tmp = lm; lm = rm; rm = tmp;
+                tmp = tm; tm = bm; bm = tmp;
+            } else if (or == OrientationRequested.LANDSCAPE) {
+                tmp = lm;
+                lm = tm;
+                tm = rm;
+                rm = bm;
+                bm = tmp;
+            } else if (or == OrientationRequested.REVERSE_LANDSCAPE) {
+                tmp = lm;
+                lm = bm;
+                bm = rm;
+                rm = tm;
+                tm = tmp;
+            }
+            MediaPrintableArea mpa;
+            if ((mpa = validateMargins(lm, rm, tm, bm)) != null) {
+                asCurrent.add(mpa);
+                lmVal = lm;
+                rmVal = rm;
+                tmVal = tm;
+                bmVal = bm;
+                lmObj = lmTmpObj;
+                rmObj = rmTmpObj;
+                tmObj = tmTmpObj;
+                bmObj = bmTmpObj;
+            } else {
+                if (lmObj == null || rmObj == null ||
+                    tmObj == null || rmObj == null) {
+                    return;
+                } else {
+                    leftMargin.setValue(lmObj);
+                    rightMargin.setValue(rmObj);
+                    topMargin.setValue(tmObj);
+                    bottomMargin.setValue(bmObj);
 
-		}
-	    }
-	}
+                }
+            }
+        }
 
-	/*
-	 * This method either accepts the values and creates a new
-	 * MediaPrintableArea, or does nothing.
-	 * It should not attempt to create a printable area from anything
-	 * other than the exact values passed in.
+        /*
+         * This method either accepts the values and creates a new
+         * MediaPrintableArea, or does nothing.
+         * It should not attempt to create a printable area from anything
+         * other than the exact values passed in.
          * But REMIND/TBD: it would be user friendly to replace margins the
-         * user entered but are out of bounds with the minimum. 
+         * user entered but are out of bounds with the minimum.
          * At that point this method will need to take responsibility for
          * updating the "stored" values and the UI.
-	 */
-	private MediaPrintableArea validateMargins(float lm, float rm,
-						   float tm, float bm) {
+         */
+        private MediaPrintableArea validateMargins(float lm, float rm,
+                                                   float tm, float bm) {
 
             Class mpaCategory = MediaPrintableArea.class;
             MediaPrintableArea mpa;
-	    MediaPrintableArea mpaMax = null;
+            MediaPrintableArea mpaMax = null;
             MediaSize mediaSize = null;
 
             Media media = (Media)asCurrent.get(Media.class);
@@ -1539,43 +1538,43 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 mediaSize = new MediaSize(8.5f, 11f, Size2DSyntax.INCH);
             }
 
-	    if (media != null) {
-		PrintRequestAttributeSet tmpASet = 
-		    new HashPrintRequestAttributeSet(asCurrent);
-		tmpASet.add(media);
+            if (media != null) {
+                PrintRequestAttributeSet tmpASet =
+                    new HashPrintRequestAttributeSet(asCurrent);
+                tmpASet.add(media);
 
-		Object values = 
-		    psCurrent.getSupportedAttributeValues(mpaCategory,
-							  docFlavor,
-							  tmpASet);
-		if (values instanceof MediaPrintableArea[] &&
-		    ((MediaPrintableArea[])values).length > 0) {
-		    mpaMax = ((MediaPrintableArea[])values)[0];
-		  
-		}
-	    }
-	    if (mpaMax == null) {
-		mpaMax = new MediaPrintableArea(0f, 0f,
-						mediaSize.getX(units),
-						mediaSize.getY(units),
-						units);
-	    }
+                Object values =
+                    psCurrent.getSupportedAttributeValues(mpaCategory,
+                                                          docFlavor,
+                                                          tmpASet);
+                if (values instanceof MediaPrintableArea[] &&
+                    ((MediaPrintableArea[])values).length > 0) {
+                    mpaMax = ((MediaPrintableArea[])values)[0];
+
+                }
+            }
+            if (mpaMax == null) {
+                mpaMax = new MediaPrintableArea(0f, 0f,
+                                                mediaSize.getX(units),
+                                                mediaSize.getY(units),
+                                                units);
+            }
 
             float wid = mediaSize.getX(units);
             float hgt = mediaSize.getY(units);
-	    float pax = lm;
-	    float pay = tm;
-	    float paw = wid - lm - rm;
-	    float pah = hgt - tm - bm;
-	
-	    if (paw <= 0f || pah <= 0f || pax < 0f || pay < 0f ||
-		pax < mpaMax.getX(units) || paw > mpaMax.getWidth(units) ||
-		pay < mpaMax.getY(units) || pah > mpaMax.getHeight(units)) {
-		return null;
-	    } else {
-		return new MediaPrintableArea(lm, tm, paw, pah, units);
-	    }
-	}
+            float pax = lm;
+            float pay = tm;
+            float paw = wid - lm - rm;
+            float pah = hgt - tm - bm;
+
+            if (paw <= 0f || pah <= 0f || pax < 0f || pay < 0f ||
+                pax < mpaMax.getX(units) || paw > mpaMax.getWidth(units) ||
+                pay < mpaMax.getY(units) || pah > mpaMax.getHeight(units)) {
+                return null;
+            } else {
+                return new MediaPrintableArea(lm, tm, paw, pah, units);
+            }
+        }
 
         /* This is complex as a MediaPrintableArea is valid only within
          * a particular context of media size.
@@ -1584,30 +1583,30 @@ public class ServiceDialog extends JDialog implements ActionListener {
          * If the application specifies a MediaPrintableArea, we accept it
          * to the extent its valid for the Media they specify. If they
          * don't specify a Media, then the default is assumed.
-         * 
-         * If an application doesn't define a MediaPrintableArea, we need to 
+         *
+         * If an application doesn't define a MediaPrintableArea, we need to
          * create a suitable one, this is created using the specified (or
          * default) Media and default 1 inch margins. This is validated
          * against the paper in case this is too large for tiny media.
          */
         public void updateInfo() {
 
-	    if (isAWT) {
-		leftMargin.setEnabled(false);
-		rightMargin.setEnabled(false);
-		topMargin.setEnabled(false);
-		bottomMargin.setEnabled(false);
-		lblLeft.setEnabled(false);
-		lblRight.setEnabled(false);
-		lblTop.setEnabled(false);
-		lblBottom.setEnabled(false);
-		return;
-	    }
+            if (isAWT) {
+                leftMargin.setEnabled(false);
+                rightMargin.setEnabled(false);
+                topMargin.setEnabled(false);
+                bottomMargin.setEnabled(false);
+                lblLeft.setEnabled(false);
+                lblRight.setEnabled(false);
+                lblTop.setEnabled(false);
+                lblBottom.setEnabled(false);
+                return;
+            }
 
             Class mpaCategory = MediaPrintableArea.class;
-            MediaPrintableArea mpa = 
+            MediaPrintableArea mpa =
                  (MediaPrintableArea)asCurrent.get(mpaCategory);
-	    MediaPrintableArea mpaMax = null;
+            MediaPrintableArea mpaMax = null;
             MediaSize mediaSize = null;
 
             Media media = (Media)asCurrent.get(Media.class);
@@ -1622,195 +1621,195 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 mediaSize = new MediaSize(8.5f, 11f, Size2DSyntax.INCH);
             }
 
-	    if (media != null) {
-		PrintRequestAttributeSet tmpASet = 
-		    new HashPrintRequestAttributeSet(asCurrent);
-		tmpASet.add(media);
+            if (media != null) {
+                PrintRequestAttributeSet tmpASet =
+                    new HashPrintRequestAttributeSet(asCurrent);
+                tmpASet.add(media);
 
-		Object values = 
-		    psCurrent.getSupportedAttributeValues(mpaCategory,
-							  docFlavor,
-							  tmpASet);
-		if (values instanceof MediaPrintableArea[] &&
-		    ((MediaPrintableArea[])values).length > 0) {
-		    mpaMax = ((MediaPrintableArea[])values)[0];
-		  
-		} else if (values instanceof MediaPrintableArea) {
-		    mpaMax = (MediaPrintableArea)values;
-		}
-	    }
-	    if (mpaMax == null) {
-		mpaMax = new MediaPrintableArea(0f, 0f,
-						mediaSize.getX(units),
-						mediaSize.getY(units),
-						units);
-	    }
+                Object values =
+                    psCurrent.getSupportedAttributeValues(mpaCategory,
+                                                          docFlavor,
+                                                          tmpASet);
+                if (values instanceof MediaPrintableArea[] &&
+                    ((MediaPrintableArea[])values).length > 0) {
+                    mpaMax = ((MediaPrintableArea[])values)[0];
 
-	    /*
-	     * At this point we now know as best we can :-
-	     * - the media size
-	     * - the maximum corresponding printable area
-	     * - the media printable area specified by the client, if any.
-	     * The next step is to create a default MPA if none was specified.
-	     * 1" margins are used unless they are disproportionately
-	     * large compared to the size of the media.
-	     */
-	     
+                } else if (values instanceof MediaPrintableArea) {
+                    mpaMax = (MediaPrintableArea)values;
+                }
+            }
+            if (mpaMax == null) {
+                mpaMax = new MediaPrintableArea(0f, 0f,
+                                                mediaSize.getX(units),
+                                                mediaSize.getY(units),
+                                                units);
+            }
+
+            /*
+             * At this point we now know as best we can :-
+             * - the media size
+             * - the maximum corresponding printable area
+             * - the media printable area specified by the client, if any.
+             * The next step is to create a default MPA if none was specified.
+             * 1" margins are used unless they are disproportionately
+             * large compared to the size of the media.
+             */
+
             float wid = mediaSize.getX(MediaPrintableArea.INCH);
             float hgt = mediaSize.getY(MediaPrintableArea.INCH);
-	    float maxMarginRatio = 5f;
-	    float xMgn, yMgn;
-	    if (wid > maxMarginRatio) {
-		xMgn = 1f;
-	    } else {
-		xMgn = wid / maxMarginRatio;
-	    }
-	    if (hgt > maxMarginRatio) {
-		yMgn = 1f;
-	    } else {
-		yMgn = hgt / maxMarginRatio;
-	    }
+            float maxMarginRatio = 5f;
+            float xMgn, yMgn;
+            if (wid > maxMarginRatio) {
+                xMgn = 1f;
+            } else {
+                xMgn = wid / maxMarginRatio;
+            }
+            if (hgt > maxMarginRatio) {
+                yMgn = 1f;
+            } else {
+                yMgn = hgt / maxMarginRatio;
+            }
 
             if (mpa == null) {
                 mpa = new MediaPrintableArea(xMgn, yMgn,
-					     wid-(2*xMgn), hgt-(2*yMgn),
+                                             wid-(2*xMgn), hgt-(2*yMgn),
                                              MediaPrintableArea.INCH);
-		asCurrent.add(mpa);
-            }	    
-	    float pax = mpa.getX(units);
-	    float pay = mpa.getY(units);
-	    float paw = mpa.getWidth(units);
-	    float pah = mpa.getHeight(units);
-	    float paxMax = mpaMax.getX(units);
-	    float payMax = mpaMax.getY(units);
-	    float pawMax = mpaMax.getWidth(units);
-	    float pahMax = mpaMax.getHeight(units);
+                asCurrent.add(mpa);
+            }
+            float pax = mpa.getX(units);
+            float pay = mpa.getY(units);
+            float paw = mpa.getWidth(units);
+            float pah = mpa.getHeight(units);
+            float paxMax = mpaMax.getX(units);
+            float payMax = mpaMax.getY(units);
+            float pawMax = mpaMax.getWidth(units);
+            float pahMax = mpaMax.getHeight(units);
 
 
-	    boolean invalid = false;
+            boolean invalid = false;
 
-	    // If the paper is set to something which is too small to
-	    // accommodate a specified printable area, perhaps carried
-	    // over from a larger paper, the adjustment that needs to be
-	    // performed should seem the most natural from a user's viewpoint.
-	    // Since the user is specifying margins, then we are biased
-	    // towards keeping the margins as close to what is specified as
-	    // possible, shrinking or growing the printable area.
-	    // But the API uses printable area, so you need to know the
-	    // media size in which the margins were previously interpreted,
-	    // or at least have a record of the margins.
-	    // In the case that this is the creation of this UI we do not
-	    // have this record, so we are somewhat reliant on the client
-	    // to supply a reasonable default
-	    wid = mediaSize.getX(units);
-	    hgt = mediaSize.getY(units);
-	    if (lmVal >= 0f) {
-		invalid = true;
+            // If the paper is set to something which is too small to
+            // accommodate a specified printable area, perhaps carried
+            // over from a larger paper, the adjustment that needs to be
+            // performed should seem the most natural from a user's viewpoint.
+            // Since the user is specifying margins, then we are biased
+            // towards keeping the margins as close to what is specified as
+            // possible, shrinking or growing the printable area.
+            // But the API uses printable area, so you need to know the
+            // media size in which the margins were previously interpreted,
+            // or at least have a record of the margins.
+            // In the case that this is the creation of this UI we do not
+            // have this record, so we are somewhat reliant on the client
+            // to supply a reasonable default
+            wid = mediaSize.getX(units);
+            hgt = mediaSize.getY(units);
+            if (lmVal >= 0f) {
+                invalid = true;
 
-		if (lmVal + rmVal > wid) {
-		    // margins impossible, but maintain P.A if can
-		    if (paw > pawMax) {
-			paw = pawMax;
-		    }
-		    // try to centre the printable area.
-		    pax = (wid - paw)/2f;
-		} else {
-		    pax = (lmVal >= paxMax) ? lmVal : paxMax;
-		    paw = wid - pax - rmVal;
-		}
-		if (tmVal + bmVal > hgt) {
-		    if (pah > pahMax) {
-			pah = pahMax;
-		    }
-		    pay = (hgt - pah)/2f;
-		} else {
-		    pay = (tmVal >= payMax) ? tmVal : payMax;
-		    pah = hgt - pay - bmVal;
-		}
-	    }
-	    if (pax < paxMax) {
-		invalid = true;
-		pax = paxMax;
-	    }
-	    if (pay < payMax) {
-		invalid = true;
-		pay = payMax;
-	    }
-	    if (paw > pawMax) {
-		invalid = true;
-		paw = pawMax;
-	    }
-	    if (pah > pahMax) {
-		invalid = true;
-		pah = pahMax;
-	    }
+                if (lmVal + rmVal > wid) {
+                    // margins impossible, but maintain P.A if can
+                    if (paw > pawMax) {
+                        paw = pawMax;
+                    }
+                    // try to centre the printable area.
+                    pax = (wid - paw)/2f;
+                } else {
+                    pax = (lmVal >= paxMax) ? lmVal : paxMax;
+                    paw = wid - pax - rmVal;
+                }
+                if (tmVal + bmVal > hgt) {
+                    if (pah > pahMax) {
+                        pah = pahMax;
+                    }
+                    pay = (hgt - pah)/2f;
+                } else {
+                    pay = (tmVal >= payMax) ? tmVal : payMax;
+                    pah = hgt - pay - bmVal;
+                }
+            }
+            if (pax < paxMax) {
+                invalid = true;
+                pax = paxMax;
+            }
+            if (pay < payMax) {
+                invalid = true;
+                pay = payMax;
+            }
+            if (paw > pawMax) {
+                invalid = true;
+                paw = pawMax;
+            }
+            if (pah > pahMax) {
+                invalid = true;
+                pah = pahMax;
+            }
 
-	    if ((pax + paw > paxMax + pawMax) || (paw <= 0f)) {
-		invalid = true;
-		pax = paxMax;
-		paw = pawMax;
-	    }
-	    if ((pay + pah > payMax + pahMax) || (pah <= 0f)) {
-		invalid = true;
-		pay = payMax;
-		pah = pahMax;
-	    }
+            if ((pax + paw > paxMax + pawMax) || (paw <= 0f)) {
+                invalid = true;
+                pax = paxMax;
+                paw = pawMax;
+            }
+            if ((pay + pah > payMax + pahMax) || (pah <= 0f)) {
+                invalid = true;
+                pay = payMax;
+                pah = pahMax;
+            }
 
-	    if (invalid) {
-		mpa = new MediaPrintableArea(pax, pay, paw, pah, units);
-		asCurrent.add(mpa);
-	    }
+            if (invalid) {
+                mpa = new MediaPrintableArea(pax, pay, paw, pah, units);
+                asCurrent.add(mpa);
+            }
 
-	    /* We now have a valid printable area.
-	     * Turn it into margins, using the mediaSize
-	     */
+            /* We now have a valid printable area.
+             * Turn it into margins, using the mediaSize
+             */
             lmVal = pax;
             tmVal = pay;
             rmVal = mediaSize.getX(units) - pax - paw;
             bmVal = mediaSize.getY(units) - pay - pah;
 
-	    lmObj = new Float(lmVal);
-	    rmObj = new Float(rmVal);
-	    tmObj = new Float(tmVal);
-	    bmObj = new Float(bmVal);			    
+            lmObj = new Float(lmVal);
+            rmObj = new Float(rmVal);
+            tmObj = new Float(tmVal);
+            bmObj = new Float(bmVal);
 
-	    /* Now we know the values to use, we need to assign them
-	     * to the fields appropriate for the orientation.
-	     * Note: if orientation changes this method must be called.
-	     */
+            /* Now we know the values to use, we need to assign them
+             * to the fields appropriate for the orientation.
+             * Note: if orientation changes this method must be called.
+             */
             Class orCategory = OrientationRequested.class;
             OrientationRequested or =
                 (OrientationRequested)asCurrent.get(orCategory);
-            
+
             if (or == null) {
                 or = (OrientationRequested)
                      psCurrent.getDefaultAttributeValue(orCategory);
             }
 
-	    Float tmp;
+            Float tmp;
 
-	    if (or == OrientationRequested.REVERSE_PORTRAIT) {
-		tmp = lmObj; lmObj = rmObj; rmObj = tmp;
-		tmp = tmObj; tmObj = bmObj; bmObj = tmp;		
-	    }  else if (or == OrientationRequested.LANDSCAPE) {
-		tmp = lmObj;
-		lmObj = bmObj;
-		bmObj = rmObj;
-		rmObj = tmObj;
-		tmObj = tmp;
-	    }  else if (or == OrientationRequested.REVERSE_LANDSCAPE) {
-		tmp = lmObj;
-		lmObj = tmObj;
-		tmObj = rmObj;
-		rmObj = bmObj;
-		bmObj = tmp;	
-	    }
+            if (or == OrientationRequested.REVERSE_PORTRAIT) {
+                tmp = lmObj; lmObj = rmObj; rmObj = tmp;
+                tmp = tmObj; tmObj = bmObj; bmObj = tmp;
+            }  else if (or == OrientationRequested.LANDSCAPE) {
+                tmp = lmObj;
+                lmObj = bmObj;
+                bmObj = rmObj;
+                rmObj = tmObj;
+                tmObj = tmp;
+            }  else if (or == OrientationRequested.REVERSE_LANDSCAPE) {
+                tmp = lmObj;
+                lmObj = tmObj;
+                tmObj = rmObj;
+                rmObj = bmObj;
+                bmObj = tmp;
+            }
 
-	    leftMargin.setValue(lmObj);
-	    rightMargin.setValue(rmObj);
-	    topMargin.setValue(tmObj);
-	    bottomMargin.setValue(bmObj);
-	}
+            leftMargin.setValue(lmObj);
+            rightMargin.setValue(rmObj);
+            topMargin.setValue(tmObj);
+            bottomMargin.setValue(bmObj);
+        }
     }
 
     private class MediaPanel extends JPanel implements ItemListener {
@@ -1820,7 +1819,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private JComboBox cbSize, cbSource;
         private Vector sizes = new Vector();
         private Vector sources = new Vector();
-	private MarginsPanel pnlMargins = null;
+        private MarginsPanel pnlMargins = null;
 
         public MediaPanel() {
             super();
@@ -1828,16 +1827,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
             GridBagLayout gridbag = new GridBagLayout();
             GridBagConstraints c = new GridBagConstraints();
 
-            setLayout(gridbag);            
+            setLayout(gridbag);
             setBorder(BorderFactory.createTitledBorder(strTitle));
 
             cbSize = new JComboBox();
             cbSource = new JComboBox();
-            
+
             c.fill = GridBagConstraints.BOTH;
             c.insets = compInsets;
             c.weighty = 1.0;
-            
+
             c.weightx = 0.0;
             lblSize = new JLabel(getMsg("label.size"), JLabel.TRAILING);
             lblSize.setDisplayedMnemonic(getMnemonic("label.size"));
@@ -1855,7 +1854,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             addToGB(lblSource, this, gridbag, c);
             c.gridwidth = GridBagConstraints.REMAINDER;
             addToGB(cbSource, this, gridbag, c);
-        }        
+        }
 
         private String getMediaName(String key) {
             try {
@@ -1863,11 +1862,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 // a resource key with valid characters
                 String newkey = key.replace(' ', '-');
                 newkey = newkey.replace('#', 'n');
-                
+
                 return messageRB.getString(newkey);
             } catch (java.util.MissingResourceException e) {
                 return key;
-            }            
+            }
         }
 
         public void itemStateChanged(ItemEvent e) {
@@ -1876,9 +1875,9 @@ public class ServiceDialog extends JDialog implements ActionListener {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (source == cbSize) {
                     int index = cbSize.getSelectedIndex();
-                    
+
                     if ((index >= 0) && (index < sizes.size())) {
-                        if ((cbSource.getItemCount() > 1) && 
+                        if ((cbSource.getItemCount() > 1) &&
                             (cbSource.getSelectedIndex() >= 1))
                         {
                             int src = cbSource.getSelectedIndex() - 1;
@@ -1889,7 +1888,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
                     }
                 } else if (source == cbSource) {
                     int index = cbSource.getSelectedIndex();
-                    
+
                     if ((index >= 1) && (index < (sources.size() + 1))) {
                        asCurrent.remove(SunAlternateMedia.class);
                        MediaTray newTray = (MediaTray)sources.get(index - 1);
@@ -1907,7 +1906,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
                                 */
                                asCurrent.add(new SunAlternateMedia(newTray));
                            }
-                       } 
+                       }
                     } else if (index == 0) {
                         asCurrent.remove(SunAlternateMedia.class);
                         if (cbSize.getItemCount() > 0) {
@@ -1916,40 +1915,40 @@ public class ServiceDialog extends JDialog implements ActionListener {
                         }
                     }
                 }
-	    // orientation affects display of margins.
-		if (pnlMargins != null) {
-		    pnlMargins.updateInfo();
-		}
+            // orientation affects display of margins.
+                if (pnlMargins != null) {
+                    pnlMargins.updateInfo();
+                }
             }
         }
 
 
-	/* this is ad hoc to keep things simple */
-	public void addMediaListener(MarginsPanel pnl) {
-	    pnlMargins = pnl;
-	}
+        /* this is ad hoc to keep things simple */
+        public void addMediaListener(MarginsPanel pnl) {
+            pnlMargins = pnl;
+        }
         public void updateInfo() {
             Class mdCategory = Media.class;
             Class amCategory = SunAlternateMedia.class;
             boolean mediaSupported = false;
 
-	    cbSize.removeItemListener(this);
+            cbSize.removeItemListener(this);
             cbSize.removeAllItems();
-	    cbSource.removeItemListener(this);
+            cbSource.removeItemListener(this);
             cbSource.removeAllItems();
             cbSource.addItem(getMediaName("auto-select"));
-            
+
             sizes.clear();
             sources.clear();
 
             if (psCurrent.isAttributeCategorySupported(mdCategory)) {
                 mediaSupported = true;
 
-                Object values = 
+                Object values =
                     psCurrent.getSupportedAttributeValues(mdCategory,
-                                                          docFlavor, 
+                                                          docFlavor,
                                                           asCurrent);
-                
+
                 if (values instanceof Media[]) {
                     Media[] media = (Media[])values;
 
@@ -1967,16 +1966,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 }
             }
 
-            boolean msSupported = (mediaSupported && (sizes.size() > 0)); 
+            boolean msSupported = (mediaSupported && (sizes.size() > 0));
             lblSize.setEnabled(msSupported);
             cbSize.setEnabled(msSupported);
-            
-	    if (isAWT) {
-		cbSource.setEnabled(false);
-		lblSource.setEnabled(false);
-	    } else {
-		cbSource.setEnabled(mediaSupported);
-	    }
+
+            if (isAWT) {
+                cbSource.setEnabled(false);
+                lblSource.setEnabled(false);
+            } else {
+                cbSource.setEnabled(mediaSupported);
+            }
 
             if (mediaSupported) {
 
@@ -1987,10 +1986,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 if (defMedia instanceof MediaSizeName) {
                     cbSize.setSelectedIndex(sizes.size() > 0 ? sizes.indexOf(defMedia) : -1);
                 }
-		
+
                 if (medium == null ||
-		    !psCurrent.isAttributeValueSupported(medium, 
-							 docFlavor, asCurrent)) {
+                    !psCurrent.isAttributeValueSupported(medium,
+                                                         docFlavor, asCurrent)) {
 
                     medium = defMedia;
 
@@ -1998,10 +1997,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
                         if (sizes.size() > 0) {
                             medium = (Media)sizes.get(0);
                         }
-		    }
-		    if (medium != null) {
-			asCurrent.add(medium);
-		    }
+                    }
+                    if (medium != null) {
+                        asCurrent.add(medium);
+                    }
                 }
                 if (medium != null) {
                     if (medium instanceof MediaSizeName) {
@@ -2025,35 +2024,35 @@ public class ServiceDialog extends JDialog implements ActionListener {
                     }
                 }
 
-		int selIndex = cbSize.getSelectedIndex();
-		if ((selIndex >= 0) && (selIndex < sizes.size())) {
-		  asCurrent.add((MediaSizeName)sizes.get(selIndex));
-		}
+                int selIndex = cbSize.getSelectedIndex();
+                if ((selIndex >= 0) && (selIndex < sizes.size())) {
+                  asCurrent.add((MediaSizeName)sizes.get(selIndex));
+                }
 
-		selIndex = cbSource.getSelectedIndex();
-		if ((selIndex >= 1) && (selIndex < (sources.size()+1))) {
+                selIndex = cbSource.getSelectedIndex();
+                if ((selIndex >= 1) && (selIndex < (sources.size()+1))) {
                     MediaTray mt = (MediaTray)sources.get(selIndex-1);
                     if (medium instanceof MediaTray) {
                         asCurrent.add(mt);
                     } else {
                         asCurrent.add(new SunAlternateMedia(mt));
                     }
-		}
-			      
+                }
+
 
             }
-	    cbSize.addItemListener(this);
-	    cbSource.addItemListener(this);
-	}
+            cbSize.addItemListener(this);
+            cbSource.addItemListener(this);
+        }
     }
 
-    private class OrientationPanel extends JPanel 
+    private class OrientationPanel extends JPanel
         implements ActionListener
     {
         private final String strTitle = getMsg("border.orientation");
         private IconRadioButton rbPortrait, rbLandscape,
                                 rbRevPortrait, rbRevLandscape;
-	private MarginsPanel pnlMargins = null;
+        private MarginsPanel pnlMargins = null;
 
         public OrientationPanel() {
             super();
@@ -2071,22 +2070,22 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             ButtonGroup bg = new ButtonGroup();
             rbPortrait = new IconRadioButton("radiobutton.portrait",
-                                             "orientPortrait.png", true, 
+                                             "orientPortrait.png", true,
                                              bg, this);
             rbPortrait.addActionListener(this);
             addToGB(rbPortrait, this, gridbag, c);
             rbLandscape = new IconRadioButton("radiobutton.landscape",
-                                              "orientLandscape.png", false, 
+                                              "orientLandscape.png", false,
                                               bg, this);
             rbLandscape.addActionListener(this);
             addToGB(rbLandscape, this, gridbag, c);
             rbRevPortrait = new IconRadioButton("radiobutton.revportrait",
-                                                "orientRevPortrait.png", false, 
+                                                "orientRevPortrait.png", false,
                                                 bg, this);
             rbRevPortrait.addActionListener(this);
             addToGB(rbRevPortrait, this, gridbag, c);
             rbRevLandscape = new IconRadioButton("radiobutton.revlandscape",
-                                                 "orientRevLandscape.png", false, 
+                                                 "orientRevLandscape.png", false,
                                                  bg, this);
             rbRevLandscape.addActionListener(this);
             addToGB(rbRevLandscape, this, gridbag, c);
@@ -2104,16 +2103,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
             } else if (rbRevLandscape.isSameAs(source)) {
                 asCurrent.add(OrientationRequested.REVERSE_LANDSCAPE);
             }
-	    // orientation affects display of margins.
-	    if (pnlMargins != null) {
-		pnlMargins.updateInfo();
-	    }
+            // orientation affects display of margins.
+            if (pnlMargins != null) {
+                pnlMargins.updateInfo();
+            }
         }
 
-	/* This is ad hoc to keep things simple */
-	void addOrientationListener(MarginsPanel pnl) {
-	    pnlMargins = pnl;
-	}
+        /* This is ad hoc to keep things simple */
+        void addOrientationListener(MarginsPanel pnl) {
+            pnlMargins = pnl;
+        }
 
         public void updateInfo() {
             Class orCategory = OrientationRequested.class;
@@ -2122,29 +2121,29 @@ public class ServiceDialog extends JDialog implements ActionListener {
             boolean rpSupported = false;
             boolean rlSupported = false;
 
-	    if (isAWT) {
-		pSupported = true;
-		lSupported = true;
-	    } else
+            if (isAWT) {
+                pSupported = true;
+                lSupported = true;
+            } else
             if (psCurrent.isAttributeCategorySupported(orCategory)) {
                 Object values =
-                    psCurrent.getSupportedAttributeValues(orCategory, 
-                                                          docFlavor, 
+                    psCurrent.getSupportedAttributeValues(orCategory,
+                                                          docFlavor,
                                                           asCurrent);
-                
+
                 if (values instanceof OrientationRequested[]) {
-                    OrientationRequested[] ovalues = 
+                    OrientationRequested[] ovalues =
                         (OrientationRequested[])values;
 
                     for (int i = 0; i < ovalues.length; i++) {
                         OrientationRequested value = ovalues[i];
-                        
+
                         if (value == OrientationRequested.PORTRAIT) {
                             pSupported = true;
                         } else if (value == OrientationRequested.LANDSCAPE) {
                             lSupported = true;
                         } else if (value == OrientationRequested.REVERSE_PORTRAIT) {
-			    rpSupported = true;
+                            rpSupported = true;
                         } else if (value == OrientationRequested.REVERSE_LANDSCAPE) {
                             rlSupported = true;
                         }
@@ -2158,30 +2157,30 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             OrientationRequested or = (OrientationRequested)asCurrent.get(orCategory);
             if (or == null ||
-		!psCurrent.isAttributeValueSupported(or, docFlavor, asCurrent)) {
+                !psCurrent.isAttributeValueSupported(or, docFlavor, asCurrent)) {
 
                 or = (OrientationRequested)psCurrent.getDefaultAttributeValue(orCategory);
-		// need to validate if default is not supported
-		if (!psCurrent.isAttributeValueSupported(or, docFlavor, asCurrent)) {
-		    or = null;
-		    Object values = 
-			psCurrent.getSupportedAttributeValues(orCategory,
-							      docFlavor,  
-							      asCurrent);
-		    if (values instanceof OrientationRequested[]) {
-			OrientationRequested[] orValues = 
-			                        (OrientationRequested[])values;
-			if (orValues.length > 1) {
-			    // get the first in the list
-			    or = orValues[0];
-			}
-		    }
-		}
+                // need to validate if default is not supported
+                if (!psCurrent.isAttributeValueSupported(or, docFlavor, asCurrent)) {
+                    or = null;
+                    Object values =
+                        psCurrent.getSupportedAttributeValues(orCategory,
+                                                              docFlavor,
+                                                              asCurrent);
+                    if (values instanceof OrientationRequested[]) {
+                        OrientationRequested[] orValues =
+                                                (OrientationRequested[])values;
+                        if (orValues.length > 1) {
+                            // get the first in the list
+                            or = orValues[0];
+                        }
+                    }
+                }
 
                 if (or == null) {
                     or = OrientationRequested.PORTRAIT;
                 }
-		asCurrent.add(or);
+                asCurrent.add(or);
             }
 
             if (or == OrientationRequested.PORTRAIT) {
@@ -2193,7 +2192,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             } else { // if (or == OrientationRequested.REVERSE_LANDSCAPE)
                 rbRevLandscape.setSelected(true);
             }
-        }        
+        }
     }
 
 
@@ -2231,10 +2230,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
             addToGB(pnlQuality, this, gridbag, c);
 
             c.gridwidth = 1;
-	    pnlSides = new SidesPanel();
+            pnlSides = new SidesPanel();
             addToGB(pnlSides, this, gridbag, c);
 
-            c.gridwidth = GridBagConstraints.REMAINDER;            
+            c.gridwidth = GridBagConstraints.REMAINDER;
             pnlJobAttributes = new JobAttributesPanel();
             addToGB(pnlJobAttributes, this, gridbag, c);
 
@@ -2248,12 +2247,12 @@ public class ServiceDialog extends JDialog implements ActionListener {
         }
     }
 
-    private class ChromaticityPanel extends JPanel 
+    private class ChromaticityPanel extends JPanel
         implements ActionListener
     {
         private final String strTitle = getMsg("border.chromaticity");
         private JRadioButton rbMonochrome, rbColor;
-        
+
         public ChromaticityPanel() {
             super();
 
@@ -2293,16 +2292,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
             boolean monoSupported = false;
             boolean colorSupported = false;
 
-	    if (isAWT) {
-   		monoSupported = true;
-		colorSupported = true;
-	    } else
+            if (isAWT) {
+                monoSupported = true;
+                colorSupported = true;
+            } else
             if (psCurrent.isAttributeCategorySupported(chCategory)) {
                 Object values =
                     psCurrent.getSupportedAttributeValues(chCategory,
-                                                          docFlavor, 
+                                                          docFlavor,
                                                           asCurrent);
-             
+
                 if (values instanceof Chromaticity[]) {
                     Chromaticity[] cvalues = (Chromaticity[])values;
 
@@ -2316,8 +2315,8 @@ public class ServiceDialog extends JDialog implements ActionListener {
                         }
                     }
                 }
-            } 
-	   
+            }
+
 
             rbMonochrome.setEnabled(monoSupported);
             rbColor.setEnabled(colorSupported);
@@ -2338,12 +2337,12 @@ public class ServiceDialog extends JDialog implements ActionListener {
         }
     }
 
-    private class QualityPanel extends JPanel 
+    private class QualityPanel extends JPanel
         implements ActionListener
     {
         private final String strTitle = getMsg("border.quality");
         private JRadioButton rbDraft, rbNormal, rbHigh;
-        
+
         public QualityPanel() {
             super();
 
@@ -2388,17 +2387,17 @@ public class ServiceDialog extends JDialog implements ActionListener {
             boolean normalSupported = false;
             boolean highSupported = false;
 
-	    if (isAWT) {
-		draftSupported = true;
-		normalSupported = true;
-		highSupported = true;
-	    } else
+            if (isAWT) {
+                draftSupported = true;
+                normalSupported = true;
+                highSupported = true;
+            } else
             if (psCurrent.isAttributeCategorySupported(pqCategory)) {
                 Object values =
                     psCurrent.getSupportedAttributeValues(pqCategory,
-                                                          docFlavor, 
+                                                          docFlavor,
                                                           asCurrent);
-		
+
                 if (values instanceof PrintQuality[]) {
                     PrintQuality[] qvalues = (PrintQuality[])values;
 
@@ -2439,7 +2438,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
 
     }
-    private class SidesPanel extends JPanel 
+    private class SidesPanel extends JPanel
         implements ActionListener
     {
         private final String strTitle = getMsg("border.sides");
@@ -2461,17 +2460,17 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             ButtonGroup bg = new ButtonGroup();
             rbOneSide = new IconRadioButton("radiobutton.oneside",
-                                            "oneside.png", true, 
+                                            "oneside.png", true,
                                             bg, this);
             rbOneSide.addActionListener(this);
             addToGB(rbOneSide, this, gridbag, c);
             rbTumble = new IconRadioButton("radiobutton.tumble",
-                                           "tumble.png", false, 
+                                           "tumble.png", false,
                                            bg, this);
             rbTumble.addActionListener(this);
             addToGB(rbTumble, this, gridbag, c);
             rbDuplex = new IconRadioButton("radiobutton.duplex",
-                                           "duplex.png", false, 
+                                           "duplex.png", false,
                                            bg, this);
             rbDuplex.addActionListener(this);
             c.gridwidth = GridBagConstraints.REMAINDER;
@@ -2498,16 +2497,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
             if (psCurrent.isAttributeCategorySupported(sdCategory)) {
                 Object values =
-                    psCurrent.getSupportedAttributeValues(sdCategory, 
-                                                          docFlavor, 
+                    psCurrent.getSupportedAttributeValues(sdCategory,
+                                                          docFlavor,
                                                           asCurrent);
-                
+
                 if (values instanceof Sides[]) {
                     Sides[] svalues = (Sides[])values;
 
                     for (int i = 0; i < svalues.length; i++) {
                         Sides value = svalues[i];
-                        
+
                         if (value == Sides.ONE_SIDED) {
                             osSupported = true;
                         } else if (value == Sides.TUMBLE) {
@@ -2542,7 +2541,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
 
 
-    private class JobAttributesPanel extends JPanel 
+    private class JobAttributesPanel extends JPanel
         implements ActionListener, ChangeListener, FocusListener
     {
         private final String strTitle = getMsg("border.jobattributes");
@@ -2570,24 +2569,24 @@ public class ServiceDialog extends JDialog implements ActionListener {
             addToGB(cbJobSheets, this, gridbag, c);
 
             JPanel pnlTop = new JPanel();
-            lblPriority = new JLabel(getMsg("label.priority"), JLabel.TRAILING); 
+            lblPriority = new JLabel(getMsg("label.priority"), JLabel.TRAILING);
             lblPriority.setDisplayedMnemonic(getMnemonic("label.priority"));
-            
+
             pnlTop.add(lblPriority);
             snModel = new SpinnerNumberModel(1, 1, 100, 1);
             spinPriority = new JSpinner(snModel);
-	    lblPriority.setLabelFor(spinPriority);
+            lblPriority.setLabelFor(spinPriority);
             // REMIND
             ((JSpinner.NumberEditor)spinPriority.getEditor()).getTextField().setColumns(3);
             spinPriority.addChangeListener(this);
             pnlTop.add(spinPriority);
             c.anchor = GridBagConstraints.LINE_END;
             c.gridwidth = GridBagConstraints.REMAINDER;
-	    pnlTop.getAccessibleContext().setAccessibleName(
+            pnlTop.getAccessibleContext().setAccessibleName(
                                        getMsg("label.priority"));
             addToGB(pnlTop, this, gridbag, c);
 
-            c.fill = GridBagConstraints.HORIZONTAL;            
+            c.fill = GridBagConstraints.HORIZONTAL;
             c.anchor = GridBagConstraints.CENTER;
             c.weightx = 0.0;
             c.gridwidth = 1;
@@ -2598,13 +2597,13 @@ public class ServiceDialog extends JDialog implements ActionListener {
             c.weightx = 1.0;
             c.gridwidth = GridBagConstraints.REMAINDER;
             tfJobName = new JTextField();
-	    lblJobName.setLabelFor(tfJobName);
+            lblJobName.setLabelFor(tfJobName);
             tfJobName.addFocusListener(this);
             tfJobName.setFocusAccelerator(jmnemonic);
-	    tfJobName.getAccessibleContext().setAccessibleName(
-					     getMsg("label.jobname"));
+            tfJobName.getAccessibleContext().setAccessibleName(
+                                             getMsg("label.jobname"));
             addToGB(tfJobName, this, gridbag, c);
-            
+
             c.weightx = 0.0;
             c.gridwidth = 1;
             char umnemonic = getMnemonic("label.username");
@@ -2613,11 +2612,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
             addToGB(lblUserName, this, gridbag, c);
             c.gridwidth = GridBagConstraints.REMAINDER;
             tfUserName = new JTextField();
-	    lblUserName.setLabelFor(tfUserName);
+            lblUserName.setLabelFor(tfUserName);
             tfUserName.addFocusListener(this);
             tfUserName.setFocusAccelerator(umnemonic);
-	    tfUserName.getAccessibleContext().setAccessibleName(
-					     getMsg("label.username"));
+            tfUserName.getAccessibleContext().setAccessibleName(
+                                             getMsg("label.username"));
             addToGB(tfUserName, this, gridbag, c);
         }
 
@@ -2685,12 +2684,12 @@ public class ServiceDialog extends JDialog implements ActionListener {
             int value = jp.getValue();
             if ((value < 1) || (value > 100)) {
                 value = 1;
-            }             
+            }
             snModel.setValue(new Integer(value));
             lblPriority.setEnabled(jpSupported);
-            spinPriority.setEnabled(jpSupported);            
+            spinPriority.setEnabled(jpSupported);
 
-            // setup JobName text field	    
+            // setup JobName text field
             if (psCurrent.isAttributeCategorySupported(jnCategory)) {
                 jnSupported = true;
             }
@@ -2735,17 +2734,17 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private JLabel lbl;
 
         public IconRadioButton(String key, String img, boolean selected,
-                               ButtonGroup bg, ActionListener al) 
+                               ButtonGroup bg, ActionListener al)
         {
             super(new FlowLayout(FlowLayout.LEADING));
-	    final URL imgURL = getImageResource(img);
-	    Icon icon = (Icon)java.security.AccessController.doPrivileged(
-				 new java.security.PrivilegedAction() {
-		public Object run() {
-		    Icon icon = new ImageIcon(imgURL);
-		    return icon;
-		}
-	    });
+            final URL imgURL = getImageResource(img);
+            Icon icon = (Icon)java.security.AccessController.doPrivileged(
+                                 new java.security.PrivilegedAction() {
+                public Object run() {
+                    Icon icon = new ImageIcon(imgURL);
+                    return icon;
+                }
+            });
             lbl = new JLabel(icon);
             add(lbl);
 
@@ -2753,7 +2752,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             rb.setSelected(selected);
             addToBG(rb, this, bg);
         }
-        
+
         public void addActionListener(ActionListener al) {
             rb.addActionListener(al);
         }
@@ -2778,7 +2777,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
 
     /**
      * Similar in functionality to the default JFileChooser, except this
-     * chooser will pop up a "Do you want to overwrite..." dialog if the 
+     * chooser will pop up a "Do you want to overwrite..." dialog if the
      * user selects a file that already exists.
      */
     private class ValidatingFileChooser extends JFileChooser {
@@ -2799,39 +2798,39 @@ public class ServiceDialog extends JDialog implements ActionListener {
                                                     getMsg("dialog.owtitle"),
                                                     JOptionPane.YES_NO_OPTION);
                 if (val != JOptionPane.YES_OPTION) {
-		    return;
-		}
-            } 
-	    
-	    try {
-		if (selected.createNewFile()) {
-		    selected.delete();
-		}
-	    }  catch (IOException ioe) {
-		JOptionPane.showMessageDialog(this, 
-				   getMsg("dialog.writeerror")+" "+selected, 
-				   getMsg("dialog.owtitle"), 
-				   JOptionPane.WARNING_MESSAGE);
-		return;
-	    } catch (SecurityException se) {
-		//There is already file read/write access so at this point
-		// only delete access is denied.  Just ignore it because in 
-		// most cases the file created in createNewFile gets
-		// overwritten anyway.
-	    }
-	    File pFile = selected.getParentFile();
-	    if ((selected.exists() && 
-		      (!selected.isFile() || !selected.canWrite())) ||
-		     ((pFile != null) && 
-		      (!pFile.exists() || (pFile.exists() && !pFile.canWrite())))) {
-		JOptionPane.showMessageDialog(this, 
-				   getMsg("dialog.writeerror")+" "+selected, 
-				   getMsg("dialog.owtitle"), 
-				   JOptionPane.WARNING_MESSAGE);
-		return;
-	    } 
-	
-	    super.approveSelection();
-	}
+                    return;
+                }
+            }
+
+            try {
+                if (selected.createNewFile()) {
+                    selected.delete();
+                }
+            }  catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this,
+                                   getMsg("dialog.writeerror")+" "+selected,
+                                   getMsg("dialog.owtitle"),
+                                   JOptionPane.WARNING_MESSAGE);
+                return;
+            } catch (SecurityException se) {
+                //There is already file read/write access so at this point
+                // only delete access is denied.  Just ignore it because in
+                // most cases the file created in createNewFile gets
+                // overwritten anyway.
+            }
+            File pFile = selected.getParentFile();
+            if ((selected.exists() &&
+                      (!selected.isFile() || !selected.canWrite())) ||
+                     ((pFile != null) &&
+                      (!pFile.exists() || (pFile.exists() && !pFile.canWrite())))) {
+                JOptionPane.showMessageDialog(this,
+                                   getMsg("dialog.writeerror")+" "+selected,
+                                   getMsg("dialog.owtitle"),
+                                   JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            super.approveSelection();
+        }
     }
 }

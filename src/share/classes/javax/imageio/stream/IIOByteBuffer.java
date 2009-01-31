@@ -37,7 +37,6 @@ package javax.imageio.stream;
  * <code>ImageReader</code> implementation; its contents should be
  * considered read-only and must not be modified.
  *
- * @version 0.5
  */
 public class IIOByteBuffer {
 
@@ -79,7 +78,7 @@ public class IIOByteBuffer {
     }
 
     /**
-     * Updates the array reference that will be returned by subsequent calls 
+     * Updates the array reference that will be returned by subsequent calls
      * to the <code>getData</code> method.
      *
      * @param data a byte array reference containing the new data value.
@@ -105,7 +104,7 @@ public class IIOByteBuffer {
     }
 
     /**
-     * Updates the value that will be returned by subsequent calls 
+     * Updates the value that will be returned by subsequent calls
      * to the <code>getOffset</code> method.
      *
      * @param offset an int containing the new offset value.
@@ -131,7 +130,7 @@ public class IIOByteBuffer {
     }
 
     /**
-     * Updates the value that will be returned by subsequent calls 
+     * Updates the value that will be returned by subsequent calls
      * to the <code>getLength</code> method.
      *
      * @param length an int containing the new length value.

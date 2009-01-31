@@ -34,18 +34,18 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 /**
- * This class is intended to be a central place for the jdk to 
+ * This class is intended to be a central place for the jdk to
  * log timing events of interest.  There is pre-defined event
  * of startTime, as well as a general
  * mechanism of setting aribtrary times in an array.
  * All unreserved times in the array can be used by callers
  * in application-defined situations.  The caller is responsible
- * for setting and getting all times and for doing whatever 
+ * for setting and getting all times and for doing whatever
  * analysis is interesting; this class is merely a central container
  * for those timing values.
  * Note that, due to the variables in this class being static,
  * use of particular time values by multiple applets will cause
- * confusing results.  For example, if plugin runs two applets 
+ * confusing results.  For example, if plugin runs two applets
  * simultaneously, the initTime for those applets will collide
  * and the results may be undefined.
  * <P>
@@ -54,7 +54,7 @@ import java.io.Writer;
  *     -Dsun.perflog[=file:<filename>]
  * <BR>
  * where simply using the parameter with no value will enable output
- * to the console and a value of "file:<filename>" will cause 
+ * to the console and a value of "file:<filename>" will cause
  * that given filename to be created and used for all output.
  * <P>
  * By default, times are measured using System.currentTimeMillis().  To use
@@ -62,8 +62,8 @@ import java.io.Writer;
        -Dsun.perflog.nano=true
  * <BR>
  * <P>
- * <B>Warning: Use at your own risk!</B> 
- * This class is intended for internal testing 
+ * <B>Warning: Use at your own risk!</B>
+ * This class is intended for internal testing
  * purposes only and may be removed at any time.  More
  * permanent monitoring and profiling APIs are expected to be
  * developed for future releases and this class will cease to
@@ -83,52 +83,52 @@ public class PerformanceLogger {
     private static Writer logWriter = null;
 
     static {
-        String perfLoggingProp = 
-	    java.security.AccessController.doPrivileged(
+        String perfLoggingProp =
+            java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.perflog"));
-	if (perfLoggingProp != null) {
-	    perfLoggingOn = true;
+        if (perfLoggingProp != null) {
+            perfLoggingOn = true;
 
             // Check if we should use nanoTime
             String perfNanoProp =
-		java.security.AccessController.doPrivileged(
+                java.security.AccessController.doPrivileged(
                 new sun.security.action.GetPropertyAction("sun.perflog.nano"));
             if (perfNanoProp != null) {
                 useNanoTime = true;
             }
 
-	    // Now, figure out what the user wants to do with the data
-	    if (perfLoggingProp.regionMatches(true, 0, "file:", 0, 5)) {
-		logFileName = perfLoggingProp.substring(5);
-	    }
-	    if (logFileName != null) {
-		if (logWriter == null) {
-		    java.security.AccessController.doPrivileged(
-		    new java.security.PrivilegedAction() {
-			public Object run() {
-			    try {
-				File logFile = new File(logFileName);
-				logFile.createNewFile();
-				logWriter = new FileWriter(logFile);
-			    } catch (Exception e) {
-				System.out.println(e + ": Creating logfile " +
-						   logFileName + 
-						   ".  Log to console");
-			    }
-			    return null;
-			}
-		    });
-		}
-	    }
-	    if (logWriter == null) {
-		logWriter = new OutputStreamWriter(System.out);
-	    }
-	}
-	times = new Vector(10);
-	// Reserve predefined slots
-	for (int i = 0; i <= LAST_RESERVED; ++i) {
-	    times.add(new TimeData("Time " + i + " not set", 0));
-	}
+            // Now, figure out what the user wants to do with the data
+            if (perfLoggingProp.regionMatches(true, 0, "file:", 0, 5)) {
+                logFileName = perfLoggingProp.substring(5);
+            }
+            if (logFileName != null) {
+                if (logWriter == null) {
+                    java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction() {
+                        public Object run() {
+                            try {
+                                File logFile = new File(logFileName);
+                                logFile.createNewFile();
+                                logWriter = new FileWriter(logFile);
+                            } catch (Exception e) {
+                                System.out.println(e + ": Creating logfile " +
+                                                   logFileName +
+                                                   ".  Log to console");
+                            }
+                            return null;
+                        }
+                    });
+                }
+            }
+            if (logWriter == null) {
+                logWriter = new OutputStreamWriter(System.out);
+            }
+        }
+        times = new Vector(10);
+        // Reserve predefined slots
+        for (int i = 0; i <= LAST_RESERVED; ++i) {
+            times.add(new TimeData("Time " + i + " not set", 0));
+        }
     }
 
     /**
@@ -138,7 +138,7 @@ public class PerformanceLogger {
      * to enable performance logging.
      */
     public static boolean loggingEnabled() {
-	return perfLoggingOn;
+        return perfLoggingOn;
     }
 
 
@@ -146,21 +146,21 @@ public class PerformanceLogger {
      * Internal class used to store time/message data together.
      */
     static class TimeData {
-	String message;
-	long time;
+        String message;
+        long time;
 
-	TimeData(String message, long time) {
-	    this.message = message;
-	    this.time = time;
-	}
+        TimeData(String message, long time) {
+            this.message = message;
+            this.time = time;
+        }
 
-	String getMessage() {
-	    return message;
-	}
+        String getMessage() {
+            return message;
+        }
 
-	long getTime() {
-	    return time;
-	}
+        long getTime() {
+            return time;
+        }
     }
 
     /**
@@ -177,27 +177,27 @@ public class PerformanceLogger {
     /**
      * Sets the start time.  Ideally, this is the earliest time available
      * during the startup of a Java applet or application.  This time is
-     * later used to analyze the difference between the initial startup 
+     * later used to analyze the difference between the initial startup
      * time and other events in the system (such as an applet's init time).
      */
     public static void setStartTime(String message) {
-	if (loggingEnabled()) {
+        if (loggingEnabled()) {
             long nowTime = getCurrentTime();
-	    setStartTime(message, nowTime);
-	}
+            setStartTime(message, nowTime);
+        }
     }
 
     /**
-     * Sets the start time.  
+     * Sets the start time.
      * This version of the method is
      * given the time to log, instead of expecting this method to
      * get the time itself.  This is done in case the time was
      * recorded much earlier than this method was called.
      */
     public static void setStartTime(String message, long time) {
-	if (loggingEnabled()) {
-	    times.set(START_INDEX, new TimeData(message, time));
-	}
+        if (loggingEnabled()) {
+            times.set(START_INDEX, new TimeData(message, time));
+        }
     }
 
     /**
@@ -206,27 +206,27 @@ public class PerformanceLogger {
      * loaded.
      */
     public static long getStartTime() {
-	if (loggingEnabled()) {
-	    return ((TimeData)times.get(START_INDEX)).getTime();
-	} else {
-	    return 0;
-	}
+        if (loggingEnabled()) {
+            return ((TimeData)times.get(START_INDEX)).getTime();
+        } else {
+            return 0;
+        }
     }
 
-    /** 
+    /**
      * Sets the value of a given time and returns the index of the
      * slot that that time was stored in.
      */
     public static int setTime(String message) {
-	if (loggingEnabled()) {
+        if (loggingEnabled()) {
             long nowTime = getCurrentTime();
-	    return setTime(message, nowTime);
-	} else {
-	    return 0;
-	}
+            return setTime(message, nowTime);
+        } else {
+            return 0;
+        }
     }
 
-    /** 
+    /**
      * Sets the value of a given time and returns the index of the
      * slot that that time was stored in.
      * This version of the method is
@@ -235,69 +235,69 @@ public class PerformanceLogger {
      * recorded much earlier than this method was called.
      */
     public static int setTime(String message, long time) {
-	if (loggingEnabled()) {
-	    // times is already synchronized, but we need to ensure that
-	    // the size used in times.set() is the same used when returning
-	    // the index of that operation.
-	    synchronized (times) {
-		times.add(new TimeData(message, time));
-		return (times.size() - 1);
-	    }
-	} else {
-	    return 0;
-	}
+        if (loggingEnabled()) {
+            // times is already synchronized, but we need to ensure that
+            // the size used in times.set() is the same used when returning
+            // the index of that operation.
+            synchronized (times) {
+                times.add(new TimeData(message, time));
+                return (times.size() - 1);
+            }
+        } else {
+            return 0;
+        }
     }
 
     /**
      * Returns time at given index.
      */
     public static long getTimeAtIndex(int index) {
-	if (loggingEnabled()) {
-	    return ((TimeData)times.get(index)).getTime();
-	} else {
-	    return 0;
-	}
+        if (loggingEnabled()) {
+            return ((TimeData)times.get(index)).getTime();
+        } else {
+            return 0;
+        }
     }
 
     /**
      * Returns message at given index.
      */
     public static String getMessageAtIndex(int index) {
-	if (loggingEnabled()) {
-	    return ((TimeData)times.get(index)).getMessage();
-	} else {
-	    return null;
-	}
+        if (loggingEnabled()) {
+            return ((TimeData)times.get(index)).getMessage();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Outputs all data to parameter-specified Writer object
      */
     public static void outputLog(Writer writer) {
-	if (loggingEnabled()) {
-	    try {
-		synchronized(times) {
-		    for (int i = 0; i < times.size(); ++i) {
-			TimeData td = (TimeData)times.get(i);
-			if (td != null) {
-			    writer.write(i + " " + td.getMessage() + ": " + 
-					 td.getTime() + "\n");
-			}
-		    }
-		}
-		writer.flush();
-	    } catch (Exception e) {
-		System.out.println(e + ": Writing performance log to " + 
-				   writer);
-	    }
-	}
+        if (loggingEnabled()) {
+            try {
+                synchronized(times) {
+                    for (int i = 0; i < times.size(); ++i) {
+                        TimeData td = (TimeData)times.get(i);
+                        if (td != null) {
+                            writer.write(i + " " + td.getMessage() + ": " +
+                                         td.getTime() + "\n");
+                        }
+                    }
+                }
+                writer.flush();
+            } catch (Exception e) {
+                System.out.println(e + ": Writing performance log to " +
+                                   writer);
+            }
+        }
     }
-    	
+
     /**
      * Outputs all data to whatever location the user specified
      * via sun.perflog command-line parameter.
      */
     public static void outputLog() {
-	outputLog(logWriter);
+        outputLog(logWriter);
     }
 }

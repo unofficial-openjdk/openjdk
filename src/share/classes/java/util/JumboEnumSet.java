@@ -312,7 +312,7 @@ class JumboEnumSet<E extends Enum<E>> extends EnumSet<E> {
 
         JumboEnumSet<?> es = (JumboEnumSet<?>)c;
         if (es.elementType != elementType) {
-	    boolean changed = (size != 0);
+            boolean changed = (size != 0);
             clear();
             return changed;
         }

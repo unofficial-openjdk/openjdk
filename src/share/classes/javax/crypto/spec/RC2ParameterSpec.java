@@ -54,7 +54,7 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      * @param effectiveKeyBits the effective key size in bits.
      */
     public RC2ParameterSpec(int effectiveKeyBits) {
-	this.effectiveKeyBits = effectiveKeyBits;
+        this.effectiveKeyBits = effectiveKeyBits;
     }
 
     /**
@@ -70,7 +70,7 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      * @exception IllegalArgumentException if <code>iv</code> is null.
      */
     public RC2ParameterSpec(int effectiveKeyBits, byte[] iv) {
-	this(effectiveKeyBits, iv, 0);
+        this(effectiveKeyBits, iv, 0);
     }
 
     /**
@@ -91,14 +91,14 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      * @exception IllegalArgumentException if <code>iv</code> is null.
      */
     public RC2ParameterSpec(int effectiveKeyBits, byte[] iv, int offset) {
-	this.effectiveKeyBits = effectiveKeyBits;
-	if (iv == null) throw new IllegalArgumentException("IV missing");
-	int blockSize = 8;
+        this.effectiveKeyBits = effectiveKeyBits;
+        if (iv == null) throw new IllegalArgumentException("IV missing");
+        int blockSize = 8;
         if (iv.length - offset < blockSize) {
             throw new IllegalArgumentException("IV too short");
         }
-	this.iv = new byte[blockSize];
-	System.arraycopy(iv, offset, this.iv, 0, blockSize);
+        this.iv = new byte[blockSize];
+        System.arraycopy(iv, offset, this.iv, 0, blockSize);
     }
 
     /**
@@ -107,7 +107,7 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      * @return the effective key size in bits.
      */
     public int getEffectiveKeyBits() {
-	return this.effectiveKeyBits;
+        return this.effectiveKeyBits;
     }
 
     /**
@@ -117,31 +117,31 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      * Returns a new array each time this method is called.
      */
     public byte[] getIV() {
-	return (iv == null? null:(byte[])iv.clone());
+        return (iv == null? null:(byte[])iv.clone());
     }
 
    /**
      * Tests for equality between the specified object and this
-     * object. Two RC2ParameterSpec objects are considered equal if their 
+     * object. Two RC2ParameterSpec objects are considered equal if their
      * effective key sizes and IVs are equal.
      * (Two IV references are considered equal if both are <tt>null</tt>.)
-     * 
+     *
      * @param obj the object to test for equality with this object.
-     * 
-     * @return true if the objects are considered equal, false if 
+     *
+     * @return true if the objects are considered equal, false if
      * <code>obj</code> is null or otherwise.
      */
     public boolean equals(Object obj) {
-	if (obj == this) {
-	    return true;
-	}
-	if (!(obj instanceof RC2ParameterSpec)) {
-	    return false;
-	}
-	RC2ParameterSpec other = (RC2ParameterSpec) obj;
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof RC2ParameterSpec)) {
+            return false;
+        }
+        RC2ParameterSpec other = (RC2ParameterSpec) obj;
 
-	return ((effectiveKeyBits == other.effectiveKeyBits) &&
-		java.util.Arrays.equals(iv, other.iv));
+        return ((effectiveKeyBits == other.effectiveKeyBits) &&
+                java.util.Arrays.equals(iv, other.iv));
     }
 
     /**
@@ -150,11 +150,11 @@ public class RC2ParameterSpec implements AlgorithmParameterSpec {
      */
     public int hashCode() {
         int retval = 0;
-	if (iv != null) {
-	    for (int i = 1; i < iv.length; i++) {
-		retval += iv[i] * i;
-	    }
-	}
-	return (retval += effectiveKeyBits);
+        if (iv != null) {
+            for (int i = 1; i < iv.length; i++) {
+                retval += iv[i] * i;
+            }
+        }
+        return (retval += effectiveKeyBits);
     }
 }

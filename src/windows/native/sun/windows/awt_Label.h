@@ -47,7 +47,7 @@ public:
     AwtLabel();
 
     virtual LPCTSTR GetClassName();
-    
+
     static AwtLabel* Create(jobject label, jobject parent);
 
     /*

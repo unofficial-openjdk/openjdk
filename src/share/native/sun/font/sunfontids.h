@@ -30,7 +30,7 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif 
+#endif
 
 typedef struct FontManagerNativeIDs {
 
@@ -69,7 +69,7 @@ typedef struct FontManagerNativeIDs {
     jclass gpClass;
     jmethodID gpCtr;
     jmethodID gpCtrEmpty;
-    
+
     /* sun/font/StrikeMetrics */
     jclass strikeMetricsClass;
     jmethodID strikeMetricsCtr;
@@ -93,6 +93,6 @@ JNIEXPORT FontManagerNativeIDs getSunFontIDs();
 
 #ifdef  __cplusplus
 }
-#endif 
+#endif
 
 #endif

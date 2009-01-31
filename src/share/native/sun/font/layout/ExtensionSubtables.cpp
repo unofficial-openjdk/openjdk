@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ExtensionSubtables.cpp	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 2003 - All Rights Reserved
  *
@@ -53,4 +52,3 @@ le_uint32 ExtensionSubtable::process(const LookupProcessor *lookupProcessor, le_
 
     return 0;
 }
-

@@ -34,15 +34,15 @@ import javax.naming.spi.ResolveResult;
 import javax.naming.spi.NamingManager;
 
 /**
-  * PartialCompositeContext implements Context operations on 
-  * composite names using implementations of the p_ interfaces 
+  * PartialCompositeContext implements Context operations on
+  * composite names using implementations of the p_ interfaces
   * defined by its subclasses.
   *
   * The main purpose provided by this class is that it deals with
   * partial resolutions and continuations, so that callers of the
   * Context operation don't have to.
   *
-  * Types of clients that will be direct subclasses of 
+  * Types of clients that will be direct subclasses of
   * PartialCompositeContext may be service providers that implement
   * one of the JNDI protocols, but which do not deal with
   * continuations.  Usually, service providers will be using
@@ -63,11 +63,11 @@ public abstract class PartialCompositeContext implements Context, Resolver {
     static CompositeName _NNS_NAME;
 
     static {
-	try {
-	    _NNS_NAME = new CompositeName("/");
-	} catch (InvalidNameException e) {
-	    // Should never happen
-	}
+        try {
+            _NNS_NAME = new CompositeName("/");
+        } catch (InvalidNameException e) {
+            // Should never happen
+        }
     }
 
     protected PartialCompositeContext() {
@@ -77,34 +77,34 @@ public abstract class PartialCompositeContext implements Context, Resolver {
 
     /* Equivalent to method in  Resolver interface */
     protected abstract ResolveResult p_resolveToClass(Name name,
-	Class contextType, Continuation cont) throws NamingException;
+        Class contextType, Continuation cont) throws NamingException;
 
     /* Equivalent to methods in Context interface */
     protected abstract Object p_lookup(Name name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract Object p_lookupLink(Name name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract NamingEnumeration p_list(Name name,
-	Continuation cont) throws NamingException;
-    protected abstract NamingEnumeration p_listBindings(Name name, 
-	Continuation cont) throws NamingException;
-    protected abstract void p_bind(Name name, Object obj, Continuation cont) 
-	throws NamingException;
+        Continuation cont) throws NamingException;
+    protected abstract NamingEnumeration p_listBindings(Name name,
+        Continuation cont) throws NamingException;
+    protected abstract void p_bind(Name name, Object obj, Continuation cont)
+        throws NamingException;
     protected abstract void p_rebind(Name name, Object obj, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract void p_unbind(Name name, Continuation cont)
-	throws NamingException;
-    protected abstract void p_destroySubcontext(Name name, Continuation cont) 
-	throws NamingException;
+        throws NamingException;
+    protected abstract void p_destroySubcontext(Name name, Continuation cont)
+        throws NamingException;
     protected abstract Context p_createSubcontext(Name name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
     protected abstract void p_rename(Name oldname, Name newname,
-				     Continuation cont)
-	throws NamingException;
+                                     Continuation cont)
+        throws NamingException;
     protected abstract NameParser p_getNameParser(Name name, Continuation cont)
-	throws NamingException;
+        throws NamingException;
 
-// ------ should be overridden by subclass; 
+// ------ should be overridden by subclass;
 // ------ not abstract only for backward compatibility
 
     /**
@@ -116,333 +116,333 @@ public abstract class PartialCompositeContext implements Context, Resolver {
      * @return The possibly null environment of the context.
      */
     protected Hashtable p_getEnvironment() throws NamingException {
-	return getEnvironment();
+        return getEnvironment();
     }
 
 
-// ------ implementations of methods in Resolver and Context 
+// ------ implementations of methods in Resolver and Context
 // ------ using corresponding p_ methods provided by subclass
 
     /* implementations for method in Resolver interface using p_ method */
 
     public ResolveResult resolveToClass(String name,
-					Class<? extends Context> contextType)
-	throws NamingException
+                                        Class<? extends Context> contextType)
+        throws NamingException
     {
-	return resolveToClass(new CompositeName(name), contextType);
+        return resolveToClass(new CompositeName(name), contextType);
     }
 
     public ResolveResult resolveToClass(Name name,
-					Class<? extends Context> contextType)
-	throws NamingException
+                                        Class<? extends Context> contextType)
+        throws NamingException
     {
-	PartialCompositeContext ctx = this;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
-	ResolveResult answer;
-	Name nm = name;
+        PartialCompositeContext ctx = this;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
+        ResolveResult answer;
+        Name nm = name;
 
-	try {
-	    answer = ctx.p_resolveToClass(nm, contextType, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_resolveToClass(nm, contextType, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    if (!(cctx instanceof Resolver)) {
-		throw e;
-	    }
-	    answer = ((Resolver)cctx).resolveToClass(e.getRemainingName(),
-						     contextType);
-	}
-	return answer;
+        try {
+            answer = ctx.p_resolveToClass(nm, contextType, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_resolveToClass(nm, contextType, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            if (!(cctx instanceof Resolver)) {
+                throw e;
+            }
+            answer = ((Resolver)cctx).resolveToClass(e.getRemainingName(),
+                                                     contextType);
+        }
+        return answer;
     }
 
     /* implementations for methods in Context interface using p_ methods */
 
     public Object lookup(String name) throws NamingException {
-	return lookup(new CompositeName(name));
+        return lookup(new CompositeName(name));
     }
 
     public Object lookup(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
-	Object answer;
-	Name nm = name;
+        PartialCompositeContext ctx = this;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
+        Object answer;
+        Name nm = name;
 
-	try {
-	    answer = ctx.p_lookup(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_lookup(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.lookup(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_lookup(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_lookup(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.lookup(e.getRemainingName());
+        }
+        return answer;
     }
 
     public void bind(String name, Object newObj) throws NamingException {
-	bind(new CompositeName(name), newObj);
+        bind(new CompositeName(name), newObj);
     }
 
     public void bind(Name name, Object newObj) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    ctx.p_bind(nm, newObj, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		ctx.p_bind(nm, newObj, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    cctx.bind(e.getRemainingName(), newObj);
-	}
+        try {
+            ctx.p_bind(nm, newObj, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                ctx.p_bind(nm, newObj, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            cctx.bind(e.getRemainingName(), newObj);
+        }
     }
 
     public void rebind(String name, Object newObj) throws NamingException {
-	rebind(new CompositeName(name), newObj);
+        rebind(new CompositeName(name), newObj);
     }
     public void rebind(Name name, Object newObj) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    ctx.p_rebind(nm, newObj, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		ctx.p_rebind(nm, newObj, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    cctx.rebind(e.getRemainingName(), newObj);
-	}
+        try {
+            ctx.p_rebind(nm, newObj, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                ctx.p_rebind(nm, newObj, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            cctx.rebind(e.getRemainingName(), newObj);
+        }
     }
 
     public void unbind(String name) throws NamingException {
-	unbind(new CompositeName(name));
+        unbind(new CompositeName(name));
     }
     public void unbind(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    ctx.p_unbind(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		ctx.p_unbind(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    cctx.unbind(e.getRemainingName());
-	}
+        try {
+            ctx.p_unbind(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                ctx.p_unbind(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            cctx.unbind(e.getRemainingName());
+        }
     }
 
     public void rename(String oldName, String newName) throws NamingException {
-	rename(new CompositeName(oldName), new CompositeName(newName));
+        rename(new CompositeName(oldName), new CompositeName(newName));
     }
     public void rename(Name oldName, Name newName)
-	throws NamingException
+        throws NamingException
     {
-	PartialCompositeContext ctx = this;
-	Name nm = oldName;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(oldName, env);
+        PartialCompositeContext ctx = this;
+        Name nm = oldName;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(oldName, env);
 
-	try {
-	    ctx.p_rename(nm, newName, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		ctx.p_rename(nm, newName, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    if (e.getRemainingNewName() != null) {
-		// %%% e.getRemainingNewName() should never be null
-		newName = e.getRemainingNewName();
-	    }
-	    cctx.rename(e.getRemainingName(), newName);
-	}
+        try {
+            ctx.p_rename(nm, newName, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                ctx.p_rename(nm, newName, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            if (e.getRemainingNewName() != null) {
+                // %%% e.getRemainingNewName() should never be null
+                newName = e.getRemainingNewName();
+            }
+            cctx.rename(e.getRemainingName(), newName);
+        }
     }
 
     public NamingEnumeration<NameClassPair> list(String name)
-	throws NamingException
+        throws NamingException
     {
-	return list(new CompositeName(name));
+        return list(new CompositeName(name));
     }
 
     public NamingEnumeration<NameClassPair> list(Name name)
-	throws NamingException
+        throws NamingException
     {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	NamingEnumeration answer;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        NamingEnumeration answer;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    answer = ctx.p_list(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_list(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.list(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_list(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_list(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.list(e.getRemainingName());
+        }
+        return answer;
     }
 
     public NamingEnumeration<Binding> listBindings(String name)
-	throws NamingException
+        throws NamingException
     {
-	return listBindings(new CompositeName(name));
+        return listBindings(new CompositeName(name));
     }
 
     public NamingEnumeration<Binding> listBindings(Name name)
-	throws NamingException
+        throws NamingException
     {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	NamingEnumeration answer;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        NamingEnumeration answer;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    answer = ctx.p_listBindings(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_listBindings(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.listBindings(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_listBindings(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_listBindings(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.listBindings(e.getRemainingName());
+        }
+        return answer;
     }
 
     public void destroySubcontext(String name) throws NamingException {
-	destroySubcontext(new CompositeName(name));
+        destroySubcontext(new CompositeName(name));
     }
 
     public void destroySubcontext(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    ctx.p_destroySubcontext(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		ctx.p_destroySubcontext(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    cctx.destroySubcontext(e.getRemainingName());
-	}
+        try {
+            ctx.p_destroySubcontext(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                ctx.p_destroySubcontext(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            cctx.destroySubcontext(e.getRemainingName());
+        }
     }
 
     public Context createSubcontext(String name) throws NamingException {
-	return createSubcontext(new CompositeName(name));
+        return createSubcontext(new CompositeName(name));
     }
 
     public Context createSubcontext(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	Context answer;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        Context answer;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    answer = ctx.p_createSubcontext(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_createSubcontext(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.createSubcontext(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_createSubcontext(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_createSubcontext(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.createSubcontext(e.getRemainingName());
+        }
+        return answer;
     }
 
     public Object lookupLink(String name) throws NamingException {
-	return lookupLink(new CompositeName(name));
+        return lookupLink(new CompositeName(name));
     }
 
     public Object lookupLink(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
-	Object answer;
-	Name nm = name;
+        PartialCompositeContext ctx = this;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
+        Object answer;
+        Name nm = name;
 
-	try {
-	    answer = ctx.p_lookupLink(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_lookupLink(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.lookupLink(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_lookupLink(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_lookupLink(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.lookupLink(e.getRemainingName());
+        }
+        return answer;
     }
 
     public NameParser getNameParser(String name) throws NamingException {
-	return getNameParser(new CompositeName(name));
+        return getNameParser(new CompositeName(name));
     }
 
     public NameParser getNameParser(Name name) throws NamingException {
-	PartialCompositeContext ctx = this;
-	Name nm = name;
-	NameParser answer;
-	Hashtable env = p_getEnvironment();
-	Continuation cont = new Continuation(name, env);
+        PartialCompositeContext ctx = this;
+        Name nm = name;
+        NameParser answer;
+        Hashtable env = p_getEnvironment();
+        Continuation cont = new Continuation(name, env);
 
-	try {
-	    answer = ctx.p_getNameParser(nm, cont);
-	    while (cont.isContinue()) {
-		nm = cont.getRemainingName();
-		ctx = getPCContext(cont);
-		answer = ctx.p_getNameParser(nm, cont);
-	    }
-	} catch (CannotProceedException e) {
-	    Context cctx = NamingManager.getContinuationContext(e);
-	    answer = cctx.getNameParser(e.getRemainingName());
-	}
-	return answer;
+        try {
+            answer = ctx.p_getNameParser(nm, cont);
+            while (cont.isContinue()) {
+                nm = cont.getRemainingName();
+                ctx = getPCContext(cont);
+                answer = ctx.p_getNameParser(nm, cont);
+            }
+        } catch (CannotProceedException e) {
+            Context cctx = NamingManager.getContinuationContext(e);
+            answer = cctx.getNameParser(e.getRemainingName());
+        }
+        return answer;
     }
 
     public String composeName(String name, String prefix)
-	    throws NamingException {
-	Name fullName = composeName(new CompositeName(name),
-				    new CompositeName(prefix));
-	return fullName.toString();
+            throws NamingException {
+        Name fullName = composeName(new CompositeName(name),
+                                    new CompositeName(prefix));
+        return fullName.toString();
     }
 
     /**
@@ -462,28 +462,28 @@ public abstract class PartialCompositeContext implements Context, Resolver {
      * </pre>
      */
     public Name composeName(Name name, Name prefix) throws NamingException {
-	Name res = (Name)prefix.clone();
-	if (name == null) {
-	    return res;
-	}
-	res.addAll(name);
+        Name res = (Name)prefix.clone();
+        if (name == null) {
+            return res;
+        }
+        res.addAll(name);
 
-	String elide = (String)
-	    p_getEnvironment().get("java.naming.provider.compose.elideEmpty");
-	if (elide == null || !elide.equalsIgnoreCase("true")) {
-	    return res;
-	}
+        String elide = (String)
+            p_getEnvironment().get("java.naming.provider.compose.elideEmpty");
+        if (elide == null || !elide.equalsIgnoreCase("true")) {
+            return res;
+        }
 
-	int len = prefix.size();
+        int len = prefix.size();
 
-	if (!allEmpty(prefix) && !allEmpty(name)) {
-	    if (res.get(len - 1).equals("")) {
-		res.remove(len - 1);
-	    } else if (res.get(len).equals("")) {
-		res.remove(len);
-	    }
-	}
-	return res;
+        if (!allEmpty(prefix) && !allEmpty(name)) {
+            if (res.get(len - 1).equals("")) {
+                res.remove(len - 1);
+            } else if (res.get(len).equals("")) {
+                res.remove(len);
+            }
+        }
+        return res;
     }
 
 
@@ -493,13 +493,13 @@ public abstract class PartialCompositeContext implements Context, Resolver {
      * Tests whether a name contains a nonempty component.
      */
     protected static boolean allEmpty(Name name) {
-	Enumeration enum_ = name.getAll();
-	while (enum_.hasMoreElements()) {
-	    if (!enum_.equals("")) {
-		return false;
-	    }
-	}
-	return true;
+        Enumeration enum_ = name.getAll();
+        while (enum_.hasMoreElements()) {
+            if (!enum_.equals("")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -507,17 +507,17 @@ public abstract class PartialCompositeContext implements Context, Resolver {
      * cont.  Throws CannotProceedException if not successful.
      */
     protected static PartialCompositeContext getPCContext(Continuation cont)
-	    throws NamingException {
+            throws NamingException {
 
-	Object obj = cont.getResolvedObj();
-	PartialCompositeContext pctx = null;
-	    
-	if (obj instanceof PartialCompositeContext) {
-	    // Just cast if octx already is PartialCompositeContext
-	    // %%% ignoring environment for now
-	    return (PartialCompositeContext)obj;
-	} else {
-	    throw cont.fillInException(new CannotProceedException());
-	}
+        Object obj = cont.getResolvedObj();
+        PartialCompositeContext pctx = null;
+
+        if (obj instanceof PartialCompositeContext) {
+            // Just cast if octx already is PartialCompositeContext
+            // %%% ignoring environment for now
+            return (PartialCompositeContext)obj;
+        } else {
+            throw cont.fillInException(new CannotProceedException());
+        }
     }
 };

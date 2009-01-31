@@ -31,38 +31,38 @@ import java.security.*;
  */
 public class NullCombinerEquals {
     public static void main(String[] args) throws Exception {
-	NullCombinerEquals nce = new NullCombinerEquals();
+        NullCombinerEquals nce = new NullCombinerEquals();
 
-	try {
-	    nce.go();
-	} catch (Exception e) {
-	    throw new Exception("Test Failed: " + e.toString());
-	}
+        try {
+            nce.go();
+        } catch (Exception e) {
+            throw new Exception("Test Failed: " + e.toString());
+        }
     }
 
     void go() throws Exception {
-	AccessControlContext acc = AccessController.getContext();
+        AccessControlContext acc = AccessController.getContext();
 
-	// test both combiners are NULL
-	acc.equals(acc);
+        // test both combiners are NULL
+        acc.equals(acc);
 
-	// test one combiner is NULL
-	AccessControlContext acc2 = new AccessControlContext(acc, new DC());
-	acc.equals(acc2);
+        // test one combiner is NULL
+        AccessControlContext acc2 = new AccessControlContext(acc, new DC());
+        acc.equals(acc2);
 
-	// test other combiner is NULL
-	acc2.equals(acc);
+        // test other combiner is NULL
+        acc2.equals(acc);
 
-	// test neither combiner is NULL
-	AccessControlContext acc3 = new AccessControlContext(acc, new DC());
-	acc2.equals(acc3);
+        // test neither combiner is NULL
+        AccessControlContext acc3 = new AccessControlContext(acc, new DC());
+        acc2.equals(acc3);
     }
 
     private static class DC implements DomainCombiner {
-	public ProtectionDomain[] combine(ProtectionDomain[] a,
-					ProtectionDomain[] b) {
-	    // this is irrelevant
-	    return a;
-	}
+        public ProtectionDomain[] combine(ProtectionDomain[] a,
+                                        ProtectionDomain[] b) {
+            // this is irrelevant
+            return a;
+        }
     }
 }

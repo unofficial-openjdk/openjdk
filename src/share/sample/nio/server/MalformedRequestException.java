@@ -34,17 +34,16 @@
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
- * @version %I%, %E%
  */
 class MalformedRequestException extends Exception {
 
     MalformedRequestException() { }
 
     MalformedRequestException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     MalformedRequestException(Exception x) {
-	super(x);
+        super(x);
     }
 }

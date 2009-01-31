@@ -63,15 +63,15 @@ class NumericValueExp extends QueryEval implements ValueExp {
     // Serializable fields in old serial form
     private static final ObjectStreamField[] oldSerialPersistentFields =
     {
-	new ObjectStreamField("longVal", Long.TYPE),
-	new ObjectStreamField("doubleVal", Double.TYPE),
-	new ObjectStreamField("valIsLong", Boolean.TYPE)
+        new ObjectStreamField("longVal", Long.TYPE),
+        new ObjectStreamField("doubleVal", Double.TYPE),
+        new ObjectStreamField("valIsLong", Boolean.TYPE)
     };
     //
     // Serializable fields in new serial form
     private static final ObjectStreamField[] newSerialPersistentFields =
     {
-	new ObjectStreamField("val", Number.class)
+        new ObjectStreamField("val", Number.class)
     };
     //
     // Actual serial version and serial form
@@ -87,20 +87,20 @@ class NumericValueExp extends QueryEval implements ValueExp {
 
     private static boolean compat = false;
     static {
-	try {
-	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-	    String form = AccessController.doPrivileged(act);
-	    compat = (form != null && form.equals("1.0"));
-	} catch (Exception e) {
-	    // OK: exception means no compat with 1.0, too bad
-	}
-	if (compat) {
-	    serialPersistentFields = oldSerialPersistentFields;
-	    serialVersionUID = oldSerialVersionUID;
-	} else {
-	    serialPersistentFields = newSerialPersistentFields;
-	    serialVersionUID = newSerialVersionUID;
-	}
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK: exception means no compat with 1.0, too bad
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
     }
     //
     // END Serialization compatibility stuff
@@ -144,7 +144,7 @@ class NumericValueExp extends QueryEval implements ValueExp {
      * Returns true is if the numeric value is a long, false otherwise.
      */
     public boolean isLong()  {
-	return (val instanceof Long || val instanceof Integer);
+        return (val instanceof Long || val instanceof Integer);
     }
 
     /**
@@ -171,16 +171,16 @@ class NumericValueExp extends QueryEval implements ValueExp {
      * @exception InvalidApplicationException
      */
     public ValueExp apply(ObjectName name)
-	    throws BadStringOperationException, BadBinaryOpValueExpException,
-		   BadAttributeValueExpException, InvalidApplicationException {
-	return this;
+            throws BadStringOperationException, BadBinaryOpValueExpException,
+                   BadAttributeValueExpException, InvalidApplicationException {
+        return this;
     }
 
     /**
      * Deserializes a {@link NumericValueExp} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-	    throws IOException, ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
       if (compat)
       {
         // Read an object serialized in the old serial form
@@ -190,17 +190,17 @@ class NumericValueExp extends QueryEval implements ValueExp {
         boolean isLong;
         ObjectInputStream.GetField fields = in.readFields();
         doubleVal = fields.get("doubleVal", (double)0);
-	if (fields.defaulted("doubleVal"))
+        if (fields.defaulted("doubleVal"))
         {
           throw new NullPointerException("doubleVal");
         }
         longVal = fields.get("longVal", (long)0);
-	if (fields.defaulted("longVal"))
+        if (fields.defaulted("longVal"))
         {
           throw new NullPointerException("longVal");
         }
         isLong = fields.get("valIsLong", false);
-	if (fields.defaulted("valIsLong"))
+        if (fields.defaulted("valIsLong"))
         {
           throw new NullPointerException("valIsLong");
         }
@@ -226,16 +226,16 @@ class NumericValueExp extends QueryEval implements ValueExp {
      * Serializes a {@link NumericValueExp} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-	    throws IOException {
+            throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-	fields.put("doubleVal", doubleValue());
-	fields.put("longVal", longValue());
-	fields.put("valIsLong", isLong());
-	out.writeFields();
+        fields.put("doubleVal", doubleValue());
+        fields.put("longVal", longValue());
+        fields.put("valIsLong", isLong());
+        out.writeFields();
       }
       else
       {

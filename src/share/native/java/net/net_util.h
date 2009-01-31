@@ -110,7 +110,7 @@ jfieldID NET_GetFileDescriptorID(JNIEnv *env);
 
 JNIEXPORT jint JNICALL ipv6_available() ;
 
-void 
+void
 NET_AllocSockaddr(struct sockaddr **him, int *len);
 
 JNIEXPORT int JNICALL
@@ -130,18 +130,18 @@ NET_GetPortFromSockaddr(struct sockaddr *him);
 jint
 NET_SockaddrEqualsInetAddress(JNIEnv *env,struct sockaddr *him, jobject iaObj);
 
-int 
+int
 NET_IsIPv4Mapped(jbyte* caddr);
 
 int
 NET_IPv4MappedToIPv4(jbyte* caddr);
 
-int 
+int
 NET_IsEqual(jbyte* caddr1, jbyte* caddr2);
 
-/* Socket operations 
+/* Socket operations
  *
- * These work just like the JVM_* procedures, except that they may do some 
+ * These work just like the JVM_* procedures, except that they may do some
  * platform-specific pre/post processing of the arguments and/or results.
  */
 

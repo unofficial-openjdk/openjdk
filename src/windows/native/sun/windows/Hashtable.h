@@ -95,30 +95,30 @@ protected:
     char* m_name;
     int m_max;
     int m_collisions;
-#endif    
+#endif
 
 public:
     /**
-     * Constructs a new, empty hashtable with the specified initial 
+     * Constructs a new, empty hashtable with the specified initial
      * capacity and the specified load factor.
      */
-    Hashtable(const char* name, void (*deleteProc)(void*) = NULL, 
+    Hashtable(const char* name, void (*deleteProc)(void*) = NULL,
               int initialCapacity = 29, float loadFactor = 0.75);
 
     virtual ~Hashtable();
 
     /**
-     * Returns the number of elements contained in the hashtable. 
+     * Returns the number of elements contained in the hashtable.
      */
     INLINE int size() {
-	return count;
+        return count;
     }
 
     /**
      * Returns true if the hashtable contains no elements.
      */
     INLINE BOOL isEmpty() {
-	return count == 0;
+        return count == 0;
     }
 
     /**
@@ -126,23 +126,23 @@ public:
      */
     INLINE HashtableEnumerator* keys() {
         CriticalSection::Lock l(lock);
-	return new HashtableEnumerator(table, capacity, TRUE);
+        return new HashtableEnumerator(table, capacity, TRUE);
     }
 
     /**
-     * Returns an enumeration of the elements. Use the Enumeration methods 
+     * Returns an enumeration of the elements. Use the Enumeration methods
      * on the returned object to fetch the elements sequentially.
      */
     INLINE HashtableEnumerator* elements() {
         CriticalSection::Lock l(lock);
-	return new HashtableEnumerator(table, capacity, FALSE);
+        return new HashtableEnumerator(table, capacity, FALSE);
     }
 
     /**
      * Returns true if the specified object is an element of the hashtable.
      * This operation is more expensive than the containsKey() method.
      */
-    BOOL contains(void* value); 
+    BOOL contains(void* value);
 
     /**
      * Returns true if the collection contains an element for the key.
@@ -150,7 +150,7 @@ public:
     BOOL containsKey(void* key);
 
     /**
-     * Gets the object associated with the specified key in the 
+     * Gets the object associated with the specified key in the
      * hashtable.
      */
     void* get(void* key);
@@ -158,7 +158,7 @@ public:
     /**
      * Puts the specified element into the hashtable, using the specified
      * key.  The element may be retrieved by doing a get() with the same key.
-     * The key and the element cannot be null. 
+     * The key and the element cannot be null.
      */
     virtual void* put(void* key, void* value);
 

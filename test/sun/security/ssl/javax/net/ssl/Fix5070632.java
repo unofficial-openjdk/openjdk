@@ -27,13 +27,13 @@
  * @summary Default SSLSockeFactory override createSocket() now
  * @author Weijun Wang
  */
- 
+
 import javax.net.ssl.SSLSocketFactory;
 import java.net.SocketException;
 import javax.net.SocketFactory;
 import java.security.*;
 
-public class Fix5070632 {    
+public class Fix5070632 {
     public static void main(String[] args) throws Exception {
         // use a non-existing provider so that the DefaultSSLSocketFactory
         // will be used, and then test against it.

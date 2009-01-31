@@ -61,7 +61,7 @@ public interface MBeanRegistration   {
      * MBeanRegistrationException}.
      */
     public ObjectName preRegister(MBeanServer server,
-				  ObjectName name) throws java.lang.Exception;
+                                  ObjectName name) throws java.lang.Exception;
 
     /**
      * Allows the MBean to perform any operations needed after having been

@@ -50,11 +50,11 @@ public class XFontPeer extends PlatformFont {
     private static native void initIDs();
 
     public XFontPeer(String name, int style){
-	super(name, style);
+        super(name, style);
 
-	if (fontConfig != null){
-	    xfsname = ((MFontConfiguration) fontConfig).getMotifFontSet(familyName, style);
-	}
+        if (fontConfig != null){
+            xfsname = ((MFontConfiguration) fontConfig).getMotifFontSet(familyName, style);
+        }
     }
 
     protected char getMissingGlyphCharacter() {

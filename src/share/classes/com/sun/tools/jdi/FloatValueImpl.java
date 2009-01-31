@@ -136,7 +136,7 @@ public class FloatValueImpl extends PrimitiveValueImpl
             return super.checkedIntValue();
         }
     }
-    
+
     long checkedLongValue() throws InvalidTypeException {
         long longValue = (long)value;
         if (longValue != value) {

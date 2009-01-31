@@ -118,7 +118,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
             boolean[] booleanArray = (boolean[])array;
             return booleanArray.clone();
         }
-        
+
         Object[] objectArray = (Object[])array;
         return objectArray.clone();
     }
@@ -327,7 +327,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
 
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
-	s.defaultReadObject();
+        s.defaultReadObject();
 
 
         // Check to make sure that types have not evolved incompatibly
@@ -353,7 +353,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
                         new AnnotationTypeMismatchExceptionProxy(
                             value.getClass() + "[" + value + "]").setMember(
                                 annotationType.members().get(name)));
-                }                                
+                }
             }
         }
     }

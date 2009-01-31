@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -42,7 +42,7 @@ _LIB_VERSION_TYPE _LIB_VERSION = _XOPEN_;
 #else
 #ifdef _SVID3_MODE
 _LIB_VERSION_TYPE _LIB_VERSION = _SVID_;
-#else					/* default _IEEE_MODE */
+#else                                   /* default _IEEE_MODE */
 _LIB_VERSION_TYPE _LIB_VERSION = _IEEE_;
 #endif
 #endif

@@ -23,7 +23,6 @@
  * have any questions.
  */
 
-#pragma ident	"@(#)mlib_v_ImageZoom_NN_f.c	1.9	03/02/05 SMI"
 
 /*
  * FUNCTION

@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM1112;
  * Tables and data to convert Unicode to Cp1112
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp1112 extends CharToByteSingleByte {

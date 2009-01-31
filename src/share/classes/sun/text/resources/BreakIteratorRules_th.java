@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 /*
  * IBM Confidential
@@ -55,9 +53,9 @@ import java.net.URL;
 
 public class BreakIteratorRules_th extends ListResourceBundle {
     protected final Object[][] getContents() {
-	return new Object[][] {
+        return new Object[][] {
             { "WordBreakRules",
-	      // this rule breaks the iterator with mixed Thai and English
+              // this rule breaks the iterator with mixed Thai and English
                 "<dictionary>=[\u0e01-\u0e2e\u0e30-\u0e3a\u0e40-\u0e44\u0e47-\u0e4e];"
 
                 + "<ignore>=[:Mn::Me::Cf:^<dictionary>];"
@@ -122,6 +120,6 @@ public class BreakIteratorRules_th extends ListResourceBundle {
                 + "<word>(<nbsp><nbsp>*<word>)*<paiyannoi>/([^[\u0e25<ignore>]]|"
                         + "\u0e25[^[<paiyannoi><ignore>]]);"
             }
-	};
+        };
     }
 }

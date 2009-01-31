@@ -40,7 +40,6 @@ import javax.naming.Name;
  *
  * @author Rosanna Lee
  * @author Scott Seligman
- * @version %I% %E%
  *
  * @since 1.3
  */
@@ -50,7 +49,7 @@ public class TimeLimitExceededException extends LimitExceededException {
      * All fields default to null.
      */
     public TimeLimitExceededException() {
-	super();
+        super();
     }
 
     /**
@@ -60,7 +59,7 @@ public class TimeLimitExceededException extends LimitExceededException {
      * @see java.lang.Throwable#getMessage
      */
     public TimeLimitExceededException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**

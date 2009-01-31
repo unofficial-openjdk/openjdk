@@ -36,42 +36,42 @@ import java.util.*;
 
 public class GenericStringTest {
     public static void main(String argv[]) throws Exception {
-	int failures = 0;
-	List<Class> classList = new LinkedList<Class>();
-	classList.add(TestClass1.class);
-	classList.add(TestClass2.class);
-	
+        int failures = 0;
+        List<Class> classList = new LinkedList<Class>();
+        classList.add(TestClass1.class);
+        classList.add(TestClass2.class);
 
-	for(Class clazz: classList)
-	    for(Field field: clazz.getDeclaredFields()) {
-		ExpectedString es = field.getAnnotation(ExpectedString.class);
-		String genericString = field.toGenericString();
-		System.out.println(genericString);
-		if (! es.value().equals(genericString)) {
-		    failures ++;
-		    System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
-				      es.value(), genericString);
-		}
-	    }
 
-	if (failures > 0) {
-	    System.err.println("Test failed.");
-	    throw new RuntimeException();
-	}
+        for(Class clazz: classList)
+            for(Field field: clazz.getDeclaredFields()) {
+                ExpectedString es = field.getAnnotation(ExpectedString.class);
+                String genericString = field.toGenericString();
+                System.out.println(genericString);
+                if (! es.value().equals(genericString)) {
+                    failures ++;
+                    System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+                                      es.value(), genericString);
+                }
+            }
+
+        if (failures > 0) {
+            System.err.println("Test failed.");
+            throw new RuntimeException();
+        }
     }
 }
 
 class TestClass1 {
     @ExpectedString("int TestClass1.field1")
-	int field1;
+        int field1;
 
     @ExpectedString("private static java.lang.String TestClass1.field2")
-	static private String field2;
+        static private String field2;
 }
 
 class TestClass2<E> {
     @ExpectedString("public E TestClass2.field1")
-	public E field1;
+        public E field1;
 }
 
 @Retention(RetentionPolicy.RUNTIME)

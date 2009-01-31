@@ -35,7 +35,7 @@ import sun.beans.editors.*;
  * The PropertyEditorManager uses three techniques for locating an editor
  * for a given type.  First, it provides a registerEditor method to allow
  * an editor to be specifically registered for a given type.  Second it
- * tries to locate a suitable class by adding "Editor" to the full 
+ * tries to locate a suitable class by adding "Editor" to the full
  * qualified classname of the given type (e.g. "foo.bah.FozEditor").
  * Finally it takes the simple classname (without the package name) adds
  * "Editor" to it and looks in a search-path of packages for a matching
@@ -44,7 +44,7 @@ import sun.beans.editors.*;
  * So for an input class foo.bah.Fred, the PropertyEditorManager would
  * first look in its tables to see if an editor had been registered for
  * foo.bah.Fred and if so use that.  Then it will look for a
- * foo.bah.FredEditor class.  Then it will look for (say) 
+ * foo.bah.FredEditor class.  Then it will look for (say)
  * standardEditorsPackage.FredEditor class.
  * <p>
  * Default PropertyEditors will be provided for the Java primitive types
@@ -57,128 +57,128 @@ public class PropertyEditorManager {
     /**
      * Register an editor class to be used to edit values of
      * a given target class.
-     * 
-     * <p>First, if there is a security manager, its <code>checkPropertiesAccess</code> 
+     *
+     * <p>First, if there is a security manager, its <code>checkPropertiesAccess</code>
      * method is called. This could result in a SecurityException.
-     * 
+     *
      * @param targetType the Class object of the type to be edited
      * @param editorClass the Class object of the editor class.  If
-     *	   this is null, then any existing definition will be removed.
-     * @exception  SecurityException  if a security manager exists and its  
+     *     this is null, then any existing definition will be removed.
+     * @exception  SecurityException  if a security manager exists and its
      *             <code>checkPropertiesAccess</code> method doesn't allow setting
      *              of system properties.
      * @see SecurityManager#checkPropertiesAccess
      */
 
     public static void registerEditor(Class<?> targetType, Class<?> editorClass) {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPropertiesAccess();
-	}
-	initialize();
-	if (editorClass == null) {
-	    registry.remove(targetType);
-	} else {
-	    registry.put(targetType, editorClass);
-	}
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPropertiesAccess();
+        }
+        initialize();
+        if (editorClass == null) {
+            registry.remove(targetType);
+        } else {
+            registry.put(targetType, editorClass);
+        }
     }
 
     /**
      * Locate a value editor for a given target type.
      *
      * @param targetType  The Class object for the type to be edited
-     * @return An editor object for the given target class. 
+     * @return An editor object for the given target class.
      * The result is null if no suitable editor can be found.
      */
 
     public static synchronized PropertyEditor findEditor(Class<?> targetType) {
-	initialize();
-	Class editorClass = (Class)registry.get(targetType);
-	if (editorClass != null) {
-	    try {
-		Object o = editorClass.newInstance();
-        	return (PropertyEditor)o;
-	    } catch (Exception ex) {
-	 	System.err.println("Couldn't instantiate type editor \"" +
-			editorClass.getName() + "\" : " + ex);
-	    }
-	}
+        initialize();
+        Class editorClass = (Class)registry.get(targetType);
+        if (editorClass != null) {
+            try {
+                Object o = editorClass.newInstance();
+                return (PropertyEditor)o;
+            } catch (Exception ex) {
+                System.err.println("Couldn't instantiate type editor \"" +
+                        editorClass.getName() + "\" : " + ex);
+            }
+        }
 
-	// Now try adding "Editor" to the class name.
+        // Now try adding "Editor" to the class name.
 
-	String editorName = targetType.getName() + "Editor";
-	try {
-	    return (PropertyEditor) Introspector.instantiate(targetType, editorName);
-	} catch (Exception ex) {
-	   // Silently ignore any errors.
-	}
+        String editorName = targetType.getName() + "Editor";
+        try {
+            return (PropertyEditor) Introspector.instantiate(targetType, editorName);
+        } catch (Exception ex) {
+           // Silently ignore any errors.
+        }
 
-	// Now try looking for <searchPath>.fooEditor
+        // Now try looking for <searchPath>.fooEditor
         int index = editorName.lastIndexOf('.') + 1;
         if (index > 0) {
             editorName = editorName.substring(index);
-	}
+        }
         for (String path : searchPath) {
             String name = path + '.' + editorName;
-	    try {
-	        return (PropertyEditor) Introspector.instantiate(targetType, name);
-	    } catch (Exception ex) {
-	       // Silently ignore any errors.
-	    }
-	}
+            try {
+                return (PropertyEditor) Introspector.instantiate(targetType, name);
+            } catch (Exception ex) {
+               // Silently ignore any errors.
+            }
+        }
 
         if (null != targetType.getEnumConstants()) {
             return new EnumEditor(targetType);
         }
-	// We couldn't find a suitable Editor.
-	return null;
+        // We couldn't find a suitable Editor.
+        return null;
     }
 
     /**
      * Gets the package names that will be searched for property editors.
      *
      * @return  The array of package names that will be searched in
-     *		order to find property editors.
+     *          order to find property editors.
      * <p>     The default value for this array is implementation-dependent,
      *         e.g. Sun implementation initially sets to  {"sun.beans.editors"}.
      */
     public static synchronized String[] getEditorSearchPath() {
-	// Return a copy of the searchPath.
-	String result[] = new String[searchPath.length];
+        // Return a copy of the searchPath.
+        String result[] = new String[searchPath.length];
         System.arraycopy(searchPath, 0, result, 0, searchPath.length);
-	return result;
+        return result;
     }
 
     /**
      * Change the list of package names that will be used for
-     *		finding property editors.
-     * 
-     * <p>First, if there is a security manager, its <code>checkPropertiesAccess</code> 
+     *          finding property editors.
+     *
+     * <p>First, if there is a security manager, its <code>checkPropertiesAccess</code>
      * method is called. This could result in a SecurityException.
      *
      * @param path  Array of package names.
-     * @exception  SecurityException  if a security manager exists and its  
+     * @exception  SecurityException  if a security manager exists and its
      *             <code>checkPropertiesAccess</code> method doesn't allow setting
      *              of system properties.
      * @see SecurityManager#checkPropertiesAccess
      */
 
     public static synchronized void setEditorSearchPath(String path[]) {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPropertiesAccess();
-	}
-	if (path == null) {
-	    path = new String[0];
-	}
-	searchPath = path;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPropertiesAccess();
+        }
+        if (path == null) {
+            path = new String[0];
+        }
+        searchPath = path;
     }
 
     private static synchronized void initialize() {
-	if (registry != null) {
-	    return;
-	}
-	registry = new java.util.Hashtable();
+        if (registry != null) {
+            return;
+        }
+        registry = new java.util.Hashtable();
         registry.put(Byte.TYPE, ByteEditor.class);
         registry.put(Short.TYPE, ShortEditor.class);
         registry.put(Integer.TYPE, IntegerEditor.class);

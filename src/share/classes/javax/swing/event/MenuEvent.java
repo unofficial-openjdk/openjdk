@@ -28,7 +28,7 @@ import java.util.EventObject;
 
 
 /**
- * MenuEvent is used to notify interested parties that 
+ * MenuEvent is used to notify interested parties that
  * the menu which is the event source has been posted,
  * selected, or canceled.
  * <p>
@@ -41,7 +41,6 @@ import java.util.EventObject;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Georges Saab
  * @author David Karlton
  */
@@ -56,4 +55,3 @@ public class MenuEvent extends EventObject {
         super(source);
     }
 }
-

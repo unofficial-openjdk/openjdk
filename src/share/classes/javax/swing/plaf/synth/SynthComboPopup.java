@@ -38,7 +38,6 @@ import java.io.Serializable;
 /**
  * Synth's ComboPopup.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthComboPopup extends BasicComboPopup {
@@ -64,7 +63,7 @@ class SynthComboPopup extends BasicComboPopup {
         }
         else {
             list.setSelectedIndex( selectedIndex );
-	    list.ensureIndexIsVisible( selectedIndex );
+            list.ensureIndexIsVisible( selectedIndex );
         }
         installListListeners();
     }

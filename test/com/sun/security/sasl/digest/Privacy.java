@@ -24,7 +24,7 @@
 /*
  * @test 1.2 07/03/29
  * @bug 4634892
- * @summary Ensure that client requesting privacy causes resulting channel to 
+ * @summary Ensure that client requesting privacy causes resulting channel to
  * be encrypted.
  */
 
@@ -50,116 +50,116 @@ public class Privacy {
     private static byte[][] clntdata, srvdata;
 
     private static void init(String[] args) throws Exception {
-	if (args.length == 0) {
-	    pwfile = "pw.properties";
-	    namesfile = "names.properties";
-	    auto = true;
-	} else {
-	    int i = 0;
-	    if (args[i].equals("-m")) {
-		i++;
-		auto = false;
-	    }
-	    if (args.length > i) {
-		pwfile = args[i++];
+        if (args.length == 0) {
+            pwfile = "pw.properties";
+            namesfile = "names.properties";
+            auto = true;
+        } else {
+            int i = 0;
+            if (args[i].equals("-m")) {
+                i++;
+                auto = false;
+            }
+            if (args.length > i) {
+                pwfile = args[i++];
 
-		if (args.length > i) {
-		    namesfile = args[i++];
+                if (args.length > i) {
+                    namesfile = args[i++];
 
-		    if (args.length > i) {
-			proxyfile = args[i];
-		    }
-		} 
-	    } else {
-		pwfile = "pw.properties";
-		namesfile = "names.properties";
-	    }
-	}
+                    if (args.length > i) {
+                        proxyfile = args[i];
+                    }
+                }
+            } else {
+                pwfile = "pw.properties";
+                namesfile = "names.properties";
+            }
+        }
 
-	initData();
+        initData();
     }
 
-    
+
     public static void main(String[] args) throws Exception {
 
-	init(args);
+        init(args);
 
-	CallbackHandler clntCbh = new ClientCallbackHandler(auto);
+        CallbackHandler clntCbh = new ClientCallbackHandler(auto);
 
-	CallbackHandler srvCbh =
-	    new PropertiesFileCallbackHandler(pwfile, namesfile, proxyfile);
+        CallbackHandler srvCbh =
+            new PropertiesFileCallbackHandler(pwfile, namesfile, proxyfile);
 
-	Map srvProps = new HashMap();
-	srvProps.put(Sasl.QOP, "auth-conf");
+        Map srvProps = new HashMap();
+        srvProps.put(Sasl.QOP, "auth-conf");
 
-	Map clntProps = new HashMap();
-	clntProps.put(Sasl.QOP, "auth-conf");
-	
-	SaslClient clnt = Sasl.createSaslClient(
-	    new String[]{MECH}, null, PROTOCOL, SERVER_FQDN, clntProps, clntCbh);
+        Map clntProps = new HashMap();
+        clntProps.put(Sasl.QOP, "auth-conf");
 
-	SaslServer srv = Sasl.createSaslServer(MECH, PROTOCOL, SERVER_FQDN, 
-	    srvProps, srvCbh);
+        SaslClient clnt = Sasl.createSaslClient(
+            new String[]{MECH}, null, PROTOCOL, SERVER_FQDN, clntProps, clntCbh);
 
-	if (clnt == null) {
-	    throw new IllegalStateException(
-		"Unable to find client impl for " + MECH);
-	}
-	if (srv == null) {
-	    throw new IllegalStateException(
-		"Unable to find server impl for " + MECH);
-	}
+        SaslServer srv = Sasl.createSaslServer(MECH, PROTOCOL, SERVER_FQDN,
+            srvProps, srvCbh);
 
-	byte[] response = (clnt.hasInitialResponse()?
-	    clnt.evaluateChallenge(EMPTY) : EMPTY);
-	byte[] challenge;
+        if (clnt == null) {
+            throw new IllegalStateException(
+                "Unable to find client impl for " + MECH);
+        }
+        if (srv == null) {
+            throw new IllegalStateException(
+                "Unable to find server impl for " + MECH);
+        }
 
-	while (!clnt.isComplete() || !srv.isComplete()) {
-	    challenge = srv.evaluateResponse(response);
+        byte[] response = (clnt.hasInitialResponse()?
+            clnt.evaluateChallenge(EMPTY) : EMPTY);
+        byte[] challenge;
 
-	    if (challenge != null) {
-		response = clnt.evaluateChallenge(challenge);
-	    }
-	}
+        while (!clnt.isComplete() || !srv.isComplete()) {
+            challenge = srv.evaluateResponse(response);
 
-	if (clnt.isComplete() && srv.isComplete()) {
-	    if (verbose) {
-		System.out.println("SUCCESS");
-		System.out.println("authzid is " + srv.getAuthorizationID());
-	    }
-	} else {
-	    throw new IllegalStateException("FAILURE: mismatched state:" +
-		" client complete? " + clnt.isComplete() +
-		" server complete? " + srv.isComplete());
-	}
+            if (challenge != null) {
+                response = clnt.evaluateChallenge(challenge);
+            }
+        }
 
-	/* Use security layer */
-	int count = 0;
-	for (int i = 0; i < clntStrs.length; i++) {
-	    byte[] orig = clntdata[i];
-	    byte[] wrapped = clnt.wrap(clntdata[i], 0, clntdata[i].length);
-	    byte[] unwrapped = srv.unwrap(wrapped, 0, wrapped.length);
+        if (clnt.isComplete() && srv.isComplete()) {
+            if (verbose) {
+                System.out.println("SUCCESS");
+                System.out.println("authzid is " + srv.getAuthorizationID());
+            }
+        } else {
+            throw new IllegalStateException("FAILURE: mismatched state:" +
+                " client complete? " + clnt.isComplete() +
+                " server complete? " + srv.isComplete());
+        }
 
-	    if (!Arrays.equals(orig, unwrapped)) {
-		throw new SaslException("Server cannot unwrap client data");
-	    }
+        /* Use security layer */
+        int count = 0;
+        for (int i = 0; i < clntStrs.length; i++) {
+            byte[] orig = clntdata[i];
+            byte[] wrapped = clnt.wrap(clntdata[i], 0, clntdata[i].length);
+            byte[] unwrapped = srv.unwrap(wrapped, 0, wrapped.length);
 
-	    byte[] sorig = srvdata[i];
-	    byte[] swrapped = srv.wrap(srvdata[i], 0, srvdata[i].length);
-	    byte[] sunwrapped = clnt.unwrap(swrapped, 0, swrapped.length);
+            if (!Arrays.equals(orig, unwrapped)) {
+                throw new SaslException("Server cannot unwrap client data");
+            }
 
-	    if (!Arrays.equals(sorig, sunwrapped)) {
-		throw new SaslException("Client cannot unwrap server data");
-	    }
-	    ++count;
-	}
+            byte[] sorig = srvdata[i];
+            byte[] swrapped = srv.wrap(srvdata[i], 0, srvdata[i].length);
+            byte[] sunwrapped = clnt.unwrap(swrapped, 0, swrapped.length);
 
-	if (verbose) {
-	    System.out.println(count + " sets of wrap/unwrap between client/server");
-	}
+            if (!Arrays.equals(sorig, sunwrapped)) {
+                throw new SaslException("Client cannot unwrap server data");
+            }
+            ++count;
+        }
 
-	clnt.dispose();
-	srv.dispose();
+        if (verbose) {
+            System.out.println(count + " sets of wrap/unwrap between client/server");
+        }
+
+        clnt.dispose();
+        srv.dispose();
     }
 
     private static final String[] srvStrs = new String[] {
@@ -193,18 +193,16 @@ public class Privacy {
 "11",
 "12",
     };
-	
-    private static void initData() {
-	clntdata = new byte[clntStrs.length][];
-	for (int i = 0; i < clntStrs.length; i++) {
-	    clntdata[i] = clntStrs[i].getBytes();
-	}
 
-	srvdata = new byte[srvStrs.length][];
-	for (int i = 0; i < srvStrs.length; i++) {
-	    srvdata[i] = srvStrs[i].getBytes();
-	}
+    private static void initData() {
+        clntdata = new byte[clntStrs.length][];
+        for (int i = 0; i < clntStrs.length; i++) {
+            clntdata[i] = clntStrs[i].getBytes();
+        }
+
+        srvdata = new byte[srvStrs.length][];
+        for (int i = 0; i < srvStrs.length; i++) {
+            srvdata[i] = srvStrs[i].getBytes();
+        }
     }
 }
-	    
-	

@@ -45,227 +45,227 @@ class AwtCursor;
 class AwtDragSource : virtual public IDropSource, virtual public IDataObject {
     public:
 
-	AwtDragSource(JNIEnv* env, jobject peer, jobject component, 
-		      jobject transferable, jobject trigger,
-		      jint actions, jlongArray formats, jobject formatMap);
+        AwtDragSource(JNIEnv* env, jobject peer, jobject component,
+                      jobject transferable, jobject trigger,
+                      jint actions, jlongArray formats, jobject formatMap);
 
-	virtual ~AwtDragSource();
+        virtual ~AwtDragSource();
 
-	// IUnknown
+        // IUnknown
 
-	virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
+        virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
 
-	virtual ULONG   __stdcall AddRef(void);
-	virtual ULONG   __stdcall Release(void);
+        virtual ULONG   __stdcall AddRef(void);
+        virtual ULONG   __stdcall Release(void);
 
-	// IDropSource
+        // IDropSource
 
-	virtual HRESULT __stdcall QueryContinueDrag(BOOL fEscapeKeyPressed, DWORD grfKeyState);
+        virtual HRESULT __stdcall QueryContinueDrag(BOOL fEscapeKeyPressed, DWORD grfKeyState);
 
-	virtual HRESULT __stdcall GiveFeedback(DWORD dwEffect);
-	
-	// IDataObject
+        virtual HRESULT __stdcall GiveFeedback(DWORD dwEffect);
 
-	virtual HRESULT __stdcall GetData(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
-	virtual HRESULT __stdcall GetDataHere(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
+        // IDataObject
 
-	virtual HRESULT __stdcall QueryGetData(FORMATETC __RPC_FAR *pFormatEtc);
+        virtual HRESULT __stdcall GetData(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
+        virtual HRESULT __stdcall GetDataHere(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
 
-	virtual HRESULT __stdcall GetCanonicalFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn, FORMATETC __RPC_FAR *pFormatEtcOut);
+        virtual HRESULT __stdcall QueryGetData(FORMATETC __RPC_FAR *pFormatEtc);
 
-	virtual HRESULT __stdcall SetData(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium, BOOL fRelease);
+        virtual HRESULT __stdcall GetCanonicalFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn, FORMATETC __RPC_FAR *pFormatEtcOut);
 
-	virtual HRESULT __stdcall EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC *__RPC_FAR *ppenumFormatEtc);
+        virtual HRESULT __stdcall SetData(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium, BOOL fRelease);
 
-	virtual HRESULT __stdcall DAdvise(FORMATETC __RPC_FAR *pFormatEtc, DWORD advf, IAdviseSink __RPC_FAR *pAdvSink, DWORD __RPC_FAR *pdwConnection);
-	virtual HRESULT __stdcall DUnadvise(DWORD dwConnection);
-	virtual HRESULT __stdcall EnumDAdvise(IEnumSTATDATA __RPC_FAR *__RPC_FAR *ppenumAdvise);
+        virtual HRESULT __stdcall EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC *__RPC_FAR *ppenumFormatEtc);
 
-	
-	// AwtDragSource
+        virtual HRESULT __stdcall DAdvise(FORMATETC __RPC_FAR *pFormatEtc, DWORD advf, IAdviseSink __RPC_FAR *pAdvSink, DWORD __RPC_FAR *pdwConnection);
+        virtual HRESULT __stdcall DUnadvise(DWORD dwConnection);
+        virtual HRESULT __stdcall EnumDAdvise(IEnumSTATDATA __RPC_FAR *__RPC_FAR *ppenumAdvise);
 
-	static void StartDrag(AwtDragSource* self, jobject cursor);
+
+        // AwtDragSource
+
+        static void StartDrag(AwtDragSource* self, jobject cursor);
 
         HRESULT ChangeCursor();
         void SetCursor(jobject cursor);
 
-	INLINE unsigned int getNTypes() { return m_ntypes; }
+        INLINE unsigned int getNTypes() { return m_ntypes; }
 
-	INLINE FORMATETC getType(unsigned int i) { return m_types[i]; }
+        INLINE FORMATETC getType(unsigned int i) { return m_types[i]; }
 
-	INLINE jobject GetPeer() { return m_peer; }
+        INLINE jobject GetPeer() { return m_peer; }
 
-	INLINE void Signal() { ::ReleaseMutex(m_mutex); }
+        INLINE void Signal() { ::ReleaseMutex(m_mutex); }
 
-	virtual HRESULT __stdcall GetProcessId(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
+        virtual HRESULT __stdcall GetProcessId(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium);
 
     protected:
-	INLINE void WaitUntilSignalled(BOOL retain) {
-	    do {
-		// nothing ...
-	    } while(::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
+        INLINE void WaitUntilSignalled(BOOL retain) {
+            do {
+                // nothing ...
+            } while(::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
 
-	    if (!retain) ::ReleaseMutex(m_mutex);
- 	}
+            if (!retain) ::ReleaseMutex(m_mutex);
+        }
 
-	static void _DoDragDrop(void* param);
+        static void _DoDragDrop(void* param);
 
-	HRESULT __stdcall MatchFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn, FORMATETC *cacheEnt);
+        HRESULT __stdcall MatchFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn, FORMATETC *cacheEnt);
 
    private:
 
-	void LoadCache(jlongArray formats);
-	void UnloadCache();
+        void LoadCache(jlongArray formats);
+        void UnloadCache();
 
-	static int __cdecl _compar(const void *, const void *);
+        static int __cdecl _compar(const void *, const void *);
 
-        static void call_dSCenter(JNIEnv* env, jobject self, jint targetActions, 
+        static void call_dSCenter(JNIEnv* env, jobject self, jint targetActions,
                                   jint modifiers, jint x, jint y);
-        static void call_dSCmotion(JNIEnv* env, jobject self, 
+        static void call_dSCmotion(JNIEnv* env, jobject self,
                                    jint targetActions, jint modifiers,
                                    jint x, jint y);
-        static void call_dSCchanged(JNIEnv* env, jobject self, 
+        static void call_dSCchanged(JNIEnv* env, jobject self,
                                     jint targetActions, jint modifiers,
                                     jint x, jint y);
-        static void call_dSCmouseMoved(JNIEnv* env, jobject self, 
+        static void call_dSCmouseMoved(JNIEnv* env, jobject self,
                                        jint targetActions, jint modifiers,
                                        jint x, jint y);
         static void call_dSCexit(JNIEnv* env, jobject self, jint x, jint y);
-        static void call_dSCddfinished(JNIEnv* env, jobject self, 
+        static void call_dSCddfinished(JNIEnv* env, jobject self,
                                        jboolean success, jint operations,
                                        jint x, jint y);
     protected:
 
-	class ADSIEnumFormatEtc : public virtual IEnumFORMATETC {
-	    public:
-		ADSIEnumFormatEtc(AwtDragSource* parent);
+        class ADSIEnumFormatEtc : public virtual IEnumFORMATETC {
+            public:
+                ADSIEnumFormatEtc(AwtDragSource* parent);
 
-		virtual ~ADSIEnumFormatEtc();
+                virtual ~ADSIEnumFormatEtc();
 
-		// IUnknown
+                // IUnknown
 
-		virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
+                virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
 
-		virtual ULONG   __stdcall AddRef(void);
-		virtual ULONG   __stdcall Release(void);
-	
-		// IEnumFORMATETC
+                virtual ULONG   __stdcall AddRef(void);
+                virtual ULONG   __stdcall Release(void);
 
-		virtual HRESULT _stdcall Next(ULONG celt, FORMATETC __RPC_FAR *rgelt, ULONG __RPC_FAR *pceltFetched);
-		virtual HRESULT _stdcall Skip(ULONG celt);
-		virtual HRESULT _stdcall Reset();
-		virtual HRESULT _stdcall Clone(IEnumFORMATETC __RPC_FAR *__RPC_FAR *ppenum);
+                // IEnumFORMATETC
 
-	    private:
-		AwtDragSource*	m_parent;
-		ULONG		m_refs;
+                virtual HRESULT _stdcall Next(ULONG celt, FORMATETC __RPC_FAR *rgelt, ULONG __RPC_FAR *pceltFetched);
+                virtual HRESULT _stdcall Skip(ULONG celt);
+                virtual HRESULT _stdcall Reset();
+                virtual HRESULT _stdcall Clone(IEnumFORMATETC __RPC_FAR *__RPC_FAR *ppenum);
 
-		unsigned int	m_idx;
-	};
+            private:
+                AwtDragSource*  m_parent;
+                ULONG           m_refs;
 
-	class ADSIStreamProxy : public virtual IStream {
-	    private:
-		ADSIStreamProxy(ADSIStreamProxy* cloneof);
+                unsigned int    m_idx;
+        };
 
-	    public:
-		ADSIStreamProxy(AwtDragSource* parent, jbyteArray buffer, jint len);
+        class ADSIStreamProxy : public virtual IStream {
+            private:
+                ADSIStreamProxy(ADSIStreamProxy* cloneof);
 
-		virtual ~ADSIStreamProxy();
+            public:
+                ADSIStreamProxy(AwtDragSource* parent, jbyteArray buffer, jint len);
 
-		// IUnknown
+                virtual ~ADSIStreamProxy();
 
-		virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
+                // IUnknown
 
-		virtual ULONG   __stdcall AddRef(void);
-		virtual ULONG   __stdcall Release(void);
-		
-		// IStream
+                virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
+
+                virtual ULONG   __stdcall AddRef(void);
+                virtual ULONG   __stdcall Release(void);
+
+                // IStream
 
 
-		virtual  HRESULT __stdcall Read(void __RPC_FAR *pv, ULONG cb, ULONG __RPC_FAR *pcbRead);
+                virtual  HRESULT __stdcall Read(void __RPC_FAR *pv, ULONG cb, ULONG __RPC_FAR *pcbRead);
 
-		virtual  HRESULT __stdcall Write(const void __RPC_FAR *pv, ULONG cb, ULONG __RPC_FAR *pcbWritten);
+                virtual  HRESULT __stdcall Write(const void __RPC_FAR *pv, ULONG cb, ULONG __RPC_FAR *pcbWritten);
 
-		virtual  HRESULT __stdcall Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER __RPC_FAR *plibNewPosition);
+                virtual  HRESULT __stdcall Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER __RPC_FAR *plibNewPosition);
 
-		virtual HRESULT __stdcall SetSize(ULARGE_INTEGER libNewSize);
+                virtual HRESULT __stdcall SetSize(ULARGE_INTEGER libNewSize);
 
-		virtual  HRESULT __stdcall CopyTo(IStream __RPC_FAR *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER __RPC_FAR *pcbRead, ULARGE_INTEGER __RPC_FAR *pcbWritten);
+                virtual  HRESULT __stdcall CopyTo(IStream __RPC_FAR *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER __RPC_FAR *pcbRead, ULARGE_INTEGER __RPC_FAR *pcbWritten);
 
-		virtual HRESULT __stdcall Commit(DWORD grfCommitFlags);
+                virtual HRESULT __stdcall Commit(DWORD grfCommitFlags);
 
-		virtual HRESULT __stdcall Revert();
+                virtual HRESULT __stdcall Revert();
 
-		virtual HRESULT __stdcall LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+                virtual HRESULT __stdcall LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
 
-		virtual HRESULT __stdcall UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+                virtual HRESULT __stdcall UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
 
-		virtual HRESULT __stdcall Stat(STATSTG __RPC_FAR *pstatstg, DWORD grfStatFlag);
+                virtual HRESULT __stdcall Stat(STATSTG __RPC_FAR *pstatstg, DWORD grfStatFlag);
 
-		virtual HRESULT __stdcall Clone(IStream __RPC_FAR *__RPC_FAR *ppstm);
-	    protected:
-		AwtDragSource*	 m_parent;
+                virtual HRESULT __stdcall Clone(IStream __RPC_FAR *__RPC_FAR *ppstm);
+            protected:
+                AwtDragSource*   m_parent;
 
-  		signed   char*	 m_buffer;
-		unsigned int	 m_off;
-		unsigned int	 m_blen;
+                signed   char*   m_buffer;
+                unsigned int     m_off;
+                unsigned int     m_blen;
 
-		STATSTG		 m_statstg;
+                STATSTG          m_statstg;
 
-		ADSIStreamProxy* m_cloneof;
+                ADSIStreamProxy* m_cloneof;
 
-		ULONG		 m_refs;
-	};
+                ULONG            m_refs;
+        };
 
     public:
-	static const UINT PROCESS_ID_FORMAT;
+        static const UINT PROCESS_ID_FORMAT;
 
     private:
- 
-	// instance vars ...
 
-	jobject		m_peer;
+        // instance vars ...
 
-	jint		m_initmods;
-	jint		m_lastmods;
+        jobject         m_peer;
 
-	HWND		m_droptarget;
-	int		m_enterpending;
+        jint            m_initmods;
+        jint            m_lastmods;
 
-	jint		m_actions;
+        HWND            m_droptarget;
+        int             m_enterpending;
 
-	FORMATETC*	m_types;
-	unsigned int	m_ntypes;
+        jint            m_actions;
 
-	ULONG		m_refs;
+        FORMATETC*      m_types;
+        unsigned int    m_ntypes;
 
-	AwtCursor*      m_cursor;
+        ULONG           m_refs;
 
-	HANDLE		m_mutex;
+        AwtCursor*      m_cursor;
+
+        HANDLE          m_mutex;
 
         jobject         m_component;
         jobject         m_transferable;
         jobject         m_formatMap;
 
         POINT           m_dragPoint;
-	POINT           m_dropPoint;
-	BOOL            m_fNC;
+        POINT           m_dropPoint;
+        BOOL            m_fNC;
         BOOL            m_bRestoreNodropCustomCursor;//CR 6480706 - MS Bug on hold
 
         DWORD           m_dwPerformedDropEffect;
 
-	// static's ...
+        // static's ...
 
-	static jclass		dSCClazz;
-	static jclass		awtIEClazz;
+        static jclass           dSCClazz;
+        static jclass           awtIEClazz;
 
-	static jmethodID	dSCdragenter;
-	static jmethodID	dSCdragmotion;
-	static jmethodID	dSCopschanged;
-	static jmethodID	dSCdragexit;
-	static jmethodID	dSCddfinish;
+        static jmethodID        dSCdragenter;
+        static jmethodID        dSCdragmotion;
+        static jmethodID        dSCopschanged;
+        static jmethodID        dSCdragexit;
+        static jmethodID        dSCddfinish;
 
-	static jfieldID		awtIEmods;
+        static jfieldID         awtIEmods;
 };
 
 #endif /* AWT_DND_DS_H */

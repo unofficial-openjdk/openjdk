@@ -30,7 +30,7 @@ import java.io.IOException;
 
 /*
  * Utility class to support file system operations
- * 
+ *
  * @since 1.5
  */
 public abstract class FileSystem {
@@ -44,19 +44,19 @@ public abstract class FileSystem {
      * Opens the file system
      */
     public static FileSystem open() {
-	synchronized (lock) {
-	    if (fs == null) {
-		fs = new FileSystemImpl();
-	    }
+        synchronized (lock) {
+            if (fs == null) {
+                fs = new FileSystemImpl();
+            }
             return fs;
-	}
+        }
     }
 
     /**
-     * Tells whether or not the specified file is located on a 
+     * Tells whether or not the specified file is located on a
      * file system that supports file security or not.
      *
-     * @throws	IOException	if an I/O error occurs.
+     * @throws  IOException     if an I/O error occurs.
      */
     public abstract boolean supportsFileSecurity(File f) throws IOException;
 
@@ -65,10 +65,10 @@ public abstract class FileSystem {
      * by anything other than the file owner.
      *
      * @throws  IOException     if an I/O error occurs.
-     * 
-     * @throws  UnsupportedOperationException	
-     * 		If file is located on a file system that doesn't support
-     *		file security.
+     *
+     * @throws  UnsupportedOperationException
+     *          If file is located on a file system that doesn't support
+     *          file security.
      */
     public abstract boolean isAccessUserOnly(File f) throws IOException;
 }

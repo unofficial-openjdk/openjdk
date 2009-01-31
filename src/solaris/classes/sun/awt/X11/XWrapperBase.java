@@ -25,7 +25,7 @@
 
 package sun.awt.X11;
 
-// This class serves as the base class for all the wrappers. 
+// This class serves as the base class for all the wrappers.
 import java.util.logging.*;
 
 abstract class XWrapperBase {
@@ -33,9 +33,9 @@ abstract class XWrapperBase {
 
     public String toString() {
         String ret = "";
-        
+
         ret += getName() + " = " + getFieldsAsString();
-        
+
         return ret;
     }
 
@@ -44,7 +44,7 @@ abstract class XWrapperBase {
     }
 
     String getName() {
-        return "XWrapperBase";   
+        return "XWrapperBase";
     }
     public void zero() {
         log.finest("Cleaning memory");
@@ -53,10 +53,10 @@ abstract class XWrapperBase {
         }
     }
     public abstract int getDataSize();
-    String getWindow(long window) { 
+    String getWindow(long window) {
         XBaseWindow w = XToolkit.windowToXWindow(window);
         if (w == null) {
-            return Long.toHexString(window); 
+            return Long.toHexString(window);
         } else {
             return w.toString();
         }

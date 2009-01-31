@@ -51,31 +51,31 @@ class ConnectionOutputStream extends MarshalOutputStream {
     /**
      * Constructs an marshal output stream using the underlying
      * stream associated with the connection, the parameter c.
-     * @param c is the Connection object associated with the 
+     * @param c is the Connection object associated with the
      * ConnectionOutputStream object being constructed
      * @param resultStream indicates whether this stream is used
      * to marshal return results
      */
     ConnectionOutputStream(Connection conn, boolean resultStream)
-	throws IOException
-    {	      
-	super(conn.getOutputStream());
-	this.conn = conn;
-	this.resultStream = resultStream;
-	ackID = resultStream ? new UID() : null;
+        throws IOException
+    {
+        super(conn.getOutputStream());
+        this.conn = conn;
+        this.resultStream = resultStream;
+        ackID = resultStream ? new UID() : null;
     }
 
     void writeID() throws IOException {
-	assert resultStream;
-	ackID.write(this);
+        assert resultStream;
+        ackID.write(this);
     }
-    
+
     /**
      * Returns true if this output stream is used to marshal return
      * results; otherwise returns false.
      */
     boolean isResultStream() {
-	return resultStream;
+        return resultStream;
     }
 
     /**
@@ -83,11 +83,11 @@ class ConnectionOutputStream extends MarshalOutputStream {
      * DGCAckHandler.
      **/
     void saveObject(Object obj) {
-	// should always be accessed from same thread
-	if (dgcAckHandler == null) {
-	    dgcAckHandler = new DGCAckHandler(ackID);
-	}
-	dgcAckHandler.add(obj);
+        // should always be accessed from same thread
+        if (dgcAckHandler == null) {
+            dgcAckHandler = new DGCAckHandler(ackID);
+        }
+        dgcAckHandler.add(obj);
     }
 
     /**
@@ -98,12 +98,12 @@ class ConnectionOutputStream extends MarshalOutputStream {
      * be created (by invoking saveObject).
      **/
     DGCAckHandler getDGCAckHandler() {
-	return dgcAckHandler;
+        return dgcAckHandler;
     }
 
     void done() {
-	if (dgcAckHandler != null) {
-	    dgcAckHandler.startTimer();
-	}
+        if (dgcAckHandler != null) {
+            dgcAckHandler.startTimer();
+        }
     }
 }

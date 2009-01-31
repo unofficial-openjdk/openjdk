@@ -34,7 +34,6 @@ package java.io;
  * the interruption occurred.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @see     java.io.InputStream
  * @see     java.io.OutputStream
  * @see     java.lang.Thread#interrupt()
@@ -47,7 +46,7 @@ class InterruptedIOException extends IOException {
      * <code>null</code> as its error detail message.
      */
     public InterruptedIOException() {
-	super();
+        super();
     }
 
     /**
@@ -60,7 +59,7 @@ class InterruptedIOException extends IOException {
      * @param   s   the detail message.
      */
     public InterruptedIOException(String s) {
-	super(s);
+        super(s);
     }
 
     /**

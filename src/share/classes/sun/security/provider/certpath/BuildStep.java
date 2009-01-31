@@ -33,13 +33,12 @@ import java.security.cert.X509Certificate;
  * <code>Vertex</code> state description, a certificate, a possible throwable,
  * and a result code.
  *
- * @author 	Anne Anderson
- * @version 	%I% %G%
- * @since	1.4
+ * @author      Anne Anderson
+ * @since       1.4
  * @see sun.security.provider.certpath.Vertex
  */
 public class BuildStep {
- 
+
     private static final Debug debug = Debug.getInstance("certpath");
     private Vertex          vertex;
     private X509Certificate cert;
@@ -85,12 +84,12 @@ public class BuildStep {
      *            FOLLOW, FAIL, SUCCEED
      */
     public BuildStep(Vertex vtx, int res) {
-	vertex = vtx;
-	if (vertex != null) {
-	    cert = (X509Certificate)vertex.getCertificate();
-	    throwable = vertex.getThrowable();
-	}
-	result = res;
+        vertex = vtx;
+        if (vertex != null) {
+            cert = (X509Certificate)vertex.getCertificate();
+            throwable = vertex.getThrowable();
+        }
+        result = res;
     }
 
     /**
@@ -99,7 +98,7 @@ public class BuildStep {
      * @returns Vertex
      */
     public Vertex getVertex() {
-	return vertex;
+        return vertex;
     }
 
     /**
@@ -108,7 +107,7 @@ public class BuildStep {
      * @returns X509Certificate
      */
     public X509Certificate getCertificate() {
-	return cert;
+        return cert;
     }
 
     /**
@@ -118,7 +117,7 @@ public class BuildStep {
      * @returns String form of issuer name or null, if no certificate.
      */
     public String getIssuerName() {
-	return (cert == null ? null : cert.getIssuerX500Principal().toString());
+        return (cert == null ? null : cert.getIssuerX500Principal().toString());
     }
 
     /**
@@ -132,8 +131,8 @@ public class BuildStep {
      * exception received while trying to extract issuer name from certificate.
      */
     public String getIssuerName(String defaultName) {
-	return (cert == null ? defaultName 
-			     : cert.getIssuerX500Principal().toString());
+        return (cert == null ? defaultName
+                             : cert.getIssuerX500Principal().toString());
     }
 
     /**
@@ -143,13 +142,13 @@ public class BuildStep {
      * @returns String form of subject name or null, if no certificate.
      */
     public String getSubjectName() {
-	return (cert == null ? null : cert.getSubjectX500Principal().toString());
+        return (cert == null ? null : cert.getSubjectX500Principal().toString());
     }
 
     /**
      * return string form of subject name from certificate associated with this
      * build step, or a default name if no certificate associated with this
-     * build step, or if subject name could not be obtained from the 
+     * build step, or if subject name could not be obtained from the
      * certificate.
      *
      * @param defaultName name to use as default if unable to return a subject
@@ -159,8 +158,8 @@ public class BuildStep {
      * from the certificate.
      */
     public String getSubjectName(String defaultName) {
-	return (cert == null ? defaultName 
-			     : cert.getSubjectX500Principal().toString());
+        return (cert == null ? defaultName
+                             : cert.getSubjectX500Principal().toString());
     }
 
     /**
@@ -169,7 +168,7 @@ public class BuildStep {
      * @returns Throwable
      */
     public Throwable getThrowable() {
-	return throwable;
+        return throwable;
     }
 
     /**
@@ -179,7 +178,7 @@ public class BuildStep {
      * @returns int result code
      */
     public int getResult() {
-	return result;
+        return result;
     }
 
     /**
@@ -190,29 +189,29 @@ public class BuildStep {
      * @returns String string representing meaning of the result code
      */
     public String resultToString(int res) {
-	String resultString = "";
-	switch (res) {
-	    case BuildStep.POSSIBLE:
-		resultString = "Certificate to be tried.\n";
-	        break;
-	    case BuildStep.BACK:
-		resultString = "Certificate backed out since path does not "
-		    + "satisfy build requirements.\n";
-		break;
-	    case BuildStep.FOLLOW:
-		resultString = "Certificate satisfies conditions.\n";
-		break;
-	    case BuildStep.FAIL:
-		resultString = "Certificate backed out since path does not "
-		    + "satisfy conditions.\n";
-		break;
-	    case BuildStep.SUCCEED:
-		resultString = "Certificate satisfies conditions.\n";
-		break;
-	    default:
-		resultString = "Internal error: Invalid step result value.\n";
-	}
-	return resultString;
+        String resultString = "";
+        switch (res) {
+            case BuildStep.POSSIBLE:
+                resultString = "Certificate to be tried.\n";
+                break;
+            case BuildStep.BACK:
+                resultString = "Certificate backed out since path does not "
+                    + "satisfy build requirements.\n";
+                break;
+            case BuildStep.FOLLOW:
+                resultString = "Certificate satisfies conditions.\n";
+                break;
+            case BuildStep.FAIL:
+                resultString = "Certificate backed out since path does not "
+                    + "satisfy conditions.\n";
+                break;
+            case BuildStep.SUCCEED:
+                resultString = "Certificate satisfies conditions.\n";
+                break;
+            default:
+                resultString = "Internal error: Invalid step result value.\n";
+        }
+        return resultString;
     }
 
     /**
@@ -222,22 +221,22 @@ public class BuildStep {
      * @returns String
      */
     public String toString() {
-	String out = "Internal Error\n";
-	switch (result) {
-	case BACK:
-	case FAIL:
-	    out = resultToString(result);
-	    out = out + vertex.throwableToString();
-	    break;
-	case FOLLOW:
-	case SUCCEED:
-	case POSSIBLE:
-	    out = resultToString(result);
-	    break;
-	default:
-	    out = "Internal Error: Invalid step result\n";
-	}
-	return out;
+        String out = "Internal Error\n";
+        switch (result) {
+        case BACK:
+        case FAIL:
+            out = resultToString(result);
+            out = out + vertex.throwableToString();
+            break;
+        case FOLLOW:
+        case SUCCEED:
+        case POSSIBLE:
+            out = resultToString(result);
+            break;
+        default:
+            out = "Internal Error: Invalid step result\n";
+        }
+        return out;
     }
 
     /**
@@ -248,23 +247,23 @@ public class BuildStep {
      * @returns String
      */
     public String verboseToString() {
-	String out = resultToString(getResult());
-	switch (result) {
-	case BACK:
-	case FAIL:
-	    out = out + vertex.throwableToString();
-	    break;
-	case FOLLOW:
-	case SUCCEED:
-	    out = out + vertex.moreToString();
-	    break;
-	case POSSIBLE:
-	    break;
-	default:
-	    break;
-	}
-	out = out + "Certificate contains:\n" + vertex.certToString();
-	return out;
+        String out = resultToString(getResult());
+        switch (result) {
+        case BACK:
+        case FAIL:
+            out = out + vertex.throwableToString();
+            break;
+        case FOLLOW:
+        case SUCCEED:
+            out = out + vertex.moreToString();
+            break;
+        case POSSIBLE:
+            break;
+        default:
+            break;
+        }
+        out = out + "Certificate contains:\n" + vertex.certToString();
+        return out;
     }
 
     /**
@@ -274,8 +273,8 @@ public class BuildStep {
      * @returns String
      */
     public String fullToString() {
-	String out = resultToString(getResult());
-	out = out + vertex.toString();
-	return out;
+        String out = resultToString(getResult());
+        out = out + vertex.toString();
+        return out;
     }
 }

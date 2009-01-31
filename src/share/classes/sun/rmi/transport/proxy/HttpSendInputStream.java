@@ -43,11 +43,11 @@ class HttpSendInputStream extends FilterInputStream {
      * @param owner the HttpSendSocket that is providing this stream
      */
     public HttpSendInputStream(InputStream in, HttpSendSocket owner)
-	throws IOException
+        throws IOException
     {
-	super(in);
+        super(in);
 
-	this.owner = owner;
+        this.owner = owner;
     }
 
     /**
@@ -57,7 +57,7 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public void deactivate()
     {
-	in = null;
+        in = null;
     }
 
     /**
@@ -65,9 +65,9 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public int read() throws IOException
     {
-	if (in == null)
-	    in = owner.readNotify();
-	return in.read();
+        if (in == null)
+            in = owner.readNotify();
+        return in.read();
     }
 
     /**
@@ -78,11 +78,11 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public int read(byte b[], int off, int len) throws IOException
     {
-	if (len == 0)
-	    return 0;
-	if (in == null)
-	    in = owner.readNotify();
-	return in.read(b, off, len);
+        if (len == 0)
+            return 0;
+        if (in == null)
+            in = owner.readNotify();
+        return in.read(b, off, len);
     }
 
     /**
@@ -91,11 +91,11 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public long skip(long n) throws IOException
     {
-	if (n == 0)
-	    return 0;
-	if (in == null)
-	    in = owner.readNotify();
-	return in.skip(n);
+        if (n == 0)
+            return 0;
+        if (in == null)
+            in = owner.readNotify();
+        return in.skip(n);
     }
 
     /**
@@ -103,9 +103,9 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public int available() throws IOException
     {
-	if (in == null)
-	    in = owner.readNotify();
-	return in.available();
+        if (in == null)
+            in = owner.readNotify();
+        return in.available();
     }
 
     /**
@@ -113,7 +113,7 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public void close() throws IOException
     {
-	owner.close();
+        owner.close();
     }
 
     /**
@@ -122,15 +122,15 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public synchronized void mark(int readlimit)
     {
-	if (in == null) {
-	    try {
-		in = owner.readNotify();
-	    }
-	    catch (IOException e) {
-		return;
-	    }
-	}
-	in.mark(readlimit);
+        if (in == null) {
+            try {
+                in = owner.readNotify();
+            }
+            catch (IOException e) {
+                return;
+            }
+        }
+        in.mark(readlimit);
     }
 
     /**
@@ -138,9 +138,9 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public synchronized void reset() throws IOException
     {
-	if (in == null)
-	    in = owner.readNotify();
-	in.reset();
+        if (in == null)
+            in = owner.readNotify();
+        in.reset();
     }
 
     /**
@@ -148,14 +148,14 @@ class HttpSendInputStream extends FilterInputStream {
      */
     public boolean markSupported()
     {
-	if (in == null) {
-	    try {
-		in = owner.readNotify();
-	    }
-	    catch (IOException e) {
-		return false;
-	    }
-	}
-	return in.markSupported();
+        if (in == null) {
+            try {
+                in = owner.readNotify();
+            }
+            catch (IOException e) {
+                return false;
+            }
+        }
+        return in.markSupported();
     }
 }

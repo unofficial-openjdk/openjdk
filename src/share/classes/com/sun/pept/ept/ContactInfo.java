@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * <p>
- * 
+ *
  * @author Dr. Harold Carr
  * </p>
  */
@@ -47,7 +47,7 @@ public interface ContactInfo extends EPTFactory {
  * <p>
  * Does ...
  * </p><p>
- * 
+ *
  * @return a Connection with ...
  * </p><p>
  * @param messageInfo ...
@@ -56,10 +56,3 @@ public interface ContactInfo extends EPTFactory {
     public Connection getConnection(MessageInfo messageInfo);
 
 } // end ContactInfo
-
-
-
-
-
-
-

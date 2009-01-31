@@ -65,12 +65,12 @@ const char *
 GetArch();
 
 void CreateExecutionEnvironment(int *_argc,
-				       char ***_argv,
-				       char jrepath[],
-				       jint so_jrepath,
-				       char jvmpath[],
-				       jint so_jvmpath,
-				       char **original_argv);
+                                       char ***_argv,
+                                       char jrepath[],
+                                       jint so_jrepath,
+                                       char jvmpath[],
+                                       jint so_jvmpath,
+                                       char **original_argv);
 
 /*
  * Report an error message to stderr or a window as appropriate.  The
@@ -94,16 +94,16 @@ const char *jlong_format_specifier();
 /*
  * Block current thread and continue execution in new thread
  */
-int ContinueInNewThread(int (JNICALL *continuation)(void *), 
+int ContinueInNewThread(int (JNICALL *continuation)(void *),
                         jlong stack_size, void * args, int ret);
 
 /* sun.java.launcher.* platform properties. */
 void SetJavaLauncherPlatformProps(void);
 
-/* 
+/*
  * Functions defined in java.c and used in java_md.c.
  */
-jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative); 
+jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative);
 char *CheckJvmType(int *argc, char ***argv, jboolean speculative);
 void AddOption(char *str, void *info);
 

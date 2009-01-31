@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug     4967283
- * @summary Basic unit test of thread states returned by 
- *          ThreadMXBean.getThreadInfo.getThreadState(). 
+ * @summary Basic unit test of thread states returned by
+ *          ThreadMXBean.getThreadInfo.getThreadState().
  *          It also tests lock information returned by ThreadInfo.
  *
  * @author  Mandy Chung
@@ -61,8 +61,8 @@ public class ThreadStateTest {
         Thread.currentThread().getState();
 
         MyThread myThread = new MyThread("MyThread");
-  
-        // before myThread starts 
+
+        // before myThread starts
         // checkThreadState(myThread, Thread.State.NEW);
 
         myThread.start();
@@ -74,7 +74,7 @@ public class ThreadStateTest {
         goSleep(10);
         checkSuspendedThreadState(myThread, Thread.State.RUNNABLE);
         myThread.resume();
- 
+
         synchronized (globalLock) {
             myThread.goBlocked();
             checkThreadState(myThread, Thread.State.BLOCKED);
@@ -97,22 +97,22 @@ public class ThreadStateTest {
       /*
        *********** parkUntil seems not working
        * ignore this park case for now.
-         
+
          Bug ID : 5062095
        ***********************************************
         myThread.goParked();
         checkThreadState(myThread, Thread.State.WAITING);
-        checkLockInfo(myThread, Thread.State.WAITING, null, null); 
+        checkLockInfo(myThread, Thread.State.WAITING, null, null);
 
         myThread.goTimedParked();
         checkThreadState(myThread, Thread.State.TIMED_WAITING);
-        checkLockInfo(myThread, Thread.State.TIMED_WAITING, null, null); 
+        checkLockInfo(myThread, Thread.State.TIMED_WAITING, null, null);
 
        */
 
         myThread.goSleeping();
         checkThreadState(myThread, Thread.State.TIMED_WAITING);
-        checkLockInfo(myThread, Thread.State.TIMED_WAITING, null, null); 
+        checkLockInfo(myThread, Thread.State.TIMED_WAITING, null, null);
 
 
         myThread.terminate();
@@ -129,7 +129,7 @@ public class ThreadStateTest {
             throw new RuntimeException("TEST FAILED.");
         System.out.println("Test passed.");
     }
- 
+
     private static void checkSuspendedThreadState(Thread t, Thread.State state) {
         ThreadInfo info = tm.getThreadInfo(t.getId());
         if (info == null) {
@@ -137,7 +137,7 @@ public class ThreadStateTest {
                " expected to have ThreadInfo " +
                " but got null.");
         }
- 
+
         if (info.getThreadState() != state) {
             throw new RuntimeException(t.getName() + " expected to be in " +
                 state + " state but got " + info.getThreadState());
@@ -151,15 +151,15 @@ public class ThreadStateTest {
     }
 
     private static void checkThreadState(Thread t, Thread.State expected) {
-        ThreadInfo ti = tm.getThreadInfo(t.getId()); 
-        Thread.State state = ti.getThreadState(); 
+        ThreadInfo ti = tm.getThreadInfo(t.getId());
+        Thread.State state = ti.getThreadState();
         if (state == null) {
             throw new RuntimeException(t.getName() + " expected to have " +
                 expected + " but got null.");
         }
- 
+
         if (state != expected) {
-	    if (expected ==  Thread.State.BLOCKED) {
+            if (expected ==  Thread.State.BLOCKED) {
                 int retryCount=0;
                 while (ti.getThreadState() != expected) {
                     if (retryCount >= 500) {
@@ -168,10 +168,10 @@ public class ThreadStateTest {
                      }
                      goSleep(100);
                 }
-	    } else {
+            } else {
                 throw new RuntimeException(t.getName() + " expected to have " +
                     expected + " but got " + state);
-	    }
+            }
         }
     }
 
@@ -189,26 +189,26 @@ public class ThreadStateTest {
                " expected to have ThreadInfo " +
                " but got null.");
         }
- 
+
         if (info.getThreadState() != state) {
             throw new RuntimeException(t.getName() + " expected to be in " +
                 state + " state but got " + info.getThreadState());
         }
 
         if (lock == null && info.getLockName() != null) {
-            throw new RuntimeException(t.getName() + 
+            throw new RuntimeException(t.getName() +
                 " expected not to be blocked on any lock" +
                 " but got " + info.getLockName());
         }
         String expectedLockName = getLockName(lock);
         if (lock != null && info.getLockName() == null) {
-            throw new RuntimeException(t.getName() + 
+            throw new RuntimeException(t.getName() +
                 " expected to be blocked on lock [" + expectedLockName +
                 "] but got null.");
         }
 
         if (lock != null && !expectedLockName.equals(info.getLockName())) {
-            throw new RuntimeException(t.getName() + 
+            throw new RuntimeException(t.getName() +
                 " expected to be blocked on lock [" + expectedLockName +
                 "] but got [" + info.getLockName() + "].");
         }
@@ -244,7 +244,7 @@ public class ThreadStateTest {
                 ") but got " + info.getLockOwnerId());
         }
         if (info.isSuspended()) {
-            throw new RuntimeException(t.getName() + 
+            throw new RuntimeException(t.getName() +
                 " isSuspended() returns " + info.isSuspended());
         }
     }
@@ -292,7 +292,7 @@ public class ThreadStateTest {
                         break;
                     }
                     case BLOCKED: {
-            	        // signal main thread. 
+                        // signal main thread.
                         thrsync.signal();
                         System.out.println("  myThread is going to block.");
                         synchronized (globalLock) {
@@ -381,53 +381,53 @@ public class ThreadStateTest {
             System.out.println("Waiting myThread to go blocked.");
             setState(BLOCKED);
             // wait for MyThread to get blocked
-	    thrsync.waitForSignal();
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
 
         public void goWaiting() {
             System.out.println("Waiting myThread to go waiting.");
             setState(WAITING);
             // wait for  MyThread to wait on object.
-	    thrsync.waitForSignal();
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
         public void goTimedWaiting() {
             System.out.println("Waiting myThread to go timed waiting.");
             setState(TIMED_WAITING);
-            // wait for MyThread timed wait call. 
-	    thrsync.waitForSignal();
+            // wait for MyThread timed wait call.
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
         public void goParked() {
             System.out.println("Waiting myThread to go parked.");
             setState(PARKED);
             // wait for  MyThread state change to PARKED.
-	    thrsync.waitForSignal();
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
         public void goTimedParked() {
             System.out.println("Waiting myThread to go timed parked.");
             setState(TIMED_PARKED);
-            // wait for  MyThread.  
-	    thrsync.waitForSignal();
+            // wait for  MyThread.
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
 
         public void goSleeping() {
             System.out.println("Waiting myThread to go sleeping.");
             setState(SLEEPING);
-            // wait for  MyThread.  
-	    thrsync.waitForSignal();
+            // wait for  MyThread.
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
         public void terminate() {
             System.out.println("Waiting myThread to terminate.");
             setState(TERMINATE);
-            // wait for  MyThread.  
-	    thrsync.waitForSignal();
+            // wait for  MyThread.
+            thrsync.waitForSignal();
             goSleep(20);
-        } 
+        }
 
         private void setState(int newState) {
             switch (state) {

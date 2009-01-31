@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package com.sun.media.sound;	  
+package com.sun.media.sound;
 
 import java.util.StringTokenizer;
 
@@ -32,7 +32,6 @@ import java.util.StringTokenizer;
 /**
  * Audio configuration class for exposing attributes specific to the platform or system.
  *
- * @version %I% %E%
  * @author Kara Kytle
  * @author Florian Bomers
  */
@@ -44,7 +43,7 @@ class Platform {
     // native library we need to load
     private static final String libNameMain     = "jsound";
     private static final String libNameMain2    = "jsoundhs";
-    
+
     private static final String libNameALSA     = "jsoundalsa";
     private static final String libNameDSound   = "jsoundds";
 
@@ -52,7 +51,7 @@ class Platform {
     public static final int LIB_MAIN     = 1;
     public static final int LIB_ALSA     = 2;
     public static final int LIB_DSOUND   = 4;
-    
+
     // bit field of the constants above. Willbe set in loadLibraries
     private static int loadedLibs = 0;
 
@@ -64,8 +63,8 @@ class Platform {
 
     // SYSTEM CHARACTERISTICS
     // vary according to hardware architecture
-	
-    // signed8 (use signed 8-bit values) is true for everything we support except for 
+
+    // signed8 (use signed 8-bit values) is true for everything we support except for
     // the solaris sbpro card.
     // we'll leave it here as a variable; in the future we may need this in java.
     // wait, is that true?  i'm not sure.  i think solaris takes unsigned data?
@@ -87,19 +86,19 @@ class Platform {
 
 
     static {
-	if(Printer.trace)Printer.trace(">> Platform.java: static");
+        if(Printer.trace)Printer.trace(">> Platform.java: static");
 
-	loadLibraries();
-	readProperties();
+        loadLibraries();
+        readProperties();
     }
 
 
     /**
      * Private constructor.
      */
-    private Platform() { 
+    private Platform() {
     }
-	
+
 
     // METHODS FOR INTERNAL IMPLEMENTATION USE
 
@@ -109,16 +108,16 @@ class Platform {
      */
     static void initialize() {
 
-	if(Printer.trace)Printer.trace("Platform: initialize()");
+        if(Printer.trace)Printer.trace("Platform: initialize()");
     }
 
-	
+
     /**
      * Determine whether the system is big-endian.
      */
     static boolean isBigEndian() {
-		
-	return bigEndian;
+
+        return bigEndian;
     }
 
 
@@ -126,8 +125,8 @@ class Platform {
      * Determine whether the system takes signed 8-bit data.
      */
     static boolean isSigned8() {
-		
-	return signed8;
+
+        return signed8;
     }
 
 
@@ -137,7 +136,7 @@ class Platform {
      */
     static String getJavahome() {
 
-	return javahome;
+        return javahome;
     }
 
     /**
@@ -146,7 +145,7 @@ class Platform {
      */
     static String getClasspath() {
 
-	return classpath;
+        return classpath;
     }
 
 
@@ -156,62 +155,62 @@ class Platform {
      * Load the native library or libraries.
      */
     private static void loadLibraries() {
-	if(Printer.trace)Printer.trace(">>Platform.loadLibraries");
+        if(Printer.trace)Printer.trace(">>Platform.loadLibraries");
 
-	try {
+        try {
             // load the main libraries
-	    JSSecurityManager.loadLibrary(libNameMain);
+            JSSecurityManager.loadLibrary(libNameMain);
             JSSecurityManager.loadLibrary(libNameMain2);
-	    // just for the heck of it...
-	    loadedLibs |= LIB_MAIN;
-	} catch (SecurityException e) {
-	    if(Printer.err)Printer.err("Security exception loading main native library.  JavaSound requires access to these resources.");
-	    throw(e);
-	}
+            // just for the heck of it...
+            loadedLibs |= LIB_MAIN;
+        } catch (SecurityException e) {
+            if(Printer.err)Printer.err("Security exception loading main native library.  JavaSound requires access to these resources.");
+            throw(e);
+        }
 
-	// now try to load extra libs. They are defined at compile time in the Makefile
-	// with the define EXTRA_SOUND_JNI_LIBS
-	String extraLibs = nGetExtraLibraries();
-	// the string is the libraries, separated by white space
-	StringTokenizer st = new StringTokenizer(extraLibs);
-	while (st.hasMoreTokens()) {
-	    String lib = st.nextToken();
-	    try {
-		JSSecurityManager.loadLibrary(lib);
-		if (lib.equals(libNameALSA)) {
-		    loadedLibs |= LIB_ALSA;
-		    if (Printer.debug) Printer.debug("Loaded ALSA lib successfully.");
-		} else if (lib.equals(libNameDSound)) {
-		    loadedLibs |= LIB_DSOUND;
-		    if (Printer.debug) Printer.debug("Loaded DirectSound lib successfully.");
-		} else {
-		    if (Printer.err) Printer.err("Loaded unknown lib '"+lib+"' successfully.");
-		}
-	    } catch (Throwable t) {
-		if (Printer.err) Printer.err("Couldn't load library "+lib+": "+t.toString());
-	    }
-	}
+        // now try to load extra libs. They are defined at compile time in the Makefile
+        // with the define EXTRA_SOUND_JNI_LIBS
+        String extraLibs = nGetExtraLibraries();
+        // the string is the libraries, separated by white space
+        StringTokenizer st = new StringTokenizer(extraLibs);
+        while (st.hasMoreTokens()) {
+            String lib = st.nextToken();
+            try {
+                JSSecurityManager.loadLibrary(lib);
+                if (lib.equals(libNameALSA)) {
+                    loadedLibs |= LIB_ALSA;
+                    if (Printer.debug) Printer.debug("Loaded ALSA lib successfully.");
+                } else if (lib.equals(libNameDSound)) {
+                    loadedLibs |= LIB_DSOUND;
+                    if (Printer.debug) Printer.debug("Loaded DirectSound lib successfully.");
+                } else {
+                    if (Printer.err) Printer.err("Loaded unknown lib '"+lib+"' successfully.");
+                }
+            } catch (Throwable t) {
+                if (Printer.err) Printer.err("Couldn't load library "+lib+": "+t.toString());
+            }
+        }
     }
 
 
     static boolean isMidiIOEnabled() {
-    	return isFeatureLibLoaded(FEATURE_MIDIIO);
+        return isFeatureLibLoaded(FEATURE_MIDIIO);
     }
 
     static boolean isPortsEnabled() {
-    	return isFeatureLibLoaded(FEATURE_PORTS);
+        return isFeatureLibLoaded(FEATURE_PORTS);
     }
 
     static boolean isDirectAudioEnabled() {
-    	return isFeatureLibLoaded(FEATURE_DIRECT_AUDIO);
+        return isFeatureLibLoaded(FEATURE_DIRECT_AUDIO);
     }
-    	
+
     private static boolean isFeatureLibLoaded(int feature) {
-	if (Printer.debug) Printer.debug("Platform: Checking for feature "+feature+"...");
-	int requiredLib = nGetLibraryForFeature(feature);
-	boolean isLoaded = (requiredLib != 0) && ((loadedLibs & requiredLib) == requiredLib);
-	if (Printer.debug) Printer.debug("          ...needs library "+requiredLib+". Result is loaded="+isLoaded);
-	return isLoaded;
+        if (Printer.debug) Printer.debug("Platform: Checking for feature "+feature+"...");
+        int requiredLib = nGetLibraryForFeature(feature);
+        boolean isLoaded = (requiredLib != 0) && ((loadedLibs & requiredLib) == requiredLib);
+        if (Printer.debug) Printer.debug("          ...needs library "+requiredLib+". Result is loaded="+isLoaded);
+        return isLoaded;
     }
 
     // the following native methods are implemented in Platform.c
@@ -219,17 +218,16 @@ class Platform {
     private native static boolean nIsSigned8();
     private native static String nGetExtraLibraries();
     private native static int nGetLibraryForFeature(int feature);
-						  
+
 
     /**
      * Read the required system properties.
      */
-    private static void readProperties() {	
-	// $$fb 2002-03-06: implement check for endianness in native. Facilitates porting !
-	bigEndian = nIsBigEndian();
-	signed8 = nIsSigned8(); // Solaris on Sparc: signed, all others unsigned
-	javahome = JSSecurityManager.getProperty("java.home");
-	classpath = JSSecurityManager.getProperty("java.class.path");
-    }  
+    private static void readProperties() {
+        // $$fb 2002-03-06: implement check for endianness in native. Facilitates porting !
+        bigEndian = nIsBigEndian();
+        signed8 = nIsSigned8(); // Solaris on Sparc: signed, all others unsigned
+        javahome = JSSecurityManager.getProperty("java.home");
+        classpath = JSSecurityManager.getProperty("java.class.path");
+    }
 }
-

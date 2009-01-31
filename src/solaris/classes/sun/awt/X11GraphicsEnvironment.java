@@ -56,7 +56,6 @@ import sun.java2d.SunGraphicsEnvironment;
  *
  * @see GraphicsDevice
  * @see GraphicsConfiguration
- * @version %I% %G%
  */
 public class X11GraphicsEnvironment
     extends SunGraphicsEnvironment
@@ -104,7 +103,7 @@ public class X11GraphicsEnvironment
      * dir can be directly derived as its parent directory.
      * If a font is used by two XLFDs, each corresponding to a different
      * X11 font directory, then precautions must be taken to include both
-     * directories. 
+     * directories.
      */
      private static Map xFontDirsMap;
 
@@ -138,17 +137,17 @@ public class X11GraphicsEnvironment
     private static String[] fontdirs = null;
 
     static {
-	java.security.AccessController.doPrivileged(
-			  new java.security.PrivilegedAction() {
-	    public Object run() {
-		System.loadLibrary("awt");
+        java.security.AccessController.doPrivileged(
+                          new java.security.PrivilegedAction() {
+            public Object run() {
+                System.loadLibrary("awt");
 
-		/*
-		 * Note: The MToolkit object depends on the static initializer
-		 * of X11GraphicsEnvironment to initialize the connection to
-		 * the X11 server.
-		 */
-		if (!isHeadless()) {
+                /*
+                 * Note: The MToolkit object depends on the static initializer
+                 * of X11GraphicsEnvironment to initialize the connection to
+                 * the X11 server.
+                 */
+                if (!isHeadless()) {
                     // first check the OGL system property
                     boolean glxRequested = false;
                     String prop = System.getProperty("sun.java2d.opengl");
@@ -160,7 +159,7 @@ public class X11GraphicsEnvironment
                             glxVerbose = true;
                         }
                     }
-                
+
                     // initialize the X11 display connection
                     initDisplay(glxRequested);
 
@@ -173,10 +172,10 @@ public class X11GraphicsEnvironment
                                 "pipeline (GLX 1.3 not available)");
                         }
                     }
-		}
+                }
 
-		return null;
-	    }
+                return null;
+            }
          });
     }
 
@@ -196,9 +195,9 @@ public class X11GraphicsEnvironment
     /**
      * Checks if Shared Memory extension can be used.
      * Returns:
-     *	 -1 if server doesn't support MITShm
-     *	  1 if server supports it and it can be used
-     *	  0 otherwise
+     *   -1 if server doesn't support MITShm
+     *    1 if server supports it and it can be used
+     *    0 otherwise
      */
     private static native int checkShmExt();
 
@@ -217,7 +216,7 @@ public class X11GraphicsEnvironment
     protected native int getNumScreens();
 
     protected GraphicsDevice makeScreenDevice(int screennum) {
-	return new X11GraphicsDevice(screennum);
+        return new X11GraphicsDevice(screennum);
     }
 
     protected native int getDefaultScreenNum();
@@ -225,7 +224,7 @@ public class X11GraphicsEnvironment
      * Returns the default screen graphics device.
      */
     public GraphicsDevice getDefaultScreenDevice() {
-	return getScreenDevices()[getDefaultScreenNum()];
+        return getScreenDevices()[getDefaultScreenNum()];
     }
 
     public static boolean isDisplayLocal() {
@@ -243,64 +242,64 @@ public class X11GraphicsEnvironment
     }
 
     private static boolean _isDisplayLocal() {
-	if (isHeadless()) {
+        if (isHeadless()) {
             return true;
-	}
+        }
 
-	String isRemote = (String)java.security.AccessController.doPrivileged(
+        String isRemote = (String)java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.java2d.remote"));
-	if (isRemote != null) {
+        if (isRemote != null) {
             return isRemote.equals("false");
-	}
-	
-	int shm = checkShmExt();
-	if (shm != -1) {
-            return (shm == 1);
-	}
+        }
 
-	// If XServer doesn't support ShMem extension, 
-	// try the other way
+        int shm = checkShmExt();
+        if (shm != -1) {
+            return (shm == 1);
+        }
+
+        // If XServer doesn't support ShMem extension,
+        // try the other way
 
         String display = getDisplayString();
-	int ind = display.indexOf(':');
-	final String hostName = display.substring(0, ind);
-	if (ind <= 0) { 
-	    // ':0' case
+        int ind = display.indexOf(':');
+        final String hostName = display.substring(0, ind);
+        if (ind <= 0) {
+            // ':0' case
             return true;
-	}
+        }
 
-	Boolean result = (Boolean)java.security.AccessController.doPrivileged(
-	    new java.security.PrivilegedAction() {
-	    public Object run() {
-		InetAddress remAddr[] = null;
-		Enumeration locals = null;
-		Enumeration interfaces = null;
-		try {
-		    interfaces = NetworkInterface.getNetworkInterfaces();
-		    remAddr = InetAddress.getAllByName(hostName);
-		    if (remAddr == null) {
-			return Boolean.FALSE;
-		    }
-		} catch (UnknownHostException e) {
-		    System.err.println("Unknown host: " + hostName);
-		    return Boolean.FALSE;
-		} catch (SocketException e1) {
-		    System.err.println(e1.getMessage());
-		    return Boolean.FALSE;
-		}
+        Boolean result = (Boolean)java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction() {
+            public Object run() {
+                InetAddress remAddr[] = null;
+                Enumeration locals = null;
+                Enumeration interfaces = null;
+                try {
+                    interfaces = NetworkInterface.getNetworkInterfaces();
+                    remAddr = InetAddress.getAllByName(hostName);
+                    if (remAddr == null) {
+                        return Boolean.FALSE;
+                    }
+                } catch (UnknownHostException e) {
+                    System.err.println("Unknown host: " + hostName);
+                    return Boolean.FALSE;
+                } catch (SocketException e1) {
+                    System.err.println(e1.getMessage());
+                    return Boolean.FALSE;
+                }
 
-		for (; interfaces.hasMoreElements();) {
-		    locals = ((NetworkInterface)interfaces.nextElement()).getInetAddresses();
-		    for (; locals.hasMoreElements();) {
-			for (int i = 0; i < remAddr.length; i++) {
-			    if (locals.nextElement().equals(remAddr[i])) {
-				return Boolean.TRUE;
-			    }
-			}
-		    }
-		}
-		return Boolean.FALSE;
-	    }});
+                for (; interfaces.hasMoreElements();) {
+                    locals = ((NetworkInterface)interfaces.nextElement()).getInetAddresses();
+                    for (; locals.hasMoreElements();) {
+                        for (int i = 0; i < remAddr.length; i++) {
+                            if (locals.nextElement().equals(remAddr[i])) {
+                                return Boolean.TRUE;
+                            }
+                        }
+                    }
+                }
+                return Boolean.FALSE;
+            }});
         return result.booleanValue();
     }
 
@@ -315,26 +314,26 @@ public class X11GraphicsEnvironment
     HashMap<String, String> oblmap = null;
 
     private String getObliqueLucidaFontID(String fontID) {
-	if (fontID.startsWith("-lucidasans-medium-i-normal") ||
-	    fontID.startsWith("-lucidasans-bold-i-normal") ||
-	    fontID.startsWith("-lucidatypewriter-medium-i-normal") ||
-	    fontID.startsWith("-lucidatypewriter-bold-i-normal")) {
-	    return fontID.substring(0, fontID.indexOf("-i-"));
-	} else {
-	    return null;
-	}
+        if (fontID.startsWith("-lucidasans-medium-i-normal") ||
+            fontID.startsWith("-lucidasans-bold-i-normal") ||
+            fontID.startsWith("-lucidatypewriter-medium-i-normal") ||
+            fontID.startsWith("-lucidatypewriter-bold-i-normal")) {
+            return fontID.substring(0, fontID.indexOf("-i-"));
+        } else {
+            return null;
+        }
     }
 
    private void initObliqueLucidaFontMap() {
        oblmap = new HashMap<String, String>();
        oblmap.put("-lucidasans-medium",
-		  jreLibDirName+"/fonts/LucidaSansRegular.ttf");
+                  jreLibDirName+"/fonts/LucidaSansRegular.ttf");
        oblmap.put("-lucidasans-bold",
-		  jreLibDirName+"/fonts/LucidaSansDemiBold.ttf");
+                  jreLibDirName+"/fonts/LucidaSansDemiBold.ttf");
        oblmap.put("-lucidatypewriter-medium",
-		  jreLibDirName+"/fonts/LucidaTypewriterRegular.ttf");
+                  jreLibDirName+"/fonts/LucidaTypewriterRegular.ttf");
        oblmap.put("-lucidatypewriter-bold",
-		  jreLibDirName+"/fonts/LucidaTypewriterBold.ttf");
+                  jreLibDirName+"/fonts/LucidaTypewriterBold.ttf");
    }
 
     /**
@@ -342,7 +341,7 @@ public class X11GraphicsEnvironment
      * "-linotype-helvetica-medium-r-normal-sans-*-%d-*-*-p-*-iso8859-1"
      * and returns the name of the corresponding physical font.
      * This code is used to resolve font configuration fonts, and expects
-     * only to get called for these fonts. 
+     * only to get called for these fonts.
      */
     public String getFileNameFromPlatformName(String platName) {
         String fileName = null;
@@ -356,100 +355,100 @@ public class X11GraphicsEnvironment
          */
         fileName = super.getFileNameFromPlatformName(platName);
         if (fileName != null) {
-	    if (isHeadless() && fileName.startsWith("-")) {
-		/* if it's headless, no xlfd should be used */
-		    return null;
-	    }
-	    if (fileName.startsWith("/")) {
-		/* If a path is assigned in the font configuration file,
-		 * it is required that the config file also specify using the
-		 * new awtfontpath key the X11 font directories
-		 * which must be added to the X11 font path to support
-		 * AWT access to that font. For that reason we no longer
-		 * have code here to add the parent directory to the list
-		 * of font config dirs, since the parent directory may not
-		 * be sufficient if fonts are symbolically linked to a
-		 * different directory.
-		 *
-		 * Add this XLFD (platform name) to the list of known
-		 * ones for this file.
-		 */
-		Vector xVal = (Vector) xlfdMap.get(fileName);
-		if (xVal == null) {
-		    /* Try to be robust on Linux distros which move fonts
-		     * around by verifying that the fileName represents a
-		     * file that exists.  If it doesn't, set it to null
-		     * to trigger a search.
-		     */
-		    if (getFontConfiguration().needToSearchForFile(fileName)) {
-			fileName = null;
-		    }
-		    if (fileName != null) {
-			xVal = new Vector();
-			xVal.add(platName);
-			xlfdMap.put(fileName, xVal);
-		    }
-		} else {
-		    if (!xVal.contains(platName)) {
-			xVal.add(platName);
-		    }
-		}
-	    }
-	    if (fileName != null) {
-		fontNameMap.put(fontID, fileName);         
-		return fileName;
-	    }
+            if (isHeadless() && fileName.startsWith("-")) {
+                /* if it's headless, no xlfd should be used */
+                    return null;
+            }
+            if (fileName.startsWith("/")) {
+                /* If a path is assigned in the font configuration file,
+                 * it is required that the config file also specify using the
+                 * new awtfontpath key the X11 font directories
+                 * which must be added to the X11 font path to support
+                 * AWT access to that font. For that reason we no longer
+                 * have code here to add the parent directory to the list
+                 * of font config dirs, since the parent directory may not
+                 * be sufficient if fonts are symbolically linked to a
+                 * different directory.
+                 *
+                 * Add this XLFD (platform name) to the list of known
+                 * ones for this file.
+                 */
+                Vector xVal = (Vector) xlfdMap.get(fileName);
+                if (xVal == null) {
+                    /* Try to be robust on Linux distros which move fonts
+                     * around by verifying that the fileName represents a
+                     * file that exists.  If it doesn't, set it to null
+                     * to trigger a search.
+                     */
+                    if (getFontConfiguration().needToSearchForFile(fileName)) {
+                        fileName = null;
+                    }
+                    if (fileName != null) {
+                        xVal = new Vector();
+                        xVal.add(platName);
+                        xlfdMap.put(fileName, xVal);
+                    }
+                } else {
+                    if (!xVal.contains(platName)) {
+                        xVal.add(platName);
+                    }
+                }
+            }
+            if (fileName != null) {
+                fontNameMap.put(fontID, fileName);
+                return fileName;
+            }
         }
 
         if (fontID != null) {
             fileName = (String)fontNameMap.get(fontID);
-	    /* On Linux check for the Lucida Oblique fonts */
+            /* On Linux check for the Lucida Oblique fonts */
             if (fileName == null && isLinux && !isOpenJDK()) {
-		if (oblmap == null) {
-		    initObliqueLucidaFontMap();
-		}
-		String oblkey = getObliqueLucidaFontID(fontID);
-		if (oblkey != null) {
-		    fileName = oblmap.get(oblkey);
-		}
-	    }
-	    if (fontPath == null &&
-		(fileName == null || !fileName.startsWith("/"))) {
-		if (debugFonts) {
-		    logger.warning("** Registering all font paths because " +
-				   "can't find file for " + platName);
-		}
-		fontPath = getPlatformFontPath(noType1Font);
-		registerFontDirs(fontPath);
-		if (debugFonts) {
-		    logger.warning("** Finished registering all font paths");
-		}
-		fileName = (String)fontNameMap.get(fontID);
-	    }
-	    if (fileName == null && !isHeadless()) {
-		/* Query X11 directly to see if this font is available
-		 * as a native font.
-		 */
-		fileName = getX11FontName(platName);
-	    }
+                if (oblmap == null) {
+                    initObliqueLucidaFontMap();
+                }
+                String oblkey = getObliqueLucidaFontID(fontID);
+                if (oblkey != null) {
+                    fileName = oblmap.get(oblkey);
+                }
+            }
+            if (fontPath == null &&
+                (fileName == null || !fileName.startsWith("/"))) {
+                if (debugFonts) {
+                    logger.warning("** Registering all font paths because " +
+                                   "can't find file for " + platName);
+                }
+                fontPath = getPlatformFontPath(noType1Font);
+                registerFontDirs(fontPath);
+                if (debugFonts) {
+                    logger.warning("** Finished registering all font paths");
+                }
+                fileName = (String)fontNameMap.get(fontID);
+            }
+            if (fileName == null && !isHeadless()) {
+                /* Query X11 directly to see if this font is available
+                 * as a native font.
+                 */
+                fileName = getX11FontName(platName);
+            }
             if (fileName == null) {
                 fontID = switchFontIDForName(platName);
                 fileName = (String)fontNameMap.get(fontID);
             }
-	    if (fileName != null) {
-		fontNameMap.put(fontID, fileName);
-	    }
+            if (fileName != null) {
+                fontNameMap.put(fontID, fileName);
+            }
         }
         return fileName;
     }
 
     private static String getX11FontName(String platName) {
-	String xlfd = platName.replaceAll("%d", "*");
-	if (NativeFont.fontExists(xlfd)) {
-	    return xlfd;
-	} else {
-	    return null;
-	}
+        String xlfd = platName.replaceAll("%d", "*");
+        if (NativeFont.fontExists(xlfd)) {
+            return xlfd;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -465,12 +464,12 @@ public class X11GraphicsEnvironment
                 fileName = (String)fontNameMap.get(fontID);
             }
             if (fileName == null) {
-		fileName = getDefaultFontFile();
+                fileName = getDefaultFontFile();
             }
-	}
-	return fileName;
+        }
+        return fileName;
     }
-    
+
     // constants identifying XLFD and font ID fields
     private static final int FOUNDRY_FIELD = 1;
     private static final int FAMILY_NAME_FIELD = 2;
@@ -489,32 +488,32 @@ public class X11GraphicsEnvironment
 
     private String switchFontIDForName(String name) {
 
-	int[] hPos = new int[14];
-	int hyphenCnt = 1;
-	int pos = 1;
- 	
-	while (pos != -1 && hyphenCnt < 14) {
-	    pos = name.indexOf('-', pos);
-	    if (pos != -1) {
-		hPos[hyphenCnt++] = pos;
-		    pos++;
-	    }
-	}
-	
-	if (hyphenCnt != 14) {
-	    if (debugFonts) {
-		logger.severe("Font Configuration Font ID is malformed:" + name);
-	    }
-	    return name; // what else can we do?
-	}
-	    
-	String slant = name.substring(hPos[SLANT_FIELD-1]+1,
-					   hPos[SLANT_FIELD]);
-	String family = name.substring(hPos[FAMILY_NAME_FIELD-1]+1,
-					   hPos[FAMILY_NAME_FIELD]);
-	String registry = name.substring(hPos[CHARSET_REGISTRY_FIELD-1]+1,
-					   hPos[CHARSET_REGISTRY_FIELD]);
-	String encoding = name.substring(hPos[CHARSET_ENCODING_FIELD-1]+1);
+        int[] hPos = new int[14];
+        int hyphenCnt = 1;
+        int pos = 1;
+
+        while (pos != -1 && hyphenCnt < 14) {
+            pos = name.indexOf('-', pos);
+            if (pos != -1) {
+                hPos[hyphenCnt++] = pos;
+                    pos++;
+            }
+        }
+
+        if (hyphenCnt != 14) {
+            if (debugFonts) {
+                logger.severe("Font Configuration Font ID is malformed:" + name);
+            }
+            return name; // what else can we do?
+        }
+
+        String slant = name.substring(hPos[SLANT_FIELD-1]+1,
+                                           hPos[SLANT_FIELD]);
+        String family = name.substring(hPos[FAMILY_NAME_FIELD-1]+1,
+                                           hPos[FAMILY_NAME_FIELD]);
+        String registry = name.substring(hPos[CHARSET_REGISTRY_FIELD-1]+1,
+                                           hPos[CHARSET_REGISTRY_FIELD]);
+        String encoding = name.substring(hPos[CHARSET_ENCODING_FIELD-1]+1);
 
         if (slant.equals("i")) {
             slant = "o";
@@ -522,74 +521,74 @@ public class X11GraphicsEnvironment
             slant = "i";
         }
         // workaround for #4471000
-        if (family.equals("itc zapfdingbats") 
+        if (family.equals("itc zapfdingbats")
             && registry.equals("sun")
             && encoding.equals("fontspecific")){
             registry = "adobe";
-	}
-	StringBuffer sb =
-	    new StringBuffer(name.substring(hPos[FAMILY_NAME_FIELD-1],
-					    hPos[SLANT_FIELD-1]+1));
-	sb.append(slant);
-	sb.append(name.substring(hPos[SLANT_FIELD],
-				 hPos[SETWIDTH_NAME_FIELD]+1));
-	sb.append(registry);
-	sb.append(name.substring(hPos[CHARSET_ENCODING_FIELD-1]));
-	String retval = sb.toString().toLowerCase (Locale.ENGLISH);
-	return retval;
+        }
+        StringBuffer sb =
+            new StringBuffer(name.substring(hPos[FAMILY_NAME_FIELD-1],
+                                            hPos[SLANT_FIELD-1]+1));
+        sb.append(slant);
+        sb.append(name.substring(hPos[SLANT_FIELD],
+                                 hPos[SETWIDTH_NAME_FIELD]+1));
+        sb.append(registry);
+        sb.append(name.substring(hPos[CHARSET_ENCODING_FIELD-1]));
+        String retval = sb.toString().toLowerCase (Locale.ENGLISH);
+        return retval;
     }
 
 
     private String specificFontIDForName(String name) {
 
-	int[] hPos = new int[14];
-	int hyphenCnt = 1;
-	int pos = 1;
- 	
-	while (pos != -1 && hyphenCnt < 14) {
-	    pos = name.indexOf('-', pos);
-	    if (pos != -1) {
-		hPos[hyphenCnt++] = pos;
-		    pos++;
-	    }
-	}
+        int[] hPos = new int[14];
+        int hyphenCnt = 1;
+        int pos = 1;
 
-	if (hyphenCnt != 14) {
-	    if (debugFonts) {
-		logger.severe("Font Configuration Font ID is malformed:" + name);
-	    }
-	    return name; // what else can we do?
-	}
+        while (pos != -1 && hyphenCnt < 14) {
+            pos = name.indexOf('-', pos);
+            if (pos != -1) {
+                hPos[hyphenCnt++] = pos;
+                    pos++;
+            }
+        }
 
-	StringBuffer sb =
-	    new StringBuffer(name.substring(hPos[FAMILY_NAME_FIELD-1],
-					    hPos[SETWIDTH_NAME_FIELD]));
-	sb.append(name.substring(hPos[CHARSET_REGISTRY_FIELD-1]));
-	String retval = sb.toString().toLowerCase (Locale.ENGLISH);
-	return retval;
+        if (hyphenCnt != 14) {
+            if (debugFonts) {
+                logger.severe("Font Configuration Font ID is malformed:" + name);
+            }
+            return name; // what else can we do?
+        }
+
+        StringBuffer sb =
+            new StringBuffer(name.substring(hPos[FAMILY_NAME_FIELD-1],
+                                            hPos[SETWIDTH_NAME_FIELD]));
+        sb.append(name.substring(hPos[CHARSET_REGISTRY_FIELD-1]));
+        String retval = sb.toString().toLowerCase (Locale.ENGLISH);
+        return retval;
     }
 
     protected String[] getNativeNames(String fontFileName,
-				      String platformName) {
+                                      String platformName) {
         Vector nativeNames;
         if ((nativeNames=(Vector)xlfdMap.get(fontFileName))==null) {
-	    if (platformName == null) {
-		return null;
-	    } else {
-		/* back-stop so that at least the name used in the
-		 * font configuration file is known as a native name
-		 */
-		String []natNames = new String[1];
-		natNames[0] = platformName;
-		return natNames;
-	    }
+            if (platformName == null) {
+                return null;
+            } else {
+                /* back-stop so that at least the name used in the
+                 * font configuration file is known as a native name
+                 */
+                String []natNames = new String[1];
+                natNames[0] = platformName;
+                return natNames;
+            }
         } else {
-	    int len = nativeNames.size();
-	    return (String[])nativeNames.toArray(new String[len]);
-	}
+            int len = nativeNames.size();
+            return (String[])nativeNames.toArray(new String[len]);
+        }
     }
 
-    
+
     // An X font spec (xlfd) includes an encoding. The same TrueType font file
     // may be referenced from different X font directories in font.dir files
     // to support use in multiple encodings by X apps.
@@ -614,52 +613,52 @@ public class X11GraphicsEnvironment
     // xFontDirsMap (it will be null). In this case the awtfontpath entries
     // must specify all the X11 directories needed by AWT.
     protected void addFontToPlatformFontPath(String platformName) {
-	if (xFontDirsMap != null) {
-	    String fontID = specificFontIDForName(platformName);
-	    String dirName = (String)xFontDirsMap.get(fontID);
-	    if (dirName != null) {
-		fontConfigDirs.add(dirName);
-	    }
-	}
-	return;
+        if (xFontDirsMap != null) {
+            String fontID = specificFontIDForName(platformName);
+            String dirName = (String)xFontDirsMap.get(fontID);
+            if (dirName != null) {
+                fontConfigDirs.add(dirName);
+            }
+        }
+        return;
     }
 
     protected void getPlatformFontPathFromFontConfig() {
-	if (fontConfigDirs == null) {
-	    fontConfigDirs = getFontConfiguration().getAWTFontPathSet();
-	    if (debugFonts && fontConfigDirs != null) {
-		String[] names = fontConfigDirs.toArray(new String[0]);
-		for (int i=0;i<names.length;i++) {
-		    logger.info("awtfontpath : " + names[i]);
-		}
-	    }
-	}
+        if (fontConfigDirs == null) {
+            fontConfigDirs = getFontConfiguration().getAWTFontPathSet();
+            if (debugFonts && fontConfigDirs != null) {
+                String[] names = fontConfigDirs.toArray(new String[0]);
+                for (int i=0;i<names.length;i++) {
+                    logger.info("awtfontpath : " + names[i]);
+                }
+            }
+        }
     }
 
     protected void registerPlatformFontsUsedByFontConfiguration() {
         if (fontConfigDirs == null) {
             return;
         }
-	if (isLinux) {
-	    fontConfigDirs.add(jreLibDirName+File.separator+"oblique-fonts");
-	}
-	fontdirs = (String[])fontConfigDirs.toArray(new String[0]);
+        if (isLinux) {
+            fontConfigDirs.add(jreLibDirName+File.separator+"oblique-fonts");
+        }
+        fontdirs = (String[])fontConfigDirs.toArray(new String[0]);
     }
 
     /* Called by MToolkit to set the X11 font path */
     public static void setNativeFontPath() {
-	if (fontdirs == null) {
+        if (fontdirs == null) {
             return;
-	}
+        }
 
         // need to register these individually rather than by one call
-	// to ensure that one bad directory doesn't cause all to be rejected
-	for (int i=0; i<fontdirs.length; i++) {
+        // to ensure that one bad directory doesn't cause all to be rejected
+        for (int i=0; i<fontdirs.length; i++) {
             if (debugFonts) {
-		logger.info("Add " + fontdirs[i] + " to X11 fontpath");
+                logger.info("Add " + fontdirs[i] + " to X11 fontpath");
             }
             FontManager.setNativeFontPath(fontdirs[i]);
-	}
+        }
     }
 
     /* Register just the paths, (it doesn't register the fonts).
@@ -705,25 +704,25 @@ public class X11GraphicsEnvironment
      * see X11GE.getFileNameFromPlatformName(..)
      * If you don't get all of these then some code points may
      * not use the Xserver, and will not get the PCF bitmaps
-     * that are available for some point sizes. 
+     * that are available for some point sizes.
      * So, in the event that there is such a problem,
      * unconditionally making this call may be necessary, at
      * some cost to JRE start-up
      */
     protected void registerFontDirs(String pathName) {
 
-        StringTokenizer parser = new StringTokenizer(pathName, 
+        StringTokenizer parser = new StringTokenizer(pathName,
                                                      File.pathSeparator);
         try {
             while (parser.hasMoreTokens()) {
                 String dirPath = parser.nextToken();
-		if (dirPath != null && !registeredDirs.containsKey(dirPath)) {
-		    registeredDirs.put(dirPath, null);
-		    registerFontDir(dirPath);
-		}
-	    }
+                if (dirPath != null && !registeredDirs.containsKey(dirPath)) {
+                    registeredDirs.put(dirPath, null);
+                    registerFontDir(dirPath);
+                }
+            }
         } catch (NoSuchElementException e) {
-        }	
+        }
     }
 
     /* NOTE: this method needs to be executed in a privileged context.
@@ -735,150 +734,150 @@ public class X11GraphicsEnvironment
     protected void registerFontDir(String path) {
         /* fonts.dir file format looks like :-
          * 47
-	 * Arial.ttf -monotype-arial-regular-r-normal--0-0-0-0-p-0-iso8859-1
+         * Arial.ttf -monotype-arial-regular-r-normal--0-0-0-0-p-0-iso8859-1
          * Arial-Bold.ttf -monotype-arial-bold-r-normal--0-0-0-0-p-0-iso8859-1
-	 * ...
+         * ...
          */
-	if (debugFonts) {
-	    logger.info("ParseFontDir " + path);
-	}
+        if (debugFonts) {
+            logger.info("ParseFontDir " + path);
+        }
         File fontsDotDir = new File(path + File.separator + "fonts.dir");
-	FileReader fr = null;
-	try {
-	    if (fontsDotDir.canRead()) {
-	        fr = new FileReader(fontsDotDir);
-		BufferedReader br = new BufferedReader(fr, 8192);
-		StreamTokenizer st = new StreamTokenizer(br);
-		st.eolIsSignificant(true);
-		int ttype = st.nextToken();
-		if (ttype == StreamTokenizer.TT_NUMBER) {
-		    int numEntries = (int)st.nval;
-		    ttype = st.nextToken();
-		    if (ttype == StreamTokenizer.TT_EOL) {
-			st.resetSyntax();
-			st.wordChars(32, 127);
-			st.wordChars(128 + 32, 255);
-			st.whitespaceChars(0, 31);
+        FileReader fr = null;
+        try {
+            if (fontsDotDir.canRead()) {
+                fr = new FileReader(fontsDotDir);
+                BufferedReader br = new BufferedReader(fr, 8192);
+                StreamTokenizer st = new StreamTokenizer(br);
+                st.eolIsSignificant(true);
+                int ttype = st.nextToken();
+                if (ttype == StreamTokenizer.TT_NUMBER) {
+                    int numEntries = (int)st.nval;
+                    ttype = st.nextToken();
+                    if (ttype == StreamTokenizer.TT_EOL) {
+                        st.resetSyntax();
+                        st.wordChars(32, 127);
+                        st.wordChars(128 + 32, 255);
+                        st.whitespaceChars(0, 31);
 
-			for (int i=0; i < numEntries; i++) {
-			    ttype = st.nextToken();
-			    if (ttype == StreamTokenizer.TT_EOF) {
-				break;
-			    }
-			    if (ttype != StreamTokenizer.TT_WORD) {
-				break;
-			    }
-			    int breakPos = st.sval.indexOf(' ');
-			    if (breakPos <= 0) {
-				/* On TurboLinux 8.0 a fonts.dir file had
-				 * a line with integer value "24" which
-				 * appeared to be the number of remaining
-				 * entries in the file. This didn't add to
-				 * the value on the first line of the file.
-				 * Seemed like XFree86 didn't like this line
-				 * much either. It failed to parse the file.
-				 * Ignore lines like this completely, and
-				 * don't let them count as an entry.
-				 */
-				numEntries++;
-				ttype = st.nextToken();
-				if (ttype != StreamTokenizer.TT_EOL) {
-				    break;
-				}
+                        for (int i=0; i < numEntries; i++) {
+                            ttype = st.nextToken();
+                            if (ttype == StreamTokenizer.TT_EOF) {
+                                break;
+                            }
+                            if (ttype != StreamTokenizer.TT_WORD) {
+                                break;
+                            }
+                            int breakPos = st.sval.indexOf(' ');
+                            if (breakPos <= 0) {
+                                /* On TurboLinux 8.0 a fonts.dir file had
+                                 * a line with integer value "24" which
+                                 * appeared to be the number of remaining
+                                 * entries in the file. This didn't add to
+                                 * the value on the first line of the file.
+                                 * Seemed like XFree86 didn't like this line
+                                 * much either. It failed to parse the file.
+                                 * Ignore lines like this completely, and
+                                 * don't let them count as an entry.
+                                 */
+                                numEntries++;
+                                ttype = st.nextToken();
+                                if (ttype != StreamTokenizer.TT_EOL) {
+                                    break;
+                                }
 
-				continue;
-			    }
-			    if (st.sval.charAt(0) == '!') {
-				/* TurboLinux 8.0 comment line: ignore.
-				 * can't use st.commentChar('!') to just
-				 * skip because this line mustn't count
-				 * against numEntries.
-				 */
-				numEntries++;
-				ttype = st.nextToken();
-				if (ttype != StreamTokenizer.TT_EOL) {
-				    break;
-				}
-				continue;
-			    }
-			    String fileName = st.sval.substring(0, breakPos);
-			    /* TurboLinux 8.0 uses some additional syntax to
-			     * indicate algorithmic styling values.
-			     * Ignore ':' separated files at the beginning
-			     * of the fileName
-			     */
-			    int lastColon = fileName.lastIndexOf(':');
-			    if (lastColon > 0) {
-				if (lastColon+1 >= fileName.length()) {
-				    continue;
-				}
-				fileName = fileName.substring(lastColon+1);
-			    }
-			    String fontPart = st.sval.substring(breakPos+1);
-			    String fontID = specificFontIDForName(fontPart);
-			    String sVal = (String) fontNameMap.get(fontID);
+                                continue;
+                            }
+                            if (st.sval.charAt(0) == '!') {
+                                /* TurboLinux 8.0 comment line: ignore.
+                                 * can't use st.commentChar('!') to just
+                                 * skip because this line mustn't count
+                                 * against numEntries.
+                                 */
+                                numEntries++;
+                                ttype = st.nextToken();
+                                if (ttype != StreamTokenizer.TT_EOL) {
+                                    break;
+                                }
+                                continue;
+                            }
+                            String fileName = st.sval.substring(0, breakPos);
+                            /* TurboLinux 8.0 uses some additional syntax to
+                             * indicate algorithmic styling values.
+                             * Ignore ':' separated files at the beginning
+                             * of the fileName
+                             */
+                            int lastColon = fileName.lastIndexOf(':');
+                            if (lastColon > 0) {
+                                if (lastColon+1 >= fileName.length()) {
+                                    continue;
+                                }
+                                fileName = fileName.substring(lastColon+1);
+                            }
+                            String fontPart = st.sval.substring(breakPos+1);
+                            String fontID = specificFontIDForName(fontPart);
+                            String sVal = (String) fontNameMap.get(fontID);
 
-			    if (debugFonts) {
-				logger.info("file=" + fileName +
-					    " xlfd=" + fontPart);
-				logger.info("fontID=" + fontID +
-					    " sVal=" + sVal);
-			    }
-			    String fullPath = null;
-			    try {
-				File file = new File(path,fileName);
-				/* we may have a resolved symbolic link
-				 * this becomes important for an xlfd we
-				 * still need to know the location it was
-				 * found to update the X server font path
-				 * for use by AWT heavyweights - and when 2D
-				 * wants to use the native rasteriser.
-				 */
-				if (xFontDirsMap == null) {
-				    xFontDirsMap = new HashMap();
-				}
-				xFontDirsMap.put(fontID, path);
-				fullPath = file.getCanonicalPath();
-			    } catch (IOException e) {
-				fullPath = path + File.separator + fileName;
-			    }
-			    Vector xVal = (Vector) xlfdMap.get(fullPath);
-			    if (debugFonts) {
-				logger.info("fullPath=" + fullPath +
-					    " xVal=" + xVal);
-			    }
-			    if ((xVal == null || !xVal.contains(fontPart)) &&
-				(sVal == null) || !sVal.startsWith("/")) {
-				if (debugFonts) {
-				    logger.info("Map fontID:"+fontID +
-						"to file:" + fullPath);
-				}
-				fontNameMap.put(fontID, fullPath);
-				if (xVal == null) {
-				    xVal = new Vector();
-				    xlfdMap.put (fullPath, xVal);
-				}
-				xVal.add(fontPart);
-			    }
+                            if (debugFonts) {
+                                logger.info("file=" + fileName +
+                                            " xlfd=" + fontPart);
+                                logger.info("fontID=" + fontID +
+                                            " sVal=" + sVal);
+                            }
+                            String fullPath = null;
+                            try {
+                                File file = new File(path,fileName);
+                                /* we may have a resolved symbolic link
+                                 * this becomes important for an xlfd we
+                                 * still need to know the location it was
+                                 * found to update the X server font path
+                                 * for use by AWT heavyweights - and when 2D
+                                 * wants to use the native rasteriser.
+                                 */
+                                if (xFontDirsMap == null) {
+                                    xFontDirsMap = new HashMap();
+                                }
+                                xFontDirsMap.put(fontID, path);
+                                fullPath = file.getCanonicalPath();
+                            } catch (IOException e) {
+                                fullPath = path + File.separator + fileName;
+                            }
+                            Vector xVal = (Vector) xlfdMap.get(fullPath);
+                            if (debugFonts) {
+                                logger.info("fullPath=" + fullPath +
+                                            " xVal=" + xVal);
+                            }
+                            if ((xVal == null || !xVal.contains(fontPart)) &&
+                                (sVal == null) || !sVal.startsWith("/")) {
+                                if (debugFonts) {
+                                    logger.info("Map fontID:"+fontID +
+                                                "to file:" + fullPath);
+                                }
+                                fontNameMap.put(fontID, fullPath);
+                                if (xVal == null) {
+                                    xVal = new Vector();
+                                    xlfdMap.put (fullPath, xVal);
+                                }
+                                xVal.add(fontPart);
+                            }
 
-			    ttype = st.nextToken();
-			    if (ttype != StreamTokenizer.TT_EOL) {
-				break;
-			    }
-			}
-		    }
-		}
-		fr.close();
-	    }
-	} catch (IOException ioe1) {
-	} finally {
-	    if (fr != null) {
-		try {
-		    fr.close();
-		}  catch (IOException ioe2) {
-		}
-	    }
-	}
+                            ttype = st.nextToken();
+                            if (ttype != StreamTokenizer.TT_EOL) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                fr.close();
+            }
+        } catch (IOException ioe1) {
+        } finally {
+            if (fr != null) {
+                try {
+                    fr.close();
+                }  catch (IOException ioe2) {
+                }
+            }
+        }
     }
 
     @Override
@@ -897,17 +896,17 @@ public class X11GraphicsEnvironment
         xlfdMap = new HashMap(1);
         fontNameMap = new HashMap(1);
     }
-    
+
     // Implements SunGraphicsEnvironment.createFontConfiguration.
     protected FontConfiguration createFontConfiguration() {
-	return new MFontConfiguration(this);
+        return new MFontConfiguration(this);
     }
     public FontConfiguration
-	createFontConfiguration(boolean preferLocaleFonts,
-				boolean preferPropFonts) {
+        createFontConfiguration(boolean preferLocaleFonts,
+                                boolean preferPropFonts) {
 
-	return new MFontConfiguration(this,
-				      preferLocaleFonts, preferPropFonts);
+        return new MFontConfiguration(this,
+                                      preferLocaleFonts, preferPropFonts);
     }
 
     /**
@@ -922,7 +921,7 @@ public class X11GraphicsEnvironment
     private static native boolean pRunningXinerama();
     private static native Point getXineramaCenterPoint();
 
-    /** 
+    /**
      * Override for Xinerama case: call new Solaris API for getting the correct
      * centering point from the windowing system.
      */
@@ -934,7 +933,7 @@ public class X11GraphicsEnvironment
             }
         }
         return super.getCenterPoint();
-    } 
+    }
 
     /**
      * Override for Xinerama case
@@ -955,7 +954,7 @@ public class X11GraphicsEnvironment
             if (screenLog.isLoggable(Level.FINER)) {
                 screenLog.log(Level.FINER, "Running Xinerama: " + xinerState);
             }
-        } 
+        }
         return xinerState.booleanValue();
     }
 

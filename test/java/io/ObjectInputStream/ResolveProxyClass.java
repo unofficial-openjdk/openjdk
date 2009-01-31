@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -48,57 +48,57 @@ public class ResolveProxyClass {
      */
     private static class TestObjectInputStream extends ObjectInputStream {
 
-	TestObjectInputStream() throws IOException {
-	    super();
-	}
+        TestObjectInputStream() throws IOException {
+            super();
+        }
 
-	protected Class resolveProxyClass(String[] interfaces)
-	    throws IOException, ClassNotFoundException
-	{
-	    return super.resolveProxyClass(interfaces);
-	}
+        protected Class resolveProxyClass(String[] interfaces)
+            throws IOException, ClassNotFoundException
+        {
+            return super.resolveProxyClass(interfaces);
+        }
     }
 
     public static void main(String[] args) {
 
-	System.err.println("\nRegression test for bug 4258644\n");
+        System.err.println("\nRegression test for bug 4258644\n");
 
-	try {
+        try {
 
-	    /*
-	     * Set this thread's context class loader to null, so that the
-	     * resolveProxyClass implementation cannot cheat by guessing that
-	     * the context class loader is the appropriate loader to pass to
-	     * the Proxy.getProxyClass method.
-	     */
-	    Thread.currentThread().setContextClassLoader(null);
+            /*
+             * Set this thread's context class loader to null, so that the
+             * resolveProxyClass implementation cannot cheat by guessing that
+             * the context class loader is the appropriate loader to pass to
+             * the Proxy.getProxyClass method.
+             */
+            Thread.currentThread().setContextClassLoader(null);
 
-	    /*
-	     * Expect the proxy class to be defined in the system class
-	     * loader, because that is the defining loader of this test
-	     * code, and it should be the first loader on the stack when
-	     * ObjectInputStream.resolveProxyClass gets executed.
-	     */
-	    ClassLoader expectedLoader = ClassLoader.getSystemClassLoader();
+            /*
+             * Expect the proxy class to be defined in the system class
+             * loader, because that is the defining loader of this test
+             * code, and it should be the first loader on the stack when
+             * ObjectInputStream.resolveProxyClass gets executed.
+             */
+            ClassLoader expectedLoader = ClassLoader.getSystemClassLoader();
 
-	    TestObjectInputStream in = new TestObjectInputStream();
-	    Class proxyClass = in.resolveProxyClass(
-		new String[] { Runnable.class.getName() });
-	    ClassLoader proxyLoader = proxyClass.getClassLoader();
-	    System.err.println("proxy class \"" + proxyClass +
-		"\" defined in loader: " + proxyLoader);
+            TestObjectInputStream in = new TestObjectInputStream();
+            Class proxyClass = in.resolveProxyClass(
+                new String[] { Runnable.class.getName() });
+            ClassLoader proxyLoader = proxyClass.getClassLoader();
+            System.err.println("proxy class \"" + proxyClass +
+                "\" defined in loader: " + proxyLoader);
 
-	    if (proxyLoader != expectedLoader) {
-		throw new RuntimeException(
-		    "proxy class defined in loader: " + proxyLoader);
-	    }
+            if (proxyLoader != expectedLoader) {
+                throw new RuntimeException(
+                    "proxy class defined in loader: " + proxyLoader);
+            }
 
-	    System.err.println("\nTEST PASSED");
+            System.err.println("\nTEST PASSED");
 
-	} catch (Throwable e) {
-	    System.err.println("\nTEST FAILED:");
-	    e.printStackTrace();
-	    throw new RuntimeException("TEST FAILED: " + e.toString());
-	}
+        } catch (Throwable e) {
+            System.err.println("\nTEST FAILED:");
+            e.printStackTrace();
+            throw new RuntimeException("TEST FAILED: " + e.toString());
+        }
     }
 }

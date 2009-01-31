@@ -68,7 +68,6 @@ import org.xml.sax.SAXParseException;
 import com.sun.beans.ObjectHandler;
 
 /**
- * @version 1.23, 09/12/05
  */
 class SynthParser extends HandlerBase {
     //
@@ -171,7 +170,7 @@ class SynthParser extends HandlerBase {
      * Based URL used to resolve paths.
      */
     private URL _urlResourceBase;
-    
+
     /**
      * Based class used to resolve paths.
      */
@@ -229,9 +228,9 @@ class SynthParser extends HandlerBase {
             throw new IllegalArgumentException(
                 "You must supply an InputStream, StyleFactory and Class or URL");
         }
-        
+
         assert(!(urlResourceBase != null && classResourceBase != null));
-        
+
         _factory = factory;
         _classResourceBase = classResourceBase;
         _urlResourceBase = urlResourceBase;
@@ -243,12 +242,12 @@ class SynthParser extends HandlerBase {
                 saxParser.parse(new BufferedInputStream(inputStream), this);
             } catch (ParserConfigurationException e) {
                 throw new ParseException("Error parsing: " + e, 0);
-            } 
+            }
             catch (SAXException se) {
-                throw new ParseException("Error parsing: " + se + " " + 
+                throw new ParseException("Error parsing: " + se + " " +
                                          se.getException(), 0);
             }
-            catch (IOException ioe) { 
+            catch (IOException ioe) {
                 throw new ParseException("Error parsing: " + ioe, 0);
             }
         } finally {
@@ -608,7 +607,7 @@ class SynthParser extends HandlerBase {
                             argb = Integer.decode(value);
                             hasAlpha = true;
                         } else if (length == 9) {
-                            // Color has alpha and is of the form 
+                            // Color has alpha and is of the form
                             // #AARRGGBB.
                             // The following split decoding is mandatory due to
                             // Integer.decode() behavior which won't decode
@@ -892,7 +891,7 @@ class SynthParser extends HandlerBase {
                 }
             }
             else if (key.equals(ATTRIBUTE_KEY)) {
-                path = attributes.getValue(i); 
+                path = attributes.getValue(i);
             }
         }
         if (style == null || path == null || type == -1) {
@@ -1002,7 +1001,7 @@ class SynthParser extends HandlerBase {
         }
         if (painter == null) {
             if (type == ELEMENT_PAINTER) {
-                throw new SAXException(type + 
+                throw new SAXException(type +
                              ": you must specify an idref");
             }
             if (sourceInsets == null && !center) {
@@ -1067,7 +1066,7 @@ class SynthParser extends HandlerBase {
         if (path == null) {
             throw new SAXException("imageIcon: you must specify a path");
         }
-        register(id, new LazyImageIcon(getResource(path))); 
+        register(id, new LazyImageIcon(getResource(path)));
        }
 
     private void startOpaque(AttributeList attributes) throws
@@ -1182,7 +1181,7 @@ class SynthParser extends HandlerBase {
     }
 
     public void startElement(String name, AttributeList attributes)
-	             throws SAXException {
+                     throws SAXException {
         name = name.intern();
         if (name == ELEMENT_STYLE) {
             startStyle(attributes);
@@ -1267,7 +1266,7 @@ class SynthParser extends HandlerBase {
     }
 
     public void ignorableWhitespace (char ch[], int start, int length)
-	throws SAXException {
+        throws SAXException {
         if (isForwarding()) {
             getHandler().ignorableWhitespace(ch, start, length);
         }
@@ -1291,13 +1290,13 @@ class SynthParser extends HandlerBase {
             getHandler().error(e);
         }
     }
-    
-    
+
+
     public void fatalError(SAXParseException e) throws SAXException {
         if (isForwarding()) {
             getHandler().fatalError(e);
         }
-	throw e;
+        throw e;
     }
 
 
@@ -1317,7 +1316,7 @@ class SynthParser extends HandlerBase {
                 super.paintIcon(c, g, x, y);
             }
         }
-    
+
         public int getIconWidth() {
             if (getImage() != null) {
                 return super.getIconWidth();

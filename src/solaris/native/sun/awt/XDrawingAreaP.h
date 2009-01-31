@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 #ifndef _XDrawingAreaP_h_
 #define _XDrawingAreaP_h_
@@ -42,17 +40,17 @@
 
 /* Define part class structure */
 typedef struct _XDrawingAreaClass {
-	XtPointer			extension;
+        XtPointer                       extension;
 } XDrawingAreaClassPart;
 
 /* Define the full class record */
 typedef struct _XDrawingAreaClassRec {
-	CoreClassPart		core_class;
-	CompositeClassPart	composite_class;
-	ConstraintClassPart	constraint_class;
-	XmManagerClassPart	manager_class;
-	XmDrawingAreaClassPart	drawing_area_class;
-	XDrawingAreaClassPart	xdrawingarea_class;
+        CoreClassPart           core_class;
+        CompositeClassPart      composite_class;
+        ConstraintClassPart     constraint_class;
+        XmManagerClassPart      manager_class;
+        XmDrawingAreaClassPart  drawing_area_class;
+        XDrawingAreaClassPart   xdrawingarea_class;
 } XDrawingAreaClassRec;
 
 /* External definition for class record */
@@ -66,14 +64,13 @@ extern XDrawingAreaClassRec xDrawingAreaClassRec;
 
 typedef struct _XDrawingAreaRec
 {
-	CorePart		core;
-	CompositePart		composite;
-	ConstraintPart		constraint;
-	XmManagerPart		manager;
-	XmDrawingAreaPart	drawing_area;
+        CorePart                core;
+        CompositePart           composite;
+        ConstraintPart          constraint;
+        XmManagerPart           manager;
+        XmDrawingAreaPart       drawing_area;
 } XDrawingAreaRec;
 
 
 
 #endif /* !_VDrawingAreaP_h_ */
-

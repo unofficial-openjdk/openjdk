@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM1098;
  * Tables and data to convert Unicode to Cp1098
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp1098 extends CharToByteSingleByte {

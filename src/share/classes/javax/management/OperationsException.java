@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management; 
+package javax.management;
 
 
 
@@ -33,7 +33,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class OperationsException extends JMException   { 
+public class OperationsException extends JMException   {
 
     /* Serial version */
     private static final long serialVersionUID = -4967597595580536216L;
@@ -42,16 +42,16 @@ public class OperationsException extends JMException   {
      * Default constructor.
      */
     public OperationsException() {
-	super();
+        super();
     }
-    
+
     /**
      * Constructor that allows a specific error message to be specified.
      *
      * @param message the detail message.
      */
     public OperationsException(String message) {
-	super(message);
+        super(message);
     }
-    
+
 }

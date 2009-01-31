@@ -37,7 +37,7 @@ class FileDispatcher extends NativeDispatcher
 
     static {
         Util.load();
-	init();
+        init();
     }
 
     int read(FileDescriptor fd, long address, int len) throws IOException {
@@ -64,7 +64,7 @@ class FileDispatcher extends NativeDispatcher
     }
 
     long writev(FileDescriptor fd, long address, int len)
-	throws IOException
+        throws IOException
     {
         return writev0(fd, address, len);
     }
@@ -74,28 +74,28 @@ class FileDispatcher extends NativeDispatcher
     }
 
     void preClose(FileDescriptor fd) throws IOException {
-	preClose0(fd);
+        preClose0(fd);
     }
 
     // -- Native methods --
 
     static native int read0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native int pread0(FileDescriptor fd, long address, int len,
                              long position) throws IOException;
 
     static native long readv0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native int write0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native int pwrite0(FileDescriptor fd, long address, int len,
                              long position) throws IOException;
 
     static native long writev0(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     static native void close0(FileDescriptor fd) throws IOException;
 

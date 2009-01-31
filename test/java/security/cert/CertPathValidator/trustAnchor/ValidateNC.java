@@ -24,10 +24,10 @@
 /**
  * @test
  * @bug 4458951
- * @summary Check that Sun's PKIX implementation of 
- *	CertPathValidator.validate() and CertPathBuilder.build() throw an 
- *	InvalidAlgorithmParameterException if any of the TrustAnchors specified
- *	contain nameConstraints
+ * @summary Check that Sun's PKIX implementation of
+ *      CertPathValidator.validate() and CertPathBuilder.build() throw an
+ *      InvalidAlgorithmParameterException if any of the TrustAnchors specified
+ *      contain nameConstraints
  */
 import java.io.File;
 import java.io.FileInputStream;
@@ -63,7 +63,7 @@ import sun.security.util.DerInputStream;
  * @author      Sean Mullan
  */
 public final class ValidateNC {
- 
+
     private static CertPath path;
     private static PKIXParameters params;
     private static Set anchors;
@@ -73,25 +73,25 @@ public final class ValidateNC {
         String[] certs = { "sun2labs2.cer", "labs2isrg2.cer" };
 
         createPath(certs);
-	try {
+        try {
             validate(path, params);
-	    throw new Exception("CertPathValidator should have thrown an " +
-	      "InvalidAlgorithmParameterException");
-	} catch (InvalidAlgorithmParameterException iape) {
-	    // success! 
-	}
+            throw new Exception("CertPathValidator should have thrown an " +
+              "InvalidAlgorithmParameterException");
+        } catch (InvalidAlgorithmParameterException iape) {
+            // success!
+        }
 
-	try {
-	    X509CertSelector sel = new X509CertSelector();
-	    sel.setSubject("cn=sean");
-	    PKIXBuilderParameters bparams = 
-		new PKIXBuilderParameters(anchors, sel);
+        try {
+            X509CertSelector sel = new X509CertSelector();
+            sel.setSubject("cn=sean");
+            PKIXBuilderParameters bparams =
+                new PKIXBuilderParameters(anchors, sel);
             build(bparams);
-	    throw new Exception("CertPathBuilder should have thrown an " +
-	      "InvalidAlgorithmParameterException");
-	} catch (InvalidAlgorithmParameterException iape) {
-	    // success! 
-	}
+            throw new Exception("CertPathBuilder should have thrown an " +
+              "InvalidAlgorithmParameterException");
+        } catch (InvalidAlgorithmParameterException iape) {
+            // success!
+        }
     }
 
     public static void createPath(String[] certs) throws Exception {
@@ -114,7 +114,7 @@ public final class ValidateNC {
         params = new PKIXParameters(anchors);
         params.setRevocationEnabled(false);
     }
-    
+
     /**
      * Get a DER-encoded X.509 certificate from a file.
      *
@@ -127,7 +127,7 @@ public final class ValidateNC {
             X509Certificate cert = null;
             try {
                 File certFile = new File(System.getProperty("test.src", "."),
-		    certFilePath);
+                    certFilePath);
                 FileInputStream certFileInputStream =
                     new FileInputStream(certFile);
                 CertificateFactory cf = CertificateFactory.getInstance("X509");

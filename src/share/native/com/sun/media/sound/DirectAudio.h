@@ -58,9 +58,9 @@ typedef struct tag_DirectAudioDeviceDescription {
 
 // callback from GetFormats, implemented in DirectAudioDevice.c
 void DAUDIO_AddAudioFormat(void* creator, int significantBits, int frameSizeInBytes,
-			   int channels, float sampleRate, 
-			   int encoding, int isSigned, 
-			   int bigEndian);
+                           int channels, float sampleRate,
+                           int encoding, int isSigned,
+                           int bigEndian);
 
 
 // the following methods need to be implemented by the platform dependent code
@@ -69,17 +69,17 @@ void DAUDIO_AddAudioFormat(void* creator, int significantBits, int frameSizeInBy
 INT32 DAUDIO_GetDirectAudioDeviceCount();
 
 /* returns TRUE on success, FALSE otherwise */
-INT32 DAUDIO_GetDirectAudioDeviceDescription(INT32 mixerIndex, 
+INT32 DAUDIO_GetDirectAudioDeviceDescription(INT32 mixerIndex,
                                              DirectAudioDeviceDescription* description);
 
 // SourceDataLine and TargetDataLine
 
 void DAUDIO_GetFormats(INT32 mixerIndex, INT32 deviceID, int isSource, void* creator);
 
-void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource, 
-		  int encoding, float sampleRate, int sampleSizeInBits, 
-		  int frameSize, int channels, 
-		  int isSigned, int isBigEndian, int bufferSizeInBytes);
+void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
+                  int encoding, float sampleRate, int sampleSizeInBits,
+                  int frameSize, int channels,
+                  int isSigned, int isBigEndian, int bufferSizeInBytes);
 int DAUDIO_Start(void* id, int isSource);
 int DAUDIO_Stop(void* id, int isSource);
 void DAUDIO_Close(void* id, int isSource);

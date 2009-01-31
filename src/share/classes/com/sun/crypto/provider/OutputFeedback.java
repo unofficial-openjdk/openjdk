@@ -35,7 +35,7 @@ import java.security.InvalidKeyException;
  * <i>plugged-in</i> using the constructor.
  *
  * <p>NOTE: This class does not deal with buffering or padding.
- *  
+ *
  * @author Gigi Ankeny
  */
 final class OutputFeedback extends FeedbackCipher {
@@ -51,7 +51,7 @@ final class OutputFeedback extends FeedbackCipher {
     private byte[] register = null;
 
     /*
-     * number of bytes for each stream unit, defaults to the blocksize 
+     * number of bytes for each stream unit, defaults to the blocksize
      * of the embedded cipher
      */
     private int numBytes;
@@ -60,22 +60,22 @@ final class OutputFeedback extends FeedbackCipher {
     private byte[] registerSave = null;
 
     OutputFeedback(SymmetricCipher embeddedCipher, int numBytes) {
-	super(embeddedCipher);
-	if (numBytes > blockSize) {
-	    numBytes = blockSize;	    
-	}
-	this.numBytes = numBytes;
-	k = new byte[blockSize];
-	register = new byte[blockSize];
+        super(embeddedCipher);
+        if (numBytes > blockSize) {
+            numBytes = blockSize;
+        }
+        this.numBytes = numBytes;
+        k = new byte[blockSize];
+        register = new byte[blockSize];
     }
 
     /**
      * Gets the name of this feedback mode.
-     * 
+     *
      * @return the string <code>OFB</code>
      */
     String getFeedback() {
-	return "OFB";
+        return "OFB";
     }
 
     /**
@@ -91,14 +91,14 @@ final class OutputFeedback extends FeedbackCipher {
      * initializing this cipher
      */
     void init(boolean decrypting, String algorithm, byte[] key, byte[] iv)
-	    throws InvalidKeyException {
-	if ((key == null) || (iv == null) || (iv.length != blockSize)) {
-	    throw new InvalidKeyException("Internal error");
-	}
-	this.iv = iv;
-	reset();
-	// always encrypt mode for embedded cipher
-	embeddedCipher.init(false, algorithm, key);
+            throws InvalidKeyException {
+        if ((key == null) || (iv == null) || (iv.length != blockSize)) {
+            throw new InvalidKeyException("Internal error");
+        }
+        this.iv = iv;
+        reset();
+        // always encrypt mode for embedded cipher
+        embeddedCipher.init(false, algorithm, key);
     }
 
     /**
@@ -107,7 +107,7 @@ final class OutputFeedback extends FeedbackCipher {
      * cipher can be reused (with its original iv).
      */
     void reset() {
-	System.arraycopy(iv, 0, register, 0, blockSize);
+        System.arraycopy(iv, 0, register, 0, blockSize);
     }
 
     /**
@@ -129,7 +129,7 @@ final class OutputFeedback extends FeedbackCipher {
 
     /**
      * Performs encryption operation.
-     * 
+     *
      * <p>The input plain text <code>plain</code>, starting at
      * <code>plainOffset</code> and ending at
      * <code>(plainOffset + len - 1)</code>, is encrypted.
@@ -151,55 +151,55 @@ final class OutputFeedback extends FeedbackCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      */
     void encrypt(byte[] plain, int plainOffset, int plainLen,
-			byte[] cipher, int cipherOffset)
-    {    
-	int i;
-	int len = blockSize - numBytes;
-	int loopCount = plainLen / numBytes;
-	int oddBytes = plainLen % numBytes;
-	    
-	if (len == 0) {
-	    for (; loopCount > 0; 
-		 plainOffset += numBytes, cipherOffset += numBytes,
-		 loopCount--) {
-		embeddedCipher.encryptBlock(register, 0, k, 0);
-		for (i=0; i<numBytes; i++)
-		    cipher[i+cipherOffset] = 
-			(byte)(k[i] ^ plain[i+plainOffset]);
-		System.arraycopy(k, 0, register, 0, numBytes);
-	    }
-	    if (oddBytes > 0) {
-		embeddedCipher.encryptBlock(register, 0, k, 0);
-		for (i=0; i<oddBytes; i++)
-		    cipher[i+cipherOffset] =
-			(byte)(k[i] ^ plain[i+plainOffset]);
-		System.arraycopy(k, 0, register, 0, numBytes);
-	    }
-	} else {	    
-	    for (; loopCount > 0; 
-		 plainOffset += numBytes, cipherOffset += numBytes,
-		 loopCount--) {
-		embeddedCipher.encryptBlock(register, 0, k, 0);
-		for (i=0; i<numBytes; i++)
-		    cipher[i+cipherOffset] = 
-			(byte)(k[i] ^ plain[i+plainOffset]);
-		System.arraycopy(register, numBytes, register, 0, len);
-		System.arraycopy(k, 0, register, len, numBytes);
-	    }
-	    if (oddBytes > 0) {
-		embeddedCipher.encryptBlock(register, 0, k, 0);
-		for (i=0; i<oddBytes; i++)
-		    cipher[i+cipherOffset] =
-			(byte)(k[i] ^ plain[i+plainOffset]);
-		System.arraycopy(register, numBytes, register, 0, len);
-		System.arraycopy(k, 0, register, len, numBytes);
-	    }
-	}
+                        byte[] cipher, int cipherOffset)
+    {
+        int i;
+        int len = blockSize - numBytes;
+        int loopCount = plainLen / numBytes;
+        int oddBytes = plainLen % numBytes;
+
+        if (len == 0) {
+            for (; loopCount > 0;
+                 plainOffset += numBytes, cipherOffset += numBytes,
+                 loopCount--) {
+                embeddedCipher.encryptBlock(register, 0, k, 0);
+                for (i=0; i<numBytes; i++)
+                    cipher[i+cipherOffset] =
+                        (byte)(k[i] ^ plain[i+plainOffset]);
+                System.arraycopy(k, 0, register, 0, numBytes);
+            }
+            if (oddBytes > 0) {
+                embeddedCipher.encryptBlock(register, 0, k, 0);
+                for (i=0; i<oddBytes; i++)
+                    cipher[i+cipherOffset] =
+                        (byte)(k[i] ^ plain[i+plainOffset]);
+                System.arraycopy(k, 0, register, 0, numBytes);
+            }
+        } else {
+            for (; loopCount > 0;
+                 plainOffset += numBytes, cipherOffset += numBytes,
+                 loopCount--) {
+                embeddedCipher.encryptBlock(register, 0, k, 0);
+                for (i=0; i<numBytes; i++)
+                    cipher[i+cipherOffset] =
+                        (byte)(k[i] ^ plain[i+plainOffset]);
+                System.arraycopy(register, numBytes, register, 0, len);
+                System.arraycopy(k, 0, register, len, numBytes);
+            }
+            if (oddBytes > 0) {
+                embeddedCipher.encryptBlock(register, 0, k, 0);
+                for (i=0; i<oddBytes; i++)
+                    cipher[i+cipherOffset] =
+                        (byte)(k[i] ^ plain[i+plainOffset]);
+                System.arraycopy(register, numBytes, register, 0, len);
+                System.arraycopy(k, 0, register, len, numBytes);
+            }
+        }
     }
-    
+
     /**
      * Performs decryption operation.
-     * 
+     *
      * <p>The input cipher text <code>cipher</code>, starting at
      * <code>cipherOffset</code> and ending at
      * <code>(cipherOffset + len - 1)</code>, is decrypted.
@@ -221,9 +221,9 @@ final class OutputFeedback extends FeedbackCipher {
      * @param plainOffset the offset in <code>plain</code>
      */
     void decrypt(byte[] cipher, int cipherOffset, int cipherLen,
-			byte[] plain, int plainOffset) 
+                        byte[] plain, int plainOffset)
     {
-	// OFB encrypt and decrypt are identical
-	encrypt(cipher, cipherOffset, cipherLen, plain, plainOffset);
+        // OFB encrypt and decrypt are identical
+        encrypt(cipher, cipherOffset, cipherLen, plain, plainOffset);
     }
 }

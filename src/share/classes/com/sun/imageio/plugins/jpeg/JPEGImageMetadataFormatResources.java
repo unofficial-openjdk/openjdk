@@ -27,7 +27,7 @@ package com.sun.imageio.plugins.jpeg;
 
 import java.util.ListResourceBundle;
 
-public class JPEGImageMetadataFormatResources 
+public class JPEGImageMetadataFormatResources
        extends JPEGMetadataFormatResources {
 
     static final Object[][] imageContents = {
@@ -40,7 +40,7 @@ public class JPEGImageMetadataFormatResources
         { "sos", "A Start Of Scan marker segment" },
         { "app0JFXX", "A JFIF extension marker segment" },
         { "app2ICC", "An ICC profile APP2 marker segment" },
-        { "JFIFthumbJPEG", 
+        { "JFIFthumbJPEG",
           "A JFIF thumbnail in JPEG format (no JFIF segments permitted)" },
         { "JFIFthumbPalette", "A JFIF thumbnail as an RGB indexed image" },
         { "JFIFthumbRGB", "A JFIF thumbnail as an RGB image" },
@@ -48,9 +48,9 @@ public class JPEGImageMetadataFormatResources
         { "scanComponentSpec", "A component specification for a scan" },
 
         // Node name + "/" + AttributeName, followed by description
-        { "app0JFIF/majorVersion", 
+        { "app0JFIF/majorVersion",
           "The major JFIF version number" },
-        { "app0JFIF/minorVersion", 
+        { "app0JFIF/minorVersion",
           "The minor JFIF version number" },
         { "app0JFIF/resUnits",
           "The resolution units for Xdensity and Ydensity "

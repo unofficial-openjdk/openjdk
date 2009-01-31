@@ -69,10 +69,10 @@ D3DRefineBounds(GlyphBlitVector *gbv, SurfaceDataBounds *bounds,
         dy1 = (jint) glyphImage.y;
         dx2 = dx1 + glyphImage.width;
         dy2 = dy1 + glyphImage.height;
-	if (glyphs.x1 > dx1) glyphs.x1 = dx1;
-	if (glyphs.y1 > dy1) glyphs.y1 = dy1;
-	if (glyphs.x2 < dx2) glyphs.x2 = dx2;
-	if (glyphs.y2 < dy2) glyphs.y2 = dy2;
+        if (glyphs.x1 > dx1) glyphs.x1 = dx1;
+        if (glyphs.y1 > dy1) glyphs.y1 = dy1;
+        if (glyphs.x2 < dx2) glyphs.x2 = dx2;
+        if (glyphs.y2 < dy2) glyphs.y2 = dy2;
 
         if (tryCache &&
             ((glyphImage.width > D3D_GCACHE_CELL_WIDTH) ||
@@ -100,7 +100,7 @@ extern JNIEXPORT void JNICALL
  * Signature: (JLsun/java2d/pipe/Region;Lsun/font/GlyphList;)V
  */
 JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DTextRenderer_doDrawGlyphList
-    (JNIEnv *env, jobject d3dtr, 
+    (JNIEnv *env, jobject d3dtr,
      jlong pData,
      jlong pCtx, jobject clip, jobject glyphlist)
 {
@@ -115,7 +115,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DTextRenderer_doDrawGlyphList
     Region_GetBounds(env, clip, &bounds);
 
     if ((gbv = setupBlitVector(env, glyphlist)) == NULL) {
-	return;
+        return;
     }
 
     if (!D3DRefineBounds(gbv, &bounds, &useCache)) {
@@ -123,8 +123,8 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DTextRenderer_doDrawGlyphList
         return;
     }
 
-    D3DDrawGlyphList(env, d3dtr, 
-                     pData, pCtx, 
+    D3DDrawGlyphList(env, d3dtr,
+                     pData, pCtx,
                      gbv->glyphs, gbv->numGlyphs, useCache);
     free(gbv);
 }

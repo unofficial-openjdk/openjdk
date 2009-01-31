@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,15 +36,15 @@ class A implements Serializable {
     static HashSet writeObjectExtent = new HashSet();
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-	if (writeObjectExtent.contains(this)) {
-	    throw new InvalidObjectException("writeObject: object " +
-					     this.toString() + " has already "
-					     + "been serialized and should " +
-					     "have be serialized by reference.");
-	} else {
-	    writeObjectExtent.add(this);
-	}
-	out.defaultWriteObject();
+        if (writeObjectExtent.contains(this)) {
+            throw new InvalidObjectException("writeObject: object " +
+                                             this.toString() + " has already "
+                                             + "been serialized and should " +
+                                             "have be serialized by reference.");
+        } else {
+            writeObjectExtent.add(this);
+        }
+        out.defaultWriteObject();
     }
 
     A() {
@@ -52,24 +52,24 @@ class A implements Serializable {
 }
 
 public class WriteObjectMemory {
-    public static void main(String args[]) 
-	throws IOException, ClassNotFoundException 
+    public static void main(String args[])
+        throws IOException, ClassNotFoundException
     {
-	ObjectOutputStream out =   
-	    new ObjectOutputStream(new ByteArrayOutputStream(3000));
-	for (int i = 0; i < 1000; i++) {
-	    out.writeObject(new A());
-	}
+        ObjectOutputStream out =
+            new ObjectOutputStream(new ByteArrayOutputStream(3000));
+        for (int i = 0; i < 1000; i++) {
+            out.writeObject(new A());
+        }
 
-	// Make sure that serialization subsystem does not 
-	// allow writeObject to be called on any objects that
-	// have already been serialized. These objects should be
-	// written out by reference.
-	Iterator iter = A.writeObjectExtent.iterator(); 
-	while (iter.hasNext()) {
-	    out.writeObject(iter.next());
-	}
+        // Make sure that serialization subsystem does not
+        // allow writeObject to be called on any objects that
+        // have already been serialized. These objects should be
+        // written out by reference.
+        Iterator iter = A.writeObjectExtent.iterator();
+        while (iter.hasNext()) {
+            out.writeObject(iter.next());
+        }
 
-	out.close();
+        out.close();
     }
 }

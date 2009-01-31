@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -43,7 +43,7 @@ import sun.text.normalizer.UCharacter;
 import sun.text.normalizer.UTF16;
 
 /**
- * Ported code from ICU punycode.c 
+ * Ported code from ICU punycode.c
  * @author ram
  */
 
@@ -58,26 +58,26 @@ public final class Punycode {
     private static final int DAMP           = 700;
     private static final int INITIAL_BIAS   = 72;
     private static final int INITIAL_N      = 0x80;
-    
+
     /* "Basic" Unicode/ASCII code points */
     private static final int HYPHEN         = 0x2d;
     private static final int DELIMITER      = HYPHEN;
-    
+
     private static final int ZERO           = 0x30;
     private static final int NINE           = 0x39;
-    
+
     private static final int SMALL_A        = 0x61;
     private static final int SMALL_Z        = 0x7a;
-    
+
     private static final int CAPITAL_A      = 0x41;
     private static final int CAPITAL_Z      = 0x5a;
 
     //  TODO: eliminate the 256 limitation
     private static final int MAX_CP_COUNT   = 256;
-    
+
     private static final int UINT_MAGIC     = 0x80000000;
     private static final long ULONG_MAGIC   = 0x8000000000000000L;
-    
+
     private static int adaptBias(int delta, int length, boolean firstTime){
         if(firstTime){
             delta /=DAMP;
@@ -91,7 +91,7 @@ public final class Punycode {
             delta/=(BASE-TMIN);
         }
 
-        return count+(((BASE-TMIN+1)*delta)/(delta+SKEW));         
+        return count+(((BASE-TMIN+1)*delta)/(delta+SKEW));
     }
 
     /**
@@ -102,25 +102,25 @@ public final class Punycode {
     static final int[]    basicToDigit= new int[]{
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    
+
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1, -1,
-    
+
         -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-    
+
         -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-    
+
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    
+
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    
+
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    
+
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
     };
@@ -136,7 +136,7 @@ public final class Punycode {
             }
         }
         return b;
-    }    
+    }
 
     /**
      * digitToBasic() returns the basic code point whose value
@@ -161,14 +161,14 @@ public final class Punycode {
      * Converts Unicode to Punycode.
      * The input string must not contain single, unpaired surrogates.
      * The output will be represented as an array of ASCII code points.
-     * 
+     *
      * @param src
      * @param caseFlags
      * @return
      * @throws ParseException
      */
     public static StringBuffer encode(StringBuffer src, boolean[] caseFlags) throws ParseException{
-        
+
         int[] cpBuffer = new int[MAX_CP_COUNT];
         int n, delta, handledCPCount, basicLength, destLength, bias, j, m, q, k, t, srcCPCount;
         char c, c2;
@@ -181,7 +181,7 @@ public final class Punycode {
          * convert extended ones to UTF-32 in cpBuffer (caseFlag in sign bit):
          */
         srcCPCount=destLength=0;
-        
+
         for(j=0; j<srcLength; ++j) {
             if(srcCPCount==MAX_CP_COUNT) {
                 /* too many input code points */
@@ -203,7 +203,7 @@ public final class Punycode {
                     n|=c;
                 } else if(UTF16.isLeadSurrogate(c) && (j+1)<srcLength && UTF16.isTrailSurrogate(c2=src.charAt(j+1))) {
                     ++j;
-                    
+
                     n|=UCharacter.getCodePoint(c, c2);
                 } else {
                     /* error: unmatched surrogate */
@@ -265,7 +265,7 @@ public final class Punycode {
                     /* Represent delta as a generalized variable-length integer: */
                     for(q=delta, k=BASE; /* no condition */; k+=BASE) {
 
-                        /** RAM: comment out the old code for conformance with draft-ietf-idn-punycode-03.txt   
+                        /** RAM: comment out the old code for conformance with draft-ietf-idn-punycode-03.txt
 
                         t=k-bias;
                         if(t<TMIN) {
@@ -274,7 +274,7 @@ public final class Punycode {
                             t=TMAX;
                         }
                         */
-                    
+
                         t=k-bias;
                         if(t<TMIN) {
                             t=TMIN;
@@ -307,7 +307,7 @@ public final class Punycode {
 
         return result.append(dest, 0, destLength);
     }
-    
+
     private static boolean isBasic(int ch){
         return (ch < INITIAL_N);
     }
@@ -322,7 +322,7 @@ public final class Punycode {
     /**
      * Converts Punycode to Unicode.
      * The Unicode string will be at most as long as the Punycode string.
-     * 
+     *
      * @param src
      * @param caseFlags
      * @return

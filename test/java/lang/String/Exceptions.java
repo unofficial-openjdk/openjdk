@@ -188,10 +188,10 @@ public class Exceptions {
     {
         Throwable t = null;
         try {
-	    if (cs instanceof String)
-		new String(b, off, len, (String)cs);
-	    else // (cs instanceof Charset)
-		new String(b, off, len, (Charset)cs);
+            if (cs instanceof String)
+                new String(b, off, len, (String)cs);
+            else // (cs instanceof Charset)
+                new String(b, off, len, (Charset)cs);
         } catch (Throwable x) {
             if (ex.isAssignableFrom(x.getClass()))
                 t = x;
@@ -263,10 +263,10 @@ public class Exceptions {
     {
         Throwable t = null;
         try {
-	    if (cs instanceof String)
-		new String(b, (String)cs);
-	    else // (cs instanceof Charset)
-		new String(b, (Charset)cs);
+            if (cs instanceof String)
+                new String(b, (String)cs);
+            else // (cs instanceof Charset)
+                new String(b, (Charset)cs);
         } catch (Throwable x) {
             if (ex.isAssignableFrom(x.getClass()))
                 t = x;
@@ -295,13 +295,13 @@ public class Exceptions {
 
     private static void byteArrayCharset() {
         System.out.println("String(byte bytes[], Charset charset)");
-	Charset cs = Charset.forName("ISO-8859-1");
-	byteArrayCharset0("  b, " + cs, null, b, cs);
-	byteArrayCharset0("  null, " + cs, NullPointerException.class,
-			  (byte []) null, cs);
-	byteArrayCharset0("  b, null", NullPointerException.class, b, null);
-	byteArrayCharset0("  null, null", NullPointerException.class,
-			  (byte []) null, null);
+        Charset cs = Charset.forName("ISO-8859-1");
+        byteArrayCharset0("  b, " + cs, null, b, cs);
+        byteArrayCharset0("  null, " + cs, NullPointerException.class,
+                          (byte []) null, cs);
+        byteArrayCharset0("  b, null", NullPointerException.class, b, null);
+        byteArrayCharset0("  null, null", NullPointerException.class,
+                          (byte []) null, null);
     }
 
     private static void byteArrayOffLength() {
@@ -363,247 +363,247 @@ public class Exceptions {
     // -- Methods --
 
         private static void getChars() {
- 	System.out.println("getChars.(int srcBegin, int srcEnd, char dst[], "
-			   + " int dstBegin");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("getChars.(int srcBegin, int srcEnd, char dst[], "
+                           + " int dstBegin");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".getChars(1, 2, null, 1);
+                    "foo".getChars(1, 2, null, 1);
                 }});
     }
 
     private static void getBytes() {
-	System.out.println("getChars.(int srcBegin, int srcEnd, char dst[], "
-			   + " int dstBegin");
-	tryCatch("  1, 2, null, 1", NullPointerException.class, new Runnable() {
+        System.out.println("getChars.(int srcBegin, int srcEnd, char dst[], "
+                           + " int dstBegin");
+        tryCatch("  1, 2, null, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".getBytes(1, 2, null, 1);
+                    "foo".getBytes(1, 2, null, 1);
                 }});
 
-	System.out.println("getBytes.(String charsetName)"
-			   + " throws UnsupportedEncodingException");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("getBytes.(String charsetName)"
+                           + " throws UnsupportedEncodingException");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    try {
-			"foo".getBytes((String)null);
-		    } catch (UnsupportedEncodingException x) {
-			throw new RuntimeException(x);
-		    }
+                    try {
+                        "foo".getBytes((String)null);
+                    } catch (UnsupportedEncodingException x) {
+                        throw new RuntimeException(x);
+                    }
                 }});
 
-	System.out.println("getBytes.(Charset charset)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
-		public void run() {
-		    "foo".getBytes((Charset)null);
-		}});
+        System.out.println("getBytes.(Charset charset)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
+                public void run() {
+                    "foo".getBytes((Charset)null);
+                }});
     }
 
     private static void contentEquals() {
-	System.out.println("contentEquals(StringBuffer sb)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("contentEquals(StringBuffer sb)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".contentEquals(null);
+                    "foo".contentEquals(null);
                 }});
     }
 
     private static void compareTo() {
-	System.out.println("compareTo(String anotherString)");
-	tryCatch("  (String) null", NullPointerException.class, new Runnable() {
+        System.out.println("compareTo(String anotherString)");
+        tryCatch("  (String) null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".compareTo((String) null);
+                    "foo".compareTo((String) null);
                 }});
 
-	/* 4830291 (javac generics bug) causes this test to fail
-	System.out.println("compareTo(Object o)");
-	tryCatch("  (Object) null", NullPointerException.class, new Runnable() {
+        /* 4830291 (javac generics bug) causes this test to fail
+        System.out.println("compareTo(Object o)");
+        tryCatch("  (Object) null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".compareTo((Object) null);
+                    "foo".compareTo((Object) null);
                 }});
-	*/
+        */
     }
 
     private static void compareToIgnoreCase() {
-	System.out.println("compareToIgnoreCase(String anotherString)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("compareToIgnoreCase(String anotherString)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".compareToIgnoreCase((String) null);
+                    "foo".compareToIgnoreCase((String) null);
                 }});
     }
 
     private static void regionMatches() {
-	System.out.println("regionMatches(int toffset, String other,"
-			   + " int ooffset, int len)");
-	tryCatch("  1, null, 1, 1", NullPointerException.class, new Runnable() {
+        System.out.println("regionMatches(int toffset, String other,"
+                           + " int ooffset, int len)");
+        tryCatch("  1, null, 1, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".regionMatches(1, null, 1, 1);
+                    "foo".regionMatches(1, null, 1, 1);
                 }});
 
-	System.out.println("regionMatches(boolean ignore, int toffset,"
-			   + " String other, int ooffset, int len)");
-	tryCatch("  true, 1, null, 1, 1", NullPointerException.class,
-		 new Runnable() {
-	                 public void run() {
-			     "foo".regionMatches(true, 1, null, 1, 1);
-			 }});
+        System.out.println("regionMatches(boolean ignore, int toffset,"
+                           + " String other, int ooffset, int len)");
+        tryCatch("  true, 1, null, 1, 1", NullPointerException.class,
+                 new Runnable() {
+                         public void run() {
+                             "foo".regionMatches(true, 1, null, 1, 1);
+                         }});
     }
 
     private static void startsWith() {
-	System.out.println("startsWith(String prefix, int toffset)");
-	tryCatch("  null, 1", NullPointerException.class, new Runnable() {
+        System.out.println("startsWith(String prefix, int toffset)");
+        tryCatch("  null, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".startsWith(null, 1);
+                    "foo".startsWith(null, 1);
                 }});
 
-	System.out.println("startsWith(String prefix)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("startsWith(String prefix)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".startsWith(null);
+                    "foo".startsWith(null);
                 }});
     }
 
     private static void endsWith() {
-	System.out.println("endsWith(String suffix)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("endsWith(String suffix)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".endsWith(null);
+                    "foo".endsWith(null);
                 }});
     }
 
     private static void indexOf() {
-	System.out.println("indexOf(String str)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("indexOf(String str)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".indexOf(null);
+                    "foo".indexOf(null);
                 }});
 
-	System.out.println("indexOf(String str, int fromIndex)");
-	tryCatch("  null, 1", NullPointerException.class, new Runnable() {
+        System.out.println("indexOf(String str, int fromIndex)");
+        tryCatch("  null, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".indexOf(null, 1);
+                    "foo".indexOf(null, 1);
                 }});
     }
 
     private static void lastIndexOf() {
-	System.out.println("lastIndexOf(String str)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("lastIndexOf(String str)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".lastIndexOf(null);
+                    "foo".lastIndexOf(null);
                 }});
 
-	System.out.println("lastIndexOf(String str, int fromIndex)");
-	tryCatch("  null, 1", NullPointerException.class, new Runnable() {
+        System.out.println("lastIndexOf(String str, int fromIndex)");
+        tryCatch("  null, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".lastIndexOf(null, 1);
+                    "foo".lastIndexOf(null, 1);
                 }});
     }
 
     private static void concat() {
-	System.out.println("concat(String str)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("concat(String str)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".concat(null);
+                    "foo".concat(null);
                 }});
     }
 
     private static void matches() {
-	System.out.println("matches(String regex)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("matches(String regex)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".matches(null);
+                    "foo".matches(null);
                 }});
     }
 
     private static void replaceFirst() {
-	System.out.println("replaceFirst(String regex, String replacement)");
-	tryCatch("  \".\", null", NullPointerException.class, new Runnable() {
+        System.out.println("replaceFirst(String regex, String replacement)");
+        tryCatch("  \".\", null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".replaceFirst(".", null);
+                    "foo".replaceFirst(".", null);
                 }});
-	tryCatch("  null, \"-\"", NullPointerException.class, new Runnable() {
+        tryCatch("  null, \"-\"", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".replaceFirst(null, "-");
+                    "foo".replaceFirst(null, "-");
                 }});
     }
 
     private static void replaceAll() {
-	System.out.println("replaceAll(String regex, String replacement)");
-	tryCatch("  \".\", null", NullPointerException.class, new Runnable() {
+        System.out.println("replaceAll(String regex, String replacement)");
+        tryCatch("  \".\", null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".replaceAll(".", null);
+                    "foo".replaceAll(".", null);
                 }});
-	tryCatch("  null, \"-\"", NullPointerException.class, new Runnable() {
+        tryCatch("  null, \"-\"", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".replaceAll(null, "-");
+                    "foo".replaceAll(null, "-");
                 }});
     }
 
     private static void split() {
-	System.out.println("split(String regex, int limit)");
-	tryCatch("  null, 1", NullPointerException.class, new Runnable() {
+        System.out.println("split(String regex, int limit)");
+        tryCatch("  null, 1", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".split(null, 1);
+                    "foo".split(null, 1);
                 }});
 
-	System.out.println("split(String regex, int limit)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("split(String regex, int limit)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".split(null);
+                    "foo".split(null);
                 }});
     }
 
     private static void toLowerCase() {
-	System.out.println("toLowerCase(Locale locale)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("toLowerCase(Locale locale)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".toLowerCase(null);
+                    "foo".toLowerCase(null);
                 }});
     }
 
     private static void toUpperCase() {
-	System.out.println("toUpperCase(Locale locale)");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("toUpperCase(Locale locale)");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".toUpperCase(null);
+                    "foo".toUpperCase(null);
                 }});
     }
 
     private static void valueOf() {
-	System.out.println("valueOf(Object obj)");
-	tryCatch("  null", null, new Runnable() {
+        System.out.println("valueOf(Object obj)");
+        tryCatch("  null", null, new Runnable() {
                 public void run() {
-		    String.valueOf((Object) null);
+                    String.valueOf((Object) null);
                 }});
 
-	System.out.println("valueOf(char data[])");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("valueOf(char data[])");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    String.valueOf((char []) null);
+                    String.valueOf((char []) null);
                 }});
 
-	System.out.println("valueOf(char data[], int offset, int count)");
-	tryCatch("  null, 1, 2", NullPointerException.class, new Runnable() {
+        System.out.println("valueOf(char data[], int offset, int count)");
+        tryCatch("  null, 1, 2", NullPointerException.class, new Runnable() {
                 public void run() {
-		    String.valueOf((char []) null, 1, 2);
+                    String.valueOf((char []) null, 1, 2);
                 }});
 
     }
 
     private static void copyValueOf() {
-	System.out.println("copyValueOf(char data[], int offset, int count)");
-	tryCatch("  null, 1, 2", NullPointerException.class, new Runnable() {
+        System.out.println("copyValueOf(char data[], int offset, int count)");
+        tryCatch("  null, 1, 2", NullPointerException.class, new Runnable() {
                 public void run() {
-		    "foo".copyValueOf((char []) null, 1, 2);
+                    "foo".copyValueOf((char []) null, 1, 2);
                 }});
 
-	System.out.println("copyVlueOf(char data[])");
-	tryCatch("  null", NullPointerException.class, new Runnable() {
+        System.out.println("copyVlueOf(char data[])");
+        tryCatch("  null", NullPointerException.class, new Runnable() {
                 public void run() {
-		    String.copyValueOf((char []) null);
+                    String.copyValueOf((char []) null);
                 }});
     }
 
     public static void main(String [] args) {
 
-	// -- Constructors --
+        // -- Constructors --
 
         noArgs();             // String()
         string();             // String(String original)
@@ -621,45 +621,45 @@ public class Exceptions {
 
         // String(byte bytes[], int offset, int length, Charset charset)
         byteArrayOffLengthCharset();
-	
+
         // String(byte bytes[], String charsetName)
         //   throws UnsupportedEncodingException
         byteArrayCharsetName();
 
-	// String(byte bytes[], Charset charset)
-	byteArrayCharset();
-	
+        // String(byte bytes[], Charset charset)
+        byteArrayCharset();
+
         byteArrayOffLength(); // String(byte bytes[], int offset, int length)
         byteArray();          // String(byte bytes[])
         stringBuffer();       // String(StringBuffer buffer)
 
-	// -- Methods --
+        // -- Methods --
 
-	getChars();           // getChars(int, int. char [], int)
-	getBytes();           // getBytes(int, int, byte [], int),
+        getChars();           // getChars(int, int. char [], int)
+        getBytes();           // getBytes(int, int, byte [], int),
                               //   getBytes(Locale)
-	                      //   getBytes(String)
-	                      //   getBytes(Charset)
-	contentEquals();      // contentEquals(StringBuffer)
-	compareTo();          // compareTo(String), compareTo(Object)
-	compareToIgnoreCase();// compareToIgnoreCase(String)
-	regionMatches();      // regionMatches(int, String, int, int)
+                              //   getBytes(String)
+                              //   getBytes(Charset)
+        contentEquals();      // contentEquals(StringBuffer)
+        compareTo();          // compareTo(String), compareTo(Object)
+        compareToIgnoreCase();// compareToIgnoreCase(String)
+        regionMatches();      // regionMatches(int, String, int, int)
                               //   regionMatches(boolean, int, String, int, int)
-	startsWith();         // startsWith(String, int), startsWith(String)
-	endsWith();           // endsWith(String)
-	indexOf();            // indexOf(String), indexOf(String, int),
-	lastIndexOf();        // lastIndexOf(String), lastIndexOf(String, int)
-	concat();             // concat(String)
-	matches();            // matches(String)
-	replaceFirst();       // replaceFirst(String, String)
-	replaceAll();         // replaceAll(String, String)
-	split();              // split(String, int), split(String)
-	toLowerCase();        // toLowerCase(Locale)
-	toUpperCase();        // toUpperCase(Locale)
-	valueOf();            // valueOf(Object), valueOf(char []),
+        startsWith();         // startsWith(String, int), startsWith(String)
+        endsWith();           // endsWith(String)
+        indexOf();            // indexOf(String), indexOf(String, int),
+        lastIndexOf();        // lastIndexOf(String), lastIndexOf(String, int)
+        concat();             // concat(String)
+        matches();            // matches(String)
+        replaceFirst();       // replaceFirst(String, String)
+        replaceAll();         // replaceAll(String, String)
+        split();              // split(String, int), split(String)
+        toLowerCase();        // toLowerCase(Locale)
+        toUpperCase();        // toUpperCase(Locale)
+        valueOf();            // valueOf(Object), valueOf(char []),
                               //   valueOf(char [], int, int)
-	copyValueOf();        // copyValueOf(char [], int, int),
-	                      //    copyValueOf(char [])
+        copyValueOf();        // copyValueOf(char [], int, int),
+                              //    copyValueOf(char [])
 
         if (!ok)
             throw new RuntimeException("Some tests FAILED");

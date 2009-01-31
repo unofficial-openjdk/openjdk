@@ -34,9 +34,9 @@
  *
  * @author  Mandy Chung
  *
- * @build Barrier 
+ * @build Barrier
  * @build LockingThread
- * @build ThreadDump 
+ * @build ThreadDump
  * @run main LockedMonitors
  */
 
@@ -70,15 +70,15 @@ public class LockedMonitors {
         tinfos = mbean.getThreadInfo(ids, true, false);
         if (tinfos.length != ids.length) {
             throw new RuntimeException("Number of ThreadInfo objects = " +
-                tinfos.length + " not matched. Expected: " + ids.length); 
+                tinfos.length + " not matched. Expected: " + ids.length);
         }
         LockingThread.checkLockedMonitors(tinfos);
 
-        // Test getThreadInfo with locked monitors and locked synchronizers 
+        // Test getThreadInfo with locked monitors and locked synchronizers
         tinfos = mbean.getThreadInfo(ids, true, true);
         if (tinfos.length != ids.length) {
             throw new RuntimeException("Number of ThreadInfo objects = " +
-                tinfos.length + " not matched. Expected: " + ids.length); 
+                tinfos.length + " not matched. Expected: " + ids.length);
         }
         LockingThread.checkLockedMonitors(tinfos);
 

@@ -27,19 +27,19 @@ import java.net.*;
 public class B5077773 {
 
     public static void main(String[] args) throws Exception {
-	URLClassLoader loader =	 new URLClassLoader (new URL[] {new URL("file:foo.jar")});
-	/* This test will fail if the file below is removed from rt.jar */
-	InputStream is = loader.getResourceAsStream ("javax/swing/text/rtf/charsets/mac.txt");
-	if (is == null) {
+        URLClassLoader loader =  new URLClassLoader (new URL[] {new URL("file:foo.jar")});
+        /* This test will fail if the file below is removed from rt.jar */
+        InputStream is = loader.getResourceAsStream ("javax/swing/text/rtf/charsets/mac.txt");
+        if (is == null) {
             System.out.println ("could not find mac.txt");
             return;
-	}
+        }
         int c=0;
-	while ((is.read()) != -1) {
+        while ((is.read()) != -1) {
             c++;
-	}
+        }
         if (c == 26) /* size of bad file */  {
             throw new RuntimeException ("Wrong mac.txt file was loaded");
-	}
+        }
     }
 }

@@ -41,7 +41,6 @@ import java.util.EventListener;
  * @since 1.4
  * @author Nathan Abramson
  * @author David Brownell
- * @version %I%
  */
 public
 interface SSLSessionBindingListener
@@ -52,7 +51,7 @@ extends EventListener
      * an SSLSession.
      *
      * @param event the event identifying the SSLSession into
-     *		which the listener is being bound.
+     *          which the listener is being bound.
      */
     public void valueBound(SSLSessionBindingEvent event);
 
@@ -61,8 +60,7 @@ extends EventListener
      * from a SSLSession.
      *
      * @param event the event identifying the SSLSession from
-     *		which the listener is being unbound.
+     *          which the listener is being unbound.
      */
     public void valueUnbound(SSLSessionBindingEvent event);
 }
-

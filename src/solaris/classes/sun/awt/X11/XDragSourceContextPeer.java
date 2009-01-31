@@ -49,14 +49,14 @@ import sun.awt.dnd.SunDropTargetContextPeer;
  *
  * @since 1.5
  */
-public final class XDragSourceContextPeer 
+public final class XDragSourceContextPeer
     extends SunDragSourceContextPeer implements XDragSourceProtocolListener {
-    private static final Logger logger = 
+    private static final Logger logger =
         Logger.getLogger("sun.awt.X11.xembed.xdnd.XDragSourceContextPeer");
 
     /* The events selected on the root window when the drag begins. */
     private static final int ROOT_EVENT_MASK = (int)XlibWrapper.ButtonMotionMask |
-        (int)XlibWrapper.KeyPressMask | (int)XlibWrapper.KeyReleaseMask; 
+        (int)XlibWrapper.KeyPressMask | (int)XlibWrapper.KeyReleaseMask;
     /* The events to be delivered during grab. */
     private static final int GRAB_EVENT_MASK = (int)XlibWrapper.ButtonPressMask |
         (int)XlibWrapper.ButtonMotionMask | (int)XlibWrapper.ButtonReleaseMask;
@@ -91,7 +91,7 @@ public final class XDragSourceContextPeer
     private long proxyModeSourceWindow = 0;
 
     /* The singleton instance. */
-    private static final XDragSourceContextPeer theInstance = 
+    private static final XDragSourceContextPeer theInstance =
         new XDragSourceContextPeer(null);
 
     private XDragSourceContextPeer(DragGestureEvent dge) {
@@ -102,13 +102,13 @@ public final class XDragSourceContextPeer
         return theInstance;
     }
 
-    static XDragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge) 
-      throws InvalidDnDOperationException { 
+    static XDragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge)
+      throws InvalidDnDOperationException {
     theInstance.setTrigger(dge);
         return theInstance;
     }
 
-    protected void startDrag(Transferable transferable, 
+    protected void startDrag(Transferable transferable,
                              long[] formats, Map formatMap) {
         Component component = getTrigger().getComponent();
         Component c = null;
@@ -155,7 +155,7 @@ public final class XDragSourceContextPeer
             }
 
             dragWindow = XWindow.getXAWTRootWindow().getWindow();
-        
+
             timeStamp = XToolkit.getCurrentServerTime();
 
             int dropActions = getDragSourceContext().getSourceActions();
@@ -179,35 +179,35 @@ public final class XDragSourceContextPeer
                 try {
                     status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                               rootWindow, wattr.pData);
-                
+
                     if (status == 0) {
                         throw new InvalidDnDOperationException("XGetWindowAttributes failed");
                     }
-                
+
                     rootEventMask = wattr.get_your_event_mask();
-                
+
                     XlibWrapper.XSelectInput(XToolkit.getDisplay(), rootWindow,
                                              rootEventMask | ROOT_EVENT_MASK);
                 } finally {
                     wattr.dispose();
                 }
-                
+
                 XBaseWindow.ungrabInput();
 
-                status = XlibWrapper.XGrabPointer(XToolkit.getDisplay(), rootWindow, 
-                                                  0, GRAB_EVENT_MASK, 
+                status = XlibWrapper.XGrabPointer(XToolkit.getDisplay(), rootWindow,
+                                                  0, GRAB_EVENT_MASK,
                                                   XlibWrapper.GrabModeAsync,
                                                   XlibWrapper.GrabModeAsync,
                                                   XlibWrapper.None, xcursor, timeStamp);
-                
+
                 if (status != XlibWrapper.GrabSuccess) {
                     cleanup(timeStamp);
                     throwGrabFailureException("Cannot grab pointer", status);
                     return;
                 }
-                
+
                 status = XlibWrapper.XGrabKeyboard(XToolkit.getDisplay(), rootWindow,
-                                                   0, 
+                                                   0,
                                                    XlibWrapper.GrabModeAsync,
                                                    XlibWrapper.GrabModeAsync,
                                                    timeStamp);
@@ -231,7 +231,7 @@ public final class XDragSourceContextPeer
 
         /* This implementation doesn't use native context */
         setNativeContext(0);
-        
+
         SunDropTargetContextPeer.setCurrentJVMLocalSourceTransferable(transferable);
     }
 
@@ -266,8 +266,8 @@ public final class XDragSourceContextPeer
         if (c == null) {
             return;
         }
-        
-        long xcursor = XGlobalCursorManager.getCursor(c);   
+
+        long xcursor = XGlobalCursorManager.getCursor(c);
 
         if (xcursor == 0) {
             return;
@@ -283,7 +283,7 @@ public final class XDragSourceContextPeer
         return false;
     }
 
-    private void throwGrabFailureException(String msg, int grabStatus) 
+    private void throwGrabFailureException(String msg, int grabStatus)
       throws InvalidDnDOperationException {
         String msgCause = "";
         switch (grabStatus) {
@@ -356,8 +356,8 @@ public final class XDragSourceContextPeer
         if ((rootEventMask | ROOT_EVENT_MASK) != rootEventMask &&
             dragRootWindow != 0) {
 
-            XlibWrapper.XSelectInput(XToolkit.getDisplay(), 
-                                     dragRootWindow, 
+            XlibWrapper.XSelectInput(XToolkit.getDisplay(),
+                                     dragRootWindow,
                                      rootEventMask);
         }
 
@@ -382,7 +382,7 @@ public final class XDragSourceContextPeer
                                                                            sourceActions);
         if (sourceAction == action) {
             return false;
-        } 
+        }
         sourceAction = action;
         return true;
     }
@@ -402,7 +402,7 @@ public final class XDragSourceContextPeer
                 return win;
             }
         }
-            
+
         return 0;
     }
 
@@ -411,7 +411,7 @@ public final class XDragSourceContextPeer
         long proxyWindow = 0;
         XDragSourceProtocol protocol = null;
         boolean isReceiver = false;
-        
+
         if (subwindow != 0) {
             clientWindow = findClientWindow(subwindow);
         }
@@ -429,7 +429,7 @@ public final class XDragSourceContextPeer
 
         /* Update the global state. */
         dragProtocol = protocol;
-        targetAction = DnDConstants.ACTION_NONE;    
+        targetAction = DnDConstants.ACTION_NONE;
         targetRootSubwindow = subwindow;
     }
 
@@ -441,27 +441,27 @@ public final class XDragSourceContextPeer
         long time = xmotion.get_time();
         long subwindow = xmotion.get_subwindow();
 
-        /* 
-         * If this event had occurred before the pointer was grabbed, 
+        /*
+         * If this event had occurred before the pointer was grabbed,
          * query the server for the current root subwindow.
          */
         if (xmotion.get_window() != xmotion.get_root()) {
-            XlibWrapper.XQueryPointer(XToolkit.getDisplay(), 
-                                      xmotion.get_root(), 
+            XlibWrapper.XQueryPointer(XToolkit.getDisplay(),
+                                      xmotion.get_root(),
                                       XlibWrapper.larg1,  // root
                                       XlibWrapper.larg2,  // subwindow
                                       XlibWrapper.larg3,  // x_root
                                       XlibWrapper.larg4,  // y_root
                                       XlibWrapper.larg5,  // x
                                       XlibWrapper.larg6,  // y
-                                      XlibWrapper.larg7); // modifiers  
+                                      XlibWrapper.larg7); // modifiers
             subwindow = Native.getLong(XlibWrapper.larg2);
         }
 
         if (targetRootSubwindow != subwindow) {
             if (dragProtocol != null) {
                 dragProtocol.sendLeaveMessage(time);
-        
+
                 /*
                  * Neither Motif DnD nor XDnD provide a mean for the target
                  * to notify the source that the pointer exits the drop site
@@ -477,9 +477,9 @@ public final class XDragSourceContextPeer
             doUpdateTargetWindow(subwindow, time);
 
             if (dragProtocol != null) {
-                dragProtocol.sendEnterMessage(sourceFormats, 
+                dragProtocol.sendEnterMessage(sourceFormats,
                                               sourceAction,
-                                              sourceActions, 
+                                              sourceActions,
                                               time);
             }
         }
@@ -497,14 +497,14 @@ public final class XDragSourceContextPeer
             xRoot = xmotion.get_x_root();
             yRoot = xmotion.get_y_root();
 
-            postDragSourceDragEvent(targetAction, 
+            postDragSourceDragEvent(targetAction,
                                     XWindow.getModifiers(xmotion.get_state(),0,0),
                                     xRoot, yRoot, DISPATCH_MOUSE_MOVED);
         }
 
         if (eventState != xmotion.get_state()) {
             if (updateSourceAction(xmotion.get_state()) && dragProtocol != null) {
-                postDragSourceDragEvent(targetAction, 
+                postDragSourceDragEvent(targetAction,
                                         XWindow.getModifiers(xmotion.get_state(),0,0),
                                         xRoot, yRoot, DISPATCH_CHANGED);
             }
@@ -523,8 +523,8 @@ public final class XDragSourceContextPeer
 
     private void processDrop(XButtonEvent xbutton) {
         try {
-            dragProtocol.initiateDrop(xbutton.get_x_root(), 
-                                      xbutton.get_y_root(), 
+            dragProtocol.initiateDrop(xbutton.get_x_root(),
+                                      xbutton.get_y_root(),
                                       sourceAction, sourceActions,
                                       xbutton.get_time());
         } catch (XException e) {
@@ -542,8 +542,8 @@ public final class XDragSourceContextPeer
         }
 
         if (logger.isLoggable(Level.FINEST)) {
-            logger.finest("        proxyModeSourceWindow=" + 
-                          getProxyModeSourceWindow() + 
+            logger.finest("        proxyModeSourceWindow=" +
+                          getProxyModeSourceWindow() +
                           " ev=" + ev);
         }
 
@@ -551,9 +551,9 @@ public final class XDragSourceContextPeer
 
         Iterator dragProtocols = XDragAndDropProtocols.getDragSourceProtocols();
         while (dragProtocols.hasNext()) {
-            XDragSourceProtocol dragProtocol = 
+            XDragSourceProtocol dragProtocol =
                 (XDragSourceProtocol)dragProtocols.next();
-            if (dragProtocol.processProxyModeEvent(xclient, 
+            if (dragProtocol.processProxyModeEvent(xclient,
                                                    getProxyModeSourceWindow())) {
                 return true;
             }
@@ -587,9 +587,9 @@ public final class XDragSourceContextPeer
             XDestroyWindowEvent xde = ev.get_xdestroywindow();
 
             /* Target crashed during drop processing - cleanup. */
-            if (!dragInProgress && 
-                dragProtocol != null && 
-                xde.get_window() == dragProtocol.getTargetWindow()) { 
+            if (!dragInProgress &&
+                dragProtocol != null &&
+                xde.get_window() == dragProtocol.getTargetWindow()) {
                 cleanup(XlibWrapper.CurrentTime);
                 return true;
             }
@@ -620,7 +620,7 @@ public final class XDragSourceContextPeer
             case (int)XKeySymConstants.XK_Control_L:
             case (int)XKeySymConstants.XK_Shift_R:
             case (int)XKeySymConstants.XK_Shift_L: {
-                XlibWrapper.XQueryPointer(XToolkit.getDisplay(), 
+                XlibWrapper.XQueryPointer(XToolkit.getDisplay(),
                                           xkey.get_root(),
                                           XlibWrapper.larg1,  // root
                                           XlibWrapper.larg2,  // subwindow
@@ -628,7 +628,7 @@ public final class XDragSourceContextPeer
                                           XlibWrapper.larg4,  // y_root
                                           XlibWrapper.larg5,  // x
                                           XlibWrapper.larg6,  // y
-                                          XlibWrapper.larg7); // modifiers  
+                                          XlibWrapper.larg7); // modifiers
                 XMotionEvent xmotion = new XMotionEvent();
                 try {
                     xmotion.set_type(XlibWrapper.MotionNotify);
@@ -660,7 +660,7 @@ public final class XDragSourceContextPeer
         }
         case XlibWrapper.ButtonPress:
             return true;
-        case XlibWrapper.MotionNotify: 
+        case XlibWrapper.MotionNotify:
             processMouseMove(ev.get_xmotion());
             return true;
         case XlibWrapper.ButtonRelease: {
@@ -696,7 +696,7 @@ public final class XDragSourceContextPeer
             }
             if (xbutton.get_button() == XlibWrapper.Button1
                     || xbutton.get_button() == XlibWrapper.Button2) {
-                // drag is initiated with Button1 or Button2 pressed and 
+                // drag is initiated with Button1 or Button2 pressed and
                 // ended on release of either of these buttons (as the same
                 // behavior was with our old Motif DnD-based implementation)
                 removeDnDGrab(xbutton.get_time());
@@ -744,7 +744,7 @@ public final class XDragSourceContextPeer
 
     public void handleDragReply(int action, int x, int y) {
         // NOTE: we have to use the current modifiers state, since
-        // the target didn't specify the modifiers state for the reply. 
+        // the target didn't specify the modifiers state for the reply.
         handleDragReply(action, xRoot, yRoot, XWindow.getModifiers(eventState,0,0));
     }
 
@@ -754,7 +754,7 @@ public final class XDragSourceContextPeer
             dragExit(x, y);
         } else if (action != DnDConstants.ACTION_NONE) {
             int type = 0;
-            
+
             if (targetAction == DnDConstants.ACTION_NONE) {
                 type = SunDragSourceContextPeer.DISPATCH_ENTER;
             } else {

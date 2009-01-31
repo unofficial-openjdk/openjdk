@@ -31,7 +31,6 @@ package java.lang;
  * void.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @since   JDK1.1
  */
 public final

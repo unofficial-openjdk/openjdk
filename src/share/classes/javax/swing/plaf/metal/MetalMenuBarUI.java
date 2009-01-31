@@ -35,7 +35,6 @@ import javax.swing.plaf.basic.*;
  * Metal implementation of <code>MenuBarUI</code>. This class is responsible
  * for providing the metal look and feel for <code>JMenuBar</code>s.
  *
- * @version %I% %G%
  * @see javax.swing.plaf.MenuBarUI
  * @since 1.5
  */
@@ -52,7 +51,7 @@ public class MetalMenuBarUI extends BasicMenuBarUI  {
         if (x == null) {
             throw new NullPointerException("Must pass in a non-null component");
         }
-	return new MetalMenuBarUI();
+        return new MetalMenuBarUI();
     }
 
     /**

@@ -176,7 +176,6 @@ import sun.util.resources.LocaleData;
  *
  * @see          DecimalFormat
  * @see          ChoiceFormat
- * @version      %I%, %G%
  * @author       Mark Davis
  * @author       Helena Shih
  */
@@ -486,9 +485,9 @@ public abstract class NumberFormat extends Format  {
      * Returns an array of all locales for which the
      * <code>get*Instance</code> methods of this class can return
      * localized instances.
-     * The returned array represents the union of locales supported by the Java 
-     * runtime and by installed 
-     * {@link java.text.spi.NumberFormatProvider NumberFormatProvider} implementations.  
+     * The returned array represents the union of locales supported by the Java
+     * runtime and by installed
+     * {@link java.text.spi.NumberFormatProvider NumberFormatProvider} implementations.
      * It must contain at least a <code>Locale</code> instance equal to
      * {@link java.util.Locale#US Locale.US}.
      *
@@ -498,7 +497,7 @@ public abstract class NumberFormat extends Format  {
     public static Locale[] getAvailableLocales() {
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(NumberFormatProvider.class);
-	return pool.getAvailableLocales();
+        return pool.getAvailableLocales();
     }
 
     /**
@@ -665,7 +664,7 @@ public abstract class NumberFormat extends Format  {
             maximumFractionDigits = minimumFractionDigits;
         }
     }
-    
+
     /**
      * Gets the currency used by this number format when formatting
      * currency values. The initial value is derived in a locale dependent
@@ -684,7 +683,7 @@ public abstract class NumberFormat extends Format  {
     public Currency getCurrency() {
         throw new UnsupportedOperationException();
     }
-    
+
     /**
      * Sets the currency used by this number format when formatting
      * currency values. This does not update the minimum or maximum
@@ -707,7 +706,7 @@ public abstract class NumberFormat extends Format  {
      * Gets the {@link java.math.RoundingMode} used in this NumberFormat.
      * The default implementation of this method in NumberFormat
      * always throws {@link java.lang.UnsupportedOperationException}.
-     * Subclasses which handle different rounding modes should override 
+     * Subclasses which handle different rounding modes should override
      * this method.
      *
      * @exception UnsupportedOperationException The default implementation
@@ -719,12 +718,12 @@ public abstract class NumberFormat extends Format  {
     public RoundingMode getRoundingMode() {
         throw new UnsupportedOperationException();
     }
- 
+
     /**
      * Sets the {@link java.math.RoundingMode} used in this NumberFormat.
      * The default implementation of this method in NumberFormat always
      * throws {@link java.lang.UnsupportedOperationException}.
-     * Subclasses which handle different rounding modes should override 
+     * Subclasses which handle different rounding modes should override
      * this method.
      *
      * @exception UnsupportedOperationException The default implementation
@@ -737,12 +736,12 @@ public abstract class NumberFormat extends Format  {
     public void setRoundingMode(RoundingMode roundingMode) {
         throw new UnsupportedOperationException();
     }
- 
+
     // =======================privates===============================
 
     private static NumberFormat getInstance(Locale desiredLocale,
                                            int choice) {
-        // Check whether a provider can provide an implementation that's closer 
+        // Check whether a provider can provide an implementation that's closer
         // to the requested locale than what the Java runtime itself can provide.
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(NumberFormatProvider.class);
@@ -768,7 +767,7 @@ public abstract class NumberFormat extends Format  {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(desiredLocale);
         int entry = (choice == INTEGERSTYLE) ? NUMBERSTYLE : choice;
         DecimalFormat format = new DecimalFormat(numberPatterns[entry], symbols);
-        
+
         if (choice == INTEGERSTYLE) {
             format.setMaximumFractionDigits(0);
             format.setDecimalSeparatorAlwaysShown(false);
@@ -874,7 +873,7 @@ public abstract class NumberFormat extends Format  {
      * When writing to a stream, <code>maxIntegerDigits</code> is set to
      * <code>maximumIntegerDigits</code> or <code>Byte.MAX_VALUE</code>,
      * whichever is smaller.  When reading from a stream, this field is used
-     * only if <code>serialVersionOnStream</code> is less than 1. 
+     * only if <code>serialVersionOnStream</code> is less than 1.
      *
      * @serial
      * @see #getMaximumIntegerDigits
@@ -892,7 +891,7 @@ public abstract class NumberFormat extends Format  {
      * When writing to a stream, <code>minIntegerDigits</code> is set to
      * <code>minimumIntegerDigits</code> or <code>Byte.MAX_VALUE</code>,
      * whichever is smaller.  When reading from a stream, this field is used
-     * only if <code>serialVersionOnStream</code> is less than 1. 
+     * only if <code>serialVersionOnStream</code> is less than 1.
      *
      * @serial
      * @see #getMinimumIntegerDigits
@@ -910,7 +909,7 @@ public abstract class NumberFormat extends Format  {
      * When writing to a stream, <code>maxFractionDigits</code> is set to
      * <code>maximumFractionDigits</code> or <code>Byte.MAX_VALUE</code>,
      * whichever is smaller.  When reading from a stream, this field is used
-     * only if <code>serialVersionOnStream</code> is less than 1. 
+     * only if <code>serialVersionOnStream</code> is less than 1.
      *
      * @serial
      * @see #getMaximumFractionDigits
@@ -928,7 +927,7 @@ public abstract class NumberFormat extends Format  {
      * When writing to a stream, <code>minFractionDigits</code> is set to
      * <code>minimumFractionDigits</code> or <code>Byte.MAX_VALUE</code>,
      * whichever is smaller.  When reading from a stream, this field is used
-     * only if <code>serialVersionOnStream</code> is less than 1. 
+     * only if <code>serialVersionOnStream</code> is less than 1.
      *
      * @serial
      * @see #getMinimumFractionDigits
@@ -1130,32 +1129,32 @@ public abstract class NumberFormat extends Format  {
     }
 
     /**
-     * Obtains a NumberFormat instance from a NumberFormatProvider implementation. 
+     * Obtains a NumberFormat instance from a NumberFormatProvider implementation.
      */
-    private static class NumberFormatGetter 
-        implements LocaleServiceProviderPool.LocalizedObjectGetter<NumberFormatProvider, 
+    private static class NumberFormatGetter
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<NumberFormatProvider,
                                                                    NumberFormat> {
         private static final NumberFormatGetter INSTANCE = new NumberFormatGetter();
 
-        public NumberFormat getObject(NumberFormatProvider numberFormatProvider, 
-                                Locale locale, 
+        public NumberFormat getObject(NumberFormatProvider numberFormatProvider,
+                                Locale locale,
                                 String key,
                                 Object... params) {
             assert params.length == 1;
             int choice = (Integer)params[0];
 
-	    switch (choice) {
-	    case NUMBERSTYLE:
-		return numberFormatProvider.getNumberInstance(locale);
-	    case PERCENTSTYLE:
-		return numberFormatProvider.getPercentInstance(locale);
-	    case CURRENCYSTYLE:
-		return numberFormatProvider.getCurrencyInstance(locale);
-	    case INTEGERSTYLE:
-		return numberFormatProvider.getIntegerInstance(locale);
-	    default:
-		assert false : choice;
-	    }
+            switch (choice) {
+            case NUMBERSTYLE:
+                return numberFormatProvider.getNumberInstance(locale);
+            case PERCENTSTYLE:
+                return numberFormatProvider.getPercentInstance(locale);
+            case CURRENCYSTYLE:
+                return numberFormatProvider.getCurrencyInstance(locale);
+            case INTEGERSTYLE:
+                return numberFormatProvider.getIntegerInstance(locale);
+            default:
+                assert false : choice;
+            }
 
             return null;
         }

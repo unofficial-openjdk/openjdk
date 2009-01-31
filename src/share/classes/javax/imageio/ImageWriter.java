@@ -53,14 +53,13 @@ import javax.imageio.spi.ImageWriterSpi;
  * which uses them for format recognition and presentation of
  * available format readers and writers.
  *
- * <p> 
+ * <p>
  *
  * @see ImageReader
  * @see ImageWriteParam
  * @see javax.imageio.spi.IIORegistry
  * @see javax.imageio.spi.ImageWriterSpi
  *
- * @version 0.5
  */
 public abstract class ImageWriter implements ImageTranscoder {
 
@@ -324,7 +323,7 @@ public abstract class ImageWriter implements ImageTranscoder {
     /**
      * Returns a new <code>ImageWriteParam</code> object of the
      * appropriate type for this file format containing default
-     * values, that is, those values that would be used 
+     * values, that is, those values that would be used
      * if no <code>ImageWriteParam</code> object were specified.  This
      * is useful as a starting point for tweaking just a few parameters
      * and otherwise leaving the default settings alone.
@@ -359,7 +358,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * specific interfaces, and the resulting data supplied to one of
      * the <code>write</code> methods that take a stream metadata
      * parameter.
-     * 
+     *
      * <p> An optional <code>ImageWriteParam</code> may be supplied
      * for cases where it may affect the structure of the stream
      * metadata.
@@ -368,7 +367,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * optional setting values not supported by this writer (<i>e.g.</i>
      * progressive encoding or any format-specific settings), they
      * will be ignored.
-     * 
+     *
      * <p> Writers that do not make use of stream metadata
      * (<i>e.g.</i>, writers for single-image formats) should return
      * <code>null</code>.
@@ -645,7 +644,7 @@ public abstract class ImageWriter implements ImageTranscoder {
     }
 
     /**
-     * Prepares a stream to accept a series of subsequent 
+     * Prepares a stream to accept a series of subsequent
      * <code>writeToSequence</code> calls, using the provided stream
      * metadata object.  The metadata will be written to the stream if
      * it should precede the image data.  If the argument is <code>null</code>,
@@ -681,7 +680,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * @exception IOException if an error occurs writing the stream
      * metadata.
      */
-    public void prepareWriteSequence(IIOMetadata streamMetadata) 
+    public void prepareWriteSequence(IIOMetadata streamMetadata)
         throws IOException {
         unsupported();
     }
@@ -691,15 +690,15 @@ public abstract class ImageWriter implements ImageTranscoder {
      * thumbnails, to the output.  If the output is an
      * <code>ImageOutputStream</code>, the existing contents of the
      * output prior to the current seek position may be flushed, and
-     * need not be readable or writable, unless the plug-in needs to 
-     * be able to patch up the header information when 
+     * need not be readable or writable, unless the plug-in needs to
+     * be able to patch up the header information when
      * <code>endWriteSequence</code> is called (<italic>e.g.</italic> TIFF).
      *
      * <p> If <code>canWriteSequence</code> returns <code>false</code>,
      * this method will throw an
      * <code>UnsupportedOperationException</code>.
      *
-     * <p> The output must have been set beforehand using 
+     * <p> The output must have been set beforehand using
      * the <code>setOutput</code> method.
      *
      * <p> <code>prepareWriteSequence</code> must have been called
@@ -728,7 +727,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise throws an
      * <code>UnsupportedOperationException</code>.
-     * 
+     *
      * @param image an <code>IIOImage</code> object containing an
      * image, thumbnails, and metadata to be written.
      * @param param an <code>ImageWriteParam</code>, or
@@ -769,7 +768,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise throws an
      * <code>UnsupportedOperationException</code>.
-     * 
+     *
      * @exception IllegalStateException if the output has not
      * been set, or <code>prepareWriteSequence</code> has not been called.
      * @exception UnsupportedOperationException if
@@ -823,7 +822,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      *
      * @param streamMetadata an <code>IIOMetadata</code> object representing
      * stream metadata, or <code>null</code> to use default values.
-     * 
+     *
      * @exception IllegalStateException if the output has not
      * been set.
      * @exception UnsupportedOperationException if the
@@ -852,7 +851,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise returns <code>false</code>
      * without checking the value of <code>imageIndex</code>.
-     * 
+     *
      * @param imageIndex the index of the image whose metadata is to
      * be replaced.
      *
@@ -881,7 +880,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <p> If <code>canReplaceImageMetadata(imageIndex)</code> returns
      * <code>false</code>, an
      * <code>UnsupportedOperationException</code> will be thrown.
-     * 
+     *
      * <p> The default implementation throws an
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise throws an
@@ -980,7 +979,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * @param param an <code>ImageWriteParam</code>, or
      * <code>null</code> to use a default
      * <code>ImageWriteParam</code>.
-     * 
+     *
      * @exception IllegalStateException if the output has not
      * been set.
      * @exception UnsupportedOperationException if
@@ -1081,7 +1080,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <p> The default implementation throws an
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise returns <code>false</code>.
-     * 
+     *
      * @return <code>true</code> if the writing of complete image
      * stream with contents to be defined later is supported.
      *
@@ -1227,7 +1226,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * <code>IllegalStateException</code> if the output is
      * <code>null</code>, and otherwise returns <code>false</code>
      * without checking the value of <code>imageIndex</code>.
-     * 
+     *
      * @param imageIndex the index at which the image is to be
      * inserted.
      *
@@ -1492,8 +1491,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      * </ul>
      * @exception IOException if an I/O error occurs during writing.
      */
-    public void replacePixels(RenderedImage image, ImageWriteParam param) 
-        throws IOException { 
+    public void replacePixels(RenderedImage image, ImageWriteParam param)
+        throws IOException {
         unsupported();
     }
 
@@ -1672,7 +1671,7 @@ public abstract class ImageWriter implements ImageTranscoder {
             warningLocales.remove(index);
             if (warningListeners.size() == 0) {
                 warningListeners = null;
-		warningLocales = null;
+                warningLocales = null;
             }
         }
     }
@@ -1811,7 +1810,7 @@ public abstract class ImageWriter implements ImageTranscoder {
      * thumbnail.
      * @param thumbnailIndex the index of the thumbnail.
      */
-    protected void processThumbnailStarted(int imageIndex, 
+    protected void processThumbnailStarted(int imageIndex,
                                            int thumbnailIndex) {
         if (progressListeners == null) {
             return;
@@ -1906,7 +1905,7 @@ public abstract class ImageWriter implements ImageTranscoder {
         for (int i = 0; i < numListeners; i++) {
             IIOWriteWarningListener listener =
                 (IIOWriteWarningListener)warningListeners.get(i);
-            
+
             listener.warningOccurred(this, imageIndex, warning);
         }
     }
@@ -1955,35 +1954,35 @@ public abstract class ImageWriter implements ImageTranscoder {
             IIOWriteWarningListener listener =
                 (IIOWriteWarningListener)warningListeners.get(i);
             Locale locale = (Locale)warningLocales.get(i);
-	    if (locale == null) {
-		locale = Locale.getDefault();
-	    }
+            if (locale == null) {
+                locale = Locale.getDefault();
+            }
 
-	    /**
+            /**
              * If an applet supplies an implementation of ImageWriter and
-	     * resource bundles, then the resource bundle will need to be
-	     * accessed via the applet class loader. So first try the context
-	     * class loader to locate the resource bundle.
-	     * If that throws MissingResourceException, then try the
-	     * system class loader.
-	     */
-	    ClassLoader loader = (ClassLoader)
-	    	java.security.AccessController.doPrivileged(
-		   new java.security.PrivilegedAction() {
-		      public Object run() {
+             * resource bundles, then the resource bundle will need to be
+             * accessed via the applet class loader. So first try the context
+             * class loader to locate the resource bundle.
+             * If that throws MissingResourceException, then try the
+             * system class loader.
+             */
+            ClassLoader loader = (ClassLoader)
+                java.security.AccessController.doPrivileged(
+                   new java.security.PrivilegedAction() {
+                      public Object run() {
                         return Thread.currentThread().getContextClassLoader();
-		      }
+                      }
                 });
 
             ResourceBundle bundle = null;
             try {
                 bundle = ResourceBundle.getBundle(baseName, locale, loader);
             } catch (MissingResourceException mre) {
-		try {
-		    bundle = ResourceBundle.getBundle(baseName, locale);
-		} catch (MissingResourceException mre1) {
-		    throw new IllegalArgumentException("Bundle not found!");
-		}
+                try {
+                    bundle = ResourceBundle.getBundle(baseName, locale);
+                } catch (MissingResourceException mre1) {
+                    throw new IllegalArgumentException("Bundle not found!");
+                }
             }
 
             String warning = null;
@@ -1994,7 +1993,7 @@ public abstract class ImageWriter implements ImageTranscoder {
             } catch (MissingResourceException mre) {
                 throw new IllegalArgumentException("Resource is missing!");
             }
-            
+
             listener.warningOccurred(this, imageIndex, warning);
         }
     }

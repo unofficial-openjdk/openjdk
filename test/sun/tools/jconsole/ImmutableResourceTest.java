@@ -33,7 +33,7 @@
 import java.util.ResourceBundle;
 
 public class ImmutableResourceTest {
-    
+
     public static void main(String[] args) throws Exception {
 
         /* Reach under the covers and get the message strings */
@@ -47,7 +47,7 @@ public class ImmutableResourceTest {
             testData[ii][1] = "yyy";
         }
 
-        /* 
+        /*
          * Try a lookup for the shredded key.
          * If this is successful we have a problem.
          */

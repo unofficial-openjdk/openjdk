@@ -32,17 +32,17 @@ class CharArrayIterator implements CharacterIterator {
     private char[] chars;
     private int pos;
     private int begin;
-    
+
     CharArrayIterator(char[] chars) {
-        
+
         reset(chars, 0);
     }
-    
+
     CharArrayIterator(char[] chars, int begin) {
-        
+
         reset(chars, begin);
     }
-    
+
     /**
      * Sets the position to getBeginIndex() and returns the character at that
      * position.
@@ -50,7 +50,7 @@ class CharArrayIterator implements CharacterIterator {
      * @see getBeginIndex
      */
     public char first() {
-        
+
         pos = 0;
         return current();
     }
@@ -62,7 +62,7 @@ class CharArrayIterator implements CharacterIterator {
      * @see getEndIndex
      */
     public char last() {
-        
+
         if (chars.length > 0) {
             pos = chars.length-1;
         }
@@ -71,7 +71,7 @@ class CharArrayIterator implements CharacterIterator {
         }
         return current();
     }
-    
+
     /**
      * Gets the character at the current position (as returned by getIndex()).
      * @return the character at the current position or DONE if the current
@@ -79,7 +79,7 @@ class CharArrayIterator implements CharacterIterator {
      * @see getIndex
      */
     public char current() {
-        
+
         if (pos >= 0 && pos < chars.length) {
             return chars[pos];
         }
@@ -97,7 +97,7 @@ class CharArrayIterator implements CharacterIterator {
      * position is off the end of the text range.
      */
     public char next() {
-       
+
         if (pos < chars.length-1) {
             pos++;
             return chars[pos];
@@ -116,7 +116,7 @@ class CharArrayIterator implements CharacterIterator {
      * position is equal to getBeginIndex().
      */
     public char previous() {
-        
+
         if (pos > 0) {
             pos--;
             return chars[pos];
@@ -136,7 +136,7 @@ class CharArrayIterator implements CharacterIterator {
      * @return the character at the specified position or DONE if the specified position is equal to getEndIndex()
      */
     public char setIndex(int position) {
-        
+
         position -= begin;
         if (position < 0 || position > chars.length) {
             throw new IllegalArgumentException("Invalid index");
@@ -183,9 +183,9 @@ class CharArrayIterator implements CharacterIterator {
     void reset(char[] chars) {
         reset(chars, 0);
     }
-    
+
     void reset(char[] chars, int begin) {
-        
+
         this.chars = chars;
         this.begin = begin;
         pos = 0;

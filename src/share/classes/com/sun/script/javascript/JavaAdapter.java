@@ -44,7 +44,6 @@ import sun.org.mozilla.javascript.internal.*;
  * implementing one or more interfaces. This JavaAdapter implementation does
  * not support these.
  *
- * @version 1.0
  * @author A. Sundararajan
  * @since 1.6
  */
@@ -52,7 +51,7 @@ final class JavaAdapter extends ScriptableObject implements Function {
     private JavaAdapter(Invocable engine) {
         this.engine = engine;
     }
-    
+
     static void init(Context cx, Scriptable scope, boolean sealed)
     throws RhinoException {
         RhinoTopLevel topLevel = (RhinoTopLevel) scope;
@@ -67,16 +66,16 @@ final class JavaAdapter extends ScriptableObject implements Function {
          */
         ScriptableObject.putProperty(topLevel, "JavaAdapter", obj);
     }
-    
+
     public String getClassName() {
         return "JavaAdapter";
     }
-    
+
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
             Object[] args) throws RhinoException {
         return construct(cx, scope, args);
     }
-    
+
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     throws RhinoException {
         if (args.length == 2) {
@@ -95,13 +94,13 @@ final class JavaAdapter extends ScriptableObject implements Function {
             if (clazz == null) {
                 throw Context.reportRuntimeError("JavaAdapter: first arg should be interface Class");
             }
-            
+
             Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
             return cx.toObject(engine.getInterface(args[1],  clazz), topLevel);
         } else {
             throw Context.reportRuntimeError("JavaAdapter requires two arguments");
         }
     }
-    
+
     private Invocable engine;
 }

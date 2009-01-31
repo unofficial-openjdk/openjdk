@@ -1,7 +1,5 @@
 README.txt
 
-%E% %W%
-
 This Poller class demonstrates access to poll(2) functionality in Java.
 
 Requires Solaris production (native threads) JDK 1.2 or later, currently

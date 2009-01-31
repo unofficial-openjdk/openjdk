@@ -35,7 +35,6 @@ package sun.jvmstat.monitor;
  * an IntInstrument class.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public interface IntegerMonitor extends Monitor {

@@ -30,15 +30,15 @@ package javax.xml.crypto;
 /**
  * Contains common context information for XML cryptographic operations.
  *
- * <p>This interface contains methods for setting and retrieving properties 
+ * <p>This interface contains methods for setting and retrieving properties
  * that affect the processing of XML signatures or XML encrypted structures.
  *
  * <p>Note that <code>XMLCryptoContext</code> instances can contain information
  * and state specific to the XML cryptographic structure it is used with.
- * The results are unpredictable if an <code>XMLCryptoContext</code> is 
- * used with multiple structures (for example, you should not use the same 
- * {@link javax.xml.crypto.dsig.XMLValidateContext} instance to validate two 
- * different {@link javax.xml.crypto.dsig.XMLSignature} objects). 
+ * The results are unpredictable if an <code>XMLCryptoContext</code> is
+ * used with multiple structures (for example, you should not use the same
+ * {@link javax.xml.crypto.dsig.XMLValidateContext} instance to validate two
+ * different {@link javax.xml.crypto.dsig.XMLSignature} objects).
  *
  * @author Sean Mullan
  * @author JSR 105 Expert Group
@@ -95,10 +95,10 @@ public interface XMLCryptoContext {
     /**
      * Sets a <code>URIDereferencer</code> that is used to dereference
      * {@link URIReference}s. The specified <code>URIDereferencer</code>
-     * is used in place of an implementation's default 
+     * is used in place of an implementation's default
      * <code>URIDereferencer</code>.
      *
-     * @param dereferencer the <code>URIDereferencer</code>, or 
+     * @param dereferencer the <code>URIDereferencer</code>, or
      *    <code>null</code> to remove any current setting
      * @see #getURIDereferencer
      */
@@ -190,20 +190,20 @@ public interface XMLCryptoContext {
     /**
      * Returns the value to which this context maps the specified key.
      *
-     * <p>More formally, if this context contains a mapping from a key 
-     * <code>k</code> to a value <code>v</code> such that 
-     * <code>(key==null ? k==null : key.equals(k))</code>, then this method 
-     * returns <code>v</code>; otherwise it returns <code>null</code>. (There 
+     * <p>More formally, if this context contains a mapping from a key
+     * <code>k</code> to a value <code>v</code> such that
+     * <code>(key==null ? k==null : key.equals(k))</code>, then this method
+     * returns <code>v</code>; otherwise it returns <code>null</code>. (There
      * can be at most one such mapping.)
      *
      * <p>This method is useful for retrieving arbitrary information that is
-     * specific to the cryptographic operation that this context is used for. 
+     * specific to the cryptographic operation that this context is used for.
      *
      * @param key the key whose associated value is to be returned
      * @return the value to which this context maps the specified key, or
      *    <code>null</code> if there is no mapping for the key
      * @see #put(Object, Object)
-     */ 
+     */
     Object get(Object key);
 
     /**
@@ -212,7 +212,7 @@ public interface XMLCryptoContext {
      * value is replaced by the specified value.
      *
      * <p>This method is useful for storing arbitrary information that is
-     * specific to the cryptographic operation that this context is used for. 
+     * specific to the cryptographic operation that this context is used for.
      *
      * @param key key with which the specified value is to be associated with
      * @param value value to be associated with the specified key

@@ -36,10 +36,10 @@ static jmethodID getBackBufferID;
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WBufferStrategy_initIDs(JNIEnv *env, jclass wbs,
-					     jclass componentClass)
+                                             jclass componentClass)
 {
     getBackBufferID = env->GetMethodID(componentClass, "getBackBuffer",
-				       "()Ljava/awt/Image;");
+                                       "()Ljava/awt/Image;");
 }
 
 /**
@@ -50,11 +50,11 @@ Java_sun_awt_windows_WBufferStrategy_initIDs(JNIEnv *env, jclass wbs,
  */
 extern "C" JNIEXPORT jobject JNICALL
 Java_sun_awt_windows_WBufferStrategy_getDrawBuffer(JNIEnv *env, jclass wbs,
-					   	   jobject component)
+                                                   jobject component)
 {
     if (!JNU_IsNull(env, getBackBufferID)) {
-	return env->CallObjectMethod(component, getBackBufferID);
+        return env->CallObjectMethod(component, getBackBufferID);
     } else {
-	return NULL;
+        return NULL;
     }
 }

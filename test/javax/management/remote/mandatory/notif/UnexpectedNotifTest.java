@@ -185,7 +185,7 @@ public class UnexpectedNotifTest {
 
             ntfInfoArray[0] = new MBeanNotificationInfo(
                               ntfTypes,
-                              "javax.management.Notification", 
+                              "javax.management.Notification",
                               "Notifications sent by the NotificationEmitter");
             return ntfInfoArray;
         }
@@ -195,7 +195,7 @@ public class UnexpectedNotifTest {
          * The sequence number will be from zero to times-1.
          *
          * @param nb The number of notifications to send
-         */ 
+         */
         public void sendNotifications(Integer nb) {
             System.out.println("NotificationEmitter: asked to send " +
                                "notifications: " + nb);

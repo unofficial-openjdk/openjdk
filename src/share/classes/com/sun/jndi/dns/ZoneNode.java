@@ -50,22 +50,21 @@ import java.util.Vector;
  * repopulated later.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 class ZoneNode extends NameNode {
 
-    private SoftReference contentsRef = null;	// the zone's namespace
-    private long serialNumber = -1;	// the zone data's serial number
-    private Date expiration = null;	// time when the zone's data expires
+    private SoftReference contentsRef = null;   // the zone's namespace
+    private long serialNumber = -1;     // the zone data's serial number
+    private Date expiration = null;     // time when the zone's data expires
 
     ZoneNode(String label) {
-	super(label);
+        super(label);
     }
 
     protected NameNode newNameNode(String label) {
-	return new ZoneNode(label);
+        return new ZoneNode(label);
     }
 
     /*
@@ -73,31 +72,31 @@ class ZoneNode extends NameNode {
      * expired, it remains so.
      */
     synchronized void depopulate() {
-	contentsRef = null;
-	serialNumber = -1;
+        contentsRef = null;
+        serialNumber = -1;
     }
 
     /*
      * Is this node currently populated?
      */
     synchronized boolean isPopulated() {
-	return (getContents() != null);
+        return (getContents() != null);
     }
 
     /*
      * Returns the zone's contents, or null if the zone is not populated.
      */
     synchronized NameNode getContents() {
-	return (contentsRef != null)
-		? (NameNode) contentsRef.get()
-		: null;
+        return (contentsRef != null)
+                ? (NameNode) contentsRef.get()
+                : null;
     }
 
     /*
      * Has this zone's data expired?
      */
     synchronized boolean isExpired() {
-	return ((expiration != null) && expiration.before(new Date()));
+        return ((expiration != null) && expiration.before(new Date()));
     }
 
     /*
@@ -107,17 +106,17 @@ class ZoneNode extends NameNode {
      * being returned.
      */
     ZoneNode getDeepestPopulated(DnsName fqdn) {
-	ZoneNode znode = this;
-	ZoneNode popNode = isPopulated() ? this : null;
-	for (int i = 1; i < fqdn.size(); i++) {	//     "i=1" to skip root label
-	    znode = (ZoneNode) znode.get(fqdn.getKey(i));
-	    if (znode == null) {
-		break;
-	    } else if (znode.isPopulated()) {
-		popNode = znode;
-	    }
-	}
-	return popNode;
+        ZoneNode znode = this;
+        ZoneNode popNode = isPopulated() ? this : null;
+        for (int i = 1; i < fqdn.size(); i++) { //     "i=1" to skip root label
+            znode = (ZoneNode) znode.get(fqdn.getKey(i));
+            if (znode == null) {
+                break;
+            } else if (znode.isPopulated()) {
+                popNode = znode;
+            }
+        }
+        return popNode;
     }
 
     /*
@@ -125,50 +124,50 @@ class ZoneNode extends NameNode {
      * name and its resource records.  Returns the zone's new contents.
      */
     NameNode populate(DnsName zone, ResourceRecords rrs) {
-	// assert zone.get(0).equals("");		// zone has root label
-	// assert (zone.size() == (depth() + 1));	// +1 due to root label
+        // assert zone.get(0).equals("");               // zone has root label
+        // assert (zone.size() == (depth() + 1));       // +1 due to root label
 
-	NameNode newContents = new NameNode(null);
+        NameNode newContents = new NameNode(null);
 
-	for (int i = 0; i < rrs.answer.size(); i++) {
-	    ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
-	    DnsName n = rr.getName();
+        for (int i = 0; i < rrs.answer.size(); i++) {
+            ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
+            DnsName n = rr.getName();
 
-	    // Ignore resource records whose names aren't within the zone's
-	    // domain.  Also skip records of the zone's top node, since
-	    // the zone's root NameNode is already in place.
-	    if ((n.size() > zone.size()) && n.startsWith(zone)) {
-		NameNode nnode = newContents.add(n, zone.size());
-		if (rr.getType() == ResourceRecord.TYPE_NS) {
-		    nnode.setZoneCut(true);
-		}
-	    }
-	}
-	// The zone's SOA record is the first record in the answer section.
-	ResourceRecord soa = (ResourceRecord) rrs.answer.firstElement();
-	synchronized (this) {
-	    contentsRef = new SoftReference(newContents);
-	    serialNumber = getSerialNumber(soa);
-	    setExpiration(getMinimumTtl(soa));
-	    return newContents;
-	}
+            // Ignore resource records whose names aren't within the zone's
+            // domain.  Also skip records of the zone's top node, since
+            // the zone's root NameNode is already in place.
+            if ((n.size() > zone.size()) && n.startsWith(zone)) {
+                NameNode nnode = newContents.add(n, zone.size());
+                if (rr.getType() == ResourceRecord.TYPE_NS) {
+                    nnode.setZoneCut(true);
+                }
+            }
+        }
+        // The zone's SOA record is the first record in the answer section.
+        ResourceRecord soa = (ResourceRecord) rrs.answer.firstElement();
+        synchronized (this) {
+            contentsRef = new SoftReference(newContents);
+            serialNumber = getSerialNumber(soa);
+            setExpiration(getMinimumTtl(soa));
+            return newContents;
+        }
     }
 
     /*
      * Set this zone's data to expire in <tt>secsToExpiration</tt> seconds.
      */
     private void setExpiration(long secsToExpiration) {
-	expiration = new Date(System.currentTimeMillis() +
-			      1000 * secsToExpiration);
+        expiration = new Date(System.currentTimeMillis() +
+                              1000 * secsToExpiration);
     }
 
     /*
      * Returns an SOA record's minimum TTL field.
      */
     private static long getMinimumTtl(ResourceRecord soa) {
-	String rdata = (String) soa.getRdata();
-	int pos = rdata.lastIndexOf(' ') + 1;
-	return Long.parseLong(rdata.substring(pos));
+        String rdata = (String) soa.getRdata();
+        int pos = rdata.lastIndexOf(' ') + 1;
+        return Long.parseLong(rdata.substring(pos));
     }
 
     /*
@@ -181,26 +180,26 @@ class ZoneNode extends NameNode {
      * serial number arithmetic.
      */
     int compareSerialNumberTo(ResourceRecord soa) {
-	// assert isPopulated();
-	return ResourceRecord.compareSerialNumbers(serialNumber,
-						   getSerialNumber(soa));
+        // assert isPopulated();
+        return ResourceRecord.compareSerialNumbers(serialNumber,
+                                                   getSerialNumber(soa));
     }
 
     /*
      * Returns an SOA record's serial number.
      */
     private static long getSerialNumber(ResourceRecord soa) {
-	String rdata = (String) soa.getRdata();
+        String rdata = (String) soa.getRdata();
 
-	// An SOA record ends with:  serial refresh retry expire minimum.
-	// Set "beg" to the space before serial, and "end" to the space after.
-	// We go "backward" to avoid dealing with escaped spaces in names.
-	int beg = rdata.length();
-	int end = -1;
-	for (int i = 0; i < 5; i++) {
-	    end = beg;
-	    beg = rdata.lastIndexOf(' ', end - 1);
-	}
-	return Long.parseLong(rdata.substring(beg + 1, end));
+        // An SOA record ends with:  serial refresh retry expire minimum.
+        // Set "beg" to the space before serial, and "end" to the space after.
+        // We go "backward" to avoid dealing with escaped spaces in names.
+        int beg = rdata.length();
+        int end = -1;
+        for (int i = 0; i < 5; i++) {
+            end = beg;
+            beg = rdata.lastIndexOf(' ', end - 1);
+        }
+        return Long.parseLong(rdata.substring(beg + 1, end));
     }
 }

@@ -60,9 +60,9 @@ public final class PRNG extends SecureRandomSpi
      * @param seed the seed.
      */
     protected void engineSetSeed(byte[] seed) {
-	if (seed != null) {
-	    generateSeed(-1, seed);
-	}
+        if (seed != null) {
+            generateSeed(-1, seed);
+        }
     }
 
     /**
@@ -71,11 +71,11 @@ public final class PRNG extends SecureRandomSpi
      * @param bytes the array to be filled in with random bytes.
      */
     protected void engineNextBytes(byte[] bytes) {
-	if (bytes != null) {
-	    if (generateSeed(0, bytes) == null) {
-		throw new ProviderException("Error generating random bytes");
-	    }
-	}
+        if (bytes != null) {
+            if (generateSeed(0, bytes) == null) {
+                throw new ProviderException("Error generating random bytes");
+            }
+        }
     }
 
     /**
@@ -87,11 +87,11 @@ public final class PRNG extends SecureRandomSpi
      * @return the seed bytes.
      */
     protected byte[] engineGenerateSeed(int numBytes) {
-	byte[] seed = generateSeed(numBytes, null);
+        byte[] seed = generateSeed(numBytes, null);
 
-	if (seed == null) {
-	    throw new ProviderException("Error generating seed bytes");
-	}
-	return seed;
+        if (seed == null) {
+            throw new ProviderException("Error generating seed bytes");
+        }
+        return seed;
     }
 }

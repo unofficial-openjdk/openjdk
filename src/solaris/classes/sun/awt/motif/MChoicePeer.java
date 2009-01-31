@@ -38,42 +38,42 @@ class MChoicePeer extends MComponentPeer implements ChoicePeer {
     native void appendItems(String[] items);
 
     void initialize() {
-	Choice opt = (Choice)target;
-	int itemCount = opt.countItems();
+        Choice opt = (Choice)target;
+        int itemCount = opt.countItems();
         String[] items = new String[itemCount];
-	for (int i=0; i < itemCount; i++) {
-	    items[i] = opt.getItem(i);
-	}
-	if (itemCount > 0) {
+        for (int i=0; i < itemCount; i++) {
+            items[i] = opt.getItem(i);
+        }
+        if (itemCount > 0) {
             appendItems(items);
-	    pSelect(opt.getSelectedIndex(), true);
-	}
-	super.initialize();
+            pSelect(opt.getSelectedIndex(), true);
+        }
+        super.initialize();
     }
 
     public MChoicePeer(Choice target) {
-	super(target);
+        super(target);
     }
 
     public boolean isFocusable() {
-	return true;
+        return true;
     }
 
     public Dimension getMinimumSize() {
-	FontMetrics fm = getFontMetrics(target.getFont());
-	Choice c = (Choice)target;
-	int w = 0;
-	for (int i = c.countItems() ; i-- > 0 ;) {
-	    w = Math.max(fm.stringWidth(c.getItem(i)), w);
-	}
-	return new Dimension(32 + w, Math.max(fm.getHeight() + 8, 15) + 5);
+        FontMetrics fm = getFontMetrics(target.getFont());
+        Choice c = (Choice)target;
+        int w = 0;
+        for (int i = c.countItems() ; i-- > 0 ;) {
+            w = Math.max(fm.stringWidth(c.getItem(i)), w);
+        }
+        return new Dimension(32 + w, Math.max(fm.getHeight() + 8, 15) + 5);
     }
 
     public native void setFont(Font f);
 
     public void add(String item, int index) {
-      	addItem(item, index);
-        // Adding an item can change the size of the Choice, so do 
+        addItem(item, index);
+        // Adding an item can change the size of the Choice, so do
         // a reshape, based on the font size.
         Rectangle r = target.getBounds();
         reshape(r.x, r.y, 0, 0);
@@ -95,16 +95,16 @@ class MChoicePeer extends MComponentPeer implements ChoicePeer {
     public native void setForeground(Color c);
 
     public void select(int index) {
-	if (!inUpCall) {
-	    pSelect(index, false);
-	}
+        if (!inUpCall) {
+            pSelect(index, false);
+        }
     }
 
     void notifySelection(String item) {
-	Choice c = (Choice)target;
-	ItemEvent e = new ItemEvent(c, ItemEvent.ITEM_STATE_CHANGED,
+        Choice c = (Choice)target;
+        ItemEvent e = new ItemEvent(c, ItemEvent.ITEM_STATE_CHANGED,
                                 item, ItemEvent.SELECTED);
-        postEvent(e); 
+        postEvent(e);
     }
 
 
@@ -112,7 +112,7 @@ class MChoicePeer extends MComponentPeer implements ChoicePeer {
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     void action(final int index) {
         final Choice c = (Choice)target;
-	inUpCall = false;  /* Used to prevent native selection. */
+        inUpCall = false;  /* Used to prevent native selection. */
         MToolkit.executeOnEventHandlerThread(c, new Runnable() {
             public void run() {
                 String item;
@@ -137,20 +137,20 @@ class MChoicePeer extends MComponentPeer implements ChoicePeer {
      * color information.
      */
     public void print(Graphics g) {
-	Choice ch = (Choice)target;
-	Dimension d = ch.size();
-	Color bg = ch.getBackground();
-	Color fg = ch.getForeground();
+        Choice ch = (Choice)target;
+        Dimension d = ch.size();
+        Color bg = ch.getBackground();
+        Color fg = ch.getForeground();
 
-	g.setColor(bg);
-	g.fillRect(2, 2, d.width-1, d.height-1);
-	draw3DRect(g, bg, 1, 1, d.width-2, d.height-2, true);
-	draw3DRect(g, bg, d.width - 18, (d.height / 2) - 3, 10, 6, true);
+        g.setColor(bg);
+        g.fillRect(2, 2, d.width-1, d.height-1);
+        draw3DRect(g, bg, 1, 1, d.width-2, d.height-2, true);
+        draw3DRect(g, bg, d.width - 18, (d.height / 2) - 3, 10, 6, true);
 
-	g.setColor(fg);
-	g.setFont(ch.getFont());
-	FontMetrics fm = g.getFontMetrics();
-	String lbl = ch.getSelectedItem();
+        g.setColor(fg);
+        g.setFont(ch.getFont());
+        FontMetrics fm = g.getFontMetrics();
+        String lbl = ch.getSelectedItem();
         if (lbl == null){
             lbl = "";
         }
@@ -158,21 +158,20 @@ class MChoicePeer extends MComponentPeer implements ChoicePeer {
             g.drawString(lbl, 5, (d.height + fm.getMaxAscent()-fm.getMaxDescent())/2);
         }
 
-	target.print(g);
-    }	
+        target.print(g);
+    }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	    return getMinimumSize();
+            return getMinimumSize();
     }
 
     protected void disposeImpl() {
         freeNativeData();
         super.disposeImpl();
     }
-     
+
     private native void freeNativeData();
 }
-

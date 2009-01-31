@@ -170,4 +170,3 @@ import java.lang.annotation.*;
 public @interface DescriptorKey {
     String value();
 }
-

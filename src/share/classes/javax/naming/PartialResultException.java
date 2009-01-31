@@ -36,7 +36,6 @@ package javax.naming;
   * apply directly here.
   *
   * @author Rosanna Lee
-  * @version %I% %E%
   * @author Scott Seligman
   * @since 1.3
   */
@@ -46,10 +45,10 @@ public class PartialResultException extends NamingException {
       * Constructs a new instance of the exception using the explanation
       * message specified. All other fields default to null.
       *
-      * @param	explanation	Possibly null detail explaining the exception.
+      * @param  explanation     Possibly null detail explaining the exception.
       */
     public PartialResultException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -57,7 +56,7 @@ public class PartialResultException extends NamingException {
       * All fields default to null.
       */
     public PartialResultException() {
-	super();
+        super();
     }
 
     /**

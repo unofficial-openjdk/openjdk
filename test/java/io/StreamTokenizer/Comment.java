@@ -31,7 +31,7 @@
 import java.io.*;
 
 public class Comment {
-  
+
     public static void main(String[] args) throws Exception {
 
         File f = new File(System.getProperty("test.src", "."), "input.txt");
@@ -39,7 +39,7 @@ public class Comment {
         int slashIsCommentStart = 1;
         int slashSlashComment = 2;
         int slashStarComment = 4;
-        
+
         for (int i = 0; i < 8 ; i++) {
             StreamTokenizer st = new StreamTokenizer(new FileReader(f));
 
@@ -54,7 +54,7 @@ public class Comment {
             }
             st.slashSlashComments(slashSlashCommentFlag);
             st.slashStarComments(slashStarCommentFlag);
-        
+
             /* now go throgh the input file */
             while(st.nextToken() != StreamTokenizer.TT_EOF)
             {
@@ -74,7 +74,7 @@ public class Comment {
                     if ((token.compareTo("Error4") == 0) && slashCommentFlag) {
                         throw new Exception("Failed to pass / comments!");
                     }
-                } 
+                }
             }
         }
     }

@@ -31,123 +31,123 @@ import java.net.*;
 public class SocketImplTest extends Applet {
 
     static public void main(String[] args) {
-	System.setSecurityManager(new SecurityManager());
-	SocketImplTest s = new SocketImplTest();
-	s.init();
-	s.start();
+        System.setSecurityManager(new SecurityManager());
+        SocketImplTest s = new SocketImplTest();
+        s.init();
+        s.start();
     }
-     
+
 
     /**
      * A no-op SocketImpl descendant.
      */
     class MySocketImpl extends SocketImpl {
-	protected void accept(SocketImpl impl) throws IOException {
-	}
+        protected void accept(SocketImpl impl) throws IOException {
+        }
 
-	protected int available(){
-	    return 0;
-	}
+        protected int available(){
+            return 0;
+        }
 
-	protected void bind(InetAddress host, int port){
-	}
+        protected void bind(InetAddress host, int port){
+        }
 
-	protected void close(){
-	}
+        protected void close(){
+        }
 
-	protected void connect(InetAddress address, int port){
-	}
+        protected void connect(InetAddress address, int port){
+        }
 
-	protected void connect(String host, int port){
-	}
+        protected void connect(String host, int port){
+        }
 
-	protected void connect(SocketAddress a, int t) throws IOException {
-	}
+        protected void connect(SocketAddress a, int t) throws IOException {
+        }
 
 
-	protected void create(boolean stream){
-	}
+        protected void create(boolean stream){
+        }
 
-	protected InputStream getInputStream(){
-	    return null;
-	}
+        protected InputStream getInputStream(){
+            return null;
+        }
 
-	protected OutputStream getOutputStream(){
-	    return null;
-	}
+        protected OutputStream getOutputStream(){
+            return null;
+        }
 
-	protected void listen(int backlog){
-	}
+        protected void listen(int backlog){
+        }
 
-	public Object getOption(int optID){
-	    return null;
-	}
+        public Object getOption(int optID){
+            return null;
+        }
 
-	public void setOption(int optID, Object value){
-	}
+        public void setOption(int optID, Object value){
+        }
 
-	protected void sendUrgentData(int i){
-	}
+        protected void sendUrgentData(int i){
+        }
     }
 
     class MyDatagramSocketImpl extends DatagramSocketImpl {
-	protected void create() throws SocketException {
-	}
-	
-	protected void bind(int lport, InetAddress laddr) throws SocketException {
-	}
+        protected void create() throws SocketException {
+        }
 
-	protected void send(DatagramPacket p) throws IOException {
-	}
-	
-	protected int peek(InetAddress i) throws IOException {
-	    return 0;
-	}
+        protected void bind(int lport, InetAddress laddr) throws SocketException {
+        }
 
-	protected int peekData(DatagramPacket p) throws IOException {
-	    return 0;
-	}
+        protected void send(DatagramPacket p) throws IOException {
+        }
 
-	protected void receive(DatagramPacket p) throws IOException {
-	}
+        protected int peek(InetAddress i) throws IOException {
+            return 0;
+        }
 
-	protected void setTTL(byte ttl) throws IOException {
-	}
+        protected int peekData(DatagramPacket p) throws IOException {
+            return 0;
+        }
 
-	protected byte getTTL() throws IOException {
-	    return 0;
-	}
+        protected void receive(DatagramPacket p) throws IOException {
+        }
 
-	protected void setTimeToLive(int ttl) throws IOException {
-	}
+        protected void setTTL(byte ttl) throws IOException {
+        }
 
-	protected int getTimeToLive() throws IOException {
-	    return 0;
-	}
+        protected byte getTTL() throws IOException {
+            return 0;
+        }
 
-	protected void join(InetAddress inetaddr) throws IOException {
-	}
+        protected void setTimeToLive(int ttl) throws IOException {
+        }
 
-	protected void leave(InetAddress inetaddr) throws IOException {
-	}
+        protected int getTimeToLive() throws IOException {
+            return 0;
+        }
 
-	protected void joinGroup(SocketAddress mcastaddr, NetworkInterface netIf) 
-	    throws IOException {
-	}
+        protected void join(InetAddress inetaddr) throws IOException {
+        }
 
-	protected void leaveGroup(SocketAddress mcastaddr, NetworkInterface netIf) 
-	    throws IOException {
-	}
+        protected void leave(InetAddress inetaddr) throws IOException {
+        }
 
-	protected void close() {
-	}
+        protected void joinGroup(SocketAddress mcastaddr, NetworkInterface netIf)
+            throws IOException {
+        }
 
-	public Object getOption(int optID){
-	    return null;
-	}
+        protected void leaveGroup(SocketAddress mcastaddr, NetworkInterface netIf)
+            throws IOException {
+        }
 
-	public void setOption(int optID, Object value){
-	}
+        protected void close() {
+        }
+
+        public Object getOption(int optID){
+            return null;
+        }
+
+        public void setOption(int optID, Object value){
+        }
 
     }
 
@@ -155,15 +155,15 @@ public class SocketImplTest extends Applet {
      * A no-op Socket descendant.
      */
     class MySocket extends Socket {
-	public MySocket(SocketImpl impl) throws IOException {
-	    super(impl);
-	}
+        public MySocket(SocketImpl impl) throws IOException {
+            super(impl);
+        }
     }
 
     class MyDatagramSocket extends DatagramSocket {
-	public MyDatagramSocket(DatagramSocketImpl impl) {
-	    super(impl);
-	}
+        public MyDatagramSocket(DatagramSocketImpl impl) {
+            super(impl);
+        }
     }
 
     /**
@@ -171,17 +171,16 @@ public class SocketImplTest extends Applet {
      * a SecurityException.
      */
     public void init(){
-	MySocketImpl socketImpl = new MySocketImpl();
-	MyDatagramSocketImpl dgramSocketImpl = new MyDatagramSocketImpl();
+        MySocketImpl socketImpl = new MySocketImpl();
+        MyDatagramSocketImpl dgramSocketImpl = new MyDatagramSocketImpl();
 
-	try{
-	    MySocket socko = new MySocket(socketImpl);
-	    MyDatagramSocket dsock = new MyDatagramSocket(dgramSocketImpl);
-	} catch(IOException ioex){
-	    System.err.println(ioex);
-	} catch(SecurityException sec) {
-	    throw new RuntimeException("Failed. Creation of socket throwing SecurityException: ");
-	}
+        try{
+            MySocket socko = new MySocket(socketImpl);
+            MyDatagramSocket dsock = new MyDatagramSocket(dgramSocketImpl);
+        } catch(IOException ioex){
+            System.err.println(ioex);
+        } catch(SecurityException sec) {
+            throw new RuntimeException("Failed. Creation of socket throwing SecurityException: ");
+        }
     }
 }
-

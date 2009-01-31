@@ -34,17 +34,17 @@ import java.security.*;
  * ClassFileTransformer implementation that returns a copy of its input
  */
 public class
-SimpleIdentityTransformer implements ClassFileTransformer {     
-    
+SimpleIdentityTransformer implements ClassFileTransformer {
+
     /**
      * Constructor for SimpleIdentityTransform.
      */
     public SimpleIdentityTransformer() {
         super();
     }
-    
+
     /**
-     * 
+     *
      */
     public byte[]
     transform(
@@ -55,9 +55,8 @@ SimpleIdentityTransformer implements ClassFileTransformer {
         byte[] classfileBuffer) {
         byte[] newBuffer = new byte[classfileBuffer.length];
         System.arraycopy(classfileBuffer, 0, newBuffer, 0, classfileBuffer.length);
-        
+
         return newBuffer;
     }
 
 }
-    

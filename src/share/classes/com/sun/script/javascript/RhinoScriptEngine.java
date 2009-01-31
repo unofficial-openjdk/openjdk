@@ -38,12 +38,11 @@ import java.util.*;
  *
  * @author Mike Grogan
  * @author A. Sundararajan
- * @version 1.0
  * @since 1.6
  */
 public final class RhinoScriptEngine extends AbstractScriptEngine
         implements  Invocable, Compilable {
-    
+
     private static final boolean DEBUG = false;
 
     /* Scope where standard JavaScript objects and our
@@ -61,7 +60,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
 
     private ScriptEngineFactory factory;
     private InterfaceImplementor implementor;
-    
+
     static {
         ContextFactory.initGlobal(new ContextFactory() {
             protected Context makeContext() {
@@ -82,21 +81,21 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         });
     }
 
-    
+
     /**
      * Creates a new instance of RhinoScriptEngine
      */
     public RhinoScriptEngine() {
-       
+
         Context cx = enterContext();
-        try { 
+        try {
             topLevel = new RhinoTopLevel(cx, this);
         } finally {
             cx.exit();
         }
-      
+
         indexedProps = new HashMap<Object, Object>();
- 
+
         //construct object used to implement getInterface
         implementor = new InterfaceImplementor(this) {
                 protected Object convertResult(Method method, Object res)
@@ -110,17 +109,17 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
                 }
             };
     }
-    
+
     public Object eval(Reader reader, ScriptContext ctxt)
     throws ScriptException {
         Object ret;
-        
+
         Context cx = enterContext();
         try {
             Scriptable scope = getRuntimeScope(ctxt);
             String filename = (String) get(ScriptEngine.FILENAME);
             filename = filename == null ? "<Unknown source>" : filename;
-            
+
             ret = cx.evaluateReader(scope, reader, filename , 1,  null);
         } catch (RhinoException re) {
             if (DEBUG) re.printStackTrace();
@@ -139,17 +138,17 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         } finally {
             cx.exit();
         }
-        
+
         return unwrapReturnValue(ret);
     }
-    
+
     public Object eval(String script, ScriptContext ctxt) throws ScriptException {
         if (script == null) {
             throw new NullPointerException("null script");
         }
         return eval(new StringReader(script) , ctxt);
     }
-    
+
     public ScriptEngineFactory getFactory() {
         if (factory != null) {
             return factory;
@@ -157,17 +156,17 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             return new RhinoScriptEngineFactory();
         }
     }
-    
+
     public Bindings createBindings() {
         return new SimpleBindings();
     }
-    
+
     //Invocable methods
     public Object invokeFunction(String name, Object... args)
     throws ScriptException, NoSuchMethodException {
         return invoke(null, name, args);
     }
-    
+
     public Object invokeMethod(Object thiz, String name, Object... args)
     throws ScriptException, NoSuchMethodException {
         if (thiz == null) {
@@ -187,7 +186,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             if (thiz != null && !(thiz instanceof Scriptable)) {
                 thiz = cx.toObject(thiz, topLevel);
             }
-            
+
             Scriptable engineScope = getRuntimeScope(context);
             Scriptable localScope = (thiz != null)? (Scriptable) thiz :
                                                     engineScope;
@@ -201,7 +200,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             if (scope == null) {
                 scope = engineScope;
             }
-            Object result = func.call(cx, scope, localScope, 
+            Object result = func.call(cx, scope, localScope,
                                       wrapArguments(args));
             return unwrapReturnValue(result);
         } catch (RhinoException re) {
@@ -212,7 +211,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             cx.exit();
         }
     }
-   
+
     public <T> T getInterface(Class<T> clasz) {
         try {
             return implementor.getInterface(null, clasz);
@@ -220,7 +219,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             return null;
         }
     }
-    
+
     public <T> T getInterface(Object thiz, Class<T> clasz) {
         if (thiz == null) {
             throw new IllegalArgumentException("script object can not be null");
@@ -233,7 +232,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         }
     }
 
-    private static final String printSource = 
+    private static final String printSource =
             "function print(str, newline) {                \n" +
             "    if (typeof(str) == 'undefined') {         \n" +
             "        str = 'undefined';                    \n" +
@@ -248,7 +247,7 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
             "function println(str) {                       \n" +
             "    print(str, true);                         \n" +
             "}";
-    
+
     Scriptable getRuntimeScope(ScriptContext ctxt) {
         if (ctxt == null) {
             throw new NullPointerException("null script context");
@@ -263,33 +262,33 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
 
         // define "context" variable in the new scope
         newScope.put("context", newScope, ctxt);
-       
+
         // define "print", "println" functions in the new scope
         Context cx = enterContext();
         try {
             cx.evaluateString(newScope, printSource, "print", 1, null);
         } finally {
             cx.exit();
-        } 
+        }
         return newScope;
     }
-    
-    
+
+
     //Compilable methods
     public CompiledScript compile(String script) throws ScriptException {
         return compile(new StringReader(script));
     }
-    
+
     public CompiledScript compile(java.io.Reader script) throws ScriptException {
         CompiledScript ret = null;
         Context cx = enterContext();
-        
+
         try {
             String fileName = (String) get(ScriptEngine.FILENAME);
             if (fileName == null) {
                 fileName = "<Unknown Source>";
             }
-            
+
             Scriptable scope = getRuntimeScope(context);
             Script scr = cx.compileReader(scope, script, fileName, 1, null);
             ret = new RhinoCompiledScript(this, scr);
@@ -301,8 +300,8 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         }
         return ret;
     }
-    
-    
+
+
     //package-private helpers
 
     static Context enterContext() {
@@ -325,24 +324,24 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         }
         return res;
     }
-    
+
     Object unwrapReturnValue(Object result) {
         if (result instanceof Wrapper) {
             result = ( (Wrapper) result).unwrap();
         }
-        
+
         return result instanceof Undefined ? null : result;
     }
-    
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("No file specified");
             return;
         }
-        
+
         InputStreamReader r = new InputStreamReader(new FileInputStream(args[0]));
         ScriptEngine engine = new RhinoScriptEngine();
-        
+
         engine.put("x", "y");
         engine.put(ScriptEngine.FILENAME, args[0]);
         engine.eval(r);

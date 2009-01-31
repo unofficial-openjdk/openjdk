@@ -30,7 +30,7 @@ import java.io.IOException;
 /**
  * A connection between a debugger and a target VM which it debugs.
  *
- * <p> A Connection represents a bi-directional communication channel 
+ * <p> A Connection represents a bi-directional communication channel
  * between a debugger and a target VM. A Connection is created when
  * {@link com.sun.jdi.connect.spi.TransportService TransportService}
  * establishes a connection and successfully handshakes with a target
@@ -38,7 +38,7 @@ import java.io.IOException;
  * JDWP packet transportation service and consequently a Connection
  * provides a reliable flow of JDWP packets between the debugger
  * and the target VM. A Connection is stream oriented, that is, the
- * JDWP packets written to a connection are read by the target VM 
+ * JDWP packets written to a connection are read by the target VM
  * in the order in which they were written. Similiarly packets written
  * to a Connection by the target VM are read by the debugger in the
  * order in which they were written.
@@ -66,10 +66,10 @@ public abstract class Connection {
      * when it reads all bytes of a packet, or in the case of a
      * transport service that is based on a stream-oriented
      * communication protocol, the end of stream is encountered.
-     * 
+     *
      * <p> Reading a packet does not do any integrity checking on
      * the packet aside from a check that the length of the packet
-     * (as indicated by the value of the <tt>length</tt> field, the 
+     * (as indicated by the value of the <tt>length</tt> field, the
      * first four bytes of the packet) is 11 or more bytes.
      * If the value of the <tt>length</tt> value is less then 11
      * then an <tt>IOException</tt> is thrown.
@@ -77,7 +77,7 @@ public abstract class Connection {
      * <p> Returns a byte array of a length equal to the length
      * of the received packet, or a byte array of length 0 when an
      * end of stream is encountered. If end of stream is encountered
-     * after some, but not all bytes of a packet, are read then it  
+     * after some, but not all bytes of a packet, are read then it
      * is considered an I/O error and an <tt>IOException</tt> is
      * thrown. The first byte of the packet is stored in element
      * <tt>0</tt> of the byte array, the second in element <tt>1</tt>,
@@ -87,23 +87,23 @@ public abstract class Connection {
      * are in big endian order as per the JDWP specification.
      *
      * <p> This method may be invoked at any time.  If another thread has
-     * already initiated a {@link #readPacket readPacket} on this 
+     * already initiated a {@link #readPacket readPacket} on this
      * connection then the invocation of this method will block until the
      * first operation is complete. </p>
      *
-     * @return	the packet read from the target VM
+     * @return  the packet read from the target VM
      *
      * @throws  ClosedConnectionException
      *          If the connection is closed, or another thread closes
      *          the connection while the readPacket is in progress.
      *
-     * @throws  java.io.IOException  
-     *		If the length of the packet (as indictaed by the first
-     *		4 bytes) is less than 11 bytes, or an I/O error occurs.
-     *          
+     * @throws  java.io.IOException
+     *          If the length of the packet (as indictaed by the first
+     *          4 bytes) is less than 11 bytes, or an I/O error occurs.
+     *
      *
      */
-    public abstract byte[] readPacket() throws IOException;    
+    public abstract byte[] readPacket() throws IOException;
 
     /**
      * Writes a packet to the target VM.
@@ -121,17 +121,17 @@ public abstract class Connection {
      * as per the <a
      * href="../../../../../../../../../technotes/guides/jpda/jdwp-spec.html">
      * JDWP specification</a>. That is, all fields in the packet
-     * are in big endian order. The first byte, that is element 
+     * are in big endian order. The first byte, that is element
      * <tt>pkt[0]</tt>, is the first byte of the <tt>length</tt> field.
      * <tt>pkt[1]</tt> is the second byte of the <tt>length</tt> field,
-     * and so on. 
-     * 
+     * and so on.
+     *
      * <p> Writing a packet does not do any integrity checking on
-     * the packet aside from checking the packet length. Checking 
+     * the packet aside from checking the packet length. Checking
      * the packet length requires checking that the value of the
      * <tt>length</tt> field (as indicated by the first four bytes
      * of the packet) is 11 or greater. Consequently the length of
-     * the byte array provided to this method, that is 
+     * the byte array provided to this method, that is
      * <tt>pkt.length</tt>, must be 11 or more, and must be equal
      * or greater than the value of the <tt>length</tt> field. If the
      * length of the byte array is greater than the value of
@@ -153,19 +153,19 @@ public abstract class Connection {
      * a subsequent invocation of this method will block until the first
      * operation is complete. </p>
      *
-     * @param	pkt
-     *		The packet to write to the target VM.
+     * @param   pkt
+     *          The packet to write to the target VM.
      *
-     * @throws	ClosedConnectionException
-     *		If the connection is closed, or another thread closes
-     *		the connection while the write operation is in progress.
+     * @throws  ClosedConnectionException
+     *          If the connection is closed, or another thread closes
+     *          the connection while the write operation is in progress.
      *
-     * @throws	java.io.IOException  
-     *		If an I/O error occurs.
+     * @throws  java.io.IOException
+     *          If an I/O error occurs.
      *
      * @throws  IllegalArgumentException
-     *		If the value of the <tt>length</tt> field is invalid,
-     *		or the byte array is of insufficient length.
+     *          If the value of the <tt>length</tt> field is invalid,
+     *          or the byte array is of insufficient length.
      */
     public abstract void writePacket(byte pkt[]) throws IOException;
 
@@ -173,10 +173,10 @@ public abstract class Connection {
      * Closes this connection.
      *
      * <p> If the connection is already closed then invoking this method
-     * has no effect. After a connection is closed, any further attempt 
+     * has no effect. After a connection is closed, any further attempt
      * calls to {@link #readPacket readPacket} or {@link #writePacket
      * writePacket} will throw a {@link ClosedConnectionException}.
-     * 
+     *
      * <p> Any thread currently blocked in an I/O operation ({@link
      * #readPacket readPacket} or {@link #writePacket writePacket})
      * will throw a {@link ClosedConnectionException}).
@@ -186,8 +186,8 @@ public abstract class Connection {
      * the first invocation is complete, after which it will return without
      * effect. </p>
      *
-     * @throws  java.io.IOException  
-     *		If an I/O error occurs
+     * @throws  java.io.IOException
+     *          If an I/O error occurs
      */
     public abstract void close() throws IOException;
 
@@ -198,4 +198,3 @@ public abstract class Connection {
      */
     public abstract boolean isOpen();
 }
-

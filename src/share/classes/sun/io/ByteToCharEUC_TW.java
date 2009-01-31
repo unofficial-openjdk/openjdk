@@ -54,36 +54,36 @@ public class ByteToCharEUC_TW extends ByteToCharConverter
 
     public static String unicodeCNS1 = nioCoder.getUnicodeCNS1();
 
-	static String[] cnsChars = {
-	    unicodeCNS2 = nioCoder.getUnicodeCNS2(),
-	    unicodeCNS3 = nioCoder.getUnicodeCNS3(),
-	    unicodeCNS4 = nioCoder.getUnicodeCNS4(),
-	    unicodeCNS5 = nioCoder.getUnicodeCNS5(),
-	    unicodeCNS6 = nioCoder.getUnicodeCNS6(),
-	    unicodeCNS7 = nioCoder.getUnicodeCNS7(),
-	    unicodeCNS15 = nioCoder.getUnicodeCNS15()
-	    };
+        static String[] cnsChars = {
+            unicodeCNS2 = nioCoder.getUnicodeCNS2(),
+            unicodeCNS3 = nioCoder.getUnicodeCNS3(),
+            unicodeCNS4 = nioCoder.getUnicodeCNS4(),
+            unicodeCNS5 = nioCoder.getUnicodeCNS5(),
+            unicodeCNS6 = nioCoder.getUnicodeCNS6(),
+            unicodeCNS7 = nioCoder.getUnicodeCNS7(),
+            unicodeCNS15 = nioCoder.getUnicodeCNS15()
+            };
 
     public ByteToCharEUC_TW() {
     }
 
     public int flush(char[] output, int outStart, int outEnd)
-	throws MalformedInputException
+        throws MalformedInputException
     {
-	if (state != G0) {
-	    state = G0;
-	    firstByte = 0;
-	    badInputLength = 0;
-	    throw new MalformedInputException();
-	}
-	reset();
-	return 0;
+        if (state != G0) {
+            state = G0;
+            firstByte = 0;
+            badInputLength = 0;
+            throw new MalformedInputException();
+        }
+        reset();
+        return 0;
     }
 
     public void reset() {
-	state = G0;
-	firstByte = 0;
-	byteOff = charOff = 0;
+        state = G0;
+        firstByte = 0;
+        byteOff = charOff = 0;
     }
 
     /**
@@ -94,94 +94,94 @@ public class ByteToCharEUC_TW extends ByteToCharConverter
         throws UnknownCharacterException, MalformedInputException,
                ConversionBufferFullException
     {
-	int inputSize = 0;
-	char outputChar = (char) 0;
+        int inputSize = 0;
+        char outputChar = (char) 0;
 
-	byteOff = inOff;
-	charOff = outOff;
+        byteOff = inOff;
+        charOff = outOff;
 
         cnsPlane = 3;
-	while (byteOff < inEnd) {
-	    if (charOff >= outEnd) 
-	 	throw new ConversionBufferFullException();
+        while (byteOff < inEnd) {
+            if (charOff >= outEnd)
+                throw new ConversionBufferFullException();
 
-	    switch (state) {
-	    case G0:
-		if ( (input[byteOff] & MSB) == 0) {	// ASCII
-		    outputChar = (char) input[byteOff];
-		} else if (input[byteOff] == SS2) {	// Codeset 2
-		    state = G2;
-		} else {				// Codeset 1
-		    firstByte = input[byteOff];
-		    state = G1;
-		}
-		break;
-	    case G1:
-		inputSize = 2;
-		if ( (input[byteOff] & MSB) != 0) {	// 2nd byte
-		    cnsPlane = 1;
-		    outputChar = convToUnicode(firstByte, 
-					input[byteOff], unicodeCNS1);
-		} else {				// Error
-		    badInputLength = 1;
-		    throw new MalformedInputException();
-		}
-		firstByte = 0;
-		state = G0;
-		break;
-	    case G2:
-		cnsPlane = (input[byteOff] & (byte)0x0f);
-		// Adjust String array index for plan 15 
-		cnsPlane = (cnsPlane == 15)? 8 : cnsPlane;
+            switch (state) {
+            case G0:
+                if ( (input[byteOff] & MSB) == 0) {     // ASCII
+                    outputChar = (char) input[byteOff];
+                } else if (input[byteOff] == SS2) {     // Codeset 2
+                    state = G2;
+                } else {                                // Codeset 1
+                    firstByte = input[byteOff];
+                    state = G1;
+                }
+                break;
+            case G1:
+                inputSize = 2;
+                if ( (input[byteOff] & MSB) != 0) {     // 2nd byte
+                    cnsPlane = 1;
+                    outputChar = convToUnicode(firstByte,
+                                        input[byteOff], unicodeCNS1);
+                } else {                                // Error
+                    badInputLength = 1;
+                    throw new MalformedInputException();
+                }
+                firstByte = 0;
+                state = G0;
+                break;
+            case G2:
+                cnsPlane = (input[byteOff] & (byte)0x0f);
+                // Adjust String array index for plan 15
+                cnsPlane = (cnsPlane == 15)? 8 : cnsPlane;
 
-		if (cnsPlane < 15) {
-		     state = G3;
-		} else {
-		    badInputLength = 2;
-		    throw new MalformedInputException();
-		}
+                if (cnsPlane < 15) {
+                     state = G3;
+                } else {
+                    badInputLength = 2;
+                    throw new MalformedInputException();
+                }
 
-		break;
-	    case G3:
-		if ( (input[byteOff] & MSB) != 0) {	// 1st byte
-		    firstByte = input[byteOff];
-		    state = G4;
-		} else {				// Error
-		    state = G0;
-		    badInputLength = 2;
-		    throw new MalformedInputException();
-		}
-		break;
-	    case G4:
-		if ( (input[byteOff] & MSB) != 0) {	// 2nd byte
-			outputChar = convToUnicode(firstByte, 
-						   input[byteOff], 
-					           cnsChars[cnsPlane - 2]);
-		} else {				// Error
-		    badInputLength = 3;
-		    throw new MalformedInputException();
-		}
-		firstByte = 0;
-		state = G0;
-		break;
-	    }
-	    byteOff++;
+                break;
+            case G3:
+                if ( (input[byteOff] & MSB) != 0) {     // 1st byte
+                    firstByte = input[byteOff];
+                    state = G4;
+                } else {                                // Error
+                    state = G0;
+                    badInputLength = 2;
+                    throw new MalformedInputException();
+                }
+                break;
+            case G4:
+                if ( (input[byteOff] & MSB) != 0) {     // 2nd byte
+                        outputChar = convToUnicode(firstByte,
+                                                   input[byteOff],
+                                                   cnsChars[cnsPlane - 2]);
+                } else {                                // Error
+                    badInputLength = 3;
+                    throw new MalformedInputException();
+                }
+                firstByte = 0;
+                state = G0;
+                break;
+            }
+            byteOff++;
 
-	    if (outputChar != (char) 0) {
-		if (outputChar == REPLACE_CHAR) {
-                    if (subMode) 		// substitution enabled
+            if (outputChar != (char) 0) {
+                if (outputChar == REPLACE_CHAR) {
+                    if (subMode)                // substitution enabled
                         outputChar = subChars[0];
                     else {
                         badInputLength = inputSize;
                         throw new UnknownCharacterException();
                     }
                 }
-	        output[charOff++] = outputChar;
-		outputChar = 0;
-	    }
-	}
+                output[charOff++] = outputChar;
+                outputChar = 0;
+            }
+        }
 
-	return charOff - outOff;
+        return charOff - outOff;
     }
 
 
@@ -194,22 +194,22 @@ public class ByteToCharEUC_TW extends ByteToCharConverter
 
     protected char convToUnicode(byte byte1, byte byte2, String table)
     {
-	int index;
+        int index;
 
-        if ((byte1 & 0xff) < 0xa1 || (byte2 & 0xff) < 0xa1 || 
-	    (byte1 & 0xff) > 0xfe || (byte2 & 0xff) > 0xfe)
+        if ((byte1 & 0xff) < 0xa1 || (byte2 & 0xff) < 0xa1 ||
+            (byte1 & 0xff) > 0xfe || (byte2 & 0xff) > 0xfe)
             return REPLACE_CHAR;
-	index = (((byte1 & 0xff) - 0xa1) * 94)  + (byte2 & 0xff) - 0xa1;
-	if (index < 0 || index >= table.length())
-	    return REPLACE_CHAR;
+        index = (((byte1 & 0xff) - 0xa1) * 94)  + (byte2 & 0xff) - 0xa1;
+        if (index < 0 || index >= table.length())
+            return REPLACE_CHAR;
 
-	// Planes 3 and above containing zero value lead byte
-	// to accommodate surrogates for mappings which decode to a surrogate
-	// pair
+        // Planes 3 and above containing zero value lead byte
+        // to accommodate surrogates for mappings which decode to a surrogate
+        // pair
 
-	if (this.cnsPlane >= 3)
-	   index = (index * 2) + 1;
+        if (this.cnsPlane >= 3)
+           index = (index * 2) + 1;
 
-	return table.charAt(index);
+        return table.charAt(index);
     }
 }

@@ -30,50 +30,50 @@ import java.nio.*;
 
 public class StringCharBufferSliceTest {
     public static void main( String[] args) throws Exception {
-	System.out.println(
-	    ">>> StringCharBufferSliceTest-main: testing the slice method...");
+        System.out.println(
+            ">>> StringCharBufferSliceTest-main: testing the slice method...");
 
-	final String in = "for testing";
+        final String in = "for testing";
 
-	System.out.println(
-	    ">>> StringCharBufferSliceTest-main: testing with the position 0.");
+        System.out.println(
+            ">>> StringCharBufferSliceTest-main: testing with the position 0.");
 
         CharBuffer buff = CharBuffer.wrap(in);
-	test(buff, buff.slice());
+        test(buff, buff.slice());
 
-	System.out.println(
-	    ">>> StringCharBufferSliceTest-main: testing with new position.");
+        System.out.println(
+            ">>> StringCharBufferSliceTest-main: testing with new position.");
 
-	buff.position(2);
-	test(buff, buff.slice());
+        buff.position(2);
+        test(buff, buff.slice());
 
-	System.out.println(
-	  ">>> StringCharBufferSliceTest-main: testing with non zero initial position.");
+        System.out.println(
+          ">>> StringCharBufferSliceTest-main: testing with non zero initial position.");
 
-	buff = CharBuffer.wrap(in, 3, in.length());
-	test(buff, buff.slice());
+        buff = CharBuffer.wrap(in, 3, in.length());
+        test(buff, buff.slice());
 
-	System.out.println(">>> StringCharBufferSliceTest-main: done!");
+        System.out.println(">>> StringCharBufferSliceTest-main: done!");
     }
 
     public static void test(CharBuffer buff, CharBuffer slice) throws RuntimeException {
-	boolean marked = false;
+        boolean marked = false;
 
-	try {
-	    slice.reset();
+        try {
+            slice.reset();
 
-	    marked = true;
-	} catch (InvalidMarkException ime) {
-	    // expected
-	}
+            marked = true;
+        } catch (InvalidMarkException ime) {
+            // expected
+        }
 
-	if (marked ||
-	    slice.position() != 0 ||
-	    buff.remaining() != slice.limit() ||
-	    buff.remaining() != slice.capacity()) {
+        if (marked ||
+            slice.position() != 0 ||
+            buff.remaining() != slice.limit() ||
+            buff.remaining() != slice.capacity()) {
 
-	    throw new RuntimeException(
-		 "Calling the CharBuffer.slice method failed.");
-	}
+            throw new RuntimeException(
+                 "Calling the CharBuffer.slice method failed.");
+        }
     }
 }

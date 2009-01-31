@@ -36,8 +36,7 @@ import java.util.Arrays;
  * of this class can be called after the stream has closed
  * without generating an IOException.
  *
- * @author	Herb Jellinek
- * @version 	%I%, %G%
+ * @author      Herb Jellinek
  * @since       JDK1.1
  */
 public
@@ -56,7 +55,7 @@ class CharArrayWriter extends Writer {
      * Creates a new CharArrayWriter.
      */
     public CharArrayWriter() {
-	this(32);
+        this(32);
     }
 
     /**
@@ -68,46 +67,46 @@ class CharArrayWriter extends Writer {
     public CharArrayWriter(int initialSize) {
         if (initialSize < 0) {
             throw new IllegalArgumentException("Negative initial size: "
-					       + initialSize);
+                                               + initialSize);
         }
-	buf = new char[initialSize];
+        buf = new char[initialSize];
     }
 
     /**
      * Writes a character to the buffer.
      */
     public void write(int c) {
-	synchronized (lock) {
-	    int newcount = count + 1;
-	    if (newcount > buf.length) {
+        synchronized (lock) {
+            int newcount = count + 1;
+            if (newcount > buf.length) {
                 buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
-	    }
-	    buf[count] = (char)c;
-	    count = newcount;
-	}
+            }
+            buf[count] = (char)c;
+            count = newcount;
+        }
     }
 
     /**
      * Writes characters to the buffer.
-     * @param c	the data to be written
-     * @param off	the start offset in the data
-     * @param len	the number of chars that are written
+     * @param c the data to be written
+     * @param off       the start offset in the data
+     * @param len       the number of chars that are written
      */
     public void write(char c[], int off, int len) {
-	if ((off < 0) || (off > c.length) || (len < 0) ||
+        if ((off < 0) || (off > c.length) || (len < 0) ||
             ((off + len) > c.length) || ((off + len) < 0)) {
-	    throw new IndexOutOfBoundsException();
-	} else if (len == 0) {
-	    return;
-	}
-	synchronized (lock) {
-	    int newcount = count + len;
-	    if (newcount > buf.length) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return;
+        }
+        synchronized (lock) {
+            int newcount = count + len;
+            if (newcount > buf.length) {
                 buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
-	    }
-	    System.arraycopy(c, off, buf, count, len);
-	    count = newcount;
-	}
+            }
+            System.arraycopy(c, off, buf, count, len);
+            count = newcount;
+        }
     }
 
     /**
@@ -117,26 +116,26 @@ class CharArrayWriter extends Writer {
      * @param  len  Number of characters to be written
      */
     public void write(String str, int off, int len) {
-	synchronized (lock) {
-	    int newcount = count + len;
-	    if (newcount > buf.length) {
+        synchronized (lock) {
+            int newcount = count + len;
+            if (newcount > buf.length) {
                 buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
-	    }
-	    str.getChars(off, off + len, buf, count);
-	    count = newcount;
-	}
+            }
+            str.getChars(off, off + len, buf, count);
+            count = newcount;
+        }
     }
 
     /**
      * Writes the contents of the buffer to another character stream.
      *
-     * @param out	the output stream to write to
+     * @param out       the output stream to write to
      * @throws IOException If an I/O error occurs.
      */
     public void writeTo(Writer out) throws IOException {
-	synchronized (lock) {
-	    out.write(buf, 0, count);
-	}
+        synchronized (lock) {
+            out.write(buf, 0, count);
+        }
     }
 
     /**
@@ -164,9 +163,9 @@ class CharArrayWriter extends Writer {
      * @since  1.5
      */
     public CharArrayWriter append(CharSequence csq) {
-	String s = (csq == null ? "null" : csq.toString());
-	write(s, 0, s.length());
-	return this;
+        String s = (csq == null ? "null" : csq.toString());
+        write(s, 0, s.length());
+        return this;
     }
 
     /**
@@ -202,9 +201,9 @@ class CharArrayWriter extends Writer {
      * @since  1.5
      */
     public CharArrayWriter append(CharSequence csq, int start, int end) {
-	String s = (csq == null ? "null" : csq).subSequence(start, end).toString();
-	write(s, 0, s.length());
-	return this;
+        String s = (csq == null ? "null" : csq).subSequence(start, end).toString();
+        write(s, 0, s.length());
+        return this;
     }
 
     /**
@@ -224,8 +223,8 @@ class CharArrayWriter extends Writer {
      * @since 1.5
      */
     public CharArrayWriter append(char c) {
-	write(c);
-	return this;
+        write(c);
+        return this;
     }
 
     /**
@@ -233,7 +232,7 @@ class CharArrayWriter extends Writer {
      * throwing away the already allocated buffer.
      */
     public void reset() {
-	count = 0;
+        count = 0;
     }
 
     /**
@@ -242,9 +241,9 @@ class CharArrayWriter extends Writer {
      * @return an array of chars copied from the input data.
      */
     public char toCharArray()[] {
-	synchronized (lock) {
+        synchronized (lock) {
             return Arrays.copyOf(buf, count);
-	}
+        }
     }
 
     /**
@@ -253,7 +252,7 @@ class CharArrayWriter extends Writer {
      * @return an int representing the current size of the buffer.
      */
     public int size() {
-	return count;
+        return count;
     }
 
     /**
@@ -261,9 +260,9 @@ class CharArrayWriter extends Writer {
      * @return the string.
      */
     public String toString() {
-	synchronized (lock) {
-	    return new String(buf, 0, count);
-	}
+        synchronized (lock) {
+            return new String(buf, 0, count);
+        }
     }
 
     /**

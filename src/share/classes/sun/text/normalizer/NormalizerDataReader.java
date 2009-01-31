@@ -42,7 +42,6 @@ import java.io.InputStream;
 import java.io.IOException;
 
 /**
- * @version     1.0
  * @author        Ram Viswanadha
  */
 
@@ -67,7 +66,7 @@ import java.io.IOException;
      * char indexes[INDEX_TOP];                   -- INDEX_TOP=32, see enum in this file
      *
      * Trie normTrie;                           -- size in bytes=indexes[INDEX_TRIE_SIZE]
-     * 
+     *
      * char extraData[extraDataTop];            -- extraDataTop=indexes[INDEX_UCHAR_COUNT]
      *                                                 extraData[0] contains the number of units for
      *                                                 FC_NFKC_Closure (formatVersion>=2.1)
@@ -260,7 +259,7 @@ import java.io.IOException;
      *  9.. 0   index into extraData[] to FC_NFKC_Closure string
      *          (not for lead surrogate),
      *          or lead surrogate offset (for lead surrogate, if 9..0 not zero)
-     * 
+     *
      * Conditions for "NF* Skippable" from Mark Davis' com.ibm.text.UCD.NFSkippable:
      * (used in NormalizerTransliterator)
      *
@@ -283,31 +282,31 @@ import java.io.IOException;
      * code points get a 0 bit.
      * This bit is only valid after (a)..(e) test FALSE; test NFD_NO before (f) as well.
      * Test Hangul LV syllables entirely in code.
-     *   
-     * 
+     *
+     *
      * - FC_NFKC_Closure strings in extraData[]
      *
      * Strings are either stored as a single code unit or as the length
      * followed by that many units.
-     * 
+     *
      */
 final class NormalizerDataReader implements ICUBinary.Authenticate {
-    
+
    /**
     * <p>Protected constructor.</p>
     * @param inputStream ICU uprop.dat file input stream
-    * @exception IOException throw if data file fails authentication 
+    * @exception IOException throw if data file fails authentication
     * @draft 2.1
     */
-    protected NormalizerDataReader(InputStream inputStream) 
+    protected NormalizerDataReader(InputStream inputStream)
                                         throws IOException{
-        
+
         unicodeVersion = ICUBinary.readHeader(inputStream, DATA_FORMAT_ID, this);
         dataInputStream = new DataInputStream(inputStream);
     }
-    
+
     // protected methods -------------------------------------------------
-    
+
     protected int[] readIndexes(int length)throws IOException{
         int[] indexes = new int[length];
         //Read the indexes
@@ -315,7 +314,7 @@ final class NormalizerDataReader implements ICUBinary.Authenticate {
              indexes[i] = dataInputStream.readInt();
         }
         return indexes;
-    } 
+    }
     /**
     * <p>Reads unorm.icu, parse it into blocks of data to be stored in
     * NormalizerImpl.</P
@@ -331,61 +330,61 @@ final class NormalizerDataReader implements ICUBinary.Authenticate {
                         char[] extraData, char[] combiningTable)
                         throws IOException{
 
-         //Read the bytes that make up the normTrie     
+         //Read the bytes that make up the normTrie
          dataInputStream.read(normBytes);
-        
+
          //normTrieStream= new ByteArrayInputStream(normBytes);
 
          //Read the extra data
          for(int i=0;i<extraData.length;i++){
              extraData[i]=dataInputStream.readChar();
          }
-         
+
          //Read the combining class table
          for(int i=0; i<combiningTable.length; i++){
              combiningTable[i]=dataInputStream.readChar();
          }
-         
+
          //Read the fcdTrie
          dataInputStream.read(fcdBytes);
-         
-         
-         //Read the AuxTrie         
+
+
+         //Read the AuxTrie
         dataInputStream.read(auxBytes);
     }
-    
+
     public byte[] getDataFormatVersion(){
         return DATA_FORMAT_VERSION;
     }
-    
+
     public boolean isDataVersionAcceptable(byte version[])
     {
-        return version[0] == DATA_FORMAT_VERSION[0] 
-               && version[2] == DATA_FORMAT_VERSION[2] 
+        return version[0] == DATA_FORMAT_VERSION[0]
+               && version[2] == DATA_FORMAT_VERSION[2]
                && version[3] == DATA_FORMAT_VERSION[3];
     }
-    
+
     public byte[] getUnicodeVersion(){
-        return unicodeVersion;    
+        return unicodeVersion;
     }
     // private data members -------------------------------------------------
-      
+
 
     /**
     * ICU data file input stream
     */
     private DataInputStream dataInputStream;
-    
+
     private byte[] unicodeVersion;
-                                       
+
     /**
     * File format version that this class understands.
     * No guarantees are made if a older version is used
     * see store.c of gennorm for more information and values
     */
-    private static final byte DATA_FORMAT_ID[] = {(byte)0x4E, (byte)0x6F, 
+    private static final byte DATA_FORMAT_ID[] = {(byte)0x4E, (byte)0x6F,
                                                     (byte)0x72, (byte)0x6D};
-    private static final byte DATA_FORMAT_VERSION[] = {(byte)0x2, (byte)0x2, 
+    private static final byte DATA_FORMAT_VERSION[] = {(byte)0x2, (byte)0x2,
                                                         (byte)0x5, (byte)0x2};
-    
+
 }

@@ -31,29 +31,29 @@ public class Mutex {
 
     public synchronized void lock() {
         if (locked && Thread.currentThread() == owner) {
-	    throw new IllegalMonitorStateException();
-	}
-	do {
-	    if (!locked) {
-	        locked = true;
-		owner = Thread.currentThread();
-	    } else {
-	        try {
-		    wait();
-		} catch (InterruptedException e) {
-		    // try again
-		}
-	    }
-	} while (owner != Thread.currentThread()); 
+            throw new IllegalMonitorStateException();
+        }
+        do {
+            if (!locked) {
+                locked = true;
+                owner = Thread.currentThread();
+            } else {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    // try again
+                }
+            }
+        } while (owner != Thread.currentThread());
     }
 
     public synchronized void unlock() {
         if (Thread.currentThread() != owner) {
-	    throw new IllegalMonitorStateException();
-	}
-	owner = null;
-	locked = false;
-	notify(); 
+            throw new IllegalMonitorStateException();
+        }
+        owner = null;
+        locked = false;
+        notify();
     }
 
     protected boolean isOwned() {

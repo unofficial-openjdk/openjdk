@@ -39,13 +39,13 @@ class AssignSubtractExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignSubtractExpression(long where, Expression left, Expression right) {
-	super(ASGSUB, where, left, right);
+        super(ASGSUB, where, left, right);
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_isub + itype.getTypeCodeOffset());
+        asm.add(where, opc_isub + itype.getTypeCodeOffset());
     }
 }

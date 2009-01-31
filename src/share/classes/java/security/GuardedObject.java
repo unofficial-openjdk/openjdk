@@ -42,7 +42,6 @@ package java.security;
  * @see Guard
  * @see Permission
  *
- * @version %I% %E%
  * @author Roland Schemers
  * @author Li Gong
  */
@@ -97,7 +96,7 @@ public class GuardedObject implements java.io.Serializable {
     {
         if (guard != null)
             guard.checkGuard(object);
-	
-	oos.defaultWriteObject();
+
+        oos.defaultWriteObject();
     }
 }

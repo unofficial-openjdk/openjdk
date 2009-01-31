@@ -25,7 +25,7 @@
  * @test
  * @author Vincent Ryan
  * @bug 6228412
- * @summary Check that a Properties object can be passed to the Sasl create 
+ * @summary Check that a Properties object can be passed to the Sasl create
  *          client and create server methods.
  */
 
@@ -46,88 +46,87 @@ public class PassSysProps {
 
     public static void main(String[] args) throws Exception {
 
-	String authorizationId = null;
-	String protocol = "ldap";
-	String serverName = "server1";
+        String authorizationId = null;
+        String protocol = "ldap";
+        String serverName = "server1";
 
-	CallbackHandler callbackHandler = new CallbackHandler(){
-	    public void handle(Callback[] callbacks) {
-	    }
-	};
+        CallbackHandler callbackHandler = new CallbackHandler(){
+            public void handle(Callback[] callbacks) {
+            }
+        };
 
-	// pass in system properties
+        // pass in system properties
 
-	Properties sysprops = System.getProperties();
+        Properties sysprops = System.getProperties();
 
-	SaslClient client1 = 
-	    Sasl.createSaslClient(new String[]{DIGEST, PLAIN}, authorizationId,
-		protocol, serverName, (Map) sysprops, callbackHandler);
-	System.out.println(client1);
+        SaslClient client1 =
+            Sasl.createSaslClient(new String[]{DIGEST, PLAIN}, authorizationId,
+                protocol, serverName, (Map) sysprops, callbackHandler);
+        System.out.println(client1);
 
-	SaslServer server1 = 
-	    Sasl.createSaslServer(DIGEST, protocol, serverName, (Map) sysprops, 
-		callbackHandler);
-	System.out.println(server1);
+        SaslServer server1 =
+            Sasl.createSaslServer(DIGEST, protocol, serverName, (Map) sysprops,
+                callbackHandler);
+        System.out.println(server1);
 
-	// pass in string-valued props
+        // pass in string-valued props
 
-	Map<String, String> stringProps = new Hashtable<String, String>();
-	stringProps.put(Sasl.POLICY_NOPLAINTEXT, "true");
+        Map<String, String> stringProps = new Hashtable<String, String>();
+        stringProps.put(Sasl.POLICY_NOPLAINTEXT, "true");
 
-	try {
+        try {
 
-	    SaslClient client2 = 
-	        Sasl.createSaslClient(new String[]{GSSAPI, PLAIN}, 
-		    authorizationId, protocol, serverName, stringProps, 
-	   	    callbackHandler);
-	    System.out.println(client2);
+            SaslClient client2 =
+                Sasl.createSaslClient(new String[]{GSSAPI, PLAIN},
+                    authorizationId, protocol, serverName, stringProps,
+                    callbackHandler);
+            System.out.println(client2);
 
-	    SaslServer server2 = 
-	        Sasl.createSaslServer(GSSAPI, protocol, serverName, 
-		    stringProps, callbackHandler);
-	    System.out.println(server2);
+            SaslServer server2 =
+                Sasl.createSaslServer(GSSAPI, protocol, serverName,
+                    stringProps, callbackHandler);
+            System.out.println(server2);
 
-	} catch (SaslException se) {
-	    Throwable t = se.getCause();
-	    if (t instanceof GSSException) {
-	        // allow GSSException because kerberos has not been initialized
+        } catch (SaslException se) {
+            Throwable t = se.getCause();
+            if (t instanceof GSSException) {
+                // allow GSSException because kerberos has not been initialized
 
-	    } else {
-		throw se;
-	    }
-	}
+            } else {
+                throw se;
+            }
+        }
 
-	// pass in object-valued props
+        // pass in object-valued props
 
-	Map<String, Object> objProps = new Hashtable<String, Object>();
-	objProps.put("some.object.valued.property", System.err);
+        Map<String, Object> objProps = new Hashtable<String, Object>();
+        objProps.put("some.object.valued.property", System.err);
 
-	SaslClient client3 = 
-	    Sasl.createSaslClient(new String[]{EXTERNAL, CRAM}, authorizationId,
-		protocol, serverName, objProps, callbackHandler);
-	System.out.println(client3);
+        SaslClient client3 =
+            Sasl.createSaslClient(new String[]{EXTERNAL, CRAM}, authorizationId,
+                protocol, serverName, objProps, callbackHandler);
+        System.out.println(client3);
 
-	SaslServer server3 = 
-	    Sasl.createSaslServer(CRAM, protocol, serverName, objProps, 
-		callbackHandler);
-	System.out.println(server3);
+        SaslServer server3 =
+            Sasl.createSaslServer(CRAM, protocol, serverName, objProps,
+                callbackHandler);
+        System.out.println(server3);
 
-	// pass in raw-type props
+        // pass in raw-type props
 
-	Map rawProps = new Hashtable();
-	rawProps.put(Sasl.POLICY_NOPLAINTEXT, "true");
-	rawProps.put("some.object.valued.property", System.err);
+        Map rawProps = new Hashtable();
+        rawProps.put(Sasl.POLICY_NOPLAINTEXT, "true");
+        rawProps.put("some.object.valued.property", System.err);
 
-	SaslClient client4 = 
-	    Sasl.createSaslClient(new String[]{EXTERNAL, CRAM}, authorizationId,
-		protocol, serverName, rawProps, callbackHandler);
-	System.out.println(client4);
+        SaslClient client4 =
+            Sasl.createSaslClient(new String[]{EXTERNAL, CRAM}, authorizationId,
+                protocol, serverName, rawProps, callbackHandler);
+        System.out.println(client4);
 
-	SaslServer server4 = 
-	    Sasl.createSaslServer(CRAM, protocol, serverName, rawProps, 
-		callbackHandler);
-	System.out.println(server4);
+        SaslServer server4 =
+            Sasl.createSaslServer(CRAM, protocol, serverName, rawProps,
+                callbackHandler);
+        System.out.println(server4);
 
     }
 }
-

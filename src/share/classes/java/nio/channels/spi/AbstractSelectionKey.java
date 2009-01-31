@@ -35,7 +35,6 @@ import java.nio.channels.*;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
@@ -51,11 +50,11 @@ public abstract class AbstractSelectionKey
     private volatile boolean valid = true;
 
     public final boolean isValid() {
-	return valid;
+        return valid;
     }
 
-    void invalidate() {					// package-private
-	valid = false;
+    void invalidate() {                                 // package-private
+        valid = false;
     }
 
     /**
@@ -69,10 +68,10 @@ public abstract class AbstractSelectionKey
         // multiple times by different threads, which might cause race
         // condition between selector's select() and channel's close().
         synchronized (this) {
-	    if (valid) {
+            if (valid) {
                 valid = false;
                 ((AbstractSelector)selector()).cancel(this);
-	    }
-	}
+            }
+        }
     }
 }

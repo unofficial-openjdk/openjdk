@@ -51,18 +51,18 @@ public class ByteToCharJISAutoDetect extends ByteToCharConverter {
     private ByteToCharConverter defaultConv = null;
 
     public ByteToCharJISAutoDetect() {
-	super();
-	SJISName = CharacterEncoding.getSJISName();
-	EUCJPName = CharacterEncoding.getEUCJPName();
+        super();
+        SJISName = CharacterEncoding.getSJISName();
+        EUCJPName = CharacterEncoding.getEUCJPName();
         defaultConv = new ByteToCharISO8859_1();
         defaultConv.subChars = subChars;
         defaultConv.subMode = subMode;
-	maskTable1 = nioCoder.getByteMask1();
-	maskTable2 = nioCoder.getByteMask2();
+        maskTable1 = nioCoder.getByteMask1();
+        maskTable2 = nioCoder.getByteMask2();
     }
 
     public int flush(char [] output, int outStart, int outEnd)
-	throws MalformedInputException, ConversionBufferFullException
+        throws MalformedInputException, ConversionBufferFullException
     {
         badInputLength = 0;
         if(detectedConv != null)
@@ -76,139 +76,139 @@ public class ByteToCharJISAutoDetect extends ByteToCharConverter {
      * Character conversion
      */
     public int convert(byte[] input, int inOff, int inEnd,
-		       char[] output, int outOff, int outEnd)
+                       char[] output, int outOff, int outEnd)
         throws UnknownCharacterException, MalformedInputException,
-	       ConversionBufferFullException
+               ConversionBufferFullException
     {
         int num = 0;
 
-	charOff = outOff;
-	byteOff = inOff;
+        charOff = outOff;
+        byteOff = inOff;
 
-	try {
-	    if (detectedConv == null) {
-		int euckana = 0;
-		int ss2count = 0;
-		int firstmask = 0;
-		int secondmask = 0;
-		int cnt;
-		boolean nonAsciiFound = false;
+        try {
+            if (detectedConv == null) {
+                int euckana = 0;
+                int ss2count = 0;
+                int firstmask = 0;
+                int secondmask = 0;
+                int cnt;
+                boolean nonAsciiFound = false;
 
-		for (cnt = inOff; cnt < inEnd; cnt++) {
-		    firstmask = 0;
-		    secondmask = 0;
-		    int byte1 = input[cnt]&0xff;
-		    int byte2;
+                for (cnt = inOff; cnt < inEnd; cnt++) {
+                    firstmask = 0;
+                    secondmask = 0;
+                    int byte1 = input[cnt]&0xff;
+                    int byte2;
 
-		    // TODO: should check valid escape sequences!
-		    if (byte1 == 0x1b) {
-			convName = "ISO2022JP";
-			break;
-		    }
+                    // TODO: should check valid escape sequences!
+                    if (byte1 == 0x1b) {
+                        convName = "ISO2022JP";
+                        break;
+                    }
 
-		    // Try to convert all leading ASCII characters.
-		    if ((nonAsciiFound == false) && (byte1 < 0x80)) {
-			if (charOff >= outEnd)
-			    throw new ConversionBufferFullException();
-			output[charOff++] = (char) byte1;
-			byteOff++;
-			num++;
-			continue;
-		    }
+                    // Try to convert all leading ASCII characters.
+                    if ((nonAsciiFound == false) && (byte1 < 0x80)) {
+                        if (charOff >= outEnd)
+                            throw new ConversionBufferFullException();
+                        output[charOff++] = (char) byte1;
+                        byteOff++;
+                        num++;
+                        continue;
+                    }
 
-		    // We can no longer convert ASCII.
-		    nonAsciiFound = true;
+                    // We can no longer convert ASCII.
+                    nonAsciiFound = true;
 
-		    firstmask = maskTable1[byte1];
-		    if (byte1 == SS2)
-			ss2count++;
+                    firstmask = maskTable1[byte1];
+                    if (byte1 == SS2)
+                        ss2count++;
 
-		    if (firstmask != 0) {
-			if (cnt+1 < inEnd) {
-			    byte2 = input[++cnt] & 0xff;
-			    secondmask = maskTable2[byte2];
-			    int mask = firstmask & secondmask;
-			    if (mask == EUCJP_MASK) {
-				convName = EUCJPName;
-				break;
-			    }
-			    if ((mask == SJIS2B_MASK) || (mask == SJIS1B_MASK)
-				|| (nioCoder.canBeSJIS1B(firstmask) && secondmask == 0)) {
-				convName = SJISName;
-				break;
-			    }
+                    if (firstmask != 0) {
+                        if (cnt+1 < inEnd) {
+                            byte2 = input[++cnt] & 0xff;
+                            secondmask = maskTable2[byte2];
+                            int mask = firstmask & secondmask;
+                            if (mask == EUCJP_MASK) {
+                                convName = EUCJPName;
+                                break;
+                            }
+                            if ((mask == SJIS2B_MASK) || (mask == SJIS1B_MASK)
+                                || (nioCoder.canBeSJIS1B(firstmask) && secondmask == 0)) {
+                                convName = SJISName;
+                                break;
+                            }
 
-			    // If the first byte is a SS3 and the third byte
-			    // is not an EUC byte, it should be SJIS.
-			    // Otherwise, we can't determine it yet, but it's
-			    // very likely SJIS. So we don't take the EUCJP CS3
-			    // character boundary. If we tried both
-			    // possibilities here, it might be able to be
-			    // determined correctly.
-			    if ((byte1 == SS3) && nioCoder.canBeEUCJP(secondmask)) {
-				if (cnt+1 < inEnd) {
-				    int nextbyte = input[cnt+1] & 0xff;
-				    if (! nioCoder.canBeEUCJP(maskTable2[nextbyte]))
-					convName = SJISName;
-				} else
-				    convName = SJISName;
-			    }
-			    if (nioCoder.canBeEUCKana(firstmask, secondmask))
-				euckana++;
-			} else {
-			    if ((firstmask & SJIS1B_MASK) != 0) {
-				convName = SJISName;
-				break;
-			    }
-			}
-		    }
-		}
+                            // If the first byte is a SS3 and the third byte
+                            // is not an EUC byte, it should be SJIS.
+                            // Otherwise, we can't determine it yet, but it's
+                            // very likely SJIS. So we don't take the EUCJP CS3
+                            // character boundary. If we tried both
+                            // possibilities here, it might be able to be
+                            // determined correctly.
+                            if ((byte1 == SS3) && nioCoder.canBeEUCJP(secondmask)) {
+                                if (cnt+1 < inEnd) {
+                                    int nextbyte = input[cnt+1] & 0xff;
+                                    if (! nioCoder.canBeEUCJP(maskTable2[nextbyte]))
+                                        convName = SJISName;
+                                } else
+                                    convName = SJISName;
+                            }
+                            if (nioCoder.canBeEUCKana(firstmask, secondmask))
+                                euckana++;
+                        } else {
+                            if ((firstmask & SJIS1B_MASK) != 0) {
+                                convName = SJISName;
+                                break;
+                            }
+                        }
+                    }
+                }
 
-		if (nonAsciiFound && (convName == null)) {
-		    if ((euckana > 1) || (ss2count > 1))
-			convName = EUCJPName;
-		    else
-			convName = SJISName;
-		}
+                if (nonAsciiFound && (convName == null)) {
+                    if ((euckana > 1) || (ss2count > 1))
+                        convName = EUCJPName;
+                    else
+                        convName = SJISName;
+                }
 
-		if (convName != null) {
-		    try {
-			detectedConv = ByteToCharConverter.getConverter(convName);
-			detectedConv.subChars = subChars;
-			detectedConv.subMode = subMode;
-		    } catch (UnsupportedEncodingException e){
-			detectedConv = null;
-			convName = null;
-		    }
-		}
-	    }
-	} catch (ConversionBufferFullException bufferFullException) {
-		throw bufferFullException;
-	} catch (Exception e) {
-	    // If we fail to detect the converter needed for any reason,
-	    // use the default converter.
-	    detectedConv = defaultConv;
-	}
+                if (convName != null) {
+                    try {
+                        detectedConv = ByteToCharConverter.getConverter(convName);
+                        detectedConv.subChars = subChars;
+                        detectedConv.subMode = subMode;
+                    } catch (UnsupportedEncodingException e){
+                        detectedConv = null;
+                        convName = null;
+                    }
+                }
+            }
+        } catch (ConversionBufferFullException bufferFullException) {
+                throw bufferFullException;
+        } catch (Exception e) {
+            // If we fail to detect the converter needed for any reason,
+            // use the default converter.
+            detectedConv = defaultConv;
+        }
 
-	// If we've converted all ASCII characters, then return.
-	if (byteOff == inEnd) { 
-	    return num;
-	}
+        // If we've converted all ASCII characters, then return.
+        if (byteOff == inEnd) {
+            return num;
+        }
 
         if(detectedConv != null) {
-	    try {
-		num += detectedConv.convert(input, inOff + num, inEnd,
-					    output, outOff + num, outEnd);
-	    } finally {
-		charOff = detectedConv.nextCharIndex();
-		byteOff = detectedConv.nextByteIndex();
-		badInputLength = detectedConv.badInputLength;
-	    }
+            try {
+                num += detectedConv.convert(input, inOff + num, inEnd,
+                                            output, outOff + num, outEnd);
+            } finally {
+                charOff = detectedConv.nextCharIndex();
+                byteOff = detectedConv.nextByteIndex();
+                badInputLength = detectedConv.badInputLength;
+            }
         } else {
             try {
                 num += defaultConv.convert(input, inOff + num, inEnd,
-					   output, outOff + num, outEnd);
-	    } finally {
+                                           output, outOff + num, outEnd);
+            } finally {
                 charOff = defaultConv.nextCharIndex();
                 byteOff = defaultConv.nextByteIndex();
                 badInputLength = defaultConv.badInputLength;
@@ -219,25 +219,25 @@ public class ByteToCharJISAutoDetect extends ByteToCharConverter {
 
     public void reset() {
         if(detectedConv != null) {
-	     detectedConv.reset();
-	     detectedConv = null;
-	     convName = null;
+             detectedConv.reset();
+             detectedConv = null;
+             convName = null;
         } else
              defaultConv.reset();
-	charOff = byteOff = 0;
+        charOff = byteOff = 0;
     }
 
     public String getCharacterEncoding() {
-	return "JISAutoDetect";
+        return "JISAutoDetect";
     }
 
     public String toString() {
-	String s = getCharacterEncoding();
-	if (detectedConv != null) {
-	    s += "[" + detectedConv.getCharacterEncoding() + "]";
-	} else {
-	    s += "[unknown]";
-	}
-	return s;
+        String s = getCharacterEncoding();
+        if (detectedConv != null) {
+            s += "[" + detectedConv.getCharacterEncoding() + "]";
+        } else {
+            s += "[unknown]";
+        }
+        return s;
     }
 }

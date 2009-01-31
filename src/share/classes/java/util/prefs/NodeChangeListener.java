@@ -29,7 +29,6 @@ package java.util.prefs;
  * A listener for receiving preference node change events.
  *
  * @author  Josh Bloch
- * @version %I%, %G%
  * @see     Preferences
  * @see     NodeChangeEvent
  * @see     PreferenceChangeListener

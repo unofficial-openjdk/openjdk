@@ -47,7 +47,7 @@ public class EventHandler implements Runnable {
     EventHandler(EventNotifier notifier, boolean stopOnVMStart) {
         this.notifier = notifier;
         this.stopOnVMStart = stopOnVMStart;
-        this.thread = new Thread(this, "event-handler"); 
+        this.thread = new Thread(this, "event-handler");
         this.thread.start();
     }
 
@@ -59,7 +59,7 @@ public class EventHandler implements Runnable {
         }
     }
 
-    public void run() { 
+    public void run() {
         EventQueue queue = Env.vm().eventQueue();
         while (connected) {
             try {
@@ -132,7 +132,7 @@ public class EventHandler implements Runnable {
             Env.shutdown(shutdownMessageKey);
             return false;
         } else {
-            throw new InternalError(MessageOutput.format("Unexpected event type", 
+            throw new InternalError(MessageOutput.format("Unexpected event type",
                                                          new Object[] {event.getClass()}));
         }
     }
@@ -180,8 +180,8 @@ public class EventHandler implements Runnable {
         ThreadReference thread;
         if (set.size() > 0) {
             /*
-             * If any event in the set has a thread associated with it, 
-             * they all will, so just grab the first one. 
+             * If any event in the set has a thread associated with it,
+             * they all will, so just grab the first one.
              */
             Event event = (Event)set.iterator().next(); // Is there a better way?
             thread = eventThread(event);
@@ -193,7 +193,7 @@ public class EventHandler implements Runnable {
 
     private void setCurrentThread(ThreadReference thread) {
         ThreadInfo.invalidateAll();
-        ThreadInfo.setCurrentThread(thread); 
+        ThreadInfo.setCurrentThread(thread);
     }
 
     private boolean vmStartEvent(Event event)  {

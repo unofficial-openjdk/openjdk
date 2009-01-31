@@ -24,9 +24,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.nio.cs.ext;
 
@@ -41,59 +39,59 @@ public class IBM834
     extends Charset
 {
     public IBM834() {
-	super("x-IBM834", ExtendedCharsets.aliasesFor("x-IBM834"));
+        super("x-IBM834", ExtendedCharsets.aliasesFor("x-IBM834"));
     }
 
     public boolean contains(Charset cs) {
-	return (cs instanceof IBM834);
+        return (cs instanceof IBM834);
     }
 
     public CharsetDecoder newDecoder() {
-	return new Decoder(this);
+        return new Decoder(this);
     }
 
     public CharsetEncoder newEncoder() {
-	return new Encoder(this);
+        return new Encoder(this);
     }
 
     protected static class Decoder extends DBCS_ONLY_IBM_EBCDIC_Decoder {
-	public Decoder(Charset cs) {
-	    super(cs);
-	    super.mask1 = 0xFFF0;
-	    super.mask2 = 0x000F;
-	    super.shift = 4;
-	    super.index1 = IBM933.getDecoderIndex1();
-	    super.index2 = IBM933.getDecoderIndex2();
-	}
+        public Decoder(Charset cs) {
+            super(cs);
+            super.mask1 = 0xFFF0;
+            super.mask2 = 0x000F;
+            super.shift = 4;
+            super.index1 = IBM933.getDecoderIndex1();
+            super.index2 = IBM933.getDecoderIndex2();
+        }
     }
 
     protected static class Encoder extends IBM933.Encoder {
-	public Encoder(Charset cs) {
-	    super(cs, new byte[] {(byte)0xfe, (byte)0xfe}, false);
-	}
+        public Encoder(Charset cs) {
+            super(cs, new byte[] {(byte)0xfe, (byte)0xfe}, false);
+        }
 
-	protected CoderResult implFlush(ByteBuffer out) {
-	    implReset();
-	    return CoderResult.UNDERFLOW;
-	}
+        protected CoderResult implFlush(ByteBuffer out) {
+            implReset();
+            return CoderResult.UNDERFLOW;
+        }
 
-	protected byte[] encodeHangul(char ch) {
+        protected byte[] encodeHangul(char ch) {
             byte[] bytes = super.encodeHangul(ch);
             if (bytes.length == 0) {
                 // Cp834 has 6 additional non-roundtrip char->bytes
-	        // mappings, see#6379808
-	        if (ch == '\u00b7') {
-		    return new byte[] {(byte)0x41, (byte)0x43 };
+                // mappings, see#6379808
+                if (ch == '\u00b7') {
+                    return new byte[] {(byte)0x41, (byte)0x43 };
                 } else if (ch == '\u00ad') {
-		    return new byte[] {(byte)0x41, (byte)0x48 };
+                    return new byte[] {(byte)0x41, (byte)0x48 };
                 } else if (ch == '\u2015') {
-		    return new byte[] {(byte)0x41, (byte)0x49 };
+                    return new byte[] {(byte)0x41, (byte)0x49 };
                 } else if (ch == '\u223c') {
-		    return new byte[] {(byte)0x42, (byte)0xa1 };
+                    return new byte[] {(byte)0x42, (byte)0xa1 };
                 } else if (ch == '\uff5e') {
-		    return new byte[] {(byte)0x49, (byte)0x54 };
+                    return new byte[] {(byte)0x49, (byte)0x54 };
                 } else if (ch == '\u2299') {
-		    return new byte[] {(byte)0x49, (byte)0x6f };
+                    return new byte[] {(byte)0x49, (byte)0x6f };
                 }
             } else if (bytes[0] == 0) {
                 return EMPTYBA;
@@ -101,7 +99,7 @@ public class IBM834
             return bytes;
         }
 
-	public boolean canEncode(char ch) {
+        public boolean canEncode(char ch) {
             return encodeHangul(ch).length != 0;
         }
 

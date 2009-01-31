@@ -26,11 +26,11 @@ public class TemperatureTableTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         testSetUp();
         new TemperatureTableTest(args).startTests();
     }
-    
+
     /********** test set-up **********/
 
     static void testSetUp() throws Exception {
@@ -39,18 +39,18 @@ public class TemperatureTableTest extends TestScaffold {
                            new File(System.getProperty("test.src", "."),
                                     "TemperatureTable.sde"));
     }
-    
+
     /********** test assist **********/
 
     void checkLocation(Location loc, String label,
-                       String expectedSourceName, 
-                       String expectedSourcePath, 
+                       String expectedSourceName,
+                       String expectedSourcePath,
                        int expectedLinenumber) throws Exception {
         String sourceName = loc.sourceName();
         if (sourceName.equals(expectedSourceName)) {
             println(label + " sourceName: " + sourceName);
         } else {
-            failure("FAIL: " + label + 
+            failure("FAIL: " + label +
                     " expected sourceName " + expectedSourceName +
                     " got - " + sourceName);
         }
@@ -59,7 +59,7 @@ public class TemperatureTableTest extends TestScaffold {
         if (sourcePath.equals(expectedSourcePath)) {
             println(label + " sourcePath: " + sourcePath);
         } else {
-            failure("FAIL: " + label + 
+            failure("FAIL: " + label +
                     " expected sourcePath " + expectedSourcePath +
                     " got - " + sourcePath);
         }
@@ -68,22 +68,22 @@ public class TemperatureTableTest extends TestScaffold {
         if (ln == expectedLinenumber) {
             println(label + " line number: " + ln);
         } else {
-            failure("FAIL: " + label + 
+            failure("FAIL: " + label +
                     " expected line number " + expectedLinenumber +
                     " got - " + ln);
         }
     }
 
-    void checkLocation(String stratum, Location loc, String label, 
-                       String expectedSourceName, 
-                       String expectedSourcePath, 
+    void checkLocation(String stratum, Location loc, String label,
+                       String expectedSourceName,
+                       String expectedSourcePath,
                        int expectedLinenumber) throws Exception {
         String sourceName = loc.sourceName(stratum);
         if (sourceName.equals(expectedSourceName)) {
             println(label + "(" + stratum + ")" +
                     " sourceName: " + sourceName);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" + 
+            failure("FAIL: " + label + "(" + stratum + ")" +
                     " expected sourceName " + expectedSourceName +
                     " got " + sourceName);
         }
@@ -93,7 +93,7 @@ public class TemperatureTableTest extends TestScaffold {
             println(label + "(" + stratum + ")" +
                     " sourcePath: " + sourcePath);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" + 
+            failure("FAIL: " + label + "(" + stratum + ")" +
                     " expected sourcePath " + expectedSourcePath +
                     " got " + sourcePath);
         }
@@ -103,7 +103,7 @@ public class TemperatureTableTest extends TestScaffold {
             println(label + "(" + stratum + ")" +
                     " line number: " + ln);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" + 
+            failure("FAIL: " + label + "(" + stratum + ")" +
                     " expected line number " + expectedLinenumber +
                     " got " + ln);
         }
@@ -113,7 +113,7 @@ public class TemperatureTableTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass
          */
         BreakpointEvent bpe = startToMain("TemperatureTableServlet");
@@ -195,7 +195,7 @@ public class TemperatureTableTest extends TestScaffold {
         } else {
             failure("FAIL: unexpected availableStrata - " + availSt);
         }
-            
+
         String def = targetClass.defaultStratum();
         if (def.equals("JSP")) {
             println("defaultStratum: " + def);
@@ -488,7 +488,7 @@ public class TemperatureTableTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -500,4 +500,3 @@ public class TemperatureTableTest extends TestScaffold {
         }
     }
 }
-

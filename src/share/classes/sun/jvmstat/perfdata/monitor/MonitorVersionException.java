@@ -33,7 +33,6 @@ import sun.jvmstat.monitor.MonitorException;
  * Java Virtual Machine.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitorVersionException extends MonitorException {

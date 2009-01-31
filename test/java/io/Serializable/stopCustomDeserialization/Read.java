@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /*
  * @bug 4663191
  * @summary Verify that readObject and readObjectNoData methods will not be
- * 	    called on an object being deserialized if that object is already
- * 	    tagged with a ClassNotFoundException.
+ *          called on an object being deserialized if that object is already
+ *          tagged with a ClassNotFoundException.
  */
 
 import java.io.*;
@@ -38,31 +38,31 @@ class A implements Serializable {
 class B extends A {
     private static final long serialVersionUID = 0L;
     private void readObjectNoData() throws ObjectStreamException {
-	throw new Error("readObjectNoData called");
+        throw new Error("readObjectNoData called");
     }
 }
 
 class C extends B {
     private static final long serialVersionUID = 0L;
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	throw new Error("readObject called");
+        throw new Error("readObject called");
     }
 }
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	try {
-	    oin.readObject();
-	    throw new Error("readObject should not succeed");
-	} catch (ClassNotFoundException e) {
-	    // expected
-	}
-	if (!oin.readObject().equals("after")) {
-	    throw new Error("subsequent object corrupted");
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        try {
+            oin.readObject();
+            throw new Error("readObject should not succeed");
+        } catch (ClassNotFoundException e) {
+            // expected
+        }
+        if (!oin.readObject().equals("after")) {
+            throw new Error("subsequent object corrupted");
+        }
     }
 }

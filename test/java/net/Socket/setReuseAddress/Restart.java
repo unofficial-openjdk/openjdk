@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4476378
- * @summary Check that SO_REUSEADDR allows a server to restart 
+ * @summary Check that SO_REUSEADDR allows a server to restart
  *          after a crash.
  */
 import java.net.*;
@@ -34,32 +34,32 @@ public class Restart {
     /*
      * Test that a server can bind to the same port after
      * a crash -- ie: while previous connection still in
-     * TIME_WAIT state we should be able to re-bind if 
+     * TIME_WAIT state we should be able to re-bind if
      * SO_REUSEADDR is enabled.
      */
 
     public static void main(String args[]) throws Exception {
 
-	InetSocketAddress isa = new InetSocketAddress(0);
-	ServerSocket ss = new ServerSocket();
-	ss.bind(isa);
+        InetSocketAddress isa = new InetSocketAddress(0);
+        ServerSocket ss = new ServerSocket();
+        ss.bind(isa);
 
-	int port = ss.getLocalPort();
+        int port = ss.getLocalPort();
 
-	Socket s1 = new Socket(InetAddress.getLocalHost(), port);
-	Socket s2 = ss.accept();
+        Socket s1 = new Socket(InetAddress.getLocalHost(), port);
+        Socket s2 = ss.accept();
 
-	// close server socket and the accepted connection
-	ss.close();
-	s2.close();
+        // close server socket and the accepted connection
+        ss.close();
+        s2.close();
 
-	boolean failed = false;
+        boolean failed = false;
 
-	ss = new ServerSocket();
-	ss.bind( new InetSocketAddress(port) );
-	ss.close();
+        ss = new ServerSocket();
+        ss.bind( new InetSocketAddress(port) );
+        ss.close();
 
-	// close the client socket
-	s1.close();
+        // close the client socket
+        s1.close();
     }
 }

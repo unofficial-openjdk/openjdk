@@ -66,7 +66,7 @@ public class XSystemTrayPeer implements SystemTrayPeer {
         } finally {
             XToolkit.awtUnlock();
         }
-        
+
         if (tray_owner == 0) {
             throw new AWTException("TrayIcon couldn't be displayed.");
         }
@@ -103,7 +103,7 @@ public class XSystemTrayPeer implements SystemTrayPeer {
             }
         } finally {
             xev.dispose();
-        }      
+        }
     }
 
     static XSystemTrayPeer getPeerInstance() {

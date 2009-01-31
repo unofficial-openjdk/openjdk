@@ -46,7 +46,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 /**
- * <code>InputMethodPopupMenu</code> provides the popup selection menu 
+ * <code>InputMethodPopupMenu</code> provides the popup selection menu
  */
 
 abstract class InputMethodPopupMenu implements ActionListener {
@@ -70,14 +70,14 @@ abstract class InputMethodPopupMenu implements ActionListener {
     abstract void addSeparator();
 
     abstract void addToComponent(Component c);
-            
+
     abstract Object createSubmenu(String label);
-            
+
     abstract void add(Object menuItem);
-            
+
     abstract void addMenuItem(String label, String command, String currentSelection);
 
-    abstract void addMenuItem(Object targetMenu, String label, String command, 
+    abstract void addMenuItem(Object targetMenu, String label, String command,
                               String currentSelection);
 
     void addOneInputMethodToMenu(InputMethodLocator locator, String currentSelection) {
@@ -137,7 +137,7 @@ abstract class InputMethodPopupMenu implements ActionListener {
         }
         return false;
     }
-    
+
     /**
      * Returns a localized locale name for input methods with the
      * given locale. It falls back to Locale.getDisplayName() and
@@ -148,18 +148,18 @@ abstract class InputMethodPopupMenu implements ActionListener {
     String getLocaleName(Locale locale) {
         String localeString = locale.toString();
         String localeName = Toolkit.getProperty("AWT.InputMethodLanguage." + localeString, null);
-	if (localeName == null) {
-	    localeName = locale.getDisplayName();
-	    if (localeName == null || localeName.length() == 0)
-		localeName = localeString;
-	}
-	return localeName;
+        if (localeName == null) {
+            localeName = locale.getDisplayName();
+            if (localeName == null || localeName.length() == 0)
+                localeName = localeString;
+        }
+        return localeName;
     }
-    
-    // ActionListener implementation 
+
+    // ActionListener implementation
     public void actionPerformed(ActionEvent event) {
-	String choice = event.getActionCommand();
-	((ExecutableInputMethodManager)InputMethodManager.getInstance()).changeInputMethod(choice);
+        String choice = event.getActionCommand();
+        ((ExecutableInputMethodManager)InputMethodManager.getInstance()).changeInputMethod(choice);
     }
 
 }
@@ -168,36 +168,36 @@ class JInputMethodPopupMenu extends InputMethodPopupMenu {
     static JPopupMenu delegate = null;
 
     JInputMethodPopupMenu(String title) {
-	synchronized (this) {
-	    if (delegate == null) {
-        	delegate = new JPopupMenu(title);
-	    }
-	}
+        synchronized (this) {
+            if (delegate == null) {
+                delegate = new JPopupMenu(title);
+            }
+        }
     }
 
     void show(Component c, int x, int y) {
-	delegate.show(c, x, y);
+        delegate.show(c, x, y);
     }
 
     void removeAll() {
-	delegate.removeAll();
+        delegate.removeAll();
     }
 
     void addSeparator() {
-	delegate.addSeparator();
+        delegate.addSeparator();
     }
 
     void addToComponent(Component c) {
     }
-            
+
     Object createSubmenu(String label) {
         return new JMenu(label);
     }
-            
+
     void add(Object menuItem) {
-	delegate.add((JMenuItem)menuItem);
+        delegate.add((JMenuItem)menuItem);
     }
-            
+
     void addMenuItem(String label, String command, String currentSelection) {
         addMenuItem(delegate, label, command, currentSelection);
     }
@@ -212,11 +212,11 @@ class JInputMethodPopupMenu extends InputMethodPopupMenu {
         menuItem.setActionCommand(command);
         menuItem.addActionListener(this);
         menuItem.setEnabled(command != null);
-	if (targetMenu instanceof JMenu) {
+        if (targetMenu instanceof JMenu) {
             ((JMenu)targetMenu).add(menuItem);
-	} else {
+        } else {
             ((JPopupMenu)targetMenu).add(menuItem);
-	}
+        }
     }
 
 }
@@ -225,37 +225,37 @@ class AWTInputMethodPopupMenu extends InputMethodPopupMenu {
     static PopupMenu delegate = null;
 
     AWTInputMethodPopupMenu(String title) {
-	synchronized (this) {
-	    if (delegate == null) {
-        	delegate = new PopupMenu(title);
-	    }
-	}
+        synchronized (this) {
+            if (delegate == null) {
+                delegate = new PopupMenu(title);
+            }
+        }
     }
 
     void show(Component c, int x, int y) {
-	delegate.show(c, x, y);
+        delegate.show(c, x, y);
     }
 
     void removeAll() {
-	delegate.removeAll();
+        delegate.removeAll();
     }
 
     void addSeparator() {
-	delegate.addSeparator();
+        delegate.addSeparator();
     }
 
     void addToComponent(Component c) {
-	c.add(delegate);
+        c.add(delegate);
     }
-    
+
     Object createSubmenu(String label) {
-	return new Menu(label);
+        return new Menu(label);
     }
-            
+
     void add(Object menuItem) {
-	delegate.add((MenuItem)menuItem);
+        delegate.add((MenuItem)menuItem);
     }
-            
+
     void addMenuItem(String label, String command, String currentSelection) {
         addMenuItem(delegate, label, command, currentSelection);
     }

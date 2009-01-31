@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM838;
  * Tables and data to convert Unicode to Cp838
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp838 extends CharToByteSingleByte {

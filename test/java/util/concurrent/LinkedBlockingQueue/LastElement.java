@@ -35,38 +35,38 @@ public class LastElement {
     static volatile int passed = 0, failed = 0;
 
     static void fail(String msg) {
-	failed++;
-	new Exception(msg).printStackTrace();
+        failed++;
+        new Exception(msg).printStackTrace();
     }
 
     static void pass() {
-	passed++;
+        passed++;
     }
 
     static void unexpected(Throwable t) {
-	failed++;
-	t.printStackTrace();
+        failed++;
+        t.printStackTrace();
     }
 
     static void check(boolean condition, String msg) {
-	if (condition)
-	    passed++;
-	else
-	    fail(msg);
+        if (condition)
+            passed++;
+        else
+            fail(msg);
     }
 
     static void check(boolean condition) {
-	check(condition, "Assertion failure");
+        check(condition, "Assertion failure");
     }
 
     public static void main(String[] args) throws Throwable {
-	testQueue(new LinkedBlockingQueue<Integer>());
-	// Uncomment when LinkedBlockingDeque is integrated
-	//testQueue(new LinkedBlockingDeque<Integer>());
-	testQueue(new ArrayBlockingQueue<Integer>(10));
+        testQueue(new LinkedBlockingQueue<Integer>());
+        // Uncomment when LinkedBlockingDeque is integrated
+        //testQueue(new LinkedBlockingDeque<Integer>());
+        testQueue(new ArrayBlockingQueue<Integer>(10));
 
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new Exception("Some tests failed");
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new Exception("Some tests failed");
     }
 
     private static void testQueue(BlockingQueue<Integer> q) throws Throwable {
@@ -74,32 +74,32 @@ public class LastElement {
         Integer two = 2;
         Integer three = 3;
 
-	// remove(Object)
-	q.put(one);
-        q.put(two);
-	check(! q.isEmpty() && q.size() == 2);
-        check(q.remove(one));
-	check(q.remove(two));
-	check(q.isEmpty() && q.size() == 0);
-        q.put(three);
-	try {check(q.take() == three);}
-	catch (Throwable t) {unexpected(t);}
-	check(q.isEmpty() && q.size() == 0);
-
-	// iterator().remove()
-	q.clear();
+        // remove(Object)
         q.put(one);
-	check(q.offer(two));
-	check(! q.isEmpty() && q.size() == 2);
-	Iterator<Integer> i = q.iterator();
-	check(i.next() == one);
-	i.remove();
-	check(i.next() == two);
-	i.remove();
-	check(q.isEmpty() && q.size() == 0);
+        q.put(two);
+        check(! q.isEmpty() && q.size() == 2);
+        check(q.remove(one));
+        check(q.remove(two));
+        check(q.isEmpty() && q.size() == 0);
         q.put(three);
-	try {check(q.take() == three);}
-	catch (Throwable t) {unexpected(t);}
-	check(q.isEmpty() && q.size() == 0);
+        try {check(q.take() == three);}
+        catch (Throwable t) {unexpected(t);}
+        check(q.isEmpty() && q.size() == 0);
+
+        // iterator().remove()
+        q.clear();
+        q.put(one);
+        check(q.offer(two));
+        check(! q.isEmpty() && q.size() == 2);
+        Iterator<Integer> i = q.iterator();
+        check(i.next() == one);
+        i.remove();
+        check(i.next() == two);
+        i.remove();
+        check(q.isEmpty() && q.size() == 0);
+        q.put(three);
+        try {check(q.take() == three);}
+        catch (Throwable t) {unexpected(t);}
+        check(q.isEmpty() && q.size() == 0);
     }
 }

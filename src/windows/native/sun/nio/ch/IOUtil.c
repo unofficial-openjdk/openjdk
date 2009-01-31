@@ -52,7 +52,7 @@ Java_sun_security_provider_NativeSeedGenerator_nativeGenerateSeed
  * static method to store field IDs in initializers
  */
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_nio_ch_IOUtil_initIDs(JNIEnv *env, jclass clazz)
 {
     OSVERSIONINFO ver;
@@ -70,7 +70,7 @@ Java_sun_nio_ch_IOUtil_initIDs(JNIEnv *env, jclass clazz)
 /**************************************************************
  * IOUtil.c
  */
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_sun_nio_ch_IOUtil_randomBytes(JNIEnv *env, jclass clazz,
                                   jbyteArray randArray)
 {
@@ -195,22 +195,19 @@ Java_sun_nio_ch_IOUtil_drain(JNIEnv *env, jclass cl, jint fd)
    It is mostly used for sockets which should use the int fd value.
 */
 jint
-fdval(JNIEnv *env, jobject fdo) 
+fdval(JNIEnv *env, jobject fdo)
 {
     return (*env)->GetIntField(env, fdo, fd_fdID);
 }
 
 jlong
-handleval(JNIEnv *env, jobject fdo) 
+handleval(JNIEnv *env, jobject fdo)
 {
     return (*env)->GetLongField(env, fdo, handle_fdID);
 }
 
 jboolean
-isNT() 
+isNT()
 {
     return onNT;
 }
-
-
-

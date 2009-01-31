@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM943;
  * Tables and data to convert Cp943 to Unicode
  *
  * @author  BuildTable tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp943 extends ByteToCharDBCS_ASCII {
@@ -44,7 +43,7 @@ public class ByteToCharCp943 extends ByteToCharDBCS_ASCII {
 
     public ByteToCharCp943() {
         super();
-	super.leadByte = this.leadByte;
+        super.leadByte = this.leadByte;
         super.singleByteToChar = this.singleByteToChar;
         super.index1 = nioCoder.getDecoderIndex1();
         super.index2 = nioCoder.getDecoderIndex2();
@@ -54,40 +53,40 @@ public class ByteToCharCp943 extends ByteToCharDBCS_ASCII {
         super.shift = 6;
     }
 
-	private static final boolean leadByte[] = {
-		false, false, false, false, false, false, false, false,  // 00 - 07
-		false, false, false, false, false, false, false, false,  // 08 - 0F
-		false, false, false, false, false, false, false, false,  // 10 - 17
-		false, false, false, false, false, false, false, false,  // 18 - 1F
-		false, false, false, false, false, false, false, false,  // 20 - 27
-		false, false, false, false, false, false, false, false,  // 28 - 2F
-		false, false, false, false, false, false, false, false,  // 30 - 37
-		false, false, false, false, false, false, false, false,  // 38 - 3F
-		false, false, false, false, false, false, false, false,  // 40 - 47
-		false, false, false, false, false, false, false, false,  // 48 - 4F
-		false, false, false, false, false, false, false, false,  // 50 - 57
-		false, false, false, false, false, false, false, false,  // 58 - 5F
-		false, false, false, false, false, false, false, false,  // 60 - 67
-		false, false, false, false, false, false, false, false,  // 68 - 6F
-		false, false, false, false, false, false, false, false,  // 70 - 77
-		false, false, false, false, false, false, false, false,  // 78 - 7F
-		false, true,  true,  true,  true,  false, false, true,   // 80 - 87
-		true,  true,  true,  true,  true,  true,  true,  true,   // 88 - 8F
-		true,  true,  true,  true,  true,  true,  true,  true,   // 90 - 97
-		true,  true,  true,  true,  true,  true,  true,  true,   // 98 - 9F
-		false, false, false, false, false, false, false, false,  // A0 - A7
-		false, false, false, false, false, false, false, false,  // A8 - AF
-		false, false, false, false, false, false, false, false,  // B0 - B7
-		false, false, false, false, false, false, false, false,  // B8 - BF
-		false, false, false, false, false, false, false, false,  // C0 - C7
-		false, false, false, false, false, false, false, false,  // C8 - CF
-		false, false, false, false, false, false, false, false,  // D0 - D7
-		false, false, false, false, false, false, false, false,  // D8 - DF
-		true,  true,  true,  true,  true,  true,  true,  true,   // E0 - E7
-		true,  true,  true,  true,  true,  true,  true,  false,  // E8 - EF
-		true,  true,  true,  true,  true,  true,  true,  true,   // F0 - F7
-		true,  true,  true,  true,  true,  false, false, false,  // F8 - FF
-	};
+        private static final boolean leadByte[] = {
+                false, false, false, false, false, false, false, false,  // 00 - 07
+                false, false, false, false, false, false, false, false,  // 08 - 0F
+                false, false, false, false, false, false, false, false,  // 10 - 17
+                false, false, false, false, false, false, false, false,  // 18 - 1F
+                false, false, false, false, false, false, false, false,  // 20 - 27
+                false, false, false, false, false, false, false, false,  // 28 - 2F
+                false, false, false, false, false, false, false, false,  // 30 - 37
+                false, false, false, false, false, false, false, false,  // 38 - 3F
+                false, false, false, false, false, false, false, false,  // 40 - 47
+                false, false, false, false, false, false, false, false,  // 48 - 4F
+                false, false, false, false, false, false, false, false,  // 50 - 57
+                false, false, false, false, false, false, false, false,  // 58 - 5F
+                false, false, false, false, false, false, false, false,  // 60 - 67
+                false, false, false, false, false, false, false, false,  // 68 - 6F
+                false, false, false, false, false, false, false, false,  // 70 - 77
+                false, false, false, false, false, false, false, false,  // 78 - 7F
+                false, true,  true,  true,  true,  false, false, true,   // 80 - 87
+                true,  true,  true,  true,  true,  true,  true,  true,   // 88 - 8F
+                true,  true,  true,  true,  true,  true,  true,  true,   // 90 - 97
+                true,  true,  true,  true,  true,  true,  true,  true,   // 98 - 9F
+                false, false, false, false, false, false, false, false,  // A0 - A7
+                false, false, false, false, false, false, false, false,  // A8 - AF
+                false, false, false, false, false, false, false, false,  // B0 - B7
+                false, false, false, false, false, false, false, false,  // B8 - BF
+                false, false, false, false, false, false, false, false,  // C0 - C7
+                false, false, false, false, false, false, false, false,  // C8 - CF
+                false, false, false, false, false, false, false, false,  // D0 - D7
+                false, false, false, false, false, false, false, false,  // D8 - DF
+                true,  true,  true,  true,  true,  true,  true,  true,   // E0 - E7
+                true,  true,  true,  true,  true,  true,  true,  false,  // E8 - EF
+                true,  true,  true,  true,  true,  true,  true,  true,   // F0 - F7
+                true,  true,  true,  true,  true,  false, false, false,  // F8 - FF
+        };
     static final String singleByteToChar =
         "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007"+    // 0-7
         "\u0008\u0009\n\u000B\u000C\r\u000E\u000F"+    // 8-F

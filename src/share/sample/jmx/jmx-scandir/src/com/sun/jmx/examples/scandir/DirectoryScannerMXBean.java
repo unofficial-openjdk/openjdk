@@ -41,12 +41,12 @@ import javax.management.InstanceNotFoundException;
  * scans a file system starting at a given root directory,
  * and then looks for files that match a given criteria.
  * <p>
- * When such a file is found, the <code>DirectoryScannerMXBean</code> takes 
+ * When such a file is found, the <code>DirectoryScannerMXBean</code> takes
  * the actions for which it was configured: see {@link #scan scan()}.
  * <p>
  * <code>DirectoryScannerMXBeans</code> are created, initialized, and
- * registered by the {@link ScanManagerMXBean}. 
- * The {@link ScanManagerMXBean} will also schedule and run them in 
+ * registered by the {@link ScanManagerMXBean}.
+ * The {@link ScanManagerMXBean} will also schedule and run them in
  * background by calling their {@link #scan} method.
  * </p>
  * @author Sun Microsystems, 2006 - All rights reserved.
@@ -60,9 +60,9 @@ public interface DirectoryScannerMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public ScanState getState() 
+    public ScanState getState()
         throws IOException, InstanceNotFoundException;
-   
+
     /**
      * Stops the current scan if {@link ScanState#RUNNING running}.
      * After this method completes the state of the application will
@@ -72,24 +72,24 @@ public interface DirectoryScannerMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public void stop() 
+    public void stop()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
-     * Scans the file system starting at the specified {@link #getRootDirectory 
+     * Scans the file system starting at the specified {@link #getRootDirectory
      * root directory}.
-     * <p>If a file that matches this <code>DirectoryScannerMXBean</code> 
-     * {@link #getConfiguration} criteria is found, 
-     * the <code>DirectoryScannerMXBean</code> takes the {@link 
-     * DirectoryScannerConfig#getActions() actions} for which 
-     * it was {@link #getConfiguration configured}: emit a notification, 
-     * <i>and or</i> log a {@link 
-     * com.sun.jmx.examples.scandir.config.ResultRecord} for this file, 
-     * <i>and or</i> delete that file. 
+     * <p>If a file that matches this <code>DirectoryScannerMXBean</code>
+     * {@link #getConfiguration} criteria is found,
+     * the <code>DirectoryScannerMXBean</code> takes the {@link
+     * DirectoryScannerConfig#getActions() actions} for which
+     * it was {@link #getConfiguration configured}: emit a notification,
+     * <i>and or</i> log a {@link
+     * com.sun.jmx.examples.scandir.config.ResultRecord} for this file,
+     * <i>and or</i> delete that file.
      * </p>
      * <p>
-     * The code that would actually delete the file is commented out - so that 
-     * nothing valuable is lost if this example is run by mistake on the wrong 
+     * The code that would actually delete the file is commented out - so that
+     * nothing valuable is lost if this example is run by mistake on the wrong
      * set of directories.
      * </p>
      * <p>This method returns only when the directory scan is completed, or
@@ -101,15 +101,15 @@ public interface DirectoryScannerMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public void scan() 
+    public void scan()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
      * Gets the root directory at which this <code>DirectoryScannerMXBean</code>
      * will start scanning the file system.
      * <p>
-     * This is a shortcut to {@link #getConfiguration 
-     * getConfiguration()}.{@link 
+     * This is a shortcut to {@link #getConfiguration
+     * getConfiguration()}.{@link
      * DirectoryScannerConfig#getRootDirectory
      * getRootDirectory()}.
      * </p>
@@ -124,16 +124,16 @@ public interface DirectoryScannerMXBean {
 
     /**
      * The configuration data from which this {@link DirectoryScanner} was
-     * created. 
+     * created.
      * <p>
-     * You cannot change this configuration here. You can however 
+     * You cannot change this configuration here. You can however
      * {@link ScanDirConfigMXBean#setConfiguration modify} the
-     * {@link ScanDirConfigMXBean} configuration, and ask the 
+     * {@link ScanDirConfigMXBean} configuration, and ask the
      * {@link ScanManagerMXBean} to {@link ScanManagerMXBean#applyConfiguration
      * apply} it. This will get all <code>DirectoryScannerMXBean</code>
      * replaced by new MBeans created from the modified configuration.
      * </p>
-     * 
+     *
      * @return This <code>DirectoryScannerMXBean</code> configuration data.
      * @throws IOException A connection problem occurred when accessing
      *                     the underlying resource.
@@ -142,7 +142,7 @@ public interface DirectoryScannerMXBean {
      **/
     public DirectoryScannerConfig getConfiguration()
         throws IOException, InstanceNotFoundException;
-    
+
     /**
      * A short string describing what's happening in current/latest scan.
      * @return a short info string.
@@ -151,8 +151,6 @@ public interface DirectoryScannerMXBean {
      * @throws InstanceNotFoundException The underlying MBean is not
      *         registered in the MBeanServer.
      **/
-    public String getCurrentScanInfo() 
+    public String getCurrentScanInfo()
         throws IOException, InstanceNotFoundException;
 }
-
-

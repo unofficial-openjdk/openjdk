@@ -36,20 +36,20 @@ public class Skip {
         int linenum = 0;
         long nchars = 164 * 50;
 
-        File f = new File(System.getProperty("test.src", "."), 
-	    "SkipInput.txt");
+        File f = new File(System.getProperty("test.src", "."),
+            "SkipInput.txt");
         LineNumberReader reader = new LineNumberReader(new FileReader(f));
 
-	boolean testFailed = false;
-	try {
-	    reader.skip(-10);
-	    testFailed = true;
-	} catch (IllegalArgumentException e) { 
-	}
-	catch (Exception e) {
-	    testFailed = true;
-	}
-	if (testFailed)
+        boolean testFailed = false;
+        try {
+            reader.skip(-10);
+            testFailed = true;
+        } catch (IllegalArgumentException e) {
+        }
+        catch (Exception e) {
+            testFailed = true;
+        }
+        if (testFailed)
             throw new Exception("Failed test: Negative value for skip()");
 
         long realnum = reader.skip(nchars);
@@ -58,6 +58,6 @@ public class Skip {
         if (linenum != 164) {
             throw new Exception("Failed test: Should skip 164, really skipped "
                                 + linenum + "lines");
-	}
+        }
     }
 }

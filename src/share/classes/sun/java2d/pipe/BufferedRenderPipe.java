@@ -268,11 +268,11 @@ public abstract class BufferedRenderPipe
          * This method needs to be called prior to each draw/fillPath()
          * operation to ensure the clip bounds are up to date.
          */
-        void validate(SunGraphics2D sg2d) { 
-            Region clip = sg2d.getCompClip(); 
-            setBounds(clip.getLoX(), clip.getLoY(), 
+        void validate(SunGraphics2D sg2d) {
+            Region clip = sg2d.getCompClip();
+            setBounds(clip.getLoX(), clip.getLoY(),
                       clip.getHiX(), clip.getHiY(),
-                      sg2d.strokeHint); 
+                      sg2d.strokeHint);
         }
 
         /**

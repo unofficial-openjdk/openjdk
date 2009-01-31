@@ -31,16 +31,16 @@ import javax.naming.directory.*;
 import java.util.Hashtable;
 
 /**
-  * This class is the starting context for performing 
+  * This class is the starting context for performing
   * LDAPv3-style extended operations and controls.
   *<p>
-  * See <tt>javax.naming.InitialContext</tt> and 
+  * See <tt>javax.naming.InitialContext</tt> and
   * <tt>javax.naming.InitialDirContext</tt> for details on synchronization,
   * and the policy for how an initial context is created.
   *
   * <h4>Request Controls</h4>
   * When you create an initial context (<tt>InitialLdapContext</tt>),
-  * you can specify a list of request controls. 
+  * you can specify a list of request controls.
   * These controls will be used as the request controls for any
   * implicit LDAP "bind" operation performed by the context or contexts
   * derived from the context. These are called <em>connection request controls</em>.
@@ -48,13 +48,13 @@ import java.util.Hashtable;
   * controls.
   *<p>
   * The request controls supplied to the initial context constructor
-  * are <em>not</em> used as the context request controls 
+  * are <em>not</em> used as the context request controls
   * for subsequent context operations such as searches and lookups.
   * Context request controls are set and updated by using
   * <tt>setRequestControls()</tt>.
   *<p>
   * As shown, there can be two different sets of request controls
-  * associated with a context: connection request controls and context 
+  * associated with a context: connection request controls and context
   * request controls.
   * This is required for those applications needing to send critical
   * controls that might not be applicable to both the context operation and
@@ -69,17 +69,16 @@ import java.util.Hashtable;
   * It specifies first the critical controls for creating the initial context
   * (<tt>critConnCtls</tt>), and then sets the context's request controls
   * (<tt>critModCtls</tt>) for the context operation. If for some reason
-  * <tt>lctx</tt> needs to reconnect to the server, it will use 
-  * <tt>critConnCtls</tt>. See the <tt>LdapContext</tt> interface for 
+  * <tt>lctx</tt> needs to reconnect to the server, it will use
+  * <tt>critConnCtls</tt>. See the <tt>LdapContext</tt> interface for
   * more discussion about request controls.
   *<p>
   * Service provider implementors should read the "Service Provider" section
   * in the <tt>LdapContext</tt> class description for implementation details.
-  * 
+  *
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
-  * @version %I% %E%
   *
   * @see LdapContext
   * @see javax.naming.InitialContext
@@ -89,18 +88,18 @@ import java.util.Hashtable;
   */
 
 public class InitialLdapContext extends InitialDirContext implements LdapContext {
-    private static final String 
+    private static final String
         BIND_CONTROLS_PROPERTY = "java.naming.ldap.control.connect";
 
     /**
-     * Constructs an initial context using no environment properties or 
+     * Constructs an initial context using no environment properties or
      * connection request controls.
      * Equivalent to <tt>new InitialLdapContext(null, null)</tt>.
      *
-     * @throws	NamingException if a naming exception is encountered
+     * @throws  NamingException if a naming exception is encountered
      */
     public InitialLdapContext() throws NamingException {
-	super(null);
+        super(null);
     }
 
     /**
@@ -117,94 +116,94 @@ public class InitialLdapContext extends InitialDirContext implements LdapContext
      * for details.
      *
      * @param environment
-     *		environment used to create the initial DirContext.
-     *		Null indicates an empty environment.
+     *          environment used to create the initial DirContext.
+     *          Null indicates an empty environment.
      * @param connCtls
-     *		connection request controls for the initial context.
-     *		If null, no connection request controls are used.
+     *          connection request controls for the initial context.
+     *          If null, no connection request controls are used.
      *
-     * @throws	NamingException if a naming exception is encountered
+     * @throws  NamingException if a naming exception is encountered
      *
      * @see #reconnect
      * @see LdapContext#reconnect
      */
     public InitialLdapContext(Hashtable<?,?> environment,
-			      Control[] connCtls) 
-	    throws NamingException {
-	super(true); // don't initialize yet
+                              Control[] connCtls)
+            throws NamingException {
+        super(true); // don't initialize yet
 
-	// Clone environment since caller owns it.
-	Hashtable env = (environment == null)
-	    ? new Hashtable(11)
-	    : (Hashtable)environment.clone();
+        // Clone environment since caller owns it.
+        Hashtable env = (environment == null)
+            ? new Hashtable(11)
+            : (Hashtable)environment.clone();
 
-	// Put connect controls into environment.  Copy them first since
-	// caller owns the array.
-	if (connCtls != null) {
-	    Control[] copy = new Control[connCtls.length];
-	    System.arraycopy(connCtls, 0, copy, 0, connCtls.length);
-	    env.put(BIND_CONTROLS_PROPERTY, copy);
-	}
-	// set version to LDAPv3
-	env.put("java.naming.ldap.version", "3");
+        // Put connect controls into environment.  Copy them first since
+        // caller owns the array.
+        if (connCtls != null) {
+            Control[] copy = new Control[connCtls.length];
+            System.arraycopy(connCtls, 0, copy, 0, connCtls.length);
+            env.put(BIND_CONTROLS_PROPERTY, copy);
+        }
+        // set version to LDAPv3
+        env.put("java.naming.ldap.version", "3");
 
-	// Initialize with updated environment
-	init(env);
+        // Initialize with updated environment
+        init(env);
     }
 
     /**
      * Retrieves the initial LDAP context.
-     * 
+     *
      * @return The non-null cached initial context.
      * @exception NotContextException If the initial context is not an
      * instance of <tt>LdapContext</tt>.
      * @exception NamingException If a naming exception was encountered.
      */
     private LdapContext getDefaultLdapInitCtx() throws NamingException{
-	Context answer = getDefaultInitCtx();
+        Context answer = getDefaultInitCtx();
 
-	if (!(answer instanceof LdapContext)) {
-	    if (answer == null) {
-		throw new NoInitialContextException();
-	    } else {
-		throw new NotContextException(
-		    "Not an instance of LdapContext");
-	    }
-	}
-	return (LdapContext)answer;
+        if (!(answer instanceof LdapContext)) {
+            if (answer == null) {
+                throw new NoInitialContextException();
+            } else {
+                throw new NotContextException(
+                    "Not an instance of LdapContext");
+            }
+        }
+        return (LdapContext)answer;
     }
 
 // LdapContext methods
 // Most Javadoc is deferred to the LdapContext interface.
 
     public ExtendedResponse extendedOperation(ExtendedRequest request)
-	    throws NamingException {
-	return getDefaultLdapInitCtx().extendedOperation(request);
+            throws NamingException {
+        return getDefaultLdapInitCtx().extendedOperation(request);
     }
 
     public LdapContext newInstance(Control[] reqCtls)
-	throws NamingException {
-	    return getDefaultLdapInitCtx().newInstance(reqCtls);
+        throws NamingException {
+            return getDefaultLdapInitCtx().newInstance(reqCtls);
     }
 
     public void reconnect(Control[] connCtls) throws NamingException {
-	getDefaultLdapInitCtx().reconnect(connCtls);
+        getDefaultLdapInitCtx().reconnect(connCtls);
     }
 
     public Control[] getConnectControls() throws NamingException {
-	return getDefaultLdapInitCtx().getConnectControls();
+        return getDefaultLdapInitCtx().getConnectControls();
     }
 
     public void setRequestControls(Control[] requestControls)
-	throws NamingException {
-	    getDefaultLdapInitCtx().setRequestControls(requestControls);
+        throws NamingException {
+            getDefaultLdapInitCtx().setRequestControls(requestControls);
     }
 
     public Control[] getRequestControls() throws NamingException {
-	return getDefaultLdapInitCtx().getRequestControls();
+        return getDefaultLdapInitCtx().getRequestControls();
     }
 
     public Control[] getResponseControls() throws NamingException {
-	return getDefaultLdapInitCtx().getResponseControls();
+        return getDefaultLdapInitCtx().getResponseControls();
     }
 }

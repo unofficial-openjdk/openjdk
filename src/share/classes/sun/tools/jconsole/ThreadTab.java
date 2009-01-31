@@ -78,108 +78,108 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
     /*
       Hierarchy of panels and layouts for this tab:
 
-	ThreadTab (BorderLayout)
+        ThreadTab (BorderLayout)
 
-	    North:  topPanel (BorderLayout)
+            North:  topPanel (BorderLayout)
 
-			Center: controlPanel (FlowLayout)
-				    timeComboBox
+                        Center: controlPanel (FlowLayout)
+                                    timeComboBox
 
-	    Center: plotterPanel (BorderLayout)
+            Center: plotterPanel (BorderLayout)
 
-			Center: plotter
+                        Center: plotter
 
     */
 
 
     public static String getTabName() {
-	return Resources.getText("Threads");
+        return Resources.getText("Threads");
     }
 
     public ThreadTab(VMPanel vmPanel) {
-	super(vmPanel, getTabName());
+        super(vmPanel, getTabName());
 
-	setLayout(new BorderLayout(0, 0));
-	setBorder(new EmptyBorder(4, 4, 3, 4));
+        setLayout(new BorderLayout(0, 0));
+        setBorder(new EmptyBorder(4, 4, 3, 4));
 
-	JPanel topPanel     = new JPanel(new BorderLayout());
-	JPanel plotterPanel = new JPanel(new VariableGridLayout(0, 1, 4, 4, true, true));
+        JPanel topPanel     = new JPanel(new BorderLayout());
+        JPanel plotterPanel = new JPanel(new VariableGridLayout(0, 1, 4, 4, true, true));
 
-	add(topPanel, BorderLayout.NORTH);
-	add(plotterPanel,  BorderLayout.CENTER);
+        add(topPanel, BorderLayout.NORTH);
+        add(plotterPanel,  BorderLayout.CENTER);
 
-	JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
-	topPanel.add(controlPanel, BorderLayout.CENTER);
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        topPanel.add(controlPanel, BorderLayout.CENTER);
 
         threadMeter = new PlotterPanel(Resources.getText("Number of Threads"),
-				       Plotter.Unit.NONE, true);
-	threadMeter.plotter.createSequence(threadCountKey, threadCountName,  threadCountColor, true);
-	threadMeter.plotter.createSequence(peakKey,        peakName,         peakColor,        true);
-	setAccessibleName(threadMeter.plotter,
-			  getText("ThreadTab.threadPlotter.accessibleName"));
+                                       Plotter.Unit.NONE, true);
+        threadMeter.plotter.createSequence(threadCountKey, threadCountName,  threadCountColor, true);
+        threadMeter.plotter.createSequence(peakKey,        peakName,         peakColor,        true);
+        setAccessibleName(threadMeter.plotter,
+                          getText("ThreadTab.threadPlotter.accessibleName"));
 
-	plotterPanel.add(threadMeter);
+        plotterPanel.add(threadMeter);
 
-	timeComboBox = new TimeComboBox(threadMeter.plotter);
-	controlPanel.add(new LabeledComponent(Resources.getText("Time Range:"),
-					      getMnemonicInt("Time Range:"),
-					      timeComboBox));
+        timeComboBox = new TimeComboBox(threadMeter.plotter);
+        controlPanel.add(new LabeledComponent(Resources.getText("Time Range:"),
+                                              getMnemonicInt("Time Range:"),
+                                              timeComboBox));
 
-	listModel = new DefaultListModel();
+        listModel = new DefaultListModel();
 
-	JTextArea textArea = new JTextArea();
-	textArea.setBorder(thinEmptyBorder);
-	textArea.setEditable(false);
-	setAccessibleName(textArea,
-			  getText("ThreadTab.threadInfo.accessibleName"));
-	JList list = new ThreadJList(listModel, textArea);
-        
+        JTextArea textArea = new JTextArea();
+        textArea.setBorder(thinEmptyBorder);
+        textArea.setEditable(false);
+        setAccessibleName(textArea,
+                          getText("ThreadTab.threadInfo.accessibleName"));
+        JList list = new ThreadJList(listModel, textArea);
+
         Dimension di = new Dimension(super.getPreferredSize());
         di.width = Math.min(di.width, 200);
 
         JScrollPane threadlistSP = new JScrollPane(list);
         threadlistSP.setPreferredSize(di);
-	threadlistSP.setBorder(null);
-      	
-	JScrollPane textAreaSP = new JScrollPane(textArea);
-	textAreaSP.setBorder(null);
+        threadlistSP.setBorder(null);
 
-	threadListTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        threadsSplitPane  = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-					   threadlistSP, textAreaSP);
+        JScrollPane textAreaSP = new JScrollPane(textArea);
+        textAreaSP.setBorder(null);
+
+        threadListTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        threadsSplitPane  = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                                           threadlistSP, textAreaSP);
         threadsSplitPane.setOneTouchExpandable(true);
-	threadsSplitPane.setBorder(null);
+        threadsSplitPane.setBorder(null);
 
-	JPanel firstTabPanel = new JPanel(new BorderLayout());
-	firstTabPanel.setOpaque(false);
-	
-	JPanel firstTabToolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-	firstTabToolPanel.setOpaque(false);
+        JPanel firstTabPanel = new JPanel(new BorderLayout());
+        firstTabPanel.setOpaque(false);
+
+        JPanel firstTabToolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        firstTabToolPanel.setOpaque(false);
 
         filterTF = new PromptingTextField("Filter", 20);
-	filterTF.getDocument().addDocumentListener(this);
-	firstTabToolPanel.add(filterTF);
+        filterTF.getDocument().addDocumentListener(this);
+        firstTabToolPanel.add(filterTF);
 
-	JSeparator separator = new JSeparator(JSeparator.VERTICAL);
-	separator.setPreferredSize(new Dimension(separator.getPreferredSize().width,
-						 filterTF.getPreferredSize().height));
-	firstTabToolPanel.add(separator);
+        JSeparator separator = new JSeparator(JSeparator.VERTICAL);
+        separator.setPreferredSize(new Dimension(separator.getPreferredSize().width,
+                                                 filterTF.getPreferredSize().height));
+        firstTabToolPanel.add(separator);
 
-	JButton detectDeadlockButton = new JButton(Resources.getText("Detect Deadlock"));
-	detectDeadlockButton.setMnemonic(getMnemonicInt("Detect Deadlock"));
-	detectDeadlockButton.setActionCommand("detectDeadlock");
-	detectDeadlockButton.addActionListener(this);
-	detectDeadlockButton.setToolTipText(getText("Detect Deadlock.toolTip"));
-	firstTabToolPanel.add(detectDeadlockButton);
+        JButton detectDeadlockButton = new JButton(Resources.getText("Detect Deadlock"));
+        detectDeadlockButton.setMnemonic(getMnemonicInt("Detect Deadlock"));
+        detectDeadlockButton.setActionCommand("detectDeadlock");
+        detectDeadlockButton.addActionListener(this);
+        detectDeadlockButton.setToolTipText(getText("Detect Deadlock.toolTip"));
+        firstTabToolPanel.add(detectDeadlockButton);
 
-	messageLabel = new JLabel();
-	firstTabToolPanel.add(messageLabel);
+        messageLabel = new JLabel();
+        firstTabToolPanel.add(messageLabel);
 
-	firstTabPanel.add(threadsSplitPane, BorderLayout.CENTER);
-	firstTabPanel.add(firstTabToolPanel, BorderLayout.SOUTH);
-	threadListTabbedPane.addTab(Resources.getText("Threads"), firstTabPanel);
+        firstTabPanel.add(threadsSplitPane, BorderLayout.CENTER);
+        firstTabPanel.add(firstTabToolPanel, BorderLayout.SOUTH);
+        threadListTabbedPane.addTab(Resources.getText("Threads"), firstTabPanel);
 
-	plotterPanel.add(threadListTabbedPane);
+        plotterPanel.add(threadListTabbedPane);
     }
 
     private long oldThreads[] = new long[0];
@@ -187,174 +187,174 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
     public SwingWorker<?, ?> newSwingWorker() {
         final ProxyClient proxyClient = vmPanel.getProxyClient();
 
-	if (!plotterListening) {
-	    proxyClient.addWeakPropertyChangeListener(threadMeter.plotter);
-	    plotterListening = true;
-	}
+        if (!plotterListening) {
+            proxyClient.addWeakPropertyChangeListener(threadMeter.plotter);
+            plotterListening = true;
+        }
 
-	return new SwingWorker<Boolean, Object>() {
-	    private int tlCount;
-	    private int tpCount;
-	    private long ttCount;
-	    private long[] threads;
-	    private long timeStamp;
+        return new SwingWorker<Boolean, Object>() {
+            private int tlCount;
+            private int tpCount;
+            private long ttCount;
+            private long[] threads;
+            private long timeStamp;
 
-	    public Boolean doInBackground() {
-		try {
-		    ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
+            public Boolean doInBackground() {
+                try {
+                    ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
 
-		    tlCount = threadMBean.getThreadCount();
-		    tpCount = threadMBean.getPeakThreadCount();
-		    if (overviewPanel != null) {
-			ttCount = threadMBean.getTotalStartedThreadCount();
-		    } else {
-			ttCount = 0L;
-		    }
+                    tlCount = threadMBean.getThreadCount();
+                    tpCount = threadMBean.getPeakThreadCount();
+                    if (overviewPanel != null) {
+                        ttCount = threadMBean.getTotalStartedThreadCount();
+                    } else {
+                        ttCount = 0L;
+                    }
 
-		    threads = threadMBean.getAllThreadIds();
-		    for (long newThread : threads) {
-			if (nameCache.get(newThread) == null) {
-			    ThreadInfo ti = threadMBean.getThreadInfo(newThread);
-			    if (ti != null) {
-				String name = ti.getThreadName();
-				if (name != null) {
-				    nameCache.put(newThread, name);
-				}
-			    }
-			}
-		    }
-		    timeStamp = System.currentTimeMillis();
-		    return true;
-		} catch (IOException e) {
-		    return false;
-		} catch (UndeclaredThrowableException e) {
-		    return false;
-		}
-	    }
+                    threads = threadMBean.getAllThreadIds();
+                    for (long newThread : threads) {
+                        if (nameCache.get(newThread) == null) {
+                            ThreadInfo ti = threadMBean.getThreadInfo(newThread);
+                            if (ti != null) {
+                                String name = ti.getThreadName();
+                                if (name != null) {
+                                    nameCache.put(newThread, name);
+                                }
+                            }
+                        }
+                    }
+                    timeStamp = System.currentTimeMillis();
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                } catch (UndeclaredThrowableException e) {
+                    return false;
+                }
+            }
 
-	    protected void done() {
-		try {
-		    if (!get()) {
-			return;
-		    }
-		} catch (InterruptedException ex) {
-		    return;
-		} catch (ExecutionException ex) {
-		    if (JConsole.isDebug()) {
-			ex.printStackTrace();
-		    }
-		    return;
-		}
+            protected void done() {
+                try {
+                    if (!get()) {
+                        return;
+                    }
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (ExecutionException ex) {
+                    if (JConsole.isDebug()) {
+                        ex.printStackTrace();
+                    }
+                    return;
+                }
 
-		threadMeter.plotter.addValues(timeStamp, tlCount, tpCount);
-		threadMeter.setValueLabel(tlCount+"");
+                threadMeter.plotter.addValues(timeStamp, tlCount, tpCount);
+                threadMeter.setValueLabel(tlCount+"");
 
-		if (overviewPanel != null) {
-		    overviewPanel.updateThreadsInfo(tlCount, tpCount, ttCount, timeStamp);
-		}
+                if (overviewPanel != null) {
+                    overviewPanel.updateThreadsInfo(tlCount, tpCount, ttCount, timeStamp);
+                }
 
-		String filter = filterTF.getText().toLowerCase(Locale.ENGLISH);
-		boolean doFilter = (filter.length() > 0);
+                String filter = filterTF.getText().toLowerCase(Locale.ENGLISH);
+                boolean doFilter = (filter.length() > 0);
 
-		ArrayList<Long> l = new ArrayList<Long>();
-		for (long t : threads) {
-		    l.add(t);
-		}
-		Iterator<Long> iterator = l.iterator();
-		while (iterator.hasNext()) {
-		    long newThread = iterator.next();
-		    String name = nameCache.get(newThread);
-		    if (doFilter && name != null &&
-			name.toLowerCase(Locale.ENGLISH).indexOf(filter) < 0) {
+                ArrayList<Long> l = new ArrayList<Long>();
+                for (long t : threads) {
+                    l.add(t);
+                }
+                Iterator<Long> iterator = l.iterator();
+                while (iterator.hasNext()) {
+                    long newThread = iterator.next();
+                    String name = nameCache.get(newThread);
+                    if (doFilter && name != null &&
+                        name.toLowerCase(Locale.ENGLISH).indexOf(filter) < 0) {
 
-			iterator.remove();
-		    }
-		}
-		long[] newThreads = threads;
-		if (l.size() < threads.length) {
-		    newThreads = new long[l.size()];
-		    for (int i = 0; i < newThreads.length; i++) {
-			newThreads[i] = l.get(i);
-		    }
-		}
+                        iterator.remove();
+                    }
+                }
+                long[] newThreads = threads;
+                if (l.size() < threads.length) {
+                    newThreads = new long[l.size()];
+                    for (int i = 0; i < newThreads.length; i++) {
+                        newThreads[i] = l.get(i);
+                    }
+                }
 
 
-		for (long oldThread : oldThreads) {
-		    boolean found = false;
-		    for (long newThread : newThreads) {
-			if (newThread == oldThread) {
-			    found = true;
-			    break;
-			}
-		    }
-		    if (!found) {
-			listModel.removeElement(oldThread);
-			if (!doFilter) {
-			    nameCache.remove(oldThread);
-			}
-		    }
-		}
+                for (long oldThread : oldThreads) {
+                    boolean found = false;
+                    for (long newThread : newThreads) {
+                        if (newThread == oldThread) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        listModel.removeElement(oldThread);
+                        if (!doFilter) {
+                            nameCache.remove(oldThread);
+                        }
+                    }
+                }
 
-		// Threads are in reverse chronological order
-		for (int i = newThreads.length - 1; i >= 0; i--) {
-		    long newThread = newThreads[i];
-		    boolean found = false;
-		    for (long oldThread : oldThreads) {
-			if (newThread == oldThread) {
-			    found = true;
-			    break;
-			}
-		    }
-		    if (!found) {
-			listModel.addElement(newThread);
-		    }
-		}
-		oldThreads = newThreads;
-	    }
-	};
+                // Threads are in reverse chronological order
+                for (int i = newThreads.length - 1; i >= 0; i--) {
+                    long newThread = newThreads[i];
+                    boolean found = false;
+                    for (long oldThread : oldThreads) {
+                        if (newThread == oldThread) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        listModel.addElement(newThread);
+                    }
+                }
+                oldThreads = newThreads;
+            }
+        };
     }
 
     long lastSelected = -1;
 
     public void valueChanged(ListSelectionEvent ev) {
-	ThreadJList list = (ThreadJList)ev.getSource();
-	final JTextArea textArea = list.textArea;
+        ThreadJList list = (ThreadJList)ev.getSource();
+        final JTextArea textArea = list.textArea;
 
-	Long selected = (Long)list.getSelectedValue();
-	if (selected == null) {
-	    if (lastSelected != -1) {
-		selected = lastSelected;
-	    }
-	} else {
-	    lastSelected = selected;
-	}
-	textArea.setText("");
-	if (selected != null) {
-	    final long threadID = selected;
-	    workerAdd(new Runnable() {
-		public void run() {
-		    ProxyClient proxyClient = vmPanel.getProxyClient();
-		    StringBuilder sb = new StringBuilder();
-		    try {
-			ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
-			ThreadInfo ti = null;
+        Long selected = (Long)list.getSelectedValue();
+        if (selected == null) {
+            if (lastSelected != -1) {
+                selected = lastSelected;
+            }
+        } else {
+            lastSelected = selected;
+        }
+        textArea.setText("");
+        if (selected != null) {
+            final long threadID = selected;
+            workerAdd(new Runnable() {
+                public void run() {
+                    ProxyClient proxyClient = vmPanel.getProxyClient();
+                    StringBuilder sb = new StringBuilder();
+                    try {
+                        ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
+                        ThreadInfo ti = null;
                         MonitorInfo[] monitors = null;
                         if (proxyClient.isLockUsageSupported() &&
                               threadMBean.isObjectMonitorUsageSupported()) {
                             // VMs that support the monitor usage monitoring
                             ThreadInfo[] infos = threadMBean.dumpAllThreads(true, false);
-                            for (ThreadInfo info : infos) { 
-                                if (info.getThreadId() == threadID) { 
+                            for (ThreadInfo info : infos) {
+                                if (info.getThreadId() == threadID) {
                                     ti = info;
                                     monitors = info.getLockedMonitors();
                                     break;
-                                } 
-                            } 
+                                }
+                            }
                         } else {
                             // VM doesn't support monitor usage monitoring
                             ti = threadMBean.getThreadInfo(threadID, Integer.MAX_VALUE);
                         }
-			if (ti != null) {
+                        if (ti != null) {
                             if (ti.getLockName() == null) {
                                 sb.append(Resources.getText("Name State",
                                               ti.getThreadName(),
@@ -376,8 +376,8 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
                                               ti.getWaitedCount()));
                             sb.append(Resources.getText("Stack trace"));
                             int index = 0;
-			    for (StackTraceElement e : ti.getStackTrace()) {
-				sb.append(e.toString()+"\n");
+                            for (StackTraceElement e : ti.getStackTrace()) {
+                                sb.append(e.toString()+"\n");
                                 if (monitors != null) {
                                     for (MonitorInfo mi : monitors) {
                                         if (mi.getLockedStackDepth() == index) {
@@ -386,125 +386,125 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
                                     }
                                 }
                                 index++;
-			    }
-			}
-		    } catch (IOException ex) {
-			// Ignore
-		    } catch (UndeclaredThrowableException e) {
-			proxyClient.markAsDead();
-		    }
-		    final String text = sb.toString();
-		    SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-			    textArea.setText(text);
-			    textArea.setCaretPosition(0);
-			}
-		    });
-		}
-	    });
-	}
+                            }
+                        }
+                    } catch (IOException ex) {
+                        // Ignore
+                    } catch (UndeclaredThrowableException e) {
+                        proxyClient.markAsDead();
+                    }
+                    final String text = sb.toString();
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            textArea.setText(text);
+                            textArea.setCaretPosition(0);
+                        }
+                    });
+                }
+            });
+        }
     }
 
     private void doUpdate() {
-	workerAdd(new Runnable() {
-	    public void run() {
-		update();
-	    }
-	});
+        workerAdd(new Runnable() {
+            public void run() {
+                update();
+            }
+        });
     }
 
 
     private void detectDeadlock() {
-	workerAdd(new Runnable() {
-	    public void run() {
-		try {
-		    final Long[][] deadlockedThreads = getDeadlockedThreadIds();
+        workerAdd(new Runnable() {
+            public void run() {
+                try {
+                    final Long[][] deadlockedThreads = getDeadlockedThreadIds();
 
-		    if (deadlockedThreads == null || deadlockedThreads.length == 0) {
-			// Display message for 30 seconds. Do it on a separate thread so
-			// the sleep won't hold up the worker queue.
-			// This will be replaced later by separate statusbar logic.
-			new Thread() {
-			    public void run() {
-				try {
-				    SwingUtilities.invokeAndWait(new Runnable() {
-					public void run() {
-					    String msg = Resources.getText("No deadlock detected");
-					    messageLabel.setText(msg);
-					    threadListTabbedPane.revalidate();
-					}
-				    });
-				    sleep(30 * 1000);
-				} catch (InterruptedException ex) {
-				    // Ignore
-				} catch (InvocationTargetException ex) {
-				    // Ignore
-				}
-				SwingUtilities.invokeLater(new Runnable() {
-				    public void run() {
-					messageLabel.setText("");
-				    }
-				});
-			    }
-			}.start();
-			return;
-		    }
+                    if (deadlockedThreads == null || deadlockedThreads.length == 0) {
+                        // Display message for 30 seconds. Do it on a separate thread so
+                        // the sleep won't hold up the worker queue.
+                        // This will be replaced later by separate statusbar logic.
+                        new Thread() {
+                            public void run() {
+                                try {
+                                    SwingUtilities.invokeAndWait(new Runnable() {
+                                        public void run() {
+                                            String msg = Resources.getText("No deadlock detected");
+                                            messageLabel.setText(msg);
+                                            threadListTabbedPane.revalidate();
+                                        }
+                                    });
+                                    sleep(30 * 1000);
+                                } catch (InterruptedException ex) {
+                                    // Ignore
+                                } catch (InvocationTargetException ex) {
+                                    // Ignore
+                                }
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        messageLabel.setText("");
+                                    }
+                                });
+                            }
+                        }.start();
+                        return;
+                    }
 
-		    SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-			    // Remove old deadlock tabs
-			    while (threadListTabbedPane.getTabCount() > 1) {
-				threadListTabbedPane.removeTabAt(1);
-			    }
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            // Remove old deadlock tabs
+                            while (threadListTabbedPane.getTabCount() > 1) {
+                                threadListTabbedPane.removeTabAt(1);
+                            }
 
-			    if (deadlockedThreads != null) {
-				for (int i = 0; i < deadlockedThreads.length; i++) {
-				    DefaultListModel listModel = new DefaultListModel();
-				    JTextArea textArea = new JTextArea();
-				    textArea.setBorder(thinEmptyBorder);
-				    textArea.setEditable(false);
-				    setAccessibleName(textArea,
-					getText("ThreadTab.threadInfo.accessibleName"));
-				    JList list = new ThreadJList(listModel, textArea);
-				    JScrollPane threadlistSP = new JScrollPane(list);
-				    JScrollPane textAreaSP = new JScrollPane(textArea);
-				    threadlistSP.setBorder(null);
-				    textAreaSP.setBorder(null);
-				    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-										 threadlistSP, textAreaSP);
-				    splitPane.setOneTouchExpandable(true);
-				    splitPane.setBorder(null);
-				    splitPane.setDividerLocation(threadsSplitPane.getDividerLocation());
-				    String tabName;
-				    if (deadlockedThreads.length > 1) {
-					tabName = Resources.getText("deadlockTabN", i+1);
-				    } else {
-					tabName = Resources.getText("deadlockTab");
-				    }
-				    threadListTabbedPane.addTab(tabName, splitPane);
+                            if (deadlockedThreads != null) {
+                                for (int i = 0; i < deadlockedThreads.length; i++) {
+                                    DefaultListModel listModel = new DefaultListModel();
+                                    JTextArea textArea = new JTextArea();
+                                    textArea.setBorder(thinEmptyBorder);
+                                    textArea.setEditable(false);
+                                    setAccessibleName(textArea,
+                                        getText("ThreadTab.threadInfo.accessibleName"));
+                                    JList list = new ThreadJList(listModel, textArea);
+                                    JScrollPane threadlistSP = new JScrollPane(list);
+                                    JScrollPane textAreaSP = new JScrollPane(textArea);
+                                    threadlistSP.setBorder(null);
+                                    textAreaSP.setBorder(null);
+                                    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                                                                                 threadlistSP, textAreaSP);
+                                    splitPane.setOneTouchExpandable(true);
+                                    splitPane.setBorder(null);
+                                    splitPane.setDividerLocation(threadsSplitPane.getDividerLocation());
+                                    String tabName;
+                                    if (deadlockedThreads.length > 1) {
+                                        tabName = Resources.getText("deadlockTabN", i+1);
+                                    } else {
+                                        tabName = Resources.getText("deadlockTab");
+                                    }
+                                    threadListTabbedPane.addTab(tabName, splitPane);
 
-				    for (long t : deadlockedThreads[i]) {
-					listModel.addElement(t);
-				    }
-				}
-				threadListTabbedPane.setSelectedIndex(1);
-			    }
-			}
-		    });
-		} catch (IOException e) {
-		    // Ignore
-		} catch (UndeclaredThrowableException e) {
-		    vmPanel.getProxyClient().markAsDead();
-		}
-	    }
-	});
+                                    for (long t : deadlockedThreads[i]) {
+                                        listModel.addElement(t);
+                                    }
+                                }
+                                threadListTabbedPane.setSelectedIndex(1);
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    // Ignore
+                } catch (UndeclaredThrowableException e) {
+                    vmPanel.getProxyClient().markAsDead();
+                }
+            }
+        });
     }
 
 
     // Return deadlocked threads or null
     public Long[][] getDeadlockedThreadIds() throws IOException {
-	ProxyClient proxyClient = vmPanel.getProxyClient();
-	ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
+        ProxyClient proxyClient = vmPanel.getProxyClient();
+        ThreadMXBean threadMBean = proxyClient.getThreadMXBean();
 
         long[] ids = proxyClient.findDeadlockedThreads();
         if (ids == null) {
@@ -533,8 +533,8 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
                         deadlockedThread = j;
                         visited[j] = true;
                         break;
-                    } 
-                } 
+                    }
+                }
                 if (deadlockedThread < 0) {
                     // done
                     break;
@@ -565,12 +565,12 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
 
     // ActionListener interface
     public void actionPerformed(ActionEvent evt) {
-	String cmd = ((AbstractButton)evt.getSource()).getActionCommand();
+        String cmd = ((AbstractButton)evt.getSource()).getActionCommand();
 
-	if (cmd == "detectDeadlock") {
-	    messageLabel.setText("");
-	    detectDeadlock();
-	}
+        if (cmd == "detectDeadlock") {
+            messageLabel.setText("");
+            detectDeadlock();
+        }
     }
 
 
@@ -578,125 +578,125 @@ class ThreadTab extends Tab implements ActionListener, DocumentListener, ListSel
     // DocumentListener interface
 
     public void insertUpdate(DocumentEvent e) {
-	doUpdate();
+        doUpdate();
     }
 
     public void removeUpdate(DocumentEvent e) {
-	doUpdate();
+        doUpdate();
     }
 
     public void changedUpdate(DocumentEvent e) {
-	doUpdate();
+        doUpdate();
     }
 
 
 
     private class ThreadJList extends JList {
-	private JTextArea textArea;
+        private JTextArea textArea;
 
-	ThreadJList(DefaultListModel listModel, JTextArea textArea) {
-	    super(listModel);
+        ThreadJList(DefaultListModel listModel, JTextArea textArea) {
+            super(listModel);
 
-	    this.textArea = textArea;
+            this.textArea = textArea;
 
-	    setBorder(thinEmptyBorder);
+            setBorder(thinEmptyBorder);
 
-	    addListSelectionListener(ThreadTab.this);
-	    setCellRenderer(new DefaultListCellRenderer() {
-		public Component getListCellRendererComponent(JList list, Object value, int index,
-							      boolean isSelected, boolean cellHasFocus) {
-		    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            addListSelectionListener(ThreadTab.this);
+            setCellRenderer(new DefaultListCellRenderer() {
+                public Component getListCellRendererComponent(JList list, Object value, int index,
+                                                              boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-		    if (value != null) {
-			String name = nameCache.get(value);
-			if (name == null) {
-			    name = value.toString();
-			}
-			setText(name);
-		    }
-		    return this;
-		}
-	    });
-	}
+                    if (value != null) {
+                        String name = nameCache.get(value);
+                        if (name == null) {
+                            name = value.toString();
+                        }
+                        setText(name);
+                    }
+                    return this;
+                }
+            });
+        }
 
-	public Dimension getPreferredSize() {
-	    Dimension d = super.getPreferredSize();
-	    d.width = Math.max(d.width, 100);
-	    return d;
-	}
+        public Dimension getPreferredSize() {
+            Dimension d = super.getPreferredSize();
+            d.width = Math.max(d.width, 100);
+            return d;
+        }
     }
 
     private class PromptingTextField extends JTextField implements FocusListener {
-	private String prompt;
-	boolean promptRemoved = false;
-	Color fg;
+        private String prompt;
+        boolean promptRemoved = false;
+        Color fg;
 
-	public PromptingTextField(String prompt, int columns) {
-	    super(prompt, columns);
+        public PromptingTextField(String prompt, int columns) {
+            super(prompt, columns);
 
-	    this.prompt = prompt;
-	    updateForeground();
-	    addFocusListener(this);
-	    setAccessibleName(this, prompt);
-	}
+            this.prompt = prompt;
+            updateForeground();
+            addFocusListener(this);
+            setAccessibleName(this, prompt);
+        }
 
-	@Override
-	public void revalidate() {
-	    super.revalidate();
-	    updateForeground();
-	}
+        @Override
+        public void revalidate() {
+            super.revalidate();
+            updateForeground();
+        }
 
-	private void updateForeground() {
-	    this.fg = UIManager.getColor("TextField.foreground");
-	    if (promptRemoved) {
-		setForeground(fg);
-	    } else {
-		setForeground(Color.gray);
-	    }
-	}
+        private void updateForeground() {
+            this.fg = UIManager.getColor("TextField.foreground");
+            if (promptRemoved) {
+                setForeground(fg);
+            } else {
+                setForeground(Color.gray);
+            }
+        }
 
-	public String getText() {
-	    if (!promptRemoved) {
-		return "";
-	    } else {
-		return super.getText();
-	    }
-	}
+        public String getText() {
+            if (!promptRemoved) {
+                return "";
+            } else {
+                return super.getText();
+            }
+        }
 
-	public void focusGained(FocusEvent e) {
-	    if (!promptRemoved) {
-		setText("");
-		setForeground(fg);
-		promptRemoved = true;
-	    }
-	}
+        public void focusGained(FocusEvent e) {
+            if (!promptRemoved) {
+                setText("");
+                setForeground(fg);
+                promptRemoved = true;
+            }
+        }
 
-	public void focusLost(FocusEvent e) {
-	    if (promptRemoved && getText().equals("")) {
-		setText(prompt);
-		setForeground(Color.gray);
-		promptRemoved = false;
-	    }
-	}
+        public void focusLost(FocusEvent e) {
+            if (promptRemoved && getText().equals("")) {
+                setText(prompt);
+                setForeground(Color.gray);
+                promptRemoved = false;
+            }
+        }
 
     }
 
     OverviewPanel[] getOverviewPanels() {
-	if (overviewPanel == null) {
-	    overviewPanel = new ThreadOverviewPanel();
-	}
-	return new OverviewPanel[] { overviewPanel };
+        if (overviewPanel == null) {
+            overviewPanel = new ThreadOverviewPanel();
+        }
+        return new OverviewPanel[] { overviewPanel };
     }
 
 
     private static class ThreadOverviewPanel extends OverviewPanel {
-	ThreadOverviewPanel() {
-	    super(getText("Threads"), threadCountKey, threadCountName, null);
-	}
+        ThreadOverviewPanel() {
+            super(getText("Threads"), threadCountKey, threadCountName, null);
+        }
 
-	private void updateThreadsInfo(long tlCount, long tpCount, long ttCount, long timeStamp) {
-	    getPlotter().addValues(timeStamp, tlCount);
-	    getInfoLabel().setText(getText(infoLabelFormat, tlCount, tpCount, ttCount));
-	}
+        private void updateThreadsInfo(long tlCount, long tpCount, long ttCount, long timeStamp) {
+            getPlotter().addValues(timeStamp, tlCount);
+            getInfoLabel().setText(getText(infoLabelFormat, tlCount, tpCount, ttCount));
+        }
     }
 }

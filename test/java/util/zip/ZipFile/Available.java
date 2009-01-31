@@ -27,12 +27,11 @@ import java.io.File;
 public class Available
 {
     public static void main (String argv[]) throws Exception {
-        ZipFile zf = new ZipFile(new File(System.getProperty("test.src"), 
+        ZipFile zf = new ZipFile(new File(System.getProperty("test.src"),
                                           "input.jar"));
         ZipEntry e = zf.getEntry("ReleaseInflater.java");
         if (e.getSize() != zf.getInputStream(e).available()) {
             throw new Exception("wrong return value of available");
         }
-    }  
+    }
 }
-

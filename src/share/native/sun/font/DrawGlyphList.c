@@ -35,7 +35,7 @@
 #include "sun_java2d_loops_DrawGlyphListAA.h"
 
 
-/* 
+/*
  * Need to account for the rare case when (eg) repainting damaged
  * areas results in the drawing location being negative, in which
  * case (int) rounding always goes towards zero. We need to always
@@ -62,13 +62,13 @@ GlyphBlitVector* setupBlitVector(JNIEnv *env, jobject glyphlist) {
     jfloat y = (*env)->GetFloatField(env, glyphlist, sunFontIDs.glyphListY);
     jint len =  (*env)->GetIntField(env, glyphlist, sunFontIDs.glyphListLen);
     jlongArray glyphImages = (jlongArray)
-	(*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphImages);
+        (*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphImages);
     jfloatArray glyphPositions =
-      (*env)->GetBooleanField(env, glyphlist, sunFontIDs.glyphListUsePos) 
+      (*env)->GetBooleanField(env, glyphlist, sunFontIDs.glyphListUsePos)
         ? (jfloatArray)
       (*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphListPos)
         : NULL;
-        
+
     bytesNeeded = sizeof(GlyphBlitVector)+sizeof(ImageRef)*len;
     gbv = (GlyphBlitVector*)malloc(bytesNeeded);
     gbv->numGlyphs = len;
@@ -77,7 +77,7 @@ GlyphBlitVector* setupBlitVector(JNIEnv *env, jobject glyphlist) {
     imagePtrs = (*env)->GetPrimitiveArrayCritical(env, glyphImages, NULL);
     if (imagePtrs == NULL) {
         free(gbv);
-	return (GlyphBlitVector*)NULL;
+        return (GlyphBlitVector*)NULL;
     }
 
     /* Add 0.5 to x and y and then use floor (or an equivalent operation)
@@ -86,51 +86,51 @@ GlyphBlitVector* setupBlitVector(JNIEnv *env, jobject glyphlist) {
     x += 0.5f;
     y += 0.5f;
     if (glyphPositions) {
-	int n = -1;
+        int n = -1;
 
         positions =
-	  (*env)->GetPrimitiveArrayCritical(env, glyphPositions, NULL);
+          (*env)->GetPrimitiveArrayCritical(env, glyphPositions, NULL);
         if (positions == NULL) {
             (*env)->ReleasePrimitiveArrayCritical(env, glyphImages,
-						  imagePtrs, JNI_ABORT);
-	    free(gbv);
+                                                  imagePtrs, JNI_ABORT);
+            free(gbv);
             return (GlyphBlitVector*)NULL;
         }
 
-	for (g=0; g<len; g++) {
-	    jfloat px = x + positions[++n];
-	    jfloat py = y + positions[++n];
+        for (g=0; g<len; g++) {
+            jfloat px = x + positions[++n];
+            jfloat py = y + positions[++n];
 
-	    ginfo = (GlyphInfo*)imagePtrs[g];
+            ginfo = (GlyphInfo*)imagePtrs[g];
             gbv->glyphs[g].glyphInfo = ginfo;
-	    gbv->glyphs[g].pixels = ginfo->image;
-	    gbv->glyphs[g].width = ginfo->width;
-	    gbv->glyphs[g].rowBytes = ginfo->rowBytes;
-	    gbv->glyphs[g].height = ginfo->height;
-	    FLOOR_ASSIGN(gbv->glyphs[g].x, px + ginfo->topLeftX); 
-	    FLOOR_ASSIGN(gbv->glyphs[g].y, py + ginfo->topLeftY);
-	}
-	(*env)->ReleasePrimitiveArrayCritical(env,glyphPositions,
-					      positions, JNI_ABORT);
+            gbv->glyphs[g].pixels = ginfo->image;
+            gbv->glyphs[g].width = ginfo->width;
+            gbv->glyphs[g].rowBytes = ginfo->rowBytes;
+            gbv->glyphs[g].height = ginfo->height;
+            FLOOR_ASSIGN(gbv->glyphs[g].x, px + ginfo->topLeftX);
+            FLOOR_ASSIGN(gbv->glyphs[g].y, py + ginfo->topLeftY);
+        }
+        (*env)->ReleasePrimitiveArrayCritical(env,glyphPositions,
+                                              positions, JNI_ABORT);
     } else {
         for (g=0; g<len; g++) {
             ginfo = (GlyphInfo*)imagePtrs[g];
             gbv->glyphs[g].glyphInfo = ginfo;
             gbv->glyphs[g].pixels = ginfo->image;
             gbv->glyphs[g].width = ginfo->width;
-	    gbv->glyphs[g].rowBytes = ginfo->rowBytes;
+            gbv->glyphs[g].rowBytes = ginfo->rowBytes;
             gbv->glyphs[g].height = ginfo->height;
-	    FLOOR_ASSIGN(gbv->glyphs[g].x, x + ginfo->topLeftX); 
-	    FLOOR_ASSIGN(gbv->glyphs[g].y, y + ginfo->topLeftY); 
+            FLOOR_ASSIGN(gbv->glyphs[g].x, x + ginfo->topLeftX);
+            FLOOR_ASSIGN(gbv->glyphs[g].y, y + ginfo->topLeftY);
 
-	    /* copy image data into this array at x/y locations */
+            /* copy image data into this array at x/y locations */
             x += ginfo->advanceX;
             y += ginfo->advanceY;
         }
     }
-    
+
     (*env)->ReleasePrimitiveArrayCritical(env, glyphImages, imagePtrs,
-					  JNI_ABORT);
+                                          JNI_ABORT);
     return gbv;
 }
 
@@ -149,10 +149,10 @@ jint RefineBounds(GlyphBlitVector *gbv, SurfaceDataBounds *bounds) {
         dy1 = (jint) glyphImage.y;
         dx2 = dx1 + glyphImage.width;
         dy2 = dy1 + glyphImage.height;
-	if (glyphs.x1 > dx1) glyphs.x1 = dx1;
-	if (glyphs.y1 > dy1) glyphs.y1 = dy1;
-	if (glyphs.x2 < dx2) glyphs.x2 = dx2;
-	if (glyphs.y2 < dy2) glyphs.y2 = dy2;
+        if (glyphs.x1 > dx1) glyphs.x1 = dx1;
+        if (glyphs.y1 > dy1) glyphs.y1 = dy1;
+        if (glyphs.x2 < dx2) glyphs.x2 = dx2;
+        if (glyphs.y2 < dy2) glyphs.y2 = dy2;
     }
 
     SurfaceData_IntersectBounds(bounds, &glyphs);
@@ -168,9 +168,9 @@ jint RefineBounds(GlyphBlitVector *gbv, SurfaceDataBounds *bounds) {
  * This could be a macro but there's enough of those already.
  */
 static void drawGlyphList(JNIEnv *env, jobject self,
-			  jobject sg2d, jobject sData,
-			  GlyphBlitVector *gbv, jint pixel, jint color,
-			  NativePrimitive *pPrim, DrawGlyphListFunc *func) {
+                          jobject sg2d, jobject sData,
+                          GlyphBlitVector *gbv, jint pixel, jint color,
+                          NativePrimitive *pPrim, DrawGlyphListFunc *func) {
 
     SurfaceDataOps *sdOps;
     SurfaceDataRasInfo rasInfo;
@@ -180,7 +180,7 @@ static void drawGlyphList(JNIEnv *env, jobject self,
 
     sdOps = SurfaceData_GetOps(env, sData);
     if (sdOps == 0) {
-	return;
+        return;
     }
 
     if (pPrim->pCompType->getCompInfo != NULL) {
@@ -189,41 +189,41 @@ static void drawGlyphList(JNIEnv *env, jobject self,
 
     GrPrim_Sg2dGetClip(env, sg2d, &rasInfo.bounds);
     if (rasInfo.bounds.y2 <= rasInfo.bounds.y1 ||
-	rasInfo.bounds.x2 <= rasInfo.bounds.x1)
+        rasInfo.bounds.x2 <= rasInfo.bounds.x1)
     {
-	return;
+        return;
     }
 
     ret = sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags);
-    if (ret != SD_SUCCESS) { 
-	if (ret == SD_SLOWLOCK) {
-	    if (!RefineBounds(gbv, &rasInfo.bounds)) {
-		SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
-		return;
-	    }
-	} else {
-	    return;
-	}
+    if (ret != SD_SUCCESS) {
+        if (ret == SD_SLOWLOCK) {
+            if (!RefineBounds(gbv, &rasInfo.bounds)) {
+                SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
+                return;
+            }
+        } else {
+            return;
+        }
     }
 
     sdOps->GetRasInfo(env, sdOps, &rasInfo);
-    if (!rasInfo.rasBase) { 
-	SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
-	return;
+    if (!rasInfo.rasBase) {
+        SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
+        return;
     }
     clipLeft    = rasInfo.bounds.x1;
     clipRight   = rasInfo.bounds.x2;
     clipTop     = rasInfo.bounds.y1;
     clipBottom  = rasInfo.bounds.y2;
-    if (clipRight > clipLeft &&	clipBottom > clipTop) {
+    if (clipRight > clipLeft && clipBottom > clipTop) {
 
-	(*func)(&rasInfo,
-		gbv->glyphs, gbv->numGlyphs,
+        (*func)(&rasInfo,
+                gbv->glyphs, gbv->numGlyphs,
                 pixel, color,
-		clipLeft, clipTop,
-		clipRight, clipBottom,
-                pPrim, &compInfo);              
-	SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
+                clipLeft, clipTop,
+                clipRight, clipBottom,
+                pPrim, &compInfo);
+        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
 
     }
     SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
@@ -233,11 +233,11 @@ static unsigned char* getLCDGammaLUT(int gamma);
 static unsigned char* getInvLCDGammaLUT(int gamma);
 
 static void drawGlyphListLCD(JNIEnv *env, jobject self,
-			  jobject sg2d, jobject sData,
-			  GlyphBlitVector *gbv, jint pixel, jint color,
-			  jboolean rgbOrder, int contrast,
-			  NativePrimitive *pPrim,
-			  DrawGlyphListLCDFunc *func) {
+                          jobject sg2d, jobject sData,
+                          GlyphBlitVector *gbv, jint pixel, jint color,
+                          jboolean rgbOrder, int contrast,
+                          NativePrimitive *pPrim,
+                          DrawGlyphListLCDFunc *func) {
 
     SurfaceDataOps *sdOps;
     SurfaceDataRasInfo rasInfo;
@@ -247,7 +247,7 @@ static void drawGlyphListLCD(JNIEnv *env, jobject self,
 
     sdOps = SurfaceData_GetOps(env, sData);
     if (sdOps == 0) {
-	return;
+        return;
     }
 
     if (pPrim->pCompType->getCompInfo != NULL) {
@@ -256,43 +256,43 @@ static void drawGlyphListLCD(JNIEnv *env, jobject self,
 
     GrPrim_Sg2dGetClip(env, sg2d, &rasInfo.bounds);
     if (rasInfo.bounds.y2 <= rasInfo.bounds.y1 ||
-	rasInfo.bounds.x2 <= rasInfo.bounds.x1)
+        rasInfo.bounds.x2 <= rasInfo.bounds.x1)
     {
-	return;
+        return;
     }
 
     ret = sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags);
-    if (ret != SD_SUCCESS) { 
-	if (ret == SD_SLOWLOCK) {
-	    if (!RefineBounds(gbv, &rasInfo.bounds)) {
-		SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
-		return;
-	    }
-	} else {
-	    return;
-	}
+    if (ret != SD_SUCCESS) {
+        if (ret == SD_SLOWLOCK) {
+            if (!RefineBounds(gbv, &rasInfo.bounds)) {
+                SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
+                return;
+            }
+        } else {
+            return;
+        }
     }
 
     sdOps->GetRasInfo(env, sdOps, &rasInfo);
-    if (!rasInfo.rasBase) { 
-	SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
-	return;
+    if (!rasInfo.rasBase) {
+        SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
+        return;
     }
     clipLeft    = rasInfo.bounds.x1;
     clipRight   = rasInfo.bounds.x2;
     clipTop     = rasInfo.bounds.y1;
     clipBottom  = rasInfo.bounds.y2;
 
-    if (clipRight > clipLeft &&	clipBottom > clipTop) {
+    if (clipRight > clipLeft && clipBottom > clipTop) {
 
-	(*func)(&rasInfo,
-		gbv->glyphs, gbv->numGlyphs,
+        (*func)(&rasInfo,
+                gbv->glyphs, gbv->numGlyphs,
                 pixel, color,
-		clipLeft, clipTop,
-		clipRight, clipBottom, (jint)rgbOrder,
-		getLCDGammaLUT(contrast), getInvLCDGammaLUT(contrast),
+                clipLeft, clipTop,
+                clipRight, clipBottom, (jint)rgbOrder,
+                getLCDGammaLUT(contrast), getInvLCDGammaLUT(contrast),
                 pPrim, &compInfo);
-	SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
+        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
 
     }
     SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
@@ -313,17 +313,17 @@ Java_sun_java2d_loops_DrawGlyphList_DrawGlyphList
     NativePrimitive *pPrim;
 
     if ((pPrim = GetNativePrim(env, self)) == NULL) {
-	return;
+        return;
     }
 
     if ((gbv = setupBlitVector(env, glyphlist)) == NULL) {
-	return;
+        return;
     }
 
     pixel = GrPrim_Sg2dGetPixel(env, sg2d);
     color = GrPrim_Sg2dGetEaRGB(env, sg2d);
     drawGlyphList(env, self, sg2d, sData, gbv, pixel, color,
-		  pPrim, pPrim->funcs.drawglyphlist);
+                  pPrim, pPrim->funcs.drawglyphlist);
     free(gbv);
 
 }
@@ -343,16 +343,16 @@ Java_sun_java2d_loops_DrawGlyphListAA_DrawGlyphListAA
     NativePrimitive *pPrim;
 
     if ((pPrim = GetNativePrim(env, self)) == NULL) {
-	return;
+        return;
     }
 
     if ((gbv = setupBlitVector(env, glyphlist)) == NULL) {
-	return;
+        return;
     }
     pixel = GrPrim_Sg2dGetPixel(env, sg2d);
     color = GrPrim_Sg2dGetEaRGB(env, sg2d);
     drawGlyphList(env, self, sg2d, sData, gbv, pixel, color,
-		  pPrim, pPrim->funcs.drawglyphlistaa);
+                  pPrim, pPrim->funcs.drawglyphlistaa);
     free(gbv);
 }
 
@@ -372,19 +372,19 @@ Java_sun_java2d_loops_DrawGlyphListLCD_DrawGlyphListLCD
     NativePrimitive *pPrim;
 
     if ((pPrim = GetNativePrim(env, self)) == NULL) {
-	return;
+        return;
     }
 
     if ((gbv = setupLCDBlitVector(env, glyphlist)) == NULL) {
-	return;
+        return;
     }
     pixel = GrPrim_Sg2dGetPixel(env, sg2d);
     color = GrPrim_Sg2dGetEaRGB(env, sg2d);
     contrast = GrPrim_Sg2dGetLCDTextContrast(env, sg2d);
     rgbOrder = (*env)->GetBooleanField(env,glyphlist, sunFontIDs.lcdRGBOrder);
     drawGlyphListLCD(env, self, sg2d, sData, gbv, pixel, color,
-		     rgbOrder, contrast,
-		     pPrim, pPrim->funcs.drawglyphlistlcd);
+                     rgbOrder, contrast,
+                     pPrim, pPrim->funcs.drawglyphlistlcd);
     free(gbv);
 }
 
@@ -455,7 +455,7 @@ Java_sun_java2d_loops_DrawGlyphListLCD_DrawGlyphListLCD
  *  past the end of the row. So the glyph cache needs to have 2 bytes of
  *  zero padding at the end of each row. This is the extra memory cost to
  *  accommodate this algorithm.
- *  
+ *
  *  The resulting text is perhaps fractionally better in overall perception
  *  than rounding to the whole pixel grid, as a few issues arise.
  *
@@ -469,7 +469,7 @@ Java_sun_java2d_loops_DrawGlyphListLCD_DrawGlyphListLCD
  *  the "heart" of a stem to span whole pixels it may appear more diffuse -
  *  less sharp. Eliminating hinting would probably not make this worse - in
  *  effect we have already doing that here. But it would improve the spacing.
- *  
+ *
  *  * perhaps contradicting the above point in some ways, more diffuse glyphs
  *  are better at reducing colour fringing, but what appears to be more
  *  colour fringing in this FM case is more likely attributable to a greater
@@ -489,15 +489,15 @@ GlyphBlitVector* setupLCDBlitVector(JNIEnv *env, jobject glyphlist) {
     jfloat y = (*env)->GetFloatField(env, glyphlist, sunFontIDs.glyphListY);
     jint len =  (*env)->GetIntField(env, glyphlist, sunFontIDs.glyphListLen);
     jlongArray glyphImages = (jlongArray)
-	(*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphImages);
+        (*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphImages);
     jfloatArray glyphPositions =
-      (*env)->GetBooleanField(env, glyphlist, sunFontIDs.glyphListUsePos) 
+      (*env)->GetBooleanField(env, glyphlist, sunFontIDs.glyphListUsePos)
         ? (jfloatArray)
       (*env)->GetObjectField(env, glyphlist, sunFontIDs.glyphListPos)
         : NULL;
     jboolean subPixPos =
       (*env)->GetBooleanField(env,glyphlist, sunFontIDs.lcdSubPixPos);
-       
+
     bytesNeeded = sizeof(GlyphBlitVector)+sizeof(ImageRef)*len;
     gbv = (GlyphBlitVector*)malloc(bytesNeeded);
     gbv->numGlyphs = len;
@@ -506,7 +506,7 @@ GlyphBlitVector* setupLCDBlitVector(JNIEnv *env, jobject glyphlist) {
     imagePtrs = (*env)->GetPrimitiveArrayCritical(env, glyphImages, NULL);
     if (imagePtrs == NULL) {
         free(gbv);
-	return (GlyphBlitVector*)NULL;
+        return (GlyphBlitVector*)NULL;
     }
 
     /* The position of the start of the text is adjusted up so
@@ -523,141 +523,141 @@ GlyphBlitVector* setupLCDBlitVector(JNIEnv *env, jobject glyphlist) {
      * heterogenous
      */
     if (subPixPos && len > 0) {
-	ginfo = (GlyphInfo*)imagePtrs[0];
-	/* rowBytes==width tests if its a B&W or LCD glyph */
-	if (ginfo->width == ginfo->rowBytes) {
-	    subPixPos = JNI_FALSE;
-	}
+        ginfo = (GlyphInfo*)imagePtrs[0];
+        /* rowBytes==width tests if its a B&W or LCD glyph */
+        if (ginfo->width == ginfo->rowBytes) {
+            subPixPos = JNI_FALSE;
+        }
     }
     if (subPixPos) {
-	x += 0.1666667f;
-	y += 0.1666667f;
+        x += 0.1666667f;
+        y += 0.1666667f;
     } else {
-	x += 0.5f;
-	y += 0.5f;	    
+        x += 0.5f;
+        y += 0.5f;
     }
 
      if (glyphPositions) {
-	int n = -1;
+        int n = -1;
 
         positions =
-	  (*env)->GetPrimitiveArrayCritical(env, glyphPositions, NULL);
+          (*env)->GetPrimitiveArrayCritical(env, glyphPositions, NULL);
         if (positions == NULL) {
             (*env)->ReleasePrimitiveArrayCritical(env, glyphImages,
-						  imagePtrs, JNI_ABORT);
-	    free(gbv);
+                                                  imagePtrs, JNI_ABORT);
+            free(gbv);
             return (GlyphBlitVector*)NULL;
         }
- 
-	for (g=0; g<len; g++) {
-	    jfloat px, py; 
 
-	    ginfo = (GlyphInfo*)imagePtrs[g];
+        for (g=0; g<len; g++) {
+            jfloat px, py;
+
+            ginfo = (GlyphInfo*)imagePtrs[g];
             gbv->glyphs[g].glyphInfo = ginfo;
-	    gbv->glyphs[g].pixels = ginfo->image;
-	    gbv->glyphs[g].width = ginfo->width;
-	    gbv->glyphs[g].rowBytes = ginfo->rowBytes;
-	    gbv->glyphs[g].height = ginfo->height;
+            gbv->glyphs[g].pixels = ginfo->image;
+            gbv->glyphs[g].width = ginfo->width;
+            gbv->glyphs[g].rowBytes = ginfo->rowBytes;
+            gbv->glyphs[g].height = ginfo->height;
 
-	    px = x + positions[++n];
-	    py = y + positions[++n];
+            px = x + positions[++n];
+            py = y + positions[++n];
 
-	    /*
-	     * Subpixel positioning may be requested for LCD text.
-	     *
-	     * Subpixel positioning can take place only in the direction in
-	     * which the subpixels increase the resolution.
-	     * So this is useful for the typical case of vertical stripes
-	     * increasing the resolution in the direction of the glyph
-	     * advances - ie typical horizontally laid out text.
-	     * If the subpixel stripes are horizontal, subpixel positioning
-	     * can take place only in the vertical direction, which isn't
-	     * as useful - you would have to be drawing rotated text on
-	     * a display which actually had that organisation. A pretty
-	     * unlikely combination.
-	     * So this is supported only for vertical stripes which
-	     * increase the horizontal resolution.
-	     * If in this case the client also rotates the text then there
-	     * will still be some benefit for small rotations. For 90 degree
-	     * rotation there's no horizontal advance and less benefit
-	     * from the subpixel rendering too.
-	     * The test for width==rowBytes detects the case where the glyph
-	     * is a B&W image obtained from an embedded bitmap. In that
-	     * case we cannot apply sub-pixel positioning so ignore it.
-	     * This is handled on a per glyph basis.
-	     */
-	    if (subPixPos) {
-		int frac;
-		float pos = px + ginfo->topLeftX;
-		FLOOR_ASSIGN(gbv->glyphs[g].x, pos);
-		/* Calculate the fractional pixel position - ie the subpixel
-		 * position within the RGB/BGR triple. We are rounding to
-		 * the nearest, even though we just do (int) since at the
-		 * start of the loop the position was already adjusted by
-		 * 0.5 (sub)pixels to get rounding.
-		 * Thus the "fractional" position will be 0, 1 or 2.
-		 * eg 0->0.32 is 0, 0.33->0.66 is 1, > 0.66->0.99 is 2.
-		 * We can use an (int) cast here since the floor operation 
-		 * above guarantees us that the value is positive.
-		 */
-	        frac = (int)((pos - gbv->glyphs[g].x)*3);
-		if (frac == 0) {
-		    /* frac rounded down to zero, so this is equivalent
-		     * to no sub-pixel positioning.
-		     */
-		    gbv->glyphs[g].rowBytesOffset = 0;
-		} else {
-		    /* In this case we need to adjust both the position at
-		     * which the glyph will be positioned by one pixel to the
-		     * left and adjust the position in the glyph image row
-		     * from which to extract the data
-		     * Every glyph image row has 2 bytes padding
-		     * on the right to account for this.
-		     */
-		    gbv->glyphs[g].rowBytesOffset = 3-frac;
-		    gbv->glyphs[g].x += 1;
-		}
-	    } else {
-		FLOOR_ASSIGN(gbv->glyphs[g].x, px + ginfo->topLeftX);
-		gbv->glyphs[g].rowBytesOffset = 0;
-	    }
-	    FLOOR_ASSIGN(gbv->glyphs[g].y, py + ginfo->topLeftY);
-	}
-	(*env)->ReleasePrimitiveArrayCritical(env,glyphPositions,
-					      positions, JNI_ABORT);
+            /*
+             * Subpixel positioning may be requested for LCD text.
+             *
+             * Subpixel positioning can take place only in the direction in
+             * which the subpixels increase the resolution.
+             * So this is useful for the typical case of vertical stripes
+             * increasing the resolution in the direction of the glyph
+             * advances - ie typical horizontally laid out text.
+             * If the subpixel stripes are horizontal, subpixel positioning
+             * can take place only in the vertical direction, which isn't
+             * as useful - you would have to be drawing rotated text on
+             * a display which actually had that organisation. A pretty
+             * unlikely combination.
+             * So this is supported only for vertical stripes which
+             * increase the horizontal resolution.
+             * If in this case the client also rotates the text then there
+             * will still be some benefit for small rotations. For 90 degree
+             * rotation there's no horizontal advance and less benefit
+             * from the subpixel rendering too.
+             * The test for width==rowBytes detects the case where the glyph
+             * is a B&W image obtained from an embedded bitmap. In that
+             * case we cannot apply sub-pixel positioning so ignore it.
+             * This is handled on a per glyph basis.
+             */
+            if (subPixPos) {
+                int frac;
+                float pos = px + ginfo->topLeftX;
+                FLOOR_ASSIGN(gbv->glyphs[g].x, pos);
+                /* Calculate the fractional pixel position - ie the subpixel
+                 * position within the RGB/BGR triple. We are rounding to
+                 * the nearest, even though we just do (int) since at the
+                 * start of the loop the position was already adjusted by
+                 * 0.5 (sub)pixels to get rounding.
+                 * Thus the "fractional" position will be 0, 1 or 2.
+                 * eg 0->0.32 is 0, 0.33->0.66 is 1, > 0.66->0.99 is 2.
+                 * We can use an (int) cast here since the floor operation
+                 * above guarantees us that the value is positive.
+                 */
+                frac = (int)((pos - gbv->glyphs[g].x)*3);
+                if (frac == 0) {
+                    /* frac rounded down to zero, so this is equivalent
+                     * to no sub-pixel positioning.
+                     */
+                    gbv->glyphs[g].rowBytesOffset = 0;
+                } else {
+                    /* In this case we need to adjust both the position at
+                     * which the glyph will be positioned by one pixel to the
+                     * left and adjust the position in the glyph image row
+                     * from which to extract the data
+                     * Every glyph image row has 2 bytes padding
+                     * on the right to account for this.
+                     */
+                    gbv->glyphs[g].rowBytesOffset = 3-frac;
+                    gbv->glyphs[g].x += 1;
+                }
+            } else {
+                FLOOR_ASSIGN(gbv->glyphs[g].x, px + ginfo->topLeftX);
+                gbv->glyphs[g].rowBytesOffset = 0;
+            }
+            FLOOR_ASSIGN(gbv->glyphs[g].y, py + ginfo->topLeftY);
+        }
+        (*env)->ReleasePrimitiveArrayCritical(env,glyphPositions,
+                                              positions, JNI_ABORT);
     } else {
         for (g=0; g<len; g++) {
             ginfo = (GlyphInfo*)imagePtrs[g];
             gbv->glyphs[g].glyphInfo = ginfo;
             gbv->glyphs[g].pixels = ginfo->image;
             gbv->glyphs[g].width = ginfo->width;
-	    gbv->glyphs[g].rowBytes = ginfo->rowBytes;
+            gbv->glyphs[g].rowBytes = ginfo->rowBytes;
             gbv->glyphs[g].height = ginfo->height;
 
-	    if (subPixPos) {
-		int frac;
-		float pos = x + ginfo->topLeftX;
-		FLOOR_ASSIGN(gbv->glyphs[g].x, pos);
-	        frac = (int)((pos - gbv->glyphs[g].x)*3);
-		if (frac == 0) {
-		    gbv->glyphs[g].rowBytesOffset = 0;
-		} else {
-		    gbv->glyphs[g].rowBytesOffset = 3-frac;
-		    gbv->glyphs[g].x += 1;
-		}
-	    } else {
-		FLOOR_ASSIGN(gbv->glyphs[g].x, x + ginfo->topLeftX);
-		gbv->glyphs[g].rowBytesOffset = 0;
-	    }
-	    FLOOR_ASSIGN(gbv->glyphs[g].y, y + ginfo->topLeftY); 
-	    /* copy image data into this array at x/y locations */
+            if (subPixPos) {
+                int frac;
+                float pos = x + ginfo->topLeftX;
+                FLOOR_ASSIGN(gbv->glyphs[g].x, pos);
+                frac = (int)((pos - gbv->glyphs[g].x)*3);
+                if (frac == 0) {
+                    gbv->glyphs[g].rowBytesOffset = 0;
+                } else {
+                    gbv->glyphs[g].rowBytesOffset = 3-frac;
+                    gbv->glyphs[g].x += 1;
+                }
+            } else {
+                FLOOR_ASSIGN(gbv->glyphs[g].x, x + ginfo->topLeftX);
+                gbv->glyphs[g].rowBytesOffset = 0;
+            }
+            FLOOR_ASSIGN(gbv->glyphs[g].y, y + ginfo->topLeftY);
+            /* copy image data into this array at x/y locations */
             x += ginfo->advanceX;
             y += ginfo->advanceY;
         }
     }
-    
+
     (*env)->ReleasePrimitiveArrayCritical(env, glyphImages, imagePtrs,
-					  JNI_ABORT);
+                                          JNI_ABORT);
     return gbv;
 }
 
@@ -675,7 +675,7 @@ GlyphBlitVector* setupLCDBlitVector(JNIEnv *env, jobject glyphlist) {
  * to a gamma adjusted space, and
  * lcdInvGammaLUT references LUTs which convert gamma adjusted colour
  * components to a linear space.
- */ 
+ */
 #define MIN_GAMMA 100
 #define MAX_GAMMA 250
 #define LCDLUTCOUNT (MAX_GAMMA-MIN_GAMMA+1)
@@ -716,7 +716,7 @@ void initLUT(int gamma) {
 static unsigned char* getLCDGammaLUT(int gamma) {
   int index;
 
-  if (gamma<MIN_GAMMA) { 
+  if (gamma<MIN_GAMMA) {
      gamma = MIN_GAMMA;
   } else if (gamma>MAX_GAMMA) {
      gamma = MAX_GAMMA;
@@ -731,7 +731,7 @@ static unsigned char* getLCDGammaLUT(int gamma) {
 static unsigned char* getInvLCDGammaLUT(int gamma) {
   int index;
 
-   if (gamma<MIN_GAMMA) { 
+   if (gamma<MIN_GAMMA) {
      gamma = MIN_GAMMA;
   } else if (gamma>MAX_GAMMA) {
      gamma = MAX_GAMMA;
@@ -779,73 +779,73 @@ void printDefaultTables(int gamma) {
 
 /* These tables are generated for a Gamma adjustment of 1.4 */
 UInt8 defaultGammaLUT[256] = {
-    /*	 0 */	  0,	4,    7,   10,	 13,   15,   17,   19,
-    /*	 8 */	 21,   23,   25,   27,	 28,   30,   32,   33,
-    /*	16 */	 35,   36,   38,   39,	 41,   42,   44,   45,
-    /*	24 */	 47,   48,   49,   51,	 52,   53,   55,   56,
-    /*	32 */	 57,   59,   60,   61,	 62,   64,   65,   66,
-    /*	40 */	 67,   69,   70,   71,	 72,   73,   75,   76,
-    /*	48 */	 77,   78,   79,   80,	 81,   83,   84,   85,
-    /*	56 */	 86,   87,   88,   89,	 90,   91,   92,   93,
-    /*	64 */	 94,   96,   97,   98,	 99,  100,  101,  102,
-    /*	72 */	103,  104,  105,  106,	107,  108,  109,  110,
-    /*	80 */	111,  112,  113,  114,	115,  116,  117,  118,
-    /*	88 */	119,  120,  121,  122,	123,  124,  125,  125,
-    /*	96 */	126,  127,  128,  129,	130,  131,  132,  133,
-    /* 104 */	134,  135,  136,  137,	138,  138,  139,  140,
-    /* 112 */	141,  142,  143,  144,	145,  146,  147,  147,
-    /* 120 */	148,  149,  150,  151,	152,  153,  154,  154,
-    /* 128 */	155,  156,  157,  158,	159,  160,  161,  161,
-    /* 136 */	162,  163,  164,  165,	166,  167,  167,  168,
-    /* 144 */	169,  170,  171,  172,	172,  173,  174,  175,
-    /* 152 */	176,  177,  177,  178,	179,  180,  181,  181,
-    /* 160 */	182,  183,  184,  185,	186,  186,  187,  188,
-    /* 168 */	189,  190,  190,  191,	192,  193,  194,  194,
-    /* 176 */	195,  196,  197,  198,	198,  199,  200,  201,
-    /* 184 */	201,  202,  203,  204,	205,  205,  206,  207,
-    /* 192 */	208,  208,  209,  210,	211,  212,  212,  213,
-    /* 200 */	214,  215,  215,  216,	217,  218,  218,  219,
-    /* 208 */	220,  221,  221,  222,	223,  224,  224,  225,
-    /* 216 */	226,  227,  227,  228,	229,  230,  230,  231,
-    /* 224 */	232,  233,  233,  234,	235,  236,  236,  237,
-    /* 232 */	238,  239,  239,  240,	241,  242,  242,  243,
-    /* 240 */	244,  244,  245,  246,	247,  247,  248,  249,
-    /* 248 */	249,  250,  251,  252,	252,  253,  254,  255,
+    /*   0 */     0,    4,    7,   10,   13,   15,   17,   19,
+    /*   8 */    21,   23,   25,   27,   28,   30,   32,   33,
+    /*  16 */    35,   36,   38,   39,   41,   42,   44,   45,
+    /*  24 */    47,   48,   49,   51,   52,   53,   55,   56,
+    /*  32 */    57,   59,   60,   61,   62,   64,   65,   66,
+    /*  40 */    67,   69,   70,   71,   72,   73,   75,   76,
+    /*  48 */    77,   78,   79,   80,   81,   83,   84,   85,
+    /*  56 */    86,   87,   88,   89,   90,   91,   92,   93,
+    /*  64 */    94,   96,   97,   98,   99,  100,  101,  102,
+    /*  72 */   103,  104,  105,  106,  107,  108,  109,  110,
+    /*  80 */   111,  112,  113,  114,  115,  116,  117,  118,
+    /*  88 */   119,  120,  121,  122,  123,  124,  125,  125,
+    /*  96 */   126,  127,  128,  129,  130,  131,  132,  133,
+    /* 104 */   134,  135,  136,  137,  138,  138,  139,  140,
+    /* 112 */   141,  142,  143,  144,  145,  146,  147,  147,
+    /* 120 */   148,  149,  150,  151,  152,  153,  154,  154,
+    /* 128 */   155,  156,  157,  158,  159,  160,  161,  161,
+    /* 136 */   162,  163,  164,  165,  166,  167,  167,  168,
+    /* 144 */   169,  170,  171,  172,  172,  173,  174,  175,
+    /* 152 */   176,  177,  177,  178,  179,  180,  181,  181,
+    /* 160 */   182,  183,  184,  185,  186,  186,  187,  188,
+    /* 168 */   189,  190,  190,  191,  192,  193,  194,  194,
+    /* 176 */   195,  196,  197,  198,  198,  199,  200,  201,
+    /* 184 */   201,  202,  203,  204,  205,  205,  206,  207,
+    /* 192 */   208,  208,  209,  210,  211,  212,  212,  213,
+    /* 200 */   214,  215,  215,  216,  217,  218,  218,  219,
+    /* 208 */   220,  221,  221,  222,  223,  224,  224,  225,
+    /* 216 */   226,  227,  227,  228,  229,  230,  230,  231,
+    /* 224 */   232,  233,  233,  234,  235,  236,  236,  237,
+    /* 232 */   238,  239,  239,  240,  241,  242,  242,  243,
+    /* 240 */   244,  244,  245,  246,  247,  247,  248,  249,
+    /* 248 */   249,  250,  251,  252,  252,  253,  254,  255,
 };
 
 UInt8 defaultInvGammaLUT[256] = {
-    /*	 0 */	  0,	0,    0,    0,	  0,	1,    1,    1,
-    /*	 8 */	  2,	2,    2,    3,	  3,	3,    4,    4,
-    /*	16 */	  5,	5,    6,    6,	  7,	7,    8,    8,
-    /*	24 */	  9,	9,   10,   10,	 11,   12,   12,   13,
-    /*	32 */	 13,   14,   15,   15,	 16,   17,   17,   18,
-    /*	40 */	 19,   19,   20,   21,	 21,   22,   23,   23,
-    /*	48 */	 24,   25,   26,   26,	 27,   28,   29,   29,
-    /*	56 */	 30,   31,   32,   32,	 33,   34,   35,   36,
-    /*	64 */	 36,   37,   38,   39,	 40,   40,   41,   42,
-    /*	72 */	 43,   44,   45,   45,	 46,   47,   48,   49,
-    /*	80 */	 50,   51,   52,   52,	 53,   54,   55,   56,
-    /*	88 */	 57,   58,   59,   60,	 61,   62,   63,   64,
-    /*	96 */	 64,   65,   66,   67,	 68,   69,   70,   71,
-    /* 104 */	 72,   73,   74,   75,	 76,   77,   78,   79,
-    /* 112 */	 80,   81,   82,   83,	 84,   85,   86,   87,
-    /* 120 */	 88,   89,   90,   91,	 92,   93,   95,   96,
-    /* 128 */	 97,   98,   99,  100,	101,  102,  103,  104,
-    /* 136 */	105,  106,  107,  109,	110,  111,  112,  113,
-    /* 144 */	114,  115,  116,  117,	119,  120,  121,  122,
-    /* 152 */	123,  124,  125,  127,	128,  129,  130,  131,
-    /* 160 */	132,  133,  135,  136,	137,  138,  139,  140,
-    /* 168 */	142,  143,  144,  145,	146,  148,  149,  150,
-    /* 176 */	151,  152,  154,  155,	156,  157,  159,  160,
-    /* 184 */	161,  162,  163,  165,	166,  167,  168,  170,
-    /* 192 */	171,  172,  173,  175,	176,  177,  178,  180,
-    /* 200 */	181,  182,  184,  185,	186,  187,  189,  190,
-    /* 208 */	191,  193,  194,  195,	196,  198,  199,  200,
-    /* 216 */	202,  203,  204,  206,	207,  208,  210,  211,
-    /* 224 */	212,  214,  215,  216,	218,  219,  220,  222,
-    /* 232 */	223,  224,  226,  227,	228,  230,  231,  232,
-    /* 240 */	234,  235,  236,  238,	239,  241,  242,  243,
-    /* 248 */	245,  246,  248,  249,	250,  252,  253,  255,
+    /*   0 */     0,    0,    0,    0,    0,    1,    1,    1,
+    /*   8 */     2,    2,    2,    3,    3,    3,    4,    4,
+    /*  16 */     5,    5,    6,    6,    7,    7,    8,    8,
+    /*  24 */     9,    9,   10,   10,   11,   12,   12,   13,
+    /*  32 */    13,   14,   15,   15,   16,   17,   17,   18,
+    /*  40 */    19,   19,   20,   21,   21,   22,   23,   23,
+    /*  48 */    24,   25,   26,   26,   27,   28,   29,   29,
+    /*  56 */    30,   31,   32,   32,   33,   34,   35,   36,
+    /*  64 */    36,   37,   38,   39,   40,   40,   41,   42,
+    /*  72 */    43,   44,   45,   45,   46,   47,   48,   49,
+    /*  80 */    50,   51,   52,   52,   53,   54,   55,   56,
+    /*  88 */    57,   58,   59,   60,   61,   62,   63,   64,
+    /*  96 */    64,   65,   66,   67,   68,   69,   70,   71,
+    /* 104 */    72,   73,   74,   75,   76,   77,   78,   79,
+    /* 112 */    80,   81,   82,   83,   84,   85,   86,   87,
+    /* 120 */    88,   89,   90,   91,   92,   93,   95,   96,
+    /* 128 */    97,   98,   99,  100,  101,  102,  103,  104,
+    /* 136 */   105,  106,  107,  109,  110,  111,  112,  113,
+    /* 144 */   114,  115,  116,  117,  119,  120,  121,  122,
+    /* 152 */   123,  124,  125,  127,  128,  129,  130,  131,
+    /* 160 */   132,  133,  135,  136,  137,  138,  139,  140,
+    /* 168 */   142,  143,  144,  145,  146,  148,  149,  150,
+    /* 176 */   151,  152,  154,  155,  156,  157,  159,  160,
+    /* 184 */   161,  162,  163,  165,  166,  167,  168,  170,
+    /* 192 */   171,  172,  173,  175,  176,  177,  178,  180,
+    /* 200 */   181,  182,  184,  185,  186,  187,  189,  190,
+    /* 208 */   191,  193,  194,  195,  196,  198,  199,  200,
+    /* 216 */   202,  203,  204,  206,  207,  208,  210,  211,
+    /* 224 */   212,  214,  215,  216,  218,  219,  220,  222,
+    /* 232 */   223,  224,  226,  227,  228,  230,  231,  232,
+    /* 240 */   234,  235,  236,  238,  239,  241,  242,  243,
+    /* 248 */   245,  246,  248,  249,  250,  252,  253,  255,
 };
 
 

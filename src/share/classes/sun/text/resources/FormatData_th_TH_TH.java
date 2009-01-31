@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.text.resources;
 
@@ -34,7 +32,7 @@ import java.util.ListResourceBundle;
 /*
  * This class implements the th_TH_TH requirement that native Thai
  * digits be used in the corresponding locale.
- * 
+ *
  * @author John O'Conner
  * @since 1.4.1
  *
@@ -62,7 +60,7 @@ public class FormatData_th_TH_TH extends ListResourceBundle {
                     "\ufffd" // NaN
                 }
             },
-	    
+
         };
     }
 }

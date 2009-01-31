@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)GlyphPositionAdjustments.h	1.12 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -144,14 +143,14 @@ public:
     inline void adjustYPlacement(le_int32 index, float yAdjustment);
     inline void adjustXAdvance(le_int32 index, float xAdjustment);
     inline void adjustYAdvance(le_int32 index, float yAdjustment);
-   
-    void setEntryPoint(le_int32 index, LEPoint &newEntryPoint, 
+
+    void setEntryPoint(le_int32 index, LEPoint &newEntryPoint,
         le_bool baselineIsLogicalEnd);
-    void setExitPoint(le_int32 index, LEPoint &newExitPoint, 
+    void setExitPoint(le_int32 index, LEPoint &newExitPoint,
         le_bool baselineIsLogicalEnd);
     void setCursiveGlyph(le_int32 index, le_bool baselineIsLogicalEnd);
 
-    void applyCursiveAdjustments(LEGlyphStorage &glyphStorage, le_bool rightToLeft, 
+    void applyCursiveAdjustments(LEGlyphStorage &glyphStorage, le_bool rightToLeft,
         const LEFontInstance *fontInstance);
 };
 
@@ -161,9 +160,9 @@ inline GlyphPositionAdjustments::Adjustment::Adjustment()
     // nothing else to do!
 }
 
-inline GlyphPositionAdjustments::Adjustment::Adjustment(float xPlace, float yPlace, 
+inline GlyphPositionAdjustments::Adjustment::Adjustment(float xPlace, float yPlace,
     float xAdv, float yAdv, le_int32 baseOff)
-  : xPlacement(xPlace), yPlacement(yPlace), xAdvance(xAdv), yAdvance(yAdv), 
+  : xPlacement(xPlace), yPlacement(yPlace), xAdvance(xAdv), yAdvance(yAdv),
     baseOffset(baseOff)
 {
     // nothing else to do!
@@ -269,7 +268,7 @@ inline void GlyphPositionAdjustments::EntryExitPoint::setEntryPoint(
     LEPoint &newEntryPoint, le_bool baselineIsLogicalEnd)
 {
     if (baselineIsLogicalEnd) {
-        fFlags |= (EEF_HAS_ENTRY_POINT | EEF_IS_CURSIVE_GLYPH | 
+        fFlags |= (EEF_HAS_ENTRY_POINT | EEF_IS_CURSIVE_GLYPH |
         EEF_BASELINE_IS_LOGICAL_END);
     } else {
         fFlags |= (EEF_HAS_ENTRY_POINT | EEF_IS_CURSIVE_GLYPH);
@@ -282,7 +281,7 @@ inline void GlyphPositionAdjustments::EntryExitPoint::setExitPoint(
     LEPoint &newExitPoint, le_bool baselineIsLogicalEnd)
 {
     if (baselineIsLogicalEnd) {
-        fFlags |= (EEF_HAS_EXIT_POINT | EEF_IS_CURSIVE_GLYPH | 
+        fFlags |= (EEF_HAS_EXIT_POINT | EEF_IS_CURSIVE_GLYPH |
             EEF_BASELINE_IS_LOGICAL_END);
     } else {
         fFlags |= (EEF_HAS_EXIT_POINT | EEF_IS_CURSIVE_GLYPH);

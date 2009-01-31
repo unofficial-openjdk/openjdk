@@ -42,26 +42,26 @@ import javax.management.openmbean.*;
 public class StandardMBeanOverrideTest {
 
     private static Object testInstances[] = {
-	new TestClass0(false),
-	new TestClass1(false),
-	new TestClass2(false),
-	new TestClass3(false),
-	new TestClass4(false),
-	new TestClass5(false),
-	new TestClass6(false),
-	new TestClass7(false),
-	new TestClass8(false),
-	new TestClass9(false),
-	new TestClass0(true),
-	new TestClass1(true),
-	new TestClass2(true),
-	new TestClass3(true),
-	new TestClass4(true),
-	new TestClass5(true),
-	new TestClass6(true),
-	new TestClass7(true),
-	new TestClass8(true),
-	new TestClass9(true),
+        new TestClass0(false),
+        new TestClass1(false),
+        new TestClass2(false),
+        new TestClass3(false),
+        new TestClass4(false),
+        new TestClass5(false),
+        new TestClass6(false),
+        new TestClass7(false),
+        new TestClass8(false),
+        new TestClass9(false),
+        new TestClass0(true),
+        new TestClass1(true),
+        new TestClass2(true),
+        new TestClass3(true),
+        new TestClass4(true),
+        new TestClass5(true),
+        new TestClass6(true),
+        new TestClass7(true),
+        new TestClass8(true),
+        new TestClass9(true),
     };
 
     public interface ImmutableInfo {
@@ -187,30 +187,30 @@ public class StandardMBeanOverrideTest {
         int error = 0;
 
         // Instantiate the MBean server
-	//
-	echo("\n>>> Create the MBean server");
-	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        //
+        echo("\n>>> Create the MBean server");
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-	// Get default domain
-	//
-	echo("\n>>> Get the MBean server's default domain");
-	String domain = mbs.getDefaultDomain();
-	echo("\tDefault Domain = " + domain);
+        // Get default domain
+        //
+        echo("\n>>> Get the MBean server's default domain");
+        String domain = mbs.getDefaultDomain();
+        echo("\tDefault Domain = " + domain);
 
-	for (int i = 0; i < testInstances.length; i++) {
-	    // Create and register the TestClass MBean
-	    //
-	    String cn = testInstances[i].getClass().getName();
-	    String ons = domain + ":type=" + cn + ",name=" + i;
-	    echo("\n>>> Create the " + cn +
-		 " MBean within the MBeanServer");
-	    echo("\tObjectName = " + ons);
-	    ObjectName on = ObjectName.getInstance(ons);
+        for (int i = 0; i < testInstances.length; i++) {
+            // Create and register the TestClass MBean
+            //
+            String cn = testInstances[i].getClass().getName();
+            String ons = domain + ":type=" + cn + ",name=" + i;
+            echo("\n>>> Create the " + cn +
+                 " MBean within the MBeanServer");
+            echo("\tObjectName = " + ons);
+            ObjectName on = ObjectName.getInstance(ons);
             mbs.registerMBean(testInstances[i], on);
 
-	    // Check immutableInfo field in descriptor
-	    //
-	    MBeanInfo mbi = mbs.getMBeanInfo(on);
+            // Check immutableInfo field in descriptor
+            //
+            MBeanInfo mbi = mbs.getMBeanInfo(on);
             Descriptor d = mbi.getDescriptor();
             echo("MBeanInfo descriptor = " + d);
             if (d == null || d.getFieldNames().length == 0) {
@@ -235,18 +235,18 @@ public class StandardMBeanOverrideTest {
                     error++;
                 }
                 continue;
-            }            
+            }
         }
 
         if (error > 0) {
-	    echo("\nTest failed! " + error + " errors.\n");
+            echo("\nTest failed! " + error + " errors.\n");
             throw new IllegalArgumentException("Test failed");
-	} else {
-	    echo("\nTest passed!\n");            
+        } else {
+            echo("\nTest passed!\n");
         }
     }
 
     private static void echo(String msg) {
-	System.out.println(msg);
+        System.out.println(msg);
     }
 }

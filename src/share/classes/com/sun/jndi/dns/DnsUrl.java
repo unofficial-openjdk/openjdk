@@ -51,13 +51,12 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  * the domain name must be %-escaped as described in RFC 2396.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 public class DnsUrl extends Uri {
 
-    private String domain;	// domain name of the context
+    private String domain;      // domain name of the context
 
 
     /**
@@ -65,38 +64,38 @@ public class DnsUrl extends Uri {
      * objects.
      */
     public static DnsUrl[] fromList(String urlList)
-	    throws MalformedURLException {
+            throws MalformedURLException {
 
-	DnsUrl[] urls = new DnsUrl[(urlList.length() + 1) / 2];
-	int i = 0;		// next available index in urls
-	StringTokenizer st = new StringTokenizer(urlList, " ");
+        DnsUrl[] urls = new DnsUrl[(urlList.length() + 1) / 2];
+        int i = 0;              // next available index in urls
+        StringTokenizer st = new StringTokenizer(urlList, " ");
 
-	while (st.hasMoreTokens()) {
-	    urls[i++] = new DnsUrl(st.nextToken());
-	}
-	DnsUrl[] trimmed = new DnsUrl[i];
-	System.arraycopy(urls, 0, trimmed, 0, i);
-	return trimmed;
+        while (st.hasMoreTokens()) {
+            urls[i++] = new DnsUrl(st.nextToken());
+        }
+        DnsUrl[] trimmed = new DnsUrl[i];
+        System.arraycopy(urls, 0, trimmed, 0, i);
+        return trimmed;
     }
 
     public DnsUrl(String url) throws MalformedURLException {
-	super(url);
+        super(url);
 
-	if (!scheme.equals("dns")) {
-	    throw new MalformedURLException(
-		    url + " is not a valid DNS pseudo-URL");
-	}
+        if (!scheme.equals("dns")) {
+            throw new MalformedURLException(
+                    url + " is not a valid DNS pseudo-URL");
+        }
 
-	domain = path.startsWith("/")
-	    ? path.substring(1)
-	    : path;
-	domain = domain.equals("")
-	    ? "."
-	    : UrlUtil.decode(domain);
+        domain = path.startsWith("/")
+            ? path.substring(1)
+            : path;
+        domain = domain.equals("")
+            ? "."
+            : UrlUtil.decode(domain);
 
-	// Debug
-	// System.out.println("host=" + host + " port=" + port +
-	//		      " domain=" + domain);
+        // Debug
+        // System.out.println("host=" + host + " port=" + port +
+        //                    " domain=" + domain);
     }
 
     /**
@@ -104,17 +103,17 @@ public class DnsUrl extends Uri {
      * Never null.
      */
     public String getDomain() {
-	return domain;
+        return domain;
     }
 
 
 /*
     // Debug
     public static void main(String args[]) throws MalformedURLException {
-	DnsUrl[] urls = fromList(args[0]);
-	for (int i = 0; i < urls.length; i++) {
-	    System.out.println(urls[i].toString());
-	}
+        DnsUrl[] urls = fromList(args[0]);
+        for (int i = 0; i < urls.length; i++) {
+            System.out.println(urls[i].toString());
+        }
     }
 */
 }

@@ -37,7 +37,6 @@ import java.util.Map;
  * retrieve cookie for every outgoing HTTP request. A CookieStore
  * is responsible for removing HttpCookie instances which have expired.
  *
- * @version %I%, %E%
  * @author Edward Wang
  * @since 1.6
  */
@@ -101,8 +100,8 @@ public interface CookieStore {
      *                  is associated with an URI
      */
     public List<URI> getURIs();
-    
-    
+
+
     /**
      * Remove a cookie from store.
      *
@@ -117,8 +116,8 @@ public interface CookieStore {
      * @throws NullPointerException if <tt>cookie</tt> is <tt>null</tt>
      */
     public boolean remove(URI uri, HttpCookie cookie);
-    
-    
+
+
     /**
      * Remove all cookies in this cookie store.
      *
@@ -126,4 +125,3 @@ public interface CookieStore {
      */
     public boolean removeAll();
 }
-

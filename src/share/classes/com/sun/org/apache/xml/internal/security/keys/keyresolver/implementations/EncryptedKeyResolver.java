@@ -36,13 +36,13 @@ import org.w3c.dom.Element;
 
 
 /**
- * The <code>EncryptedKeyResolver</code> is not a generic resolver.  It can 
- * only be for specific instantiations, as the key being unwrapped will 
- * always be of a particular type and will always have been wrapped by 
+ * The <code>EncryptedKeyResolver</code> is not a generic resolver.  It can
+ * only be for specific instantiations, as the key being unwrapped will
+ * always be of a particular type and will always have been wrapped by
  * another key which needs to be recursively resolved.
  *
  * The <code>EncryptedKeyResolver</code> can therefore only be instantiated
- * with an algorithm.  It can also be instantiated with a key (the KEK) or 
+ * with an algorithm.  It can also be instantiated with a key (the KEK) or
  * will search the static KeyResolvers to find the appropriate key.
  *
  * @author Berin Lautenbach
@@ -50,54 +50,54 @@ import org.w3c.dom.Element;
 
 public class EncryptedKeyResolver extends KeyResolverSpi {
 
-	/** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+        /** {@link java.util.logging} logging facility */
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                         RSAKeyValueResolver.class.getName());
 
-	
-	Key _key;
-	Key _kek;
-	String _algorithm;
 
-	/**
-	 * Constructor for use when a KEK needs to be derived from a KeyInfo
-	 * list
-	 * @param algorithm
-	 */
-	public EncryptedKeyResolver(String algorithm) {
-		_key = null;
-		_kek = null;
+        Key _key;
+        Key _kek;
+        String _algorithm;
+
+        /**
+         * Constructor for use when a KEK needs to be derived from a KeyInfo
+         * list
+         * @param algorithm
+         */
+        public EncryptedKeyResolver(String algorithm) {
+                _key = null;
+                _kek = null;
         _algorithm=algorithm;
-	}
+        }
 
-	/**
-	 * Constructor used for when a KEK has been set
-	 * @param algorithm
-	 * @param kek
-	 */
+        /**
+         * Constructor used for when a KEK has been set
+         * @param algorithm
+         * @param kek
+         */
 
-	public EncryptedKeyResolver(String algorithm, Key kek) {
-		_key = null;
-		_algorithm = algorithm;
-		_kek = kek;
+        public EncryptedKeyResolver(String algorithm, Key kek) {
+                _key = null;
+                _algorithm = algorithm;
+                _kek = kek;
 
-	}
+        }
 
-	/**
-	 * Method engineCanResolve
-	 *
-	 * @param element
-	 * @param BaseURI
-	 * @param storage
-	 * @return true if can resolve the key in the element
-	 *
-	 */
+        /**
+         * Method engineCanResolve
+         *
+         * @param element
+         * @param BaseURI
+         * @param storage
+         * @return true if can resolve the key in the element
+         *
+         */
 
-	public boolean engineCanResolve(Element element, String BaseURI,
+        public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
-	  if (true)
-	  	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "EncryptedKeyResolver - Can I resolve " + element.getTagName());
+          if (true)
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "EncryptedKeyResolver - Can I resolve " + element.getTagName());
 
       if (element == null) {
          return false;
@@ -107,16 +107,16 @@ public class EncryptedKeyResolver extends KeyResolverSpi {
                               EncryptionConstants._TAG_ENCRYPTEDKEY);
 
       if (isEncryptedKey) {
-		  if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Passed an Encrypted Key");
-		  try {
-			  XMLCipher cipher = XMLCipher.getInstance();
-			  cipher.init(XMLCipher.UNWRAP_MODE, _kek);
-			  EncryptedKey ek = cipher.loadEncryptedKey(element);
-			  _key = cipher.decryptKey(ek, _algorithm);
-		  }
-		  catch (Exception e) {}
+                  if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Passed an Encrypted Key");
+                  try {
+                          XMLCipher cipher = XMLCipher.getInstance();
+                          cipher.init(XMLCipher.UNWRAP_MODE, _kek);
+                          EncryptedKey ek = cipher.loadEncryptedKey(element);
+                          _key = cipher.decryptKey(ek, _algorithm);
+                  }
+                  catch (Exception e) {}
       }
-	  
+
       return (_key != null);
    }
 
@@ -124,7 +124,7 @@ public class EncryptedKeyResolver extends KeyResolverSpi {
    public PublicKey engineResolvePublicKey(
            Element element, String BaseURI, StorageResolver storage) {
 
-	   return null;
+           return null;
    }
 
    /** @inheritDoc */

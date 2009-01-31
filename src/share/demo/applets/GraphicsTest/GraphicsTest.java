@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 import java.awt.*;
 import java.util.*;
@@ -165,29 +163,29 @@ class ArcDegreePanel extends Panel {
     int progress = 0;
     g.setColor(c1);
     for (; (a1+a2) <= 360; a1 = a1+a2, a2 += 1) {
-	if (g.getColor() == c1) {
-	    g.setColor(c2);
+        if (g.getColor() == c1) {
+            g.setColor(c2);
         }
-	else {
-	    g.setColor(c1);
-        }
-
-	if (filled) {
-	    g.fillArc(x, y, w, h, a1, a2);
-        }
-	else {
-	    g.drawArc(x, y, w, h, a1, a2);
+        else {
+            g.setColor(c1);
         }
 
-	progress = a1+a2;
+        if (filled) {
+            g.fillArc(x, y, w, h, a1, a2);
+        }
+        else {
+            g.drawArc(x, y, w, h, a1, a2);
+        }
+
+        progress = a1+a2;
       }  // end for
 
     if (progress != 360) {
           if (filled) {
-	    g.fillArc(x, y, w, h, a1, 360 - progress);
-	  }
-	else {
-	    g.drawArc(x, y, w, h, a1, 360 - progress);
+            g.fillArc(x, y, w, h, a1, 360 - progress);
+          }
+        else {
+            g.drawArc(x, y, w, h, a1, 360 - progress);
         }
       }  // end if
   }  // end arcSteps()
@@ -233,82 +231,82 @@ class ArcPanel extends Panel {
     g.setColor(Color.yellow);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, 0, 45);
+        g.fillArc(0, 0, r.width, r.height, 0, 45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, 0, 45);
+        g.drawArc(0, 0, r.width, r.height, 0, 45);
       }
 
     g.setColor(Color.green);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, 90, -45);
+        g.fillArc(0, 0, r.width, r.height, 90, -45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, 90, -45);
+        g.drawArc(0, 0, r.width, r.height, 90, -45);
       }
 
     g.setColor(Color.orange);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, 135, -45);
+        g.fillArc(0, 0, r.width, r.height, 135, -45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, 135, -45);
+        g.drawArc(0, 0, r.width, r.height, 135, -45);
       }
 
     g.setColor(Color.magenta);
 
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, -225, 45);
+        g.fillArc(0, 0, r.width, r.height, -225, 45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, -225, 45);
+        g.drawArc(0, 0, r.width, r.height, -225, 45);
       }
 
     g.setColor(Color.yellow);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, 225, -45);
+        g.fillArc(0, 0, r.width, r.height, 225, -45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, 225, -45);
+        g.drawArc(0, 0, r.width, r.height, 225, -45);
       }
 
     g.setColor(Color.green);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, -135, 45);
+        g.fillArc(0, 0, r.width, r.height, -135, 45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, -135, 45);
+        g.drawArc(0, 0, r.width, r.height, -135, 45);
       }
 
     g.setColor(Color.orange);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, -45, -45);
+        g.fillArc(0, 0, r.width, r.height, -45, -45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, -45, -45);
+        g.drawArc(0, 0, r.width, r.height, -45, -45);
       }
 
     g.setColor(Color.magenta);
     if (filled)
       {
-	g.fillArc(0, 0, r.width, r.height, 315, 45);
+        g.fillArc(0, 0, r.width, r.height, 315, 45);
       }
     else
       {
-	g.drawArc(0, 0, r.width, r.height, 315, 45);
+        g.drawArc(0, 0, r.width, r.height, 315, 45);
       }
 
   }  // end paint()
@@ -387,8 +385,8 @@ class PolygonShape extends Shape
     p = new Polygon();
     for (int i = 0; i < pBase.npoints; ++i)
       {
-	p.addPoint( (int) (pBase.xpoints[i] * w),
-		    (int) (pBase.ypoints[i] * h) );
+        p.addPoint( (int) (pBase.xpoints[i] * w),
+                    (int) (pBase.ypoints[i] * h) );
       }
 
   }
@@ -398,9 +396,9 @@ class PolygonShape extends Shape
     Graphics ng = g.create();
     try {
         ng.translate(x, y);
-	scalePolygon( (float) ( (float) w / (float) 10 ),
-		      (float) ( (float) h / (float) 20 ) );
-	ng.drawPolygon(p);
+        scalePolygon( (float) ( (float) w / (float) 10 ),
+                      (float) ( (float) h / (float) 20 ) );
+        ng.drawPolygon(p);
     } finally {
         ng.dispose();
     }
@@ -411,9 +409,9 @@ class PolygonShape extends Shape
     Graphics ng = g.create();
     try {
         ng.translate(x, y);
-	scalePolygon( (float) ( (float) w / (float) 10 ),
-		      (float) ( (float) h / (float) 20 ) );
-	ng.fillPolygon(p);
+        scalePolygon( (float) ( (float) w / (float) 10 ),
+                      (float) ( (float) h / (float) 20 ) );
+        ng.fillPolygon(p);
     } finally {
         ng.dispose();
     }
@@ -424,7 +422,7 @@ class PolygonShape extends Shape
 class ShapeTest extends Panel
 {
   Shape   shape;
-  int	    step;
+  int       step;
 
   public ShapeTest(Shape shape, int step)
   {
@@ -494,105 +492,3 @@ class ColorUtils {
                           Math.max((int)(c.getBlue() *factor), 0) );
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

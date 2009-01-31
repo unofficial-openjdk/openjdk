@@ -63,9 +63,9 @@ class OGLTextRenderer extends BufferedTextPipe {
         Tracer(OGLTextRenderer ogltr) {
             super(ogltr.rq);
         }
-	protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl) {
-	    GraphicsPrimitive.tracePrimitive("OGLDrawGlyphs");
-	    super.drawGlyphList(sg2d, gl);
-	}
+        protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl) {
+            GraphicsPrimitive.tracePrimitive("OGLDrawGlyphs");
+            super.drawGlyphList(sg2d, gl);
+        }
     }
 }

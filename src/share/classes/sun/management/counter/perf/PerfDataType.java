@@ -28,14 +28,13 @@ package sun.management.counter.perf;
 import java.io.UnsupportedEncodingException;
 
 /**
- * A typesafe enumeration for the data types supported for 
+ * A typesafe enumeration for the data types supported for
  * performance data.
  *
  * <p> The enumeration values for this typesafe enumeration must be
  * kept in sychronization with the PerfDataType enum in the
  * globalsDefinitions.hpp file in the HotSpot source base.</p>
  *
- * @version 1.0, 8/17/02
  * @author  Brian Doherty
  */
 class PerfDataType {
@@ -61,7 +60,7 @@ class PerfDataType {
     public String toString() {
         return name;
     }
-    
+
     public byte byteValue() {
         return value;
     }
@@ -71,7 +70,7 @@ class PerfDataType {
     }
 
     /**
-     * Maps an integer PerfDataType value to its corresponding PerfDataType 
+     * Maps an integer PerfDataType value to its corresponding PerfDataType
      * object.
      *
      * @param   i  an integer representation of a PerfDataType

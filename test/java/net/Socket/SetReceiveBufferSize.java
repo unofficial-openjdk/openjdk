@@ -33,36 +33,36 @@ import java.net.ServerSocket;
 
 public class SetReceiveBufferSize {
     class Server extends Thread {
-	private ServerSocket ss;
-	public Server(ServerSocket ss) {
-	    this.ss = ss;
-	}
+        private ServerSocket ss;
+        public Server(ServerSocket ss) {
+            this.ss = ss;
+        }
 
-	public void run() {
-	    try {
-		ss.accept();
-	    } catch (Exception e) {
-	    }
-	}
+        public void run() {
+            try {
+                ss.accept();
+            } catch (Exception e) {
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {
-	SetReceiveBufferSize s = new SetReceiveBufferSize();
+        SetReceiveBufferSize s = new SetReceiveBufferSize();
     }
 
     public SetReceiveBufferSize() throws Exception {
-	ServerSocket ss = new ServerSocket(0);
-	Server serv = new Server(ss);
-	serv.start();
+        ServerSocket ss = new ServerSocket(0);
+        Server serv = new Server(ss);
+        serv.start();
         Socket s = new Socket("localhost", ss.getLocalPort());
-	try {
-	    s.setReceiveBufferSize(0);
-	} catch (IllegalArgumentException e) {
-	    return;
-	} catch (Exception ex) {
-	} finally {
-	    ss.close();
-	}
-	throw new RuntimeException("IllegalArgumentException not thrown!");
+        try {
+            s.setReceiveBufferSize(0);
+        } catch (IllegalArgumentException e) {
+            return;
+        } catch (Exception ex) {
+        } finally {
+            ss.close();
+        }
+        throw new RuntimeException("IllegalArgumentException not thrown!");
     }
 }

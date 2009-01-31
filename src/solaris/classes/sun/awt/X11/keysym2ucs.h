@@ -38,7 +38,7 @@
  *
  */
 
-tojava /* 
+tojava /*
 tojava  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
 tojava  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 tojava  *
@@ -112,10 +112,10 @@ tojava             if( (state & XConstants.ControlMask) != 0 ) {
 tojava                 if ((ks >= 'A' && ks <= ']') || (ks == '_') ||
 tojava                     (ks >= 'a' && ks <='z')) {
 tojava                     ks &= 0x1F;
-tojava                 }    
+tojava                 }
 tojava             }
 tojava             return (char)ks;
-tojava         } 
+tojava         }
 tojava
 tojava         /* XXX: Also check for directly encoded 24-bit UCS characters:
 tojava          */
@@ -2550,7 +2550,7 @@ tojava
 tojava             /* Editing block */
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_Redo),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_AGAIN, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava         // XXX XK_L2 == F12; TODO: add code to use only one of them depending on the keyboard type. For now, restore
-tojava         // good PC behavior and bad but old Sparc behavior. 
+tojava         // good PC behavior and bad but old Sparc behavior.
 tojava         // keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_L2),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_AGAIN, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_Undo),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDO, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_L4),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDO, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
@@ -2561,7 +2561,7 @@ tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_Find
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_L9),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_FIND, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava         keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_L3),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_PROPS, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava         // XXX XK_L1 == F11; TODO: add code to use only one of them depending on the keyboard type. For now, restore
-tojava         // good PC behavior and bad but old Sparc behavior. 
+tojava         // good PC behavior and bad but old Sparc behavior.
 tojava         // keysym2JavaKeycodeHash.put( Long.valueOf(XKeySymConstants.XK_L1),     new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_STOP, java.awt.event.KeyEvent.KEY_LOCATION_STANDARD));
 tojava
 tojava             /* Sun vendor-specific versions for editing block */

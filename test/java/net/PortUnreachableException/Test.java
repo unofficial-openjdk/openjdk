@@ -36,10 +36,10 @@ public class Test {
      * Return an available port
      */
     int getPort() throws Exception {
-	DatagramSocket s = new DatagramSocket(0);
-	int port = s.getLocalPort();
-	s.close();
-	return port;
+        DatagramSocket s = new DatagramSocket(0);
+        int port = s.getLocalPort();
+        s.close();
+        return port;
     }
 
     /*
@@ -51,85 +51,85 @@ public class Test {
      */
     void doTest(String remote_host, int port, boolean sendOnly) throws Exception {
 
-	System.out.println("***");
-	System.out.println("Test Description:");
-	System.out.println("    DatagramSocket.connect");
-	System.out.println("    Loop: DatagramSocket.send");
-	if (!sendOnly) {
-	    System.out.println("          DatagramSocket.receive");
-	}
-	System.out.println("");
-	System.out.println("Test Run:");
+        System.out.println("***");
+        System.out.println("Test Description:");
+        System.out.println("    DatagramSocket.connect");
+        System.out.println("    Loop: DatagramSocket.send");
+        if (!sendOnly) {
+            System.out.println("          DatagramSocket.receive");
+        }
+        System.out.println("");
+        System.out.println("Test Run:");
 
-	InetAddress ia = InetAddress.getByName(remote_host);
-	DatagramSocket s = new DatagramSocket(0);
-	s.setSoTimeout(1000);
-	s.connect(ia, port);
+        InetAddress ia = InetAddress.getByName(remote_host);
+        DatagramSocket s = new DatagramSocket(0);
+        s.setSoTimeout(1000);
+        s.connect(ia, port);
 
-	byte[] b = "Hello".getBytes();
-	DatagramPacket p1 = new DatagramPacket(b, b.length, ia, port);
+        byte[] b = "Hello".getBytes();
+        DatagramPacket p1 = new DatagramPacket(b, b.length, ia, port);
 
-	DatagramPacket p2 = new DatagramPacket(b, b.length);
+        DatagramPacket p2 = new DatagramPacket(b, b.length);
 
-	int i = 0;
-  	boolean gotPUE = false;
+        int i = 0;
+        boolean gotPUE = false;
 
-	do {
+        do {
 
-	    System.out.println("Sending datagram to unreachable port...");
-	    try {
-	        s.send(p1);
-	    } catch (PortUnreachableException e) {
-		System.out.println("DatagramSocket.send threw PUE");
-	        gotPUE = true;
-	    }
+            System.out.println("Sending datagram to unreachable port...");
+            try {
+                s.send(p1);
+            } catch (PortUnreachableException e) {
+                System.out.println("DatagramSocket.send threw PUE");
+                gotPUE = true;
+            }
 
-	    if (!gotPUE) {
-		Thread.currentThread().sleep(1000);
-	    }
+            if (!gotPUE) {
+                Thread.currentThread().sleep(1000);
+            }
 
-	    if (!sendOnly && !gotPUE) {
-		System.out.println("DatagramSocket.receive...");
-		try {
-		    s.receive(p2);
-	 	} catch (PortUnreachableException e) {
-		    System.out.println("DatagramSocket.receive threw PUE");
-		    gotPUE = true;
-		} catch (SocketTimeoutException e) {
-		    System.out.println("DatagramSocket.receive timed out - no PUE");
-		}
-	    }
+            if (!sendOnly && !gotPUE) {
+                System.out.println("DatagramSocket.receive...");
+                try {
+                    s.receive(p2);
+                } catch (PortUnreachableException e) {
+                    System.out.println("DatagramSocket.receive threw PUE");
+                    gotPUE = true;
+                } catch (SocketTimeoutException e) {
+                    System.out.println("DatagramSocket.receive timed out - no PUE");
+                }
+            }
 
-	    i++;
-	} while (i < 10 && !gotPUE);
+            i++;
+        } while (i < 10 && !gotPUE);
 
-	if (!gotPUE) {
-	    System.out.println("DatagramSocket.{send,receive} didn't throw " +
-		"PortUnreachableException - passing anyway!");
-	} else {
-	    System.out.println("    Test passed.");
-	}
-	System.out.println("");
+        if (!gotPUE) {
+            System.out.println("DatagramSocket.{send,receive} didn't throw " +
+                "PortUnreachableException - passing anyway!");
+        } else {
+            System.out.println("    Test passed.");
+        }
+        System.out.println("");
     }
 
     /*
-     * Perform tests via remote_host. 
+     * Perform tests via remote_host.
      */
     Test(String remote_host) throws Exception {
 
-	int port = getPort();
+        int port = getPort();
 
-	doTest(remote_host, port, true);
+        doTest(remote_host, port, true);
         doTest(remote_host, port, false);
     }
 
     public static void main(String args[]) throws Exception {
 
-	String remote_host = "localhost";
-	if (args.length > 0) {
-	    remote_host = args[0];
-	}
+        String remote_host = "localhost";
+        if (args.length > 0) {
+            remote_host = args[0];
+        }
 
-	new Test(remote_host);
+        new Test(remote_host);
     }
 }

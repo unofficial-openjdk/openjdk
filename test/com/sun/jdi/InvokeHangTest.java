@@ -77,7 +77,7 @@ class InvokeHangTarg extends Thread {
         System.out.println("Debuggee: invokeee finished");
         return s;
     }
- 
+
     public InvokeHangTarg(String name) {
         super(name);
     }
@@ -91,7 +91,7 @@ class InvokeHangTarg extends Thread {
     }
 
     public void bkpt1(int i) {
-        System.out.println("Debuggee: " + Thread.currentThread() +" is running:" + i); 
+        System.out.println("Debuggee: " + Thread.currentThread() +" is running:" + i);
         try {
             Thread.currentThread().sleep(2);
         } catch (InterruptedException iex) {}
@@ -107,7 +107,7 @@ class InvokeHangTarg extends Thread {
     }
 
     public void bkpt2(int i) {
-        System.out.println("Debuggee: " + Thread.currentThread() +" is running:" + i); 
+        System.out.println("Debuggee: " + Thread.currentThread() +" is running:" + i);
         try {
             Thread.currentThread().sleep(2);
         } catch (InterruptedException iex) {}
@@ -138,7 +138,7 @@ public class InvokeHangTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new InvokeHangTest(args).startTests();
     }
 
@@ -173,22 +173,22 @@ public class InvokeHangTest extends TestScaffold {
              */
             bkpts++;
         }
-        
+
         /*
          * The bug occurs when the requests are disabled
          * and then an invoke is done in the event handler.  In some cases
          * the other thread has hit a bkpt and the back-end is waiting
          * to send it.  When the back-end resumes the debuggee to do the
          * invokeMethod, this 2nd bkpt is released, the debuggee is suspended, including
-         * the thread on which the invoke was done (because it is a SUSPEND_ALL bkpt), 
-         * the bkpt is sent to the front-end, but the client event handler is sitting 
-         * here waiting for the invoke to finish, so it doesn't get the 2nd bkpt and 
-         * do the resume for it.  Thus, the debuggee is suspended waiting for a resume 
+         * the thread on which the invoke was done (because it is a SUSPEND_ALL bkpt),
+         * the bkpt is sent to the front-end, but the client event handler is sitting
+         * here waiting for the invoke to finish, so it doesn't get the 2nd bkpt and
+         * do the resume for it.  Thus, the debuggee is suspended waiting for a resume
          * that never comes.
          */
         request1.disable();
         request2.disable();
-        
+
         ThreadReference thread = event.thread();
         try {
             StackFrame sf = thread.frame(0);
@@ -200,15 +200,15 @@ public class InvokeHangTest extends TestScaffold {
         }
         request1.enable();
         request2.enable();
-        
+
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
 
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("InvokeHangTarg");
@@ -216,7 +216,7 @@ public class InvokeHangTest extends TestScaffold {
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
         final Thread mainThread = Thread.currentThread();
-        
+
         /*
          * Set event requests
          */
@@ -276,4 +276,3 @@ public class InvokeHangTest extends TestScaffold {
         }
     }
 }
-

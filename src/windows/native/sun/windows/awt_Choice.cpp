@@ -94,46 +94,46 @@ AwtChoice* AwtChoice::Create(jobject peer, jobject parent) {
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-	    return NULL;
-	}
-	AwtCanvas* awtParent;
+            return NULL;
+        }
+        AwtCanvas* awtParent;
 
-	JNI_CHECK_NULL_GOTO(parent, "null parent", done);
+        JNI_CHECK_NULL_GOTO(parent, "null parent", done);
 
-	awtParent = (AwtCanvas*)JNI_GET_PDATA(parent);
-	JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
+        awtParent = (AwtCanvas*)JNI_GET_PDATA(parent);
+        JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
 
-	target = env->GetObjectField(peer, AwtObject::targetID);
-	JNI_CHECK_NULL_GOTO(target, "null target", done);
+        target = env->GetObjectField(peer, AwtObject::targetID);
+        JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-	c = new AwtChoice();
+        c = new AwtChoice();
 
-	{
-	    DWORD style = WS_CHILD | WS_CLIPSIBLINGS | WS_VSCROLL |
-	                  CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED;
-	    DWORD exStyle = 0;
-	    if (GetRTL()) {
-	        exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
-		if (GetRTLReadingOrder())
-		    exStyle |= WS_EX_RTLREADING;
-	    }
+        {
+            DWORD style = WS_CHILD | WS_CLIPSIBLINGS | WS_VSCROLL |
+                          CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED;
+            DWORD exStyle = 0;
+            if (GetRTL()) {
+                exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
+                if (GetRTLReadingOrder())
+                    exStyle |= WS_EX_RTLREADING;
+            }
 
-	    /*
-	     * In OWNER_DRAW, the size of the edit control part of the
-	     * choice must be determinded in its creation, when the parent
-	     * cannot get the choice's instance from its handle.  So
-	     * record the pair of the ID and the instance of the choice.
-	     */
-	    UINT myId = awtParent->CreateControlID();
-	    DASSERT(myId > 0);
-	    c->m_myControlID = myId;
-	    awtParent->PushChild(myId, c);
+            /*
+             * In OWNER_DRAW, the size of the edit control part of the
+             * choice must be determinded in its creation, when the parent
+             * cannot get the choice's instance from its handle.  So
+             * record the pair of the ID and the instance of the choice.
+             */
+            UINT myId = awtParent->CreateControlID();
+            DASSERT(myId > 0);
+            c->m_myControlID = myId;
+            awtParent->PushChild(myId, c);
 
-	    jint x = env->GetIntField(target, AwtComponent::xID);
-	    jint y = env->GetIntField(target, AwtComponent::yID);
-	    jint width = env->GetIntField(target, AwtComponent::widthID);
-	    jint height = env->GetIntField(target, AwtComponent::heightID);
-	    
+            jint x = env->GetIntField(target, AwtComponent::xID);
+            jint y = env->GetIntField(target, AwtComponent::yID);
+            jint width = env->GetIntField(target, AwtComponent::widthID);
+            jint height = env->GetIntField(target, AwtComponent::heightID);
+
             jobject dimension = JNU_CallMethodByName(env, NULL, peer,
                                                      "preferredSize",
                                                      "()Ljava/awt/Dimension;").l;
@@ -142,16 +142,16 @@ AwtChoice* AwtChoice::Create(jobject peer, jobject parent) {
             if (dimension != NULL && width == 0) {
                 width = env->GetIntField(dimension, AwtDimension::widthID);
             }
-	    c->CreateHWnd(env, L"", style, exStyle,
-			  x, y, width, height,
-			  awtParent->GetHWnd(),
-			  reinterpret_cast<HMENU>(static_cast<INT_PTR>(myId)),
-			  ::GetSysColor(COLOR_WINDOWTEXT),
-			  ::GetSysColor(COLOR_WINDOW),
-			  peer);
+            c->CreateHWnd(env, L"", style, exStyle,
+                          x, y, width, height,
+                          awtParent->GetHWnd(),
+                          reinterpret_cast<HMENU>(static_cast<INT_PTR>(myId)),
+                          ::GetSysColor(COLOR_WINDOWTEXT),
+                          ::GetSysColor(COLOR_WINDOW),
+                          peer);
 
-	    /* suppress inheriting parent's color. */
-	    c->m_backgroundColorSet = TRUE;
+            /* suppress inheriting parent's color. */
+            c->m_backgroundColorSet = TRUE;
             c->UpdateBackground(env, target);
 
             /* Bug 4255631 Solaris: Size returned by Choice.getSize() does not match
@@ -163,10 +163,10 @@ AwtChoice* AwtChoice::Create(jobject peer, jobject parent) {
             env->SetIntField(target, AwtComponent::heightID, (jint) rc.bottom);
 
             env->DeleteLocalRef(dimension);
-	}
+        }
     } catch (...) {
         env->DeleteLocalRef(target);
-	throw;
+        throw;
     }
 
 done:
@@ -179,7 +179,7 @@ BOOL AwtChoice::ActMouseMessage(MSG* pMsg) {
     if (!IsFocusingMessage(pMsg->message)) {
         return FALSE;
     }
-    
+
     if (pMsg->message == WM_LBUTTONDOWN) {
         SendMessage(CB_SHOWDROPDOWN, ~SendMessage(CB_GETDROPPEDSTATE, 0, 0), 0);
     }
@@ -232,10 +232,10 @@ void AwtChoice::ResetDropDownHeight()
 
     ::GetWindowRect(GetHWnd(), &rcWindow);
     // resize the drop down to accomodate added/removed items
-    int	    totalHeight = GetTotalHeight();
+    int     totalHeight = GetTotalHeight();
     ::SetWindowPos(GetHWnd(), NULL,
-		    0, 0, rcWindow.right - rcWindow.left, totalHeight,
-		    SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
+                    0, 0, rcWindow.right - rcWindow.left, totalHeight,
+                    SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 }
 
 /* Fix for the bug 4327666: set the capture for middle
@@ -243,16 +243,16 @@ void AwtChoice::ResetDropDownHeight()
 void AwtChoice::SetDragCapture(UINT flags)
 {
     if ((flags & MK_LBUTTON) != 0) {
-        if ((::GetCapture() == GetHWnd()) && mouseCapture) {     
-            /* On MK_LBUTTON ComboBox captures mouse itself 
+        if ((::GetCapture() == GetHWnd()) && mouseCapture) {
+            /* On MK_LBUTTON ComboBox captures mouse itself
                so we should release capture and clear flag to
-               prevent releasing capture by ReleaseDragCapture 
+               prevent releasing capture by ReleaseDragCapture
              */
             ::ReleaseCapture();
             mouseCapture = FALSE;
         }
         return;
-    } 
+    }
     // don't want to interfere with other controls
     if (::GetCapture() == NULL) {
         ::SetCapture(GetHWnd());
@@ -285,7 +285,7 @@ void AwtChoice::Reshape(int x, int y, int w, int h)
     }
 
     /* Fix for 4783342
-     * Choice should ignore reshape on height changes, 
+     * Choice should ignore reshape on height changes,
      * as height is dependent on Font size only.
      */
     AwtComponent* awtParent = GetParent();
@@ -300,8 +300,8 @@ void AwtChoice::Reshape(int x, int y, int w, int h)
         bReshape = (x != oldX || y != oldY || w != oldW);
     }
 
-    if (bReshape) 
-    { 
+    if (bReshape)
+    {
         int totalHeight = GetTotalHeight();
         AwtComponent::Reshape(x, y, w, totalHeight);
     }
@@ -321,17 +321,17 @@ void AwtChoice::Reshape(int x, int y, int w, int h)
 jobject AwtChoice::PreferredItemSize(JNIEnv *env)
 {
     jobject dimension = JNU_CallMethodByName(env, NULL, GetPeer(env),
-					     "preferredSize",
-					     "()Ljava/awt/Dimension;").l;
+                                             "preferredSize",
+                                             "()Ljava/awt/Dimension;").l;
     DASSERT(!safe_ExceptionOccurred(env));
     if (dimension == NULL) {
-	return NULL;
+        return NULL;
     }
     /* This size is window size of choice and it's too big for each
      * drop down item height.
      */
     env->SetIntField(dimension, AwtDimension::heightID,
-		       GetFontHeight(env));
+                       GetFontHeight(env));
     return dimension;
 }
 
@@ -343,7 +343,7 @@ void AwtChoice::SetFont(AwtFont* font)
     HDC hDC = ::GetDC(GetHWnd());
     DASSERT(hDC != NULL);
     TEXTMETRIC tm;
-        
+
     HANDLE hFont = font->GetHFont();
     VERIFY(::SelectObject(hDC, hFont) != NULL);
     VERIFY(::GetTextMetrics(hDC, &tm));
@@ -364,7 +364,7 @@ void AwtChoice::SetFont(AwtFont* font)
 
     Reshape(env->GetIntField(target, AwtComponent::xID),
             env->GetIntField(target, AwtComponent::yID),
-            env->GetIntField(target, AwtComponent::widthID), 
+            env->GetIntField(target, AwtComponent::widthID),
             h);
 
     env->DeleteLocalRef(target);
@@ -407,7 +407,7 @@ AwtChoice::OwnerMeasureItem(UINT /*ctrlId*/, MEASUREITEMSTRUCT& measureInfo)
 }
 
 /* Bug #4338368: when a choice loses focus, it triggers spurious MouseUp event,
- * even if the focus was lost due to TAB key pressing 
+ * even if the focus was lost due to TAB key pressing
  */
 
 MsgRouting
@@ -628,7 +628,7 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WChoicePeer_select(JNIEnv *env, jobject self,
-					jint index)
+                                        jint index)
 {
     TRY;
 
@@ -649,7 +649,7 @@ Java_sun_awt_windows_WChoicePeer_select(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WChoicePeer_remove(JNIEnv *env, jobject self,
-					jint index)
+                                        jint index)
 {
     TRY;
 
@@ -688,7 +688,7 @@ Java_sun_awt_windows_WChoicePeer_removeAll(JNIEnv *env, jobject self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WChoicePeer_addItems(JNIEnv *env, jobject self,
-					  jobjectArray items, jint index)
+                                          jobjectArray items, jint index)
 {
     TRY;
 
@@ -710,8 +710,8 @@ Java_sun_awt_windows_WChoicePeer_addItems(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WChoicePeer_reshape(JNIEnv *env, jobject self,
-					 jint x, jint y,
-					 jint width, jint height)
+                                         jint x, jint y,
+                                         jint width, jint height)
 {
     TRY;
 
@@ -735,15 +735,15 @@ Java_sun_awt_windows_WChoicePeer_reshape(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WChoicePeer_create(JNIEnv *env, jobject self,
-					jobject parent)
+                                        jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
     AwtToolkit::CreateComponent(self, parent,
-				(AwtToolkit::ComponentFactory)
-				AwtChoice::Create);
+                                (AwtToolkit::ComponentFactory)
+                                AwtChoice::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;
@@ -781,14 +781,14 @@ void AwtChoice::VerifyState()
     if (AwtToolkit::MainThread() != ::GetCurrentThreadId()) {
         // Compare number of items.
         int nTargetItems = JNU_CallMethodByName(env, NULL, target,
-					        "countItems", "()I").i;
+                                                "countItems", "()I").i;
         DASSERT(!safe_ExceptionOccurred(env));
         int nPeerItems = (int)::SendMessage(GetHWnd(), CB_GETCOUNT, 0, 0);
         DASSERT(nTargetItems == nPeerItems);
 
         // Compare selection
         int targetIndex = JNU_CallMethodByName(env, NULL, target,
-					       "getSelectedIndex", "()I").i;
+                                               "getSelectedIndex", "()I").i;
         DASSERT(!safe_ExceptionOccurred(env));
         int peerCurSel = (int)::SendMessage(GetHWnd(), CB_GETCURSEL, 0, 0);
         DASSERT(targetIndex == peerCurSel);

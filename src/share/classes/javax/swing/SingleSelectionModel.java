@@ -30,7 +30,6 @@ import javax.swing.event.*;
 /**
  * A model that supports at most one indexed selection.
  *
- * @version %I% %G%
  * @author Dave Moore
  */
 public interface SingleSelectionModel {

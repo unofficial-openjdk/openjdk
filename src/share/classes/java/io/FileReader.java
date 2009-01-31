@@ -39,9 +39,8 @@ package java.io;
  * @see InputStreamReader
  * @see FileInputStream
  *
- * @version 	%I%, %E%
- * @author	Mark Reinhold
- * @since	JDK1.1
+ * @author      Mark Reinhold
+ * @since       JDK1.1
  */
 public class FileReader extends InputStreamReader {
 
@@ -56,11 +55,11 @@ public class FileReader extends InputStreamReader {
     *                   reading.
     */
     public FileReader(String fileName) throws FileNotFoundException {
-	super(new FileInputStream(fileName));
+        super(new FileInputStream(fileName));
     }
 
    /**
-    * Creates a new <tt>FileReader</tt>, given the <tt>File</tt> 
+    * Creates a new <tt>FileReader</tt>, given the <tt>File</tt>
     * to read from.
     *
     * @param file the <tt>File</tt> to read from
@@ -70,18 +69,17 @@ public class FileReader extends InputStreamReader {
     *                   reading.
     */
     public FileReader(File file) throws FileNotFoundException {
-	super(new FileInputStream(file));
+        super(new FileInputStream(file));
     }
 
    /**
-    * Creates a new <tt>FileReader</tt>, given the 
+    * Creates a new <tt>FileReader</tt>, given the
     * <tt>FileDescriptor</tt> to read from.
     *
     * @param fd the FileDescriptor to read from
     */
     public FileReader(FileDescriptor fd) {
-	super(new FileInputStream(fd));
+        super(new FileInputStream(fd));
     }
 
 }
-

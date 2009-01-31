@@ -33,17 +33,16 @@ import javax.swing.event.*;
  *  <code>JTable</code> will use to interrogate a tabular data model. <p>
  *
  *  The <code>JTable</code> can be set up to display any data
- *  model which implements the 
+ *  model which implements the
  *  <code>TableModel</code> interface with a couple of lines of code:  <p>
  *  <pre>
- *  	TableModel myData = new MyTableModel(); 
- *  	JTable table = new JTable(myData);
+ *      TableModel myData = new MyTableModel();
+ *      JTable table = new JTable(myData);
  *  </pre><p>
  *
  * For further documentation, see <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/table.html#data">Creating a Table Model</a>
  * in <em>The Java Tutorial</em>.
  * <p>
- * @version %I% %G%
  * @author Philip Milne
  * @see JTable
  */
@@ -76,14 +75,14 @@ public interface TableModel
      * to initialize the table's column header name.  Note: this name does
      * not need to be unique; two columns in a table can have the same name.
      *
-     * @param	columnIndex	the index of the column
+     * @param   columnIndex     the index of the column
      * @return  the name of the column
      */
     public String getColumnName(int columnIndex);
 
     /**
-     * Returns the most specific superclass for all the cell values 
-     * in the column.  This is used by the <code>JTable</code> to set up a 
+     * Returns the most specific superclass for all the cell values
+     * in the column.  This is used by the <code>JTable</code> to set up a
      * default renderer and editor for the column.
      *
      * @param columnIndex  the index of the column
@@ -97,9 +96,9 @@ public interface TableModel
      * is editable.  Otherwise, <code>setValueAt</code> on the cell will not
      * change the value of that cell.
      *
-     * @param	rowIndex	the row whose value to be queried
-     * @param	columnIndex	the column whose value to be queried
-     * @return	true if the cell is editable
+     * @param   rowIndex        the row whose value to be queried
+     * @param   columnIndex     the column whose value to be queried
+     * @return  true if the cell is editable
      * @see #setValueAt
      */
     public boolean isCellEditable(int rowIndex, int columnIndex);
@@ -108,9 +107,9 @@ public interface TableModel
      * Returns the value for the cell at <code>columnIndex</code> and
      * <code>rowIndex</code>.
      *
-     * @param	rowIndex	the row whose value is to be queried
-     * @param	columnIndex 	the column whose value is to be queried
-     * @return	the value Object at the specified cell
+     * @param   rowIndex        the row whose value is to be queried
+     * @param   columnIndex     the column whose value is to be queried
+     * @return  the value Object at the specified cell
      */
     public Object getValueAt(int rowIndex, int columnIndex);
 
@@ -118,9 +117,9 @@ public interface TableModel
      * Sets the value in the cell at <code>columnIndex</code> and
      * <code>rowIndex</code> to <code>aValue</code>.
      *
-     * @param	aValue		 the new value
-     * @param	rowIndex	 the row whose value is to be changed
-     * @param	columnIndex 	 the column whose value is to be changed
+     * @param   aValue           the new value
+     * @param   rowIndex         the row whose value is to be changed
+     * @param   columnIndex      the column whose value is to be changed
      * @see #getValueAt
      * @see #isCellEditable
      */
@@ -130,7 +129,7 @@ public interface TableModel
      * Adds a listener to the list that is notified each time a change
      * to the data model occurs.
      *
-     * @param	l		the TableModelListener
+     * @param   l               the TableModelListener
      */
     public void addTableModelListener(TableModelListener l);
 
@@ -138,8 +137,7 @@ public interface TableModel
      * Removes a listener from the list that is notified each time a
      * change to the data model occurs.
      *
-     * @param	l		the TableModelListener
+     * @param   l               the TableModelListener
      */
     public void removeTableModelListener(TableModelListener l);
 }
-

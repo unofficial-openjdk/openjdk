@@ -63,7 +63,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
     XAWTTextField xtext;
 
     boolean firstChangeSkipped;
-    
+
     public XTextFieldPeer(TextField target) {
         super(target);
         int start, end;
@@ -107,11 +107,11 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         XToolkit.specialPeerMap.remove(xtext);
         xtext.removeNotify();
         super.dispose();
-    }    
+    }
 
     void initTextField() {
         setVisible(target.isVisible());
-        
+
         setBounds(x, y, width, height, SET_BOUNDS);
 
         foreground = ComponentAccessor.getForeground(target);
@@ -122,13 +122,13 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
 
         background = ComponentAccessor.getBackground(target);
         if (background == null) {
-            if (((TextField)target).isEditable()) background = SystemColor.text; 
+            if (((TextField)target).isEditable()) background = SystemColor.text;
             else background = SystemColor.control;
         }
         setBackground(background);
 
         if (!target.isBackgroundSet()) {
-            // This is a way to set the background color of the TextArea 
+            // This is a way to set the background color of the TextArea
             // without calling setBackground - go through reflection
             ComponentAccessor.setBackground(target, background);
         }
@@ -144,7 +144,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
      * @see java.awt.peer.TextComponentPeer
      */
     public void setEditable(boolean editable) {
-        if (xtext != null) { 
+        if (xtext != null) {
             xtext.setEditable(editable);
             xtext.repaint();
         }
@@ -154,8 +154,8 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
      * @see java.awt.peer.ComponentPeer
      */
     public void setEnabled(boolean enabled) {
-    	super.setEnabled(enabled);
-        if (xtext != null) { 
+        super.setEnabled(enabled);
+        if (xtext != null) {
             xtext.setEnabled(enabled);
             xtext.repaint();
         }
@@ -222,7 +222,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         if (xtext != null)  {
             // JTextField.setText() posts two different events (remove & insert).
             // Since we make no differences between text events,
-            // the document listener has to be disabled while 
+            // the document listener has to be disabled while
             // JTextField.setText() is called.
             xtext.getDocument().removeDocumentListener(xtext);
             xtext.setText(txt);
@@ -230,7 +230,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
                 postEvent(new TextEvent(target, TextEvent.TEXT_VALUE_CHANGED));
             }
             xtext.getDocument().addDocumentListener(xtext);
-            xtext.setCaretPosition(0); 
+            xtext.setCaretPosition(0);
         }
         return true;
     }
@@ -240,7 +240,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
      * @see java.awt.peer.TextComponentPeer
      */
     public void setCaretPosition(int position) {
-        if (xtext != null) xtext.setCaretPosition(position); 
+        if (xtext != null) xtext.setCaretPosition(position);
     }
 
     /**
@@ -304,7 +304,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         }
     }
 
-    
+
     /**
      * to be implemented.
      * @see java.awt.peer.TextComponentPeer
@@ -327,7 +327,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
 
 
     public Dimension getMinimumSize() {
-        return xtext.getMinimumSize();        
+        return xtext.getMinimumSize();
     }
 
     public Dimension getPreferredSize() {
@@ -339,7 +339,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
     }
 
     private static final int PADDING = 16;
-    
+
     public Dimension getMinimumSize(int cols) {
         Font f = xtext.getFont();
         FontMetrics fm = xtext.getFontMetrics(f);
@@ -384,7 +384,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         super.focusLost(e);
         xtext.forwardFocusLost(e);
     }
- 
+
     public void focusGained(FocusEvent e) {
         super.focusGained(e);
         xtext.forwardFocusGained(e);
@@ -399,7 +399,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         super.handleJavaMouseEvent(mouseEvent);
         if (xtext != null)  {
             mouseEvent.setSource(xtext);
-            int id = mouseEvent.getID(); 
+            int id = mouseEvent.getID();
             if (id == MouseEvent.MOUSE_DRAGGED || id == MouseEvent.MOUSE_MOVED)
                 xtext.processMouseMotionEventImpl(mouseEvent);
             else
@@ -429,7 +429,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
 
     public void setBounds(int x, int y, int width, int height, int op) {
         super.setBounds(x, y, width, height, op);
-        if (xtext != null) { 
+        if (xtext != null) {
             /*
              * Fixed 6277332, 6198290:
              * the coordinates is coming (to peer): relatively to closest HW parent
@@ -452,8 +452,8 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
             xtext.validate();
         }
     }
-  
-  
+
+
     //
     // Accessibility support
     //
@@ -478,7 +478,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
          * (Note: could be simply a change in the caret location)
          *
          public void selectionValuesChanged(int start, int end) {
-         return;  // Need to write implemetation of this.  
+         return;  // Need to write implemetation of this.
          }
     */
 
@@ -494,7 +494,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         JTextField jtf;
 
 
-        protected String getPropertyPrefix() { 
+        protected String getPropertyPrefix() {
             JTextComponent comp = getComponent();
             if (comp instanceof JPasswordField && ((JPasswordField)comp).echoCharIsSet()) {
                 return "PasswordField";
@@ -583,14 +583,14 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
 
     class XAWTCaret extends DefaultCaret {
         public void focusGained(FocusEvent e) {
-	    super.focusGained(e);
-	    getComponent().repaint();
-	}        
+            super.focusGained(e);
+            getComponent().repaint();
+        }
 
         public void focusLost(FocusEvent e) {
-	    super.focusLost(e);
-	    getComponent().repaint();
-	}
+            super.focusLost(e);
+            getComponent().repaint();
+        }
 
         // Fix for 5100950: textarea.getSelectedText() returns the de-selected text, on XToolkit
         // Restoring Motif behaviour
@@ -605,56 +605,56 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         }
     }
 
-    class XAWTTextField extends JPasswordField 
+    class XAWTTextField extends JPasswordField
         implements ActionListener,
                    DocumentListener
     {
-    
+
         boolean isFocused = false;
-    
+
         XComponentPeer peer;
-    
+
         public XAWTTextField(String text, XComponentPeer peer, Container parent) {
             super(text);
             this.peer = peer;
             setDoubleBuffered(true);
             setFocusable(false);
-            ComponentAccessor.setParent(this,parent); 
+            ComponentAccessor.setParent(this,parent);
             setBackground(peer.getPeerBackground());
             setForeground(peer.getPeerForeground());
             setFont(peer.getPeerFont());
-            setCaretPosition(0); 
+            setCaretPosition(0);
             addActionListener(this);
             addNotify();
 
         }
 
         public void actionPerformed( ActionEvent actionEvent ) {
-            peer.postEvent(new ActionEvent(peer.target, 
-                                           ActionEvent.ACTION_PERFORMED, 
+            peer.postEvent(new ActionEvent(peer.target,
+                                           ActionEvent.ACTION_PERFORMED,
                                            getText(),
-                                           actionEvent.getWhen(), 
+                                           actionEvent.getWhen(),
                                            actionEvent.getModifiers()));
 
         }
 
         public void insertUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
 
         public void removeUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
 
         public void changedUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
@@ -669,7 +669,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         }
 
         public Graphics getGraphics() {
-            return peer.getGraphics(); 
+            return peer.getGraphics();
         }
 
         public void updateUI() {
@@ -715,16 +715,15 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         public void setTransferHandler(TransferHandler newHandler) {
             TransferHandler oldHandler = (TransferHandler)
                 getClientProperty(XTextTransferHelper.getTransferHandlerKey());
-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(), 
+            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
                               newHandler);
 
             firePropertyChange("transferHandler", oldHandler, newHandler);
         }
-        
+
         public void setEchoChar(char c) {
             super.setEchoChar(c);
             ((AWTTextFieldUI)ui).installKeyboardActions();
         }
     }
 }
-

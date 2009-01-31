@@ -44,10 +44,9 @@ package javax.naming.event;
   * A listener that wants to be notified of <tt>OBJECT_CHANGED</tt> event types
   * should also implement the <tt>ObjectChangeListener</tt>
   * interface.
-  * 
+  *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see NamingEvent
   * @see ObjectChangeListener
@@ -88,5 +87,5 @@ public interface NamespaceChangeListener extends NamingListener {
      * @param evt The nonnull event.
      * @see NamingEvent#OBJECT_RENAMED
      */
-    void objectRenamed(NamingEvent evt); 
+    void objectRenamed(NamingEvent evt);
 }

@@ -40,7 +40,7 @@
 #include "jni.h"
 
 #ifndef MAXDNAME
-#define MAXDNAME		1025
+#define MAXDNAME                1025
 #endif
 
 
@@ -58,11 +58,11 @@ Java_sun_net_dns_ResolverConfigurationImpl_localDomain0(JNIEnv *env, jclass cls)
      */
 #ifdef __solaris__
     {
-	char *cp = getenv("LOCALDOMAIN");
-	if (cp != NULL) {
-	    jstring s = (*env)->NewStringUTF(env, cp);
-	    return s;
-	}
+        char *cp = getenv("LOCALDOMAIN");
+        if (cp != NULL) {
+            jstring s = (*env)->NewStringUTF(env, cp);
+            return s;
+        }
     }
 #endif
     return (jstring)NULL;
@@ -82,46 +82,45 @@ Java_sun_net_dns_ResolverConfigurationImpl_fallbackDomain0(JNIEnv *env, jclass c
      * On Solaris if domain or search directives aren't specified
      * in /etc/resolv.conf then sysinfo or gethostname is used to
      * determine the domain name.
-     * 
+     *
      * On Linux if domain or search directives aren't specified
      * then gethostname is used.
      */
 
 #ifdef __solaris__
     {
-	int ret = sysinfo(SI_SRPC_DOMAIN, buf, sizeof(buf));
+        int ret = sysinfo(SI_SRPC_DOMAIN, buf, sizeof(buf));
 
-	if ((ret > 0) && (ret<sizeof(buf))) {
-	    char *cp;
-	    jstring s;
+        if ((ret > 0) && (ret<sizeof(buf))) {
+            char *cp;
+            jstring s;
 
-	    if (buf[0] == '+') {
-		buf[0] = '.';
-	    }
-	    cp = strchr(buf, '.');
-	    if (cp == NULL) {
-		s = (*env)->NewStringUTF(env, buf);
-	    } else {
-		s = (*env)->NewStringUTF(env, cp+1);
-	    }
-	    return s;
-	}
+            if (buf[0] == '+') {
+                buf[0] = '.';
+            }
+            cp = strchr(buf, '.');
+            if (cp == NULL) {
+                s = (*env)->NewStringUTF(env, buf);
+            } else {
+                s = (*env)->NewStringUTF(env, cp+1);
+            }
+            return s;
+        }
     }
 #endif
 
     if (gethostname(buf, sizeof(buf)) == 0) {
-	char *cp;
+        char *cp;
 
-	/* gethostname doesn't null terminate if insufficient space */
-	buf[sizeof(buf)-1] = '\0';
+        /* gethostname doesn't null terminate if insufficient space */
+        buf[sizeof(buf)-1] = '\0';
 
- 	cp = strchr(buf, '.');
-	if (cp != NULL) {
-	    jstring s = (*env)->NewStringUTF(env, cp+1);
-	    return s;
-	}
+        cp = strchr(buf, '.');
+        if (cp != NULL) {
+            jstring s = (*env)->NewStringUTF(env, cp+1);
+            return s;
+        }
     }
 
     return (jstring)NULL;
 }
-

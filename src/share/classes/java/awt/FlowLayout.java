@@ -31,7 +31,7 @@ import java.io.IOException;
  * A flow layout arranges components in a directional flow, much
  * like lines of text in a paragraph. The flow direction is
  * determined by the container's <code>componentOrientation</code>
- * property and may be one of two values: 
+ * property and may be one of two values:
  * <ul>
  * <li><code>ComponentOrientation.LEFT_TO_RIGHT</code>
  * <li><code>ComponentOrientation.RIGHT_TO_LEFT</code>
@@ -77,7 +77,6 @@ import java.io.IOException;
  * <p>
  * A flow layout lets each component assume its natural (preferred) size.
  *
- * @version     %I%, %G%
  * @author      Arthur van Hoff
  * @author      Sami Shaio
  * @since       JDK1.0
@@ -229,10 +228,10 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
      * or <code>FlowLayout.TRAILING</code>.
      * @param      align   the alignment value
      * @param      hgap    the horizontal gap between components
-     *                     and between the components and the 
+     *                     and between the components and the
      *                     borders of the <code>Container</code>
      * @param      vgap    the vertical gap between components
-     *                     and between the components and the 
+     *                     and between the components and the
      *                     borders of the <code>Container</code>
      */
     public FlowLayout(int align, int hgap, int vgap) {
@@ -392,7 +391,7 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Returns the preferred dimensions for this layout given the 
+     * Returns the preferred dimensions for this layout given the
      * <i>visible</i> components in the specified target container.
      *
      * @param target the container that needs to be laid out
@@ -421,7 +420,7 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
                 } else {
                     dim.width += hgap;
                 }
-		dim.width += d.width;
+                dim.width += d.width;
                 if (useBaseline) {
                     int baseline = m.getBaseline(d.width, d.height);
                     if (baseline >= 0) {
@@ -429,15 +428,15 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
                         maxDescent = Math.max(maxDescent, d.height - baseline);
                     }
                 }
-	    }
-	}
+            }
+        }
         if (useBaseline) {
             dim.height = Math.max(maxAscent + maxDescent, dim.height);
         }
-	Insets insets = target.getInsets();
-	dim.width += insets.left + insets.right + hgap*2;
-	dim.height += insets.top + insets.bottom + vgap*2;
-	return dim;
+        Insets insets = target.getInsets();
+        dim.width += insets.left + insets.right + hgap*2;
+        dim.height += insets.top + insets.bottom + vgap*2;
+        return dim;
       }
     }
 
@@ -454,23 +453,23 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
     public Dimension minimumLayoutSize(Container target) {
       synchronized (target.getTreeLock()) {
         boolean useBaseline = getAlignOnBaseline();
-	Dimension dim = new Dimension(0, 0);
-	int nmembers = target.getComponentCount();
+        Dimension dim = new Dimension(0, 0);
+        int nmembers = target.getComponentCount();
         int maxAscent = 0;
         int maxDescent = 0;
         boolean firstVisibleComponent = true;
 
-	for (int i = 0 ; i < nmembers ; i++) {
-	    Component m = target.getComponent(i);
-	    if (m.visible) {
-		Dimension d = m.getMinimumSize();
-		dim.height = Math.max(dim.height, d.height);
+        for (int i = 0 ; i < nmembers ; i++) {
+            Component m = target.getComponent(i);
+            if (m.visible) {
+                Dimension d = m.getMinimumSize();
+                dim.height = Math.max(dim.height, d.height);
                 if (firstVisibleComponent) {
                     firstVisibleComponent = false;
                 } else {
                     dim.width += hgap;
-		}
-		dim.width += d.width;
+                }
+                dim.width += d.width;
                 if (useBaseline) {
                     int baseline = m.getBaseline(d.width, d.height);
                     if (baseline >= 0) {
@@ -486,10 +485,10 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
             dim.height = Math.max(maxAscent + maxDescent, dim.height);
         }
 
-	Insets insets = target.getInsets();
-	dim.width += insets.left + insets.right + hgap*2;
-	dim.height += insets.top + insets.bottom + vgap*2;
-	return dim;
+        Insets insets = target.getInsets();
+        dim.width += insets.left + insets.right + hgap*2;
+        dim.height += insets.top + insets.bottom + vgap*2;
+        return dim;
 
 
 
@@ -555,7 +554,7 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
             height = Math.max(maxAscent + maxDescent, nonbaselineHeight);
             baselineOffset = (height - maxAscent - maxDescent) / 2;
         }
-	for (int i = rowStart ; i < rowEnd ; i++) {
+        for (int i = rowStart ; i < rowEnd ; i++) {
             Component m = target.getComponent(i);
             if (m.isVisible()) {
                 int cy;
@@ -566,18 +565,18 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
                     cy = y + (height - m.height) / 2;
                 }
                 if (ltr) {
-        	    m.setLocation(x, cy);
+                    m.setLocation(x, cy);
                 } else {
-	            m.setLocation(target.width - x - m.width, cy);
+                    m.setLocation(target.width - x - m.width, cy);
                 }
                 x += m.width + hgap;
-	    }
-	}
+            }
+        }
         return height;
     }
 
     /**
-     * Lays out the container. This method lets each 
+     * Lays out the container. This method lets each
      * <i>visible</i> component take
      * its preferred size by reshaping the components in the
      * target container in order to satisfy the alignment of
@@ -629,7 +628,7 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
                     x += d.width;
                     rowh = Math.max(rowh, d.height);
                 } else {
-		    rowh = moveComponents(target, insets.left + hgap, y,
+                    rowh = moveComponents(target, insets.left + hgap, y,
                                    maxwidth - x, rowh, start, i, ltr,
                                    useBaseline, ascent, descent);
                     x = d.width;
@@ -639,7 +638,7 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
                 }
             }
         }
-	moveComponents(target, insets.left + hgap, y, maxwidth - x, rowh,
+        moveComponents(target, insets.left + hgap, y, maxwidth - x, rowh,
                        start, nmembers, ltr, useBaseline, ascent, descent);
       }
     }

@@ -86,7 +86,7 @@ NativePrimitive IntArgbBmPrimitives[] = {
 jboolean RegisterIntArgbBm(JNIEnv *env)
 {
     return RegisterPrimitives(env, IntArgbBmPrimitives,
-			      ArraySize(IntArgbBmPrimitives));
+                              ArraySize(IntArgbBmPrimitives));
 }
 
 jint PixelForIntArgbBm(SurfaceDataRasInfo *pRasInfo, jint rgb)

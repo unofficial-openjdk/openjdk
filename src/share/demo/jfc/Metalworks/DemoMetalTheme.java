@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 
 import javax.swing.plaf.*;
@@ -45,7 +43,6 @@ import java.awt.*;
  * It's great for giving demos of your software to a group
  * where people will have trouble seeing what you're doing.
  *
- * @version %I% %G%
  * @author Steve Wilson
  */
 public class DemoMetalTheme extends DefaultMetalTheme {

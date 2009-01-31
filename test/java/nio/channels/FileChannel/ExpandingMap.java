@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 4938372
- * @summary Flushing dirty pages prior to unmap can cause Cleaner thread to 
+ * @summary Flushing dirty pages prior to unmap can cause Cleaner thread to
  *          abort VM if memory system has pages locked
  */
 import java.io.File;
@@ -40,76 +40,76 @@ import java.util.ArrayList;
 public class ExpandingMap {
 
     public static void main(String[] args) throws IOException {
-	
-	int initialSize = 20480*1024;
-	int maximumMapSize = 16*1024*1024;
-	int maximumFileSize = 300000000;
 
-	File file = File.createTempFile("exp", "tmp");
-	file.deleteOnExit();
-	RandomAccessFile f = new RandomAccessFile(file, "rw");
-	f.setLength(initialSize);
+        int initialSize = 20480*1024;
+        int maximumMapSize = 16*1024*1024;
+        int maximumFileSize = 300000000;
 
-	FileChannel fc = f.getChannel();
+        File file = File.createTempFile("exp", "tmp");
+        file.deleteOnExit();
+        RandomAccessFile f = new RandomAccessFile(file, "rw");
+        f.setLength(initialSize);
 
-	ByteBuffer[] buffers = new ByteBuffer[128];
+        FileChannel fc = f.getChannel();
 
-	System.out.format("map %d -> %d\n", 0, initialSize);
-	buffers[0] = fc.map(FileChannel.MapMode.READ_WRITE, 0, initialSize);
+        ByteBuffer[] buffers = new ByteBuffer[128];
 
-	int currentBuffer = 0;
-	int currentSize = initialSize;
-	int currentPosition = 0;
-			
-	ArrayList<String> junk = new ArrayList<String>();
-			
-	while (currentPosition+currentSize < maximumFileSize) {
-	    int inc = Math.max(1000*1024, (currentPosition+currentSize)/8);
+        System.out.format("map %d -> %d\n", 0, initialSize);
+        buffers[0] = fc.map(FileChannel.MapMode.READ_WRITE, 0, initialSize);
 
-	    int size = currentPosition+currentSize+inc;
+        int currentBuffer = 0;
+        int currentSize = initialSize;
+        int currentPosition = 0;
+
+        ArrayList<String> junk = new ArrayList<String>();
+
+        while (currentPosition+currentSize < maximumFileSize) {
+            int inc = Math.max(1000*1024, (currentPosition+currentSize)/8);
+
+            int size = currentPosition+currentSize+inc;
             f.setLength(size);
 
             while (currentSize+inc > maximumMapSize) {
                 if (currentSize < maximumMapSize) {
-		    System.out.format("map %d -> %d\n", currentPosition, 
+                    System.out.format("map %d -> %d\n", currentPosition,
                         (currentPosition + maximumMapSize));
-	     	    buffers[currentBuffer] = fc.map(FileChannel.MapMode.READ_WRITE,
+                    buffers[currentBuffer] = fc.map(FileChannel.MapMode.READ_WRITE,
                         currentPosition, maximumMapSize);
-	            fillBuffer(buffers[currentBuffer], currentSize);
-		}
-		currentPosition += maximumMapSize;
-		inc = currentSize+inc-maximumMapSize;
-		currentSize = 0;
-		currentBuffer++;
-		if (currentBuffer == buffers.length) {
-	            ByteBuffer[] old = buffers;
-	            buffers = new ByteBuffer[currentBuffer+currentBuffer/2];
-		    System.arraycopy(old, 0, buffers, 0, currentBuffer); 					}
+                    fillBuffer(buffers[currentBuffer], currentSize);
+                }
+                currentPosition += maximumMapSize;
+                inc = currentSize+inc-maximumMapSize;
+                currentSize = 0;
+                currentBuffer++;
+                if (currentBuffer == buffers.length) {
+                    ByteBuffer[] old = buffers;
+                    buffers = new ByteBuffer[currentBuffer+currentBuffer/2];
+                    System.arraycopy(old, 0, buffers, 0, currentBuffer);                                        }
             }
-	    currentSize += inc;
-	    if (currentSize > 0) {
- 		System.out.format("map %d -> %d\n", currentPosition, 
+            currentSize += inc;
+            if (currentSize > 0) {
+                System.out.format("map %d -> %d\n", currentPosition,
                     (currentPosition + currentSize));
-	        buffers[currentBuffer] = fc.map(FileChannel.MapMode.READ_WRITE,
+                buffers[currentBuffer] = fc.map(FileChannel.MapMode.READ_WRITE,
                      currentPosition, currentSize);
-		fillBuffer(buffers[currentBuffer], currentSize-inc);
-	    }
+                fillBuffer(buffers[currentBuffer], currentSize-inc);
+            }
 
             // busy loop needed to reproduce issue
-	    long t = System.currentTimeMillis();
-	    while (System.currentTimeMillis() < t+500) {
-	        junk.add(String.valueOf(t));
-	        if (junk.size() > 100000) junk.clear();
+            long t = System.currentTimeMillis();
+            while (System.currentTimeMillis() < t+500) {
+                junk.add(String.valueOf(t));
+                if (junk.size() > 100000) junk.clear();
             }
-	}
+        }
 
         System.out.println("TEST PASSED");
     }
-	
+
     static void fillBuffer(ByteBuffer buf, int from) {
         int limit = buf.limit();
-	for (int i=from; i<limit; i++) {
-	    buf.put(i, (byte)i);		
-	}
+        for (int i=from; i<limit; i++) {
+            buf.put(i, (byte)i);
+        }
     }
 }

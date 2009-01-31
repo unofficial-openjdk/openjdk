@@ -31,12 +31,11 @@ import java.io.FileDescriptor;
  * This class defines the plain SocketImpl that is used for all
  * Windows version lower than Vista. It adds support for IPv6 on
  * these platforms where available.
- * 
- * For backward compatibility Windows platforms that do not have IPv6 
+ *
+ * For backward compatibility Windows platforms that do not have IPv6
  * support also use this implementation, and fd1 gets set to null
  * during socket creation.
  *
- * @version %I%, %G%
  * @author Chris Hegarty
  */
 
@@ -67,13 +66,13 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
     private int lastfd = -1;
 
     static {
-	initProto();
+        initProto();
     }
 
     public TwoStacksPlainSocketImpl() {}
-    
+
     public TwoStacksPlainSocketImpl(FileDescriptor fd) {
-	this.fd = fd;
+        this.fd = fd;
     }
 
     /**
@@ -82,7 +81,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
      */
     protected synchronized void create(boolean stream) throws IOException {
         fd1 = new FileDescriptor();
-	super.create(stream);
+        super.create(stream);
     }
 
      /**
@@ -93,7 +92,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
     protected synchronized void bind(InetAddress address, int lport)
         throws IOException
     {
-	super.bind(address, lport);
+        super.bind(address, lport);
         if (address.isAnyLocalAddress()) {
             anyLocalBoundAddr = address;
         }
@@ -112,7 +111,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
             socketGetOption(opt, in);
             return in.addr;
         } else
-	    return super.getOption(opt);
+            return super.getOption(opt);
     }
 
     /**
@@ -200,8 +199,8 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
 
     native int socketGetOption(int opt, Object iaContainerObj) throws SocketException;
 
-    native int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) 
-	throws SocketException;
+    native int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
+        throws SocketException;
 
     native void socketSendUrgentData(int data) throws IOException;
 }

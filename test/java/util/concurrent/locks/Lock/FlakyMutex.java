@@ -46,56 +46,56 @@ public class FlakyMutex implements Lock {
     static final Random rnd = new Random();
 
     static void maybeThrow() {
-	switch (rnd.nextInt(10)) {
-	case 0: throw new MyError();
-	case 1: throw new MyRuntimeException();
-	case 2: Thread.currentThread().stop(new MyException()); break;
-	default: /* Do nothing */ break;
-	}
+        switch (rnd.nextInt(10)) {
+        case 0: throw new MyError();
+        case 1: throw new MyRuntimeException();
+        case 2: Thread.currentThread().stop(new MyException()); break;
+        default: /* Do nothing */ break;
+        }
     }
 
     static void checkThrowable(Throwable t) {
-	check((t instanceof MyError) ||
-	      (t instanceof MyException) ||
-	      (t instanceof MyRuntimeException));
+        check((t instanceof MyError) ||
+              (t instanceof MyException) ||
+              (t instanceof MyRuntimeException));
     }
 
     static void realMain(String[] args) throws Throwable {
-	final int nThreads = 3;
-	final CyclicBarrier barrier = new CyclicBarrier(nThreads + 1);
-	final FlakyMutex m = new FlakyMutex();
-	final ExecutorService es = Executors.newFixedThreadPool(nThreads);
-	for (int i = 0; i < nThreads; i++) {
-	    es.submit(new Runnable() { public void run() {
-		try {
-		    barrier.await();
-		    for (int i = 0; i < 100; i++) {
-			for (;;) {
-			    try { m.lock(); break; }
-			    catch (Throwable t) { checkThrowable(t); }
-			}
+        final int nThreads = 3;
+        final CyclicBarrier barrier = new CyclicBarrier(nThreads + 1);
+        final FlakyMutex m = new FlakyMutex();
+        final ExecutorService es = Executors.newFixedThreadPool(nThreads);
+        for (int i = 0; i < nThreads; i++) {
+            es.submit(new Runnable() { public void run() {
+                try {
+                    barrier.await();
+                    for (int i = 0; i < 100; i++) {
+                        for (;;) {
+                            try { m.lock(); break; }
+                            catch (Throwable t) { checkThrowable(t); }
+                        }
 
-			try { check (! m.tryLock()); }
-			catch (Throwable t) { checkThrowable(t); }
+                        try { check (! m.tryLock()); }
+                        catch (Throwable t) { checkThrowable(t); }
 
-			try { check (! m.tryLock(1, TimeUnit.MICROSECONDS)); }
-			catch (Throwable t) { checkThrowable(t); }
+                        try { check (! m.tryLock(1, TimeUnit.MICROSECONDS)); }
+                        catch (Throwable t) { checkThrowable(t); }
 
-			m.unlock();
-		    }
-		} catch (Throwable t) { unexpected(t); }}});}
-	barrier.await();
-	es.shutdown();
-	check(es.awaitTermination(10, TimeUnit.SECONDS));
+                        m.unlock();
+                    }
+                } catch (Throwable t) { unexpected(t); }}});}
+        barrier.await();
+        es.shutdown();
+        check(es.awaitTermination(10, TimeUnit.SECONDS));
     }
 
     private static class FlakySync extends AbstractQueuedLongSynchronizer {
-	private static final long serialVersionUID = -1L;
+        private static final long serialVersionUID = -1L;
 
         public boolean isHeldExclusively() { return getState() == 1; }
 
         public boolean tryAcquire(long acquires) {
-	    maybeThrow();
+            maybeThrow();
             return compareAndSetState(0, 1);
         }
 
@@ -129,10 +129,10 @@ public class FlakyMutex implements Lock {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	try {realMain(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {realMain(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

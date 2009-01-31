@@ -40,7 +40,6 @@ import java.util.Enumeration;
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/tree.html">How to Use Tree Nodes</a>
  * in <em>The Java Tutorial.</em>
  *
- * @version %I% %G%
  * @author Rob Davis
  * @author Scott Violet
  */
@@ -48,7 +47,7 @@ import java.util.Enumeration;
 public interface TreeNode
 {
     /**
-     * Returns the child <code>TreeNode</code> at index 
+     * Returns the child <code>TreeNode</code> at index
      * <code>childIndex</code>.
      */
     TreeNode getChildAt(int childIndex);

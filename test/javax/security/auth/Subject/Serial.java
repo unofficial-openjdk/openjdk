@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 4364826
- * @summary	Subject serialized principal set is
- *		implementation-dependent class
+ * @summary     Subject serialized principal set is
+ *              implementation-dependent class
  * @run main/othervm/policy=Serial.policy Serial
  */
 
@@ -37,62 +37,62 @@ public class Serial implements java.io.Serializable {
 
     public static void main(String[] args) {
 
-	try {
-	    FileOutputStream fos = new FileOutputStream("serial.tmp");
-	    ObjectOutputStream oos = new ObjectOutputStream(fos);
+        try {
+            FileOutputStream fos = new FileOutputStream("serial.tmp");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-	    HashSet principals = new HashSet();
-	    principals.add
-		(new com.sun.security.auth.NTUserPrincipal("test"));
-	    principals.add
-		(new com.sun.security.auth.NTDomainPrincipal("test2"));
+            HashSet principals = new HashSet();
+            principals.add
+                (new com.sun.security.auth.NTUserPrincipal("test"));
+            principals.add
+                (new com.sun.security.auth.NTDomainPrincipal("test2"));
 
-	    Subject s = new Subject
-				(false,
-				principals,
-				new HashSet(),
-				new HashSet());
-	    oos.writeObject(s);
-	    oos.flush();
-	    fos.close();
+            Subject s = new Subject
+                                (false,
+                                principals,
+                                new HashSet(),
+                                new HashSet());
+            oos.writeObject(s);
+            oos.flush();
+            fos.close();
 
-	    FileInputStream fis = new FileInputStream("serial.tmp");
-	    ObjectInputStream ois = new ObjectInputStream(fis);
+            FileInputStream fis = new FileInputStream("serial.tmp");
+            ObjectInputStream ois = new ObjectInputStream(fis);
 
-	    Subject s2 = (Subject)ois.readObject();
-	    fis.close();
+            Subject s2 = (Subject)ois.readObject();
+            fis.close();
 
-	    System.out.println("s2 = " + s2.toString());
-	    System.out.println("s2.getPrincipals().size() = " +
-				s2.getPrincipals().size());
-	    if (!s.equals(s2) || !s2.equals(s)) {
-		throw new SecurityException("Serial test failed: " +
-					"EQUALS TEST FAILED");
-	    }
+            System.out.println("s2 = " + s2.toString());
+            System.out.println("s2.getPrincipals().size() = " +
+                                s2.getPrincipals().size());
+            if (!s.equals(s2) || !s2.equals(s)) {
+                throw new SecurityException("Serial test failed: " +
+                                        "EQUALS TEST FAILED");
+            }
 
-	    // make sure private credentials are not serializable
-	    // without permissions
+            // make sure private credentials are not serializable
+            // without permissions
 
-	    Set privateCredentials = s.getPrivateCredentials();
-	    privateCredentials.add(new Serial());
+            Set privateCredentials = s.getPrivateCredentials();
+            privateCredentials.add(new Serial());
 
-	    fos = new FileOutputStream("serial2.tmp");
-	    oos = new ObjectOutputStream(fos);
-	    try {
-		oos.writeObject(privateCredentials);
-		oos.flush();
-		fos.close();
-		throw new RuntimeException("Serial test failed: " +
-			"allowed to serialize private credential set");
-	    } catch (SecurityException se) {
-		// good
-		se.printStackTrace();
-	    }
+            fos = new FileOutputStream("serial2.tmp");
+            oos = new ObjectOutputStream(fos);
+            try {
+                oos.writeObject(privateCredentials);
+                oos.flush();
+                fos.close();
+                throw new RuntimeException("Serial test failed: " +
+                        "allowed to serialize private credential set");
+            } catch (SecurityException se) {
+                // good
+                se.printStackTrace();
+            }
 
-	    System.out.println("Serial test succeeded");
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    throw new SecurityException("Serial test failed");
-	}
+            System.out.println("Serial test succeeded");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new SecurityException("Serial test failed");
+        }
     }
 }

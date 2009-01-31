@@ -26,14 +26,13 @@
 package java.awt;
 
 /**
- * An <code>Insets</code> object is a representation of the borders 
- * of a container. It specifies the space that a container must leave 
- * at each of its edges. The space can be a border, a blank space, or 
- * a title. 
+ * An <code>Insets</code> object is a representation of the borders
+ * of a container. It specifies the space that a container must leave
+ * at each of its edges. The space can be a border, a blank space, or
+ * a title.
  *
- * @version 	%I%, %G%
- * @author 	Arthur van Hoff
- * @author 	Sami Shaio
+ * @author      Arthur van Hoff
+ * @author      Sami Shaio
  * @see         java.awt.LayoutManager
  * @see         java.awt.Container
  * @since       JDK1.0
@@ -81,31 +80,31 @@ public class Insets implements Cloneable, java.io.Serializable {
     public int right;
 
     /*
-     * JDK 1.1 serialVersionUID 
+     * JDK 1.1 serialVersionUID
      */
     private static final long serialVersionUID = -2272572637695466749L;
-  
+
     static {
         /* ensure that the necessary native libraries are loaded */
-	Toolkit.loadLibraries();
+        Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
     }
 
     /**
-     * Creates and initializes a new <code>Insets</code> object with the 
-     * specified top, left, bottom, and right insets. 
+     * Creates and initializes a new <code>Insets</code> object with the
+     * specified top, left, bottom, and right insets.
      * @param       top   the inset from the top.
      * @param       left   the inset from the left.
      * @param       bottom   the inset from the bottom.
      * @param       right   the inset from the right.
      */
     public Insets(int top, int left, int bottom, int right) {
-	this.top = top;
-	this.left = left;
-	this.bottom = bottom;
-	this.right = right;
+        this.top = top;
+        this.left = left;
+        this.bottom = bottom;
+        this.right = right;
     }
 
     /**
@@ -125,21 +124,21 @@ public class Insets implements Cloneable, java.io.Serializable {
     }
 
     /**
-     * Checks whether two insets objects are equal. Two instances 
+     * Checks whether two insets objects are equal. Two instances
      * of <code>Insets</code> are equal if the four integer values
-     * of the fields <code>top</code>, <code>left</code>, 
+     * of the fields <code>top</code>, <code>left</code>,
      * <code>bottom</code>, and <code>right</code> are all equal.
      * @return      <code>true</code> if the two insets are equal;
      *                          otherwise <code>false</code>.
      * @since       JDK1.1
      */
     public boolean equals(Object obj) {
-	if (obj instanceof Insets) {
-	    Insets insets = (Insets)obj;
-	    return ((top == insets.top) && (left == insets.left) &&
-		    (bottom == insets.bottom) && (right == insets.right));
-	}
-	return false;
+        if (obj instanceof Insets) {
+            Insets insets = (Insets)obj;
+            return ((top == insets.top) && (left == insets.left) &&
+                    (bottom == insets.bottom) && (right == insets.right));
+        }
+        return false;
     }
 
     /**
@@ -157,29 +156,29 @@ public class Insets implements Cloneable, java.io.Serializable {
     }
 
     /**
-     * Returns a string representation of this <code>Insets</code> object. 
-     * This method is intended to be used only for debugging purposes, and 
-     * the content and format of the returned string may vary between 
-     * implementations. The returned string may be empty but may not be 
+     * Returns a string representation of this <code>Insets</code> object.
+     * This method is intended to be used only for debugging purposes, and
+     * the content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not be
      * <code>null</code>.
-     * 
+     *
      * @return  a string representation of this <code>Insets</code> object.
      */
     public String toString() {
-	return getClass().getName() + "[top="  + top + ",left=" + left + ",bottom=" + bottom + ",right=" + right + "]";
+        return getClass().getName() + "[top="  + top + ",left=" + left + ",bottom=" + bottom + ",right=" + right + "]";
     }
 
     /**
      * Create a copy of this object.
      * @return     a copy of this <code>Insets</code> object.
      */
-    public Object clone() { 
-	try { 
-	    return super.clone();
-	} catch (CloneNotSupportedException e) { 
-	    // this shouldn't happen, since we are Cloneable
-	    throw new InternalError();
-	}
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
     }
     /**
      * Initialize JNI field and method IDs

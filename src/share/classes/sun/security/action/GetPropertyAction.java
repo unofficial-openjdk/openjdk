@@ -37,18 +37,17 @@ package sun.security.action;
  *
  * <pre>
  * String s = java.security.AccessController.doPrivileged
- *			(new GetPropertyAction("prop"));
+ *                      (new GetPropertyAction("prop"));
  * </pre>
  *
  * @author Roland Schemers
- * @version %I%, %G%
  * @see java.security.PrivilegedAction
  * @see java.security.AccessController
  * @since 1.2
  */
 
 public class GetPropertyAction
-	implements java.security.PrivilegedAction<String> {
+        implements java.security.PrivilegedAction<String> {
     private String theProp;
     private String defaultVal;
 
@@ -59,7 +58,7 @@ public class GetPropertyAction
      * @param theProp the name of the system property.
      */
     public GetPropertyAction(String theProp) {
-	this.theProp = theProp;
+        this.theProp = theProp;
     }
 
     /**
@@ -70,8 +69,8 @@ public class GetPropertyAction
      * @param defaulVal the default value.
      */
     public GetPropertyAction(String theProp, String defaultVal) {
-	this.theProp = theProp;
-	this.defaultVal = defaultVal;
+        this.theProp = theProp;
+        this.defaultVal = defaultVal;
     }
 
     /**
@@ -82,7 +81,7 @@ public class GetPropertyAction
      *         or the default value if there is no property with that key.
      */
     public String run() {
-	String value = System.getProperty(theProp);
-	return (value == null) ? defaultVal : value;
+        String value = System.getProperty(theProp);
+        return (value == null) ? defaultVal : value;
     }
 }

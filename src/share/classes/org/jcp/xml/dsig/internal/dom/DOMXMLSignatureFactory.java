@@ -53,79 +53,79 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
     public DOMXMLSignatureFactory() {}
 
     public XMLSignature newXMLSignature(SignedInfo si, KeyInfo ki) {
-	return new DOMXMLSignature(si, ki, null, null, null);
+        return new DOMXMLSignature(si, ki, null, null, null);
     }
 
     public XMLSignature newXMLSignature(SignedInfo si, KeyInfo ki,
         List objects, String id, String signatureValueId) {
-	return new DOMXMLSignature(si, ki, objects, id, signatureValueId);
+        return new DOMXMLSignature(si, ki, objects, id, signatureValueId);
     }
 
     public Reference newReference(String uri, DigestMethod dm) {
-	return newReference(uri, dm, null, null, null);
+        return newReference(uri, dm, null, null, null);
     }
 
     public Reference newReference(String uri, DigestMethod dm, List transforms,
         String type, String id) {
-	return new DOMReference(uri, type, dm, transforms, id);
+        return new DOMReference(uri, type, dm, transforms, id);
     }
 
-    public Reference newReference(String uri, DigestMethod dm, 
-	List appliedTransforms, Data result, List transforms, String type, 
-	String id) {
-	if (appliedTransforms == null) {
-	    throw new NullPointerException("appliedTransforms cannot be null");
-	}
-	if (appliedTransforms.isEmpty()) {
-	    throw new NullPointerException("appliedTransforms cannot be empty");
-	}
-	if (result == null) {
-	    throw new NullPointerException("result cannot be null");
-	}
-	return new DOMReference
-	    (uri, type, dm, appliedTransforms, result, transforms, id);
+    public Reference newReference(String uri, DigestMethod dm,
+        List appliedTransforms, Data result, List transforms, String type,
+        String id) {
+        if (appliedTransforms == null) {
+            throw new NullPointerException("appliedTransforms cannot be null");
+        }
+        if (appliedTransforms.isEmpty()) {
+            throw new NullPointerException("appliedTransforms cannot be empty");
+        }
+        if (result == null) {
+            throw new NullPointerException("result cannot be null");
+        }
+        return new DOMReference
+            (uri, type, dm, appliedTransforms, result, transforms, id);
     }
 
     public Reference newReference(String uri, DigestMethod dm, List transforms,
         String type, String id, byte[] digestValue) {
-	if (digestValue == null) {
-	    throw new NullPointerException("digestValue cannot be null");
-	}
-	return new DOMReference
-	    (uri, type, dm, null, null, transforms, id, digestValue);
+        if (digestValue == null) {
+            throw new NullPointerException("digestValue cannot be null");
+        }
+        return new DOMReference
+            (uri, type, dm, null, null, transforms, id, digestValue);
     }
 
     public SignedInfo newSignedInfo(CanonicalizationMethod cm,
-	SignatureMethod sm, List references) {
-	return newSignedInfo(cm, sm, references, null);
+        SignatureMethod sm, List references) {
+        return newSignedInfo(cm, sm, references, null);
     }
 
     public SignedInfo newSignedInfo(CanonicalizationMethod cm,
-	SignatureMethod sm, List references, String id) {
-	return new DOMSignedInfo(cm, sm, references, id);
+        SignatureMethod sm, List references, String id) {
+        return new DOMSignedInfo(cm, sm, references, id);
     }
 
     // Object factory methods
     public XMLObject newXMLObject(List content, String id, String mimeType,
-	String encoding) {
-	return new DOMXMLObject(content, id, mimeType, encoding);
+        String encoding) {
+        return new DOMXMLObject(content, id, mimeType, encoding);
     }
 
     public Manifest newManifest(List references) {
-	return newManifest(references, null);
+        return newManifest(references, null);
     }
 
     public Manifest newManifest(List references, String id) {
-	return new DOMManifest(references, id);
+        return new DOMManifest(references, id);
     }
 
     public SignatureProperties newSignatureProperties(List props, String id) {
-	return new DOMSignatureProperties(props, id);
+        return new DOMSignatureProperties(props, id);
     }
 
     public SignatureProperty newSignatureProperty
-	(List info, String target, String id) {
-	return new DOMSignatureProperty(info, target, id);
+        (List info, String target, String id) {
+        return new DOMSignatureProperty(info, target, id);
     }
 
     public XMLSignature unmarshalXMLSignature(XMLValidateContext context)
@@ -134,7 +134,7 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
         if (context == null) {
             throw new NullPointerException("context cannot be null");
         }
-	return unmarshal(((DOMValidateContext) context).getNode(), context);
+        return unmarshal(((DOMValidateContext) context).getNode(), context);
     }
 
     public XMLSignature unmarshalXMLSignature(XMLStructure xmlStructure)
@@ -143,16 +143,16 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
         if (xmlStructure == null) {
             throw new NullPointerException("xmlStructure cannot be null");
         }
-	return unmarshal
-	    (((javax.xml.crypto.dom.DOMStructure) xmlStructure).getNode(), 
-	     null);
+        return unmarshal
+            (((javax.xml.crypto.dom.DOMStructure) xmlStructure).getNode(),
+             null);
     }
 
-    private XMLSignature unmarshal(Node node, XMLValidateContext context) 
-	throws MarshalException {
+    private XMLSignature unmarshal(Node node, XMLValidateContext context)
+        throws MarshalException {
 
         node.normalize();
-        
+
         Element element = null;
         if (node.getNodeType() == Node.DOCUMENT_NODE) {
             element = ((Document) node).getDocumentElement();
@@ -160,15 +160,15 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
             element = (Element) node;
         } else {
             throw new MarshalException
-		("Signature element is not a proper Node");
+                ("Signature element is not a proper Node");
         }
 
         // check tag
         String tag = element.getLocalName();
-	if (tag == null) {
-	    throw new MarshalException("Document implementation must " +
-		"support DOM Level 2 and be namespace aware");
-	}
+        if (tag == null) {
+            throw new MarshalException("Document implementation must " +
+                "support DOM Level 2 and be namespace aware");
+        }
         if (tag.equals("Signature")) {
             return new DOMXMLSignature(element, context);
         } else {
@@ -187,28 +187,28 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
     public DigestMethod newDigestMethod(String algorithm,
         DigestMethodParameterSpec params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	if (algorithm == null) {
-	    throw new NullPointerException();
-	}
+        if (algorithm == null) {
+            throw new NullPointerException();
+        }
         if (algorithm.equals(DigestMethod.SHA1)) {
-	    return new DOMDigestMethod.SHA1(params);
-	} else if (algorithm.equals(DigestMethod.SHA256)) {
-	    return new DOMDigestMethod.SHA256(params);
-	} else if (algorithm.equals(DOMDigestMethod.SHA384)) {
-	    return new DOMDigestMethod.SHA384(params);
-	} else if (algorithm.equals(DigestMethod.SHA512)) {
+            return new DOMDigestMethod.SHA1(params);
+        } else if (algorithm.equals(DigestMethod.SHA256)) {
+            return new DOMDigestMethod.SHA256(params);
+        } else if (algorithm.equals(DOMDigestMethod.SHA384)) {
+            return new DOMDigestMethod.SHA384(params);
+        } else if (algorithm.equals(DigestMethod.SHA512)) {
             return new DOMDigestMethod.SHA512(params);
-	} else {
-	    throw new NoSuchAlgorithmException("unsupported algorithm");
-	}
+        } else {
+            throw new NoSuchAlgorithmException("unsupported algorithm");
+        }
     }
 
     public SignatureMethod newSignatureMethod(String algorithm,
         SignatureMethodParameterSpec params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	if (algorithm == null) {
-	    throw new NullPointerException();
-	}
+        if (algorithm == null) {
+            throw new NullPointerException();
+        }
         if (algorithm.equals(SignatureMethod.RSA_SHA1)) {
             return new DOMSignatureMethod.SHA1withRSA(params);
         } else if (algorithm.equals(DOMSignatureMethod.RSA_SHA256)) {
@@ -227,52 +227,52 @@ public final class DOMXMLSignatureFactory extends XMLSignatureFactory {
             return new DOMHMACSignatureMethod.SHA384(params);
         } else if (algorithm.equals(DOMSignatureMethod.HMAC_SHA512)) {
             return new DOMHMACSignatureMethod.SHA512(params);
-	} else {
-	    throw new NoSuchAlgorithmException("unsupported algorithm");
-	}
+        } else {
+            throw new NoSuchAlgorithmException("unsupported algorithm");
+        }
     }
 
     public Transform newTransform(String algorithm,
         TransformParameterSpec params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	TransformService spi = TransformService.getInstance(algorithm, "DOM");
-	spi.init(params);
-	return new DOMTransform(spi);
+        TransformService spi = TransformService.getInstance(algorithm, "DOM");
+        spi.init(params);
+        return new DOMTransform(spi);
     }
 
     public Transform newTransform(String algorithm,
         XMLStructure params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	TransformService spi = TransformService.getInstance(algorithm, "DOM");
-	if (params == null) {
-	    spi.init(null);
-	} else {
-	    spi.init(params, null);
-	}
-	return new DOMTransform(spi);
+        TransformService spi = TransformService.getInstance(algorithm, "DOM");
+        if (params == null) {
+            spi.init(null);
+        } else {
+            spi.init(params, null);
+        }
+        return new DOMTransform(spi);
     }
 
     public CanonicalizationMethod newCanonicalizationMethod(String algorithm,
         C14NMethodParameterSpec params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	TransformService spi = TransformService.getInstance(algorithm, "DOM");
-	spi.init(params);
-	return new DOMCanonicalizationMethod(spi);
+        TransformService spi = TransformService.getInstance(algorithm, "DOM");
+        spi.init(params);
+        return new DOMCanonicalizationMethod(spi);
     }
 
     public CanonicalizationMethod newCanonicalizationMethod(String algorithm,
         XMLStructure params) throws NoSuchAlgorithmException,
         InvalidAlgorithmParameterException {
-	TransformService spi = TransformService.getInstance(algorithm, "DOM");
-	if (params == null) {
-	    spi.init(null);
-	} else {
-	    spi.init(params, null);
-	}
-	return new DOMCanonicalizationMethod(spi);
+        TransformService spi = TransformService.getInstance(algorithm, "DOM");
+        if (params == null) {
+            spi.init(null);
+        } else {
+            spi.init(params, null);
+        }
+        return new DOMCanonicalizationMethod(spi);
     }
 
     public URIDereferencer getURIDereferencer() {
-	return DOMURIDereferencer.INSTANCE;
+        return DOMURIDereferencer.INSTANCE;
     }
 }

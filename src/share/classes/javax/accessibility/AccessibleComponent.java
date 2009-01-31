@@ -29,12 +29,12 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * The AccessibleComponent interface should be supported by any object 
- * that is rendered on the screen.  This interface provides the standard 
- * mechanism for an assistive technology to determine and set the 
+ * The AccessibleComponent interface should be supported by any object
+ * that is rendered on the screen.  This interface provides the standard
+ * mechanism for an assistive technology to determine and set the
  * graphical representation of an object.  Applications can determine
  * if an object supports the AccessibleComponent interface by first
- * obtaining its AccessibleContext 
+ * obtaining its AccessibleContext
  * and then calling the
  * {@link AccessibleContext#getAccessibleComponent} method.
  * If the return value is not null, the object supports this interface.
@@ -44,9 +44,8 @@ import java.awt.event.*;
  * @see AccessibleContext
  * @see AccessibleContext#getAccessibleComponent
  *
- * @version     1.7 10/05/99 14:00:28
- * @author	Peter Korn
- * @author	Hans Muller
+ * @author      Peter Korn
+ * @author      Hans Muller
  * @author      Willie Walker
  */
 public interface AccessibleComponent {
@@ -54,7 +53,7 @@ public interface AccessibleComponent {
     /**
      * Gets the background color of this object.
      *
-     * @return the background color, if supported, of the object; 
+     * @return the background color, if supported, of the object;
      * otherwise, null
      * @see #setBackground
      */
@@ -71,7 +70,7 @@ public interface AccessibleComponent {
     /**
      * Gets the foreground color of this object.
      *
-     * @return the foreground color, if supported, of the object; 
+     * @return the foreground color, if supported, of the object;
      * otherwise, null
      * @see #setForeground
      */
@@ -142,7 +141,7 @@ public interface AccessibleComponent {
     /**
      * Sets the enabled state of the object.
      *
-     * @param b if true, enables this object; otherwise, disables it 
+     * @param b if true, enables this object; otherwise, disables it
      * @see #isEnabled
      */
     public void setEnabled(boolean b);
@@ -153,7 +152,7 @@ public interface AccessibleComponent {
      * showing on the screen because one of the objects that this object
      * is contained by is currently not visible.  To determine if an object is
      * showing on the screen, use isShowing().
-     * <p>Objects that are visible will also have the 
+     * <p>Objects that are visible will also have the
      * AccessibleState.VISIBLE state set in their AccessibleStateSets.
      *
      * @return true if object is visible; otherwise, false
@@ -167,7 +166,7 @@ public interface AccessibleComponent {
     /**
      * Sets the visible state of the object.
      *
-     * @param b if true, shows this object; otherwise, hides it 
+     * @param b if true, shows this object; otherwise, hides it
      * @see #isVisible
      */
     public void setVisible(boolean b);
@@ -183,10 +182,10 @@ public interface AccessibleComponent {
      */
     public boolean isShowing();
 
-    /** 
+    /**
      * Checks whether the specified point is within this object's bounds,
      * where the point's x and y coordinates are defined to be relative to the
-     * coordinate system of the object. 
+     * coordinate system of the object.
      *
      * @param p the Point relative to the coordinate system of the object
      * @return true if object contains Point; otherwise false
@@ -194,7 +193,7 @@ public interface AccessibleComponent {
      */
     public boolean contains(Point p);
 
-    /** 
+    /**
      * Returns the location of the object on the screen.
      *
      * @return the location of the object on screen; null if this object
@@ -204,12 +203,12 @@ public interface AccessibleComponent {
      */
     public Point getLocationOnScreen();
 
-    /** 
-     * Gets the location of the object relative to the parent in the form 
-     * of a point specifying the object's top-left corner in the screen's 
+    /**
+     * Gets the location of the object relative to the parent in the form
+     * of a point specifying the object's top-left corner in the screen's
      * coordinate space.
      *
-     * @return An instance of Point representing the top-left corner of the 
+     * @return An instance of Point representing the top-left corner of the
      * object's bounds in the coordinate space of the screen; null if
      * this object or its parent are not on the screen
      * @see #getBounds
@@ -217,67 +216,67 @@ public interface AccessibleComponent {
      */
     public Point getLocation();
 
-    /** 
+    /**
      * Sets the location of the object relative to the parent.
      * @param p the new position for the top-left corner
      * @see #getLocation
      */
     public void setLocation(Point p);
 
-    /** 
-     * Gets the bounds of this object in the form of a Rectangle object. 
+    /**
+     * Gets the bounds of this object in the form of a Rectangle object.
      * The bounds specify this object's width, height, and location
-     * relative to its parent. 
+     * relative to its parent.
      *
-     * @return A rectangle indicating this component's bounds; null if 
+     * @return A rectangle indicating this component's bounds; null if
      * this object is not on the screen.
      * @see #contains
      */
     public Rectangle getBounds();
 
-    /** 
-     * Sets the bounds of this object in the form of a Rectangle object. 
+    /**
+     * Sets the bounds of this object in the form of a Rectangle object.
      * The bounds specify this object's width, height, and location
      * relative to its parent.
-     *	
+     *
      * @param r rectangle indicating this component's bounds
      * @see #getBounds
      */
     public void setBounds(Rectangle r);
 
-    /** 
-     * Returns the size of this object in the form of a Dimension object. 
+    /**
+     * Returns the size of this object in the form of a Dimension object.
      * The height field of the Dimension object contains this object's
-     * height, and the width field of the Dimension object contains this 
-     * object's width. 
+     * height, and the width field of the Dimension object contains this
+     * object's width.
      *
-     * @return A Dimension object that indicates the size of this component; 
+     * @return A Dimension object that indicates the size of this component;
      * null if this object is not on the screen
      * @see #setSize
      */
     public Dimension getSize();
 
-    /** 
-     * Resizes this object so that it has width and height. 
-     *	
-     * @param d The dimension specifying the new size of the object. 
+    /**
+     * Resizes this object so that it has width and height.
+     *
+     * @param d The dimension specifying the new size of the object.
      * @see #getSize
      */
     public void setSize(Dimension d);
 
     /**
-     * Returns the Accessible child, if one exists, contained at the local 
+     * Returns the Accessible child, if one exists, contained at the local
      * coordinate Point.
      *
      * @param p The point relative to the coordinate system of this object.
-     * @return the Accessible, if it exists, at the specified location; 
+     * @return the Accessible, if it exists, at the specified location;
      * otherwise null
      */
     public Accessible getAccessibleAt(Point p);
 
     /**
-     * Returns whether this object can accept focus or not.   Objects that 
-     * can accept focus will also have the AccessibleState.FOCUSABLE state 
+     * Returns whether this object can accept focus or not.   Objects that
+     * can accept focus will also have the AccessibleState.FOCUSABLE state
      * set in their AccessibleStateSets.
      *
      * @return true if object can accept focus; otherwise false
@@ -297,8 +296,8 @@ public interface AccessibleComponent {
     public void requestFocus();
 
     /**
-     * Adds the specified focus listener to receive focus events from this 
-     * component. 
+     * Adds the specified focus listener to receive focus events from this
+     * component.
      *
      * @param l the focus listener
      * @see #removeFocusListener
@@ -306,7 +305,7 @@ public interface AccessibleComponent {
     public void addFocusListener(FocusListener l);
 
     /**
-     * Removes the specified focus listener so it no longer receives focus 
+     * Removes the specified focus listener so it no longer receives focus
      * events from this component.
      *
      * @param l the focus listener

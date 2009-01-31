@@ -32,7 +32,7 @@ import java.io.*;
 public class MarkReset {
 
     public static void main(String[] args) throws Exception {
-        LineNumberInputStream in = new 
+        LineNumberInputStream in = new
             LineNumberInputStream(new StringBufferInputStream("\rabcd"));
 
         in.read();

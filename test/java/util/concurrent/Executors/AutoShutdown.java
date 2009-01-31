@@ -35,19 +35,19 @@ import static java.util.concurrent.Executors.*;
 
 public class AutoShutdown {
     private static void waitForFinalizersToRun() throws Throwable {
-	System.gc(); System.runFinalization(); Thread.sleep(10);
-	System.gc(); System.runFinalization(); Thread.sleep(10);
+        System.gc(); System.runFinalization(); Thread.sleep(10);
+        System.gc(); System.runFinalization(); Thread.sleep(10);
     }
-    
+
     private static void realMain(String[] args) throws Throwable {
-	Runnable trivialRunnable = new Runnable() { public void run() {}};
-	int count0 = Thread.activeCount();
-	newSingleThreadExecutor().execute(trivialRunnable);
-	newSingleThreadExecutor(defaultThreadFactory()).execute(trivialRunnable);
-	Thread.sleep(100);
-	equal(Thread.activeCount(), count0 + 2);
-	waitForFinalizersToRun();
-	equal(Thread.activeCount(), count0);
+        Runnable trivialRunnable = new Runnable() { public void run() {}};
+        int count0 = Thread.activeCount();
+        newSingleThreadExecutor().execute(trivialRunnable);
+        newSingleThreadExecutor(defaultThreadFactory()).execute(trivialRunnable);
+        Thread.sleep(100);
+        equal(Thread.activeCount(), count0 + 2);
+        waitForFinalizersToRun();
+        equal(Thread.activeCount(), count0);
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -57,10 +57,10 @@ public class AutoShutdown {
     static void fail(String msg) {System.out.println(msg); fail();}
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	try {realMain(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {realMain(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
+
 package sun.security.jgss.krb5;
 
 import javax.security.auth.kerberos.KerberosTicket;
@@ -36,16 +36,15 @@ import java.util.Set;
 
 /**
  * This utility looks through the current Subject and retrieves a ticket or key
- * for the desired client/server principals. 
+ * for the desired client/server principals.
  *
  * @author Ram Marti
- * @version %I%, %G%
- * @since 1.4.2 
+ * @since 1.4.2
  */
 
 class SubjectComber {
 
-    private static final boolean DEBUG = Krb5Util.DEBUG; 
+    private static final boolean DEBUG = Krb5Util.DEBUG;
 
     /**
      * Default constructor
@@ -53,64 +52,64 @@ class SubjectComber {
     private SubjectComber() {  // Cannot create one of these
     }
 
-    static Object find(Subject subject, String serverPrincipal, 
-	String clientPrincipal,	Class credClass) {
+    static Object find(Subject subject, String serverPrincipal,
+        String clientPrincipal, Class credClass) {
 
-	return findAux(subject, serverPrincipal, clientPrincipal, credClass, 
-	    true);
+        return findAux(subject, serverPrincipal, clientPrincipal, credClass,
+            true);
     }
 
-    static Object findMany(Subject subject, String serverPrincipal, 
-	String clientPrincipal,	Class credClass) {
+    static Object findMany(Subject subject, String serverPrincipal,
+        String clientPrincipal, Class credClass) {
 
-	return findAux(subject, serverPrincipal, clientPrincipal, credClass,
-	    false);
+        return findAux(subject, serverPrincipal, clientPrincipal, credClass,
+            false);
     }
- 
+
     /**
      * Find the ticket or key for the specified client/server principals
      * in the subject. Returns null if the subject is null.
      *
      * @return the ticket or key
      */
-    private static Object findAux(Subject subject, String serverPrincipal, 
-	String clientPrincipal,	Class credClass, boolean oneOnly) {
+    private static Object findAux(Subject subject, String serverPrincipal,
+        String clientPrincipal, Class credClass, boolean oneOnly) {
 
-	if (subject == null) {
-	    return null;
-	} else {
-	    List<Object> answer = (oneOnly ? null : new ArrayList<Object>());
+        if (subject == null) {
+            return null;
+        } else {
+            List<Object> answer = (oneOnly ? null : new ArrayList<Object>());
 
-	    if (credClass == KerberosKey.class) {
-		// We are looking for a KerberosKey credentials for the
-		// serverPrincipal
-		Iterator<KerberosKey> iterator =
+            if (credClass == KerberosKey.class) {
+                // We are looking for a KerberosKey credentials for the
+                // serverPrincipal
+                Iterator<KerberosKey> iterator =
                     subject.getPrivateCredentials(KerberosKey.class).iterator();
                 while (iterator.hasNext()) {
                     KerberosKey key = iterator.next();
                     if (serverPrincipal == null ||
                         serverPrincipal.equals(key.getPrincipal().getName())) {
-			 if (DEBUG) {	
-			     System.out.println("Found key for "
-				 + key.getPrincipal() + "(" + 
-				 key.getKeyType() + ")");
-			 }
-			 if (oneOnly) {
-			     return key;
-			 } else {
-			     if (serverPrincipal == null) {
-				 // Record name so that keys returned will all
-				 // belong to the same principal
-				 serverPrincipal = 
-				     key.getPrincipal().getName();
-			     }
-			     answer.add(key);
-			 }
+                         if (DEBUG) {
+                             System.out.println("Found key for "
+                                 + key.getPrincipal() + "(" +
+                                 key.getKeyType() + ")");
+                         }
+                         if (oneOnly) {
+                             return key;
+                         } else {
+                             if (serverPrincipal == null) {
+                                 // Record name so that keys returned will all
+                                 // belong to the same principal
+                                 serverPrincipal =
+                                     key.getPrincipal().getName();
+                             }
+                             answer.add(key);
+                         }
                     }
                 }
-	    } else if (credClass == KerberosTicket.class) {
-		// we are looking for a KerberosTicket credentials
-		// for client-service principal pair
+            } else if (credClass == KerberosTicket.class) {
+                // we are looking for a KerberosTicket credentials
+                // for client-service principal pair
                 Set<Object> pcs = subject.getPrivateCredentials();
                 synchronized (pcs) {
                     Iterator<Object> iterator = pcs.iterator();
@@ -119,7 +118,7 @@ class SubjectComber {
                         if (obj instanceof KerberosTicket) {
                             KerberosTicket ticket = (KerberosTicket)obj;
                             if (DEBUG) {
-                                System.out.println("Found ticket for " 
+                                System.out.println("Found ticket for "
                                                     + ticket.getClient()
                                                     + " to go to "
                                                     + ticket.getServer()
@@ -149,8 +148,8 @@ class SubjectComber {
 
                                 }
                             } else {
-				if (serverPrincipal == null ||
-				    ticket.getServer().getName().equals(serverPrincipal))  {
+                                if (serverPrincipal == null ||
+                                    ticket.getServer().getName().equals(serverPrincipal))  {
 
                                     if (clientPrincipal == null ||
                                         clientPrincipal.equals(
@@ -161,11 +160,11 @@ class SubjectComber {
                                             // Record names so that tickets will
                                             // all belong to same principals
                                             if (clientPrincipal == null) {
-                                                clientPrincipal = 
+                                                clientPrincipal =
                                                 ticket.getClient().getName();
                                             }
                                             if (serverPrincipal == null) {
-                                                serverPrincipal = 
+                                                serverPrincipal =
                                                 ticket.getServer().getName();
                                             }
                                             answer.add(ticket);
@@ -177,7 +176,7 @@ class SubjectComber {
                     }
                 }
             }
-	    return answer;    
-	}
+            return answer;
+        }
     }
 }

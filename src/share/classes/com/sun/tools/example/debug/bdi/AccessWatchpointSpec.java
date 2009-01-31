@@ -30,7 +30,7 @@ import com.sun.jdi.request.*;
 
 public class AccessWatchpointSpec extends WatchpointSpec {
 
-    AccessWatchpointSpec(EventRequestSpecList specs, 
+    AccessWatchpointSpec(EventRequestSpecList specs,
                          ReferenceTypeSpec refSpec, String fieldId) {
         super(specs, refSpec,  fieldId);
     }
@@ -55,5 +55,3 @@ public class AccessWatchpointSpec extends WatchpointSpec {
         return (obj instanceof AccessWatchpointSpec) && super.equals(obj);
     }
 }
-
-

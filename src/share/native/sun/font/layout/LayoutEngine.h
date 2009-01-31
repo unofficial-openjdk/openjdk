@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)LayoutEngine.h	1.14 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -66,7 +65,7 @@ class LEGlyphStorage;
  * default positioning using the glyph's advance widths. Subclasses
  * can override these methods for more advanced layout.  There is a
  * public method which invokes the steps in the correct order.
- * 
+ *
  * The steps are:
  *
  * 1) Glyph processing - character to glyph mapping and any other
@@ -135,7 +134,7 @@ protected:
     le_int32 fTypoFlags;
 
     /**
-     * This constructs an instance for a given font, script and 
+     * This constructs an instance for a given font, script and
      * language. Subclass constructors
      * must call this constructor.
      *
@@ -186,8 +185,8 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset, 
-	le_int32 count, le_int32 max, le_bool rightToLeft,
+    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset,
+        le_int32 count, le_int32 max, le_bool rightToLeft,
         LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -210,7 +209,7 @@ protected:
      * @param rightToLeft - TRUE if the text is in a right to left
      *            directional run
      * @param glyphStorage - the object which holds the per-glyph
-     *            storage. The glyph and char indices arrays will be 
+     *            storage. The glyph and char indices arrays will be
      *            set.
      *
      * Output parameters:
@@ -220,8 +219,8 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset, 
-	le_int32 count, le_int32 max, le_bool rightToLeft, 
+    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset,
+        le_int32 count, le_int32 max, le_bool rightToLeft,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -231,7 +230,7 @@ protected:
      * that many subclasses will override this method.
      *
      * Input parameters:
-     * @param glyphStorage - the object which holds the per-glyph storage. 
+     * @param glyphStorage - the object which holds the per-glyph storage.
      *            The glyph position array will be set.
      * @param x - the starting X position
      * @param y - the starting Y position
@@ -239,7 +238,7 @@ protected:
      *
      * @internal
      */
-    virtual void positionGlyphs(LEGlyphStorage &glyphStorage, 
+    virtual void positionGlyphs(LEGlyphStorage &glyphStorage,
                      float x, float y, LEErrorCode &success);
 
     /**
@@ -265,8 +264,8 @@ protected:
      *
      * @internal
      */
-    virtual void adjustGlyphPositions(const LEUnicode chars[], 
-	le_int32 offset, le_int32 count, le_bool reverse, 
+    virtual void adjustGlyphPositions(const LEUnicode chars[],
+        le_int32 offset, le_int32 count, le_bool reverse,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -274,7 +273,7 @@ protected:
      * text. The default implementation gets the table from the font
      * instance. Subclasses which need to get the tables some other
      * way must override this method.
-     * 
+     *
      * @param tableTag - the four byte table tag.
      *
      * @return the address of the table.
@@ -312,15 +311,15 @@ protected:
      *
      * @internal
      */
-    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset, 
-	le_int32 count, le_bool reverse, le_bool mirror, 
+    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset,
+        le_int32 count, le_bool reverse, le_bool mirror,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
      * This is a convenience method that forces the advance width of
      * mark glyphs to be zero, which is required for proper selection
      * and highlighting.
-     * 
+     *
      * @param glyphStorage - the object containing the per-glyph
      *     storage. The positions array will be modified.
      * @param markFilter - used to identify mark glyphs
@@ -331,7 +330,7 @@ protected:
      *
      * @internal
      */
-    static void adjustMarkGlyphs(LEGlyphStorage &glyphStorage, 
+    static void adjustMarkGlyphs(LEGlyphStorage &glyphStorage,
         LEGlyphFilter *markFilter, LEErrorCode &success);
 
 
@@ -342,7 +341,7 @@ protected:
      * identify marks. This is required in cases where the font does
      * not contain enough information to identify them based on the
      * glyph IDs.
-     * 
+     *
      * @param chars - the array of input characters
      * @param charCount - the number of input characers
      * @param glyphStorage - the object containing the per-glyph
@@ -357,9 +356,9 @@ protected:
      *
      * @internal
      */
-    static void adjustMarkGlyphs(const LEUnicode chars[], 
-        le_int32 charCount, le_bool reverse, 
-        LEGlyphStorage &glyphStorage, LEGlyphFilter *markFilter, 
+    static void adjustMarkGlyphs(const LEUnicode chars[],
+        le_int32 charCount, le_bool reverse,
+        LEGlyphStorage &glyphStorage, LEGlyphFilter *markFilter,
         LEErrorCode &success);
 
 public:
@@ -396,8 +395,8 @@ public:
      * Note: the glyph, character index and position array can be
      * accessed using the getter method below.
      */
-    le_int32 layoutChars(const LEUnicode chars[], le_int32 offset, 
-        le_int32 count, le_int32 max, le_bool rightToLeft, float x, 
+    le_int32 layoutChars(const LEUnicode chars[], le_int32 offset,
+        le_int32 count, le_int32 max, le_bool rightToLeft, float x,
         float y, LEErrorCode &success);
 
     /**
@@ -436,7 +435,7 @@ public:
      *
      * @stable ICU 2.8
      */
-    virtual void getGlyphs(le_uint32 glyphs[], le_uint32 extraBits, 
+    virtual void getGlyphs(le_uint32 glyphs[], le_uint32 extraBits,
         LEErrorCode &success) const;
 
     /**
@@ -462,7 +461,7 @@ public:
      *
      * @stable ICU 2.8
      */
-    void getCharIndices(le_int32 charIndices[], le_int32 indexBase, 
+    void getCharIndices(le_int32 charIndices[], le_int32 indexBase,
         LEErrorCode &success) const;
 
     /**
@@ -492,7 +491,7 @@ public:
      *
      * @stable ICU 2.8
      */
-    void getGlyphPosition(le_int32 glyphIndex, float &x, float &y, 
+    void getGlyphPosition(le_int32 glyphIndex, float &x, float &y,
         LEErrorCode &success) const;
 
     /**
@@ -521,7 +520,7 @@ public:
      *
      * @stable ICU 2.8
      */
-    static LayoutEngine *layoutEngineFactory(const LEFontInstance *fontInstance, 
+    static LayoutEngine *layoutEngineFactory(const LEFontInstance *fontInstance,
         le_int32 scriptCode, le_int32 languageCode, LEErrorCode &success);
 
     /**
@@ -529,10 +528,9 @@ public:
      * @draft ICU 3.4
      */
     static LayoutEngine *layoutEngineFactory(
-        const LEFontInstance *fontInstance, 
-        le_int32 scriptCode, le_int32 languageCode, 
+        const LEFontInstance *fontInstance,
+        le_int32 scriptCode, le_int32 languageCode,
         le_int32 typo_flags, LEErrorCode &success);
 };
 
 #endif
-

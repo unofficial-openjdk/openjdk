@@ -55,9 +55,8 @@ import javax.swing.plaf.UIResource;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @see javax.swing.plaf.UIResource
- * @version %I% %G%
  * @author Amy Fowler
- * 
+ *
  */
 public class BorderUIResource implements Border, UIResource, Serializable
 {
@@ -109,7 +108,7 @@ public class BorderUIResource implements Border, UIResource, Serializable
     }
 
     public void paintBorder(Component c, Graphics g, int x, int y,
-                            int width, int height) {        
+                            int width, int height) {
         delegate.paintBorder(c, g, x, y, width, height);
     }
 
@@ -117,7 +116,7 @@ public class BorderUIResource implements Border, UIResource, Serializable
         return delegate.getBorderInsets(c);
     }
 
-    public boolean isBorderOpaque() { 
+    public boolean isBorderOpaque() {
         return delegate.isBorderOpaque();
     }
 
@@ -160,7 +159,7 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(bevelType, highlight, shadow);
         }
 
-        public BevelBorderUIResource(int bevelType, 
+        public BevelBorderUIResource(int bevelType,
                                      Color highlightOuter, Color highlightInner,
                                      Color shadowOuter, Color shadowInner) {
             super(bevelType, highlightOuter, highlightInner, shadowOuter, shadowInner);
@@ -188,12 +187,12 @@ public class BorderUIResource implements Border, UIResource, Serializable
 
     public static class MatteBorderUIResource extends MatteBorder implements UIResource {
 
-        public MatteBorderUIResource(int top, int left, int bottom, int right, 
+        public MatteBorderUIResource(int top, int left, int bottom, int right,
                                      Color color)   {
             super(top, left, bottom, right, color);
         }
 
-        public MatteBorderUIResource(int top, int left, int bottom, int right, 
+        public MatteBorderUIResource(int top, int left, int bottom, int right,
                                      Icon tileIcon)   {
             super(top, left, bottom, right, tileIcon);
         }
@@ -212,19 +211,19 @@ public class BorderUIResource implements Border, UIResource, Serializable
         public TitledBorderUIResource(Border border)       {
             super(border);
         }
-        
+
         public TitledBorderUIResource(Border border, String title) {
             super(border, title);
         }
 
-        public TitledBorderUIResource(Border border, 
+        public TitledBorderUIResource(Border border,
                         String title,
                         int titleJustification,
                         int titlePosition)      {
             super(border, title, titleJustification, titlePosition);
         }
 
-        public TitledBorderUIResource(Border border, 			
+        public TitledBorderUIResource(Border border,
                         String title,
                         int titleJustification,
                         int titlePosition,
@@ -232,7 +231,7 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(border, title, titleJustification, titlePosition, titleFont);
         }
 
-        public TitledBorderUIResource(Border border,                     
+        public TitledBorderUIResource(Border border,
                         String title,
                         int titleJustification,
                         int titlePosition,
@@ -241,5 +240,5 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(border, title, titleJustification, titlePosition, titleFont, titleColor);
         }
     }
- 
+
 }

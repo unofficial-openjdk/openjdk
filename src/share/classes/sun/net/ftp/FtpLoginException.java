@@ -29,14 +29,12 @@ import java.io.*;
 
 /**
  * This exception is thrown when an error is encountered during an
- * FTP login operation. 
- * 
- * @version 	%I%, %G%
- * @author	Jonathan Payne
+ * FTP login operation.
+ *
+ * @author      Jonathan Payne
  */
 public class FtpLoginException extends FtpProtocolException {
     FtpLoginException(String s) {
-	super(s);
+        super(s);
     }
 }
-

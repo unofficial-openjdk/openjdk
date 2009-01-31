@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be 
+ * Thrown to indicate that the requested operation cannot be
  * completed while the specified thread is in its current state.
  *
  * @author Gordon Hirsch
@@ -36,11 +36,11 @@ public class IncompatibleThreadStateException extends Exception
 {
     public IncompatibleThreadStateException()
     {
-	super();
+        super();
     }
 
     public IncompatibleThreadStateException(String s)
     {
-	super(s);
+        super(s);
     }
 }

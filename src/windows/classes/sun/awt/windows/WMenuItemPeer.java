@@ -51,11 +51,11 @@ class WMenuItemPeer extends WObjectPeer implements MenuItemPeer {
     private synchronized native void _dispose();
     protected void disposeImpl() {
         WToolkit.targetDisposedPeer(target, this);
-	_dispose();
+        _dispose();
     }
 
     public void setEnabled(boolean b) {
-	enable(b);
+        enable(b);
     }
 
     /**
@@ -73,7 +73,7 @@ class WMenuItemPeer extends WObjectPeer implements MenuItemPeer {
     }
 
     public void readShortcutLabel() {
-        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu 
+        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu
         WMenuPeer ancestor = parent;
         while (ancestor != null && !(ancestor instanceof WMenuBarPeer)) {
             ancestor = ancestor.parent;
@@ -87,7 +87,7 @@ class WMenuItemPeer extends WObjectPeer implements MenuItemPeer {
     }
 
     public void setLabel(String label) {
-        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu 
+        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu
         readShortcutLabel();
         _setLabel(label);
     }
@@ -111,7 +111,7 @@ class WMenuItemPeer extends WObjectPeer implements MenuItemPeer {
         create(parent);
         // fix for 5088782: check if menu object is created successfully
         checkMenuCreation();
-        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu 
+        //Fix for 6288578: PIT. Windows: Shortcuts displayed for the menuitems in a popup menu
         readShortcutLabel();
     }
 
@@ -146,14 +146,14 @@ class WMenuItemPeer extends WObjectPeer implements MenuItemPeer {
     // native callbacks
 
     void handleAction(final long when, final int modifiers) {
-	WToolkit.executeOnEventHandlerThread(target, new Runnable() {
-	    public void run() {
-		postEvent(new ActionEvent(target, ActionEvent.ACTION_PERFORMED,
-					  ((MenuItem)target).
+        WToolkit.executeOnEventHandlerThread(target, new Runnable() {
+            public void run() {
+                postEvent(new ActionEvent(target, ActionEvent.ACTION_PERFORMED,
+                                          ((MenuItem)target).
                                               getActionCommand(), when,
                                           modifiers));
-	    }
-	});
+            }
+        });
     }
 
     private static Font defaultMenuFont;

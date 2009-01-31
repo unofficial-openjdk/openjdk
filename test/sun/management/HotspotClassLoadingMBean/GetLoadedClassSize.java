@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetLoadedClassSize {
 
     private static HotspotClassLoadingMBean mbean =
-	(HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
+        (HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
 
     // Careful with these values.
     private static final long MIN_VALUE_FOR_PASS = 1;
@@ -50,36 +50,36 @@ public class GetLoadedClassSize {
             trace = true;
         }
 
-	long value = mbean.getLoadedClassSize();
+        long value = mbean.getLoadedClassSize();
 
-	if (trace) {
-	    System.out.println("Loaded class size (bytes): " + value);
-	}
+        if (trace) {
+            System.out.println("Loaded class size (bytes): " + value);
+        }
 
-	if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
-	    throw new RuntimeException("Loaded class size " + 
-				       "illegal value: " + value + " bytes " + 
-				       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
-				       "MAX = " + MAX_VALUE_FOR_PASS + ")");
-	}
+        if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
+            throw new RuntimeException("Loaded class size " +
+                                       "illegal value: " + value + " bytes " +
+                                       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
+                                       "MAX = " + MAX_VALUE_FOR_PASS + ")");
+        }
 
-	// increase the size
-	Class.forName("ClassToLoad1");
-	
-	
-	long value2 = mbean.getLoadedClassSize();
+        // increase the size
+        Class.forName("ClassToLoad1");
 
-	if (trace) {
-	    System.out.println("Loaded class size2 (bytes): " + value2);
-	}
 
-	if (value2 <= value) {
-	    throw new RuntimeException("Loaded class size " + 
-				       "did not increase " +
-				       "(value = " + value + "; " +
-				       "value2 = " + value2 + ")");
-	}
-	System.out.println("Test passed.");
+        long value2 = mbean.getLoadedClassSize();
+
+        if (trace) {
+            System.out.println("Loaded class size2 (bytes): " + value2);
+        }
+
+        if (value2 <= value) {
+            throw new RuntimeException("Loaded class size " +
+                                       "did not increase " +
+                                       "(value = " + value + "; " +
+                                       "value2 = " + value2 + ")");
+        }
+        System.out.println("Test passed.");
     }
 }
 

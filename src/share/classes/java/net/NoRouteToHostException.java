@@ -35,14 +35,14 @@ package java.net;
  */
 public class NoRouteToHostException extends SocketException {
     /**
-     * Constructs a new NoRouteToHostException with the specified detail 
+     * Constructs a new NoRouteToHostException with the specified detail
      * message as to why the remote host cannot be reached.
-     * A detail message is a String that gives a specific 
+     * A detail message is a String that gives a specific
      * description of this error.
      * @param msg the detail message
      */
     public NoRouteToHostException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**

@@ -90,7 +90,6 @@
  * after performing the BiDi algorithm.<p>
  *
  * @author Markus W. Scherer
- * @version 1.0
  */
 DOCXX_TAG
 /*@{*/
@@ -703,18 +702,18 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *
  * <pre>
  *&nbsp; #include "ubidi.h"
- *&nbsp; 
+ *&nbsp;
  *&nbsp; typedef enum {
  *&nbsp;     styleNormal=0, styleSelected=1,
  *&nbsp;     styleBold=2, styleItalics=4,
  *&nbsp;     styleSuper=8, styleSub=16
  *&nbsp; } Style;
- *&nbsp; 
+ *&nbsp;
  *&nbsp; typedef struct { int32_t limit; Style style; } StyleRun;
- *&nbsp; 
+ *&nbsp;
  *&nbsp; int getTextWidth(const UChar *text, int32_t start, int32_t limit,
  *&nbsp;                  const StyleRun *styleRuns, int styleRunCount);
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // set *pLimit and *pStyleRunLimit for a line
  *&nbsp; // from text[start] and from styleRuns[styleRunStart]
  *&nbsp; // using ubidi_getLogicalRun(para, ...)
@@ -722,17 +721,17 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;                   UBiDi *para,
  *&nbsp;                   const StyleRun *styleRuns, int styleRunStart, int *pStyleRunLimit,
  *&nbsp;                   int *pLineWidth);
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // render runs on a line sequentially, always from left to right
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // prepare rendering a new line
  *&nbsp; void startLine(UBiDiDirection textDirection, int lineWidth);
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // render a run of text and advance to the right by the run width
  *&nbsp; // the text[start..limit-1] is always in logical order
  *&nbsp; void renderRun(const UChar *text, int32_t start, int32_t limit,
  *&nbsp;                UBiDiDirection textDirection, Style style);
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // We could compute a cross-product
  *&nbsp; // from the style runs with the directional runs
  *&nbsp; // and then reorder it.
@@ -740,7 +739,7 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp; // and render the intersections -
  *&nbsp; // with shortcuts in simple (and common) cases.
  *&nbsp; // renderParagraph() is the main function.
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // render a directional run with
  *&nbsp; // (possibly) multiple style runs intersecting with it
  *&nbsp; void renderDirectionalRun(const UChar *text,
@@ -748,11 +747,11 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;                           UBiDiDirection direction,
  *&nbsp;                           const StyleRun *styleRuns, int styleRunCount) {
  *&nbsp;     int i;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;     // iterate over style runs
  *&nbsp;     if(direction==UBIDI_LTR) {
  *&nbsp;         int styleLimit;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         for(i=0; i&lt;styleRunCount; ++i) {
  *&nbsp;             styleLimit=styleRun[i].limit;
  *&nbsp;             if(start&lt;styleLimit) {
@@ -765,7 +764,7 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;         }
  *&nbsp;     } else {
  *&nbsp;         int styleStart;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         for(i=styleRunCount-1; i>=0; --i) {
  *&nbsp;             if(i>0) {
  *&nbsp;                 styleStart=styleRun[i-1].limit;
@@ -782,7 +781,7 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;         }
  *&nbsp;     }
  *&nbsp; }
- *&nbsp; 
+ *&nbsp;
  *&nbsp; // the line object represents text[start..limit-1]
  *&nbsp; void renderLine(UBiDi *line, const UChar *text,
  *&nbsp;                 int32_t start, int32_t limit,
@@ -793,19 +792,19 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;         if(styleRunCount&lt;=1) {
  *&nbsp;             renderRun(text, start, limit, direction, styleRuns[0].style);
  *&nbsp;         } else {
- *&nbsp;             renderDirectionalRun(text, start, limit, 
+ *&nbsp;             renderDirectionalRun(text, start, limit,
  *&nbsp;                                  direction, styleRuns, styleRunCount);
  *&nbsp;         }
  *&nbsp;     } else {
  *&nbsp;         // mixed-directional
  *&nbsp;         int32_t count, i, length;
  *&nbsp;         UBiDiLevel level;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         count=ubidi_countRuns(para, pErrorCode);
  *&nbsp;         if(U_SUCCESS(*pErrorCode)) {
  *&nbsp;             if(styleRunCount&lt;=1) {
  *&nbsp;                 Style style=styleRuns[0].style;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;                 // iterate over directional runs
  *&nbsp;                 for(i=0; i&lt;count; ++i) {
  *&nbsp;                     direction=ubidi_getVisualRun(para, i, &start, &length);
@@ -813,32 +812,32 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;                 }
  *&nbsp;             } else {
  *&nbsp;                 int32_t j;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;                 // iterate over both directional and style runs
  *&nbsp;                 for(i=0; i&lt;count; ++i) {
  *&nbsp;                     direction=ubidi_getVisualRun(line, i, &start, &length);
- *&nbsp;                     renderDirectionalRun(text, start, start+length, 
+ *&nbsp;                     renderDirectionalRun(text, start, start+length,
  *&nbsp;                                          direction, styleRuns, styleRunCount);
  *&nbsp;                 }
  *&nbsp;             }
  *&nbsp;         }
  *&nbsp;     }
  *&nbsp; }
- *&nbsp; 
+ *&nbsp;
  *&nbsp; void renderParagraph(const UChar *text, int32_t length,
  *&nbsp;                      UBiDiDirection textDirection,
  *&nbsp;                      const StyleRun *styleRuns, int styleRunCount,
  *&nbsp;                      int lineWidth,
  *&nbsp;                      UErrorCode *pErrorCode) {
  *&nbsp;     UBiDi *para;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;     if(pErrorCode==NULL || U_FAILURE(*pErrorCode) || length&lt;=0) {
  *&nbsp;         return;
  *&nbsp;     }
- *&nbsp; 
+ *&nbsp;
  *&nbsp;     para=ubidi_openSized(length, 0, pErrorCode);
  *&nbsp;     if(para==NULL) { return; }
- *&nbsp; 
+ *&nbsp;
  *&nbsp;     ubidi_setPara(para, text, length,
  *&nbsp;                   textDirection ? UBIDI_DEFAULT_RTL : UBIDI_DEFAULT_LTR,
  *&nbsp;                   NULL, pErrorCode);
@@ -846,32 +845,32 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;         UBiDiLevel paraLevel=1&ubidi_getParaLevel(para);
  *&nbsp;         StyleRun styleRun={ length, styleNormal };
  *&nbsp;         int width;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         if(styleRuns==NULL || styleRunCount&lt;=0) {
  *&nbsp;             styleRunCount=1;
  *&nbsp;             styleRuns=&styleRun;
  *&nbsp;         }
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         // assume styleRuns[styleRunCount-1].limit>=length
- *&nbsp; 
+ *&nbsp;
  *&nbsp;         width=getTextWidth(text, 0, length, styleRuns, styleRunCount);
  *&nbsp;         if(width&lt;=lineWidth) {
  *&nbsp;             // everything fits onto one line
- *&nbsp; 
+ *&nbsp;
  *&nbsp;             // prepare rendering a new line from either left or right
  *&nbsp;             startLine(paraLevel, width);
- *&nbsp; 
+ *&nbsp;
  *&nbsp;             renderLine(para, text, 0, length,
  *&nbsp;                        styleRuns, styleRunCount);
  *&nbsp;         } else {
  *&nbsp;             UBiDi *line;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;             // we need to render several lines
  *&nbsp;             line=ubidi_openSized(length, 0, pErrorCode);
  *&nbsp;             if(line!=NULL) {
  *&nbsp;                 int32_t start=0, limit;
  *&nbsp;                 int styleRunStart=0, styleRunLimit;
- *&nbsp; 
+ *&nbsp;
  *&nbsp;                 for(;;) {
  *&nbsp;                     limit=length;
  *&nbsp;                     styleRunLimit=styleRunCount;
@@ -883,7 +882,7 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;                         // prepare rendering a new line
  *&nbsp;                         // from either left or right
  *&nbsp;                         startLine(paraLevel, width);
- *&nbsp; 
+ *&nbsp;
  *&nbsp;                         renderLine(line, text, start, limit,
  *&nbsp;                                    styleRuns+styleRunStart,
  *&nbsp;                                    styleRunLimit-styleRunStart);
@@ -895,12 +894,12 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  *&nbsp;                         ++styleRunStart;
  *&nbsp;                     }
  *&nbsp;                 }
- *&nbsp; 
+ *&nbsp;
  *&nbsp;                 ubidi_close(line);
  *&nbsp;             }
  *&nbsp;         }
  *&nbsp;     }
- *&nbsp; 
+ *&nbsp;
  *&nbsp;     ubidi_close(para);
  *&nbsp; }
  * </pre>
@@ -912,4 +911,3 @@ BIDI_SAMPLE_CODE
 /*@}*/
 
 #endif
-

@@ -104,7 +104,7 @@
             fork="true" failonerror="true"
             jvm="${bootstrap.jdk}/bin/java">
             <jvmarg line="${demo.bootclasspath}"/>
-            <arg line="${jvm.args}"/>
+            <jvmarg line="${jvm.args}"/>
         </java>
     </target>
 

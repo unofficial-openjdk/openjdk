@@ -59,10 +59,10 @@ Java_java_net_SocketOutputStream_init(JNIEnv *env, jclass cls) {
  * Signature: (Ljava/io/FileDescriptor;[BII)V
  */
 JNIEXPORT void JNICALL
-Java_java_net_SocketOutputStream_socketWrite0(JNIEnv *env, jobject this, 
-					      jobject fdObj,
-					      jbyteArray data,
-					      jint off, jint len) {
+Java_java_net_SocketOutputStream_socketWrite0(JNIEnv *env, jobject this,
+                                              jobject fdObj,
+                                              jbyteArray data,
+                                              jint off, jint len) {
     char *bufP;
     char BUF[MAX_BUFFER_LEN];
     int buflen;
@@ -70,10 +70,10 @@ Java_java_net_SocketOutputStream_socketWrite0(JNIEnv *env, jobject this,
     jint n = 0;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, "java/net/SocketException", "Socket closed");
-	return;
+        JNU_ThrowByName(env, "java/net/SocketException", "Socket closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
         /* Bug 4086704 - If the Socket associated with this file descriptor
          * was closed (sysCloseFD), the the file descriptor is set to -1.
          */
@@ -85,57 +85,53 @@ Java_java_net_SocketOutputStream_socketWrite0(JNIEnv *env, jobject this,
     }
 
     if (len <= MAX_BUFFER_LEN) {
-	bufP = BUF;
-	buflen = MAX_BUFFER_LEN;
+        bufP = BUF;
+        buflen = MAX_BUFFER_LEN;
     } else {
-	buflen = min(MAX_HEAP_BUFFER_LEN, len);
-	bufP = (char *)malloc((size_t)buflen);
+        buflen = min(MAX_HEAP_BUFFER_LEN, len);
+        bufP = (char *)malloc((size_t)buflen);
 
-	/* if heap exhausted resort to stack buffer */
-	if (bufP == NULL) {
-	    bufP = BUF;
-	    buflen = MAX_BUFFER_LEN;
-	}
+        /* if heap exhausted resort to stack buffer */
+        if (bufP == NULL) {
+            bufP = BUF;
+            buflen = MAX_BUFFER_LEN;
+        }
     }
 
     while(len > 0) {
-	int loff = 0;
-	int chunkLen = min(buflen, len);
-	int llen = chunkLen;
-	(*env)->GetByteArrayRegion(env, data, off, chunkLen, (jbyte *)bufP);
-      
-	while(llen > 0) {
-	    int n = NET_Send(fd, bufP + loff, llen, 0);
-	    if (n > 0) {
-		llen -= n;
-		loff += n;
-		continue;
-	    }
-	    if (n == JVM_IO_INTR) {
-		JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
-	    } else {
-		if (errno == ECONNRESET) {
+        int loff = 0;
+        int chunkLen = min(buflen, len);
+        int llen = chunkLen;
+        (*env)->GetByteArrayRegion(env, data, off, chunkLen, (jbyte *)bufP);
+
+        while(llen > 0) {
+            int n = NET_Send(fd, bufP + loff, llen, 0);
+            if (n > 0) {
+                llen -= n;
+                loff += n;
+                continue;
+            }
+            if (n == JVM_IO_INTR) {
+                JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
+            } else {
+                if (errno == ECONNRESET) {
                     JNU_ThrowByName(env, "sun/net/ConnectionResetException",
                         "Connection reset");
-		} else {
-		    NET_ThrowByNameWithLastError(env, "java/net/SocketException", 
-			"Write failed");
-		}
-	    }
-	    if (bufP != BUF) {
-		free(bufP);
-	    }
-	    return;
-	}
-	len -= chunkLen;
-	off += chunkLen;
+                } else {
+                    NET_ThrowByNameWithLastError(env, "java/net/SocketException",
+                        "Write failed");
+                }
+            }
+            if (bufP != BUF) {
+                free(bufP);
+            }
+            return;
+        }
+        len -= chunkLen;
+        off += chunkLen;
     }
 
     if (bufP != BUF) {
-	free(bufP);
+        free(bufP);
     }
 }
-
-
-
-

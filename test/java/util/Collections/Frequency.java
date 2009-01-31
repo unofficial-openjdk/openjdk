@@ -51,6 +51,3 @@ public class Frequency {
                 throw new RuntimeException(list.getClass() + ": " + i);
     }
 }
-
-
-

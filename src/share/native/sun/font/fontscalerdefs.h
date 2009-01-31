@@ -30,7 +30,7 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif 
+#endif
 
 #define kPosInfinity16          (32767)
 #define kNegInfinity16          (-32768)
@@ -63,8 +63,8 @@ typedef UInt32                  Bool32;
         #define true            1
 #endif
 
-#define kPosInfinity32		(0x7fffffff)
-#define kNegInfinity32		(0x80000000)
+#define kPosInfinity32          (0x7fffffff)
+#define kNegInfinity32          (0x80000000)
 
 #define F26Dot6ToFixed(n)  ((n) << 10)
 #define F26Dot6ToScalar(n) (((t2kScalar)(n)) / (t2kScalar)64)
@@ -84,7 +84,7 @@ typedef float t2kScalar;
 
 #define t2kScalarAverage(a, b) (((a) + (b)) / (t2kScalar)(2))
 
-typedef struct GlyphInfo {  
+typedef struct GlyphInfo {
     float        advanceX;
     float        advanceY;
     UInt16       width;
@@ -128,23 +128,23 @@ typedef struct TTLayoutTableCache {
 JNIEXPORT extern TTLayoutTableCache* newLayoutTableCache();
 JNIEXPORT extern void freeLayoutTableCache(TTLayoutTableCache* ltc);
 
-/* If font is malformed then scaler context created by particular scaler 
+/* If font is malformed then scaler context created by particular scaler
  * will be replaced by null scaler context.
  * Note that this context is not compatible with structure of the context
- * object used by particular scaler. Therefore, before using context 
+ * object used by particular scaler. Therefore, before using context
  * scaler has to check if it is NullContext.
  *
  * Note that in theory request with NullContext should not even reach native
  * scaler.
  *
- * It seems that the only reason to support NullContext is to simplify 
- * FileFontStrike logic - presence of context is used as marker to 
+ * It seems that the only reason to support NullContext is to simplify
+ * FileFontStrike logic - presence of context is used as marker to
  * free the memory.
 */
 JNIEXPORT int isNullScalerContext(void *context);
 
 #ifdef  __cplusplus
 }
-#endif 
+#endif
 
 #endif

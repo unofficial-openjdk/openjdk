@@ -48,12 +48,11 @@ import sun.security.util.Debug;
  * on a PKIX certificate, namely the signature, timestamp, and subject/issuer
  * name chaining.
  *
- * @version 	%I% %G%
- * @since	1.4
- * @author	Yassir Elley
+ * @since       1.4
+ * @author      Yassir Elley
  */
 class BasicChecker extends PKIXCertPathChecker {
- 
+
     private static final Debug debug = Debug.getInstance("certpath");
     private final PublicKey trustedPubKey;
     private final X500Principal caName;
@@ -73,16 +72,16 @@ class BasicChecker extends PKIXCertPathChecker {
      * @param sigOnly true if only signature checking is to be done;
      *        if false, all checks are done
      */
-    BasicChecker(TrustAnchor anchor, Date testDate, String sigProvider, 
-	boolean sigOnly) throws CertPathValidatorException
+    BasicChecker(TrustAnchor anchor, Date testDate, String sigProvider,
+        boolean sigOnly) throws CertPathValidatorException
     {
-	if (anchor.getTrustedCert() != null) {
+        if (anchor.getTrustedCert() != null) {
             this.trustedPubKey = anchor.getTrustedCert().getPublicKey();
             this.caName = anchor.getTrustedCert().getSubjectX500Principal();
-	} else {
+        } else {
             this.trustedPubKey = anchor.getCAPublicKey();
             this.caName = anchor.getCA();
-	}
+        }
         this.testDate = testDate;
         this.sigProvider = sigProvider;
         this.sigOnly = sigOnly;
@@ -94,25 +93,25 @@ class BasicChecker extends PKIXCertPathChecker {
      * specified in the constructor.
      */
     public void init(boolean forward) throws CertPathValidatorException {
-	if (!forward) {
-	    prevPubKey = trustedPubKey;
-	    prevSubject = caName;
-	} else {
-	    throw new 
-		CertPathValidatorException("forward checking not supported");
-	}
+        if (!forward) {
+            prevPubKey = trustedPubKey;
+            prevSubject = caName;
+        } else {
+            throw new
+                CertPathValidatorException("forward checking not supported");
+        }
     }
 
     public boolean isForwardCheckingSupported() {
-	return false;
+        return false;
     }
 
     public Set<String> getSupportedExtensions() {
-	return null;
+        return null;
     }
 
     /**
-     * Performs the signature, timestamp, and subject/issuer name chaining 
+     * Performs the signature, timestamp, and subject/issuer name chaining
      * checks on the certificate using its internal state. This method does
      * not remove any critical extensions from the Collection.
      *
@@ -122,7 +121,7 @@ class BasicChecker extends PKIXCertPathChecker {
      * @exception CertPathValidatorException Exception thrown if certificate
      * does not verify.
      */
-    public void check(Certificate cert, Collection<String> unresolvedCritExts) 
+    public void check(Certificate cert, Collection<String> unresolvedCritExts)
         throws CertPathValidatorException
     {
         X509Certificate currCert = (X509Certificate) cert;
@@ -132,7 +131,7 @@ class BasicChecker extends PKIXCertPathChecker {
             verifyNameChaining(currCert, prevSubject);
         }
         verifySignature(currCert, prevPubKey, sigProvider);
-	
+
         updateState(currCert);
     }
 
@@ -148,74 +147,74 @@ class BasicChecker extends PKIXCertPathChecker {
         String sigProvider) throws CertPathValidatorException
     {
         String msg = "signature";
-	if (debug != null)
-	    debug.println("---checking " + msg + "...");
+        if (debug != null)
+            debug.println("---checking " + msg + "...");
 
-	try {
-	    cert.verify(prevPubKey, sigProvider);
-	} catch (Exception e) {
-	    if (debug != null) {
-	    	debug.println(e.getMessage());
-	    	e.printStackTrace();
-	    }
-	    throw new CertPathValidatorException(msg + " check failed", e);
-	}
+        try {
+            cert.verify(prevPubKey, sigProvider);
+        } catch (Exception e) {
+            if (debug != null) {
+                debug.println(e.getMessage());
+                e.printStackTrace();
+            }
+            throw new CertPathValidatorException(msg + " check failed", e);
+        }
 
-	if (debug != null)
-	    debug.println(msg + " verified.");
+        if (debug != null)
+            debug.println(msg + " verified.");
     }
 
     /**
      * Internal method to verify the timestamp on a certificate
      */
     private void verifyTimestamp(X509Certificate cert, Date date)
-	throws CertPathValidatorException
+        throws CertPathValidatorException
     {
-	String msg = "timestamp";
-	if (debug != null)
-	    debug.println("---checking " + msg + ":" + date.toString() + "...");
+        String msg = "timestamp";
+        if (debug != null)
+            debug.println("---checking " + msg + ":" + date.toString() + "...");
 
-	try {
-	    cert.checkValidity(date);
-	} catch (Exception e) {
-	    if (debug != null) {
-	    	debug.println(e.getMessage());
-	    	e.printStackTrace();
-	    }
-	    throw new CertPathValidatorException(msg + " check failed", e);
-	}
+        try {
+            cert.checkValidity(date);
+        } catch (Exception e) {
+            if (debug != null) {
+                debug.println(e.getMessage());
+                e.printStackTrace();
+            }
+            throw new CertPathValidatorException(msg + " check failed", e);
+        }
 
-	if (debug != null)
-	    debug.println(msg + " verified.");
+        if (debug != null)
+            debug.println(msg + " verified.");
     }
 
     /**
      * Internal method to check that cert has a valid DN to be next in a chain
      */
-    private void verifyNameChaining(X509Certificate cert, 
-	X500Principal prevSubject) throws CertPathValidatorException
+    private void verifyNameChaining(X509Certificate cert,
+        X500Principal prevSubject) throws CertPathValidatorException
     {
-	if (prevSubject != null) {
+        if (prevSubject != null) {
 
-	    String msg = "subject/issuer name chaining";
-	    if (debug != null)
-	    	debug.println("---checking " + msg + "...");
-	    
-	    X500Principal currIssuer = cert.getIssuerX500Principal();
-	    // reject null or empty issuer DNs
-	    
-	    if (X500Name.asX500Name(currIssuer).isEmpty()) {
-		throw new CertPathValidatorException(msg + " check failed: " +
-		    "empty/null issuer DN in certificate is invalid"); 
-	    }
+            String msg = "subject/issuer name chaining";
+            if (debug != null)
+                debug.println("---checking " + msg + "...");
 
-	    if (!(currIssuer.equals(prevSubject))) {
-		throw new CertPathValidatorException(msg + " check failed");
-	    }
+            X500Principal currIssuer = cert.getIssuerX500Principal();
+            // reject null or empty issuer DNs
 
-	    if (debug != null)
-	    	debug.println(msg + " verified.");	
-	}
+            if (X500Name.asX500Name(currIssuer).isEmpty()) {
+                throw new CertPathValidatorException(msg + " check failed: " +
+                    "empty/null issuer DN in certificate is invalid");
+            }
+
+            if (!(currIssuer.equals(prevSubject))) {
+                throw new CertPathValidatorException(msg + " check failed");
+            }
+
+            if (debug != null)
+                debug.println(msg + " verified.");
+        }
     }
 
     /**
@@ -227,7 +226,7 @@ class BasicChecker extends PKIXCertPathChecker {
         PublicKey cKey = currCert.getPublicKey();
         if (debug != null) {
             debug.println("BasicChecker.updateState issuer: " +
-            	currCert.getIssuerX500Principal().toString() + "; subject: " +
+                currCert.getIssuerX500Principal().toString() + "; subject: " +
                 currCert.getSubjectX500Principal() + "; serial#: " +
                 currCert.getSerialNumber().toString());
         }
@@ -236,7 +235,7 @@ class BasicChecker extends PKIXCertPathChecker {
             //cKey needs to inherit DSA parameters from prev key
             cKey = makeInheritedParamsKey(cKey, prevPubKey);
             if (debug != null) debug.println("BasicChecker.updateState Made " +
-                                             "key with inherited params"); 
+                                             "key with inherited params");
         }
         prevPubKey = cKey;
         prevSubject = currCert.getSubjectX500Principal();
@@ -248,11 +247,11 @@ class BasicChecker extends PKIXCertPathChecker {
      * @param keyValueKey key from which to obtain key value
      * @param keyParamsKey key from which to obtain key parameters
      * @return new public key having value and parameters
-     * @throws CertPathValidatorException if keys are not appropriate types 
+     * @throws CertPathValidatorException if keys are not appropriate types
      * for this operation
      */
     static PublicKey makeInheritedParamsKey(PublicKey keyValueKey,
-        PublicKey keyParamsKey) throws CertPathValidatorException 
+        PublicKey keyParamsKey) throws CertPathValidatorException
     {
         PublicKey usableKey;
         if (!(keyValueKey instanceof DSAPublicKey) ||
@@ -274,7 +273,7 @@ class BasicChecker extends PKIXCertPathChecker {
         } catch (Exception e) {
             throw new CertPathValidatorException("Unable to generate key with" +
                                                  " inherited parameters: " +
-                                                 e.getMessage(), e); 
+                                                 e.getMessage(), e);
         }
         return usableKey;
     }

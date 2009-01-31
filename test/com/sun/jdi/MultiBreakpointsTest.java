@@ -201,7 +201,7 @@ public class MultiBreakpointsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
     EventRequestManager erm;
-    
+
     static int nthreads;
     static int nhits;
 
@@ -214,7 +214,7 @@ public class MultiBreakpointsTest extends TestScaffold {
         hits = new int[nthreads];
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         String countStr = System.getProperty("nthreads");
         if (countStr == null) {
             nthreads = 4;
@@ -240,7 +240,7 @@ public class MultiBreakpointsTest extends TestScaffold {
 
     public void breakpointReached(BreakpointEvent event) {
         BreakpointRequest req = (BreakpointRequest)event.request();
-        for ( int ii = 0; ii < nthreads; ii++) { 
+        for ( int ii = 0; ii < nthreads; ii++) {
             if (req == bkpts[ii]) {
                 println("Hit bkpt on thread: " +ii+ ": " +  ++hits[ii]);
                 break;
@@ -249,8 +249,8 @@ public class MultiBreakpointsTest extends TestScaffold {
     }
 
 
-    public BreakpointRequest setBreakpoint(String clsName, 
-                                           String methodName, 
+    public BreakpointRequest setBreakpoint(String clsName,
+                                           String methodName,
                                            String methodSignature) {
         ReferenceType rt = findReferenceType(clsName);
         if (rt == null) {
@@ -267,12 +267,12 @@ public class MultiBreakpointsTest extends TestScaffold {
         bpr.enable();
         return bpr;
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
 
@@ -286,12 +286,12 @@ public class MultiBreakpointsTest extends TestScaffold {
             bkpts[ii] = setBreakpoint("MultiBreakpointsTarg",
                               "bkpt" + ii,
                               "()V");
-        }                                                              
+        }
         /*
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         for ( int ii = 0; ii < nthreads; ii++) {
             if (hits[ii] != nhits) {
                 failure("FAILED: Expected " + nhits + " breakpoints for thread " + ii + " but only got " + hits[ii]);

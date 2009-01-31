@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageAffineIndex_BC.c	1.14	02/05/08 SMI"
+
 
 #include "vis_proto.h"
 #include "mlib_image.h"

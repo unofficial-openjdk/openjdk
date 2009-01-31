@@ -33,7 +33,7 @@ import java.net.ServerSocket;
 
 public class Application {
     public static void main(String args[]) throws Exception {
-	// bind to a random port
+        // bind to a random port
         ServerSocket ss = new ServerSocket(0);
         int port = ss.getLocalPort();
 

@@ -60,7 +60,7 @@ public:
     INLINE int DecrRefCount() { return --m_refCount; }
 
     /*
-     * Decrement the reference count of a cached GDI object.  When it hits 
+     * Decrement the reference count of a cached GDI object.  When it hits
      * zero, notify the cache that the object can be safely removed.
      * The cache will eventually delete the GDI object and this wrapper.
      */
@@ -85,7 +85,7 @@ protected:
 
     virtual void ReleaseInCache() = 0;
 
-    INLINE AwtGDIObject() { 
+    INLINE AwtGDIObject() {
         m_handle = NULL;
         m_refCount = 0;
     }

@@ -25,7 +25,7 @@
 
 /*****************************************************************************/
 /*
-**	Native functions for interfacing Java with the native implementation
+**      Native functions for interfacing Java with the native implementation
 **      of PlatformMidi.h's functions.
 */
 /*****************************************************************************/
@@ -36,7 +36,7 @@
 
 #include <jni.h>
 /* for memcpy */
-#include <string.h> 
+#include <string.h>
 #include "SoundDefs.h"
 #include "PlatformMidi.h"
 #include "com_sun_media_sound_MidiInDevice.h"
@@ -66,12 +66,12 @@ Java_com_sun_media_sound_MidiInDevice_nOpen(JNIEnv* e, jobject thisObj, jint ind
     */
     // if we didn't get a valid handle, throw a MidiUnavailableException
     if (!deviceHandle || err != MIDI_SUCCESS) {
-	deviceHandle = NULL;
-	ERROR0("Java_com_sun_media_sound_MidiInDevice_nOpen: ");
-	ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException", 
-				  MIDI_IN_InternalGetErrorString(err));
+        deviceHandle = NULL;
+        ERROR0("Java_com_sun_media_sound_MidiInDevice_nOpen: ");
+        ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException",
+                                  MIDI_IN_InternalGetErrorString(err));
     } else {
-	TRACE0("< Java_com_sun_media_sound_MidiInDevice_nOpen succeeded\n");
+        TRACE0("< Java_com_sun_media_sound_MidiInDevice_nOpen succeeded\n");
     }
     return (jlong) (UINT_PTR) deviceHandle;
 }
@@ -102,11 +102,11 @@ Java_com_sun_media_sound_MidiInDevice_nStart(JNIEnv* e, jobject thisObj, jlong d
 #endif
 
     if (err != MIDI_SUCCESS) {
-	ERROR0("Java_com_sun_media_sound_MidiInDevice_nStart: ");
-	ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException",
-				  MIDI_IN_InternalGetErrorString(err));
+        ERROR0("Java_com_sun_media_sound_MidiInDevice_nStart: ");
+        ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException",
+                                  MIDI_IN_InternalGetErrorString(err));
     } else {
-	TRACE0("< Java_com_sun_media_sound_MidiInDevice_nStart succeeded\n");
+        TRACE0("< Java_com_sun_media_sound_MidiInDevice_nStart succeeded\n");
     }
 }
 
@@ -137,8 +137,8 @@ Java_com_sun_media_sound_MidiInDevice_nGetTimeStamp(JNIEnv* e, jobject thisObj, 
 
     /* Handle error codes. */
     if (ret < -1) {
-	ERROR1("Java_com_sun_media_sound_MidiInDevice_nGetTimeStamp: MIDI_IN_GetTimeStamp returned %lld\n", ret);
-	ret = -1;
+        ERROR1("Java_com_sun_media_sound_MidiInDevice_nGetTimeStamp: MIDI_IN_GetTimeStamp returned %lld\n", ret);
+        ret = -1;
     }
     return ret;
 }
@@ -158,104 +158,103 @@ Java_com_sun_media_sound_MidiInDevice_nGetMessages(JNIEnv* e, jobject thisObj, j
 
 #if USE_PLATFORM_MIDI_IN == TRUE
     while ((pMessage = MIDI_IN_GetMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle))) {
-	if ((javaClass == NULL) || (callbackShortMessageMethodID == NULL)) {
-	    if (!thisObj) {
-		ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: thisObj is NULL\n");
-		return;
-	    }
+        if ((javaClass == NULL) || (callbackShortMessageMethodID == NULL)) {
+            if (!thisObj) {
+                ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: thisObj is NULL\n");
+                return;
+            }
 
-	    if (javaClass == NULL) {
-		javaClass = (*e)->GetObjectClass(e, thisObj);
-		if (javaClass == NULL) {
-		    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: javaClass is NULL\n");
-		    return;
-		}
-	    }
+            if (javaClass == NULL) {
+                javaClass = (*e)->GetObjectClass(e, thisObj);
+                if (javaClass == NULL) {
+                    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: javaClass is NULL\n");
+                    return;
+                }
+            }
 
-	    if (callbackShortMessageMethodID == NULL) {
-		// save the callbackShortMessage callback method id.
-		// this is valid as long as the class is not unloaded.
-		callbackShortMessageMethodID = (*e)->GetMethodID(e, javaClass, "callbackShortMessage", "(IJ)V");
-		if (callbackShortMessageMethodID == 0) {
-		    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: callbackShortMessageMethodID is 0\n");
-		    return;
-		}
-	    }
-	    if (callbackLongMessageMethodID == NULL) {
-		// save the callbackLongMessage callback method id.
-		// this is valid as long as the class is not unloaded.
-		callbackLongMessageMethodID = (*e)->GetMethodID(e, javaClass, "callbackLongMessage", "([BJ)V");
-		if (callbackLongMessageMethodID == 0) {
-		    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: callbackLongMessageMethodID is 0\n");
-		    return;
-		}
-	    }
-	}
+            if (callbackShortMessageMethodID == NULL) {
+                // save the callbackShortMessage callback method id.
+                // this is valid as long as the class is not unloaded.
+                callbackShortMessageMethodID = (*e)->GetMethodID(e, javaClass, "callbackShortMessage", "(IJ)V");
+                if (callbackShortMessageMethodID == 0) {
+                    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: callbackShortMessageMethodID is 0\n");
+                    return;
+                }
+            }
+            if (callbackLongMessageMethodID == NULL) {
+                // save the callbackLongMessage callback method id.
+                // this is valid as long as the class is not unloaded.
+                callbackLongMessageMethodID = (*e)->GetMethodID(e, javaClass, "callbackLongMessage", "([BJ)V");
+                if (callbackLongMessageMethodID == 0) {
+                    ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: callbackLongMessageMethodID is 0\n");
+                    return;
+                }
+            }
+        }
 
-	switch ((int)pMessage->type) {
-	case SHORT_MESSAGE: {
-	    jint msg = (jint)pMessage->data.s.packedMsg;
-	    jlong ts = (jlong)pMessage->timestamp;
-	    TRACE0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got SHORT_MESSAGE\n");
-	    // now we can put this message object back in the queue
-	    MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
-	    // and notify Java space
-	    (*e)->CallVoidMethod(e, thisObj, callbackShortMessageMethodID, msg, ts);
-	    break;
-	}
+        switch ((int)pMessage->type) {
+        case SHORT_MESSAGE: {
+            jint msg = (jint)pMessage->data.s.packedMsg;
+            jlong ts = (jlong)pMessage->timestamp;
+            TRACE0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got SHORT_MESSAGE\n");
+            // now we can put this message object back in the queue
+            MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
+            // and notify Java space
+            (*e)->CallVoidMethod(e, thisObj, callbackShortMessageMethodID, msg, ts);
+            break;
+        }
 
-	case LONG_MESSAGE: {
-	    jlong ts = (jlong)pMessage->timestamp;
-	    jbyteArray jData;
-	    UBYTE* data;
-	    int isSXCont = 0;
-	    TRACE0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got LONG_MESSAGE\n");
-	    if ((*(pMessage->data.l.data) != 0xF0)
-	    	&& (*(pMessage->data.l.data) != 0xF7)) {
-	    	// this is a continued sys ex message
-	    	// need to prepend 0xF7
-	    	isSXCont = 1;
-	    }
-	    jData = (*e)->NewByteArray(e, pMessage->data.l.size + isSXCont);
-	    if (!jData) {
-		ERROR0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: cannot create long byte array.\n");
-		break;
-	    }
-	    data = (UBYTE*) ((*e)->GetByteArrayElements(e, jData, NULL));
-	    if (!data) {
-		ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: array data is NULL\n");
-		break;
-	    }
-	    // finally copy the long message
-	    memcpy(data + isSXCont, pMessage->data.l.data, pMessage->data.l.size);
+        case LONG_MESSAGE: {
+            jlong ts = (jlong)pMessage->timestamp;
+            jbyteArray jData;
+            UBYTE* data;
+            int isSXCont = 0;
+            TRACE0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got LONG_MESSAGE\n");
+            if ((*(pMessage->data.l.data) != 0xF0)
+                && (*(pMessage->data.l.data) != 0xF7)) {
+                // this is a continued sys ex message
+                // need to prepend 0xF7
+                isSXCont = 1;
+            }
+            jData = (*e)->NewByteArray(e, pMessage->data.l.size + isSXCont);
+            if (!jData) {
+                ERROR0("Java_com_sun_media_sound_MidiInDevice_nGetMessages: cannot create long byte array.\n");
+                break;
+            }
+            data = (UBYTE*) ((*e)->GetByteArrayElements(e, jData, NULL));
+            if (!data) {
+                ERROR0("MidiInDevice: Java_com_sun_media_sound_MidiInDevice_nGetMessages: array data is NULL\n");
+                break;
+            }
+            // finally copy the long message
+            memcpy(data + isSXCont, pMessage->data.l.data, pMessage->data.l.size);
 
-	    // now we can put this message object back in the queue
-	    MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
+            // now we can put this message object back in the queue
+            MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
 
-	    // if this is a patched continued sys ex message, prepend 0xF7
-	    if (isSXCont) {
-	    	*data = 0xF7;
-	    }
+            // if this is a patched continued sys ex message, prepend 0xF7
+            if (isSXCont) {
+                *data = 0xF7;
+            }
 
-	    // commit the byte array
-	    (*e)->ReleaseByteArrayElements(e, jData, (jbyte*) data, (jint) 0);
+            // commit the byte array
+            (*e)->ReleaseByteArrayElements(e, jData, (jbyte*) data, (jint) 0);
 
-	    (*e)->CallVoidMethod(e, thisObj, callbackLongMessageMethodID, jData, ts);
-	    // release local reference to array: not needed anymore.
-	    (*e)->DeleteLocalRef(e, jData);
-	    break;
-	}
+            (*e)->CallVoidMethod(e, thisObj, callbackLongMessageMethodID, jData, ts);
+            // release local reference to array: not needed anymore.
+            (*e)->DeleteLocalRef(e, jData);
+            break;
+        }
 
-	default:
-	    // put this message object back in the queue
-	    MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
-	    ERROR1("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got unsupported message, type %d\n", pMessage->type);
-	    break;
-	} // switch
+        default:
+            // put this message object back in the queue
+            MIDI_IN_ReleaseMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, pMessage);
+            ERROR1("Java_com_sun_media_sound_MidiInDevice_nGetMessages: got unsupported message, type %d\n", pMessage->type);
+            break;
+        } // switch
     }
 
 #endif // USE_PLATFORM_MIDI_IN
 
     TRACE0("< Java_com_sun_media_sound_MidiInDevice_nGetMessages returning\n");
 }
-

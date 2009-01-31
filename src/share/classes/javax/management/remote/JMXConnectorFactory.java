@@ -427,13 +427,13 @@ public class JMXConnectorFactory {
                 loader);
        return serviceLoader.iterator();
     }
-    
+
     private static JMXConnector getConnectorAsService(ClassLoader loader,
                                                       JMXServiceURL url,
                                                       Map<String, ?> map)
         throws IOException {
-        
-        Iterator<JMXConnectorProvider> providers = 
+
+        Iterator<JMXConnectorProvider> providers =
                 getProviderIterator(JMXConnectorProvider.class, loader);
         JMXConnector connection = null;
         IOException exception = null;

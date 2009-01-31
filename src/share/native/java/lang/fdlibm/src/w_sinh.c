@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -32,21 +32,21 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double sinh(double x)		/* wrapper sinh */
+        double sinh(double x)           /* wrapper sinh */
 #else
-	double sinh(x)			/* wrapper sinh */
-	double x;
+        double sinh(x)                  /* wrapper sinh */
+        double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_sinh(x);
+        return __ieee754_sinh(x);
 #else
-	double z;
-	z = __ieee754_sinh(x);
-	if(_LIB_VERSION == _IEEE_) return z;
-	if(!finite(z)&&finite(x)) {
-	    return __kernel_standard(x,x,25); /* sinh overflow */
-	} else
-	    return z;
+        double z;
+        z = __ieee754_sinh(x);
+        if(_LIB_VERSION == _IEEE_) return z;
+        if(!finite(z)&&finite(x)) {
+            return __kernel_standard(x,x,25); /* sinh overflow */
+        } else
+            return z;
 #endif
 }

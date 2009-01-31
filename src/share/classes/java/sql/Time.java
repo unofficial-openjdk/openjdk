@@ -30,14 +30,14 @@ package java.sql;
  * API to identify this as an SQL <code>TIME</code> value. The <code>Time</code>
  * class adds formatting and
  * parsing operations to support the JDBC escape syntax for time
- * values. 
+ * values.
  * <p>The date components should be set to the "zero epoch"
- * value of January 1, 1970 and should not be accessed. 
+ * value of January 1, 1970 and should not be accessed.
  */
 public class Time extends java.util.Date {
 
     /**
-     * Constructs a <code>Time</code> object initialized with the 
+     * Constructs a <code>Time</code> object initialized with the
      * given values for the hour, minute, and second.
      * The driver sets the date components to January 1, 1970.
      * Any method that attempts to access the date components of a
@@ -55,9 +55,9 @@ public class Time extends java.util.Date {
      */
     @Deprecated
     public Time(int hour, int minute, int second) {
-	super(70, 0, 1, hour, minute, second);
+        super(70, 0, 1, hour, minute, second);
     }
-   
+
     /**
      * Constructs a <code>Time</code> object using a milliseconds time value.
      *
@@ -66,7 +66,7 @@ public class Time extends java.util.Date {
      *               January 1, 1970, 00:00:00 GMT
      */
     public Time(long time) {
-	super(time);
+        super(time);
     }
 
     /**
@@ -77,7 +77,7 @@ public class Time extends java.util.Date {
      *               January 1, 1970, 00:00:00 GMT
      */
     public void setTime(long time) {
-	super.setTime(time);
+        super.setTime(time);
     }
 
     /**
@@ -87,64 +87,64 @@ public class Time extends java.util.Date {
      * @return a corresponding <code>Time</code> object
      */
     public static Time valueOf(String s) {
-	int hour;
-	int minute;
-	int second;
-	int firstColon;
-	int secondColon;
+        int hour;
+        int minute;
+        int second;
+        int firstColon;
+        int secondColon;
 
-	if (s == null) throw new java.lang.IllegalArgumentException();
+        if (s == null) throw new java.lang.IllegalArgumentException();
 
-	firstColon = s.indexOf(':');
-	secondColon = s.indexOf(':', firstColon+1);
-	if ((firstColon > 0) & (secondColon > 0) & 
-	    (secondColon < s.length()-1)) {
-	    hour = Integer.parseInt(s.substring(0, firstColon));
-	    minute = 
-		Integer.parseInt(s.substring(firstColon+1, secondColon));
-	    second = Integer.parseInt(s.substring(secondColon+1));	    
-	} else {
-	    throw new java.lang.IllegalArgumentException();
-	}
+        firstColon = s.indexOf(':');
+        secondColon = s.indexOf(':', firstColon+1);
+        if ((firstColon > 0) & (secondColon > 0) &
+            (secondColon < s.length()-1)) {
+            hour = Integer.parseInt(s.substring(0, firstColon));
+            minute =
+                Integer.parseInt(s.substring(firstColon+1, secondColon));
+            second = Integer.parseInt(s.substring(secondColon+1));
+        } else {
+            throw new java.lang.IllegalArgumentException();
+        }
 
-	return new Time(hour, minute, second);
+        return new Time(hour, minute, second);
     }
-   
+
     /**
-     * Formats a time in JDBC time escape format.  
+     * Formats a time in JDBC time escape format.
      *
      * @return a <code>String</code> in hh:mm:ss format
      */
     public String toString () {
-	int hour = super.getHours();
-	int minute = super.getMinutes();
-	int second = super.getSeconds();
-	String hourString;
-	String minuteString;
-	String secondString;
+        int hour = super.getHours();
+        int minute = super.getMinutes();
+        int second = super.getSeconds();
+        String hourString;
+        String minuteString;
+        String secondString;
 
-	if (hour < 10) {
-	    hourString = "0" + hour;
-	} else {		
-	    hourString = Integer.toString(hour);
-	}
-	if (minute < 10) {
-	    minuteString = "0" + minute;
-	} else {		
-	    minuteString = Integer.toString(minute);
-	}
-	if (second < 10) {
-	    secondString = "0" + second;
-	} else {		
-	    secondString = Integer.toString(second);
-	}
-	return (hourString + ":" + minuteString + ":" + secondString);
+        if (hour < 10) {
+            hourString = "0" + hour;
+        } else {
+            hourString = Integer.toString(hour);
+        }
+        if (minute < 10) {
+            minuteString = "0" + minute;
+        } else {
+            minuteString = Integer.toString(minute);
+        }
+        if (second < 10) {
+            secondString = "0" + second;
+        } else {
+            secondString = Integer.toString(second);
+        }
+        return (hourString + ":" + minuteString + ":" + secondString);
     }
 
     // Override all the date operations inherited from java.util.Date;
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a year component.
     *
     * @deprecated
@@ -154,11 +154,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public int getYear() {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a month component.
     *
     * @deprecated
@@ -168,11 +168,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public int getMonth() {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
-    
+
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a day component.
     *
     * @deprecated
@@ -181,11 +181,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public int getDay() {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a date component.
     *
     * @deprecated
@@ -195,11 +195,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public int getDate() {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a year component.
     *
     * @deprecated
@@ -209,11 +209,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public void setYear(int i) {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a month component.
     *
     * @deprecated
@@ -223,11 +223,11 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public void setMonth(int i) {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
-    * This method is deprecated and should not be used because SQL <code>TIME</code> 
+    * This method is deprecated and should not be used because SQL <code>TIME</code>
     * values do not have a date component.
     *
     * @deprecated
@@ -237,7 +237,7 @@ public class Time extends java.util.Date {
     */
     @Deprecated
     public void setDate(int i) {
-	throw new java.lang.IllegalArgumentException();
+        throw new java.lang.IllegalArgumentException();
     }
 
    /**
@@ -246,6 +246,3 @@ public class Time extends java.util.Date {
     */
     static final long serialVersionUID = 8397324403548013681L;
 }
-
-
-

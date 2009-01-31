@@ -34,7 +34,6 @@ package java.net;
  * @see java.net.Authenticator#getPasswordAuthentication()
  *
  * @author  Bill Foote
- * @version %I%, %G%
  * @since   1.2
  */
 
@@ -54,8 +53,8 @@ public final class PasswordAuthentication {
      * @param password the user's password
      */
     public PasswordAuthentication(String userName, char[] password) {
-	this.userName = userName;
-	this.password = password.clone();
+        this.userName = userName;
+        this.password = password.clone();
     }
 
     /**
@@ -64,7 +63,7 @@ public final class PasswordAuthentication {
      * @return the user name
      */
     public String getUserName() {
-	return userName;
+        return userName;
     }
 
     /**
@@ -77,7 +76,6 @@ public final class PasswordAuthentication {
      * @return the password
      */
     public char[] getPassword() {
-	return password;
+        return password;
     }
 }
-

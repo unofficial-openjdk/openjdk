@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MS949;
  * Tables and data to convert MS949 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharMS949 extends ByteToCharDoubleByte {

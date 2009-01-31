@@ -39,13 +39,13 @@ void monitor_cleanup(void);
 void monitor_clear(void);
 void monitor_write_contended_time(JNIEnv *env, double cutoff);
 
-void monitor_contended_enter_event(JNIEnv *env_id, jthread thread, 
-			jobject object);
-void monitor_contended_entered_event(JNIEnv* env_id, jthread thread, 
-			jobject object);
-void monitor_wait_event(JNIEnv *env_id, jthread thread, 
-			jobject object, jlong timeout);
-void monitor_waited_event(JNIEnv *env_id, jthread thread, 
-			jobject object, jboolean timed_out);
+void monitor_contended_enter_event(JNIEnv *env_id, jthread thread,
+                        jobject object);
+void monitor_contended_entered_event(JNIEnv* env_id, jthread thread,
+                        jobject object);
+void monitor_wait_event(JNIEnv *env_id, jthread thread,
+                        jobject object, jlong timeout);
+void monitor_waited_event(JNIEnv *env_id, jthread thread,
+                        jobject object, jboolean timed_out);
 
 #endif

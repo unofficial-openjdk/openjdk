@@ -45,32 +45,32 @@ public class TransformC14N extends TransformSpi {
 
 
    /**
-    * @inheritDoc 
+    * @inheritDoc
     */
    protected String engineGetURI() {
       return TransformC14N.implementedTransformURI;
    }
 
    /**
-    *  @inheritDoc 
+    *  @inheritDoc
     */
    protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
            throws CanonicalizationException {
-   	    return enginePerformTransform(input,null);
+            return enginePerformTransform(input,null);
    }
     protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input,OutputStream os)
-    throws CanonicalizationException {   
+    throws CanonicalizationException {
          Canonicalizer20010315OmitComments c14n = new Canonicalizer20010315OmitComments();
          if (os!=null) {
-         	c14n.setWriter(os);
+                c14n.setWriter(os);
          }
-         byte[] result = null;                
+         byte[] result = null;
          input.setNeedsToBeExpanded(true);
-         result=c14n.engineCanonicalize(input);         		         	         
+         result=c14n.engineCanonicalize(input);
          XMLSignatureInput output=new XMLSignatureInput(result);
          if (os!=null) {
             output.setOutputStream(os);
          }
-         return output;     
+         return output;
    }
 }

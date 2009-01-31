@@ -38,9 +38,9 @@ public class ForInnerClass {
 
     public static void main(String[] args) throws Exception {
         /* We are not testing for the ACC_SUPER bug, so strip we strip
-	 * synchorized. */
+         * synchorized. */
 
-	int m = 0;
+        int m = 0;
 
         m = Inner.class.getModifiers() & (~Modifier.SYNCHRONIZED);
         if (m != Modifier.PRIVATE)
@@ -48,7 +48,7 @@ public class ForInnerClass {
                                 "InnerClasses attribute");
 
         m = Protected.class.getModifiers() & (~Modifier.SYNCHRONIZED);
-	if (m != Modifier.PROTECTED)
-	    throw new Exception("Protected inner class wronged modifiers");
+        if (m != Modifier.PROTECTED)
+            throw new Exception("Protected inner class wronged modifiers");
     }
 }

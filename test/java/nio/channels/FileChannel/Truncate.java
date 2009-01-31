@@ -45,7 +45,7 @@ public class Truncate {
 
     public static void main(String[] args) throws Exception {
         blah = File.createTempFile("blah", null);
-	blah.deleteOnExit();
+        blah.deleteOnExit();
         for(int i=0; i<100; i++) {
             long testSize = generator.nextInt(1000) + 10;
             initTestFile(blah, testSize);
@@ -54,22 +54,22 @@ public class Truncate {
             if (c.size() != testSize)
                 throw new RuntimeException("Size failed");
 
-	    long position = generator.nextInt((int)testSize);
-	    c.position(position);
+            long position = generator.nextInt((int)testSize);
+            c.position(position);
 
-	    long newSize = generator.nextInt((int)testSize);
+            long newSize = generator.nextInt((int)testSize);
             c.truncate(newSize);
 
             if (c.size() != newSize)
                 throw new RuntimeException("Truncate failed");
 
-	    if (position > newSize) {
-	        if (c.position() != newSize) 
-		    throw new RuntimeException("Position greater than size");
-	    } else {
-	        if (c.position() != position) 
+            if (position > newSize) {
+                if (c.position() != newSize)
+                    throw new RuntimeException("Position greater than size");
+            } else {
+                if (c.position() != position)
                     throw new RuntimeException("Truncate changed position");
-	    }
+            }
 
             c.close();
             fis.close();
@@ -86,7 +86,7 @@ public class Truncate {
             blah.delete();
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<size; i++) {
             awriter.write("e");

@@ -144,7 +144,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
         /**
          * Reset the builder for a new path.  Datalen is a hint of how many
          * points will be in the path, and the working buffer will be sized
-         * to accomodate at least this number of points.  If datalen is zero, 
+         * to accomodate at least this number of points.  If datalen is zero,
          * the working buffer is freed (it will be allocated on first use).
          */
         public void reset(int datalen) {
@@ -176,7 +176,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
 
         /**
          * Move to a new point.  If there is no data, this will become the
-         * first point.  If there is data, and the previous call was a lineTo, this 
+         * first point.  If there is data, and the previous call was a lineTo, this
          * point is checked against the previous point, and if different, this
          * starts a new segment at the same advance as the end of the last
          * segment.  If there is data, and the previous call was a moveTo, this
@@ -234,7 +234,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
                 System.arraycopy(data, 0, t, 0, w);
                 data = t;
             }
-             
+
             if (connect) {
                 double dx = x - px;
                 double dy = y - py;
@@ -307,7 +307,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
      * thus the ending advance minus the starting advance.
      *
      * Note: We might want to cache more auxiliary data than the
-     * advance, but this seems adequate for now. 
+     * advance, but this seems adequate for now.
      */
     public static final class SegmentPath extends LayoutPathImpl {
         private double[] data; // triplets x, y, a
@@ -354,7 +354,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
         // path vector in the path segment, it is the end of the path vector.  If
         // case C, it is the projection onto the path vector.  Otherwise
         // there is no closest point.
-        // 
+        //
         // if we have a closest point, compare the distance from it to
         // the test point against our current closest distance.
         // (culling should be fast, currently i am using distance
@@ -392,7 +392,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
         // indicates that we associate with the previous vector at a
         // junction (which is necessary when projecting such a
         // location back to a point).
-        
+
         public boolean pointToPath(Point2D pt, Point2D result) {
             double x = pt.getX();               // test point
             double y = pt.getY();
@@ -461,7 +461,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
                     double tdy = y - vcy;
                     double td2 = tdx * tdx + tdy * tdy;
                     if (td2 <= cd2) {            // new closest point, record info on it
-                        cd2 = td2;               
+                        cd2 = td2;
                         cx = vcx;
                         cy = vcy;
                         cl = vcl;
@@ -576,7 +576,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
                 a -= count * length();
                 if (a < 0 || (a == 0 && preceding)) {
                     a += length();
-                    
+
                 }
                 a += data[2];
             }
@@ -597,7 +597,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
          *
          * Note: if the path is not closed, the advance might not actually
          * lie on the returned segment-- it might be before the first, or
-         * after the last.  The first or last segment (as appropriate) 
+         * after the last.  The first or last segment (as appropriate)
          * will be returned in this case.
          */
         private int getSegmentIndexForAdvance(double a, boolean preceding) {
@@ -631,7 +631,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
 
             a -= data[seg-1];
 
-            pt.setLocation(data[seg-3] + a * ux - o * uy, 
+            pt.setLocation(data[seg-3] + a * ux - o * uy,
                            data[seg-2] + a * uy + o * ux);
         }
 
@@ -733,14 +733,14 @@ public abstract class LayoutPathImpl extends LayoutPath {
                 double lo = data[ix-1];
                 double hi = data[ix+2];
                 switch (SegmentPath.this.etype) {
-                case PINNED: 
+                case PINNED:
                     break;
                 case EXTENDED:
                     if (ix == 3) lo = Double.NEGATIVE_INFINITY;
                     if (ix == data.length - 3) hi = Double.POSITIVE_INFINITY;
                     break;
-                case CLOSED: 
-                    // not implemented 
+                case CLOSED:
+                    // not implemented
                     break;
                 }
 
@@ -793,7 +793,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
                 if (LOGMAP) LOG.format("s(%d) line %g, %g to %g, %g\n", ix, li.sx, li.sy, li.lx, li.ly);
 
                 if (li.pin(ix, temp)) {
-                    if (LOGMAP) LOG.format("pin: %g, %g to %g, %g\n", temp.sx, temp.sy, temp.lx, temp.ly); 
+                    if (LOGMAP) LOG.format("pin: %g, %g to %g, %g\n", temp.sx, temp.sy, temp.lx, temp.ly);
 
                     temp.sx -= data[ix-1];
                     double sx = data[ix-3] + temp.sx * ux - temp.sy * uy;
@@ -838,7 +838,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
                         segments.add(new Segment(i));
                     }
                 }
-                
+
                 mpt = new Point2D.Double();
                 cpt = new Point2D.Double();
             }
@@ -863,7 +863,7 @@ public abstract class LayoutPathImpl extends LayoutPath {
 
                 if (haveMT) {
                     // prepare previous point for no-op check
-                    cpt.x = mpt.x; 
+                    cpt.x = mpt.x;
                     cpt.y = mpt.y;
                 }
 
@@ -954,14 +954,14 @@ public abstract class LayoutPathImpl extends LayoutPath {
         }
     }
 
-  
+
     public static class EmptyPath extends LayoutPathImpl {
         private AffineTransform tx;
 
         public EmptyPath(AffineTransform tx) {
             this.tx = tx;
         }
-      
+
         public void pathToPoint(Point2D location, boolean preceding, Point2D point) {
             if (tx != null) {
                 tx.transform(location, point);
@@ -996,5 +996,3 @@ public abstract class LayoutPathImpl extends LayoutPath {
         }
     }
 }
-
-

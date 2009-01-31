@@ -50,7 +50,6 @@ import javax.sound.sampled.AudioSystem;
 /**
  * WAVE file writer.
  *
- * @version %I%, %G%
  * @author Jan Borgersen
  */
 public class WaveFileWriter extends SunFileWriter {
@@ -80,7 +79,7 @@ public class WaveFileWriter extends SunFileWriter {
      * WAVE type
      */
     private static final AudioFileFormat.Type waveTypes[] = {
-	AudioFileFormat.Type.WAVE
+        AudioFileFormat.Type.WAVE
     };
 
 
@@ -88,7 +87,7 @@ public class WaveFileWriter extends SunFileWriter {
      * Constructs a new WaveFileWriter object.
      */
     public WaveFileWriter() {
-	super(waveTypes);
+        super(waveTypes);
     }
 
 
@@ -97,77 +96,77 @@ public class WaveFileWriter extends SunFileWriter {
 
     public AudioFileFormat.Type[] getAudioFileTypes(AudioInputStream stream) {
 
-	AudioFileFormat.Type[] filetypes = new AudioFileFormat.Type[types.length];
-	System.arraycopy(types, 0, filetypes, 0, types.length);
+        AudioFileFormat.Type[] filetypes = new AudioFileFormat.Type[types.length];
+        System.arraycopy(types, 0, filetypes, 0, types.length);
 
-	// make sure we can write this stream
-	AudioFormat format = stream.getFormat();
-	AudioFormat.Encoding encoding = format.getEncoding();
+        // make sure we can write this stream
+        AudioFormat format = stream.getFormat();
+        AudioFormat.Encoding encoding = format.getEncoding();
 
-	if( AudioFormat.Encoding.ALAW.equals(encoding) ||
-	    AudioFormat.Encoding.ULAW.equals(encoding) ||
-	    AudioFormat.Encoding.PCM_SIGNED.equals(encoding) ||
-	    AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) ) {
+        if( AudioFormat.Encoding.ALAW.equals(encoding) ||
+            AudioFormat.Encoding.ULAW.equals(encoding) ||
+            AudioFormat.Encoding.PCM_SIGNED.equals(encoding) ||
+            AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) ) {
 
-	    return filetypes;
-	}
+            return filetypes;
+        }
 
-	return new AudioFileFormat.Type[0];
+        return new AudioFileFormat.Type[0];
     }
 
 
     public int write(AudioInputStream stream, AudioFileFormat.Type fileType, OutputStream out) throws IOException {
 
-	//$$fb the following check must come first ! Otherwise
-	// the next frame length check may throw an IOException and
-	// interrupt iterating File Writers. (see bug 4351296)
+        //$$fb the following check must come first ! Otherwise
+        // the next frame length check may throw an IOException and
+        // interrupt iterating File Writers. (see bug 4351296)
 
-	// throws IllegalArgumentException if not supported
-	WaveFileFormat waveFileFormat = (WaveFileFormat)getAudioFileFormat(fileType, stream);
+        // throws IllegalArgumentException if not supported
+        WaveFileFormat waveFileFormat = (WaveFileFormat)getAudioFileFormat(fileType, stream);
 
-	//$$fb when we got this far, we are committed to write this file
+        //$$fb when we got this far, we are committed to write this file
 
-	// we must know the total data length to calculate the file length
-	if( stream.getFrameLength() == AudioSystem.NOT_SPECIFIED ) {
-	    throw new IOException("stream length not specified");
-	}
+        // we must know the total data length to calculate the file length
+        if( stream.getFrameLength() == AudioSystem.NOT_SPECIFIED ) {
+            throw new IOException("stream length not specified");
+        }
 
-	int bytesWritten = writeWaveFile(stream, waveFileFormat, out);
-	return bytesWritten;
+        int bytesWritten = writeWaveFile(stream, waveFileFormat, out);
+        return bytesWritten;
     }
 
 
     public int write(AudioInputStream stream, AudioFileFormat.Type fileType, File out) throws IOException {
 
-	// throws IllegalArgumentException if not supported
-	WaveFileFormat waveFileFormat = (WaveFileFormat)getAudioFileFormat(fileType, stream);
+        // throws IllegalArgumentException if not supported
+        WaveFileFormat waveFileFormat = (WaveFileFormat)getAudioFileFormat(fileType, stream);
 
-	// first write the file without worrying about length fields
-	FileOutputStream fos = new FileOutputStream( out );	// throws IOException
-	BufferedOutputStream bos = new BufferedOutputStream( fos, bisBufferSize );
-	int bytesWritten = writeWaveFile(stream, waveFileFormat, bos );
-	bos.close();
+        // first write the file without worrying about length fields
+        FileOutputStream fos = new FileOutputStream( out );     // throws IOException
+        BufferedOutputStream bos = new BufferedOutputStream( fos, bisBufferSize );
+        int bytesWritten = writeWaveFile(stream, waveFileFormat, bos );
+        bos.close();
 
-	// now, if length fields were not specified, calculate them,
-	// open as a random access file, write the appropriate fields,
-	// close again....
-	if( waveFileFormat.getByteLength()== AudioSystem.NOT_SPECIFIED ) {
+        // now, if length fields were not specified, calculate them,
+        // open as a random access file, write the appropriate fields,
+        // close again....
+        if( waveFileFormat.getByteLength()== AudioSystem.NOT_SPECIFIED ) {
 
-	    int dataLength=bytesWritten-waveFileFormat.getHeaderSize();
-	    int riffLength=dataLength + waveFileFormat.getHeaderSize() - 8;
+            int dataLength=bytesWritten-waveFileFormat.getHeaderSize();
+            int riffLength=dataLength + waveFileFormat.getHeaderSize() - 8;
 
-	    RandomAccessFile raf=new RandomAccessFile(out, "rw");
-	    // skip RIFF magic
-	    raf.skipBytes(4);
-	    raf.writeInt(big2little( riffLength ));
-	    // skip WAVE magic, fmt_ magic, fmt_ length, fmt_ chunk, data magic
-	    raf.skipBytes(4+4+4+WaveFileFormat.getFmtChunkSize(waveFileFormat.getWaveType())+4);
-	    raf.writeInt(big2little( dataLength ));
-	    // that's all
-	    raf.close();
-	}
+            RandomAccessFile raf=new RandomAccessFile(out, "rw");
+            // skip RIFF magic
+            raf.skipBytes(4);
+            raf.writeInt(big2little( riffLength ));
+            // skip WAVE magic, fmt_ magic, fmt_ length, fmt_ chunk, data magic
+            raf.skipBytes(4+4+4+WaveFileFormat.getFmtChunkSize(waveFileFormat.getWaveType())+4);
+            raf.writeInt(big2little( dataLength ));
+            // that's all
+            raf.close();
+        }
 
-	return bytesWritten;
+        return bytesWritten;
     }
 
     //--------------------------------------------------------------------
@@ -177,203 +176,203 @@ public class WaveFileWriter extends SunFileWriter {
      * Throws IllegalArgumentException if not supported.
      */
     private AudioFileFormat getAudioFileFormat(AudioFileFormat.Type type, AudioInputStream stream) {
-	AudioFormat format = null;
-	WaveFileFormat fileFormat = null;
-	AudioFormat.Encoding encoding = AudioFormat.Encoding.PCM_SIGNED;
+        AudioFormat format = null;
+        WaveFileFormat fileFormat = null;
+        AudioFormat.Encoding encoding = AudioFormat.Encoding.PCM_SIGNED;
 
-	AudioFormat streamFormat = stream.getFormat();
-	AudioFormat.Encoding streamEncoding = streamFormat.getEncoding();
+        AudioFormat streamFormat = stream.getFormat();
+        AudioFormat.Encoding streamEncoding = streamFormat.getEncoding();
 
-	float sampleRate;
-	int sampleSizeInBits;
-	int channels;
-	int frameSize;
-	float frameRate;
-	int fileSize;
+        float sampleRate;
+        int sampleSizeInBits;
+        int channels;
+        int frameSize;
+        float frameRate;
+        int fileSize;
 
-	if (!types[0].equals(type)) {
-	    throw new IllegalArgumentException("File type " + type + " not supported.");
-	}
-	int waveType = WaveFileFormat.WAVE_FORMAT_PCM;
+        if (!types[0].equals(type)) {
+            throw new IllegalArgumentException("File type " + type + " not supported.");
+        }
+        int waveType = WaveFileFormat.WAVE_FORMAT_PCM;
 
-	if( AudioFormat.Encoding.ALAW.equals(streamEncoding) ||
-	    AudioFormat.Encoding.ULAW.equals(streamEncoding) ) {
+        if( AudioFormat.Encoding.ALAW.equals(streamEncoding) ||
+            AudioFormat.Encoding.ULAW.equals(streamEncoding) ) {
 
-	    encoding = streamEncoding;
-	    sampleSizeInBits = streamFormat.getSampleSizeInBits();
-	    if (streamEncoding.equals(AudioFormat.Encoding.ALAW)) {
-		waveType = WAVE_FORMAT_ALAW;
-	    } else {
-		waveType = WAVE_FORMAT_MULAW;
-	    }
-	} else if ( streamFormat.getSampleSizeInBits()==8 ) {
-	    encoding = AudioFormat.Encoding.PCM_UNSIGNED;
-	    sampleSizeInBits=8;
-	} else {
-	    encoding = AudioFormat.Encoding.PCM_SIGNED;
-	    sampleSizeInBits=streamFormat.getSampleSizeInBits();
-	}
+            encoding = streamEncoding;
+            sampleSizeInBits = streamFormat.getSampleSizeInBits();
+            if (streamEncoding.equals(AudioFormat.Encoding.ALAW)) {
+                waveType = WAVE_FORMAT_ALAW;
+            } else {
+                waveType = WAVE_FORMAT_MULAW;
+            }
+        } else if ( streamFormat.getSampleSizeInBits()==8 ) {
+            encoding = AudioFormat.Encoding.PCM_UNSIGNED;
+            sampleSizeInBits=8;
+        } else {
+            encoding = AudioFormat.Encoding.PCM_SIGNED;
+            sampleSizeInBits=streamFormat.getSampleSizeInBits();
+        }
 
 
-	format = new AudioFormat( encoding,
-				  streamFormat.getSampleRate(),
-				  sampleSizeInBits,
-				  streamFormat.getChannels(),
-				  streamFormat.getFrameSize(),
-				  streamFormat.getFrameRate(),
-				  false);	// WAVE is little endian
+        format = new AudioFormat( encoding,
+                                  streamFormat.getSampleRate(),
+                                  sampleSizeInBits,
+                                  streamFormat.getChannels(),
+                                  streamFormat.getFrameSize(),
+                                  streamFormat.getFrameRate(),
+                                  false);       // WAVE is little endian
 
-	if( stream.getFrameLength()!=AudioSystem.NOT_SPECIFIED ) {
-	    fileSize = (int)stream.getFrameLength()*streamFormat.getFrameSize()
-		+ WaveFileFormat.getHeaderSize(waveType);
-	} else {
-	    fileSize = AudioSystem.NOT_SPECIFIED;
-	}
+        if( stream.getFrameLength()!=AudioSystem.NOT_SPECIFIED ) {
+            fileSize = (int)stream.getFrameLength()*streamFormat.getFrameSize()
+                + WaveFileFormat.getHeaderSize(waveType);
+        } else {
+            fileSize = AudioSystem.NOT_SPECIFIED;
+        }
 
-	fileFormat = new WaveFileFormat( AudioFileFormat.Type.WAVE,
-					 fileSize,
-					 format,
-					 (int)stream.getFrameLength() );
+        fileFormat = new WaveFileFormat( AudioFileFormat.Type.WAVE,
+                                         fileSize,
+                                         format,
+                                         (int)stream.getFrameLength() );
 
-	return fileFormat;
+        return fileFormat;
     }
 
 
     private int writeWaveFile(InputStream in, WaveFileFormat waveFileFormat, OutputStream out) throws IOException {
 
-	int bytesRead = 0;
-	int bytesWritten = 0;
-	InputStream fileStream = getFileStream(waveFileFormat, in);
-	byte buffer[] = new byte[bisBufferSize];
-	int maxLength = waveFileFormat.getByteLength();
+        int bytesRead = 0;
+        int bytesWritten = 0;
+        InputStream fileStream = getFileStream(waveFileFormat, in);
+        byte buffer[] = new byte[bisBufferSize];
+        int maxLength = waveFileFormat.getByteLength();
 
-	while( (bytesRead = fileStream.read( buffer )) >= 0 ) {
+        while( (bytesRead = fileStream.read( buffer )) >= 0 ) {
 
-	    if (maxLength>0) {
-		if( bytesRead < maxLength ) {
-		    out.write( buffer, 0, (int)bytesRead );
-		    bytesWritten += bytesRead;
-		    maxLength -= bytesRead;
-		} else {
-		    out.write( buffer, 0, (int)maxLength );
-		    bytesWritten += maxLength;
-		    maxLength = 0;
-		    break;
-		}
-	    } else {
-		out.write( buffer, 0, (int)bytesRead );
-		bytesWritten += bytesRead;
-	    }
-	}
+            if (maxLength>0) {
+                if( bytesRead < maxLength ) {
+                    out.write( buffer, 0, (int)bytesRead );
+                    bytesWritten += bytesRead;
+                    maxLength -= bytesRead;
+                } else {
+                    out.write( buffer, 0, (int)maxLength );
+                    bytesWritten += maxLength;
+                    maxLength = 0;
+                    break;
+                }
+            } else {
+                out.write( buffer, 0, (int)bytesRead );
+                bytesWritten += bytesRead;
+            }
+        }
 
-	return bytesWritten;
+        return bytesWritten;
     }
 
     private InputStream getFileStream(WaveFileFormat waveFileFormat, InputStream audioStream) throws IOException {
-	// private method ... assumes audioFileFormat is a supported file type
+        // private method ... assumes audioFileFormat is a supported file type
 
-	// WAVE header fields
-	AudioFormat audioFormat = waveFileFormat.getFormat();
-	int headerLength       = waveFileFormat.getHeaderSize();
-	int riffMagic          = WaveFileFormat.RIFF_MAGIC;
-	int waveMagic          = WaveFileFormat.WAVE_MAGIC;
-	int fmtMagic           = WaveFileFormat.FMT_MAGIC;
-	int fmtLength          = WaveFileFormat.getFmtChunkSize(waveFileFormat.getWaveType());
-	short wav_type         = (short) waveFileFormat.getWaveType();
-	short channels         = (short) audioFormat.getChannels();
-	short sampleSizeInBits = (short) audioFormat.getSampleSizeInBits();
-	int sampleRate         = (int) audioFormat.getSampleRate();
-	int frameSizeInBytes   = (int) audioFormat.getFrameSize();
-	int frameRate		   = (int) audioFormat.getFrameRate();
-	int avgBytesPerSec     = channels * sampleSizeInBits * sampleRate / 8;;
-	short blockAlign       = (short) ((sampleSizeInBits / 8) * channels);
-	int dataMagic		   = WaveFileFormat.DATA_MAGIC;
-	int dataLength		   = waveFileFormat.getFrameLength() * frameSizeInBytes;
-	int length			   = waveFileFormat.getByteLength();
-	int riffLength = dataLength + headerLength - 8;
+        // WAVE header fields
+        AudioFormat audioFormat = waveFileFormat.getFormat();
+        int headerLength       = waveFileFormat.getHeaderSize();
+        int riffMagic          = WaveFileFormat.RIFF_MAGIC;
+        int waveMagic          = WaveFileFormat.WAVE_MAGIC;
+        int fmtMagic           = WaveFileFormat.FMT_MAGIC;
+        int fmtLength          = WaveFileFormat.getFmtChunkSize(waveFileFormat.getWaveType());
+        short wav_type         = (short) waveFileFormat.getWaveType();
+        short channels         = (short) audioFormat.getChannels();
+        short sampleSizeInBits = (short) audioFormat.getSampleSizeInBits();
+        int sampleRate         = (int) audioFormat.getSampleRate();
+        int frameSizeInBytes   = (int) audioFormat.getFrameSize();
+        int frameRate              = (int) audioFormat.getFrameRate();
+        int avgBytesPerSec     = channels * sampleSizeInBits * sampleRate / 8;;
+        short blockAlign       = (short) ((sampleSizeInBits / 8) * channels);
+        int dataMagic              = WaveFileFormat.DATA_MAGIC;
+        int dataLength             = waveFileFormat.getFrameLength() * frameSizeInBytes;
+        int length                         = waveFileFormat.getByteLength();
+        int riffLength = dataLength + headerLength - 8;
 
-	byte header[] = null;
-	ByteArrayInputStream headerStream = null;
-	ByteArrayOutputStream baos = null;
-	DataOutputStream dos = null;
-	SequenceInputStream waveStream = null;
+        byte header[] = null;
+        ByteArrayInputStream headerStream = null;
+        ByteArrayOutputStream baos = null;
+        DataOutputStream dos = null;
+        SequenceInputStream waveStream = null;
 
-	AudioFormat audioStreamFormat = null;
-	AudioFormat.Encoding encoding = null;
-	InputStream codedAudioStream = audioStream;
+        AudioFormat audioStreamFormat = null;
+        AudioFormat.Encoding encoding = null;
+        InputStream codedAudioStream = audioStream;
 
-	// if audioStream is an AudioInputStream and we need to convert, do it here...
-	if(audioStream instanceof AudioInputStream) {
-	    audioStreamFormat = ((AudioInputStream)audioStream).getFormat();
+        // if audioStream is an AudioInputStream and we need to convert, do it here...
+        if(audioStream instanceof AudioInputStream) {
+            audioStreamFormat = ((AudioInputStream)audioStream).getFormat();
 
-	    encoding = audioStreamFormat.getEncoding();
+            encoding = audioStreamFormat.getEncoding();
 
-	    if(AudioFormat.Encoding.PCM_SIGNED.equals(encoding)) {
-		if( sampleSizeInBits==8 ) {
-		    wav_type = WaveFileFormat.WAVE_FORMAT_PCM;
-		    // plug in the transcoder to convert from PCM_SIGNED to PCM_UNSIGNED
-		    codedAudioStream = AudioSystem.getAudioInputStream( new AudioFormat(
-											AudioFormat.Encoding.PCM_UNSIGNED,
-											audioStreamFormat.getSampleRate(),
-											audioStreamFormat.getSampleSizeInBits(),
-											audioStreamFormat.getChannels(),
-											audioStreamFormat.getFrameSize(),
-											audioStreamFormat.getFrameRate(),
-											false),
-									(AudioInputStream)audioStream);
-		}
-	    }
-	    if( (AudioFormat.Encoding.PCM_SIGNED.equals(encoding) && audioStreamFormat.isBigEndian()) ||
-		(AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) && !audioStreamFormat.isBigEndian()) ||
-		(AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) && audioStreamFormat.isBigEndian()) ) {
-		if( sampleSizeInBits!=8) {
-		    wav_type = WaveFileFormat.WAVE_FORMAT_PCM;
-		    // plug in the transcoder to convert to PCM_SIGNED_LITTLE_ENDIAN
-		    codedAudioStream = AudioSystem.getAudioInputStream( new AudioFormat(
-											AudioFormat.Encoding.PCM_SIGNED,
-											audioStreamFormat.getSampleRate(),
-											audioStreamFormat.getSampleSizeInBits(),
-											audioStreamFormat.getChannels(),
-											audioStreamFormat.getFrameSize(),
-											audioStreamFormat.getFrameRate(),
-											false),
-									(AudioInputStream)audioStream);
-		}
-	    }
-	}
+            if(AudioFormat.Encoding.PCM_SIGNED.equals(encoding)) {
+                if( sampleSizeInBits==8 ) {
+                    wav_type = WaveFileFormat.WAVE_FORMAT_PCM;
+                    // plug in the transcoder to convert from PCM_SIGNED to PCM_UNSIGNED
+                    codedAudioStream = AudioSystem.getAudioInputStream( new AudioFormat(
+                                                                                        AudioFormat.Encoding.PCM_UNSIGNED,
+                                                                                        audioStreamFormat.getSampleRate(),
+                                                                                        audioStreamFormat.getSampleSizeInBits(),
+                                                                                        audioStreamFormat.getChannels(),
+                                                                                        audioStreamFormat.getFrameSize(),
+                                                                                        audioStreamFormat.getFrameRate(),
+                                                                                        false),
+                                                                        (AudioInputStream)audioStream);
+                }
+            }
+            if( (AudioFormat.Encoding.PCM_SIGNED.equals(encoding) && audioStreamFormat.isBigEndian()) ||
+                (AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) && !audioStreamFormat.isBigEndian()) ||
+                (AudioFormat.Encoding.PCM_UNSIGNED.equals(encoding) && audioStreamFormat.isBigEndian()) ) {
+                if( sampleSizeInBits!=8) {
+                    wav_type = WaveFileFormat.WAVE_FORMAT_PCM;
+                    // plug in the transcoder to convert to PCM_SIGNED_LITTLE_ENDIAN
+                    codedAudioStream = AudioSystem.getAudioInputStream( new AudioFormat(
+                                                                                        AudioFormat.Encoding.PCM_SIGNED,
+                                                                                        audioStreamFormat.getSampleRate(),
+                                                                                        audioStreamFormat.getSampleSizeInBits(),
+                                                                                        audioStreamFormat.getChannels(),
+                                                                                        audioStreamFormat.getFrameSize(),
+                                                                                        audioStreamFormat.getFrameRate(),
+                                                                                        false),
+                                                                        (AudioInputStream)audioStream);
+                }
+            }
+        }
 
 
-	// Now push the header into a stream, concat, and return the new SequenceInputStream
+        // Now push the header into a stream, concat, and return the new SequenceInputStream
 
-	baos = new ByteArrayOutputStream();
-	dos = new DataOutputStream(baos);
+        baos = new ByteArrayOutputStream();
+        dos = new DataOutputStream(baos);
 
-	// we write in littleendian...
-	dos.writeInt(riffMagic);
-	dos.writeInt(big2little( riffLength ));
-	dos.writeInt(waveMagic);
-	dos.writeInt(fmtMagic);
-	dos.writeInt(big2little(fmtLength));
-	dos.writeShort(big2littleShort(wav_type));
-	dos.writeShort(big2littleShort(channels));
-	dos.writeInt(big2little(sampleRate));
-	dos.writeInt(big2little(avgBytesPerSec));
-	dos.writeShort(big2littleShort(blockAlign));
-	dos.writeShort(big2littleShort(sampleSizeInBits));
-	//$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
-	if (wav_type != WaveFileFormat.WAVE_FORMAT_PCM) {
-	    // add length 0 for "codec specific data length"
-	    dos.writeShort(0);
-	}
+        // we write in littleendian...
+        dos.writeInt(riffMagic);
+        dos.writeInt(big2little( riffLength ));
+        dos.writeInt(waveMagic);
+        dos.writeInt(fmtMagic);
+        dos.writeInt(big2little(fmtLength));
+        dos.writeShort(big2littleShort(wav_type));
+        dos.writeShort(big2littleShort(channels));
+        dos.writeInt(big2little(sampleRate));
+        dos.writeInt(big2little(avgBytesPerSec));
+        dos.writeShort(big2littleShort(blockAlign));
+        dos.writeShort(big2littleShort(sampleSizeInBits));
+        //$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
+        if (wav_type != WaveFileFormat.WAVE_FORMAT_PCM) {
+            // add length 0 for "codec specific data length"
+            dos.writeShort(0);
+        }
 
-	dos.writeInt(dataMagic);
-	dos.writeInt(big2little(dataLength));
+        dos.writeInt(dataMagic);
+        dos.writeInt(big2little(dataLength));
 
-	dos.close();
-	header = baos.toByteArray();
-	headerStream = new ByteArrayInputStream( header );
-	waveStream = new SequenceInputStream(headerStream,codedAudioStream);
+        dos.close();
+        header = baos.toByteArray();
+        headerStream = new ByteArrayInputStream( header );
+        waveStream = new SequenceInputStream(headerStream,codedAudioStream);
 
-	return (InputStream)waveStream;
+        return (InputStream)waveStream;
     }
 }

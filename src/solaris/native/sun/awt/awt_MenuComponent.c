@@ -44,5 +44,5 @@ Java_java_awt_MenuComponent_initIDs(JNIEnv *env, jclass cls)
       (*env)->GetFieldID(env, cls, "appContext", "Lsun/awt/AppContext;");
     menuComponentIDs.getParent =
       (*env)->GetMethodID(
-	  env, cls, "getParent_NoClientCode", "()Ljava/awt/MenuContainer;");
+          env, cls, "getParent_NoClientCode", "()Ljava/awt/MenuContainer;");
 }

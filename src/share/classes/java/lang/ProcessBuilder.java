@@ -140,9 +140,9 @@ public final class ProcessBuilder
      *          If the argument is <code>null</code>
      */
     public ProcessBuilder(List<String> command) {
-	if (command == null)
-	    throw new NullPointerException();
-	this.command = command;
+        if (command == null)
+            throw new NullPointerException();
+        this.command = command;
     }
 
     /**
@@ -157,9 +157,9 @@ public final class ProcessBuilder
      * @param   command  A string array containing the program and its arguments
      */
     public ProcessBuilder(String... command) {
-	this.command = new ArrayList<String>(command.length);
-	for (String arg : command)
-	    this.command.add(arg);
+        this.command = new ArrayList<String>(command.length);
+        for (String arg : command)
+            this.command.add(arg);
     }
 
     /**
@@ -177,10 +177,10 @@ public final class ProcessBuilder
      *          If the argument is <code>null</code>
      */
     public ProcessBuilder command(List<String> command) {
-	if (command == null)
-	    throw new NullPointerException();
-	this.command = command;
-	return this;
+        if (command == null)
+            throw new NullPointerException();
+        this.command = command;
+        return this;
     }
 
     /**
@@ -195,10 +195,10 @@ public final class ProcessBuilder
      * @return  This process builder
      */
     public ProcessBuilder command(String... command) {
-	this.command = new ArrayList<String>(command.length);
-	for (String arg : command)
-	    this.command.add(arg);
-	return this;
+        this.command = new ArrayList<String>(command.length);
+        for (String arg : command)
+            this.command.add(arg);
+        return this;
     }
 
     /**
@@ -210,7 +210,7 @@ public final class ProcessBuilder
      * @return  This process builder's program and its arguments
      */
     public List<String> command() {
-	return command;
+        return command;
     }
 
     /**
@@ -283,44 +283,44 @@ public final class ProcessBuilder
      * @see     System#getenv()
      */
     public Map<String,String> environment() {
-	SecurityManager security = System.getSecurityManager();
-	if (security != null)
-	    security.checkPermission(new RuntimePermission("getenv.*"));
+        SecurityManager security = System.getSecurityManager();
+        if (security != null)
+            security.checkPermission(new RuntimePermission("getenv.*"));
 
-	if (environment == null)
-	    environment = ProcessEnvironment.environment();
+        if (environment == null)
+            environment = ProcessEnvironment.environment();
 
-	assert environment != null;
+        assert environment != null;
 
-	return environment;
+        return environment;
     }
 
     // Only for use by Runtime.exec(...envp...)
     ProcessBuilder environment(String[] envp) {
-	assert environment == null;
-	if (envp != null) {
-	    environment = ProcessEnvironment.emptyEnvironment(envp.length);
-	    assert environment != null;
+        assert environment == null;
+        if (envp != null) {
+            environment = ProcessEnvironment.emptyEnvironment(envp.length);
+            assert environment != null;
 
-	    for (String envstring : envp) {
-		// Before 1.5, we blindly passed invalid envstrings
-		// to the child process.
-		// We would like to throw an exception, but do not,
-		// for compatibility with old broken code.
+            for (String envstring : envp) {
+                // Before 1.5, we blindly passed invalid envstrings
+                // to the child process.
+                // We would like to throw an exception, but do not,
+                // for compatibility with old broken code.
 
-		// Silently discard any trailing junk.
-		if (envstring.indexOf((int) '\u0000') != -1)
-		    envstring = envstring.replaceFirst("\u0000.*", "");
+                // Silently discard any trailing junk.
+                if (envstring.indexOf((int) '\u0000') != -1)
+                    envstring = envstring.replaceFirst("\u0000.*", "");
 
-		int eqlsign =
-		    envstring.indexOf('=', ProcessEnvironment.MIN_NAME_LENGTH);
-		// Silently ignore envstrings lacking the required `='.
-		if (eqlsign != -1)
-		    environment.put(envstring.substring(0,eqlsign),
-				    envstring.substring(eqlsign+1));
-	    }
-	}
-	return this;
+                int eqlsign =
+                    envstring.indexOf('=', ProcessEnvironment.MIN_NAME_LENGTH);
+                // Silently ignore envstrings lacking the required `='.
+                if (eqlsign != -1)
+                    environment.put(envstring.substring(0,eqlsign),
+                                    envstring.substring(eqlsign+1));
+            }
+        }
+        return this;
     }
 
     /**
@@ -336,7 +336,7 @@ public final class ProcessBuilder
      * @return  This process builder's working directory
      */
     public File directory() {
-	return directory;
+        return directory;
     }
 
     /**
@@ -353,8 +353,8 @@ public final class ProcessBuilder
      * @return  This process builder
      */
     public ProcessBuilder directory(File directory) {
-	this.directory = directory;
-	return this;
+        this.directory = directory;
+        return this;
     }
 
     /**
@@ -372,7 +372,7 @@ public final class ProcessBuilder
      * @return  This process builder's <code>redirectErrorStream</code> property
      */
     public boolean redirectErrorStream() {
-	return redirectErrorStream;
+        return redirectErrorStream;
     }
 
     /**
@@ -390,8 +390,8 @@ public final class ProcessBuilder
      * @return  This process builder
      */
     public ProcessBuilder redirectErrorStream(boolean redirectErrorStream) {
-	this.redirectErrorStream = redirectErrorStream;
-	return this;
+        this.redirectErrorStream = redirectErrorStream;
+        return this;
     }
 
     /**
@@ -448,34 +448,34 @@ public final class ProcessBuilder
      * @see     SecurityManager#checkExec(String)
      */
     public Process start() throws IOException {
-	// Must convert to array first -- a malicious user-supplied
-	// list might try to circumvent the security check.
-	String[] cmdarray = command.toArray(new String[command.size()]);
-	for (String arg : cmdarray)
-	    if (arg == null)
-		throw new NullPointerException();
-	// Throws IndexOutOfBoundsException if command is empty
-	String prog = cmdarray[0];
+        // Must convert to array first -- a malicious user-supplied
+        // list might try to circumvent the security check.
+        String[] cmdarray = command.toArray(new String[command.size()]);
+        for (String arg : cmdarray)
+            if (arg == null)
+                throw new NullPointerException();
+        // Throws IndexOutOfBoundsException if command is empty
+        String prog = cmdarray[0];
 
-	SecurityManager security = System.getSecurityManager();
-	if (security != null)
-	    security.checkExec(prog);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null)
+            security.checkExec(prog);
 
-	String dir = directory == null ? null : directory.toString();
+        String dir = directory == null ? null : directory.toString();
 
-	try {
-	    return ProcessImpl.start(cmdarray,
-				     environment,
-				     dir,
-				     redirectErrorStream);
-	} catch (IOException e) {
-	    // It's much easier for us to create a high-quality error
-	    // message than the low-level C code which found the problem.
-	    throw new IOException(
-		"Cannot run program \"" + prog + "\""
-		+ (dir == null ? "" : " (in directory \"" + dir + "\")")
-		+ ": " + e.getMessage(),
-		e);
-	}
+        try {
+            return ProcessImpl.start(cmdarray,
+                                     environment,
+                                     dir,
+                                     redirectErrorStream);
+        } catch (IOException e) {
+            // It's much easier for us to create a high-quality error
+            // message than the low-level C code which found the problem.
+            throw new IOException(
+                "Cannot run program \"" + prog + "\""
+                + (dir == null ? "" : " (in directory \"" + dir + "\")")
+                + ": " + e.getMessage(),
+                e);
+        }
     }
 }

@@ -41,17 +41,17 @@
 
 #include "jvm_md.h"
 
-#define R_OK	4
-#define W_OK	2
-#define X_OK	1
-#define F_OK	0
+#define R_OK    4
+#define W_OK    2
+#define X_OK    1
+#define F_OK    0
 
-#define	MAXPATHLEN _MAX_PATH
+#define MAXPATHLEN _MAX_PATH
 
-#define S_ISFIFO(mode)	(((mode) & _S_IFIFO) == _S_IFIFO)
-#define S_ISCHR(mode)	(((mode) & _S_IFCHR) == _S_IFCHR)
-#define S_ISDIR(mode)	(((mode) & _S_IFDIR) == _S_IFDIR)
-#define S_ISREG(mode)	(((mode) & _S_IFREG) == _S_IFREG)
+#define S_ISFIFO(mode)  (((mode) & _S_IFIFO) == _S_IFIFO)
+#define S_ISCHR(mode)   (((mode) & _S_IFCHR) == _S_IFCHR)
+#define S_ISDIR(mode)   (((mode) & _S_IFDIR) == _S_IFDIR)
+#define S_ISREG(mode)   (((mode) & _S_IFREG) == _S_IFREG)
 
 #define LINE_SEPARATOR "\r\n"
 

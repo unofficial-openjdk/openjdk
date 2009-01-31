@@ -38,7 +38,7 @@ import java.awt.event.InputEvent;
 public class XEmbedHelper {
     private static final Logger xembedLog = Logger.getLogger("sun.awt.X11.xembed");
     final static Unsafe unsafe = Unsafe.getUnsafe();
-    
+
     final static int XEMBED_VERSION = 0,
         XEMBED_MAPPED = (1 << 0);
 /* XEMBED messages */
@@ -62,12 +62,12 @@ public class XEmbedHelper {
 
     final static int NON_STANDARD_XEMBED_GTK_GRAB_KEY = 108;
     final static int NON_STANDARD_XEMBED_GTK_UNGRAB_KEY = 109;
-    
-//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:    
+
+//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:
 /* Details for  XEMBED_FOCUS_IN: */
     final static int XEMBED_FOCUS_CURRENT       =       0;
     final static int XEMBED_FOCUS_FIRST         =       1;
-    final static int XEMBED_FOCUS_LAST  =       2;    
+    final static int XEMBED_FOCUS_LAST  =       2;
 
 // Modifiers bits
     final static int XEMBED_MODIFIER_SHIFT   = (1 << 0);
@@ -83,7 +83,7 @@ public class XEmbedHelper {
         if (XEmbed == null) {
             XEmbed = XAtom.get("_XEMBED");
             if (xembedLog.isLoggable(Level.FINER)) xembedLog.finer("Created atom " + XEmbed.toString());
-        }        
+        }
         if (XEmbedInfo == null) {
             XEmbedInfo = XAtom.get("_XEMBED_INFO");
             if (xembedLog.isLoggable(Level.FINER)) xembedLog.finer("Created atom " + XEmbedInfo.toString());
@@ -181,13 +181,13 @@ public class XEmbedHelper {
         return ("XEmbed message to " + Long.toHexString(msg.get_window()) + ": " + msgidToString((int)msg.get_data(1)) +
                 ", detail: " + msg.get_data(2) +
                 ", data:[" + msg.get_data(3) + "," + msg.get_data(4) + "]");
-                                                                                                       
+
     }
 
 
     /**
      * Converts XEMBED modifiers mask into AWT InputEvent mask
-     */ 
+     */
     int getModifiers(int state) {
         int mods = 0;
         if ((state & XEMBED_MODIFIER_SHIFT) != 0) {
@@ -211,7 +211,7 @@ public class XEmbedHelper {
     }
 
     // Shouldn't be called on Toolkit thread.
-    AWTKeyStroke getKeyStrokeForKeySym(long keysym, long state) {        
+    AWTKeyStroke getKeyStrokeForKeySym(long keysym, long state) {
         XBaseWindow.checkSecurity();
 
         int keycode;

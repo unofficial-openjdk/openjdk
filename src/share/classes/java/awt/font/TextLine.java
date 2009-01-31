@@ -216,7 +216,7 @@ final class TextLine {
                 -ascent
             };
         }
-            
+
         float x = 0;
         float y = 0;
         CoreMetrics pcm = null;
@@ -226,7 +226,7 @@ final class TextLine {
 
         for (int i = 0, n = 0; i < fComponents.length; ++i, n += 2) {
             int vi = fComponentVisualOrder == null ? i : fComponentVisualOrder[i];
-            
+
             tlc = fComponents[vi];
             CoreMetrics cm = tlc.getCoreMetrics();
 
@@ -241,14 +241,14 @@ final class TextLine {
                 // 3) compute maximum left - right, adjust right position by this value
                 // this is a crude form of kerning between textcomponents
 
-                // note glyphvectors preposition glyphs based on offset, 
+                // note glyphvectors preposition glyphs based on offset,
                 // so tl doesn't need to adjust glyphvector position
                 // 1)
                 float pb = pcm.effectiveBaselineOffset(fBaselineOffsets);
                 float pa = pb - pcm.ascent;
                 float pd = pb + pcm.descent;
                 // pb += pcm.ssOffset;
-                        
+
                 float cb = cm.effectiveBaselineOffset(fBaselineOffsets);
                 float ca = cb - cm.ascent;
                 float cd = cb + cm.descent;
@@ -263,12 +263,12 @@ final class TextLine {
 
                 float cax = cm.italicAngle * (cb - a);
                 float cdx = cm.italicAngle * (cb - d);
-                
+
                 // 3)
                 float dax = pax - cax;
                 float ddx = pdx - cdx;
                 float dx = Math.max(dax, ddx);
-                
+
                 x += dx;
                 y = cb;
             } else {
@@ -316,7 +316,7 @@ final class TextLine {
             Point2D.Double pt = new Point2D.Double();
             double tx = 0, ty = 0;
             SegmentPathBuilder builder = new SegmentPathBuilder();
-	    builder.moveTo(locs[0], 0);
+            builder.moveTo(locs[0], 0);
             for (int i = 0, n = 0; i < fComponents.length; ++i, n += 2) {
                 int vi = fComponentVisualOrder == null ? i : fComponentVisualOrder[i];
                 tlc = fComponents[vi];
@@ -370,7 +370,7 @@ final class TextLine {
         }
 
         // couldn't use cache, or didn't have it, so compute
-        
+
         if (isSimple) { // all glyphvectors with no decorations, no layout path
             for (int i = 0, n = 0; i < fComponents.length; i++, n += 2) {
                 int vi = fComponentVisualOrder==null ? i : fComponentVisualOrder[i];
@@ -394,8 +394,8 @@ final class TextLine {
                 r2d = lp.mapShape(r2d).getBounds();
             }
             Rectangle bounds = r2d.getBounds();
-            BufferedImage im = new BufferedImage(bounds.width + MARGIN * 2, 
-                                                 bounds.height + MARGIN * 2, 
+            BufferedImage im = new BufferedImage(bounds.width + MARGIN * 2,
+                                                 bounds.height + MARGIN * 2,
                                                  BufferedImage.TYPE_INT_ARGB);
 
             Graphics2D g2d = im.createGraphics();
@@ -494,7 +494,7 @@ final class TextLine {
 
             TextLineComponent tlc = line.fComponents[componentIndex];
             int vi = line.fComponentVisualOrder == null
-                ? componentIndex 
+                ? componentIndex
                 : line.fComponentVisualOrder[componentIndex];
             return line.locs[vi * 2] + tlc.getCharX(indexInArray) + tlc.getCharAdvance(indexInArray);
         }
@@ -518,7 +518,7 @@ final class TextLine {
                               int indexInArray) {
 
             int vi = line.fComponentVisualOrder == null
-                ? componentIndex 
+                ? componentIndex
                 : line.fComponentVisualOrder[componentIndex];
             TextLineComponent tlc = line.fComponents[componentIndex];
             return line.locs[vi * 2] + tlc.getCharX(indexInArray);
@@ -564,7 +564,7 @@ final class TextLine {
         if (fCharVisualOrder == null) {
             fCharVisualOrder = BidiUtils.createInverseMap(fCharLogicalOrder);
         }
- 
+
         return fCharVisualOrder[visualIndex];
     }
 
@@ -757,7 +757,7 @@ final class TextLine {
                 int vi = fComponentVisualOrder==null? i : fComponentVisualOrder[i];
                 TextLineComponent tlc = fComponents[vi];
                 tlc.draw(g2, locs[n] + x, locs[n+1] + y);
-            } 
+            }
         } else {
             AffineTransform oldTx = g2.getTransform();
             Point2D.Float pt = new Point2D.Float();
@@ -781,7 +781,7 @@ final class TextLine {
         }
     }
 
-    /** 
+    /**
      * Return the union of the visual bounds of all the components.
      * This incorporates the path.  It does not include logical
      * bounds (used by carets).
@@ -793,7 +793,7 @@ final class TextLine {
             int vi = fComponentVisualOrder==null? i : fComponentVisualOrder[i];
             TextLineComponent tlc = fComponents[vi];
             Rectangle2D r = tlc.getVisualBounds();
-            
+
             Point2D.Float pt = new Point2D.Float(locs[n], locs[n+1]);
             if (lp == null) {
                 r.setRect(r.getMinX() + pt.x, r.getMinY() + pt.y,
@@ -808,7 +808,7 @@ final class TextLine {
                     tx.concatenate(at);
                     r = tx.createTransformedShape(r).getBounds2D();
                 } else {
-                    r.setRect(r.getMinX() + pt.x, r.getMinY() + pt.y, 
+                    r.setRect(r.getMinX() + pt.x, r.getMinY() + pt.y,
                               r.getWidth(), r.getHeight());
                 }
             }
@@ -818,7 +818,7 @@ final class TextLine {
             } else {
                 result.add(r);
             }
-        } 
+        }
 
         if (result == null) {
             result = new Rectangle2D.Float(Float.MAX_VALUE, Float.MAX_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
@@ -828,7 +828,7 @@ final class TextLine {
     }
 
     public Rectangle2D getItalicBounds() {
-        
+
         float left = Float.MAX_VALUE, right = -Float.MAX_VALUE;
         float top = Float.MAX_VALUE, bottom = -Float.MAX_VALUE;
 
@@ -927,7 +927,7 @@ final class TextLine {
         }
 
         if (requiresBidi) {
-          int bidiflags = values == null 
+          int bidiflags = values == null
               ? Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT
               : values.getRunDirection();
 
@@ -946,7 +946,7 @@ final class TextLine {
         TextLabelFactory factory = new TextLabelFactory(frc, chars, bidi, layoutFlags);
 
         TextLineComponent[] components = new TextLineComponent[1];
-        
+
         components = createComponentsOnRun(0, chars.length,
                                            chars,
                                            charsLtoV, levels,
@@ -955,18 +955,18 @@ final class TextLine {
                                            decorator,
                                            components,
                                            0);
-                                           
+
         int numComponents = components.length;
         while (components[numComponents-1] == null) {
             numComponents -= 1;
         }
-        
+
         if (numComponents != components.length) {
             TextLineComponent[] temp = new TextLineComponent[numComponents];
             System.arraycopy(components, 0, temp, 0, numComponents);
             components = temp;
         }
-        
+
         return new TextLine(frc, components, lm.baselineOffsets,
                             chars, 0, chars.length, charsLtoV, levels, isDirectionLTR);
     }
@@ -1003,7 +1003,7 @@ final class TextLine {
             do {
                 int startPos = pos;
                 int lmCount;
-                
+
                 if (cm == null) {
                     LineMetrics lineMetrics = font.getLineMetrics(chars, startPos, chunkLimit, frc);
                     cm = CoreMetrics.get(lineMetrics);
@@ -1022,12 +1022,12 @@ final class TextLine {
                 }
 
                 components[numComponents-1] = nextComponent;
-                
+
                 pos += lmCount;
             } while (pos < chunkLimit);
 
         } while (pos < runLimit);
-        
+
         return components;
     }
 
@@ -1051,7 +1051,7 @@ final class TextLine {
         int pos = textStart;
         do {
             int runLimit = Math.min(styledParagraph.getRunLimit(pos), textLimit);
-            
+
             Decoration decorator = styledParagraph.getDecorationAt(pos);
 
             Object graphicOrFont = styledParagraph.getFontOrGraphicAt(pos);
@@ -1231,26 +1231,26 @@ final class TextLine {
         return limit;
     }
      */
-    
+
     /**
      * When this returns, the ACI's current position will be at the start of the
      * first run which does NOT contain a GraphicAttribute.  If no such run exists
      * the ACI's position will be at the end, and this method will return false.
      */
     static boolean advanceToFirstFont(AttributedCharacterIterator aci) {
-        
+
         for (char ch = aci.first(); ch != aci.DONE; ch = aci.setIndex(aci.getRunLimit())) {
 
             if (aci.getAttribute(TextAttribute.CHAR_REPLACEMENT) == null) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     static float[] getNormalizedOffsets(float[] baselineOffsets, byte baseline) {
-        
+
         if (baselineOffsets[baseline] != 0) {
             float base = baselineOffsets[baseline];
             float[] temp = new float[baselineOffsets.length];
@@ -1260,9 +1260,9 @@ final class TextLine {
         }
         return baselineOffsets;
     }
-    
+
     static Font getFontAtCurrentPos(AttributedCharacterIterator aci) {
-        
+
         Object value = aci.getAttribute(TextAttribute.FONT);
         if (value != null) {
             return (Font) value;

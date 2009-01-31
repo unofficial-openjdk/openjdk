@@ -31,13 +31,13 @@ public class SpecErrorEvent extends SpecEvent {
 
     private Exception reason;
 
-    public SpecErrorEvent(EventRequestSpec eventRequestSpec, 
+    public SpecErrorEvent(EventRequestSpec eventRequestSpec,
                                  Exception reason) {
-	super(eventRequestSpec);
-	this.reason = reason;
+        super(eventRequestSpec);
+        this.reason = reason;
     }
 
     public Exception getReason() {
-	return reason;
+        return reason;
     }
 }

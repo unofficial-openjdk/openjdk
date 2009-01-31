@@ -64,23 +64,23 @@
 
 /* extra PKCS#11 constants not in the standard include files */
 
-#define CKA_NETSCAPE_BASE			(0x80000000 + 0x4E534350)
-#define CKA_NETSCAPE_TRUST_BASE			(CKA_NETSCAPE_BASE + 0x2000)
+#define CKA_NETSCAPE_BASE                       (0x80000000 + 0x4E534350)
+#define CKA_NETSCAPE_TRUST_BASE                 (CKA_NETSCAPE_BASE + 0x2000)
 
-#define CKA_NETSCAPE_TRUST_SERVER_AUTH		(CKA_NETSCAPE_TRUST_BASE + 8)
-#define CKA_NETSCAPE_TRUST_CLIENT_AUTH		(CKA_NETSCAPE_TRUST_BASE + 9)
-#define CKA_NETSCAPE_TRUST_CODE_SIGNING	(CKA_NETSCAPE_TRUST_BASE + 10)
-#define CKA_NETSCAPE_TRUST_EMAIL_PROTECTION	(CKA_NETSCAPE_TRUST_BASE + 11)
+#define CKA_NETSCAPE_TRUST_SERVER_AUTH          (CKA_NETSCAPE_TRUST_BASE + 8)
+#define CKA_NETSCAPE_TRUST_CLIENT_AUTH          (CKA_NETSCAPE_TRUST_BASE + 9)
+#define CKA_NETSCAPE_TRUST_CODE_SIGNING (CKA_NETSCAPE_TRUST_BASE + 10)
+#define CKA_NETSCAPE_TRUST_EMAIL_PROTECTION     (CKA_NETSCAPE_TRUST_BASE + 11)
 
 /*
 
  Define the PKCS#11 functions to include and exclude. Reduces the size
  of the binary somewhat.
- 
+
  This list needs to be kept in sync with the mapfile and PKCS11.java
 
 */
- 
+
 #define P11_ENABLE_C_INITIALIZE
 #define P11_ENABLE_C_FINALIZE
 #define P11_ENABLE_C_GETINFO
@@ -438,4 +438,3 @@ extern jobject notifyListLock;
 extern jobject jInitArgsObject;
 extern CK_C_INITIALIZE_ARGS_PTR ckpGlobalInitArgs;
 #endif /* NO_CALLBACKS */
-

@@ -83,7 +83,7 @@ import javax.management.ObjectName;
  */
 public class MXBeanLookup {
     private MXBeanLookup(MBeanServerConnection mbsc) {
-	this.mbsc = mbsc;
+        this.mbsc = mbsc;
     }
 
     static MXBeanLookup lookupFor(MBeanServerConnection mbsc) {
@@ -100,20 +100,20 @@ public class MXBeanLookup {
 
     synchronized <T> T objectNameToMXBean(ObjectName name, Class<T> type) {
         WeakReference<Object> wr = objectNameToProxy.get(name);
-	if (wr != null) {
-	    Object proxy = wr.get();
-	    if (type.isInstance(proxy))
-		return type.cast(proxy);
-	}
-	T proxy = JMX.newMXBeanProxy(mbsc, name, type);
-	objectNameToProxy.put(name, new WeakReference<Object>(proxy));
-	return proxy;
+        if (wr != null) {
+            Object proxy = wr.get();
+            if (type.isInstance(proxy))
+                return type.cast(proxy);
+        }
+        T proxy = JMX.newMXBeanProxy(mbsc, name, type);
+        objectNameToProxy.put(name, new WeakReference<Object>(proxy));
+        return proxy;
     }
 
     synchronized ObjectName mxbeanToObjectName(Object mxbean) {
         if (mxbean instanceof Proxy) {
-	    InvocationHandler ih = Proxy.getInvocationHandler(mxbean);
-	    if (ih instanceof MBeanServerInvocationHandler) {
+            InvocationHandler ih = Proxy.getInvocationHandler(mxbean);
+            if (ih instanceof MBeanServerInvocationHandler) {
                 MBeanServerInvocationHandler mbsih =
                         (MBeanServerInvocationHandler) ih;
                 if (mbsih.getMBeanServerConnection().equals(mbsc))

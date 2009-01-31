@@ -81,7 +81,7 @@ int init(){
 JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XDesktopPeer_init
   (JNIEnv *env, jclass cls)
 {
-    int init_ok = init(); 
+    int init_ok = init();
     return init_ok ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -106,4 +106,3 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11_XDesktopPeer_gnome_1url_1show
 
     return success ? JNI_TRUE : JNI_FALSE;
 }
-

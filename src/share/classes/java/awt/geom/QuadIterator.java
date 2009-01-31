@@ -31,8 +31,7 @@ import java.util.*;
  * A utility class to iterate over the path segments of a quadratic curve
  * segment through the PathIterator interface.
  *
- * @version 10 Feb 1997
- * @author	Jim Graham
+ * @author      Jim Graham
  */
 class QuadIterator implements PathIterator {
     QuadCurve2D quad;
@@ -40,8 +39,8 @@ class QuadIterator implements PathIterator {
     int index;
 
     QuadIterator(QuadCurve2D q, AffineTransform at) {
-	this.quad = q;
-	this.affine = at;
+        this.quad = q;
+        this.affine = at;
     }
 
     /**
@@ -51,7 +50,7 @@ class QuadIterator implements PathIterator {
      * @see #WIND_NON_ZERO
      */
     public int getWindingRule() {
-	return WIND_NON_ZERO;
+        return WIND_NON_ZERO;
     }
 
     /**
@@ -59,7 +58,7 @@ class QuadIterator implements PathIterator {
      * @return true if there are more points to read
      */
     public boolean isDone() {
-	return (index > 1);
+        return (index > 1);
     }
 
     /**
@@ -68,7 +67,7 @@ class QuadIterator implements PathIterator {
      * more points in that direction.
      */
     public void next() {
-	index++;
+        index++;
     }
 
     /**
@@ -90,25 +89,25 @@ class QuadIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(float[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("quad iterator iterator out of bounds");
-	}
-	int type;
-	if (index == 0) {
-	    coords[0] = (float) quad.getX1();
-	    coords[1] = (float) quad.getY1();
-	    type = SEG_MOVETO;
-	} else {
-	    coords[0] = (float) quad.getCtrlX();
-	    coords[1] = (float) quad.getCtrlY();
-	    coords[2] = (float) quad.getX2();
-	    coords[3] = (float) quad.getY2();
-	    type = SEG_QUADTO;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 2);
-	}
-	return type;
+        if (isDone()) {
+            throw new NoSuchElementException("quad iterator iterator out of bounds");
+        }
+        int type;
+        if (index == 0) {
+            coords[0] = (float) quad.getX1();
+            coords[1] = (float) quad.getY1();
+            type = SEG_MOVETO;
+        } else {
+            coords[0] = (float) quad.getCtrlX();
+            coords[1] = (float) quad.getCtrlY();
+            coords[2] = (float) quad.getX2();
+            coords[3] = (float) quad.getY2();
+            type = SEG_QUADTO;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 2);
+        }
+        return type;
     }
 
     /**
@@ -130,24 +129,24 @@ class QuadIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(double[] coords) {
-	if (isDone()) {
-	    throw new NoSuchElementException("quad iterator iterator out of bounds");
-	}
-	int type;
-	if (index == 0) {
-	    coords[0] = quad.getX1();
-	    coords[1] = quad.getY1();
-	    type = SEG_MOVETO;
-	} else {
-	    coords[0] = quad.getCtrlX();
-	    coords[1] = quad.getCtrlY();
-	    coords[2] = quad.getX2();
-	    coords[3] = quad.getY2();
-	    type = SEG_QUADTO;
-	}
-	if (affine != null) {
-	    affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 2);
-	}
-	return type;
+        if (isDone()) {
+            throw new NoSuchElementException("quad iterator iterator out of bounds");
+        }
+        int type;
+        if (index == 0) {
+            coords[0] = quad.getX1();
+            coords[1] = quad.getY1();
+            type = SEG_MOVETO;
+        } else {
+            coords[0] = quad.getCtrlX();
+            coords[1] = quad.getCtrlY();
+            coords[2] = quad.getX2();
+            coords[3] = quad.getY2();
+            type = SEG_QUADTO;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, index == 0 ? 1 : 2);
+        }
+        return type;
     }
 }

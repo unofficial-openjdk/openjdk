@@ -50,14 +50,13 @@ import sun.awt.dnd.SunDragSourceContextPeer;
  * TBC
  * </p>
  *
- * @version %R%.%L%
  * @since JDK1.2
  *
  */
 
 final class MDragSourceContextPeer extends SunDragSourceContextPeer {
 
-    private static final MDragSourceContextPeer theInstance = 
+    private static final MDragSourceContextPeer theInstance =
         new MDragSourceContextPeer(null);
 
     /**
@@ -65,15 +64,15 @@ final class MDragSourceContextPeer extends SunDragSourceContextPeer {
      */
 
     private MDragSourceContextPeer(DragGestureEvent dge) {
-    	super(dge);
+        super(dge);
     }
 
     static MDragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge) throws InvalidDnDOperationException {
-	theInstance.setTrigger(dge);
+        theInstance.setTrigger(dge);
         return theInstance;
     }
 
-    protected void startDrag(Transferable transferable, 
+    protected void startDrag(Transferable transferable,
                              long[] formats, Map formatMap) {
         try {
             long nativeCtxtLocal = startDrag(getTrigger().getComponent(),
@@ -88,11 +87,11 @@ final class MDragSourceContextPeer extends SunDragSourceContextPeer {
         } catch (Exception e) {
             throw new InvalidDnDOperationException("failed to create native peer: " + e);
         }
-        
+
         if (getNativeContext() == 0) {
             throw new InvalidDnDOperationException("failed to create native peer");
         }
-        
+
         MDropTargetContextPeer.setCurrentJVMLocalSourceTransferable(transferable);
     }
 
@@ -102,9 +101,9 @@ final class MDragSourceContextPeer extends SunDragSourceContextPeer {
 
     private native long startDrag(Component component,
                                   Transferable transferable,
-				  InputEvent nativeTrigger, 
-				  Cursor c, int ctype, int actions, 
-				  long[] formats, Map formatMap);
+                                  InputEvent nativeTrigger,
+                                  Cursor c, int ctype, int actions,
+                                  long[] formats, Map formatMap);
 
     /**
      * set cursor

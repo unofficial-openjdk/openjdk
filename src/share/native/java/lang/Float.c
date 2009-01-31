@@ -35,8 +35,8 @@ JNIEXPORT jfloat JNICALL
 Java_java_lang_Float_intBitsToFloat(JNIEnv *env, jclass unused, jint v)
 {
     union {
-	int i;
-	float f;
+        int i;
+        float f;
     } u;
     u.i = (long)v;
     return (jfloat)u.f;
@@ -49,8 +49,8 @@ JNIEXPORT jint JNICALL
 Java_java_lang_Float_floatToRawIntBits(JNIEnv *env, jclass unused, jfloat v)
 {
     union {
-	int i;
-	float f;
+        int i;
+        float f;
     } u;
     u.f = (float)v;
     return (jint)u.i;

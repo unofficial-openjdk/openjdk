@@ -33,7 +33,7 @@ import java.net.*;
 import javax.net.ssl.*;
 
 public class InvalidateServerSessionRenegotiate implements
-	HandshakeCompletedListener {
+        HandshakeCompletedListener {
 
     static byte handshakesCompleted = 0;
 
@@ -41,12 +41,12 @@ public class InvalidateServerSessionRenegotiate implements
      * Define what happens when handshaking is completed
      */
     public void handshakeCompleted(HandshakeCompletedEvent event) {
-	synchronized (this) {
-	    handshakesCompleted++;
-	    System.out.println("Session: " + event.getSession().toString());
-	    System.out.println("Seen handshake completed #" +
-		handshakesCompleted);
-	}
+        synchronized (this) {
+            handshakesCompleted++;
+            System.out.println("Session: " + event.getSession().toString());
+            System.out.println("Seen handshake completed #" +
+                handshakesCompleted);
+        }
     }
 
     /*
@@ -96,42 +96,42 @@ public class InvalidateServerSessionRenegotiate implements
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	SSLServerSocketFactory sslssf =
-	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	    
-	serverPort = sslServerSocket.getLocalPort();
+        SSLServerSocketFactory sslssf =
+            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        serverPort = sslServerSocket.getLocalPort();
 
-	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-	sslSocket.addHandshakeCompletedListener(this);
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
 
-	for (int i = 0; i < 10; i++) {
-	    sslIS.read();
-	    sslOS.write(85);
-	    sslOS.flush();
-	}
+        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+        sslSocket.addHandshakeCompletedListener(this);
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	System.out.println("invalidating");
-	sslSocket.getSession().invalidate();
-	System.out.println("starting new handshake");
-	sslSocket.startHandshake();
+        for (int i = 0; i < 10; i++) {
+            sslIS.read();
+            sslOS.write(85);
+            sslOS.flush();
+        }
 
-	for (int i = 0; i < 10; i++) {
-	    System.out.println("sending/receiving data, iteration: " + i);
-	    sslIS.read();
-	    sslOS.write(85);
-	    sslOS.flush();
-	}
+        System.out.println("invalidating");
+        sslSocket.getSession().invalidate();
+        System.out.println("starting new handshake");
+        sslSocket.startHandshake();
 
-	sslSocket.close();
+        for (int i = 0; i < 10; i++) {
+            System.out.println("sending/receiving data, iteration: " + i);
+            sslIS.read();
+            sslOS.write(85);
+            sslOS.flush();
+        }
+
+        sslSocket.close();
     }
 
     /*
@@ -142,34 +142,34 @@ public class InvalidateServerSessionRenegotiate implements
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
-	SSLSocketFactory sslsf =
-	    (SSLSocketFactory) SSLSocketFactory.getDefault();
-	SSLSocket sslSocket = (SSLSocket)
-	    sslsf.createSocket("localhost", serverPort);
+        SSLSocketFactory sslsf =
+            (SSLSocketFactory) SSLSocketFactory.getDefault();
+        SSLSocket sslSocket = (SSLSocket)
+            sslsf.createSocket("localhost", serverPort);
 
-	InputStream sslIS = sslSocket.getInputStream();
-	OutputStream sslOS = sslSocket.getOutputStream();
+        InputStream sslIS = sslSocket.getInputStream();
+        OutputStream sslOS = sslSocket.getOutputStream();
 
-	for (int i = 0; i < 10; i++) {
-	    sslOS.write(280);
-	    sslOS.flush();
-	    sslIS.read();
-	}
+        for (int i = 0; i < 10; i++) {
+            sslOS.write(280);
+            sslOS.flush();
+            sslIS.read();
+        }
 
-	for (int i = 0; i < 10; i++) {
-	    sslOS.write(280);
-	    sslOS.flush();
-	    sslIS.read();
-	}
+        for (int i = 0; i < 10; i++) {
+            sslOS.write(280);
+            sslOS.flush();
+            sslIS.read();
+        }
 
-	sslSocket.close();
+        sslSocket.close();
     }
 
     /*
@@ -184,25 +184,25 @@ public class InvalidateServerSessionRenegotiate implements
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
-	new InvalidateServerSessionRenegotiate();
+        /*
+         * Start the tests.
+         */
+        new InvalidateServerSessionRenegotiate();
     }
 
     Thread clientThread = null;
@@ -214,93 +214,93 @@ public class InvalidateServerSessionRenegotiate implements
      * Fork off the other side, then do your work.
      */
     InvalidateServerSessionRenegotiate() throws Exception {
-	if (separateServerThread) {
-	    startServer(true);
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    startServer(false);
-	}
+        if (separateServerThread) {
+            startServer(true);
+            startClient(false);
+        } else {
+            startClient(true);
+            startServer(false);
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null) {
-	    System.out.print("Server Exception:");
-	    throw serverException;
-	}
-	if (clientException != null) {
-	    System.out.print("Client Exception:");
-	    throw clientException;
-	}
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null) {
+            System.out.print("Server Exception:");
+            throw serverException;
+        }
+        if (clientException != null) {
+            System.out.print("Client Exception:");
+            throw clientException;
+        }
 
-	/*
-	 * Give the Handshaker Thread a chance to run
-	 */
-	Thread.sleep(1000);
+        /*
+         * Give the Handshaker Thread a chance to run
+         */
+        Thread.sleep(1000);
 
-	synchronized (this) {
-	    if (handshakesCompleted != 2) {
-	        throw new Exception("Didn't see 2 handshake completed events.");
-	    }
-	}
+        synchronized (this) {
+            if (handshakesCompleted != 2) {
+                throw new Exception("Didn't see 2 handshake completed events.");
+            }
+        }
     }
 
     void startServer(boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide();
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide();
-	}
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide();
+        }
     }
 
     void startClient(boolean newThread) throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

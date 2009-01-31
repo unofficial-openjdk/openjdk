@@ -110,7 +110,7 @@ public abstract class Win32SurfaceDataProxy extends SurfaceDataProxy {
             cachedData.isSurfaceLost())
         {
             // use the device's color model for ddraw surfaces
-            ColorModel dstScreenCM = wgc.getDeviceColorModel(); 
+            ColorModel dstScreenCM = wgc.getDeviceColorModel();
             try {
                 cachedData =
                     Win32OffScreenSurfaceData.createData(w, h,
@@ -148,9 +148,9 @@ public abstract class Win32SurfaceDataProxy extends SurfaceDataProxy {
                                             CompositeType comp,
                                             Color bgColor)
         {
-	    // we save a read from video memory for compositing
-	    // operations by copying from the buffered image sd
-	    return (txtype <= TXMAX &&
+            // we save a read from video memory for compositing
+            // operations by copying from the buffered image sd
+            return (txtype <= TXMAX &&
                     (CompositeType.SrcOverNoEa.equals(comp) ||
                      CompositeType.SrcNoEa.equals(comp)));
         }
@@ -259,9 +259,9 @@ public abstract class Win32SurfaceDataProxy extends SurfaceDataProxy {
                                             CompositeType comp,
                                             Color bgColor)
         {
-	    // We have accelerated loops only for blits with SrcOverNoEa
-	    // (no blit bg loops or blit loops with SrcNoEa)
-	    return (CompositeType.SrcOverNoEa.equals(comp) &&
+            // We have accelerated loops only for blits with SrcOverNoEa
+            // (no blit bg loops or blit loops with SrcNoEa)
+            return (CompositeType.SrcOverNoEa.equals(comp) &&
                     bgColor == null &&
                     txtype < SunGraphics2D.TRANSFORM_TRANSLATESCALE);
         }
@@ -367,7 +367,7 @@ public abstract class Win32SurfaceDataProxy extends SurfaceDataProxy {
 
         /**
          * Attempts to find an unused pixel value in the color map of an
-         * IndexColorModel.  If successful, it returns that value (in the 
+         * IndexColorModel.  If successful, it returns that value (in the
          * ColorModel of the destination surface) or null otherwise.
          */
         private boolean findUnusedPixelICM(IndexColorModel icm,
@@ -395,7 +395,7 @@ public abstract class Win32SurfaceDataProxy extends SurfaceDataProxy {
         }
 
         /**
-         * Attempts to find an unused pixel value in an image with a 
+         * Attempts to find an unused pixel value in an image with a
          * 25-bit DirectColorModel and a DataBuffer of TYPE_INT.
          * If successful, it returns that value (in the ColorModel
          * of the destination surface) or null otherwise.

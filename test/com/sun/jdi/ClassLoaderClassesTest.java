@@ -64,10 +64,10 @@ public class ClassLoaderClassesTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new ClassLoaderClassesTest(args).startTests();
     }
-    
+
     /********** test assist **********/
 
     boolean findClass(String className) throws Exception {
@@ -82,7 +82,7 @@ public class ClassLoaderClassesTest extends TestScaffold {
         }
         return false;
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
@@ -91,7 +91,7 @@ public class ClassLoaderClassesTest extends TestScaffold {
          */
         BreakpointEvent bpe = startToMain("ClassLoaderClassesTarg");
         targetClass = bpe.location().declaringType();
-        
+
         if (findClass("int[]")) {
             println("int[] found");
         } else {
@@ -107,7 +107,7 @@ public class ClassLoaderClassesTest extends TestScaffold {
          * resume the target until end
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -119,4 +119,3 @@ public class ClassLoaderClassesTest extends TestScaffold {
         }
     }
 }
-

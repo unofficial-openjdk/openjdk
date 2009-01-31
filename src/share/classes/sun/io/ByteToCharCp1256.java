@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MS1256;
  * A table to convert Cp1256 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp1256 extends ByteToCharSingleByte {

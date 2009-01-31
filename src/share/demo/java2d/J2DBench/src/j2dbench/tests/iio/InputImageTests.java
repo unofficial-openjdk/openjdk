@@ -192,7 +192,7 @@ abstract class InputImageTests extends InputTests {
         imageioReaderSpis = (ImageReaderSpi[])spis.toArray(imageioReaderSpis);
         imageioReadFormatShortNames = new String[shortNames.size()];
         imageioReadFormatShortNames =
-            (String[])shortNames.toArray(imageioReadFormatShortNames); 
+            (String[])shortNames.toArray(imageioReadFormatShortNames);
     }
 
     protected InputImageTests(Group parent,
@@ -292,13 +292,13 @@ abstract class InputImageTests extends InputTests {
                   "Toolkit.createImage()");
             addDependency(generalSourceRoot,
                 new Modifier.Filter() {
-		    public boolean isCompatible(Object val) {
+                    public boolean isCompatible(Object val) {
                         // Toolkit handles FILE, URL, and ARRAY, but
                         // not FILECHANNEL
-		        InputType t = (InputType)val;
-		        return (t.getType() != INPUT_FILECHANNEL);
-		    }
-		});
+                        InputType t = (InputType)val;
+                        return (t.getType() != INPUT_FILECHANNEL);
+                    }
+                });
             addDependencies(toolkitOptRoot, true);
         }
 
@@ -353,7 +353,7 @@ abstract class InputImageTests extends InputTests {
             default:
                 throw new IllegalArgumentException("Invalid input type");
             }
-	}
+        }
     }
 
     private static class ImageIORead extends InputImageTests {
@@ -363,16 +363,16 @@ abstract class InputImageTests extends InputTests {
                   "ImageIO.read()");
             addDependency(generalSourceRoot,
                 new Modifier.Filter() {
-		    public boolean isCompatible(Object val) {
+                    public boolean isCompatible(Object val) {
                         // ImageIO.read() handles FILE, URL, and ARRAY, but
                         // not FILECHANNEL (well, I suppose we could create
                         // an ImageInputStream from a FileChannel source,
                         // but that's not a common use case; FileChannel is
                         // better handled by the ImageReader tests below)
-		        InputType t = (InputType)val;
-		        return (t.getType() != INPUT_FILECHANNEL);
-		    }
-		});
+                        InputType t = (InputType)val;
+                        return (t.getType() != INPUT_FILECHANNEL);
+                    }
+                });
             addDependencies(imageioOptRoot, true);
         }
 
@@ -420,7 +420,7 @@ abstract class InputImageTests extends InputTests {
             default:
                 throw new IllegalArgumentException("Invalid input type");
             }
-	}
+        }
     }
 
     private static class ImageReaderRead extends InputImageTests {
@@ -455,7 +455,7 @@ abstract class InputImageTests extends InputTests {
                     e.printStackTrace();
                 }
             } while (--numReps >= 0);
-	}
+        }
     }
 
     private static class ImageReaderGetImageMetadata extends InputImageTests {
@@ -494,7 +494,7 @@ abstract class InputImageTests extends InputTests {
                     e.printStackTrace();
                 }
             } while (--numReps >= 0);
-	}
+        }
     }
 
     private static class ReadProgressListener

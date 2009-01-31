@@ -65,7 +65,7 @@ public class WBMPImageReader extends ImageReader {
     private int height;
 
     private int wbmpType;
-    
+
     private WBMPMetadata metadata;
 
     /** Constructs <code>WBMPImageReader</code> from the provided
@@ -127,27 +127,27 @@ public class WBMPImageReader extends ImageReader {
         }
 
         metadata = new WBMPMetadata();
-        
+
         wbmpType = iis.readByte();   // TypeField
         byte fixHeaderField = iis.readByte();
 
         // check for valid wbmp image
         if (fixHeaderField != 0
-            || !isValidWbmpType(wbmpType)) 
+            || !isValidWbmpType(wbmpType))
         {
             throw new IIOException(I18N.getString("WBMPImageReader2"));
         }
 
         metadata.wbmpType = wbmpType;
-        
+
         // Read image width
         width = readMultiByteInteger();
         metadata.width = width;
-        
+
         // Read image height
         height = readMultiByteInteger();
         metadata.height = height;
-        
+
         gotHeader = true;
     }
 
@@ -217,10 +217,10 @@ public class WBMPImageReader extends ImageReader {
                               destinationRegion.y + destinationRegion.height,
                               BufferedImage.TYPE_BYTE_BINARY);
 
-        boolean noTransform = 
+        boolean noTransform =
             destinationRegion.equals(new Rectangle(0, 0, width, height)) &&
             destinationRegion.equals(new Rectangle(0, 0, bi.getWidth(), bi.getHeight()));
-        
+
         // Get the image data.
         WritableRaster tile = bi.getWritableTile(0, 0);
 
@@ -321,11 +321,11 @@ public class WBMPImageReader extends ImageReader {
         }
         return result;
     }
-    
+
     /*
      * This method verifies that given byte is valid wbmp type marker.
      * At the moment only 0x0 marker is described by wbmp spec.
-     */      
+     */
     boolean isValidWbmpType(int type) {
         return type == 0;
     }

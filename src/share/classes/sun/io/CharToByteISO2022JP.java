@@ -28,11 +28,11 @@ import java.io.*;
 
 public class CharToByteISO2022JP extends CharToByteJIS0208 {
 
-    private static final int ASCII = 0;			// ESC ( B
-    private static final int JISX0201_1976 = 1;		// ESC ( J
-    private static final int JISX0208_1978 = 2;		// ESC $ @
-    private static final int JISX0208_1983 = 3;		// ESC $ B
-    private static final int JISX0201_1976_KANA = 4;	// ESC ( I
+    private static final int ASCII = 0;                 // ESC ( B
+    private static final int JISX0201_1976 = 1;         // ESC ( J
+    private static final int JISX0208_1978 = 2;         // ESC $ @
+    private static final int JISX0208_1983 = 3;         // ESC $ B
+    private static final int JISX0201_1976_KANA = 4;    // ESC ( I
 
     private char highHalfZoneCode;
     private boolean flushed = true;
@@ -50,32 +50,32 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
     protected int subBytesMode = ASCII;
 
     public int flush(byte[] output, int outStart, int outEnd)
-	throws MalformedInputException, ConversionBufferFullException
+        throws MalformedInputException, ConversionBufferFullException
     {
-	if (highHalfZoneCode != 0) {
-	    highHalfZoneCode = 0;
-	    badInputLength = 0;
-	    throw new MalformedInputException();
-	}
+        if (highHalfZoneCode != 0) {
+            highHalfZoneCode = 0;
+            badInputLength = 0;
+            throw new MalformedInputException();
+        }
 
-	if (!flushed && (currentMode != ASCII)) {
-	    if (outEnd - outStart < 3) {
-		throw new ConversionBufferFullException();
-	    }
-	    output[outStart]     = (byte)0x1b;
-	    output[outStart + 1] = (byte)0x28;
-	    output[outStart + 2] = (byte)0x42;
-	    byteOff += 3;
-	    byteOff = charOff = 0;
-	    flushed = true;
-	    currentMode = ASCII;
-	    return 3;
-	}
-	return 0;
+        if (!flushed && (currentMode != ASCII)) {
+            if (outEnd - outStart < 3) {
+                throw new ConversionBufferFullException();
+            }
+            output[outStart]     = (byte)0x1b;
+            output[outStart + 1] = (byte)0x28;
+            output[outStart + 2] = (byte)0x42;
+            byteOff += 3;
+            byteOff = charOff = 0;
+            flushed = true;
+            currentMode = ASCII;
+            return 3;
+        }
+        return 0;
     }
 
     public int convert(char[] input, int inOff, int inEnd,
-		       byte[] output, int outOff, int outEnd)
+                       byte[] output, int outOff, int outEnd)
         throws MalformedInputException, UnknownCharacterException,
                ConversionBufferFullException
 
@@ -85,33 +85,33 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
         int     outputSize;         // Size of the output
 
         // Buffer for output bytes
-	byte[]  tmpArray = new byte[6];
+        byte[]  tmpArray = new byte[6];
         byte[]  outputByte;
 
-	flushed = false;
+        flushed = false;
 
-	// Make copies of input and output indexes
+        // Make copies of input and output indexes
         charOff = inOff;
         byteOff = outOff;
 
-	if (highHalfZoneCode != 0) {
-	    inputChar = highHalfZoneCode;
-	    highHalfZoneCode = 0;
-	    if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
-		// This is legal UTF16 sequence.
-		badInputLength = 1;
-		throw new UnknownCharacterException();
-	    } else {
-		// This is illegal UTF16 sequence.
-		badInputLength = 0;
-		throw new MalformedInputException();
-	    }
-	}
+        if (highHalfZoneCode != 0) {
+            inputChar = highHalfZoneCode;
+            highHalfZoneCode = 0;
+            if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
+                // This is legal UTF16 sequence.
+                badInputLength = 1;
+                throw new UnknownCharacterException();
+            } else {
+                // This is illegal UTF16 sequence.
+                badInputLength = 0;
+                throw new MalformedInputException();
+            }
+        }
 
         // Loop until we run out of input
         while(charOff < inEnd) {
-	    outputByte = tmpArray;
-	    int newMode = currentMode; // Trace character mode changing
+            outputByte = tmpArray;
+            int newMode = currentMode; // Trace character mode changing
 
             // Get the input character
             inputChar = input[charOff];
@@ -122,8 +122,8 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
             if(inputChar >= '\uD800' && inputChar <= '\uDBFF') {
                 // Is this the last character of the input?
                 if (charOff + 1 >= inEnd) {
-		    highHalfZoneCode = inputChar;
-		    break;
+                    highHalfZoneCode = inputChar;
+                    break;
                 }
 
                 // Is there a low surrogate following?
@@ -132,18 +132,18 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
                     // We have a valid surrogate pair.  Too bad we don't do
                     // surrogates.  Is substitution enabled?
                     if (subMode) {
-			if (currentMode != subBytesMode) {
-			    System.arraycopy(subBytesEscape, 0, outputByte, 0,
-					     subBytesEscape.length);
-			    outputSize = subBytesEscape.length;
-			    System.arraycopy(subBytes, 0, outputByte, 
-					     outputSize, subBytes.length);
-			    outputSize += subBytes.length;
-			    newMode = subBytesMode;
-			} else {
-			    outputByte = subBytes;
-			    outputSize = subBytes.length;
-			}
+                        if (currentMode != subBytesMode) {
+                            System.arraycopy(subBytesEscape, 0, outputByte, 0,
+                                             subBytesEscape.length);
+                            outputSize = subBytesEscape.length;
+                            System.arraycopy(subBytes, 0, outputByte,
+                                             outputSize, subBytes.length);
+                            outputSize += subBytes.length;
+                            newMode = subBytesMode;
+                        } else {
+                            outputByte = subBytes;
+                            outputSize = subBytes.length;
+                        }
                         inputSize = 2;
                     } else {
                         badInputLength = 2;
@@ -161,112 +161,112 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
                 badInputLength = 1;
                 throw new MalformedInputException();
             } else {
-		// Not part of a surrogate
+                // Not part of a surrogate
 
                 // Does this map to the Roman range?
                 if (inputChar <= '\u007F') {
-		    if (currentMode != ASCII) {
-			outputByte[0] = (byte)0x1b;
-			outputByte[1] = (byte)0x28;
-			outputByte[2] = (byte)0x42;
-			outputByte[3] = (byte)inputChar;
-			outputSize = 4;
-			newMode = ASCII;
-		    } else {
-			outputByte[0] = (byte)inputChar;
-			outputSize = 1;
-		    }
+                    if (currentMode != ASCII) {
+                        outputByte[0] = (byte)0x1b;
+                        outputByte[1] = (byte)0x28;
+                        outputByte[2] = (byte)0x42;
+                        outputByte[3] = (byte)inputChar;
+                        outputSize = 4;
+                        newMode = ASCII;
+                    } else {
+                        outputByte[0] = (byte)inputChar;
+                        outputSize = 1;
+                    }
                 }
                 // Is it a single byte kana?
                 else if (inputChar >= 0xFF61 && inputChar <= 0xFF9F) {
-		    if (currentMode != JISX0201_1976_KANA) {
-			outputByte[0] = (byte)0x1b;
-			outputByte[1] = (byte)0x28;
-			outputByte[2] = (byte)0x49;
-			outputByte[3] = (byte)(inputChar - 0xff40);
-			outputSize = 4;
-			newMode = JISX0201_1976_KANA;
-		    } else {
-			outputByte[0] = (byte)(inputChar - 0xff40);
-			outputSize = 1;
-		    }
+                    if (currentMode != JISX0201_1976_KANA) {
+                        outputByte[0] = (byte)0x1b;
+                        outputByte[1] = (byte)0x28;
+                        outputByte[2] = (byte)0x49;
+                        outputByte[3] = (byte)(inputChar - 0xff40);
+                        outputSize = 4;
+                        newMode = JISX0201_1976_KANA;
+                    } else {
+                        outputByte[0] = (byte)(inputChar - 0xff40);
+                        outputSize = 1;
+                    }
                 }
                 // Is it a yen sign?
                 else if (inputChar == '\u00A5') {
-		    if (currentMode != JISX0201_1976) {
-			outputByte[0] = (byte)0x1b;
-			outputByte[1] = (byte)0x28;
-			outputByte[2] = (byte)0x4a;
-			outputByte[3] = (byte)0x5c;
-			outputSize = 4;
-			newMode = JISX0201_1976;
-		    } else {
-			outputByte[0] = (byte)0x5C;
-			outputSize = 1;
-		    }
+                    if (currentMode != JISX0201_1976) {
+                        outputByte[0] = (byte)0x1b;
+                        outputByte[1] = (byte)0x28;
+                        outputByte[2] = (byte)0x4a;
+                        outputByte[3] = (byte)0x5c;
+                        outputSize = 4;
+                        newMode = JISX0201_1976;
+                    } else {
+                        outputByte[0] = (byte)0x5C;
+                        outputSize = 1;
+                    }
                 }
                 // Is it a tilde?
                 else if (inputChar == '\u203E')
-		    {
-			if (currentMode != JISX0201_1976) {
-			    outputByte[0] = (byte)0x1b;
-			    outputByte[1] = (byte)0x28;
-			    outputByte[2] = (byte)0x4a;
-			    outputByte[3] = (byte)0x7e;
-			    outputSize = 4;
-			    newMode = JISX0201_1976;
-			} else {
-			    outputByte[0] = (byte)0x7e;
-			    outputSize = 1;
-			}
-		    }
+                    {
+                        if (currentMode != JISX0201_1976) {
+                            outputByte[0] = (byte)0x1b;
+                            outputByte[1] = (byte)0x28;
+                            outputByte[2] = (byte)0x4a;
+                            outputByte[3] = (byte)0x7e;
+                            outputSize = 4;
+                            newMode = JISX0201_1976;
+                        } else {
+                            outputByte[0] = (byte)0x7e;
+                            outputSize = 1;
+                        }
+                    }
                 // Is it a JIS-X-0208 character?
                 else {
                     int index = getNative(inputChar);
                     if (index != 0) {
-			if (currentMode != JISX0208_1983) {
-			    outputByte[0] = (byte)0x1b;
-			    outputByte[1] = (byte)0x24;
-			    outputByte[2] = (byte)0x42;
-			    outputByte[3] = (byte)(index >> 8);
-			    outputByte[4] = (byte)(index & 0xff);
-			    outputSize = 5;
-			    newMode = JISX0208_1983;
-			} else {
-			    outputByte[0] = (byte)(index >> 8);
-			    outputByte[1] = (byte)(index & 0xff);
-			    outputSize = 2;
-			}
-		    }
+                        if (currentMode != JISX0208_1983) {
+                            outputByte[0] = (byte)0x1b;
+                            outputByte[1] = (byte)0x24;
+                            outputByte[2] = (byte)0x42;
+                            outputByte[3] = (byte)(index >> 8);
+                            outputByte[4] = (byte)(index & 0xff);
+                            outputSize = 5;
+                            newMode = JISX0208_1983;
+                        } else {
+                            outputByte[0] = (byte)(index >> 8);
+                            outputByte[1] = (byte)(index & 0xff);
+                            outputSize = 2;
+                        }
+                    }
                     // It doesn't map to JIS-0208!
                     else {
                         if (subMode) {
-			    if (currentMode != subBytesMode) {
-				System.arraycopy(subBytesEscape, 0, outputByte, 0,
-						 subBytesEscape.length);
-				outputSize = subBytesEscape.length;
-				System.arraycopy(subBytes, 0, outputByte, 
-						 outputSize, subBytes.length);
-				outputSize += subBytes.length;
-				newMode = subBytesMode;
-			    } else {
-				outputByte = subBytes;
-				outputSize = subBytes.length;
-			    }
-			} else {
-			    badInputLength = 1;
-			    throw new UnknownCharacterException();
-			}
-		    }
+                            if (currentMode != subBytesMode) {
+                                System.arraycopy(subBytesEscape, 0, outputByte, 0,
+                                                 subBytesEscape.length);
+                                outputSize = subBytesEscape.length;
+                                System.arraycopy(subBytes, 0, outputByte,
+                                                 outputSize, subBytes.length);
+                                outputSize += subBytes.length;
+                                newMode = subBytesMode;
+                            } else {
+                                outputByte = subBytes;
+                                outputSize = subBytes.length;
+                            }
+                        } else {
+                            badInputLength = 1;
+                            throw new UnknownCharacterException();
+                        }
+                    }
                 }
             }
 
             // Is there room in the output buffer?
-	    // XXX: The code assumes output buffer can hold at least 5 bytes,
-	    // in this coverter case. However, there is no way for apps to
-	    // see how many bytes will be necessary for next call.
-	    // getMaxBytesPerChar() should be overriden in every subclass of
-	    // CharToByteConverter and reflect real value (5 for this).
+            // XXX: The code assumes output buffer can hold at least 5 bytes,
+            // in this coverter case. However, there is no way for apps to
+            // see how many bytes will be necessary for next call.
+            // getMaxBytesPerChar() should be overriden in every subclass of
+            // CharToByteConverter and reflect real value (5 for this).
             if (byteOff + outputSize > outEnd)
                 throw new ConversionBufferFullException();
 
@@ -276,22 +276,22 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
 
             // Advance the input pointer
             charOff += inputSize;
-	    
-	    // We can successfuly output the characters, changes
-	    // current mode. Fix for 4251646.
-	    currentMode = newMode;
+
+            // We can successfuly output the characters, changes
+            // current mode. Fix for 4251646.
+            currentMode = newMode;
         }
 
-	// return mode ASCII at the end
-	if (currentMode != ASCII){
-	    if (byteOff + 3 > outEnd)
-		throw new ConversionBufferFullException();
+        // return mode ASCII at the end
+        if (currentMode != ASCII){
+            if (byteOff + 3 > outEnd)
+                throw new ConversionBufferFullException();
 
-	    output[byteOff++] = 0x1b;
-	    output[byteOff++] = 0x28;
-	    output[byteOff++] = 0x42;
-	    currentMode = ASCII;
-	}
+            output[byteOff++] = 0x1b;
+            output[byteOff++] = 0x28;
+            output[byteOff++] = 0x42;
+            currentMode = ASCII;
+        }
 
         // Return the length written to the output buffer
         return byteOff-outOff;
@@ -299,16 +299,16 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
 
     // Reset
     public void reset() {
-	highHalfZoneCode = 0;
-	byteOff = charOff = 0;
-	currentMode = ASCII;
+        highHalfZoneCode = 0;
+        byteOff = charOff = 0;
+        currentMode = ASCII;
     }
 
     /**
      * returns the maximum number of bytes needed to convert a char
      */
     public int getMaxBytesPerChar() {
-	return 8;
+        return 8;
     }
 
     // Return the character set ID
@@ -317,4 +317,3 @@ public class CharToByteISO2022JP extends CharToByteJIS0208 {
     }
 
 }
-

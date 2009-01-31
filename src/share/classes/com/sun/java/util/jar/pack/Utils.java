@@ -62,7 +62,7 @@ class Utils {
      * Property indicating that the unpacker should
      * ignore the transmitted PACK_MODIFICATION_TIME,
      * replacing it by the given value. The value can
-     * be a numeric string, representing the number of 
+     * be a numeric string, representing the number of
      * mSecs since the epoch (UTC), or the special string
      * {@link #NOW}, meaning the current time (UTC).
      * The default value is the special string {@link #KEEP},
@@ -89,7 +89,7 @@ class Utils {
     /*
      * A possible value for MODIFICATION_TIME
      */
-    static final String NOW 				= "now";
+    static final String NOW                             = "now";
     // Other debug options:
     //   com...debug.bands=false      add band IDs to pack file, to verify sync
     //   com...dump.bands=false       dump band contents to local disk
@@ -118,159 +118,159 @@ class Utils {
     static final ThreadLocal currentInstance = new ThreadLocal();
 
     static PropMap currentPropMap() {
-	Object obj = currentInstance.get();
-	if (obj instanceof PackerImpl)
-	    return ((PackerImpl)obj)._props;
-	if (obj instanceof UnpackerImpl)
-	    return ((UnpackerImpl)obj)._props;
-	return null;
+        Object obj = currentInstance.get();
+        if (obj instanceof PackerImpl)
+            return ((PackerImpl)obj)._props;
+        if (obj instanceof UnpackerImpl)
+            return ((UnpackerImpl)obj)._props;
+        return null;
     }
 
     static final boolean nolog
-	= Boolean.getBoolean(Utils.COM_PREFIX+"nolog");
+        = Boolean.getBoolean(Utils.COM_PREFIX+"nolog");
 
 
     static final Logger log
-	= new Logger("java.util.jar.Pack200", null) {
-	    public void log(LogRecord record) {
-		int verbose = currentPropMap().getInteger(DEBUG_VERBOSE);
-		if (verbose > 0) {
-		    if (nolog &&
-			record.getLevel().intValue() < Level.WARNING.intValue()) {
-			System.out.println(record.getMessage());
-		    } else {
-			super.log(record);
-		    }
-		}
-	    }
+        = new Logger("java.util.jar.Pack200", null) {
+            public void log(LogRecord record) {
+                int verbose = currentPropMap().getInteger(DEBUG_VERBOSE);
+                if (verbose > 0) {
+                    if (nolog &&
+                        record.getLevel().intValue() < Level.WARNING.intValue()) {
+                        System.out.println(record.getMessage());
+                    } else {
+                        super.log(record);
+                    }
+                }
+            }
 
-	    public void fine(String msg) {
-		int verbose = currentPropMap().getInteger(DEBUG_VERBOSE);
-		if (verbose > 0) {
-			System.out.println(msg);
-		}
-	    }
-	};
+            public void fine(String msg) {
+                int verbose = currentPropMap().getInteger(DEBUG_VERBOSE);
+                if (verbose > 0) {
+                        System.out.println(msg);
+                }
+            }
+        };
     static {
-	LogManager.getLogManager().addLogger(log);
+        LogManager.getLogManager().addLogger(log);
     }
 
     // Returns the Max Version String of this implementation
     static String getVersionString() {
-	return "Pack200, Vendor: Sun Microsystems, Version: " + 
-	    Constants.JAVA6_PACKAGE_MAJOR_VERSION + "." + 
-	    Constants.JAVA6_PACKAGE_MINOR_VERSION;	
+        return "Pack200, Vendor: Sun Microsystems, Version: " +
+            Constants.JAVA6_PACKAGE_MAJOR_VERSION + "." +
+            Constants.JAVA6_PACKAGE_MINOR_VERSION;
     }
 
     static void markJarFile(JarOutputStream out) throws IOException {
-	out.setComment(PACK_ZIP_ARCHIVE_MARKER_COMMENT);
+        out.setComment(PACK_ZIP_ARCHIVE_MARKER_COMMENT);
     }
 
     // -0 mode helper
     static void copyJarFile(JarInputStream in, JarOutputStream out) throws IOException {
-	if (in.getManifest() != null) {
-	    ZipEntry me = new ZipEntry(JarFile.MANIFEST_NAME);
-	    out.putNextEntry(me);
-	    in.getManifest().write(out);
-	    out.closeEntry();
-	}
-	byte[] buffer = new byte[1 << 14];
-	for (JarEntry je; (je = in.getNextJarEntry()) != null; ) {
-	    out.putNextEntry(je);
-	    for (int nr; 0 < (nr = in.read(buffer)); ) {
-		out.write(buffer, 0, nr);
-	    }
-	}
-	in.close();
-	markJarFile(out);  // add PACK200 comment
+        if (in.getManifest() != null) {
+            ZipEntry me = new ZipEntry(JarFile.MANIFEST_NAME);
+            out.putNextEntry(me);
+            in.getManifest().write(out);
+            out.closeEntry();
+        }
+        byte[] buffer = new byte[1 << 14];
+        for (JarEntry je; (je = in.getNextJarEntry()) != null; ) {
+            out.putNextEntry(je);
+            for (int nr; 0 < (nr = in.read(buffer)); ) {
+                out.write(buffer, 0, nr);
+            }
+        }
+        in.close();
+        markJarFile(out);  // add PACK200 comment
     }
     static void copyJarFile(JarFile in, JarOutputStream out) throws IOException {
-	byte[] buffer = new byte[1 << 14];
-	for (Enumeration e = in.entries(); e.hasMoreElements(); ) {
-	    JarEntry je = (JarEntry) e.nextElement();
-	    out.putNextEntry(je);
-	    InputStream ein = in.getInputStream(je);
-	    for (int nr; 0 < (nr = ein.read(buffer)); ) {
-		out.write(buffer, 0, nr);
-	    }
-	}
-	in.close();
-	markJarFile(out);  // add PACK200 comment
+        byte[] buffer = new byte[1 << 14];
+        for (Enumeration e = in.entries(); e.hasMoreElements(); ) {
+            JarEntry je = (JarEntry) e.nextElement();
+            out.putNextEntry(je);
+            InputStream ein = in.getInputStream(je);
+            for (int nr; 0 < (nr = ein.read(buffer)); ) {
+                out.write(buffer, 0, nr);
+            }
+        }
+        in.close();
+        markJarFile(out);  // add PACK200 comment
     }
     static void copyJarFile(JarInputStream in, OutputStream out) throws IOException {
-	// 4947205 : Peformance is slow when using pack-effort=0
-	out = new BufferedOutputStream(out); 
-	out = new NonCloser(out); // protect from JarOutputStream.close()
-	JarOutputStream jout = new JarOutputStream(out);
-	copyJarFile(in, jout);
-	jout.close();
+        // 4947205 : Peformance is slow when using pack-effort=0
+        out = new BufferedOutputStream(out);
+        out = new NonCloser(out); // protect from JarOutputStream.close()
+        JarOutputStream jout = new JarOutputStream(out);
+        copyJarFile(in, jout);
+        jout.close();
     }
     static void copyJarFile(JarFile in, OutputStream out) throws IOException {
 
-	// 4947205 : Peformance is slow when using pack-effort=0
-	out = new BufferedOutputStream(out); 
-	out = new NonCloser(out); // protect from JarOutputStream.close()
-	JarOutputStream jout = new JarOutputStream(out);
-	copyJarFile(in, jout);
-	jout.close();
+        // 4947205 : Peformance is slow when using pack-effort=0
+        out = new BufferedOutputStream(out);
+        out = new NonCloser(out); // protect from JarOutputStream.close()
+        JarOutputStream jout = new JarOutputStream(out);
+        copyJarFile(in, jout);
+        jout.close();
     }
-	// Wrapper to prevent closing of client-supplied stream.
+        // Wrapper to prevent closing of client-supplied stream.
     static private
     class NonCloser extends FilterOutputStream {
-	NonCloser(OutputStream out) { super(out); }
-	public void close() throws IOException { flush(); }
+        NonCloser(OutputStream out) { super(out); }
+        public void close() throws IOException { flush(); }
     }
    static String getJarEntryName(String name) {
-	if (name == null)  return null;
-	return name.replace(File.separatorChar, '/');
+        if (name == null)  return null;
+        return name.replace(File.separatorChar, '/');
     }
 
     static String zeString(ZipEntry ze) {
-	int store = (ze.getCompressedSize() > 0) ? 
-	    (int)( (1.0 - ((double)ze.getCompressedSize()/(double)ze.getSize()))*100 )
-	    : 0 ;
-	// Follow unzip -lv output
-	return (long)ze.getSize() + "\t" + ze.getMethod() 
-	    + "\t" + ze.getCompressedSize() + "\t" 
-	    + store + "%\t" 
-	    + new Date(ze.getTime()) + "\t" 
-	    + Long.toHexString(ze.getCrc()) + "\t" 
-	    + ze.getName() ;
+        int store = (ze.getCompressedSize() > 0) ?
+            (int)( (1.0 - ((double)ze.getCompressedSize()/(double)ze.getSize()))*100 )
+            : 0 ;
+        // Follow unzip -lv output
+        return (long)ze.getSize() + "\t" + ze.getMethod()
+            + "\t" + ze.getCompressedSize() + "\t"
+            + store + "%\t"
+            + new Date(ze.getTime()) + "\t"
+            + Long.toHexString(ze.getCrc()) + "\t"
+            + ze.getName() ;
     }
 
 
 
     static byte[] readMagic(BufferedInputStream in) throws IOException {
-	in.mark(4);
-	byte[] magic = new byte[4];
-	for (int i = 0; i < magic.length; i++) {
-	    // read 1 byte at a time, so we always get 4
-	    if (1 != in.read(magic, i, 1))
-		break;
-	}
-	in.reset();
-	return magic;
+        in.mark(4);
+        byte[] magic = new byte[4];
+        for (int i = 0; i < magic.length; i++) {
+            // read 1 byte at a time, so we always get 4
+            if (1 != in.read(magic, i, 1))
+                break;
+        }
+        in.reset();
+        return magic;
     }
 
     // magic number recognizers
     static boolean isJarMagic(byte[] magic) {
-	return (magic[0] == (byte)'P' &&
-		magic[1] == (byte)'K' &&
-		magic[2] >= 1 &&
-		magic[2] <  8 &&
-		magic[3] == magic[2] + 1);
+        return (magic[0] == (byte)'P' &&
+                magic[1] == (byte)'K' &&
+                magic[2] >= 1 &&
+                magic[2] <  8 &&
+                magic[3] == magic[2] + 1);
     }
     static boolean isPackMagic(byte[] magic) {
-	return (magic[0] == (byte)0xCA &&
-		magic[1] == (byte)0xFE &&
-		magic[2] == (byte)0xD0 &&
-		magic[3] == (byte)0x0D);
+        return (magic[0] == (byte)0xCA &&
+                magic[1] == (byte)0xFE &&
+                magic[2] == (byte)0xD0 &&
+                magic[3] == (byte)0x0D);
     }
     static boolean isGZIPMagic(byte[] magic) {
-	return (magic[0] == (byte)0x1F &&
-		magic[1] == (byte)0x8B &&
-		magic[2] == (byte)0x08);
-	// fourth byte is variable "flg" field
+        return (magic[0] == (byte)0x1F &&
+                magic[1] == (byte)0x8B &&
+                magic[2] == (byte)0x08);
+        // fourth byte is variable "flg" field
     }
 
     private Utils() { } // do not instantiate

@@ -40,7 +40,7 @@ void freeThreadBlock(sys_thread_t *tid);
 int threadBootstrapMD(sys_thread_t **tid, sys_mon_t **lockP, int nb);
 
 HPI_SysInfo *sysGetSysInfo(void);
-long 	sysGetMilliTicks(void);
+long    sysGetMilliTicks(void);
 jlong sysTimeMillis(void);
 
 signal_handler_t sysSignal(int sig, signal_handler_t handler);
@@ -52,11 +52,11 @@ int sysSetLoggingLevel(int level);
 bool_t sysSetMonitoringOn(bool_t on);
 int sysGetLastErrorString(char *buf, int len);
 
-void *	sysMalloc(size_t);
-void *	sysRealloc(void*, size_t);
-void	sysFree(void*);
-void *	sysCalloc(size_t, size_t);
-char *	sysStrdup(const char * string);
+void *  sysMalloc(size_t);
+void *  sysRealloc(void*, size_t);
+void    sysFree(void*);
+void *  sysCalloc(size_t, size_t);
+char *  sysStrdup(const char * string);
 void *  sysMapMem(size_t, size_t *);
 void *  sysUnmapMem(void *, size_t, size_t *);
 void *  sysCommitMem(void * ptr, size_t size, size_t * actual);
@@ -64,32 +64,32 @@ void *  sysDecommitMem(void * ptr, size_t size, size_t * actual);
 void *  sysAllocBlock(size_t, void**);
 void    sysFreeBlock(void *);
 
-void	sysBuildLibName(char *, int, char *, char *);
+void    sysBuildLibName(char *, int, char *, char *);
 int     sysBuildFunName(char *, int, int, int);
 void *  sysLoadLibrary(const char *, char *err_buf, int err_buflen);
 void    sysUnloadLibrary(void *);
 void *  sysFindLibraryEntry(void *, const char *);
 
-int 	sysThreadBootstrap(sys_thread_t **, sys_mon_t **, int);
-int 	sysThreadCreate(sys_thread_t **,
-			long,
-			void (*)(void *),
-			void *arg);
-void	sysThreadExit(void);
+int     sysThreadBootstrap(sys_thread_t **, sys_mon_t **, int);
+int     sysThreadCreate(sys_thread_t **,
+                        long,
+                        void (*)(void *),
+                        void *arg);
+void    sysThreadExit(void);
 sys_thread_t * sysThreadSelf(void);
 void    sysThreadYield(void);
-int	sysThreadSuspend(sys_thread_t *);
-int	sysThreadResume(sys_thread_t *);
-int	sysThreadSetPriority(sys_thread_t *, int);
-int	sysThreadGetPriority(sys_thread_t *, int *);
-void *  sysThreadStackPointer(sys_thread_t *); 
+int     sysThreadSuspend(sys_thread_t *);
+int     sysThreadResume(sys_thread_t *);
+int     sysThreadSetPriority(sys_thread_t *, int);
+int     sysThreadGetPriority(sys_thread_t *, int *);
+void *  sysThreadStackPointer(sys_thread_t *);
 void *  sysThreadStackTop(sys_thread_t *);
 long *  sysThreadRegs(sys_thread_t *, int *);
-int	sysThreadSingle(void);
-void	sysThreadMulti(void);
+int     sysThreadSingle(void);
+void    sysThreadMulti(void);
 int     sysThreadEnumerateOver(int (*)(sys_thread_t *, void *), void *);
 int     sysThreadCheckStack(void);
-void	sysThreadPostException(sys_thread_t *, void *);
+void    sysThreadPostException(sys_thread_t *, void *);
 void    sysThreadInterrupt(sys_thread_t *);
 int     sysThreadIsInterrupted(sys_thread_t *, int);
 int     sysThreadAlloc(sys_thread_t **);
@@ -97,7 +97,7 @@ int     sysThreadFree(void);
 size_t  sysThreadSizeof(void);
 jlong   sysThreadCPUTime(void);
 int     sysThreadGetStatus(sys_thread_t *, sys_mon_t **);
-int     sysAdjustUserThreadCount(int delta);  
+int     sysAdjustUserThreadCount(int delta);
 bool_t  sysThreadIsRunning(sys_thread_t *);
 void    sysThreadProfSuspend(sys_thread_t *);
 void    sysThreadProfResume(sys_thread_t *);
@@ -114,7 +114,7 @@ bool_t  sysMonitorEntered(sys_thread_t *, sys_mon_t *);
 int     sysMonitorExit(sys_thread_t *, sys_mon_t *);
 int     sysMonitorNotify(sys_thread_t *, sys_mon_t *);
 int     sysMonitorNotifyAll(sys_thread_t *, sys_mon_t *);
-int 	sysMonitorWait(sys_thread_t *, sys_mon_t *, jlong);
+int     sysMonitorWait(sys_thread_t *, sys_mon_t *, jlong);
 bool_t  sysMonitorInUse(sys_mon_t *);
 sys_thread_t * sysMonitorOwner(sys_mon_t *);
 int     sysMonitorGetInfo(sys_mon_t *, sys_mon_info *);
@@ -140,21 +140,21 @@ int sysAccept(int fd, struct sockaddr *him, int *len);
 int sysGetSockName(int fd, struct sockaddr *him, int *len);
 #ifdef _LP64
 ssize_t sysSendTo(int fd, char *buf, int len, int flags, struct sockaddr *to,
-	      int tolen);
+              int tolen);
 ssize_t sysRecvFrom(int fd, char *buf, int nbytes, int flags,
                 struct sockaddr *from, int *fromlen);
 ssize_t sysRecv(int fd, char *buf, int nBytes, int flags);
 ssize_t sysSend(int fd, char *buf, int nBytes, int flags);
 #else
 int sysSendTo(int fd, char *buf, int len, int flags, struct sockaddr *to,
-	      int tolen);
+              int tolen);
 int sysRecvFrom(int fd, char *buf, int nbytes, int flags,
                 struct sockaddr *from, int *fromlen);
 int sysRecv(int fd, char *buf, int nBytes, int flags);
 int sysSend(int fd, char *buf, int nBytes, int flags);
 #endif
 int sysListen(int fd, int count);
-int sysTimeout(int fd, long timeout); 
+int sysTimeout(int fd, long timeout);
 int sysGetHostName(char* name, int namelen);
 struct hostent *sysGetHostByAddr(const char* name, int len, int type);
 struct hostent *sysGetHostByName(char *hostname);
@@ -167,8 +167,8 @@ struct protoent * sysGetProtoByName(char* name);
 #define SYS_SIG_ERR HPI_SIG_ERR
 #define SYS_SIG_IGN HPI_SIG_IGN
 
-#define SYS_OK	       HPI_OK
-#define SYS_ERR	       HPI_ERR
+#define SYS_OK         HPI_OK
+#define SYS_ERR        HPI_ERR
 #define SYS_INTRPT     HPI_INTRPT
 #define SYS_TIMEOUT    HPI_TIMEOUT
 #define SYS_NOMEM      HPI_NOMEM
@@ -178,13 +178,13 @@ struct protoent * sysGetProtoByName(char* name);
 #define SYS_THREAD_MONITOR_WAIT HPI_THREAD_MONITOR_WAIT
 #define SYS_THREAD_CONDVAR_WAIT HPI_THREAD_CONDVAR_WAIT
 
-#define MinimumPriority	    HPI_MINIMUM_PRIORITY
-#define MaximumPriority	    HPI_MAXIMUM_PRIORITY
-#define NormalPriority	    HPI_NORMAL_PRIORITY
+#define MinimumPriority     HPI_MINIMUM_PRIORITY
+#define MaximumPriority     HPI_MAXIMUM_PRIORITY
+#define NormalPriority      HPI_NORMAL_PRIORITY
 
 #define SYS_THREAD_SUSPENDED HPI_THREAD_SUSPENDED
 
-#define PAGE_ALIGNMENT	    HPI_PAGE_ALIGNMENT
+#define PAGE_ALIGNMENT      HPI_PAGE_ALIGNMENT
 
 #define SYS_TIMEOUT_INFINITY HPI_TIMEOUT_INFINITY
 

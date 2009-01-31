@@ -43,7 +43,6 @@ import java.nio.channels.*;
  *
  * @author Brad R. Wetmore
  * @author Mark Reinhold
- * @version %I%, %E%
  */
 class ChannelIO {
 
@@ -58,21 +57,21 @@ class ChannelIO {
     static private int requestBBSize = 4096;
 
     protected ChannelIO(SocketChannel sc, boolean blocking)
-	    throws IOException {
-	this.sc = sc;
-	sc.configureBlocking(blocking);
+            throws IOException {
+        this.sc = sc;
+        sc.configureBlocking(blocking);
     }
 
     static ChannelIO getInstance(SocketChannel sc, boolean blocking)
-	    throws IOException {
-	ChannelIO cio = new ChannelIO(sc, blocking);
-	cio.requestBB = ByteBuffer.allocate(requestBBSize);
+            throws IOException {
+        ChannelIO cio = new ChannelIO(sc, blocking);
+        cio.requestBB = ByteBuffer.allocate(requestBBSize);
 
-	return cio;
+        return cio;
     }
 
     SocketChannel getSocketChannel() {
-	return sc;
+        return sc;
     }
 
     /*
@@ -80,13 +79,13 @@ class ChannelIO {
      * reallocate the ByteBuffer, copy the existing info into the new buffer.
      */
     protected void resizeRequestBB(int remaining) {
-	if (requestBB.remaining() < remaining) {
-	    // Expand buffer for large request
-	    ByteBuffer bb = ByteBuffer.allocate(requestBB.capacity() * 2);
-	    requestBB.flip();
-	    bb.put(requestBB);
-	    requestBB = bb;
-	}
+        if (requestBB.remaining() < remaining) {
+            // Expand buffer for large request
+            ByteBuffer bb = ByteBuffer.allocate(requestBB.capacity() * 2);
+            requestBB.flip();
+            bb.put(requestBB);
+            requestBB = bb;
+        }
     }
 
     /*
@@ -98,7 +97,7 @@ class ChannelIO {
      * return true when we're done with handshaking.
      */
     boolean doHandshake() throws IOException {
-	return true;
+        return true;
     }
 
     /*
@@ -111,7 +110,7 @@ class ChannelIO {
      * return true when we're done with handshaking.
      */
     boolean doHandshake(SelectionKey sk) throws IOException {
-	return true;
+        return true;
     }
 
     /*
@@ -119,32 +118,32 @@ class ChannelIO {
      * data into the read buffer.
      */
     int read() throws IOException {
-	/*
-	 * Allocate more space if less than 5% remains
-	 */
-	resizeRequestBB(requestBBSize/20);
-	return sc.read(requestBB);
+        /*
+         * Allocate more space if less than 5% remains
+         */
+        resizeRequestBB(requestBBSize/20);
+        return sc.read(requestBB);
     }
 
     /*
      * All data has been read, pass back the request in one buffer.
      */
     ByteBuffer getReadBuf() {
-	return requestBB;
+        return requestBB;
     }
 
     /*
      * Write the src buffer into the socket channel.
      */
     int write(ByteBuffer src) throws IOException {
-	return sc.write(src);
+        return sc.write(src);
     }
 
     /*
      * Perform a FileChannel.TransferTo on the socket channel.
      */
     long transferTo(FileChannel fc, long pos, long len) throws IOException {
-	return fc.transferTo(pos, len, sc);
+        return fc.transferTo(pos, len, sc);
     }
 
     /*
@@ -156,7 +155,7 @@ class ChannelIO {
      * Return true if successful.
      */
     boolean dataFlush() throws IOException {
-	return true;
+        return true;
     }
 
     /*
@@ -168,14 +167,14 @@ class ChannelIO {
      * Return true if successful, and the data has been flushed.
      */
     boolean shutdown() throws IOException {
-	return true;
+        return true;
     }
 
     /*
      * Close the underlying connection.
      */
     void close() throws IOException {
-	sc.close();
+        sc.close();
     }
 
 }

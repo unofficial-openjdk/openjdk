@@ -20,7 +20,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-/* 
+/*
   test
   @bug 4185854
   @summary Checks that constructors do not accept nulls and throw NPE
@@ -34,7 +34,7 @@
 //  were valid as well as the html file.)
 // Also, note the area= after Your Name in the author tag.  Here, you
 //  should put which functional area the test falls in.  See the
-//  AWT-core home page -> test areas and/or -> AWT team  for a list of 
+//  AWT-core home page -> test areas and/or -> AWT team  for a list of
 //  areas.
 // Note also the 'ConstructorsNullTest.html' in the run tag.  This should
 //  be changed to the name of the test.
@@ -63,22 +63,22 @@ import java.awt.color.*;
 // tests...
 
 
-public class ConstructorsNullTest extends Applet 
+public class ConstructorsNullTest extends Applet
  {
    //Declare things used in the test, like buttons and labels here
 
-   public void init() 
+   public void init()
     {
-      //Create instructions for the user here, as well as set up 
+      //Create instructions for the user here, as well as set up
       // the environment -- set the layout manager, add buttons,
       // etc.
-      
+
       this.setLayout (new BorderLayout ());
 
-      String[] instructions = 
+      String[] instructions =
        {
-	 "This is an AUTOMATIC test",
-	 "simply wait until it is done"
+         "This is an AUTOMATIC test",
+         "simply wait until it is done"
        };
       Sysout.createDialog( );
       Sysout.printInstructions( instructions );
@@ -125,8 +125,8 @@ public class ConstructorsNullTest extends Applet
 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -139,12 +139,12 @@ public class ConstructorsNullTest extends Applet
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
- { 
+class Sysout
+ {
    private static TestDialog dialog;
 
    public static void createDialogWithInstructions( String[] instructions )
@@ -154,7 +154,7 @@ class Sysout
       dialog.show();
       println( "Any messages for the tester will display here." );
     }
-   
+
    public static void createDialog( )
     {
       dialog = new TestDialog( new Frame(), "Instructions" );
@@ -163,8 +163,8 @@ class Sysout
       dialog.show();
       println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
    public static void printInstructions( String[] instructions )
     {
       dialog.printInstructions( instructions );
@@ -192,20 +192,20 @@ class TestDialog extends Dialog
    TextArea instructionsText;
    TextArea messageText;
    int maxStringLength = 80;
-   
+
    //DO NOT call this directly, go through Sysout
-   public TestDialog( Frame frame, String name ) 
+   public TestDialog( Frame frame, String name )
     {
       super( frame, name );
       int scrollBoth = TextArea.SCROLLBARS_BOTH;
       instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
       add( "North", instructionsText );
-      
+
       messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
       add("South", messageText);
-      
+
       pack();
-      
+
       show();
     }// TestDialog()
 
@@ -219,43 +219,42 @@ class TestDialog extends Dialog
 
       String printStr, remainingStr;
       for( int i=0; i < instructions.length; i++ )
-       { 
-	 //chop up each into pieces maxSringLength long
-	 remainingStr = instructions[ i ];
-	 while( remainingStr.length() > 0 )
-	  {
-	    //if longer than max then chop off first max chars to print
-	    if( remainingStr.length() >= maxStringLength )
-	     {
-	       //Try to chop on a word boundary
-	       int posOfSpace = remainingStr.
-		  lastIndexOf( ' ', maxStringLength - 1 );
-	       
-	       if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-	       
-	       printStr = remainingStr.substring( 0, posOfSpace + 1 );
-	       remainingStr = remainingStr.substring( posOfSpace + 1 );
-	     }
-	    //else just print
-	    else 
-	     { 
-	       printStr = remainingStr;
-	       remainingStr = "";
-	     }
-	    
+       {
+         //chop up each into pieces maxSringLength long
+         remainingStr = instructions[ i ];
+         while( remainingStr.length() > 0 )
+          {
+            //if longer than max then chop off first max chars to print
+            if( remainingStr.length() >= maxStringLength )
+             {
+               //Try to chop on a word boundary
+               int posOfSpace = remainingStr.
+                  lastIndexOf( ' ', maxStringLength - 1 );
+
+               if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
+
+               printStr = remainingStr.substring( 0, posOfSpace + 1 );
+               remainingStr = remainingStr.substring( posOfSpace + 1 );
+             }
+            //else just print
+            else
+             {
+               printStr = remainingStr;
+               remainingStr = "";
+             }
+
             instructionsText.append( printStr + "\n" );
-	    
-	  }// while
-	 
+
+          }// while
+
        }// for
-      
+
     }//printInstructions()
 
    //DO NOT call this directly, go through Sysout
    public void displayMessage( String messageIn )
     {
       messageText.append( messageIn + "\n" );
-    }  
-   
- }// TestDialog  class    
-  
+    }
+
+ }// TestDialog  class

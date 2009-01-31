@@ -23,14 +23,14 @@
 
 /*
  *
- * 
+ *
  * @bug     4858522
  * @summary Basic unit test of OperatingSystemMXBean.getTotalSwapSpaceSize()
  * @author  Steve Bohne
  */
 
 /*
- * This test tests the actual swap size on linux and solaris. 
+ * This test tests the actual swap size on linux and solaris.
  * The correct value should be checked manually:
  * Solaris:
  *   1. In a shell, enter the command: "swap -l"
@@ -53,8 +53,8 @@ import java.lang.management.*;
 public class GetTotalSwapSpaceSize {
 
     private static OperatingSystemMXBean mbean =
-	(com.sun.management.OperatingSystemMXBean)
-	ManagementFactory.getOperatingSystemMXBean();
+        (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
 
     // Careful with these values.
     // Min size for pass dynamically determined below.
@@ -69,41 +69,41 @@ public class GetTotalSwapSpaceSize {
             trace = true;
         }
 
-	long expected_swap_size = 0;
+        long expected_swap_size = 0;
 
-	if (args.length < 1 || args.length > 2) {
-	   throw new IllegalArgumentException("Unexpected number of args " + args.length);
-	}
-	
+        if (args.length < 1 || args.length > 2) {
+           throw new IllegalArgumentException("Unexpected number of args " + args.length);
+        }
 
-	long min_size = mbean.getFreeSwapSpaceSize();
-	if (min_size > 0) {
-	    min_size_for_pass = min_size;
-	}
 
-	long size = mbean.getTotalSwapSpaceSize();
+        long min_size = mbean.getFreeSwapSpaceSize();
+        if (min_size > 0) {
+            min_size_for_pass = min_size;
+        }
 
-	if (trace) {
-	    System.out.println("Total swap space size in bytes: " + size);
-	}
+        long size = mbean.getTotalSwapSpaceSize();
 
-	if (!args[0].matches("sanity-only")) {
-	    expected_swap_size = Long.parseLong(args[0]);
-	    if (size != expected_swap_size) {
-	        throw new RuntimeException("Expected total swap size      : " + 
-				           expected_swap_size +
-	                                   " but getTotalSwapSpaceSize returned: " +
- 					   size);
-	    }
-	}
+        if (trace) {
+            System.out.println("Total swap space size in bytes: " + size);
+        }
 
-	if (size < min_size_for_pass || size > MAX_SIZE_FOR_PASS) {
-	    throw new RuntimeException("Total swap space size " +
-				       "illegal value: " + size + " bytes " + 
-				       "(MIN = " + min_size_for_pass + "; " +
-				       "MAX = " + MAX_SIZE_FOR_PASS + ")");
-	}
-	
-	System.out.println("Test passed.");
+        if (!args[0].matches("sanity-only")) {
+            expected_swap_size = Long.parseLong(args[0]);
+            if (size != expected_swap_size) {
+                throw new RuntimeException("Expected total swap size      : " +
+                                           expected_swap_size +
+                                           " but getTotalSwapSpaceSize returned: " +
+                                           size);
+            }
+        }
+
+        if (size < min_size_for_pass || size > MAX_SIZE_FOR_PASS) {
+            throw new RuntimeException("Total swap space size " +
+                                       "illegal value: " + size + " bytes " +
+                                       "(MIN = " + min_size_for_pass + "; " +
+                                       "MAX = " + MAX_SIZE_FOR_PASS + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }

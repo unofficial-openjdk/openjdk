@@ -47,7 +47,6 @@ import javax.imageio.ImageReader;
  * @see javax.imageio.ImageReader#addIIOReadProgressListener
  * @see javax.imageio.ImageReader#removeIIOReadProgressListener
  *
- * @version 0.5
  */
 public interface IIOReadProgressListener extends EventListener {
 

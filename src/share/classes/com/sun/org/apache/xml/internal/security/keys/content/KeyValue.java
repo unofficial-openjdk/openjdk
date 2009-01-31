@@ -47,7 +47,7 @@ import org.w3c.dom.Element;
 public class KeyValue extends SignatureElementProxy implements KeyInfoContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(KeyValue.class.getName());
 
    /**
@@ -140,10 +140,10 @@ public class KeyValue extends SignatureElementProxy implements KeyInfoContent {
     */
    public PublicKey getPublicKey() throws XMLSecurityException {
 
-      
+
          Element rsa = XMLUtils.selectDsNode(this._constructionElement.getFirstChild(),
-         				Constants._TAG_RSAKEYVALUE,0);
-         
+                                        Constants._TAG_RSAKEYVALUE,0);
+
          if (rsa != null) {
             RSAKeyValue kv = new RSAKeyValue(rsa,
                                              this._baseURI);
@@ -152,8 +152,8 @@ public class KeyValue extends SignatureElementProxy implements KeyInfoContent {
          }
 
          Element dsa = XMLUtils.selectDsNode(this._constructionElement,
-         		 Constants._TAG_DSAKEYVALUE,0);
-            
+                         Constants._TAG_DSAKEYVALUE,0);
+
 
          if (dsa != null) {
             DSAKeyValue kv = new DSAKeyValue(dsa,
@@ -161,7 +161,7 @@ public class KeyValue extends SignatureElementProxy implements KeyInfoContent {
 
             return kv.getPublicKey();
          }
-      
+
 
       return null;
    }

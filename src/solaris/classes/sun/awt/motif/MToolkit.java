@@ -51,7 +51,7 @@ import sun.awt.SunToolkit;
 import sun.awt.UNIXToolkit;
 import sun.awt.GlobalCursorManager;
 import sun.awt.datatransfer.DataTransferer;
- 
+
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragGestureEvent;
@@ -77,7 +77,7 @@ import sun.security.action.GetBooleanAction;
 public class MToolkit extends UNIXToolkit implements Runnable {
 
     private static final Logger log = Logger.getLogger("sun.awt.motif.MToolkit");
-    
+
     // the system clipboard - CLIPBOARD selection
     X11Clipboard clipboard;
     // the system selection - PRIMARY selection
@@ -114,17 +114,17 @@ public class MToolkit extends UNIXToolkit implements Runnable {
             config = null;
         } else {
             config = (X11GraphicsConfig) (GraphicsEnvironment.
-			     getLocalGraphicsEnvironment().
-			     getDefaultScreenDevice().
-			     getDefaultConfiguration());
-	}
+                             getLocalGraphicsEnvironment().
+                             getDefaultScreenDevice().
+                             getDefaultConfiguration());
+        }
 
-	/* Add font properties font directories to the X11 font path.
-	 * Its called here *after* the X connection has been initialised
-	 * and when we know that MToolkit is the one that will be used,
-	 * since XToolkit doesn't need the X11 font path set
-	 */
-	X11GraphicsEnvironment.setNativeFontPath();
+        /* Add font properties font directories to the X11 font path.
+         * Its called here *after* the X connection has been initialised
+         * and when we know that MToolkit is the one that will be used,
+         * since XToolkit doesn't need the X11 font path set
+         */
+        X11GraphicsEnvironment.setNativeFontPath();
 
         motifdnd = ((Boolean)java.security.AccessController.doPrivileged(
             new GetBooleanAction("awt.dnd.motifdnd"))).booleanValue();
@@ -134,20 +134,20 @@ public class MToolkit extends UNIXToolkit implements Runnable {
 
     public MToolkit() {
         super();
-	if (PerformanceLogger.loggingEnabled()) {
-	    PerformanceLogger.setTime("MToolkit construction");
-	}
+        if (PerformanceLogger.loggingEnabled()) {
+            PerformanceLogger.setTime("MToolkit construction");
+        }
         if (!GraphicsEnvironment.isHeadless()) {
-	    String mainClassName = null;
+            String mainClassName = null;
 
-	    StackTraceElement trace[] = (new Throwable()).getStackTrace();
-	    int bottom = trace.length - 1;
-	    if (bottom >= 0) {
-		mainClassName = trace[bottom].getClassName();
-	    }
-	    if (mainClassName == null || mainClassName.equals("")) {
-		mainClassName = "AWT";
-	    }
+            StackTraceElement trace[] = (new Throwable()).getStackTrace();
+            int bottom = trace.length - 1;
+            if (bottom >= 0) {
+                mainClassName = trace[bottom].getClassName();
+            }
+            if (mainClassName == null || mainClassName.equals("")) {
+                mainClassName = "AWT";
+            }
 
             init(mainClassName);
             SunToolkit.setDataTransfererClassName(DATA_TRANSFERER_CLASS_NAME);
@@ -155,27 +155,27 @@ public class MToolkit extends UNIXToolkit implements Runnable {
             Thread toolkitThread = new Thread(this, "AWT-Motif");
             toolkitThread.setPriority(Thread.NORM_PRIORITY + 1);
             toolkitThread.setDaemon(true);
-	    ThreadGroup mainTG = (ThreadGroup)AccessController.doPrivileged(
-	    	new PrivilegedAction() {
-	            public Object run() {
-		        ThreadGroup currentTG =
-		            Thread.currentThread().getThreadGroup();
-			ThreadGroup parentTG = currentTG.getParent();
-			while (parentTG != null) {
-			    currentTG = parentTG;
-			    parentTG = currentTG.getParent();
-			}
-			return currentTG;
-		    }
-	    });
-	
-	    Runtime.getRuntime().addShutdownHook(
-	    	new Thread(mainTG, new Runnable() {
-	            public void run() {
-		        shutdown();
-		    }
-		}, "Shutdown-Thread")
-	    );
+            ThreadGroup mainTG = (ThreadGroup)AccessController.doPrivileged(
+                new PrivilegedAction() {
+                    public Object run() {
+                        ThreadGroup currentTG =
+                            Thread.currentThread().getThreadGroup();
+                        ThreadGroup parentTG = currentTG.getParent();
+                        while (parentTG != null) {
+                            currentTG = parentTG;
+                            parentTG = currentTG.getParent();
+                        }
+                        return currentTG;
+                    }
+            });
+
+            Runtime.getRuntime().addShutdownHook(
+                new Thread(mainTG, new Runnable() {
+                    public void run() {
+                        shutdown();
+                    }
+                }, "Shutdown-Thread")
+            );
 
             /*
              * Fix for 4701990.
@@ -197,63 +197,63 @@ public class MToolkit extends UNIXToolkit implements Runnable {
      */
 
     public ButtonPeer createButton(Button target) {
-	ButtonPeer peer = new MButtonPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ButtonPeer peer = new MButtonPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public TextFieldPeer createTextField(TextField target) {
-	TextFieldPeer peer = new MTextFieldPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        TextFieldPeer peer = new MTextFieldPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public LabelPeer createLabel(Label target) {
-	LabelPeer peer = new MLabelPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        LabelPeer peer = new MLabelPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ListPeer createList(List target) {
-	ListPeer peer = new MListPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ListPeer peer = new MListPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CheckboxPeer createCheckbox(Checkbox target) {
-	CheckboxPeer peer = new MCheckboxPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        CheckboxPeer peer = new MCheckboxPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ScrollbarPeer createScrollbar(Scrollbar target) {
-	ScrollbarPeer peer = new MScrollbarPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ScrollbarPeer peer = new MScrollbarPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ScrollPanePeer createScrollPane(ScrollPane target) {
-	ScrollPanePeer peer = new MScrollPanePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ScrollPanePeer peer = new MScrollPanePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public TextAreaPeer createTextArea(TextArea target) {
-	TextAreaPeer peer = new MTextAreaPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        TextAreaPeer peer = new MTextAreaPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public ChoicePeer createChoice(Choice target) {
-	ChoicePeer peer = new MChoicePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        ChoicePeer peer = new MChoicePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public FramePeer  createFrame(Frame target) {
-	FramePeer peer = new MFramePeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        FramePeer peer = new MFramePeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CanvasPeer createCanvas(Canvas target) {
@@ -263,57 +263,57 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     }
 
     public PanelPeer createPanel(Panel target) {
-	PanelPeer peer = new MPanelPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        PanelPeer peer = new MPanelPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public WindowPeer createWindow(Window target) {
-	WindowPeer peer = new MWindowPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        WindowPeer peer = new MWindowPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public DialogPeer createDialog(Dialog target) {
-	DialogPeer peer = new MDialogPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        DialogPeer peer = new MDialogPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public FileDialogPeer createFileDialog(FileDialog target) {
-	FileDialogPeer peer = new MFileDialogPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        FileDialogPeer peer = new MFileDialogPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuBarPeer createMenuBar(MenuBar target) {
-	MenuBarPeer peer = new MMenuBarPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuBarPeer peer = new MMenuBarPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuPeer createMenu(Menu target) {
-	MenuPeer peer = new MMenuPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuPeer peer = new MMenuPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public PopupMenuPeer createPopupMenu(PopupMenu target) {
-	PopupMenuPeer peer = new MPopupMenuPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        PopupMenuPeer peer = new MPopupMenuPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MenuItemPeer createMenuItem(MenuItem target) {
-	MenuItemPeer peer = new MMenuItemPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        MenuItemPeer peer = new MMenuItemPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public CheckboxMenuItemPeer createCheckboxMenuItem(CheckboxMenuItem target) {
-	CheckboxMenuItemPeer peer = new MCheckboxMenuItemPeer(target);
-	targetCreatedPeer(target, peer);
-	return peer;
+        CheckboxMenuItemPeer peer = new MCheckboxMenuItemPeer(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     public MEmbeddedFramePeer createEmbeddedFrame(MEmbeddedFrame target)
@@ -325,7 +325,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
 
 
     public FontPeer getFontPeer(String name, int style){
-	return new MFontPeer(name, style);
+        return new MFontPeer(name, style);
     }
 
     /*
@@ -342,7 +342,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
         return dynamicLayoutSetting;
     }
 
-    /* Called from isDynamicLayoutActive() and from 
+    /* Called from isDynamicLayoutActive() and from
      * lazilyLoadDynamicLayoutSupportedProperty()
      */
     protected native boolean isDynamicLayoutSupportedNative();
@@ -369,14 +369,14 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     static ColorModel screenmodel;
 
     static ColorModel getStaticColorModel() {
-	if (screenmodel == null) {
-	    screenmodel = config.getColorModel ();
-	}
-	return screenmodel;
+        if (screenmodel == null) {
+            screenmodel = config.getColorModel ();
+        }
+        return screenmodel;
     }
 
     public ColorModel getColorModel() {
-	return getStaticColorModel();
+        return getStaticColorModel();
     }
 
     public native int getScreenResolution();
@@ -389,20 +389,20 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     protected native int getScreenHeight();
 
     public FontMetrics getFontMetrics(Font font) {
-	/*
-	// REMIND: platform font flag should be obsolete soon
+        /*
+        // REMIND: platform font flag should be obsolete soon
         if (!RasterOutputManager.usesPlatformFont()) {
             return super.getFontMetrics(font);
         } else {
             return X11FontMetrics.getFontMetrics(font);
         }
-	*/
-	return super.getFontMetrics(font);
+        */
+        return super.getFontMetrics(font);
     }
 
     public PrintJob getPrintJob(final Frame frame, final String doctitle,
-				final Properties props) {
- 
+                                final Properties props) {
+
         if (GraphicsEnvironment.isHeadless()) {
             throw new IllegalArgumentException();
         }
@@ -413,12 +413,12 @@ public class MToolkit extends UNIXToolkit implements Runnable {
             printJob = null;
         }
 
-        return printJob;   
+        return printJob;
     }
 
     public PrintJob getPrintJob(final Frame frame, final String doctitle,
-				final JobAttributes jobAttributes,
-				final PageAttributes pageAttributes) {
+                                final JobAttributes jobAttributes,
+                                final PageAttributes pageAttributes) {
 
 
         if (GraphicsEnvironment.isHeadless()) {
@@ -440,16 +440,16 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     public  Clipboard getSystemClipboard() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-	  security.checkSystemClipboardAccess();
-	}
+          security.checkSystemClipboardAccess();
+        }
         synchronized (this) {
             if (clipboard == null) {
                 clipboard = new X11Clipboard("System", "CLIPBOARD");
             }
         }
-	return clipboard;
+        return clipboard;
     }
-    
+
     public Clipboard getSystemSelection() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -462,7 +462,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
         }
         return selection;
     }
-    
+
     public boolean getLockingKeyState(int key) {
         if (! (key == KeyEvent.VK_CAPS_LOCK || key == KeyEvent.VK_NUM_LOCK ||
                key == KeyEvent.VK_SCROLL_LOCK || key == KeyEvent.VK_KANA_LOCK)) {
@@ -470,17 +470,17 @@ public class MToolkit extends UNIXToolkit implements Runnable {
         }
         return getLockingKeyStateNative(key);
     }
-    
+
     public native boolean getLockingKeyStateNative(int key);
 
     public native void loadSystemColors(int[] systemColors);
 
     /**
-     * Give native peers the ability to query the native container 
+     * Give native peers the ability to query the native container
      * given a native component (e.g. the direct parent may be lightweight).
      */
     public static Container getNativeContainer(Component c) {
-	return Toolkit.getNativeContainer(c);
+        return Toolkit.getNativeContainer(c);
     }
 
     protected static final Object targetToPeer(Object target) {
@@ -500,13 +500,13 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     }
 
     public <T extends DragGestureRecognizer> T
-	createDragGestureRecognizer(Class<T> abstractRecognizerClass,
-				    DragSource ds, Component c, int srcActions,
-				    DragGestureListener dgl)
+        createDragGestureRecognizer(Class<T> abstractRecognizerClass,
+                                    DragSource ds, Component c, int srcActions,
+                                    DragGestureListener dgl)
     {
-	if (MouseDragGestureRecognizer.class.equals(abstractRecognizerClass))
-	    return (T)new MMouseDragGestureRecognizer(ds, c, srcActions, dgl);
-	else
+        if (MouseDragGestureRecognizer.class.equals(abstractRecognizerClass))
+            return (T)new MMouseDragGestureRecognizer(ds, c, srcActions, dgl);
+        else
             return null;
     }
 
@@ -514,14 +514,14 @@ public class MToolkit extends UNIXToolkit implements Runnable {
      * Returns a new input method adapter descriptor for native input methods.
      */
     public InputMethodDescriptor getInputMethodAdapterDescriptor() throws AWTException {
-	return new MInputMethodDescriptor();
+        return new MInputMethodDescriptor();
     }
 
     /**
      * Returns a style map for the input method highlight.
      */
     public Map mapInputMethodHighlight(InputMethodHighlight highlight) {
-	return MInputMethod.mapInputMethodHighlight(highlight);
+        return MInputMethod.mapInputMethodHighlight(highlight);
     }
 
     /**
@@ -549,17 +549,17 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     private static final String dndPrefix  = "DnD.";
 
     protected Object lazilyLoadDesktopProperty(String name) {
-	if (name.startsWith(prefix)) {
-	    String cursorName = name.substring(prefix.length(), name.length()) + postfix;
+        if (name.startsWith(prefix)) {
+            String cursorName = name.substring(prefix.length(), name.length()) + postfix;
 
-	    try {
-	        return Cursor.getSystemCustomCursor(cursorName);
-	    } catch (AWTException awte) {
-	 	System.err.println("cannot load system cursor: " + cursorName);
-	
-		return null;
-	    }
-	}
+            try {
+                return Cursor.getSystemCustomCursor(cursorName);
+            } catch (AWTException awte) {
+                System.err.println("cannot load system cursor: " + cursorName);
+
+                return null;
+            }
+        }
 
         if (name.equals("awt.dynamicLayoutSupported")) {
             return lazilyLoadDynamicLayoutSupportedProperty(name);
@@ -578,18 +578,18 @@ public class MToolkit extends UNIXToolkit implements Runnable {
             }
         }
 
-	return super.lazilyLoadDesktopProperty(name);
+        return super.lazilyLoadDesktopProperty(name);
     }
 
     /*
-     * Called from lazilyLoadDesktopProperty because we may not know if 
-     * the user has quit the previous window manager and started another. 
+     * Called from lazilyLoadDesktopProperty because we may not know if
+     * the user has quit the previous window manager and started another.
      */
     protected Boolean lazilyLoadDynamicLayoutSupportedProperty(String name) {
         boolean nativeDynamic = isDynamicLayoutSupportedNative();
 
         if (log.isLoggable(Level.FINER)) {
-            log.log(Level.FINER, "nativeDynamic == " + nativeDynamic); 
+            log.log(Level.FINER, "nativeDynamic == " + nativeDynamic);
         }
 
         return Boolean.valueOf(nativeDynamic);
@@ -599,16 +599,16 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     private native int getNumMouseButtons();
 
     protected void initializeDesktopProperties() {
-	desktopProperties.put("DnD.Autoscroll.initialDelay",     Integer.valueOf(50));
-	desktopProperties.put("DnD.Autoscroll.interval",         Integer.valueOf(50));
-	desktopProperties.put("DnD.Autoscroll.cursorHysteresis", Integer.valueOf(5));
+        desktopProperties.put("DnD.Autoscroll.initialDelay",     Integer.valueOf(50));
+        desktopProperties.put("DnD.Autoscroll.interval",         Integer.valueOf(50));
+        desktopProperties.put("DnD.Autoscroll.cursorHysteresis", Integer.valueOf(5));
 
         /* As of 1.4, no wheel mice are supported on Solaris
          * however, they are on Linux, and there isn't a way to detect them,
          * so we leave this property unset to indicate we're not sure if there's
          * a wheel mouse or not.
          */
-	//desktopProperties.put("awt.wheelMousePresent", Boolean.valueOf(false));
+        //desktopProperties.put("awt.wheelMousePresent", Boolean.valueOf(false));
 
         // We don't want to call getMultilclickTime() if we're headless
         if (!GraphicsEnvironment.isHeadless()) {
@@ -620,8 +620,8 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     }
 
     public RobotPeer createRobot(Robot target, GraphicsDevice screen) {
-	/* 'target' is unused for now... */
-	return new MRobotPeer(screen.getDefaultConfiguration());
+        /* 'target' is unused for now... */
+        return new MRobotPeer(screen.getDefaultConfiguration());
     }
 
     static boolean useMotifDnD() {
@@ -652,33 +652,33 @@ public class MToolkit extends UNIXToolkit implements Runnable {
      * thread if triggered by an XSETTINGS change.
      */
     private void parseXSettings(int screen_XXX_ignored, byte[] data) {
-	// XXX: notyet: map screen -> per screen XSettings object
-	// for now native code only calls us for default screen
-	// see awt_MToolkit.c awt_xsettings_update().
-	if (xs == null) {
-	    xs = new XSettings();
-	}
+        // XXX: notyet: map screen -> per screen XSettings object
+        // for now native code only calls us for default screen
+        // see awt_MToolkit.c awt_xsettings_update().
+        if (xs == null) {
+            xs = new XSettings();
+        }
 
-	Map updatedSettings = xs.update(data);
-	if (updatedSettings == null || updatedSettings.isEmpty()) {
-	    return;
-	}
+        Map updatedSettings = xs.update(data);
+        if (updatedSettings == null || updatedSettings.isEmpty()) {
+            return;
+        }
 
-	Iterator i = updatedSettings.entrySet().iterator();
-	while (i.hasNext()) {
-	    Map.Entry e = (Map.Entry)i.next();
-	    String name = (String)e.getKey();
+        Iterator i = updatedSettings.entrySet().iterator();
+        while (i.hasNext()) {
+            Map.Entry e = (Map.Entry)i.next();
+            String name = (String)e.getKey();
 
-	    name = "gnome." + name;
-	    setDesktopProperty(name, e.getValue());
+            name = "gnome." + name;
+            setDesktopProperty(name, e.getValue());
 
-	    // XXX: we probably want to do something smarter.  In
-	    // particular, "Net" properties are of interest to the
-	    // "core" AWT itself.  E.g.
-	    // 
-	    // Net/DndDragThreshold -> ???
-	    // Net/DoubleClickTime  -> awt.multiClickInterval
-	}
+            // XXX: we probably want to do something smarter.  In
+            // particular, "Net" properties are of interest to the
+            // "core" AWT itself.  E.g.
+            //
+            // Net/DndDragThreshold -> ???
+            // Net/DoubleClickTime  -> awt.multiClickInterval
+        }
 
         setDesktopProperty(SunToolkit.DESKTOPFONTHINTS,
                            SunToolkit.getDesktopFontHints());
@@ -713,7 +713,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
 
     /**
      * @inheritDoc
-     */ 
+     */
     protected boolean syncNativeQueue(final long timeout) {
         awtLock();
         try {
@@ -742,14 +742,14 @@ public class MToolkit extends UNIXToolkit implements Runnable {
                     throw new RuntimeException(ie);
                 } finally {
                     awtLock();
-                }                                    
-            }   
+                }
+            }
             return getEventNumber() - event_number > 2;
         } finally {
             awtUnlock();
         }
     }
-    
+
     public  void grab(Window w) {
         WindowPeer peer = (WindowPeer)w.getPeer();
         if (peer != null) {
@@ -766,11 +766,11 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     private native void nativeGrab(WindowPeer peer);
     private native void nativeUnGrab(WindowPeer peer);
 
-    
+
     public boolean isDesktopSupported(){
         return false;
     }
-    
+
     public DesktopPeer createDesktopPeer(Desktop target)
     throws HeadlessException{
         throw new UnsupportedOperationException();
@@ -825,4 +825,3 @@ public class MToolkit extends UNIXToolkit implements Runnable {
     private static native String getWMName();
 
 } // class MToolkit
-

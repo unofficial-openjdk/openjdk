@@ -39,31 +39,31 @@ public class AsyncCloseChannel {
     static int sensorPort = 3010;
     static int targetPort = 3020;
     static int maxAcceptCount = 1000;
-    static int acceptCount = 0;    
+    static int acceptCount = 0;
 
     public static void main(String args[]) throws Exception {
         if (System.getProperty("os.name").startsWith("Windows")) {
-	    System.err.println("WARNING: Still does not work on Windows!");
-	    return;
+            System.err.println("WARNING: Still does not work on Windows!");
+            return;
         }
         Thread ss = new SensorServer(); ss.start();
         Thread ts = new TargetServer(); ts.start();
         Thread sc = new SensorClient(); sc.start();
         Thread tc = new TargetClient(); tc.start();
 
-	while(acceptCount < maxAcceptCount && !failed) {
-	    Thread.yield();
-	}
+        while(acceptCount < maxAcceptCount && !failed) {
+            Thread.yield();
+        }
         keepGoing = false;
         try {
             ss.interrupt();
             ts.interrupt();
-	    sc.interrupt();
+            sc.interrupt();
             tc.interrupt();
         } catch (Exception e) {}
-        if (failed) 
+        if (failed)
             throw new RuntimeException("AsyncCloseChannel2 failed after <"
-				       + acceptCount + "> times of accept!");
+                                       + acceptCount + "> times of accept!");
     }
 
 
@@ -75,24 +75,24 @@ public class AsyncCloseChannel {
                 try {
                     final Socket s = server.accept();
                     new Thread() {
-		        public void run() {
-			    try {
+                        public void run() {
+                            try {
                                 int c = s.getInputStream().read();
                                 if(c != -1) {
                                     // No data is ever written to the peer's socket!
                                     System.out.println("Oops: read a character: "
                                                        + (char) c);
-				    failed = true;
-				}
-			    } catch (IOException ex) {
-			        ex.printStackTrace();
-			    } finally {
-			        closeIt(s);
-			    }
-			}
+                                    failed = true;
+                                }
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            } finally {
+                                closeIt(s);
+                            }
+                        }
                     }.start();
-		} catch (IOException ex) {
-		    //ex.printStackTrace();
+                } catch (IOException ex) {
+                    //ex.printStackTrace();
                 }
             }
         }
@@ -108,31 +108,31 @@ public class AsyncCloseChannel {
                     final Socket s = server.accept();
                     acceptCount++;
                     new Thread() {
-		        public void run() {
-			    boolean empty = true;
-			    try {
+                        public void run() {
+                            boolean empty = true;
+                            try {
                                 for(;;) {
                                     int c = s.getInputStream().read();
                                     if(c == -1) {
                                         if(!empty)
                                         break;
-				    }
-				    empty = false;
-				}
-			    } catch (IOException ex) {
+                                    }
+                                    empty = false;
+                                }
+                            } catch (IOException ex) {
                                 ex.printStackTrace();
-			    } finally {
-				closeIt(s);
-			    }
-			}
-		    }.start();
+                            } finally {
+                                closeIt(s);
+                            }
+                        }
+                    }.start();
                 } catch (IOException ex) {
                     //ex.printStackTrace();
                 }
-	    }
+            }
         }
     }
-    
+
     static class SensorClient extends Thread {
         private static boolean wake;
         private static SensorClient theClient;
@@ -154,7 +154,7 @@ public class AsyncCloseChannel {
                         Thread.sleep(10);
                     } catch (InterruptedException ex) { }
                 } catch (IOException ex) {
-		    System.out.println("Exception on sensor client " + ex.getMessage());
+                    System.out.println("Exception on sensor client " + ex.getMessage());
                 } finally {
                     if(s != null) {
                         try {
@@ -164,11 +164,11 @@ public class AsyncCloseChannel {
                 }
             }
         }
-        
+
         public SensorClient() {
             theClient = this;
         }
-        
+
         public static void wakeMe() {
             synchronized(theClient) {
                 wake = true;
@@ -176,14 +176,14 @@ public class AsyncCloseChannel {
             }
         }
     }
-    
+
     static class TargetClient extends Thread {
         volatile boolean ready = false;
         public void run() {
             while(keepGoing) {
                 try {
                     final SocketChannel s = SocketChannel.open(
-		        new InetSocketAddress(host, targetPort));
+                        new InetSocketAddress(host, targetPort));
                     s.finishConnect();
                     s.socket().setSoLinger(false, 0);
                     ready = false;
@@ -201,7 +201,7 @@ public class AsyncCloseChannel {
                             } catch (IOException ex) {
                                 if(!(ex instanceof ClosedChannelException))
                                     System.out.println("Exception in target client child "
-						       + ex.toString());
+                                                       + ex.toString());
                             }
                         }
                     };
@@ -218,7 +218,7 @@ public class AsyncCloseChannel {
             }
         }
     }
-    
+
     static abstract class ThreadEx extends Thread {
         public void run() {
             try {
@@ -227,11 +227,11 @@ public class AsyncCloseChannel {
                 ex.printStackTrace();
             }
         }
-        
+
         abstract void runEx() throws Exception;
     }
-            
-    
+
+
     public static void closeIt(Socket s) {
         try {
             if(s != null)

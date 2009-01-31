@@ -36,11 +36,11 @@ public class InvalidTypeException extends Exception
 {
     public InvalidTypeException()
     {
-	super();
+        super();
     }
 
     public InvalidTypeException(String s)
     {
-	super(s);
+        super(s);
     }
 }

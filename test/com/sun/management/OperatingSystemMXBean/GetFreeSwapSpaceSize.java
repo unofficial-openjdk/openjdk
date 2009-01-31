@@ -49,8 +49,8 @@ import java.lang.management.*;
 public class GetFreeSwapSpaceSize {
 
     private static OperatingSystemMXBean mbean =
-	(com.sun.management.OperatingSystemMXBean)
-	ManagementFactory.getOperatingSystemMXBean();
+        (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
 
     // Careful with these values.
     // Min size is zero since the system can run of swap spaces
@@ -65,24 +65,24 @@ public class GetFreeSwapSpaceSize {
             trace = true;
         }
 
-	long max_size = mbean.getTotalSwapSpaceSize();
-	if (max_size > 0) {
-	    max_size_for_pass = max_size;
-	}
+        long max_size = mbean.getTotalSwapSpaceSize();
+        if (max_size > 0) {
+            max_size_for_pass = max_size;
+        }
 
-	long size = mbean.getFreeSwapSpaceSize();
+        long size = mbean.getFreeSwapSpaceSize();
 
-	if (trace) {
-	    System.out.println("Free swap space size in bytes: " + size);
-	}
+        if (trace) {
+            System.out.println("Free swap space size in bytes: " + size);
+        }
 
-	if (size < MIN_SIZE_FOR_PASS || size > max_size_for_pass) {
-	    throw new RuntimeException("Free swap space size " +
-				       "illegal value: " + size + " bytes " + 
-				       "(MIN = " + MIN_SIZE_FOR_PASS + "; " +
-				       "MAX = " + max_size_for_pass + ")");
-	}
-	
-	System.out.println("Test passed.");
+        if (size < MIN_SIZE_FOR_PASS || size > max_size_for_pass) {
+            throw new RuntimeException("Free swap space size " +
+                                       "illegal value: " + size + " bytes " +
+                                       "(MIN = " + MIN_SIZE_FOR_PASS + "; " +
+                                       "MAX = " + max_size_for_pass + ")");
+        }
+
+        System.out.println("Test passed.");
     }
 }

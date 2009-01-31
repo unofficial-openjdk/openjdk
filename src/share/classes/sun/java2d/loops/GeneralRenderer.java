@@ -50,14 +50,14 @@ import sun.font.GlyphList;
 
 public final class GeneralRenderer {
     public static void register() {
-	Class owner = GeneralRenderer.class;
+        Class owner = GeneralRenderer.class;
         GraphicsPrimitive[] primitives = {
             new  GraphicsPrimitiveProxy(owner, "SetFillRectANY",
-					FillRect.methodSignature,
-					FillRect.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.SrcNoEa,
-					SurfaceType.Any),
+                                        FillRect.methodSignature,
+                                        FillRect.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.SrcNoEa,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetFillPathANY",
                                         FillPath.methodSignature,
                                         FillPath.primTypeID,
@@ -65,23 +65,23 @@ public final class GeneralRenderer {
                                         CompositeType.SrcNoEa,
                                         SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetFillSpansANY",
-					FillSpans.methodSignature,
-					FillSpans.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.SrcNoEa,
-					SurfaceType.Any),
+                                        FillSpans.methodSignature,
+                                        FillSpans.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.SrcNoEa,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetDrawLineANY",
-					DrawLine.methodSignature,
-					DrawLine.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.SrcNoEa,
-					SurfaceType.Any),
+                                        DrawLine.methodSignature,
+                                        DrawLine.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.SrcNoEa,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetDrawPolygonsANY",
-					DrawPolygons.methodSignature,
-					DrawPolygons.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.SrcNoEa,
-					SurfaceType.Any),
+                                        DrawPolygons.methodSignature,
+                                        DrawPolygons.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.SrcNoEa,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetDrawPathANY",
                                         DrawPath.methodSignature,
                                         DrawPath.primTypeID,
@@ -89,18 +89,18 @@ public final class GeneralRenderer {
                                         CompositeType.SrcNoEa,
                                         SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "SetDrawRectANY",
-					DrawRect.methodSignature,
-					DrawRect.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.SrcNoEa,
-					SurfaceType.Any),
+                                        DrawRect.methodSignature,
+                                        DrawRect.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.SrcNoEa,
+                                        SurfaceType.Any),
 
             new  GraphicsPrimitiveProxy(owner, "XorFillRectANY",
-					FillRect.methodSignature,
-					FillRect.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        FillRect.methodSignature,
+                                        FillRect.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorFillPathANY",
                                         FillPath.methodSignature,
                                         FillPath.primTypeID,
@@ -108,23 +108,23 @@ public final class GeneralRenderer {
                                         CompositeType.Xor,
                                         SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorFillSpansANY",
-					FillSpans.methodSignature,
-					FillSpans.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        FillSpans.methodSignature,
+                                        FillSpans.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawLineANY",
-					DrawLine.methodSignature,
-					DrawLine.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        DrawLine.methodSignature,
+                                        DrawLine.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawPolygonsANY",
-					DrawPolygons.methodSignature,
-					DrawPolygons.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        DrawPolygons.methodSignature,
+                                        DrawPolygons.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawPathANY",
                                         DrawPath.methodSignature,
                                         DrawPath.primTypeID,
@@ -132,79 +132,79 @@ public final class GeneralRenderer {
                                         CompositeType.Xor,
                                         SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawRectANY",
-					DrawRect.methodSignature,
-					DrawRect.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        DrawRect.methodSignature,
+                                        DrawRect.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawGlyphListANY",
-					DrawGlyphList.methodSignature,
-					DrawGlyphList.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        DrawGlyphList.methodSignature,
+                                        DrawGlyphList.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
             new  GraphicsPrimitiveProxy(owner, "XorDrawGlyphListAAANY",
-					DrawGlyphListAA.methodSignature,
-					DrawGlyphListAA.primTypeID,
-					SurfaceType.AnyColor,
-					CompositeType.Xor,
-					SurfaceType.Any),
+                                        DrawGlyphListAA.methodSignature,
+                                        DrawGlyphListAA.primTypeID,
+                                        SurfaceType.AnyColor,
+                                        CompositeType.Xor,
+                                        SurfaceType.Any),
         };
-	GraphicsPrimitiveMgr.register(primitives);
+        GraphicsPrimitiveMgr.register(primitives);
     }
 
     static void doDrawPoly(SurfaceData sData, PixelWriter pw,
-			   int xPoints[], int yPoints[], int off, int nPoints,
-			   Region clip, int transx, int transy, boolean close)
+                           int xPoints[], int yPoints[], int off, int nPoints,
+                           Region clip, int transx, int transy, boolean close)
     {
-	int mx, my, x1, y1;
-	int[] tmp = null;
-	mx = x1 = xPoints[off] + transx;
-	my = y1 = yPoints[off] + transy;
-	while (--nPoints > 0) {
-	    ++off;
-	    int x2 = xPoints[off] + transx;
-	    int y2 = yPoints[off] + transy;
-	    tmp = GeneralRenderer.doDrawLine(sData, pw, tmp, clip,
-					     x1, y1, x2, y2);
-	    x1 = x2;
-	    y1 = y2;
-	}
-	if (close && (x1 != mx || y1 != my)) {
-	    tmp = GeneralRenderer.doDrawLine(sData, pw, tmp, clip,
-					     x1, y1, mx, my);
-	}
+        int mx, my, x1, y1;
+        int[] tmp = null;
+        mx = x1 = xPoints[off] + transx;
+        my = y1 = yPoints[off] + transy;
+        while (--nPoints > 0) {
+            ++off;
+            int x2 = xPoints[off] + transx;
+            int y2 = yPoints[off] + transy;
+            tmp = GeneralRenderer.doDrawLine(sData, pw, tmp, clip,
+                                             x1, y1, x2, y2);
+            x1 = x2;
+            y1 = y2;
+        }
+        if (close && (x1 != mx || y1 != my)) {
+            tmp = GeneralRenderer.doDrawLine(sData, pw, tmp, clip,
+                                             x1, y1, mx, my);
+        }
     }
 
     static void doSetRect(SurfaceData sData, PixelWriter pw,
-			  int x1, int y1, int x2, int y2) {
-	WritableRaster dstRast =
-	    (WritableRaster) sData.getRaster(x1, y1, x2-x1, y2-y1);
-	pw.setRaster(dstRast);
+                          int x1, int y1, int x2, int y2) {
+        WritableRaster dstRast =
+            (WritableRaster) sData.getRaster(x1, y1, x2-x1, y2-y1);
+        pw.setRaster(dstRast);
 
-	while (y1 < y2) {
-	    for (int x = x1; x < x2; x++) {
-		pw.writePixel(x, y1);
-	    }
-	    y1++;
-	}
+        while (y1 < y2) {
+            for (int x = x1; x < x2; x++) {
+                pw.writePixel(x, y1);
+            }
+            y1++;
+        }
     }
 
     static int[] doDrawLine(SurfaceData sData, PixelWriter pw, int[] boundPts,
-			    Region clip,
-			    int origx1, int origy1, int origx2, int origy2)
+                            Region clip,
+                            int origx1, int origy1, int origx2, int origy2)
     {
-	if (boundPts == null) {
-	    boundPts = new int[8];
-	}
-	boundPts[0] = origx1;
-	boundPts[1] = origy1;
-	boundPts[2] = origx2;
-	boundPts[3] = origy2;
+        if (boundPts == null) {
+            boundPts = new int[8];
+        }
+        boundPts[0] = origx1;
+        boundPts[1] = origy1;
+        boundPts[2] = origx2;
+        boundPts[3] = origy2;
         if (!adjustLine(boundPts,
-			clip.getLoX(), clip.getLoY(),
-			clip.getHiX(), clip.getHiY()))
-	{
+                        clip.getLoX(), clip.getLoY(),
+                        clip.getHiX(), clip.getHiY()))
+        {
             return boundPts;
         }
         int x1 = boundPts[0];
@@ -212,10 +212,10 @@ public final class GeneralRenderer {
         int x2 = boundPts[2];
         int y2 = boundPts[3];
 
-	WritableRaster dstRast = (WritableRaster)
-	    sData.getRaster(Math.min(x1, x2), Math.min(y1, y2),
-			    Math.abs(x1 - x2) + 1, Math.abs(y1 - y2) + 1);
-	pw.setRaster(dstRast);
+        WritableRaster dstRast = (WritableRaster)
+            sData.getRaster(Math.min(x1, x2), Math.min(y1, y2),
+                            Math.abs(x1 - x2) + 1, Math.abs(y1 - y2) + 1);
+        pw.setRaster(dstRast);
 
         /* this could be made smaller, more elegant, more traditional. */
         if (x1 == x2) {
@@ -314,45 +314,45 @@ public final class GeneralRenderer {
                 } while (--steps >= 0);
             }
         }
-	return boundPts;
+        return boundPts;
     }
 
     public static void doDrawRect(PixelWriter pw,
-				  SunGraphics2D sg2d, SurfaceData sData,
-				  int x, int y, int w, int h)
+                                  SunGraphics2D sg2d, SurfaceData sData,
+                                  int x, int y, int w, int h)
     {
-	if (w < 0 || h < 0) {
-	    return;
-	}
-	int x2 = Region.dimAdd(Region.dimAdd(x, w), 1);
-	int y2 = Region.dimAdd(Region.dimAdd(y, h), 1);
-	Region r = sg2d.getCompClip().getBoundsIntersectionXYXY(x, y, x2, y2);
-	if (r.isEmpty()) {
-	    return;
-	}
-	int cx1 = r.getLoX();
-	int cy1 = r.getLoY();
-	int cx2 = r.getHiX();
-	int cy2 = r.getHiY();
+        if (w < 0 || h < 0) {
+            return;
+        }
+        int x2 = Region.dimAdd(Region.dimAdd(x, w), 1);
+        int y2 = Region.dimAdd(Region.dimAdd(y, h), 1);
+        Region r = sg2d.getCompClip().getBoundsIntersectionXYXY(x, y, x2, y2);
+        if (r.isEmpty()) {
+            return;
+        }
+        int cx1 = r.getLoX();
+        int cy1 = r.getLoY();
+        int cx2 = r.getHiX();
+        int cy2 = r.getHiY();
 
-	if (w < 2 || h < 2) {
-	    doSetRect(sData, pw, cx1, cy1, cx2, cy2);
-	    return;
-	}
+        if (w < 2 || h < 2) {
+            doSetRect(sData, pw, cx1, cy1, cx2, cy2);
+            return;
+        }
 
 
-	if (cy1 == y) {
-	    doSetRect(sData, pw,   cx1,   cy1,   cx2, cy1+1);
-	}
-	if (cx1 == x) {
-	    doSetRect(sData, pw,   cx1, cy1+1, cx1+1, cy2-1);
-	}
-	if (cx2 == x2) {
-	    doSetRect(sData, pw, cx2-1, cy1+1,   cx2, cy2-1);
-	}
-	if (cy2 == y2) {
-	    doSetRect(sData, pw,   cx1, cy2-1,   cx2,   cy2);
-	}
+        if (cy1 == y) {
+            doSetRect(sData, pw,   cx1,   cy1,   cx2, cy1+1);
+        }
+        if (cx1 == x) {
+            doSetRect(sData, pw,   cx1, cy1+1, cx1+1, cy2-1);
+        }
+        if (cx2 == x2) {
+            doSetRect(sData, pw, cx2-1, cy1+1,   cx2, cy2-1);
+        }
+        if (cy2 == y2) {
+            doSetRect(sData, pw,   cx1, cy2-1,   cx2,   cy2);
+        }
     }
 
     /*
@@ -363,52 +363,52 @@ public final class GeneralRenderer {
      * reset the glyphs to non-AA after construction.
      */
     static void doDrawGlyphList(SurfaceData sData, PixelWriter pw,
-				GlyphList gl, Region clip)
+                                GlyphList gl, Region clip)
     {
-	int[] bounds = gl.getBounds();
-	clip.clipBoxToBounds(bounds);
-	int cx1 = bounds[0];
-	int cy1 = bounds[1];
-	int cx2 = bounds[2];
-	int cy2 = bounds[3];
+        int[] bounds = gl.getBounds();
+        clip.clipBoxToBounds(bounds);
+        int cx1 = bounds[0];
+        int cy1 = bounds[1];
+        int cx2 = bounds[2];
+        int cy2 = bounds[3];
 
-	WritableRaster dstRast =
-	    (WritableRaster) sData.getRaster(cx1, cy1, cx2 - cx1, cy2 - cy1);
-	pw.setRaster(dstRast);
+        WritableRaster dstRast =
+            (WritableRaster) sData.getRaster(cx1, cy1, cx2 - cx1, cy2 - cy1);
+        pw.setRaster(dstRast);
 
-	int num = gl.getNumGlyphs();
-	for (int i = 0; i < num; i++) {
-	    gl.setGlyphIndex(i);
-	    int metrics[] = gl.getMetrics();
-	    int gx1 = metrics[0];
-	    int gy1 = metrics[1];
-	    int w = metrics[2];
-	    int gx2 = gx1 + w;
-	    int gy2 = gy1 + metrics[3];
-	    int off = 0;
-	    if (gx1 < cx1) {
-		off = cx1 - gx1;
-		gx1 = cx1;
-	    }
-	    if (gy1 < cy1) {
-		off += (cy1 - gy1) * w;
-		gy1 = cy1;
-	    }
-	    if (gx2 > cx2) gx2 = cx2;
-	    if (gy2 > cy2) gy2 = cy2;
-	    if (gx2 > gx1 && gy2 > gy1) {
-		byte alpha[] = gl.getGrayBits();
-		w -= (gx2 - gx1);
-		for (int y = gy1; y < gy2; y++) {
-		    for (int x = gx1; x < gx2; x++) {
-			if (alpha[off++] < 0) {
-			    pw.writePixel(x, y);
-			}
-		    }
-		    off += w;
-		}
-	    }
-	}
+        int num = gl.getNumGlyphs();
+        for (int i = 0; i < num; i++) {
+            gl.setGlyphIndex(i);
+            int metrics[] = gl.getMetrics();
+            int gx1 = metrics[0];
+            int gy1 = metrics[1];
+            int w = metrics[2];
+            int gx2 = gx1 + w;
+            int gy2 = gy1 + metrics[3];
+            int off = 0;
+            if (gx1 < cx1) {
+                off = cx1 - gx1;
+                gx1 = cx1;
+            }
+            if (gy1 < cy1) {
+                off += (cy1 - gy1) * w;
+                gy1 = cy1;
+            }
+            if (gx2 > cx2) gx2 = cx2;
+            if (gy2 > cy2) gy2 = cy2;
+            if (gx2 > gx1 && gy2 > gy1) {
+                byte alpha[] = gl.getGrayBits();
+                w -= (gx2 - gx1);
+                for (int y = gy1; y < gy2; y++) {
+                    for (int x = gx1; x < gx2; x++) {
+                        if (alpha[off++] < 0) {
+                            pw.writePixel(x, y);
+                        }
+                    }
+                    off += w;
+                }
+            }
+        }
     }
 
     static final int OUTCODE_TOP     = 1;
@@ -434,10 +434,10 @@ public final class GeneralRenderer {
     }
 
     public static boolean adjustLine(int [] boundPts,
-				     int cxmin, int cymin, int cx2, int cy2)
+                                     int cxmin, int cymin, int cx2, int cy2)
     {
-	int cxmax = cx2 - 1;
-	int cymax = cy2 - 1;
+        int cxmax = cx2 - 1;
+        int cymax = cy2 - 1;
         int x1 = boundPts[0];
         int y1 = boundPts[1];
         int x2 = boundPts[2];
@@ -524,7 +524,7 @@ public final class GeneralRenderer {
                         }
                         x1 = boundPts[0] + xsteps;
                     } else if (0 !=
-			       (outcode1 & (OUTCODE_LEFT | OUTCODE_RIGHT))) {
+                               (outcode1 & (OUTCODE_LEFT | OUTCODE_RIGHT))) {
                         if (0 != (outcode1 & OUTCODE_LEFT)) {
                             x1 = cxmin;
                         } else {
@@ -544,7 +544,7 @@ public final class GeneralRenderer {
                         }
                         y1 = boundPts[1] + ysteps;
                     }
-		    outcode1 = outcode(x1, y1, cxmin, cymin, cxmax, cymax);
+                    outcode1 = outcode(x1, y1, cxmin, cymin, cxmax, cymax);
                 } else {
                     if (0 != (outcode2 & (OUTCODE_TOP | OUTCODE_BOTTOM))) {
                         if (0 != (outcode2 & OUTCODE_TOP)) {
@@ -568,7 +568,7 @@ public final class GeneralRenderer {
                         }
                         x2 = boundPts[2] + xsteps;
                     } else if (0 !=
-			       (outcode2 & (OUTCODE_LEFT | OUTCODE_RIGHT))) {
+                               (outcode2 & (OUTCODE_LEFT | OUTCODE_RIGHT))) {
                         if (0 != (outcode2 & OUTCODE_LEFT)) {
                             x2 = cxmin;
                         } else {
@@ -590,7 +590,7 @@ public final class GeneralRenderer {
                         }
                         y2 = boundPts[3] + ysteps;
                     }
-		    outcode2 = outcode(x2, y2, cxmin, cymin, cxmax, cymax);
+                    outcode2 = outcode(x2, y2, cxmin, cymin, cxmax, cymax);
                 }
             }
             boundPts[0] = x1;
@@ -609,66 +609,66 @@ public final class GeneralRenderer {
                                               SurfaceData sData)
     {
         ColorModel dstCM = sData.getColorModel();
-	Object srcPixel = dstCM.getDataElements(sg2d.eargb, null);
+        Object srcPixel = dstCM.getDataElements(sg2d.eargb, null);
 
         return new SolidPixelWriter(srcPixel);
     }
 
-    static PixelWriter createXorPixelWriter(SunGraphics2D sg2d, 
-                                            SurfaceData sData) 
+    static PixelWriter createXorPixelWriter(SunGraphics2D sg2d,
+                                            SurfaceData sData)
     {
         ColorModel dstCM = sData.getColorModel();
 
-	Object srcPixel = dstCM.getDataElements(sg2d.eargb, null);
+        Object srcPixel = dstCM.getDataElements(sg2d.eargb, null);
 
         XORComposite comp = (XORComposite)sg2d.getComposite();
         int xorrgb = comp.getXorColor().getRGB();
         Object xorPixel = dstCM.getDataElements(xorrgb, null);
 
         switch (dstCM.getTransferType()) {
-	case DataBuffer.TYPE_BYTE:
-	    return new XorPixelWriter.ByteData(srcPixel, xorPixel);
+        case DataBuffer.TYPE_BYTE:
+            return new XorPixelWriter.ByteData(srcPixel, xorPixel);
         case DataBuffer.TYPE_SHORT:
         case DataBuffer.TYPE_USHORT:
-	    return new XorPixelWriter.ShortData(srcPixel, xorPixel);
+            return new XorPixelWriter.ShortData(srcPixel, xorPixel);
         case DataBuffer.TYPE_INT:
-	    return new XorPixelWriter.IntData(srcPixel, xorPixel);
+            return new XorPixelWriter.IntData(srcPixel, xorPixel);
         case DataBuffer.TYPE_FLOAT:
-	    return new XorPixelWriter.FloatData(srcPixel, xorPixel);
+            return new XorPixelWriter.FloatData(srcPixel, xorPixel);
         case DataBuffer.TYPE_DOUBLE:
-	    return new XorPixelWriter.DoubleData(srcPixel, xorPixel);
+            return new XorPixelWriter.DoubleData(srcPixel, xorPixel);
         default:
-	    throw new InternalError("Unsupported XOR pixel type");
-	}
+            throw new InternalError("Unsupported XOR pixel type");
+        }
     }
 }
 
 class SetFillRectANY extends FillRect {
     SetFillRectANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.SrcNoEa,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.SrcNoEa,
+              SurfaceType.Any);
     }
 
     public void FillRect(SunGraphics2D sg2d, SurfaceData sData,
-			 int x, int y, int w, int h)
+                         int x, int y, int w, int h)
     {
-	PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
+        PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
 
-	Region r = sg2d.getCompClip().getBoundsIntersectionXYWH(x, y, w, h);
+        Region r = sg2d.getCompClip().getBoundsIntersectionXYWH(x, y, w, h);
 
-	GeneralRenderer.doSetRect(sData, pw,
-				  r.getLoX(), r.getLoY(),
-				  r.getHiX(), r.getHiY());
+        GeneralRenderer.doSetRect(sData, pw,
+                                  r.getLoX(), r.getLoY(),
+                                  r.getHiX(), r.getHiY());
     }
 }
 
 class PixelWriterDrawHandler extends ProcessPath.DrawHandler {
-    PixelWriter pw; 
+    PixelWriter pw;
     SurfaceData sData;
     Region clip;
-    
-    public PixelWriterDrawHandler(SurfaceData sData, PixelWriter pw, 
+
+    public PixelWriterDrawHandler(SurfaceData sData, PixelWriter pw,
                                   Region clip, int strokeHint) {
         super(clip.getLoX(), clip.getLoY(),
               clip.getHiX(), clip.getHiY(),
@@ -677,7 +677,7 @@ class PixelWriterDrawHandler extends ProcessPath.DrawHandler {
         this.pw = pw;
         this.clip = clip;
     }
-    
+
     public void drawLine(int x0, int y0, int x1, int y1) {
         GeneralRenderer.doDrawLine(sData, pw, null, clip,
                                    x0, y0, x1, y1);
@@ -704,7 +704,7 @@ class SetFillPathANY extends FillPath {
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
         ProcessPath.fillPath(
-            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(), 
+            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(),
                                        sg2d.strokeHint),
             p2df, transx, transy);
     }
@@ -712,72 +712,72 @@ class SetFillPathANY extends FillPath {
 
 class SetFillSpansANY extends FillSpans {
     SetFillSpansANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.SrcNoEa,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.SrcNoEa,
+              SurfaceType.Any);
     }
 
     public void FillSpans(SunGraphics2D sg2d, SurfaceData sData,
-			  SpanIterator si)
+                          SpanIterator si)
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
 
-	int span[] = new int[4];
-	while (si.nextSpan(span)) {
-	    GeneralRenderer.doSetRect(sData, pw,
-				      span[0], span[1], span[2], span[3]);
-	}
+        int span[] = new int[4];
+        while (si.nextSpan(span)) {
+            GeneralRenderer.doSetRect(sData, pw,
+                                      span[0], span[1], span[2], span[3]);
+        }
     }
 }
 
 class SetDrawLineANY extends DrawLine {
     SetDrawLineANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.SrcNoEa,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.SrcNoEa,
+              SurfaceType.Any);
     }
 
     public void DrawLine(SunGraphics2D sg2d, SurfaceData sData,
-			 int x1, int y1, int x2, int y2)
+                         int x1, int y1, int x2, int y2)
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
 
-	if (y1 >= y2) {
-	    GeneralRenderer.doDrawLine(sData, pw, null,
-				       sg2d.getCompClip(),
-				       x2, y2, x1, y1);
-	} else {
-	    GeneralRenderer.doDrawLine(sData, pw, null,
-				       sg2d.getCompClip(),
-				       x1, y1, x2, y2);
-	}
+        if (y1 >= y2) {
+            GeneralRenderer.doDrawLine(sData, pw, null,
+                                       sg2d.getCompClip(),
+                                       x2, y2, x1, y1);
+        } else {
+            GeneralRenderer.doDrawLine(sData, pw, null,
+                                       sg2d.getCompClip(),
+                                       x1, y1, x2, y2);
+        }
     }
 }
 
 class SetDrawPolygonsANY extends DrawPolygons {
     SetDrawPolygonsANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.SrcNoEa,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.SrcNoEa,
+              SurfaceType.Any);
     }
 
     public void DrawPolygons(SunGraphics2D sg2d, SurfaceData sData,
-			     int xPoints[], int yPoints[],
-			     int nPoints[], int numPolys,
-			     int transx, int transy,
-			     boolean close)
+                             int xPoints[], int yPoints[],
+                             int nPoints[], int numPolys,
+                             int transx, int transy,
+                             boolean close)
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
 
-	int off = 0;
-	Region clip = sg2d.getCompClip();
-	for (int i = 0; i < numPolys; i++) {
-	    int numpts = nPoints[i];
-	    GeneralRenderer.doDrawPoly(sData, pw,
-				       xPoints, yPoints, off, numpts,
-				       clip, transx, transy, close);
-	    off += numpts;
-	}
+        int off = 0;
+        Region clip = sg2d.getCompClip();
+        for (int i = 0; i < numPolys; i++) {
+            int numpts = nPoints[i];
+            GeneralRenderer.doDrawPoly(sData, pw,
+                                       xPoints, yPoints, off, numpts,
+                                       clip, transx, transy, close);
+            off += numpts;
+        }
     }
 }
 
@@ -794,7 +794,7 @@ class SetDrawPathANY extends DrawPath {
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
         ProcessPath.drawPath(
-            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(), 
+            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(),
                                        sg2d.strokeHint),
             p2df, transx, transy
         );
@@ -803,37 +803,37 @@ class SetDrawPathANY extends DrawPath {
 
 class SetDrawRectANY extends DrawRect {
     SetDrawRectANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.SrcNoEa,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.SrcNoEa,
+              SurfaceType.Any);
     }
 
     public void DrawRect(SunGraphics2D sg2d, SurfaceData sData,
-			 int x, int y, int w, int h)
+                         int x, int y, int w, int h)
     {
         PixelWriter pw = GeneralRenderer.createSolidPixelWriter(sg2d, sData);
 
-	GeneralRenderer.doDrawRect(pw, sg2d, sData, x, y, w, h);
+        GeneralRenderer.doDrawRect(pw, sg2d, sData, x, y, w, h);
     }
 }
 
 class XorFillRectANY extends FillRect {
     XorFillRectANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void FillRect(SunGraphics2D sg2d, SurfaceData sData,
-			    int x, int y, int w, int h)
+                            int x, int y, int w, int h)
     {
-	PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
+        PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
 
-	Region r = sg2d.getCompClip().getBoundsIntersectionXYWH(x, y, w, h);
+        Region r = sg2d.getCompClip().getBoundsIntersectionXYWH(x, y, w, h);
 
-	GeneralRenderer.doSetRect(sData, pw,
-				  r.getLoX(), r.getLoY(),
-				  r.getHiX(), r.getHiY());
+        GeneralRenderer.doSetRect(sData, pw,
+                                  r.getLoX(), r.getLoY(),
+                                  r.getHiX(), r.getHiY());
     }
 }
 
@@ -857,72 +857,72 @@ class XorFillPathANY extends FillPath {
 
 class XorFillSpansANY extends FillSpans {
     XorFillSpansANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void FillSpans(SunGraphics2D sg2d, SurfaceData sData,
-			  SpanIterator si)
+                          SpanIterator si)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
 
-	int span[] = new int[4];
-	while (si.nextSpan(span)) {
-	    GeneralRenderer.doSetRect(sData, pw,
-				      span[0], span[1], span[2], span[3]);
-	}
+        int span[] = new int[4];
+        while (si.nextSpan(span)) {
+            GeneralRenderer.doSetRect(sData, pw,
+                                      span[0], span[1], span[2], span[3]);
+        }
     }
 }
 
 class XorDrawLineANY extends DrawLine {
     XorDrawLineANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void DrawLine(SunGraphics2D sg2d, SurfaceData sData,
-			 int x1, int y1, int x2, int y2)
+                         int x1, int y1, int x2, int y2)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
 
-	if (y1 >= y2) {
-	    GeneralRenderer.doDrawLine(sData, pw, null,
-				       sg2d.getCompClip(),
-				       x2, y2, x1, y1);
-	} else {
-	    GeneralRenderer.doDrawLine(sData, pw, null,
-				       sg2d.getCompClip(),
-				       x1, y1, x2, y2);
-	}
+        if (y1 >= y2) {
+            GeneralRenderer.doDrawLine(sData, pw, null,
+                                       sg2d.getCompClip(),
+                                       x2, y2, x1, y1);
+        } else {
+            GeneralRenderer.doDrawLine(sData, pw, null,
+                                       sg2d.getCompClip(),
+                                       x1, y1, x2, y2);
+        }
     }
 }
 
 class XorDrawPolygonsANY extends DrawPolygons {
     XorDrawPolygonsANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void DrawPolygons(SunGraphics2D sg2d, SurfaceData sData,
-			     int xPoints[], int yPoints[],
-			     int nPoints[], int numPolys,
-			     int transx, int transy,
-			     boolean close)
+                             int xPoints[], int yPoints[],
+                             int nPoints[], int numPolys,
+                             int transx, int transy,
+                             boolean close)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
 
-	int off = 0;
-	Region clip = sg2d.getCompClip();
-	for (int i = 0; i < numPolys; i++) {
-	    int numpts = nPoints[i];
-	    GeneralRenderer.doDrawPoly(sData, pw,
-				       xPoints, yPoints, off, numpts,
-				       clip, transx, transy, close);
-	    off += numpts;
-	}
+        int off = 0;
+        Region clip = sg2d.getCompClip();
+        for (int i = 0; i < numPolys; i++) {
+            int numpts = nPoints[i];
+            GeneralRenderer.doDrawPoly(sData, pw,
+                                       xPoints, yPoints, off, numpts,
+                                       clip, transx, transy, close);
+            off += numpts;
+        }
     }
 }
 
@@ -938,7 +938,7 @@ class XorDrawPathANY extends DrawPath {
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
         ProcessPath.drawPath(
-            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(), 
+            new PixelWriterDrawHandler(sData, pw, sg2d.getCompClip(),
                                        sg2d.strokeHint),
             p2df, transx, transy
         );
@@ -947,47 +947,47 @@ class XorDrawPathANY extends DrawPath {
 
 class XorDrawRectANY extends DrawRect {
     XorDrawRectANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void DrawRect(SunGraphics2D sg2d, SurfaceData sData,
-			 int x, int y, int w, int h)
+                         int x, int y, int w, int h)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
 
-	GeneralRenderer.doDrawRect(pw, sg2d, sData, x, y, w, h);
+        GeneralRenderer.doDrawRect(pw, sg2d, sData, x, y, w, h);
     }
 }
 
 class XorDrawGlyphListANY extends DrawGlyphList {
     XorDrawGlyphListANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void DrawGlyphList(SunGraphics2D sg2d, SurfaceData sData,
-			      GlyphList gl)
+                              GlyphList gl)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
-	GeneralRenderer.doDrawGlyphList(sData, pw, gl, sg2d.getCompClip());
+        GeneralRenderer.doDrawGlyphList(sData, pw, gl, sg2d.getCompClip());
     }
 }
 
 class XorDrawGlyphListAAANY extends DrawGlyphListAA {
     XorDrawGlyphListAAANY() {
-	super(SurfaceType.AnyColor,
-	      CompositeType.Xor,
-	      SurfaceType.Any);
+        super(SurfaceType.AnyColor,
+              CompositeType.Xor,
+              SurfaceType.Any);
     }
 
     public void DrawGlyphListAA(SunGraphics2D sg2d, SurfaceData sData,
-				GlyphList gl)
+                                GlyphList gl)
     {
         PixelWriter pw = GeneralRenderer.createXorPixelWriter(sg2d, sData);
-	GeneralRenderer.doDrawGlyphList(sData, pw, gl, sg2d.getCompClip());
+        GeneralRenderer.doDrawGlyphList(sData, pw, gl, sg2d.getCompClip());
     }
 }
 
@@ -1007,7 +1007,7 @@ class SolidPixelWriter extends PixelWriter {
     SolidPixelWriter(Object srcPixel) {
         this.srcData = srcPixel;
     }
-    
+
     public void writePixel(int x, int y) {
         dstRast.setDataElements(x, y, srcData);
     }
@@ -1018,104 +1018,104 @@ abstract class XorPixelWriter extends PixelWriter {
 
     public void writePixel(int x, int y) {
         Object dstPixel = dstRast.getDataElements(x, y, null);
-	xorPixel(dstPixel);
+        xorPixel(dstPixel);
         dstRast.setDataElements(x, y, dstPixel);
     }
 
     protected abstract void xorPixel(Object pixData);
 
     public static class ByteData extends XorPixelWriter {
-	byte[] xorData;
+        byte[] xorData;
 
-	ByteData(Object srcPixel, Object xorPixel) {
-	    this.xorData = (byte[]) srcPixel;
-	    xorPixel(xorPixel);
-	    this.xorData = (byte[]) xorPixel;
-	}
+        ByteData(Object srcPixel, Object xorPixel) {
+            this.xorData = (byte[]) srcPixel;
+            xorPixel(xorPixel);
+            this.xorData = (byte[]) xorPixel;
+        }
 
-	protected void xorPixel(Object pixData) {
-	    byte[] dstData = (byte[]) pixData;
-	    for (int i = 0; i < dstData.length; i++) {
-	    	dstData[i] ^= xorData[i];
-	    }
-	}
+        protected void xorPixel(Object pixData) {
+            byte[] dstData = (byte[]) pixData;
+            for (int i = 0; i < dstData.length; i++) {
+                dstData[i] ^= xorData[i];
+            }
+        }
     }
 
     public static class ShortData extends XorPixelWriter {
-	short[] xorData;
+        short[] xorData;
 
-	ShortData(Object srcPixel, Object xorPixel) {
-	    this.xorData = (short[]) srcPixel;
-	    xorPixel(xorPixel);
-	    this.xorData = (short[]) xorPixel;
-	}
+        ShortData(Object srcPixel, Object xorPixel) {
+            this.xorData = (short[]) srcPixel;
+            xorPixel(xorPixel);
+            this.xorData = (short[]) xorPixel;
+        }
 
-	protected void xorPixel(Object pixData) {
-	    short[] dstData = (short[]) pixData;
-	    for (int i = 0; i < dstData.length; i++) {
-	    	dstData[i] ^= xorData[i];
-	    }
-	}
+        protected void xorPixel(Object pixData) {
+            short[] dstData = (short[]) pixData;
+            for (int i = 0; i < dstData.length; i++) {
+                dstData[i] ^= xorData[i];
+            }
+        }
     }
 
     public static class IntData extends XorPixelWriter {
-	int[] xorData;
+        int[] xorData;
 
-	IntData(Object srcPixel, Object xorPixel) {
-	    this.xorData = (int[]) srcPixel;
-	    xorPixel(xorPixel);
-	    this.xorData = (int[]) xorPixel;
-	}
+        IntData(Object srcPixel, Object xorPixel) {
+            this.xorData = (int[]) srcPixel;
+            xorPixel(xorPixel);
+            this.xorData = (int[]) xorPixel;
+        }
 
-	protected void xorPixel(Object pixData) {
-	    int[] dstData = (int[]) pixData;
-	    for (int i = 0; i < dstData.length; i++) {
-	    	dstData[i] ^= xorData[i];
-	    }
-	}
+        protected void xorPixel(Object pixData) {
+            int[] dstData = (int[]) pixData;
+            for (int i = 0; i < dstData.length; i++) {
+                dstData[i] ^= xorData[i];
+            }
+        }
     }
 
     public static class FloatData extends XorPixelWriter {
-	int[] xorData;
+        int[] xorData;
 
-	FloatData(Object srcPixel, Object xorPixel) {
-	    float[] srcData = (float[]) srcPixel;
-	    float[] xorData = (float[]) xorPixel;
-	    this.xorData = new int[srcData.length];
-	    for (int i = 0; i < srcData.length; i++) {
-		this.xorData[i] = (Float.floatToIntBits(srcData[i]) ^
-				   Float.floatToIntBits(xorData[i]));
-	    }
-	}
+        FloatData(Object srcPixel, Object xorPixel) {
+            float[] srcData = (float[]) srcPixel;
+            float[] xorData = (float[]) xorPixel;
+            this.xorData = new int[srcData.length];
+            for (int i = 0; i < srcData.length; i++) {
+                this.xorData[i] = (Float.floatToIntBits(srcData[i]) ^
+                                   Float.floatToIntBits(xorData[i]));
+            }
+        }
 
-	protected void xorPixel(Object pixData) {
-	    float[] dstData = (float[]) pixData;
-	    for (int i = 0; i < dstData.length; i++) {
-		int v = Float.floatToIntBits(dstData[i]) ^ xorData[i];
-	    	dstData[i] = Float.intBitsToFloat(v);
-	    }
-	}
+        protected void xorPixel(Object pixData) {
+            float[] dstData = (float[]) pixData;
+            for (int i = 0; i < dstData.length; i++) {
+                int v = Float.floatToIntBits(dstData[i]) ^ xorData[i];
+                dstData[i] = Float.intBitsToFloat(v);
+            }
+        }
     }
 
     public static class DoubleData extends XorPixelWriter {
-	long[] xorData;
+        long[] xorData;
 
-	DoubleData(Object srcPixel, Object xorPixel) {
-	    double[] srcData = (double[]) srcPixel;
-	    double[] xorData = (double[]) xorPixel;
-	    this.xorData = new long[srcData.length];
-	    for (int i = 0; i < srcData.length; i++) {
-		this.xorData[i] = (Double.doubleToLongBits(srcData[i]) ^
-				   Double.doubleToLongBits(xorData[i]));
-	    }
-	}
+        DoubleData(Object srcPixel, Object xorPixel) {
+            double[] srcData = (double[]) srcPixel;
+            double[] xorData = (double[]) xorPixel;
+            this.xorData = new long[srcData.length];
+            for (int i = 0; i < srcData.length; i++) {
+                this.xorData[i] = (Double.doubleToLongBits(srcData[i]) ^
+                                   Double.doubleToLongBits(xorData[i]));
+            }
+        }
 
-	protected void xorPixel(Object pixData) {
-	    double[] dstData = (double[]) pixData;
-	    for (int i = 0; i < dstData.length; i++) {
-		long v = Double.doubleToLongBits(dstData[i]) ^ xorData[i];
-	    	dstData[i] = Double.longBitsToDouble(v);
-	    }
-	}
+        protected void xorPixel(Object pixData) {
+            double[] dstData = (double[]) pixData;
+            for (int i = 0; i < dstData.length; i++) {
+                long v = Double.doubleToLongBits(dstData[i]) ^ xorData[i];
+                dstData[i] = Double.longBitsToDouble(v);
+            }
+        }
     }
 }

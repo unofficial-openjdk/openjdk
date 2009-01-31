@@ -34,8 +34,8 @@ import sun.management.VMManagement;
  * ManagementFactory.getOperatingSystemMXBean() returns an instance
  * of this class.
  */
-class OperatingSystem 
-    extends    sun.management.OperatingSystemImpl 
+class OperatingSystem
+    extends    sun.management.OperatingSystemImpl
     implements OperatingSystemMXBean {
 
     // psapiLock is a lock to make sure only one thread loading

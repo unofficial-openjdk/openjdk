@@ -33,29 +33,29 @@ import java.awt.im.InputMethodRequests;
 class WTextAreaPeer extends WTextComponentPeer implements TextAreaPeer {
 
     // WComponentPeer overrides
-  
+
     public Dimension getMinimumSize() {
-	return getMinimumSize(10, 60);
+        return getMinimumSize(10, 60);
     }
 
     // TextAreaPeer implementation
 
     /* This should eventually be a direct native method. */
     public void insert(String txt, int pos) {
-	insertText(txt, pos);
+        insertText(txt, pos);
     }
 
     /* This should eventually be a direct native method. */
     public void replaceRange(String txt, int start, int end) {
-	replaceText(txt, start, end);
+        replaceText(txt, start, end);
     }
 
     public Dimension getPreferredSize(int rows, int cols) {
-	return getMinimumSize(rows, cols);
+        return getMinimumSize(rows, cols);
     }
     public Dimension getMinimumSize(int rows, int cols) {
-	FontMetrics fm = getFontMetrics(((TextArea)target).getFont());
-	return new Dimension(fm.charWidth('0') * cols + 20, fm.getHeight() * rows + 20);
+        FontMetrics fm = getFontMetrics(((TextArea)target).getFont());
+        return new Dimension(fm.charWidth('0') * cols + 20, fm.getHeight() * rows + 20);
     }
 
     public InputMethodRequests getInputMethodRequests() {
@@ -65,7 +65,7 @@ class WTextAreaPeer extends WTextComponentPeer implements TextAreaPeer {
     // Toolkit & peer internals
 
     WTextAreaPeer(TextArea target) {
-	super(target);
+        super(target);
     }
 
     native void create(WComponentPeer parent);
@@ -89,21 +89,21 @@ class WTextAreaPeer extends WTextComponentPeer implements TextAreaPeer {
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	return getMinimumSize();
+        return getMinimumSize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize(int rows, int cols) {
-	return getMinimumSize(rows, cols);
+        return getMinimumSize(rows, cols);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension preferredSize(int rows, int cols) {
-	return getPreferredSize(rows, cols);
+        return getPreferredSize(rows, cols);
     }
 
 }

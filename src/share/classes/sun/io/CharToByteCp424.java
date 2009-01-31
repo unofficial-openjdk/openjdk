@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM424;
  * Tables and data to convert Unicode to Cp424
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp424 extends CharToByteSingleByte {

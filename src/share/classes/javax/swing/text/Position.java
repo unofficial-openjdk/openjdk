@@ -45,7 +45,6 @@ package javax.swing.text;
  * offset while document content is altered.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public interface Position {
 
@@ -66,29 +65,29 @@ public interface Position {
      */
     public static final class Bias {
 
-	/**
-	 * Indicates to bias toward the next character
-	 * in the model.
-	 */
-	public static final Bias Forward = new Bias("Forward");
+        /**
+         * Indicates to bias toward the next character
+         * in the model.
+         */
+        public static final Bias Forward = new Bias("Forward");
 
-	/**
-	 * Indicates a bias toward the previous character
-	 * in the model.
-	 */
-	public static final Bias Backward = new Bias("Backward");
+        /**
+         * Indicates a bias toward the previous character
+         * in the model.
+         */
+        public static final Bias Backward = new Bias("Backward");
 
-	/**
-	 * string representation
-	 */
+        /**
+         * string representation
+         */
         public String toString() {
-	    return name;
-	}
+            return name;
+        }
 
         private Bias(String name) {
-	    this.name = name;
-	}
+            this.name = name;
+        }
 
-	private String name;
+        private String name;
     }
 }

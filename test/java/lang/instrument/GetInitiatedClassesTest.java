@@ -47,28 +47,28 @@ GetInitiatedClassesTest
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new GetInitiatedClassesTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testGetInitiatedClasses();
     }
-    
+
     public void
     testGetInitiatedClasses()
         throws  Throwable
     {
         ClassLoader loader = getClass().getClassLoader();
-        
+
         Class[] classes = fInst.getInitiatedClasses(loader);
         assertNotNull(classes);
-        
-        Class dummy = loader.loadClass("DummyClass");                                                       
+
+        Class dummy = loader.loadClass("DummyClass");
         assertEquals("DummyClass", dummy.getName());
 
         // double check that we can make an instance (just to prove the loader is kosher)

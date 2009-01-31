@@ -35,13 +35,13 @@ public class EnumAfterClose {
     public static void main(String args[]) throws Exception {
         ZipFile zf = new ZipFile(new File(System.getProperty("test.src", "."),
                                           "input.zip"));
-	Enumeration e = zf.entries();
-	zf.close();
-	try {
-	    if (e.hasMoreElements()) {
-		ZipEntry ze = (ZipEntry)e.nextElement();
-	    }
-	} catch (IllegalStateException ie) {
-	}
+        Enumeration e = zf.entries();
+        zf.close();
+        try {
+            if (e.hasMoreElements()) {
+                ZipEntry ze = (ZipEntry)e.nextElement();
+            }
+        } catch (IllegalStateException ie) {
+        }
     }
 }

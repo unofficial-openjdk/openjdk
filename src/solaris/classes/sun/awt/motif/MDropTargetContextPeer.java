@@ -45,24 +45,23 @@ import sun.awt.SunToolkit;
  * the interaction between the Motif DnD system and Java.
  * </p>
  *
- * @version %R%.%L%
  * @since JDK1.2
  *
  */
 
 final class MDropTargetContextPeer extends SunDropTargetContextPeer {
 
-    private long      	      nativeDropTransfer;	  
-    
-    long		      nativeDataAvailable = 0;
-    Object		      nativeData	  = null;
+    private long              nativeDropTransfer;
+
+    long                      nativeDataAvailable = 0;
+    Object                    nativeData          = null;
 
     /**
      * create the peer
      */
 
     static MDropTargetContextPeer createMDropTargetContextPeer() {
-	return new MDropTargetContextPeer();
+        return new MDropTargetContextPeer();
     }
 
     /**
@@ -70,18 +69,18 @@ final class MDropTargetContextPeer extends SunDropTargetContextPeer {
      */
 
     private MDropTargetContextPeer() {
-	super();
+        super();
     }
 
     protected Object getNativeData(long format) {
         SunToolkit.awtLock();
         if (nativeDropTransfer == 0) {
-            nativeDropTransfer = startTransfer(getNativeDragContext(), 
+            nativeDropTransfer = startTransfer(getNativeDragContext(),
                                                format);
         } else {
             addTransfer (nativeDropTransfer, format);
         }
-        
+
         for (nativeDataAvailable = 0;
              format != nativeDataAvailable;) {
             try {
@@ -99,10 +98,10 @@ final class MDropTargetContextPeer extends SunDropTargetContextPeer {
      * signal drop complete
      */
 
-    protected void doDropDone(boolean success, int dropAction, 
+    protected void doDropDone(boolean success, int dropAction,
                               boolean isLocal) {
-	dropDone(getNativeDragContext(), nativeDropTransfer, isLocal,
-		 success, dropAction);
+        dropDone(getNativeDragContext(), nativeDropTransfer, isLocal,
+                 success, dropAction);
     }
 
     /**
@@ -123,7 +122,7 @@ final class MDropTargetContextPeer extends SunDropTargetContextPeer {
     private void transferFailed(long format) {
         nativeDataAvailable = format;
         nativeData          = null;
-        
+
         SunToolkit.awtLockNotifyAll();
     }
 
@@ -143,7 +142,6 @@ final class MDropTargetContextPeer extends SunDropTargetContextPeer {
      * signal that drop is completed
      */
 
-    private native void dropDone(long nativeDragContext, long nativeDropTransfer, 
-				 boolean localTx, boolean success, int dropAction);
+    private native void dropDone(long nativeDragContext, long nativeDropTransfer,
+                                 boolean localTx, boolean success, int dropAction);
 }
-

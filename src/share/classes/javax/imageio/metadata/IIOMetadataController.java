@@ -63,7 +63,6 @@ package javax.imageio.metadata;
  * @see IIOMetadata#hasController
  * @see IIOMetadata#activateController
  *
- * @version 0.5
  */
 public interface IIOMetadataController {
 
@@ -79,7 +78,7 @@ public interface IIOMetadataController {
      *
      * @return <code>true</code> if the <code>IIOMetadata</code> has been
      * modified, <code>false</code> otherwise.
-     * 
+     *
      * @exception IllegalArgumentException if <code>metadata</code> is
      * <code>null</code> or is not an instance of the correct class.
      */

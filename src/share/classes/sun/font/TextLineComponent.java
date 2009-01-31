@@ -40,14 +40,14 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
 public interface TextLineComponent {
-    
+
     public CoreMetrics getCoreMetrics();
     public void draw(Graphics2D g2d, float x, float y);
     public Rectangle2D getCharVisualBounds(int index);
     public Rectangle2D getVisualBounds();
     public float getAdvance();
     public Shape getOutline(float x, float y);
-    
+
     public int getNumCharacters();
 
     public float getCharX(int index);
@@ -67,7 +67,7 @@ public interface TextLineComponent {
 
     public AffineTransform getBaselineTransform();
 
-    // return true if this wraps a glyphvector with no baseline rotation and 
+    // return true if this wraps a glyphvector with no baseline rotation and
     // has no styles requiring complex pixel bounds calculations.
     public boolean isSimple();
 
@@ -83,7 +83,7 @@ public interface TextLineComponent {
      * Force subset characters to run right-to-left.
      */
     public static final int RIGHT_TO_LEFT = 1;
-    
+
     /**
      * Leave subset character direction and ordering unchanged.
      */
@@ -97,7 +97,7 @@ public interface TextLineComponent {
      */
     public TextLineComponent getSubset(int start, int limit, int dir);
 
-    /** 
+    /**
      * Return the number of justification records this uses.
      */
     public int getNumJustificationInfos();
@@ -112,14 +112,14 @@ public interface TextLineComponent {
     public void getJustificationInfos(GlyphJustificationInfo[] infos, int infoStart, int charStart, int charLimit);
 
     /**
-     * Apply deltas to the data in this component, starting at offset 
+     * Apply deltas to the data in this component, starting at offset
      * deltaStart, and return the new component.  There are two floats
      * for each justification info, for a total of 2 * getNumJustificationInfos.
-     * The first delta is the left adjustment, the second is the right 
+     * The first delta is the left adjustment, the second is the right
      * adjustment.
      * <p>
      * If flags[0] is true on entry, rejustification is allowed.  If
-     * the new component requires rejustification (ligatures were 
+     * the new component requires rejustification (ligatures were
      * formed or split), flags[0] will be set on exit.
      */
     public TextLineComponent applyJustificationDeltas(float[] deltas, int deltaStart, boolean[] flags);

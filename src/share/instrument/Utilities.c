@@ -43,8 +43,8 @@ allocate(jvmtiEnv * jvmtienv, size_t bytecount) {
     void *          resultBuffer    = NULL;
     jvmtiError      error           = JVMTI_ERROR_NONE;
 
-    error = (*jvmtienv)->Allocate(jvmtienv, 
-                                  bytecount, 
+    error = (*jvmtienv)->Allocate(jvmtienv,
+                                  bytecount,
                                   (unsigned char**) &resultBuffer);
     jplis_assert(error == JVMTI_ERROR_NONE);
     if ( error != JVMTI_ERROR_NONE ) {
@@ -63,7 +63,7 @@ allocate(jvmtiEnv * jvmtienv, size_t bytecount) {
 void
 deallocate(jvmtiEnv * jvmtienv, void * buffer) {
     jvmtiError  error = JVMTI_ERROR_NONE;
-    
+
     error = (*jvmtienv)->Deallocate(jvmtienv,
                                     (unsigned char*)buffer);
     jplis_assert_msg(error == JVMTI_ERROR_NONE, "Can't deallocate memory");
@@ -81,9 +81,9 @@ isInstanceofClassName(  JNIEnv *        jnienv,
     jboolean    isInstanceof        = JNI_FALSE;
     jboolean    errorOutstanding    = JNI_FALSE;
     jclass      classHandle         = NULL;
-    
+
     jplis_assert(isSafeForJNICalls(jnienv));
-    
+
     /* get an instance of unchecked exception for instanceof comparison */
     classHandle = (*jnienv)->FindClass(jnienv, className);
     errorOutstanding = checkForAndClearThrowable(jnienv);
@@ -94,7 +94,7 @@ isInstanceofClassName(  JNIEnv *        jnienv,
         errorOutstanding = checkForAndClearThrowable(jnienv);
         jplis_assert(!errorOutstanding);
     }
-    
+
     jplis_assert(isSafeForJNICalls(jnienv));
     return isInstanceof;
 }
@@ -106,4 +106,3 @@ abortJVM(   JNIEnv *        jnienv,
             const char *    message) {
     (*jnienv)->FatalError(jnienv, message);
 }
-

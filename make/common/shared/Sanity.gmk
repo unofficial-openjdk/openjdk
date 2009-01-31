@@ -477,6 +477,7 @@ endif
 ######################################################
 ifdef OPENJDK
 sane-binary-plugs:
+ifeq ($(IMPORT_BINARY_PLUGS),true)
 	@if [ ! -d "$(BINARY_PLUGS_PATH)" ]; then \
 	  $(ECHO) "ERROR: Can't locate pre-built libraries. \n" \
 	    "      Please check your access to \n" \
@@ -484,6 +485,7 @@ sane-binary-plugs:
 	    "      and/or check your value of ALT_BINARY_PLUGS_PATH. \n" \
 	   "" >> $(ERROR_FILE); \
 	fi
+endif
 endif
 
 ######################################################

@@ -49,7 +49,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -116,8 +115,8 @@ implements CertAttrSet<String> {
      * Returns a printable representation.
      */
     public String toString() {
-	return super.toString() + "SubjectKeyIdentifier [\n"
-		+ String.valueOf(id) + "]\n";
+        return super.toString() + "SubjectKeyIdentifier [\n"
+                + String.valueOf(id) + "]\n";
     }
 
     /**
@@ -134,23 +133,23 @@ implements CertAttrSet<String> {
             encodeThis();
         }
         super.encode(tmp);
-	out.write(tmp.toByteArray());
+        out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-	if (name.equalsIgnoreCase(KEY_ID)) {
-	    if (!(obj instanceof KeyIdentifier)) {
-	      throw new IOException("Attribute value should be of" +
+        if (name.equalsIgnoreCase(KEY_ID)) {
+            if (!(obj instanceof KeyIdentifier)) {
+              throw new IOException("Attribute value should be of" +
                                     " type KeyIdentifier.");
-	    }
-	    id = (KeyIdentifier)obj;
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-		"CertAttrSet:SubjectKeyIdentifierExtension.");
-	}
+            }
+            id = (KeyIdentifier)obj;
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                "CertAttrSet:SubjectKeyIdentifierExtension.");
+        }
         encodeThis();
     }
 
@@ -158,24 +157,24 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-	if (name.equalsIgnoreCase(KEY_ID)) {
-	    return (id);
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-		"CertAttrSet:SubjectKeyIdentifierExtension.");
-	}
+        if (name.equalsIgnoreCase(KEY_ID)) {
+            return (id);
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                "CertAttrSet:SubjectKeyIdentifierExtension.");
+        }
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-	if (name.equalsIgnoreCase(KEY_ID)) {
-	    id = null;
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-		"CertAttrSet:SubjectKeyIdentifierExtension.");
-	}
+        if (name.equalsIgnoreCase(KEY_ID)) {
+            id = null;
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                "CertAttrSet:SubjectKeyIdentifierExtension.");
+        }
         encodeThis();
     }
 
@@ -187,7 +186,7 @@ implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(KEY_ID);
 
-	return (elements.elements());
+        return (elements.elements());
     }
 
     /**

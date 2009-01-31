@@ -55,7 +55,7 @@ Java_java_awt_image_Raster_initIDs(JNIEnv *env, jclass cls) {
     g_RasterMinYID  = (*env)->GetFieldID(env, cls, "minY", "I");
     g_RasterBaseOriginXID  = (*env)->GetFieldID(env, cls,
                                  "sampleModelTranslateX", "I");
-    g_RasterBaseOriginYID  = (*env)->GetFieldID(env, cls, 
+    g_RasterBaseOriginYID  = (*env)->GetFieldID(env, cls,
                                  "sampleModelTranslateY", "I");
     g_RasterSampleModelID = (*env)->GetFieldID(env, cls,
                                  "sampleModel","Ljava/awt/image/SampleModel;");
@@ -116,7 +116,7 @@ Java_sun_awt_image_ShortComponentRaster_initIDs(JNIEnv *env, jclass cls) {
     if (g_SCRdataID == NULL || g_SCRscanstrID == NULL ||
         g_SCRpixstrID == NULL || g_SCRbandoffsID == NULL ||
         g_SCRdataOffsetsID == NULL || g_SCRtypeID == NULL)
-    {        
+    {
         JNU_ThrowNullPointerException(env, "Unable to grab field ids");
     }
 }
@@ -127,11 +127,11 @@ Java_sun_awt_image_IntegerComponentRaster_initIDs(JNIEnv *env, jclass cls) {
     g_ICRpixstrID = (*env)->GetFieldID(env, cls, "pixelStride", "I");
     g_ICRdataOffsetsID = (*env)->GetFieldID(env, cls, "dataOffsets", "[I");
     g_ICRbandoffsID = (*env)->GetFieldID(env, cls, "bandOffset", "I");
-    g_ICRputDataMID  = (*env)->GetMethodID(env, cls, "setDataElements", 
+    g_ICRputDataMID  = (*env)->GetMethodID(env, cls, "setDataElements",
                                      "(IIIILjava/lang/Object;)V");
     g_ICRtypeID = (*env)->GetFieldID(env, cls, "type", "I");
     if (g_ICRdataID == NULL || g_ICRscanstrID == NULL
-        || g_ICRpixstrID == NULL || g_ICRbandoffsID == NULL 
+        || g_ICRpixstrID == NULL || g_ICRbandoffsID == NULL
         || g_ICRputDataMID == NULL || g_ICRdataOffsetsID == NULL || g_ICRtypeID == NULL)
     {
         JNU_ThrowNullPointerException(env, "Unable to grab field ids");
@@ -170,12 +170,12 @@ Java_java_awt_image_ColorModel_initIDs(JNIEnv *env, jclass cls) {
     g_CMgetRGBdefaultMID   = (*env)->GetStaticMethodID(env, cls,
                                                        "getRGBdefault",
                                              "()Ljava/awt/image/ColorModel;");
-    if (g_CMnBitsID == NULL || g_CMcspaceID == NULL 
+    if (g_CMnBitsID == NULL || g_CMcspaceID == NULL
         || g_CMnumComponentsID == NULL || g_CMsuppAlphaID == NULL
         || g_CMisAlphaPreID == NULL || g_CMtransparencyID == NULL
         || g_CMgetRGBMID == NULL || g_CMgetRGBMID == NULL
         || g_CMis_sRGBID == NULL || g_CMgetRGBdefaultMID == NULL
-	|| g_CMpDataID == NULL)
+        || g_CMpDataID == NULL)
     {
         JNU_ThrowNullPointerException(env, "Unable to grab field ids");
     }

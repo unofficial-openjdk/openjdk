@@ -50,35 +50,34 @@ import javax.accessibility.*;
  * new TextArea("Hello", 5, 40);
  * </pre></blockquote><hr>
  * <p>
- * @version	%I%, %G%
- * @author 	Sami Shaio
+ * @author      Sami Shaio
  * @since       JDK1.0
  */
 public class TextArea extends TextComponent {
 
     /**
      * The number of rows in the <code>TextArea</code>.
-     * This parameter will determine the text area's height.  
-     * Guaranteed to be non-negative.  
+     * This parameter will determine the text area's height.
+     * Guaranteed to be non-negative.
      *
      * @serial
      * @see #getRows()
      * @see #setRows(int)
      */
-    int	rows;
+    int rows;
 
     /**
      * The number of columns in the <code>TextArea</code>.
      * A column is an approximate average character
      * width that is platform-dependent.
-     * This parameter will determine the text area's width.  
-     * Guaranteed to be non-negative.  
+     * This parameter will determine the text area's width.
+     * Guaranteed to be non-negative.
      *
      * @serial
      * @see  #setColumns(int)
      * @see  #getColumns()
      */
-    int	columns;
+    int columns;
 
     private static final String base = "text";
     private static int nameCounter = 0;
@@ -152,21 +151,21 @@ public class TextArea extends TextComponent {
 
     /**
      * Constructs a new text area with the empty string as text.
-     * This text area is created with scrollbar visibility equal to 
-     * {@link #SCROLLBARS_BOTH}, so both vertical and horizontal 
+     * This text area is created with scrollbar visibility equal to
+     * {@link #SCROLLBARS_BOTH}, so both vertical and horizontal
      * scrollbars will be visible for this text area.
      * @exception HeadlessException if
      *    <code>GraphicsEnvironment.isHeadless</code> returns true
      * @see java.awt.GraphicsEnvironment#isHeadless()
      */
     public TextArea() throws HeadlessException {
-	this("", 0, 0, SCROLLBARS_BOTH);
+        this("", 0, 0, SCROLLBARS_BOTH);
     }
 
     /**
      * Constructs a new text area with the specified text.
-     * This text area is created with scrollbar visibility equal to 
-     * {@link #SCROLLBARS_BOTH}, so both vertical and horizontal 
+     * This text area is created with scrollbar visibility equal to
+     * {@link #SCROLLBARS_BOTH}, so both vertical and horizontal
      * scrollbars will be visible for this text area.
      * @param      text       the text to be displayed; if
      *             <code>text</code> is <code>null</code>, the empty
@@ -176,16 +175,16 @@ public class TextArea extends TextComponent {
      * @see java.awt.GraphicsEnvironment#isHeadless()
      */
     public TextArea(String text) throws HeadlessException {
-	this(text, 0, 0, SCROLLBARS_BOTH);
+        this(text, 0, 0, SCROLLBARS_BOTH);
     }
 
     /**
      * Constructs a new text area with the specified number of
-     * rows and columns and the empty string as text. 
+     * rows and columns and the empty string as text.
      * A column is an approximate average character
-     * width that is platform-dependent.  The text area is created with 
-     * scrollbar visibility equal to {@link #SCROLLBARS_BOTH}, so both 
-     * vertical and horizontal scrollbars will be visible for this 
+     * width that is platform-dependent.  The text area is created with
+     * scrollbar visibility equal to {@link #SCROLLBARS_BOTH}, so both
+     * vertical and horizontal scrollbars will be visible for this
      * text area.
      * @param rows the number of rows
      * @param columns the number of columns
@@ -194,16 +193,16 @@ public class TextArea extends TextComponent {
      * @see java.awt.GraphicsEnvironment#isHeadless()
      */
     public TextArea(int rows, int columns) throws HeadlessException {
-	this("", rows, columns, SCROLLBARS_BOTH);
+        this("", rows, columns, SCROLLBARS_BOTH);
     }
 
     /**
      * Constructs a new text area with the specified text,
      * and with the specified number of rows and columns.
      * A column is an approximate average character
-     * width that is platform-dependent.  The text area is created with 
-     * scrollbar visibility equal to {@link #SCROLLBARS_BOTH}, so both 
-     * vertical and horizontal scrollbars will be visible for this 
+     * width that is platform-dependent.  The text area is created with
+     * scrollbar visibility equal to {@link #SCROLLBARS_BOTH}, so both
+     * vertical and horizontal scrollbars will be visible for this
      * text area.
      * @param      text       the text to be displayed; if
      *             <code>text</code> is <code>null</code>, the empty
@@ -227,16 +226,16 @@ public class TextArea extends TextComponent {
      * <p>
      * The <code>TextArea</code> class defines several constants
      * that can be supplied as values for the
-     * <code>scrollbars</code> argument: 
+     * <code>scrollbars</code> argument:
      * <ul>
-     * <li><code>SCROLLBARS_BOTH</code>, 
-     * <li><code>SCROLLBARS_VERTICAL_ONLY</code>, 
-     * <li><code>SCROLLBARS_HORIZONTAL_ONLY</code>, 
+     * <li><code>SCROLLBARS_BOTH</code>,
+     * <li><code>SCROLLBARS_VERTICAL_ONLY</code>,
+     * <li><code>SCROLLBARS_HORIZONTAL_ONLY</code>,
      * <li><code>SCROLLBARS_NONE</code>.
      * </ul>
-     * Any other value for the 
-     * <code>scrollbars</code> argument is invalid and will result in 
-     * this text area being created with scrollbar visibility equal to 
+     * Any other value for the
+     * <code>scrollbars</code> argument is invalid and will result in
+     * this text area being created with scrollbar visibility equal to
      * the default value of {@link #SCROLLBARS_BOTH}.
      * @param      text       the text to be displayed; if
      *             <code>text</code> is <code>null</code>, the empty
@@ -256,21 +255,21 @@ public class TextArea extends TextComponent {
      */
     public TextArea(String text, int rows, int columns, int scrollbars)
         throws HeadlessException {
-	super(text);
+        super(text);
 
         this.rows = (rows >= 0) ? rows : 0;
         this.columns = (columns >= 0) ? columns : 0;
 
         if (scrollbars >= SCROLLBARS_BOTH && scrollbars <= SCROLLBARS_NONE) {
-       	    this.scrollbarVisibility = scrollbars;
+            this.scrollbarVisibility = scrollbars;
         } else {
             this.scrollbarVisibility = SCROLLBARS_BOTH;
         }
 
-	setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-			      forwardTraversalKeys);
-	setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-			      backwardTraversalKeys);
+        setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+                              forwardTraversalKeys);
+        setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                              backwardTraversalKeys);
     }
 
     /**
@@ -290,10 +289,10 @@ public class TextArea extends TextComponent {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-	    if (peer == null)
-	        peer = getToolkit().createTextArea(this);
-	    super.addNotify();
-	}
+            if (peer == null)
+                peer = getToolkit().createTextArea(this);
+            super.addNotify();
+        }
     }
 
     /**
@@ -311,7 +310,7 @@ public class TextArea extends TextComponent {
      * @since      JDK1.1
      */
     public void insert(String str, int pos) {
-    	insertText(str, pos);
+        insertText(str, pos);
     }
 
     /**
@@ -320,12 +319,12 @@ public class TextArea extends TextComponent {
      */
     @Deprecated
     public synchronized void insertText(String str, int pos) {
-	TextAreaPeer peer = (TextAreaPeer)this.peer;
-	if (peer != null) {
-	    peer.insertText(str, pos);
-	} else {
-	    text = text.substring(0, pos) + str + text.substring(pos);
-	}
+        TextAreaPeer peer = (TextAreaPeer)this.peer;
+        if (peer != null) {
+            peer.insertText(str, pos);
+        } else {
+            text = text.substring(0, pos) + str + text.substring(pos);
+        }
     }
 
     /**
@@ -339,7 +338,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public void append(String str) {
-    	appendText(str);
+        appendText(str);
     }
 
     /**
@@ -348,20 +347,20 @@ public class TextArea extends TextComponent {
      */
     @Deprecated
     public synchronized void appendText(String str) {
-	if (peer != null) {
-	    insertText(str, getText().length());
-	} else {
-	    text = text + str;
-	}
+        if (peer != null) {
+            insertText(str, getText().length());
+        } else {
+            text = text + str;
+        }
     }
 
     /**
      * Replaces text between the indicated start and end positions
-     * with the specified replacement text.  The text at the end 
-     * position will not be replaced.  The text at the start 
-     * position will be replaced (unless the start position is the 
-     * same as the end position).  
-     * The text position is zero-based.  The inserted substring may be 
+     * with the specified replacement text.  The text at the end
+     * position will not be replaced.  The text at the start
+     * position will be replaced (unless the start position is the
+     * same as the end position).
+     * The text position is zero-based.  The inserted substring may be
      * of a different length than the text it replaces.
      * <p>Note that passing <code>null</code> or inconsistent
      * parameters is invalid and will result in unspecified
@@ -375,7 +374,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public void replaceRange(String str, int start, int end) {
-	replaceText(str, start, end);
+        replaceText(str, start, end);
     }
 
     /**
@@ -384,12 +383,12 @@ public class TextArea extends TextComponent {
      */
     @Deprecated
     public synchronized void replaceText(String str, int start, int end) {
-	TextAreaPeer peer = (TextAreaPeer)this.peer;
-	if (peer != null) {
-	    peer.replaceText(str, start, end);
-	} else {
-	    text = text.substring(0, start) + str + text.substring(end);
-	}
+        TextAreaPeer peer = (TextAreaPeer)this.peer;
+        if (peer != null) {
+            peer.replaceText(str, start, end);
+        } else {
+            text = text.substring(0, start) + str + text.substring(end);
+        }
     }
 
     /**
@@ -400,7 +399,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1
      */
     public int getRows() {
-	return rows;
+        return rows;
     }
 
     /**
@@ -414,14 +413,14 @@ public class TextArea extends TextComponent {
      * @since       JDK1.1
      */
     public void setRows(int rows) {
-	int oldVal = this.rows;
-	if (rows < 0) {
-	    throw new IllegalArgumentException("rows less than zero.");
-	}
-	if (rows != oldVal) {
-	    this.rows = rows;
-	    invalidate();
-	}
+        int oldVal = this.rows;
+        if (rows < 0) {
+            throw new IllegalArgumentException("rows less than zero.");
+        }
+        if (rows != oldVal) {
+            this.rows = rows;
+            invalidate();
+        }
     }
 
     /**
@@ -431,7 +430,7 @@ public class TextArea extends TextComponent {
      * @see       #getRows()
      */
     public int getColumns() {
-	return columns;
+        return columns;
     }
 
     /**
@@ -445,14 +444,14 @@ public class TextArea extends TextComponent {
      * @since       JDK1.1
      */
     public void setColumns(int columns) {
-	int oldVal = this.columns;
-	if (columns < 0) {
-	    throw new IllegalArgumentException("columns less than zero.");
-	}
-	if (columns != oldVal) {
-	    this.columns = columns;
-	    invalidate();
-	}
+        int oldVal = this.columns;
+        if (columns < 0) {
+            throw new IllegalArgumentException("columns less than zero.");
+        }
+        if (columns != oldVal) {
+            this.columns = columns;
+            invalidate();
+        }
     }
 
     /**
@@ -489,7 +488,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public Dimension getPreferredSize(int rows, int columns) {
-    	return preferredSize(rows, columns);
+        return preferredSize(rows, columns);
     }
 
     /**
@@ -499,10 +498,10 @@ public class TextArea extends TextComponent {
     @Deprecated
     public Dimension preferredSize(int rows, int columns) {
         synchronized (getTreeLock()) {
-	    TextAreaPeer peer = (TextAreaPeer)this.peer;
-	    return (peer != null) ? 
-		       peer.preferredSize(rows, columns) :
-		       super.preferredSize();
+            TextAreaPeer peer = (TextAreaPeer)this.peer;
+            return (peer != null) ?
+                       peer.preferredSize(rows, columns) :
+                       super.preferredSize();
         }
     }
 
@@ -513,7 +512,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public Dimension getPreferredSize() {
-	return preferredSize();
+        return preferredSize();
     }
 
     /**
@@ -523,9 +522,9 @@ public class TextArea extends TextComponent {
     @Deprecated
     public Dimension preferredSize() {
         synchronized (getTreeLock()) {
-	    return ((rows > 0) && (columns > 0)) ? 
-			preferredSize(rows, columns) :
-			super.preferredSize();
+            return ((rows > 0) && (columns > 0)) ?
+                        preferredSize(rows, columns) :
+                        super.preferredSize();
         }
     }
 
@@ -541,7 +540,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public Dimension getMinimumSize(int rows, int columns) {
-    	return minimumSize(rows, columns);
+        return minimumSize(rows, columns);
     }
 
     /**
@@ -551,10 +550,10 @@ public class TextArea extends TextComponent {
     @Deprecated
     public Dimension minimumSize(int rows, int columns) {
         synchronized (getTreeLock()) {
-	    TextAreaPeer peer = (TextAreaPeer)this.peer;
-	    return (peer != null) ? 
-		       peer.minimumSize(rows, columns) :
-		       super.minimumSize();
+            TextAreaPeer peer = (TextAreaPeer)this.peer;
+            return (peer != null) ?
+                       peer.minimumSize(rows, columns) :
+                       super.minimumSize();
         }
     }
 
@@ -565,7 +564,7 @@ public class TextArea extends TextComponent {
      * @since     JDK1.1
      */
     public Dimension getMinimumSize() {
-	return minimumSize();
+        return minimumSize();
     }
 
     /**
@@ -575,43 +574,43 @@ public class TextArea extends TextComponent {
     @Deprecated
     public Dimension minimumSize() {
         synchronized (getTreeLock()) {
-	    return ((rows > 0) && (columns > 0)) ? 
-			minimumSize(rows, columns) :
-			super.minimumSize();
+            return ((rows > 0) && (columns > 0)) ?
+                        minimumSize(rows, columns) :
+                        super.minimumSize();
         }
     }
 
     /**
      * Returns a string representing the state of this <code>TextArea</code>.
-     * This method is intended to be used only for debugging purposes, and the 
-     * content and format of the returned string may vary between 
-     * implementations. The returned string may be empty but may not be 
+     * This method is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not be
      * <code>null</code>.
      *
      * @return      the parameter string of this text area
      */
     protected String paramString() {
-	String sbVisStr;
-	switch (scrollbarVisibility) {
-	    case SCROLLBARS_BOTH:
-		sbVisStr = "both";
-		break;
-	    case SCROLLBARS_VERTICAL_ONLY:
-		sbVisStr = "vertical-only";
-		break;
-	    case SCROLLBARS_HORIZONTAL_ONLY:
-		sbVisStr = "horizontal-only";
-		break;
-	    case SCROLLBARS_NONE:
-		sbVisStr = "none";
-		break;
-	    default:
-		sbVisStr = "invalid display policy";
-	}
+        String sbVisStr;
+        switch (scrollbarVisibility) {
+            case SCROLLBARS_BOTH:
+                sbVisStr = "both";
+                break;
+            case SCROLLBARS_VERTICAL_ONLY:
+                sbVisStr = "vertical-only";
+                break;
+            case SCROLLBARS_HORIZONTAL_ONLY:
+                sbVisStr = "horizontal-only";
+                break;
+            case SCROLLBARS_NONE:
+                sbVisStr = "none";
+                break;
+            default:
+                sbVisStr = "invalid display policy";
+        }
 
-	return super.paramString() + ",rows=" + rows +
-	    ",columns=" + columns +
-	  ",scrollbarVisibility=" + sbVisStr;
+        return super.paramString() + ",rows=" + rows +
+            ",columns=" + columns +
+          ",scrollbarVisibility=" + sbVisStr;
     }
 
 
@@ -626,7 +625,7 @@ public class TextArea extends TextComponent {
     private int textAreaSerializedDataVersion = 2;
 
     /**
-     * Read the ObjectInputStream.  
+     * Read the ObjectInputStream.
      * @exception HeadlessException if
      * <code>GraphicsEnvironment.isHeadless()</code> returns
      * <code>true</code>
@@ -638,7 +637,7 @@ public class TextArea extends TextComponent {
         // HeadlessException will be thrown by TextComponent's readObject
         s.defaultReadObject();
 
-        // Make sure the state we just read in for columns, rows, 
+        // Make sure the state we just read in for columns, rows,
         // and scrollbarVisibility has legal values
         if (columns < 0) {
             columns = 0;
@@ -647,17 +646,17 @@ public class TextArea extends TextComponent {
             rows = 0;
         }
 
-        if ((scrollbarVisibility < SCROLLBARS_BOTH) || 
+        if ((scrollbarVisibility < SCROLLBARS_BOTH) ||
             (scrollbarVisibility > SCROLLBARS_NONE)) {
             this.scrollbarVisibility = SCROLLBARS_BOTH;
         }
 
-	if (textAreaSerializedDataVersion < 2) {
-	    setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-				  forwardTraversalKeys);
-	    setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-				  backwardTraversalKeys);
-	}
+        if (textAreaSerializedDataVersion < 2) {
+            setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+                                  forwardTraversalKeys);
+            setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                                  backwardTraversalKeys);
+        }
     }
 
 
@@ -669,11 +668,11 @@ public class TextArea extends TextComponent {
     /**
      * Returns the <code>AccessibleContext</code> associated with
      * this <code>TextArea</code>. For text areas, the
-     * <code>AccessibleContext</code> takes the form of an 
-     * <code>AccessibleAWTTextArea</code>. 
+     * <code>AccessibleContext</code> takes the form of an
+     * <code>AccessibleAWTTextArea</code>.
      * A new <code>AccessibleAWTTextArea</code> instance is created if necessary.
      *
-     * @return an <code>AccessibleAWTTextArea</code> that serves as the 
+     * @return an <code>AccessibleAWTTextArea</code> that serves as the
      *         <code>AccessibleContext</code> of this <code>TextArea</code>
      * @since 1.3
      */
@@ -685,8 +684,8 @@ public class TextArea extends TextComponent {
     }
 
     /**
-     * This class implements accessibility support for the 
-     * <code>TextArea</code> class.  It provides an implementation of the 
+     * This class implements accessibility support for the
+     * <code>TextArea</code> class.  It provides an implementation of the
      * Java Accessibility API appropriate to text area user-interface elements.
      * @since 1.3
      */

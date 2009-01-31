@@ -39,32 +39,32 @@ import sun.java2d.loops.GraphicsPrimitive;
 import sun.java2d.x11.X11SurfaceData;
 
 /**
- * A delegate pipe of SG2D for drawing text with 
+ * A delegate pipe of SG2D for drawing text with
  * a solid source colour to an X11 drawable destination.
  */
 public class X11TextRenderer extends GlyphListPipe {
     /*
-     * Override super class method to call the AA pipe if 
+     * Override super class method to call the AA pipe if
      * AA is specified in the GlyphVector's FontRenderContext
      */
     public void drawGlyphVector(SunGraphics2D sg2d, GlyphVector g,
-				float x, float y)
+                                float x, float y)
     {
-	FontRenderContext frc = g.getFontRenderContext();
-	FontInfo info = sg2d.getGVFontInfo(g.getFont(), frc);
-	switch (info.aaHint) {
-	case SunHints.INTVAL_TEXT_ANTIALIAS_OFF:
-	    super.drawGlyphVector(sg2d, g, x, y);
-	    return;
-	case SunHints.INTVAL_TEXT_ANTIALIAS_ON:
-	     sg2d.surfaceData.aaTextRenderer.drawGlyphVector(sg2d, g, x, y);
-	    return;
-	case SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB:
-	case SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB:
-	     sg2d.surfaceData.lcdTextRenderer.drawGlyphVector(sg2d, g, x, y);
-	    return;
-	default:
-	}
+        FontRenderContext frc = g.getFontRenderContext();
+        FontInfo info = sg2d.getGVFontInfo(g.getFont(), frc);
+        switch (info.aaHint) {
+        case SunHints.INTVAL_TEXT_ANTIALIAS_OFF:
+            super.drawGlyphVector(sg2d, g, x, y);
+            return;
+        case SunHints.INTVAL_TEXT_ANTIALIAS_ON:
+             sg2d.surfaceData.aaTextRenderer.drawGlyphVector(sg2d, g, x, y);
+            return;
+        case SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB:
+        case SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB:
+             sg2d.surfaceData.lcdTextRenderer.drawGlyphVector(sg2d, g, x, y);
+            return;
+        default:
+        }
     }
 
     native void doDrawGlyphList(long dstData, long xgc,
@@ -84,15 +84,15 @@ public class X11TextRenderer extends GlyphListPipe {
     }
 
     public X11TextRenderer traceWrap() {
-	return new Tracer();
+        return new Tracer();
     }
 
     public static class Tracer extends X11TextRenderer {
         void doDrawGlyphList(long dstData, long xgc,
                              Region clip, GlyphList gl)
-	{
-	    GraphicsPrimitive.tracePrimitive("X11DrawGlyphs");
+        {
+            GraphicsPrimitive.tracePrimitive("X11DrawGlyphs");
             super.doDrawGlyphList(dstData, xgc, clip, gl);
-	}
+        }
     }
 }

@@ -30,7 +30,6 @@ package sun.jvmstat.monitor;
  * Monitoring interfaces.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitorException extends Exception {

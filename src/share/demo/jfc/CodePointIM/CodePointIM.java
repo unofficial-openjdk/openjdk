@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;

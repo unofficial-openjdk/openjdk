@@ -28,7 +28,6 @@ package javax.swing.event;
  * <code>RowSorterListener</code>s are notified of changes to a
  * <code>RowSorter</code>.
  *
- * @version %I% %G%
  * @see javax.swing.RowSorter
  * @since 1.6
  */

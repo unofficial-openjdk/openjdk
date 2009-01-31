@@ -242,8 +242,8 @@ public class Semaphore implements java.io.Serializable {
 
         protected int tryAcquireShared(int acquires) {
             for (;;) {
-		if (getFirstQueuedThread() != Thread.currentThread() &&
-		    hasQueuedThreads())
+                if (getFirstQueuedThread() != Thread.currentThread() &&
+                    hasQueuedThreads())
                     return -1;
                 int available = getState();
                 int remaining = available - acquires;
@@ -642,7 +642,7 @@ public class Semaphore implements java.io.Serializable {
      * @throws IllegalArgumentException if {@code reduction} is negative
      */
     protected void reducePermits(int reduction) {
-	if (reduction < 0) throw new IllegalArgumentException();
+        if (reduction < 0) throw new IllegalArgumentException();
         sync.reducePermits(reduction);
     }
 

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security;
 
 /**
@@ -30,7 +30,6 @@ package java.security;
  * security exception class that provides type safety for all the
  * security-related exception classes that extend from it.
  *
- * @version %I%, %E%
  * @author Jan Luehe
  */
 
@@ -38,8 +37,8 @@ public class GeneralSecurityException extends Exception {
 
     private static final long serialVersionUID = 894798122053539237L;
 
-    /** 
-     * Constructs a GeneralSecurityException with no detail message.  
+    /**
+     * Constructs a GeneralSecurityException with no detail message.
      */
     public GeneralSecurityException() {
         super();
@@ -51,7 +50,7 @@ public class GeneralSecurityException extends Exception {
      * A detail message is a String that describes this particular
      * exception.
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public GeneralSecurityException(String msg) {
         super(msg);

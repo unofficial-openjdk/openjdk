@@ -24,7 +24,7 @@
 
 /* DemoRun:
  *
- * Support classes for java jvmti demo tests 
+ * Support classes for java jvmti demo tests
  *
  */
 
@@ -43,7 +43,7 @@ class MyInputStream implements Runnable {
     private StringBuffer        buffer;
 
     /* Create MyInputStream that saves all output to a StringBuffer */
-    MyInputStream(String name, InputStream in) { 
+    MyInputStream(String name, InputStream in) {
         this.name = name;
         this.in = new BufferedInputStream(in);
         buffer = new StringBuffer(4096);
@@ -84,8 +84,8 @@ class MyInputStream implements Runnable {
     }
 }
 
-/* 
- * Main JVMTI Demo Run class. 
+/*
+ * Main JVMTI Demo Run class.
  */
 public class DemoRun {
 
@@ -95,7 +95,7 @@ public class DemoRun {
     private MyInputStream error;
 
     /* Create a Demo run process */
-    public DemoRun(String name, String options) 
+    public DemoRun(String name, String options)
     {
         demo_name    = name;
         demo_options = options;
@@ -113,10 +113,10 @@ public class DemoRun {
      * Execute a process with an -agentpath or -agentlib command option
      *    plus any set of other java options.
      */
-    public void runit(String class_name, String vm_options[]) 
+    public void runit(String class_name, String vm_options[])
     {
         String jre_home  = System.getProperty("java.home");
-        String sdk_home  = (jre_home.endsWith("jre") ? 
+        String sdk_home  = (jre_home.endsWith("jre") ?
                             (jre_home + File.separator + "..") :
                             jre_home );
         String cdir      = System.getProperty("test.classes", ".");
@@ -125,8 +125,8 @@ public class DemoRun {
         String libprefix = os_name.contains("Windows")?"":"lib";
         String libsuffix = os_name.contains("Windows")?".dll":".so";
         boolean d64      =    ( os_name.contains("Solaris") ||
-			        os_name.contains("SunOS") ) 
-			   && ( os_arch.equals("sparcv9") ||
+                                os_name.contains("SunOS") )
+                           && ( os_arch.equals("sparcv9") ||
                                 os_arch.equals("amd64"));
         boolean hprof    = demo_name.equals("hprof");
         String isa_dir   = d64?(File.separator+os_arch):"";
@@ -134,22 +134,22 @@ public class DemoRun {
                              + File.separator + "bin" + isa_dir
                              + File.separator + "java";
         /* Array of strings to be passed in for exec:
-         *   1. java 
+         *   1. java
          *   2. -Dtest.classes=.
          *   3. -d64                 (optional)
          *   4. -Xcheck:jni          (Just because it finds bugs)
          *   5. -Xverify:all         (Make sure verification is on full blast)
          *   6. -agent
-	 *       vm_options
+         *       vm_options
          *   7+i. classname
          */
-	int nvm_options = 0;
-	if ( vm_options != null ) nvm_options = vm_options.length;
+        int nvm_options = 0;
+        if ( vm_options != null ) nvm_options = vm_options.length;
         String cmd[]     = new String[1 + (d64?1:0) + 5 + nvm_options];
         String cmdLine;
         int exitStatus;
         int i,j;
-        
+
         i = 0;
         cmdLine = "";
         cmdLine += (cmd[i++] = java);
@@ -166,7 +166,7 @@ public class DemoRun {
         if ( hprof ) {
             /* Load hprof with -agentlib since it's part of jre */
             cmdLine += " ";
-            cmdLine += (cmd[i++] = "-agentlib:" + demo_name 
+            cmdLine += (cmd[i++] = "-agentlib:" + demo_name
                      + (demo_options.equals("")?"":("="+demo_options)));
         } else {
             String libname  = sdk_home
@@ -176,21 +176,21 @@ public class DemoRun {
                          + File.separator + "lib" + isa_dir
                          + File.separator + libprefix + demo_name + libsuffix;
             cmdLine += " ";
-            cmdLine += (cmd[i++] = "-agentpath:" + libname 
+            cmdLine += (cmd[i++] = "-agentpath:" + libname
                      + (demo_options.equals("")?"":("="+demo_options)));
         }
-	/* Add any special VM options */
-	for ( j = 0; j < nvm_options; j++ ) {
-	    cmdLine += " ";
-	    cmdLine += (cmd[i++] = vm_options[j]);
-	}
-	/* Add classname */
+        /* Add any special VM options */
+        for ( j = 0; j < nvm_options; j++ ) {
+            cmdLine += " ";
+            cmdLine += (cmd[i++] = vm_options[j]);
+        }
+        /* Add classname */
         cmdLine += " ";
         cmdLine += (cmd[i++] = class_name);
 
         /* Begin process */
         Process p;
-        
+
         System.out.println("Starting: " + cmdLine);
         try {
             p = Runtime.getRuntime().exec(cmd);
@@ -225,4 +225,3 @@ public class DemoRun {
         return output.contains(pattern) || error.contains(pattern);
     }
 }
-

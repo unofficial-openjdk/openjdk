@@ -37,7 +37,6 @@ import sun.jvmstat.monitor.VmIdentifier;
  * level access to arguments.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class Arguments {

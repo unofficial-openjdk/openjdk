@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.sound.sampled.spi;		  	 
+package javax.sound.sampled.spi;
 
 import javax.sound.sampled.Mixer;
 
@@ -33,7 +33,6 @@ import javax.sound.sampled.Mixer;
  * how resources are managed in creation / management of
  * a mixer.
  *
- * @version %I% %E%
  * @author Kara Kytle
  * @since 1.3
  */
@@ -44,19 +43,19 @@ public abstract class MixerProvider {
      * Indicates whether the mixer provider supports the mixer represented by
      * the specified mixer info object.
      * @param info an info object that describes the mixer for which support is queried
-     * @return <code>true</code> if the specified mixer is supported, 
+     * @return <code>true</code> if the specified mixer is supported,
      * otherwise <code>false</code>
      */
     public boolean isMixerSupported(Mixer.Info info) {
 
-	Mixer.Info infos[] = getMixerInfo();
-		
-	for(int i=0; i<infos.length; i++){
-	    if( info.equals( infos[i] ) ) {
-		return true;
-	    }
-	}
-	return false;
+        Mixer.Info infos[] = getMixerInfo();
+
+        for(int i=0; i<infos.length; i++){
+            if( info.equals( infos[i] ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

@@ -65,7 +65,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     SurfaceData surfaceData;
     int         oldWidth = -1;
     int         oldHeight = -1;
-    
+
     private RepaintArea paintArea;
 
     boolean isLayouting = false;
@@ -109,7 +109,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
 
         Container container  = (target instanceof Container) ?
             (Container)target : target.getParent();
-        
+
         if (container == null) {
             return true;
         }
@@ -132,12 +132,12 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public boolean canDetermineObscurity() {
         return true;
     }
-    
+
     abstract void create(MComponentPeer parent);
     void create(MComponentPeer parent, Object arg) {
         create(parent);
     }
-    
+
     void EFcreate(MComponentPeer parent, int x){}
 
     native void pInitialize();
@@ -308,7 +308,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public SurfaceData getSurfaceData() {
         return surfaceData;
     }
-    
+
     public ColorModel getColorModel() {
         return graphicsConfig.getColorModel();
     }
@@ -358,7 +358,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public void coalescePaintEvent(PaintEvent e) {
         Rectangle r = e.getUpdateRect();
         paintArea.add(r, e.getID());
-       
+
         if (log.isLoggable(Level.FINEST)) {
             switch(e.getID()) {
               case PaintEvent.UPDATE:
@@ -388,7 +388,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     /**
      * Checks whether or not this component would be focused by native system if it would be allowed to do so.
      * Currently it checks that it displayable, visible, enabled and focusable.
-     */ 
+     */
     static boolean canBeFocusedByClick(Component component) {
         if (component == null) {
             return false;
@@ -398,7 +398,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     }
 
     static Method requestFocusWithCause;
- 
+
     static void callRequestFocusInWindow(Component target, CausedFocusEvent.Cause cause) {
         if (requestFocusWithCause == null) {
             requestFocusWithCause = SunToolkit.getMethod(Component.class, "requestFocusInWindow", new Class[] {CausedFocusEvent.Cause.class});
@@ -428,8 +428,8 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
               }
               return;
           case MouseEvent.MOUSE_PRESSED:
-              if (target == e.getSource() && !((InputEvent)e).isConsumed() && shouldFocusOnClick() 
-                  && !target.isFocusOwner() && canBeFocusedByClick(target)) 
+              if (target == e.getSource() && !((InputEvent)e).isConsumed() && shouldFocusOnClick()
+                  && !target.isFocusOwner() && canBeFocusedByClick(target))
               {
                   callRequestFocusInWindow(target, CausedFocusEvent.Cause.MOUSE_EVENT);
               }
@@ -484,7 +484,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
             if (fgColor == null) {
                 fgColor = SystemColor.windowText;
             }
-            Font font = target.getFont(); 
+            Font font = target.getFont();
             if (font == null) {
                 font = defaultFont;
             }
@@ -556,7 +556,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public boolean requestFocus
     (Component lightweightChild, boolean temporary,
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause) {
-        if (processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary, 
+        if (processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary,
                                                   focusedWindowChangeAllowed, time)) {
             return true;
         } else {
@@ -565,8 +565,8 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
             }
             /**
              * The problems with requests in non-focused window arise because shouldNativelyFocusHeavyweight
-             * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet 
-             * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record 
+             * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet
+             * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record
              * in requests list - and it breaks our requests sequence as first record on WGF should be the last focus
              * owner which had focus before WLF. So, we should not add request record for such requests
              * but store this component in mostRecent - and return true as before for compatibility.
@@ -576,7 +576,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
             while (parent != null && !(parent instanceof Window)) {
                 parent = getParent_NoClientCode(parent);
             }
-            if (parent != null) {                
+            if (parent != null) {
                 Window parentWindow = (Window)parent;
                 // and check that it is focused
                 if (focusLog.isLoggable(Level.FINER)) {
@@ -598,7 +598,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
                         focusLog.finer("Waiting for asynchronous processing of window focus request");
                         KeyboardFocusManagerPeerImpl.removeLastFocusRequest(target);
                         return false;
-                    }                 
+                    }
                 }
             }
             return _requestFocus(lightweightChild, temporary, focusedWindowChangeAllowed, time, cause);
@@ -620,26 +620,26 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
         MToolkit.postEvent(MToolkit.targetToAppContext(target), event);
     }
 
-    /* Callbacks for window-system events to the frame 
+    /* Callbacks for window-system events to the frame
      *
      * NOTE: This method may be called by privileged threads.
      *       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
      */
     void handleExpose(int x, int y, int w, int h) {
         if ( !ComponentAccessor.getIgnoreRepaint(target) ) {
-            postEvent(new PaintEvent(target, PaintEvent.PAINT, 
+            postEvent(new PaintEvent(target, PaintEvent.PAINT,
                                      new Rectangle(x, y, w, h)));
         }
     }
 
-    /* Callbacks for window-system events to the frame 
+    /* Callbacks for window-system events to the frame
      *
      * NOTE: This method may be called by privileged threads.
      *       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
      */
     void handleRepaint(int x, int y, int w, int h) {
         if ( !ComponentAccessor.getIgnoreRepaint(target) ) {
-            postEvent(new PaintEvent(target, PaintEvent.UPDATE, 
+            postEvent(new PaintEvent(target, PaintEvent.UPDATE,
                                      new Rectangle(x, y, w, h)));
         }
     }
@@ -666,7 +666,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
                     return index;
                 } else {
                     Object cpeer = MToolkit.targetToPeer(children[i]);
-                    if (cpeer != null && 
+                    if (cpeer != null &&
                         !(cpeer instanceof java.awt.peer.LightweightPeer)) {
                         index++;
                     }
@@ -677,7 +677,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     }
 
     /*
-     * drawXXX() methods are used to print the native components by 
+     * drawXXX() methods are used to print the native components by
      * rendering the Motif look ourselves.
      * ToDo(aim): needs to query native motif for more accurate color
      * information.
@@ -708,7 +708,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
         g.drawLine(x + 1, y + height, x + width, y + height);
         g.drawLine(x + width, y, x + width, y + height - 1);
         g.setColor(c);
-    }  
+    }
     void drawScrollbar(Graphics g, Color bg, int thickness, int length,
                        int min, int max, int val, int vis, boolean horizontal) {
         Color c = g.getColor();
@@ -830,7 +830,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
         } else {
             g.drawLine(0, 0, thickness, 0);
             g.drawLine(0, 0, 0, length - 1);
-        
+
             // arrows
             g.drawLine(sbmin, w2, sbmax, w2);
             g.drawLine(sbmax, w2, ctr, 1);
@@ -855,7 +855,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     }
 
     /* New 1.1 API */
-    public void setVisible(boolean b) { 
+    public void setVisible(boolean b) {
         if (b) {
             Dimension s = target.getSize();
             oldWidth = s.width;
@@ -907,7 +907,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     void setBounds(int x, int y, int width, int height) {
         setBounds(x, y, width, height, SET_BOUNDS);
     }
-    
+
     /* New 1.1 API */
     public void setBounds(int x, int y, int width, int height, int op) {
         if (disposed) return;
@@ -980,10 +980,10 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
         if (!paintPending && !paintArea.isEmpty() &&
             !((Component)target).getIgnoreRepaint()) {
             // if not waiting for native painting repaint damaged area
-            postEvent(new PaintEvent((Component)target, PaintEvent.PAINT, 
+            postEvent(new PaintEvent((Component)target, PaintEvent.PAINT,
                                      new Rectangle()));
-        }       
-        isLayouting = false;    
+        }
+        isLayouting = false;
     }
 
     /**
@@ -1117,7 +1117,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public boolean handlesWheelScrolling() {
         return false;
     }
-    
+
     /**
      * The following multibuffering-related methods delegate to our
      * associated GraphicsConfig (X11 or GLX) to handle the appropriate
@@ -1178,5 +1178,5 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
      */
     public void applyShape(Region shape) {
     }
-        
+
 }

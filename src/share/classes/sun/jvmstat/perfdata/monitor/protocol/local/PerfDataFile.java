@@ -38,7 +38,6 @@ import java.io.FilenameFilter;
  * <em>lvmid</em>.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  * @see java.io.File
  */

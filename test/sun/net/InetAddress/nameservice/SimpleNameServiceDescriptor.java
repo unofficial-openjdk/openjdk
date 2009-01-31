@@ -50,4 +50,3 @@ public final class SimpleNameServiceDescriptor implements NameServiceDescriptor 
         return "simple";
     }
 }
-

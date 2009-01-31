@@ -25,7 +25,7 @@
  * @test 1.1 98/01/12
  * @bug 4022294
  * @summary Test bufferedinputstream for data loss during skip
- * 
+ *
  */
 
 import java.io.*;
@@ -37,12 +37,12 @@ import java.util.*;
  * not contain all the bytes to be skipped
  */
 public class SkipTest {
-  
+
     public static void main(String[] args) throws Exception {
         long skipped = 0;
 
         // Create a tiny buffered stream so it can be easily
-        // set up to contain only some of the bytes to skip 
+        // set up to contain only some of the bytes to skip
         DataSupplier source = new DataSupplier();
         BufferedInputStream in = new BufferedInputStream(source, 4);
 
@@ -57,7 +57,7 @@ public class SkipTest {
 
         // Resume reading and see if data was lost
         nextint = in.read();
-        
+
         if (nextint != 'a')
             throw new RuntimeException("BufferedInputStream skip lost data");
     }
@@ -95,4 +95,3 @@ class DataSupplier extends InputStream {
     }
 
 }
-

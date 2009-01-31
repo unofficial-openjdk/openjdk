@@ -40,8 +40,7 @@ import java.util.Hashtable;
  * @see FilteredImageSource
  * @see ImageConsumer
  *
- * @version	%I% %G%
- * @author 	Jim Graham
+ * @author      Jim Graham
  */
 public class ImageFilter implements ImageConsumer, Cloneable {
     /**
@@ -67,13 +66,13 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * this method directly since that operation could interfere
      * with the filtering operation.
      * @param ic the specified <code>ImageConsumer</code>
-     * @return an <code>ImageFilter</code> used to perform the 
+     * @return an <code>ImageFilter</code> used to perform the
      *         filtering for the specified <code>ImageConsumer</code>.
      */
     public ImageFilter getFilterInstance(ImageConsumer ic) {
-	ImageFilter instance = (ImageFilter) clone();
-	instance.consumer = ic;
-	return instance;
+        ImageFilter instance = (ImageFilter) clone();
+        instance.consumer = ic;
+        return instance;
     }
 
     /**
@@ -83,12 +82,12 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#setDimensions
      */
     public void setDimensions(int width, int height) {
-	consumer.setDimensions(width, height);
+        consumer.setDimensions(width, height);
     }
 
     /**
@@ -98,21 +97,21 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      *
      * @param props the properties from the source object
      * @exception NullPointerException if <code>props</code> is null
      */
     public void setProperties(Hashtable<?,?> props) {
-	Hashtable<Object,Object> p = (Hashtable<Object,Object>)props.clone();
-	Object o = p.get("filters");
-	if (o == null) {
-	    p.put("filters", toString());
-	} else if (o instanceof String) {
-	    p.put("filters", ((String) o)+toString());
-	}
-	consumer.setProperties(p);
+        Hashtable<Object,Object> p = (Hashtable<Object,Object>)props.clone();
+        Object o = p.get("filters");
+        if (o == null) {
+            p.put("filters", toString());
+        } else if (o instanceof String) {
+            p.put("filters", ((String) o)+toString());
+        }
+        consumer.setProperties(p);
     }
 
     /**
@@ -122,12 +121,12 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#setColorModel
      */
     public void setColorModel(ColorModel model) {
-	consumer.setColorModel(model);
+        consumer.setColorModel(model);
     }
 
     /**
@@ -137,12 +136,12 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#setHints
      */
     public void setHints(int hints) {
-	consumer.setHints(hints);
+        consumer.setHints(hints);
     }
 
     /**
@@ -152,14 +151,14 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#setPixels
      */
     public void setPixels(int x, int y, int w, int h,
-			  ColorModel model, byte pixels[], int off,
-			  int scansize) {
-	consumer.setPixels(x, y, w, h, model, pixels, off, scansize);
+                          ColorModel model, byte pixels[], int off,
+                          int scansize) {
+        consumer.setPixels(x, y, w, h, model, pixels, off, scansize);
     }
 
     /**
@@ -169,14 +168,14 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#setPixels
      */
     public void setPixels(int x, int y, int w, int h,
-			  ColorModel model, int pixels[], int off,
-			  int scansize) {
-	consumer.setPixels(x, y, w, h, model, pixels, off, scansize);
+                          ColorModel model, int pixels[], int off,
+                          int scansize) {
+        consumer.setPixels(x, y, w, h, model, pixels, off, scansize);
     }
 
     /**
@@ -186,12 +185,12 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * Note: This method is intended to be called by the ImageProducer
      * of the Image whose pixels are being filtered.  Developers using
      * this class to filter pixels from an image should avoid calling
-     * this method directly since that operation could interfere      
-     * with the filtering operation.  
+     * this method directly since that operation could interfere
+     * with the filtering operation.
      * @see ImageConsumer#imageComplete
      */
     public void imageComplete(int status) {
-	consumer.imageComplete(status);
+        consumer.imageComplete(status);
     }
 
     /**
@@ -199,7 +198,7 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * of the pixel data from an <code>ImageConsumer</code>.
      * When an <code>ImageConsumer</code> being fed
      * by an instance of this <code>ImageFilter</code>
-     * requests a resend of the data in TDLR order, 
+     * requests a resend of the data in TDLR order,
      * the <code>FilteredImageSource</code>
      * invokes this method of the <code>ImageFilter</code>.
      *
@@ -213,7 +212,7 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * <li>
      * Do not override this method.
      * This makes the subclass use the default implementation,
-     * which is to 
+     * which is to
      * forward the request
      * to the indicated <code>ImageProducer</code>
      * using this filter as the requesting <code>ImageConsumer</code>.
@@ -231,9 +230,9 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      *
      * <li>
      * Override the method to do nothing.
-     * This is appropriate 
+     * This is appropriate
      * if the filter cannot produce filtered data in TDLR order.
-     * </ul> 
+     * </ul>
      *
      * @see ImageProducer#requestTopDownLeftRightResend
      * @param ip the ImageProducer that is feeding this instance of
@@ -242,18 +241,18 @@ public class ImageFilter implements ImageConsumer, Cloneable {
      * @exception NullPointerException if <code>ip</code> is null
      */
     public void resendTopDownLeftRight(ImageProducer ip) {
-	ip.requestTopDownLeftRightResend(this);
+        ip.requestTopDownLeftRightResend(this);
     }
-    
+
     /**
      * Clones this object.
      */
-    public Object clone() { 
-	try { 
-	    return super.clone();
-	} catch (CloneNotSupportedException e) { 
-	    // this shouldn't happen, since we are Cloneable
-	    throw new InternalError();
-	}
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
     }
 }

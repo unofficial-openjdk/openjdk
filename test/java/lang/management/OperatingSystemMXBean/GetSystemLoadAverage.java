@@ -26,15 +26,15 @@
  *
  * @bug     6336608 6511738
  * @summary Basic unit test of OperatingSystemMXBean.getSystemLoadAverage()
- * @author  Mandy Chung 
+ * @author  Mandy Chung
  */
 
 /*
  * This test tests the load average on linux and solaris. On Windows,
- * getSystemLoadAverage() returns -1. 
+ * getSystemLoadAverage() returns -1.
  *
  * Usage: GetSystemLoadAverage ["-1.0"]
- * Arguments: 
+ * Arguments:
  *   o If no argument is specified, the test will verify the system load
  *     average with the /usr/bin/uptime command.
  *   o Otherwise, the input argument must be "-1.0" indicating the
@@ -48,16 +48,16 @@ import java.io.*;
 public class GetSystemLoadAverage {
 
     private static OperatingSystemMXBean mbean =
-	ManagementFactory.getOperatingSystemMXBean();
+        ManagementFactory.getOperatingSystemMXBean();
 
     // The system load average may be changing due to other jobs running.
     // Allow some delta.
     private static double DELTA = 0.05;
 
     public static void main(String args[]) throws Exception {
-	if (args.length > 1)  {
-	    throw new IllegalArgumentException("Unexpected number of args " + args.length);
-	}
+        if (args.length > 1)  {
+            throw new IllegalArgumentException("Unexpected number of args " + args.length);
+        }
 
         if (args.length == 0) {
             // On Linux or Solaris
@@ -65,18 +65,18 @@ public class GetSystemLoadAverage {
         } else {
             // On Windows, the system load average is expected to be -1.0
             if (!args[0].equals("-1.0")) {
-	        throw new IllegalArgumentException("Invalid argument: " + args[0]);
+                throw new IllegalArgumentException("Invalid argument: " + args[0]);
             } else {
                 double loadavg = mbean.getSystemLoadAverage();
                 if (loadavg != -1.0) {
-                    throw new RuntimeException("Expected load average : -1.0" + 
-        	        " but getSystemLoadAverage returned: " +
-         		loadavg);
+                    throw new RuntimeException("Expected load average : -1.0" +
+                        " but getSystemLoadAverage returned: " +
+                        loadavg);
                 }
             }
-	}
+        }
 
-	System.out.println("Test passed.");
+        System.out.println("Test passed.");
     }
 
     private static String LOAD_AVERAGE_TEXT = "load average:";
@@ -87,13 +87,13 @@ public class GetSystemLoadAverage {
         String output = commandOutput(p);
 
         // obtain load average from OperatingSystemMXBean
-	double loadavg = mbean.getSystemLoadAverage();
+        double loadavg = mbean.getSystemLoadAverage();
 
         // verify if two values are close
-        output = output.substring(output.lastIndexOf(LOAD_AVERAGE_TEXT) + 
+        output = output.substring(output.lastIndexOf(LOAD_AVERAGE_TEXT) +
                                   LOAD_AVERAGE_TEXT.length());
         System.out.println("Load average returned from uptime = " + output);
-    	System.out.println("getSystemLoadAverage() returned " + loadavg);
+        System.out.println("getSystemLoadAverage() returned " + loadavg);
 
         String[] lavg = output.split(",");
         double expected = Double.parseDouble(lavg[0]);
@@ -101,11 +101,11 @@ public class GetSystemLoadAverage {
         double highRange = expected * (1 + DELTA);
 
         if (loadavg < lowRange || loadavg >  highRange) {
-            throw new RuntimeException("Expected load average : " +   
-    		    expected +
-    	            " but getSystemLoadAverage returned: " +
-     		    loadavg);
-	}
+            throw new RuntimeException("Expected load average : " +
+                    expected +
+                    " but getSystemLoadAverage returned: " +
+                    loadavg);
+        }
     }
 
     private static String commandOutput(Reader r) throws Exception {
@@ -118,7 +118,7 @@ public class GetSystemLoadAverage {
         }
         return sb.toString();
     }
-                                                                                
+
     private static String commandOutput(Process p) throws Exception {
         Reader r = new InputStreamReader(p.getInputStream(),"UTF-8");
         String output = commandOutput(r);
@@ -126,5 +126,5 @@ public class GetSystemLoadAverage {
         p.exitValue();
         return output;
     }
- 
+
 }

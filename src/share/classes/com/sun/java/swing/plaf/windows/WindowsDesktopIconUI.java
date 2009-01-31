@@ -56,9 +56,9 @@ public class WindowsDesktopIconUI extends BasicDesktopIconUI {
     }
 
     public void installUI(JComponent c)   {
-	super.installUI(c);
+        super.installUI(c);
 
-	c.setOpaque(XPStyle.getXP() == null);
+        c.setOpaque(XPStyle.getXP() == null);
     }
 
     // Uninstall the listeners added by the WindowsInternalFrameTitlePane
@@ -74,9 +74,9 @@ public class WindowsDesktopIconUI extends BasicDesktopIconUI {
         desktopIcon.setLayout(new BorderLayout());
         desktopIcon.add(iconPane, BorderLayout.CENTER);
 
-	if (XPStyle.getXP() != null) {
-	    desktopIcon.setBorder(null);
-	}
+        if (XPStyle.getXP() != null) {
+            desktopIcon.setBorder(null);
+        }
     }
 
     public Dimension getPreferredSize(JComponent c) {

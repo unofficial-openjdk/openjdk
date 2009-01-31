@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that an unexpected internal error has 
+ * Thrown to indicate that an unexpected internal error has
  * occurred.
  *
  * @author Gordon Hirsch
@@ -39,19 +39,19 @@ public class InternalException extends RuntimeException {
          super();
          this.errorCode = 0;
      }
- 
+
      public InternalException(String s) {
          super(s);
          this.errorCode = 0;
      }
 
     public InternalException(int errorCode) {
-	super();
+        super();
         this.errorCode = errorCode;
     }
 
     public InternalException(String s, int errorCode) {
-	super(s);
+        super(s);
         this.errorCode = errorCode;
     }
 

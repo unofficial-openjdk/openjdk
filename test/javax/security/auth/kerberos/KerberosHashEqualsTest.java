@@ -47,7 +47,7 @@ public class KerberosHashEqualsTest {
             throw new RuntimeException("hashCode() not same");
         }
     }
-    
+
     void checkNotSame(Object o1, Object o2) {
         if(o1.equals(o2)) {
             throw new RuntimeException("equals() succeeds");
@@ -60,10 +60,10 @@ public class KerberosHashEqualsTest {
         k2 = new KerberosKey(new KerberosPrincipal("A"), "pass".getBytes(), 1, 1);
         checkSame(k1, k1);  // me to me
         checkSame(k1, k2);  // same
-        
+
         k2.destroy();
         checkNotSame(k1, k2);
-        
+
         // destroyed keys doesn't equal to each other
         checkNotSame(k2, k1);
         checkSame(k2, k2);
@@ -77,12 +77,12 @@ public class KerberosHashEqualsTest {
         checkNotSame(k1, k2);
         k2 = new KerberosKey(new KerberosPrincipal("A"), "pass".getBytes(), 1, 2);
         checkNotSame(k1, k2);
-        
+
         k1 = new KerberosKey(null, "pass".getBytes(), 1, 2);
         checkNotSame(k1, k2); // null to non-null
         k2 = new KerberosKey(null, "pass".getBytes(), 1, 2);
         checkSame(k1, k2);    // null to null
-        
+
         checkNotSame(k1, "Another Object");
 
         KerberosTicket t1, t2;
@@ -114,7 +114,7 @@ public class KerberosHashEqualsTest {
         t2 = new KerberosTicket("asn1".getBytes(), new KerberosPrincipal("client"), new KerberosPrincipal("server"), "pass".getBytes(), 1, new boolean[] {true, true}, new Date(0), new Date(0), new Date(0), new Date(1), null);
         t1 = new KerberosTicket("asn1".getBytes(), new KerberosPrincipal("client"), new KerberosPrincipal("server"), "pass".getBytes(), 1, new boolean[] {true, true}, new Date(0), new Date(0), new Date(0), new Date(2), null);
         checkSame(t1, t2);  // renewtill is useless
-        
+
         t2.destroy();
         checkNotSame(t1, t2);
 

@@ -31,15 +31,15 @@ import java.util.WeakHashMap;
 import javax.imageio.stream.ImageInputStream;
 
 /**
- * This class provide means to properly close hanging 
+ * This class provide means to properly close hanging
  * image input/output streams on VM shutdown.
- * This might be useful for proper cleanup such as removal 
+ * This might be useful for proper cleanup such as removal
  * of temporary files.
  *
  * Addition of stream do not prevent it from being garbage collected
- * if no other references to it exists. Stream can be closed 
- * explicitly without removal from StreamCloser queue. 
- * Explicit removal from the queue only helps to save some memory. 
+ * if no other references to it exists. Stream can be closed
+ * explicitly without removal from StreamCloser queue.
+ * Explicit removal from the queue only helps to save some memory.
  */
 public class StreamCloser {
 
@@ -52,7 +52,7 @@ public class StreamCloser {
                 toCloseQueue =
                     new WeakHashMap<ImageInputStream, Object>();
             }
-            
+
             toCloseQueue.put(iis, null);
 
             if (streamCloser == null) {
@@ -80,7 +80,7 @@ public class StreamCloser {
                         }
                     }
                 };
-                
+
                 java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction() {
                         public Object run() {

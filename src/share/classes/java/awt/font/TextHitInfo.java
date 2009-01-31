@@ -53,32 +53,32 @@ import java.lang.String;
  * corresponds to the right side of the 'b' in the text.
  * <p>
  * <code>TextHitInfo</code> is used primarily by {@link TextLayout} and
- * clients of <code>TextLayout</code>.  Clients of <code>TextLayout</code> 
- * query <code>TextHitInfo</code> instances for an insertion offset, where 
+ * clients of <code>TextLayout</code>.  Clients of <code>TextLayout</code>
+ * query <code>TextHitInfo</code> instances for an insertion offset, where
  * new text is inserted into the text model.  The insertion offset is equal
  * to the character position in the <code>TextHitInfo</code> if the bias
- * is leading, and one character after if the bias is trailing.  The 
+ * is leading, and one character after if the bias is trailing.  The
  * insertion offset for TextHitInfo.trailing(1) is 2.
  * <p>
  * Sometimes it is convenient to construct a <code>TextHitInfo</code> with
  * the same insertion offset as an existing one, but on the opposite
  * character.  The <code>getOtherHit</code> method constructs a new
- * <code>TextHitInfo</code> with the same insertion offset as an existing 
- * one, with a hit on the character on the other side of the insertion offset. 
+ * <code>TextHitInfo</code> with the same insertion offset as an existing
+ * one, with a hit on the character on the other side of the insertion offset.
  * Calling <code>getOtherHit</code> on trailing(1) would return leading(2).
- * In general, <code>getOtherHit</code> for trailing(n) returns 
- * leading(n+1) and <code>getOtherHit</code> for leading(n) 
+ * In general, <code>getOtherHit</code> for trailing(n) returns
+ * leading(n+1) and <code>getOtherHit</code> for leading(n)
  * returns trailing(n-1).
  * <p>
  * <strong>Example</strong>:<p>
- * Converting a graphical point to an insertion point within a text 
+ * Converting a graphical point to an insertion point within a text
  * model
  * <blockquote><pre>
  * TextLayout layout = ...;
  * Point2D.Float hitPoint = ...;
  * TextHitInfo hitInfo = layout.hitTestChar(hitPoint.x, hitPoint.y);
  * int insPoint = hitInfo.getInsertionIndex();
- * // insPoint is relative to layout;  may need to adjust for use 
+ * // insPoint is relative to layout;  may need to adjust for use
  * // in a text model
  * </pre></blockquote>
  *
@@ -92,23 +92,23 @@ public final class TextHitInfo {
     /**
      * Constructs a new <code>TextHitInfo</code>.
      * @param charIndex the index of the character hit
-     * @param isLeadingEdge <code>true</code> if the leading edge of the 
+     * @param isLeadingEdge <code>true</code> if the leading edge of the
      * character was hit
      */
     private TextHitInfo(int charIndex, boolean isLeadingEdge) {
         this.charIndex = charIndex;
         this.isLeadingEdge = isLeadingEdge;
     }
-    
-    /** 
+
+    /**
      * Returns the index of the character hit.
      * @return the index of the character hit.
      */
     public int getCharIndex() {
         return charIndex;
     }
-    
-    /** 
+
+    /**
      * Returns <code>true</code> if the leading edge of the character was
      * hit.
      * @return <code>true</code> if the leading edge of the character was
@@ -119,8 +119,8 @@ public final class TextHitInfo {
     }
 
     /**
-     * Returns the insertion index.  This is the character index if 
-     * the leading edge of the character was hit, and one greater 
+     * Returns the insertion index.  This is the character index if
+     * the leading edge of the character was hit, and one greater
      * than the character index if the trailing edge was hit.
      * @return the insertion index.
      */
@@ -139,7 +139,7 @@ public final class TextHitInfo {
 
     /**
      * Returns <code>true</code> if the specified <code>Object</code> is a
-     * <code>TextHitInfo</code> and equals this <code>TextHitInfo</code>. 
+     * <code>TextHitInfo</code> and equals this <code>TextHitInfo</code>.
      * @param obj the <code>Object</code> to test for equality
      * @return <code>true</code> if the specified <code>Object</code>
      * equals this <code>TextHitInfo</code>; <code>false</code> otherwise.
@@ -172,7 +172,7 @@ public final class TextHitInfo {
     public String toString() {
         return "TextHitInfo[" + charIndex + (isLeadingEdge ? "L" : "T")+"]";
     }
-    
+
     /**
      * Creates a <code>TextHitInfo</code> on the leading edge of the
      * character at the specified <code>charIndex</code>.
@@ -185,7 +185,7 @@ public final class TextHitInfo {
     }
 
     /**
-     * Creates a hit on the trailing edge of the character at 
+     * Creates a hit on the trailing edge of the character at
      * the specified <code>charIndex</code>.
      * @param charIndex the index of the character hit
      * @return a <code>TextHitInfo</code> on the trailing edge of the
@@ -220,7 +220,7 @@ public final class TextHitInfo {
     /**
      * Creates a <code>TextHitInfo</code> on the other side of the
      * insertion point.  This <code>TextHitInfo</code> remains unchanged.
-     * @return a <code>TextHitInfo</code> on the other side of the 
+     * @return a <code>TextHitInfo</code> on the other side of the
      * insertion point.
      */
     public TextHitInfo getOtherHit() {
@@ -238,7 +238,7 @@ public final class TextHitInfo {
      * unchanged.
      * @param delta the value to offset this <code>charIndex</code>
      * @return a <code>TextHitInfo</code> whose <code>charIndex</code> is
-     * offset by <code>delta</code> from the <code>charIndex</code> of 
+     * offset by <code>delta</code> from the <code>charIndex</code> of
      * this <code>TextHitInfo</code>.
      */
     public TextHitInfo getOffsetHit(int delta) {

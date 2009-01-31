@@ -90,7 +90,6 @@ import java.util.*;
  * @param <T> the type of objects that this object may be compared to
  *
  * @author  Josh Bloch
- * @version %I%, %G%
  * @see java.util.Comparator
  * @since 1.2
  */
@@ -129,7 +128,7 @@ public interface Comparable<T> {
      *
      * @param   o the object to be compared.
      * @return  a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
+     *          is less than, equal to, or greater than the specified object.
      *
      * @throws ClassCastException if the specified object's type prevents it
      *         from being compared to this object.

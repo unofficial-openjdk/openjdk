@@ -28,7 +28,7 @@
  *          monitors.
  * @author  Mandy Chung
  *
- * @build ThreadDump 
+ * @build ThreadDump
  */
 
 import java.lang.management.*;
@@ -104,7 +104,7 @@ public class SynchronizerLockingThread extends Thread {
     int             numOwnedSyncs;
     Map<String, ReentrantLock[]> ownedSyncs;
     public SynchronizerLockingThread(String name) {
-        this.threadName = name; 
+        this.threadName = name;
     }
 
     protected void setExpectedResult(Lock waitingLock,
@@ -113,12 +113,12 @@ public class SynchronizerLockingThread extends Thread {
                                      Condition waitingSync,
                                      int numOwnedSyncs,
                                      Map<String, ReentrantLock[]> ownedSyncs) {
-        this.waitingLock = waitingLock; 
-        this.numOwnedMonitors = numOwnedMonitors; 
-        this.ownedMonitors = ownedMonitors; 
-        this.waitingSync = waitingSync; 
-        this.numOwnedSyncs = numOwnedSyncs; 
-        this.ownedSyncs = ownedSyncs; 
+        this.waitingLock = waitingLock;
+        this.numOwnedMonitors = numOwnedMonitors;
+        this.ownedMonitors = ownedMonitors;
+        this.waitingSync = waitingSync;
+        this.numOwnedSyncs = numOwnedSyncs;
+        this.ownedSyncs = ownedSyncs;
     }
 
     void checkLocks(ThreadInfo info) throws Exception {
@@ -126,15 +126,15 @@ public class SynchronizerLockingThread extends Thread {
         MonitorInfo[] monitors = info.getLockedMonitors();
         if (monitors.length != numOwnedMonitors) {
             ThreadDump.threadDump();
-            throw new RuntimeException("Number of locked monitors = " + 
+            throw new RuntimeException("Number of locked monitors = " +
                 monitors.length +
-                " not matched. Expected: " + numOwnedMonitors); 
+                " not matched. Expected: " + numOwnedMonitors);
         }
         // check if each monitor returned in the list is the expected
         // one
         for (MonitorInfo m : monitors) {
-            StackTraceElement ste = m.getLockedStackFrame();    
-            int depth = m.getLockedStackDepth();    
+            StackTraceElement ste = m.getLockedStackFrame();
+            int depth = m.getLockedStackDepth();
             checkStackFrame(info, ste, depth);
             checkMonitor(m, ste.getMethodName());
         }
@@ -143,7 +143,7 @@ public class SynchronizerLockingThread extends Thread {
         for (Map.Entry<String, Lock[]> e : ownedMonitors.entrySet()) {
             for (Lock l : e.getValue()) {
                 checkMonitor(e.getKey(), l, monitors);
-            } 
+            }
         }
 
         // We can only check if the length matches since we have no
@@ -151,25 +151,25 @@ public class SynchronizerLockingThread extends Thread {
         LockInfo[] syncs = info.getLockedSynchronizers();
         if (syncs.length != numOwnedSyncs) {
             ThreadDump.threadDump();
-            throw new RuntimeException("Number of locked syncs = " + 
+            throw new RuntimeException("Number of locked syncs = " +
                 syncs.length +
-                " not matched. Expected: " + numOwnedSyncs); 
+                " not matched. Expected: " + numOwnedSyncs);
         }
     }
 
     void checkThreadInfo(ThreadInfo info) throws Exception {
         if (!getName().equals(info.getThreadName())) {
             throw new RuntimeException("Name: " + info.getThreadName() +
-                " not matched. Expected: " + getName()); 
+                " not matched. Expected: " + getName());
         }
         LockInfo l = info.getLockInfo();
         if ((waitingLock != null || waitingSync != null) && l == null) {
             throw new RuntimeException("LockInfo: " + l +
-                " not matched. Expected: non-null"); 
+                " not matched. Expected: non-null");
         }
         if (waitingLock == null && waitingSync == null && l != null) {
             throw new RuntimeException("LockInfo: " + l +
-                " not matched. Expected: null"); 
+                " not matched. Expected: null");
         }
 
         String waitingLockName;
@@ -183,23 +183,23 @@ public class SynchronizerLockingThread extends Thread {
         }
         if (!waitingLockName.equals(l.getClassName())) {
             throw new RuntimeException("LockInfo : " + l +
-                " class name not matched. Expected: " + waitingLockName); 
+                " class name not matched. Expected: " + waitingLockName);
         }
         if (hcode != l.getIdentityHashCode()) {
             throw new RuntimeException("LockInfo: " + l +
-                " IdentityHashCode not matched. Expected: " + hcode); 
+                " IdentityHashCode not matched. Expected: " + hcode);
         }
 
         String lockName = info.getLockName();
         String[] s = lockName.split("@");
         if (!waitingLockName.equals(s[0])) {
             throw new RuntimeException("LockName: " + lockName +
-                " class name not matched. Expected: " + waitingLockName); 
+                " class name not matched. Expected: " + waitingLockName);
         }
         int i = Integer.parseInt(s[1], 16);
         if (hcode != i) {
             throw new RuntimeException("LockName: " + lockName +
-                " IdentityHashCode not matched. Expected: " + hcode); 
+                " IdentityHashCode not matched. Expected: " + hcode);
         }
     }
 
@@ -207,9 +207,9 @@ public class SynchronizerLockingThread extends Thread {
         StackTraceElement[] stacktrace = info.getStackTrace();
         if (!ste.equals(stacktrace[depth])) {
             System.out.println("LockedStackFrame:- " + ste);
-            System.out.println("StackTrace at " + depth + " :-" + 
+            System.out.println("StackTrace at " + depth + " :-" +
                 stacktrace[depth]);
-            throw new RuntimeException("LockedStackFrame does not match " + 
+            throw new RuntimeException("LockedStackFrame does not match " +
                 "stack frame in ThreadInfo.getStackTrace");
         }
     }
@@ -221,13 +221,13 @@ public class SynchronizerLockingThread extends Thread {
                     int hcode = System.identityHashCode(l);
                     if (className.equals(m.getClassName()) &&
                         hcode == m.getIdentityHashCode()) {
-                        // monitor matched the expected 
+                        // monitor matched the expected
                         return;
                     }
                 }
             }
         }
-        throw new RuntimeException("Monitor not expected" + m); 
+        throw new RuntimeException("Monitor not expected" + m);
     }
     void checkMonitor(String methodName, Lock l, MonitorInfo[] monitors) {
         String className = l.getClass().getName();
@@ -240,8 +240,8 @@ public class SynchronizerLockingThread extends Thread {
             }
         }
         throw new RuntimeException("Monitor not found in the returned list" +
-            " Method: " + methodName + " Lock: " + l); 
-            
+            " Method: " + methodName + " Lock: " + l);
+
     }
 
     static class Thread1 extends SynchronizerLockingThread {
@@ -259,7 +259,7 @@ public class SynchronizerLockingThread extends Thread {
                 try {
                     lock3.lock();
                     try {
-                        B();     
+                        B();
                     } finally {
                         lock3.unlock();
                     }
@@ -271,10 +271,10 @@ public class SynchronizerLockingThread extends Thread {
             }
         }
         void B() {
-            lock4.lock(); 
+            lock4.lock();
             try {
                 synchronized(lock5) {
-                    C();     
+                    C();
                 }
             } finally {
                 lock4.unlock();
@@ -282,7 +282,7 @@ public class SynchronizerLockingThread extends Thread {
         }
         void C() {
             synchronized(lock6) {
-                D();     
+                D();
             }
         }
         void D() {
@@ -290,10 +290,10 @@ public class SynchronizerLockingThread extends Thread {
                 try {
                     // signal to about to wait
                     count--;
-                    lock7.wait();    
+                    lock7.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
-                } 
+                }
             }
         }
 
@@ -303,23 +303,23 @@ public class SynchronizerLockingThread extends Thread {
         int OWNED_MONITORS = 2;
         int OWNED_SYNCS = 4;
         void initExpectedResult() {
-            LOCKED_MONITORS = new HashMap<String, Lock[]>(); 
-            LOCKED_MONITORS.put("D", new Lock[0]); // no monitored locked 
-            LOCKED_MONITORS.put("C", new Lock[] {lock6});   
-            LOCKED_MONITORS.put("B", new Lock[] {lock5}); 
+            LOCKED_MONITORS = new HashMap<String, Lock[]>();
+            LOCKED_MONITORS.put("D", new Lock[0]); // no monitored locked
+            LOCKED_MONITORS.put("C", new Lock[] {lock6});
+            LOCKED_MONITORS.put("B", new Lock[] {lock5});
             LOCKED_MONITORS.put("A", new Lock[0]);
 
-            LOCKED_SYNCS = new HashMap<String, ReentrantLock[]>(); 
-            LOCKED_SYNCS.put("D", new ReentrantLock[0]); // no sync locked 
-            LOCKED_SYNCS.put("C", new ReentrantLock[0]); // no sync locked 
+            LOCKED_SYNCS = new HashMap<String, ReentrantLock[]>();
+            LOCKED_SYNCS.put("D", new ReentrantLock[0]); // no sync locked
+            LOCKED_SYNCS.put("C", new ReentrantLock[0]); // no sync locked
             LOCKED_SYNCS.put("B", new ReentrantLock[] {lock4});
             LOCKED_SYNCS.put("A", new ReentrantLock[] {lock3, lock2, lock1});
-            this.setExpectedResult(WAITING_LOCK, 
+            this.setExpectedResult(WAITING_LOCK,
                                    OWNED_MONITORS, LOCKED_MONITORS,
                                    null,
                                    OWNED_SYNCS, LOCKED_SYNCS);
         }
-   
+
     }
 
     static class Thread2 extends SynchronizerLockingThread {
@@ -331,7 +331,7 @@ public class SynchronizerLockingThread extends Thread {
         int OWNED_SYNCS = 0;
         public Thread2() {
             super("t2");
-            this.setExpectedResult(null, 
+            this.setExpectedResult(null,
                                    OWNED_MONITORS, LOCKED_MONITORS,
                                    WAITING_LOCK,
                                    OWNED_SYNCS, LOCKED_SYNCS);
@@ -349,7 +349,7 @@ public class SynchronizerLockingThread extends Thread {
                 lock8.unlock();
             }
             throw new RuntimeException("should not reach here");
-        } 
+        }
     }
 
 }

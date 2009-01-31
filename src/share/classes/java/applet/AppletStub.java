@@ -33,8 +33,7 @@ import java.net.URL;
  * environment or applet viewer environment in which the application
  * is running.
  *
- * @author 	Arthur van Hoff
- * @version     %I%, %G%
+ * @author      Arthur van Hoff
  * @see         java.applet.Applet#setStub(java.applet.AppletStub)
  * @since       JDK1.0
  */
@@ -49,7 +48,7 @@ public interface AppletStub {
      */
     boolean isActive();
 
-    
+
     /**
      * Gets the URL of the document in which the applet is embedded.
      * For example, suppose an applet is contained

@@ -40,24 +40,23 @@ import sun.security.x509.GeneralNameInterface;
  * The methods are made available in this fashion for performance reasons.
  *
  * @author Andreas Sterbenz
- * @version %I%, %G%
  */
 public abstract class CertPathHelper {
-    
+
     /**
      * Object used to tunnel the calls. Initialized by CertPathHelperImpl.
      */
     protected static CertPathHelper instance;
-    
+
     protected CertPathHelper() {
-	// empty
+        // empty
     }
-    
-    protected abstract void implSetPathToNames(X509CertSelector sel, 
-	    Set<GeneralNameInterface> names);
-    
-    static void setPathToNames(X509CertSelector sel, 
-	    Set<GeneralNameInterface> names) {
-	instance.implSetPathToNames(sel, names);
+
+    protected abstract void implSetPathToNames(X509CertSelector sel,
+            Set<GeneralNameInterface> names);
+
+    static void setPathToNames(X509CertSelector sel,
+            Set<GeneralNameInterface> names) {
+        instance.implSetPathToNames(sel, names);
     }
 }

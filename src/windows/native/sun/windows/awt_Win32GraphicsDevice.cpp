@@ -55,15 +55,15 @@
 
 uns_ordered_dither_array img_oda_alpha;
 
-jclass	    AwtWin32GraphicsDevice::indexCMClass;
-jclass	    AwtWin32GraphicsDevice::wToolkitClass;
+jclass      AwtWin32GraphicsDevice::indexCMClass;
+jclass      AwtWin32GraphicsDevice::wToolkitClass;
 jfieldID    AwtWin32GraphicsDevice::dynamicColorModelID;
 jfieldID    AwtWin32GraphicsDevice::indexCMrgbID;
 jfieldID    AwtWin32GraphicsDevice::indexCMcacheID;
 jfieldID    AwtWin32GraphicsDevice::accelerationEnabledID;
 jmethodID   AwtWin32GraphicsDevice::paletteChangedMID;
-BOOL	    AwtWin32GraphicsDevice::primaryPalettized;
-int	    AwtWin32GraphicsDevice::primaryIndex = 0;
+BOOL        AwtWin32GraphicsDevice::primaryPalettized;
+int         AwtWin32GraphicsDevice::primaryIndex = 0;
 
 
 /**
@@ -73,7 +73,7 @@ int	    AwtWin32GraphicsDevice::primaryIndex = 0;
  * classes will inquire of this device), the bits per pixel of this
  * device, and information on whether the primary device is palettized.
  */
-AwtWin32GraphicsDevice::AwtWin32GraphicsDevice(int screen, 
+AwtWin32GraphicsDevice::AwtWin32GraphicsDevice(int screen,
                                                MHND mhnd, Devices *arr)
 {
     this->screen  = screen;
@@ -92,41 +92,41 @@ AwtWin32GraphicsDevice::AwtWin32GraphicsDevice(int screen,
     // Set primary device info: other devices will need to know
     // whether the primary is palettized during the initialization
     // process
-    HDC hDC = this->GetDC();    
+    HDC hDC = this->GetDC();
     colorData->bitsperpixel = ::GetDeviceCaps(hDC, BITSPIXEL);
     this->ReleaseDC(hDC);
     if (MONITOR_INFO_FLAG_PRIMARY & pMonitorInfo->dwFlags) {
-	primaryIndex = screen;
-	if (colorData->bitsperpixel > 8) {
-	    primaryPalettized = FALSE;
-	} else {
-	    primaryPalettized = TRUE;
-	}
+        primaryIndex = screen;
+        if (colorData->bitsperpixel > 8) {
+            primaryPalettized = FALSE;
+        } else {
+            primaryPalettized = TRUE;
+        }
     }
 }
 
-AwtWin32GraphicsDevice::~AwtWin32GraphicsDevice() 
+AwtWin32GraphicsDevice::~AwtWin32GraphicsDevice()
 {
     delete colorData;
     if (gpBitmapInfo) {
-	free(gpBitmapInfo);
+        free(gpBitmapInfo);
     }
     if (palette) {
-	delete palette;
+        delete palette;
     }
     if (pMonitorInfo) {
-	delete pMonitorInfo;
+        delete pMonitorInfo;
     }
     if (javaDevice) {
-	JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-	env->DeleteWeakGlobalRef(javaDevice);
+        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+        env->DeleteWeakGlobalRef(javaDevice);
     }
     if (cData != NULL) {
-	freeICMColorData(cData);
+        freeICMColorData(cData);
     }
 }
 
-HDC AwtWin32GraphicsDevice::GetDC() 
+HDC AwtWin32GraphicsDevice::GetDC()
 {
     return MakeDCFromMonitor(monitor);
 }
@@ -134,7 +134,7 @@ HDC AwtWin32GraphicsDevice::GetDC()
 void AwtWin32GraphicsDevice::ReleaseDC(HDC hDC)
 {
     if (hDC != NULL) {
-	::DeleteDC(hDC);
+        ::DeleteDC(hDC);
     }
 }
 
@@ -147,134 +147,134 @@ void AwtWin32GraphicsDevice::Initialize()
 {
     unsigned int ri, gi, bi;
     if (colorData->bitsperpixel < 8) {
-	// REMIND: how to handle?
+        // REMIND: how to handle?
     }
-        
+
     // Create a BitmapInfo object for color data
     if (!gpBitmapInfo) {
-	try {
-	    gpBitmapInfo = (BITMAPINFO *)
-		safe_Malloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-	} catch (std::bad_alloc&) {
-	    throw;
-	}
-	gpBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        try {
+            gpBitmapInfo = (BITMAPINFO *)
+                safe_Malloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+        } catch (std::bad_alloc&) {
+            throw;
+        }
+        gpBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     }
     gpBitmapInfo->bmiHeader.biBitCount = 0;
     HDC hBMDC = this->GetDC();
     HBITMAP hBM = ::CreateCompatibleBitmap(hBMDC, 1, 1);
     VERIFY(::GetDIBits(hBMDC, hBM, 0, 1, NULL, gpBitmapInfo, DIB_RGB_COLORS));
-    
+
     if (colorData->bitsperpixel > 8) {
-	if (MONITOR_INFO_FLAG_PRIMARY & pMonitorInfo->dwFlags) {
-	    primaryPalettized = FALSE;
-	}
-	if (colorData->bitsperpixel != 24) { // 15, 16, or 32 bpp
-	    int foo;
-	    gpBitmapInfo->bmiHeader.biCompression = BI_BITFIELDS;
-	    if (::GetDIBits(hBMDC, hBM, 0, 1, &foo, gpBitmapInfo, 
-			    DIB_RGB_COLORS) == 0)
-	    {
-		// Bug 4684966: If GetDIBits returns an error, we could
-		// get stuck in an infinite loop setting the colorData
-		// fields.  Hardcode bitColors to reasonable values instead.
-		// These values are picked according to standard masks
-		// for these bit depths on win9x, according to MSDN docs.
-		switch (colorData->bitsperpixel) {
-		case 15:
-		    ((int *)gpBitmapInfo->bmiColors)[0] = 0x7c00;
-		    ((int *)gpBitmapInfo->bmiColors)[1] = 0x03e0;
-		    ((int *)gpBitmapInfo->bmiColors)[2] = 0x001f;
-		    break;
-		case 16:
-		    ((int *)gpBitmapInfo->bmiColors)[0] = 0xf800;
-		    ((int *)gpBitmapInfo->bmiColors)[1] = 0x07e0;
-		    ((int *)gpBitmapInfo->bmiColors)[2] = 0x001f;
-		    break;
-		case 32:
-		default:
-		    ((int *)gpBitmapInfo->bmiColors)[0] = 0xff0000;
-		    ((int *)gpBitmapInfo->bmiColors)[1] = 0x00ff00;
-		    ((int *)gpBitmapInfo->bmiColors)[2] = 0x0000ff;
-		    break;
-		}
-	    }
-	    ri = ((unsigned int *)gpBitmapInfo->bmiColors)[0];
-	    colorData->rOff = 0;
-	    while ((ri & 1) == 0) {
-		colorData->rOff++;
-		ri >>= 1;
-	    }
-	    colorData->rScale = 0;
-	    while (ri < 0x80) {
-		colorData->rScale++;
-		ri <<= 1;
-	    }
-	    gi = ((unsigned int *)gpBitmapInfo->bmiColors)[1];
-	    colorData->gOff = 0;
-	    while ((gi & 1) == 0) {
-		colorData->gOff++;
-		gi >>= 1;
-	    }
-	    colorData->gScale = 0;
-	    while (gi < 0x80) {
-		colorData->gScale++;
-		gi <<= 1;
-	    }
-	    bi = ((unsigned int *)gpBitmapInfo->bmiColors)[2];
-	    colorData->bOff = 0;
-	    while ((bi & 1) == 0) {
-		colorData->bOff++;
-		bi >>= 1;
-	    }
-	    colorData->bScale = 0;
-	    while (bi < 0x80) {
-		colorData->bScale++;
-		bi <<= 1;
-	    }
-            if (   (0 == colorData->bOff)
-		&& (5 == colorData->gOff)
-		&& (10 == colorData->rOff)
-		&& (3 == colorData->bScale)
-		&& (3 == colorData->gScale)
-		&& (3 == colorData->rScale)) {
-                colorData->bitsperpixel = 15;
-		gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
+        if (MONITOR_INFO_FLAG_PRIMARY & pMonitorInfo->dwFlags) {
+            primaryPalettized = FALSE;
+        }
+        if (colorData->bitsperpixel != 24) { // 15, 16, or 32 bpp
+            int foo;
+            gpBitmapInfo->bmiHeader.biCompression = BI_BITFIELDS;
+            if (::GetDIBits(hBMDC, hBM, 0, 1, &foo, gpBitmapInfo,
+                            DIB_RGB_COLORS) == 0)
+            {
+                // Bug 4684966: If GetDIBits returns an error, we could
+                // get stuck in an infinite loop setting the colorData
+                // fields.  Hardcode bitColors to reasonable values instead.
+                // These values are picked according to standard masks
+                // for these bit depths on win9x, according to MSDN docs.
+                switch (colorData->bitsperpixel) {
+                case 15:
+                    ((int *)gpBitmapInfo->bmiColors)[0] = 0x7c00;
+                    ((int *)gpBitmapInfo->bmiColors)[1] = 0x03e0;
+                    ((int *)gpBitmapInfo->bmiColors)[2] = 0x001f;
+                    break;
+                case 16:
+                    ((int *)gpBitmapInfo->bmiColors)[0] = 0xf800;
+                    ((int *)gpBitmapInfo->bmiColors)[1] = 0x07e0;
+                    ((int *)gpBitmapInfo->bmiColors)[2] = 0x001f;
+                    break;
+                case 32:
+                default:
+                    ((int *)gpBitmapInfo->bmiColors)[0] = 0xff0000;
+                    ((int *)gpBitmapInfo->bmiColors)[1] = 0x00ff00;
+                    ((int *)gpBitmapInfo->bmiColors)[2] = 0x0000ff;
+                    break;
+                }
             }
-	} else {    // 24 bpp
-	    gpBitmapInfo->bmiHeader.biBitCount = 24;
-	    gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
-	    
-	    // Fill these values in as a convenience for the screen
-	    // ColorModel construction code below (see getColorModel())
-	    ((int *)gpBitmapInfo->bmiColors)[0] = 0x0000ff;
-	    ((int *)gpBitmapInfo->bmiColors)[1] = 0x00ff00;
-	    ((int *)gpBitmapInfo->bmiColors)[2] = 0xff0000;
-	}
+            ri = ((unsigned int *)gpBitmapInfo->bmiColors)[0];
+            colorData->rOff = 0;
+            while ((ri & 1) == 0) {
+                colorData->rOff++;
+                ri >>= 1;
+            }
+            colorData->rScale = 0;
+            while (ri < 0x80) {
+                colorData->rScale++;
+                ri <<= 1;
+            }
+            gi = ((unsigned int *)gpBitmapInfo->bmiColors)[1];
+            colorData->gOff = 0;
+            while ((gi & 1) == 0) {
+                colorData->gOff++;
+                gi >>= 1;
+            }
+            colorData->gScale = 0;
+            while (gi < 0x80) {
+                colorData->gScale++;
+                gi <<= 1;
+            }
+            bi = ((unsigned int *)gpBitmapInfo->bmiColors)[2];
+            colorData->bOff = 0;
+            while ((bi & 1) == 0) {
+                colorData->bOff++;
+                bi >>= 1;
+            }
+            colorData->bScale = 0;
+            while (bi < 0x80) {
+                colorData->bScale++;
+                bi <<= 1;
+            }
+            if (   (0 == colorData->bOff)
+                && (5 == colorData->gOff)
+                && (10 == colorData->rOff)
+                && (3 == colorData->bScale)
+                && (3 == colorData->gScale)
+                && (3 == colorData->rScale)) {
+                colorData->bitsperpixel = 15;
+                gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
+            }
+        } else {    // 24 bpp
+            gpBitmapInfo->bmiHeader.biBitCount = 24;
+            gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
+
+            // Fill these values in as a convenience for the screen
+            // ColorModel construction code below (see getColorModel())
+            ((int *)gpBitmapInfo->bmiColors)[0] = 0x0000ff;
+            ((int *)gpBitmapInfo->bmiColors)[1] = 0x00ff00;
+            ((int *)gpBitmapInfo->bmiColors)[2] = 0xff0000;
+        }
     } else {
-	if (MONITOR_INFO_FLAG_PRIMARY & pMonitorInfo->dwFlags) {
-	    primaryPalettized = TRUE;
-	}
-	gpBitmapInfo->bmiHeader.biBitCount = 8;
-	gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
-	gpBitmapInfo->bmiHeader.biClrUsed = 256;
-	gpBitmapInfo->bmiHeader.biClrImportant = 256;
+        if (MONITOR_INFO_FLAG_PRIMARY & pMonitorInfo->dwFlags) {
+            primaryPalettized = TRUE;
+        }
+        gpBitmapInfo->bmiHeader.biBitCount = 8;
+        gpBitmapInfo->bmiHeader.biCompression = BI_RGB;
+        gpBitmapInfo->bmiHeader.biClrUsed = 256;
+        gpBitmapInfo->bmiHeader.biClrImportant = 256;
 
-	// The initialization of cData is done prior to 
-	// calling palette->Update() since we need it
-	// for calculating inverseGrayLut
-	if (cData == NULL) {
-	    cData = (ColorData*)safe_Calloc(1, sizeof(ColorData));
-	    memset(cData, 0, sizeof(ColorData));
-	    initDitherTables(cData);
-	}
+        // The initialization of cData is done prior to
+        // calling palette->Update() since we need it
+        // for calculating inverseGrayLut
+        if (cData == NULL) {
+            cData = (ColorData*)safe_Calloc(1, sizeof(ColorData));
+            memset(cData, 0, sizeof(ColorData));
+            initDitherTables(cData);
+        }
 
-	if (!palette) {
-	    palette = new AwtPalette(this);
-	} else {
-	    palette->Update();
-	}
-	palette->UpdateLogical();
+        if (!palette) {
+            palette = new AwtPalette(this);
+        } else {
+            palette->Update();
+        }
+        palette->UpdateLogical();
     }
     VERIFY(::DeleteObject(hBM));
     VERIFY(::DeleteDC(hBMDC));
@@ -292,19 +292,19 @@ jobject AwtWin32GraphicsDevice::GetColorModel(JNIEnv *env, jboolean dynamic)
     int i;
     if (colorData->bitsperpixel == 24) {
         awt_colormodel =
-	    JNU_NewObjectByName(env, "sun/awt/Win32ColorModel24", "()V");
+            JNU_NewObjectByName(env, "sun/awt/Win32ColorModel24", "()V");
     } else if (colorData->bitsperpixel > 8) {
-	int *masks = (int *)gpBitmapInfo->bmiColors;
-	int numbits = 0;
-	unsigned int bits = (masks[0] | masks[1] | masks[2]);
-	while (bits) {
-	    numbits++;
-	    bits >>= 1;
-	}
-        awt_colormodel = JNU_NewObjectByName(env, 
+        int *masks = (int *)gpBitmapInfo->bmiColors;
+        int numbits = 0;
+        unsigned int bits = (masks[0] | masks[1] | masks[2]);
+        while (bits) {
+            numbits++;
+            bits >>= 1;
+        }
+        awt_colormodel = JNU_NewObjectByName(env,
                                              "java/awt/image/DirectColorModel",
-					     "(IIII)V", numbits,
-					     masks[0], masks[1], masks[2]);
+                                             "(IIII)V", numbits,
+                                             masks[0], masks[1], masks[2]);
     } else if (colorData->grayscale == GS_STATICGRAY) {
         jclass clazz;
         jclass clazz1;
@@ -312,7 +312,7 @@ jobject AwtWin32GraphicsDevice::GetColorModel(JNIEnv *env, jboolean dynamic)
         jobject cspace = NULL;
         jint bits[1];
         jintArray bitsArray;
- 
+
         clazz1 = env->FindClass("java/awt/color/ColorSpace");
         mid = env->GetStaticMethodID(clazz1, "getInstance",
               "(I)Ljava/awt/color/ColorSpace;");
@@ -324,7 +324,7 @@ jobject AwtWin32GraphicsDevice::GetColorModel(JNIEnv *env, jboolean dynamic)
         if (cspace == 0) {
             return NULL;
         }
- 
+
         bits[0] = 8;
         bitsArray = env->NewIntArray(1);
         if (bitsArray == 0) {
@@ -332,112 +332,112 @@ jobject AwtWin32GraphicsDevice::GetColorModel(JNIEnv *env, jboolean dynamic)
         } else {
             env->SetIntArrayRegion(bitsArray, 0, 1, bits);
         }
- 
+
         clazz = env->FindClass("java/awt/image/ComponentColorModel");
 
         mid = env->GetMethodID(clazz,"<init>",
             "(Ljava/awt/color/ColorSpace;[IZZII)V");
-     
+
         if (mid == 0) {
             return NULL;
         }
-     
-	awt_colormodel = env->NewObject(clazz, mid,
+
+        awt_colormodel = env->NewObject(clazz, mid,
                                         cspace,
                                         bitsArray,
                                         JNI_FALSE,
                                         JNI_FALSE,
                                         java_awt_Transparency_OPAQUE,
-                                        java_awt_image_DataBuffer_TYPE_BYTE);        
+                                        java_awt_image_DataBuffer_TYPE_BYTE);
     } else {
         jintArray hRGB = env->NewIntArray(256);
         unsigned int *rgb = NULL, *rgbP = NULL;
-	jboolean allvalid = JNI_TRUE;
-	jbyte vbits[256/8];
-	jobject validBits = NULL;
+        jboolean allvalid = JNI_TRUE;
+        jbyte vbits[256/8];
+        jobject validBits = NULL;
 
         /* Create the LUT from the color map */
-	try {
-	    rgb = (unsigned int *) env->GetPrimitiveArrayCritical(hRGB, 0);
-	    if (rgb == NULL) {
-	        return NULL;
-	    }
-	    rgbP = rgb;
-	    if (!palette) {
-		palette = new AwtPalette(this);
-		palette->UpdateLogical();
-	    }
-	    if (colorData->grayscale == GS_INDEXGRAY) {
-	        /* For IndexColorModel, pretend first 10 colors and last
-		   10 colors are transparent black.  This makes 
-		   ICM.allgrayopaque true.
-		*/
-		unsigned int *logicalEntries = palette->GetLogicalEntries();
+        try {
+            rgb = (unsigned int *) env->GetPrimitiveArrayCritical(hRGB, 0);
+            if (rgb == NULL) {
+                return NULL;
+            }
+            rgbP = rgb;
+            if (!palette) {
+                palette = new AwtPalette(this);
+                palette->UpdateLogical();
+            }
+            if (colorData->grayscale == GS_INDEXGRAY) {
+                /* For IndexColorModel, pretend first 10 colors and last
+                   10 colors are transparent black.  This makes
+                   ICM.allgrayopaque true.
+                */
+                unsigned int *logicalEntries = palette->GetLogicalEntries();
 
-		for (i=0; i < 10; i++) {
-		    rgbP[i] = 0x00000000;
-		    rgbP[i+246] = 0x00000000;
-		}
-		memcpy(&rgbP[10], &logicalEntries[10], 236 * sizeof(RGBQUAD));
-		// We need to specify which entries in the colormap are
-		// valid so that the transparent black entries we have
-		// created do not affect the Transparency setting of the
-		// IndexColorModel.  The vbits array is used to construct
-		// a BigInteger such that the most significant bit of vbits[0]
-		// indicates the validity of the last color (#256) and the
-		// least significant bit of vbits[256/8] indicates the
-		// validity of the first color (#0).  We need to fill vbits
-		// with all 1's and then turn off the first and last 10 bits.
-		memset(vbits, 0xff, sizeof(vbits));
-		vbits[0] = 0;
-		vbits[1] = (jbyte) (0xff >> 2);
-		vbits[sizeof(vbits)-2] = (jbyte) (0xff << 2);
-		vbits[sizeof(vbits)-1] = 0;
-		allvalid = JNI_FALSE;
-	    } else {
-		if (AwtPalette::UseCustomPalette() && !dynamic) {
-		    // If we plan to use our custom palette (i.e., we are
-		    // not running inside another app and we are not creating
-		    // a dynamic colorModel object), then setup ICM with
-		    // custom palette entries
-		    unsigned int *logicalEntries = palette->GetLogicalEntries();
-		    memcpy(rgbP, logicalEntries, 256 * sizeof(int));
-		} else {
-		    // Else, use current system palette entries.
-		    // REMIND: This may not give the result we want if
-		    // we are running inside another app and that
-		    // parent app is running in the background when we
-		    // reach here.  We could at least cache an "ideal" set of
-		    // system palette entries from the first time we are
-		    // running in the foreground and then future ICM's will
-		    // use that set instead.
-		    unsigned int *systemEntries = palette->GetSystemEntries();
-		    memcpy(rgbP, systemEntries, 256 * sizeof(int));
-		}
-	    }
-	} catch (...) {
-	    env->ReleasePrimitiveArrayCritical(hRGB, rgb, 0);
-	    throw;
-	}
+                for (i=0; i < 10; i++) {
+                    rgbP[i] = 0x00000000;
+                    rgbP[i+246] = 0x00000000;
+                }
+                memcpy(&rgbP[10], &logicalEntries[10], 236 * sizeof(RGBQUAD));
+                // We need to specify which entries in the colormap are
+                // valid so that the transparent black entries we have
+                // created do not affect the Transparency setting of the
+                // IndexColorModel.  The vbits array is used to construct
+                // a BigInteger such that the most significant bit of vbits[0]
+                // indicates the validity of the last color (#256) and the
+                // least significant bit of vbits[256/8] indicates the
+                // validity of the first color (#0).  We need to fill vbits
+                // with all 1's and then turn off the first and last 10 bits.
+                memset(vbits, 0xff, sizeof(vbits));
+                vbits[0] = 0;
+                vbits[1] = (jbyte) (0xff >> 2);
+                vbits[sizeof(vbits)-2] = (jbyte) (0xff << 2);
+                vbits[sizeof(vbits)-1] = 0;
+                allvalid = JNI_FALSE;
+            } else {
+                if (AwtPalette::UseCustomPalette() && !dynamic) {
+                    // If we plan to use our custom palette (i.e., we are
+                    // not running inside another app and we are not creating
+                    // a dynamic colorModel object), then setup ICM with
+                    // custom palette entries
+                    unsigned int *logicalEntries = palette->GetLogicalEntries();
+                    memcpy(rgbP, logicalEntries, 256 * sizeof(int));
+                } else {
+                    // Else, use current system palette entries.
+                    // REMIND: This may not give the result we want if
+                    // we are running inside another app and that
+                    // parent app is running in the background when we
+                    // reach here.  We could at least cache an "ideal" set of
+                    // system palette entries from the first time we are
+                    // running in the foreground and then future ICM's will
+                    // use that set instead.
+                    unsigned int *systemEntries = palette->GetSystemEntries();
+                    memcpy(rgbP, systemEntries, 256 * sizeof(int));
+                }
+            }
+        } catch (...) {
+            env->ReleasePrimitiveArrayCritical(hRGB, rgb, 0);
+            throw;
+        }
 
-	env->ReleasePrimitiveArrayCritical(hRGB, rgb, 0);
+        env->ReleasePrimitiveArrayCritical(hRGB, rgb, 0);
 
         // Construct a new color model
-	if (!allvalid) {
-	    jbyteArray bArray = env->NewByteArray(sizeof(vbits));
-	    env->SetByteArrayRegion(bArray, 0, sizeof(vbits), vbits);
-	    validBits = JNU_NewObjectByName(env,
-					    "java/math/BigInteger",
-					    "([B)V", bArray);
-	}
-	awt_colormodel =
-	    JNU_NewObjectByName(env, 
-				"java/awt/image/IndexColorModel",
-				"(II[IIILjava/math/BigInteger;)V",
-				8, 256,
-				hRGB, 0, 
-				java_awt_image_DataBuffer_TYPE_BYTE,
-				validBits);
+        if (!allvalid) {
+            jbyteArray bArray = env->NewByteArray(sizeof(vbits));
+            env->SetByteArrayRegion(bArray, 0, sizeof(vbits), vbits);
+            validBits = JNU_NewObjectByName(env,
+                                            "java/math/BigInteger",
+                                            "([B)V", bArray);
+        }
+        awt_colormodel =
+            JNU_NewObjectByName(env,
+                                "java/awt/image/IndexColorModel",
+                                "(II[IIILjava/math/BigInteger;)V",
+                                8, 256,
+                                hRGB, 0,
+                                java_awt_image_DataBuffer_TYPE_BYTE,
+                                validBits);
     }
     return awt_colormodel;
 }
@@ -458,77 +458,77 @@ void AwtWin32GraphicsDevice::SetGrayness(int grayValue)
  * (Win32OffScreenSurfaceData and Win32SurfaceData objects)
  * refer to this colorModel and use its lookup table and inverse
  * lookup to calculate correct index values for rgb colors.  So
- * the colorModel must always reflect the current state of the 
+ * the colorModel must always reflect the current state of the
  * system palette.
  */
-void AwtWin32GraphicsDevice::UpdateDynamicColorModel() 
+void AwtWin32GraphicsDevice::UpdateDynamicColorModel()
 {
     if (!javaDevice) {
-	// javaDevice may not be set yet.  If not, return.  In
-	// this situation, we probably don't need an update anyway
-	// since the colorModel will be created with the correct
-	// info when the java side is initialized.
-	return;
+        // javaDevice may not be set yet.  If not, return.  In
+        // this situation, we probably don't need an update anyway
+        // since the colorModel will be created with the correct
+        // info when the java side is initialized.
+        return;
     }
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    jobject colorModel = env->GetObjectField(javaDevice, 
-	dynamicColorModelID);
+    jobject colorModel = env->GetObjectField(javaDevice,
+        dynamicColorModelID);
     if (!colorModel) {
-	return;
+        return;
     }
     if (env->IsInstanceOf(colorModel, indexCMClass)) {
-	// If colorModel not of type ICM then we're not in 8-bit mode and
-	// don't need to update it
-	jboolean isCopy;
-	unsigned int *newEntries = palette->GetSystemEntries();
-	jintArray rgbArray = (jintArray)env->GetObjectField(colorModel, 
-	    AwtWin32GraphicsDevice::indexCMrgbID);
-	jintArray cacheArray = (jintArray)env->GetObjectField(colorModel, 
-	    AwtWin32GraphicsDevice::indexCMcacheID);
-	if (!rgbArray || !cacheArray) {
-            JNU_ThrowInternalError(env, 
-		"rgb or lookupcache array of IndexColorModel null");
-	    return;
-	}
-	int rgbLength = env->GetArrayLength(rgbArray);
-	int cacheLength = env->GetArrayLength(cacheArray);
-	jint *cmEntries = (jint *)env->GetPrimitiveArrayCritical(rgbArray, 
-	    &isCopy);
-	jint *cache = (jint *)env->GetPrimitiveArrayCritical(cacheArray, 
-	    &isCopy);
-	if (!cmEntries || !cache) {
-            JNU_ThrowInternalError(env, 
-		"Problem retrieving rgb or cache critical array");
-	    return;
-	}
-	// Set the new rgb values
+        // If colorModel not of type ICM then we're not in 8-bit mode and
+        // don't need to update it
+        jboolean isCopy;
+        unsigned int *newEntries = palette->GetSystemEntries();
+        jintArray rgbArray = (jintArray)env->GetObjectField(colorModel,
+            AwtWin32GraphicsDevice::indexCMrgbID);
+        jintArray cacheArray = (jintArray)env->GetObjectField(colorModel,
+            AwtWin32GraphicsDevice::indexCMcacheID);
+        if (!rgbArray || !cacheArray) {
+            JNU_ThrowInternalError(env,
+                "rgb or lookupcache array of IndexColorModel null");
+            return;
+        }
+        int rgbLength = env->GetArrayLength(rgbArray);
+        int cacheLength = env->GetArrayLength(cacheArray);
+        jint *cmEntries = (jint *)env->GetPrimitiveArrayCritical(rgbArray,
+            &isCopy);
+        jint *cache = (jint *)env->GetPrimitiveArrayCritical(cacheArray,
+            &isCopy);
+        if (!cmEntries || !cache) {
+            JNU_ThrowInternalError(env,
+                "Problem retrieving rgb or cache critical array");
+            return;
+        }
+        // Set the new rgb values
     int i;
     for (i = 0; i < rgbLength; ++i) {
-	    cmEntries[i] = newEntries[i];
-	}
-	// clear out the old cache
-	for (i = 0; i < cacheLength; ++i) {
-	    cache[i] = 0;
-	}
-	env->ReleasePrimitiveArrayCritical(cacheArray, cache, 0);
-	env->ReleasePrimitiveArrayCritical(rgbArray, cmEntries, 0);
+            cmEntries[i] = newEntries[i];
+        }
+        // clear out the old cache
+        for (i = 0; i < cacheLength; ++i) {
+            cache[i] = 0;
+        }
+        env->ReleasePrimitiveArrayCritical(cacheArray, cache, 0);
+        env->ReleasePrimitiveArrayCritical(rgbArray, cmEntries, 0);
 
-	// Call WToolkit::paletteChanged() method; this will invalidate
-	// the offscreen surfaces dependent on this dynamic colorModel
-	// to ensure that they get redrawn with the correct color indices
-	env->CallStaticVoidMethod(AwtWin32GraphicsDevice::wToolkitClass, 
-	    paletteChangedMID);
+        // Call WToolkit::paletteChanged() method; this will invalidate
+        // the offscreen surfaces dependent on this dynamic colorModel
+        // to ensure that they get redrawn with the correct color indices
+        env->CallStaticVoidMethod(AwtWin32GraphicsDevice::wToolkitClass,
+            paletteChangedMID);
     }
 }
 
-unsigned int *AwtWin32GraphicsDevice::GetSystemPaletteEntries() 
+unsigned int *AwtWin32GraphicsDevice::GetSystemPaletteEntries()
 {
     // REMIND: What to do if palette NULL?  Need to throw
     // some kind of exception?
     return palette->GetSystemEntries();
 }
 
-unsigned char *AwtWin32GraphicsDevice::GetSystemInverseLUT() 
+unsigned char *AwtWin32GraphicsDevice::GetSystemInverseLUT()
 {
     // REMIND: What to do if palette NULL?  Need to throw
     // some kind of exception?
@@ -536,28 +536,28 @@ unsigned char *AwtWin32GraphicsDevice::GetSystemInverseLUT()
 }
 
 
-BOOL AwtWin32GraphicsDevice::UpdateSystemPalette() 
+BOOL AwtWin32GraphicsDevice::UpdateSystemPalette()
 {
     if (colorData->bitsperpixel > 8) {
-	return FALSE;
+        return FALSE;
     } else {
-	return palette->Update();
+        return palette->Update();
     }
 }
 
-HPALETTE AwtWin32GraphicsDevice::SelectPalette(HDC hDC) 
+HPALETTE AwtWin32GraphicsDevice::SelectPalette(HDC hDC)
 {
     if (palette) {
-	return palette->Select(hDC);
+        return palette->Select(hDC);
     } else {
-	return NULL;
+        return NULL;
     }
 }
 
-void AwtWin32GraphicsDevice::RealizePalette(HDC hDC) 
+void AwtWin32GraphicsDevice::RealizePalette(HDC hDC)
 {
     if (palette) {
-	palette->Realize(hDC);
+        palette->Realize(hDC);
     }
 }
 
@@ -565,7 +565,7 @@ void AwtWin32GraphicsDevice::RealizePalette(HDC hDC)
  * Deterine which device the HWND exists on and return the
  * appropriate index into the devices array.
  */
-int AwtWin32GraphicsDevice::DeviceIndexForWindow(HWND hWnd) 
+int AwtWin32GraphicsDevice::DeviceIndexForWindow(HWND hWnd)
 {
     MHND mon = MonitorFromWindow(hWnd, MONITOR_DEFAULT_TO_NEAR);
     int screen = AwtWin32GraphicsDevice::GetScreenFromMHND(mon);
@@ -575,12 +575,12 @@ int AwtWin32GraphicsDevice::DeviceIndexForWindow(HWND hWnd)
 /**
  * Get the HPALETTE associated with this device
  */
-HPALETTE AwtWin32GraphicsDevice::GetPalette() 
+HPALETTE AwtWin32GraphicsDevice::GetPalette()
 {
     if (palette) {
-	return palette->GetPalette();
-    } else { 
-	return NULL;
+        return palette->GetPalette();
+    } else {
+        return NULL;
     }
 }
 
@@ -589,7 +589,7 @@ HPALETTE AwtWin32GraphicsDevice::GetPalette()
  * This allows the array holding all devices to be released (once
  * all references to the array have gone away).
  */
-void AwtWin32GraphicsDevice::Release() 
+void AwtWin32GraphicsDevice::Release()
 {
     devicesArray->Release();
 }
@@ -627,7 +627,7 @@ void AwtWin32GraphicsDevice::DisableOffscreenAcceleration()
 
 /**
  * Invalidates the GraphicsDevice object associated with this
- * device by disabling offscreen acceleration and calling 
+ * device by disabling offscreen acceleration and calling
  * invalidate(defIndex) on the java object.
  */
 void AwtWin32GraphicsDevice::Invalidate(JNIEnv *env)
@@ -652,7 +652,7 @@ void AwtWin32GraphicsDevice::Invalidate(JNIEnv *env)
 
 
 jobject AwtWin32GraphicsDevice::GetColorModel(JNIEnv *env, jboolean dynamic,
-					      int deviceIndex)
+                                              int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->GetColorModel(env, dynamic);
@@ -674,7 +674,7 @@ void AwtWin32GraphicsDevice::ResetAllMonitorInfo()
     int devicesNum = devices->GetNumDevices();
     for (int deviceIndex = 0; deviceIndex < devicesNum; deviceIndex++) {
         MHND monitor = devices->GetDevice(deviceIndex)->GetMonitor();
-        ::GetMonitorInfo(monitor, 
+        ::GetMonitorInfo(monitor,
                          devices->GetDevice(deviceIndex)->pMonitorInfo);
     }
 }
@@ -707,7 +707,7 @@ DxCapabilities *AwtWin32GraphicsDevice::GetDxCapsForDevice(MHND hMonitor)
             if (devices->GetDevice(i)->GetMonitor() == hMonitor) {
                 return devices->GetDevice(i)->GetDxCaps();
             }
-	}
+        }
     }
     return (DxCapabilities*)NULL;
 }
@@ -718,37 +718,37 @@ MHND AwtWin32GraphicsDevice::GetMonitor(int deviceIndex)
     return devices->GetDevice(deviceIndex)->GetMonitor();
 }
 
-HPALETTE AwtWin32GraphicsDevice::GetPalette(int deviceIndex) 
+HPALETTE AwtWin32GraphicsDevice::GetPalette(int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->GetPalette();
 }
 
-void AwtWin32GraphicsDevice::UpdateDynamicColorModel(int deviceIndex) 
+void AwtWin32GraphicsDevice::UpdateDynamicColorModel(int deviceIndex)
 {
     Devices::InstanceAccess devices;
     devices->GetDevice(deviceIndex)->UpdateDynamicColorModel();
 }
 
-BOOL AwtWin32GraphicsDevice::UpdateSystemPalette(int deviceIndex) 
+BOOL AwtWin32GraphicsDevice::UpdateSystemPalette(int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->UpdateSystemPalette();
 }
 
-HPALETTE AwtWin32GraphicsDevice::SelectPalette(HDC hDC, int deviceIndex) 
+HPALETTE AwtWin32GraphicsDevice::SelectPalette(HDC hDC, int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->SelectPalette(hDC);
 }
 
-void AwtWin32GraphicsDevice::RealizePalette(HDC hDC, int deviceIndex) 
+void AwtWin32GraphicsDevice::RealizePalette(HDC hDC, int deviceIndex)
 {
     Devices::InstanceAccess devices;
     devices->GetDevice(deviceIndex)->RealizePalette(hDC);
 }
 
-ColorData *AwtWin32GraphicsDevice::GetColorData(int deviceIndex) 
+ColorData *AwtWin32GraphicsDevice::GetColorData(int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->GetColorData();
@@ -757,14 +757,14 @@ ColorData *AwtWin32GraphicsDevice::GetColorData(int deviceIndex)
 /**
  * Return the grayscale value for the indicated device.
  */
-int AwtWin32GraphicsDevice::GetGrayness(int deviceIndex) 
+int AwtWin32GraphicsDevice::GetGrayness(int deviceIndex)
 {
     Devices::InstanceAccess devices;
     return devices->GetDevice(deviceIndex)->GetGrayness();
 }
 
 HDC AwtWin32GraphicsDevice::GetDCFromScreen(int screen) {
-    J2dTraceLn1(J2D_TRACE_INFO, 
+    J2dTraceLn1(J2D_TRACE_INFO,
                 "AwtWin32GraphicsDevice::GetDCFromScreen screen=%d", screen);
     Devices::InstanceAccess devices;
     AwtWin32GraphicsDevice *dev = devices->GetDevice(screen);
@@ -775,14 +775,14 @@ HDC AwtWin32GraphicsDevice::GetDCFromScreen(int screen) {
  * If equal, return TRUE
  */
 BOOL AwtWin32GraphicsDevice::AreSameMonitors(MHND mon1, MHND mon2) {
-    J2dTraceLn2(J2D_TRACE_INFO, 
+    J2dTraceLn2(J2D_TRACE_INFO,
                 "AwtWin32GraphicsDevice::AreSameMonitors mhnd1=%x mhnd2=%x",
                 mon1, mon2);
     DASSERT(mon1 != NULL);
     DASSERT(mon2 != NULL);
 
-    MONITOR_INFO mi1; 
-    MONITOR_INFO mi2; 
+    MONITOR_INFO mi1;
+    MONITOR_INFO mi2;
 
     memset((void*)(&mi1),0,sizeof(MONITOR_INFO));
     mi1.dwSize = sizeof(MONITOR_INFO);
@@ -805,7 +805,7 @@ BOOL AwtWin32GraphicsDevice::AreSameMonitors(MHND mon1, MHND mon2) {
 }
 
 int AwtWin32GraphicsDevice::GetScreenFromMHND(MHND mon) {
-    J2dTraceLn1(J2D_TRACE_INFO, 
+    J2dTraceLn1(J2D_TRACE_INFO,
                 "AwtWin32GraphicsDevice::GetScreenFromMHND mhnd=%x", mon);
 
     DASSERT(mon != NULL);
@@ -839,33 +839,33 @@ int AwtWin32GraphicsDevice::GetScreenFromMHND(MHND mon) {
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_sun_awt_Win32GraphicsDevice_initIDs(JNIEnv *env, jclass cls) 
+Java_sun_awt_Win32GraphicsDevice_initIDs(JNIEnv *env, jclass cls)
 {
     TRY;
 
     /* class ids */
-    AwtWin32GraphicsDevice::indexCMClass = 
-	(jclass)env->NewGlobalRef(env->FindClass("java/awt/image/IndexColorModel"));
-    AwtWin32GraphicsDevice::wToolkitClass = 
-	(jclass)env->NewGlobalRef(env->FindClass("sun/awt/windows/WToolkit"));
+    AwtWin32GraphicsDevice::indexCMClass =
+        (jclass)env->NewGlobalRef(env->FindClass("java/awt/image/IndexColorModel"));
+    AwtWin32GraphicsDevice::wToolkitClass =
+        (jclass)env->NewGlobalRef(env->FindClass("sun/awt/windows/WToolkit"));
 
     DASSERT(AwtWin32GraphicsDevice::indexCMClass);
     DASSERT(AwtWin32GraphicsDevice::wToolkitClass);
 
     /* field ids */
-    AwtWin32GraphicsDevice::dynamicColorModelID = env->GetFieldID(cls, 
-	"dynamicColorModel", "Ljava/awt/image/ColorModel;");
-    AwtWin32GraphicsDevice::indexCMrgbID = 
-	env->GetFieldID(AwtWin32GraphicsDevice::indexCMClass, "rgb", "[I");
-    AwtWin32GraphicsDevice::indexCMcacheID = 
-	env->GetFieldID(AwtWin32GraphicsDevice::indexCMClass, 
-	"lookupcache", "[I");
-    AwtWin32GraphicsDevice::accelerationEnabledID = 
-	env->GetFieldID(cls, "offscreenAccelerationEnabled", "Z");
+    AwtWin32GraphicsDevice::dynamicColorModelID = env->GetFieldID(cls,
+        "dynamicColorModel", "Ljava/awt/image/ColorModel;");
+    AwtWin32GraphicsDevice::indexCMrgbID =
+        env->GetFieldID(AwtWin32GraphicsDevice::indexCMClass, "rgb", "[I");
+    AwtWin32GraphicsDevice::indexCMcacheID =
+        env->GetFieldID(AwtWin32GraphicsDevice::indexCMClass,
+        "lookupcache", "[I");
+    AwtWin32GraphicsDevice::accelerationEnabledID =
+        env->GetFieldID(cls, "offscreenAccelerationEnabled", "Z");
 
     /* method ids */
     AwtWin32GraphicsDevice::paletteChangedMID = env->GetStaticMethodID(
-	AwtWin32GraphicsDevice::wToolkitClass, "paletteChanged", "()V");
+        AwtWin32GraphicsDevice::wToolkitClass, "paletteChanged", "()V");
 
 
     DASSERT(AwtWin32GraphicsDevice::dynamicColorModelID);
@@ -892,7 +892,7 @@ Java_sun_awt_Win32GraphicsDevice_initIDs(JNIEnv *env, jclass cls)
 
 JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getMaxConfigsImpl
     (JNIEnv* jniEnv, jobject theThis, jint screen) {
-	TRY;
+        TRY;
     HDC hDC = AwtWin32GraphicsDevice::GetDCFromScreen(screen);
 
     PIXELFORMATDESCRIPTOR pfd;
@@ -908,7 +908,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getMaxConfigsImpl
         max = 1;
     }
     return (jint)max;
-	CATCH_BAD_ALLOC_RET(0);
+        CATCH_BAD_ALLOC_RET(0);
 }
 
 /*
@@ -919,14 +919,14 @@ JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getMaxConfigsImpl
 
 JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isPixFmtSupported
     (JNIEnv* env, jobject theThis, jint pixFmtID, jint screen) {
-	TRY;
+        TRY;
     jboolean suppColor = JNI_TRUE;
     HDC hDC = AwtWin32GraphicsDevice::GetDCFromScreen(screen);
 
     if (pixFmtID == 0) {
         return true;
     }
-    
+
     PIXELFORMATDESCRIPTOR pfd;
     int max = ::DescribePixelFormat(hDC, (int)pixFmtID,
         sizeof(PIXELFORMATDESCRIPTOR), &pfd);
@@ -937,7 +937,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isPixFmtSupported
        ((pfd.cColorBits == 8) && (pfd.iPixelType != PFD_TYPE_COLORINDEX))) {
         //Note: this still allows for PixelFormats with > 8 color bits
         //which use COLORINDEX instead of RGB.  This seems to work fine,
-        //although issues may crop up involving PFD_NEED_PALETTE, which 
+        //although issues may crop up involving PFD_NEED_PALETTE, which
         //is not currently taken into account.
         //If changes are made, they should also be reflected in
         //getDefaultPixID.
@@ -950,7 +950,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isPixFmtSupported
     }
     return (((pfd.dwFlags & REQUIRED_FLAGS) == REQUIRED_FLAGS) && suppColor) ?
      JNI_TRUE : JNI_FALSE;
-	CATCH_BAD_ALLOC_RET(FALSE);
+        CATCH_BAD_ALLOC_RET(FALSE);
 }
 
 /*
@@ -961,7 +961,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isPixFmtSupported
 
 JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getDefaultPixIDImpl
     (JNIEnv* env, jobject theThis, jint screen) {
-	TRY;
+        TRY;
     int pixFmtID = 0;
     HDC hDC = AwtWin32GraphicsDevice::GetDCFromScreen(screen);
 
@@ -975,7 +975,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getDefaultPixIDImpl
         0,0,0,0,0,       //cAccumBits, cAccumRedBits, green, blue, alpha
         0,0,0,0,0,0,0,0  //etc.
     };
-    
+
     //If 8-bit mode, must use Indexed mode
     if (8 == ::GetDeviceCaps(hDC, BITSPIXEL)) {
         pfd.iPixelType = PFD_TYPE_COLORINDEX;
@@ -999,10 +999,10 @@ JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getDefaultPixIDImpl
 
     VERIFY(::DeleteDC(hDC));
     hDC = NULL;
-    return (jint)pixFmtID; 
-	CATCH_BAD_ALLOC_RET(0);
+    return (jint)pixFmtID;
+        CATCH_BAD_ALLOC_RET(0);
 }
-  
+
 /*
  * Class:     sun_awt_Win32GraphicsDevice
  * Method:    enterFullScreenExclusive
@@ -1011,7 +1011,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_Win32GraphicsDevice_getDefaultPixIDImpl
 
 JNIEXPORT void JNICALL
 Java_sun_awt_Win32GraphicsDevice_enterFullScreenExclusive(
-        JNIEnv* env, jobject graphicsDevice, 
+        JNIEnv* env, jobject graphicsDevice,
         jboolean useDD, jint screen, jobject windowPeer) {
 
     TRY;
@@ -1032,28 +1032,28 @@ Java_sun_awt_Win32GraphicsDevice_enterFullScreenExclusive(
          */
         DWORD_PTR eventResult;
         LRESULT sendResult;
-        sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_ENTER_FULLSCREEN, 
-                                          (WPARAM)monitor, NULL, 
+        sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_ENTER_FULLSCREEN,
+                                          (WPARAM)monitor, NULL,
                                           SMTO_NORMAL, 1000, &eventResult);
         if (sendResult == 0) {
             // Not the end of the world, but we would like to know about
             // it and fix the problem/deadlock if one exists
             int error = GetLastError();
             if (error == 0) {
-                J2dTraceLn(J2D_TRACE_ERROR, 
+                J2dTraceLn(J2D_TRACE_ERROR,
                            "SendMessage(ENTER_FULLSCREEN) timed out");
             } else {
-                J2dTraceLn1(J2D_TRACE_ERROR, 
+                J2dTraceLn1(J2D_TRACE_ERROR,
                             "SendMessage(ENTER_FULLSCREEN) failed with error %d",
                             error);
             }
         }
     } else {
-        if (!::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, 
-                            SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOSIZE)) 
+        if (!::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0,
+                            SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOSIZE))
         {
-            J2dTraceLn1(J2D_TRACE_ERROR, 
-                        "Error %d setting topmost attribute to fs window", 
+            J2dTraceLn1(J2D_TRACE_ERROR,
+                        "Error %d setting topmost attribute to fs window",
                         ::GetLastError());
         }
     }
@@ -1069,7 +1069,7 @@ Java_sun_awt_Win32GraphicsDevice_enterFullScreenExclusive(
 
 JNIEXPORT void JNICALL
 Java_sun_awt_Win32GraphicsDevice_exitFullScreenExclusive(
-        JNIEnv* env, jobject graphicsDevice, 
+        JNIEnv* env, jobject graphicsDevice,
         jboolean useDD, jint screen, jobject windowPeer) {
 
     TRY;
@@ -1090,28 +1090,28 @@ Java_sun_awt_Win32GraphicsDevice_exitFullScreenExclusive(
          */
         DWORD_PTR eventResult;
         LRESULT sendResult;
-        sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_EXIT_FULLSCREEN, 
-                                          (WPARAM)monitor, NULL, 
+        sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_EXIT_FULLSCREEN,
+                                          (WPARAM)monitor, NULL,
                                           SMTO_NORMAL, 1000, &eventResult);
         if (sendResult == 0) {
             // Not the end of the world, but we would like to know about
             // it and fix the problem/deadlock if one exists
             int error = GetLastError();
             if (error == 0) {
-                J2dTraceLn(J2D_TRACE_ERROR, 
+                J2dTraceLn(J2D_TRACE_ERROR,
                            "SendMessage(EXIT_FULLSCREEN) timed out");
             } else {
-                J2dTraceLn1(J2D_TRACE_ERROR, 
+                J2dTraceLn1(J2D_TRACE_ERROR,
                             "SendMessage(EXIT_FULLSCREEN) failed with error %d",
                             error);
             }
         }
     } else {
-        if (!::SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, 
-                            SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOSIZE)) 
+        if (!::SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+                            SWP_NOMOVE|SWP_NOOWNERZORDER|SWP_NOSIZE))
         {
-            J2dTraceLn1(J2D_TRACE_ERROR, 
-                        "Error %d unsetting topmost attribute to fs window", 
+            J2dTraceLn1(J2D_TRACE_ERROR,
+                        "Error %d unsetting topmost attribute to fs window",
                         ::GetLastError());
         }
     }
@@ -1121,7 +1121,7 @@ Java_sun_awt_Win32GraphicsDevice_exitFullScreenExclusive(
 
 static jobject CreateDisplayMode(JNIEnv* env, jint width, jint height,
     jint bitDepth, jint refreshRate) {
-	
+
     TRY;
 
     jclass displayModeClass = env->FindClass("java/awt/DisplayMode");
@@ -1153,10 +1153,10 @@ static jobject CreateDisplayMode(JNIEnv* env, jint width, jint height,
  */
 JNIEXPORT jboolean JNICALL
 Java_sun_awt_Win32GraphicsDevice_isDDEnabledOnDeviceNative
-    (JNIEnv* env, jobject graphicsDevice, jint screen) 
+    (JNIEnv* env, jobject graphicsDevice, jint screen)
 {
     TRY;
-    
+
     HMONITOR monitor = (HMONITOR)AwtWin32GraphicsDevice::GetMonitor(screen);
     return DeviceUseDDraw(monitor);
 
@@ -1200,7 +1200,7 @@ GetAttachedDisplayDevice(int screen, _DISPLAY_DEVICE *lpDisplayDevice)
  * Method:    getCurrentDisplayMode
  * Signature: (IZ)Ljava/awt/DisplayMode;
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 Java_sun_awt_Win32GraphicsDevice_getCurrentDisplayMode
     (JNIEnv* env, jobject graphicsDevice, jint screen)
 {
@@ -1229,7 +1229,7 @@ Java_sun_awt_Win32GraphicsDevice_getCurrentDisplayMode
         if (GetAttachedDisplayDevice(screen, &displayDevice)) {
             pName = displayDevice.strDevName;
         }
-        if (!EnumDisplaySettings(pName, ENUM_CURRENT_SETTINGS, &dm)) 
+        if (!EnumDisplaySettings(pName, ENUM_CURRENT_SETTINGS, &dm))
         {
             return NULL;
         }
@@ -1246,7 +1246,7 @@ Java_sun_awt_Win32GraphicsDevice_getCurrentDisplayMode
  * Method:    configDisplayMode
  * Signature: (IIIIZ)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_Win32GraphicsDevice_configDisplayMode
     (JNIEnv* env, jobject graphicsDevice, jint screen, jobject windowPeer,
      jint width, jint height, jint bitDepth, jint refreshRate)
@@ -1255,55 +1255,55 @@ Java_sun_awt_Win32GraphicsDevice_configDisplayMode
 
     HMONITOR monitor = (HMONITOR)AwtWin32GraphicsDevice::GetMonitor(screen);
     if (DeviceUseDDraw(monitor)) {
-	PDATA pData;
+        PDATA pData;
 
-	JNI_CHECK_PEER_RETURN(windowPeer);
+        JNI_CHECK_PEER_RETURN(windowPeer);
 
-	AwtWindow * window = (AwtWindow * )pData; // safe cast; we are called
-	                                          // with the WWindowPeer object
-	HWND hWnd = window->GetHWnd();
+        AwtWindow * window = (AwtWindow * )pData; // safe cast; we are called
+                                                  // with the WWindowPeer object
+        HWND hWnd = window->GetHWnd();
 
-	DDrawDisplayMode *dm = new DDrawDisplayMode(width, height, bitDepth,
-						    refreshRate);
+        DDrawDisplayMode *dm = new DDrawDisplayMode(width, height, bitDepth,
+                                                    refreshRate);
 
-	/**
-	 * We call SendMessage with a timeout of 1000 ms because we would like
-	 * this call to be synchronous, but we want to avoid any possibility
-	 * of deadlocking here.
-	 * Also, note that we have to free the dm object in the message
-	 * processing code since we may return from the SendMessageTimeout
-	 * before that object has been used. 
-	 */
-	DWORD_PTR eventResult;
-	LRESULT sendResult;
-	sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_SET_DISPLAY_MODE, 
-					  (WPARAM)monitor, (LPARAM)dm, 
-					  SMTO_NORMAL, 1000, &eventResult);
-	if (sendResult == 0) {
-	    // Not the end of the world, but we would like to know about
-	    // it and fix the problem/deadlock if one exists
-	    int error = GetLastError();
-	    if (error == 0) {
-		J2dTraceLn(J2D_TRACE_ERROR, 
-			   "SendMessage(SET_DISPLAY_MODE) timed out");
-	    } else {
-		J2dTraceLn1(J2D_TRACE_ERROR, 
-			   "SendMessage(SET_DISPLAY_MODE) failed with error %d",
-			   error);
-	    }
-	} else {
-	    // see comment in awt_Window.cpp WmDDEnterFullScreenMode
-	    // Since the event to reshape the window will come to the owner
-	    // frame, we need to reshape the window by ourselves.
-	    // Note that we do not need to reshape it on the exit
-	    // from full screen mode, this is already handled in
-	    // GraphicsDevice.setFullScreenWindow .
-	    if (window->GetOwningFrameOrDialog() != NULL) {
-		RECT* r = new RECT;
-		::SetRect(r, 0, 0, width, height);
-		window->SendMessage(WM_AWT_RESHAPE_COMPONENT, 0, (LPARAM)r);
-	    }
-	}
+        /**
+         * We call SendMessage with a timeout of 1000 ms because we would like
+         * this call to be synchronous, but we want to avoid any possibility
+         * of deadlocking here.
+         * Also, note that we have to free the dm object in the message
+         * processing code since we may return from the SendMessageTimeout
+         * before that object has been used.
+         */
+        DWORD_PTR eventResult;
+        LRESULT sendResult;
+        sendResult = ::SendMessageTimeout(hWnd, WM_AWT_DD_SET_DISPLAY_MODE,
+                                          (WPARAM)monitor, (LPARAM)dm,
+                                          SMTO_NORMAL, 1000, &eventResult);
+        if (sendResult == 0) {
+            // Not the end of the world, but we would like to know about
+            // it and fix the problem/deadlock if one exists
+            int error = GetLastError();
+            if (error == 0) {
+                J2dTraceLn(J2D_TRACE_ERROR,
+                           "SendMessage(SET_DISPLAY_MODE) timed out");
+            } else {
+                J2dTraceLn1(J2D_TRACE_ERROR,
+                           "SendMessage(SET_DISPLAY_MODE) failed with error %d",
+                           error);
+            }
+        } else {
+            // see comment in awt_Window.cpp WmDDEnterFullScreenMode
+            // Since the event to reshape the window will come to the owner
+            // frame, we need to reshape the window by ourselves.
+            // Note that we do not need to reshape it on the exit
+            // from full screen mode, this is already handled in
+            // GraphicsDevice.setFullScreenWindow .
+            if (window->GetOwningFrameOrDialog() != NULL) {
+                RECT* r = new RECT;
+                ::SetRect(r, 0, 0, width, height);
+                window->SendMessage(WM_AWT_RESHAPE_COMPONENT, 0, (LPARAM)r);
+            }
+        }
     } else {
         DEVMODE dm;
 
@@ -1321,7 +1321,7 @@ Java_sun_awt_Win32GraphicsDevice_configDisplayMode
         // so it'd be nice not to break it if we can help it.
         if (screen == AwtWin32GraphicsDevice::GetDefaultDeviceIndex()) {
             if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) !=
-                DISP_CHANGE_SUCCESSFUL) 
+                DISP_CHANGE_SUCCESSFUL)
             {
                 JNU_ThrowInternalError(env,
                                        "Could not set display mode");
@@ -1405,7 +1405,7 @@ static void enumDMCallback(DDrawDisplayMode& dm, void* pContext) {
  * Signature: (Ljava/util/ArrayList;Z)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_Win32GraphicsDevice_enumDisplayModes
-    (JNIEnv* env, jobject graphicsDevice, jint screen, jobject arrayList) 
+    (JNIEnv* env, jobject graphicsDevice, jint screen, jobject arrayList)
 {
 
     TRY;
@@ -1466,9 +1466,9 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isDisplayModeAvailab
     HMONITOR monitor = (HMONITOR)AwtWin32GraphicsDevice::GetMonitor(screen);
 
     if (!DDEnumDisplayModes(monitor, &dm, checkDMCallback, &isCalled)) {
-	    JNU_ThrowInternalError(env,
-		    "Could not get display modes");
-	    return JNI_FALSE;
+            JNU_ThrowInternalError(env,
+                    "Could not get display modes");
+            return JNI_FALSE;
     }
 
     return isCalled;
@@ -1483,7 +1483,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_Win32GraphicsDevice_isDisplayModeAvailab
  */
 
 JNIEXPORT jobject JNICALL
-    Java_sun_awt_Win32GraphicsDevice_makeColorModel 
+    Java_sun_awt_Win32GraphicsDevice_makeColorModel
     (JNIEnv *env, jobject thisPtr, jint screen, jboolean dynamic)
 {
     Devices::InstanceAccess devices;
@@ -1496,7 +1496,7 @@ JNIEXPORT jobject JNICALL
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL
-    Java_sun_awt_Win32GraphicsDevice_initDevice 
+    Java_sun_awt_Win32GraphicsDevice_initDevice
     (JNIEnv *env, jobject thisPtr, jint screen)
 {
     Devices::InstanceAccess devices;
@@ -1516,4 +1516,3 @@ JNIEXPORT jint JNICALL
     return DDGetAvailableMemory(
         (HMONITOR)devices->GetDevice(screen)->GetMonitor());
 }
-

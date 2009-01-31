@@ -30,12 +30,12 @@ import com.sun.jndi.ldap.Ber;
 import com.sun.jndi.ldap.BerDecoder;
 
 /**
- * Indicates the end of a batch of search results. 
+ * Indicates the end of a batch of search results.
  * Contains an estimate of the total number of entries in the result set
- * and an opaque cookie. The cookie must be supplied to the next search 
+ * and an opaque cookie. The cookie must be supplied to the next search
  * operation in order to get the next batch of results.
  * <p>
- * The code sample in {@link PagedResultsControl} shows how this class may 
+ * The code sample in {@link PagedResultsControl} shows how this class may
  * be used.
  * <p>
  * This class implements the LDAPv3 Response Control for
@@ -68,14 +68,14 @@ final public class PagedResultsResponseControl extends BasicControl {
 
     private static final long serialVersionUID = -8819778744844514666L;
 
-    /** 
+    /**
      * An estimate of the number of entries in the search result.
      *
      * @serial
      */
     private int resultSize;
 
-    /** 
+    /**
      * A server-generated cookie.
      *
      * @serial
@@ -103,7 +103,7 @@ final public class PagedResultsResponseControl extends BasicControl {
 
         ber.parseSeq(null);
         resultSize = ber.parseInt();
-	cookie = ber.parseOctetString(Ber.ASN_OCTET_STR, null);
+        cookie = ber.parseOctetString(Ber.ASN_OCTET_STR, null);
     }
 
     /**
@@ -120,14 +120,14 @@ final public class PagedResultsResponseControl extends BasicControl {
      * no more entries for the server to return.
      *
      * @return A possibly null server-generated cookie. It is not cloned - any
-     *         changes to the cookie will update the control's state and thus 
+     *         changes to the cookie will update the control's state and thus
      *         are not recommended.
      */
     public byte[] getCookie() {
-	if (cookie.length == 0) {
-	    return null;
-	} else {
+        if (cookie.length == 0) {
+            return null;
+        } else {
             return cookie;
-	}
+        }
     }
 }

@@ -31,7 +31,6 @@ import sun.nio.cs.KOI8_R;
  * Tables and data to convert Unicode to KOI8_R
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteKOI8_R extends CharToByteSingleByte {

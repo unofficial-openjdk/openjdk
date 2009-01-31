@@ -25,33 +25,33 @@ import javax.net.ssl.*;
 
 class ServerHandler extends Handler
 {
-    private boolean	needClientAuth;
+    private boolean     needClientAuth;
 
-    static private int	threadCounter = 0;
+    static private int  threadCounter = 0;
 
     private static synchronized int getCounter ()
-	{ return ++threadCounter; }
+        { return ++threadCounter; }
 
     ServerHandler (SSLSocket sock)
     {
-	super ("ServerHandler-" + getCounter ());
-	s = sock;
-	roleIsClient = false;
+        super ("ServerHandler-" + getCounter ());
+        s = sock;
+        roleIsClient = false;
     }
 
     public void setNeedClientAuth (boolean flag)
     {
-	needClientAuth = flag;
+        needClientAuth = flag;
 
-	    // XXX use it in handshake completed event code
+            // XXX use it in handshake completed event code
     }
 
 
     public void setReverseRole (boolean flag)
     {
-	if (flag)
-	    roleIsClient = true;
-	else
-	    roleIsClient = false;
+        if (flag)
+            roleIsClient = true;
+        else
+            roleIsClient = false;
     }
 }

@@ -50,7 +50,7 @@ public interface MWMConstants {
     static final int MWM_DECOR_MENU     =       (1  << 4);
     static final int MWM_DECOR_MINIMIZE=        (1  << 5);
     static final int MWM_DECOR_MAXIMIZE=        (1  << 6);
-    
+
     // Input modes
     static final int MWM_INPUT_MODELESS                 =0;
     static final int MWM_INPUT_PRIMARY_APPLICATION_MODAL=1;
@@ -61,8 +61,7 @@ public interface MWMConstants {
     static final int PROP_MWM_HINTS_ELEMENTS          = 5;
 /* number of elements of size 32 in _MWM_INFO */
     final static int PROP_MOTIF_WM_INFO_ELEMENTS=       2;
-    final static int PROP_MWM_INFO_ELEMENTS=            PROP_MOTIF_WM_INFO_ELEMENTS;   
+    final static int PROP_MWM_INFO_ELEMENTS=            PROP_MOTIF_WM_INFO_ELEMENTS;
 
     static final String MWM_HINTS_ATOM_NAME = "_MOTIF_WM_HINTS";
 }
-

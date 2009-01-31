@@ -42,12 +42,12 @@
 #define EXTRA_3(FUNC, ANYTYPE, NCHAN, DO_PIX)
 #define EXTRA_4(FUNC, ANYTYPE, NCHAN, DO_PIX)                                \
     if ((((jint)pPix | scan) & 3) == 0) {                                    \
-	mlib_s32 s_pixel = pixel, r_pixel;                                   \
-	*(mlib_f32*)&r_pixel = vis_ldfa_ASI_PL(&s_pixel);                    \
-	ADD_SUFF(AnyInt##FUNC)(pRasInfo, x1, y1, r_pixel, steps, error,      \
-			       bumpmajormask, errmajor, bumpminormask,       \
-			       errminor, pPrim, pCompInfo);                  \
-	return;                                                              \
+        mlib_s32 s_pixel = pixel, r_pixel;                                   \
+        *(mlib_f32*)&r_pixel = vis_ldfa_ASI_PL(&s_pixel);                    \
+        ADD_SUFF(AnyInt##FUNC)(pRasInfo, x1, y1, r_pixel, steps, error,      \
+                               bumpmajormask, errmajor, bumpminormask,       \
+                               errminor, pPrim, pCompInfo);                  \
+        return;                                                              \
     }
 
 /***************************************************************/
@@ -59,17 +59,17 @@
 
 #define DEFINE_SET_LINE(FUNC, ANYTYPE, NCHAN, DO_PIX)                  \
 void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,            \
-			     jint x1,                                  \
-			     jint y1,                                  \
-			     jint pixel,                               \
-			     jint steps,                               \
-			     jint error,                               \
-			     jint bumpmajormask,                       \
-			     jint errmajor,                            \
-			     jint bumpminormask,                       \
-			     jint errminor,                            \
-			     NativePrimitive * pPrim,                  \
-			     CompositeInfo * pCompInfo)                \
+                             jint x1,                                  \
+                             jint y1,                                  \
+                             jint pixel,                               \
+                             jint steps,                               \
+                             jint error,                               \
+                             jint bumpmajormask,                       \
+                             jint errmajor,                            \
+                             jint bumpminormask,                       \
+                             jint errminor,                            \
+                             NativePrimitive * pPrim,                  \
+                             CompositeInfo * pCompInfo)                \
 {                                                                      \
     ANYTYPE##DataType *pPix = (void *)(pRasInfo->rasBase);             \
     mlib_s32 scan = pRasInfo->scanStride;                              \
@@ -86,27 +86,27 @@ void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,            \
     if (bumpmajormask & 0x1) bumpmajor =  ANYTYPE##PixelStride; else   \
     if (bumpmajormask & 0x2) bumpmajor = -ANYTYPE##PixelStride; else   \
     if (bumpmajormask & 0x4) bumpmajor =  scan; else                   \
-	bumpmajor = - scan;                                            \
+        bumpmajor = - scan;                                            \
                                                                        \
     if (bumpminormask & 0x1) bumpminor =  ANYTYPE##PixelStride; else   \
     if (bumpminormask & 0x2) bumpminor = -ANYTYPE##PixelStride; else   \
     if (bumpminormask & 0x4) bumpminor =  scan; else                   \
     if (bumpminormask & 0x8) bumpminor = -scan; else                   \
-	bumpminor = 0;                                                 \
+        bumpminor = 0;                                                 \
                                                                        \
     if (errmajor == 0) {                                               \
-	do {                                                           \
-	    PROCESS_PIX_##NCHAN(DO_PIX);                               \
-	    PTR_ADD(pPix, bumpmajor);                                  \
-	} while (--steps > 0);                                         \
-	return;                                                        \
+        do {                                                           \
+            PROCESS_PIX_##NCHAN(DO_PIX);                               \
+            PTR_ADD(pPix, bumpmajor);                                  \
+        } while (--steps > 0);                                         \
+        return;                                                        \
     }                                                                  \
                                                                        \
     do {                                                               \
-	PROCESS_PIX_##NCHAN(DO_PIX);                                   \
-	mask = error >> 31;                                            \
-	PTR_ADD(pPix, bumpmajor + (bumpminor &~ mask));                \
-	error += errmajor - (errminor &~ mask);                        \
+        PROCESS_PIX_##NCHAN(DO_PIX);                                   \
+        mask = error >> 31;                                            \
+        PTR_ADD(pPix, bumpmajor + (bumpminor &~ mask));                \
+        error += errmajor - (errminor &~ mask);                        \
     } while (--steps > 0);                                             \
 }
 

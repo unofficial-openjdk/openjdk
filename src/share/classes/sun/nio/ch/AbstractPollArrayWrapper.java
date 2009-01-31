@@ -32,18 +32,17 @@ import sun.misc.*;
  * Manipulates a native array of pollfd structs.
  *
  * @author Mike McCloskey
- * @version %I%, %E%
  * @since 1.4
  */
 
 abstract class AbstractPollArrayWrapper {
- 
+
     // Event masks
     static final short POLLIN       = 0x0001;
-    static final short POLLOUT	    = 0x0004;
-    static final short POLLERR	    = 0x0008;
-    static final short POLLHUP	    = 0x0010;
-    static final short POLLNVAL	    = 0x0020;
+    static final short POLLOUT      = 0x0004;
+    static final short POLLERR      = 0x0008;
+    static final short POLLHUP      = 0x0010;
+    static final short POLLNVAL     = 0x0020;
     static final short POLLREMOVE   = 0x0800;
 
     // Miscellaneous constants

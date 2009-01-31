@@ -33,7 +33,7 @@
  * patents. This notice and attribution to IBM may not be removed.
  */
 
-/*  
+/*
 *
 ******************************************************************************
 *   file name:  ubidi.c
@@ -171,7 +171,7 @@ static const Flags flagO[2]={ DIRPROP_FLAG(LRO), DIRPROP_FLAG(RLO) };
 /* UBiDi object management -------------------------------------------------- */
 
 U_CAPI UBiDi * U_EXPORT2
-ubidi_open(void) 
+ubidi_open(void)
 {
     UErrorCode errorCode=U_ZERO_ERROR;
     return ubidi_openSized(0, 0, &errorCode);
@@ -332,9 +332,9 @@ ubidi_setPara(UBiDi *pBiDi, const UChar *text, int32_t length,
 
     if(length==-1) {
         // length=u_strlen(text);
-		const UChar *p = text - 1;
-		while(*++p);
-		length = p - text;
+                const UChar *p = text - 1;
+                while(*++p);
+                length = p - text;
     }
 
     /* initialize the UBiDi structure */
@@ -553,7 +553,7 @@ getDirProps(UBiDi *pBiDi, const UChar *text) {
             }
         }
     } else {
-	flags|=DIRPROP_FLAG_LR(pBiDi->paraLevel);
+        flags|=DIRPROP_FLAG_LR(pBiDi->paraLevel);
     }
 
     /* get the rest of the directional properties and the flags bits */
@@ -565,7 +565,7 @@ getDirProps(UBiDi *pBiDi, const UChar *text) {
         } else {
             /* a surrogate pair */
             dirProps[i++]=BN;   /* first surrogate in the pair gets the BN type */
-	    flags|=DIRPROP_FLAG(dirProps[i]=dirProp=u_surrogatePairDirection(uchar, text[i]))|DIRPROP_FLAG(BN);
+            flags|=DIRPROP_FLAG(dirProps[i]=dirProp=u_surrogatePairDirection(uchar, text[i]))|DIRPROP_FLAG(BN);
         }
         ++i;
     }
@@ -635,7 +635,7 @@ static UBiDiDirection
 resolveExplicitLevels(UBiDi *pBiDi) {
     const DirProp *dirProps=pBiDi->dirProps;
     UBiDiLevel *levels=pBiDi->levels;
-    
+
     int32_t i=0, length=pBiDi->length;
     Flags flags=pBiDi->flags;       /* collect all directionalities in the text */
     DirProp dirProp;
@@ -792,7 +792,7 @@ static UBiDiDirection
 checkExplicitLevels(UBiDi *pBiDi, UErrorCode *pErrorCode) {
     const DirProp *dirProps=pBiDi->dirProps;
     UBiDiLevel *levels=pBiDi->levels;
-    
+
     int32_t i, length=pBiDi->length;
     Flags flags=0;  /* collect all directionalities in the text */
     UBiDiLevel level, paraLevel=pBiDi->paraLevel;
@@ -800,7 +800,7 @@ checkExplicitLevels(UBiDi *pBiDi, UErrorCode *pErrorCode) {
     for(i=0; i<length; ++i) {
       // dlf: we special case levels array for java, 0 means base level, not actually 0
       if (levels[i] == 0) {
-	levels[i] = paraLevel;
+        levels[i] = paraLevel;
       }
         level=levels[i];
         if(level&UBIDI_LEVEL_OVERRIDE) {
@@ -1431,4 +1431,3 @@ resolveImplicitLevels(BiDi *pBiDi,
     /* perform (Nn) and (In) as usual */
 }
 #endif
-

@@ -40,7 +40,6 @@ import java.util.Enumeration;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Scott Violet
  */
 
@@ -75,24 +74,24 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @param nd a <code>NodeDimensions</code> object
      */
     public void setNodeDimensions(NodeDimensions nd) {
-	this.nodeDimensions = nd;
+        this.nodeDimensions = nd;
     }
 
     /**
-     * Returns the object that renders nodes in the tree, and which is 
+     * Returns the object that renders nodes in the tree, and which is
      * responsible for calculating the dimensions of individual nodes.
      *
      * @return the <code>NodeDimensions</code> object
      */
     public NodeDimensions getNodeDimensions() {
-	return nodeDimensions;
+        return nodeDimensions;
     }
 
     /**
      * Sets the <code>TreeModel</code> that will provide the data.
      *
      * @param newModel the <code>TreeModel</code> that is to
-     *		provide the data
+     *          provide the data
      */
     public void setModel(TreeModel newModel) {
         treeModel = newModel;
@@ -162,11 +161,11 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @param newLSM  the new <code>TreeSelectionModel</code>
      */
     public void setSelectionModel(TreeSelectionModel newLSM) {
-	if(treeSelectionModel != null)
-	    treeSelectionModel.setRowMapper(null);
-	treeSelectionModel = newLSM;
-	if(treeSelectionModel != null)
-	    treeSelectionModel.setRowMapper(this);
+        if(treeSelectionModel != null)
+            treeSelectionModel.setRowMapper(null);
+        treeSelectionModel = newLSM;
+        if(treeSelectionModel != null)
+            treeSelectionModel.setRowMapper(this);
     }
 
     /**
@@ -175,7 +174,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @return the <code>treeSelectionModel</code>
      */
     public TreeSelectionModel getSelectionModel() {
-	return treeSelectionModel;
+        return treeSelectionModel;
     }
 
     /**
@@ -184,17 +183,17 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @return the preferred height
      */
     public int getPreferredHeight() {
-	// Get the height
-	int           rowCount = getRowCount();
+        // Get the height
+        int           rowCount = getRowCount();
 
-	if(rowCount > 0) {
-	    Rectangle     bounds = getBounds(getPathForRow(rowCount - 1),
-					     null);
+        if(rowCount > 0) {
+            Rectangle     bounds = getBounds(getPathForRow(rowCount - 1),
+                                             null);
 
-	    if(bounds != null)
-		return bounds.y + bounds.height;
-	}
-	return 0;
+            if(bounds != null)
+                return bounds.y + bounds.height;
+        }
+        return 0;
     }
 
     /**
@@ -211,51 +210,51 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @return the preferred width for the passed in region
      */
     public int getPreferredWidth(Rectangle bounds) {
-	int           rowCount = getRowCount();
+        int           rowCount = getRowCount();
 
-	if(rowCount > 0) {
-	    // Get the width
-	    TreePath      firstPath;
-	    int           endY;
+        if(rowCount > 0) {
+            // Get the width
+            TreePath      firstPath;
+            int           endY;
 
-	    if(bounds == null) {
-		firstPath = getPathForRow(0);
-		endY = Integer.MAX_VALUE;
-	    }
-	    else {
-		firstPath = getPathClosestTo(bounds.x, bounds.y);
-		endY = bounds.height + bounds.y;
-	    }
+            if(bounds == null) {
+                firstPath = getPathForRow(0);
+                endY = Integer.MAX_VALUE;
+            }
+            else {
+                firstPath = getPathClosestTo(bounds.x, bounds.y);
+                endY = bounds.height + bounds.y;
+            }
 
-	    Enumeration   paths = getVisiblePathsFrom(firstPath);
+            Enumeration   paths = getVisiblePathsFrom(firstPath);
 
-	    if(paths != null && paths.hasMoreElements()) {
-		Rectangle   pBounds = getBounds((TreePath)paths.nextElement(),
-						null);
-		int         width;
+            if(paths != null && paths.hasMoreElements()) {
+                Rectangle   pBounds = getBounds((TreePath)paths.nextElement(),
+                                                null);
+                int         width;
 
-		if(pBounds != null) {
-		    width = pBounds.x + pBounds.width;
-		    if (pBounds.y >= endY) {
-			return width;
-		    }
-		}
-		else
-		    width = 0;
-		while (pBounds != null && paths.hasMoreElements()) {
-		    pBounds = getBounds((TreePath)paths.nextElement(),
-					pBounds);
-		    if (pBounds != null && pBounds.y < endY) {
-			width = Math.max(width, pBounds.x + pBounds.width);
-		    }
-		    else {
-			pBounds = null;
-		    }
-		}
-		return width;
-	    }
-	}
-	return 0;
+                if(pBounds != null) {
+                    width = pBounds.x + pBounds.width;
+                    if (pBounds.y >= endY) {
+                        return width;
+                    }
+                }
+                else
+                    width = 0;
+                while (pBounds != null && paths.hasMoreElements()) {
+                    pBounds = getBounds((TreePath)paths.nextElement(),
+                                        pBounds);
+                    if (pBounds != null && pBounds.y < endY) {
+                        width = Math.max(width, pBounds.x + pBounds.width);
+                    }
+                    else {
+                        pBounds = null;
+                    }
+                }
+                return width;
+            }
+        }
+        return 0;
     }
 
     //
@@ -272,7 +271,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
      *
      * @param path     a <code>TreePath</code> specifying a node
      * @param placeIn  a <code>Rectangle</code> object giving the
-     *		available space
+     *          available space
      * @return a <code>Rectangle</code> object specifying the space to be used
      */
     public abstract Rectangle getBounds(TreePath path, Rectangle placeIn);
@@ -293,7 +292,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
       *
       * @param path the <code>TreePath</code> being queried
       * @return the row where the last item in path is visible or -1
-      *		if any elements in path aren't currently visible
+      *         if any elements in path aren't currently visible
       */
     public abstract int getRowForPath(TreePath path);
 
@@ -312,8 +311,8 @@ public abstract class AbstractLayoutCache implements RowMapper {
     public abstract TreePath getPathClosestTo(int x, int y);
 
     /**
-     * Returns an <code>Enumerator</code> that increments over the visible 
-     * paths starting at the passed in location. The ordering of the 
+     * Returns an <code>Enumerator</code> that increments over the visible
+     * paths starting at the passed in location. The ordering of the
      * enumeration is based on how the paths are displayed.
      * The first element of the returned enumeration will be path,
      * unless it isn't visible,
@@ -326,7 +325,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
 
     /**
      * Returns the number of visible children for row.
-     * 
+     *
      * @param path  the path being queried
      * @return the number of visible children for the specified path
      */
@@ -337,7 +336,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * <code>isExpanded</code>.
      *
      * @param path  the path being expanded or collapsed
-     * @param isExpanded true if the path should be expanded, false otherwise 
+     * @param isExpanded true if the path should be expanded, false otherwise
      */
     public abstract void setExpandedState(TreePath path, boolean isExpanded);
 
@@ -351,7 +350,7 @@ public abstract class AbstractLayoutCache implements RowMapper {
 
     /**
      * Number of rows being displayed.
-     * 
+     *
      * @return the number of rows being displayed
      */
     public abstract int getRowCount();
@@ -446,20 +445,20 @@ public abstract class AbstractLayoutCache implements RowMapper {
      *
      * @param paths the array of <code>TreePath</code>s being queried
      * @return an array of the same length that is passed in containing
-     *		the rows that each corresponding where each
-     *		<code>TreePath</code> is displayed; if <code>paths</code>
-     *		is <code>null</code>, <code>null</code> is returned
+     *          the rows that each corresponding where each
+     *          <code>TreePath</code> is displayed; if <code>paths</code>
+     *          is <code>null</code>, <code>null</code> is returned
      */
     public int[] getRowsForPaths(TreePath[] paths) {
-	if(paths == null)
-	    return null;
+        if(paths == null)
+            return null;
 
-	int               numPaths = paths.length;
-	int[]             rows = new int[numPaths];
+        int               numPaths = paths.length;
+        int[]             rows = new int[numPaths];
 
-	for(int counter = 0; counter < numPaths; counter++)
-	    rows[counter] = getRowForPath(paths[counter]);
-	return rows;
+        for(int counter = 0; counter < numPaths; counter++)
+            rows[counter] = getRowForPath(paths[counter]);
+        return rows;
     }
 
     //
@@ -478,28 +477,28 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * @param value the <code>value</code> to be represented
      * @param row  row being queried
      * @param depth the depth of the row
-     * @param expanded true if row is expanded, false otherwise 
+     * @param expanded true if row is expanded, false otherwise
      * @param placeIn  a <code>Rectangle</code> containing the size needed
-     *		to represent <code>value</code>
+     *          to represent <code>value</code>
      * @return a <code>Rectangle</code> containing the node dimensions,
-     *		or <code>null</code> if node has no dimension
+     *          or <code>null</code> if node has no dimension
      */
     protected Rectangle getNodeDimensions(Object value, int row, int depth,
-					  boolean expanded,
-					  Rectangle placeIn) {
-	NodeDimensions            nd = getNodeDimensions();
+                                          boolean expanded,
+                                          Rectangle placeIn) {
+        NodeDimensions            nd = getNodeDimensions();
 
-	if(nd != null) {
-	    return nd.getNodeDimensions(value, row, depth, expanded, placeIn);
-	}
-	return null;
+        if(nd != null) {
+            return nd.getNodeDimensions(value, row, depth, expanded, placeIn);
+        }
+        return null;
     }
 
     /**
       * Returns true if the height of each row is a fixed size.
       */
     protected boolean isFixedRowHeight() {
-	return (rowHeight > 0);
+        return (rowHeight > 0);
     }
 
 
@@ -508,25 +507,25 @@ public abstract class AbstractLayoutCache implements RowMapper {
      * and x origin of a particular node.
      */
     static public abstract class NodeDimensions {
-	/**
-	 * Returns, by reference in bounds, the size and x origin to
-	 * place value at. The calling method is responsible for determining
-	 * the Y location. If bounds is <code>null</code>, a newly created
-	 * <code>Rectangle</code> should be returned,
+        /**
+         * Returns, by reference in bounds, the size and x origin to
+         * place value at. The calling method is responsible for determining
+         * the Y location. If bounds is <code>null</code>, a newly created
+         * <code>Rectangle</code> should be returned,
          * otherwise the value should be placed in bounds and returned.
          *
          * @param value the <code>value</code> to be represented
-    	 * @param row row being queried
-  	 * @param depth the depth of the row
-	 * @param expanded true if row is expanded, false otherwise
+         * @param row row being queried
+         * @param depth the depth of the row
+         * @param expanded true if row is expanded, false otherwise
          * @param bounds  a <code>Rectangle</code> containing the size needed
-         *		to represent <code>value</code>
-   	 * @return a <code>Rectangle</code> containing the node dimensions,
-	 * 		or <code>null</code> if node has no dimension
-	 */
-	public abstract Rectangle getNodeDimensions(Object value, int row,
-						    int depth,
-						    boolean expanded,
-						    Rectangle bounds);
+         *              to represent <code>value</code>
+         * @return a <code>Rectangle</code> containing the node dimensions,
+         *              or <code>null</code> if node has no dimension
+         */
+        public abstract Rectangle getNodeDimensions(Object value, int row,
+                                                    int depth,
+                                                    boolean expanded,
+                                                    Rectangle bounds);
     }
 }

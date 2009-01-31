@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management.monitor; 
+package javax.management.monitor;
 
 // jmx imports
 //
@@ -35,21 +35,21 @@ import javax.management.ObjectName;
  *
  * @since 1.5
  */
-public interface MonitorMBean { 
-    
+public interface MonitorMBean {
+
     /**
      * Starts the monitor.
      */
     public void start();
-    
+
     /**
      * Stops the monitor.
      */
     public void stop();
-    
+
     // GETTERS AND SETTERS
-    //-------------------- 
-    
+    //--------------------
+
     /**
      * Adds the specified object in the set of observed MBeans.
      *
@@ -58,7 +58,7 @@ public interface MonitorMBean {
      *
      */
     public void addObservedObject(ObjectName object) throws java.lang.IllegalArgumentException;
-    
+
     /**
      * Removes the specified object from the set of observed MBeans.
      *
@@ -66,7 +66,7 @@ public interface MonitorMBean {
      *
      */
     public void removeObservedObject(ObjectName object);
-    
+
     /**
      * Tests whether the specified object is in the set of observed MBeans.
      *
@@ -75,15 +75,15 @@ public interface MonitorMBean {
      *
      */
     public boolean containsObservedObject(ObjectName object);
-    
+
     /**
      * Returns an array containing the objects being observed.
      *
      * @return The objects being observed.
      *
      */
-    public ObjectName[] getObservedObjects();   
-    
+    public ObjectName[] getObservedObjects();
+
     /**
      * Gets the object name of the object being observed.
      *
@@ -95,7 +95,7 @@ public interface MonitorMBean {
      */
     @Deprecated
     public ObjectName getObservedObject();
-    
+
     /**
      * Sets the object to observe identified by its object name.
      *
@@ -107,7 +107,7 @@ public interface MonitorMBean {
      */
     @Deprecated
     public void setObservedObject(ObjectName object);
-    
+
     /**
      * Gets the attribute being observed.
      *
@@ -116,7 +116,7 @@ public interface MonitorMBean {
      * @see #setObservedAttribute
      */
     public String getObservedAttribute();
-    
+
     /**
      * Sets the attribute to observe.
      *
@@ -125,7 +125,7 @@ public interface MonitorMBean {
      * @see #getObservedAttribute
      */
     public void setObservedAttribute(String attribute);
-        
+
     /**
      * Gets the granularity period (in milliseconds).
      *
@@ -134,7 +134,7 @@ public interface MonitorMBean {
      * @see #setGranularityPeriod
      */
     public long getGranularityPeriod();
-    
+
     /**
      * Sets the granularity period (in milliseconds).
      *
@@ -145,7 +145,7 @@ public interface MonitorMBean {
      * @see #getGranularityPeriod
      */
     public void setGranularityPeriod(long period) throws java.lang.IllegalArgumentException;
-    
+
     /**
      * Tests if the monitor MBean is active.
      * A monitor MBean is marked active when the {@link #start start} method is called.

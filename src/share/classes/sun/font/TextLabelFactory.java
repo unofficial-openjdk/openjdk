@@ -23,7 +23,6 @@
  * have any questions.
  */
 /*
- * @(#)TextLabelFactory.java	1.6 00/10/09
  *
  * (C) Copyright IBM Corp. 1998-2003 All Rights Reserved
  */
@@ -67,9 +66,9 @@ public class TextLabelFactory {
    * entire text is left-to-right text.
    */
   public TextLabelFactory(FontRenderContext frc,
-			  char[] text,
-			  Bidi bidi,
-			  int flags) {
+                          char[] text,
+                          Bidi bidi,
+                          int flags) {
     this.frc = frc;
     this.text = text;
     this.bidi = bidi;
@@ -136,10 +135,10 @@ public class TextLabelFactory {
    * has the same bidi level for the current line.
    */
   public ExtendedTextLabel createExtended(Font font,
-					  CoreMetrics lm,
-					  Decoration decorator,
-					  int start,
-					  int limit) {
+                                          CoreMetrics lm,
+                                          Decoration decorator,
+                                          int start,
+                                          int limit) {
 
     if (start >= limit || start < lineStart || limit > lineLimit) {
       throw new IllegalArgumentException("bad start: " + start + " or limit: " + limit);
@@ -163,9 +162,9 @@ public class TextLabelFactory {
    * @param limit the limit of the subrange for which to create glyph array
    */
   public TextLabel createSimple(Font font,
-				CoreMetrics lm,
-				int start,
-				int limit) {
+                                CoreMetrics lm,
+                                int start,
+                                int limit) {
 
     if (start >= limit || start < lineStart || limit > lineLimit) {
       throw new IllegalArgumentException("bad start: " + start + " or limit: " + limit);

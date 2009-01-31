@@ -45,7 +45,7 @@ import sun.security.util.*;
 
       Key:  com.sun.net.ssl.internal.ssl.JSA_RSAPublicKey@1d8957f
       Validity: [From: Fri Mar 22 12:22:57 GMT 2002,
-		   To: Tue Mar 22 12:22:57 GMT 2022]
+                   To: Tue Mar 22 12:22:57 GMT 2022]
       Issuer: CN=CA, O=Sun, C=US
       SerialNumber: [  0  ]
 
@@ -75,10 +75,10 @@ import sun.security.util.*;
 
       Key:  com.sun.net.ssl.internal.ssl.JSA_RSAPublicKey@173831b
       Validity: [From: Fri Mar 22 12:22:57 GMT 2002,
-		   To: Tue Mar 22 12:22:57 GMT 2022]
+                   To: Tue Mar 22 12:22:57 GMT 2022]
       Issuer: CN=CA, O=Sun, C=US
       SerialNumber: [    01]
-    
+
     ]
       Algorithm: [SHA1withRSA]
       Signature:
@@ -90,7 +90,7 @@ import sun.security.util.*;
     0050: 4D D7 92 C4 CA C6 DC 59   CA A6 1B 6D FE 01 AC F4  M......Y...m....
     0060: 09 86 D8 A1 40 C4 C2 77   BF 53 21 9A 3B 43 2E 9A  ....@..w.S!.;C..
     0070: D4 0C BE 85 47 A5 02 35   7D EE 27 11 36 0E 80 14  ....G..5..'.6...
-    
+
     ]
  * </pre>
  *
@@ -106,7 +106,7 @@ import sun.security.util.*;
 
       Key:  com.sun.net.ssl.internal.ssl.JSA_RSAPublicKey@18e2b22
       Validity: [From: Fri Mar 22 12:22:57 GMT 2002,
-		   To: Tue Mar 22 12:22:57 GMT 2022]
+                   To: Tue Mar 22 12:22:57 GMT 2022]
       Issuer: CN=CA, O=Sun, C=US
       SerialNumber: [    02]
 
@@ -114,7 +114,7 @@ import sun.security.util.*;
     [1]: ObjectId: 2.5.29.17 Criticality=false
     SubjectAlternativeName [
     [DNSName: altfoo1.com, DNSName: altfoo2.com, IPAddress: 5.6.7.8]]
-    
+
     ]
       Algorithm: [SHA1withRSA]
       Signature:
@@ -174,65 +174,64 @@ public class TestHostnameChecker {
     private final static String PATH = System.getProperty("test.src", ".");
 
     public static void main(String[] args) throws Exception {
-	CertificateFactory cf = CertificateFactory.getInstance("X.509");
-	InputStream in = new FileInputStream(new File(PATH, "cert1.crt"));
-	X509Certificate cert1 = (X509Certificate)cf.generateCertificate(in);
-	in.close();
-	in = new FileInputStream(new File(PATH, "cert2.crt"));
-	X509Certificate cert2 = (X509Certificate)cf.generateCertificate(in);
-	in.close();
-	in = new FileInputStream(new File(PATH, "cert3.crt"));
-	X509Certificate cert3 = (X509Certificate)cf.generateCertificate(in);
-	in.close();
-	in = new FileInputStream(new File(PATH, "cert4.crt"));
-	X509Certificate cert4 = (X509Certificate)cf.generateCertificate(in);
-	in.close();
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        InputStream in = new FileInputStream(new File(PATH, "cert1.crt"));
+        X509Certificate cert1 = (X509Certificate)cf.generateCertificate(in);
+        in.close();
+        in = new FileInputStream(new File(PATH, "cert2.crt"));
+        X509Certificate cert2 = (X509Certificate)cf.generateCertificate(in);
+        in.close();
+        in = new FileInputStream(new File(PATH, "cert3.crt"));
+        X509Certificate cert3 = (X509Certificate)cf.generateCertificate(in);
+        in.close();
+        in = new FileInputStream(new File(PATH, "cert4.crt"));
+        X509Certificate cert4 = (X509Certificate)cf.generateCertificate(in);
+        in.close();
 
-	HostnameChecker checker = HostnameChecker.getInstance(
-					HostnameChecker.TYPE_TLS);
-	System.out.println("TLS tests.........");
-	System.out.println("==================");
-	check(checker, "foo1.com", cert1, true);
-	check(checker, "foo2.com", cert1, false);
-	check(checker, "1.2.3.4", cert2, false);
-	check(checker, "foo1.com", cert3, false);
-	check(checker, "foo2.com", cert3, false);
-	check(checker, "altfoo1.com", cert3, true);
-	check(checker, "altfoo2.com", cert3, true);
-	check(checker, "5.6.7.8", cert3, true);
-	check(checker, "foo.bar.com", cert4, true);
-	check(checker, "altfoo.bar.com", cert4, true);
+        HostnameChecker checker = HostnameChecker.getInstance(
+                                        HostnameChecker.TYPE_TLS);
+        System.out.println("TLS tests.........");
+        System.out.println("==================");
+        check(checker, "foo1.com", cert1, true);
+        check(checker, "foo2.com", cert1, false);
+        check(checker, "1.2.3.4", cert2, false);
+        check(checker, "foo1.com", cert3, false);
+        check(checker, "foo2.com", cert3, false);
+        check(checker, "altfoo1.com", cert3, true);
+        check(checker, "altfoo2.com", cert3, true);
+        check(checker, "5.6.7.8", cert3, true);
+        check(checker, "foo.bar.com", cert4, true);
+        check(checker, "altfoo.bar.com", cert4, true);
 
-	checker = HostnameChecker.getInstance(
-				HostnameChecker.TYPE_LDAP);
-	System.out.println();
-	System.out.println("LDAP tests.........");
-	System.out.println("==================");
-	check(checker, "foo1.com", cert1, true);
-	check(checker, "foo2.com", cert1, false);
-	check(checker, "foo1.com", cert3, false);
-	check(checker, "foo2.com", cert3, false);
-	check(checker, "altfoo1.com", cert3, true);
-	check(checker, "altfoo2.com", cert3, true);
-	check(checker, "5.6.7.8", cert3, true);
-	check(checker, "foo.bar.com", cert4, true);
-	check(checker, "altfoo.bar.com", cert4, false);
+        checker = HostnameChecker.getInstance(
+                                HostnameChecker.TYPE_LDAP);
+        System.out.println();
+        System.out.println("LDAP tests.........");
+        System.out.println("==================");
+        check(checker, "foo1.com", cert1, true);
+        check(checker, "foo2.com", cert1, false);
+        check(checker, "foo1.com", cert3, false);
+        check(checker, "foo2.com", cert3, false);
+        check(checker, "altfoo1.com", cert3, true);
+        check(checker, "altfoo2.com", cert3, true);
+        check(checker, "5.6.7.8", cert3, true);
+        check(checker, "foo.bar.com", cert4, true);
+        check(checker, "altfoo.bar.com", cert4, false);
     }
 
     private static void check(HostnameChecker checker, String name,
-		 X509Certificate cert, boolean expectedResult)
-		 throws Exception {
-	try {
-	    checker.match(name, cert);
-	    if (expectedResult == false) {
-		throw new Exception("Passed invalid test: " + name);
-	    }
-	} catch (CertificateException e) {
-	    if (expectedResult == true) {
-		throw e;
-	    }
-	}
-	System.out.println("OK: " + name);
+                 X509Certificate cert, boolean expectedResult)
+                 throws Exception {
+        try {
+            checker.match(name, cert);
+            if (expectedResult == false) {
+                throw new Exception("Passed invalid test: " + name);
+            }
+        } catch (CertificateException e) {
+            if (expectedResult == true) {
+                throw e;
+            }
+        }
+        System.out.println("OK: " + name);
     }
 }
-

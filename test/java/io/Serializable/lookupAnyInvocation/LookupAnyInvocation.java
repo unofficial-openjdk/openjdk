@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,8 +23,8 @@
 
 /* @test
  * @bug 4413615
- * @summary Verify that ObjectStreamClass.lookupAny() returns a non-null 
- *          descriptor for class which doesn't implement java.io.Serializable 
+ * @summary Verify that ObjectStreamClass.lookupAny() returns a non-null
+ *          descriptor for class which doesn't implement java.io.Serializable
  *          interface at all.
  */
 
@@ -41,5 +41,3 @@ public class LookupAnyInvocation {
         }
     }
 }
-
-

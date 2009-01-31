@@ -37,14 +37,13 @@ import javax.naming.*;
  * empty component at position 0).
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 class Resolver {
 
     private DnsClient dnsClient;
-    private int timeout;		// initial timeout on UDP queries in ms
-    private int retries;		// number of UDP retries
+    private int timeout;                // initial timeout on UDP queries in ms
+    private int retries;                // number of UDP retries
 
 
     /*
@@ -56,15 +55,15 @@ class Resolver {
      * and "retries" gives the number of retries per server.
      */
     Resolver(String[] servers, int timeout, int retries)
-	    throws NamingException {
-	this.timeout = timeout;
-	this.retries = retries;
-	dnsClient = new DnsClient(servers, timeout, retries);
+            throws NamingException {
+        this.timeout = timeout;
+        this.retries = retries;
+        dnsClient = new DnsClient(servers, timeout, retries);
     }
 
     public void close() {
-	dnsClient.close();
-	dnsClient = null;
+        dnsClient.close();
+        dnsClient = null;
     }
 
 
@@ -77,9 +76,9 @@ class Resolver {
      * If auth is true, only authoritative responses are accepted.
      */
     ResourceRecords query(DnsName fqdn, int rrclass, int rrtype,
-			  boolean recursion, boolean auth)
-	    throws NamingException {
-	return dnsClient.query(fqdn, rrclass, rrtype, recursion, auth);
+                          boolean recursion, boolean auth)
+            throws NamingException {
+        return dnsClient.query(fqdn, rrclass, rrtype, recursion, auth);
     }
 
     /*
@@ -88,15 +87,15 @@ class Resolver {
      * the name server (and also on the zone transfer, but it won't matter).
      */
     ResourceRecords queryZone(DnsName zone, int rrclass, boolean recursion)
-	    throws NamingException {
+            throws NamingException {
 
-	DnsClient cl =
-	    new DnsClient(findNameServers(zone, recursion), timeout, retries);
-	try {
-	    return cl.queryZone(zone, rrclass, recursion);
-	} finally {
-	    cl.close();
-	}
+        DnsClient cl =
+            new DnsClient(findNameServers(zone, recursion), timeout, retries);
+        try {
+            return cl.queryZone(zone, rrclass, recursion);
+        } finally {
+            cl.close();
+        }
     }
 
     /*
@@ -107,39 +106,39 @@ class Resolver {
      * If recursion is true, recursion is requested on any queries.
      */
     DnsName findZoneName(DnsName fqdn, int rrclass, boolean recursion)
-	    throws NamingException {
+            throws NamingException {
 
-	fqdn = (DnsName) fqdn.clone();
-	while (fqdn.size() > 1) {	// while below root
-	    ResourceRecords rrs = null;
-	    try {
-		rrs = query(fqdn, rrclass, ResourceRecord.TYPE_SOA,
-			    recursion, false);
-	    } catch (NameNotFoundException e) {
-		throw e;
-	    } catch (NamingException e) {
-		// Ignore error and keep searching up the tree.
-	    }
-	    if (rrs != null) {
-		if (rrs.answer.size() > 0) {	// found zone's SOA
-		    return fqdn;
-		}
-		// Look for an SOA record giving the zone's top node.
-		for (int i = 0; i < rrs.authority.size(); i++) {
-		    ResourceRecord rr = (ResourceRecord)
-			rrs.authority.elementAt(i);
-		    if (rr.getType() == ResourceRecord.TYPE_SOA) {
-			DnsName zone = rr.getName();
-			if (fqdn.endsWith(zone)) {
-			    return zone;
-			}
-		    }
-		}
-	    }
-	    fqdn.remove(fqdn.size() - 1);	// one step rootward
-	}
-	return fqdn;			// no SOA found below root, so
-					// return root
+        fqdn = (DnsName) fqdn.clone();
+        while (fqdn.size() > 1) {       // while below root
+            ResourceRecords rrs = null;
+            try {
+                rrs = query(fqdn, rrclass, ResourceRecord.TYPE_SOA,
+                            recursion, false);
+            } catch (NameNotFoundException e) {
+                throw e;
+            } catch (NamingException e) {
+                // Ignore error and keep searching up the tree.
+            }
+            if (rrs != null) {
+                if (rrs.answer.size() > 0) {    // found zone's SOA
+                    return fqdn;
+                }
+                // Look for an SOA record giving the zone's top node.
+                for (int i = 0; i < rrs.authority.size(); i++) {
+                    ResourceRecord rr = (ResourceRecord)
+                        rrs.authority.elementAt(i);
+                    if (rr.getType() == ResourceRecord.TYPE_SOA) {
+                        DnsName zone = rr.getName();
+                        if (fqdn.endsWith(zone)) {
+                            return zone;
+                        }
+                    }
+                }
+            }
+            fqdn.remove(fqdn.size() - 1);       // one step rootward
+        }
+        return fqdn;                    // no SOA found below root, so
+                                        // return root
     }
 
     /*
@@ -148,17 +147,17 @@ class Resolver {
      * If recursion is true, recursion is requested on the query.
      */
      ResourceRecord findSoa(DnsName zone, int rrclass, boolean recursion)
-	    throws NamingException {
+            throws NamingException {
 
-	ResourceRecords rrs = query(zone, rrclass, ResourceRecord.TYPE_SOA,
-				    recursion, false);
-	for (int i = 0; i < rrs.answer.size(); i++) {
-	    ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
-	    if (rr.getType() == ResourceRecord.TYPE_SOA) {
-		return rr;
-	    }
-	}
-	return null;
+        ResourceRecords rrs = query(zone, rrclass, ResourceRecord.TYPE_SOA,
+                                    recursion, false);
+        for (int i = 0; i < rrs.answer.size(); i++) {
+            ResourceRecord rr = (ResourceRecord) rrs.answer.elementAt(i);
+            if (rr.getType() == ResourceRecord.TYPE_SOA) {
+                return rr;
+            }
+        }
+        return null;
     }
 
     /*
@@ -167,27 +166,27 @@ class Resolver {
      * If recursion is true, recursion is requested on the query.
      */
     private String[] findNameServers(DnsName zone, boolean recursion)
-	    throws NamingException {
+            throws NamingException {
 
-	// %%% As an optimization, could look in authority section of
-	// findZoneName() response first.
-	ResourceRecords rrs =
-	    query(zone, ResourceRecord.CLASS_INTERNET, ResourceRecord.TYPE_NS,
-		  recursion, false);
-	String[] ns = new String[rrs.answer.size()];
-	for (int i = 0; i < ns.length; i++) {
-	    ResourceRecord rr = (ResourceRecord)
-		rrs.answer.elementAt(i);
-	    if (rr.getType() != ResourceRecord.TYPE_NS) {
-		throw new CommunicationException("Corrupted DNS message");
-	    }
-	    ns[i] = (String) rr.getRdata();
+        // %%% As an optimization, could look in authority section of
+        // findZoneName() response first.
+        ResourceRecords rrs =
+            query(zone, ResourceRecord.CLASS_INTERNET, ResourceRecord.TYPE_NS,
+                  recursion, false);
+        String[] ns = new String[rrs.answer.size()];
+        for (int i = 0; i < ns.length; i++) {
+            ResourceRecord rr = (ResourceRecord)
+                rrs.answer.elementAt(i);
+            if (rr.getType() != ResourceRecord.TYPE_NS) {
+                throw new CommunicationException("Corrupted DNS message");
+            }
+            ns[i] = (String) rr.getRdata();
 
-	    // Server name will be passed to InetAddress.getByName(), which
-	    // may not be able to handle a trailing dot.
-	    // assert ns[i].endsWith(".");
-	    ns[i] = ns[i].substring(0, ns[i].length() - 1);
-	}
-	return ns;
+            // Server name will be passed to InetAddress.getByName(), which
+            // may not be able to handle a trailing dot.
+            // assert ns[i].endsWith(".");
+            ns[i] = ns[i].substring(0, ns[i].length() - 1);
+        }
+        return ns;
     }
 }

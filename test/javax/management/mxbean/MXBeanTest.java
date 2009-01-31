@@ -71,122 +71,122 @@ import javax.management.remote.JMXServiceURL;
 
 public class MXBeanTest {
     public static void main(String[] args) throws Exception {
-	testInterface(MerlinMXBean.class, false);
+        testInterface(MerlinMXBean.class, false);
         testInterface(TigerMXBean.class, false);
-	testInterface(MerlinMXBean.class, true);
+        testInterface(MerlinMXBean.class, true);
         testInterface(TigerMXBean.class, true);
-	testExplicitMXBean();
-	testSubclassMXBean();
-	testIndirectMXBean();
+        testExplicitMXBean();
+        testSubclassMXBean();
+        testIndirectMXBean();
 
-	if (failures == 0)
-	    System.out.println("Test passed");
-	else {
-	    System.out.println("TEST FAILURES: " + failures);
-	    System.exit(1);
-	}
+        if (failures == 0)
+            System.out.println("Test passed");
+        else {
+            System.out.println("TEST FAILURES: " + failures);
+            System.exit(1);
+        }
     }
 
     private static int failures = 0;
 
     public static interface ExplicitMXBean {
-	public int[] getInts();
+        public int[] getInts();
     }
     public static class Explicit implements ExplicitMXBean {
-	public int[] getInts() {
-	    return new int[] {1, 2, 3};
-	}
+        public int[] getInts() {
+            return new int[] {1, 2, 3};
+        }
     }
     public static class Subclass
         extends StandardMBean
         implements ExplicitMXBean {
-	public Subclass() {
-	    super(ExplicitMXBean.class, true);
-	}
+        public Subclass() {
+            super(ExplicitMXBean.class, true);
+        }
 
-	public int[] getInts() {
-	    return new int[] {1, 2, 3};
-	}
+        public int[] getInts() {
+            return new int[] {1, 2, 3};
+        }
     }
     public static interface IndirectInterface extends ExplicitMXBean {}
     public static class Indirect implements IndirectInterface {
-	public int[] getInts() {
-	    return new int[] {1, 2, 3};
-	}
+        public int[] getInts() {
+            return new int[] {1, 2, 3};
+        }
     }
 
     private static void testExplicitMXBean() throws Exception {
-	System.out.println("Explicit MXBean test...");
-	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-	ObjectName on = new ObjectName("test:type=Explicit");
-	Explicit explicit = new Explicit();
-	mbs.registerMBean(explicit, on);
-	testMXBean(mbs, on);
+        System.out.println("Explicit MXBean test...");
+        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+        ObjectName on = new ObjectName("test:type=Explicit");
+        Explicit explicit = new Explicit();
+        mbs.registerMBean(explicit, on);
+        testMXBean(mbs, on);
     }
 
     private static void testSubclassMXBean() throws Exception {
-	System.out.println("Subclass MXBean test...");
-	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-	ObjectName on = new ObjectName("test:type=Subclass");
-	Subclass subclass = new Subclass();
-	mbs.registerMBean(subclass, on);
-	testMXBean(mbs, on);
+        System.out.println("Subclass MXBean test...");
+        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+        ObjectName on = new ObjectName("test:type=Subclass");
+        Subclass subclass = new Subclass();
+        mbs.registerMBean(subclass, on);
+        testMXBean(mbs, on);
     }
 
     private static void testIndirectMXBean() throws Exception {
-	System.out.println("Indirect MXBean test...");
-	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-	ObjectName on = new ObjectName("test:type=Indirect");
-	Indirect indirect = new Indirect();
-	mbs.registerMBean(indirect, on);
-	testMXBean(mbs, on);
+        System.out.println("Indirect MXBean test...");
+        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+        ObjectName on = new ObjectName("test:type=Indirect");
+        Indirect indirect = new Indirect();
+        mbs.registerMBean(indirect, on);
+        testMXBean(mbs, on);
     }
 
     private static void testMXBean(MBeanServer mbs, ObjectName on)
-	    throws Exception {
-	MBeanInfo mbi = mbs.getMBeanInfo(on);
-	MBeanAttributeInfo[] attrs = mbi.getAttributes();
-	int nattrs = attrs.length;
-	if (mbi.getAttributes().length != 1)
-	    failure("wrong number of attributes: " + attrs);
-	else {
-	    MBeanAttributeInfo mbai = attrs[0];
-	    if (mbai.getName().equals("Ints")
-		&& mbai.isReadable() && !mbai.isWritable()
-		&& mbai.getDescriptor().getFieldValue("openType")
-		    .equals(new ArrayType(SimpleType.INTEGER, true))
-		&& attrs[0].getType().equals("[I"))
-		success("MBeanAttributeInfo");
-	    else
-		failure("MBeanAttributeInfo: " + mbai);
-	}
+            throws Exception {
+        MBeanInfo mbi = mbs.getMBeanInfo(on);
+        MBeanAttributeInfo[] attrs = mbi.getAttributes();
+        int nattrs = attrs.length;
+        if (mbi.getAttributes().length != 1)
+            failure("wrong number of attributes: " + attrs);
+        else {
+            MBeanAttributeInfo mbai = attrs[0];
+            if (mbai.getName().equals("Ints")
+                && mbai.isReadable() && !mbai.isWritable()
+                && mbai.getDescriptor().getFieldValue("openType")
+                    .equals(new ArrayType(SimpleType.INTEGER, true))
+                && attrs[0].getType().equals("[I"))
+                success("MBeanAttributeInfo");
+            else
+                failure("MBeanAttributeInfo: " + mbai);
+        }
 
-	int[] ints = (int[]) mbs.getAttribute(on, "Ints");
-	if (equal(ints, new int[] {1, 2, 3}, null))
-	    success("getAttribute");
-	else
-	    failure("getAttribute: " + Arrays.toString(ints));
+        int[] ints = (int[]) mbs.getAttribute(on, "Ints");
+        if (equal(ints, new int[] {1, 2, 3}, null))
+            success("getAttribute");
+        else
+            failure("getAttribute: " + Arrays.toString(ints));
 
-	ExplicitMXBean proxy =
-	    JMX.newMXBeanProxy(mbs, on, ExplicitMXBean.class);
-	int[] pints = proxy.getInts();
-	if (equal(pints, new int[] {1, 2, 3}, null))
-	    success("getAttribute through proxy");
-	else
-	    failure("getAttribute through proxy: " + Arrays.toString(pints));
+        ExplicitMXBean proxy =
+            JMX.newMXBeanProxy(mbs, on, ExplicitMXBean.class);
+        int[] pints = proxy.getInts();
+        if (equal(pints, new int[] {1, 2, 3}, null))
+            success("getAttribute through proxy");
+        else
+            failure("getAttribute through proxy: " + Arrays.toString(pints));
     }
 
     private static class NamedMXBeans extends HashMap<ObjectName, Object> {
         private static final long serialVersionUID = 0;
-        
+
         NamedMXBeans(MBeanServerConnection mbsc) {
             this.mbsc = mbsc;
         }
-        
+
         MBeanServerConnection getMBeanServerConnection() {
             return mbsc;
         }
-        
+
         private final MBeanServerConnection mbsc;
     }
 
@@ -221,12 +221,12 @@ public class MXBeanTest {
        references are correctly converted to ObjectNames and back.
      */
     private static <T> void testInterface(Class<T> c, boolean nullTest)
-	    throws Exception {
+            throws Exception {
 
-	System.out.println("Testing " + c.getName() +
-			   (nullTest ? " for null values" : "") + "...");
+        System.out.println("Testing " + c.getName() +
+                           (nullTest ? " for null values" : "") + "...");
 
-	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
 
         JMXServiceURL url = new JMXServiceURL("rmi", null, 0);
         JMXConnectorServer cs =
@@ -237,14 +237,14 @@ public class MXBeanTest {
         MBeanServerConnection mbsc = cc.getMBeanServerConnection();
 
         NamedMXBeans namedMXBeans = new NamedMXBeans(mbsc);
-	InvocationHandler ih =
-	    nullTest ? new MXBeanNullImplInvocationHandler(c, namedMXBeans) :
-	    	       new MXBeanImplInvocationHandler(c, namedMXBeans);
-	T impl = c.cast(Proxy.newProxyInstance(c.getClassLoader(),
-					       new Class[] {c},
-					       ih));
-	ObjectName on = new ObjectName("test:type=" + c.getName());
-	mbs.registerMBean(impl, on);
+        InvocationHandler ih =
+            nullTest ? new MXBeanNullImplInvocationHandler(c, namedMXBeans) :
+                       new MXBeanImplInvocationHandler(c, namedMXBeans);
+        T impl = c.cast(Proxy.newProxyInstance(c.getClassLoader(),
+                                               new Class[] {c},
+                                               ih));
+        ObjectName on = new ObjectName("test:type=" + c.getName());
+        mbs.registerMBean(impl, on);
 
         System.out.println("Register any MXBeans...");
 
@@ -278,86 +278,86 @@ public class MXBeanTest {
                                           MBeanServerConnection mbsc,
                                           ObjectName on,
                                           NamedMXBeans namedMXBeans,
-					  boolean nullTest)
+                                          boolean nullTest)
             throws Exception {
 
-	System.out.println("Type check...");
+        System.out.println("Type check...");
 
-	MBeanInfo mbi = mbsc.getMBeanInfo(on);
-	MBeanAttributeInfo[] mbais = mbi.getAttributes();
-	for (int i = 0; i < mbais.length; i++) {
-	    MBeanAttributeInfo mbai = mbais[i];
-	    String name = mbai.getName();
-	    Field typeField = c.getField(name + "Type");
-	    OpenType typeValue = (OpenType) typeField.get(null);
+        MBeanInfo mbi = mbsc.getMBeanInfo(on);
+        MBeanAttributeInfo[] mbais = mbi.getAttributes();
+        for (int i = 0; i < mbais.length; i++) {
+            MBeanAttributeInfo mbai = mbais[i];
+            String name = mbai.getName();
+            Field typeField = c.getField(name + "Type");
+            OpenType typeValue = (OpenType) typeField.get(null);
             OpenType openType =
                 (OpenType) mbai.getDescriptor().getFieldValue("openType");
-	    if (typeValue.equals(openType))
-		success("attribute " + name);
-	    else {
-		final String msg =
-		    "Wrong type attribute " + name + ": " +
-		    openType + " should be " + typeValue;
-		failure(msg);
-	    }
-	}
+            if (typeValue.equals(openType))
+                success("attribute " + name);
+            else {
+                final String msg =
+                    "Wrong type attribute " + name + ": " +
+                    openType + " should be " + typeValue;
+                failure(msg);
+            }
+        }
 
-	MBeanOperationInfo[] mbois = mbi.getOperations();
-	for (int i = 0; i < mbois.length; i++) {
-	    MBeanOperationInfo mboi = mbois[i];
-	    String oname = mboi.getName();
-	    if (!oname.startsWith("op"))
-		throw new Error();
-	    OpenType retType =
+        MBeanOperationInfo[] mbois = mbi.getOperations();
+        for (int i = 0; i < mbois.length; i++) {
+            MBeanOperationInfo mboi = mbois[i];
+            String oname = mboi.getName();
+            if (!oname.startsWith("op"))
+                throw new Error();
+            OpenType retType =
                 (OpenType) mboi.getDescriptor().getFieldValue("openType");
-	    MBeanParameterInfo[] params = mboi.getSignature();
-	    MBeanParameterInfo p1i = params[0];
-	    MBeanParameterInfo p2i = params[1];
-	    OpenType p1Type =
+            MBeanParameterInfo[] params = mboi.getSignature();
+            MBeanParameterInfo p1i = params[0];
+            MBeanParameterInfo p2i = params[1];
+            OpenType p1Type =
                 (OpenType) p1i.getDescriptor().getFieldValue("openType");
-	    OpenType p2Type =
+            OpenType p2Type =
                 (OpenType) p2i.getDescriptor().getFieldValue("openType");
-	    if (!retType.equals(p1Type) || !p1Type.equals(p2Type)) {
-		final String msg =
-		    "Parameter and return open types should all be same " +
-		    "but are not: " + retType + " " + oname + "(" + p1Type +
-		    ", " + p2Type + ")";
-		failure(msg);
-		continue;
-	    }
-	    String name = oname.substring(2);
-	    Field typeField = c.getField(name + "Type");
-	    OpenType typeValue = (OpenType) typeField.get(null);
-	    if (typeValue.equals(retType))
-		success("operation " + oname);
-	    else {
-		final String msg =
-		    "Wrong type operation " + oname + ": " +
-		    retType + " should be " + typeValue;
-		failure(msg);
-	    }
-	}
+            if (!retType.equals(p1Type) || !p1Type.equals(p2Type)) {
+                final String msg =
+                    "Parameter and return open types should all be same " +
+                    "but are not: " + retType + " " + oname + "(" + p1Type +
+                    ", " + p2Type + ")";
+                failure(msg);
+                continue;
+            }
+            String name = oname.substring(2);
+            Field typeField = c.getField(name + "Type");
+            OpenType typeValue = (OpenType) typeField.get(null);
+            if (typeValue.equals(retType))
+                success("operation " + oname);
+            else {
+                final String msg =
+                    "Wrong type operation " + oname + ": " +
+                    retType + " should be " + typeValue;
+                failure(msg);
+            }
+        }
 
-        
-	System.out.println("Mapping check...");
 
-	Object proxy =
-	    JMX.newMXBeanProxy(mbsc, on, c);
+        System.out.println("Mapping check...");
 
-	Method[] methods = c.getMethods();
-	for (int i = 0; i < methods.length; i++) {
-	    final Method method = methods[i];
-	    if (method.getDeclaringClass() != c)
-		continue; // skip hashCode() etc inherited from Object
-	    final String mname = method.getName();
-	    final int what = getType(method);
-	    final String name = getName(method);
-	    final Field refField = c.getField(name);
-	    if (nullTest && refField.getType().isPrimitive())
-		continue;
-	    final Field openTypeField = c.getField(name + "Type");
-	    final OpenType openType = (OpenType) openTypeField.get(null);
-	    final Object refValue = nullTest ? null : refField.get(null);
+        Object proxy =
+            JMX.newMXBeanProxy(mbsc, on, c);
+
+        Method[] methods = c.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            final Method method = methods[i];
+            if (method.getDeclaringClass() != c)
+                continue; // skip hashCode() etc inherited from Object
+            final String mname = method.getName();
+            final int what = getType(method);
+            final String name = getName(method);
+            final Field refField = c.getField(name);
+            if (nullTest && refField.getType().isPrimitive())
+                continue;
+            final Field openTypeField = c.getField(name + "Type");
+            final OpenType openType = (OpenType) openTypeField.get(null);
+            final Object refValue = nullTest ? null : refField.get(null);
             Object setValue = refValue;
             try {
                 Field onField = c.getField(name + "ObjectName");
@@ -369,204 +369,204 @@ public class MXBeanTest {
             } catch (Exception e) {
                 // no xObjectName field, setValue == refValue
             }
-	    boolean ok = true;
-	    try {
-		switch (what) {
-		case GET:
-		    final Object gotOpen = mbsc.getAttribute(on, name);
-		    if (nullTest) {
-			if (gotOpen != null) {
-			    failure(mname + " got non-null value " +
-				    gotOpen);
-			    ok = false;
-			}
-		    } else if (!openType.isValue(gotOpen)) {
+            boolean ok = true;
+            try {
+                switch (what) {
+                case GET:
+                    final Object gotOpen = mbsc.getAttribute(on, name);
+                    if (nullTest) {
+                        if (gotOpen != null) {
+                            failure(mname + " got non-null value " +
+                                    gotOpen);
+                            ok = false;
+                        }
+                    } else if (!openType.isValue(gotOpen)) {
                         if (gotOpen instanceof TabularData) {
                             // detail the mismatch
                             TabularData gotTabular = (TabularData) gotOpen;
                             compareTabularType((TabularType) openType,
                                                gotTabular.getTabularType());
                         }
-			failure(mname + " got open data " + gotOpen +
-				" not valid for open type " + openType);
-			ok = false;
-		    }
-		    final Object got = method.invoke(proxy, (Object[]) null);
-		    if (!equal(refValue, got, namedMXBeans)) {
-			failure(mname + " got " + string(got) +
-				", should be " + string(refValue));
-			ok = false;
-		    }
-		    break;
+                        failure(mname + " got open data " + gotOpen +
+                                " not valid for open type " + openType);
+                        ok = false;
+                    }
+                    final Object got = method.invoke(proxy, (Object[]) null);
+                    if (!equal(refValue, got, namedMXBeans)) {
+                        failure(mname + " got " + string(got) +
+                                ", should be " + string(refValue));
+                        ok = false;
+                    }
+                    break;
 
-		case SET:
-		    method.invoke(proxy, new Object[] {setValue});
-		    break;
+                case SET:
+                    method.invoke(proxy, new Object[] {setValue});
+                    break;
 
-		case OP:
-		    final Object opped =
-			method.invoke(proxy, new Object[] {setValue, setValue});
-		    if (!equal(refValue, opped, namedMXBeans)) {
-			failure(
-				mname + " got " + string(opped) +
-				", should be " + string(refValue)
-				);
-			ok = false;
-		    }
-		    break;
+                case OP:
+                    final Object opped =
+                        method.invoke(proxy, new Object[] {setValue, setValue});
+                    if (!equal(refValue, opped, namedMXBeans)) {
+                        failure(
+                                mname + " got " + string(opped) +
+                                ", should be " + string(refValue)
+                                );
+                        ok = false;
+                    }
+                    break;
 
-		default:
-		    throw new Error();
-		}
+                default:
+                    throw new Error();
+                }
 
-		if (ok)
-		    success(mname);
+                if (ok)
+                    success(mname);
 
-	    } catch (Exception e) {
-		failure(mname, e);
-	    }
-	}
+            } catch (Exception e) {
+                failure(mname, e);
+            }
+        }
     }
 
 
     private static void success(String what) {
-	System.out.println("OK: " + what);
+        System.out.println("OK: " + what);
     }
 
     private static void failure(String what) {
-	System.out.println("FAILED: " + what);
-	failures++;
+        System.out.println("FAILED: " + what);
+        failures++;
     }
 
     private static void failure(String what, Exception e) {
-	System.out.println("FAILED WITH EXCEPTION: " + what);
-	e.printStackTrace(System.out);
-	failures++;
+        System.out.println("FAILED WITH EXCEPTION: " + what);
+        e.printStackTrace(System.out);
+        failures++;
     }
 
     private static class MXBeanImplInvocationHandler
-	    implements InvocationHandler {
-	MXBeanImplInvocationHandler(Class intf, NamedMXBeans namedMXBeans) {
-	    this.intf = intf;
+            implements InvocationHandler {
+        MXBeanImplInvocationHandler(Class intf, NamedMXBeans namedMXBeans) {
+            this.intf = intf;
             this.namedMXBeans = namedMXBeans;
-	}
+        }
 
-	public Object invoke(Object proxy, Method method, Object[] args)
-		throws Throwable {
-	    final String mname = method.getName();
-	    final int what = getType(method);
-	    final String name = getName(method);
-	    final Field refField = intf.getField(name);
-	    final Object refValue = getRefValue(refField);
+        public Object invoke(Object proxy, Method method, Object[] args)
+                throws Throwable {
+            final String mname = method.getName();
+            final int what = getType(method);
+            final String name = getName(method);
+            final Field refField = intf.getField(name);
+            final Object refValue = getRefValue(refField);
 
-	    switch (what) {
-	    case GET:
-		assert args == null;
-		return refValue;
+            switch (what) {
+            case GET:
+                assert args == null;
+                return refValue;
 
-	    case SET:
-		assert args.length == 1;
-		Object setValue = args[0];
-		if (!equal(refValue, setValue, namedMXBeans)) {
-		    final String msg =
-			mname + "(" + string(setValue) +
-			") does not match ref: " + string(refValue);
-		    throw new IllegalArgumentException(msg);
-		}
-		return null;
+            case SET:
+                assert args.length == 1;
+                Object setValue = args[0];
+                if (!equal(refValue, setValue, namedMXBeans)) {
+                    final String msg =
+                        mname + "(" + string(setValue) +
+                        ") does not match ref: " + string(refValue);
+                    throw new IllegalArgumentException(msg);
+                }
+                return null;
 
-	    case OP:
-		assert args.length == 2;
-		Object arg1 = args[0];
-		Object arg2 = args[1];
-		if (!equal(arg1, arg2, namedMXBeans)) {
-		    final String msg =
-			mname + "(" + string(arg1) + ", " + string(arg2) +
-			"): args not equal";
-		    throw new IllegalArgumentException(msg);
-		}
-		if (!equal(refValue, arg1, namedMXBeans)) {
-		    final String msg =
-			mname + "(" + string(arg1) + ", " + string(arg2) +
-			"): args do not match ref: " + string(refValue);
-		    throw new IllegalArgumentException(msg);
-		}
-		return refValue;
-	    default:
-		throw new Error();
-	    }
-	}
+            case OP:
+                assert args.length == 2;
+                Object arg1 = args[0];
+                Object arg2 = args[1];
+                if (!equal(arg1, arg2, namedMXBeans)) {
+                    final String msg =
+                        mname + "(" + string(arg1) + ", " + string(arg2) +
+                        "): args not equal";
+                    throw new IllegalArgumentException(msg);
+                }
+                if (!equal(refValue, arg1, namedMXBeans)) {
+                    final String msg =
+                        mname + "(" + string(arg1) + ", " + string(arg2) +
+                        "): args do not match ref: " + string(refValue);
+                    throw new IllegalArgumentException(msg);
+                }
+                return refValue;
+            default:
+                throw new Error();
+            }
+        }
 
-	Object getRefValue(Field refField) throws Exception {
-	    return refField.get(null);
-	}
+        Object getRefValue(Field refField) throws Exception {
+            return refField.get(null);
+        }
 
-	private final Class intf;
+        private final Class intf;
         private final NamedMXBeans namedMXBeans;
     }
 
     private static class MXBeanNullImplInvocationHandler
-	    extends MXBeanImplInvocationHandler {
-	MXBeanNullImplInvocationHandler(Class intf, NamedMXBeans namedMXBeans) {
-	    super(intf, namedMXBeans);
-	}
+            extends MXBeanImplInvocationHandler {
+        MXBeanNullImplInvocationHandler(Class intf, NamedMXBeans namedMXBeans) {
+            super(intf, namedMXBeans);
+        }
 
-	@Override
-	Object getRefValue(Field refField) throws Exception {
-	    Class<?> type = refField.getType();
-	    if (type.isPrimitive())
-		return super.getRefValue(refField);
-	    else
-		return null;
-	}
+        @Override
+        Object getRefValue(Field refField) throws Exception {
+            Class<?> type = refField.getType();
+            if (type.isPrimitive())
+                return super.getRefValue(refField);
+            else
+                return null;
+        }
     }
 
 
     private static final String[] prefixes = {
-	"get", "set", "op",
+        "get", "set", "op",
     };
     private static final int GET = 0, SET = 1, OP = 2;
 
     private static String getName(Method m) {
-	return getName(m.getName());
+        return getName(m.getName());
     }
 
     private static String getName(String n) {
-	for (int i = 0; i < prefixes.length; i++) {
-	    if (n.startsWith(prefixes[i]))
-		return n.substring(prefixes[i].length());
-	}
-	throw new Error();
+        for (int i = 0; i < prefixes.length; i++) {
+            if (n.startsWith(prefixes[i]))
+                return n.substring(prefixes[i].length());
+        }
+        throw new Error();
     }
 
     private static int getType(Method m) {
-	return getType(m.getName());
+        return getType(m.getName());
     }
 
     private static int getType(String n) {
-	for (int i = 0; i < prefixes.length; i++) {
-	    if (n.startsWith(prefixes[i]))
-		return i;
-	}
-	throw new Error();
+        for (int i = 0; i < prefixes.length; i++) {
+            if (n.startsWith(prefixes[i]))
+                return i;
+        }
+        throw new Error();
     }
 
     static boolean equal(Object o1, Object o2, NamedMXBeans namedMXBeans) {
-	if (o1 == o2)
-	    return true;
-	if (o1 == null || o2 == null)
-	    return false;
-	if (o1.getClass().isArray()) {
-	    if (!o2.getClass().isArray())
-		return false;
-	    return deepEqual(o1, o2, namedMXBeans);
-	}
-	if (o1 instanceof CompositeData && o2 instanceof CompositeData) {
-	    return compositeDataEqual((CompositeData) o1, (CompositeData) o2,
+        if (o1 == o2)
+            return true;
+        if (o1 == null || o2 == null)
+            return false;
+        if (o1.getClass().isArray()) {
+            if (!o2.getClass().isArray())
+                return false;
+            return deepEqual(o1, o2, namedMXBeans);
+        }
+        if (o1 instanceof CompositeData && o2 instanceof CompositeData) {
+            return compositeDataEqual((CompositeData) o1, (CompositeData) o2,
                                       namedMXBeans);
         }
-	if (Proxy.isProxyClass(o1.getClass())) {
-	    if (Proxy.isProxyClass(o2.getClass()))
+        if (Proxy.isProxyClass(o1.getClass())) {
+            if (Proxy.isProxyClass(o2.getClass()))
                 return proxyEqual(o1, o2, namedMXBeans);
             InvocationHandler ih = Proxy.getInvocationHandler(o1);
 //            if (ih instanceof MXBeanInvocationHandler) {
@@ -580,7 +580,7 @@ public class MXBeanTest {
             }
         } else if (Proxy.isProxyClass(o2.getClass()))
             return equal(o2, o1, namedMXBeans);
-	return o1.equals(o2);
+        return o1.equals(o2);
     }
 
     // We'd use Arrays.deepEquals except we want the test to work on 1.4
@@ -588,63 +588,63 @@ public class MXBeanTest {
     // (as does Arrays.deepEquals)
     private static boolean deepEqual(Object a1, Object a2,
                                      NamedMXBeans namedMXBeans) {
-	int len = Array.getLength(a1);
-	if (len != Array.getLength(a2))
-	    return false;
-	for (int i = 0; i < len; i++) {
-	    Object e1 = Array.get(a1, i);
-	    Object e2 = Array.get(a2, i);
-	    if (!equal(e1, e2, namedMXBeans))
-		return false;
-	}
-	return true;
+        int len = Array.getLength(a1);
+        if (len != Array.getLength(a2))
+            return false;
+        for (int i = 0; i < len; i++) {
+            Object e1 = Array.get(a1, i);
+            Object e2 = Array.get(a2, i);
+            if (!equal(e1, e2, namedMXBeans))
+                return false;
+        }
+        return true;
     }
 
     // This is needed to work around a bug (5095277)
     // in CompositeDataSupport.equals
     private static boolean compositeDataEqual(CompositeData cd1,
-					      CompositeData cd2,
+                                              CompositeData cd2,
                                               NamedMXBeans namedMXBeans) {
-	if (cd1 == cd2)
-	    return true;
-	if (!cd1.getCompositeType().equals(cd2.getCompositeType()))
-	    return false;
-	Collection v1 = cd1.values();
-	Collection v2 = cd2.values();
-	if (v1.size() != v2.size())
-	    return false; // should not happen
-	for (Iterator i1 = v1.iterator(), i2 = v2.iterator();
-	     i1.hasNext(); ) {
-	    if (!equal(i1.next(), i2.next(), namedMXBeans))
-		return false;
-	}
-	return true;
+        if (cd1 == cd2)
+            return true;
+        if (!cd1.getCompositeType().equals(cd2.getCompositeType()))
+            return false;
+        Collection v1 = cd1.values();
+        Collection v2 = cd2.values();
+        if (v1.size() != v2.size())
+            return false; // should not happen
+        for (Iterator i1 = v1.iterator(), i2 = v2.iterator();
+             i1.hasNext(); ) {
+            if (!equal(i1.next(), i2.next(), namedMXBeans))
+                return false;
+        }
+        return true;
     }
 
     // Also needed for 5095277
     private static boolean proxyEqual(Object proxy1, Object proxy2,
                                       NamedMXBeans namedMXBeans) {
-	if (proxy1.getClass() != proxy2.getClass())
-	    return proxy1.equals(proxy2);
-	InvocationHandler ih1 = Proxy.getInvocationHandler(proxy1);
-	InvocationHandler ih2 = Proxy.getInvocationHandler(proxy2);
-	if (!(ih1 instanceof CompositeDataInvocationHandler)
-	    || !(ih2 instanceof CompositeDataInvocationHandler))
-	    return proxy1.equals(proxy2);
-	CompositeData cd1 =
-	    ((CompositeDataInvocationHandler) ih1).getCompositeData();
-	CompositeData cd2 =
-	    ((CompositeDataInvocationHandler) ih2).getCompositeData();
-	return compositeDataEqual(cd1, cd2, namedMXBeans);
+        if (proxy1.getClass() != proxy2.getClass())
+            return proxy1.equals(proxy2);
+        InvocationHandler ih1 = Proxy.getInvocationHandler(proxy1);
+        InvocationHandler ih2 = Proxy.getInvocationHandler(proxy2);
+        if (!(ih1 instanceof CompositeDataInvocationHandler)
+            || !(ih2 instanceof CompositeDataInvocationHandler))
+            return proxy1.equals(proxy2);
+        CompositeData cd1 =
+            ((CompositeDataInvocationHandler) ih1).getCompositeData();
+        CompositeData cd2 =
+            ((CompositeDataInvocationHandler) ih2).getCompositeData();
+        return compositeDataEqual(cd1, cd2, namedMXBeans);
     }
-    
+
 //    private static boolean proxyEqualsObject(MXBeanInvocationHandler ih,
 //                                             Object o,
 //                                             NamedMXBeans namedMXBeans) {
 //        if (namedMXBeans.getMBeanServerConnection() !=
 //            ih.getMBeanServerConnection())
 //            return false;
-//        
+//
 //        ObjectName on = ih.getObjectName();
 //        Object named = namedMXBeans.get(on);
 //        if (named == null)
@@ -655,35 +655,35 @@ public class MXBeanTest {
     /* I wanted to call this method toString(Object), but oddly enough
        this meant that I couldn't call it from the inner class
        MXBeanImplInvocationHandler, because the inherited Object.toString()
-       prevented that.	Surprising behaviour.  */
+       prevented that.  Surprising behaviour.  */
     static String string(Object o) {
-	if (o == null)
-	    return "null";
-	if (o instanceof String)
-	    return '"' + (String) o + '"';
-	if (o instanceof Collection)
-	    return deepToString((Collection) o);
-	if (o.getClass().isArray())
-	    return deepToString(o);
-	return o.toString();
+        if (o == null)
+            return "null";
+        if (o instanceof String)
+            return '"' + (String) o + '"';
+        if (o instanceof Collection)
+            return deepToString((Collection) o);
+        if (o.getClass().isArray())
+            return deepToString(o);
+        return o.toString();
     }
 
     private static String deepToString(Object o) {
-	StringBuffer buf = new StringBuffer();
-	buf.append("[");
-	int len = Array.getLength(o);
-	for (int i = 0; i < len; i++) {
-	    if (i > 0)
-		buf.append(", ");
-	    Object e = Array.get(o, i);
-	    buf.append(string(e));
-	}
-	buf.append("]");
-	return buf.toString();
+        StringBuffer buf = new StringBuffer();
+        buf.append("[");
+        int len = Array.getLength(o);
+        for (int i = 0; i < len; i++) {
+            if (i > 0)
+                buf.append(", ");
+            Object e = Array.get(o, i);
+            buf.append(string(e));
+        }
+        buf.append("]");
+        return buf.toString();
     }
 
     private static String deepToString(Collection c) {
-	return deepToString(c.toArray());
+        return deepToString(c.toArray());
     }
 
     private static void compareTabularType(TabularType t1, TabularType t2) {

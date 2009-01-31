@@ -62,7 +62,7 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
      *    {@link String} (subject names), <code>byte[]</code> (subject key ids),
      *    {@link java.security.cert.X509Certificate}, {@link X509CRL},
      *    or {@link javax.xml.dsig.XMLStructure} ({@link X509IssuerSerial}
-     *    objects or elements from an external namespace). The list is 
+     *    objects or elements from an external namespace). The list is
      *    defensively copied to protect against subsequent modification.
      * @return a <code>X509Data</code>
      * @throws NullPointerException if <code>content</code> is <code>null</code>
@@ -79,10 +79,10 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
             throw new IllegalArgumentException("content cannot be empty");
         }
         for (int i = 0, size = contentCopy.size(); i < size; i++) {
-	    Object x509Type = contentCopy.get(i);
-	    if (x509Type instanceof String) {
-		new X500Principal((String) x509Type);
-	    } else if (!(x509Type instanceof byte[]) &&
+            Object x509Type = contentCopy.get(i);
+            if (x509Type instanceof String) {
+                new X500Principal((String) x509Type);
+            } else if (!(x509Type instanceof byte[]) &&
                 !(x509Type instanceof X509Certificate) &&
                 !(x509Type instanceof X509CRL) &&
                 !(x509Type instanceof XMLStructure)) {
@@ -102,17 +102,17 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
     public DOMX509Data(Element xdElem) throws MarshalException {
         // get all children nodes
         NodeList nl = xdElem.getChildNodes();
-	int length = nl.getLength();
-	List content = new ArrayList(length);
+        int length = nl.getLength();
+        List content = new ArrayList(length);
         for (int i = 0; i < length; i++) {
             Node child = nl.item(i);
             // ignore all non-Element nodes
             if (child.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
-	    }
+            }
 
             Element childElem = (Element) child;
-	    String localName = childElem.getLocalName();
+            String localName = childElem.getLocalName();
             if (localName.equals("X509Certificate")) {
                 content.add(unmarshalX509Certificate(childElem));
             } else if (localName.equals("X509IssuerSerial")) {
@@ -120,46 +120,46 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
             } else if (localName.equals("X509SubjectName")) {
                 content.add(childElem.getFirstChild().getNodeValue());
             } else if (localName.equals("X509SKI")) {
-		try {
+                try {
                     content.add(Base64.decode(childElem));
-		} catch (Base64DecodingException bde) {
-		    throw new MarshalException("cannot decode X509SKI", bde);
-		}
+                } catch (Base64DecodingException bde) {
+                    throw new MarshalException("cannot decode X509SKI", bde);
+                }
             } else if (localName.equals("X509CRL")) {
                 content.add(unmarshalX509CRL(childElem));
             } else {
-		content.add(new javax.xml.crypto.dom.DOMStructure(childElem));
+                content.add(new javax.xml.crypto.dom.DOMStructure(childElem));
             }
         }
         this.content = Collections.unmodifiableList(content);
     }
 
     public List getContent() {
-	return content;
+        return content;
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-	throws MarshalException {
+        throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element xdElem = DOMUtils.createElement
             (ownerDoc, "X509Data", XMLSignature.XMLNS, dsPrefix);
 
         // append children and preserve order
-	for (int i = 0, size = content.size(); i < size; i++) {
-	    Object object = content.get(i);
+        for (int i = 0, size = content.size(); i < size; i++) {
+            Object object = content.get(i);
             if (object instanceof X509Certificate) {
                 marshalCert((X509Certificate) object,xdElem,ownerDoc,dsPrefix);
-	    } else if (object instanceof XMLStructure) {
-	        if (object instanceof X509IssuerSerial) {
-		    ((DOMX509IssuerSerial) object).marshal
-			(xdElem, dsPrefix, context);
-		} else {
-		    javax.xml.crypto.dom.DOMStructure domContent =
-			(javax.xml.crypto.dom.DOMStructure) object;
-		    DOMUtils.appendChild(xdElem, domContent.getNode());
-		}
-	    } else if (object instanceof byte[]) {
+            } else if (object instanceof XMLStructure) {
+                if (object instanceof X509IssuerSerial) {
+                    ((DOMX509IssuerSerial) object).marshal
+                        (xdElem, dsPrefix, context);
+                } else {
+                    javax.xml.crypto.dom.DOMStructure domContent =
+                        (javax.xml.crypto.dom.DOMStructure) object;
+                    DOMUtils.appendChild(xdElem, domContent.getNode());
+                }
+            } else if (object instanceof byte[]) {
                 marshalSKI((byte[]) object, xdElem, ownerDoc, dsPrefix);
             } else if (object instanceof String) {
                 marshalSubjectName((String) object, xdElem, ownerDoc,dsPrefix);
@@ -171,29 +171,29 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
         parent.appendChild(xdElem);
     }
 
-    private void marshalSKI(byte[] skid, Node parent, Document doc, 
-	String dsPrefix) {
+    private void marshalSKI(byte[] skid, Node parent, Document doc,
+        String dsPrefix) {
 
         Element skidElem = DOMUtils.createElement
-	    (doc, "X509SKI", XMLSignature.XMLNS, dsPrefix);
+            (doc, "X509SKI", XMLSignature.XMLNS, dsPrefix);
         skidElem.appendChild(doc.createTextNode(Base64.encode(skid)));
         parent.appendChild(skidElem);
     }
 
-    private void marshalSubjectName(String name, Node parent, Document doc, 
-	String dsPrefix) {
+    private void marshalSubjectName(String name, Node parent, Document doc,
+        String dsPrefix) {
 
         Element snElem = DOMUtils.createElement
-	    (doc, "X509SubjectName", XMLSignature.XMLNS, dsPrefix);
+            (doc, "X509SubjectName", XMLSignature.XMLNS, dsPrefix);
         snElem.appendChild(doc.createTextNode(name));
         parent.appendChild(snElem);
     }
 
     private void marshalCert(X509Certificate cert, Node parent, Document doc,
-	String dsPrefix) throws MarshalException {
+        String dsPrefix) throws MarshalException {
 
         Element certElem = DOMUtils.createElement
-	    (doc, "X509Certificate", XMLSignature.XMLNS, dsPrefix);
+            (doc, "X509Certificate", XMLSignature.XMLNS, dsPrefix);
         try {
             certElem.appendChild(doc.createTextNode
                 (Base64.encode(cert.getEncoded())));
@@ -203,11 +203,11 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
         parent.appendChild(certElem);
     }
 
-    private void marshalCRL(X509CRL crl, Node parent, Document doc, 
-	String dsPrefix) throws MarshalException {
+    private void marshalCRL(X509CRL crl, Node parent, Document doc,
+        String dsPrefix) throws MarshalException {
 
         Element crlElem = DOMUtils.createElement
-	    (doc, "X509CRL", XMLSignature.XMLNS, dsPrefix);
+            (doc, "X509CRL", XMLSignature.XMLNS, dsPrefix);
         try {
             crlElem.appendChild(doc.createTextNode
                 (Base64.encode(crl.getEncoded())));
@@ -217,8 +217,8 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
         parent.appendChild(crlElem);
     }
 
-    private X509Certificate unmarshalX509Certificate(Element elem) 
-	throws MarshalException {
+    private X509Certificate unmarshalX509Certificate(Element elem)
+        throws MarshalException {
         try {
             ByteArrayInputStream bs = unmarshalBase64Binary(elem);
             return (X509Certificate) cf.generateCertificate(bs);
@@ -236,12 +236,12 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
         }
     }
 
-    private ByteArrayInputStream unmarshalBase64Binary(Element elem) 
-	throws MarshalException {
+    private ByteArrayInputStream unmarshalBase64Binary(Element elem)
+        throws MarshalException {
         try {
             if (cf == null) {
                 cf = CertificateFactory.getInstance("X.509");
-	    }
+            }
             return new ByteArrayInputStream(Base64.decode(elem));
         } catch (CertificateException e) {
             throw new MarshalException("Cannot create CertificateFactory", e);
@@ -251,36 +251,36 @@ public final class DOMX509Data extends DOMStructure implements X509Data {
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof X509Data)) {
             return false;
-	}
+        }
         X509Data oxd = (X509Data) o;
 
-	List ocontent = oxd.getContent();
-	int size = content.size();
-	if (size != ocontent.size()) {
-	    return false;
-	}
+        List ocontent = oxd.getContent();
+        int size = content.size();
+        if (size != ocontent.size()) {
+            return false;
+        }
 
-	for (int i = 0; i < size; i++) {
-	    Object x = content.get(i);
-	    Object ox = ocontent.get(i);
-	    if (x instanceof byte[]) {
-		if (!(ox instanceof byte[]) || 
-		    !Arrays.equals((byte[]) x, (byte[]) ox)) {
-		    return false;
-		} 
-	    } else {
-		if (!(x.equals(ox))) {
-		    return false;
-		}
-	    }
-	}
+        for (int i = 0; i < size; i++) {
+            Object x = content.get(i);
+            Object ox = ocontent.get(i);
+            if (x instanceof byte[]) {
+                if (!(ox instanceof byte[]) ||
+                    !Arrays.equals((byte[]) x, (byte[]) ox)) {
+                    return false;
+                }
+            } else {
+                if (!(x.equals(ox))) {
+                    return false;
+                }
+            }
+        }
 
-	return true;
+        return true;
     }
 }

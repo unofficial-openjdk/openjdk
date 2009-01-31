@@ -44,7 +44,7 @@ import org.w3c.dom.Element;
 public class X509IssuerSerialResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                     X509IssuerSerialResolver.class.getName());
 
@@ -52,7 +52,7 @@ public class X509IssuerSerialResolver extends KeyResolverSpi {
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
 
       X509Data x509data = null;
       try {
@@ -119,9 +119,9 @@ public class X509IssuerSerialResolver extends KeyResolverSpi {
             XMLX509IssuerSerial certSerial = new XMLX509IssuerSerial(element.getOwnerDocument(), cert);
 
             if (true) {
-            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Certificate Issuer: "
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Certificate Issuer: "
                       + certSerial.getIssuerName());
-            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Certificate Serial: "
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Certificate Serial: "
                       + certSerial.getSerialNumber().toString());
             }
 
@@ -129,9 +129,9 @@ public class X509IssuerSerialResolver extends KeyResolverSpi {
                XMLX509IssuerSerial xmliss = x509data.itemIssuerSerial(i);
 
                if (true) {
-               	    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Element Issuer:     "
+                    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Element Issuer:     "
                          + xmliss.getIssuerName());
-               	    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Element Serial:     "
+                    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found Element Serial:     "
                          + xmliss.getSerialNumber().toString());
                }
 
@@ -139,8 +139,8 @@ public class X509IssuerSerialResolver extends KeyResolverSpi {
                   if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "match !!! ");
 
                   return cert;
-               } 
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "no match...");               
+               }
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "no match...");
             }
          }
 

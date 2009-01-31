@@ -46,7 +46,6 @@ package javax.swing.text;
  *
  * @see javax.swing.text.Document
  *
- * @version %I% %G%
  * @since 1.4
  */
 public class DocumentFilter {
@@ -77,8 +76,8 @@ public class DocumentFilter {
      *
      * @param fb FilterBypass that can be used to mutate Document
      * @param offset  the offset into the document to insert the content >= 0.
-     *    All positions that track change at or after the given location 
-     *    will move.  
+     *    All positions that track change at or after the given location
+     *    will move.
      * @param string the string to insert
      * @param attr      the attributes to associate with the inserted
      *   content.  This may be null if there are no attributes.
@@ -145,7 +144,7 @@ public class DocumentFilter {
          * DocumentFilter.
          * @param offset  the offset into the document to insert the
          *   content >= 0. All positions that track change at or after the
-         *   given location will move.  
+         *   given location will move.
          * @param string the string to insert
          * @param attr the attributes to associate with the inserted
          *   content.  This may be null if there are no attributes.

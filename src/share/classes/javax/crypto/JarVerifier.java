@@ -56,11 +56,11 @@ final class JarVerifier {
      *
      * @param jarURL the JAR file to be verified.
      * @param savePerms if true, save the permissions allowed by the
-     *		exemption mechanism
+     *          exemption mechanism
      */
     JarVerifier(URL jarURL, boolean savePerms) {
-	this.jarURL = jarURL;
-	this.savePerms = savePerms;
+        this.jarURL = jarURL;
+        this.savePerms = savePerms;
     }
 
     /**
@@ -72,66 +72,66 @@ final class JarVerifier {
      */
     void verify() throws JarException, IOException {
 
-	// Short-circuit.  If we weren't asked to save any, we're done.
-	if (!savePerms) {
-	    return;
-	}
+        // Short-circuit.  If we weren't asked to save any, we're done.
+        if (!savePerms) {
+            return;
+        }
 
-	// If the protocol of jarURL isn't "jar", we should
-	// construct a JAR URL so we can open a JarURLConnection
-	// for verifying this provider.
-	final URL url = jarURL.getProtocol().equalsIgnoreCase("jar")?
-			jarURL : new URL("jar:" + jarURL.toString() + "!/");
+        // If the protocol of jarURL isn't "jar", we should
+        // construct a JAR URL so we can open a JarURLConnection
+        // for verifying this provider.
+        final URL url = jarURL.getProtocol().equalsIgnoreCase("jar")?
+                        jarURL : new URL("jar:" + jarURL.toString() + "!/");
 
-	JarFile jf = null;
-	try {
+        JarFile jf = null;
+        try {
 
-	    // Get a link to the Jarfile to search.
-	    try {
-		jf = (JarFile)
-		    AccessController.doPrivileged(
-			new PrivilegedExceptionAction() {
-			    public Object run() throws Exception {
-				JarURLConnection conn =
-				    (JarURLConnection) url.openConnection();
-				// You could do some caching here as
-				// an optimization.
-				conn.setUseCaches(false);
-				return conn.getJarFile();
-			    }
-			});
-	    } catch (java.security.PrivilegedActionException pae) {
-		SecurityException se = new SecurityException(
-		    "Cannot load " + url.toString());
-		se.initCause(pae);
-		throw se;
-	    }
+            // Get a link to the Jarfile to search.
+            try {
+                jf = (JarFile)
+                    AccessController.doPrivileged(
+                        new PrivilegedExceptionAction() {
+                            public Object run() throws Exception {
+                                JarURLConnection conn =
+                                    (JarURLConnection) url.openConnection();
+                                // You could do some caching here as
+                                // an optimization.
+                                conn.setUseCaches(false);
+                                return conn.getJarFile();
+                            }
+                        });
+            } catch (java.security.PrivilegedActionException pae) {
+                SecurityException se = new SecurityException(
+                    "Cannot load " + url.toString());
+                se.initCause(pae);
+                throw se;
+            }
 
-	    if (jf != null) {
-		JarEntry je = jf.getJarEntry("cryptoPerms");
-		if (je == null) {
-		    throw new JarException(
-			"Can not find cryptoPerms");
-		}
-		try {
-		    appPerms = new CryptoPermissions();
-		    appPerms.load(jf.getInputStream(je));
-		} catch (Exception ex) {
-		    JarException jex =
-			new JarException("Cannot load/parse" +
-			    jarURL.toString());
-		    jex.initCause(ex);
-		    throw jex;
-		}
-	    }
-	} finally {
-	    // Only call close() when caching is not enabled.
-	    // Otherwise, exceptions will be thrown for all
-	    // subsequent accesses of this cached jar.
-	    if (jf != null) {
-		jf.close();
-	    }
-	}
+            if (jf != null) {
+                JarEntry je = jf.getJarEntry("cryptoPerms");
+                if (je == null) {
+                    throw new JarException(
+                        "Can not find cryptoPerms");
+                }
+                try {
+                    appPerms = new CryptoPermissions();
+                    appPerms.load(jf.getInputStream(je));
+                } catch (Exception ex) {
+                    JarException jex =
+                        new JarException("Cannot load/parse" +
+                            jarURL.toString());
+                    jex.initCause(ex);
+                    throw jex;
+                }
+            }
+        } finally {
+            // Only call close() when caching is not enabled.
+            // Otherwise, exceptions will be thrown for all
+            // subsequent accesses of this cached jar.
+            if (jf != null) {
+                jf.close();
+            }
+        }
     }
 
     /**
@@ -140,7 +140,7 @@ final class JarVerifier {
      *
      * @param je the URL of the jar entry to be checked.
      * @throws Exception if the jar entry was not signed by
-     *		the proper certificate
+     *          the proper certificate
      */
     static void verifyFrameworkSigned(URL je) throws Exception {
     }
@@ -151,10 +151,10 @@ final class JarVerifier {
      *
      * @param certs the list of certs to be checked.
      * @throws Exception if the list of certs did not contain
-     *		the framework signing certificate
+     *          the framework signing certificate
      */
     static void verifyPolicySigned(java.security.cert.Certificate[] certs)
-	    throws Exception {
+            throws Exception {
     }
 
     /**
@@ -165,6 +165,6 @@ final class JarVerifier {
      * equal to false, then this method would always return null.
      */
     CryptoPermissions getPermissions() {
-	return appPerms;
+        return appPerms;
     }
 }

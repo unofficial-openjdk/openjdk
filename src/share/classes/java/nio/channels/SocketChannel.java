@@ -34,7 +34,7 @@ import java.nio.channels.spi.*;
 
 /**
  * A selectable channel for stream-oriented connecting sockets.
- * 
+ *
  * <p> Socket channels are not a complete abstraction of connecting network
  * sockets.  Binding, shutdown, and the manipulation of socket options must be
  * done through an associated {@link java.net.Socket} object obtained by
@@ -90,7 +90,6 @@ import java.nio.channels.spi.*;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
@@ -103,7 +102,7 @@ public abstract class SocketChannel
      * Initializes a new instance of this class.
      */
     protected SocketChannel(SelectorProvider provider) {
-	super(provider);
+        super(provider);
     }
 
     /**
@@ -120,7 +119,7 @@ public abstract class SocketChannel
      *          If an I/O error occurs
      */
     public static SocketChannel open() throws IOException {
-	return SelectorProvider.provider().openSocketChannel();
+        return SelectorProvider.provider().openSocketChannel();
     }
 
     /**
@@ -158,18 +157,18 @@ public abstract class SocketChannel
      *          If some other I/O error occurs
      */
     public static SocketChannel open(SocketAddress remote)
-	throws IOException
+        throws IOException
     {
-	SocketChannel sc = open();
-	try {
-	    sc.connect(remote);
-	} finally {
-	    if (!sc.isConnected()) {
-		try { sc.close(); } catch (IOException x) { }
-	    }
-	}
-	assert sc.isConnected();
-	return sc;
+        SocketChannel sc = open();
+        try {
+            sc.connect(remote);
+        } finally {
+            if (!sc.isConnected()) {
+                try { sc.close(); } catch (IOException x) { }
+            }
+        }
+        assert sc.isConnected();
+        return sc;
     }
 
     /**
@@ -184,9 +183,9 @@ public abstract class SocketChannel
      * @return  The valid-operation set
      */
     public final int validOps() {
-	return (SelectionKey.OP_READ
-		| SelectionKey.OP_WRITE
-		| SelectionKey.OP_CONNECT);
+        return (SelectionKey.OP_READ
+                | SelectionKey.OP_WRITE
+                | SelectionKey.OP_CONNECT);
     }
 
 
@@ -354,14 +353,14 @@ public abstract class SocketChannel
      *          If this channel is not yet connected
      */
     public abstract long read(ByteBuffer[] dsts, int offset, int length)
-	throws IOException;
+        throws IOException;
 
     /**
      * @throws  NotYetConnectedException
      *          If this channel is not yet connected
      */
     public final long read(ByteBuffer[] dsts) throws IOException {
-	return read(dsts, 0, dsts.length);
+        return read(dsts, 0, dsts.length);
     }
 
     /**
@@ -375,14 +374,14 @@ public abstract class SocketChannel
      *          If this channel is not yet connected
      */
     public abstract long write(ByteBuffer[] srcs, int offset, int length)
-	throws IOException;
+        throws IOException;
 
     /**
      * @throws  NotYetConnectedException
      *          If this channel is not yet connected
      */
     public final long write(ByteBuffer[] srcs) throws IOException {
-	return write(srcs, 0, srcs.length);
+        return write(srcs, 0, srcs.length);
     }
 
 }

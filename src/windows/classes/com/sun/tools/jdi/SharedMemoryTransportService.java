@@ -37,33 +37,33 @@ class SharedMemoryTransportService extends TransportService {
     private ResourceBundle messages = null;
 
     /**
-     * The listener returned by startListening 
+     * The listener returned by startListening
      */
     static class SharedMemoryListenKey extends ListenKey {
-	long id;
- 	String name;
+        long id;
+        String name;
 
-	SharedMemoryListenKey(long id, String name) {
-	    this.id = id;
-	    this.name = name;
-	}
+        SharedMemoryListenKey(long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
 
-	long id() {
-	    return id;
-	}
+        long id() {
+            return id;
+        }
 
-	void setId(long id) {
-	    this.id = id;
-	}
+        void setId(long id) {
+            this.id = id;
+        }
 
-	public String address() {
-	    return name;
-	}
+        public String address() {
+            return name;
+        }
 
-	public String toString() {
-	    return address();
-	}
-    }    
+        public String toString() {
+            return address();
+        }
+    }
 
     SharedMemoryTransportService() {
         System.loadLibrary("dt_shmem");
@@ -91,7 +91,7 @@ class SharedMemoryTransportService extends TransportService {
     }
 
     public Capabilities capabilities() {
-	return new SharedMemoryTransportServiceCapabilities();
+        return new SharedMemoryTransportServiceCapabilities();
     }
 
     private native void initialize();
@@ -105,18 +105,18 @@ class SharedMemoryTransportService extends TransportService {
         if (address == null) {
             throw new NullPointerException("address is null");
         }
-        long id = attach0(address, attachTimeout);	
+        long id = attach0(address, attachTimeout);
         SharedMemoryConnection conn = new SharedMemoryConnection(id);
-	conn.handshake(handshakeTimeout);
-	return conn;
+        conn.handshake(handshakeTimeout);
+        return conn;
     }
 
     public TransportService.ListenKey startListening(String address) throws IOException {
-	if (address == null || address.length() == 0) {
-	    address = defaultAddress();
-	}
+        if (address == null || address.length() == 0) {
+            address = defaultAddress();
+        }
         long id = startListening0(address);
-	return new SharedMemoryListenKey(id, name(id));
+        return new SharedMemoryListenKey(id, name(id));
     }
 
     public ListenKey startListening() throws IOException {
@@ -124,30 +124,30 @@ class SharedMemoryTransportService extends TransportService {
     }
 
     public void stopListening(ListenKey listener) throws IOException {
-	if (!(listener instanceof SharedMemoryListenKey)) {
+        if (!(listener instanceof SharedMemoryListenKey)) {
             throw new IllegalArgumentException("Invalid listener");
         }
 
-	long id;
-	SharedMemoryListenKey key = (SharedMemoryListenKey)listener;
-	synchronized (key) {
-	    id = key.id();
-	    if (id == 0) {
-		throw new IllegalArgumentException("Invalid listener");
-	    }
+        long id;
+        SharedMemoryListenKey key = (SharedMemoryListenKey)listener;
+        synchronized (key) {
+            id = key.id();
+            if (id == 0) {
+                throw new IllegalArgumentException("Invalid listener");
+            }
 
-	    // invalidate the id
-	    key.setId(0);
-	}
-	stopListening0(id);
+            // invalidate the id
+            key.setId(0);
+        }
+        stopListening0(id);
     }
 
     public Connection accept(ListenKey listener, long acceptTimeout, long handshakeTimeout) throws IOException {
-	if (!(listener instanceof SharedMemoryListenKey)) {
+        if (!(listener instanceof SharedMemoryListenKey)) {
             throw new IllegalArgumentException("Invalid listener");
         }
 
-	long transportId;
+        long transportId;
         SharedMemoryListenKey key = (SharedMemoryListenKey)listener;
         synchronized (key) {
             transportId = key.id();
@@ -156,15 +156,15 @@ class SharedMemoryTransportService extends TransportService {
             }
         }
 
-	// in theory another thread could call stopListening before
-	// accept0 is called. In that case accept0 will try to accept
-	// with an invalid "transport id" - this should result in an
-	// IOException.
+        // in theory another thread could call stopListening before
+        // accept0 is called. In that case accept0 will try to accept
+        // with an invalid "transport id" - this should result in an
+        // IOException.
 
         long connectId = accept0(transportId, acceptTimeout);
         SharedMemoryConnection conn = new SharedMemoryConnection(connectId);
-	conn.handshake(handshakeTimeout);
-	return conn;
+        conn.handshake(handshakeTimeout);
+        return conn;
     }
 }
 
@@ -177,21 +177,21 @@ class SharedMemoryConnection extends Connection {
 
     private native byte receiveByte0(long id) throws IOException;
     private native void sendByte0(long id, byte b) throws IOException;
-    private native void close0(long id);    
+    private native void close0(long id);
     private native byte[] receivePacket0(long id)throws IOException;
     private native void sendPacket0(long id, byte b[]) throws IOException;
 
-    // handshake with the target VM 
+    // handshake with the target VM
     void handshake(long handshakeTimeout) throws IOException {
         byte[] hello = "JDWP-Handshake".getBytes("UTF-8");
 
-	for (int i=0; i<hello.length; i++) {
-	    sendByte0(id, hello[i]);
-	}
-	for (int i=0; i<hello.length; i++) {
-	    byte b = receiveByte0(id);
-	    if (b != hello[i]) {
-	        throw new IOException("handshake failed - unrecognized message from target VM");
+        for (int i=0; i<hello.length; i++) {
+            sendByte0(id, hello[i]);
+        }
+        for (int i=0; i<hello.length; i++) {
+            byte b = receiveByte0(id);
+            if (b != hello[i]) {
+                throw new IOException("handshake failed - unrecognized message from target VM");
             }
         }
     }
@@ -202,42 +202,42 @@ class SharedMemoryConnection extends Connection {
     }
 
     public void close() {
-	synchronized (closeLock) {
+        synchronized (closeLock) {
             if (!closed) {
                 close0(id);
-		closed = true;
-	    }
+                closed = true;
+            }
         }
     }
 
     public boolean isOpen() {
-	synchronized (closeLock) {
-	    return !closed;
-	}
+        synchronized (closeLock) {
+            return !closed;
+        }
     }
-    
+
     public byte[] readPacket() throws IOException {
-	if (!isOpen()) {
+        if (!isOpen()) {
             throw new ClosedConnectionException("Connection closed");
-	}
-  	byte b[];
-	try {
-	    // only one thread may be reading at a time
-	    synchronized (receiveLock) {
-		b  = receivePacket0(id);
-	    }
- 	} catch (IOException ioe) {
-	    if (!isOpen()) {
+        }
+        byte b[];
+        try {
+            // only one thread may be reading at a time
+            synchronized (receiveLock) {
+                b  = receivePacket0(id);
+            }
+        } catch (IOException ioe) {
+            if (!isOpen()) {
                 throw new ClosedConnectionException("Connection closed");
             } else {
-	 	throw ioe;
+                throw ioe;
             }
-	}
-	return b;
+        }
+        return b;
     }
-    
+
     public void writePacket(byte b[]) throws IOException {
-	if (!isOpen()) {
+        if (!isOpen()) {
             throw new ClosedConnectionException("Connection closed");
         }
 
@@ -264,16 +264,16 @@ class SharedMemoryConnection extends Connection {
         }
 
         try {
-	    // only one thread may be writing at a time
-	    synchronized(sendLock) {
-	        sendPacket0(id, b);
-	    } 
-	} catch (IOException ioe) {
-	    if (!isOpen()) {
-	       throw new ClosedConnectionException("Connection closed");
-	    } else {
-	       throw ioe;
-	    }	
+            // only one thread may be writing at a time
+            synchronized(sendLock) {
+                sendPacket0(id, b);
+            }
+        } catch (IOException ioe) {
+            if (!isOpen()) {
+               throw new ClosedConnectionException("Connection closed");
+            } else {
+               throw ioe;
+            }
         }
     }
 }
@@ -294,9 +294,7 @@ class SharedMemoryTransportServiceCapabilities extends TransportService.Capabili
     }
 
     public boolean supportsHandshakeTimeout() {
-        return false; 
+        return false;
     }
 
 }
-
-

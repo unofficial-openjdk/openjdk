@@ -35,45 +35,44 @@ abstract class VersionHelper {
     VersionHelper() {} // Disallow anyone from creating one of these.
 
     static {
-	try {
-	    Class.forName("java.net.URLClassLoader"); // 1.2 test
-	    Class.forName("java.security.PrivilegedAction"); // 1.2 test
-	    helper = (VersionHelper)
-		Class.forName(
-		    "com.sun.jndi.ldap.VersionHelper12").newInstance();
-	} catch (Exception e) {
-	}
+        try {
+            Class.forName("java.net.URLClassLoader"); // 1.2 test
+            Class.forName("java.security.PrivilegedAction"); // 1.2 test
+            helper = (VersionHelper)
+                Class.forName(
+                    "com.sun.jndi.ldap.VersionHelper12").newInstance();
+        } catch (Exception e) {
+        }
 
-	// Use 1.1 helper if 1.2 test fails, or if we cannot create 1.2 helper
-	if (helper == null) {
-	    try {
-		helper = (VersionHelper)
-		    Class.forName(
-			"com.sun.jndi.ldap.VersionHelper11").newInstance();
-	    } catch (Exception e) {
-		// should never happen
-	    }
-	}
+        // Use 1.1 helper if 1.2 test fails, or if we cannot create 1.2 helper
+        if (helper == null) {
+            try {
+                helper = (VersionHelper)
+                    Class.forName(
+                        "com.sun.jndi.ldap.VersionHelper11").newInstance();
+            } catch (Exception e) {
+                // should never happen
+            }
+        }
     }
 
     static VersionHelper getVersionHelper() {
-	return helper;
+        return helper;
     }
 
-    abstract ClassLoader getURLClassLoader(String[] url) 
-	throws MalformedURLException;
+    abstract ClassLoader getURLClassLoader(String[] url)
+        throws MalformedURLException;
 
 
     static protected URL[] getUrlArray(String[] url) throws MalformedURLException {
-	URL[] urlArray = new URL[url.length];
-	for (int i = 0; i < urlArray.length; i++) {
-	    urlArray[i] = new URL(url[i]);
-	}
-	return urlArray;
+        URL[] urlArray = new URL[url.length];
+        for (int i = 0; i < urlArray.length; i++) {
+            urlArray[i] = new URL(url[i]);
+        }
+        return urlArray;
     }
 
     abstract Class loadClass(String className) throws ClassNotFoundException;
 
     abstract Thread createThread(Runnable r);
 }
-

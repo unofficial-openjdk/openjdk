@@ -36,8 +36,8 @@ JLI_MemAlloc(size_t size)
 {
     void *p = malloc(size);
     if (p == 0) {
-	perror("malloc");
-	exit(1);
+        perror("malloc");
+        exit(1);
     }
     return p;
 }
@@ -51,8 +51,8 @@ JLI_MemRealloc(void *ptr, size_t size)
 {
     void *p = realloc(ptr, size);
     if (p == 0) {
-	perror("realloc");
-	exit(1);
+        perror("realloc");
+        exit(1);
     }
     return p;
 }

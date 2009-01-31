@@ -43,7 +43,7 @@ jfieldID fos_fd; /* id for jobject 'fd' in java.io.FileOutputStream */
  * static methods to store field ID's in initializers
  */
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_java_io_FileOutputStream_initIDs(JNIEnv *env, jclass fdClass) {
     fos_fd = (*env)->GetFieldID(env, fdClass, "fd", "Ljava/io/FileDescriptor;");
 }
@@ -72,7 +72,7 @@ Java_java_io_FileOutputStream_writeBytes(JNIEnv *env,
     jobject this, jbyteArray bytes, jint off, jint len) {
     writeBytes(env, this, bytes, off, len, fos_fd);
 }
-    
+
 JNIEXPORT void JNICALL
 Java_java_io_FileOutputStream_close0(JNIEnv *env, jobject this) {
     fileClose(env, this, fos_fd);

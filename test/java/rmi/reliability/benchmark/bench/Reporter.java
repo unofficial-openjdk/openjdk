@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,4 +40,3 @@ public interface Reporter {
     void writeReport(BenchInfo[] binfo, Properties props)
         throws IOException;
 }
-

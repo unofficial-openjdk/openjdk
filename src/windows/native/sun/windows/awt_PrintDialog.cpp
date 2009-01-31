@@ -46,7 +46,7 @@ AwtPrintDialog::PrintDlg(LPPRINTDLG data) {
             data)));
 }
 
-LRESULT CALLBACK PrintDialogWndProc(HWND hWnd, UINT message, 
+LRESULT CALLBACK PrintDialogWndProc(HWND hWnd, UINT message,
                                     WPARAM wParam, LPARAM lParam)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -92,7 +92,7 @@ PrintDialogHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
             ::SetFocus(hdlg);
 
             // set appropriate icon for parentless dialogs
-            jobject awtParent = env->GetObjectField(peer, AwtPrintDialog::parentID); 
+            jobject awtParent = env->GetObjectField(peer, AwtPrintDialog::parentID);
             if (awtParent == NULL) {
                 ::SendMessage(hdlg, WM_SETICON, (WPARAM)ICON_BIG,
                               (LPARAM)AwtToolkit::GetInstance().GetAwtIcon());
@@ -157,7 +157,7 @@ Java_sun_awt_windows_WPrintDialog_initIDs(JNIEnv *env, jclass cls)
     AwtPrintDialog::controlID =
         env->GetFieldID(cls, "pjob", "Ljava/awt/print/PrinterJob;");
     DASSERT(AwtPrintDialog::controlID != NULL);
-   
+
     AwtPrintControl::initIDs(env, cls);
 
     CATCH_BAD_ALLOC;
@@ -165,7 +165,7 @@ Java_sun_awt_windows_WPrintDialog_initIDs(JNIEnv *env, jclass cls)
 
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPrintDialog_setPeer(JNIEnv *env, jobject target,
-					  jobject peer)
+                                          jobject peer)
 {
     TRY;
 
@@ -208,7 +208,7 @@ Java_sun_awt_windows_WPrintDialogPeer__1show(JNIEnv *env, jobject peer)
 
     AwtComponent *awtParent = (parent != NULL) ? (AwtComponent *)JNI_GET_PDATA(parent) : NULL;
     HWND hwndOwner = awtParent ? awtParent->GetHWnd() : NULL;
-    
+
     PRINTDLG pd;
     memset(&pd, 0, sizeof(PRINTDLG));
     pd.lStructSize = sizeof(PRINTDLG);
@@ -253,7 +253,7 @@ Java_sun_awt_windows_WPrintDialogPeer__1show(JNIEnv *env, jobject peer)
       if (ret)
       {
         AwtPrintControl::UpdateAttributes(env, control, pd);
-	result = JNI_TRUE;
+        result = JNI_TRUE;
       }
       else
       {
@@ -278,7 +278,7 @@ Java_sun_awt_windows_WPrintDialogPeer__1show(JNIEnv *env, jobject peer)
 
     CATCH_BAD_ALLOC_RET(0);
 }
-    
+
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPrintDialogPeer_toFront(JNIEnv *env, jobject peer)
 {
@@ -304,4 +304,3 @@ Java_sun_awt_windows_WPrintDialogPeer_toBack(JNIEnv *env, jobject peer)
 }
 
 } /* extern "C" */
-

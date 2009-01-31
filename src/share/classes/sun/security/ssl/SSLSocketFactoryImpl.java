@@ -40,7 +40,6 @@ import javax.net.ssl.SSLSocket;
  * any flexibility about which keys to use; that context defaults to the
  * process-default context, but may be explicitly specified.
  *
- * @version %I%, %G%
  * @author David Brownell
  */
 final
@@ -56,14 +55,14 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * java.security file is set.
      */
     public SSLSocketFactoryImpl() throws Exception {
-	this.context = DefaultSSLContextImpl.getDefaultImpl();
+        this.context = DefaultSSLContextImpl.getDefaultImpl();
     }
 
     /**
      * Constructs an SSL socket factory.
      */
     SSLSocketFactoryImpl(SSLContextImpl context) {
-	this.context = context;
+        this.context = context;
     }
 
     /**
@@ -73,7 +72,7 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * @see java.net.Socket#connect(java.net.SocketAddress, int)
      */
     public Socket createSocket() {
-	return new SSLSocketImpl(context);
+        return new SSLSocketImpl(context);
     }
 
     /**
@@ -88,7 +87,7 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException
     {
-	return new SSLSocketImpl(context, host, port);
+        return new SSLSocketImpl(context, host, port);
     }
 
     /**
@@ -108,8 +107,8 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * @exception UnknownHostException if the host is not known
      */
     public Socket createSocket(Socket s, String host, int port,
-	    boolean autoClose) throws IOException {
-	return new SSLSocketImpl(context, s, host, port, autoClose);
+            boolean autoClose) throws IOException {
+        return new SSLSocketImpl(context, s, host, port, autoClose);
     }
 
 
@@ -125,7 +124,7 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
     public Socket createSocket(InetAddress address, int port)
     throws IOException
     {
-	return new SSLSocketImpl(context, address, port);
+        return new SSLSocketImpl(context, address, port);
     }
 
 
@@ -137,11 +136,11 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * address and port supplied.
      */
     public Socket createSocket(String host, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException
     {
-	return new SSLSocketImpl(context, host, port,
-		clientAddress, clientPort);
+        return new SSLSocketImpl(context, host, port,
+                clientAddress, clientPort);
     }
 
     /**
@@ -152,11 +151,11 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * the local address and port supplied.
      */
     public Socket createSocket(InetAddress address, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException
     {
-	return new SSLSocketImpl(context, address, port,
-		clientAddress, clientPort);
+        return new SSLSocketImpl(context, address, port,
+                clientAddress, clientPort);
     }
 
 
@@ -168,8 +167,8 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * is encrypted to provide confidentiality.
      */
     public String[] getDefaultCipherSuites() {
-	CipherSuiteList.clearAvailableCache();
-	return CipherSuiteList.getDefault().toStringArray();
+        CipherSuiteList.clearAvailableCache();
+        return CipherSuiteList.getDefault().toStringArray();
     }
 
 
@@ -182,8 +181,7 @@ public class SSLSocketFactoryImpl extends SSLSocketFactory
      * certain kinds of certificates to use certain cipher suites.
      */
     public String[] getSupportedCipherSuites() {
-	CipherSuiteList.clearAvailableCache();
-	return CipherSuiteList.getSupported().toStringArray();
+        CipherSuiteList.clearAvailableCache();
+        return CipherSuiteList.getSupported().toStringArray();
     }
 }
-

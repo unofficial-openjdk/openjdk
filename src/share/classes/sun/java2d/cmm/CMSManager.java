@@ -44,7 +44,7 @@ public class CMSManager {
                                               // by java.awt.color.ColorSpace
                                               // and read by
                                               // java.awt.image.ColorModel.
-    
+
     private static PCMM cmmImpl = null;
 
     public static synchronized PCMM getModule() {
@@ -101,7 +101,7 @@ public class CMSManager {
             System.err.print(cName + ".loadProfile");
             long profileID = tcmm.loadProfile(data);
             System.err.println("(ID=" + profileID + ")");
-            return profileID;    
+            return profileID;
         }
 
         public void freeProfile(long profileID) {
@@ -123,32 +123,32 @@ public class CMSManager {
         }
 
         public int getTagSize(long profileID, int tagSignature) {
-            System.err.print(cName + ".getTagSize(ID=" + profileID + 
+            System.err.print(cName + ".getTagSize(ID=" + profileID +
                                ", TagSig=" + tagSignature + ")");
             int size = tcmm.getTagSize(profileID, tagSignature);
             System.err.println("=" + size);
             return size;
         }
 
-        public void getTagData(long profileID, int tagSignature, 
+        public void getTagData(long profileID, int tagSignature,
                                byte[] data) {
-            System.err.print(cName + ".getTagData(ID=" + profileID + 
+            System.err.print(cName + ".getTagData(ID=" + profileID +
                              ", TagSig=" + tagSignature + ")");
             System.err.println(" requested " + data.length + " byte(s)");
             tcmm.getTagData(profileID, tagSignature, data);
         }
 
-        public void setTagData(long profileID, int tagSignature, 
+        public void setTagData(long profileID, int tagSignature,
                                byte[] data) {
-            System.err.print(cName + ".setTagData(ID=" + profileID + 
+            System.err.print(cName + ".setTagData(ID=" + profileID +
                              ", TagSig=" + tagSignature + ")");
             System.err.println(" sending " + data.length + " byte(s)");
             tcmm.setTagData(profileID, tagSignature, data);
         }
 
         /* methods for creating ColorTransforms */
-        public ColorTransform createTransform(ICC_Profile profile, 
-                                              int renderType, 
+        public ColorTransform createTransform(ICC_Profile profile,
+                                              int renderType,
                                               int transformType) {
             System.err.println(cName + ".createTransform(ICC_Profile,int,int)");
             return tcmm.createTransform(profile, renderType, transformType);

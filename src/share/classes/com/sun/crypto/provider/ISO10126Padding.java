@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package com.sun.crypto.provider;
 
 import javax.crypto.ShortBufferException;
@@ -40,7 +40,7 @@ final class ISO10126Padding implements Padding {
     private int blockSize;
 
     ISO10126Padding(int blockSize) {
-	this.blockSize = blockSize;
+        this.blockSize = blockSize;
     }
 
     /**
@@ -48,7 +48,7 @@ final class ISO10126Padding implements Padding {
      * The value of the padding bytes is determined
      * by the specific padding mechanism that implements this
      * interface.
-     * 
+     *
      * @param in the input buffer with the data to pad
      * @param off the offset in <code>in</code> where the padding bytes
      * are appended
@@ -57,22 +57,22 @@ final class ISO10126Padding implements Padding {
      * @exception ShortBufferException if <code>in</code> is too small to hold
      * the padding bytes
      */
-    public void padWithLen(byte[] in, int off, int len) 
-	throws ShortBufferException
+    public void padWithLen(byte[] in, int off, int len)
+        throws ShortBufferException
     {
-	if (in == null)
-	    return;
+        if (in == null)
+            return;
 
-	if ((off + len) > in.length) {
-	    throw new ShortBufferException("Buffer too small to hold padding");
-	}
+        if ((off + len) > in.length) {
+            throw new ShortBufferException("Buffer too small to hold padding");
+        }
 
-	byte paddingOctet = (byte) (len & 0xff);
-	byte[] padding = new byte[len];
-	SunJCE.RANDOM.nextBytes(padding);
-	padding[len-1] = paddingOctet;
-	System.arraycopy(padding, 0, in, off, len);
-	return;
+        byte paddingOctet = (byte) (len & 0xff);
+        byte[] padding = new byte[len];
+        SunJCE.RANDOM.nextBytes(padding);
+        padding[len-1] = paddingOctet;
+        System.arraycopy(padding, 0, in, off, len);
+        return;
     }
 
     /**
@@ -89,36 +89,35 @@ final class ISO10126Padding implements Padding {
      * not properly padded
      */
     public int unpad(byte[] in, int off, int len) {
-	if ((in == null) || 
-	    (len == 0)) { // this can happen if input is really a padded buffer
-	    return 0;
-	}
+        if ((in == null) ||
+            (len == 0)) { // this can happen if input is really a padded buffer
+            return 0;
+        }
 
-	byte lastByte = in[off + len - 1];
-	int padValue = (int)lastByte & 0x0ff;
-	if ((padValue < 0x01)
-	    || (padValue > blockSize)) {
-	    return -1;
-	}
+        byte lastByte = in[off + len - 1];
+        int padValue = (int)lastByte & 0x0ff;
+        if ((padValue < 0x01)
+            || (padValue > blockSize)) {
+            return -1;
+        }
 
-	int start = off + len - ((int)lastByte & 0x0ff);
-	if (start < off) {
-	    return -1;
-	}
+        int start = off + len - ((int)lastByte & 0x0ff);
+        if (start < off) {
+            return -1;
+        }
 
-	return start;
+        return start;
     }
 
     /**
      * Determines how long the padding will be for a given input length.
      *
      * @param len the length of the data to pad
-     * 
+     *
      * @return the length of the padding
      */
     public int padLength(int len) {
-	int paddingOctet = blockSize - (len % blockSize);
-	return paddingOctet;
+        int paddingOctet = blockSize - (len % blockSize);
+        return paddingOctet;
     }
 }
-

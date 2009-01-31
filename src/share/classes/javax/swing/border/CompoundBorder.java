@@ -30,7 +30,7 @@ import java.awt.Component;
 
 /**
  * A composite Border class used to compose two Border objects
- * into a single border by nesting an inside Border object within 
+ * into a single border by nesting an inside Border object within
  * the insets of an outside Border object.
  *
  * For example, this class may be used to add blank margin space
@@ -51,43 +51,42 @@ import java.awt.Component;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author David Kloba
  */
 public class CompoundBorder extends AbstractBorder {
     protected Border outsideBorder;
     protected Border insideBorder;
 
-    /** 
+    /**
      * Creates a compound border with null outside and inside borders.
      */
     public CompoundBorder() {
-	this.outsideBorder = null;
-	this.insideBorder = null;
-    }	    
+        this.outsideBorder = null;
+        this.insideBorder = null;
+    }
 
-    /** 
-     * Creates a compound border with the specified outside and 
+    /**
+     * Creates a compound border with the specified outside and
      * inside borders.  Either border may be null.
      * @param outsideBorder the outside border
      * @param insideBorder the inside border to be nested
      */
     public CompoundBorder(Border outsideBorder, Border insideBorder) {
-	this.outsideBorder = outsideBorder;
-	this.insideBorder = insideBorder;
-    }	    
+        this.outsideBorder = outsideBorder;
+        this.insideBorder = insideBorder;
+    }
 
     /**
      * Returns whether or not this compound border is opaque.
      * Returns true if both the inside and outside borders are
      * non-null and opaque; returns false otherwise.
      */
-    public boolean isBorderOpaque() { 
-	return (outsideBorder == null || outsideBorder.isBorderOpaque()) &&
-               (insideBorder == null || insideBorder.isBorderOpaque()); 
+    public boolean isBorderOpaque() {
+        return (outsideBorder == null || outsideBorder.isBorderOpaque()) &&
+               (insideBorder == null || insideBorder.isBorderOpaque());
     }
 
-    /** 
+    /**
      * Paints the compound border by painting the outside border
      * with the specified position and size and then painting the
      * inside border at the specified position and size offset by
@@ -100,51 +99,51 @@ public class CompoundBorder extends AbstractBorder {
      * @param height the height of the painted border
      */
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-	Insets  nextInsets;
-	int px, py, pw, ph;
+        Insets  nextInsets;
+        int px, py, pw, ph;
 
-	px = x;
-	py = y;
-	pw = width;
-	ph = height;
+        px = x;
+        py = y;
+        pw = width;
+        ph = height;
 
-	if(outsideBorder != null) {
-	    outsideBorder.paintBorder(c, g, px, py, pw, ph);		
+        if(outsideBorder != null) {
+            outsideBorder.paintBorder(c, g, px, py, pw, ph);
 
-	    nextInsets = outsideBorder.getBorderInsets(c);
-	    px += nextInsets.left;
-	    py += nextInsets.top;
-	    pw = pw - nextInsets.right - nextInsets.left;
-	    ph = ph - nextInsets.bottom - nextInsets.top;
-	}
-	if(insideBorder != null) 
-  	    insideBorder.paintBorder(c, g, px, py, pw, ph);		
+            nextInsets = outsideBorder.getBorderInsets(c);
+            px += nextInsets.left;
+            py += nextInsets.top;
+            pw = pw - nextInsets.right - nextInsets.left;
+            ph = ph - nextInsets.bottom - nextInsets.top;
+        }
+        if(insideBorder != null)
+            insideBorder.paintBorder(c, g, px, py, pw, ph);
 
     }
-     
-    /** 
-     * Reinitialize the insets parameter with this Border's current Insets. 
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      */
     public Insets getBorderInsets(Component c, Insets insets) {
-	Insets  nextInsets;
+        Insets  nextInsets;
 
-	insets.top = insets.left = insets.right = insets.bottom = 0;
-	if(outsideBorder != null) {
-	    nextInsets = outsideBorder.getBorderInsets(c);
-	    insets.top += nextInsets.top;
-	    insets.left += nextInsets.left;
-	    insets.right += nextInsets.right;
-	    insets.bottom += nextInsets.bottom;
-	}
-	if(insideBorder != null) {
-	    nextInsets = insideBorder.getBorderInsets(c);
-	    insets.top += nextInsets.top;
-	    insets.left += nextInsets.left;
-	    insets.right += nextInsets.right;
-	    insets.bottom += nextInsets.bottom;
-	}
+        insets.top = insets.left = insets.right = insets.bottom = 0;
+        if(outsideBorder != null) {
+            nextInsets = outsideBorder.getBorderInsets(c);
+            insets.top += nextInsets.top;
+            insets.left += nextInsets.left;
+            insets.right += nextInsets.right;
+            insets.bottom += nextInsets.bottom;
+        }
+        if(insideBorder != null) {
+            nextInsets = insideBorder.getBorderInsets(c);
+            insets.top += nextInsets.top;
+            insets.left += nextInsets.left;
+            insets.right += nextInsets.right;
+            insets.bottom += nextInsets.bottom;
+        }
         return insets;
     }
 
@@ -155,7 +154,7 @@ public class CompoundBorder extends AbstractBorder {
      * @param c the component for which this border insets value applies
      */
     public Insets getBorderInsets(Component c) {
-	return getBorderInsets(c, new Insets(0,0,0,0));
+        return getBorderInsets(c, new Insets(0,0,0,0));
     }
 
     /**
@@ -172,4 +171,3 @@ public class CompoundBorder extends AbstractBorder {
         return insideBorder;
     }
 }
-

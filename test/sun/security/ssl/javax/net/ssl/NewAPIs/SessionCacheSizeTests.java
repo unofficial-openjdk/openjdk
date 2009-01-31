@@ -102,34 +102,34 @@ public class SessionCacheSizeTests {
 
     void doServerSide(int serverPort, int serverConns) throws Exception {
 
-	SSLServerSocket sslServerSocket =
-	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
-	serverPorts[createdPorts++] = sslServerSocket.getLocalPort();
+        SSLServerSocket sslServerSocket =
+            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+        serverPorts[createdPorts++] = sslServerSocket.getLocalPort();
 
-	/*
-	 * Signal Client, we're ready for his connect.
-	 */
-	serverReady = true;
+        /*
+         * Signal Client, we're ready for his connect.
+         */
+        serverReady = true;
         int read = 0;
         int nConnections = 0;
-	/*
+        /*
          * Divide the max connections among the available server ports.
          * The use of more than one server port ensures creation of more
          * than one session.
-	 */
-	SSLSession sessions [] = new SSLSession [serverConns];
-	SSLSessionContext sessCtx = sslctx.getServerSessionContext();
+         */
+        SSLSession sessions [] = new SSLSession [serverConns];
+        SSLSessionContext sessCtx = sslctx.getServerSessionContext();
 
         while (nConnections < serverConns) {
-	    SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-	    InputStream sslIS = sslSocket.getInputStream();
-	    OutputStream sslOS = sslSocket.getOutputStream();
-	    read = sslIS.read();
-	    sessions[nConnections] = sslSocket.getSession();
-	    sslOS.write(85);
-	    sslOS.flush();
-	    sslSocket.close();
-	    nConnections++;
+            SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+            InputStream sslIS = sslSocket.getInputStream();
+            OutputStream sslOS = sslSocket.getOutputStream();
+            read = sslIS.read();
+            sessions[nConnections] = sslSocket.getSession();
+            sslOS.write(85);
+            sslOS.flush();
+            sslSocket.close();
+            nConnections++;
         }
     }
 
@@ -141,57 +141,57 @@ public class SessionCacheSizeTests {
      */
     void doClientSide() throws Exception {
 
-	/*
-	 * Wait for server to get started.
-	 */
-	while (!serverReady) {
-	    Thread.sleep(50);
-	}
+        /*
+         * Wait for server to get started.
+         */
+        while (!serverReady) {
+            Thread.sleep(50);
+        }
 
         int nConnections = 0;
         SSLSocket sslSockets[] = new SSLSocket [MAX_ACTIVE_CONNECTIONS];
-	Vector sessions = new Vector();
-   	SSLSessionContext sessCtx = sslctx.getClientSessionContext();
-	sessCtx.setSessionTimeout(0); // no limit
+        Vector sessions = new Vector();
+        SSLSessionContext sessCtx = sslctx.getClientSessionContext();
+        sessCtx.setSessionTimeout(0); // no limit
 
-	while (nConnections < (MAX_ACTIVE_CONNECTIONS - 1)) {
-	    // divide the connections among the available server ports
-	    sslSockets[nConnections] = (SSLSocket) sslsf.
-			createSocket("localhost",
-			serverPorts [nConnections % (serverPorts.length)]);
-	    InputStream sslIS = sslSockets[nConnections].getInputStream();
-	    OutputStream sslOS = sslSockets[nConnections].getOutputStream();
-	    sslOS.write(237);
-	    sslOS.flush();
+        while (nConnections < (MAX_ACTIVE_CONNECTIONS - 1)) {
+            // divide the connections among the available server ports
+            sslSockets[nConnections] = (SSLSocket) sslsf.
+                        createSocket("localhost",
+                        serverPorts [nConnections % (serverPorts.length)]);
+            InputStream sslIS = sslSockets[nConnections].getInputStream();
+            OutputStream sslOS = sslSockets[nConnections].getOutputStream();
+            sslOS.write(237);
+            sslOS.flush();
             int read = sslIS.read();
             SSLSession sess = sslSockets[nConnections].getSession();
-	    if (!sessions.contains(sess))
-		sessions.add(sess);
-	    nConnections++;
+            if (!sessions.contains(sess))
+                sessions.add(sess);
+            nConnections++;
         }
-	System.out.println("Current cacheSize is set to: " +
-				 sessCtx.getSessionCacheSize());
-	System.out.println();
-	System.out.println("Currently cached Sessions......");
-	System.out.println("============================================"
-				+ "============================");
-	System.out.println("Session	                    		"
-				+ "      Session-last-accessTime");
-	System.out.println("============================================"
-				+ "============================");
-	checkCachedSessions(sessCtx, nConnections);
-	// Change session cache size
-	sessCtx.setSessionCacheSize(2);
-	System.out.println("Session cache size changed to: "
-			+ sessCtx.getSessionCacheSize());
-	System.out.println();
-	checkCachedSessions(sessCtx, nConnections);
+        System.out.println("Current cacheSize is set to: " +
+                                 sessCtx.getSessionCacheSize());
+        System.out.println();
+        System.out.println("Currently cached Sessions......");
+        System.out.println("============================================"
+                                + "============================");
+        System.out.println("Session                                     "
+                                + "      Session-last-accessTime");
+        System.out.println("============================================"
+                                + "============================");
+        checkCachedSessions(sessCtx, nConnections);
+        // Change session cache size
+        sessCtx.setSessionCacheSize(2);
+        System.out.println("Session cache size changed to: "
+                        + sessCtx.getSessionCacheSize());
+        System.out.println();
+        checkCachedSessions(sessCtx, nConnections);
 
-	// Test the effect of increasing the cache size
-	sessCtx.setSessionCacheSize(3);
-	System.out.println("Session cache size changed to: "
-			+ sessCtx.getSessionCacheSize());
-	// create a new session
+        // Test the effect of increasing the cache size
+        sessCtx.setSessionCacheSize(3);
+        System.out.println("Session cache size changed to: "
+                        + sessCtx.getSessionCacheSize());
+        // create a new session
         sslSockets[nConnections] = (SSLSocket) sslsf.
                         createSocket("localhost",
                         serverPorts [nConnections % (serverPorts.length)]);
@@ -203,46 +203,46 @@ public class SessionCacheSizeTests {
         SSLSession sess = sslSockets[nConnections].getSession();
         if (!sessions.contains(sess))
             sessions.add(sess);
-	nConnections++;
+        nConnections++;
 
-	// test the number of sessions cached against the cache size
-	checkCachedSessions(sessCtx, nConnections);
+        // test the number of sessions cached against the cache size
+        checkCachedSessions(sessCtx, nConnections);
 
         for (int i = 0; i < nConnections; i++) {
-	    sslSockets[i].close();
-	}
-	System.out.println("Session cache size tests passed");
+            sslSockets[i].close();
+        }
+        System.out.println("Session cache size tests passed");
     }
 
     void checkCachedSessions(SSLSessionContext sessCtx,
-		int nConn) throws Exception {
- 	int nSessions = 0;
+                int nConn) throws Exception {
+        int nSessions = 0;
         Enumeration e = sessCtx.getIds();
-	int cacheSize = sessCtx.getSessionCacheSize();
+        int cacheSize = sessCtx.getSessionCacheSize();
         SSLSession sess;
 
         while (e.hasMoreElements()) {
             sess = sessCtx.getSession((byte[]) e.nextElement());
-	    long lastAccessedTime  = sess.getLastAccessedTime();
+            long lastAccessedTime  = sess.getLastAccessedTime();
                 System.out.println(sess + "       "
                         +  new Date(lastAccessedTime));
 
             nSessions++;
         }
-	System.out.println("--------------------------------------------"
-				+ "----------------------------");
-	if ((cacheSize > 0) && (nSessions > cacheSize)) {
+        System.out.println("--------------------------------------------"
+                                + "----------------------------");
+        if ((cacheSize > 0) && (nSessions > cacheSize)) {
 
-	    // close all active connections before exiting
-	    for (int conn = nConn; conn < MAX_ACTIVE_CONNECTIONS; conn++) {
-		SSLSocket s = (SSLSocket) sslsf.createSocket("localhost",
+            // close all active connections before exiting
+            for (int conn = nConn; conn < MAX_ACTIVE_CONNECTIONS; conn++) {
+                SSLSocket s = (SSLSocket) sslsf.createSocket("localhost",
                         serverPorts [conn % (serverPorts.length)]);
-		s.close();
+                s.close();
             }
-	    throw new Exception("Session cache size test failed,"
-		+ " current cache size: " + cacheSize + " #sessions cached: "
-		+ nSessions);
-	}
+            throw new Exception("Session cache size test failed,"
+                + " current cache size: " + cacheSize + " #sessions cached: "
+                + nSessions);
+        }
     }
 
     /*
@@ -265,35 +265,35 @@ public class SessionCacheSizeTests {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-	String keyFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + keyStoreFile;
-	String trustFilename =
-	    System.getProperty("test.src", "./") + "/" + pathToStores +
-		"/" + trustStoreFile;
+        String keyFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + keyStoreFile;
+        String trustFilename =
+            System.getProperty("test.src", "./") + "/" + pathToStores +
+                "/" + trustStoreFile;
 
-	System.setProperty("javax.net.ssl.keyStore", keyFilename);
-	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-	System.setProperty("javax.net.ssl.trustStore", trustFilename);
-	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+        System.setProperty("javax.net.ssl.keyStore", keyFilename);
+        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+        System.setProperty("javax.net.ssl.trustStore", trustFilename);
+        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-	// test the effect of javax.net.ssl.sessionCacheSize
-	System.setProperty("javax.net.ssl.sessionCacheSize", String.valueOf(0));
+        // test the effect of javax.net.ssl.sessionCacheSize
+        System.setProperty("javax.net.ssl.sessionCacheSize", String.valueOf(0));
 
         sslctx = SSLContext.getInstance("TLS");
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-    	KeyStore ks = KeyStore.getInstance("JKS");
-    	ks.load(new FileInputStream(keyFilename), passwd.toCharArray());
-    	kmf.init(ks, passwd.toCharArray());
-    	sslctx.init(kmf.getKeyManagers(), null, null);
-	sslssf = (SSLServerSocketFactory) sslctx.getServerSocketFactory();
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(keyFilename), passwd.toCharArray());
+        kmf.init(ks, passwd.toCharArray());
+        sslctx.init(kmf.getKeyManagers(), null, null);
+        sslssf = (SSLServerSocketFactory) sslctx.getServerSocketFactory();
         sslsf = (SSLSocketFactory) sslctx.getSocketFactory();
-	if (debug)
-	    System.setProperty("javax.net.debug", "all");
+        if (debug)
+            System.setProperty("javax.net.debug", "all");
 
-	/*
-	 * Start the tests.
-	 */
+        /*
+         * Start the tests.
+         */
         new SessionCacheSizeTests();
     }
 
@@ -307,105 +307,105 @@ public class SessionCacheSizeTests {
      */
     SessionCacheSizeTests() throws Exception {
 
-	/*
-	 * create the SSLServerSocket and SSLSocket factories
-	 */
+        /*
+         * create the SSLServerSocket and SSLSocket factories
+         */
 
-	/*
+        /*
          * Divide the max connections among the available server ports.
          * The use of more than one server port ensures creation of more
          * than one session.
-	 */
+         */
         int serverConns = MAX_ACTIVE_CONNECTIONS / (serverPorts.length);
         int remainingConns = MAX_ACTIVE_CONNECTIONS % (serverPorts.length);
 
-	if (separateServerThread) {
-	    for (int i = 0; i < serverPorts.length; i++) {
+        if (separateServerThread) {
+            for (int i = 0; i < serverPorts.length; i++) {
 
                 // distribute remaining connections among the available ports
                 if (i < remainingConns)
-		    startServer(serverPorts[i], (serverConns + 1), true);
-		else
-		    startServer(serverPorts[i], serverConns, true);
-	    }
-	    startClient(false);
-	} else {
-	    startClient(true);
-	    for (int i = 0; i < serverPorts.length; i++) {
-		if (i < remainingConns)
-		    startServer(serverPorts[i], (serverConns + 1), false);
-		else
-		    startServer(serverPorts[i], serverConns, false);
-	    }
-	}
+                    startServer(serverPorts[i], (serverConns + 1), true);
+                else
+                    startServer(serverPorts[i], serverConns, true);
+            }
+            startClient(false);
+        } else {
+            startClient(true);
+            for (int i = 0; i < serverPorts.length; i++) {
+                if (i < remainingConns)
+                    startServer(serverPorts[i], (serverConns + 1), false);
+                else
+                    startServer(serverPorts[i], serverConns, false);
+            }
+        }
 
-	/*
-	 * Wait for other side to close down.
-	 */
-	if (separateServerThread) {
-	    serverThread.join();
-	} else {
-	    clientThread.join();
-	}
+        /*
+         * Wait for other side to close down.
+         */
+        if (separateServerThread) {
+            serverThread.join();
+        } else {
+            clientThread.join();
+        }
 
-	/*
-	 * When we get here, the test is pretty much over.
-	 *
-	 * If the main thread excepted, that propagates back
-	 * immediately.  If the other thread threw an exception, we
-	 * should report back.
-	 */
-	if (serverException != null)
-	    throw serverException;
-	if (clientException != null)
-	    throw clientException;
+        /*
+         * When we get here, the test is pretty much over.
+         *
+         * If the main thread excepted, that propagates back
+         * immediately.  If the other thread threw an exception, we
+         * should report back.
+         */
+        if (serverException != null)
+            throw serverException;
+        if (clientException != null)
+            throw clientException;
     }
 
     void startServer(final int port, final int nConns,
-			boolean newThread) throws Exception {
-	if (newThread) {
-	    serverThread = new Thread() {
-		public void run() {
-		    try {
-			doServerSide(port, nConns);
-		    } catch (Exception e) {
-			/*
-			 * Our server thread just died.
-			 *
-			 * Release the client, if not active already...
-			 */
-			System.err.println("Server died...");
-			e.printStackTrace();
-			serverReady = true;
-			serverException = e;
-		    }
-		}
-	    };
-	    serverThread.start();
-	} else {
-	    doServerSide(port, nConns);
-	}
+                        boolean newThread) throws Exception {
+        if (newThread) {
+            serverThread = new Thread() {
+                public void run() {
+                    try {
+                        doServerSide(port, nConns);
+                    } catch (Exception e) {
+                        /*
+                         * Our server thread just died.
+                         *
+                         * Release the client, if not active already...
+                         */
+                        System.err.println("Server died...");
+                        e.printStackTrace();
+                        serverReady = true;
+                        serverException = e;
+                    }
+                }
+            };
+            serverThread.start();
+        } else {
+            doServerSide(port, nConns);
+        }
     }
 
     void startClient(boolean newThread)
-		 throws Exception {
-	if (newThread) {
-	    clientThread = new Thread() {
-		public void run() {
-		    try {
-			doClientSide();
-		    } catch (Exception e) {
-			/*
-			 * Our client thread just died.
-			 */
-			System.err.println("Client died...");
-			clientException = e;
-		    }
-		}
-	    };
-	    clientThread.start();
-	} else {
-	    doClientSide();
-	}
+                 throws Exception {
+        if (newThread) {
+            clientThread = new Thread() {
+                public void run() {
+                    try {
+                        doClientSide();
+                    } catch (Exception e) {
+                        /*
+                         * Our client thread just died.
+                         */
+                        System.err.println("Client died...");
+                        clientException = e;
+                    }
+                }
+            };
+            clientThread.start();
+        } else {
+            doClientSide();
+        }
     }
 }

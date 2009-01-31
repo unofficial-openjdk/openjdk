@@ -87,7 +87,7 @@ public class BuddhistCalendar extends GregorianCalendar {
 /////////////////
 // Public methods
 /////////////////
-    
+
     /**
      * Compares this BuddhistCalendar to an object reference.
      * @param obj the object reference with which to compare
@@ -95,9 +95,9 @@ public class BuddhistCalendar extends GregorianCalendar {
      */
     public boolean equals(Object obj) {
         return obj instanceof BuddhistCalendar
-	    && super.equals(obj);
+            && super.equals(obj);
     }
-    
+
     /**
      * Override hashCode.
      * Generates the hash code for the BuddhistCalendar object
@@ -113,10 +113,10 @@ public class BuddhistCalendar extends GregorianCalendar {
      */
     public int get(int field)
     {
-	if (field == YEAR) {
-	    return super.get(field) + yearOffset;
-	}
-	return super.get(field);
+        if (field == YEAR) {
+            return super.get(field) + yearOffset;
+        }
+        return super.get(field);
     }
 
     /**
@@ -126,11 +126,11 @@ public class BuddhistCalendar extends GregorianCalendar {
      */
     public void set(int field, int value)
     {
-	if (field == YEAR) {
-	    super.set(field, value - yearOffset);
-	} else {
-	    super.set(field, value);
-	}
+        if (field == YEAR) {
+            super.set(field, value - yearOffset);
+        } else {
+            super.set(field, value);
+        }
     }
 
     /**
@@ -140,13 +140,13 @@ public class BuddhistCalendar extends GregorianCalendar {
      */
     public void add(int field, int amount)
     {
-	int savedYearOffset = yearOffset;
-	yearOffset = 0;
-	try {
-	    super.add(field, amount);
-	} finally {
-	    yearOffset = savedYearOffset;
-	}
+        int savedYearOffset = yearOffset;
+        yearOffset = 0;
+        try {
+            super.add(field, amount);
+        } finally {
+            yearOffset = savedYearOffset;
+        }
     }
 
     /**
@@ -158,81 +158,81 @@ public class BuddhistCalendar extends GregorianCalendar {
      */
     public void roll(int field, int amount)
     {
-	int savedYearOffset = yearOffset;
-	yearOffset = 0;
-	try {
-	    super.roll(field, amount);
-	} finally {
-	    yearOffset = savedYearOffset;
-	}
+        int savedYearOffset = yearOffset;
+        yearOffset = 0;
+        try {
+            super.roll(field, amount);
+        } finally {
+            yearOffset = savedYearOffset;
+        }
     }
 
     public String getDisplayName(int field, int style, Locale locale) {
-	if (field != ERA) {
-	    return super.getDisplayName(field, style, locale);
-	}
+        if (field != ERA) {
+            return super.getDisplayName(field, style, locale);
+        }
 
-	// Handle Thai BuddhistCalendar specific era names
-	if (field < 0 || field >= fields.length ||
-	    style < SHORT || style > LONG) {
-	    throw new IllegalArgumentException();
-	}
-	if (locale == null) {
-	    throw new NullPointerException();
-	}
-	ResourceBundle rb = LocaleData.getDateFormatData(locale);
-	String[] eras = rb.getStringArray(getKey(style));
-	return eras[get(field)];
+        // Handle Thai BuddhistCalendar specific era names
+        if (field < 0 || field >= fields.length ||
+            style < SHORT || style > LONG) {
+            throw new IllegalArgumentException();
+        }
+        if (locale == null) {
+            throw new NullPointerException();
+        }
+        ResourceBundle rb = LocaleData.getDateFormatData(locale);
+        String[] eras = rb.getStringArray(getKey(style));
+        return eras[get(field)];
     }
 
     public Map<String,Integer> getDisplayNames(int field, int style, Locale locale) {
-	if (field != ERA) {
-	    return super.getDisplayNames(field, style, locale);
-	}
+        if (field != ERA) {
+            return super.getDisplayNames(field, style, locale);
+        }
 
-	// Handle Thai BuddhistCalendar specific era names
-	if (field < 0 || field >= fields.length ||
-	    style < ALL_STYLES || style > LONG) {
-	    throw new IllegalArgumentException();
-	}
-	if (locale == null) {
-	    throw new NullPointerException();
-	}
-	// ALL_STYLES
-	if (style == ALL_STYLES) {
-	    Map<String,Integer> shortNames = getDisplayNamesImpl(field, SHORT, locale);
-	    Map<String,Integer> longNames = getDisplayNamesImpl(field, LONG, locale);
-	    if (shortNames == null) {
-		return longNames;
-	    }
-	    if (longNames != null) {
-		shortNames.putAll(longNames);
-	    }
-	    return shortNames;
-	}
+        // Handle Thai BuddhistCalendar specific era names
+        if (field < 0 || field >= fields.length ||
+            style < ALL_STYLES || style > LONG) {
+            throw new IllegalArgumentException();
+        }
+        if (locale == null) {
+            throw new NullPointerException();
+        }
+        // ALL_STYLES
+        if (style == ALL_STYLES) {
+            Map<String,Integer> shortNames = getDisplayNamesImpl(field, SHORT, locale);
+            Map<String,Integer> longNames = getDisplayNamesImpl(field, LONG, locale);
+            if (shortNames == null) {
+                return longNames;
+            }
+            if (longNames != null) {
+                shortNames.putAll(longNames);
+            }
+            return shortNames;
+        }
 
-	// SHORT or LONG
-	return getDisplayNamesImpl(field, style, locale);
+        // SHORT or LONG
+        return getDisplayNamesImpl(field, style, locale);
     }
 
     private Map<String,Integer> getDisplayNamesImpl(int field, int style, Locale locale) {
-	ResourceBundle rb = LocaleData.getDateFormatData(locale);
-	String[] eras = rb.getStringArray(getKey(style));
-	Map<String,Integer> map = new HashMap<String,Integer>(4);
-	for (int i = 0; i < eras.length; i++) {
-	    map.put(eras[i], i);
-	}
-	return map;
+        ResourceBundle rb = LocaleData.getDateFormatData(locale);
+        String[] eras = rb.getStringArray(getKey(style));
+        Map<String,Integer> map = new HashMap<String,Integer>(4);
+        for (int i = 0; i < eras.length; i++) {
+            map.put(eras[i], i);
+        }
+        return map;
     }
 
     private String getKey(int style) {
-	StringBuilder key = new StringBuilder();
-	key.append(BuddhistCalendar.class.getName());
-	if (style == SHORT) {
-	    key.append(".short");
-	}
-	key.append(".Eras");
-	return key.toString();
+        StringBuilder key = new StringBuilder();
+        key.append(BuddhistCalendar.class.getName());
+        if (style == SHORT) {
+            key.append(".short");
+        }
+        key.append(".Eras");
+        return key.toString();
     }
 
     /**
@@ -245,39 +245,39 @@ public class BuddhistCalendar extends GregorianCalendar {
      * @return the maximum of the given field for the current date of this Calendar
      */
     public int getActualMaximum(int field) {
-	int savedYearOffset = yearOffset;
-	yearOffset = 0;
-	try {
-	    return super.getActualMaximum(field);
-	} finally {
-	    yearOffset = savedYearOffset;
-	}
+        int savedYearOffset = yearOffset;
+        yearOffset = 0;
+        try {
+            return super.getActualMaximum(field);
+        } finally {
+            yearOffset = savedYearOffset;
+        }
     }
 
     public String toString() {
-	// The super class produces a String with the Gregorian year
-	// value (or '?')
-	String s = super.toString();
-	// If the YEAR field is UNSET, then return the Gregorian string.
-	if (!isSet(YEAR)) {
-	    return s;
-	}
+        // The super class produces a String with the Gregorian year
+        // value (or '?')
+        String s = super.toString();
+        // If the YEAR field is UNSET, then return the Gregorian string.
+        if (!isSet(YEAR)) {
+            return s;
+        }
 
-	final String yearField = "YEAR=";
-	int p = s.indexOf(yearField);
-	// If the string doesn't include the year value for some
-	// reason, then return the Gregorian string.
-	if (p == -1) {
-	    return s;
-	}
-	p += yearField.length();
-	StringBuilder sb = new StringBuilder(s.substring(0, p));
-	// Skip the year number
-	while (Character.isDigit(s.charAt(p++)))
-	    ;
-	int year = internalGet(YEAR) + buddhistOffset;
-	sb.append(year).append(s.substring(p - 1));
-	return sb.toString();
+        final String yearField = "YEAR=";
+        int p = s.indexOf(yearField);
+        // If the string doesn't include the year value for some
+        // reason, then return the Gregorian string.
+        if (p == -1) {
+            return s;
+        }
+        p += yearField.length();
+        StringBuilder sb = new StringBuilder(s.substring(0, p));
+        // Skip the year number
+        while (Character.isDigit(s.charAt(p++)))
+            ;
+        int year = internalGet(YEAR) + buddhistOffset;
+        sb.append(year).append(s.substring(p - 1));
+        return sb.toString();
     }
 
     private transient int yearOffset = buddhistOffset;

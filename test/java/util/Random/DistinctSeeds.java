@@ -41,10 +41,10 @@ import java.util.Random;
 
 public class DistinctSeeds {
     public static void main(String[] args) throws Exception {
-	// Strictly speaking, it is possible for these to randomly fail,
-	// but the probability should be *extremely* small (< 2**-63).
-	if (new Random().nextLong() == new Random().nextLong() ||
-	    new Random().nextLong() == new Random().nextLong())
+        // Strictly speaking, it is possible for these to randomly fail,
+        // but the probability should be *extremely* small (< 2**-63).
+        if (new Random().nextLong() == new Random().nextLong() ||
+            new Random().nextLong() == new Random().nextLong())
             throw new RuntimeException("Random() seeds not unique.");
     }
 }

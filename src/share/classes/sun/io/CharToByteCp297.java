@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM297;
  * Tables and data to convert Unicode to Cp297
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp297 extends CharToByteSingleByte {

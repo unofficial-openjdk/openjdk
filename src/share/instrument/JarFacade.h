@@ -38,6 +38,3 @@ void freeAttributes(jarAttribute* attributes);
 
 /* Gets the attribute by name */
 char* getAttribute(const jarAttribute* attributes, const char* name);
-
-
-

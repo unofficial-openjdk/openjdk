@@ -38,15 +38,15 @@ import javax.security.auth.callback.UnsupportedCallbackException;
  * @since 1.6
  */
 public class NegotiateCallbackHandler implements CallbackHandler {
-    
+
     private String username;
     private char[] password;
-    
+
     public void handle(Callback[] callbacks) throws
             UnsupportedCallbackException, IOException {
         for (int i=0; i<callbacks.length; i++) {
             Callback callBack = callbacks[i];
-            
+
             if (callBack instanceof NameCallback) {
                 if (username == null) {
                     PasswordAuthentication passAuth =
@@ -59,7 +59,7 @@ public class NegotiateCallbackHandler implements CallbackHandler {
                 NameCallback nameCallback =
                         (NameCallback)callBack;
                 nameCallback.setName(username);
-                
+
             } else if (callBack instanceof PasswordCallback) {
                 PasswordCallback passwordCallback =
                         (PasswordCallback)callBack;
@@ -78,5 +78,5 @@ public class NegotiateCallbackHandler implements CallbackHandler {
                         "Call back not supported");
             }//else
         }//for
-    }    
+    }
 }

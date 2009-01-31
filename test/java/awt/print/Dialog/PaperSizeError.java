@@ -58,7 +58,7 @@ public class PaperSizeError {
                                              null, null)) {
          return;
       }
-    
+
       // Create A4 sized PageFormat.
       MediaSize a4 = MediaSize.ISO.A4;
       double a4w = Math.rint((a4.getX(1) * 72.0) / Size2DSyntax.INCH);
@@ -72,7 +72,7 @@ public class PaperSizeError {
       // Test dialog with PF argument
       PageFormat newPF = job.pageDialog(pf);
       if (newPF == null) {
-          return; // user cancelled the dialog (and hence the test). 
+          return; // user cancelled the dialog (and hence the test).
       } else {
           verifyPaper(newPF, a4w, a4h);
       }
@@ -84,7 +84,7 @@ public class PaperSizeError {
       // Test dialog with AttributeSet argument
       newPF = job.pageDialog(aset);
       if (newPF == null) {
-          return; // user cancelled the dialog (and hence the test). 
+          return; // user cancelled the dialog (and hence the test).
       } else {
           verifyPaper(newPF, a4w, a4h);
       }
@@ -112,4 +112,3 @@ public class PaperSizeError {
       }
   }
 }
-

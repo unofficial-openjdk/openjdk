@@ -47,14 +47,14 @@ import java.util.ListResourceBundle;
 public class FormatData_ms_MY extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "NumberPatterns", 
+            { "NumberPatterns",
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00;(\u00a4#,##0.00)",
                     "#,##0%",
                 }
             },
-            { "DateTimePatterns", 
+            { "DateTimePatterns",
                 new String[] {
                     "h:mm:ss a z",
                     "h:mm:ss a z",

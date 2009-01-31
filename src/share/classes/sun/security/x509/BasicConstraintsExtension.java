@@ -47,7 +47,6 @@ import sun.security.util.*;
  * </pre>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see CertAttrSet
  * @see Extension
  */
@@ -66,8 +65,8 @@ implements CertAttrSet<String> {
     public static final String PATH_LEN = "path_len";
 
     // Private data members
-    private boolean	ca = false;
-    private int	pathLen = -1;
+    private boolean     ca = false;
+    private int pathLen = -1;
 
     // Encode this extension value
     private void encodeThis() throws IOException {
@@ -96,7 +95,7 @@ implements CertAttrSet<String> {
      * @param len specifies the depth of the certification path.
      */
     public BasicConstraintsExtension(boolean ca, int len) throws IOException {
-	this(Boolean.valueOf(ca), ca, len);
+        this(Boolean.valueOf(ca), ca, len);
     }
 
     /**
@@ -106,7 +105,7 @@ implements CertAttrSet<String> {
      * @param ca true, if the subject of the Certificate is a CA.
      * @param len specifies the depth of the certification path.
      */
-    public BasicConstraintsExtension(Boolean critical, boolean ca, int len) 
+    public BasicConstraintsExtension(Boolean critical, boolean ca, int len)
     throws IOException {
         this.ca = ca;
         this.pathLen = len;
@@ -124,10 +123,10 @@ implements CertAttrSet<String> {
      * @exception IOException on error.
      */
      public BasicConstraintsExtension(Boolean critical, Object value)
-	 throws IOException
+         throws IOException
     {
          this.extensionId = PKIXExtensions.BasicConstraints_Id;
-	 this.critical = critical.booleanValue();
+         this.critical = critical.booleanValue();
 
          this.extensionValue = (byte[]) value;
          DerValue val = new DerValue(this.extensionValue);
@@ -136,23 +135,23 @@ implements CertAttrSet<String> {
          }
 
          if (val.data == null) {
-	     // non-CA cert ("cA" field is FALSE by default), return -1
+             // non-CA cert ("cA" field is FALSE by default), return -1
              return;
          }
          DerValue opt = val.data.getDerValue();
          if (opt.tag != DerValue.tag_Boolean) {
-	     // non-CA cert ("cA" field is FALSE by default), return -1
-	     return;
+             // non-CA cert ("cA" field is FALSE by default), return -1
+             return;
          }
 
-	 this.ca = opt.getBoolean();
+         this.ca = opt.getBoolean();
          if (val.data.available() == 0) {
-	     // From PKIX profile:
-	     // Where pathLenConstraint does not appear, there is no
-	     // limit to the allowed length of the certification path.
-	     this.pathLen = Integer.MAX_VALUE;
-	     return;
-	 }
+             // From PKIX profile:
+             // Where pathLenConstraint does not appear, there is no
+             // limit to the allowed length of the certification path.
+             this.pathLen = Integer.MAX_VALUE;
+             return;
+         }
 
          opt = val.data.getDerValue();
          if (opt.tag != DerValue.tag_Integer) {
@@ -196,35 +195,35 @@ implements CertAttrSet<String> {
          if (extensionValue == null) {
              this.extensionId = PKIXExtensions.BasicConstraints_Id;
              if (ca) {
-	         critical = true;
+                 critical = true;
              } else {
-	         critical = false;
+                 critical = false;
              }
              encodeThis();
          }
          super.encode(tmp);
 
-	 out.write(tmp.toByteArray());
+         out.write(tmp.toByteArray());
      }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-	if (name.equalsIgnoreCase(IS_CA)) {
-	    if (!(obj instanceof Boolean)) {
-	      throw new IOException("Attribute value should be of type Boolean.");
-	    }
-	    ca = ((Boolean)obj).booleanValue();
-	} else if (name.equalsIgnoreCase(PATH_LEN)) {
-	    if (!(obj instanceof Integer)) {
-	      throw new IOException("Attribute value should be of type Integer.");
-	    }
-	    pathLen = ((Integer)obj).intValue();
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-				"CertAttrSet:BasicConstraints.");
-	}
+        if (name.equalsIgnoreCase(IS_CA)) {
+            if (!(obj instanceof Boolean)) {
+              throw new IOException("Attribute value should be of type Boolean.");
+            }
+            ca = ((Boolean)obj).booleanValue();
+        } else if (name.equalsIgnoreCase(PATH_LEN)) {
+            if (!(obj instanceof Integer)) {
+              throw new IOException("Attribute value should be of type Integer.");
+            }
+            pathLen = ((Integer)obj).intValue();
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                                "CertAttrSet:BasicConstraints.");
+        }
         encodeThis();
     }
 
@@ -232,28 +231,28 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-	if (name.equalsIgnoreCase(IS_CA)) {
-	    return (Boolean.valueOf(ca));
-	} else if (name.equalsIgnoreCase(PATH_LEN)) {
-	    return (Integer.valueOf(pathLen));
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-				"CertAttrSet:BasicConstraints.");
-	}
+        if (name.equalsIgnoreCase(IS_CA)) {
+            return (Boolean.valueOf(ca));
+        } else if (name.equalsIgnoreCase(PATH_LEN)) {
+            return (Integer.valueOf(pathLen));
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                                "CertAttrSet:BasicConstraints.");
+        }
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-	if (name.equalsIgnoreCase(IS_CA)) {
-	    ca = false;
-	} else if (name.equalsIgnoreCase(PATH_LEN)) {
-	    pathLen = -1;
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-				"CertAttrSet:BasicConstraints.");
-	}
+        if (name.equalsIgnoreCase(IS_CA)) {
+            ca = false;
+        } else if (name.equalsIgnoreCase(PATH_LEN)) {
+            pathLen = -1;
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                                "CertAttrSet:BasicConstraints.");
+        }
         encodeThis();
     }
 
@@ -266,7 +265,7 @@ implements CertAttrSet<String> {
         elements.addElement(IS_CA);
         elements.addElement(PATH_LEN);
 
-	return (elements.elements());
+        return (elements.elements());
     }
 
     /**

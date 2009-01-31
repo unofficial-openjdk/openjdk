@@ -124,20 +124,20 @@ public interface OpenMBeanInfo {
     public MBeanConstructorInfo[] getConstructors() ;
 
     /**
-     * Returns an array of <tt>MBeanNotificationInfo</tt> instances 
-     * describing each notification emitted by the open MBean 
+     * Returns an array of <tt>MBeanNotificationInfo</tt> instances
+     * describing each notification emitted by the open MBean
      * described by this <tt>OpenMBeanInfo</tt> instance.
      *
      * @return the notification array.
      */
-    public MBeanNotificationInfo[] getNotifications() ; 
+    public MBeanNotificationInfo[] getNotifications() ;
 
 
     // commodity methods
     //
 
     /**
-     * Compares the specified <var>obj</var> parameter with this <code>OpenMBeanInfo</code> instance for equality. 
+     * Compares the specified <var>obj</var> parameter with this <code>OpenMBeanInfo</code> instance for equality.
      * <p>
      * Returns <tt>true</tt> if and only if all of the following statements are true:
      * <ul>
@@ -150,22 +150,22 @@ public interface OpenMBeanInfo {
      * different implementations of the <code>OpenMBeanInfo</code> interface.
      * <br>&nbsp;
      * @param  obj  the object to be compared for equality with this <code>OpenMBeanInfo</code> instance;
-     * 
+     *
      * @return  <code>true</code> if the specified object is equal to this <code>OpenMBeanInfo</code> instance.
      */
     public boolean equals(Object obj);
 
     /**
-     * Returns the hash code value for this <code>OpenMBeanInfo</code> instance. 
+     * Returns the hash code value for this <code>OpenMBeanInfo</code> instance.
      * <p>
      * The hash code of an <code>OpenMBeanInfo</code> instance is the sum of the hash codes
-     * of all elements of information used in <code>equals</code> comparisons 
-     * (ie: its class name, and its infos on attributes, constructors, operations and notifications, 
-     * where the hashCode of each of these arrays is calculated by a call to 
-     *  <tt>new java.util.HashSet(java.util.Arrays.asList(this.getSignature)).hashCode()</tt>). 
+     * of all elements of information used in <code>equals</code> comparisons
+     * (ie: its class name, and its infos on attributes, constructors, operations and notifications,
+     * where the hashCode of each of these arrays is calculated by a call to
+     *  <tt>new java.util.HashSet(java.util.Arrays.asList(this.getSignature)).hashCode()</tt>).
      * <p>
-     * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code> 
-     * for any two <code>OpenMBeanInfo</code> instances <code>t1</code> and <code>t2</code>, 
+     * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code>
+     * for any two <code>OpenMBeanInfo</code> instances <code>t1</code> and <code>t2</code>,
      * as required by the general contract of the method
      * {@link Object#hashCode() Object.hashCode()}.
      * <p>
@@ -175,12 +175,12 @@ public interface OpenMBeanInfo {
     public int hashCode();
 
     /**
-     * Returns a string representation of this <code>OpenMBeanInfo</code> instance. 
+     * Returns a string representation of this <code>OpenMBeanInfo</code> instance.
      * <p>
-     * The string representation consists of the name of this class (ie <code>javax.management.openmbean.OpenMBeanInfo</code>), 
-     * the MBean class name, 
+     * The string representation consists of the name of this class (ie <code>javax.management.openmbean.OpenMBeanInfo</code>),
+     * the MBean class name,
      * and the string representation of infos on attributes, constructors, operations and notifications of the described MBean.
-     * 
+     *
      * @return  a string representation of this <code>OpenMBeanInfo</code> instance
      */
     public String toString();

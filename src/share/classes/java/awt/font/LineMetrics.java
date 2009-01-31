@@ -23,7 +23,6 @@
  * have any questions.
  */
 /*
-* @(#)LineMetrics.java	1.4 98/09/21
 */
 
 package java.awt.font;
@@ -68,18 +67,18 @@ public abstract class LineMetrics {
 
     /**
      * Returns the descent of the text.  The descent
-     * is the distance from the baseline 
+     * is the distance from the baseline
      * to the descender line.  The descent usually represents
      * the distance to the bottom of lower case letters like
      * 'p'.  Some characters can extend below the descender
-     * line. 
+     * line.
      * @return the descent of the text.
      */
     public abstract float getDescent();
 
     /**
      * Returns the leading of the text. The
-     * leading is the recommended 
+     * leading is the recommended
      * distance from the bottom of the descender line to the
      * top of the next line.
      * @return the leading of the text.
@@ -96,30 +95,30 @@ public abstract class LineMetrics {
 
     /**
      * Returns the baseline index of the text.
-     * The index is one of 
+     * The index is one of
      * {@link java.awt.Font#ROMAN_BASELINE ROMAN_BASELINE},
-     * {@link java.awt.Font#CENTER_BASELINE CENTER_BASELINE}, 
+     * {@link java.awt.Font#CENTER_BASELINE CENTER_BASELINE},
      * {@link java.awt.Font#HANGING_BASELINE HANGING_BASELINE}.
      * @return the baseline of the text.
      */
     public abstract int getBaselineIndex();
 
     /**
-     * Returns the baseline offsets of the text, 
+     * Returns the baseline offsets of the text,
      * relative to the baseline of the text.  The
-     * offsets are indexed by baseline index.  For 
-     * example, if the baseline index is 
-     * <code>CENTER_BASELINE</code> then 
+     * offsets are indexed by baseline index.  For
+     * example, if the baseline index is
+     * <code>CENTER_BASELINE</code> then
      * <code>offsets[HANGING_BASELINE]</code> is usually
-     * negative, <code>offsets[CENTER_BASELINE]</code> 
-     * is zero, and <code>offsets[ROMAN_BASELINE]</code> 
+     * negative, <code>offsets[CENTER_BASELINE]</code>
+     * is zero, and <code>offsets[ROMAN_BASELINE]</code>
      * is usually positive.
      * @return the baseline offsets of the text.
      */
     public abstract float[] getBaselineOffsets();
 
     /**
-     * Returns the position of the strike-through line 
+     * Returns the position of the strike-through line
      * relative to the baseline.
      * @return the position of the strike-through line.
      */
@@ -127,13 +126,13 @@ public abstract class LineMetrics {
 
     /**
      * Returns the thickness of the strike-through line.
-     * @return the thickness of the strike-through line.         
+     * @return the thickness of the strike-through line.
      */
     public abstract float getStrikethroughThickness();
 
     /**
      * Returns the position of the underline relative to
-     * the baseline.   
+     * the baseline.
      * @return the position of the underline.
      */
     public abstract float getUnderlineOffset();

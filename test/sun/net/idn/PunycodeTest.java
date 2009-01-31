@@ -39,48 +39,48 @@ import sun.net.idn.Punycode;
  * provided in rfc3492.txt
  */
 public class PunycodeTest {
-    
+
     /* For testing, we'll just set some compile-time limits rather than */
     /* use malloc(), and set a compile-time option rather than using a  */
     /* command-line option.                                             */
-    
+
     static final int  unicode_max_length = 256;
     static final int  ace_max_length = 256;
-    
+
     static final String too_big =
             "input or output is too large, recompile with larger limits\n";
     static final String invalid_input = "invalid input\n";
     static final String overflow = "arithmetic overflow\n";
     static final String io_error = "I/O error\n";
-    
+
     /* The following string is used to convert printable */
     /* characters between ASCII and the native charset:  */
-    
+
     static void fail(String msg, String input) {
         System.out.println(msg+" input: "+input);
         throw new RuntimeException(msg+" input: "+input);
     }
-    
-    
+
+
     public int testCount = 0;
-    
+
     private int input_length, j;
     private int output_length[] = new int[1];
     private boolean case_flags[] = new boolean[unicode_max_length];
-    
+
     public String testEncoding(String inputS) {
         char input[] = new char[unicode_max_length];
         int codept = 0;
         char uplus[] = new char[2];
         StringBuffer output;
         int c;
-        
+
         /* Read the input code points: */
-        
+
         input_length = 0;
-        
+
         Scanner sc = new Scanner(inputS);
-        
+
         while (sc.hasNext()) {  // need to stop at end of line
             try {
                 String next = sc.next();
@@ -90,22 +90,22 @@ public class PunycodeTest {
             } catch (Exception ex) {
                 fail(invalid_input, inputS);
             }
-            
+
             if (uplus[1] != '+' || codept > Integer.MAX_VALUE) {
                 fail(invalid_input, inputS);
             }
-            
+
             if (input_length == unicode_max_length) fail(too_big, inputS);
-            
+
             if (uplus[0] == 'u') case_flags[input_length] = false;
             else if (uplus[0] == 'U') case_flags[input_length] = true;
             else fail(invalid_input, inputS);
-            
+
             input[input_length++] = (char)codept;
         }
-        
+
         /* Encode: */
-        
+
         output_length[0] = ace_max_length;
         try {
             output = Punycode.encode((new StringBuffer()).append(input, 0, input_length), case_flags);
@@ -114,27 +114,27 @@ public class PunycodeTest {
             // never reach here, just to make compiler happy
             return null;
         }
-        
+
         testCount++;
         return output.toString();
     }
-    
+
     public String testDecoding(String inputS) {
         char input[] = new char[0];
         int pp;
         StringBuffer output;
-        
+
         /* Read the Punycode input string and convert to ASCII: */
-        
+
         if (inputS.length() <= ace_max_length+2) {
             input = inputS.toCharArray();
         } else {
             fail(invalid_input, inputS);
         }
         input_length = input.length;
-        
+
         /* Decode: */
-        
+
         output_length[0] = unicode_max_length;
         try {
             output = Punycode.decode((new StringBuffer()).append(input, 0, input_length), case_flags);
@@ -143,7 +143,7 @@ public class PunycodeTest {
             // never reach here, just to make compiler happy
             return null;
         }
-        
+
         /* Output the result: */
         StringBuffer result = new StringBuffer();
         for (j = 0;  j < output.length();  ++j) {
@@ -151,7 +151,7 @@ public class PunycodeTest {
                     case_flags[j] ? "U" : "u",
                     (int)output.charAt(j) ));
         }
-        
+
         testCount++;
         return result.substring(0, result.length() - 1);
     }
@@ -252,14 +252,14 @@ public class PunycodeTest {
       for (int i = 0; i < testdata.length; i++) {
           String encodeResult = mytest.testEncoding(testdata[i][1]);
           String decodeResult = mytest.testDecoding(testdata[i][2]);
-          
+
           checkResult(encodeResult, testdata[i][2]);
           checkResult(decodeResult, testdata[i][1]);
       }
-      
+
       System.out.println("Test cases: " + mytest.testCount);
   }
-  
+
   public static void checkResult(String actual, String expected) {
       if (!actual.equals(expected)) {
           System.out.printf("\n%15s: %s\n", "FAILED", actual);
@@ -269,5 +269,5 @@ public class PunycodeTest {
           System.out.printf("%15s: %s\n", "SUCCEEDED", actual);
       }
   }
-  
+
 }

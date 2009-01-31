@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MacCroatian;
  * A table to convert to MacCroatian to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacCroatian extends ByteToCharSingleByte {

@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)MPreFixups.h	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 2002-2004 - All Rights Reserved
  *
@@ -46,7 +45,7 @@ public:
    ~MPreFixups();
 
     void add(le_int32 baseIndex, le_int32 mpreIndex);
-    
+
     void apply(LEGlyphStorage &glyphStorage);
 
 private:
@@ -55,4 +54,3 @@ private:
 };
 
 #endif
-

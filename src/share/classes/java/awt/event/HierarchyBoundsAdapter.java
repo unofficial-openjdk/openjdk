@@ -37,16 +37,15 @@ package java.awt.event;
  * about.)
  * <p>
  * Create a listener object using your class and then register it with a
- * Component using the Component's <code>addHierarchyBoundsListener</code> 
+ * Component using the Component's <code>addHierarchyBoundsListener</code>
  * method. When the hierarchy to which the Component belongs changes by
  * resize or movement of an ancestor, the relevant method in the listener
  * object is invoked, and the <code>HierarchyEvent</code> is passed to it.
  *
- * @author	David Mendenhall
- * @version	%I%, %G%
- * @see		HierarchyBoundsListener
- * @see		HierarchyEvent
- * @since 	1.3
+ * @author      David Mendenhall
+ * @see         HierarchyBoundsListener
+ * @see         HierarchyEvent
+ * @since       1.3
  */
 public abstract class HierarchyBoundsAdapter implements HierarchyBoundsListener
 {

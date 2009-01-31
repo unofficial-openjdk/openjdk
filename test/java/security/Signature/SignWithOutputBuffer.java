@@ -34,33 +34,33 @@ public class SignWithOutputBuffer {
 
     public static void main(String[] args) throws Exception {
 
-	int numBytes;
+        int numBytes;
 
-	KeyPairGenerator kpGen = KeyPairGenerator.getInstance("DSA");
-	kpGen.initialize(512);
-	KeyPair kp = kpGen.genKeyPair();
+        KeyPairGenerator kpGen = KeyPairGenerator.getInstance("DSA");
+        kpGen.initialize(512);
+        KeyPair kp = kpGen.genKeyPair();
 
-	Signature sig = Signature.getInstance("DSS");
-	sig.initSign(kp.getPrivate());
-	sig.update((byte)0xff);
-	
-	// Allocate buffer for signature. According to BSAFE, the size of the
-	// signature may be as many as 48 bytes.
-	// First, let's allocate a buffer that's too short.
-	byte[] out = new byte[10];
-	try {
-	    numBytes = sig.sign(out, 0, out.length);
-	} catch (SignatureException e) {
-	    System.out.println(e);
-	}
+        Signature sig = Signature.getInstance("DSS");
+        sig.initSign(kp.getPrivate());
+        sig.update((byte)0xff);
 
-	// Now repeat the same with a buffer that's big enough
-	sig = Signature.getInstance("DSS");
-	sig.initSign(kp.getPrivate());
-	sig.update((byte)0xff);
-	out = new byte[48];
-	numBytes = sig.sign(out, 0, out.length);
-	
-	System.out.println("Signature len="+numBytes);
+        // Allocate buffer for signature. According to BSAFE, the size of the
+        // signature may be as many as 48 bytes.
+        // First, let's allocate a buffer that's too short.
+        byte[] out = new byte[10];
+        try {
+            numBytes = sig.sign(out, 0, out.length);
+        } catch (SignatureException e) {
+            System.out.println(e);
+        }
+
+        // Now repeat the same with a buffer that's big enough
+        sig = Signature.getInstance("DSS");
+        sig.initSign(kp.getPrivate());
+        sig.update((byte)0xff);
+        out = new byte[48];
+        numBytes = sig.sign(out, 0, out.length);
+
+        System.out.println("Signature len="+numBytes);
     }
 }

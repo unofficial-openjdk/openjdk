@@ -40,7 +40,6 @@ import java.security.*;
  * @since 1.4
  * @see SSLSocket
  * @see SSLServerSocket
- * @version %I%
  * @author David Brownell
  */
 public abstract class SSLServerSocketFactory extends ServerSocketFactory
@@ -50,9 +49,9 @@ public abstract class SSLServerSocketFactory extends ServerSocketFactory
     private static boolean propertyChecked;
 
     private static void log(String msg) {
-	if (SSLSocketFactory.DEBUG) {
-	    System.out.println(msg);
-	}
+        if (SSLSocketFactory.DEBUG) {
+            System.out.println(msg);
+        }
     }
 
     /**
@@ -64,9 +63,9 @@ public abstract class SSLServerSocketFactory extends ServerSocketFactory
      * Returns the default SSL server socket factory.
      *
      * <p>The first time this method is called, the security property
-     * "ssl.ServerSocketFactory.provider" is examined. If it is non-null, a 
+     * "ssl.ServerSocketFactory.provider" is examined. If it is non-null, a
      * class by that name is loaded and instantiated. If that is successful and
-     * the object is an instance of SSLServerSocketFactory, it is made the 
+     * the object is an instance of SSLServerSocketFactory, it is made the
      * default SSL server socket factory.
      *
      * <p>Otherwise, this method returns
@@ -77,46 +76,46 @@ public abstract class SSLServerSocketFactory extends ServerSocketFactory
      * @see SSLContext#getDefault
      */
     public static synchronized ServerSocketFactory getDefault() {
-	if (theFactory != null) {
-	    return theFactory;
-	}
-	
-	if (propertyChecked == false) {
-	    propertyChecked = true;
-	    String clsName = SSLSocketFactory.getSecurityProperty
-					("ssl.ServerSocketFactory.provider");
-	    if (clsName != null) {
-		log("setting up default SSLServerSocketFactory");
-		try {
-		    Class cls = null;
-		    try {
-			cls = Class.forName(clsName);
-		    } catch (ClassNotFoundException e) {
-			ClassLoader cl = ClassLoader.getSystemClassLoader();
-			if (cl != null) {
-			    cls = cl.loadClass(clsName);
-			}
-		    }
-		    log("class " + clsName + " is loaded");
-		    SSLServerSocketFactory fac = (SSLServerSocketFactory)cls.newInstance();
-		    log("instantiated an instance of class " + clsName);
-		    theFactory = fac;
-		    return fac;
-		} catch (Exception e) {
-		    log("SSLServerSocketFactory instantiation failed: " + e);
-		    theFactory = new DefaultSSLServerSocketFactory(e);
-		    return theFactory;
-		}
-	    }
-	}
+        if (theFactory != null) {
+            return theFactory;
+        }
 
-	try {
-	    return SSLContext.getDefault().getServerSocketFactory();
-	} catch (NoSuchAlgorithmException e) {
-	    return new DefaultSSLServerSocketFactory(e);
-	}
+        if (propertyChecked == false) {
+            propertyChecked = true;
+            String clsName = SSLSocketFactory.getSecurityProperty
+                                        ("ssl.ServerSocketFactory.provider");
+            if (clsName != null) {
+                log("setting up default SSLServerSocketFactory");
+                try {
+                    Class cls = null;
+                    try {
+                        cls = Class.forName(clsName);
+                    } catch (ClassNotFoundException e) {
+                        ClassLoader cl = ClassLoader.getSystemClassLoader();
+                        if (cl != null) {
+                            cls = cl.loadClass(clsName);
+                        }
+                    }
+                    log("class " + clsName + " is loaded");
+                    SSLServerSocketFactory fac = (SSLServerSocketFactory)cls.newInstance();
+                    log("instantiated an instance of class " + clsName);
+                    theFactory = fac;
+                    return fac;
+                } catch (Exception e) {
+                    log("SSLServerSocketFactory instantiation failed: " + e);
+                    theFactory = new DefaultSSLServerSocketFactory(e);
+                    return theFactory;
+                }
+            }
+        }
+
+        try {
+            return SSLContext.getDefault().getServerSocketFactory();
+        } catch (NoSuchAlgorithmException e) {
+            return new DefaultSSLServerSocketFactory(e);
+        }
     }
-	
+
     /**
      * Returns the list of cipher suites which are enabled by default.
      * Unless a different list is enabled, handshaking on an SSL connection
@@ -153,43 +152,43 @@ class DefaultSSLServerSocketFactory extends SSLServerSocketFactory {
     private final Exception reason;
 
     DefaultSSLServerSocketFactory(Exception reason) {
-	this.reason = reason;
+        this.reason = reason;
     }
 
     private ServerSocket throwException() throws SocketException {
-	throw (SocketException)
-	    new SocketException(reason.toString()).initCause(reason);
+        throw (SocketException)
+            new SocketException(reason.toString()).initCause(reason);
     }
 
     public ServerSocket createServerSocket() throws IOException {
-	return throwException();
+        return throwException();
     }
 
 
     public ServerSocket createServerSocket(int port)
     throws IOException
     {
-	return throwException();
+        return throwException();
     }
 
     public ServerSocket createServerSocket(int port, int backlog)
     throws IOException
     {
-	return throwException();
+        return throwException();
     }
 
     public ServerSocket
     createServerSocket(int port, int backlog, InetAddress ifAddress)
     throws IOException
     {
-	return throwException();
+        return throwException();
     }
 
     public String [] getDefaultCipherSuites() {
-	return new String[0];
+        return new String[0];
     }
 
     public String [] getSupportedCipherSuites() {
-	return new String[0];
+        return new String[0];
     }
 }

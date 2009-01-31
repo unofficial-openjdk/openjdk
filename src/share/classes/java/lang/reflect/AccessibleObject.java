@@ -59,7 +59,7 @@ public class AccessibleObject implements AnnotatedElement {
      * control checks.
      */
     static final private java.security.Permission ACCESS_PERMISSION =
-	new ReflectPermission("suppressAccessChecks");
+        new ReflectPermission("suppressAccessChecks");
 
     /**
      * Convenience method to set the {@code accessible} flag for an
@@ -87,25 +87,25 @@ public class AccessibleObject implements AnnotatedElement {
      * @see java.lang.RuntimePermission
      */
     public static void setAccessible(AccessibleObject[] array, boolean flag)
-	throws SecurityException {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-	for (int i = 0; i < array.length; i++) {
-	    setAccessible0(array[i], flag);
-	}
+        throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        for (int i = 0; i < array.length; i++) {
+            setAccessible0(array[i], flag);
+        }
     }
 
     /**
      * Set the {@code accessible} flag for this object to
      * the indicated boolean value.  A value of {@code true} indicates that
      * the reflected object should suppress Java language access
-     * checking when it is used.  A value of {@code false} indicates 
+     * checking when it is used.  A value of {@code false} indicates
      * that the reflected object should enforce Java language access checks.
      *
      * <p>First, if there is a security manager, its
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
-     * 
+     *
      * <p>A {@code SecurityException} is raised if {@code flag} is
      * {@code true} but accessibility of this object may not be changed
      * (for example, if this element object is a {@link Constructor} object for
@@ -121,23 +121,23 @@ public class AccessibleObject implements AnnotatedElement {
      * @see java.lang.RuntimePermission
      */
     public void setAccessible(boolean flag) throws SecurityException {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
-	setAccessible0(this, flag);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        setAccessible0(this, flag);
     }
 
     /* Check that you aren't exposing java.lang.Class.<init>. */
     private static void setAccessible0(AccessibleObject obj, boolean flag)
-	throws SecurityException
+        throws SecurityException
     {
-	if (obj instanceof Constructor && flag == true) {
-	    Constructor c = (Constructor)obj;
-	    if (c.getDeclaringClass() == Class.class) {
-		throw new SecurityException("Can not make a java.lang.Class" +
-					    " constructor accessible");
-	    }
-	}
-	obj.override = flag;
+        if (obj instanceof Constructor && flag == true) {
+            Constructor c = (Constructor)obj;
+            if (c.getDeclaringClass() == Class.class) {
+                throw new SecurityException("Can not make a java.lang.Class" +
+                                            " constructor accessible");
+            }
+        }
+        obj.override = flag;
     }
 
     /**
@@ -146,7 +146,7 @@ public class AccessibleObject implements AnnotatedElement {
      * @return the value of the object's {@code accessible} flag
      */
     public boolean isAccessible() {
-	return override;
+        return override;
     }
 
     /**
@@ -189,7 +189,7 @@ public class AccessibleObject implements AnnotatedElement {
     /**
      * @since 1.5
      */
-    public Annotation[] getAnnotations() { 
+    public Annotation[] getAnnotations() {
         return getDeclaredAnnotations();
     }
 

@@ -34,18 +34,18 @@ import java.nio.channels.*;
 public class AcceptAddress {
 
     public static void main(String[] args) throws Exception {
-	InetAddress local = InetAddress.getLocalHost();
-	InetSocketAddress isa = new InetSocketAddress(local, 5555);
+        InetAddress local = InetAddress.getLocalHost();
+        InetSocketAddress isa = new InetSocketAddress(local, 5555);
 
-	ServerSocketChannel ssc;
-	ssc = ServerSocketChannel.open();
-	ssc.socket().bind(isa);
-	
-	SocketChannel sc; 
-	sc = SocketChannel.open();
-	sc.connect(isa);  
-       
-	SocketChannel sc2 = ssc.accept();
-	System.err.println("Socket connected to " + sc2);
+        ServerSocketChannel ssc;
+        ssc = ServerSocketChannel.open();
+        ssc.socket().bind(isa);
+
+        SocketChannel sc;
+        sc = SocketChannel.open();
+        sc.connect(isa);
+
+        SocketChannel sc2 = ssc.accept();
+        System.err.println("Socket connected to " + sc2);
     }
 }

@@ -38,7 +38,7 @@ import javax.naming.InvalidNameException;
 
 public class LdapParserTests {
     public static void main(String args[])
-		throws Exception {
+                throws Exception {
         Rdn rdn = null;
 
         /**
@@ -46,90 +46,90 @@ public class LdapParserTests {
          * without a preceeding escape is considered Illegal by
          * the LDAP parser.
          */
-	String[] mustEscSpecials = new String[]
+        String[] mustEscSpecials = new String[]
                                 {";", ",", "\\", "+"};
 
-	/**
+        /**
          * The special characters that should be preceeded by an escape
-	 */
+         */
         String[] specials = new String[]
                         {";", ",", "\\", "<", ">", "#", "\"", "+"};
 
-	/**
+        /**
          * Test with unescaped speicial characters in the Rdn
          */
         System.out.println();
         System.out.print("*****Tests with unescaped special ");
-	System.out.println("characters in the Rdn*****");
+        System.out.println("characters in the Rdn*****");
 
-	for (int i = 0; i < mustEscSpecials.length; i++) {
-	    String rdnStr = "cn=Juicy" + mustEscSpecials[i] + "Fruit";
-	    testInvalids(rdnStr);
-	}
+        for (int i = 0; i < mustEscSpecials.length; i++) {
+            String rdnStr = "cn=Juicy" + mustEscSpecials[i] + "Fruit";
+            testInvalids(rdnStr);
+        }
 
-	/*
+        /*
          * special characters with a preceeding backslash must be accepted.
-	 */
+         */
         System.out.println();
         System.out.println("******Special character escaping tests ******");
-	for (int i = 0; i < specials.length; i++) {
-	    rdn = new Rdn("cn=Juicy\\" + specials[i] + "Fruit");
-	}
-	System.out.println("Escape leading space:" +
-		new Rdn("cn=\\  Juicy Fruit")); // escaped leading space
-	System.out.println("Escaped leading #:" +
-		new Rdn("cn=\\#Juicy Fruit"));  // escaped leading # in string
-	System.out.println("Escaped trailing space:" +
-		new Rdn("cn=Juicy Fruit\\  ")); // escaped trailing space
+        for (int i = 0; i < specials.length; i++) {
+            rdn = new Rdn("cn=Juicy\\" + specials[i] + "Fruit");
+        }
+        System.out.println("Escape leading space:" +
+                new Rdn("cn=\\  Juicy Fruit")); // escaped leading space
+        System.out.println("Escaped leading #:" +
+                new Rdn("cn=\\#Juicy Fruit"));  // escaped leading # in string
+        System.out.println("Escaped trailing space:" +
+                new Rdn("cn=Juicy Fruit\\  ")); // escaped trailing space
 
         // Unescaped special characters at the beginning of a value
         System.out.println();
         System.out.println(
-		"******Other unescaped special character tests ******");
+                "******Other unescaped special character tests ******");
         rdn = new Rdn("cn=  Juicy Fruit");
-	System.out.println(
+        System.out.println(
             "Accepted Rdn with value containing leading spaces:" +
-	    rdn.toString());
+            rdn.toString());
         rdn = new Rdn("cn=Juicy Fruit  ");
-	System.out.println(
+        System.out.println(
             "Accepted Rdn with value containing trailing spaces:" +
-	    rdn.toString());
+            rdn.toString());
 
-	String[] invalids =  new String[]
+        String[] invalids =  new String[]
                 {"cn=#xabc", "cn=#axcd", "cn=#abcx", "cn=#abcdex"};
 
         for (int i = 0; i < invalids.length; i++) {
             testInvalids(invalids[i]);
         }
 
-	/**
-	 * Other special cases
-	 */
+        /**
+         * Other special cases
+         */
         System.out.println();
         System.out.println(
-		"***************Other special cases****************");
+                "***************Other special cases****************");
 
-	LdapName name = new LdapName("");
-	System.out.println("Empty LDAP name:" + name.toString());
+        LdapName name = new LdapName("");
+        System.out.println("Empty LDAP name:" + name.toString());
 
         // Rdn with quoted value
         rdn = new Rdn("cn=\"Juicy ,=+<>#; Fruit\"");
-	System.out.println("Quoted Rdn string:" + rdn.toString());
+        System.out.println("Quoted Rdn string:" + rdn.toString());
 
-	// Rdn with unicode value
-	rdn = new Rdn("SN=Lu\\C4\\8Di\\C4\\87");
-	System.out.println("Unicode Rdn string:" + rdn.toString());
+        // Rdn with unicode value
+        rdn = new Rdn("SN=Lu\\C4\\8Di\\C4\\87");
+        System.out.println("Unicode Rdn string:" + rdn.toString());
 
-	/*
+        /*
          * oid type and binary value
          */
-	name = new LdapName(
-		"1.3.6.1.4.1.466.0=#04024869,O=Test,C=GB");
-	System.out.println("binary valued LDAP name:" + name.toString());
+        name = new LdapName(
+                "1.3.6.1.4.1.466.0=#04024869,O=Test,C=GB");
+        System.out.println("binary valued LDAP name:" + name.toString());
 
-	// ';' seperated name- RFC 1779 style
+        // ';' seperated name- RFC 1779 style
         name = new LdapName("CN=Steve Kille;O=Isode;C=GB");
-	System.out.println("';' seperated LDAP name:" + name.toString());
+        System.out.println("';' seperated LDAP name:" + name.toString());
     }
 
     static void testInvalids(String rdnStr) throws Exception {
@@ -147,7 +147,7 @@ public class LdapParserTests {
         if (!isExcepThrown) {
             throw new Exception(
                     "Accepted an invalid Rdn string:" +
-		    rdnStr + " as Rdn: " + rdn);
+                    rdnStr + " as Rdn: " + rdn);
         }
     }
 }

@@ -31,7 +31,6 @@ package javax.security.auth.login;
  * <p> This exception may be thrown by a LoginModule if it is unable
  * to locate an account necessary to perform authentication.
  *
- * @version %I%, %G%
  * @since 1.5
  */
 public class AccountNotFoundException extends AccountException {

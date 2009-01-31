@@ -33,7 +33,6 @@ package sun.jvmstat.monitor;
  * or monitored.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  * @see sun.jvmstat.instrument.ByteArrayInstrument
  */

@@ -87,9 +87,9 @@ NativePrimitive ByteGrayPrimitives[] = {
     REGISTER_CONVERT_BLIT(ByteGray, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, ByteGray),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, ByteGray,
-				NAME_CONVERT_BLIT(IntArgb, ByteGray)),
+                                NAME_CONVERT_BLIT(IntArgb, ByteGray)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, ByteGray,
-				NAME_CONVERT_BLIT(IntArgb, ByteGray)),
+                                NAME_CONVERT_BLIT(IntArgb, ByteGray)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, ByteGray),
     REGISTER_CONVERT_BLIT(UshortGray, ByteGray),
     REGISTER_CONVERT_BLIT(ByteIndexed, ByteGray),
@@ -98,9 +98,9 @@ NativePrimitive ByteGrayPrimitives[] = {
     REGISTER_SCALE_BLIT(ByteGray, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, ByteGray),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, ByteGray,
-			      NAME_SCALE_BLIT(IntArgb, ByteGray)),
+                              NAME_SCALE_BLIT(IntArgb, ByteGray)),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, ByteGray,
-			      NAME_SCALE_BLIT(IntArgb, ByteGray)),
+                              NAME_SCALE_BLIT(IntArgb, ByteGray)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, ByteGray),
     REGISTER_SCALE_BLIT(UshortGray, ByteGray),
     REGISTER_SCALE_BLIT(ByteIndexed, ByteGray),
@@ -130,7 +130,7 @@ NativePrimitive ByteGrayPrimitives[] = {
 jboolean RegisterByteGray(JNIEnv *env)
 {
     return RegisterPrimitives(env, ByteGrayPrimitives,
-			      ArraySize(ByteGrayPrimitives));
+                              ArraySize(ByteGrayPrimitives));
 }
 
 jint PixelForByteGray(SurfaceDataRasInfo *pRasInfo, jint rgb)

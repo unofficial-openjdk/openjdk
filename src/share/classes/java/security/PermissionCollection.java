@@ -88,7 +88,6 @@ import java.util.*;
  * @see Permission
  * @see Permissions
  *
- * @version %I% %E%
  *
  * @author Roland Schemers
  */
@@ -135,7 +134,7 @@ public abstract class PermissionCollection implements java.io.Serializable {
      * using <code>add</code>.
      */
     public void setReadOnly() {
-	readOnly = true;
+        readOnly = true;
     }
 
     /**
@@ -150,7 +149,7 @@ public abstract class PermissionCollection implements java.io.Serializable {
      * false otherwise.
      */
     public boolean isReadOnly() {
-	return readOnly;
+        return readOnly;
     }
 
     /**
@@ -176,19 +175,19 @@ public abstract class PermissionCollection implements java.io.Serializable {
      *
      */
     public String toString() {
-	Enumeration<Permission> enum_ = elements();
-	StringBuilder sb = new StringBuilder();
-	sb.append(super.toString()+" (\n");
-	while (enum_.hasMoreElements()) {
-	    try {
-		sb.append(" ");
-		sb.append(enum_.nextElement().toString());
-		sb.append("\n");
-	    } catch (NoSuchElementException e){
-		// ignore
-	    }
-	}
-	sb.append(")\n");
-	return sb.toString();
+        Enumeration<Permission> enum_ = elements();
+        StringBuilder sb = new StringBuilder();
+        sb.append(super.toString()+" (\n");
+        while (enum_.hasMoreElements()) {
+            try {
+                sb.append(" ");
+                sb.append(enum_.nextElement().toString());
+                sb.append("\n");
+            } catch (NoSuchElementException e){
+                // ignore
+            }
+        }
+        sb.append(")\n");
+        return sb.toString();
     }
 }

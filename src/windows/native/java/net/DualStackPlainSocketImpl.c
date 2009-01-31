@@ -62,17 +62,17 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainSocketImpl_socket0
 
     fd = NET_Socket(AF_INET6, (stream ? SOCK_STREAM : SOCK_DGRAM), 0);
     if (fd == INVALID_SOCKET) {
-	NET_ThrowNew(env, WSAGetLastError(), "create"); 
-	return -1;
+        NET_ThrowNew(env, WSAGetLastError(), "create");
+        return -1;
     }
 
     rv = setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
     if (rv == SOCKET_ERROR) {
-	NET_ThrowNew(env, WSAGetLastError(), "create");
+        NET_ThrowNew(env, WSAGetLastError(), "create");
     }
 
     SetHandleInformation((HANDLE)(UINT_PTR)fd, HANDLE_FLAG_INHERIT, FALSE);
-	
+
     return fd;
 }
 
@@ -87,15 +87,15 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_bind0
     int rv;
     int sa_len = sizeof(sa);
 
-    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa, 
-				 &sa_len, JNI_TRUE) != 0) {
+    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
+                                 &sa_len, JNI_TRUE) != 0) {
       return;
     }
 
     rv = NET_Bind(fd, (struct sockaddr *)&sa, sa_len);
 
     if (rv == SOCKET_ERROR)
-        NET_ThrowNew(env, WSAGetLastError(), "JVM_Bind"); 
+        NET_ThrowNew(env, WSAGetLastError(), "JVM_Bind");
 }
 
 /*
@@ -109,22 +109,22 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainSocketImpl_connect0
     int rv;
     int sa_len = sizeof(sa);
 
-    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa, 
-				 &sa_len, JNI_TRUE) != 0) {
+    if (NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&sa,
+                                 &sa_len, JNI_TRUE) != 0) {
       return -1;
     }
 
     rv = connect(fd, (struct sockaddr *)&sa, sa_len);
     if (rv == SOCKET_ERROR) {
         int err = WSAGetLastError();
-	if (err == WSAEWOULDBLOCK) {
-	    return java_net_DualStackPlainSocketImpl_WOULDBLOCK;
-	} else if (err == WSAEADDRNOTAVAIL) {
-	    JNU_ThrowByName(env, JNU_JAVANETPKG "ConnectException",
+        if (err == WSAEWOULDBLOCK) {
+            return java_net_DualStackPlainSocketImpl_WOULDBLOCK;
+        } else if (err == WSAEADDRNOTAVAIL) {
+            JNU_ThrowByName(env, JNU_JAVANETPKG "ConnectException",
                 "connect: Address is invalid on local machine, or port is not valid on remote machine");
-	} else {
-	    NET_ThrowNew(env, err, "connect"); 
-	}
+        } else {
+            NET_ThrowNew(env, err, "connect");
+        }
         return -1;  // return value not important.
     }
     return rv;
@@ -154,7 +154,7 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_waitForConnect
      * connection failed.
      */
     rv = select(fd+1, 0, &wr, &ex, &t);
-    
+
     /*
      * Timeout before connection is established/failed so
      * we throw exception and shutdown input/output to prevent
@@ -162,19 +162,19 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_waitForConnect
      * The socket should be closed immediately by the caller.
      */
     if (rv == 0) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
                         "connect timed out");
-	shutdown( fd, SD_BOTH );
-	return;
+        shutdown( fd, SD_BOTH );
+        return;
     }
 
-    /*  
-     * Socket is writable or error occured. On some Windows editions  
-     * the socket will appear writable when the connect fails so we 
-     * check for error rather than writable. 
-     */ 
-    if (!FD_ISSET(fd, &ex)) { 
-        return;		/* connection established */
+    /*
+     * Socket is writable or error occured. On some Windows editions
+     * the socket will appear writable when the connect fails so we
+     * check for error rather than writable.
+     */
+    if (!FD_ISSET(fd, &ex)) {
+        return;         /* connection established */
     }
 
     /*
@@ -186,19 +186,19 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_waitForConnect
      * load conditions we attempt up to 3 times to get the error reason.
      */
     for (retry=0; retry<3; retry++) {
-	NET_GetSockOpt(fd, SOL_SOCKET, SO_ERROR,
+        NET_GetSockOpt(fd, SOL_SOCKET, SO_ERROR,
                        (char*)&rv, &optlen);
-	if (rv) {
-	    break;
-	}
-	Sleep(0);
+        if (rv) {
+            break;
+        }
+        Sleep(0);
     }
 
     if (rv == 0) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
                         "Unable to establish connection");
     } else {
-	NET_ThrowNew(env, rv, "connect");
+        NET_ThrowNew(env, rv, "connect");
     }
 }
 
@@ -260,7 +260,7 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_localAddress
 JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_listen0
   (JNIEnv *env, jclass clazz, jint fd, jint backlog) {
     if (listen(fd, backlog) == SOCKET_ERROR) {
-	NET_ThrowNew(env, WSAGetLastError(), "listen failed");
+        NET_ThrowNew(env, WSAGetLastError(), "listen failed");
     }
 }
 
@@ -281,7 +281,7 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainSocketImpl_accept0
     newfd = accept(fd, (struct sockaddr *)&sa, &len);
 
     if (newfd == INVALID_SOCKET) {
-	if (WSAGetLastError() == -2) {
+        if (WSAGetLastError() == -2) {
             JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
                             "operation interrupted");
         } else {
@@ -309,12 +309,12 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_waitForNewConnecti
 
     rv = NET_Timeout(fd, timeout);
     if (rv == 0) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
                         "Accept timed out");
     } else if (rv == -1) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "socket closed");
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "socket closed");
     } else if (rv == -2) {
-	JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
+        JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
                         "operation interrupted");
     }
 }
@@ -329,7 +329,7 @@ JNIEXPORT jint JNICALL Java_java_net_DualStackPlainSocketImpl_available0
     jint available = -1;
 
     if ((ioctlsocket(fd, FIONREAD, &available)) == SOCKET_ERROR) {
-	NET_ThrowNew(env, WSAGetLastError(), "socket available");
+        NET_ThrowNew(env, WSAGetLastError(), "socket available");
     }
 
     return available;
@@ -473,7 +473,6 @@ JNIEXPORT void JNICALL Java_java_net_DualStackPlainSocketImpl_configureBlocking
 
     result = ioctlsocket(fd, FIONBIO, &arg);
     if (result == SOCKET_ERROR) {
-       	NET_ThrowNew(env, WSAGetLastError(), "configureBlocking"); 
+        NET_ThrowNew(env, WSAGetLastError(), "configureBlocking");
     }
 }
-

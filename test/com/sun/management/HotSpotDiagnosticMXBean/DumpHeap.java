@@ -24,7 +24,7 @@
 /*
  *
  * @bug 6455258
- * @summary Sanity test for com.sun.management.HotSpotDiagnosticMXBean.dumpHeap 
+ * @summary Sanity test for com.sun.management.HotSpotDiagnosticMXBean.dumpHeap
  *          method
  */
 
@@ -36,7 +36,7 @@ public class DumpHeap {
     public static void main(String[] argv) throws Exception {
          MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
          HotSpotDiagnosticMXBean dm = sun.management.ManagementFactory.getDiagnosticMXBean();
-         System.out.println("Dumping to file: " + argv[0] + " ...."); 
+         System.out.println("Dumping to file: " + argv[0] + " ....");
          dm.dumpHeap(argv[0], true);
     }
 }

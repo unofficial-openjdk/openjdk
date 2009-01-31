@@ -36,23 +36,22 @@ import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.spi.ImageWriterSpi;
 
 /**
- * @version 0.5
  */
 public class PNGImageWriterSpi extends ImageWriterSpi {
 
     private static final String vendorName = "Sun Microsystems, Inc.";
-    
+
     private static final String version = "1.0";
-    
+
     private static final String[] names = { "png", "PNG" };
-    
+
     private static final String[] suffixes = { "png" };
-    
+
     private static final String[] MIMETypes = { "image/png", "image/x-png" };
-    
+
     private static final String writerClassName =
         "com.sun.imageio.plugins.png.PNGImageWriter";
-    
+
     private static final String[] readerSpiNames = {
         "com.sun.imageio.plugins.png.PNGImageReaderSpi"
     };
@@ -81,7 +80,7 @@ public class PNGImageWriterSpi extends ImageWriterSpi {
         ColorModel colorModel = type.getColorModel();
 
         // Find the maximum bit depth across all channels
-        int[] sampleSize = sampleModel.getSampleSize(); 
+        int[] sampleSize = sampleModel.getSampleSize();
         int bitDepth = sampleSize[0];
         for (int i = 1; i < sampleSize.length; i++) {
             if (sampleSize[i] > bitDepth) {

@@ -39,14 +39,14 @@ class AssignShiftLeftExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignShiftLeftExpression(long where, Expression left, Expression right) {
-	super(ASGLSHIFT, where, left, right);
+        super(ASGLSHIFT, where, left, right);
     }
 
- 
+
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_ishl + itype.getTypeCodeOffset());
+        asm.add(where, opc_ishl + itype.getTypeCodeOffset());
     }
 }

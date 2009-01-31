@@ -36,8 +36,8 @@ class AwtDataTransferer {
                                   jlong format, jobject formatMap);
     static jobject ConcatData(JNIEnv* env, jobject obj1, jobject obj2);
 
-    static jbyteArray GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType, 
-				      BOOL bFailSafe);
+    static jbyteArray GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType,
+                                      BOOL bFailSafe);
     static jbyteArray LCIDToTextEncoding(JNIEnv *env, LCID lcid);
     static void SecondaryMessageLoop();
 };
@@ -48,7 +48,7 @@ class AwtDataTransferer {
  */
 
 /*
- * This macro defines a function which returns the class for the specified 
+ * This macro defines a function which returns the class for the specified
  * class name with proper caching and error handling.
  */
 #define DECLARE_JAVA_CLASS(javaclazz, name)                                    \
@@ -106,7 +106,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(FALSE);                                                    \
             return;                                                            \
         }                                                                      \
-    }                                                               
+    }
 
 #define DECLARE_JINT_JAVA_METHOD(method, javaclazz, name, signature)           \
     static jmethodID method = NULL;                                            \
@@ -129,7 +129,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(FALSE);                                                    \
             return java_awt_dnd_DnDConstants_ACTION_NONE;                      \
         }                                                                      \
-    }                                                               
+    }
 
 #define DECLARE_OBJECT_JAVA_METHOD(method, javaclazz, name, signature)         \
     static jmethodID method = NULL;                                            \
@@ -152,7 +152,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(FALSE);                                                    \
             return NULL;                                                       \
         }                                                                      \
-    }                                                               
+    }
 
 #define DECLARE_STATIC_OBJECT_JAVA_METHOD(method, javaclazz, name, signature)  \
     static jmethodID method = NULL;                                            \
@@ -174,6 +174,6 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(FALSE);                                                    \
             return NULL;                                                       \
         }                                                                      \
-    }                                                               
+    }
 
 #endif /* AWT_DATATRANSFERER_H */

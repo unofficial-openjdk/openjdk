@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ScriptAndLanguageTags.cpp	1.5 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004. All Rights Reserved.
  *

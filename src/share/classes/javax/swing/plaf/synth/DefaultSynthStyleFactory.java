@@ -38,7 +38,6 @@ import sun.swing.BakedArrayList;
  * and the <code>Region</code> associated with the <code>JComponent</code>.
  * Lookup is done using regular expressions.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class DefaultSynthStyleFactory extends SynthStyleFactory {

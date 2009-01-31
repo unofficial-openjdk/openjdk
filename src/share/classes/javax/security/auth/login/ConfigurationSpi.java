@@ -38,7 +38,6 @@ package javax.security.auth.login;
  * an IllegalArgumentException if it does not understand the
  * <code>Configuration.Parameters</code> input.
  *
- * @version %I%, %G%
  *
  * @since 1.6
  */
@@ -52,7 +51,7 @@ public abstract class ConfigurationSpi {
      * @param name the name used to index the Configuration.
      *
      * @return an array of AppConfigurationEntries for the specified
-     *		<i>name</i>, or null if there are no entries.
+     *          <i>name</i>, or null if there are no entries.
      */
     protected abstract AppConfigurationEntry[] engineGetAppConfigurationEntry
                                                         (String name);
@@ -70,7 +69,7 @@ public abstract class ConfigurationSpi {
      * by the implementation.
      *
      * @exception SecurityException if the caller does not have permission
-     *		to refresh its Configuration.
+     *          to refresh its Configuration.
      */
     protected void engineRefresh() { }
 }

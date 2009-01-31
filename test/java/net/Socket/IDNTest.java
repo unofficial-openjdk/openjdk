@@ -40,7 +40,7 @@ public class IDNTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-	try {
+        try {
             Socket s = new Socket("ho st", 8000);
         } catch (UnknownHostException e) {
             // Expected
@@ -49,7 +49,3 @@ public class IDNTest {
         }
     }
 }
-
-
-
-

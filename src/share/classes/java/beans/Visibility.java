@@ -42,7 +42,7 @@ public interface Visibility {
      * Determines whether this bean needs a GUI.
      *
      * @return True if the bean absolutely needs a GUI available in
-     *		order to get its work done.
+     *          order to get its work done.
      */
     boolean needsGui();
 

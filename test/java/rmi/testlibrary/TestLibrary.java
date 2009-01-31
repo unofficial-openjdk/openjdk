@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,7 +33,7 @@
  * for use in rmi regression tests.
  *
  * NOTE: The JavaTest group has recommended that regression tests do
- * not make use of packages.  
+ * not make use of packages.
  */
 
 import java.io.File;
@@ -59,7 +59,7 @@ import java.security.PrivilegedAction;
 
 /**
  * Class of utility/library methods (i.e. procedures) that assist with
- * the writing and maintainance of rmi regression tests.  
+ * the writing and maintainance of rmi regression tests.
  */
 public class TestLibrary {
 
@@ -69,7 +69,7 @@ public class TestLibrary {
     public final static int RMID_PORT = 1098;
 
     static void mesg(Object mesg) {
-	System.err.println("TEST_LIBRARY: " + mesg.toString());
+        System.err.println("TEST_LIBRARY: " + mesg.toString());
     }
 
     /**
@@ -77,100 +77,100 @@ public class TestLibrary {
      * informative fashion.
      */
     public static void bomb(String message, Exception e) {
-	String testFailed = "TEST FAILED: ";
+        String testFailed = "TEST FAILED: ";
 
-	if ((message == null) && (e == null)) {
-	    testFailed += " No relevant information";
-	} else if (e == null) {
-	    testFailed += message;
-	}
+        if ((message == null) && (e == null)) {
+            testFailed += " No relevant information";
+        } else if (e == null) {
+            testFailed += message;
+        }
 
-	System.err.println(testFailed);
-	if (e != null) {
-	    System.err.println("Test failed with: " + 
-			       e.getMessage());
-	    e.printStackTrace(System.err);
-	}
-	throw new TestFailedException(testFailed, e);
+        System.err.println(testFailed);
+        if (e != null) {
+            System.err.println("Test failed with: " +
+                               e.getMessage());
+            e.printStackTrace(System.err);
+        }
+        throw new TestFailedException(testFailed, e);
     }
     public static void bomb(String message) {
-	bomb(message, null);
+        bomb(message, null);
     }
     public static void bomb(Exception e) {
-	bomb(null, e);
+        bomb(null, e);
     }
 
-    /** 
+    /**
      * Property accessors
      */
     private static boolean getBoolean(String name) {
-	return (new Boolean(getProperty(name, "false")).booleanValue());
+        return (new Boolean(getProperty(name, "false")).booleanValue());
     }
     private static Integer getInteger(String name) {
-	int val = 0;
-	Integer value = null;
-	
-	String propVal = getProperty(name, null);
-	if (propVal == null) {
-	    return null;
-	}
-	
-	try {
-	    value = new Integer(Integer.parseInt(propVal));
-	} catch (NumberFormatException nfe) {
-	}
-	return value;
+        int val = 0;
+        Integer value = null;
+
+        String propVal = getProperty(name, null);
+        if (propVal == null) {
+            return null;
+        }
+
+        try {
+            value = new Integer(Integer.parseInt(propVal));
+        } catch (NumberFormatException nfe) {
+        }
+        return value;
     }
     public static String getProperty(String property, String defaultVal) {
-	final String prop = property;
-	final String def = defaultVal;
-	return ((String) java.security.AccessController.doPrivileged
-	    (new java.security.PrivilegedAction() {
-		public Object run() {
-		    return System.getProperty(prop, def);
-		}
-	    }));
+        final String prop = property;
+        final String def = defaultVal;
+        return ((String) java.security.AccessController.doPrivileged
+            (new java.security.PrivilegedAction() {
+                public Object run() {
+                    return System.getProperty(prop, def);
+                }
+            }));
     }
 
-    /** 
+    /**
      * Property mutators
      */
     public static void setBoolean(String property, boolean value) {
-	setProperty(property, (new Boolean(value)).toString());
+        setProperty(property, (new Boolean(value)).toString());
     }
     public static void setInteger(String property, int value) {
-	setProperty(property, Integer.toString(value));
+        setProperty(property, Integer.toString(value));
     }
     public static void setProperty(String property, String value) {
-	final String prop = property;
-	final String val = value;
-	java.security.AccessController.doPrivileged
-	    (new java.security.PrivilegedAction() {
-		public Object run() {
-		    System.setProperty(prop, val);
-		    return null;
-		}
-	});
+        final String prop = property;
+        final String val = value;
+        java.security.AccessController.doPrivileged
+            (new java.security.PrivilegedAction() {
+                public Object run() {
+                    System.setProperty(prop, val);
+                    return null;
+                }
+        });
     }
 
     /**
      * Routines to print out a test's properties environment.
      */
     public static void printEnvironment() {
-	printEnvironment(System.err);
+        printEnvironment(System.err);
     }
     public static void printEnvironment(PrintStream out) {
-	out.println("-------------------Test environment----------" + 
-		    "---------");
+        out.println("-------------------Test environment----------" +
+                    "---------");
 
-	for(Enumeration keys = System.getProperties().keys(); 
-	    keys.hasMoreElements();) {
-	    
-	    String property = (String) keys.nextElement();
-	    out.println(property + " = " + getProperty(property, null));
-	}
-	out.println("---------------------------------------------" + 
-		    "---------");
+        for(Enumeration keys = System.getProperties().keys();
+            keys.hasMoreElements();) {
+
+            String property = (String) keys.nextElement();
+            out.println(property + " = " + getProperty(property, null));
+        }
+        out.println("---------------------------------------------" +
+                    "---------");
     }
 
     /**
@@ -191,152 +191,152 @@ public class TestLibrary {
      *   getProperty etc.
      */
     public static URL installClassInCodebase(String className,
-					     String codebase)
-	throws MalformedURLException
+                                             String codebase)
+        throws MalformedURLException
     {
-	return installClassInCodebase(className, codebase, true);
+        return installClassInCodebase(className, codebase, true);
     }
 
     public static URL installClassInCodebase(String className,
-					     String codebase,
-					     boolean delete)
-	throws MalformedURLException
+                                             String codebase,
+                                             boolean delete)
+        throws MalformedURLException
     {
-	/*
-	 * NOTES/LIMITATIONS: The class must not be in a named package,
-	 * and the codebase must be a relative path (it's created relative
-	 * to the working directory).
-	 */
-	String classFileName = className + ".class";
+        /*
+         * NOTES/LIMITATIONS: The class must not be in a named package,
+         * and the codebase must be a relative path (it's created relative
+         * to the working directory).
+         */
+        String classFileName = className + ".class";
 
-	/*
-	 * Specify the file to contain the class definition.  Make sure
-	 * that the codebase directory exists (underneath the working
-	 * directory).
-	 */
-	File dstDir = (new File(getProperty("user.dir", "."), codebase));
+        /*
+         * Specify the file to contain the class definition.  Make sure
+         * that the codebase directory exists (underneath the working
+         * directory).
+         */
+        File dstDir = (new File(getProperty("user.dir", "."), codebase));
 
-	if (!dstDir.exists()) {
-	    if (!dstDir.mkdir()) {
-		throw new RuntimeException(
-		    "could not create codebase directory");
-	    }
-	}
-	File dstFile = new File(dstDir, classFileName);
+        if (!dstDir.exists()) {
+            if (!dstDir.mkdir()) {
+                throw new RuntimeException(
+                    "could not create codebase directory");
+            }
+        }
+        File dstFile = new File(dstDir, classFileName);
 
-	/*
-	 * Obtain the URL for the codebase.
-	 */
-	URL codebaseURL = dstDir.toURL();
+        /*
+         * Obtain the URL for the codebase.
+         */
+        URL codebaseURL = dstDir.toURL();
 
-	/*
-	 * Specify where we will copy the class definition from, if
-	 * necessary.  After the test is built, the class file can be
-	 * found in the "test.classes" directory.
-	 */
-	File srcDir = new File(getProperty("test.classes", "."));
-	File srcFile = new File(srcDir, classFileName);
+        /*
+         * Specify where we will copy the class definition from, if
+         * necessary.  After the test is built, the class file can be
+         * found in the "test.classes" directory.
+         */
+        File srcDir = new File(getProperty("test.classes", "."));
+        File srcFile = new File(srcDir, classFileName);
 
-	mesg(srcFile);
-	mesg(dstFile);
+        mesg(srcFile);
+        mesg(dstFile);
 
-	/*
-	 * If the class definition is not already located at the codebase,
-	 * copy it there from the test build area.
-	 */
-	if (!dstFile.exists()) {
-	    if (!srcFile.exists()) {
-		throw new RuntimeException(
-		    "could not find class file to install in codebase " +
-		    "(try rebuilding the test): " + srcFile);
-	    }
+        /*
+         * If the class definition is not already located at the codebase,
+         * copy it there from the test build area.
+         */
+        if (!dstFile.exists()) {
+            if (!srcFile.exists()) {
+                throw new RuntimeException(
+                    "could not find class file to install in codebase " +
+                    "(try rebuilding the test): " + srcFile);
+            }
 
-	    try {
-		copyFile(srcFile, dstFile);
-	    } catch (IOException e) {
-		throw new RuntimeException(
-		    "could not install class file in codebase");
-	    }
+            try {
+                copyFile(srcFile, dstFile);
+            } catch (IOException e) {
+                throw new RuntimeException(
+                    "could not install class file in codebase");
+            }
 
-	    mesg("Installed class \"" + className +
-		"\" in codebase " + codebaseURL);
-	}
+            mesg("Installed class \"" + className +
+                "\" in codebase " + codebaseURL);
+        }
 
-	/*
-	 * After the class definition is successfully installed at the
-	 * codebase, delete it from the test's CLASSPATH, so that it will
-	 * not be found there first before the codebase is searched.
-	 */
-	if (srcFile.exists()) {
-	    if (delete && !srcFile.delete()) {
-		throw new RuntimeException(
-		    "could not delete duplicate class file in CLASSPATH");
-	    }
-	}
+        /*
+         * After the class definition is successfully installed at the
+         * codebase, delete it from the test's CLASSPATH, so that it will
+         * not be found there first before the codebase is searched.
+         */
+        if (srcFile.exists()) {
+            if (delete && !srcFile.delete()) {
+                throw new RuntimeException(
+                    "could not delete duplicate class file in CLASSPATH");
+            }
+        }
 
-	return codebaseURL;
+        return codebaseURL;
     }
 
     public static void copyFile(File srcFile, File dstFile)
-	throws IOException
+        throws IOException
     {
-	FileInputStream src = new FileInputStream(srcFile);
-	FileOutputStream dst = new FileOutputStream(dstFile);
+        FileInputStream src = new FileInputStream(srcFile);
+        FileOutputStream dst = new FileOutputStream(dstFile);
 
-	byte[] buf = new byte[32768];
-	while (true) {
-	    int count = src.read(buf);
-	    if (count < 0) {
-		break;
-	    }
-	    dst.write(buf, 0, count);
-	}
+        byte[] buf = new byte[32768];
+        while (true) {
+            int count = src.read(buf);
+            if (count < 0) {
+                break;
+            }
+            dst.write(buf, 0, count);
+        }
 
-	dst.close();
-	src.close();
+        dst.close();
+        src.close();
     }
 
     /** routine to unexport an object */
     public static void unexport(Remote obj) {
-	if (obj != null) {
-	    try {
-		mesg("unexporting object...");
-		UnicastRemoteObject.unexportObject(obj, true);
-	    } catch (NoSuchObjectException munch) {
-	    } catch (Exception e) {
-		e.getMessage();
-		e.printStackTrace();
-	    }
-	}
+        if (obj != null) {
+            try {
+                mesg("unexporting object...");
+                UnicastRemoteObject.unexportObject(obj, true);
+            } catch (NoSuchObjectException munch) {
+            } catch (Exception e) {
+                e.getMessage();
+                e.printStackTrace();
+            }
+        }
     }
 
-    /** 
+    /**
      * Allow test framework to control the security manager set in
-     * each test.  
+     * each test.
      *
      * @param managerClassName The class name of the security manager
      *                         to be instantiated and set if no security
      *                         manager has already been set.
      */
     public static void suggestSecurityManager(String managerClassName) {
-	SecurityManager manager = null;
+        SecurityManager manager = null;
 
-	if (System.getSecurityManager() == null) {
-	    try {
-		if (managerClassName == null) {
-		    managerClassName = TestParams.defaultSecurityManager;
-		}
-		manager = ((SecurityManager) Class.
-			   forName(managerClassName).newInstance());
-	    } catch (ClassNotFoundException cnfe) {
-		bomb("Security manager could not be found: " +
-		     managerClassName, cnfe);
-	    } catch (Exception e) {
-		bomb("Error creating security manager. ", e);
-	    }
-	    
-	    System.setSecurityManager(manager);
-	}
+        if (System.getSecurityManager() == null) {
+            try {
+                if (managerClassName == null) {
+                    managerClassName = TestParams.defaultSecurityManager;
+                }
+                manager = ((SecurityManager) Class.
+                           forName(managerClassName).newInstance());
+            } catch (ClassNotFoundException cnfe) {
+                bomb("Security manager could not be found: " +
+                     managerClassName, cnfe);
+            } catch (Exception e) {
+                bomb("Error creating security manager. ", e);
+            }
+
+            System.setSecurityManager(manager);
+        }
     }
 
     /**
@@ -344,11 +344,11 @@ public class TestLibrary {
      * as a string.
      */
     public String stackTraceToString(Exception e) {
-	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	PrintStream ps = new PrintStream(bos);
-	
-	e.printStackTrace(ps);
-	return bos.toString();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(bos);
+
+        e.printStackTrace(ps);
+        return bos.toString();
     }
 
     /** extra properties */
@@ -372,15 +372,15 @@ public class TestLibrary {
         try {
             FileInputStream in = new FileInputStream(f);
             try {
-		props.load(in);
+                props.load(in);
             } finally {
-		in.close();
+                in.close();
             }
-	} catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("extra property setup failed", e);
-	}
-	return props;
+        }
+        return props;
     }
 
     /**

@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   test
   @bug 4992908
   @summary Need way to get location of MouseEvent in screen coordinates
@@ -50,7 +50,7 @@ public class MenuDragMouseEventAbsoluteCoordsTest extends Applet implements Mous
 
     Point mousePositionOnScreen = new Point(200, 200);
     Point mousePosition = new Point(100, 100);
-    public void init() 
+    public void init()
     {
         frame.addMouseListener(this);
     }//End  init()
@@ -128,7 +128,7 @@ public class MenuDragMouseEventAbsoluteCoordsTest extends Applet implements Mous
                                           );
         frame.dispatchEvent( ( AWTEvent )meOld );
     }
-    
+
     public void checkEventAbsolutePosition(MouseEvent evt, String message){
             if (evt.getXOnScreen() != mousePositionOnScreen.x ||
                 evt.getYOnScreen() != mousePositionOnScreen.y ||
@@ -146,7 +146,3 @@ public class MenuDragMouseEventAbsoluteCoordsTest extends Applet implements Mous
         System.out.println(message);
     }
 }// class AutomaticAppletTest
-
-
-
-

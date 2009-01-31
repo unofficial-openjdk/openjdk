@@ -32,7 +32,7 @@ import com.sun.jmx.snmp.SnmpSecurityParameters;
 
 /**
  * Security sub system interface. To allow engine integration, a security sub system must implement this interface.
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 public interface SnmpSecuritySubSystem extends SnmpSubSystem {
@@ -46,9 +46,9 @@ public interface SnmpSecuritySubSystem extends SnmpSubSystem {
      * To release the previously created cache. This call is routed to the dedicated model according to the model ID.
      * @param id The model ID.
      * @param cache The security cache to release.
-     */ 
-    public void releaseSecurityCache(int id, 
-				     SnmpSecurityCache cache) throws SnmpUnknownSecModelException;
+     */
+    public void releaseSecurityCache(int id,
+                                     SnmpSecurityCache cache) throws SnmpUnknownSecModelException;
 
      /**
      * Called when a request is to be sent to the network. It must be securized. This call is routed to the dedicated model according to the model ID.
@@ -68,18 +68,18 @@ public interface SnmpSecuritySubSystem extends SnmpSubSystem {
      * @return The marshalled byte number.
      */
     public int generateRequestMsg(SnmpSecurityCache cache,
-				  int version,
-				  int msgID,
-				  int msgMaxSize,
-				  byte msgFlags,
-				  int msgSecurityModel,
-				  SnmpSecurityParameters params,
-				  byte[] contextEngineID,
-				  byte[] contextName,
-				  byte[] data,
-				  int dataLength,
-				  byte[] outputBytes) 
-	throws SnmpTooBigException, SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
+                                  int version,
+                                  int msgID,
+                                  int msgMaxSize,
+                                  byte msgFlags,
+                                  int msgSecurityModel,
+                                  SnmpSecurityParameters params,
+                                  byte[] contextEngineID,
+                                  byte[] contextName,
+                                  byte[] data,
+                                  int dataLength,
+                                  byte[] outputBytes)
+        throws SnmpTooBigException, SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
 
     /**
      * Called when a response is to be sent to the network. It must be securized. This call is routed to the dedicated model according to the model ID.
@@ -99,19 +99,19 @@ public interface SnmpSecuritySubSystem extends SnmpSubSystem {
      * @return The marshalled byte number.
      */
     public int generateResponseMsg(SnmpSecurityCache cache,
-				   int version,
-				   int msgID,
-				   int msgMaxSize,
-				   byte msgFlags,
-				   int msgSecurityModel,
-				   SnmpSecurityParameters params,
-				   byte[] contextEngineID,
-				   byte[] contextName,
-				   byte[] data,
-				   int dataLength,
-				   byte[] outputBytes)
-	throws SnmpTooBigException, SnmpStatusException, 
-	       SnmpSecurityException, SnmpUnknownSecModelException;
+                                   int version,
+                                   int msgID,
+                                   int msgMaxSize,
+                                   byte msgFlags,
+                                   int msgSecurityModel,
+                                   SnmpSecurityParameters params,
+                                   byte[] contextEngineID,
+                                   byte[] contextName,
+                                   byte[] data,
+                                   int dataLength,
+                                   byte[] outputBytes)
+        throws SnmpTooBigException, SnmpStatusException,
+               SnmpSecurityException, SnmpUnknownSecModelException;
       /**
      * Called when a request is received from the network. It handles authentication and privacy. This call is routed to the dedicated model according to the model ID.
      * <BR>The specified parameters are defined in RFC 2572 (see also the {@link com.sun.jmx.snmp.SnmpV3Message} class).
@@ -128,22 +128,22 @@ public interface SnmpSecuritySubSystem extends SnmpSubSystem {
      * @param encryptedPdu The encrypted pdu or null if not encrypted.
      * @param decryptedPdu The decrypted pdu. If no decryption is to be done, the passed context engine ID, context name and data could be used to fill this object.
      * @return The decoded security parameters.
-     
+
      */
-    public SnmpSecurityParameters 
-	processIncomingRequest(SnmpSecurityCache cache,
-			       int version,
-			       int msgID,
-			       int msgMaxSize,
-			       byte msgFlags,
-			       int msgSecurityModel,
-			       byte[] params,
-			       byte[] contextEngineID,
-			       byte[] contextName,
-			       byte[] data,
-			       byte[] encryptedPdu,
-			       SnmpDecryptedPdu decryptedPdu)
-	throws SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
+    public SnmpSecurityParameters
+        processIncomingRequest(SnmpSecurityCache cache,
+                               int version,
+                               int msgID,
+                               int msgMaxSize,
+                               byte msgFlags,
+                               int msgSecurityModel,
+                               byte[] params,
+                               byte[] contextEngineID,
+                               byte[] contextName,
+                               byte[] data,
+                               byte[] encryptedPdu,
+                               SnmpDecryptedPdu decryptedPdu)
+        throws SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
           /**
      * Called when a response is received from the network. It handles authentication and privacy. This call is routed to the dedicated model according to the model ID.
      * <BR>The specified parameters are defined in RFC 2572 (see also the {@link com.sun.jmx.snmp.SnmpV3Message} class).
@@ -160,19 +160,19 @@ public interface SnmpSecuritySubSystem extends SnmpSubSystem {
      * @param encryptedPdu The encrypted pdu or null if not encrypted.
      * @param decryptedPdu The decrypted pdu. If no decryption is to be done, the passed context engine ID, context name and data could be used to fill this object.
      * @return The security parameters.
-     
+
      */
     public SnmpSecurityParameters processIncomingResponse(SnmpSecurityCache cache,
-							  int version,
-							  int msgID,
-							  int msgMaxSize,
-							  byte msgFlags,
-							  int msgSecurityModel,
-							  byte[] params,
-							  byte[] contextEngineID,
-							  byte[] contextName,
-							  byte[] data,
-							  byte[] encryptedPdu,
-							  SnmpDecryptedPdu decryptedPdu)
-	throws SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
+                                                          int version,
+                                                          int msgID,
+                                                          int msgMaxSize,
+                                                          byte msgFlags,
+                                                          int msgSecurityModel,
+                                                          byte[] params,
+                                                          byte[] contextEngineID,
+                                                          byte[] contextName,
+                                                          byte[] data,
+                                                          byte[] encryptedPdu,
+                                                          SnmpDecryptedPdu decryptedPdu)
+        throws SnmpStatusException, SnmpSecurityException, SnmpUnknownSecModelException;
 }

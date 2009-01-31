@@ -47,7 +47,6 @@ import sun.swing.PrintColorUIResource;
  * All colors returned by {@code OceanTheme} are completely
  * opaque.
  *
- * @version %I% %G%
  * @since 1.5
  * @see MetalLookAndFeel#setCurrentTheme
  */
@@ -87,7 +86,7 @@ public class OceanTheme extends DefaultMetalTheme {
             this.rtl = rtl;
         }
 
-        public void paintIcon(Component c, Graphics g, int x, int y) {        
+        public void paintIcon(Component c, Graphics g, int x, int y) {
             if (MetalUtils.isLeftToRight(c)) {
                 super.paintIcon(c, g, x, y);
             } else {
@@ -105,7 +104,7 @@ public class OceanTheme extends DefaultMetalTheme {
             super(normal);
             this.pressed = pressed;
         }
-        
+
         public void paintIcon(Component c, Graphics g, int x, int y) {
             ButtonModel model = ((AbstractButton)c).getModel();
             if (model.isPressed() && model.isArmed()) {
@@ -156,7 +155,7 @@ public class OceanTheme extends DefaultMetalTheme {
         Object[] defaults = new Object[] {
             "Button.gradient", buttonGradient,
             "Button.rollover", Boolean.TRUE,
-            "Button.toolBarBorderBackground", INACTIVE_CONTROL_TEXT_COLOR, 
+            "Button.toolBarBorderBackground", INACTIVE_CONTROL_TEXT_COLOR,
             "Button.disabledToolBarBorderBackground", cccccc,
             "Button.rolloverIconType", "ocean",
 
@@ -188,12 +187,12 @@ public class OceanTheme extends DefaultMetalTheme {
                  getIconResource("icons/ocean/floppy.gif"),
 
             "Label.disabledForeground", getInactiveControlTextColor(),
-            
+
             "Menu.opaque", Boolean.FALSE,
 
             "MenuBar.gradient", Arrays.asList(new Object[] {
                      new Float(1f), new Float(0f),
-                     getWhite(), dadada, 
+                     getWhite(), dadada,
                      new ColorUIResource(dadada) }),
             "MenuBar.borderColor", cccccc,
 
@@ -304,7 +303,7 @@ public class OceanTheme extends DefaultMetalTheme {
             "Tree.dropLineColor", getPrimary1(),
             "Table.dropLineColor", getPrimary1(),
             "Table.dropLineShortColor", OCEAN_BLACK,
-            
+
             "Table.dropCellBackground", OCEAN_DROP,
             "Tree.dropCellBackground", OCEAN_DROP,
             "List.dropCellBackground", OCEAN_DROP,
@@ -338,7 +337,7 @@ public class OceanTheme extends DefaultMetalTheme {
      */
     protected ColorUIResource getPrimary1() {
         return PRIMARY1;
-    } 
+    }
 
     /**
      * Returns the primary 2 color. This returns a color with an rgb hex value

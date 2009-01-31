@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   @test
   @bug 4507585
   @summary Native modal dialog shouldn't block event dispatching when called on EventDispatchThread.
@@ -40,79 +40,79 @@ public class PageSetupDlgBlockingTest extends Panel {
     public static Frame frame = new TestFrame("Test Frame");
 
     public static void main(String[] args) {
-	PageSetupDlgBlockingTest a = new PageSetupDlgBlockingTest();
+        PageSetupDlgBlockingTest a = new PageSetupDlgBlockingTest();
 
-	a.init();
-	a.start();
+        a.init();
+        a.start();
     }
 
     public void init()
     {
-        //Create instructions for the user here, as well as set up 
+        //Create instructions for the user here, as well as set up
         // the environment -- set the layout manager, add buttons,
         // etc.
         this.setLayout (new BorderLayout ());
 
-        String[] instructions = 
+        String[] instructions =
         {
-	    "This test verifies that native modal 'Page Setup' dialog doesn't block event",
-	    "handling when called on EventDispatchThread.",
-	    " ",
+            "This test verifies that native modal 'Page Setup' dialog doesn't block event",
+            "handling when called on EventDispatchThread.",
+            " ",
             "After test started you will see 'Test Frame' frame which contains",
-	    "one 'Click Me' button.",
-	    "1. Click the button:",
-	    "   - 'Page Setup' dialog will appear.",
-	    "2. Drag the dialog over the 'Test Frame' so that to enforce its button redraw:",
-	    "   - if you're seeing the button redraw (as long as PAINT events are displayed)",
-	    "     the test PASSED else FAILED."
+            "one 'Click Me' button.",
+            "1. Click the button:",
+            "   - 'Page Setup' dialog will appear.",
+            "2. Drag the dialog over the 'Test Frame' so that to enforce its button redraw:",
+            "   - if you're seeing the button redraw (as long as PAINT events are displayed)",
+            "     the test PASSED else FAILED."
         };
         Sysout.createDialogWithInstructions(instructions);
     }
 
 
-    public void start() {       
-	JButton button = new JButton("Click Me");
-	final AWTEventListener listener = new AWTEventListener() {
-		public void eventDispatched(AWTEvent e) {
-		    if (e.getSource().getClass() == TestFrame.class) {
-			Sysout.println(e.paramString() + " on <Test Frame>");
-		    }
-		}
-	    };
+    public void start() {
+        JButton button = new JButton("Click Me");
+        final AWTEventListener listener = new AWTEventListener() {
+                public void eventDispatched(AWTEvent e) {
+                    if (e.getSource().getClass() == TestFrame.class) {
+                        Sysout.println(e.paramString() + " on <Test Frame>");
+                    }
+                }
+            };
 
-	button.addActionListener(new ActionListener() {
-		public void actionPerformed(ActionEvent e) {
+        button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
 
-		    // Show PAINT events only when the dialog is displayed.
-		    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.PAINT_EVENT_MASK);
+                    // Show PAINT events only when the dialog is displayed.
+                    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.PAINT_EVENT_MASK);
 
-		    PrinterJob job = PrinterJob.getPrinterJob();
-		    job.pageDialog(job.defaultPage());
+                    PrinterJob job = PrinterJob.getPrinterJob();
+                    job.pageDialog(job.defaultPage());
 
-		    Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
-		}
-	    });
+                    Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
+                }
+            });
 
-	button.setSize(100, 50);
+        button.setSize(100, 50);
 
-	frame.setLayout(new BorderLayout());
-	frame.setSize(200, 200);
-	frame.setLocation(500, 0);
-	frame.add(button, BorderLayout.CENTER);
-	frame.setVisible(true);
+        frame.setLayout(new BorderLayout());
+        frame.setSize(200, 200);
+        frame.setLocation(500, 0);
+        frame.add(button, BorderLayout.CENTER);
+        frame.setVisible(true);
     }
 }
 
 class TestFrame extends Frame {
     TestFrame(String title) {
-	super(title);
+        super(title);
     }
 }
 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -125,12 +125,12 @@ class TestFrame extends Frame {
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
-{ 
+class Sysout
+{
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -140,7 +140,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
+
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -149,8 +149,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -178,20 +178,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-   
+
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name ) 
+    public TestDialog( Frame frame, String name )
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-      
+
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-      
+
         pack();
-      
+
         setVisible(true);
     }// TestDialog()
 
@@ -205,7 +205,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        { 
+        {
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -216,25 +216,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-               
+
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-               
+
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else 
-                { 
+                else
+                {
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-            
+
                 instructionsText.append( printStr + "\n" );
-            
+
             }// while
-         
+
         }// for
-      
+
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -242,6 +242,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }  
-   
+    }
+
 }// TestDialog  class

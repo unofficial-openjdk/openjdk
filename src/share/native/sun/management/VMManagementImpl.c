@@ -30,9 +30,9 @@
 
 #define MAX_VERSION_LEN   20
 
-JNIEXPORT jstring JNICALL 
+JNIEXPORT jstring JNICALL
 Java_sun_management_VMManagementImpl_getVersion0
-  (JNIEnv *env, jclass dummy) 
+  (JNIEnv *env, jclass dummy)
 {
     char buf[MAX_VERSION_LEN];
     jstring version_string = NULL;
@@ -49,16 +49,16 @@ Java_sun_management_VMManagementImpl_getVersion0
 }
 
 static void setStaticBooleanField
-   (JNIEnv* env, jclass cls, const char* name, jboolean value) 
+   (JNIEnv* env, jclass cls, const char* name, jboolean value)
 {
     jfieldID fid;
     fid = (*env)->GetStaticFieldID(env, cls, name, "Z");
     if (fid != 0) {
         (*env)->SetStaticBooleanField(env, cls, fid, value);
     }
-} 
+}
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_management_VMManagementImpl_initOptionalSupportFields
   (JNIEnv *env, jclass cls)
 {
@@ -94,7 +94,7 @@ Java_sun_management_VMManagementImpl_initOptionalSupportFields
     }
 }
 
-JNIEXPORT jobjectArray JNICALL 
+JNIEXPORT jobjectArray JNICALL
 Java_sun_management_VMManagementImpl_getVmArguments0
   (JNIEnv *env, jobject dummy)
 {
@@ -116,7 +116,7 @@ Java_sun_management_VMManagementImpl_getUnloadedClassCount
   (JNIEnv *env, jobject dummy)
 {
     /* JMM_CLASS_UNLOADED_COUNT is the total number of classes unloaded */
-    jlong count = jmm_interface->GetLongAttribute(env, NULL, 
+    jlong count = jmm_interface->GetLongAttribute(env, NULL,
                                                   JMM_CLASS_UNLOADED_COUNT);
     return count;
 }

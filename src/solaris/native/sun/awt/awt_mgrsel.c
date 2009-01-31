@@ -37,10 +37,10 @@ static Atom XA_MANAGER = None;
  * listen to a couple of selections, so linear search is enough).
  */
 struct AwtMgrsel {
-    char *selname;		/* base name of selection atoms */
-    Atom *per_scr_atoms;	/* per-screen selection atoms (ICCCM 1.2.6) */
-    Atom *per_scr_owners;	/* windows currently owning the selection */
-    long extra_mask;		/* extra events to listen to on owners */
+    char *selname;              /* base name of selection atoms */
+    Atom *per_scr_atoms;        /* per-screen selection atoms (ICCCM 1.2.6) */
+    Atom *per_scr_owners;       /* windows currently owning the selection */
+    long extra_mask;            /* extra events to listen to on owners */
     void *cookie;
     void (*callback_event)(int, XEvent *, void *); /* extra_mask events */
     void (*callback_owner)(int, Window, long *, void *); /* owner changes */
@@ -72,9 +72,9 @@ awt_mgrsel_screen(Window w)
     int scr;
 
     for (scr = 0; scr < ScreenCount(dpy); ++scr) {
-	if (w == RootWindow(dpy, scr)) {
-	    return (scr);
-	}
+        if (w == RootWindow(dpy, scr)) {
+            return (scr);
+        }
     }
 
     return (-1);
@@ -98,16 +98,16 @@ awt_mgrsel_screen(Window w)
  * Events in extra_mask are selected for on owning windows (exsiting
  * ones and on new owners when established) and callback_event will be
  * called with the screen number and an event.
- * 
+ *
  * The function returns an array of current owners.  The size of the
  * array is ScreenCount(awt_display).  The array is "owned" by this
  * module and should be considered by the caller as read-only.
  */
 const Window *
 awt_mgrsel_select(const char *selname, long extra_mask,
-		  void *cookie,
-		  void (*callback_event)(int, XEvent *, void *),
-		  void (*callback_owner)(int, Window, long *, void *))
+                  void *cookie,
+                  void (*callback_event)(int, XEvent *, void *),
+                  void (*callback_owner)(int, Window, long *, void *))
 {
     Display *dpy = awt_display;
     struct AwtMgrsel *mgrsel;
@@ -133,24 +133,24 @@ awt_mgrsel_select(const char *selname, long extra_mask,
     mgrsel = malloc(sizeof(struct AwtMgrsel));
 
     if (namesbuf == NULL || names == NULL || per_scr_atoms == NULL
-	|| per_scr_owners == NULL || mgrsel == NULL)
+        || per_scr_owners == NULL || mgrsel == NULL)
     {
-	DTRACE_PRINTLN("MG: select: unable to allocate memory");
-	if (namesbuf != NULL) free(per_scr_atoms);
-	if (names != NULL) free(names);
-	if (per_scr_atoms != NULL) free(per_scr_atoms);
-	if (per_scr_owners != NULL) free(per_scr_owners);
-	if (mgrsel != NULL) free(mgrsel);
-	return (NULL);
+        DTRACE_PRINTLN("MG: select: unable to allocate memory");
+        if (namesbuf != NULL) free(per_scr_atoms);
+        if (names != NULL) free(names);
+        if (per_scr_atoms != NULL) free(per_scr_atoms);
+        if (per_scr_owners != NULL) free(per_scr_owners);
+        if (mgrsel != NULL) free(mgrsel);
+        return (NULL);
     }
 
 
     for (scr = 0; scr < nscreens; ++scr) {
-	size_t sz;
+        size_t sz;
 
-	names[scr] = &namesbuf[per_scr_sz * scr];
-	sz = snprintf(names[scr], per_scr_sz, "%s_S%-d", selname, scr);
-	DASSERT(sz < per_scr_sz);
+        names[scr] = &namesbuf[per_scr_sz * scr];
+        sz = snprintf(names[scr], per_scr_sz, "%s_S%-d", selname, scr);
+        DASSERT(sz < per_scr_sz);
     }
 
     status = XInternAtoms(dpy, names, nscreens, False, per_scr_atoms);
@@ -159,10 +159,10 @@ awt_mgrsel_select(const char *selname, long extra_mask,
     free(namesbuf);
 
     if (status == 0) {
-	DTRACE_PRINTLN("MG: select: XInternAtoms failed");
-	free(per_scr_atoms);
-	free(per_scr_owners);
-	return (NULL);
+        DTRACE_PRINTLN("MG: select: XInternAtoms failed");
+        free(per_scr_atoms);
+        free(per_scr_owners);
+        return (NULL);
     }
 
     mgrsel->selname = strdup(selname);
@@ -174,16 +174,16 @@ awt_mgrsel_select(const char *selname, long extra_mask,
     mgrsel->callback_owner = callback_owner;
 
     for (scr = 0; scr < nscreens; ++scr) {
-	Window owner;
+        Window owner;
 
-	owner = awt_mgrsel_select_per_screen(per_scr_atoms[scr], extra_mask);
-	mgrsel->per_scr_owners[scr] = owner;
+        owner = awt_mgrsel_select_per_screen(per_scr_atoms[scr], extra_mask);
+        mgrsel->per_scr_owners[scr] = owner;
 #ifdef DEBUG
-	if (owner == None) {
-	    DTRACE_PRINTLN1("MG:   screen %d - None", scr);
-	} else {
-	    DTRACE_PRINTLN2("MG:   screen %d - 0x%08lx", scr, owner);
-	}
+        if (owner == None) {
+            DTRACE_PRINTLN1("MG:   screen %d - None", scr);
+        } else {
+            DTRACE_PRINTLN2("MG:   screen %d - 0x%08lx", scr, owner);
+        }
 #endif
     }
 
@@ -204,11 +204,11 @@ awt_mgrsel_select_per_screen(Atom selection, long extra_mask)
 
     owner = XGetSelectionOwner(dpy, selection);
     if (owner == None) {
-	/* we'll get notified later if one arrives */
-	XUngrabServer(dpy);
-	/* Workaround for bug 5039226 */
-	XSync(dpy, False);
-	return (None);
+        /* we'll get notified later if one arrives */
+        XUngrabServer(dpy);
+        /* Workaround for bug 5039226 */
+        XSync(dpy, False);
+        return (None);
     }
 
     /*
@@ -250,23 +250,23 @@ awt_mgrsel_dtraceManaged(XClientMessageEvent *mgrown)
     selection = mgrown->data.l[1];
     print_selname = selname = XGetAtomName(dpy, selection);
     if (selname == NULL) {
-	if (selection == None) {
-	    print_selname = "<None>";
-	} else {
-	    print_selname = "<Unknown>";
-	}
+        if (selection == None) {
+            print_selname = "<None>";
+        } else {
+            print_selname = "<Unknown>";
+        }
     }
 
     DTRACE_PRINTLN4("MG: new MANAGER for %s: screen %d, owner 0x%08lx (@%lu)",
-		   print_selname, scr,
-		   mgrown->data.l[2],  /* the window owning the selection */
-		   mgrown->data.l[0]); /* timestamp */
+                   print_selname, scr,
+                   mgrown->data.l[2],  /* the window owning the selection */
+                   mgrown->data.l[0]); /* timestamp */
     DTRACE_PRINTLN4("MG:   %ld %ld / 0x%lx 0x%lx", /* extra data */
-		    mgrown->data.l[3], mgrown->data.l[4],
-		    mgrown->data.l[3], mgrown->data.l[4]);
+                    mgrown->data.l[3], mgrown->data.l[4],
+                    mgrown->data.l[3], mgrown->data.l[4]);
 
     if (selname != NULL) {
-	XFree(selname);
+        XFree(selname);
     }
 }
 #endif /* DEBUG */
@@ -285,8 +285,8 @@ awt_mgrsel_managed(XClientMessageEvent *mgrown)
     long *data;
 
     if (mgrown->message_type != XA_MANAGER) {
-	DTRACE_PRINTLN("MG: ClientMessage type != MANAGER, ignoring");
-	return (0);
+        DTRACE_PRINTLN("MG: ClientMessage type != MANAGER, ignoring");
+        return (0);
     }
 
     scr = awt_mgrsel_screen(mgrown->window);
@@ -296,8 +296,8 @@ awt_mgrsel_managed(XClientMessageEvent *mgrown)
 #endif
 
     if (scr < 0) {
-	DTRACE_PRINTLN("MG: MANAGER ClientMessage with a non-root window!");
-	return (0);
+        DTRACE_PRINTLN("MG: MANAGER ClientMessage with a non-root window!");
+        return (0);
     }
 
     timestamp = mgrown->data.l[0];
@@ -307,13 +307,13 @@ awt_mgrsel_managed(XClientMessageEvent *mgrown)
 
     /* is this a selection we are intrested in? */
     for (mgrsel = mgrsel_list; mgrsel != NULL; mgrsel = mgrsel->next) {
-	if (selection == mgrsel->per_scr_atoms[scr])
-	    break;
+        if (selection == mgrsel->per_scr_atoms[scr])
+            break;
     }
 
     if (mgrsel == NULL) {
-	DTRACE_PRINTLN("MG: not interested in this selection, ignoring");
-	return (0);
+        DTRACE_PRINTLN("MG: not interested in this selection, ignoring");
+        return (0);
     }
 
 
@@ -323,7 +323,7 @@ awt_mgrsel_managed(XClientMessageEvent *mgrown)
 
     /* notify the listener */
     if (mgrsel->callback_owner != NULL) {
-	(*mgrsel->callback_owner)(scr, owner, data, mgrsel->cookie);
+        (*mgrsel->callback_owner)(scr, owner, data, mgrsel->cookie);
     }
 
     return (1);
@@ -338,29 +338,29 @@ awt_mgrsel_unmanaged(XDestroyWindowEvent *ev)
     Window exowner;
     int scr;
 
-    exowner = ev->window;	/* selection owner that's gone */
+    exowner = ev->window;       /* selection owner that's gone */
 
     /* is this a selection we are intrested in? */
     for (mgrsel = mgrsel_list; mgrsel != NULL; mgrsel = mgrsel->next) {
-	for (scr = 0; scr < ScreenCount(dpy); ++scr) {
-	    if (exowner == mgrsel->per_scr_owners[scr]) {
-		/* can one window own selections for more than one screen? */
-		goto out;	/* XXX??? */
-	    }
-	}
+        for (scr = 0; scr < ScreenCount(dpy); ++scr) {
+            if (exowner == mgrsel->per_scr_owners[scr]) {
+                /* can one window own selections for more than one screen? */
+                goto out;       /* XXX??? */
+            }
+        }
     }
   out:
     if (mgrsel == NULL) {
-	DTRACE_PRINTLN1("MG: DestroyNotify for 0x%08lx ignored", exowner);
-	return (0);
+        DTRACE_PRINTLN1("MG: DestroyNotify for 0x%08lx ignored", exowner);
+        return (0);
     }
 
     DTRACE_PRINTLN3("MG: DestroyNotify for 0x%08lx, owner of %s at screen %d",
-		    exowner, mgrsel->selname, scr);
+                    exowner, mgrsel->selname, scr);
 
     /* notify the listener (pass exowner as data???) */
     if (mgrsel->callback_owner != NULL) {
-	(*mgrsel->callback_owner)(scr, None, NULL, mgrsel->cookie);
+        (*mgrsel->callback_owner)(scr, None, NULL, mgrsel->cookie);
     }
 
     return (1);
@@ -378,40 +378,40 @@ awt_mgrsel_processEvent(XEvent *ev)
     int scr;
 
     if (ev->type == ClientMessage) { /* new manager announces ownership? */
-	if (awt_mgrsel_managed(&ev->xclient))
-	    return (1);
+        if (awt_mgrsel_managed(&ev->xclient))
+            return (1);
     }
 
     if (ev->type == DestroyNotify) { /* manager gives up selection? */
-	if (awt_mgrsel_unmanaged(&ev->xdestroywindow))
-	    return (1);	
+        if (awt_mgrsel_unmanaged(&ev->xdestroywindow))
+            return (1);
     }
 
     /* is this an event selected on one of selection owners? */
     for (mgrsel = mgrsel_list; mgrsel != NULL; mgrsel = mgrsel->next) {
-	for (scr = 0; scr < ScreenCount(dpy); ++scr) {
-	    if (ev->xany.window == mgrsel->per_scr_owners[scr]) {
-		/* can one window own selections for more than one screen? */
-		goto out;	/* XXX??? */
-	    }
-	}
+        for (scr = 0; scr < ScreenCount(dpy); ++scr) {
+            if (ev->xany.window == mgrsel->per_scr_owners[scr]) {
+                /* can one window own selections for more than one screen? */
+                goto out;       /* XXX??? */
+            }
+        }
     }
   out:
     DTRACE_PRINT2("MG: screen %d, event %d ...  ",
-		  scr, ev->xany.type);
+                  scr, ev->xany.type);
     if (mgrsel == NULL) {
-	DTRACE_PRINTLN("ignored");
-	return (0);		/* not interested */
+        DTRACE_PRINTLN("ignored");
+        return (0);             /* not interested */
     }
 
     DTRACE_PRINT1("%s ...  ", mgrsel->selname);
     if (mgrsel->callback_event != NULL) {
-	DTRACE_PRINTLN("dispatching");
-	(*mgrsel->callback_event)(scr, ev, mgrsel->cookie);
+        DTRACE_PRINTLN("dispatching");
+        (*mgrsel->callback_event)(scr, ev, mgrsel->cookie);
     }
 #ifdef DEBUG
     else {
-	DTRACE_PRINTLN("no callback");
+        DTRACE_PRINTLN("no callback");
     }
 #endif
 
@@ -428,7 +428,7 @@ awt_mgrsel_init(void)
     int scr;
 
     if (inited) {
-	return;
+        return;
     }
 
     XA_MANAGER = XInternAtom(dpy, "MANAGER", False);
@@ -442,9 +442,8 @@ awt_mgrsel_init(void)
      * new manager acquiring ownership of the manager selection.
      */
     for (scr = 0; scr < ScreenCount(dpy); ++scr) {
-	XSelectInput(dpy, RootWindow(dpy, scr), StructureNotifyMask);
+        XSelectInput(dpy, RootWindow(dpy, scr), StructureNotifyMask);
     }
 
     inited = True;
 }
-

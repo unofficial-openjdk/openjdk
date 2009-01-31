@@ -135,7 +135,6 @@ import java.io.*;
  * @param <V> the type of mapped values
  *
  * @author  Josh Bloch
- * @version %I%, %G%
  * @see     Object#hashCode()
  * @see     Collection
  * @see     Map
@@ -187,7 +186,7 @@ public class LinkedHashMap<K,V>
      * @throws IllegalArgumentException if the initial capacity is negative
      */
     public LinkedHashMap(int initialCapacity) {
-	super(initialCapacity);
+        super(initialCapacity);
         accessOrder = false;
     }
 
@@ -196,7 +195,7 @@ public class LinkedHashMap<K,V>
      * with the default initial capacity (16) and load factor (0.75).
      */
     public LinkedHashMap() {
-	super();
+        super();
         accessOrder = false;
     }
 
@@ -226,7 +225,7 @@ public class LinkedHashMap<K,V>
      *         or the load factor is nonpositive
      */
     public LinkedHashMap(int initialCapacity,
-			 float loadFactor,
+                         float loadFactor,
                          boolean accessOrder) {
         super(initialCapacity, loadFactor);
         this.accessOrder = accessOrder;
@@ -318,7 +317,7 @@ public class LinkedHashMap<K,V>
         // These fields comprise the doubly linked list used for iteration.
         Entry<K,V> before, after;
 
-	Entry(int hash, K key, V value, HashMap.Entry<K,V> next) {
+        Entry(int hash, K key, V value, HashMap.Entry<K,V> next) {
             super(hash, key, value, next);
         }
 
@@ -361,53 +360,53 @@ public class LinkedHashMap<K,V>
     }
 
     private abstract class LinkedHashIterator<T> implements Iterator<T> {
-	Entry<K,V> nextEntry    = header.after;
-	Entry<K,V> lastReturned = null;
+        Entry<K,V> nextEntry    = header.after;
+        Entry<K,V> lastReturned = null;
 
-	/**
-	 * The modCount value that the iterator believes that the backing
-	 * List should have.  If this expectation is violated, the iterator
-	 * has detected concurrent modification.
-	 */
-	int expectedModCount = modCount;
+        /**
+         * The modCount value that the iterator believes that the backing
+         * List should have.  If this expectation is violated, the iterator
+         * has detected concurrent modification.
+         */
+        int expectedModCount = modCount;
 
-	public boolean hasNext() {
+        public boolean hasNext() {
             return nextEntry != header;
-	}
+        }
 
-	public void remove() {
-	    if (lastReturned == null)
-		throw new IllegalStateException();
-	    if (modCount != expectedModCount)
-		throw new ConcurrentModificationException();
+        public void remove() {
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
 
             LinkedHashMap.this.remove(lastReturned.key);
             lastReturned = null;
             expectedModCount = modCount;
-	}
+        }
 
-	Entry<K,V> nextEntry() {
-	    if (modCount != expectedModCount)
-		throw new ConcurrentModificationException();
+        Entry<K,V> nextEntry() {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
             if (nextEntry == header)
                 throw new NoSuchElementException();
 
             Entry<K,V> e = lastReturned = nextEntry;
             nextEntry = e.after;
             return e;
-	}
+        }
     }
 
     private class KeyIterator extends LinkedHashIterator<K> {
-	public K next() { return nextEntry().getKey(); }
+        public K next() { return nextEntry().getKey(); }
     }
 
     private class ValueIterator extends LinkedHashIterator<V> {
-	public V next() { return nextEntry().value; }
+        public V next() { return nextEntry().value; }
     }
 
     private class EntryIterator extends LinkedHashIterator<Map.Entry<K,V>> {
-	public Map.Entry<K,V> next() { return nextEntry(); }
+        public Map.Entry<K,V> next() { return nextEntry(); }
     }
 
     // These Overrides alter the behavior of superclass view iterator() methods
@@ -439,7 +438,7 @@ public class LinkedHashMap<K,V>
      */
     void createEntry(int hash, K key, V value, int bucketIndex) {
         HashMap.Entry<K,V> old = table[bucketIndex];
-	Entry<K,V> e = new Entry<K,V>(hash, key, value, old);
+        Entry<K,V> e = new Entry<K,V>(hash, key, value, old);
         table[bucketIndex] = e;
         e.addBefore(header);
         size++;

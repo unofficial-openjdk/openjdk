@@ -106,4 +106,3 @@ public interface EncryptionMethod {
      */
     void removeEncryptionMethodInformation(Element information);
 }
-

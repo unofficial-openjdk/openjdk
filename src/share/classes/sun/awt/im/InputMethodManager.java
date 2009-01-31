@@ -64,7 +64,7 @@ import sun.awt.SunToolkit;
  * <UL>
  * <LI>
  * Keeps track of the current input context.</LI>
- * 
+ *
  * <LI>
  * Provides a user interface to switch input methods and notifies the current
  * input context about changes made from the user interface.</LI>
@@ -80,7 +80,7 @@ import sun.awt.SunToolkit;
  * Win32) on each window which is popped up by clicking the left top box of
  * a window (known as <I>Window menu button</I> in Motif and <I>System menu
  * button</I> in Win32). This happens to be common in both Motif and Win32.</LI>
- * 
+ *
  * <LI>
  * When more than one input method descriptor can be found or the only input
  * method descriptor found supports multiple locales, a menu item
@@ -88,19 +88,19 @@ import sun.awt.SunToolkit;
  * <code>getTriggerMenuString()</code>. If null is returned by this method, it
  * means that there is only input method or none in the environment. Frame and Dialog
  * invoke this method.</LI>
- * 
+ *
  * <LI>
  * This menu item means a trigger switch to the user to pop up a selection
  * menu.</LI>
- * 
+ *
  * <LI>
  * When the menu item of the window (manager) menu has been selected by the
  * user, Frame/Dialog invokes <code>notifyChangeRequest()</code> to notify
  * <code>InputMethodManager</code> that the user wants to switch input methods.</LI>
- * 
+ *
  * <LI>
  * <code>InputMethodManager</code> displays a pop-up menu to choose an input method.</LI>
- * 
+ *
  * <LI>
  * <code>InputMethodManager</code> notifies the current <code>InputContext</code> of
  * the selected <code>InputMethod</code>.</LI>
@@ -108,21 +108,20 @@ import sun.awt.SunToolkit;
  *
  * <UL>
  * <LI>
- * The other way is to use user-defined hot key combination to show the pop-up menu to 
+ * The other way is to use user-defined hot key combination to show the pop-up menu to
  * choose an input method.  This is useful for the platforms which do not provide a
  * way to add a menu item in the window (manager) menu.</LI>
  *
  * <LI>
  * When the hot key combination is typed by the user, the component which has the input
- * focus invokes <code>notifyChangeRequestByHotKey()</code> to notify 
+ * focus invokes <code>notifyChangeRequestByHotKey()</code> to notify
  * <code>InputMethodManager</code> that the user wants to switch input methods.</LI>
  *
  * <LI>
  * This results in a popup menu and notification to the current input context,
  * as above.</LI>
  * </UL>
- * 
- * @version %I% %G%
+ *
  * @see java.awt.im.spi.InputMethod
  * @see sun.awt.im.InputContext
  * @see sun.awt.im.InputMethodAdapter
@@ -154,27 +153,27 @@ public abstract class InputMethodManager {
      * @return the InputMethodManager instance
      */
     public static final InputMethodManager getInstance() {
-	if (inputMethodManager != null) {
-	    return inputMethodManager;
-	}
-	synchronized(LOCK) {
-	    if (inputMethodManager == null) {
-		ExecutableInputMethodManager imm = new ExecutableInputMethodManager();
+        if (inputMethodManager != null) {
+            return inputMethodManager;
+        }
+        synchronized(LOCK) {
+            if (inputMethodManager == null) {
+                ExecutableInputMethodManager imm = new ExecutableInputMethodManager();
 
-		// Initialize the input method manager and start a
-		// daemon thread if the user has multiple input methods
-		// to choose from. Otherwise, just keep the instance.
-		if (imm.hasMultipleInputMethods()) {
-		    imm.initialize();
-		    Thread immThread = new Thread(imm, threadName);
-		    immThread.setDaemon(true);
+                // Initialize the input method manager and start a
+                // daemon thread if the user has multiple input methods
+                // to choose from. Otherwise, just keep the instance.
+                if (imm.hasMultipleInputMethods()) {
+                    imm.initialize();
+                    Thread immThread = new Thread(imm, threadName);
+                    immThread.setDaemon(true);
                     immThread.setPriority(Thread.NORM_PRIORITY + 1);
-		    immThread.start();
-		}
-		inputMethodManager = imm;
-	    }
-	}
-	return inputMethodManager;
+                    immThread.start();
+                }
+                inputMethodManager = imm;
+            }
+        }
+        return inputMethodManager;
     }
 
     /**
@@ -211,7 +210,7 @@ public abstract class InputMethodManager {
      * deactivating.
      */
     abstract void setInputContext(InputContext inputContext);
-    
+
     /**
      * Tries to find an input method locator for the given locale.
      * Returns null if no available input method locator supports
@@ -242,7 +241,7 @@ public abstract class InputMethodManager {
  * @see InputMethodManager
  */
 class ExecutableInputMethodManager extends InputMethodManager
-				   implements Runnable
+                                   implements Runnable
 {
     // the input context that's informed about selections from the user interface
     private InputContext currentInputContext;
@@ -256,7 +255,7 @@ class ExecutableInputMethodManager extends InputMethodManager
 
     // locator and name of host adapter
     private InputMethodLocator hostAdapterLocator;
-     
+
     // locators for Java input methods
     private int javaInputMethodCount;         // number of Java input methods found
     private Vector<InputMethodLocator> javaInputMethodLocatorList;
@@ -276,7 +275,7 @@ class ExecutableInputMethodManager extends InputMethodManager
 
     ExecutableInputMethodManager() {
 
-	// set up host adapter locator
+        // set up host adapter locator
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         try {
             if (toolkit instanceof InputMethodSupport) {
@@ -286,37 +285,37 @@ class ExecutableInputMethodManager extends InputMethodManager
                 if (hostAdapterDescriptor != null) {
                     hostAdapterLocator = new InputMethodLocator(hostAdapterDescriptor, null, null);
                 }
-	    }
-	} catch (AWTException e) {
-	    // if we can't get a descriptor, we'll just have to do without native input methods
-	}
+            }
+        } catch (AWTException e) {
+            // if we can't get a descriptor, we'll just have to do without native input methods
+        }
 
-	javaInputMethodLocatorList = new Vector<InputMethodLocator>();
-	initializeInputMethodLocatorList();
+        javaInputMethodLocatorList = new Vector<InputMethodLocator>();
+        initializeInputMethodLocatorList();
     }
 
     synchronized void initialize() {
         selectInputMethodMenuTitle = Toolkit.getProperty("AWT.InputMethodSelectionMenu", "Select Input Method");
 
-	triggerMenuString = selectInputMethodMenuTitle;
+        triggerMenuString = selectInputMethodMenuTitle;
     }
 
     public void run() {
-	// If there are no multiple input methods to choose from, wait forever
-	while (!hasMultipleInputMethods()) {
-	    try {
-		synchronized (this) {
-		    wait();
-		}
-	    } catch (InterruptedException e) {
-	    }
-	}
+        // If there are no multiple input methods to choose from, wait forever
+        while (!hasMultipleInputMethods()) {
+            try {
+                synchronized (this) {
+                    wait();
+                }
+            } catch (InterruptedException e) {
+            }
+        }
 
-	// Loop for processing input method change requests
-	while (true) {
-	    waitForChangeRequest();
-	    initializeInputMethodLocatorList();
-	    try {
+        // Loop for processing input method change requests
+        while (true) {
+            waitForChangeRequest();
+            initializeInputMethodLocatorList();
+            try {
                 if (requestComponent != null) {
                     showInputMethodMenuOnRequesterEDT(requestComponent);
                 } else {
@@ -327,11 +326,11 @@ class ExecutableInputMethodManager extends InputMethodManager
                         }
                     });
                 }
-	    } catch (InterruptedException ie) {
-	    } catch (InvocationTargetException ite) {
-		// should we do anything under these exceptions?
-	    }
-	}
+            } catch (InterruptedException ie) {
+            } catch (InvocationTargetException ite) {
+                // should we do anything under these exceptions?
+            }
+        }
     }
 
     // Shows Input Method Menu on the EDT of requester component
@@ -376,48 +375,48 @@ class ExecutableInputMethodManager extends InputMethodManager
     }
 
     public synchronized void notifyChangeRequest(Component comp) {
-	if (!(comp instanceof Frame || comp instanceof Dialog))
-	    return;
+        if (!(comp instanceof Frame || comp instanceof Dialog))
+            return;
 
-	// if busy with the current request, ignore this request.
-	if (requestComponent != null)
-	    return;
+        // if busy with the current request, ignore this request.
+        if (requestComponent != null)
+            return;
 
-	requestComponent = comp;
-	notify();
+        requestComponent = comp;
+        notify();
     }
 
     public synchronized void notifyChangeRequestByHotKey(Component comp) {
-	while (!(comp instanceof Frame || comp instanceof Dialog)) {
-	    if (comp == null) {
-		// no Frame or Dialog found in containment hierarchy.
-		return;
-	    }
-	    comp = comp.getParent();
-	}
+        while (!(comp instanceof Frame || comp instanceof Dialog)) {
+            if (comp == null) {
+                // no Frame or Dialog found in containment hierarchy.
+                return;
+            }
+            comp = comp.getParent();
+        }
 
-	notifyChangeRequest(comp);
+        notifyChangeRequest(comp);
     }
 
     public String getTriggerMenuString() {
-	return triggerMenuString;
+        return triggerMenuString;
     }
 
     /*
      * Returns true if the environment indicates there are multiple input methods
      */
     boolean hasMultipleInputMethods() {
-	return ((hostAdapterLocator != null) && (javaInputMethodCount > 0)
-	        || (javaInputMethodCount > 1));
+        return ((hostAdapterLocator != null) && (javaInputMethodCount > 0)
+                || (javaInputMethodCount > 1));
     }
 
     private synchronized void waitForChangeRequest() {
-	try {
-	    while (requestComponent == null) {
-		wait();
-	    }
-	} catch (InterruptedException e) {
-	}
+        try {
+            while (requestComponent == null) {
+                wait();
+            }
+        } catch (InterruptedException e) {
+        }
     }
 
     /*
@@ -426,57 +425,57 @@ class ExecutableInputMethodManager extends InputMethodManager
      */
     private void initializeInputMethodLocatorList() {
         synchronized (javaInputMethodLocatorList) {
-	    javaInputMethodLocatorList.clear();
+            javaInputMethodLocatorList.clear();
             try {
                 AccessController.doPrivileged(new PrivilegedExceptionAction() {
                     public Object run() {
-			for (InputMethodDescriptor descriptor : 
-			    ServiceLoader.loadInstalled(InputMethodDescriptor.class)) {
-			    ClassLoader cl = descriptor.getClass().getClassLoader();
-			    javaInputMethodLocatorList.add(new InputMethodLocator(descriptor, cl, null));
-			}
-			return null;
-		    }
-		});
-	    }  catch (PrivilegedActionException e) {
-		e.printStackTrace();
+                        for (InputMethodDescriptor descriptor :
+                            ServiceLoader.loadInstalled(InputMethodDescriptor.class)) {
+                            ClassLoader cl = descriptor.getClass().getClassLoader();
+                            javaInputMethodLocatorList.add(new InputMethodLocator(descriptor, cl, null));
+                        }
+                        return null;
+                    }
+                });
+            }  catch (PrivilegedActionException e) {
+                e.printStackTrace();
             }
-	    javaInputMethodCount = javaInputMethodLocatorList.size();
-	}
-        
+            javaInputMethodCount = javaInputMethodLocatorList.size();
+        }
+
         if (hasMultipleInputMethods()) {
-	    // initialize preferences
-	    if (userRoot == null) {
-		userRoot = getUserRoot();
-	    }
+            // initialize preferences
+            if (userRoot == null) {
+                userRoot = getUserRoot();
+            }
         } else {
-	    // indicate to clients not to offer the menu
+            // indicate to clients not to offer the menu
             triggerMenuString = null;
-	}
+        }
     }
-    
+
     private void showInputMethodMenu() {
 
-	if (!hasMultipleInputMethods()) {
-	    requestComponent = null;
-	    return;
-	}
+        if (!hasMultipleInputMethods()) {
+            requestComponent = null;
+            return;
+        }
 
-	// initialize pop-up menu
-	selectionMenu = InputMethodPopupMenu.getInstance(requestComponent, selectInputMethodMenuTitle);
+        // initialize pop-up menu
+        selectionMenu = InputMethodPopupMenu.getInstance(requestComponent, selectInputMethodMenuTitle);
 
-	// we have to rebuild the menu each time because
-	// some input methods (such as IIIMP) may change
-	// their list of supported locales dynamically
-	selectionMenu.removeAll();
-        
+        // we have to rebuild the menu each time because
+        // some input methods (such as IIIMP) may change
+        // their list of supported locales dynamically
+        selectionMenu.removeAll();
+
         // get information about the currently selected input method
         // ??? if there's no current input context, what's the point
         // of showing the menu?
         String currentSelection = getCurrentSelection();
 
-	// Add menu item for host adapter
-	if (hostAdapterLocator != null) {
+        // Add menu item for host adapter
+        if (hostAdapterLocator != null) {
             selectionMenu.addOneInputMethodToMenu(hostAdapterLocator, currentSelection);
             selectionMenu.addSeparator();
         }
@@ -487,14 +486,14 @@ class ExecutableInputMethodManager extends InputMethodManager
             selectionMenu.addOneInputMethodToMenu(locator, currentSelection);
         }
 
-	synchronized (this) {
-	    selectionMenu.addToComponent(requestComponent);
-	    requestInputContext = currentInputContext;
-	    selectionMenu.show(requestComponent, 60, 80); // TODO: get proper x, y...
-	    requestComponent = null;
-	}
+        synchronized (this) {
+            selectionMenu.addToComponent(requestComponent);
+            requestInputContext = currentInputContext;
+            selectionMenu.show(requestComponent, 60, 80); // TODO: get proper x, y...
+            requestComponent = null;
+        }
     }
-    
+
     private String getCurrentSelection() {
         InputContext inputContext = currentInputContext;
         if (inputContext != null) {
@@ -507,74 +506,74 @@ class ExecutableInputMethodManager extends InputMethodManager
     }
 
     synchronized void changeInputMethod(String choice) {
-	InputMethodLocator locator = null;
+        InputMethodLocator locator = null;
 
-	String inputMethodName = choice;
-	String localeString = null;
-	int index = choice.indexOf('\n');
-	if (index != -1) {
-	    localeString = choice.substring(index + 1);
-	    inputMethodName = choice.substring(0, index);
-	}
-	if (hostAdapterLocator.getActionCommandString().equals(inputMethodName)) {
-	    locator = hostAdapterLocator;
-	} else {
+        String inputMethodName = choice;
+        String localeString = null;
+        int index = choice.indexOf('\n');
+        if (index != -1) {
+            localeString = choice.substring(index + 1);
+            inputMethodName = choice.substring(0, index);
+        }
+        if (hostAdapterLocator.getActionCommandString().equals(inputMethodName)) {
+            locator = hostAdapterLocator;
+        } else {
             for (int i = 0; i < javaInputMethodLocatorList.size(); i++) {
                 InputMethodLocator candidate = javaInputMethodLocatorList.get(i);
                 String name = candidate.getActionCommandString();
                 if (name.equals(inputMethodName)) {
                     locator = candidate;
-		    break;
-		}
-	    }
-	}
-	    
-	if (locator != null && localeString != null) {
-	    String language = "", country = "", variant = "";
-	    int postIndex = localeString.indexOf('_');
-	    if (postIndex == -1) {
-	        language = localeString;
-	    } else {
-	        language = localeString.substring(0, postIndex);
-	        int preIndex = postIndex + 1;
-	        postIndex = localeString.indexOf('_', preIndex);
-	        if (postIndex == -1) {
-	            country = localeString.substring(preIndex);
-	        } else {
-	            country = localeString.substring(preIndex, postIndex);
-	            variant = localeString.substring(postIndex + 1);
-	        }
-	    }
-	    Locale locale = new Locale(language, country, variant);
-	    locator = locator.deriveLocator(locale);
-	}
+                    break;
+                }
+            }
+        }
 
-	if (locator == null)
-	    return;
+        if (locator != null && localeString != null) {
+            String language = "", country = "", variant = "";
+            int postIndex = localeString.indexOf('_');
+            if (postIndex == -1) {
+                language = localeString;
+            } else {
+                language = localeString.substring(0, postIndex);
+                int preIndex = postIndex + 1;
+                postIndex = localeString.indexOf('_', preIndex);
+                if (postIndex == -1) {
+                    country = localeString.substring(preIndex);
+                } else {
+                    country = localeString.substring(preIndex, postIndex);
+                    variant = localeString.substring(postIndex + 1);
+                }
+            }
+            Locale locale = new Locale(language, country, variant);
+            locator = locator.deriveLocator(locale);
+        }
 
-	// tell the input context about the change
-	if (requestInputContext != null) {
-	    requestInputContext.changeInputMethod(locator);
-	    requestInputContext = null;
-	    
-	    // remember the selection
-	    putPreferredInputMethod(locator);
-	}
+        if (locator == null)
+            return;
+
+        // tell the input context about the change
+        if (requestInputContext != null) {
+            requestInputContext.changeInputMethod(locator);
+            requestInputContext = null;
+
+            // remember the selection
+            putPreferredInputMethod(locator);
+        }
     }
-    
+
     InputMethodLocator findInputMethod(Locale locale) {
         // look for preferred input method first
-	InputMethodLocator locator = getPreferredInputMethod(locale);
-	if (locator != null) {
-	    return locator;
-	}
-		    
-	if (hostAdapterLocator != null && hostAdapterLocator.isLocaleAvailable(locale)) {
+        InputMethodLocator locator = getPreferredInputMethod(locale);
+        if (locator != null) {
+            return locator;
+        }
+
+        if (hostAdapterLocator != null && hostAdapterLocator.isLocaleAvailable(locale)) {
             return hostAdapterLocator.deriveLocator(locale);
         }
 
-	// Update the locator list
-	initializeInputMethodLocatorList();
+        // Update the locator list
+        initializeInputMethodLocatorList();
 
         for (int i = 0; i < javaInputMethodLocatorList.size(); i++) {
             InputMethodLocator candidate = javaInputMethodLocatorList.get(i);
@@ -583,15 +582,15 @@ class ExecutableInputMethodManager extends InputMethodManager
             }
         }
         return null;
-    }       
+    }
 
     Locale getDefaultKeyboardLocale() {
-	Toolkit toolkit = Toolkit.getDefaultToolkit();
-	if (toolkit instanceof InputMethodSupport) {
-	    return ((InputMethodSupport)toolkit).getDefaultKeyboardLocale();
-	} else {
-	    return Locale.getDefault();
-	}
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (toolkit instanceof InputMethodSupport) {
+            return ((InputMethodSupport)toolkit).getDefaultKeyboardLocale();
+        } else {
+            return Locale.getDefault();
+        }
     }
 
     /**
@@ -601,89 +600,89 @@ class ExecutableInputMethodManager extends InputMethodManager
      * @param locale Locale for which the user prefers the input method.
      */
     private synchronized InputMethodLocator getPreferredInputMethod(Locale locale) {
-	InputMethodLocator preferredLocator = null;
+        InputMethodLocator preferredLocator = null;
 
-	if (!hasMultipleInputMethods()) {
-	    // No need to look for a preferred Java input method
-	    return null;
-	}
+        if (!hasMultipleInputMethods()) {
+            // No need to look for a preferred Java input method
+            return null;
+        }
 
-	// look for the cached preference first.
-	preferredLocator = (InputMethodLocator)preferredLocatorCache.get(locale.toString().intern());
-	if (preferredLocator != null) {
-	    return preferredLocator;
-	}
-	
-   	// look for the preference in the user preference tree
-	String nodePath = findPreferredInputMethodNode(locale);
-	String descriptorName = readPreferredInputMethod(nodePath);
-	Locale advertised;
+        // look for the cached preference first.
+        preferredLocator = (InputMethodLocator)preferredLocatorCache.get(locale.toString().intern());
+        if (preferredLocator != null) {
+            return preferredLocator;
+        }
 
-	// get the locator object
-	if (descriptorName != null) {
-	    // check for the host adapter first
-	    if (hostAdapterLocator != null &&
-	        hostAdapterLocator.getDescriptor().getClass().getName().equals(descriptorName)) {
-		advertised = getAdvertisedLocale(hostAdapterLocator, locale);
-		if (advertised != null) {
-		    preferredLocator = hostAdapterLocator.deriveLocator(advertised);
-		    preferredLocatorCache.put(locale.toString().intern(), preferredLocator);
-		}
-		return preferredLocator;
-	    }
-	    // look for Java input methods
+        // look for the preference in the user preference tree
+        String nodePath = findPreferredInputMethodNode(locale);
+        String descriptorName = readPreferredInputMethod(nodePath);
+        Locale advertised;
+
+        // get the locator object
+        if (descriptorName != null) {
+            // check for the host adapter first
+            if (hostAdapterLocator != null &&
+                hostAdapterLocator.getDescriptor().getClass().getName().equals(descriptorName)) {
+                advertised = getAdvertisedLocale(hostAdapterLocator, locale);
+                if (advertised != null) {
+                    preferredLocator = hostAdapterLocator.deriveLocator(advertised);
+                    preferredLocatorCache.put(locale.toString().intern(), preferredLocator);
+                }
+                return preferredLocator;
+            }
+            // look for Java input methods
             for (int i = 0; i < javaInputMethodLocatorList.size(); i++) {
                 InputMethodLocator locator = javaInputMethodLocatorList.get(i);
                 InputMethodDescriptor descriptor = locator.getDescriptor();
-		if (descriptor.getClass().getName().equals(descriptorName)) {
-		    advertised = getAdvertisedLocale(locator, locale);
-		    if (advertised != null) {
-			preferredLocator = locator.deriveLocator(advertised);
-			preferredLocatorCache.put(locale.toString().intern(), preferredLocator);
-		    }
-		    return preferredLocator;
-		}
-	    }
+                if (descriptor.getClass().getName().equals(descriptorName)) {
+                    advertised = getAdvertisedLocale(locator, locale);
+                    if (advertised != null) {
+                        preferredLocator = locator.deriveLocator(advertised);
+                        preferredLocatorCache.put(locale.toString().intern(), preferredLocator);
+                    }
+                    return preferredLocator;
+                }
+            }
 
-	    // maybe preferred input method information is bogus.
-	    writePreferredInputMethod(nodePath, null);
+            // maybe preferred input method information is bogus.
+            writePreferredInputMethod(nodePath, null);
         }
-
-	return null;
-    }
-
-    private String findPreferredInputMethodNode(Locale locale) {
-	if (userRoot == null) {
-	    return null;
-	}
-
-	// create locale node relative path
-	String nodePath = preferredIMNode + "/" + createLocalePath(locale);
-	    
-	// look for the descriptor
-	while (!nodePath.equals(preferredIMNode)) {
-	    try {
-	        if (userRoot.nodeExists(nodePath)) {
-		    if (readPreferredInputMethod(nodePath) != null) {
-			return nodePath;
-		    }
-		}
-	    } catch (BackingStoreException bse) {
-	    }
-
-	    // search at parent's node
-	    nodePath = nodePath.substring(0, nodePath.lastIndexOf('/'));
-	}
 
         return null;
     }
-    
-    private String readPreferredInputMethod(String nodePath) {
-	if ((userRoot == null) || (nodePath == null)) {
-	    return null;
-	}
 
-	return userRoot.node(nodePath).get(descriptorKey, null);
+    private String findPreferredInputMethodNode(Locale locale) {
+        if (userRoot == null) {
+            return null;
+        }
+
+        // create locale node relative path
+        String nodePath = preferredIMNode + "/" + createLocalePath(locale);
+
+        // look for the descriptor
+        while (!nodePath.equals(preferredIMNode)) {
+            try {
+                if (userRoot.nodeExists(nodePath)) {
+                    if (readPreferredInputMethod(nodePath) != null) {
+                        return nodePath;
+                    }
+                }
+            } catch (BackingStoreException bse) {
+            }
+
+            // search at parent's node
+            nodePath = nodePath.substring(0, nodePath.lastIndexOf('/'));
+        }
+
+        return null;
+    }
+
+    private String readPreferredInputMethod(String nodePath) {
+        if ((userRoot == null) || (nodePath == null)) {
+            return null;
+        }
+
+        return userRoot.node(nodePath).get(descriptorKey, null);
     }
 
     /**
@@ -693,112 +692,112 @@ class ExecutableInputMethodManager extends InputMethodManager
      * @param inputMethodLocator input method locator to remember.
      */
     private synchronized void putPreferredInputMethod(InputMethodLocator locator) {
-	InputMethodDescriptor descriptor = locator.getDescriptor();
+        InputMethodDescriptor descriptor = locator.getDescriptor();
         Locale preferredLocale = locator.getLocale();
-	
-	if (preferredLocale == null) {
-	    // check available locales of the input method
-	    try {
-		Locale[] availableLocales = descriptor.getAvailableLocales();
-		if (availableLocales.length == 1) {
-		    preferredLocale = availableLocales[0];
-		} else {
-		    // there is no way to know which locale is the preferred one, so do nothing.
-		    return;
-		}
-	    } catch (AWTException ae) {
-		// do nothing here, either.
-		return;
-	    }
-	}
 
-	// for regions that have only one language, we need to regard 
-	// "xx_YY" as "xx" when putting the preference into tree
-	if (preferredLocale.equals(Locale.JAPAN)) {
-	    preferredLocale = Locale.JAPANESE;
-	}
-	if (preferredLocale.equals(Locale.KOREA)) {
-	    preferredLocale = Locale.KOREAN;
-	}
-	if (preferredLocale.equals(new Locale("th", "TH"))) {
-	    preferredLocale = new Locale("th");
-	}
+        if (preferredLocale == null) {
+            // check available locales of the input method
+            try {
+                Locale[] availableLocales = descriptor.getAvailableLocales();
+                if (availableLocales.length == 1) {
+                    preferredLocale = availableLocales[0];
+                } else {
+                    // there is no way to know which locale is the preferred one, so do nothing.
+                    return;
+                }
+            } catch (AWTException ae) {
+                // do nothing here, either.
+                return;
+            }
+        }
 
-	// obtain node
+        // for regions that have only one language, we need to regard
+        // "xx_YY" as "xx" when putting the preference into tree
+        if (preferredLocale.equals(Locale.JAPAN)) {
+            preferredLocale = Locale.JAPANESE;
+        }
+        if (preferredLocale.equals(Locale.KOREA)) {
+            preferredLocale = Locale.KOREAN;
+        }
+        if (preferredLocale.equals(new Locale("th", "TH"))) {
+            preferredLocale = new Locale("th");
+        }
+
+        // obtain node
         String path = preferredIMNode + "/" + createLocalePath(preferredLocale);
 
-	// write in the preference tree
-	writePreferredInputMethod(path, descriptor.getClass().getName());
-	preferredLocatorCache.put(preferredLocale.toString().intern(),
-	    locator.deriveLocator(preferredLocale));
+        // write in the preference tree
+        writePreferredInputMethod(path, descriptor.getClass().getName());
+        preferredLocatorCache.put(preferredLocale.toString().intern(),
+            locator.deriveLocator(preferredLocale));
 
-	return;
+        return;
     }
 
     private String createLocalePath(Locale locale) {
-	String language = locale.getLanguage();
-	String country = locale.getCountry();
-	String variant = locale.getVariant();
-	String localePath = null;
-	if (!variant.equals("")) {
-	    localePath = "_" + language + "/_" + country + "/_" + variant;
-	} else if (!country.equals("")) {
-	    localePath = "_" + language + "/_" + country;
-	} else {
-	    localePath = "_" + language;
-	}
-	
-	return localePath;
+        String language = locale.getLanguage();
+        String country = locale.getCountry();
+        String variant = locale.getVariant();
+        String localePath = null;
+        if (!variant.equals("")) {
+            localePath = "_" + language + "/_" + country + "/_" + variant;
+        } else if (!country.equals("")) {
+            localePath = "_" + language + "/_" + country;
+        } else {
+            localePath = "_" + language;
+        }
+
+        return localePath;
     }
 
     private void writePreferredInputMethod(String path, String descriptorName) {
-	if (userRoot != null) {
-	    Preferences node = userRoot.node(path);
-	
-	    // record it
-	    if (descriptorName != null) {
-		node.put(descriptorKey, descriptorName);
-	    } else {
-		node.remove(descriptorKey);
-	    }
-	}
+        if (userRoot != null) {
+            Preferences node = userRoot.node(path);
+
+            // record it
+            if (descriptorName != null) {
+                node.put(descriptorKey, descriptorName);
+            } else {
+                node.remove(descriptorKey);
+            }
+        }
     }
 
     private Preferences getUserRoot() {
-	return (Preferences)AccessController.doPrivileged(new PrivilegedAction() {
-	    public Object run() {
-		return Preferences.userRoot();
-	    }
-	});
+        return (Preferences)AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                return Preferences.userRoot();
+            }
+        });
     }
 
     private Locale getAdvertisedLocale(InputMethodLocator locator, Locale locale) {
-	Locale advertised = null;
-	
-	if (locator.isLocaleAvailable(locale)) {
-	    advertised = locale;
-	} else if (locale.getLanguage().equals("ja")) {
-	    // for Japanese, Korean, and Thai, check whether the input method supports 
-	    // language or language_COUNTRY.
-	    if (locator.isLocaleAvailable(Locale.JAPAN)) {
-		advertised = Locale.JAPAN;
-	    } else if (locator.isLocaleAvailable(Locale.JAPANESE)) {
-		advertised = Locale.JAPANESE;
-	    }
-	} else if (locale.getLanguage().equals("ko")) {
-	    if (locator.isLocaleAvailable(Locale.KOREA)) {
-		advertised = Locale.KOREA;
-	    } else if (locator.isLocaleAvailable(Locale.KOREAN)) {
-		advertised = Locale.KOREAN;
-	    }
-	} else if (locale.getLanguage().equals("th")) {
-	    if (locator.isLocaleAvailable(new Locale("th", "TH"))) {
-		advertised = new Locale("th", "TH");
-	    } else if (locator.isLocaleAvailable(new Locale("th"))) {
-		advertised = new Locale("th");
-	    }
-	}
+        Locale advertised = null;
 
-	return advertised;
+        if (locator.isLocaleAvailable(locale)) {
+            advertised = locale;
+        } else if (locale.getLanguage().equals("ja")) {
+            // for Japanese, Korean, and Thai, check whether the input method supports
+            // language or language_COUNTRY.
+            if (locator.isLocaleAvailable(Locale.JAPAN)) {
+                advertised = Locale.JAPAN;
+            } else if (locator.isLocaleAvailable(Locale.JAPANESE)) {
+                advertised = Locale.JAPANESE;
+            }
+        } else if (locale.getLanguage().equals("ko")) {
+            if (locator.isLocaleAvailable(Locale.KOREA)) {
+                advertised = Locale.KOREA;
+            } else if (locator.isLocaleAvailable(Locale.KOREAN)) {
+                advertised = Locale.KOREAN;
+            }
+        } else if (locale.getLanguage().equals("th")) {
+            if (locator.isLocaleAvailable(new Locale("th", "TH"))) {
+                advertised = new Locale("th", "TH");
+            } else if (locator.isLocaleAvailable(new Locale("th"))) {
+                advertised = new Locale("th");
+            }
+        }
+
+        return advertised;
     }
 }

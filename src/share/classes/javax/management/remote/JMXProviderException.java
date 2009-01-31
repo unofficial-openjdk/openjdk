@@ -55,7 +55,7 @@ public class JMXProviderException extends IOException {
      * @param message the detail message
      */
     public JMXProviderException(String message) {
-	super(message);
+        super(message);
     }
 
     /**
@@ -66,12 +66,12 @@ public class JMXProviderException extends IOException {
      * @param cause the nested exception
      */
     public JMXProviderException(String message, Throwable cause) {
-	super(message);
-	this.cause = cause;
+        super(message);
+        this.cause = cause;
     }
 
     public Throwable getCause() {
-	return cause;
+        return cause;
     }
 
     /**

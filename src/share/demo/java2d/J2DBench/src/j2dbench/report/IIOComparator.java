@@ -44,7 +44,7 @@ import j2dbench.report.J2DAnalyzer.ResultSetHolder;
  */
 public class IIOComparator {
 
-    private static final DecimalFormat decimalFormat = 
+    private static final DecimalFormat decimalFormat =
         new DecimalFormat("0.0");
 
     /**
@@ -69,17 +69,17 @@ public class IIOComparator {
         }
 
         Vector results = J2DAnalyzer.results;
-	int numsets = results.size();
+        int numsets = results.size();
 
-	ResultSetHolder base = (ResultSetHolder)results.elementAt(0);
-	Enumeration basekeys = base.getKeyEnumeration();
+        ResultSetHolder base = (ResultSetHolder)results.elementAt(0);
+        Enumeration basekeys = base.getKeyEnumeration();
         String[] keys = toSortedArray(basekeys, false);
 
         // build results table
-	for (int k = 0; k < keys.length; k++) {
-	    String key = keys[k];
-	    ResultHolder rh = base.getResultByKey(key);
-	    double score = rh.getScore();
+        for (int k = 0; k < keys.length; k++) {
+            String key = keys[k];
+            ResultHolder rh = base.getResultByKey(key);
+            double score = rh.getScore();
             Hashtable opts = rh.getOptions();
 
             String imgsize = (String)opts.get("imageio.opts.size");
@@ -169,11 +169,11 @@ public class IIOComparator {
                 for (int j = 0; j < methods.length; j++) {
                     Double result = (Double)testResults.get(methods[j]);
                     double res = result.doubleValue();
-                    
+
                     System.out.print("   " +
                                      decimalFormat.format(res) +
                                      " | ");
-                    
+
                     if (j == 0) {
                         baseres = res;
                     } else {
@@ -231,10 +231,10 @@ public class IIOComparator {
                 for (int j = 0; j < methods.length; j++) {
                     Double result = (Double)testResults.get(methods[j]);
                     double res = result.doubleValue();
-                    
+
                     printHtmlCell(decimalFormat.format(res),
                                   rowcolor, "right");
-                    
+
                     if (j == 0) {
                         baseres = res;
                     } else {
@@ -266,17 +266,17 @@ public class IIOComparator {
     private static void printHtmlCell(String s, String color, String align) {
         System.out.print("<td bgcolor=\"" + color +
                          "\" align=\"" + align + "\">" + s +
-                         "</td>");        
+                         "</td>");
     }
 
     private static String[] toSortedArray(Enumeration e, boolean special) {
-	Vector keylist = new Vector();
-	while (e.hasMoreElements()) {
+        Vector keylist = new Vector();
+        while (e.hasMoreElements()) {
             String key = (String)e.nextElement();
-	    keylist.add(key);
-	}
-	String keys[] = new String[keylist.size()];
-	keylist.copyInto(keys);
+            keylist.add(key);
+        }
+        String keys[] = new String[keylist.size()];
+        keylist.copyInto(keys);
         if (special) {
             sort2(keys);
         } else {
@@ -286,29 +286,29 @@ public class IIOComparator {
     }
 
     public static void sort(String strs[]) {
-	for (int i = 1; i < strs.length; i++) {
-	    for (int j = i; j > 0; j--) {
-		if (strs[j].compareTo(strs[j-1]) >= 0) {
-		    break;
-		}
-		String tmp = strs[j-1];
-		strs[j-1] = strs[j];
-		strs[j] = tmp;
-	    }
-	}
+        for (int i = 1; i < strs.length; i++) {
+            for (int j = i; j > 0; j--) {
+                if (strs[j].compareTo(strs[j-1]) >= 0) {
+                    break;
+                }
+                String tmp = strs[j-1];
+                strs[j-1] = strs[j];
+                strs[j] = tmp;
+            }
+        }
     }
 
     public static void sort2(String strs[]) {
-	for (int i = 1; i < strs.length; i++) {
-	    for (int j = i; j > 0; j--) {
+        for (int i = 1; i < strs.length; i++) {
+            for (int j = i; j > 0; j--) {
                 if (compare(strs[j-1], strs[j])) {
-		    break;
-		}
-		String tmp = strs[j-1];
-		strs[j-1] = strs[j];
-		strs[j] = tmp;
-	    }
-	}
+                    break;
+                }
+                String tmp = strs[j-1];
+                strs[j-1] = strs[j];
+                strs[j] = tmp;
+            }
+        }
     }
 
     private static int magic(String s) {

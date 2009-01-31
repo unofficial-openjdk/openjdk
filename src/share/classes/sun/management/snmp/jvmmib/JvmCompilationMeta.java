@@ -155,10 +155,10 @@ public class JvmCompilationMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "get" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void get(SnmpMibSubRequest req, int depth)
@@ -168,10 +168,10 @@ public class JvmCompilationMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "set" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void set(SnmpMibSubRequest req, int depth)
@@ -181,10 +181,10 @@ public class JvmCompilationMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "check" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void check(SnmpMibSubRequest req, int depth)
@@ -226,10 +226,10 @@ public class JvmCompilationMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "skipVariable" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public boolean  skipVariable(long var, Object data, int pduVersion) {

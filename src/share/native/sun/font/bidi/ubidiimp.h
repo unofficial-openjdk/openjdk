@@ -61,7 +61,7 @@ typedef uint32_t Flags;
     is easier with the same names for the BiDi types in the code as there.
     See UCharDirection in uchar.h .
 */
-enum { 
+enum {
     L=  U_LEFT_TO_RIGHT,
     R=  U_RIGHT_TO_LEFT,
     EN= U_EUROPEAN_NUMBER,
@@ -244,4 +244,3 @@ ubidi_getMemory(void **pMemory, int32_t *pSize, bool_t mayAllocate, int32_t size
 #endif
 
 #endif
-

@@ -53,4 +53,3 @@ public class XEmbedChildProxy extends Component {
         return handle;
     }
 }
-

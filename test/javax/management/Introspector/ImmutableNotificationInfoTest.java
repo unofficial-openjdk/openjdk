@@ -64,7 +64,7 @@ public class ImmutableNotificationInfoTest {
     public static class NoOverrideNBS extends NotificationBroadcasterSupport
             implements NoOverrideNBSMBean {
     }
-    
+
     public static class OverrideNBS extends NotificationBroadcasterSupport
             implements OverrideNBSMBean {
         public MBeanNotificationInfo[] getNotificationInfo() {
@@ -80,7 +80,7 @@ public class ImmutableNotificationInfoTest {
         if (!ok)
             throw new Exception("TEST FAILED: immutability incorrect");
     }
-    
+
     private static boolean test(Object mbean, boolean expectImmutable)
             throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();

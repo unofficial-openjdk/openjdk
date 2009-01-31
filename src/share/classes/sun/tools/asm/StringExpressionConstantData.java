@@ -46,29 +46,29 @@ class StringExpressionConstantData extends ConstantPoolData {
      * Constructor
      */
     StringExpressionConstantData(ConstantPool tab, StringExpression str) {
-	this.str = str;
-	tab.put(str.getValue());
+        this.str = str;
+        tab.put(str.getValue());
     }
 
     /**
      * Write the constant to the output stream
      */
     void write(Environment env, DataOutputStream out, ConstantPool tab) throws IOException {
-	out.writeByte(CONSTANT_STRING);
-	out.writeShort(tab.index(str.getValue()));
+        out.writeByte(CONSTANT_STRING);
+        out.writeShort(tab.index(str.getValue()));
     }
 
     /**
      * Return the order of the constant
      */
     int order() {
-	return 0;
+        return 0;
     }
 
     /**
      * toString
      */
     public String toString() {
-	return "StringExpressionConstantData[" + str.getValue() + "]=" + str.getValue().hashCode();
+        return "StringExpressionConstantData[" + str.getValue() + "]=" + str.getValue().hashCode();
     }
 }

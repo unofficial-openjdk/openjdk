@@ -36,8 +36,8 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     private static final Logger eventLog = Logger.getLogger("sun.awt.X11.event.XBaseWindow");
     private static final Logger focusLog = Logger.getLogger("sun.awt.X11.focus.XBaseWindow");
     private static final Logger grabLog = Logger.getLogger("sun.awt.X11.grab.XBaseWindow");
-    
-    public static final String 
+
+    public static final String
         PARENT_WINDOW = "parent window", // parent window, Long
         BOUNDS = "bounds", // bounds of the window, Rectangle
         OVERRIDE_REDIRECT = "overrideRedirect", // override_redirect setting, Boolean
@@ -55,7 +55,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         VISIBLE = "visible", // whether it is visible by default
         SAVE_UNDER = "save under", // save content under this window
         BACKING_STORE = "backing store", // enables double buffering
-        BIT_GRAVITY = "bit gravity"; // copy old content on geometry change        
+        BIT_GRAVITY = "bit gravity"; // copy old content on geometry change
     private XCreateWindowParams delayedParams;
 
     Set<Long> children = new HashSet<Long>();
@@ -85,7 +85,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     };
 
     private InitialiseState initialising;
-    
+
     int x;
     int y;
     int width;
@@ -144,7 +144,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
                 parentWindow = XToolkit.windowToXWindow(parentWindowID);
             }
         }
-        
+
         Long eventMask = (Long)params.get(EVENT_MASK);
         if (eventMask != null) {
             long mask = eventMask.longValue();
@@ -189,21 +189,21 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             }
             awtLock();
             initialising = InitialiseState.INITIALISED;
-            awtLockNotifyAll();            
+            awtLockNotifyAll();
             awtUnlock();
         } catch (RuntimeException re) {
             awtLock();
             initialising = InitialiseState.FAILED_INITIALISATION;
-            awtLockNotifyAll();            
+            awtLockNotifyAll();
             awtUnlock();
             throw re;
         } catch (Throwable t) {
             log.log(Level.WARNING, "Exception during peer initialization", t);
             awtLock();
             initialising = InitialiseState.FAILED_INITIALISATION;
-            awtLockNotifyAll();            
+            awtLockNotifyAll();
             awtUnlock();
-        }            
+        }
     }
 
     public boolean checkInitialised() {
@@ -238,7 +238,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     XBaseWindow() {
         this(new XCreateWindowParams());
     }
-    
+
     /**
      * Creates normal child window
      */
@@ -246,11 +246,11 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         this(new XCreateWindowParams(new Object[] {
             BOUNDS, bounds,
             PARENT_WINDOW, Long.valueOf(parentWindow)}));
-    }    
-    
+    }
+
     /**
      * Creates top-level window
-     */ 
+     */
     XBaseWindow(Rectangle bounds) {
         this(new XCreateWindowParams(new Object[] {
             BOUNDS, bounds
@@ -267,14 +267,14 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         this(new XCreateWindowParams(new Object[] {
             PARENT_WINDOW, Long.valueOf(parentWindow),
             EMBEDDED, Boolean.TRUE
-        }));        
+        }));
     }
 
     /**
      * Verifies that all required parameters are set. If not, sets them to default values.
      * Verifies values of critical parameters, adjust their values when needed.
      * @throws IllegalArgumentException if params is null
-     */ 
+     */
     protected void checkParams(XCreateWindowParams params) {
         if (params == null) {
             throw new IllegalArgumentException("Window creation parameters are null");
@@ -305,7 +305,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         XToolkit.awtLock();
         try {
             XSetWindowAttributes xattr = new XSetWindowAttributes();
-            try {            
+            try {
                 checkParams(params);
 
                 long value_mask = ((Long)params.get(VALUE_MASK)).longValue();
@@ -339,7 +339,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
                 Boolean overrideRedirect = (Boolean)params.get(OVERRIDE_REDIRECT);
                 if (overrideRedirect != null) {
                     xattr.set_override_redirect(overrideRedirect.booleanValue());
-                    value_mask |= XlibWrapper.CWOverrideRedirect;                
+                    value_mask |= XlibWrapper.CWOverrideRedirect;
                 }
 
                 Boolean saveUnder = (Boolean)params.get(SAVE_UNDER);
@@ -377,7 +377,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
                 if (window == 0) {
                     throw new IllegalStateException("Couldn't create window because of wrong parameters. Run with NOISY_AWT to see details");
                 }
-                XToolkit.addToWinMap(window, this);            
+                XToolkit.addToWinMap(window, this);
             } finally {
                 xattr.dispose();
             }
@@ -385,7 +385,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             XToolkit.awtUnlock();
         }
     }
-    
+
     public XCreateWindowParams getDelayedParams() {
         return delayedParams;
     }
@@ -422,7 +422,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             if (XPropertyCache.isCachingSupported()) {
                 XPropertyCache.clearCache(window);
             }
-            window = -1;            
+            window = -1;
             if( !isDisposed() ) {
                 setDisposed( true );
             }
@@ -441,7 +441,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             XToolkit.awtUnlock();
         }
     }
-    
+
     /**
      * Helper function to set W
      */
@@ -465,7 +465,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     }
 
 
-    /* 
+    /*
      * Call this method under AWTLock.
      * The lock should be acquired untill all operations with XSizeHints are completed.
      */
@@ -541,9 +541,9 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             flags |= XlibWrapper.PWinGravity;
             hints.set_flags(flags);
             hints.set_win_gravity((int)XlibWrapper.NorthWestGravity);
-            if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, resulted flags " + XlibWrapper.hintsToString(flags) + 
+            if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, resulted flags " + XlibWrapper.hintsToString(flags) +
                                                              ", values " + hints);
-            XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(), getWindow(), hints.pData);        
+            XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(), getWindow(), hints.pData);
         } finally {
             XToolkit.awtUnlock();
         }
@@ -628,7 +628,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             }
             else {
                 XlibWrapper.XUnmapWindow(XToolkit.getDisplay(), getWindow());
-            }        
+            }
             XlibWrapper.XFlush(XToolkit.getDisplay());
         } finally {
             XToolkit.awtUnlock();
@@ -652,7 +652,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             netNameAtom.setPropertyUTF8(getWindow(), name);
         } finally {
             XToolkit.awtUnlock();
-        }        
+        }
     }
     void setWMClass(String[] cl) {
         if (cl.length != 2) {
@@ -664,7 +664,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             xa.setProperty8(getWindow(), cl[0] + '\0' + cl[1]);
         } finally {
             XToolkit.awtUnlock();
-        }                
+        }
     }
 
     boolean isVisible() {
@@ -718,7 +718,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             XToolkit.awtUnlock();
         }
     }
-    
+
     /**
      * Translate coordinates from one window into another.  Optimized
      * for XAWT - uses cached data when possible.  Preferable over
@@ -819,7 +819,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     }
 
     /**
-     * We should always grab both keyboard and pointer to control event flow 
+     * We should always grab both keyboard and pointer to control event flow
      * on popups. This also simplifies synthetic grab implementation.
      * The active grab overrides activated automatic grab.
      */
@@ -829,7 +829,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         XToolkit.awtLock();
         try {
             if (XAwtState.getGrabWindow() == this &&
-                XAwtState.isManualGrab()) 
+                XAwtState.isManualGrab())
             {
                 grabLog.fine("    Already Grabbed");
                 return true;
@@ -837,13 +837,13 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             //6273031: PIT. Choice drop down does not close once it is right clicked to show a popup menu
             //remember previous window having grab and if it's not null ungrab it.
             XBaseWindow prevGrabWindow = XAwtState.getGrabWindow();
-            final int eventMask = (int) (ButtonPressMask | ButtonReleaseMask 
-                | EnterWindowMask | LeaveWindowMask | PointerMotionMask 
+            final int eventMask = (int) (ButtonPressMask | ButtonReleaseMask
+                | EnterWindowMask | LeaveWindowMask | PointerMotionMask
                 | ButtonMotionMask);
             final int ownerEvents = 1;
-                
-            int ptrGrab = XlibWrapper.XGrabPointer(XToolkit.getDisplay(),  
-                getContentWindow(), ownerEvents, eventMask, GrabModeAsync, 
+
+            int ptrGrab = XlibWrapper.XGrabPointer(XToolkit.getDisplay(),
+                getContentWindow(), ownerEvents, eventMask, GrabModeAsync,
                 GrabModeAsync, None, (XWM.isMotif() ? XToolkit.arrowCursor : None),
                 CurrentTime);
             // Check grab results to be consistent with X server grab
@@ -853,8 +853,8 @@ public class XBaseWindow implements XConstants, XUtilConstants {
                 grabLog.fine("    Grab Failure - mouse");
                 return false;
             }
-            
-            int keyGrab = XlibWrapper.XGrabKeyboard(XToolkit.getDisplay(),  
+
+            int keyGrab = XlibWrapper.XGrabKeyboard(XToolkit.getDisplay(),
                 getContentWindow(), ownerEvents, GrabModeAsync, GrabModeAsync,
                 CurrentTime);
             if (keyGrab != GrabSuccess) {
@@ -874,7 +874,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
             XToolkit.awtUnlock();
         }
     }
-    
+
     static void ungrabInput() {
         XToolkit.awtLock();
         try {
@@ -892,8 +892,8 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         } finally {
             XToolkit.awtUnlock();
         }
-    }    
-    
+    }
+
     // called from ungrabInput, used in popup windows to hide theirselfs in ungrabbing
     void ungrabInputImpl() {
     }
@@ -974,12 +974,12 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     public void handleExposeEvent(XEvent xev) {
     }
     /**
-     * Activate automatic grab on first ButtonPress, 
+     * Activate automatic grab on first ButtonPress,
      * deactivate on full mouse release
      */
     public void handleButtonPressRelease(XEvent xev) {
         XButtonEvent xbe = xev.get_xbutton();
-        final int buttonState = xbe.get_state() & (Button1Mask | Button2Mask 
+        final int buttonState = xbe.get_state() & (Button1Mask | Button2Mask
             | Button3Mask | Button4Mask | Button5Mask);
         switch (xev.get_type()) {
         case ButtonPress:
@@ -1009,7 +1009,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     }
     /**
      * Checks ButtonRelease released all Mouse buttons
-     */ 
+     */
     static boolean isFullRelease(int buttonState, int button) {
         switch (button) {
         case Button1:
@@ -1044,7 +1044,7 @@ public class XBaseWindow implements XConstants, XUtilConstants {
         }
     }
     /**
-     * Dispatches event to the grab Window or event source window depending 
+     * Dispatches event to the grab Window or event source window depending
      * on whether the grab is active and on the event type
      */
     static void dispatchToWindow(XEvent ev) {
@@ -1157,13 +1157,13 @@ public class XBaseWindow implements XConstants, XUtilConstants {
     }
 
     public int getAbsoluteY() {
-        XBaseWindow pw = getParentWindow();        
+        XBaseWindow pw = getParentWindow();
         if (pw != null) {
             return pw.getAbsoluteY() + getY();
         } else {
             return getY();
         }
-    }    
+    }
 
     public XBaseWindow getParentWindow() {
         return parentWindow;

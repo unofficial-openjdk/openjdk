@@ -29,11 +29,11 @@ import sun.net.www.MessageHeader;
 import java.util.*;
 
 /**
- * This class implements a simple HTTP server. It uses multiple threads to 
+ * This class implements a simple HTTP server. It uses multiple threads to
  * handle connections in parallel, and also multiple connections/requests
  * can be handled per thread.
  * <p>
- * It must be instantiated with a {@link HttpCallback} object to which 
+ * It must be instantiated with a {@link HttpCallback} object to which
  * requests are given and must be handled.
  * <p>
  * Simple synchronization between the client(s) and server can be done
@@ -42,7 +42,7 @@ import java.util.*;
  *
  * NOTE NOTE NOTE NOTE NOTE NOTE NOTE
  *
- * If changes are made here, please sure they are propagated to 
+ * If changes are made here, please sure they are propagated to
  * the HTTPS equivalent in the JSSE regression test suite.
  *
  * NOTE NOTE NOTE NOTE NOTE NOTE NOTE
@@ -58,9 +58,9 @@ public class HttpServer {
 
     /**
      * Create a <code>HttpServer<code> instance with the specified callback object
-     * for handling requests. One thread is created to handle requests, 
+     * for handling requests. One thread is created to handle requests,
      * and up to ten TCP connections will be handled simultaneously.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *  incoming request
      */
 
@@ -69,14 +69,14 @@ public class HttpServer {
     }
 
     /**
-     * Create a <code>HttpServer<code> instance with the specified number of 
-     * threads and maximum number of connections per thread. This functions 
+     * Create a <code>HttpServer<code> instance with the specified number of
+     * threads and maximum number of connections per thread. This functions
      * the same as the 4 arg constructor, where the port argument is set to zero.
-     * @param cb the callback object which is invoked to handle each 
+     * @param cb the callback object which is invoked to handle each
      *     incoming request
-     * @param threads the number of threads to create to handle requests 
+     * @param threads the number of threads to create to handle requests
      *     in parallel
-     * @param cperthread the number of simultaneous TCP connections to 
+     * @param cperthread the number of simultaneous TCP connections to
      *     handle per thread
      */
 
@@ -86,18 +86,18 @@ public class HttpServer {
     }
 
     /**
-     * Create a <code>HttpServer<code> instance with the specified number 
-     * of threads and maximum number of connections per thread and running on 
-     * the specified port. The specified number of threads are created to 
+     * Create a <code>HttpServer<code> instance with the specified number
+     * of threads and maximum number of connections per thread and running on
+     * the specified port. The specified number of threads are created to
      * handle incoming requests, and each thread is allowed
      * to handle a number of simultaneous TCP connections.
-     * @param cb the callback object which is invoked to handle 
+     * @param cb the callback object which is invoked to handle
      *  each incoming request
-     * @param threads the number of threads to create to handle 
+     * @param threads the number of threads to create to handle
      *  requests in parallel
-     * @param cperthread the number of simultaneous TCP connections 
+     * @param cperthread the number of simultaneous TCP connections
      *  to handle per thread
-     * @param port the port number to bind the server to. <code>Zero</code> 
+     * @param port the port number to bind the server to. <code>Zero</code>
      *  means choose any free port.
      */
 
@@ -198,16 +198,16 @@ public class HttpServer {
                                 boolean closed;
                                 SocketChannel chan = (SocketChannel) key.channel();
                                 if (key.attachment() != null) {
-    				    closed = consume (chan);
+                                    closed = consume (chan);
                                 } else {
-    				    closed = read (chan, key);
+                                    closed = read (chan, key);
                                 }
                                 if (closed) {
-				    chan.close ();
-				    key.cancel ();
-				    if (nconn == maxconn) {
-        				listenerKey = schan.register (selector, SelectionKey.OP_ACCEPT);
-    				    }
+                                    chan.close ();
+                                    key.cancel ();
+                                    if (nconn == maxconn) {
+                                        listenerKey = schan.register (selector, SelectionKey.OP_ACCEPT);
+                                    }
                                     nconn --;
                                 }
                             }
@@ -226,8 +226,8 @@ public class HttpServer {
             }
         }
 
-        /* read all the data off the channel without looking at it 
-             * return true if connection closed 
+        /* read all the data off the channel without looking at it
+             * return true if connection closed
              */
         boolean consume (SocketChannel chan) {
             try {
@@ -258,10 +258,10 @@ public class HttpServer {
                 else if (clen != null)
                     data = new String (readNormalData (is, Integer.parseInt (clen)));
                 String[] req = requestline.split (" ");
-		if (req.length < 2) {
-		    /* invalid request line */
-		    return false;
-		}
+                if (req.length < 2) {
+                    /* invalid request line */
+                    return false;
+                }
                 String cmd = req[0];
                 URI uri = null;
                 try {
@@ -290,16 +290,16 @@ public class HttpServer {
             return buf;
         }
 
-	private void readCRLF(InputStream is) throws IOException {
-	    int cr = is.read();
-	    int lf = is.read();
+        private void readCRLF(InputStream is) throws IOException {
+            int cr = is.read();
+            int lf = is.read();
 
-	    if (((cr & 0xff) != 0x0d) || 
-	        ((lf & 0xff) != 0x0a)) {
-		throw new IOException(
-		    "Expected <CR><LF>:  got '" + cr + "/" + lf + "'");
-	    }
-	}
+            if (((cr & 0xff) != 0x0d) ||
+                ((lf & 0xff) != 0x0a)) {
+                throw new IOException(
+                    "Expected <CR><LF>:  got '" + cr + "/" + lf + "'");
+            }
+        }
 
         byte[] readChunkedData (InputStream is) throws IOException {
             LinkedList l = new LinkedList ();
@@ -307,9 +307,9 @@ public class HttpServer {
             for (int len=readChunkLen(is); len!=0; len=readChunkLen(is)) {
                 l.add (readNormalData(is, len));
                 total += len;
-		readCRLF(is);  // CRLF at end of chunk
+                readCRLF(is);  // CRLF at end of chunk
             }
-	    readCRLF(is); // CRLF at end of Chunked Stream.
+            readCRLF(is); // CRLF at end of Chunked Stream.
             byte[] buf = new byte [total];
             Iterator i = l.iterator();
             int x = 0;
@@ -332,15 +332,15 @@ public class HttpServer {
                     if (c == '\r' && !readCR) {
                         readCR = true;
                     } else {
-			int x=0;
-			if (c >= 'a' && c <= 'f') {
-			    x = c - 'a' + 10;
-			} else if (c >= 'A' && c <= 'F') {
-			    x = c - 'A' + 10;
-			} else if (c >= '0' && c <= '9') {
-			    x = c - '0';
-			}
-		    	len = len * 16 + x;
+                        int x=0;
+                        if (c >= 'a' && c <= 'f') {
+                            x = c - 'a' + 10;
+                        } else if (c >= 'A' && c <= 'F') {
+                            x = c - 'A' + 10;
+                        } else if (c >= '0' && c <= '9') {
+                            x = c - '0';
+                        }
+                        len = len * 16 + x;
                     }
                 }
             }
@@ -382,9 +382,9 @@ public class HttpServer {
 
         synchronized void abortiveCloseChannel (SelectionKey key) throws IOException {
             SocketChannel ch = (SocketChannel)key.channel ();
-	    Socket s = ch.socket ();
-	    s.setSoLinger (true, 0);
-	    ch.close();
+            Socket s = ch.socket ();
+            s.setSoLinger (true, 0);
+            ch.close();
         }
     }
 
@@ -479,7 +479,7 @@ public class HttpServer {
         }
 
         /**
-         * block() only called when available==0 and buf is empty 
+         * block() only called when available==0 and buf is empty
          */
         private synchronized void block () throws IOException {
             //assert available == 0;
@@ -567,11 +567,11 @@ public class HttpServer {
     }
 
     /**
-     * Utilities for synchronization. A condition is 
+     * Utilities for synchronization. A condition is
      * identified by a string name, and is initialized
-     * upon first use (ie. setCondition() or waitForCondition()). Threads 
+     * upon first use (ie. setCondition() or waitForCondition()). Threads
      * are blocked until some thread calls (or has called) setCondition() for the same
-     * condition. 
+     * condition.
      * <P>
      * A rendezvous built on a condition is also provided for synchronizing
      * N threads.
@@ -652,7 +652,7 @@ public class HttpServer {
     /**
      * Force N threads to rendezvous (ie. wait for each other) before proceeding.
      * The first thread(s) to call are blocked until the last
-     * thread makes the call. Then all threads continue. 
+     * thread makes the call. Then all threads continue.
      * <p>
      * All threads that call with the same condition name, must use the same value
      * for N (or the results may be not be as expected).

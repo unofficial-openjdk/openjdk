@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   @test
   @bug 4452373 6567564
   @summary Tests that all the child and toplevel components have

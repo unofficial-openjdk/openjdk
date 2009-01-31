@@ -64,4 +64,3 @@ JPLISAssertConditionWithMessage(    jboolean        condition,
                                             line);
     }
 }
-

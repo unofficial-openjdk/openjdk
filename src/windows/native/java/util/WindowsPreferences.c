@@ -48,9 +48,9 @@ extern "C" {
 
     JNIEXPORT jint JNICALL Java_java_util_prefs_WindowsPreferences_WindowsRegCloseKey
                (JNIEnv* env, jclass this_class, jint hKey) {
-        return (jint) RegCloseKey((HKEY) hKey);        
+        return (jint) RegCloseKey((HKEY) hKey);
     };
-       
+
     JNIEXPORT jintArray JNICALL Java_java_util_prefs_WindowsPreferences_WindowsRegCreateKeyEx
                (JNIEnv* env, jclass this_class, jint hKey, jbyteArray lpSubKey) {
         HKEY handle;
@@ -60,8 +60,8 @@ extern "C" {
         int errorCode;
         jintArray result;
         str = (*env)->GetByteArrayElements(env, lpSubKey, NULL);
-        errorCode =  RegCreateKeyEx((HKEY)hKey, str, 0, NULL, 
-                      REG_OPTION_NON_VOLATILE, KEY_READ, 
+        errorCode =  RegCreateKeyEx((HKEY)hKey, str, 0, NULL,
+                      REG_OPTION_NON_VOLATILE, KEY_READ,
                       NULL, &handle, &lpdwDisposition);
         (*env)->ReleaseByteArrayElements(env, lpSubKey, str, 0);
         tmp[0]= (int) handle;
@@ -71,18 +71,18 @@ extern "C" {
         (*env)->SetIntArrayRegion(env, result, 0, 3, tmp);
         return result;
     }
-       
+
     JNIEXPORT jint JNICALL Java_java_util_prefs_WindowsPreferences_WindowsRegDeleteKey
               (JNIEnv* env, jclass this_class, jint hKey, jbyteArray lpSubKey) {
         char* str;
-        int result; 
+        int result;
         str = (*env)->GetByteArrayElements(env, lpSubKey, NULL);
-        result = RegDeleteKey((HKEY)hKey, str);   
+        result = RegDeleteKey((HKEY)hKey, str);
         (*env)->ReleaseByteArrayElements(env, lpSubKey, str, 0);
         return  result;
-        
+
     };
-       
+
     JNIEXPORT jint JNICALL Java_java_util_prefs_WindowsPreferences_WindowsRegFlushKey
         (JNIEnv* env, jclass this_class, jint hKey) {
         return RegFlushKey ((HKEY)hKey);
@@ -96,7 +96,7 @@ extern "C" {
         DWORD valueType;
         DWORD valueSize;
         valueNameStr = (*env)->GetByteArrayElements(env, valueName, NULL);
-        if (RegQueryValueEx((HKEY)hKey, valueNameStr, NULL, &valueType, NULL, 
+        if (RegQueryValueEx((HKEY)hKey, valueNameStr, NULL, &valueType, NULL,
                                                  &valueSize) != ERROR_SUCCESS) {
         (*env)->ReleaseByteArrayElements(env, valueName, valueNameStr, 0);
         return NULL;
@@ -111,7 +111,7 @@ extern "C" {
         return NULL;
         }
 
-        if (valueType == REG_SZ) {  
+        if (valueType == REG_SZ) {
         result = (*env)->NewByteArray(env, valueSize);
         (*env)->SetByteArrayRegion(env, result, 0, valueSize, buffer);
         } else {
@@ -120,7 +120,7 @@ extern "C" {
         free(buffer);
         (*env)->ReleaseByteArrayElements(env, valueName, valueNameStr, 0);
         return result;
-    } 
+    }
 
 
 
@@ -129,14 +129,14 @@ extern "C" {
     (JNIEnv* env, jclass this_class, jint hKey, jbyteArray valueName, jbyteArray data) {
         char* valueNameStr;
         char* dataStr;
-        int size = -1; 
+        int size = -1;
         int nameSize = -1;
         int error_code = -1;
         if ((valueName == NULL)||(data == NULL)) {return -1;}
         size = (*env)->GetArrayLength(env, data);
         dataStr = (*env)->GetByteArrayElements(env, data, NULL);
         valueNameStr = (*env)->GetByteArrayElements(env, valueName, NULL);
-        error_code = RegSetValueEx((HKEY)hKey, valueNameStr, 0, 
+        error_code = RegSetValueEx((HKEY)hKey, valueNameStr, 0,
                                                         REG_SZ, dataStr, size);
         (*env)->ReleaseByteArrayElements(env, data, dataStr, 0);
         (*env)->ReleaseByteArrayElements(env, valueName, valueNameStr, 0);
@@ -164,7 +164,7 @@ extern "C" {
         int subKeysNumber = -1;
         int errorCode = -1;
         errorCode = RegQueryInfoKey((HKEY)hKey, NULL, NULL, NULL,
-                 &subKeysNumber, &maxSubKeyLength, NULL, 
+                 &subKeysNumber, &maxSubKeyLength, NULL,
                  &valuesNumber, &maxValueNameLength,
                  NULL, NULL, NULL);
         tmp[0]= subKeysNumber;
@@ -201,7 +201,7 @@ extern "C" {
           char* buffer = NULL;
           int error_code;
           buffer = (char*)malloc(maxValueNameLength);
-          error_code = RegEnumValue((HKEY) hKey, valueIndex, buffer, 
+          error_code = RegEnumValue((HKEY) hKey, valueIndex, buffer,
                                              &size, NULL, NULL, NULL, NULL);
           if (error_code!= ERROR_SUCCESS){
             free(buffer);

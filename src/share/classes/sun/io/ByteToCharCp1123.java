@@ -32,7 +32,6 @@ import sun.nio.cs.ext.IBM1123;
  * A table to convert to Cp1123 to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp1123 extends ByteToCharSingleByte {

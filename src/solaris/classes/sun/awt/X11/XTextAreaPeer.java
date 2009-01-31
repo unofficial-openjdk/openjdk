@@ -98,12 +98,12 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
      */
     XTextAreaPeer(TextArea target) {
         super( target  );
-    
+
         // some initializations require that target be set even
         // though init(target) has not been called
         this.target = target;
 
-        //ComponentAccessor.enableEvents(target,AWTEvent.MOUSE_WHEEL_EVENT_MASK); 
+        //ComponentAccessor.enableEvents(target,AWTEvent.MOUSE_WHEEL_EVENT_MASK);
         target.enableInputMethods(true);
 
         firstChangeSkipped = false;
@@ -126,14 +126,14 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         setForeground(foreground);
 
         background = ComponentAccessor.getBackground(target);
-        if (background == null) { 
-            if (target.isEditable()) background = SystemColor.text; 
+        if (background == null) {
+            if (target.isEditable()) background = SystemColor.text;
             else background = SystemColor.control;
         }
         setBackground(background);
 
         if (!target.isBackgroundSet()) {
-            // This is a way to set the background color of the TextArea 
+            // This is a way to set the background color of the TextArea
             // without calling setBackground - go through reflection
             ComponentAccessor.setBackground(target, background);
         }
@@ -391,7 +391,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
      */
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        if (jtext != null) { 
+        if (jtext != null) {
             jtext.setEnabled(enabled);
             jtext.repaint();
         }
@@ -445,7 +445,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
             // JTextArea.setText() posts two different events (remove & insert).
             // Since we make no differences between text events,
-            // the document listener has to be disabled while 
+            // the document listener has to be disabled while
             // JTextArea.setText() is called.
             jtext.getDocument().removeDocumentListener(jtext);
             jtext.setText(txt);
@@ -464,7 +464,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
     public void insert(String txt, int p) {
         if (jtext != null) {
             boolean doScroll = (p >= jtext.getDocument().getLength() && jtext.getDocument().getLength() != 0);
-            jtext.insert(txt,p); 
+            jtext.insert(txt,p);
             textPane.validate();
             if (doScroll) {
                 JScrollBar bar = textPane.getVerticalScrollBar();
@@ -483,7 +483,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         if (jtext != null) {
             // JTextArea.replaceRange() posts two different events.
             // Since we make no differences between text events,
-            // the document listener has to be disabled while 
+            // the document listener has to be disabled while
             // JTextArea.replaceRange() is called.
             jtext.getDocument().removeDocumentListener(jtext);
             jtext.replaceRange(txt, s, e);
@@ -626,7 +626,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
         protected Caret createCaret() {
             return new XAWTCaret();
-        }        
+        }
     }
 
 
@@ -635,7 +635,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         public void focusGained(FocusEvent e) {
             super.focusGained(e);
             getComponent().repaint();
-        }  
+        }
 
         public void focusLost(FocusEvent e) {
             super.focusLost(e);
@@ -686,8 +686,8 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
         public Dimension getPreferredSize() {
             switch (direction) {
-            case NORTH: 
-            case SOUTH: 
+            case NORTH:
+            case SOUTH:
                 return new Dimension(11, 12);
             case EAST:
             case WEST:
@@ -708,7 +708,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             return false;
         }
 
-        public void paint(Graphics g) 
+        public void paint(Graphics g)
         {
             int w = getWidth();
             int h = getHeight();
@@ -824,7 +824,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
     }
 
 
-    class XAWTScrollBarUI extends BasicScrollBarUI 
+    class XAWTScrollBarUI extends BasicScrollBarUI
     {
         public XAWTScrollBarUI() {
             super();
@@ -846,7 +846,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             Color fg = scrollbar.getForeground();
             if (fg == null || fg instanceof UIResource) {
                 scrollbar.setForeground(uidefaults.getColor("ScrollBar.foreground"));
-            } 
+            }
 
             thumbHighlightColor = uidefaults.getColor("ScrollBar.thumbHighlight");
             thumbLightShadowColor = uidefaults.getColor("ScrollBar.thumbShadow");
@@ -872,7 +872,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         public JButton getDecreaseButton(){
             return decrButton;
         }
-        
+
         public JButton getIncreaseButton(){
             return incrButton;
         }
@@ -889,7 +889,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
                 return;
             }
 
-            if (thumbBounds.isEmpty()) 
+            if (thumbBounds.isEmpty())
                 thumbBounds = getTrackBounds();
 
             int w = thumbBounds.width;
@@ -924,21 +924,21 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
         public void insertUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
 
         public void removeUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
 
         public void changedUpdate(DocumentEvent e) {
             if (peer != null) {
-                peer.postEvent(new TextEvent(peer.target, 
+                peer.postEvent(new TextEvent(peer.target,
                                              TextEvent.TEXT_VALUE_CHANGED));
             }
         }
@@ -986,7 +986,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         public void setTransferHandler(TransferHandler newHandler) {
             TransferHandler oldHandler = (TransferHandler)
                 getClientProperty(XTextTransferHelper.getTransferHandlerKey());
-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(), 
+            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
                               newHandler);
 
             firePropertyChange("transferHandler", oldHandler, newHandler);
@@ -1060,11 +1060,11 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             JScrollBar vsb = scrollpane.getVerticalScrollBar();
             if (vsb != null) {
                 if (isLeftToRight(scrollpane)) {
-                    vsbBorder = new CompoundBorder(vsbMarginBorderR, 
+                    vsbBorder = new CompoundBorder(vsbMarginBorderR,
                                                    vsb.getBorder());
                 }
                 else {
-                    vsbBorder = new CompoundBorder(vsbMarginBorderL, 
+                    vsbBorder = new CompoundBorder(vsbMarginBorderL,
                                                    vsb.getBorder());
                 }
                 vsb.setBorder(vsbBorder);
@@ -1104,14 +1104,14 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         XWindow xwin;
 
         Color control = SystemColor.control;
-        Color focus = SystemColor.activeCaptionBorder; 
+        Color focus = SystemColor.activeCaptionBorder;
 
         public AWTTextPane(JTextArea jt, XWindow xwin, Container parent) {
             super(jt);
             this.xwin = xwin;
             setDoubleBuffered(true);
             jt.addFocusListener(this);
-            ComponentAccessor.setParent(this,parent); 
+            ComponentAccessor.setParent(this,parent);
             setViewportBorder(new BevelBorder(false,SystemColor.controlDkShadow,SystemColor.controlLtHighlight) );
             this.jtext = jt;
             setFocusable(false);
@@ -1122,7 +1122,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             Graphics g = getGraphics();
             Rectangle r = getViewportBorderBounds();
             g.setColor(focus);
-            g.drawRect(r.x,r.y,r.width,r.height); 
+            g.drawRect(r.x,r.y,r.width,r.height);
             g.dispose();
         }
 
@@ -1130,7 +1130,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             Graphics g = getGraphics();
             Rectangle r = getViewportBorderBounds();
             g.setColor(control);
-            g.drawRect(r.x,r.y,r.width,r.height); 
+            g.drawRect(r.x,r.y,r.width,r.height);
             g.dispose();
         }
 
@@ -1208,7 +1208,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             g.drawLine(x+w-2, y+h-2, x+w-2, y+1); // right
         }
 
-        public Insets getBorderInsets(Component c) { 
+        public Insets getBorderInsets(Component c) {
             return getBorderInsets(c, new Insets(0,0,0,0));
         }
 
@@ -1217,7 +1217,7 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
             return insets;
         }
 
-        public boolean isOpaque(Component c) { 
+        public boolean isOpaque(Component c) {
             return true;
         }
     }

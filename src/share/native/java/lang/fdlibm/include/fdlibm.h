@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,9 +27,9 @@
 
 #include "jfdlibm.h"
 
-#ifdef __NEWVALID	/* special setup for Sun test regime */
+#ifdef __NEWVALID       /* special setup for Sun test regime */
 #if defined(i386) || defined(i486) || \
-	defined(intel) || defined(x86) || \
+        defined(intel) || defined(x86) || \
         defined(i86pc) || defined(_M_IA64)
 #define _LITTLE_ENDIAN
 #endif
@@ -48,9 +48,9 @@
 #endif
 
 #ifdef __STDC__
-#define	__P(p)	p
+#define __P(p)  p
 #else
-#define	__P(p)	()
+#define __P(p)  ()
 #endif
 
 /*
@@ -59,7 +59,7 @@
 
 extern int signgam;
 
-#define	MAXFLOAT	((float)3.40282346638528860e+38)
+#define MAXFLOAT        ((float)3.40282346638528860e+38)
 
 enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
@@ -68,7 +68,7 @@ enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 /* if global variable _LIB_VERSION is not desirable, one may
  * change the following to be a constant by:
- *	#define _LIB_VERSION_TYPE const enum version
+ *      #define _LIB_VERSION_TYPE const enum version
  * In that case, after one initializes the value _LIB_VERSION (see
  * s_lib_version.c) during compile time, it cannot be modified
  * in the middle of a program
@@ -81,28 +81,28 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #define _POSIX_ fdlibm_posix
 
 struct exception {
-	int type;
-	char *name;
-	double arg1;
-	double arg2;
-	double retval;
+        int type;
+        char *name;
+        double arg1;
+        double arg2;
+        double retval;
 };
 
-#define	HUGE		MAXFLOAT
+#define HUGE            MAXFLOAT
 
 /*
  * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
  * (one may replace the following line by "#include <values.h>")
  */
 
-#define X_TLOSS		1.41484755040568800000e+16
+#define X_TLOSS         1.41484755040568800000e+16
 
-#define	DOMAIN		1
-#define	SING		2
-#define	OVERFLOW	3
-#define	UNDERFLOW	4
-#define	TLOSS		5
-#define	PLOSS		6
+#define DOMAIN          1
+#define SING            2
+#define OVERFLOW        3
+#define UNDERFLOW       4
+#define TLOSS           5
+#define PLOSS           6
 
 /*
  * ANSI/POSIX
@@ -189,7 +189,7 @@ extern double log1p __P((double));
 #ifdef _REENTRANT
 extern double gamma_r __P((double, int *));
 extern double lgamma_r __P((double, int *));
-#endif	/* _REENTRANT */
+#endif  /* _REENTRANT */
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt __P((double));

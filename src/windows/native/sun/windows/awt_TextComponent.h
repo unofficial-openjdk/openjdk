@@ -59,11 +59,11 @@ public:
     virtual void SetSelRange(LONG start, LONG end);
 
     INLINE void SetText(LPCTSTR text) {
-        ::SetWindowText(GetHWnd(), text); 
+        ::SetWindowText(GetHWnd(), text);
     }
 
     INLINE virtual int GetText(LPTSTR buffer, int size) {
-        return ::GetWindowText(GetHWnd(), buffer, size); 
+        return ::GetWindowText(GetHWnd(), buffer, size);
     }
 
     // called on Toolkit thread from JNI
@@ -72,7 +72,7 @@ public:
     BOOL ActMouseMessage(MSG* pMsg);
     /*
      * For TextComponents that contains WCHAR strings or messages with
-     * WCHAR parameters.  
+     * WCHAR parameters.
      */
     INLINE LRESULT SendMessageW(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
@@ -91,13 +91,13 @@ public:
 
 /*  To be fully implemented in a future release
 
-    MsgRouting WmKeyDown(UINT wkey, UINT repCnt, 
+    MsgRouting WmKeyDown(UINT wkey, UINT repCnt,
                          UINT flags, BOOL system);  // accessibility support
 */
 
 
     //im --- for over the spot composition
-    void SetCompositionWindow(RECT& rect); 
+    void SetCompositionWindow(RECT& rect);
 
     INLINE HWND GetDBCSEditHandle() { return GetHWnd(); }
 
@@ -121,14 +121,14 @@ public:
 
     // Used to prevent untrusted code from synthesizing a WM_PASTE message
     // by posting a <CTRL>-V KeyEvent
-    BOOL    m_synthetic; 
+    BOOL    m_synthetic;
     virtual void EditSetSel(CHARRANGE &cr) = 0;
     virtual void EditGetSel(CHARRANGE &cr) = 0;
     virtual LONG EditGetCharFromPos(POINT& pt) = 0;
-        
+
 private:
 
-    // Fields to track the selection state while the left mouse button is 
+    // Fields to track the selection state while the left mouse button is
     // pressed. They are used to simulate autoscrolling.
     LONG    m_lStartPos;
     LONG    m_lEndPos;

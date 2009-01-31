@@ -234,7 +234,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified element is null
      */
     public boolean add(E e) {
-	return super.add(e);
+        return super.add(e);
     }
 
     /**
@@ -300,7 +300,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         throws InterruptedException {
 
         if (e == null) throw new NullPointerException();
-	long nanos = unit.toNanos(timeout);
+        long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
@@ -355,7 +355,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     }
 
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-	long nanos = unit.toNanos(timeout);
+        long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {

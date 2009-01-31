@@ -52,12 +52,12 @@ public abstract class ResolverConfiguration {
      * @return the resolver configuration
      */
     public static ResolverConfiguration open() {
-	synchronized (lock) {
-	    if (provider == null) {
-		provider = new sun.net.dns.ResolverConfigurationImpl();
-	    }
-	    return provider;
-	}
+        synchronized (lock) {
+            if (provider == null) {
+                provider = new sun.net.dns.ResolverConfigurationImpl();
+            }
+            return provider;
+        }
     }
 
     /**
@@ -66,17 +66,17 @@ public abstract class ResolverConfiguration {
      * Each element in the list returns a {@link java.lang.String}
      * containing a domain name or suffix.
      *
-     * @return list of domain names 
+     * @return list of domain names
      */
     public abstract List searchlist();
 
     /**
      * Returns a list of name servers used for host name lookup.
-     * Each element in the list returns a {@link java.lang.String} 
+     * Each element in the list returns a {@link java.lang.String}
      * containing the textual representation of the IP address of
      * the name server.
      *
-     * @return list of the name servers 
+     * @return list of the name servers
      */
     public abstract List nameservers();
 
@@ -87,10 +87,10 @@ public abstract class ResolverConfiguration {
      */
     public static abstract class Options {
 
-	/**
-	 * Returns the maximum number of attempts the resolver
+        /**
+         * Returns the maximum number of attempts the resolver
          * will connect to each name server before giving up
-	 * and returning an error.
+         * and returning an error.
          *
          * @return the resolver attempts value or -1 is unknown
          */
@@ -98,20 +98,20 @@ public abstract class ResolverConfiguration {
             return -1;
         }
 
-	/**
-   	 * Returns the basic retransmit timeout, in milliseconds,
-	 * used by the resolver. The resolver will typically use 
-	 * an exponential backoff algorithm where the timeout is
-	 * doubled for every retransmit attempt. The basic 
-	 * retransmit timeout, returned here, is the initial
-	 * timeout for the exponential backoff algorithm.
-	 * 
-	 * @return the basic retransmit timeout value or -1 
-  	 *         if unknown
-	 */
-	public int retrans() {
-	    return -1;
-	}
+        /**
+         * Returns the basic retransmit timeout, in milliseconds,
+         * used by the resolver. The resolver will typically use
+         * an exponential backoff algorithm where the timeout is
+         * doubled for every retransmit attempt. The basic
+         * retransmit timeout, returned here, is the initial
+         * timeout for the exponential backoff algorithm.
+         *
+         * @return the basic retransmit timeout value or -1
+         *         if unknown
+         */
+        public int retrans() {
+            return -1;
+        }
     }
 
     /**
@@ -121,5 +121,3 @@ public abstract class ResolverConfiguration {
      */
     public abstract Options options();
 }
-
-

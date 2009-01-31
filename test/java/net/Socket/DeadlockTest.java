@@ -25,7 +25,7 @@
  * @test
  * @bug 4176738
  * @summary Make sure a deadlock situation
- *     would not occur 
+ *     would not occur
  */
 
 import java.net.*;
@@ -34,29 +34,29 @@ import java.io.*;
 public class DeadlockTest {
     public static void main(String [] argv) throws Exception {
 
-	// Start the server thread
+        // Start the server thread
         Thread s1 = new Thread(new ServerThread());
-	s1.start(); 
-		
-	// Sleep to make sure s1 has created a server socket
-	Thread.sleep(1000);
+        s1.start();
 
-	// Start the client thread
-	ClientThread ct = new ClientThread();
-	Thread c1 = new Thread(ct);
-	c1.start();
-	
-	// Wait for the client thread to finish
-	c1.join(40000);
+        // Sleep to make sure s1 has created a server socket
+        Thread.sleep(1000);
 
-	// If timeout, we assume there is a deadlock
-	if (c1.isAlive() == true) {
-	    // Close the socket to force the server thread 
-	    // terminate too
-	    s1.stop();
-	    ct.getSock().close();
-	    throw new Exception("Takes too long. Dead lock");
-	}
+        // Start the client thread
+        ClientThread ct = new ClientThread();
+        Thread c1 = new Thread(ct);
+        c1.start();
+
+        // Wait for the client thread to finish
+        c1.join(40000);
+
+        // If timeout, we assume there is a deadlock
+        if (c1.isAlive() == true) {
+            // Close the socket to force the server thread
+            // terminate too
+            s1.stop();
+            ct.getSock().close();
+            throw new Exception("Takes too long. Dead lock");
+        }
     }
 }
 
@@ -72,7 +72,7 @@ class ServerThread implements Runnable {
     Socket sock;
 
     public ServerThread() throws Exception {
-       
+
     }
 
     public void ping(int cnt) {
@@ -83,54 +83,54 @@ class ServerThread implements Runnable {
 
     public void run() {
 
-	try {
-	    if (Thread.currentThread().getName().startsWith("child") == false) {
-		server = new ServerSocket(4711);
-		sock  = server.accept();
+        try {
+            if (Thread.currentThread().getName().startsWith("child") == false) {
+                server = new ServerSocket(4711);
+                sock  = server.accept();
 
-		new Thread(this, "child").start();
+                new Thread(this, "child").start();
 
-		out = new ObjectOutputStream(sock.getOutputStream());
-		out.flush();
+                out = new ObjectOutputStream(sock.getOutputStream());
+                out.flush();
 
-		if (dbg) System.out.println("*** ping0 ***");
-		ping(0);
-		if (dbg) System.out.println("*** ping1 ***");
-		ping(1);
-		if (dbg) System.out.println("*** ping2 ***");
-		ping(2);
-		if (dbg) System.out.println("*** ping3 ***");
-		ping(3);
-		if (dbg) System.out.println("*** ping4 ***");
-		ping(4);
-		if (dbg) System.out.println("*** end ***");
-	    }
+                if (dbg) System.out.println("*** ping0 ***");
+                ping(0);
+                if (dbg) System.out.println("*** ping1 ***");
+                ping(1);
+                if (dbg) System.out.println("*** ping2 ***");
+                ping(2);
+                if (dbg) System.out.println("*** ping3 ***");
+                ping(3);
+                if (dbg) System.out.println("*** ping4 ***");
+                ping(4);
+                if (dbg) System.out.println("*** end ***");
+            }
 
         } catch (Throwable e) {
-	    // If anything goes wrong, just quit.
-	} 
+            // If anything goes wrong, just quit.
+        }
 
-	if (Thread.currentThread().getName().startsWith("child")) {
-	    try {
-          
-		in  = new ObjectInputStream(sock.getInputStream());
+        if (Thread.currentThread().getName().startsWith("child")) {
+            try {
 
-		while (true) {
-		    if (dbg) System.out.println("read " + cnt);
-		    Message msg = (Message) in.readObject();
-		    if (dbg) System.out.println("read done " + cnt++);
-		    switch (msg.code) {
-		    case Message.PING: {
-			if (true) System.out.println("ping recv'ed");
-		    } break;
-		    }
-		    
-		}        
+                in  = new ObjectInputStream(sock.getInputStream());
 
-	    } catch (Throwable e) {
-		// If anything goes wrong, just quit.	    }
-	    }
-	}
+                while (true) {
+                    if (dbg) System.out.println("read " + cnt);
+                    Message msg = (Message) in.readObject();
+                    if (dbg) System.out.println("read done " + cnt++);
+                    switch (msg.code) {
+                    case Message.PING: {
+                        if (true) System.out.println("ping recv'ed");
+                    } break;
+                    }
+
+                }
+
+            } catch (Throwable e) {
+                // If anything goes wrong, just quit.       }
+            }
+        }
     }
 }
 
@@ -143,12 +143,12 @@ class ClientThread implements Runnable {
 
     public ClientThread() throws Exception {
         try {
-	    System.out.println("About to create a socket");
-	    sock = new Socket(InetAddress.getLocalHost().getHostName(), 4711);
-	    System.out.println("connected");
- 
-	    out = new ObjectOutputStream(sock.getOutputStream());
-	    out.flush();
+            System.out.println("About to create a socket");
+            sock = new Socket(InetAddress.getLocalHost().getHostName(), 4711);
+            System.out.println("connected");
+
+            out = new ObjectOutputStream(sock.getOutputStream());
+            out.flush();
         } catch (Throwable e) {
           System.out.println("client failed with: " + e);
           e.printStackTrace();
@@ -157,7 +157,7 @@ class ClientThread implements Runnable {
     }
 
     public Socket getSock() {
-	return sock;
+        return sock;
     }
 
     private int cnt = 1;
@@ -166,26 +166,26 @@ class ClientThread implements Runnable {
         try {
           in  = new ObjectInputStream(sock.getInputStream());
 
-	  int count = 0;
+          int count = 0;
 
           while (true) {
-	      System.out.println("read " + cnt);
-	      Message msg = (Message) in.readObject();
-	      System.out.println("read done " + cnt++);
-	      switch (msg.code) {
-	      case Message.PING: {
-		  System.out.println("ping recv'ed");
-		  count++;
-	      } break;
-	      }
-	      if (count == 5) {
-		  sock.close();
-		  break;
-	      }
+              System.out.println("read " + cnt);
+              Message msg = (Message) in.readObject();
+              System.out.println("read done " + cnt++);
+              switch (msg.code) {
+              case Message.PING: {
+                  System.out.println("ping recv'ed");
+                  count++;
+              } break;
+              }
+              if (count == 5) {
+                  sock.close();
+                  break;
+              }
           }
         }  catch (IOException ioe) {
-	} catch (Throwable e) {
-	    // If anything went wrong, just quit
+        } catch (Throwable e) {
+            // If anything went wrong, just quit
         }
     }
 
@@ -206,13 +206,13 @@ class Message implements java.io.Serializable {
 
     public static void write(ObjectOutput out, Message msg) {
         try {
-	    System.out.println("write message " + cnt);
-	    out.writeObject(msg);
-	    System.out.println("flush message");
-	    out.flush();
-	    System.out.println("write message done " + cnt++);
+            System.out.println("write message " + cnt);
+            out.writeObject(msg);
+            System.out.println("flush message");
+            out.flush();
+            System.out.println("write message done " + cnt++);
         } catch (IOException ioe) {
-	    // Ignore the exception
+            // Ignore the exception
         }
      }
 }

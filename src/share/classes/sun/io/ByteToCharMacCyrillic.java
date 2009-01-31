@@ -32,7 +32,6 @@ import sun.nio.cs.ext.MacCyrillic;
  * A table to convert to MacCyrillic to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacCyrillic extends ByteToCharSingleByte {

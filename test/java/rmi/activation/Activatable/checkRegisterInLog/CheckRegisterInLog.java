@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -41,14 +41,14 @@ import java.lang.reflect.*;
 import java.util.Properties;
 
 public class CheckRegisterInLog
-	extends Activatable
-	implements ActivateMe, Runnable
+        extends Activatable
+        implements ActivateMe, Runnable
 {
-    
+
     public CheckRegisterInLog(ActivationID id, MarshalledObject obj)
-	throws ActivationException, RemoteException
+        throws ActivationException, RemoteException
     {
-	super(id, 0);
+        super(id, 0);
     }
 
     public void ping()
@@ -59,7 +59,7 @@ public class CheckRegisterInLog
      */
     public void shutdown() throws Exception
     {
-	(new Thread(this,"CheckRegisterInLog")).start();
+        (new Thread(this,"CheckRegisterInLog")).start();
     }
 
     /**
@@ -69,104 +69,102 @@ public class CheckRegisterInLog
      * unexport the object forcibly.
      */
     public void run() {
-	ActivationLibrary.deactivate(this, getID());
+        ActivationLibrary.deactivate(this, getID());
     }
 
     public static void main(String[] args)  {
-	/*
-	 * The following line is required with the JDK 1.2 VM so that the
-	 * VM can exit gracefully when this test completes.  Otherwise, the
-	 * conservative garbage collector will find a handle to the server
-	 * object on the native stack and not clear the weak reference to
-	 * it in the RMI runtime's object table.
-	 */
-	Object dummy = new Object();
-	RMID rmid = null;
-	ActivateMe obj;
-	
-	System.out.println("\nRegression test for bug 4110548\n");
+        /*
+         * The following line is required with the JDK 1.2 VM so that the
+         * VM can exit gracefully when this test completes.  Otherwise, the
+         * conservative garbage collector will find a handle to the server
+         * object on the native stack and not clear the weak reference to
+         * it in the RMI runtime's object table.
+         */
+        Object dummy = new Object();
+        RMID rmid = null;
+        ActivateMe obj;
 
-	CheckRegisterInLog server;
-	
-	try {
+        System.out.println("\nRegression test for bug 4110548\n");
+
+        CheckRegisterInLog server;
+
+        try {
             TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
 
-	    /*
-	     * Start up activation system daemon "rmid".
-	     */
-	    RMID.removeLog();
-	    rmid = RMID.createRMID();
-	    rmid.start();
+            /*
+             * Start up activation system daemon "rmid".
+             */
+            RMID.removeLog();
+            rmid = RMID.createRMID();
+            rmid.start();
 
-	    /* Cause activation groups to have a security policy that will
-	     * allow security managers to be downloaded and installed
-	     */
-	    Properties p = new Properties();
-	    // this test must always set policies/managers in its
-	    // activation groups
-	    p.put("java.security.policy", 
-		  TestParams.defaultGroupPolicy);
-	    p.put("java.security.manager", 
-		  TestParams.defaultSecurityManager);
+            /* Cause activation groups to have a security policy that will
+             * allow security managers to be downloaded and installed
+             */
+            Properties p = new Properties();
+            // this test must always set policies/managers in its
+            // activation groups
+            p.put("java.security.policy",
+                  TestParams.defaultGroupPolicy);
+            p.put("java.security.manager",
+                  TestParams.defaultSecurityManager);
 
-	    /*
-	     * Register an activation group and an object
-	     * in that group.
-	     */
-	    System.err.println("Creating group descriptor");
-	    ActivationGroupDesc groupDesc =
-		new ActivationGroupDesc(p, null);
-	    System.err.println("Registering group");
-	    ActivationSystem system = ActivationGroup.getSystem();
-	    ActivationGroupID groupID = system.registerGroup(groupDesc);
-	    
-	    System.err.println("Creating descriptor");
-	    ActivationDesc desc =
-		new ActivationDesc(groupID, "CheckRegisterInLog",
-				   null, null);
-	    System.err.println("Registering descriptor");
-	    obj = (ActivateMe)Activatable.register(desc);
+            /*
+             * Register an activation group and an object
+             * in that group.
+             */
+            System.err.println("Creating group descriptor");
+            ActivationGroupDesc groupDesc =
+                new ActivationGroupDesc(p, null);
+            System.err.println("Registering group");
+            ActivationSystem system = ActivationGroup.getSystem();
+            ActivationGroupID groupID = system.registerGroup(groupDesc);
 
-	    /*
-	     * Restart rmid to force it to read the log file
-	     */
-	    rmid.restart();
+            System.err.println("Creating descriptor");
+            ActivationDesc desc =
+                new ActivationDesc(groupID, "CheckRegisterInLog",
+                                   null, null);
+            System.err.println("Registering descriptor");
+            obj = (ActivateMe)Activatable.register(desc);
 
-	    
-	    /* 
-	     * 4212096: Give rmid time to go away - we want to make
-	     * sure that an attempt to activate the test object is not made
-	     * on the ActivationSystem that is about to be shutdown.
-	     */
-	    try {
-		Thread.sleep(5000);
-	    } catch (InterruptedException ie) {
-	    }
+            /*
+             * Restart rmid to force it to read the log file
+             */
+            rmid.restart();
 
-	    /*
-	     * Activate the object via a method call.
-	     */
-	    System.err.println("Activate the object via method call");
-	    obj.ping();
-	    
-	    /*
-	     * Clean up object too.
-	     */
-	    System.err.println("Deactivate object via method call");
-	    obj.shutdown();
 
-	    System.err.println("\nsuccess: CheckRegisterInLog test passed ");
-	    
-	} catch (Exception e) {
-	    System.err.println("\nfailure: unexpected exception " +
-			       e.getClass().getName() + ": " + e.getMessage());
-	    e.printStackTrace(System.err);
-	    throw new RuntimeException("CheckRegisterInLog got exception " +
-				       e.getMessage());
-	} finally {
-	    ActivationLibrary.rmidCleanup(rmid);
-	}
+            /*
+             * 4212096: Give rmid time to go away - we want to make
+             * sure that an attempt to activate the test object is not made
+             * on the ActivationSystem that is about to be shutdown.
+             */
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ie) {
+            }
+
+            /*
+             * Activate the object via a method call.
+             */
+            System.err.println("Activate the object via method call");
+            obj.ping();
+
+            /*
+             * Clean up object too.
+             */
+            System.err.println("Deactivate object via method call");
+            obj.shutdown();
+
+            System.err.println("\nsuccess: CheckRegisterInLog test passed ");
+
+        } catch (Exception e) {
+            System.err.println("\nfailure: unexpected exception " +
+                               e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace(System.err);
+            throw new RuntimeException("CheckRegisterInLog got exception " +
+                                       e.getMessage());
+        } finally {
+            ActivationLibrary.rmidCleanup(rmid);
+        }
     }
 }
-
-

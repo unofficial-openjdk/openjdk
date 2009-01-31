@@ -36,10 +36,10 @@
 import java.util.ResourceBundle;
 
 public class ImmutableResourceTest {
-    
+
     public static void main(String[] args) throws Exception {
         /* Reach under the covers and get the message strings */
-        sun.tools.native2ascii.resources.MsgNative2ascii msgs = 
+        sun.tools.native2ascii.resources.MsgNative2ascii msgs =
             new sun.tools.native2ascii.resources.MsgNative2ascii ();
         Object [][] testData = msgs.getContents();
 
@@ -49,7 +49,7 @@ public class ImmutableResourceTest {
             testData[ii][1] = "yyy";
         }
 
-        /* 
+        /*
          * Try to lookup the shredded key.
          * If this is successful we have a problem.
          */
@@ -57,7 +57,7 @@ public class ImmutableResourceTest {
         try {
             ss = msgs.getString("T6287579");
         } catch (java.util.MissingResourceException mre) {
-            /* 
+            /*
              * Ignore the expected MissingResourceException since key
              * "T6287579" is not in the canonical MsgNative2ascii.
              */

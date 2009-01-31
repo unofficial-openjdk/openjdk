@@ -150,14 +150,14 @@ public class RenderBuffer {
             long offsetInBytes = offset * SIZEOF_BYTE;
             long lengthInBytes = length * SIZEOF_BYTE;
             copyFromArray(x, offsetInBytes, curAddress, lengthInBytes);
-	    position(position() + lengthInBytes);
+            position(position() + lengthInBytes);
         } else {
             int end = offset + length;
             for (int i = offset; i < end; i++) {
                 putByte(x[i]);
             }
         }
-	return this;
+        return this;
     }
 
     /**
@@ -218,14 +218,14 @@ public class RenderBuffer {
             long offsetInBytes = offset * SIZEOF_INT;
             long lengthInBytes = length * SIZEOF_INT;
             copyFromArray(x, offsetInBytes, curAddress, lengthInBytes);
-	    position(position() + lengthInBytes);
+            position(position() + lengthInBytes);
         } else {
             int end = offset + length;
             for (int i = offset; i < end; i++) {
                 putInt(x[i]);
             }
         }
-	return this;
+        return this;
     }
 
     /**
@@ -249,14 +249,14 @@ public class RenderBuffer {
             long offsetInBytes = offset * SIZEOF_FLOAT;
             long lengthInBytes = length * SIZEOF_FLOAT;
             copyFromArray(x, offsetInBytes, curAddress, lengthInBytes);
-	    position(position() + lengthInBytes);
+            position(position() + lengthInBytes);
         } else {
             int end = offset + length;
             for (int i = offset; i < end; i++) {
                 putFloat(x[i]);
             }
         }
-	return this;
+        return this;
     }
 
     /**
@@ -280,14 +280,14 @@ public class RenderBuffer {
             long offsetInBytes = offset * SIZEOF_LONG;
             long lengthInBytes = length * SIZEOF_LONG;
             copyFromArray(x, offsetInBytes, curAddress, lengthInBytes);
-	    position(position() + lengthInBytes);
+            position(position() + lengthInBytes);
         } else {
             int end = offset + length;
             for (int i = offset; i < end; i++) {
                 putLong(x[i]);
             }
         }
-	return this;
+        return this;
     }
 
     /**

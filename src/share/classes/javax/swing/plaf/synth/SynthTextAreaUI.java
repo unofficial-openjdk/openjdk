@@ -49,7 +49,6 @@ import sun.swing.plaf.synth.SynthUI;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Shannon Hickey
- * @version %I% %G%
  */
 class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
     private SynthStyle style;

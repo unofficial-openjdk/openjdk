@@ -38,7 +38,6 @@ import java.util.List;
  *   segmentCache.releaseSegment(segment);
  * </pre>
  *
- * @version %I% %G%
  */
 class SegmentCache {
     /**

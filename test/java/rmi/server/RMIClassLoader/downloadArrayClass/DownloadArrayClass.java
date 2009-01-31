@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -53,88 +53,88 @@ public class DownloadArrayClass
     }
 
     public void receive(Object obj) {
-	System.err.println("+ receive(): received object " + obj);
+        System.err.println("+ receive(): received object " + obj);
     }
 
     public static void main(String[] args) {
 
-	System.err.println("\nRegression test for bug 4082868\n");
+        System.err.println("\nRegression test for bug 4082868\n");
 
-	URL remoteCodebase = null;
-	try {
-	    remoteCodebase =
-		TestLibrary.installClassInCodebase("Foo", "remote_codebase");
-	} catch (MalformedURLException e) {
-	    TestLibrary.bomb(e);
-	}
+        URL remoteCodebase = null;
+        try {
+            remoteCodebase =
+                TestLibrary.installClassInCodebase("Foo", "remote_codebase");
+        } catch (MalformedURLException e) {
+            TestLibrary.bomb(e);
+        }
 
-	/*
-	 * Load Foo from a non-RMI class loader so that it won't be already
-	 * loaded by an RMI class loader in this VM (for whatever that's
-	 * worth), but with URLClassLoader so that they will be annotated
-	 * properly.
-	 */
-	System.err.println("Creating class loader for remote codebase " +
-	    remoteCodebase);
-	ClassLoader remoteCodebaseLoader =
-	    URLClassLoader.newInstance(new URL[] { remoteCodebase });
+        /*
+         * Load Foo from a non-RMI class loader so that it won't be already
+         * loaded by an RMI class loader in this VM (for whatever that's
+         * worth), but with URLClassLoader so that they will be annotated
+         * properly.
+         */
+        System.err.println("Creating class loader for remote codebase " +
+            remoteCodebase);
+        ClassLoader remoteCodebaseLoader =
+            URLClassLoader.newInstance(new URL[] { remoteCodebase });
 
-	TestLibrary.suggestSecurityManager(null);
+        TestLibrary.suggestSecurityManager(null);
 
-	System.err.println("Creating remote object.");
-	DownloadArrayClass obj = null;
-	try {
-	    obj = new DownloadArrayClass();
-	} catch (RemoteException e) {
-	    TestLibrary.bomb(e);
-	}
+        System.err.println("Creating remote object.");
+        DownloadArrayClass obj = null;
+        try {
+            obj = new DownloadArrayClass();
+        } catch (RemoteException e) {
+            TestLibrary.bomb(e);
+        }
 
-	try {
-	    Receiver stub = (Receiver) RemoteObject.toStub(obj);
+        try {
+            Receiver stub = (Receiver) RemoteObject.toStub(obj);
 
-	    /*
-	     * Load the downloadable class "Foo" to marshal over RMI calls
-	     * in various forms.
-	     */
-	    Class fooClass = remoteCodebaseLoader.loadClass("Foo");
-	    Object arg;
+            /*
+             * Load the downloadable class "Foo" to marshal over RMI calls
+             * in various forms.
+             */
+            Class fooClass = remoteCodebaseLoader.loadClass("Foo");
+            Object arg;
 
-	    /*
-	     * First, to establish that simple class downloading is working
-	     * properly, try marshalling a simple instance of Foo.
-	     */
-	    arg = fooClass.newInstance();
-	    System.err.println("Passing object of type " + arg.getClass());
-	    stub.receive(arg);
+            /*
+             * First, to establish that simple class downloading is working
+             * properly, try marshalling a simple instance of Foo.
+             */
+            arg = fooClass.newInstance();
+            System.err.println("Passing object of type " + arg.getClass());
+            stub.receive(arg);
 
-	    /*
-	     * Second, try marshalling a one-dimensional array of element
-	     * type Foo.
-	     */
-	    arg = Array.newInstance(fooClass, 26);
-	    System.err.println("Passing object of type " + arg.getClass());
-	    stub.receive(arg);
+            /*
+             * Second, try marshalling a one-dimensional array of element
+             * type Foo.
+             */
+            arg = Array.newInstance(fooClass, 26);
+            System.err.println("Passing object of type " + arg.getClass());
+            stub.receive(arg);
 
-	    /*
-	     * Finally, try marshalling a multi-dimensional array with
-	     * Foo as the eventual element type.
-	     */
-	    arg = Array.newInstance(fooClass, new int[] { 1, 42, 0 });
-	    System.err.println("Passing object of type " + arg.getClass());
-	    stub.receive(arg);
+            /*
+             * Finally, try marshalling a multi-dimensional array with
+             * Foo as the eventual element type.
+             */
+            arg = Array.newInstance(fooClass, new int[] { 1, 42, 0 });
+            System.err.println("Passing object of type " + arg.getClass());
+            stub.receive(arg);
 
-	    System.err.println("TEST PASSED: " +
-		"arrays of downloaded classes successfully passed");
+            System.err.println("TEST PASSED: " +
+                "arrays of downloaded classes successfully passed");
 
-	} catch (Exception e) {
-	    System.err.println("TEST FAILED: ");
-	    e.printStackTrace();
-	    throw new RuntimeException("TEST FAILED: " + e.toString());
-	} finally {
-	    try {
-		UnicastRemoteObject.unexportObject(obj, true);
-	    } catch (Throwable e) {
-	    }
-	}
+        } catch (Exception e) {
+            System.err.println("TEST FAILED: ");
+            e.printStackTrace();
+            throw new RuntimeException("TEST FAILED: " + e.toString());
+        } finally {
+            try {
+                UnicastRemoteObject.unexportObject(obj, true);
+            } catch (Throwable e) {
+            }
+        }
     }
 }

@@ -37,7 +37,7 @@ import java.awt.Graphics;
  * implement appropriate animation when the window is shown/hidden.
  * <p>
  * Note that support for transition effects may be supported with a
- * different mechanism in the future and so this class is 
+ * different mechanism in the future and so this class is
  * package-private and targeted for Swing implementation use only.
  * <p>
  * <strong>Warning:</strong>
@@ -47,7 +47,6 @@ import java.awt.Graphics;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Amy Fowler
  */
 class WindowsPopupWindow extends JWindow {
@@ -71,7 +70,7 @@ class WindowsPopupWindow extends JWindow {
     }
 
     int getWindowType() {
-	return windowType;
+        return windowType;
     }
 
     public void update(Graphics g) {
@@ -90,7 +89,7 @@ class WindowsPopupWindow extends JWindow {
     }
 
     public void show() {
-	super.show();
-	this.pack();
+        super.show();
+        this.pack();
     }
 }

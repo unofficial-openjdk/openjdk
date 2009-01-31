@@ -27,56 +27,55 @@ package java.lang;
 
 
 /**
- * A thread-safe, mutable sequence of characters. 
- * A string buffer is like a {@link String}, but can be modified. At any 
- * point in time it contains some particular sequence of characters, but 
- * the length and content of the sequence can be changed through certain 
+ * A thread-safe, mutable sequence of characters.
+ * A string buffer is like a {@link String}, but can be modified. At any
+ * point in time it contains some particular sequence of characters, but
+ * the length and content of the sequence can be changed through certain
  * method calls.
  * <p>
- * String buffers are safe for use by multiple threads. The methods 
- * are synchronized where necessary so that all the operations on any 
- * particular instance behave as if they occur in some serial order 
- * that is consistent with the order of the method calls made by each of 
+ * String buffers are safe for use by multiple threads. The methods
+ * are synchronized where necessary so that all the operations on any
+ * particular instance behave as if they occur in some serial order
+ * that is consistent with the order of the method calls made by each of
  * the individual threads involved.
  * <p>
- * The principal operations on a <code>StringBuffer</code> are the 
- * <code>append</code> and <code>insert</code> methods, which are 
- * overloaded so as to accept data of any type. Each effectively 
- * converts a given datum to a string and then appends or inserts the 
- * characters of that string to the string buffer. The 
- * <code>append</code> method always adds these characters at the end 
- * of the buffer; the <code>insert</code> method adds the characters at 
- * a specified point. 
+ * The principal operations on a <code>StringBuffer</code> are the
+ * <code>append</code> and <code>insert</code> methods, which are
+ * overloaded so as to accept data of any type. Each effectively
+ * converts a given datum to a string and then appends or inserts the
+ * characters of that string to the string buffer. The
+ * <code>append</code> method always adds these characters at the end
+ * of the buffer; the <code>insert</code> method adds the characters at
+ * a specified point.
  * <p>
- * For example, if <code>z</code> refers to a string buffer object 
- * whose current contents are "<code>start</code>", then 
- * the method call <code>z.append("le")</code> would cause the string 
- * buffer to contain "<code>startle</code>", whereas 
- * <code>z.insert(4, "le")</code> would alter the string buffer to 
- * contain "<code>starlet</code>". 
+ * For example, if <code>z</code> refers to a string buffer object
+ * whose current contents are "<code>start</code>", then
+ * the method call <code>z.append("le")</code> would cause the string
+ * buffer to contain "<code>startle</code>", whereas
+ * <code>z.insert(4, "le")</code> would alter the string buffer to
+ * contain "<code>starlet</code>".
  * <p>
- * In general, if sb refers to an instance of a <code>StringBuffer</code>, 
- * then <code>sb.append(x)</code> has the same effect as 
+ * In general, if sb refers to an instance of a <code>StringBuffer</code>,
+ * then <code>sb.append(x)</code> has the same effect as
  * <code>sb.insert(sb.length(),&nbsp;x)</code>.
  * <p>
  * Whenever an operation occurs involving a source sequence (such as
  * appending or inserting from a source sequence) this class synchronizes
  * only on the string buffer performing the operation, not on the source.
  * <p>
- * Every string buffer has a capacity. As long as the length of the 
- * character sequence contained in the string buffer does not exceed 
- * the capacity, it is not necessary to allocate a new internal 
- * buffer array. If the internal buffer overflows, it is 
- * automatically made larger. 
+ * Every string buffer has a capacity. As long as the length of the
+ * character sequence contained in the string buffer does not exceed
+ * the capacity, it is not necessary to allocate a new internal
+ * buffer array. If the internal buffer overflows, it is
+ * automatically made larger.
  *
- * As of  release JDK 5, this class has been supplemented with an equivalent 
- * class designed for use by a single thread, {@link StringBuilder}.  The 
- * <tt>StringBuilder</tt> class should generally be used in preference to 
- * this one, as it supports all of the same operations but it is faster, as 
+ * As of  release JDK 5, this class has been supplemented with an equivalent
+ * class designed for use by a single thread, {@link StringBuilder}.  The
+ * <tt>StringBuilder</tt> class should generally be used in preference to
+ * this one, as it supports all of the same operations but it is faster, as
  * it performs no synchronization.
  *
- * @author	Arthur van Hoff
- * @version 	%I%, %G%
+ * @author      Arthur van Hoff
  * @see     java.lang.StringBuilder
  * @see     java.lang.String
  * @since   JDK1.0
@@ -90,36 +89,36 @@ package java.lang;
     static final long serialVersionUID = 3388685877147921107L;
 
     /**
-     * Constructs a string buffer with no characters in it and an 
-     * initial capacity of 16 characters. 
+     * Constructs a string buffer with no characters in it and an
+     * initial capacity of 16 characters.
      */
     public StringBuffer() {
-	super(16);
+        super(16);
     }
 
     /**
-     * Constructs a string buffer with no characters in it and 
-     * the specified initial capacity. 
+     * Constructs a string buffer with no characters in it and
+     * the specified initial capacity.
      *
      * @param      capacity  the initial capacity.
      * @exception  NegativeArraySizeException  if the <code>capacity</code>
      *               argument is less than <code>0</code>.
      */
     public StringBuffer(int capacity) {
-	super(capacity);
+        super(capacity);
     }
 
     /**
-     * Constructs a string buffer initialized to the contents of the 
-     * specified string. The initial capacity of the string buffer is 
+     * Constructs a string buffer initialized to the contents of the
+     * specified string. The initial capacity of the string buffer is
      * <code>16</code> plus the length of the string argument.
      *
      * @param   str   the initial contents of the buffer.
      * @exception NullPointerException if <code>str</code> is <code>null</code>
      */
     public StringBuffer(String str) {
-	super(str.length() + 16);
-	append(str);
+        super(str.length() + 16);
+        append(str);
     }
 
     /**
@@ -142,18 +141,18 @@ package java.lang;
     }
 
     public synchronized int length() {
-	return count;
+        return count;
     }
 
     public synchronized int capacity() {
-	return value.length;
+        return value.length;
     }
 
 
     public synchronized void ensureCapacity(int minimumCapacity) {
-	if (minimumCapacity > value.length) {
-	    expandCapacity(minimumCapacity);
-	}
+        if (minimumCapacity > value.length) {
+            expandCapacity(minimumCapacity);
+        }
     }
 
     /**
@@ -168,7 +167,7 @@ package java.lang;
      * @see        #length()
      */
     public synchronized void setLength(int newLength) {
-	super.setLength(newLength);
+        super.setLength(newLength);
     }
 
     /**
@@ -176,9 +175,9 @@ package java.lang;
      * @see        #length()
      */
     public synchronized char charAt(int index) {
-	if ((index < 0) || (index >= count))
-	    throw new StringIndexOutOfBoundsException(index);
-	return value[index];
+        if ((index < 0) || (index >= count))
+            throw new StringIndexOutOfBoundsException(index);
+        return value[index];
     }
 
     /**
@@ -199,14 +198,14 @@ package java.lang;
      * @since     1.5
      */
     public synchronized int codePointCount(int beginIndex, int endIndex) {
-	return super.codePointCount(beginIndex, endIndex);
+        return super.codePointCount(beginIndex, endIndex);
     }
 
     /**
      * @since     1.5
      */
     public synchronized int offsetByCodePoints(int index, int codePointOffset) {
-	return super.offsetByCodePoints(index, codePointOffset);
+        return super.offsetByCodePoints(index, codePointOffset);
     }
 
     /**
@@ -216,7 +215,7 @@ package java.lang;
     public synchronized void getChars(int srcBegin, int srcEnd, char dst[],
                                       int dstBegin)
     {
-	super.getChars(srcBegin, srcEnd, dst, dstBegin);
+        super.getChars(srcBegin, srcEnd, dst, dstBegin);
     }
 
     /**
@@ -224,9 +223,9 @@ package java.lang;
      * @see        #length()
      */
     public synchronized void setCharAt(int index, char ch) {
-	if ((index < 0) || (index >= count))
-	    throw new StringIndexOutOfBoundsException(index);
-	value[index] = ch;
+        if ((index < 0) || (index >= count))
+            throw new StringIndexOutOfBoundsException(index);
+        value[index] = ch;
     }
 
     /**
@@ -234,33 +233,33 @@ package java.lang;
      * @see     #append(java.lang.String)
      */
     public synchronized StringBuffer append(Object obj) {
-	super.append(String.valueOf(obj));
+        super.append(String.valueOf(obj));
         return this;
     }
 
     public synchronized StringBuffer append(String str) {
-	super.append(str);
+        super.append(str);
         return this;
     }
 
     /**
      * Appends the specified <tt>StringBuffer</tt> to this sequence.
      * <p>
-     * The characters of the <tt>StringBuffer</tt> argument are appended, 
-     * in order, to the contents of this <tt>StringBuffer</tt>, increasing the 
-     * length of this <tt>StringBuffer</tt> by the length of the argument. 
-     * If <tt>sb</tt> is <tt>null</tt>, then the four characters 
+     * The characters of the <tt>StringBuffer</tt> argument are appended,
+     * in order, to the contents of this <tt>StringBuffer</tt>, increasing the
+     * length of this <tt>StringBuffer</tt> by the length of the argument.
+     * If <tt>sb</tt> is <tt>null</tt>, then the four characters
      * <tt>"null"</tt> are appended to this <tt>StringBuffer</tt>.
      * <p>
-     * Let <i>n</i> be the length of the old character sequence, the one 
-     * contained in the <tt>StringBuffer</tt> just prior to execution of the 
-     * <tt>append</tt> method. Then the character at index <i>k</i> in 
-     * the new character sequence is equal to the character at index <i>k</i> 
-     * in the old character sequence, if <i>k</i> is less than <i>n</i>; 
-     * otherwise, it is equal to the character at index <i>k-n</i> in the 
+     * Let <i>n</i> be the length of the old character sequence, the one
+     * contained in the <tt>StringBuffer</tt> just prior to execution of the
+     * <tt>append</tt> method. Then the character at index <i>k</i> in
+     * the new character sequence is equal to the character at index <i>k</i>
+     * in the old character sequence, if <i>k</i> is less than <i>n</i>;
+     * otherwise, it is equal to the character at index <i>k-n</i> in the
      * argument <code>sb</code>.
      * <p>
-     * This method synchronizes on <code>this</code> (the destination) 
+     * This method synchronizes on <code>this</code> (the destination)
      * object but does not synchronize on the source (<code>sb</code>).
      *
      * @param   sb   the <tt>StringBuffer</tt> to append.
@@ -277,17 +276,17 @@ package java.lang;
      * Appends the specified <code>CharSequence</code> to this
      * sequence.
      * <p>
-     * The characters of the <code>CharSequence</code> argument are appended, 
-     * in order, increasing the length of this sequence by the length of the 
+     * The characters of the <code>CharSequence</code> argument are appended,
+     * in order, increasing the length of this sequence by the length of the
      * argument.
      *
      * <p>The result of this method is exactly the same as if it were an
      * invocation of this.append(s, 0, s.length());
      *
-     * <p>This method synchronizes on this (the destination) 
+     * <p>This method synchronizes on this (the destination)
      * object but does not synchronize on the source (<code>s</code>).
      *
-     * <p>If <code>s</code> is <code>null</code>, then the four characters 
+     * <p>If <code>s</code> is <code>null</code>, then the four characters
      * <code>"null"</code> are appended.
      *
      * @param   s the <code>CharSequence</code> to append.
@@ -309,13 +308,13 @@ package java.lang;
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @since      1.5
      */
-    public synchronized StringBuffer append(CharSequence s, int start, int end) 
+    public synchronized StringBuffer append(CharSequence s, int start, int end)
     {
         super.append(s, start, end);
         return this;
     }
 
-    public synchronized StringBuffer append(char str[]) { 
+    public synchronized StringBuffer append(char str[]) {
         super.append(str);
         return this;
     }
@@ -344,7 +343,7 @@ package java.lang;
      * @see     #append(java.lang.String)
      */
     public synchronized StringBuffer append(int i) {
-	super.append(i);
+        super.append(i);
         return this;
     }
 
@@ -352,8 +351,8 @@ package java.lang;
      * @since 1.5
      */
     public synchronized StringBuffer appendCodePoint(int codePoint) {
-	super.appendCodePoint(codePoint);
-	return this;
+        super.appendCodePoint(codePoint);
+        return this;
     }
 
     /**
@@ -362,7 +361,7 @@ package java.lang;
      */
     public synchronized StringBuffer append(long lng) {
         super.append(lng);
-	return this;
+        return this;
     }
 
     /**
@@ -370,8 +369,8 @@ package java.lang;
      * @see     #append(java.lang.String)
      */
     public synchronized StringBuffer append(float f) {
-	super.append(f);
-	return this;
+        super.append(f);
+        return this;
     }
 
     /**
@@ -379,8 +378,8 @@ package java.lang;
      * @see     #append(java.lang.String)
      */
     public synchronized StringBuffer append(double d) {
-	super.append(d);
-	return this;
+        super.append(d);
+        return this;
     }
 
     /**
@@ -439,7 +438,7 @@ package java.lang;
      * @since      1.2
      */
     public synchronized StringBuffer insert(int index, char str[], int offset,
-                                            int len) 
+                                            int len)
     {
         super.insert(index, str, offset, len);
         return this;
@@ -452,7 +451,7 @@ package java.lang;
      * @see        #length()
      */
     public synchronized StringBuffer insert(int offset, Object obj) {
-	super.insert(offset, String.valueOf(obj));
+        super.insert(offset, String.valueOf(obj));
         return this;
     }
 
@@ -470,7 +469,7 @@ package java.lang;
      */
     public synchronized StringBuffer insert(int offset, char str[]) {
         super.insert(offset, str);
-	return this;
+        return this;
     }
 
     /**
@@ -490,7 +489,7 @@ package java.lang;
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @since      1.5
      */
-    public synchronized StringBuffer insert(int dstOffset, CharSequence s, 
+    public synchronized StringBuffer insert(int dstOffset, CharSequence s,
                                             int start, int end)
     {
         super.insert(dstOffset, s, start, end);
@@ -504,7 +503,7 @@ package java.lang;
      * @see        #length()
      */
     public StringBuffer insert(int offset, boolean b) {
-	return insert(offset, String.valueOf(b));
+        return insert(offset, String.valueOf(b));
     }
 
     /**
@@ -512,8 +511,8 @@ package java.lang;
      * @see        #length()
      */
     public synchronized StringBuffer insert(int offset, char c) {
-	super.insert(offset, c);
-	return this;
+        super.insert(offset, c);
+        return this;
     }
 
     /**
@@ -523,7 +522,7 @@ package java.lang;
      * @see        #length()
      */
     public StringBuffer insert(int offset, int i) {
-	return insert(offset, String.valueOf(i));
+        return insert(offset, String.valueOf(i));
     }
 
     /**
@@ -533,7 +532,7 @@ package java.lang;
      * @see        #length()
      */
     public StringBuffer insert(int offset, long l) {
-	return insert(offset, String.valueOf(l));
+        return insert(offset, String.valueOf(l));
     }
 
     /**
@@ -543,7 +542,7 @@ package java.lang;
      * @see        #length()
      */
     public StringBuffer insert(int offset, float f) {
-	return insert(offset, String.valueOf(f));
+        return insert(offset, String.valueOf(f));
     }
 
     /**
@@ -553,7 +552,7 @@ package java.lang;
      * @see        #length()
      */
     public StringBuffer insert(int offset, double d) {
-	return insert(offset, String.valueOf(d));
+        return insert(offset, String.valueOf(d));
     }
 
     /**
@@ -561,7 +560,7 @@ package java.lang;
      * @since      1.4
      */
     public int indexOf(String str) {
-	return indexOf(str, 0);
+        return indexOf(str, 0);
     }
 
     /**
@@ -595,28 +594,28 @@ package java.lang;
      * @since   JDK1.0.2
      */
     public synchronized StringBuffer reverse() {
-	super.reverse();
-	return this;
+        super.reverse();
+        return this;
     }
 
     public synchronized String toString() {
-	return new String(value, 0, count);
+        return new String(value, 0, count);
     }
 
     /**
      * Serializable fields for StringBuffer.
-     * 
+     *
      * @serialField value  char[]
      *              The backing character array of this StringBuffer.
      * @serialField count int
      *              The number of characters in this StringBuffer.
      * @serialField shared  boolean
-     *              A flag indicating whether the backing array is shared. 
+     *              A flag indicating whether the backing array is shared.
      *              The value is ignored upon deserialization.
      */
-    private static final java.io.ObjectStreamField[] serialPersistentFields = 
-    { 
-        new java.io.ObjectStreamField("value", char[].class), 
+    private static final java.io.ObjectStreamField[] serialPersistentFields =
+    {
+        new java.io.ObjectStreamField("value", char[].class),
         new java.io.ObjectStreamField("count", Integer.TYPE),
         new java.io.ObjectStreamField("shared", Boolean.TYPE),
     };

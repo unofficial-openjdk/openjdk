@@ -22,9 +22,9 @@
  */
 
 /* @test
- * @bug 4639943 
- * @summary  Checks that Windows behavior matches Solaris for 
- *           various read/select combinations.  
+ * @bug 4639943
+ * @summary  Checks that Windows behavior matches Solaris for
+ *           various read/select combinations.
  * @author kladko
  */
 
@@ -38,9 +38,9 @@ public class SelectAfterRead {
 
     public static void main(String[] argv) throws Exception {
         // server: accept connection and write one byte
-        ByteServer server = new ByteServer(1); 
+        ByteServer server = new ByteServer(1);
         server.start();
-	InetSocketAddress isa = new InetSocketAddress(
+        InetSocketAddress isa = new InetSocketAddress(
                 InetAddress.getByName(ByteServer.LOCALHOST), ByteServer.PORT);
         Selector sel = Selector.open();
         SocketChannel sc = SocketChannel.open();
@@ -50,11 +50,11 @@ public class SelectAfterRead {
         sc.register(sel, SelectionKey.OP_READ);
         // previously on Windows select would select channel here, although there was
         // nothing to read
-        if (sel.selectNow() != 0) 
-            throw new Exception("Select returned nonzero value"); 
+        if (sel.selectNow() != 0)
+            throw new Exception("Select returned nonzero value");
         sc.close();
         sel.close();
-        server.exit();	
+        server.exit();
 
         // Now we will test a two reads combination
         // server: accept connection and write two bytes
@@ -64,27 +64,24 @@ public class SelectAfterRead {
         sc.connect(isa);
         sc.configureBlocking(false);
         sel = Selector.open();
-        sc.register(sel, SelectionKey.OP_READ);        
-        if (sel.select(TIMEOUT) != 1) 
+        sc.register(sel, SelectionKey.OP_READ);
+        if (sel.select(TIMEOUT) != 1)
             throw new Exception("One selected key expected");
         sel.selectedKeys().clear();
-        // previously on Windows a channel would get selected only once   
+        // previously on Windows a channel would get selected only once
         if (sel.selectNow() != 1)
             throw new Exception("One selected key expected");
-        // Previously on Windows two consequent reads would cause select() 
-        // to select a channel, although there was nothing remaining to 
-        // read in the channel 
-        if (sc.read(ByteBuffer.allocate(1)) != 1)
-            throw new Exception("One byte expected"); 
+        // Previously on Windows two consequent reads would cause select()
+        // to select a channel, although there was nothing remaining to
+        // read in the channel
         if (sc.read(ByteBuffer.allocate(1)) != 1)
             throw new Exception("One byte expected");
-        if (sel.selectNow() != 0) 
+        if (sc.read(ByteBuffer.allocate(1)) != 1)
+            throw new Exception("One byte expected");
+        if (sel.selectNow() != 0)
             throw new Exception("Select returned nonzero value");
         sc.close();
         sel.close();
         server.exit();
     }
 }
-
-
-

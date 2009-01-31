@@ -32,7 +32,6 @@ import java.util.List;
  * monitors over an arbitrary time period.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitorStatus {

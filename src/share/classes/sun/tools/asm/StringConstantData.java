@@ -44,28 +44,28 @@ class StringConstantData extends ConstantPoolData {
      * Constructor
      */
     StringConstantData(ConstantPool tab, String str) {
-	this.str = str;
+        this.str = str;
     }
 
     /**
      * Write the constant to the output stream
      */
     void write(Environment env, DataOutputStream out, ConstantPool tab) throws IOException {
-	out.writeByte(CONSTANT_UTF8);
-	out.writeUTF(str);
+        out.writeByte(CONSTANT_UTF8);
+        out.writeUTF(str);
     }
 
     /**
      * Return the order of the constant
      */
     int order() {
-	return 4;
+        return 4;
     }
 
     /**
      * toString
      */
     public String toString() {
-	return "StringConstantData[" + str + "]=" + str.hashCode();
+        return "StringConstantData[" + str + "]=" + str.hashCode();
     }
 }

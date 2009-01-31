@@ -46,7 +46,6 @@ import javax.swing.plaf.basic.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Steve Wilson
- * @version %I% %G%
  */
 public class MetalTextFieldUI extends BasicTextFieldUI {
 
@@ -63,7 +62,7 @@ public class MetalTextFieldUI extends BasicTextFieldUI {
      * @param evt the property change event
      */
     public void propertyChange(PropertyChangeEvent evt) {
-	super.propertyChange(evt);
+        super.propertyChange(evt);
     }
 
  }

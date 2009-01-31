@@ -25,7 +25,7 @@
  * @test
  * @bug 4016189
  * @summary Test operation of nextStream method of SIS
- * 
+ *
  */
 
 import java.io.*;
@@ -44,12 +44,12 @@ public class ConstructorNull {
        ByteArrayInputStream is = new ByteArrayInputStream(data);
 
        try {
-           SequenceInputStream sis = new SequenceInputStream(null,is);     
-           int b = sis.read(); 
-           throw new RuntimeException("No exception with null stream"); 
+           SequenceInputStream sis = new SequenceInputStream(null,is);
+           int b = sis.read();
+           throw new RuntimeException("No exception with null stream");
        } catch(NullPointerException e) {
-           System.err.println("Test passed: NullPointerException thrown"); 
-       } 
-       
+           System.err.println("Test passed: NullPointerException thrown");
+       }
+
    }
 }

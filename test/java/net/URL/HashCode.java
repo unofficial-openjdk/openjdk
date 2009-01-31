@@ -25,13 +25,13 @@
  * @test
  * @bug 4091093
  * @summary Test URL.hashCode with null host
- * 
+ *
  */
 
 import java.net.*;
 
 public class HashCode {
-  
+
     public static void main(String[] args) throws Exception {
         URL url = new URL("http", null, 80, "test");
         int code = url.hashCode();

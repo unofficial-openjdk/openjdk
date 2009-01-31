@@ -45,4 +45,3 @@ public:
 };
 
 #endif // AWT_RECTANGLE_H
-

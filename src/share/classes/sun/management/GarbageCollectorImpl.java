@@ -42,7 +42,7 @@ import java.util.ListIterator;
  * Implementation class for the garbage collector.
  * Standard and committed hotspot-specific metrics if any.
  *
- * ManagementFactory.getGarbageCollectorMXBeans() returns a list 
+ * ManagementFactory.getGarbageCollectorMXBeans() returns a list
  * of instances of this class.
  */
 class GarbageCollectorImpl extends MemoryManagerImpl
@@ -65,16 +65,16 @@ class GarbageCollectorImpl extends MemoryManagerImpl
             List pools = ManagementFactory.getMemoryPoolMXBeans();
             poolNames = new String[pools.size()];
             int i = 0;
-            for (ListIterator iter = pools.listIterator();  
-                 iter.hasNext(); 
+            for (ListIterator iter = pools.listIterator();
+                 iter.hasNext();
                  i++) {
                 MemoryPoolMXBean p = (MemoryPoolMXBean) iter.next();
                 poolNames[i] = p.getName();
-            } 
-        } 
+            }
+        }
         return poolNames;
     }
-    
+
     // Sun JDK extension
     private GcInfoBuilder gcInfoBuilder;
     public GcInfo getLastGcInfo() {

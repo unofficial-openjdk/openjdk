@@ -29,7 +29,7 @@
 #include "D3DSurfaceData.h"
 
 #ifdef DEBUG
-// These strings must be in the same order as pixel 
+// These strings must be in the same order as pixel
 // formats in D3DSurfaceData.java
 char * TR_NAMES[] = {
     "TR_OPAQUE",
@@ -83,7 +83,7 @@ HRESULT WINAPI EnumAlphaTextureFormatsCallback(DDPIXELFORMAT* pddpf,
     return D3DENUMRET_OK;
 }
 
-HRESULT CALLBACK 
+HRESULT CALLBACK
 D3DUtils_TextureSearchCallback(DDPIXELFORMAT *lpddpf,
                                void *param)
 {
@@ -97,14 +97,14 @@ D3DUtils_TextureSearchCallback(DDPIXELFORMAT *lpddpf,
     if (lpddpf->dwFlags & DDPF_ALPHAPIXELS) {
         DWORD dwMask = lpddpf->dwRGBAlphaBitMask;
         while( dwMask ) {
-            dwMask = dwMask & ( dwMask - 1 ); 
+            dwMask = dwMask & ( dwMask - 1 );
             dwAlphaBitCount++;
         }
     }
 
     DWORD dwRGBBitCount = lpddpf->dwRGBBitCount;
     WORD wDepthIndex = D3D_DEPTH_IDX(dwRGBBitCount);
-    WORD wTransparencyIndex = 
+    WORD wTransparencyIndex =
         dwAlphaBitCount > 0 ? TR_TRANSLUCENT_IDX : TR_OPAQUE_IDX;
 
     D3DTextureTable *table = (D3DTextureTable*)param;
@@ -136,7 +136,7 @@ WINAPI EnumZBufferFormatsCallback(DDPIXELFORMAT* pddpf,
     // If a format with exact depth can't be found, look for the best
     // available, preferring those with the lowest bit depth to save
     // video memory. Also, prefer formats with no stencil bits.
-    if (!ppfss->bFoundFormat || 
+    if (!ppfss->bFoundFormat ||
         (pddpfOut->dwZBufferBitDepth > pddpf->dwZBufferBitDepth &&
          !(pddpf->dwFlags & DDPF_STENCILBUFFER)))
     {
@@ -147,7 +147,7 @@ WINAPI EnumZBufferFormatsCallback(DDPIXELFORMAT* pddpf,
     return D3DENUMRET_OK;
 }
 
-HRESULT 
+HRESULT
 WINAPI DeviceEnumCallback(LPSTR strDesc, LPSTR strName,
                           LPD3DDEVICEDESC7 pDesc,
                           LPVOID pParentInfo)
@@ -172,7 +172,7 @@ D3DUtils_FindMaskTileTextureFormat(IDirect3DDevice7 *d3dDevice,
                                    DDPIXELFORMAT* pddpf)
 {
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_FindMaskTileTextureFormat");
-    d3dDevice->EnumTextureFormats(EnumAlphaTextureFormatsCallback, 
+    d3dDevice->EnumTextureFormats(EnumAlphaTextureFormatsCallback,
                                   (void*)pddpf);
     if (pddpf->dwAlphaBitDepth == 8) {
         return D3D_OK;
@@ -193,7 +193,7 @@ D3DUtils_FindDepthBufferFormat(IDirect3D7 *d3dObject,
     pfss.preferredDepth = preferredDepth;
 
     d3dObject->EnumZBufferFormats(*pDeviceGUID,
-                                  EnumZBufferFormatsCallback, 
+                                  EnumZBufferFormatsCallback,
                                   (void*)&pfss);
 
     return pfss.bFoundFormat ? D3D_OK : DDERR_GENERIC;
@@ -237,12 +237,12 @@ jint D3DUtils_GetPixelFormatType(DDPIXELFORMAT*lpddpf)
     } else if (rMask == 0x00000f00 &&
                gMask == 0x000000f0 &&
                bMask == 0x0000000f &&
-               aMask == 0x0000f000) 
+               aMask == 0x0000f000)
     {
         // REMIND: we currently don't support this
         // pixel format, since we don't have the loops for a
-        // premultiplied version of it. So we'll just use INT_ARGB 
-        // for now 
+        // premultiplied version of it. So we'll just use INT_ARGB
+        // for now
         pfType = PF_INVALID;
         // pfType = PF_USHORT_4444_ARGB;
     } else if (rMask == 0x00ff0000 &&
@@ -250,7 +250,7 @@ jint D3DUtils_GetPixelFormatType(DDPIXELFORMAT*lpddpf)
                bMask == 0x000000ff)
     {
         if (lpddpf->dwRGBBitCount == 32) {
-            pfType = (dwFlags & DDPF_ALPHAPIXELS) ? 
+            pfType = (dwFlags & DDPF_ALPHAPIXELS) ?
                 PF_INT_ARGB : PF_INT_RGB;
         } else {
             // We currently don't support this format.
@@ -262,9 +262,9 @@ jint D3DUtils_GetPixelFormatType(DDPIXELFORMAT*lpddpf)
     return pfType;
 }
 
-void 
-D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice, 
-                             D3DTextureTable &table) 
+void
+D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
+                             D3DTextureTable &table)
 {
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_SetupTextureFormats");
     if (d3dDevice == NULL || table == NULL) {
@@ -291,7 +291,7 @@ D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
 
     // we'll be using translucent pixel formats for bitmask images
     // for now, this may change later
-    memcpy(&table[TR_BITMASK_IDX], &table[TR_TRANSLUCENT_IDX], 
+    memcpy(&table[TR_BITMASK_IDX], &table[TR_TRANSLUCENT_IDX],
            sizeof(D3DTextureTableCell[DEPTH_MAX_IDX]));
     // Transparency/Depth        Depth 16            Depth 24          Depth 32
     // ------------------------------------------------------------------------
@@ -301,7 +301,7 @@ D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
 
     // REMIND: crude force
     // Find substitutes for pixel formats which we didn't find.
-    // For example, if we didn't find a 24-bit format, 32-bit will be 
+    // For example, if we didn't find a 24-bit format, 32-bit will be
     // a first choice for substitution. But if it wasn't found either,
     // then use 16-bit format
     D3DTextureTableCell *cell16, *cell24, *cell32;
@@ -336,11 +336,11 @@ D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
     // ------------------------------------------------------------------------
     //      TR_OPAQUE   PF_USHORT_565_RGB          PF_INT_RGB        PF_INT_RGB
     //     TR_BITMASK         PF_INT_ARGB         PF_INT_ARGB       PF_INT_ARGB
-    // TR_TRANSLUCENT         PF_INT_ARGB         PF_INT_ARGB       PF_INT_ARGB    
+    // TR_TRANSLUCENT         PF_INT_ARGB         PF_INT_ARGB       PF_INT_ARGB
 
 #ifdef DEBUG
     // Print out the matrix (should look something like the comment above)
-    J2dTraceLn1(J2D_TRACE_INFO, 
+    J2dTraceLn1(J2D_TRACE_INFO,
                 "Texutre formats table for device %x", d3dDevice);
     J2dTraceLn(J2D_TRACE_INFO, "Transparency/Depth     Depth 16            "\
                "Depth 24            Depth 32");
@@ -349,7 +349,7 @@ D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
     for (t = TR_OPAQUE_IDX; t < TR_MAX_IDX; t++) {
         J2dTrace1(J2D_TRACE_INFO, "%15s", TR_NAMES[t]);
         for (int d = DEPTH16_IDX; d < DEPTH_MAX_IDX; d++) {
-            J2dTrace1(J2D_TRACE_INFO, "%20s", 
+            J2dTrace1(J2D_TRACE_INFO, "%20s",
                       PF_NAMES[table[t][d].pfType]);
         }
         J2dTrace(J2D_TRACE_INFO, "\n");
@@ -379,7 +379,7 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
         } else if (strncmp(pRasterizer, "tnl", 3) == 0) {
             defIndex = TNL_IDX;
         }
-        J2dTraceLn1(J2D_TRACE_VERBOSE, 
+        J2dTraceLn1(J2D_TRACE_VERBOSE,
                     "  rasterizer requested: %s",
                     RASTERIZER_NAMES[defIndex]);
     }
@@ -387,8 +387,8 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
     DEVICES_INFO devInfo;
     memset(&devInfo, 0, sizeof(devInfo));
     HRESULT res;
-    if (FAILED(res = d3dObject->EnumDevices(DeviceEnumCallback, 
-                                            (VOID*)&devInfo))) 
+    if (FAILED(res = d3dObject->EnumDevices(DeviceEnumCallback,
+                                            (VOID*)&devInfo)))
     {
         DebugPrintDirectDrawError(res, "D3DUtils_SelectDeviceGUID: "\
                                   "EnumDevices failed");
@@ -397,7 +397,7 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
 
     // return requested rasterizer's guid if it's present
     if (devInfo.pGUIDs[defIndex] != NULL) {
-        J2dRlsTraceLn1(J2D_TRACE_VERBOSE, 
+        J2dRlsTraceLn1(J2D_TRACE_VERBOSE,
                        "D3DUtils_SelectDeviceGUID: using %s rasterizer",
                        RASTERIZER_NAMES[defIndex]);
         return devInfo.pGUIDs[defIndex];
@@ -406,7 +406,7 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
     defIndex = TNL_IDX;
     do {
         if (devInfo.pGUIDs[defIndex] != NULL) {
-            J2dRlsTraceLn1(J2D_TRACE_VERBOSE, 
+            J2dRlsTraceLn1(J2D_TRACE_VERBOSE,
                            "D3DUtils_SelectDeviceGUID: using %s rasterizer",
                            RASTERIZER_NAMES[defIndex]);
             return devInfo.pGUIDs[defIndex];
@@ -415,9 +415,9 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
         // hal aren't present, it's not practical for performance purposes.
         // so we just leave an opportunity to force them.
     } while (++defIndex < REF_IDX /*DEV_IDX_MAX*/);
-    
 
-    J2dRlsTraceLn(J2D_TRACE_ERROR, 
+
+    J2dRlsTraceLn(J2D_TRACE_ERROR,
                   "D3DUtils_SelectDeviceGUID: "\
                   "No Accelerated Rasterizers Found");
     return NULL;
@@ -430,7 +430,7 @@ D3DUtils_SelectDeviceGUID(IDirect3D7 *d3dObject)
  * D3DXMatrixOrthoOffCenterLH((D3DXMATRIX*)&tx,
  *                            0.0, width, height, 0.0, -1.0, 1.0);
  */
-void 
+void
 D3DUtils_SetOrthoMatrixOffCenterLH(D3DMATRIX *m,
                                    float width, float height)
 {
@@ -462,7 +462,7 @@ D3DUtils_SetIdentityMatrix(D3DMATRIX *m, BOOL adjust)
 }
 
 DDrawSurface *
-D3DUtils_CreatePlainSurface(JNIEnv *env, 
+D3DUtils_CreatePlainSurface(JNIEnv *env,
                             DDraw *ddObject,
                             D3DContext *d3dContext,
                             int w, int h)
@@ -472,7 +472,7 @@ D3DUtils_CreatePlainSurface(JNIEnv *env,
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_CreatePlainSurface");
     if (FAILED(d3dContext->CreateSurface(env, w, h, 32,
                                          TR_OPAQUE, D3D_PLAIN_SURFACE,
-                                         &dxSurface, &pType))) 
+                                         &dxSurface, &pType)))
     {
         return NULL;
     }
@@ -480,7 +480,7 @@ D3DUtils_CreatePlainSurface(JNIEnv *env,
 }
 
 DDrawSurface *
-D3DUtils_CreateTexture(JNIEnv *env, 
+D3DUtils_CreateTexture(JNIEnv *env,
                        DDraw *ddObject,
                        D3DContext *d3dContext,
                        int transparency,
@@ -491,7 +491,7 @@ D3DUtils_CreateTexture(JNIEnv *env,
     jint pType;
     if (FAILED(d3dContext->CreateSurface(env, w, h, 32,
                                          transparency, D3D_TEXTURE_SURFACE,
-                                         &dxSurface, &pType))) 
+                                         &dxSurface, &pType)))
     {
         return NULL;
     }
@@ -516,7 +516,7 @@ D3DUtils_UploadIntImageToXRGBTexture(DDrawSurface *lpTexture,
     }
 
     SurfaceDataRasInfo rasInfo;
-    if (SUCCEEDED(res = lpTexture->Lock(NULL, &rasInfo, 
+    if (SUCCEEDED(res = lpTexture->Lock(NULL, &rasInfo,
                                         DDLOCK_WAIT|DDLOCK_NOSYSLOCK, NULL)))
     {
         void *pDstPixels = rasInfo.rasBase;
@@ -535,48 +535,48 @@ D3DUtils_UploadIntImageToXRGBTexture(DDrawSurface *lpTexture,
 }
 
 HRESULT
-D3DUtils_CheckD3DCaps(LPD3DDEVICEDESC7 lpDesc7) 
+D3DUtils_CheckD3DCaps(LPD3DDEVICEDESC7 lpDesc7)
 {
     // The device must support fast rasterization
-    static DWORD dwDevCaps = 
+    static DWORD dwDevCaps =
         (D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_HWRASTERIZATION);
     BOOL vt = lpDesc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMTLVERTEX;
     BOOL rz = lpDesc7->dwDevCaps & D3DDEVCAPS_HWRASTERIZATION;
 
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_CheckD3DCaps");
-    return (lpDesc7->dwDevCaps & dwDevCaps) ? 
-        D3D_OK : 
+    return (lpDesc7->dwDevCaps & dwDevCaps) ?
+        D3D_OK :
         DDERR_GENERIC;
 }
 
 HRESULT
-D3DUtils_CheckTextureCaps(LPD3DDEVICEDESC7 lpDesc7) 
+D3DUtils_CheckTextureCaps(LPD3DDEVICEDESC7 lpDesc7)
 {
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_CheckTextureCaps");
     // REMIND: we should really check both Tri and Lin caps,
     // but hopefully we won't be using line strips soon
     LPD3DPRIMCAPS lpDpcTriCaps = &lpDesc7->dpcTriCaps;
     // Filtering requirements
-    static DWORD dwFilterCaps = 
+    static DWORD dwFilterCaps =
         (D3DPTFILTERCAPS_LINEAR | D3DPTFILTERCAPS_NEAREST);
     // Check for caps used for alpha compositing (implementation of
     // Porter-Duff rules)
-    static DWORD dwBlendCaps = 
-        (D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | 
-         D3DPBLENDCAPS_SRCALPHA  | D3DPBLENDCAPS_INVSRCALPHA | 
+    static DWORD dwBlendCaps =
+        (D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE |
+         D3DPBLENDCAPS_SRCALPHA  | D3DPBLENDCAPS_INVSRCALPHA |
          D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA);
 
     if ((lpDesc7->dwTextureOpCaps & D3DTEXOPCAPS_MODULATE) &&
         (lpDpcTriCaps->dwTextureFilterCaps & dwFilterCaps) &&
         (lpDpcTriCaps->dwSrcBlendCaps  & dwBlendCaps) &&
-        (lpDpcTriCaps->dwDestBlendCaps & dwBlendCaps)) 
+        (lpDpcTriCaps->dwDestBlendCaps & dwBlendCaps))
     {
         return D3D_OK;
     }
     return DDERR_GENERIC;
 }
 
-HRESULT 
+HRESULT
 D3DUtils_CheckDeviceCaps(LPD3DDEVICEDESC7 lpDesc7) {
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_CheckDeviceCaps");
     if (SUCCEEDED(D3DUtils_CheckD3DCaps(lpDesc7)) &&
@@ -589,7 +589,7 @@ D3DUtils_CheckDeviceCaps(LPD3DDEVICEDESC7 lpDesc7) {
 }
 
 HRESULT
-D3DUtils_CheckDepthCaps(LPD3DDEVICEDESC7 lpDesc7) 
+D3DUtils_CheckDepthCaps(LPD3DDEVICEDESC7 lpDesc7)
 {
     J2dTraceLn(J2D_TRACE_INFO, "D3DUtils_CheckDepthCaps");
     // Check for required depth-buffer operations

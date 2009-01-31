@@ -69,7 +69,7 @@ static void GC_msec_sleep(int n);
  */
 extern ulong_t __gettsp(thread_t);
 
-static const char * gettspMessage = 
+static const char * gettspMessage =
 "You must install a Solaris patch to run the native threads version of the\n"
 "Java runtime.  The green threads version will work without this patch.\n"
 "Please check the native threads release notes for more information.\n"
@@ -83,8 +83,8 @@ static void
 checkForCorrectLibthread()
 {
     if (&__gettsp == 0) {
-	fprintf(stderr, gettspMessage);
-	exit(1);
+        fprintf(stderr, gettspMessage);
+        exit(1);
     }
 }
 #ifdef __GNUC__
@@ -133,20 +133,20 @@ int
 np_stackinfo(void **addr, long *size)
 {
     stack_t stkseg;
-    
+
     if (thr_stksegment(&stkseg) == 0) {
-	*addr = (void *)(stkseg.ss_sp);
-	if (thr_main()) {
-	    struct rlimit r;
-	    getrlimit(RLIMIT_STACK, &r);
-	    *size = (long)r.rlim_cur;
-	} else {
-	    *size = (long)(stkseg.ss_size);
-	}
-	return SYS_OK;
+        *addr = (void *)(stkseg.ss_sp);
+        if (thr_main()) {
+            struct rlimit r;
+            getrlimit(RLIMIT_STACK, &r);
+            *size = (long)r.rlim_cur;
+        } else {
+            *size = (long)(stkseg.ss_size);
+        }
+        return SYS_OK;
     } else {
-	return SYS_ERR; /* thr_stksegment failed. */
-    }    
+        return SYS_ERR; /* thr_stksegment failed. */
+    }
 }
 
 /*
@@ -188,7 +188,7 @@ np_profiler_thread_is_running(sys_thread_t *tid)
 
     if (!(lwpstatus.pr_flags & PR_STOPPED)) {
         GC_msec_sleep(1);
-	goto retry;
+        goto retry;
     }
 
     close(lwpfd);
@@ -201,7 +201,7 @@ np_profiler_thread_is_running(sys_thread_t *tid)
     sum += lwpstatus.pr_reg[R_G2];
     sum += lwpstatus.pr_reg[R_G3];
     sum += lwpstatus.pr_reg[R_G4];
-    
+
     sum += lwpstatus.pr_reg[R_O0];
     sum += lwpstatus.pr_reg[R_O1];
     sum += lwpstatus.pr_reg[R_O2];
@@ -280,8 +280,8 @@ np_initialize()
     char procname[32];
     MakeProcName(procname, getpid());
     if ((procfd = open(procname, O_RDONLY, 0)) < 0) {
-	VM_CALL(jio_fprintf)(stderr, "Cannot open %s for GC", procname);
-	return SYS_ERR;
+        VM_CALL(jio_fprintf)(stderr, "Cannot open %s for GC", procname);
+        return SYS_ERR;
     }
     return SYS_OK;
 }
@@ -290,7 +290,7 @@ static void
 MakeProcName(register char *procname, register pid_t pid)
 {
     register char * s;
- 
+
     (void) strcpy(procname, "/proc/00000");
     s = procname + strlen(procname);
     while (pid) {
@@ -360,16 +360,16 @@ clear_onproc_flags()
 }
 
 
-/* Sleep for n milliseconds, n < 1000	*/
+/* Sleep for n milliseconds, n < 1000   */
 static void
 GC_msec_sleep(int n)
 {
     struct timespec ts;
-                            
+
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000*n;
     if (syscall(SYS_nanosleep, &ts, 0) < 0) {
-	VM_CALL(jio_fprintf)(stderr, "%d\n", errno);
+        VM_CALL(jio_fprintf)(stderr, "%d\n", errno);
     }
 }
 
@@ -394,61 +394,61 @@ record_lwp_regs(prstatus_t lwpstatus)
 
     tid = ThreadQueue;
     for (i = 0; i < ActiveThreadCount && tid != 0; i++) {
-	if (VALID_SP(sp, tid->stack_bottom, tid->stack_top)) {
-	    long *regs = tid->regs;
-	    tid->sp = sp;
-	    /*
-	     * The code below relies on N_TRACED_REGS being set
-	     * correctly for each platform.  If you change the
-	     * number of registers being watched, you should update
-	     * the define for N_TRACED_REGS
-	     */
+        if (VALID_SP(sp, tid->stack_bottom, tid->stack_top)) {
+            long *regs = tid->regs;
+            tid->sp = sp;
+            /*
+             * The code below relies on N_TRACED_REGS being set
+             * correctly for each platform.  If you change the
+             * number of registers being watched, you should update
+             * the define for N_TRACED_REGS
+             */
 #if   defined(sparc)
-	    regs[0] = lwpstatus.pr_reg[R_G1];
-	    regs[1] = lwpstatus.pr_reg[R_G2];
-	    regs[2] = lwpstatus.pr_reg[R_G3];
-	    regs[3] = lwpstatus.pr_reg[R_G4];
-	    
-	    regs[4] = lwpstatus.pr_reg[R_O0];
-	    regs[5] = lwpstatus.pr_reg[R_O1];
-	    regs[6] = lwpstatus.pr_reg[R_O2];
-	    regs[7] = lwpstatus.pr_reg[R_O3];
-	    regs[8] = lwpstatus.pr_reg[R_O4];
-	    regs[9] = lwpstatus.pr_reg[R_O5];
-	    regs[10] = lwpstatus.pr_reg[R_O6];
-	    regs[11] = lwpstatus.pr_reg[R_O7];
+            regs[0] = lwpstatus.pr_reg[R_G1];
+            regs[1] = lwpstatus.pr_reg[R_G2];
+            regs[2] = lwpstatus.pr_reg[R_G3];
+            regs[3] = lwpstatus.pr_reg[R_G4];
+
+            regs[4] = lwpstatus.pr_reg[R_O0];
+            regs[5] = lwpstatus.pr_reg[R_O1];
+            regs[6] = lwpstatus.pr_reg[R_O2];
+            regs[7] = lwpstatus.pr_reg[R_O3];
+            regs[8] = lwpstatus.pr_reg[R_O4];
+            regs[9] = lwpstatus.pr_reg[R_O5];
+            regs[10] = lwpstatus.pr_reg[R_O6];
+            regs[11] = lwpstatus.pr_reg[R_O7];
 #elif defined(amd64)
-	    regs[0] = lwpstatus.pr_reg[REG_RAX];
-	    regs[1] = lwpstatus.pr_reg[REG_RCX];
-	    regs[2] = lwpstatus.pr_reg[REG_RDX];
-	    regs[3] = lwpstatus.pr_reg[REG_RBX];
-	    regs[4] = lwpstatus.pr_reg[REG_RBP];
-	    regs[5] = lwpstatus.pr_reg[REG_RSI];
-	    regs[6] = lwpstatus.pr_reg[REG_RDI];
-	    regs[7] = lwpstatus.pr_reg[REG_R8];
-	    regs[8] = lwpstatus.pr_reg[REG_R9];
-	    regs[9] = lwpstatus.pr_reg[REG_R10];
-	    regs[10]= lwpstatus.pr_reg[REG_R11];
-	    regs[11]= lwpstatus.pr_reg[REG_R12];
-	    regs[12]= lwpstatus.pr_reg[REG_R13];
-	    regs[13]= lwpstatus.pr_reg[REG_R14];
-	    regs[14]= lwpstatus.pr_reg[REG_R15];
+            regs[0] = lwpstatus.pr_reg[REG_RAX];
+            regs[1] = lwpstatus.pr_reg[REG_RCX];
+            regs[2] = lwpstatus.pr_reg[REG_RDX];
+            regs[3] = lwpstatus.pr_reg[REG_RBX];
+            regs[4] = lwpstatus.pr_reg[REG_RBP];
+            regs[5] = lwpstatus.pr_reg[REG_RSI];
+            regs[6] = lwpstatus.pr_reg[REG_RDI];
+            regs[7] = lwpstatus.pr_reg[REG_R8];
+            regs[8] = lwpstatus.pr_reg[REG_R9];
+            regs[9] = lwpstatus.pr_reg[REG_R10];
+            regs[10]= lwpstatus.pr_reg[REG_R11];
+            regs[11]= lwpstatus.pr_reg[REG_R12];
+            regs[12]= lwpstatus.pr_reg[REG_R13];
+            regs[13]= lwpstatus.pr_reg[REG_R14];
+            regs[14]= lwpstatus.pr_reg[REG_R15];
 #elif defined(i386)
-	    regs[0] = lwpstatus.pr_reg[EAX];
-	    regs[1] = lwpstatus.pr_reg[ECX];
-	    regs[2] = lwpstatus.pr_reg[EDX];
-	    regs[3] = lwpstatus.pr_reg[EBX];
-	    regs[4] = lwpstatus.pr_reg[EBP];
-	    regs[5] = lwpstatus.pr_reg[ESI];
-	    regs[6] = lwpstatus.pr_reg[EDI];
+            regs[0] = lwpstatus.pr_reg[EAX];
+            regs[1] = lwpstatus.pr_reg[ECX];
+            regs[2] = lwpstatus.pr_reg[EDX];
+            regs[3] = lwpstatus.pr_reg[EBX];
+            regs[4] = lwpstatus.pr_reg[EBP];
+            regs[5] = lwpstatus.pr_reg[ESI];
+            regs[6] = lwpstatus.pr_reg[EDI];
 #endif
-	    
-	    if (tid->onproc != TRUE) {
-	    	tid->onproc = TRUE;
-	    	onproct_list[onproct_ix++] = tid;
-	    }
-	    break;
-	}
+
+            if (tid->onproc != TRUE) {
+                tid->onproc = TRUE;
+                onproct_list[onproct_ix++] = tid;
+            }
+            break;
+        }
         tid = tid->next;
     }
 }
@@ -461,30 +461,30 @@ record_thread_regs()
 
     tid = ThreadQueue;
     for (i = 0; i < ActiveThreadCount && tid != 0; i++) {
-	if (tid->onproc != TRUE) {
-	    int i;
+        if (tid->onproc != TRUE) {
+            int i;
 
-	    if (tid->sys_thread != 0) {
-		/* if thread has already been initialized */
-		tid->sp = __gettsp(tid->sys_thread);
-	    } else {
-		/*
-		 * thread is still in the process of being initalized.
-		 * So GC should not care about this thread. Just
-		 * set its sp to 0, and this will force GC to ignore it.
-		 */
-		tid->sp = 0;
-	    }
+            if (tid->sys_thread != 0) {
+                /* if thread has already been initialized */
+                tid->sp = __gettsp(tid->sys_thread);
+            } else {
+                /*
+                 * thread is still in the process of being initalized.
+                 * So GC should not care about this thread. Just
+                 * set its sp to 0, and this will force GC to ignore it.
+                 */
+                tid->sp = 0;
+            }
 
- 	    /*
- 	     * Clear out the registers since they are no longer live
- 	     * and we don't want to garbage collector to think they are.
- 	     */
+            /*
+             * Clear out the registers since they are no longer live
+             * and we don't want to garbage collector to think they are.
+             */
 
- 	    for (i = 0; i < N_TRACED_REGS; i++)
- 		tid->regs[i] = 0;
-	}
-	tid = tid->next;
+            for (i = 0; i < N_TRACED_REGS; i++)
+                tid->regs[i] = 0;
+        }
+        tid = tid->next;
     }
 }
 
@@ -495,37 +495,37 @@ wait_stopped_lwps(void)
     prstatus_t lwpstatus;
 
     for (i = 0; i < (int) Mystatus.pr_nlwp; i++) {
-	/* if its  not me */
-	if (lwpid_list[i] != _lwp_self()) {
+        /* if its  not me */
+        if (lwpid_list[i] != _lwp_self()) {
 
-	    /* open the lwp and check the status */
-	    if ((lwpfd = syscall(SYS_ioctl, procfd, PIOCOPENLWP, 
-	        &lwpid_list[i])) < 0) {
+            /* open the lwp and check the status */
+            if ((lwpfd = syscall(SYS_ioctl, procfd, PIOCOPENLWP,
+                &lwpid_list[i])) < 0) {
 #ifdef MY_DEBUG
-	        VM_CALL(jio_fprintf)(stderr, "lwpid %d was not found in process\n", 
-		 	    lwpid_list[i]);
+                VM_CALL(jio_fprintf)(stderr, "lwpid %d was not found in process\n",
+                            lwpid_list[i]);
 #endif
                 continue;
             }
-	    memset(&lwpstatus, 0, sizeof(lwpstatus));
-	    while (1) {
-		if (syscall(SYS_ioctl,lwpfd, PIOCSTATUS, &lwpstatus)<0) {
-		    sysAssert(0);
+            memset(&lwpstatus, 0, sizeof(lwpstatus));
+            while (1) {
+                if (syscall(SYS_ioctl,lwpfd, PIOCSTATUS, &lwpstatus)<0) {
+                    sysAssert(0);
 #ifdef MY_DEBUG
-		    VM_CALL(jio_fprintf)(stderr, "PIOCSTATUS failed for lwp %d",
-			        lwpid_list[i]);
+                    VM_CALL(jio_fprintf)(stderr, "PIOCSTATUS failed for lwp %d",
+                                lwpid_list[i]);
 #endif
-	    	    break;
-	        }
-	        if (lwpstatus.pr_flags & PR_STOPPED) {
-	   	    record_lwp_regs(lwpstatus);
-	   	    break;
-	        }
-	        GC_msec_sleep(1);
+                    break;
+                }
+                if (lwpstatus.pr_flags & PR_STOPPED) {
+                    record_lwp_regs(lwpstatus);
+                    break;
+                }
+                GC_msec_sleep(1);
             }
 
-	    close (lwpfd);
-	} /* end of if-me */
+            close (lwpfd);
+        } /* end of if-me */
     } /* end of for */
 }
 
@@ -536,17 +536,17 @@ suspend_lwps()
     /* pioopen all the lwps and stop them - except the one I am running on */
     for (i = 0; i < (int) Mystatus.pr_nlwp; i++) {
 
-	/* open and stop the lwp if its not me */
-	if (lwpid_list[i] != _lwp_self()) {
-	 
-	    /* PIOCSTOP doesn't work without a writable		*/
-	    /* descriptor.  And that makes the process		*/
-	    /* undebuggable.					*/
-	    if (_lwp_suspend(lwpid_list[i]) < 0) {
+        /* open and stop the lwp if its not me */
+        if (lwpid_list[i] != _lwp_self()) {
+
+            /* PIOCSTOP doesn't work without a writable         */
+            /* descriptor.  And that makes the process          */
+            /* undebuggable.                                    */
+            if (_lwp_suspend(lwpid_list[i]) < 0) {
                         /* Could happen if the lwp exited */
-		lwpid_list[i] = _lwp_self();
-		continue;
-	    }
+                lwpid_list[i] = _lwp_self();
+                continue;
+            }
         }
     }
 }
@@ -564,7 +564,7 @@ print_lwps()
             VM_CALL(jio_fprintf)(stdout, ", %d", lwpid_list[i]);
         } else {
             VM_CALL(jio_fprintf)(stdout, " and %d", lwpid_list[i]);
-	}
+        }
     }
 #endif
 }
@@ -579,60 +579,60 @@ stop_lwps()
 
     /* mask all signals */
     (void) sigfillset(&set);
-    syscall(SYS_sigprocmask, SIG_SETMASK, &set, &gcmask); 
+    syscall(SYS_sigprocmask, SIG_SETMASK, &set, &gcmask);
 
     /* run at highest prio so I cannot be preempted */
-    thr_getprio(thr_self(), &gcprio); 
+    thr_getprio(thr_self(), &gcprio);
     thr_setprio(thr_self(), 2147483647);  /* #define INT_MAX 2147483647 */
 
     oldlwpid_list_len = 0;
 
     while(1) {
-	changed = B_FALSE;
+        changed = B_FALSE;
 
-	/* Get the # of lwps in the process */
-	memset(&Mystatus, 0, sizeof(Mystatus));
-	syscall(SYS_ioctl, procfd, PIOCSTATUS, &Mystatus);
+        /* Get the # of lwps in the process */
+        memset(&Mystatus, 0, sizeof(Mystatus));
+        syscall(SYS_ioctl, procfd, PIOCSTATUS, &Mystatus);
 
 #ifdef MY_DEBUG
-	VM_CALL(jio_fprintf)(stdout, "Number of lwps in the process is %d\n", 
-		    Mystatus.pr_nlwp);
-	VM_CALL(jio_fprintf)(stdout, "My lwp id is %d\n", _lwp_self());
+        VM_CALL(jio_fprintf)(stdout, "Number of lwps in the process is %d\n",
+                    Mystatus.pr_nlwp);
+        VM_CALL(jio_fprintf)(stdout, "My lwp id is %d\n", _lwp_self());
 #endif
-	lwpid_list_len = Mystatus.pr_nlwp;
-	if (syscall(SYS_ioctl, procfd, PIOCLWPIDS, lwpid_list) == -1) {
+        lwpid_list_len = Mystatus.pr_nlwp;
+        if (syscall(SYS_ioctl, procfd, PIOCLWPIDS, lwpid_list) == -1) {
 #ifdef MY_DEBUG
- 	    VM_CALL(jio_fprintf)(stderr, "Can't read proc's lwpid list");
+            VM_CALL(jio_fprintf)(stderr, "Can't read proc's lwpid list");
 #endif
-	    return;
-	}
+            return;
+        }
 
-	print_lwps();
+        print_lwps();
 
-	/* suspend all the lwps */
-	suspend_lwps();
+        /* suspend all the lwps */
+        suspend_lwps();
 
-	/* make sure all the lwps have actually stopped */
-	wait_stopped_lwps();
+        /* make sure all the lwps have actually stopped */
+        wait_stopped_lwps();
 
-	/* make sure the list has not changed while you were not looking
-	   else start all over again */
-	if (lwpid_list_len != oldlwpid_list_len) changed = B_TRUE;
-	else  {
-	    for (i=0; i<lwpid_list_len; ++i) {
-	        if (lwpid_list[i] != oldlwpid_list[i]) {
-		    changed = B_TRUE; break; 
-		}
-	    }
-	} 
-	if (!changed) break;
+        /* make sure the list has not changed while you were not looking
+           else start all over again */
+        if (lwpid_list_len != oldlwpid_list_len) changed = B_TRUE;
+        else  {
+            for (i=0; i<lwpid_list_len; ++i) {
+                if (lwpid_list[i] != oldlwpid_list[i]) {
+                    changed = B_TRUE; break;
+                }
+            }
+        }
+        if (!changed) break;
 
-	{
-	    id_t *tmplwpid_list = oldlwpid_list;
-	    oldlwpid_list = lwpid_list; oldlwpid_list_len = lwpid_list_len;
-	    lwpid_list = 0; lwpid_list_len = 0;
-	    lwpid_list = tmplwpid_list;
-	}
+        {
+            id_t *tmplwpid_list = oldlwpid_list;
+            oldlwpid_list = lwpid_list; oldlwpid_list_len = lwpid_list_len;
+            lwpid_list = 0; lwpid_list_len = 0;
+            lwpid_list = tmplwpid_list;
+        }
     }
 
     /* record regs for threads that were not on LWPs */
@@ -649,7 +649,7 @@ restart_lwps()
     int i;
 
     for (i = 0; i < Mystatus.pr_nlwp; i++) {
-	if (lwpid_list[i] == _lwp_self()) continue;
+        if (lwpid_list[i] == _lwp_self()) continue;
         if (_lwp_continue(lwpid_list[i]) < 0) {
 #ifdef MY_DEBUG
             VM_CALL(jio_fprintf)(stderr, "Failed to restart lwp %d\n",lwpid_list[i]);
@@ -658,9 +658,9 @@ restart_lwps()
     }
 
     /* restore the old priority of the thread */
-    thr_setprio(thr_self(), gcprio); 
+    thr_setprio(thr_self(), gcprio);
     /* restore the oldmask */
-    syscall(SYS_sigprocmask, SIG_SETMASK, &gcmask, NULL); 
+    syscall(SYS_sigprocmask, SIG_SETMASK, &gcmask, NULL);
 
     print_lwps();
 }

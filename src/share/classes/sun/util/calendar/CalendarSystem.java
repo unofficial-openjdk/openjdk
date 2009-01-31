@@ -60,11 +60,11 @@ import java.util.concurrent.ConcurrentMap;
  * runtime in this release supports the following calendar systems.
  *
  * <pre>
- *  Name          Calendar System          
+ *  Name          Calendar System
  *  ---------------------------------------
- *  gregorian     Gregorian Calendar       
- *  julian        Julian Calendar    
- *  japanese      Japanese Imperial Calendar      
+ *  gregorian     Gregorian Calendar
+ *  julian        Julian Calendar
+ *  japanese      Japanese Imperial Calendar
  * </pre>
  *
  * @see CalendarDate
@@ -87,35 +87,35 @@ public abstract class CalendarSystem {
     private static final String PACKAGE_NAME = "sun.util.calendar.";
 
     private static final String[] namePairs = {
-	"gregorian", "Gregorian",
-	"japanese", "LocalGregorianCalendar",
-	"julian", "JulianCalendar",
-	/*
-	"hebrew", "HebrewCalendar",
-	"iso8601", "ISOCalendar",
-	"taiwanese", "LocalGregorianCalendar",
-	"thaibuddhist", "LocalGregorianCalendar",
-	*/
+        "gregorian", "Gregorian",
+        "japanese", "LocalGregorianCalendar",
+        "julian", "JulianCalendar",
+        /*
+        "hebrew", "HebrewCalendar",
+        "iso8601", "ISOCalendar",
+        "taiwanese", "LocalGregorianCalendar",
+        "thaibuddhist", "LocalGregorianCalendar",
+        */
     };
 
     private static void initNames() {
-	ConcurrentMap<String,String> nameMap = new ConcurrentHashMap<String,String>();
+        ConcurrentMap<String,String> nameMap = new ConcurrentHashMap<String,String>();
 
-	// Associate a calendar name with its class name and the
-	// calendar class name with its date class name.
-	StringBuilder clName = new StringBuilder();
-	for (int i = 0; i < namePairs.length; i += 2) {
-	    clName.setLength(0);
-	    String cl = clName.append(PACKAGE_NAME).append(namePairs[i+1]).toString();
-	    nameMap.put(namePairs[i], cl);
-	}
-	synchronized (CalendarSystem.class) {
-	    if (!initialized) {
-		names = nameMap;
-		calendars = new ConcurrentHashMap<String,CalendarSystem>();
-		initialized = true;
-	    }
-	}
+        // Associate a calendar name with its class name and the
+        // calendar class name with its date class name.
+        StringBuilder clName = new StringBuilder();
+        for (int i = 0; i < namePairs.length; i += 2) {
+            clName.setLength(0);
+            String cl = clName.append(PACKAGE_NAME).append(namePairs[i+1]).toString();
+            nameMap.put(namePairs[i], cl);
+        }
+        synchronized (CalendarSystem.class) {
+            if (!initialized) {
+                names = nameMap;
+                calendars = new ConcurrentHashMap<String,CalendarSystem>();
+                initialized = true;
+            }
+        }
     }
 
     private final static Gregorian GREGORIAN_INSTANCE = new Gregorian();
@@ -127,7 +127,7 @@ public abstract class CalendarSystem {
      * @return the <code>Gregorian</code> instance
      */
     public static Gregorian getGregorianCalendar() {
-	return GREGORIAN_INSTANCE;
+        return GREGORIAN_INSTANCE;
     }
 
     /**
@@ -141,40 +141,40 @@ public abstract class CalendarSystem {
      * <code>CalendarSystem</code> associated with the given calendar name.
      */
     public static CalendarSystem forName(String calendarName) {
-	if ("gregorian".equals(calendarName)) {
-	    return GREGORIAN_INSTANCE;
-	}
+        if ("gregorian".equals(calendarName)) {
+            return GREGORIAN_INSTANCE;
+        }
 
-	if (!initialized) {
-	    initNames();
-	}
+        if (!initialized) {
+            initNames();
+        }
 
-	CalendarSystem cal = calendars.get(calendarName);
-	if (cal != null) {
-	    return cal;
-	}
+        CalendarSystem cal = calendars.get(calendarName);
+        if (cal != null) {
+            return cal;
+        }
 
-	String className = names.get(calendarName);
-	if (className == null) {
-	    return null; // Unknown calendar name
-	}
+        String className = names.get(calendarName);
+        if (className == null) {
+            return null; // Unknown calendar name
+        }
 
-	if (className.endsWith("LocalGregorianCalendar")) {
-	    // Create the specific kind of local Gregorian calendar system
-	    cal = LocalGregorianCalendar.getLocalGregorianCalendar(calendarName);
-	} else {
-	    try {
-		Class cl = Class.forName(className);
-		cal = (CalendarSystem) cl.newInstance();
-	    } catch (Exception e) {
-		throw new RuntimeException("internal error", e);
-	    }
-	}
-	if (cal == null) {
-	    return null;
-	}
-	CalendarSystem cs =  calendars.putIfAbsent(calendarName, cal);
-	return (cs == null) ? cal : cs;
+        if (className.endsWith("LocalGregorianCalendar")) {
+            // Create the specific kind of local Gregorian calendar system
+            cal = LocalGregorianCalendar.getLocalGregorianCalendar(calendarName);
+        } else {
+            try {
+                Class cl = Class.forName(className);
+                cal = (CalendarSystem) cl.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("internal error", e);
+            }
+        }
+        if (cal == null) {
+            return null;
+        }
+        CalendarSystem cs =  calendars.putIfAbsent(calendarName, cal);
+        return (cs == null) ? cal : cs;
     }
 
     //////////////////////////////// Calendar API //////////////////////////////////
@@ -324,7 +324,7 @@ public abstract class CalendarSystem {
      * or before the specified <code>CalendarDate</code>
      */
     public abstract CalendarDate getNthDayOfWeek(int nth, int dayOfWeek,
-						 CalendarDate date);
+                                                 CalendarDate date);
 
     public abstract CalendarDate setTimeOfDay(CalendarDate date, int timeOfDay);
 

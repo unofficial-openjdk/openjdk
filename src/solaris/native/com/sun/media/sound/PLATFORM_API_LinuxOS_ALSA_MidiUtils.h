@@ -38,11 +38,11 @@
 #undef ALSA_MIDI_USE_PLUGHW
 
 typedef struct tag_ALSA_MIDIDeviceDescription {
-	int index;          // in
-	int strLen;         // in
-	INT32 deviceID;    // out
-	char* name;         // out
-	char* description;  // out
+        int index;          // in
+        int strLen;         // in
+        INT32 deviceID;    // out
+        char* name;         // out
+        char* description;  // out
 } ALSA_MIDIDeviceDescription;
 
 
@@ -57,7 +57,7 @@ int getMidiDeviceCount(snd_rawmidi_stream_t direction);
 /* direction is either SND_RAWMIDI_STREAM_OUTPUT or
    SND_RAWMIDI_STREAM_INPUT. */
 int getMidiDeviceName(snd_rawmidi_stream_t direction, int index,
-		      char *name, UINT32 nameLength);
+                      char *name, UINT32 nameLength);
 
 /* Returns MIDI_SUCCESS or MIDI_INVALID_DEVICEID */
 int getMidiDeviceVendor(int index, char *name, UINT32 nameLength);
@@ -66,7 +66,7 @@ int getMidiDeviceVendor(int index, char *name, UINT32 nameLength);
 /* direction is either SND_RAWMIDI_STREAM_OUTPUT or
    SND_RAWMIDI_STREAM_INPUT. */
 int getMidiDeviceDescription(snd_rawmidi_stream_t direction, int index,
-			     char *name, UINT32 nameLength);
+                             char *name, UINT32 nameLength);
 
 /* Returns MIDI_SUCCESS or MIDI_INVALID_DEVICEID */
 int getMidiDeviceVersion(int index, char *name, UINT32 nameLength);
@@ -75,7 +75,7 @@ int getMidiDeviceVersion(int index, char *name, UINT32 nameLength);
 /* direction is either SND_RAWMIDI_STREAM_OUTPUT or
    SND_RAWMIDI_STREAM_INPUT. */
 INT32 openMidiDevice(snd_rawmidi_stream_t direction, INT32 deviceIndex,
-		     MidiDeviceHandle** handle);
+                     MidiDeviceHandle** handle);
 
 // returns 0 on success, otherwise a (negative) ALSA error code
 INT32 closeMidiDevice(MidiDeviceHandle* handle);
@@ -83,4 +83,3 @@ INT32 closeMidiDevice(MidiDeviceHandle* handle);
 INT64 getMidiTimestamp(MidiDeviceHandle* handle);
 
 #endif // PLATFORM_API_LINUXOS_ALSA_MIDIUTILS_H_INCLUDED
-

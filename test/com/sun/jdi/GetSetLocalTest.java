@@ -49,7 +49,7 @@ class GetSetLocalTarg {
              byte byte_2 = 2;
              intArg++;
         }
-        { 
+        {
              { char   char_1 = '1';
                intArg++;
              }
@@ -492,14 +492,14 @@ public class GetSetLocalTest extends TestScaffold {
         try {
             IntegerValue get = (IntegerValue) frame.getValue(lv);
             println(" Get: No ClassCastException error!");
-	} catch(java.lang.ClassCastException ex) {
+        } catch(java.lang.ClassCastException ex) {
             println(" Success: Get: ClassCastException error has cought as expected!");
         }
         try {
             IntegerValue set = vm().mirrorOf((int) 0x3F);
             frame.setValue(lv, set);
             println(" Set: No InvalidTypeException with Integer error!");
-	} catch(com.sun.jdi.InvalidTypeException ex) {
+        } catch(com.sun.jdi.InvalidTypeException ex) {
             println(" Success: Set: InvalidTypeException with Integer error has cought as expected!");
         }
     }
@@ -508,14 +508,14 @@ public class GetSetLocalTest extends TestScaffold {
         try {
             FloatValue get = (FloatValue) frame.getValue(lv);
             println(" Get: No ClassCastException error!");
-	} catch(java.lang.ClassCastException ex) {
+        } catch(java.lang.ClassCastException ex) {
             println(" Success: Get: ClassCastException with Float error has cought as expected!");
         }
         try {
             FloatValue set = vm().mirrorOf(1.2345f);
             frame.setValue(lv, set);
             println(" Set: No InvalidTypeException with Float error!");
-	} catch(com.sun.jdi.InvalidTypeException ex) {
+        } catch(com.sun.jdi.InvalidTypeException ex) {
             println(" Success: Set: InvalidTypeException error has cought as expected!");
         }
     }
@@ -524,14 +524,14 @@ public class GetSetLocalTest extends TestScaffold {
         try {
             DoubleValue get = (DoubleValue) frame.getValue(lv);
             println(" Get: No ClassCastException error!");
-	} catch(java.lang.ClassCastException ex) {
+        } catch(java.lang.ClassCastException ex) {
             println(" Success: Get: ClassCastException  with Double error has cought as expected!");
         }
         try {
             DoubleValue set = vm().mirrorOf(1.2345E02);
             frame.setValue(lv, set);
             println(" Set: No InvalidTypeException with Double error!");
-	} catch(com.sun.jdi.InvalidTypeException ex) {
+        } catch(com.sun.jdi.InvalidTypeException ex) {
             println(" Success: Set: InvalidTypeException error has cought as expected!");
         }
     }
@@ -608,7 +608,7 @@ public class GetSetLocalTest extends TestScaffold {
             default:
                 printOneVariable(lv, index);
                 failure(" Failure: List of local variables has a wrong entry!");
-            };    
+            };
         }
     }
 
@@ -661,4 +661,3 @@ public class GetSetLocalTest extends TestScaffold {
         }
     }
 }
-

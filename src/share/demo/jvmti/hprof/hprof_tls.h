@@ -46,13 +46,13 @@ void         tls_sample_all_threads(JNIEnv *env);
 MonitorIndex tls_get_monitor(TlsIndex index);
 void         tls_set_monitor(TlsIndex index, MonitorIndex monitor_index);
 
-void         tls_set_thread_object_index(TlsIndex index, 
-			ObjectIndex thread_object_index);
+void         tls_set_thread_object_index(TlsIndex index,
+                        ObjectIndex thread_object_index);
 
-jint         tls_get_tracker_status(JNIEnv *env, jthread thread, 
-			jboolean skip_init, jint **ppstatus, TlsIndex* pindex,
-		        SerialNumber *pthread_serial_num, 
-			TraceIndex *ptrace_index);
+jint         tls_get_tracker_status(JNIEnv *env, jthread thread,
+                        jboolean skip_init, jint **ppstatus, TlsIndex* pindex,
+                        SerialNumber *pthread_serial_num,
+                        TraceIndex *ptrace_index);
 
 void         tls_set_sample_status(ObjectIndex object_index, jint sample_status);
 jint         tls_sum_sample_status(void);

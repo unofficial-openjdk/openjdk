@@ -32,12 +32,12 @@ import java.io.StringReader;
  */
 public class RFC2253Parser {
 
-    
+
    /** {@link java.util.logging} logging facility */
-   /* static java.util.logging.Logger log = 
+   /* static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(RFC2253Parser.class.getName());
    */
-    
+
    static boolean _TOXML = true;
 
    /**
@@ -156,12 +156,12 @@ public class RFC2253Parser {
 
       if ((i == -1) || ((i > 0) && (str.charAt(i - 1) == '\\'))) {
          return str;
-      } 
+      }
       String attrType = normalizeAT(str.substring(0, i));
       String attrValue = normalizeV(str.substring(i + 1));
 
       return attrType + "=" + attrValue;
-      
+
    }
 
    /**

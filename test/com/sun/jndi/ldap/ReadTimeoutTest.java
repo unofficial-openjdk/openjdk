@@ -15,67 +15,67 @@ public class ReadTimeoutTest {
 
     public static void main(String[] args) throws Exception {
 
-	boolean passed = false;
+        boolean passed = false;
 
-	// Set up the environment for creating the initial context
-	Hashtable env = new Hashtable(11);
-	env.put(Context.INITIAL_CONTEXT_FACTORY,
-	    "com.sun.jndi.ldap.LdapCtxFactory");
-	env.put("com.sun.jndi.ldap.read.timeout", "1000");
+        // Set up the environment for creating the initial context
+        Hashtable env = new Hashtable(11);
+        env.put(Context.INITIAL_CONTEXT_FACTORY,
+            "com.sun.jndi.ldap.LdapCtxFactory");
+        env.put("com.sun.jndi.ldap.read.timeout", "1000");
         env.put(Context.PROVIDER_URL, "ldap://localhost:2001");
 
-	Server s = new Server();
+        Server s = new Server();
 
-	try {
+        try {
 
-	    // start the server
-	    s.start();
+            // start the server
+            s.start();
 
-	    // Create initial context
-	    DirContext ctx = new InitialDirContext(env);
-	    System.out.println("LDAP Client: Connected to the Server");
+            // Create initial context
+            DirContext ctx = new InitialDirContext(env);
+            System.out.println("LDAP Client: Connected to the Server");
 
-	    SearchControls scl = new SearchControls();
-	    scl.setSearchScope(SearchControls.SUBTREE_SCOPE);
-	    System.out.println("Performing Search");
-	    NamingEnumeration answer =
-		ctx.search("ou=People,o=JNDITutorial", "(objectClass=*)", scl);
+            SearchControls scl = new SearchControls();
+            scl.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            System.out.println("Performing Search");
+            NamingEnumeration answer =
+                ctx.search("ou=People,o=JNDITutorial", "(objectClass=*)", scl);
 
-	    // Close the context when we're done
-	    ctx.close();
-	} catch (NamingException e) {
-	    passed = true;
-	    e.printStackTrace();
-	}
-	s.interrupt();
-	if (!passed) {
-	    throw new Exception("Read timeout test failed," +
-			 " read timeout exception not thrown");
-	}
-	System.out.println("The test PASSED");
+            // Close the context when we're done
+            ctx.close();
+        } catch (NamingException e) {
+            passed = true;
+            e.printStackTrace();
+        }
+        s.interrupt();
+        if (!passed) {
+            throw new Exception("Read timeout test failed," +
+                         " read timeout exception not thrown");
+        }
+        System.out.println("The test PASSED");
     }
 
     static class Server extends Thread {
 
         static int serverPort = 2001;
 
-	Server() {
-	}
+        Server() {
+        }
 
-	public void run() {
-	    try {
-		ServerSocket serverSock = new ServerSocket(serverPort);
-            	Socket socket = serverSock.accept();
-            	System.out.println("Server: Connection accepted");
+        public void run() {
+            try {
+                ServerSocket serverSock = new ServerSocket(serverPort);
+                Socket socket = serverSock.accept();
+                System.out.println("Server: Connection accepted");
 
-            	BufferedInputStream bin = new BufferedInputStream(socket.
+                BufferedInputStream bin = new BufferedInputStream(socket.
                                 getInputStream());
-            	while (true) {
+                while (true) {
                     bin.read();
-            	}
-	    } catch (IOException e) {
-		// ignore
-	    }
+                }
+            } catch (IOException e) {
+                // ignore
+            }
     }
 }
 }

@@ -67,7 +67,7 @@ class SourceNameReferenceTypeSpec implements ReferenceTypeSpec {
         if (obj instanceof SourceNameReferenceTypeSpec) {
             SourceNameReferenceTypeSpec spec = (SourceNameReferenceTypeSpec)obj;
 
-            return sourceName.equals(spec.sourceName) && 
+            return sourceName.equals(spec.sourceName) &&
                               (linenumber == spec.linenumber);
         } else {
             return false;
@@ -78,5 +78,3 @@ class SourceNameReferenceTypeSpec implements ReferenceTypeSpec {
         return sourceName + "@" + linenumber;
     }
 }
-
-

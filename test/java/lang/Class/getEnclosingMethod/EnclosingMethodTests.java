@@ -33,53 +33,53 @@ import java.lang.annotation.*;
 
 public class EnclosingMethodTests {
     static Class<?> anonymousClass;
-    
+
     static {
-	Cloneable c = new Cloneable() {}; // anonymous cloneable
-	anonymousClass = c.getClass();
+        Cloneable c = new Cloneable() {}; // anonymous cloneable
+        anonymousClass = c.getClass();
     }
 
     EnclosingMethodTests() {}
 
     @MethodDescriptor("java.lang.Class EnclosingMethodTests.getLocalClass(Object o)")
     Class getLocalClass(Object o) {
-	class Local {};
-	Local l = new Local();
-	return l.getClass();
+        class Local {};
+        Local l = new Local();
+        return l.getClass();
     }
 
     static int examine(Class enclosedClass, String methodSig) {
-	Method m = enclosedClass.getEnclosingMethod();
-	if (m == null && methodSig == null)
-	    return 0;
+        Method m = enclosedClass.getEnclosingMethod();
+        if (m == null && methodSig == null)
+            return 0;
 
-	if (m != null && 
-	    m.getAnnotation(MethodDescriptor.class).value().equals(methodSig))
-	    return 0; // everything is okay
-	else {
-	    System.err.println("\nUnexpected method value; expected:\t" + methodSig +
-			       "\ngot:\t" + m);
-	    return 1;
-	}
+        if (m != null &&
+            m.getAnnotation(MethodDescriptor.class).value().equals(methodSig))
+            return 0; // everything is okay
+        else {
+            System.err.println("\nUnexpected method value; expected:\t" + methodSig +
+                               "\ngot:\t" + m);
+            return 1;
+        }
     }
-    
+
     @MethodDescriptor("public static void EnclosingMethodTests.main(java.lang.String[])")
     public static void main(String argv[]) {
-	int failures = 0;
-	class StaticLocal {};
-	
-	failures += examine(StaticLocal.class,
-			    "public static void EnclosingMethodTests.main(java.lang.String[])");
+        int failures = 0;
+        class StaticLocal {};
 
-	failures += examine( (new EnclosingMethodTests()).getLocalClass(null),
-			     "java.lang.Class EnclosingMethodTests.getLocalClass(Object o)");
+        failures += examine(StaticLocal.class,
+                            "public static void EnclosingMethodTests.main(java.lang.String[])");
 
-	failures += examine(EnclosingMethodTests.class, null);
+        failures += examine( (new EnclosingMethodTests()).getLocalClass(null),
+                             "java.lang.Class EnclosingMethodTests.getLocalClass(Object o)");
 
-	failures += examine(anonymousClass, null);
+        failures += examine(EnclosingMethodTests.class, null);
 
-	if (failures > 0)
-	    throw new RuntimeException("Test failed.");
+        failures += examine(anonymousClass, null);
+
+        if (failures > 0)
+            throw new RuntimeException("Test failed.");
     }
 }
 

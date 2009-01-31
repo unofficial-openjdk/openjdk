@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)SingleTableProcessor.cpp	1.10 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -68,4 +67,4 @@ void SingleTableProcessor::process(LEGlyphStorage &glyphStorage)
             glyphStorage[glyph] = SWAPW(lookupSingle->value);
         }
     }
-} 
+}

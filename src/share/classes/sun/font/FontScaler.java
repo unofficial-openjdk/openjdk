@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package sun.font; 
+package sun.font;
 
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
@@ -39,21 +39,21 @@ import sun.java2d.DisposerRecord;
  *
  * FontScaler represents combination of particular rasterizer implementation
  * and particular font. It does not include rasterization attributes such as
- * transform. These attributes are part of native scalerContext object. 
+ * transform. These attributes are part of native scalerContext object.
  * This approach allows to share same scaler for different requests related
  * to the same font file.
  *
- * Note that scaler may throw FontScalerException on any operation. 
+ * Note that scaler may throw FontScalerException on any operation.
  * Generally this means that runtime error had happened and scaler is not
  * usable.  Subsequent calls to this scaler should not cause crash but will
  * likely cause exceptions to be thrown again.
- * 
+ *
  * It is recommended that callee should replace its reference to the scaler
  * with something else. For instance it could be FontManager.getNullScaler().
  * Note that NullScaler is trivial and will not actually rasterize anything.
  *
- * Alternatively, callee can use more sophisticated error recovery strategies 
- * and for instance try to substitute failed scaler with new scaler instance 
+ * Alternatively, callee can use more sophisticated error recovery strategies
+ * and for instance try to substitute failed scaler with new scaler instance
  * using another font.
  *
  * Note that in case of error there is no need to call dispose(). Moreover,
@@ -78,102 +78,102 @@ import sun.java2d.DisposerRecord;
  */
 public abstract class FontScaler implements DisposerRecord {
     protected WeakReference<Font2D> font = null;
-    protected long nativeScaler = 0; //used by decendants 
+    protected long nativeScaler = 0; //used by decendants
                                      //that have native state
     protected boolean disposed = false;
 
     abstract StrikeMetrics getFontMetrics(long pScalerContext)
                 throws FontScalerException;
 
-    abstract float getGlyphAdvance(long pScalerContext, int glyphCode) 
+    abstract float getGlyphAdvance(long pScalerContext, int glyphCode)
                 throws FontScalerException;
 
     abstract void getGlyphMetrics(long pScalerContext, int glyphCode,
-                                  Point2D.Float metrics) 
+                                  Point2D.Float metrics)
                 throws FontScalerException;
 
-    /*  
+    /*
      *  Returns pointer to native GlyphInfo object.
      *  Callee is responsible for freeing this memory.
      *
-     *  Note: 
+     *  Note:
      *   currently this method has to return not 0L but pointer to valid
      *   GlyphInfo object. Because Strike and drawing releated logic does
      *   expect that.
      *   In the future we may want to rework this to allow 0L here.
      */
-    abstract long getGlyphImage(long pScalerContext, int glyphCode) 
+    abstract long getGlyphImage(long pScalerContext, int glyphCode)
                 throws FontScalerException;
 
     abstract Rectangle2D.Float getGlyphOutlineBounds(long pContext,
-                                                     int glyphCode) 
+                                                     int glyphCode)
                 throws FontScalerException;
 
     abstract GeneralPath getGlyphOutline(long pScalerContext, int glyphCode,
-                                         float x, float y) 
+                                         float x, float y)
                 throws FontScalerException;
 
     abstract GeneralPath getGlyphVectorOutline(long pScalerContext, int[] glyphs,
-                                               int numGlyphs, float x, float y) 
+                                               int numGlyphs, float x, float y)
                 throws FontScalerException;
 
     /* Used by Java2D disposer to ensure native resources are released.
-       Note: this method does not release any of created 
+       Note: this method does not release any of created
              scaler context objects! */
     public void dispose() {}
 
     /* At the moment these 3 methods are needed for Type1 fonts only.
-     * For Truetype fonts we extract required info outside of scaler 
+     * For Truetype fonts we extract required info outside of scaler
      * on java layer.
      */
-    abstract int getNumGlyphs() throws FontScalerException; 
+    abstract int getNumGlyphs() throws FontScalerException;
     abstract int getMissingGlyphCode() throws FontScalerException;
     abstract int getGlyphCode(char charCode) throws FontScalerException;
 
     /* This method returns table cache used by native layout engine.
-     * This cache is essentially just small collection of 
+     * This cache is essentially just small collection of
      * pointers to various truetype tables. See definition of TTLayoutTableCache
      * in the fontscalerdefs.h for more details.
-     * 
-     * Note that tables themselves have same format as defined in the truetype 
+     *
+     * Note that tables themselves have same format as defined in the truetype
      * specification, i.e. font scaler do not need to perform any preprocessing.
-     * 
-     * Probably it is better to have API to request pointers to each table 
+     *
+     * Probably it is better to have API to request pointers to each table
      * separately instead of requesting pointer to some native structure.
-     * (then there is not need to share its definition by different 
-     * implementations of scaler). 
+     * (then there is not need to share its definition by different
+     * implementations of scaler).
      * However, this means multiple JNI calls and potential impact on performance.
      *
-     * Note: return value 0 is legal. 
+     * Note: return value 0 is legal.
      *   This means tables are not available (e.g. type1 font).
-     */ 
+     */
     abstract long getLayoutTableCache() throws FontScalerException;
 
     /* Used by the OpenType engine for mark positioning. */
     abstract Point2D.Float getGlyphPoint(long pScalerContext,
                                 int glyphCode, int ptNumber)
         throws FontScalerException;
-    
+
     abstract long getUnitsPerEm();
 
     /* Returns pointer to native structure describing rasterization attributes.
        Format of this structure is scaler-specific.
 
        Callee is responsible for freeing scaler context (using free()).
- 
-       Note: 
-         Context is tightly associated with strike and it is actually 
+
+       Note:
+         Context is tightly associated with strike and it is actually
         freed when corresponding strike is being released.
      */
     abstract long createScalerContext(double[] matrix,
                         boolean fontType,
-                        int aa, int fm, 
+                        int aa, int fm,
                         float boldness, float italic);
 
-    /* Marks context as invalid because native scaler is invalid. 
+    /* Marks context as invalid because native scaler is invalid.
        Notes:
-         - pointer itself is still valid and has to be released 
-         - if pointer to native scaler was cached it 
+         - pointer itself is still valid and has to be released
+         - if pointer to native scaler was cached it
            should not be neither disposed nor used.
            it is very likely it is already disposed by this moment. */
     abstract void invalidateScalerContext(long ppScalerContext);

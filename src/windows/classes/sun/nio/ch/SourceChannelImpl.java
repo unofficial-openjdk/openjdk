@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package sun.nio.ch;
 
@@ -35,7 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.channels.spi.*;
 
-/** 
+/**
  * Pipe.SourceChannel implementation based on socket connection.
  */
 
@@ -47,29 +45,29 @@ class SourceChannelImpl
     SocketChannel sc;
 
     public FileDescriptor getFD() {
-	return ((SocketChannelImpl) sc).getFD();
+        return ((SocketChannelImpl) sc).getFD();
     }
 
     public int getFDVal() {
-	return ((SocketChannelImpl) sc).getFDVal();
+        return ((SocketChannelImpl) sc).getFDVal();
     }
 
     SourceChannelImpl(SelectorProvider sp, SocketChannel sc) {
-	super(sp);
-	this.sc = sc;
+        super(sp);
+        this.sc = sc;
     }
 
     protected void implCloseSelectableChannel() throws IOException {
-	if (!isRegistered())
-	    kill();
+        if (!isRegistered())
+            kill();
     }
 
     public void kill() throws IOException {
-	sc.close();
+        sc.close();
     }
 
     protected void implConfigureBlocking(boolean block) throws IOException {
-	sc.configureBlocking(block);
+        sc.configureBlocking(block);
     }
 
     public boolean translateReadyOps(int ops, int initialOps,
@@ -111,34 +109,34 @@ class SourceChannelImpl
     }
 
     public int read(ByteBuffer dst) throws IOException {
-	try {
-	    return sc.read(dst);
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return sc.read(dst);
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 
     public long read(ByteBuffer[] dsts, int offset, int length)
-	throws IOException
+        throws IOException
     {
         if ((offset < 0) || (length < 0) || (offset > dsts.length - length))
            throw new IndexOutOfBoundsException();
-	try {
-	    return read(Util.subsequence(dsts, offset, length));
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return read(Util.subsequence(dsts, offset, length));
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 
     public long read(ByteBuffer[] dsts) throws IOException {
-	try {
-	    return sc.read(dsts);
-	} catch (AsynchronousCloseException x) {
-	    close();
-	    throw x;
-	}
+        try {
+            return sc.read(dsts);
+        } catch (AsynchronousCloseException x) {
+            close();
+            throw x;
+        }
     }
 
 }

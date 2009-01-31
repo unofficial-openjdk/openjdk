@@ -42,100 +42,100 @@ public class Basic {
     static PrintStream out = System.err;
 
     static long ic(int i) {
-	int j = i % 54;
-	return j + 'a' + ((j > 26) ? 128 : 0);
+        int j = i % 54;
+        return j + 'a' + ((j > 26) ? 128 : 0);
     }
 
     static String toString(Buffer b) {
-	return (b.getClass().getName()
-		+ "[pos=" + b.position()
-		+ " lim=" + b.limit()
-		+ " cap=" + b.capacity()
-		+ "]");
+        return (b.getClass().getName()
+                + "[pos=" + b.position()
+                + " lim=" + b.limit()
+                + " cap=" + b.capacity()
+                + "]");
     }
 
     static void show(int level, Buffer b) {
-	for (int i = 0; i < level; i++)
-	    out.print("  ");
-	out.println(toString(b) + " " + Integer.toHexString(b.hashCode()));
+        for (int i = 0; i < level; i++)
+            out.print("  ");
+        out.println(toString(b) + " " + Integer.toHexString(b.hashCode()));
     }
 
     static void fail(String s) {
-	throw new RuntimeException(s);
+        throw new RuntimeException(s);
     }
 
     static void fail(String s, Buffer b) {
-	throw new RuntimeException(s + ": " + toString(b));
+        throw new RuntimeException(s + ": " + toString(b));
     }
 
     static void fail(String s, Buffer b, Buffer b2) {
-	throw new RuntimeException(s + ": "
-				   + toString(b) + ", " + toString(b2));
+        throw new RuntimeException(s + ": "
+                                   + toString(b) + ", " + toString(b2));
     }
 
     static void fail(Buffer b,
-		     String expected, char expectedChar,
-		     String got, char gotChar)
+                     String expected, char expectedChar,
+                     String got, char gotChar)
     {
-	if (b instanceof ByteBuffer) {
-	    ByteBuffer bb = (ByteBuffer)b;
-	    int n = Math.min(16, bb.limit());
-      	    for (int i = 0; i < n; i++)
-      		out.print(" " + Integer.toHexString(bb.get(i) & 0xff));
-	    out.println();
-	}
-	if (b instanceof CharBuffer) {
-	    CharBuffer bb = (CharBuffer)b;
-	    int n = Math.min(16, bb.limit());
-	    for (int i = 0; i < n; i++)
-		out.print(" " + Integer.toHexString(bb.get(i) & 0xffff));
-	    out.println();
-	}
-	throw new RuntimeException(toString(b)
-				   + ": Expected '" + expectedChar + "'=0x"
-				   + expected
-				   + ", got '" + gotChar + "'=0x"
-				   + got);
+        if (b instanceof ByteBuffer) {
+            ByteBuffer bb = (ByteBuffer)b;
+            int n = Math.min(16, bb.limit());
+            for (int i = 0; i < n; i++)
+                out.print(" " + Integer.toHexString(bb.get(i) & 0xff));
+            out.println();
+        }
+        if (b instanceof CharBuffer) {
+            CharBuffer bb = (CharBuffer)b;
+            int n = Math.min(16, bb.limit());
+            for (int i = 0; i < n; i++)
+                out.print(" " + Integer.toHexString(bb.get(i) & 0xffff));
+            out.println();
+        }
+        throw new RuntimeException(toString(b)
+                                   + ": Expected '" + expectedChar + "'=0x"
+                                   + expected
+                                   + ", got '" + gotChar + "'=0x"
+                                   + got);
     }
 
     static void fail(Buffer b, long expected, long got) {
-	fail(b,
-	     Long.toHexString(expected), (char)expected,
-	     Long.toHexString(got), (char)got);
+        fail(b,
+             Long.toHexString(expected), (char)expected,
+             Long.toHexString(got), (char)got);
     }
 
     static void ck(Buffer b, boolean cond) {
-	if (!cond)
-	    fail("Condition failed", b);
+        if (!cond)
+            fail("Condition failed", b);
     }
 
     static void ck(Buffer b, long got, long expected) {
-	if (expected != got)
-	    fail(b, expected, got);
+        if (expected != got)
+            fail(b, expected, got);
     }
 
     static void ck(Buffer b, float got, float expected) {
-	if (expected != got)
-	    fail(b,
-		 Float.toString(expected), (char)expected,
-		 Float.toString(got), (char)got);
+        if (expected != got)
+            fail(b,
+                 Float.toString(expected), (char)expected,
+                 Float.toString(got), (char)got);
     }
 
     static void ck(Buffer b, double got, double expected) {
-	if (expected != got)
-	    fail(b,
-		 Double.toString(expected), (char)expected,
-		 Double.toString(got), (char)got);
+        if (expected != got)
+            fail(b,
+                 Double.toString(expected), (char)expected,
+                 Double.toString(got), (char)got);
     }
 
     public static void main(String[] args) {
-	BasicByte.test();
-	BasicChar.test();
-	BasicShort.test();
-	BasicInt.test();
-	BasicLong.test();
-	BasicFloat.test();
-	BasicDouble.test();
+        BasicByte.test();
+        BasicChar.test();
+        BasicShort.test();
+        BasicInt.test();
+        BasicLong.test();
+        BasicFloat.test();
+        BasicDouble.test();
     }
 
 }

@@ -60,31 +60,31 @@ final class PrivateKeyInfo {
      * Constructs a PKCS#8 PrivateKeyInfo from its ASN.1 encoding.
      */
     PrivateKeyInfo(byte[] encoded) throws IOException {
-	DerValue val = new DerValue(encoded);
+        DerValue val = new DerValue(encoded);
 
-	if (val.tag != DerValue.tag_Sequence)
-	    throw new IOException("private key parse error: not a sequence");
+        if (val.tag != DerValue.tag_Sequence)
+            throw new IOException("private key parse error: not a sequence");
 
-	// version
-	BigInteger parsedVersion = val.data.getBigInteger();
-	if (!parsedVersion.equals(VERSION)) {
-	    throw new IOException("version mismatch: (supported: " + 
-				  VERSION + ", parsed: " + parsedVersion);
-	}
+        // version
+        BigInteger parsedVersion = val.data.getBigInteger();
+        if (!parsedVersion.equals(VERSION)) {
+            throw new IOException("version mismatch: (supported: " +
+                                  VERSION + ", parsed: " + parsedVersion);
+        }
 
-	// privateKeyAlgorithm
-	this.algid = AlgorithmId.parse(val.data.getDerValue());
+        // privateKeyAlgorithm
+        this.algid = AlgorithmId.parse(val.data.getDerValue());
 
-	// privateKey
-	this.privkey = val.data.getOctetString();
+        // privateKey
+        this.privkey = val.data.getOctetString();
 
-	// OPTIONAL attributes not supported yet
+        // OPTIONAL attributes not supported yet
     }
 
     /**
      * Returns the private-key algorithm.
      */
     AlgorithmId getAlgorithm() {
-	return this.algid;
+        return this.algid;
     }
 }

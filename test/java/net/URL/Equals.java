@@ -25,7 +25,7 @@
  * @test
  * @bug 4052976
  * @summary Test URL.equals involving anchors
- * 
+ *
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ public class Equals {
 
         url1 = new URL(null, "http://JavaSoft/Test#bar");
         url2 = new URL(null, "http://JavaSoft/Test");
-    
+
         if (url1.equals(url2))
             throw new RuntimeException("URL.equals fails with anchors");
         if (url2.equals(url1))

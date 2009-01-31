@@ -47,22 +47,21 @@ public class WindowsSplitPaneUI extends BasicSplitPaneUI
 {
 
     public WindowsSplitPaneUI() {
-	super();
+        super();
     }
 
     /**
       * Creates a new WindowsSplitPaneUI instance
       */
     public static ComponentUI createUI(JComponent x) {
-	return new WindowsSplitPaneUI();
+        return new WindowsSplitPaneUI();
     }
 
     /**
       * Creates the default divider.
       */
     public BasicSplitPaneDivider createDefaultDivider() {
-	return new WindowsSplitPaneDivider(this);
+        return new WindowsSplitPaneDivider(this);
     }
 
 }
-

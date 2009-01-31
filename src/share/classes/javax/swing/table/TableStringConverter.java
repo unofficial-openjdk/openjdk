@@ -29,7 +29,6 @@ package javax.swing.table;
  * strings.  This is useful in filtering and searching when the model returns
  * objects that do not have meaningful <code>toString</code> implementations.
  *
- * @version %I% %G%
  * @since 1.6
  */
 public abstract class TableStringConverter {

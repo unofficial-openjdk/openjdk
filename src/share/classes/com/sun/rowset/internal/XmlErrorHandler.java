@@ -45,16 +45,15 @@ public class XmlErrorHandler extends DefaultHandler {
 
        public void error(SAXParseException e) throws SAXException {
            errorCounter++;
-       
+
        }
-       
+
        public void fatalError(SAXParseException e) throws SAXException {
-	   errorCounter++;
-       
+           errorCounter++;
+
        }
-       
+
        public void warning(SAXParseException exception) throws SAXException {
-       
-       }	
-}  
-    
+
+       }
+}

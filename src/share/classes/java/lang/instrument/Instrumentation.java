@@ -37,7 +37,7 @@ import  java.util.jar.JarFile;
  * This class provides services needed to instrument Java
  * programming language code.
  * Instrumentation is the addition of byte-codes to methods for the
- * purpose of gathering data to be utilized by tools. 
+ * purpose of gathering data to be utilized by tools.
  * Since the changes are purely additive, these tools do not modify
  * application state or behavior.
  * Examples of such benign tools include monitoring agents, profilers,
@@ -48,17 +48,17 @@ import  java.util.jar.JarFile;
  * <code>Instrumentation</code> interface:
  *
  * <ol>
- *   <li><p> When a JVM is launched in a way that indicates an agent 
+ *   <li><p> When a JVM is launched in a way that indicates an agent
  *     class. In that case an <code>Instrumentation</code> instance
- *     is passed to the <code>premain</code> method of the agent class. 
+ *     is passed to the <code>premain</code> method of the agent class.
  *     </p></li>
  *   <li><p> When a JVM provides a mechanism to start agents sometime
  *     after the JVM is launched. In that case an <code>Instrumentation</code>
  *     instance is passed to the <code>agentmain</code> method of the
- *     agent code. </p> </li> 
+ *     agent code. </p> </li>
  * </ol>
- * <p> 
- * These mechanisms are described in the 
+ * <p>
+ * These mechanisms are described in the
  * {@linkplain java.lang.instrument package specification}.
  * <p>
  * Once an agent acquires an <code>Instrumentation</code> instance,
@@ -78,8 +78,8 @@ public interface Instrumentation {
      * ClassFileTransformer.transform} for the order
      * of transform calls.
      * If a transformer throws
-     * an exception during execution, the JVM will still call the other registered 
-     * transformers in order. The same transformer may be added more than once, 
+     * an exception during execution, the JVM will still call the other registered
+     * transformers in order. The same transformer may be added more than once,
      * but it is strongly discouraged -- avoid this by creating a new instance of
      * tranformer class.
      * <P>
@@ -89,8 +89,8 @@ public interface Instrumentation {
      * @param transformer          the transformer to register
      * @param canRetransform       can this transformer's transformations be retransformed
      * @throws java.lang.NullPointerException if passed a <code>null</code> transformer
-     * @throws java.lang.UnsupportedOperationException if <code>canRetransform</code> 
-     * is true and the current configuration of the JVM does not allow 
+     * @throws java.lang.UnsupportedOperationException if <code>canRetransform</code>
+     * is true and the current configuration of the JVM does not allow
      * retransformation ({@link #isRetransformClassesSupported} is false)
      * @since 1.6
      */
@@ -98,7 +98,7 @@ public interface Instrumentation {
     addTransformer(ClassFileTransformer transformer, boolean canRetransform);
 
     /**
-     * Registers the supplied transformer. 
+     * Registers the supplied transformer.
      * <P>
      * Same as <code>addTransformer(transformer, false)</code>.
      *
@@ -115,7 +115,7 @@ public interface Instrumentation {
      * instance of the transformer. Due to the multi-threaded nature of
      * class loading, it is possible for a transformer to receive calls
      * after it has been removed. Transformers should be written defensively
-     * to expect this situation. 
+     * to expect this situation.
      *
      * @param transformer          the transformer to unregister
      * @return  true if the transformer was found and removed, false if the
@@ -130,9 +130,9 @@ public interface Instrumentation {
      * of classes.
      * The ability to retransform an already loaded class is an optional capability
      * of a JVM.
-     * Retransformation will only be supported if the 
+     * Retransformation will only be supported if the
      * <code>Can-Retransform-Classes</code> manifest attribute is set to
-     * <code>true</code> in the agent JAR file (as described in the 
+     * <code>true</code> in the agent JAR file (as described in the
      * {@linkplain java.lang.instrument package specification}) and the JVM supports
      * this capability.
      * During a single instantiation of a single JVM, multiple calls to this
@@ -151,7 +151,7 @@ public interface Instrumentation {
      * <P>
      * This function facilitates the instrumentation
      * of already loaded classes.
-     * When classes are initially loaded or when they are 
+     * When classes are initially loaded or when they are
      * {@linkplain #redefineClasses redefined},
      * the initial class file bytes can be transformed with the
      * {@link java.lang.instrument.ClassFileTransformer ClassFileTransformer}.
@@ -159,7 +159,7 @@ public interface Instrumentation {
      * (whether or not a transformation has previously occurred).
      * This retransformation follows these steps:
      *  <ul>
-     *    <li>starting from the initial class file bytes 
+     *    <li>starting from the initial class file bytes
      *    </li>
      *    <li>for each transformer that was added with <code>canRetransform</code>
      *      false, the bytes returned by
@@ -188,7 +188,7 @@ public interface Instrumentation {
      * incapable transforms.
      * <P>
      *
-     * The initial class file bytes represent the bytes passed to 
+     * The initial class file bytes represent the bytes passed to
      * {@link java.lang.ClassLoader#defineClass ClassLoader.defineClass} or
      * {@link #redefineClasses redefineClasses}
      * (before any transformations
@@ -208,7 +208,7 @@ public interface Instrumentation {
      *
      * <P>
      * If a retransformed method has active stack frames, those active frames continue to
-     * run the bytecodes of the original method. 
+     * run the bytecodes of the original method.
      * The retransformed method will be used on new invokes.
      *
      * <P>
@@ -222,7 +222,7 @@ public interface Instrumentation {
      *
      * <P>
      * The retransformation may change method bodies, the constant pool and attributes.
-     * The retransformation must not add, remove or rename fields or methods, change the 
+     * The retransformation must not add, remove or rename fields or methods, change the
      * signatures of methods, or change inheritance.  These restrictions maybe be
      * lifted in future versions.  The class file bytes are not checked, verified and installed
      * until after the transformations have been applied, if the resultant bytes are in
@@ -234,11 +234,11 @@ public interface Instrumentation {
      * This method is intended for use in instrumentation, as described in the
      * {@linkplain Instrumentation class specification}.
      *
-     * @param classes array of classes to retransform; 
+     * @param classes array of classes to retransform;
      *                a zero-length array is allowed, in this case, this method does nothing
      * @throws java.lang.instrument.UnmodifiableClassException if a specified class cannot be modified
      * ({@link #isModifiableClass} would return <code>false</code>)
-     * @throws java.lang.UnsupportedOperationException if the current configuration of the JVM does not allow 
+     * @throws java.lang.UnsupportedOperationException if the current configuration of the JVM does not allow
      * retransformation ({@link #isRetransformClassesSupported} is false) or the retransformation attempted
      * to make unsupported changes
      * @throws java.lang.ClassFormatError if the data did not contain a valid class
@@ -262,9 +262,9 @@ public interface Instrumentation {
      * of classes.
      * The ability to redefine an already loaded class is an optional capability
      * of a JVM.
-     * Redefinition will only be supported if the 
+     * Redefinition will only be supported if the
      * <code>Can-Redefine-Classes</code> manifest attribute is set to
-     * <code>true</code> in the agent JAR file (as described in the 
+     * <code>true</code> in the agent JAR file (as described in the
      * {@linkplain java.lang.instrument package specification}) and the JVM supports
      * this capability.
      * During a single instantiation of a single JVM, multiple calls to this
@@ -283,7 +283,7 @@ public interface Instrumentation {
      * This method is used to replace the definition of a class without reference
      * to the existing class file bytes, as one might do when recompiling from source
      * for fix-and-continue debugging.
-     * Where the existing class file bytes are to be transformed (for 
+     * Where the existing class file bytes are to be transformed (for
      * example in bytecode instrumentation)
      * {@link #retransformClasses retransformClasses}
      * should be used.
@@ -295,7 +295,7 @@ public interface Instrumentation {
      *
      * <P>
      * If a redefined method has active stack frames, those active frames continue to
-     * run the bytecodes of the original method. 
+     * run the bytecodes of the original method.
      * The redefined method will be used on new invokes.
      *
      * <P>
@@ -309,7 +309,7 @@ public interface Instrumentation {
      *
      * <P>
      * The redefinition may change method bodies, the constant pool and attributes.
-     * The redefinition must not add, remove or rename fields or methods, change the 
+     * The redefinition must not add, remove or rename fields or methods, change the
      * signatures of methods, or change inheritance.  These restrictions maybe be
      * lifted in future versions.  The class file bytes are not checked, verified and installed
      * until after the transformations have been applied, if the resultant bytes are in
@@ -321,11 +321,11 @@ public interface Instrumentation {
      * This method is intended for use in instrumentation, as described in the
      * {@linkplain Instrumentation class specification}.
      *
-     * @param definitions array of classes to redefine with corresponding definitions; 
+     * @param definitions array of classes to redefine with corresponding definitions;
      *                    a zero-length array is allowed, in this case, this method does nothing
      * @throws java.lang.instrument.UnmodifiableClassException if a specified class cannot be modified
      * ({@link #isModifiableClass} would return <code>false</code>)
-     * @throws java.lang.UnsupportedOperationException if the current configuration of the JVM does not allow 
+     * @throws java.lang.UnsupportedOperationException if the current configuration of the JVM does not allow
      * redefinition ({@link #isRedefineClassesSupported} is false) or the redefinition attempted
      * to make unsupported changes
      * @throws java.lang.ClassFormatError if the data did not contain a valid class
@@ -360,8 +360,8 @@ public interface Instrumentation {
      * But the value of <code>isRedefineClassesSupported()</code> does not influence the value
      * returned by this function.
      * <P>
-     * Primitive classes (for example, <code>java.lang.Integer.TYPE</code>) 
-     * and array classes are never modifiable. 
+     * Primitive classes (for example, <code>java.lang.Integer.TYPE</code>)
+     * and array classes are never modifiable.
      *
      * @throws java.lang.NullPointerException if the specified class is <code>null</code>.
      *
@@ -388,7 +388,7 @@ public interface Instrumentation {
      * loader are returned.
      *
      * @param loader          the loader whose initiated class list will be returned
-     * @return an array containing all the classes for which loader is an initiating loader, 
+     * @return an array containing all the classes for which loader is an initiating loader,
      *          zero-length if there are none
      */
     Class[]
@@ -416,43 +416,43 @@ public interface Instrumentation {
      * <p> When the virtual machine's built-in class loader, known as the "bootstrap
      * class loader", unsuccessfully searches for a class, the entries in the {@link
      * java.util.jar.JarFile JAR file} will be searched as well.
-     * 
+     *
      * <p> This method may be used multiple times to add multiple JAR files to be
      * searched in the order that this method was invoked.
-     * 
+     *
      * <p> The agent should take care to ensure that the JAR does not contain any
      * classes or resources other than those to be defined by the bootstrap
      * class loader for the purpose of instrumentation.
      * Failure to observe this warning could result in unexpected
-     * behaviour that is difficult to diagnose. For example, suppose there is a 
+     * behaviour that is difficult to diagnose. For example, suppose there is a
      * loader L, and L's parent for delegation is the bootstrap class loader.
      * Furthermore, a method in class C, a class defined by L, makes reference to
-     * a non-public accessor class C$1. If the JAR file contains a class C$1 then 
+     * a non-public accessor class C$1. If the JAR file contains a class C$1 then
      * the delegation to the bootstrap class loader will cause C$1 to be defined
      * by the bootstrap class loader. In this example an <code>IllegalAccessError</code>
-     * will be thrown that may cause the application to fail. One approach to 
+     * will be thrown that may cause the application to fail. One approach to
      * avoiding these types of issues, is to use a unique package name for the
      * instrumentation classes.
      *
      * <p> The <a href="http://java.sun.com/docs/books/vmspec/">Java Virtual Machine
      * Specification</a> specifies that a subsequent attempt to resolve a symbolic
-     * reference that the Java virtual machine has previously unsuccessfully attempted 
+     * reference that the Java virtual machine has previously unsuccessfully attempted
      * to resolve always fails with the same error that was thrown as a result of the
      * initial resolution attempt. Consequently, if the JAR file contains an entry
      * that corresponds to a class for which the Java virtual machine has
      * unsuccessfully attempted to resolve a reference, then subsequent attempts to
      * resolve that reference will fail with the same error as the initial attempt.
      *
-     * @param	jarfile
-     *		The JAR file to be searched when the bootstrap class loader
-     *		unsuccessfully searches for a class.
+     * @param   jarfile
+     *          The JAR file to be searched when the bootstrap class loader
+     *          unsuccessfully searches for a class.
      *
-     * @throws	NullPointerException
-     *		If <code>jarfile</code> is <code>null</code>.
+     * @throws  NullPointerException
+     *          If <code>jarfile</code> is <code>null</code>.
      *
      * @see     #appendToSystemClassLoaderSearch
-     * @see	java.lang.ClassLoader
-     * @see	java.util.jar.JarFile
+     * @see     java.lang.ClassLoader
+     * @see     java.util.jar.JarFile
      *
      * @since 1.6
      */
@@ -463,7 +463,7 @@ public interface Instrumentation {
      * Specifies a JAR file with instrumentation classes to be defined by the
      * system class loader.
      *
-     * When the system class loader for delegation (see 
+     * When the system class loader for delegation (see
      * {@link java.lang.ClassLoader#getSystemClassLoader getSystemClassLoader()})
      * unsuccessfully searches for a class, the entries in the {@link
      * java.util.jar.JarFile JarFile} will be searched as well.
@@ -472,18 +472,18 @@ public interface Instrumentation {
      * searched in the order that this method was invoked.
      *
      * <p> The agent should take care to ensure that the JAR does not contain any
-     * classes or resources other than those to be defined by the system class 
+     * classes or resources other than those to be defined by the system class
      * loader for the purpose of instrumentation.
      * Failure to observe this warning could result in unexpected
-     * behaviour that is difficult to diagnose (see 
-     * {@link #appendToBootstrapClassLoaderSearch 
+     * behaviour that is difficult to diagnose (see
+     * {@link #appendToBootstrapClassLoaderSearch
      * appendToBootstrapClassLoaderSearch}.
      *
      * <p> The system class loader supports adding a JAR file to be searched if
      * it implements a method named <code>appendToClassPathForInstrumentation</code>
      * which takes a single parameter of type <code>java.lang.String</code>. The
      * method is not required to have <code>public</code> access. The name of
-     * the JAR file is obtained by invoking the {@link java.util.zip.ZipFile#getName 
+     * the JAR file is obtained by invoking the {@link java.util.zip.ZipFile#getName
      * getName()} method on the <code>jarfile</code> and this is provided as the
      * parameter to the <code>appendtoClassPathForInstrumentation</code> method.
      *
@@ -503,9 +503,9 @@ public interface Instrumentation {
      *          The JAR file to be searched when the system class loader
      *          unsuccessfully searches for a class.
      *
-     * @throws	UnsupportedOperationException
-     *		If the system class loader does not support appending a 
-     *		a JAR file to be searched.
+     * @throws  UnsupportedOperationException
+     *          If the system class loader does not support appending a
+     *          a JAR file to be searched.
      *
      * @throws  NullPointerException
      *          If <code>jarfile</code> is <code>null</code>.
@@ -524,9 +524,9 @@ public interface Instrumentation {
      * setting a native method prefix}.
      * The ability to set a native method prefix is an optional
      * capability of a JVM.
-     * Setting a native method prefix will only be supported if the 
+     * Setting a native method prefix will only be supported if the
      * <code>Can-Set-Native-Method-Prefix</code> manifest attribute is set to
-     * <code>true</code> in the agent JAR file (as described in the 
+     * <code>true</code> in the agent JAR file (as described in the
      * {@linkplain java.lang.instrument package specification}) and the JVM supports
      * this capability.
      * During a single instantiation of a single JVM, multiple
@@ -543,7 +543,7 @@ public interface Instrumentation {
      * This method modifies the failure handling of
      * native method resolution by allowing retry
      * with a prefix applied to the name.
-     * When used with the 
+     * When used with the
      * {@link java.lang.instrument.ClassFileTransformer ClassFileTransformer},
      * it enables native methods to be
      * instrumented.
@@ -555,7 +555,7 @@ public interface Instrumentation {
      * <pre>
      *   native boolean foo(int x);</pre>
      * <p/>
-     * We could transform the class file (with the 
+     * We could transform the class file (with the
      * ClassFileTransformer during the initial definition
      * of the class) so that this becomes:
      * <pre>
@@ -563,10 +563,10 @@ public interface Instrumentation {
      *     <i>... record entry to foo ...</i>
      *     return wrapped_foo(x);
      *   }
-     *   
+     *
      *   native boolean wrapped_foo(int x);</pre>
      * <p/>
-     * Where <code>foo</code> becomes a wrapper for the actual native 
+     * Where <code>foo</code> becomes a wrapper for the actual native
      * method with the appended prefix "wrapped_".  Note that
      * "wrapped_" would be a poor choice of prefix since it
      * might conceivably form the name of an existing method
@@ -574,28 +574,28 @@ public interface Instrumentation {
      * better but would make these examples less readable.
      * <p/>
      * The wrapper will allow data to be collected on the native
-     * method call, but now the problem becomes linking up the  
-     * wrapped method with the native implementation.  
-     * That is, the method <code>wrapped_foo</code> needs to be 
+     * method call, but now the problem becomes linking up the
+     * wrapped method with the native implementation.
+     * That is, the method <code>wrapped_foo</code> needs to be
      * resolved to the native implementation of <code>foo</code>,
      * which might be:
      * <pre>
      *   Java_somePackage_someClass_foo(JNIEnv* env, jint x)</pre>
      * <p/>
      * This function allows the prefix to be specified and the
-     * proper resolution to occur.  
+     * proper resolution to occur.
      * Specifically, when the standard resolution fails, the
      * resolution is retried taking the prefix into consideration.
      * There are two ways that resolution occurs, explicit
      * resolution with the JNI function <code>RegisterNatives</code>
-     * and the normal automatic resolution.  For 
-     * <code>RegisterNatives</code>, the JVM will attempt this 
+     * and the normal automatic resolution.  For
+     * <code>RegisterNatives</code>, the JVM will attempt this
      * association:
      * <pre>
      *   method(foo) -> nativeImplementation(foo)</pre>
      * <p/>
      * When this fails, the resolution will be retried with
-     * the specified prefix prepended to the method name, 
+     * the specified prefix prepended to the method name,
      * yielding the correct resolution:
      * <pre>
      *   method(wrapped_foo) -> nativeImplementation(foo)</pre>
@@ -605,7 +605,7 @@ public interface Instrumentation {
      *   method(wrapped_foo) -> nativeImplementation(wrapped_foo)</pre>
      * <p/>
      * When this fails, the resolution will be retried with
-     * the specified prefix deleted from the implementation name, 
+     * the specified prefix deleted from the implementation name,
      * yielding the correct resolution:
      * <pre>
      *   method(wrapped_foo) -> nativeImplementation(foo)</pre>
@@ -614,23 +614,23 @@ public interface Instrumentation {
      * resolution fails, native methods can be wrapped selectively.
      * <p/>
      * Since each <code>ClassFileTransformer</code>
-     * can do its own transformation of the bytecodes, more 
+     * can do its own transformation of the bytecodes, more
      * than one layer of wrappers may be applied. Thus each
      * transformer needs its own prefix.  Since transformations
      * are applied in order, the prefixes, if applied, will
      * be applied in the same order
-     * (see {@link #addTransformer(ClassFileTransformer,boolean) addTransformer}). 
+     * (see {@link #addTransformer(ClassFileTransformer,boolean) addTransformer}).
      * Thus if three transformers applied
-     * wrappers, <code>foo</code> might become 
+     * wrappers, <code>foo</code> might become
      * <code>$trans3_$trans2_$trans1_foo</code>.  But if, say,
      * the second transformer did not apply a wrapper to
-     * <code>foo</code> it would be just 
-     * <code>$trans3_$trans1_foo</code>.  To be able to 
+     * <code>foo</code> it would be just
+     * <code>$trans3_$trans1_foo</code>.  To be able to
      * efficiently determine the sequence of prefixes,
      * an intermediate prefix is only applied if its non-native
-     * wrapper exists.  Thus, in the last example, even though 
+     * wrapper exists.  Thus, in the last example, even though
      * <code>$trans1_foo</code> is not a native method, the
-     * <code>$trans1_</code> prefix is applied since 
+     * <code>$trans1_</code> prefix is applied since
      * <code>$trans1_foo</code> exists.
      *
      * @param   transformer

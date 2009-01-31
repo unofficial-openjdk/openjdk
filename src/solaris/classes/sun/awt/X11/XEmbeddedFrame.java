@@ -55,7 +55,7 @@ public class XEmbeddedFrame extends EmbeddedFrame {
                 show();
             }
         }
-    }        
+    }
 
     public void addNotify()
     {
@@ -92,5 +92,5 @@ public class XEmbeddedFrame extends EmbeddedFrame {
         if (xefp != null) {
             xefp.unregisterAccelerator(stroke);
         }
-    }   
+    }
 }

@@ -56,18 +56,18 @@ void AwtObjectList::Remove(AwtObject* obj)
     AwtObjectListItem* lastItem = NULL;
 
     while (item != NULL) {
-	if (item->obj == obj) {
-	    if (lastItem == NULL) {
+        if (item->obj == obj) {
+            if (lastItem == NULL) {
                 m_head = item->next;
-	    } else {
-		lastItem->next = item->next;
-	    }
+            } else {
+                lastItem->next = item->next;
+            }
             DASSERT(item != NULL);
-	    delete item;
-	    return;
-	}
-	lastItem = item;
-	item = item->next;
+            delete item;
+            return;
+        }
+        lastItem = item;
+        item = item->next;
     }
 //    DASSERT(FALSE);  // should never get here...
                       // even if it does it shouldn't be fatal.

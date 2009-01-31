@@ -46,4 +46,3 @@ struct MWindowPeerIDs {
     jmethodID handleStateChange;
     jmethodID draggedToScreenMID;
 };
-

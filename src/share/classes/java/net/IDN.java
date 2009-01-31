@@ -68,7 +68,6 @@ import sun.text.normalizer.UCharacterIterator;
  * Applications are responsible for taking adequate security measures when using
  * international domain names.
  *
- * @version %I%, %E%
  * @author Edward Wang
  * @since 1.6
  *
@@ -78,13 +77,13 @@ public final class IDN {
      * Flag to allow processing of unassigned code points
      */
     public static final int ALLOW_UNASSIGNED = 0x01;
-    
+
     /**
      * Flag to turn on the check against STD-3 ASCII rules
      */
     public static final int USE_STD3_ASCII_RULES = 0x02;
-    
-    
+
+
     /**
      * Translates a string from Unicode to ASCII Compatible Encoding (ACE),
      * as defined by the ToASCII operation of <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>.
@@ -113,18 +112,18 @@ public final class IDN {
     {
         int p = 0, q = 0;
         StringBuffer out = new StringBuffer();
-        
+
         while (p < input.length()) {
             q = searchDots(input, p);
             out.append(toASCIIInternal(input.substring(p, q),  flag));
             p = q + 1;
             if (p < input.length()) out.append('.');
         }
-        
+
         return out.toString();
     }
-    
-    
+
+
     /**
      * Translates a string from Unicode to ASCII Compatible Encoding (ACE),
      * as defined by the ToASCII operation of <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>.
@@ -144,8 +143,8 @@ public final class IDN {
     public static String toASCII(String input) {
         return toASCII(input, 0);
     }
-    
-    
+
+
     /**
      * Translates a string from ASCII Compatible Encoding (ACE) to Unicode,
      * as defined by the ToUnicode operation of <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>.
@@ -167,18 +166,18 @@ public final class IDN {
     public static String toUnicode(String input, int flag) {
         int p = 0, q = 0;
         StringBuffer out = new StringBuffer();
-        
+
         while (p < input.length()) {
             q = searchDots(input, p);
             out.append(toUnicodeInternal(input.substring(p, q),  flag));
             p = q + 1;
             if (p < input.length()) out.append('.');
         }
-        
+
         return out.toString();
     }
-    
-    
+
+
     /**
      * Translates a string from ASCII Compatible Encoding (ACE) to Unicode,
      * as defined by the ToUnicode operation of <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>.
@@ -197,9 +196,9 @@ public final class IDN {
         return toUnicode(input, 0);
     }
 
-    
+
     /* ---------------- Private members -------------- */
-    
+
     // ACE Prefix is "xn--"
     private static final String ACE_PREFIX = "xn--";
     private static final int ACE_PREFIX_LENGTH = ACE_PREFIX.length();
@@ -208,10 +207,10 @@ public final class IDN {
 
     // single instance of nameprep
     private static StringPrep namePrep = null;
-    
+
     static {
         InputStream stream = null;
-        
+
         try {
             final String IDN_PROFILE = "uidna.spp";
             if (System.getSecurityManager() != null) {
@@ -234,13 +233,13 @@ public final class IDN {
 
 
     /* ---------------- Private operations -------------- */
-    
-    
+
+
     //
     // to suppress the default zero-argument constructor
     //
     private IDN() {}
-    
+
     //
     // toASCII operation; should only apply to a single label
     //
@@ -250,7 +249,7 @@ public final class IDN {
         // Check if the string contains code points outside the ASCII range 0..0x7c.
         boolean isASCII  = isAllASCII(label);
         StringBuffer dest;
-        
+
         // step 2
         // perform the nameprep operation; flag ALLOW_UNASSIGNED is used here
         if (!isASCII) {
@@ -263,7 +262,7 @@ public final class IDN {
         } else {
             dest = new StringBuffer(label);
         }
-        
+
         // step 3
         // Verify the absence of non-LDH ASCII code points
         //   0..0x2c, 0x2e..0x2f, 0x3a..0x40, 0x5b..0x60, 0x7b..0x7f
@@ -276,7 +275,7 @@ public final class IDN {
                     throw new IllegalArgumentException("Contains non-LDH characters");
                 }
             }
-            
+
             if (dest.charAt(0) == '-' || dest.charAt(dest.length() - 1) == '-') {
                 throw new IllegalArgumentException("Has leading or trailing hyphen");
             }
@@ -289,7 +288,7 @@ public final class IDN {
                 // step 5
                 // verify the sequence does not begin with ACE prefix
                 if(!startsWithACEPrefix(dest)){
-                    
+
                     // step 6
                     // encode the sequence with punycode
                     try {
@@ -297,16 +296,16 @@ public final class IDN {
                     } catch (java.text.ParseException e) {
                         throw new IllegalArgumentException(e);
                     }
-                    
+
                     dest = toASCIILower(dest);
-                    
+
                     // step 7
                     // prepend the ACE prefix
                     dest.insert(0, ACE_PREFIX);
                 } else {
                     throw new IllegalArgumentException("The input starts with the ACE Prefix");
                 }
-                
+
             }
         }
 
@@ -315,21 +314,21 @@ public final class IDN {
         if(dest.length() > MAX_LABEL_LENGTH){
             throw new IllegalArgumentException("The label in the input is too long");
         }
-        
+
         return dest.toString();
     }
-    
+
     //
     // toUnicode operation; should only apply to a single label
     //
     private static String toUnicodeInternal(String label, int flag) {
         boolean[] caseFlags = null;
         StringBuffer dest;
-        
+
         // step 1
         // find out if all the codepoints in input are ASCII
         boolean isASCII = isAllASCII(label);
-        
+
         if(!isASCII){
             // step 2
             // perform the nameprep operation; flag ALLOW_UNASSIGNED is used here
@@ -343,7 +342,7 @@ public final class IDN {
         } else {
             dest = new StringBuffer(label);
         }
-        
+
         // step 3
         // verify ACE Prefix
         if(startsWithACEPrefix(dest)) {
@@ -356,11 +355,11 @@ public final class IDN {
                 // step 5
                 // Decode using punycode
                 StringBuffer decodeOut = Punycode.decode(new StringBuffer(temp), null);
-                
+
                 // step 6
                 // Apply toASCII
                 String toASCIIOut = toASCII(decodeOut.toString(), flag);
-                
+
                 // step 7
                 // verify
                 if (toASCIIOut.equalsIgnoreCase(dest.toString())) {
@@ -372,12 +371,12 @@ public final class IDN {
                 // no-op
             }
         }
-        
+
         // just return the input
         return label;
     }
 
-    
+
     //
     // LDH stands for "letter/digit/hyphen", with characters restricted to the
     // 26-letter Latin alphabet <A-Z a-z>, the digits <0-9>, and the hyphen
@@ -390,7 +389,7 @@ public final class IDN {
             return false;
         }
         //['-' '0'..'9' 'A'..'Z' 'a'..'z']
-        if((ch == 0x002D) || 
+        if((ch == 0x002D) ||
            (0x0030 <= ch && ch <= 0x0039) ||
            (0x0041 <= ch && ch <= 0x005A) ||
            (0x0061 <= ch && ch <= 0x007A)
@@ -399,8 +398,8 @@ public final class IDN {
         }
         return false;
     }
-    
-    
+
+
     //
     // search dots in a string and return the index of that character;
     // or if there is no dots, return the length of input string
@@ -415,11 +414,11 @@ public final class IDN {
                 break;
             }
         }
-        
+
         return i;
     }
-    
-    
+
+
     //
     // to check if a string only contains US-ASCII code point
     //

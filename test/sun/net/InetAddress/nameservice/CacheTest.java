@@ -39,66 +39,66 @@ public class CacheTest {
 
     public static void main(String args[]) throws Exception {
 
-	/*
-	 * First check the ttl on negative lookups is in the <15 second
-	 * range. If the ttl is <=0 it means we cache forever or always
-	 * consult the name service. For ttl > 15 the test would take
-	 * too long so we skip it (need to coordinate jtreg timeout 
-	 * with negative ttl)   
-	 */
-	String ttlProp = "networkaddress.cache.negative.ttl";
-	int ttl = 0;
-	String policy = Security.getProperty(ttlProp);
-	if (policy != null) {
-	    ttl = Integer.parseInt(policy);
-	}
-	if (ttl <= 0  || ttl > 15) {
-	    System.err.println("Security property " + ttlProp + " needs to " + 
-		" in 1-15 second range to execute this test");
-	    return;
-	
-	}
+        /*
+         * First check the ttl on negative lookups is in the <15 second
+         * range. If the ttl is <=0 it means we cache forever or always
+         * consult the name service. For ttl > 15 the test would take
+         * too long so we skip it (need to coordinate jtreg timeout
+         * with negative ttl)
+         */
+        String ttlProp = "networkaddress.cache.negative.ttl";
+        int ttl = 0;
+        String policy = Security.getProperty(ttlProp);
+        if (policy != null) {
+            ttl = Integer.parseInt(policy);
+        }
+        if (ttl <= 0  || ttl > 15) {
+            System.err.println("Security property " + ttlProp + " needs to " +
+                " in 1-15 second range to execute this test");
+            return;
 
-	/*
-	 * The following outlines how the test works :-
-	 *
-	 * 1. Do a lookup via InetAddress.getByName that it guaranteed
-	 *    to succeed. This forces at least one entry into the cache
-	 *    that will not expire.
- 	 *
-  	 * 2. Do a lookup via InetAddress.getByName that is guarnateed
-	 *    to fail. This results in a negative lookup cached for
-	 *    for a short period to time.
-	 *
-	 * 3. Wait for the cache entry to expire.
-	 *
-	 * 4. Do a lookup (which should consult the name service) and
-	 *    the lookup should succeed.
-	 */
+        }
 
-	// name service needs to resolve this.
-	SimpleNameService.put("theclub", "129.156.220.219");
+        /*
+         * The following outlines how the test works :-
+         *
+         * 1. Do a lookup via InetAddress.getByName that it guaranteed
+         *    to succeed. This forces at least one entry into the cache
+         *    that will not expire.
+         *
+         * 2. Do a lookup via InetAddress.getByName that is guarnateed
+         *    to fail. This results in a negative lookup cached for
+         *    for a short period to time.
+         *
+         * 3. Wait for the cache entry to expire.
+         *
+         * 4. Do a lookup (which should consult the name service) and
+         *    the lookup should succeed.
+         */
 
-	// this lookup will succeed
-	InetAddress.getByName("theclub");
+        // name service needs to resolve this.
+        SimpleNameService.put("theclub", "129.156.220.219");
 
-	// lookup "luster" - this should throw UHE as name service
-	// doesn't know anything about this host.
+        // this lookup will succeed
+        InetAddress.getByName("theclub");
 
-	try {
-	    InetAddress.getByName("luster");
-	    throw new RuntimeException("Test internal error " + 
-		" - luster is bring resolved by name service");
-	} catch (UnknownHostException x) {
-	}
+        // lookup "luster" - this should throw UHE as name service
+        // doesn't know anything about this host.
 
-	// name service now needs to know about luster
-	SimpleNameService.put("luster", "10.5.18.21");
+        try {
+            InetAddress.getByName("luster");
+            throw new RuntimeException("Test internal error " +
+                " - luster is bring resolved by name service");
+        } catch (UnknownHostException x) {
+        }
 
-	// wait for the cache entry to expire and lookup should
-	// succeed.
-	Thread.currentThread().sleep(ttl*1000 + 1000);
-	InetAddress.getByName("luster");
+        // name service now needs to know about luster
+        SimpleNameService.put("luster", "10.5.18.21");
+
+        // wait for the cache entry to expire and lookup should
+        // succeed.
+        Thread.currentThread().sleep(ttl*1000 + 1000);
+        InetAddress.getByName("luster");
     }
 
 }

@@ -35,7 +35,7 @@ import javax.print.attribute.Attribute;
  * This attribute can be used instead of specifying MediaName or MediaTray.
  * <p>
  * Class MediaSizeName currently declares a few standard media
- * name values. 
+ * name values.
  * <P>
  * <B>IPP Compatibility:</B> MediaSizeName is a representation class for
  * values of the IPP "media" attribute which names media sizes.
@@ -91,7 +91,7 @@ public class MediaSizeName extends Media {
     /**
      * A10 size.
      */
-    public static final MediaSizeName ISO_A10 = new MediaSizeName(10);  
+    public static final MediaSizeName ISO_A10 = new MediaSizeName(10);
 
    /**
      * ISO B0 size.
@@ -136,7 +136,7 @@ public class MediaSizeName extends Media {
     /**
      * ISO B10 size.
      */
-    public static final MediaSizeName ISO_B10 = new MediaSizeName(21);  
+    public static final MediaSizeName ISO_B10 = new MediaSizeName(21);
 
    /**
      * JIS B0 size.
@@ -255,12 +255,12 @@ public class MediaSizeName extends Media {
      *  Japanese Postcard size.
      */
     public static final MediaSizeName
-	JAPANESE_POSTCARD = new MediaSizeName(48);
+        JAPANESE_POSTCARD = new MediaSizeName(48);
    /**
      *  Japanese Double Postcard size.
      */
     public static final MediaSizeName
-	JAPANESE_DOUBLE_POSTCARD = new MediaSizeName(49);
+        JAPANESE_DOUBLE_POSTCARD = new MediaSizeName(49);
 
     /**
      *  A size .
@@ -291,259 +291,259 @@ public class MediaSizeName extends Media {
      *  ISO designated long size .
      */
     public static final MediaSizeName
-	ISO_DESIGNATED_LONG = new MediaSizeName(55);
+        ISO_DESIGNATED_LONG = new MediaSizeName(55);
 
     /**
-     *  Italy envelope size . 
+     *  Italy envelope size .
      */
     public static final MediaSizeName
-	ITALY_ENVELOPE = new MediaSizeName(56);  // DESIGNATED_LONG?
+        ITALY_ENVELOPE = new MediaSizeName(56);  // DESIGNATED_LONG?
 
     /**
      *  monarch envelope size .
      */
     public static final MediaSizeName
-	MONARCH_ENVELOPE = new MediaSizeName(57);
+        MONARCH_ENVELOPE = new MediaSizeName(57);
     /**
      * personal envelope size .
      */
     public static final MediaSizeName
-	PERSONAL_ENVELOPE = new MediaSizeName(58);
+        PERSONAL_ENVELOPE = new MediaSizeName(58);
     /**
      *  number 9 envelope size .
      */
     public static final MediaSizeName
-	NA_NUMBER_9_ENVELOPE = new MediaSizeName(59);
+        NA_NUMBER_9_ENVELOPE = new MediaSizeName(59);
     /**
      *  number 10 envelope size .
      */
     public static final MediaSizeName
-	NA_NUMBER_10_ENVELOPE = new MediaSizeName(60);
+        NA_NUMBER_10_ENVELOPE = new MediaSizeName(60);
     /**
      *  number 11 envelope size .
      */
     public static final MediaSizeName
-	NA_NUMBER_11_ENVELOPE = new MediaSizeName(61);
+        NA_NUMBER_11_ENVELOPE = new MediaSizeName(61);
     /**
      *  number 12 envelope size .
      */
     public static final MediaSizeName
-	NA_NUMBER_12_ENVELOPE = new MediaSizeName(62);
+        NA_NUMBER_12_ENVELOPE = new MediaSizeName(62);
     /**
      *  number 14 envelope size .
      */
     public static final MediaSizeName
-	NA_NUMBER_14_ENVELOPE = new MediaSizeName(63);
+        NA_NUMBER_14_ENVELOPE = new MediaSizeName(63);
    /**
      *  6x9 North American envelope size.
      */
     public static final MediaSizeName
-	NA_6X9_ENVELOPE = new MediaSizeName(64);
+        NA_6X9_ENVELOPE = new MediaSizeName(64);
    /**
      *  7x9 North American envelope size.
      */
     public static final MediaSizeName
-	NA_7X9_ENVELOPE = new MediaSizeName(65);
+        NA_7X9_ENVELOPE = new MediaSizeName(65);
    /**
      *  9x11 North American envelope size.
      */
     public static final MediaSizeName
-	NA_9X11_ENVELOPE = new MediaSizeName(66);
+        NA_9X11_ENVELOPE = new MediaSizeName(66);
     /**
      *  9x12 North American envelope size.
      */
     public static final MediaSizeName
-	NA_9X12_ENVELOPE = new MediaSizeName(67);
+        NA_9X12_ENVELOPE = new MediaSizeName(67);
 
     /**
      *  10x13 North American envelope size .
      */
     public static final MediaSizeName
-	NA_10X13_ENVELOPE = new MediaSizeName(68);
+        NA_10X13_ENVELOPE = new MediaSizeName(68);
     /**
      *  10x14North American  envelope size .
      */
     public static final MediaSizeName
-	NA_10X14_ENVELOPE = new MediaSizeName(69);
+        NA_10X14_ENVELOPE = new MediaSizeName(69);
     /**
      *  10x15 North American envelope size.
      */
     public static final MediaSizeName
-	NA_10X15_ENVELOPE = new MediaSizeName(70);
+        NA_10X15_ENVELOPE = new MediaSizeName(70);
 
     /**
      *  5x7 North American paper.
      */
     public static final MediaSizeName
-	NA_5X7 = new MediaSizeName(71);
+        NA_5X7 = new MediaSizeName(71);
 
     /**
      *  8x10 North American paper.
      */
     public static final MediaSizeName
-	NA_8X10 = new MediaSizeName(72);
+        NA_8X10 = new MediaSizeName(72);
 
-    /** 
-     * Construct a new media size enumeration value with the given integer 
-     * value. 
+    /**
+     * Construct a new media size enumeration value with the given integer
+     * value.
      *
      * @param  value  Integer value.
      */
     protected MediaSizeName(int value) {
-	super (value);
+        super (value);
     }
 
     private static final String[] myStringTable = {
-		"iso-a0",
-		"iso-a1",
-		"iso-a2",
-		"iso-a3",
-		"iso-a4",
-		"iso-a5",
-		"iso-a6",
-		"iso-a7",
-		"iso-a8",
-		"iso-a9",
-		"iso-a10",
-		"iso-b0",
-		"iso-b1",
-		"iso-b2",
-		"iso-b3",
-		"iso-b4",
-		"iso-b5",
-		"iso-b6",
-		"iso-b7",
-		"iso-b8",
-		"iso-b9",
-		"iso-b10",
-		"jis-b0",
-		"jis-b1",
-		"jis-b2",
-		"jis-b3",
-		"jis-b4",
-		"jis-b5",
-		"jis-b6",
-		"jis-b7",
-		"jis-b8",
-		"jis-b9",
-		"jis-b10",
-		"iso-c0",
-		"iso-c1",
-		"iso-c2",
-		"iso-c3",
-		"iso-c4",
-		"iso-c5",
-		"iso-c6",
-		"na-letter",
-		"na-legal",
-		"executive",
-		"ledger",
-		"tabloid",
-		"invoice",
-		"folio",
-		"quarto",
-		"japanese-postcard",
-		"oufuko-postcard",
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"iso-designated-long",
-		"italian-envelope",
-		"monarch-envelope",
-		"personal-envelope",
-		"na-number-9-envelope",
-		"na-number-10-envelope",
-		"na-number-11-envelope",
-		"na-number-12-envelope",
-		"na-number-14-envelope",
-		"na-6x9-envelope",
-		"na-7x9-envelope",
-		"na-9x11-envelope",
-		"na-9x12-envelope",
-		"na-10x13-envelope",
-		"na-10x14-envelope",
-		"na-10x15-envelope",
-		"na-5x7",
-		"na-8x10",
-	}; 
+                "iso-a0",
+                "iso-a1",
+                "iso-a2",
+                "iso-a3",
+                "iso-a4",
+                "iso-a5",
+                "iso-a6",
+                "iso-a7",
+                "iso-a8",
+                "iso-a9",
+                "iso-a10",
+                "iso-b0",
+                "iso-b1",
+                "iso-b2",
+                "iso-b3",
+                "iso-b4",
+                "iso-b5",
+                "iso-b6",
+                "iso-b7",
+                "iso-b8",
+                "iso-b9",
+                "iso-b10",
+                "jis-b0",
+                "jis-b1",
+                "jis-b2",
+                "jis-b3",
+                "jis-b4",
+                "jis-b5",
+                "jis-b6",
+                "jis-b7",
+                "jis-b8",
+                "jis-b9",
+                "jis-b10",
+                "iso-c0",
+                "iso-c1",
+                "iso-c2",
+                "iso-c3",
+                "iso-c4",
+                "iso-c5",
+                "iso-c6",
+                "na-letter",
+                "na-legal",
+                "executive",
+                "ledger",
+                "tabloid",
+                "invoice",
+                "folio",
+                "quarto",
+                "japanese-postcard",
+                "oufuko-postcard",
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "iso-designated-long",
+                "italian-envelope",
+                "monarch-envelope",
+                "personal-envelope",
+                "na-number-9-envelope",
+                "na-number-10-envelope",
+                "na-number-11-envelope",
+                "na-number-12-envelope",
+                "na-number-14-envelope",
+                "na-6x9-envelope",
+                "na-7x9-envelope",
+                "na-9x11-envelope",
+                "na-9x12-envelope",
+                "na-10x13-envelope",
+                "na-10x14-envelope",
+                "na-10x15-envelope",
+                "na-5x7",
+                "na-8x10",
+        };
 
     private static final MediaSizeName[] myEnumValueTable = {
-		ISO_A0,
-		ISO_A1,
-		ISO_A2,
-		ISO_A3,
-		ISO_A4,
-		ISO_A5,
-		ISO_A6,
-		ISO_A7,
-		ISO_A8,
-		ISO_A9,
-		ISO_A10,
-		ISO_B0,
-		ISO_B1,
-		ISO_B2,
-		ISO_B3,
-		ISO_B4,
-		ISO_B5,
-		ISO_B6,
-		ISO_B7,
-		ISO_B8,
-		ISO_B9,
-		ISO_B10,
-		JIS_B0,
-		JIS_B1,
-		JIS_B2,
-		JIS_B3,
-		JIS_B4,
-		JIS_B5,
-		JIS_B6,
-		JIS_B7,
-		JIS_B8,
-		JIS_B9,
-		JIS_B10,
-		ISO_C0,
-		ISO_C1,
-		ISO_C2,
-		ISO_C3,
-		ISO_C4,
-		ISO_C5,	
-		ISO_C6,	
-		NA_LETTER,
-		NA_LEGAL,
-		EXECUTIVE,
-		LEDGER,
-		TABLOID,
-		INVOICE,
-		FOLIO,
-		QUARTO,
-		JAPANESE_POSTCARD,
-		JAPANESE_DOUBLE_POSTCARD,
-		A,
-		B,
-		C,
-		D,
-		E,
-		ISO_DESIGNATED_LONG,
-		ITALY_ENVELOPE,
-		MONARCH_ENVELOPE,
-		PERSONAL_ENVELOPE,
-		NA_NUMBER_9_ENVELOPE,
-		NA_NUMBER_10_ENVELOPE,
-		NA_NUMBER_11_ENVELOPE,
-		NA_NUMBER_12_ENVELOPE,
-		NA_NUMBER_14_ENVELOPE,
-		NA_6X9_ENVELOPE,
-		NA_7X9_ENVELOPE,
-		NA_9X11_ENVELOPE,
-		NA_9X12_ENVELOPE,
-		NA_10X13_ENVELOPE,
-		NA_10X14_ENVELOPE,
-		NA_10X15_ENVELOPE,
-		NA_5X7,
-		NA_8X10,
-	};
+                ISO_A0,
+                ISO_A1,
+                ISO_A2,
+                ISO_A3,
+                ISO_A4,
+                ISO_A5,
+                ISO_A6,
+                ISO_A7,
+                ISO_A8,
+                ISO_A9,
+                ISO_A10,
+                ISO_B0,
+                ISO_B1,
+                ISO_B2,
+                ISO_B3,
+                ISO_B4,
+                ISO_B5,
+                ISO_B6,
+                ISO_B7,
+                ISO_B8,
+                ISO_B9,
+                ISO_B10,
+                JIS_B0,
+                JIS_B1,
+                JIS_B2,
+                JIS_B3,
+                JIS_B4,
+                JIS_B5,
+                JIS_B6,
+                JIS_B7,
+                JIS_B8,
+                JIS_B9,
+                JIS_B10,
+                ISO_C0,
+                ISO_C1,
+                ISO_C2,
+                ISO_C3,
+                ISO_C4,
+                ISO_C5,
+                ISO_C6,
+                NA_LETTER,
+                NA_LEGAL,
+                EXECUTIVE,
+                LEDGER,
+                TABLOID,
+                INVOICE,
+                FOLIO,
+                QUARTO,
+                JAPANESE_POSTCARD,
+                JAPANESE_DOUBLE_POSTCARD,
+                A,
+                B,
+                C,
+                D,
+                E,
+                ISO_DESIGNATED_LONG,
+                ITALY_ENVELOPE,
+                MONARCH_ENVELOPE,
+                PERSONAL_ENVELOPE,
+                NA_NUMBER_9_ENVELOPE,
+                NA_NUMBER_10_ENVELOPE,
+                NA_NUMBER_11_ENVELOPE,
+                NA_NUMBER_12_ENVELOPE,
+                NA_NUMBER_14_ENVELOPE,
+                NA_6X9_ENVELOPE,
+                NA_7X9_ENVELOPE,
+                NA_9X11_ENVELOPE,
+                NA_9X12_ENVELOPE,
+                NA_10X13_ENVELOPE,
+                NA_10X14_ENVELOPE,
+                NA_10X15_ENVELOPE,
+                NA_5X7,
+                NA_8X10,
+        };
 
 
     /**
@@ -551,14 +551,14 @@ public class MediaSizeName extends Media {
      */
     protected String[] getStringTable()
     {
-	return (String[])myStringTable.clone();
+        return (String[])myStringTable.clone();
     }
 
     /**
      * Returns the enumeration value table for class MediaSizeName.
      */
     protected EnumSyntax[] getEnumValueTable() {
-	return (EnumSyntax[])myEnumValueTable.clone();
+        return (EnumSyntax[])myEnumValueTable.clone();
     }
 
 

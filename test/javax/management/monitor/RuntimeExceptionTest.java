@@ -77,18 +77,18 @@ public class RuntimeExceptionTest implements NotificationListener {
     public void handleNotification(Notification notification, Object handback) {
         echo(">>> Received notification: " + notification);
         if (notification instanceof MonitorNotification) {
-	    String type = notification.getType();
-	    if (type.equals(MonitorNotification.RUNTIME_ERROR)) {
-		MonitorNotification mn = (MonitorNotification) notification;
-		echo("\tType: " + mn.getType());
-		echo("\tTimeStamp: " + mn.getTimeStamp());
-		echo("\tObservedObject: " + mn.getObservedObject());
-		echo("\tObservedAttribute: " + mn.getObservedAttribute());
-		echo("\tDerivedGauge: " + mn.getDerivedGauge());
-		echo("\tTrigger: " + mn.getTrigger());
+            String type = notification.getType();
+            if (type.equals(MonitorNotification.RUNTIME_ERROR)) {
+                MonitorNotification mn = (MonitorNotification) notification;
+                echo("\tType: " + mn.getType());
+                echo("\tTimeStamp: " + mn.getTimeStamp());
+                echo("\tObservedObject: " + mn.getObservedObject());
+                echo("\tObservedAttribute: " + mn.getObservedAttribute());
+                echo("\tDerivedGauge: " + mn.getDerivedGauge());
+                echo("\tTrigger: " + mn.getTrigger());
                 messageReceived = true;
-	    }
-	}
+            }
+        }
     }
 
     /**
@@ -96,7 +96,7 @@ public class RuntimeExceptionTest implements NotificationListener {
      */
     public int counterMonitorNotification() throws Exception {
 
-	CounterMonitor counterMonitor = new CounterMonitor();
+        CounterMonitor counterMonitor = new CounterMonitor();
         try {
             // Create a new CounterMonitor MBean and add it to the MBeanServer.
             //
@@ -123,11 +123,11 @@ public class RuntimeExceptionTest implements NotificationListener {
             counterMonitor.setNotify(false);
             echo("\tATTRIBUTE \"NotifyFlag\"        = false");
 
-	    Integer threshold = 2;
+            Integer threshold = 2;
             counterMonitor.setInitThreshold(threshold);
             echo("\tATTRIBUTE \"Threshold\"         = " + threshold);
 
-	    int granularityperiod = 500;
+            int granularityperiod = 500;
             counterMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -138,22 +138,22 @@ public class RuntimeExceptionTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-	    // Check if notification was received
-	    //
-	    if (messageReceived) {
-		echo("\tOK: CounterMonitor got RUNTIME_ERROR notification!");
-	    } else {
-		echo("\tKO: CounterMonitor did not get " +
-		     "RUNTIME_ERROR notification!");
-		return 1;
-	    }
+            // Check if notification was received
+            //
+            if (messageReceived) {
+                echo("\tOK: CounterMonitor got RUNTIME_ERROR notification!");
+            } else {
+                echo("\tKO: CounterMonitor did not get " +
+                     "RUNTIME_ERROR notification!");
+                return 1;
+            }
         } finally {
-	    messageReceived = false;
-	    if (counterMonitor != null)
-		counterMonitor.stop();
+            messageReceived = false;
+            if (counterMonitor != null)
+                counterMonitor.stop();
         }
 
-	return 0;
+        return 0;
     }
 
     /**
@@ -190,12 +190,12 @@ public class RuntimeExceptionTest implements NotificationListener {
             echo("\tATTRIBUTE \"Notify Low  Flag\"  = false");
             echo("\tATTRIBUTE \"Notify High Flag\"  = false");
 
-	    Integer highThreshold = 3, lowThreshold = 2;
+            Integer highThreshold = 3, lowThreshold = 2;
             gaugeMonitor.setThresholds(highThreshold, lowThreshold);
             echo("\tATTRIBUTE \"Low  Threshold\"    = " + lowThreshold);
             echo("\tATTRIBUTE \"High Threshold\"    = " + highThreshold);
 
-	    int granularityperiod = 500;
+            int granularityperiod = 500;
             gaugeMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -206,22 +206,22 @@ public class RuntimeExceptionTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-	    // Check if notification was received
-	    //
-	    if (messageReceived) {
-		echo("\tOK: GaugeMonitor got RUNTIME_ERROR notification!");
-	    } else {
-		echo("\tKO: GaugeMonitor did not get " +
-		     "RUNTIME_ERROR notification!");
-		return 1;
-	    }
+            // Check if notification was received
+            //
+            if (messageReceived) {
+                echo("\tOK: GaugeMonitor got RUNTIME_ERROR notification!");
+            } else {
+                echo("\tKO: GaugeMonitor did not get " +
+                     "RUNTIME_ERROR notification!");
+                return 1;
+            }
         } finally {
-	    messageReceived = false;
-	    if (gaugeMonitor != null)
-		gaugeMonitor.stop();
+            messageReceived = false;
+            if (gaugeMonitor != null)
+                gaugeMonitor.stop();
         }
 
-	return 0;
+        return 0;
     }
 
     /**
@@ -262,7 +262,7 @@ public class RuntimeExceptionTest implements NotificationListener {
             stringMonitor.setStringToCompare("dummy");
             echo("\tATTRIBUTE \"StringToCompare\"   = \"dummy\"");
 
-	    int granularityperiod = 500;
+            int granularityperiod = 500;
             stringMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -273,22 +273,22 @@ public class RuntimeExceptionTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-	    // Check if notification was received
-	    //
-	    if (messageReceived) {
-		echo("\tOK: StringMonitor got RUNTIME_ERROR notification!");
-	    } else {
-		echo("\tKO: StringMonitor did not get " +
-		     "RUNTIME_ERROR notification!");
-		return 1;
-	    }
+            // Check if notification was received
+            //
+            if (messageReceived) {
+                echo("\tOK: StringMonitor got RUNTIME_ERROR notification!");
+            } else {
+                echo("\tKO: StringMonitor did not get " +
+                     "RUNTIME_ERROR notification!");
+                return 1;
+            }
         } finally {
-	    messageReceived = false;
-	    if (stringMonitor != null)
-		stringMonitor.stop();
+            messageReceived = false;
+            if (stringMonitor != null)
+                stringMonitor.stop();
         }
 
-	return 0;
+        return 0;
     }
 
     /**
@@ -296,9 +296,9 @@ public class RuntimeExceptionTest implements NotificationListener {
      */
     public int monitorNotifications() throws Exception {
 
-	server = MBeanServerFactory.newMBeanServer();
+        server = MBeanServerFactory.newMBeanServer();
 
-	MBeanServerForwarderInvocationHandler mbsfih =
+        MBeanServerForwarderInvocationHandler mbsfih =
             (MBeanServerForwarderInvocationHandler)
             Proxy.getInvocationHandler(server);
 
@@ -307,17 +307,17 @@ public class RuntimeExceptionTest implements NotificationListener {
 
         domain = server.getDefaultDomain();
 
-	obsObjName = ObjectName.getInstance(domain + ":type=ObservedObject");
-	server.registerMBean(new ObservedObject(), obsObjName);
+        obsObjName = ObjectName.getInstance(domain + ":type=ObservedObject");
+        server.registerMBean(new ObservedObject(), obsObjName);
 
-	echo(">>> ----------------------------------------");
+        echo(">>> ----------------------------------------");
         int error = counterMonitorNotification();
-	echo(">>> ----------------------------------------");
+        echo(">>> ----------------------------------------");
         error += gaugeMonitorNotification();
-	echo(">>> ----------------------------------------");
+        echo(">>> ----------------------------------------");
         error += stringMonitorNotification();
-	echo(">>> ----------------------------------------");
-	return error;
+        echo(">>> ----------------------------------------");
+        return error;
     }
 
     /*
@@ -333,18 +333,18 @@ public class RuntimeExceptionTest implements NotificationListener {
      * Run the test and report to stdout.
      */
     public static void main (String args[]) throws Exception {
-	System.setProperty("javax.management.builder.initial",
-			   MBeanServerBuilderImpl.class.getName());
+        System.setProperty("javax.management.builder.initial",
+                           MBeanServerBuilderImpl.class.getName());
         RuntimeExceptionTest test = new RuntimeExceptionTest();
         int error = test.monitorNotifications();
-	if (error > 0) {
-	    echo(">>> Unhappy Bye, Bye!");
-	    throw new IllegalStateException("Test FAILED: Didn't get all " +
-					    "the notifications that were " +
-					    "expected by the test!");
-	} else {
-	    echo(">>> Happy Bye, Bye!");
-	}
+        if (error > 0) {
+            echo(">>> Unhappy Bye, Bye!");
+            throw new IllegalStateException("Test FAILED: Didn't get all " +
+                                            "the notifications that were " +
+                                            "expected by the test!");
+        } else {
+            echo(">>> Happy Bye, Bye!");
+        }
     }
 
     // Flag to notify that a message has been received

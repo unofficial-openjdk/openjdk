@@ -89,7 +89,7 @@ public class Desktop {
      */
     public static enum Action {
         /**
-         * Represents an "open" action. 
+         * Represents an "open" action.
          * @see Desktop#open(java.io.File)
          */
         OPEN,
@@ -104,9 +104,9 @@ public class Desktop {
          */
         PRINT,
         /**
-         * Represents a "mail" action. 
+         * Represents a "mail" action.
          * @see Desktop#mail()
-         * @see Desktop#mail(java.net.URI) 
+         * @see Desktop#mail(java.net.URI)
          */
         MAIL,
         /**
@@ -115,16 +115,16 @@ public class Desktop {
          */
         BROWSE
     };
-        
+
     private DesktopPeer peer;
-    
+
     /**
      * Suppresses default constructor for noninstantiability.
      */
     private Desktop() {
         peer = Toolkit.getDefaultToolkit().createDesktopPeer(this);
     }
-    
+
     /**
      * Returns the <code>Desktop</code> instance of the current
      * browser context.  On some platforms the Desktop API may not be
@@ -152,10 +152,10 @@ public class Desktop {
             desktop = new Desktop();
             context.put(Desktop.class, desktop);
         }
-        
+
         return desktop;
     }
-    
+
     /**
      * Tests whether this class is supported on the current platform.
      * If it's supported, use {@link #getDesktop()} to retrieve an
@@ -172,7 +172,7 @@ public class Desktop {
         }
         return false;
     }
-    
+
     /**
      * Tests whether an action is supported on the current platform.
      *
@@ -192,12 +192,12 @@ public class Desktop {
     public boolean isSupported(Action action) {
         return peer.isSupported(action);
     }
-    
+
     /**
      * Checks if the file is a valid file and readable.
-     * 
-     * @throws SecurityException If a security manager exists and its 
-     *         {@link SecurityManager#checkRead(java.lang.String)} method 
+     *
+     * @throws SecurityException If a security manager exists and its
+     *         {@link SecurityManager#checkRead(java.lang.String)} method
      *         denies read access to the file
      * @throws NullPointerException if file is null
      * @throws IllegalArgumentException if file doesn't exist
@@ -209,28 +209,28 @@ public class Desktop {
             throw new IllegalArgumentException("The file: "
                                                + file.getPath() + " doesn't exist.");
         }
-        
-        file.canRead(); 
+
+        file.canRead();
     }
-    
+
     /**
      * Checks if the action type is supported.
-     * 
+     *
      * @param actionType the action type in question
      * @throws UnsupportedOperationException if the specified action type is not
      *         supported on the current platform
      */
     private void checkActionSupport(Action actionType){
         if (!isSupported(actionType)) {
-            throw new UnsupportedOperationException("The " + actionType.name() 
+            throw new UnsupportedOperationException("The " + actionType.name()
                                                     + " action is not supported on the current platform!");
         }
     }
 
-    
+
     /**
-     *  Calls to the security manager's <code>checkPermission</code> method with 
-     *  an <code>AWTPermission("showWindowWithoutWarningBanner")</code> 
+     *  Calls to the security manager's <code>checkPermission</code> method with
+     *  an <code>AWTPermission("showWindowWithoutWarningBanner")</code>
      *  permission.
      */
     private void checkAWTPermission(){
@@ -263,15 +263,15 @@ public class Desktop {
      * subprocess
      * @see java.awt.AWTPermission
      */
-    public void open(File file) throws IOException {        
+    public void open(File file) throws IOException {
         checkAWTPermission();
         checkExec();
         checkActionSupport(Action.OPEN);
-        checkFileValidation(file); 
-        
+        checkFileValidation(file);
+
         peer.open(file);
     }
-   
+
     /**
      * Launches the associated editor application and opens a file for
      * editing.
@@ -300,7 +300,7 @@ public class Desktop {
         checkActionSupport(Action.EDIT);
         file.canWrite();
         checkFileValidation(file);
-        
+
         peer.edit(file);
     }
 
@@ -331,11 +331,11 @@ public class Desktop {
             sm.checkPrintJobAccess();
         }
         checkActionSupport(Action.PRINT);
-        checkFileValidation(file); 
+        checkFileValidation(file);
 
         peer.print(file);
-    }    
-  
+    }
+
     /**
      * Launches the default browser to display a {@code URI}.
      * If the default browser is not able to handle the specified
@@ -429,7 +429,7 @@ public class Desktop {
             peer.mail(mailtoURI);
         } catch (URISyntaxException e){
             // won't reach here.
-        }        
+        }
     }
 
     /**
@@ -470,14 +470,14 @@ public class Desktop {
         if (!"mailto".equalsIgnoreCase(mailtoURI.getScheme())) {
             throw new IllegalArgumentException("URI scheme is not \"mailto\"");
         }
-        
+
         peer.mail(mailtoURI);
-    } 
+    }
 
     private void checkExec() throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            sm.checkPermission(new FilePermission("<<ALL FILES>>", 
+            sm.checkPermission(new FilePermission("<<ALL FILES>>",
                                                   SecurityConstants.FILE_EXECUTE_ACTION));
         }
     }

@@ -32,9 +32,8 @@ import javax.swing.*;
 /**
  * Implements the Highlighter interfaces.  Implements a simple highlight
  * painter that renders in a solid color.
- * 
+ *
  * @author  Timothy Prinzing
- * @version %I% %G%
  * @see     Highlighter
  */
 public class DefaultHighlighter extends LayeredHighlighter {
@@ -43,7 +42,7 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * Creates a new DefaultHighlighther object.
      */
     public DefaultHighlighter() {
-	drawsLayeredHighlights = true;
+        drawsLayeredHighlights = true;
     }
 
     // ---- Highlighter methods ----------------------------------------------
@@ -57,25 +56,25 @@ public class DefaultHighlighter extends LayeredHighlighter {
         // PENDING(prinz) - should cull ranges not visible
         int len = highlights.size();
         for (int i = 0; i < len; i++) {
-	    HighlightInfo info = (HighlightInfo) highlights.elementAt(i);
-	    if (!(info instanceof LayeredHighlightInfo)) {
-		// Avoid allocing unless we need it.
-		Rectangle a = component.getBounds();
-		Insets insets = component.getInsets();
-		a.x = insets.left;
-		a.y = insets.top;
-		a.width -= insets.left + insets.right;
-		a.height -= insets.top + insets.bottom;
-		for (; i < len; i++) {
-		    info = (HighlightInfo)highlights.elementAt(i);
-		    if (!(info instanceof LayeredHighlightInfo)) {
-			Highlighter.HighlightPainter p = info.getPainter();
-			p.paint(g, info.getStartOffset(), info.getEndOffset(),
-				a, component);
-		    }
-		}
-	    }
-	}
+            HighlightInfo info = (HighlightInfo) highlights.elementAt(i);
+            if (!(info instanceof LayeredHighlightInfo)) {
+                // Avoid allocing unless we need it.
+                Rectangle a = component.getBounds();
+                Insets insets = component.getInsets();
+                a.x = insets.left;
+                a.y = insets.top;
+                a.width -= insets.left + insets.right;
+                a.height -= insets.top + insets.bottom;
+                for (; i < len; i++) {
+                    info = (HighlightInfo)highlights.elementAt(i);
+                    if (!(info instanceof LayeredHighlightInfo)) {
+                        Highlighter.HighlightPainter p = info.getPainter();
+                        p.paint(g, info.getStartOffset(), info.getEndOffset(),
+                                a, component);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -87,8 +86,8 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @see Highlighter#install
      */
     public void install(JTextComponent c) {
-	component = c;
-	removeAllHighlights();
+        component = c;
+        removeAllHighlights();
     }
 
     /**
@@ -99,11 +98,11 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @see Highlighter#deinstall
      */
     public void deinstall(JTextComponent c) {
-	component = null;
+        component = null;
     }
 
     /**
-     * Adds a highlight to the view.  Returns a tag that can be used 
+     * Adds a highlight to the view.  Returns a tag that can be used
      * to refer to the highlight.
      *
      * @param p0   the start offset of the range to highlight >= 0
@@ -114,14 +113,14 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @exception BadLocationException if the specified location is invalid
      */
     public Object addHighlight(int p0, int p1, Highlighter.HighlightPainter p) throws BadLocationException {
-	Document doc = component.getDocument();
-	HighlightInfo i = (getDrawsLayeredHighlights() &&
-			   (p instanceof LayeredHighlighter.LayerPainter)) ?
-	                  new LayeredHighlightInfo() : new HighlightInfo();
-	i.painter = p;
-	i.p0 = doc.createPosition(p0);
-	i.p1 = doc.createPosition(p1);
-	highlights.addElement(i);
+        Document doc = component.getDocument();
+        HighlightInfo i = (getDrawsLayeredHighlights() &&
+                           (p instanceof LayeredHighlighter.LayerPainter)) ?
+                          new LayeredHighlightInfo() : new HighlightInfo();
+        i.painter = p;
+        i.p0 = doc.createPosition(p0);
+        i.p1 = doc.createPosition(p1);
+        highlights.addElement(i);
         safeDamageRange(p0, p1);
         return i;
     }
@@ -132,34 +131,34 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @param tag the reference to the highlight
      */
     public void removeHighlight(Object tag) {
-	if (tag instanceof LayeredHighlightInfo) {
-	    LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
-	    if (lhi.width > 0 && lhi.height > 0) {
-		component.repaint(lhi.x, lhi.y, lhi.width, lhi.height);
-	    }
-	}
-	else {
-	    HighlightInfo info = (HighlightInfo) tag;
+        if (tag instanceof LayeredHighlightInfo) {
+            LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
+            if (lhi.width > 0 && lhi.height > 0) {
+                component.repaint(lhi.x, lhi.y, lhi.width, lhi.height);
+            }
+        }
+        else {
+            HighlightInfo info = (HighlightInfo) tag;
             safeDamageRange(info.p0, info.p1);
-	}
-	highlights.removeElement(tag);
+        }
+        highlights.removeElement(tag);
     }
 
     /**
      * Removes all highlights.
      */
     public void removeAllHighlights() {
-	TextUI mapper = component.getUI();
-	if (getDrawsLayeredHighlights()) {
-	    int len = highlights.size();
-	    if (len != 0) {
-		int minX = 0;
-		int minY = 0;
-		int maxX = 0;
-		int maxY = 0;
-		int p0 = -1;
-		int p1 = -1;
-		for (int i = 0; i < len; i++) {
+        TextUI mapper = component.getUI();
+        if (getDrawsLayeredHighlights()) {
+            int len = highlights.size();
+            if (len != 0) {
+                int minX = 0;
+                int minY = 0;
+                int maxX = 0;
+                int maxY = 0;
+                int p0 = -1;
+                int p1 = -1;
+                for (int i = 0; i < len; i++) {
                     HighlightInfo hi = (HighlightInfo)highlights.elementAt(i);
                     if (hi instanceof LayeredHighlightInfo) {
                         LayeredHighlightInfo info = (LayeredHighlightInfo)hi;
@@ -179,34 +178,34 @@ public class DefaultHighlighter extends LayeredHighlighter {
                         }
                     }
                 }
-		if (minX != maxX && minY != maxY) {
-		    component.repaint(minX, minY, maxX - minX, maxY - minY);
-		}
+                if (minX != maxX && minY != maxY) {
+                    component.repaint(minX, minY, maxX - minX, maxY - minY);
+                }
                 if (p0 != -1) {
                     try {
                         safeDamageRange(p0, p1);
                     } catch (BadLocationException e) {}
                 }
-		highlights.removeAllElements();
-	    }
-	}
-	else if (mapper != null) {
-	    int len = highlights.size();
-	    if (len != 0) {
-		int p0 = Integer.MAX_VALUE;
-		int p1 = 0;
-		for (int i = 0; i < len; i++) {
-		    HighlightInfo info = (HighlightInfo) highlights.elementAt(i);
-		    p0 = Math.min(p0, info.p0.getOffset());
-		    p1 = Math.max(p1, info.p1.getOffset());
-		}
+                highlights.removeAllElements();
+            }
+        }
+        else if (mapper != null) {
+            int len = highlights.size();
+            if (len != 0) {
+                int p0 = Integer.MAX_VALUE;
+                int p1 = 0;
+                for (int i = 0; i < len; i++) {
+                    HighlightInfo info = (HighlightInfo) highlights.elementAt(i);
+                    p0 = Math.min(p0, info.p0.getOffset());
+                    p1 = Math.max(p1, info.p1.getOffset());
+                }
                 try {
                     safeDamageRange(p0, p1);
                 } catch (BadLocationException e) {}
 
-		highlights.removeAllElements();
-	    }
-	}
+                highlights.removeAllElements();
+            }
+        }
     }
 
     /**
@@ -218,36 +217,36 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @exception BadLocationException if the specified location is invalid
      */
     public void changeHighlight(Object tag, int p0, int p1) throws BadLocationException {
-	Document doc = component.getDocument();
-	if (tag instanceof LayeredHighlightInfo) {
-	    LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
-	    if (lhi.width > 0 && lhi.height > 0) {
-		component.repaint(lhi.x, lhi.y, lhi.width, lhi.height);
-	    }
-	    // Mark the highlights region as invalid, it will reset itself
-	    // next time asked to paint.
-	    lhi.width = lhi.height = 0;
-	    lhi.p0 = doc.createPosition(p0);
-	    lhi.p1 = doc.createPosition(p1);
+        Document doc = component.getDocument();
+        if (tag instanceof LayeredHighlightInfo) {
+            LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
+            if (lhi.width > 0 && lhi.height > 0) {
+                component.repaint(lhi.x, lhi.y, lhi.width, lhi.height);
+            }
+            // Mark the highlights region as invalid, it will reset itself
+            // next time asked to paint.
+            lhi.width = lhi.height = 0;
+            lhi.p0 = doc.createPosition(p0);
+            lhi.p1 = doc.createPosition(p1);
             safeDamageRange(Math.min(p0, p1), Math.max(p0, p1));
-	}
-	else {
-	    HighlightInfo info = (HighlightInfo) tag;
-	    int oldP0 = info.p0.getOffset();
-	    int oldP1 = info.p1.getOffset();
-	    if (p0 == oldP0) {
+        }
+        else {
+            HighlightInfo info = (HighlightInfo) tag;
+            int oldP0 = info.p0.getOffset();
+            int oldP1 = info.p1.getOffset();
+            if (p0 == oldP0) {
                 safeDamageRange(Math.min(oldP1, p1),
-				   Math.max(oldP1, p1));
-	    } else if (p1 == oldP1) {
+                                   Math.max(oldP1, p1));
+            } else if (p1 == oldP1) {
                 safeDamageRange(Math.min(p0, oldP0),
-				   Math.max(p0, oldP0));
-	    } else {
+                                   Math.max(p0, oldP0));
+            } else {
                 safeDamageRange(oldP0, oldP1);
                 safeDamageRange(p0, p1);
-	    }
-	    info.p0 = doc.createPosition(p0);
-	    info.p1 = doc.createPosition(p1);
-	}
+            }
+            info.p0 = doc.createPosition(p0);
+            info.p1 = doc.createPosition(p1);
+        }
     }
 
     /**
@@ -262,9 +261,9 @@ public class DefaultHighlighter extends LayeredHighlighter {
         if (size == 0) {
             return noHighlights;
         }
-	Highlighter.Highlight[] h = new Highlighter.Highlight[size];
-	highlights.copyInto(h);
-	return h;
+        Highlighter.Highlight[] h = new Highlighter.Highlight[size];
+        highlights.copyInto(h);
+        return h;
     }
 
     /**
@@ -280,21 +279,21 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * @param view View instance being rendered
      */
     public void paintLayeredHighlights(Graphics g, int p0, int p1,
-				       Shape viewBounds,
-				       JTextComponent editor, View view) {
-	for (int counter = highlights.size() - 1; counter >= 0; counter--) {
-	    Object tag = highlights.elementAt(counter);
-	    if (tag instanceof LayeredHighlightInfo) {
-		LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
-		int start = lhi.getStartOffset();
-		int end = lhi.getEndOffset();
-		if ((p0 < start && p1 > start) ||
-		    (p0 >= start && p0 < end)) {
-		    lhi.paintLayeredHighlights(g, p0, p1, viewBounds,
-					       editor, view);
-		}
-	    }
-	}
+                                       Shape viewBounds,
+                                       JTextComponent editor, View view) {
+        for (int counter = highlights.size() - 1; counter >= 0; counter--) {
+            Object tag = highlights.elementAt(counter);
+            if (tag instanceof LayeredHighlightInfo) {
+                LayeredHighlightInfo lhi = (LayeredHighlightInfo)tag;
+                int start = lhi.getStartOffset();
+                int end = lhi.getEndOffset();
+                if ((p0 < start && p1 > start) ||
+                    (p0 >= start && p0 < end)) {
+                    lhi.paintLayeredHighlights(g, p0, p1, viewBounds,
+                                               editor, view);
+                }
+            }
+        }
     }
 
     /**
@@ -323,15 +322,15 @@ public class DefaultHighlighter extends LayeredHighlighter {
      * LayeredHighlightPainter.
      */
     public void setDrawsLayeredHighlights(boolean newValue) {
-	drawsLayeredHighlights = newValue;
+        drawsLayeredHighlights = newValue;
     }
 
     public boolean getDrawsLayeredHighlights() {
-	return drawsLayeredHighlights;
+        return drawsLayeredHighlights;
     }
 
     // ---- member variables --------------------------------------------
-    
+
     private final static Highlighter.Highlight[] noHighlights =
             new Highlighter.Highlight[0];
     private Vector highlights = new Vector();  // Vector<HighlightInfo>
@@ -357,24 +356,24 @@ public class DefaultHighlighter extends LayeredHighlighter {
 
         /**
          * Constructs a new highlight painter. If <code>c</code> is null,
-	 * the JTextComponent will be queried for its selection color.
+         * the JTextComponent will be queried for its selection color.
          *
          * @param c the color for the highlight
          */
         public DefaultHighlightPainter(Color c) {
-	    color = c;
-	}
-	
+            color = c;
+        }
+
         /**
          * Returns the color of the highlight.
          *
          * @return the color
          */
-	public Color getColor() {
-	    return color;
-	}
+        public Color getColor() {
+            return color;
+        }
 
-	// --- HighlightPainter methods ---------------------------------------
+        // --- HighlightPainter methods ---------------------------------------
 
         /**
          * Paints a highlight.
@@ -386,42 +385,42 @@ public class DefaultHighlighter extends LayeredHighlighter {
          * @param c the editor
          */
         public void paint(Graphics g, int offs0, int offs1, Shape bounds, JTextComponent c) {
-	    Rectangle alloc = bounds.getBounds();
-	    try {
-		// --- determine locations ---
-		TextUI mapper = c.getUI();
-		Rectangle p0 = mapper.modelToView(c, offs0);
-		Rectangle p1 = mapper.modelToView(c, offs1);
+            Rectangle alloc = bounds.getBounds();
+            try {
+                // --- determine locations ---
+                TextUI mapper = c.getUI();
+                Rectangle p0 = mapper.modelToView(c, offs0);
+                Rectangle p1 = mapper.modelToView(c, offs1);
 
-		// --- render ---
-		Color color = getColor();
+                // --- render ---
+                Color color = getColor();
 
-		if (color == null) {
-		    g.setColor(c.getSelectionColor());
-		}
-		else {
-		    g.setColor(color);
-		}
-		if (p0.y == p1.y) {
-		    // same line, render a rectangle
-		    Rectangle r = p0.union(p1);
-		    g.fillRect(r.x, r.y, r.width, r.height);
-		} else {
-		    // different lines
-		    int p0ToMarginWidth = alloc.x + alloc.width - p0.x;
-		    g.fillRect(p0.x, p0.y, p0ToMarginWidth, p0.height);
-		    if ((p0.y + p0.height) != p1.y) {
-			g.fillRect(alloc.x, p0.y + p0.height, alloc.width, 
-				   p1.y - (p0.y + p0.height));
-		    }
-		    g.fillRect(alloc.x, p1.y, (p1.x - alloc.x), p1.height);
-		}
-	    } catch (BadLocationException e) {
-		// can't render
-	    }
-	}
+                if (color == null) {
+                    g.setColor(c.getSelectionColor());
+                }
+                else {
+                    g.setColor(color);
+                }
+                if (p0.y == p1.y) {
+                    // same line, render a rectangle
+                    Rectangle r = p0.union(p1);
+                    g.fillRect(r.x, r.y, r.width, r.height);
+                } else {
+                    // different lines
+                    int p0ToMarginWidth = alloc.x + alloc.width - p0.x;
+                    g.fillRect(p0.x, p0.y, p0ToMarginWidth, p0.height);
+                    if ((p0.y + p0.height) != p1.y) {
+                        g.fillRect(alloc.x, p0.y + p0.height, alloc.width,
+                                   p1.y - (p0.y + p0.height));
+                    }
+                    g.fillRect(alloc.x, p1.y, (p1.x - alloc.x), p1.height);
+                }
+            } catch (BadLocationException e) {
+                // can't render
+            }
+        }
 
-	// --- LayerPainter methods ----------------------------
+        // --- LayerPainter methods ----------------------------
         /**
          * Paints a portion of a highlight.
          *
@@ -429,81 +428,81 @@ public class DefaultHighlighter extends LayeredHighlighter {
          * @param offs0 the starting model offset >= 0
          * @param offs1 the ending model offset >= offs1
          * @param bounds the bounding box of the view, which is not
-	 *        necessarily the region to paint.
+         *        necessarily the region to paint.
          * @param c the editor
-	 * @param view View painting for
-	 * @return region drawing occured in
+         * @param view View painting for
+         * @return region drawing occured in
          */
-	public Shape paintLayer(Graphics g, int offs0, int offs1,
-				Shape bounds, JTextComponent c, View view) {
-	    Color color = getColor();
+        public Shape paintLayer(Graphics g, int offs0, int offs1,
+                                Shape bounds, JTextComponent c, View view) {
+            Color color = getColor();
 
-	    if (color == null) {
-		g.setColor(c.getSelectionColor());
-	    }
-	    else {
-		g.setColor(color);
-	    }
-            
+            if (color == null) {
+                g.setColor(c.getSelectionColor());
+            }
+            else {
+                g.setColor(color);
+            }
+
             Rectangle r;
-            
-	    if (offs0 == view.getStartOffset() &&
-		offs1 == view.getEndOffset()) {
-		// Contained in view, can just use bounds.
-		if (bounds instanceof Rectangle) {
+
+            if (offs0 == view.getStartOffset() &&
+                offs1 == view.getEndOffset()) {
+                // Contained in view, can just use bounds.
+                if (bounds instanceof Rectangle) {
                     r = (Rectangle) bounds;
-		}
-		else {
+                }
+                else {
                     r = bounds.getBounds();
-		}
-	    }
-	    else {
-		// Should only render part of View.
-		try {
-		    // --- determine locations ---
+                }
+            }
+            else {
+                // Should only render part of View.
+                try {
+                    // --- determine locations ---
                     Shape shape = view.modelToView(offs0, Position.Bias.Forward,
                                                    offs1,Position.Bias.Backward,
                                                    bounds);
                     r = (shape instanceof Rectangle) ?
                                   (Rectangle)shape : shape.getBounds();
-		} catch (BadLocationException e) {
-		    // can't render
+                } catch (BadLocationException e) {
+                    // can't render
                     r = null;
-		}
-	    }
-            
+                }
+            }
+
             if (r != null) {
                 // If we are asked to highlight, we should draw something even
                 // if the model-to-view projection is of zero width (6340106).
                 r.width = Math.max(r.width, 1);
-                
+
                 g.fillRect(r.x, r.y, r.width, r.height);
             }
-            
-            return r;
-	}
 
-	private Color color;
+            return r;
+        }
+
+        private Color color;
 
     }
 
 
     class HighlightInfo implements Highlighter.Highlight {
 
-	public int getStartOffset() {
-	    return p0.getOffset();
-	}
+        public int getStartOffset() {
+            return p0.getOffset();
+        }
 
-	public int getEndOffset() {
-	    return p1.getOffset();
-	}
+        public int getEndOffset() {
+            return p1.getOffset();
+        }
 
-	public Highlighter.HighlightPainter getPainter() {
-	    return painter;
-	}
+        public Highlighter.HighlightPainter getPainter() {
+            return painter;
+        }
 
-	Position p0;
-	Position p1;
+        Position p0;
+        Position p1;
         Highlighter.HighlightPainter painter;
     }
 
@@ -514,55 +513,55 @@ public class DefaultHighlighter extends LayeredHighlighter {
      */
     class LayeredHighlightInfo extends HighlightInfo {
 
-	void union(Shape bounds) {
-	    if (bounds == null)
-		return;
+        void union(Shape bounds) {
+            if (bounds == null)
+                return;
 
-	    Rectangle alloc;
-	    if (bounds instanceof Rectangle) {
-		alloc = (Rectangle)bounds;
-	    }
-	    else {
-		alloc = bounds.getBounds();
-	    }
-	    if (width == 0 || height == 0) {
-		x = alloc.x;
-		y = alloc.y;
-		width = alloc.width;
-		height = alloc.height;
-	    }
-	    else {
-		width = Math.max(x + width, alloc.x + alloc.width);
-		height = Math.max(y + height, alloc.y + alloc.height);
-		x = Math.min(x, alloc.x);
-		width -= x;
-		y = Math.min(y, alloc.y);
-		height -= y;
-	    }
-	}
+            Rectangle alloc;
+            if (bounds instanceof Rectangle) {
+                alloc = (Rectangle)bounds;
+            }
+            else {
+                alloc = bounds.getBounds();
+            }
+            if (width == 0 || height == 0) {
+                x = alloc.x;
+                y = alloc.y;
+                width = alloc.width;
+                height = alloc.height;
+            }
+            else {
+                width = Math.max(x + width, alloc.x + alloc.width);
+                height = Math.max(y + height, alloc.y + alloc.height);
+                x = Math.min(x, alloc.x);
+                width -= x;
+                y = Math.min(y, alloc.y);
+                height -= y;
+            }
+        }
 
-	/**
-	 * Restricts the region based on the receivers offsets and messages
-	 * the painter to paint the region.
-	 */
-	void paintLayeredHighlights(Graphics g, int p0, int p1,
-				    Shape viewBounds, JTextComponent editor,
-				    View view) {
-	    int start = getStartOffset();
-	    int end = getEndOffset();
-	    // Restrict the region to what we represent
-	    p0 = Math.max(start, p0);
-	    p1 = Math.min(end, p1);
-	    // Paint the appropriate region using the painter and union
-	    // the effected region with our bounds.
-	    union(((LayeredHighlighter.LayerPainter)painter).paintLayer
-		  (g, p0, p1, viewBounds, editor, view));
-	}
+        /**
+         * Restricts the region based on the receivers offsets and messages
+         * the painter to paint the region.
+         */
+        void paintLayeredHighlights(Graphics g, int p0, int p1,
+                                    Shape viewBounds, JTextComponent editor,
+                                    View view) {
+            int start = getStartOffset();
+            int end = getEndOffset();
+            // Restrict the region to what we represent
+            p0 = Math.max(start, p0);
+            p1 = Math.min(end, p1);
+            // Paint the appropriate region using the painter and union
+            // the effected region with our bounds.
+            union(((LayeredHighlighter.LayerPainter)painter).paintLayer
+                  (g, p0, p1, viewBounds, editor, view));
+        }
 
-	int x;
-	int y;
-	int width;
-	int height;
+        int x;
+        int y;
+        int width;
+        int height;
     }
 
     /**

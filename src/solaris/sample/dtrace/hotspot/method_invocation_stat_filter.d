@@ -32,10 +32,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *   1. method_invocation_stat_filter.d -c "java ..." p|c|m package|class_name|method_name
  *   2. method_invocation_stat_filter.d -p JAVA_PID  p|c|m package|class_name|method_name

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package sun.security.x509;
 
 import java.util.Vector;
@@ -35,7 +35,6 @@ import java.util.Enumeration;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  */
 public class AttributeNameEnumeration extends Vector<String> {
 

@@ -36,7 +36,6 @@ import sun.nio.cs.ISO_8859_15;
  * Tables and data to convert Unicode to ISO8859_15
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.7
  */
 
 public class CharToByteISO8859_15 extends CharToByteSingleByte {

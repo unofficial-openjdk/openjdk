@@ -30,7 +30,7 @@
 #ifndef _WIN32_DIRENT_H_
 #define _WIN32_DIRENT_H_
 
-#include "jvm_md.h"	/* DIR actually defined in here */
+#include "jvm_md.h"     /* DIR actually defined in here */
 
 DIR *opendir(const char *dirname);
 struct dirent *readdir(DIR *dirp);

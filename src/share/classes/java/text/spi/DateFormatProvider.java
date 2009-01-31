@@ -31,11 +31,10 @@ import java.util.spi.LocaleServiceProvider;
 
 /**
  * An abstract class for service providers that
- * provide concrete implementations of the 
+ * provide concrete implementations of the
  * {@link java.text.DateFormat DateFormat} class.
  *
- * @since        1.6 
- * @version      %W% %E%
+ * @since        1.6
  */
 public abstract class DateFormatProvider extends LocaleServiceProvider {
 
@@ -47,18 +46,18 @@ public abstract class DateFormatProvider extends LocaleServiceProvider {
     }
 
     /**
-     * Returns a new <code>DateFormat</code> instance which formats time 
+     * Returns a new <code>DateFormat</code> instance which formats time
      * with the given formatting style for the specified locale.
      * @param style the given formatting style.  Either one of
-     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT}, 
-     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM}, 
+     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT},
+     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM},
      *     {@link java.text.DateFormat#LONG DateFormat.LONG}, or
      *     {@link java.text.DateFormat#FULL DateFormat.FULL}.
      * @param locale the desired locale.
      * @exception IllegalArgumentException if <code>style</code> is invalid,
      *     or if <code>locale</code> isn't
-     *     one of the locales returned from 
-     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales() 
+     *     one of the locales returned from
+     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales()
      *     getAvailableLocales()}.
      * @exception NullPointerException if <code>locale</code> is null
      * @return a time formatter.
@@ -70,15 +69,15 @@ public abstract class DateFormatProvider extends LocaleServiceProvider {
      * Returns a new <code>DateFormat</code> instance which formats date
      * with the given formatting style for the specified locale.
      * @param style the given formatting style.  Either one of
-     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT}, 
-     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM}, 
+     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT},
+     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM},
      *     {@link java.text.DateFormat#LONG DateFormat.LONG}, or
      *     {@link java.text.DateFormat#FULL DateFormat.FULL}.
      * @param locale the desired locale.
      * @exception IllegalArgumentException if <code>style</code> is invalid,
      *     or if <code>locale</code> isn't
-     *     one of the locales returned from 
-     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales() 
+     *     one of the locales returned from
+     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales()
      *     getAvailableLocales()}.
      * @exception NullPointerException if <code>locale</code> is null
      * @return a date formatter.
@@ -90,21 +89,21 @@ public abstract class DateFormatProvider extends LocaleServiceProvider {
      * Returns a new <code>DateFormat</code> instance which formats date and time
      * with the given formatting style for the specified locale.
      * @param dateStyle the given date formatting style.  Either one of
-     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT}, 
-     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM}, 
+     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT},
+     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM},
      *     {@link java.text.DateFormat#LONG DateFormat.LONG}, or
      *     {@link java.text.DateFormat#FULL DateFormat.FULL}.
      * @param timeStyle the given time formatting style.  Either one of
-     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT}, 
-     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM}, 
+     *     {@link java.text.DateFormat#SHORT DateFormat.SHORT},
+     *     {@link java.text.DateFormat#MEDIUM DateFormat.MEDIUM},
      *     {@link java.text.DateFormat#LONG DateFormat.LONG}, or
      *     {@link java.text.DateFormat#FULL DateFormat.FULL}.
      * @param locale the desired locale.
      * @exception IllegalArgumentException if <code>dateStyle</code> or
      *     <code>timeStyle</code> is invalid,
      *     or if <code>locale</code> isn't
-     *     one of the locales returned from 
-     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales() 
+     *     one of the locales returned from
+     *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales()
      *     getAvailableLocales()}.
      * @exception NullPointerException if <code>locale</code> is null
      * @return a date/time formatter.

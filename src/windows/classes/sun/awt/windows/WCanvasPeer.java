@@ -80,7 +80,7 @@ class WCanvasPeer extends WComponentPeer implements CanvasPeer {
     void initialize() {
         eraseBackground = !SunToolkit.getSunAwtNoerasebackground();
         boolean eraseBackgroundOnResize = SunToolkit.getSunAwtErasebackgroundonresize();
-        // Optimization: the default value in the native code is true, so we 
+        // Optimization: the default value in the native code is true, so we
         // call setNativeBackgroundErase only when the value changes to false
         if (!PaintEventDispatcher.getPaintEventDispatcher().
                 shouldDoNativeBackgroundErase((Component)target)) {
@@ -95,35 +95,35 @@ class WCanvasPeer extends WComponentPeer implements CanvasPeer {
     }
 
     public void paint(Graphics g) {
-	Dimension d = ((Component)target).getSize();
+        Dimension d = ((Component)target).getSize();
         if (g instanceof Graphics2D ||
-	    g instanceof sun.awt.Graphics2Delegate) {
-	    // background color is setup correctly, so just use clearRect
-	    g.clearRect(0, 0, d.width, d.height);
-	} else {
-	    // emulate clearRect
-	    g.setColor(((Component)target).getBackground());
-	    g.fillRect(0, 0, d.width, d.height);
-	    g.setColor(((Component)target).getForeground());
-	}
-	super.paint(g);
+            g instanceof sun.awt.Graphics2Delegate) {
+            // background color is setup correctly, so just use clearRect
+            g.clearRect(0, 0, d.width, d.height);
+        } else {
+            // emulate clearRect
+            g.setColor(((Component)target).getBackground());
+            g.fillRect(0, 0, d.width, d.height);
+            g.setColor(((Component)target).getForeground());
+        }
+        super.paint(g);
     }
 
     public void print(Graphics g) {
-	Dimension d = ((Component)target).getSize();
+        Dimension d = ((Component)target).getSize();
         if (g instanceof Graphics2D ||
-	    g instanceof sun.awt.Graphics2Delegate) {
-	    // background color is setup correctly, so just use clearRect
-	    g.clearRect(0, 0, d.width, d.height);
-	} else {
-	    // emulate clearRect
-	    g.setColor(((Component)target).getBackground());
-	    g.fillRect(0, 0, d.width, d.height);
-	    g.setColor(((Component)target).getForeground());
-	}
-	super.print(g);
+            g instanceof sun.awt.Graphics2Delegate) {
+            // background color is setup correctly, so just use clearRect
+            g.clearRect(0, 0, d.width, d.height);
+        } else {
+            // emulate clearRect
+            g.setColor(((Component)target).getBackground());
+            g.fillRect(0, 0, d.width, d.height);
+            g.setColor(((Component)target).getForeground());
+        }
+        super.print(g);
     }
-    
+
     public boolean shouldClearRectBeforePaint() {
         return eraseBackground;
     }

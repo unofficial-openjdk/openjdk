@@ -27,13 +27,12 @@ package java.util;
 
 /**
  * Unchecked exception thrown when duplicate flags are provided in the format
- * specifier.  
+ * specifier.
  *
  * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public class DuplicateFormatFlagsException extends IllegalFormatException {
@@ -49,9 +48,9 @@ public class DuplicateFormatFlagsException extends IllegalFormatException {
      *         The set of format flags which contain a duplicate flag.
      */
     public DuplicateFormatFlagsException(String f) {
- 	if (f == null)
- 	    throw new NullPointerException();
-	this.flags = f;
+        if (f == null)
+            throw new NullPointerException();
+        this.flags = f;
     }
 
     /**
@@ -60,10 +59,10 @@ public class DuplicateFormatFlagsException extends IllegalFormatException {
      * @return  The flags
      */
     public String getFlags() {
-	return flags;
+        return flags;
     }
 
     public String getMessage() {
-	return String.format("Flags = '%s'", flags);
+        return String.format("Flags = '%s'", flags);
     }
 }

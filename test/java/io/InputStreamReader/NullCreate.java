@@ -33,13 +33,13 @@ public class NullCreate {
 
     public static void main(String args[])
     {
-	try{
-	    InputStreamReader osw = new InputStreamReader(null);
-	} catch (NullPointerException e){
-	    // No problem - null create argument caught
-	    return;
-	}
-	throw new RuntimeException("Create with null did not throw an error");
+        try{
+            InputStreamReader osw = new InputStreamReader(null);
+        } catch (NullPointerException e){
+            // No problem - null create argument caught
+            return;
+        }
+        throw new RuntimeException("Create with null did not throw an error");
     }
 
 }

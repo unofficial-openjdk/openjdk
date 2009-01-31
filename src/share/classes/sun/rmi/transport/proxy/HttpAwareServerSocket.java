@@ -47,12 +47,12 @@ class HttpAwareServerSocket extends ServerSocket {
      */
     public HttpAwareServerSocket(int port) throws IOException
     {
-	super(port);
+        super(port);
     }
 
     /**
-     * Create a server socket, bind it to the specified local port 
-     * and listen to it.  You can connect to an annonymous port by 
+     * Create a server socket, bind it to the specified local port
+     * and listen to it.  You can connect to an annonymous port by
      * specifying the port number to be 0.  <i>backlog</i> specifies
      * how many connection requests the system will queue up while waiting
      * for the ServerSocket to execute accept().
@@ -61,7 +61,7 @@ class HttpAwareServerSocket extends ServerSocket {
      */
     public HttpAwareServerSocket(int port, int backlog) throws IOException
     {
-	super(port, backlog);
+        super(port, backlog);
     }
 
     /**
@@ -75,40 +75,40 @@ class HttpAwareServerSocket extends ServerSocket {
      * the underlying socket's input stream.
      * @exception IOException IO error when waiting for the connection.
      */
-    public Socket accept() throws IOException 
+    public Socket accept() throws IOException
     {
-	Socket socket = super.accept();
-	BufferedInputStream in =
-	    new BufferedInputStream(socket.getInputStream());
+        Socket socket = super.accept();
+        BufferedInputStream in =
+            new BufferedInputStream(socket.getInputStream());
 
-	RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
-	    "socket accepted (checking for POST)");
+        RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
+            "socket accepted (checking for POST)");
 
-	in.mark(4);
+        in.mark(4);
         boolean isHttp = (in.read() == 'P') &&
-	                 (in.read() == 'O') &&
+                         (in.read() == 'O') &&
                          (in.read() == 'S') &&
-	                 (in.read() == 'T');
+                         (in.read() == 'T');
         in.reset();
 
-	if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.BRIEF)) {
-	    RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
-		(isHttp ? "POST found, HTTP socket returned" :
-		          "POST not found, direct socket returned"));
-	}
+        if (RMIMasterSocketFactory.proxyLog.isLoggable(Log.BRIEF)) {
+            RMIMasterSocketFactory.proxyLog.log(Log.BRIEF,
+                (isHttp ? "POST found, HTTP socket returned" :
+                          "POST not found, direct socket returned"));
+        }
 
-	if (isHttp)
+        if (isHttp)
             return new HttpReceiveSocket(socket, in, null);
-	else
-	    return new WrappedSocket(socket, in, null);
+        else
+            return new WrappedSocket(socket, in, null);
     }
 
     /**
-     * Return the implementation address and implementation port of 
+     * Return the implementation address and implementation port of
      * the HttpAwareServerSocket as a String.
      */
     public String toString()
     {
-	return "HttpAware" + super.toString();
+        return "HttpAware" + super.toString();
     }
 }

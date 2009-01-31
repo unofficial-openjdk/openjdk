@@ -35,7 +35,7 @@ public class CharToByteCp935
         extends CharToByteDBCS_EBCDIC
 
 {
-	private final static IBM935 nioCoder = new IBM935();
+        private final static IBM935 nioCoder = new IBM935();
 
         // Return the character set id
         public String getCharacterEncoding()

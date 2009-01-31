@@ -53,7 +53,6 @@ import sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection;
  * of protocol implementation (this one)
  * com.sun.net.ssl.HttpURLConnection is used in the com.sun version.
  *
- * @version %I% %G%
  */
 public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnection {
 
@@ -67,27 +66,27 @@ public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnecti
     public com.sun.net.ssl.HttpsURLConnection httpsURLConnection;
 
     DelegateHttpsURLConnection(URL url,
-	    sun.net.www.protocol.http.Handler handler,
-	    com.sun.net.ssl.HttpsURLConnection httpsURLConnection)
-	    throws IOException {
-	this(url, null, handler, httpsURLConnection);
+            sun.net.www.protocol.http.Handler handler,
+            com.sun.net.ssl.HttpsURLConnection httpsURLConnection)
+            throws IOException {
+        this(url, null, handler, httpsURLConnection);
     }
 
     DelegateHttpsURLConnection(URL url, Proxy p,
-	    sun.net.www.protocol.http.Handler handler,
-	    com.sun.net.ssl.HttpsURLConnection httpsURLConnection)
-	    throws IOException {
-	super(url, p, handler);
-	this.httpsURLConnection = httpsURLConnection;
+            sun.net.www.protocol.http.Handler handler,
+            com.sun.net.ssl.HttpsURLConnection httpsURLConnection)
+            throws IOException {
+        super(url, p, handler);
+        this.httpsURLConnection = httpsURLConnection;
     }
 
     protected javax.net.ssl.SSLSocketFactory getSSLSocketFactory() {
-	return httpsURLConnection.getSSLSocketFactory();
+        return httpsURLConnection.getSSLSocketFactory();
     }
 
     protected javax.net.ssl.HostnameVerifier getHostnameVerifier() {
-	// note: getHostnameVerifier() never returns null
-	return new VerifierWrapper(httpsURLConnection.getHostnameVerifier());
+        // note: getHostnameVerifier() never returns null
+        return new VerifierWrapper(httpsURLConnection.getHostnameVerifier());
     }
 
     /*
@@ -95,7 +94,7 @@ public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnecti
      * the underlying object.
      */
     protected void dispose() throws Throwable {
-	super.finalize();
+        super.finalize();
     }
 }
 
@@ -104,7 +103,7 @@ class VerifierWrapper implements javax.net.ssl.HostnameVerifier {
     private com.sun.net.ssl.HostnameVerifier verifier;
 
     VerifierWrapper(com.sun.net.ssl.HostnameVerifier verifier) {
-	this.verifier = verifier;
+        this.verifier = verifier;
     }
 
     /*
@@ -114,47 +113,47 @@ class VerifierWrapper implements javax.net.ssl.HostnameVerifier {
      * in this wrapper
      */
     public boolean verify(String hostname, javax.net.ssl.SSLSession session) {
-	try {
-	    String serverName;
-	    Principal principal = getPeerPrincipal(session);
-	    if (principal instanceof KerberosPrincipal) {
-		serverName =
-		    HostnameChecker.getServerName((KerberosPrincipal)principal);
-	    } else {
-		Certificate[] serverChain = session.getPeerCertificates();
-		if ((serverChain == null) || (serverChain.length == 0)) {
-		    return false;
-		}
-		if (serverChain[0] instanceof X509Certificate == false) {
-		    return false;
-		}
-		X509Certificate serverCert = (X509Certificate)serverChain[0];
-		serverName = getServername(serverCert);
-	    }
-	    if (serverName == null) {
-		return false;
-	    }
-	    return verifier.verify(hostname, serverName);
-	} catch (javax.net.ssl.SSLPeerUnverifiedException e) {
-	    return false;
-	}
+        try {
+            String serverName;
+            Principal principal = getPeerPrincipal(session);
+            if (principal instanceof KerberosPrincipal) {
+                serverName =
+                    HostnameChecker.getServerName((KerberosPrincipal)principal);
+            } else {
+                Certificate[] serverChain = session.getPeerCertificates();
+                if ((serverChain == null) || (serverChain.length == 0)) {
+                    return false;
+                }
+                if (serverChain[0] instanceof X509Certificate == false) {
+                    return false;
+                }
+                X509Certificate serverCert = (X509Certificate)serverChain[0];
+                serverName = getServername(serverCert);
+            }
+            if (serverName == null) {
+                return false;
+            }
+            return verifier.verify(hostname, serverName);
+        } catch (javax.net.ssl.SSLPeerUnverifiedException e) {
+            return false;
+        }
     }
 
     /*
      * Get the peer principal from the session
      */
     private Principal getPeerPrincipal(javax.net.ssl.SSLSession session)
-	throws javax.net.ssl.SSLPeerUnverifiedException
+        throws javax.net.ssl.SSLPeerUnverifiedException
     {
-	Principal principal;
-	try {
-	    principal = session.getPeerPrincipal();
-	} catch (AbstractMethodError e) {
-	    // if the provider does not support it, return null, since
-	    // we need it only for Kerberos.
-	    principal = null;
-	}
-	return principal;
+        Principal principal;
+        try {
+            principal = session.getPeerPrincipal();
+        } catch (AbstractMethodError e) {
+            // if the provider does not support it, return null, since
+            // we need it only for Kerberos.
+            principal = null;
+        }
+        return principal;
     }
 
     /*
@@ -164,37 +163,37 @@ class VerifierWrapper implements javax.net.ssl.HostnameVerifier {
      * code in HostnameChecker.
      */
     private static String getServername(X509Certificate peerCert) {
-	try {
-	    // compare to subjectAltNames if dnsName is present
-	    Collection subjAltNames = peerCert.getSubjectAlternativeNames();
-	    if (subjAltNames != null) {
-		for (Iterator itr = subjAltNames.iterator(); itr.hasNext(); ) {
-		    List next = (List)itr.next();
-		    if (((Integer)next.get(0)).intValue() == 2) {
-			// compare dNSName with host in url
-			String dnsName = ((String)next.get(1));
-			return dnsName;
-		    }
-		}
-	    }
+        try {
+            // compare to subjectAltNames if dnsName is present
+            Collection subjAltNames = peerCert.getSubjectAlternativeNames();
+            if (subjAltNames != null) {
+                for (Iterator itr = subjAltNames.iterator(); itr.hasNext(); ) {
+                    List next = (List)itr.next();
+                    if (((Integer)next.get(0)).intValue() == 2) {
+                        // compare dNSName with host in url
+                        String dnsName = ((String)next.get(1));
+                        return dnsName;
+                    }
+                }
+            }
 
-	    // else check against common name in the subject field
-	    X500Name subject = HostnameChecker.getSubjectX500Name(peerCert);
+            // else check against common name in the subject field
+            X500Name subject = HostnameChecker.getSubjectX500Name(peerCert);
 
-	    DerValue derValue = subject.findMostSpecificAttribute
-						(X500Name.commonName_oid);
-	    if (derValue != null) {
-		try {
-		    String name = derValue.getAsString();
-		    return name;
-		} catch (IOException e) {
-		    // ignore
-		}
-	    }
-	} catch (java.security.cert.CertificateException e) {
-	    // ignore
-	}
-	return null;
+            DerValue derValue = subject.findMostSpecificAttribute
+                                                (X500Name.commonName_oid);
+            if (derValue != null) {
+                try {
+                    String name = derValue.getAsString();
+                    return name;
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        } catch (java.security.cert.CertificateException e) {
+            // ignore
+        }
+        return null;
     }
 
 }

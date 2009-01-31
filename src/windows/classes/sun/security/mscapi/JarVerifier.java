@@ -68,6 +68,6 @@ final class JarVerifier {
      * @return true if verification is successful.
      */
     static boolean verify(final Class c) {
-	return true;
+        return true;
     }
 }

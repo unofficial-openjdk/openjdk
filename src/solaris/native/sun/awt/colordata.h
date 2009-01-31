@@ -28,8 +28,8 @@
 #include "img_globals.h"
 
 typedef struct ColorEntry {
-	unsigned char r, g, b;
-	unsigned char flags;
+        unsigned char r, g, b;
+        unsigned char flags;
 } ColorEntry;
 
 typedef struct _ColorData {

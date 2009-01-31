@@ -32,23 +32,23 @@ import com.sun.jmx.snmp.SnmpPdu;
 import com.sun.jmx.snmp.SnmpEngine;
 
 /**
- * This interface models the part of a SNMP request that involves 
- * a specific MIB. One object implementing this interface will be created 
+ * This interface models the part of a SNMP request that involves
+ * a specific MIB. One object implementing this interface will be created
  * for every MIB involved in a SNMP request, and that object will be passed
  * to the SnmpMibAgent in charge of handling that MIB.
- * 
- * Objects implementing this interface will be allocated by the SNMP engine. 
+ *
+ * Objects implementing this interface will be allocated by the SNMP engine.
  * You will never need to implement this interface. You will only use it.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 public interface SnmpMibRequest {
     /**
      * Returns the list of varbind to be handled by the SNMP mib node.
      *
-     * @return The element of the enumeration are instances of 
-     *         {@link com.sun.jmx.snmp.SnmpVarBind} 
+     * @return The element of the enumeration are instances of
+     *         {@link com.sun.jmx.snmp.SnmpVarBind}
      */
     public Enumeration getElements();
 
@@ -56,7 +56,7 @@ public interface SnmpMibRequest {
      * Returns the vector of varbind to be handled by the SNMP mib node.
      * The caller shall not modify this vector.
      *
-     * @return The element of the vector are instances of 
+     * @return The element of the vector are instances of
      *         {@link com.sun.jmx.snmp.SnmpVarBind}
      */
     public Vector<SnmpVarBind> getSubList();
@@ -119,13 +119,13 @@ public interface SnmpMibRequest {
      * @since 1.5
      */
     public byte[] getAccessContextName();
-    
+
     /**
      * Returns a handle on a user allocated contextual object.
      * This contextual object is allocated through the SnmpUserDataFactory
      * on a per SNMP request basis, and is handed back to the user via
      * SnmpMibRequest (and derivative) objects. It is never accessed by
-     * the system, but might be handed back in multiple threads. It is thus 
+     * the system, but might be handed back in multiple threads. It is thus
      * the user responsibility to make sure he handles this object in a
      * thread safe manner.
      */
@@ -138,7 +138,7 @@ public interface SnmpMibRequest {
      * index value that will be returned in the result PDU.
      *
      * @param varbind The varbind for which the index value is
-     *        querried. Note that this varbind <b>must</b> have 
+     *        querried. Note that this varbind <b>must</b> have
      *        been obtained from the enumeration returned by
      *        <CODE>getElements()</CODE>, or from the vector
      *        returned by <CODE>getSublist()</CODE>.
@@ -165,8 +165,8 @@ public interface SnmpMibRequest {
      *
      **/
     public int getSize();
-    /** 
-     * Returns the SNMP PDU attached to the request. 
+    /**
+     * Returns the SNMP PDU attached to the request.
      * @return The SNMP PDU.
      *
      * @since 1.5

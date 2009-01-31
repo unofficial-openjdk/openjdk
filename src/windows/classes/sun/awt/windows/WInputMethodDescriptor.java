@@ -36,7 +36,7 @@ import java.util.Locale;
  * Provides sufficient information about an input method
  * to enable selection and loading of that input method.
  * The input method itself is only loaded when it is actually used.
- * 
+ *
  * @since JDK1.3
  */
 
@@ -46,24 +46,24 @@ class WInputMethodDescriptor implements InputMethodDescriptor {
      * @see java.awt.im.spi.InputMethodDescriptor#getAvailableLocales
      */
     public Locale[] getAvailableLocales() {
-	// returns a copy of internal list for public API
-	Locale[] locales = getAvailableLocalesInternal();
-	Locale[] tmp = new Locale[locales.length];
-	System.arraycopy(locales, 0, tmp, 0, locales.length);
-	return tmp;
+        // returns a copy of internal list for public API
+        Locale[] locales = getAvailableLocalesInternal();
+        Locale[] tmp = new Locale[locales.length];
+        System.arraycopy(locales, 0, tmp, 0, locales.length);
+        return tmp;
     }
-    
+
     static Locale[] getAvailableLocalesInternal() {
-	return getNativeAvailableLocales();
+        return getNativeAvailableLocales();
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#hasDynamicLocaleList
      */
     public boolean hasDynamicLocaleList() {
         return true;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodDisplayName
      */
@@ -77,14 +77,14 @@ class WInputMethodDescriptor implements InputMethodDescriptor {
         }
         return name;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodIcon
      */
     public Image getInputMethodIcon(Locale inputLocale) {
         return null;
     }
-    
+
     /**
      * @see java.awt.im.spi.InputMethodDescriptor#createInputMethod
      */

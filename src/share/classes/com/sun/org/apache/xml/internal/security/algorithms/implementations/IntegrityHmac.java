@@ -48,9 +48,9 @@ import org.w3c.dom.Text;
  * @author $Author: raul $
  */
 public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
-    
+
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(IntegrityHmacSHA1.class.getName());
 
    /**
@@ -75,7 +75,7 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
 
       String algorithmID = JCEMapper.translateURItoJCEID(this.engineGetURI());
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created IntegrityHmacSHA1 using " + algorithmID);
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created IntegrityHmacSHA1 using " + algorithmID);
 
       try {
          this._macAlgorithm = Mac.getInstance(algorithmID);
@@ -118,7 +118,7 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
          }
          byte[] stripped = IntegrityHmac.reduceBitLength(completeResult,
                                  this._HMACOutputLength);
-         return MessageDigestAlgorithm.isEqual(stripped, signature);         
+         return MessageDigestAlgorithm.isEqual(stripped, signature);
       } catch (IllegalStateException ex) {
          throw new XMLSignatureException("empty", ex);
       }
@@ -163,10 +163,10 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
 
          if ((this._HMACOutputLength == 0) || (this._HMACOutputLength >= 160)) {
             return completeResult;
-         } 
+         }
           return IntegrityHmac.reduceBitLength(completeResult,
                                                  this._HMACOutputLength);
-         
+
       } catch (IllegalStateException ex) {
          throw new XMLSignatureException("empty", ex);
       }
@@ -360,12 +360,12 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
       }
 
              Text hmaclength =XMLUtils.selectDsNodeText(element.getFirstChild(),
-                    Constants._TAG_HMACOUTPUTLENGTH,0);               
+                    Constants._TAG_HMACOUTPUTLENGTH,0);
 
             if (hmaclength != null) {
                this._HMACOutputLength = Integer.parseInt(hmaclength.getData());
             }
-      
+
    }
 
    /**
@@ -398,7 +398,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacSHA1
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacSHA1 extends IntegrityHmac {
 
@@ -425,7 +424,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacSHA256
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacSHA256 extends IntegrityHmac {
 
@@ -452,7 +450,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacSHA384
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacSHA384 extends IntegrityHmac {
 
@@ -479,7 +476,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacSHA512
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacSHA512 extends IntegrityHmac {
 
@@ -506,7 +502,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacRIPEMD160
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacRIPEMD160 extends IntegrityHmac {
 
@@ -533,7 +528,6 @@ public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
     * Class IntegrityHmacMD5
     *
     * @author $Author: raul $
-    * @version $Revision: 1.13 $
     */
    public static class IntegrityHmacMD5 extends IntegrityHmac {
 

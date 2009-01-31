@@ -35,77 +35,77 @@ public class PreserveCombiner {
 
     public static void main(String[] args) throws Exception {
 
-	Subject s = new Subject();
-	s.getPrincipals().add(new X500Principal("cn=duke"));
+        Subject s = new Subject();
+        s.getPrincipals().add(new X500Principal("cn=duke"));
 
-	String result = (String)Subject.doAs(s, new PrivilegedAction() {
-	    public Object run() {
+        String result = (String)Subject.doAs(s, new PrivilegedAction() {
+            public Object run() {
 
-		// get subject from current ACC - this always worked
-		Subject doAsSubject =
-			Subject.getSubject(AccessController.getContext());
-		if (doAsSubject == null) {
-		    return "test 1 failed";
-		} else {
-		    System.out.println(doAsSubject);
-		    System.out.println("test 1 passed");
-		}
+                // get subject from current ACC - this always worked
+                Subject doAsSubject =
+                        Subject.getSubject(AccessController.getContext());
+                if (doAsSubject == null) {
+                    return "test 1 failed";
+                } else {
+                    System.out.println(doAsSubject);
+                    System.out.println("test 1 passed");
+                }
 
-		// try doPriv (PrivilegedAction) test
-		String result = AccessController.doPrivilegedWithCombiner
-		    (new PrivilegedAction<String>() {
-		    public String run() {
-			// get subject after doPriv
-			Subject doPrivSubject =
-			    Subject.getSubject(AccessController.getContext());
-			if (doPrivSubject == null) {
-			    return "test 2 failed";
-			} else {
-			    System.out.println(doPrivSubject);
-			    return "test 2 passed";
-			}
-		    }
-		});
-	
-		if ("test 2 failed".equals(result)) {
-		    return result;
-		} else {
-		    System.out.println(result);
-		}
+                // try doPriv (PrivilegedAction) test
+                String result = AccessController.doPrivilegedWithCombiner
+                    (new PrivilegedAction<String>() {
+                    public String run() {
+                        // get subject after doPriv
+                        Subject doPrivSubject =
+                            Subject.getSubject(AccessController.getContext());
+                        if (doPrivSubject == null) {
+                            return "test 2 failed";
+                        } else {
+                            System.out.println(doPrivSubject);
+                            return "test 2 passed";
+                        }
+                    }
+                });
 
-		// try doPriv (PrivilegedExceptionAction) test
-		try {
-		    result = AccessController.doPrivilegedWithCombiner
-			(new PrivilegedExceptionAction<String>() {
-			public String run() throws PrivilegedActionException {
-			    // get subject after doPriv
-			    Subject doPrivSubject = Subject.getSubject
-				(AccessController.getContext());
-			    if (doPrivSubject == null) {
-				return "test 3 failed";
-			    } else {
-				System.out.println(doPrivSubject);
-				return "test 3 passed";
-			    }
-			}
-		    });
-		} catch (PrivilegedActionException pae) {
-		    result = "test 3 failed";
-		}
+                if ("test 2 failed".equals(result)) {
+                    return result;
+                } else {
+                    System.out.println(result);
+                }
 
-		if ("test 3 failed".equals(result)) {
-		    return result;
-		} else {
-		    System.out.println(result);
-		}
+                // try doPriv (PrivilegedExceptionAction) test
+                try {
+                    result = AccessController.doPrivilegedWithCombiner
+                        (new PrivilegedExceptionAction<String>() {
+                        public String run() throws PrivilegedActionException {
+                            // get subject after doPriv
+                            Subject doPrivSubject = Subject.getSubject
+                                (AccessController.getContext());
+                            if (doPrivSubject == null) {
+                                return "test 3 failed";
+                            } else {
+                                System.out.println(doPrivSubject);
+                                return "test 3 passed";
+                            }
+                        }
+                    });
+                } catch (PrivilegedActionException pae) {
+                    result = "test 3 failed";
+                }
 
-		// tests passed
-		return result;
-	    }
-	});
+                if ("test 3 failed".equals(result)) {
+                    return result;
+                } else {
+                    System.out.println(result);
+                }
 
-	if (result.indexOf("passed") <= 0) {
-	    throw new SecurityException("overall test failed");
-	}
+                // tests passed
+                return result;
+            }
+        });
+
+        if (result.indexOf("passed") <= 0) {
+            throw new SecurityException("overall test failed");
+        }
     }
 }

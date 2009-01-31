@@ -23,42 +23,42 @@
  * have any questions.
  */
 
-package javax.sound.midi;	
+package javax.sound.midi;
 
 
 /**
- * A <code>VoiceStatus</code> object contains information about the current 
- * status of one of the voices produced by a {@link Synthesizer}.  
+ * A <code>VoiceStatus</code> object contains information about the current
+ * status of one of the voices produced by a {@link Synthesizer}.
  * <p>
- * MIDI synthesizers are generally capable of producing some maximum number of 
+ * MIDI synthesizers are generally capable of producing some maximum number of
  * simultaneous notes, also referred to as voices.  A voice is a stream
  * of successive single notes, and the process of assigning incoming MIDI notes to
  * specific voices is known as voice allocation.
- * However, the voice-allocation algorithm and the contents of each voice are 
- * normally internal to a MIDI synthesizer and hidden from outside view.  One can, of 
- * course, learn from MIDI messages which notes the synthesizer is playing, and 
+ * However, the voice-allocation algorithm and the contents of each voice are
+ * normally internal to a MIDI synthesizer and hidden from outside view.  One can, of
+ * course, learn from MIDI messages which notes the synthesizer is playing, and
  * one might be able deduce something about the assignment of notes to voices.
- * But MIDI itself does not provide a means to report which notes a 
- * synthesizer has assigned to which voice, nor even to report how many voices 
- * the synthesizer is capable of synthesizing.  
+ * But MIDI itself does not provide a means to report which notes a
+ * synthesizer has assigned to which voice, nor even to report how many voices
+ * the synthesizer is capable of synthesizing.
  * <p>
- * In Java Sound, however, a 
- * <code>Synthesizer</code> class can expose the contents of its voices through its 
- * {@link Synthesizer#getVoiceStatus() getVoiceStatus()} method.  
+ * In Java Sound, however, a
+ * <code>Synthesizer</code> class can expose the contents of its voices through its
+ * {@link Synthesizer#getVoiceStatus() getVoiceStatus()} method.
  * This behavior is recommended but optional;
  * synthesizers that don't expose their voice allocation simply return a
  * zero-length array. A <code>Synthesizer</code> that does report its voice status
  * should maintain this information at
  * all times for all of its voices, whether they are currently sounding or
  * not.  In other words, a given type of <code>Synthesizer</code> always has a fixed
- * number of voices, equal to the maximum number of simultaneous notes it is 
- * capable of sounding.  
+ * number of voices, equal to the maximum number of simultaneous notes it is
+ * capable of sounding.
  * <p>
  * <A NAME="description_of_active"></A>
  * If the voice is not currently processing a MIDI note, it
  * is considered inactive.  A voice is inactive when it has
  * been given no note-on commands, or when every note-on command received has
- * been terminated by a corresponding note-off (or by an "all notes off" 
+ * been terminated by a corresponding note-off (or by an "all notes off"
  * message).  For example, this happens when a synthesizer capable of playing 16
  * simultaneous notes is told to play a four-note chord; only
  * four voices are active in this case (assuming no earlier notes are still playing).
@@ -67,38 +67,37 @@ package javax.sound.midi;
  * is, the synthesis algorithm) and how long the note has been going on.
  * For example, a voice may be synthesizing the sound of a single hand-clap.  Because
  * this sound dies away so quickly, it may become inaudible before a note-off
- * message is received.  In such a situation, the voice is still considered active 
+ * message is received.  In such a situation, the voice is still considered active
  * even though no sound is currently being produced.
  * <p>
- * Besides its active or inactive status, the <code>VoiceStatus</code> class 
- * provides fields that reveal the voice's current MIDI channel, bank and 
+ * Besides its active or inactive status, the <code>VoiceStatus</code> class
+ * provides fields that reveal the voice's current MIDI channel, bank and
  * program number, MIDI note number, and MIDI volume.  All of these can
  * change during the course of a voice.  While the voice is inactive, each
  * of these fields has an unspecified value, so you should check the active
  * field first.
- * 
+ *
  * @see Synthesizer#getMaxPolyphony
  * @see Synthesizer#getVoiceStatus
  *
- * @version %I%, %G%
  * @author David Rivas
  * @author Kara Kytle
  */
 
 public class VoiceStatus {
 
-	
+
     /**
      * Indicates whether the voice is currently processing a MIDI note.
-     * See the explanation of 
+     * See the explanation of
      * <A HREF="#description_of_active">active and inactive voices</A>.
      */
     public boolean active = false;
 
 
     /**
-     * The MIDI channel on which this voice is playing.  The value is a 
-     * zero-based channel number if the voice is active, or 
+     * The MIDI channel on which this voice is playing.  The value is a
+     * zero-based channel number if the voice is active, or
      * unspecified if the voice is inactive.
      *
      * @see MidiChannel
@@ -145,7 +144,7 @@ public class VoiceStatus {
 
 
     /**
-     * The current MIDI volume level for the voice.  
+     * The current MIDI volume level for the voice.
      * The value ranges from 0 to 127 if the voice is active, and is
      * unspecified if the voice is inactive.
      * <p>

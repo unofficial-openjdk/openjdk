@@ -33,11 +33,11 @@
 
 #include "jni_util.h"
 
-#define MAX_STR_LEN	    256
+#define MAX_STR_LEN         256
 
-#define STS_NO_CONFIG	    0x0		    /* no configuration found */
-#define STS_SL_FOUND	    0x1		    /* search list found */
-#define STS_NS_FOUND	    0x2		    /* name servers found */
+#define STS_NO_CONFIG       0x0             /* no configuration found */
+#define STS_SL_FOUND        0x1             /* search list found */
+#define STS_NS_FOUND        0x2             /* name servers found */
 
 #define IS_SL_FOUND(sts)    (sts & STS_SL_FOUND)
 #define IS_NS_FOUND(sts)    (sts & STS_NS_FOUND)
@@ -49,12 +49,12 @@
  */
 #ifndef MAX_ADAPTER_NAME_LENGTH
 
-#define MAX_ADAPTER_ADDRESS_LENGTH      8 
+#define MAX_ADAPTER_ADDRESS_LENGTH      8
 #define MAX_ADAPTER_DESCRIPTION_LENGTH  128
-#define MAX_ADAPTER_NAME_LENGTH         256 
-#define MAX_HOSTNAME_LEN                128 
-#define MAX_DOMAIN_NAME_LEN             128 
-#define MAX_SCOPE_ID_LEN                256 
+#define MAX_ADAPTER_NAME_LENGTH         256
+#define MAX_HOSTNAME_LEN                128
+#define MAX_DOMAIN_NAME_LEN             128
+#define MAX_SCOPE_ID_LEN                256
 
 typedef struct {
     char String[4 * 4];
@@ -87,7 +87,7 @@ typedef struct _IP_ADAPTER_INFO {
     time_t LeaseObtained;
     time_t LeaseExpires;
 } IP_ADAPTER_INFO, *PIP_ADAPTER_INFO;
-    
+
 typedef struct _FIXED_INFO {
     char HostName[MAX_HOSTNAME_LEN + 4] ;
     char DomainName[MAX_DOMAIN_NAME_LEN + 4];
@@ -124,23 +124,23 @@ static jfieldID nameserversID;
 
 /*
  * Utility routine to append s2 to s1 with a space delimiter.
- *  strappend(s1="abc", "def")	=> "abc def"
- *  strappend(s1="", "def")	=> "def
+ *  strappend(s1="abc", "def")  => "abc def"
+ *  strappend(s1="", "def")     => "def
  */
 void strappend(char *s1, char *s2) {
     int len;
 
-    if (s2[0] == '\0')			    /* nothing to append */
-	return;
-    
+    if (s2[0] == '\0')                      /* nothing to append */
+        return;
+
     len = strlen(s1)+1;
-    if (s1[0] != 0)			    /* needs space character */
-	len++;
-    if (len + strlen(s2) > MAX_STR_LEN)	    /* insufficient space */
-	return;
+    if (s1[0] != 0)                         /* needs space character */
+        len++;
+    if (len + strlen(s2) > MAX_STR_LEN)     /* insufficient space */
+        return;
 
     if (s1[0] != 0) {
-	strcat(s1, " ");
+        strcat(s1, " ");
     }
     strcat(s1, s2);
 }
@@ -150,7 +150,7 @@ void strappend(char *s1, char *s2) {
  * Windows 95/98/ME for static TCP/IP configuration.
  *
  * Use registry approach for statically configured TCP/IP settings.
- * Registry entries described in "MS TCP/IP and Windows 95 Networking" 
+ * Registry entries described in "MS TCP/IP and Windows 95 Networking"
  * (Microsoft TechNet site).
  */
 static int loadStaticConfig9x(char *sl, char *ns) {
@@ -158,52 +158,52 @@ static int loadStaticConfig9x(char *sl, char *ns) {
     HANDLE hKey;
     DWORD dwLen;
     ULONG ulType;
-    char result[MAX_STR_LEN];    
+    char result[MAX_STR_LEN];
     int index;
     int sts = STS_NO_CONFIG;
 
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
-		       "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 
-		       0, 
-		       KEY_READ, 
-		       (PHKEY)&hKey);
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                       "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP",
+                       0,
+                       KEY_READ,
+                       (PHKEY)&hKey);
     if (ret == ERROR_SUCCESS) {
-	/*
-	 * Determine suffix list
-	 */
-	result[0] = '\0';
-	dwLen = sizeof(result);
-	ret = RegQueryValueEx(hKey, "SearchList", NULL, &ulType,
-			      (LPBYTE)&result, &dwLen);
-	if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
-	    dwLen = sizeof(result);
-	    ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
-				 (LPBYTE)&result, &dwLen);
-	}
-	if (ret == ERROR_SUCCESS) {
-	    assert(ulType == REG_SZ);
-	    if (strlen(result) > 0) {
-		strappend(sl, result);
-		sts |= STS_SL_FOUND;
-	    }
-	}
+        /*
+         * Determine suffix list
+         */
+        result[0] = '\0';
+        dwLen = sizeof(result);
+        ret = RegQueryValueEx(hKey, "SearchList", NULL, &ulType,
+                              (LPBYTE)&result, &dwLen);
+        if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
+            dwLen = sizeof(result);
+            ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
+                                 (LPBYTE)&result, &dwLen);
+        }
+        if (ret == ERROR_SUCCESS) {
+            assert(ulType == REG_SZ);
+            if (strlen(result) > 0) {
+                strappend(sl, result);
+                sts |= STS_SL_FOUND;
+            }
+        }
 
-	/* 
-	 * Determine DNS name server(s)
-	 */
-	result[0] = '\0';
-	dwLen = sizeof(result);
-	ret = RegQueryValueEx(hKey, "NameServer", NULL, &ulType,
-			      (LPBYTE)&result, &dwLen);
-	if (ret == ERROR_SUCCESS) {
-	    assert(ulType == REG_SZ);
-	    if (strlen(result) > 0) {		
-		strappend(ns, result);
-		sts |= STS_NS_FOUND;
-	    }
-	}
+        /*
+         * Determine DNS name server(s)
+         */
+        result[0] = '\0';
+        dwLen = sizeof(result);
+        ret = RegQueryValueEx(hKey, "NameServer", NULL, &ulType,
+                              (LPBYTE)&result, &dwLen);
+        if (ret == ERROR_SUCCESS) {
+            assert(ulType == REG_SZ);
+            if (strlen(result) > 0) {
+                strappend(ns, result);
+                sts |= STS_NS_FOUND;
+            }
+        }
 
-	RegCloseKey(hKey);
+        RegCloseKey(hKey);
     }
 
     return sts;
@@ -211,7 +211,7 @@ static int loadStaticConfig9x(char *sl, char *ns) {
 
 
 /*
- * Windows 95 
+ * Windows 95
  *
  * Use registry approach for statically configured TCP/IP settings
  * (see loadStaticConfig9x).
@@ -222,7 +222,7 @@ static int loadStaticConfig9x(char *sl, char *ns) {
  * If Dial-up Networking (DUN) is used then this TCP/IP settings cannot
  * be determined here.
  */
-static int loadConfig95(char *sl, char *ns) {      
+static int loadConfig95(char *sl, char *ns) {
     int sts;
     int index;
     LONG ret;
@@ -234,9 +234,9 @@ static int loadConfig95(char *sl, char *ns) {
     /*
      * First try static configuration - if found we are done.
      */
-    sts = loadStaticConfig9x(sl, ns);   
+    sts = loadStaticConfig9x(sl, ns);
     if (IS_SL_FOUND(sts) && IS_NS_FOUND(sts)) {
-	return sts;
+        return sts;
     }
 
     /*
@@ -245,96 +245,96 @@ static int loadConfig95(char *sl, char *ns) {
      *
      * The key is normally DhcpInfo00\OptionInfo (see Article Q255245 on
      * Microsoft site). However when multiple cards are added & removed we
-     * have observed that it can be located in DhcpInfo{01,02, ...}. 
+     * have observed that it can be located in DhcpInfo{01,02, ...}.
      * As a hack we search all DhcpInfoXX keys until we find OptionInfo.
      */
     for (index=0; index<99; index++) {
-	char key[MAX_STR_LEN];
-	sprintf(key, "SYSTEM\\CurrentControlSet\\Services\\VxD\\DHCP\\DhcpInfo%02d", 
-		index);
+        char key[MAX_STR_LEN];
+        sprintf(key, "SYSTEM\\CurrentControlSet\\Services\\VxD\\DHCP\\DhcpInfo%02d",
+                index);
 
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, (PHKEY)&hKey);
-	if (ret != ERROR_SUCCESS) {
-	    /* end of DhcpInfoXX entries */
-	    break;
-	}
+        ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, (PHKEY)&hKey);
+        if (ret != ERROR_SUCCESS) {
+            /* end of DhcpInfoXX entries */
+            break;
+        }
 
-	dwLen = sizeof(optionInfo);
-	ret = RegQueryValueEx(hKey, "OptionInfo",  NULL, &ulType,
-			      (LPBYTE)optionInfo, &dwLen);
-	RegCloseKey(hKey);
+        dwLen = sizeof(optionInfo);
+        ret = RegQueryValueEx(hKey, "OptionInfo",  NULL, &ulType,
+                              (LPBYTE)optionInfo, &dwLen);
+        RegCloseKey(hKey);
 
-	if (ret == ERROR_SUCCESS) {	
-	    /* OptionInfo found */
-	    break;
-	}
+        if (ret == ERROR_SUCCESS) {
+            /* OptionInfo found */
+            break;
+        }
     }
 
     /*
      * If OptionInfo was found then we parse (as the 'options' field of
      * the DHCP packet - see RFC 2132).
      */
-    if (ret == ERROR_SUCCESS) {	
-	int pos = 0;
+    if (ret == ERROR_SUCCESS) {
+        int pos = 0;
 
-	while (pos < dwLen) {
-	    int code, len;
-	    
-	    code = optionInfo[pos];
-	    pos++;
-	    if (pos >= dwLen) break;	/* bad packet */
+        while (pos < dwLen) {
+            int code, len;
 
-	    len = optionInfo[pos];
-	    pos++;
+            code = optionInfo[pos];
+            pos++;
+            if (pos >= dwLen) break;    /* bad packet */
 
-	    if (pos+len > dwLen) break;	/* bad packet */
+            len = optionInfo[pos];
+            pos++;
 
-	    /* 
-	     * Domain Name - see RFC 2132 section 3.17
-	     */
-	    if (!IS_SL_FOUND(sts)) {
-		if (code == 0xf) {
-		    char domain[MAX_STR_LEN];
+            if (pos+len > dwLen) break; /* bad packet */
 
-		    assert(len < MAX_STR_LEN);
+            /*
+             * Domain Name - see RFC 2132 section 3.17
+             */
+            if (!IS_SL_FOUND(sts)) {
+                if (code == 0xf) {
+                    char domain[MAX_STR_LEN];
 
-		    memcpy((void *)domain, (void *)&(optionInfo[pos]), (size_t)len);
-		    domain[len] = '\0';
+                    assert(len < MAX_STR_LEN);
 
-		    strappend(sl, domain);
-		    sts |= STS_SL_FOUND;
-		}
-	    }
+                    memcpy((void *)domain, (void *)&(optionInfo[pos]), (size_t)len);
+                    domain[len] = '\0';
 
-	    /* 
-	     * DNS Option - see RFC 2132 section 3.8
-	     */
-	    if (!IS_NS_FOUND(sts)) {
-		if (code == 6 && (len % 4) == 0) {
-		    while (len > 0 && pos < dwLen) {
-			char addr[32];
-			sprintf(addr, "%d.%d.%d.%d",
-			       (unsigned char)optionInfo[pos],
-			       (unsigned char)optionInfo[pos+1],
-			       (unsigned char)optionInfo[pos+2],
-			       (unsigned char)optionInfo[pos+3]);
-			pos += 4;
-			len -= 4;
+                    strappend(sl, domain);
+                    sts |= STS_SL_FOUND;
+                }
+            }
 
-			/*
-			 * Append to list of name servers
-			 */
-			strappend(ns, addr);
-			sts |= STS_NS_FOUND;
-		    }
-		} 
-	    }		
-	    
-	    /*
-	     * Onto the next options
-	     */
-	    pos += len;
-	}
+            /*
+             * DNS Option - see RFC 2132 section 3.8
+             */
+            if (!IS_NS_FOUND(sts)) {
+                if (code == 6 && (len % 4) == 0) {
+                    while (len > 0 && pos < dwLen) {
+                        char addr[32];
+                        sprintf(addr, "%d.%d.%d.%d",
+                               (unsigned char)optionInfo[pos],
+                               (unsigned char)optionInfo[pos+1],
+                               (unsigned char)optionInfo[pos+2],
+                               (unsigned char)optionInfo[pos+3]);
+                        pos += 4;
+                        len -= 4;
+
+                        /*
+                         * Append to list of name servers
+                         */
+                        strappend(ns, addr);
+                        sts |= STS_NS_FOUND;
+                    }
+                }
+            }
+
+            /*
+             * Onto the next options
+             */
+            pos += len;
+        }
     }
 
     return sts;
@@ -352,18 +352,18 @@ static int loadConfig95(char *sl, char *ns) {
  * preference to GetNetworkParams as the domain name is not populated
  * by GetNetworkParams if the configuration is static.
  */
-static int loadConfig98(char *sl, char *ns) {      
+static int loadConfig98(char *sl, char *ns) {
     FIXED_INFO *infoP;
     ULONG size;
-    DWORD ret; 
+    DWORD ret;
     int sts;
 
     /*
      * Use registry approach to pick up static configuation.
      */
-    sts = loadStaticConfig9x(sl, ns);   
+    sts = loadStaticConfig9x(sl, ns);
     if (IS_SL_FOUND(sts) && IS_NS_FOUND(sts)) {
-	return sts;
+        return sts;
     }
 
     /*
@@ -373,36 +373,36 @@ static int loadConfig98(char *sl, char *ns) {
     size = sizeof(FIXED_INFO);
     infoP = (FIXED_INFO *)malloc(size);
     if (infoP) {
-	ret = (*GetNetworkParams_fn)(infoP, &size);
-	if (ret == ERROR_BUFFER_OVERFLOW) {
-	    infoP = (FIXED_INFO *)realloc(infoP, size);
-	    if (infoP != NULL) 
-		ret = (*GetNetworkParams_fn)(infoP, &size);
-	}
+        ret = (*GetNetworkParams_fn)(infoP, &size);
+        if (ret == ERROR_BUFFER_OVERFLOW) {
+            infoP = (FIXED_INFO *)realloc(infoP, size);
+            if (infoP != NULL)
+                ret = (*GetNetworkParams_fn)(infoP, &size);
+        }
     }
     if (infoP == NULL) {
-	return sts;
+        return sts;
     }
     if (ret == ERROR_SUCCESS) {
-	/*
-	 * Use DomainName if search-list not specified.
-	 */
-	if (!IS_SL_FOUND(sts)) {	    
-	    strappend(sl, infoP->DomainName);
-	    sts |= STS_SL_FOUND;
-	}
+        /*
+         * Use DomainName if search-list not specified.
+         */
+        if (!IS_SL_FOUND(sts)) {
+            strappend(sl, infoP->DomainName);
+            sts |= STS_SL_FOUND;
+        }
 
-	/*
-	 * Use DnsServerList if not statically configured.
-	 */
-	if (!IS_NS_FOUND(sts)) {
-	    PIP_ADDR_STRING dnsP = &(infoP->DnsServerList);
-	    do {
-		strappend(ns, (char *)&(dnsP->IpAddress));
-		dnsP = dnsP->Next;
-	    } while (dnsP != NULL);
-	    sts |= STS_NS_FOUND;
-	}	
+        /*
+         * Use DnsServerList if not statically configured.
+         */
+        if (!IS_NS_FOUND(sts)) {
+            PIP_ADDR_STRING dnsP = &(infoP->DnsServerList);
+            do {
+                strappend(ns, (char *)&(dnsP->IpAddress));
+                dnsP = dnsP->Next;
+            } while (dnsP != NULL);
+            sts |= STS_NS_FOUND;
+        }
     }
 
     free(infoP);
@@ -410,7 +410,7 @@ static int loadConfig98(char *sl, char *ns) {
     return sts;
 }
 
-	
+
 /*
  * Windows NT
  *
@@ -433,44 +433,44 @@ static int loadConfigNT(char *sl, char *ns) {
     HANDLE hKey;
     DWORD dwLen;
     ULONG ulType;
-    char result[MAX_STR_LEN];    
+    char result[MAX_STR_LEN];
     int sts = STS_NO_CONFIG;
 
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
-		       "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters",
-		       0, 
-		       KEY_READ, 
-		       (PHKEY)&hKey);
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                       "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                       0,
+                       KEY_READ,
+                       (PHKEY)&hKey);
     if (ret != ERROR_SUCCESS) {
-	return sts;
+        return sts;
     }
 
     /*
-     * Determine search list 
+     * Determine search list
      */
     result[0] = '\0';
     dwLen = sizeof(result);
     ret = RegQueryValueEx(hKey, "SearchList", NULL, &ulType,
                           (LPBYTE)&result, &dwLen);
     if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
-	dwLen = sizeof(result);
-	ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
+        dwLen = sizeof(result);
+        ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
                              (LPBYTE)&result, &dwLen);
-	if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
-	    dwLen = sizeof(result);
-	    ret = RegQueryValueEx(hKey, "DhcpDomain", NULL, &ulType,
-				 (LPBYTE)&result, &dwLen);
-	}
+        if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
+            dwLen = sizeof(result);
+            ret = RegQueryValueEx(hKey, "DhcpDomain", NULL, &ulType,
+                                 (LPBYTE)&result, &dwLen);
+        }
     }
     if (ret == ERROR_SUCCESS) {
-	assert(ulType == REG_SZ);
-	if (strlen(result) > 0) {
-	    strappend(sl, result);
-	    sts |= STS_SL_FOUND;
-	}
+        assert(ulType == REG_SZ);
+        if (strlen(result) > 0) {
+            strappend(sl, result);
+            sts |= STS_SL_FOUND;
+        }
     }
 
-    /* 
+    /*
      * Determine DNS name server(s)
      */
     result[0] = '\0';
@@ -478,16 +478,16 @@ static int loadConfigNT(char *sl, char *ns) {
     ret = RegQueryValueEx(hKey, "NameServer", NULL, &ulType,
                           (LPBYTE)&result, &dwLen);
     if ((ret != ERROR_SUCCESS) || (strlen(result) == 0)) {
-	dwLen = sizeof(result);
-	ret = RegQueryValueEx(hKey, "DhcpNameServer", NULL, &ulType,
+        dwLen = sizeof(result);
+        ret = RegQueryValueEx(hKey, "DhcpNameServer", NULL, &ulType,
                               (LPBYTE)&result, &dwLen);
     }
     if (ret == ERROR_SUCCESS) {
-	assert(ulType == REG_SZ);
-	if (strlen(result) > 0) {
-	    strappend(ns, result);
-	    sts |= STS_NS_FOUND;
-	}
+        assert(ulType == REG_SZ);
+        if (strlen(result) > 0) {
+            strappend(ns, result);
+            sts |= STS_NS_FOUND;
+        }
     }
 
     RegCloseKey(hKey);
@@ -497,21 +497,21 @@ static int loadConfigNT(char *sl, char *ns) {
 
 
 /*
- * Windows 2000/XP 
+ * Windows 2000/XP
  *
  * Use registry approach based on settings described in Appendix C
  * of "Microsoft Windows 2000 TCP/IP Implementation Details".
  *
  * DNS suffix list is obtained from SearchList registry setting. If
- * this is not specified we compile suffix list based on the 
+ * this is not specified we compile suffix list based on the
  * per-connection domain suffix.
  *
  * DNS name servers and domain settings are on a per-connection
- * basic. We therefore enumerate the network adapters to get the 
+ * basic. We therefore enumerate the network adapters to get the
  * names of each adapter and then query the corresponding registry
  * settings to obtain NameServer/DhcpNameServer and Domain/DhcpDomain.
  */
-static int loadConfig2000(char *sl, char *ns) {  
+static int loadConfig2000(char *sl, char *ns) {
     IP_ADAPTER_INFO *adapterP;
     ULONG size;
     DWORD ret;
@@ -522,25 +522,25 @@ static int loadConfig2000(char *sl, char *ns) {
     int gotSearchList = 0;
 
     /*
-     * First see if there is a global suffix list specified. 
+     * First see if there is a global suffix list specified.
      */
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
-		       "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters",
-		       0, 
-		       KEY_READ, 
-		       (PHKEY)&hKey);
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                       "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                       0,
+                       KEY_READ,
+                       (PHKEY)&hKey);
     if (ret == ERROR_SUCCESS) {
-	dwLen = sizeof(result);
-	ret = RegQueryValueEx(hKey, "SearchList", NULL, &ulType,
-			     (LPBYTE)&result, &dwLen);
-	if (ret == ERROR_SUCCESS) {	    
-	    assert(ulType == REG_SZ);
-	    if (strlen(result) > 0) {
-		strappend(sl, result);
-		gotSearchList = 1;
-	    }
-	}
-	RegCloseKey(hKey);
+        dwLen = sizeof(result);
+        ret = RegQueryValueEx(hKey, "SearchList", NULL, &ulType,
+                             (LPBYTE)&result, &dwLen);
+        if (ret == ERROR_SUCCESS) {
+            assert(ulType == REG_SZ);
+            if (strlen(result) > 0) {
+                strappend(sl, result);
+                gotSearchList = 1;
+            }
+        }
+        RegCloseKey(hKey);
     }
 
     /*
@@ -550,8 +550,8 @@ static int loadConfig2000(char *sl, char *ns) {
     adapterP = (IP_ADAPTER_INFO *)malloc(size);
     ret = (*GetAdaptersInfo_fn)(adapterP, &size);
     if (ret == ERROR_BUFFER_OVERFLOW) {
-	adapterP = (IP_ADAPTER_INFO *)realloc(adapterP, size);
-	ret = (*GetAdaptersInfo_fn)(adapterP, &size);
+        adapterP = (IP_ADAPTER_INFO *)realloc(adapterP, size);
+        ret = (*GetAdaptersInfo_fn)(adapterP, &size);
     }
 
     /*
@@ -559,89 +559,89 @@ static int loadConfig2000(char *sl, char *ns) {
      * keyed on the adapter name (GUID).
      */
     if (ret == ERROR_SUCCESS) {
-	IP_ADAPTER_INFO *curr = adapterP;
-	while (curr != NULL) {
-	    char key[MAX_STR_LEN];
-	   
-	    sprintf(key, 
-	        "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\%s",
-		curr->AdapterName);
+        IP_ADAPTER_INFO *curr = adapterP;
+        while (curr != NULL) {
+            char key[MAX_STR_LEN];
 
-	    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
-			       key,
-			       0, 
-			       KEY_READ, 
-			       (PHKEY)&hKey);
-	    if (ret == ERROR_SUCCESS) {		  
-		DWORD enableDhcp = 0;
+            sprintf(key,
+                "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\%s",
+                curr->AdapterName);
 
-		/* 
-		 * Is DHCP enabled on this interface
-		 */
-		dwLen = sizeof(enableDhcp);
-		ret = RegQueryValueEx(hKey, "EnableDhcp", NULL, &ulType,
-				     (LPBYTE)&enableDhcp, &dwLen);
-		
-		/*
-		 * If we don't have the suffix list when get the Domain
-		 * or DhcpDomain. If DHCP is enabled then Domain overides
-		 * DhcpDomain
-		 */
-		if (!gotSearchList) {
-		    result[0] = '\0';
-		    dwLen = sizeof(result);
-		    ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
-					 (LPBYTE)&result, &dwLen);
-		    if (((ret != ERROR_SUCCESS) || (strlen(result) == 0)) &&
-			enableDhcp) {
-			dwLen = sizeof(result);
-			ret = RegQueryValueEx(hKey, "DhcpDomain", NULL, &ulType,
-					      (LPBYTE)&result, &dwLen);	
-		    }	
-		    if (ret == ERROR_SUCCESS) {
-			assert(ulType == REG_SZ);
-			strappend(sl, result);
-		    }
-		}
-		
-		/*
-		 * Get DNS servers based on NameServer or DhcpNameServer
-		 * registry setting. If NameServer is set then it overrides
-		 * DhcpNameServer (even if DHCP is enabled).
-		 */
-		result[0] = '\0';
-		dwLen = sizeof(result);
-		ret = RegQueryValueEx(hKey, "NameServer", NULL, &ulType,
-				     (LPBYTE)&result, &dwLen);
-		if (((ret != ERROR_SUCCESS) || (strlen(result) == 0)) &&
-		    enableDhcp) {
-		    dwLen = sizeof(result);
-		    ret = RegQueryValueEx(hKey, "DhcpNameServer", NULL, &ulType,
-				          (LPBYTE)&result, &dwLen);	
-		} 
-		if (ret == ERROR_SUCCESS) {
-		    assert(ulType == REG_SZ);
-		    strappend(ns, result);
-		}
+            ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                               key,
+                               0,
+                               KEY_READ,
+                               (PHKEY)&hKey);
+            if (ret == ERROR_SUCCESS) {
+                DWORD enableDhcp = 0;
 
-		/*
-		 * Finished with this registry key
-		 */
-		RegCloseKey(hKey);
-	    }
+                /*
+                 * Is DHCP enabled on this interface
+                 */
+                dwLen = sizeof(enableDhcp);
+                ret = RegQueryValueEx(hKey, "EnableDhcp", NULL, &ulType,
+                                     (LPBYTE)&enableDhcp, &dwLen);
 
-	    /*
-	     * Onto the next adapeter
-	     */
-	    curr = curr->Next;
-	}
+                /*
+                 * If we don't have the suffix list when get the Domain
+                 * or DhcpDomain. If DHCP is enabled then Domain overides
+                 * DhcpDomain
+                 */
+                if (!gotSearchList) {
+                    result[0] = '\0';
+                    dwLen = sizeof(result);
+                    ret = RegQueryValueEx(hKey, "Domain", NULL, &ulType,
+                                         (LPBYTE)&result, &dwLen);
+                    if (((ret != ERROR_SUCCESS) || (strlen(result) == 0)) &&
+                        enableDhcp) {
+                        dwLen = sizeof(result);
+                        ret = RegQueryValueEx(hKey, "DhcpDomain", NULL, &ulType,
+                                              (LPBYTE)&result, &dwLen);
+                    }
+                    if (ret == ERROR_SUCCESS) {
+                        assert(ulType == REG_SZ);
+                        strappend(sl, result);
+                    }
+                }
+
+                /*
+                 * Get DNS servers based on NameServer or DhcpNameServer
+                 * registry setting. If NameServer is set then it overrides
+                 * DhcpNameServer (even if DHCP is enabled).
+                 */
+                result[0] = '\0';
+                dwLen = sizeof(result);
+                ret = RegQueryValueEx(hKey, "NameServer", NULL, &ulType,
+                                     (LPBYTE)&result, &dwLen);
+                if (((ret != ERROR_SUCCESS) || (strlen(result) == 0)) &&
+                    enableDhcp) {
+                    dwLen = sizeof(result);
+                    ret = RegQueryValueEx(hKey, "DhcpNameServer", NULL, &ulType,
+                                          (LPBYTE)&result, &dwLen);
+                }
+                if (ret == ERROR_SUCCESS) {
+                    assert(ulType == REG_SZ);
+                    strappend(ns, result);
+                }
+
+                /*
+                 * Finished with this registry key
+                 */
+                RegCloseKey(hKey);
+            }
+
+            /*
+             * Onto the next adapeter
+             */
+            curr = curr->Next;
+        }
     }
 
     /*
      * Free the adpater structure
      */
     if (adapterP) {
-	free(adapterP);
+        free(adapterP);
     }
 
     return STS_SL_FOUND & STS_NS_FOUND;
@@ -650,7 +650,7 @@ static int loadConfig2000(char *sl, char *ns) {
 
 /*
  * Initialization :-
- * 
+ *
  * 1. Based on OS version set the function pointer for OS specific load
  *    configuration routine.
  *
@@ -660,75 +660,75 @@ static int loadConfig2000(char *sl, char *ns) {
  *
  */
 JNIEXPORT void JNICALL
-Java_sun_net_dns_ResolverConfigurationImpl_init0(JNIEnv *env, jclass cls) 
+Java_sun_net_dns_ResolverConfigurationImpl_init0(JNIEnv *env, jclass cls)
 {
     OSVERSIONINFO ver;
     jboolean loadHelperLibrary = JNI_TRUE;
 
-    /* 
+    /*
      * First we figure out which OS is running
      */
     ver.dwOSVersionInfoSize = sizeof(ver);
     GetVersionEx(&ver);
 
     if (ver.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-	if ((ver.dwMajorVersion == 4) && (ver.dwMinorVersion == 0)) {	
-	    /*
-	     * Windows 95
-	     */
-	    loadHelperLibrary = JNI_FALSE;
-	    loadconfig_fn = loadConfig95;
-	} else {
-	    /*
-	     * Windows 98/ME
-	     */
-	    loadHelperLibrary = JNI_TRUE;
-	    loadconfig_fn = loadConfig98;
-	}
+        if ((ver.dwMajorVersion == 4) && (ver.dwMinorVersion == 0)) {
+            /*
+             * Windows 95
+             */
+            loadHelperLibrary = JNI_FALSE;
+            loadconfig_fn = loadConfig95;
+        } else {
+            /*
+             * Windows 98/ME
+             */
+            loadHelperLibrary = JNI_TRUE;
+            loadconfig_fn = loadConfig98;
+        }
     }
 
     if (ver.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-	if (ver.dwMajorVersion <= 4) {
-	    /*
-	     * Windows NT
-	     */
-	    loadHelperLibrary = JNI_FALSE;
-	    loadconfig_fn = loadConfigNT;
-	} else {
-	    /*
-	     * Windows 2000/XP
-	     */
-	    loadHelperLibrary = JNI_TRUE;
-	    loadconfig_fn = loadConfig2000;
-	}
+        if (ver.dwMajorVersion <= 4) {
+            /*
+             * Windows NT
+             */
+            loadHelperLibrary = JNI_FALSE;
+            loadconfig_fn = loadConfigNT;
+        } else {
+            /*
+             * Windows 2000/XP
+             */
+            loadHelperLibrary = JNI_TRUE;
+            loadconfig_fn = loadConfig2000;
+        }
     }
 
-    /*		
-     * On 98/2000/XP we load the IP Helper Library. 
+    /*
+     * On 98/2000/XP we load the IP Helper Library.
      */
     if (loadHelperLibrary) {
         HANDLE h = LoadLibrary("iphlpapi.dll");
 
-	if (h != NULL) {
-	    GetNetworkParams_fn = (int (PASCAL FAR *)())GetProcAddress(h, "GetNetworkParams");
-	    GetAdaptersInfo_fn = (int (PASCAL FAR *)())GetProcAddress(h, "GetAdaptersInfo");
+        if (h != NULL) {
+            GetNetworkParams_fn = (int (PASCAL FAR *)())GetProcAddress(h, "GetNetworkParams");
+            GetAdaptersInfo_fn = (int (PASCAL FAR *)())GetProcAddress(h, "GetAdaptersInfo");
 
-	    NotifyAddrChange_fn = (int (PASCAL FAR *)())GetProcAddress(h, "NotifyAddrChange");
-	}
+            NotifyAddrChange_fn = (int (PASCAL FAR *)())GetProcAddress(h, "NotifyAddrChange");
+        }
 
-	if (GetNetworkParams_fn == NULL || GetAdaptersInfo_fn == NULL) {
-	    JNU_ThrowByName(env, "java/lang/UnsatisfiedLinkError", "iphlpapi.dll");
-	    return;
-	}	
+        if (GetNetworkParams_fn == NULL || GetAdaptersInfo_fn == NULL) {
+            JNU_ThrowByName(env, "java/lang/UnsatisfiedLinkError", "iphlpapi.dll");
+            return;
+        }
     }
 
     /*
      * Get JNI ids
      */
-    searchlistID = (*env)->GetStaticFieldID(env, cls, "os_searchlist", 
-				      "Ljava/lang/String;");
-    nameserversID = (*env)->GetStaticFieldID(env, cls, "os_nameservers", 
-				      "Ljava/lang/String;");
+    searchlistID = (*env)->GetStaticFieldID(env, cls, "os_searchlist",
+                                      "Ljava/lang/String;");
+    nameserversID = (*env)->GetStaticFieldID(env, cls, "os_nameservers",
+                                      "Ljava/lang/String;");
 
 }
 
@@ -738,7 +738,7 @@ Java_sun_net_dns_ResolverConfigurationImpl_init0(JNIEnv *env, jclass cls)
  * Signature: ()V
  */
 JNIEXPORT void JNICALL
-Java_sun_net_dns_ResolverConfigurationImpl_loadDNSconfig0(JNIEnv *env, jclass cls) 
+Java_sun_net_dns_ResolverConfigurationImpl_loadDNSconfig0(JNIEnv *env, jclass cls)
 {
     char searchlist[MAX_STR_LEN];
     char nameservers[MAX_STR_LEN];
@@ -767,21 +767,21 @@ Java_sun_net_dns_ResolverConfigurationImpl_loadDNSconfig0(JNIEnv *env, jclass cl
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL
-Java_sun_net_dns_ResolverConfigurationImpl_notifyAddrChange0(JNIEnv *env, jclass cls) 
+Java_sun_net_dns_ResolverConfigurationImpl_notifyAddrChange0(JNIEnv *env, jclass cls)
 {
     OVERLAPPED ol;
     HANDLE h;
     DWORD rc, xfer;
 
     if (NotifyAddrChange_fn != NULL) {
-	ol.hEvent = (HANDLE)0;
-	rc = (*NotifyAddrChange_fn)(&h, &ol);
-	if (rc == ERROR_IO_PENDING) {
-	    rc = GetOverlappedResult(h, &ol, &xfer, TRUE);
-	    if (rc != 0) {
-		return 0;   /* address changed */
-	    }
-	}
+        ol.hEvent = (HANDLE)0;
+        rc = (*NotifyAddrChange_fn)(&h, &ol);
+        if (rc == ERROR_IO_PENDING) {
+            rc = GetOverlappedResult(h, &ol, &xfer, TRUE);
+            if (rc != 0) {
+                return 0;   /* address changed */
+            }
+        }
     }
 
     /* NotifyAddrChange not support or error */

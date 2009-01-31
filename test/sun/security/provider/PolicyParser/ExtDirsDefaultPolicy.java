@@ -25,35 +25,35 @@
  * @test
  * @bug 4993819
  * @summary standard extensions path is hard-coded in default
- *	system policy file
+ *      system policy file
  * @ignore run this by hand
  *
- *	java	-Djava.security.manager \
- *		-Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
- *		-Djava.security.debug=parser \
- *		ExtDirsDefaultPolicy
+ *      java    -Djava.security.manager \
+ *              -Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
+ *              -Djava.security.debug=parser \
+ *              ExtDirsDefaultPolicy
  *
  * To test other varients of the ${{java.ext.dirs}} protocol, remove
  * the grant statement for java.ext.dirs in $JAVA_HOME/lib/security/java.policy
  * and then run against the 3 different policy files.
  *
- *	java	-Djava.security.manager \
- *		-Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
- *		-Djava.security.debug=parser \
+ *      java    -Djava.security.manager \
+ *              -Djava.ext.dirs=./ExtDirsA:./ExtDirsB \
+ *              -Djava.security.debug=parser \
  *              -Djava.security.policy=ExtDirs{1,2,3}.policy \
- *		ExtDirsDefaultPolicy
+ *              ExtDirsDefaultPolicy
  */
 
 public class ExtDirsDefaultPolicy {
     public static void main(String args[]) throws Exception {
-	try {
-	    ExtDirsA a = new ExtDirsA();
-	    a.go();
-	    System.out.println("Test Succeeded");
-	} catch (SecurityException se) {
-	    se.printStackTrace();
-	    System.out.println("Test Failed");
-	    throw se;
-	}
+        try {
+            ExtDirsA a = new ExtDirsA();
+            a.go();
+            System.out.println("Test Succeeded");
+        } catch (SecurityException se) {
+            se.printStackTrace();
+            System.out.println("Test Failed");
+            throw se;
+        }
     }
 }

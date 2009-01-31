@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package javax.swing.plaf.synth;
 
 
@@ -37,7 +37,6 @@ import java.io.Serializable;
 /**
  * Synth's CheckBoxMenuItemUI.
  *
- * @version %I% %G%
  * @author Leif Samuelsson
  * @author Georges Saab
  * @author David Karlton
@@ -50,11 +49,11 @@ class SynthCheckBoxMenuItemUI extends SynthMenuItemUI {
     }
 
     protected String getPropertyPrefix() {
-	return "CheckBoxMenuItem";
+        return "CheckBoxMenuItem";
     }
 
     public void processMouseEvent(JMenuItem item, MouseEvent e,
-				  MenuElement path[], MenuSelectionManager manager) {
+                                  MenuElement path[], MenuSelectionManager manager) {
         Point p = e.getPoint();
         if (p.x >= 0 && p.x < item.getWidth() && p.y >= 0 && p.y < item.getHeight()) {
             if (e.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -62,13 +61,13 @@ class SynthCheckBoxMenuItemUI extends SynthMenuItemUI {
                 item.doClick(0);
             } else {
                 manager.setSelectedPath(path);
-	    }
+            }
         } else if (item.getModel().isArmed()) {
-	    int c = path.length - 1;
+            int c = path.length - 1;
             MenuElement newPath[] = new MenuElement[c];
             for (int i = 0; i < c; i++) {
                 newPath[i] = path[i];
-	    }
+            }
             manager.setSelectedPath(newPath);
         }
     }

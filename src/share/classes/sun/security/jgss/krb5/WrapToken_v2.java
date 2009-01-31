@@ -37,24 +37,23 @@ import sun.security.krb5.Confounder;
 import sun.security.krb5.KrbException;
 
 /**
- * This class represents the new format of GSS tokens, as specified in 
- * draft-ietf-krb-wg-gssapi-cfx-07.txt, emitted by the GSSContext.wrap() 
- * call. It is a MessageToken except that it also contains plaintext or 
- * encrypted data at the end. A WrapToken has certain other rules that are 
- * peculiar to it and different from a  MICToken, which is another type of 
- * MessageToken. All data in a WrapToken is prepended by a random counfounder 
- * of 16 bytes. Thus, all application data is replaced by 
+ * This class represents the new format of GSS tokens, as specified in
+ * draft-ietf-krb-wg-gssapi-cfx-07.txt, emitted by the GSSContext.wrap()
+ * call. It is a MessageToken except that it also contains plaintext or
+ * encrypted data at the end. A WrapToken has certain other rules that are
+ * peculiar to it and different from a  MICToken, which is another type of
+ * MessageToken. All data in a WrapToken is prepended by a random counfounder
+ * of 16 bytes. Thus, all application data is replaced by
  * (confounder || data || tokenHeader || checksum).
  *
  * @author Seema Malkani
- * @version %I%, %G%
  */
 class WrapToken_v2 extends MessageToken_v2 {
     /**
      * The size of the random confounder used in a WrapToken.
      */
     static final int CONFOUNDER_SIZE = 16;
-  
+
     /*
      * A token may come in either in an InputStream or as a
      * byte[]. Store a reference to it in either case and process
@@ -67,7 +66,7 @@ class WrapToken_v2 extends MessageToken_v2 {
     private byte[] tokenBytes = null;
     private int tokenOffset = 0;
     private int tokenLen = 0;
-    
+
     /*
      * Application data may come from an InputStream or from a
      * byte[]. However, it will always be stored and processed as a
@@ -78,17 +77,17 @@ class WrapToken_v2 extends MessageToken_v2 {
     private byte[] dataBytes = null;
     private int dataOffset = 0;
     private int dataLen = 0;
-    
-    // the len of the token data: 
-    //		(confounder || data || tokenHeader || checksum)
+
+    // the len of the token data:
+    //          (confounder || data || tokenHeader || checksum)
     private int dataSize = 0;
 
     // Accessed by CipherHelper
     byte[] confounder = null;
-    
+
     private boolean privacy = false;
     private boolean initiator = true;
-    
+
     /**
      * Constructs a WrapToken from token bytes obtained from the
      * peer.
@@ -102,35 +101,35 @@ class WrapToken_v2 extends MessageToken_v2 {
      * @throws GSSException if the token is defective
      */
     public WrapToken_v2(Krb5Context context,
-		     byte[] tokenBytes, int tokenOffset, int tokenLen,
-		     MessageProp prop)  throws GSSException {
+                     byte[] tokenBytes, int tokenOffset, int tokenLen,
+                     MessageProp prop)  throws GSSException {
 
-	// Just parse the MessageToken part first
-	super(Krb5Token.WRAP_ID_v2, context, 
-	      tokenBytes, tokenOffset, tokenLen, prop);
-	this.readTokenFromInputStream = false;
+        // Just parse the MessageToken part first
+        super(Krb5Token.WRAP_ID_v2, context,
+              tokenBytes, tokenOffset, tokenLen, prop);
+        this.readTokenFromInputStream = false;
 
-	// rotate token bytes as per RRC
-	byte[] new_tokenBytes = new byte[tokenLen];
-	if (rotate_left(tokenBytes, tokenOffset, new_tokenBytes, tokenLen)) {
-	    this.tokenBytes = new_tokenBytes;
-	    this.tokenOffset = 0;
-	} else {
-	    this.tokenBytes = tokenBytes;
-	    this.tokenOffset = tokenOffset;
-	}
+        // rotate token bytes as per RRC
+        byte[] new_tokenBytes = new byte[tokenLen];
+        if (rotate_left(tokenBytes, tokenOffset, new_tokenBytes, tokenLen)) {
+            this.tokenBytes = new_tokenBytes;
+            this.tokenOffset = 0;
+        } else {
+            this.tokenBytes = tokenBytes;
+            this.tokenOffset = tokenOffset;
+        }
 
-	// Will need the token bytes again when extracting data
-	this.tokenLen = tokenLen;
-	this.privacy = prop.getPrivacy();
+        // Will need the token bytes again when extracting data
+        this.tokenLen = tokenLen;
+        this.privacy = prop.getPrivacy();
 
-	dataSize = tokenLen - TOKEN_HEADER_SIZE;
+        dataSize = tokenLen - TOKEN_HEADER_SIZE;
 
-	// save initiator
-	this.initiator = context.isInitiator();
+        // save initiator
+        this.initiator = context.isInitiator();
 
     }
-    
+
     /**
      * Constructs a WrapToken from token bytes read on the fly from
      * an InputStream.
@@ -143,32 +142,32 @@ class WrapToken_v2 extends MessageToken_v2 {
      * a problem reading from the InputStream
      */
     public WrapToken_v2(Krb5Context context,
-		     InputStream is, MessageProp prop)
-	throws GSSException {
+                     InputStream is, MessageProp prop)
+        throws GSSException {
 
-	// Just parse the MessageToken part first
-	super(Krb5Token.WRAP_ID_v2, context, is, prop);
-	
-	// Will need the token bytes again when extracting data	
-	this.is = is;
-	this.privacy = prop.getPrivacy();
+        // Just parse the MessageToken part first
+        super(Krb5Token.WRAP_ID_v2, context, is, prop);
 
-	// get the token length
-	try {
-	    this.tokenLen = is.available();
-	} catch (IOException e) {
-	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
-				   getTokenName(getTokenId())
-				   + ": " + e.getMessage());
-	}
+        // Will need the token bytes again when extracting data
+        this.is = is;
+        this.privacy = prop.getPrivacy();
 
-	// data size
-	dataSize = tokenLen - TOKEN_HEADER_SIZE;
+        // get the token length
+        try {
+            this.tokenLen = is.available();
+        } catch (IOException e) {
+            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
+                                   getTokenName(getTokenId())
+                                   + ": " + e.getMessage());
+        }
 
-	// save initiator
-	this.initiator = context.isInitiator();
+        // data size
+        dataSize = tokenLen - TOKEN_HEADER_SIZE;
+
+        // save initiator
+        this.initiator = context.isInitiator();
     }
-    
+
     /**
      * Obtains the application data that was transmitted in this
      * WrapToken.
@@ -178,13 +177,13 @@ class WrapToken_v2 extends MessageToken_v2 {
      */
     public byte[] getData() throws GSSException {
 
-	byte[] temp = new byte[dataSize];
-	int len = getData(temp, 0);
-	// len obtained is after removing confounder, tokenHeader and HMAC 
+        byte[] temp = new byte[dataSize];
+        int len = getData(temp, 0);
+        // len obtained is after removing confounder, tokenHeader and HMAC
 
-	byte[] retVal = new byte[len];
-	System.arraycopy(temp, 0, retVal, 0, retVal.length);
-	return retVal;
+        byte[] retVal = new byte[len];
+        System.arraycopy(temp, 0, retVal, 0, retVal.length);
+        return retVal;
     }
 
     /**
@@ -198,22 +197,22 @@ class WrapToken_v2 extends MessageToken_v2 {
      * @throws GSSException if an error occurs while decrypting any
      * cipher text and checking for validity
      */
-    public int getData(byte[] dataBuf, int dataBufOffset) 
-	throws GSSException {
-	
-	if (readTokenFromInputStream)
-	    getDataFromStream(dataBuf, dataBufOffset);
-	else
-	    getDataFromBuffer(dataBuf, dataBufOffset);
+    public int getData(byte[] dataBuf, int dataBufOffset)
+        throws GSSException {
 
-	int retVal = 0;
-	if (privacy) {
-	    retVal = dataSize - confounder.length - 
-		TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
-	} else {
-	    retVal = dataSize - cipherHelper.getChecksumLength();
-	}
-	return retVal;
+        if (readTokenFromInputStream)
+            getDataFromStream(dataBuf, dataBufOffset);
+        else
+            getDataFromBuffer(dataBuf, dataBufOffset);
+
+        int retVal = 0;
+        if (privacy) {
+            retVal = dataSize - confounder.length -
+                TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
+        } else {
+            retVal = dataSize - cipherHelper.getChecksumLength();
+        }
+        return retVal;
     }
 
     /**
@@ -226,58 +225,58 @@ class WrapToken_v2 extends MessageToken_v2 {
      * @throws GSSException if an error occurs while decrypting any
      * cipher text and checking for validity
      */
-    private void getDataFromBuffer(byte[] dataBuf, int dataBufOffset) 
-	throws GSSException {
-	
-	int dataPos = tokenOffset + TOKEN_HEADER_SIZE;
-	int data_length = 0;
+    private void getDataFromBuffer(byte[] dataBuf, int dataBufOffset)
+        throws GSSException {
 
-	if (dataPos + dataSize > tokenOffset + tokenLen)
-	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
-				   "Insufficient data in " 
-				   + getTokenName(getTokenId()));
-	// debug("WrapToken cons: data is token is [" + 
-	//      getHexBytes(tokenBytes, tokenOffset, tokenLen) + "]\n");
-	confounder = new byte[CONFOUNDER_SIZE];
-	
-	// Do decryption if this token was privacy protected.
-	if (privacy) {
+        int dataPos = tokenOffset + TOKEN_HEADER_SIZE;
+        int data_length = 0;
 
-	    // decrypt data
-	    cipherHelper.decryptData(this, tokenBytes, dataPos, dataSize, 
-				dataBuf, dataBufOffset, getKeyUsage());
-	    /*
-	    debug("\t\tDecrypted data is [" + 
-		getHexBytes(confounder) + " " +
-		getHexBytes(dataBuf, dataBufOffset,
-		dataSize - CONFOUNDER_SIZE) +
-		"]\n");
-	    */
+        if (dataPos + dataSize > tokenOffset + tokenLen)
+            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
+                                   "Insufficient data in "
+                                   + getTokenName(getTokenId()));
+        // debug("WrapToken cons: data is token is [" +
+        //      getHexBytes(tokenBytes, tokenOffset, tokenLen) + "]\n");
+        confounder = new byte[CONFOUNDER_SIZE];
 
-	    data_length = dataSize - CONFOUNDER_SIZE - 
-			TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
-	} else {
+        // Do decryption if this token was privacy protected.
+        if (privacy) {
 
-	    // Token data is in cleartext
-	    debug("\t\tNo encryption was performed by peer.\n");
+            // decrypt data
+            cipherHelper.decryptData(this, tokenBytes, dataPos, dataSize,
+                                dataBuf, dataBufOffset, getKeyUsage());
+            /*
+            debug("\t\tDecrypted data is [" +
+                getHexBytes(confounder) + " " +
+                getHexBytes(dataBuf, dataBufOffset,
+                dataSize - CONFOUNDER_SIZE) +
+                "]\n");
+            */
 
-	    // data
-	    data_length = dataSize - cipherHelper.getChecksumLength();
-	    System.arraycopy(tokenBytes, dataPos,
-			     dataBuf, dataBufOffset, 
-			     data_length);
-	    // debug("\t\tData is: " + getHexBytes(dataBuf, data_length));
+            data_length = dataSize - CONFOUNDER_SIZE -
+                        TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
+        } else {
 
-	    /*
-	     * Make sure checksum is not corrupt
-	     */
-	    if (!verifySign(dataBuf, dataBufOffset, data_length)) {
-		throw new GSSException(GSSException.BAD_MIC, -1, 
+            // Token data is in cleartext
+            debug("\t\tNo encryption was performed by peer.\n");
+
+            // data
+            data_length = dataSize - cipherHelper.getChecksumLength();
+            System.arraycopy(tokenBytes, dataPos,
+                             dataBuf, dataBufOffset,
+                             data_length);
+            // debug("\t\tData is: " + getHexBytes(dataBuf, data_length));
+
+            /*
+             * Make sure checksum is not corrupt
+             */
+            if (!verifySign(dataBuf, dataBufOffset, data_length)) {
+                throw new GSSException(GSSException.BAD_MIC, -1,
                          "Corrupt checksum in Wrap token");
-	    }
-	}
+            }
+        }
     }
-    
+
     /**
      * Helper routine to obtain the application data transmitted in
      * this WrapToken. It is called if the WrapToken was constructed
@@ -288,204 +287,204 @@ class WrapToken_v2 extends MessageToken_v2 {
      * @throws GSSException if an error occurs while decrypting any
      * cipher text and checking for validity
      */
-    private void getDataFromStream(byte[] dataBuf, int dataBufOffset) 
-	throws GSSException {
+    private void getDataFromStream(byte[] dataBuf, int dataBufOffset)
+        throws GSSException {
 
-	int data_length = 0;	
-	// Don't check the token length. Data will be read on demand from
-	// the InputStream.
-	// debug("WrapToken cons: data will be read from InputStream.\n");
+        int data_length = 0;
+        // Don't check the token length. Data will be read on demand from
+        // the InputStream.
+        // debug("WrapToken cons: data will be read from InputStream.\n");
 
-	confounder = new byte[CONFOUNDER_SIZE];
-	
-	try {
-	    // Do decryption if this token was privacy protected.
-	    if (privacy) {
+        confounder = new byte[CONFOUNDER_SIZE];
 
-		cipherHelper.decryptData(this, is, dataSize, 
-		    dataBuf, dataBufOffset, getKeyUsage());
+        try {
+            // Do decryption if this token was privacy protected.
+            if (privacy) {
 
-		/*
-		debug("\t\tDecrypted data is [" + 
-		     getHexBytes(confounder) + " " +
-		     getHexBytes(dataBuf, dataBufOffset, 
-		  dataSize - CONFOUNDER_SIZE) +
-		     "]\n");
-		*/
-	        data_length = dataSize - CONFOUNDER_SIZE - 
-			TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
-	    } else {
+                cipherHelper.decryptData(this, is, dataSize,
+                    dataBuf, dataBufOffset, getKeyUsage());
 
-		// Token data is in cleartext
-		debug("\t\tNo encryption was performed by peer.\n");
-		readFully(is, confounder);
+                /*
+                debug("\t\tDecrypted data is [" +
+                     getHexBytes(confounder) + " " +
+                     getHexBytes(dataBuf, dataBufOffset,
+                  dataSize - CONFOUNDER_SIZE) +
+                     "]\n");
+                */
+                data_length = dataSize - CONFOUNDER_SIZE -
+                        TOKEN_HEADER_SIZE - cipherHelper.getChecksumLength();
+            } else {
 
-		// read the data 
-	        data_length = dataSize - cipherHelper.getChecksumLength();
-		readFully(is, dataBuf, dataBufOffset, data_length);
+                // Token data is in cleartext
+                debug("\t\tNo encryption was performed by peer.\n");
+                readFully(is, confounder);
 
-		/*
-		 * Make sure checksum is not corrupt
-		 */
-		if (!verifySign(dataBuf, dataBufOffset, data_length)) {
-		    throw new GSSException(GSSException.BAD_MIC, -1, 
+                // read the data
+                data_length = dataSize - cipherHelper.getChecksumLength();
+                readFully(is, dataBuf, dataBufOffset, data_length);
+
+                /*
+                 * Make sure checksum is not corrupt
+                 */
+                if (!verifySign(dataBuf, dataBufOffset, data_length)) {
+                    throw new GSSException(GSSException.BAD_MIC, -1,
                          "Corrupt checksum in Wrap token");
-	    	}
-	    }
-	} catch (IOException e) {
-	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1, 
-				   getTokenName(getTokenId()) 
-				   + ": " + e.getMessage());
-	}
-	
+                }
+            }
+        } catch (IOException e) {
+            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
+                                   getTokenName(getTokenId())
+                                   + ": " + e.getMessage());
+        }
+
     }
 
 
     public WrapToken_v2(Krb5Context context, MessageProp prop,
-		     byte[] dataBytes, int dataOffset, int dataLen)
-	throws GSSException {
-    
-	super(Krb5Token.WRAP_ID_v2, context);
+                     byte[] dataBytes, int dataOffset, int dataLen)
+        throws GSSException {
 
-	confounder = Confounder.bytes(CONFOUNDER_SIZE);
-	
-	dataSize = confounder.length + dataLen + TOKEN_HEADER_SIZE +
-			cipherHelper.getChecksumLength();
-	this.dataBytes = dataBytes;
-	this.dataOffset = dataOffset;
-	this.dataLen = dataLen;
+        super(Krb5Token.WRAP_ID_v2, context);
 
-	// save initiator
-	this.initiator = context.isInitiator();
+        confounder = Confounder.bytes(CONFOUNDER_SIZE);
 
-	// debug("\nWrapToken cons: data to wrap is [" + 
-	// getHexBytes(confounder) + " " +
-	// getHexBytes(dataBytes, dataOffset, dataLen) + "]\n");
+        dataSize = confounder.length + dataLen + TOKEN_HEADER_SIZE +
+                        cipherHelper.getChecksumLength();
+        this.dataBytes = dataBytes;
+        this.dataOffset = dataOffset;
+        this.dataLen = dataLen;
 
-	genSignAndSeqNumber(prop, 
-			    dataBytes, dataOffset, dataLen); 
+        // save initiator
+        this.initiator = context.isInitiator();
 
-	/*
-	 * If the application decides to ask for privacy when the context
-	 * did not negotiate for it, do not provide it. The peer might not
-	 * have support for it. The app will realize this with a call to
-	 * pop.getPrivacy() after wrap().
-	 */
-	if (!context.getConfState())
-	    prop.setPrivacy(false);
+        // debug("\nWrapToken cons: data to wrap is [" +
+        // getHexBytes(confounder) + " " +
+        // getHexBytes(dataBytes, dataOffset, dataLen) + "]\n");
 
-	privacy = prop.getPrivacy();
+        genSignAndSeqNumber(prop,
+                            dataBytes, dataOffset, dataLen);
+
+        /*
+         * If the application decides to ask for privacy when the context
+         * did not negotiate for it, do not provide it. The peer might not
+         * have support for it. The app will realize this with a call to
+         * pop.getPrivacy() after wrap().
+         */
+        if (!context.getConfState())
+            prop.setPrivacy(false);
+
+        privacy = prop.getPrivacy();
     }
 
     public void encode(OutputStream os) throws IOException, GSSException {
 
-	super.encode(os);
- 
+        super.encode(os);
+
         // debug("\n\nWriting data: [");
-	if (!privacy) {
+        if (!privacy) {
 
-	    // Wrap Tokens (without confidentiality) =
-	    // { 16 byte token_header | plaintext | 12-byte HMAC }
-	    // where HMAC is on { plaintext | token_header }
+            // Wrap Tokens (without confidentiality) =
+            // { 16 byte token_header | plaintext | 12-byte HMAC }
+            // where HMAC is on { plaintext | token_header }
 
-	    // calculate checksum
-	    byte[] checksum = getChecksum(dataBytes, dataOffset, dataLen);
+            // calculate checksum
+            byte[] checksum = getChecksum(dataBytes, dataOffset, dataLen);
 
-	    // data 
-	    // debug(" " + getHexBytes(dataBytes, dataOffset, dataLen));
-	    os.write(dataBytes, dataOffset, dataLen);
-	    
-	    // write HMAC
-	    // debug(" " + getHexBytes(checksum, 
-	    //			cipherHelper.getChecksumLength()));
-	    os.write(checksum);
+            // data
+            // debug(" " + getHexBytes(dataBytes, dataOffset, dataLen));
+            os.write(dataBytes, dataOffset, dataLen);
 
-	} else {
+            // write HMAC
+            // debug(" " + getHexBytes(checksum,
+            //                  cipherHelper.getChecksumLength()));
+            os.write(checksum);
 
-	    // Wrap Tokens (with confidentiality) =
-	    // { 16 byte token_header | 
-	    // Encrypt(16-byte confounder | plaintext | token_header) | 
-	    // 12-byte HMAC } 
+        } else {
 
-	    cipherHelper.encryptData(this, confounder, getTokenHeader(),
-		dataBytes, dataOffset, dataLen,	getKeyUsage(), os);
-	
-	}
-	// debug("]\n");
+            // Wrap Tokens (with confidentiality) =
+            // { 16 byte token_header |
+            // Encrypt(16-byte confounder | plaintext | token_header) |
+            // 12-byte HMAC }
+
+            cipherHelper.encryptData(this, confounder, getTokenHeader(),
+                dataBytes, dataOffset, dataLen, getKeyUsage(), os);
+
+        }
+        // debug("]\n");
     }
 
     public byte[] encode() throws IOException, GSSException {
-	// XXX Fine tune this initial size
-	ByteArrayOutputStream bos = new ByteArrayOutputStream(dataSize + 50);
-	encode(bos);
-	return bos.toByteArray();
+        // XXX Fine tune this initial size
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(dataSize + 50);
+        encode(bos);
+        return bos.toByteArray();
     }
 
     public int encode(byte[] outToken, int offset)
-	throws IOException, GSSException  {
+        throws IOException, GSSException  {
 
-	int retVal = 0;
+        int retVal = 0;
 
-	// Token header is small
-	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	super.encode(bos);
-	byte[] header = bos.toByteArray();
-	System.arraycopy(header, 0, outToken, offset, header.length);
-	offset += header.length;
+        // Token header is small
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        super.encode(bos);
+        byte[] header = bos.toByteArray();
+        System.arraycopy(header, 0, outToken, offset, header.length);
+        offset += header.length;
 
-	// debug("WrapToken.encode: Writing data: [");
-	if (!privacy) {
+        // debug("WrapToken.encode: Writing data: [");
+        if (!privacy) {
 
-	    // Wrap Tokens (without confidentiality) =
-	    // { 16 byte token_header | plaintext | 12-byte HMAC }
-	    // where HMAC is on { plaintext | token_header }
+            // Wrap Tokens (without confidentiality) =
+            // { 16 byte token_header | plaintext | 12-byte HMAC }
+            // where HMAC is on { plaintext | token_header }
 
-	    // calculate checksum
-	    byte[] checksum = getChecksum(dataBytes, dataOffset, dataLen);
+            // calculate checksum
+            byte[] checksum = getChecksum(dataBytes, dataOffset, dataLen);
 
-	    // data
-	    // debug(" " + getHexBytes(dataBytes, dataOffset, dataLen));
-	    System.arraycopy(dataBytes, dataOffset, outToken, offset,
-			     dataLen);
-	    offset += dataLen;
-	    
-	    // write HMAC
-	    // debug(" " + getHexBytes(checksum, 
-	    //			cipherHelper.getChecksumLength()));
-	    System.arraycopy(checksum, 0, outToken, offset, 
-				cipherHelper.getChecksumLength());
+            // data
+            // debug(" " + getHexBytes(dataBytes, dataOffset, dataLen));
+            System.arraycopy(dataBytes, dataOffset, outToken, offset,
+                             dataLen);
+            offset += dataLen;
 
-	    retVal = header.length + dataLen + cipherHelper.getChecksumLength();
-	} else {
+            // write HMAC
+            // debug(" " + getHexBytes(checksum,
+            //                  cipherHelper.getChecksumLength()));
+            System.arraycopy(checksum, 0, outToken, offset,
+                                cipherHelper.getChecksumLength());
 
-	    // Wrap Tokens (with confidentiality) =
-	    // { 16 byte token_header | 
-	    // Encrypt(16-byte confounder | plaintext | token_header) | 
-	    // 12-byte HMAC } 
-	    int cLen = cipherHelper.encryptData(this, confounder, 
-			getTokenHeader(), dataBytes, dataOffset, dataLen, 
-			outToken, offset, getKeyUsage());
+            retVal = header.length + dataLen + cipherHelper.getChecksumLength();
+        } else {
 
-	    retVal = header.length + cLen;
-	    // debug(getHexBytes(outToken, offset, dataSize));
-	}
+            // Wrap Tokens (with confidentiality) =
+            // { 16 byte token_header |
+            // Encrypt(16-byte confounder | plaintext | token_header) |
+            // 12-byte HMAC }
+            int cLen = cipherHelper.encryptData(this, confounder,
+                        getTokenHeader(), dataBytes, dataOffset, dataLen,
+                        outToken, offset, getKeyUsage());
 
-	// debug("]\n");
+            retVal = header.length + cLen;
+            // debug(getHexBytes(outToken, offset, dataSize));
+        }
 
-	// %%% assume that plaintext length == ciphertext len
-	return retVal;
+        // debug("]\n");
+
+        // %%% assume that plaintext length == ciphertext len
+        return retVal;
 
     }
 
     protected int getKrb5TokenSize() throws GSSException {
-	return (getTokenSize() + dataSize);
+        return (getTokenSize() + dataSize);
     }
 
     // This implementation is way to conservative. And it certainly
     // doesn't return the maximum limit.
     static int getSizeLimit(int qop, boolean confReq, int maxTokenSize,
-	CipherHelper ch) throws GSSException {
-	return (GSSHeader.getMaxMechTokenSize(OID, maxTokenSize) -
-		(getTokenSize(ch) + CONFOUNDER_SIZE) - 8 /* safety */);
+        CipherHelper ch) throws GSSException {
+        return (GSSHeader.getMaxMechTokenSize(OID, maxTokenSize) -
+                (getTokenSize(ch) + CONFOUNDER_SIZE) - 8 /* safety */);
     }
 }

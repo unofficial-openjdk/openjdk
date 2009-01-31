@@ -54,7 +54,7 @@ typedef struct FrameKey {
 } FrameKey;
 
 typedef struct FrameInfo {
-    unsigned short    	lineno;
+    unsigned short      lineno;
     unsigned char       lineno_state; /* LinenoState */
     unsigned char       status;
     SerialNumber serial_num;
@@ -86,17 +86,17 @@ list_item(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     FrameKey   key;
     FrameInfo *info;
-    
+
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(key_len==sizeof(FrameKey));
     HPROF_ASSERT(info_ptr!=NULL);
-    
+
     key = *((FrameKey*)key_ptr);
     info = (FrameInfo*)info_ptr;
-    debug_message( 
-	"Frame 0x%08x: method=%p, location=%d, lineno=%d(%d), status=%d \n",
-                i, (void*)key.method, (jint)key.location, 
-		info->lineno, info->lineno_state, info->status);
+    debug_message(
+        "Frame 0x%08x: method=%p, location=%d, lineno=%d(%d), status=%d \n",
+                i, (void*)key.method, (jint)key.location,
+                info->lineno, info->lineno_state, info->status);
 }
 
 void
@@ -113,21 +113,21 @@ frame_find_or_create(jmethodID method, jlocation location)
     static FrameKey empty_key;
     FrameKey key;
     jboolean new_one;
-    
+
     key          = empty_key;
     key.method   = method;
     key.location = location;
     new_one      = JNI_FALSE;
-    index        = table_find_or_create_entry(gdata->frame_table, 
-			&key, (int)sizeof(key), &new_one, NULL);
+    index        = table_find_or_create_entry(gdata->frame_table,
+                        &key, (int)sizeof(key), &new_one, NULL);
     if ( new_one ) {
-	FrameInfo *info;
-	
-	info = get_info(index);
-	info->lineno_state = LINENUM_UNINITIALIZED;
-	if ( location < 0 ) {
-	    info->lineno_state = LINENUM_UNAVAILABLE;
-	}
+        FrameInfo *info;
+
+        info = get_info(index);
+        info->lineno_state = LINENUM_UNINITIALIZED;
+        if ( location < 0 ) {
+            info->lineno_state = LINENUM_UNAVAILABLE;
+        }
         info->serial_num = gdata->frame_serial_number_counter++;
     }
     return index;
@@ -136,7 +136,7 @@ frame_find_or_create(jmethodID method, jlocation location)
 void
 frame_list(void)
 {
-    debug_message( 
+    debug_message(
         "--------------------- Frame Table ------------------------\n");
     table_walk_items(gdata->frame_table, &list_item, NULL);
     debug_message(
@@ -161,7 +161,7 @@ frame_set_status(FrameIndex index, jint status)
 
 void
 frame_get_location(FrameIndex index, SerialNumber *pserial_num,
-		   jmethodID *pmethod, jlocation *plocation, jint *plineno)
+                   jmethodID *pmethod, jlocation *plocation, jint *plineno)
 {
     FrameKey  *pkey;
     FrameInfo *info;
@@ -173,19 +173,19 @@ frame_get_location(FrameIndex index, SerialNumber *pserial_num,
     info       = get_info(index);
     lineno     = (jint)info->lineno;
     if ( info->lineno_state == LINENUM_UNINITIALIZED ) {
-	info->lineno_state = LINENUM_UNAVAILABLE;
-	if ( gdata->lineno_in_traces ) {
-	    if ( pkey->location >= 0 && !isMethodNative(pkey->method) ) {
-		lineno = getLineNumber(pkey->method, pkey->location);
-		if ( lineno >= 0 ) {
-		    info->lineno = (unsigned short)lineno; /* save it */
+        info->lineno_state = LINENUM_UNAVAILABLE;
+        if ( gdata->lineno_in_traces ) {
+            if ( pkey->location >= 0 && !isMethodNative(pkey->method) ) {
+                lineno = getLineNumber(pkey->method, pkey->location);
+                if ( lineno >= 0 ) {
+                    info->lineno = (unsigned short)lineno; /* save it */
                     info->lineno_state = LINENUM_AVAILABLE;
-		}
-	    }
-	}
-    } 
+                }
+            }
+        }
+    }
     if ( info->lineno_state == LINENUM_UNAVAILABLE ) {
-	lineno = -1;
+        lineno = -1;
     }
     *plineno     = lineno;
     *pserial_num = info->serial_num;
@@ -199,4 +199,3 @@ frame_get_status(FrameIndex index)
     info = get_info(index);
     return (jint)info->status;
 }
-

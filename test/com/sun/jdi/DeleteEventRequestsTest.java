@@ -42,8 +42,8 @@ import java.util.*;
 
 class DeleteEventRequestsTarg {
     public static void main(String[] args){
-	System.out.println("Howdy!");
-	System.out.println("Goodbye from DeleteEventRequestsTarg!");
+        System.out.println("Howdy!");
+        System.out.println("Goodbye from DeleteEventRequestsTarg!");
     }
 }
 
@@ -54,11 +54,11 @@ public class DeleteEventRequestsTest extends TestScaffold {
     ThreadReference mainThread;
 
     DeleteEventRequestsTest (String args[]) {
-	super(args);
+        super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
-	new DeleteEventRequestsTest(args).startTests();
+    public static void main(String[] args)      throws Exception {
+        new DeleteEventRequestsTest(args).startTests();
     }
 
     /********** event handlers **********/
@@ -66,12 +66,12 @@ public class DeleteEventRequestsTest extends TestScaffold {
     public void stepCompleted(StepEvent event) {
         failure("Got StepEvent which was deleted");
     }
-    
+
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("DeleteEventRequestsTarg");
@@ -82,7 +82,7 @@ public class DeleteEventRequestsTest extends TestScaffold {
         /*
          * Set event requests
          */
-        StepRequest request = erm.createStepRequest(mainThread, 
+        StepRequest request = erm.createStepRequest(mainThread,
                                                     StepRequest.STEP_LINE,
                                                     StepRequest.STEP_OVER);
         request.enable();
@@ -108,4 +108,3 @@ public class DeleteEventRequestsTest extends TestScaffold {
         }
     }
 }
-

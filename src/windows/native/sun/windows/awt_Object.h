@@ -40,12 +40,12 @@
 class AwtObject {
 public:
     class ExecuteArgs {
-	public:
-	    UINT	cmdId;
-	    LPARAM	param1;
-	    LPARAM	param2;
-	    LPARAM	param3;
-	    LPARAM	param4;
+        public:
+            UINT        cmdId;
+            LPARAM      param1;
+            LPARAM      param2;
+            LPARAM      param3;
+            LPARAM      param4;
     };
 
 
@@ -72,17 +72,17 @@ public:
     INLINE CriticalSection& GetLock() { return m_Lock; }
 
     // Return the associated AWT peer or target object.
-    INLINE jobject GetPeer(JNIEnv *env) { 
+    INLINE jobject GetPeer(JNIEnv *env) {
         return m_peerObject;
     }
 
-    INLINE jobject GetTarget(JNIEnv *env) { 
+    INLINE jobject GetTarget(JNIEnv *env) {
         jobject peer = GetPeer(env);
-	if (peer != NULL) {
-	    return env->GetObjectField(peer, AwtObject::targetID);
-	} else {
-	    return NULL;
-	}
+        if (peer != NULL) {
+            return env->GetObjectField(peer, AwtObject::targetID);
+        } else {
+            return NULL;
+        }
     }
 
     INLINE jobject GetTargetAsGlobalRef(JNIEnv *env) {
@@ -119,7 +119,7 @@ public:
     static LRESULT WinThreadExec(jobject peerObject, UINT cmdId, LPARAM param1 = 0L, LPARAM param2 = 0L, LPARAM param3 = 0L, LPARAM param4 = 0L);
     // callback function to execute code on Windows message-pump thread
     virtual LRESULT WinThreadExecProc(AwtObject::ExecuteArgs * args);
-    
+
     // overridden in AwtComponent to return FALSE if any messages
     // are being processed by this component
     virtual BOOL CanBeDeleted() {
@@ -135,5 +135,3 @@ private:
 };
 
 #endif // AWT_OBJECT_H
-
-

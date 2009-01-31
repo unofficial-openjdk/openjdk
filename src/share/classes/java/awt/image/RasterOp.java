@@ -48,7 +48,6 @@ import java.awt.RenderingHints;
  * @see ConvolveOp
  * @see LookupOp
  * @see RescaleOp
- * @version 10 Feb 1997
  */
 public interface RasterOp {
     /**
@@ -70,7 +69,7 @@ public interface RasterOp {
      * is incompatible with the types of Rasters allowed
      * by the class implementing this filter.
      * @param src the source <code>Raster</code>
-     * @return a <code>Rectangle2D</code> that is the bounding box of 
+     * @return a <code>Rectangle2D</code> that is the bounding box of
      *         the <code>Raster</code> resulting from the filtering
      *         operation.
      */
@@ -83,7 +82,7 @@ public interface RasterOp {
      * is incompatible with the types of Rasters allowed
      * by the class implementing this filter.
      * @param src the source <code>Raster</code>
-     * @return a <code>WritableRaster</code> that is compatible with 
+     * @return a <code>WritableRaster</code> that is compatible with
      *         <code>src</code>
      */
     public WritableRaster createCompatibleDestRaster(Raster src);

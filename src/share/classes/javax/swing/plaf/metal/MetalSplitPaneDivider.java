@@ -43,7 +43,6 @@ import javax.swing.plaf.basic.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Steve Wilson
  * @author Ralph kar
  */
@@ -70,29 +69,29 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
     }
 
     public void paint(Graphics g) {
-	MetalBumps usedBumps;
-	if (splitPane.hasFocus()) {
-	    usedBumps = focusBumps;
-	    g.setColor(primaryControlColor);
-	}
-	else {
-	    usedBumps = bumps;
-	    g.setColor(controlColor);
-	}
-	Rectangle clip = g.getClipBounds();
-	Insets insets = getInsets();
-	g.fillRect(clip.x, clip.y, clip.width, clip.height);
+        MetalBumps usedBumps;
+        if (splitPane.hasFocus()) {
+            usedBumps = focusBumps;
+            g.setColor(primaryControlColor);
+        }
+        else {
+            usedBumps = bumps;
+            g.setColor(controlColor);
+        }
+        Rectangle clip = g.getClipBounds();
+        Insets insets = getInsets();
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
         Dimension  size = getSize();
         size.width -= inset * 2;
         size.height -= inset * 2;
-	int drawX = inset;
-	int drawY = inset;
-	if (insets != null) {
-	    size.width -= (insets.left + insets.right);
-	    size.height -= (insets.top + insets.bottom);
-	    drawX += insets.left;
-	    drawY += insets.top;
-	}
+        int drawX = inset;
+        int drawY = inset;
+        if (insets != null) {
+            size.width -= (insets.left + insets.right);
+            size.height -= (insets.top + insets.bottom);
+            drawX += insets.left;
+            drawY += insets.top;
+        }
         usedBumps.setBumpArea(size);
         usedBumps.paintIcon(this, g, drawX, drawY);
         super.paint(g);
@@ -184,13 +183,13 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
                 }
             }
 
-	    // Don't want the button to participate in focus traversable.
-	    public boolean isFocusTraversable() {
-		return false;
-	    }
+            // Don't want the button to participate in focus traversable.
+            public boolean isFocusTraversable() {
+                return false;
+            }
         };
         b.setRequestFocusEnabled(false);
-	b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         b.setFocusPainted(false);
         b.setBorderPainted(false);
         maybeMakeButtonOpaque(b);
@@ -293,12 +292,12 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
                 }
             }
 
-	    // Don't want the button to participate in focus traversable.
-	    public boolean isFocusTraversable() {
-		return false;
-	    }
+            // Don't want the button to participate in focus traversable.
+            public boolean isFocusTraversable() {
+                return false;
+            }
         };
-	b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         b.setFocusPainted(false);
         b.setBorderPainted(false);
         b.setRequestFocusEnabled(false);
@@ -327,7 +326,7 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
             int         orientation = getOrientationFromSuper();
             int         oneTouchSize = getOneTouchSizeFromSuper();
             int         oneTouchOffset = getOneTouchOffsetFromSuper();
-	    Insets      insets = getInsets();
+            Insets      insets = getInsets();
 
             // This layout differs from the one used in BasicSplitPaneDivider.
             // It does not center justify the oneTouchExpadable buttons.
@@ -337,13 +336,13 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
                 c == MetalSplitPaneDivider.this) {
                 if (splitPane.isOneTouchExpandable()) {
                     if (orientation == JSplitPane.VERTICAL_SPLIT) {
-			int extraY = (insets != null) ? insets.top : 0;
-			int blockSize = getDividerSize();
+                        int extraY = (insets != null) ? insets.top : 0;
+                        int blockSize = getDividerSize();
 
-			if (insets != null) {
-			    blockSize -= (insets.top + insets.bottom);
-			}
-			blockSize = Math.min(blockSize, oneTouchSize);
+                        if (insets != null) {
+                            blockSize -= (insets.top + insets.bottom);
+                        }
+                        blockSize = Math.min(blockSize, oneTouchSize);
                         leftButton.setBounds(oneTouchOffset, extraY,
                                              blockSize * 2, blockSize);
                         rightButton.setBounds(oneTouchOffset +
@@ -351,13 +350,13 @@ class MetalSplitPaneDivider extends BasicSplitPaneDivider
                                               blockSize * 2, blockSize);
                     }
                     else {
-			int blockSize = getDividerSize();
-			int extraX = (insets != null) ? insets.left : 0;
+                        int blockSize = getDividerSize();
+                        int extraX = (insets != null) ? insets.left : 0;
 
-			if (insets != null) {
-			    blockSize -= (insets.left + insets.right);
-			}
-			blockSize = Math.min(blockSize, oneTouchSize);
+                        if (insets != null) {
+                            blockSize -= (insets.left + insets.right);
+                        }
+                        blockSize = Math.min(blockSize, oneTouchSize);
                         leftButton.setBounds(extraX, oneTouchOffset,
                                              blockSize, blockSize * 2);
                         rightButton.setBounds(extraX, oneTouchOffset +

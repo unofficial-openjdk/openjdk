@@ -52,66 +52,66 @@ class MXBeanIntrospector extends MBeanIntrospector<ConvertingMethod> {
     private static final MXBeanIntrospector instance = new MXBeanIntrospector();
 
     static MXBeanIntrospector getInstance() {
-	return instance;
+        return instance;
     }
 
     @Override
     PerInterfaceMap<ConvertingMethod> getPerInterfaceMap() {
-	return perInterfaceMap;
+        return perInterfaceMap;
     }
 
     @Override
     MBeanInfoMap getMBeanInfoMap() {
-	return mbeanInfoMap;
+        return mbeanInfoMap;
     }
 
     @Override
     MBeanAnalyzer<ConvertingMethod> getAnalyzer(Class<?> mbeanInterface)
-	    throws NotCompliantMBeanException {
-	return MBeanAnalyzer.analyzer(mbeanInterface, this);
+            throws NotCompliantMBeanException {
+        return MBeanAnalyzer.analyzer(mbeanInterface, this);
     }
 
     @Override
     boolean isMXBean() {
-	return true;
+        return true;
     }
 
     @Override
     ConvertingMethod mFrom(Method m) {
-	return ConvertingMethod.from(m);
+        return ConvertingMethod.from(m);
     }
 
     @Override
     String getName(ConvertingMethod m) {
-	return m.getName();
+        return m.getName();
     }
 
     @Override
     Type getGenericReturnType(ConvertingMethod m) {
-	return m.getGenericReturnType();
+        return m.getGenericReturnType();
     }
 
     @Override
     Type[] getGenericParameterTypes(ConvertingMethod m) {
-	return m.getGenericParameterTypes();
+        return m.getGenericParameterTypes();
     }
 
     @Override
     String[] getSignature(ConvertingMethod m) {
-	return m.getOpenSignature();
+        return m.getOpenSignature();
     }
 
     @Override
     void checkMethod(ConvertingMethod m) {
-	m.checkCallFromOpen();
+        m.checkCallFromOpen();
     }
 
     @Override
     Object invokeM2(ConvertingMethod m, Object target, Object[] args,
-		    Object cookie)
-	    throws InvocationTargetException, IllegalAccessException,
-		   MBeanException {
-	return m.invokeWithOpenReturn((MXBeanLookup) cookie, target, args);
+                    Object cookie)
+            throws InvocationTargetException, IllegalAccessException,
+                   MBeanException {
+        return m.invokeWithOpenReturn((MXBeanLookup) cookie, target, args);
     }
 
     @Override
@@ -146,7 +146,7 @@ class MXBeanIntrospector extends MBeanIntrospector<ConvertingMethod> {
         final boolean isIs = isReadable && getName(getter).startsWith("is");
 
         final String description = attributeName;
-        
+
         final OpenType<?> openType;
         final Type originalType;
         if (isReadable) {
@@ -186,7 +186,7 @@ class MXBeanIntrospector extends MBeanIntrospector<ConvertingMethod> {
         }
         // could also consult annotations for defaultValue,
         // minValue, maxValue, legalValues
-        
+
         return ai;
     }
 
@@ -270,25 +270,25 @@ class MXBeanIntrospector extends MBeanIntrospector<ConvertingMethod> {
                                         impact,
                                         descriptor);
         }
-        
+
         return oi;
     }
 
     @Override
     Descriptor getBasicMBeanDescriptor() {
-	return new ImmutableDescriptor("mxbean=true",
-				       "immutableInfo=true");
+        return new ImmutableDescriptor("mxbean=true",
+                                       "immutableInfo=true");
     }
 
     @Override
     Descriptor getMBeanDescriptor(Class<?> resourceClass) {
-	/* We already have immutableInfo=true in the Descriptor
-	 * included in the MBeanInfo for the MXBean interface.  This
-	 * method is being called for the MXBean *class* to add any
-	 * new items beyond those in the interface Descriptor, which
-	 * currently it does not.
-	 */
-	return ImmutableDescriptor.EMPTY_DESCRIPTOR;
+        /* We already have immutableInfo=true in the Descriptor
+         * included in the MBeanInfo for the MXBean interface.  This
+         * method is being called for the MXBean *class* to add any
+         * new items beyond those in the interface Descriptor, which
+         * currently it does not.
+         */
+        return ImmutableDescriptor.EMPTY_DESCRIPTOR;
     }
 
     private static Descriptor typeDescriptor(OpenType openType,

@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar NoTransformerAddedTest NoTransformerAddedTest
  */
-public class 
-NoTransformerAddedTest 
+public class
+NoTransformerAddedTest
     extends ATransformerManagementTestCase
 {
 
@@ -46,18 +46,18 @@ NoTransformerAddedTest
     }
 
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new NoTransformerAddedTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testNoTransformersAdded();
     }
-    
+
     /**
      * Add no transformers to the the manager and check it
      */
@@ -66,5 +66,5 @@ NoTransformerAddedTest
     {
         verifyTransformers(fInst);
     }
-    
+
 }

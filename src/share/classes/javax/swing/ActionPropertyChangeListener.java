@@ -35,7 +35,7 @@ import java.lang.ref.ReferenceQueue;
  * property changes on an Action and updates the properties
  * of an ActionEvent source.
  * <p>
- * Subclasses must override the actionPropertyChanged method, 
+ * Subclasses must override the actionPropertyChanged method,
  * which is invoked from the propertyChange method as long as
  * the target is still valid.
  * </p>
@@ -47,7 +47,6 @@ import java.lang.ref.ReferenceQueue;
  *
  * @param T the type of JComponent the underlying Action is attached to
  *
- * @version %I% %G%
  * @author Georges Saab
  * @see AbstractButton
  */
@@ -71,9 +70,9 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
     }
 
     public ActionPropertyChangeListener(T c, Action a) {
-	super();
-	setTarget(c);
-	this.action = a;
+        super();
+        setTarget(c);
+        this.action = a;
     }
 
     /**
@@ -96,23 +95,23 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
      */
     protected abstract void actionPropertyChanged(T target, Action action,
                                                   PropertyChangeEvent e);
-    
+
     private void setTarget(T c) {
         ReferenceQueue<JComponent> queue = getQueue();
-	// Check to see whether any old buttons have
-	// been enqueued for GC.  If so, look up their
-	// PCL instance and remove it from its Action.
-	OwnedWeakReference r;
+        // Check to see whether any old buttons have
+        // been enqueued for GC.  If so, look up their
+        // PCL instance and remove it from its Action.
+        OwnedWeakReference r;
         while ((r = (OwnedWeakReference)queue.poll()) != null) {
             ActionPropertyChangeListener oldPCL = r.getOwner();
-	    Action oldAction = oldPCL.getAction();
-	    if (oldAction!=null) {
-	        oldAction.removePropertyChangeListener(oldPCL);
-	    }
-	}
+            Action oldAction = oldPCL.getAction();
+            if (oldAction!=null) {
+                oldAction.removePropertyChangeListener(oldPCL);
+            }
+        }
         this.target = new OwnedWeakReference<T>(c, queue, this);
     }
-    
+
     public T getTarget() {
         if (target == null) {
             // Will only happen if serialized and real target was null
@@ -122,7 +121,7 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
     }
 
     public Action getAction() {
-	  return action;
+          return action;
     }
 
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -131,7 +130,7 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
     }
 
     @SuppressWarnings("unchecked")
-    private void readObject(ObjectInputStream s) 
+    private void readObject(ObjectInputStream s)
                      throws IOException, ClassNotFoundException {
         s.defaultReadObject();
         T target = (T)s.readObject();
@@ -147,12 +146,12 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
 
         OwnedWeakReference(U target, ReferenceQueue<? super U> queue,
                            ActionPropertyChangeListener owner) {
-	    super(target, queue);
-	    this.owner = owner;
-	}
+            super(target, queue);
+            this.owner = owner;
+        }
 
         public ActionPropertyChangeListener getOwner() {
-	    return owner;
-	}
+            return owner;
+        }
     }
 }

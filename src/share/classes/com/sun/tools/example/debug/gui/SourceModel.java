@@ -74,20 +74,20 @@ public class SourceModel extends AbstractListModel {
             return hasBreakpoint;
         }
     };
-	
+
     // 132 characters long, all printable characters.
     public static final Line prototypeCellValue = new Line(
-                                        "abcdefghijklmnopqrstuvwxyz" + 
-    					"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    					"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    					"1234567890~!@#$%^&*()_+{}|" +
-    					":<>?`-=[];',.XXXXXXXXXXXX/\\\"");
+                                        "abcdefghijklmnopqrstuvwxyz" +
+                                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                        "1234567890~!@#$%^&*()_+{}|" +
+                                        ":<>?`-=[];',.XXXXXXXXXXXX/\\\"");
 
     SourceModel(Environment env, File path) {
         this.env = env;
-	this.path = path;
+        this.path = path;
     }
-    
+
     public SourceModel(String message) {
         this.path = null;
         setMessage(message);
@@ -118,32 +118,32 @@ public class SourceModel extends AbstractListModel {
     // ***** Other functionality *****
 
     public File fileName() {
-	return path;
+        return path;
     }
 
     public BufferedReader sourceReader() throws IOException {
-	return new BufferedReader(new FileReader(path));
+        return new BufferedReader(new FileReader(path));
     }
 
     public Line line(int lineNo) {
-	if (sourceLines == null) {
-	    initialize();
-	}
-	int index = lineNo - 1; // list is 0-indexed
-	if (index >= sourceLines.size() || index < 0) {
-	    return null;
-	} else {
-	    return sourceLines.get(index);  
-	}
+        if (sourceLines == null) {
+            initialize();
+        }
+        int index = lineNo - 1; // list is 0-indexed
+        if (index >= sourceLines.size() || index < 0) {
+            return null;
+        } else {
+            return sourceLines.get(index);
+        }
     }
 
     public String sourceLine(int lineNo) {
         Line line = line(lineNo);
-	if (line == null) {
-	    return null;
-	} else {
-	    return line.text;  
-	}
+        if (line == null) {
+            return null;
+        } else {
+            return line.text;
+        }
     }
 
     void addClass(ReferenceType refType) {
@@ -157,7 +157,7 @@ public class SourceModel extends AbstractListModel {
     }
 
     /**
-     * @return List of currently known {@link com.sun.jdi.ReferenceType} 
+     * @return List of currently known {@link com.sun.jdi.ReferenceType}
      * in this source file.
      */
     public List<ReferenceType> referenceTypes() {
@@ -195,11 +195,11 @@ public class SourceModel extends AbstractListModel {
                 for (Iterator lit = lines.iterator(); lit.hasNext();) {
                     Location loc = (Location)lit.next();
                     showExecutable(loc.lineNumber(), refType);
-                }       
+                }
             } catch (AbsentInformationException exc) {
                 // do nothing
             }
-        }             
+        }
         List bps = env.getExecutionManager().eventRequestManager().breakpointRequests();
         for (Iterator it = bps.iterator(); it.hasNext();) {
             BreakpointRequest bp = (BreakpointRequest)it.next();
@@ -213,40 +213,40 @@ public class SourceModel extends AbstractListModel {
     }
 
     private void rawInit() throws IOException {
-	sourceLines = new ArrayList<Line>();
-	BufferedReader reader = sourceReader();
-	try {
-	    String line = reader.readLine();
-	    while (line != null) {
-		sourceLines.add(new Line(expandTabs(line)));
-		line = reader.readLine();
-	    }
-	} finally {
-	    reader.close();
-	}
+        sourceLines = new ArrayList<Line>();
+        BufferedReader reader = sourceReader();
+        try {
+            String line = reader.readLine();
+            while (line != null) {
+                sourceLines.add(new Line(expandTabs(line)));
+                line = reader.readLine();
+            }
+        } finally {
+            reader.close();
+        }
         for (Iterator it = classes.iterator(); it.hasNext();) {
             markClassLines((ClassType)it.next());
         }
     }
 
     private String expandTabs(String s) {
-	int col = 0;
-	int len = s.length();
-	StringBuffer sb = new StringBuffer(132);
-	for (int i = 0; i < len; i++) {
-	    char c = s.charAt(i);
-	    sb.append(c);
-	    if (c == '\t') {
-		int pad = (8 - (col % 8));
-		for (int j = 0; j < pad; j++) {
-		    sb.append(' ');
-		}
-		col += pad;
-	    } else {
-		col++;
-	    }
-	}
-	return sb.toString();
+        int col = 0;
+        int len = s.length();
+        StringBuffer sb = new StringBuffer(132);
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            sb.append(c);
+            if (c == '\t') {
+                int pad = (8 - (col % 8));
+                for (int j = 0; j < pad; j++) {
+                    sb.append(' ');
+                }
+                col += pad;
+            } else {
+                col++;
+            }
+        }
+        return sb.toString();
     }
 
 }

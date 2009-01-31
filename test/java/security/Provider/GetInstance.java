@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 4856968 
+ * @bug 4856968
  * @summary make sure getInstance() works correctly, including failover
  *   and delayed provider selection for Signatures
  * @author Andreas Sterbenz
@@ -35,223 +35,222 @@ import java.security.*;
 import java.security.cert.*;
 
 public class GetInstance {
-    
+
     private static void same(Provider p1, Provider p2) throws Exception {
-	if (p1 != p2) {
-	    throw new Exception("Wrong provider");
-	}
+        if (p1 != p2) {
+            throw new Exception("Wrong provider");
+        }
     }
-    
+
     public static void main(String[] args) throws Exception {
-	long start = System.currentTimeMillis();
-	
-	Provider foo = new FooProvider();
-	Provider bar = new BarProvider();
-	Provider baz = new BazProvider();
+        long start = System.currentTimeMillis();
 
-	Security.addProvider(foo);
-	Security.addProvider(bar);
-	Security.addProvider(baz);
+        Provider foo = new FooProvider();
+        Provider bar = new BarProvider();
+        Provider baz = new BazProvider();
 
-	System.out.println("Testing MessageDigest.getInstance()...");
-	MessageDigest m;
-	m = MessageDigest.getInstance("foo");
-	m = MessageDigest.getInstance("foo", "foo");
-	m = MessageDigest.getInstance("foo", foo);
+        Security.addProvider(foo);
+        Security.addProvider(bar);
+        Security.addProvider(baz);
 
-	System.out.println("Testing Signature.getInstance() for SPI...");
-	Signature sig;
-	PrivateKey privateKey = new FooPrivateKey();
-	sig = Signature.getInstance("foo");
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("foo");
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("foo", "foo");
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("foo", foo);
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
+        System.out.println("Testing MessageDigest.getInstance()...");
+        MessageDigest m;
+        m = MessageDigest.getInstance("foo");
+        m = MessageDigest.getInstance("foo", "foo");
+        m = MessageDigest.getInstance("foo", foo);
 
-	System.out.println("Testing Signature.getInstance() for Signature...");
-	sig = Signature.getInstance("fuu");
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("fuu");
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("fuu", "foo");
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
-	sig = Signature.getInstance("fuu", foo);
-	sig.initSign(privateKey);
-	same(foo, sig.getProvider());
+        System.out.println("Testing Signature.getInstance() for SPI...");
+        Signature sig;
+        PrivateKey privateKey = new FooPrivateKey();
+        sig = Signature.getInstance("foo");
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("foo");
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("foo", "foo");
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("foo", foo);
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
 
-	System.out.println("Testing CertStore.getInstance()...");
-	CertStoreParameters params = new CollectionCertStoreParameters(Collections.EMPTY_LIST);
-	CertStore cs;
-	cs = CertStore.getInstance("foo", params);
-	cs = CertStore.getInstance("foo", params, "foo");
-	cs = CertStore.getInstance("foo", params, foo);
-	
-	System.out.println("Testing failover...");
-	m = MessageDigest.getInstance("bar");
-	same(m.getProvider(), baz);
-	sig = Signature.getInstance("bar");
-	same(sig.getProvider(), baz);
-	cs = CertStore.getInstance("bar", params);
-	same(cs.getProvider(), baz);
-	
-	System.out.println("Testing Signature delayed provider selection...");
-	sig = Signature.getInstance("baz");
-	sig.initVerify(new FooPublicKey());
-	same(sig.getProvider(), baz);
-	
-	Provider.Service s = foo.getService("CertStore", "foo");
-	s.newInstance(null);
-	s.newInstance(params);
-	try {
-	    s.newInstance(0);
-	    throw new Exception("call should not succeed");
-	} catch (NoSuchAlgorithmException e) {
-	    e.printStackTrace();
-	    Throwable cause = e.getCause();
-	    if (cause instanceof InvalidParameterException == false) {
-		throw new Exception("incorrect exception");
-	    }
-	}
+        System.out.println("Testing Signature.getInstance() for Signature...");
+        sig = Signature.getInstance("fuu");
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("fuu");
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("fuu", "foo");
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
+        sig = Signature.getInstance("fuu", foo);
+        sig.initSign(privateKey);
+        same(foo, sig.getProvider());
 
-	long stop = System.currentTimeMillis();
-	System.out.println("Done (" + (stop - start) + " ms).");
+        System.out.println("Testing CertStore.getInstance()...");
+        CertStoreParameters params = new CollectionCertStoreParameters(Collections.EMPTY_LIST);
+        CertStore cs;
+        cs = CertStore.getInstance("foo", params);
+        cs = CertStore.getInstance("foo", params, "foo");
+        cs = CertStore.getInstance("foo", params, foo);
+
+        System.out.println("Testing failover...");
+        m = MessageDigest.getInstance("bar");
+        same(m.getProvider(), baz);
+        sig = Signature.getInstance("bar");
+        same(sig.getProvider(), baz);
+        cs = CertStore.getInstance("bar", params);
+        same(cs.getProvider(), baz);
+
+        System.out.println("Testing Signature delayed provider selection...");
+        sig = Signature.getInstance("baz");
+        sig.initVerify(new FooPublicKey());
+        same(sig.getProvider(), baz);
+
+        Provider.Service s = foo.getService("CertStore", "foo");
+        s.newInstance(null);
+        s.newInstance(params);
+        try {
+            s.newInstance(0);
+            throw new Exception("call should not succeed");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Throwable cause = e.getCause();
+            if (cause instanceof InvalidParameterException == false) {
+                throw new Exception("incorrect exception");
+            }
+        }
+
+        long stop = System.currentTimeMillis();
+        System.out.println("Done (" + (stop - start) + " ms).");
     }
-    
+
     public static class FooProvider extends Provider {
-	FooProvider() {
-	    super("foo", 1.0d, "none");
-	    put("MessageDigest.foo", "GetInstance$FooDigest");
-	    put("CertStore.foo",     "GetInstance$FooStore");
-	    put("Signature.foo",     "GetInstance$FooSignatureSpi");
+        FooProvider() {
+            super("foo", 1.0d, "none");
+            put("MessageDigest.foo", "GetInstance$FooDigest");
+            put("CertStore.foo",     "GetInstance$FooStore");
+            put("Signature.foo",     "GetInstance$FooSignatureSpi");
 
-	    put("Signature.fuu",     "GetInstance$BazSignature");
-	    
-	    // throws InvalidKeyException, skipped in delayed provider selection
-	    put("Signature.baz",     "GetInstance$BazSignatureSpi");
-	}
+            put("Signature.fuu",     "GetInstance$BazSignature");
+
+            // throws InvalidKeyException, skipped in delayed provider selection
+            put("Signature.baz",     "GetInstance$BazSignatureSpi");
+        }
     }
-    
+
     public static class BarProvider extends Provider {
-	BarProvider() {
-	    super("bar", 1.0d, "none");
-	    // all entries invalid for failover
-	    put("MessageDigest.bar", "GetInstance$FooKey");
-	    put("Signature.bar",     "GetInstance$FooKey");
-	    put("Certstore.bar",     "GetInstance$FooKey");
+        BarProvider() {
+            super("bar", 1.0d, "none");
+            // all entries invalid for failover
+            put("MessageDigest.bar", "GetInstance$FooKey");
+            put("Signature.bar",     "GetInstance$FooKey");
+            put("Certstore.bar",     "GetInstance$FooKey");
 
-	    // not an SPI, skipped in delayed provider selection
-	    put("Signature.baz",     "GetInstance$BazSignature");
-	}
+            // not an SPI, skipped in delayed provider selection
+            put("Signature.baz",     "GetInstance$BazSignature");
+        }
     }
-    
+
     public static class BazProvider extends Provider {
-	BazProvider() {
-	    super("baz", 1.0d, "none");
-	    put("MessageDigest.bar", "GetInstance$FooDigest");
-	    put("CertStore.bar",     "GetInstance$FooStore");
-	    put("Signature.bar",     "GetInstance$FooSignatureSpi");
+        BazProvider() {
+            super("baz", 1.0d, "none");
+            put("MessageDigest.bar", "GetInstance$FooDigest");
+            put("CertStore.bar",     "GetInstance$FooStore");
+            put("Signature.bar",     "GetInstance$FooSignatureSpi");
 
-	    put("Signature.baz",     "GetInstance$FooSignatureSpi");
-	}
+            put("Signature.baz",     "GetInstance$FooSignatureSpi");
+        }
     }
-    
+
     public static class FooDigest extends MessageDigestSpi {
-	public byte[] engineDigest() { return new byte[0]; }
-	public void engineReset() {}
-	public void engineUpdate(byte input) {}
-	public void engineUpdate(byte[] b, int ofs, int len) {}
+        public byte[] engineDigest() { return new byte[0]; }
+        public void engineReset() {}
+        public void engineUpdate(byte input) {}
+        public void engineUpdate(byte[] b, int ofs, int len) {}
     }
-    
+
     public static class FooStore extends CertStoreSpi {
-	public FooStore(CertStoreParameters params) throws InvalidAlgorithmParameterException { super(params); }
-	public Collection engineGetCertificates(CertSelector sel) { return Collections.EMPTY_LIST; }
-	public Collection engineGetCRLs(CRLSelector sel) { return Collections.EMPTY_LIST; }
+        public FooStore(CertStoreParameters params) throws InvalidAlgorithmParameterException { super(params); }
+        public Collection engineGetCertificates(CertSelector sel) { return Collections.EMPTY_LIST; }
+        public Collection engineGetCRLs(CRLSelector sel) { return Collections.EMPTY_LIST; }
     }
-    
+
     public static class BaseSignatureSpi extends SignatureSpi {
-	protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
-	}
-	protected void engineInitSign(PrivateKey privateKey) throws InvalidKeyException {
-	}
-	protected void engineUpdate(byte b) throws SignatureException {	}   
-	protected void engineUpdate(byte[] b, int off, int len) throws SignatureException { }
-	protected byte[] engineSign() throws SignatureException {
-	    return new byte[0];
-	}
-	protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
-	    return false;
-	}
-	protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
-	}
-	protected Object engineGetParameter(String param) throws InvalidParameterException {
-	    return null;
-	}	
+        protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
+        }
+        protected void engineInitSign(PrivateKey privateKey) throws InvalidKeyException {
+        }
+        protected void engineUpdate(byte b) throws SignatureException { }
+        protected void engineUpdate(byte[] b, int off, int len) throws SignatureException { }
+        protected byte[] engineSign() throws SignatureException {
+            return new byte[0];
+        }
+        protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
+            return false;
+        }
+        protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
+        }
+        protected Object engineGetParameter(String param) throws InvalidParameterException {
+            return null;
+        }
     }
-    
+
     public static class BaseSignature extends Signature {
-	BaseSignature(String s) {
-	    super(s);
-	}
-	protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
-	    //
-	}
-	protected void engineInitSign(PrivateKey privateKey) throws InvalidKeyException { }
-	protected void engineUpdate(byte b) throws SignatureException {	}   
-	protected void engineUpdate(byte[] b, int off, int len) throws SignatureException { }
-	protected byte[] engineSign() throws SignatureException {
-	    return new byte[0];
-	}
-	protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
-	    return false;
-	}
-	protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
-	}
-	protected Object engineGetParameter(String param) throws InvalidParameterException {
-	    return null;
-	}	
+        BaseSignature(String s) {
+            super(s);
+        }
+        protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
+            //
+        }
+        protected void engineInitSign(PrivateKey privateKey) throws InvalidKeyException { }
+        protected void engineUpdate(byte b) throws SignatureException { }
+        protected void engineUpdate(byte[] b, int off, int len) throws SignatureException { }
+        protected byte[] engineSign() throws SignatureException {
+            return new byte[0];
+        }
+        protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
+            return false;
+        }
+        protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
+        }
+        protected Object engineGetParameter(String param) throws InvalidParameterException {
+            return null;
+        }
     }
-    
+
     public static abstract class FooKey implements Key {
-	public String getFormat() { return null; }
-	public byte[] getEncoded() { return null; }
-	public String getAlgorithm() { return "foo"; }
+        public String getFormat() { return null; }
+        public byte[] getEncoded() { return null; }
+        public String getAlgorithm() { return "foo"; }
     }
-    
+
     public static class FooPrivateKey extends FooKey implements PrivateKey { }
 
     public static class FooPublicKey extends FooKey implements PublicKey { }
-    
-    public static class FooSignatureSpi extends BaseSignatureSpi {
-	public FooSignatureSpi() {
-	    super();
-	    System.out.println("FooSignatureSpi constructor");
-	}
-    }
-    
-    public static class BazSignatureSpi extends BaseSignatureSpi {
-	public BazSignatureSpi() {
-	    super();
-	    System.out.println("BazSignatureSpi constructor");
-	}
-	protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
-	    throw new InvalidKeyException("verify not supported");
-	}
-    }
-    
-    public static class BazSignature extends BaseSignature {
-	public BazSignature() {
-	    super("baz");
-	    System.out.println("BazSignature constructor");
-	}
-    }
-    
-}
 
+    public static class FooSignatureSpi extends BaseSignatureSpi {
+        public FooSignatureSpi() {
+            super();
+            System.out.println("FooSignatureSpi constructor");
+        }
+    }
+
+    public static class BazSignatureSpi extends BaseSignatureSpi {
+        public BazSignatureSpi() {
+            super();
+            System.out.println("BazSignatureSpi constructor");
+        }
+        protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
+            throw new InvalidKeyException("verify not supported");
+        }
+    }
+
+    public static class BazSignature extends BaseSignature {
+        public BazSignature() {
+            super("baz");
+            System.out.println("BazSignature constructor");
+        }
+    }
+
+}

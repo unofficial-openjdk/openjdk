@@ -36,7 +36,7 @@ public class BigInteger0 {
 
   // invalid zero length value
   private final static byte[] INT_LEN0 = { 2, 0 };
-  
+
   // correct zero integer
   private final static byte[] INT0 = { 2, 1, 0 };
 
@@ -48,13 +48,13 @@ public class BigInteger0 {
     } catch( IOException e ) {
       System.out.println("OK, zero length value rejected.");
     }
-    
+
     DerInputStream derin = new DerInputStream(INT0);
     BigInteger bi = derin.getBigInteger();
     if( bi.equals(BigInteger.ZERO) == false ) {
       throw new Exception("Failed to parse Integer 0");
     }
-    
+
   }
-  
+
 }

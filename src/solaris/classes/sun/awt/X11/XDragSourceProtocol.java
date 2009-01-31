@@ -39,7 +39,7 @@ import java.util.Map;
  * @since 1.5
  */
 abstract class XDragSourceProtocol {
-    private final XDragSourceProtocolListener listener;    
+    private final XDragSourceProtocolListener listener;
 
     private boolean initialized = false;
 
@@ -84,8 +84,8 @@ abstract class XDragSourceProtocol {
      * @throws XException if some X call failed.
      */
     public final void initializeDrag(int actions, Transferable contents,
-                                     Map formatMap, long[] formats) 
-      throws InvalidDnDOperationException, 
+                                     Map formatMap, long[] formats)
+      throws InvalidDnDOperationException,
              IllegalArgumentException, XException {
         XToolkit.awtLock();
         try {
@@ -93,7 +93,7 @@ abstract class XDragSourceProtocol {
                 if (initialized) {
                     throw new InvalidDnDOperationException("Already initialized");
                 }
-            
+
                 initializeDragImpl(actions, contents, formatMap, formats);
 
                 initialized = true;
@@ -108,9 +108,9 @@ abstract class XDragSourceProtocol {
     }
 
     /* The caller must hold AWT_LOCK. */
-    protected abstract void initializeDragImpl(int actions, 
-                                               Transferable contents,  
-                                               Map formatMap, long[] formats) 
+    protected abstract void initializeDragImpl(int actions,
+                                               Transferable contents,
+                                               Map formatMap, long[] formats)
       throws InvalidDnDOperationException, IllegalArgumentException, XException;
 
     /**
@@ -140,7 +140,7 @@ abstract class XDragSourceProtocol {
      *
      * @returns true if the event was successfully processed.
      */
-    public abstract boolean processClientMessage(XClientMessageEvent xclient) 
+    public abstract boolean processClientMessage(XClientMessageEvent xclient)
       throws XException;
 
     /* The caller must hold AWT_LOCK. */
@@ -162,21 +162,21 @@ abstract class XDragSourceProtocol {
     public abstract TargetWindowInfo getTargetWindowInfo(long window);
 
     /* The caller must hold AWT_LOCK. */
-    public abstract void sendEnterMessage(long[] formats, int sourceAction, 
+    public abstract void sendEnterMessage(long[] formats, int sourceAction,
                                           int sourceActions, long time);
     /* The caller must hold AWT_LOCK. */
-    public abstract void sendMoveMessage(int xRoot, int yRoot, 
+    public abstract void sendMoveMessage(int xRoot, int yRoot,
                                          int sourceAction, int sourceActions,
                                          long time);
     /* The caller must hold AWT_LOCK. */
     public abstract void sendLeaveMessage(long time);
 
     /* The caller must hold AWT_LOCK. */
-    protected abstract void sendDropMessage(int xRoot, int yRoot, 
+    protected abstract void sendDropMessage(int xRoot, int yRoot,
                                             int sourceAction, int sourceActions,
                                             long time);
 
-    public final void initiateDrop(int xRoot, int yRoot, 
+    public final void initiateDrop(int xRoot, int yRoot,
                                    int sourceAction, int sourceActions,
                                    long time) {
         XWindowAttributes wattr = new XWindowAttributes();
@@ -184,28 +184,28 @@ abstract class XDragSourceProtocol {
             XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                           targetWindow, wattr.pData);
-                
+
             XToolkit.RESTORE_XERROR_HANDLER();
 
-            if (status == 0 || 
-                (XToolkit.saved_error != null && 
+            if (status == 0 ||
+                (XToolkit.saved_error != null &&
                  XToolkit.saved_error.get_error_code() != XlibWrapper.Success)) {
                 throw new XException("XGetWindowAttributes failed");
             }
-             
+
             targetWindowMask = wattr.get_your_event_mask();
         } finally {
             wattr.dispose();
         }
-                
+
         XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
         XlibWrapper.XSelectInput(XToolkit.getDisplay(), targetWindow,
-                                 targetWindowMask | 
+                                 targetWindowMask |
                                  XlibWrapper.StructureNotifyMask);
-            
+
         XToolkit.RESTORE_XERROR_HANDLER();
 
-        if (XToolkit.saved_error != null && 
+        if (XToolkit.saved_error != null &&
             XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
             throw new XException("XSelectInput failed");
         }

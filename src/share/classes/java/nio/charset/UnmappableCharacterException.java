@@ -43,15 +43,15 @@ public class UnmappableCharacterException
     private int inputLength;
 
     public UnmappableCharacterException(int inputLength) {
-	this.inputLength = inputLength;
+        this.inputLength = inputLength;
     }
 
     public int getInputLength() {
-	return inputLength;
+        return inputLength;
     }
 
     public String getMessage() {
-	return "Input length = " + inputLength;
+        return "Input length = " + inputLength;
     }
 
 }

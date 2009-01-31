@@ -200,23 +200,23 @@ public class ZoneInfo extends TimeZone {
      * @param willGMTOffsetChange the value of willGMTOffsetChange
      */
     ZoneInfo(String ID,
-	     int rawOffset,
-	     int dstSavings,
-	     int checksum,
-	     long[] transitions,
-	     int[] offsets,
-	     int[] simpleTimeZoneParams,
-	     boolean willGMTOffsetChange) {
-	setID(ID);
-	this.rawOffset = rawOffset;
-	this.dstSavings = dstSavings;
-	this.checksum = checksum;
-	this.transitions = transitions;
-	this.offsets = offsets;
-	this.simpleTimeZoneParams = simpleTimeZoneParams;
-	this.willGMTOffsetChange = willGMTOffsetChange;
+             int rawOffset,
+             int dstSavings,
+             int checksum,
+             long[] transitions,
+             int[] offsets,
+             int[] simpleTimeZoneParams,
+             boolean willGMTOffsetChange) {
+        setID(ID);
+        this.rawOffset = rawOffset;
+        this.dstSavings = dstSavings;
+        this.checksum = checksum;
+        this.transitions = transitions;
+        this.offsets = offsets;
+        this.simpleTimeZoneParams = simpleTimeZoneParams;
+        this.willGMTOffsetChange = willGMTOffsetChange;
     }
-	
+
     /**
      * Returns the difference in milliseconds between local time and UTC
      * of given time, taking into account both the raw offset and the
@@ -226,114 +226,114 @@ public class ZoneInfo extends TimeZone {
      * @return the milliseconds to add to UTC to get local wall time
      */
     public int getOffset(long date) {
-	return getOffsets(date, null, UTC_TIME);
+        return getOffsets(date, null, UTC_TIME);
     }
 
     public int getOffsets(long utc, int[] offsets) {
-	return getOffsets(utc, offsets, UTC_TIME);
+        return getOffsets(utc, offsets, UTC_TIME);
     }
 
     public int getOffsetsByStandard(long standard, int[] offsets) {
-	return getOffsets(standard, offsets, STANDARD_TIME);
+        return getOffsets(standard, offsets, STANDARD_TIME);
     }
 
     public int getOffsetsByWall(long wall, int[] offsets) {
-	return getOffsets(wall, offsets, WALL_TIME);
+        return getOffsets(wall, offsets, WALL_TIME);
     }
 
     private int getOffsets(long date, int[] offsets, int type) {
-	// if dst is never observed, there is no transition.
-	if (transitions == null) {
-	    int offset = getLastRawOffset();
-	    if (offsets != null) {
-		offsets[0] = offset;
-		offsets[1] = 0;
-	    }
-	    return offset;
-	}
+        // if dst is never observed, there is no transition.
+        if (transitions == null) {
+            int offset = getLastRawOffset();
+            if (offsets != null) {
+                offsets[0] = offset;
+                offsets[1] = 0;
+            }
+            return offset;
+        }
 
-	date -= rawOffsetDiff;
-	int index = getTransitionIndex(date, type);
+        date -= rawOffsetDiff;
+        int index = getTransitionIndex(date, type);
 
-	// prior to the transition table, returns the raw offset.
-	// should support LMT.
-	if (index < 0) {
-	    int offset = getLastRawOffset();
-	    if (offsets != null) {
-		offsets[0] = offset;
-		offsets[1] = 0;
-	    }
-	    return offset;
-	}
+        // prior to the transition table, returns the raw offset.
+        // should support LMT.
+        if (index < 0) {
+            int offset = getLastRawOffset();
+            if (offsets != null) {
+                offsets[0] = offset;
+                offsets[1] = 0;
+            }
+            return offset;
+        }
 
-	if (index < transitions.length) {
-	    long val = transitions[index];
-	    int offset = this.offsets[(int)(val & OFFSET_MASK)] + rawOffsetDiff;
-	    if (offsets != null) {
-		int dst = (int)((val >>> DST_NSHIFT) & 0xfL);
-		int save = (dst == 0) ? 0 : this.offsets[dst];
-		offsets[0] = offset - save;
-		offsets[1] = save;
-	    }
-	    return offset;
-	}
+        if (index < transitions.length) {
+            long val = transitions[index];
+            int offset = this.offsets[(int)(val & OFFSET_MASK)] + rawOffsetDiff;
+            if (offsets != null) {
+                int dst = (int)((val >>> DST_NSHIFT) & 0xfL);
+                int save = (dst == 0) ? 0 : this.offsets[dst];
+                offsets[0] = offset - save;
+                offsets[1] = save;
+            }
+            return offset;
+        }
 
-	// beyond the transitions, delegate to SimpleTimeZone if there
-	// is a rule; otherwise, return rawOffset.
-	SimpleTimeZone tz = getLastRule();
-	if (tz != null) {
-	    int rawoffset = tz.getRawOffset();
-	    long msec = date;
-	    if (type != UTC_TIME) {
-		msec -= rawOffset;
-	    }
-	    int dstoffset = tz.inDaylightTime(new Date(msec)) ? tz.getDSTSavings() : 0;
-	    if (offsets != null) {
-		offsets[0] = rawoffset;
-		offsets[1] = dstoffset;
-	    }
-	    return rawoffset + dstoffset;
-	}
-	int offset = getLastRawOffset();
-	if (offsets != null) {
-	    offsets[0] = offset;
-	    offsets[1] = 0;
-	}
-	return offset;
+        // beyond the transitions, delegate to SimpleTimeZone if there
+        // is a rule; otherwise, return rawOffset.
+        SimpleTimeZone tz = getLastRule();
+        if (tz != null) {
+            int rawoffset = tz.getRawOffset();
+            long msec = date;
+            if (type != UTC_TIME) {
+                msec -= rawOffset;
+            }
+            int dstoffset = tz.inDaylightTime(new Date(msec)) ? tz.getDSTSavings() : 0;
+            if (offsets != null) {
+                offsets[0] = rawoffset;
+                offsets[1] = dstoffset;
+            }
+            return rawoffset + dstoffset;
+        }
+        int offset = getLastRawOffset();
+        if (offsets != null) {
+            offsets[0] = offset;
+            offsets[1] = 0;
+        }
+        return offset;
     }
 
     private final int getTransitionIndex(long date, int type) {
-	int low = 0;
-	int high = transitions.length - 1;
+        int low = 0;
+        int high = transitions.length - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) / 2;
-	    long val = transitions[mid];
-	    long midVal = val >> TRANSITION_NSHIFT; // sign extended
-	    if (type != UTC_TIME) {
-		midVal += offsets[(int)(val & OFFSET_MASK)]; // wall time
-	    }
-	    if (type == STANDARD_TIME) {
-		int dstIndex = (int)((val >>> DST_NSHIFT) & 0xfL);
-		if (dstIndex != 0) {
-		    midVal -= offsets[dstIndex]; // make it standard time
-		}
-	    }
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            long val = transitions[mid];
+            long midVal = val >> TRANSITION_NSHIFT; // sign extended
+            if (type != UTC_TIME) {
+                midVal += offsets[(int)(val & OFFSET_MASK)]; // wall time
+            }
+            if (type == STANDARD_TIME) {
+                int dstIndex = (int)((val >>> DST_NSHIFT) & 0xfL);
+                if (dstIndex != 0) {
+                    midVal -= offsets[dstIndex]; // make it standard time
+                }
+            }
 
-	    if (midVal < date) {
-		low = mid + 1;
-	    } else if (midVal > date) {
-		high = mid - 1;
-	    } else {
-		return mid;
-	    }
-	}
+            if (midVal < date) {
+                low = mid + 1;
+            } else if (midVal > date) {
+                high = mid - 1;
+            } else {
+                return mid;
+            }
+        }
 
-	// if beyond the transitions, returns that index.
-	if (low >= transitions.length) {
-	    return low;
-	}
-	return low - 1;
+        // if beyond the transitions, returns that index.
+        if (low >= transitions.length) {
+            return low;
+        }
+        return low - 1;
     }
 
    /**
@@ -359,36 +359,36 @@ public class ZoneInfo extends TimeZone {
      * @return The milliseconds to add to UTC to get local time.
      */
     public int getOffset(int era, int year, int month, int day,
-			 int dayOfWeek, int milliseconds) {
-	if (milliseconds < 0 || milliseconds >= AbstractCalendar.DAY_IN_MILLIS) {
-	    throw new IllegalArgumentException();
-	}
+                         int dayOfWeek, int milliseconds) {
+        if (milliseconds < 0 || milliseconds >= AbstractCalendar.DAY_IN_MILLIS) {
+            throw new IllegalArgumentException();
+        }
 
-	if (era == java.util.GregorianCalendar.BC) { // BC
-	    year = 1 - year;
-	} else if (era != java.util.GregorianCalendar.AD) {
-	    throw new IllegalArgumentException();
-	}
+        if (era == java.util.GregorianCalendar.BC) { // BC
+            year = 1 - year;
+        } else if (era != java.util.GregorianCalendar.AD) {
+            throw new IllegalArgumentException();
+        }
 
-	CalendarDate date = gcal.newCalendarDate(null);
-	date.setDate(year, month + 1, day);
-	if (gcal.validate(date) == false) {
-	    throw new IllegalArgumentException();
-	}
+        CalendarDate date = gcal.newCalendarDate(null);
+        date.setDate(year, month + 1, day);
+        if (gcal.validate(date) == false) {
+            throw new IllegalArgumentException();
+        }
 
-	// bug-for-bug compatible argument checking
-	if (dayOfWeek < java.util.GregorianCalendar.SUNDAY
-	    || dayOfWeek > java.util.GregorianCalendar.SATURDAY) {
-	    throw new IllegalArgumentException();
-	}
+        // bug-for-bug compatible argument checking
+        if (dayOfWeek < java.util.GregorianCalendar.SUNDAY
+            || dayOfWeek > java.util.GregorianCalendar.SATURDAY) {
+            throw new IllegalArgumentException();
+        }
 
-	if (transitions == null) {
-	    return getLastRawOffset();
-	}
+        if (transitions == null) {
+            return getLastRawOffset();
+        }
 
-	long dateInMillis = gcal.getTime(date) + milliseconds;
-	dateInMillis -= (long) rawOffset; // make it UTC
-	return getOffsets(dateInMillis, null, UTC_TIME);
+        long dateInMillis = gcal.getTime(date) + milliseconds;
+        dateInMillis -= (long) rawOffset; // make it UTC
+        return getOffsets(dateInMillis, null, UTC_TIME);
     }
 
     /**
@@ -400,14 +400,14 @@ public class ZoneInfo extends TimeZone {
      * @see getRawOffset
      */
     public synchronized void setRawOffset(int offsetMillis) {
-	if (offsetMillis == rawOffset + rawOffsetDiff) {
-	    return;
-	}
-	rawOffsetDiff = offsetMillis - rawOffset;
-	if (lastRule != null) {
-	    lastRule.setRawOffset(offsetMillis);
-	}
-	dirty = true;
+        if (offsetMillis == rawOffset + rawOffsetDiff) {
+            return;
+        }
+        rawOffsetDiff = offsetMillis - rawOffset;
+        if (lastRule != null) {
+            lastRule.setRawOffset(offsetMillis);
+        }
+        dirty = true;
     }
 
     /**
@@ -418,61 +418,61 @@ public class ZoneInfo extends TimeZone {
      * to get local standard time
      */
     public int getRawOffset() {
-	if (!willGMTOffsetChange) {
-	    return rawOffset + rawOffsetDiff;
-	}
+        if (!willGMTOffsetChange) {
+            return rawOffset + rawOffsetDiff;
+        }
 
-	int[] offsets = new int[2];
-	getOffsets(System.currentTimeMillis(), offsets, UTC_TIME);
-	return offsets[0];
+        int[] offsets = new int[2];
+        getOffsets(System.currentTimeMillis(), offsets, UTC_TIME);
+        return offsets[0];
     }
 
     public boolean isDirty() {
-	return dirty;
+        return dirty;
     }
 
     private int getLastRawOffset() {
-	return rawOffset + rawOffsetDiff;
+        return rawOffset + rawOffsetDiff;
     }
 
     /**
      * Queries if this time zone uses Daylight Saving Time in the last known rule.
      */
     public boolean useDaylightTime() {
-	return (simpleTimeZoneParams != null);
+        return (simpleTimeZoneParams != null);
     }
 
     /**
      * Queries if the specified date is in Daylight Saving Time.
      */
     public boolean inDaylightTime(Date date) {
-	if (date == null) {
-	    throw new NullPointerException();
-	}
+        if (date == null) {
+            throw new NullPointerException();
+        }
 
-	if (transitions == null) {
-	    return false;
-	}
+        if (transitions == null) {
+            return false;
+        }
 
-	long utc = date.getTime() - rawOffsetDiff;
-	int index = getTransitionIndex(utc, UTC_TIME);
+        long utc = date.getTime() - rawOffsetDiff;
+        int index = getTransitionIndex(utc, UTC_TIME);
 
-	// before transitions in the transition table
-	if (index < 0) {
-	    return false;
-	}
+        // before transitions in the transition table
+        if (index < 0) {
+            return false;
+        }
 
-	// the time is in the table range.
-	if (index < transitions.length) {
-	    return (transitions[index] & DST_MASK) != 0;
-	}
+        // the time is in the table range.
+        if (index < transitions.length) {
+            return (transitions[index] & DST_MASK) != 0;
+        }
 
-	// beyond the transition table
-	SimpleTimeZone tz = getLastRule();
-	if (tz != null) {
-	    return tz.inDaylightTime(date);
-	}
-	return false;
+        // beyond the transition table
+        SimpleTimeZone tz = getLastRule();
+        if (tz != null) {
+            return tz.inDaylightTime(date);
+        }
+        return false;
     }
 
     /**
@@ -483,7 +483,7 @@ public class ZoneInfo extends TimeZone {
      * standard time when daylight saving time is in effect.
      */
     public int getDSTSavings() {
-	return dstSavings;
+        return dstSavings;
     }
 
 //    /**
@@ -491,14 +491,14 @@ public class ZoneInfo extends TimeZone {
 //     * time zone doesn't observe any daylight saving time.
 //     */
 //    public int getMaxTransitionYear() {
-//	if (transitions == null) {
-//	    return -1;
-//	}
-//	long val = transitions[transitions.length - 1];
-//	int offset = this.offsets[(int)(val & OFFSET_MASK)] + rawOffsetDiff;
-//	val = (val >> TRANSITION_NSHIFT) + offset;
-//	CalendarDate lastDate = Gregorian.getCalendarDate(val);
-//	return lastDate.getYear();
+//      if (transitions == null) {
+//          return -1;
+//      }
+//      long val = transitions[transitions.length - 1];
+//      int offset = this.offsets[(int)(val & OFFSET_MASK)] + rawOffsetDiff;
+//      val = (val >> TRANSITION_NSHIFT) + offset;
+//      CalendarDate lastDate = Gregorian.getCalendarDate(val);
+//      return lastDate.getYear();
 //    }
 
     /**
@@ -506,14 +506,14 @@ public class ZoneInfo extends TimeZone {
      * @return the string
      */
     public String toString() {
-	return getClass().getName() +
-	    "[id=\"" + getID() + "\"" +
-	    ",offset=" + getLastRawOffset() +
-	    ",dstSavings=" + dstSavings +
-	    ",useDaylight=" + useDaylightTime() +
-	    ",transitions=" + ((transitions != null) ? transitions.length : 0) +
-	    ",lastRule=" + (lastRule == null ? getLastRuleInstance() : lastRule) +
-	    "]";
+        return getClass().getName() +
+            "[id=\"" + getID() + "\"" +
+            ",offset=" + getLastRawOffset() +
+            ",dstSavings=" + dstSavings +
+            ",useDaylight=" + useDaylightTime() +
+            ",transitions=" + ((transitions != null) ? transitions.length : 0) +
+            ",lastRule=" + (lastRule == null ? getLastRuleInstance() : lastRule) +
+            "]";
     }
 
     /**
@@ -522,17 +522,17 @@ public class ZoneInfo extends TimeZone {
      * @return an array of time zone IDs.
      */
     public static String[] getAvailableIDs() {
-	List<String> idList = ZoneInfoFile.getZoneIDs();
-	List<String> excluded = ZoneInfoFile.getExcludedZones();
-	if (excluded != null) {
-	    // List all zones from the idList and excluded lists
-	    List<String> list = new ArrayList<String>(idList.size() + excluded.size());
-	    list.addAll(idList);
-	    list.addAll(excluded);
-	    idList = list;
-	}
-	String[] ids = new String[idList.size()];
-	return idList.toArray(ids);
+        List<String> idList = ZoneInfoFile.getZoneIDs();
+        List<String> excluded = ZoneInfoFile.getExcludedZones();
+        if (excluded != null) {
+            // List all zones from the idList and excluded lists
+            List<String> list = new ArrayList<String>(idList.size() + excluded.size());
+            list.addAll(idList);
+            list.addAll(excluded);
+            idList = list;
+        }
+        String[] ids = new String[idList.size()];
+        return idList.toArray(ids);
     }
 
     /**
@@ -545,44 +545,44 @@ public class ZoneInfo extends TimeZone {
      * @return an array of time zone IDs.
      */
     public static String[] getAvailableIDs(int rawOffset) {
-	String[] result;
-	List<String> matched = new ArrayList<String>();
-	List<String> IDs = ZoneInfoFile.getZoneIDs();
-	int[] rawOffsets = ZoneInfoFile.getRawOffsets();
+        String[] result;
+        List<String> matched = new ArrayList<String>();
+        List<String> IDs = ZoneInfoFile.getZoneIDs();
+        int[] rawOffsets = ZoneInfoFile.getRawOffsets();
 
     loop:
-	for (int index = 0; index < rawOffsets.length; index++) {
-	    if (rawOffsets[index] == rawOffset) {
-		byte[] indices = ZoneInfoFile.getRawOffsetIndices();
-		for (int i = 0; i < indices.length; i++) {
-		    if (indices[i] == index) {
-			matched.add(IDs.get(i++));
-			while (i < indices.length && indices[i] == index) {
-			    matched.add(IDs.get(i++));
-			}
-			break loop;
-		    }
-		}
-	    }
-	}
+        for (int index = 0; index < rawOffsets.length; index++) {
+            if (rawOffsets[index] == rawOffset) {
+                byte[] indices = ZoneInfoFile.getRawOffsetIndices();
+                for (int i = 0; i < indices.length; i++) {
+                    if (indices[i] == index) {
+                        matched.add(IDs.get(i++));
+                        while (i < indices.length && indices[i] == index) {
+                            matched.add(IDs.get(i++));
+                        }
+                        break loop;
+                    }
+                }
+            }
+        }
 
-	// We need to add any zones from the excluded zone list that
-	// currently have the same GMT offset as the specified
-	// rawOffset. The zones returned by this method may not be
-	// correct as of return to the caller if any GMT offset
-	// transition is happening during this GMT offset checking...
-	List<String> excluded = ZoneInfoFile.getExcludedZones();
-	if (excluded != null) {
-	    for (String id : excluded) {
-		TimeZone zi = getTimeZone(id);
-		if (zi != null && zi.getRawOffset() == rawOffset) {
-		    matched.add(id);
-		}
-	    }
-	}
+        // We need to add any zones from the excluded zone list that
+        // currently have the same GMT offset as the specified
+        // rawOffset. The zones returned by this method may not be
+        // correct as of return to the caller if any GMT offset
+        // transition is happening during this GMT offset checking...
+        List<String> excluded = ZoneInfoFile.getExcludedZones();
+        if (excluded != null) {
+            for (String id : excluded) {
+                TimeZone zi = getTimeZone(id);
+                if (zi != null && zi.getRawOffset() == rawOffset) {
+                    matched.add(id);
+                }
+            }
+        }
 
-	result = new String[matched.size()];
-	matched.toArray(result);
+        result = new String[matched.size()];
+        matched.toArray(result);
         return result;
     }
 
@@ -595,28 +595,28 @@ public class ZoneInfo extends TimeZone {
      * time zone of the ID.
      */
     public static TimeZone getTimeZone(String ID) {
-	ZoneInfo zi = null;
+        ZoneInfo zi = null;
 
-	zi = ZoneInfoFile.getZoneInfo(ID);
-	if (zi == null) {
-	    // if we can't create an object for the ID, try aliases.
-	    try {
-		Map<String, String> map = getAliasTable();
-		String alias = ID;
-		while ((alias = map.get(alias)) != null) {
-		    zi = ZoneInfoFile.getZoneInfo(alias);
-		    if (zi != null) {
-			zi.setID(ID);
-			zi = ZoneInfoFile.addToCache(ID, zi);
-			zi = (ZoneInfo) zi.clone();
-			break;
-		    }
-		}
-	    } catch (Exception e) {
-		// ignore exceptions
-	    }
-	}
-	return zi;
+        zi = ZoneInfoFile.getZoneInfo(ID);
+        if (zi == null) {
+            // if we can't create an object for the ID, try aliases.
+            try {
+                Map<String, String> map = getAliasTable();
+                String alias = ID;
+                while ((alias = map.get(alias)) != null) {
+                    zi = ZoneInfoFile.getZoneInfo(alias);
+                    if (zi != null) {
+                        zi.setID(ID);
+                        zi = ZoneInfoFile.addToCache(ID, zi);
+                        zi = (ZoneInfo) zi.clone();
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                // ignore exceptions
+            }
+        }
+        return zi;
     }
 
     private transient SimpleTimeZone lastRule;
@@ -627,10 +627,10 @@ public class ZoneInfo extends TimeZone {
      * observe DST.
      */
     private synchronized SimpleTimeZone getLastRule() {
-	if (lastRule == null) {
-	    lastRule = getLastRuleInstance();
-	}
-	return lastRule;
+        if (lastRule == null) {
+            lastRule = getLastRuleInstance();
+        }
+        return lastRule;
     }
 
     /**
@@ -641,42 +641,42 @@ public class ZoneInfo extends TimeZone {
      * doesn't observe DST.
      */
     public SimpleTimeZone getLastRuleInstance() {
-	if (simpleTimeZoneParams == null) {
-	    return null;
-	}
-	if (simpleTimeZoneParams.length == 10) {
-	    return new SimpleTimeZone(getLastRawOffset(), getID(),
-				      simpleTimeZoneParams[0],
-				      simpleTimeZoneParams[1],
-				      simpleTimeZoneParams[2],
-				      simpleTimeZoneParams[3],
-				      simpleTimeZoneParams[4],
-				      simpleTimeZoneParams[5],
-				      simpleTimeZoneParams[6],
-				      simpleTimeZoneParams[7],
-				      simpleTimeZoneParams[8],
-				      simpleTimeZoneParams[9],
-				      dstSavings);
-	}
-	return new SimpleTimeZone(getLastRawOffset(), getID(),
-				  simpleTimeZoneParams[0],
-				  simpleTimeZoneParams[1],
-				  simpleTimeZoneParams[2],
-				  simpleTimeZoneParams[3],
-				  simpleTimeZoneParams[4],
-				  simpleTimeZoneParams[5],
-				  simpleTimeZoneParams[6],
-				  simpleTimeZoneParams[7],
-				  dstSavings);
+        if (simpleTimeZoneParams == null) {
+            return null;
+        }
+        if (simpleTimeZoneParams.length == 10) {
+            return new SimpleTimeZone(getLastRawOffset(), getID(),
+                                      simpleTimeZoneParams[0],
+                                      simpleTimeZoneParams[1],
+                                      simpleTimeZoneParams[2],
+                                      simpleTimeZoneParams[3],
+                                      simpleTimeZoneParams[4],
+                                      simpleTimeZoneParams[5],
+                                      simpleTimeZoneParams[6],
+                                      simpleTimeZoneParams[7],
+                                      simpleTimeZoneParams[8],
+                                      simpleTimeZoneParams[9],
+                                      dstSavings);
+        }
+        return new SimpleTimeZone(getLastRawOffset(), getID(),
+                                  simpleTimeZoneParams[0],
+                                  simpleTimeZoneParams[1],
+                                  simpleTimeZoneParams[2],
+                                  simpleTimeZoneParams[3],
+                                  simpleTimeZoneParams[4],
+                                  simpleTimeZoneParams[5],
+                                  simpleTimeZoneParams[6],
+                                  simpleTimeZoneParams[7],
+                                  dstSavings);
     }
 
     /**
      * Returns a copy of this <code>ZoneInfo</code>.
      */
     public Object clone() {
-	ZoneInfo zi = (ZoneInfo) super.clone();
-	zi.lastRule = null;
-	return zi;
+        ZoneInfo zi = (ZoneInfo) super.clone();
+        zi.lastRule = null;
+        return zi;
     }
 
     /**
@@ -685,7 +685,7 @@ public class ZoneInfo extends TimeZone {
      * @return a hash code of this time zone
      */
     public int hashCode() {
-	return getLastRawOffset() ^ checksum;
+        return getLastRawOffset() ^ checksum;
     }
 
     /**
@@ -696,16 +696,16 @@ public class ZoneInfo extends TimeZone {
      * false otherwise.
      */
     public boolean equals(Object obj) {
-	if (this == obj) {
-	    return true;
-	}
-	if (!(obj instanceof ZoneInfo)) {
-	    return false;
-	}
-	ZoneInfo that = (ZoneInfo) obj;
-	return (getID().equals(that.getID())
-		&& (getLastRawOffset() == that.getLastRawOffset())
-		&& (checksum == that.checksum));
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ZoneInfo)) {
+            return false;
+        }
+        ZoneInfo that = (ZoneInfo) obj;
+        return (getID().equals(that.getID())
+                && (getLastRawOffset() == that.getLastRawOffset())
+                && (checksum == that.checksum));
     }
 
     /**
@@ -720,29 +720,29 @@ public class ZoneInfo extends TimeZone {
      * GMT offset and transition information; false, otherwise.
      */
     public boolean hasSameRules(TimeZone other) {
-	if (this == other) {
-	    return true;
-	}
-	if (other == null) {
-	    return false;
-	}
-	if (!(other instanceof ZoneInfo)) {
-	    if (getRawOffset() != other.getRawOffset()) {
-		return false;
-	    }
-	    // if both have the same raw offset and neither observes
-	    // DST, they have the same rule.
-	    if ((transitions == null)
-		&& (useDaylightTime() == false)
-		&& (other.useDaylightTime() == false)) {
-		return true;
-	    }
-	    return false;
-	}
-	if (getLastRawOffset() != ((ZoneInfo)other).getLastRawOffset()) {
-	    return false;
-	}
-	return (checksum == ((ZoneInfo)other).checksum);
+        if (this == other) {
+            return true;
+        }
+        if (other == null) {
+            return false;
+        }
+        if (!(other instanceof ZoneInfo)) {
+            if (getRawOffset() != other.getRawOffset()) {
+                return false;
+            }
+            // if both have the same raw offset and neither observes
+            // DST, they have the same rule.
+            if ((transitions == null)
+                && (useDaylightTime() == false)
+                && (other.useDaylightTime() == false)) {
+                return true;
+            }
+            return false;
+        }
+        if (getLastRawOffset() != ((ZoneInfo)other).getLastRawOffset()) {
+            return false;
+        }
+        return (checksum == ((ZoneInfo)other).checksum);
     }
 
     private static SoftReference<Map> aliasTable;
@@ -751,33 +751,33 @@ public class ZoneInfo extends TimeZone {
      * Returns a Map from alias time zone IDs to their standard
      * time zone IDs.
      *
-     * @return the Map that holds the mappings from alias time zone IDs 
-     *    to their standard time zone IDs, or null if 
+     * @return the Map that holds the mappings from alias time zone IDs
+     *    to their standard time zone IDs, or null if
      *    <code>ZoneInfoMappings</code> file is not available.
      */
     public synchronized static Map<String, String> getAliasTable() {
-	Map<String, String> aliases = null;
+        Map<String, String> aliases = null;
 
-	SoftReference<Map> cache = aliasTable;
-	if (cache != null) {
-	    aliases = cache.get();
-	    if (aliases != null) {
-		return aliases;
-	    }
-	}
+        SoftReference<Map> cache = aliasTable;
+        if (cache != null) {
+            aliases = cache.get();
+            if (aliases != null) {
+                return aliases;
+            }
+        }
 
-	aliases = ZoneInfoFile.getZoneAliases();
-	if (aliases != null) {
-	    aliasTable = new SoftReference<Map>(aliases);
-	}
-	return aliases;
+        aliases = ZoneInfoFile.getZoneAliases();
+        if (aliases != null) {
+            aliasTable = new SoftReference<Map>(aliases);
+        }
+        return aliases;
     }
 
     private void readObject(ObjectInputStream stream)
-	    throws IOException, ClassNotFoundException {
-	stream.defaultReadObject();
-	// We don't know how this object from 1.4.x or earlier has
-	// been mutated. So it should always be marked as `dirty'.
-	dirty = true;
+            throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        // We don't know how this object from 1.4.x or earlier has
+        // been mutated. So it should always be marked as `dirty'.
+        dirty = true;
     }
 }

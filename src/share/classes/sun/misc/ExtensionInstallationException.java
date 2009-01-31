@@ -26,11 +26,10 @@
 package sun.misc;
 
 /*
- * Exception when installation of an extension has failed for 
+ * Exception when installation of an extension has failed for
  * any reason
  *
  * @author  Jerome Dochez
- * @version %I%, %G%
  */
 
 public class ExtensionInstallationException extends Exception {
@@ -41,6 +40,6 @@ public class ExtensionInstallationException extends Exception {
      * </p>
      */
     public ExtensionInstallationException(String s) {
-	super(s);
+        super(s);
     }
 }

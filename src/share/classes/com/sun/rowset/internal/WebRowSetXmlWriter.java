@@ -41,7 +41,7 @@ import javax.sql.rowset.spi.*;
  */
 
 public class WebRowSetXmlWriter implements XmlWriter, Serializable {
-    
+
     /**
      * The <code>java.io.Writer</code> object to which this <code>WebRowSetXmlWriter</code>
      * object will write when its <code>writeXML</code> method is called. The value
@@ -49,25 +49,25 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
      * as the second argument to the <code>writeXML</code> method.
      */
     private java.io.Writer writer;
-    
+
     /**
      * The <code>java.util.Stack</code> object that this <code>WebRowSetXmlWriter</code>
      * object will use for storing the tags to be used for writing the calling
      * <code>WebRowSet</code> object as an XML document.
      */
     private java.util.Stack stack;
-    
+
     private  JdbcRowSetResourceBundle resBundle;
-    
+
     public WebRowSetXmlWriter() {
-       
-	try {
-	   resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
-	} catch(IOException ioe) { 
+
+        try {
+           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
+        } catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
-    
+
     /**
      * Writes the given <code>WebRowSet</code> object as an XML document
      * using the given <code>java.io.Writer</code> object. The XML document
@@ -92,13 +92,13 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
      */
     public void writeXML(WebRowSet caller, java.io.Writer wrt)
     throws SQLException {
-        
+
         // create a new stack for tag checking.
         stack = new java.util.Stack();
         writer = wrt;
         writeRowSet(caller);
     }
-    
+
     /**
      * Writes the given <code>WebRowSet</code> object as an XML document
      * using the given <code>java.io.OutputStream</code> object. The XML document
@@ -125,63 +125,63 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
      */
     public void writeXML(WebRowSet caller, java.io.OutputStream oStream)
     throws SQLException {
-        
+
         // create a new stack for tag checking.
         stack = new java.util.Stack();
         writer = new OutputStreamWriter(oStream);
         writeRowSet(caller);
     }
-    
+
     /**
      *
      *
      * @exception SQLException if a database access error occurs
      */
     private void writeRowSet(WebRowSet caller) throws SQLException {
-        
+
         try {
-            
+
             startHeader();
-            
+
             writeProperties(caller);
             writeMetaData(caller);
             writeData(caller);
-            
+
             endHeader();
-            
+
         } catch (java.io.IOException ex) {
             throw new SQLException(MessageFormat.format(resBundle.handleGetObject("wrsxmlwriter.ioex").toString(), ex.getMessage()));
         }
     }
-    
+
     private void startHeader() throws java.io.IOException {
-        
+
         setTag("webRowSet");
         writer.write("<?xml version=\"1.0\"?>\n");
         writer.write("<webRowSet xmlns=\"http://java.sun.com/xml/ns/jdbc\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
         writer.write("xsi:schemaLocation=\"http://java.sun.com/xml/ns/jdbc http://java.sun.com/xml/ns/jdbc/webrowset.xsd\">\n");
     }
-    
+
     private void endHeader() throws java.io.IOException {
         endTag("webRowSet");
     }
-    
+
     /**
      *
      *
      * @exception SQLException if a database access error occurs
      */
     private void writeProperties(WebRowSet caller) throws java.io.IOException {
-        
+
         beginSection("properties");
-        
+
         try {
             propString("command", processSpecialCharacters(caller.getCommand()));
             propInteger("concurrency", caller.getConcurrency());
             propString("datasource", caller.getDataSourceName());
             propBoolean("escape-processing",
                     caller.getEscapeProcessing());
-            
+
             try {
                 propInteger("fetch-direction", caller.getFetchDirection());
             } catch(SQLException sqle) {
@@ -190,19 +190,19 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                 // in that case it will throw a SQLException.
                 // To avoid that catch it here
             }
-            
+
             propInteger("fetch-size", caller.getFetchSize());
             propInteger("isolation-level",
                     caller.getTransactionIsolation());
-            
+
             beginSection("key-columns");
-            
+
             int[] kc = caller.getKeyColumns();
             for (int i = 0; kc != null && i < kc.length; i++)
                 propInteger("column", kc[i]);
-            
+
             endSection("key-columns");
-            
+
             //Changed to beginSection and endSection for maps for proper indentation
             beginSection("map");
             java.util.Map typeMap = caller.getTypeMap();
@@ -218,15 +218,15 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                 }
             }
             endSection("map");
-            
+
             propInteger("max-field-size", caller.getMaxFieldSize());
             propInteger("max-rows", caller.getMaxRows());
             propInteger("query-timeout", caller.getQueryTimeout());
             propBoolean("read-only", caller.isReadOnly());
-            
+
             int itype = caller.getType();
             String strType = "";
-            
+
             if(itype == 1003) {
                 strType = "ResultSet.TYPE_FORWARD_ONLY";
             } else if(itype == 1004) {
@@ -234,34 +234,34 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
             } else if(itype == 1005) {
                 strType = "ResultSet.TYPE_SCROLL_SENSITIVE";
             }
-            
+
             propString("rowset-type", strType);
-            
+
             propBoolean("show-deleted", caller.getShowDeleted());
             propString("table-name", caller.getTableName());
             propString("url", caller.getUrl());
-            
+
             beginSection("sync-provider");
             // Remove the string after "@xxxx"
             // before writing it to the xml file.
             String strProviderInstance = (caller.getSyncProvider()).toString();
             String strProvider = strProviderInstance.substring(0, (caller.getSyncProvider()).toString().indexOf("@"));
-            
+
             propString("sync-provider-name", strProvider);
             propString("sync-provider-vendor", "Sun Microsystems Inc.");
             propString("sync-provider-version", "1.0");
             propInteger("sync-provider-grade", caller.getSyncProvider().getProviderGrade());
             propInteger("data-source-lock", caller.getSyncProvider().getDataSourceLock());
-            
+
             endSection("sync-provider");
-            
+
         } catch (SQLException ex) {
             throw new java.io.IOException(MessageFormat.format(resBundle.handleGetObject("wrsxmlwriter.sqlex").toString(), ex.getMessage()));
         }
-        
+
         endSection("properties");
     }
-    
+
     /**
      *
      *
@@ -269,18 +269,18 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
      */
     private void writeMetaData(WebRowSet caller) throws java.io.IOException {
         int columnCount;
-        
+
         beginSection("metadata");
-        
+
         try {
-            
+
             ResultSetMetaData rsmd = caller.getMetaData();
             columnCount = rsmd.getColumnCount();
             propInteger("column-count", columnCount);
-            
+
             for (int colIndex = 1; colIndex <= columnCount; colIndex++) {
                 beginSection("column-definition");
-                
+
                 propInteger("column-index", colIndex);
                 propBoolean("auto-increment", rsmd.isAutoIncrement(colIndex));
                 propBoolean("case-sensitive", rsmd.isCaseSensitive(colIndex));
@@ -298,16 +298,16 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                 propString("catalog-name", rsmd.getCatalogName(colIndex));
                 propInteger("column-type", rsmd.getColumnType(colIndex));
                 propString("column-type-name", rsmd.getColumnTypeName(colIndex));
-                
+
                 endSection("column-definition");
             }
         } catch (SQLException ex) {
             throw new java.io.IOException(MessageFormat.format(resBundle.handleGetObject("wrsxmlwriter.sqlex").toString(), ex.getMessage()));
         }
-        
+
         endSection("metadata");
     }
-    
+
     /**
      *
      *
@@ -315,14 +315,14 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
      */
     private void writeData(WebRowSet caller) throws java.io.IOException {
         ResultSet rs;
-        
+
         try {
             ResultSetMetaData rsmd = caller.getMetaData();
             int columnCount = rsmd.getColumnCount();
             int i;
-            
+
             beginSection("data");
-            
+
             caller.beforeFirst();
             caller.setShowDeleted(true);
             while (caller.next()) {
@@ -335,7 +335,7 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                 } else {
                     beginSection("currentRow");
                 }
-                
+
                 for (i = 1; i <= columnCount; i++) {
                     if (caller.columnUpdated(i)) {
                         rs = caller.getOriginalRow();
@@ -352,7 +352,7 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                         endTag("columnValue");
                     }
                 }
-                
+
                 endSection(); // this is unchecked
             }
             endSection("data");
@@ -360,11 +360,11 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
             throw new java.io.IOException(MessageFormat.format(resBundle.handleGetObject("wrsxmlwriter.sqlex").toString(), ex.getMessage()));
         }
     }
-    
+
     private void writeValue(int idx, RowSet caller) throws java.io.IOException {
         try {
             int type = caller.getMetaData().getColumnType(idx);
-            
+
             switch (type) {
                 case java.sql.Types.BIT:
                 case java.sql.Types.BOOLEAN:
@@ -453,7 +453,7 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
             throw new java.io.IOException(resBundle.handleGetObject("wrsxmlwriter.failedwrite").toString()+ ex.getMessage());
         }
     }
-    
+
     /*
      * This begins a new tag with a indent
      *
@@ -461,26 +461,26 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
     private void beginSection(String tag) throws java.io.IOException {
         // store the current tag
         setTag(tag);
-        
+
         writeIndent(stack.size());
-        
+
         // write it out
         writer.write("<" + tag + ">\n");
     }
-    
+
     /*
      * This closes a tag started by beginTag with a indent
      *
      */
     private void endSection(String tag) throws java.io.IOException {
         writeIndent(stack.size());
-        
+
         String beginTag = getTag();
-        
+
         if(beginTag.indexOf("webRowSet") != -1) {
             beginTag ="webRowSet";
         }
-        
+
         if (tag.equals(beginTag) ) {
             // get the current tag and write it out
             writer.write("</" + beginTag + ">\n");
@@ -489,27 +489,27 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
         }
         writer.flush();
     }
-    
+
     private void endSection() throws java.io.IOException {
         writeIndent(stack.size());
-        
+
         // get the current tag and write it out
         String beginTag = getTag();
         writer.write("</" + beginTag + ">\n");
-        
+
         writer.flush();
     }
-    
+
     private void beginTag(String tag) throws java.io.IOException {
         // store the current tag
         setTag(tag);
-        
+
         writeIndent(stack.size());
-        
+
         // write tag out
         writer.write("<" + tag + ">");
     }
-    
+
     private void endTag(String tag) throws java.io.IOException {
         String beginTag = getTag();
         if (tag.equals(beginTag)) {
@@ -520,38 +520,38 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
         }
         writer.flush();
     }
-    
+
     private void emptyTag(String tag) throws java.io.IOException {
         // write an emptyTag
         writer.write("<" + tag + "/>");
     }
-    
+
     private void setTag(String tag) {
         // add the tag to stack
         stack.push(tag);
     }
-    
+
     private String getTag() {
         return (String)stack.pop();
     }
-    
+
     private void writeNull() throws java.io.IOException {
         emptyTag("null");
     }
-    
+
     private void writeStringData(String s) throws java.io.IOException {
         if (s == null) {
             writeNull();
         } else if (s.equals("")) {
             writeEmptyString();
         } else {
-            
+
             s = processSpecialCharacters(s);
-            
+
             writer.write(s);
         }
     }
-    
+
     private void writeString(String s) throws java.io.IOException {
         if (s != null) {
             writer.write(s);
@@ -559,64 +559,64 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
             writeNull();
         }
     }
-    
-    
+
+
     private void writeShort(short s) throws java.io.IOException {
         writer.write(Short.toString(s));
     }
-    
+
     private void writeLong(long l) throws java.io.IOException {
         writer.write(Long.toString(l));
     }
-    
+
     private void writeInteger(int i) throws java.io.IOException {
         writer.write(Integer.toString(i));
     }
-    
+
     private void writeBoolean(boolean b) throws java.io.IOException {
         writer.write(new Boolean(b).toString());
     }
-    
+
     private void writeFloat(float f) throws java.io.IOException {
         writer.write(Float.toString(f));
     }
-    
+
     private void writeDouble(double d) throws java.io.IOException {
         writer.write(Double.toString(d));
     }
-    
+
     private void writeBigDecimal(java.math.BigDecimal bd) throws java.io.IOException {
         if (bd != null)
             writer.write(bd.toString());
         else
             emptyTag("null");
     }
-    
+
     private void writeIndent(int tabs) throws java.io.IOException {
         // indent...
         for (int i = 1; i < tabs; i++) {
             writer.write("  ");
         }
     }
-    
+
     private void propString(String tag, String s) throws java.io.IOException {
         beginTag(tag);
         writeString(s);
         endTag(tag);
     }
-    
+
     private void propInteger(String tag, int i) throws java.io.IOException {
         beginTag(tag);
         writeInteger(i);
         endTag(tag);
     }
-    
+
     private void propBoolean(String tag, boolean b) throws java.io.IOException {
         beginTag(tag);
         writeBoolean(b);
         endTag(tag);
     }
-    
+
     private void writeEmptyString() throws java.io.IOException {
         emptyTag("emptyString");
     }
@@ -626,23 +626,23 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
     public boolean writeData(RowSetInternal caller) {
         return false;
     }
-    
-    
+
+
     /**
      * This function has been added for the processing of special characters
      * lik <,>,'," and & in the data to be serialized. These have to be taken
      * of specifically or else there will be parsing error while trying to read
      * the contents of the XML file.
      **/
-    
+
     private String processSpecialCharacters(String s) {
-        
+
         if(s == null) {
             return null;
         }
         char []charStr = s.toCharArray();
         String specialStr = new String();
-        
+
         for(int i = 0; i < charStr.length; i++) {
             if(charStr[i] == '&') {
                 specialStr = specialStr.concat("&amp;");
@@ -658,9 +658,9 @@ public class WebRowSetXmlWriter implements XmlWriter, Serializable {
                 specialStr = specialStr.concat(String.valueOf(charStr[i]));
             }
         }
-        
+
         s = specialStr;
         return s;
     }
-    
+
 }

@@ -38,7 +38,7 @@
  * through direct linking at compile time or through dynamic
  * loading at runtime, and use an entry point defined as
  *
- *	JDgaLibInitFunc JDgaLibInit;
+ *      JDgaLibInitFunc JDgaLibInit;
  *
  * to initialize the library and obtain a copy of a JDgaLibInfo
  * structure that will be used to communicate with the library
@@ -73,19 +73,19 @@ typedef enum {
  * This structure defines the location and size of a rectangular
  * region of a drawing surface.
  *
- *	lox, loy - coordinates that point to the pixel just inside
- *			the top left-hand corner of the region.
- *	hix, hiy - coordinates that point to the pixel just beyond
- *			the bottom right-hand corner of the region.
+ *      lox, loy - coordinates that point to the pixel just inside
+ *                      the top left-hand corner of the region.
+ *      hix, hiy - coordinates that point to the pixel just beyond
+ *                      the bottom right-hand corner of the region.
  *
  * Thus, the region is a rectangle containing (hiy-loy) rows of
  * (hix-lox) columns of pixels.
  */
 typedef struct {
-    jint	lox;
-    jint	loy;
-    jint	hix;
-    jint	hiy;
+    jint        lox;
+    jint        loy;
+    jint        hix;
+    jint        hiy;
 } JDgaBounds;
 
 typedef struct {
@@ -93,10 +93,10 @@ typedef struct {
      * Information describing the global memory partition containing
      * the pixel information for the window.
      */
-    void	*basePtr;	/* Base address of memory partition. */
-    jint	surfaceScan;	/* Number of pixels from one row to the next */
-    jint	surfaceWidth;	/* Total accessible pixels across */
-    jint	surfaceHeight;	/* Total accessible pixels down */
+    void        *basePtr;       /* Base address of memory partition. */
+    jint        surfaceScan;    /* Number of pixels from one row to the next */
+    jint        surfaceWidth;   /* Total accessible pixels across */
+    jint        surfaceHeight;  /* Total accessible pixels down */
     jint        surfaceDepth;   /* Mapped depth */
 
     /*
@@ -105,7 +105,7 @@ typedef struct {
      *
      * The coordinates are relative to the "basePtr" origin of the screen.
      */
-    JDgaBounds	window;
+    JDgaBounds  window;
 
     /*
      * Location and size information of the visible portion of the
@@ -119,7 +119,7 @@ typedef struct {
      *
      * The coordinates are relative to the "basePtr" origin of the screen.
      */
-    JDgaBounds	visible;
+    JDgaBounds  visible;
 
 } JDgaSurfaceInfo;
 
@@ -133,9 +133,9 @@ typedef struct _JDgaLibInfo JDgaLibInfo;
  * data that that library needs to track the indicated display.
  *
  * @return
- *	JDGA_SUCCESS if library was successfully initialized
- *	JDGA_FAILED if library is unable to perform operations
- *		on the given X11 Display.
+ *      JDGA_SUCCESS if library was successfully initialized
+ *      JDGA_FAILED if library is unable to perform operations
+ *              on the given X11 Display.
  */
 typedef JDgaStatus
 JDgaLibInitFunc(JNIEnv *env, JDgaLibInfo *ppInfo);
@@ -148,16 +148,16 @@ JDgaLibInitFunc(JNIEnv *env, JDgaLibInfo *ppInfo);
  *
  * Information provided to this function includes:
  *
- *	lox, loy - the X and Y coordinates of the pixel just inside
- *		the upper left corner of the region to be rendered
- *	hix, hiy - the X and Y coordinates of the pixel just beyond
- *		the lower right corner of the region to be rendered
+ *      lox, loy - the X and Y coordinates of the pixel just inside
+ *              the upper left corner of the region to be rendered
+ *      hix, hiy - the X and Y coordinates of the pixel just beyond
+ *              the lower right corner of the region to be rendered
  *
  * Information obtained via this function includes:
  *
- *	*pSurface - A pointer to a JDgaSurfaceInfo structure which is
- *		filled in with information about the drawing area for
- *		the specified Drawable.
+ *      *pSurface - A pointer to a JDgaSurfaceInfo structure which is
+ *              filled in with information about the drawing area for
+ *              the specified Drawable.
  *
  * The return value indicates whether or not the library was able
  * to successfully lock the drawable into memory and obtain the
@@ -174,14 +174,14 @@ JDgaLibInitFunc(JNIEnv *env, JDgaLibInfo *ppInfo);
  * then JDGA_FAILED should be indicated so that the rendering library
  * can back off to another rendering mechanism.
  *
- * @return 
- *	JDGA_SUCCESS memory successfully locked and described
- *	JDGA_FAILED temporary failure to lock the specified Drawable
+ * @return
+ *      JDGA_SUCCESS memory successfully locked and described
+ *      JDGA_FAILED temporary failure to lock the specified Drawable
  */
 typedef JDgaStatus
 JDgaGetLockFunc(JNIEnv *env, Display *display, void **dgaDev,
-		    Drawable d, JDgaSurfaceInfo *pSurface,
-		    jint lox, jint loy, jint hix, jint hiy);
+                    Drawable d, JDgaSurfaceInfo *pSurface,
+                    jint lox, jint loy, jint hix, jint hiy);
 
 /*
  * This function is called to unlock the locally addressable memory
@@ -199,10 +199,10 @@ JDgaGetLockFunc(JNIEnv *env, Display *display, void **dgaDev,
  * the rendering library asked to unlock a Drawable that it had
  * never locked.
  *
- * @return 
- *	JDGA_SUCCESS lock successfully released
- *	JDGA_FAILED unable to release lock for some reason,
- *		typically the lock was already invalid
+ * @return
+ *      JDGA_SUCCESS lock successfully released
+ *      JDGA_FAILED unable to release lock for some reason,
+ *              typically the lock was already invalid
  */
 typedef JDgaStatus
 JDgaReleaseLockFunc(JNIEnv *env, void *dgaDev, Drawable d);
@@ -234,16 +234,16 @@ struct _JDgaLibInfo {
      * The X11 display structure that this instance of JDgaLibInfo
      * structure is tracking.
      */
-    Display			*display;
+    Display                     *display;
 
     /*
      * Pointers to the utility functions to query information about
      * X11 drawables and perform synchronization on them.
      */
-    JDgaGetLockFunc		*pGetLock;
-    JDgaReleaseLockFunc		*pReleaseLock;
-    JDgaXRequestSentFunc	*pXRequestSent;
-    JDgaLibDisposeFunc		*pLibDispose;
+    JDgaGetLockFunc             *pGetLock;
+    JDgaReleaseLockFunc         *pReleaseLock;
+    JDgaXRequestSentFunc        *pXRequestSent;
+    JDgaLibDisposeFunc          *pLibDispose;
 
     /*
      * Since the JDGA library is responsible for allocating this

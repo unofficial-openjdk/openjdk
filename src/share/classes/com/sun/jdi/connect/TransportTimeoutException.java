@@ -36,15 +36,15 @@ package com.sun.jdi.connect;
  * {@link Connector.Argument connector argument}. Similiarly,
  * when waiting to accept a connection from a target VM,
  * using {@link ListeningConnector#accept accept} this
- * exception may be thrown if the connector supports a 
+ * exception may be thrown if the connector supports a
  * timeout connector argument when accepting.
  *
  * <p> In addition, for developers creating {@link
  * com.sun.jdi.connect.spi.TransportService TransportService}
- * implementations this exception is thrown when 
+ * implementations this exception is thrown when
  * {@link com.sun.jdi.connect.spi.TransportService#attach attach}
  * times out when establishing a connection to a target VM,
- * or {@link com.sun.jdi.connect.spi.TransportService#accept 
+ * or {@link com.sun.jdi.connect.spi.TransportService#accept
  * accept} times out while waiting for a target VM to connect. </p>
  *
  * @see AttachingConnector#attach
@@ -62,10 +62,10 @@ public class TransportTimeoutException extends java.io.IOException {
      */
     public TransportTimeoutException() {
     }
- 
+
 
     /**
-     * Constructs a <tt>TransportTimeoutException</tt> with the 
+     * Constructs a <tt>TransportTimeoutException</tt> with the
      * specified detail message.
      *
      * @param message the detail message pertaining to this exception.

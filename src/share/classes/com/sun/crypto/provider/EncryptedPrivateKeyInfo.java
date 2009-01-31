@@ -56,14 +56,14 @@ final class EncryptedPrivateKeyInfo {
      * Constructs (i.e., parses) an <code>EncryptedPrivateKeyInfo</code> from
      * its encoding.
      */
-    EncryptedPrivateKeyInfo(byte[] encoded) throws IOException { 
-	DerValue val = new DerValue(encoded);
+    EncryptedPrivateKeyInfo(byte[] encoded) throws IOException {
+        DerValue val = new DerValue(encoded);
 
         DerValue[] seq = new DerValue[2];
 
         seq[0] = val.data.getDerValue();
         seq[1] = val.data.getDerValue();
-	
+
         if (val.data.available() != 0) {
             throw new IOException("overrun, bytes = " + val.data.available());
         }
@@ -77,54 +77,54 @@ final class EncryptedPrivateKeyInfo {
         if (seq[1].data.available() != 0)
             throw new IOException("encryptedData field overrun");
 
-	this.encoded = (byte[])encoded.clone();
+        this.encoded = (byte[])encoded.clone();
     }
 
     /**
-     * Constructs an <code>EncryptedPrivateKeyInfo</code> from the 
+     * Constructs an <code>EncryptedPrivateKeyInfo</code> from the
      * encryption algorithm and the encrypted data.
      */
     EncryptedPrivateKeyInfo(AlgorithmId algid, byte[] encryptedData) {
-	this.algid = algid;
-	this.encryptedData = (byte[])encryptedData.clone();
-	this.encoded = null; // lazy generation of encoding
+        this.algid = algid;
+        this.encryptedData = (byte[])encryptedData.clone();
+        this.encoded = null; // lazy generation of encoding
     }
 
     /**
      * Returns the encryption algorithm.
      */
     AlgorithmId getAlgorithm() {
-	return this.algid;
+        return this.algid;
     }
 
     /**
      * Returns the encrypted data.
      */
     byte[] getEncryptedData() {
-	return (byte[])this.encryptedData.clone();
+        return (byte[])this.encryptedData.clone();
     }
 
     /**
      * Returns the ASN.1 encoding of this class.
      */
     byte[] getEncoded()
-	throws IOException
+        throws IOException
     {
-	if (this.encoded != null) return (byte[])this.encoded.clone();
+        if (this.encoded != null) return (byte[])this.encoded.clone();
 
-	DerOutputStream out = new DerOutputStream();
-	DerOutputStream tmp = new DerOutputStream();
+        DerOutputStream out = new DerOutputStream();
+        DerOutputStream tmp = new DerOutputStream();
 
-	// encode encryption algorithm
-	algid.encode(tmp);
+        // encode encryption algorithm
+        algid.encode(tmp);
 
-	// encode encrypted data
-	tmp.putOctetString(encryptedData);
+        // encode encrypted data
+        tmp.putOctetString(encryptedData);
 
-	// wrap everything into a SEQUENCE
-	out.write(DerValue.tag_Sequence, tmp);
-	this.encoded = out.toByteArray();
+        // wrap everything into a SEQUENCE
+        out.write(DerValue.tag_Sequence, tmp);
+        this.encoded = out.toByteArray();
 
-	return (byte[])this.encoded.clone();
+        return (byte[])this.encoded.clone();
     }
 }

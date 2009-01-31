@@ -38,29 +38,29 @@ public final class Provider extends SunJSSE {
 
     // standard constructor
     public Provider() {
-	super();
+        super();
     }
 
     // prefered constructor to enable FIPS mode at runtime
     public Provider(java.security.Provider cryptoProvider) {
-	super(cryptoProvider);
+        super(cryptoProvider);
     }
-    
+
     // constructor to enable FIPS mode from java.security file
     public Provider(String cryptoProvider) {
-	super(cryptoProvider);
+        super(cryptoProvider);
     }
-    
+
     // public for now, but we may want to change it or not document it.
     public static synchronized boolean isFIPS() {
-	return SunJSSE.isFIPS();
+        return SunJSSE.isFIPS();
     }
 
     /**
      * Installs the JSSE provider.
      */
     public static synchronized void install() {
-	/* nop. Remove this method in the future. */
+        /* nop. Remove this method in the future. */
     }
 
 }

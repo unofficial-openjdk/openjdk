@@ -34,16 +34,16 @@
 
 void         object_init(void);
 ObjectIndex  object_new(SiteIndex site_index, jint size, ObjectKind kind,
-			SerialNumber thread_serial_num);
+                        SerialNumber thread_serial_num);
 SiteIndex    object_get_site(ObjectIndex index);
 jint         object_get_size(ObjectIndex index);
 ObjectKind   object_get_kind(ObjectIndex index);
 ObjectKind   object_free(ObjectIndex index);
 void         object_list(void);
 void         object_cleanup(void);
-  
-void         object_set_thread_serial_number(ObjectIndex index, 
-					     SerialNumber thread_serial_num);
+
+void         object_set_thread_serial_number(ObjectIndex index,
+                                             SerialNumber thread_serial_num);
 SerialNumber object_get_thread_serial_number(ObjectIndex index);
 RefIndex     object_get_references(ObjectIndex index);
 void         object_set_references(ObjectIndex index, RefIndex ref_index);

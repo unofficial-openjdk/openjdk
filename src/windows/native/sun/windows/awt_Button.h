@@ -44,7 +44,7 @@ public:
     AwtButton();
 
     virtual LPCTSTR GetClassName();
-    
+
     static AwtButton* Create(jobject self, jobject hParent);
 
     /* Windows message handler functions */
@@ -67,10 +67,3 @@ private:
 };
 
 #endif // AWT_BUTTON_H
-
-
-
-
-
-
-

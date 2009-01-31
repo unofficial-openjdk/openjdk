@@ -45,16 +45,15 @@ import sun.security.util.DerOutputStream;
 /**
  * An X.509 public key for the Digital Signature Algorithm.
  *
- * @author Benjamin Renaud 
+ * @author Benjamin Renaud
  *
- * @version 1.62, 12/19/03
  *
  * @see DSAPrivateKey
  * @see AlgIdDSA
  * @see DSA
  */
 
-public class DSAPublicKey extends X509Key 
+public class DSAPublicKey extends X509Key
 implements java.security.interfaces.DSAPublicKey, Serializable {
 
     /** use serialVersionUID from JDK 1.1. for interoperability */
@@ -64,7 +63,7 @@ implements java.security.interfaces.DSAPublicKey, Serializable {
     private BigInteger y;
 
     /*
-     * Keep this constructor for backwards compatibility with JDK1.1. 
+     * Keep this constructor for backwards compatibility with JDK1.1.
      */
     public DSAPublicKey() {
     }
@@ -83,26 +82,26 @@ implements java.security.interfaces.DSAPublicKey, Serializable {
      * @param g DSA parameter g, may be null if all of p, q, and g are null.
      */
     public DSAPublicKey(BigInteger y, BigInteger p, BigInteger q,
-			BigInteger g) 
+                        BigInteger g)
     throws InvalidKeyException {
-	this.y = y;
-	algid = new AlgIdDSA(p, q, g);
+        this.y = y;
+        algid = new AlgIdDSA(p, q, g);
 
-	try {
-	    key = new DerValue(DerValue.tag_Integer, 
-			       y.toByteArray()).toByteArray();
-	    encode();
-	} catch (IOException e) {
-	    throw new InvalidKeyException("could not DER encode y: " +
-					  e.getMessage());
-	}
+        try {
+            key = new DerValue(DerValue.tag_Integer,
+                               y.toByteArray()).toByteArray();
+            encode();
+        } catch (IOException e) {
+            throw new InvalidKeyException("could not DER encode y: " +
+                                          e.getMessage());
+        }
     }
 
     /**
      * Make a DSA public key from its DER encoding (X.509).
      */
     public DSAPublicKey(byte[] encoded) throws InvalidKeyException {
-	decode(encoded);
+        decode(encoded);
     }
 
     /**
@@ -110,30 +109,30 @@ implements java.security.interfaces.DSAPublicKey, Serializable {
      * parameters could not be parsed.
      */
     public DSAParams getParams() {
-	try {
-	    if (algid instanceof DSAParams) {
-		return (DSAParams)algid;
-	    } else {
-		DSAParameterSpec paramSpec;
-		AlgorithmParameters algParams = algid.getParameters();
-		if (algParams == null) {
-		    return null;
-		}
-		paramSpec = algParams.getParameterSpec(DSAParameterSpec.class);
-		return (DSAParams)paramSpec;
-	    }
-	} catch (InvalidParameterSpecException e) {
-	    return null;
-	}
+        try {
+            if (algid instanceof DSAParams) {
+                return (DSAParams)algid;
+            } else {
+                DSAParameterSpec paramSpec;
+                AlgorithmParameters algParams = algid.getParameters();
+                if (algParams == null) {
+                    return null;
+                }
+                paramSpec = algParams.getParameterSpec(DSAParameterSpec.class);
+                return (DSAParams)paramSpec;
+            }
+        } catch (InvalidParameterSpecException e) {
+            return null;
+        }
     }
-                                                                   
+
     /**
      * Get the raw public value, y, without the parameters.
      *
      * @see getParameters
      */
     public BigInteger getY() {
-	return y;
+        return y;
     }
 
     public String toString() {
@@ -142,12 +141,12 @@ implements java.security.interfaces.DSAPublicKey, Serializable {
     }
 
     protected void parseKeyBits() throws InvalidKeyException {
-	try {
-	    DerInputStream in = new DerInputStream(key);
-	    y = in.getBigInteger();
-	} catch (IOException e) {
-	    throw new InvalidKeyException("Invalid key: y value\n" +
-					  e.getMessage());
-	}
+        try {
+            DerInputStream in = new DerInputStream(key);
+            y = in.getBigInteger();
+        } catch (IOException e) {
+            throw new InvalidKeyException("Invalid key: y value\n" +
+                                          e.getMessage());
+        }
     }
 }

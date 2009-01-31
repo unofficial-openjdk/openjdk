@@ -36,5 +36,3 @@ mlib_stop_timer awt_setMlibStopTimer();
 void awt_getBIColorOrder(int type, int *colorOrder);
 
 #endif /* _AWT_MLIB_H */
-
-

@@ -39,7 +39,6 @@ import sun.security.util.*;
  * GSS-API mechanism
  *
  * @author Seema Malkani
- * @version %I%, %G%
  * @since 1.6
  */
 public class SpNegoContext implements GSSContextSpi {
@@ -51,14 +50,14 @@ public class SpNegoContext implements GSSContextSpi {
     private static final int STATE_IN_PROCESS = 2;
     private static final int STATE_DONE = 3;
     private static final int STATE_DELETED = 4;
-    
+
     private int state = STATE_NEW;
 
     private static final int CHECKSUM_DELEG_FLAG    = 1;
     private static final int CHECKSUM_MUTUAL_FLAG   = 2;
     private static final int CHECKSUM_REPLAY_FLAG   = 4;
     private static final int CHECKSUM_SEQUENCE_FLAG = 8;
-    private static final int CHECKSUM_CONF_FLAG	    = 16;
+    private static final int CHECKSUM_CONF_FLAG     = 16;
     private static final int CHECKSUM_INTEG_FLAG    = 32;
 
     /*
@@ -71,7 +70,7 @@ public class SpNegoContext implements GSSContextSpi {
     private boolean sequenceDetState = true;
     private boolean confState = true;
     private boolean integState = true;
-  
+
     private GSSNameSpi peerName = null;
     private GSSNameSpi myName = null;
     private SpNegoCredElement myCred = null;
@@ -85,33 +84,33 @@ public class SpNegoContext implements GSSContextSpi {
 
     // the underlying negotiated mechanism
     private Oid internal_mech = null;
-    
+
     // the SpNegoMechFactory that creates this context
     final private SpNegoMechFactory factory;
 
     // debug property
     static final boolean DEBUG =
-	java.security.AccessController.doPrivileged(
+        java.security.AccessController.doPrivileged(
             new sun.security.action.GetBooleanAction
-	    ("sun.security.spnego.debug")).booleanValue();
+            ("sun.security.spnego.debug")).booleanValue();
 
     /**
      * Constructor for SpNegoContext to be called on the context initiator's
      * side.
      */
-    public SpNegoContext(SpNegoMechFactory factory, GSSNameSpi peerName, 
-                        GSSCredentialSpi myCred, 
-			int lifetime) throws GSSException {
+    public SpNegoContext(SpNegoMechFactory factory, GSSNameSpi peerName,
+                        GSSCredentialSpi myCred,
+                        int lifetime) throws GSSException {
 
-	if (peerName == null)
+        if (peerName == null)
             throw new IllegalArgumentException("Cannot have null peer name");
-	if ((myCred != null) && !(myCred instanceof SpNegoCredElement)) {
-	    throw new IllegalArgumentException("Wrong cred element type");
-	}
-	this.peerName = peerName;
-	this.myCred = (SpNegoCredElement) myCred;
-	this.lifetime = lifetime;
-	this.initiator = true;
+        if ((myCred != null) && !(myCred instanceof SpNegoCredElement)) {
+            throw new IllegalArgumentException("Wrong cred element type");
+        }
+        this.peerName = peerName;
+        this.myCred = (SpNegoCredElement) myCred;
+        this.lifetime = lifetime;
+        this.initiator = true;
         this.factory = factory;
     }
 
@@ -119,13 +118,13 @@ public class SpNegoContext implements GSSContextSpi {
      * Constructor for SpNegoContext to be called on the context acceptor's
      * side.
      */
-    public SpNegoContext(SpNegoMechFactory factory, GSSCredentialSpi myCred) 
+    public SpNegoContext(SpNegoMechFactory factory, GSSCredentialSpi myCred)
             throws GSSException {
         if ((myCred != null) && !(myCred instanceof SpNegoCredElement)) {
             throw new IllegalArgumentException("Wrong cred element type");
         }
-	this.myCred = (SpNegoCredElement) myCred;
-	this.initiator = false;
+        this.myCred = (SpNegoCredElement) myCred;
+        this.initiator = false;
         this.factory = factory;
     }
 
@@ -133,39 +132,39 @@ public class SpNegoContext implements GSSContextSpi {
      * Constructor for SpNegoContext to import a previously exported context.
      */
     public SpNegoContext(SpNegoMechFactory factory, byte [] interProcessToken)
-	throws GSSException {
-	throw new GSSException(GSSException.UNAVAILABLE,
+        throws GSSException {
+        throw new GSSException(GSSException.UNAVAILABLE,
                                -1, "GSS Import Context not available");
     }
 
     /**
      * Requests that confidentiality be available.
      */
-    public final void requestConf(boolean value) throws GSSException { 
-	if (state == STATE_NEW && isInitiator())
-	    confState  = value;
+    public final void requestConf(boolean value) throws GSSException {
+        if (state == STATE_NEW && isInitiator())
+            confState  = value;
     }
 
     /**
      * Is confidentiality available?
      */
     public final boolean getConfState() {
-	return confState;
+        return confState;
     }
-     
+
     /**
      * Requests that integrity be available.
      */
-    public final void requestInteg(boolean value) throws GSSException { 
-	if (state == STATE_NEW && isInitiator())
-	    integState  = value;
+    public final void requestInteg(boolean value) throws GSSException {
+        if (state == STATE_NEW && isInitiator())
+            integState  = value;
     }
 
     /**
      * Is integrity available?
      */
     public final boolean getIntegState() {
-	return integState;
+        return integState;
     }
 
     /**
@@ -173,19 +172,19 @@ public class SpNegoContext implements GSSContextSpi {
      * establishment.
      */
     public final void requestCredDeleg(boolean value) throws GSSException {
-	if (state == STATE_NEW && isInitiator())
-	    credDelegState  = value;
+        if (state == STATE_NEW && isInitiator())
+            credDelegState  = value;
     }
 
     /**
      * Is credential delegation enabled?
      */
     public final boolean getCredDelegState() {
-        if (mechContext != null && 
+        if (mechContext != null &&
                 (state == STATE_IN_PROCESS || state == STATE_DONE)) {
             return mechContext.getCredDelegState();
         } else {
-	    return credDelegState;
+            return credDelegState;
         }
     }
 
@@ -194,43 +193,43 @@ public class SpNegoContext implements GSSContextSpi {
      * establishment. Since this is fromm the client's perspective, it
      * essentially requests that the server be authenticated.
      */
-    public final void requestMutualAuth(boolean value) throws GSSException { 
-	if (state == STATE_NEW && isInitiator()) {
-	    mutualAuthState  = value;
-	}
+    public final void requestMutualAuth(boolean value) throws GSSException {
+        if (state == STATE_NEW && isInitiator()) {
+            mutualAuthState  = value;
+        }
     }
-   
+
     /**
      * Is mutual authentication enabled? Since this is from the client's
      * perspective, it essentially meas that the server is being
      * authenticated.
      */
     public final boolean getMutualAuthState() {
-	return mutualAuthState;
+        return mutualAuthState;
     }
-    
+
     final void setCredDelegState(boolean state) {
-	credDelegState = state;
+        credDelegState = state;
     }
 
     final void setMutualAuthState(boolean state) {
-	mutualAuthState = state;
+        mutualAuthState = state;
     }
 
     final void setReplayDetState(boolean state) {
-	replayDetState = state;
-    } 
-    
+        replayDetState = state;
+    }
+
     final void setSequenceDetState(boolean state) {
-	sequenceDetState = state;
+        sequenceDetState = state;
     }
-    
+
     final void setConfState(boolean state) {
-	confState = state;
+        confState = state;
     }
-    
+
     final void setIntegState(boolean state) {
-	integState = state;
+        integState = state;
     }
 
     /**
@@ -239,47 +238,47 @@ public class SpNegoContext implements GSSContextSpi {
      * @return the Oid of this context
      */
     public final Oid getMech() {
-	if (isEstablished()) {
-	    return getNegotiatedMech();
-	}
-	return (SpNegoMechFactory.GSS_SPNEGO_MECH_OID);
+        if (isEstablished()) {
+            return getNegotiatedMech();
+        }
+        return (SpNegoMechFactory.GSS_SPNEGO_MECH_OID);
     }
-   
+
     public final Oid getNegotiatedMech() {
-	return (internal_mech);
+        return (internal_mech);
     }
 
     public final Provider getProvider() {
-	return SpNegoMechFactory.PROVIDER;
+        return SpNegoMechFactory.PROVIDER;
     }
 
     public final void dispose() throws GSSException {
-	mechContext = null;
+        mechContext = null;
         state = STATE_DELETED;
     }
- 
+
     /**
      * Tests if this is the initiator side of the context.
      *
      * @return boolean indicating if this is initiator (true)
-     *	or target (false)
+     *  or target (false)
      */
     public final boolean isInitiator() {
-	return initiator;
+        return initiator;
     }
-    
+
     /**
      * Tests if the context can be used for per-message service.
      * Context may allow the calls to the per-message service
      * functions before being fully established.
      *
      * @return boolean indicating if per-message methods can
-     *	be called.
+     *  be called.
      */
     public final boolean isProtReady() {
-	return (state == STATE_DONE);
+        return (state == STATE_DONE);
     }
-  
+
     /**
      * Initiator context establishment call. This method may be
      * required to be called several times. A CONTINUE_NEEDED return
@@ -287,198 +286,198 @@ public class SpNegoContext implements GSSContextSpi {
      * is received from the peer.
      *
      * @param is contains the token received from the peer. On the
-     *	      first call it will be ignored.
+     *        first call it will be ignored.
      * @return any token required to be sent to the peer
      * It is responsibility of the caller to send the token
      * to its peer for processing.
      * @exception GSSException
      */
-    public final byte[] initSecContext(InputStream is, int mechTokenSize) 
-	throws GSSException {
-      
-	byte[] retVal = null;
-	NegTokenInit initToken = null;
-	byte[] mechToken = null;
-	int errorCode = GSSException.FAILURE;
+    public final byte[] initSecContext(InputStream is, int mechTokenSize)
+        throws GSSException {
 
-	if (DEBUG) {
-	    System.out.println("Entered SpNego.initSecContext with " +
-				"state=" + printState(state));
-	}
-	if (!isInitiator()) {
-	    throw new GSSException(GSSException.FAILURE, -1, 
-		"initSecContext on an acceptor GSSContext"); 
-	}
+        byte[] retVal = null;
+        NegTokenInit initToken = null;
+        byte[] mechToken = null;
+        int errorCode = GSSException.FAILURE;
 
-	try {
-	    if (state == STATE_NEW) {
-		state = STATE_IN_PROCESS;
+        if (DEBUG) {
+            System.out.println("Entered SpNego.initSecContext with " +
+                                "state=" + printState(state));
+        }
+        if (!isInitiator()) {
+            throw new GSSException(GSSException.FAILURE, -1,
+                "initSecContext on an acceptor GSSContext");
+        }
 
-		errorCode = GSSException.NO_CRED;
+        try {
+            if (state == STATE_NEW) {
+                state = STATE_IN_PROCESS;
 
-		// determine available mech set
-		Oid[] mechList = getAvailableMechs();
-		DER_mechTypes = getEncodedMechs(mechList);
+                errorCode = GSSException.NO_CRED;
 
-		// pull out first mechanism
-		internal_mech = mechList[0];
-		
-		// get the token for first mechanism 
-		mechToken = GSS_initSecContext(null);
+                // determine available mech set
+                Oid[] mechList = getAvailableMechs();
+                DER_mechTypes = getEncodedMechs(mechList);
 
-		errorCode = GSSException.DEFECTIVE_TOKEN;
-		byte[] micToken = null;
-		if (!GSSUtil.useMSInterop()) {
-		    // calculate MIC only in normal mode
-		    micToken = generateMechListMIC(DER_mechTypes);
-		}
-		// generate SPNEGO token
-		initToken = new NegTokenInit(DER_mechTypes, getContextFlags(),
-					mechToken, micToken);
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.initSecContext: " +
-				"sending token of type = " + 
-				SpNegoToken.getTokenName(initToken.getType()));
-		}
-		// get the encoded token
-		retVal = initToken.getEncoded();
+                // pull out first mechanism
+                internal_mech = mechList[0];
 
-	    } else if (state == STATE_IN_PROCESS) {
+                // get the token for first mechanism
+                mechToken = GSS_initSecContext(null);
 
-		errorCode = GSSException.FAILURE;
-		if (is == null) {
-		    throw new GSSException(errorCode, -1,
-				"No token received from peer!");
-		}
+                errorCode = GSSException.DEFECTIVE_TOKEN;
+                byte[] micToken = null;
+                if (!GSSUtil.useMSInterop()) {
+                    // calculate MIC only in normal mode
+                    micToken = generateMechListMIC(DER_mechTypes);
+                }
+                // generate SPNEGO token
+                initToken = new NegTokenInit(DER_mechTypes, getContextFlags(),
+                                        mechToken, micToken);
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.initSecContext: " +
+                                "sending token of type = " +
+                                SpNegoToken.getTokenName(initToken.getType()));
+                }
+                // get the encoded token
+                retVal = initToken.getEncoded();
 
-		errorCode = GSSException.DEFECTIVE_TOKEN;
-		byte[] server_token = new byte[is.available()];
-		SpNegoToken.readFully(is, server_token);
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.initSecContext: " +
-					"process received token = " + 
-					SpNegoToken.getHexBytes(server_token));
-		}
+            } else if (state == STATE_IN_PROCESS) {
 
-		// read the SPNEGO token
-		// token will be validated when parsing
-		NegTokenTarg targToken = new NegTokenTarg(server_token);
+                errorCode = GSSException.FAILURE;
+                if (is == null) {
+                    throw new GSSException(errorCode, -1,
+                                "No token received from peer!");
+                }
 
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.initSecContext: " +
-				"received token of type = " + 
-				SpNegoToken.getTokenName(targToken.getType()));
-		}
-		    
-		// pull out mechanism
-		internal_mech = targToken.getSupportedMech();
-		if (internal_mech == null) {
-		    // return wth failure 
-		    throw new GSSException(errorCode, -1,
-				"supported mechansim from server is null");
-		}
+                errorCode = GSSException.DEFECTIVE_TOKEN;
+                byte[] server_token = new byte[is.available()];
+                SpNegoToken.readFully(is, server_token);
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.initSecContext: " +
+                                        "process received token = " +
+                                        SpNegoToken.getHexBytes(server_token));
+                }
 
-		// get the negotiated result
-		SpNegoToken.NegoResult negoResult = null;
-		int result = targToken.getNegotiatedResult();
-		switch (result) {
-		    case 0: 
-			negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
-			state = STATE_DONE;
-			break;
-		    case 1: 
-			negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
-			state = STATE_IN_PROCESS;
-			break;
-		    case 2: 
-			negoResult = SpNegoToken.NegoResult.REJECT;
-			state = STATE_DELETED;
-			break;
-		    default:
-			state = STATE_DONE;
-			break;
-		}
+                // read the SPNEGO token
+                // token will be validated when parsing
+                NegTokenTarg targToken = new NegTokenTarg(server_token);
 
-		errorCode = GSSException.BAD_MECH;
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.initSecContext: " +
+                                "received token of type = " +
+                                SpNegoToken.getTokenName(targToken.getType()));
+                }
 
-		if (negoResult == SpNegoToken.NegoResult.REJECT) {
-		    throw new GSSException(errorCode, -1,
-					internal_mech.toString());
-		}
+                // pull out mechanism
+                internal_mech = targToken.getSupportedMech();
+                if (internal_mech == null) {
+                    // return wth failure
+                    throw new GSSException(errorCode, -1,
+                                "supported mechansim from server is null");
+                }
 
-		errorCode = GSSException.DEFECTIVE_TOKEN;
+                // get the negotiated result
+                SpNegoToken.NegoResult negoResult = null;
+                int result = targToken.getNegotiatedResult();
+                switch (result) {
+                    case 0:
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
+                        state = STATE_DONE;
+                        break;
+                    case 1:
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
+                        state = STATE_IN_PROCESS;
+                        break;
+                    case 2:
+                        negoResult = SpNegoToken.NegoResult.REJECT;
+                        state = STATE_DELETED;
+                        break;
+                    default:
+                        state = STATE_DONE;
+                        break;
+                }
 
-		if ((negoResult == SpNegoToken.NegoResult.ACCEPT_COMPLETE) ||
-		    (negoResult == SpNegoToken.NegoResult.ACCEPT_INCOMPLETE)) {
+                errorCode = GSSException.BAD_MECH;
 
-		    // pull out the mechanism token
-		    byte[] accept_token = targToken.getResponseToken();
-		    if (accept_token == null) {
-			// return wth failure 
-			throw new GSSException(errorCode, -1,
-					"mechansim token from server is null");
-		    }
-			
-		    mechToken = GSS_initSecContext(accept_token);
+                if (negoResult == SpNegoToken.NegoResult.REJECT) {
+                    throw new GSSException(errorCode, -1,
+                                        internal_mech.toString());
+                }
 
-		    // verify MIC
-		    if (!GSSUtil.useMSInterop()) {
-			byte[] micToken = targToken.getMechListMIC();
-			if (!verifyMechListMIC(DER_mechTypes, micToken)) {
-			    throw new GSSException(errorCode, -1,
-				"verification of MIC on MechList Failed!");
-			}
-		    }
+                errorCode = GSSException.DEFECTIVE_TOKEN;
 
-		    if (isMechContextEstablished()) {
-			state = STATE_DONE;
-			retVal = mechToken;
+                if ((negoResult == SpNegoToken.NegoResult.ACCEPT_COMPLETE) ||
+                    (negoResult == SpNegoToken.NegoResult.ACCEPT_INCOMPLETE)) {
+
+                    // pull out the mechanism token
+                    byte[] accept_token = targToken.getResponseToken();
+                    if (accept_token == null) {
+                        // return wth failure
+                        throw new GSSException(errorCode, -1,
+                                        "mechansim token from server is null");
+                    }
+
+                    mechToken = GSS_initSecContext(accept_token);
+
+                    // verify MIC
+                    if (!GSSUtil.useMSInterop()) {
+                        byte[] micToken = targToken.getMechListMIC();
+                        if (!verifyMechListMIC(DER_mechTypes, micToken)) {
+                            throw new GSSException(errorCode, -1,
+                                "verification of MIC on MechList Failed!");
+                        }
+                    }
+
+                    if (isMechContextEstablished()) {
+                        state = STATE_DONE;
+                        retVal = mechToken;
                         if (DEBUG) {
                             System.out.println("SPNEGO Negotiated Mechanism = "
                                 + internal_mech + " " +
                                 GSSUtil.getMechStr(internal_mech));
                         }
-		    } else {
-			// generate SPNEGO token
-			initToken = new NegTokenInit(null, null, 
-						mechToken, null);
-			if (DEBUG) {
-			    System.out.println("SpNegoContext.initSecContext:" +
-				" continue sending token of type = " + 
-				SpNegoToken.getTokenName(initToken.getType()));
-			}
-			// get the encoded token
-			retVal = initToken.getEncoded();
-		    }
-		}
-		    
-	    } else {
-		// XXX Use logging API
-		if (DEBUG) {
-		    System.out.println(state);
-		}
-	    }
-	    if (DEBUG) {
-		if (retVal != null) {
-		    System.out.println("SNegoContext.initSecContext: " +
-			"sending token = " + SpNegoToken.getHexBytes(retVal));
-		}
-	    }
-	} catch (GSSException e) {
-	    GSSException gssException = 
-			new GSSException(errorCode, -1, e.getMessage());
-	    gssException.initCause(e);
-	    throw gssException;
-	} catch (IOException e) {
-	    GSSException gssException = 
-		new GSSException(GSSException.FAILURE, -1, e.getMessage());
-	    gssException.initCause(e);
-	    throw gssException;
-	}
+                    } else {
+                        // generate SPNEGO token
+                        initToken = new NegTokenInit(null, null,
+                                                mechToken, null);
+                        if (DEBUG) {
+                            System.out.println("SpNegoContext.initSecContext:" +
+                                " continue sending token of type = " +
+                                SpNegoToken.getTokenName(initToken.getType()));
+                        }
+                        // get the encoded token
+                        retVal = initToken.getEncoded();
+                    }
+                }
 
-	return retVal;
+            } else {
+                // XXX Use logging API
+                if (DEBUG) {
+                    System.out.println(state);
+                }
+            }
+            if (DEBUG) {
+                if (retVal != null) {
+                    System.out.println("SNegoContext.initSecContext: " +
+                        "sending token = " + SpNegoToken.getHexBytes(retVal));
+                }
+            }
+        } catch (GSSException e) {
+            GSSException gssException =
+                        new GSSException(errorCode, -1, e.getMessage());
+            gssException.initCause(e);
+            throw gssException;
+        } catch (IOException e) {
+            GSSException gssException =
+                new GSSException(GSSException.FAILURE, -1, e.getMessage());
+            gssException.initCause(e);
+            throw gssException;
+        }
+
+        return retVal;
     }
-    
+
 
     /**
      * Acceptor's context establishment call. This method may be
@@ -488,194 +487,194 @@ public class SpNegoContext implements GSSContextSpi {
      *
      * @param is contains the token received from the peer.
      * @return any token required to be sent to the peer
-     * It is responsibility of the caller to send the token 
+     * It is responsibility of the caller to send the token
      * to its peer for processing.
      * @exception GSSException
      */
     public final byte[] acceptSecContext(InputStream is, int mechTokenSize)
-	throws GSSException {
-	    
-	byte[] retVal = null;
-       	SpNegoToken.NegoResult negoResult;
-	boolean valid = true;
+        throws GSSException {
 
-	if (DEBUG) {
-	    System.out.println("Entered SpNegoContext.acceptSecContext with " +
-			       "state=" +  printState(state));
-	}
-	
-	if (isInitiator()) {
-	    throw new GSSException(GSSException.FAILURE, -1, 
-				   "acceptSecContext on an initiator " +
-				   "GSSContext"); 
-	}
-	try {
-	    if (state == STATE_NEW) {
-		state = STATE_IN_PROCESS;
+        byte[] retVal = null;
+        SpNegoToken.NegoResult negoResult;
+        boolean valid = true;
 
-		// read data
-		byte[] token = new byte[is.available()];
-		SpNegoToken.readFully(is, token);
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-					"receiving token = " + 
-					SpNegoToken.getHexBytes(token));
-		}
+        if (DEBUG) {
+            System.out.println("Entered SpNegoContext.acceptSecContext with " +
+                               "state=" +  printState(state));
+        }
 
-		// read the SPNEGO token
-		// token will be validated when parsing
-		NegTokenInit initToken = new NegTokenInit(token);
+        if (isInitiator()) {
+            throw new GSSException(GSSException.FAILURE, -1,
+                                   "acceptSecContext on an initiator " +
+                                   "GSSContext");
+        }
+        try {
+            if (state == STATE_NEW) {
+                state = STATE_IN_PROCESS;
 
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-				"received token of type = " + 
-				SpNegoToken.getTokenName(initToken.getType()));
-		}
+                // read data
+                byte[] token = new byte[is.available()];
+                SpNegoToken.readFully(is, token);
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                        "receiving token = " +
+                                        SpNegoToken.getHexBytes(token));
+                }
 
-		Oid[] mechList = initToken.getMechTypeList();
-		DER_mechTypes = initToken.getMechTypes();
-		if (DER_mechTypes == null) {
-		    valid = false;
-		}
+                // read the SPNEGO token
+                // token will be validated when parsing
+                NegTokenInit initToken = new NegTokenInit(token);
 
-		// get the mechanism token
-		byte[] mechToken = initToken.getMechToken();
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                "received token of type = " +
+                                SpNegoToken.getTokenName(initToken.getType()));
+                }
 
-		/*
-		 * Select the best match between the list of mechs
-		 * that the initiator requested and the list that
-		 * the acceptor will support.
+                Oid[] mechList = initToken.getMechTypeList();
+                DER_mechTypes = initToken.getMechTypes();
+                if (DER_mechTypes == null) {
+                    valid = false;
+                }
+
+                // get the mechanism token
+                byte[] mechToken = initToken.getMechToken();
+
+                /*
+                 * Select the best match between the list of mechs
+                 * that the initiator requested and the list that
+                 * the acceptor will support.
                  */
-		Oid[] supported_mechSet = getAvailableMechs();
-		Oid mech_wanted = 
-			negotiate_mech_type(supported_mechSet, mechList);
-		if (mech_wanted == null) {
-		    valid = false;
-		}
-		// save the desired mechansim
-		internal_mech = mech_wanted;
+                Oid[] supported_mechSet = getAvailableMechs();
+                Oid mech_wanted =
+                        negotiate_mech_type(supported_mechSet, mechList);
+                if (mech_wanted == null) {
+                    valid = false;
+                }
+                // save the desired mechansim
+                internal_mech = mech_wanted;
 
-		// get the token for mechanism
-		byte[] accept_token = GSS_acceptSecContext(mechToken);
-		if (accept_token == null) {
-		    valid = false;
-		}
+                // get the token for mechanism
+                byte[] accept_token = GSS_acceptSecContext(mechToken);
+                if (accept_token == null) {
+                    valid = false;
+                }
 
-		// verify MIC
-		if (!GSSUtil.useMSInterop() && valid) {
-		    valid = verifyMechListMIC(DER_mechTypes,
-						initToken.getMechListMIC());
-		}
+                // verify MIC
+                if (!GSSUtil.useMSInterop() && valid) {
+                    valid = verifyMechListMIC(DER_mechTypes,
+                                                initToken.getMechListMIC());
+                }
 
-		// determine negotiated result status
-		if (valid) {
-		    if (isMechContextEstablished()) {
-			negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
-			state = STATE_DONE;
-			// now set the context flags for acceptor
-			setContextFlags();
-			// print the negotiated mech info
+                // determine negotiated result status
+                if (valid) {
+                    if (isMechContextEstablished()) {
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
+                        state = STATE_DONE;
+                        // now set the context flags for acceptor
+                        setContextFlags();
+                        // print the negotiated mech info
                         if (DEBUG) {
                             System.out.println("SPNEGO Negotiated Mechanism = "
                                 + internal_mech + " " +
                                 GSSUtil.getMechStr(internal_mech));
                         }
-		    } else {
-			negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
-			state = STATE_IN_PROCESS;
-		    }
-		} else {
-		    negoResult = SpNegoToken.NegoResult.REJECT;
-		    state = STATE_DONE;
-		}
+                    } else {
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
+                        state = STATE_IN_PROCESS;
+                    }
+                } else {
+                    negoResult = SpNegoToken.NegoResult.REJECT;
+                    state = STATE_DONE;
+                }
 
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-				"mechanism wanted = " + mech_wanted);
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-				"negotiated result = " + negoResult);
-		}
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                "mechanism wanted = " + mech_wanted);
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                "negotiated result = " + negoResult);
+                }
 
-		// calculate MIC only in normal mode
-		byte[] micToken = null;
-		if (!GSSUtil.useMSInterop() && valid) {
-		    micToken = generateMechListMIC(DER_mechTypes);
-		}
+                // calculate MIC only in normal mode
+                byte[] micToken = null;
+                if (!GSSUtil.useMSInterop() && valid) {
+                    micToken = generateMechListMIC(DER_mechTypes);
+                }
 
-		// generate SPNEGO token
-		NegTokenTarg targToken = new NegTokenTarg(negoResult.ordinal(),
-				mech_wanted, accept_token, micToken);
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-				"sending token of type = " + 
-				SpNegoToken.getTokenName(targToken.getType()));
-		}
-		// get the encoded token
-		retVal = targToken.getEncoded();
+                // generate SPNEGO token
+                NegTokenTarg targToken = new NegTokenTarg(negoResult.ordinal(),
+                                mech_wanted, accept_token, micToken);
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                "sending token of type = " +
+                                SpNegoToken.getTokenName(targToken.getType()));
+                }
+                // get the encoded token
+                retVal = targToken.getEncoded();
 
-	    } else if (state == STATE_IN_PROCESS) {
-		// read the token
-		byte[] client_token = new byte[is.available()];
-		SpNegoToken.readFully(is, client_token);
-		byte[] accept_token = GSS_acceptSecContext(client_token);
-		if (accept_token == null) {
-		    valid = false;
-		}
+            } else if (state == STATE_IN_PROCESS) {
+                // read the token
+                byte[] client_token = new byte[is.available()];
+                SpNegoToken.readFully(is, client_token);
+                byte[] accept_token = GSS_acceptSecContext(client_token);
+                if (accept_token == null) {
+                    valid = false;
+                }
 
-		// determine negotiated result status
-		if (valid) {
-		    if (isMechContextEstablished()) {
-			negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
-			state = STATE_DONE;
-		    } else {
-			negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
-			state = STATE_IN_PROCESS;
-		    }
-		} else {
-		    negoResult = SpNegoToken.NegoResult.REJECT;
-		    state = STATE_DONE;
-		}
+                // determine negotiated result status
+                if (valid) {
+                    if (isMechContextEstablished()) {
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_COMPLETE;
+                        state = STATE_DONE;
+                    } else {
+                        negoResult = SpNegoToken.NegoResult.ACCEPT_INCOMPLETE;
+                        state = STATE_IN_PROCESS;
+                    }
+                } else {
+                    negoResult = SpNegoToken.NegoResult.REJECT;
+                    state = STATE_DONE;
+                }
 
-		// generate SPNEGO token
-		NegTokenTarg targToken = new NegTokenTarg(negoResult.ordinal(),
-				null, accept_token, null);
-		if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-				"sending token of type = " + 
-				SpNegoToken.getTokenName(targToken.getType()));
-		}
-		// get the encoded token
-		retVal = targToken.getEncoded();
+                // generate SPNEGO token
+                NegTokenTarg targToken = new NegTokenTarg(negoResult.ordinal(),
+                                null, accept_token, null);
+                if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                                "sending token of type = " +
+                                SpNegoToken.getTokenName(targToken.getType()));
+                }
+                // get the encoded token
+                retVal = targToken.getEncoded();
 
-	    } else {
-		// XXX Use logging API
-		if (DEBUG) {
-		    System.out.println("AcceptSecContext: state = " + state);
-		}
-	    }
-	    if (DEBUG) {
-		    System.out.println("SpNegoContext.acceptSecContext: " +
-			"sending token = " + SpNegoToken.getHexBytes(retVal));
-	    }
-	} catch (IOException e) {
-	    GSSException gssException = 
-		new GSSException(GSSException.FAILURE, -1, e.getMessage());
-	    gssException.initCause(e);
-	    throw gssException;
-	}
-	
-	return retVal;
+            } else {
+                // XXX Use logging API
+                if (DEBUG) {
+                    System.out.println("AcceptSecContext: state = " + state);
+                }
+            }
+            if (DEBUG) {
+                    System.out.println("SpNegoContext.acceptSecContext: " +
+                        "sending token = " + SpNegoToken.getHexBytes(retVal));
+            }
+        } catch (IOException e) {
+            GSSException gssException =
+                new GSSException(GSSException.FAILURE, -1, e.getMessage());
+            gssException.initCause(e);
+            throw gssException;
+        }
+
+        return retVal;
     }
 
     /**
      * obtain the available mechanisms
      */
     private Oid[] getAvailableMechs() {
-	if (myCred != null) {
-	    Oid[] mechs = new Oid[1];
-	    mechs[0] = myCred.getInternalMech();
-	    return mechs;
-	} else {
+        if (myCred != null) {
+            Oid[] mechs = new Oid[1];
+            mechs[0] = myCred.getInternalMech();
+            return mechs;
+        } else {
             return factory.availableMechs;
         }
     }
@@ -683,192 +682,192 @@ public class SpNegoContext implements GSSContextSpi {
     /**
      * get ther DER encoded MechList
      */
-    private byte[] getEncodedMechs(Oid[] mechSet) 
-	throws IOException, GSSException {
+    private byte[] getEncodedMechs(Oid[] mechSet)
+        throws IOException, GSSException {
 
-	DerOutputStream mech = new DerOutputStream();
-	for (int i = 0; i < mechSet.length; i++) {
-	    byte[] mechType = mechSet[i].getDER();
-	    mech.write(mechType);
-	}
-	// insert in SEQUENCE
-	DerOutputStream mechTypeList = new DerOutputStream();
-	mechTypeList.write(DerValue.tag_Sequence, mech);
-	byte[] encoded = mechTypeList.toByteArray();
-	return encoded;
+        DerOutputStream mech = new DerOutputStream();
+        for (int i = 0; i < mechSet.length; i++) {
+            byte[] mechType = mechSet[i].getDER();
+            mech.write(mechType);
+        }
+        // insert in SEQUENCE
+        DerOutputStream mechTypeList = new DerOutputStream();
+        mechTypeList.write(DerValue.tag_Sequence, mech);
+        byte[] encoded = mechTypeList.toByteArray();
+        return encoded;
     }
 
     /**
      * get the context flags
      */
     private byte[] getContextFlags() {
-	int flags = 0;
+        int flags = 0;
 
-	if (getCredDelegState())
+        if (getCredDelegState())
             flags |= CHECKSUM_DELEG_FLAG;
-	if (getMutualAuthState())
+        if (getMutualAuthState())
             flags |= CHECKSUM_MUTUAL_FLAG;
-	if (getReplayDetState())
+        if (getReplayDetState())
             flags |= CHECKSUM_REPLAY_FLAG;
-	if (getSequenceDetState())
+        if (getSequenceDetState())
             flags |= CHECKSUM_SEQUENCE_FLAG;
-	if (getIntegState())
+        if (getIntegState())
             flags |= CHECKSUM_INTEG_FLAG;
-	if (getConfState())
+        if (getConfState())
             flags |= CHECKSUM_CONF_FLAG;
 
-	byte[] temp = new byte[1];
-	temp[0] = (byte)(flags & 0xff);
-	return temp;
+        byte[] temp = new byte[1];
+        temp[0] = (byte)(flags & 0xff);
+        return temp;
     }
 
     private void setContextFlags() {
 
-	if (mechContext != null) {
-	    // default for cred delegation is false
-	    if (mechContext.getCredDelegState()) {
-		setCredDelegState(true);
-	    }
-	    // default for the following are true
-	    if (!mechContext.getMutualAuthState()) {
-		setMutualAuthState(false);
-	    }
-	    if (!mechContext.getReplayDetState()) {
-		setReplayDetState(false);
-	    }
-	    if (!mechContext.getSequenceDetState()) {
-		setSequenceDetState(false);
-	    }
-	    if (!mechContext.getIntegState()) {
-		setIntegState(false);
-	    }
-	    if (!mechContext.getConfState()) {
-		setConfState(false);
-	    }
-	}
+        if (mechContext != null) {
+            // default for cred delegation is false
+            if (mechContext.getCredDelegState()) {
+                setCredDelegState(true);
+            }
+            // default for the following are true
+            if (!mechContext.getMutualAuthState()) {
+                setMutualAuthState(false);
+            }
+            if (!mechContext.getReplayDetState()) {
+                setReplayDetState(false);
+            }
+            if (!mechContext.getSequenceDetState()) {
+                setSequenceDetState(false);
+            }
+            if (!mechContext.getIntegState()) {
+                setIntegState(false);
+            }
+            if (!mechContext.getConfState()) {
+                setConfState(false);
+            }
+        }
     }
 
     /**
      * generate MIC on mechList
      */
     private byte[] generateMechListMIC(byte[] mechTypes)
-	throws GSSException {
+        throws GSSException {
 
-	// sanity check the required input
-	if (mechTypes == null) {
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: no MIC token included");
-	    }
-	    return null;
-	}
+        // sanity check the required input
+        if (mechTypes == null) {
+            if (DEBUG) {
+                System.out.println("SpNegoContext: no MIC token included");
+            }
+            return null;
+        }
 
-	// check if mechansim supports integrity
-	if (!mechContext.getIntegState()) {
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: no MIC token included" +
-			" - mechanism does not support integrity");
-	    }
-	    return null;
-	}
+        // check if mechansim supports integrity
+        if (!mechContext.getIntegState()) {
+            if (DEBUG) {
+                System.out.println("SpNegoContext: no MIC token included" +
+                        " - mechanism does not support integrity");
+            }
+            return null;
+        }
 
-	// compute MIC on DER encoded mechanism list
-	byte[] mic = null;   
-	try {
-	    MessageProp prop = new MessageProp(0, true);
-	    mic = getMIC(mechTypes, 0, mechTypes.length, prop);
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: getMIC = " + 
-					SpNegoToken.getHexBytes(mic));
-	    }
-	} catch (GSSException e) {
-	    mic = null;
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: no MIC token included" +
-			" - getMIC failed : " + e.getMessage());
-	    }
-	}
-	return mic;
+        // compute MIC on DER encoded mechanism list
+        byte[] mic = null;
+        try {
+            MessageProp prop = new MessageProp(0, true);
+            mic = getMIC(mechTypes, 0, mechTypes.length, prop);
+            if (DEBUG) {
+                System.out.println("SpNegoContext: getMIC = " +
+                                        SpNegoToken.getHexBytes(mic));
+            }
+        } catch (GSSException e) {
+            mic = null;
+            if (DEBUG) {
+                System.out.println("SpNegoContext: no MIC token included" +
+                        " - getMIC failed : " + e.getMessage());
+            }
+        }
+        return mic;
     }
 
     /**
      * verify MIC on MechList
      */
-    private boolean verifyMechListMIC(byte[] mechTypes, byte[] token) 
-	throws GSSException {
+    private boolean verifyMechListMIC(byte[] mechTypes, byte[] token)
+        throws GSSException {
 
-	// sanity check the input
-	if (token == null) {
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: no MIC token validation");
-	    }
-	    return true;
-	}
+        // sanity check the input
+        if (token == null) {
+            if (DEBUG) {
+                System.out.println("SpNegoContext: no MIC token validation");
+            }
+            return true;
+        }
 
-	// check if mechansim supports integrity
-	if (!mechContext.getIntegState()) {
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: no MIC token validation" +
-			" - mechanism does not support integrity");
-	    }
-	    return true;
-	}
+        // check if mechansim supports integrity
+        if (!mechContext.getIntegState()) {
+            if (DEBUG) {
+                System.out.println("SpNegoContext: no MIC token validation" +
+                        " - mechanism does not support integrity");
+            }
+            return true;
+        }
 
-	// now verify the token
-	boolean valid = false;
-	try {
-	    MessageProp prop = new MessageProp(0, true);
-	    verifyMIC(token, 0, token.length, mechTypes, 
-			0, mechTypes.length, prop);
-	    valid = true;
-	} catch (GSSException e) {
-	    valid = false;
-	    if (DEBUG) {
-		System.out.println("SpNegoContext: MIC validation failed! " +
-					e.getMessage());
-	    }
-	}
-	return valid;
+        // now verify the token
+        boolean valid = false;
+        try {
+            MessageProp prop = new MessageProp(0, true);
+            verifyMIC(token, 0, token.length, mechTypes,
+                        0, mechTypes.length, prop);
+            valid = true;
+        } catch (GSSException e) {
+            valid = false;
+            if (DEBUG) {
+                System.out.println("SpNegoContext: MIC validation failed! " +
+                                        e.getMessage());
+            }
+        }
+        return valid;
     }
 
     /**
      * call gss_init_sec_context for the corresponding underlying mechanism
      */
     private byte[] GSS_initSecContext(byte[] token) throws GSSException {
-	byte[] tok = null;
+        byte[] tok = null;
 
-	if (mechContext == null) {
-	    // initialize mech context
-	    GSSName serverName = 
-		factory.manager.createName(peerName.toString(),
-		    peerName.getStringNameType(), internal_mech);
-	    GSSCredential cred = null;
-	    if (myCred != null) {
-		// create context with provided credential
-		cred = new GSSCredentialImpl(factory.manager, 
-		    myCred.getInternalCred());
-	    }
-	    mechContext = 
-		factory.manager.createContext(serverName, 
-		    internal_mech, cred, GSSContext.DEFAULT_LIFETIME);
-	    mechContext.requestConf(confState);
-	    mechContext.requestInteg(integState);
-	    mechContext.requestCredDeleg(credDelegState);
-	    mechContext.requestMutualAuth(mutualAuthState);
-	    mechContext.requestReplayDet(replayDetState);
-	    mechContext.requestSequenceDet(sequenceDetState);
-	}
+        if (mechContext == null) {
+            // initialize mech context
+            GSSName serverName =
+                factory.manager.createName(peerName.toString(),
+                    peerName.getStringNameType(), internal_mech);
+            GSSCredential cred = null;
+            if (myCred != null) {
+                // create context with provided credential
+                cred = new GSSCredentialImpl(factory.manager,
+                    myCred.getInternalCred());
+            }
+            mechContext =
+                factory.manager.createContext(serverName,
+                    internal_mech, cred, GSSContext.DEFAULT_LIFETIME);
+            mechContext.requestConf(confState);
+            mechContext.requestInteg(integState);
+            mechContext.requestCredDeleg(credDelegState);
+            mechContext.requestMutualAuth(mutualAuthState);
+            mechContext.requestReplayDet(replayDetState);
+            mechContext.requestSequenceDet(sequenceDetState);
+        }
 
-	// pass token
-	if (token != null) {
-	    tok = token;
-	} else {
-	    tok = new byte[0];
-	}
-		
-	// pass token to mechanism initSecContext
-	byte[] init_token = mechContext.initSecContext(tok, 0, tok.length);
+        // pass token
+        if (token != null) {
+            tok = token;
+        } else {
+            tok = new byte[0];
+        }
 
-	return init_token;
+        // pass token to mechanism initSecContext
+        byte[] init_token = mechContext.initSecContext(tok, 0, tok.length);
+
+        return init_token;
     }
 
     /**
@@ -876,23 +875,23 @@ public class SpNegoContext implements GSSContextSpi {
      */
     private byte[] GSS_acceptSecContext(byte[] token) throws GSSException {
 
-	if (mechContext == null) {
-	    // initialize mech context
-	    GSSCredential cred = null;
-	    if (myCred != null) {
-		// create context with provided credential
-		cred = new GSSCredentialImpl(factory.manager,
-		myCred.getInternalCred());
-	    }
-	    mechContext = 
-		factory.manager.createContext(cred);
-	}
+        if (mechContext == null) {
+            // initialize mech context
+            GSSCredential cred = null;
+            if (myCred != null) {
+                // create context with provided credential
+                cred = new GSSCredentialImpl(factory.manager,
+                myCred.getInternalCred());
+            }
+            mechContext =
+                factory.manager.createContext(cred);
+        }
 
-	// pass token to mechanism acceptSecContext
-	byte[] accept_token = 
-		mechContext.acceptSecContext(token, 0, token.length);
+        // pass token to mechanism acceptSecContext
+        byte[] accept_token =
+                mechContext.acceptSecContext(token, 0, token.length);
 
-	return accept_token;
+        return accept_token;
     }
 
     /**
@@ -901,38 +900,38 @@ public class SpNegoContext implements GSSContextSpi {
      * and the first one that matches what the server can support is
      * chosen as the negotiated mechanism. If one is found, negResult
      * is set to ACCEPT_COMPLETE, otherwise we return NULL and negResult
-     * is set to REJECT. 
+     * is set to REJECT.
      */
-    private static Oid negotiate_mech_type(Oid[] supported_mechSet, 
-					Oid[] mechSet) {
-	for (int i = 0; i < supported_mechSet.length; i++) {
-	    for (int j = 0; j < mechSet.length; j++) {
-		if (mechSet[j].equals(supported_mechSet[i])) {
-		    if (DEBUG) {
-			System.out.println("SpNegoContext: " +
-				"negotiated mechanism = " + mechSet[j]);
-		    }
-		    return (mechSet[j]);
-		}
-	    }
-	}
-	return null;
+    private static Oid negotiate_mech_type(Oid[] supported_mechSet,
+                                        Oid[] mechSet) {
+        for (int i = 0; i < supported_mechSet.length; i++) {
+            for (int j = 0; j < mechSet.length; j++) {
+                if (mechSet[j].equals(supported_mechSet[i])) {
+                    if (DEBUG) {
+                        System.out.println("SpNegoContext: " +
+                                "negotiated mechanism = " + mechSet[j]);
+                    }
+                    return (mechSet[j]);
+                }
+            }
+        }
+        return null;
     }
 
     public final boolean isEstablished() {
-	return (state == STATE_DONE);
+        return (state == STATE_DONE);
     }
 
     public final boolean isMechContextEstablished() {
-	if (mechContext != null) {
-	    return mechContext.isEstablished();
-	} else {
-	    if (DEBUG) {
-		System.out.println("The underlying mechansim context has " +
-					"not been initialized");
-	    }
-	    return false;
-	}
+        if (mechContext != null) {
+            return mechContext.isEstablished();
+        } else {
+            if (DEBUG) {
+                System.out.println("The underlying mechansim context has " +
+                                        "not been initialized");
+            }
+            return false;
+        }
     }
 
     public final byte [] export() throws GSSException {
@@ -945,12 +944,12 @@ public class SpNegoContext implements GSSContextSpi {
      * establishment.
      */
     public final void setChannelBinding(ChannelBinding channelBinding)
-	throws GSSException {
-	this.channelBinding = channelBinding;
+        throws GSSException {
+        this.channelBinding = channelBinding;
     }
 
     final ChannelBinding getChannelBinding() {
-	return channelBinding;
+        return channelBinding;
     }
 
     /*
@@ -962,8 +961,8 @@ public class SpNegoContext implements GSSContextSpi {
      * anonymous.
      */
     public final void requestAnonymity(boolean value) throws GSSException {
-	// Ignore silently. Application will check back with
-	// getAnonymityState.
+        // Ignore silently. Application will check back with
+        // getAnonymityState.
     }
 
     // RFC 2853 actually calls for this to be called after context
@@ -971,7 +970,7 @@ public class SpNegoContext implements GSSContextSpi {
     // incorrect. The application may not want to send over any
     // tokens if anonymity is not available.
     public final boolean getAnonymityState() {
-	return false;
+        return false;
     }
 
     /**
@@ -979,19 +978,19 @@ public class SpNegoContext implements GSSContextSpi {
      * initiator's side.
      */
     public void requestLifetime(int lifetime) throws GSSException {
-	if (state == STATE_NEW && isInitiator())
-	    this.lifetime = lifetime;
+        if (state == STATE_NEW && isInitiator())
+            this.lifetime = lifetime;
     }
 
     /**
      * The lifetime remaining for this context.
      */
     public final int getLifetime() {
-	if (mechContext != null) {
-	    return mechContext.getLifetime();
-	} else {
-	    return GSSContext.INDEFINITE_LIFETIME;
-	}
+        if (mechContext != null) {
+            return mechContext.getLifetime();
+        } else {
+            return GSSContext.INDEFINITE_LIFETIME;
+        }
     }
 
     public final boolean isTransferable() throws GSSException {
@@ -1003,7 +1002,7 @@ public class SpNegoContext implements GSSContextSpi {
      * tokens.
      */
     public final void requestSequenceDet(boolean value) throws GSSException {
-	if (state == STATE_NEW && isInitiator())
+        if (state == STATE_NEW && isInitiator())
             sequenceDetState  = value;
     }
 
@@ -1012,7 +1011,7 @@ public class SpNegoContext implements GSSContextSpi {
      * We enable sequence checking if replay detection is enabled.
      */
     public final boolean getSequenceDetState() {
-	return sequenceDetState || replayDetState;
+        return sequenceDetState || replayDetState;
     }
 
     /**
@@ -1020,7 +1019,7 @@ public class SpNegoContext implements GSSContextSpi {
      * tokens.
      */
     public final void requestReplayDet(boolean value) throws GSSException {
-	if (state == STATE_NEW && isInitiator())
+        if (state == STATE_NEW && isInitiator())
             replayDetState  = value;
     }
 
@@ -1029,39 +1028,39 @@ public class SpNegoContext implements GSSContextSpi {
      * We enable replay detection if sequence checking is enabled.
      */
     public final boolean getReplayDetState() {
-	return replayDetState || sequenceDetState;
+        return replayDetState || sequenceDetState;
     }
 
     public final GSSNameSpi getTargName() throws GSSException {
-	// fill-in the GSSName
-	// get the peer name for the mechanism
-	if (mechContext != null) {
-	    GSSNameImpl targName = (GSSNameImpl)mechContext.getTargName();
-	    peerName = (GSSNameSpi) targName.getElement(internal_mech);
-	    return peerName;
-	} else {
-	    if (DEBUG) {
-		System.out.println("The underlying mechansim context has " +
-					"not been initialized");
-	    }
-	    return null;
-	}
+        // fill-in the GSSName
+        // get the peer name for the mechanism
+        if (mechContext != null) {
+            GSSNameImpl targName = (GSSNameImpl)mechContext.getTargName();
+            peerName = (GSSNameSpi) targName.getElement(internal_mech);
+            return peerName;
+        } else {
+            if (DEBUG) {
+                System.out.println("The underlying mechansim context has " +
+                                        "not been initialized");
+            }
+            return null;
+        }
     }
 
     public final GSSNameSpi getSrcName() throws GSSException {
-	// fill-in the GSSName
-	// get the src name for the mechanism
-	if (mechContext != null) {
-	    GSSNameImpl srcName = (GSSNameImpl)mechContext.getSrcName();
-	    myName = (GSSNameSpi) srcName.getElement(internal_mech);
-	    return myName;
-	} else {
-	    if (DEBUG) {
-		System.out.println("The underlying mechansim context has " +
-					"not been initialized");
-	    }
-	    return null;
-	}
+        // fill-in the GSSName
+        // get the src name for the mechanism
+        if (mechContext != null) {
+            GSSNameImpl srcName = (GSSNameImpl)mechContext.getSrcName();
+            myName = (GSSNameSpi) srcName.getElement(internal_mech);
+            return myName;
+        } else {
+            if (DEBUG) {
+                System.out.println("The underlying mechansim context has " +
+                                        "not been initialized");
+            }
+            return null;
+        }
     }
 
     /**
@@ -1075,133 +1074,133 @@ public class SpNegoContext implements GSSContextSpi {
      * @see GSSContext#getDelegCredState
      */
     public final GSSCredentialSpi getDelegCred() throws GSSException {
-	if (state != STATE_IN_PROCESS && state != STATE_DONE)
+        if (state != STATE_IN_PROCESS && state != STATE_DONE)
             throw new GSSException(GSSException.NO_CONTEXT);
-	if (mechContext != null) {
-	    GSSCredentialImpl delegCred = 
-			(GSSCredentialImpl)mechContext.getDelegCred();
-	    // determine delegated cred element usage
-	    boolean initiate = false;
-	    if (delegCred.getUsage() == GSSCredential.INITIATE_ONLY) {
-		initiate = true;
-	    }
-	    GSSCredentialSpi mechCred = (GSSCredentialSpi)
-				delegCred.getElement(internal_mech, initiate);
-	    SpNegoCredElement cred = new SpNegoCredElement(mechCred);
-	    return cred.getInternalCred();
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"getDelegCred called in invalid state!");
-	}
+        if (mechContext != null) {
+            GSSCredentialImpl delegCred =
+                        (GSSCredentialImpl)mechContext.getDelegCred();
+            // determine delegated cred element usage
+            boolean initiate = false;
+            if (delegCred.getUsage() == GSSCredential.INITIATE_ONLY) {
+                initiate = true;
+            }
+            GSSCredentialSpi mechCred = (GSSCredentialSpi)
+                                delegCred.getElement(internal_mech, initiate);
+            SpNegoCredElement cred = new SpNegoCredElement(mechCred);
+            return cred.getInternalCred();
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "getDelegCred called in invalid state!");
+        }
     }
 
     public final int getWrapSizeLimit(int qop, boolean confReq,
                                        int maxTokSize) throws GSSException {
-	if (mechContext != null) {
-	    return mechContext.getWrapSizeLimit(qop, confReq, maxTokSize);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"getWrapSizeLimit called in invalid state!");
-	}
+        if (mechContext != null) {
+            return mechContext.getWrapSizeLimit(qop, confReq, maxTokSize);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "getWrapSizeLimit called in invalid state!");
+        }
     }
 
     public final byte[] wrap(byte inBuf[], int offset, int len,
                              MessageProp msgProp) throws GSSException {
-	if (mechContext != null) {
-	    return mechContext.wrap(inBuf, offset, len, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"Wrap called in invalid state!");
-	}
+        if (mechContext != null) {
+            return mechContext.wrap(inBuf, offset, len, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "Wrap called in invalid state!");
+        }
     }
 
     public final void wrap(InputStream is, OutputStream os,
                             MessageProp msgProp) throws GSSException {
-	if (mechContext != null) {
-	    mechContext.wrap(is, os, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"Wrap called in invalid state!");
-	}
+        if (mechContext != null) {
+            mechContext.wrap(is, os, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "Wrap called in invalid state!");
+        }
     }
 
     public final byte[] unwrap(byte inBuf[], int offset, int len,
                                MessageProp msgProp)
         throws GSSException {
-	if (mechContext != null) {
-	    return mechContext.unwrap(inBuf, offset, len, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"UnWrap called in invalid state!");
-	}
+        if (mechContext != null) {
+            return mechContext.unwrap(inBuf, offset, len, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "UnWrap called in invalid state!");
+        }
     }
 
     public final void unwrap(InputStream is, OutputStream os,
                              MessageProp msgProp) throws GSSException {
-	if (mechContext != null) {
-	    mechContext.unwrap(is, os, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"UnWrap called in invalid state!");
-	}
+        if (mechContext != null) {
+            mechContext.unwrap(is, os, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "UnWrap called in invalid state!");
+        }
     }
 
     public final byte[] getMIC(byte []inMsg, int offset, int len,
                                MessageProp msgProp)
         throws GSSException {
-	if (mechContext != null) {
-	    return mechContext.getMIC(inMsg, offset, len, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"getMIC called in invalid state!");
-	}
+        if (mechContext != null) {
+            return mechContext.getMIC(inMsg, offset, len, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "getMIC called in invalid state!");
+        }
     }
 
     public final void getMIC(InputStream is, OutputStream os,
                               MessageProp msgProp) throws GSSException {
-	if (mechContext != null) {
-	    mechContext.getMIC(is, os, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"getMIC called in invalid state!");
-	}
+        if (mechContext != null) {
+            mechContext.getMIC(is, os, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "getMIC called in invalid state!");
+        }
     }
 
     public final void verifyMIC(byte []inTok, int tokOffset, int tokLen,
                                 byte[] inMsg, int msgOffset, int msgLen,
                                 MessageProp msgProp)
         throws GSSException {
-	if (mechContext != null) {
-	    mechContext.verifyMIC(inTok, tokOffset, tokLen, inMsg, msgOffset,
-				msgLen,  msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"verifyMIC called in invalid state!");
-	}
+        if (mechContext != null) {
+            mechContext.verifyMIC(inTok, tokOffset, tokLen, inMsg, msgOffset,
+                                msgLen,  msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "verifyMIC called in invalid state!");
+        }
     }
 
     public final void verifyMIC(InputStream is, InputStream msgStr,
                                  MessageProp msgProp) throws GSSException {
-	if (mechContext != null) {
-	    mechContext.verifyMIC(is, msgStr, msgProp);
-	} else {
-	    throw new GSSException(GSSException.NO_CONTEXT, -1,
-				"verifyMIC called in invalid state!");
-	}
-    } 
+        if (mechContext != null) {
+            mechContext.verifyMIC(is, msgStr, msgProp);
+        } else {
+            throw new GSSException(GSSException.NO_CONTEXT, -1,
+                                "verifyMIC called in invalid state!");
+        }
+    }
 
     private static String printState(int state) {
-	switch (state) { 
-	  case STATE_NEW:
-		return ("STATE_NEW");
-	  case STATE_IN_PROCESS:
-		return ("STATE_IN_PROCESS");
-	  case STATE_DONE:
-		return ("STATE_DONE");
-	  case STATE_DELETED:
-		return ("STATE_DELETED");
-	  default:
-		return ("Unknown state " + state);
-	}
+        switch (state) {
+          case STATE_NEW:
+                return ("STATE_NEW");
+          case STATE_IN_PROCESS:
+                return ("STATE_IN_PROCESS");
+          case STATE_DONE:
+                return ("STATE_DONE");
+          case STATE_DELETED:
+                return ("STATE_DELETED");
+          default:
+                return ("Unknown state " + state);
+        }
     }
 }

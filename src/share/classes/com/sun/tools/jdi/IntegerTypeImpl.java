@@ -40,5 +40,5 @@ public class IntegerTypeImpl extends PrimitiveTypeImpl implements IntegerType {
     PrimitiveValue convert(PrimitiveValue value) throws InvalidTypeException {
         return vm.mirrorOf(((PrimitiveValueImpl)value).checkedIntValue());
     }
-    
+
 }

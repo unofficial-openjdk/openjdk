@@ -50,7 +50,6 @@ import sun.reflect.annotation.AnnotationType;
  * method for quickly copying a portion of an array.
  *
  * @author  unascribed
- * @version %I%, %G%
  * @since   JDK1.0
  */
 public final class System {
@@ -139,8 +138,8 @@ public final class System {
      * @since   JDK1.1
      */
     public static void setIn(InputStream in) {
-	checkIO();
-	setIn0(in);
+        checkIO();
+        setIn0(in);
     }
 
     /**
@@ -163,8 +162,8 @@ public final class System {
      * @since   JDK1.1
      */
     public static void setOut(PrintStream out) {
-	checkIO();
-	setOut0(out);
+        checkIO();
+        setOut0(out);
     }
 
     /**
@@ -187,8 +186,8 @@ public final class System {
      * @since   JDK1.1
      */
     public static void setErr(PrintStream err) {
-	checkIO();
-	setErr0(err);
+        checkIO();
+        setErr0(err);
     }
 
     private static volatile Console cons = null;
@@ -204,7 +203,7 @@ public final class System {
          if (cons == null) {
              synchronized (System.class) {
                  cons = sun.misc.SharedSecrets.getJavaIOAccess().console();
-	     }
+             }
          }
          return cons;
      }
@@ -223,14 +222,14 @@ public final class System {
      * inheritedChannel}, this method may return other kinds of
      * channels in the future.
      *
-     * @return	The inherited channel, if any, otherwise <tt>null</tt>.
+     * @return  The inherited channel, if any, otherwise <tt>null</tt>.
      *
-     * @throws	IOException
-     *		If an I/O error occurs
+     * @throws  IOException
+     *          If an I/O error occurs
      *
-     * @throws	SecurityException
-     *		If a security manager is present and it does not
-     *		permit access to the channel.
+     * @throws  SecurityException
+     *          If a security manager is present and it does not
+     *          permit access to the channel.
      *
      * @since 1.5
      */
@@ -239,10 +238,10 @@ public final class System {
     }
 
     private static void checkIO() {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("setIO"));
-	}
+            sm.checkPermission(new RuntimePermission("setIO"));
+        }
     }
 
     private static native void setIn0(InputStream in);
@@ -284,34 +283,34 @@ public final class System {
 
     private static synchronized
     void setSecurityManager0(final SecurityManager s) {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
- 	    // ask the currently installed security manager if we
- 	    // can replace it.
- 	    sm.checkPermission(new RuntimePermission
-				     ("setSecurityManager"));
-	}
+            // ask the currently installed security manager if we
+            // can replace it.
+            sm.checkPermission(new RuntimePermission
+                                     ("setSecurityManager"));
+        }
 
-	if ((s != null) && (s.getClass().getClassLoader() != null)) {
-	    // New security manager class is not on bootstrap classpath.
-	    // Cause policy to get initialized before we install the new
-	    // security manager, in order to prevent infinite loops when
-	    // trying to initialize the policy (which usually involves
-	    // accessing some security and/or system properties, which in turn
-	    // calls the installed security manager's checkPermission method
-	    // which will loop infinitely if there is a non-system class
-	    // (in this case: the new security manager class) on the stack).
-	    AccessController.doPrivileged(new PrivilegedAction<Object>() {
-		public Object run() {
-		    s.getClass().getProtectionDomain().implies
-			(SecurityConstants.ALL_PERMISSION);
-		    return null;
-		}
-	    });
-	}
+        if ((s != null) && (s.getClass().getClassLoader() != null)) {
+            // New security manager class is not on bootstrap classpath.
+            // Cause policy to get initialized before we install the new
+            // security manager, in order to prevent infinite loops when
+            // trying to initialize the policy (which usually involves
+            // accessing some security and/or system properties, which in turn
+            // calls the installed security manager's checkPermission method
+            // which will loop infinitely if there is a non-system class
+            // (in this case: the new security manager class) on the stack).
+            AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                public Object run() {
+                    s.getClass().getProtectionDomain().implies
+                        (SecurityConstants.ALL_PERMISSION);
+                    return null;
+                }
+            });
+        }
 
-	security = s;
-	InetAddressCachePolicy.setIfNotSet(InetAddressCachePolicy.FOREVER);
+        security = s;
+        InetAddressCachePolicy.setIfNotSet(InetAddressCachePolicy.FOREVER);
     }
 
     /**
@@ -323,7 +322,7 @@ public final class System {
      * @see     #setSecurityManager
      */
     public static SecurityManager getSecurityManager() {
-	return security;
+        return security;
     }
 
     /**
@@ -365,7 +364,7 @@ public final class System {
      *   // ... the code being measured ...
      *   long estimatedTime = System.nanoTime() - startTime;
      * </pre>
-     * 
+     *
      * @return The current value of the system timer, in nanoseconds.
      * @since 1.5
      */
@@ -483,21 +482,21 @@ public final class System {
     /**
      * System properties. The following properties are guaranteed to be defined:
      * <dl>
-     * <dt>java.version		<dd>Java version number
-     * <dt>java.vendor		<dd>Java vendor specific string
-     * <dt>java.vendor.url	<dd>Java vendor URL
-     * <dt>java.home		<dd>Java installation directory
-     * <dt>java.class.version	<dd>Java class version number
-     * <dt>java.class.path	<dd>Java classpath
-     * <dt>os.name		<dd>Operating System Name
-     * <dt>os.arch		<dd>Operating System Architecture
-     * <dt>os.version		<dd>Operating System Version
-     * <dt>file.separator	<dd>File separator ("/" on Unix)
-     * <dt>path.separator	<dd>Path separator (":" on Unix)
-     * <dt>line.separator	<dd>Line separator ("\n" on Unix)
-     * <dt>user.name		<dd>User account name
-     * <dt>user.home		<dd>User home directory
-     * <dt>user.dir		<dd>User's current working directory
+     * <dt>java.version         <dd>Java version number
+     * <dt>java.vendor          <dd>Java vendor specific string
+     * <dt>java.vendor.url      <dd>Java vendor URL
+     * <dt>java.home            <dd>Java installation directory
+     * <dt>java.class.version   <dd>Java class version number
+     * <dt>java.class.path      <dd>Java classpath
+     * <dt>os.name              <dd>Operating System Name
+     * <dt>os.arch              <dd>Operating System Architecture
+     * <dt>os.version           <dd>Operating System Version
+     * <dt>file.separator       <dd>File separator ("/" on Unix)
+     * <dt>path.separator       <dd>Path separator (":" on Unix)
+     * <dt>line.separator       <dd>Line separator ("\n" on Unix)
+     * <dt>user.name            <dd>User account name
+     * <dt>user.home            <dd>User home directory
+     * <dt>user.dir             <dd>User's current working directory
      * </dl>
      */
 
@@ -595,12 +594,12 @@ public final class System {
      * @see        java.util.Properties
      */
     public static Properties getProperties() {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPropertiesAccess();
-	}
+            sm.checkPropertiesAccess();
+        }
 
-	return props;
+        return props;
     }
 
     /**
@@ -626,15 +625,15 @@ public final class System {
      * @see        java.lang.SecurityManager#checkPropertiesAccess()
      */
     public static void setProperties(Properties props) {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPropertiesAccess();
-	}
+            sm.checkPropertiesAccess();
+        }
         if (props == null) {
             props = new Properties();
             initProperties(props);
         }
-	System.props = props;
+        System.props = props;
     }
 
     /**
@@ -664,13 +663,13 @@ public final class System {
      * @see        java.lang.System#getProperties()
      */
     public static String getProperty(String key) {
-	checkKey(key);
-	SecurityManager sm = getSecurityManager();
+        checkKey(key);
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPropertyAccess(key);
-	}
+            sm.checkPropertyAccess(key);
+        }
 
-	return props.getProperty(key);
+        return props.getProperty(key);
     }
 
     /**
@@ -700,13 +699,13 @@ public final class System {
      * @see        java.lang.System#getProperties()
      */
     public static String getProperty(String key, String def) {
-	checkKey(key);
-	SecurityManager sm = getSecurityManager();
+        checkKey(key);
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPropertyAccess(key);
-	}
+            sm.checkPropertyAccess(key);
+        }
 
-	return props.getProperty(key, def);
+        return props.getProperty(key, def);
     }
 
     /**
@@ -739,14 +738,14 @@ public final class System {
      * @since      1.2
      */
     public static String setProperty(String key, String value) {
-	checkKey(key);
-	SecurityManager sm = getSecurityManager();
+        checkKey(key);
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPermission(new PropertyPermission(key,
-		SecurityConstants.PROPERTY_WRITE_ACTION));
-	}
+            sm.checkPermission(new PropertyPermission(key,
+                SecurityConstants.PROPERTY_WRITE_ACTION));
+        }
 
-	return (String) props.setProperty(key, value);
+        return (String) props.setProperty(key, value);
     }
 
     /**
@@ -777,11 +776,11 @@ public final class System {
      * @since 1.5
      */
     public static String clearProperty(String key) {
-	checkKey(key);
-	SecurityManager sm = getSecurityManager();
+        checkKey(key);
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new PropertyPermission(key, "write"));
-	}
+        }
 
         return (String) props.remove(key);
     }
@@ -842,12 +841,12 @@ public final class System {
      * @see    ProcessBuilder#environment()
      */
     public static String getenv(String name) {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("getenv."+name));
-	}
+            sm.checkPermission(new RuntimePermission("getenv."+name));
+        }
 
-	return ProcessEnvironment.getenv(name);
+        return ProcessEnvironment.getenv(name);
     }
 
 
@@ -892,12 +891,12 @@ public final class System {
      * @since  1.5
      */
     public static java.util.Map<String,String> getenv() {
-	SecurityManager sm = getSecurityManager();
+        SecurityManager sm = getSecurityManager();
         if (sm != null) {
-	    sm.checkPermission(new RuntimePermission("getenv.*"));
-	}
+            sm.checkPermission(new RuntimePermission("getenv.*"));
+        }
 
-	return ProcessEnvironment.getenv();
+        return ProcessEnvironment.getenv();
     }
 
     /**
@@ -921,7 +920,7 @@ public final class System {
      * @see        java.lang.Runtime#exit(int)
      */
     public static void exit(int status) {
-	Runtime.getRuntime().exit(status);
+        Runtime.getRuntime().exit(status);
     }
 
     /**
@@ -943,7 +942,7 @@ public final class System {
      * @see     java.lang.Runtime#gc()
      */
     public static void gc() {
-	Runtime.getRuntime().gc();
+        Runtime.getRuntime().gc();
     }
 
     /**
@@ -965,7 +964,7 @@ public final class System {
      * @see     java.lang.Runtime#runFinalization()
      */
     public static void runFinalization() {
-	Runtime.getRuntime().runFinalization();
+        Runtime.getRuntime().runFinalization();
     }
 
     /**
@@ -980,9 +979,9 @@ public final class System {
      * This could result in a SecurityException.
      *
      * @deprecated  This method is inherently unsafe.  It may result in
-     * 	    finalizers being called on live objects while other threads are
+     *      finalizers being called on live objects while other threads are
      *      concurrently manipulating those objects, resulting in erratic
-     *	    behavior or deadlock.
+     *      behavior or deadlock.
      * @param value indicating enabling or disabling of finalization
      * @throws  SecurityException
      *        if a security manager exists and its <code>checkExit</code>
@@ -995,7 +994,7 @@ public final class System {
      */
     @Deprecated
     public static void runFinalizersOnExit(boolean value) {
-	Runtime.getRuntime().runFinalizersOnExit(value);
+        Runtime.getRuntime().runFinalizersOnExit(value);
     }
 
     /**
@@ -1020,7 +1019,7 @@ public final class System {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     public static void load(String filename) {
-	Runtime.getRuntime().load0(getCallerClass(), filename);
+        Runtime.getRuntime().load0(getCallerClass(), filename);
     }
 
     /**
@@ -1045,7 +1044,7 @@ public final class System {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     public static void loadLibrary(String libname) {
-	Runtime.getRuntime().loadLibrary0(getCallerClass(), libname);
+        Runtime.getRuntime().loadLibrary0(getCallerClass(), libname);
     }
 
     /**
@@ -1069,47 +1068,47 @@ public final class System {
      * by initializeSystemClass().
      */
     private static InputStream nullInputStream() throws NullPointerException {
-	if (currentTimeMillis() > 0) {
-	    return null;
-	}
-	throw new NullPointerException();
+        if (currentTimeMillis() > 0) {
+            return null;
+        }
+        throw new NullPointerException();
     }
 
     private static PrintStream nullPrintStream() throws NullPointerException {
-	if (currentTimeMillis() > 0) {
-	    return null;
-	}
-	throw new NullPointerException();
+        if (currentTimeMillis() > 0) {
+            return null;
+        }
+        throw new NullPointerException();
     }
 
     /**
      * Initialize the system class.  Called after thread initialization.
      */
     private static void initializeSystemClass() {
-	props = new Properties();
-	initProperties(props);
-	sun.misc.Version.init();
-	FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
-	FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
-	FileOutputStream fdErr = new FileOutputStream(FileDescriptor.err);
-	setIn0(new BufferedInputStream(fdIn));
-	setOut0(new PrintStream(new BufferedOutputStream(fdOut, 128), true));
-	setErr0(new PrintStream(new BufferedOutputStream(fdErr, 128), true));
+        props = new Properties();
+        initProperties(props);
+        sun.misc.Version.init();
+        FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
+        FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
+        FileOutputStream fdErr = new FileOutputStream(FileDescriptor.err);
+        setIn0(new BufferedInputStream(fdIn));
+        setOut0(new PrintStream(new BufferedOutputStream(fdOut, 128), true));
+        setErr0(new PrintStream(new BufferedOutputStream(fdErr, 128), true));
 
-	// Load the zip library now in order to keep java.util.zip.ZipFile
-	// from trying to use itself to load this library later.
-	loadLibrary("zip");
+        // Load the zip library now in order to keep java.util.zip.ZipFile
+        // from trying to use itself to load this library later.
+        loadLibrary("zip");
 
-	// Setup Java signal handlers for HUP, TERM, and INT (where available).
+        // Setup Java signal handlers for HUP, TERM, and INT (where available).
         Terminator.setup();
 
-	// The order in with the hooks are added here is important as it
-	// determines the order in which they are run.
+        // The order in with the hooks are added here is important as it
+        // determines the order in which they are run.
         // (1)Console restore hook needs to be called first.
         // (2)Application hooks must be run before calling deleteOnExitHook.
-	Shutdown.add(sun.misc.SharedSecrets.getJavaIOAccess().consoleRestoreHook());
-	Shutdown.add(ApplicationShutdownHooks.hook());
-	Shutdown.add(sun.misc.SharedSecrets.getJavaIODeleteOnExitAccess());
+        Shutdown.add(sun.misc.SharedSecrets.getJavaIOAccess().consoleRestoreHook());
+        Shutdown.add(ApplicationShutdownHooks.hook());
+        Shutdown.add(sun.misc.SharedSecrets.getJavaIODeleteOnExitAccess());
 
         // Initialize any miscellenous operating system settings that need to be
         // set for the class libraries. Currently this is no-op everywhere except
@@ -1117,21 +1116,21 @@ public final class System {
         // classes are used.
         sun.misc.VM.initializeOSEnvironment();
 
-	// Set the maximum amount of direct memory.  This value is controlled
-	// by the vm option -XX:MaxDirectMemorySize=<size>.  This method acts
-	// as an initializer only if it is called before sun.misc.VM.booted().
- 	sun.misc.VM.maxDirectMemory();
+        // Set the maximum amount of direct memory.  This value is controlled
+        // by the vm option -XX:MaxDirectMemorySize=<size>.  This method acts
+        // as an initializer only if it is called before sun.misc.VM.booted().
+        sun.misc.VM.maxDirectMemory();
 
-	// Set a boolean to determine whether ClassLoader.loadClass accepts
-	// array syntax.  This value is controlled by the system property
-	// "sun.lang.ClassLoader.allowArraySyntax".  This method acts as
-	// an initializer only if it is called before sun.misc.VM.booted().
-	sun.misc.VM.allowArraySyntax();
+        // Set a boolean to determine whether ClassLoader.loadClass accepts
+        // array syntax.  This value is controlled by the system property
+        // "sun.lang.ClassLoader.allowArraySyntax".  This method acts as
+        // an initializer only if it is called before sun.misc.VM.booted().
+        sun.misc.VM.allowArraySyntax();
 
-	// Subsystems that are invoked during initialization can invoke
-	// sun.misc.VM.isBooted() in order to avoid doing things that should
-	// wait until the application class loader has been set up.
-	sun.misc.VM.booted();
+        // Subsystems that are invoked during initialization can invoke
+        // sun.misc.VM.isBooted() in order to avoid doing things that should
+        // wait until the application class loader has been set up.
+        sun.misc.VM.booted();
 
         // The main thread is not added to its thread group in the same
         // way as other threads; we must do it ourselves here.
@@ -1150,7 +1149,7 @@ public final class System {
                 return klass.getAnnotationType();
             }
             public <E extends Enum<E>>
-		    E[] getEnumConstantsShared(Class<E> klass) {
+                    E[] getEnumConstantsShared(Class<E> klass) {
                 return klass.getEnumConstantsShared();
             }
             public void blockedOn(Thread t, Interruptible b) {

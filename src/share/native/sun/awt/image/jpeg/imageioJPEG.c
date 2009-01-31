@@ -54,7 +54,7 @@
 #include "jerror.h"
 
 #undef MAX
-#define MAX(a,b)	((a) > (b) ? (a) : (b))
+#define MAX(a,b)        ((a) > (b) ? (a) : (b))
 
 /* Cached Java method ids */
 static jmethodID ImageInputStream_readID;
@@ -75,7 +75,7 @@ static jfieldID JPEGQTable_tableID;
 static jfieldID JPEGHuffmanTable_lengthsID;
 static jfieldID JPEGHuffmanTable_valuesID;
 
-/* 
+/*
  * Defined in jpegdecoder.c.  Copy code from there if and
  * when that disappears. */
 extern JavaVM *jvm;
@@ -144,16 +144,16 @@ static int initStreamBuffer(JNIEnv *env, streamBufferPtr sb) {
     /* Initialize a new buffer */
     jbyteArray hInputBuffer = (*env)->NewByteArray(env, STREAMBUF_SIZE);
     if (hInputBuffer == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Reader");
         return NOT_OK;
     }
     sb->bufferLength = (*env)->GetArrayLength(env, hInputBuffer);
     sb->hstreamBuffer = (*env)->NewGlobalRef(env, hInputBuffer);
     if (sb->hstreamBuffer == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Reader");
         return NOT_OK;
     }
@@ -164,7 +164,7 @@ static int initStreamBuffer(JNIEnv *env, streamBufferPtr sb) {
     sb->buf = NULL;
 
     resetStreamBuffer(env, sb);
-    
+
     return OK;
 }
 
@@ -181,8 +181,8 @@ static void destroyStreamBuffer(JNIEnv *env, streamBufferPtr sb) {
 }
 
 // Forward reference
-static void unpinStreamBuffer(JNIEnv *env, 
-                              streamBufferPtr sb, 
+static void unpinStreamBuffer(JNIEnv *env,
+                              streamBufferPtr sb,
                               const JOCTET *next_byte);
 /*
  * Resets the state of a streamBuffer object that has been in use.
@@ -190,7 +190,7 @@ static void unpinStreamBuffer(JNIEnv *env,
  * to the buffer is retained.  The buffer is unpinned if it was pinned.
  * All other state is reset.
  */
-static void resetStreamBuffer(JNIEnv *env, streamBufferPtr sb) {  
+static void resetStreamBuffer(JNIEnv *env, streamBufferPtr sb) {
     if (sb->stream != NULL) {
         (*env)->DeleteGlobalRef(env, sb->stream);
         sb->stream = NULL;
@@ -202,24 +202,24 @@ static void resetStreamBuffer(JNIEnv *env, streamBufferPtr sb) {
 }
 
 /*
- * Pins the data buffer associated with this stream.  Returns OK on 
+ * Pins the data buffer associated with this stream.  Returns OK on
  * success, NOT_OK on failure, as GetPrimitiveArrayCritical may fail.
  */
-static int pinStreamBuffer(JNIEnv *env, 
-                           streamBufferPtr sb, 
-                           const JOCTET **next_byte) { 
+static int pinStreamBuffer(JNIEnv *env,
+                           streamBufferPtr sb,
+                           const JOCTET **next_byte) {
     if (sb->hstreamBuffer != NULL) {
         assert(sb->buf == NULL);
-        sb->buf = 
-            (JOCTET *)(*env)->GetPrimitiveArrayCritical(env, 
-                                                        sb->hstreamBuffer, 
+        sb->buf =
+            (JOCTET *)(*env)->GetPrimitiveArrayCritical(env,
+                                                        sb->hstreamBuffer,
                                                         NULL);
-	if (sb->buf == NULL) {
-	    return NOT_OK;
-	}
-	if (sb->bufferOffset != NO_DATA) {
-	    *next_byte = sb->buf + sb->bufferOffset;
-	}
+        if (sb->buf == NULL) {
+            return NOT_OK;
+        }
+        if (sb->bufferOffset != NO_DATA) {
+            *next_byte = sb->buf + sb->bufferOffset;
+        }
     }
     return OK;
 }
@@ -227,19 +227,19 @@ static int pinStreamBuffer(JNIEnv *env,
 /*
  * Unpins the data buffer associated with this stream.
  */
-static void unpinStreamBuffer(JNIEnv *env, 
-                              streamBufferPtr sb, 
-                              const JOCTET *next_byte) { 
+static void unpinStreamBuffer(JNIEnv *env,
+                              streamBufferPtr sb,
+                              const JOCTET *next_byte) {
     if (sb->buf != NULL) {
         assert(sb->hstreamBuffer != NULL);
-	if (next_byte == NULL) {
+        if (next_byte == NULL) {
             sb->bufferOffset = NO_DATA;
-	} else {
+        } else {
             sb->bufferOffset = next_byte - sb->buf;
-	}
-        (*env)->ReleasePrimitiveArrayCritical(env, 
+        }
+        (*env)->ReleasePrimitiveArrayCritical(env,
                                               sb->hstreamBuffer,
-					      sb->buf, 
+                                              sb->buf,
                                               0);
         sb->buf = NULL;
     }
@@ -257,10 +257,10 @@ static void clearStreamBuffer(streamBufferPtr sb) {
 /*************************** Pixel Buffer definition ******************/
 
 typedef struct pixelBufferStruct {
-    jobject hpixelObject;   // Usually a DataBuffer bank as a byte array 
+    jobject hpixelObject;   // Usually a DataBuffer bank as a byte array
     union pixptr {
-        INT32	      *ip;  // Pinned buffer pointer, as 32-bit ints 
-        unsigned char *bp;  // Pinned buffer pointer, as bytes 
+        INT32         *ip;  // Pinned buffer pointer, as 32-bit ints
+        unsigned char *bp;  // Pinned buffer pointer, as bytes
     } buf;
 } pixelBuffer, *pixelBufferPtr;
 
@@ -273,16 +273,16 @@ static void initPixelBuffer(pixelBufferPtr pb) {
     pb->buf.ip = NULL;
 }
 
-/* 
+/*
  * Set the pixelBuffer to use the given buffer, acquiring a new global
  * reference for it.  Returns OK on success, NOT_OK on failure.
  */
 static int setPixelBuffer(JNIEnv *env, pixelBufferPtr pb, jobject obj) {
     pb->hpixelObject = (*env)->NewGlobalRef(env, obj);
-    
+
     if (pb->hpixelObject == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Setting Pixel Buffer");
         return NOT_OK;
     }
@@ -310,12 +310,12 @@ static void resetPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
  */
 static int pinPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
     if (pb->hpixelObject != NULL) {
-	assert(pb->buf.ip == NULL);
+        assert(pb->buf.ip == NULL);
         pb->buf.bp = (unsigned char *)(*env)->GetPrimitiveArrayCritical
             (env, pb->hpixelObject, NULL);
-	if (pb->buf.bp == NULL) {
-	    return NOT_OK;
-	}
+        if (pb->buf.bp == NULL) {
+            return NOT_OK;
+        }
     }
     return OK;
 }
@@ -327,9 +327,9 @@ static void unpinPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
 
     if (pb->buf.ip != NULL) {
         assert(pb->hpixelObject != NULL);
-        (*env)->ReleasePrimitiveArrayCritical(env, 
+        (*env)->ReleasePrimitiveArrayCritical(env,
                                               pb->hpixelObject,
-					      pb->buf.ip, 
+                                              pb->buf.ip,
                                               0);
         pb->buf.ip = NULL;
     }
@@ -349,7 +349,7 @@ static void unpinPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
 #define NUM_INPUT_VALUES (1 << 16)
 
 /*
- * The principal imageioData object, opaque to I/O direction. 
+ * The principal imageioData object, opaque to I/O direction.
  * Each JPEGImageReader will have associated with it a
  * jpeg_decompress_struct, and similarly each JPEGImageWriter will
  * have associated with it a jpeg_compress_struct.  In order to
@@ -357,7 +357,7 @@ static void unpinPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
  * the next, and to provide a central locus of imageio-specific
  * data, we define an imageioData struct containing references
  * to the Java object and the IJG structs.  The functions
- * that manipulate these objects know whether input or output is being 
+ * that manipulate these objects know whether input or output is being
  * performed and therefore know how to manipulate the contents correctly.
  * If for some reason they don't, the direction can be determined by
  * checking the is_decompressor field of the jpegObj.
@@ -369,13 +369,13 @@ static void unpinPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
  * change that, you run the risk of dangling pointers.
  */
 typedef struct imageIODataStruct {
-    j_common_ptr jpegObj;     // Either struct is fine 
+    j_common_ptr jpegObj;     // Either struct is fine
     jobject imageIOobj;       // A JPEGImageReader or a JPEGImageWriter
-    
+
     streamBuffer streamBuf;   // Buffer for the stream
     pixelBuffer pixelBuf;     // Buffer for pixels
 
-    jboolean abortFlag;       // Passed down from Java abort method 
+    jboolean abortFlag;       // Passed down from Java abort method
 
     UINT8 scale[MAX_BANDS][NUM_INPUT_VALUES];
     int bandSizes[MAX_BANDS]; // For scaling to-from non-8-bit images
@@ -386,8 +386,8 @@ typedef struct imageIODataStruct {
  * jpeg object and the Java object.  Returns a pointer to the new object
  * on success, NULL on failure.
  */
-static imageIODataPtr initImageioData (JNIEnv *env, 
-                                       j_common_ptr cinfo, 
+static imageIODataPtr initImageioData (JNIEnv *env,
+                                       j_common_ptr cinfo,
                                        jobject obj) {
     int i, j;
 
@@ -494,7 +494,7 @@ static int GET_ARRAYS(JNIEnv *env, imageIODataPtr data, const JOCTET **next_byte
 
     if (pinPixelBuffer(env, &data->pixelBuf) == NOT_OK) {
         RELEASE_ARRAYS(env, data, *next_byte);
-        return NOT_OK;    
+        return NOT_OK;
     }
     return OK;
 }
@@ -511,9 +511,9 @@ static int GET_ARRAYS(JNIEnv *env, imageIODataPtr data, const JOCTET **next_byte
  */
 
 struct sun_jpeg_error_mgr {
-  struct jpeg_error_mgr pub;	/* "public" fields */
+  struct jpeg_error_mgr pub;    /* "public" fields */
 
-  jmp_buf setjmp_buffer;	/* for return to caller */
+  jmp_buf setjmp_buffer;        /* for return to caller */
 };
 
 typedef struct sun_jpeg_error_mgr * sun_jpeg_error_ptr;
@@ -554,16 +554,16 @@ sun_jpeg_output_message (j_common_ptr cinfo)
   (*cinfo->err->format_message) (cinfo, buffer);
 
   // Create a new java string from the message
-  string = (*env)->NewStringUTF(env, buffer); 
+  string = (*env)->NewStringUTF(env, buffer);
 
   theObject = data->imageIOobj;
 
   if (cinfo->is_decompressor) {
-      (*env)->CallVoidMethod(env, theObject, 
+      (*env)->CallVoidMethod(env, theObject,
                              JPEGImageReader_warningWithMessageID,
                              string);
   } else {
-      (*env)->CallVoidMethod(env, theObject, 
+      (*env)->CallVoidMethod(env, theObject,
                              JPEGImageWriter_warningWithMessageID,
                              string);
   }
@@ -575,8 +575,8 @@ sun_jpeg_output_message (j_common_ptr cinfo)
 
 /*************** Shared utility code ***********************/
 
-static void imageio_set_stream(JNIEnv *env, 
-                               j_common_ptr cinfo, 
+static void imageio_set_stream(JNIEnv *env,
+                               j_common_ptr cinfo,
                                imageIODataPtr data,
                                jobject stream){
     streamBufferPtr sb;
@@ -590,13 +590,13 @@ static void imageio_set_stream(JNIEnv *env,
     if (stream != NULL) { // Fix for 4411955
         sb->stream = (*env)->NewGlobalRef(env, stream);
         if (sb->stream == NULL) {
-            JNU_ThrowByName(env, 
-                            "java/lang/OutOfMemoryError", 
+            JNU_ThrowByName(env,
+                            "java/lang/OutOfMemoryError",
                             "Setting Stream");
             return;
         }
     }
-    
+
     /* And finally reset state */
     data->abortFlag = JNI_FALSE;
 
@@ -604,7 +604,7 @@ static void imageio_set_stream(JNIEnv *env,
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
     if (setjmp(jerr->setjmp_buffer)) {
-        /* If we get here, the JPEG code has signaled an error 
+        /* If we get here, the JPEG code has signaled an error
            while aborting. */
         if (!(*env)->ExceptionOccurred(env)) {
             char buffer[JMSG_LENGTH_MAX];
@@ -619,8 +619,8 @@ static void imageio_set_stream(JNIEnv *env,
 
 }
 
-static void imageio_reset(JNIEnv *env, 
-                          j_common_ptr cinfo, 
+static void imageio_reset(JNIEnv *env,
+                          j_common_ptr cinfo,
                           imageIODataPtr data) {
     sun_jpeg_error_ptr jerr;
 
@@ -630,7 +630,7 @@ static void imageio_reset(JNIEnv *env,
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
     if (setjmp(jerr->setjmp_buffer)) {
-        /* If we get here, the JPEG code has signaled an error 
+        /* If we get here, the JPEG code has signaled an error
            while aborting. */
         if (!(*env)->ExceptionOccurred(env)) {
             char buffer[JMSG_LENGTH_MAX];
@@ -668,7 +668,7 @@ static void imageio_abort(JNIEnv *env, jobject this,
     data->abortFlag = JNI_TRUE;
 }
 
-static int setQTables(JNIEnv *env, 
+static int setQTables(JNIEnv *env,
                       j_common_ptr cinfo,
                       jobjectArray qtables,
                       boolean write) {
@@ -693,14 +693,14 @@ static int setQTables(JNIEnv *env,
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
             if (decomp->quant_tbl_ptrs[i] == NULL) {
-                decomp->quant_tbl_ptrs[i] = 
+                decomp->quant_tbl_ptrs[i] =
                     jpeg_alloc_quant_table(cinfo);
             }
             quant_ptr = decomp->quant_tbl_ptrs[i];
         } else {
             comp = (j_compress_ptr) cinfo;
             if (comp->quant_tbl_ptrs[i] == NULL) {
-                comp->quant_tbl_ptrs[i] = 
+                comp->quant_tbl_ptrs[i] =
                     jpeg_alloc_quant_table(cinfo);
             }
             quant_ptr = comp->quant_tbl_ptrs[i];
@@ -710,27 +710,27 @@ static int setQTables(JNIEnv *env,
             quant_ptr->quantval[j] = (UINT16)qdataBody[j];
         }
         quant_ptr->sent_table = !write;
-        (*env)->ReleasePrimitiveArrayCritical(env, 
-                                              qdata, 
+        (*env)->ReleasePrimitiveArrayCritical(env,
+                                              qdata,
                                               qdataBody,
                                               0);
     }
     return qlen;
 }
 
-static void setHuffTable(JNIEnv *env, 
+static void setHuffTable(JNIEnv *env,
                          JHUFF_TBL *huff_ptr,
                          jobject table) {
-    
+
     jshortArray huffLens;
     jshortArray huffValues;
     jshort *hlensBody, *hvalsBody;
     jsize hlensLen, hvalsLen;
     int i;
-    
+
     // lengths
-    huffLens = (*env)->GetObjectField(env, 
-                                      table, 
+    huffLens = (*env)->GetObjectField(env,
+                                      table,
                                       JPEGHuffmanTable_lengthsID);
     hlensLen = (*env)->GetArrayLength(env, huffLens);
     hlensBody = (*env)->GetShortArrayElements(env,
@@ -739,8 +739,8 @@ static void setHuffTable(JNIEnv *env,
     for (i = 1; i <= hlensLen; i++) {
         huff_ptr->bits[i] = (UINT8)hlensBody[i-1];
     }
-    (*env)->ReleaseShortArrayElements(env, 
-                                      huffLens, 
+    (*env)->ReleaseShortArrayElements(env,
+                                      huffLens,
                                       hlensBody,
                                       JNI_ABORT);
     // values
@@ -751,19 +751,19 @@ static void setHuffTable(JNIEnv *env,
     hvalsBody = (*env)->GetShortArrayElements(env,
                                               huffValues,
                                               NULL);
-    
+
     for (i = 0; i < hvalsLen; i++) {
         huff_ptr->huffval[i] = (UINT8)hvalsBody[i];
     }
-    (*env)->ReleaseShortArrayElements(env, 
-                                      huffValues, 
+    (*env)->ReleaseShortArrayElements(env,
+                                      huffValues,
                                       hvalsBody,
                                       JNI_ABORT);
 }
 
-static int setHTables(JNIEnv *env, 
+static int setHTables(JNIEnv *env,
                       j_common_ptr cinfo,
-                      jobjectArray DCHuffmanTables, 
+                      jobjectArray DCHuffmanTables,
                       jobjectArray ACHuffmanTables,
                       boolean write) {
     int i;
@@ -776,14 +776,14 @@ static int setHTables(JNIEnv *env,
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
             if (decomp->dc_huff_tbl_ptrs[i] == NULL) {
-                decomp->dc_huff_tbl_ptrs[i] = 
+                decomp->dc_huff_tbl_ptrs[i] =
                     jpeg_alloc_huff_table(cinfo);
             }
             huff_ptr = decomp->dc_huff_tbl_ptrs[i];
         } else {
             comp = (j_compress_ptr) cinfo;
             if (comp->dc_huff_tbl_ptrs[i] == NULL) {
-                comp->dc_huff_tbl_ptrs[i] = 
+                comp->dc_huff_tbl_ptrs[i] =
                     jpeg_alloc_huff_table(cinfo);
             }
             huff_ptr = comp->dc_huff_tbl_ptrs[i];
@@ -797,14 +797,14 @@ static int setHTables(JNIEnv *env,
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
             if (decomp->ac_huff_tbl_ptrs[i] == NULL) {
-                decomp->ac_huff_tbl_ptrs[i] = 
+                decomp->ac_huff_tbl_ptrs[i] =
                     jpeg_alloc_huff_table(cinfo);
             }
             huff_ptr = decomp->ac_huff_tbl_ptrs[i];
         } else {
             comp = (j_compress_ptr) cinfo;
             if (comp->ac_huff_tbl_ptrs[i] == NULL) {
-                comp->ac_huff_tbl_ptrs[i] = 
+                comp->ac_huff_tbl_ptrs[i] =
                     jpeg_alloc_huff_table(cinfo);
             }
             huff_ptr = comp->ac_huff_tbl_ptrs[i];
@@ -882,11 +882,11 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
 
     /* This is where input suspends */
     if (sb->suspendable) {
-	return FALSE;
+        return FALSE;
     }
 
 #ifdef DEBUG
-    printf("Filling input buffer, remaining skip is %ld, ", 
+    printf("Filling input buffer, remaining skip is %ld, ",
            sb->remaining_skip);
     printf("Buffer length is %d\n", sb->bufferLength);
 #endif
@@ -897,10 +897,10 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
      * buffer.  Now we aren't suspended, so we can catch up.
      */
     if (sb->remaining_skip) {
-	src->skip_input_data(cinfo, 0);
+        src->skip_input_data(cinfo, 0);
     }
 
-    /* 
+    /*
      * Now fill a complete buffer, or as much of one as the stream
      * will give us if we are near the end.
      */
@@ -908,7 +908,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
     ret = (*env)->CallIntMethod(env,
                                 sb->stream,
                                 ImageInputStream_readID,
-				sb->hstreamBuffer, 0, 
+                                sb->hstreamBuffer, 0,
                                 sb->bufferLength);
     if ((*env)->ExceptionOccurred(env)
         || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
@@ -930,7 +930,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
       printf("YO! Early EOI! ret = %d\n", ret);
 #endif
         RELEASE_ARRAYS(env, data, src->next_input_byte);
-        (*env)->CallVoidMethod(env, reader, 
+        (*env)->CallVoidMethod(env, reader,
                                JPEGImageReader_warningOccurredID,
                                READ_NO_EOI);
         if ((*env)->ExceptionOccurred(env)
@@ -938,9 +938,9 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
             cinfo->err->error_exit((j_common_ptr) cinfo);
         }
 
-	sb->buf[0] = (JOCTET) 0xFF;
-	sb->buf[1] = (JOCTET) JPEG_EOI;
-	ret = 2;
+        sb->buf[0] = (JOCTET) 0xFF;
+        sb->buf[1] = (JOCTET) JPEG_EOI;
+        ret = 2;
     }
 
     src->next_input_byte = sb->buf;
@@ -967,7 +967,7 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
     jint ret;
     int offset, buflen;
 
-    /* 
+    /*
      * The original (jpegdecoder.c) had code here that called
      * InputStream.available and just returned if the number of bytes
      * available was less than any remaining skip.  Presumably this was
@@ -978,31 +978,31 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
      * block in the skip if we have to.
      */
 
-    if (sb->remaining_skip) { 
-	src->skip_input_data(cinfo, 0);
+    if (sb->remaining_skip) {
+        src->skip_input_data(cinfo, 0);
     }
 
     /* Save the data currently in the buffer */
     offset = src->bytes_in_buffer;
     if (src->next_input_byte > sb->buf) {
-	memcpy(sb->buf, src->next_input_byte, offset);
+        memcpy(sb->buf, src->next_input_byte, offset);
     }
     RELEASE_ARRAYS(env, data, src->next_input_byte);
     buflen = sb->bufferLength - offset;
     if (buflen <= 0) {
         if (!GET_ARRAYS(env, data, &(src->next_input_byte))) {
-	    cinfo->err->error_exit((j_common_ptr) cinfo);
-	} 
-	return;
+            cinfo->err->error_exit((j_common_ptr) cinfo);
+        }
+        return;
     }
 
-    ret = (*env)->CallIntMethod(env, sb->stream, 
+    ret = (*env)->CallIntMethod(env, sb->stream,
                                 ImageInputStream_readID,
-				sb->hstreamBuffer, 
+                                sb->hstreamBuffer,
                                 offset, buflen);
-    if ((*env)->ExceptionOccurred(env) 
+    if ((*env)->ExceptionOccurred(env)
         || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
-	cinfo->err->error_exit((j_common_ptr) cinfo);
+        cinfo->err->error_exit((j_common_ptr) cinfo);
     }
     /*
      * If we have reached the end of the stream, then the EOI marker
@@ -1013,7 +1013,7 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
     if (ret <= 0) {
         jobject reader = data->imageIOobj;
         RELEASE_ARRAYS(env, data, src->next_input_byte);
-        (*env)->CallVoidMethod(env, reader, 
+        (*env)->CallVoidMethod(env, reader,
                                JPEGImageReader_warningOccurredID,
                                READ_NO_EOI);
         if ((*env)->ExceptionOccurred(env)
@@ -1021,9 +1021,9 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
             cinfo->err->error_exit((j_common_ptr) cinfo);
         }
 
-	sb->buf[offset] = (JOCTET) 0xFF;
-	sb->buf[offset + 1] = (JOCTET) JPEG_EOI;
-	ret = 2;
+        sb->buf[offset] = (JOCTET) 0xFF;
+        sb->buf[offset + 1] = (JOCTET) JPEG_EOI;
+        ret = 2;
     }
 
     src->next_input_byte = sb->buf;
@@ -1059,9 +1059,9 @@ imageio_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jlong ret;
     jobject reader;
-     
+
     if (num_bytes < 0) {
-	return;
+        return;
     }
     num_bytes += sb->remaining_skip;
     sb->remaining_skip = 0;
@@ -1069,12 +1069,12 @@ imageio_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     /* First the easy case where we are skipping <= the current contents. */
     ret = src->bytes_in_buffer;
     if (ret >= num_bytes) {
-	src->next_input_byte += num_bytes;
-	src->bytes_in_buffer -= num_bytes;
-	return;
+        src->next_input_byte += num_bytes;
+        src->bytes_in_buffer -= num_bytes;
+        return;
     }
 
-    /* 
+    /*
      * We are skipping more than is in the buffer.  We empty the buffer and,
      * if we aren't suspended, call the Java skipBytes method.  We always
      * leave the buffer empty, to be filled by either fill method above.
@@ -1084,13 +1084,13 @@ imageio_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
 
     num_bytes -= (long)ret;
     if (sb->suspendable) {
-	sb->remaining_skip = num_bytes;
-	return;
+        sb->remaining_skip = num_bytes;
+        return;
     }
 
     RELEASE_ARRAYS(env, data, src->next_input_byte);
-    ret = (*env)->CallLongMethod(env, 
-                                 sb->stream, 
+    ret = (*env)->CallLongMethod(env,
+                                 sb->stream,
                                  ImageInputStream_skipBytesID,
                                  (jlong) num_bytes);
     if ((*env)->ExceptionOccurred(env)
@@ -1107,8 +1107,8 @@ imageio_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     if (ret <= 0) {
         reader = data->imageIOobj;
         RELEASE_ARRAYS(env, data, src->next_input_byte);
-        (*env)->CallVoidMethod(env, 
-                               reader, 
+        (*env)->CallVoidMethod(env,
+                               reader,
                                JPEGImageReader_warningOccurredID,
                                READ_NO_EOI);
 
@@ -1116,10 +1116,10 @@ imageio_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
             || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
                 cinfo->err->error_exit((j_common_ptr) cinfo);
         }
-	sb->buf[0] = (JOCTET) 0xFF;
-	sb->buf[1] = (JOCTET) JPEG_EOI;
-	src->bytes_in_buffer = 2;
-	src->next_input_byte = sb->buf;
+        sb->buf[0] = (JOCTET) 0xFF;
+        sb->buf[1] = (JOCTET) JPEG_EOI;
+        src->bytes_in_buffer = 2;
+        src->next_input_byte = sb->buf;
     }
 }
 
@@ -1141,8 +1141,8 @@ imageio_term_source(j_decompress_ptr cinfo)
     jobject reader = data->imageIOobj;
     if (src->bytes_in_buffer > 0) {
          RELEASE_ARRAYS(env, data, src->next_input_byte);
-         (*env)->CallVoidMethod(env, 
-                                reader, 
+         (*env)->CallVoidMethod(env,
+                                reader,
                                 JPEGImageReader_pushBackID,
                                 src->bytes_in_buffer);
 
@@ -1161,7 +1161,7 @@ imageio_term_source(j_decompress_ptr cinfo)
 /*
  * The following routines are modified versions of the ICC
  * profile support routines available from the IJG website.
- * The originals were written by Todd Newman 
+ * The originals were written by Todd Newman
  * <tdn@eccentric.esd.sgi.com> and modified by Tom Lane for
  * the IJG.  They are further modified to fit in the context
  * of the imageio JPEG plug-in.
@@ -1172,17 +1172,17 @@ imageio_term_source(j_decompress_ptr cinfo)
  * (64K), we need provisions to split it into multiple markers.  The format
  * defined by the ICC specifies one or more APP2 markers containing the
  * following data:
- *	Identifying string	ASCII "ICC_PROFILE\0"  (12 bytes)
- *	Marker sequence number	1 for first APP2, 2 for next, etc (1 byte)
- *	Number of markers	Total number of APP2's used (1 byte)
- *      Profile data		(remainder of APP2 data)
+ *      Identifying string      ASCII "ICC_PROFILE\0"  (12 bytes)
+ *      Marker sequence number  1 for first APP2, 2 for next, etc (1 byte)
+ *      Number of markers       Total number of APP2's used (1 byte)
+ *      Profile data            (remainder of APP2 data)
  * Decoders should use the marker sequence numbers to reassemble the profile,
  * rather than assuming that the APP2 markers appear in the correct sequence.
  */
 
-#define ICC_MARKER  (JPEG_APP0 + 2)	/* JPEG marker code for ICC */
-#define ICC_OVERHEAD_LEN  14		/* size of non-profile data in APP2 */
-#define MAX_BYTES_IN_MARKER  65533	/* maximum data len of a JPEG marker */
+#define ICC_MARKER  (JPEG_APP0 + 2)     /* JPEG marker code for ICC */
+#define ICC_OVERHEAD_LEN  14            /* size of non-profile data in APP2 */
+#define MAX_BYTES_IN_MARKER  65533      /* maximum data len of a JPEG marker */
 #define MAX_DATA_BYTES_IN_ICC_MARKER  (MAX_BYTES_IN_MARKER - ICC_OVERHEAD_LEN)
 
 
@@ -1228,8 +1228,8 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
     int seq_no;
     JOCTET *icc_data;
     unsigned int total_length;
-#define MAX_SEQ_NO  255		// sufficient since marker numbers are bytes
-    char marker_present[MAX_SEQ_NO+1];	  // 1 if marker found
+#define MAX_SEQ_NO  255         // sufficient since marker numbers are bytes
+    char marker_present[MAX_SEQ_NO+1];    // 1 if marker found
     unsigned int data_length[MAX_SEQ_NO+1]; // size of profile data in marker
     unsigned int data_offset[MAX_SEQ_NO+1]; // offset for data in marker
     jbyteArray data = NULL;
@@ -1294,8 +1294,8 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
 
     data = (*env)->NewByteArray(env, total_length);
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName(env,
+                        "java/lang/OutOfMemoryError",
                         "Reading ICC profile");
         return NULL;
     }
@@ -1331,7 +1331,7 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
                                           icc_data,
                                           0);
 
-    
+
     return data;
 }
 
@@ -1341,52 +1341,52 @@ read_icc_profile (JNIEnv *env, j_decompress_ptr cinfo)
 
 JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initReaderIDs
-    (JNIEnv *env, 
-     jclass cls, 
+    (JNIEnv *env,
+     jclass cls,
      jclass ImageInputStreamClass,
      jclass qTableClass,
      jclass huffClass) {
 
-    ImageInputStream_readID = (*env)->GetMethodID(env, 
+    ImageInputStream_readID = (*env)->GetMethodID(env,
                                                   ImageInputStreamClass,
-                                                  "read", 
+                                                  "read",
                                                   "([BII)I");
-    ImageInputStream_skipBytesID = (*env)->GetMethodID(env, 
+    ImageInputStream_skipBytesID = (*env)->GetMethodID(env,
                                                        ImageInputStreamClass,
-                                                       "skipBytes", 
+                                                       "skipBytes",
                                                        "(J)J");
-    JPEGImageReader_warningOccurredID = (*env)->GetMethodID(env, 
+    JPEGImageReader_warningOccurredID = (*env)->GetMethodID(env,
                                                             cls,
-                                                            "warningOccurred", 
+                                                            "warningOccurred",
                                                             "(I)V");
-    JPEGImageReader_warningWithMessageID = 
-        (*env)->GetMethodID(env, 
+    JPEGImageReader_warningWithMessageID =
+        (*env)->GetMethodID(env,
                             cls,
-                            "warningWithMessage", 
+                            "warningWithMessage",
                             "(Ljava/lang/String;)V");
-    JPEGImageReader_setImageDataID = (*env)->GetMethodID(env, 
+    JPEGImageReader_setImageDataID = (*env)->GetMethodID(env,
                                                          cls,
-                                                         "setImageData", 
+                                                         "setImageData",
                                                          "(IIIII[B)V");
-    JPEGImageReader_acceptPixelsID = (*env)->GetMethodID(env, 
+    JPEGImageReader_acceptPixelsID = (*env)->GetMethodID(env,
                                                          cls,
-                                                         "acceptPixels", 
+                                                         "acceptPixels",
                                                          "(IZ)V");
-    JPEGImageReader_passStartedID = (*env)->GetMethodID(env, 
+    JPEGImageReader_passStartedID = (*env)->GetMethodID(env,
                                                         cls,
-                                                        "passStarted", 
+                                                        "passStarted",
                                                         "(I)V");
-    JPEGImageReader_passCompleteID = (*env)->GetMethodID(env, 
+    JPEGImageReader_passCompleteID = (*env)->GetMethodID(env,
                                                          cls,
-                                                         "passComplete", 
+                                                         "passComplete",
                                                          "()V");
-    JPEGImageReader_pushBackID = (*env)->GetMethodID(env, 
+    JPEGImageReader_pushBackID = (*env)->GetMethodID(env,
                                                      cls,
-                                                     "pushBack", 
+                                                     "pushBack",
                                                      "(I)V");
-    JPEGQTable_tableID = (*env)->GetFieldID(env, 
-                                            qTableClass, 
-                                            "qTable", 
+    JPEGQTable_tableID = (*env)->GetFieldID(env,
+                                            qTableClass,
+                                            "qTable",
                                             "[I");
 
     JPEGHuffmanTable_lengthsID = (*env)->GetFieldID(env,
@@ -1407,15 +1407,15 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
 
     imageIODataPtr ret;
     struct sun_jpeg_error_mgr *jerr;
-    
+
     /* This struct contains the JPEG decompression parameters and pointers to
      * working space (which is allocated as needed by the JPEG library).
      */
-    struct jpeg_decompress_struct *cinfo = 
+    struct jpeg_decompress_struct *cinfo =
         malloc(sizeof(struct jpeg_decompress_struct));
     if (cinfo == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Reader");
         return 0;
     }
@@ -1424,8 +1424,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
      */
     jerr = malloc (sizeof(struct sun_jpeg_error_mgr));
     if (jerr == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Reader");
         return 0;
     }
@@ -1457,11 +1457,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
     /*
      * Now set up our source.
      */
-    cinfo->src = 
+    cinfo->src =
         (struct jpeg_source_mgr *) malloc (sizeof(struct jpeg_source_mgr));
     if (cinfo->src == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName(env,
+                        "java/lang/OutOfMemoryError",
                         "Initializing Reader");
         return 0;
     }
@@ -1476,8 +1476,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
     /* set up the association to persist for future calls */
     ret = initImageioData(env, (j_common_ptr) cinfo, this);
     if (ret == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Reader");
         return 0;
     }
@@ -1500,8 +1500,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_setSource
     j_common_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return;
     }
@@ -1514,11 +1514,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_setSource
 }
 
 #define JPEG_APP1  (JPEG_APP0 + 1)  /* EXIF APP1 marker code  */
-        
+
 /*
  * For EXIF images, the APP1 will appear immediately after the SOI,
  * so it's safe to only look at the first marker in the list.
- * (see http://www.exif.org/Exif2-2.PDF, section 4.7, page 58)   
+ * (see http://www.exif.org/Exif2-2.PDF, section 4.7, page 58)
  */
 #define IS_EXIF(c) \
     (((c)->marker_list != NULL) && ((c)->marker_list->marker == JPEG_APP1))
@@ -1541,8 +1541,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
     sun_jpeg_error_ptr jerr;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return JNI_FALSE;
     }
@@ -1555,7 +1555,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
 
     if (setjmp(jerr->setjmp_buffer)) {
         /* If we get here, the JPEG code has signaled an error
-           while reading the header. */        
+           while reading the header. */
         RELEASE_ARRAYS(env, data, src->next_input_byte);
         if (!(*env)->ExceptionOccurred(env)) {
             char buffer[JMSG_LENGTH_MAX];
@@ -1572,13 +1572,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
 #endif
 
     if (GET_ARRAYS(env, data, &src->next_input_byte) == NOT_OK) {
-        JNU_ThrowByName(env, 
-                        "javax/imageio/IIOException", 
+        JNU_ThrowByName(env,
+                        "javax/imageio/IIOException",
                         "Array pin failed");
         return retval;
     }
 
-    /* 
+    /*
      * Now clear the input buffer if the Java code has done a seek
      * on the stream since the last call, invalidating any buffer contents.
      */
@@ -1593,29 +1593,29 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
     if (ret == JPEG_HEADER_TABLES_ONLY) {
         retval = JNI_TRUE;
         imageio_term_source(cinfo);  // Pushback remaining buffer contents
-#ifdef DEBUG        
-        printf("just read tables-only image; q table 0 at %p\n", 
+#ifdef DEBUG
+        printf("just read tables-only image; q table 0 at %p\n",
                cinfo->quant_tbl_ptrs[0]);
 #endif
         RELEASE_ARRAYS(env, data, src->next_input_byte);
     } else {
         /*
-         * Now adjust the jpeg_color_space variable, which was set in 
+         * Now adjust the jpeg_color_space variable, which was set in
          * default_decompress_parms, to reflect our differences from IJG
          */
-        
+
         switch (cinfo->jpeg_color_space) {
-	default :
-	  break;
+        default :
+          break;
         case JCS_YCbCr:
 
             /*
-             * There are several possibilities:  
+             * There are several possibilities:
              *  - we got image with embeded colorspace
              *     Use it. User knows what he is doing.
-             *  - we got JFIF image   
-             *     Must be YCbCr (see http://www.w3.org/Graphics/JPEG/jfif3.pdf, page 2) 
-             *  - we got EXIF image 
+             *  - we got JFIF image
+             *     Must be YCbCr (see http://www.w3.org/Graphics/JPEG/jfif3.pdf, page 2)
+             *  - we got EXIF image
              *     Must be YCbCr (see http://www.exif.org/Exif2-2.PDF, section 4.7, page 63)
              *  - something else
              *     Apply heuristical rules to identify actual colorspace.
@@ -1700,7 +1700,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
             }
         }
         RELEASE_ARRAYS(env, data, src->next_input_byte);
-        (*env)->CallVoidMethod(env, this, 
+        (*env)->CallVoidMethod(env, this,
                                JPEGImageReader_setImageDataID,
                                cinfo->image_width,
                                cinfo->image_height,
@@ -1728,8 +1728,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_setOutColorSpace
     j_decompress_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return;
     }
@@ -1739,7 +1739,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_setOutColorSpace
     cinfo->out_color_space = code;
 
 }
-                                                      
+
 JNIEXPORT jboolean JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     (JNIEnv *env,
@@ -1755,16 +1755,16 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
      jint sourceHeight,
      jint stepX,
      jint stepY,
-     jobjectArray qtables, 
-     jobjectArray DCHuffmanTables, 
-     jobjectArray ACHuffmanTables, 
+     jobjectArray qtables,
+     jobjectArray DCHuffmanTables,
+     jobjectArray ACHuffmanTables,
      jint minProgressivePass,  // Counts from 0
      jint maxProgressivePass,
      jboolean wantUpdates) {
-    
+
 
     struct jpeg_source_mgr *src;
-    JSAMPROW scanLinePtr;  
+    JSAMPROW scanLinePtr;
     jint bands[MAX_BANDS];
     int i, j;
     jint *body;
@@ -1787,8 +1787,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     /* verify the inputs */
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return JNI_FALSE;
     }
@@ -1806,7 +1806,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         (sourceWidth < 1) || (sourceWidth > (jint)cinfo->image_width) ||
         (sourceHeight < 1) || (sourceHeight > (jint)cinfo->image_height) ||
         (stepX < 1) || (stepY < 1) ||
-        (minProgressivePass < 0) || 
+        (minProgressivePass < 0) ||
         (maxProgressivePass < minProgressivePass))
     {
         JNU_ThrowByName(env, "javax/imageio/IIOException",
@@ -1818,11 +1818,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
      * First get the source bands array and copy it to our local array
      * so we don't have to worry about pinning and unpinning it again.
      */
-    
+
     body = (*env)->GetIntArrayElements(env, srcBands, NULL);
     if (body == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Read");
         return JNI_FALSE;
     }
@@ -1853,15 +1853,15 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
                 maxBandValue = (1 << bandSize[i]) - 1;
                 halfMaxBandValue = maxBandValue >> 1;
                 for (j = 0; j <= maxBandValue; j++) {
-                    data->scale[i][j] = 
-                        (UINT8)((j*MAX_JPEG_BAND_VALUE 
+                    data->scale[i][j] =
+                        (UINT8)((j*MAX_JPEG_BAND_VALUE
                                  + halfMaxBandValue)/maxBandValue);
                 }
             }
         }
     }
 
-    (*env)->ReleaseIntArrayElements(env, bandSizes, 
+    (*env)->ReleaseIntArrayElements(env, bandSizes,
                                     bandSize, JNI_ABORT);
 
 #ifdef DEBUG
@@ -1872,7 +1872,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         printf("%d ", bands[i]);
     }
     printf("\n");
-    printf("jq table 0 at %p\n", 
+    printf("jq table 0 at %p\n",
                cinfo->quant_tbl_ptrs[0]);
 #endif
 
@@ -1885,13 +1885,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     if (setPixelBuffer(env, pb, buffer) == NOT_OK) {
         return data->abortFlag;  // We already threw an out of memory exception
     }
-    
+
     // Allocate a 1-scanline buffer
     scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->num_components);
     if (scanLinePtr == NULL) {
         RELEASE_ARRAYS(env, data, src->next_input_byte);
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Reading JPEG Stream");
         return data->abortFlag;
     }
@@ -1900,7 +1900,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
     if (setjmp(jerr->setjmp_buffer)) {
-        /* If we get here, the JPEG code has signaled an error 
+        /* If we get here, the JPEG code has signaled an error
            while reading. */
         RELEASE_ARRAYS(env, data, src->next_input_byte);
         if (!(*env)->ExceptionOccurred(env)) {
@@ -1914,8 +1914,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     }
 
     if (GET_ARRAYS(env, data, &src->next_input_byte) == NOT_OK) {
-        JNU_ThrowByName(env, 
-                        "javax/imageio/IIOException", 
+        JNU_ThrowByName(env,
+                        "javax/imageio/IIOException",
                         "Array pin failed");
         return data->abortFlag;
     }
@@ -1927,8 +1927,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     }
 
     if ((DCHuffmanTables != NULL) && (cinfo->dc_huff_tbl_ptrs[0] == NULL)) {
-        setHTables(env, (j_common_ptr) cinfo, 
-                   DCHuffmanTables, 
+        setHTables(env, (j_common_ptr) cinfo,
+                   DCHuffmanTables,
                    ACHuffmanTables,
                    TRUE);
     }
@@ -1946,7 +1946,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     data->streamBuf.suspendable = FALSE;
 
     jpeg_start_decompress(cinfo);
-    
+
     // loop over progressive passes
     done = FALSE;
     while (!done) {
@@ -1955,19 +1955,19 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
             // the first interesting pass.
             jpeg_start_output(cinfo, cinfo->input_scan_number);
             if (wantUpdates) {
-                (*env)->CallVoidMethod(env, this, 
+                (*env)->CallVoidMethod(env, this,
                                        JPEGImageReader_passStartedID,
                                        cinfo->input_scan_number-1);
             }
         } else if (wantUpdates) {
-            (*env)->CallVoidMethod(env, this, 
+            (*env)->CallVoidMethod(env, this,
                                    JPEGImageReader_passStartedID,
                                    0);
 
         }
-        
+
         // Skip until the first interesting line
-        while ((data->abortFlag == JNI_FALSE) 
+        while ((data->abortFlag == JNI_FALSE)
                && ((jint)cinfo->output_scanline < sourceYStart)) {
             jpeg_read_scanlines(cinfo, &scanLinePtr, 1);
         }
@@ -1975,13 +1975,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         scanlineLimit = sourceYStart+sourceHeight;
         pixelLimit = scanLinePtr
             +(sourceXStart+sourceWidth)*cinfo->num_components;
-        
+
         pixelStride = stepX*cinfo->num_components;
         targetLine = 0;
 
-        while ((data->abortFlag == JNI_FALSE) 
+        while ((data->abortFlag == JNI_FALSE)
                && ((jint)cinfo->output_scanline < scanlineLimit)) {
-            
+
             jpeg_read_scanlines(cinfo, &scanLinePtr, 1);
 
             // Now mangle it into our buffer
@@ -2014,8 +2014,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
             // And call it back to Java
             RELEASE_ARRAYS(env, data, src->next_input_byte);
-            (*env)->CallVoidMethod(env, 
-                                   this, 
+            (*env)->CallVoidMethod(env,
+                                   this,
                                    JPEGImageReader_acceptPixelsID,
                                    targetLine++,
                                    progressive);
@@ -2024,7 +2024,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
                 || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
                 cinfo->err->error_exit((j_common_ptr) cinfo);
             }
-         
+
             // And skip over uninteresting lines to the next subsampled line
             // Ensure we don't go past the end of the image
 
@@ -2051,13 +2051,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
             done = TRUE;
         }
         if (wantUpdates) {
-            (*env)->CallVoidMethod(env, this, 
+            (*env)->CallVoidMethod(env, this,
                                    JPEGImageReader_passCompleteID);
         }
 
     }
     /*
-     * We are done, but we might not have read all the lines, or all 
+     * We are done, but we might not have read all the lines, or all
      * the passes, so use jpeg_abort instead of jpeg_finish_decompress.
      */
     if (cinfo->output_scanline == cinfo->output_height) {
@@ -2080,12 +2080,12 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_abortRead
     (JNIEnv *env,
      jobject this,
      jlong ptr) {
-    
+
     imageIODataPtr data = (imageIODataPtr) ptr;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return;
     }
@@ -2103,8 +2103,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_resetLibraryState
     j_decompress_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return;
     }
@@ -2126,8 +2126,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_resetReader
     sun_jpeg_error_ptr jerr;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use reader after dispose()");
         return;
     }
@@ -2142,7 +2142,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_resetReader
      * The tables have not been reset, and there is no way to do so
      * in IJG without leaking memory.  The only situation in which
      * this will cause a problem is if an image-only stream is read
-     * with this object without initializing the correct tables first. 
+     * with this object without initializing the correct tables first.
      * This situation, which should cause an error, might work but
      * produce garbage instead.  If the huffman tables are wrong,
      * it will fail during the decode.  If the q tables are wrong, it
@@ -2153,8 +2153,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_resetReader
 
     /* above does not clean up the source, so we have to */
 
-    /* 
-      We need to explicitly initialize exception handler or we may 
+    /*
+      We need to explicitly initialize exception handler or we may
        longjump to random address from the term_source()
      */
 
@@ -2162,30 +2162,30 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_resetReader
 
         /*
           We may get IOException from pushBack() here.
-          
+
           However it could be legal if original input stream was closed
           earlier (for example because network connection was closed).
-          Unfortunately, image inputstream API has no way to check whether 
+          Unfortunately, image inputstream API has no way to check whether
           stream is already closed or IOException was thrown because of some
-          other IO problem, 
+          other IO problem,
           And we can not avoid call to pushBack() on closed stream for the
           same reason.
-          
+
           So, for now we will silently eat this exception.
-          
+
           NB: this may be changed in future when ImageInputStream API will
           become more flexible.
         */
-  
+
         if ((*env)->ExceptionOccurred(env)) {
-            (*env)->ExceptionClear(env);            
+            (*env)->ExceptionClear(env);
         }
     } else {
         cinfo->src->term_source(cinfo);
     }
 
     cinfo->src->bytes_in_buffer = 0;
-    cinfo->src->next_input_byte = NULL;    
+    cinfo->src->next_input_byte = NULL;
 }
 
 JNIEXPORT void JNICALL
@@ -2218,8 +2218,8 @@ imageio_init_destination (j_compress_ptr cinfo)
     imageIODataPtr data = (imageIODataPtr) cinfo->client_data;
     streamBufferPtr sb = &data->streamBuf;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
-    if (sb->buf == NULL) {  
+
+    if (sb->buf == NULL) {
         // We forgot to pin the array
         (*env)->FatalError(env, "Output buffer not pinned!");
     }
@@ -2244,21 +2244,21 @@ imageio_empty_output_buffer (j_compress_ptr cinfo)
     imageIODataPtr data = (imageIODataPtr) cinfo->client_data;
     streamBufferPtr sb = &data->streamBuf;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-  
+
     RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
-  
-    (*env)->CallVoidMethod(env, 
+
+    (*env)->CallVoidMethod(env,
                            sb->stream,
                            ImageOutputStream_writeID,
-                           sb->hstreamBuffer, 
-                           0, 
+                           sb->hstreamBuffer,
+                           0,
                            sb->bufferLength);
     if ((*env)->ExceptionOccurred(env)
-        || !GET_ARRAYS(env, data, 
+        || !GET_ARRAYS(env, data,
                        (const JOCTET **)(&dest->next_output_byte))) {
             cinfo->err->error_exit((j_common_ptr) cinfo);
     }
-  
+
     dest->next_output_byte = sb->buf;
     dest->free_in_buffer = sb->bufferLength;
 
@@ -2283,16 +2283,16 @@ imageio_term_destination (j_compress_ptr cinfo)
 
     if (datacount != 0) {
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
-  
-        (*env)->CallVoidMethod(env, 
+
+        (*env)->CallVoidMethod(env,
                                sb->stream,
                                ImageOutputStream_writeID,
-                               sb->hstreamBuffer, 
-                               0, 
+                               sb->hstreamBuffer,
+                               0,
                                datacount);
 
         if ((*env)->ExceptionOccurred(env)
-            || !GET_ARRAYS(env, data, 
+            || !GET_ARRAYS(env, data,
                            (const JOCTET **)(&dest->next_output_byte))) {
             cinfo->err->error_exit((j_common_ptr) cinfo);
         }
@@ -2305,7 +2305,7 @@ imageio_term_destination (j_compress_ptr cinfo)
 
 /*
  * Flush the destination buffer.  This is not called by the library,
- * but by our code below.  This is the simplest implementation, though 
+ * but by our code below.  This is the simplest implementation, though
  * certainly not the most efficient.
  */
 METHODDEF(void)
@@ -2320,41 +2320,41 @@ imageio_flush_destination(j_compress_ptr cinfo)
 /********************** Writer JNI calls **********************/
 
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initWriterIDs
-    (JNIEnv *env, 
-     jclass cls, 
+    (JNIEnv *env,
+     jclass cls,
      jclass IOSClass,
      jclass qTableClass,
      jclass huffClass) {
 
-    ImageOutputStream_writeID = (*env)->GetMethodID(env, 
+    ImageOutputStream_writeID = (*env)->GetMethodID(env,
                                                     IOSClass,
                                                     "write",
                                                     "([BII)V");
 
-    JPEGImageWriter_warningOccurredID = (*env)->GetMethodID(env, 
+    JPEGImageWriter_warningOccurredID = (*env)->GetMethodID(env,
                                                             cls,
-                                                            "warningOccurred", 
+                                                            "warningOccurred",
                                                             "(I)V");
-    JPEGImageWriter_warningWithMessageID = 
-        (*env)->GetMethodID(env, 
+    JPEGImageWriter_warningWithMessageID =
+        (*env)->GetMethodID(env,
                             cls,
-                            "warningWithMessage", 
+                            "warningWithMessage",
                             "(Ljava/lang/String;)V");
 
-    JPEGImageWriter_writeMetadataID = (*env)->GetMethodID(env, 
+    JPEGImageWriter_writeMetadataID = (*env)->GetMethodID(env,
                                                           cls,
-                                                          "writeMetadata", 
+                                                          "writeMetadata",
                                                           "()V");
-    JPEGImageWriter_grabPixelsID = (*env)->GetMethodID(env, 
+    JPEGImageWriter_grabPixelsID = (*env)->GetMethodID(env,
                                                        cls,
                                                        "grabPixels",
                                                        "(I)V");
 
-    JPEGQTable_tableID = (*env)->GetFieldID(env, 
-                                            qTableClass, 
-                                            "qTable", 
+    JPEGQTable_tableID = (*env)->GetFieldID(env,
+                                            qTableClass,
+                                            "qTable",
                                             "[I");
 
     JPEGHuffmanTable_lengthsID = (*env)->GetFieldID(env,
@@ -2368,23 +2368,23 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initWriterIDs
                                                     "[S");
 }
 
-JNIEXPORT jlong JNICALL 
+JNIEXPORT jlong JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this) {
 
     imageIODataPtr ret;
     struct sun_jpeg_error_mgr *jerr;
     struct jpeg_destination_mgr *dest;
-    
+
     /* This struct contains the JPEG compression parameters and pointers to
      * working space (which is allocated as needed by the JPEG library).
      */
-    struct jpeg_compress_struct *cinfo = 
+    struct jpeg_compress_struct *cinfo =
         malloc(sizeof(struct jpeg_compress_struct));
     if (cinfo == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Writer");
         return 0;
     }
@@ -2393,8 +2393,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
      */
     jerr = malloc (sizeof(struct sun_jpeg_error_mgr));
     if (jerr == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Writer");
         free(cinfo);
         return 0;
@@ -2423,8 +2423,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
     /* Now set up the destination  */
     dest = malloc(sizeof(struct jpeg_destination_mgr));
     if (dest == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Writer");
         free(cinfo);
         free(jerr);
@@ -2436,14 +2436,14 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
     dest->term_destination = imageio_term_destination;
     dest->next_output_byte = NULL;
     dest->free_in_buffer = 0;
-        
+
     cinfo->dest = dest;
 
     /* set up the association to persist for future calls */
     ret = initImageioData(env, (j_common_ptr) cinfo, this);
     if (ret == NULL) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Initializing Writer");
         free(cinfo);
         free(jerr);
@@ -2452,9 +2452,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
     return (jlong) ret;
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_setDest
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this,
      jlong ptr,
      jobject destination) {
@@ -2463,8 +2463,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_setDest
     j_compress_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use writer after dispose()");
         return;
     }
@@ -2479,13 +2479,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_setDest
     cinfo->dest->free_in_buffer = 0;
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this,
-     jlong ptr, 
-     jobjectArray qtables, 
-     jobjectArray DCHuffmanTables, 
+     jlong ptr,
+     jobjectArray qtables,
+     jobjectArray DCHuffmanTables,
      jobjectArray ACHuffmanTables) {
 
     struct jpeg_destination_mgr *dest;
@@ -2494,8 +2494,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
     j_compress_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use writer after dispose()");
         return;
     }
@@ -2507,7 +2507,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
     if (setjmp(jerr->setjmp_buffer)) {
-        /* If we get here, the JPEG code has signaled an error 
+        /* If we get here, the JPEG code has signaled an error
            while writing. */
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
         if (!(*env)->ExceptionOccurred(env)) {
@@ -2519,26 +2519,26 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
         return;
     }
 
-    if (GET_ARRAYS(env, data, 
+    if (GET_ARRAYS(env, data,
                    (const JOCTET **)(&dest->next_output_byte)) == NOT_OK) {
-        JNU_ThrowByName(env, 
-                        "javax/imageio/IIOException", 
+        JNU_ThrowByName(env,
+                        "javax/imageio/IIOException",
                         "Array pin failed");
         return;
     }
-    
+
     jpeg_suppress_tables(cinfo, TRUE);  // Suppress writing of any current
 
     data->streamBuf.suspendable = FALSE;
     if (qtables != NULL) {
 #ifdef DEBUG
         printf("in writeTables: qtables not NULL\n");
-#endif        
+#endif
         setQTables(env, (j_common_ptr) cinfo, qtables, TRUE);
     }
 
     if (DCHuffmanTables != NULL) {
-        setHTables(env, (j_common_ptr) cinfo, 
+        setHTables(env, (j_common_ptr) cinfo,
                    DCHuffmanTables, ACHuffmanTables, TRUE);
     }
 
@@ -2546,22 +2546,22 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
     RELEASE_ARRAYS(env, data, NULL);
 }
 
-JNIEXPORT jboolean JNICALL 
+JNIEXPORT jboolean JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this,
-     jlong ptr, 
-     jbyteArray buffer, 
-     jint inCs, jint outCs, 
-     jint numBands, 
+     jlong ptr,
+     jbyteArray buffer,
+     jint inCs, jint outCs,
+     jint numBands,
      jintArray bandSizes,
-     jint srcWidth, 
-     jint destWidth, jint destHeight, 
-     jint stepX, jint stepY, 
-     jobjectArray qtables, 
+     jint srcWidth,
+     jint destWidth, jint destHeight,
+     jint stepX, jint stepY,
+     jobjectArray qtables,
      jboolean writeDQT,
-     jobjectArray DCHuffmanTables, 
-     jobjectArray ACHuffmanTables, 
+     jobjectArray DCHuffmanTables,
+     jobjectArray ACHuffmanTables,
      jboolean writeDHT,
      jboolean optimize,
      jboolean progressive,
@@ -2573,9 +2573,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
      jintArray QtableSelectors,
      jboolean haveMetadata,
      jint restartInterval) {
-    
+
     struct jpeg_destination_mgr *dest;
-    JSAMPROW scanLinePtr;  
+    JSAMPROW scanLinePtr;
     int i, j;
     int pixelStride;
     unsigned char *in, *out, *pixelLimit;
@@ -2595,8 +2595,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     /* verify the inputs */
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use writer after dispose()");
         return JNI_FALSE;
     }
@@ -2614,12 +2614,12 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
     }
 
-    if ((inCs < 0) || (inCs > JCS_YCCK) || 
+    if ((inCs < 0) || (inCs > JCS_YCCK) ||
         (outCs < 0) || (outCs > JCS_YCCK) ||
         (numBands < 1) || (numBands > MAX_BANDS) ||
-        (srcWidth < 0) || 
+        (srcWidth < 0) ||
         (destWidth < 0) || (destWidth > srcWidth) ||
-        (destHeight < 0) || 
+        (destHeight < 0) ||
         (stepX < 0) || (stepY < 0))
     {
         JNU_ThrowByName(env, "javax/imageio/IIOException",
@@ -2644,15 +2644,15 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
                 maxBandValue = (1 << bandSize[i]) - 1;
                 halfMaxBandValue = maxBandValue >> 1;
                 for (j = 0; j <= maxBandValue; j++) {
-                    data->scale[i][j] = 
-                        (UINT8)((j*MAX_JPEG_BAND_VALUE 
+                    data->scale[i][j] =
+                        (UINT8)((j*MAX_JPEG_BAND_VALUE
                                  + halfMaxBandValue)/maxBandValue);
                 }
             }
         }
     }
 
-    (*env)->ReleaseIntArrayElements(env, bandSizes, 
+    (*env)->ReleaseIntArrayElements(env, bandSizes,
                                     bandSize, JNI_ABORT);
 
     cinfo = (j_compress_ptr) data->jpegObj;
@@ -2664,13 +2664,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     if (setPixelBuffer(env, pb, buffer) == NOT_OK) {
         return data->abortFlag;  // We already threw an out of memory exception
     }
-    
+
     // Allocate a 1-scanline buffer
     scanLinePtr = (JSAMPROW)malloc(destWidth*numBands);
     if (scanLinePtr == NULL) {
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Writing JPEG Stream");
         return data->abortFlag;
     }
@@ -2679,7 +2679,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     jerr = (sun_jpeg_error_ptr) cinfo->err;
 
     if (setjmp(jerr->setjmp_buffer)) {
-        /* If we get here, the JPEG code has signaled an error 
+        /* If we get here, the JPEG code has signaled an error
            while writing. */
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
         if (!(*env)->ExceptionOccurred(env)) {
@@ -2711,12 +2711,12 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     hfactors = (*env)->GetIntArrayElements(env, HsamplingFactors, NULL);
     vfactors = (*env)->GetIntArrayElements(env, VsamplingFactors, NULL);
     qsels = (*env)->GetIntArrayElements(env, QtableSelectors, NULL);
-    
-    if ((ids == NULL) || 
-        (hfactors == NULL) || (vfactors == NULL) || 
+
+    if ((ids == NULL) ||
+        (hfactors == NULL) || (vfactors == NULL) ||
         (qsels == NULL)) {
-        JNU_ThrowByName( env, 
-                         "java/lang/OutOfMemoryError", 
+        JNU_ThrowByName( env,
+                         "java/lang/OutOfMemoryError",
                          "Writing JPEG");
         return JNI_FALSE;
     }
@@ -2728,13 +2728,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
         cinfo->comp_info[i].quant_tbl_no = qsels[i];
     }
 
-    (*env)->ReleaseIntArrayElements(env, componentIds, 
+    (*env)->ReleaseIntArrayElements(env, componentIds,
                                     ids, JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env, HsamplingFactors, 
+    (*env)->ReleaseIntArrayElements(env, HsamplingFactors,
                                     hfactors, JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env, VsamplingFactors, 
+    (*env)->ReleaseIntArrayElements(env, VsamplingFactors,
                                     vfactors, JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env, QtableSelectors, 
+    (*env)->ReleaseIntArrayElements(env, QtableSelectors,
                                     qsels, JNI_ABORT);
 
     jpeg_suppress_tables(cinfo, TRUE);  // Disable writing any current
@@ -2743,9 +2743,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
     if (!optimize) {
         // Set the h tables
-        hlen = setHTables(env, 
-                          (j_common_ptr) cinfo, 
-                          DCHuffmanTables, 
+        hlen = setHTables(env,
+                          (j_common_ptr) cinfo,
+                          DCHuffmanTables,
                           ACHuffmanTables,
                           writeDHT);
     }
@@ -2774,13 +2774,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
    * object, we try to re-use previously allocated space, and we allocate
    * enough space to handle YCbCr even if initially asked for grayscale.
    */
-            if (cinfo->script_space == NULL 
+            if (cinfo->script_space == NULL
                 || cinfo->script_space_size < numScans) {
                 cinfo->script_space_size = MAX(numScans, 10);
                 cinfo->script_space = (jpeg_scan_info *)
-                    (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, 
+                    (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo,
                                                 JPOOL_PERMANENT,
-                                                cinfo->script_space_size 
+                                                cinfo->script_space_size
                                                 * sizeof(jpeg_scan_info));
             }
             cinfo->scan_info = cinfo->script_space;
@@ -2791,17 +2791,17 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
             for (i = 0; i < numScans*9; i++) {
                 scanptr[i] = scanData[i];
             }
-            (*env)->ReleaseIntArrayElements(env, scanInfo, 
+            (*env)->ReleaseIntArrayElements(env, scanInfo,
                                             scanData, JNI_ABORT);
-            
+
         }
-    }    
+    }
 
     cinfo->restart_interval = restartInterval;
 
 #ifdef DEBUG
     printf("writer setup complete, starting compressor\n");
-#endif    
+#endif
 
     // start the compressor; tables must already be set
     jpeg_start_compress(cinfo, FALSE); // Leaves sent_table alone
@@ -2811,11 +2811,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
         imageio_flush_destination(cinfo);
         // Call Java to write the metadata
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
-        (*env)->CallVoidMethod(env, 
-                               this, 
+        (*env)->CallVoidMethod(env,
+                               this,
                                JPEGImageWriter_writeMetadataID);
         if ((*env)->ExceptionOccurred(env)
-            || !GET_ARRAYS(env, data, 
+            || !GET_ARRAYS(env, data,
                            (const JOCTET **)(&dest->next_output_byte))) {
                 cinfo->err->error_exit((j_common_ptr) cinfo);
          }
@@ -2824,21 +2824,21 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     targetLine = 0;
 
     // for each line in destHeight
-    while ((data->abortFlag == JNI_FALSE) 
+    while ((data->abortFlag == JNI_FALSE)
            && (cinfo->next_scanline < cinfo->image_height)) {
         // get the line from Java
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
-        (*env)->CallVoidMethod(env, 
-                               this, 
+        (*env)->CallVoidMethod(env,
+                               this,
                                JPEGImageWriter_grabPixelsID,
                                targetLine);
         if ((*env)->ExceptionOccurred(env)
-            || !GET_ARRAYS(env, data, 
+            || !GET_ARRAYS(env, data,
                            (const JOCTET **)(&dest->next_output_byte))) {
                 cinfo->err->error_exit((j_common_ptr) cinfo);
          }
-        
-        // subsample it into our buffer 
+
+        // subsample it into our buffer
 
         in = data->pixelBuf.buf.bp;
         out = scanLinePtr;
@@ -2852,7 +2852,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
                         printf("in %d -> out %d, ", *(in+i), *(out-i-1));
                     }
-#endif                
+#endif
                 }
 #ifdef DEBUG
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
@@ -2870,7 +2870,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
         // write it out
         jpeg_write_scanlines(cinfo, (JSAMPARRAY)&scanLinePtr, 1);
         targetLine += stepY;
-    }    
+    }
 
     /*
      * We are done, but we might not have done all the lines,
@@ -2886,17 +2886,17 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     return data->abortFlag;
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_abortWrite
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this,
      jlong ptr) {
-    
+
     imageIODataPtr data = (imageIODataPtr) ptr;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use writer after dispose()");
         return;
     }
@@ -2904,23 +2904,23 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_abortWrite
     imageio_abort(env, this, data);
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_resetWriter
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jobject this,
      jlong ptr) {
     imageIODataPtr data = (imageIODataPtr) ptr;
     j_compress_ptr cinfo;
 
     if (data == NULL) {
-        JNU_ThrowByName(env, 
-                        "java/lang/IllegalStateException", 
+        JNU_ThrowByName(env,
+                        "java/lang/IllegalStateException",
                         "Attempting to use writer after dispose()");
         return;
     }
 
     cinfo = (j_compress_ptr) data->jpegObj;
-    
+
     imageio_reset(env, (j_common_ptr) cinfo, data);
 
     /*
@@ -2935,9 +2935,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_resetWriter
     cinfo->dest->free_in_buffer = 0;
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_disposeWriter
-    (JNIEnv *env, 
+    (JNIEnv *env,
      jclass writer,
      jlong ptr) {
 

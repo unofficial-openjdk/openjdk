@@ -31,7 +31,6 @@ import javax.swing.plaf.UIResource;
 /**
  * JButton object that draws a scaled Arrow in one of the cardinal directions.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthArrowButton extends JButton implements SwingConstants, UIResource {
@@ -62,8 +61,8 @@ class SynthArrowButton extends JButton implements SwingConstants, UIResource {
         return direction;
     }
 
-    public void setFocusable(boolean focusable) {} 
-    
+    public void setFocusable(boolean focusable) {}
+
     private static class SynthArrowButtonUI extends SynthButtonUI {
         protected void installDefaults(AbstractButton b) {
             super.installDefaults(b);

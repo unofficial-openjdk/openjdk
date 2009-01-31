@@ -31,7 +31,6 @@ import java.awt.Color;
  * Interface for a generic styled document.
  *
  * @author  Timothy Prinzing
- * @version %I% %G%
  */
 public interface StyledDocument extends Document {
 

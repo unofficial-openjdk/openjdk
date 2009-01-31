@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 #include "jni.h"
 #include "jni_util.h"
@@ -40,7 +38,7 @@
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_DatagramDispatcher_read0(JNIEnv *env, jclass clazz,
-			 jobject fdo, jlong address, jint len)
+                         jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     void *buf = (void *)jlong_to_ptr(address);
@@ -55,7 +53,7 @@ Java_sun_nio_ch_DatagramDispatcher_read0(JNIEnv *env, jclass clazz,
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_DatagramDispatcher_readv0(JNIEnv *env, jclass clazz,
-			      jobject fdo, jlong address, jint len)
+                              jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     ssize_t result = 0;
@@ -89,7 +87,7 @@ Java_sun_nio_ch_DatagramDispatcher_readv0(JNIEnv *env, jclass clazz,
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_DatagramDispatcher_write0(JNIEnv *env, jclass clazz,
-			      jobject fdo, jlong address, jint len)
+                              jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     void *buf = (void *)jlong_to_ptr(address);

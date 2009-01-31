@@ -38,6 +38,3 @@ public class RegionMatches {
           throw new RuntimeException("Integer overflow in RegionMatches");
   }
 }
-
-
-

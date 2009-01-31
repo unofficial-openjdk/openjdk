@@ -55,28 +55,28 @@ public class TestUtil {
     // Returns the bound port.
     //
     static int bind(ServerSocketChannel ssc) throws IOException {
-	InetAddress lh = InetAddress.getLocalHost();
-	Random r = new Random();
-	for (;;) {
-	    int p = r.nextInt((1 << 16) - 1024) + 1024;
-	    InetSocketAddress isa = new InetSocketAddress(lh, p);
-	    try {
-		ssc.socket().bind(isa);
-	    } catch (IOException x) {
-		continue;
-	    }
-	    return p;
-	}
+        InetAddress lh = InetAddress.getLocalHost();
+        Random r = new Random();
+        for (;;) {
+            int p = r.nextInt((1 << 16) - 1024) + 1024;
+            InetSocketAddress isa = new InetSocketAddress(lh, p);
+            try {
+                ssc.socket().bind(isa);
+            } catch (IOException x) {
+                continue;
+            }
+            return p;
+        }
     }
 
     // A more convenient form of bind(ServerSocketChannel) that returns a full
     // socket address.
     //
     static InetSocketAddress bindToRandomPort(ServerSocketChannel ssc)
-	throws IOException
+        throws IOException
     {
-	int p = bind(ssc);
-	return new InetSocketAddress(InetAddress.getLocalHost(), p);
+        int p = bind(ssc);
+        return new InetSocketAddress(InetAddress.getLocalHost(), p);
     }
 
     private static String osName = System.getProperty("os.name");
@@ -96,11 +96,11 @@ public class TestUtil {
     }
 
     static boolean onSolaris() {
-	return osName.startsWith("SunOS");
+        return osName.startsWith("SunOS");
     }
 
     static boolean onWindows() {
-	return osName.startsWith("Windows");
+        return osName.startsWith("Windows");
     }
 
 }

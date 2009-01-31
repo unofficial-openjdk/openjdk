@@ -111,7 +111,7 @@ sysBuildLibName(char *holder, int holderlen, char *pname, char *fname)
    #ifndef NATIVE
    extern int thr_main(void);
    #endif
-#endif 
+#endif
 
 void *
 sysLoadLibrary(const char *name, char *err_buf, int err_buflen)
@@ -137,8 +137,8 @@ sysLoadLibrary(const char *name, char *err_buf, int err_buflen)
     }
 #endif
     if (result == NULL) {
-	strncpy(err_buf, dlerror(), err_buflen-2);
-	err_buf[err_buflen-1] = '\0';
+        strncpy(err_buf, dlerror(), err_buflen-2);
+        err_buf[err_buflen-1] = '\0';
     }
     return result;
 }

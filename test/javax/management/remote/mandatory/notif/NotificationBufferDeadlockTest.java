@@ -107,7 +107,7 @@ public class NotificationBufferDeadlockTest {
         else
             throw new Exception("TEST FAILED: " + failure);
     }
-    
+
     private static void test(String proto) throws Exception {
         System.out.println("Testing protocol " + proto);
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
@@ -143,7 +143,7 @@ public class NotificationBufferDeadlockTest {
             cs.stop();
         }
     }
-    
+
     private static String test(MBeanServerConnection mbsc,
                                ObjectName testName) throws Exception {
 
@@ -162,9 +162,9 @@ public class NotificationBufferDeadlockTest {
         Set<ObjectName> names =
             mbsc.queryNames(new ObjectName("d:type=DeadlockTest,*"), null);
         System.out.printf("...found %d test MBeans\n", names.size());
-        
-	sources.clear();
-	countListener = new MyListener(names.size());
+
+        sources.clear();
+        countListener = new MyListener(names.size());
 
         for (ObjectName name : names)
             mbsc.addNotificationListener(name, countListener, null, null);
@@ -173,19 +173,19 @@ public class NotificationBufferDeadlockTest {
         for (ObjectName name : names)
             mbsc.invoke(name, "send", null, null);
 
-	if (!countListener.waiting(MAX_WAITING_TIME)) {
+        if (!countListener.waiting(MAX_WAITING_TIME)) {
             return "did not get " + names.size() + " notifs as expected\n";
-	}
+        }
 
         if (!sources.containsAll(names))
             return "missing names: " + sources;
         return thisFailure;
     }
-    
+
     public static interface DeadlockTestMBean {
         public void send();
     }
-    
+
     public static class DeadlockTest extends NotificationBroadcasterSupport
             implements DeadlockTestMBean {
         @Override
@@ -215,7 +215,7 @@ public class NotificationBufferDeadlockTest {
             sendNotification(new Notification(TESTING_TYPE, DeadlockTest.this, 1L));
         }
     }
-    
+
     private static class CreateDuringQueryInvocationHandler
             implements InvocationHandler {
         public Object invoke(Object proxy, Method m, Object[] args)
@@ -229,7 +229,7 @@ public class NotificationBufferDeadlockTest {
             createMBeanIfQuery(m);
             return ret;
         }
-        
+
         private void createMBeanIfQuery(Method m) throws InterruptedException {
             if (m.getName().equals("queryNames")) {
                 Thread t = new Thread() {
@@ -249,10 +249,10 @@ public class NotificationBufferDeadlockTest {
                     failure = "Query deadlock detected";
             }
         }
-        
+
         private MBeanServer mbs;
     }
-    
+
     private static synchronized ObjectName newName() {
         try {
             return new ObjectName("d:type=DeadlockTest,instance=" +
@@ -263,45 +263,45 @@ public class NotificationBufferDeadlockTest {
     }
 
     private static class MyListener implements NotificationListener {
-	public MyListener(int waitNB) {
-	    this.waitNB= waitNB;
-	}
-
-	public void handleNotification(Notification n, Object h) {
-	    System.out.println("MyListener got: "+n.getSource()+" "+n.getType());
-
-	    synchronized(this) {
-		if (TESTING_TYPE.equals(n.getType())) {
-		    sources.add((ObjectName) n.getSource());
-
-		    if (sources.size() == waitNB) {
-			this.notifyAll();
-		    }
-		}
-	    }
+        public MyListener(int waitNB) {
+            this.waitNB= waitNB;
         }
 
-	public boolean waiting(long timeout) {
-	    final long startTime = System.currentTimeMillis();
-	    long toWait = timeout;
+        public void handleNotification(Notification n, Object h) {
+            System.out.println("MyListener got: "+n.getSource()+" "+n.getType());
 
-	    synchronized(this) {
-		while(sources.size() < waitNB && toWait > 0) {
-		    try {
-			this.wait(toWait);
-		    } catch (InterruptedException ire) {
-			break;
-		    }
+            synchronized(this) {
+                if (TESTING_TYPE.equals(n.getType())) {
+                    sources.add((ObjectName) n.getSource());
 
-		    toWait = timeout - 
-			(System.currentTimeMillis() - startTime);
-		}
-	    }
+                    if (sources.size() == waitNB) {
+                        this.notifyAll();
+                    }
+                }
+            }
+        }
 
-	    return sources.size() == waitNB;
-	}
+        public boolean waiting(long timeout) {
+            final long startTime = System.currentTimeMillis();
+            long toWait = timeout;
 
-	private final int waitNB;
+            synchronized(this) {
+                while(sources.size() < waitNB && toWait > 0) {
+                    try {
+                        this.wait(toWait);
+                    } catch (InterruptedException ire) {
+                        break;
+                    }
+
+                    toWait = timeout -
+                        (System.currentTimeMillis() - startTime);
+                }
+            }
+
+            return sources.size() == waitNB;
+        }
+
+        private final int waitNB;
     }
 
     static String thisFailure;

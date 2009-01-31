@@ -74,7 +74,7 @@ import static javax.management.ImmutableDescriptor.nonNullDescriptor;
  * does not implement the {@link NotificationBroadcaster} interface,
  * otherwise the result of calling {@link
  * NotificationBroadcaster#getNotificationInfo()} on it;
- * 
+ *
  * <li>{@link #getDescriptor()} returns a descriptor containing the contents
  * of any descriptor annotations in the MBean interface.
  *
@@ -173,12 +173,12 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * may be null with the same effect as a zero-length array.
      */
     public MBeanInfo(String className,
-		     String description,
-		     MBeanAttributeInfo[] attributes,
-		     MBeanConstructorInfo[] constructors,
-		     MBeanOperationInfo[] operations,
-		     MBeanNotificationInfo[] notifications)
-	    throws IllegalArgumentException {
+                     String description,
+                     MBeanAttributeInfo[] attributes,
+                     MBeanConstructorInfo[] constructors,
+                     MBeanOperationInfo[] operations,
+                     MBeanNotificationInfo[] notifications)
+            throws IllegalArgumentException {
         this(className, description, attributes, constructors, operations,
              notifications, null);
     }
@@ -211,39 +211,39 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @since 1.6
      */
     public MBeanInfo(String className,
-		     String description,
-		     MBeanAttributeInfo[] attributes,
-		     MBeanConstructorInfo[] constructors,
-		     MBeanOperationInfo[] operations,
-		     MBeanNotificationInfo[] notifications,
+                     String description,
+                     MBeanAttributeInfo[] attributes,
+                     MBeanConstructorInfo[] constructors,
+                     MBeanOperationInfo[] operations,
+                     MBeanNotificationInfo[] notifications,
                      Descriptor descriptor)
-	    throws IllegalArgumentException {
+            throws IllegalArgumentException {
 
         this.className = className;
 
-	this.description = description;
+        this.description = description;
 
-	if (attributes == null)
-	    attributes = MBeanAttributeInfo.NO_ATTRIBUTES;
-	this.attributes = attributes;
+        if (attributes == null)
+            attributes = MBeanAttributeInfo.NO_ATTRIBUTES;
+        this.attributes = attributes;
 
-	if (operations == null)
-	    operations = MBeanOperationInfo.NO_OPERATIONS;
-	this.operations = operations;
+        if (operations == null)
+            operations = MBeanOperationInfo.NO_OPERATIONS;
+        this.operations = operations;
 
-	if (constructors == null)
-	    constructors = MBeanConstructorInfo.NO_CONSTRUCTORS;
-	this.constructors = constructors;
+        if (constructors == null)
+            constructors = MBeanConstructorInfo.NO_CONSTRUCTORS;
+        this.constructors = constructors;
 
-	if (notifications == null)
-	    notifications = MBeanNotificationInfo.NO_NOTIFICATIONS;
-	this.notifications = notifications;
-        
+        if (notifications == null)
+            notifications = MBeanNotificationInfo.NO_NOTIFICATIONS;
+        this.notifications = notifications;
+
         if (descriptor == null)
             descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
         this.descriptor = descriptor;
 
-	this.arrayGettersSafe =
+        this.arrayGettersSafe =
                 arrayGettersSafe(this.getClass(), MBeanInfo.class);
     }
 
@@ -258,12 +258,12 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * interest to subclasses.</p>
      */
      public Object clone () {
-	 try {
-	     return super.clone() ;
-	 } catch (CloneNotSupportedException e) {
-	     // should not happen as this class is cloneable
-	     return null;
-	 }
+         try {
+             return super.clone() ;
+         } catch (CloneNotSupportedException e) {
+             // should not happen as this class is cloneable
+             return null;
+         }
      }
 
 
@@ -274,7 +274,7 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return the class name.
      */
     public String getClassName()  {
-	return className;
+        return className;
     }
 
     /**
@@ -283,7 +283,7 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return the description.
      */
     public String getDescription()  {
-	return description;
+        return description;
     }
 
     /**
@@ -298,18 +298,18 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return  An array of <CODE>MBeanAttributeInfo</CODE> objects.
      */
     public MBeanAttributeInfo[] getAttributes()   {
-	MBeanAttributeInfo[] as = nonNullAttributes();
-	if (as.length == 0)
-	    return as;
-	else
-	    return as.clone();
+        MBeanAttributeInfo[] as = nonNullAttributes();
+        if (as.length == 0)
+            return as;
+        else
+            return as.clone();
     }
 
     private MBeanAttributeInfo[] fastGetAttributes() {
-	if (arrayGettersSafe)
-	    return nonNullAttributes();
-	else
-	    return getAttributes();
+        if (arrayGettersSafe)
+            return nonNullAttributes();
+        else
+            return getAttributes();
     }
 
     /**
@@ -324,8 +324,8 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * conceptually they are indeed final.
      */
     private MBeanAttributeInfo[] nonNullAttributes() {
-	return (attributes == null) ?
-	    MBeanAttributeInfo.NO_ATTRIBUTES : attributes;
+        return (attributes == null) ?
+            MBeanAttributeInfo.NO_ATTRIBUTES : attributes;
     }
 
     /**
@@ -340,23 +340,23 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return  An array of <CODE>MBeanOperationInfo</CODE> objects.
      */
     public MBeanOperationInfo[] getOperations()  {
-	MBeanOperationInfo[] os = nonNullOperations();
-	if (os.length == 0)
-	    return os;
-	else
-	    return os.clone();
+        MBeanOperationInfo[] os = nonNullOperations();
+        if (os.length == 0)
+            return os;
+        else
+            return os.clone();
     }
 
     private MBeanOperationInfo[] fastGetOperations() {
-	if (arrayGettersSafe)
-	    return nonNullOperations();
-	else
-	    return getOperations();
+        if (arrayGettersSafe)
+            return nonNullOperations();
+        else
+            return getOperations();
     }
 
     private MBeanOperationInfo[] nonNullOperations() {
-	return (operations == null) ?
-	    MBeanOperationInfo.NO_OPERATIONS : operations;
+        return (operations == null) ?
+            MBeanOperationInfo.NO_OPERATIONS : operations;
     }
 
     /**
@@ -379,23 +379,23 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return  An array of <CODE>MBeanConstructorInfo</CODE> objects.
      */
     public MBeanConstructorInfo[] getConstructors()  {
-	MBeanConstructorInfo[] cs = nonNullConstructors();
-	if (cs.length == 0)
-	    return cs;
-	else
-	    return cs.clone();
+        MBeanConstructorInfo[] cs = nonNullConstructors();
+        if (cs.length == 0)
+            return cs;
+        else
+            return cs.clone();
     }
 
     private MBeanConstructorInfo[] fastGetConstructors() {
-	if (arrayGettersSafe)
-	    return nonNullConstructors();
-	else
-	    return getConstructors();
+        if (arrayGettersSafe)
+            return nonNullConstructors();
+        else
+            return getConstructors();
     }
 
     private MBeanConstructorInfo[] nonNullConstructors() {
-	return (constructors == null) ?
-	    MBeanConstructorInfo.NO_CONSTRUCTORS : constructors;
+        return (constructors == null) ?
+            MBeanConstructorInfo.NO_CONSTRUCTORS : constructors;
     }
 
     /**
@@ -410,25 +410,25 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * @return  An array of <CODE>MBeanNotificationInfo</CODE> objects.
      */
     public MBeanNotificationInfo[] getNotifications()  {
-	MBeanNotificationInfo[] ns = nonNullNotifications();
-	if (ns.length == 0)
-	    return ns;
-	else
-	    return ns.clone();
+        MBeanNotificationInfo[] ns = nonNullNotifications();
+        if (ns.length == 0)
+            return ns;
+        else
+            return ns.clone();
     }
 
     private MBeanNotificationInfo[] fastGetNotifications() {
-	if (arrayGettersSafe)
-	    return nonNullNotifications();
-	else
-	    return getNotifications();
+        if (arrayGettersSafe)
+            return nonNullNotifications();
+        else
+            return getNotifications();
     }
 
     private MBeanNotificationInfo[] nonNullNotifications() {
-	return (notifications == null) ?
-	    MBeanNotificationInfo.NO_NOTIFICATIONS : notifications;
+        return (notifications == null) ?
+            MBeanNotificationInfo.NO_NOTIFICATIONS : notifications;
     }
-    
+
     /**
      * Get the descriptor of this MBeanInfo.  Changing the returned value
      * will have no affect on the original descriptor.
@@ -452,7 +452,7 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
             "descriptor=" + getDescriptor() +
             "]";
     }
-    
+
     /**
      * <p>Compare this MBeanInfo to another.  Two MBeanInfo objects
      * are equal if and only if they return equal values for {@link
@@ -473,50 +473,50 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * to this one according to the rules above.
      */
     public boolean equals(Object o) {
-	if (o == this)
-	    return true;
-	if (!(o instanceof MBeanInfo))
-	    return false;
-	MBeanInfo p = (MBeanInfo) o;
+        if (o == this)
+            return true;
+        if (!(o instanceof MBeanInfo))
+            return false;
+        MBeanInfo p = (MBeanInfo) o;
         if (!isEqual(getClassName(),  p.getClassName()) ||
                 !isEqual(getDescription(), p.getDescription()) ||
                 !getDescriptor().equals(p.getDescriptor())) {
             return false;
         }
 
-	return
-	    (Arrays.equals(p.fastGetAttributes(), fastGetAttributes()) &&
-	     Arrays.equals(p.fastGetOperations(), fastGetOperations()) &&
-	     Arrays.equals(p.fastGetConstructors(), fastGetConstructors()) &&
-	     Arrays.equals(p.fastGetNotifications(), fastGetNotifications()));
+        return
+            (Arrays.equals(p.fastGetAttributes(), fastGetAttributes()) &&
+             Arrays.equals(p.fastGetOperations(), fastGetOperations()) &&
+             Arrays.equals(p.fastGetConstructors(), fastGetConstructors()) &&
+             Arrays.equals(p.fastGetNotifications(), fastGetNotifications()));
     }
 
     public int hashCode() {
-	/* Since computing the hashCode is quite expensive, we cache it.
-	   If by some terrible misfortune the computed value is 0, the
-	   caching won't work and we will recompute it every time.
+        /* Since computing the hashCode is quite expensive, we cache it.
+           If by some terrible misfortune the computed value is 0, the
+           caching won't work and we will recompute it every time.
 
-	   We don't bother synchronizing, because, at worst, n different
-	   threads will compute the same hashCode at the same time.  */
-	if (hashCode != 0)
-	    return hashCode;
+           We don't bother synchronizing, because, at worst, n different
+           threads will compute the same hashCode at the same time.  */
+        if (hashCode != 0)
+            return hashCode;
 
-	hashCode =
-	    getClassName().hashCode() ^
+        hashCode =
+            getClassName().hashCode() ^
             getDescriptor().hashCode() ^
-	    arrayHashCode(fastGetAttributes()) ^
-	    arrayHashCode(fastGetOperations()) ^
-	    arrayHashCode(fastGetConstructors()) ^
-	    arrayHashCode(fastGetNotifications());
+            arrayHashCode(fastGetAttributes()) ^
+            arrayHashCode(fastGetOperations()) ^
+            arrayHashCode(fastGetConstructors()) ^
+            arrayHashCode(fastGetNotifications());
 
-	return hashCode;
+        return hashCode;
     }
 
     private static int arrayHashCode(Object[] array) {
-	int hash = 0;
-	for (int i = 0; i < array.length; i++)
-	    hash ^= array[i].hashCode();
-	return hash;
+        int hash = 0;
+        for (int i = 0; i < array.length; i++)
+            hash ^= array[i].hashCode();
+        return hash;
     }
 
     /**
@@ -525,7 +525,7 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * garbage collected just because we know whether it's immutable.
      */
     private static final Map<Class, Boolean> arrayGettersSafeMap =
-	new WeakHashMap<Class, Boolean>();
+        new WeakHashMap<Class, Boolean>();
 
     /**
      * Return true if <code>subclass</code> is known to preserve the
@@ -538,23 +538,23 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * but it works for the public interfaces of the MBean*Info classes.
     */
     static boolean arrayGettersSafe(Class subclass, Class immutableClass) {
-	if (subclass == immutableClass)
-	    return true;
-	synchronized (arrayGettersSafeMap) {
-	    Boolean safe = arrayGettersSafeMap.get(subclass);
-	    if (safe == null) {
-		try {
-		    ArrayGettersSafeAction action =
-			new ArrayGettersSafeAction(subclass, immutableClass);
-		    safe = AccessController.doPrivileged(action);
-		} catch (Exception e) { // e.g. SecurityException
-		    /* We don't know, so we assume it isn't.  */
-		    safe = false;
-		}
-		arrayGettersSafeMap.put(subclass, safe);
-	    }
-	    return safe;
-	}
+        if (subclass == immutableClass)
+            return true;
+        synchronized (arrayGettersSafeMap) {
+            Boolean safe = arrayGettersSafeMap.get(subclass);
+            if (safe == null) {
+                try {
+                    ArrayGettersSafeAction action =
+                        new ArrayGettersSafeAction(subclass, immutableClass);
+                    safe = AccessController.doPrivileged(action);
+                } catch (Exception e) { // e.g. SecurityException
+                    /* We don't know, so we assume it isn't.  */
+                    safe = false;
+                }
+                arrayGettersSafeMap.put(subclass, safe);
+            }
+            return safe;
+        }
     }
 
     /*
@@ -565,48 +565,48 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      * to check the whole call stack.
      */
     private static class ArrayGettersSafeAction
-	    implements PrivilegedAction<Boolean> {
+            implements PrivilegedAction<Boolean> {
 
-	private final Class<?> subclass;
-	private final Class<?> immutableClass;
+        private final Class<?> subclass;
+        private final Class<?> immutableClass;
 
-	ArrayGettersSafeAction(Class<?> subclass, Class<?> immutableClass) {
-	    this.subclass = subclass;
-	    this.immutableClass = immutableClass;
-	}
+        ArrayGettersSafeAction(Class<?> subclass, Class<?> immutableClass) {
+            this.subclass = subclass;
+            this.immutableClass = immutableClass;
+        }
 
-	public Boolean run() {
-	    Method[] methods = immutableClass.getMethods();
-	    for (int i = 0; i < methods.length; i++) {
-		Method method = methods[i];
-		String methodName = method.getName();
-		if (methodName.startsWith("get") &&
+        public Boolean run() {
+            Method[] methods = immutableClass.getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                Method method = methods[i];
+                String methodName = method.getName();
+                if (methodName.startsWith("get") &&
                         method.getParameterTypes().length == 0 &&
                         method.getReturnType().isArray()) {
-		    try {
-			Method submethod =
-			    subclass.getMethod(methodName);
-			if (!submethod.equals(method))
-			    return false;
-		    } catch (NoSuchMethodException e) {
-			return false;
-		    }
-		}
-	    }
-	    return true;
-	}
+                    try {
+                        Method submethod =
+                            subclass.getMethod(methodName);
+                        if (!submethod.equals(method))
+                            return false;
+                    } catch (NoSuchMethodException e) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
     }
 
     private static boolean isEqual(String s1, String s2) {
-	boolean ret;
+        boolean ret;
 
-	if (s1 == null) {
-	    ret = (s2 == null);
-	} else {
-	    ret = s1.equals(s2);
-	}
+        if (s1 == null) {
+            ret = (s2 == null);
+        } else {
+            ret = s1.equals(s2);
+        }
 
-	return ret;
+        return ret;
     }
 
     /**
@@ -637,18 +637,18 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
 
-	if (descriptor.getClass() == ImmutableDescriptor.class) {
-	    out.write(1);
+        if (descriptor.getClass() == ImmutableDescriptor.class) {
+            out.write(1);
 
-	    final String[] names = descriptor.getFieldNames();
+            final String[] names = descriptor.getFieldNames();
 
-	    out.writeObject(names);
-	    out.writeObject(descriptor.getFieldValues(names));
-	} else {
-	    out.write(0);
+            out.writeObject(names);
+            out.writeObject(descriptor.getFieldValues(names));
+        } else {
+            out.write(0);
 
-	    out.writeObject(descriptor);
-	}
+            out.writeObject(descriptor);
+        }
     }
 
     /**
@@ -682,36 +682,36 @@ public class MBeanInfo implements Cloneable, Serializable, DescriptorRead {
      */
 
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException {
-	
-	in.defaultReadObject();
+        throws IOException, ClassNotFoundException {
 
-	switch (in.read()) {
-	case 1:
-	    final String[] names = (String[])in.readObject();
+        in.defaultReadObject();
 
-	    if (names.length == 0) {
-		descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
-	    } else {
-		final Object[] values = (Object[])in.readObject();
-		descriptor = new ImmutableDescriptor(names, values);
-	    }
+        switch (in.read()) {
+        case 1:
+            final String[] names = (String[])in.readObject();
 
-	    break;
-	case 0:
-	    descriptor = (Descriptor)in.readObject();
+            if (names.length == 0) {
+                descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
+            } else {
+                final Object[] values = (Object[])in.readObject();
+                descriptor = new ImmutableDescriptor(names, values);
+            }
 
-	    if (descriptor == null) {
-		descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
-	    }
+            break;
+        case 0:
+            descriptor = (Descriptor)in.readObject();
 
-	    break;
-	case -1: // from an earlier version of the JMX API
-	    descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
+            if (descriptor == null) {
+                descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
+            }
 
-	    break;
-	default:
-	    throw new StreamCorruptedException("Got unexpected byte.");
-	}
+            break;
+        case -1: // from an earlier version of the JMX API
+            descriptor = ImmutableDescriptor.EMPTY_DESCRIPTOR;
+
+            break;
+        default:
+            throw new StreamCorruptedException("Got unexpected byte.");
+        }
     }
 }

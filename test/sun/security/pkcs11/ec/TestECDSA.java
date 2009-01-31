@@ -28,7 +28,7 @@
  * @author Andreas Sterbenz
  * @library ..
  */
- 
+
 import java.io.*;
 import java.util.*;
 import java.math.BigInteger;
@@ -38,9 +38,9 @@ import java.security.spec.*;
 import java.security.interfaces.*;
 
 public class TestECDSA extends PKCS11Test {
-    
+
     // values of the keys we use for the tests
-    
+
     // keypair using NIST P-192
     private final static String pub192 =
 "30:49:30:13:06:07:2a:86:48:ce:3d:02:01:06:08:2a:86:48:ce:3d:03:01:01:03:32:00:04:ee:b4:7f:60:3a:25:6a:0c:3c:86:d9:a0:62:be:f6:11:25:42:0e:19:fa:f3:1a:df:0c:98:b4:f8:b3:8f:f5:c1:82:74:e5:e7:71:d6:f9:d0:26:3b:2d:53:a6:37:fc:ab";
@@ -68,7 +68,7 @@ public class TestECDSA extends PKCS11Test {
     // data for test 1, original and SHA-1 hashed
     private final static byte[] data1Raw = b("0102030405060708090a0b0c0d0e0f10111213");
     private final static byte[] data1SHA = b("00:e2:5f:c9:1c:8f:d6:8c:6a:dc:c6:bd:f0:46:60:5e:a2:cd:8d:ad");
-    
+
     // valid signatures of data1.
     private final static byte[] sig192 = b("30:35:02:19:00:91:ba:19:b2:01:da:ce:77:ed:08:6d:70:77:84:25:46:9f:56:a0:40:9a:04:e6:1b:02:18:14:7e:cd:a5:8a:3b:25:e9:f8:c3:20:9b:a9:90:5a:ca:91:5d:60:5e:a8:2f:3e:a4");
     private final static byte[] sig163 = b("30:2d:02:15:02:8d:aa:95:06:f4:4f:fa:44:59:ec:4b:cb:86:59:8c:1f:25:36:64:f5:02:14:6b:d1:ea:82:ed:0c:2a:19:a1:c5:fa:d6:05:78:4b:eb:bf:83:d5:fa");
@@ -78,160 +78,160 @@ public class TestECDSA extends PKCS11Test {
     // data for test 2 (invalid signatures)
     private final static byte[] data2Raw = {};
     private final static byte[] data2SHA = b("da:39:a3:ee:5e:6b:4b:0d:32:55:bf:ef:95:60:18:90:af:d8:07:09");
-    
+
     private static void verify(Provider provider, String alg, PublicKey key, byte[] data, byte[] sig, boolean result) throws Exception {
-	Signature s = Signature.getInstance(alg, provider);
-	s.initVerify(key);
-	boolean r;
-	s.update(data);
-	r = s.verify(sig);
-	if (r != result) {
-	    throw new Exception("Result mismatch, actual: " + r);
-	}
-	s.update(data);
-	r = s.verify(sig);
-	if (r != result) {
-	    throw new Exception("Result mismatch, actual: " + r);
-	}
-	System.out.println("Passed");
+        Signature s = Signature.getInstance(alg, provider);
+        s.initVerify(key);
+        boolean r;
+        s.update(data);
+        r = s.verify(sig);
+        if (r != result) {
+            throw new Exception("Result mismatch, actual: " + r);
+        }
+        s.update(data);
+        r = s.verify(sig);
+        if (r != result) {
+            throw new Exception("Result mismatch, actual: " + r);
+        }
+        System.out.println("Passed");
     }
-    
+
     private static void sign(Provider provider, String alg, PrivateKey key, byte[] data) throws Exception {
-	Signature s = Signature.getInstance(alg, provider);
-	s.initSign(key);
-	s.update(data);
-	byte[] sig = s.sign();
-	System.out.println(toString(sig));
+        Signature s = Signature.getInstance(alg, provider);
+        s.initSign(key);
+        s.update(data);
+        byte[] sig = s.sign();
+        System.out.println(toString(sig));
     }
-    
+
     public static void main(String[] args) throws Exception {
-	main(new TestECDSA());
+        main(new TestECDSA());
     }
-    
+
     public void main(Provider provider) throws Exception {
-	long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
-	if (provider.getService("Signature", "SHA1withECDSA") == null) {
-	    System.out.println("ECDSA not supported, skipping");
-	    return;
-	}
-	Security.insertProviderAt(provider, 1);
-	
-	if (false) {
-	    KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", provider);
-	    kpg.initialize(571);
-	    KeyPair kp = kpg.generateKeyPair();
-	    PrivateKey priv = kp.getPrivate();
-	    ECPublicKey pub = (ECPublicKey)kp.getPublic();
-	    System.out.println("Keys for " + pub.getParams());
-	    System.out.println("public key:");
-	    System.out.println(toString(pub.getEncoded()));
-	    System.out.println("private key:");
-	    System.out.println(toString(priv.getEncoded()));
-	    return;
-	}
-	
-	test(provider, pub192, priv192, sig192);
-	test(provider, pub163, priv163, sig163);
-	test(provider, pub521, priv521, sig521);
-	test(provider, pub571, priv571, sig571);
+        if (provider.getService("Signature", "SHA1withECDSA") == null) {
+            System.out.println("ECDSA not supported, skipping");
+            return;
+        }
+        Security.insertProviderAt(provider, 1);
 
-	Security.removeProvider(provider.getName());
-	long stop = System.currentTimeMillis();
-	System.out.println("All tests passed (" + (stop - start) + " ms).");
+        if (false) {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", provider);
+            kpg.initialize(571);
+            KeyPair kp = kpg.generateKeyPair();
+            PrivateKey priv = kp.getPrivate();
+            ECPublicKey pub = (ECPublicKey)kp.getPublic();
+            System.out.println("Keys for " + pub.getParams());
+            System.out.println("public key:");
+            System.out.println(toString(pub.getEncoded()));
+            System.out.println("private key:");
+            System.out.println(toString(priv.getEncoded()));
+            return;
+        }
+
+        test(provider, pub192, priv192, sig192);
+        test(provider, pub163, priv163, sig163);
+        test(provider, pub521, priv521, sig521);
+        test(provider, pub571, priv571, sig571);
+
+        Security.removeProvider(provider.getName());
+        long stop = System.currentTimeMillis();
+        System.out.println("All tests passed (" + (stop - start) + " ms).");
     }
-    
+
     private void test(Provider provider, String pub, String priv, byte[] sig) throws Exception {
-	
-	KeyFactory kf = KeyFactory.getInstance("EC", provider);
-	X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(parse(pub));
-	PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(parse(priv));
-	
-	PrivateKey privateKey = kf.generatePrivate(privSpec);
-	PublicKey publicKey = kf.generatePublic(pubSpec);
-	
-	if (false) {
-	    sign(provider, "SHA1withECDSA", privateKey, data1Raw);
-//	    sign(provider, "NONEwithECDSA", privateKey, data1SHA);
-	    return;
-	}
 
-	// verify known-good and known-bad signatures using SHA1withECDSA and NONEwithECDSA
-	verify(provider, "SHA1withECDSA", publicKey, data1Raw, sig, true);
-	verify(provider, "SHA1withECDSA", publicKey, data2Raw, sig, false);
+        KeyFactory kf = KeyFactory.getInstance("EC", provider);
+        X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(parse(pub));
+        PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(parse(priv));
 
-	verify(provider, "NONEwithECDSA", publicKey, data1SHA, sig, true);
-	verify(provider, "NONEwithECDSA", publicKey, data2SHA, sig, false);
+        PrivateKey privateKey = kf.generatePrivate(privSpec);
+        PublicKey publicKey = kf.generatePublic(pubSpec);
 
-	testSigning(provider, privateKey, publicKey);
+        if (false) {
+            sign(provider, "SHA1withECDSA", privateKey, data1Raw);
+//          sign(provider, "NONEwithECDSA", privateKey, data1SHA);
+            return;
+        }
+
+        // verify known-good and known-bad signatures using SHA1withECDSA and NONEwithECDSA
+        verify(provider, "SHA1withECDSA", publicKey, data1Raw, sig, true);
+        verify(provider, "SHA1withECDSA", publicKey, data2Raw, sig, false);
+
+        verify(provider, "NONEwithECDSA", publicKey, data1SHA, sig, true);
+        verify(provider, "NONEwithECDSA", publicKey, data2SHA, sig, false);
+
+        testSigning(provider, privateKey, publicKey);
     }
-    
-    private void testSigning(Provider provider, PrivateKey privateKey, 
-	    PublicKey publicKey) throws Exception {
-	byte[] data = new byte[2048];
-	new Random().nextBytes(data);
-	
-	// sign random data using SHA1withECDSA and verify using
-	// SHA1withECDSA and NONEwithECDSA
-	Signature s = Signature.getInstance("SHA1withECDSA", provider);
-	s.initSign(privateKey);
-	s.initSign(privateKey);
-	s.update(data);
-	byte[] s1 = s.sign();
-	
-	s.initVerify(publicKey);
-	s.update(data);
-	if (!s.verify(s1)) {
-	    throw new Exception("Sign/verify 1 failed");
-	}
-	
-	s = Signature.getInstance("NONEwithECDSA", provider);
-	MessageDigest md = MessageDigest.getInstance("SHA-1");
-	byte[] digest = md.digest(data);
-	s.initVerify(publicKey);
-	s.update(digest);
-	if (!s.verify(s1)) {
-	    throw new Exception("Sign/verify 2 failed");
-	}
-	
-	// sign random data using NONEwithECDSA and verify using
-	// SHA1withECDSA and NONEwithECDSA
-	s.initSign(privateKey);
-	s.update(digest);
-	byte[] s2 = s.sign();
-	
-	s.initVerify(publicKey);
-	s.update(digest);
-	if (!s.verify(s2)) {
-	    throw new Exception("Sign/verify 3 failed");
-	}
-	
-	s = Signature.getInstance("SHA1withECDSA", provider);
-	s.initVerify(publicKey);
-	s.update(data);
-	if (!s.verify(s2)) {
-	    throw new Exception("Sign/verify 4 failed");
-	}
+
+    private void testSigning(Provider provider, PrivateKey privateKey,
+            PublicKey publicKey) throws Exception {
+        byte[] data = new byte[2048];
+        new Random().nextBytes(data);
+
+        // sign random data using SHA1withECDSA and verify using
+        // SHA1withECDSA and NONEwithECDSA
+        Signature s = Signature.getInstance("SHA1withECDSA", provider);
+        s.initSign(privateKey);
+        s.initSign(privateKey);
+        s.update(data);
+        byte[] s1 = s.sign();
+
+        s.initVerify(publicKey);
+        s.update(data);
+        if (!s.verify(s1)) {
+            throw new Exception("Sign/verify 1 failed");
+        }
+
+        s = Signature.getInstance("NONEwithECDSA", provider);
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] digest = md.digest(data);
+        s.initVerify(publicKey);
+        s.update(digest);
+        if (!s.verify(s1)) {
+            throw new Exception("Sign/verify 2 failed");
+        }
+
+        // sign random data using NONEwithECDSA and verify using
+        // SHA1withECDSA and NONEwithECDSA
+        s.initSign(privateKey);
+        s.update(digest);
+        byte[] s2 = s.sign();
+
+        s.initVerify(publicKey);
+        s.update(digest);
+        if (!s.verify(s2)) {
+            throw new Exception("Sign/verify 3 failed");
+        }
+
+        s = Signature.getInstance("SHA1withECDSA", provider);
+        s.initVerify(publicKey);
+        s.update(data);
+        if (!s.verify(s2)) {
+            throw new Exception("Sign/verify 4 failed");
+        }
 
 /*
-	// XXX session release bug in P11Signature
-	// test behavior if data of incorrect length is passed
-	s = Signature.getInstance("NONEwithECDSA", provider);
-	s.initSign(privateKey);
-	s.update(new byte[8]);
-	s.update(new byte[640]);
-	try {
-	    s.sign();
-	    throw new Exception("No error NONEwithECDSA signing long data");
-	} catch (SignatureException e) {
-	    System.out.println("OK: " + e);
-	}
-	System.out.println("sign/verify test ok");
+        // XXX session release bug in P11Signature
+        // test behavior if data of incorrect length is passed
+        s = Signature.getInstance("NONEwithECDSA", provider);
+        s.initSign(privateKey);
+        s.update(new byte[8]);
+        s.update(new byte[640]);
+        try {
+            s.sign();
+            throw new Exception("No error NONEwithECDSA signing long data");
+        } catch (SignatureException e) {
+            System.out.println("OK: " + e);
+        }
+        System.out.println("sign/verify test ok");
 /**/
     }
 
     private static byte[] b(String s) {
-	return parse(s);
+        return parse(s);
     }
-    
+
 }

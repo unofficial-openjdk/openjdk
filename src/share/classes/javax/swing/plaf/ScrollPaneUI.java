@@ -29,7 +29,6 @@ package javax.swing.plaf;
 /**
  * Pluggable look and feel interface for JScrollPane.
  *
- * @version %I% %G%
  * @author Hans Muller
  */
 

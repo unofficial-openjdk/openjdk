@@ -61,7 +61,7 @@ public class FeatureDescriptor {
      * @return The programmatic name of the property/method/event
      */
     public String getName() {
-	return name;
+        return name;
     }
 
     /**
@@ -70,30 +70,30 @@ public class FeatureDescriptor {
      * @param name  The programmatic name of the property/method/event
      */
     public void setName(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     /**
      * Gets the localized display name of this feature.
      *
      * @return The localized display name for the property/method/event.
-     *	This defaults to the same as its programmatic name from getName.
+     *  This defaults to the same as its programmatic name from getName.
      */
     public String getDisplayName() {
-	if (displayName == null) {
-	    return getName();
-	}
-	return displayName;
+        if (displayName == null) {
+            return getName();
+        }
+        return displayName;
     }
 
     /**
      * Sets the localized display name of this feature.
      *
      * @param displayName  The localized display name for the
-     *		property/method/event.
+     *          property/method/event.
      */
     public void setDisplayName(String displayName) {
-	this.displayName = displayName;
+        this.displayName = displayName;
     }
 
     /**
@@ -103,7 +103,7 @@ public class FeatureDescriptor {
      * @return True if this feature is intended for use by experts only.
      */
     public boolean isExpert() {
-	return expert;
+        return expert;
     }
 
     /**
@@ -113,7 +113,7 @@ public class FeatureDescriptor {
      * @param expert True if this feature is intended for use by experts only.
      */
     public void setExpert(boolean expert) {
-	this.expert = expert;
+        this.expert = expert;
     }
 
     /**
@@ -123,7 +123,7 @@ public class FeatureDescriptor {
      * @return True if this feature should be hidden from human users.
      */
     public boolean isHidden() {
-	return hidden;
+        return hidden;
     }
 
     /**
@@ -133,7 +133,7 @@ public class FeatureDescriptor {
      * @param hidden  True if this feature should be hidden from human users.
      */
     public void setHidden(boolean hidden) {
-	this.hidden = hidden;
+        this.hidden = hidden;
     }
 
     /**
@@ -143,7 +143,7 @@ public class FeatureDescriptor {
      * @return True if this feature should be preferentially shown to human users.
      */
     public boolean isPreferred() {
-	return preferred;
+        return preferred;
     }
 
     /**
@@ -151,23 +151,23 @@ public class FeatureDescriptor {
      * important for presenting to humans.
      *
      * @param preferred  True if this feature should be preferentially shown
-     *		    	 to human users.
+     *                   to human users.
      */
     public void setPreferred(boolean preferred) {
-	this.preferred = preferred;
+        this.preferred = preferred;
     }
 
     /**
      * Gets the short description of this feature.
      *
-     * @return  A localized short description associated with this 
+     * @return  A localized short description associated with this
      *   property/method/event.  This defaults to be the display name.
      */
     public String getShortDescription() {
-	if (shortDescription == null) {
-	    return getDisplayName();
-	}
-	return shortDescription;
+        if (shortDescription == null) {
+            return getDisplayName();
+        }
+        return shortDescription;
     }
 
     /**
@@ -177,7 +177,7 @@ public class FeatureDescriptor {
      * this property/method/event.
      */
     public void setShortDescription(String text) {
-	shortDescription = text;
+        shortDescription = text;
     }
 
     /**
@@ -187,10 +187,10 @@ public class FeatureDescriptor {
      * @param value  The value.
      */
     public void setValue(String attributeName, Object value) {
-	if (table == null) {
-	    table = new java.util.Hashtable();
-	}
-	table.put(attributeName, value);
+        if (table == null) {
+            table = new java.util.Hashtable();
+        }
+        table.put(attributeName, value);
     }
 
     /**
@@ -198,27 +198,27 @@ public class FeatureDescriptor {
      *
      * @param attributeName  The locale-independent name of the attribute
      * @return  The value of the attribute.  May be null if
-     *	   the attribute is unknown.
+     *     the attribute is unknown.
      */
     public Object getValue(String attributeName) {
-	if (table == null) {
-	   return null;
-	}
-	return table.get(attributeName);
+        if (table == null) {
+           return null;
+        }
+        return table.get(attributeName);
     }
 
     /**
      * Gets an enumeration of the locale-independent names of this
      * feature.
      *
-     * @return  An enumeration of the locale-independent names of any 
+     * @return  An enumeration of the locale-independent names of any
      *    attributes that have been registered with setValue.
      */
     public java.util.Enumeration<String> attributeNames() {
-	if (table == null) {
-	    table = new java.util.Hashtable();
-	}
-	return table.keys();
+        if (table == null) {
+            table = new java.util.Hashtable();
+        }
+        return table.keys();
     }
 
     /**
@@ -232,24 +232,24 @@ public class FeatureDescriptor {
      * @param y  The second (higher priority) MethodDescriptor
      */
     FeatureDescriptor(FeatureDescriptor x, FeatureDescriptor y) {
-	expert = x.expert | y.expert;
-	hidden = x.hidden | y.hidden;
-	preferred = x.preferred | y.preferred;
-	name = y.name;
-	shortDescription = x.shortDescription;
-	if (y.shortDescription != null) {
-	    shortDescription = y.shortDescription;
-	}
-	displayName = x.displayName;
-	if (y.displayName != null) {
-	    displayName = y.displayName;
-	}
-	classRef = x.classRef;
-	if (y.classRef != null) {
-	    classRef = y.classRef;
-	}
-	addTable(x.table);
-	addTable(y.table);
+        expert = x.expert | y.expert;
+        hidden = x.hidden | y.hidden;
+        preferred = x.preferred | y.preferred;
+        name = y.name;
+        shortDescription = x.shortDescription;
+        if (y.shortDescription != null) {
+            shortDescription = y.shortDescription;
+        }
+        displayName = x.displayName;
+        if (y.displayName != null) {
+            displayName = y.displayName;
+        }
+        classRef = x.classRef;
+        if (y.classRef != null) {
+            classRef = y.classRef;
+        }
+        addTable(x.table);
+        addTable(y.table);
     }
 
     /*
@@ -257,27 +257,27 @@ public class FeatureDescriptor {
      * This must isolate the new object from any changes to the old object.
      */
     FeatureDescriptor(FeatureDescriptor old) {
-	expert = old.expert;
-	hidden = old.hidden;
-	preferred = old.preferred;
-	name = old.name;
-	shortDescription = old.shortDescription;
-	displayName = old.displayName;
-	classRef = old.classRef;
+        expert = old.expert;
+        hidden = old.hidden;
+        preferred = old.preferred;
+        name = old.name;
+        shortDescription = old.shortDescription;
+        displayName = old.displayName;
+        classRef = old.classRef;
 
-	addTable(old.table);
+        addTable(old.table);
     }
 
     private void addTable(java.util.Hashtable t) {
-	if (t == null) {
-	    return;
-	}
-	java.util.Enumeration keys = t.keys();
-	while (keys.hasMoreElements()) {
-	    String key = (String)keys.nextElement();
-	    Object value = t.get(key);
-	    setValue(key, value);
-	}
+        if (t == null) {
+            return;
+        }
+        java.util.Enumeration keys = t.keys();
+        while (keys.hasMoreElements()) {
+            String key = (String)keys.nextElement();
+            Object value = t.get(key);
+            setValue(key, value);
+        }
     }
 
     // Package private methods for recreating the weak/soft referent
@@ -300,20 +300,20 @@ public class FeatureDescriptor {
      * @return a Reference or null if obj is null.
      */
     static Reference createReference(Object obj, boolean soft) {
-	Reference ref = null;
-	if (obj != null) {
-	    if (soft) {
-		ref = new SoftReference(obj);
-	    } else {
-		ref = new WeakReference(obj);
-	    }
-	}
-	return ref;
+        Reference ref = null;
+        if (obj != null) {
+            if (soft) {
+                ref = new SoftReference(obj);
+            } else {
+                ref = new WeakReference(obj);
+            }
+        }
+        return ref;
     }
 
     // Convenience method which creates a WeakReference.
     static Reference createReference(Object obj) {
-	return createReference(obj, false);
+        return createReference(obj, false);
     }
 
     /**
@@ -322,7 +322,7 @@ public class FeatureDescriptor {
      * @return the Object in a wrapper or null.
      */
     static Object getObject(Reference ref) {
-	return (ref == null) ? null : (Object)ref.get();
+        return (ref == null) ? null : (Object)ref.get();
     }
 
     /**

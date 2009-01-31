@@ -44,7 +44,7 @@ public class YesNo extends Panel implements ActionListener {
         +nl+
         "Select either the Pass or Fail button below";
 
-    
+
     public static void main(String args[]) {
         Frame f = new Frame("Test Execution Instructions");
         f.setLayout(new BorderLayout());
@@ -72,5 +72,5 @@ public class YesNo extends Panel implements ActionListener {
             System.exit(-1);
         }
     }
-    
+
 }

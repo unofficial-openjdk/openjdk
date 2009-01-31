@@ -58,7 +58,7 @@ import org.xml.sax.SAXException;
 public class TransformXPath2Filter extends TransformSpi {
 
    /** {@link java.util.logging} logging facility */
-//    static java.util.logging.Logger log = 
+//    static java.util.logging.Logger log =
 //        java.util.logging.Logger.getLogger(
 //                            TransformXPath2Filter.class.getName());
 
@@ -66,10 +66,10 @@ public class TransformXPath2Filter extends TransformSpi {
    public static final String implementedTransformURI =
       Transforms.TRANSFORM_XPATH2FILTER;
    //J-
-   // contains the type of the filter   
+   // contains the type of the filter
 
    // contains the node set
-  
+
    /**
     * Method engineGetURI
     *
@@ -90,16 +90,16 @@ public class TransformXPath2Filter extends TransformSpi {
     */
    protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
            throws TransformationException {
-	  CachedXPathAPIHolder.setDoc(this._transformObject.getElement().getOwnerDocument());
+          CachedXPathAPIHolder.setDoc(this._transformObject.getElement().getOwnerDocument());
       try {
-    	  List unionNodes=new ArrayList();
-    	   List substractNodes=new ArrayList();
-    	   List intersectNodes=new ArrayList();
+          List unionNodes=new ArrayList();
+           List substractNodes=new ArrayList();
+           List intersectNodes=new ArrayList();
 
          CachedXPathFuncHereAPI xPathFuncHereAPI =
             new CachedXPathFuncHereAPI(CachedXPathAPIHolder.getCachedXPathAPI());
 
-         
+
          Element []xpathElements =XMLUtils.selectNodes(
                 this._transformObject.getElement().getFirstChild(),
                    XPath2FilterContainer.XPathFilter2NS,
@@ -114,11 +114,11 @@ public class TransformXPath2Filter extends TransformSpi {
          }
 
          Document inputDoc = null;
-	 if (input.getSubNode() != null) {   
+         if (input.getSubNode() != null) {
             inputDoc = XMLUtils.getOwnerDocument(input.getSubNode());
-	 } else {
+         } else {
             inputDoc = XMLUtils.getOwnerDocument(input.getNodeSet());
-	 }
+         }
 
          for (int i = 0; i < noOfSteps; i++) {
             Element xpathElement =XMLUtils.selectNode(
@@ -128,7 +128,7 @@ public class TransformXPath2Filter extends TransformSpi {
             XPath2FilterContainer xpathContainer =
                XPath2FilterContainer.newInstance(xpathElement,
                                                    input.getSourceURI());
-           
+
 
             NodeList subtreeRoots = xPathFuncHereAPI.selectNodeList(inputDoc,
                                        xpathContainer.getXPathFilterTextNode(),
@@ -137,14 +137,14 @@ public class TransformXPath2Filter extends TransformSpi {
             if (xpathContainer.isIntersect()) {
                 intersectNodes.add(subtreeRoots);
              } else if (xpathContainer.isSubtract()) {
-            	 substractNodes.add(subtreeRoots);
+                 substractNodes.add(subtreeRoots);
              } else if (xpathContainer.isUnion()) {
                 unionNodes.add(subtreeRoots);
-             } 
+             }
          }
 
          input.setNeedsToBeExpanded(true);
-         
+
          input.addNodeFilter(new XPath2NodeFilter(unionNodes,substractNodes,intersectNodes));
          input.setNodeSet(true);
          return input;
@@ -164,35 +164,35 @@ public class TransformXPath2Filter extends TransformSpi {
          throw new TransformationException("empty", ex);
       } catch (ParserConfigurationException ex) {
          throw new TransformationException("empty", ex);
-      } 
+      }
    }
 }
 
 class XPath2NodeFilter implements NodeFilter {
-	XPath2NodeFilter(List unionNodes, List substractNodes,
-			List intersectNodes) {
-		this.unionNodes=unionNodes;
-		this.substractNodes=substractNodes;
-		this.intersectNodes=intersectNodes;
-	}
-	List unionNodes=new ArrayList();
-	List substractNodes=new ArrayList();
-	List intersectNodes=new ArrayList();
+        XPath2NodeFilter(List unionNodes, List substractNodes,
+                        List intersectNodes) {
+                this.unionNodes=unionNodes;
+                this.substractNodes=substractNodes;
+                this.intersectNodes=intersectNodes;
+        }
+        List unionNodes=new ArrayList();
+        List substractNodes=new ArrayList();
+        List intersectNodes=new ArrayList();
 
 
    /**
     * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
     */
-   public boolean isNodeInclude(Node currentNode) {	 
-	   boolean notIncluded=false;
-	   if (rooted(currentNode,substractNodes)) {
-		   notIncluded=true;
-	   } else if (!rooted(currentNode,intersectNodes)) {
-		   notIncluded=true;
-	   }
-	   if (notIncluded && rooted(currentNode,unionNodes)) {
-		   notIncluded=false;
-	   }
+   public boolean isNodeInclude(Node currentNode) {
+           boolean notIncluded=false;
+           if (rooted(currentNode,substractNodes)) {
+                   notIncluded=true;
+           } else if (!rooted(currentNode,intersectNodes)) {
+                   notIncluded=true;
+           }
+           if (notIncluded && rooted(currentNode,unionNodes)) {
+                   notIncluded=false;
+           }
 
       return !notIncluded;
 
@@ -200,14 +200,14 @@ class XPath2NodeFilter implements NodeFilter {
 
    /**
     * Method rooted
-    * @param currentNode 
-    * @param nodeList 
+    * @param currentNode
+    * @param nodeList
     *
     * @return if rooted bye the rootnodes
     */
    boolean rooted(Node currentNode, List nodeList ) {
-	   for (int j=0;j<nodeList.size();j++) {
-		   NodeList rootNodes=(NodeList) nodeList.get(j);	   
+           for (int j=0;j<nodeList.size();j++) {
+                   NodeList rootNodes=(NodeList) nodeList.get(j);
       int length = rootNodes.getLength();
 
       for (int i = 0; i < length; i++) {
@@ -217,8 +217,8 @@ class XPath2NodeFilter implements NodeFilter {
             return true;
          }
       }
-   
-	   }
-	   return false;
+
+           }
+           return false;
    }
 }

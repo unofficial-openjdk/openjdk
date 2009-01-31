@@ -96,20 +96,20 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1OpenSession
 
 #ifndef NO_CALLBACKS
     if (jNotify != NULL) {
-	notifyEncapsulation = (NotifyEncapsulation *) malloc(sizeof(NotifyEncapsulation));
-	notifyEncapsulation->jApplicationData = (jApplication != NULL)
-		? (*env)->NewGlobalRef(env, jApplication)
-		: NULL;
-	notifyEncapsulation->jNotifyObject = (*env)->NewGlobalRef(env, jNotify);
-	ckpApplication = notifyEncapsulation;
-	ckNotify = (CK_NOTIFY) &notifyCallback;
+        notifyEncapsulation = (NotifyEncapsulation *) malloc(sizeof(NotifyEncapsulation));
+        notifyEncapsulation->jApplicationData = (jApplication != NULL)
+                ? (*env)->NewGlobalRef(env, jApplication)
+                : NULL;
+        notifyEncapsulation->jNotifyObject = (*env)->NewGlobalRef(env, jNotify);
+        ckpApplication = notifyEncapsulation;
+        ckNotify = (CK_NOTIFY) &notifyCallback;
     } else {
-	ckpApplication = NULL_PTR;
-	ckNotify = NULL_PTR;
+        ckpApplication = NULL_PTR;
+        ckNotify = NULL_PTR;
     }
 #else
-	ckpApplication = NULL_PTR;
-	ckNotify = NULL_PTR;
+        ckpApplication = NULL_PTR;
+        ckNotify = NULL_PTR;
 #endif /* NO_CALLBACKS */
 
     TRACE0("DEBUG: C_OpenSession");
@@ -128,8 +128,8 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1OpenSession
 
 #ifndef NO_CALLBACKS
     if (notifyEncapsulation != NULL) {
-	/* store the notifyEncapsulation to enable later cleanup */
-	putNotifyEntry(env, ckSessionHandle, notifyEncapsulation);
+        /* store the notifyEncapsulation to enable later cleanup */
+        putNotifyEntry(env, ckSessionHandle, notifyEncapsulation);
     }
 #endif /* NO_CALLBACKS */
 
@@ -169,15 +169,15 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CloseSession
     notifyEncapsulation = removeNotifyEntry(env, ckSessionHandle);
 
     if (notifyEncapsulation != NULL) {
-	/* there was a notify object used with this session, now dump the
-	 * encapsulation object
-	 */
-	(*env)->DeleteGlobalRef(env, notifyEncapsulation->jNotifyObject);
-	jApplicationData = notifyEncapsulation->jApplicationData;
-	if (jApplicationData != NULL) {
-	    (*env)->DeleteGlobalRef(env, jApplicationData);
-	}
-	free(notifyEncapsulation);
+        /* there was a notify object used with this session, now dump the
+         * encapsulation object
+         */
+        (*env)->DeleteGlobalRef(env, notifyEncapsulation->jNotifyObject);
+        jApplicationData = notifyEncapsulation->jApplicationData;
+        if (jApplicationData != NULL) {
+            (*env)->DeleteGlobalRef(env, jApplicationData);
+        }
+        free(notifyEncapsulation);
     }
 #endif /* NO_CALLBACKS */
 
@@ -213,15 +213,15 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CloseAllSessio
 #ifndef NO_CALLBACKS
     /* Remove all notify callback helper objects. */
     while ((notifyEncapsulation = removeFirstNotifyEntry(env)) != NULL) {
-	/* there was a notify object used with this session, now dump the
-	 * encapsulation object
-	 */
-	(*env)->DeleteGlobalRef(env, notifyEncapsulation->jNotifyObject);
-	jApplicationData = notifyEncapsulation->jApplicationData;
-	if (jApplicationData != NULL) {
-	    (*env)->DeleteGlobalRef(env, jApplicationData);
-	}
-	free(notifyEncapsulation);
+        /* there was a notify object used with this session, now dump the
+         * encapsulation object
+         */
+        (*env)->DeleteGlobalRef(env, notifyEncapsulation->jNotifyObject);
+        jApplicationData = notifyEncapsulation->jApplicationData;
+        if (jApplicationData != NULL) {
+            (*env)->DeleteGlobalRef(env, jApplicationData);
+        }
+        free(notifyEncapsulation);
     }
 #endif /* NO_CALLBACKS */
 }
@@ -410,7 +410,7 @@ void putNotifyEntry(JNIEnv *env, CK_SESSION_HANDLE hSession, NotifyEncapsulation
     NotifyListNode *currentNode, *newNode;
 
     if (notifyEncapsulation == NULL) {
-	return ;
+        return ;
     }
 
     newNode = (NotifyListNode *) malloc(sizeof(NotifyListNode));
@@ -421,16 +421,16 @@ void putNotifyEntry(JNIEnv *env, CK_SESSION_HANDLE hSession, NotifyEncapsulation
     (*env)->MonitorEnter(env, notifyListLock); /* synchronize access to list */
 
     if (notifyListHead == NULL) {
-	/* this is the first entry */
-	notifyListHead = newNode;
+        /* this is the first entry */
+        notifyListHead = newNode;
     } else {
-	/* go to the last entry; i.e. the first node which's 'next' is NULL.
-	 */
-	currentNode = notifyListHead;
-	while (currentNode->next != NULL) {
-	    currentNode = currentNode->next;
-	}
-	currentNode->next = newNode;
+        /* go to the last entry; i.e. the first node which's 'next' is NULL.
+         */
+        currentNode = notifyListHead;
+        while (currentNode->next != NULL) {
+            currentNode = currentNode->next;
+        }
+        currentNode->next = newNode;
     }
 
     (*env)->MonitorExit(env, notifyListLock); /* synchronize access to list */
@@ -448,34 +448,34 @@ NotifyEncapsulation * removeNotifyEntry(JNIEnv *env, CK_SESSION_HANDLE hSession)
     (*env)->MonitorEnter(env, notifyListLock); /* synchronize access to list */
 
     if (notifyListHead == NULL) {
-	/* this is the first entry */
-	notifyEncapsulation = NULL;
+        /* this is the first entry */
+        notifyEncapsulation = NULL;
     } else {
-	/* Find the node with the wanted session handle. Also stop, when we reach
-	 * the last entry; i.e. the first node which's 'next' is NULL.
-	 */
-	currentNode = notifyListHead;
-	previousNode = NULL;
+        /* Find the node with the wanted session handle. Also stop, when we reach
+         * the last entry; i.e. the first node which's 'next' is NULL.
+         */
+        currentNode = notifyListHead;
+        previousNode = NULL;
 
-	while ((currentNode->hSession != hSession) && (currentNode->next != NULL)) {
-	    previousNode = currentNode;
-	    currentNode = currentNode->next;
-	}
+        while ((currentNode->hSession != hSession) && (currentNode->next != NULL)) {
+            previousNode = currentNode;
+            currentNode = currentNode->next;
+        }
 
-	if (currentNode->hSession == hSession) {
-	    /* We found a entry for the wanted session, now remove it. */
-	    if (previousNode == NULL) {
-		/* it's the first node */
-		notifyListHead = currentNode->next;
-	    } else {
-		previousNode->next = currentNode->next;
-	    }
-	    notifyEncapsulation = currentNode->notifyEncapsulation;
-	    free(currentNode);
-	} else {
-	    /* We did not find a entry for this session */
-	    notifyEncapsulation = NULL;
-	}
+        if (currentNode->hSession == hSession) {
+            /* We found a entry for the wanted session, now remove it. */
+            if (previousNode == NULL) {
+                /* it's the first node */
+                notifyListHead = currentNode->next;
+            } else {
+                previousNode->next = currentNode->next;
+            }
+            notifyEncapsulation = currentNode->notifyEncapsulation;
+            free(currentNode);
+        } else {
+            /* We did not find a entry for this session */
+            notifyEncapsulation = NULL;
+        }
     }
 
     (*env)->MonitorExit(env, notifyListLock); /* synchronize access to list */
@@ -495,14 +495,14 @@ NotifyEncapsulation * removeFirstNotifyEntry(JNIEnv *env) {
     (*env)->MonitorEnter(env, notifyListLock); /* synchronize access to list */
 
     if (notifyListHead == NULL) {
-	/* this is the first entry */
-	notifyEncapsulation = NULL;
+        /* this is the first entry */
+        notifyEncapsulation = NULL;
     } else {
-	/* Remove the first entry. */
-	currentNode = notifyListHead;
-	notifyListHead = notifyListHead->next;
-	notifyEncapsulation = currentNode->notifyEncapsulation;
-	free(currentNode);
+        /* Remove the first entry. */
+        currentNode = notifyListHead;
+        notifyListHead = notifyListHead->next;
+        notifyEncapsulation = currentNode->notifyEncapsulation;
+        free(currentNode);
     }
 
     (*env)->MonitorExit(env, notifyListLock); /* synchronize access to list */
@@ -522,9 +522,9 @@ NotifyEncapsulation * removeFirstNotifyEntry(JNIEnv *env) {
  * @param hSession The session, this callback is comming from.
  * @param event The type of event that occurred.
  * @param pApplication The application data as passed in upon OpenSession. In
-		       this wrapper we always pass in a NotifyEncapsulation
-		       object, which holds necessary information for delegating
-		       the callback to the Java VM.
+                       this wrapper we always pass in a NotifyEncapsulation
+                       object, which holds necessary information for delegating
+                       the callback to the Java VM.
  * @return
  */
 CK_RV notifyCallback(
@@ -559,19 +559,19 @@ CK_RV notifyCallback(
     /* Determine, if current thread is already attached */
     returnValue = (*jvm)->GetEnv(jvm, (void **) &env, JNI_VERSION_1_2);
     if (returnValue == JNI_EDETACHED) {
-	/* thread detached, so attach it */
-	wasAttached = 0;
-	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+        /* thread detached, so attach it */
+        wasAttached = 0;
+        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else if (returnValue == JNI_EVERSION) {
-	/* this version of JNI is not supported, so just try to attach */
-	/* we assume it was attached to ensure that this thread is not detached
-	 * afterwards even though it should not
-	 */
-	wasAttached = 1;
-	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+        /* this version of JNI is not supported, so just try to attach */
+        /* we assume it was attached to ensure that this thread is not detached
+         * afterwards even though it should not
+         */
+        wasAttached = 1;
+        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else {
-	/* attached */
-	wasAttached = 1;
+        /* attached */
+        wasAttached = 1;
     }
 
     jSessionHandle = ckULongToJLong(hSession);
@@ -582,28 +582,26 @@ CK_RV notifyCallback(
     jmethod = (*env)->GetMethodID(env, ckNotifyClass, "CK_NOTIFY", "(JJLjava/lang/Object;)V");
     assert(jmethod != 0);
     (*env)->CallVoidMethod(env, notifyEncapsulation->jNotifyObject, jmethod,
-			 jSessionHandle, jEvent, notifyEncapsulation->jApplicationData);
+                         jSessionHandle, jEvent, notifyEncapsulation->jApplicationData);
 
     /* check, if callback threw an exception */
     pkcs11Exception = (*env)->ExceptionOccurred(env);
 
     if (pkcs11Exception != NULL) {
-	/* The was an exception thrown, now we get the error-code from it */
-	pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
-	jmethod = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
-	assert(jmethod != 0);
-	errorCode = (*env)->CallLongMethod(env, pkcs11Exception, jmethod);
-	rv = jLongToCKULong(errorCode);
+        /* The was an exception thrown, now we get the error-code from it */
+        pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
+        jmethod = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
+        assert(jmethod != 0);
+        errorCode = (*env)->CallLongMethod(env, pkcs11Exception, jmethod);
+        rv = jLongToCKULong(errorCode);
     }
 
     /* if we attached this thread to the VM just for callback, we detach it now */
     if (wasAttached) {
-	returnValue = (*jvm)->DetachCurrentThread(jvm);
+        returnValue = (*jvm)->DetachCurrentThread(jvm);
     }
 
     return rv ;
 }
 
 #endif /* NO_CALLBACKS */
-
-

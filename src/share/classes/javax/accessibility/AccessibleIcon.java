@@ -26,8 +26,8 @@
 package javax.accessibility;
 
 /**
- * The AccessibleIcon interface should be supported by any object 
- * that has an associated icon (e.g., buttons). This interface 
+ * The AccessibleIcon interface should be supported by any object
+ * that has an associated icon (e.g., buttons). This interface
  * provides the standard mechanism for an assistive technology
  * to get descriptive information about icons.
  * Applications can determine
@@ -40,8 +40,7 @@ package javax.accessibility;
  * @see Accessible
  * @see AccessibleContext
  *
- * @version     1.3 10/12/99
- * @author	Lynn Monsanto
+ * @author      Lynn Monsanto
  * @since 1.3
  */
 public interface AccessibleIcon {
@@ -55,7 +54,7 @@ public interface AccessibleIcon {
      * @return the description of the icon
      */
     public String getAccessibleIconDescription();
-    
+
     /**
      * Sets the description of the icon.  This is meant to be a brief
      * textual description of the object.  For example, it might be
@@ -65,7 +64,7 @@ public interface AccessibleIcon {
      * @param description the description of the icon
      */
     public void setAccessibleIconDescription(String description);
-	
+
     /**
      * Gets the width of the icon
      *

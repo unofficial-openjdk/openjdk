@@ -32,14 +32,13 @@ import java.io.IOException;
 /**
  * Implements the ASN.1 ETYPE-INFO-ENTRY type.
  *
- * ETYPE-INFO2-ENTRY	::= SEQUENCE {
- *	    etype	[0] Int32,
- *	    salt	[1] KerberosString OPTIONAL,
- *	    s2kparams   [2] OCTET STRING OPTIONAL
+ * ETYPE-INFO2-ENTRY    ::= SEQUENCE {
+ *          etype       [0] Int32,
+ *          salt        [1] KerberosString OPTIONAL,
+ *          s2kparams   [2] OCTET STRING OPTIONAL
  * }
  *
  * @author Seema Malkani
- * @version %I%, %G%
  */
 
 public class ETypeInfo2 {
@@ -56,67 +55,67 @@ public class ETypeInfo2 {
     }
 
     public ETypeInfo2(int etype, byte[] salt, byte[] s2kparams) {
-	this.etype = etype;
-	if (salt != null) {
-	    this.saltStr = new String(salt);
-	}
-	if (s2kparams != null) {
-	    this.s2kparams = s2kparams.clone();
-	}
+        this.etype = etype;
+        if (salt != null) {
+            this.saltStr = new String(salt);
+        }
+        if (s2kparams != null) {
+            this.s2kparams = s2kparams.clone();
+        }
     }
 
     public Object clone() {
-	ETypeInfo2 etypeInfo2 = new ETypeInfo2();
-	etypeInfo2.etype = etype;
-	etypeInfo2.saltStr = saltStr;
-	if (s2kparams != null) {
-	    etypeInfo2.s2kparams = new byte[s2kparams.length];
-	    System.arraycopy(s2kparams, 0, etypeInfo2.s2kparams, 
-				0, s2kparams.length);
-	}
-	return etypeInfo2;
+        ETypeInfo2 etypeInfo2 = new ETypeInfo2();
+        etypeInfo2.etype = etype;
+        etypeInfo2.saltStr = saltStr;
+        if (s2kparams != null) {
+            etypeInfo2.s2kparams = new byte[s2kparams.length];
+            System.arraycopy(s2kparams, 0, etypeInfo2.s2kparams,
+                                0, s2kparams.length);
+        }
+        return etypeInfo2;
     }
 
     /**
      * Constructs a ETypeInfo2 object.
      * @param encoding a DER-encoded data.
-     * @exception Asn1Exception if an error occurs while decoding an 
+     * @exception Asn1Exception if an error occurs while decoding an
      *            ASN1 encoded data.
      * @exception IOException if an I/O error occurs while reading encoded data.
      */
-    public ETypeInfo2(DerValue encoding) throws Asn1Exception, IOException { 
-	DerValue der = null; 
+    public ETypeInfo2(DerValue encoding) throws Asn1Exception, IOException {
+        DerValue der = null;
 
-	if (encoding.getTag() != DerValue.tag_Sequence) {
+        if (encoding.getTag() != DerValue.tag_Sequence) {
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-	}
+        }
 
-	// etype
-	der = encoding.getData().getDerValue();
-	if ((der.getTag() & 0x1F) == 0x00) {
-	    this.etype = der.getData().getBigInteger().intValue();
-	}
-	else
+        // etype
+        der = encoding.getData().getDerValue();
+        if ((der.getTag() & 0x1F) == 0x00) {
+            this.etype = der.getData().getBigInteger().intValue();
+        }
+        else
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
 
-	// salt
-	if (encoding.getData().available() > 0) {
-	    der = encoding.getData().getDerValue();
-	    if ((der.getTag() & 0x1F) == 0x01) {
-		this.saltStr = der.getData().getGeneralString();
-	    }
-	}
+        // salt
+        if (encoding.getData().available() > 0) {
+            der = encoding.getData().getDerValue();
+            if ((der.getTag() & 0x1F) == 0x01) {
+                this.saltStr = der.getData().getGeneralString();
+            }
+        }
 
-	// s2kparams
-	if (encoding.getData().available() > 0) {
-	    der = encoding.getData().getDerValue();
-	    if ((der.getTag() & 0x1F) == 0x02) {
-		this.s2kparams = der.getData().getOctetString();
-	    }
-	}
+        // s2kparams
+        if (encoding.getData().available() > 0) {
+            der = encoding.getData().getDerValue();
+            if ((der.getTag() & 0x1F) == 0x02) {
+                this.s2kparams = der.getData().getOctetString();
+            }
+        }
 
-	if (encoding.getData().available() > 0) 
-	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+        if (encoding.getData().available() > 0)
+            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
     }
 
     /**
@@ -128,42 +127,42 @@ public class ETypeInfo2 {
      */
     public byte[] asn1Encode() throws Asn1Exception, IOException {
 
-	DerOutputStream bytes = new DerOutputStream();		 
-	DerOutputStream temp = new DerOutputStream();
-		
-	temp.putInteger(etype);
-	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, 
-					TAG_TYPE), temp);
+        DerOutputStream bytes = new DerOutputStream();
+        DerOutputStream temp = new DerOutputStream();
 
-	if (saltStr != null) {
-	    temp = new DerOutputStream();
-	    temp.putGeneralString(saltStr);
-	    bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, 
-					TAG_VALUE1), temp);
-	}
-	if (s2kparams != null) {
-	    temp = new DerOutputStream();
-	    temp.putOctetString(s2kparams);
-	    bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, 
-					TAG_VALUE2), temp);
-	}
-	
-	temp = new DerOutputStream();
-	temp.write(DerValue.tag_Sequence, bytes);
-	return temp.toByteArray();
+        temp.putInteger(etype);
+        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true,
+                                        TAG_TYPE), temp);
+
+        if (saltStr != null) {
+            temp = new DerOutputStream();
+            temp.putGeneralString(saltStr);
+            bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true,
+                                        TAG_VALUE1), temp);
+        }
+        if (s2kparams != null) {
+            temp = new DerOutputStream();
+            temp.putOctetString(s2kparams);
+            bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true,
+                                        TAG_VALUE2), temp);
+        }
+
+        temp = new DerOutputStream();
+        temp.write(DerValue.tag_Sequence, bytes);
+        return temp.toByteArray();
     }
 
     // accessor methods
     public int getEType() {
-	return etype;
+        return etype;
     }
 
     public byte[] getSalt() {
-	return ((saltStr == null) ? null : saltStr.getBytes());
+        return ((saltStr == null) ? null : saltStr.getBytes());
     }
 
     public byte[] getParams() {
-	return ((s2kparams == null) ? null : s2kparams.clone());
+        return ((s2kparams == null) ? null : s2kparams.clone());
     }
 
 }

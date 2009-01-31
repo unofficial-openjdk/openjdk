@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
 public abstract class TransformSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(TransformSpi.class.getName());
 
    protected Transform _transformObject = null;
@@ -70,7 +70,7 @@ public abstract class TransformSpi {
                 CanonicalizationException, InvalidCanonicalizerException,
                 TransformationException, ParserConfigurationException,
                 SAXException {
-   	    return enginePerformTransform(input);
+            return enginePerformTransform(input);
    }
    /**
     * The mega method which MUST be implemented by the Transformation Algorithm.

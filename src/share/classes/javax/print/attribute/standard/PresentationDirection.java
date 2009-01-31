@@ -41,9 +41,9 @@ import javax.print.attribute.PrintRequestAttribute;
  * <B>IPP Compatibility:</B>  This attribute is not an IPP 1.1
  * attribute; it is an attribute in the Production Printing Extension
  * (<a href="ftp://ftp.pwg.org/pub/pwg/standards/pwg5100.3.pdf">PDF</a>)
- * of IPP 1.1.  The category name returned by 
- * <CODE>getName()</CODE> is the IPP attribute name.  The enumeration's 
- * integer value is the IPP enum value.  The <code>toString()</code> method 
+ * of IPP 1.1.  The category name returned by
+ * <CODE>getName()</CODE> is the IPP attribute name.  The enumeration's
+ * integer value is the IPP enum value.  The <code>toString()</code> method
  * returns the IPP string representation of the attribute value.
  * <P>
  *
@@ -112,75 +112,75 @@ public final class PresentationDirection extends EnumSyntax
 
     /**
      * Construct a new presentation direction enumeration value with the given
-     * integer value. 
+     * integer value.
      *
      * @param  value  Integer value.
      */
     private PresentationDirection(int value) {
-	super (value);
+        super (value);
     }
 
     private static final String[] myStringTable = {
-	"tobottom-toright",
-	"tobottom-toleft",
-	"totop-toright",
-	"totop-toleft",
-	"toright-tobottom",
-	"toright-totop",
-	"toleft-tobottom",
-	"toleft-totop",
+        "tobottom-toright",
+        "tobottom-toleft",
+        "totop-toright",
+        "totop-toleft",
+        "toright-tobottom",
+        "toright-totop",
+        "toleft-tobottom",
+        "toleft-totop",
     };
 
     private static final PresentationDirection[] myEnumValueTable = {
-	TOBOTTOM_TORIGHT,
-	TOBOTTOM_TOLEFT,
-	TOTOP_TORIGHT,
-	TOTOP_TOLEFT,
-	TORIGHT_TOBOTTOM,
-	TORIGHT_TOTOP,
-	TOLEFT_TOBOTTOM,
-	TOLEFT_TOTOP,
+        TOBOTTOM_TORIGHT,
+        TOBOTTOM_TOLEFT,
+        TOTOP_TORIGHT,
+        TOTOP_TOLEFT,
+        TORIGHT_TOBOTTOM,
+        TORIGHT_TOTOP,
+        TOLEFT_TOBOTTOM,
+        TOLEFT_TOTOP,
     };
 
     /**
      * Returns the string table for class PresentationDirection.
      */
     protected String[] getStringTable() {
-	return myStringTable;
+        return myStringTable;
     }
 
     /**
      * Returns the enumeration value table for class PresentationDirection.
      */
     protected EnumSyntax[] getEnumValueTable() {
-	return myEnumValueTable;
+        return myEnumValueTable;
     }
 
     /**
-     * Get the printing attribute class which is to be used as the "category" 
+     * Get the printing attribute class which is to be used as the "category"
      * for this printing attribute value.
      * <P>
      * For class PresentationDirection
-     * the category is class PresentationDirection itself. 
+     * the category is class PresentationDirection itself.
      *
      * @return  Printing attribute class (category), an instance of class
      *          {@link java.lang.Class java.lang.Class}.
      */
     public final Class<? extends Attribute> getCategory() {
-	return PresentationDirection.class;
+        return PresentationDirection.class;
     }
 
     /**
-     * Get the name of the category of which this attribute value is an 
-     * instance. 
+     * Get the name of the category of which this attribute value is an
+     * instance.
      * <P>
      * For class PresentationDirection
-     * the category name is <CODE>"presentation-direction"</CODE>. 
+     * the category name is <CODE>"presentation-direction"</CODE>.
      *
      * @return  Attribute category name.
      */
     public final String getName() {
-	return "presentation-direction";
+        return "presentation-direction";
     }
 
 }

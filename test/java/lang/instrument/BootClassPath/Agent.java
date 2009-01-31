@@ -23,7 +23,7 @@
 
 /*
  *
- * 
+ *
  * Used by BootClassPath.sh
  *
  * Loads a supporting class and tests that the class is loaded from the boot
@@ -31,18 +31,18 @@
  */
 import java.lang.instrument.Instrumentation;
 
-public class Agent { 
+public class Agent {
     public static void premain(String options, Instrumentation ins) throws Exception {
-	String bootclasspath = System.getProperty("sun.boot.class.path");
-	System.out.println("bootclasspath: " + bootclasspath);
+        String bootclasspath = System.getProperty("sun.boot.class.path");
+        System.out.println("bootclasspath: " + bootclasspath);
 
-	Class c = Class.forName("AgentSupport");
-	ClassLoader cl = c.getClassLoader();
-	if (cl != null) {
+        Class c = Class.forName("AgentSupport");
+        ClassLoader cl = c.getClassLoader();
+        if (cl != null) {
             System.err.println("AgentSupport loaded by: " + cl);
             throw new RuntimeException("AgentSupport class not loaded by boot class loader");
-	} else {
+        } else {
             System.out.println("AgentSupport loaded by boot class loader");
-	}
+        }
     }
 }

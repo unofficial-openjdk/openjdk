@@ -36,6 +36,6 @@ class LdapNameParser implements NameParser {
     }
 
     public Name parse(String name) throws NamingException {
-	return new LdapName(name);
+        return new LdapName(name);
     }
 }

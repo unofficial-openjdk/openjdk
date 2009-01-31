@@ -36,7 +36,6 @@ import java.io.ObjectStreamException;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
- * @version %I%, %G%
  * @see     Class#getEnumConstants()
  * @since   1.5
  */
@@ -62,7 +61,7 @@ public abstract class Enum<E extends Enum<E>>
      * @return the name of this enum constant
      */
     public final String name() {
-	return name;
+        return name;
     }
 
     /**
@@ -88,7 +87,7 @@ public abstract class Enum<E extends Enum<E>>
      * @return the ordinal of this enumeration constant
      */
     public final int ordinal() {
-	return ordinal;
+        return ordinal;
     }
 
     /**
@@ -103,8 +102,8 @@ public abstract class Enum<E extends Enum<E>>
      *         an ordinal of zero).
      */
     protected Enum(String name, int ordinal) {
-	this.name = name;
-	this.ordinal = ordinal;
+        this.name = name;
+        this.ordinal = ordinal;
     }
 
     /**
@@ -116,7 +115,7 @@ public abstract class Enum<E extends Enum<E>>
      * @return the name of this enum constant
      */
     public String toString() {
-	return name;
+        return name;
     }
 
     /**
@@ -148,7 +147,7 @@ public abstract class Enum<E extends Enum<E>>
      * @return (never returns)
      */
     protected final Object clone() throws CloneNotSupportedException {
-	throw new CloneNotSupportedException();
+        throw new CloneNotSupportedException();
     }
 
     /**
@@ -161,12 +160,12 @@ public abstract class Enum<E extends Enum<E>>
      * method is the order in which the constants are declared.
      */
     public final int compareTo(E o) {
-	Enum other = (Enum)o;
-	Enum self = this;
-	if (self.getClass() != other.getClass() && // optimization
+        Enum other = (Enum)o;
+        Enum self = this;
+        if (self.getClass() != other.getClass() && // optimization
             self.getDeclaringClass() != other.getDeclaringClass())
-	    throw new ClassCastException();
-	return self.ordinal - other.ordinal;
+            throw new ClassCastException();
+        return self.ordinal - other.ordinal;
     }
 
     /**
@@ -182,9 +181,9 @@ public abstract class Enum<E extends Enum<E>>
      *     enum type
      */
     public final Class<E> getDeclaringClass() {
-	Class clazz = getClass();
-	Class zuper = clazz.getSuperclass();
-	return (zuper == Enum.class) ? clazz : zuper;
+        Class clazz = getClass();
+        Class zuper = clazz.getSuperclass();
+        return (zuper == Enum.class) ? clazz : zuper;
     }
 
     /**
@@ -226,10 +225,10 @@ public abstract class Enum<E extends Enum<E>>
      */
     private void readObject(ObjectInputStream in) throws IOException,
         ClassNotFoundException {
-	    throw new InvalidObjectException("can't deserialize enum");
+            throw new InvalidObjectException("can't deserialize enum");
     }
 
     private void readObjectNoData() throws ObjectStreamException {
-	    throw new InvalidObjectException("can't deserialize enum");
+            throw new InvalidObjectException("can't deserialize enum");
     }
 }

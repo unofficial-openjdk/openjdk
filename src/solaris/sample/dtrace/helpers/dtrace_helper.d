@@ -31,10 +31,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Description:
  * dtrace -c option launches the command specified in the -c argument and
  * starts tracing the process. Typically, you can run a D script and trace

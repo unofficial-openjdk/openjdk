@@ -23,11 +23,6 @@
 # have any questions.
 #
 
-
-#
-#  @(#)RedefineSetUp.sh FIXME
-#
-
 if [ "${TESTSRC}" = "" ]
 then
   echo "TESTSRC not set.  Test cannot execute.  Failed."

@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 public class X509SubjectNameResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                     X509SubjectNameResolver.class.getName());
 
@@ -64,18 +64,18 @@ public class X509SubjectNameResolver extends KeyResolverSpi {
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
       if (true)
-      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
 
-      
+
        if (!XMLUtils.elementIsInSignatureSpace(element,
-                 Constants._TAG_X509DATA) ) {      
+                 Constants._TAG_X509DATA) ) {
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I can't");
 
          return false;
       }
 
 
-         
+
          this._x509childNodes = XMLUtils.selectDsNodes(element,
                  Constants._TAG_X509SUBJECTNAME);
 
@@ -85,7 +85,7 @@ public class X509SubjectNameResolver extends KeyResolverSpi {
 
             return true;
          }
-     
+
 
       if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I can't");
 
@@ -173,8 +173,8 @@ public class X509SubjectNameResolver extends KeyResolverSpi {
                   if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "match !!! ");
 
                   return cert;
-               } 
-               if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "no match...");               
+               }
+               if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "no match...");
             }
          }
 

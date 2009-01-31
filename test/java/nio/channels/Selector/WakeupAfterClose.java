@@ -32,28 +32,28 @@ import java.io.IOException;
 public class WakeupAfterClose {
 
     public static void main(String[] args) throws Exception {
-	final Selector sel = Selector.open();
+        final Selector sel = Selector.open();
 
-	Runnable r = new Runnable() {
-	    public void run() {
-		try {
-		    sel.select();
-		} catch (IOException x) {
-		    x.printStackTrace();
-		}
-	    }
-	};
+        Runnable r = new Runnable() {
+            public void run() {
+                try {
+                    sel.select();
+                } catch (IOException x) {
+                    x.printStackTrace();
+                }
+            }
+        };
 
-	// start thread to block in Selector
-	Thread t = new Thread(r);
-	t.start();
+        // start thread to block in Selector
+        Thread t = new Thread(r);
+        t.start();
 
-	// give thread time to start
-	Thread.sleep(1000);
+        // give thread time to start
+        Thread.sleep(1000);
 
-	// interrupt, close, and wakeup is the magic sequence to provoke the NPE
-	t.interrupt();
-	sel.close();
-	sel.wakeup();
+        // interrupt, close, and wakeup is the magic sequence to provoke the NPE
+        t.interrupt();
+        sel.close();
+        sel.wakeup();
     }
 }

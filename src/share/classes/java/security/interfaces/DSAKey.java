@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security.interfaces;
 
 /**
@@ -32,10 +32,9 @@ package java.security.interfaces;
  * @see DSAParams
  * @see java.security.Key
  * @see java.security.Signature
- * 
- * @version %I% %E%
- * @author Benjamin Renaud 
- * @author Josh Bloch 
+ *
+ * @author Benjamin Renaud
+ * @author Josh Bloch
  */
 public interface DSAKey {
 
@@ -44,7 +43,7 @@ public interface DSAKey {
      * never secret.
      *
      * @return the DSA-specific key parameters.
-     * 
+     *
      * @see DSAParams
      */
     public DSAParams getParams();

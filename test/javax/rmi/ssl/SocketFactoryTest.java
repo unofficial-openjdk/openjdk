@@ -111,19 +111,19 @@ public class SocketFactoryTest {
                 new SslRMIServerSocketFactory();
             final SslRMIServerSocketFactory server2 =
                 new SslRMIServerSocketFactory(null,
-					      null,
+                                              null,
                                               false);
             final SslRMIServerSocketFactory server3 =
                 new SslRMIServerSocketFactory(ciphersuite,
-					      null,
+                                              null,
                                               false);
             final SslRMIServerSocketFactory server4 =
                 new SslRMIServerSocketFactory(null,
-					      protocol,
+                                              protocol,
                                               false);
             final SslRMIServerSocketFactory server5 =
                 new SslRMIServerSocketFactory(null,
-					      null,
+                                              null,
                                               true);
             final MySslRMIClientSocketFactory subclient1 =
                 new MySslRMIClientSocketFactory();
@@ -133,19 +133,19 @@ public class SocketFactoryTest {
                 new MySslRMIServerSocketFactory();
             final MySslRMIServerSocketFactory subserver2 =
                 new MySslRMIServerSocketFactory(null,
-						null,
+                                                null,
                                                 false);
             final MySslRMIServerSocketFactory subserver3 =
                 new MySslRMIServerSocketFactory(ciphersuite,
-						null,
+                                                null,
                                                 false);
             final MySslRMIServerSocketFactory subserver4 =
                 new MySslRMIServerSocketFactory(null,
-						protocol,
+                                                protocol,
                                                 false);
             final MySslRMIServerSocketFactory subserver5 =
                 new MySslRMIServerSocketFactory(null,
-						null,
+                                                null,
                                                 true);
 
             // clients

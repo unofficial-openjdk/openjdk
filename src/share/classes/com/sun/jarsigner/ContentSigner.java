@@ -34,7 +34,6 @@ import java.security.cert.CertificateException;
  * Implementations must be instantiable using a zero-argument constructor.
  *
  * @since 1.5
- * @version %I%, %G%
  * @author Vincent Ryan
  */
 
@@ -43,8 +42,8 @@ public abstract class ContentSigner {
     /**
      * Generates a PKCS #7 signed data message.
      * This method is used when the signature has already been generated.
-     * The signature, the signer's details, and optionally a signature 
-     * timestamp and the content that was signed, are all packaged into a 
+     * The signature, the signer's details, and optionally a signature
+     * timestamp and the content that was signed, are all packaged into a
      * signed data message.
      *
      * @param parameters The non-null input parameters.
@@ -56,16 +55,16 @@ public abstract class ContentSigner {
      * @throws NoSuchAlgorithmException The exception is thrown if the signature
      *         algorithm is unrecognised.
      * @throws CertificateException The exception is thrown if an error occurs
-     *         while processing the signer's certificate or the TSA's 
+     *         while processing the signer's certificate or the TSA's
      *         certificate.
      * @throws IOException The exception is thrown if an error occurs while
      *         generating the signature timestamp or while generating the signed
      *         data message.
-     * @throws NullPointerException The exception is thrown if parameters is 
+     * @throws NullPointerException The exception is thrown if parameters is
      *         null.
      */
     public abstract byte[] generateSignedData(
-	ContentSignerParameters parameters, boolean omitContent,
-	boolean applyTimestamp)
+        ContentSignerParameters parameters, boolean omitContent,
+        boolean applyTimestamp)
             throws NoSuchAlgorithmException, CertificateException, IOException;
 }

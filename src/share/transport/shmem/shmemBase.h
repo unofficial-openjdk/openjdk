@@ -27,7 +27,7 @@
 #ifndef JAVASOFT_SHMEMBASE_H
 #define JAVASOFT_SHMEMBASE_H
 
-void exitTransportWithError(char *msg, char *fileName, 
+void exitTransportWithError(char *msg, char *fileName,
                             char *date, int lineNumber);
 
 typedef struct SharedMemoryConnection SharedMemoryConnection;
@@ -52,7 +52,7 @@ jint shmemBase_getlasterror(char *msg, jint size);
 #ifdef DEBUG
 #define SHMEM_ASSERT(expression)  \
 do {                            \
-    if (!(expression)) {		\
+    if (!(expression)) {                \
         exitTransportWithError("assertion failed", __FILE__, __DATE__, __LINE__); \
     } \
 } while (0)
@@ -62,17 +62,9 @@ do {                            \
 
 #define SHMEM_GUARANTEE(expression) \
 do {                            \
-    if (!(expression)) {		\
+    if (!(expression)) {                \
         exitTransportWithError("assertion failed", __FILE__, __DATE__, __LINE__); \
     } \
 } while (0)
 
 #endif
-
-
-
-
-
-
-
-

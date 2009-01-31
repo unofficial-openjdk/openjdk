@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security.interfaces;
 
 import java.math.BigInteger;
@@ -31,7 +31,6 @@ import java.math.BigInteger;
  * The interface to an RSA public or private key.
  *
  * @author Jan Luehe
- * @version %I% %G%
  *
  * @see RSAPublicKey
  * @see RSAPrivateKey
@@ -43,7 +42,7 @@ public interface RSAKey {
 
     /**
      * Returns the modulus.
-     *		
+     *
      * @return the modulus
      */
     public BigInteger getModulus();

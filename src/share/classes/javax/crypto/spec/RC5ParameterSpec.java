@@ -60,9 +60,9 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @param wordSize the word size in bits.
      */
     public RC5ParameterSpec(int version, int rounds, int wordSize) {
-	this.version = version;
-	this.rounds = rounds;
-	this.wordSize = wordSize;
+        this.version = version;
+        this.rounds = rounds;
+        this.wordSize = wordSize;
     }
 
     /**
@@ -77,13 +77,13 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @param rounds the number of rounds.
      * @param wordSize the word size in bits.
      * @param iv the buffer with the IV. The first <code>2*(wordSize/8)
-     * </code> bytes of the buffer are copied to protect against subsequent 
+     * </code> bytes of the buffer are copied to protect against subsequent
      * modification.
      * @exception IllegalArgumentException if <code>iv</code> is
-     * <code>null</code> or <code>(iv.length < 2 * (wordSize / 8))</code> 
+     * <code>null</code> or <code>(iv.length < 2 * (wordSize / 8))</code>
      */
     public RC5ParameterSpec(int version, int rounds, int wordSize, byte[] iv) {
-	this(version, rounds, wordSize, iv, 0);
+        this(version, rounds, wordSize, iv, 0);
     }
 
     /**
@@ -102,25 +102,25 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @param rounds the number of rounds.
      * @param wordSize the word size in bits.
      * @param iv the buffer with the IV. The first <code>2*(wordSize/8)
-     * </code> bytes of the buffer beginning at <code>offset</code> 
+     * </code> bytes of the buffer beginning at <code>offset</code>
      * inclusive are copied to protect against subsequent modification.
      * @param offset the offset in <code>iv</code> where the IV starts.
      * @exception IllegalArgumentException if <code>iv</code> is
-     * <code>null</code> or 
-     * <code>(iv.length - offset < 2 * (wordSize / 8))</code> 
+     * <code>null</code> or
+     * <code>(iv.length - offset < 2 * (wordSize / 8))</code>
      */
     public RC5ParameterSpec(int version, int rounds, int wordSize,
-			    byte[] iv, int offset) {
-	this.version = version;
-	this.rounds = rounds;
-	this.wordSize = wordSize;
-	if (iv == null) throw new IllegalArgumentException("IV missing");
-	int blockSize = (wordSize / 8) * 2;
+                            byte[] iv, int offset) {
+        this.version = version;
+        this.rounds = rounds;
+        this.wordSize = wordSize;
+        if (iv == null) throw new IllegalArgumentException("IV missing");
+        int blockSize = (wordSize / 8) * 2;
         if (iv.length - offset < blockSize) {
             throw new IllegalArgumentException("IV too short");
         }
-	this.iv = new byte[blockSize];
-	System.arraycopy(iv, offset, this.iv, 0, blockSize);
+        this.iv = new byte[blockSize];
+        System.arraycopy(iv, offset, this.iv, 0, blockSize);
     }
 
     /**
@@ -129,7 +129,7 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @return the version.
      */
     public int getVersion() {
-	return this.version;
+        return this.version;
     }
 
     /**
@@ -138,7 +138,7 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @return the number of rounds.
      */
     public int getRounds() {
-	return this.rounds;
+        return this.rounds;
     }
 
     /**
@@ -147,7 +147,7 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * @return the word size in bits.
      */
     public int getWordSize() {
-	return this.wordSize;
+        return this.wordSize;
     }
 
     /**
@@ -157,33 +157,33 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      * Returns a new array each time this method is called.
      */
     public byte[] getIV() {
-	return (iv == null? null:(byte[])iv.clone());
+        return (iv == null? null:(byte[])iv.clone());
     }
 
    /**
      * Tests for equality between the specified object and this
-     * object. Two RC5ParameterSpec objects are considered equal if their 
+     * object. Two RC5ParameterSpec objects are considered equal if their
      * version numbers, number of rounds, word sizes, and IVs are equal.
      * (Two IV references are considered equal if both are <tt>null</tt>.)
-     * 
+     *
      * @param obj the object to test for equality with this object.
-     * 
-     * @return true if the objects are considered equal, false if 
+     *
+     * @return true if the objects are considered equal, false if
      * <code>obj</code> is null or otherwise.
      */
     public boolean equals(Object obj) {
-	if (obj == this) {
-	    return true;
-	}
-	if (!(obj instanceof RC5ParameterSpec)) {
-	    return false;
-	}
-	RC5ParameterSpec other = (RC5ParameterSpec) obj;
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof RC5ParameterSpec)) {
+            return false;
+        }
+        RC5ParameterSpec other = (RC5ParameterSpec) obj;
 
-	return ((version == other.version) &&
-		(rounds == other.rounds) &&
-		(wordSize == other.wordSize) &&
-		java.util.Arrays.equals(iv, other.iv));
+        return ((version == other.version) &&
+                (rounds == other.rounds) &&
+                (wordSize == other.wordSize) &&
+                java.util.Arrays.equals(iv, other.iv));
     }
 
     /**
@@ -192,12 +192,12 @@ public class RC5ParameterSpec implements AlgorithmParameterSpec {
      */
     public int hashCode() {
         int retval = 0;
-	if (iv != null) {
-	    for (int i = 1; i < iv.length; i++) {
-		retval += iv[i] * i;
-	    }
-	}
-	retval += (version + rounds + wordSize);
-	return retval;
+        if (iv != null) {
+            for (int i = 1; i < iv.length; i++) {
+                retval += iv[i] * i;
+            }
+        }
+        retval += (version + rounds + wordSize);
+        return retval;
     }
 }

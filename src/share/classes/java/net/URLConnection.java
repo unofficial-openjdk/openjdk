@@ -89,9 +89,9 @@ import sun.net.www.MessageHeader;
  * Each of the above <code>set</code> methods has a corresponding
  * <code>get</code> method to retrieve the value of the parameter or
  * general request property. The specific parameters and general
- * request properties that are applicable are protocol specific. 
+ * request properties that are applicable are protocol specific.
  * <p>
- * The following methods are used to access the header fields and 
+ * The following methods are used to access the header fields and
  * the contents after the connection is made to the remote object:
  * <ul>
  *   <li><code>getContent</code>
@@ -110,14 +110,14 @@ import sun.net.www.MessageHeader;
  *   <li><code>getLastModifed</code>
  * </ul>
  * <p>
- * provide convenient access to these fields. The 
- * <code>getContentType</code> method is used by the 
- * <code>getContent</code> method to determine the type of the remote 
- * object; subclasses may find it convenient to override the 
- * <code>getContentType</code> method. 
+ * provide convenient access to these fields. The
+ * <code>getContentType</code> method is used by the
+ * <code>getContent</code> method to determine the type of the remote
+ * object; subclasses may find it convenient to override the
+ * <code>getContentType</code> method.
  * <p>
- * In the common case, all of the pre-connection parameters and 
- * general request properties can be ignored: the pre-connection 
+ * In the common case, all of the pre-connection parameters and
+ * general request properties can be ignored: the pre-connection
  * parameters and request properties default to sensible values. For
  * most clients of this interface, there are only two interesting
  * methods: <code>getInputStream</code> and <code>getContent</code>,
@@ -129,22 +129,21 @@ import sun.net.www.MessageHeader;
  * <a href="http://www.ietf.org/rfc/rfc2616.txt">http://www.ietf.org/rfc/rfc2616.txt</a>
  * </pre></blockquote>
  *
- * Note about <code>fileNameMap</code>: In versions prior to JDK 1.1.6, 
+ * Note about <code>fileNameMap</code>: In versions prior to JDK 1.1.6,
  * field <code>fileNameMap</code> of <code>URLConnection</code> was public.
- * In JDK 1.1.6 and later, <code>fileNameMap</code> is private; accessor 
- * and mutator methods {@link #getFileNameMap() getFileNameMap} and 
+ * In JDK 1.1.6 and later, <code>fileNameMap</code> is private; accessor
+ * and mutator methods {@link #getFileNameMap() getFileNameMap} and
  * {@link #setFileNameMap(java.net.FileNameMap) setFileNameMap} are added
  * to access it.  This change is also described on the <a href=
  * "http://java.sun.com/products/jdk/1.2/compatibility.html">
  * Compatibility</a> page.
  *
- * Invoking the <tt>close()</tt> methods on the <tt>InputStream</tt> or <tt>OutputStream</tt> of an 
- * <tt>URLConnection</tt> after a request may free network resources associated with this 
- * instance, unless particular protocol specifications specify different behaviours 
+ * Invoking the <tt>close()</tt> methods on the <tt>InputStream</tt> or <tt>OutputStream</tt> of an
+ * <tt>URLConnection</tt> after a request may free network resources associated with this
+ * instance, unless particular protocol specifications specify different behaviours
  * for it.
  *
  * @author  James Gosling
- * @version %I%, %G%
  * @see     java.net.URL#openConnection()
  * @see     java.net.URLConnection#connect()
  * @see     java.net.URLConnection#getContent()
@@ -170,14 +169,14 @@ import sun.net.www.MessageHeader;
 public abstract class URLConnection {
 
    /**
-     * The URL represents the remote object on the World Wide Web to 
-     * which this connection is opened. 
+     * The URL represents the remote object on the World Wide Web to
+     * which this connection is opened.
      * <p>
-     * The value of this field can be accessed by the 
-     * <code>getURL</code> method. 
+     * The value of this field can be accessed by the
+     * <code>getURL</code> method.
      * <p>
-     * The default value of this variable is the value of the URL 
-     * argument in the <code>URLConnection</code> constructor. 
+     * The default value of this variable is the value of the URL
+     * argument in the <code>URLConnection</code> constructor.
      *
      * @see     java.net.URLConnection#getURL()
      * @see     java.net.URLConnection#url
@@ -185,14 +184,14 @@ public abstract class URLConnection {
     protected URL url;
 
    /**
-     * This variable is set by the <code>setDoInput</code> method. Its 
-     * value is returned by the <code>getDoInput</code> method. 
+     * This variable is set by the <code>setDoInput</code> method. Its
+     * value is returned by the <code>getDoInput</code> method.
      * <p>
-     * A URL connection can be used for input and/or output. Setting the 
-     * <code>doInput</code> flag to <code>true</code> indicates that 
-     * the application intends to read data from the URL connection. 
+     * A URL connection can be used for input and/or output. Setting the
+     * <code>doInput</code> flag to <code>true</code> indicates that
+     * the application intends to read data from the URL connection.
      * <p>
-     * The default value of this field is <code>true</code>. 
+     * The default value of this field is <code>true</code>.
      *
      * @see     java.net.URLConnection#getDoInput()
      * @see     java.net.URLConnection#setDoInput(boolean)
@@ -200,14 +199,14 @@ public abstract class URLConnection {
     protected boolean doInput = true;
 
    /**
-     * This variable is set by the <code>setDoOutput</code> method. Its 
-     * value is returned by the <code>getDoOutput</code> method. 
+     * This variable is set by the <code>setDoOutput</code> method. Its
+     * value is returned by the <code>getDoOutput</code> method.
      * <p>
-     * A URL connection can be used for input and/or output. Setting the 
-     * <code>doOutput</code> flag to <code>true</code> indicates 
-     * that the application intends to write data to the URL connection. 
+     * A URL connection can be used for input and/or output. Setting the
+     * <code>doOutput</code> flag to <code>true</code> indicates
+     * that the application intends to write data to the URL connection.
      * <p>
-     * The default value of this field is <code>false</code>. 
+     * The default value of this field is <code>false</code>.
      *
      * @see     java.net.URLConnection#getDoOutput()
      * @see     java.net.URLConnection#setDoOutput(boolean)
@@ -217,17 +216,17 @@ public abstract class URLConnection {
     private static boolean defaultAllowUserInteraction = false;
 
    /**
-     * If <code>true</code>, this <code>URL</code> is being examined in 
-     * a context in which it makes sense to allow user interactions such 
-     * as popping up an authentication dialog. If <code>false</code>, 
-     * then no user interaction is allowed. 
+     * If <code>true</code>, this <code>URL</code> is being examined in
+     * a context in which it makes sense to allow user interactions such
+     * as popping up an authentication dialog. If <code>false</code>,
+     * then no user interaction is allowed.
      * <p>
-     * The value of this field can be set by the 
+     * The value of this field can be set by the
      * <code>setAllowUserInteraction</code> method.
-     * Its value is returned by the 
+     * Its value is returned by the
      * <code>getAllowUserInteraction</code> method.
-     * Its default value is the value of the argument in the last invocation 
-     * of the <code>setDefaultAllowUserInteraction</code> method. 
+     * Its default value is the value of the argument in the last invocation
+     * of the <code>setDefaultAllowUserInteraction</code> method.
      *
      * @see     java.net.URLConnection#getAllowUserInteraction()
      * @see     java.net.URLConnection#setAllowUserInteraction(boolean)
@@ -238,15 +237,15 @@ public abstract class URLConnection {
     private static boolean defaultUseCaches = true;
 
    /**
-     * If <code>true</code>, the protocol is allowed to use caching 
-     * whenever it can. If <code>false</code>, the protocol must always 
-     * try to get a fresh copy of the object. 
+     * If <code>true</code>, the protocol is allowed to use caching
+     * whenever it can. If <code>false</code>, the protocol must always
+     * try to get a fresh copy of the object.
      * <p>
-     * This field is set by the <code>setUseCaches</code> method. Its 
+     * This field is set by the <code>setUseCaches</code> method. Its
      * value is returned by the <code>getUseCaches</code> method.
      * <p>
-     * Its default value is the value given in the last invocation of the 
-     * <code>setDefaultUseCaches</code> method. 
+     * Its default value is the value given in the last invocation of the
+     * <code>setDefaultUseCaches</code> method.
      *
      * @see     java.net.URLConnection#setUseCaches(boolean)
      * @see     java.net.URLConnection#getUseCaches()
@@ -255,19 +254,19 @@ public abstract class URLConnection {
     protected boolean useCaches = defaultUseCaches;
 
    /**
-     * Some protocols support skipping the fetching of the object unless 
-     * the object has been modified more recently than a certain time. 
+     * Some protocols support skipping the fetching of the object unless
+     * the object has been modified more recently than a certain time.
      * <p>
-     * A nonzero value gives a time as the number of milliseconds since 
-     * January 1, 1970, GMT. The object is fetched only if it has been 
-     * modified more recently than that time. 
+     * A nonzero value gives a time as the number of milliseconds since
+     * January 1, 1970, GMT. The object is fetched only if it has been
+     * modified more recently than that time.
      * <p>
-     * This variable is set by the <code>setIfModifiedSince</code> 
-     * method. Its value is returned by the 
+     * This variable is set by the <code>setIfModifiedSince</code>
+     * method. Its value is returned by the
      * <code>getIfModifiedSince</code> method.
      * <p>
-     * The default value of this field is <code>0</code>, indicating 
-     * that the fetching must always occur. 
+     * The default value of this field is <code>0</code>, indicating
+     * that the fetching must always occur.
      *
      * @see     java.net.URLConnection#getIfModifiedSince()
      * @see     java.net.URLConnection#setIfModifiedSince(long)
@@ -275,9 +274,9 @@ public abstract class URLConnection {
     protected long ifModifiedSince = 0;
 
    /**
-     * If <code>false</code>, this connection object has not created a 
-     * communications link to the specified URL. If <code>true</code>, 
-     * the communications link has been established. 
+     * If <code>false</code>, this connection object has not created a
+     * communications link to the specified URL. If <code>true</code>,
+     * the communications link has been established.
      */
     protected boolean connected = false;
 
@@ -306,7 +305,7 @@ public abstract class URLConnection {
      * Loads filename map (a mimetable) from a data file. It will
      * first try to load the user-specific table, defined
      * by &quot;content.types.user.table&quot; property. If that fails,
-     * it tries to load the default built-in table at 
+     * it tries to load the default built-in table at
      * lib/content-types.properties under java home.
      *
      * @return the FileNameMap
@@ -314,47 +313,47 @@ public abstract class URLConnection {
      * @see #setFileNameMap(java.net.FileNameMap)
      */
     public static synchronized FileNameMap getFileNameMap() {
-	if ((fileNameMap == null) && !fileNameMapLoaded) {
-	    fileNameMap = sun.net.www.MimeTable.loadTable();
-	    fileNameMapLoaded = true;
-	}
+        if ((fileNameMap == null) && !fileNameMapLoaded) {
+            fileNameMap = sun.net.www.MimeTable.loadTable();
+            fileNameMapLoaded = true;
+        }
 
-	return new FileNameMap() {
-	    private FileNameMap map = fileNameMap;
-	    public String getContentTypeFor(String fileName) {
-		return map.getContentTypeFor(fileName);
-	    }
-	};
+        return new FileNameMap() {
+            private FileNameMap map = fileNameMap;
+            public String getContentTypeFor(String fileName) {
+                return map.getContentTypeFor(fileName);
+            }
+        };
     }
 
     /**
      * Sets the FileNameMap.
      * <p>
      * If there is a security manager, this method first calls
-     * the security manager's <code>checkSetFactory</code> method 
-     * to ensure the operation is allowed. 
+     * the security manager's <code>checkSetFactory</code> method
+     * to ensure the operation is allowed.
      * This could result in a SecurityException.
      *
      * @param map the FileNameMap to be set
-     * @exception  SecurityException  if a security manager exists and its  
+     * @exception  SecurityException  if a security manager exists and its
      *             <code>checkSetFactory</code> method doesn't allow the operation.
      * @see        SecurityManager#checkSetFactory
      * @see #getFileNameMap()
      * @since 1.2
      */
     public static void setFileNameMap(FileNameMap map) {
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkSetFactory();
-	fileNameMap = map;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkSetFactory();
+        fileNameMap = map;
     }
 
     /**
-     * Opens a communications link to the resource referenced by this 
-     * URL, if such a connection has not already been established. 
+     * Opens a communications link to the resource referenced by this
+     * URL, if such a connection has not already been established.
      * <p>
-     * If the <code>connect</code> method is called when the connection 
-     * has already been opened (indicated by the <code>connected</code> 
-     * field having the value <code>true</code>), the call is ignored. 
+     * If the <code>connect</code> method is called when the connection
+     * has already been opened (indicated by the <code>connected</code>
+     * field having the value <code>true</code>), the call is ignored.
      * <p>
      * URLConnection objects go through two phases: first they are
      * created, then they are connected.  After being created, and
@@ -395,10 +394,10 @@ public abstract class URLConnection {
      * @since 1.5
      */
     public void setConnectTimeout(int timeout) {
-	if (timeout < 0) {
-	    throw new IllegalArgumentException("timeout can not be negative");
-	}
-	connectTimeout = timeout;
+        if (timeout < 0) {
+            throw new IllegalArgumentException("timeout can not be negative");
+        }
+        connectTimeout = timeout;
     }
 
     /**
@@ -414,7 +413,7 @@ public abstract class URLConnection {
      * @since 1.5
      */
     public int getConnectTimeout() {
-	return connectTimeout;
+        return connectTimeout;
     }
 
     /**
@@ -438,10 +437,10 @@ public abstract class URLConnection {
      * @since 1.5
      */
     public void setReadTimeout(int timeout) {
-	if (timeout < 0) {
-	    throw new IllegalArgumentException("timeout can not be negative");
-	}
-	readTimeout = timeout;
+        if (timeout < 0) {
+            throw new IllegalArgumentException("timeout can not be negative");
+        }
+        readTimeout = timeout;
     }
 
     /**
@@ -456,17 +455,17 @@ public abstract class URLConnection {
      * @since 1.5
      */
     public int getReadTimeout() {
-	return readTimeout;
+        return readTimeout;
     }
 
     /**
-     * Constructs a URL connection to the specified URL. A connection to 
-     * the object referenced by the URL is not created. 
+     * Constructs a URL connection to the specified URL. A connection to
+     * the object referenced by the URL is not created.
      *
      * @param   url   the specified URL.
      */
     protected URLConnection(URL url) {
-	this.url = url;
+        this.url = url;
     }
 
     /**
@@ -478,7 +477,7 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#url
      */
     public URL getURL() {
-	return url;
+        return url;
     }
 
     /**
@@ -489,7 +488,7 @@ public abstract class URLConnection {
      *          not known.
      */
     public int getContentLength() {
-	return getHeaderFieldInt("content-length", -1);
+        return getHeaderFieldInt("content-length", -1);
     }
 
     /**
@@ -500,7 +499,7 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getHeaderField(java.lang.String)
      */
     public String getContentType() {
-	return getHeaderField("content-type");
+        return getHeaderField("content-type");
     }
 
     /**
@@ -511,11 +510,11 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getHeaderField(java.lang.String)
      */
     public String getContentEncoding() {
-	return getHeaderField("content-encoding");
+        return getHeaderField("content-encoding");
     }
 
     /**
-     * Returns the value of the <code>expires</code> header field. 
+     * Returns the value of the <code>expires</code> header field.
      *
      * @return  the expiration date of the resource that this URL references,
      *          or 0 if not known. The value is the number of milliseconds since
@@ -523,11 +522,11 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getHeaderField(java.lang.String)
      */
     public long getExpiration() {
-	return getHeaderFieldDate("expires", 0);
+        return getHeaderFieldDate("expires", 0);
     }
 
     /**
-     * Returns the value of the <code>date</code> header field. 
+     * Returns the value of the <code>date</code> header field.
      *
      * @return  the sending date of the resource that the URL references,
      *          or <code>0</code> if not known. The value returned is the
@@ -535,11 +534,11 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getHeaderField(java.lang.String)
      */
     public long getDate() {
-	return getHeaderFieldDate("date", 0);
+        return getHeaderFieldDate("date", 0);
     }
 
     /**
-     * Returns the value of the <code>last-modified</code> header field. 
+     * Returns the value of the <code>last-modified</code> header field.
      * The result is the number of milliseconds since January 1, 1970 GMT.
      *
      * @return  the date the resource referenced by this
@@ -547,7 +546,7 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getHeaderField(java.lang.String)
      */
     public long getLastModified() {
-	return getHeaderFieldDate("last-modified", 0);
+        return getHeaderFieldDate("last-modified", 0);
     }
 
     /**
@@ -555,21 +554,21 @@ public abstract class URLConnection {
      * <p>
      * If called on a connection that sets the same header multiple times
      * with possibly different values, only the last value is returned.
-     * 
+     *
      *
      * @param   name   the name of a header field.
      * @return  the value of the named header field, or <code>null</code>
      *          if there is no such field in the header.
      */
     public String getHeaderField(String name) {
-	return null;
+        return null;
     }
 
     /**
      * Returns an unmodifiable Map of the header fields.
      * The Map keys are Strings that represent the
      * response-header field names. Each Map value is an
-     * unmodifiable List of Strings that represents 
+     * unmodifiable List of Strings that represents
      * the corresponding field values.
      *
      * @return a Map of header fields
@@ -582,10 +581,10 @@ public abstract class URLConnection {
     /**
      * Returns the value of the named field parsed as a number.
      * <p>
-     * This form of <code>getHeaderField</code> exists because some 
-     * connection types (e.g., <code>http-ng</code>) have pre-parsed 
-     * headers. Classes for that connection type can override this method 
-     * and short-circuit the parsing. 
+     * This form of <code>getHeaderField</code> exists because some
+     * connection types (e.g., <code>http-ng</code>) have pre-parsed
+     * headers. Classes for that connection type can override this method
+     * and short-circuit the parsing.
      *
      * @param   name      the name of the header field.
      * @param   Default   the default value.
@@ -594,22 +593,22 @@ public abstract class URLConnection {
      *          missing or malformed.
      */
     public int getHeaderFieldInt(String name, int Default) {
-	String value = getHeaderField(name);
-	try {
-	    return Integer.parseInt(value);
-	} catch (Exception e) { }
-	return Default;
+        String value = getHeaderField(name);
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception e) { }
+        return Default;
     }
 
     /**
      * Returns the value of the named field parsed as date.
      * The result is the number of milliseconds since January 1, 1970 GMT
-     * represented by the named field. 
+     * represented by the named field.
      * <p>
-     * This form of <code>getHeaderField</code> exists because some 
-     * connection types (e.g., <code>http-ng</code>) have pre-parsed 
-     * headers. Classes for that connection type can override this method 
-     * and short-circuit the parsing. 
+     * This form of <code>getHeaderField</code> exists because some
+     * connection types (e.g., <code>http-ng</code>) have pre-parsed
+     * headers. Classes for that connection type can override this method
+     * and short-circuit the parsing.
      *
      * @param   name     the name of the header field.
      * @param   Default   a default value.
@@ -618,51 +617,51 @@ public abstract class URLConnection {
      *          missing or malformed.
      */
     public long getHeaderFieldDate(String name, long Default) {
-	String value = getHeaderField(name);
-	try {
-	    return Date.parse(value);
-	} catch (Exception e) { }
-	return Default;
+        String value = getHeaderField(name);
+        try {
+            return Date.parse(value);
+        } catch (Exception e) { }
+        return Default;
     }
 
     /**
      * Returns the key for the <code>n</code><sup>th</sup> header field.
-     * It returns <code>null</code> if there are fewer than <code>n+1</code> fields. 
+     * It returns <code>null</code> if there are fewer than <code>n+1</code> fields.
      *
      * @param   n   an index, where n>=0
      * @return  the key for the <code>n</code><sup>th</sup> header field,
      *          or <code>null</code> if there are fewer than <code>n+1</code>
-     *		fields.
+     *          fields.
      */
     public String getHeaderFieldKey(int n) {
-	return null;
+        return null;
     }
 
     /**
-     * Returns the value for the <code>n</code><sup>th</sup> header field. 
+     * Returns the value for the <code>n</code><sup>th</sup> header field.
      * It returns <code>null</code> if there are fewer than
-     * <code>n+1</code>fields. 
+     * <code>n+1</code>fields.
      * <p>
-     * This method can be used in conjunction with the 
-     * {@link #getHeaderFieldKey(int) getHeaderFieldKey} method to iterate through all 
-     * the headers in the message. 
+     * This method can be used in conjunction with the
+     * {@link #getHeaderFieldKey(int) getHeaderFieldKey} method to iterate through all
+     * the headers in the message.
      *
      * @param   n   an index, where n>=0
      * @return  the value of the <code>n</code><sup>th</sup> header field
-     *		or <code>null</code> if there are fewer than <code>n+1</code> fields
+     *          or <code>null</code> if there are fewer than <code>n+1</code> fields
      * @see     java.net.URLConnection#getHeaderFieldKey(int)
      */
     public String getHeaderField(int n) {
-	return null;
+        return null;
     }
 
     /**
-     * Retrieves the contents of this URL connection. 
+     * Retrieves the contents of this URL connection.
      * <p>
-     * This method first determines the content type of the object by 
-     * calling the <code>getContentType</code> method. If this is 
-     * the first time that the application has seen that specific content 
-     * type, a content handler for that content type is created: 
+     * This method first determines the content type of the object by
+     * calling the <code>getContentType</code> method. If this is
+     * the first time that the application has seen that specific content
+     * type, a content handler for that content type is created:
      * <ol>
      * <li>If the application has set up a content handler factory instance
      *     using the <code>setContentHandlerFactory</code> method, the
@@ -704,18 +703,18 @@ public abstract class URLConnection {
         // so that FileNotFoundException has a chance to be thrown up
         // from here without being caught.
         getInputStream();
-	return getContentHandler().getContent(this);
+        return getContentHandler().getContent(this);
     }
 
     /**
-     * Retrieves the contents of this URL connection. 
+     * Retrieves the contents of this URL connection.
      *
-     * @param classes the <code>Class</code> array 
+     * @param classes the <code>Class</code> array
      * indicating the requested types
      * @return     the object fetched that is the first match of the type
-     *               specified in the classes array. null if none of 
+     *               specified in the classes array. null if none of
      *               the requested types are supported.
-     *               The <code>instanceof</code> operator should be used to 
+     *               The <code>instanceof</code> operator should be used to
      *               determine the specific kind of object returned.
      * @exception  IOException              if an I/O error occurs while
      *               getting the content.
@@ -732,19 +731,19 @@ public abstract class URLConnection {
         // so that FileNotFoundException has a chance to be thrown up
         // from here without being caught.
         getInputStream();
-	return getContentHandler().getContent(this, classes);
+        return getContentHandler().getContent(this, classes);
     }
 
-    /**  
+    /**
      * Returns a permission object representing the permission
      * necessary to make the connection represented by this
      * object. This method returns null if no permission is
      * required to make the connection. By default, this method
      * returns <code>java.security.AllPermission</code>. Subclasses
      * should override this method and return the permission
-     * that best represents the permission required to make a 
+     * that best represents the permission required to make a
      * a connection to the URL. For example, a <code>URLConnection</code>
-     * representing a <code>file:</code> URL would return a 
+     * representing a <code>file:</code> URL would return a
      * <code>java.io.FilePermission</code> object.
      *
      * <p>The permission returned may dependent upon the state of the
@@ -755,7 +754,7 @@ public abstract class URLConnection {
      * the connection will represent the permission needed to connect
      * to foo.com, while the permission returned after connecting will
      * be to bar.com.
-     * 
+     *
      * <p>Permissions are generally used for two purposes: to protect
      * caches of objects obtained through URLConnections, and to check
      * the right of a recipient to learn about a particular URL. In
@@ -768,14 +767,14 @@ public abstract class URLConnection {
      *
      * @return the permission object representing the permission
      * necessary to make the connection represented by this
-     * URLConnection. 
+     * URLConnection.
      *
      * @exception IOException if the computation of the permission
      * requires network or file I/O and an exception occurs while
-     * computing it.  
+     * computing it.
      */
     public Permission getPermission() throws IOException {
-	return SecurityConstants.ALL_PERMISSION;
+        return SecurityConstants.ALL_PERMISSION;
     }
 
     /**
@@ -794,7 +793,7 @@ public abstract class URLConnection {
      * @see #getReadTimeout()
      */
     public InputStream getInputStream() throws IOException {
-	throw new UnknownServiceException("protocol doesn't support input");
+        throw new UnknownServiceException("protocol doesn't support input");
     }
 
     /**
@@ -807,7 +806,7 @@ public abstract class URLConnection {
      *               output.
      */
     public OutputStream getOutputStream() throws IOException {
-	throw new UnknownServiceException("protocol doesn't support output");
+        throw new UnknownServiceException("protocol doesn't support output");
     }
 
     /**
@@ -816,12 +815,12 @@ public abstract class URLConnection {
      * @return  a string representation of this <code>URLConnection</code>.
      */
     public String toString() {
-	return this.getClass().getName() + ":" + url;
+        return this.getClass().getName() + ":" + url;
     }
 
     /**
-     * Sets the value of the <code>doInput</code> field for this 
-     * <code>URLConnection</code> to the specified value. 
+     * Sets the value of the <code>doInput</code> field for this
+     * <code>URLConnection</code> to the specified value.
      * <p>
      * A URL connection can be used for input and/or output.  Set the DoInput
      * flag to true if you intend to use the URL connection for input,
@@ -833,9 +832,9 @@ public abstract class URLConnection {
      * @see #getDoInput()
      */
     public void setDoInput(boolean doinput) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	doInput = doinput;
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        doInput = doinput;
     }
 
     /**
@@ -847,12 +846,12 @@ public abstract class URLConnection {
      * @see     #setDoInput(boolean)
      */
     public boolean getDoInput() {
-	return doInput;
+        return doInput;
     }
 
     /**
-     * Sets the value of the <code>doOutput</code> field for this 
-     * <code>URLConnection</code> to the specified value. 
+     * Sets the value of the <code>doOutput</code> field for this
+     * <code>URLConnection</code> to the specified value.
      * <p>
      * A URL connection can be used for input and/or output.  Set the DoOutput
      * flag to true if you intend to use the URL connection for output,
@@ -863,9 +862,9 @@ public abstract class URLConnection {
      * @see #getDoOutput()
      */
     public void setDoOutput(boolean dooutput) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	doOutput = dooutput;
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        doOutput = dooutput;
     }
 
     /**
@@ -877,21 +876,21 @@ public abstract class URLConnection {
      * @see     #setDoOutput(boolean)
      */
     public boolean getDoOutput() {
-	return doOutput;
+        return doOutput;
     }
 
     /**
-     * Set the value of the <code>allowUserInteraction</code> field of 
-     * this <code>URLConnection</code>. 
+     * Set the value of the <code>allowUserInteraction</code> field of
+     * this <code>URLConnection</code>.
      *
      * @param   allowuserinteraction   the new value.
      * @throws IllegalStateException if already connected
      * @see     #getAllowUserInteraction()
      */
     public void setAllowUserInteraction(boolean allowuserinteraction) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	allowUserInteraction = allowuserinteraction;
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        allowUserInteraction = allowuserinteraction;
     }
 
     /**
@@ -903,19 +902,19 @@ public abstract class URLConnection {
      * @see     #setAllowUserInteraction(boolean)
      */
     public boolean getAllowUserInteraction() {
-	return allowUserInteraction;
+        return allowUserInteraction;
     }
 
     /**
-     * Sets the default value of the 
-     * <code>allowUserInteraction</code> field for all future 
-     * <code>URLConnection</code> objects to the specified value. 
+     * Sets the default value of the
+     * <code>allowUserInteraction</code> field for all future
+     * <code>URLConnection</code> objects to the specified value.
      *
      * @param   defaultallowuserinteraction   the new value.
      * @see     #getDefaultAllowUserInteraction()
      */
     public static void setDefaultAllowUserInteraction(boolean defaultallowuserinteraction) {
-	defaultAllowUserInteraction = defaultallowuserinteraction;
+        defaultAllowUserInteraction = defaultallowuserinteraction;
     }
 
     /**
@@ -931,12 +930,12 @@ public abstract class URLConnection {
      * @see     #setDefaultAllowUserInteraction(boolean)
      */
     public static boolean getDefaultAllowUserInteraction() {
-	return defaultAllowUserInteraction;
+        return defaultAllowUserInteraction;
     }
 
     /**
-     * Sets the value of the <code>useCaches</code> field of this 
-     * <code>URLConnection</code> to the specified value. 
+     * Sets the value of the <code>useCaches</code> field of this
+     * <code>URLConnection</code> to the specified value.
      * <p>
      * Some protocols do caching of documents.  Occasionally, it is important
      * to be able to "tunnel through" and ignore the caches (e.g., the
@@ -946,15 +945,15 @@ public abstract class URLConnection {
      *  The default value comes from DefaultUseCaches, which defaults to
      * true.
      *
-     * @param usecaches a <code>boolean</code> indicating whether 
+     * @param usecaches a <code>boolean</code> indicating whether
      * or not to allow caching
      * @throws IllegalStateException if already connected
      * @see #getUseCaches()
      */
     public void setUseCaches(boolean usecaches) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	useCaches = usecaches;
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        useCaches = usecaches;
     }
 
     /**
@@ -966,11 +965,11 @@ public abstract class URLConnection {
      * @see #setUseCaches(boolean)
      */
     public boolean getUseCaches() {
-	return useCaches;
+        return useCaches;
     }
 
     /**
-     * Sets the value of the <code>ifModifiedSince</code> field of 
+     * Sets the value of the <code>ifModifiedSince</code> field of
      * this <code>URLConnection</code> to the specified value.
      *
      * @param   ifmodifiedsince   the new value.
@@ -978,9 +977,9 @@ public abstract class URLConnection {
      * @see     #getIfModifiedSince()
      */
     public void setIfModifiedSince(long ifmodifiedsince) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	ifModifiedSince = ifmodifiedsince;
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        ifModifiedSince = ifmodifiedsince;
     }
 
     /**
@@ -990,7 +989,7 @@ public abstract class URLConnection {
      * @see #setIfModifiedSince(long)
      */
     public long getIfModifiedSince() {
-	return ifModifiedSince;
+        return ifModifiedSince;
     }
 
    /**
@@ -1006,18 +1005,18 @@ public abstract class URLConnection {
      * @see     #setDefaultUseCaches(boolean)
      */
     public boolean getDefaultUseCaches() {
-	return defaultUseCaches;
+        return defaultUseCaches;
     }
 
    /**
-     * Sets the default value of the <code>useCaches</code> field to the 
-     * specified value. 
+     * Sets the default value of the <code>useCaches</code> field to the
+     * specified value.
      *
      * @param   defaultusecaches   the new value.
      * @see     #getDefaultUseCaches()
      */
     public void setDefaultUseCaches(boolean defaultusecaches) {
-	defaultUseCaches = defaultusecaches;
+        defaultUseCaches = defaultusecaches;
     }
 
     /**
@@ -1037,15 +1036,15 @@ public abstract class URLConnection {
      * @see #getRequestProperty(java.lang.String)
      */
     public void setRequestProperty(String key, String value) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	if (key == null) 
-	    throw new NullPointerException ("key is null");
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        if (key == null)
+            throw new NullPointerException ("key is null");
 
         if (requests == null)
             requests = new MessageHeader();
 
-	requests.set(key, value);
+        requests.set(key, value);
     }
 
     /**
@@ -1062,15 +1061,15 @@ public abstract class URLConnection {
      * @since 1.4
      */
     public void addRequestProperty(String key, String value) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
-	if (key == null) 
-	    throw new NullPointerException ("key is null");
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        if (key == null)
+            throw new NullPointerException ("key is null");
 
-	if (requests == null)
-	    requests = new MessageHeader();
+        if (requests == null)
+            requests = new MessageHeader();
 
-	requests.add(key, value);
+        requests.add(key, value);
     }
 
 
@@ -1085,21 +1084,21 @@ public abstract class URLConnection {
      * @see #setRequestProperty(java.lang.String, java.lang.String)
      */
     public String getRequestProperty(String key) {
-	if (connected)
-	    throw new IllegalStateException("Already connected");
+        if (connected)
+            throw new IllegalStateException("Already connected");
 
-	if (requests == null)
-	    return null;
+        if (requests == null)
+            return null;
 
-	return requests.findValue(key);
+        return requests.findValue(key);
     }
 
     /**
      * Returns an unmodifiable Map of general request
      * properties for this connection. The Map keys
      * are Strings that represent the request-header
-     * field names. Each Map value is a unmodifiable List 
-     * of Strings that represents the corresponding 
+     * field names. Each Map value is a unmodifiable List
+     * of Strings that represents the corresponding
      * field values.
      *
      * @return  a Map of the general request properties for this connection.
@@ -1110,22 +1109,22 @@ public abstract class URLConnection {
         if (connected)
             throw new IllegalStateException("Already connected");
 
-	if (requests == null)
-	    return Collections.EMPTY_MAP;
+        if (requests == null)
+            return Collections.EMPTY_MAP;
 
-	return requests.getHeaders(null);
+        return requests.getHeaders(null);
     }
 
     /**
-     * Sets the default value of a general request property. When a 
-     * <code>URLConnection</code> is created, it is initialized with 
-     * these properties. 
+     * Sets the default value of a general request property. When a
+     * <code>URLConnection</code> is created, it is initialized with
+     * these properties.
      *
      * @param   key     the keyword by which the request is known
      *                  (e.g., "<code>accept</code>").
      * @param   value   the value associated with the key.
      *
-     * @see java.net.URLConnection#setRequestProperty(java.lang.String,java.lang.String) 
+     * @see java.net.URLConnection#setRequestProperty(java.lang.String,java.lang.String)
      *
      * @deprecated The instance specific setRequestProperty method
      * should be used after an appropriate instance of URLConnection
@@ -1138,11 +1137,11 @@ public abstract class URLConnection {
     }
 
     /**
-     * Returns the value of the default request property. Default request 
-     * properties are set for every connection. 
+     * Returns the value of the default request property. Default request
+     * properties are set for every connection.
      *
      * @param key the keyword by which the request is known (e.g., "accept").
-     * @return  the value of the default request property 
+     * @return  the value of the default request property
      * for the specified key.
      *
      * @see java.net.URLConnection#getRequestProperty(java.lang.String)
@@ -1155,7 +1154,7 @@ public abstract class URLConnection {
      */
     @Deprecated
     public static String getDefaultRequestProperty(String key) {
-	return null;
+        return null;
     }
 
     /**
@@ -1164,34 +1163,34 @@ public abstract class URLConnection {
     static ContentHandlerFactory factory;
 
     /**
-     * Sets the <code>ContentHandlerFactory</code> of an 
-     * application. It can be called at most once by an application. 
+     * Sets the <code>ContentHandlerFactory</code> of an
+     * application. It can be called at most once by an application.
      * <p>
-     * The <code>ContentHandlerFactory</code> instance is used to 
-     * construct a content handler from a content type 
+     * The <code>ContentHandlerFactory</code> instance is used to
+     * construct a content handler from a content type
      * <p>
      * If there is a security manager, this method first calls
-     * the security manager's <code>checkSetFactory</code> method 
-     * to ensure the operation is allowed. 
+     * the security manager's <code>checkSetFactory</code> method
+     * to ensure the operation is allowed.
      * This could result in a SecurityException.
      *
      * @param      fac   the desired factory.
      * @exception  Error  if the factory has already been defined.
-     * @exception  SecurityException  if a security manager exists and its  
+     * @exception  SecurityException  if a security manager exists and its
      *             <code>checkSetFactory</code> method doesn't allow the operation.
      * @see        java.net.ContentHandlerFactory
      * @see        java.net.URLConnection#getContent()
      * @see        SecurityManager#checkSetFactory
      */
     public static synchronized void setContentHandlerFactory(ContentHandlerFactory fac) {
-	if (factory != null) {
-	    throw new Error("factory already defined");
-	}
-	SecurityManager security = System.getSecurityManager();
-	if (security != null) {
-	    security.checkSetFactory();
-	}
-	factory = fac;
+        if (factory != null) {
+            throw new Error("factory already defined");
+        }
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkSetFactory();
+        }
+        factory = fac;
     }
 
     private static Hashtable handlers = new Hashtable();
@@ -1204,29 +1203,29 @@ public abstract class URLConnection {
     synchronized ContentHandler getContentHandler()
     throws UnknownServiceException
     {
-	String contentType = stripOffParameters(getContentType());
-	ContentHandler handler = null;
-	if (contentType == null)
-	    throw new UnknownServiceException("no content-type");
-	try {
-	    handler = (ContentHandler) handlers.get(contentType);
-	    if (handler != null)
-		return handler;
-	} catch(Exception e) {
-	}
+        String contentType = stripOffParameters(getContentType());
+        ContentHandler handler = null;
+        if (contentType == null)
+            throw new UnknownServiceException("no content-type");
+        try {
+            handler = (ContentHandler) handlers.get(contentType);
+            if (handler != null)
+                return handler;
+        } catch(Exception e) {
+        }
 
-	if (factory != null)
-	    handler = factory.createContentHandler(contentType);
-	if (handler == null) {
-	    try {
-		handler = lookupContentHandlerClassFor(contentType);
-	    } catch(Exception e) {
-		e.printStackTrace();
-		handler = UnknownContentHandlerP;
-	    }
-	    handlers.put(contentType, handler);
-	}
-	return handler;
+        if (factory != null)
+            handler = factory.createContentHandler(contentType);
+        if (handler == null) {
+            try {
+                handler = lookupContentHandlerClassFor(contentType);
+            } catch(Exception e) {
+                e.printStackTrace();
+                handler = UnknownContentHandlerP;
+            }
+            handlers.put(contentType, handler);
+        }
+        return handler;
     }
 
     /*
@@ -1236,14 +1235,14 @@ public abstract class URLConnection {
      */
     private String stripOffParameters(String contentType)
     {
-	if (contentType == null)
-	    return null;
-	int index = contentType.indexOf(';');
+        if (contentType == null)
+            return null;
+        int index = contentType.indexOf(';');
 
-	if (index > 0)
-	    return contentType.substring(0, index);
-	else
-	    return contentType;
+        if (index > 0)
+            return contentType.substring(0, index);
+        else
+            return contentType;
     }
 
     private static final String contentClassPrefix = "sun.net.www.content";
@@ -1251,8 +1250,8 @@ public abstract class URLConnection {
 
     /**
      * Looks for a content handler in a user-defineable set of places.
-     * By default it looks in sun.net.www.content, but users can define a 
-     * vertical-bar delimited set of class prefixes to search through in 
+     * By default it looks in sun.net.www.content, but users can define a
+     * vertical-bar delimited set of class prefixes to search through in
      * addition by defining the java.content.handler.pkgs property.
      * The class name must be of the form:
      * <pre>
@@ -1262,38 +1261,38 @@ public abstract class URLConnection {
      * </pre>
      */
     private ContentHandler lookupContentHandlerClassFor(String contentType)
-	throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-	String contentHandlerClassName = typeToPackageName(contentType);
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        String contentHandlerClassName = typeToPackageName(contentType);
 
-	String contentHandlerPkgPrefixes =getContentHandlerPkgPrefixes();
+        String contentHandlerPkgPrefixes =getContentHandlerPkgPrefixes();
 
-	StringTokenizer packagePrefixIter =
-	    new StringTokenizer(contentHandlerPkgPrefixes, "|");
-	
-	while (packagePrefixIter.hasMoreTokens()) {
-	    String packagePrefix = packagePrefixIter.nextToken().trim();
+        StringTokenizer packagePrefixIter =
+            new StringTokenizer(contentHandlerPkgPrefixes, "|");
 
-	    try {
-		String clsName = packagePrefix + "." + contentHandlerClassName;
-		Class cls = null;
-		try {
-		    cls = Class.forName(clsName);
-		} catch (ClassNotFoundException e) {
-		    ClassLoader cl = ClassLoader.getSystemClassLoader();
-		    if (cl != null) {
-			cls = cl.loadClass(clsName);
-		    }
-		}
-		if (cls != null) {
-		    ContentHandler handler = 
-			(ContentHandler)cls.newInstance();
-		    return handler;
-		}
-	    } catch(Exception e) {
-	    }
-	}
-	
-	return UnknownContentHandlerP;
+        while (packagePrefixIter.hasMoreTokens()) {
+            String packagePrefix = packagePrefixIter.nextToken().trim();
+
+            try {
+                String clsName = packagePrefix + "." + contentHandlerClassName;
+                Class cls = null;
+                try {
+                    cls = Class.forName(clsName);
+                } catch (ClassNotFoundException e) {
+                    ClassLoader cl = ClassLoader.getSystemClassLoader();
+                    if (cl != null) {
+                        cls = cl.loadClass(clsName);
+                    }
+                }
+                if (cls != null) {
+                    ContentHandler handler =
+                        (ContentHandler)cls.newInstance();
+                    return handler;
+                }
+            } catch(Exception e) {
+            }
+        }
+
+        return UnknownContentHandlerP;
     }
 
     /**
@@ -1302,22 +1301,22 @@ public abstract class URLConnection {
      * be returned as "text.html"
      */
     private String typeToPackageName(String contentType) {
-	// make sure we canonicalize the class name: all lower case
-	contentType = contentType.toLowerCase();
-	int len = contentType.length();
-	char nm[] = new char[len];
-	contentType.getChars(0, len, nm, 0);
-	for (int i = 0; i < len; i++) {
-	    char c = nm[i];
-	    if (c == '/') {
-		nm[i] = '.';
-	    } else if (!('A' <= c && c <= 'Z' ||
-		       'a' <= c && c <= 'z' ||
-		       '0' <= c && c <= '9')) {
-		nm[i] = '_';
-	    }
-	}
-	return new String(nm);
+        // make sure we canonicalize the class name: all lower case
+        contentType = contentType.toLowerCase();
+        int len = contentType.length();
+        char nm[] = new char[len];
+        contentType.getChars(0, len, nm, 0);
+        for (int i = 0; i < len; i++) {
+            char c = nm[i];
+            if (c == '/') {
+                nm[i] = '.';
+            } else if (!('A' <= c && c <= 'Z' ||
+                       'a' <= c && c <= 'z' ||
+                       '0' <= c && c <= '9')) {
+                nm[i] = '_';
+            }
+        }
+        return new String(nm);
     }
 
 
@@ -1329,21 +1328,21 @@ public abstract class URLConnection {
      * the last one on the returned package list.
      */
     private String getContentHandlerPkgPrefixes() {
-	String packagePrefixList = AccessController.doPrivileged(
+        String packagePrefixList = AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction(contentPathProp, ""));
 
-	if (packagePrefixList != "") {
-	    packagePrefixList += "|";
-	}
-	
-	return packagePrefixList + contentClassPrefix;
+        if (packagePrefixList != "") {
+            packagePrefixList += "|";
+        }
+
+        return packagePrefixList + contentClassPrefix;
     }
 
     /**
-     * Tries to determine the content type of an object, based 
+     * Tries to determine the content type of an object, based
      * on the specified "file" component of a URL.
-     * This is a convenience method that can be used by 
-     * subclasses that override the <code>getContentType</code> method. 
+     * This is a convenience method that can be used by
+     * subclasses that override the <code>getContentType</code> method.
      *
      * @param   fname   a filename.
      * @return  a guess as to what the content type of the object is,
@@ -1351,19 +1350,19 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#getContentType()
      */
     public static String guessContentTypeFromName(String fname) {
-	return getFileNameMap().getContentTypeFor(fname);
+        return getFileNameMap().getContentTypeFor(fname);
     }
 
     /**
-     * Tries to determine the type of an input stream based on the 
-     * characters at the beginning of the input stream. This method can 
-     * be used by subclasses that override the 
-     * <code>getContentType</code> method. 
+     * Tries to determine the type of an input stream based on the
+     * characters at the beginning of the input stream. This method can
+     * be used by subclasses that override the
+     * <code>getContentType</code> method.
      * <p>
-     * Ideally, this routine would not be needed. But many 
-     * <code>http</code> servers return the incorrect content type; in 
-     * addition, there are many nonstandard extensions. Direct inspection 
-     * of the bytes to determine the content type is often more accurate 
+     * Ideally, this routine would not be needed. But many
+     * <code>http</code> servers return the incorrect content type; in
+     * addition, there are many nonstandard extensions. Direct inspection
+     * of the bytes to determine the content type is often more accurate
      * than believing the content type claimed by the <code>http</code> server.
      *
      * @param      is   an input stream that supports marks.
@@ -1376,90 +1375,90 @@ public abstract class URLConnection {
      * @see        java.net.URLConnection#getContentType()
      */
     static public String guessContentTypeFromStream(InputStream is)
-			throws IOException {
-	// If we can't read ahead safely, just give up on guessing
-	if (!is.markSupported())
-	    return null;
+                        throws IOException {
+        // If we can't read ahead safely, just give up on guessing
+        if (!is.markSupported())
+            return null;
 
-	is.mark(12);
-	int c1 = is.read();
-	int c2 = is.read();
-	int c3 = is.read();
-	int c4 = is.read();
-	int c5 = is.read();
-	int c6 = is.read();
-	int c7 = is.read();
-	int c8 = is.read();
-	int c9 = is.read();
-	int c10 = is.read();
-	int c11 = is.read();
-	is.reset();
+        is.mark(12);
+        int c1 = is.read();
+        int c2 = is.read();
+        int c3 = is.read();
+        int c4 = is.read();
+        int c5 = is.read();
+        int c6 = is.read();
+        int c7 = is.read();
+        int c8 = is.read();
+        int c9 = is.read();
+        int c10 = is.read();
+        int c11 = is.read();
+        is.reset();
 
-	if (c1 == 0xCA && c2 == 0xFE && c3 == 0xBA && c4 == 0xBE) {
-	    return "application/java-vm";
-	}
+        if (c1 == 0xCA && c2 == 0xFE && c3 == 0xBA && c4 == 0xBE) {
+            return "application/java-vm";
+        }
 
-	if (c1 == 0xAC && c2 == 0xED) {
-	    // next two bytes are version number, currently 0x00 0x05
-	    return "application/x-java-serialized-object";
-	}
+        if (c1 == 0xAC && c2 == 0xED) {
+            // next two bytes are version number, currently 0x00 0x05
+            return "application/x-java-serialized-object";
+        }
 
-	if (c1 == '<') {
-	    if (c2 == '!'
-		|| ((c2 == 'h' && (c3 == 't' && c4 == 'm' && c5 == 'l' ||
-				   c3 == 'e' && c4 == 'a' && c5 == 'd') ||
-		(c2 == 'b' && c3 == 'o' && c4 == 'd' && c5 == 'y'))) ||
-		((c2 == 'H' && (c3 == 'T' && c4 == 'M' && c5 == 'L' ||
-				c3 == 'E' && c4 == 'A' && c5 == 'D') ||
-		(c2 == 'B' && c3 == 'O' && c4 == 'D' && c5 == 'Y')))) {
-		return "text/html";
-	    }
+        if (c1 == '<') {
+            if (c2 == '!'
+                || ((c2 == 'h' && (c3 == 't' && c4 == 'm' && c5 == 'l' ||
+                                   c3 == 'e' && c4 == 'a' && c5 == 'd') ||
+                (c2 == 'b' && c3 == 'o' && c4 == 'd' && c5 == 'y'))) ||
+                ((c2 == 'H' && (c3 == 'T' && c4 == 'M' && c5 == 'L' ||
+                                c3 == 'E' && c4 == 'A' && c5 == 'D') ||
+                (c2 == 'B' && c3 == 'O' && c4 == 'D' && c5 == 'Y')))) {
+                return "text/html";
+            }
 
-	    if (c2 == '?' && c3 == 'x' && c4 == 'm' && c5 == 'l' && c6 == ' ') {
-		return "application/xml";
-	    }
-	}
+            if (c2 == '?' && c3 == 'x' && c4 == 'm' && c5 == 'l' && c6 == ' ') {
+                return "application/xml";
+            }
+        }
 
-	// big and little endian UTF-16 encodings, with byte order mark
-	if (c1 == 0xfe && c2 == 0xff) {
-	    if (c3 == 0 && c4 == '<' && c5 == 0 && c6 == '?' &&
-		c7 == 0 && c8 == 'x') {
-		return "application/xml";
-	    }
-	}
+        // big and little endian UTF-16 encodings, with byte order mark
+        if (c1 == 0xfe && c2 == 0xff) {
+            if (c3 == 0 && c4 == '<' && c5 == 0 && c6 == '?' &&
+                c7 == 0 && c8 == 'x') {
+                return "application/xml";
+            }
+        }
 
-	if (c1 == 0xff && c2 == 0xfe) {
-	    if (c3 == '<' && c4 == 0 && c5 == '?' && c6 == 0 &&
-		c7 == 'x' && c8 == 0) {
-		return "application/xml";
-	    }
-	}
+        if (c1 == 0xff && c2 == 0xfe) {
+            if (c3 == '<' && c4 == 0 && c5 == '?' && c6 == 0 &&
+                c7 == 'x' && c8 == 0) {
+                return "application/xml";
+            }
+        }
 
-	if (c1 == 'G' && c2 == 'I' && c3 == 'F' && c4 == '8') {
-	    return "image/gif";
-	}
+        if (c1 == 'G' && c2 == 'I' && c3 == 'F' && c4 == '8') {
+            return "image/gif";
+        }
 
-	if (c1 == '#' && c2 == 'd' && c3 == 'e' && c4 == 'f') {
-	    return "image/x-bitmap";
-	}
+        if (c1 == '#' && c2 == 'd' && c3 == 'e' && c4 == 'f') {
+            return "image/x-bitmap";
+        }
 
-	if (c1 == '!' && c2 == ' ' && c3 == 'X' && c4 == 'P' &&
-			c5 == 'M' && c6 == '2') {
-	    return "image/x-pixmap";
-	}
+        if (c1 == '!' && c2 == ' ' && c3 == 'X' && c4 == 'P' &&
+                        c5 == 'M' && c6 == '2') {
+            return "image/x-pixmap";
+        }
 
-	if (c1 == 137 && c2 == 80 && c3 == 78 &&
-		c4 == 71 && c5 == 13 && c6 == 10 &&
-		c7 == 26 && c8 == 10) {
-	    return "image/png";
-	}
+        if (c1 == 137 && c2 == 80 && c3 == 78 &&
+                c4 == 71 && c5 == 13 && c6 == 10 &&
+                c7 == 26 && c8 == 10) {
+            return "image/png";
+        }
 
-	if (c1 == 0xFF && c2 == 0xD8 && c3 == 0xFF) {
-	    if (c4 == 0xE0) {
-	        return "image/jpeg";
-	    }
+        if (c1 == 0xFF && c2 == 0xD8 && c3 == 0xFF) {
+            if (c4 == 0xE0) {
+                return "image/jpeg";
+            }
 
-	    /**
+            /**
              * File format used by digital cameras to store images.
              * Exif Format can be read by any application supporting
              * JPEG. Exif Spec can be found at:
@@ -1471,38 +1470,38 @@ public abstract class URLConnection {
                 return "image/jpeg";
             }
 
-	    if (c4 == 0xEE) {
-		return "image/jpg";
-	    }
-	}
+            if (c4 == 0xEE) {
+                return "image/jpg";
+            }
+        }
 
-	if (c1 == 0xD0 && c2 == 0xCF && c3 == 0x11 && c4 == 0xE0 &&
-	    c5 == 0xA1 && c6 == 0xB1 && c7 == 0x1A && c8 == 0xE1) {
+        if (c1 == 0xD0 && c2 == 0xCF && c3 == 0x11 && c4 == 0xE0 &&
+            c5 == 0xA1 && c6 == 0xB1 && c7 == 0x1A && c8 == 0xE1) {
 
-	    /* Above is signature of Microsoft Structured Storage.
-	     * Below this, could have tests for various SS entities.
-	     * For now, just test for FlashPix.
-	     */
-	    if (checkfpx(is)) {
-		return "image/vnd.fpx";
-	    }
-	}
+            /* Above is signature of Microsoft Structured Storage.
+             * Below this, could have tests for various SS entities.
+             * For now, just test for FlashPix.
+             */
+            if (checkfpx(is)) {
+                return "image/vnd.fpx";
+            }
+        }
 
-	if (c1 == 0x2E && c2 == 0x73 && c3 == 0x6E && c4 == 0x64) {
-	    return "audio/basic";  // .au format, big endian
-	}
+        if (c1 == 0x2E && c2 == 0x73 && c3 == 0x6E && c4 == 0x64) {
+            return "audio/basic";  // .au format, big endian
+        }
 
-	if (c1 == 0x64 && c2 == 0x6E && c3 == 0x73 && c4 == 0x2E) {
-	    return "audio/basic";  // .au format, little endian
-	}
+        if (c1 == 0x64 && c2 == 0x6E && c3 == 0x73 && c4 == 0x2E) {
+            return "audio/basic";  // .au format, little endian
+        }
 
-	if (c1 == 'R' && c2 == 'I' && c3 == 'F' && c4 == 'F') {
-	    /* I don't know if this is official but evidence
-	     * suggests that .wav files start with "RIFF" - brown
-	     */
-	    return "audio/x-wav";  
-	}
-	return null;
+        if (c1 == 'R' && c2 == 'I' && c3 == 'F' && c4 == 'F') {
+            /* I don't know if this is official but evidence
+             * suggests that .wav files start with "RIFF" - brown
+             */
+            return "audio/x-wav";
+        }
+        return null;
     }
 
     /**
@@ -1518,12 +1517,12 @@ public abstract class URLConnection {
          * Lacking that, need to dig via offsets to get to the FlashPix
          * ClassID.  Details:
          *
-         * Offset to Fpx ClsID from beginning of stream should be:  
+         * Offset to Fpx ClsID from beginning of stream should be:
          *
          * FpxClsidOffset = rootEntryOffset + clsidOffset
          *
-         * where: clsidOffset = 0x50.  
-         *        rootEntryOffset = headerSize + sectorSize*sectDirStart 
+         * where: clsidOffset = 0x50.
+         *        rootEntryOffset = headerSize + sectorSize*sectDirStart
          *                          + 128*rootEntryDirectory
          *
          *        where:  headerSize = 0x200 (always)
@@ -1531,138 +1530,138 @@ public abstract class URLConnection {
          *                             which is found in the header at
          *                             offset 0x1E.
          *                sectDirStart = found in the header at offset 0x30.
-         *                rootEntryDirectory = in general, should search for 
+         *                rootEntryDirectory = in general, should search for
          *                                     directory labelled as root.
          *                                     We will assume value of 0 (i.e.,
          *                                     rootEntry is in first directory)
          */
 
-	// Mark the stream so we can reset it. 0x100 is enough for the first
-	// few reads, but the mark will have to be reset and set again once
-	// the offset to the root directory entry is computed. That offset
-	// can be very large and isn't know until the stream has been read from
-	is.mark(0x100);
+        // Mark the stream so we can reset it. 0x100 is enough for the first
+        // few reads, but the mark will have to be reset and set again once
+        // the offset to the root directory entry is computed. That offset
+        // can be very large and isn't know until the stream has been read from
+        is.mark(0x100);
 
-	// Get the byte ordering located at 0x1E. 0xFE is Intel,
-	// 0xFF is other 
-	long toSkip = (long)0x1C;
-	long posn;
+        // Get the byte ordering located at 0x1E. 0xFE is Intel,
+        // 0xFF is other
+        long toSkip = (long)0x1C;
+        long posn;
 
         if ((posn = skipForward(is, toSkip)) < toSkip) {
-	  is.reset();
-	  return false;
-	}
-	
-	int c[] = new int[16];
-	if (readBytes(c, 2, is) < 0) {
-	    is.reset();
-	    return false;
-	}
+          is.reset();
+          return false;
+        }
 
-	int byteOrder = c[0];
+        int c[] = new int[16];
+        if (readBytes(c, 2, is) < 0) {
+            is.reset();
+            return false;
+        }
 
-	posn+=2;
-	int uSectorShift;
-	if (readBytes(c, 2, is) < 0) {
-	    is.reset();
-	    return false;
-	}
+        int byteOrder = c[0];
 
-	if(byteOrder == 0xFE) {
-	    uSectorShift = c[0];
-	    uSectorShift += c[1] << 8;
-	}
-	else {
-	    uSectorShift = c[0] << 8;
-	    uSectorShift += c[1];
-	}
+        posn+=2;
+        int uSectorShift;
+        if (readBytes(c, 2, is) < 0) {
+            is.reset();
+            return false;
+        }
 
-	posn += 2;
-	toSkip = (long)0x30 - posn;
-	long skipped = 0;
-	if ((skipped = skipForward(is, toSkip)) < toSkip) {
-	  is.reset();
-	  return false;
-	}
-	posn += skipped;
+        if(byteOrder == 0xFE) {
+            uSectorShift = c[0];
+            uSectorShift += c[1] << 8;
+        }
+        else {
+            uSectorShift = c[0] << 8;
+            uSectorShift += c[1];
+        }
 
-	if (readBytes(c, 4, is) < 0) {
-	    is.reset();
-	    return false;
-	}
+        posn += 2;
+        toSkip = (long)0x30 - posn;
+        long skipped = 0;
+        if ((skipped = skipForward(is, toSkip)) < toSkip) {
+          is.reset();
+          return false;
+        }
+        posn += skipped;
 
-	int sectDirStart;
-	if(byteOrder == 0xFE) {
-	    sectDirStart = c[0];
-	    sectDirStart += c[1] << 8;
-	    sectDirStart += c[2] << 16;
-	    sectDirStart += c[3] << 24;
-	} else {
-	    sectDirStart =  c[0] << 24;
-	    sectDirStart += c[1] << 16;
-	    sectDirStart += c[2] << 8;
-	    sectDirStart += c[3];
-	}
-	posn += 4;
-	is.reset(); // Reset back to the beginning
+        if (readBytes(c, 4, is) < 0) {
+            is.reset();
+            return false;
+        }
 
-	toSkip = 0x200L + (long)(1<<uSectorShift)*sectDirStart + 0x50L;
+        int sectDirStart;
+        if(byteOrder == 0xFE) {
+            sectDirStart = c[0];
+            sectDirStart += c[1] << 8;
+            sectDirStart += c[2] << 16;
+            sectDirStart += c[3] << 24;
+        } else {
+            sectDirStart =  c[0] << 24;
+            sectDirStart += c[1] << 16;
+            sectDirStart += c[2] << 8;
+            sectDirStart += c[3];
+        }
+        posn += 4;
+        is.reset(); // Reset back to the beginning
 
-	// Sanity check!
-	if (toSkip < 0) {
-	    return false;
-	}
+        toSkip = 0x200L + (long)(1<<uSectorShift)*sectDirStart + 0x50L;
 
-	/*
-	 * How far can we skip? Is there any performance problem here?
-	 * This skip can be fairly long, at least 0x4c650 in at least
-	 * one case. Have to assume that the skip will fit in an int.
+        // Sanity check!
+        if (toSkip < 0) {
+            return false;
+        }
+
+        /*
+         * How far can we skip? Is there any performance problem here?
+         * This skip can be fairly long, at least 0x4c650 in at least
+         * one case. Have to assume that the skip will fit in an int.
          * Leave room to read whole root dir
-	 */
-	is.mark((int)toSkip+0x30);
+         */
+        is.mark((int)toSkip+0x30);
 
-	if ((skipForward(is, toSkip)) < toSkip) {
-	    is.reset();
-	    return false;
-	}
+        if ((skipForward(is, toSkip)) < toSkip) {
+            is.reset();
+            return false;
+        }
 
-	/* should be at beginning of ClassID, which is as follows
-	 * (in Intel byte order):
-	 *    00 67 61 56 54 C1 CE 11 85 53 00 AA 00 A1 F9 5B
-	 *
-	 * This is stored from Windows as long,short,short,char[8]
-	 * so for byte order changes, the order only changes for 
-	 * the first 8 bytes in the ClassID.
-	 *
-	 * Test against this, ignoring second byte (Intel) since 
-	 * this could change depending on part of Fpx file we have.
-	 */
+        /* should be at beginning of ClassID, which is as follows
+         * (in Intel byte order):
+         *    00 67 61 56 54 C1 CE 11 85 53 00 AA 00 A1 F9 5B
+         *
+         * This is stored from Windows as long,short,short,char[8]
+         * so for byte order changes, the order only changes for
+         * the first 8 bytes in the ClassID.
+         *
+         * Test against this, ignoring second byte (Intel) since
+         * this could change depending on part of Fpx file we have.
+         */
 
-	if (readBytes(c, 16, is) < 0) {
-	    is.reset();
-	    return false;
-	}
+        if (readBytes(c, 16, is) < 0) {
+            is.reset();
+            return false;
+        }
 
-	// intel byte order
-	if (byteOrder == 0xFE && 
-	    c[0] == 0x00 && c[2] == 0x61 && c[3] == 0x56 &&
-	    c[4] == 0x54 && c[5] == 0xC1 && c[6] == 0xCE &&
-	    c[7] == 0x11 && c[8] == 0x85 && c[9] == 0x53 &&
-	    c[10]== 0x00 && c[11]== 0xAA && c[12]== 0x00 &&
-	    c[13]== 0xA1 && c[14]== 0xF9 && c[15]== 0x5B) {
-	    is.reset();
-	    return true;
-	}
+        // intel byte order
+        if (byteOrder == 0xFE &&
+            c[0] == 0x00 && c[2] == 0x61 && c[3] == 0x56 &&
+            c[4] == 0x54 && c[5] == 0xC1 && c[6] == 0xCE &&
+            c[7] == 0x11 && c[8] == 0x85 && c[9] == 0x53 &&
+            c[10]== 0x00 && c[11]== 0xAA && c[12]== 0x00 &&
+            c[13]== 0xA1 && c[14]== 0xF9 && c[15]== 0x5B) {
+            is.reset();
+            return true;
+        }
 
-	// non-intel byte order
-	else if (c[3] == 0x00 && c[1] == 0x61 && c[0] == 0x56 &&
-	    c[5] == 0x54 && c[4] == 0xC1 && c[7] == 0xCE &&
-	    c[6] == 0x11 && c[8] == 0x85 && c[9] == 0x53 &&
-	    c[10]== 0x00 && c[11]== 0xAA && c[12]== 0x00 &&
-	    c[13]== 0xA1 && c[14]== 0xF9 && c[15]== 0x5B) {
-	    is.reset();
-	    return true;
-	}
+        // non-intel byte order
+        else if (c[3] == 0x00 && c[1] == 0x61 && c[0] == 0x56 &&
+            c[5] == 0x54 && c[4] == 0xC1 && c[7] == 0xCE &&
+            c[6] == 0x11 && c[8] == 0x85 && c[9] == 0x53 &&
+            c[10]== 0x00 && c[11]== 0xAA && c[12]== 0x00 &&
+            c[13]== 0xA1 && c[14]== 0xF9 && c[15]== 0x5B) {
+            is.reset();
+            return true;
+        }
         is.reset();
         return false;
     }
@@ -1670,34 +1669,34 @@ public abstract class URLConnection {
     /**
      * Tries to read the specified number of bytes from the stream
      * Returns -1, If EOF is reached before len bytes are read, returns 0
-     * otherwise 
-     */ 
-    static private int readBytes(int c[], int len, InputStream is) 
-		throws IOException {
+     * otherwise
+     */
+    static private int readBytes(int c[], int len, InputStream is)
+                throws IOException {
 
-	byte buf[] = new byte[len];
-	if (is.read(buf, 0, len) < len) {
-	    return -1;
-	}
-	
-	// fill the passed in int array
-	for (int i = 0; i < len; i++) {
-	     c[i] = buf[i] & 0xff;
-	}       
-	return 0;
-    } 
+        byte buf[] = new byte[len];
+        if (is.read(buf, 0, len) < len) {
+            return -1;
+        }
+
+        // fill the passed in int array
+        for (int i = 0; i < len; i++) {
+             c[i] = buf[i] & 0xff;
+        }
+        return 0;
+    }
 
 
     /**
      * Skips through the specified number of bytes from the stream
      * until either EOF is reached, or the specified
-     * number of bytes have been skipped 
+     * number of bytes have been skipped
      */
     static private long skipForward(InputStream is, long toSkip)
-		throws IOException {
+                throws IOException {
 
-	long eachSkip = 0;
-	long skipped = 0;
+        long eachSkip = 0;
+        long skipped = 0;
 
         while (skipped != toSkip) {
             eachSkip = is.skip(toSkip - skipped);
@@ -1712,7 +1711,7 @@ public abstract class URLConnection {
             }
             skipped += eachSkip;
         }
-	return skipped;
+        return skipped;
     }
 
 }
@@ -1720,6 +1719,6 @@ public abstract class URLConnection {
 
 class UnknownContentHandler extends ContentHandler {
     public Object getContent(URLConnection uc) throws IOException {
-	return uc.getInputStream();
+        return uc.getInputStream();
     }
 }

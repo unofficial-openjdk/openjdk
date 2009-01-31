@@ -34,7 +34,7 @@ import com.sun.org.apache.xml.internal.security.utils.UnsyncByteArrayOutputStrea
 
 /**
  * This class has been modified slightly to use java.security.MessageDigest
- * objects as input, rather than 
+ * objects as input, rather than
  * org.apache.xml.security.algorithms.MessageDigestAlgorithm objects.
  * It also optionally caches the input bytes.
  *
@@ -71,17 +71,17 @@ public class DigesterOutputStream extends OutputStream {
 
     /** @inheritDoc */
     public void write(byte[] input) {
-	write(input, 0, input.length);
+        write(input, 0, input.length);
     }
-    
+
     /** @inheritDoc */
     public void write(int input) {
-	if (buffer) {
-	    bos.write(input);
-	}
-	md.update((byte)input);
+        if (buffer) {
+            bos.write(input);
+        }
+        md.update((byte)input);
     }
-    
+
     /** @inheritDoc */
     public void write(byte[] input, int offset, int len) {
         if (buffer) {
@@ -97,12 +97,12 @@ public class DigesterOutputStream extends OutputStream {
         }
         md.update(input, offset, len);
     }
-    
+
     /**
-     * @return the digest value 
+     * @return the digest value
      */
     public byte[] getDigestValue() {
-         return md.digest();   
+         return md.digest();
     }
 
     /**

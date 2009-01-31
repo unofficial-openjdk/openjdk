@@ -36,10 +36,10 @@ import java.security.Principal;
  * may be associated with a particular <code>Subject</code>
  * to augment that <code>Subject</code> with an additional
  * identity.  Refer to the {@link javax.security.auth.Subject}
- * class for more information on how to achieve this.  
- * Authorization decisions can then be based upon 
+ * class for more information on how to achieve this.
+ * Authorization decisions can then be based upon
  * the Principals associated with a <code>Subject</code>.
- * 
+ *
  * @see java.security.Principal
  * @see javax.security.auth.Subject
  * @since 1.5
@@ -112,14 +112,14 @@ public class JMXPrincipal implements Principal, Serializable {
 
         if (this == o)
             return true;
- 
+
         if (!(o instanceof JMXPrincipal))
             return false;
         JMXPrincipal that = (JMXPrincipal)o;
 
         return (this.getName().equals(that.getName()));
     }
- 
+
     /**
      * Returns a hash code for this <code>JMXPrincipal</code>.
      *

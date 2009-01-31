@@ -44,7 +44,6 @@ import javax.accessibility.*;
 /**
  * The default model for combo boxes.
  *
- * @version %I% %G%
  * @author Arnaud Weber
  * @author Tom Santos
  */
@@ -101,9 +100,9 @@ public class DefaultComboBoxModel extends AbstractListModel implements MutableCo
      */
     public void setSelectedItem(Object anObject) {
         if ((selectedObject != null && !selectedObject.equals( anObject )) ||
-	    selectedObject == null && anObject != null) {
-	    selectedObject = anObject;
-	    fireContentsChanged(this, -1, -1);
+            selectedObject == null && anObject != null) {
+            selectedObject = anObject;
+            fireContentsChanged(this, -1, -1);
         }
     }
 
@@ -128,8 +127,8 @@ public class DefaultComboBoxModel extends AbstractListModel implements MutableCo
     /**
      * Returns the index-position of the specified object in the list.
      *
-     * @param anObject  
-     * @return an int representing the index position, where 0 is 
+     * @param anObject
+     * @return an int representing the index position, where 0 is
      *         the first position
      */
     public int getIndexOf(Object anObject) {
@@ -183,10 +182,10 @@ public class DefaultComboBoxModel extends AbstractListModel implements MutableCo
             int firstIndex = 0;
             int lastIndex = objects.size() - 1;
             objects.removeAllElements();
-	    selectedObject = null;
+            selectedObject = null;
             fireIntervalRemoved(this, firstIndex, lastIndex);
         } else {
-	    selectedObject = null;
-	}
+            selectedObject = null;
+        }
     }
 }

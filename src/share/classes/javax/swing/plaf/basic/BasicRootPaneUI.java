@@ -41,7 +41,6 @@ import sun.swing.UIAction;
  * Basic implementation of RootPaneUI, there is one shared between all
  * JRootPane instances.
  *
- * @version %I% %G%
  * @author Scott Violet
  * @since 1.3
  */
@@ -53,15 +52,15 @@ public class BasicRootPaneUI extends RootPaneUI implements
         return rootPaneUI;
     }
 
-    public void installUI(JComponent c) { 
+    public void installUI(JComponent c) {
         installDefaults((JRootPane)c);
         installComponents((JRootPane)c);
         installListeners((JRootPane)c);
         installKeyboardActions((JRootPane)c);
     }
 
-    
-    public void uninstallUI(JComponent c) { 
+
+    public void uninstallUI(JComponent c) {
         uninstallDefaults((JRootPane)c);
         uninstallComponents((JRootPane)c);
         uninstallListeners((JRootPane)c);
@@ -76,12 +75,12 @@ public class BasicRootPaneUI extends RootPaneUI implements
     }
 
     protected void installListeners(JRootPane root) {
-	root.addPropertyChangeListener(this);
+        root.addPropertyChangeListener(this);
     }
 
     protected void installKeyboardActions(JRootPane root) {
-	InputMap km = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, root);
-	SwingUtilities.replaceUIInputMap(root,
+        InputMap km = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, root);
+        SwingUtilities.replaceUIInputMap(root,
                 JComponent.WHEN_IN_FOCUSED_WINDOW, km);
         km = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
                 root);
@@ -90,7 +89,7 @@ public class BasicRootPaneUI extends RootPaneUI implements
 
         LazyActionMap.installLazyActionMap(root, BasicRootPaneUI.class,
                 "RootPane.actionMap");
-	updateDefaultButtonBindings(root);
+        updateDefaultButtonBindings(root);
     }
 
     protected void uninstallDefaults(JRootPane root) {
@@ -100,13 +99,13 @@ public class BasicRootPaneUI extends RootPaneUI implements
     }
 
     protected void uninstallListeners(JRootPane root) {
-	root.removePropertyChangeListener(this);
+        root.removePropertyChangeListener(this);
     }
 
     protected void uninstallKeyboardActions(JRootPane root) {
-	SwingUtilities.replaceUIInputMap(root, JComponent.
-				       WHEN_IN_FOCUSED_WINDOW, null);
-	SwingUtilities.replaceUIActionMap(root, null);
+        SwingUtilities.replaceUIInputMap(root, JComponent.
+                                       WHEN_IN_FOCUSED_WINDOW, null);
+        SwingUtilities.replaceUIActionMap(root, null);
     }
 
     InputMap getInputMap(int condition, JComponent c) {
@@ -115,20 +114,20 @@ public class BasicRootPaneUI extends RootPaneUI implements
                                        "RootPane.ancestorInputMap");
         }
 
-	if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW) {
-	    return createInputMap(condition, c);
-	}
-	return null;
+        if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW) {
+            return createInputMap(condition, c);
+        }
+        return null;
     }
 
     ComponentInputMap createInputMap(int condition, JComponent c) {
-	return new RootPaneInputMap(c);
+        return new RootPaneInputMap(c);
     }
 
     static void loadActionMap(LazyActionMap map) {
-	map.put(new Actions(Actions.PRESS));
-	map.put(new Actions(Actions.RELEASE));
-	map.put(new Actions(Actions.POST_POPUP));
+        map.put(new Actions(Actions.PRESS));
+        map.put(new Actions(Actions.RELEASE));
+        map.put(new Actions(Actions.POST_POPUP));
     }
 
     /**
@@ -137,21 +136,21 @@ public class BasicRootPaneUI extends RootPaneUI implements
      * <code>RootPane.defaultButtonWindowKeyBindings</code>.
      */
     void updateDefaultButtonBindings(JRootPane root) {
-	InputMap km = SwingUtilities.getUIInputMap(root, JComponent.
-					       WHEN_IN_FOCUSED_WINDOW);
-	while (km != null && !(km instanceof RootPaneInputMap)) {
-	    km = km.getParent();
-	}
-	if (km != null) {
-	    km.clear();
-	    if (root.getDefaultButton() != null) {
-		Object[] bindings = (Object[])DefaultLookup.get(root, this,
+        InputMap km = SwingUtilities.getUIInputMap(root, JComponent.
+                                               WHEN_IN_FOCUSED_WINDOW);
+        while (km != null && !(km instanceof RootPaneInputMap)) {
+            km = km.getParent();
+        }
+        if (km != null) {
+            km.clear();
+            if (root.getDefaultButton() != null) {
+                Object[] bindings = (Object[])DefaultLookup.get(root, this,
                            "RootPane.defaultButtonWindowKeyBindings");
-		if (bindings != null) {
-		    LookAndFeel.loadKeyBindings(km, bindings);
-		}
-	    }
-	}
+                if (bindings != null) {
+                    LookAndFeel.loadKeyBindings(km, bindings);
+                }
+            }
+        }
     }
 
     /**
@@ -160,13 +159,13 @@ public class BasicRootPaneUI extends RootPaneUI implements
      * reinstall the keyboard actions.
      */
     public void propertyChange(PropertyChangeEvent e) {
-	if(e.getPropertyName().equals("defaultButton")) {
-	    JRootPane rootpane = (JRootPane)e.getSource();
-	    updateDefaultButtonBindings(rootpane);
-	    if (rootpane.getClientProperty("temporaryDefaultButton") == null) {
-		rootpane.putClientProperty("initialDefaultButton", e.getNewValue());
-	    }
-	}
+        if(e.getPropertyName().equals("defaultButton")) {
+            JRootPane rootpane = (JRootPane)e.getSource();
+            updateDefaultButtonBindings(rootpane);
+            if (rootpane.getClientProperty("temporaryDefaultButton") == null) {
+                rootpane.putClientProperty("initialDefaultButton", e.getNewValue());
+            }
+        }
     }
 
 
@@ -181,7 +180,7 @@ public class BasicRootPaneUI extends RootPaneUI implements
 
         public void actionPerformed(ActionEvent evt) {
             JRootPane root = (JRootPane)evt.getSource();
-	    JButton owner = root.getDefaultButton();
+            JButton owner = root.getDefaultButton();
             String key = getName();
 
             if (key == POST_POPUP) { // Action to post popup
@@ -232,9 +231,9 @@ public class BasicRootPaneUI extends RootPaneUI implements
 
                 return false;
             }
-                
+
             if (sender != null && sender instanceof JRootPane) {
-	        JButton owner = ((JRootPane)sender).getDefaultButton();
+                JButton owner = ((JRootPane)sender).getDefaultButton();
                 return (owner != null && owner.getModel().isEnabled());
             }
             return true;
@@ -242,8 +241,8 @@ public class BasicRootPaneUI extends RootPaneUI implements
     }
 
     private static class RootPaneInputMap extends ComponentInputMapUIResource {
-	public RootPaneInputMap(JComponent c) {
-	    super(c);
-	}
+        public RootPaneInputMap(JComponent c) {
+            super(c);
+        }
     }
 }

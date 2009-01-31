@@ -64,8 +64,8 @@ jint JAWTDrawingSurfaceInfo::Init(JAWTDrawingSurface* parent)
         if (hwnd != NULL) {
             ::ReleaseDC(hwnd, hdc);
             retval = JAWT_LOCK_SURFACE_CHANGED;
-	}
-	hwnd = newHwnd;
+        }
+        hwnd = newHwnd;
         hdc = ::GetDCEx(hwnd, NULL, DCX_CACHE|DCX_CLIPCHILDREN|DCX_CLIPSIBLINGS);
     }
     clipSize = 1;
@@ -88,8 +88,8 @@ jint JAWTOffscreenDrawingSurfaceInfo::Init(JAWTOffscreenDrawingSurface* parent)
         DTRACE_PRINTLN("NULL target");
         return JAWT_LOCK_ERROR;
     }
-    Win32SDOps * ops = 
-    	(Win32SDOps *)((void*)env->GetLongField(target, jawtPDataID));
+    Win32SDOps * ops =
+        (Win32SDOps *)((void*)env->GetLongField(target, jawtPDataID));
     if (ops == NULL) {
         DTRACE_PRINTLN("NULL ops");
         return JAWT_LOCK_ERROR;
@@ -150,7 +150,7 @@ JAWT_DrawingSurfaceInfo* JNICALL JAWTDrawingSurface::GetDSI
     }
     JAWTDrawingSurface* pds = static_cast<JAWTDrawingSurface*>(ds);
     return &(pds->info);
-    
+
     CATCH_BAD_ALLOC_RET(NULL);
 }
 
@@ -180,7 +180,7 @@ jint JNICALL JAWTDrawingSurface::LockSurface
     JAWTDrawingSurface* pds = static_cast<JAWTDrawingSurface*>(ds);
     jint val = pds->info.Init(pds);
     if ((val & JAWT_LOCK_ERROR) != 0) {
-	return val;
+        return val;
     }
     val = AwtComponent::GetDrawState(pds->info.hwnd);
     AwtComponent::SetDrawState(pds->info.hwnd, 0);
@@ -203,8 +203,8 @@ void JNICALL JAWTDrawingSurface::UnlockSurface
     CATCH_BAD_ALLOC;
 }
 
-JAWTOffscreenDrawingSurface::JAWTOffscreenDrawingSurface(JNIEnv* pEnv, 
-							 jobject rTarget)
+JAWTOffscreenDrawingSurface::JAWTOffscreenDrawingSurface(JNIEnv* pEnv,
+                                                         jobject rTarget)
 {
     TRY_NO_VERIFY;
     env = pEnv;
@@ -233,10 +233,10 @@ JAWT_DrawingSurfaceInfo* JNICALL JAWTOffscreenDrawingSurface::GetDSI
         DTRACE_PRINTLN("Drawing Surface is NULL");
         return NULL;
     }
-    JAWTOffscreenDrawingSurface* pds = 
-    	static_cast<JAWTOffscreenDrawingSurface*>(ds);
+    JAWTOffscreenDrawingSurface* pds =
+        static_cast<JAWTOffscreenDrawingSurface*>(ds);
     return &(pds->info);
-    
+
     CATCH_BAD_ALLOC_RET(NULL);
 }
 
@@ -254,32 +254,32 @@ jint JNICALL JAWTOffscreenDrawingSurface::LockSurface
         DTRACE_PRINTLN("Drawing Surface is NULL");
         return JAWT_LOCK_ERROR;
     }
-    JAWTOffscreenDrawingSurface* pds = 
-    	static_cast<JAWTOffscreenDrawingSurface*>(ds);
+    JAWTOffscreenDrawingSurface* pds =
+        static_cast<JAWTOffscreenDrawingSurface*>(ds);
     jint val = pds->info.Init(pds);
     if ((val & JAWT_LOCK_ERROR) != 0) {
-	    return val;
+            return val;
     }
     DDrawSurface *ddrawSurface = pds->info.ddrawSurface;
     if (ddrawSurface == NULL) {
-	return JAWT_LOCK_ERROR;
+        return JAWT_LOCK_ERROR;
     }
     ddrawSurface->GetExclusiveAccess();
     DXSurface *dxSurface = ddrawSurface->GetDXSurface();
     if (!dxSurface) {
-	return JAWT_LOCK_ERROR;
+        return JAWT_LOCK_ERROR;
     }
     switch (dxSurface->GetVersionID()) {
     case VERSION_DX7:
-	{
-	    pds->info.dx7Surface = dxSurface->GetDDSurface();
-	    break;
-	}
+        {
+            pds->info.dx7Surface = dxSurface->GetDDSurface();
+            break;
+        }
     default:
-    	// Leave info values at default and return error
-	DTRACE_PRINTLN1("unknown jawt offscreen version: %d\n", 
-			dxSurface->GetVersionID());
-    	return JAWT_LOCK_ERROR;
+        // Leave info values at default and return error
+        DTRACE_PRINTLN1("unknown jawt offscreen version: %d\n",
+                        dxSurface->GetVersionID());
+        return JAWT_LOCK_ERROR;
     }
     return 0;
 
@@ -295,8 +295,8 @@ void JNICALL JAWTOffscreenDrawingSurface::UnlockSurface
         DTRACE_PRINTLN("Drawing Surface is NULL");
         return;
     }
-    JAWTOffscreenDrawingSurface* pds = 
-    	static_cast<JAWTOffscreenDrawingSurface*>(ds);
+    JAWTOffscreenDrawingSurface* pds =
+        static_cast<JAWTOffscreenDrawingSurface*>(ds);
     pds->info.ddrawSurface->ReleaseExclusiveAccess();
 
     CATCH_BAD_ALLOC;
@@ -311,30 +311,30 @@ extern "C" JNIEXPORT JAWT_DrawingSurface* JNICALL DSGetDrawingSurface
 
     // See if the target component is a java.awt.Component
     if (env->IsInstanceOf(target, jawtComponentClass)) {
-	return new JAWTDrawingSurface(env, target);
+        return new JAWTDrawingSurface(env, target);
     }
     // Sharing native offscreen surfaces is disabled by default in
     // this release.  Sharing is enabled via the -Dsun.java2d.offscreenSharing
     // flag.
     if (g_offscreenSharing && env->IsInstanceOf(target, jawtVImgClass)) {
-	jobject sMgr, sData;
+        jobject sMgr, sData;
         sMgr = env->GetObjectField(target, jawtSMgrID);
         if (!sMgr) {
             return NULL;
         }
-	sData = env->GetObjectField(sMgr, jawtSDataID);
-	if (!sData || !(env->IsInstanceOf(sData, jawtW32ossdClass))) {
-	    return NULL;
-	}
-	return new JAWTOffscreenDrawingSurface(env, sData);
+        sData = env->GetObjectField(sMgr, jawtSDataID);
+        if (!sData || !(env->IsInstanceOf(sData, jawtW32ossdClass))) {
+            return NULL;
+        }
+        return new JAWTOffscreenDrawingSurface(env, sData);
     } else {
-	if (!g_offscreenSharing) {
-	    DTRACE_PRINTLN(
-		"GetDrawingSurface target must be a Component");
-	} else {
-	    DTRACE_PRINTLN(
-		"GetDrawingSurface target must be a Component or VolatileImage");
-	}
+        if (!g_offscreenSharing) {
+            DTRACE_PRINTLN(
+                "GetDrawingSurface target must be a Component");
+        } else {
+            DTRACE_PRINTLN(
+                "GetDrawingSurface target must be a Component or VolatileImage");
+        }
         return NULL;
     }
 

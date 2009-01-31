@@ -55,7 +55,7 @@ class ClassDefinition implements Constants {
     protected ClassDeclaration interfaces[];
     protected ClassDefinition outerClass;
     protected MemberDefinition outerMember;
-    protected MemberDefinition innerClassMember;	// field for me in outerClass
+    protected MemberDefinition innerClassMember;        // field for me in outerClass
     protected MemberDefinition firstMember;
     protected MemberDefinition lastMember;
     protected boolean resolved;
@@ -84,7 +84,7 @@ class ClassDefinition implements Constants {
     // The saved class context is now also used in 'SourceClass.getAccessMember'.
     // Provide read-only access via this method.  Part of fix for 4098093.
     public Context getClassContext() {
-	return classContext;
+        return classContext;
     }
 
 
@@ -92,49 +92,49 @@ class ClassDefinition implements Constants {
      * Constructor
      */
     protected ClassDefinition(Object source, long where, ClassDeclaration declaration,
-			      int modifiers, IdentifierToken superClass, IdentifierToken interfaces[]) {
-	this.source = source;
-	this.where = where;
-	this.declaration = declaration;
-	this.modifiers = modifiers;
-	this.superClassId = superClass;
-	this.interfaceIds = interfaces;
+                              int modifiers, IdentifierToken superClass, IdentifierToken interfaces[]) {
+        this.source = source;
+        this.where = where;
+        this.declaration = declaration;
+        this.modifiers = modifiers;
+        this.superClassId = superClass;
+        this.interfaceIds = interfaces;
     }
 
     /**
      * Get the source of the class
      */
     public final Object getSource() {
-	return source;
+        return source;
     }
 
     /**
      * Check if there were any errors in this class.
      */
     public final boolean getError() {
-	return error;
+        return error;
     }
 
     /**
      * Mark this class to be erroneous.
      */
     public final void setError() {
-	this.error = true;
-	setNestError();
+        this.error = true;
+        setNestError();
     }
 
     /**
      * Check if there were any errors in our class nest.
      */
     public final boolean getNestError() {
-	// Check to see if our error value is set, or if any of our
-	// outer classes' error values are set.  This will work in
-	// conjunction with setError(), which sets the error value
-	// of its outer class, to yield true is any of our nest
-	// siblings has an error.  This addresses bug 4111488: either
-	// code should be generated for all classes in a nest, or
-	// none of them.
-	return nestError || ((outerClass != null) ? outerClass.getNestError() : false);
+        // Check to see if our error value is set, or if any of our
+        // outer classes' error values are set.  This will work in
+        // conjunction with setError(), which sets the error value
+        // of its outer class, to yield true is any of our nest
+        // siblings has an error.  This addresses bug 4111488: either
+        // code should be generated for all classes in a nest, or
+        // none of them.
+        return nestError || ((outerClass != null) ? outerClass.getNestError() : false);
     }
 
     /**
@@ -142,43 +142,43 @@ class ClassDefinition implements Constants {
      * erroneous.
      */
     public final void setNestError() {
-	this.nestError = true;
-	if (outerClass != null) {
-	    // If we have an outer class, set it to be erroneous as well.
-	    // This will work in conjunction with getError(), which checks
-	    // the error value of its outer class, to set the whole class
-	    // nest to be erroneous.  This address bug 4111488: either
-	    // code should be generated for all classes in a nest, or
-	    // none of them.
-	    outerClass.setNestError();
-	}
+        this.nestError = true;
+        if (outerClass != null) {
+            // If we have an outer class, set it to be erroneous as well.
+            // This will work in conjunction with getError(), which checks
+            // the error value of its outer class, to set the whole class
+            // nest to be erroneous.  This address bug 4111488: either
+            // code should be generated for all classes in a nest, or
+            // none of them.
+            outerClass.setNestError();
+        }
     }
 
     /**
      * Get the position in the input
      */
     public final long getWhere() {
-	return where;
+        return where;
     }
-    
+
     /**
      * Get the class declaration
      */
     public final ClassDeclaration getClassDeclaration() {
-	return declaration;
+        return declaration;
     }
 
     /**
      * Get the class' modifiers
      */
     public final int getModifiers() {
-	return modifiers;
+        return modifiers;
     }
     public final void subModifiers(int mod) {
-	modifiers &= ~mod;
+        modifiers &= ~mod;
     }
     public final void addModifiers(int mod) {
-	modifiers |= mod;
+        modifiers |= mod;
     }
 
     // *** DEBUG ***
@@ -188,19 +188,19 @@ class ClassDefinition implements Constants {
      * Get the class' super class
      */
     public final ClassDeclaration getSuperClass() {
-	/*---
-	if (superClass == null && superClassId != null)
-	    throw new CompilerError("getSuperClass "+superClassId);
-	// There are obscure cases where null is the right answer,
-	// in order to enable some error reporting later on.
-	// For example:  class T extends T.N { class N { } }
-	---*/
+        /*---
+        if (superClass == null && superClassId != null)
+            throw new CompilerError("getSuperClass "+superClassId);
+        // There are obscure cases where null is the right answer,
+        // in order to enable some error reporting later on.
+        // For example:  class T extends T.N { class N { } }
+        ---*/
 
-	// *** DEBUG ***
-	// This method should not be called if the superclass has not been resolved.
-	if (!supersCheckStarted) throw new CompilerError("unresolved super");
+        // *** DEBUG ***
+        // This method should not be called if the superclass has not been resolved.
+        if (!supersCheckStarted) throw new CompilerError("unresolved super");
 
-	return superClass;
+        return superClass;
     }
 
     /**
@@ -217,30 +217,30 @@ class ClassDefinition implements Constants {
      */
 
     public ClassDeclaration getSuperClass(Environment env) {
-	return getSuperClass();
+        return getSuperClass();
     }
 
     /**
      * Get the class' interfaces
      */
     public final ClassDeclaration getInterfaces()[] {
-	if (interfaces == null)  throw new CompilerError("getInterfaces");
-	return interfaces;
+        if (interfaces == null)  throw new CompilerError("getInterfaces");
+        return interfaces;
     }
 
     /**
      * Get the class' enclosing class (or null if not inner)
      */
     public final ClassDefinition getOuterClass() {
-	return outerClass;
+        return outerClass;
     }
 
     /**
      * Set the class' enclosing class.  Must be done at most once.
      */
     protected final void setOuterClass(ClassDefinition outerClass) {
-	if (this.outerClass != null)  throw new CompilerError("setOuterClass");
-	this.outerClass = outerClass;
+        if (this.outerClass != null)  throw new CompilerError("setOuterClass");
+        this.outerClass = outerClass;
     }
 
     /**
@@ -249,9 +249,9 @@ class ClassDefinition implements Constants {
      */
     protected final void setOuterMember(MemberDefinition outerMember) {
 
-	if (isStatic() || !isInnerClass())  throw new CompilerError("setOuterField");
-	if (this.outerMember != null)  throw new CompilerError("setOuterField");
-	this.outerMember = outerMember;
+        if (isStatic() || !isInnerClass())  throw new CompilerError("setOuterField");
+        if (this.outerMember != null)  throw new CompilerError("setOuterField");
+        this.outerMember = outerMember;
     }
 
     /**
@@ -261,7 +261,7 @@ class ClassDefinition implements Constants {
      * use <tt>!isTopLevel()</tt>.
      */
     public final boolean isInnerClass() {
-	return outerClass != null;
+        return outerClass != null;
     }
 
     /**
@@ -269,7 +269,7 @@ class ClassDefinition implements Constants {
      * This is false for package members and for block-local classes.
      */
     public final boolean isMember() {
-	return outerClass != null && !isLocal();
+        return outerClass != null && !isLocal();
     }
 
     /**
@@ -277,7 +277,7 @@ class ClassDefinition implements Constants {
      * or a static member of another top-level class.
      */
     public final boolean isTopLevel() {
-	return outerClass == null || isStatic() || isInterface();
+        return outerClass == null || isStatic() || isInterface();
     }
 
     /**
@@ -290,8 +290,8 @@ class ClassDefinition implements Constants {
     // isAnonymous(x) => isLocal(x).
 
     public final boolean isInsideLocal() {
-	return isLocal() ||
-	    (outerClass != null && outerClass.isInsideLocal());
+        return isLocal() ||
+            (outerClass != null && outerClass.isInsideLocal());
     }
 
     /**
@@ -300,50 +300,50 @@ class ClassDefinition implements Constants {
      * its file.
      */
     public final boolean isInsideLocalOrAnonymous() {
-	return isLocal() || isAnonymous () ||
-	    (outerClass != null && outerClass.isInsideLocalOrAnonymous());
+        return isLocal() || isAnonymous () ||
+            (outerClass != null && outerClass.isInsideLocalOrAnonymous());
     }
 
     /**
      * Return a simple identifier for this class (idNull if anonymous).
      */
     public Identifier getLocalName() {
-	if (localName != null) {
-	    return localName;
-	}
-	// This is also the name of the innerClassMember, if any:
-	return getName().getFlatName().getName();
+        if (localName != null) {
+            return localName;
+        }
+        // This is also the name of the innerClassMember, if any:
+        return getName().getFlatName().getName();
     }
 
     /**
      * Set the local name of a class.  Must be a local class.
      */
     public void setLocalName(Identifier name) {
-	if (isLocal()) {
-	    localName = name;
-	}
+        if (isLocal()) {
+            localName = name;
+        }
     }
 
     /**
      * If inner, get the field for this class in the enclosing class
      */
     public final MemberDefinition getInnerClassMember() {
-	if (outerClass == null)
-	    return null;
-	if (innerClassMember == null) {
-	    // We must find the field in the outer class.
-	    Identifier nm = getName().getFlatName().getName();
-	    for (MemberDefinition field = outerClass.getFirstMatch(nm);
-		 field != null; field = field.getNextMatch()) {
-		if (field.isInnerClass()) {
-		    innerClassMember = field;
-		    break;
-		}
-	    }
-	    if (innerClassMember == null)
-		throw new CompilerError("getInnerClassField");
-	}
-	return innerClassMember;
+        if (outerClass == null)
+            return null;
+        if (innerClassMember == null) {
+            // We must find the field in the outer class.
+            Identifier nm = getName().getFlatName().getName();
+            for (MemberDefinition field = outerClass.getFirstMatch(nm);
+                 field != null; field = field.getNextMatch()) {
+                if (field.isInnerClass()) {
+                    innerClassMember = field;
+                    break;
+                }
+            }
+            if (innerClassMember == null)
+                throw new CompilerError("getInnerClassField");
+        }
+        return innerClassMember;
     }
 
     /**
@@ -351,55 +351,55 @@ class ClassDefinition implements Constants {
      * Otherwise, return null.
      */
     public final MemberDefinition findOuterMember() {
-	return outerMember;
+        return outerMember;
     }
 
     /**
      * See if this is a (nested) static class.
      */
     public final boolean isStatic() {
-	return (modifiers & ACC_STATIC) != 0;
+        return (modifiers & ACC_STATIC) != 0;
     }
 
     /**
      * Get the class' top-level enclosing class
      */
     public final ClassDefinition getTopClass() {
-	ClassDefinition p, q;
-	for (p = this; (q = p.outerClass) != null; p = q)
-	    ;
-	return p;
+        ClassDefinition p, q;
+        for (p = this; (q = p.outerClass) != null; p = q)
+            ;
+        return p;
     }
 
     /**
      * Get the class' first field or first match
      */
     public final MemberDefinition getFirstMember() {
-	return firstMember;
+        return firstMember;
     }
     public final MemberDefinition getFirstMatch(Identifier name) {
-	return (MemberDefinition)fieldHash.get(name);
+        return (MemberDefinition)fieldHash.get(name);
     }
 
     /**
      * Get the class' name
      */
     public final Identifier getName() {
-	return declaration.getName();
+        return declaration.getName();
     }
 
     /**
      * Get the class' type
      */
     public final Type getType() {
-	return declaration.getType();
+        return declaration.getType();
     }
 
     /**
      * Get the class' documentation
      */
     public String getDocumentation() {
-	return documentation;
+        return documentation;
     }
 
     /**
@@ -408,94 +408,94 @@ class ClassDefinition implements Constants {
      * is the first word in a line.
      */
     public static boolean containsDeprecated(String documentation) {
-	if (documentation == null) {
-	    return false;
-	}
+        if (documentation == null) {
+            return false;
+        }
     doScan:
-	for (int scan = 0;
-	     (scan = documentation.indexOf(paraDeprecated, scan)) >= 0;
-	     scan += paraDeprecated.length()) {
-	    // make sure there is only whitespace between this word
-	    // and the beginning of the line
-	    for (int beg = scan-1; beg >= 0; beg--) {
-		char ch = documentation.charAt(beg);
-		if (ch == '\n' || ch == '\r') {
-		    break;	// OK
-		}
-		if (!Character.isSpace(ch)) {
-		    continue doScan;
-		}
-	    }
-	    // make sure the char after the word is space or end of line
-	    int end = scan+paraDeprecated.length();
-	    if (end < documentation.length()) {
-		char ch = documentation.charAt(end);
-		if (!(ch == '\n' || ch == '\r') && !Character.isSpace(ch)) {
-		    continue doScan;
-		}
-	    }
-	    return true;
-	}
-	return false;
+        for (int scan = 0;
+             (scan = documentation.indexOf(paraDeprecated, scan)) >= 0;
+             scan += paraDeprecated.length()) {
+            // make sure there is only whitespace between this word
+            // and the beginning of the line
+            for (int beg = scan-1; beg >= 0; beg--) {
+                char ch = documentation.charAt(beg);
+                if (ch == '\n' || ch == '\r') {
+                    break;      // OK
+                }
+                if (!Character.isSpace(ch)) {
+                    continue doScan;
+                }
+            }
+            // make sure the char after the word is space or end of line
+            int end = scan+paraDeprecated.length();
+            if (end < documentation.length()) {
+                char ch = documentation.charAt(end);
+                if (!(ch == '\n' || ch == '\r') && !Character.isSpace(ch)) {
+                    continue doScan;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public final boolean inSamePackage(ClassDeclaration c) {
-	// find out if the class stored in c is defined in the same
-	// package as the current class.
-	return inSamePackage(c.getName().getQualifier());
+        // find out if the class stored in c is defined in the same
+        // package as the current class.
+        return inSamePackage(c.getName().getQualifier());
     }
 
     public final boolean inSamePackage(ClassDefinition c) {
-	// find out if the class stored in c is defined in the same
-	// package as the current class.
-	return inSamePackage(c.getName().getQualifier());
+        // find out if the class stored in c is defined in the same
+        // package as the current class.
+        return inSamePackage(c.getName().getQualifier());
     }
 
     public final boolean inSamePackage(Identifier packageName) {
-	return (getName().getQualifier().equals(packageName));
+        return (getName().getQualifier().equals(packageName));
     }
 
     /**
      * Checks
      */
     public final boolean isInterface() {
-	return (getModifiers() & M_INTERFACE) != 0;
+        return (getModifiers() & M_INTERFACE) != 0;
     }
     public final boolean isClass() {
-	return (getModifiers() & M_INTERFACE) == 0;
+        return (getModifiers() & M_INTERFACE) == 0;
     }
     public final boolean isPublic() {
-	return (getModifiers() & M_PUBLIC) != 0;
+        return (getModifiers() & M_PUBLIC) != 0;
     }
     public final boolean isPrivate() {
-	return (getModifiers() & M_PRIVATE) != 0;
+        return (getModifiers() & M_PRIVATE) != 0;
     }
     public final boolean isProtected() {
-	return (getModifiers() & M_PROTECTED) != 0;
+        return (getModifiers() & M_PROTECTED) != 0;
     }
     public final boolean isPackagePrivate() {
-	return (modifiers & (M_PUBLIC | M_PRIVATE | M_PROTECTED)) == 0;
+        return (modifiers & (M_PUBLIC | M_PRIVATE | M_PROTECTED)) == 0;
     }
     public final boolean isFinal() {
-	return (getModifiers() & M_FINAL) != 0;
+        return (getModifiers() & M_FINAL) != 0;
     }
     public final boolean isAbstract() {
-	return (getModifiers() & M_ABSTRACT) != 0;
+        return (getModifiers() & M_ABSTRACT) != 0;
     }
     public final boolean isSynthetic() {
-	return (getModifiers() & M_SYNTHETIC) != 0;
+        return (getModifiers() & M_SYNTHETIC) != 0;
     }
     public final boolean isDeprecated() {
-	return (getModifiers() & M_DEPRECATED) != 0;
+        return (getModifiers() & M_DEPRECATED) != 0;
     }
     public final boolean isAnonymous() {
-	return (getModifiers() & M_ANONYMOUS) != 0;
+        return (getModifiers() & M_ANONYMOUS) != 0;
     }
     public final boolean isLocal() {
-	return (getModifiers() & M_LOCAL) != 0;
+        return (getModifiers() & M_LOCAL) != 0;
     }
     public final boolean hasConstructor() {
-	return getFirstMatch(idInit) != null;
+        return getFirstMatch(idInit) != null;
     }
 
 
@@ -504,91 +504,91 @@ class ClassDefinition implements Constants {
      * isAbstract(env)
      */
     public final boolean mustBeAbstract(Environment env) {
-	// If it is declared abstract, return true.
-	// (Fix for 4110534.)
-	if (isAbstract()) {
-	    return true;
-	}
+        // If it is declared abstract, return true.
+        // (Fix for 4110534.)
+        if (isAbstract()) {
+            return true;
+        }
 
-	// Check to see if the class should have been declared to be
-	// abstract.
+        // Check to see if the class should have been declared to be
+        // abstract.
 
-	// We make sure that the inherited method collection has been
-	// performed.
-	collectInheritedMethods(env);
+        // We make sure that the inherited method collection has been
+        // performed.
+        collectInheritedMethods(env);
 
-	// We check for any abstract methods inherited or declared
-	// by this class.
-	Iterator methods = getMethods();
-	while (methods.hasNext()) {
-	    MemberDefinition method = (MemberDefinition) methods.next();
-	    
-	    if (method.isAbstract()) {
-		return true;
-	    }
-	}
+        // We check for any abstract methods inherited or declared
+        // by this class.
+        Iterator methods = getMethods();
+        while (methods.hasNext()) {
+            MemberDefinition method = (MemberDefinition) methods.next();
 
-	// We check for hidden "permanently abstract" methods in
-	// our superclasses.
-	return getPermanentlyAbstractMethods().hasNext();
+            if (method.isAbstract()) {
+                return true;
+            }
+        }
+
+        // We check for hidden "permanently abstract" methods in
+        // our superclasses.
+        return getPermanentlyAbstractMethods().hasNext();
     }
 
     /**
      * Check if this is a super class of another class
      */
     public boolean superClassOf(Environment env, ClassDeclaration otherClass)
-								throws ClassNotFound {
+                                                                throws ClassNotFound {
         while (otherClass != null) {
-	    if (getClassDeclaration().equals(otherClass)) {
-		return true;
-	    }
-	    otherClass = otherClass.getClassDefinition(env).getSuperClass();
-	}
-	return false;
+            if (getClassDeclaration().equals(otherClass)) {
+                return true;
+            }
+            otherClass = otherClass.getClassDefinition(env).getSuperClass();
+        }
+        return false;
     }
 
     /**
      * Check if this is an enclosing class of another class
      */
     public boolean enclosingClassOf(ClassDefinition otherClass) {
-	while ((otherClass = otherClass.getOuterClass()) != null) {
-	    if (this == otherClass) {
-		return true;
-	    }
-	}
-	return false;
+        while ((otherClass = otherClass.getOuterClass()) != null) {
+            if (this == otherClass) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Check if this is a sub class of another class
      */
     public boolean subClassOf(Environment env, ClassDeclaration otherClass) throws ClassNotFound {
-	ClassDeclaration c = getClassDeclaration();
-	while (c != null) {
-	    if (c.equals(otherClass)) {
-		return true;
-	    }
-	    c = c.getClassDefinition(env).getSuperClass();
-	}
-	return false;
+        ClassDeclaration c = getClassDeclaration();
+        while (c != null) {
+            if (c.equals(otherClass)) {
+                return true;
+            }
+            c = c.getClassDefinition(env).getSuperClass();
+        }
+        return false;
     }
 
     /**
      * Check if this class is implemented by another class
      */
     public boolean implementedBy(Environment env, ClassDeclaration c) throws ClassNotFound {
-	for (; c != null ; c = c.getClassDefinition(env).getSuperClass()) {
-	    if (getClassDeclaration().equals(c)) {
-		return true;
-	    }
-	    ClassDeclaration intf[] = c.getClassDefinition(env).getInterfaces();
-	    for (int i = 0 ; i < intf.length ; i++) {
-		if (implementedBy(env, intf[i])) {
-		    return true;
-		}
-	    }
-	}
-	return false;
+        for (; c != null ; c = c.getClassDefinition(env).getSuperClass()) {
+            if (getClassDeclaration().equals(c)) {
+                return true;
+            }
+            ClassDeclaration intf[] = c.getClassDefinition(env).getInterfaces();
+            for (int i = 0 ; i < intf.length ; i++) {
+                if (implementedBy(env, intf[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -603,51 +603,51 @@ class ClassDefinition implements Constants {
      * basicCheck()'ed.
      */
     public boolean couldImplement(ClassDefinition intDef) {
-	// Check to see if we could have done the necessary checks.
-	if (!doInheritanceChecks) {
-	    throw new CompilerError("couldImplement: no checks");
-	}
-	
-	// This method should only be called for interfaces.
-	if (!isInterface() || !intDef.isInterface()) {
-	    throw new CompilerError("couldImplement: not interface");
-	}
-	
-	// Make sure we are not called before we have collected our
-	// inheritance information.
-	if (allMethods == null) {
-	    throw new CompilerError("couldImplement: called early");
-	}
+        // Check to see if we could have done the necessary checks.
+        if (!doInheritanceChecks) {
+            throw new CompilerError("couldImplement: no checks");
+        }
 
-	// Get the other classes' methods.  getMethods() in
-	// general can return methods which are not visible to the
-	// current package.  We need to make sure that these do not
-	// prevent this class from being implemented.
-	Iterator otherMethods = intDef.getMethods();
+        // This method should only be called for interfaces.
+        if (!isInterface() || !intDef.isInterface()) {
+            throw new CompilerError("couldImplement: not interface");
+        }
 
-	while (otherMethods.hasNext()) {
-	    // Get one of the methods from intDef...
-	    MemberDefinition method =
-		(MemberDefinition) otherMethods.next();
-	    
-	    Identifier name = method.getName();
-	    Type type = method.getType();
-	    
-	    // See if we implement a method of the same signature...
-	    MemberDefinition myMethod = allMethods.lookupSig(name, type);
+        // Make sure we are not called before we have collected our
+        // inheritance information.
+        if (allMethods == null) {
+            throw new CompilerError("couldImplement: called early");
+        }
 
-	    //System.out.println("Comparing\n\t" + myMethod +
-	    //                   "\nand\n\t" + method);
-	    
-	    if (myMethod != null) {
-		// We do.  Make sure the methods have the same return type.
-		if (!myMethod.sameReturnType(method)) {
-		    return false;
-		}
-	    }
-	}
-	
-	return true;
+        // Get the other classes' methods.  getMethods() in
+        // general can return methods which are not visible to the
+        // current package.  We need to make sure that these do not
+        // prevent this class from being implemented.
+        Iterator otherMethods = intDef.getMethods();
+
+        while (otherMethods.hasNext()) {
+            // Get one of the methods from intDef...
+            MemberDefinition method =
+                (MemberDefinition) otherMethods.next();
+
+            Identifier name = method.getName();
+            Type type = method.getType();
+
+            // See if we implement a method of the same signature...
+            MemberDefinition myMethod = allMethods.lookupSig(name, type);
+
+            //System.out.println("Comparing\n\t" + myMethod +
+            //                   "\nand\n\t" + method);
+
+            if (myMethod != null) {
+                // We do.  Make sure the methods have the same return type.
+                if (!myMethod.sameReturnType(method)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -656,72 +656,72 @@ class ClassDefinition implements Constants {
      */
     public boolean extendsCanAccess(Environment env, ClassDeclaration c) throws ClassNotFound {
 
-	// Names in the 'extends' or 'implements' clause of an inner class
-	// are checked as if they appeared in the body of the surrounding class.
-	if (outerClass != null) {
-	    return outerClass.canAccess(env, c);
-	}
+        // Names in the 'extends' or 'implements' clause of an inner class
+        // are checked as if they appeared in the body of the surrounding class.
+        if (outerClass != null) {
+            return outerClass.canAccess(env, c);
+        }
 
-	// We are a package member.
+        // We are a package member.
 
-	ClassDefinition cdef = c.getClassDefinition(env);
+        ClassDefinition cdef = c.getClassDefinition(env);
 
-	if (cdef.isLocal()) {
-	    // No locals should be in scope in the 'extends' or 
-	    // 'implements' clause of a package member.
-	    throw new CompilerError("top local");
-	}
-	
-	if (cdef.isInnerClass()) {
-	    MemberDefinition f = cdef.getInnerClassMember();
+        if (cdef.isLocal()) {
+            // No locals should be in scope in the 'extends' or
+            // 'implements' clause of a package member.
+            throw new CompilerError("top local");
+        }
 
-	    // Access to public member is always allowed.
-	    if (f.isPublic()) {
-		return true;
-	    }
+        if (cdef.isInnerClass()) {
+            MemberDefinition f = cdef.getInnerClassMember();
 
-	    // Private access is ok only from the same class nest.  This can
-	    // happen only if the class represented by 'this' encloses the inner
-	    // class represented by 'f'.
-	    if (f.isPrivate()) {
-		return getClassDeclaration().equals(f.getTopClass().getClassDeclaration());
-	    }
+            // Access to public member is always allowed.
+            if (f.isPublic()) {
+                return true;
+            }
 
-	    // Protected or default access -- allow access if in same package.
-	    return getName().getQualifier().equals(f.getClassDeclaration().getName().getQualifier());
-	}
+            // Private access is ok only from the same class nest.  This can
+            // happen only if the class represented by 'this' encloses the inner
+            // class represented by 'f'.
+            if (f.isPrivate()) {
+                return getClassDeclaration().equals(f.getTopClass().getClassDeclaration());
+            }
 
-	// Access to public member is always allowed.
-	if (cdef.isPublic()) {
-	    return true;
-	}
+            // Protected or default access -- allow access if in same package.
+            return getName().getQualifier().equals(f.getClassDeclaration().getName().getQualifier());
+        }
 
-	// Default access -- allow access if in same package.
-	return getName().getQualifier().equals(c.getName().getQualifier());
+        // Access to public member is always allowed.
+        if (cdef.isPublic()) {
+            return true;
+        }
+
+        // Default access -- allow access if in same package.
+        return getName().getQualifier().equals(c.getName().getQualifier());
     }
 
     /**
      * Check if another class can be accessed from within the body of this class.
      */
     public boolean canAccess(Environment env, ClassDeclaration c) throws ClassNotFound {
-	ClassDefinition cdef = c.getClassDefinition(env);
+        ClassDefinition cdef = c.getClassDefinition(env);
 
-	if (cdef.isLocal()) {
-	    // if it's in scope, it's accessible
-	    return true;
-	}
+        if (cdef.isLocal()) {
+            // if it's in scope, it's accessible
+            return true;
+        }
 
-	if (cdef.isInnerClass()) {
-	    return canAccess(env, cdef.getInnerClassMember());
-	}
+        if (cdef.isInnerClass()) {
+            return canAccess(env, cdef.getInnerClassMember());
+        }
 
-	// Public access is always ok
-	if (cdef.isPublic()) {
-	    return true;
-	}
+        // Public access is always ok
+        if (cdef.isPublic()) {
+            return true;
+        }
 
-	// It must be in the same package
-	return getName().getQualifier().equals(c.getName().getQualifier());
+        // It must be in the same package
+        return getName().getQualifier().equals(c.getName().getQualifier());
     }
 
     /**
@@ -729,73 +729,73 @@ class ClassDefinition implements Constants {
      */
 
     public boolean canAccess(Environment env, MemberDefinition f)
-		throws ClassNotFound {
+                throws ClassNotFound {
 
         // Public access is always ok
-	if (f.isPublic()) {
-	    return true;
-	}
-	// Protected access is ok from a subclass
-	if (f.isProtected() && subClassOf(env, f.getClassDeclaration())) {
-	    return true;
-	}
-	// Private access is ok only from the same class nest
-	if (f.isPrivate()) {
-	    return getTopClass().getClassDeclaration()
-		.equals(f.getTopClass().getClassDeclaration());
-	}
-	// It must be in the same package
-	return getName().getQualifier().equals(f.getClassDeclaration().getName().getQualifier());
+        if (f.isPublic()) {
+            return true;
+        }
+        // Protected access is ok from a subclass
+        if (f.isProtected() && subClassOf(env, f.getClassDeclaration())) {
+            return true;
+        }
+        // Private access is ok only from the same class nest
+        if (f.isPrivate()) {
+            return getTopClass().getClassDeclaration()
+                .equals(f.getTopClass().getClassDeclaration());
+        }
+        // It must be in the same package
+        return getName().getQualifier().equals(f.getClassDeclaration().getName().getQualifier());
     }
 
     /**
-     * Check if a class is entitled to inline access to a class from 
+     * Check if a class is entitled to inline access to a class from
      * another class.
      */
     public boolean permitInlinedAccess(Environment env, ClassDeclaration c)
-		       throws ClassNotFound {
+                       throws ClassNotFound {
 
         return (env.opt() && c.equals(declaration)) ||
-	       (env.opt_interclass() && canAccess(env, c));
+               (env.opt_interclass() && canAccess(env, c));
     }
 
     /**
-     * Check if a class is entitled to inline access to a method from 
+     * Check if a class is entitled to inline access to a method from
      * another class.
      */
     public boolean permitInlinedAccess(Environment env, MemberDefinition f)
-		       throws ClassNotFound {
-        return (env.opt() 
-		    && (f.clazz.getClassDeclaration().equals(declaration))) ||
-	       (env.opt_interclass() && canAccess(env, f));
+                       throws ClassNotFound {
+        return (env.opt()
+                    && (f.clazz.getClassDeclaration().equals(declaration))) ||
+               (env.opt_interclass() && canAccess(env, f));
     }
- 
+
     /**
      * We know the the field is marked protected (and not public) and that
      * the field is visible (as per canAccess).  Can we access the field as
      * <accessor>.<field>, where <accessor> has the type <accessorType>?
      *
-     * Protected fields can only be accessed when the accessorType is a 
+     * Protected fields can only be accessed when the accessorType is a
      * subclass of the current class
      */
     public boolean protectedAccess(Environment env, MemberDefinition f,
-				   Type accessorType)
+                                   Type accessorType)
         throws ClassNotFound
-    { 
-               
-	return 
-	       // static protected fields are accessible
-	       f.isStatic() 
-	    || // allow array.clone()
-	       (accessorType.isType(TC_ARRAY) && (f.getName() == idClone) 
-		 && (f.getType().getArgumentTypes().length == 0))
-	    || // <accessorType> is a subtype of the current class
-	       (accessorType.isType(TC_CLASS)
-		 && env.getClassDefinition(accessorType.getClassName())
-		         .subClassOf(env, getClassDeclaration()))
-	    || // we are accessing the field from a friendly class (same package)
-	       (getName().getQualifier()
-	           .equals(f.getClassDeclaration().getName().getQualifier()));
+    {
+
+        return
+               // static protected fields are accessible
+               f.isStatic()
+            || // allow array.clone()
+               (accessorType.isType(TC_ARRAY) && (f.getName() == idClone)
+                 && (f.getType().getArgumentTypes().length == 0))
+            || // <accessorType> is a subtype of the current class
+               (accessorType.isType(TC_CLASS)
+                 && env.getClassDefinition(accessorType.getClassName())
+                         .subClassOf(env, getClassDeclaration()))
+            || // we are accessing the field from a friendly class (same package)
+               (getName().getQualifier()
+                   .equals(f.getClassDeclaration().getName().getQualifier()));
     }
 
 
@@ -804,8 +804,8 @@ class ClassDefinition implements Constants {
      * or return null if this is not possible.
      */
     public MemberDefinition getAccessMember(Environment env, Context ctx,
-					  MemberDefinition field, boolean isSuper) {
-	throw new CompilerError("binary getAccessMember");
+                                          MemberDefinition field, boolean isSuper) {
+        throw new CompilerError("binary getAccessMember");
     }
 
     /**
@@ -813,8 +813,8 @@ class ClassDefinition implements Constants {
      * or return null if this is not possible.
      */
     public MemberDefinition getUpdateMember(Environment env, Context ctx,
-					    MemberDefinition field, boolean isSuper) {
-	throw new CompilerError("binary getUpdateMember");
+                                            MemberDefinition field, boolean isSuper) {
+        throw new CompilerError("binary getUpdateMember");
     }
 
     /**
@@ -829,11 +829,11 @@ class ClassDefinition implements Constants {
      * accessible.  (bug 4053724)
      */
     public MemberDefinition getVariable(Environment env,
-					Identifier nm,
-					ClassDefinition source)
-	throws AmbiguousMember, ClassNotFound {
+                                        Identifier nm,
+                                        ClassDefinition source)
+        throws AmbiguousMember, ClassNotFound {
 
-	return getVariable0(env, nm, source, true, true);
+        return getVariable0(env, nm, source, true, true);
     }
 
     /*
@@ -844,70 +844,70 @@ class ClassDefinition implements Constants {
      * we have crossed a package boundary.
      */
     private MemberDefinition getVariable0(Environment env,
-					  Identifier nm,
-					  ClassDefinition source,
-					  boolean showPrivate,
-					  boolean showPackage)
-	throws AmbiguousMember, ClassNotFound {
+                                          Identifier nm,
+                                          ClassDefinition source,
+                                          boolean showPrivate,
+                                          boolean showPackage)
+        throws AmbiguousMember, ClassNotFound {
 
-	// Check to see if this field is defined in the current class
-	for (MemberDefinition member = getFirstMatch(nm);
-	     member != null;
-	     member = member.getNextMatch()) {
-	    if (member.isVariable()) {
-		if ((showPrivate || !member.isPrivate()) &&
-		    (showPackage || !member.isPackagePrivate())) {
-		    // It is defined in this class.
-		    return member;
-		} else {
-		    // Even though this definition is not inherited,
-		    // it hides all definitions in supertypes.
-		    return null;
-		}
-	    }
-	}
+        // Check to see if this field is defined in the current class
+        for (MemberDefinition member = getFirstMatch(nm);
+             member != null;
+             member = member.getNextMatch()) {
+            if (member.isVariable()) {
+                if ((showPrivate || !member.isPrivate()) &&
+                    (showPackage || !member.isPackagePrivate())) {
+                    // It is defined in this class.
+                    return member;
+                } else {
+                    // Even though this definition is not inherited,
+                    // it hides all definitions in supertypes.
+                    return null;
+                }
+            }
+        }
 
         // Find the field in our superclass.
-	ClassDeclaration sup = getSuperClass();
-	MemberDefinition field = null;
-	if (sup != null) {
-	    field =
-		sup.getClassDefinition(env)
-		  .getVariable0(env, nm, source,
-				false,
-				showPackage && inSamePackage(sup));
-	}
-	
-	// Find the field in our superinterfaces.
-	for (int i = 0 ; i < interfaces.length ; i++) {
-	    // Try to look up the field in an interface.  Since interfaces
-	    // only have public fields, the values of the two boolean
-	    // arguments are not important.
-	    MemberDefinition field2 =
-		interfaces[i].getClassDefinition(env)
-		  .getVariable0(env, nm, source, true, true);
+        ClassDeclaration sup = getSuperClass();
+        MemberDefinition field = null;
+        if (sup != null) {
+            field =
+                sup.getClassDefinition(env)
+                  .getVariable0(env, nm, source,
+                                false,
+                                showPackage && inSamePackage(sup));
+        }
 
-	    if (field2 != null) {
-		// If we have two different, accessible fields, then
-		// we've found an ambiguity.
-		if (field != null &&
-		    source.canAccess(env, field) &&
-		    field2 != field) {
-		    
-		    throw new AmbiguousMember(field2, field);
-		}
-		field = field2;
-	    }
-	}
-	return field;
+        // Find the field in our superinterfaces.
+        for (int i = 0 ; i < interfaces.length ; i++) {
+            // Try to look up the field in an interface.  Since interfaces
+            // only have public fields, the values of the two boolean
+            // arguments are not important.
+            MemberDefinition field2 =
+                interfaces[i].getClassDefinition(env)
+                  .getVariable0(env, nm, source, true, true);
+
+            if (field2 != null) {
+                // If we have two different, accessible fields, then
+                // we've found an ambiguity.
+                if (field != null &&
+                    source.canAccess(env, field) &&
+                    field2 != field) {
+
+                    throw new AmbiguousMember(field2, field);
+                }
+                field = field2;
+            }
+        }
+        return field;
     }
-					   
+
     /**
      * Tells whether to report a deprecation error for this class.
      */
     public boolean reportDeprecated(Environment env) {
-	return (isDeprecated()
-		|| (outerClass != null && outerClass.reportDeprecated(env)));
+        return (isDeprecated()
+                || (outerClass != null && outerClass.reportDeprecated(env)));
     }
 
     /**
@@ -915,10 +915,10 @@ class ClassDefinition implements Constants {
      * Report deprecation errors, etc.
      */
     public void noteUsedBy(ClassDefinition ref, long where, Environment env) {
-	// (Have this deal with canAccess() checks, too?)
-	if (reportDeprecated(env)) {
-	    env.error(where, "warn.class.is.deprecated", this);
-	}
+        // (Have this deal with canAccess() checks, too?)
+        if (reportDeprecated(env)) {
+            env.error(where, "warn.class.is.deprecated", this);
+        }
     }
 
    /**
@@ -933,43 +933,43 @@ class ClassDefinition implements Constants {
      * @see resolveName
      */
     public MemberDefinition getInnerClass(Environment env, Identifier nm)
-							throws ClassNotFound {
-	// Note:  AmbiguousClass will not be thrown unless and until
-	// inner classes can be defined inside interfaces.
+                                                        throws ClassNotFound {
+        // Note:  AmbiguousClass will not be thrown unless and until
+        // inner classes can be defined inside interfaces.
 
-	// Check if it is defined in the current class
-	for (MemberDefinition field = getFirstMatch(nm);
-	        field != null ; field = field.getNextMatch()) {
-	    if (field.isInnerClass()) {
-		if (field.getInnerClass().isLocal()) {
-		    continue;	// ignore this name; it is internally generated
-		}
-		return field;
-	    }
-	}
+        // Check if it is defined in the current class
+        for (MemberDefinition field = getFirstMatch(nm);
+                field != null ; field = field.getNextMatch()) {
+            if (field.isInnerClass()) {
+                if (field.getInnerClass().isLocal()) {
+                    continue;   // ignore this name; it is internally generated
+                }
+                return field;
+            }
+        }
 
-	// Get it from the super class
-	// It is likely that 'getSuperClass()' could be made to work here
-	// but we would have to assure somehow that 'resolveTypeStructure'
-	// has been called on the current class nest.  Since we can get
-	// here from 'resolveName', which is called from 'resolveSupers',
-	// it is possible that the first attempt to resolve the superclass
-	// will originate here, instead of in the call to 'getSuperClass'
-	// in 'checkSupers'.  See 'resolveTypeStructure', in which a call
-	// to 'resolveSupers' precedes the call to 'checkSupers'.  Why is
-	// name resolution done twice, first in 'resolveName'?
-	// NOTE: 'SourceMember.resolveTypeStructure' may initiate type
-	// structure resolution for an inner class.  Normally, this
-	// occurs during the resolution of the outer class, but fields
-	// added after the resolution of their containing class will
-	// be resolved late -- see 'addMember(env,field)' below.
-	// This should only happen for synthetic members, which should
-	// never be an inner class.
-	ClassDeclaration sup = getSuperClass(env);
-	if (sup != null)
-	    return sup.getClassDefinition(env).getInnerClass(env, nm);
+        // Get it from the super class
+        // It is likely that 'getSuperClass()' could be made to work here
+        // but we would have to assure somehow that 'resolveTypeStructure'
+        // has been called on the current class nest.  Since we can get
+        // here from 'resolveName', which is called from 'resolveSupers',
+        // it is possible that the first attempt to resolve the superclass
+        // will originate here, instead of in the call to 'getSuperClass'
+        // in 'checkSupers'.  See 'resolveTypeStructure', in which a call
+        // to 'resolveSupers' precedes the call to 'checkSupers'.  Why is
+        // name resolution done twice, first in 'resolveName'?
+        // NOTE: 'SourceMember.resolveTypeStructure' may initiate type
+        // structure resolution for an inner class.  Normally, this
+        // occurs during the resolution of the outer class, but fields
+        // added after the resolution of their containing class will
+        // be resolved late -- see 'addMember(env,field)' below.
+        // This should only happen for synthetic members, which should
+        // never be an inner class.
+        ClassDeclaration sup = getSuperClass(env);
+        if (sup != null)
+            return sup.getClassDefinition(env).getInnerClass(env, nm);
 
-	return null;
+        return null;
     }
 
     /**
@@ -979,94 +979,94 @@ class ClassDefinition implements Constants {
      * This mechanism cannot be used to lookup synthetic methods.
      */
     private MemberDefinition matchMethod(Environment env,
-					 ClassDefinition accessor,
-					 Identifier methodName,
-					 Type[] argumentTypes,
-					 boolean isAnonConstCall,
-					 Identifier accessPackage)
-	throws AmbiguousMember, ClassNotFound {
+                                         ClassDefinition accessor,
+                                         Identifier methodName,
+                                         Type[] argumentTypes,
+                                         boolean isAnonConstCall,
+                                         Identifier accessPackage)
+        throws AmbiguousMember, ClassNotFound {
 
-	if (allMethods == null || !allMethods.isFrozen()) {
-	    // This may be too restrictive.
-	    throw new CompilerError("matchMethod called early");
-	    // collectInheritedMethods(env);
-	}
-	
-	// A tentative maximally specific method.
-	MemberDefinition tentative = null;
+        if (allMethods == null || !allMethods.isFrozen()) {
+            // This may be too restrictive.
+            throw new CompilerError("matchMethod called early");
+            // collectInheritedMethods(env);
+        }
 
-	// A list of other methods which may be maximally specific too.
-	List candidateList = null;
+        // A tentative maximally specific method.
+        MemberDefinition tentative = null;
 
-	// Get all the methods inherited by this class which
-	// have the name `methodName'.
-	Iterator methods = allMethods.lookupName(methodName);
+        // A list of other methods which may be maximally specific too.
+        List candidateList = null;
 
-	while (methods.hasNext()) {
-	    MemberDefinition method = (MemberDefinition)methods.next();
+        // Get all the methods inherited by this class which
+        // have the name `methodName'.
+        Iterator methods = allMethods.lookupName(methodName);
 
-	    // See if this method is applicable.
-	    if (!env.isApplicable(method, argumentTypes)) {
-		continue;
-	    }
+        while (methods.hasNext()) {
+            MemberDefinition method = (MemberDefinition)methods.next();
 
-	    // See if this method is accessible.
-	    if (accessor != null) {
-		if (!accessor.canAccess(env, method)) {
-		    continue;
-		}
-	    } else if (isAnonConstCall) {
-		if (method.isPrivate() ||
-		    (method.isPackagePrivate() &&
-		     accessPackage != null &&
-		     !inSamePackage(accessPackage))) {
-		    // For anonymous constructor accesses, we
-		    // haven't yet built an accessing class.
-		    // We disallow anonymous classes from seeing
-		    // private/package-private inaccessible
-		    // constructors in their superclass.
-		    continue;
-		}
-	    } else {
-		// If accessor is null, we assume that the access
-		// is allowed.  Query: is this option used?
-	    }
+            // See if this method is applicable.
+            if (!env.isApplicable(method, argumentTypes)) {
+                continue;
+            }
 
-	    if (tentative == null) {
-		// `method' becomes our tentative maximally specific match.
-		tentative = method;
-	    } else {
-		if (env.isMoreSpecific(method, tentative)) {
-		    // We have found a method which is a strictly better
-		    // match than `tentative'.  Replace it.
-		    tentative = method;
-		} else {
-		    // If this method could possibly be another
-		    // maximally specific method, add it to our
-		    // list of other candidates.
-		    if (!env.isMoreSpecific(tentative,method)) {
-			if (candidateList == null) {
-			    candidateList = new ArrayList();
-			}
-			candidateList.add(method);
-		    }
-		}
-	    }
-	}
-	
-	if (tentative != null && candidateList != null) {
-	    // Find out if our `tentative' match is a uniquely
-	    // maximally specific.
-	    Iterator candidates = candidateList.iterator();
-	    while (candidates.hasNext()) {
-		MemberDefinition method = (MemberDefinition)candidates.next();
-		if (!env.isMoreSpecific(tentative, method)) {
-		    throw new AmbiguousMember(tentative, method);
-		}
-	    }
-	}
+            // See if this method is accessible.
+            if (accessor != null) {
+                if (!accessor.canAccess(env, method)) {
+                    continue;
+                }
+            } else if (isAnonConstCall) {
+                if (method.isPrivate() ||
+                    (method.isPackagePrivate() &&
+                     accessPackage != null &&
+                     !inSamePackage(accessPackage))) {
+                    // For anonymous constructor accesses, we
+                    // haven't yet built an accessing class.
+                    // We disallow anonymous classes from seeing
+                    // private/package-private inaccessible
+                    // constructors in their superclass.
+                    continue;
+                }
+            } else {
+                // If accessor is null, we assume that the access
+                // is allowed.  Query: is this option used?
+            }
 
-	return tentative;
+            if (tentative == null) {
+                // `method' becomes our tentative maximally specific match.
+                tentative = method;
+            } else {
+                if (env.isMoreSpecific(method, tentative)) {
+                    // We have found a method which is a strictly better
+                    // match than `tentative'.  Replace it.
+                    tentative = method;
+                } else {
+                    // If this method could possibly be another
+                    // maximally specific method, add it to our
+                    // list of other candidates.
+                    if (!env.isMoreSpecific(tentative,method)) {
+                        if (candidateList == null) {
+                            candidateList = new ArrayList();
+                        }
+                        candidateList.add(method);
+                    }
+                }
+            }
+        }
+
+        if (tentative != null && candidateList != null) {
+            // Find out if our `tentative' match is a uniquely
+            // maximally specific.
+            Iterator candidates = candidateList.iterator();
+            while (candidates.hasNext()) {
+                MemberDefinition method = (MemberDefinition)candidates.next();
+                if (!env.isMoreSpecific(tentative, method)) {
+                    throw new AmbiguousMember(tentative, method);
+                }
+            }
+        }
+
+        return tentative;
     }
 
     /**
@@ -1075,14 +1075,14 @@ class ClassDefinition implements Constants {
      *
      * This mechanism cannot be used to lookup synthetic methods.
      */
-    public MemberDefinition matchMethod(Environment env, 
-					ClassDefinition accessor, 
-					Identifier methodName,
-					Type[] argumentTypes) 
-	throws AmbiguousMember, ClassNotFound {
-	    
-	return matchMethod(env, accessor, methodName,
-			   argumentTypes, false, null);
+    public MemberDefinition matchMethod(Environment env,
+                                        ClassDefinition accessor,
+                                        Identifier methodName,
+                                        Type[] argumentTypes)
+        throws AmbiguousMember, ClassNotFound {
+
+        return matchMethod(env, accessor, methodName,
+                           argumentTypes, false, null);
     }
 
     /**
@@ -1091,13 +1091,13 @@ class ClassDefinition implements Constants {
      *
      * This mechanism cannot be used to lookup synthetic methods.
      */
-    public MemberDefinition matchMethod(Environment env, 
-					ClassDefinition accessor, 
-					Identifier methodName) 
-	throws AmbiguousMember, ClassNotFound {
+    public MemberDefinition matchMethod(Environment env,
+                                        ClassDefinition accessor,
+                                        Identifier methodName)
+        throws AmbiguousMember, ClassNotFound {
 
-	return matchMethod(env, accessor, methodName,
-			   Type.noArgs, false, null);
+        return matchMethod(env, accessor, methodName,
+                           Type.noArgs, false, null);
     }
 
     /**
@@ -1110,12 +1110,12 @@ class ClassDefinition implements Constants {
      * parameter available.
      */
     public MemberDefinition matchAnonConstructor(Environment env,
-						 Identifier accessPackage,
-						 Type argumentTypes[])
-	throws AmbiguousMember, ClassNotFound {
+                                                 Identifier accessPackage,
+                                                 Type argumentTypes[])
+        throws AmbiguousMember, ClassNotFound {
 
-	return matchMethod(env, null, idInit, argumentTypes,
-			   true, accessPackage);
+        return matchMethod(env, null, idInit, argumentTypes,
+                           true, accessPackage);
     }
 
     /**
@@ -1128,33 +1128,33 @@ class ClassDefinition implements Constants {
      */
     public MemberDefinition findMethod(Environment env, Identifier nm, Type t)
     throws ClassNotFound {
-    	// look in the current class
-	MemberDefinition f;
-	for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
-	    // Note that non-method types return false for equalArguments().
-	    if (f.getType().equalArguments(t)) {
-		return f;
-	    }
-	}
-	
-    	// constructors are not inherited
-    	if (nm.equals(idInit)) {
-    	    return null;
-    	}
-	
-    	// look in the super class
-    	ClassDeclaration sup = getSuperClass();
-    	if (sup == null) 
-    	    return null;
+        // look in the current class
+        MemberDefinition f;
+        for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
+            // Note that non-method types return false for equalArguments().
+            if (f.getType().equalArguments(t)) {
+                return f;
+            }
+        }
 
-    	return sup.getClassDefinition(env).findMethod(env, nm, t);
+        // constructors are not inherited
+        if (nm.equals(idInit)) {
+            return null;
+        }
+
+        // look in the super class
+        ClassDeclaration sup = getSuperClass();
+        if (sup == null)
+            return null;
+
+        return sup.getClassDefinition(env).findMethod(env, nm, t);
     }
 
     // We create a stub for this.  Source classes do more work.
     protected void basicCheck(Environment env) throws ClassNotFound {
-	// Do the outer class first.
-	if (outerClass != null)
-	    outerClass.basicCheck(env);
+        // Do the outer class first.
+        if (outerClass != null)
+            outerClass.basicCheck(env);
     }
 
     /**
@@ -1164,10 +1164,10 @@ class ClassDefinition implements Constants {
     }
 
     public Vset checkLocalClass(Environment env, Context ctx,
-				Vset vset, ClassDefinition sup,
-				Expression args[], Type argTypes[]
-				) throws ClassNotFound {
-	throw new CompilerError("checkLocalClass");
+                                Vset vset, ClassDefinition sup,
+                                Expression args[], Type argTypes[]
+                                ) throws ClassNotFound {
+        throw new CompilerError("checkLocalClass");
     }
 
     //---------------------------------------------------------------
@@ -1187,18 +1187,18 @@ class ClassDefinition implements Constants {
     // indeed abstract and so that we can give somewhat comprehensible
     // error messages.
     private List permanentlyAbstractMethods = new ArrayList();
-    
+
     /**
      * This method returns an Iterator of all abstract methods
      * in our superclasses which we are unable to implement.
      */
     protected Iterator getPermanentlyAbstractMethods() {
-	// This method can only be called after collectInheritedMethods.
-	if (allMethods == null) {
-	    throw new CompilerError("isPermanentlyAbstract() called early");
-	}
-	
-	return permanentlyAbstractMethods.iterator();
+        // This method can only be called after collectInheritedMethods.
+        if (allMethods == null) {
+            throw new CompilerError("isPermanentlyAbstract() called early");
+        }
+
+        return permanentlyAbstractMethods.iterator();
     }
 
     /**
@@ -1206,7 +1206,7 @@ class ClassDefinition implements Constants {
      * inheritance checks are on or off.
      */
     protected static boolean doInheritanceChecks = true;
-    
+
     /**
      * This is a workaround to allow javadoc to turn off certain
      * inheritance/override checks which interfere with javadoc
@@ -1215,7 +1215,7 @@ class ClassDefinition implements Constants {
      * sort of workaround.
      */
     public static void turnOffInheritanceChecks() {
-	doInheritanceChecks = false;
+        doInheritanceChecks = false;
     }
 
     /**
@@ -1230,212 +1230,212 @@ class ClassDefinition implements Constants {
      * method addMirandaMethods() which occurs later in this file.
      */
     private void collectOneClass(Environment env,
-				 ClassDeclaration parent,
-				 MethodSet myMethods,
-				 MethodSet allMethods,
-				 MethodSet mirandaMethods) {
-	
-	// System.out.println("Inheriting methods from " + parent);
+                                 ClassDeclaration parent,
+                                 MethodSet myMethods,
+                                 MethodSet allMethods,
+                                 MethodSet mirandaMethods) {
 
-	try {
-	    ClassDefinition pClass = parent.getClassDefinition(env);
-	    Iterator methods = pClass.getMethods(env);
-	    while (methods.hasNext()) {
-		MemberDefinition method =
-		    (MemberDefinition) methods.next();
+        // System.out.println("Inheriting methods from " + parent);
 
-		// Private methods are not inherited.
-		//
-		// Constructors are not inherited.
-		//
-		// Any non-abstract methods in an interface come
-		// from java.lang.Object.  This means that they
-		// should have already been added to allMethods
-		// when we walked our superclass lineage.
-		if (method.isPrivate() ||
-		    method.isConstructor() ||
-		    (pClass.isInterface() && !method.isAbstract())) {
+        try {
+            ClassDefinition pClass = parent.getClassDefinition(env);
+            Iterator methods = pClass.getMethods(env);
+            while (methods.hasNext()) {
+                MemberDefinition method =
+                    (MemberDefinition) methods.next();
 
-		    continue;
-		}
-		
-		// Get the components of the methods' signature.
-		Identifier name = method.getName();
-		Type type = method.getType();
-		
-		// Check for a method of the same signature which
-		// was locally declared.
-		MemberDefinition override =
-		    myMethods.lookupSig(name, type);
+                // Private methods are not inherited.
+                //
+                // Constructors are not inherited.
+                //
+                // Any non-abstract methods in an interface come
+                // from java.lang.Object.  This means that they
+                // should have already been added to allMethods
+                // when we walked our superclass lineage.
+                if (method.isPrivate() ||
+                    method.isConstructor() ||
+                    (pClass.isInterface() && !method.isAbstract())) {
 
-		// Is this method inaccessible due to package-private
-		// visibility?
-		if (method.isPackagePrivate() &&
-		    !inSamePackage(method.getClassDeclaration())) {
-			
-		    if (override != null && this instanceof
-			sun.tools.javac.SourceClass) {
-			// We give a warning when a class shadows an
-			// inaccessible package-private method from
-			// its superclass.  This warning is meant
-			// to prevent people from relying on overriding
-			// when it does not happen.  This warning should
-			// probably be removed to be consistent with the
-			// general "no warnings" policy of this
-			// compiler.
-			//
-			// The `instanceof' above is a hack so that only
-			// SourceClass generates this warning, not a
-			// BinaryClass, for example.
-			env.error(method.getWhere(),
-				  "warn.no.override.access",
-				  override,
-				  override.getClassDeclaration(),
-				  method.getClassDeclaration());
-		    }
+                    continue;
+                }
 
-		    // If our superclass has a package-private abstract
-		    // method that we have no access to, then we add
-		    // this method to our list of permanently abstract
-		    // methods.  The idea is, since we cannot override
-		    // the method, we can never make this class
-		    // non-abstract.
-		    if (method.isAbstract()) {
-			permanentlyAbstractMethods.add(method);
-		    }
+                // Get the components of the methods' signature.
+                Identifier name = method.getName();
+                Type type = method.getType();
 
-		    // `method' is inaccessible.  We do not inherit it.
-		    continue;
-		}
+                // Check for a method of the same signature which
+                // was locally declared.
+                MemberDefinition override =
+                    myMethods.lookupSig(name, type);
 
-		if (override != null) {
-		    // `method' and `override' have the same signature.
-		    // We are required to check that `override' is a
-		    // legal override of `method'
+                // Is this method inaccessible due to package-private
+                // visibility?
+                if (method.isPackagePrivate() &&
+                    !inSamePackage(method.getClassDeclaration())) {
 
-		    //System.out.println ("About to check override of " +
-		    //		    method);
+                    if (override != null && this instanceof
+                        sun.tools.javac.SourceClass) {
+                        // We give a warning when a class shadows an
+                        // inaccessible package-private method from
+                        // its superclass.  This warning is meant
+                        // to prevent people from relying on overriding
+                        // when it does not happen.  This warning should
+                        // probably be removed to be consistent with the
+                        // general "no warnings" policy of this
+                        // compiler.
+                        //
+                        // The `instanceof' above is a hack so that only
+                        // SourceClass generates this warning, not a
+                        // BinaryClass, for example.
+                        env.error(method.getWhere(),
+                                  "warn.no.override.access",
+                                  override,
+                                  override.getClassDeclaration(),
+                                  method.getClassDeclaration());
+                    }
 
-		    override.checkOverride(env, method);
-		} else {
-		    // In the absence of a definition in the class
-		    // itself, we check to see if this definition
-		    // can be successfully merged with any other
-		    // inherited definitions.
+                    // If our superclass has a package-private abstract
+                    // method that we have no access to, then we add
+                    // this method to our list of permanently abstract
+                    // methods.  The idea is, since we cannot override
+                    // the method, we can never make this class
+                    // non-abstract.
+                    if (method.isAbstract()) {
+                        permanentlyAbstractMethods.add(method);
+                    }
 
-		    // Have we added a member of the same signature
-		    // to `allMethods' already?
-		    MemberDefinition formerMethod =
-			allMethods.lookupSig(name, type);
+                    // `method' is inaccessible.  We do not inherit it.
+                    continue;
+                }
 
-		    // If the previous definition is nonexistent or
-		    // ignorable, replace it.
-		    if (formerMethod == null) {
-			//System.out.println("Added " + method + " to " +
-			//	       this);
-		    
-			if (mirandaMethods != null &&
-			    pClass.isInterface() && !isInterface()) {
-			    // Whenever a class inherits a method
-			    // from an interface, that method is
-			    // one of our "miranda" methods.  Early
-			    // VMs require that these methods be
-			    // added as true members to the class
-			    // to enable method lookup to work in the
-			    // VM.
-			    method =
-				new sun.tools.javac.SourceMember(method,this,
-								 env);
-			    mirandaMethods.add(method);
+                if (override != null) {
+                    // `method' and `override' have the same signature.
+                    // We are required to check that `override' is a
+                    // legal override of `method'
 
-			    //System.out.println("Added " + method +
-			    // " to " + this + " as a Miranda");
-			}
+                    //System.out.println ("About to check override of " +
+                    //              method);
 
-			// There is no previous inherited definition.
-			// Add `method' to `allMethods'.
-			allMethods.add(method);
-		    } else if (isInterface() &&
-			       !formerMethod.isAbstract() &&
-			       method.isAbstract()) {
-			// If we are in an interface and we have inherited
-			// both an abstract method and a non-abstract method
-			// then we know that the non-abstract method is
-			// a placeholder from Object put in for type checking
-			// and the abstract method was already checked to
-			// be proper by our superinterface.
-			allMethods.replace(method);
+                    override.checkOverride(env, method);
+                } else {
+                    // In the absence of a definition in the class
+                    // itself, we check to see if this definition
+                    // can be successfully merged with any other
+                    // inherited definitions.
 
-		    } else {
-			// Okay, `formerMethod' and `method' both have the
-			// same signature.  See if they are compatible.
+                    // Have we added a member of the same signature
+                    // to `allMethods' already?
+                    MemberDefinition formerMethod =
+                        allMethods.lookupSig(name, type);
 
-			//System.out.println ("About to check meet of " +
-			//		method);
+                    // If the previous definition is nonexistent or
+                    // ignorable, replace it.
+                    if (formerMethod == null) {
+                        //System.out.println("Added " + method + " to " +
+                        //             this);
 
-			if (!formerMethod.checkMeet(env,
-					   method,
-					   this.getClassDeclaration())) {
-				// The methods are incompatible.  Skip to
-				// next method.
-			    continue;
-			}
-			
-			if (formerMethod.couldOverride(env, method)) {
-				// Do nothing.  The current definition
-				// is specific enough.
+                        if (mirandaMethods != null &&
+                            pClass.isInterface() && !isInterface()) {
+                            // Whenever a class inherits a method
+                            // from an interface, that method is
+                            // one of our "miranda" methods.  Early
+                            // VMs require that these methods be
+                            // added as true members to the class
+                            // to enable method lookup to work in the
+                            // VM.
+                            method =
+                                new sun.tools.javac.SourceMember(method,this,
+                                                                 env);
+                            mirandaMethods.add(method);
 
-				//System.out.println("trivial meet of " +
-				//		   method);
-			    continue;
-			}
+                            //System.out.println("Added " + method +
+                            // " to " + this + " as a Miranda");
+                        }
 
-			if (method.couldOverride(env, formerMethod)) {
-				// `method' is more specific than
-				// `formerMethod'.  replace `formerMethod'.
-			    
-				//System.out.println("new def of " + method);
-			    if (mirandaMethods != null &&
-				pClass.isInterface() && !isInterface()) {
-				// Whenever a class inherits a method
-				// from an interface, that method is
-				// one of our "miranda" methods.  Early
-				// VMs require that these methods be
-				// added as true members to the class
-				// to enable method lookup to work in the
-				// VM.
-				method =
-				    new sun.tools.javac.SourceMember(method,
-								     this,env);
+                        // There is no previous inherited definition.
+                        // Add `method' to `allMethods'.
+                        allMethods.add(method);
+                    } else if (isInterface() &&
+                               !formerMethod.isAbstract() &&
+                               method.isAbstract()) {
+                        // If we are in an interface and we have inherited
+                        // both an abstract method and a non-abstract method
+                        // then we know that the non-abstract method is
+                        // a placeholder from Object put in for type checking
+                        // and the abstract method was already checked to
+                        // be proper by our superinterface.
+                        allMethods.replace(method);
 
-				mirandaMethods.replace(method);
+                    } else {
+                        // Okay, `formerMethod' and `method' both have the
+                        // same signature.  See if they are compatible.
 
-				//System.out.println("Added " + method +
-				// " to " + this + " as a Miranda");
-			    }
-			    
-			    allMethods.replace(method);
-			    
-			    continue;
-			}
+                        //System.out.println ("About to check meet of " +
+                        //              method);
 
-			// Neither method is more specific than the other.
-			// Oh well.  We need to construct a nontrivial
-			// meet of the two methods.
-			//
-			// This is not yet implemented, so we give
-			// a message with a helpful workaround.
-			env.error(this.where,
-				  "nontrivial.meet", method,
-				  formerMethod.getClassDefinition(),
-				  method.getClassDeclaration()
-				  );
-		    }
-		}
-	    }
-	} catch (ClassNotFound ee) {
-	    env.error(getWhere(), "class.not.found", ee.name, this);
-	}
+                        if (!formerMethod.checkMeet(env,
+                                           method,
+                                           this.getClassDeclaration())) {
+                                // The methods are incompatible.  Skip to
+                                // next method.
+                            continue;
+                        }
+
+                        if (formerMethod.couldOverride(env, method)) {
+                                // Do nothing.  The current definition
+                                // is specific enough.
+
+                                //System.out.println("trivial meet of " +
+                                //                 method);
+                            continue;
+                        }
+
+                        if (method.couldOverride(env, formerMethod)) {
+                                // `method' is more specific than
+                                // `formerMethod'.  replace `formerMethod'.
+
+                                //System.out.println("new def of " + method);
+                            if (mirandaMethods != null &&
+                                pClass.isInterface() && !isInterface()) {
+                                // Whenever a class inherits a method
+                                // from an interface, that method is
+                                // one of our "miranda" methods.  Early
+                                // VMs require that these methods be
+                                // added as true members to the class
+                                // to enable method lookup to work in the
+                                // VM.
+                                method =
+                                    new sun.tools.javac.SourceMember(method,
+                                                                     this,env);
+
+                                mirandaMethods.replace(method);
+
+                                //System.out.println("Added " + method +
+                                // " to " + this + " as a Miranda");
+                            }
+
+                            allMethods.replace(method);
+
+                            continue;
+                        }
+
+                        // Neither method is more specific than the other.
+                        // Oh well.  We need to construct a nontrivial
+                        // meet of the two methods.
+                        //
+                        // This is not yet implemented, so we give
+                        // a message with a helpful workaround.
+                        env.error(this.where,
+                                  "nontrivial.meet", method,
+                                  formerMethod.getClassDefinition(),
+                                  method.getClassDeclaration()
+                                  );
+                    }
+                }
+            }
+        } catch (ClassNotFound ee) {
+            env.error(getWhere(), "class.not.found", ee.name, this);
+        }
     }
 
     /**
@@ -1449,104 +1449,104 @@ class ClassDefinition implements Constants {
      * below.
      */
     protected void collectInheritedMethods(Environment env) {
-	// The methods defined in this class.
-	MethodSet myMethods;
-	MethodSet mirandaMethods;
+        // The methods defined in this class.
+        MethodSet myMethods;
+        MethodSet mirandaMethods;
 
-	//System.out.println("Called collectInheritedMethods() for " +
-	//		   this);
+        //System.out.println("Called collectInheritedMethods() for " +
+        //                 this);
 
-	if (allMethods != null) {
-	    if (allMethods.isFrozen()) {
-		// We have already done the collection.  No need to
-		// do it again.
-		return;
-	    } else {
-		// We have run into a circular need to collect our methods.
-		// This should not happen at this stage.
-		throw new CompilerError("collectInheritedMethods()");
-	    }
-	}
+        if (allMethods != null) {
+            if (allMethods.isFrozen()) {
+                // We have already done the collection.  No need to
+                // do it again.
+                return;
+            } else {
+                // We have run into a circular need to collect our methods.
+                // This should not happen at this stage.
+                throw new CompilerError("collectInheritedMethods()");
+            }
+        }
 
-	myMethods = new MethodSet();
-	allMethods = new MethodSet();
+        myMethods = new MethodSet();
+        allMethods = new MethodSet();
 
-	// For testing, do not generate miranda methods.
-	if (env.version12()) {
-	    mirandaMethods = null;
-	} else {
-	    mirandaMethods = new MethodSet();
-	}
+        // For testing, do not generate miranda methods.
+        if (env.version12()) {
+            mirandaMethods = null;
+        } else {
+            mirandaMethods = new MethodSet();
+        }
 
-	// Any methods defined in the current class get added
-	// to both the myMethods and the allMethods MethodSets.
+        // Any methods defined in the current class get added
+        // to both the myMethods and the allMethods MethodSets.
 
-	for (MemberDefinition member = getFirstMember();
-	     member != null;
-	     member = member.nextMember) {
-	    
-	    // We only collect methods.  Initializers are not relevant.
-	    if (member.isMethod() &&
-		!member.isInitializer()) {
+        for (MemberDefinition member = getFirstMember();
+             member != null;
+             member = member.nextMember) {
 
-		//System.out.println("Declared in " + this + ", " + member);
+            // We only collect methods.  Initializers are not relevant.
+            if (member.isMethod() &&
+                !member.isInitializer()) {
 
-		////////////////////////////////////////////////////////////
-		// PCJ 2003-07-30 modified the following code because with
-		// the covariant return type feature of the 1.5 compiler,
-		// there might be multiple methods with the same signature
-		// but different return types, and MethodSet doesn't
-		// support that.  We use a new utility method that attempts
-		// to ensure that the appropriate method winds up in the
-		// MethodSet.  See 4892308.
-		////////////////////////////////////////////////////////////
-		// myMethods.add(member);
-		// allMethods.add(member);
-		////////////////////////////////////////////////////////////
-		methodSetAdd(env, myMethods, member);
-		methodSetAdd(env, allMethods, member);
-		////////////////////////////////////////////////////////////
-	    }
-	}
+                //System.out.println("Declared in " + this + ", " + member);
 
-	// We're ready to start adding inherited methods.  First add
-	// the methods from our superclass.
+                ////////////////////////////////////////////////////////////
+                // PCJ 2003-07-30 modified the following code because with
+                // the covariant return type feature of the 1.5 compiler,
+                // there might be multiple methods with the same signature
+                // but different return types, and MethodSet doesn't
+                // support that.  We use a new utility method that attempts
+                // to ensure that the appropriate method winds up in the
+                // MethodSet.  See 4892308.
+                ////////////////////////////////////////////////////////////
+                // myMethods.add(member);
+                // allMethods.add(member);
+                ////////////////////////////////////////////////////////////
+                methodSetAdd(env, myMethods, member);
+                methodSetAdd(env, allMethods, member);
+                ////////////////////////////////////////////////////////////
+            }
+        }
 
-	//System.out.println("About to start superclasses for " + this);
-	
-	ClassDeclaration scDecl = getSuperClass(env);
-	if (scDecl != null) {
-	    collectOneClass(env, scDecl,
-			    myMethods, allMethods, mirandaMethods);
+        // We're ready to start adding inherited methods.  First add
+        // the methods from our superclass.
 
-	    // Make sure that we add all unimplementable methods from our
-	    // superclass to our list of unimplementable methods.
-	    ClassDefinition sc = scDecl.getClassDefinition();
-	    Iterator supIter = sc.getPermanentlyAbstractMethods();
-	    while (supIter.hasNext()) {
-		permanentlyAbstractMethods.add(supIter.next());
-	    }
-	}
+        //System.out.println("About to start superclasses for " + this);
 
-	// Now we inherit all of the methods from our interfaces.
+        ClassDeclaration scDecl = getSuperClass(env);
+        if (scDecl != null) {
+            collectOneClass(env, scDecl,
+                            myMethods, allMethods, mirandaMethods);
 
-	//System.out.println("About to start interfaces for " + this);
+            // Make sure that we add all unimplementable methods from our
+            // superclass to our list of unimplementable methods.
+            ClassDefinition sc = scDecl.getClassDefinition();
+            Iterator supIter = sc.getPermanentlyAbstractMethods();
+            while (supIter.hasNext()) {
+                permanentlyAbstractMethods.add(supIter.next());
+            }
+        }
 
-	for (int i = 0; i < interfaces.length; i++) {
-	    collectOneClass(env, interfaces[i],
-			    myMethods, allMethods, mirandaMethods);
-	}
-	allMethods.freeze();
- 
-	// Now we have collected all of our methods from our superclasses
-	// and interfaces into our `allMethods' member.  Good.  As a last
-	// task, we add our collected miranda methods to this class.
-	//
-	// If we do not add the mirandas to the class explicitly, there
-	// will be no code generated for them.
-	if (mirandaMethods != null && mirandaMethods.size() > 0) {
-	    addMirandaMethods(env, mirandaMethods.iterator());
-	}	
+        // Now we inherit all of the methods from our interfaces.
+
+        //System.out.println("About to start interfaces for " + this);
+
+        for (int i = 0; i < interfaces.length; i++) {
+            collectOneClass(env, interfaces[i],
+                            myMethods, allMethods, mirandaMethods);
+        }
+        allMethods.freeze();
+
+        // Now we have collected all of our methods from our superclasses
+        // and interfaces into our `allMethods' member.  Good.  As a last
+        // task, we add our collected miranda methods to this class.
+        //
+        // If we do not add the mirandas to the class explicitly, there
+        // will be no code generated for them.
+        if (mirandaMethods != null && mirandaMethods.size() > 0) {
+            addMirandaMethods(env, mirandaMethods.iterator());
+        }
     }
 
     ////////////////////////////////////////////////////////////
@@ -1563,23 +1563,23 @@ class ClassDefinition implements Constants {
     // rmic.  See 4892308.
     ////////////////////////////////////////////////////////////
     private static void methodSetAdd(Environment env,
-				     MethodSet methodSet,
-				     MemberDefinition newMethod)
+                                     MethodSet methodSet,
+                                     MemberDefinition newMethod)
     {
-	MemberDefinition oldMethod = methodSet.lookupSig(newMethod.getName(),
-							 newMethod.getType());
-	if (oldMethod != null) {
-	    Type oldReturnType = oldMethod.getType().getReturnType();
-	    Type newReturnType = newMethod.getType().getReturnType();
-	    try {
-		if (env.isMoreSpecific(newReturnType, oldReturnType)) {
-		    methodSet.replace(newMethod);
-		}
-	    } catch (ClassNotFound ignore) {
-	    }
-	} else {
-	    methodSet.add(newMethod);
-	}
+        MemberDefinition oldMethod = methodSet.lookupSig(newMethod.getName(),
+                                                         newMethod.getType());
+        if (oldMethod != null) {
+            Type oldReturnType = oldMethod.getType().getReturnType();
+            Type newReturnType = newMethod.getType().getReturnType();
+            try {
+                if (env.isMoreSpecific(newReturnType, oldReturnType)) {
+                    methodSet.replace(newMethod);
+                }
+            } catch (ClassNotFound ignore) {
+            }
+        } else {
+            methodSet.add(newMethod);
+        }
     }
     ////////////////////////////////////////////////////////////
 
@@ -1588,10 +1588,10 @@ class ClassDefinition implements Constants {
      * instance of this class.
      */
     public Iterator getMethods(Environment env) {
-	if (allMethods == null) {
-	    collectInheritedMethods(env);
-	}
-	return getMethods();
+        if (allMethods == null) {
+            collectInheritedMethods(env);
+        }
+        return getMethods();
     }
 
     /**
@@ -1600,10 +1600,10 @@ class ClassDefinition implements Constants {
      * generated this information yet.
      */
     public Iterator getMethods() {
-	if (allMethods == null) {
-	    throw new CompilerError("getMethods: too early");
-	}
-	return allMethods.iterator();
+        if (allMethods == null) {
+            throw new CompilerError("getMethods: too early");
+        }
+        return allMethods.iterator();
     }
 
     // In early VM's there was a bug -- the VM didn't walk the interfaces
@@ -1636,8 +1636,8 @@ class ClassDefinition implements Constants {
      * affect our compilation.
      */
     protected void addMirandaMethods(Environment env,
-				     Iterator mirandas) {
-	// do nothing.
+                                     Iterator mirandas) {
+        // do nothing.
     }
 
     //---------------------------------------------------------------
@@ -1652,7 +1652,7 @@ class ClassDefinition implements Constants {
      */
 
     public void resolveTypeStructure(Environment env) {
-    }	
+    }
 
     /**
      * Look up an inner class name, from somewhere inside this class.
@@ -1687,106 +1687,106 @@ class ClassDefinition implements Constants {
      * directly to resolveName().
      */
     public Identifier resolveName(Environment env, Identifier name) {
-	if (tracing) env.dtEvent("ClassDefinition.resolveName: " + name);
-	// This logic is pretty much exactly parallel to that of
-	// Environment.resolveName().
-	if (name.isQualified()) {
-	    // Try to resolve the first identifier component,
-	    // because inner class names take precedence over
-	    // package prefixes.  (Cf. Environment.resolveName.)
-	    Identifier rhead = resolveName(env, name.getHead());
+        if (tracing) env.dtEvent("ClassDefinition.resolveName: " + name);
+        // This logic is pretty much exactly parallel to that of
+        // Environment.resolveName().
+        if (name.isQualified()) {
+            // Try to resolve the first identifier component,
+            // because inner class names take precedence over
+            // package prefixes.  (Cf. Environment.resolveName.)
+            Identifier rhead = resolveName(env, name.getHead());
 
-	    if (rhead.hasAmbigPrefix()) {
-		// The first identifier component refers to an
-		// ambiguous class.  Limp on.  We throw away the
-		// rest of the classname as it is irrelevant.
-		// (part of solution for 4059855).
-		return rhead;
-	    }
+            if (rhead.hasAmbigPrefix()) {
+                // The first identifier component refers to an
+                // ambiguous class.  Limp on.  We throw away the
+                // rest of the classname as it is irrelevant.
+                // (part of solution for 4059855).
+                return rhead;
+            }
 
-	    if (!env.classExists(rhead)) {
-		return env.resolvePackageQualifiedName(name);
-	    }
-	    try {
-		return env.getClassDefinition(rhead).
-		    resolveInnerClass(env, name.getTail());
-	    } catch (ClassNotFound ee) {
-		// return partially-resolved name someone else can fail on
-		return Identifier.lookupInner(rhead, name.getTail());
-	    }
-	}
+            if (!env.classExists(rhead)) {
+                return env.resolvePackageQualifiedName(name);
+            }
+            try {
+                return env.getClassDefinition(rhead).
+                    resolveInnerClass(env, name.getTail());
+            } catch (ClassNotFound ee) {
+                // return partially-resolved name someone else can fail on
+                return Identifier.lookupInner(rhead, name.getTail());
+            }
+        }
 
-	// This method used to fail to look for local classes, thus a
-	// reference to a local class within, e.g., the type of a member
-	// declaration, would fail to resolve if the immediately enclosing
-	// context was an inner class.  The code added below is ugly, but
-	// it works, and is lifted from existing code in 'Context.resolveName'
-	// and 'Context.getClassCommon'. See the comments there about the design.
-	// Fixes 4095716.
+        // This method used to fail to look for local classes, thus a
+        // reference to a local class within, e.g., the type of a member
+        // declaration, would fail to resolve if the immediately enclosing
+        // context was an inner class.  The code added below is ugly, but
+        // it works, and is lifted from existing code in 'Context.resolveName'
+        // and 'Context.getClassCommon'. See the comments there about the design.
+        // Fixes 4095716.
 
-	int ls = -2;
-	LocalMember lf = null;
-	if (classContext != null) {
-	    lf = classContext.getLocalClass(name);
-	    if (lf != null) {
-		ls = lf.getScopeNumber();
-	    }
-	}
+        int ls = -2;
+        LocalMember lf = null;
+        if (classContext != null) {
+            lf = classContext.getLocalClass(name);
+            if (lf != null) {
+                ls = lf.getScopeNumber();
+            }
+        }
 
-	// Look for an unqualified name in enclosing scopes.
-	for (ClassDefinition c = this; c != null; c = c.outerClass) {
-	    try {
-		MemberDefinition f = c.getInnerClass(env, name);
-		if (f != null &&
-		    (lf == null || classContext.getScopeNumber(c) > ls)) {
-		    // An uplevel member was found, and was nested more deeply than
-		    // any enclosing local of the same name.
+        // Look for an unqualified name in enclosing scopes.
+        for (ClassDefinition c = this; c != null; c = c.outerClass) {
+            try {
+                MemberDefinition f = c.getInnerClass(env, name);
+                if (f != null &&
+                    (lf == null || classContext.getScopeNumber(c) > ls)) {
+                    // An uplevel member was found, and was nested more deeply than
+                    // any enclosing local of the same name.
                     return f.getInnerClass().getName();
-		}
-	    } catch (ClassNotFound ee) {
-		// a missing superclass, or something catastrophic
-	    }
-	}
+                }
+            } catch (ClassNotFound ee) {
+                // a missing superclass, or something catastrophic
+            }
+        }
 
-	// No uplevel member found, so use the enclosing local if one was found.
-	if (lf != null) {
+        // No uplevel member found, so use the enclosing local if one was found.
+        if (lf != null) {
            return lf.getInnerClass().getName();
-	}
+        }
 
-	// look in imports, etc.
-	return env.resolveName(name);
+        // look in imports, etc.
+        return env.resolveName(name);
     }
 
     /**
      * Interpret a qualified class name, which may have further subcomponents..
      * Follow inheritance links, as in:
-     *	class C { class N { } }  class D extends C { }  ... new D.N() ...
+     *  class C { class N { } }  class D extends C { }  ... new D.N() ...
      * Ignore outer scopes and packages.
      * @see resolveName
      */
     public Identifier resolveInnerClass(Environment env, Identifier nm) {
-	if (nm.isInner())  throw new CompilerError("inner");
-	if (nm.isQualified()) {
-	    Identifier rhead = resolveInnerClass(env, nm.getHead());
-	    try {
-		return env.getClassDefinition(rhead).
-		    resolveInnerClass(env, nm.getTail());
-	    } catch (ClassNotFound ee) {
-		// return partially-resolved name someone else can fail on
-		return Identifier.lookupInner(rhead, nm.getTail());
-	    }
-	} else {
-	    try {
-		MemberDefinition f = getInnerClass(env, nm);
-		if (f != null) {
-		    return f.getInnerClass().getName();
-		}
-	    } catch (ClassNotFound ee) {
-		// a missing superclass, or something catastrophic
-	    }
-	    // Fake a good name for a diagnostic.
-	    return Identifier.lookupInner(this.getName(), nm);
-	}
+        if (nm.isInner())  throw new CompilerError("inner");
+        if (nm.isQualified()) {
+            Identifier rhead = resolveInnerClass(env, nm.getHead());
+            try {
+                return env.getClassDefinition(rhead).
+                    resolveInnerClass(env, nm.getTail());
+            } catch (ClassNotFound ee) {
+                // return partially-resolved name someone else can fail on
+                return Identifier.lookupInner(rhead, nm.getTail());
+            }
+        } else {
+            try {
+                MemberDefinition f = getInnerClass(env, nm);
+                if (f != null) {
+                    return f.getInnerClass().getName();
+                }
+            } catch (ClassNotFound ee) {
+                // a missing superclass, or something catastrophic
+            }
+            // Fake a good name for a diagnostic.
+            return Identifier.lookupInner(this.getName(), nm);
+        }
     }
 
     /**
@@ -1801,36 +1801,36 @@ class ClassDefinition implements Constants {
      * name exactly.)
      */
     public boolean innerClassExists(Identifier nm) {
-	for (MemberDefinition field = getFirstMatch(nm.getHead()) ; field != null ; field = field.getNextMatch()) {
-	    if (field.isInnerClass()) {
-		if (field.getInnerClass().isLocal()) {
-		    continue;	// ignore this name; it is internally generated
-		}
-		return !nm.isQualified() ||
-		    field.getInnerClass().innerClassExists(nm.getTail());
-	    }
-	}
-	return false;
+        for (MemberDefinition field = getFirstMatch(nm.getHead()) ; field != null ; field = field.getNextMatch()) {
+            if (field.isInnerClass()) {
+                if (field.getInnerClass().isLocal()) {
+                    continue;   // ignore this name; it is internally generated
+                }
+                return !nm.isQualified() ||
+                    field.getInnerClass().innerClassExists(nm.getTail());
+            }
+        }
+        return false;
     }
 
    /**
      * Find any method with a given name.
      */
     public MemberDefinition findAnyMethod(Environment env, Identifier nm) throws ClassNotFound {
-	MemberDefinition f;
-	for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
-	    if (f.isMethod()) {
-		return f;
-	    }
-	}
+        MemberDefinition f;
+        for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
+            if (f.isMethod()) {
+                return f;
+            }
+        }
 
-	// look in the super class
-	ClassDeclaration sup = getSuperClass();
-	if (sup == null) 
-	    return null;
-	return sup.getClassDefinition(env).findAnyMethod(env, nm);
+        // look in the super class
+        ClassDeclaration sup = getSuperClass();
+        if (sup == null)
+            return null;
+        return sup.getClassDefinition(env).findAnyMethod(env, nm);
     }
-    
+
     /**
       * Given the fact that this class has no method "nm" matching "argTypes",
       * find out if the mismatch can be blamed on a particular actual argument
@@ -1848,126 +1848,126 @@ class ClassDefinition implements Constants {
       * checking.
       */
     public int diagnoseMismatch(Environment env, Identifier nm, Type argTypes[],
-				int start, Type margTypeResult[]) throws ClassNotFound {
-	int haveMatch[] = new int[argTypes.length];
-	Type margType[] = new Type[argTypes.length];
-	if (!diagnoseMismatch(env, nm, argTypes, start, haveMatch, margType))
-	    return -2;
-	for (int i = start; i < argTypes.length; i++) {
-	    if (haveMatch[i] < 4) {
-		margTypeResult[0] = margType[i];
-		return (i<<2) | haveMatch[i];
-	    }
-	}
-	return -1;
+                                int start, Type margTypeResult[]) throws ClassNotFound {
+        int haveMatch[] = new int[argTypes.length];
+        Type margType[] = new Type[argTypes.length];
+        if (!diagnoseMismatch(env, nm, argTypes, start, haveMatch, margType))
+            return -2;
+        for (int i = start; i < argTypes.length; i++) {
+            if (haveMatch[i] < 4) {
+                margTypeResult[0] = margType[i];
+                return (i<<2) | haveMatch[i];
+            }
+        }
+        return -1;
     }
 
     private boolean diagnoseMismatch(Environment env, Identifier nm, Type argTypes[], int start,
-				     int haveMatch[], Type margType[]) throws ClassNotFound {
-	// look in the current class
-	boolean haveOne = false;
-	MemberDefinition f;
-	for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
-	    if (!f.isMethod()) {
-		continue;
-	    }
-	    Type fArgTypes[] = f.getType().getArgumentTypes();
-	    if (fArgTypes.length == argTypes.length) {
-		haveOne = true;
-		for (int i = start; i < argTypes.length; i++) {
-		    Type at = argTypes[i];
-		    Type ft = fArgTypes[i];
-		    if (env.implicitCast(at, ft)) {
-			haveMatch[i] = 4;
-			continue;
-		    } else if (haveMatch[i] <= 2 && env.explicitCast(at, ft)) {
-			if (haveMatch[i] < 2)  margType[i] = null;
-			haveMatch[i] = 2;
-		    } else if (haveMatch[i] > 0) {
-			continue;
-		    }
-		    if (margType[i] == null)
-			margType[i] = ft;
-		    else if (margType[i] != ft)
-			haveMatch[i] |= 1;
-		}
-	    }
-	}
+                                     int haveMatch[], Type margType[]) throws ClassNotFound {
+        // look in the current class
+        boolean haveOne = false;
+        MemberDefinition f;
+        for (f = getFirstMatch(nm) ; f != null ; f = f.getNextMatch()) {
+            if (!f.isMethod()) {
+                continue;
+            }
+            Type fArgTypes[] = f.getType().getArgumentTypes();
+            if (fArgTypes.length == argTypes.length) {
+                haveOne = true;
+                for (int i = start; i < argTypes.length; i++) {
+                    Type at = argTypes[i];
+                    Type ft = fArgTypes[i];
+                    if (env.implicitCast(at, ft)) {
+                        haveMatch[i] = 4;
+                        continue;
+                    } else if (haveMatch[i] <= 2 && env.explicitCast(at, ft)) {
+                        if (haveMatch[i] < 2)  margType[i] = null;
+                        haveMatch[i] = 2;
+                    } else if (haveMatch[i] > 0) {
+                        continue;
+                    }
+                    if (margType[i] == null)
+                        margType[i] = ft;
+                    else if (margType[i] != ft)
+                        haveMatch[i] |= 1;
+                }
+            }
+        }
 
-	// constructors are not inherited
-	if (nm.equals(idInit)) {
-	    return haveOne;
-	}
+        // constructors are not inherited
+        if (nm.equals(idInit)) {
+            return haveOne;
+        }
 
-	// look in the super class
-	ClassDeclaration sup = getSuperClass();
-	if (sup != null) {
-	    if (sup.getClassDefinition(env).diagnoseMismatch(env, nm, argTypes, start,
-							     haveMatch, margType))
-		haveOne = true;
-	}
-	return haveOne;
+        // look in the super class
+        ClassDeclaration sup = getSuperClass();
+        if (sup != null) {
+            if (sup.getClassDefinition(env).diagnoseMismatch(env, nm, argTypes, start,
+                                                             haveMatch, margType))
+                haveOne = true;
+        }
+        return haveOne;
     }
-    
+
     /**
      * Add a field (no checks)
      */
     public void addMember(MemberDefinition field) {
-	//System.out.println("ADD = " + field);
-	if (firstMember == null) {
-	    firstMember = lastMember = field;
-	} else if (field.isSynthetic() && field.isFinal()
-				       && field.isVariable()) {
-	    // insert this at the front, because of initialization order
-	    field.nextMember = firstMember;
-	    firstMember = field;
-	    field.nextMatch = (MemberDefinition)fieldHash.get(field.name);
-	} else {
-	    lastMember.nextMember = field;
-	    lastMember = field;
-	    field.nextMatch = (MemberDefinition)fieldHash.get(field.name);
-	}
-	fieldHash.put(field.name, field);
+        //System.out.println("ADD = " + field);
+        if (firstMember == null) {
+            firstMember = lastMember = field;
+        } else if (field.isSynthetic() && field.isFinal()
+                                       && field.isVariable()) {
+            // insert this at the front, because of initialization order
+            field.nextMember = firstMember;
+            firstMember = field;
+            field.nextMatch = (MemberDefinition)fieldHash.get(field.name);
+        } else {
+            lastMember.nextMember = field;
+            lastMember = field;
+            field.nextMatch = (MemberDefinition)fieldHash.get(field.name);
+        }
+        fieldHash.put(field.name, field);
     }
 
     /**
      * Add a field (subclasses make checks)
      */
     public void addMember(Environment env, MemberDefinition field) {
-	addMember(field);
-	if (resolved) {
-	    // a late addition
-	    field.resolveTypeStructure(env);
-	}
+        addMember(field);
+        if (resolved) {
+            // a late addition
+            field.resolveTypeStructure(env);
+        }
     }
 
     /**
      * Find or create an uplevel reference for the given target.
      */
     public UplevelReference getReference(LocalMember target) {
-	for (UplevelReference r = references; r != null; r = r.getNext()) {
-	    if (r.getTarget() == target) {
-		return r;
-	    }
-	}
-	return addReference(target);
+        for (UplevelReference r = references; r != null; r = r.getNext()) {
+            if (r.getTarget() == target) {
+                return r;
+            }
+        }
+        return addReference(target);
     }
 
     protected UplevelReference addReference(LocalMember target) {
-	if (target.getClassDefinition() == this) {
-	    throw new CompilerError("addReference "+target);
-	}
-	referencesMustNotBeFrozen();
-	UplevelReference r = new UplevelReference(this, target);
-	references = r.insertInto(references);
-	return r;
+        if (target.getClassDefinition() == this) {
+            throw new CompilerError("addReference "+target);
+        }
+        referencesMustNotBeFrozen();
+        UplevelReference r = new UplevelReference(this, target);
+        references = r.insertInto(references);
+        return r;
     }
 
     /**
      * Return the list of all uplevel references.
      */
     public UplevelReference getReferences() {
-	return references;
+        return references;
     }
 
     /**
@@ -1976,31 +1976,31 @@ class ClassDefinition implements Constants {
      * After that, it is an error to add new references.
      */
     public UplevelReference getReferencesFrozen() {
-	referencesFrozen = true;
-	return references;
+        referencesFrozen = true;
+        return references;
     }
 
     /**
      * assertion check
      */
     public final void referencesMustNotBeFrozen() {
-	if (referencesFrozen) {
-	    throw new CompilerError("referencesMustNotBeFrozen "+this);
-	}
+        if (referencesFrozen) {
+            throw new CompilerError("referencesMustNotBeFrozen "+this);
+        }
     }
 
     /**
      * Get helper method for class literal lookup.
      */
     public MemberDefinition getClassLiteralLookup(long fwhere) {
-	throw new CompilerError("binary class");
+        throw new CompilerError("binary class");
     }
 
     /**
      * Add a dependency
      */
     public void addDependency(ClassDeclaration c) {
-	throw new CompilerError("addDependency");
+        throw new CompilerError("addDependency");
     }
 
     /**
@@ -2010,18 +2010,18 @@ class ClassDefinition implements Constants {
      */
 
     public ClassDefinition getLocalClass(String name) {
-	if (localClasses == null) {
-	    return null;
-	} else {
-	    return (ClassDefinition)localClasses.get(name);
-	}
+        if (localClasses == null) {
+            return null;
+        } else {
+            return (ClassDefinition)localClasses.get(name);
+        }
     }
 
     public void addLocalClass(ClassDefinition c, String name) {
-	if (localClasses == null) {
-	    localClasses = new Hashtable(LOCAL_CLASSES_SIZE);
-	}
-	localClasses.put(name, c);
+        if (localClasses == null) {
+            localClasses = new Hashtable(LOCAL_CLASSES_SIZE);
+        }
+        localClasses.put(name, c);
     }
 
 
@@ -2029,43 +2029,43 @@ class ClassDefinition implements Constants {
      * Print for debugging
      */
     public void print(PrintStream out) {
-	if (isPublic()) {
-	    out.print("public ");
-	} 
-	if (isInterface()) {
-	    out.print("interface ");
-	} else {
-	    out.print("class ");
-	}
-	out.print(getName() + " ");
-	if (getSuperClass() != null) {
-	    out.print("extends " + getSuperClass().getName() + " ");
-	}
-	if (interfaces.length > 0) {
-	    out.print("implements ");
-	    for (int i = 0 ; i < interfaces.length ; i++) {
-		if (i > 0) {
-		    out.print(", ");
-		}
-		out.print(interfaces[i].getName());
-		out.print(" ");
-	    }
-	}
-	out.println("{");
+        if (isPublic()) {
+            out.print("public ");
+        }
+        if (isInterface()) {
+            out.print("interface ");
+        } else {
+            out.print("class ");
+        }
+        out.print(getName() + " ");
+        if (getSuperClass() != null) {
+            out.print("extends " + getSuperClass().getName() + " ");
+        }
+        if (interfaces.length > 0) {
+            out.print("implements ");
+            for (int i = 0 ; i < interfaces.length ; i++) {
+                if (i > 0) {
+                    out.print(", ");
+                }
+                out.print(interfaces[i].getName());
+                out.print(" ");
+            }
+        }
+        out.println("{");
 
-	for (MemberDefinition f = getFirstMember() ; f != null ; f = f.getNextMember()) {
-	    out.print("    ");
-	    f.print(out);
-	}
+        for (MemberDefinition f = getFirstMember() ; f != null ; f = f.getNextMember()) {
+            out.print("    ");
+            f.print(out);
+        }
 
-	out.println("}");
+        out.println("}");
     }
 
     /**
      * Convert to String
      */
     public String toString() {
-    	return getClassDeclaration().toString();
+        return getClassDeclaration().toString();
     }
 
     /**
@@ -2073,13 +2073,13 @@ class ClassDefinition implements Constants {
      * some storage.
      */
     public void cleanup(Environment env) {
-	if (env.dump()) {
-	    env.output("[cleanup " + getName() + "]");
-	}
-	for (MemberDefinition f = getFirstMember() ; f != null ; f = f.getNextMember()) {
-	    f.cleanup(env);
-	}
-	// keep "references" around, for the sake of local subclasses
-	documentation = null;
+        if (env.dump()) {
+            env.output("[cleanup " + getName() + "]");
+        }
+        for (MemberDefinition f = getFirstMember() ; f != null ; f = f.getNextMember()) {
+            f.cleanup(env);
+        }
+        // keep "references" around, for the sake of local subclasses
+        documentation = null;
     }
 }

@@ -30,8 +30,7 @@ package sun.misc;
  * in arbitrary threads, and to be posted for execution in a non-restricted
  * thread.
  *
- * @version 	%I%, %G%
- * @author	Steven B. Byrne
+ * @author      Steven B. Byrne
  */
 
 
@@ -45,31 +44,31 @@ public class RequestProcessor implements Runnable {
      * thread.
      */
     public static void postRequest(Request req) {
-	lazyInitialize();
-	requestQueue.enqueue(req);
+        lazyInitialize();
+        requestQueue.enqueue(req);
     }
 
     /**
      * Process requests as they are queued.
      */
     public void run() {
-	lazyInitialize();
-	while (true) {
-	    try {
-		Object obj = requestQueue.dequeue();
-		if (obj instanceof Request) { // ignore bogons
-		    Request req = (Request)obj;
-		    try {
-			req.execute();
-		    } catch (Throwable t) {
-			// do nothing at the moment...maybe report an error
-			// in the future
-		    }
-		}
-	    } catch (InterruptedException e) {
-		// do nothing at the present time.
-	    }
-	}
+        lazyInitialize();
+        while (true) {
+            try {
+                Object obj = requestQueue.dequeue();
+                if (obj instanceof Request) { // ignore bogons
+                    Request req = (Request)obj;
+                    try {
+                        req.execute();
+                    } catch (Throwable t) {
+                        // do nothing at the moment...maybe report an error
+                        // in the future
+                    }
+                }
+            } catch (InterruptedException e) {
+                // do nothing at the present time.
+            }
+        }
     }
 
 
@@ -80,11 +79,11 @@ public class RequestProcessor implements Runnable {
      * processor thread is created
      */
     public static synchronized void startProcessing() {
-	if (dispatcher == null) {
-	    dispatcher = new Thread(new RequestProcessor(), "Request Processor");
-	    dispatcher.setPriority(Thread.NORM_PRIORITY + 2);
-	    dispatcher.start();
-	}	
+        if (dispatcher == null) {
+            dispatcher = new Thread(new RequestProcessor(), "Request Processor");
+            dispatcher.setPriority(Thread.NORM_PRIORITY + 2);
+            dispatcher.start();
+        }
     }
 
 
@@ -92,9 +91,9 @@ public class RequestProcessor implements Runnable {
      * This method performs lazy initialization.
      */
     private static synchronized void lazyInitialize() {
-	if (requestQueue == null) {
-	    requestQueue = new Queue();
-	}
+        if (requestQueue == null) {
+            requestQueue = new Queue();
+        }
     }
 
 }

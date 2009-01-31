@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management; 
+package javax.management;
 
 
 
@@ -34,7 +34,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class ReflectionException extends JMException   { 
+public class ReflectionException extends JMException   {
 
     /* Serial version */
     private static final long serialVersionUID = 9170809325636915553L;
@@ -49,11 +49,11 @@ public class ReflectionException extends JMException   {
      * Creates a <CODE>ReflectionException</CODE> that wraps the actual <CODE>java.lang.Exception</CODE>.
      *
      * @param e the wrapped exception.
-     */   
-    public ReflectionException(java.lang.Exception e) { 
-	super() ;
-	exception = e ; 
-    } 
+     */
+    public ReflectionException(java.lang.Exception e) {
+        super() ;
+        exception = e ;
+    }
 
     /**
      * Creates a <CODE>ReflectionException</CODE> that wraps the actual <CODE>java.lang.Exception</CODE> with
@@ -62,19 +62,19 @@ public class ReflectionException extends JMException   {
      * @param e the wrapped exception.
      * @param message the detail message.
      */
-    public ReflectionException(java.lang.Exception e, String message) { 
-	super(message) ;
-	exception = e ; 
-    } 
+    public ReflectionException(java.lang.Exception e, String message) {
+        super(message) ;
+        exception = e ;
+    }
 
     /**
      * Returns the actual {@link Exception} thrown.
      *
      * @return the wrapped {@link Exception}.
      */
-    public java.lang.Exception getTargetException()  { 
-	return exception ;
-    } 
+    public java.lang.Exception getTargetException()  {
+        return exception ;
+    }
 
     /**
      * Returns the actual {@link Exception} thrown.
@@ -82,6 +82,6 @@ public class ReflectionException extends JMException   {
      * @return the wrapped {@link Exception}.
      */
     public Throwable getCause() {
-	return exception;
+        return exception;
     }
 }

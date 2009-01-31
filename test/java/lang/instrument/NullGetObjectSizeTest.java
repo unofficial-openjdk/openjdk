@@ -55,12 +55,12 @@ NullGetObjectSizeTest
     doRunTest() {
         testNullGetObjectSize();
     }
-    
-    
+
+
     public void
     testNullGetObjectSize() {
         boolean caught = false;
-        
+
         // Test that a null argument throws NullPointerException
         try {
             fInst.getObjectSize(null);

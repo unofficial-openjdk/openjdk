@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -62,122 +62,122 @@ public class InheritedChannelNotServerSocket {
     private InheritedChannelNotServerSocket() { }
 
     public interface Callback extends Remote {
-	void notifyTest() throws RemoteException;
+        void notifyTest() throws RemoteException;
     }
 
     public static class CallbackImpl implements Callback {
-	CallbackImpl() { }
-	public void notifyTest() {
-	    synchronized (lock) {
-		notified = true;
-		System.err.println("notification received.");
-		lock.notifyAll();
-	    }
-	}
+        CallbackImpl() { }
+        public void notifyTest() {
+            synchronized (lock) {
+                notified = true;
+                System.err.println("notification received.");
+                lock.notifyAll();
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {
-	System.err.println("\nRegression test for bug 6261402\n");
+        System.err.println("\nRegression test for bug 6261402\n");
 
-	RMID rmid = null;
-	Callback obj = null;
-	try {
-	    /*
-	     * Export callback object and bind in registry.
-	     */
-	    System.err.println("export callback object and bind in registry");
-	    obj = new CallbackImpl();
-	    Callback proxy =
-		(Callback) UnicastRemoteObject.exportObject(obj, 0);
-	    Registry registry =
-		LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
-	    registry.bind("Callback", proxy);
+        RMID rmid = null;
+        Callback obj = null;
+        try {
+            /*
+             * Export callback object and bind in registry.
+             */
+            System.err.println("export callback object and bind in registry");
+            obj = new CallbackImpl();
+            Callback proxy =
+                (Callback) UnicastRemoteObject.exportObject(obj, 0);
+            Registry registry =
+                LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
+            registry.bind("Callback", proxy);
 
-	    /*
-	     * Start rmid.
-	     */
-	    System.err.println("start rmid with inherited channel");
-	    RMID.removeLog();
-	    rmid = RMID.createRMID(System.out, System.err, true, true, PORT);
-	    rmid.addOptions(new String[]{
-		"-Djava.nio.channels.spi.SelectorProvider=" +
-		"InheritedChannelNotServerSocket$SP"});
-	    rmid.start();
+            /*
+             * Start rmid.
+             */
+            System.err.println("start rmid with inherited channel");
+            RMID.removeLog();
+            rmid = RMID.createRMID(System.out, System.err, true, true, PORT);
+            rmid.addOptions(new String[]{
+                "-Djava.nio.channels.spi.SelectorProvider=" +
+                "InheritedChannelNotServerSocket$SP"});
+            rmid.start();
 
-	    /*
-	     * Get activation system and wait to be notified via callback
-	     * from rmid's selector provider.
-	     */
-	    System.err.println("get activation system");
-	    ActivationSystem system = ActivationGroup.getSystem();
-	    System.err.println("ActivationSystem = " + system);
-	    synchronized (lock) {
-		while (!notified) {
-		    lock.wait();
-		}
-	    }
-	    System.err.println("TEST PASSED");
-	} finally {
-	    if (obj != null) {
-		UnicastRemoteObject.unexportObject(obj, true);
-	    }
-	    ActivationLibrary.rmidCleanup(rmid, PORT);
-	}
+            /*
+             * Get activation system and wait to be notified via callback
+             * from rmid's selector provider.
+             */
+            System.err.println("get activation system");
+            ActivationSystem system = ActivationGroup.getSystem();
+            System.err.println("ActivationSystem = " + system);
+            synchronized (lock) {
+                while (!notified) {
+                    lock.wait();
+                }
+            }
+            System.err.println("TEST PASSED");
+        } finally {
+            if (obj != null) {
+                UnicastRemoteObject.unexportObject(obj, true);
+            }
+            ActivationLibrary.rmidCleanup(rmid, PORT);
+        }
     }
 
     public static class SP extends SelectorProvider {
-	private final SelectorProvider provider;
-	private volatile SocketChannel channel = null;
+        private final SelectorProvider provider;
+        private volatile SocketChannel channel = null;
 
-	public SP() {
-	    provider = sun.nio.ch.DefaultSelectorProvider.create();
-	}
+        public SP() {
+            provider = sun.nio.ch.DefaultSelectorProvider.create();
+        }
 
-	public DatagramChannel openDatagramChannel() throws IOException {
-	    return provider.openDatagramChannel();
-	}
+        public DatagramChannel openDatagramChannel() throws IOException {
+            return provider.openDatagramChannel();
+        }
 
-	public Pipe openPipe() throws IOException {
-	    return provider.openPipe();
-	}
+        public Pipe openPipe() throws IOException {
+            return provider.openPipe();
+        }
 
-	public AbstractSelector openSelector() throws IOException {
-	    return provider.openSelector();
-	}
+        public AbstractSelector openSelector() throws IOException {
+            return provider.openSelector();
+        }
 
-	public ServerSocketChannel openServerSocketChannel() 
-	    throws IOException
-	{
-	    return provider.openServerSocketChannel();
-	}
+        public ServerSocketChannel openServerSocketChannel()
+            throws IOException
+        {
+            return provider.openServerSocketChannel();
+        }
 
-	public SocketChannel openSocketChannel() throws IOException {
-	    return provider.openSocketChannel();
-	}
-	
-	public synchronized Channel inheritedChannel() throws IOException {
-	    System.err.println("SP.inheritedChannel");
-	    if (channel == null) {
-		channel = SocketChannel.open();
-		Socket socket = channel.socket();
-		System.err.println("socket = " + socket);
+        public SocketChannel openSocketChannel() throws IOException {
+            return provider.openSocketChannel();
+        }
 
-		/*
-		 * Notify test that inherited channel was created.
-		 */
-		try {
-		    System.err.println("notify test...");
-		    Registry registry =
-			LocateRegistry.getRegistry(TestLibrary.REGISTRY_PORT);
-		    Callback obj = (Callback) registry.lookup("Callback");
-		    obj.notifyTest();
-		} catch (NotBoundException nbe) {
-		    throw (IOException)
-			new IOException("callback object not bound").
-			    initCause(nbe);
-		}
-	    }
-	    return channel;
-	}
+        public synchronized Channel inheritedChannel() throws IOException {
+            System.err.println("SP.inheritedChannel");
+            if (channel == null) {
+                channel = SocketChannel.open();
+                Socket socket = channel.socket();
+                System.err.println("socket = " + socket);
+
+                /*
+                 * Notify test that inherited channel was created.
+                 */
+                try {
+                    System.err.println("notify test...");
+                    Registry registry =
+                        LocateRegistry.getRegistry(TestLibrary.REGISTRY_PORT);
+                    Callback obj = (Callback) registry.lookup("Callback");
+                    obj.notifyTest();
+                } catch (NotBoundException nbe) {
+                    throw (IOException)
+                        new IOException("callback object not bound").
+                            initCause(nbe);
+                }
+            }
+            return channel;
+        }
     }
 }

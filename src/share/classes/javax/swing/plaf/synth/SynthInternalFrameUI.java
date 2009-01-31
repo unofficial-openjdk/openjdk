@@ -42,7 +42,6 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's InternalFrameUI.
  *
- * @version %I% %G%
  * @author David Kloba
  * @author Joshua Outwater
  * @author Rich Schiavi
@@ -50,7 +49,7 @@ import sun.swing.plaf.synth.SynthUI;
 class SynthInternalFrameUI extends BasicInternalFrameUI implements SynthUI,
         PropertyChangeListener {
     private SynthStyle style;
- 
+
     private static DesktopManager sharedDesktopManager;
     private boolean componentListenerAdded = false;
 
@@ -75,10 +74,10 @@ class SynthInternalFrameUI extends BasicInternalFrameUI implements SynthUI,
     }
 
     protected void uninstallComponents() {
-	if (frame.getComponentPopupMenu() instanceof UIResource) {
-	    frame.setComponentPopupMenu(null);
-	}
-	super.uninstallComponents();
+        if (frame.getComponentPopupMenu() instanceof UIResource) {
+            frame.setComponentPopupMenu(null);
+        }
+        super.uninstallComponents();
     }
 
     protected void uninstallListeners() {
@@ -135,38 +134,38 @@ class SynthInternalFrameUI extends BasicInternalFrameUI implements SynthUI,
 
     protected JComponent createNorthPane(JInternalFrame w) {
         titlePane = new SynthInternalFrameTitlePane(w);
-	titlePane.setName("InternalFrame.northPane");
+        titlePane.setName("InternalFrame.northPane");
         return titlePane;
     }
-    
-    protected ComponentListener createComponentListener() {
-	if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
-	    return new ComponentHandler() {
-		public void componentResized(ComponentEvent e) {
-		    if (frame != null && frame.isMaximum()) {
-			JDesktopPane desktop = (JDesktopPane)e.getSource();
-			for (Component comp : desktop.getComponents()) {
-			    if (comp instanceof SynthDesktopPaneUI.TaskBar) {
-				frame.setBounds(0, 0,
-						desktop.getWidth(),
-						desktop.getHeight() - comp.getHeight());
-				frame.revalidate();
-				break;
-			    }
-			}
-		    }
 
-		    // Update the new parent bounds for next resize, but don't
-		    // let the super method touch this frame
-		    JInternalFrame f = frame;
-		    frame = null;
-		    super.componentResized(e);
-		    frame = f;
-		}
-	    };
-	} else {
-	    return super.createComponentListener();
-	}
+    protected ComponentListener createComponentListener() {
+        if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
+            return new ComponentHandler() {
+                public void componentResized(ComponentEvent e) {
+                    if (frame != null && frame.isMaximum()) {
+                        JDesktopPane desktop = (JDesktopPane)e.getSource();
+                        for (Component comp : desktop.getComponents()) {
+                            if (comp instanceof SynthDesktopPaneUI.TaskBar) {
+                                frame.setBounds(0, 0,
+                                                desktop.getWidth(),
+                                                desktop.getHeight() - comp.getHeight());
+                                frame.revalidate();
+                                break;
+                            }
+                        }
+                    }
+
+                    // Update the new parent bounds for next resize, but don't
+                    // let the super method touch this frame
+                    JInternalFrame f = frame;
+                    frame = null;
+                    super.componentResized(e);
+                    frame = f;
+                }
+            };
+        } else {
+            return super.createComponentListener();
+        }
     }
 
     public void update(Graphics g, JComponent c) {

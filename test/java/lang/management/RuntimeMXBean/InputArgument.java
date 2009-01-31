@@ -26,7 +26,7 @@
  * @summary Basic unit test of RuntimeMXBean.getInputArguments().
  *
  * @author  Mandy Chung
- * 
+ *
  */
 
 import java.lang.management.*;
@@ -35,7 +35,7 @@ import java.util.ListIterator;
 
 public class InputArgument {
     private static RuntimeMXBean rm = ManagementFactory.getRuntimeMXBean();
-    private static String vmOption = null; 
+    private static String vmOption = null;
 
     public static void main(String args[]) throws Exception {
         // set the expected input argument

@@ -35,7 +35,7 @@ import javax.print.attribute.standard.*;
 public class PSCopiesFlavorTest {
 
    public static void main(String args[]) {
- 
+
        DocFlavor flavor = DocFlavor.INPUT_STREAM.POSTSCRIPT;
        PrintService ps = PrintServiceLookup.lookupDefaultPrintService();
        if (!(ps.isDocFlavorSupported(flavor))) {

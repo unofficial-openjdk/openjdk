@@ -26,7 +26,7 @@
  *
  * @bug 6388456
  * @summary Need adjustable TLS max record size for interoperability
- *	with non-compliant
+ *      with non-compliant
  *
  * @author Xuelei Fan
  */
@@ -65,39 +65,39 @@ public class LargePacket extends SSLEngineService {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-	// create SSLEngine.
-	SSLEngine ssle = createSSLEngine(false);
+        // create SSLEngine.
+        SSLEngine ssle = createSSLEngine(false);
 
-	// Create a server socket channel.
-	InetSocketAddress isa = 
-		new InetSocketAddress(InetAddress.getLocalHost(), serverPort);
-	ServerSocketChannel ssc = ServerSocketChannel.open();
-	ssc.socket().bind(isa);
-	serverPort = ssc.socket().getLocalPort();
-	
+        // Create a server socket channel.
+        InetSocketAddress isa =
+                new InetSocketAddress(InetAddress.getLocalHost(), serverPort);
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.socket().bind(isa);
+        serverPort = ssc.socket().getLocalPort();
+
         // Signal Client, we're ready for his connect.
         serverReady = true;
 
-	// Accept a socket channel.
-	SocketChannel sc = ssc.accept();
+        // Accept a socket channel.
+        SocketChannel sc = ssc.accept();
 
-	// Complete connection.
-	while (!sc.finishConnect() ) {
-	    // waiting for the connection completed.
-	}
+        // Complete connection.
+        while (!sc.finishConnect() ) {
+            // waiting for the connection completed.
+        }
 
-	// handshaking
-	handshaking(ssle, sc);
+        // handshaking
+        handshaking(ssle, sc);
 
-	// receive application data
-	receive(ssle, sc);
+        // receive application data
+        receive(ssle, sc);
 
-	// send out application data
-	deliver(ssle, sc);
+        // send out application data
+        deliver(ssle, sc);
 
-	// close the socket channel.
-	sc.close();
-	ssc.close();
+        // close the socket channel.
+        sc.close();
+        ssc.close();
     }
 
     /*
@@ -107,8 +107,8 @@ public class LargePacket extends SSLEngineService {
      * to avoid infinite hangs.
      */
     void doClientSide() throws Exception {
-	// create SSLEngine.
-	SSLEngine ssle = createSSLEngine(true);
+        // create SSLEngine.
+        SSLEngine ssle = createSSLEngine(true);
 
         /*
          * Wait for server to get started.
@@ -156,7 +156,7 @@ public class LargePacket extends SSLEngineService {
         if (debug)
             System.setProperty("javax.net.debug", "all");
 
-	new LargePacket();
+        new LargePacket();
     }
 
     Thread clientThread = null;

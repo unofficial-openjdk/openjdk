@@ -49,96 +49,96 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXConnectorFactory;
 
 /**
- * VM shutdown hook. Test that the hook is called less than 5 secs 
+ * VM shutdown hook. Test that the hook is called less than 5 secs
  * after expected exit.
  */
 class TimeChecker extends Thread {
     public void run() {
-	System.out.println("shutdown hook called");
-	long elapsedTime = 
-	    System.currentTimeMillis() - RMIExitTest.exitStartTime;
-	if(elapsedTime >= 5000) {
-	    System.out.println("BUG 4917237 not Fixed.");
-	    // Once in hook, to provide an exit status != 0, halt must 
-	    // be called. Hooks are not called when halt is called.
-	    Runtime.getRuntime().halt(1);
-	} else {
-	    System.out.println("BUG 4917237 Fixed");
-	}
+        System.out.println("shutdown hook called");
+        long elapsedTime =
+            System.currentTimeMillis() - RMIExitTest.exitStartTime;
+        if(elapsedTime >= 5000) {
+            System.out.println("BUG 4917237 not Fixed.");
+            // Once in hook, to provide an exit status != 0, halt must
+            // be called. Hooks are not called when halt is called.
+            Runtime.getRuntime().halt(1);
+        } else {
+            System.out.println("BUG 4917237 Fixed");
+        }
     }
 }
 
 /**
- * Start a server, connect a client, add/remove listeners, close client, 
- * stop server. Check that VM exits in less than 5 secs. 
+ * Start a server, connect a client, add/remove listeners, close client,
+ * stop server. Check that VM exits in less than 5 secs.
  *
  */
 public class RMIExitTest {
-    private static final MBeanServer mbs = 
-	MBeanServerFactory.createMBeanServer();
+    private static final MBeanServer mbs =
+        MBeanServerFactory.createMBeanServer();
     public static long exitStartTime = 0;
-    
+
     public static void main(String[] args) {
-	System.out.println("Start test");
-	Runtime.getRuntime().addShutdownHook(new TimeChecker());
-	test();
-	exitStartTime = System.currentTimeMillis();
-	System.out.println("End test");
-    }   
-    
+        System.out.println("Start test");
+        Runtime.getRuntime().addShutdownHook(new TimeChecker());
+        test();
+        exitStartTime = System.currentTimeMillis();
+        System.out.println("End test");
+    }
+
     private static void test() {
-	try {
-	    JMXServiceURL u = new JMXServiceURL("rmi", null, 0);
-	    JMXConnectorServer server;
-	    JMXServiceURL addr;
-	    JMXConnector client;
-	    MBeanServerConnection mserver;
-	    
-	    final ObjectName delegateName =
-		new ObjectName("JMImplementation:type=MBeanServerDelegate");
-	    final NotificationListener dummyListener = 
-		new NotificationListener() {
-			public void handleNotification(Notification n, 
-						       Object o) {
-			    // do nothing
-			    return;
-			}
-		    };
-	    
-	    server = JMXConnectorServerFactory.newJMXConnectorServer(u, 
-								     null, 
-								     mbs);
-	    server.start();
-	    
-	    addr = server.getAddress();
-	    client = JMXConnectorFactory.newJMXConnector(addr, null);
-	    client.connect(null);
-	    
-	    mserver = client.getMBeanServerConnection();
-	    String s1 = "1";
-	    String s2 = "2";
-	    String s3 = "3";
-	    
-	    mserver.addNotificationListener(delegateName, 
-					    dummyListener, null, s1);
-	    mserver.addNotificationListener(delegateName, 
-					    dummyListener, null, s2);
-	    mserver.addNotificationListener(delegateName, 
-					    dummyListener, null, s3);
-	    
-	    mserver.removeNotificationListener(delegateName, 
-					       dummyListener, null, s3);
-	    mserver.removeNotificationListener(delegateName, 
-					       dummyListener, null, s2);
-	    mserver.removeNotificationListener(delegateName, 
-					       dummyListener, null, s1);
-	    client.close();
-	    
-	    server.stop();
-	} catch (Exception e) {
-	    System.out.println(e);
-	    e.printStackTrace();
-	    System.exit(1);
-	}
+        try {
+            JMXServiceURL u = new JMXServiceURL("rmi", null, 0);
+            JMXConnectorServer server;
+            JMXServiceURL addr;
+            JMXConnector client;
+            MBeanServerConnection mserver;
+
+            final ObjectName delegateName =
+                new ObjectName("JMImplementation:type=MBeanServerDelegate");
+            final NotificationListener dummyListener =
+                new NotificationListener() {
+                        public void handleNotification(Notification n,
+                                                       Object o) {
+                            // do nothing
+                            return;
+                        }
+                    };
+
+            server = JMXConnectorServerFactory.newJMXConnectorServer(u,
+                                                                     null,
+                                                                     mbs);
+            server.start();
+
+            addr = server.getAddress();
+            client = JMXConnectorFactory.newJMXConnector(addr, null);
+            client.connect(null);
+
+            mserver = client.getMBeanServerConnection();
+            String s1 = "1";
+            String s2 = "2";
+            String s3 = "3";
+
+            mserver.addNotificationListener(delegateName,
+                                            dummyListener, null, s1);
+            mserver.addNotificationListener(delegateName,
+                                            dummyListener, null, s2);
+            mserver.addNotificationListener(delegateName,
+                                            dummyListener, null, s3);
+
+            mserver.removeNotificationListener(delegateName,
+                                               dummyListener, null, s3);
+            mserver.removeNotificationListener(delegateName,
+                                               dummyListener, null, s2);
+            mserver.removeNotificationListener(delegateName,
+                                               dummyListener, null, s1);
+            client.close();
+
+            server.stop();
+        } catch (Exception e) {
+            System.out.println(e);
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 }

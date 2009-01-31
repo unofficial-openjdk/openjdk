@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
   @test
   @bug 6426186
   @summary XToolkit: List throws ArrayIndexOutOfBoundsException on double clicking when the List is empty
@@ -46,7 +46,7 @@ public class ActionAfterRemove
         passed = false;
     }
 
-    public static final void main(String args[]) 
+    public static final void main(String args[])
     {
         final Frame frame = new Frame();
         final List list = new List();

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security;
 
 import java.security.*;
@@ -35,21 +35,20 @@ import sun.security.util.SecurityConstants;
  * The AllPermission is a permission that implies all other permissions.
  * <p>
  * <b>Note:</b> Granting AllPermission should be done with extreme care,
- * as it implies all other permissions. Thus, it grants code the ability 
+ * as it implies all other permissions. Thus, it grants code the ability
  * to run with security
  * disabled.  Extreme caution should be taken before granting such
  * a permission to code.  This permission should be used only during testing,
  * or in extremely rare cases where an application or applet is
- * completely trusted and adding the necessary permissions to the policy 
+ * completely trusted and adding the necessary permissions to the policy
  * is prohibitively cumbersome.
- * 
+ *
  * @see java.security.Permission
  * @see java.security.AccessController
  * @see java.security.Permissions
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
- * @version %I% %E%
  *
  * @author Roland Schemers
  *
@@ -66,7 +65,7 @@ public final class AllPermission extends Permission {
 
     public AllPermission()
     {
-	super("<all permissions>");
+        super("<all permissions>");
     }
 
 
@@ -78,13 +77,13 @@ public final class AllPermission extends Permission {
      * @param name ignored
      * @param actions ignored.
      */
-    public AllPermission(String name, String actions) 
+    public AllPermission(String name, String actions)
     {
-	this();
+        this();
     }
 
     /**
-     * Checks if the specified permission is "implied" by 
+     * Checks if the specified permission is "implied" by
      * this object. This method always returns true.
      *
      * @param p the permission to check against.
@@ -92,7 +91,7 @@ public final class AllPermission extends Permission {
      * @return return
      */
     public boolean implies(Permission p) {
-	 return true;
+         return true;
     }
 
     /**
@@ -103,17 +102,17 @@ public final class AllPermission extends Permission {
      * @return true if <i>obj</i> is an AllPermission, false otherwise.
      */
     public boolean equals(Object obj) {
-	return (obj instanceof AllPermission);
+        return (obj instanceof AllPermission);
     }
 
     /**
      * Returns the hash code value for this object.
-     * 
+     *
      * @return a hash code value for this object.
      */
 
     public int hashCode() {
-	return 1;
+        return 1;
     }
 
     /**
@@ -123,20 +122,20 @@ public final class AllPermission extends Permission {
      */
     public String getActions()
     {
-	return "<all actions>";
+        return "<all actions>";
     }
 
     /**
-     * Returns a new PermissionCollection object for storing AllPermission 
+     * Returns a new PermissionCollection object for storing AllPermission
      * objects.
      * <p>
-     * 
-     * @return a new PermissionCollection object suitable for 
+     *
+     * @return a new PermissionCollection object suitable for
      * storing AllPermissions.
      */
 
     public PermissionCollection newPermissionCollection() {
-	return new AllPermissionCollection();
+        return new AllPermissionCollection();
     }
 
 }
@@ -146,12 +145,11 @@ public final class AllPermission extends Permission {
  * of AllPermission permissions. AllPermission objects
  * must be stored in a manner that allows them to be inserted in any
  * order, but enable the implies function to evaluate the implies
- * method in an efficient (and consistent) manner. 
+ * method in an efficient (and consistent) manner.
  *
  * @see java.security.Permission
  * @see java.security.Permissions
  *
- * @version %I% %G%
  *
  * @author Roland Schemers
  *
@@ -159,8 +157,8 @@ public final class AllPermission extends Permission {
  */
 
 final class AllPermissionCollection
-extends PermissionCollection 
-implements java.io.Serializable 
+extends PermissionCollection
+implements java.io.Serializable
 {
 
     // use serialVersionUID from JDK 1.2.2 for interoperability
@@ -174,7 +172,7 @@ implements java.io.Serializable
      */
 
     public AllPermissionCollection() {
-	all_allowed = false;
+        all_allowed = false;
     }
 
     /**
@@ -192,17 +190,17 @@ implements java.io.Serializable
 
     public void add(Permission permission)
     {
-	if (! (permission instanceof AllPermission))
-	    throw new IllegalArgumentException("invalid permission: "+
-					       permission);
-	if (isReadOnly())
-	    throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
+        if (! (permission instanceof AllPermission))
+            throw new IllegalArgumentException("invalid permission: "+
+                                               permission);
+        if (isReadOnly())
+            throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
 
-	all_allowed = true; // No sync; staleness OK
+        all_allowed = true; // No sync; staleness OK
     }
 
     /**
-     * Check and see if this set of permissions implies the permissions 
+     * Check and see if this set of permissions implies the permissions
      * expressed in "permission".
      *
      * @param p the Permission object to compare
@@ -210,31 +208,30 @@ implements java.io.Serializable
      * @return always returns true.
      */
 
-    public boolean implies(Permission permission) 
+    public boolean implies(Permission permission)
     {
-	return all_allowed; // No sync; staleness OK
+        return all_allowed; // No sync; staleness OK
     }
 
     /**
-     * Returns an enumeration of all the AllPermission objects in the 
+     * Returns an enumeration of all the AllPermission objects in the
      * container.
      *
      * @return an enumeration of all the AllPermission objects.
      */
     public Enumeration<Permission> elements()
     {
-	return new Enumeration<Permission>() {
-	    private boolean hasMore = all_allowed;
+        return new Enumeration<Permission>() {
+            private boolean hasMore = all_allowed;
 
-	    public boolean hasMoreElements() {
-		return hasMore;
-	    }
+            public boolean hasMoreElements() {
+                return hasMore;
+            }
 
-	    public Permission nextElement() {
-		hasMore = false;
-		return SecurityConstants.ALL_PERMISSION;
-	    }
-	};
+            public Permission nextElement() {
+                hasMore = false;
+                return SecurityConstants.ALL_PERMISSION;
+            }
+        };
     }
 }
-

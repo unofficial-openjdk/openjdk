@@ -64,7 +64,7 @@ public final class ImageGraphicAttribute extends GraphicAttribute {
      * <code>ImageGraphicAttribute</code>.
      * This object keeps a reference to <code>image</code>.
      * @param alignment one of the alignments from this
-     * <code>ImageGraphicAttribute</code> 
+     * <code>ImageGraphicAttribute</code>
      */
     public ImageGraphicAttribute(Image image, int alignment) {
 
@@ -74,13 +74,13 @@ public final class ImageGraphicAttribute extends GraphicAttribute {
     /**
      * Constructs an <code>ImageGraphicAttribute</code> from the specified
      * <code>Image</code>. The point
-     * (<code>originX</code>,&nbsp;<code>originY</code>) in the 
-     * <code>Image</code> appears at the origin of the 
+     * (<code>originX</code>,&nbsp;<code>originY</code>) in the
+     * <code>Image</code> appears at the origin of the
      * <code>ImageGraphicAttribute</code> within the text.
      * @param image the <code>Image</code> rendered by this
      * <code>ImageGraphicAttribute</code>.
      * This object keeps a reference to <code>image</code>.
-     * @param alignment one of the alignments from this 
+     * @param alignment one of the alignments from this
      * <code>ImageGraphicAttribute</code>
      * @param originX the X coordinate of the point within
      * the <code>Image</code> that appears at the origin of the
@@ -177,7 +177,7 @@ public final class ImageGraphicAttribute extends GraphicAttribute {
      * Compares this <code>ImageGraphicAttribute</code> to the specified
      * {@link Object}.
      * @param rhs the <code>Object</code> to compare for equality
-     * @return <code>true</code> if this 
+     * @return <code>true</code> if this
      * <code>ImageGraphicAttribute</code> equals <code>rhs</code>;
      * <code>false</code> otherwise.
      */
@@ -225,5 +225,3 @@ public final class ImageGraphicAttribute extends GraphicAttribute {
         return true;
     }
 }
-
-

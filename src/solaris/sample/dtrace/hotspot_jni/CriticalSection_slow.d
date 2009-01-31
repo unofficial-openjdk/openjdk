@@ -32,10 +32,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. CriticalSection_slow.d -c "java ..."
  *    2. CriticalSection_slow.d -p JAVA_PID

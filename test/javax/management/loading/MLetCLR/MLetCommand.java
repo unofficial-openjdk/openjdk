@@ -25,7 +25,7 @@
  * @test
  * @bug 4836468
  * @summary Test that the getClassLoaderRepository permission is not necessary
- * for the test codebase as it is executed by the MLet code using 
+ * for the test codebase as it is executed by the MLet code using
  * doPrivileged.
  * @author Luis-Miguel Alventosa
  * @run clean MLetCommand
@@ -41,23 +41,23 @@ import java.io.File;
 public class MLetCommand {
 
     public static void main(String[] args) throws Exception {
-	if (System.getSecurityManager() == null) 
-	    throw new IllegalStateException("No security manager installed!");
+        if (System.getSecurityManager() == null)
+            throw new IllegalStateException("No security manager installed!");
 
-	System.out.println("java.security.policy=" + 
-			   System.getProperty("java.security.policy"));
+        System.out.println("java.security.policy=" +
+                           System.getProperty("java.security.policy"));
 
-	// Instantiate the MBean server
-	//
-	System.out.println("Create the MBean server");
-	MBeanServer mbs = MBeanServerFactory.createMBeanServer();
-	// Register the MLetMBean
-	//
-	System.out.println("Create MLet MBean");
-	ObjectName mlet = new ObjectName("MLetTest:name=MLetMBean");
-	mbs.createMBean("javax.management.loading.MLet", mlet);
-	// Test OK!
-	//
-	System.out.println("Bye! Bye!");
+        // Instantiate the MBean server
+        //
+        System.out.println("Create the MBean server");
+        MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+        // Register the MLetMBean
+        //
+        System.out.println("Create MLet MBean");
+        ObjectName mlet = new ObjectName("MLetTest:name=MLetMBean");
+        mbs.createMBean("javax.management.loading.MLet", mlet);
+        // Test OK!
+        //
+        System.out.println("Bye! Bye!");
     }
 }

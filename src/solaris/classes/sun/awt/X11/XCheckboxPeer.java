@@ -91,13 +91,13 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
 
     public boolean isFocusable() { return true; }
 
-    public void focusGained(FocusEvent e) { 
+    public void focusGained(FocusEvent e) {
         // TODO: only need to paint the focus bit
         super.focusGained(e);
         repaint();
     }
 
-    public void focusLost(FocusEvent e) { 
+    public void focusLost(FocusEvent e) {
         // TODO: only need to paint the focus bit?
         super.focusLost(e);
         repaint();
@@ -107,7 +107,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
     void handleJavaKeyEvent(KeyEvent e) {
         int i = e.getID();
         switch (i) {
-          case KeyEvent.KEY_PRESSED: 
+          case KeyEvent.KEY_PRESSED:
               keyPressed(e);
               break;
           case KeyEvent.KEY_RELEASED:
@@ -118,9 +118,9 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
               break;
         }
     }
-    
+
     public void keyTyped(KeyEvent e) {}
-    
+
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE)
         {
@@ -149,7 +149,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
         super.handleJavaMouseEvent(e);
         int i = e.getID();
         switch (i) {
-          case MouseEvent.MOUSE_PRESSED: 
+          case MouseEvent.MOUSE_PRESSED:
               mousePressed(e);
               break;
           case MouseEvent.MOUSE_RELEASED:
@@ -183,9 +183,9 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
                 if (!armed) {
                     armed = true;
                 }
-                pressed = true; 
+                pressed = true;
                 repaint();
-            } 
+            }
         }
     }
 
@@ -202,7 +202,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
                 // send action event
                 //action(e.getWhen(),e.getModifiers());
                 sendEvent = true;
-            } 
+            }
             pressed = false;
             armed = false;
             if (sendEvent) {
@@ -251,7 +251,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
         int wdth = fm.stringWidth(label) + getCheckboxSize(fm) + (2 * checkBoxInsetFromText) + 8;
         int hght = Math.max(fm.getHeight() + 8, 15);
 
-        return new Dimension(wdth, hght); 
+        return new Dimension(wdth, hght);
     }
 
     private int getCheckboxSize(FontMetrics fm) {
@@ -336,7 +336,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
     }
 
     // You'll note this looks suspiciously like paintBorder
-    public void paintCheckbox(Graphics g, 
+    public void paintCheckbox(Graphics g,
                               int x, int y, int w, int h) {
         boolean useBufferedImage = false;
         BufferedImage buffer = null;
@@ -344,7 +344,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
         int rx = x;
         int ry = y;
         if (!(g instanceof Graphics2D)) {
-            // Fix for 5045936. While printing, g is an instance of 
+            // Fix for 5045936. While printing, g is an instance of
             //   sun.print.ProxyPrintGraphics which extends Graphics. So
             //   we use a separate buffered image and its graphics is
             //   always Graphics2D instance
@@ -429,7 +429,7 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
     protected void paintFocus(Graphics g, int x, int y, int w, int h) {
         g.setColor(focusColor);
         g.drawRect(x,y,w,h);
-    } 
+    }
 
     public void setState(boolean state) {
         if (selected != state) {
@@ -452,9 +452,9 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
         XToolkit.executeOnEventHandlerThread(cb, new Runnable() {
                 public void run() {
                     CheckboxGroup cbg = checkBoxGroup;
-                    // Bugid 4039594. If this is the current Checkbox in 
-                    // a CheckboxGroup, then return to prevent deselection. 
-                    // Otherwise, it's logical state will be turned off, 
+                    // Bugid 4039594. If this is the current Checkbox in
+                    // a CheckboxGroup, then return to prevent deselection.
+                    // Otherwise, it's logical state will be turned off,
                     // but it will appear on.
                     if ((cbg != null) && (cbg.getSelectedCheckbox() == cb) &&
                         cb.getState()) {
@@ -465,9 +465,9 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
                     // All clear - set the new state
                     cb.setState(newState);
                     notifyStateChanged(newState);
-                } 
+                }
             });
-    } 
+    }
 
     void notifyStateChanged(boolean state) {
         Checkbox cb = (Checkbox) target;

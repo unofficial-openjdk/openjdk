@@ -32,8 +32,8 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
     final boolean isWild;
     final String classId;
 
-    PatternReferenceTypeSpec(String classId) 
-//                             throws ClassNotFoundException 
+    PatternReferenceTypeSpec(String classId)
+//                             throws ClassNotFoundException
     {
 //        checkClassName(classId);
         isWild = classId.startsWith("*.");
@@ -79,7 +79,7 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             // Each dot-separated piece must be a valid identifier
-            // and the first token can also be "*". (Note that 
+            // and the first token can also be "*". (Note that
             // numeric class ids are not permitted. They must
             // match a loaded class.)
             if (!Utils.isJavaIdentifier(token) && !(first && token.equals("*"))) {
@@ -93,5 +93,3 @@ class PatternReferenceTypeSpec implements ReferenceTypeSpec {
         return isWild? "*" + classId : classId;
     }
 }
-
-

@@ -37,7 +37,6 @@ import javax.naming.NamingException;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   * @since 1.3
   */
 
@@ -45,11 +44,11 @@ public class InvalidAttributeIdentifierException extends NamingException {
     /**
      * Constructs a new instance of InvalidAttributeIdentifierException using the
      * explanation supplied. All other fields set to null.
-     * @param	explanation	Possibly null string containing additional detail about this exception.
+     * @param   explanation     Possibly null string containing additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public InvalidAttributeIdentifierException(String explanation) {
-	super(explanation);
+        super(explanation);
     }
 
     /**
@@ -57,7 +56,7 @@ public class InvalidAttributeIdentifierException extends NamingException {
       * All fields are set to null.
       */
     public InvalidAttributeIdentifierException() {
-	super();
+        super();
     }
 
     /**

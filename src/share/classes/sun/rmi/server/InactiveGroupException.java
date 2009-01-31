@@ -32,19 +32,19 @@ import java.rmi.activation.ActivationException;
  * instance that is inactive.
  *
  * @author Sun Microsystems, Inc.
- * 
+ *
  * @since 1.6
  */
 public class InactiveGroupException extends ActivationException {
 
     private static final long serialVersionUID = -7491041778450214975L;
-    
+
     /**
      * Constructs an instance with the specified detail message.
      *
      * @param s the detail message
      */
     public InactiveGroupException(String s) {
-	super(s);
+        super(s);
     }
 }

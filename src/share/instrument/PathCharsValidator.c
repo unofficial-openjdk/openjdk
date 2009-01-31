@@ -56,7 +56,7 @@ static jlong lowMask(char* s) {
     }
     return m;
 }
-                                                                                                            
+
 /* Compute the high-order mask for the characters in the given string */
 static jlong highMask(char* s) {
     int n = strlen(s);
@@ -70,8 +70,8 @@ static jlong highMask(char* s) {
     return m;
 }
 
-/* 
- * Compute a low-order mask for the characters 
+/*
+ * Compute a low-order mask for the characters
  * between first and last, inclusive
  */
 static jlong lowMaskRange(char first, char last) {
@@ -85,8 +85,8 @@ static jlong lowMaskRange(char first, char last) {
     }
     return m;
 }
-                                                                                                            
-/* 
+
+/*
  * Compute a high-order mask for the characters
  * between first and last, inclusive
  */
@@ -107,7 +107,7 @@ static jlong highMaskRange(char first, char last) {
 static int match(int c, jlong lowMask, jlong highMask) {
     if (c >= 0 && c < 64)
         if ((((jlong)1 << c) & lowMask) != 0) return 1;
-    if (c >= 64 && c < 128) 
+    if (c >= 64 && c < 128)
         if ((((jlong)1 << (c - 64)) & highMask) != 0) return 1;
     return 0;
 }
@@ -117,27 +117,27 @@ static void initialize() {
     //            "8" | "9"
     jlong L_DIGIT = lowMaskRange('0', '9');
     jlong H_DIGIT = 0;
-                                                                                                            
+
     // upalpha  = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" |
     //            "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" |
     //            "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
     jlong L_UPALPHA = 0;
     jlong H_UPALPHA = highMaskRange('A', 'Z');
-                                                                                                            
+
     // lowalpha = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" |
     //            "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" |
     //            "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
     jlong L_LOWALPHA = 0;
     jlong H_LOWALPHA = highMaskRange('a', 'z');
-                                                                                                            
+
     // alpha         = lowalpha | upalpha
     jlong L_ALPHA = L_LOWALPHA | L_UPALPHA;
     jlong H_ALPHA = H_LOWALPHA | H_UPALPHA;
-                                                                                                            
+
     // alphanum      = alpha | digit
     jlong L_ALPHANUM = L_DIGIT | L_ALPHA;
     jlong H_ALPHANUM = H_DIGIT | H_ALPHA;
-                                                                                                            
+
     // mark          = "-" | "_" | "." | "!" | "~" | "*" | "'" |
     //                 "(" | ")"
     jlong L_MARK = lowMask("-_.!~*'()");
@@ -146,7 +146,7 @@ static void initialize() {
     // unreserved    = alphanum | mark
     jlong L_UNRESERVED = L_ALPHANUM | L_MARK;
     jlong H_UNRESERVED = H_ALPHANUM | H_MARK;
-     
+
     // pchar         = unreserved |
     //                 ":" | "@" | "&" | "=" | "+" | "$" | ","
     jlong L_PCHAR = L_UNRESERVED | lowMask(":@&=+$,");
@@ -156,7 +156,7 @@ static void initialize() {
     //                         "a" | "b" | "c" | "d" | "e" | "f"
     L_HEX = L_DIGIT;
     H_HEX = highMaskRange('A', 'F') | highMaskRange('a', 'f');
-        
+
     // All valid path characters
     L_PATH = L_PCHAR | lowMask(";/");
     H_PATH = H_PCHAR | highMask(";/");
@@ -164,7 +164,7 @@ static void initialize() {
 
 
 /*
- * Validates that the given URI path component does not contain any 
+ * Validates that the given URI path component does not contain any
  * illegal characters. Returns 0 if only validate characters are present.
  */
 int validatePathChars(const char* path) {
@@ -172,34 +172,34 @@ int validatePathChars(const char* path) {
 
     /* initialize on first usage */
     if (L_HEX == 0) {
-	initialize();
+        initialize();
     }
 
     i=0;
     n = strlen(path);
     while (i < n) {
-	int c = (int)(signed char)path[i];
+        int c = (int)(signed char)path[i];
 
-	/* definitely not us-ascii */
-	if (c < 0) return -1;
+        /* definitely not us-ascii */
+        if (c < 0) return -1;
 
-	/* start of an escapted character */
-	if (c == '%') {
-	    if (i + 3 <= n) {
-		int h1 = (int)(signed char)path[i+1];
-		int h2 = (int)(signed char)path[i+2];
-		if (h1 < 0 || h2 < 0) return -1;
-	        if (!match(h1, L_HEX, H_HEX)) return -1;
-		if (!match(h2, L_HEX, H_HEX)) return -1;
-		i += 3;
-	    } else {
-	       /* malformed escape pair */
-	       return -1;
-	    }
-	} else {
-	    if (!match(c, L_PATH, H_PATH)) return -1;
-	    i++;
-	}
+        /* start of an escapted character */
+        if (c == '%') {
+            if (i + 3 <= n) {
+                int h1 = (int)(signed char)path[i+1];
+                int h2 = (int)(signed char)path[i+2];
+                if (h1 < 0 || h2 < 0) return -1;
+                if (!match(h1, L_HEX, H_HEX)) return -1;
+                if (!match(h2, L_HEX, H_HEX)) return -1;
+                i += 3;
+            } else {
+               /* malformed escape pair */
+               return -1;
+            }
+        } else {
+            if (!match(c, L_PATH, H_PATH)) return -1;
+            i++;
+        }
     }
 
     return 0;

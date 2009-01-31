@@ -32,20 +32,20 @@ import java.util.concurrent.*;
 
 public class PollUnexpired {
     private static class Godot implements Delayed {
-	public long getDelay(TimeUnit unit) {return Long.MAX_VALUE;}
-	public int compareTo(Delayed other) {return 0;}
+        public long getDelay(TimeUnit unit) {return Long.MAX_VALUE;}
+        public int compareTo(Delayed other) {return 0;}
     }
 
     private static void realMain(String[] args) throws Throwable {
-	DelayQueue<Godot> q = new DelayQueue<Godot>();
-	for (int i = 0; i < 3; i++) {
-	    equal(q.size(), i);
-	    equal(q.poll(), null);
-	    equal(q.size(), i);
-	    equal(q.poll(100, TimeUnit.MILLISECONDS), null);
-	    equal(q.size(), i);
-	    q.add(new Godot());
-	}
+        DelayQueue<Godot> q = new DelayQueue<Godot>();
+        for (int i = 0; i < 3; i++) {
+            equal(q.size(), i);
+            equal(q.poll(), null);
+            equal(q.size(), i);
+            equal(q.poll(100, TimeUnit.MILLISECONDS), null);
+            equal(q.size(), i);
+            q.add(new Godot());
+        }
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -56,10 +56,10 @@ public class PollUnexpired {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-	if (x == null ? y == null : x.equals(y)) pass();
-	else fail(x + " not equal to " + y);}
+        if (x == null ? y == null : x.equals(y)) pass();
+        else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-	try {realMain(args);} catch (Throwable t) {unexpected(t);}
-	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-	if (failed > 0) throw new AssertionError("Some tests failed");}
+        try {realMain(args);} catch (Throwable t) {unexpected(t);}
+        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+        if (failed > 0) throw new AssertionError("Some tests failed");}
 }

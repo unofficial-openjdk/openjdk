@@ -26,30 +26,29 @@
 package java.io;
 
 /**
- * The class implements a buffered output stream. By setting up such 
- * an output stream, an application can write bytes to the underlying 
- * output stream without necessarily causing a call to the underlying 
+ * The class implements a buffered output stream. By setting up such
+ * an output stream, an application can write bytes to the underlying
+ * output stream without necessarily causing a call to the underlying
  * system for each byte written.
  *
  * @author  Arthur van Hoff
- * @version %I%, %G%
  * @since   JDK1.0
  */
-public 
+public
 class BufferedOutputStream extends FilterOutputStream {
     /**
-     * The internal buffer where data is stored. 
+     * The internal buffer where data is stored.
      */
     protected byte buf[];
 
     /**
-     * The number of valid bytes in the buffer. This value is always 
-     * in the range <tt>0</tt> through <tt>buf.length</tt>; elements 
-     * <tt>buf[0]</tt> through <tt>buf[count-1]</tt> contain valid 
+     * The number of valid bytes in the buffer. This value is always
+     * in the range <tt>0</tt> through <tt>buf.length</tt>; elements
+     * <tt>buf[0]</tt> through <tt>buf[count-1]</tt> contain valid
      * byte data.
      */
     protected int count;
-    
+
     /**
      * Creates a new buffered output stream to write data to the
      * specified underlying output stream.
@@ -57,49 +56,49 @@ class BufferedOutputStream extends FilterOutputStream {
      * @param   out   the underlying output stream.
      */
     public BufferedOutputStream(OutputStream out) {
-	this(out, 8192);
+        this(out, 8192);
     }
 
     /**
-     * Creates a new buffered output stream to write data to the 
-     * specified underlying output stream with the specified buffer 
-     * size. 
+     * Creates a new buffered output stream to write data to the
+     * specified underlying output stream with the specified buffer
+     * size.
      *
      * @param   out    the underlying output stream.
      * @param   size   the buffer size.
      * @exception IllegalArgumentException if size &lt;= 0.
      */
     public BufferedOutputStream(OutputStream out, int size) {
-	super(out);
+        super(out);
         if (size <= 0) {
             throw new IllegalArgumentException("Buffer size <= 0");
         }
-	buf = new byte[size];
+        buf = new byte[size];
     }
 
     /** Flush the internal buffer */
     private void flushBuffer() throws IOException {
         if (count > 0) {
-	    out.write(buf, 0, count);
-	    count = 0;
+            out.write(buf, 0, count);
+            count = 0;
         }
     }
 
     /**
-     * Writes the specified byte to this buffered output stream. 
+     * Writes the specified byte to this buffered output stream.
      *
      * @param      b   the byte to be written.
      * @exception  IOException  if an I/O error occurs.
      */
     public synchronized void write(int b) throws IOException {
-	if (count >= buf.length) {
-	    flushBuffer();
-	}
-	buf[count++] = (byte)b;
+        if (count >= buf.length) {
+            flushBuffer();
+        }
+        buf[count++] = (byte)b;
     }
 
     /**
-     * Writes <code>len</code> bytes from the specified byte array 
+     * Writes <code>len</code> bytes from the specified byte array
      * starting at offset <code>off</code> to this buffered output stream.
      *
      * <p> Ordinarily this method stores bytes from the given array into this
@@ -115,30 +114,30 @@ class BufferedOutputStream extends FilterOutputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public synchronized void write(byte b[], int off, int len) throws IOException {
-	if (len >= buf.length) {
-	    /* If the request length exceeds the size of the output buffer,
-    	       flush the output buffer and then write the data directly.
-    	       In this way buffered streams will cascade harmlessly. */
-	    flushBuffer();
-	    out.write(b, off, len);
-	    return;
-	}
-	if (len > buf.length - count) {
-	    flushBuffer();
-	}
-	System.arraycopy(b, off, buf, count, len);
-	count += len;
+        if (len >= buf.length) {
+            /* If the request length exceeds the size of the output buffer,
+               flush the output buffer and then write the data directly.
+               In this way buffered streams will cascade harmlessly. */
+            flushBuffer();
+            out.write(b, off, len);
+            return;
+        }
+        if (len > buf.length - count) {
+            flushBuffer();
+        }
+        System.arraycopy(b, off, buf, count, len);
+        count += len;
     }
 
     /**
-     * Flushes this buffered output stream. This forces any buffered 
-     * output bytes to be written out to the underlying output stream. 
+     * Flushes this buffered output stream. This forces any buffered
+     * output bytes to be written out to the underlying output stream.
      *
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.FilterOutputStream#out
      */
     public synchronized void flush() throws IOException {
         flushBuffer();
-	out.flush();
+        out.flush();
     }
 }

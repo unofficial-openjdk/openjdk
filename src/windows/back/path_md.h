@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 /*
  * Adapted from JDK 1.2 path_md.h       1.15 98/09/21
  */

@@ -33,7 +33,6 @@ package java.lang;
  * Java Collections Framework</a>.
  *
  * @author  Josh Bloch
- * @version %I%, %G%
  * @since   1.2
  */
 public class UnsupportedOperationException extends RuntimeException {
@@ -50,7 +49,7 @@ public class UnsupportedOperationException extends RuntimeException {
      * @param message the detail message
      */
     public UnsupportedOperationException(String message) {
-	super(message);
+        super(message);
     }
 
     /**
@@ -72,7 +71,7 @@ public class UnsupportedOperationException extends RuntimeException {
     public UnsupportedOperationException(String message, Throwable cause) {
         super(message, cause);
     }
- 
+
     /**
      * Constructs a new exception with the specified cause and a detail
      * message of <tt>(cause==null ? null : cause.toString())</tt> (which

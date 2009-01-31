@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)StateTableProcessor.cpp	1.10 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -68,7 +67,7 @@ void StateTableProcessor::process(LEGlyphStorage &glyphStorage)
     // XXX: How do we know when to start at state 1?
     ByteOffset currentState = stateArrayOffset;
 
-    // XXX: reverse? 
+    // XXX: reverse?
     le_int32 currGlyph = 0;
     le_int32 glyphCount = glyphStorage.getGlyphCount();
 
@@ -97,4 +96,3 @@ void StateTableProcessor::process(LEGlyphStorage &glyphStorage)
 
     endStateTable();
 }
-

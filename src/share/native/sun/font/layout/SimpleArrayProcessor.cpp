@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)SimpleArrayProcessor.cpp	1.11 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -69,4 +68,3 @@ void SimpleArrayProcessor::process(LEGlyphStorage &glyphStorage)
         }
     }
 }
- 

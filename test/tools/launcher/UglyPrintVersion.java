@@ -34,8 +34,8 @@ import sun.misc.Version;
 
 public class UglyPrintVersion {
 
-	public static void main(String argv[]) {
-		Version.print();
-	}
+        public static void main(String argv[]) {
+                Version.print();
+        }
 
 }

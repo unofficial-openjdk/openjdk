@@ -32,22 +32,22 @@ import sun.nio.cs.ext.IBM970;
 * @author Malcolm Ayres, assisted by UniMap program
 */
 public class ByteToCharCp970
-	extends ByteToCharEUC
+        extends ByteToCharEUC
 
 {
-	private final static IBM970 nioCoder = new IBM970();
+        private final static IBM970 nioCoder = new IBM970();
 
-	// Return the character set id
-	public String getCharacterEncoding()
-	{
-		return "Cp970";
-	}
+        // Return the character set id
+        public String getCharacterEncoding()
+        {
+                return "Cp970";
+        }
 
-	public ByteToCharCp970()
-	{
-	    // Set the correct mapping table
-	    super();
-	    super.byteToCharTable = nioCoder.getDecoderSingleByteMappings();
-	    super.mappingTableG1 = nioCoder.getDecoderMappingTableG1();
-	}
+        public ByteToCharCp970()
+        {
+            // Set the correct mapping table
+            super();
+            super.byteToCharTable = nioCoder.getDecoderSingleByteMappings();
+            super.mappingTableG1 = nioCoder.getDecoderMappingTableG1();
+        }
 }

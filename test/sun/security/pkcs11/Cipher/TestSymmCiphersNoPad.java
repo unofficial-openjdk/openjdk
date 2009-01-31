@@ -42,15 +42,15 @@ import javax.crypto.spec.IvParameterSpec;
 public class TestSymmCiphersNoPad extends PKCS11Test {
 
     private static class CI { // class for holding Cipher Information
-	String transformation;
-	String keyAlgo;
+        String transformation;
+        String keyAlgo;
         int dataSize;
 
-	CI(String transformation, String keyAlgo, int dataSize) {
-	    this.transformation = transformation;
-	    this.keyAlgo = keyAlgo;
+        CI(String transformation, String keyAlgo, int dataSize) {
+            this.transformation = transformation;
+            this.keyAlgo = keyAlgo;
             this.dataSize = dataSize;
-	}
+        }
     }
 
     private static final CI TEST_LIST[] = {
@@ -58,8 +58,8 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
         new CI("RC4", "RC4", 401),
         new CI("DES/CBC/NoPadding", "DES", 400),
         new CI("DESede/CBC/NoPadding", "DESede", 160),
-      	new CI("AES/CBC/NoPadding", "AES", 4800),
-	new CI("Blowfish/CBC/NoPadding", "Blowfish", 24)
+        new CI("AES/CBC/NoPadding", "AES", 4800),
+        new CI("Blowfish/CBC/NoPadding", "Blowfish", 24)
     };
 
     private static StringBuffer debugBuf;
@@ -72,30 +72,30 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
                 CI currTest = TEST_LIST[i];
                 System.out.println("===" + currTest.transformation + "===");
                 try {
-                    KeyGenerator kg = 
+                    KeyGenerator kg =
                         KeyGenerator.getInstance(currTest.keyAlgo, p);
                     SecretKey key = kg.generateKey();
                     Cipher c1 = Cipher.getInstance(currTest.transformation, p);
                     Cipher c2 = Cipher.getInstance(currTest.transformation,
                                                    "SunJCE");
-                
+
                     byte[] plainTxt = new byte[currTest.dataSize];
                     random.nextBytes(plainTxt);
                     System.out.println("Testing inLen = " + plainTxt.length);
-                    
+
                     c2.init(Cipher.ENCRYPT_MODE, key);
                     AlgorithmParameters params = c2.getParameters();
                     byte[] answer = c2.doFinal(plainTxt);
-                    test(c1, Cipher.ENCRYPT_MODE, key, params, 
+                    test(c1, Cipher.ENCRYPT_MODE, key, params,
                          plainTxt, answer);
                     System.out.println("Encryption tests: DONE");
                     c2.init(Cipher.DECRYPT_MODE, key, params);
                     byte[] answer2 = c2.doFinal(answer);
-                    test(c1, Cipher.DECRYPT_MODE, key, params, 
+                    test(c1, Cipher.DECRYPT_MODE, key, params,
                          answer, answer2);
                     System.out.println("Decryption tests: DONE");
                 } catch (NoSuchAlgorithmException nsae) {
-                    System.out.println("Skipping unsupported algorithm: " + 
+                    System.out.println("Skipping unsupported algorithm: " +
                                        nsae);
                 }
             }
@@ -108,8 +108,8 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
         }
     }
 
-    private static void test(Cipher cipher, int mode, SecretKey key, 
-                             AlgorithmParameters params, 
+    private static void test(Cipher cipher, int mode, SecretKey key,
+                             AlgorithmParameters params,
                              byte[] in, byte[] answer) throws Exception {
         // test setup
         debugBuf = new StringBuffer();
@@ -129,12 +129,12 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
 
         // test#1: byte[] in + byte[] out
         debugBuf.append("Test#1:\n");
-	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	byte[] testOut1 = cipher.update(in, 0, 16);
-	if (testOut1 != null) baos.write(testOut1, 0, testOut1.length);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] testOut1 = cipher.update(in, 0, 16);
+        if (testOut1 != null) baos.write(testOut1, 0, testOut1.length);
         testOut1 = cipher.doFinal(in, 16, in.length-16);
-	if (testOut1 != null) baos.write(testOut1, 0, testOut1.length);
-	testOut1 = baos.toByteArray();
+        if (testOut1 != null) baos.write(testOut1, 0, testOut1.length);
+        testOut1 = baos.toByteArray();
         match(testOut1, answer);
 
         // test#2: Non-direct Buffer in + non-direct Buffer out
@@ -144,7 +144,7 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
         cipher.update(inBuf, outBuf);
         cipher.doFinal(inBuf, outBuf);
         match(outBuf, answer);
-        
+
         // test#3: Direct Buffer in + direc Buffer out
         debugBuf.append("Test#3:\n");
         debugBuf.append("(pre) inputBuf: " + inDirectBuf + "\n");
@@ -183,7 +183,7 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
 
         debugBuf = null;
     }
-    
+
     private static void match(byte[] b1, byte[] b2) throws Exception {
         if (b1.length != b2.length) {
             debugBuf.append("got len   : " + b1.length + "\n");
@@ -199,7 +199,7 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
             }
         }
     }
-    
+
     private static void match(ByteBuffer bb, byte[] answer) throws Exception {
         byte[] bbTemp = new byte[bb.position()];
         bb.position(0);
@@ -208,6 +208,6 @@ public class TestSymmCiphersNoPad extends PKCS11Test {
     }
 
     public static void main(String[] args) throws Exception {
-	main(new TestSymmCiphersNoPad());
+        main(new TestSymmCiphersNoPad());
     }
 }

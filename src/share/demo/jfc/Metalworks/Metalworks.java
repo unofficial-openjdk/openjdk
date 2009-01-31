@@ -29,9 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * %W% %E%
- */
+
 
 
 import java.awt.*;
@@ -42,7 +40,6 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 /**
   * This application is a demo of the Metal Look & Feel
   *
-  * @version %I% %G%
   * @author Steve Wilson
   */
 public class Metalworks {
@@ -56,7 +53,7 @@ public class Metalworks {
 
         try {
             UIManager.setLookAndFeel(new MetalLookAndFeel());
-        }  
+        }
         catch ( UnsupportedLookAndFeelException e ) {
             System.out.println ("Metal Look & Feel not supported on this platform. \nProgram Terminated");
             System.exit(0);

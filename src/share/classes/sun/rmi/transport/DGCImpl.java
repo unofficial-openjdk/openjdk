@@ -63,23 +63,23 @@ final class DGCImpl implements DGC {
 
     /* dgc system log */
     static final Log dgcLog = Log.getLog("sun.rmi.dgc", "dgc",
-	LogStream.parseLevel(AccessController.doPrivileged(
-	    new GetPropertyAction("sun.rmi.dgc.logLevel"))));
+        LogStream.parseLevel(AccessController.doPrivileged(
+            new GetPropertyAction("sun.rmi.dgc.logLevel"))));
 
     /** lease duration to grant to clients */
-    private static final long leaseValue =		// default 10 minutes
-	AccessController.doPrivileged(
-	    new GetLongAction("java.rmi.dgc.leaseValue", 600000));
+    private static final long leaseValue =              // default 10 minutes
+        AccessController.doPrivileged(
+            new GetLongAction("java.rmi.dgc.leaseValue", 600000));
 
     /** lease check interval; default is half of lease grant duration */
     private static final long leaseCheckInterval =
-	AccessController.doPrivileged(
-	    new GetLongAction("sun.rmi.dgc.checkInterval", leaseValue / 2));
+        AccessController.doPrivileged(
+            new GetLongAction("sun.rmi.dgc.checkInterval", leaseValue / 2));
 
     /** thread pool for scheduling delayed tasks */
     private static final ScheduledExecutorService scheduler =
-	AccessController.doPrivileged(
-	    new RuntimeUtil.GetInstanceAction()).getScheduler();
+        AccessController.doPrivileged(
+            new RuntimeUtil.GetInstanceAction()).getScheduler();
 
     /** remote implementation of DGC interface for this VM */
     private static DGCImpl dgc;
@@ -93,7 +93,7 @@ final class DGCImpl implements DGC {
      * this VM.
      */
     static DGCImpl getDGCImpl() {
-	return dgc;
+        return dgc;
     }
 
     /**
@@ -116,65 +116,65 @@ final class DGCImpl implements DGC {
      * "unreferenced".
      */
     public Lease dirty(ObjID[] ids, long sequenceNum, Lease lease) {
-	VMID vmid = lease.getVMID();
-	/*
-	 * The server specifies the lease value; the client has
-	 * no say in the matter.
-	 */
-	long duration = leaseValue;
+        VMID vmid = lease.getVMID();
+        /*
+         * The server specifies the lease value; the client has
+         * no say in the matter.
+         */
+        long duration = leaseValue;
 
-	if (dgcLog.isLoggable(Log.VERBOSE)) {
-	    dgcLog.log(Log.VERBOSE, "vmid = " + vmid);
-	}
+        if (dgcLog.isLoggable(Log.VERBOSE)) {
+            dgcLog.log(Log.VERBOSE, "vmid = " + vmid);
+        }
 
-	// create a VMID if one wasn't supplied
-	if (vmid == null) {
-	    vmid = new VMID();
+        // create a VMID if one wasn't supplied
+        if (vmid == null) {
+            vmid = new VMID();
 
-	    if (dgcLog.isLoggable(Log.BRIEF)) {
-		String clientHost;
-		try {
-		    clientHost = RemoteServer.getClientHost();
-		} catch (ServerNotActiveException e) {
-		    clientHost = "<unknown host>";
-		}
-		dgcLog.log(Log.BRIEF, " assigning vmid " + vmid +
-			   " to client " + clientHost);
-	    }
-	}
+            if (dgcLog.isLoggable(Log.BRIEF)) {
+                String clientHost;
+                try {
+                    clientHost = RemoteServer.getClientHost();
+                } catch (ServerNotActiveException e) {
+                    clientHost = "<unknown host>";
+                }
+                dgcLog.log(Log.BRIEF, " assigning vmid " + vmid +
+                           " to client " + clientHost);
+            }
+        }
 
-	lease = new Lease(vmid, duration);
-	// record lease information
-	synchronized (leaseTable) {
-	    LeaseInfo info = leaseTable.get(vmid);
-	    if (info == null) {
-		leaseTable.put(vmid, new LeaseInfo(vmid, duration));
-		if (checker == null) {
-		    checker = scheduler.scheduleWithFixedDelay(
-			new Runnable() {
-			    public void run() {
-				checkLeases();
-			    }
-			},
-			leaseCheckInterval,
-			leaseCheckInterval, TimeUnit.MILLISECONDS);
-		}
-	    } else {
-		info.renew(duration);
-	    }
-	}
+        lease = new Lease(vmid, duration);
+        // record lease information
+        synchronized (leaseTable) {
+            LeaseInfo info = leaseTable.get(vmid);
+            if (info == null) {
+                leaseTable.put(vmid, new LeaseInfo(vmid, duration));
+                if (checker == null) {
+                    checker = scheduler.scheduleWithFixedDelay(
+                        new Runnable() {
+                            public void run() {
+                                checkLeases();
+                            }
+                        },
+                        leaseCheckInterval,
+                        leaseCheckInterval, TimeUnit.MILLISECONDS);
+                }
+            } else {
+                info.renew(duration);
+            }
+        }
 
-	for (ObjID id : ids) {
-	    if (dgcLog.isLoggable(Log.VERBOSE)) {
-		dgcLog.log(Log.VERBOSE, "id = " + id +
-			   ", vmid = " + vmid + ", duration = " + duration);
-	    }
+        for (ObjID id : ids) {
+            if (dgcLog.isLoggable(Log.VERBOSE)) {
+                dgcLog.log(Log.VERBOSE, "id = " + id +
+                           ", vmid = " + vmid + ", duration = " + duration);
+            }
 
-	    ObjectTable.referenced(id, sequenceNum, vmid);
-	}
+            ObjectTable.referenced(id, sequenceNum, vmid);
+        }
 
-	// return the VMID used
-	return lease;
+        // return the VMID used
+        return lease;
     }
 
     /**
@@ -187,14 +187,14 @@ final class DGCImpl implements DGC {
      */
     public void clean(ObjID[] ids, long sequenceNum, VMID vmid, boolean strong)
     {
-	for (ObjID id : ids) {
-	    if (dgcLog.isLoggable(Log.VERBOSE)) {
-		dgcLog.log(Log.VERBOSE, "id = " + id +
-		    ", vmid = " + vmid + ", strong = " + strong);
-	    }
+        for (ObjID id : ids) {
+            if (dgcLog.isLoggable(Log.VERBOSE)) {
+                dgcLog.log(Log.VERBOSE, "id = " + id +
+                    ", vmid = " + vmid + ", strong = " + strong);
+            }
 
-	    ObjectTable.unreferenced(id, sequenceNum, vmid, strong);
-	}
+            ObjectTable.unreferenced(id, sequenceNum, vmid, strong);
+        }
     }
 
     /**
@@ -202,26 +202,26 @@ final class DGCImpl implements DGC {
      * becomes inaccessible.
      */
     void registerTarget(VMID vmid, Target target) {
-	synchronized (leaseTable) {
-	    LeaseInfo info = leaseTable.get(vmid);
-	    if (info == null) {
-		target.vmidDead(vmid);
-	    } else {
-		info.notifySet.add(target);
-	    }
-	}
+        synchronized (leaseTable) {
+            LeaseInfo info = leaseTable.get(vmid);
+            if (info == null) {
+                target.vmidDead(vmid);
+            } else {
+                info.notifySet.add(target);
+            }
+        }
     }
 
     /**
      * Remove notification request.
      */
     void unregisterTarget(VMID vmid, Target target) {
-	synchronized (leaseTable) {
-	    LeaseInfo info = leaseTable.get(vmid);
-	    if (info != null) {
-		info.notifySet.remove(target);
-	    }
-	}
+        synchronized (leaseTable) {
+            LeaseInfo info = leaseTable.get(vmid);
+            if (info != null) {
+                info.notifySet.remove(target);
+            }
+        }
     }
 
     /**
@@ -235,95 +235,95 @@ final class DGCImpl implements DGC {
     private void checkLeases() {
         long time = System.currentTimeMillis();
 
-	/* List of vmids that need to be removed from the leaseTable */
-	List<LeaseInfo> toUnregister = new ArrayList<LeaseInfo>();
+        /* List of vmids that need to be removed from the leaseTable */
+        List<LeaseInfo> toUnregister = new ArrayList<LeaseInfo>();
 
-	/* Build a list of leaseInfo objects that need to have
-	 * targets removed from their notifySet.  Remove expired
-	 * leases from leaseTable.
-	 */
-	synchronized (leaseTable) {
-	    Iterator<LeaseInfo> iter = leaseTable.values().iterator();
-	    while (iter.hasNext()) {
-		LeaseInfo info = iter.next();
-		if (info.expired(time)) {
-		    toUnregister.add(info);
-		    iter.remove();
-		}
-	    }
-	    
-	    if (leaseTable.isEmpty()) {
-		checker.cancel(false);
-		checker = null;
-	    }
-	}
-	
-	/* Notify and unegister targets without holding the lock on
-	 * the leaseTable so we avoid deadlock.
-	 */
-	for (LeaseInfo info : toUnregister) {
-	    for (Target target : info.notifySet) {
-		target.vmidDead(info.vmid);
-	    }
-	}
+        /* Build a list of leaseInfo objects that need to have
+         * targets removed from their notifySet.  Remove expired
+         * leases from leaseTable.
+         */
+        synchronized (leaseTable) {
+            Iterator<LeaseInfo> iter = leaseTable.values().iterator();
+            while (iter.hasNext()) {
+                LeaseInfo info = iter.next();
+                if (info.expired(time)) {
+                    toUnregister.add(info);
+                    iter.remove();
+                }
+            }
+
+            if (leaseTable.isEmpty()) {
+                checker.cancel(false);
+                checker = null;
+            }
+        }
+
+        /* Notify and unegister targets without holding the lock on
+         * the leaseTable so we avoid deadlock.
+         */
+        for (LeaseInfo info : toUnregister) {
+            for (Target target : info.notifySet) {
+                target.vmidDead(info.vmid);
+            }
+        }
     }
 
     static {
-	/*
-	 * "Export" the singleton DGCImpl in a context isolated from
-	 * the arbitrary current thread context.
-	 */
-	AccessController.doPrivileged(new PrivilegedAction<Void>() {
-	    public Void run() {
-		ClassLoader savedCcl =
-		    Thread.currentThread().getContextClassLoader();
-		try {
-		    Thread.currentThread().setContextClassLoader(
-			ClassLoader.getSystemClassLoader());
+        /*
+         * "Export" the singleton DGCImpl in a context isolated from
+         * the arbitrary current thread context.
+         */
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                ClassLoader savedCcl =
+                    Thread.currentThread().getContextClassLoader();
+                try {
+                    Thread.currentThread().setContextClassLoader(
+                        ClassLoader.getSystemClassLoader());
 
-		    /*
-		     * Put remote collector object in table by hand to prevent
-		     * listen on port.  (UnicastServerRef.exportObject would
-		     * cause transport to listen.)
-		     */
-		    try {
-			dgc = new DGCImpl();
-			ObjID dgcID = new ObjID(ObjID.DGC_ID);
-			LiveRef ref = new LiveRef(dgcID, 0);
-			UnicastServerRef disp = new UnicastServerRef(ref);
-			Remote stub =
-			    Util.createProxy(DGCImpl.class,
-					     new UnicastRef(ref), true);
-			disp.setSkeleton(dgc);
-			Target target =
-			    new Target(dgc, disp, stub, dgcID, true);
-			ObjectTable.putTarget(target);
-		    } catch (RemoteException e) {
-			throw new Error(
-			    "exception initializing server-side DGC", e);
-		    }
-		} finally {
-		    Thread.currentThread().setContextClassLoader(savedCcl);
-		}
-		return null;
-	    }
-	});
+                    /*
+                     * Put remote collector object in table by hand to prevent
+                     * listen on port.  (UnicastServerRef.exportObject would
+                     * cause transport to listen.)
+                     */
+                    try {
+                        dgc = new DGCImpl();
+                        ObjID dgcID = new ObjID(ObjID.DGC_ID);
+                        LiveRef ref = new LiveRef(dgcID, 0);
+                        UnicastServerRef disp = new UnicastServerRef(ref);
+                        Remote stub =
+                            Util.createProxy(DGCImpl.class,
+                                             new UnicastRef(ref), true);
+                        disp.setSkeleton(dgc);
+                        Target target =
+                            new Target(dgc, disp, stub, dgcID, true);
+                        ObjectTable.putTarget(target);
+                    } catch (RemoteException e) {
+                        throw new Error(
+                            "exception initializing server-side DGC", e);
+                    }
+                } finally {
+                    Thread.currentThread().setContextClassLoader(savedCcl);
+                }
+                return null;
+            }
+        });
     }
 
     private static class LeaseInfo {
-	VMID vmid;
-	long expiration;
-	Set<Target> notifySet = new HashSet<Target>();
+        VMID vmid;
+        long expiration;
+        Set<Target> notifySet = new HashSet<Target>();
 
         LeaseInfo(VMID vmid, long lease) {
-	    this.vmid = vmid;
-	    expiration = System.currentTimeMillis() + lease;
+            this.vmid = vmid;
+            expiration = System.currentTimeMillis() + lease;
         }
 
         synchronized void renew(long lease) {
-	    long newExpiration = System.currentTimeMillis() + lease;
-	    if (newExpiration > expiration)
-	        expiration = newExpiration;
+            long newExpiration = System.currentTimeMillis() + lease;
+            if (newExpiration > expiration)
+                expiration = newExpiration;
         }
 
         boolean expired(long time) {

@@ -30,15 +30,14 @@ import javax.swing.JComponent;
 
 
 /**
- * A subclass of javax.swing.ComponentInputMap that implements UIResource. 
+ * A subclass of javax.swing.ComponentInputMap that implements UIResource.
  * UI classes which provide a ComponentInputMap should use this class.
- * 
- * @version %I% %G%
+ *
  * @author Scott Violet
  * @since 1.3
  */
 public class ComponentInputMapUIResource extends ComponentInputMap implements UIResource {
     public ComponentInputMapUIResource(JComponent component) {
-	super(component);
+        super(component);
     }
 }

@@ -67,8 +67,8 @@ public class ExecutorCompletionServiceLoops {
             Thread.sleep(100);
         }
         pool.shutdown();
-	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-	    throw new Error();
+        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+            throw new Error();
    }
 
     static class Task implements Callable<Integer> {

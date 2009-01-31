@@ -33,7 +33,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * parameters to be used with a certain algorithm. Parameter generators
  * are constructed using the <code>getInstance</code> factory methods
  * (static methods that return instances of a given class).
- * 
+ *
  * <P>The object that will generate the parameters can be initialized
  * in two different ways: in an algorithm-independent manner, or in an
  * algorithm-specific manner:
@@ -41,7 +41,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * <ul>
  * <li>The algorithm-independent approach uses the fact that all parameter
  * generators share the concept of a "size" and a
- * source of randomness. The measure of size is universally shared 
+ * source of randomness. The measure of size is universally shared
  * by all algorithm parameters, though it is interpreted differently
  * for different algorithms. For example, in the case of parameters for
  * the <i>DSA</i> algorithm, "size" corresponds to the size
@@ -68,7 +68,6 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author Jan Luehe
  *
- * @version %I%, %G%
  *
  * @see AlgorithmParameters
  * @see java.security.spec.AlgorithmParameterSpec
@@ -97,19 +96,19 @@ public class AlgorithmParameterGenerator {
     protected AlgorithmParameterGenerator
     (AlgorithmParameterGeneratorSpi paramGenSpi, Provider provider,
      String algorithm) {
-	this.paramGenSpi = paramGenSpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
+        this.paramGenSpi = paramGenSpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
     }
 
     /**
      * Returns the standard name of the algorithm this parameter
      * generator is associated with.
-     * 
-     * @return the string name of the algorithm. 
+     *
+     * @return the string name of the algorithm.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -135,27 +134,27 @@ public class AlgorithmParameterGenerator {
      * @return the new AlgorithmParameterGenerator object.
      *
      * @exception NoSuchAlgorithmException if no Provider supports an
-     *		AlgorithmParameterGeneratorSpi implementation for the
-     *		specified algorithm.
-     * 
+     *          AlgorithmParameterGeneratorSpi implementation for the
+     *          specified algorithm.
+     *
      * @see Provider
      */
     public static AlgorithmParameterGenerator getInstance(String algorithm)
-	throws NoSuchAlgorithmException {
-	    try {
-		Object[] objs = Security.getImpl(algorithm,
-						 "AlgorithmParameterGenerator",
-						 (String)null);
-		return new AlgorithmParameterGenerator
-		    ((AlgorithmParameterGeneratorSpi)objs[0],
-		     (Provider)objs[1],
-		     algorithm);
-	    } catch(NoSuchProviderException e) {
-		throw new NoSuchAlgorithmException(algorithm + " not found");
-	    }
+        throws NoSuchAlgorithmException {
+            try {
+                Object[] objs = Security.getImpl(algorithm,
+                                                 "AlgorithmParameterGenerator",
+                                                 (String)null);
+                return new AlgorithmParameterGenerator
+                    ((AlgorithmParameterGeneratorSpi)objs[0],
+                     (Provider)objs[1],
+                     algorithm);
+            } catch(NoSuchProviderException e) {
+                throw new NoSuchAlgorithmException(algorithm + " not found");
+            }
     }
 
-    /** 
+    /**
      * Returns an AlgorithmParameterGenerator object for generating
      * a set of parameters to be used with the specified algorithm.
      *
@@ -179,32 +178,32 @@ public class AlgorithmParameterGenerator {
      * @return the new AlgorithmParameterGenerator object.
      *
      * @exception NoSuchAlgorithmException if an AlgorithmParameterGeneratorSpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @exception NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the provider name is null
-     *		or empty.
-     * 
+     *          or empty.
+     *
      * @see Provider
      */
     public static AlgorithmParameterGenerator getInstance(String algorithm,
-							  String provider) 
-	throws NoSuchAlgorithmException, NoSuchProviderException
+                                                          String provider)
+        throws NoSuchAlgorithmException, NoSuchProviderException
     {
-	if (provider == null || provider.length() == 0)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = Security.getImpl(algorithm,
-					 "AlgorithmParameterGenerator",
-					 provider);
-	return new AlgorithmParameterGenerator
-	    ((AlgorithmParameterGeneratorSpi)objs[0], (Provider)objs[1],
-	     algorithm);
+        if (provider == null || provider.length() == 0)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = Security.getImpl(algorithm,
+                                         "AlgorithmParameterGenerator",
+                                         provider);
+        return new AlgorithmParameterGenerator
+            ((AlgorithmParameterGeneratorSpi)objs[0], (Provider)objs[1],
+             algorithm);
     }
 
-    /** 
+    /**
      * Returns an AlgorithmParameterGenerator object for generating
      * a set of parameters to be used with the specified algorithm.
      *
@@ -225,8 +224,8 @@ public class AlgorithmParameterGenerator {
      * @return the new AlgorithmParameterGenerator object.
      *
      * @exception NoSuchAlgorithmException if an AlgorithmParameterGeneratorSpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the specified provider is null.
      *
@@ -235,26 +234,26 @@ public class AlgorithmParameterGenerator {
      * @since 1.4
      */
     public static AlgorithmParameterGenerator getInstance(String algorithm,
-							  Provider provider) 
-	throws NoSuchAlgorithmException
+                                                          Provider provider)
+        throws NoSuchAlgorithmException
     {
-	if (provider == null)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = Security.getImpl(algorithm,
-					 "AlgorithmParameterGenerator",
-					 provider);
-	return new AlgorithmParameterGenerator
-	    ((AlgorithmParameterGeneratorSpi)objs[0], (Provider)objs[1],
-	     algorithm);
+        if (provider == null)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = Security.getImpl(algorithm,
+                                         "AlgorithmParameterGenerator",
+                                         provider);
+        return new AlgorithmParameterGenerator
+            ((AlgorithmParameterGeneratorSpi)objs[0], (Provider)objs[1],
+             algorithm);
     }
 
-    /** 
+    /**
      * Returns the provider of this algorithm parameter generator object.
-     * 
+     *
      * @return the provider of this algorithm parameter generator object
      */
     public final Provider getProvider() {
-	return this.provider;
+        return this.provider;
     }
 
     /**
@@ -269,7 +268,7 @@ public class AlgorithmParameterGenerator {
      * @param size the size (number of bits).
      */
     public final void init(int size) {
-	paramGenSpi.engineInit(size, new SecureRandom());
+        paramGenSpi.engineInit(size, new SecureRandom());
     }
 
     /**
@@ -280,7 +279,7 @@ public class AlgorithmParameterGenerator {
      * @param random the source of randomness.
      */
     public final void init(int size, SecureRandom random) {
-	paramGenSpi.engineInit(size, random);
+        paramGenSpi.engineInit(size, random);
     }
 
     /**
@@ -299,8 +298,8 @@ public class AlgorithmParameterGenerator {
      * generation values are inappropriate for this parameter generator.
      */
     public final void init(AlgorithmParameterSpec genParamSpec)
-	throws InvalidAlgorithmParameterException {
-	    paramGenSpi.engineInit(genParamSpec, new SecureRandom());
+        throws InvalidAlgorithmParameterException {
+            paramGenSpi.engineInit(genParamSpec, new SecureRandom());
     }
 
     /**
@@ -314,9 +313,9 @@ public class AlgorithmParameterGenerator {
      * generation values are inappropriate for this parameter generator.
      */
     public final void init(AlgorithmParameterSpec genParamSpec,
-			   SecureRandom random)
-	throws InvalidAlgorithmParameterException {
-	    paramGenSpi.engineInit(genParamSpec, random);
+                           SecureRandom random)
+        throws InvalidAlgorithmParameterException {
+            paramGenSpi.engineInit(genParamSpec, random);
     }
 
     /**
@@ -325,6 +324,6 @@ public class AlgorithmParameterGenerator {
      * @return the new AlgorithmParameters object.
      */
     public final AlgorithmParameters generateParameters() {
-	return paramGenSpi.engineGenerateParameters();
+        return paramGenSpi.engineGenerateParameters();
     }
 }

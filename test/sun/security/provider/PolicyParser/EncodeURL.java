@@ -37,73 +37,73 @@ public class EncodeURL {
     private static final String extInput = "foo bar";
     private static final String extAnswer = "foo%20bar";
     private static final String policy0 =
-	"grant codebase \"${java.ext.dirs}\" { permission java.security.AllPermission; };";
+        "grant codebase \"${java.ext.dirs}\" { permission java.security.AllPermission; };";
 
     // keystore inputs and encodings
     private static final String prop1 = "http://foobar";
     private static final String answer1 = "http://foobar/foo";
     private static final String policy1 =
-	"keystore \"${prop1}/foo\"; grant { permission java.security.AllPermission; };";
+        "keystore \"${prop1}/foo\"; grant { permission java.security.AllPermission; };";
 
     private static final String prop2 = "foo#bar";
     private static final String answer2 = "http://foo%23bar/foo";
     private static final String policy2 =
-	"keystore \"http://${prop2}/foo\"; grant { permission java.security.AllPermission; };";
+        "keystore \"http://${prop2}/foo\"; grant { permission java.security.AllPermission; };";
 
     private static final String prop3 = "goofy:foo#bar";
     private static final String answer3 = "http://goofy:foo%23bar/foo";
     private static final String policy3 =
-	"keystore \"http://${prop3}/foo\"; grant { permission java.security.AllPermission; };";
+        "keystore \"http://${prop3}/foo\"; grant { permission java.security.AllPermission; };";
 
     public static void main(String[] args) throws Exception {
 
-	// make sure 'file' URLs created from java.ext.dirs
-	// are encoded
+        // make sure 'file' URLs created from java.ext.dirs
+        // are encoded
 
-	System.setProperty("java.ext.dirs", extInput);
-	PolicyParser pp = new PolicyParser(true);
-	pp.read(new StringReader(policy0));
-	Enumeration e = pp.grantElements();
-	while (e.hasMoreElements()) {
-	    PolicyParser.GrantEntry ge =
-				(PolicyParser.GrantEntry)e.nextElement();
-	    if (ge.codeBase.indexOf("foo") >= 0 &&
-	        ge.codeBase.indexOf(extAnswer) < 0) {
-		throw new SecurityException("test 0 failed: " +
-			"expected " + extAnswer +
-			" inside " + ge.codeBase);
-	    }
-	}
+        System.setProperty("java.ext.dirs", extInput);
+        PolicyParser pp = new PolicyParser(true);
+        pp.read(new StringReader(policy0));
+        Enumeration e = pp.grantElements();
+        while (e.hasMoreElements()) {
+            PolicyParser.GrantEntry ge =
+                                (PolicyParser.GrantEntry)e.nextElement();
+            if (ge.codeBase.indexOf("foo") >= 0 &&
+                ge.codeBase.indexOf(extAnswer) < 0) {
+                throw new SecurityException("test 0 failed: " +
+                        "expected " + extAnswer +
+                        " inside " + ge.codeBase);
+            }
+        }
 
-	// make sure keystore URL is properly encoded (or not)
+        // make sure keystore URL is properly encoded (or not)
 
-	System.setProperty("prop1", prop1);
-	pp = new PolicyParser(true);
-	pp.read(new StringReader(policy1));
-	if (!pp.getKeyStoreUrl().equals(answer1)) {
-	    throw new SecurityException("test 1 failed: " +
-		"expected " + answer1 +
-		", and got " + pp.getKeyStoreUrl());
-	}
-	
-	System.setProperty("prop2", prop2);
-	pp = new PolicyParser(true);
-	pp.read(new StringReader(policy2));
-	if (!pp.getKeyStoreUrl().equals(answer2)) {
-	    throw new SecurityException("test 2 failed: " +
-		"expected " + answer2 +
-		", and got " + pp.getKeyStoreUrl());
-	}
-	
-	System.setProperty("prop3", prop3);
-	pp = new PolicyParser(true);
-	pp.read(new StringReader(policy3));
-	if (!pp.getKeyStoreUrl().equals(answer3)) {
-	    throw new SecurityException("test 3 failed: " +
-		"expected " + answer3 +
-		", and got " + pp.getKeyStoreUrl());
-	}
+        System.setProperty("prop1", prop1);
+        pp = new PolicyParser(true);
+        pp.read(new StringReader(policy1));
+        if (!pp.getKeyStoreUrl().equals(answer1)) {
+            throw new SecurityException("test 1 failed: " +
+                "expected " + answer1 +
+                ", and got " + pp.getKeyStoreUrl());
+        }
 
-	System.out.println("test passed");
+        System.setProperty("prop2", prop2);
+        pp = new PolicyParser(true);
+        pp.read(new StringReader(policy2));
+        if (!pp.getKeyStoreUrl().equals(answer2)) {
+            throw new SecurityException("test 2 failed: " +
+                "expected " + answer2 +
+                ", and got " + pp.getKeyStoreUrl());
+        }
+
+        System.setProperty("prop3", prop3);
+        pp = new PolicyParser(true);
+        pp.read(new StringReader(policy3));
+        if (!pp.getKeyStoreUrl().equals(answer3)) {
+            throw new SecurityException("test 3 failed: " +
+                "expected " + answer3 +
+                ", and got " + pp.getKeyStoreUrl());
+        }
+
+        System.out.println("test passed");
     }
 }

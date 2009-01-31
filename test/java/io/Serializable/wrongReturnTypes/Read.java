@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @bug 4337857
  * @summary Verify that custom serialization methods declared with incorrect
- * 	    return types are not invoked.
+ *          return types are not invoked.
  */
 
 import java.io.*;
@@ -35,8 +35,8 @@ class A implements Serializable {
     static boolean readObjectNoDataCalled;
 
     private Object readObjectNoData() throws ObjectStreamException {
-	readObjectNoDataCalled = true;
-	return null;
+        readObjectNoDataCalled = true;
+        return null;
     }
 }
 
@@ -47,30 +47,30 @@ class B extends A {
     static boolean readResolveCalled;
 
     private Integer readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	readObjectCalled = true;
-	in.defaultReadObject();
-	return null;
+        readObjectCalled = true;
+        in.defaultReadObject();
+        return null;
     }
 
     private B readResolve() throws ObjectStreamException {
-	readResolveCalled = true;
-	return this;
+        readResolveCalled = true;
+        return this;
     }
 }
 
 public class Read {
     public static void main(String[] args) throws Exception {
-	ObjectInputStream oin =
-	    new ObjectInputStream(new FileInputStream("tmp.ser"));
-	B b = (B) oin.readObject();
-	if (A.readObjectNoDataCalled) {
-	    throw new Error("readObjectNoData with wrong return type called");
-	} else if (B.readObjectCalled) {
-	    throw new Error("readObject with wrong return type called");
-	} else if (B.readResolveCalled) {
-	    throw new Error("readResolve with wrong return type called");
-	}
+        ObjectInputStream oin =
+            new ObjectInputStream(new FileInputStream("tmp.ser"));
+        B b = (B) oin.readObject();
+        if (A.readObjectNoDataCalled) {
+            throw new Error("readObjectNoData with wrong return type called");
+        } else if (B.readObjectCalled) {
+            throw new Error("readObject with wrong return type called");
+        } else if (B.readResolveCalled) {
+            throw new Error("readResolve with wrong return type called");
+        }
     }
 }

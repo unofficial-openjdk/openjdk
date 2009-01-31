@@ -39,7 +39,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-                                                                                                   
+
 #include "sun_tools_attach_LinuxVirtualMachine.h"
 
 #define RESTARTABLE(_cmd, _result) do { \
@@ -53,8 +53,8 @@
  */
 typedef void (*ProcessCallback)(const pid_t pid, void* user_data);
 
-/* 
- * Invokes the callback function for each process 
+/*
+ * Invokes the callback function for each process
  */
 static void forEachProcess(ProcessCallback f, void* user_data) {
     DIR* dir;
@@ -137,7 +137,7 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_LinuxVirtualMachine_socket
 {
     int fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
-	JNU_ThrowIOExceptionWithLastError(env, "socket");
+        JNU_ThrowIOExceptionWithLastError(env, "socket");
     }
     return (jint)fd;
 }
@@ -153,36 +153,36 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_LinuxVirtualMachine_connect
     jboolean isCopy;
     const char* p = GetStringPlatformChars(env, path, &isCopy);
     if (p != NULL) {
-	struct sockaddr_un addr;
-	int err = 0;
-	
-	addr.sun_family = AF_UNIX;
-	strcpy(addr.sun_path, p);	                                                              
+        struct sockaddr_un addr;
+        int err = 0;
 
-	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-	    err = errno;
-	}
+        addr.sun_family = AF_UNIX;
+        strcpy(addr.sun_path, p);
+
+        if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+            err = errno;
+        }
 
         if (isCopy) {
             JNU_ReleaseStringPlatformChars(env, path, p);
         }
 
-	/*
-	 * If the connect failed then we throw the appropriate exception
-	 * here (can't throw it before releasing the string as can't call
-	 * JNI with pending exception)
-	 */
-	if (err != 0) {
+        /*
+         * If the connect failed then we throw the appropriate exception
+         * here (can't throw it before releasing the string as can't call
+         * JNI with pending exception)
+         */
+        if (err != 0) {
             if (err == ENOENT) {
                 JNU_ThrowByName(env, "java/io/FileNotFoundException", NULL);
             } else {
-		char* msg = strdup(strerror(err));
-		JNU_ThrowIOException(env, msg);
-		if (msg != NULL) {
-		    free(msg);
-		}
-	    }
-	}
+                char* msg = strdup(strerror(err));
+                JNU_ThrowIOException(env, msg);
+                if (msg != NULL) {
+                    free(msg);
+                }
+            }
+        }
     }
 }
 
@@ -200,17 +200,17 @@ JNIEXPORT jboolean JNICALL Java_sun_tools_attach_LinuxVirtualMachine_isLinuxThre
     size_t n;
     char* s;
     jboolean res;
- 
+
     n = confstr(_CS_GNU_LIBPTHREAD_VERSION, NULL, 0);
     if (n <= 0) {
        /* glibc before 2.3.2 only has LinuxThreads */
        return JNI_TRUE;
     }
- 
+
     s = (char *)malloc(n);
     if (s == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "malloc failed");
-	return JNI_TRUE;
+        JNU_ThrowOutOfMemoryError(env, "malloc failed");
+        return JNI_TRUE;
     }
     confstr(_CS_GNU_LIBPTHREAD_VERSION, s, n);
 
@@ -241,7 +241,7 @@ static void ChildCountCallback(const pid_t pid, void* user_data) {
          * Remember the pid of the first child. If the final count is
          * one then this is the pid of the LinuxThreads manager.
          */
-        if (context->count == 1) {     
+        if (context->count == 1) {
             context->mpid = pid;
         }
     }
@@ -253,7 +253,7 @@ static void ChildCountCallback(const pid_t pid, void* user_data) {
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_sun_tools_attach_LinuxVirtualMachine_getLinuxThreadsManager
-  (JNIEnv *env, jclass cls, jint pid) 
+  (JNIEnv *env, jclass cls, jint pid)
 {
     ChildCountContext context;
 
@@ -276,7 +276,7 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_LinuxVirtualMachine_getLinuxThreads
             return (jint)parent;
         }
     }
-    
+
     /*
      * There's one child so this is likely the embedded VM case where the
      * the primordial thread == LinuxThreads initial thread. The LinuxThreads
@@ -287,7 +287,7 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_LinuxVirtualMachine_getLinuxThreads
     }
 
     /*
-     * If we get here it's most likely we were given the wrong pid 
+     * If we get here it's most likely we were given the wrong pid
      */
     JNU_ThrowIOException(env, "Unable to get pid of LinuxThreads manager thread");
     return -1;
@@ -320,7 +320,7 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_LinuxVirtualMachine_sendQuitToChild
     SendQuitContext context;
     context.ppid = (pid_t)pid;
 
-    /* 
+    /*
      * Iterate over all children of 'pid' and send a QUIT signal to each.
      */
     forEachProcess(SendQuitCallback, (void*)&context);
@@ -353,7 +353,7 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_LinuxVirtualMachine_checkPermission
         struct stat64 sb;
         uid_t uid, gid;
         int res;
-                                                                                                       
+
         /*
          * Check that the path is owned by the effective uid/gid of this
          * process. Also check that group/other access is not allowed.
@@ -410,7 +410,7 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_LinuxVirtualMachine_read
     unsigned char buf[128];
     size_t len = sizeof(buf);
     ssize_t n;
-                                                                                                   
+
     size_t remaining = (size_t)(baLen - off);
     if (len > remaining) {
         len = remaining;
@@ -439,24 +439,23 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_LinuxVirtualMachine_write
 {
     size_t remaining = bufLen;
     do {
-	unsigned char buf[128];
-	size_t len = sizeof(buf);
-	int n;
+        unsigned char buf[128];
+        size_t len = sizeof(buf);
+        int n;
 
-	if (len > remaining) {
-	    len = remaining;
-	}
-	(*env)->GetByteArrayRegion(env, ba, off, len, (jbyte *)buf);
+        if (len > remaining) {
+            len = remaining;
+        }
+        (*env)->GetByteArrayRegion(env, ba, off, len, (jbyte *)buf);
 
-	RESTARTABLE(write(fd, buf, len), n);
-	if (n > 0) {
-	   off += n;
-	   remaining -= n;
-	} else {
-	    JNU_ThrowIOExceptionWithLastError(env, "write");
-	    return;
-	}
+        RESTARTABLE(write(fd, buf, len), n);
+        if (n > 0) {
+           off += n;
+           remaining -= n;
+        } else {
+            JNU_ThrowIOExceptionWithLastError(env, "write");
+            return;
+        }
 
     } while (remaining > 0);
 }
-

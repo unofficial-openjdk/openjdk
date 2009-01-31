@@ -37,59 +37,59 @@ public class ClassnameCharTest implements HttpCallback {
     private static MessageDigest md5;
     private static byte[] file1Mac, file2Mac;
     public void request (HttpTransaction req) {
-	try {
-	    String filename = req.getRequestURI().getPath();
-	    System.out.println("getRequestURI = "+req.getRequestURI());
-	    System.out.println("filename = "+filename);
-	    FileInputStream fis = new FileInputStream(FNPrefix+filename);
-	    req.setResponseEntityBody(fis);
-	    req.sendResponse(200, "OK");
-	    req.orderlyClose();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            String filename = req.getRequestURI().getPath();
+            System.out.println("getRequestURI = "+req.getRequestURI());
+            System.out.println("filename = "+filename);
+            FileInputStream fis = new FileInputStream(FNPrefix+filename);
+            req.setResponseEntityBody(fis);
+            req.sendResponse(200, "OK");
+            req.orderlyClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     static HttpServer server;
 
     public static void test () throws Exception {
-	try {
+        try {
 
-	    FNPrefix = System.getProperty("test.classes", ".")+"/";
-    	    server = new HttpServer (new ClassnameCharTest(), 1, 10, 0);
-    	    System.out.println ("Server: listening on port: " + server.getLocalPort());
-	    URL base = new URL("http://localhost:"+server.getLocalPort());
-	    MyAppletClassLoader acl = new MyAppletClassLoader(base);
-	    Class class1 = acl.findClass("fo o");
-	    System.out.println("class1 = "+class1);
-	    // can't test the following class unless platform in unicode locale
-	    // Class class2 = acl.findClass("\u624b\u518c");
-	    // System.out.println("class2 = "+class2);
-	} catch (Exception e) {
-	    if (server != null) {
-	    	server.terminate();
-	    }
-	    throw e;
-	}
+            FNPrefix = System.getProperty("test.classes", ".")+"/";
+            server = new HttpServer (new ClassnameCharTest(), 1, 10, 0);
+            System.out.println ("Server: listening on port: " + server.getLocalPort());
+            URL base = new URL("http://localhost:"+server.getLocalPort());
+            MyAppletClassLoader acl = new MyAppletClassLoader(base);
+            Class class1 = acl.findClass("fo o");
+            System.out.println("class1 = "+class1);
+            // can't test the following class unless platform in unicode locale
+            // Class class2 = acl.findClass("\u624b\u518c");
+            // System.out.println("class2 = "+class2);
+        } catch (Exception e) {
+            if (server != null) {
+                server.terminate();
+            }
+            throw e;
+        }
 
-	server.terminate();
+        server.terminate();
     }
 
     public static void main(String[] args) throws Exception {
-	test();
+        test();
     }
 
     public static void except (String s) {
         server.terminate();
-    	throw new RuntimeException (s); 
+        throw new RuntimeException (s);
     }
 }
 
 class MyAppletClassLoader extends AppletClassLoader {
     MyAppletClassLoader(URL base) {
-	super(base);
+        super(base);
     }
 
     public Class findClass(String name) throws ClassNotFoundException {
-	return super.findClass(name);
+        return super.findClass(name);
     }
 }

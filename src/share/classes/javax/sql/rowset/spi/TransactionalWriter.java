@@ -34,31 +34,31 @@ import java.sql.Savepoint;
 
 /**
  * A specialized interface that facilitates an extension of the standard
- * <code>SyncProvider</code> abstract class so that it has finer grained 
+ * <code>SyncProvider</code> abstract class so that it has finer grained
  * transaction control.
  * <p>
- * If one or more disconnected <code>RowSet</code> objects are particating 
+ * If one or more disconnected <code>RowSet</code> objects are particating
  * in a global transaction, they may wish to coordinate their synchronization
- * commits to preserve data integrity and reduce the number of 
+ * commits to preserve data integrity and reduce the number of
  * sychronization exceptions. If this is the case, an application should set
  * the <code>CachedRowSet</code> constant <code>COMMIT_ON_ACCEPT_CHANGES</code>
- * to <code>false</code> and use the <code>commit</code> and <code>rollback</code> 
+ * to <code>false</code> and use the <code>commit</code> and <code>rollback</code>
  * methods defined in this interface to manage transaction boundaries.
  */
-public interface TransactionalWriter extends RowSetWriter {   
-    
+public interface TransactionalWriter extends RowSetWriter {
+
     /**
      * Makes permanent all changes that have been performed by the
      * <code>acceptChanges</code> method since the last call to either the
      * <code>commit</code> or <code>rollback</code> methods.
      * This method should be used only when auto-commit mode has been disabled.
      *
-     * @throws SQLException  if a database access error occurs or the 
-     *         <code>Connection</code> object within this <code>CachedRowSet</code> 
+     * @throws SQLException  if a database access error occurs or the
+     *         <code>Connection</code> object within this <code>CachedRowSet</code>
      *         object is in auto-commit mode
      */
     public void commit() throws SQLException;
-    
+
     /**
      * Undoes all changes made in the current transaction. This method should be
      * used only when auto-commit mode has been disabled.
@@ -66,8 +66,8 @@ public interface TransactionalWriter extends RowSetWriter {
      * @throws SQLException if a database access error occurs or the <code>Connection</code>
      *         object within this <code>CachedRowSet</code> object is in auto-commit mode
      */
-    public void rollback() throws SQLException;    
-    
+    public void rollback() throws SQLException;
+
     /**
      * Undoes all changes made in the current transaction made prior to the given
      * <code>Savepoint</code> object.  This method should be used only when auto-commit

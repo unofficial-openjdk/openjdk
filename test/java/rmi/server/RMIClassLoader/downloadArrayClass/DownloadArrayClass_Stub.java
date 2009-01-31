@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,66 +29,66 @@ public final class DownloadArrayClass_Stub
     implements Receiver, java.rmi.Remote
 {
     private static final java.rmi.server.Operation[] operations = {
-	new java.rmi.server.Operation("void receive(java.lang.Object)")
+        new java.rmi.server.Operation("void receive(java.lang.Object)")
     };
-    
+
     private static final long interfaceHash = -953299374608818732L;
-    
+
     private static final long serialVersionUID = 2;
-    
+
     private static boolean useNewInvoke;
     private static java.lang.reflect.Method $method_receive_0;
-    
+
     static {
-	try {
-	    java.rmi.server.RemoteRef.class.getMethod("invoke",
-		new java.lang.Class[] {
-		    java.rmi.Remote.class,
-		    java.lang.reflect.Method.class,
-		    java.lang.Object[].class,
-		    long.class
-		});
-	    useNewInvoke = true;
-	    $method_receive_0 = Receiver.class.getMethod("receive", new java.lang.Class[] {java.lang.Object.class});
-	} catch (java.lang.NoSuchMethodException e) {
-	    useNewInvoke = false;
-	}
+        try {
+            java.rmi.server.RemoteRef.class.getMethod("invoke",
+                new java.lang.Class[] {
+                    java.rmi.Remote.class,
+                    java.lang.reflect.Method.class,
+                    java.lang.Object[].class,
+                    long.class
+                });
+            useNewInvoke = true;
+            $method_receive_0 = Receiver.class.getMethod("receive", new java.lang.Class[] {java.lang.Object.class});
+        } catch (java.lang.NoSuchMethodException e) {
+            useNewInvoke = false;
+        }
     }
-    
+
     // constructors
     public DownloadArrayClass_Stub() {
-	super();
+        super();
     }
     public DownloadArrayClass_Stub(java.rmi.server.RemoteRef ref) {
-	super(ref);
+        super(ref);
     }
-    
+
     // methods from remote interfaces
-    
+
     // implementation of receive(Object)
     public void receive(java.lang.Object $param_Object_1)
-	throws java.rmi.RemoteException
+        throws java.rmi.RemoteException
     {
-	try {
-	    if (useNewInvoke) {
-		ref.invoke(this, $method_receive_0, new java.lang.Object[] {$param_Object_1}, -578858472643205929L);
-	    } else {
-		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
-		try {
-		    java.io.ObjectOutput out = call.getOutputStream();
-		    out.writeObject($param_Object_1);
-		} catch (java.io.IOException e) {
-		    throw new java.rmi.MarshalException("error marshalling arguments", e);
-		}
-		ref.invoke(call);
-		ref.done(call);
-	    }
-	} catch (java.lang.RuntimeException e) {
-	    throw e;
-	} catch (java.rmi.RemoteException e) {
-	    throw e;
-	} catch (java.lang.Exception e) {
-	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
-	}
+        try {
+            if (useNewInvoke) {
+                ref.invoke(this, $method_receive_0, new java.lang.Object[] {$param_Object_1}, -578858472643205929L);
+            } else {
+                java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
+                try {
+                    java.io.ObjectOutput out = call.getOutputStream();
+                    out.writeObject($param_Object_1);
+                } catch (java.io.IOException e) {
+                    throw new java.rmi.MarshalException("error marshalling arguments", e);
+                }
+                ref.invoke(call);
+                ref.done(call);
+            }
+        } catch (java.lang.RuntimeException e) {
+            throw e;
+        } catch (java.rmi.RemoteException e) {
+            throw e;
+        } catch (java.lang.Exception e) {
+            throw new java.rmi.UnexpectedException("undeclared checked exception", e);
+        }
     }
 }

@@ -86,8 +86,8 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CreateObject
 
     jObjectHandle = ckULongToJLong(ckObjectHandle);
     for(i=0; i<ckAttributesLength; i++)
-	if(ckpAttributes[i].pValue != NULL_PTR)
-	    free(ckpAttributes[i].pValue);
+        if(ckpAttributes[i].pValue != NULL_PTR)
+            free(ckpAttributes[i].pValue);
     free(ckpAttributes);
 
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
@@ -131,8 +131,8 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1CopyObject
 
     jNewObjectHandle = ckULongToJLong(ckNewObjectHandle);
     for(i=0; i<ckAttributesLength; i++)
-	if(ckpAttributes[i].pValue != NULL_PTR)
-	    free(ckpAttributes[i].pValue);
+        if(ckpAttributes[i].pValue != NULL_PTR)
+            free(ckpAttributes[i].pValue);
     free(ckpAttributes);
 
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return 0L ; }
@@ -242,26 +242,26 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetAttributeVa
 
     /* first set all pValue to NULL, to get the needed buffer length */
     for(i = 0; i < ckAttributesLength; i++) {
-	if(ckpAttributes[i].pValue != NULL_PTR) {
-	    free(ckpAttributes[i].pValue);
-	}
+        if(ckpAttributes[i].pValue != NULL_PTR) {
+            free(ckpAttributes[i].pValue);
+        }
     }
     for (i = 0; i < ckAttributesLength; i++) {
-	ckpAttributes[i].pValue = NULL_PTR;
+        ckpAttributes[i].pValue = NULL_PTR;
     }
     rv = (*ckpFunctions->C_GetAttributeValue)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength);
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) {
-	free(ckpAttributes);
-	return ;
+        free(ckpAttributes);
+        return ;
     }
 
     /* now, the ulValueLength field of each attribute should hold the exact buffer length needed
      * allocate the needed buffers accordingly
      */
     for (i = 0; i < ckAttributesLength; i++) {
-	ckBufferLength = sizeof(CK_BYTE) * ckpAttributes[i].ulValueLen;
-	ckpAttributes[i].pValue = (void *) malloc(ckBufferLength);
-	ckpAttributes[i].ulValueLen = ckBufferLength;
+        ckBufferLength = sizeof(CK_BYTE) * ckpAttributes[i].ulValueLen;
+        ckpAttributes[i].pValue = (void *) malloc(ckBufferLength);
+        ckpAttributes[i].ulValueLen = ckBufferLength;
     }
 
     /* now get the attributes with all values */
@@ -269,14 +269,14 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetAttributeVa
 
     /* copy back the values to the Java attributes */
     for (i = 0; i < ckAttributesLength; i++) {
-	jAttribute = ckAttributePtrToJAttribute(env, &(ckpAttributes[i]));
-	(*env)->SetObjectArrayElement(env, jTemplate, i, jAttribute);
+        jAttribute = ckAttributePtrToJAttribute(env, &(ckpAttributes[i]));
+        (*env)->SetObjectArrayElement(env, jTemplate, i, jAttribute);
     }
 
     for(i=0; i<ckAttributesLength; i++) {
-	if(ckpAttributes[i].pValue != NULL_PTR) {
-	    free(ckpAttributes[i].pValue);
-	}
+        if(ckpAttributes[i].pValue != NULL_PTR) {
+            free(ckpAttributes[i].pValue);
+        }
     }
     free(ckpAttributes);
     TRACE0("FINISHED\n");
@@ -316,9 +316,9 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1SetAttributeVa
     rv = (*ckpFunctions->C_SetAttributeValue)(ckSessionHandle, ckObjectHandle, ckpAttributes, ckAttributesLength);
 
     for(i=0; i<ckAttributesLength; i++) {
-	if(ckpAttributes[i].pValue != NULL_PTR) {
-	    free(ckpAttributes[i].pValue);
-	}
+        if(ckpAttributes[i].pValue != NULL_PTR) {
+            free(ckpAttributes[i].pValue);
+        }
     }
     free(ckpAttributes);
 
@@ -359,9 +359,9 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObjectsIni
     rv = (*ckpFunctions->C_FindObjectsInit)(ckSessionHandle, ckpAttributes, ckAttributesLength);
 
     for(i=0; i<ckAttributesLength; i++) {
-	if(ckpAttributes[i].pValue != NULL_PTR) {
-	    free(ckpAttributes[i].pValue);
-	}
+        if(ckpAttributes[i].pValue != NULL_PTR) {
+            free(ckpAttributes[i].pValue);
+        }
     }
     free(ckpAttributes);
     TRACE0("FINISHED\n");
@@ -431,4 +431,3 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1FindObjectsFin
     if(ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
 }
 #endif
-

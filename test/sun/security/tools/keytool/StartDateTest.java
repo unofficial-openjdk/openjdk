@@ -22,7 +22,7 @@
  */
 
 /*
- * @test %W% %E%
+ * @test
  * @bug 6468285
  * @summary keytool ability to backdate self-signed certificates to compensate for clock skew
  */
@@ -39,14 +39,14 @@ import sun.security.tools.KeyTool;
 
 public class StartDateTest {
     public static void main(String[] args) throws Exception {
-        
+
         // Part 1: Test function
         Calendar cal = new GregorianCalendar();
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
-        
+
         new File("jks").delete();
-        
+
         run("-keystore jks -storetype jks -storepass changeit -keypass changeit -alias me " +
                 "-genkeypair -dname CN=Haha -startdate +1y");
         cal.setTime(getIssueDate());
@@ -54,7 +54,7 @@ public class StartDateTest {
         if (cal.get(Calendar.YEAR) != year + 1) {
             throw new Exception("Function #1 check fails");
         }
-        
+
         run("-keystore jks -storetype jks -storepass changeit -keypass changeit -alias me " +
                 "-selfcert -startdate +1m");
         cal.setTime(getIssueDate());
@@ -62,9 +62,9 @@ public class StartDateTest {
         if (cal.get(Calendar.MONTH) != month + 1) {
             throw new Exception("Function #1 check fails");
         }
-        
+
         new File("jks").delete();
-        
+
         // Part 2: Test format
         Method m = KeyTool.class.getDeclaredMethod("getStartDate", String.class);
         m.setAccessible(true);
@@ -125,8 +125,8 @@ public class StartDateTest {
             if (!failed) throw new Exception("Failed at " + s);
         }
     }
-    
-    static void run(String s) throws Exception {        
+
+    static void run(String s) throws Exception {
         KeyTool.main((s+" -debug").split(" "));
     }
 

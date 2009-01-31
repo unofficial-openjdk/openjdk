@@ -35,9 +35,9 @@
  *     If the component type is a reference type, C is marked as having
  *     been defined by the defining class loader of the component type.
  */
-static jdwpError 
-getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature, 
-                jclass *componentClassPtr) 
+static jdwpError
+getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
+                jclass *componentClassPtr)
 {
     jobject arrayClassLoader;
     jclass *classes;
@@ -47,12 +47,12 @@ getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
     jvmtiError error;
 
     serror = JDWP_ERROR(NONE);
-    
+
     error = classLoader(arrayClass, &arrayClassLoader);
     if (error != JVMTI_ERROR_NONE) {
         return map2jdwpError(error);
     }
-    
+
     error = allLoadedClasses(&classes, &count);
     if (error != JVMTI_ERROR_NONE) {
         serror = map2jdwpError(error);
@@ -74,7 +74,7 @@ getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
             jvmtiDeallocate(signature);
 
             /* if signature matches, get class loader to check if
-             * it matches 
+             * it matches
              */
             if (match) {
                 jobject loader;
@@ -95,7 +95,7 @@ getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
     }
 
     if (serror == JDWP_ERROR(NONE) && componentClass == NULL) {
-        /* per JVM spec, component class is always loaded 
+        /* per JVM spec, component class is always loaded
          * before array class, so this should never occur.
          */
         serror = JDWP_ERROR(NOT_FOUND);
@@ -105,17 +105,17 @@ getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
 }
 
 static void
-writeNewObjectArray(JNIEnv *env, PacketOutputStream *out, 
+writeNewObjectArray(JNIEnv *env, PacketOutputStream *out,
                  jclass arrayClass, jint size, char *componentSignature)
 {
 
     WITH_LOCAL_REFS(env, 1) {
-        
+
         jarray array;
         jclass componentClass;
         jdwpError serror;
-        
-        serror = getComponentClass(env, arrayClass, 
+
+        serror = getComponentClass(env, arrayClass,
                                        componentSignature, &componentClass);
         if (serror != JDWP_ERROR(NONE)) {
             outStream_setError(out, serror);
@@ -140,8 +140,8 @@ writeNewObjectArray(JNIEnv *env, PacketOutputStream *out,
 }
 
 static void
-writeNewPrimitiveArray(JNIEnv *env, PacketOutputStream *out, 
-                       jclass arrayClass, jint size, char *componentSignature) 
+writeNewPrimitiveArray(JNIEnv *env, PacketOutputStream *out,
+                       jclass arrayClass, jint size, char *componentSignature)
 {
 
     WITH_LOCAL_REFS(env, 1) {
@@ -201,7 +201,7 @@ writeNewPrimitiveArray(JNIEnv *env, PacketOutputStream *out,
     } END_WITH_LOCAL_REFS(env);
 }
 
-static jboolean 
+static jboolean
 newInstance(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
@@ -210,9 +210,9 @@ newInstance(PacketInputStream *in, PacketOutputStream *out)
     jclass arrayClass;
     jint size;
     jvmtiError error;
-    
+
     env = getEnv();
-    
+
     arrayClass = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -229,7 +229,7 @@ newInstance(PacketInputStream *in, PacketOutputStream *out)
     }
     componentSignature = &signature[1];
 
-    if ((componentSignature[0] == JDWP_TAG(OBJECT)) || 
+    if ((componentSignature[0] == JDWP_TAG(OBJECT)) ||
         (componentSignature[0] == JDWP_TAG(ARRAY))) {
         writeNewObjectArray(env, out, arrayClass, size, componentSignature);
     } else {

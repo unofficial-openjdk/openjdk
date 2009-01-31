@@ -38,7 +38,6 @@ import java.util.regex.PatternSyntaxException;
  * a target Java Virtual Machine.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class JStatLogger {

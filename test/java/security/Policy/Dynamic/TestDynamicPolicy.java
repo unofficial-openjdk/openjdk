@@ -52,76 +52,73 @@ public class TestDynamicPolicy {
 
     public static void main(String args[]) throws Exception {
 
-	try {
-	    //
-	    TestDynamicPolicy jstest = new TestDynamicPolicy();
-	    jstest.doit();
-	} catch(Exception e)  {
-	    System.out.println("Failed. Unexpected exception:" + e);
-	    throw e;
-	}
-	System.out.println("Passed. OKAY"); 	
+        try {
+            //
+            TestDynamicPolicy jstest = new TestDynamicPolicy();
+            jstest.doit();
+        } catch(Exception e)  {
+            System.out.println("Failed. Unexpected exception:" + e);
+            throw e;
+        }
+        System.out.println("Passed. OKAY");
     }
 
     private void doit() throws Exception {
-	// A security manager must be installed
+        // A security manager must be installed
         SecurityManager sm=System.getSecurityManager();
         if (sm==null)
-	    throw new
-		Exception("Test must be run with a security manager installed");
+            throw new
+                Exception("Test must be run with a security manager installed");
 
         // Instantiate and set the new policy
         DynamicPolicy dp = new DynamicPolicy();
-	Policy.setPolicy(dp);
+        Policy.setPolicy(dp);
 
-	// Verify that policy has been set
-	if (dp != Policy.getPolicy())
-	    throw new Exception("Policy was not set!!");
+        // Verify that policy has been set
+        if (dp != Policy.getPolicy())
+            throw new Exception("Policy was not set!!");
 
-	// now see this class can access user.name
-	String usr = getUserName();
+        // now see this class can access user.name
+        String usr = getUserName();
 
-	if (usr != null) {
-	    System.out.println("Test was able to read user.name prior to refresh!");
-	    throw new
-		Exception("Test was able to read user.name prior to refresh!");
-	}
+        if (usr != null) {
+            System.out.println("Test was able to read user.name prior to refresh!");
+            throw new
+                Exception("Test was able to read user.name prior to refresh!");
+        }
 
-	// Now, make policy allow reading user.name
-	dp.refresh();
+        // Now, make policy allow reading user.name
+        dp.refresh();
 
-	// now I should be able to read it
-	usr = getUserName();
+        // now I should be able to read it
+        usr = getUserName();
 
-	if (usr == null) {
-	    System.out.println("Test was unable to read user.name after refresh!");
-	    throw new
-		Exception("Test was unable to read user.name after refresh!");
-	}
-	// Now, take away permission to read user.name
-	dp.refresh();
+        if (usr == null) {
+            System.out.println("Test was unable to read user.name after refresh!");
+            throw new
+                Exception("Test was unable to read user.name after refresh!");
+        }
+        // Now, take away permission to read user.name
+        dp.refresh();
 
-	// now I should not be able to read it
-	usr = getUserName();
+        // now I should not be able to read it
+        usr = getUserName();
 
-	if (usr != null) {
-	    System.out.println("Test was able to read user.name following 2nd refresh!");
-	    throw new
-		Exception("Test was able to read user.name following 2nd refresh!");
-	}
+        if (usr != null) {
+            System.out.println("Test was able to read user.name following 2nd refresh!");
+            throw new
+                Exception("Test was able to read user.name following 2nd refresh!");
+        }
 
     }
 
     private String getUserName() {
-	String usr = null;
-	
-	try {
+        String usr = null;
+
+        try {
             usr = System.getProperty("user.name");
-	} catch (Exception e) {
+        } catch (Exception e) {
         }
         return usr;
     }
 }
-
-
-

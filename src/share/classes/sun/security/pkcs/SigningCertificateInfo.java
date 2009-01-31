@@ -35,7 +35,7 @@ import sun.security.x509.GeneralNames;
 import sun.security.x509.SerialNumber;
 
 /**
- * This class represents a signing certificate attribute. 
+ * This class represents a signing certificate attribute.
  * Its attribute value is defined by the following ASN.1 definition.
  * <pre>
  *
@@ -59,27 +59,26 @@ import sun.security.x509.SerialNumber;
  *       issuer         GeneralNames,
  *       serialNumber   CertificateSerialNumber
  *   }
- *  
+ *
  *   PolicyInformation ::= SEQUENCE {
  *       policyIdentifier   CertPolicyId,
  *       policyQualifiers   SEQUENCE SIZE (1..MAX) OF
  *               PolicyQualifierInfo OPTIONAL }
- *  
+ *
  *   CertPolicyId ::= OBJECT IDENTIFIER
- *  
+ *
  *   PolicyQualifierInfo ::= SEQUENCE {
  *       policyQualifierId  PolicyQualifierId,
  *       qualifier        ANY DEFINED BY policyQualifierId }
- *  
+ *
  *   -- Implementations that recognize additional policy qualifiers MUST
  *   -- augment the following definition for PolicyQualifierId
- *  
+ *
  *   PolicyQualifierId ::= OBJECT IDENTIFIER ( id-qt-cps | id-qt-unotice )
  *
  * </pre>
  *
  * @since 1.5
- * @version %I%, %G%
  * @author Vincent Ryan
  */
 public class SigningCertificateInfo {
@@ -89,43 +88,43 @@ public class SigningCertificateInfo {
     private ESSCertId[] certId = null;
 
     public SigningCertificateInfo(byte[] ber) throws IOException {
-	parse(ber);
+        parse(ber);
     }
 
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
-	buffer.append("[\n");
-	for (int i = 0; i < certId.length; i++) {
-	    buffer.append(certId[i].toString());
-	}
-	// format policies as a string
-	buffer.append("\n]");
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("[\n");
+        for (int i = 0; i < certId.length; i++) {
+            buffer.append(certId[i].toString());
+        }
+        // format policies as a string
+        buffer.append("\n]");
 
-	return buffer.toString();
+        return buffer.toString();
     }
 
     public void parse(byte[] bytes) throws IOException {
 
-	// Parse signingCertificate
-	DerValue derValue = new DerValue(bytes);
-	if (derValue.tag != DerValue.tag_Sequence) {
-	    throw new IOException("Bad encoding for signingCertificate");
-	}
+        // Parse signingCertificate
+        DerValue derValue = new DerValue(bytes);
+        if (derValue.tag != DerValue.tag_Sequence) {
+            throw new IOException("Bad encoding for signingCertificate");
+        }
 
-	// Parse certs
-	DerValue[] certs = derValue.data.getSequence(1);
-	certId = new ESSCertId[certs.length];
-	for (int i = 0; i < certs.length; i++) {
-	    certId[i] = new ESSCertId(certs[i]);
-	}
+        // Parse certs
+        DerValue[] certs = derValue.data.getSequence(1);
+        certId = new ESSCertId[certs.length];
+        for (int i = 0; i < certs.length; i++) {
+            certId[i] = new ESSCertId(certs[i]);
+        }
 
-	// Parse policies, if present
+        // Parse policies, if present
         if (derValue.data.available() > 0) {
-	    DerValue[] policies = derValue.data.getSequence(1);
-	    for (int i = 0; i < policies.length; i++) {
-		// parse PolicyInformation
-	    }
-	}
+            DerValue[] policies = derValue.data.getSequence(1);
+            for (int i = 0; i < policies.length; i++) {
+                // parse PolicyInformation
+            }
+        }
     }
 }
 
@@ -138,31 +137,31 @@ class ESSCertId {
     private SerialNumber serialNumber;
 
     ESSCertId(DerValue certId) throws IOException {
-	// Parse certHash
-	certHash = certId.data.getDerValue().toByteArray();
+        // Parse certHash
+        certHash = certId.data.getDerValue().toByteArray();
 
-	// Parse issuerSerial, if present
-	if (certId.data.available() > 0) {
-	    DerValue issuerSerial = certId.data.getDerValue();
-	    // Parse issuer
-	    issuer = new GeneralNames(issuerSerial.data.getDerValue());
-	    // Parse serialNumber
-	    serialNumber = new SerialNumber(issuerSerial.data.getDerValue());
-	}
+        // Parse issuerSerial, if present
+        if (certId.data.available() > 0) {
+            DerValue issuerSerial = certId.data.getDerValue();
+            // Parse issuer
+            issuer = new GeneralNames(issuerSerial.data.getDerValue());
+            // Parse serialNumber
+            serialNumber = new SerialNumber(issuerSerial.data.getDerValue());
+        }
     }
 
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
-	buffer.append("[\n\tCertificate hash (SHA-1):\n");
-	if (hexDumper == null) {
-	    hexDumper = new HexDumpEncoder();
-	}
-	buffer.append(hexDumper.encode(certHash));
-	if (issuer != null && serialNumber != null) {
-	    buffer.append("\n\tIssuer: " + issuer + "\n");
-	    buffer.append("\t" + serialNumber);
-	}
-	buffer.append("\n]");
-	return buffer.toString();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("[\n\tCertificate hash (SHA-1):\n");
+        if (hexDumper == null) {
+            hexDumper = new HexDumpEncoder();
+        }
+        buffer.append(hexDumper.encode(certHash));
+        if (issuer != null && serialNumber != null) {
+            buffer.append("\n\tIssuer: " + issuer + "\n");
+            buffer.append("\t" + serialNumber);
+        }
+        buffer.append("\n]");
+        return buffer.toString();
     }
 }

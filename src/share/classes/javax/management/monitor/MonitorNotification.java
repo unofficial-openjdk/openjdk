@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management.monitor; 
+package javax.management.monitor;
 
 
 // jmx imports
@@ -70,15 +70,15 @@ import javax.management.ObjectName;
  *
  * @since 1.5
  */
-public class MonitorNotification extends javax.management.Notification { 
+public class MonitorNotification extends javax.management.Notification {
 
 
     /*
      * ------------------------------------------
      *  PUBLIC VARIABLES
      * ------------------------------------------
-     */    
-    
+     */
+
     /**
      * Notification type denoting that the observed object is not registered in the MBean server.
      * This notification is fired by all kinds of monitors.
@@ -106,14 +106,14 @@ public class MonitorNotification extends javax.management.Notification {
      * <BR>The value of this notification type is <CODE>jmx.monitor.error.threshold</CODE>.
      */
     public static final String THRESHOLD_ERROR = "jmx.monitor.error.threshold";
-    
+
     /**
      * Notification type denoting that a non-predefined error type has occurred when trying to get the value of the observed attribute.
      * This notification is fired by all kinds of monitors.
      * <BR>The value of this notification type is <CODE>jmx.monitor.error.runtime</CODE>.
      */
     public static final String RUNTIME_ERROR = "jmx.monitor.error.runtime";
-    
+
     /**
      * Notification type denoting that the observed attribute has reached the threshold value.
      * This notification is only fired by counter monitors.
@@ -134,7 +134,7 @@ public class MonitorNotification extends javax.management.Notification {
      * <BR>The value of this notification type is <CODE>jmx.monitor.gauge.low</CODE>.
      */
     public static final String THRESHOLD_LOW_VALUE_EXCEEDED = "jmx.monitor.gauge.low";
-    
+
     /**
      * Notification type denoting that the observed attribute has matched the "string to compare" value.
      * This notification is only fired by string monitors.
@@ -148,14 +148,14 @@ public class MonitorNotification extends javax.management.Notification {
      * <BR>The value of this notification type is <CODE>jmx.monitor.string.differs</CODE>.
      */
     public static final String STRING_TO_COMPARE_VALUE_DIFFERED = "jmx.monitor.string.differs";
-    
-    
+
+
     /*
      * ------------------------------------------
      *  PRIVATE VARIABLES
      * ------------------------------------------
      */
-    
+
     /* Serial version */
     private static final long serialVersionUID = -4608189663661929204L;
 
@@ -173,7 +173,7 @@ public class MonitorNotification extends javax.management.Notification {
      * @serial Monitor notification derived gauge.
      */
     private Object derivedGauge = null;
-    
+
     /**
      * @serial Monitor notification release mechanism.
      *         This value is used to keep the threshold/string (depending on the
@@ -187,7 +187,7 @@ public class MonitorNotification extends javax.management.Notification {
      *  CONSTRUCTORS
      * ------------------------------------------
      */
-    
+
     /**
      * Creates a monitor notification object.
      *
@@ -203,57 +203,57 @@ public class MonitorNotification extends javax.management.Notification {
      */
     MonitorNotification(String type, Object source, long sequenceNumber, long timeStamp, String msg,
                                ObjectName obsObj, String obsAtt, Object derGauge, Object trigger) {
-        
+
         super(type, source, sequenceNumber, timeStamp, msg);
         this.observedObject = obsObj;
         this.observedAttribute = obsAtt;
         this.derivedGauge = derGauge;
         this.trigger = trigger;
     }
-    
+
     /*
      * ------------------------------------------
      *  PUBLIC METHODS
      * ------------------------------------------
      */
-    
+
     // GETTERS AND SETTERS
-    //--------------------    
-    
+    //--------------------
+
     /**
      * Gets the observed object of this monitor notification.
      *
      * @return The observed object.
      */
-    public ObjectName getObservedObject() { 
+    public ObjectName getObservedObject() {
         return observedObject;
-    } 
+    }
 
     /**
      * Gets the observed attribute of this monitor notification.
      *
      * @return The observed attribute.
      */
-    public String getObservedAttribute() { 
+    public String getObservedAttribute() {
         return observedAttribute;
-    } 
+    }
 
     /**
      * Gets the derived gauge of this monitor notification.
      *
      * @return The derived gauge.
      */
-    public Object getDerivedGauge() { 
+    public Object getDerivedGauge() {
         return derivedGauge;
     }
-    
+
     /**
      * Gets the threshold/string (depending on the monitor type) that triggered off this monitor notification.
      *
      * @return The trigger.
      */
-    public Object getTrigger() { 
+    public Object getTrigger() {
         return trigger;
     }
-    
+
 }

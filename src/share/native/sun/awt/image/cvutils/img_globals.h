@@ -33,9 +33,9 @@
 
 
 /* Image Conversion function return codes. */
-#define SCALEFAILURE	-1
-#define SCALENOOP	0
-#define SCALESUCCESS	1
+#define SCALEFAILURE    -1
+#define SCALENOOP       0
+#define SCALESUCCESS    1
 
 /*
  * The constants needed to choose from among the many variants of image
@@ -44,11 +44,11 @@
  * broken down into 5 different attributes each with 2 to 4 different
  * variants:
  *
- *	SCALING:	SCALED or UNSCALED
- *	INPUT SIZE:	BYTEIN (8-bit) or INTIN (32-bit)
- *	ALPHA:		OPAQUE or ALPHA
- *	ORDER:		TDLR or RANDOM
- *	COLORMODEL:	ICM, DCM, DCM8 (8-bits for each component) or ANY
+ *      SCALING:        SCALED or UNSCALED
+ *      INPUT SIZE:     BYTEIN (8-bit) or INTIN (32-bit)
+ *      ALPHA:          OPAQUE or ALPHA
+ *      ORDER:          TDLR or RANDOM
+ *      COLORMODEL:     ICM, DCM, DCM8 (8-bits for each component) or ANY
  *
  * For each attribute, a mask is defined with the "BITS" suffix which
  * identifies which bits contain the variation information for that
@@ -63,25 +63,25 @@
  * indexed into with the constant identifier that characterizes the
  * input data, which is only known and constantly varies at run-time.
  */
-#define IMGCV_UNSCALED		(0 << 0)
-#define IMGCV_SCALED		(1 << 0)
-#define IMGCV_SCALEBITS		(1 << 0)
-#define IMGCV_BYTEIN		(0 << 1)
-#define IMGCV_INTIN		(1 << 1)
-#define IMGCV_INSIZEBITS	(1 << 1)
-#define IMGCV_OPAQUE		(0 << 2)
-#define IMGCV_ALPHA		(1 << 2)
-#define IMGCV_ALPHABITS		(1 << 2)
-#define IMGCV_TDLRORDER		(0 << 3)
-#define IMGCV_RANDORDER		(1 << 3)
-#define IMGCV_ORDERBITS		(1 << 3)
-#define IMGCV_ICM		(0 << 4)
-#define IMGCV_DCM		(1 << 4)
-#define IMGCV_DCM8		(2 << 4)
-#define IMGCV_ANYCM		(3 << 4)
-#define IMGCV_CMBITS		(3 << 4)
+#define IMGCV_UNSCALED          (0 << 0)
+#define IMGCV_SCALED            (1 << 0)
+#define IMGCV_SCALEBITS         (1 << 0)
+#define IMGCV_BYTEIN            (0 << 1)
+#define IMGCV_INTIN             (1 << 1)
+#define IMGCV_INSIZEBITS        (1 << 1)
+#define IMGCV_OPAQUE            (0 << 2)
+#define IMGCV_ALPHA             (1 << 2)
+#define IMGCV_ALPHABITS         (1 << 2)
+#define IMGCV_TDLRORDER         (0 << 3)
+#define IMGCV_RANDORDER         (1 << 3)
+#define IMGCV_ORDERBITS         (1 << 3)
+#define IMGCV_ICM               (0 << 4)
+#define IMGCV_DCM               (1 << 4)
+#define IMGCV_DCM8              (2 << 4)
+#define IMGCV_ANYCM             (3 << 4)
+#define IMGCV_CMBITS            (3 << 4)
 
-#define NUM_IMGCV		(1 << 6)	/* total # of IMGCV variants */
+#define NUM_IMGCV               (1 << 6)        /* total # of IMGCV variants */
 
 /*
  * The structure which holds the image conversion data.
@@ -126,11 +126,11 @@ typedef struct {
  * FIXME!
  */
 typedef int ImgConvertFcn(void *colormodel,
-			  int srcOX, int srcOY, int srcW, int srcH,
-			  void *srcpix, int srcOff, int srcBPP, int srcScan,
-			  int srcTotalWidth, int srcTotalHeight,
-			  int dstTotalWidth, int dstTotalHeight,
-			  ImgConvertData *cvdata, ImgColorData *clrdata);
+                          int srcOX, int srcOY, int srcW, int srcH,
+                          void *srcpix, int srcOff, int srcBPP, int srcScan,
+                          int srcTotalWidth, int srcTotalHeight,
+                          int dstTotalWidth, int dstTotalHeight,
+                          ImgConvertData *cvdata, ImgColorData *clrdata);
 
 /*
  * The type of the error matrix used in the ordered dithering code.
@@ -145,7 +145,7 @@ typedef char sgn_ordered_dither_array[8][8];
  * distance between adjacent allocated component values in the color cube).
  */
 extern void make_uns_ordered_dither_array(uns_ordered_dither_array oda,
-					  int quantum);
+                                          int quantum);
 extern void make_sgn_ordered_dither_array(char* oda, int errmin, int errmax);
 
 /*

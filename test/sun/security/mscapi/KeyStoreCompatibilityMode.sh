@@ -24,7 +24,7 @@
 #
 
 
-# @test @(#)KeyStoreCompatibilityMode.sh	1.1 05/10/02
+# @test
 # @bug 6324294
 # @run shell KeyStoreCompatibilityMode.sh
 # @summary Confirm that a null stream or password is not permitted when 

@@ -22,8 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
-package javax.swing.colorchooser; 
+
+package javax.swing.colorchooser;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +35,6 @@ import java.awt.image.*;
 /**
  * Implements the default HSB Color chooser
  *
- *  @version %I% %G%
  *  @author Tom Santos
  *  @author Steve Wilson
  *  @author Mark Davidson
@@ -45,16 +44,16 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
 
     private transient HSBImage palette;
     private transient HSBImage sliderPalette;
-    
+
     private transient Image paletteImage;
     private transient Image sliderPaletteImage;
-    
+
     private JSlider slider;
-    private JSpinner hField; 
+    private JSpinner hField;
     private JSpinner sField;
     private JSpinner bField;
 
-    private JTextField redField; 
+    private JTextField redField;
     private JTextField greenField;
     private JTextField blueField;
 
@@ -113,7 +112,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
                 if ( y < 0 ) {
                     y = 0;
                 }
-                
+
                 float[] hsb = new float[3];
                 palette.getHSBForLocation( x, y, hsb );
                 updateHSB( hsb[0], hsb[1], hsb[2] );
@@ -151,7 +150,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             y = PALETTE_DIMENSION - (int)(s * PALETTE_DIMENSION);
             break;
         }
-        
+
         paletteSelection.setLocation( x, y );
         paletteLabel.repaint();
     }
@@ -164,7 +163,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             sliderPalette.setHue( h );
             sliderPalette.nextFrame();
         }
-        
+
         float value = 0f;
 
         switch ( currentMode ) {
@@ -183,9 +182,9 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
     }
 
     private void updateHSBTextFields( float hue, float saturation, float brightness ) {
-        int h =  Math.round(hue * 359); 
-        int s =  Math.round(saturation * 100); 
-        int b =  Math.round(brightness * 100); 
+        int h =  Math.round(hue * 359);
+        int s =  Math.round(saturation * 100);
+        int b =  Math.round(brightness * 100);
 
         if (((Integer)hField.getValue()).intValue() != h) {
             hField.setValue(new Integer(h));
@@ -198,7 +197,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         }
     }
 
-    /** 
+    /**
      * Updates the values of the RGB fields to reflect the new color change
      */
     private void updateRGBTextFields( Color color ) {
@@ -207,7 +206,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         blueField.setText(String.valueOf(color.getBlue()));
     }
 
-    /** 
+    /**
      * Main internal method of updating the ui controls and the color model.
      */
     private void updateHSB( float h, float s, float b ) {
@@ -226,7 +225,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             isAdjusting = false;
         }
     }
-    
+
     /**
       * Invoked automatically when the model's state changes.
       * It is also called by <code>installChooserPanel</code> to allow
@@ -236,27 +235,27 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
     public void updateChooser() {
         if ( !isAdjusting ) {
             float[] hsb = getHSBColorFromModel();
-            updateHSB( hsb[0], hsb[1], hsb[2] ); 
+            updateHSB( hsb[0], hsb[1], hsb[2] );
         }
     }
-    
+
     public void installChooserPanel(JColorChooser enclosingChooser) {
-	super.installChooserPanel(enclosingChooser);
+        super.installChooserPanel(enclosingChooser);
         setInheritsPopupMenu(true);
-	addHierarchyListener(this);
+        addHierarchyListener(this);
     }
-    
+
     /**
      * Invoked when the panel is removed from the chooser.
      */
     public void uninstallChooserPanel(JColorChooser enclosingChooser) {
-    	super.uninstallChooserPanel(enclosingChooser);
-    	cleanupPalettesIfNecessary();
-    	removeAll();
-    	removeHierarchyListener(this);
+        super.uninstallChooserPanel(enclosingChooser);
+        cleanupPalettesIfNecessary();
+        removeAll();
+        removeHierarchyListener(this);
     }
-    
-    /** 
+
+    /**
      * Returns an float array containing the HSB values of the selected color from
      * the ColorSelectionModel
      */
@@ -264,7 +263,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         Color color = getColorFromModel();
         float[] hsb = new float[3];
         Color.RGBtoHSB( color.getRed(), color.getGreen(), color.getBlue(), hsb );
-        
+
         return hsb;
     }
 
@@ -293,7 +292,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         add( controlHolder, BorderLayout.CENTER);
     }
 
-    /** 
+    /**
      * Creates the panel with the uneditable RGB field
      */
     private JComponent buildRGBControls() {
@@ -326,11 +325,11 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         panel.add( greenField );
         panel.add( new JLabel(blueString) );
         panel.add( blueField );
-        
-        return panel;                  
+
+        return panel;
     }
 
-    /** 
+    /**
      * Creates the panel with the editable HSB fields and the radio buttons.
      */
     private JComponent buildHSBControls() {
@@ -360,7 +359,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         group.add(bRadio);
 
         float[] hsb = getHSBColorFromModel();
-        
+
         hField = new JSpinner(new SpinnerNumberModel((int)(hsb[0] * 359), 0, 359, 1));
         sField = new JSpinner(new SpinnerNumberModel((int)(hsb[1] * 100), 0, 100, 1));
         bField = new JSpinner(new SpinnerNumberModel((int)(hsb[2] * 100), 0, 100, 1));
@@ -374,7 +373,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         bField.setInheritsPopupMenu(true);
 
         JPanel panel = new JPanel( new SmartGridLayout(2, 3) );
-        
+
         panel.add(hRadio);
         panel.add(hField);
         panel.add(sRadio);
@@ -385,14 +384,14 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
 
         return panel;
     }
-    
-    /** 
+
+    /**
      * Handler for the radio button classes.
      */
     private class RadioButtonHandler implements ActionListener  {
         public void actionPerformed(ActionEvent evt)  {
             Object obj = evt.getSource();
-        
+
             if (obj instanceof JRadioButton)  {
                 JRadioButton button = (JRadioButton)obj;
                 if (button == hRadio) {
@@ -405,17 +404,17 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             }
         }
     }
-    
+
     private void setMode(int mode) {
         if (currentMode == mode) {
             return;
         }
-        
+
         isAdjusting = true;  // Ensure no events propagate from changing slider value.
         currentMode = mode;
-        
+
         float[] hsb = getHSBColorFromModel();
-        
+
         switch (currentMode) {
             case HUE_MODE:
                 slider.setInverted(true);
@@ -438,7 +437,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         }
 
         isAdjusting = false;
-        
+
         palette.nextFrame();
         sliderPalette.nextFrame();
 
@@ -447,37 +446,37 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
 
     protected JComponent buildSliderPalettePanel() {
 
-        // This slider has to have a minimum of 0.  A lot of math in this file is simplified due to this. 
+        // This slider has to have a minimum of 0.  A lot of math in this file is simplified due to this.
         slider = new JSlider(JSlider.VERTICAL, 0, MAX_HUE_VALUE, 0);
         slider.setInverted(true);
         slider.setPaintTrack(false);
         slider.setPreferredSize(new Dimension(slider.getPreferredSize().width, PALETTE_DIMENSION + 15));
         slider.addChangeListener(this);
         slider.setInheritsPopupMenu(true);
-	// We're not painting ticks, but need to ask UI classes to
-	// paint arrow shape anyway, if possible.
-	slider.putClientProperty("Slider.paintThumbArrowShape", Boolean.TRUE);
+        // We're not painting ticks, but need to ask UI classes to
+        // paint arrow shape anyway, if possible.
+        slider.putClientProperty("Slider.paintThumbArrowShape", Boolean.TRUE);
         paletteLabel = createPaletteLabel();
         addPaletteListeners();
         sliderPaletteLabel = new JLabel();
-        
+
         JPanel panel = new JPanel();
         panel.add( paletteLabel );
         panel.add( slider );
         panel.add( sliderPaletteLabel );
-        
+
         initializePalettesIfNecessary();
-        
+
         return panel;
     }
-    
+
     private void initializePalettesIfNecessary() {
         if (palette != null) {
             return;
         }
-        
+
         float[] hsb = getHSBColorFromModel();
-        
+
         switch(currentMode){
             case HUE_MODE:
                 palette = new HSBImage(HSBImage.HSQUARE, PALETTE_DIMENSION, PALETTE_DIMENSION, hsb[0], 1.0f, 1.0f);
@@ -494,16 +493,16 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         }
         paletteImage = Toolkit.getDefaultToolkit().createImage(palette);
         sliderPaletteImage = Toolkit.getDefaultToolkit().createImage(sliderPalette);
-        
+
         paletteLabel.setIcon(new ImageIcon(paletteImage));
         sliderPaletteLabel.setIcon(new ImageIcon(sliderPaletteImage));
     }
-    
+
     private void cleanupPalettesIfNecessary() {
         if (palette == null) {
             return;
         }
-        
+
         palette.aborted = true;
         sliderPalette.aborted = true;
 
@@ -512,10 +511,10 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
 
         palette = null;
         sliderPalette = null;
-        
+
         paletteImage = null;
         sliderPaletteImage = null;
-        
+
         paletteLabel.setIcon(null);
         sliderPaletteLabel.setIcon(null);
     }
@@ -543,7 +542,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
      * and feel to honor the return value in some meaningful way.
      * <p>
      * This implementation looks up the value from the default
-     * <code>ColorChooser.hsbMnemonic</code>, or if it 
+     * <code>ColorChooser.hsbMnemonic</code>, or if it
      * isn't available (or not an <code>Integer</code>) returns -1.
      * The lookup for the default is done through the <code>UIManager</code>:
      * <code>UIManager.get("ColorChooser.rgbMnemonic");</code>.
@@ -571,7 +570,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
      * the <code>getDisplayName</code>.
      * <p>
      * This implementation looks up the value from the default
-     * <code>ColorChooser.rgbDisplayedMnemonicIndex</code>, or if it 
+     * <code>ColorChooser.rgbDisplayedMnemonicIndex</code>, or if it
      * isn't available (or not an <code>Integer</code>) returns -1.
      * The lookup for the default is done through the <code>UIManager</code>:
      * <code>UIManager.get("ColorChooser.hsbDisplayedMnemonicIndex");</code>.
@@ -592,8 +591,8 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
     public Icon getLargeDisplayIcon() {
         return null;
     }
-    
-    /** 
+
+    /**
      * Class for the slider and palette images.
      */
     class HSBImage extends SyntheticImage {
@@ -660,7 +659,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             isDirty = true;
             notifyAll();
         }
-        
+
         public synchronized void addConsumer(ImageConsumer ic) {
             isDirty = true;
             super.addConsumer(ic);
@@ -684,7 +683,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
                     float saturationStep = ((float)x) / width;
                     float brightnessStep = ((float)y) / height;
                     hsbArray[0] = h;
-                    hsbArray[1] = s - saturationStep; 
+                    hsbArray[1] = s - saturationStep;
                     hsbArray[2] = b - brightnessStep;
                     break;
                 }
@@ -727,8 +726,8 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
                 }
             }
         }
-        
-        /** 
+
+        /**
          * Overriden method from SyntheticImage
          */
         protected void computeRow( int y, int[] row ) {
@@ -750,10 +749,10 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
 
             for ( int i = 0; i < row.length; ++i ) {
                 row[i] = getRGBForLocation( i, y );
-            }  
+            }
         }
     }
-    
+
     public void stateChanged(ChangeEvent e) {
         if (e.getSource() == slider) {
             boolean modelIsAdjusting = slider.getModel().getValueIsAdjusting();
@@ -785,7 +784,7 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
             updateHSB(hue, saturation, brightness);
         }
     }
-    
+
     public void hierarchyChanged(HierarchyEvent he) {
         if ((he.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
             if (isDisplayable()) {
@@ -796,4 +795,4 @@ class DefaultHSBChooserPanel extends AbstractColorChooserPanel implements Change
         }
     }
 
-}    
+}

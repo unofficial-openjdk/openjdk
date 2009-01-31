@@ -31,20 +31,20 @@ import java.awt.geom.QuadCurve2D;
 import sun.awt.SunHints;
 import java.util.*;
 
-/* This is the java implementation of the native code from 
+/* This is the java implementation of the native code from
  * src/share/native/sun/java2d/loops/ProcessPath.[c,h]
- * This code is written to be as much similar to the native 
+ * This code is written to be as much similar to the native
  * as it possible. So, it sometimes does not follow java naming conventions.
  *
  * It's important to keep this code synchronized with native one.  See more
- * comments, description and high level scheme of the rendering process in the 
+ * comments, description and high level scheme of the rendering process in the
  * ProcessPath.c
  */
 
 public class ProcessPath {
-    
+
     /* Public interfaces and methods for drawing and filling general paths */
-    
+
     public static abstract class DrawHandler {
         public int xMin;
         public int yMin;
@@ -56,7 +56,7 @@ public class ProcessPath {
         public float yMaxf;
 
         public int strokeControl;
-        
+
         public DrawHandler(int xMin, int yMin, int xMax, int yMax,
                            int strokeControl)
         {
@@ -71,14 +71,14 @@ public class ProcessPath {
             this.yMax = yMax;
 
             /*                Setting up fractional clipping box
-             *                  
-             * We are using following float -> int mapping: 
              *
-             *      xi = floor(xf + 0.5) 
+             * We are using following float -> int mapping:
+             *
+             *      xi = floor(xf + 0.5)
              *
              * So, fractional values that hit the [xmin, xmax) integer interval
-             * will be situated inside the [xmin-0.5, xmax - 0.5) fractional 
-             * interval. We are using EPSF constant to provide that upper 
+             * will be situated inside the [xmin-0.5, xmax - 0.5) fractional
+             * interval. We are using EPSF constant to provide that upper
              * boundary is not included.
              */
             xMinf = xMin - 0.5f;
@@ -88,13 +88,13 @@ public class ProcessPath {
         }
 
         public void setBounds(int xMin, int yMin, int xMax, int yMax,
-                              int strokeControl) 
+                              int strokeControl)
         {
             this.strokeControl = strokeControl;
             setBounds(xMin, yMin, xMax, yMax);
         }
 
-        public void adjustBounds(int bxMin, int byMin, int bxMax, int byMax) 
+        public void adjustBounds(int bxMin, int byMin, int bxMax, int byMax)
         {
             if (xMin > bxMin) bxMin = xMin;
             if (xMax < bxMax) bxMax = xMax;
@@ -102,7 +102,7 @@ public class ProcessPath {
             if (yMax < byMax) byMax = yMax;
             setBounds(bxMin, byMin, bxMax, byMax);
         }
-       
+
         public DrawHandler(int xMin, int yMin, int xMax, int yMax) {
             this(xMin, yMin, xMax, yMax, SunHints.INTVAL_STROKE_DEFAULT);
         }
@@ -117,27 +117,27 @@ public class ProcessPath {
     public interface EndSubPathHandler {
         public void processEndSubPath();
     }
-    
+
     public static final int PH_MODE_DRAW_CLIP = 0;
     public static final int PH_MODE_FILL_CLIP = 1;
-    
+
     public static abstract class ProcessHandler implements EndSubPathHandler {
         DrawHandler dhnd;
         int clipMode;
-        
+
         public ProcessHandler(DrawHandler dhnd,
                               int clipMode) {
             this.dhnd = dhnd;
             this.clipMode = clipMode;
-        }        
-        
+        }
+
         public abstract void processFixedLine(int x1, int y1,
                                               int x2, int y2, int [] pixelInfo,
                                               boolean checkBounds,
                                               boolean endSubPath);
     }
 
-    public static EndSubPathHandler noopEndSubPathHandler = 
+    public static EndSubPathHandler noopEndSubPathHandler =
         new EndSubPathHandler() {
             public void processEndSubPath() { }
         };
@@ -153,7 +153,7 @@ public class ProcessPath {
         return true;
     }
 
-    public static boolean drawPath(DrawHandler dhnd, 
+    public static boolean drawPath(DrawHandler dhnd,
                                    EndSubPathHandler endSubPath,
                                    Path2D.Float p2df,
                                    int transX, int transY)
@@ -161,8 +161,8 @@ public class ProcessPath {
         return doProcessPath(new DrawProcessHandler(dhnd, endSubPath),
                              p2df, transX, transY);
     }
-    
-    public static boolean drawPath(DrawHandler dhnd, 
+
+    public static boolean drawPath(DrawHandler dhnd,
                                    Path2D.Float p2df,
                                    int transX, int transY)
     {
@@ -170,9 +170,9 @@ public class ProcessPath {
                                                     noopEndSubPathHandler),
                              p2df, transX, transY);
     }
-    
+
     /* Private implementation of the rendering process */
-    
+
     /* Boundaries used for skipping huge path segments */
     private static final float UPPER_BND = Float.MAX_VALUE/4.0f;
     private static final float LOWER_BND = -UPPER_BND;
@@ -186,14 +186,14 @@ public class ProcessPath {
     private static final int MDP_MULT = 1 << MDP_PREC;
     private static final int MDP_HALF_MULT = MDP_MULT >> 1;
 
-    /* Boundaries used for clipping large path segments (those are inside 
-     * [UPPER/LOWER]_BND boundaries) 
+    /* Boundaries used for clipping large path segments (those are inside
+     * [UPPER/LOWER]_BND boundaries)
      */
     private static final int UPPER_OUT_BND = 1 << (30 - MDP_PREC);
     private static final int LOWER_OUT_BND = -UPPER_OUT_BND;
 
 
-    /* Calculation boundaries. They are used for switching to the more slow but 
+    /* Calculation boundaries. They are used for switching to the more slow but
      * allowing larger input values method of calculation of the initial values
      * of the scan converted line segments inside the FillPolygon
      */
@@ -201,7 +201,7 @@ public class ProcessPath {
     private static final float CALC_LBND = -CALC_UBND;
 
 
-    /* Following constants are used for providing open boundaries of the 
+    /* Following constants are used for providing open boundaries of the
      * intervals
      */
     public static final int EPSFX = 1;
@@ -218,7 +218,7 @@ public class ProcessPath {
     private static final int MDP_F_MASK = MDP_MULT - 1;
 
     /*
-     *                  Constants for the forward differencing 
+     *                  Constants for the forward differencing
      *                      of the cubic and quad curves
      */
 
@@ -240,9 +240,9 @@ public class ProcessPath {
     private static final int DF_QUAD_STEPS = 2;
 
     /* Shift of the current point of the curve for preparing to the midpoint
-     * rounding 
+     * rounding
      */
-    private static final int DF_CUB_SHIFT = FWD_PREC + DF_CUB_STEPS*3 - 
+    private static final int DF_CUB_SHIFT = FWD_PREC + DF_CUB_STEPS*3 -
                                             MDP_PREC;
     private static final int DF_QUAD_SHIFT = FWD_PREC + DF_QUAD_STEPS*2 -
                                              MDP_PREC;
@@ -250,14 +250,14 @@ public class ProcessPath {
     /* Default amount of steps of the forward differencing */
     private static final int DF_CUB_COUNT = (1<<DF_CUB_STEPS);
     private static final int DF_QUAD_COUNT = (1<<DF_QUAD_STEPS);
-                                            
+
     /* Default boundary constants used to check the necessity of the restepping
      */
     private static final int DF_CUB_DEC_BND = 1<<DF_CUB_STEPS*3 + FWD_PREC + 2;
     private static final int DF_CUB_INC_BND = 1<<DF_CUB_STEPS*3 + FWD_PREC - 1;
-    private static final int DF_QUAD_DEC_BND = 1<<DF_QUAD_STEPS*2 + 
+    private static final int DF_QUAD_DEC_BND = 1<<DF_QUAD_STEPS*2 +
                                                   FWD_PREC + 2;
-    private static final int DF_QUAD_INC_BND = 1<<DF_QUAD_STEPS*2 + 
+    private static final int DF_QUAD_INC_BND = 1<<DF_QUAD_STEPS*2 +
                                                   FWD_PREC - 1;
 
     /* Multipliers for the coefficients of the polynomial form of the cubic and
@@ -287,7 +287,7 @@ public class ProcessPath {
         return (int)(b1 + (double)(t - a1)*(b2 - b1) / (a2 - a1));
     }
 
-    
+
     private static final int CRES_MIN_CLIPPED = 0;
     private static final int CRES_MAX_CLIPPED = 1;
     private static final int CRES_NOT_CLIPPED = 3;
@@ -298,62 +298,62 @@ public class ProcessPath {
     }
 
     /* This is java implementation of the macro from ProcessGeneralPath.c.
-     * To keep the logic of the java code similar to the native one 
+     * To keep the logic of the java code similar to the native one
      * array and set of indexes are used to point out the data.
-     */ 
+     */
     private static int TESTANDCLIP(float LINE_MIN, float LINE_MAX, float[] c,
                                    int a1, int b1, int a2, int b2) {
-        double t;                                                  
-        int res = CRES_NOT_CLIPPED;                                    
-        if (c[a1] < (LINE_MIN) || c[a1] > (LINE_MAX)) {                  
-            if (c[a1] < (LINE_MIN)) {                                 
-                if (c[a2] < (LINE_MIN)) {                             
-                    return CRES_INVISIBLE;                          
-                };                                                 
-                res = CRES_MIN_CLIPPED;                            
-                t = (LINE_MIN);                                    
-            } else {                                               
-                if (c[a2] > (LINE_MAX)) {                             
-                    return CRES_INVISIBLE;                          
-                };                                                 
-                res = CRES_MAX_CLIPPED;                            
-                t = (LINE_MAX);                                    
-            }                                                      
-            c[b1] = CLIP(c[a1], c[b1], c[a2], c[b2], t);                          
-            c[a1] = (float)t;                                                
-        }                                                          
+        double t;
+        int res = CRES_NOT_CLIPPED;
+        if (c[a1] < (LINE_MIN) || c[a1] > (LINE_MAX)) {
+            if (c[a1] < (LINE_MIN)) {
+                if (c[a2] < (LINE_MIN)) {
+                    return CRES_INVISIBLE;
+                };
+                res = CRES_MIN_CLIPPED;
+                t = (LINE_MIN);
+            } else {
+                if (c[a2] > (LINE_MAX)) {
+                    return CRES_INVISIBLE;
+                };
+                res = CRES_MAX_CLIPPED;
+                t = (LINE_MAX);
+            }
+            c[b1] = CLIP(c[a1], c[b1], c[a2], c[b2], t);
+            c[a1] = (float)t;
+        }
         return res;
     }
 
     /* Integer version of the method above */
     private static int TESTANDCLIP(int LINE_MIN, int LINE_MAX, int[] c,
                                    int a1, int b1, int a2, int b2) {
-        double t;                                                  
-        int res = CRES_NOT_CLIPPED;                                    
-        if (c[a1] < (LINE_MIN) || c[a1] > (LINE_MAX)) {                  
-            if (c[a1] < (LINE_MIN)) {                                 
-                if (c[a2] < (LINE_MIN)) {                             
-                    return CRES_INVISIBLE;                          
-                };                                                 
-                res = CRES_MIN_CLIPPED;                            
-                t = (LINE_MIN);                                    
-            } else {                                               
-                if (c[a2] > (LINE_MAX)) {                             
-                    return CRES_INVISIBLE;                          
-                };                                                 
-                res = CRES_MAX_CLIPPED;                            
-                t = (LINE_MAX);                                    
-            }                                                      
-            c[b1] = CLIP(c[a1], c[b1], c[a2], c[b2], t);                          
-            c[a1] = (int)t;                                                
-        }                                                          
+        double t;
+        int res = CRES_NOT_CLIPPED;
+        if (c[a1] < (LINE_MIN) || c[a1] > (LINE_MAX)) {
+            if (c[a1] < (LINE_MIN)) {
+                if (c[a2] < (LINE_MIN)) {
+                    return CRES_INVISIBLE;
+                };
+                res = CRES_MIN_CLIPPED;
+                t = (LINE_MIN);
+            } else {
+                if (c[a2] > (LINE_MAX)) {
+                    return CRES_INVISIBLE;
+                };
+                res = CRES_MAX_CLIPPED;
+                t = (LINE_MAX);
+            }
+            c[b1] = CLIP(c[a1], c[b1], c[a2], c[b2], t);
+            c[a1] = (int)t;
+        }
         return res;
     }
 
 
 
-    /* Following method is used for clipping and clumping filled shapes. 
-     * An example of this process is shown on the picture below: 
+    /* Following method is used for clipping and clumping filled shapes.
+     * An example of this process is shown on the picture below:
      *                      ----+          ----+
      *                    |/    |        |/    |
      *                    +     |        +     |
@@ -373,12 +373,12 @@ public class ProcessPath {
      * contours).
      *
      * This is java implementation of the macro from ProcessGeneralPath.c.
-     * To keep the logic of the java code similar to the native one  
+     * To keep the logic of the java code similar to the native one
      * array and set of indexes are used to point out the data.
-     * 
+     *
      */
-    private static int CLIPCLAMP(float LINE_MIN, float LINE_MAX, float[] c, 
-                                 int a1, int b1, int a2, int b2, 
+    private static int CLIPCLAMP(float LINE_MIN, float LINE_MAX, float[] c,
+                                 int a1, int b1, int a2, int b2,
                                  int a3, int b3) {
         c[a3] = c[a1];
         c[b3] = c[b1];
@@ -401,8 +401,8 @@ public class ProcessPath {
     }
 
     /* Integer version of the method above */
-    private static int CLIPCLAMP(int LINE_MIN, int LINE_MAX, int[] c, 
-                                 int a1, int b1, int a2, int b2, 
+    private static int CLIPCLAMP(int LINE_MIN, int LINE_MAX, int[] c,
+                                 int a1, int b1, int a2, int b2,
                                  int a3, int b3) {
         c[a3] = c[a1];
         c[b3] = c[b1];
@@ -423,22 +423,22 @@ public class ProcessPath {
         }
         return res;
     }
-    
+
     private static class DrawProcessHandler extends ProcessHandler {
-        
+
         EndSubPathHandler processESP;
-        
-        public DrawProcessHandler(DrawHandler dhnd, 
+
+        public DrawProcessHandler(DrawHandler dhnd,
                                   EndSubPathHandler processESP) {
             super(dhnd, PH_MODE_DRAW_CLIP);
             this.dhnd = dhnd;
             this.processESP = processESP;
         }
-        
+
         public void processEndSubPath() {
             processESP.processEndSubPath();
         }
-        
+
         void PROCESS_LINE(int fX0, int fY0, int fX1, int fY1,
                           boolean checkBounds, int[] pixelInfo) {
             int X0 = fX0 >> MDP_PREC;
@@ -446,14 +446,14 @@ public class ProcessPath {
             int X1 = fX1 >> MDP_PREC;
             int Y1 = fY1 >> MDP_PREC;
 
-           /* Handling lines having just one pixel */ 
+           /* Handling lines having just one pixel */
             if (((X0^X1) | (Y0^Y1)) == 0) {
-                if (checkBounds && 
+                if (checkBounds &&
                     (dhnd.yMin > Y0  ||
                      dhnd.yMax <= Y0 ||
                      dhnd.xMin > X0  ||
                      dhnd.xMax <= X0)) return;
- 
+
                 if (pixelInfo[0] == 0) {
                     pixelInfo[0] = 1;
                     pixelInfo[1] = X0;
@@ -470,11 +470,11 @@ public class ProcessPath {
                 return;
             }
 
-            if (!checkBounds ||                                            
-                (dhnd.yMin <= Y0  &&                                 
+            if (!checkBounds ||
+                (dhnd.yMin <= Y0  &&
                  dhnd.yMax > Y0 &&
                  dhnd.xMin <= X0  &&
-                 dhnd.xMax > X0)) 
+                 dhnd.xMax > X0))
             {
                 /* Switch off first pixel of the line before drawing */
                 if (pixelInfo[0] == 1 &&
@@ -517,13 +517,13 @@ public class ProcessPath {
 
         void PROCESS_POINT(int fX, int fY, boolean checkBounds,
                            int[] pixelInfo) {
-            int _X = fX>> MDP_PREC;                                          
-            int _Y = fY>> MDP_PREC;                                          
-            if (checkBounds &&                                                  
-                (dhnd.yMin > _Y  ||                                       
-                 dhnd.yMax <= _Y ||                                       
-                 dhnd.xMin > _X  ||                                       
-                 dhnd.xMax <= _X)) return;                                 
+            int _X = fX>> MDP_PREC;
+            int _Y = fY>> MDP_PREC;
+            if (checkBounds &&
+                (dhnd.yMin > _Y  ||
+                 dhnd.yMax <= _Y ||
+                 dhnd.xMin > _X  ||
+                 dhnd.xMax <= _X)) return;
             /*
              *  (_X,_Y) should be inside boundaries
              *
@@ -533,19 +533,19 @@ public class ProcessPath {
              *         dhnd.xMax >  _X);
              *
              */
-            if (pixelInfo[0] == 0) {                                            
-                pixelInfo[0] = 1;                                               
-                pixelInfo[1] = _X;                                              
-                pixelInfo[2] = _Y;                                              
-                pixelInfo[3] = _X;                                              
-                pixelInfo[4] = _Y;                                              
+            if (pixelInfo[0] == 0) {
+                pixelInfo[0] = 1;
+                pixelInfo[1] = _X;
+                pixelInfo[2] = _Y;
+                pixelInfo[3] = _X;
+                pixelInfo[4] = _Y;
                 dhnd.drawPixel(_X, _Y);
-            } else if ((_X != pixelInfo[3] || _Y != pixelInfo[4]) &&            
-                       (_X != pixelInfo[1] || _Y != pixelInfo[2])) {            
+            } else if ((_X != pixelInfo[3] || _Y != pixelInfo[4]) &&
+                       (_X != pixelInfo[1] || _Y != pixelInfo[2])) {
                 dhnd.drawPixel(_X, _Y);
-                pixelInfo[3] = _X;                                              
-                pixelInfo[4] = _Y;                                              
-            }                                                                   
+                pixelInfo[3] = _X;
+                pixelInfo[4] = _Y;
+            }
         }
 
         /*                  Drawing line with subpixel endpoints
@@ -561,21 +561,21 @@ public class ProcessPath {
          *                                           0 - no pixel drawn between
          *                                           moveTo/close of the path
          *                                           1 - there are drawn pixels
-         *                         
+         *
          *                          pixelInfo[1,2] - first pixel of the path
          *                                           between moveTo/close of the
          *                                           path
-         *                         
+         *
          *                          pixelInfo[3,4] - last drawn pixel between
          *                                           moveTo/close of the path
-         *                         
+         *
          * checkBounds        - flag showing necessity of checking the clip
          *
          */
         public void  processFixedLine(int x1, int y1, int x2, int y2,
                                       int[] pixelInfo, boolean checkBounds,
                                       boolean endSubPath)  {
-            
+
             /* Checking if line is inside a (X,Y),(X+MDP_MULT,Y+MDP_MULT) box */
             int c = ((x1 ^ x2) | (y1 ^ y2));
             int rx1, ry1, rx2, ry2;
@@ -589,7 +589,7 @@ public class ProcessPath {
                 }
                 return;
             }
-            
+
             if (x1 == x2 || y1 == y2) {
                 rx1 = x1 + MDP_HALF_MULT;
                 rx2 = x2 + MDP_HALF_MULT;
@@ -599,7 +599,7 @@ public class ProcessPath {
                 /* Neither dx nor dy can be zero because of the check above */
                 int dx = x2 - x1;
                 int dy = y2 - y1;
-                
+
                 /* Floor of x1, y1, x2, y2 */
                 int fx1 = x1 & MDP_W_MASK;
                 int fy1 = y1 & MDP_W_MASK;
@@ -608,8 +608,8 @@ public class ProcessPath {
 
                 /* Processing first endpoint */
                 if (fx1 == x1 || fy1 == y1) {
-                    /* Adding MDP_HALF_MULT to the [xy]1 if f[xy]1 == [xy]1 
-                     * will not affect the result 
+                    /* Adding MDP_HALF_MULT to the [xy]1 if f[xy]1 == [xy]1
+                     * will not affect the result
                      */
                     rx1 = x1 + MDP_HALF_MULT;
                     ry1 = y1 + MDP_HALF_MULT;
@@ -633,8 +633,8 @@ public class ProcessPath {
 
                 /* Processing second endpoint */
                 if (fx2 == x2 || fy2 == y2) {
-                    /* Adding MDP_HALF_MULT to the [xy]2 if f[xy]2 == [xy]2 
-                     * will not affect the result 
+                    /* Adding MDP_HALF_MULT to the [xy]2 if f[xy]2 == [xy]2
+                     * will not affect the result
                      */
                     rx2 = x2 + MDP_HALF_MULT;
                     ry2 = y2 + MDP_HALF_MULT;
@@ -662,20 +662,20 @@ public class ProcessPath {
 
     /* Performing drawing of the monotonic in X and Y quadratic curves with
      * sizes less than MAX_QUAD_SIZE by using forward differencing method of
-     * calculation. See comments to the DrawMonotonicQuad in the 
+     * calculation. See comments to the DrawMonotonicQuad in the
      * ProcessGeneralPath.c
      */
-    private static void DrawMonotonicQuad(ProcessHandler hnd, 
+    private static void DrawMonotonicQuad(ProcessHandler hnd,
                                           float[] coords,
                                           boolean checkBounds,
                                           int[] pixelInfo) {
-        
+
         int x0 = (int)(coords[0]*MDP_MULT);
         int y0 = (int)(coords[1]*MDP_MULT);
 
         int xe = (int)(coords[4]*MDP_MULT);
         int ye = (int)(coords[5]*MDP_MULT);
-       
+
         /* Extracting fractional part of coordinates of first control point */
         int px = (x0 & (~MDP_W_MASK)) << DF_QUAD_SHIFT;
         int py = (y0 & (~MDP_W_MASK)) << DF_QUAD_SHIFT;
@@ -693,7 +693,7 @@ public class ProcessPath {
 
         int bx = (int)((-2*coords[0] + 2*coords[2])*QUAD_B_MDP_MULT);
         int by = (int)((-2*coords[1] + 2*coords[3])*QUAD_B_MDP_MULT);
-       
+
         int ddpx = 2*ax;
         int ddpy = 2*ay;
 
@@ -706,10 +706,10 @@ public class ProcessPath {
         int y2 = y0;
 
         int maxDD = Math.max(Math.abs(ddpx),Math.abs(ddpy));
-        
+
         int dx = xe - x0;
         int dy = ye - y0;
-        
+
         int x0w = x0 & MDP_W_MASK;
         int y0w = y0 & MDP_W_MASK;
 
@@ -717,7 +717,7 @@ public class ProcessPath {
          * difference changes too quickly (more than a pixel per step in X or Y
          * direction).  We can perform adjusting of the step size before the
          * rendering loop because the curvature of the quad curve remains the
-         * same along all the curve 
+         * same along all the curve
          */
         while (maxDD > DF_QUAD_DEC_BND) {
             dpx = (dpx<<1) - ax;
@@ -735,19 +735,19 @@ public class ProcessPath {
 
             dpx += ddpx;
             dpy += ddpy;
-      
+
             x1 = x2;
             y1 = y2;
 
             x2 = x0w + (px >> shift);
             y2 = y0w + (py >> shift);
-            
+
             /* Checking that we are not running out of the endpoint and bounding
              * violating coordinate.  The check is pretty simple because the
              * curve passed to the DrawCubic already splitted into the
              * monotonic in X and Y pieces
              */
-            
+
             /* Bounding x2 by xe */
             if (((xe-x2)^dx) < 0) {
                 x2 = xe;
@@ -764,7 +764,7 @@ public class ProcessPath {
         /* We are performing one step less than necessary and use actual
          * (xe,ye) endpoint of the curve instead of calculated. This prevent us
          * from running above the curve endpoint due to the accumulated errors
-         * during the iterations.  
+         * during the iterations.
          */
 
         hnd.processFixedLine(x2, y2, xe, ye, pixelInfo, checkBounds, false);
@@ -775,14 +775,14 @@ public class ProcessPath {
      * Calling DrawMonotonicQuad for the curves of the appropriate size.
      * Note: coords array could be changed
      */
-    private static void ProcessMonotonicQuad(ProcessHandler hnd, 
+    private static void ProcessMonotonicQuad(ProcessHandler hnd,
                                              float[] coords,
                                              int[] pixelInfo) {
 
         float[] coords1 = new float[6];
         float tx, ty;
         float xMin, yMin, xMax, yMax;
-        
+
         xMin = xMax = coords[0];
         yMin = yMax = coords[1];
         for (int i = 2; i < 6; i += 2) {
@@ -791,31 +791,31 @@ public class ProcessPath {
             yMin = (yMin > coords[i + 1])? coords[i + 1] : yMin;
             yMax = (yMax < coords[i + 1])? coords[i + 1] : yMax;
         }
-        
+
         if (hnd.clipMode == PH_MODE_DRAW_CLIP) {
 
            /* In case of drawing we could just skip curves which are
-            * completely out of bounds 
+            * completely out of bounds
             */
-           if (hnd.dhnd.xMaxf < xMin || hnd.dhnd.xMinf > xMax || 
+           if (hnd.dhnd.xMaxf < xMin || hnd.dhnd.xMinf > xMax ||
                hnd.dhnd.yMaxf < yMin || hnd.dhnd.yMinf > yMax) {
                return;
            }
-        } else { 
+        } else {
 
             /* In case of filling we could skip curves which are above,
              * below and behind the right boundary of the visible area
              */
 
             if (hnd.dhnd.yMaxf < yMin || hnd.dhnd.yMinf > yMax ||
-                hnd.dhnd.xMaxf < xMin) 
+                hnd.dhnd.xMaxf < xMin)
             {
                 return;
             }
 
-            /* We could clamp x coordinates to the corresponding boundary 
+            /* We could clamp x coordinates to the corresponding boundary
              * if the curve is completely behind the left one
-             */  
+             */
 
             if (hnd.dhnd.xMinf > xMax) {
                 coords[0] = coords[2] = coords[4] = hnd.dhnd.xMinf;
@@ -842,19 +842,19 @@ public class ProcessPath {
                                * curve is visible, so the check is pretty
                                * simple
                                */
-                              hnd.dhnd.xMinf >= xMin || 
+                              hnd.dhnd.xMinf >= xMin ||
                               hnd.dhnd.xMaxf <= xMax ||
-                              hnd.dhnd.yMinf >= yMin || 
+                              hnd.dhnd.yMinf >= yMin ||
                               hnd.dhnd.yMaxf <= yMax,
                               pixelInfo);
         }
     }
-    
+
     /*
      * Split quadratic curve into monotonic in X and Y parts. Calling
      * ProcessMonotonicQuad for each monotonic piece of the curve.
      * Note: coords array could be changed
-     */ 
+     */
     private static void ProcessQuad(ProcessHandler hnd, float[] coords,
                                     int[] pixelInfo) {
         /* Temporary array for holding parameters corresponding to the extreme
@@ -863,17 +863,17 @@ public class ProcessPath {
         double params[] = new double[2];
         int cnt = 0;
         double param;
-        
+
         /* Simple check for monotonicity in X before searching for the extreme
          * points of the X(t) function. We first check if the curve is
          * monotonic in X by seeing if all of the X coordinates are strongly
-         * ordered. 
+         * ordered.
          */
         if ((coords[0] > coords[2] || coords[2] > coords[4]) &&
-            (coords[0] < coords[2] || coords[2] < coords[4])) 
+            (coords[0] < coords[2] || coords[2] < coords[4]))
         {
             /* Searching for extreme points of the X(t) function  by solving
-             * dX(t)  
+             * dX(t)
              * ----  = 0 equation
              *  dt
              */
@@ -883,21 +883,21 @@ public class ProcessPath {
                  * ax*t + bx = 0
                  */
                 double bx = coords[0] - coords[2];
-                
+
                 param = bx/ax;
                 if (param < 1.0 && param > 0.0) {
                     params[cnt++] = param;
                 }
             }
         }
-        
+
         /* Simple check for monotonicity in Y before searching for the extreme
          * points of the Y(t) function. We first check if the curve is
          * monotonic in Y by seeing if all of the Y coordinates are strongly
-         * ordered. 
+         * ordered.
          */
         if ((coords[1] > coords[3] || coords[3] > coords[5]) &&
-            (coords[1] < coords[3] || coords[3] < coords[5])) 
+            (coords[1] < coords[3] || coords[3] < coords[5]))
         {
             /* Searching for extreme points of the Y(t) function by solving
              * dY(t)
@@ -905,13 +905,13 @@ public class ProcessPath {
              *  dt
              */
             double ay = coords[1] - 2*coords[3] + coords[5];
-            
+
             if (ay != 0) {
                 /* Calculating root of the following equation
                  * ay*t + by = 0
                  */
                 double by = coords[1] - coords[3];
-                
+
                 param = by/ay;
                 if (param < 1.0 && param > 0.0) {
                     if (cnt > 0) {
@@ -936,17 +936,17 @@ public class ProcessPath {
             case 0:
                 break;
             case 1:
-                ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo, 
+                ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo,
                                                 (float)params[0]);
                 break;
             case 2:
-                ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo, 
+                ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo,
                                                 (float)params[0]);
-                param = params[1] - params[0]; 
+                param = params[1] - params[0];
                 if (param > 0) {
                     ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo,
                                            /* Scale parameter to match with
-                                            * rest of the curve 
+                                            * rest of the curve
                                             */
                                            (float)(param/(1.0 - params[0])));
                 }
@@ -955,11 +955,11 @@ public class ProcessPath {
 
         ProcessMonotonicQuad(hnd,coords,pixelInfo);
     }
-    
+
     /*
      * Bite the piece of the quadratic curve from start point till the point
      * corresponding to the specified parameter then call ProcessQuad for the
-     * bitten part. 
+     * bitten part.
      * Note: coords array will be changed
      */
     private static void ProcessFirstMonotonicPartOfQuad(ProcessHandler hnd,
@@ -976,16 +976,16 @@ public class ProcessPath {
         coords[3] = coords[3] + t*(coords[5] - coords[3]);
         coords[0] = coords1[4] = coords1[2] + t*(coords[2] - coords1[2]);
         coords[1] = coords1[5] = coords1[3] + t*(coords[3] - coords1[3]);
-        
+
         ProcessMonotonicQuad(hnd, coords1, pixelInfo);
     }
-    
+
     /* Performing drawing of the monotonic in X and Y cubic curves with sizes
      * less than MAX_CUB_SIZE by using forward differencing method of
-     * calculation.  See comments to the DrawMonotonicCubic in the 
+     * calculation.  See comments to the DrawMonotonicCubic in the
      * ProcessGeneralPath.c
      */
-    private static void DrawMonotonicCubic(ProcessHandler hnd, 
+    private static void DrawMonotonicCubic(ProcessHandler hnd,
                                            float[] coords,
                                            boolean checkBounds,
                                            int[] pixelInfo) {
@@ -994,7 +994,7 @@ public class ProcessPath {
 
         int xe = (int)(coords[6]*MDP_MULT);
         int ye = (int)(coords[7]*MDP_MULT);
-       
+
         /* Extracting fractional part of coordinates of first control point */
         int px = (x0 & (~MDP_W_MASK)) << DF_CUB_SHIFT;
         int py = (y0 & (~MDP_W_MASK)) << DF_CUB_SHIFT;
@@ -1027,10 +1027,10 @@ public class ProcessPath {
 
         int dddpx = 6*ax;
         int dddpy = 6*ay;
-       
+
         int ddpx = dddpx + bx;
         int ddpy = dddpy + by;
-      
+
         int dpx = ax + (bx>>1) + cx;
         int dpy = ay + (by>>1) + cy;
 
@@ -1038,14 +1038,14 @@ public class ProcessPath {
 
         int x2 = x0;
         int y2 = y0;
-        
+
         /* Calculating whole part of the first point of the curve */
         int x0w = x0 & MDP_W_MASK;
         int y0w = y0 & MDP_W_MASK;
-        
+
         int dx = xe - x0;
         int dy = ye - y0;
-        
+
         while (count > 0) {
             /* Perform decreasing step in 2 times if necessary */
             while (Math.abs(ddpx) > decStepBnd ||
@@ -1083,9 +1083,9 @@ public class ProcessPath {
 
             count--;
 
-            /* Performing one step less than necessary and use actual (xe,ye) 
-             * curve's endpoint instead of calculated. This prevent us from 
-             * running above the curve endpoint due to the accumulated errors 
+            /* Performing one step less than necessary and use actual (xe,ye)
+             * curve's endpoint instead of calculated. This prevent us from
+             * running above the curve endpoint due to the accumulated errors
              * during the iterations.
              */
             if (count > 0) {
@@ -1102,13 +1102,13 @@ public class ProcessPath {
 
                 x2 = x0w + (px >> shift);
                 y2 = y0w + (py >> shift);
-                
+
                 /* Checking that we are not running out of the endpoint and
                  * bounding violating coordinate.  The check is pretty simple
                  * because the curve passed to the DrawCubic already splitted
                  * into the monotonic in X and Y pieces
                  */
-                
+
                 /* Bounding x2 by xe */
                 if (((xe-x2)^dx) < 0) {
                     x2 = xe;
@@ -1141,7 +1141,7 @@ public class ProcessPath {
         float tx, ty;
         float xMin, xMax;
         float yMin, yMax;
-        
+
         xMin = xMax = coords[0];
         yMin = yMax = coords[1];
 
@@ -1150,34 +1150,34 @@ public class ProcessPath {
             xMax = (xMax < coords[i])? coords[i] : xMax;
             yMin = (yMin > coords[i + 1])? coords[i + 1] : yMin;
             yMax = (yMax < coords[i + 1])? coords[i + 1] : yMax;
-        }        
+        }
 
         if (hnd.clipMode == PH_MODE_DRAW_CLIP) {
             /* In case of drawing we could just skip curves which are
-             * completely out of bounds 
+             * completely out of bounds
              */
-            if (hnd.dhnd.xMaxf < xMin || hnd.dhnd.xMinf > xMax || 
+            if (hnd.dhnd.xMaxf < xMin || hnd.dhnd.xMinf > xMax ||
                 hnd.dhnd.yMaxf < yMin || hnd.dhnd.yMinf > yMax) {
                 return;
             }
-        } else { 
+        } else {
 
             /* In case of filling we could skip curves which are above,
              * below and behind the right boundary of the visible area
              */
 
             if (hnd.dhnd.yMaxf < yMin || hnd.dhnd.yMinf > yMax ||
-                hnd.dhnd.xMaxf < xMin) 
+                hnd.dhnd.xMaxf < xMin)
             {
                 return;
             }
 
-            /* We could clamp x coordinates to the corresponding boundary 
+            /* We could clamp x coordinates to the corresponding boundary
              * if the curve is completely behind the left one
-             */  
+             */
 
             if (hnd.dhnd.xMinf > xMax) {
-                coords[0] = coords[2] = coords[4] = coords[6] = 
+                coords[0] = coords[2] = coords[4] = coords[6] =
                     hnd.dhnd.xMinf;
             }
         }
@@ -1197,7 +1197,7 @@ public class ProcessPath {
             coords[5] = (coords[3] + ty)/2.0f;
             coords[6]=coords1[0]=(coords[4] + coords1[2])/2.0f;
             coords[7]=coords1[1]=(coords[5] + coords1[3])/2.0f;
-           
+
             ProcessMonotonicCubic(hnd, coords, pixelInfo);
 
             ProcessMonotonicCubic(hnd, coords1, pixelInfo);
@@ -1208,14 +1208,14 @@ public class ProcessPath {
                                 * the curve is visible, so the check is pretty
                                 * simple
                                 */
-                                hnd.dhnd.xMinf > xMin || 
+                                hnd.dhnd.xMinf > xMin ||
                                 hnd.dhnd.xMaxf < xMax ||
-                                hnd.dhnd.yMinf > yMin || 
+                                hnd.dhnd.yMinf > yMin ||
                                 hnd.dhnd.yMaxf < yMax,
                                 pixelInfo);
         }
     }
-    
+
     /*
      * Split cubic curve into monotonic in X and Y parts. Calling
      * ProcessMonotonicCubic for each monotonic piece of the curve.
@@ -1236,15 +1236,15 @@ public class ProcessPath {
         /* Simple check for monotonicity in X before searching for the extreme
          * points of the X(t) function. We first check if the curve is
          * monotonic in X by seeing if all of the X coordinates are strongly
-         * ordered. 
+         * ordered.
          */
         if ((coords[0] > coords[2] || coords[2] > coords[4] ||
              coords[4] > coords[6]) &&
             (coords[0] < coords[2] || coords[2] < coords[4] ||
-             coords[4] < coords[6])) 
+             coords[4] < coords[6]))
         {
             /* Searching for extreme points of the X(t) function  by solving
-             * dX(t)  
+             * dX(t)
              * ----  = 0 equation
              *  dt
              */
@@ -1254,7 +1254,7 @@ public class ProcessPath {
 
             int nr = QuadCurve2D.solveQuadratic(eqn, res);
 
-            /* Following code also correctly works in degenerate case of 
+            /* Following code also correctly works in degenerate case of
              * the quadratic equation (nr = -1) because we do not need
              * splitting in this case.
              */
@@ -1264,16 +1264,16 @@ public class ProcessPath {
                 }
             }
         }
-        
+
         /* Simple check for monotonicity in Y before searching for the extreme
          * points of the Y(t) function. We first check if the curve is
          * monotonic in Y by seeing if all of the Y coordinates are strongly
-         * ordered. 
+         * ordered.
          */
         if ((coords[1] > coords[3] || coords[3] > coords[5] ||
              coords[5] > coords[7]) &&
             (coords[1] < coords[3] || coords[3] < coords[5] ||
-             coords[5] < coords[7])) 
+             coords[5] < coords[7]))
         {
             /* Searching for extreme points of the Y(t) function by solving
              * dY(t)
@@ -1286,7 +1286,7 @@ public class ProcessPath {
 
             int nr = QuadCurve2D.solveQuadratic(eqn, res);
 
-            /* Following code also correctly works in degenerate case of 
+            /* Following code also correctly works in degenerate case of
              * the quadratic equation (nr = -1) because we do not need
              * splitting in this case.
              */
@@ -1298,13 +1298,13 @@ public class ProcessPath {
         }
 
         if (cnt > 0) {
-            /* Sorting parameter values corresponding to the extreme points 
+            /* Sorting parameter values corresponding to the extreme points
              * of the curve
              */
             Arrays.sort(params, 0, cnt);
-        
+
             /* Processing obtained monotonic parts */
-            ProcessFirstMonotonicPartOfCubic(hnd, coords, pixelInfo, 
+            ProcessFirstMonotonicPartOfCubic(hnd, coords, pixelInfo,
                                              (float)params[0]);
             for (int i = 1; i < cnt; i++) {
                 double param = params[i] - params[i-1];
@@ -1318,21 +1318,21 @@ public class ProcessPath {
 
         ProcessMonotonicCubic(hnd,coords,pixelInfo);
     }
-    
+
     /*
-     * Bite the piece of the cubic curve from start point till the point 
-     * corresponding to the specified parameter then call ProcessCubic for the 
-     * bitten part. 
+     * Bite the piece of the cubic curve from start point till the point
+     * corresponding to the specified parameter then call ProcessCubic for the
+     * bitten part.
      * Note: coords array will be changed
      */
     private static void ProcessFirstMonotonicPartOfCubic(ProcessHandler hnd,
                                                          float[] coords,
                                                          int[] pixelInfo,
-                                                         float t) 
+                                                         float t)
     {
         float[] coords1 = new float[8];
         float tx, ty;
-        
+
         coords1[0] = coords[0];
         coords1[1] = coords[1];
         tx = coords[2] + t*(coords[4] - coords[2]);
@@ -1347,7 +1347,7 @@ public class ProcessPath {
         coords[3] = ty + t*(coords[5] - ty);
         coords[0]=coords1[6]=coords1[4] + t*(coords[2] - coords1[4]);
         coords[1]=coords1[7]=coords1[5] + t*(coords[3] - coords1[5]);
-        
+
         ProcessMonotonicCubic(hnd, coords1, pixelInfo);
     }
 
@@ -1356,13 +1356,13 @@ public class ProcessPath {
      * from the ProcessPath.c preceded by the commented origin call
      * containing verbose names of the parameters
      */
-    private static void ProcessLine(ProcessHandler hnd, float x1, float y1, 
+    private static void ProcessLine(ProcessHandler hnd, float x1, float y1,
                                     float x2, float y2, int[] pixelInfo) {
         float xMin, yMin, xMax, yMax;
         int X1, Y1, X2, Y2, X3, Y3, res;
         boolean clipped = false;
         float x3,y3;
-        float c[] = new float[]{x1, y1, x2, y2, 0, 0}; 
+        float c[] = new float[]{x1, y1, x2, y2, 0, 0};
 
         boolean lastClipped;
 
@@ -1371,30 +1371,30 @@ public class ProcessPath {
         xMax = hnd.dhnd.xMaxf;
         yMax = hnd.dhnd.yMaxf;
 
-        // 
+        //
         // TESTANDCLIP(yMin, yMax, y1, x1, y2, x2, res);
-        // 
+        //
         res = TESTANDCLIP(yMin, yMax, c, 1, 0, 3, 2);
         if (res == CRES_INVISIBLE) return;
         clipped = IS_CLIPPED(res);
-        // 
+        //
         // TESTANDCLIP(yMin, yMax, y2, x2, y1, x1, res);
-        // 
+        //
         res = TESTANDCLIP(yMin, yMax, c, 3, 2, 1, 0);
         if (res == CRES_INVISIBLE) return;
         lastClipped = IS_CLIPPED(res);
         clipped = clipped || lastClipped;
-        
+
         if (hnd.clipMode == PH_MODE_DRAW_CLIP) {
-            // 
+            //
             // TESTANDCLIP(xMin, xMax, x1, y1, x2, y2, res);
-            // 
+            //
             res = TESTANDCLIP(xMin, xMax, c, 0, 1, 2, 3);
             if (res == CRES_INVISIBLE) return;
             clipped = clipped || IS_CLIPPED(res);
             //
             // TESTANDCLIP(xMin, xMax, x2, y2, x1, y1, res);
-            // 
+            //
             res = TESTANDCLIP(xMin, xMax, c, 2, 3, 0, 1);
             if (res == CRES_INVISIBLE) return;
             lastClipped = lastClipped || IS_CLIPPED(res);
@@ -1404,7 +1404,7 @@ public class ProcessPath {
             X2 = (int)(c[2]*MDP_MULT);
             Y2 = (int)(c[3]*MDP_MULT);
 
-            hnd.processFixedLine(X1, Y1, X2, Y2, pixelInfo, 
+            hnd.processFixedLine(X1, Y1, X2, Y2, pixelInfo,
                                  clipped, /* enable boundary checking in
                                              case of clipping to avoid
                                              entering out of bounds which
@@ -1412,17 +1412,17 @@ public class ProcessPath {
                                            */
                                  lastClipped /* Notify pProcessFixedLine
                                                 that
-                                                this is the end of the 
-                                                subpath (because of exiting 
+                                                this is the end of the
+                                                subpath (because of exiting
                                                 out of boundaries)
                                               */
                                  );
         } else {
             /* Clamping starting from first vertex of the the processed
              * segment
-             * 
+             *
              * CLIPCLAMP(xMin, xMax, x1, y1, x2, y2, x3, y3, res);
-             */ 
+             */
             res = CLIPCLAMP(xMin, xMax, c, 0, 1, 2, 3, 4, 5);
             X1 = (int)(c[0]*MDP_MULT);
             Y1 = (int)(c[1]*MDP_MULT);
@@ -1431,7 +1431,7 @@ public class ProcessPath {
             if (res == CRES_MIN_CLIPPED) {
                 X3 = (int)(c[4]*MDP_MULT);
                 Y3 = (int)(c[5]*MDP_MULT);
-                hnd.processFixedLine(X3, Y3, X1, Y1, pixelInfo, 
+                hnd.processFixedLine(X3, Y3, X1, Y1, pixelInfo,
                                      false, lastClipped);
 
             } else if (res == CRES_INVISIBLE) {
@@ -1440,31 +1440,31 @@ public class ProcessPath {
 
             /* Clamping starting from last vertex of the the processed
              * segment
-             * 
+             *
              * CLIPCLAMP(xMin, xMax, x2, y2, x1, y1, x3, y3, res);
-             */ 
+             */
             res = CLIPCLAMP(xMin, xMax, c, 2, 3, 0, 1, 4, 5);
 
             /* Checking if there was a clip by right boundary */
-            lastClipped = lastClipped || (res == CRES_MAX_CLIPPED); 
+            lastClipped = lastClipped || (res == CRES_MAX_CLIPPED);
 
             X2 = (int)(c[2]*MDP_MULT);
             Y2 = (int)(c[3]*MDP_MULT);
-            hnd.processFixedLine(X1, Y1, X2, Y2, pixelInfo, 
+            hnd.processFixedLine(X1, Y1, X2, Y2, pixelInfo,
                                  false, lastClipped);
 
             /* Clamping only by left boundary */
             if (res == CRES_MIN_CLIPPED) {
                 X3 = (int)(c[4]*MDP_MULT);
                 Y3 = (int)(c[5]*MDP_MULT);
-                hnd.processFixedLine(X2, Y2, X3, Y3, pixelInfo, 
+                hnd.processFixedLine(X2, Y2, X3, Y3, pixelInfo,
                                      false, lastClipped);
-            } 
+            }
         }
     }
 
-    private static boolean doProcessPath(ProcessHandler hnd, 
-                                         Path2D.Float p2df, 
+    private static boolean doProcessPath(ProcessHandler hnd,
+                                         Path2D.Float p2df,
                                          float transXf, float transYf) {
         float coords[] = new float[8];
         float tCoords[] = new float[8];
@@ -1476,19 +1476,19 @@ public class ProcessPath {
         float lastX, lastY;
         pixelInfo[0] = 0;
 
-        /* Adjusting boundaries to the capabilities of the 
+        /* Adjusting boundaries to the capabilities of the
          * ProcessPath code
          */
         hnd.dhnd.adjustBounds(LOWER_OUT_BND, LOWER_OUT_BND,
                               UPPER_OUT_BND, UPPER_OUT_BND);
 
         /* Adding support of the KEY_STROKE_CONTROL rendering hint.
-         * Now we are supporting two modes: "pixels at centers" and 
+         * Now we are supporting two modes: "pixels at centers" and
          * "pixels at corners".
          * First one is disabled by default but could be enabled by setting
          * VALUE_STROKE_PURE to the rendering hint. It means that pixel at the
          * screen (x,y) has (x + 0.5, y + 0.5) float coordinates.
-         * 
+         *
          * Second one is enabled by default and means straightforward mapping
          * (x,y) --> (x,y)
          */
@@ -1497,7 +1497,7 @@ public class ProcessPath {
             closeCoord[1] = -0.5f;
             transXf -= 0.5;
             transYf -= 0.5;
-        } 
+        }
 
         PathIterator pi = p2df.getPathIterator(null);
 
@@ -1507,8 +1507,8 @@ public class ProcessPath {
                     /* Performing closing of the unclosed segments */
                     if (subpathStarted && !skip) {
                         if (hnd.clipMode == PH_MODE_FILL_CLIP) {
-                            if (tCoords[0] != closeCoord[0] || 
-                                tCoords[1] != closeCoord[1]) 
+                            if (tCoords[0] != closeCoord[0] ||
+                                tCoords[1] != closeCoord[1])
                             {
                                 ProcessLine(hnd, tCoords[0], tCoords[1],
                                             closeCoord[0], closeCoord[1],
@@ -1626,7 +1626,7 @@ public class ProcessPath {
                      * the SEG_LINETO if endpoint coordinates are valid but
                      * there are invalid data among other coordinates
                      */
-                   
+
                     if (lastX < UPPER_BND &&
                         lastX > LOWER_BND &&
                         lastY < UPPER_BND &&
@@ -1650,7 +1650,7 @@ public class ProcessPath {
                                 ProcessCubic(hnd, tCoords, pixelInfo);
                             } else {
                                 ProcessLine(hnd, tCoords[0], tCoords[1],
-                                            tCoords[6], tCoords[7], 
+                                            tCoords[6], tCoords[7],
                                             pixelInfo);
                             }
                             tCoords[0] = lastX;
@@ -1661,16 +1661,16 @@ public class ProcessPath {
                 case PathIterator.SEG_CLOSE:
                     if (subpathStarted && !skip) {
                         skip = false;
-                        if (tCoords[0] != closeCoord[0] || 
-                            tCoords[1] != closeCoord[1]) 
+                        if (tCoords[0] != closeCoord[0] ||
+                            tCoords[1] != closeCoord[1])
                         {
                             ProcessLine(hnd, tCoords[0], tCoords[1],
                                         closeCoord[0], closeCoord[1],
                                         pixelInfo);
-                            
+
                             /* Storing last path's point for using in following
                              * segments without initial moveTo
-                             */ 
+                             */
                             tCoords[0] = closeCoord[0];
                             tCoords[1] = closeCoord[1];
                         }
@@ -1684,8 +1684,8 @@ public class ProcessPath {
         /* Performing closing of the unclosed segments */
         if (subpathStarted & !skip) {
             if (hnd.clipMode == PH_MODE_FILL_CLIP) {
-                if (tCoords[0] != closeCoord[0] || 
-                    tCoords[1] != closeCoord[1]) 
+                if (tCoords[0] != closeCoord[0] ||
+                    tCoords[1] != closeCoord[1])
                 {
                     ProcessLine(hnd, tCoords[0], tCoords[1],
                                 closeCoord[0], closeCoord[1],
@@ -1703,7 +1703,7 @@ public class ProcessPath {
         public boolean lastPoint;
         public Point prev;
         public Point next;
-        public Point nextByY; 
+        public Point nextByY;
         public Edge edge;
         public Point(int x, int y, boolean lastPoint) {
             this.x = x;
@@ -1736,7 +1736,7 @@ public class ProcessPath {
     /* Following class accumulates points of the non-continuous flattened
      * general path during iteration through the origin path's segments . The
      * end of the each subpath is marked as lastPoint flag set at the last
-     * point 
+     * point
      */
     private static class FillData {
         List<Point>  plgPnts;
@@ -1754,7 +1754,7 @@ public class ProcessPath {
                 plgYMin = (plgYMin > y)?y:plgYMin;
                 plgYMax = (plgYMax < y)?y:plgYMax;
             }
-                
+
             plgPnts.add(new Point(x, y, lastPoint));
         }
 
@@ -1799,7 +1799,7 @@ public class ProcessPath {
                     x0 = X2;
                     dy = cy - Y2;
                     dir = 1;
-                } 
+                }
 
                 /* We need to worry only about dX because dY is in denominator
                  * and abs(dy) < MDP_MULT (cy is a first scanline of the scan
@@ -1911,10 +1911,10 @@ public class ProcessPath {
         int hashOffset = ((yMin - 1) & MDP_W_MASK);
 
         /* Winding counter */
-        int counter; 
+        int counter;
 
         /* Calculating mask to be applied to the winding counter */
-        int counterMask = 
+        int counterMask =
             (fillRule == PathIterator.WIND_NON_ZERO)? -1:1;
 
         int pntOffset;
@@ -1929,7 +1929,7 @@ public class ProcessPath {
          * and hash table with points which fall between scanlines. nextByY
          * link is used for the points which are between same scanlines.
          * Scanlines are passed through the centers of the pixels.
-         */ 
+         */
         Point curpt = pnts.get(0);
         curpt.prev = null;
         for (int i = 0; i < n - 1; i++) {
@@ -1949,12 +1949,12 @@ public class ProcessPath {
 
         ActiveEdgeList activeList = new ActiveEdgeList();
 
-        for (y=hashOffset + MDP_MULT,k = 0; 
-             y<=yMax && k < hashSize; y += MDP_MULT, k++) 
+        for (y=hashOffset + MDP_MULT,k = 0;
+             y<=yMax && k < hashSize; y += MDP_MULT, k++)
         {
             for(Point pt = yHash[k];pt != null; pt=pt.nextByY) {
-                /* pt.y should be inside hashed interval 
-                 * assert(y-MDP_MULT <= pt.y && pt.y < y); 
+                /* pt.y should be inside hashed interval
+                 * assert(y-MDP_MULT <= pt.y && pt.y < y);
                  */
                 if (pt.prev != null && !pt.prev.lastPoint) {
                     if (pt.prev.edge != null && pt.prev.y <= y) {
@@ -1969,7 +1969,7 @@ public class ProcessPath {
                     if (pt.edge != null && pt.next.y <= y) {
                         activeList.delete(pt.edge);
                         pt.edge = null;
-                    } else if (pt.next.y > y) { 
+                    } else if (pt.next.y > y) {
                         activeList.insert(pt, y);
                     }
                 }
@@ -2005,10 +2005,10 @@ public class ProcessPath {
 
             /* Performing drawing till the right boundary (for correct
              * rendering shapes clipped at the right side)
-             */  
+             */
             if (drawing && xl <= rightBnd) {
 
-                /* Support of the strokeHint was added into the 
+                /* Support of the strokeHint was added into the
                  * draw and fill methods of the sun.java2d.pipe.LoopPipe
                  */
                 hnd.dhnd.drawScanline(xl, rightBnd, y  >> MDP_PREC);
@@ -2025,9 +2025,9 @@ public class ProcessPath {
          * origin call containing verbose names of the parameters
          */
         public void  processFixedLine(int x1, int y1, int x2, int y2,
-                                      int[] pixelInfo, boolean checkBounds, 
+                                      int[] pixelInfo, boolean checkBounds,
                                       boolean endSubPath)
-        {         
+        {
             int outXMin, outXMax, outYMin, outYMax;
             int res;
 
@@ -2036,7 +2036,7 @@ public class ProcessPath {
              * preventing the curve go out the endpoint (this sometimes does
              * not help). The problem was fixed in the forward differencing
              * loops.
-             */ 
+             */
             if (checkBounds) {
                 boolean lastClipped;
 
@@ -2062,8 +2062,8 @@ public class ProcessPath {
                 if (res == CRES_INVISIBLE) return;
                 lastClipped = IS_CLIPPED(res);
 
-                /* Clamping starting from first vertex of the the processed 
-                 * segment 
+                /* Clamping starting from first vertex of the the processed
+                 * segment
                  *
                  * CLIPCLAMP(outXMin, outXMax, x1, y1, x2, y2, x3, y3, res);
                  */
@@ -2071,35 +2071,35 @@ public class ProcessPath {
 
                 /* Clamping only by left boundary */
                 if (res == CRES_MIN_CLIPPED) {
-                    processFixedLine(c[4], c[5], c[0], c[1], pixelInfo, 
+                    processFixedLine(c[4], c[5], c[0], c[1], pixelInfo,
                                      false, lastClipped);
 
                 } else if (res == CRES_INVISIBLE) {
                     return;
                 }
-                
-                /* Clamping starting from last vertex of the the processed 
-                 * segment 
+
+                /* Clamping starting from last vertex of the the processed
+                 * segment
                  *
                  * CLIPCLAMP(outXMin, outXMax, x2, y2, x1, y1, x3, y3, res);
                  */
                 res = CLIPCLAMP(outXMin, outXMax, c, 2, 3, 0, 1, 4, 5);
-                
+
                 /* Checking if there was a clip by right boundary */
                 lastClipped = lastClipped || (res == CRES_MAX_CLIPPED);
 
-                processFixedLine(c[0], c[1], c[2], c[3], pixelInfo, 
+                processFixedLine(c[0], c[1], c[2], c[3], pixelInfo,
                                  false, lastClipped);
 
                 /* Clamping only by left boundary */
                 if (res == CRES_MIN_CLIPPED) {
-                    processFixedLine(c[2], c[3], c[4], c[5], pixelInfo, 
+                    processFixedLine(c[2], c[3], c[4], c[5], pixelInfo,
                                      false, lastClipped);
-                } 
-                
+                }
+
                 return;
-            } 
-         
+            }
+
             /* Adding first point of the line only in case of empty or just
              * finished path
              */
@@ -2113,7 +2113,7 @@ public class ProcessPath {
                 fd.setEnded();
             }
         }
-     
+
         FillProcessHandler(DrawHandler dhnd) {
             super(dhnd, PH_MODE_FILL_CLIP);
             this.fd = new FillData();

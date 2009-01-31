@@ -40,14 +40,13 @@ import com.sun.jndi.toolkit.url.GenericURLDirContext;
  * See com.sun.jndi.dns.DnsUrl for a description of the URL format.
  *
  * @author Scott Seligman
- * @version %I% %E%
  */
 
 
 public class dnsURLContext extends GenericURLDirContext {
 
     public dnsURLContext(Hashtable env) {
-	super(env);
+        super(env);
     }
 
     /**
@@ -56,20 +55,20 @@ public class dnsURLContext extends GenericURLDirContext {
      * remaining name.
      */
     protected ResolveResult getRootURLContext(String url, Hashtable env)
-	    throws NamingException {
+            throws NamingException {
 
-	DnsUrl dnsUrl;
-	try {
-	    dnsUrl = new DnsUrl(url);
-	} catch (MalformedURLException e) {
-	    throw new InvalidNameException(e.getMessage());
-	}
+        DnsUrl dnsUrl;
+        try {
+            dnsUrl = new DnsUrl(url);
+        } catch (MalformedURLException e) {
+            throw new InvalidNameException(e.getMessage());
+        }
 
-	DnsUrl[] urls = new DnsUrl[] { dnsUrl };
-	String domain = dnsUrl.getDomain();
+        DnsUrl[] urls = new DnsUrl[] { dnsUrl };
+        String domain = dnsUrl.getDomain();
 
-	return new ResolveResult(
-		DnsContextFactory.getContext(".", urls, env),
-		new CompositeName().add(domain));
+        return new ResolveResult(
+                DnsContextFactory.getContext(".", urls, env),
+                new CompositeName().add(domain));
     }
 }

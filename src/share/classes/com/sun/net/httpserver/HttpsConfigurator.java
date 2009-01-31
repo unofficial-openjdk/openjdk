@@ -46,24 +46,24 @@ import javax.net.ssl.*;
  * <pre><blockquote>
  * SSLContext sslContext = SSLContext.getInstance (....);
  * HttpsServer server = HttpsServer.create();
- * 
+ *
  * server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
  *     public void configure (HttpsParameters params) {
- * 
+ *
  *         // get the remote address if needed
  *         InetSocketAddress remote = params.getClientAddress();
- * 
+ *
  *         SSLContext c = getSSLContext();
- * 
+ *
  *         // get the default parameters
  *         SSLParameters sslparams = c.getDefaultSSLParameters();
  *         if (remote.equals (...) ) {
  *             // modify the default set for client x
  *         }
- * 
+ *
  *         params.setSSLParameters(sslparams);
  *     }
- * }); 
+ * });
  * </blockquote></pre>
  * @since 1.6
  */
@@ -77,10 +77,10 @@ public class HttpsConfigurator {
      * @throws NullPointerException if no SSLContext supplied
      */
     public HttpsConfigurator (SSLContext context) {
-	if (context == null) {
-	    throw new NullPointerException ("null SSLContext");
-	}
-	this.context = context;
+        if (context == null) {
+            throw new NullPointerException ("null SSLContext");
+        }
+        this.context = context;
     }
 
     /**
@@ -88,7 +88,7 @@ public class HttpsConfigurator {
      * @return the SSLContext
      */
     public SSLContext getSSLContext() {
-	return context;
+        return context;
     }
 
    /**
@@ -98,7 +98,7 @@ public class HttpsConfigurator {
     * {@link HttpsParameters#setSSLParameters(SSLParameters)}
     * in order to set the SSL parameters for the connection.
     * <p>
-    * The default implementation of this method uses the 
+    * The default implementation of this method uses the
     * SSLParameters returned from <p>
     * <code>getSSLContext().getDefaultSSLParameters()</code>
     * <p>
@@ -109,6 +109,6 @@ public class HttpsConfigurator {
     * @since 1.6
     */
     public void configure (HttpsParameters params) {
-	params.setSSLParameters (getSSLContext().getDefaultSSLParameters());
+        params.setSSLParameters (getSSLContext().getDefaultSSLParameters());
     }
 }

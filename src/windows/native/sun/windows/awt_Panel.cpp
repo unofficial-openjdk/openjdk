@@ -48,7 +48,7 @@ void* AwtPanel::Restack(void * param) {
     int peerCount = env->GetArrayLength(peers);
     if (peerCount < 1) {
         env->DeleteGlobalRef(peers);
-        return AWTPANEL_RESTACK_MSG_1; 
+        return AWTPANEL_RESTACK_MSG_1;
     }
 
     jobject self = env->GetObjectArrayElement(peers, 0);
@@ -86,7 +86,7 @@ void* AwtPanel::Restack(void * param) {
             return AWTPANEL_RESTACK_MSG_3;
         }
         AwtComponent* child_comp = (AwtComponent*)child_pData;
-        ::SetWindowPos(child_comp->GetHWnd(), prevWindow, 0, 0, 0, 0, 
+        ::SetWindowPos(child_comp->GetHWnd(), prevWindow, 0, 0, 0, 0,
                        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_DEFERERASE | SWP_ASYNCWINDOWPOS);
         prevWindow = child_comp->GetHWnd();
         env->DeleteLocalRef(peer);
@@ -104,7 +104,7 @@ void* AwtPanel::Restack(void * param) {
 
 extern "C" {
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPanelPeer_initIDs(JNIEnv *env, jclass cls) {
 
     TRY;
@@ -116,7 +116,7 @@ Java_sun_awt_windows_WPanelPeer_initIDs(JNIEnv *env, jclass cls) {
     CATCH_BAD_ALLOC;
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPanelPeer_pRestack(JNIEnv *env, jobject self, jobjectArray peers) {
 
     TRY;
@@ -131,4 +131,3 @@ Java_sun_awt_windows_WPanelPeer_pRestack(JNIEnv *env, jobject self, jobjectArray
 
 
 } /* extern "C" */
-

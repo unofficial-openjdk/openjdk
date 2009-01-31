@@ -25,7 +25,7 @@
  * @test
  * @author Vincent Ryan
  * @bug 4814522
- * @summary Check that a LdapLoginModule can be initialized using various 
+ * @summary Check that a LdapLoginModule can be initialized using various
  *          options.
  *          (LdapLoginModule replaces the JndiLoginModule for LDAP access)
  */
@@ -45,130 +45,130 @@ public class CheckOptions {
     private static final String USER_PROVIDER_OPTION = "UsErPrOvIdeR";
 
     public static void main(String[] args) throws Exception {
-	init();
-	testInvalidOptions();
-	testNullCallbackHandler();
-	testWithCallbackHandler();
+        init();
+        testInvalidOptions();
+        testNullCallbackHandler();
+        testWithCallbackHandler();
     }
 
     private static void init() throws Exception {
     }
 
     private static void testInvalidOptions() throws Exception {
-	
-	// empty set of options
 
-	LdapLoginModule ldap = new LdapLoginModule();
-	Subject subject = new Subject();
-	ldap.initialize(subject, null, null, Collections.EMPTY_MAP);
+        // empty set of options
 
-	try {
-	    ldap.login();
-	    throw new SecurityException("expected a LoginException");
+        LdapLoginModule ldap = new LdapLoginModule();
+        Subject subject = new Subject();
+        ldap.initialize(subject, null, null, Collections.EMPTY_MAP);
 
-	} catch (LoginException le) {
-	    // expected behaviour
-	    System.out.println("Caught a LoginException, as expected");
-	}
+        try {
+            ldap.login();
+            throw new SecurityException("expected a LoginException");
 
-	// bad value for userProvider option
+        } catch (LoginException le) {
+            // expected behaviour
+            System.out.println("Caught a LoginException, as expected");
+        }
 
-	Map<String, String> options = new HashMap<String, String>();
-	options.put(USER_PROVIDER_OPTION, "ldap://localhost:23456");
-	ldap.initialize(subject, null, null, options);
+        // bad value for userProvider option
 
-	try {
-	    ldap.login();
-	    throw new SecurityException("expected a LoginException");
+        Map<String, String> options = new HashMap<String, String>();
+        options.put(USER_PROVIDER_OPTION, "ldap://localhost:23456");
+        ldap.initialize(subject, null, null, options);
 
-	} catch (LoginException le) {
-	    // expected behaviour
-	    System.out.println("Caught a LoginException, as expected");
-	}
+        try {
+            ldap.login();
+            throw new SecurityException("expected a LoginException");
+
+        } catch (LoginException le) {
+            // expected behaviour
+            System.out.println("Caught a LoginException, as expected");
+        }
     }
 
     private static void testNullCallbackHandler() throws Exception {
 
-	// empty set of options
+        // empty set of options
 
-	LdapLoginModule ldap = new LdapLoginModule();
-	Subject subject = new Subject();
-	Map<String, String> options = new HashMap<String, String>();
-	ldap.initialize(subject, null, null, options);
+        LdapLoginModule ldap = new LdapLoginModule();
+        Subject subject = new Subject();
+        Map<String, String> options = new HashMap<String, String>();
+        ldap.initialize(subject, null, null, options);
 
-	try {
-	    ldap.login();
-	    throw new SecurityException("expected LoginException");
+        try {
+            ldap.login();
+            throw new SecurityException("expected LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour
-	    System.out.println("Caught a LoginException, as expected");
-	}
+        } catch (LoginException le) {
+            // expected behaviour
+            System.out.println("Caught a LoginException, as expected");
+        }
     }
 
     private static void testWithCallbackHandler() throws Exception {
 
-	LdapLoginModule ldap = new LdapLoginModule();
-	Subject subject = new Subject();
-	Map<String, String> options = new HashMap<String, String>();
+        LdapLoginModule ldap = new LdapLoginModule();
+        Subject subject = new Subject();
+        Map<String, String> options = new HashMap<String, String>();
 
-	CallbackHandler goodHandler = new MyCallbackHandler(true);
-	ldap.initialize(subject, goodHandler, null, options);
+        CallbackHandler goodHandler = new MyCallbackHandler(true);
+        ldap.initialize(subject, goodHandler, null, options);
 
-	try {
-	    ldap.login();
-	    throw new SecurityException("expected LoginException");	
+        try {
+            ldap.login();
+            throw new SecurityException("expected LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour
-	    System.out.println("Caught a LoginException, as expected");
-	}
+        } catch (LoginException le) {
+            // expected behaviour
+            System.out.println("Caught a LoginException, as expected");
+        }
 
-	CallbackHandler badHandler = new MyCallbackHandler(false);
-	ldap.initialize(subject, badHandler, null, options);
+        CallbackHandler badHandler = new MyCallbackHandler(false);
+        ldap.initialize(subject, badHandler, null, options);
 
-	try {
-	    ldap.login();
-	    throw new SecurityException("expected LoginException");	
+        try {
+            ldap.login();
+            throw new SecurityException("expected LoginException");
 
-	} catch (LoginException le) {
-	    // expected behaviour
-	    System.out.println("Caught a LoginException, as expected");
-	}
+        } catch (LoginException le) {
+            // expected behaviour
+            System.out.println("Caught a LoginException, as expected");
+        }
     }
 
     private static class MyCallbackHandler implements CallbackHandler {
 
- 	private final boolean good;
+        private final boolean good;
 
-	public MyCallbackHandler(boolean good) {
-	    this.good = good;
-	}
+        public MyCallbackHandler(boolean good) {
+            this.good = good;
+        }
 
-	public void handle(Callback[] callbacks)
-		throws IOException, UnsupportedCallbackException {
+        public void handle(Callback[] callbacks)
+                throws IOException, UnsupportedCallbackException {
 
-	    for (int i = 0; i < callbacks.length; i++) {
+            for (int i = 0; i < callbacks.length; i++) {
 
-		if (callbacks[i] instanceof NameCallback) {
-		    NameCallback nc = (NameCallback) callbacks[i];
+                if (callbacks[i] instanceof NameCallback) {
+                    NameCallback nc = (NameCallback) callbacks[i];
 
-		    if (good) {
-			nc.setName("foo");
-		    } else {
-			// do nothing
-		    }
+                    if (good) {
+                        nc.setName("foo");
+                    } else {
+                        // do nothing
+                    }
 
-		} else if (callbacks[i] instanceof PasswordCallback) {
-		    PasswordCallback pc = (PasswordCallback) callbacks[i];
+                } else if (callbacks[i] instanceof PasswordCallback) {
+                    PasswordCallback pc = (PasswordCallback) callbacks[i];
 
-		    if (good) {
-			pc.setPassword("foo".toCharArray());
-		    } else {
-			// do nothing
-		    }
-		}
-	    }
-	}
+                    if (good) {
+                        pc.setPassword("foo".toCharArray());
+                    } else {
+                        // do nothing
+                    }
+                }
+            }
+        }
     }
 }

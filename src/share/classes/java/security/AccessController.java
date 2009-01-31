@@ -22,63 +22,63 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package java.security;
 
 import sun.security.util.Debug;
 
-/** 
+/**
  * <p> The AccessController class is used for access control operations
  * and decisions.
- * 
- * <p> More specifically, the AccessController class is used for 
+ *
+ * <p> More specifically, the AccessController class is used for
  * three purposes:
- * 
+ *
  * <ul>
  * <li> to decide whether an access to a critical system
  * resource is to be allowed or denied, based on the security policy
- * currently in effect,<p> 
+ * currently in effect,<p>
  * <li>to mark code as being "privileged", thus affecting subsequent
  * access determinations, and<p>
  * <li>to obtain a "snapshot" of the current calling context so
  * access-control decisions from a different context can be made with
  * respect to the saved context. </ul>
- * 
+ *
  * <p> The {@link #checkPermission(Permission) checkPermission} method
  * determines whether the access request indicated by a specified
  * permission should be granted or denied. A sample call appears
- * below. In this example, <code>checkPermission</code> will determine 
- * whether or not to grant "read" access to the file named "testFile" in 
+ * below. In this example, <code>checkPermission</code> will determine
+ * whether or not to grant "read" access to the file named "testFile" in
  * the "/temp" directory.
- * 
+ *
  * <pre>
- * 
+ *
  * FilePermission perm = new FilePermission("/temp/testFile", "read");
  * AccessController.checkPermission(perm);
- * 
+ *
  * </pre>
  *
- * <p> If a requested access is allowed, 
- * <code>checkPermission</code> returns quietly. If denied, an 
+ * <p> If a requested access is allowed,
+ * <code>checkPermission</code> returns quietly. If denied, an
  * AccessControlException is
  * thrown. AccessControlException can also be thrown if the requested
  * permission is of an incorrect type or contains an invalid value.
  * Such information is given whenever possible.
- * 
- * Suppose the current thread traversed m callers, in the order of caller 1 
- * to caller 2 to caller m. Then caller m invoked the 
+ *
+ * Suppose the current thread traversed m callers, in the order of caller 1
+ * to caller 2 to caller m. Then caller m invoked the
  * <code>checkPermission</code> method.
- * The <code>checkPermission </code>method determines whether access 
+ * The <code>checkPermission </code>method determines whether access
  * is granted or denied based on the following algorithm:
- * 
+ *
  *  <pre> {@code
  * for (int i = m; i > 0; i--) {
- * 
+ *
  *     if (caller i's domain does not have the permission)
  *         throw AccessControlException
- * 
+ *
  *     else if (caller i is marked as privileged) {
- *         if (a context was specified in the call to doPrivileged) 
+ *         if (a context was specified in the call to doPrivileged)
  *             context.checkPermission(permission)
  *         return;
  *     }
@@ -88,25 +88,25 @@ import sun.security.util.Debug;
  * // Whenever a new thread is created, the AccessControlContext at
  * // that time is stored and associated with the new thread, as the
  * // "inherited" context.
- * 
+ *
  * inheritedContext.checkPermission(permission);
  * }</pre>
- * 
- * <p> A caller can be marked as being "privileged" 
- * (see {@link #doPrivileged(PrivilegedAction) doPrivileged} and below). 
+ *
+ * <p> A caller can be marked as being "privileged"
+ * (see {@link #doPrivileged(PrivilegedAction) doPrivileged} and below).
  * When making access control decisions, the <code>checkPermission</code>
- * method stops checking if it reaches a caller that 
- * was marked as "privileged" via a <code>doPrivileged</code> 
+ * method stops checking if it reaches a caller that
+ * was marked as "privileged" via a <code>doPrivileged</code>
  * call without a context argument (see below for information about a
  * context argument). If that caller's domain has the
- * specified permission, no further checking is done and 
+ * specified permission, no further checking is done and
  * <code>checkPermission</code>
  * returns quietly, indicating that the requested access is allowed.
  * If that domain does not have the specified permission, an exception
  * is thrown, as usual.
- * 
+ *
  * <p> The normal use of the "privileged" feature is as follows. If you
- * don't need to return a value from within the "privileged" block, do 
+ * don't need to return a value from within the "privileged" block, do
  * the following:
  *
  *  <pre> {@code
@@ -128,12 +128,12 @@ import sun.security.util.Debug;
  * The above example shows creation of an implementation
  * of that interface; a concrete implementation of the
  * <code>run</code> method is supplied.
- * When the call to <code>doPrivileged</code> is made, an 
+ * When the call to <code>doPrivileged</code> is made, an
  * instance of the PrivilegedAction implementation is passed
  * to it. The <code>doPrivileged</code> method calls the
- * <code>run</code> method from the PrivilegedAction 
- * implementation after enabling privileges, and returns the 
- * <code>run</code> method's return value as the 
+ * <code>run</code> method from the PrivilegedAction
+ * implementation after enabling privileges, and returns the
+ * <code>run</code> method's return value as the
  * <code>doPrivileged</code> return value (which is
  * ignored in this example).
  *
@@ -153,10 +153,10 @@ import sun.security.util.Debug;
  *
  * <p>If the action performed in your <code>run</code> method could
  * throw a "checked" exception (those listed in the <code>throws</code> clause
- * of a method), then you need to use the 
+ * of a method), then you need to use the
  * <code>PrivilegedExceptionAction</code> interface instead of the
  * <code>PrivilegedAction</code> interface:
- * 
+ *
  *  <pre> {@code
  * somemethod() throws FileNotFoundException {
  *     ...normal code here...
@@ -175,28 +175,28 @@ import sun.security.util.Debug;
  *     }
  *     ...normal code here...
  *  }}</pre>
- * 
- * <p> Be *very* careful in your use of the "privileged" construct, and 
+ *
+ * <p> Be *very* careful in your use of the "privileged" construct, and
  * always remember to make the privileged code section as small as possible.
- * 
+ *
  * <p> Note that <code>checkPermission</code> always performs security checks
  * within the context of the currently executing thread.
  * Sometimes a security check that should be made within a given context
  * will actually need to be done from within a
  * <i>different</i> context (for example, from within a worker thread).
- * The {@link #getContext() getContext} method and 
- * AccessControlContext class are provided 
+ * The {@link #getContext() getContext} method and
+ * AccessControlContext class are provided
  * for this situation. The <code>getContext</code> method takes a "snapshot"
  * of the current calling context, and places
  * it in an AccessControlContext object, which it returns. A sample call is
  * the following:
- * 
+ *
  * <pre>
- * 
+ *
  * AccessControlContext acc = AccessController.getContext()
- * 
+ *
  * </pre>
- * 
+ *
  * <p>
  * AccessControlContext itself has a <code>checkPermission</code> method
  * that makes access decisions based on the context <i>it</i> encapsulates,
@@ -204,17 +204,17 @@ import sun.security.util.Debug;
  * Code within a different context can thus call that method on the
  * previously-saved AccessControlContext object. A sample call is the
  * following:
- * 
+ *
  * <pre>
- * 
+ *
  * acc.checkPermission(permission)
- * 
- * </pre> 
+ *
+ * </pre>
  *
  * <p> There are also times where you don't know a priori which permissions
  * to check the context against. In these cases you can use the
  * doPrivileged method that takes a context:
- * 
+ *
  *  <pre> {@code
  * somemethod() {
  *     AccessController.doPrivileged(new PrivilegedAction<Object>() {
@@ -227,26 +227,25 @@ import sun.security.util.Debug;
  *     }, acc);
  *     ...normal code here...
  * }}</pre>
- * 
+ *
  * @see AccessControlContext
  *
- * @version %I% %E%
- * @author Li Gong 
+ * @author Li Gong
  * @author Roland Schemers
  */
 
 public final class AccessController {
 
-    /** 
+    /**
      * Don't allow anyone to instantiate an AccessController
      */
     private AccessController() { }
 
     /**
      * Performs the specified <code>PrivilegedAction</code> with privileges
-     * enabled. The action is performed with <i>all</i> of the permissions 
+     * enabled. The action is performed with <i>all</i> of the permissions
      * possessed by the caller's protection domain.
-     * 
+     *
      * <p> If the action's <code>run</code> method throws an (unchecked)
      * exception, it will propagate through this method.
      *
@@ -269,7 +268,7 @@ public final class AccessController {
 
     /**
      * Performs the specified <code>PrivilegedAction</code> with privileges
-     * enabled. The action is performed with <i>all</i> of the permissions 
+     * enabled. The action is performed with <i>all</i> of the permissions
      * possessed by the caller's protection domain.
      *
      * <p> If the action's <code>run</code> method throws an (unchecked)
@@ -291,12 +290,12 @@ public final class AccessController {
      */
     public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action) {
 
-	DomainCombiner dc = null;
-	AccessControlContext acc = getStackAccessControlContext();
-	if (acc == null || (dc = acc.getAssignedCombiner()) == null) {
-	    return AccessController.doPrivileged(action);
-	}
-	return AccessController.doPrivileged(action, preserveCombiner(dc));
+        DomainCombiner dc = null;
+        AccessControlContext acc = getStackAccessControlContext();
+        if (acc == null || (dc = acc.getAssignedCombiner()) == null) {
+            return AccessController.doPrivileged(action);
+        }
+        return AccessController.doPrivileged(action, preserveCombiner(dc));
     }
 
 
@@ -323,16 +322,16 @@ public final class AccessController {
      * @return the value returned by the action's <code>run</code> method.
      *
      * @exception NullPointerException if the action is <code>null</code>
-     * 
+     *
      * @see #doPrivileged(PrivilegedAction)
      * @see #doPrivileged(PrivilegedExceptionAction,AccessControlContext)
      */
     public static native <T> T doPrivileged(PrivilegedAction<T> action,
-					    AccessControlContext context);
+                                            AccessControlContext context);
 
     /**
      * Performs the specified <code>PrivilegedExceptionAction</code> with
-     * privileges enabled.  The action is performed with <i>all</i> of the 
+     * privileges enabled.  The action is performed with <i>all</i> of the
      * permissions possessed by the caller's protection domain.
      *
      * <p> If the action's <code>run</code> method throws an <i>unchecked</i>
@@ -348,20 +347,20 @@ public final class AccessController {
      * @exception PrivilegedActionException if the specified action's
      *         <code>run</code> method threw a <i>checked</i> exception
      * @exception NullPointerException if the action is <code>null</code>
-     * 
+     *
      * @see #doPrivileged(PrivilegedAction)
      * @see #doPrivileged(PrivilegedExceptionAction,AccessControlContext)
      * @see #doPrivilegedWithCombiner(PrivilegedExceptionAction)
      * @see java.security.DomainCombiner
      */
     public static native <T> T
-	doPrivileged(PrivilegedExceptionAction<T> action)
-	throws PrivilegedActionException;
-    
+        doPrivileged(PrivilegedExceptionAction<T> action)
+        throws PrivilegedActionException;
+
 
     /**
      * Performs the specified <code>PrivilegedExceptionAction</code> with
-     * privileges enabled.  The action is performed with <i>all</i> of the 
+     * privileges enabled.  The action is performed with <i>all</i> of the
      * permissions possessed by the caller's protection domain.
      *
      * <p> If the action's <code>run</code> method throws an <i>unchecked</i>
@@ -377,7 +376,7 @@ public final class AccessController {
      * @exception PrivilegedActionException if the specified action's
      *         <code>run</code> method threw a <i>checked</i> exception
      * @exception NullPointerException if the action is <code>null</code>
-     * 
+     *
      * @see #doPrivileged(PrivilegedAction)
      * @see #doPrivileged(PrivilegedExceptionAction,AccessControlContext)
      * @see java.security.DomainCombiner
@@ -385,45 +384,45 @@ public final class AccessController {
      * @since 1.6
      */
     public static <T> T doPrivilegedWithCombiner
-	(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
+        (PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
 
-	DomainCombiner dc = null;
-	AccessControlContext acc = getStackAccessControlContext();
-	if (acc == null || (dc = acc.getAssignedCombiner()) == null) {
-	    return AccessController.doPrivileged(action);
-	}
-	return AccessController.doPrivileged(action, preserveCombiner(dc));
+        DomainCombiner dc = null;
+        AccessControlContext acc = getStackAccessControlContext();
+        if (acc == null || (dc = acc.getAssignedCombiner()) == null) {
+            return AccessController.doPrivileged(action);
+        }
+        return AccessController.doPrivileged(action, preserveCombiner(dc));
     }
 
     /**
      * preserve the combiner across the doPrivileged call
      */
     private static AccessControlContext preserveCombiner
-					(DomainCombiner combiner) {
+                                        (DomainCombiner combiner) {
 
-	/**
-	 * callerClass[0] = Reflection.getCallerClass
-	 * callerClass[1] = AccessController.preserveCombiner
-	 * callerClass[2] = AccessController.doPrivileged
-	 * callerClass[3] = caller
-	 */
-	final Class callerClass = sun.reflect.Reflection.getCallerClass(3);
-	ProtectionDomain callerPd = doPrivileged
-	    (new PrivilegedAction<ProtectionDomain>() {
-	    public ProtectionDomain run() {
-		return callerClass.getProtectionDomain();
-	    }
-	});
+        /**
+         * callerClass[0] = Reflection.getCallerClass
+         * callerClass[1] = AccessController.preserveCombiner
+         * callerClass[2] = AccessController.doPrivileged
+         * callerClass[3] = caller
+         */
+        final Class callerClass = sun.reflect.Reflection.getCallerClass(3);
+        ProtectionDomain callerPd = doPrivileged
+            (new PrivilegedAction<ProtectionDomain>() {
+            public ProtectionDomain run() {
+                return callerClass.getProtectionDomain();
+            }
+        });
 
-	// perform 'combine' on the caller of doPrivileged,
-	// even if the caller is from the bootclasspath
-	ProtectionDomain[] pds = new ProtectionDomain[] {callerPd};
-	return new AccessControlContext(combiner.combine(pds, null), combiner);
+        // perform 'combine' on the caller of doPrivileged,
+        // even if the caller is from the bootclasspath
+        ProtectionDomain[] pds = new ProtectionDomain[] {callerPd};
+        return new AccessControlContext(combiner.combine(pds, null), combiner);
     }
 
 
     /**
-     * Performs the specified <code>PrivilegedExceptionAction</code> with 
+     * Performs the specified <code>PrivilegedExceptionAction</code> with
      * privileges enabled and restricted by the specified
      * <code>AccessControlContext</code>.  The action is performed with the
      * intersection of the the permissions possessed by the caller's
@@ -445,22 +444,22 @@ public final class AccessController {
      *
      * @exception PrivilegedActionException if the specified action's
      *         <code>run</code> method
-     *	       threw a <i>checked</i> exception
+     *         threw a <i>checked</i> exception
      * @exception NullPointerException if the action is <code>null</code>
-     * 
+     *
      * @see #doPrivileged(PrivilegedAction)
      * @see #doPrivileged(PrivilegedExceptionAction,AccessControlContext)
      */
     public static native <T> T
-	doPrivileged(PrivilegedExceptionAction<T> action,
-		     AccessControlContext context)
-	throws PrivilegedActionException;
+        doPrivileged(PrivilegedExceptionAction<T> action,
+                     AccessControlContext context)
+        throws PrivilegedActionException;
 
     /**
-     * Returns the AccessControl context. i.e., it gets 
+     * Returns the AccessControl context. i.e., it gets
      * the protection domains of all the callers on the stack,
-     * starting at the first class with a non-null 
-     * ProtectionDomain. 
+     * starting at the first class with a non-null
+     * ProtectionDomain.
      *
      * @return the access control context based on the current stack or
      *         null if there was only privileged system code.
@@ -470,13 +469,13 @@ public final class AccessController {
 
     /**
      * Returns the "inherited" AccessControl context. This is the context
-     * that existed when the thread was created. Package private so 
+     * that existed when the thread was created. Package private so
      * AccessControlContext can use it.
      */
 
     static native AccessControlContext getInheritedAccessControlContext();
 
-    /** 
+    /**
      * This method takes a "snapshot" of the current calling context, which
      * includes the current Thread's inherited AccessControlContext,
      * and places it in an AccessControlContext object. This context may then
@@ -489,17 +488,17 @@ public final class AccessController {
 
     public static AccessControlContext getContext()
     {
-	AccessControlContext acc = getStackAccessControlContext();
-	if (acc == null) {
-	    // all we had was privileged system code. We don't want
-	    // to return null though, so we construct a real ACC.
-	    return new AccessControlContext(null, true);
-	} else {
-	    return acc.optimize();
-	}
+        AccessControlContext acc = getStackAccessControlContext();
+        if (acc == null) {
+            // all we had was privileged system code. We don't want
+            // to return null though, so we construct a real ACC.
+            return new AccessControlContext(null, true);
+        } else {
+            return acc.optimize();
+        }
     }
 
-    /** 
+    /**
      * Determines whether the access request indicated by the
      * specified permission should be allowed or denied, based on
      * the current AccessControlContext and security policy.
@@ -507,7 +506,7 @@ public final class AccessController {
      * is permitted, or throws a suitable AccessControlException otherwise.
      *
      * @param perm the requested permission.
-     * 
+     *
      * @exception AccessControlException if the specified permission
      *            is not permitted, based on the current security policy.
      * @exception NullPointerException if the specified permission
@@ -516,41 +515,41 @@ public final class AccessController {
      */
 
     public static void checkPermission(Permission perm)
-		 throws AccessControlException 
+                 throws AccessControlException
     {
-	//System.err.println("checkPermission "+perm);
-	//Thread.currentThread().dumpStack();
+        //System.err.println("checkPermission "+perm);
+        //Thread.currentThread().dumpStack();
 
-	if (perm == null) {
-	    throw new NullPointerException("permission can't be null");
-	}
+        if (perm == null) {
+            throw new NullPointerException("permission can't be null");
+        }
 
-	AccessControlContext stack = getStackAccessControlContext();
-	// if context is null, we had privileged system code on the stack.
-	if (stack == null) {
-	    Debug debug = AccessControlContext.getDebug();
-	    boolean dumpDebug = false;
-	    if (debug != null) {
-		dumpDebug = !Debug.isOn("codebase=");
-		dumpDebug &= !Debug.isOn("permission=") ||
-		    Debug.isOn("permission=" + perm.getClass().getCanonicalName());
-	    }
+        AccessControlContext stack = getStackAccessControlContext();
+        // if context is null, we had privileged system code on the stack.
+        if (stack == null) {
+            Debug debug = AccessControlContext.getDebug();
+            boolean dumpDebug = false;
+            if (debug != null) {
+                dumpDebug = !Debug.isOn("codebase=");
+                dumpDebug &= !Debug.isOn("permission=") ||
+                    Debug.isOn("permission=" + perm.getClass().getCanonicalName());
+            }
 
-	    if (dumpDebug && Debug.isOn("stack")) {
-		Thread.currentThread().dumpStack();
-	    }
+            if (dumpDebug && Debug.isOn("stack")) {
+                Thread.currentThread().dumpStack();
+            }
 
-	    if (dumpDebug && Debug.isOn("domain")) {
-		debug.println("domain (context is null)");
-	    }
+            if (dumpDebug && Debug.isOn("domain")) {
+                debug.println("domain (context is null)");
+            }
 
-	    if (dumpDebug) {
-		debug.println("access allowed "+perm);
-	    }
-	    return;
-	}
+            if (dumpDebug) {
+                debug.println("access allowed "+perm);
+            }
+            return;
+        }
 
-	AccessControlContext acc = stack.optimize();
-	acc.checkPermission(perm);
+        AccessControlContext acc = stack.optimize();
+        acc.checkPermission(perm);
     }
 }

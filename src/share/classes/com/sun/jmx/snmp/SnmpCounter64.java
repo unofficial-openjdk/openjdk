@@ -31,7 +31,7 @@ package com.sun.jmx.snmp;
 /**
  * Represents an SNMP 64bits counter.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  */
 
@@ -44,31 +44,31 @@ public class SnmpCounter64 extends SnmpValue {
      * Constructs a new <CODE>SnmpCounter64</CODE> from the specified long value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than <CODE>Long.MAX_VALUE</CODE>. 
+     * or larger than <CODE>Long.MAX_VALUE</CODE>.
      */
     public SnmpCounter64(long v) throws IllegalArgumentException {
 
-	// NOTE:
-	// The max value for a counter64 variable is 2^64 - 1.
-	// The max value for a Long is 2^63 - 1.
-	// All the allowed values for a conuter64 variable cannot be covered !!!
-	//
-	if ((v < 0) || (v > Long.MAX_VALUE)) {
-	    throw new IllegalArgumentException() ;
-	}
-	value = v ;
+        // NOTE:
+        // The max value for a counter64 variable is 2^64 - 1.
+        // The max value for a Long is 2^63 - 1.
+        // All the allowed values for a conuter64 variable cannot be covered !!!
+        //
+        if ((v < 0) || (v > Long.MAX_VALUE)) {
+            throw new IllegalArgumentException() ;
+        }
+        value = v ;
     }
-  
+
     /**
      * Constructs a new <CODE>SnmpCounter64</CODE> from the specified <CODE>Long</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than <CODE>Long.MAX_VALUE</CODE>. 
+     * or larger than <CODE>Long.MAX_VALUE</CODE>.
      */
     public SnmpCounter64(Long v) throws IllegalArgumentException {
-	this(v.longValue()) ;
+        this(v.longValue()) ;
     }
-  
+
     // PUBLIC METHODS
     //---------------
     /**
@@ -76,7 +76,7 @@ public class SnmpCounter64 extends SnmpValue {
      * @return The value.
      */
     public long longValue() {
-	return value ;
+        return value ;
     }
 
     /**
@@ -84,23 +84,23 @@ public class SnmpCounter64 extends SnmpValue {
      * @return The <CODE>Long</CODE> representation of the value.
      */
     public Long toLong() {
-	return new Long(value) ;
+        return new Long(value) ;
     }
-    
+
     /**
      * Converts the counter value to its integer form.
      * @return The integer representation of the value.
      */
     public int intValue() {
-	return (int)value ;
+        return (int)value ;
     }
-  
+
     /**
      * Converts the counter value to its <CODE>Integer</CODE> form.
      * @return The <CODE>Integer</CODE> representation of the value.
      */
     public Integer toInteger() {
-	return new Integer((int)value) ;
+        return new Integer((int)value) ;
     }
 
     /**
@@ -108,17 +108,17 @@ public class SnmpCounter64 extends SnmpValue {
      * @return The <CODE>String</CODE> representation of the value.
      */
     public String toString() {
-	return String.valueOf(value) ;
+        return String.valueOf(value) ;
     }
-  
+
     /**
      * Converts the counter value to its <CODE>SnmpOid</CODE> form.
      * @return The OID representation of the value.
      */
     public SnmpOid toOid() {
-	return new SnmpOid(value) ;
+        return new SnmpOid(value) ;
     }
-  
+
     /**
      * Extracts the counter from an index OID and returns its
      * value converted as an <CODE>SnmpOid</CODE>.
@@ -129,12 +129,12 @@ public class SnmpCounter64 extends SnmpValue {
      * available at the start position.
      */
     public static SnmpOid toOid(long[] index, int start) throws SnmpStatusException {
-	try {
-	    return new SnmpOid(index[start]) ;
-	}
-	catch(IndexOutOfBoundsException e) {
-	    throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
-	}
+        try {
+            return new SnmpOid(index[start]) ;
+        }
+        catch(IndexOutOfBoundsException e) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
+        }
     }
 
     /**
@@ -147,33 +147,33 @@ public class SnmpCounter64 extends SnmpValue {
      * available at the start position.
      */
     public static int nextOid(long[] index, int start) throws SnmpStatusException {
-	if (start >= index.length) {
-	    throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
-	}
-	else {
-	    return start + 1 ;
-	}
+        if (start >= index.length) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
+        }
+        else {
+            return start + 1 ;
+        }
     }
-    
+
     /**
      * Appends an <CODE>SnmpOid</CODE> representing an <CODE>SnmpCounter64</CODE> to another OID.
      * @param source An OID representing an <CODE>SnmpCounter64</CODE> value.
      * @param dest Where source should be appended.
      */
     public static void appendToOid(SnmpOid source, SnmpOid dest) {
-	if (source.getLength() != 1) {
-	    throw new IllegalArgumentException() ;
-	}
-	dest.append(source) ;
+        if (source.getLength() != 1) {
+            throw new IllegalArgumentException() ;
+        }
+        dest.append(source) ;
     }
-  
+
     /**
      * Performs a clone action. This provides a workaround for the
      * <CODE>SnmpValue</CODE> interface.
      * @return The SnmpValue clone.
      */
     final synchronized public SnmpValue duplicate() {
-	return (SnmpValue)clone() ;
+        return (SnmpValue)clone() ;
     }
 
     /**
@@ -183,10 +183,10 @@ public class SnmpCounter64 extends SnmpValue {
     final synchronized public Object clone() {
         SnmpCounter64  newclone = null ;
         try {
-	    newclone = (SnmpCounter64) super.clone() ;
-	    newclone.value = value ;
+            newclone = (SnmpCounter64) super.clone() ;
+            newclone.value = value ;
         } catch (CloneNotSupportedException e) {
-	    throw new InternalError() ; // vm bug.
+            throw new InternalError() ; // vm bug.
         }
         return newclone ;
     }
@@ -205,7 +205,7 @@ public class SnmpCounter64 extends SnmpValue {
      * Name of the type.
      */
     final static String name = "Counter64" ;
-  
+
     /**
      * This is where the value is stored. This long is positive.
      * @serial

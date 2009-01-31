@@ -177,9 +177,9 @@ public class ScheduledThreadPoolExecutor
          */
         private final long period;
 
-	/** The actual task to be re-enqueued by reExecutePeriodic */
-	RunnableScheduledFuture<V> outerTask = this;
-	
+        /** The actual task to be re-enqueued by reExecutePeriodic */
+        RunnableScheduledFuture<V> outerTask = this;
+
         /**
          * Creates a one-shot action with given nanoTime-based trigger time.
          */
@@ -303,8 +303,8 @@ public class ScheduledThreadPoolExecutor
                 !canRunInCurrentRunState(task.isPeriodic()) &&
                 remove(task))
                 task.cancel(false);
-	    else
-		prestartCoreThread();
+            else
+                prestartCoreThread();
         }
     }
 
@@ -319,8 +319,8 @@ public class ScheduledThreadPoolExecutor
             super.getQueue().add(task);
             if (!canRunInCurrentRunState(true) && remove(task))
                 task.cancel(false);
-	    else
-		prestartCoreThread();
+            else
+                prestartCoreThread();
         }
     }
 
@@ -350,7 +350,7 @@ public class ScheduledThreadPoolExecutor
                 }
             }
         }
-	tryTerminate();
+        tryTerminate();
     }
 
     /**
@@ -489,13 +489,13 @@ public class ScheduledThreadPoolExecutor
             throw new IllegalArgumentException();
         if (initialDelay < 0) initialDelay = 0;
         long triggerTime = now() + unit.toNanos(initialDelay);
-	ScheduledFutureTask<Void> sft =
-	    new ScheduledFutureTask<Void>(command,
-					  null,
-					  triggerTime,
-					  unit.toNanos(period));
+        ScheduledFutureTask<Void> sft =
+            new ScheduledFutureTask<Void>(command,
+                                          null,
+                                          triggerTime,
+                                          unit.toNanos(period));
         RunnableScheduledFuture<Void> t = decorateTask(command, sft);
-	sft.outerTask = t;
+        sft.outerTask = t;
         delayedExecute(t);
         return t;
     }
@@ -510,13 +510,13 @@ public class ScheduledThreadPoolExecutor
             throw new IllegalArgumentException();
         if (initialDelay < 0) initialDelay = 0;
         long triggerTime = now() + unit.toNanos(initialDelay);
-	ScheduledFutureTask<Void> sft =
-	    new ScheduledFutureTask<Void>(command,
-					  null,
-					  triggerTime,
-					  unit.toNanos(-delay));
+        ScheduledFutureTask<Void> sft =
+            new ScheduledFutureTask<Void>(command,
+                                          null,
+                                          triggerTime,
+                                          unit.toNanos(-delay));
         RunnableScheduledFuture<Void> t = decorateTask(command, sft);
-	sft.outerTask = t;
+        sft.outerTask = t;
         delayedExecute(t);
         return t;
     }
@@ -691,11 +691,11 @@ public class ScheduledThreadPoolExecutor
         }
 
         public boolean add(Runnable x) {
-	    return dq.add((RunnableScheduledFuture)x);
-	}
+            return dq.add((RunnableScheduledFuture)x);
+        }
         public boolean offer(Runnable x) {
-	    return dq.offer((RunnableScheduledFuture)x);
-	}
+            return dq.offer((RunnableScheduledFuture)x);
+        }
         public void put(Runnable x) {
             dq.put((RunnableScheduledFuture)x);
         }

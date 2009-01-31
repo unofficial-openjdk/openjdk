@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1997-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,7 +40,7 @@ class NewFieldClass implements Serializable {
     int k;
 
     NewFieldClass(int value) {
-	k = value;
+        k = value;
     }
 };
 
@@ -53,18 +53,18 @@ class NewExternFieldClass implements Externalizable {
     byte l;
 
     public NewExternFieldClass(int value) {
-	l = (byte)value;
+        l = (byte)value;
     }
 
     public void readExternal(ObjectInput s)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	l = s.readByte();
+        l = s.readByte();
     }
 
     public void writeExternal(ObjectOutput s) throws IOException
     {
-	s.writeByte(l);
+        s.writeByte(l);
     }
 }
 
@@ -81,46 +81,46 @@ class A implements Serializable  {
     */
     int bar;
     A() {
-	foo = new NewFieldClass(23);
-	fooarray = new NewFieldClass[24];
-	for (int i = 0; i < fooarray.length; i++)
-	    fooarray[i] = new NewFieldClass(i);
-	boo = new IncompatibleFieldClass();
-	booarray = new IncompatibleFieldClass[24];
-	for (int i = 0; i < booarray.length; i++)
-	    booarray[i] = new IncompatibleFieldClass();
-	bar = 4;
-	/* Excluded due to Bug 4089540
-	abc = new NewExternFieldClass(66);
-	farray = new NewExternFieldClass[10];
-	for (int k = 0; k < farray.length; k++)
-	    farray[k] = new NewExternFieldClass(k);
-	*/
+        foo = new NewFieldClass(23);
+        fooarray = new NewFieldClass[24];
+        for (int i = 0; i < fooarray.length; i++)
+            fooarray[i] = new NewFieldClass(i);
+        boo = new IncompatibleFieldClass();
+        booarray = new IncompatibleFieldClass[24];
+        for (int i = 0; i < booarray.length; i++)
+            booarray[i] = new IncompatibleFieldClass();
+        bar = 4;
+        /* Excluded due to Bug 4089540
+        abc = new NewExternFieldClass(66);
+        farray = new NewExternFieldClass[10];
+        for (int k = 0; k < farray.length; k++)
+            farray[k] = new NewExternFieldClass(k);
+        */
     }
-} 
+}
 
 /** Test serial persistent fields w/o using Alternate API.
   */
 class B implements Serializable {
     private static final long serialVersionUID = 2L;
-    NewFieldClass	foo;
-    NewFieldClass[]	array;
+    NewFieldClass       foo;
+    NewFieldClass[]     array;
     IncompatibleFieldClass boo;
     IncompatibleFieldClass booarray[];
     transient NewExternFieldClass abc;
     transient NewExternFieldClass farray[];
-    int 		bar;
+    int                 bar;
 
     B() {
-	foo = new NewFieldClass(12);
-	array = new NewFieldClass[12];
-	for (int i = 0; i < array.length; i++)
-	    array[i] = new NewFieldClass(i);
-	bar = 4;
-	abc = new NewExternFieldClass(66);
- 	farray = new NewExternFieldClass[10];
-	for (int k = 0; k < farray.length; k++)
-	    farray[k] = new NewExternFieldClass(k);
+        foo = new NewFieldClass(12);
+        array = new NewFieldClass[12];
+        for (int i = 0; i < array.length; i++)
+            array[i] = new NewFieldClass(i);
+        bar = 4;
+        abc = new NewExternFieldClass(66);
+        farray = new NewExternFieldClass[10];
+        for (int k = 0; k < farray.length; k++)
+            farray[k] = new NewExternFieldClass(k);
     }
 }
 
@@ -129,78 +129,78 @@ class B implements Serializable {
   */
 class C implements Serializable {
     private static final long serialVersionUID = 3L;
-    NewFieldClass	foo;
-    NewFieldClass[]	array;
-    int			bar;
+    NewFieldClass       foo;
+    NewFieldClass[]     array;
+    int                 bar;
     transient NewExternFieldClass abc;
     transient NewExternFieldClass farray[];
-    
+
     C() {
-	foo = new NewFieldClass(12);
-	array = new NewFieldClass[12];
-	for (int i = 0; i < array.length; i++)
-	    array[i] = new NewFieldClass(i);
-	bar = 4;
-	abc = new NewExternFieldClass(3);
-	farray = new NewExternFieldClass[10];
-	for (int k = 0; k < farray.length; k++)
-	    farray[k] = new NewExternFieldClass(k);
+        foo = new NewFieldClass(12);
+        array = new NewFieldClass[12];
+        for (int i = 0; i < array.length; i++)
+            array[i] = new NewFieldClass(i);
+        bar = 4;
+        abc = new NewExternFieldClass(3);
+        farray = new NewExternFieldClass[10];
+        for (int k = 0; k < farray.length; k++)
+            farray[k] = new NewExternFieldClass(k);
     }
 
     private void readObject(ObjectInputStream s)
-	throws IOException, ClassNotFoundException
+        throws IOException, ClassNotFoundException
     {
-	s.defaultReadObject();
-	/* Excluded due to Bug 4089540
-	abc  = (NewExternFieldClass)fields.get("abc", null);
-	farray = (NewExternFieldClass[])fields.get("farray", null);
-	*/
-	
-	/* read optional data */
-	NewFieldClass	tmpfoo 	= (NewFieldClass)s.readObject();
-	NewFieldClass[] tmparray= (NewFieldClass[])s.readObject();
-	int tmpbar = s.readInt();
-	/* Excluded due to Bug 4089540
-	NewExternFieldClass tmpabc = (NewExternFieldClass)s.readObject();
-	NewExternFieldClass[] tmpfarray = (NewExternFieldClass[])s.readObject();
-	*/
+        s.defaultReadObject();
+        /* Excluded due to Bug 4089540
+        abc  = (NewExternFieldClass)fields.get("abc", null);
+        farray = (NewExternFieldClass[])fields.get("farray", null);
+        */
+
+        /* read optional data */
+        NewFieldClass   tmpfoo  = (NewFieldClass)s.readObject();
+        NewFieldClass[] tmparray= (NewFieldClass[])s.readObject();
+        int tmpbar = s.readInt();
+        /* Excluded due to Bug 4089540
+        NewExternFieldClass tmpabc = (NewExternFieldClass)s.readObject();
+        NewExternFieldClass[] tmpfarray = (NewExternFieldClass[])s.readObject();
+        */
     }
 
     private void writeObject(ObjectOutputStream s)
-	throws IOException
+        throws IOException
     {
-	s.defaultWriteObject();
+        s.defaultWriteObject();
 
-	/* write optional data */
-	s.writeObject(foo);
-	s.writeObject(array);
-	s.writeInt(bar);
+        /* write optional data */
+        s.writeObject(foo);
+        s.writeObject(array);
+        s.writeInt(bar);
 
-	/* Excluded due to Bug 4089540
-	s.writeObject(abc);
-	s.writeObject(farray);
-	*/
+        /* Excluded due to Bug 4089540
+        s.writeObject(abc);
+        s.writeObject(farray);
+        */
     }
 }
 
 
 public class WriteAddedField {
     public static void main(String args[]) throws IOException {
-	A a = new A();
-	B b = new B();
-	C c = new C();
-	File f = new File("tmp.ser");
-	ObjectOutput out =
-	    new ObjectOutputStream(new FileOutputStream(f));
-	out.writeObject(a);
-	out.writeObject(b);
-	out.writeObject(c);
-	a = new A();
-	b = new B();
-	c = new C();
-	out.writeObject(a);
-	out.writeObject(b);
-	out.writeObject(c);
-	out.close();
+        A a = new A();
+        B b = new B();
+        C c = new C();
+        File f = new File("tmp.ser");
+        ObjectOutput out =
+            new ObjectOutputStream(new FileOutputStream(f));
+        out.writeObject(a);
+        out.writeObject(b);
+        out.writeObject(c);
+        a = new A();
+        b = new B();
+        c = new C();
+        out.writeObject(a);
+        out.writeObject(b);
+        out.writeObject(c);
+        out.close();
     }
 }

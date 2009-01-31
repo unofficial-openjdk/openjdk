@@ -35,14 +35,14 @@ class PacketStream {
     final Packet pkt;
     private ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
     private boolean isCommitted = false;
-                
+
     PacketStream(VirtualMachineImpl vm, int cmdSet, int cmd) {
         this.vm = vm;
         this.pkt = new Packet();
         pkt.cmdSet = (short)cmdSet;
         pkt.cmd = (short)cmd;
     }
-        
+
     PacketStream(VirtualMachineImpl vm, Packet pkt) {
         this.vm = vm;
         this.pkt = pkt;
@@ -52,7 +52,7 @@ class PacketStream {
     int id() {
         return pkt.id;
     }
-        
+
     void send() {
         if (!isCommitted) {
             pkt.data = dataStream.toByteArray();
@@ -67,7 +67,7 @@ class PacketStream {
         }
 
         vm.waitForTargetReply(pkt);
-                
+
         if (pkt.errorCode != Packet.ReplyNoError) {
             throw new JDWPException(pkt.errorCode);
         }
@@ -82,36 +82,36 @@ class PacketStream {
     }
 
     void writeByte(byte data) {
-	dataStream.write( data );
+        dataStream.write( data );
     }
 
     void writeChar(char data) {
-	dataStream.write( (byte)((data >>> 8) & 0xFF) );
-	dataStream.write( (byte)((data >>> 0) & 0xFF) );
+        dataStream.write( (byte)((data >>> 8) & 0xFF) );
+        dataStream.write( (byte)((data >>> 0) & 0xFF) );
     }
 
     void writeShort(short data) {
-	dataStream.write( (byte)((data >>> 8) & 0xFF) );
-	dataStream.write( (byte)((data >>> 0) & 0xFF) );
+        dataStream.write( (byte)((data >>> 8) & 0xFF) );
+        dataStream.write( (byte)((data >>> 0) & 0xFF) );
     }
 
     void writeInt(int data) {
-	dataStream.write( (byte)((data >>> 24) & 0xFF) );
-	dataStream.write( (byte)((data >>> 16) & 0xFF) );
-	dataStream.write( (byte)((data >>> 8) & 0xFF) );
-	dataStream.write( (byte)((data >>> 0) & 0xFF) );
+        dataStream.write( (byte)((data >>> 24) & 0xFF) );
+        dataStream.write( (byte)((data >>> 16) & 0xFF) );
+        dataStream.write( (byte)((data >>> 8) & 0xFF) );
+        dataStream.write( (byte)((data >>> 0) & 0xFF) );
     }
 
     void writeLong(long data) {
-	dataStream.write( (byte)((data >>> 56) & 0xFF) );
-	dataStream.write( (byte)((data >>> 48) & 0xFF) );
-	dataStream.write( (byte)((data >>> 40) & 0xFF) );
-	dataStream.write( (byte)((data >>> 32) & 0xFF) );
+        dataStream.write( (byte)((data >>> 56) & 0xFF) );
+        dataStream.write( (byte)((data >>> 48) & 0xFF) );
+        dataStream.write( (byte)((data >>> 40) & 0xFF) );
+        dataStream.write( (byte)((data >>> 32) & 0xFF) );
 
-	dataStream.write( (byte)((data >>> 24) & 0xFF) );
-	dataStream.write( (byte)((data >>> 16) & 0xFF) );
-	dataStream.write( (byte)((data >>> 8) & 0xFF) );
-	dataStream.write( (byte)((data >>> 0) & 0xFF) );
+        dataStream.write( (byte)((data >>> 24) & 0xFF) );
+        dataStream.write( (byte)((data >>> 16) & 0xFF) );
+        dataStream.write( (byte)((data >>> 8) & 0xFF) );
+        dataStream.write( (byte)((data >>> 0) & 0xFF) );
     }
 
     void writeFloat(float data) {
@@ -124,16 +124,16 @@ class PacketStream {
 
     void writeID(int size, long data) {
         switch (size) {
-            case 8: 
+            case 8:
                 writeLong(data);
                 break;
-            case 4: 
+            case 4:
                 writeInt((int)data);
                 break;
-            case 2: 
+            case 2:
                 writeShort((short)data);
                 break;
-            default: 
+            default:
                 throw new UnsupportedOperationException("JDWP: ID size not supported: " + size);
         }
     }
@@ -232,56 +232,56 @@ class PacketStream {
                 case JDWP.Tag.BYTE:
                     if(!(val instanceof ByteValue))
                         throw new InvalidTypeException();
-    
+
                     writeByte(((PrimitiveValue)val).byteValue());
                     break;
-    
+
                 case JDWP.Tag.CHAR:
                     if(!(val instanceof CharValue))
                         throw new InvalidTypeException();
-    
+
                     writeChar(((PrimitiveValue)val).charValue());
                     break;
-    
+
                 case JDWP.Tag.FLOAT:
                     if(!(val instanceof FloatValue))
                         throw new InvalidTypeException();
-    
+
                     writeFloat(((PrimitiveValue)val).floatValue());
                     break;
-    
+
                 case JDWP.Tag.DOUBLE:
                     if(!(val instanceof DoubleValue))
                         throw new InvalidTypeException();
-    
+
                     writeDouble(((PrimitiveValue)val).doubleValue());
                     break;
-    
+
                 case JDWP.Tag.INT:
                     if(!(val instanceof IntegerValue))
                         throw new InvalidTypeException();
-    
+
                     writeInt(((PrimitiveValue)val).intValue());
                     break;
-    
+
                 case JDWP.Tag.LONG:
                     if(!(val instanceof LongValue))
                         throw new InvalidTypeException();
-    
+
                     writeLong(((PrimitiveValue)val).longValue());
                     break;
-    
+
                 case JDWP.Tag.SHORT:
                     if(!(val instanceof ShortValue))
                         throw new InvalidTypeException();
-    
+
                     writeShort(((PrimitiveValue)val).shortValue());
                     break;
-    
+
                 case JDWP.Tag.BOOLEAN:
                     if(!(val instanceof BooleanValue))
                         throw new InvalidTypeException();
-    
+
                     writeBoolean(((PrimitiveValue)val).booleanValue());
                     break;
             }
@@ -370,18 +370,18 @@ class PacketStream {
      * Read float represented as four bytes.
      */
     float readFloat() {
-	return Float.intBitsToFloat(readInt());
+        return Float.intBitsToFloat(readInt());
     }
 
     /**
      * Read double represented as eight bytes.
      */
     double readDouble() {
-	return Double.longBitsToDouble(readLong());
+        return Double.longBitsToDouble(readLong());
     }
 
     /**
-     * Read string represented as four byte length followed by 
+     * Read string represented as four byte length followed by
      * characters of the string.
      */
     String readString() {
@@ -400,13 +400,13 @@ class PacketStream {
 
     private long readID(int size) {
         switch (size) {
-          case 8:   
+          case 8:
               return readLong();
-          case 4:   
+          case 4:
               return (long)readInt();
-          case 2:   
+          case 2:
               return (long)readShort();
-          default: 
+          default:
               throw new UnsupportedOperationException("JDWP: ID size not supported: " + size);
         }
     }
@@ -425,7 +425,7 @@ class PacketStream {
     ObjectReferenceImpl readTaggedObjectReference() {
         byte typeKey = readByte();
         return vm.objectMirror(readObjectRef(), typeKey);
-    }        
+    }
 
     ObjectReferenceImpl readObjectReference() {
         return vm.objectMirror(readObjectRef());
@@ -489,14 +489,14 @@ class PacketStream {
         long fieldRef = readFieldRef();
         return refType.getFieldMirror(fieldRef);
     }
-    
+
     /**
      * Read frame represented as vm specific byte sequence.
      */
     long readFrameRef() {
         return readID(vm.sizeofFrameRef);
     }
-    
+
     /**
      * Read a value, first byte describes type of value to read.
      */
@@ -515,35 +515,35 @@ class PacketStream {
                 case JDWP.Tag.BYTE:
                     val = new ByteValueImpl(vm, readByte());
                     break;
-    
+
                 case JDWP.Tag.CHAR:
                     val = new CharValueImpl(vm, readChar());
                     break;
-    
+
                 case JDWP.Tag.FLOAT:
                     val = new FloatValueImpl(vm, readFloat());
                     break;
-    
+
                 case JDWP.Tag.DOUBLE:
                     val = new DoubleValueImpl(vm, readDouble());
                     break;
-    
+
                 case JDWP.Tag.INT:
                     val = new IntegerValueImpl(vm, readInt());
                     break;
-    
+
                 case JDWP.Tag.LONG:
                     val = new LongValueImpl(vm, readLong());
                     break;
-    
+
                 case JDWP.Tag.SHORT:
                     val = new ShortValueImpl(vm, readShort());
                     break;
-    
+
                 case JDWP.Tag.BOOLEAN:
                     val = new BooleanValueImpl(vm, readBoolean());
                     break;
-    
+
                 case JDWP.Tag.VOID:
                     val = new VoidValueImpl(vm);
                     break;
@@ -625,5 +625,4 @@ class PacketStream {
                (tag == JDWP.Tag.CLASS_LOADER) ||
                (tag == JDWP.Tag.CLASS_OBJECT);
     }
-}               
-    
+}

@@ -60,58 +60,58 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
     void initialize() {
         int start, end;
 
-	TextArea txt = (TextArea)target;
-	String	text;
+        TextArea txt = (TextArea)target;
+        String  text;
 
-	if ((text = txt.getText()) != null) {
-	    setText(text);
-	}
+        if ((text = txt.getText()) != null) {
+            setText(text);
+        }
 
-	start = txt.getSelectionStart();
-	end = txt.getSelectionEnd();
+        start = txt.getSelectionStart();
+        end = txt.getSelectionEnd();
 
-	if (end > start) {
-	    select(start, end);
-	} else {
-	    setCaretPosition(start);
-	}
+        if (end > start) {
+            select(start, end);
+        } else {
+            setCaretPosition(start);
+        }
 
         super.pSetScrollbarBackground(getParent_NoClientCode(target).getBackground());
 
-	if (!target.isBackgroundSet()) {
-	    // This is a way to set the background color of the TextArea
-	    // without calling setBackground - go through native C code
-	    setTargetBackground(SystemColor.text);
-	}
-	if (!target.isForegroundSet()) {
-	    target.setForeground(SystemColor.textText);
-	}
+        if (!target.isBackgroundSet()) {
+            // This is a way to set the background color of the TextArea
+            // without calling setBackground - go through native C code
+            setTargetBackground(SystemColor.text);
+        }
+        if (!target.isForegroundSet()) {
+            target.setForeground(SystemColor.textText);
+        }
 
-	setEditable(txt.isEditable());
+        setEditable(txt.isEditable());
 
-//	oldSelectionStart = -1;	// accessibility support
-//	oldSelectionEnd = -1;	// accessibility support
+//      oldSelectionStart = -1; // accessibility support
+//      oldSelectionEnd = -1;   // accessibility support
 
-	super.initialize();
+        super.initialize();
     }
 
     public MTextAreaPeer(TextArea target) {
-	super(target);
+        super(target);
     }
 
     public void setEditable(boolean editable) {
-	pSetEditable(editable);
+        pSetEditable(editable);
 
-	/* 4136955 - Calling setBackground() here works around an Xt
-	 * bug by forcing Xt to flush an internal widget cache
-	 */
-	setBackground(target.getBackground());
+        /* 4136955 - Calling setBackground() here works around an Xt
+         * bug by forcing Xt to flush an internal widget cache
+         */
+        setBackground(target.getBackground());
     }
     public void setBackground(Color c) {
-    	setTextBackground(c);
+        setTextBackground(c);
     }
     public void setForeground(Color c) {
-    	pSetInnerForeground(c);
+        pSetInnerForeground(c);
     }
 
     native int getExtraWidth();
@@ -134,28 +134,28 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
 
 
     public Dimension getMinimumSize() {
-	return getMinimumSize(10, 60);
+        return getMinimumSize(10, 60);
     }
     public Dimension getPreferredSize(int rows, int cols) {
-	return getMinimumSize(rows, cols);
+        return getMinimumSize(rows, cols);
     }
     public Dimension getMinimumSize(int rows, int cols) {
-	FontMetrics fm = getFontMetrics(target.getFont());
+        FontMetrics fm = getFontMetrics(target.getFont());
 
-	/* Calculate proper size for text area plus scrollbars.
-	 *   - Motif allows NO leading in its text areas ...
-	 *   - extra width and height counts everything outside the
-	 *     usable text space.
-	 * (bug 4103248, 4120310):
-	 *   - Motif uses maxAscent + maxDescent, not ascent + descent.
-	 */ 
-	int colWidth = fm.charWidth('0');
-	int rowHeight = fm.getMaxAscent() + fm.getMaxDescent();
-	return new Dimension(cols * colWidth + getExtraWidth(),
-			     rows * rowHeight + getExtraHeight());
+        /* Calculate proper size for text area plus scrollbars.
+         *   - Motif allows NO leading in its text areas ...
+         *   - extra width and height counts everything outside the
+         *     usable text space.
+         * (bug 4103248, 4120310):
+         *   - Motif uses maxAscent + maxDescent, not ascent + descent.
+         */
+        int colWidth = fm.charWidth('0');
+        int rowHeight = fm.getMaxAscent() + fm.getMaxDescent();
+        return new Dimension(cols * colWidth + getExtraWidth(),
+                             rows * rowHeight + getExtraHeight());
     }
     public boolean isFocusable() {
-	return true;
+        return true;
     }
 
     // Called from native widget when paste key is pressed and we
@@ -164,17 +164,17 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
     //
     public void pasteFromClipboard() {
         Clipboard clipboard = target.getToolkit().getSystemClipboard();
-        
-	Transferable content = clipboard.getContents(this);
-	if (content != null) {
-	    try {
-		String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
+
+        Transferable content = clipboard.getContents(this);
+        if (content != null) {
+            try {
+                String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
                 // fix for 4401853: to clear TextArea selection if null is pasted
                 data = (data == null ? "" : data);
                 replaceRange(data, getSelectionStart(), getSelectionEnd());
-                
-	    } catch (Exception e) {       
-	    }
+
+            } catch (Exception e) {
+            }
         }
     }
 
@@ -203,41 +203,41 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
 
     public void print(Graphics g) {
         TextArea area = (TextArea)target;
-	Dimension d = area.size();
-	Color bg = area.getBackground();
-	Color fg = area.getForeground();
-	FontMetrics fm = getFontMetrics(area.getFont());
-	int vmin, vmax, vval, vvis;
-	int hmin, hmax, hval, hvis;
-	int max = 0;
+        Dimension d = area.size();
+        Color bg = area.getBackground();
+        Color fg = area.getForeground();
+        FontMetrics fm = getFontMetrics(area.getFont());
+        int vmin, vmax, vval, vvis;
+        int hmin, hmax, hval, hvis;
+        int max = 0;
 
-	/*
-	  Doesn't work right yet.
-	selStart = area.getSelectionStart();
-	selEnd = area.getSelectionEnd();
-	*/
+        /*
+          Doesn't work right yet.
+        selStart = area.getSelectionStart();
+        selEnd = area.getSelectionEnd();
+        */
 
-	// Figure out number of lines and max line length
-	String text = area.getText();
-	textLength = text.length();
-	BufferedReader is = new BufferedReader(new StringReader(text));
+        // Figure out number of lines and max line length
+        String text = area.getText();
+        textLength = text.length();
+        BufferedReader is = new BufferedReader(new StringReader(text));
         String line;
-	int pos = 0;
-	lines = new Vector();
-	int sv = ((TextArea)target).getScrollbarVisibility();
-	vscrollbar = (sv == TextArea.SCROLLBARS_BOTH ||
-		sv == TextArea.SCROLLBARS_VERTICAL_ONLY);
-	hscrollbar = (sv == TextArea.SCROLLBARS_BOTH ||
-		sv == TextArea.SCROLLBARS_HORIZONTAL_ONLY);
-	boolean wrap = !hscrollbar;
-	int w = d.width - (vscrollbar ? SCROLLBAR : 0);
-	int h = d.height - (hscrollbar ? SCROLLBAR : 0);
+        int pos = 0;
+        lines = new Vector();
+        int sv = ((TextArea)target).getScrollbarVisibility();
+        vscrollbar = (sv == TextArea.SCROLLBARS_BOTH ||
+                sv == TextArea.SCROLLBARS_VERTICAL_ONLY);
+        hscrollbar = (sv == TextArea.SCROLLBARS_BOTH ||
+                sv == TextArea.SCROLLBARS_HORIZONTAL_ONLY);
+        boolean wrap = !hscrollbar;
+        int w = d.width - (vscrollbar ? SCROLLBAR : 0);
+        int h = d.height - (hscrollbar ? SCROLLBAR : 0);
 
-	try {
-	    numLines = 0;
+        try {
+            numLines = 0;
             while((line = is.readLine()) != null) {
-		int len = fm.stringWidth(line);
-		if (len > w && wrap) {
+                int len = fm.stringWidth(line);
+                if (len > w && wrap) {
                    // need to do line wrapping
                    int start = 0;
                    int end = 0;
@@ -269,208 +269,208 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
                            break;
                        }
                    }
-		} else {
-	        TextLine tline = new TextLine();
-		tline.text = line;
-		tline.pos = pos;
-		lines.addElement(tline);
-		pos += line.length() + 1;
+                } else {
+                TextLine tline = new TextLine();
+                tline.text = line;
+                tline.pos = pos;
+                lines.addElement(tline);
+                pos += line.length() + 1;
 
-	        max = Math.max(max, len);
-	        numLines++;
-		}
-	    }
+                max = Math.max(max, len);
+                numLines++;
+                }
+            }
             is.close();
 
-	} catch (IOException e) {
-	}
-
-
-	fontHeight = fm.getHeight();
-	fontAscent = fm.getAscent();
-	fontLeading = fm.getLeading();
-
-	hmin = vmin = 0;
-
-	vvis = linesInWindow(true);
-	vmax = Math.max(numLines - vvis, 0);
-	vval = 0;
-
-	hvis = w - (2 * MARGIN);
-	hmax = Math.max(max - hvis, 0);
-	hval = 0;
-
-	g.setColor(bg);
-	g.fillRect(BORDER, BORDER, w, h);
-	if (vscrollbar)
-	{
-	    int sbh = d.height - (hscrollbar ? SCROLLBAR : 0);
-	    g.fillRect(d.width - SCROLLBAR - 3, 1, SCROLLBAR - 3, sbh - 1);	
-	    Graphics ng = g.create();
-	    try {
-	        ng.translate(d.width - (SCROLLBAR - 2), 0);
-	        drawScrollbar(ng, bg, SCROLLBAR - 2, sbh, 
-			      vmin, vmax, vval, vvis, false);
-	    } finally {
-	        ng.dispose();
-	    }
+        } catch (IOException e) {
         }
-	if (hscrollbar)
-	{
-	    int sbw = d.width - (vscrollbar ? SCROLLBAR : 0);
-	    g.fillRect(1, d.height - SCROLLBAR - 3, sbw - 1, SCROLLBAR - 3);	
-	    Graphics ng = g.create();
-	    try {
-	        ng.translate(0, d.height - (SCROLLBAR - 2));
-	        drawScrollbar(ng, bg, SCROLLBAR - 2, sbw, 
-			      hmin, hmax, hval, hvis, true);
-	    } finally {
-	        ng.dispose();
-	    }
-        }
-	
-	draw3DRect(g, bg, 0, 0, w - 1, h - 1, false);
-	
-	if (text != null) {
-	    int l = linesInWindow(true);
-	    h = d.height - ((2 * MARGIN) + SCROLLBAR);
-	    int e = Math.min(numLines - 1, (topLine + l) - 1);
-	    paintLines(g, bg, fg, topLine, e);
-	}
-       
 
-	target.print(g);
+
+        fontHeight = fm.getHeight();
+        fontAscent = fm.getAscent();
+        fontLeading = fm.getLeading();
+
+        hmin = vmin = 0;
+
+        vvis = linesInWindow(true);
+        vmax = Math.max(numLines - vvis, 0);
+        vval = 0;
+
+        hvis = w - (2 * MARGIN);
+        hmax = Math.max(max - hvis, 0);
+        hval = 0;
+
+        g.setColor(bg);
+        g.fillRect(BORDER, BORDER, w, h);
+        if (vscrollbar)
+        {
+            int sbh = d.height - (hscrollbar ? SCROLLBAR : 0);
+            g.fillRect(d.width - SCROLLBAR - 3, 1, SCROLLBAR - 3, sbh - 1);
+            Graphics ng = g.create();
+            try {
+                ng.translate(d.width - (SCROLLBAR - 2), 0);
+                drawScrollbar(ng, bg, SCROLLBAR - 2, sbh,
+                              vmin, vmax, vval, vvis, false);
+            } finally {
+                ng.dispose();
+            }
+        }
+        if (hscrollbar)
+        {
+            int sbw = d.width - (vscrollbar ? SCROLLBAR : 0);
+            g.fillRect(1, d.height - SCROLLBAR - 3, sbw - 1, SCROLLBAR - 3);
+            Graphics ng = g.create();
+            try {
+                ng.translate(0, d.height - (SCROLLBAR - 2));
+                drawScrollbar(ng, bg, SCROLLBAR - 2, sbw,
+                              hmin, hmax, hval, hvis, true);
+            } finally {
+                ng.dispose();
+            }
+        }
+
+        draw3DRect(g, bg, 0, 0, w - 1, h - 1, false);
+
+        if (text != null) {
+            int l = linesInWindow(true);
+            h = d.height - ((2 * MARGIN) + SCROLLBAR);
+            int e = Math.min(numLines - 1, (topLine + l) - 1);
+            paintLines(g, bg, fg, topLine, e);
+        }
+
+
+        target.print(g);
     }
 
     int linesInWindow(boolean horizScrollbar) {
         Dimension d = target.size();
-	int htotal = d.height - ((2 * MARGIN) + (horizScrollbar? SCROLLBAR : 0));
-	return htotal / fontHeight;
+        int htotal = d.height - ((2 * MARGIN) + (horizScrollbar? SCROLLBAR : 0));
+        return htotal / fontHeight;
     }
 
     void paintLines(Graphics g, Color bg, Color fg, int s, int e) {
         Dimension d = target.size();
-	int w = d.width - ((2 * BORDER) + (vscrollbar ? SCROLLBAR : 0));
-	int h = d.height - ((2 * BORDER) + (hscrollbar ? SCROLLBAR : 0));
-	int lm = linesInWindow(true) + topLine;
-	s = Math.max(topLine, s);
-	e = Math.min(e, lm - 1);
-	Graphics ng = g.create();
-	try {
-	    ng.clipRect(BORDER + MARGIN, MARGIN + BORDER, w - (2*MARGIN),
-			h - (2*MARGIN));
-	    ng.setFont(target.getFont());
-	    for (int i = s ; i <= e; i++) {
-	        paintLine(ng, bg, fg, i);
-	    }
-	} finally {
-	    ng.dispose();
-	}
+        int w = d.width - ((2 * BORDER) + (vscrollbar ? SCROLLBAR : 0));
+        int h = d.height - ((2 * BORDER) + (hscrollbar ? SCROLLBAR : 0));
+        int lm = linesInWindow(true) + topLine;
+        s = Math.max(topLine, s);
+        e = Math.min(e, lm - 1);
+        Graphics ng = g.create();
+        try {
+            ng.clipRect(BORDER + MARGIN, MARGIN + BORDER, w - (2*MARGIN),
+                        h - (2*MARGIN));
+            ng.setFont(target.getFont());
+            for (int i = s ; i <= e; i++) {
+                paintLine(ng, bg, fg, i);
+            }
+        } finally {
+            ng.dispose();
+        }
     }
 
     void paintLine(Graphics g, Color bg, Color fg, int lnr) {
         Dimension d = target.size();
-	int l = linesInWindow(true);
+        int l = linesInWindow(true);
 
-	if((lnr < topLine) || (lnr >= l + topLine)) { 
-	    return;
-	}
-	int w = d.width - ((2 * BORDER) + (hscrollbar ? SCROLLBAR : 0)); 
-	int y = MARGIN + fontLeading + ((lnr - topLine) * fontHeight);
-	String text = ((TextLine)lines.elementAt(lnr)).text;
-	int len = text.length();
-	
-	if (lnr > numLines - 1) {
-	    g.setColor(bg);
-	    g.fillRect(BORDER, y - fontLeading, w, fontHeight);
-	    return;
-	}
-	int s = 0;
-	int e = (lnr < numLines - 1) ? len : textLength;
-	int xs = pos2x(selStart) - movedRight;
-	int xe = pos2x(selEnd) - movedRight;
+        if((lnr < topLine) || (lnr >= l + topLine)) {
+            return;
+        }
+        int w = d.width - ((2 * BORDER) + (hscrollbar ? SCROLLBAR : 0));
+        int y = MARGIN + fontLeading + ((lnr - topLine) * fontHeight);
+        String text = ((TextLine)lines.elementAt(lnr)).text;
+        int len = text.length();
 
-	Color highlight = bg.brighter();
-	if ((selStart < s) && (selEnd > e)) {
-	    g.setColor(highlight);
-	    g.fillRect(BORDER, y - fontLeading, w, fontHeight);
-	} else {
-	    g.setColor(bg);
-	    g.fillRect(BORDER, y - fontLeading, w, fontHeight);
-		
-	    if ((selStart >= s) && (selStart <= e)) {
-		g.setColor(highlight);
-		    
-		if (selEnd > e) {
-		    g.fillRect(xs, y - fontLeading, (w + BORDER) - xs, fontHeight);
-		} else if (selStart == selEnd) { 
-		  //g.fillRect(xs, y - fontLeading, 1, fontHeight);
-		} else { 
-		    g.fillRect(xs, y - fontLeading, xe - xs, fontHeight);
-		}		
-	    } else if ((selEnd >= s) && (selEnd <= e)) {
-		g.setColor(highlight);
-		g.fillRect(BORDER, y - fontLeading, xe - BORDER, fontHeight);
-	    }	    
-	}
-	g.setColor(fg);
-	g.drawString(text, MARGIN - movedRight, y + fontAscent);
-    } 
+        if (lnr > numLines - 1) {
+            g.setColor(bg);
+            g.fillRect(BORDER, y - fontLeading, w, fontHeight);
+            return;
+        }
+        int s = 0;
+        int e = (lnr < numLines - 1) ? len : textLength;
+        int xs = pos2x(selStart) - movedRight;
+        int xe = pos2x(selEnd) - movedRight;
+
+        Color highlight = bg.brighter();
+        if ((selStart < s) && (selEnd > e)) {
+            g.setColor(highlight);
+            g.fillRect(BORDER, y - fontLeading, w, fontHeight);
+        } else {
+            g.setColor(bg);
+            g.fillRect(BORDER, y - fontLeading, w, fontHeight);
+
+            if ((selStart >= s) && (selStart <= e)) {
+                g.setColor(highlight);
+
+                if (selEnd > e) {
+                    g.fillRect(xs, y - fontLeading, (w + BORDER) - xs, fontHeight);
+                } else if (selStart == selEnd) {
+                  //g.fillRect(xs, y - fontLeading, 1, fontHeight);
+                } else {
+                    g.fillRect(xs, y - fontLeading, xe - xs, fontHeight);
+                }
+            } else if ((selEnd >= s) && (selEnd <= e)) {
+                g.setColor(highlight);
+                g.fillRect(BORDER, y - fontLeading, xe - BORDER, fontHeight);
+            }
+        }
+        g.setColor(fg);
+        g.drawString(text, MARGIN - movedRight, y + fontAscent);
+    }
 
     int pos2x(int pos) {
-	FontMetrics fm = getFontMetrics(target.getFont());	
-	int widths[] = fm.getWidths();
-	TextLine tl1 = (TextLine)lines.elementAt(0);
-	TextLine tl2;
-	int l = 0;
-	for (int i = 0; i < lines.size() - 1; i++) {
-	    tl2 = (TextLine)lines.elementAt(i+1);
-	    if (pos >= tl1.pos && pos < tl2.pos) {
-	        l = i;
-		break;
-	    }
-	    tl1 = tl2;
-	}
-	int x = MARGIN;
-	for (int i = 0 ; i < (pos - tl1.pos - 1) ; i++) {
-	    x += widths[tl1.text.charAt(i)];
-	}
-	return x;
-    }   
+        FontMetrics fm = getFontMetrics(target.getFont());
+        int widths[] = fm.getWidths();
+        TextLine tl1 = (TextLine)lines.elementAt(0);
+        TextLine tl2;
+        int l = 0;
+        for (int i = 0; i < lines.size() - 1; i++) {
+            tl2 = (TextLine)lines.elementAt(i+1);
+            if (pos >= tl1.pos && pos < tl2.pos) {
+                l = i;
+                break;
+            }
+            tl1 = tl2;
+        }
+        int x = MARGIN;
+        for (int i = 0 ; i < (pos - tl1.pos - 1) ; i++) {
+            x += widths[tl1.text.charAt(i)];
+        }
+        return x;
+    }
 
     /**
      * DEPRECATED
      */
     public void insertText(String txt, int pos) {
-      	insert(txt, pos);
+        insert(txt, pos);
     }
 
     /**
      * DEPRECATED
      */
     public void replaceText(String txt, int start, int end) {
-      	replaceRange(txt, start, end);
+        replaceRange(txt, start, end);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	return getMinimumSize();
+        return getMinimumSize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension preferredSize(int rows, int cols) {
-    	return getPreferredSize(rows, cols);
+        return getPreferredSize(rows, cols);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize(int rows, int cols) {
-    	return getMinimumSize(rows, cols);
+        return getMinimumSize(rows, cols);
     }
 
     /*
@@ -543,7 +543,7 @@ public class MTextAreaPeer extends MComponentPeer implements TextAreaPeer {
      * (Note: could be simply a change in the caret location)
      *
     public void selectionValuesChanged(int start, int end) {
-        return;  // Need to write implementation of this.  
+        return;  // Need to write implementation of this.
     }
 */
 }

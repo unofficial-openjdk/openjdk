@@ -28,7 +28,6 @@ package java.awt;
 /**
  * The <code>Transparency</code> interface defines the common transparency
  * modes for implementing classes.
- * @version %I%, %G%
  */
 public interface Transparency {
 
@@ -54,7 +53,7 @@ public interface Transparency {
     /**
      * Returns the type of this <code>Transparency</code>.
      * @return the field type of this <code>Transparency</code>, which is
-     *		either OPAQUE, BITMASK or TRANSLUCENT. 
+     *          either OPAQUE, BITMASK or TRANSLUCENT.
      */
     public int getTransparency();
 }

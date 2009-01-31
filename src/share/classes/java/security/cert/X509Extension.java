@@ -65,14 +65,13 @@ import java.util.Set;
  * be handled by a <em>Class</em> that understands the extension.
  *
  * @author Hemma Prafullchandra
- * @version %I% %E%
  */
 
 public interface X509Extension {
 
     /**
      * Check if there is a critical extension that is not supported.
-     * 
+     *
      * @return <tt>true</tt> if a critical extension is found that is
      * not supported, otherwise <tt>false</tt>.
      */

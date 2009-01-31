@@ -37,20 +37,20 @@ import java.io.PrintStream;
 public
 class FloatExpression extends ConstantExpression {
     float value;
-    
+
     /**
      * Constructor
      */
     public FloatExpression(long where, float value) {
-	super(FLOATVAL, where, Type.tFloat);
-	this.value = value;
+        super(FLOATVAL, where, Type.tFloat);
+        this.value = value;
     }
 
     /**
      * Get the value
      */
     public Object getValue() {
-	return new Float(value);
+        return new Float(value);
     }
 
     /**
@@ -59,7 +59,7 @@ class FloatExpression extends ConstantExpression {
     public boolean equals(int i) {
         return value == i;
     }
-  
+
     /**
      * Check if the expression is equal to its default static value
      */
@@ -72,13 +72,13 @@ class FloatExpression extends ConstantExpression {
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_ldc, new Float(value));
+        asm.add(where, opc_ldc, new Float(value));
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-	out.print(value +"F");
+        out.print(value +"F");
     }
 }

@@ -35,11 +35,10 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  */
 public class UniqueIdentity {
     // Private data members
-    private BitArray	id;
+    private BitArray    id;
 
     /**
      * The default constructor for this class.
@@ -96,8 +95,8 @@ public class UniqueIdentity {
      * @exception IOException on errors.
      */
     public void encode(DerOutputStream out, byte tag) throws IOException {
-	byte[] bytes = id.toByteArray();
-	int excessBits = bytes.length*8 - id.length();
+        byte[] bytes = id.toByteArray();
+        int excessBits = bytes.length*8 - id.length();
 
         out.write(tag);
         out.putLength(bytes.length + 1);

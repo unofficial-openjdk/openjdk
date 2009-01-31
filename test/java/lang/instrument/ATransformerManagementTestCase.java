@@ -31,7 +31,7 @@ import java.util.*;
 
 /**
  * Simple tests for the TransformerManager
- * 
+ *
  */
 public abstract class
 ATransformerManagementTestCase
@@ -62,7 +62,7 @@ ATransformerManagementTestCase
             new MyClassFileTransformer(         Integer.toString(17)),
             new MyClassFileTransformer( Integer.toString(18)),
         };
-    
+
     private ArrayList           fTransformers;       // The list of transformers
     private int                 fTransformerIndex;   // The number of transformers encountered
     private String              fDelayedFailure;     // Set non-null if failed in transformer
@@ -74,9 +74,9 @@ ATransformerManagementTestCase
     public ATransformerManagementTestCase(String name)
     {
         super(name);
-    }   
-    
-    
+    }
+
+
     /**
      * Returns one of the sample transformers
      * @return a random transformer
@@ -88,7 +88,7 @@ ATransformerManagementTestCase
         verbosePrint("Choosing random transformer #" + randIndex);
         return kTransformerSamples[randIndex];
     }
-    
+
     /**
      * Method addTransformerToManager.
      * @param manager
@@ -106,7 +106,7 @@ ATransformerManagementTestCase
         manager.addTransformer(transformer);
         verbosePrint("Added transformer " + transformer);
     }
-    
+
     /**
      * Remove transformer from manager and list
      * @param manager
@@ -118,14 +118,14 @@ ATransformerManagementTestCase
         ClassFileTransformer transformer)
     {
         assertTrue("Transformer not found in manager ("+transformer+")", manager.removeTransformer(transformer));
-        
+
         if (transformer != null)
         {
             fTransformers.remove(transformer);
         }
         verbosePrint("Removed transformer " + transformer);
     }
-    
+
     /**
      * Decrements the transformer index as well as removes transformer
      * @param fInst         manager
@@ -142,11 +142,11 @@ ATransformerManagementTestCase
         if (decrementIndex)
         {
             fTransformerIndex--;
-            verbosePrint("removeTransformerFromManager fTransformerIndex decremented to: " + 
+            verbosePrint("removeTransformerFromManager fTransformerIndex decremented to: " +
                          fTransformerIndex);
         }
     }
-    
+
     /**
      * verify transformer by asserting that the number of transforms that occured
      * is the same as the number of valid transformers added to the list.
@@ -177,21 +177,21 @@ ATransformerManagementTestCase
         {
             fail("Could not modify the class: " + redefinedClassName);
         }
-        
+
         // Report any delayed failures
         assertTrue(fDelayedFailure, fDelayedFailure == null);
 
         assertEquals("The number of transformers that were run does not match the expected number added to manager",
                         fTransformers.size(), fTransformerIndex);
     }
-    
-    
+
+
     /**
      * Asserts that the transformer being checked by the manager is the correct
      * one (as far as order goes) and updates the number of transformers that have
      * been called.  Note that since this is being called inside of a transformer,
      * a standard assert (which throws an exception) cannot be used since it would
-     * simply cancel the transformation and otherwise be ignored.  Instead, note 
+     * simply cancel the transformation and otherwise be ignored.  Instead, note
      * the failure for delayed processing.
      * @param ClassFileTransformer
      */
@@ -199,7 +199,7 @@ ATransformerManagementTestCase
     checkInTransformer(ClassFileTransformer transformer)
     {
         verbosePrint("checkInTransformer: " + transformer);
-        if (fDelayedFailure == null) 
+        if (fDelayedFailure == null)
         {
             if (fTransformers.size() <= fTransformerIndex)
             {
@@ -211,7 +211,7 @@ ATransformerManagementTestCase
             }
             if (!fTransformers.get(fTransformerIndex).equals(transformer))
             {
-                String msg = "Transformer " + fTransformers.get(fTransformerIndex) + 
+                String msg = "Transformer " + fTransformers.get(fTransformerIndex) +
                     " should be the same as " + transformer;
                 fDelayedFailure = msg;
                 System.err.println("Delayed failure: " + msg);
@@ -236,7 +236,7 @@ ATransformerManagementTestCase
         fDelayedFailure = null;
         verbosePrint("setUp completed");
     }
-    
+
     /**
      * Sets the manager and transformers to null so that setUp needs to update.
      */
@@ -248,7 +248,7 @@ ATransformerManagementTestCase
         fTransformers = null;
         super.tearDown();
     }
-    
+
     /*
      *  Simple transformer that registers when it transforms
      */
@@ -259,11 +259,11 @@ ATransformerManagementTestCase
             super();
             fID = id;
         }
- 
+
         public String toString() {
             return MyClassFileTransformer.this.getClass().getName() + fID;
         }
-    
+
         public byte[]
         transform(
             ClassLoader loader,
@@ -271,7 +271,7 @@ ATransformerManagementTestCase
             Class<?> classBeingRedefined,
             ProtectionDomain    protectionDomain,
             byte[] classfileBuffer) {
-            
+
             // The transform testing is triggered by redefine, ignore others
             if (classBeingRedefined != null) checkInTransformer(MyClassFileTransformer.this);
 
@@ -281,9 +281,9 @@ ATransformerManagementTestCase
                                         protectionDomain,
                                         classfileBuffer);
         }
-    } 
-    
-    
+    }
+
+
     /**
      * Class loader that does nothing
      */
@@ -298,10 +298,10 @@ ATransformerManagementTestCase
         }
 
     }
-    
+
     public String debug_byteArrayToString(byte[] b) {
         if (b == null) return "null";
-        
+
         StringBuffer buf = new StringBuffer();
         buf.append("byte[");
         buf.append(b.length);
@@ -313,7 +313,7 @@ ATransformerManagementTestCase
         }
         buf.deleteCharAt(buf.length()-1);
         buf.append(")");
-        
+
         return buf.toString();
     }
 }

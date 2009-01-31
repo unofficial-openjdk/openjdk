@@ -615,4 +615,3 @@ public class MapCheck {
     }
 
 }
-

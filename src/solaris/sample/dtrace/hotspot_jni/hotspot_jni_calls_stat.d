@@ -32,10 +32,6 @@
  */
 
 /*
-* %W% %E%
-*/
-
-/*
  * Usage:
  *    1. hotspot_jni_calls_stat.d -c "java ..."
  *    2. hotspot_jni_calls_stat.d -p JAVA_PID

@@ -33,8 +33,8 @@
  * Windows implementation of file system support functions
  */
 
-#define slash		'\\'
-#define altSlash	'/'
+#define slash           '\\'
+#define altSlash        '/'
 
 static int isSlash(char c) {
     return (c == '\\') || (c == '/');
@@ -55,22 +55,22 @@ int filenameStrcmp(const char* s1, const char* s2) {
 
 char* basePath(const char* path) {
     char* pos = strchr(path, slash);
-    char* last = NULL; 
+    char* last = NULL;
     while (pos != NULL) {
-	last = pos;
-	pos++;
-	pos = strchr(pos, slash);
+        last = pos;
+        pos++;
+        pos = strchr(pos, slash);
     }
     if (last == NULL) {
-	return (char*)path;
+        return (char*)path;
     } else {
-	int len = (int)(last - path);
-	char* str = (char*)malloc(len+1);
-	if (len > 0) {
-	    memcpy(str, path, len);
-	}
-	str[len] = '\0';
-	return str;
+        int len = (int)(last - path);
+        char* str = (char*)malloc(len+1);
+        if (len > 0) {
+            memcpy(str, path, len);
+        }
+        str[len] = '\0';
+        return str;
     }
 }
 
@@ -86,43 +86,43 @@ char* basePath(const char* path) {
  * and whether it is absolute or relative:
  *
  *      0  relative to both drive and directory
- *	1  drive-relative (begins with '\\')
- *	2  absolute UNC (if first char is '\\'),
- *	   else directory-relative (has form "z:foo")
- *	3  absolute local pathname (begins with "z:\\")
+ *      1  drive-relative (begins with '\\')
+ *      2  absolute UNC (if first char is '\\'),
+ *         else directory-relative (has form "z:foo")
+ *      3  absolute local pathname (begins with "z:\\")
  */
 static int normalizePrefix(const char* path, int len, char* sb, int* sbLen) {
     char c;
     int src = 0;
     while ((src < len) && isSlash(path[src])) src++;
     if ((len - src >= 2)
-	&& isLetter(c = path[src])
-	&& path[src + 1] == ':') {
-	/* Remove leading slashes if followed by drive specifier.
-	   This hack is necessary to support file URLs containing drive
-	   specifiers (e.g., "file://c:/path").  As a side effect,
-	   "/c:/path" can be used as an alternative to "c:/path". */
-	sb[(*sbLen)++] = c;
-	sb[(*sbLen)++] = ':';
-	src += 2;
+        && isLetter(c = path[src])
+        && path[src + 1] == ':') {
+        /* Remove leading slashes if followed by drive specifier.
+           This hack is necessary to support file URLs containing drive
+           specifiers (e.g., "file://c:/path").  As a side effect,
+           "/c:/path" can be used as an alternative to "c:/path". */
+        sb[(*sbLen)++] = c;
+        sb[(*sbLen)++] = ':';
+        src += 2;
     } else {
-	src = 0;
-	if ((len >= 2)
-	    && isSlash(path[0])
-	    && isSlash(path[1])) {
-	    /* UNC pathname: Retain first slash; leave src pointed at
-	       second slash so that further slashes will be collapsed
-	       into the second slash.  The result will be a pathname
-	       beginning with "\\\\" followed (most likely) by a host
-	       name. */
-	    src = 1;
-	    sb[(*sbLen)++] = slash;
-	}
+        src = 0;
+        if ((len >= 2)
+            && isSlash(path[0])
+            && isSlash(path[1])) {
+            /* UNC pathname: Retain first slash; leave src pointed at
+               second slash so that further slashes will be collapsed
+               into the second slash.  The result will be a pathname
+               beginning with "\\\\" followed (most likely) by a host
+               name. */
+            src = 1;
+            sb[(*sbLen)++] = slash;
+        }
     }
     return src;
 }
 
-/* 
+/*
  * Normalize the given pathname, whose length is len, starting at the given
  * offset; everything before this offset is already normal.
  */
@@ -132,87 +132,87 @@ static char* normalizePath(const char* path, int len, int off) {
     int sbLen;
 
     if (len == 0) return (char*)path;
-    if (off < 3) off = 0;	/* Avoid fencepost cases with UNC pathnames */
+    if (off < 3) off = 0;       /* Avoid fencepost cases with UNC pathnames */
 
     sb = (char*)malloc(len+1);
     sbLen = 0;
 
     if (off == 0) {
-	/* Complete normalization, including prefix */
-	src = normalizePrefix(path, len, sb, &sbLen);
+        /* Complete normalization, including prefix */
+        src = normalizePrefix(path, len, sb, &sbLen);
     } else {
-	/* Partial normalization */
-	src = off;
-	memcpy(sb+sbLen, path, off);
-	sbLen += off;
+        /* Partial normalization */
+        src = off;
+        memcpy(sb+sbLen, path, off);
+        sbLen += off;
     }
 
     /* Remove redundant slashes from the remainder of the path, forcing all
        slashes into the preferred slash */
     while (src < len) {
-	char c = path[src++];
-	if (isSlash(c)) {
-	    while ((src < len) && isSlash(path[src])) src++;
-	    if (src == len) {
-		/* Check for trailing separator */
-		if ((sbLen == 2) && (sb[1] == ':')) {
-		    /* "z:\\" */
-		    sb[sbLen++] = slash;
-		    break;
-		}
-		if (sbLen == 0) {
-		    /* "\\" */
-		    sb[sbLen++] = slash;
-		    break;
-		}
-		if ((sbLen == 1) && (isSlash(sb[0]))) {
-		    /* "\\\\" is not collapsed to "\\" because "\\\\" marks
-		       the beginning of a UNC pathname.  Even though it is
-		       not, by itself, a valid UNC pathname, we leave it as
-		       is in order to be consistent with the win32 APIs,
-		       which treat this case as an invalid UNC pathname
-		       rather than as an alias for the root directory of
-		       the current drive. */
-		    sb[sbLen++] = slash;
-		    break;
-		}
-		/* Path does not denote a root directory, so do not append
-		   trailing slash */
-		break;
-	    } else {
-		sb[sbLen++] = slash;
-	    }
-	} else {
-	    sb[sbLen++] = c;	    
-	}
+        char c = path[src++];
+        if (isSlash(c)) {
+            while ((src < len) && isSlash(path[src])) src++;
+            if (src == len) {
+                /* Check for trailing separator */
+                if ((sbLen == 2) && (sb[1] == ':')) {
+                    /* "z:\\" */
+                    sb[sbLen++] = slash;
+                    break;
+                }
+                if (sbLen == 0) {
+                    /* "\\" */
+                    sb[sbLen++] = slash;
+                    break;
+                }
+                if ((sbLen == 1) && (isSlash(sb[0]))) {
+                    /* "\\\\" is not collapsed to "\\" because "\\\\" marks
+                       the beginning of a UNC pathname.  Even though it is
+                       not, by itself, a valid UNC pathname, we leave it as
+                       is in order to be consistent with the win32 APIs,
+                       which treat this case as an invalid UNC pathname
+                       rather than as an alias for the root directory of
+                       the current drive. */
+                    sb[sbLen++] = slash;
+                    break;
+                }
+                /* Path does not denote a root directory, so do not append
+                   trailing slash */
+                break;
+            } else {
+                sb[sbLen++] = slash;
+            }
+        } else {
+            sb[sbLen++] = c;
+        }
     }
 
     sb[sbLen] = '\0';
     return sb;
 }
 
-/* 
+/*
  * Check that the given pathname is normal.  If not, invoke the real
  * normalizer on the part of the pathname that requires normalization.
- * This way we iterate through the whole pathname string only once. 
+ * This way we iterate through the whole pathname string only once.
  */
-char* normalize(char* path) {        
+char* normalize(char* path) {
     int n = (int)strlen(path);
     int i;
     char c = 0;
     int prev = 0;
     for (i = 0; i < n; i++) {
-	char c = path[i];
-	if (c == altSlash)
-	    return normalizePath(path, n, (prev == slash) ? i - 1 : i);
-	if ((c == slash) && (prev == slash) && (i > 1))
-	    return normalizePath(path, n, i - 1);
-	if ((c == ':') && (i > 1))
-	    return normalizePath(path, n, 0);
-	prev = c;
+        char c = path[i];
+        if (c == altSlash)
+            return normalizePath(path, n, (prev == slash) ? i - 1 : i);
+        if ((c == slash) && (prev == slash) && (i > 1))
+            return normalizePath(path, n, i - 1);
+        if ((c == ':') && (i > 1))
+            return normalizePath(path, n, 0);
+        prev = c;
     }
-    if (prev == slash) 
-	return normalizePath(path, n, n - 1);
+    if (prev == slash)
+        return normalizePath(path, n, n - 1);
     return path;
 }
 
@@ -246,10 +246,10 @@ char* resolve(const char* parent, const char* child) {
         }
         if (cn == childStart) { // Child is double slash
             if (parent[pn - 1] == slash) {
-		char* str = strdup(parent);
-		str[pn-1] = '\0';
+                char* str = strdup(parent);
+                str[pn-1] = '\0';
                 return str;
-	    }
+            }
             return (char*)parent;
         }
     }
@@ -258,18 +258,18 @@ char* resolve(const char* parent, const char* child) {
         parentEnd--;
 
     len = parentEnd + cn - childStart;
-    
+
     if (child[childStart] == slash) {
         theChars = (char*)malloc(len+1);
-	memcpy(theChars, parent, parentEnd);
-	memcpy(theChars+parentEnd, child+childStart, (cn-childStart));
-	theChars[len] = '\0';
+        memcpy(theChars, parent, parentEnd);
+        memcpy(theChars+parentEnd, child+childStart, (cn-childStart));
+        theChars[len] = '\0';
     } else {
-        theChars = (char*)malloc(len+2);	   
-	memcpy(theChars, parent, parentEnd);
-	theChars[parentEnd] = slash;
-	memcpy(theChars+parentEnd+1, child+childStart, (cn-childStart));
-	theChars[len+1] = '\0';
+        theChars = (char*)malloc(len+2);
+        memcpy(theChars, parent, parentEnd);
+        theChars[parentEnd] = slash;
+        memcpy(theChars+parentEnd+1, child+childStart, (cn-childStart));
+        theChars[len+1] = '\0';
     }
     return theChars;
 }
@@ -283,15 +283,15 @@ static int prefixLength(const char* path) {
     c0 = path[0];
     c1 = (n > 1) ? path[1] : 0;
     if (c0 == slash) {
-	if (c1 == slash) return 2;	/* Absolute UNC pathname "\\\\foo" */
-	return 1;			/* Drive-relative "\\foo" */
+        if (c1 == slash) return 2;      /* Absolute UNC pathname "\\\\foo" */
+        return 1;                       /* Drive-relative "\\foo" */
     }
     if (isLetter(c0) && (c1 == ':')) {
-	if ((n > 2) && (path[2] == slash))
-	    return 3;		/* Absolute local pathname "z:\\foo" */
-	return 2;			/* Directory-relative "z:foo" */
+        if ((n > 2) && (path[2] == slash))
+            return 3;           /* Absolute local pathname "z:\\foo" */
+        return 2;                       /* Directory-relative "z:foo" */
     }
-    return 0;			/* Completely relative */
+    return 0;                   /* Completely relative */
 }
 
 
@@ -306,24 +306,24 @@ char* fromURIPath(const char* path) {
     int len = (int)strlen(path);
 
     if ((len > 2) && (path[2] == ':')) {
-	// "/c:/foo" --> "c:/foo"
-	start = 1;
-	// "c:/foo/" --> "c:/foo", but "c:/" --> "c:/"
-	if ((len > 3) && path[len-1] == '/')
-	    len--;
+        // "/c:/foo" --> "c:/foo"
+        start = 1;
+        // "c:/foo/" --> "c:/foo", but "c:/" --> "c:/"
+        if ((len > 3) && path[len-1] == '/')
+            len--;
     } else if ((len > 1) && path[len-1] == '/') {
-	// "/foo/" --> "/foo"
-	len--;
+        // "/foo/" --> "/foo"
+        len--;
     }
 
     if (start == 0 && len == (int)strlen(path)) {
-	return (char*)path;
+        return (char*)path;
     } else {
-	char* p = (char*)malloc(len+1);
+        char* p = (char*)malloc(len+1);
         if (p != NULL) {
-	    memcpy(p, path+start, len);
-	    p[len] = '\0';
-	}
-	return p;
+            memcpy(p, path+start, len);
+            p[len] = '\0';
+        }
+        return p;
     }
 }

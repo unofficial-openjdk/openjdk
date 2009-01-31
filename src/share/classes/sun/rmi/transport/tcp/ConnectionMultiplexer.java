@@ -49,15 +49,15 @@ final class ConnectionMultiplexer {
     static int logLevel = LogStream.parseLevel(getLogLevel());
 
     private static String getLogLevel() {
-	return (String) java.security.AccessController.doPrivileged(
+        return (String) java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.rmi.transport.tcp.multiplex.logLevel"));
     }
 
     /* multiplex system log */
     static final Log multiplexLog =
-	Log.getLog("sun.rmi.transport.tcp.multiplex",
-		   "multiplex", ConnectionMultiplexer.logLevel);
-    
+        Log.getLog("sun.rmi.transport.tcp.multiplex",
+                   "multiplex", ConnectionMultiplexer.logLevel);
+
     /** multiplexing protocol operation codes */
     private final static int OPEN     = 0xE1;
     private final static int CLOSE    = 0xE2;
@@ -110,18 +110,18 @@ final class ConnectionMultiplexer {
      *        connection (needs to be set differently at both ends)
      */
     public ConnectionMultiplexer(
-	TCPChannel    channel,
-	InputStream   in,
-	OutputStream  out,
-	boolean       orig)
+        TCPChannel    channel,
+        InputStream   in,
+        OutputStream  out,
+        boolean       orig)
     {
-	this.channel = channel;
-	this.in      = in;
-	this.out     = out;
-	this.orig    = orig;
+        this.channel = channel;
+        this.in      = in;
+        this.out     = out;
+        this.orig    = orig;
 
-	dataIn = new DataInputStream(in);
-	dataOut = new DataOutputStream(out);
+        dataIn = new DataInputStream(in);
+        dataOut = new DataOutputStream(out);
     }
 
     /**
@@ -129,138 +129,138 @@ final class ConnectionMultiplexer {
      */
     public void run() throws IOException
     {
-	try {
-	    int op, id, length;
-	    Integer idObj;
-	    MultiplexConnectionInfo info;
+        try {
+            int op, id, length;
+            Integer idObj;
+            MultiplexConnectionInfo info;
 
-	    while (true) {
+            while (true) {
 
-		// read next op code from remote endpoint
-		op = dataIn.readUnsignedByte();
-		switch (op) {
+                // read next op code from remote endpoint
+                op = dataIn.readUnsignedByte();
+                switch (op) {
 
-		// remote endpoint initiating new connection
-		case OPEN:
-		    id = dataIn.readUnsignedShort();
+                // remote endpoint initiating new connection
+                case OPEN:
+                    id = dataIn.readUnsignedShort();
 
-		    if (multiplexLog.isLoggable(Log.VERBOSE)) {
-			multiplexLog.log(Log.VERBOSE, "operation  OPEN " + id);
-		    }
+                    if (multiplexLog.isLoggable(Log.VERBOSE)) {
+                        multiplexLog.log(Log.VERBOSE, "operation  OPEN " + id);
+                    }
 
-		    idObj = new Integer(id);
-		    info =
-			(MultiplexConnectionInfo) connectionTable.get(idObj);
-		    if (info != null)
-			throw new IOException(
-			    "OPEN: Connection ID already exists");
-		    info = new MultiplexConnectionInfo(id);
-		    info.in = new MultiplexInputStream(this, info, 2048);
-		    info.out = new MultiplexOutputStream(this, info, 2048);
-		    synchronized (connectionTable) {
-			connectionTable.put(idObj, info);
-			++ numConnections;
-		    }
-		    sun.rmi.transport.Connection conn;
-		    conn = new TCPConnection(channel, info.in, info.out);
-		    channel.acceptMultiplexConnection(conn);
-		    break;
+                    idObj = new Integer(id);
+                    info =
+                        (MultiplexConnectionInfo) connectionTable.get(idObj);
+                    if (info != null)
+                        throw new IOException(
+                            "OPEN: Connection ID already exists");
+                    info = new MultiplexConnectionInfo(id);
+                    info.in = new MultiplexInputStream(this, info, 2048);
+                    info.out = new MultiplexOutputStream(this, info, 2048);
+                    synchronized (connectionTable) {
+                        connectionTable.put(idObj, info);
+                        ++ numConnections;
+                    }
+                    sun.rmi.transport.Connection conn;
+                    conn = new TCPConnection(channel, info.in, info.out);
+                    channel.acceptMultiplexConnection(conn);
+                    break;
 
-		// remote endpoint closing connection
-		case CLOSE:
-		    id = dataIn.readUnsignedShort();
+                // remote endpoint closing connection
+                case CLOSE:
+                    id = dataIn.readUnsignedShort();
 
-		    if (multiplexLog.isLoggable(Log.VERBOSE)) {
-			multiplexLog.log(Log.VERBOSE, "operation  CLOSE " + id);
-		    }
+                    if (multiplexLog.isLoggable(Log.VERBOSE)) {
+                        multiplexLog.log(Log.VERBOSE, "operation  CLOSE " + id);
+                    }
 
-		    idObj = new Integer(id);
-		    info =
-			(MultiplexConnectionInfo) connectionTable.get(idObj);
-		    if (info == null)
-			throw new IOException(
-			    "CLOSE: Invalid connection ID");
-		    info.in.disconnect();
-		    info.out.disconnect();
-		    if (!info.closed)
-			sendCloseAck(info);
-		    synchronized (connectionTable) {
-			connectionTable.remove(idObj);
-			-- numConnections;
-		    }
-		    break;
+                    idObj = new Integer(id);
+                    info =
+                        (MultiplexConnectionInfo) connectionTable.get(idObj);
+                    if (info == null)
+                        throw new IOException(
+                            "CLOSE: Invalid connection ID");
+                    info.in.disconnect();
+                    info.out.disconnect();
+                    if (!info.closed)
+                        sendCloseAck(info);
+                    synchronized (connectionTable) {
+                        connectionTable.remove(idObj);
+                        -- numConnections;
+                    }
+                    break;
 
-		// remote endpoint acknowledging close of connection
-		case CLOSEACK:
-		    id = dataIn.readUnsignedShort();
+                // remote endpoint acknowledging close of connection
+                case CLOSEACK:
+                    id = dataIn.readUnsignedShort();
 
-		    if (multiplexLog.isLoggable(Log.VERBOSE)) {
-			multiplexLog.log(Log.VERBOSE,
-			    "operation  CLOSEACK " + id);
-		    }
+                    if (multiplexLog.isLoggable(Log.VERBOSE)) {
+                        multiplexLog.log(Log.VERBOSE,
+                            "operation  CLOSEACK " + id);
+                    }
 
-		    idObj = new Integer(id);
-		    info =
-			(MultiplexConnectionInfo) connectionTable.get(idObj);
-		    if (info == null)
-			throw new IOException(
-			    "CLOSEACK: Invalid connection ID");
-		    if (!info.closed)
-			throw new IOException(
-			    "CLOSEACK: Connection not closed");
-		    info.in.disconnect();
-		    info.out.disconnect();
-		    synchronized (connectionTable) {
-			connectionTable.remove(idObj);
-			-- numConnections;
-		    }
-		    break;
+                    idObj = new Integer(id);
+                    info =
+                        (MultiplexConnectionInfo) connectionTable.get(idObj);
+                    if (info == null)
+                        throw new IOException(
+                            "CLOSEACK: Invalid connection ID");
+                    if (!info.closed)
+                        throw new IOException(
+                            "CLOSEACK: Connection not closed");
+                    info.in.disconnect();
+                    info.out.disconnect();
+                    synchronized (connectionTable) {
+                        connectionTable.remove(idObj);
+                        -- numConnections;
+                    }
+                    break;
 
-		// remote endpoint declaring additional bytes receivable
-		case REQUEST:
-		    id = dataIn.readUnsignedShort();
-		    idObj = new Integer(id);
-		    info =
-			(MultiplexConnectionInfo) connectionTable.get(idObj);
-		    if (info == null)
-			throw new IOException(
-			    "REQUEST: Invalid connection ID");
-		    length = dataIn.readInt();
+                // remote endpoint declaring additional bytes receivable
+                case REQUEST:
+                    id = dataIn.readUnsignedShort();
+                    idObj = new Integer(id);
+                    info =
+                        (MultiplexConnectionInfo) connectionTable.get(idObj);
+                    if (info == null)
+                        throw new IOException(
+                            "REQUEST: Invalid connection ID");
+                    length = dataIn.readInt();
 
-		    if (multiplexLog.isLoggable(Log.VERBOSE)) {
-			multiplexLog.log(Log.VERBOSE,
-			    "operation  REQUEST " + id + ": " + length);
-		    }
+                    if (multiplexLog.isLoggable(Log.VERBOSE)) {
+                        multiplexLog.log(Log.VERBOSE,
+                            "operation  REQUEST " + id + ": " + length);
+                    }
 
-		    info.out.request(length);
-		    break;
+                    info.out.request(length);
+                    break;
 
-		// remote endpoint transmitting data packet
-		case TRANSMIT:
-		    id = dataIn.readUnsignedShort();
-		    idObj = new Integer(id);
-		    info =
-			(MultiplexConnectionInfo) connectionTable.get(idObj);
-		    if (info == null)
-			throw new IOException("SEND: Invalid connection ID");
-		    length = dataIn.readInt();
+                // remote endpoint transmitting data packet
+                case TRANSMIT:
+                    id = dataIn.readUnsignedShort();
+                    idObj = new Integer(id);
+                    info =
+                        (MultiplexConnectionInfo) connectionTable.get(idObj);
+                    if (info == null)
+                        throw new IOException("SEND: Invalid connection ID");
+                    length = dataIn.readInt();
 
-		    if (multiplexLog.isLoggable(Log.VERBOSE)) {
-			multiplexLog.log(Log.VERBOSE,
-			    "operation  TRANSMIT " + id + ": " + length);
-		    }
+                    if (multiplexLog.isLoggable(Log.VERBOSE)) {
+                        multiplexLog.log(Log.VERBOSE,
+                            "operation  TRANSMIT " + id + ": " + length);
+                    }
 
-		    info.in.receive(length, dataIn);
-		    break;
+                    info.in.receive(length, dataIn);
+                    break;
 
-		default:
-		    throw new IOException("Invalid operation: " +
-		                          Integer.toHexString(op));
-		}
-	    }
-	} finally {
-	    shutDown();
-	}
+                default:
+                    throw new IOException("Invalid operation: " +
+                                          Integer.toHexString(op));
+                }
+            }
+        } finally {
+            shutDown();
+        }
     }
 
     /**
@@ -269,54 +269,54 @@ final class ConnectionMultiplexer {
      */
     public synchronized TCPConnection openConnection() throws IOException
     {
-	// generate ID that should not be already used
-	// If all possible 32768 IDs are used,
-	// this method will block searching for a new ID forever.
-	int id;
-	Integer idObj;
-	do {
-	    lastID = (++ lastID) & 0x7FFF;
-	    id = lastID;
+        // generate ID that should not be already used
+        // If all possible 32768 IDs are used,
+        // this method will block searching for a new ID forever.
+        int id;
+        Integer idObj;
+        do {
+            lastID = (++ lastID) & 0x7FFF;
+            id = lastID;
 
-	    // The orig flag (copied to the high bit of the ID) is used
-	    // to have two distinct ranges to choose IDs from for the
-	    // two endpoints.
-	    if (orig)
-		id |= 0x8000;
-	    idObj = new Integer(id);
-	} while (connectionTable.get(idObj) != null);
+            // The orig flag (copied to the high bit of the ID) is used
+            // to have two distinct ranges to choose IDs from for the
+            // two endpoints.
+            if (orig)
+                id |= 0x8000;
+            idObj = new Integer(id);
+        } while (connectionTable.get(idObj) != null);
 
-	// create multiplexing streams and bookkeeping information
-	MultiplexConnectionInfo info = new MultiplexConnectionInfo(id);
-	info.in = new MultiplexInputStream(this, info, 2048);
-	info.out = new MultiplexOutputStream(this, info, 2048);
+        // create multiplexing streams and bookkeeping information
+        MultiplexConnectionInfo info = new MultiplexConnectionInfo(id);
+        info.in = new MultiplexInputStream(this, info, 2048);
+        info.out = new MultiplexOutputStream(this, info, 2048);
 
-	// add to connection table if multiplexer has not died
-	synchronized (connectionTable) {
-	    if (!alive)
-		throw new IOException("Multiplexer connection dead");
-	    if (numConnections >= maxConnections)
-		throw new IOException("Cannot exceed " + maxConnections +
-		    " simultaneous multiplexed connections");
-	    connectionTable.put(idObj, info);
-	    ++ numConnections;
-	}
+        // add to connection table if multiplexer has not died
+        synchronized (connectionTable) {
+            if (!alive)
+                throw new IOException("Multiplexer connection dead");
+            if (numConnections >= maxConnections)
+                throw new IOException("Cannot exceed " + maxConnections +
+                    " simultaneous multiplexed connections");
+            connectionTable.put(idObj, info);
+            ++ numConnections;
+        }
 
-	// inform remote endpoint of new connection
-	synchronized (dataOut) {
-	    try {
-		dataOut.writeByte(OPEN);
-		dataOut.writeShort(id);
-		dataOut.flush();
-	    } catch (IOException e) {
-		multiplexLog.log(Log.BRIEF, "exception: ", e);
+        // inform remote endpoint of new connection
+        synchronized (dataOut) {
+            try {
+                dataOut.writeByte(OPEN);
+                dataOut.writeShort(id);
+                dataOut.flush();
+            } catch (IOException e) {
+                multiplexLog.log(Log.BRIEF, "exception: ", e);
 
-		shutDown();
-		throw e;
-	    }
-	}
+                shutDown();
+                throw e;
+            }
+        }
 
-	return new TCPConnection(channel, info.in, info.out);
+        return new TCPConnection(channel, info.in, info.out);
     }
 
     /**
@@ -324,33 +324,33 @@ final class ConnectionMultiplexer {
      */
     public void shutDown()
     {
-	// inform all associated streams
-	synchronized (connectionTable) {
-	    // return if multiplexer already officially dead
-	    if (!alive)
-		return;
-	    alive = false;
+        // inform all associated streams
+        synchronized (connectionTable) {
+            // return if multiplexer already officially dead
+            if (!alive)
+                return;
+            alive = false;
 
-	    Enumeration enum_ = connectionTable.elements();
-	    while (enum_.hasMoreElements()) {
-		MultiplexConnectionInfo info =
-		    (MultiplexConnectionInfo) enum_.nextElement();
-		info.in.disconnect();
-		info.out.disconnect();
-	    }
-	    connectionTable.clear();
-	    numConnections = 0;
-	}
+            Enumeration enum_ = connectionTable.elements();
+            while (enum_.hasMoreElements()) {
+                MultiplexConnectionInfo info =
+                    (MultiplexConnectionInfo) enum_.nextElement();
+                info.in.disconnect();
+                info.out.disconnect();
+            }
+            connectionTable.clear();
+            numConnections = 0;
+        }
 
-	// close underlying connection, if possible (and not already done)
-	try {
-	    in.close();
-	} catch (IOException e) {
-	}
-	try {
-	    out.close();
-	} catch (IOException e) {
-	}
+        // close underlying connection, if possible (and not already done)
+        try {
+            in.close();
+        } catch (IOException e) {
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+        }
     }
 
     /**
@@ -360,20 +360,20 @@ final class ConnectionMultiplexer {
      */
     void sendRequest(MultiplexConnectionInfo info, int len) throws IOException
     {
-	synchronized (dataOut) {
-	    if (alive && !info.closed)
-		try {
-		    dataOut.writeByte(REQUEST);
-		    dataOut.writeShort(info.id);
-		    dataOut.writeInt(len);
-		    dataOut.flush();
-		} catch (IOException e) {
-		    multiplexLog.log(Log.BRIEF, "exception: ", e);
+        synchronized (dataOut) {
+            if (alive && !info.closed)
+                try {
+                    dataOut.writeByte(REQUEST);
+                    dataOut.writeShort(info.id);
+                    dataOut.writeInt(len);
+                    dataOut.flush();
+                } catch (IOException e) {
+                    multiplexLog.log(Log.BRIEF, "exception: ", e);
 
-		    shutDown();
-		    throw e;
-		}
-	}
+                    shutDown();
+                    throw e;
+                }
+        }
     }
 
     /**
@@ -386,21 +386,21 @@ final class ConnectionMultiplexer {
     void sendTransmit(MultiplexConnectionInfo info,
                       byte buf[], int off, int len) throws IOException
     {
-	synchronized (dataOut) {
-	    if (alive && !info.closed)
-		try {
-		    dataOut.writeByte(TRANSMIT);
-		    dataOut.writeShort(info.id);
-		    dataOut.writeInt(len);
-		    dataOut.write(buf, off, len);
-		    dataOut.flush();
-		} catch (IOException e) {
-		    multiplexLog.log(Log.BRIEF, "exception: ", e);
+        synchronized (dataOut) {
+            if (alive && !info.closed)
+                try {
+                    dataOut.writeByte(TRANSMIT);
+                    dataOut.writeShort(info.id);
+                    dataOut.writeInt(len);
+                    dataOut.write(buf, off, len);
+                    dataOut.flush();
+                } catch (IOException e) {
+                    multiplexLog.log(Log.BRIEF, "exception: ", e);
 
-		    shutDown();
-		    throw e;
-		}
-	}
+                    shutDown();
+                    throw e;
+                }
+        }
     }
 
     /**
@@ -409,21 +409,21 @@ final class ConnectionMultiplexer {
      */
     void sendClose(MultiplexConnectionInfo info) throws IOException
     {
-	info.out.disconnect();
-	synchronized (dataOut) {
-	    if (alive && !info.closed)
-		try {
-		    dataOut.writeByte(CLOSE);
-		    dataOut.writeShort(info.id);
-		    dataOut.flush();
-		    info.closed = true;
-		} catch (IOException e) {
-		    multiplexLog.log(Log.BRIEF, "exception: ", e);
+        info.out.disconnect();
+        synchronized (dataOut) {
+            if (alive && !info.closed)
+                try {
+                    dataOut.writeByte(CLOSE);
+                    dataOut.writeShort(info.id);
+                    dataOut.flush();
+                    info.closed = true;
+                } catch (IOException e) {
+                    multiplexLog.log(Log.BRIEF, "exception: ", e);
 
-		    shutDown();
-		    throw e;
-		}
-	}
+                    shutDown();
+                    throw e;
+                }
+        }
     }
 
     /**
@@ -432,20 +432,20 @@ final class ConnectionMultiplexer {
      */
     void sendCloseAck(MultiplexConnectionInfo info) throws IOException
     {
-	synchronized (dataOut) {
-	    if (alive && !info.closed)
-		try {
-		    dataOut.writeByte(CLOSEACK);
-		    dataOut.writeShort(info.id);
-		    dataOut.flush();
-		    info.closed = true;
-		} catch (IOException e) {
-		    multiplexLog.log(Log.BRIEF, "exception: ", e);
+        synchronized (dataOut) {
+            if (alive && !info.closed)
+                try {
+                    dataOut.writeByte(CLOSEACK);
+                    dataOut.writeShort(info.id);
+                    dataOut.flush();
+                    info.closed = true;
+                } catch (IOException e) {
+                    multiplexLog.log(Log.BRIEF, "exception: ", e);
 
-		    shutDown();
-		    throw e;
-		}
-	}
+                    shutDown();
+                    throw e;
+                }
+        }
     }
 
     /**
@@ -453,7 +453,7 @@ final class ConnectionMultiplexer {
      */
     protected void finalize() throws Throwable
     {
-	super.finalize();
-	shutDown();
+        super.finalize();
+        shutDown();
     }
 }

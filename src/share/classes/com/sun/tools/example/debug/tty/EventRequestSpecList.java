@@ -40,7 +40,7 @@ class EventRequestSpecList {
     private static final int statusResolved = 1;
     private static final int statusUnresolved = 2;
     private static final int statusError = 3;
-    
+
     // all specs
     private List<EventRequestSpec> eventRequestSpecs = Collections.synchronizedList(
                                                   new ArrayList<EventRequestSpec>());
@@ -48,7 +48,7 @@ class EventRequestSpecList {
     EventRequestSpecList() {
     }
 
-    /** 
+    /**
      * Resolve all deferred eventRequests waiting for 'refType'.
      * @return true if it completes successfully, false on error.
      */
@@ -84,7 +84,7 @@ class EventRequestSpecList {
                 EventRequest eventRequest = spec.resolveEagerly();
                 if (eventRequest != null) {
                     MessageOutput.println("Set deferred", spec.toString());
-                } 
+                }
             } catch (Exception e) {
             }
         }
@@ -96,7 +96,7 @@ class EventRequestSpecList {
             EventRequest eventRequest = spec.resolveEagerly();
             if (eventRequest != null) {
                 MessageOutput.println("Set", spec.toString());
-            } 
+            }
             return true;
         } catch (Exception exc) {
             MessageOutput.println("Unable to set",
@@ -106,46 +106,46 @@ class EventRequestSpecList {
         }
     }
 
-    EventRequestSpec createBreakpoint(String classPattern, 
+    EventRequestSpec createBreakpoint(String classPattern,
                                  int line) throws ClassNotFoundException {
-        ReferenceTypeSpec refSpec = 
+        ReferenceTypeSpec refSpec =
             new PatternReferenceTypeSpec(classPattern);
         return new BreakpointSpec(refSpec, line);
     }
-        
-    EventRequestSpec createBreakpoint(String classPattern, 
-                                 String methodId, 
-                                 List methodArgs) 
-                                throws MalformedMemberNameException, 
+
+    EventRequestSpec createBreakpoint(String classPattern,
+                                 String methodId,
+                                 List methodArgs)
+                                throws MalformedMemberNameException,
                                        ClassNotFoundException {
-        ReferenceTypeSpec refSpec = 
+        ReferenceTypeSpec refSpec =
             new PatternReferenceTypeSpec(classPattern);
         return new BreakpointSpec(refSpec, methodId, methodArgs);
     }
-        
+
     EventRequestSpec createExceptionCatch(String classPattern,
                                           boolean notifyCaught,
                                           boolean notifyUncaught)
                                             throws ClassNotFoundException {
-        ReferenceTypeSpec refSpec = 
+        ReferenceTypeSpec refSpec =
             new PatternReferenceTypeSpec(classPattern);
         return new ExceptionSpec(refSpec, notifyCaught, notifyUncaught);
     }
-        
-    EventRequestSpec createAccessWatchpoint(String classPattern, 
-                                       String fieldId) 
-                                      throws MalformedMemberNameException, 
+
+    EventRequestSpec createAccessWatchpoint(String classPattern,
+                                       String fieldId)
+                                      throws MalformedMemberNameException,
                                              ClassNotFoundException {
-        ReferenceTypeSpec refSpec = 
+        ReferenceTypeSpec refSpec =
             new PatternReferenceTypeSpec(classPattern);
         return new AccessWatchpointSpec(refSpec, fieldId);
     }
-        
-    EventRequestSpec createModificationWatchpoint(String classPattern, 
-                                       String fieldId) 
-                                      throws MalformedMemberNameException, 
+
+    EventRequestSpec createModificationWatchpoint(String classPattern,
+                                       String fieldId)
+                                      throws MalformedMemberNameException,
                                              ClassNotFoundException {
-        ReferenceTypeSpec refSpec = 
+        ReferenceTypeSpec refSpec =
             new PatternReferenceTypeSpec(classPattern);
         return new ModificationWatchpointSpec(refSpec, fieldId);
     }

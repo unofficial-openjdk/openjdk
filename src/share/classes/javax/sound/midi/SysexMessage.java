@@ -68,7 +68,6 @@ package javax.sound.midi;
  * bytes used to indicate that a <code>SysexMessage</code> contains continuing system
  * exclusive data should not be propagated via MIDI wire protocol.
  *
- * @version %I%, %E%
  * @author David Rivas
  * @author Kara Kytle
  * @author Florian Bomers
@@ -83,7 +82,7 @@ public class SysexMessage extends MidiMessage {
      * Status byte for System Exclusive message (0xF0, or 240).
      * @see MidiMessage#getStatus
      */
-    public static final int SYSTEM_EXCLUSIVE			= 0xF0; // 240
+    public static final int SYSTEM_EXCLUSIVE                    = 0xF0; // 240
 
 
     /**
@@ -92,7 +91,7 @@ public class SysexMessage extends MidiMessage {
      * is used in the real-time "MIDI wire" protocol.
      * @see MidiMessage#getStatus
      */
-    public static final int SPECIAL_SYSTEM_EXCLUSIVE	= 0xF7; // 247
+    public static final int SPECIAL_SYSTEM_EXCLUSIVE    = 0xF7; // 247
 
 
     // Instance variables
@@ -115,10 +114,10 @@ public class SysexMessage extends MidiMessage {
      * @see #setMessage
      */
     public SysexMessage() {
-	this(new byte[2]);
-	// Default sysex message data: SOX followed by EOX
-	data[0] = (byte) (SYSTEM_EXCLUSIVE & 0xFF);
-	data[1] = (byte) (ShortMessage.END_OF_EXCLUSIVE & 0xFF);
+        this(new byte[2]);
+        // Default sysex message data: SOX followed by EOX
+        data[0] = (byte) (SYSTEM_EXCLUSIVE & 0xFF);
+        data[1] = (byte) (ShortMessage.END_OF_EXCLUSIVE & 0xFF);
     }
 
 
@@ -130,7 +129,7 @@ public class SysexMessage extends MidiMessage {
      * @see #setMessage
      */
     protected SysexMessage(byte[] data) {
-	super(data);
+        super(data);
     }
 
 
@@ -143,11 +142,11 @@ public class SysexMessage extends MidiMessage {
      * the array, including the status byte.
      */
     public void setMessage(byte[] data, int length) throws InvalidMidiDataException {
-	int status = (data[0] & 0xFF);
-	if ((status != 0xF0) && (status != 0xF7)) {
-	    throw new InvalidMidiDataException("Invalid status byte for sysex message: 0x" + Integer.toHexString(status));
-	}
-	super.setMessage(data, length);
+        int status = (data[0] & 0xFF);
+        if ((status != 0xF0) && (status != 0xF7)) {
+            throw new InvalidMidiDataException("Invalid status byte for sysex message: 0x" + Integer.toHexString(status));
+        }
+        super.setMessage(data, length);
     }
 
 
@@ -159,22 +158,22 @@ public class SysexMessage extends MidiMessage {
      * the array
      */
     public void setMessage(int status, byte[] data, int length) throws InvalidMidiDataException {
-	if ( (status != 0xF0) && (status != 0xF7) ) {
-	    throw new InvalidMidiDataException("Invalid status byte for sysex message: 0x" + Integer.toHexString(status));
-	}
-	if (length < 0 || length > data.length) {
-	    throw new IndexOutOfBoundsException("length out of bounds: "+length);
-	}
-	this.length = length + 1;
+        if ( (status != 0xF0) && (status != 0xF7) ) {
+            throw new InvalidMidiDataException("Invalid status byte for sysex message: 0x" + Integer.toHexString(status));
+        }
+        if (length < 0 || length > data.length) {
+            throw new IndexOutOfBoundsException("length out of bounds: "+length);
+        }
+        this.length = length + 1;
 
-	if (this.data==null || this.data.length < this.length) {
-	    this.data = new byte[this.length];
-	}
+        if (this.data==null || this.data.length < this.length) {
+            this.data = new byte[this.length];
+        }
 
-	this.data[0] = (byte) (status & 0xFF);
-	if (length > 0) {
-	    System.arraycopy(data, 0, this.data, 1, length);
-	}
+        this.data[0] = (byte) (status & 0xFF);
+        if (length > 0) {
+            System.arraycopy(data, 0, this.data, 1, length);
+        }
     }
 
 
@@ -184,9 +183,9 @@ public class SysexMessage extends MidiMessage {
      * @return array containing the system exclusive message data.
      */
     public byte[] getData() {
-	byte[] returnedArray = new byte[length - 1];
-	System.arraycopy(data, 1, returnedArray, 0, (length - 1));
-	return returnedArray;
+        byte[] returnedArray = new byte[length - 1];
+        System.arraycopy(data, 1, returnedArray, 0, (length - 1));
+        return returnedArray;
     }
 
 
@@ -196,9 +195,9 @@ public class SysexMessage extends MidiMessage {
      * @return a clone of this instance
      */
     public Object clone() {
-	byte[] newData = new byte[length];
-	System.arraycopy(data, 0, newData, 0, newData.length);
-	SysexMessage event = new SysexMessage(newData);
-	return event;
+        byte[] newData = new byte[length];
+        System.arraycopy(data, 0, newData, 0, newData.length);
+        SysexMessage event = new SysexMessage(newData);
+        return event;
     }
 }

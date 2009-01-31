@@ -31,10 +31,10 @@ import java.security.spec.AlgorithmParameterSpec;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 
 /**
- * A representation of the XML <code>CanonicalizationMethod</code> 
- * element as defined in the 
+ * A representation of the XML <code>CanonicalizationMethod</code>
+ * element as defined in the
  * <a href="http://www.w3.org/TR/xmldsig-core/">
- * W3C Recommendation for XML-Signature Syntax and Processing</a>. The XML 
+ * W3C Recommendation for XML-Signature Syntax and Processing</a>. The XML
  * Schema Definition is defined as:
  * <p>
  * <pre>
@@ -48,8 +48,8 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
  *     &lt;/complexType&gt;
  * </pre>
  *
- * A <code>CanonicalizationMethod</code> instance may be created by invoking 
- * the {@link XMLSignatureFactory#newCanonicalizationMethod 
+ * A <code>CanonicalizationMethod</code> instance may be created by invoking
+ * the {@link XMLSignatureFactory#newCanonicalizationMethod
  * newCanonicalizationMethod} method of the {@link XMLSignatureFactory} class.
  *
  * @author Sean Mullan
@@ -60,14 +60,14 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 public interface CanonicalizationMethod extends Transform {
 
     /**
-     * The <a href="http://www.w3.org/TR/2001/REC-xml-c14n-20010315">Canonical 
+     * The <a href="http://www.w3.org/TR/2001/REC-xml-c14n-20010315">Canonical
      * XML (without comments)</a> canonicalization method algorithm URI.
      */
-    final static String INCLUSIVE = 
-	"http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+    final static String INCLUSIVE =
+        "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
 
     /**
-     * The 
+     * The
      * <a href="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments">
      * Canonical XML with comments</a> canonicalization method algorithm URI.
      */
@@ -75,7 +75,7 @@ public interface CanonicalizationMethod extends Transform {
         "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments";
 
     /**
-     * The <a href="http://www.w3.org/2001/10/xml-exc-c14n#">Exclusive 
+     * The <a href="http://www.w3.org/2001/10/xml-exc-c14n#">Exclusive
      * Canonical XML (without comments)</a> canonicalization method algorithm
      * URI.
      */
@@ -84,20 +84,20 @@ public interface CanonicalizationMethod extends Transform {
 
     /**
      * The <a href="http://www.w3.org/2001/10/xml-exc-c14n#WithComments">
-     * Exclusive Canonical XML with comments</a> canonicalization method 
+     * Exclusive Canonical XML with comments</a> canonicalization method
      * algorithm URI.
      */
     final static String EXCLUSIVE_WITH_COMMENTS =
         "http://www.w3.org/2001/10/xml-exc-c14n#WithComments";
 
     /**
-     * Returns the algorithm-specific input parameters associated with this 
+     * Returns the algorithm-specific input parameters associated with this
      * <code>CanonicalizationMethod</code>.
      *
-     * <p>The returned parameters can be typecast to a 
+     * <p>The returned parameters can be typecast to a
      * {@link C14NMethodParameterSpec} object.
      *
-     * @return the algorithm-specific input parameters (may be 
+     * @return the algorithm-specific input parameters (may be
      *    <code>null</code> if not specified)
      */
     AlgorithmParameterSpec getParameterSpec();

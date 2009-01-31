@@ -27,8 +27,8 @@ package com.sun.jdi;
 
 /**
  * The mirror for a value in the target VM.
- * This interface is the root of a 
- * value hierarchy encompassing primitive values and object values. 
+ * This interface is the root of a
+ * value hierarchy encompassing primitive values and object values.
  * <P>
  * Some examples of where values may be accessed:
  * <BLOCKQUOTE><TABLE SUMMARY="layout">
@@ -50,7 +50,7 @@ package com.sun.jdi;
  *   <TD>- returned with an event
  * </TABLE></BLOCKQUOTE>
  * <P>
- * The following table illustrates which subinterfaces of Value 
+ * The following table illustrates which subinterfaces of Value
  * are used to mirror values in the target VM --
  * <TABLE BORDER=1 SUMMARY="Maps each kind of value to a mirrored
  *  instance of a subinterface of Value">
@@ -171,12 +171,11 @@ package com.sun.jdi;
 public interface Value extends Mirror
 {
     /**
-     * Returns the run-time type of this value. 
+     * Returns the run-time type of this value.
      *
      * @see Type
-     * @return a {@link Type} which mirrors the value's type in the 
+     * @return a {@link Type} which mirrors the value's type in the
      * target VM.
      */
     Type type();
 }
-

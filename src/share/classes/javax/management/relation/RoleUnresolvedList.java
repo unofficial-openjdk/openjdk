@@ -67,7 +67,7 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * Constructs an empty RoleUnresolvedList.
      */
     public RoleUnresolvedList() {
-	super();
+        super();
     }
 
     /**
@@ -77,7 +77,7 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * @param initialCapacity  initial capacity
      */
     public RoleUnresolvedList(int initialCapacity) {
-	super(initialCapacity);
+        super(initialCapacity);
     }
 
     /**
@@ -140,7 +140,7 @@ public class RoleUnresolvedList extends ArrayList<Object> {
                 checkTypeSafe(this);
             typeSafe = true;
         }
-	return (List<RoleUnresolved>) (List) this;
+        return (List<RoleUnresolved>) (List) this;
     }
 
     //
@@ -155,13 +155,13 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * @exception IllegalArgumentException  if the unresolved role is null.
      */
     public void add(RoleUnresolved role)
-	throws IllegalArgumentException {
+        throws IllegalArgumentException {
 
-	if (role == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
-	super.add(role);
+        if (role == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
+        super.add(role);
     }
 
     /**
@@ -179,16 +179,16 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * (<code>index &lt; 0 || index &gt; size()</code>).
      */
     public void add(int index,
-		    RoleUnresolved role)
-	throws IllegalArgumentException,
-	       IndexOutOfBoundsException {
+                    RoleUnresolved role)
+        throws IllegalArgumentException,
+               IndexOutOfBoundsException {
 
-	if (role == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (role == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	super.add(index, role);
+        super.add(index, role);
     }
 
     /**
@@ -205,16 +205,16 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * (<code>index &lt; 0 || index &gt;= size()</code>).
      */
      public void set(int index,
-		     RoleUnresolved role)
-	 throws IllegalArgumentException,
+                     RoleUnresolved role)
+         throws IllegalArgumentException,
                 IndexOutOfBoundsException {
 
-	if (role == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (role == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	super.set(index, role);
+        super.set(index, role);
      }
 
     /**
@@ -231,13 +231,13 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * outside of the list.
      */
     public boolean addAll(RoleUnresolvedList roleList)
-	throws IndexOutOfBoundsException {
+        throws IndexOutOfBoundsException {
 
-	if (roleList == null) {
-	    return true;
-	}
+        if (roleList == null) {
+            return true;
+        }
 
-	return (super.addAll(roleList));
+        return (super.addAll(roleList));
     }
 
     /**
@@ -256,16 +256,16 @@ public class RoleUnresolvedList extends ArrayList<Object> {
      * (<code>index &lt; 0 || index &gt; size()</code>).
      */
     public boolean addAll(int index,
-			  RoleUnresolvedList roleList)
-	throws IllegalArgumentException,
+                          RoleUnresolvedList roleList)
+        throws IllegalArgumentException,
                IndexOutOfBoundsException {
 
-	if (roleList == null) {
-	    String excMsg = "Invalid parameter";
-	    throw new IllegalArgumentException(excMsg);
-	}
+        if (roleList == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
 
-	return (super.addAll(index, roleList));
+        return (super.addAll(index, roleList));
     }
 
     /*

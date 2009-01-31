@@ -53,42 +53,42 @@
  */
 #ifndef DitherDeclared
 #define DitherDeclared
-#define DeclareDitherVars	DeclareAllColorDitherVars
-#define InitDither		InitColorDither
-#define StartDitherLine		StartColorDitherLine
-#define DitherPixel		ColorDitherPixel
-#define DitherBufComplete	ColorDitherBufComplete
+#define DeclareDitherVars       DeclareAllColorDitherVars
+#define InitDither              InitColorDither
+#define StartDitherLine         StartColorDitherLine
+#define DitherPixel             ColorDitherPixel
+#define DitherBufComplete       ColorDitherBufComplete
 #endif
 
-#define DeclareAllColorDitherVars			\
-    DeclareColorDitherVars				\
+#define DeclareAllColorDitherVars                       \
+    DeclareColorDitherVars                              \
     int relx, rely;
 
-#define DeclareColorDitherVars				\
-    extern sgn_ordered_dither_array img_oda_red;	\
-    extern sgn_ordered_dither_array img_oda_green;	\
+#define DeclareColorDitherVars                          \
+    extern sgn_ordered_dither_array img_oda_red;        \
+    extern sgn_ordered_dither_array img_oda_green;      \
     extern sgn_ordered_dither_array img_oda_blue;
 
-#define InitColorDither(cvdata, clrdata, dstTW)			\
+#define InitColorDither(cvdata, clrdata, dstTW)                 \
     do {} while (0)
 
-#define StartColorDitherLine(cvdata, dstX1, dstY)		\
-    do {							\
-	relx = dstX1 & 7;					\
-	rely = dstY & 7;					\
+#define StartColorDitherLine(cvdata, dstX1, dstY)               \
+    do {                                                        \
+        relx = dstX1 & 7;                                       \
+        rely = dstY & 7;                                        \
     } while (0)
 
-#define ColorDitherPixel(dstX, dstY, pixel, red, green, blue)	\
-    do {							\
-	red += img_oda_red[relx][rely];				\
-	red = ComponentBound(red);				\
-	green += img_oda_green[relx][rely];			\
-	green = ComponentBound(green);				\
-	blue += img_oda_blue[relx][rely];			\
-	blue = ComponentBound(blue);				\
-	pixel = ColorCubeOrdMapSgn(red, green, blue);		\
-	relx = (relx + 1) & 7;					\
+#define ColorDitherPixel(dstX, dstY, pixel, red, green, blue)   \
+    do {                                                        \
+        red += img_oda_red[relx][rely];                         \
+        red = ComponentBound(red);                              \
+        green += img_oda_green[relx][rely];                     \
+        green = ComponentBound(green);                          \
+        blue += img_oda_blue[relx][rely];                       \
+        blue = ComponentBound(blue);                            \
+        pixel = ColorCubeOrdMapSgn(red, green, blue);           \
+        relx = (relx + 1) & 7;                                  \
     } while (0)
 
-#define ColorDitherBufComplete(cvdata, dstX1)			\
+#define ColorDitherBufComplete(cvdata, dstX1)                   \
     do {} while (0)

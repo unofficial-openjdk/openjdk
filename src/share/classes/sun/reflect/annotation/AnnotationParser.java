@@ -84,7 +84,7 @@ public class AnnotationParser {
         ByteBuffer buf = ByteBuffer.wrap(rawAnnotations);
         int numAnnotations = buf.getShort() & 0xFFFF;
         for (int i = 0; i < numAnnotations; i++) {
-	    Annotation a = parseAnnotation(buf, constPool, container, false);
+            Annotation a = parseAnnotation(buf, constPool, container, false);
             if (a != null) {
                 Class klass = a.annotationType();
                 AnnotationType type = AnnotationType.getInstance(klass);
@@ -189,10 +189,10 @@ public class AnnotationParser {
     private static Annotation parseAnnotation(ByteBuffer buf,
                                               ConstantPool constPool,
                                               Class container,
-					      boolean exceptionOnMissingAnnotationClass) {
+                                              boolean exceptionOnMissingAnnotationClass) {
         int typeIndex = buf.getShort() & 0xFFFF;
         Class annotationClass = null;
-	String sig = "[unknown]";
+        String sig = "[unknown]";
         try {
             try {
                 sig = constPool.getUTF8At(typeIndex);
@@ -202,16 +202,16 @@ public class AnnotationParser {
                 annotationClass = constPool.getClassAt(typeIndex);
             }
         } catch (NoClassDefFoundError e) {
-	    if (exceptionOnMissingAnnotationClass)
-		// note: at this point sig is "[unknown]" or VM-style
-		// name instead of a binary name
-		throw new TypeNotPresentException(sig, e);
+            if (exceptionOnMissingAnnotationClass)
+                // note: at this point sig is "[unknown]" or VM-style
+                // name instead of a binary name
+                throw new TypeNotPresentException(sig, e);
             skipAnnotation(buf, false);
             return null;
         }
-	catch (TypeNotPresentException e) {
-	    if (exceptionOnMissingAnnotationClass)
-		throw e;
+        catch (TypeNotPresentException e) {
+            if (exceptionOnMissingAnnotationClass)
+                throw e;
             skipAnnotation(buf, false);
             return null;
         }
@@ -275,7 +275,7 @@ public class AnnotationParser {
      *           u2   const_name_index;
      *       } enum_const_value;
      *       u2   class_info_index;
-     *       annotation annotation_value; 
+     *       annotation annotation_value;
      *       {
      *           u2    num_values;
      *           member_value values[num_values];
@@ -314,7 +314,7 @@ public class AnnotationParser {
     }
 
     /**
-     * Parses the primitive or String annotation member value indicated by 
+     * Parses the primitive or String annotation member value indicated by
      * the specified tag byte at the current position in the specified byte
      * buffer, resolving constant reference in the specified constant pool.
      * The cursor of the byte buffer must point to an annotation member value
@@ -457,7 +457,7 @@ public class AnnotationParser {
         Class componentType = arrayType.getComponentType();
 
         if (componentType == byte.class) {
-            return parseByteArray(length, buf, constPool); 
+            return parseByteArray(length, buf, constPool);
         } else if (componentType == char.class) {
             return parseCharArray(length, buf, constPool);
         } else if (componentType == double.class) {
@@ -580,7 +580,7 @@ public class AnnotationParser {
         }
         return typeMismatch ? exceptionProxy(tag) : result;
     }
-    
+
     private static Object parseLongArray(int length,
                                   ByteBuffer buf, ConstantPool constPool) {
         long[] result = new long[length];
@@ -729,10 +729,10 @@ public class AnnotationParser {
 
     /**
      * Skips the annotation at the current position in the specified
-     * byte buffer.  The cursor of the byte buffer must point to 
+     * byte buffer.  The cursor of the byte buffer must point to
      * an "annotation structure" OR two bytes into an annotation
      * structure (i.e., after the type index).
-     * 
+     *
      * @parameter complete true if the byte buffer points to the beginning
      *     of an annotation structure (rather than two bytes in).
      */

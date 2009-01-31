@@ -48,7 +48,7 @@ final class EntryPair
     public String entryName;
     public int value;
     public boolean fwd;
-    
+
     public EntryPair(String name, int value) {
         this(name, value, true);
     }

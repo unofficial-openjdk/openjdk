@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -45,37 +45,37 @@ public class DefaultProperty {
 
     public static void main(String[] args) throws Exception {
 
-	ServiceConfiguration.installServiceConfigurationFile();
+        ServiceConfiguration.installServiceConfigurationFile();
 
-	System.setProperty(
-	    "java.rmi.server.RMIClassLoaderSpi", "default");
+        System.setProperty(
+            "java.rmi.server.RMIClassLoaderSpi", "default");
 
-	String classname = "Foo";
+        String classname = "Foo";
 
-	URL codebaseURL = null;
-	try {
-	    codebaseURL = TestLibrary.installClassInCodebase(
-		classname, "remote_codebase");
-	} catch (MalformedURLException e) {
-	    TestLibrary.bomb(e);
-	}
+        URL codebaseURL = null;
+        try {
+            codebaseURL = TestLibrary.installClassInCodebase(
+                classname, "remote_codebase");
+        } catch (MalformedURLException e) {
+            TestLibrary.bomb(e);
+        }
 
-	TestLibrary.suggestSecurityManager(null);
+        TestLibrary.suggestSecurityManager(null);
 
-	Class fooClass = RMIClassLoader.loadClass(codebaseURL, classname);
-	if (!fooClass.getName().equals(classname)) {
-	    throw new RuntimeException(
-		"wrong class name, expected: " + classname +
-		", received: " + fooClass.getName());
-	}
+        Class fooClass = RMIClassLoader.loadClass(codebaseURL, classname);
+        if (!fooClass.getName().equals(classname)) {
+            throw new RuntimeException(
+                "wrong class name, expected: " + classname +
+                ", received: " + fooClass.getName());
+        }
 
-	String annotation = RMIClassLoader.getClassAnnotation(fooClass);
-	if (!annotation.equals(codebaseURL.toString())) {
-	    throw new RuntimeException(
-		"wrong class annotation, expected: " + codebaseURL.toString() +
-		", received: " + annotation);
-	}
+        String annotation = RMIClassLoader.getClassAnnotation(fooClass);
+        if (!annotation.equals(codebaseURL.toString())) {
+            throw new RuntimeException(
+                "wrong class annotation, expected: " + codebaseURL.toString() +
+                ", received: " + annotation);
+        }
 
-	System.err.println("TEST PASSED");
+        System.err.println("TEST PASSED");
     }
 }

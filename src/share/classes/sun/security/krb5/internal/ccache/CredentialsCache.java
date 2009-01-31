@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -47,7 +45,6 @@ import java.io.InputStreamReader;
  * for later use by different program.
  *
  * @author Yanni Zhang
- * @version 1.00
  */
 public abstract class CredentialsCache {
     static CredentialsCache singleton = null;
@@ -62,27 +59,27 @@ public abstract class CredentialsCache {
         if ((cache.length() >= 5) && cache.substring(0, 5).equalsIgnoreCase("FILE:")) {
             return FileCredentialsCache.acquireInstance(null, cache.substring(5));
         }
-        // XXX else, memory credential cache 
+        // XXX else, memory credential cache
         // default is file credential cache.
         return FileCredentialsCache.acquireInstance(null, cache);
     }
 
     public static CredentialsCache getInstance(PrincipalName principal,
-					       String cache) {  
+                                               String cache) {
 
-	// XXX Modify this to use URL framework of the JDK
-	if (cache != null &&
-	    (cache.length() >= 5) && 
-	    cache.regionMatches(true, 0, "FILE:", 0, 5)) { 
-	    return FileCredentialsCache.acquireInstance(principal, 
-							cache.substring(5));
-	}
+        // XXX Modify this to use URL framework of the JDK
+        if (cache != null &&
+            (cache.length() >= 5) &&
+            cache.regionMatches(true, 0, "FILE:", 0, 5)) {
+            return FileCredentialsCache.acquireInstance(principal,
+                                                        cache.substring(5));
+        }
 
-	// When cache is null, read the default cache.
-	// XXX else ..we haven't provided support for memory credential cache
-	// yet. (supported in native code)
-	// default is file credentials cache.
-	return FileCredentialsCache.acquireInstance(principal, cache);
+        // When cache is null, read the default cache.
+        // XXX else ..we haven't provided support for memory credential cache
+        // yet. (supported in native code)
+        // default is file credentials cache.
+        return FileCredentialsCache.acquireInstance(principal, cache);
 
     }
 
@@ -90,31 +87,31 @@ public abstract class CredentialsCache {
      * Gets the default credentials cache.
      */
     public static CredentialsCache getInstance() {
-	// Default credentials cache is file-based.
-	return FileCredentialsCache.acquireInstance();
+        // Default credentials cache is file-based.
+        return FileCredentialsCache.acquireInstance();
     }
-    
+
     public static CredentialsCache create(PrincipalName principal, String name) {
-	if (name == null) {
+        if (name == null) {
             throw new RuntimeException("cache name error");
-	}
-	if ((name.length() >= 5) 
-	    && name.regionMatches(true, 0, "FILE:", 0, 5)) {
-	    name = name.substring(5);
-	    return (FileCredentialsCache.New(principal, name));
-	}
-	// else return file credentials cache 
-	// default is file credentials cache.
-	return (FileCredentialsCache.New(principal, name));
+        }
+        if ((name.length() >= 5)
+            && name.regionMatches(true, 0, "FILE:", 0, 5)) {
+            name = name.substring(5);
+            return (FileCredentialsCache.New(principal, name));
+        }
+        // else return file credentials cache
+        // default is file credentials cache.
+        return (FileCredentialsCache.New(principal, name));
     }
 
     public static CredentialsCache create(PrincipalName principal) {
-	// create a default credentials cache for a specified principal
-	return (FileCredentialsCache.New(principal));
+        // create a default credentials cache for a specified principal
+        return (FileCredentialsCache.New(principal));
     }
 
     public static String cacheName() {
-	return cacheName;
+        return cacheName;
     }
 
     public abstract PrincipalName getPrimaryPrincipal();
@@ -122,6 +119,6 @@ public abstract class CredentialsCache {
     public abstract void save() throws IOException, KrbException;
     public abstract Credentials[] getCredsList();
     public abstract Credentials getDefaultCreds();
-    public abstract Credentials getCreds(PrincipalName sname, Realm srealm) ; 
+    public abstract Credentials getCreds(PrincipalName sname, Realm srealm) ;
     public abstract Credentials getCreds(LoginOptions options, PrincipalName sname, Realm srealm) ;
 }

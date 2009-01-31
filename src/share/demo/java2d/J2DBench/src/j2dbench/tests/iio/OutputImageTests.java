@@ -151,7 +151,7 @@ abstract class OutputImageTests extends OutputTests {
         imageioWriterSpis = (ImageWriterSpi[])spis.toArray(imageioWriterSpis);
         imageioWriteFormatShortNames = new String[shortNames.size()];
         imageioWriteFormatShortNames =
-            (String[])shortNames.toArray(imageioWriteFormatShortNames); 
+            (String[])shortNames.toArray(imageioWriteFormatShortNames);
     }
 
     protected OutputImageTests(Group parent,
@@ -243,16 +243,16 @@ abstract class OutputImageTests extends OutputTests {
                   "ImageIO.write()");
             addDependency(generalDestRoot,
                 new Modifier.Filter() {
-		    public boolean isCompatible(Object val) {
+                    public boolean isCompatible(Object val) {
                         // ImageIO.write() handles FILE and ARRAY, but
                         // not FILECHANNEL (well, I suppose we could create
                         // an ImageOutputStream from a FileChannel source,
                         // but that's not a common use case; FileChannel is
                         // better handled by the ImageWriter tests below)
-		        OutputType t = (OutputType)val;
-		        return (t.getType() != OUTPUT_FILECHANNEL);
-		    }
-		});
+                        OutputType t = (OutputType)val;
+                        return (t.getType() != OUTPUT_FILECHANNEL);
+                    }
+                });
             addDependencies(imageioOptRoot, true);
         }
 
@@ -293,7 +293,7 @@ abstract class OutputImageTests extends OutputTests {
             default:
                 throw new IllegalArgumentException("Invalid output type");
             }
-	}
+        }
     }
 
     private static class ImageWriterWrite extends OutputImageTests {
@@ -327,14 +327,14 @@ abstract class OutputImageTests extends OutputTests {
                     e.printStackTrace();
                 }
             } while (--numReps >= 0);
-	}
+        }
     }
 
     private static class WriteProgressListener
         implements IIOWriteProgressListener
     {
         public void imageStarted(ImageWriter source, int imageIndex) {}
-        public void imageProgress(ImageWriter source, 
+        public void imageProgress(ImageWriter source,
                                   float percentageDone) {}
         public void imageComplete(ImageWriter source) {}
         public void thumbnailStarted(ImageWriter source,

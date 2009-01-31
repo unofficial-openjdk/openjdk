@@ -184,23 +184,23 @@ public final class DataBufferFloat extends DataBuffer {
         data = bankdata[0];
     }
 
-    /** 
-     * Returns the default (first) <code>float</code> data array. 
+    /**
+     * Returns the default (first) <code>float</code> data array.
      * <p>
      * Note that calling this method may cause this {@code DataBuffer}
      * object to be incompatible with <a href="#optimizations">performance
      * optimizations</a> used by some implementations (such as caching
      * an associated image in video memory).
      *
-     * @return the first float data array.     
+     * @return the first float data array.
      */
     public float[] getData() {
-	theTrackable.setUntrackable();
+        theTrackable.setUntrackable();
         return data;
     }
 
-    /** 
-     * Returns the data array for the specified bank. 
+    /**
+     * Returns the data array for the specified bank.
      * <p>
      * Note that calling this method may cause this {@code DataBuffer}
      * object to be incompatible with <a href="#optimizations">performance
@@ -211,12 +211,12 @@ public final class DataBufferFloat extends DataBuffer {
      * @return the data array specified by <code>bank</code>.
      */
     public float[] getData(int bank) {
-	theTrackable.setUntrackable();
+        theTrackable.setUntrackable();
         return bankdata[bank];
     }
 
-    /** 
-     * Returns the data array for all banks. 
+    /**
+     * Returns the data array for all banks.
      * <p>
      * Note that calling this method may cause this {@code DataBuffer}
      * object to be incompatible with <a href="#optimizations">performance
@@ -226,10 +226,10 @@ public final class DataBufferFloat extends DataBuffer {
      * @return all data arrays for this data buffer.
      */
     public float[][] getBankData() {
-	theTrackable.setUntrackable();
+        theTrackable.setUntrackable();
         return (float[][]) bankdata.clone();
     }
-    
+
     /**
      * Returns the requested data array element from the first
      * (default) bank as an <code>int</code>.
@@ -270,7 +270,7 @@ public final class DataBufferFloat extends DataBuffer {
      */
     public void setElem(int i, int val) {
         data[i+offset] = (float)val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
 
     /**
@@ -285,7 +285,7 @@ public final class DataBufferFloat extends DataBuffer {
      */
     public void setElem(int bank, int i, int val) {
         bankdata[bank][i+offsets[bank]] = (float)val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
 
     /**
@@ -301,7 +301,7 @@ public final class DataBufferFloat extends DataBuffer {
     public float getElemFloat(int i) {
         return data[i+offset];
     }
- 
+
     /**
      * Returns the requested data array element from the specified
      * bank as a <code>float</code>.
@@ -316,7 +316,7 @@ public final class DataBufferFloat extends DataBuffer {
     public float getElemFloat(int bank, int i) {
         return bankdata[bank][i+offsets[bank]];
     }
- 
+
     /**
      * Sets the requested data array element in the first (default)
      * bank to the given <code>float</code>.
@@ -328,9 +328,9 @@ public final class DataBufferFloat extends DataBuffer {
      */
     public void setElemFloat(int i, float val) {
         data[i+offset] = val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
- 
+
     /**
      * Sets the requested data array element in the specified bank to
      * the given <code>float</code>.
@@ -338,12 +338,12 @@ public final class DataBufferFloat extends DataBuffer {
      * @param bank The bank number.
      * @param i The desired data array element.
      * @param val The value to be set.
-     * @see #getElemFloat(int)       
+     * @see #getElemFloat(int)
      * @see #getElemFloat(int, int)
      */
     public void setElemFloat(int bank, int i, float val) {
         bankdata[bank][i+offsets[bank]] = val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
 
     /**
@@ -353,13 +353,13 @@ public final class DataBufferFloat extends DataBuffer {
      * @param i The desired data array element.
      *
      * @return The data entry as a <code>double</code>.
-     * @see #setElemDouble(int, double)  
+     * @see #setElemDouble(int, double)
      * @see #setElemDouble(int, int, double)
      */
     public double getElemDouble(int i) {
         return (double)data[i+offset];
     }
- 
+
     /**
      * Returns the requested data array element from the specified
      * bank as a <code>double</code>.
@@ -374,7 +374,7 @@ public final class DataBufferFloat extends DataBuffer {
     public double getElemDouble(int bank, int i) {
         return (double)bankdata[bank][i+offsets[bank]];
     }
- 
+
     /**
      * Sets the requested data array element in the first (default)
      * bank to the given <code>double</code>.
@@ -386,9 +386,9 @@ public final class DataBufferFloat extends DataBuffer {
      */
     public void setElemDouble(int i, double val) {
         data[i+offset] = (float)val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
- 
+
     /**
      * Sets the requested data array element in the specified bank to
      * the given <code>double</code>.
@@ -396,11 +396,11 @@ public final class DataBufferFloat extends DataBuffer {
      * @param bank The bank number.
      * @param i The desired data array element.
      * @param val The value to be set.
-     * @see #getElemDouble(int)        
+     * @see #getElemDouble(int)
      * @see #getElemDouble(int, int)
      */
     public void setElemDouble(int bank, int i, double val) {
         bankdata[bank][i+offsets[bank]] = (float)val;
-	theTrackable.markDirty();
+        theTrackable.markDirty();
     }
 }

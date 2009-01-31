@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)ContextualGlyphSubstitution.h	1.6 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *

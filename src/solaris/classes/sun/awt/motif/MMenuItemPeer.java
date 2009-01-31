@@ -30,10 +30,10 @@ import java.awt.event.ActionEvent;
 import sun.awt.AppContext;
 
 class MMenuItemPeer implements MenuItemPeer {
-    long	pData;
+    long        pData;
     long        jniGlobalRef;
-    boolean	isCheckbox = false;
-    MenuItem	target;
+    boolean     isCheckbox = false;
+    MenuItem    target;
     boolean     nativeCreated = false;
 
     private boolean disposed = false;
@@ -61,24 +61,24 @@ class MMenuItemPeer implements MenuItemPeer {
     }
 
     MMenuItemPeer(MenuItem target) {
-	this.target = target;
-	MMenuPeer parent = (MMenuPeer) MToolkit.targetToPeer(getParent_NoClientCode(target));
-	create(parent);
+        this.target = target;
+        MMenuPeer parent = (MMenuPeer) MToolkit.targetToPeer(getParent_NoClientCode(target));
+        create(parent);
     }
 
     static native MenuContainer getParent_NoClientCode(MenuComponent menuComponent);
 
     protected void finalize() throws Throwable {
         dispose();
-	super.finalize();
+        super.finalize();
     }
 
     public void setEnabled(boolean b) {
-	if (b) {
-	    enable();
-	} else {
-	    disable();
-	}
+        if (b) {
+            enable();
+        } else {
+            disable();
+        }
     }
 
     public void setLabel(String label) {
@@ -125,9 +125,9 @@ class MMenuItemPeer implements MenuItemPeer {
 
     private void destroyNativeWidgetImpl() {
         if (nativeCreated) {
-	    pDispose();
-	    nativeCreated = false;
-	}
+            pDispose();
+            nativeCreated = false;
+        }
     }
 
     void destroyNativeWidget() {
@@ -174,14 +174,14 @@ class MMenuItemPeer implements MenuItemPeer {
     // NOTE: This method may be called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void action(final long when, final int modifiers) {
-    
-	MToolkit.executeOnEventHandlerThread(target, new Runnable() {
-	    public void run() {
+
+        MToolkit.executeOnEventHandlerThread(target, new Runnable() {
+            public void run() {
                 postEvent(new ActionEvent(target, ActionEvent.ACTION_PERFORMED,
                                           target.getActionCommand(), when,
                                           modifiers));
-	    }
-	});
+            }
+        });
     }
 
     // Needed for MenuComponentPeer.

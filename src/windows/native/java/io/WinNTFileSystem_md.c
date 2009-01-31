@@ -65,7 +65,7 @@ Java_java_io_WinNTFileSystem_initIDs(JNIEnv *env, jclass cls)
 extern int wcanonicalize(const WCHAR *path, WCHAR *out, int len);
 extern int wcanonicalizeWithPrefix(const WCHAR *canonicalPrefix, const WCHAR *pathWithCanonicalPrefix, WCHAR *out, int len);
 
-JNIEXPORT jstring JNICALL 
+JNIEXPORT jstring JNICALL
 Java_java_io_WinNTFileSystem_canonicalize0(JNIEnv *env, jobject this,
                                            jstring pathname)
 {
@@ -73,32 +73,32 @@ Java_java_io_WinNTFileSystem_canonicalize0(JNIEnv *env, jobject this,
     WCHAR canonicalPath[MAX_PATH_LENGTH];
 
     WITH_UNICODE_STRING(env, pathname, path) {
-        /*we estimate the max length of memory needed as 
+        /*we estimate the max length of memory needed as
           "currentDir. length + pathname.length"
          */
         int len = wcslen(path);
         len += currentDirLength(path, len);
         if (len  > MAX_PATH_LENGTH - 1) {
-            WCHAR *cp = (WCHAR*)malloc(len * sizeof(WCHAR));  
+            WCHAR *cp = (WCHAR*)malloc(len * sizeof(WCHAR));
             if (cp != NULL) {
                 if (wcanonicalize(path, cp, len) >= 0) {
                     rv = (*env)->NewString(env, cp, wcslen(cp));
-		}
-		free(cp);
-	    }
+                }
+                free(cp);
+            }
         } else
-	if (wcanonicalize(path, canonicalPath, MAX_PATH_LENGTH) >= 0) {
-	    rv = (*env)->NewString(env, canonicalPath, wcslen(canonicalPath));
+        if (wcanonicalize(path, canonicalPath, MAX_PATH_LENGTH) >= 0) {
+            rv = (*env)->NewString(env, canonicalPath, wcslen(canonicalPath));
         }
-    } END_UNICODE_STRING(env, path); 
+    } END_UNICODE_STRING(env, path);
     if (rv == NULL) {
-     	JNU_ThrowIOExceptionWithLastError(env, "Bad pathname");
+        JNU_ThrowIOExceptionWithLastError(env, "Bad pathname");
     }
     return rv;
 }
 
 
-JNIEXPORT jstring JNICALL 
+JNIEXPORT jstring JNICALL
 Java_java_io_WinNTFileSystem_canonicalizeWithPrefix0(JNIEnv *env, jobject this,
                                                      jstring canonicalPrefixString,
                                                      jstring pathWithCanonicalPrefixString)
@@ -112,22 +112,22 @@ Java_java_io_WinNTFileSystem_canonicalizeWithPrefix0(JNIEnv *env, jobject this,
                 WCHAR *cp = (WCHAR*)malloc(len * sizeof(WCHAR));
                 if (cp != NULL) {
                     if (wcanonicalizeWithPrefix(canonicalPrefix,
-						pathWithCanonicalPrefix,
-						cp, len) >= 0) {
-		      rv = (*env)->NewString(env, cp, wcslen(cp));
-		    }
-		    free(cp);
-		}
+                                                pathWithCanonicalPrefix,
+                                                cp, len) >= 0) {
+                      rv = (*env)->NewString(env, cp, wcslen(cp));
+                    }
+                    free(cp);
+                }
             } else
             if (wcanonicalizeWithPrefix(canonicalPrefix,
                                         pathWithCanonicalPrefix,
-					canonicalPath, MAX_PATH_LENGTH) >= 0) {
+                                        canonicalPath, MAX_PATH_LENGTH) >= 0) {
                 rv = (*env)->NewString(env, canonicalPath, wcslen(canonicalPath));
             }
         } END_UNICODE_STRING(env, pathWithCanonicalPrefix);
     } END_UNICODE_STRING(env, canonicalPrefix);
     if (rv == NULL) {
-     	JNU_ThrowIOExceptionWithLastError(env, "Bad pathname");
+        JNU_ThrowIOExceptionWithLastError(env, "Bad pathname");
     }
     return rv;
 }
@@ -152,7 +152,7 @@ Java_java_io_WinNTFileSystem_canonicalizeWithPrefix0(JNIEnv *env, jobject this,
    never happen, we will need to revisit the lookup implementation.
 
 static WCHAR* ReservedDEviceNames[] = {
-    L"CON", L"PRN", L"AUX", L"NUL", 
+    L"CON", L"PRN", L"AUX", L"NUL",
     L"COM1", L"COM2", L"COM3", L"COM4", L"COM5", L"COM6", L"COM7", L"COM8", L"COM9",
     L"LPT1", L"LPT2", L"LPT3", L"LPT4", L"LPT5", L"LPT6", L"LPT7", L"LPT8", L"LPT9",
     L"CLOCK$"
@@ -164,12 +164,12 @@ static BOOL isReservedDeviceNameW(WCHAR* path) {
     WCHAR buf[BUFSIZE];
     WCHAR *lpf = NULL;
     DWORD retLen = GetFullPathNameW(path,
-				   BUFSIZE,
-				   buf,
-				   &lpf);
+                                   BUFSIZE,
+                                   buf,
+                                   &lpf);
     if ((retLen == BUFSIZE - 1 || retLen == BUFSIZE - 2) &&
-        buf[0] == L'\\' && buf[1] == L'\\' && 
-	buf[2] == L'.' && buf[3] == L'\\') {
+        buf[0] == L'\\' && buf[1] == L'\\' &&
+        buf[2] == L'.' && buf[3] == L'\\') {
         WCHAR* dname = _wcsupr(buf + 4);
         if (wcscmp(dname, L"CON") == 0 ||
             wcscmp(dname, L"PRN") == 0 ||
@@ -177,9 +177,9 @@ static BOOL isReservedDeviceNameW(WCHAR* path) {
             wcscmp(dname, L"NUL") == 0)
             return TRUE;
         if ((wcsncmp(dname, L"COM", 3) == 0 ||
-	     wcsncmp(dname, L"LPT", 3) == 0) &&
+             wcsncmp(dname, L"LPT", 3) == 0) &&
             dname[3] - L'0' > 0 &&
-	    dname[3] - L'0' <= 9)
+            dname[3] - L'0' <= 9)
             return TRUE;
     }
     return FALSE;
@@ -187,14 +187,14 @@ static BOOL isReservedDeviceNameW(WCHAR* path) {
 
 JNIEXPORT jint JNICALL
 Java_java_io_WinNTFileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
-                                                  jobject file) 
+                                                  jobject file)
 {
 
     jint rv = 0;
     jint pathlen;
 
     /* both pagefile.sys and hiberfil.sys have length 12 */
-#define SPECIALFILE_NAMELEN 12 
+#define SPECIALFILE_NAMELEN 12
 
     WCHAR *pathbuf = fileToNTPath(env, file, ids.path);
     WIN32_FILE_ATTRIBUTE_DATA wfad;
@@ -205,29 +205,29 @@ Java_java_io_WinNTFileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
             rv = (java_io_FileSystem_BA_EXISTS
                   | ((wfad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                      ? java_io_FileSystem_BA_DIRECTORY
-		     : java_io_FileSystem_BA_REGULAR)
-		  | ((wfad.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
-		     ? java_io_FileSystem_BA_HIDDEN : 0));
-	} else { /* pagefile.sys is a special case */
-	    if (GetLastError() == ERROR_SHARING_VIOLATION) {
+                     : java_io_FileSystem_BA_REGULAR)
+                  | ((wfad.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+                     ? java_io_FileSystem_BA_HIDDEN : 0));
+        } else { /* pagefile.sys is a special case */
+            if (GetLastError() == ERROR_SHARING_VIOLATION) {
                 rv = java_io_FileSystem_BA_EXISTS;
-	        if ((pathlen = wcslen(pathbuf)) >= SPECIALFILE_NAMELEN && 
-		    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN, 
-			      L"pagefile.sys") == 0) ||
-		    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN, 
-			      L"hiberfil.sys") == 0))
-		  rv |= java_io_FileSystem_BA_REGULAR;
-	    }
-	}
+                if ((pathlen = wcslen(pathbuf)) >= SPECIALFILE_NAMELEN &&
+                    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN,
+                              L"pagefile.sys") == 0) ||
+                    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN,
+                              L"hiberfil.sys") == 0))
+                  rv |= java_io_FileSystem_BA_REGULAR;
+            }
+        }
     }
     free(pathbuf);
     return rv;
 }
 
 
-JNIEXPORT jboolean 
-JNICALL Java_java_io_WinNTFileSystem_checkAccess(JNIEnv *env, jobject this, 
-                                                 jobject file, jint access) 
+JNIEXPORT jboolean
+JNICALL Java_java_io_WinNTFileSystem_checkAccess(JNIEnv *env, jobject this,
+                                                 jobject file, jint access)
 {
     jboolean rv = JNI_FALSE;
     int mode;
@@ -243,7 +243,7 @@ JNICALL Java_java_io_WinNTFileSystem_checkAccess(JNIEnv *env, jobject this,
         mode = 2;
         break;
     default: assert(0);
-    }    
+    }
     if (_waccess(pathbuf, mode) == 0) {
         rv = JNI_TRUE;
     }
@@ -252,11 +252,11 @@ JNICALL Java_java_io_WinNTFileSystem_checkAccess(JNIEnv *env, jobject this,
 }
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_setPermission(JNIEnv *env, jobject this, 
+Java_java_io_WinNTFileSystem_setPermission(JNIEnv *env, jobject this,
                                            jobject file,
                                            jint access,
-					   jboolean enable,
-					   jboolean owneronly)
+                                           jboolean enable,
+                                           jboolean owneronly)
 {
     jboolean rv = JNI_FALSE;
     WCHAR *pathbuf;
@@ -272,7 +272,7 @@ Java_java_io_WinNTFileSystem_setPermission(JNIEnv *env, jobject this,
     if (a != INVALID_FILE_ATTRIBUTES) {
         if (enable)
             a =  a & ~FILE_ATTRIBUTE_READONLY;
-        else 
+        else
             a =  a | FILE_ATTRIBUTE_READONLY;
         if (SetFileAttributesW(pathbuf, a))
             rv = JNI_TRUE;
@@ -283,7 +283,7 @@ Java_java_io_WinNTFileSystem_setPermission(JNIEnv *env, jobject this,
 
 JNIEXPORT jlong JNICALL
 Java_java_io_WinNTFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
-                                                 jobject file) 
+                                                 jobject file)
 {
     jlong rv = 0;
     LARGE_INTEGER modTime;
@@ -293,26 +293,26 @@ Java_java_io_WinNTFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
     if (pathbuf == NULL)
         return rv;
     h = CreateFileW(pathbuf,
-		    /* Device query access */
-		    0,
-		    /* Share it */
-		    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-		    /* No security attributes */
-		    NULL,
-		    /* Open existing or fail */
-		    OPEN_EXISTING,
-		    /* Backup semantics for directories */
-		    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
-		    /* No template file */
-		    NULL);
+                    /* Device query access */
+                    0,
+                    /* Share it */
+                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    /* No security attributes */
+                    NULL,
+                    /* Open existing or fail */
+                    OPEN_EXISTING,
+                    /* Backup semantics for directories */
+                    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
+                    /* No template file */
+                    NULL);
     if (h != INVALID_HANDLE_VALUE) {
         GetFileTime(h, NULL, NULL, &t);
-	CloseHandle(h);
-	modTime.LowPart = (DWORD) t.dwLowDateTime;
-	modTime.HighPart = (LONG) t.dwHighDateTime;
-	rv = modTime.QuadPart / 10000;
-	rv -= 11644473600000;
-    } 
+        CloseHandle(h);
+        modTime.LowPart = (DWORD) t.dwLowDateTime;
+        modTime.HighPart = (LONG) t.dwHighDateTime;
+        rv = modTime.QuadPart / 10000;
+        rv -= 11644473600000;
+    }
     free(pathbuf);
     return rv;
 }
@@ -331,10 +331,10 @@ Java_java_io_WinNTFileSystem_getLength(JNIEnv *env, jobject this, jobject file)
         rv = wfad.nFileSizeHigh * ((jlong)MAXDWORD + 1) + wfad.nFileSizeLow;
     } else {
         if (GetLastError() == ERROR_SHARING_VIOLATION) {
-	    /* The error is "share violation", which means the file/dir
+            /* The error is "share violation", which means the file/dir
                must exists. Try _wstati64, we know this at least works
                for pagefile.sys and hiberfil.sys.
-	    */
+            */
             struct _stati64 sb;
             if (_wstati64(pathbuf, &sb) == 0) {
                 rv = sb.st_size;
@@ -365,31 +365,31 @@ Java_java_io_WinNTFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
         NULL);
 
     if (h == INVALID_HANDLE_VALUE) {
- 	DWORD error = GetLastError();
-	if ((error != ERROR_FILE_EXISTS) && (error != ERROR_ALREADY_EXISTS)) {
+        DWORD error = GetLastError();
+        if ((error != ERROR_FILE_EXISTS) && (error != ERROR_ALREADY_EXISTS)) {
 
-	    // If a directory by the named path already exists,
-	    // return false (behavior of solaris and linux) instead of
-	    // throwing an exception
- 	    DWORD fattr = GetFileAttributesW(pathbuf);
-	    if ((fattr == INVALID_FILE_ATTRIBUTES) ||
-		    (fattr & ~FILE_ATTRIBUTE_DIRECTORY)) {
-		SetLastError(error);
-		JNU_ThrowIOExceptionWithLastError(env, "Could not open file");
-	    }
-	 }
-	 free(pathbuf);
-	 return JNI_FALSE;
+            // If a directory by the named path already exists,
+            // return false (behavior of solaris and linux) instead of
+            // throwing an exception
+            DWORD fattr = GetFileAttributesW(pathbuf);
+            if ((fattr == INVALID_FILE_ATTRIBUTES) ||
+                    (fattr & ~FILE_ATTRIBUTE_DIRECTORY)) {
+                SetLastError(error);
+                JNU_ThrowIOExceptionWithLastError(env, "Could not open file");
+            }
+         }
+         free(pathbuf);
+         return JNI_FALSE;
     }
     free(pathbuf);
     CloseHandle(h);
     return JNI_TRUE;
 }
 
-static int 
-removeFileOrDirectory(const jchar *path) 
-{ 
-    /* Returns 0 on success */ 
+static int
+removeFileOrDirectory(const jchar *path)
+{
+    /* Returns 0 on success */
     DWORD a;
 
     SetFileAttributesW(path, 0);
@@ -418,7 +418,7 @@ Java_java_io_WinNTFileSystem_delete0(JNIEnv *env, jobject this, jobject file)
     return rv;
 }
 
-JNIEXPORT jobjectArray JNICALL 
+JNIEXPORT jobjectArray JNICALL
 Java_java_io_WinNTFileSystem_list(JNIEnv *env, jobject this, jobject file)
 {
     WCHAR *search_path;
@@ -455,7 +455,7 @@ Java_java_io_WinNTFileSystem_list(JNIEnv *env, jobject this, jobject file)
         len--;
     }
     search_path[len] = 0;
-    
+
     /* Append "*", or possibly "\\*", to path */
     if ((search_path[0] == L'\\' && search_path[1] == L'\0') ||
         (search_path[1] == L':'
@@ -489,10 +489,10 @@ Java_java_io_WinNTFileSystem_list(JNIEnv *env, jobject this, jobject file)
         return NULL;
     /* Scan the directory */
     do {
-        if (!wcscmp(find_data.cFileName, L".") 
+        if (!wcscmp(find_data.cFileName, L".")
                                 || !wcscmp(find_data.cFileName, L".."))
            continue;
-        name = (*env)->NewString(env, find_data.cFileName, 
+        name = (*env)->NewString(env, find_data.cFileName,
                                  wcslen(find_data.cFileName));
         if (name == NULL)
             return NULL; // error;
@@ -500,34 +500,34 @@ Java_java_io_WinNTFileSystem_list(JNIEnv *env, jobject this, jobject file)
             old = rv;
             rv = (*env)->NewObjectArray(env, maxlen <<= 1,
                                             JNU_ClassString(env), NULL);
-            if ( rv == NULL 
+            if ( rv == NULL
                          || JNU_CopyObjectArray(env, rv, old, len) < 0)
                 return NULL; // error
             (*env)->DeleteLocalRef(env, old);
         }
         (*env)->SetObjectArrayElement(env, rv, len++, name);
         (*env)->DeleteLocalRef(env, name);
-        
+
     } while (FindNextFileW(handle, &find_data));
 
     if (GetLastError() != ERROR_NO_MORE_FILES)
         return NULL; // error
     FindClose(handle);
 
-    /* Copy the final results into an appropriately-sized array */    
+    /* Copy the final results into an appropriately-sized array */
     old = rv;
     rv = (*env)->NewObjectArray(env, len, JNU_ClassString(env), NULL);
     if (rv == NULL)
         return NULL; /* error */
     if (JNU_CopyObjectArray(env, rv, old, len) < 0)
-        return NULL; /* error */    
+        return NULL; /* error */
     return rv;
 }
 
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_createDirectory(JNIEnv *env, jobject this, 
-                                             jobject file) 
+Java_java_io_WinNTFileSystem_createDirectory(JNIEnv *env, jobject this,
+                                             jobject file)
 {
     BOOL h = FALSE;
     WCHAR *pathbuf = fileToNTPath(env, file, ids.path);
@@ -537,18 +537,18 @@ Java_java_io_WinNTFileSystem_createDirectory(JNIEnv *env, jobject this,
     }
     h = CreateDirectoryW(pathbuf, NULL);
     free(pathbuf);
-    
+
     if (h == 0) {
         return JNI_FALSE;
     }
-        
+
     return JNI_TRUE;
 }
 
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_rename0(JNIEnv *env, jobject this, jobject from, 
-                                     jobject to) 
+Java_java_io_WinNTFileSystem_rename0(JNIEnv *env, jobject this, jobject from,
+                                     jobject to)
 {
 
     jboolean rv = JNI_FALSE;
@@ -567,7 +567,7 @@ Java_java_io_WinNTFileSystem_rename0(JNIEnv *env, jobject this, jobject from,
 
 JNIEXPORT jboolean JNICALL
 Java_java_io_WinNTFileSystem_setLastModifiedTime(JNIEnv *env, jobject this,
-                                                 jobject file, jlong time) 
+                                                 jobject file, jlong time)
 {
     jboolean rv = JNI_FALSE;
     WCHAR *pathbuf = fileToNTPath(env, file, ids.path);
@@ -575,17 +575,17 @@ Java_java_io_WinNTFileSystem_setLastModifiedTime(JNIEnv *env, jobject this,
     if (pathbuf == NULL)
         return JNI_FALSE;
     h = CreateFileW(pathbuf, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-		    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, 0);
+                    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, 0);
     if (h != INVALID_HANDLE_VALUE) {
         LARGE_INTEGER modTime;
-	FILETIME t;
-	modTime.QuadPart = (time + 11644473600000L) * 10000L;
-	t.dwLowDateTime = (DWORD)modTime.LowPart;
-	t.dwHighDateTime = (DWORD)modTime.HighPart;
-	if (SetFileTime(h, NULL, NULL, &t)) {
-	    rv = JNI_TRUE;
-	}
-	CloseHandle(h);
+        FILETIME t;
+        modTime.QuadPart = (time + 11644473600000L) * 10000L;
+        t.dwLowDateTime = (DWORD)modTime.LowPart;
+        t.dwHighDateTime = (DWORD)modTime.HighPart;
+        if (SetFileTime(h, NULL, NULL, &t)) {
+            rv = JNI_TRUE;
+        }
+        CloseHandle(h);
     }
     free(pathbuf);
 
@@ -594,8 +594,8 @@ Java_java_io_WinNTFileSystem_setLastModifiedTime(JNIEnv *env, jobject this,
 
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this, 
-                                         jobject file) 
+Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
+                                         jobject file)
 {
     jboolean rv = JNI_FALSE;
     DWORD a;
@@ -615,8 +615,8 @@ Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
 
 
 JNIEXPORT jobject JNICALL
-Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this, 
-                                               jint drive) 
+Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
+                                               jint drive)
 {
     jstring ret = NULL;
     jchar *p = _wgetdcwd(drive, NULL, MAX_PATH);
@@ -630,9 +630,9 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
 
 typedef BOOL (WINAPI* GetVolumePathNameProc) (LPCWSTR, LPWSTR, DWORD);
 
-JNIEXPORT jlong JNICALL  
+JNIEXPORT jlong JNICALL
 Java_java_io_WinNTFileSystem_getSpace0(JNIEnv *env, jobject this,
-				       jobject file, jint t)
+                                       jobject file, jint t)
 {
     WCHAR volname[MAX_PATH_LENGTH + 1];
     jlong rv = 0L;
@@ -641,7 +641,7 @@ Java_java_io_WinNTFileSystem_getSpace0(JNIEnv *env, jobject this,
     HMODULE h = LoadLibrary("kernel32");
     GetVolumePathNameProc getVolumePathNameW = NULL;
     if (h) {
-        getVolumePathNameW 
+        getVolumePathNameW
             = (GetVolumePathNameProc)GetProcAddress(h, "GetVolumePathNameW");
     }
 
@@ -649,24 +649,24 @@ Java_java_io_WinNTFileSystem_getSpace0(JNIEnv *env, jobject this,
         ULARGE_INTEGER totalSpace, freeSpace, usableSpace;
         if (GetDiskFreeSpaceExW(volname, &usableSpace, &totalSpace, &freeSpace)) {
             switch(t) {
-	    case java_io_FileSystem_SPACE_TOTAL:
-	        rv = long_to_jlong(totalSpace.QuadPart);
-		break;
-	    case java_io_FileSystem_SPACE_FREE:
-	        rv = long_to_jlong(freeSpace.QuadPart);
-		break;
-	    case java_io_FileSystem_SPACE_USABLE:
-	        rv = long_to_jlong(usableSpace.QuadPart);
-		break;
-	    default:
-	        assert(0);
-	    }
-	} 
+            case java_io_FileSystem_SPACE_TOTAL:
+                rv = long_to_jlong(totalSpace.QuadPart);
+                break;
+            case java_io_FileSystem_SPACE_FREE:
+                rv = long_to_jlong(freeSpace.QuadPart);
+                break;
+            case java_io_FileSystem_SPACE_USABLE:
+                rv = long_to_jlong(usableSpace.QuadPart);
+                break;
+            default:
+                assert(0);
+            }
+        }
     }
 
     if (h) {
         FreeLibrary(h);
     }
-    free(pathbuf); 
+    free(pathbuf);
     return rv;
 }

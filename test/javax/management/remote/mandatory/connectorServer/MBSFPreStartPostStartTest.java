@@ -110,7 +110,7 @@ public class MBSFPreStartPostStartTest {
 
         JMXConnectorServer server = null;
         JMXConnector client = null;
-            
+
         // Create a new MBeanServer
         //
         final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
@@ -126,13 +126,13 @@ public class MBSFPreStartPostStartTest {
                                                                      null,
                                                                      mbs);
 
-	    // Create MBeanServerForwarder
-	    //
+            // Create MBeanServerForwarder
+            //
             MBeanServerForwarder mbsf =
                 MBSFInvocationHandler.newProxyInstance();
 
             // Set MBeanServerForwarder before start()
-	    //
+            //
             if (setBeforeStart)
                 server.setMBeanServerForwarder(mbsf);
 
@@ -141,7 +141,7 @@ public class MBSFPreStartPostStartTest {
             server.start();
 
             // Set MBeanServerForwarder after start()
-	    //
+            //
             if (!setBeforeStart)
                 server.setMBeanServerForwarder(mbsf);
 
@@ -156,18 +156,18 @@ public class MBSFPreStartPostStartTest {
             // Get non-secure MBeanServerConnection
             //
             final MBeanServerConnection mbsc =
-		client.getMBeanServerConnection();
+                client.getMBeanServerConnection();
 
-	    // Run method
-	    //
+            // Run method
+            //
             mbsc.getDefaultDomain();
 
-	    // Check flag in MBeanServerForwarder
-	    //
+            // Check flag in MBeanServerForwarder
+            //
             MBSFInvocationHandler mbsfih =
                 (MBSFInvocationHandler) Proxy.getInvocationHandler(mbsf);
-	    if (mbsfih.getFlag() == true) {
-		echo("OK: Did go into MBeanServerForwarder!");
+            if (mbsfih.getFlag() == true) {
+                echo("OK: Did go into MBeanServerForwarder!");
             } else {
                 echo("KO: Didn't go into MBeanServerForwarder!");
                 return 1;
@@ -223,11 +223,11 @@ public class MBSFPreStartPostStartTest {
         // Check test results
         //
         if (error > 0) {
-	    echo(">>> Unhappy Bye, Bye!");
-	    throw new IllegalStateException(
+            echo(">>> Unhappy Bye, Bye!");
+            throw new IllegalStateException(
                 "Test FAILED: Unexpected error!");
-	} else {
-	    echo(">>> Happy Bye, Bye!");
-	}
+        } else {
+            echo(">>> Happy Bye, Bye!");
+        }
     }
 }

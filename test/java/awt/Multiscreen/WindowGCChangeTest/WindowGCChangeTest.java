@@ -39,9 +39,9 @@ import java.awt.event.*;
 
 import test.java.awt.regtesthelpers.Util;
 
-public class WindowGCChangeTest extends Applet 
+public class WindowGCChangeTest extends Applet
 {
-    public void init() 
+    public void init()
     {
     }
 

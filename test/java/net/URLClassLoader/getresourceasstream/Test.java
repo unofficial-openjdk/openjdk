@@ -26,17 +26,17 @@ import java.io.*;
 
 public class Test {
     public static void main (String[] args) throws Exception {
-    	test1();
+        test1();
     }
 
     public static void test1 () throws Exception {
-	URLClassLoader cl = new URLClassLoader (new URL[] {
-	    new URL ("file:./test.jar")
-	});
-	Class clazz = Class.forName ("Test\u00a3", true, cl);
-	InputStream is = clazz.getResourceAsStream ("Test\u00a3.class");
-	is.read();
-	is = clazz.getResourceAsStream ("Rest\u00a3.class");
-	is.read();
+        URLClassLoader cl = new URLClassLoader (new URL[] {
+            new URL ("file:./test.jar")
+        });
+        Class clazz = Class.forName ("Test\u00a3", true, cl);
+        InputStream is = clazz.getResourceAsStream ("Test\u00a3.class");
+        is.read();
+        is = clazz.getResourceAsStream ("Rest\u00a3.class");
+        is.read();
     }
 }

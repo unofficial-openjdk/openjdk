@@ -29,8 +29,8 @@
 /*
  * MBeanFeatureInfoSerialStore
  *
- * Generated on December 9, 2005  by dfuchs 
- *   with JRE: Sun Microsystems Inc. 1.5.0_05 
+ * Generated on December 9, 2005  by dfuchs
+ *   with JRE: Sun Microsystems Inc. 1.5.0_05
  *
  */
 
@@ -46,16 +46,16 @@ import java.util.Set;
 import javax.management.MBeanFeatureInfo;
 
 /**
- * The class MBeanFeatureInfoSerialStore is a static store of MBeanFeatureInfo instances 
+ * The class MBeanFeatureInfoSerialStore is a static store of MBeanFeatureInfo instances
  * serialized with java version 1.5.0_05.
- * It is used to check serial compatibility with later version of the 
+ * It is used to check serial compatibility with later version of the
  * JDK.
  **/
 public class MBeanFeatureInfoSerialStore {
 
     // The serial object store.
     //
-    private static final Map<String,byte[]> map = 
+    private static final Map<String,byte[]> map =
             new HashMap<String,byte[]>();
     static {
         // initialization of serial store
@@ -1045,8 +1045,8 @@ public class MBeanFeatureInfoSerialStore {
         }
 
     }
-        
-    /** 
+
+    /**
      * Deserialize a byte array into an object.
      * @param bytes The bytes to deserialize.
      * @return The deserialized object.
@@ -1054,23 +1054,23 @@ public class MBeanFeatureInfoSerialStore {
      * @throws ClassNotFoundException if the class of the serialized object
      *         cannot be loaded.
      **/
-    public static Object deserialize(byte[] bytes) throws IOException, 
+    public static Object deserialize(byte[] bytes) throws IOException,
             ClassNotFoundException {
-        final ByteArrayInputStream bin = new ByteArrayInputStream(bytes); 
+        final ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
         final ObjectInputStream istr = new ObjectInputStream(bin);
         return istr.readObject();
     }
 
     /**
      * The set of keys for objects registered in this serialized data store.
-     * For each of these keys we have a serialized object of type 
+     * For each of these keys we have a serialized object of type
      * MBeanFeatureInfo.
      * @return The set of keys corresponding to registered objects.
      **/
     public static Set<String> keySet() {
-	return map.keySet();
+        return map.keySet();
     }
-        
+
     /**
      * Retrieves and deserializes the object stored at the given key.
      * @return The deserialized object.
@@ -1078,7 +1078,7 @@ public class MBeanFeatureInfoSerialStore {
      * @throws ClassNotFoundException if the class of the serialized object
      *         cannot be loaded.
      **/
-    public static MBeanFeatureInfo get(String name) 
+    public static MBeanFeatureInfo get(String name)
     throws IOException, ClassNotFoundException {
         final byte[] bytes = map.get(name);
         final Object obj = deserialize(bytes);
@@ -1090,7 +1090,7 @@ public class MBeanFeatureInfoSerialStore {
      **/
     public static final String SERIALIZER_VM_VERSION =
             "1.5.0_05";
-    
+
     /**
      * Vendor of the JVM that was used to generate the serialized data.
      **/

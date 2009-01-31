@@ -38,16 +38,15 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see CertAttrSet
  */
 public class CertificateIssuerUniqueIdentity implements CertAttrSet<String> {
-    private UniqueIdentity	id;
+    private UniqueIdentity      id;
 
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */  
+     */
     public static final String IDENT = "x509.info.issuerID";
     /**
      * Sub attributes name for this CertAttrSet.

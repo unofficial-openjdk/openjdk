@@ -36,7 +36,6 @@ import java.math.BigInteger;
  * @see DSAKey
  * @see DSAPublicKey
  *
- * @version %I% %E%
  * @author Benjamin Renaud
  */
 public interface DSAPrivateKey extends DSAKey, java.security.PrivateKey {
@@ -44,8 +43,8 @@ public interface DSAPrivateKey extends DSAKey, java.security.PrivateKey {
     // Declare serialVersionUID to be compatible with JDK1.1
 
    /**
-    * The class fingerprint that is set to indicate 
-    * serialization compatibility with a previous 
+    * The class fingerprint that is set to indicate
+    * serialization compatibility with a previous
     * version of the class.
     */
     static final long serialVersionUID = 7776497482533790279L;
@@ -57,5 +56,3 @@ public interface DSAPrivateKey extends DSAKey, java.security.PrivateKey {
      */
     public BigInteger getX();
 }
-
-

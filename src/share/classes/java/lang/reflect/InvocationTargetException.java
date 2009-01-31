@@ -46,30 +46,30 @@ public class InvocationTargetException extends Exception {
     private static final long serialVersionUID = 4085088731926701167L;
 
      /**
-     * This field holds the target if the 
+     * This field holds the target if the
      * InvocationTargetException(Throwable target) constructor was
      * used to instantiate the object
-     * 
-     * @serial 
-     * 
+     *
+     * @serial
+     *
      */
     private Throwable target;
 
     /**
-     * Constructs an {@code InvocationTargetException} with 
+     * Constructs an {@code InvocationTargetException} with
      * {@code null} as the target exception.
      */
     protected InvocationTargetException() {
-	super((Throwable)null);  // Disallow initCause
+        super((Throwable)null);  // Disallow initCause
     }
 
     /**
      * Constructs a InvocationTargetException with a target exception.
-     * 
+     *
      * @param target the target exception
      */
     public InvocationTargetException(Throwable target) {
-	super((Throwable)null);  // Disallow initCause
+        super((Throwable)null);  // Disallow initCause
         this.target = target;
     }
 
@@ -81,7 +81,7 @@ public class InvocationTargetException extends Exception {
      * @param s      the detail message
      */
     public InvocationTargetException(Throwable target, String s) {
-	super(s, null);  // Disallow initCause
+        super(s, null);  // Disallow initCause
         this.target = target;
     }
 
@@ -95,7 +95,7 @@ public class InvocationTargetException extends Exception {
      * @return the thrown target exception (cause of this exception).
      */
     public Throwable getTargetException() {
-	return target;
+        return target;
     }
 
     /**

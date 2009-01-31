@@ -230,10 +230,10 @@ public final class IntHashtable {
                 // ignore
             } else if (tableHash == EMPTY) {        // empty, end o' the line
                 if (firstDeleted >= 0) {
-		    index = firstDeleted;           // reset if had deleted slot
+                    index = firstDeleted;           // reset if had deleted slot
                 }
                 return index;
-            } else if (firstDeleted < 0) {	    // remember first deleted
+            } else if (firstDeleted < 0) {          // remember first deleted
                     firstDeleted = index;
             }
             if (jump == 0) {                        // lazy compute jump
@@ -243,10 +243,10 @@ public final class IntHashtable {
             }
 
             index = (index + jump) % keyList.length;
-	    if (index == firstDeleted) {
-		// We've searched all entries for the given key.
-		return index;
-	    }
+            if (index == firstDeleted) {
+                // We've searched all entries for the given key.
+                return index;
+            }
         }
     }
 
@@ -269,4 +269,3 @@ public final class IntHashtable {
         33554467, 67108879, 134217757, 268435459, 536870923, 1073741827, 2147483647
     };
 }
-

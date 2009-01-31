@@ -44,7 +44,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -72,7 +71,7 @@ extends Extension implements CertAttrSet<String> {
             return;
         }
         DerOutputStream os = new DerOutputStream();
-	names.encode(os);
+        names.encode(os);
         this.extensionValue = os.toByteArray();
     }
 
@@ -113,12 +112,12 @@ extends Extension implements CertAttrSet<String> {
         this.critical = critical.booleanValue();
         this.extensionValue = (byte[]) value;
         DerValue val = new DerValue(this.extensionValue);
-	if (val.data == null) {
-	    names = new GeneralNames();
-	    return;
-	}
+        if (val.data == null) {
+            names = new GeneralNames();
+            return;
+        }
 
-	names = new GeneralNames(val);
+        names = new GeneralNames(val);
     }
 
     /**
@@ -146,29 +145,29 @@ extends Extension implements CertAttrSet<String> {
      */
     public void encode(OutputStream out) throws IOException {
         DerOutputStream tmp = new DerOutputStream();
-	if (extensionValue == null) {
+        if (extensionValue == null) {
             extensionId = PKIXExtensions.IssuerAlternativeName_Id;
-	    critical = false;
-	    encodeThis();
-	}
-	super.encode(tmp);
-	out.write(tmp.toByteArray());
+            critical = false;
+            encodeThis();
+        }
+        super.encode(tmp);
+        out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-	if (name.equalsIgnoreCase(ISSUER_NAME)) {
-	    if (!(obj instanceof GeneralNames)) {
-	      throw new IOException("Attribute value should be of" +
+        if (name.equalsIgnoreCase(ISSUER_NAME)) {
+            if (!(obj instanceof GeneralNames)) {
+              throw new IOException("Attribute value should be of" +
                                     " type GeneralNames.");
-	    }
-	    names = (GeneralNames)obj;
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-			"CertAttrSet:IssuerAlternativeName.");
-	}
+            }
+            names = (GeneralNames)obj;
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                        "CertAttrSet:IssuerAlternativeName.");
+        }
         encodeThis();
     }
 
@@ -176,24 +175,24 @@ extends Extension implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-	if (name.equalsIgnoreCase(ISSUER_NAME)) {
-	    return (names);
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-			"CertAttrSet:IssuerAlternativeName.");
-	}
+        if (name.equalsIgnoreCase(ISSUER_NAME)) {
+            return (names);
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                        "CertAttrSet:IssuerAlternativeName.");
+        }
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-	if (name.equalsIgnoreCase(ISSUER_NAME)) {
-	    names = null;
-	} else {
-	  throw new IOException("Attribute name not recognized by " +
-			"CertAttrSet:IssuerAlternativeName.");
-	}
+        if (name.equalsIgnoreCase(ISSUER_NAME)) {
+            names = null;
+        } else {
+          throw new IOException("Attribute name not recognized by " +
+                        "CertAttrSet:IssuerAlternativeName.");
+        }
         encodeThis();
     }
 
@@ -205,7 +204,7 @@ extends Extension implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(ISSUER_NAME);
 
-	return (elements.elements());
+        return (elements.elements());
     }
 
     /**

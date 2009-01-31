@@ -54,26 +54,26 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
     private static native void initIDs();
 
     MScrollPanePeer(Component target) {
-	init(target);
+        init(target);
         scrollPaneInit();
     }
 
     MScrollPanePeer(Component target, Object arg) {
-	init(target, arg);
+        init(target, arg);
         scrollPaneInit();
     }
 
     void scrollPaneInit() {
-	ignore = false;
+        ignore = false;
         ScrollPane sp = (ScrollPane)target;
-	Adjustable vadj, hadj;
-	if ((vadj = sp.getVAdjustable()) != null) {
+        Adjustable vadj, hadj;
+        if ((vadj = sp.getVAdjustable()) != null) {
             pSetIncrement(Adjustable.VERTICAL, UNIT_INCREMENT, vadj.getUnitIncrement());
-	}
-	if ((hadj = sp.getHAdjustable()) != null) {
-	    pSetIncrement(Adjustable.HORIZONTAL, UNIT_INCREMENT, hadj.getUnitIncrement());
-	}
-	super.pSetScrollbarBackground(sp.getBackground());
+        }
+        if ((hadj = sp.getHAdjustable()) != null) {
+            pSetIncrement(Adjustable.HORIZONTAL, UNIT_INCREMENT, hadj.getUnitIncrement());
+        }
+        super.pSetScrollbarBackground(sp.getBackground());
     }
 
     public void setScrollChild(MComponentPeer child) {
@@ -82,12 +82,12 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
 
     public void setBackground(Color c) {
         super.setBackground(c);
-	pSetScrollbarBackground(c);
+        pSetScrollbarBackground(c);
     }
 
     public void setForeground(Color c) {
         super.setForeground(c);
-	pSetInnerForeground(c);
+        pSetInnerForeground(c);
     }
 
     native void pSetScrollChild(MComponentPeer child);
@@ -100,68 +100,68 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
     public int getHScrollbarHeight() {
         ScrollPane sp = (ScrollPane)target;
         if (sp.getScrollbarDisplayPolicy() == ScrollPane.SCROLLBARS_NEVER) {
-	    return 0;
-	} else {
-	    return pGetScrollbarSpace(Adjustable.HORIZONTAL);
-	}
+            return 0;
+        } else {
+            return pGetScrollbarSpace(Adjustable.HORIZONTAL);
+        }
     }
 
     public int getVScrollbarWidth() {
         ScrollPane sp = (ScrollPane)target;
         if (sp.getScrollbarDisplayPolicy() == ScrollPane.SCROLLBARS_NEVER) {
-	    return 0;
-	} else {
-	    return pGetScrollbarSpace(Adjustable.VERTICAL);
-	}
+            return 0;
+        } else {
+            return pGetScrollbarSpace(Adjustable.VERTICAL);
+        }
     }
 
     public Insets insets() {
-	ScrollPane sp = (ScrollPane)target;
-	Dimension d = sp.size();
-	Dimension cd;
+        ScrollPane sp = (ScrollPane)target;
+        Dimension d = sp.size();
+        Dimension cd;
         Component c = getScrollChild();
         if (c != null) {
-	    cd = c.size();
-	} else {
-	    cd = new Dimension(0, 0);
-	}
-	return pInsets(d.width, d.height, cd.width, cd.height);
+            cd = c.size();
+        } else {
+            cd = new Dimension(0, 0);
+        }
+        return pInsets(d.width, d.height, cd.width, cd.height);
     }
 
     public void setUnitIncrement(Adjustable adj, int u) {
         ScrollPane sp = (ScrollPane)target;
         if (sp.getScrollbarDisplayPolicy() != ScrollPane.SCROLLBARS_NEVER) {
-	    pSetIncrement(adj.getOrientation(), UNIT_INCREMENT, u);
-	}
+            pSetIncrement(adj.getOrientation(), UNIT_INCREMENT, u);
+        }
     }
 
     public void setValue(Adjustable adj, int v) {
-	if (! ignore) {
-	    Point p;
-	    Component c = getScrollChild();
+        if (! ignore) {
+            Point p;
+            Component c = getScrollChild();
             if (c == null) {
                 return;
             }
-	    p = c.getLocation();
-	    switch(adj.getOrientation()) {
-	    case Adjustable.VERTICAL:
-		setScrollPosition(-(p.x), v);
-		break;
-	    case Adjustable.HORIZONTAL:
-		setScrollPosition(v, -(p.y));
-		break;
-	    }
-	}
+            p = c.getLocation();
+            switch(adj.getOrientation()) {
+            case Adjustable.VERTICAL:
+                setScrollPosition(-(p.x), v);
+                break;
+            case Adjustable.HORIZONTAL:
+                setScrollPosition(v, -(p.y));
+                break;
+            }
+        }
     }
 
     public native void setScrollPosition(int x, int y);
 
     public void childResized(int w, int h) {
-	// REMIND AIM:  May need to revisit this...
+        // REMIND AIM:  May need to revisit this...
         if (((ScrollPane)target).getScrollbarDisplayPolicy() != ScrollPane.SCROLLBARS_NEVER) {
             ScrollPane sp = (ScrollPane)target;
-	    Adjustable vAdj = sp.getVAdjustable();
-	    Adjustable hAdj = sp.getHAdjustable();
+            Adjustable vAdj = sp.getVAdjustable();
+            Adjustable hAdj = sp.getHAdjustable();
             pSetIncrement(Scrollbar.VERTICAL, UNIT_INCREMENT, vAdj.getUnitIncrement());
             pSetIncrement(Scrollbar.HORIZONTAL, UNIT_INCREMENT, hAdj.getUnitIncrement());
             pSetIncrement(Scrollbar.VERTICAL, BLOCK_INCREMENT, vAdj.getBlockIncrement());
@@ -173,10 +173,10 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
     // NOTE: This method may be called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     private void postScrollEvent(int orient, int type,
-				 int pos, boolean isAdjusting)
+                                 int pos, boolean isAdjusting)
     {
-	Runnable adjustor = new Adjustor(orient, type, pos, isAdjusting);
-	MToolkit.executeOnEventHandlerThread(new ScrollEvent(target, adjustor));
+        Runnable adjustor = new Adjustor(orient, type, pos, isAdjusting);
+        MToolkit.executeOnEventHandlerThread(new ScrollEvent(target, adjustor));
     }
 
     /**
@@ -186,19 +186,19 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
      * notification from the adjustable is temporarily ignored.
      */
     class ScrollEvent extends PeerEvent {
-	ScrollEvent(Object source, Runnable runnable) {
-	    super(source, runnable, 0L);
-	}
+        ScrollEvent(Object source, Runnable runnable) {
+            super(source, runnable, 0L);
+        }
 
-	public PeerEvent coalesceEvents(PeerEvent newEvent) {
-	    if (log.isLoggable(Level.FINEST)) {
+        public PeerEvent coalesceEvents(PeerEvent newEvent) {
+            if (log.isLoggable(Level.FINEST)) {
                 log.log(Level.FINEST, "ScrollEvent coalesced " + newEvent);
             }
-	    if (newEvent instanceof ScrollEvent) {
-		return newEvent;
-	    }
-	    return null;
-	}
+            if (newEvent instanceof ScrollEvent) {
+                return newEvent;
+            }
+            return null;
+        }
     }
 
     native void setTypedValue(ScrollPaneAdjustable adjustable, int value, int type);
@@ -207,83 +207,83 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
      * Runnable for the ScrollEvent that performs the adjustment.
      */
     class Adjustor implements Runnable {
-	int orient;		// selects scrollbar
-	int type;		// adjustment type
-	int pos;		// new position (only used for absolute)
-	boolean isAdjusting;	// isAdjusting status
+        int orient;             // selects scrollbar
+        int type;               // adjustment type
+        int pos;                // new position (only used for absolute)
+        boolean isAdjusting;    // isAdjusting status
 
-	Adjustor(int orient, int type, int pos, boolean isAdjusting) {
-	    this.orient = orient;
-	    this.type = type;
-	    this.pos = pos;
-	    this.isAdjusting = isAdjusting;
-	}
+        Adjustor(int orient, int type, int pos, boolean isAdjusting) {
+            this.orient = orient;
+            this.type = type;
+            this.pos = pos;
+            this.isAdjusting = isAdjusting;
+        }
 
-	public void run() {
-	    ScrollPane sp = (ScrollPane)MScrollPanePeer.this.target;
-	    ScrollPaneAdjustable adj = null;
+        public void run() {
+            ScrollPane sp = (ScrollPane)MScrollPanePeer.this.target;
+            ScrollPaneAdjustable adj = null;
 
-	    // ScrollPaneAdjustable made public in 1.4, but
-	    // get[HV]Adjustable can't be declared to return
-	    // ScrollPaneAdjustable because it would break backward
-	    // compatibility -- hence the cast
+            // ScrollPaneAdjustable made public in 1.4, but
+            // get[HV]Adjustable can't be declared to return
+            // ScrollPaneAdjustable because it would break backward
+            // compatibility -- hence the cast
 
-	    if (orient == Adjustable.VERTICAL) {
-		adj = (ScrollPaneAdjustable)sp.getVAdjustable();
-	    } else if (orient == Adjustable.HORIZONTAL) {
-		adj = (ScrollPaneAdjustable)sp.getHAdjustable();
-	    } else {
+            if (orient == Adjustable.VERTICAL) {
+                adj = (ScrollPaneAdjustable)sp.getVAdjustable();
+            } else if (orient == Adjustable.HORIZONTAL) {
+                adj = (ScrollPaneAdjustable)sp.getHAdjustable();
+            } else {
                 if (log.isLoggable(Level.FINE)) {
                     log.log(Level.FINE, "Assertion failed: unknown orient");
                 }
-	    }
+            }
 
-	    if (adj == null) {
-		return;
-	    }
+            if (adj == null) {
+                return;
+            }
 
-	    int newpos = adj.getValue();
-	    switch (type) {
-	      case AdjustmentEvent.UNIT_DECREMENT:
-		  newpos -= adj.getUnitIncrement();
-		  break;
-	      case AdjustmentEvent.UNIT_INCREMENT:
-		  newpos += adj.getUnitIncrement();
-		  break;
-	      case AdjustmentEvent.BLOCK_DECREMENT:
-		  newpos -= adj.getBlockIncrement();
-		  break;
-	      case AdjustmentEvent.BLOCK_INCREMENT:
-		  newpos += adj.getBlockIncrement();
-		  break;
-	      case AdjustmentEvent.TRACK:
-		  newpos = this.pos;
-		  break;
-	      default:
+            int newpos = adj.getValue();
+            switch (type) {
+              case AdjustmentEvent.UNIT_DECREMENT:
+                  newpos -= adj.getUnitIncrement();
+                  break;
+              case AdjustmentEvent.UNIT_INCREMENT:
+                  newpos += adj.getUnitIncrement();
+                  break;
+              case AdjustmentEvent.BLOCK_DECREMENT:
+                  newpos -= adj.getBlockIncrement();
+                  break;
+              case AdjustmentEvent.BLOCK_INCREMENT:
+                  newpos += adj.getBlockIncrement();
+                  break;
+              case AdjustmentEvent.TRACK:
+                  newpos = this.pos;
+                  break;
+              default:
                   if (log.isLoggable(Level.FINE)) {
                       log.log(Level.FINE, "Assertion failed: unknown type");
                   }
-		  return;
-	    }
+                  return;
+            }
 
-	    // keep scroll position in acceptable range
-	    newpos = Math.max(adj.getMinimum(), newpos);
-	    newpos = Math.min(adj.getMaximum(), newpos);
+            // keep scroll position in acceptable range
+            newpos = Math.max(adj.getMinimum(), newpos);
+            newpos = Math.min(adj.getMaximum(), newpos);
 
-	    // set value; this will synchronously fire an AdjustmentEvent
-	    try {
-		MScrollPanePeer.this.ignore = true;
-		adj.setValueIsAdjusting(isAdjusting);
+            // set value; this will synchronously fire an AdjustmentEvent
+            try {
+                MScrollPanePeer.this.ignore = true;
+                adj.setValueIsAdjusting(isAdjusting);
 
                 // Fix for 4075484 - consider type information when creating AdjustmentEvent
                 // We can't just call adj.setValue() because it creates AdjustmentEvent with type=TRACK
-                // Instead, we call private method setTypedValue of ScrollPaneAdjustable. 
-                // Because ScrollPaneAdjustable is in another package we should call it through native code.                
+                // Instead, we call private method setTypedValue of ScrollPaneAdjustable.
+                // Because ScrollPaneAdjustable is in another package we should call it through native code.
                 setTypedValue(adj, newpos, type);
-	    } finally {
-		MScrollPanePeer.this.ignore = false;
-	    }
-	}
+            } finally {
+                MScrollPanePeer.this.ignore = false;
+            }
+        }
     } // class Adjustor
 
 
@@ -298,8 +298,8 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
         return child;
     }
 
-    final static int 	MARGIN = 1;
-    final static int 	SCROLLBAR = 16;
+    final static int    MARGIN = 1;
+    final static int    SCROLLBAR = 16;
     int hsbSpace;
     int vsbSpace;
     int vval;
@@ -313,91 +313,91 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
      */
     public void print(Graphics g) {
         ScrollPane sp = (ScrollPane)target;
-	Dimension d = sp.size();
-	Color bg = sp.getBackground();
-	Color fg = sp.getForeground();
-	Point p = sp.getScrollPosition();
-	Component c = getScrollChild();
-	Dimension cd;
+        Dimension d = sp.size();
+        Color bg = sp.getBackground();
+        Color fg = sp.getForeground();
+        Point p = sp.getScrollPosition();
+        Component c = getScrollChild();
+        Dimension cd;
         if (c != null) {
             cd = c.size();
         } else {
             cd = new Dimension(0, 0);
         }
-	int sbDisplay = sp.getScrollbarDisplayPolicy();
-	int vvis, hvis, vmin, hmin, vmax, hmax, vval, hval;
+        int sbDisplay = sp.getScrollbarDisplayPolicy();
+        int vvis, hvis, vmin, hmin, vmax, hmax, vval, hval;
 
-	switch (sbDisplay) {
-	  case ScrollPane.SCROLLBARS_NEVER:
-	    hsbSpace = vsbSpace = 0;
-	    break;
-	  case ScrollPane.SCROLLBARS_ALWAYS:
-	    hsbSpace = vsbSpace = SCROLLBAR;
-	    break;
-	  case ScrollPane.SCROLLBARS_AS_NEEDED:
-	    hsbSpace = (cd.width <= (d.width - 2*MARGIN)? 0 : SCROLLBAR);
-	    vsbSpace = (cd.height <= (d.height - 2*MARGIN)? 0 : SCROLLBAR);
+        switch (sbDisplay) {
+          case ScrollPane.SCROLLBARS_NEVER:
+            hsbSpace = vsbSpace = 0;
+            break;
+          case ScrollPane.SCROLLBARS_ALWAYS:
+            hsbSpace = vsbSpace = SCROLLBAR;
+            break;
+          case ScrollPane.SCROLLBARS_AS_NEEDED:
+            hsbSpace = (cd.width <= (d.width - 2*MARGIN)? 0 : SCROLLBAR);
+            vsbSpace = (cd.height <= (d.height - 2*MARGIN)? 0 : SCROLLBAR);
 
-	    if (hsbSpace == 0 && vsbSpace != 0) {
-		hsbSpace = (cd.width <= (d.width - SCROLLBAR - 2*MARGIN)? 0 : SCROLLBAR);
-	    }
-	    if (vsbSpace == 0 && hsbSpace != 0) {
-		vsbSpace = (cd.height <= (d.height - SCROLLBAR - 2*MARGIN)? 0 : SCROLLBAR);
-	    }
-	}
+            if (hsbSpace == 0 && vsbSpace != 0) {
+                hsbSpace = (cd.width <= (d.width - SCROLLBAR - 2*MARGIN)? 0 : SCROLLBAR);
+            }
+            if (vsbSpace == 0 && hsbSpace != 0) {
+                vsbSpace = (cd.height <= (d.height - SCROLLBAR - 2*MARGIN)? 0 : SCROLLBAR);
+            }
+        }
 
         vvis = hvis = vmin = hmin = vmax = hmax = vval = hval = 0;
 
-	if (vsbSpace > 0) {
-	    vmin = 0;
-	    vvis = d.height - (2*MARGIN) - hsbSpace;
-	    vmax = Math.max(cd.height - vvis, 0);
-	    vval = p.y;
-	}
-	if (hsbSpace > 0) {
-	    hmin = 0;
-	    hvis = d.width - (2*MARGIN) - vsbSpace;
-	    hmax = Math.max(cd.width - hvis, 0);
-	    hval = p.x;
-	}
+        if (vsbSpace > 0) {
+            vmin = 0;
+            vvis = d.height - (2*MARGIN) - hsbSpace;
+            vmax = Math.max(cd.height - vvis, 0);
+            vval = p.y;
+        }
+        if (hsbSpace > 0) {
+            hmin = 0;
+            hvis = d.width - (2*MARGIN) - vsbSpace;
+            hmax = Math.max(cd.width - hvis, 0);
+            hval = p.x;
+        }
 
-	// need to be careful to add the margins back in here because
-	// we're drawing the margin border, after all!
-	int w = d.width - vsbSpace;
-	int h = d.height - hsbSpace;
+        // need to be careful to add the margins back in here because
+        // we're drawing the margin border, after all!
+        int w = d.width - vsbSpace;
+        int h = d.height - hsbSpace;
 
-	g.setColor(bg);
-	g.fillRect(0, 0, d.width, d.height);
+        g.setColor(bg);
+        g.fillRect(0, 0, d.width, d.height);
 
-	if (hsbSpace > 0) {
-	    int sbw = d.width - vsbSpace;
-	    g.fillRect(1, d.height - SCROLLBAR - 3, sbw - 1, SCROLLBAR - 3);
-	    Graphics ng = g.create();
-	    try {
-	        ng.translate(0, d.height - (SCROLLBAR - 2));
-	        drawScrollbar(ng, bg, SCROLLBAR - 2, sbw,
-			       hmin, hmax, hval, hvis, true);
-	    } finally {
-	        ng.dispose();
-	    }
-	}
-	if (vsbSpace > 0) {
-	    int sbh = d.height - hsbSpace;
-	    g.fillRect(d.width - SCROLLBAR - 3, 1, SCROLLBAR - 3, sbh - 1);
-	    Graphics ng = g.create();
-	    try {
-	        ng.translate(d.width - (SCROLLBAR - 2), 0);
-	        drawScrollbar(ng, bg, SCROLLBAR - 2, sbh,
-			       vmin, vmax, vval, vvis, false);
-	    } finally {
-	        ng.dispose();
-	    }
-	}
+        if (hsbSpace > 0) {
+            int sbw = d.width - vsbSpace;
+            g.fillRect(1, d.height - SCROLLBAR - 3, sbw - 1, SCROLLBAR - 3);
+            Graphics ng = g.create();
+            try {
+                ng.translate(0, d.height - (SCROLLBAR - 2));
+                drawScrollbar(ng, bg, SCROLLBAR - 2, sbw,
+                               hmin, hmax, hval, hvis, true);
+            } finally {
+                ng.dispose();
+            }
+        }
+        if (vsbSpace > 0) {
+            int sbh = d.height - hsbSpace;
+            g.fillRect(d.width - SCROLLBAR - 3, 1, SCROLLBAR - 3, sbh - 1);
+            Graphics ng = g.create();
+            try {
+                ng.translate(d.width - (SCROLLBAR - 2), 0);
+                drawScrollbar(ng, bg, SCROLLBAR - 2, sbh,
+                               vmin, vmax, vval, vvis, false);
+            } finally {
+                ng.dispose();
+            }
+        }
 
-	draw3DRect(g, bg, 0, 0, w - 1, h - 1, false);
+        draw3DRect(g, bg, 0, 0, w - 1, h - 1, false);
 
-	target.print(g);
-	sp.printComponents(g);
+        target.print(g);
+        sp.printComponents(g);
     }
 
     /**
@@ -409,4 +409,3 @@ class MScrollPanePeer extends MPanelPeer implements ScrollPanePeer {
         // but the child of SP content widget.
     }
 }
-

@@ -121,32 +121,32 @@ void ADD_SUFF(SRC_T##ToByteIndexed##FUNC)(BLIT_PARAMS)                 \
     DstWriteInvLut = pDstInfo->invColorTable;                          \
                                                                        \
     for (j = 0; j < height; j++) {                                     \
-	mlib_u8 *pSrc = srcBase;                                       \
-	mlib_u8 *pDst = dstBase;                                       \
+        mlib_u8 *pSrc = srcBase;                                       \
+        mlib_u8 *pDst = dstBase;                                       \
                                                                        \
-	DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
-	DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
-	DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
+        DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
+        DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
+        DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
                                                                        \
-	DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
+        DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
                                                                        \
-	for (i = 0; i < width; i++) {                                  \
-	    GET_RGB_##SRC_T(i)                                         \
-	    {                                                          \
-		r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
-		g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
-		b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
+        for (i = 0; i < width; i++) {                                  \
+            GET_RGB_##SRC_T(i)                                         \
+            {                                                          \
+                r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
+                g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
+                b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
                                                                        \
-		pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
-	    }                                                          \
+                pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
+            }                                                          \
                                                                        \
-	    DstWriteXDither = (DstWriteXDither + 1) & 7;               \
-	}                                                              \
+            DstWriteXDither = (DstWriteXDither + 1) & 7;               \
+        }                                                              \
                                                                        \
-	PTR_ADD(dstBase, dstScan);                                     \
-	PTR_ADD(srcBase, srcScan);                                     \
+        PTR_ADD(dstBase, dstScan);                                     \
+        PTR_ADD(srcBase, srcScan);                                     \
                                                                        \
-	DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
+        DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
     }                                                                  \
 }
 
@@ -169,37 +169,37 @@ void ADD_SUFF(SRC_T##ToByteIndexed##FUNC)(SCALE_PARAMS)                \
     DstWriteInvLut = pDstInfo->invColorTable;                          \
                                                                        \
     for (j = 0; j < height; j++) {                                     \
-	mlib_u8 *pSrc = srcBase;                                       \
-	mlib_u8 *pDst = dstBase;                                       \
-	mlib_s32 tmpsxloc = sxloc;                                     \
+        mlib_u8 *pSrc = srcBase;                                       \
+        mlib_u8 *pDst = dstBase;                                       \
+        mlib_s32 tmpsxloc = sxloc;                                     \
                                                                        \
-	PTR_ADD(pSrc, (syloc >> shift) * srcScan);                     \
+        PTR_ADD(pSrc, (syloc >> shift) * srcScan);                     \
                                                                        \
-	DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
-	DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
-	DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
+        DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
+        DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
+        DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
                                                                        \
-	DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
+        DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
                                                                        \
-	for (i = 0; i < width; i++) {                                  \
-	    mlib_s32 ii = tmpsxloc >> shift;                           \
-	    GET_RGB_##SRC_T(ii)                                        \
-	    {                                                          \
-		r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
-		g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
-		b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
+        for (i = 0; i < width; i++) {                                  \
+            mlib_s32 ii = tmpsxloc >> shift;                           \
+            GET_RGB_##SRC_T(ii)                                        \
+            {                                                          \
+                r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
+                g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
+                b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
                                                                        \
-		pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
-	    }                                                          \
+                pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
+            }                                                          \
                                                                        \
-	    DstWriteXDither = (DstWriteXDither + 1) & 7;               \
-	    tmpsxloc += sxinc;                                         \
-	}                                                              \
+            DstWriteXDither = (DstWriteXDither + 1) & 7;               \
+            tmpsxloc += sxinc;                                         \
+        }                                                              \
                                                                        \
-	PTR_ADD(dstBase, dstScan);                                     \
-	syloc += syinc;                                                \
+        PTR_ADD(dstBase, dstScan);                                     \
+        syloc += syinc;                                                \
                                                                        \
-	DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
+        DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
     }                                                                  \
 }
 
@@ -230,38 +230,38 @@ void ADD_SUFF(SRC_T##ToByteIndexedXparBgCopy)(BCOPY_PARAMS)            \
     DstWriteInvLut = pDstInfo->invColorTable;                          \
                                                                        \
     for (j = 0; j < height; j++) {                                     \
-	mlib_u8 *pSrc = srcBase;                                       \
-	mlib_u8 *pDst = dstBase;                                       \
+        mlib_u8 *pSrc = srcBase;                                       \
+        mlib_u8 *pDst = dstBase;                                       \
                                                                        \
-	DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
-	DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
-	DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
+        DstWritererr = pDstInfo->redErrTable + DstWriteYDither;        \
+        DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;        \
+        DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;        \
                                                                        \
-	DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
+        DstWriteXDither = pDstInfo->bounds.x1 & 7;                     \
                                                                        \
-	for (i = 0; i < width; i++) {                                  \
-	    GET_PIX_##SRC_T(i)                                         \
-	    {                                                          \
-		b = (pixel) & 0xff;                                    \
-		g = (pixel >> 8) & 0xff;                               \
-		r = (pixel >> 16) & 0xff;                              \
+        for (i = 0; i < width; i++) {                                  \
+            GET_PIX_##SRC_T(i)                                         \
+            {                                                          \
+                b = (pixel) & 0xff;                                    \
+                g = (pixel >> 8) & 0xff;                               \
+                r = (pixel >> 16) & 0xff;                              \
                                                                        \
-		r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
-		g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
-		b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
+                r = p_tbl[r + DstWritererr[DstWriteXDither]];          \
+                g = p_tbl[g + DstWritegerr[DstWriteXDither]];          \
+                b = p_tbl[b + DstWriteberr[DstWriteXDither]];          \
                                                                        \
-		pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
-	    } else {                                                   \
-		pDst[i] = bgpixel;                                     \
-	    }                                                          \
+                pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];    \
+            } else {                                                   \
+                pDst[i] = bgpixel;                                     \
+            }                                                          \
                                                                        \
-	    DstWriteXDither = (DstWriteXDither + 1) & 7;               \
-	}                                                              \
+            DstWriteXDither = (DstWriteXDither + 1) & 7;               \
+        }                                                              \
                                                                        \
-	PTR_ADD(dstBase, dstScan);                                     \
-	PTR_ADD(srcBase, srcScan);                                     \
+        PTR_ADD(dstBase, dstScan);                                     \
+        PTR_ADD(srcBase, srcScan);                                     \
                                                                        \
-	DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
+        DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);     \
     }                                                                  \
 }
 
@@ -339,8 +339,8 @@ FUNC_SCALE_CONVERT(ScaleXparOver, ByteIndexedBm)
     jint *SrcReadLut = pSrcInfo->lutBase;                              \
     jint *DstReadLut = pDstInfo->lutBase;                              \
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {    \
-	ADD_SUFF(AnyByteIsomorphicCopy)(BLIT_CALL_PARAMS);             \
-	return;                                                        \
+        ADD_SUFF(AnyByteIsomorphicCopy)(BLIT_CALL_PARAMS);             \
+        return;                                                        \
     }
 
 FUNC_CONVERT(Convert, ByteIndexed)
@@ -350,8 +350,8 @@ FUNC_CONVERT(Convert, ByteIndexed)
     jint *SrcReadLut = pSrcInfo->lutBase;                              \
     jint *DstReadLut = pDstInfo->lutBase;                              \
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {    \
-	ADD_SUFF(AnyByteIsomorphicScaleCopy)(SCALE_CALL_PARAMS);       \
-	return;                                                        \
+        ADD_SUFF(AnyByteIsomorphicScaleCopy)(SCALE_CALL_PARAMS);       \
+        return;                                                        \
     }
 
 FUNC_SCALE_CONVERT(ScaleConvert, ByteIndexed)
@@ -370,22 +370,22 @@ void ADD_SUFF(IntArgbToByteIndexedXorBlit)(BLIT_PARAMS)
     DstWriteInvLut = pDstInfo->invColorTable;
 
     for (j = 0; j < height; j++) {
-	mlib_s32 *pSrc = srcBase;
-	mlib_u8  *pDst = dstBase;
+        mlib_s32 *pSrc = srcBase;
+        mlib_u8  *pDst = dstBase;
 
-	for (i = 0; i < width; i++) {
-	    mlib_s32 spix = pSrc[i];
-	    mlib_s32 dpix;
-	    if (spix < 0) {
-		dpix = DstWriteInvLut[((spix >> 9) & 0x7C00) + 
-				      ((spix >> 6) & 0x03E0) +
-				      ((spix >> 3) & 0x001F)];
-		pDst[i] ^= (dpix ^ xorpixel) &~ alphamask;
-	    }
-	}
+        for (i = 0; i < width; i++) {
+            mlib_s32 spix = pSrc[i];
+            mlib_s32 dpix;
+            if (spix < 0) {
+                dpix = DstWriteInvLut[((spix >> 9) & 0x7C00) +
+                                      ((spix >> 6) & 0x03E0) +
+                                      ((spix >> 3) & 0x001F)];
+                pDst[i] ^= (dpix ^ xorpixel) &~ alphamask;
+            }
+        }
 
-	PTR_ADD(dstBase, dstScan);
-	PTR_ADD(srcBase, srcScan);
+        PTR_ADD(dstBase, dstScan);
+        PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -415,15 +415,15 @@ void ADD_SUFF(IntArgbToByteIndexedXorBlit)(BLIT_PARAMS)
 /***************************************************************/
 
 void ADD_SUFF(ByteIndexedAlphaMaskFill)(void *dstBase,
-					jubyte *pMask,
-					jint maskOff,
-					jint maskScan,
-					jint width,
-					jint height,
-					jint fgColor,
-					SurfaceDataRasInfo *pDstInfo,
-					NativePrimitive *pPrim,
-					CompositeInfo *pCompInfo)
+                                        jubyte *pMask,
+                                        jint maskOff,
+                                        jint maskScan,
+                                        jint width,
+                                        jint height,
+                                        jint fgColor,
+                                        SurfaceDataRasInfo *pDstInfo,
+                                        NativePrimitive *pPrim,
+                                        CompositeInfo *pCompInfo)
 {
     const mlib_u8 *mul8_tbl = (void*)mul8table;
     const mlib_u8 *p_tbl = vis_sat_sh3_tbl + 128;
@@ -446,9 +446,9 @@ void ADD_SUFF(ByteIndexedAlphaMaskFill)(void *dstBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-	cnstR = mul8table[cnstA][cnstR];
-	cnstG = mul8table[cnstA][cnstG];
-	cnstB = mul8table[cnstA][cnstB];
+        cnstR = mul8table[cnstA][cnstR];
+        cnstG = mul8table[cnstA][cnstG];
+        cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstR, cnstG, cnstB);
@@ -468,68 +468,68 @@ void ADD_SUFF(ByteIndexedAlphaMaskFill)(void *dstBase,
     vis_write_gsr(7 << 3);
 
     if (pMask != NULL) {
-	DstWriteYDither = (pDstInfo->bounds.y1 & 7) << 3;
-	DstWriteInvLut = pDstInfo->invColorTable;
+        DstWriteYDither = (pDstInfo->bounds.y1 & 7) << 3;
+        DstWriteInvLut = pDstInfo->invColorTable;
 
-	pMask += maskOff;
+        pMask += maskOff;
 
-	if (dstScan == width && maskScan == width) {
-	    width *= height;
-	    height = 1;
-	}
+        if (dstScan == width && maskScan == width) {
+            width *= height;
+            height = 1;
+        }
 
-	for (j = 0; j < height; j++) {
-	    mlib_u8  *pDst = dstBase;
-	    mlib_s32 i;
-	    mlib_s32 pathA0, dstA0, dst_val, pixel;
-	    mlib_d64 res0;
-	    mlib_f32 dstARGB0;
+        for (j = 0; j < height; j++) {
+            mlib_u8  *pDst = dstBase;
+            mlib_s32 i;
+            mlib_s32 pathA0, dstA0, dst_val, pixel;
+            mlib_d64 res0;
+            mlib_f32 dstARGB0;
 
-	    DstWritererr = pDstInfo->redErrTable + DstWriteYDither;
-	    DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;
-	    DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;
+            DstWritererr = pDstInfo->redErrTable + DstWriteYDither;
+            DstWritegerr = pDstInfo->grnErrTable + DstWriteYDither;
+            DstWriteberr = pDstInfo->bluErrTable + DstWriteYDither;
 
-	    DstWriteXDither = pDstInfo->bounds.x1 & 7;
+            DstWriteXDither = pDstInfo->bounds.x1 & 7;
 
 #pragma pipeloop(0)
-	    for (i = 0; i < width; i++) {
-		dst_val = pDst[i];
-		pathA0 = pMask[i];
-		dstA0 = *(mlib_u8*)(DstReadLut + dst_val);
-		dstARGB0 = DstReadLut[dst_val];
-		MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-		dstARGB0 = vis_fpack16(res0);
+            for (i = 0; i < width; i++) {
+                dst_val = pDst[i];
+                pathA0 = pMask[i];
+                dstA0 = *(mlib_u8*)(DstReadLut + dst_val);
+                dstARGB0 = DstReadLut[dst_val];
+                MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+                dstARGB0 = vis_fpack16(res0);
 
-		pixel = *(mlib_s32*)&dstARGB0;
-		b = (pixel) & 0xff;
-		g = (pixel >> 8) & 0xff;
-		r = (pixel >> 16) & 0xff;
-		r = p_tbl[r + DstWritererr[DstWriteXDither]];
-		g = p_tbl[g + DstWritegerr[DstWriteXDither]];
-		b = p_tbl[b + DstWriteberr[DstWriteXDither]];
-		pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];
+                pixel = *(mlib_s32*)&dstARGB0;
+                b = (pixel) & 0xff;
+                g = (pixel >> 8) & 0xff;
+                r = (pixel >> 16) & 0xff;
+                r = p_tbl[r + DstWritererr[DstWriteXDither]];
+                g = p_tbl[g + DstWritegerr[DstWriteXDither]];
+                b = p_tbl[b + DstWriteberr[DstWriteXDither]];
+                pDst[i] = DstWriteInvLut[(r << 10) + (g << 5) + b];
 
-		DstWriteXDither = (DstWriteXDither + 1) & 7;
-	    }
+                DstWriteXDither = (DstWriteXDither + 1) & 7;
+            }
 
-	    PTR_ADD(dstBase, dstScan);
-	    PTR_ADD(pMask, maskScan);
-	    DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);
-	}
+            PTR_ADD(dstBase, dstScan);
+            PTR_ADD(pMask, maskScan);
+            DstWriteYDither = (DstWriteYDither + (1 << 3)) & (7 << 3);
+        }
     }/* else {
-	if (dstScan == 4*width) {
-	    width *= height;
-	    height = 1;
-	}
+        if (dstScan == 4*width) {
+            width *= height;
+            height = 1;
+        }
 
-	for (j = 0; j < height; j++) {
-	    IntArgbAlphaMaskFill_A1_line(dstBase, pMask, width,
-					 cnstARGB0,
-					 log_val, mul8_cnstA, mul8_dstF,
-					 (void*)mul8table);
+        for (j = 0; j < height; j++) {
+            IntArgbAlphaMaskFill_A1_line(dstBase, pMask, width,
+                                         cnstARGB0,
+                                         log_val, mul8_cnstA, mul8_dstF,
+                                         (void*)mul8table);
 
-	    PTR_ADD(dstBase, dstScan);
-	}
+            PTR_ADD(dstBase, dstScan);
+        }
     }*/
 }
 

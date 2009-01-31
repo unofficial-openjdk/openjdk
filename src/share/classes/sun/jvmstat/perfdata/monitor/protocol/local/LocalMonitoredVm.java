@@ -42,7 +42,6 @@ import sun.jvmstat.perfdata.monitor.*;
  * mechanism.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class LocalMonitoredVm extends AbstractMonitoredVm {
@@ -209,6 +208,6 @@ public class LocalMonitoredVm extends AbstractMonitoredVm {
     // Suppress unchecked cast warning msg.
     @SuppressWarnings("unchecked")
     static <T> T cast(Object x) {
-	return (T) x;
+        return (T) x;
     }
 }

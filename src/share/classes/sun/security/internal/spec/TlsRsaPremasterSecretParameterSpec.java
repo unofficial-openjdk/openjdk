@@ -59,8 +59,8 @@ public class TlsRsaPremasterSecretParameterSpec implements AlgorithmParameterSpe
      *   negative or larger than 255
      */
     public TlsRsaPremasterSecretParameterSpec(int majorVersion, int minorVersion) {
-	this.majorVersion = TlsMasterSecretParameterSpec.checkVersion(majorVersion);
-	this.minorVersion = TlsMasterSecretParameterSpec.checkVersion(minorVersion);
+        this.majorVersion = TlsMasterSecretParameterSpec.checkVersion(majorVersion);
+        this.minorVersion = TlsMasterSecretParameterSpec.checkVersion(minorVersion);
     }
 
     /**
@@ -69,7 +69,7 @@ public class TlsRsaPremasterSecretParameterSpec implements AlgorithmParameterSpe
      * @return the major version.
      */
     public int getMajorVersion() {
-	return majorVersion;
+        return majorVersion;
     }
 
     /**
@@ -78,6 +78,6 @@ public class TlsRsaPremasterSecretParameterSpec implements AlgorithmParameterSpe
      * @return the minor version.
      */
     public int getMinorVersion() {
-	return minorVersion;
+        return minorVersion;
     }
 }

@@ -244,6 +244,29 @@
         <property name="jtreg.options" value=""/> <!-- default, can be overridden per user or per project -->
         <property name="jtreg.samevm" value="false"/>  <!-- default, can be overridden per user or per project -->
     </target>
+
+    <!-- Make sure there are tests to run, failing if not.  There are tests
+         if  ${jtreg.tests} is (a) one or more directories, or (b) a single
+         file containing "@test".
+    -->
+    <target name="-check-have-tests">
+        <condition property="testOK">
+            <or>
+                <not>
+                    <!-- false if jtreg.tests denotes more than one dir -->
+                    <available file="${root}/test/${jtreg.tests}"/>
+                </not>
+                <isFileSelected file="${root}/test/${jtreg.tests}">
+                    <or>
+                        <type type="dir"/> <!-- a single dir is OK -->
+                        <contains text="@test" casesensitive="yes"/>
+                    </or>
+                </isFileSelected>
+            </or>
+        </condition>
+        <fail unless="testOK" message="Missing '@test' in ${root}/test/${jtreg.tests}"/>
+    </target>
+
     <target name="-jtreg-ant" unless="use.make">
         <jtreg dir="${root}/test" samevm="${jtreg.samevm}" verbose="summary"
                jdk="${bootstrap.jdk}"
@@ -276,7 +299,7 @@
         <!-- Empty placeholder for easier customization. -->
         <!-- You can override this target in the ../build.xml file. -->
     </target>
-    <target name="-jtreg" depends="-init,-pre-jtreg,-taskdef-jtreg,-check-tests-defined,-jtreg-setup,-jtreg-make,-jtreg-ant,-post-jtreg">
+    <target name="-jtreg" depends="-init,-pre-jtreg,-taskdef-jtreg,-check-tests-defined,-check-have-tests,-jtreg-setup,-jtreg-make,-jtreg-ant,-post-jtreg">
         <property name="jtreg.report" location="${jtreg.dir}/JTreport/report.html"/>
         <condition property="jtreg.passed">
             <equals arg1="${jtreg.result}" arg2="0"/>
@@ -323,6 +346,7 @@
                 <pathelement location="${bootstrap.jdk}/jre/lib/rt.jar"/>
             </bootclasspath>
             <sourcepath>
+                <pathelement location="${root}/src/share/demo/${demo.src.dir}"/>
                 <pathelement location="${share.src.dir}"/>
                 <pathelement location="${platform.src.dir}"/>
                 <pathelement location="${root}/src/closed/share/classes"/>

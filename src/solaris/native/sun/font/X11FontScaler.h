@@ -86,7 +86,7 @@ JNIEXPORT int JNICALL AWTFontAscent(AWTFont font);
 JNIEXPORT int JNICALL AWTFontDescent(AWTFont font);
 /* Call AWTFreeChar() on overall after calling AWTFontQueryTextExtents16() */
 JNIEXPORT void JNICALL AWTFontTextExtents16(AWTFont font, AWTChar2b* xChar,
-					    AWTChar* overall);
+                                            AWTChar* overall);
 JNIEXPORT void JNICALL AWTFreeChar(AWTChar xChar);
 JNIEXPORT jlong JNICALL AWTFontGenerateImage(AWTFont xFont, AWTChar2b* xChar);
 JNIEXPORT short JNICALL AWTCharAdvance(AWTChar xChar);

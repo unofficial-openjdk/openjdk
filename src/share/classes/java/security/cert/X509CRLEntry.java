@@ -60,7 +60,6 @@ import javax.security.auth.x500.X500Principal;
  * @see X509Extension
  *
  * @author Hemma Prafullchandra
- * @version %I% %E%
  */
 
 public abstract class X509CRLEntry implements X509Extension {
@@ -147,7 +146,7 @@ public abstract class X509CRLEntry implements X509Extension {
      * @since 1.5
      */
     public X500Principal getCertificateIssuer() {
-	return null;
+        return null;
     }
 
     /**
@@ -157,7 +156,7 @@ public abstract class X509CRLEntry implements X509Extension {
      * @return the revocation date.
      */
     public abstract Date getRevocationDate();
-    
+
     /**
      * Returns true if this CRL entry has extensions.
      *

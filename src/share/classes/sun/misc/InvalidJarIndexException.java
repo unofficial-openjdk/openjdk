@@ -32,7 +32,6 @@ import java.lang.LinkageError;
  * a jar file contains incorrect information.
  *
  * @author   Zhenghua Li
- * @version  %I%, %G%
  * @since   1.3
  */
 
@@ -40,20 +39,20 @@ public
 class InvalidJarIndexException extends RuntimeException {
 
     /**
-     * Constructs an <code>InvalidJarIndexException</code> with no 
+     * Constructs an <code>InvalidJarIndexException</code> with no
      * detail message.
      */
     public InvalidJarIndexException() {
-	super();
+        super();
     }
 
     /**
-     * Constructs an <code>InvalidJarIndexException</code> with the 
-     * specified detail message. 
+     * Constructs an <code>InvalidJarIndexException</code> with the
+     * specified detail message.
      *
      * @param   s   the detail message.
      */
     public InvalidJarIndexException(String s) {
-	super(s);
+        super(s);
     }
 }

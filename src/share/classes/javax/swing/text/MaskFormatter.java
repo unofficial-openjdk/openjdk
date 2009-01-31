@@ -148,7 +148,6 @@ import javax.swing.text.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @since 1.4
  */
 public class MaskFormatter extends DefaultFormatter {
@@ -648,7 +647,7 @@ public class MaskFormatter extends DefaultFormatter {
      * Subclassed to update the internal representation of the mask after
      * the default read operation has completed.
      */
-    private void readObject(ObjectInputStream s) 
+    private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         s.defaultReadObject();
         try {
@@ -775,7 +774,7 @@ public class MaskFormatter extends DefaultFormatter {
                         rh.offset++;
                         rh.length--;
                         counter--;
-			max--;
+                        max--;
                     }
                 }
                 else if (textIndex >= tl) {

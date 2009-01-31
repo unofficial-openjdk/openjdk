@@ -73,7 +73,7 @@ public class XSelection {
     private static long SELECTION_TIMEOUT = UNIXToolkit.getDatatransferTimeout();
 
     /* The PropertyNotify event handler for incremental data transfer. */
-    private static final XEventDispatcher incrementalTransferHandler = 
+    private static final XEventDispatcher incrementalTransferHandler =
         new IncrementalTransferHandler();
     /* The context for the current request - protected with awtLock. */
     private static WindowPropertyGetter propertyGetter = null;
@@ -122,7 +122,7 @@ public class XSelection {
 
 
     static {
-        XToolkit.addEventDispatcher(XWindow.getXAWTRootWindow().getWindow(), 
+        XToolkit.addEventDispatcher(XWindow.getXAWTRootWindow().getWindow(),
                                     new SelectionEventHandler());
     }
 
@@ -189,9 +189,9 @@ public class XSelection {
 
         XToolkit.awtLock();
         try {
-            XlibWrapper.XSetSelectionOwner(XToolkit.getDisplay(), 
+            XlibWrapper.XSetSelectionOwner(XToolkit.getDisplay(),
                                            selection, owner, time);
-            if (XlibWrapper.XGetSelectionOwner(XToolkit.getDisplay(), 
+            if (XlibWrapper.XGetSelectionOwner(XToolkit.getDisplay(),
                                                selection) != owner) {
 
                 reset();
@@ -234,11 +234,11 @@ public class XSelection {
 
         long[] formats = null;
 
-        synchronized (lock) {  
+        synchronized (lock) {
             SELECTION_TIMEOUT = UNIXToolkit.getDatatransferTimeout();
 
-            WindowPropertyGetter targetsGetter = 
-                new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(), 
+            WindowPropertyGetter targetsGetter =
+                new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(),
                                          selectionPropertyAtom, 0, MAX_LENGTH,
                                          true, XlibWrapper.AnyPropertyType);
 
@@ -248,13 +248,13 @@ public class XSelection {
                     propertyGetter = targetsGetter;
                     lastRequestServerTime = time;
 
-                    XlibWrapper.XConvertSelection(XToolkit.getDisplay(), 
-                                                  getSelectionAtom().getAtom(), 
+                    XlibWrapper.XConvertSelection(XToolkit.getDisplay(),
+                                                  getSelectionAtom().getAtom(),
                                                   XDataTransferer.TARGETS_ATOM.getAtom(),
                                                   selectionPropertyAtom.getAtom(),
                                                   XWindow.getXAWTRootWindow().getWindow(),
                                                   time);
-                    
+
                     // If the owner doesn't respond within the
                     // SELECTION_TIMEOUT, we report conversion failure.
                     try {
@@ -279,7 +279,7 @@ public class XSelection {
         long[] formats = null;
 
         if (targetsGetter.isExecuted() && !targetsGetter.isDisposed() &&
-                (targetsGetter.getActualType() == XAtom.XA_ATOM ||  
+                (targetsGetter.getActualType() == XAtom.XA_ATOM ||
                  targetsGetter.getActualType() == XDataTransferer.TARGETS_ATOM.getAtom()) &&
                 targetsGetter.getActualFormat() == 32) {
 
@@ -288,7 +288,7 @@ public class XSelection {
                 long atoms = targetsGetter.getData();
                 formats = new long[count];
                 for (int index = 0; index < count; index++) {
-                    formats[index] = 
+                    formats[index] =
                             Native.getLong(atoms+index*XAtom.getAtomSize());
                 }
             }
@@ -318,7 +318,7 @@ public class XSelection {
     }
 
     /*
-     * Requests the selection data in the specified format and returns 
+     * Requests the selection data in the specified format and returns
      * the data provided by the owner.
      */
     public byte[] getData(long format, long time) throws IOException {
@@ -328,23 +328,23 @@ public class XSelection {
 
         byte[] data = null;
 
-        synchronized (lock) {  
+        synchronized (lock) {
             SELECTION_TIMEOUT = UNIXToolkit.getDatatransferTimeout();
 
-            WindowPropertyGetter dataGetter = 
-                new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(), 
-                                         selectionPropertyAtom, 0, MAX_LENGTH, 
+            WindowPropertyGetter dataGetter =
+                new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(),
+                                         selectionPropertyAtom, 0, MAX_LENGTH,
                                          false, // don't delete to handle INCR properly.
                                          XlibWrapper.AnyPropertyType);
-            
+
             try {
                 XToolkit.awtLock();
                 try {
                     propertyGetter = dataGetter;
                     lastRequestServerTime = time;
 
-                    XlibWrapper.XConvertSelection(XToolkit.getDisplay(), 
-                                                  getSelectionAtom().getAtom(), 
+                    XlibWrapper.XConvertSelection(XToolkit.getDisplay(),
+                                                  getSelectionAtom().getAtom(),
                                                   format,
                                                   selectionPropertyAtom.getAtom(),
                                                   XWindow.getXAWTRootWindow().getWindow(),
@@ -375,7 +375,7 @@ public class XSelection {
                     XDataTransferer.INCR_ATOM.getAtom()) {
 
                     if (dataGetter.getActualFormat() != 32) {
-                        throw new IOException("Unsupported INCR format: " + 
+                        throw new IOException("Unsupported INCR format: " +
                                               dataGetter.getActualFormat());
                     }
 
@@ -398,7 +398,7 @@ public class XSelection {
                         }
 
                         if (longLength > Integer.MAX_VALUE) {
-                            throw new IOException("Can't handle large data block: " 
+                            throw new IOException("Can't handle large data block: "
                                                   + longLength + " bytes");
                         }
 
@@ -410,15 +410,15 @@ public class XSelection {
                     ByteArrayOutputStream dataStream = new ByteArrayOutputStream(len);
 
                     while (true) {
-                        WindowPropertyGetter incrDataGetter = 
-                            new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(), 
-                                                     selectionPropertyAtom, 
-                                                     0, MAX_LENGTH, false,  
+                        WindowPropertyGetter incrDataGetter =
+                            new WindowPropertyGetter(XWindow.getXAWTRootWindow().getWindow(),
+                                                     selectionPropertyAtom,
+                                                     0, MAX_LENGTH, false,
                                                      XlibWrapper.AnyPropertyType);
 
                         try {
                             XToolkit.awtLock();
-                            XToolkit.addEventDispatcher(XWindow.getXAWTRootWindow().getWindow(), 
+                            XToolkit.addEventDispatcher(XWindow.getXAWTRootWindow().getWindow(),
                                                         incrementalTransferHandler);
 
                             propertyGetter = incrDataGetter;
@@ -427,7 +427,7 @@ public class XSelection {
                                 XlibWrapper.XDeleteProperty(XToolkit.getDisplay(),
                                                             XWindow.getXAWTRootWindow().getWindow(),
                                                             selectionPropertyAtom.getAtom());
-                                
+
                                 // If the owner doesn't respond within the
                                 // SELECTION_TIMEOUT, we terminate incremental
                                 // transfer.
@@ -436,7 +436,7 @@ public class XSelection {
                                 break;
                             } finally {
                                 propertyGetter = null;
-                                XToolkit.removeEventDispatcher(XWindow.getXAWTRootWindow().getWindow(), 
+                                XToolkit.removeEventDispatcher(XWindow.getXAWTRootWindow().getWindow(),
                                                                incrementalTransferHandler);
                                 XToolkit.awtUnlock();
                             }
@@ -451,12 +451,12 @@ public class XSelection {
                             }
 
                             if (incrDataGetter.getActualFormat() != 8) {
-                                throw new IOException("Unsupported data format: " + 
+                                throw new IOException("Unsupported data format: " +
                                                       incrDataGetter.getActualFormat());
                             }
 
                             count = (int)incrDataGetter.getNumberOfItems();
-                            
+
                             if (count == 0) {
                                 break;
                             }
@@ -485,7 +485,7 @@ public class XSelection {
                     }
 
                     if (dataGetter.getActualFormat() != 8) {
-                        throw new IOException("Unsupported data format: " + 
+                        throw new IOException("Unsupported data format: " +
                                               dataGetter.getActualFormat());
                     }
 
@@ -525,7 +525,7 @@ public class XSelection {
         appContext = null;
         ownershipTime = 0;
     }
-    
+
     // Converts the data to the 'format' and if the conversion succeeded stores
     // the data in the 'property' on the 'requestor' window.
     // Returns true if the conversion succeeded.
@@ -539,8 +539,8 @@ public class XSelection {
             SunToolkit.insertTargetMapping(this, appContext);
 
             byteData = DataTransferer.getInstance().convertData(this,
-                                                                contents, 
-                                                                format, 
+                                                                contents,
+                                                                format,
                                                                 formatMap,
                                                                 XToolkit.isToolkitThread());
         } catch (IOException ioe) {
@@ -550,7 +550,7 @@ public class XSelection {
         if (byteData == null) {
             return false;
         }
-        
+
         count = byteData.length;
 
         try {
@@ -560,9 +560,9 @@ public class XSelection {
                 } else {
                     // Initiate incremental data transfer.
                     new IncrementalDataProvider(requestor, property, format, 8,
-                                                byteData); 
+                                                byteData);
 
-                    nativeDataPtr = 
+                    nativeDataPtr =
                         XlibWrapper.unsafe.allocateMemory(XAtom.getAtomSize());
 
                     Native.putLong(nativeDataPtr, (long)count);
@@ -578,7 +578,7 @@ public class XSelection {
             try {
                 XlibWrapper.XChangeProperty(XToolkit.getDisplay(), requestor, property,
                                             format, dataFormat,
-                                            XlibWrapper.PropModeReplace, 
+                                            XlibWrapper.PropModeReplace,
                                             nativeDataPtr, count);
             } finally {
                 XToolkit.awtUnlock();
@@ -588,37 +588,37 @@ public class XSelection {
                 XlibWrapper.unsafe.freeMemory(nativeDataPtr);
                 nativeDataPtr = 0;
             }
-        }            
+        }
 
         return true;
     }
 
     private void handleSelectionRequest(XSelectionRequestEvent xsre) {
-        long property = xsre.get_property(); 
+        long property = xsre.get_property();
         long requestor = xsre.get_requestor();
         long requestTime = xsre.get_time();
         long format = xsre.get_target();
         int dataFormat = 0;
         boolean conversionSucceeded = false;
 
-        if (ownershipTime != 0 && 
+        if (ownershipTime != 0 &&
             (requestTime == XlibWrapper.CurrentTime ||
              requestTime >= ownershipTime)) {
 
             property = xsre.get_property();
-            
+
             // Handle MULTIPLE requests as per ICCCM.
             if (format == XDataTransferer.MULTIPLE_ATOM.getAtom()) {
                 // The property cannot be 0 for a MULTIPLE request.
                 if (property != 0) {
                     // First retrieve the list of requested targets.
-                    WindowPropertyGetter wpg = 
-                        new WindowPropertyGetter(requestor, XAtom.get(property), 0, 
+                    WindowPropertyGetter wpg =
+                        new WindowPropertyGetter(requestor, XAtom.get(property), 0,
                                                  MAX_LENGTH, false,
                                                  XlibWrapper.AnyPropertyType);
                     try {
                         wpg.execute();
-                    
+
                         if (wpg.getActualFormat() == 32 &&
                             (wpg.getNumberOfItems() % 2) == 0) {
                             long count = wpg.getNumberOfItems() / 2;
@@ -639,11 +639,11 @@ public class XSelection {
                                 XToolkit.awtLock();
                                 try {
                                     XlibWrapper.XChangeProperty(XToolkit.getDisplay(), requestor,
-                                                                property, 
+                                                                property,
                                                                 wpg.getActualType(),
                                                                 wpg.getActualFormat(),
                                                                 XlibWrapper.PropModeReplace,
-                                                                wpg.getData(), 
+                                                                wpg.getData(),
                                                                 wpg.getNumberOfItems());
                                 } finally {
                                     XToolkit.awtUnlock();
@@ -835,8 +835,8 @@ public class XSelection {
         private int offset = 0;
 
         // NOTE: formats other than 8 are not supported.
-        public IncrementalDataProvider(long requestor, long property, 
-                                       long target, int format, byte[] data) { 
+        public IncrementalDataProvider(long requestor, long property,
+                                       long target, int format, byte[] data) {
             if (format != 8) {
                 throw new IllegalArgumentException("Unsupported format: " + format);
             }
@@ -867,7 +867,7 @@ public class XSelection {
 
         public void dispatchEvent(XEvent ev) {
             switch (ev.get_type()) {
-            case XlibWrapper.PropertyNotify: 
+            case XlibWrapper.PropertyNotify:
                 XPropertyEvent xpe = ev.get_xproperty();
                 if (xpe.get_window() == requestor &&
                     xpe.get_state() == XlibWrapper.PropertyDelete &&
@@ -894,9 +894,9 @@ public class XSelection {
                     XToolkit.awtLock();
                     try {
                         XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
-                                                    requestor, property, 
+                                                    requestor, property,
                                                     target, format,
-                                                    XlibWrapper.PropModeReplace, 
+                                                    XlibWrapper.PropModeReplace,
                                                     nativeDataPtr, count);
                     } finally {
                         XToolkit.awtUnlock();
@@ -935,4 +935,3 @@ public class XSelection {
         }
     };
 }
-

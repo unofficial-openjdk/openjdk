@@ -46,124 +46,123 @@ public class SnmpCachedData implements SnmpTableHandler {
      **/
     public static final Comparator<SnmpOid> oidComparator =
         new Comparator<SnmpOid>() {
-	    public int compare(SnmpOid o1, SnmpOid o2) {
-		return o1.compareTo(o2);
-	    }
-	    public boolean equals(Object o1, Object o2) {
-		if (o1 == o2) return true;
-		else return o1.equals(o2);
-	    }
-	};
+            public int compare(SnmpOid o1, SnmpOid o2) {
+                return o1.compareTo(o2);
+            }
+            public boolean equals(Object o1, Object o2) {
+                if (o1 == o2) return true;
+                else return o1.equals(o2);
+            }
+        };
 
     /**
      * Constructs a new instance of SnmpCachedData. Instances are
      * immutable.
-     * @param lastUpdated Time stamp as returned by 
+     * @param lastUpdated Time stamp as returned by
      *        {@link System#currentTimeMillis System.currentTimeMillis()}
      * @param indexes The table entry indexes, sorted in ascending order.
-     * @param datas   The table datas, sorted according to the 
+     * @param datas   The table datas, sorted according to the
      *                order in <code>indexes</code>: <code>datas[i]</code>
-     *                is the data that corresponds to 
+     *                is the data that corresponds to
      *                <code>indexes[i]</code>
      **/
-    public SnmpCachedData(long lastUpdated, SnmpOid indexes[], 
-			  Object  datas[]) {
-	this.lastUpdated = lastUpdated;
-	this.indexes     = indexes;
-	this.datas       = datas;
+    public SnmpCachedData(long lastUpdated, SnmpOid indexes[],
+                          Object  datas[]) {
+        this.lastUpdated = lastUpdated;
+        this.indexes     = indexes;
+        this.datas       = datas;
     }
 
     /**
      * Constructs a new instance of SnmpCachedData. Instances are
      * immutable.
-     * @param lastUpdated Time stamp as returned by 
+     * @param lastUpdated Time stamp as returned by
      *        {@link System#currentTimeMillis System.currentTimeMillis()}
-     * @param indexMap The table indexed table data, sorted in ascending 
+     * @param indexMap The table indexed table data, sorted in ascending
      *                 order by {@link #oidComparator}. The keys must be
      *                 instances of {@link SnmpOid}.
      **/
     public SnmpCachedData(long lastUpdated, TreeMap<SnmpOid, Object> indexMap) {
-	this(lastUpdated, indexMap, true);
+        this(lastUpdated, indexMap, true);
     }
     /**
      * Constructs a new instance of SnmpCachedData. Instances are
      * immutable.
-     * @param lastUpdated Time stamp as returned by 
+     * @param lastUpdated Time stamp as returned by
      *        {@link System#currentTimeMillis System.currentTimeMillis()}
-     * @param indexMap The table indexed table data, sorted in ascending 
+     * @param indexMap The table indexed table data, sorted in ascending
      *                 order by {@link #oidComparator}. The keys must be
      *                 instances of {@link SnmpOid}.
      **/
     public SnmpCachedData(long lastUpdated, TreeMap<SnmpOid, Object> indexMap,
                           boolean b) {
 
-	final int size = indexMap.size();
-	this.lastUpdated = lastUpdated;
-	this.indexes     = new SnmpOid[size];
-	this.datas       = new Object[size];
+        final int size = indexMap.size();
+        this.lastUpdated = lastUpdated;
+        this.indexes     = new SnmpOid[size];
+        this.datas       = new Object[size];
 
-	if(b) {
-	    indexMap.keySet().toArray(this.indexes);	
-	    indexMap.values().toArray(this.datas);
-	} else
-	    indexMap.values().toArray(this.datas);
+        if(b) {
+            indexMap.keySet().toArray(this.indexes);
+            indexMap.values().toArray(this.datas);
+        } else
+            indexMap.values().toArray(this.datas);
     }
 
     /**
-     * Time stamp as returned by 
+     * Time stamp as returned by
      * {@link System#currentTimeMillis System.currentTimeMillis()}
      **/
     public final long    lastUpdated;
-    
+
     /**
      * The table entry indexes, sorted in ascending order.
      **/
     public final SnmpOid indexes[];
-    
+
     /**
-     * The table datas, sorted according to the 
+     * The table datas, sorted according to the
      * order in <code>indexes</code>: <code>datas[i]</code>
      * is the data that corresponds to <code>indexes[i]</code>
      **/
     public final Object  datas[];
-    
+
     /**
      * The position of the given <var>index</var>, as returned by
      * <code>java.util.Arrays.binarySearch()</code>
      **/
     public final int find(SnmpOid index) {
-	return Arrays.binarySearch(indexes,index,oidComparator);
+        return Arrays.binarySearch(indexes,index,oidComparator);
     }
-    
+
     // SnmpTableHandler.getData()
     public  Object getData(SnmpOid index) {
-	final int pos = find(index);
-	if ((pos < 0)||(pos >= datas.length)) return null;
-	return datas[pos];
+        final int pos = find(index);
+        if ((pos < 0)||(pos >= datas.length)) return null;
+        return datas[pos];
     }
 
     // SnmpTableHandler.getNext()
     public  SnmpOid getNext(SnmpOid index) {
-	if (index == null) {
-	    if (indexes.length>0) return indexes[0];
-	    else return null;
-	}
-	final int pos = find(index);
-	if (pos > -1) {
-	    if (pos < (indexes.length -1) ) return indexes[pos+1]; 
-	    else return null;
-	}
-	final int insertion = -pos -1;
-	if ((insertion > -1) && (insertion < indexes.length))
-	    return indexes[insertion];
-	else return null;
+        if (index == null) {
+            if (indexes.length>0) return indexes[0];
+            else return null;
+        }
+        final int pos = find(index);
+        if (pos > -1) {
+            if (pos < (indexes.length -1) ) return indexes[pos+1];
+            else return null;
+        }
+        final int insertion = -pos -1;
+        if ((insertion > -1) && (insertion < indexes.length))
+            return indexes[insertion];
+        else return null;
     }
 
     // SnmpTableHandler.contains()
     public  boolean contains(SnmpOid index) {
-	final int pos = find(index);
-	return ((pos > -1)&&(pos < indexes.length));
+        final int pos = find(index);
+        return ((pos > -1)&&(pos < indexes.length));
     }
 
 }
- 

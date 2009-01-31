@@ -43,8 +43,8 @@ typedef void GeneralDisposeFunc(JNIEnv *env, jlong pData);
  * the object for disposal when the object becomes non-reachable.
  */
 JNIEXPORT void JNICALL
-Disposer_AddRecord(JNIEnv *env, jobject obj, 
-		   GeneralDisposeFunc disposer, jlong pData);
+Disposer_AddRecord(JNIEnv *env, jobject obj,
+                   GeneralDisposeFunc disposer, jlong pData);
 
 #ifdef __cplusplus
 };

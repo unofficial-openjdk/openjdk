@@ -41,14 +41,14 @@ public class Names {
      * Return stub class name for impl class name.
      */
     static final public Identifier stubFor(Identifier name) {
-	return Identifier.lookup(name + "_Stub");
+        return Identifier.lookup(name + "_Stub");
     }
 
     /**
      * Return skeleton class name for impl class name.
      */
     static final public Identifier skeletonFor(Identifier name) {
-	return Identifier.lookup(name + "_Skel");
+        return Identifier.lookup(name + "_Skel");
     }
 
     /**
@@ -68,21 +68,21 @@ public class Names {
      * itself because it is package protected.
      */
     static final public Identifier mangleClass(Identifier className) {
-	if (!className.isInner())
-	    return className;
+        if (!className.isInner())
+            return className;
 
-	/*
-	 * Get '.' qualified inner class name (with outer class
-	 * qualification and no package qualification) and replace
-	 * each '.' with '$'.
-	 */
-	Identifier mangled = Identifier.lookup(
-					       className.getFlatName().toString()
-					       .replace('.', sun.tools.java.Constants.SIGC_INNERCLASS));
-	if (mangled.isInner())
-	    throw new Error("failed to mangle inner class name");
+        /*
+         * Get '.' qualified inner class name (with outer class
+         * qualification and no package qualification) and replace
+         * each '.' with '$'.
+         */
+        Identifier mangled = Identifier.lookup(
+                                               className.getFlatName().toString()
+                                               .replace('.', sun.tools.java.Constants.SIGC_INNERCLASS));
+        if (mangled.isInner())
+            throw new Error("failed to mangle inner class name");
 
-	// prepend package qualifier back for returned identifier
-	return Identifier.lookup(className.getQualifier(), mangled);
+        // prepend package qualifier back for returned identifier
+        return Identifier.lookup(className.getQualifier(), mangled);
     }
 }

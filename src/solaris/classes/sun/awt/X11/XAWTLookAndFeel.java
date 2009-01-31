@@ -39,7 +39,7 @@ import com.sun.java.swing.plaf.motif.*;
 import sun.awt.X11.XComponentPeer;
 
 class XAWTLookAndFeel extends MotifLookAndFeel {
-    
+
     /**
      * Load the SystemColors into the defaults table.  The keys
      * for SystemColor defaults are the same as the names of
@@ -72,7 +72,7 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
             "controlHighlight", "#DCDEE5", /* Highlight color for controls */
             "controlLtHighlight", "#DCDEE5", /* Light highlight color for controls */
             "controlShadow", "#63656F", /* Shadow color for controls */
-            "controlLightShadow", "#9397A5", /* Shadow color for controls */           
+            "controlLightShadow", "#9397A5", /* Shadow color for controls */
             "controlDkShadow", "#000000", /* Dark shadow color for controls */
             "scrollbar", "#AEB2C3", /* Scrollbar ??? color. PENDING(jeff) foreground? background? ?*/
             "info", "#FFF7E9", /* ??? */
@@ -85,27 +85,27 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
 
-        FontUIResource dialogPlain12 = new FontUIResource(Font.DIALOG, 
+        FontUIResource dialogPlain12 = new FontUIResource(Font.DIALOG,
                                                           Font.PLAIN, 12);
-        FontUIResource sansSerifPlain12 = new FontUIResource(Font.SANS_SERIF, 
+        FontUIResource sansSerifPlain12 = new FontUIResource(Font.SANS_SERIF,
                                                              Font.PLAIN, 12);
-        FontUIResource monospacedPlain12 = new FontUIResource(Font.MONOSPACED, 
+        FontUIResource monospacedPlain12 = new FontUIResource(Font.MONOSPACED,
                                                               Font.PLAIN, 12);
         ColorUIResource red = new ColorUIResource(Color.red);
         ColorUIResource black = new ColorUIResource(Color.black);
         ColorUIResource white = new ColorUIResource(Color.white);
         ColorUIResource lightGray = new ColorUIResource(Color.lightGray);
         ColorUIResource controlDarker =  new ColorUIResource(SystemColor.controlDkShadow);
-        
+
         Color back = table.getColor("control");
         Color colors [] = XComponentPeer.getSystemColors();
         Color scrollBarBackground = colors[XComponentPeer.BACKGROUND_COLOR];
         Color trackColor = new Color(MotifColorUtilities.calculateSelectFromBackground(scrollBarBackground.getRed(), scrollBarBackground.getGreen(), scrollBarBackground.getBlue()));
-        Border loweredBevelBorder = new MotifBorders.BevelBorder(false, 
+        Border loweredBevelBorder = new MotifBorders.BevelBorder(false,
                                                                  table.getColor("controlShadow"),
                                                                  table.getColor("controlLtHighlight"));
 
-        Border raisedBevelBorder = new MotifBorders.BevelBorder(true, 
+        Border raisedBevelBorder = new MotifBorders.BevelBorder(true,
                                                                 table.getColor("controlShadow"),
                                                                 table.getColor("controlLtHighlight"));
 
@@ -232,7 +232,7 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
             "UP", DefaultEditorKit.upAction,
             "DOWN", DefaultEditorKit.downAction,
             "KP_UP", DefaultEditorKit.upAction,
-            "KP_DOWN", DefaultEditorKit.downAction, 
+            "KP_DOWN", DefaultEditorKit.downAction,
             "PAGE_UP", DefaultEditorKit.pageUpAction,
             "PAGE_DOWN", DefaultEditorKit.pageDownAction,
             "shift PAGE_UP", "selection-page-up",
@@ -250,8 +250,8 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
             "control END", DefaultEditorKit.endAction,
             "control shift HOME", DefaultEditorKit.selectionBeginAction,
             "control shift END", DefaultEditorKit.selectionEndAction,
-            "control T", "next-link-action", 
-            "control shift T", "previous-link-action", 
+            "control T", "next-link-action",
+            "control shift T", "previous-link-action",
             "control SPACE", "activate-link-action",
             "control shift O", "toggle-componentOrientation"
         });
@@ -288,7 +288,7 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
                 "HOME", "minScroll",
                 "END", "maxScroll"
             }),
- 
+
             "ScrollPane.font", dialogPlain12,
             "ScrollPane.background", scrollBarBackground,
             "ScrollPane.foreground", table.get("controlText"),
@@ -363,7 +363,7 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
             "TextField.font", sansSerifPlain12,
             "TextField.border", textFieldBorder,
             "TextField.focusInputMap", fieldInputMap,
-            
+
             "PasswordField.caretForeground", black,
             "PasswordField.caretBlinkRate", Integer.valueOf(500),
             "PasswordField.inactiveForeground", table.get("textInactiveText"),
@@ -374,7 +374,7 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
             "PasswordField.font", sansSerifPlain12,
             "PasswordField.border", textFieldBorder,
             "PasswordField.focusInputMap", passwordInputMap,
-            
+
             "TextArea.caretForeground", black,
             "TextArea.caretBlinkRate", Integer.valueOf(500),
             "TextArea.inactiveForeground", table.get("textInactiveText"),
@@ -388,7 +388,5 @@ class XAWTLookAndFeel extends MotifLookAndFeel {
         };
 
         table.putDefaults(defaults);
-    }    
+    }
 }
-
-

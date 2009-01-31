@@ -27,14 +27,13 @@ package sun.security.jgss.spi;
 
 import org.ietf.jgss.*;
 import java.security.Provider;
- 
+
 /**
  * This interface is implemented by a mechanism specific name element. A
  * GSSName is conceptually a container class of several name elements from
  * different mechanisms.
  *
  * @author Mayank Upadhyay
- * @version %I%, %G%
  */
 
 public interface GSSNameSpi {
@@ -52,11 +51,11 @@ public interface GSSNameSpi {
      *    BAD_NAME, FAILURE
      */
     public boolean equals(GSSNameSpi name) throws GSSException;
-  
+
     /**
      * Compares this <code>GSSNameSpi</code> object to another Object
      * that might be a <code>GSSNameSpi</code>. The behaviour is exactly
-     * the same as in {@link #equals(GSSNameSpi) equals} except that 
+     * the same as in {@link #equals(GSSNameSpi) equals} except that
      * no GSSException is thrown; instead, false will be returned in the
      * situation where an error occurs.
      *
@@ -79,7 +78,7 @@ public interface GSSNameSpi {
      *
      * @return the flat name representation for this object
      * @exception GSSException with major codes NAME_NOT_MN, BAD_NAME,
-     *    BAD_NAME, FAILURE.   
+     *    BAD_NAME, FAILURE.
      */
     public byte[] export() throws GSSException;
 
@@ -100,7 +99,7 @@ public interface GSSNameSpi {
      * @overrides Object#toString
      */
     public String toString();
-    
+
 
     /**
      * Returns the oid describing the format of the printable name.
@@ -108,7 +107,7 @@ public interface GSSNameSpi {
      * @return the Oid for the format of the printed name
      */
     public Oid getStringNameType();
-  
+
     /**
      * Indicates if this name object represents an Anonymous name.
      */

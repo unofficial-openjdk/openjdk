@@ -22,11 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#ifdef __SUNPRO_C
-#pragma ident	"@(#)mlib_ImageFilters.c	1.12	00/06/09 SMI"
-#endif /* __SUNPRO_C */
 
 /*  Tables mlib_filters_u8f_bc and mlib_filters_u8f_bc2
  *

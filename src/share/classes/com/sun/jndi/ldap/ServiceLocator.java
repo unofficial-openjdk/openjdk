@@ -60,7 +60,7 @@ class ServiceLocator {
     /**
      * Maps a distinguished name (RFC 2253) to a fully qualified domain name.
      * Processes a sequence of RDNs having a DC attribute.
-     * The special RDN "DC=." denotes the root of the domain tree. 
+     * The special RDN "DC=." denotes the root of the domain tree.
      * Multi-valued RDNs, non-DC attributes, binary-valued attributes and the
      * RDN "DC=." all reset the domain name and processing continues.
      *
@@ -69,42 +69,42 @@ class ServiceLocator {
      * @throw InvalidNameException If the distinugished name is invalid.
      */
     static String mapDnToDomainName(String dn) throws InvalidNameException {
-	if (dn == null) {
-	    return null;
-	}
-	StringBuffer domain = new StringBuffer();
-	LdapName ldapName = new LdapName(dn);
+        if (dn == null) {
+            return null;
+        }
+        StringBuffer domain = new StringBuffer();
+        LdapName ldapName = new LdapName(dn);
 
-	// process RDNs left-to-right
-	//List<Rdn> rdnList = ldapName.getRdns();
+        // process RDNs left-to-right
+        //List<Rdn> rdnList = ldapName.getRdns();
 
-	List rdnList = ldapName.getRdns();
-	for (int i = rdnList.size() - 1; i >= 0; i--) {
-	    //Rdn rdn = rdnList.get(i);
-	    Rdn rdn = (Rdn) rdnList.get(i);
+        List rdnList = ldapName.getRdns();
+        for (int i = rdnList.size() - 1; i >= 0; i--) {
+            //Rdn rdn = rdnList.get(i);
+            Rdn rdn = (Rdn) rdnList.get(i);
 
-	    // single-valued RDN with a DC attribute
-	    if ((rdn.size() == 1) &&
-		("dc".equalsIgnoreCase(rdn.getType()) )) {
-		Object attrval = rdn.getValue();
-		if (attrval instanceof String) {
-		    if (attrval.equals(".") ||
-			(domain.length() == 1 && domain.charAt(0) == '.')) {
-			domain.setLength(0); // reset (when current or previous
-					     //        RDN value is "DC=.")
-		    }
-		    if (domain.length() > 0) {
-			domain.append('.');
-		    }
-		    domain.append(attrval);
-		} else {
-		    domain.setLength(0); // reset (when binary-valued attribute)
-		}
-	    } else {
-		domain.setLength(0); // reset (when multi-valued RDN or non-DC)
-	    }
-	}
-	return (domain.length() != 0) ? domain.toString() : null;
+            // single-valued RDN with a DC attribute
+            if ((rdn.size() == 1) &&
+                ("dc".equalsIgnoreCase(rdn.getType()) )) {
+                Object attrval = rdn.getValue();
+                if (attrval instanceof String) {
+                    if (attrval.equals(".") ||
+                        (domain.length() == 1 && domain.charAt(0) == '.')) {
+                        domain.setLength(0); // reset (when current or previous
+                                             //        RDN value is "DC=.")
+                    }
+                    if (domain.length() > 0) {
+                        domain.append('.');
+                    }
+                    domain.append(attrval);
+                } else {
+                    domain.setLength(0); // reset (when binary-valued attribute)
+                }
+            } else {
+                domain.setLength(0); // reset (when multi-valued RDN or non-DC)
+            }
+        }
+        return (domain.length() != 0) ? domain.toString() : null;
     }
 
     /**
@@ -114,71 +114,71 @@ class ServiceLocator {
      *
      * @param domainName A string domain name.
      * @param environment The possibly null environment of the context.
-     * @return An ordered list of hostports for the LDAP service or null if 
+     * @return An ordered list of hostports for the LDAP service or null if
      *         the service has not been located.
      */
     static String[] getLdapService(String domainName, Hashtable environment) {
 
-	if (domainName == null || domainName.length() == 0) {
-	    return null;
-	}
+        if (domainName == null || domainName.length() == 0) {
+            return null;
+        }
 
-	String dnsUrl = "dns:///_ldap._tcp." + domainName;
-	String[] hostports = null;
+        String dnsUrl = "dns:///_ldap._tcp." + domainName;
+        String[] hostports = null;
 
-	try {
-	    // Create the DNS context using NamingManager rather than using
-	    // the initial context constructor. This avoids having the initial
-	    // context constructor call itself (when processing the URL
-	    // argument in the getAttributes call).
-	    Context ctx = NamingManager.getURLContext("dns", environment);
-	    if (!(ctx instanceof DirContext)) {
-		return null; // cannot create a DNS context
-	    }
-	    Attributes attrs =
-		((DirContext)ctx).getAttributes(dnsUrl, SRV_RR_ATTR);
-	    Attribute attr;
+        try {
+            // Create the DNS context using NamingManager rather than using
+            // the initial context constructor. This avoids having the initial
+            // context constructor call itself (when processing the URL
+            // argument in the getAttributes call).
+            Context ctx = NamingManager.getURLContext("dns", environment);
+            if (!(ctx instanceof DirContext)) {
+                return null; // cannot create a DNS context
+            }
+            Attributes attrs =
+                ((DirContext)ctx).getAttributes(dnsUrl, SRV_RR_ATTR);
+            Attribute attr;
 
-	    if (attrs != null && ((attr = attrs.get(SRV_RR)) != null)) {
-		int numValues = attr.size();
-		int numRecords = 0;
-		SrvRecord[] srvRecords = new SrvRecord[numValues];
+            if (attrs != null && ((attr = attrs.get(SRV_RR)) != null)) {
+                int numValues = attr.size();
+                int numRecords = 0;
+                SrvRecord[] srvRecords = new SrvRecord[numValues];
 
-		// create the service records
-		int i = 0;
-		int j = 0;
-		while (i < numValues) {
-		    try {
-			srvRecords[j] = new SrvRecord((String) attr.get(i));
-			j++;
-		    } catch (Exception e) {
-			// ignore bad value
-		    }
-		    i++;
-		}
-		numRecords = j;
+                // create the service records
+                int i = 0;
+                int j = 0;
+                while (i < numValues) {
+                    try {
+                        srvRecords[j] = new SrvRecord((String) attr.get(i));
+                        j++;
+                    } catch (Exception e) {
+                        // ignore bad value
+                    }
+                    i++;
+                }
+                numRecords = j;
 
-		// trim
-		if (numRecords < numValues) {
-		    SrvRecord[] trimmed = new SrvRecord[numRecords];
-		    System.arraycopy(srvRecords, 0, trimmed, 0, numRecords);
-		    srvRecords = trimmed;
-		}
+                // trim
+                if (numRecords < numValues) {
+                    SrvRecord[] trimmed = new SrvRecord[numRecords];
+                    System.arraycopy(srvRecords, 0, trimmed, 0, numRecords);
+                    srvRecords = trimmed;
+                }
 
-		// Sort the service records in ascending order of their
-		// priority value. For records with equal priority, move
-		// those with weight 0 to the top of the list.
-		if (numRecords > 1) {
-		    Arrays.sort(srvRecords);
-		}
+                // Sort the service records in ascending order of their
+                // priority value. For records with equal priority, move
+                // those with weight 0 to the top of the list.
+                if (numRecords > 1) {
+                    Arrays.sort(srvRecords);
+                }
 
-		// extract the host and port number from each service record
-		hostports = extractHostports(srvRecords);
-	    }
-	} catch (NamingException e) {
-	    // ignore
-	}
-	return hostports;
+                // extract the host and port number from each service record
+                hostports = extractHostports(srvRecords);
+            }
+        } catch (NamingException e) {
+            // ignore
+        }
+        return hostports;
     }
 
     /**
@@ -196,8 +196,8 @@ class ServiceLocator {
             if (hostports == null) {
                 hostports = new String[srvRecords.length];
             }
-	    // find the head and tail of the list of records having the same
-	    // priority value.
+            // find the head and tail of the list of records having the same
+            // priority value.
             head = i;
             while (i < srvRecords.length - 1 &&
                 srvRecords[i].priority == srvRecords[i + 1].priority) {
@@ -205,7 +205,7 @@ class ServiceLocator {
             }
             tail = i;
 
-	    // select hostports from the sublist
+            // select hostports from the sublist
             sublistLength = (tail - head) + 1;
             for (int j = 0; j < sublistLength; j++) {
                 hostports[k++] = selectHostport(srvRecords, head, tail);
@@ -220,31 +220,31 @@ class ServiceLocator {
      */
     private static String selectHostport(SrvRecord[] srvRecords, int head,
             int tail) {
-	if (head == tail) {
-	    return srvRecords[head].hostport;
-	}
+        if (head == tail) {
+            return srvRecords[head].hostport;
+        }
 
-	// compute the running sum for records between head and tail
-	int sum = 0;
-	for (int i = head; i <= tail; i++) {
-	    if (srvRecords[i] != null) {
-		sum += srvRecords[i].weight;
-		srvRecords[i].sum = sum;
-	    }
-	}
-	String hostport = null;
+        // compute the running sum for records between head and tail
+        int sum = 0;
+        for (int i = head; i <= tail; i++) {
+            if (srvRecords[i] != null) {
+                sum += srvRecords[i].weight;
+                srvRecords[i].sum = sum;
+            }
+        }
+        String hostport = null;
 
-	// If all records have zero weight, select first available one;
-	// otherwise, randomly select a record according to its weight
-	int target = (sum == 0 ? 0 : random.nextInt(sum + 1));
-	for (int i = head; i <= tail; i++) {
-	    if (srvRecords[i] != null && srvRecords[i].sum >= target) {
-		hostport = srvRecords[i].hostport;
-		srvRecords[i] = null; // make this record unavailable
-		break;
-	    }
-	}
-	return hostport;
+        // If all records have zero weight, select first available one;
+        // otherwise, randomly select a record according to its weight
+        int target = (sum == 0 ? 0 : random.nextInt(sum + 1));
+        for (int i = head; i <= tail; i++) {
+            if (srvRecords[i] != null && srvRecords[i].sum >= target) {
+                hostport = srvRecords[i].hostport;
+                srvRecords[i] = null; // make this record unavailable
+                break;
+            }
+        }
+        return hostport;
     }
 
 /**
@@ -267,17 +267,17 @@ static class SrvRecord implements Comparable {
      * </pre>
      */
     SrvRecord(String srvRecord) throws Exception {
-	StringTokenizer tokenizer = new StringTokenizer(srvRecord, " ");
-	String port;
+        StringTokenizer tokenizer = new StringTokenizer(srvRecord, " ");
+        String port;
 
-	if (tokenizer.countTokens() == 4) {
-	    priority = Integer.parseInt(tokenizer.nextToken());
-	    weight = Integer.parseInt(tokenizer.nextToken());
-	    port = tokenizer.nextToken();
-	    hostport = tokenizer.nextToken() + ":" + port;
-	} else {
-	    throw new IllegalArgumentException();
-	}
+        if (tokenizer.countTokens() == 4) {
+            priority = Integer.parseInt(tokenizer.nextToken());
+            weight = Integer.parseInt(tokenizer.nextToken());
+            port = tokenizer.nextToken();
+            hostport = tokenizer.nextToken() + ":" + port;
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     /*
@@ -285,18 +285,18 @@ static class SrvRecord implements Comparable {
      * equal priority move those with weight 0 to the top of the list.
      */
     public int compareTo(Object o) {
-	SrvRecord that = (SrvRecord) o;
-	if (priority > that.priority) {
-	    return 1; // this > that
-	} else if (priority < that.priority) {
-	    return -1; // this < that
-	} else if (weight == 0 && that.weight != 0) {
-	    return -1; // this < that
-	} else if (weight != 0 && that.weight == 0) {
-	    return 1; // this > that
-	} else {
-	    return 0; // this == that
-	}
+        SrvRecord that = (SrvRecord) o;
+        if (priority > that.priority) {
+            return 1; // this > that
+        } else if (priority < that.priority) {
+            return -1; // this < that
+        } else if (weight == 0 && that.weight != 0) {
+            return -1; // this < that
+        } else if (weight != 0 && that.weight == 0) {
+            return 1; // this > that
+        } else {
+            return 0; // this == that
+        }
     }
 }
 }

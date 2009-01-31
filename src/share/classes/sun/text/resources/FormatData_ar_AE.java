@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 /*
  * (C) Copyright IBM Corp. 1998 - All Rights Reserved

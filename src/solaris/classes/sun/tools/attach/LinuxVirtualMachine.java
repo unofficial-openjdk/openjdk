@@ -38,21 +38,21 @@ import java.util.Properties;
  */
 public class LinuxVirtualMachine extends HotSpotVirtualMachine {
 
-    // Indicates if this machine uses the old LinuxThreads 
+    // Indicates if this machine uses the old LinuxThreads
     static boolean isLinuxThreads;
 
     // The patch to the socket file created by the target VM
     String path;
 
     /**
-     * Attaches to the target VM 
+     * Attaches to the target VM
      */
-    LinuxVirtualMachine(AttachProvider provider, String vmid) 
-	throws AttachNotSupportedException, IOException
+    LinuxVirtualMachine(AttachProvider provider, String vmid)
+        throws AttachNotSupportedException, IOException
     {
-	super(provider, vmid);
+        super(provider, vmid);
 
-	// This provider only understands pids 
+        // This provider only understands pids
         int pid;
         try {
             pid = Integer.parseInt(vmid);
@@ -60,19 +60,19 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
             throw new AttachNotSupportedException("Invalid process identifier");
         }
 
-	// Find the socket file. If not found then we attempt to start the
-	// attach mechanism in the target VM by sending it a QUIT signal.
-	// Then we attempt to find the socket file again.
-	path = findSocketFile(pid);
-	if (path == null) {
+        // Find the socket file. If not found then we attempt to start the
+        // attach mechanism in the target VM by sending it a QUIT signal.
+        // Then we attempt to find the socket file again.
+        path = findSocketFile(pid);
+        if (path == null) {
             File f = createAttachFile(pid);
             try {
-		// On LinuxThreads each thread is a process and we don't have the
-		// pid of the VMThread which has SIGQUIT unblocked. To workaround
+                // On LinuxThreads each thread is a process and we don't have the
+                // pid of the VMThread which has SIGQUIT unblocked. To workaround
                 // this we get the pid of the "manager thread" that is created
                 // by the first call to pthread_create. This is parent of all
-                // threads (except the initial thread). 
-		if (isLinuxThreads) {
+                // threads (except the initial thread).
+                if (isLinuxThreads) {
                     int mpid;
                     try {
                         mpid = getLinuxThreadsManager(pid);
@@ -81,20 +81,20 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
                     }
                     assert(mpid >= 1);
                     sendQuitToChildrenOf(mpid);
-		} else {
+                } else {
                     sendQuitTo(pid);
-		}
+                }
 
                 // give the target VM time to start the attach mechanism
-		int i = 0;
+                int i = 0;
                 long delay = 200;
                 int retries = (int)(attachTimeout() / delay);
-		do {
+                do {
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException x) { }
                     path = findSocketFile(pid);
-		    i++;
+                    i++;
                 } while (i <= retries && path == null);
                 if (path == null) {
                     throw new AttachNotSupportedException(
@@ -104,32 +104,32 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
             } finally {
                 f.delete();
             }
-	}
+        }
 
         // Check that the file owner/permission to avoid attaching to
         // bogus process
         checkPermissions(path);
 
-	// Check that we can connect to the process
-	// - this ensures we throw the permission denied error now rather than	
-	// later when we attempt to enqueue a command.
-	int s = socket();
-	try {
-	    connect(s, path);
-	} finally {
-	    close(s);
-	}
+        // Check that we can connect to the process
+        // - this ensures we throw the permission denied error now rather than
+        // later when we attempt to enqueue a command.
+        int s = socket();
+        try {
+            connect(s, path);
+        } finally {
+            close(s);
+        }
     }
 
     /**
      * Detach from the target VM
      */
     public void detach() throws IOException {
-	synchronized (this) {
-	    if (this.path != null) {
-		this.path = null;
-	    }
-	}
+        synchronized (this) {
+            if (this.path != null) {
+                this.path = null;
+            }
+        }
     }
 
     // protocol version
@@ -137,125 +137,125 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
 
     // known errors
     private final static int ATTACH_ERROR_BADVERSION = 101;
-      
+
     /**
      * Execute the given command in the target VM.
-     */ 
+     */
     InputStream execute(String cmd, Object ... args) throws AgentLoadException, IOException {
-        assert args.length <= 3;        	// includes null
+        assert args.length <= 3;                // includes null
 
-	// did we detach?
-	String p;
-	synchronized (this) {
-	    if (this.path == null) {
-	        throw new IOException("Detached from target VM");
-	    }
-	    p = this.path;
-	}
+        // did we detach?
+        String p;
+        synchronized (this) {
+            if (this.path == null) {
+                throw new IOException("Detached from target VM");
+            }
+            p = this.path;
+        }
 
-	// create UNIX socket
-	int s = socket();
+        // create UNIX socket
+        int s = socket();
 
-	// connect to target VM
-	try {
-	    connect(s, p);
-	} catch (IOException x) {
-	    close(s);
-	    throw x;
-	}
+        // connect to target VM
+        try {
+            connect(s, p);
+        } catch (IOException x) {
+            close(s);
+            throw x;
+        }
 
-	IOException ioe = null;
+        IOException ioe = null;
 
-	// connected - write request
-   	// <ver> <cmd> <args...>
-	try {
-	    writeString(s, PROTOCOL_VERSION);
-	    writeString(s, cmd);
+        // connected - write request
+        // <ver> <cmd> <args...>
+        try {
+            writeString(s, PROTOCOL_VERSION);
+            writeString(s, cmd);
 
-	    for (int i=0; i<3; i++) {
-		if (i < args.length && args[i] != null) {
-		    writeString(s, (String)args[i]);
-		} else {
-		    writeString(s, "");
-		}
-	    }
-	} catch (IOException x) {
-	    ioe = x;
-	}
-	
+            for (int i=0; i<3; i++) {
+                if (i < args.length && args[i] != null) {
+                    writeString(s, (String)args[i]);
+                } else {
+                    writeString(s, "");
+                }
+            }
+        } catch (IOException x) {
+            ioe = x;
+        }
 
-	// Create an input stream to read reply
-	SocketInputStream sis = new SocketInputStream(s);
 
-	// Read the command completion status
-	int completionStatus;
-	try {
-	    completionStatus = readInt(sis);
-	} catch (IOException x) {
-	    sis.close();
-	    if (ioe != null) {
-		throw ioe;
-	    } else {
-		throw x;
-	    }
-	}
+        // Create an input stream to read reply
+        SocketInputStream sis = new SocketInputStream(s);
 
-	if (completionStatus != 0) {
-	    sis.close();
+        // Read the command completion status
+        int completionStatus;
+        try {
+            completionStatus = readInt(sis);
+        } catch (IOException x) {
+            sis.close();
+            if (ioe != null) {
+                throw ioe;
+            } else {
+                throw x;
+            }
+        }
 
-	    // In the event of a protocol mismatch then the target VM
-	    // returns a known error so that we can throw a reasonable
-	    // error.
-	    if (completionStatus == ATTACH_ERROR_BADVERSION) {
-		throw new IOException("Protocol mismatch with target VM");
-	    }
+        if (completionStatus != 0) {
+            sis.close();
 
-	    // Special-case the "load" command so that the right exception is
-	    // thrown.
-	    if (cmd.equals("load")) {
-		throw new AgentLoadException("Failed to load agent library");
-	    } else {
-	        throw new IOException("Command failed in target VM");
-	    }
-	}
+            // In the event of a protocol mismatch then the target VM
+            // returns a known error so that we can throw a reasonable
+            // error.
+            if (completionStatus == ATTACH_ERROR_BADVERSION) {
+                throw new IOException("Protocol mismatch with target VM");
+            }
 
-	// Return the input stream so that the command output can be read
-	return sis;
+            // Special-case the "load" command so that the right exception is
+            // thrown.
+            if (cmd.equals("load")) {
+                throw new AgentLoadException("Failed to load agent library");
+            } else {
+                throw new IOException("Command failed in target VM");
+            }
+        }
+
+        // Return the input stream so that the command output can be read
+        return sis;
     }
 
     /*
      * InputStream for the socket connection to get target VM
      */
     private class SocketInputStream extends InputStream {
-	int s;
+        int s;
 
-	public SocketInputStream(int s) {
-	    this.s = s;
-	}
+        public SocketInputStream(int s) {
+            this.s = s;
+        }
 
-	public synchronized int read() throws IOException {
-	    byte b[] = new byte[1];
-	    int n = this.read(b, 0, 1);
-	    if (n == 1) {
-		return b[0] & 0xff;
-	    } else {
-		return -1;
-	    }
-	}
+        public synchronized int read() throws IOException {
+            byte b[] = new byte[1];
+            int n = this.read(b, 0, 1);
+            if (n == 1) {
+                return b[0] & 0xff;
+            } else {
+                return -1;
+            }
+        }
 
-	public synchronized int read(byte[] bs, int off, int len) throws IOException {
-	    if ((off < 0) || (off > bs.length) || (len < 0) ||
+        public synchronized int read(byte[] bs, int off, int len) throws IOException {
+            if ((off < 0) || (off > bs.length) || (len < 0) ||
                 ((off + len) > bs.length) || ((off + len) < 0)) {
                 throw new IndexOutOfBoundsException();
             } else if (len == 0)
                 return 0;
 
-	    return LinuxVirtualMachine.read(s, bs, off, len);
-	}
+            return LinuxVirtualMachine.read(s, bs, off, len);
+        }
 
-	public void close() throws IOException {
-	    LinuxVirtualMachine.close(s);
-	}
+        public void close() throws IOException {
+            LinuxVirtualMachine.close(s);
+        }
     }
 
     // Return the socket file for the given process.
@@ -301,18 +301,18 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
      * UTF-8 encoding.
      */
     private void writeString(int fd, String s) throws IOException {
-	if (s.length() > 0) {
-	    byte b[];
-	    try {
-	        b = s.getBytes("UTF-8");
-	    } catch (java.io.UnsupportedEncodingException x) { 
-	        throw new InternalError();
-  	    }	
-	    LinuxVirtualMachine.write(fd, b, 0, b.length);
-	}
-	byte b[] = new byte[1];
-	b[0] = 0;
-	write(fd, b, 0, 1);
+        if (s.length() > 0) {
+            byte b[];
+            try {
+                b = s.getBytes("UTF-8");
+            } catch (java.io.UnsupportedEncodingException x) {
+                throw new InternalError();
+            }
+            LinuxVirtualMachine.write(fd, b, 0, b.length);
+        }
+        byte b[] = new byte[1];
+        b[0] = 0;
+        write(fd, b, 0, 1);
     }
 
 
@@ -340,6 +340,6 @@ public class LinuxVirtualMachine extends HotSpotVirtualMachine {
 
     static {
         System.loadLibrary("attach");
-	isLinuxThreads = isLinuxThreads();
+        isLinuxThreads = isLinuxThreads();
     }
 }

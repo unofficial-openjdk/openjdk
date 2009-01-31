@@ -36,17 +36,16 @@ import sun.rmi.server.Util;
  * <code>RemoteObject</code> provides the remote semantics of Object by
  * implementing methods for hashCode, equals, and toString.
  *
- * @author	Ann Wollrath
- * @author	Laird Dornin
- * @author	Peter Jones
- * @version	%I%, %E%
- * @since	JDK1.1
+ * @author      Ann Wollrath
+ * @author      Laird Dornin
+ * @author      Peter Jones
+ * @since       JDK1.1
  */
 public abstract class RemoteObject implements Remote, java.io.Serializable {
 
     /** The object's remote reference. */
     transient protected RemoteRef ref;
-    
+
     /** indicate compatibility with JDK 1.1.x version of class */
     private static final long serialVersionUID = -3215090123894869218L;
 
@@ -54,16 +53,16 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * Creates a remote object.
      */
     protected RemoteObject() {
-	ref = null;
+        ref = null;
     }
-    
+
     /**
      * Creates a remote object, initialized with the specified remote
      * reference.
      * @param newref remote reference
      */
     protected RemoteObject(RemoteRef newref) {
-	ref = newref;
+        ref = newref;
     }
 
     /**
@@ -82,9 +81,9 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * @since 1.2
      */
     public RemoteRef getRef() {
-	return ref;
+        return ref;
     }
-    
+
     /**
      * Returns the stub for the remote object <code>obj</code> passed
      * as a parameter. This operation is only valid <i>after</i>
@@ -96,16 +95,16 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * @since 1.2
      */
     public static Remote toStub(Remote obj) throws NoSuchObjectException {
-	if (obj instanceof RemoteStub ||
-	    (obj != null &&
-	     Proxy.isProxyClass(obj.getClass()) &&
-	     Proxy.getInvocationHandler(obj) instanceof
-	     RemoteObjectInvocationHandler))
-	{
-	    return obj; 
-	} else {
-	    return sun.rmi.transport.ObjectTable.getStub(obj);
-	}
+        if (obj instanceof RemoteStub ||
+            (obj != null &&
+             Proxy.isProxyClass(obj.getClass()) &&
+             Proxy.getInvocationHandler(obj) instanceof
+             RemoteObjectInvocationHandler))
+        {
+            return obj;
+        } else {
+            return sun.rmi.transport.ObjectTable.getStub(obj);
+        }
     }
 
     /**
@@ -113,10 +112,10 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * that refer to the same remote object will have the same hash code
      * (in order to support remote objects as keys in hash tables).
      *
-     * @see		java.util.Hashtable
+     * @see             java.util.Hashtable
      */
     public int hashCode() {
-	return (ref == null) ? super.hashCode() : ref.remoteHashCode();
+        return (ref == null) ? super.hashCode() : ref.remoteHashCode();
     }
 
     /**
@@ -128,37 +127,37 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * then this method delegates by returning the result of invoking the
      * <code>equals</code> method of its parameter with this remote object
      * as the argument.
-     * @param	obj	the Object to compare with
-     * @return	true if these Objects are equal; false otherwise.
-     * @see		java.util.Hashtable
+     * @param   obj     the Object to compare with
+     * @return  true if these Objects are equal; false otherwise.
+     * @see             java.util.Hashtable
      */
     public boolean equals(Object obj) {
-	if (obj instanceof RemoteObject) {
-	    if (ref == null) {
-		return obj == this;
-	    } else {
-		return ref.remoteEquals(((RemoteObject)obj).ref);
-	    }
-	} else if (obj != null) {
-	    /*
-	     * Fix for 4099660: if object is not an instance of RemoteObject,
-	     * use the result of its equals method, to support symmetry is a
-	     * remote object implementation class that does not extend
-	     * RemoteObject wishes to support equality with its stub objects.
-	     */
-	    return obj.equals(this);
-	} else {
-	    return false;
-	}
+        if (obj instanceof RemoteObject) {
+            if (ref == null) {
+                return obj == this;
+            } else {
+                return ref.remoteEquals(((RemoteObject)obj).ref);
+            }
+        } else if (obj != null) {
+            /*
+             * Fix for 4099660: if object is not an instance of RemoteObject,
+             * use the result of its equals method, to support symmetry is a
+             * remote object implementation class that does not extend
+             * RemoteObject wishes to support equality with its stub objects.
+             */
+            return obj.equals(this);
+        } else {
+            return false;
+        }
     }
 
     /**
      * Returns a String that represents the value of this remote object.
      */
     public String toString() {
-	String classname = Util.getUnqualifiedName(getClass());
-	return (ref == null) ? classname :
-	    classname + "[" + ref.remoteToString() + "]";
+        String classname = Util.getUnqualifiedName(getClass());
+        return (ref == null) ? classname :
+            classname + "[" + ref.remoteToString() + "]";
     }
 
     /**
@@ -181,7 +180,7 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * with a zero-length string (<code>""</code>), and then
      * the <code>writeObject</code> method is invoked on <code>out</code>
      * passing this object's <code>ref</code> field as the argument.
-     * 
+     *
      * @serialData
      *
      * The serialized data for this class comprises a string (written with
@@ -286,7 +285,7 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * written by {@link java.io.ObjectOutput#writeBoolean(boolean)}
      *
      * </ul>
-     * 
+     *
      * <p>For <code>"UnicastRef2"</code> with a
      * non-<code>null</code> client socket factory:
      *
@@ -359,28 +358,28 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * <code>readExternal</code> method.
      */
     private void writeObject(java.io.ObjectOutputStream out)
-	throws java.io.IOException, java.lang.ClassNotFoundException
+        throws java.io.IOException, java.lang.ClassNotFoundException
     {
-	if (ref == null) {
-	    throw new java.rmi.MarshalException("Invalid remote object");
-	} else {
-	    String refClassName = ref.getRefClass(out);
-	    if (refClassName == null || refClassName.length() == 0) {
-		/*
-		 * No reference class name specified, so serialize
-		 * remote reference.
-		 */
-		out.writeUTF("");
-		out.writeObject(ref);
-	    } else {
-		/*
-		 * Built-in reference class specified, so delegate
-		 * to reference to write out its external form.
-		 */
-		out.writeUTF(refClassName);
-		ref.writeExternal(out);
-	    }
-	}
+        if (ref == null) {
+            throw new java.rmi.MarshalException("Invalid remote object");
+        } else {
+            String refClassName = ref.getRefClass(out);
+            if (refClassName == null || refClassName.length() == 0) {
+                /*
+                 * No reference class name specified, so serialize
+                 * remote reference.
+                 */
+                out.writeUTF("");
+                out.writeObject(ref);
+            } else {
+                /*
+                 * Built-in reference class specified, so delegate
+                 * to reference to write out its external form.
+                 */
+                out.writeUTF(refClassName);
+                ref.writeExternal(out);
+            }
+        }
     }
 
     /**
@@ -419,41 +418,41 @@ public abstract class RemoteObject implements Remote, java.io.Serializable {
      * case this object's <code>ref</code> field will be set to an
      * instance of that implementation-specific class.
      */
-    private void readObject(java.io.ObjectInputStream in) 
-	throws java.io.IOException, java.lang.ClassNotFoundException
+    private void readObject(java.io.ObjectInputStream in)
+        throws java.io.IOException, java.lang.ClassNotFoundException
     {
-	String refClassName = in.readUTF();
-	if (refClassName == null || refClassName.length() == 0) {
-	    /*
-	     * No reference class name specified, so construct
-	     * remote reference from its serialized form.
-	     */
-	    ref = (RemoteRef) in.readObject();
-	} else {
-	    /*
-	     * Built-in reference class specified, so delegate to
-	     * internal reference class to initialize its fields from
-	     * its external form.
-	     */
-	    String internalRefClassName =
-		RemoteRef.packagePrefix + "." + refClassName;
-	    Class refClass = Class.forName(internalRefClassName);
-	    try {
-		ref = (RemoteRef) refClass.newInstance();
+        String refClassName = in.readUTF();
+        if (refClassName == null || refClassName.length() == 0) {
+            /*
+             * No reference class name specified, so construct
+             * remote reference from its serialized form.
+             */
+            ref = (RemoteRef) in.readObject();
+        } else {
+            /*
+             * Built-in reference class specified, so delegate to
+             * internal reference class to initialize its fields from
+             * its external form.
+             */
+            String internalRefClassName =
+                RemoteRef.packagePrefix + "." + refClassName;
+            Class refClass = Class.forName(internalRefClassName);
+            try {
+                ref = (RemoteRef) refClass.newInstance();
 
-		/*
-		 * If this step fails, assume we found an internal
-		 * class that is not meant to be a serializable ref
-		 * type.
-		 */
-	    } catch (InstantiationException e) {
-		throw new ClassNotFoundException(internalRefClassName, e);
-	    } catch (IllegalAccessException e) {
-		throw new ClassNotFoundException(internalRefClassName, e);
-	    } catch (ClassCastException e) {
-		throw new ClassNotFoundException(internalRefClassName, e);
-	    }
-	    ref.readExternal(in);
-	}
+                /*
+                 * If this step fails, assume we found an internal
+                 * class that is not meant to be a serializable ref
+                 * type.
+                 */
+            } catch (InstantiationException e) {
+                throw new ClassNotFoundException(internalRefClassName, e);
+            } catch (IllegalAccessException e) {
+                throw new ClassNotFoundException(internalRefClassName, e);
+            } catch (ClassCastException e) {
+                throw new ClassNotFoundException(internalRefClassName, e);
+            }
+            ref.readExternal(in);
+        }
     }
 }

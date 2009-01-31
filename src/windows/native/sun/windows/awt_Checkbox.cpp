@@ -78,61 +78,61 @@ AwtCheckbox* AwtCheckbox::Create(jobject peer, jobject parent)
 
     try {
         if (env->EnsureLocalCapacity(2) < 0) {
-	    return NULL;
-	}
+            return NULL;
+        }
 
-	AwtComponent* awtParent;
-	JNI_CHECK_NULL_GOTO(parent, "null parent", done);
+        AwtComponent* awtParent;
+        JNI_CHECK_NULL_GOTO(parent, "null parent", done);
 
-	awtParent = (AwtComponent*)JNI_GET_PDATA(parent);
-	JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
+        awtParent = (AwtComponent*)JNI_GET_PDATA(parent);
+        JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
 
-	target = env->GetObjectField(peer, AwtObject::targetID);
-	JNI_CHECK_NULL_GOTO(target, "null target", done);
+        target = env->GetObjectField(peer, AwtObject::targetID);
+        JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-	checkbox = new AwtCheckbox();
+        checkbox = new AwtCheckbox();
 
-	{
+        {
             DWORD style = WS_CHILD | WS_CLIPSIBLINGS | BS_OWNERDRAW;
-	    LPCWSTR defaultLabelStr = L"";
-	    LPCWSTR labelStr = defaultLabelStr;
-	    DWORD exStyle = 0;
+            LPCWSTR defaultLabelStr = L"";
+            LPCWSTR labelStr = defaultLabelStr;
+            DWORD exStyle = 0;
 
-	    if (GetRTL()) {
-	        exStyle |= WS_EX_RIGHT;
-		if (GetRTLReadingOrder())
-		    exStyle |= WS_EX_RTLREADING;
-	    }
+            if (GetRTL()) {
+                exStyle |= WS_EX_RIGHT;
+                if (GetRTLReadingOrder())
+                    exStyle |= WS_EX_RTLREADING;
+            }
 
-	    label = (jstring)env->GetObjectField(target, AwtCheckbox::labelID);
-	    if (label != NULL) {
-	        labelStr = env->GetStringChars(label, 0);
-	    }
-	    if (labelStr != 0) {
-	        jint x = env->GetIntField(target, AwtComponent::xID);
-		jint y = env->GetIntField(target, AwtComponent::yID);
-		jint width = env->GetIntField(target, AwtComponent::widthID);
-		jint height = env->GetIntField(target, AwtComponent::heightID);
-		checkbox->CreateHWnd(env, labelStr, style, exStyle,
-				     x, y, width, height,
-				     awtParent->GetHWnd(),
-				     reinterpret_cast<HMENU>(static_cast<INT_PTR>(
+            label = (jstring)env->GetObjectField(target, AwtCheckbox::labelID);
+            if (label != NULL) {
+                labelStr = env->GetStringChars(label, 0);
+            }
+            if (labelStr != 0) {
+                jint x = env->GetIntField(target, AwtComponent::xID);
+                jint y = env->GetIntField(target, AwtComponent::yID);
+                jint width = env->GetIntField(target, AwtComponent::widthID);
+                jint height = env->GetIntField(target, AwtComponent::heightID);
+                checkbox->CreateHWnd(env, labelStr, style, exStyle,
+                                     x, y, width, height,
+                                     awtParent->GetHWnd(),
+                                     reinterpret_cast<HMENU>(static_cast<INT_PTR>(
                          awtParent->CreateControlID())),
-				     ::GetSysColor(COLOR_WINDOWTEXT),
-				     ::GetSysColor(COLOR_BTNFACE),
-				     peer);
+                                     ::GetSysColor(COLOR_WINDOWTEXT),
+                                     ::GetSysColor(COLOR_BTNFACE),
+                                     peer);
 
-		if (labelStr != defaultLabelStr) {
-		    env->ReleaseStringChars(label, labelStr);
-		}
-	    } else {
-	        throw std::bad_alloc();
-	    }
-	}
+                if (labelStr != defaultLabelStr) {
+                    env->ReleaseStringChars(label, labelStr);
+                }
+            } else {
+                throw std::bad_alloc();
+            }
+        }
     } catch (...) {
         env->DeleteLocalRef(label);
-	env->DeleteLocalRef(target);
-	throw;
+        env->DeleteLocalRef(target);
+        throw;
     }
 
 done:
@@ -146,14 +146,14 @@ BOOL AwtCheckbox::ActMouseMessage(MSG* pMsg) {
     if (!IsFocusingMessage(pMsg->message)) {
         return FALSE;
     }
-    
+
     if (pMsg->message == WM_LBUTTONDOWN) {
         SendMessage(BM_SETSTATE, ~SendMessage(BM_GETSTATE, 0, 0), 0);
     }
     return TRUE;
 }
 
-MsgRouting 
+MsgRouting
 AwtCheckbox::WmMouseUp(UINT flags, int x, int y, int button)
 {
     MsgRouting mrResult = AwtComponent::WmMouseUp(flags, x, y, button);
@@ -174,7 +174,7 @@ AwtCheckbox::WmMouseUp(UINT flags, int x, int y, int button)
     return mrResult;
 }
 
-MsgRouting 
+MsgRouting
 AwtCheckbox::WmMouseDown(UINT flags, int x, int y, int button)
 {
     m_fLButtonDowned = TRUE;
@@ -185,7 +185,7 @@ MsgRouting
 AwtCheckbox::WmNotify(UINT notifyCode)
 {
     if (notifyCode == BN_CLICKED) {
-	BOOL fChecked = !GetState();
+        BOOL fChecked = !GetState();
         DoCallback("handleAction", "(Z)V", fChecked);
     }
     return mrDoDefault;
@@ -196,7 +196,7 @@ BOOL AwtCheckbox::GetState()
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->EnsureLocalCapacity(2) < 0) {
-	return NULL;
+        return NULL;
     }
     jobject target = GetTarget(env);
     jboolean result = JNI_FALSE;
@@ -221,7 +221,7 @@ AwtCheckbox::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->EnsureLocalCapacity(4) < 0) {
-	return mrConsume;
+        return mrConsume;
     }
 
     jobject self = GetPeer(env);
@@ -239,20 +239,20 @@ AwtCheckbox::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
 
     jobject group = env->GetObjectField(target, AwtCheckbox::groupID);
     if (group != NULL)
-	nState = DFCS_BUTTONRADIO;
+        nState = DFCS_BUTTONRADIO;
     else
-	nState = DFCS_BUTTONCHECK;
+        nState = DFCS_BUTTONCHECK;
 
     if (GetState())
-	nState |= DFCS_CHECKED;
+        nState |= DFCS_CHECKED;
     else
-	nState &= ~DFCS_CHECKED;
+        nState &= ~DFCS_CHECKED;
 
     if (drawInfo.itemState & ODS_SELECTED)
-	nState |= DFCS_PUSHED;
+        nState |= DFCS_PUSHED;
 
     if (drawInfo.itemAction & ODA_DRAWENTIRE) {
-	VERIFY(::FillRect (hDC, &rect, GetBackgroundBrush()));
+        VERIFY(::FillRect (hDC, &rect, GetBackgroundBrush()));
     }
 
     /* draw check mark */
@@ -270,15 +270,15 @@ AwtCheckbox::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
      *
      * 4 is a heuristic number
      */
-    rect.left = rect.left + checkSize + checkSize/4; 
+    rect.left = rect.left + checkSize + checkSize/4;
     if (drawInfo.itemAction & ODA_DRAWENTIRE) {
         BOOL bEnabled = isEnabled();
 
-	int x = (GetRTL()) ? rect.right - (checkSize + checkSize / 4 + size.cx)
-	                   : rect.left;
-	int y = (rect.top + rect.bottom - size.cy) / 2;
+        int x = (GetRTL()) ? rect.right - (checkSize + checkSize / 4 + size.cx)
+                           : rect.left;
+        int y = (rect.top + rect.bottom - size.cy) / 2;
         if (bEnabled) {
-	    AwtComponent::DrawWindowText(hDC, font, str, x, y);
+            AwtComponent::DrawWindowText(hDC, font, str, x, y);
         } else {
             AwtComponent::DrawGrayText(hDC, font, str, x, y);
         }
@@ -296,11 +296,11 @@ AwtCheckbox::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
                                       margin
                                  : focusRect.left + size.cx + 2 * margin;
     focusRect.bottom = focusRect.top + size.cy;
-    
+
     /*  draw focus rect */
     if ((drawInfo.itemState & ODS_FOCUS) &&
-	((drawInfo.itemAction & ODA_FOCUS)||
-	 (drawInfo.itemAction &ODA_DRAWENTIRE))) {
+        ((drawInfo.itemAction & ODA_FOCUS)||
+         (drawInfo.itemAction &ODA_DRAWENTIRE))) {
         VERIFY(::DrawFocusRect(hDC, &focusRect));
     }
     /*  erase focus rect */
@@ -311,7 +311,7 @@ AwtCheckbox::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
 
     /*  Notify any subclasses */
     rect = drawInfo.rcItem;
-    DoCallback("handlePaint", "(IIII)V", rect.left, rect.top, 
+    DoCallback("handlePaint", "(IIII)V", rect.left, rect.top,
                rect.right-rect.left, rect.bottom-rect.top);
 
     env->DeleteLocalRef(target);
@@ -354,7 +354,7 @@ void AwtCheckbox::_SetLabel(void *param)
 
     int badAlloc = 0;
     AwtCheckbox *c = NULL;
-    
+
     PDATA pData;
     JNI_CHECK_PEER_GOTO(checkbox, done);
 
@@ -460,9 +460,9 @@ void AwtCheckbox::_SetState(void *param)
     c = (AwtCheckbox *)pData;
     if (::IsWindow(c->GetHWnd()))
     {
-        /* 
+        /*
          * when multifont and group checkbox receive setState native
-         * method, it must be redraw to display correct check mark 
+         * method, it must be redraw to display correct check mark
          */
         jobject target = env->GetObjectField(checkbox, AwtObject::targetID);
         jobject group = env->GetObjectField(target, AwtCheckbox::groupID);
@@ -475,7 +475,7 @@ void AwtCheckbox::_SetState(void *param)
             VERIFY(::InvalidateRect(hWnd, &rect,TRUE));
             VERIFY(::UpdateWindow(hWnd));
         } else {
-	    c->SendMessage(BM_SETCHECK, (WPARAM)(state ? BST_CHECKED : BST_UNCHECKED));
+            c->SendMessage(BM_SETCHECK, (WPARAM)(state ? BST_CHECKED : BST_UNCHECKED));
             VERIFY(::InvalidateRect(hWnd, NULL, FALSE));
         }
         c->VerifyState();
@@ -500,14 +500,14 @@ void AwtCheckbox::VerifyState()
         /*  Component is not fully setup yet. */
         return;
     }
-    
+
     AwtComponent::VerifyState();
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->EnsureLocalCapacity(2) < 0) {
-	return;
+        return;
     }
-    
+
     jobject target = GetTarget(env);
 
     /*  Check button style */
@@ -520,9 +520,9 @@ void AwtCheckbox::VerifyState()
     try {
         peerStr = new TCHAR[len+1];
     } catch (std::bad_alloc&) {
-	env->DeleteLocalRef(target);
+        env->DeleteLocalRef(target);
         throw;
-    }        
+    }
 
     GetText(peerStr, len+1);
     jstring label = (jstring)env->GetObjectField(target, AwtCheckbox::labelID);
@@ -547,15 +547,15 @@ extern "C" {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL
-Java_java_awt_Checkbox_initIDs(JNIEnv *env, jclass cls) 
+Java_java_awt_Checkbox_initIDs(JNIEnv *env, jclass cls)
 {
     TRY;
 
-    AwtCheckbox::labelID = 
+    AwtCheckbox::labelID =
       env->GetFieldID(cls, "label", "Ljava/lang/String;");
-    AwtCheckbox::groupID = 
+    AwtCheckbox::groupID =
       env->GetFieldID(cls, "group", "Ljava/awt/CheckboxGroup;");
-    AwtCheckbox::stateID = 
+    AwtCheckbox::stateID =
       env->GetFieldID(cls, "state", "Z");
 
     DASSERT(AwtCheckbox::labelID != NULL);
@@ -564,7 +564,7 @@ Java_java_awt_Checkbox_initIDs(JNIEnv *env, jclass cls)
 
     CATCH_BAD_ALLOC;
 }
- 
+
 } /* extern "C" */
 
 
@@ -581,7 +581,7 @@ extern "C" {
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_windows_WCheckboxPeer_getCheckMarkSize(JNIEnv *env,
-							  jclass cls)
+                                                          jclass cls)
 {
     return (jint)AwtCheckbox::GetCheckSize();
 }
@@ -591,9 +591,9 @@ Java_sun_awt_windows_WCheckboxPeer_getCheckMarkSize(JNIEnv *env,
  * Method:    setState
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCheckboxPeer_setState(JNIEnv *env, jobject self,
-					    jboolean state) 
+                                            jboolean state)
 {
     TRY;
 
@@ -614,7 +614,7 @@ Java_sun_awt_windows_WCheckboxPeer_setState(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCheckboxPeer_setCheckboxGroup(JNIEnv *env, jobject self,
-						    jobject group) 
+                                                    jobject group)
 {
     TRY;
 
@@ -635,7 +635,7 @@ Java_sun_awt_windows_WCheckboxPeer_setCheckboxGroup(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCheckboxPeer_setLabel(JNIEnv *env, jobject self,
-					    jstring label) 
+                                            jstring label)
 {
     TRY;
 
@@ -655,16 +655,16 @@ Java_sun_awt_windows_WCheckboxPeer_setLabel(JNIEnv *env, jobject self,
  * Signature: (Lsun/awt/windows/WComponentPeer;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WCheckboxPeer_create(JNIEnv *env, jobject self, 
-					  jobject parent) 
+Java_sun_awt_windows_WCheckboxPeer_create(JNIEnv *env, jobject self,
+                                          jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
-    AwtToolkit::CreateComponent(self, parent, 
-				(AwtToolkit::ComponentFactory)
-				AwtCheckbox::Create);
+    AwtToolkit::CreateComponent(self, parent,
+                                (AwtToolkit::ComponentFactory)
+                                AwtCheckbox::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
 #ifdef DEBUG

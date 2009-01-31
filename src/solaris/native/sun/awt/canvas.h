@@ -28,18 +28,18 @@
 
 void awt_canvas_reconfigure(struct FrameData *wdata);
 Widget awt_canvas_create(XtPointer this,
-			 Widget parent,
-			 char *base,
-			 int32_t width,
-			 int32_t height,
-			 Boolean parentIsFrame,
-			 struct FrameData *wdata,
+                         Widget parent,
+                         char *base,
+                         int32_t width,
+                         int32_t height,
+                         Boolean parentIsFrame,
+                         struct FrameData *wdata,
                          AwtGraphicsConfigDataPtr awtData);
 void awt_canvas_scroll(XtPointer this, struct CanvasData *wdata, long dx, long dy);
 void awt_canvas_event_handler(Widget w, XtPointer client_data,
-			      XEvent *event, Boolean *cont);
+                              XEvent *event, Boolean *cont);
 void awt_canvas_handleEvent(Widget w, XtPointer client_data,
-			    XEvent *event, struct WidgetInfo *winfo,
+                            XEvent *event, struct WidgetInfo *winfo,
                             Boolean *cont, Boolean passEvent);
 
 void awt_copyXEventToAWTEvent(JNIEnv* env, XEvent * xevent, jobject jevent);
@@ -49,7 +49,7 @@ jobject awt_canvas_getFocusedWindowPeer();
 void awt_canvas_setFocusOwnerPeer(jobject peer);
 void awt_canvas_setFocusedWindowPeer(jobject peer);
 jobject awt_canvas_wrapInSequenced(jobject awtevent);
-extern void keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar, 
+extern void keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar,
                         jint *keyLocation);
 #define awt_canvas_addToFocusList awt_canvas_addToFocusListDefault
 void awt_canvas_addToFocusListDefault(jobject target);

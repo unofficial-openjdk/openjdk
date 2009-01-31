@@ -28,17 +28,17 @@
 #include "java_lang_Compiler.h"
 
 static JNINativeMethod methods[] = {
-    {"compileClass", 
+    {"compileClass",
      "(Ljava/lang/Class;)Z",
      (void *)&JVM_CompileClass},
     {"compileClasses",
      "(Ljava/lang/String;)Z",
      (void *)&JVM_CompileClasses},
     {"command",
-     "(Ljava/lang/Object;)Ljava/lang/Object;", 
+     "(Ljava/lang/Object;)Ljava/lang/Object;",
      (void *)&JVM_CompilerCommand},
     {"enable",
-     "()V", 
+     "()V",
      (void *)&JVM_EnableCompiler},
     {"disable",
      "()V",
@@ -49,5 +49,5 @@ JNIEXPORT void JNICALL
 Java_java_lang_Compiler_registerNatives(JNIEnv *env, jclass compCls)
 {
     (*env)->RegisterNatives(env, compCls, methods,
-			    sizeof methods / sizeof methods[0]);
+                            sizeof methods / sizeof methods[0]);
 }

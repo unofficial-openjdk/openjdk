@@ -37,7 +37,7 @@ public class ReadUByte {
         BrokenInputStream() {
             super(new byte[16]);
         }
-        
+
         public int read() {
             return -33;
         }

@@ -27,7 +27,7 @@
  * jexec for J2SE
  *
  * jexec is used by the system to allow execution of JAR files.
- *    Essentially jexec needs to run java and 
+ *    Essentially jexec needs to run java and
  *    needs to be a native ISA executable (not a shell script), although
  *    this native ISA executable requirement was a mistake that will be fixed.
  *    (<ISA> is sparc or i386 or amd64).
@@ -131,7 +131,7 @@ const char * isJar(const char * path);
 /*
  * This is the main entry point.  This program (jexec) will attempt to execute
  * a JAR file by finding the Java program (java), relative to its own location.
- * The exact location of the Java program depends on the platform, i.e. 
+ * The exact location of the Java program depends on the platform, i.e.
  *
  *      <INSTALLATIONDIR>/jre/lib/<ISA>/jexec  (for Solaris)
  *      <INSTALLATIONDIR>/lib/jexec            (for Linux JDK)
@@ -189,7 +189,7 @@ int main(int argc, const char * argv[]) {
         if (realpath(jarfile, jarPath) == NULL) {
             errorExit(errno, BAD_PATHNAME_MSG);
         }
-        
+
         message = isJar(jarPath);
         if (message != NULL) {
             errorExit(errno, message);
@@ -236,7 +236,7 @@ void errorExit(int error, const char * message) {
         errno = error;
         perror((message != NULL) ? message : UNKNOWN_ERROR);
     }
-    
+
     exit((error == 0) ? 0 : 1);
 }
 

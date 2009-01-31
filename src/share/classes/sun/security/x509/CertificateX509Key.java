@@ -38,14 +38,13 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  * @see CertAttrSet
  */
 public class CertificateX509Key implements CertAttrSet<String> {
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */  
+     */
     public static final String IDENT = "x509.info.key";
     /**
      * Sub attributes name for this CertAttrSet.

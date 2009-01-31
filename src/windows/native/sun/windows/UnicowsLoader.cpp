@@ -29,11 +29,11 @@
 
 /*
  * Support functions for the Microsoft Layer for Unicode (MSLU).
- * 
+ *
  * The MSLU maps the wide char version of Windows APIs with strings
  * to their ANSI version equivalent on Win98/ME platforms.
  *
- * For more details on the MSLU, please refer to the MSDN webpage at: 
+ * For more details on the MSLU, please refer to the MSDN webpage at:
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/mslu/winprog/microsoft_layer_for_unicode_on_windows_95_98_me_systems.asp
  */
 
@@ -42,19 +42,19 @@ HMODULE UnicowsLoader::hmodUnicows = NULL;
 
 // MSLU loader entry point, which is called when the module
 // is initialized.
-extern "C" HMODULE (__stdcall *_PfnLoadUnicows)(void) = 
-	&UnicowsLoader::LoadUnicows;
+extern "C" HMODULE (__stdcall *_PfnLoadUnicows)(void) =
+        &UnicowsLoader::LoadUnicows;
 
 // Overriede APIs that are not supported by MSLU.
-extern "C" FARPROC Unicows_GetPrinterW = 
-	(FARPROC)&UnicowsLoader::GetPrinterWImpl;
-extern "C" FARPROC Unicows_EnumPrintersW = 
-	(FARPROC)&UnicowsLoader::EnumPrintersWImpl;
+extern "C" FARPROC Unicows_GetPrinterW =
+        (FARPROC)&UnicowsLoader::GetPrinterWImpl;
+extern "C" FARPROC Unicows_EnumPrintersW =
+        (FARPROC)&UnicowsLoader::EnumPrintersWImpl;
 
 HMODULE __stdcall UnicowsLoader::LoadUnicows(void)
 {
     if (hmodUnicows != NULL) {
-	return hmodUnicows;
+        return hmodUnicows;
     }
 
     // Unfortunately, some DLLs that are loaded in conjunction with
@@ -78,12 +78,12 @@ HMODULE __stdcall UnicowsLoader::LoadUnicows(void)
         *strrchr(abspath, '\\') = '\0';
         strcat(abspath, "\\unicows.dll");
         hmodUnicows = LoadLibraryA(abspath);
-	free(abspath);
+        free(abspath);
     }
 
     // Restore the FPU control word if needed.
     if ( _control87(0, 0) != fpu_cw) {
-	_control87(fpu_cw, 0xfffff);
+        _control87(fpu_cw, 0xfffff);
     }
 
     return hmodUnicows;
@@ -101,16 +101,16 @@ void UnicowsLoader::DevModeA2DevModeW(
     DEVMODEW * dmw)
 {
     // convert string portions
-    ::MultiByteToWideChar(CP_ACP, 0, (CHAR *)dma->dmDeviceName, CCHDEVICENAME, 
-	dmw->dmDeviceName, CCHDEVICENAME);
-    ::MultiByteToWideChar(CP_ACP, 0, (CHAR *)dma->dmFormName, CCHDEVICENAME, 
-	dmw->dmFormName, CCHDEVICENAME);
+    ::MultiByteToWideChar(CP_ACP, 0, (CHAR *)dma->dmDeviceName, CCHDEVICENAME,
+        dmw->dmDeviceName, CCHDEVICENAME);
+    ::MultiByteToWideChar(CP_ACP, 0, (CHAR *)dma->dmFormName, CCHDEVICENAME,
+        dmw->dmFormName, CCHDEVICENAME);
 
     // copy driver specific data if exists
     if (dma->dmDriverExtra != 0) {
-	PBYTE pExtraA = (PBYTE)(dma + 1);
-	PBYTE pExtraW = (PBYTE)(dmw + 1);
-	memcpy(pExtraW, pExtraA, dma->dmDriverExtra);
+        PBYTE pExtraA = (PBYTE)(dma + 1);
+        PBYTE pExtraW = (PBYTE)(dmw + 1);
+        memcpy(pExtraW, pExtraA, dma->dmDriverExtra);
     }
 
     // copy normal struct members
@@ -151,8 +151,8 @@ void UnicowsLoader::DevModeA2DevModeW(
 
 // PRINTER_INFO_1 struct converter
 void UnicowsLoader::PrinterInfo1A2W(
-    const LPPRINTER_INFO_1A pi1A, 
-    LPPRINTER_INFO_1W pi1W, 
+    const LPPRINTER_INFO_1A pi1A,
+    LPPRINTER_INFO_1W pi1W,
     const DWORD num)
 {
     LPWSTR pwstrbuf = (LPWSTR)(pi1W + num);
@@ -160,61 +160,61 @@ void UnicowsLoader::PrinterInfo1A2W(
 
     // loop through all structures
     for (current = 0; current < num; current ++) {
-	LPPRINTER_INFO_1A curPi1A = pi1A + current;
-	LPPRINTER_INFO_1W curPi1W = pi1W + current;
+        LPPRINTER_INFO_1A curPi1A = pi1A + current;
+        LPPRINTER_INFO_1W curPi1W = pi1W + current;
 
-	// copy the structure itself
-	memcpy(curPi1W, curPi1A, sizeof(_PRINTER_INFO_1W));
+        // copy the structure itself
+        memcpy(curPi1W, curPi1A, sizeof(_PRINTER_INFO_1W));
 
-	// copy string members
-	StringA2W(curPi1A->pDescription, &(curPi1W->pDescription), &pwstrbuf);
-	StringA2W(curPi1A->pName, &(curPi1W->pName), &pwstrbuf);
-	StringA2W(curPi1A->pComment, &(curPi1W->pComment), &pwstrbuf);
+        // copy string members
+        StringA2W(curPi1A->pDescription, &(curPi1W->pDescription), &pwstrbuf);
+        StringA2W(curPi1A->pName, &(curPi1W->pName), &pwstrbuf);
+        StringA2W(curPi1A->pComment, &(curPi1W->pComment), &pwstrbuf);
     }
 }
 
 // PRINTER_INFO_2 struct converter
 void UnicowsLoader::PrinterInfo2A2W(
-    const LPPRINTER_INFO_2A pi2A, 
-    LPPRINTER_INFO_2W pi2W, 
-    const DWORD num) 
+    const LPPRINTER_INFO_2A pi2A,
+    LPPRINTER_INFO_2W pi2W,
+    const DWORD num)
 {
     PBYTE pbytebuf = (PBYTE)(pi2W + num);
     DWORD current;
 
     // loop through all structures
     for (current = 0; current < num; current ++) {
-	LPPRINTER_INFO_2A curPi2A = pi2A + current;
-	LPPRINTER_INFO_2W curPi2W = pi2W + current;
-	// copy the structure itself
-	memcpy(curPi2W, curPi2A, sizeof(_PRINTER_INFO_2W));
+        LPPRINTER_INFO_2A curPi2A = pi2A + current;
+        LPPRINTER_INFO_2W curPi2W = pi2W + current;
+        // copy the structure itself
+        memcpy(curPi2W, curPi2A, sizeof(_PRINTER_INFO_2W));
 
-	// copy string members
-	StringA2W(curPi2A->pServerName, &(curPi2W->pServerName), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pPrinterName, &(curPi2W->pPrinterName), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pShareName, &(curPi2W->pShareName), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pPortName, &(curPi2W->pPortName), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pDriverName, &(curPi2W->pDriverName), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pComment, &(curPi2W->pComment), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pLocation, &(curPi2W->pLocation), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pSepFile, &(curPi2W->pSepFile), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pPrintProcessor, &(curPi2W->pPrintProcessor), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pDatatype, &(curPi2W->pDatatype), (LPWSTR *)&pbytebuf);
-	StringA2W(curPi2A->pParameters, &(curPi2W->pParameters), (LPWSTR *)&pbytebuf);
+        // copy string members
+        StringA2W(curPi2A->pServerName, &(curPi2W->pServerName), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pPrinterName, &(curPi2W->pPrinterName), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pShareName, &(curPi2W->pShareName), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pPortName, &(curPi2W->pPortName), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pDriverName, &(curPi2W->pDriverName), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pComment, &(curPi2W->pComment), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pLocation, &(curPi2W->pLocation), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pSepFile, &(curPi2W->pSepFile), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pPrintProcessor, &(curPi2W->pPrintProcessor), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pDatatype, &(curPi2W->pDatatype), (LPWSTR *)&pbytebuf);
+        StringA2W(curPi2A->pParameters, &(curPi2W->pParameters), (LPWSTR *)&pbytebuf);
 
-	// copy DEVMODE structure
-	if (curPi2A->pDevMode != NULL) {
-	    curPi2W->pDevMode = (LPDEVMODEW)pbytebuf;
-	    DevModeA2DevModeW(curPi2A->pDevMode, curPi2W->pDevMode);
-	    pbytebuf += sizeof(DEVMODEW) + curPi2A->pDevMode->dmDriverExtra;
-	}
+        // copy DEVMODE structure
+        if (curPi2A->pDevMode != NULL) {
+            curPi2W->pDevMode = (LPDEVMODEW)pbytebuf;
+            DevModeA2DevModeW(curPi2A->pDevMode, curPi2W->pDevMode);
+            pbytebuf += sizeof(DEVMODEW) + curPi2A->pDevMode->dmDriverExtra;
+        }
     }
 }
 
 // PRINTER_INFO_5 struct converter
 void UnicowsLoader::PrinterInfo5A2W(
-    const LPPRINTER_INFO_5A pi5A, 
-    LPPRINTER_INFO_5W pi5W, 
+    const LPPRINTER_INFO_5A pi5A,
+    LPPRINTER_INFO_5W pi5W,
     const DWORD num)
 {
     LPWSTR pbuf = (LPWSTR)(pi5W + num);
@@ -222,37 +222,37 @@ void UnicowsLoader::PrinterInfo5A2W(
 
     // loop through all structures
     for (current = 0; current < num; current ++) {
-	LPPRINTER_INFO_5A curPi5A = pi5A + current;
-	LPPRINTER_INFO_5W curPi5W = pi5W + current;
+        LPPRINTER_INFO_5A curPi5A = pi5A + current;
+        LPPRINTER_INFO_5W curPi5W = pi5W + current;
 
-	// copy the structure itself
-	memcpy(curPi5W, curPi5A, sizeof(_PRINTER_INFO_5W));
+        // copy the structure itself
+        memcpy(curPi5W, curPi5A, sizeof(_PRINTER_INFO_5W));
 
-	// copy string members
-	StringA2W(curPi5A->pPrinterName, &(curPi5W->pPrinterName), &pbuf);
-	StringA2W(curPi5A->pPortName, &(curPi5W->pPortName), &pbuf);
+        // copy string members
+        StringA2W(curPi5A->pPrinterName, &(curPi5W->pPrinterName), &pbuf);
+        StringA2W(curPi5A->pPortName, &(curPi5W->pPortName), &pbuf);
     }
 }
 
 // PRINTER_INFO_* struct converter.  Supported levels are 1, 2, and 5.
 void UnicowsLoader::PrinterInfoA2W(
-    const PVOID piA, 
-    PVOID piW, 
-    const DWORD Level, 
-    const DWORD num) 
+    const PVOID piA,
+    PVOID piW,
+    const DWORD Level,
+    const DWORD num)
 {
     switch (Level) {
     case 1:
-	PrinterInfo1A2W((LPPRINTER_INFO_1A)piA, (LPPRINTER_INFO_1W)piW, num);
-	break;
+        PrinterInfo1A2W((LPPRINTER_INFO_1A)piA, (LPPRINTER_INFO_1W)piW, num);
+        break;
 
     case 2:
-	PrinterInfo2A2W((LPPRINTER_INFO_2A)piA, (LPPRINTER_INFO_2W)piW, num);
-	break;
+        PrinterInfo2A2W((LPPRINTER_INFO_2A)piA, (LPPRINTER_INFO_2W)piW, num);
+        break;
 
     case 5:
-	PrinterInfo5A2W((LPPRINTER_INFO_5A)piA, (LPPRINTER_INFO_5W)piW, num);
-	break;
+        PrinterInfo5A2W((LPPRINTER_INFO_5A)piA, (LPPRINTER_INFO_5W)piW, num);
+        break;
     }
 }
 
@@ -261,14 +261,14 @@ void UnicowsLoader::StringA2W(
     LPCSTR pSrcA,
     LPWSTR * ppwstrDest,
     LPWSTR * ppwstrbuf)
-{	
+{
     if (pSrcA != NULL) {
-	DWORD cchWideChar = ::MultiByteToWideChar(CP_ACP, 0, pSrcA, -1, NULL, 0);
-	*ppwstrDest = *ppwstrbuf;
-	::MultiByteToWideChar(CP_ACP, 0, pSrcA, -1, *ppwstrbuf, cchWideChar);
-	*ppwstrbuf += cchWideChar;
+        DWORD cchWideChar = ::MultiByteToWideChar(CP_ACP, 0, pSrcA, -1, NULL, 0);
+        *ppwstrDest = *ppwstrbuf;
+        ::MultiByteToWideChar(CP_ACP, 0, pSrcA, -1, *ppwstrbuf, cchWideChar);
+        *ppwstrbuf += cchWideChar;
     } else {
-	*ppwstrDest = NULL;
+        *ppwstrDest = NULL;
     }
 }
 
@@ -281,8 +281,8 @@ BOOL __stdcall UnicowsLoader::GetPrinterWImpl(
     LPDWORD pcbNeeded)
 {
     if ((Level != 1) && (Level != 2) && (Level != 5)) {
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
     }
 
     DWORD cbBufA = (cbBuf != 0 ? cbBuf / 2 : 0); // dirty estimation...
@@ -291,18 +291,18 @@ BOOL __stdcall UnicowsLoader::GetPrinterWImpl(
     BOOL ret;
 
     if (cbBufA != 0) {
-	pPrinterA = (LPBYTE)safe_Malloc(cbBufA);
-	memset(pPrinterA, 0, cbBufA);
+        pPrinterA = (LPBYTE)safe_Malloc(cbBufA);
+        memset(pPrinterA, 0, cbBufA);
     }
 
     ret = ::GetPrinterA(hPrinter, Level, pPrinterA, cbBufA, &cbNeededA);
     *pcbNeeded = cbNeededA * 2; // dirty estimation...
 
     if (pPrinterA != NULL) {
-	if (ret) {
-	    PrinterInfoA2W(pPrinterA, pPrinter, Level, 1);
-	}
-	free(pPrinterA);
+        if (ret) {
+            PrinterInfoA2W(pPrinterA, pPrinter, Level, 1);
+        }
+        free(pPrinterA);
     }
 
     return ret;
@@ -319,8 +319,8 @@ BOOL __stdcall UnicowsLoader::EnumPrintersWImpl(
     LPDWORD pcReturned)
 {
     if ((Level != 1) && (Level != 2) && (Level != 5)) {
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
     }
 
     LPSTR pNameA = NULL;
@@ -330,29 +330,29 @@ BOOL __stdcall UnicowsLoader::EnumPrintersWImpl(
     BOOL ret;
 
     if (Name != NULL) {
-	DWORD len = static_cast<DWORD>(wcslen(Name)) + 1;
-	pNameA = (LPSTR)safe_Malloc(len);
-	::WideCharToMultiByte(CP_ACP, 0, Name, -1, pNameA, len, NULL, NULL);
+        DWORD len = static_cast<DWORD>(wcslen(Name)) + 1;
+        pNameA = (LPSTR)safe_Malloc(len);
+        ::WideCharToMultiByte(CP_ACP, 0, Name, -1, pNameA, len, NULL, NULL);
     }
 
     if (cbBufA != 0) {
-	pPrinterEnumA = (LPBYTE)safe_Malloc(cbBufA);
-	memset(pPrinterEnumA, 0, cbBufA);
+        pPrinterEnumA = (LPBYTE)safe_Malloc(cbBufA);
+        memset(pPrinterEnumA, 0, cbBufA);
     }
 
-    ret = ::EnumPrintersA(Flags, pNameA, Level, pPrinterEnumA, 
-			cbBufA, &cbNeededA, pcReturned);
+    ret = ::EnumPrintersA(Flags, pNameA, Level, pPrinterEnumA,
+                        cbBufA, &cbNeededA, pcReturned);
     *pcbNeeded = cbNeededA * 2; // dirty estimation...
 
     if (pPrinterEnumA != NULL) {
-	if (ret) {
-	    PrinterInfoA2W(pPrinterEnumA, pPrinterEnum, Level, *pcReturned);
-	}
-	free(pPrinterEnumA);
+        if (ret) {
+            PrinterInfoA2W(pPrinterEnumA, pPrinterEnum, Level, *pcReturned);
+        }
+        free(pPrinterEnumA);
     }
 
     if (pNameA != NULL) {
-	free(pNameA);
+        free(pNameA);
     }
 
     return ret;
@@ -360,71 +360,71 @@ BOOL __stdcall UnicowsLoader::EnumPrintersWImpl(
 
 // wchar CRT implementations that VC6 does not support on Win9x.
 // These implementations are used on both Win9x/ME *and* WinNT/2K/XP.
-#undef _waccess	
-#undef _wchmod		
+#undef _waccess
+#undef _wchmod
 #undef _wfullpath
-#undef _wremove	
-#undef _wrename	
-#undef _wstat		
-#undef _wstati64	
-#undef _wstat64	
-#undef _wunlink	
-#undef _wfopen		
-#undef _wfreopen	
-#undef _wfsopen	
-#undef _wcreat		
-#undef _wopen		
-#undef _wsopen		
-#undef _wfindfirst	
-#undef _wfindfirst64	
-#undef _wfindnext	
-#undef _wfindnext64	
-#undef _wsystem	
-#undef _wexcel		
-#undef _wexcele	
-#undef _wexelp		
-#undef _wexelpe	
-#undef _wexecv		
-#undef _wexecve	
-#undef _wexecvp	
-#undef _wexecvpe	
-#undef _wpopen		
-#undef _wputenv	
-#undef _wspawnl	
-#undef _wspawnle	
-#undef _wspawnlp	
-#undef _wspawnlpe	
-#undef _wspawnv	
-#undef _wspawnve	
-#undef _wspawnvp	
-#undef _wspawnvpe	
+#undef _wremove
+#undef _wrename
+#undef _wstat
+#undef _wstati64
+#undef _wstat64
+#undef _wunlink
+#undef _wfopen
+#undef _wfreopen
+#undef _wfsopen
+#undef _wcreat
+#undef _wopen
+#undef _wsopen
+#undef _wfindfirst
+#undef _wfindfirst64
+#undef _wfindnext
+#undef _wfindnext64
+#undef _wsystem
+#undef _wexcel
+#undef _wexcele
+#undef _wexelp
+#undef _wexelpe
+#undef _wexecv
+#undef _wexecve
+#undef _wexecvp
+#undef _wexecvpe
+#undef _wpopen
+#undef _wputenv
+#undef _wspawnl
+#undef _wspawnle
+#undef _wspawnlp
+#undef _wspawnlpe
+#undef _wspawnv
+#undef _wspawnve
+#undef _wspawnvp
+#undef _wspawnvpe
 
 // _wfullpath implementation
 wchar_t * __cdecl UnicowsLoader::_wfullpathImpl(
-    wchar_t * absPath, 
+    wchar_t * absPath,
     const wchar_t * relPath,
     size_t maxLength)
 {
     if (IS_NT) {
-	return _wfullpath(absPath, relPath, maxLength);
+        return _wfullpath(absPath, relPath, maxLength);
     } else {
-	wchar_t * ret = NULL;
-	char * absPathA = (char *)safe_Malloc(maxLength);
-	char * relPathA = (char *)safe_Malloc(maxLength);
-	::WideCharToMultiByte(CP_ACP, 0, relPath, -1, relPathA, 
+        wchar_t * ret = NULL;
+        char * absPathA = (char *)safe_Malloc(maxLength);
+        char * relPathA = (char *)safe_Malloc(maxLength);
+        ::WideCharToMultiByte(CP_ACP, 0, relPath, -1, relPathA,
             static_cast<DWORD>(maxLength), NULL, NULL);
 
-	char * retA = _fullpath(absPathA, relPathA, maxLength);
+        char * retA = _fullpath(absPathA, relPathA, maxLength);
 
-	if (retA != NULL) {
-	    ::MultiByteToWideChar(CP_ACP, 0, absPathA, -1,
+        if (retA != NULL) {
+            ::MultiByteToWideChar(CP_ACP, 0, absPathA, -1,
                 absPath, static_cast<DWORD>(maxLength));
-	    ret = absPath;
-	}
+            ret = absPath;
+        }
 
-	free(absPathA);
-	free(relPathA);
-    
-	return ret;
+        free(absPathA);
+        free(relPathA);
+
+        return ret;
     }
 }

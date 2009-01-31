@@ -25,11 +25,11 @@
 package com.sun.jmx.snmp;
 
 /**
- * This engine is conformant with the RFC 2571. It is the main object within an SNMP entity (agent, manager...). 
+ * This engine is conformant with the RFC 2571. It is the main object within an SNMP entity (agent, manager...).
  * To an engine is associated an {@link SnmpEngineId}.
  * Engine instantiation is based on a factory {@link com.sun.jmx.snmp.SnmpEngineFactory  SnmpEngineFactory}.
  * When an <CODE> SnmpEngine </CODE> is created, a User based Security Model (USM) is initialized. The security configuration is located in a text file.
- * The text file is read when the engine is created. 
+ * The text file is read when the engine is created.
  * <p>Note that the engine is not used when the agent is SNMPv1/SNMPv2 only.
 <P> The USM configuration text file is remotely updatable using the USM Mib.</P>
 <P> User that are configured in the Usm text file are nonVolatile. </P>
@@ -40,7 +40,7 @@ package com.sun.jmx.snmp;
 <li> If a nonVolatile row is set to be volatile, it will be not flushed in the file </li>
 <li>If a volatile row created from the UsmMib is set to nonVolatile, it will be flushed in the file (if the file exist and is writable otherwise an inconsistentValue is returned)</li>
 </ul>
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */

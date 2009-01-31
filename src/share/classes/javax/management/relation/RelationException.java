@@ -42,7 +42,7 @@ public class RelationException extends JMException {
      * Default constructor, no message put in exception.
      */
     public RelationException() {
-	super();
+        super();
     }
 
     /**
@@ -51,6 +51,6 @@ public class RelationException extends JMException {
      * @param message the detail message.
      */
     public RelationException(String message) {
-	super(message);
+        super(message);
     }
 }

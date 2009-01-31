@@ -27,12 +27,11 @@ package javax.security.auth;
 
 /**
  * Signals that a <code>destroy</code> operation failed.
- * 
+ *
  * <p> This exception is thrown by credentials implementing
  * the <code>Destroyable</code> interface when the <code>destroy</code>
  * method fails.
  *
- * @version %I%, %G%
  */
 public class DestroyFailedException extends Exception {
 
@@ -43,7 +42,7 @@ public class DestroyFailedException extends Exception {
      * message is a String that describes this particular exception.
      */
     public DestroyFailedException() {
-	super();
+        super();
     }
 
     /**
@@ -53,9 +52,9 @@ public class DestroyFailedException extends Exception {
      *
      * <p>
      *
-     * @param msg the detail message.  
+     * @param msg the detail message.
      */
     public DestroyFailedException(String msg) {
-	super(msg);
+        super(msg);
     }
 }

@@ -50,10 +50,10 @@ public class ByteToCharCp33722 extends ByteToCharConverter
     public ByteToCharCp33722() {
         super();
         state = G0;
-	byteToCharTable = nioCoder.getDecoderSingleByteMappings();
-	mappingTableG1 = nioCoder.getDecoderMappingTableG1();
-	mappingTableG2 = nioCoder.getDecoderMappingTableG2();
-	mappingTableG3 = nioCoder.getDecoderMappingTableG3();
+        byteToCharTable = nioCoder.getDecoderSingleByteMappings();
+        mappingTableG1 = nioCoder.getDecoderMappingTableG1();
+        mappingTableG2 = nioCoder.getDecoderMappingTableG2();
+        mappingTableG3 = nioCoder.getDecoderMappingTableG3();
     }
 
     /**

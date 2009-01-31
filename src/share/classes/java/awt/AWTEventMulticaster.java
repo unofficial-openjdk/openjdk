@@ -45,10 +45,10 @@ import java.util.EventListener;
  *     ActionListener actionListener = null;
  *
  *     public synchronized void addActionListener(ActionListener l) {
- *	   actionListener = AWTEventMulticaster.add(actionListener, l);
+ *         actionListener = AWTEventMulticaster.add(actionListener, l);
  *     }
  *     public synchronized void removeActionListener(ActionListener l) {
- *  	   actionListener = AWTEventMulticaster.remove(actionListener, l);
+ *         actionListener = AWTEventMulticaster.remove(actionListener, l);
  *     }
  *     public void processEvent(AWTEvent e) {
  *         // when event occurs which causes "action" semantic
@@ -99,12 +99,11 @@ import java.util.EventListener;
  * @see javax.swing.event.EventListenerList
  *
  * @author      John Rose
- * @author 	Amy Fowler
- * @version 	%I%, %G%
- * @since 	1.1
+ * @author      Amy Fowler
+ * @since       1.1
  */
 
-public class AWTEventMulticaster implements 
+public class AWTEventMulticaster implements
     ComponentListener, ContainerListener, FocusListener, KeyListener,
     MouseListener, MouseMotionListener, WindowListener, WindowFocusListener,
     WindowStateListener, ActionListener, ItemListener, AdjustmentListener,
@@ -115,15 +114,15 @@ public class AWTEventMulticaster implements
 
     /**
      * Creates an event multicaster instance which chains listener-a
-     * with listener-b. Input parameters <code>a</code> and <code>b</code> 
-     * should not be <code>null</code>, though implementations may vary in 
-     * choosing whether or not to throw <code>NullPointerException</code> 
+     * with listener-b. Input parameters <code>a</code> and <code>b</code>
+     * should not be <code>null</code>, though implementations may vary in
+     * choosing whether or not to throw <code>NullPointerException</code>
      * in that case.
      * @param a listener-a
      * @param b listener-b
-     */ 
+     */
     protected AWTEventMulticaster(EventListener a, EventListener b) {
-	this.a = a; this.b = b;
+        this.a = a; this.b = b;
     }
 
     /**
@@ -141,14 +140,14 @@ public class AWTEventMulticaster implements
      * @return resulting listener
      */
     protected EventListener remove(EventListener oldl) {
-	if (oldl == a)  return b;
-	if (oldl == b)  return a;
-	EventListener a2 = removeInternal(a, oldl);
-	EventListener b2 = removeInternal(b, oldl);
-	if (a2 == a && b2 == b) {
-	    return this;	// it's not here
-	}
-	return addInternal(a2, b2);
+        if (oldl == a)  return b;
+        if (oldl == b)  return a;
+        EventListener a2 = removeInternal(a, oldl);
+        EventListener b2 = removeInternal(b, oldl);
+        if (a2 == a && b2 == b) {
+            return this;        // it's not here
+        }
+        return addInternal(a2, b2);
     }
 
     /**
@@ -711,7 +710,7 @@ public class AWTEventMulticaster implements
      * @param oldl the component-listener being removed
      */
     public static ComponentListener remove(ComponentListener l, ComponentListener oldl) {
-	return (ComponentListener) removeInternal(l, oldl);
+        return (ComponentListener) removeInternal(l, oldl);
     }
 
     /**
@@ -721,7 +720,7 @@ public class AWTEventMulticaster implements
      * @param oldl the container-listener being removed
      */
     public static ContainerListener remove(ContainerListener l, ContainerListener oldl) {
-	return (ContainerListener) removeInternal(l, oldl);
+        return (ContainerListener) removeInternal(l, oldl);
     }
 
     /**
@@ -731,7 +730,7 @@ public class AWTEventMulticaster implements
      * @param oldl the focus-listener being removed
      */
     public static FocusListener remove(FocusListener l, FocusListener oldl) {
-	return (FocusListener) removeInternal(l, oldl);
+        return (FocusListener) removeInternal(l, oldl);
     }
 
     /**
@@ -741,7 +740,7 @@ public class AWTEventMulticaster implements
      * @param oldl the key-listener being removed
      */
     public static KeyListener remove(KeyListener l, KeyListener oldl) {
-	return (KeyListener) removeInternal(l, oldl);
+        return (KeyListener) removeInternal(l, oldl);
     }
 
     /**
@@ -751,17 +750,17 @@ public class AWTEventMulticaster implements
      * @param oldl the mouse-listener being removed
      */
     public static MouseListener remove(MouseListener l, MouseListener oldl) {
-	return (MouseListener) removeInternal(l, oldl);
+        return (MouseListener) removeInternal(l, oldl);
     }
 
     /**
-     * Removes the old mouse-motion-listener from mouse-motion-listener-l 
+     * Removes the old mouse-motion-listener from mouse-motion-listener-l
      * and returns the resulting multicast listener.
      * @param l mouse-motion-listener-l
      * @param oldl the mouse-motion-listener being removed
      */
     public static MouseMotionListener remove(MouseMotionListener l, MouseMotionListener oldl) {
-	return (MouseMotionListener) removeInternal(l, oldl);
+        return (MouseMotionListener) removeInternal(l, oldl);
     }
 
     /**
@@ -771,7 +770,7 @@ public class AWTEventMulticaster implements
      * @param oldl the window-listener being removed
      */
     public static WindowListener remove(WindowListener l, WindowListener oldl) {
-	return (WindowListener) removeInternal(l, oldl);
+        return (WindowListener) removeInternal(l, oldl);
     }
 
     /**
@@ -805,7 +804,7 @@ public class AWTEventMulticaster implements
      * @param oldl the action-listener being removed
      */
     public static ActionListener remove(ActionListener l, ActionListener oldl) {
-	return (ActionListener) removeInternal(l, oldl);
+        return (ActionListener) removeInternal(l, oldl);
     }
 
     /**
@@ -815,7 +814,7 @@ public class AWTEventMulticaster implements
      * @param oldl the item-listener being removed
      */
     public static ItemListener remove(ItemListener l, ItemListener oldl) {
-	return (ItemListener) removeInternal(l, oldl);
+        return (ItemListener) removeInternal(l, oldl);
     }
 
     /**
@@ -825,10 +824,10 @@ public class AWTEventMulticaster implements
      * @param oldl the adjustment-listener being removed
      */
     public static AdjustmentListener remove(AdjustmentListener l, AdjustmentListener oldl) {
-	return (AdjustmentListener) removeInternal(l, oldl);
+        return (AdjustmentListener) removeInternal(l, oldl);
     }
     public static TextListener remove(TextListener l, TextListener oldl) {
-	return (TextListener) removeInternal(l, oldl);
+        return (TextListener) removeInternal(l, oldl);
     }
 
     /**
@@ -865,7 +864,7 @@ public class AWTEventMulticaster implements
     }
 
     /**
-     * Removes the old mouse-wheel-listener from mouse-wheel-listener-l 
+     * Removes the old mouse-wheel-listener from mouse-wheel-listener-l
      * and returns the resulting multicast listener.
      * @param l mouse-wheel-listener-l
      * @param oldl the mouse-wheel-listener being removed
@@ -887,47 +886,47 @@ public class AWTEventMulticaster implements
      * @param b event listener-b
      */
     protected static EventListener addInternal(EventListener a, EventListener b) {
-	if (a == null)  return b;
-	if (b == null)  return a;
-	return new AWTEventMulticaster(a, b);
+        if (a == null)  return b;
+        if (b == null)  return a;
+        return new AWTEventMulticaster(a, b);
     }
 
-    /** 
+    /**
      * Returns the resulting multicast listener after removing the
      * old listener from listener-l.
-     * If listener-l equals the old listener OR listener-l is null, 
+     * If listener-l equals the old listener OR listener-l is null,
      * returns null.
-     * Else if listener-l is an instance of AWTEventMulticaster, 
+     * Else if listener-l is an instance of AWTEventMulticaster,
      * then it removes the old listener from it.
      * Else, returns listener l.
      * @param l the listener being removed from
      * @param oldl the listener being removed
      */
     protected static EventListener removeInternal(EventListener l, EventListener oldl) {
-	if (l == oldl || l == null) {
-	    return null;
-	} else if (l instanceof AWTEventMulticaster) {
-	    return ((AWTEventMulticaster)l).remove(oldl);
-	} else {
-	    return l;		// it's not here
-	}
+        if (l == oldl || l == null) {
+            return null;
+        } else if (l instanceof AWTEventMulticaster) {
+            return ((AWTEventMulticaster)l).remove(oldl);
+        } else {
+            return l;           // it's not here
+        }
     }
-      
 
-    /* Serialization support.  
+
+    /* Serialization support.
      */
 
     protected void saveInternal(ObjectOutputStream s, String k) throws IOException {
         if (a instanceof AWTEventMulticaster) {
-	    ((AWTEventMulticaster)a).saveInternal(s, k);
+            ((AWTEventMulticaster)a).saveInternal(s, k);
         }
         else if (a instanceof Serializable) {
             s.writeObject(k);
             s.writeObject(a);
         }
-        
+
         if (b instanceof AWTEventMulticaster) {
-	    ((AWTEventMulticaster)b).saveInternal(s, k);
+            ((AWTEventMulticaster)b).saveInternal(s, k);
         }
         else if (b instanceof Serializable) {
             s.writeObject(k);
@@ -938,7 +937,7 @@ public class AWTEventMulticaster implements
     protected static void save(ObjectOutputStream s, String k, EventListener l) throws IOException {
       if (l == null) {
           return;
-      } 
+      }
       else if (l instanceof AWTEventMulticaster) {
           ((AWTEventMulticaster)l).saveInternal(s, k);
       }
@@ -947,25 +946,25 @@ public class AWTEventMulticaster implements
            s.writeObject(l);
       }
     }
-    
+
     /*
      * Recursive method which returns a count of the number of listeners in
      * EventListener, handling the (common) case of l actually being an
      * AWTEventMulticaster.  Additionally, only listeners of type listenerType
      * are counted.  Method modified to fix bug 4513402.  -bchristi
      */
-    private static int getListenerCount(EventListener l, Class listenerType) { 
+    private static int getListenerCount(EventListener l, Class listenerType) {
         if (l instanceof AWTEventMulticaster) {
-            AWTEventMulticaster mc = (AWTEventMulticaster)l; 
+            AWTEventMulticaster mc = (AWTEventMulticaster)l;
             return getListenerCount(mc.a, listenerType) +
-             getListenerCount(mc.b, listenerType); 
+             getListenerCount(mc.b, listenerType);
         }
         else {
             // Only count listeners of correct type
             return listenerType.isInstance(l) ? 1 : 0;
-        } 
+        }
     }
-    
+
     /*
      * Recusive method which populates EventListener array a with EventListeners
      * from l.  l is usually an AWTEventMulticaster.  Bug 4513402 revealed that
@@ -973,29 +972,29 @@ public class AWTEventMulticaster implements
      * would occur.  Now l is only inserted into a if it's of the appropriate
      * type.  -bchristi
      */
-    private static int populateListenerArray(EventListener[] a, EventListener l, int index) { 
-        if (l instanceof AWTEventMulticaster) { 
-            AWTEventMulticaster mc = (AWTEventMulticaster)l; 
-            int lhs = populateListenerArray(a, mc.a, index); 
-            return populateListenerArray(a, mc.b, lhs); 
+    private static int populateListenerArray(EventListener[] a, EventListener l, int index) {
+        if (l instanceof AWTEventMulticaster) {
+            AWTEventMulticaster mc = (AWTEventMulticaster)l;
+            int lhs = populateListenerArray(a, mc.a, index);
+            return populateListenerArray(a, mc.b, lhs);
         }
-        else if (a.getClass().getComponentType().isInstance(l)) { 
-            a[index] = l; 
-            return index + 1; 
-        } 
+        else if (a.getClass().getComponentType().isInstance(l)) {
+            a[index] = l;
+            return index + 1;
+        }
         // Skip nulls, instances of wrong class
-        else { 
-            return index; 
+        else {
+            return index;
         }
     }
-    
+
     /**
      * Returns an array of all the objects chained as
      * <code><em>Foo</em>Listener</code>s by the specified
      * <code>java.util.EventListener</code>.
      * <code><em>Foo</em>Listener</code>s are chained by the
      * <code>AWTEventMulticaster</code> using the
-     * <code>add<em>Foo</em>Listener</code> method. 
+     * <code>add<em>Foo</em>Listener</code> method.
      * If a <code>null</code> listener is specified, this method returns an
      * empty array. If the specified listener is not an instance of
      * <code>AWTEventMulticaster</code>, this method returns an array which
@@ -1025,7 +1024,7 @@ public class AWTEventMulticaster implements
             throw new NullPointerException ("Listener type should not be null");
         }
 
-        int n = getListenerCount(l, listenerType); 
+        int n = getListenerCount(l, listenerType);
         T[] result = (T[])Array.newInstance(listenerType, n);
         populateListenerArray(result, l, 0);
         return result;

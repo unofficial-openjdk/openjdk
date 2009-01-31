@@ -23,10 +23,10 @@
 
 /**
  * @test
- * @bug 4213822 
+ * @bug 4213822
  * @summary Test that checkError() returns a correct value
  *       when a PrintWriter is wrapped with another
- *	 PrintWriter.
+ *       PrintWriter.
  */
 
 import java.io.*;
@@ -35,28 +35,28 @@ public class CheckError {
 
     public static void main(String[] args) throws Exception {
 
-	File file = new File(System.getProperty("test.dir", "."),
+        File file = new File(System.getProperty("test.dir", "."),
                           "junkie.out");
-	file.deleteOnExit();
+        file.deleteOnExit();
 
-	FileOutputStream fos = new FileOutputStream(file);
-	PrintStream pps  = new PrintStream(
-			    new PrintStream(fos));
-	boolean passTest1 = false;
+        FileOutputStream fos = new FileOutputStream(file);
+        PrintStream pps  = new PrintStream(
+                            new PrintStream(fos));
+        boolean passTest1 = false;
 
-	fos.close();
+        fos.close();
         pps.println("Hello World!");
 
-	if (pps.checkError()) {
-	    System.out.println("Correct: An error occured in the" +
-		" underlying Stream");
-	    passTest1 = true;
-	}
-	pps.close();
+        if (pps.checkError()) {
+            System.out.println("Correct: An error occured in the" +
+                " underlying Stream");
+            passTest1 = true;
+        }
+        pps.close();
 
-	if (!passTest1) {
-		throw new Exception("CheckError() returned an incorrect value" +
-		    " when the error has occured in the underlying Stream");
-	}
+        if (!passTest1) {
+                throw new Exception("CheckError() returned an incorrect value" +
+                    " when the error has occured in the underlying Stream");
+        }
     }
 }

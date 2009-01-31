@@ -36,28 +36,27 @@ import sun.security.x509.GeneralNameInterface;
  * implementation dependent APIs in CertPath framework.
  *
  * @author Andreas Sterbenz
- * @version %I%, %G%
  */
 class CertPathHelperImpl extends CertPathHelper {
-    
+
     private CertPathHelperImpl() {
-	// empty
+        // empty
     }
-    
+
     /**
-     * Initialize the helper framework. This method must be called from 
-     * the static initializer of each class that is the target of one of 
+     * Initialize the helper framework. This method must be called from
+     * the static initializer of each class that is the target of one of
      * the methods in this class. This ensures that the helper if initialized
      * prior to a tunneled call from the Sun provider.
      */
     synchronized static void initialize() {
-	if (CertPathHelper.instance == null) {
-	    CertPathHelper.instance = new CertPathHelperImpl();
-	}
+        if (CertPathHelper.instance == null) {
+            CertPathHelper.instance = new CertPathHelperImpl();
+        }
     }
-    
-    protected void implSetPathToNames(X509CertSelector sel, 
-	    Set<GeneralNameInterface> names) {
-	sel.setPathToNamesInternal(names);
+
+    protected void implSetPathToNames(X509CertSelector sel,
+            Set<GeneralNameInterface> names) {
+        sel.setPathToNamesInternal(names);
     }
 }

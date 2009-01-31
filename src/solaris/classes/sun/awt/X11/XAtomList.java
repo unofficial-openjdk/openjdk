@@ -88,7 +88,7 @@ class XAtomList {
     public long getAtomsData() {
         return XAtom.toData(getAtoms());
     }
-    
+
     /**
      * Returns true if this list contains the atom <code>atom</code>
      */

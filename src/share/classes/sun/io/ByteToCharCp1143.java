@@ -29,7 +29,6 @@ package sun.io;
  * A table to convert Cp1143 to Unicode.  This converter differs from
  * Cp278 is one code point, 0x5A, which changes from \u00A4 to \u20AC.
  * @author  Alan Liu
- * @version >= JDK1.2
  */
 public class ByteToCharCp1143 extends ByteToCharCp278 {
     public ByteToCharCp1143() {}

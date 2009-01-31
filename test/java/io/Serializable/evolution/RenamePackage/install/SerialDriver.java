@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -45,27 +45,27 @@ public class SerialDriver implements Serializable {
     transient Object objarray[];
 
     public SerialDriver() {
-	name = "<terminator>";
-	next = null;
+        name = "<terminator>";
+        next = null;
     }
 
     public SerialDriver(String name, SerialDriver next) {
-	this.name = name;
-	this.next = next;
+        this.name = name;
+        this.next = next;
     }
 
     static boolean serialize;
     static boolean deserialize;
 
     public static void main(String args[]) throws Exception  {
-	SerialDriver obj = new SerialDriver("SerialDriver_2", 
-					    new SerialDriver());
-	SerialDriver[] array = new SerialDriver[5];
-	for (int i = 0; i < array.length; i++)
-	    array[i] = new SerialDriver("SerialDriver_1_" + i, new SerialDriver());
+        SerialDriver obj = new SerialDriver("SerialDriver_2",
+                                            new SerialDriver());
+        SerialDriver[] array = new SerialDriver[5];
+        for (int i = 0; i < array.length; i++)
+            array[i] = new SerialDriver("SerialDriver_1_" + i, new SerialDriver());
 
-	/* 
-	 * see if we are serializing or deserializing.
+        /*
+         * see if we are serializing or deserializing.
          * The ability to deserialize or serialize allows
          * us to see the bidirectional readability and writeability
          */
@@ -76,62 +76,62 @@ public class SerialDriver implements Serializable {
                 serialize = true;
             } else {
                 usage();
-		throw new Exception("incorrect command line arguments");
+                throw new Exception("incorrect command line arguments");
             }
         } else {
             usage();
-	    throw new Exception("incorrect command line arguments");
+            throw new Exception("incorrect command line arguments");
         }
-	
-	File f = new File("stream.ser");
-	if (serialize) {
-	    // Serialize the subclass
-	    try {
-		FileOutputStream fo = new FileOutputStream(f);
-		ObjectOutputStream so = new ObjectOutputStream(fo);
-		so.writeObject(obj);
-		/* Skip arrays since they do not work with rename yet.
-		   The serialVersionUID changes due to the name change
-		   and there is no way to set the serialVersionUID for an
-		   array. */
-		so.writeObject(array);
-		so.flush();
-	    } catch (Exception e) {
-		System.out.println(e);
-		throw e;
-	    }
-	}
-	if (deserialize) {
-	    // Deserialize the subclass
-	    try {
-		FileInputStream fi = new FileInputStream(f);
-		ExtendedObjectInputStream si = 
-		    new ExtendedObjectInputStream(fi);  
-		si.addRenamedClassName("test.SerialDriver", "install.SerialDriver");
-		si.addRenamedClassName("[Ltest.SerialDriver;",
-				       "[Linstall.SerialDriver");
-		obj = (SerialDriver) si.readObject();
-		array = (SerialDriver[]) si.readObject();
-		si.close();
-	    } catch (Exception e) {
-		System.out.println(e);
-		throw e;
-	    }
-	    System.out.println();
-	    System.out.println("Printing deserialized class: ");
-	    System.out.println();
-	    System.out.println(obj.toString());
-	    System.out.println();
-	}
+
+        File f = new File("stream.ser");
+        if (serialize) {
+            // Serialize the subclass
+            try {
+                FileOutputStream fo = new FileOutputStream(f);
+                ObjectOutputStream so = new ObjectOutputStream(fo);
+                so.writeObject(obj);
+                /* Skip arrays since they do not work with rename yet.
+                   The serialVersionUID changes due to the name change
+                   and there is no way to set the serialVersionUID for an
+                   array. */
+                so.writeObject(array);
+                so.flush();
+            } catch (Exception e) {
+                System.out.println(e);
+                throw e;
+            }
+        }
+        if (deserialize) {
+            // Deserialize the subclass
+            try {
+                FileInputStream fi = new FileInputStream(f);
+                ExtendedObjectInputStream si =
+                    new ExtendedObjectInputStream(fi);
+                si.addRenamedClassName("test.SerialDriver", "install.SerialDriver");
+                si.addRenamedClassName("[Ltest.SerialDriver;",
+                                       "[Linstall.SerialDriver");
+                obj = (SerialDriver) si.readObject();
+                array = (SerialDriver[]) si.readObject();
+                si.close();
+            } catch (Exception e) {
+                System.out.println(e);
+                throw e;
+            }
+            System.out.println();
+            System.out.println("Printing deserialized class: ");
+            System.out.println();
+            System.out.println(obj.toString());
+            System.out.println();
+        }
     }
 
 
     public String toString() {
-	String nextString = next != null ? next.toString() : "<null>";
-	return "name =" + name + " next = <" + nextString + ">";
+        String nextString = next != null ? next.toString() : "<null>";
+        return "name =" + name + " next = <" + nextString + ">";
     }
 
-    /** 
+    /**
      * Prints out the usage
      */
     static void usage() {
@@ -140,4 +140,3 @@ public class SerialDriver implements Serializable {
         System.out.println("      -d (in order to deserialize)");
     }
 }
-

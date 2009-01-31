@@ -32,7 +32,6 @@ import sun.jvmstat.monitor.MonitorException;
  * evaluate based on some context.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 interface ExpressionEvaluator {

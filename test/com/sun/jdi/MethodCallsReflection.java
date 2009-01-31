@@ -28,7 +28,7 @@ import java.lang.reflect.*;
  * Exceptions, including some done via Reflection,
  * This was written while investigating Bug ID 4359606
  */
- 
+
 class MethodCallsReflection {
 
     public static void main(String args[]) throws Exception {
@@ -37,17 +37,17 @@ class MethodCallsReflection {
 
     static void staticCaller1(MethodCallsReflection mc) throws Exception {
         System.out.println("Called staticCaller1");
-	staticExceptionCallee();
+        staticExceptionCallee();
     }
     static void staticCaller2(MethodCallsReflection mc) throws Exception {
         System.out.println("Called staticCaller2");
-	mc.instanceExceptionCallee();
+        mc.instanceExceptionCallee();
     }
     static void staticCaller3(MethodCallsReflection mc) throws Exception {
         System.out.println("Called staticCaller3");
-        /* 
+        /*
          * Invocation by reflection. This also exercises native method calls
-         * since Method.invoke is a native method. 
+         * since Method.invoke is a native method.
          */
         Method m = MethodCallsReflection.class.getDeclaredMethod("staticExceptionCallee", new Class[0]);
         m.invoke(mc, new Object[0]);
@@ -55,20 +55,20 @@ class MethodCallsReflection {
 
     void instanceCaller1() throws Exception {
         System.out.println("Called instanceCaller1");
-	staticExceptionCallee();
+        staticExceptionCallee();
     }
 
     void instanceCaller2() throws Exception {
         System.out.println("Called instanceCaller2");
-	instanceExceptionCallee();
+        instanceExceptionCallee();
     }
 
     void instanceCaller3() throws Exception {
         System.out.println("Called instanceCaller3");
 
-        /* 
+        /*
          * Invocation by reflection. This also exercises native method calls
-         * since Method.invoke is a native method. 
+         * since Method.invoke is a native method.
          */
         Method m = getClass().getDeclaredMethod("instanceExceptionCallee", new Class[0]);
         m.invoke(this, new Object[0]);
@@ -76,48 +76,48 @@ class MethodCallsReflection {
 
    static  void staticExceptionCallee() throws Exception {
         System.out.println("Called staticExceptionCallee");
-	throw new IndexOutOfBoundsException ("staticExceptionCallee");
+        throw new IndexOutOfBoundsException ("staticExceptionCallee");
     }
 
     void instanceExceptionCallee() throws Exception {
         System.out.println("Called instanceExceptionCallee");
-	throw new IndexOutOfBoundsException ("instanceExceptionCallee");
+        throw new IndexOutOfBoundsException ("instanceExceptionCallee");
     }
 
     void go() throws Exception {
-	try {
-	    instanceCaller1();
-	} catch (IndexOutOfBoundsException ex) {
-	    System.out.println("Caught expected IndexOutOfBoundsException from instanceCaller1()");
-	}
+        try {
+            instanceCaller1();
+        } catch (IndexOutOfBoundsException ex) {
+            System.out.println("Caught expected IndexOutOfBoundsException from instanceCaller1()");
+        }
 
-	try {
-	    instanceCaller2();
-	} catch (IndexOutOfBoundsException ex) {
-	    System.out.println("Caught expected IndexOutOfBoundsException from instanceCaller2()");
-	}
+        try {
+            instanceCaller2();
+        } catch (IndexOutOfBoundsException ex) {
+            System.out.println("Caught expected IndexOutOfBoundsException from instanceCaller2()");
+        }
 
-	try {
-	    instanceCaller3();
-	} catch (InvocationTargetException ex) {
-	    System.out.println("Caught expected InvocationTargetException from instanceCaller3()");
-	}
+        try {
+            instanceCaller3();
+        } catch (InvocationTargetException ex) {
+            System.out.println("Caught expected InvocationTargetException from instanceCaller3()");
+        }
 
-	try {
-	    staticCaller1(this);
-	} catch (IndexOutOfBoundsException ex) {
-	    System.out.println("Caught expected IndexOutOfBoundsException from staticCaller1()");
-	}
+        try {
+            staticCaller1(this);
+        } catch (IndexOutOfBoundsException ex) {
+            System.out.println("Caught expected IndexOutOfBoundsException from staticCaller1()");
+        }
 
-	try {
-	    staticCaller2(this);
-	} catch (IndexOutOfBoundsException ex) {
-	    System.out.println("Caught expected IndexOutOfBoundsException from staticCaller2()");
-	}
-	try {
-	    staticCaller3(this);
-	} catch (InvocationTargetException ex) {
-	    System.out.println("Caught expected InvocationTargetException from staticCaller3()");
-	}
+        try {
+            staticCaller2(this);
+        } catch (IndexOutOfBoundsException ex) {
+            System.out.println("Caught expected IndexOutOfBoundsException from staticCaller2()");
+        }
+        try {
+            staticCaller3(this);
+        } catch (InvocationTargetException ex) {
+            System.out.println("Caught expected InvocationTargetException from staticCaller3()");
+        }
     }
 }

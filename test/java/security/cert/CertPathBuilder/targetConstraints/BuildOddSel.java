@@ -24,10 +24,10 @@
 /**
  * @test
  * @bug 4459538
- * @summary make sure a PKIX CertPathBuilder throws an 
- * 	InvalidAlgorithmParameterException if the target constraints
- *	specified in the PKIXBuilderParameters is not an instance of
- *	X509CertSelector.
+ * @summary make sure a PKIX CertPathBuilder throws an
+ *      InvalidAlgorithmParameterException if the target constraints
+ *      specified in the PKIXBuilderParameters is not an instance of
+ *      X509CertSelector.
  */
 
 import java.io.File;
@@ -49,7 +49,7 @@ import java.util.Set;
 
 /**
  * BuildOddSel tries to perform a simple build of a certification path
- * using the PKIX algorithm and a bogus target constraints CertSelector 
+ * using the PKIX algorithm and a bogus target constraints CertSelector
  * (one that is not an instance of X509CertSelector). On success, it should
  * throw an InvalidAlgorithmParameterException.
  *
@@ -57,19 +57,19 @@ import java.util.Set;
  * @author      Sean Mullan
  */
 public final class BuildOddSel {
- 
+
     private static PKIXBuilderParameters params;
     private static CertSelector sel;
 
     public static void main(String[] args) throws Exception {
 
-	try {
-	    createParams();
-       	    build(params);
-	    throw new Exception
-		("CertPath should not have been built successfully");
-	} catch (InvalidAlgorithmParameterException iape) {
-	}	
+        try {
+            createParams();
+            build(params);
+            throw new Exception
+                ("CertPath should not have been built successfully");
+        } catch (InvalidAlgorithmParameterException iape) {
+        }
     }
 
     /**
@@ -110,7 +110,7 @@ public final class BuildOddSel {
             X509Certificate cert = null;
             try {
                 File certFile = new File(System.getProperty("test.src", "."),
-		    certFilePath);
+                    certFilePath);
                 FileInputStream certFileInputStream =
                     new FileInputStream(certFile);
                 CertificateFactory cf = CertificateFactory.getInstance("X509");
@@ -125,7 +125,7 @@ public final class BuildOddSel {
     }
 
     /**
-     * Perform a PKIX build. 
+     * Perform a PKIX build.
      *
      * @param params PKIXBuilderParameters to use in building
      * @throws Exception on error

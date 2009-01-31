@@ -80,8 +80,7 @@ import java.util.Locale;
  * (<i>e.g.</i> progressive encoding is optional, but subsampling must be
  * supported).
  *
- * @version 0.5
- * 
+ *
  * @see ImageReadParam
  */
 public class ImageWriteParam extends IIOParam {
@@ -449,7 +448,7 @@ public class ImageWriteParam extends IIOParam {
 
     /**
      * Determines whether the image will be tiled in the output
-     * stream and, if it will, how the tiling parameters will be 
+     * stream and, if it will, how the tiling parameters will be
      * determined.  The modes are interpreted as follows:
      *
      * <ul>
@@ -580,7 +579,7 @@ public class ImageWriteParam extends IIOParam {
      * @see #getTileGridXOffset()
      * @see #getTileGridYOffset()
      */
-    public void setTiling(int tileWidth, 
+    public void setTiling(int tileWidth,
                           int tileHeight,
                           int tileGridXOffset,
                           int tileGridYOffset) {
@@ -615,7 +614,7 @@ public class ImageWriteParam extends IIOParam {
                 throw new IllegalArgumentException("Illegal tile size!");
             }
         }
-        
+
         this.tilingSet = true;
         this.tileWidth = tileWidth;
         this.tileHeight = tileHeight;
@@ -666,7 +665,7 @@ public class ImageWriteParam extends IIOParam {
      * <code>MODE_EXPLICIT</code>.
      * @exception IllegalStateException if the tiling parameters have
      * not been set.
-     * 
+     *
      * @see #setTiling(int, int, int, int)
      * @see #getTileHeight()
      */
@@ -687,7 +686,7 @@ public class ImageWriteParam extends IIOParam {
      * Returns the height of each tile in an image as it will be written to
      * the output stream.  If tiling parameters have not
      * been set, an <code>IllegalStateException</code> is thrown.
-     * 
+     *
      * @return the tile height to be used for encoding.
      *
      * @exception UnsupportedOperationException if the plug-in does not
@@ -696,7 +695,7 @@ public class ImageWriteParam extends IIOParam {
      * <code>MODE_EXPLICIT</code>.
      * @exception IllegalStateException if the tiling parameters have
      * not been set.
-     * 
+     *
      * @see #setTiling(int, int, int, int)
      * @see #getTileWidth()
      */
@@ -717,7 +716,7 @@ public class ImageWriteParam extends IIOParam {
      * Returns the horizontal tile grid offset of an image as it will
      * be written to the output stream.  If tiling parameters have not
      * been set, an <code>IllegalStateException</code> is thrown.
-     * 
+     *
      * @return the tile grid X offset to be used for encoding.
      *
      * @exception UnsupportedOperationException if the plug-in does not
@@ -726,7 +725,7 @@ public class ImageWriteParam extends IIOParam {
      * <code>MODE_EXPLICIT</code>.
      * @exception IllegalStateException if the tiling parameters have
      * not been set.
-     * 
+     *
      * @see #setTiling(int, int, int, int)
      * @see #getTileGridYOffset()
      */
@@ -747,7 +746,7 @@ public class ImageWriteParam extends IIOParam {
      * Returns the vertical tile grid offset of an image as it will
      * be written to the output stream.  If tiling parameters have not
      * been set, an <code>IllegalStateException</code> is thrown.
-     * 
+     *
      * @return the tile grid Y offset to be used for encoding.
      *
      * @exception UnsupportedOperationException if the plug-in does not
@@ -756,7 +755,7 @@ public class ImageWriteParam extends IIOParam {
      * <code>MODE_EXPLICIT</code>.
      * @exception IllegalStateException if the tiling parameters have
      * not been set.
-     * 
+     *
      * @see #setTiling(int, int, int, int)
      * @see #getTileGridXOffset()
      */
@@ -777,7 +776,7 @@ public class ImageWriteParam extends IIOParam {
      * Returns <code>true</code> if the writer can write out images
      * as a series of passes of progressively increasing quality.
      *
-     * @return <code>true</code> if the writer supports progressive 
+     * @return <code>true</code> if the writer supports progressive
      * encoding.
      *
      * @see #setProgressiveMode
@@ -841,7 +840,7 @@ public class ImageWriteParam extends IIOParam {
         }
         this.progressiveMode = mode;
     }
-    
+
     /**
      * Returns the current mode for writing the stream in a
      * progressive manner.
@@ -876,15 +875,15 @@ public class ImageWriteParam extends IIOParam {
      * argument must be one of the four modes, interpreted as follows:
      *
      * <ul>
-     *   <li><code>MODE_DISABLED</code> - If the mode is set to 
+     *   <li><code>MODE_DISABLED</code> - If the mode is set to
      *   <code>MODE_DISABLED</code>, methods that query or modify the
-     *   compression type or parameters will throw an 
+     *   compression type or parameters will throw an
      *   <code>IllegalStateException</code> (if compression is
      *   normally supported by the plug-in). Some writers, such as JPEG,
-     *   do not normally offer uncompressed output. In this case, attempting 
+     *   do not normally offer uncompressed output. In this case, attempting
      *   to set the mode to <code>MODE_DISABLED</code> will throw an
      *   <code>UnsupportedOperationException</code> and the mode will not be
-     *   changed.  
+     *   changed.
      *
      *   <li><code>MODE_EXPLICIT</code> - Compress using the
      *   compression type and quality settings specified in this
@@ -1252,7 +1251,7 @@ public class ImageWriteParam extends IIOParam {
 
     /**
      * Returns the current compression quality setting.
-     * 
+     *
      * <p> If there are multiple compression types but none has been
      * set, an <code>IllegalStateException</code> is thrown.
      *

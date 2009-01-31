@@ -145,15 +145,15 @@ public interface JMXConnectorServerMBean {
     /**
      * <p>The address of this connector server.</p>
      * <p>
-     * The address returned may not be the exact original {@link JMXServiceURL} 
-     * that was supplied when creating the connector server, since the original 
-     * address may not always be complete. For example the port number may be 
-     * dynamically allocated when starting the connector server. Instead the 
-     * address returned is the actual {@link JMXServiceURL} of the 
+     * The address returned may not be the exact original {@link JMXServiceURL}
+     * that was supplied when creating the connector server, since the original
+     * address may not always be complete. For example the port number may be
+     * dynamically allocated when starting the connector server. Instead the
+     * address returned is the actual {@link JMXServiceURL} of the
      * {@link JMXConnectorServer}. This is the address that clients supply
      * to {@link JMXConnectorFactory#connect(JMXServiceURL)}.
      * </p>
-     * <p>Note that the address returned may be {@code null} if 
+     * <p>Note that the address returned may be {@code null} if
      *    the {@code JMXConnectorServer} is not yet {@link #isActive active}.
      * </p>
      *
@@ -179,7 +179,7 @@ public interface JMXConnectorServerMBean {
      * one new connection to this connector server.</p>
      *
      * <p>A given connector need not support the generation of client
-     * stubs.  However, the connectors specified by the JMX Remote API do 
+     * stubs.  However, the connectors specified by the JMX Remote API do
      * (JMXMP Connector and RMI Connector).</p>
      *
      * @param env client connection parameters of the same sort that
@@ -201,5 +201,5 @@ public interface JMXConnectorServerMBean {
      *
      */
     public JMXConnector toJMXConnector(Map<String,?> env)
-	throws IOException;
+        throws IOException;
 }

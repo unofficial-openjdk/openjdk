@@ -76,39 +76,39 @@ class SinkChannelImpl
     }
 
     SinkChannelImpl(SelectorProvider sp, FileDescriptor fd) {
-	super(sp);
-	this.fd = fd;
+        super(sp);
+        this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         this.state = ST_INUSE;
     }
 
     protected void implCloseSelectableChannel() throws IOException {
-	synchronized (stateLock) {
-	    nd.preClose(fd);
-	    long th = thread;
-	    if (th != 0)
-		NativeThread.signal(th);
-	    if (!isRegistered())
-		kill();
-	}
+        synchronized (stateLock) {
+            nd.preClose(fd);
+            long th = thread;
+            if (th != 0)
+                NativeThread.signal(th);
+            if (!isRegistered())
+                kill();
+        }
     }
 
     public void kill() throws IOException {
-	synchronized (stateLock) {
-	    if (state == ST_KILLED)
-		return;
-	    if (state == ST_UNINITIALIZED) {
+        synchronized (stateLock) {
+            if (state == ST_KILLED)
+                return;
+            if (state == ST_UNINITIALIZED) {
                 state = ST_KILLED;
-		return;
+                return;
             }
-	    assert !isOpen() && !isRegistered();
-	    nd.close(fd);
-	    state = ST_KILLED;
-	}
+            assert !isOpen() && !isRegistered();
+            nd.close(fd);
+            state = ST_KILLED;
+        }
     }
 
     protected void implConfigureBlocking(boolean block) throws IOException {
-	IOUtil.configureBlocking(fd, block);
+        IOUtil.configureBlocking(fd, block);
     }
 
     public boolean translateReadyOps(int ops, int initialOps,
@@ -150,60 +150,60 @@ class SinkChannelImpl
     }
 
     private void ensureOpen() throws IOException {
-	if (!isOpen())
-	    throw new ClosedChannelException();
+        if (!isOpen())
+            throw new ClosedChannelException();
     }
 
     public int write(ByteBuffer src) throws IOException {
-	ensureOpen();
-	synchronized (lock) {
-	    int n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		thread = NativeThread.current();
-		do {
-		    n = IOUtil.write(fd, src, -1, nd, lock);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		thread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        ensureOpen();
+        synchronized (lock) {
+            int n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                thread = NativeThread.current();
+                do {
+                    n = IOUtil.write(fd, src, -1, nd, lock);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                thread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     public long write(ByteBuffer[] srcs) throws IOException {
         if (srcs == null)
             throw new NullPointerException();
-	ensureOpen();
-	synchronized (lock) {
-	    long n = 0;
-	    try {
-		begin();
-		if (!isOpen())
-		    return 0;
-		thread = NativeThread.current();
-		do {
-		    n = IOUtil.write(fd, srcs, nd);
-		} while ((n == IOStatus.INTERRUPTED) && isOpen());
-		return IOStatus.normalize(n);
-	    } finally {
-		thread = 0;
-		end((n > 0) || (n == IOStatus.UNAVAILABLE));
-		assert IOStatus.check(n);
-	    }
-	}
+        ensureOpen();
+        synchronized (lock) {
+            long n = 0;
+            try {
+                begin();
+                if (!isOpen())
+                    return 0;
+                thread = NativeThread.current();
+                do {
+                    n = IOUtil.write(fd, srcs, nd);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                thread = 0;
+                end((n > 0) || (n == IOStatus.UNAVAILABLE));
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     public long write(ByteBuffer[] srcs, int offset, int length)
-	throws IOException
+        throws IOException
     {
         if ((offset < 0) || (length < 0) || (offset > srcs.length - length))
            throw new IndexOutOfBoundsException();
-	return write(Util.subsequence(srcs, offset, length));
+        return write(Util.subsequence(srcs, offset, length));
     }
 
     static {

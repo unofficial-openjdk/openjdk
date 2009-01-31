@@ -29,7 +29,7 @@ package javax.net.ssl;
  * This class is the base interface for hostname verification.
  * <P>
  * During handshaking, if the URL's hostname and
- * the server's identification hostname mismatch, the 
+ * the server's identification hostname mismatch, the
  * verification mechanism can call back to implementers of this
  * interface to determine if this connection should be allowed.
  * <P>
@@ -40,7 +40,6 @@ package javax.net.ssl;
  * verification fail.
  *
  * @author Brad R. Wetmore
- * @version %I%, %G%
  * @since 1.4
  */
 

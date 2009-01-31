@@ -34,32 +34,31 @@
 public class HeapBinaryFormatTest {
 
     public static void main(String args[]) throws Exception {
-	DemoRun hprof;
+        DemoRun hprof;
 
-	/* Run JVMTI hprof agent to get binary format dump */
-	hprof = new DemoRun("hprof", "heap=dump,format=b,logflags=4");
-	hprof.runit(args[0]);
+        /* Run JVMTI hprof agent to get binary format dump */
+        hprof = new DemoRun("hprof", "heap=dump,format=b,logflags=4");
+        hprof.runit(args[0]);
 
-	/* Make sure patterns in output look ok */
-	if (hprof.output_contains("ERROR")) {
-	    throw new RuntimeException("Test failed - ERROR seen in output");
-	}
+        /* Make sure patterns in output look ok */
+        if (hprof.output_contains("ERROR")) {
+            throw new RuntimeException("Test failed - ERROR seen in output");
+        }
 
-	/* Try a variation */
-	String vm_opts[] = new String[1];
-	vm_opts[0] = "-Xmx2100m";
-	/* Crashes on small Linux machines: (like fyi) 
-	   How can I tell how much real memory is on a machine?
-	   hprof.runit(args[0], vm_opts);
+        /* Try a variation */
+        String vm_opts[] = new String[1];
+        vm_opts[0] = "-Xmx2100m";
+        /* Crashes on small Linux machines: (like fyi)
+           How can I tell how much real memory is on a machine?
+           hprof.runit(args[0], vm_opts);
         */
 
-	/* Make sure patterns in output look ok */
-	if (hprof.output_contains("ERROR")) {
-	    throw new RuntimeException("Test failed - ERROR seen in output");
-	}
+        /* Make sure patterns in output look ok */
+        if (hprof.output_contains("ERROR")) {
+            throw new RuntimeException("Test failed - ERROR seen in output");
+        }
 
-	/* Must be a pass. */
-	System.out.println("Test passed - cleanly terminated");
+        /* Must be a pass. */
+        System.out.println("Test passed - cleanly terminated");
     }
 }
-

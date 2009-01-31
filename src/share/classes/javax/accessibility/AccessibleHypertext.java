@@ -49,8 +49,7 @@ import javax.swing.text.*;
  * @see AccessibleText
  * @see AccessibleContext#getAccessibleText
  *
- * @version
- * @author	Peter Korn
+ * @author      Peter Korn
  */
 public interface AccessibleHypertext extends AccessibleText {
 

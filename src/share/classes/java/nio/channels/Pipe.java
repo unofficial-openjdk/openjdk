@@ -47,7 +47,6 @@ import java.nio.channels.spi.*;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
- * @version %I%, %E%
  * @since 1.4
  */
 
@@ -59,28 +58,28 @@ public abstract class Pipe {
      * @since 1.4
      */
     public static abstract class SourceChannel
-	extends AbstractSelectableChannel
-	implements ReadableByteChannel, ScatteringByteChannel
+        extends AbstractSelectableChannel
+        implements ReadableByteChannel, ScatteringByteChannel
     {
-	/**
-	 * Constructs a new instance of this class.
-	 */
-	protected SourceChannel(SelectorProvider provider) {
-	    super(provider);
-	}
+        /**
+         * Constructs a new instance of this class.
+         */
+        protected SourceChannel(SelectorProvider provider) {
+            super(provider);
+        }
 
-	/**
-	 * Returns an operation set identifying this channel's supported
-	 * operations.
-	 *
-	 * <p> Pipe-source channels only support reading, so this method
-	 * returns {@link SelectionKey#OP_READ}.  </p>
-	 *
-	 * @return  The valid-operation set
-	 */
-	public final int validOps() {
-	    return SelectionKey.OP_READ;
-	}
+        /**
+         * Returns an operation set identifying this channel's supported
+         * operations.
+         *
+         * <p> Pipe-source channels only support reading, so this method
+         * returns {@link SelectionKey#OP_READ}.  </p>
+         *
+         * @return  The valid-operation set
+         */
+        public final int validOps() {
+            return SelectionKey.OP_READ;
+        }
 
     }
 
@@ -90,28 +89,28 @@ public abstract class Pipe {
      * @since 1.4
      */
     public static abstract class SinkChannel
-	extends AbstractSelectableChannel
-	implements WritableByteChannel, GatheringByteChannel
+        extends AbstractSelectableChannel
+        implements WritableByteChannel, GatheringByteChannel
     {
-	/**
-	 * Initializes a new instance of this class.
-	 */
-	protected SinkChannel(SelectorProvider provider) {
-	    super(provider);
-	}
+        /**
+         * Initializes a new instance of this class.
+         */
+        protected SinkChannel(SelectorProvider provider) {
+            super(provider);
+        }
 
-	/**
-	 * Returns an operation set identifying this channel's supported
-	 * operations.
-	 *
-	 * <p> Pipe-sink channels only support writing, so this method returns
-	 * {@link SelectionKey#OP_WRITE}.  </p>
-	 *
-	 * @return  The valid-operation set
-	 */
-	public final int validOps() {
-	    return SelectionKey.OP_WRITE;
-	}
+        /**
+         * Returns an operation set identifying this channel's supported
+         * operations.
+         *
+         * <p> Pipe-sink channels only support writing, so this method returns
+         * {@link SelectionKey#OP_WRITE}.  </p>
+         *
+         * @return  The valid-operation set
+         */
+        public final int validOps() {
+            return SelectionKey.OP_WRITE;
+        }
 
     }
 
@@ -148,7 +147,7 @@ public abstract class Pipe {
      *          If an I/O error occurs
      */
     public static Pipe open() throws IOException {
-	return SelectorProvider.provider().openPipe();
+        return SelectorProvider.provider().openPipe();
     }
 
 }

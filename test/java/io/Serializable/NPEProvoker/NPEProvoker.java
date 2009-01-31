@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,9 +23,9 @@
 
 /* @test
  * @bug 6541870
- * @summary this test checks that ObjectInputStream throws an IOException 
- *          instead of a NullPointerException when deserializing an ArrayList 
- *          of Externalizables if there is an IOException while deserializing 
+ * @summary this test checks that ObjectInputStream throws an IOException
+ *          instead of a NullPointerException when deserializing an ArrayList
+ *          of Externalizables if there is an IOException while deserializing
  *          one of these Externalizables.
  *
  * @author Andrey Ozerov
@@ -42,9 +42,9 @@ import java.util.ArrayList;
 
 public class NPEProvoker implements java.io.Externalizable {
     private String test = "test";
-    
-    public void readExternal(ObjectInput in) throws IOException, 
-        ClassNotFoundException 
+
+    public void readExternal(ObjectInput in) throws IOException,
+        ClassNotFoundException
     {
         throw new IOException(); //io exception for whatever reason
     }
@@ -52,9 +52,9 @@ public class NPEProvoker implements java.io.Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(test);
     }
-    
+
     public static void main(String[] args) {
-	System.err.println("\n Regression test for bug 6541870\n");        
+        System.err.println("\n Regression test for bug 6541870\n");
         try {
             ArrayList<NPEProvoker> list = new ArrayList<NPEProvoker>();
             list.add(new NPEProvoker());
@@ -62,15 +62,15 @@ public class NPEProvoker implements java.io.Externalizable {
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(list);
 
-            ObjectInputStream ois = 
+            ObjectInputStream ois =
                 new ObjectInputStream(new ByteArrayInputStream(
                 baos.toByteArray()));
             ois.readObject();
-	    throw new Error();
+            throw new Error();
         } catch (IOException e) {
-            System.err.println("\nTEST PASSED");            
+            System.err.println("\nTEST PASSED");
         } catch (ClassNotFoundException e) {
-	    throw new Error();
+            throw new Error();
         } catch (NullPointerException e) {
             throw new Error();
         }

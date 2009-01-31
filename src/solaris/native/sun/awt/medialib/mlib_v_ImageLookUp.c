@@ -22,9 +22,8 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
 
-#pragma ident	"@(#)mlib_v_ImageLookUp.c	1.15	02/03/28 SMI"
+
 
 /*
  * FUNCTION

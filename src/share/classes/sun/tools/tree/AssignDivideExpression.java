@@ -39,13 +39,13 @@ class AssignDivideExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignDivideExpression(long where, Expression left, Expression right) {
-	super(ASGDIV, where, left, right);
+        super(ASGDIV, where, left, right);
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-	asm.add(where, opc_idiv + itype.getTypeCodeOffset());
+        asm.add(where, opc_idiv + itype.getTypeCodeOffset());
     }
 }

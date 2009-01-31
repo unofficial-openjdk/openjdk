@@ -32,14 +32,14 @@ import java.net.*;
 
 public class OpenConnection {
     public static void main(String[] args) throws IOException {
-	System.setSecurityManager( new SecurityManager() );
+        System.setSecurityManager( new SecurityManager() );
         URL u = new URL("http://foo.bar.baz/");
-	try {
-	    // Will throw NullPointerException if not fixed
-	    URLConnection con = u.openConnection(Proxy.NO_PROXY);
-	} catch (UnknownHostException ex) {
-	    // That's OK, we were expecting that!
-	    return;
-	}
+        try {
+            // Will throw NullPointerException if not fixed
+            URLConnection con = u.openConnection(Proxy.NO_PROXY);
+        } catch (UnknownHostException ex) {
+            // That's OK, we were expecting that!
+            return;
+        }
     }
 }

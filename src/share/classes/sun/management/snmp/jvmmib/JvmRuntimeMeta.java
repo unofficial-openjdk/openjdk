@@ -297,10 +297,10 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "get" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void get(SnmpMibSubRequest req, int depth)
@@ -310,10 +310,10 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "set" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void set(SnmpMibSubRequest req, int depth)
@@ -323,10 +323,10 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "check" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public void check(SnmpMibSubRequest req, int depth)
@@ -386,10 +386,10 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    // 
+    //
     // Implements the "skipVariable" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    // 
+    //
     // ------------------------------------------------------------
 
     public boolean  skipVariable(long var, Object data, int pduVersion) {
@@ -541,18 +541,18 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmRTLibraryPathTable" table metadata class.
-     * 
+     *
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     * 
+     *
      * @param tableName Name of the table object ("JvmRTLibraryPathTable")
      * @param groupName Name of the group to which this table belong ("JvmRuntime")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     * 
+     *
      * @return An instance of the metadata class generated for the
      *         "JvmRTLibraryPathTable" table (JvmRTLibraryPathTableMeta)
-     * 
+     *
      **/
     protected JvmRTLibraryPathTableMeta createJvmRTLibraryPathTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmRTLibraryPathTableMeta(mib, objectserver);
@@ -561,18 +561,18 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmRTClassPathTable" table metadata class.
-     * 
+     *
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     * 
+     *
      * @param tableName Name of the table object ("JvmRTClassPathTable")
      * @param groupName Name of the group to which this table belong ("JvmRuntime")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     * 
+     *
      * @return An instance of the metadata class generated for the
      *         "JvmRTClassPathTable" table (JvmRTClassPathTableMeta)
-     * 
+     *
      **/
     protected JvmRTClassPathTableMeta createJvmRTClassPathTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmRTClassPathTableMeta(mib, objectserver);
@@ -581,18 +581,18 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmRTBootClassPathTable" table metadata class.
-     * 
+     *
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     * 
+     *
      * @param tableName Name of the table object ("JvmRTBootClassPathTable")
      * @param groupName Name of the group to which this table belong ("JvmRuntime")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     * 
+     *
      * @return An instance of the metadata class generated for the
      *         "JvmRTBootClassPathTable" table (JvmRTBootClassPathTableMeta)
-     * 
+     *
      **/
     protected JvmRTBootClassPathTableMeta createJvmRTBootClassPathTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmRTBootClassPathTableMeta(mib, objectserver);
@@ -601,18 +601,18 @@ public class JvmRuntimeMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmRTInputArgsTable" table metadata class.
-     * 
+     *
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     * 
+     *
      * @param tableName Name of the table object ("JvmRTInputArgsTable")
      * @param groupName Name of the group to which this table belong ("JvmRuntime")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     * 
+     *
      * @return An instance of the metadata class generated for the
      *         "JvmRTInputArgsTable" table (JvmRTInputArgsTableMeta)
-     * 
+     *
      **/
     protected JvmRTInputArgsTableMeta createJvmRTInputArgsTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmRTInputArgsTableMeta(mib, objectserver);

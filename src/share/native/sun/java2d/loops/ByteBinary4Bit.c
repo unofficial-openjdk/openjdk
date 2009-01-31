@@ -79,7 +79,7 @@ NativePrimitive ByteBinary4BitPrimitives[] = {
 jboolean RegisterByteBinary4Bit(JNIEnv *env)
 {
     return RegisterPrimitives(env, ByteBinary4BitPrimitives,
-			      ArraySize(ByteBinary4BitPrimitives));
+                              ArraySize(ByteBinary4BitPrimitives));
 }
 
 DEFINE_BYTE_BINARY_SOLID_FILLRECT(ByteBinary4Bit)

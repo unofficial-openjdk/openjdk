@@ -41,76 +41,76 @@ public class ChunkedEncodingTest implements HttpCallback {
     private static MessageDigest md5;
     private static byte[] file1Mac, file2Mac;
     public void request (HttpTransaction req) {
-	try {
-	    FileInputStream fis = new FileInputStream(FNPrefix+"test.txt");
-	    DigestInputStream dis = null;
-	    md5.reset();
-	    dis = new DigestInputStream(fis, md5);
-	    for (int i = 0; i < 52; i++) {
-		int n = dis.read(bufs[i]);
-		respBody[i] = new String(bufs[i], 0, n);
-	    }
-	    file1Mac = dis.getMessageDigest().digest();
-	    dis.close();
-	    req.setResponseEntityBody(respBody);
-	    req.sendResponse(200, "OK");
-	    req.orderlyClose();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            FileInputStream fis = new FileInputStream(FNPrefix+"test.txt");
+            DigestInputStream dis = null;
+            md5.reset();
+            dis = new DigestInputStream(fis, md5);
+            for (int i = 0; i < 52; i++) {
+                int n = dis.read(bufs[i]);
+                respBody[i] = new String(bufs[i], 0, n);
+            }
+            file1Mac = dis.getMessageDigest().digest();
+            dis.close();
+            req.setResponseEntityBody(respBody);
+            req.sendResponse(200, "OK");
+            req.orderlyClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     static void read (InputStream is) throws IOException {
-	int c;
-	System.out.println ("reading");
-       
-	DigestInputStream dis = null;
-	md5.reset();
-	dis = new DigestInputStream(is, md5);
-	while ((c=dis.read()) != -1);
-	file2Mac = dis.getMessageDigest().digest();
-	dis.close();
-	System.out.println ("finished reading");
+        int c;
+        System.out.println ("reading");
+
+        DigestInputStream dis = null;
+        md5.reset();
+        dis = new DigestInputStream(is, md5);
+        while ((c=dis.read()) != -1);
+        file2Mac = dis.getMessageDigest().digest();
+        dis.close();
+        System.out.println ("finished reading");
     }
 
     static void client (String u) throws Exception {
-    	URL url = new URL (u);
-	System.out.println ("client opening connection to: " + u);
-    	URLConnection urlc = url.openConnection ();
-    	InputStream is = urlc.getInputStream ();
-    	read (is);
-    	is.close();
+        URL url = new URL (u);
+        System.out.println ("client opening connection to: " + u);
+        URLConnection urlc = url.openConnection ();
+        InputStream is = urlc.getInputStream ();
+        read (is);
+        is.close();
     }
 
     static HttpServer server;
 
     public static void test () throws Exception {
-	try {
+        try {
 
-	    FNPrefix = System.getProperty("test.src", ".")+"/";
-	    md5 = MessageDigest.getInstance("MD5");
-    	    server = new HttpServer (new ChunkedEncodingTest(), 1, 10, 0);
-    	    System.out.println ("Server: listening on port: " + server.getLocalPort());
-    	    client ("http://localhost:"+server.getLocalPort()+"/d1/foo.html");
-	} catch (Exception e) {
-	    if (server != null) {
-	    	server.terminate();
-	    }
-	    throw e;
-	}
-    	if (!MessageDigest.isEqual(file1Mac, file2Mac)) {
-	    except ("The file sent by server is different from the original file");
-    	}
-	
-	server.terminate();
+            FNPrefix = System.getProperty("test.src", ".")+"/";
+            md5 = MessageDigest.getInstance("MD5");
+            server = new HttpServer (new ChunkedEncodingTest(), 1, 10, 0);
+            System.out.println ("Server: listening on port: " + server.getLocalPort());
+            client ("http://localhost:"+server.getLocalPort()+"/d1/foo.html");
+        } catch (Exception e) {
+            if (server != null) {
+                server.terminate();
+            }
+            throw e;
+        }
+        if (!MessageDigest.isEqual(file1Mac, file2Mac)) {
+            except ("The file sent by server is different from the original file");
+        }
+
+        server.terminate();
     }
 
     public static void main(String[] args) throws Exception {
-	test();
+        test();
     }
 
     public static void except (String s) {
         server.terminate();
-    	throw new RuntimeException (s);
+        throw new RuntimeException (s);
     }
 }

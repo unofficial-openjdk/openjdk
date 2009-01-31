@@ -29,24 +29,24 @@ import sun.security.util.*;
  * @author Sean Mullan
  * @bug 4716972
  * @summary Check that GeneralName.encode() encodes an X500Name with
- *	an explicit tag
+ *      an explicit tag
  */
 public class Encode {
 
     public static void main(String[] args) throws Exception {
 
-	GeneralName gn = new GeneralName(new X500Name("cn=john"));
-	DerOutputStream dos = new DerOutputStream();
-	gn.encode(dos);
-	DerValue dv = new DerValue(dos.toByteArray());
+        GeneralName gn = new GeneralName(new X500Name("cn=john"));
+        DerOutputStream dos = new DerOutputStream();
+        gn.encode(dos);
+        DerValue dv = new DerValue(dos.toByteArray());
         short tag = (byte)(dv.tag & 0x1f);
-	if (tag != GeneralNameInterface.NAME_DIRECTORY) {
-	    throw new Exception("Invalid tag for Directory name");
-	}
+        if (tag != GeneralNameInterface.NAME_DIRECTORY) {
+            throw new Exception("Invalid tag for Directory name");
+        }
         if (!dv.isContextSpecific() || !dv.isConstructed()) {
             throw new Exception("Invalid encoding of Directory name");
         }
-	DerInputStream data = dv.getData();
-	DerValue[] seq = data.getSequence(5);
+        DerInputStream data = dv.getData();
+        DerValue[] seq = data.getSequence(5);
     }
 }

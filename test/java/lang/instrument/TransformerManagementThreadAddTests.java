@@ -39,55 +39,55 @@ import java.util.*;
 public class TransformerManagementThreadAddTests extends ATestCaseScaffold
 {
     public static void
-    main (String[] args) 
+    main (String[] args)
         throws Throwable {
         ATestCaseScaffold   test = new TransformerManagementThreadAddTests(args[0]);
         test.runTest();
     }
 
     protected void
-    doRunTest()     
+    doRunTest()
         throws Throwable {
         testMultiThreadAdds();
     }
-        
-    
+
+
     /**
      * CONFIGURATION FOR TEST
      * ----------------------
      * Set these variables to different values to test the object that
      * manages the transformers.
-     * 
+     *
      * MIN_TRANS: the minimum number of transformers to add by a thread
      * MAX_TRANS: the maximum number of transformers to add by a thread
      *      There will be a total of MAX_TRANS-MIN_TRANS+1 threads created.
      *      Each thread will add between MIN_TRANS and MAX_TRANS transformers
      *      to the manager.
-     * 
+     *
      * REMOVE_THREADS: the number of threads to run that spend their time
      *                  removing transformers
      */
     protected static final int MIN_TRANS = 33;
     protected static final int MAX_TRANS = 45;
     protected static final int REMOVE_THREADS = 5;
-    
+
     protected static final boolean LOG_TRANSFORMATIONS = false;
 
     /**
      * Field variables
      */
     protected static final int TOTAL_THREADS = MAX_TRANS - MIN_TRANS + 1;
-    
+
     private byte[]          fDummyClassBytes;
     private Vector              fCheckedTransformers;
     private Instrumentation fInstrumentation;
     private int             fFinished;
     private ExecuteTransformersThread fExec;
-    
+
     // Need to use this for synchronization in subclass
     protected Vector            fAddedTransformers;
     private String          fDummyClassName;
-    
+
     /**
      * Constructor for TransformerManagementThreadAddTests.
      * @param name  Name for the test
@@ -95,10 +95,10 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     public TransformerManagementThreadAddTests(String name)
     {
         super(name);
-        
+
         fCheckedTransformers = new Vector();
         fAddedTransformers = new Vector();
-        
+
         fDummyClassName = "DummyClass";
         String resourceName = "DummyClass.class";
         File f = new File(System.getProperty("test.classes", "."), resourceName);
@@ -113,7 +113,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             fail("Could not load the class: "+resourceName);
         }
     }
-    
+
     public void
     testMultiThreadAdds()
     {
@@ -123,23 +123,23 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             int index = i - MIN_TRANS;
             threads[index] = new TransformerThread("Trans"+prettyNum(index,2), i);
         }
-        
+
         ExecuteTransformersThread exec = new ExecuteTransformersThread();
         exec.start();
         for (int i = threads.length - 1; i >= 0; i--)
         {
             threads[i].start();
         }
-        
+
         while (!exec.fDone)
         {
             Thread.currentThread().yield();
         }
         assertTrue(finalCheck());
-        
+
         if (LOG_TRANSFORMATIONS) {
-	    printTransformers();
-	}
+            printTransformers();
+        }
     }
 
     /**
@@ -150,7 +150,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     {
         return fInstrumentation;
     }
-    
+
     /**
      * Returns the execution thread
      * @return ExecuteTransformersThread
@@ -174,13 +174,13 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     {
         fFinished++;
     }
-    
+
     protected boolean
     threadsDone()
     {
         return fFinished == TOTAL_THREADS;
     }
-    
+
     /**
      * Method testCompleted.
      * @return boolean
@@ -192,62 +192,62 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     }
 
     /**
-     * 
+     *
      */
     protected boolean
     finalCheck()
     {
         if (LOG_TRANSFORMATIONS) {
-	    // log the list
-	    for (int x = 0; x < fCheckedTransformers.size(); x++ ) {
-		System.out.println(x + "\t\t" + fCheckedTransformers.get(x));
-	    }
-	    System.out.println();
-	    System.out.println();
-	    
-	    // check for multiples
-	    for (int x = 0; x < fCheckedTransformers.size(); x++ ) {
-		Object current = fCheckedTransformers.get(x);
-		for ( int y = x + 1; y < fCheckedTransformers.size(); y++) {
-		    Object running = fCheckedTransformers.get(y);
-		    if ( current.equals(running) ) {
-			System.out.println(x + "\t" + y + " \t" + "FOUND DUPLICATE: " + current);
-		    }
-		}
-	    }
-	}
-   
+            // log the list
+            for (int x = 0; x < fCheckedTransformers.size(); x++ ) {
+                System.out.println(x + "\t\t" + fCheckedTransformers.get(x));
+            }
+            System.out.println();
+            System.out.println();
+
+            // check for multiples
+            for (int x = 0; x < fCheckedTransformers.size(); x++ ) {
+                Object current = fCheckedTransformers.get(x);
+                for ( int y = x + 1; y < fCheckedTransformers.size(); y++) {
+                    Object running = fCheckedTransformers.get(y);
+                    if ( current.equals(running) ) {
+                        System.out.println(x + "\t" + y + " \t" + "FOUND DUPLICATE: " + current);
+                    }
+                }
+            }
+        }
+
         for (int j = 1; j < fCheckedTransformers.size(); j++) {
             ThreadTransformer transformer = (ThreadTransformer)fCheckedTransformers.get(j);
             for (int i = 0; i < j; i++) {
                 ThreadTransformer currTrans = (ThreadTransformer)fCheckedTransformers.get(i);
                 assertTrue(currTrans + " incorrectly appeared before " +
-			   transformer + " i=" + i + " j=" + j + " size=" +
-			   fCheckedTransformers.size(),
-			   !(
-			     currTrans.getThread().equals(transformer.getThread()) &&
-			     currTrans.getIndex() > transformer.getIndex()));
+                           transformer + " i=" + i + " j=" + j + " size=" +
+                           fCheckedTransformers.size(),
+                           !(
+                             currTrans.getThread().equals(transformer.getThread()) &&
+                             currTrans.getIndex() > transformer.getIndex()));
             }
         }
         return true;
     }
-    
+
     /**
-     * 
+     *
      */
     protected void
     setUp()
         throws Exception
     {
         super.setUp();
-        
+
         fFinished = 0;
         assertTrue(MIN_TRANS < MAX_TRANS);
         fInstrumentation = InstrumentationHandoff.getInstrumentationOrThrow();
     }
-    
+
     /**
-     * 
+     *
      */
     protected void
     tearDown()
@@ -255,9 +255,9 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     {
         super.tearDown();
     }
-    
-    
-    
+
+
+
     /**
      * Method executeTransform.
      */
@@ -265,7 +265,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     executeTransform()
     {
         fCheckedTransformers.clear();
-        
+
         try
         {
             ClassDefinition cd = new ClassDefinition(DummyClass.class, fDummyClassBytes);
@@ -291,7 +291,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
         getInstrumentation().addTransformer(threadTransformer);
         fAddedTransformers.add(threadTransformer);
     }
-    
+
     /**
      * Method checkInTransformer.
      * @param myClassFileTransformer
@@ -301,7 +301,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     {
         fCheckedTransformers.add(transformer);
     }
-    
+
     /**
      * Method createTransformer.
      * @param transformerThread
@@ -312,19 +312,19 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
     createTransformer(TransformerThread thread, int index)
     {
         ThreadTransformer tt = null;
-        
+
         tt = new ThreadTransformer(thread, index);
-        
+
         return tt;
     }
-    
-    
+
+
     protected class
     ExecuteTransformersThread
         extends Thread
     {
         private boolean fDone = false;
-        
+
         public void
         run()
         {
@@ -332,24 +332,24 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             {
                 executeTransform();
             }
-            
+
             // Do a final check for good measure
             executeTransform();
             fDone = true;
         }
     }
-    
-    
+
+
     protected class
     TransformerThread
         extends Thread
     {
         private final ThreadTransformer[] fThreadTransformers;
-        
+
         TransformerThread(String name, int numTransformers)
         {
             super(name);
-            
+
             fThreadTransformers = makeTransformers(numTransformers);
         }
 
@@ -362,15 +362,15 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
         makeTransformers(int numTransformers)
         {
             ThreadTransformer[] trans = new ThreadTransformer[numTransformers];
-            
+
             for (int i = 0; i < trans.length; i++)
             {
                 trans[i] = createTransformer(TransformerThread.this, i);
             }
-            
+
             return trans;
         }
-        
+
         public void
         run()
         {
@@ -381,17 +381,17 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             threadFinished(TransformerThread.this);
         }
     }
-        
+
     /**
      * ClassFileTransformer implementation that knows its thread
      */
     protected class
     ThreadTransformer extends SimpleIdentityTransformer
-    {       
+    {
         private final String    fName;
         private final int       fIndex;
         private final Thread    fThread;
-        
+
         /**
          * Constructor for ThreadTransformer.
          */
@@ -401,14 +401,14 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             fIndex = index;
             fName = "TT["+fThread.getName()+"]["+prettyNum(fIndex,3)+"]";
         }
-        
+
         public String toString()
         {
             return fName;
         }
-        
+
         /**
-         * 
+         *
          */
         public byte[]
         transform(
@@ -427,7 +427,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
                                         domain,
                                         classfileBuffer);
         }
-        
+
         /**
          * Returns the index.
          * @return int
@@ -447,12 +447,12 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
         }
 
     }
-    
+
     /**
      * DEBUG STUFF
      */
     private int NUM_SWITCHES;
-    
+
     /**
      * Method printTransformers.
      */
@@ -462,7 +462,7 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
         Iterator trans = fCheckedTransformers.iterator();
         ThreadTransformer old = null;
         StringBuffer buf = new StringBuffer();
-        
+
         for (int i = 1; trans.hasNext(); i++)
         {
             ThreadTransformer t = (ThreadTransformer)trans.next();
@@ -479,20 +479,20 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
             }
             else
             { buf.append(" "); }
-            
+
             if (i % 5 == 0)
             {
                 buf.append("\n");
             }
             else
             { buf.append(" "); }
-            
+
             old = t;
         }
         System.out.println(buf);
         System.out.println("\nNumber of transitions from one thread to another: "+NUM_SWITCHES);
     }
-    
+
     protected String
     prettyNum(int n, int numSize)
     {
@@ -502,11 +502,11 @@ public class TransformerManagementThreadAddTests extends ATestCaseScaffold
         {
             num.insert(0, "0");
         }
-        
+
         return num.toString();
     }
     /**
      * END DEBUG STUFF
      */
-        
+
 }

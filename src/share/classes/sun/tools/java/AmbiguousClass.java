@@ -46,8 +46,8 @@ class AmbiguousClass extends ClassNotFound {
      * Constructor
      */
     public AmbiguousClass(Identifier name1, Identifier name2) {
-	super(name1.getName());
-	this.name1 = name1;
-	this.name2 = name2;
+        super(name1.getName());
+        this.name1 = name1;
+        this.name2 = name2;
     }
 }

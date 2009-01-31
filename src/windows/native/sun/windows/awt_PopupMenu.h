@@ -57,8 +57,8 @@ public:
 
     virtual AwtMenuBar* GetMenuBar() { return NULL; }
     INLINE void SetParent(AwtComponent* parent) { m_parent = parent; }
-    virtual HWND GetOwnerHWnd() { 
-        return (m_parent == NULL) ? NULL : m_parent->GetHWnd(); 
+    virtual HWND GetOwnerHWnd() {
+        return (m_parent == NULL) ? NULL : m_parent->GetHWnd();
     }
     virtual void Enable(BOOL isEnabled);
     virtual BOOL IsDisabledAndPopup();

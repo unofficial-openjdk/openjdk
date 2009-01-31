@@ -37,7 +37,7 @@ import com.sun.jmx.snmp.SnmpStatusException;
  * A partially decoded representation of an SNMP packet. It contains
  * the information contained in any SNMP message (SNMPv1, SNMPv2 or
  * SNMPv3).
- * <p><b>This API is a Sun Microsystems internal API  and is subject 
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -46,7 +46,7 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      * The protocol version.
      * <P><CODE>decodeMessage</CODE> and <CODE>encodeMessage</CODE> do not
      * perform any check on this value.
-     * <BR><CODE>decodeSnmpPdu</CODE> and <CODE>encodeSnmpPdu</CODE> only 
+     * <BR><CODE>decodeSnmpPdu</CODE> and <CODE>encodeSnmpPdu</CODE> only
      * accept  the values 0 (for SNMPv1), 1 (for SNMPv2) and 3 (for SNMPv3).
      */
     public int version = 0;
@@ -55,7 +55,7 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      * Encoding of the PDU.
      * <P>This is usually the BER encoding of the PDU's syntax
      * defined in RFC1157 and RFC1902. However, this can be authenticated
-     * or encrypted data (but you need to implemented your own 
+     * or encrypted data (but you need to implemented your own
      * <CODE>SnmpPduFactory</CODE> class).
      */
     public byte[] data = null;
@@ -87,24 +87,24 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      * @param data The unmarshalled SNMP message.
      * @return The SNMP version (0, 1 or 3).
      */
-    public static int getProtocolVersion(byte[] data) 
-	throws SnmpStatusException {
-	int version = 0;
-	BerDecoder bdec = null;	
-	try {
-	    bdec = new BerDecoder(data);
-	    bdec.openSequence();
-	    version = bdec.fetchInteger();
-	}
+    public static int getProtocolVersion(byte[] data)
+        throws SnmpStatusException {
+        int version = 0;
+        BerDecoder bdec = null;
+        try {
+            bdec = new BerDecoder(data);
+            bdec.openSequence();
+            version = bdec.fetchInteger();
+        }
         catch(BerException x) {
             throw new SnmpStatusException("Invalid encoding") ;
         }
-	try {
-	    bdec.closeSequence();
-	}
+        try {
+            bdec.closeSequence();
+        }
         catch(BerException x) {
         }
-	return version;
+        return version;
     }
 
     /**
@@ -113,41 +113,41 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      * @return The request ID.
      */
     public abstract int getRequestId(byte[] data) throws SnmpStatusException;
-    
+
     /**
      * Encodes this message and puts the result in the specified byte array.
      * For internal use only.
-     * 
+     *
      * @param outputBytes An array to receive the resulting encoding.
      *
      * @exception ArrayIndexOutOfBoundsException If the result does not fit
      *                                           into the specified array.
      */
-    public abstract int encodeMessage(byte[] outputBytes) 
-	throws SnmpTooBigException;
+    public abstract int encodeMessage(byte[] outputBytes)
+        throws SnmpTooBigException;
 
      /**
      * Decodes the specified bytes and initializes this message.
      * For internal use only.
-     * 
+     *
      * @param inputBytes The bytes to be decoded.
      *
      * @exception SnmpStatusException If the specified bytes are not a valid encoding.
      */
-    public abstract void decodeMessage(byte[] inputBytes, int byteCount) 
+    public abstract void decodeMessage(byte[] inputBytes, int byteCount)
         throws SnmpStatusException;
-    
+
      /**
      * Initializes this message with the specified <CODE>pdu</CODE>.
      * <P>
-     * This method initializes the data field with an array of 
-     * <CODE>maxDataLength</CODE> bytes. It encodes the <CODE>pdu</CODE>. 
+     * This method initializes the data field with an array of
+     * <CODE>maxDataLength</CODE> bytes. It encodes the <CODE>pdu</CODE>.
      * The resulting encoding is stored in the data field
      * and the length of the encoding is stored in <CODE>dataLength</CODE>.
      * <p>
-     * If the encoding length exceeds <CODE>maxDataLength</CODE>, 
+     * If the encoding length exceeds <CODE>maxDataLength</CODE>,
      * the method throws an exception.
-     * 
+     *
      * @param pdu The PDU to be encoded.
      * @param maxDataLength The maximum length permitted for the data field.
      *
@@ -156,19 +156,19 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      * into <CODE>maxDataLength</CODE> bytes.
      * @exception ArrayIndexOutOfBoundsException If the encoding exceeds <CODE>maxDataLength</CODE>.
      */
-    public abstract void encodeSnmpPdu(SnmpPdu pdu, int maxDataLength) 
+    public abstract void encodeSnmpPdu(SnmpPdu pdu, int maxDataLength)
         throws SnmpStatusException, SnmpTooBigException;
-    
+
 
     /**
      * Gets the PDU encoded in this message.
      * <P>
      * This method decodes the data field and returns the resulting PDU.
-     * 
+     *
      * @return The resulting PDU.
      * @exception SnmpStatusException If the encoding is not valid.
      */
-    public abstract SnmpPdu decodeSnmpPdu() 
+    public abstract SnmpPdu decodeSnmpPdu()
         throws SnmpStatusException;
 
     /**
@@ -180,23 +180,23 @@ public abstract class SnmpMsg implements SnmpDefinitions {
      *
      * @return The string containing the dump.
      */
-    public static String dumpHexBuffer(byte [] b, int offset, int len) { 
+    public static String dumpHexBuffer(byte [] b, int offset, int len) {
         StringBuffer buf = new StringBuffer(len << 1) ;
-        int k = 1 ; 
-        int flen = offset + len ; 
- 
-        for (int i = offset; i < flen ; i++) { 
-            int j = b[i] & 0xFF ; 
-            buf.append(Character.forDigit((j >>> 4) , 16)) ; 
-            buf.append(Character.forDigit((j & 0x0F), 16)) ; 
-            k++ ; 
-            if (k%16 == 0) { 
-                buf.append('\n') ; 
-                k = 1 ; 
-            } else 
-                buf.append(' ') ; 
-        } 
-        return buf.toString() ; 
+        int k = 1 ;
+        int flen = offset + len ;
+
+        for (int i = offset; i < flen ; i++) {
+            int j = b[i] & 0xFF ;
+            buf.append(Character.forDigit((j >>> 4) , 16)) ;
+            buf.append(Character.forDigit((j & 0x0F), 16)) ;
+            k++ ;
+            if (k%16 == 0) {
+                buf.append('\n') ;
+                k = 1 ;
+            } else
+                buf.append(' ') ;
+        }
+        return buf.toString() ;
     }
 
     /**
@@ -224,8 +224,8 @@ public abstract class SnmpMsg implements SnmpDefinitions {
     /**
      * For SNMP Runtime private use only.
      */
-    public void encodeVarBindList(BerEncoder benc, 
-				  SnmpVarBind[] varBindList) 
+    public void encodeVarBindList(BerEncoder benc,
+                                  SnmpVarBind[] varBindList)
         throws SnmpStatusException, SnmpTooBigException {
         //
         // Remember: the encoder does backward encoding
@@ -243,20 +243,20 @@ public abstract class SnmpMsg implements SnmpDefinitions {
                         benc.closeSequence() ;
                         encodedVarBindCount++ ;
                     }
-                }  
-            }  
+                }
+            }
             benc.closeSequence() ;
         }
         catch(ArrayIndexOutOfBoundsException x) {
             throw new SnmpTooBigException(encodedVarBindCount) ;
         }
     }
-  
+
     /**
      * For SNMP Runtime private use only.
      */
-    void encodeVarBindValue(BerEncoder benc, 
-			    SnmpValue v)throws SnmpStatusException {
+    void encodeVarBindValue(BerEncoder benc,
+                            SnmpValue v)throws SnmpStatusException {
         if (v == null) {
             benc.putNull() ;
         }
@@ -287,7 +287,7 @@ public abstract class SnmpMsg implements SnmpDefinitions {
         else if (v instanceof SnmpCounter64) {
             if (version == snmpVersionOne) {
                 throw new SnmpStatusException("Invalid value for SNMP v1 : " + v) ;
-            }  
+            }
             benc.putInteger(((SnmpCounter64)v).longValue(), SnmpValue.Counter64Tag) ;
         }
         else if (v instanceof SnmpNull) {
@@ -296,8 +296,8 @@ public abstract class SnmpMsg implements SnmpDefinitions {
                 throw new SnmpStatusException("Invalid value for SNMP v1 : " + v) ;
             }
             if ((version == snmpVersionTwo) &&
-                (tag != SnmpValue.NullTag) && 
-                (tag != SnmpVarBind.errNoSuchObjectTag) && 
+                (tag != SnmpValue.NullTag) &&
+                (tag != SnmpVarBind.errNoSuchObjectTag) &&
                 (tag != SnmpVarBind.errNoSuchInstanceTag) &&
                 (tag != SnmpVarBind.errEndOfMibViewTag)) {
                 throw new SnmpStatusException("Invalid value " + v) ;
@@ -307,125 +307,125 @@ public abstract class SnmpMsg implements SnmpDefinitions {
         else {
             throw new SnmpStatusException("Invalid value " + v) ;
         }
-    
+
     }
 
 
     /**
      * For SNMP Runtime private use only.
      */
-    public SnmpVarBind[] decodeVarBindList(BerDecoder bdec) 
-	throws BerException {
-	    bdec.openSequence() ;
-	    Vector<SnmpVarBind> tmp = new Vector<SnmpVarBind>() ;
-	    while (bdec.cannotCloseSequence()) {
-		SnmpVarBind bind = new SnmpVarBind() ;
-		bdec.openSequence() ;
-		bind.oid = new SnmpOid(bdec.fetchOid()) ;
-		bind.setSnmpValue(decodeVarBindValue(bdec)) ;
-		bdec.closeSequence() ;
-		tmp.addElement(bind) ;
-	    }
-	    bdec.closeSequence() ;
-	    SnmpVarBind[] varBindList= new SnmpVarBind[tmp.size()] ;
-	    tmp.copyInto(varBindList);
-	    return varBindList ;
-	}
-    
-    
+    public SnmpVarBind[] decodeVarBindList(BerDecoder bdec)
+        throws BerException {
+            bdec.openSequence() ;
+            Vector<SnmpVarBind> tmp = new Vector<SnmpVarBind>() ;
+            while (bdec.cannotCloseSequence()) {
+                SnmpVarBind bind = new SnmpVarBind() ;
+                bdec.openSequence() ;
+                bind.oid = new SnmpOid(bdec.fetchOid()) ;
+                bind.setSnmpValue(decodeVarBindValue(bdec)) ;
+                bdec.closeSequence() ;
+                tmp.addElement(bind) ;
+            }
+            bdec.closeSequence() ;
+            SnmpVarBind[] varBindList= new SnmpVarBind[tmp.size()] ;
+            tmp.copyInto(varBindList);
+            return varBindList ;
+        }
+
+
     /**
      * For SNMP Runtime private use only.
      */
-    SnmpValue decodeVarBindValue(BerDecoder bdec) 
-	throws BerException {
+    SnmpValue decodeVarBindValue(BerDecoder bdec)
+        throws BerException {
         SnmpValue result = null ;
         int tag = bdec.getTag() ;
 
-	// bugId 4641696 : RuntimeExceptions must be transformed in 
-	//                 BerException.
+        // bugId 4641696 : RuntimeExceptions must be transformed in
+        //                 BerException.
         switch(tag) {
-	    
+
             //
             // Simple syntax
             //
         case BerDecoder.IntegerTag :
-	    try {
-		result = new SnmpInt(bdec.fetchInteger()) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpInt from decoded value.");
-	    }
+            try {
+                result = new SnmpInt(bdec.fetchInteger()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpInt from decoded value.");
+            }
             break ;
         case BerDecoder.OctetStringTag :
-	    try {
-		result = new SnmpString(bdec.fetchOctetString()) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpString from decoded value.");
-	    }
+            try {
+                result = new SnmpString(bdec.fetchOctetString()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpString from decoded value.");
+            }
             break ;
         case BerDecoder.OidTag :
-	    try {
-		result = new SnmpOid(bdec.fetchOid()) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpOid from decoded value.");
-	    }
+            try {
+                result = new SnmpOid(bdec.fetchOid()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpOid from decoded value.");
+            }
             break ;
         case BerDecoder.NullTag :
             bdec.fetchNull() ;
-	    try {
-		result = new SnmpNull() ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpNull from decoded value.");
-	    }
+            try {
+                result = new SnmpNull() ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpNull from decoded value.");
+            }
             break ;
 
             //
             // Application syntax
             //
         case SnmpValue.IpAddressTag :
-	    try {
-		result = new SnmpIpAddress(bdec.fetchOctetString(tag)) ;
-	    } catch (RuntimeException r) {
-		throw new  BerException();
-	      // BerException("Can't build SnmpIpAddress from decoded value.");
-	    }
+            try {
+                result = new SnmpIpAddress(bdec.fetchOctetString(tag)) ;
+            } catch (RuntimeException r) {
+                throw new  BerException();
+              // BerException("Can't build SnmpIpAddress from decoded value.");
+            }
             break ;
         case SnmpValue.CounterTag :
-	    try {
-		result = new SnmpCounter(bdec.fetchIntegerAsLong(tag)) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpCounter from decoded value.");
-	    }
+            try {
+                result = new SnmpCounter(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpCounter from decoded value.");
+            }
             break ;
         case SnmpValue.GaugeTag :
-	    try {
-		result = new SnmpGauge(bdec.fetchIntegerAsLong(tag)) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpGauge from decoded value.");
-	    }
+            try {
+                result = new SnmpGauge(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpGauge from decoded value.");
+            }
             break ;
         case SnmpValue.TimeticksTag :
-	    try {
-		result = new SnmpTimeticks(bdec.fetchIntegerAsLong(tag)) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-	     // BerException("Can't build SnmpTimeticks from decoded value.");
-	    }
+            try {
+                result = new SnmpTimeticks(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+             // BerException("Can't build SnmpTimeticks from decoded value.");
+            }
             break ;
         case SnmpValue.OpaqueTag :
-	    try {
-		result = new SnmpOpaque(bdec.fetchOctetString(tag)) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-		// BerException("Can't build SnmpOpaque from decoded value.");
-	    }
+            try {
+                result = new SnmpOpaque(bdec.fetchOctetString(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpOpaque from decoded value.");
+            }
             break ;
-      
+
             //
             // V2 syntaxes
             //
@@ -433,14 +433,14 @@ public abstract class SnmpMsg implements SnmpDefinitions {
             if (version == snmpVersionOne) {
                 throw new BerException(BerException.BAD_VERSION) ;
             }
-	    try {
-		result = new SnmpCounter64(bdec.fetchIntegerAsLong(tag)) ;
-	    } catch(RuntimeException r) {
-		throw new BerException();
-	     // BerException("Can't build SnmpCounter64 from decoded value.");
-	    }
+            try {
+                result = new SnmpCounter64(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+             // BerException("Can't build SnmpCounter64 from decoded value.");
+            }
             break ;
-    
+
         case SnmpVarBind.errNoSuchObjectTag :
             if (version == snmpVersionOne) {
                 throw new BerException(BerException.BAD_VERSION) ;
@@ -448,7 +448,7 @@ public abstract class SnmpMsg implements SnmpDefinitions {
             bdec.fetchNull(tag) ;
             result = SnmpVarBind.noSuchObject ;
             break ;
-        
+
         case SnmpVarBind.errNoSuchInstanceTag :
             if (version == snmpVersionOne) {
                 throw new BerException(BerException.BAD_VERSION) ;
@@ -456,7 +456,7 @@ public abstract class SnmpMsg implements SnmpDefinitions {
             bdec.fetchNull(tag) ;
             result = SnmpVarBind.noSuchInstance ;
             break ;
-        
+
         case SnmpVarBind.errEndOfMibViewTag :
             if (version == snmpVersionOne) {
                 throw new BerException(BerException.BAD_VERSION) ;
@@ -464,12 +464,12 @@ public abstract class SnmpMsg implements SnmpDefinitions {
             bdec.fetchNull(tag) ;
             result = SnmpVarBind.endOfMibView ;
             break ;
-        
+
         default:
             throw new BerException() ;
 
         }
-    
+
         return result ;
     }
 

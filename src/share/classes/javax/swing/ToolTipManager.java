@@ -50,7 +50,6 @@ import sun.swing.UIAction;
  * tooltip will be shown again after <code>initialDelay</code> milliseconds.
  *
  * @see JComponent#createToolTip
- * @version %I% %G%
  * @author Dave Moore
  * @author Rich Schiavi
  */
@@ -74,7 +73,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
 
     boolean enabled = true;
     private boolean tipShowing = false;
-   
+
     private FocusListener focusChangeListener = null;
     private MouseMotionListener moveBeforeEnterListener = null;
     private KeyListener accessibilityKeyListener = null;
@@ -91,7 +90,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
         insideTimer = new Timer(4000, new stillInsideTimerAction());
         insideTimer.setRepeats(false);
 
-	moveBeforeEnterListener = new MoveBeforeEnterListener();
+        moveBeforeEnterListener = new MoveBeforeEnterListener();
         accessibilityKeyListener = new AccessibilityKeyListener();
     }
 
@@ -129,7 +128,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
     public void setLightWeightPopupEnabled(boolean aFlag){
         lightWeightPopupEnabled = aFlag;
     }
-    
+
     /**
      * Returns true if lightweight (all-Java) <code>Tooltips</code>
      * are in use, or false if heavyweight (native peer)
@@ -137,7 +136,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
      *
      * @return true if lightweight <code>ToolTips</code> are in use
      */
-    public boolean isLightWeightPopupEnabled() { 
+    public boolean isLightWeightPopupEnabled() {
         return lightWeightPopupEnabled;
     }
 
@@ -158,7 +157,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
      * Returns the initial delay value.
      *
      * @return an integer representing the initial delay value,
-     *		in milliseconds
+     *          in milliseconds
      * @see #setInitialDelay
      */
     public int getInitialDelay() {
@@ -179,8 +178,8 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
     /**
      * Returns the dismissal delay value.
      *
-     * @return an integer representing the dismissal delay value, 
-     *		in milliseconds
+     * @return an integer representing the dismissal delay value,
+     *          in milliseconds
      * @see #setDismissDelay
      */
     public int getDismissDelay() {
@@ -220,7 +219,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
             return;
         String mode = UIManager.getString("ToolTipManager.enableToolTipMode");
         if ("activeApplication".equals(mode)) {
-            KeyboardFocusManager kfm = 
+            KeyboardFocusManager kfm =
                     KeyboardFocusManager.getCurrentKeyboardFocusManager();
             if (kfm.getFocusedWindow() == null) {
                 return;
@@ -333,11 +332,11 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
                 window = null;
             }
             tipWindow.hide();
-	    tipWindow = null;
-	    tipShowing = false;
+            tipWindow = null;
+            tipShowing = false;
             tip = null;
             insideTimer.stop();
-        } 
+        }
     }
 
     /**
@@ -366,7 +365,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
         component.removeMouseListener(this);
         component.addMouseListener(this);
         component.removeMouseMotionListener(moveBeforeEnterListener);
-	component.addMouseMotionListener(moveBeforeEnterListener);
+        component.addMouseMotionListener(moveBeforeEnterListener);
         component.removeKeyListener(accessibilityKeyListener);
         component.addKeyListener(accessibilityKeyListener);
     }
@@ -378,7 +377,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
      */
     public void unregisterComponent(JComponent component) {
         component.removeMouseListener(this);
-	component.removeMouseMotionListener(moveBeforeEnterListener);
+        component.removeMouseMotionListener(moveBeforeEnterListener);
         component.removeKeyListener(accessibilityKeyListener);
     }
 
@@ -398,25 +397,25 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
             return;
         }
         JComponent component = (JComponent)event.getSource();
-	component.removeMouseMotionListener(moveBeforeEnterListener);
+        component.removeMouseMotionListener(moveBeforeEnterListener);
 
         exitTimer.stop();
 
-	Point location = event.getPoint();
-	// ensure tooltip shows only in proper place
-	if (location.x < 0 || 
-	    location.x >=component.getWidth() ||
-	    location.y < 0 ||
-	    location.y >= component.getHeight()) {
-	    return;
-	}
+        Point location = event.getPoint();
+        // ensure tooltip shows only in proper place
+        if (location.x < 0 ||
+            location.x >=component.getWidth() ||
+            location.y < 0 ||
+            location.y >= component.getHeight()) {
+            return;
+        }
 
         if (insideComponent != null) {
             enterTimer.stop();
         }
-	// A component in an unactive internal frame is sent two
-	// mouseEntered events, make sure we don't end up adding
-	// ourselves an extra time.
+        // A component in an unactive internal frame is sent two
+        // mouseEntered events, make sure we don't end up adding
+        // ourselves an extra time.
         component.removeMouseMotionListener(this);
         component.addMouseMotionListener(this);
 
@@ -433,7 +432,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
                             preferredLocation.equals(newPreferredLocation) :
                             (newPreferredLocation == null);
 
-                if (!sameComponent || !toolTipText.equals(newToolTipText) || 
+                if (!sameComponent || !toolTipText.equals(newToolTipText) ||
                          !sameLoc) {
                     toolTipText = newToolTipText;
                     preferredLocation = newPreferredLocation;
@@ -456,12 +455,12 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
         boolean shouldHide = true;
         if (insideComponent == null) {
             // Drag exit
-        } 
+        }
         if (window != null && event.getSource() == window) {
-	  // if we get an exit and have a heavy window
-	  // we need to check if it if overlapping the inside component
+          // if we get an exit and have a heavy window
+          // we need to check if it if overlapping the inside component
             Container insideComponentWindow = insideComponent.getTopLevelAncestor();
-            // insideComponent may be removed after tooltip is made visible 
+            // insideComponent may be removed after tooltip is made visible
             if (insideComponentWindow != null) {
                 Point location = event.getPoint();
                 SwingUtilities.convertPointToScreen(location, window);
@@ -478,36 +477,36 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
                 }
             }
         } else if(event.getSource() == insideComponent && tipWindow != null) {
-	    Window win = SwingUtilities.getWindowAncestor(insideComponent);
-	    if (win != null) {	// insideComponent may have been hidden (e.g. in a menu)
-		Point location = SwingUtilities.convertPoint(insideComponent,
-							     event.getPoint(),
-							     win);
-		Rectangle bounds = insideComponent.getTopLevelAncestor().getBounds();
-		location.x += bounds.x;
-		location.y += bounds.y;
-		
-		Point loc = new Point(0, 0);
-		SwingUtilities.convertPointToScreen(loc, tip);
-		bounds.x = loc.x;
-		bounds.y = loc.y;
-		bounds.width = tip.getWidth();
-		bounds.height = tip.getHeight();
-		
-		if (location.x >= bounds.x && location.x < (bounds.x + bounds.width) &&
-		    location.y >= bounds.y && location.y < (bounds.y + bounds.height)) {
-		    shouldHide = false;
-		} else {
-		    shouldHide = true;
-		}
-	    }
-        } 
-        
-        if (shouldHide) {        
+            Window win = SwingUtilities.getWindowAncestor(insideComponent);
+            if (win != null) {  // insideComponent may have been hidden (e.g. in a menu)
+                Point location = SwingUtilities.convertPoint(insideComponent,
+                                                             event.getPoint(),
+                                                             win);
+                Rectangle bounds = insideComponent.getTopLevelAncestor().getBounds();
+                location.x += bounds.x;
+                location.y += bounds.y;
+
+                Point loc = new Point(0, 0);
+                SwingUtilities.convertPointToScreen(loc, tip);
+                bounds.x = loc.x;
+                bounds.y = loc.y;
+                bounds.width = tip.getWidth();
+                bounds.height = tip.getHeight();
+
+                if (location.x >= bounds.x && location.x < (bounds.x + bounds.width) &&
+                    location.y >= bounds.y && location.y < (bounds.y + bounds.height)) {
+                    shouldHide = false;
+                } else {
+                    shouldHide = true;
+                }
+            }
+        }
+
+        if (shouldHide) {
             enterTimer.stop();
         if (insideComponent != null) {
-	        insideComponent.removeMouseMotionListener(this);
-	    }
+                insideComponent.removeMouseMotionListener(this);
+            }
             insideComponent = null;
             toolTipText = null;
             mouseEvent = null;
@@ -584,7 +583,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
         if (newText != null || newPreferredLocation != null) {
             mouseEvent = event;
             if (((newText != null && newText.equals(toolTipText)) || newText == null) &&
-                ((newPreferredLocation != null && newPreferredLocation.equals(preferredLocation)) 
+                ((newPreferredLocation != null && newPreferredLocation.equals(preferredLocation))
                  || newPreferredLocation == null)) {
                 if (tipWindow != null) {
                     insideTimer.restart();
@@ -663,10 +662,10 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
    */
     private class MoveBeforeEnterListener extends MouseMotionAdapter {
         public void mouseMoved(MouseEvent e) {
-	    initiateToolTip(e);
-	}
+            initiateToolTip(e);
+        }
     }
-    
+
     static Frame frameForComponent(Component component) {
         while (!(component instanceof Frame)) {
             component = component.getParent();
@@ -677,10 +676,10 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
   private FocusListener createFocusChangeListener(){
     return new FocusAdapter(){
       public void focusLost(FocusEvent evt){
-	hideTipWindow();
+        hideTipWindow();
         insideComponent = null;
-	JComponent c = (JComponent)evt.getSource();
-	c.removeFocusListener(focusChangeListener);
+        JComponent c = (JComponent)evt.getSource();
+        c.removeFocusListener(focusChangeListener);
       }
     };
   }
@@ -692,20 +691,20 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
     if (invoker != null){
       Container parent;
       for (parent = invoker.getParent(); parent != null; parent = parent.getParent()){
-	// fix internal frame size bug: 4139087 - 4159012
-	if(parent instanceof JFrame || parent instanceof JDialog ||
-	   parent instanceof JWindow) { // no check for awt.Frame since we use Heavy tips
-	  return getWidthAdjust(parent.getBounds(),popupRectInScreen);
-	} else if (parent instanceof JApplet || parent instanceof JInternalFrame) {
-	  if (popupFrameRect == null){
-	    popupFrameRect = new Rectangle();
-	  }
-	  Point p = parent.getLocationOnScreen();
-	  popupFrameRect.setBounds(p.x,p.y,
-				   parent.getBounds().width,
-				   parent.getBounds().height);
-	  return getWidthAdjust(popupFrameRect,popupRectInScreen);
-	}
+        // fix internal frame size bug: 4139087 - 4159012
+        if(parent instanceof JFrame || parent instanceof JDialog ||
+           parent instanceof JWindow) { // no check for awt.Frame since we use Heavy tips
+          return getWidthAdjust(parent.getBounds(),popupRectInScreen);
+        } else if (parent instanceof JApplet || parent instanceof JInternalFrame) {
+          if (popupFrameRect == null){
+            popupFrameRect = new Rectangle();
+          }
+          Point p = parent.getLocationOnScreen();
+          popupFrameRect.setBounds(p.x,p.y,
+                                   parent.getBounds().width,
+                                   parent.getBounds().height);
+          return getWidthAdjust(popupFrameRect,popupRectInScreen);
+        }
       }
     }
     return 0;
@@ -717,19 +716,19 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
     if (invoker != null){
       Container parent;
       for (parent = invoker.getParent(); parent != null; parent = parent.getParent()){
-	if(parent instanceof JFrame || parent instanceof JDialog ||
-	   parent instanceof JWindow) {
-	  return getHeightAdjust(parent.getBounds(),popupRectInScreen);
-	} else if (parent instanceof JApplet || parent instanceof JInternalFrame) {
-	  if (popupFrameRect == null){
-	    popupFrameRect = new Rectangle();
-	  }
-	  Point p = parent.getLocationOnScreen();
-	  popupFrameRect.setBounds(p.x,p.y,
-				   parent.getBounds().width,
-				   parent.getBounds().height);
-	  return getHeightAdjust(popupFrameRect,popupRectInScreen);
-	}
+        if(parent instanceof JFrame || parent instanceof JDialog ||
+           parent instanceof JWindow) {
+          return getHeightAdjust(parent.getBounds(),popupRectInScreen);
+        } else if (parent instanceof JApplet || parent instanceof JInternalFrame) {
+          if (popupFrameRect == null){
+            popupFrameRect = new Rectangle();
+          }
+          Point p = parent.getLocationOnScreen();
+          popupFrameRect.setBounds(p.x,p.y,
+                                   parent.getBounds().width,
+                                   parent.getBounds().height);
+          return getHeightAdjust(popupFrameRect,popupRectInScreen);
+        }
       }
     }
     return 0;
@@ -747,7 +746,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
   // REMIND: what if the Tooltip is just too big to fit at all - we currently will just clip
   private int getWidthAdjust(Rectangle a, Rectangle b){
     //    System.out.println("width b.x/b.width: " + b.x + "/" + b.width +
-    //		       "a.x/a.width: " + a.x + "/" + a.width);
+    //                 "a.x/a.width: " + a.x + "/" + a.width);
     if (b.x >= a.x && (b.x + b.width) <= (a.x + a.width)){
       return 0;
     }
@@ -780,7 +779,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
                 if (focusChangeListener == null){
                     focusChangeListener = createFocusChangeListener();
                 }
-                insideComponent.addFocusListener(focusChangeListener); 
+                insideComponent.addFocusListener(focusChangeListener);
             }
         }
     }
@@ -791,7 +790,7 @@ public class ToolTipManager extends MouseAdapter implements MouseMotionListener 
         preferredLocation = null;
         insideComponent = null;
     }
-    
+
     /* This listener is registered when the tooltip is first registered
      * on a component in order to process accessibility keybindings.
      * This will apply globally across L&F

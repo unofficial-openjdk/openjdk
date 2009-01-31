@@ -30,7 +30,7 @@
 #if defined(__linux__) && !defined(USE_SELECT)
 #include <sys/poll.h>
 #endif
-#include <netinet/tcp.h>	/* Defines TCP_NODELAY, needed for 2.6 */
+#include <netinet/tcp.h>        /* Defines TCP_NODELAY, needed for 2.6 */
 #include <netinet/in.h>
 #ifdef __linux__
 #include <netinet/ip.h>
@@ -76,24 +76,24 @@ jfieldID psi_closePendingID;
 static int marker_fd = -1;
 
 
-#define SET_NONBLOCKING(fd) {		\
-        int flags = fcntl(fd, F_GETFL);	\
-        flags |= O_NONBLOCK; 		\
-        fcntl(fd, F_SETFL, flags);	\
+#define SET_NONBLOCKING(fd) {           \
+        int flags = fcntl(fd, F_GETFL); \
+        flags |= O_NONBLOCK;            \
+        fcntl(fd, F_SETFL, flags);      \
 }
 
-#define SET_BLOCKING(fd) {		\
+#define SET_BLOCKING(fd) {              \
         int flags = fcntl(fd, F_GETFL); \
-	flags &= ~O_NONBLOCK;		\
+        flags &= ~O_NONBLOCK;           \
         fcntl(fd, F_SETFL, flags);      \
 }
 
 /*
- * Create the marker file descriptor by establishing a loopback connection 
+ * Create the marker file descriptor by establishing a loopback connection
  * which we shutdown but do not close the fd. The result is an fd that
  * can be used for read/write.
  */
-static int getMarkerFD() 
+static int getMarkerFD()
 {
     int server_fd, child_fd, connect_fd;
     SOCKADDR him;
@@ -102,63 +102,63 @@ static int getMarkerFD()
     type = AF_INET;
 #ifdef AF_INET6
     if (ipv6_available()) {
-	type = AF_INET6;
+        type = AF_INET6;
     }
 #endif
 
     /*
-     * Create listener on any port 
+     * Create listener on any port
      */
     server_fd = JVM_Socket(type, SOCK_STREAM, 0);
     if (server_fd < 0) {
-	return -1;
+        return -1;
     }
     if (JVM_Listen(server_fd, 1) == -1) {
         JVM_SocketClose(server_fd);
-	return -1;
+        return -1;
     }
     len = SOCKADDR_LEN;
     if (JVM_GetSockName(server_fd, (struct sockaddr *)&him, &len) == -1) {
         JVM_SocketClose(server_fd);
-	return -1;
+        return -1;
     }
     port = NET_GetPortFromSockaddr((struct sockaddr *)&him);
 
-    /* 
+    /*
      * Establish connection from client socket.
-     * Server is bound to 0.0.0.0/X or ::/X 
+     * Server is bound to 0.0.0.0/X or ::/X
      * We connect to 127.0.0.1/X or ::1/X
      */
 #ifdef AF_INET6
     if (ipv6_available()) {
-	struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)&him;
-	jbyte caddr[16];
-	memset((char *) caddr, 0, 16);
-	caddr[15] = 1;
-	memset((char *)him6, 0, sizeof(struct sockaddr_in6));
-	memcpy((void *)&(him6->sin6_addr), caddr, sizeof(struct in6_addr) );
-	him6->sin6_port = htons((short) port);
-	him6->sin6_family = AF_INET6; 
-	len = sizeof(struct sockaddr_in6) ;
-    } else 
-#endif /* AF_INET6 */  
+        struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)&him;
+        jbyte caddr[16];
+        memset((char *) caddr, 0, 16);
+        caddr[15] = 1;
+        memset((char *)him6, 0, sizeof(struct sockaddr_in6));
+        memcpy((void *)&(him6->sin6_addr), caddr, sizeof(struct in6_addr) );
+        him6->sin6_port = htons((short) port);
+        him6->sin6_family = AF_INET6;
+        len = sizeof(struct sockaddr_in6) ;
+    } else
+#endif /* AF_INET6 */
     {
-	struct sockaddr_in *him4 = (struct sockaddr_in*)&him;
-	memset((char *) him4, 0, sizeof(struct sockaddr_in));
-	him4->sin_port = htons((short) port);
-	him4->sin_addr.s_addr = (uint32_t) htonl(0x7f000001);
-	him4->sin_family = AF_INET;
-	len = sizeof(struct sockaddr_in);
+        struct sockaddr_in *him4 = (struct sockaddr_in*)&him;
+        memset((char *) him4, 0, sizeof(struct sockaddr_in));
+        him4->sin_port = htons((short) port);
+        him4->sin_addr.s_addr = (uint32_t) htonl(0x7f000001);
+        him4->sin_family = AF_INET;
+        len = sizeof(struct sockaddr_in);
     }
     connect_fd = JVM_Socket(type, SOCK_STREAM, 0);
     if (connect_fd < 0) {
-	JVM_SocketClose(server_fd);
-	return -1;
-    }    
+        JVM_SocketClose(server_fd);
+        return -1;
+    }
     if (JVM_Connect(connect_fd, (struct sockaddr *) &him, len) == -1) {
         JVM_SocketClose(server_fd);
         JVM_SocketClose(connect_fd);
-	return -1;
+        return -1;
     }
 
     /*
@@ -171,7 +171,7 @@ static int getMarkerFD()
     if (child_fd == -1) {
         JVM_SocketClose(server_fd);
         JVM_SocketClose(connect_fd);
-	return -1;
+        return -1;
     }
 
     /*
@@ -209,10 +209,10 @@ Java_java_net_PlainSocketImpl_initProto(JNIEnv *env, jclass cls) {
     char *s;
 
     psi_fdID = (*env)->GetFieldID(env, cls , "fd",
-				  "Ljava/io/FileDescriptor;");
+                                  "Ljava/io/FileDescriptor;");
     CHECK_NULL(psi_fdID);
     psi_addressID = (*env)->GetFieldID(env, cls, "address",
-					  "Ljava/net/InetAddress;");
+                                          "Ljava/net/InetAddress;");
     CHECK_NULL(psi_addressID);
     psi_portID = (*env)->GetFieldID(env, cls, "port", "I");
     CHECK_NULL(psi_portID);
@@ -222,11 +222,11 @@ Java_java_net_PlainSocketImpl_initProto(JNIEnv *env, jclass cls) {
     CHECK_NULL(psi_timeoutID);
     psi_trafficClassID = (*env)->GetFieldID(env, cls, "trafficClass", "I");
     CHECK_NULL(psi_trafficClassID);
-    psi_serverSocketID = (*env)->GetFieldID(env, cls, "serverSocket", 
-			"Ljava/net/ServerSocket;");
+    psi_serverSocketID = (*env)->GetFieldID(env, cls, "serverSocket",
+                        "Ljava/net/ServerSocket;");
     CHECK_NULL(psi_serverSocketID);
     psi_fdLockID = (*env)->GetFieldID(env, cls, "fdLock",
-				      "Ljava/lang/Object;");
+                                      "Ljava/lang/Object;");
     CHECK_NULL(psi_fdLockID);
     psi_closePendingID = (*env)->GetFieldID(env, cls, "closePending", "Z");
     CHECK_NULL(psi_closePendingID);
@@ -250,40 +250,40 @@ static jclass socketExceptionCls;
  * Signature: (Z)V */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
-					   jboolean stream) {
+                                           jboolean stream) {
     jobject fdObj, ssObj;
     int fd;
     int arg = -1;
 
     if (socketExceptionCls == NULL) {
-	jclass c = (*env)->FindClass(env, "java/net/SocketException");
-	CHECK_NULL(c);
-	socketExceptionCls = (jclass)(*env)->NewGlobalRef(env, c);
+        jclass c = (*env)->FindClass(env, "java/net/SocketException");
+        CHECK_NULL(c);
+        socketExceptionCls = (jclass)(*env)->NewGlobalRef(env, c);
         CHECK_NULL(socketExceptionCls);
     }
     fdObj = (*env)->GetObjectField(env, this, psi_fdID);
 
     if (fdObj == NULL) {
-	(*env)->ThrowNew(env, socketExceptionCls, "null fd object");
-	return;
+        (*env)->ThrowNew(env, socketExceptionCls, "null fd object");
+        return;
     }
 #ifdef AF_INET6
     if (ipv6_available()) {
-	fd = JVM_Socket(AF_INET6, (stream ? SOCK_STREAM: SOCK_DGRAM), 0);
+        fd = JVM_Socket(AF_INET6, (stream ? SOCK_STREAM: SOCK_DGRAM), 0);
     } else
 #endif /* AF_INET6 */
-	{
-	    fd = JVM_Socket(AF_INET, (stream ? SOCK_STREAM: SOCK_DGRAM), 0);
-	}
+        {
+            fd = JVM_Socket(AF_INET, (stream ? SOCK_STREAM: SOCK_DGRAM), 0);
+        }
     if (fd == JVM_IO_ERR) {
-	/* note: if you run out of fds, you may not be able to load
-	 * the exception class, and get a NoClassDefFoundError
-	 * instead.
-	 */
-	NET_ThrowNew(env, errno, "can't create socket");
-	return;
+        /* note: if you run out of fds, you may not be able to load
+         * the exception class, and get a NoClassDefFoundError
+         * instead.
+         */
+        NET_ThrowNew(env, errno, "can't create socket");
+        return;
     } else {
-	(*env)->SetIntField(env, fdObj, IO_fd_fdID, fd);
+        (*env)->SetIntField(env, fdObj, IO_fd_fdID, fd);
     }
 
     /*
@@ -292,10 +292,10 @@ Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
      */
     ssObj = (*env)->GetObjectField(env, this, psi_serverSocketID);
     if (ssObj != NULL) {
-	int arg = 1;
+        int arg = 1;
         SET_NONBLOCKING(fd);
-        JVM_SetSockOpt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, 
-	    sizeof(arg));
+        JVM_SetSockOpt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&arg,
+            sizeof(arg));
     }
 }
 
@@ -309,8 +309,8 @@ Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
-					    jobject iaObj, jint port,
-					    jint timeout)
+                                            jobject iaObj, jint port,
+                                            jint timeout)
 {
     jint localport = (*env)->GetIntField(env, this, psi_localportID);
     int len = 0;
@@ -329,14 +329,14 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
     int connect_rv = -1;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Socket closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Socket closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     if (IS_NULL(iaObj)) {
-	JNU_ThrowNullPointerException(env, "inet address argument null.");
-	return;
+        JNU_ThrowNullPointerException(env, "inet address argument null.");
+        return;
     }
 
     /* connect */
@@ -346,119 +346,119 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
 
 #ifdef AF_INET6
     if (trafficClass != 0 && ipv6_available()) {
-	NET_SetTrafficClass((struct sockaddr *)&him, trafficClass);
+        NET_SetTrafficClass((struct sockaddr *)&him, trafficClass);
     }
 #endif /* AF_INET6 */
     if (timeout <= 0) {
-	connect_rv = NET_Connect(fd, (struct sockaddr *)&him, len);
+        connect_rv = NET_Connect(fd, (struct sockaddr *)&him, len);
 #ifdef __solaris__
-	if (connect_rv == JVM_IO_ERR && errno == EINPROGRESS ) {
+        if (connect_rv == JVM_IO_ERR && errno == EINPROGRESS ) {
 
-	    /* This can happen if a blocking connect is interrupted by a signal.
-	     * See 6343810.
-	     */
-	    while (1) {
-	        fd_set wr, ex;
+            /* This can happen if a blocking connect is interrupted by a signal.
+             * See 6343810.
+             */
+            while (1) {
+                fd_set wr, ex;
 
-	        FD_ZERO(&wr);
-	        FD_SET(fd, &wr);
-	        FD_ZERO(&ex);
-	        FD_SET(fd, &ex);
+                FD_ZERO(&wr);
+                FD_SET(fd, &wr);
+                FD_ZERO(&ex);
+                FD_SET(fd, &ex);
 
-	        errno = 0;
-	        connect_rv = NET_Select(fd+1, 0, &wr, &ex, 0);
-		if (connect_rv == JVM_IO_ERR) {
-		    if (errno == EINTR) {
-		    	continue;
-		    } else {
-		    	break;
-		    }
-		}
-		if (connect_rv > 0) {
-	    	    int optlen;
-	            /* has connection been established */
-	            optlen = sizeof(connect_rv);
-	            if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, 
-					(void*)&connect_rv, &optlen) <0) {
-		        connect_rv = errno;
-	            } 
+                errno = 0;
+                connect_rv = NET_Select(fd+1, 0, &wr, &ex, 0);
+                if (connect_rv == JVM_IO_ERR) {
+                    if (errno == EINTR) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if (connect_rv > 0) {
+                    int optlen;
+                    /* has connection been established */
+                    optlen = sizeof(connect_rv);
+                    if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR,
+                                        (void*)&connect_rv, &optlen) <0) {
+                        connect_rv = errno;
+                    }
 
-		    if (connect_rv != 0) {
-	            	/* restore errno */
-	                errno = connect_rv;
-	                connect_rv = JVM_IO_ERR;
-	            }
-		    break;
-		}
-	    }
-	}
+                    if (connect_rv != 0) {
+                        /* restore errno */
+                        errno = connect_rv;
+                        connect_rv = JVM_IO_ERR;
+                    }
+                    break;
+                }
+            }
+        }
 #endif
     } else {
-	/* 
-	 * A timeout was specified. We put the socket into non-blocking
-	 * mode, connect, and then wait for the connection to be 
-	 * established, fail, or timeout.
-	 */
-	SET_NONBLOCKING(fd);
+        /*
+         * A timeout was specified. We put the socket into non-blocking
+         * mode, connect, and then wait for the connection to be
+         * established, fail, or timeout.
+         */
+        SET_NONBLOCKING(fd);
 
-	/* no need to use NET_Connect as non-blocking */
-	connect_rv = connect(fd, (struct sockaddr *)&him, len);
+        /* no need to use NET_Connect as non-blocking */
+        connect_rv = connect(fd, (struct sockaddr *)&him, len);
 
-	/* connection not established immediately */
-	if (connect_rv != 0) {
-	    int optlen;
-	    jlong prevTime = JVM_CurrentTimeMillis(env, 0);
+        /* connection not established immediately */
+        if (connect_rv != 0) {
+            int optlen;
+            jlong prevTime = JVM_CurrentTimeMillis(env, 0);
 
-	    if (errno != EINPROGRESS) {
-	        NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+            if (errno != EINPROGRESS) {
+                NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
                              "connect failed");
-		SET_BLOCKING(fd);
-	        return;
-	    }
+                SET_BLOCKING(fd);
+                return;
+            }
 
-	    /*
+            /*
              * Wait for the connection to be established or a
              * timeout occurs. poll/select needs to handle EINTR in
-	     * case lwp sig handler redirects any process signals to
-	     * this thread.
+             * case lwp sig handler redirects any process signals to
+             * this thread.
              */
-	    while (1) {
-		jlong newTime;
+            while (1) {
+                jlong newTime;
 #ifndef USE_SELECT
-    	        {
-		    struct pollfd pfd;
-    		    pfd.fd = fd;
-    		    pfd.events = POLLOUT;
+                {
+                    struct pollfd pfd;
+                    pfd.fd = fd;
+                    pfd.events = POLLOUT;
 
-		    errno = 0;
-		    connect_rv = NET_Poll(&pfd, 1, timeout);
-	        }
+                    errno = 0;
+                    connect_rv = NET_Poll(&pfd, 1, timeout);
+                }
 #else
-	        {
-    		    fd_set wr, ex;
-    		    struct timeval t;
+                {
+                    fd_set wr, ex;
+                    struct timeval t;
 
-    		    t.tv_sec = timeout / 1000;
-    		    t.tv_usec = (timeout % 1000) * 1000;
+                    t.tv_sec = timeout / 1000;
+                    t.tv_usec = (timeout % 1000) * 1000;
 
-    		    FD_ZERO(&wr);
-    		    FD_SET(fd, &wr);
-		    FD_ZERO(&ex);
-		    FD_SET(fd, &ex);
+                    FD_ZERO(&wr);
+                    FD_SET(fd, &wr);
+                    FD_ZERO(&ex);
+                    FD_SET(fd, &ex);
 
-		    errno = 0;
-    		    connect_rv = NET_Select(fd+1, 0, &wr, &ex, &t);
-		}
+                    errno = 0;
+                    connect_rv = NET_Select(fd+1, 0, &wr, &ex, &t);
+                }
 #endif
 
-		if (connect_rv >= 0) {
-		    break;
-		}
-		if (errno != EINTR) {
-		    break;
-		}
+                if (connect_rv >= 0) {
+                    break;
+                }
+                if (errno != EINTR) {
+                    break;
+                }
 
-		/*
+                /*
                  * The poll was interrupted so adjust timeout and
                  * restart
                  */
@@ -466,78 +466,78 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
                 timeout -= (newTime - prevTime);
                 if (timeout <= 0) {
                     connect_rv = 0;
-		    break;
-		}
-		prevTime = newTime;
+                    break;
+                }
+                prevTime = newTime;
 
-	    } /* while */
+            } /* while */
 
-	    if (connect_rv == 0) {
-		JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
+            if (connect_rv == 0) {
+                JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
                             "connect timed out");
 
-		/*
-		 * Timeout out but connection may still be established.
-		 * At the high level it should be closed immediately but
-		 * just in case we make the socket blocking again and
-		 * shutdown input & output.
-		 */
-		SET_BLOCKING(fd);
-	        JVM_SocketShutdown(fd, 2);
-	        return;
-	    }
+                /*
+                 * Timeout out but connection may still be established.
+                 * At the high level it should be closed immediately but
+                 * just in case we make the socket blocking again and
+                 * shutdown input & output.
+                 */
+                SET_BLOCKING(fd);
+                JVM_SocketShutdown(fd, 2);
+                return;
+            }
 
-	    /* has connection been established */
-	    optlen = sizeof(connect_rv);
-	    if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv, 
-			       &optlen) <0) {
-		connect_rv = errno;
-	    }
-	}
+            /* has connection been established */
+            optlen = sizeof(connect_rv);
+            if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
+                               &optlen) <0) {
+                connect_rv = errno;
+            }
+        }
 
-	/* make socket blocking again */
-	SET_BLOCKING(fd);
+        /* make socket blocking again */
+        SET_BLOCKING(fd);
 
-	/* restore errno */
-	if (connect_rv != 0) {
-	    errno = connect_rv;
-	    connect_rv = JVM_IO_ERR;
-	}
-    } 
+        /* restore errno */
+        if (connect_rv != 0) {
+            errno = connect_rv;
+            connect_rv = JVM_IO_ERR;
+        }
+    }
 
     /* report the appropriate exception */
     if (connect_rv < 0) {
 
 #ifdef __linux__
-	/*
-	 * Linux/GNU distribution setup /etc/hosts so that
-	 * InetAddress.getLocalHost gets back the loopback address
-	 * rather than the host address. Thus a socket can be
-	 * bound to the loopback address and the connect will 
-	 * fail with EADDRNOTAVAIL. In addition the Linux kernel
-	 * returns the wrong error in this case - it returns EINVAL
-	 * instead of EADDRNOTAVAIL. We handle this here so that
-	 * a more descriptive exception text is used.
-	 */
-	if (connect_rv == JVM_IO_ERR && errno == EINVAL) {
-	    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-		"Invalid argument or cannot assign requested address");
-	    return;
-	}
+        /*
+         * Linux/GNU distribution setup /etc/hosts so that
+         * InetAddress.getLocalHost gets back the loopback address
+         * rather than the host address. Thus a socket can be
+         * bound to the loopback address and the connect will
+         * fail with EADDRNOTAVAIL. In addition the Linux kernel
+         * returns the wrong error in this case - it returns EINVAL
+         * instead of EADDRNOTAVAIL. We handle this here so that
+         * a more descriptive exception text is used.
+         */
+        if (connect_rv == JVM_IO_ERR && errno == EINVAL) {
+            JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                "Invalid argument or cannot assign requested address");
+            return;
+        }
 #endif
-	if (connect_rv == JVM_IO_INTR) {
-	    JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
-			    "operation interrupted");
-	} else if (errno == EPROTO) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ProtocolException",
+        if (connect_rv == JVM_IO_INTR) {
+            JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
+                            "operation interrupted");
+        } else if (errno == EPROTO) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ProtocolException",
                            "Protocol error");
-	} else if (errno == ECONNREFUSED) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+        } else if (errno == ECONNREFUSED) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
                            "Connection refused");
-	} else if (errno == ETIMEDOUT) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+        } else if (errno == ETIMEDOUT) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
                            "Connection timed out");
-	} else if (errno == EHOSTUNREACH) {
+        } else if (errno == EHOSTUNREACH) {
             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
                            "Host unreachable");
         } else if (errno == EADDRNOTAVAIL) {
@@ -546,10 +546,10 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
         } else if ((errno == EISCONN) || (errno == EBADF)) {
             JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
                             "Socket closed");
-	} else {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException", "connect failed");
-	}
-	return;
+        } else {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException", "connect failed");
+        }
+        return;
     }
 
     /*
@@ -557,7 +557,7 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
      * poll/select. In that case SO_ERROR will return 0 making
      * it appear that the connection has been established.
      * To avoid any race conditions we therefore grab the
-     * fd lock, check if the socket has been closed, and 
+     * fd lock, check if the socket has been closed, and
      * set the various fields whilst holding the lock
      */
     fdLock = (*env)->GetObjectField(env, this, psi_fdLockID);
@@ -565,12 +565,12 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
 
     if ((*env)->GetBooleanField(env, this, psi_closePendingID)) {
 
-	/* release fdLock */
-	(*env)->MonitorExit(env, fdLock);
+        /* release fdLock */
+        (*env)->MonitorExit(env, fdLock);
 
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
                             "Socket closed");
-	return;
+        return;
     }
 
     (*env)->SetIntField(env, fdObj, IO_fd_fdID, fd);
@@ -585,17 +585,17 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
      * will already be initialized
      */
     if (localport == 0) {
-	/* Now that we're a connected socket, let's extract the port number
-	 * that the system chose for us and store it in the Socket object.
-  	 */
-	len = SOCKADDR_LEN;
-	if (JVM_GetSockName(fd, (struct sockaddr *)&him, &len) == -1) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        /* Now that we're a connected socket, let's extract the port number
+         * that the system chose for us and store it in the Socket object.
+         */
+        len = SOCKADDR_LEN;
+        if (JVM_GetSockName(fd, (struct sockaddr *)&him, &len) == -1) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                            "Error getting socket name");
-	} else {
-	    localport = NET_GetPortFromSockaddr((struct sockaddr *)&him);
-	    (*env)->SetIntField(env, this, psi_localportID, localport);
-	}
+        } else {
+            localport = NET_GetPortFromSockaddr((struct sockaddr *)&him);
+            (*env)->SetIntField(env, this, psi_localportID, localport);
+        }
     }
 
     /*
@@ -611,7 +611,7 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
-					 jobject iaObj, jint localport) {
+                                         jobject iaObj, jint localport) {
 
     /* fdObj is the FileDescriptor field on this */
     jobject fdObj = (*env)->GetObjectField(env, this, psi_fdID);
@@ -621,15 +621,15 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
     SOCKADDR him;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"Socket closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     if (IS_NULL(iaObj)) {
-	JNU_ThrowNullPointerException(env, "iaObj is null.");
-	return;
+        JNU_ThrowNullPointerException(env, "iaObj is null.");
+        return;
     }
 
     /* bind */
@@ -638,15 +638,15 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
     }
 
     if (NET_Bind(fd, (struct sockaddr *)&him, len) < 0) {
-	if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||
-	    errno == EPERM || errno == EACCES) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "BindException",
+        if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||
+            errno == EPERM || errno == EACCES) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "BindException",
                            "Bind failed");
-	} else {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        } else {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                            "Bind failed");
-	}
-	return;
+        }
+        return;
     }
 
     /* set the address */
@@ -654,18 +654,18 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
 
     /* intialize the local port */
     if (localport == 0) {
-	/* Now that we're a connected socket, let's extract the port number
-	 * that the system chose for us and store it in the Socket object.
-  	 */
-	if (JVM_GetSockName(fd, (struct sockaddr *)&him, &len) == -1) {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        /* Now that we're a connected socket, let's extract the port number
+         * that the system chose for us and store it in the Socket object.
+         */
+        if (JVM_GetSockName(fd, (struct sockaddr *)&him, &len) == -1) {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                            "Error getting socket name");
-	    return;
-	}
-	localport = NET_GetPortFromSockaddr((struct sockaddr *)&him);
-	(*env)->SetIntField(env, this, psi_localportID, localport);
+            return;
+        }
+        localport = NET_GetPortFromSockaddr((struct sockaddr *)&him);
+        (*env)->SetIntField(env, this, psi_localportID, localport);
     } else {
-	(*env)->SetIntField(env, this, psi_localportID, localport);
+        (*env)->SetIntField(env, this, psi_localportID, localport);
     }
 }
 
@@ -676,7 +676,7 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketListen (JNIEnv *env, jobject this,
-					    jint count)
+                                            jint count)
 {
     /* this FileDescriptor fd field */
     jobject fdObj = (*env)->GetObjectField(env, this, psi_fdID);
@@ -684,11 +684,11 @@ Java_java_net_PlainSocketImpl_socketListen (JNIEnv *env, jobject this,
     int fd;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"Socket closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
 
     /*
@@ -696,10 +696,10 @@ Java_java_net_PlainSocketImpl_socketListen (JNIEnv *env, jobject this,
      * If listen backlog is Integer.MAX_VALUE then subtract 1.
      */
     if (count == 0x7fffffff)
-	count -= 1;
+        count -= 1;
 
     if (JVM_Listen(fd, count) == JVM_IO_ERR) {
-	NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                        "Listen failed");
     }
 }
@@ -711,7 +711,7 @@ Java_java_net_PlainSocketImpl_socketListen (JNIEnv *env, jobject this,
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketAccept(JNIEnv *env, jobject this,
-					   jobject socket)
+                                           jobject socket)
 {
     /* fields on this */
     int port;
@@ -734,98 +734,98 @@ Java_java_net_PlainSocketImpl_socketAccept(JNIEnv *env, jobject this,
 
     SOCKADDR him;
     int len;
-    
+
     len = SOCKADDR_LEN;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"Socket closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     if (IS_NULL(socket)) {
-	JNU_ThrowNullPointerException(env, "socket is null");
-	return;
+        JNU_ThrowNullPointerException(env, "socket is null");
+        return;
     }
 
-    /* 
+    /*
      * accept connection but ignore ECONNABORTED indicating that
      * connection was eagerly accepted by the OS but was reset
      * before accept() was called.
      *
      * If accept timeout in place and timeout is adjusted with
-     * each ECONNABORTED or EWOULDBLOCK to ensure that semantics 
+     * each ECONNABORTED or EWOULDBLOCK to ensure that semantics
      * of timeout are preserved.
      */
     for (;;) {
-	int ret;
+        int ret;
 
-	/* first usage pick up current time */
-	if (prevTime == 0 && timeout > 0) {
-	    prevTime = JVM_CurrentTimeMillis(env, 0);
-	}
+        /* first usage pick up current time */
+        if (prevTime == 0 && timeout > 0) {
+            prevTime = JVM_CurrentTimeMillis(env, 0);
+        }
 
         /* passing a timeout of 0 to poll will return immediately,
            but in the case of ServerSocket 0 means infinite. */
         if (timeout <= 0) {
             ret = NET_Timeout(fd, -1);
         } else {
-	    ret = NET_Timeout(fd, timeout);
-	}
+            ret = NET_Timeout(fd, timeout);
+        }
 
         if (ret == 0) {
             JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
-			    "Accept timed out");
-	    return;
+                            "Accept timed out");
+            return;
         } else if (ret == JVM_IO_ERR) {
-	    if (errno == EBADF) {
+            if (errno == EBADF) {
                JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Socket closed");
             } else {
                NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException", "Accept failed");
-            } 
-	    return;
-	} else if (ret == JVM_IO_INTR) {
-	    JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
-			    "operation interrupted");
-	    return;
-	}
+            }
+            return;
+        } else if (ret == JVM_IO_INTR) {
+            JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
+                            "operation interrupted");
+            return;
+        }
 
         newfd = NET_Accept(fd, (struct sockaddr *)&him, (jint*)&len);
 
-	/* connection accepted */
-	if (newfd >= 0) {
-	    SET_BLOCKING(newfd);
-	    break;
-	}
+        /* connection accepted */
+        if (newfd >= 0) {
+            SET_BLOCKING(newfd);
+            break;
+        }
 
         /* non (ECONNABORTED or EWOULDBLOCK) error */
         if (!(errno == ECONNABORTED || errno == EWOULDBLOCK)) {
-	    break;
-	}
+            break;
+        }
 
-        /* ECONNABORTED or EWOULDBLOCK error so adjust timeout if there is one. */ 
-	if (timeout) {
-	    jlong currTime = JVM_CurrentTimeMillis(env, 0);
-	    timeout -= (currTime - prevTime);
+        /* ECONNABORTED or EWOULDBLOCK error so adjust timeout if there is one. */
+        if (timeout) {
+            jlong currTime = JVM_CurrentTimeMillis(env, 0);
+            timeout -= (currTime - prevTime);
 
-	    if (timeout <= 0) {
-		JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
+            if (timeout <= 0) {
+                JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
                                 "Accept timed out");
-		return;
-	    }
-	    prevTime = currTime;
-	}
+                return;
+            }
+            prevTime = currTime;
+        }
     }
 
     if (newfd < 0) {
         if (newfd == -2) {
             JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
-			    "operation interrupted");
+                            "operation interrupted");
         } else {
-	    if (errno == EINVAL) {
-		errno = EBADF;
-	    }
+            if (errno == EINVAL) {
+                errno = EBADF;
+            }
             if (errno == EBADF) {
                 JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Socket closed");
             } else {
@@ -840,9 +840,9 @@ Java_java_net_PlainSocketImpl_socketAccept(JNIEnv *env, jobject this,
      */
     socketAddressObj = NET_SockaddrToInetAddress(env, (struct sockaddr *)&him, &port);
     if (socketAddressObj == NULL) {
-	/* should be pending exception */
-	close(newfd);
-	return;
+        /* should be pending exception */
+        close(newfd);
+        return;
     }
 
     /*
@@ -872,20 +872,20 @@ Java_java_net_PlainSocketImpl_socketAvailable(JNIEnv *env, jobject this) {
     jint fd;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"Socket closed");
-	return -1;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "Socket closed");
+        return -1;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     /* JVM_SocketAvailable returns 0 for failure, 1 for success */
     if (!JVM_SocketAvailable(fd, &ret)){
-	if (errno == ECONNRESET) {
-	    JNU_ThrowByName(env, "sun/net/ConnectionResetException", "");
-	} else {
-	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        if (errno == ECONNRESET) {
+            JNU_ThrowByName(env, "sun/net/ConnectionResetException", "");
+        } else {
+            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                                          "ioctl FIONREAD failed");
-	}
+        }
     }
     return ret;
 }
@@ -897,25 +897,25 @@ Java_java_net_PlainSocketImpl_socketAvailable(JNIEnv *env, jobject this) {
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketClose0(JNIEnv *env, jobject this,
-					  jboolean useDeferredClose) {
+                                          jboolean useDeferredClose) {
 
     jobject fdObj = (*env)->GetObjectField(env, this, psi_fdID);
     jint fd;
 
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"socket already closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "socket already closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     if (fd != -1) {
-	if (useDeferredClose && marker_fd >= 0) {
-	    NET_Dup2(marker_fd, fd);
-	} else {
+        if (useDeferredClose && marker_fd >= 0) {
+            NET_Dup2(marker_fd, fd);
+        } else {
             (*env)->SetIntField(env, fdObj, IO_fd_fdID, -1);
             NET_SocketClose(fd);
-	}
+        }
     }
 }
 
@@ -926,7 +926,7 @@ Java_java_net_PlainSocketImpl_socketClose0(JNIEnv *env, jobject this,
  */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketShutdown(JNIEnv *env, jobject this,
-					     jint howto) 
+                                             jint howto)
 {
 
     jobject fdObj = (*env)->GetObjectField(env, this, psi_fdID);
@@ -937,11 +937,11 @@ Java_java_net_PlainSocketImpl_socketShutdown(JNIEnv *env, jobject this,
      * -1 already?
      */
     if (IS_NULL(fdObj)) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-			"socket already closed");
-	return;
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                        "socket already closed");
+        return;
     } else {
-	fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
+        fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
     }
     JVM_SocketShutdown(fd, howto);
 }
@@ -959,18 +959,18 @@ Java_java_net_PlainSocketImpl_socketSetOption(JNIEnv *env, jobject this,
     int fd;
     int level, optname, optlen;
     union {
- 	int i;
-	struct linger ling;
+        int i;
+        struct linger ling;
     } optval;
 
-    /* 
-     * Check that socket hasn't been closed 
+    /*
+     * Check that socket hasn't been closed
      */
     fd = getFD(env, this);
     if (fd < 0) {
-	JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
                         "Socket closed");
-	return;
+        return;
     }
 
     /*
@@ -983,62 +983,62 @@ Java_java_net_PlainSocketImpl_socketSetOption(JNIEnv *env, jobject this,
     /*
      * Map the Java level socket option to the platform specific
      * level and option name.
-     */ 
+     */
     if (NET_MapSocketOption(cmd, &level, &optname)) {
         JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Invalid option");
-	return;
+        return;
     }
 
     switch (cmd) {
-	case java_net_SocketOptions_SO_SNDBUF :
-	case java_net_SocketOptions_SO_RCVBUF :
-	case java_net_SocketOptions_SO_LINGER :
-	case java_net_SocketOptions_IP_TOS :
-	    { 
-		jclass cls;
-	        jfieldID fid;
+        case java_net_SocketOptions_SO_SNDBUF :
+        case java_net_SocketOptions_SO_RCVBUF :
+        case java_net_SocketOptions_SO_LINGER :
+        case java_net_SocketOptions_IP_TOS :
+            {
+                jclass cls;
+                jfieldID fid;
 
-		cls = (*env)->FindClass(env, "java/lang/Integer");
- 		CHECK_NULL(cls);
-		fid = (*env)->GetFieldID(env, cls, "value", "I");
-		CHECK_NULL(fid);
+                cls = (*env)->FindClass(env, "java/lang/Integer");
+                CHECK_NULL(cls);
+                fid = (*env)->GetFieldID(env, cls, "value", "I");
+                CHECK_NULL(fid);
 
-		if (cmd == java_net_SocketOptions_SO_LINGER) {
+                if (cmd == java_net_SocketOptions_SO_LINGER) {
                     if (on) {
                         optval.ling.l_onoff = 1;
                         optval.ling.l_linger = (*env)->GetIntField(env, value, fid);
                     } else {
                         optval.ling.l_onoff = 0;
-			optval.ling.l_linger = 0;
-		    }
-		    optlen = sizeof(optval.ling);
-		} else {
-		    optval.i = (*env)->GetIntField(env, value, fid);
-		    optlen = sizeof(optval.i);
-		}
+                        optval.ling.l_linger = 0;
+                    }
+                    optlen = sizeof(optval.ling);
+                } else {
+                    optval.i = (*env)->GetIntField(env, value, fid);
+                    optlen = sizeof(optval.i);
+                }
 
-		break;
-	    }
+                break;
+            }
 
-	/* Boolean -> int */
-	default :
-	    optval.i = (on ? 1 : 0);
-	    optlen = sizeof(optval.i);
-	    
+        /* Boolean -> int */
+        default :
+            optval.i = (on ? 1 : 0);
+            optlen = sizeof(optval.i);
+
     }
 
     if (NET_SetSockOpt(fd, level, optname, (const void *)&optval, optlen) < 0) {
 #ifdef __solaris__
         if (errno == EINVAL) {
-	    // On Solaris setsockopt will set errno to EINVAL if the socket
-	    // is closed. The default error message is then confusing
-	    char fullMsg[128];
-	    jio_snprintf(fullMsg, sizeof(fullMsg), "Invalid option or socket reset by remote peer");
-	    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", fullMsg);
-	    return;
-	}
+            // On Solaris setsockopt will set errno to EINVAL if the socket
+            // is closed. The default error message is then confusing
+            char fullMsg[128];
+            jio_snprintf(fullMsg, sizeof(fullMsg), "Invalid option or socket reset by remote peer");
+            JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", fullMsg);
+            return;
+        }
 #endif /* __solaris__ */
-	NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                                       "Error setting socket option");
     }
 }
@@ -1073,7 +1073,7 @@ Java_java_net_PlainSocketImpl_socketGetOption(JNIEnv *env, jobject this,
      * SO_BINDADDR isn't a socket option
      */
     if (cmd == java_net_SocketOptions_SO_BINDADDR) {
-	SOCKADDR him;
+        SOCKADDR him;
         int len = 0;
         int port;
         jobject iaObj;
@@ -1088,11 +1088,11 @@ Java_java_net_PlainSocketImpl_socketGetOption(JNIEnv *env, jobject this,
             return -1;
         }
         iaObj = NET_SockaddrToInetAddress(env, (struct sockaddr *)&him, &port);
-	CHECK_NULL_RETURN(iaObj, -1);
+        CHECK_NULL_RETURN(iaObj, -1);
 
         iaCntrClass = (*env)->GetObjectClass(env, iaContainerObj);
         iaFieldID = (*env)->GetFieldID(env, iaCntrClass, "addr", "Ljava/net/InetAddress;");
-	CHECK_NULL_RETURN(iaFieldID, -1);
+        CHECK_NULL_RETURN(iaFieldID, -1);
         (*env)->SetObjectField(env, iaContainerObj, iaFieldID, iaObj);
         return 0; /* notice change from before */
     }
@@ -1110,28 +1110,28 @@ Java_java_net_PlainSocketImpl_socketGetOption(JNIEnv *env, jobject this,
      * Args are int except for SO_LINGER
      */
     if (cmd == java_net_SocketOptions_SO_LINGER) {
-	optlen = sizeof(optval.ling);
+        optlen = sizeof(optval.ling);
     } else {
-	optlen = sizeof(optval.i);
+        optlen = sizeof(optval.i);
     }
 
     if (NET_GetSockOpt(fd, level, optname, (void *)&optval, &optlen) < 0) {
-	NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+        NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
                                       "Error getting socket option");
-	return -1;
+        return -1;
     }
 
     switch (cmd) {
-	case java_net_SocketOptions_SO_LINGER:
-	    return (optval.ling.l_onoff ? optval.ling.l_linger: -1);
+        case java_net_SocketOptions_SO_LINGER:
+            return (optval.ling.l_onoff ? optval.ling.l_linger: -1);
 
-	case java_net_SocketOptions_SO_SNDBUF:
+        case java_net_SocketOptions_SO_SNDBUF:
         case java_net_SocketOptions_SO_RCVBUF:
         case java_net_SocketOptions_IP_TOS:
             return optval.i;
 
-	default :
-	    return (optval.i == 0) ? -1 : 1;
+        default :
+            return (optval.i == 0) ? -1 : 1;
     }
 }
 

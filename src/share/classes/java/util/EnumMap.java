@@ -73,7 +73,6 @@ import sun.misc.SharedSecrets;
  * Java Collections Framework</a>.
  *
  * @author Josh Bloch
- * @version %I%, %G%
  * @see EnumSet
  * @since 1.5
  */
@@ -486,14 +485,14 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         public Object[] toArray() {
             return fillEntryArray(new Object[size]);
         }
-	@SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
         public <T> T[] toArray(T[] a) {
-	    int size = size();
-	    if (a.length < size)
-		a = (T[])java.lang.reflect.Array
-		    .newInstance(a.getClass().getComponentType(), size);
-	    if (a.length > size)
-		a[size] = null;
+            int size = size();
+            if (a.length < size)
+                a = (T[])java.lang.reflect.Array
+                    .newInstance(a.getClass().getComponentType(), size);
+            if (a.length > size)
+                a[size] = null;
             return (T[]) fillEntryArray(a);
         }
         private Object[] fillEntryArray(Object[] a) {
@@ -682,7 +681,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      */
     private static <K extends Enum<K>> K[] getKeyUniverse(Class<K> keyType) {
         return SharedSecrets.getJavaLangAccess()
-					.getEnumConstantsShared(keyType);
+                                        .getEnumConstantsShared(keyType);
     }
 
     private static final long serialVersionUID = 458661240069192865L;

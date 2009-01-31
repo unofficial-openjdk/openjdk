@@ -45,12 +45,12 @@ public interface Modifier {
     public String getModifierValueName(Object val);
 
     public static interface Iterator {
-	public boolean hasNext();
+        public boolean hasNext();
 
-	public Object next();
+        public Object next();
     }
 
     public static interface Filter {
-	public boolean isCompatible(Object val);
+        public boolean isCompatible(Object val);
     }
 }

@@ -59,7 +59,7 @@ import java.awt.Component;
  *  <p>
  *  A <code>Spring</code> can be treated as a pair of intervals
  *  with a single common point: the preferred value.
- *  The following rules define some of the 
+ *  The following rules define some of the
  *  arithmetic operators that can be applied to intervals
  *  (<code>[a, b]</code> refers to the interval
  *  from <code>a</code>
@@ -74,7 +74,7 @@ import java.awt.Component;
  *      max([a1, b1], [a2, b2]) = [max(a1, a2), max(b1, b2)]
  *  </pre>
  *  <p>
- *  
+ *
  *  If we denote <code>Spring</code>s as <code>[a, b, c]</code>,
  *  where <code>a &lt;= b &lt;= c</code>, we can define the same
  *  arithmetic operators on <code>Spring</code>s:
@@ -124,8 +124,7 @@ import java.awt.Component;
  * @see SpringLayout
  * @see SpringLayout.Constraints
  *
- * @version %I% %G%
- * @author 	Philip Milne
+ * @author      Philip Milne
  * @since       1.4
  */
 public abstract class Spring {
@@ -137,7 +136,7 @@ public abstract class Spring {
 
     /**
      * Used by factory methods to create a <code>Spring</code>.
-     * 
+     *
      * @see #constant(int)
      * @see #constant(int, int, int)
      * @see #max
@@ -213,7 +212,7 @@ public abstract class Spring {
 
         public final void setValue(int size) {
             if (this.size == size) {
-                return; 
+                return;
             }
             if (size == UNSET) {
                 clear();
@@ -225,7 +224,7 @@ public abstract class Spring {
         protected void clear() {
             size = UNSET;
         }
-        
+
         protected void setNonClearValue(int size) {
             this.size = size;
         }
@@ -383,15 +382,15 @@ public abstract class Spring {
 
    /*pp*/ static abstract class SpringMap extends Spring {
        private Spring s;
-       
+
        public SpringMap(Spring s) {
-           this.s = s; 
+           this.s = s;
        }
 
-       protected abstract int map(int i); 
-       
-       protected abstract int inv(int i); 
-       
+       protected abstract int map(int i);
+
+       protected abstract int inv(int i);
+
        public int getMinimumValue() {
            return map(s.getMinimumValue());
        }
@@ -439,7 +438,7 @@ public abstract class Spring {
 
         protected void clear() {
             super.clear();
-            min = pref = max = UNSET; 
+            min = pref = max = UNSET;
             s1.setValue(UNSET);
             s2.setValue(UNSET);
         }

@@ -35,21 +35,20 @@ import java.security.cert.*;
 /**
  * This class specifies the set of parameters used as input for the Sun
  * certification path build algorithm. It is identical to PKIXBuilderParameters
- * with the addition of a <code>buildForward</code> parameter which allows 
+ * with the addition of a <code>buildForward</code> parameter which allows
  * the caller to specify whether or not the path should be constructed in
  * the forward direction.
- * 
+ *
  * The default for the <code>buildForward</code> parameter is
  * true, which means that the build algorithm should construct paths
  * from the target subject back to the trusted anchor.
  *
- * @version 	%I% %G%
- * @since	1.4
- * @author	Sean Mullan
- * @author 	Yassir Elley
+ * @since       1.4
+ * @author      Sean Mullan
+ * @author      Yassir Elley
  */
 public class SunCertPathBuilderParameters extends PKIXBuilderParameters {
- 
+
     private boolean buildForward = true;
 
     /**
@@ -57,7 +56,7 @@ public class SunCertPathBuilderParameters extends PKIXBuilderParameters {
      * specified parameter values.
      *
      * @param trustAnchors a <code>Set</code> of <code>TrustAnchor</code>s
-     * @param targetConstraints a <code>CertSelector</code> specifying the 
+     * @param targetConstraints a <code>CertSelector</code> specifying the
      * constraints on the target certificate
      * @throws InvalidAlgorithmParameterException if the specified
      * <code>Set</code> is empty <code>(trustAnchors.isEmpty() == true)</code>
@@ -66,33 +65,33 @@ public class SunCertPathBuilderParameters extends PKIXBuilderParameters {
      * @throws ClassCastException if any of the elements in the <code>Set</code>
      * are not of type <code>java.security.cert.TrustAnchor</code>
      */
-    public SunCertPathBuilderParameters(Set<TrustAnchor> trustAnchors, 
-	CertSelector targetConstraints) throws InvalidAlgorithmParameterException 
+    public SunCertPathBuilderParameters(Set<TrustAnchor> trustAnchors,
+        CertSelector targetConstraints) throws InvalidAlgorithmParameterException
     {
         super(trustAnchors, targetConstraints);
-	setBuildForward(true);
+        setBuildForward(true);
     }
 
     /**
      * Creates an instance of <code>SunCertPathBuilderParameters</code> that
      * uses the specified <code>KeyStore</code> to populate the set
-     * of most-trusted CA certificates. 
+     * of most-trusted CA certificates.
      *
      * @param keystore A keystore from which the set of most-trusted
      * CA certificates will be populated.
-     * @param targetConstraints a <code>CertSelector</code> specifying the 
+     * @param targetConstraints a <code>CertSelector</code> specifying the
      * constraints on the target certificate
      * @throws KeyStoreException if the keystore has not been initialized.
      * @throws InvalidAlgorithmParameterException if the keystore does
      * not contain at least one trusted certificate entry
      * @throws NullPointerException if the keystore is <code>null</code>
      */
-    public SunCertPathBuilderParameters(KeyStore keystore, 
-        CertSelector targetConstraints) 
-	throws KeyStoreException, InvalidAlgorithmParameterException 
+    public SunCertPathBuilderParameters(KeyStore keystore,
+        CertSelector targetConstraints)
+        throws KeyStoreException, InvalidAlgorithmParameterException
     {
         super(keystore, targetConstraints);
-	setBuildForward(true);
+        setBuildForward(true);
     }
 
     /**
@@ -124,9 +123,9 @@ public class SunCertPathBuilderParameters extends PKIXBuilderParameters {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("[\n");
-	sb.append(super.toString());
- 	sb.append("  Build Forward Flag: " + String.valueOf(buildForward) + "\n");
-	sb.append("]\n");
-	return sb.toString();
+        sb.append(super.toString());
+        sb.append("  Build Forward Flag: " + String.valueOf(buildForward) + "\n");
+        sb.append("]\n");
+        return sb.toString();
     }
 }

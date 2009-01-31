@@ -25,7 +25,7 @@
  * @test
  * @bug 5031097
  * @summary sun.misc.CharacterEncoder(ByteBuffer) is dumping too
- *	much information
+ *      much information
  * @author Brad Wetmore
  */
 
@@ -36,31 +36,31 @@ public class GetBytes {
 
     public static void main(String args[]) throws Exception {
 
-	ByteBuffer bb = ByteBuffer.wrap(new byte [26 + 2]);
+        ByteBuffer bb = ByteBuffer.wrap(new byte [26 + 2]);
 
-	for (int i = 'a'; i < 'a' + bb.capacity(); i++) {
-	    bb.put((byte)i);
-	}
+        for (int i = 'a'; i < 'a' + bb.capacity(); i++) {
+            bb.put((byte)i);
+        }
 
-	/*
-	 * Slice a subbuffer out of the original buffer.
-	 */
-	bb.position(1);
-	bb.limit(bb.capacity() - 1);
+        /*
+         * Slice a subbuffer out of the original buffer.
+         */
+        bb.position(1);
+        bb.limit(bb.capacity() - 1);
 
-	ByteBuffer src = bb.slice();
+        ByteBuffer src = bb.slice();
 
-	CharacterEncoder e = new BASE64Encoder();
-	CharacterDecoder d = new BASE64Decoder();
+        CharacterEncoder e = new BASE64Encoder();
+        CharacterDecoder d = new BASE64Decoder();
 
-	String encoded = e.encodeBuffer(src);
-	ByteBuffer dst = d.decodeBufferToByteBuffer(encoded);
+        String encoded = e.encodeBuffer(src);
+        ByteBuffer dst = d.decodeBufferToByteBuffer(encoded);
 
-	src.rewind();
-	dst.rewind();
+        src.rewind();
+        dst.rewind();
 
-	if (src.compareTo(dst) != 0) {
-	    throw new Exception("Didn't encode/decode correctly");
-	}
+        if (src.compareTo(dst) != 0) {
+            throw new Exception("Didn't encode/decode correctly");
+        }
     }
 }

@@ -24,7 +24,7 @@
  */
 
 /*
- * =========================================================================== 
+ * ===========================================================================
  *
  * (C) Copyright IBM Corp. 2003 All Rights Reserved.
  *
@@ -64,7 +64,7 @@ import com.sun.org.apache.xml.internal.security.utils.UnsyncBufferedOutputStream
  * @author Sean Mullan
  * @author Joyce Leung
  */
-public final class DOMReference extends DOMStructure 
+public final class DOMReference extends DOMStructure
     implements Reference, DOMURIReference {
 
     private static Logger log = Logger.getLogger("org.jcp.xml.dsig.internal.dom");
@@ -103,22 +103,22 @@ public final class DOMReference extends DOMStructure
      * @throws ClassCastException if any of the <code>transforms</code> are
      *    not of type <code>Transform</code>
      */
-    public DOMReference(String uri, String type, DigestMethod dm, 
-	List transforms, String id) {
-	this(uri, type, dm, null, null, transforms, id, null);
+    public DOMReference(String uri, String type, DigestMethod dm,
+        List transforms, String id) {
+        this(uri, type, dm, null, null, transforms, id, null);
     }
 
-    public DOMReference(String uri, String type, DigestMethod dm, 
-	List appliedTransforms, Data result, List transforms, String id) {
-	this(uri, type, dm, appliedTransforms, result, transforms, id, null);
+    public DOMReference(String uri, String type, DigestMethod dm,
+        List appliedTransforms, Data result, List transforms, String id) {
+        this(uri, type, dm, appliedTransforms, result, transforms, id, null);
     }
 
-    public DOMReference(String uri, String type, DigestMethod dm, 
-	List appliedTransforms, Data result, List transforms, String id, 
-	byte[] digestValue){
-	if (dm == null) {
-	    throw new NullPointerException("DigestMethod must be non-null");
-	}
+    public DOMReference(String uri, String type, DigestMethod dm,
+        List appliedTransforms, Data result, List transforms, String id,
+        byte[] digestValue){
+        if (dm == null) {
+            throw new NullPointerException("DigestMethod must be non-null");
+        }
         if (appliedTransforms == null || appliedTransforms.isEmpty()) {
             this.appliedTransforms = Collections.EMPTY_LIST;
         } else {
@@ -129,8 +129,8 @@ public final class DOMReference extends DOMStructure
                         ("appliedTransforms["+i+"] is not a valid type");
                 }
             }
-            this.appliedTransforms = 
-		Collections.unmodifiableList(transformsCopy);
+            this.appliedTransforms =
+                Collections.unmodifiableList(transformsCopy);
         }
         if (transforms == null || transforms.isEmpty()) {
             this.transforms = Collections.EMPTY_LIST;
@@ -144,11 +144,11 @@ public final class DOMReference extends DOMStructure
             }
             this.transforms = Collections.unmodifiableList(transformsCopy);
         }
-	List all = new ArrayList(this.appliedTransforms);
-	all.addAll(this.transforms);
-	this.allTransforms = Collections.unmodifiableList(all);
-	this.digestMethod = dm;
-	this.uri = uri;
+        List all = new ArrayList(this.appliedTransforms);
+        all.addAll(this.transforms);
+        this.allTransforms = Collections.unmodifiableList(all);
+        this.digestMethod = dm;
+        this.uri = uri;
         if ((uri != null) && (!uri.equals(""))) {
             try {
                 new URI(uri);
@@ -156,240 +156,240 @@ public final class DOMReference extends DOMStructure
                 throw new IllegalArgumentException(e.getMessage());
             }
         }
-	this.type = type;
-	this.id = id;
-	if (digestValue != null) {
-	    this.digestValue = (byte[]) digestValue.clone();
-	    this.digested = true;
-	}
-	this.appliedTransformData = result;
+        this.type = type;
+        this.id = id;
+        if (digestValue != null) {
+            this.digestValue = (byte[]) digestValue.clone();
+            this.digested = true;
+        }
+        this.appliedTransformData = result;
     }
- 
+
     /**
      * Creates a <code>DOMReference</code> from an element.
      *
      * @param refElem a Reference element
      */
-    public DOMReference(Element refElem, XMLCryptoContext context) 
-	throws MarshalException {
+    public DOMReference(Element refElem, XMLCryptoContext context)
+        throws MarshalException {
         // unmarshal Transforms, if specified
         Element nextSibling = DOMUtils.getFirstChildElement(refElem);
         List transforms = new ArrayList(5);
         if (nextSibling.getLocalName().equals("Transforms")) {
-	    Element transformElem = DOMUtils.getFirstChildElement(nextSibling);
-	    while (transformElem != null) {
+            Element transformElem = DOMUtils.getFirstChildElement(nextSibling);
+            while (transformElem != null) {
                 transforms.add(new DOMTransform(transformElem, context));
-	        transformElem = DOMUtils.getNextSiblingElement(transformElem);
-	    }
+                transformElem = DOMUtils.getNextSiblingElement(transformElem);
+            }
             nextSibling = DOMUtils.getNextSiblingElement(nextSibling);
-	}
+        }
 
         // unmarshal DigestMethod
         Element dmElem = nextSibling;
         this.digestMethod = DOMDigestMethod.unmarshal(dmElem);
 
         // unmarshal DigestValue
-	try {
-	    Element dvElem = DOMUtils.getNextSiblingElement(dmElem);
-	    this.digestValue = Base64.decode(dvElem);
-	} catch (Base64DecodingException bde) {
-	    throw new MarshalException(bde);
-	}
+        try {
+            Element dvElem = DOMUtils.getNextSiblingElement(dmElem);
+            this.digestValue = Base64.decode(dvElem);
+        } catch (Base64DecodingException bde) {
+            throw new MarshalException(bde);
+        }
 
-	// unmarshal attributes
+        // unmarshal attributes
         this.uri = DOMUtils.getAttributeValue(refElem, "URI");
         this.id = DOMUtils.getAttributeValue(refElem, "Id");
 
         this.type = DOMUtils.getAttributeValue(refElem, "Type");
-	this.here = refElem.getAttributeNodeNS(null, "URI");
-	this.refElem = refElem;
+        this.here = refElem.getAttributeNodeNS(null, "URI");
+        this.refElem = refElem;
 
         if (transforms.isEmpty()) {
             this.transforms = Collections.EMPTY_LIST;
         } else {
             this.transforms = Collections.unmodifiableList(transforms);
         }
-	this.appliedTransforms = Collections.EMPTY_LIST;
-	this.allTransforms = transforms;
-	this.appliedTransformData = null;
+        this.appliedTransforms = Collections.EMPTY_LIST;
+        this.allTransforms = transforms;
+        this.appliedTransformData = null;
     }
 
     public DigestMethod getDigestMethod() {
-	return digestMethod;
+        return digestMethod;
     }
 
     public String getId() {
-	return id;
+        return id;
     }
 
     public String getURI() {
-	return uri;
+        return uri;
     }
 
     public String getType() {
-	return type;
+        return type;
     }
 
     public List getTransforms() {
-	return allTransforms;
+        return allTransforms;
     }
 
     public byte[] getDigestValue() {
-	return (digestValue == null ? null : (byte[]) digestValue.clone());
+        return (digestValue == null ? null : (byte[]) digestValue.clone());
     }
 
     public byte[] getCalculatedDigestValue() {
-	return (calcDigestValue == null ? null 
-		: (byte[]) calcDigestValue.clone());
+        return (calcDigestValue == null ? null
+                : (byte[]) calcDigestValue.clone());
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-	throws MarshalException {
-	if (log.isLoggable(Level.FINE)) {
+        throws MarshalException {
+        if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "Marshalling Reference");
-	}
+        }
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         refElem = DOMUtils.createElement
             (ownerDoc, "Reference", XMLSignature.XMLNS, dsPrefix);
 
-	// set attributes
-	DOMUtils.setAttributeID(refElem, "Id", id);
+        // set attributes
+        DOMUtils.setAttributeID(refElem, "Id", id);
         DOMUtils.setAttribute(refElem, "URI", uri);
         DOMUtils.setAttribute(refElem, "Type", type);
 
-	// create and append Transforms element
-	if (!transforms.isEmpty() || !appliedTransforms.isEmpty()) {
+        // create and append Transforms element
+        if (!transforms.isEmpty() || !appliedTransforms.isEmpty()) {
             Element transformsElem = DOMUtils.createElement
-		(ownerDoc, "Transforms", XMLSignature.XMLNS, dsPrefix);
-	    refElem.appendChild(transformsElem);
-	    for (int i = 0, size = appliedTransforms.size(); i < size; i++) {
-	        DOMStructure transform = 
-		    (DOMStructure) appliedTransforms.get(i);
-	        transform.marshal(transformsElem, dsPrefix, context);
-	    }
-	    for (int i = 0, size = transforms.size(); i < size; i++) {
-	        DOMStructure transform = (DOMStructure) transforms.get(i);
-	        transform.marshal(transformsElem, dsPrefix, context);
-	    }
-	}
+                (ownerDoc, "Transforms", XMLSignature.XMLNS, dsPrefix);
+            refElem.appendChild(transformsElem);
+            for (int i = 0, size = appliedTransforms.size(); i < size; i++) {
+                DOMStructure transform =
+                    (DOMStructure) appliedTransforms.get(i);
+                transform.marshal(transformsElem, dsPrefix, context);
+            }
+            for (int i = 0, size = transforms.size(); i < size; i++) {
+                DOMStructure transform = (DOMStructure) transforms.get(i);
+                transform.marshal(transformsElem, dsPrefix, context);
+            }
+        }
 
-	// create and append DigestMethod element
-	((DOMDigestMethod) digestMethod).marshal(refElem, dsPrefix, context);
+        // create and append DigestMethod element
+        ((DOMDigestMethod) digestMethod).marshal(refElem, dsPrefix, context);
 
-	// create and append DigestValue element
-	if (log.isLoggable(Level.FINE)) {
-	    log.log(Level.FINE, "Adding digestValueElem");
-	}
+        // create and append DigestValue element
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE, "Adding digestValueElem");
+        }
         Element digestValueElem = DOMUtils.createElement
             (ownerDoc, "DigestValue", XMLSignature.XMLNS, dsPrefix);
-	if (digestValue != null) {
+        if (digestValue != null) {
             digestValueElem.appendChild
-	        (ownerDoc.createTextNode(Base64.encode(digestValue)));
-	}
+                (ownerDoc.createTextNode(Base64.encode(digestValue)));
+        }
         refElem.appendChild(digestValueElem);
 
-	parent.appendChild(refElem);
-	here = refElem.getAttributeNodeNS(null, "URI");
+        parent.appendChild(refElem);
+        here = refElem.getAttributeNodeNS(null, "URI");
     }
 
-    public void digest(XMLSignContext signContext) 
-	throws XMLSignatureException {
-	Data data = null;
-	if (appliedTransformData == null) {
-	    data = dereference(signContext);
-	} else {
-	    data = appliedTransformData;
-	}
-	digestValue = transform(data, signContext);
+    public void digest(XMLSignContext signContext)
+        throws XMLSignatureException {
+        Data data = null;
+        if (appliedTransformData == null) {
+            data = dereference(signContext);
+        } else {
+            data = appliedTransformData;
+        }
+        digestValue = transform(data, signContext);
 
-	// insert digestValue into DigestValue element
-	String encodedDV = Base64.encode(digestValue);
-	if (log.isLoggable(Level.FINE)) {
-	    log.log(Level.FINE, "Reference object uri = " + uri);
-	}
+        // insert digestValue into DigestValue element
+        String encodedDV = Base64.encode(digestValue);
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE, "Reference object uri = " + uri);
+        }
         Element digestElem = DOMUtils.getLastChildElement(refElem);
-	if (digestElem == null) {
-	    throw new XMLSignatureException("DigestValue element expected");
-	}
-	DOMUtils.removeAllChildren(digestElem);
-	digestElem.appendChild
-	    (refElem.getOwnerDocument().createTextNode(encodedDV));
+        if (digestElem == null) {
+            throw new XMLSignatureException("DigestValue element expected");
+        }
+        DOMUtils.removeAllChildren(digestElem);
+        digestElem.appendChild
+            (refElem.getOwnerDocument().createTextNode(encodedDV));
 
-	digested = true;
-	if (log.isLoggable(Level.FINE)) {
-	    log.log(Level.FINE, "Reference digesting completed");
-	}
+        digested = true;
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE, "Reference digesting completed");
+        }
     }
 
     public boolean validate(XMLValidateContext validateContext)
         throws XMLSignatureException {
-	if (validateContext == null) {
-	    throw new NullPointerException("validateContext cannot be null");
-	}
-	if (validated) {
-	    return validationStatus;
-	}
-	Data data = dereference(validateContext);
-	calcDigestValue = transform(data, validateContext);
+        if (validateContext == null) {
+            throw new NullPointerException("validateContext cannot be null");
+        }
+        if (validated) {
+            return validationStatus;
+        }
+        Data data = dereference(validateContext);
+        calcDigestValue = transform(data, validateContext);
 
-	if (log.isLoggable(Level.FINE)) {
-	    log.log(Level.FINE, "Expected digest: " 
-		+ Base64.encode(digestValue));
-	    log.log(Level.FINE, "Actual digest: " 
-		+ Base64.encode(calcDigestValue));
-	}
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE, "Expected digest: "
+                + Base64.encode(digestValue));
+            log.log(Level.FINE, "Actual digest: "
+                + Base64.encode(calcDigestValue));
+        }
 
-	validationStatus = Arrays.equals(digestValue, calcDigestValue);
-	validated = true;
-	return validationStatus;
+        validationStatus = Arrays.equals(digestValue, calcDigestValue);
+        validated = true;
+        return validationStatus;
     }
 
     public Data getDereferencedData() {
-	return derefData;
+        return derefData;
     }
 
     public InputStream getDigestInputStream() {
-	return dis;
+        return dis;
     }
 
-    private Data dereference(XMLCryptoContext context) 
-	throws XMLSignatureException {
+    private Data dereference(XMLCryptoContext context)
+        throws XMLSignatureException {
         Data data = null;
 
-	// use user-specified URIDereferencer if specified; otherwise use deflt
-	URIDereferencer deref = context.getURIDereferencer();
-	if (deref == null) {
-	    deref = DOMURIDereferencer.INSTANCE;
-	}
-	try {
+        // use user-specified URIDereferencer if specified; otherwise use deflt
+        URIDereferencer deref = context.getURIDereferencer();
+        if (deref == null) {
+            deref = DOMURIDereferencer.INSTANCE;
+        }
+        try {
             data = deref.dereference(this, context);
-	    if (log.isLoggable(Level.FINE)) {
-                log.log(Level.FINE, "URIDereferencer class name: " 
-	            + deref.getClass().getName());
-                log.log(Level.FINE, "Data class name: " 
-		    + data.getClass().getName());
-	    }
+            if (log.isLoggable(Level.FINE)) {
+                log.log(Level.FINE, "URIDereferencer class name: "
+                    + deref.getClass().getName());
+                log.log(Level.FINE, "Data class name: "
+                    + data.getClass().getName());
+            }
         } catch (URIReferenceException ure) {
-	    throw new XMLSignatureException(ure);
+            throw new XMLSignatureException(ure);
         }
 
-	return data;
+        return data;
     }
 
-    private byte[] transform(Data dereferencedData, 
-	XMLCryptoContext context) throws XMLSignatureException {
+    private byte[] transform(Data dereferencedData,
+        XMLCryptoContext context) throws XMLSignatureException {
 
-	if (md == null) {
-	    try {
-		md = MessageDigest.getInstance
+        if (md == null) {
+            try {
+                md = MessageDigest.getInstance
                     (((DOMDigestMethod) digestMethod).getMessageDigestAlgorithm());
-	    } catch (NoSuchAlgorithmException nsae) {
-	        throw new XMLSignatureException(nsae);
-	    }
-	}
-	md.reset();
-	DigesterOutputStream dos;
+            } catch (NoSuchAlgorithmException nsae) {
+                throw new XMLSignatureException(nsae);
+            }
+        }
+        md.reset();
+        DigesterOutputStream dos;
         Boolean cache = (Boolean)
             context.getProperty("javax.xml.crypto.dsig.cacheReference");
         if (cache != null && cache.booleanValue() == true) {
@@ -398,79 +398,79 @@ public final class DOMReference extends DOMStructure
         } else {
             dos = new DigesterOutputStream(md);
         }
-	OutputStream os = new UnsyncBufferedOutputStream(dos);
-	Data data = dereferencedData;
-	for (int i = 0, size = transforms.size(); i < size; i++) {
-	    DOMTransform transform = (DOMTransform) transforms.get(i);
-	    try {
+        OutputStream os = new UnsyncBufferedOutputStream(dos);
+        Data data = dereferencedData;
+        for (int i = 0, size = transforms.size(); i < size; i++) {
+            DOMTransform transform = (DOMTransform) transforms.get(i);
+            try {
                 if (i < size - 1) {
                     data = transform.transform(data, context);
                 } else {
                     data = transform.transform(data, context, os);
                 }
-	    } catch (TransformException te) {
-		throw new XMLSignatureException(te);
-	    }
+            } catch (TransformException te) {
+                throw new XMLSignatureException(te);
+            }
         }
-	
-	try {
-	    if (data != null) {
-	        XMLSignatureInput xi;
-	        if (data instanceof ApacheData) {
-	            xi = ((ApacheData) data).getXMLSignatureInput();
-	        } else if (data instanceof OctetStreamData) {
-	            xi = new XMLSignatureInput
-			(((OctetStreamData)data).getOctetStream());
-	        } else if (data instanceof NodeSetData) {
-		    TransformService spi = TransformService.getInstance
-		        (CanonicalizationMethod.INCLUSIVE, "DOM");
+
+        try {
+            if (data != null) {
+                XMLSignatureInput xi;
+                if (data instanceof ApacheData) {
+                    xi = ((ApacheData) data).getXMLSignatureInput();
+                } else if (data instanceof OctetStreamData) {
+                    xi = new XMLSignatureInput
+                        (((OctetStreamData)data).getOctetStream());
+                } else if (data instanceof NodeSetData) {
+                    TransformService spi = TransformService.getInstance
+                        (CanonicalizationMethod.INCLUSIVE, "DOM");
                     data = spi.transform(data, context);
-	            xi = new XMLSignatureInput
-		        (((OctetStreamData)data).getOctetStream());
-	        } else {
-	            throw new XMLSignatureException("unrecognized Data type");
-	        }
-	        xi.updateOutputStream(os);
-	    }
-	    os.flush();
+                    xi = new XMLSignatureInput
+                        (((OctetStreamData)data).getOctetStream());
+                } else {
+                    throw new XMLSignatureException("unrecognized Data type");
+                }
+                xi.updateOutputStream(os);
+            }
+            os.flush();
             if (cache != null && cache.booleanValue() == true) {
                 this.dis = dos.getInputStream();
             }
-	    return dos.getDigestValue();
-	} catch (Exception e) {
-	    throw new XMLSignatureException(e);
-	}
+            return dos.getDigestValue();
+        } catch (Exception e) {
+            throw new XMLSignatureException(e);
+        }
     }
 
     public Node getHere() {
-	return here;
+        return here;
     }
 
     public boolean equals(Object o) {
-	if (this == o) {
+        if (this == o) {
             return true;
-	}
+        }
 
         if (!(o instanceof Reference)) {
             return false;
-	}
+        }
         Reference oref = (Reference) o;
 
-	boolean idsEqual = (id == null ? oref.getId() == null :
-	    id.equals(oref.getId()));
-	boolean urisEqual = (uri == null ? oref.getURI() == null :
-	    uri.equals(oref.getURI()));
-	boolean typesEqual = (type == null ? oref.getType() == null :
-	    type.equals(oref.getType()));
-	boolean digestValuesEqual = 
-	    Arrays.equals(digestValue, oref.getDigestValue());
+        boolean idsEqual = (id == null ? oref.getId() == null :
+            id.equals(oref.getId()));
+        boolean urisEqual = (uri == null ? oref.getURI() == null :
+            uri.equals(oref.getURI()));
+        boolean typesEqual = (type == null ? oref.getType() == null :
+            type.equals(oref.getType()));
+        boolean digestValuesEqual =
+            Arrays.equals(digestValue, oref.getDigestValue());
 
-	return (digestMethod.equals(oref.getDigestMethod()) && idsEqual &&
-	    urisEqual && typesEqual && transforms.equals(oref.getTransforms()));
+        return (digestMethod.equals(oref.getDigestMethod()) && idsEqual &&
+            urisEqual && typesEqual && transforms.equals(oref.getTransforms()));
     }
 
     boolean isDigested() {
-	return digested;
+        return digested;
     }
 
     private static Data copyDerefData(Data dereferencedData) {

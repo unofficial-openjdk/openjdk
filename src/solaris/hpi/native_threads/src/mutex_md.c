@@ -46,8 +46,8 @@ bool_t
 mutexLocked(mutex_t *mutex)
 {
     if (mutex_trylock(mutex) == 0) {
-	mutex_unlock(mutex);
-	return FALSE;
+        mutex_unlock(mutex);
+        return FALSE;
     }
     return TRUE;
 }

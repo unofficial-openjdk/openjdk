@@ -488,7 +488,7 @@ OGLBufImgOps_DisableRescaleOp(OGLContext *oglc)
  * this fact because the software LookupOp implementation would usually
  * throw an ArrayIndexOutOfBoundsException in this scenario (although it is
  * not something demanded by the spec).
- * 
+ *
  * The LookupOp spec says that the operation is performed regardless of
  * whether the source data is premultiplied or non-premultiplied.  This is
  * a problem for the OpenGL pipeline in that a non-premultiplied

@@ -31,23 +31,23 @@ import javax.xml.crypto.XMLStructure;
 import java.util.List;
 
 /**
- * A representation of the XML <code>Manifest</code> element as defined in 
+ * A representation of the XML <code>Manifest</code> element as defined in
  * the <a href="http://www.w3.org/TR/xmldsig-core/">
  * W3C Recommendation for XML-Signature Syntax and Processing</a>.
  * The XML Schema Definition is defined as:
  * <pre><code>
- * &lt;element name="Manifest" type="ds:ManifestType"/&gt; 
+ * &lt;element name="Manifest" type="ds:ManifestType"/&gt;
  *   &lt;complexType name="ManifestType"&gt;
  *     &lt;sequence>
- *       &lt;element ref="ds:Reference" maxOccurs="unbounded"/&gt; 
- *     &lt;/sequence&gt;  
- *     &lt;attribute name="Id" type="ID" use="optional"/&gt; 
+ *       &lt;element ref="ds:Reference" maxOccurs="unbounded"/&gt;
+ *     &lt;/sequence&gt;
+ *     &lt;attribute name="Id" type="ID" use="optional"/&gt;
  *   &lt;/complexType&gt;
  * </code></pre>
  *
  * A <code>Manifest</code> instance may be created by invoking
- * one of the {@link XMLSignatureFactory#newManifest newManifest} 
- * methods of the {@link XMLSignatureFactory} class; for example: 
+ * one of the {@link XMLSignatureFactory#newManifest newManifest}
+ * methods of the {@link XMLSignatureFactory} class; for example:
  *
  * <pre>
  *   XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
@@ -65,8 +65,8 @@ import java.util.List;
 public interface Manifest extends XMLStructure {
 
     /**
-     * URI that identifies the <code>Manifest</code> element (this can be 
-     * specified as the value of the <code>type</code> parameter of the 
+     * URI that identifies the <code>Manifest</code> element (this can be
+     * specified as the value of the <code>type</code> parameter of the
      * {@link Reference} class to identify the referent's type).
      */
     final static String TYPE = "http://www.w3.org/2000/09/xmldsig#Manifest";
@@ -74,17 +74,17 @@ public interface Manifest extends XMLStructure {
     /**
      * Returns the Id of this <code>Manifest</code>.
      *
-     * @return the Id  of this <code>Manifest</code> (or <code>null</code> 
+     * @return the Id  of this <code>Manifest</code> (or <code>null</code>
      *    if not specified)
      */
     String getId();
-    
+
     /**
-     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable 
+     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable
      * list} of one or more {@link Reference}s that are contained in this
-     * <code>Manifest</code>. 
+     * <code>Manifest</code>.
      *
-     * @return an unmodifiable list of one or more <code>Reference</code>s 
+     * @return an unmodifiable list of one or more <code>Reference</code>s
      */
     List getReferences();
 }

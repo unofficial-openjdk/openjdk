@@ -33,7 +33,6 @@ import java.awt.Rectangle;
 /**
  * The {@code JList} pluggable look and feel delegate.
  *
- * @version %I% %G%
  * @author Hans Muller
  */
 
@@ -54,7 +53,7 @@ public abstract class ListUI extends ComponentUI
     public abstract int locationToIndex(JList list, Point location);
 
 
-    /** 
+    /**
      * Returns the origin in the given {@code JList}, of the specified item,
      * in the list's coordinate system.
      * Returns {@code null} if the index isn't valid.
@@ -66,7 +65,7 @@ public abstract class ListUI extends ComponentUI
     public abstract Point indexToLocation(JList list, int index);
 
 
-    /** 
+    /**
      * Returns the bounding rectangle, in the given list's coordinate system,
      * for the range of cells specified by the two indices.
      * The indices can be supplied in any order.

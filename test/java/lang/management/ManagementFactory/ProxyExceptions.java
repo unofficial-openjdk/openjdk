@@ -40,7 +40,7 @@ import java.util.Properties;
 import com.sun.management.GcInfo;
 
 public class ProxyExceptions {
-    private static MBeanServer server = 
+    private static MBeanServer server =
         ManagementFactory.getPlatformMBeanServer();
     private static MemoryPoolMXBean heapPool = null;
     private static MemoryPoolMXBean nonHeapPool = null;
@@ -97,7 +97,7 @@ public class ProxyExceptions {
                 if (!uoeCaught) {
                     throw new RuntimeException("TEST FAILED: " +
                         "UnsupportedOperationException not thrown " +
-                        "when calling getCollectionUsageThreshold on " + 
+                        "when calling getCollectionUsageThreshold on " +
                         p.getName());
                 }
             }

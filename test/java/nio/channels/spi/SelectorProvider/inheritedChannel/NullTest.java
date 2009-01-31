@@ -34,20 +34,20 @@ public class NullTest {
 
     public static void main(String args[]) {
 
-	// test the assertion that SelectorProvider.inheritedChannel()
-	// and System.inheritedChannel return null when standard input
-	// is not connected to a socket
+        // test the assertion that SelectorProvider.inheritedChannel()
+        // and System.inheritedChannel return null when standard input
+        // is not connected to a socket
 
-	Channel c1, c2;
-	try {
-	    c1 = SelectorProvider.provider().inheritedChannel();
-	    c2 = System.inheritedChannel();
-	} catch (IOException ioe) {
-	    throw new RuntimeException("Unexpected IOException: " + ioe);
-	}
-	if (c1 != null || c2 != null) {
-	    throw new RuntimeException("Channel returned - unexpected");
-	}
+        Channel c1, c2;
+        try {
+            c1 = SelectorProvider.provider().inheritedChannel();
+            c2 = System.inheritedChannel();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Unexpected IOException: " + ioe);
+        }
+        if (c1 != null || c2 != null) {
+            throw new RuntimeException("Channel returned - unexpected");
+        }
     }
 
 }

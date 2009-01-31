@@ -42,7 +42,7 @@ public class Inject implements RuntimeConstants {
         return c.result();
     }
 
-    static boolean verbose = false; 
+    static boolean verbose = false;
 
     final String className;
     final ClassReaderWriter c;
@@ -64,7 +64,7 @@ public class Inject implements RuntimeConstants {
         void reinit(int tracker);
         int stackSize(int currentSize);
     }
-      
+
     static class SimpleInjector implements TrackerInjector {
         byte[] injection;
 
@@ -88,7 +88,7 @@ public class Inject implements RuntimeConstants {
         byte[] injection;
 
         public int stackSize(int currentSize) {
-            return currentSize + 1; 
+            return currentSize + 1;
         }
 
         public void reinit(int tracker) {
@@ -110,7 +110,7 @@ public class Inject implements RuntimeConstants {
         List<Info> infoList = new ArrayList<Info>();
 
         public int stackSize(int currentSize) {
-            return currentSize + 1; 
+            return currentSize + 1;
         }
 
         public void reinit(int tracker) {
@@ -142,7 +142,7 @@ public class Inject implements RuntimeConstants {
             int injectedIndex = options.fixedIndex != 0? options.fixedIndex : ++counter;
             infoList.add(new Info(counter, className, methodName, location));
             injection[0] = (byte)opc_sipush;
-            injection[1] = (byte)(injectedIndex >> 8); 
+            injection[1] = (byte)(injectedIndex >> 8);
             injection[2] = (byte)injectedIndex;
             injection[3] = (byte)opc_invokestatic;
             injection[4] = (byte)(tracker >> 8);
@@ -167,7 +167,7 @@ public class Inject implements RuntimeConstants {
         c.copyConstantPool(constantPoolCount);
 
         if (verbose) {
-            System.out.println("ConstantPool expanded from: " + 
+            System.out.println("ConstantPool expanded from: " +
                                constantPoolCount);
         }
 
@@ -178,8 +178,8 @@ public class Inject implements RuntimeConstants {
                     // first time - create it
                     allocInjector = new IndexedInjector();
                 }
-                int allocTracker = addMethodToConstantPool(profiler, 
-                                                           options.allocTrackerMethodName, 
+                int allocTracker = addMethodToConstantPool(profiler,
+                                                           options.allocTrackerMethodName,
                                                            "(I)V");
                 allocInjector.reinit(allocTracker);
             } else if (options.shouldInstrumentObject) {
@@ -187,8 +187,8 @@ public class Inject implements RuntimeConstants {
                     // first time - create it
                     allocInjector = new ObjectInjector();
                 }
-                int allocTracker = addMethodToConstantPool(profiler, 
-                                                           options.allocTrackerMethodName, 
+                int allocTracker = addMethodToConstantPool(profiler,
+                                                           options.allocTrackerMethodName,
                                                            "(Ljava/lang/Object;)V");
                 allocInjector.reinit(allocTracker);
             } else {
@@ -196,21 +196,21 @@ public class Inject implements RuntimeConstants {
                     // first time - create it
                     allocInjector = new SimpleInjector();
                 }
-                int allocTracker = addMethodToConstantPool(profiler, 
+                int allocTracker = addMethodToConstantPool(profiler,
                                                            options.allocTrackerMethodName,
                                                            "()V");
                 allocInjector.reinit(allocTracker);
             }
             defaultInjector = allocInjector;
-        } 
+        }
         if (options.shouldInstrumentCall) {
             if (options.shouldInstrumentIndexed) {
                 if (callInjector == null) {
                     // first time - create it
                     callInjector = new IndexedInjector();
                 }
-                int callTracker = addMethodToConstantPool(profiler, 
-                                                          options.callTrackerMethodName, 
+                int callTracker = addMethodToConstantPool(profiler,
+                                                          options.callTrackerMethodName,
                                                           "(I)V");
                 callInjector.reinit(callTracker);
             } else {
@@ -218,14 +218,14 @@ public class Inject implements RuntimeConstants {
                     // first time - create it
                     callInjector = new SimpleInjector();
                 }
-                int callTracker = addMethodToConstantPool(profiler, 
+                int callTracker = addMethodToConstantPool(profiler,
                                                           options.callTrackerMethodName,
                                                           "()V");
                 callInjector.reinit(callTracker);
             }
             defaultInjector = callInjector;
         }
-            
+
         if (verbose) {
             System.out.println("To: " + constantPoolCount);
         }
@@ -332,8 +332,8 @@ public class Inject implements RuntimeConstants {
         }
 
         // generate a Code attribute for the wrapper method
-        int wrappedIndex = addMethodToConstantPool(getThisClassIndex(), 
-                                                   wrappedNameIndex, 
+        int wrappedIndex = addMethodToConstantPool(getThisClassIndex(),
+                                                   wrappedNameIndex,
                                                    descriptorIndex);
         String descriptor = c.constantPoolString(descriptorIndex);
         createWrapperCodeAttr(nameIndex, accessFlags, descriptor, wrappedIndex);
@@ -400,7 +400,7 @@ public class Inject implements RuntimeConstants {
         int attrLengthPos = c.generatedPosition();
         int attrLength = c.copyU4();        // attr len
         int maxStack = c.readU2();          // max stack
-        c.writeU2(defaultInjector == null? maxStack : 
+        c.writeU2(defaultInjector == null? maxStack :
                   defaultInjector.stackSize(maxStack));  // big enough for injected code
         c.copyU2();                         // max locals
         int codeLengthPos = c.generatedPosition();
@@ -434,13 +434,13 @@ public class Inject implements RuntimeConstants {
                 return;
             }
         }
-        if (options.shouldInstrumentObjectInit  
+        if (options.shouldInstrumentObjectInit
             && (!className.equals("java/lang/Object")
                 || !methodName.equals("<init>"))) {
             c.copy(attrLength - 8); // copy remainder minus already copied
             return;
         }
- 
+
         InjectBytecodes ib = new InjectBytecodes(c, codeLength, className, methodName);
 
         if (options.shouldInstrumentNew) {
@@ -462,7 +462,7 @@ public class Inject implements RuntimeConstants {
         int newCodeLength = c.generatedPosition() - (codeLengthPos + 4);
         c.randomAccessWriteU4(codeLengthPos, newCodeLength);
         if (verbose) {
-            System.out.println("code length old: " + codeLength + 
+            System.out.println("code length old: " + codeLength +
                                ", new: " + newCodeLength);
         }
 
@@ -477,10 +477,10 @@ public class Inject implements RuntimeConstants {
         int newAttrLength = c.generatedPosition() - (attrLengthPos + 4);
         c.randomAccessWriteU4(attrLengthPos, newAttrLength);
         if (verbose) {
-            System.out.println("attr length old: " + attrLength + 
+            System.out.println("attr length old: " + attrLength +
                                ", new: " + newAttrLength);
         }
-    }        
+    }
 
     int nextDescriptorIndex(String descriptor, int index) {
         switch (descriptor.charAt(index)) {
@@ -507,8 +507,8 @@ public class Inject implements RuntimeConstants {
 
     int getWrappedTrackerIndex() {
         if (wrappedTrackerIndex == 0) {
-            wrappedTrackerIndex = addMethodToConstantPool(profiler, 
-                                                          options.wrappedTrackerMethodName, 
+            wrappedTrackerIndex = addMethodToConstantPool(profiler,
+                                                          options.wrappedTrackerMethodName,
                                                           "(Ljava/lang/String;I)V");
         }
         return wrappedTrackerIndex;
@@ -552,12 +552,12 @@ public class Inject implements RuntimeConstants {
         return slot;
     }
 
-  
+
     void createWrapperCodeAttr(int methodNameIndex, int accessFlags,
                                String descriptor, int wrappedIndex) {
         int maxLocals = computeMaxLocals(descriptor, accessFlags);
 
-        c.writeU2(c.codeAttributeIndex);        // 
+        c.writeU2(c.codeAttributeIndex);        //
         int attrLengthPos = c.generatedPosition();
         c.writeU4(0);                // attr len -- fix up below
         c.writeU2(maxLocals + 4);    // max stack
@@ -676,8 +676,8 @@ public class Inject implements RuntimeConstants {
         return classIndex;
     }
 
-    int addMethodToConstantPool(int classIndex, 
-                                String methodName, 
+    int addMethodToConstantPool(int classIndex,
+                                String methodName,
                                 String descr) {
         int prevSection = c.setSection(0);
         int methodNameIndex = writeCPEntryUtf8(methodName);
@@ -686,59 +686,59 @@ public class Inject implements RuntimeConstants {
         return addMethodToConstantPool(classIndex, methodNameIndex, descrIndex);
     }
 
-    int addMethodToConstantPool(int classIndex, 
-                                int methodNameIndex, 
+    int addMethodToConstantPool(int classIndex,
+                                int methodNameIndex,
                                 int descrIndex) {
         int prevSection = c.setSection(0);
-        int nameAndTypeIndex = writeCPEntryNameAndType(methodNameIndex, 
+        int nameAndTypeIndex = writeCPEntryNameAndType(methodNameIndex,
                                                        descrIndex);
         int methodIndex = writeCPEntryMethodRef(classIndex, nameAndTypeIndex);
         c.setSection(prevSection);
         return methodIndex;
     }
 
-    int writeCPEntryUtf8(String str) { 
+    int writeCPEntryUtf8(String str) {
         int prevSection = c.setSection(0);
-        int len = str.length(); 
-        c.writeU1(CONSTANT_UTF8); // Utf8 tag 
-        c.writeU2(len); 
-        for (int i = 0; i < len; ++i) { 
-            c.writeU1(str.charAt(i)); 
-        } 
+        int len = str.length();
+        c.writeU1(CONSTANT_UTF8); // Utf8 tag
+        c.writeU2(len);
+        for (int i = 0; i < len; ++i) {
+            c.writeU1(str.charAt(i));
+        }
         c.setSection(prevSection);
         return constantPoolCount++;
     }
 
-    int writeCPEntryString(int utf8Index) { 
+    int writeCPEntryString(int utf8Index) {
         int prevSection = c.setSection(0);
-        c.writeU1(CONSTANT_STRING); 
-        c.writeU2(utf8Index); 
+        c.writeU1(CONSTANT_STRING);
+        c.writeU2(utf8Index);
         c.setSection(prevSection);
         return constantPoolCount++;
     }
 
-    int writeCPEntryClass(int classNameIndex) { 
+    int writeCPEntryClass(int classNameIndex) {
         int prevSection = c.setSection(0);
-        c.writeU1(CONSTANT_CLASS); 
-        c.writeU2(classNameIndex); 
+        c.writeU1(CONSTANT_CLASS);
+        c.writeU2(classNameIndex);
         c.setSection(prevSection);
         return constantPoolCount++;
     }
 
-    int writeCPEntryNameAndType(int nameIndex, int descrIndex) { 
+    int writeCPEntryNameAndType(int nameIndex, int descrIndex) {
         int prevSection = c.setSection(0);
-        c.writeU1(CONSTANT_NAMEANDTYPE); 
-        c.writeU2(nameIndex); 
-        c.writeU2(descrIndex); 
+        c.writeU1(CONSTANT_NAMEANDTYPE);
+        c.writeU2(nameIndex);
+        c.writeU2(descrIndex);
         c.setSection(prevSection);
         return constantPoolCount++;
     }
 
-    int writeCPEntryMethodRef(int classIndex, int nameAndTypeIndex) { 
+    int writeCPEntryMethodRef(int classIndex, int nameAndTypeIndex) {
         int prevSection = c.setSection(0);
-        c.writeU1(CONSTANT_METHOD); 
-        c.writeU2(classIndex); 
-        c.writeU2(nameAndTypeIndex); 
+        c.writeU1(CONSTANT_METHOD);
+        c.writeU2(classIndex);
+        c.writeU2(nameAndTypeIndex);
         c.setSection(prevSection);
         return constantPoolCount++;
     }

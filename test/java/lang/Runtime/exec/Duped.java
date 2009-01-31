@@ -35,53 +35,53 @@ import java.io.File;
 public class Duped {
 
     public static class Echo {
-	public static void main(String args[]) throws Exception {
-	    StringBuffer s = new StringBuffer();
-	    int c;
-	    while ((System.in.available() != 0) 
+        public static void main(String args[]) throws Exception {
+            StringBuffer s = new StringBuffer();
+            int c;
+            while ((System.in.available() != 0)
                            && ((c = System.in.read()) != -1))
-		s.append((char)c);
-	    System.out.println(s);
-	}
+                s.append((char)c);
+            System.out.println(s);
+        }
     }
 
     public static void main(String[] args) throws Exception {
 
-	String command = 
-	    System.getProperty("java.home") +
-	    File.separator +
-	    "bin" +
-	    File.separator +
-	    "java -classpath " +
-	    System.getProperty("java.class.path") +
-	    " Duped$Echo";
+        String command =
+            System.getProperty("java.home") +
+            File.separator +
+            "bin" +
+            File.separator +
+            "java -classpath " +
+            System.getProperty("java.class.path") +
+            " Duped$Echo";
 
-	if (args.length == 1 && args[0].equals("-dont")) {
-	    /*
-	     * To quickly check that this test is working when it is
-	     * supposed to, just run it with -dont and it shouldn't
-	     * complain at all.
-	     */
-	} else {
-	    /*
-	     * In normal runs we just close in, and that causes
-	     * lossage on fork.
-	     */
-	    System.in.close();
-	}
+        if (args.length == 1 && args[0].equals("-dont")) {
+            /*
+             * To quickly check that this test is working when it is
+             * supposed to, just run it with -dont and it shouldn't
+             * complain at all.
+             */
+        } else {
+            /*
+             * In normal runs we just close in, and that causes
+             * lossage on fork.
+             */
+            System.in.close();
+        }
 
-	Process p = Runtime.getRuntime().exec(command);
-	PrintStream out = new PrintStream(p.getOutputStream());
-	out.println(HELLO);
-	out.close();
+        Process p = Runtime.getRuntime().exec(command);
+        PrintStream out = new PrintStream(p.getOutputStream());
+        out.println(HELLO);
+        out.close();
 
-	BufferedReader in =
-	    new BufferedReader(new InputStreamReader(p.getInputStream()));
-	String read = in.readLine();
+        BufferedReader in =
+            new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String read = in.readLine();
 
-	if (!HELLO.equals(read)) {
-	    throw new Exception("Failed, read ``" + read + "''");
-	}
+        if (!HELLO.equals(read)) {
+            throw new Exception("Failed, read ``" + read + "''");
+        }
     }
 
     static final String HELLO = "Hello, world!";

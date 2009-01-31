@@ -31,7 +31,6 @@ package sun.io;
  *
  * @author Lloyd Honomichl
  * @author Asmus Freytag
- * @version 8/28/96
  */
 public abstract class ByteToCharSingleByte extends ByteToCharConverter {
 
@@ -41,12 +40,12 @@ public abstract class ByteToCharSingleByte extends ByteToCharConverter {
     protected String byteToCharTable;
 
     public String getByteToCharTable() {
-	return byteToCharTable;
+        return byteToCharTable;
     }
 
     public int flush(char[] output, int outStart, int outEnd) {
-	byteOff = charOff = 0;
-	return 0;
+        byteOff = charOff = 0;
+        return 0;
     }
 
     /**
@@ -74,13 +73,13 @@ public abstract class ByteToCharSingleByte extends ByteToCharConverter {
      * @see #reset
      */
     public int convert(byte[] input, int inOff, int inEnd,
-		       char[] output, int outOff, int outEnd)
+                       char[] output, int outOff, int outEnd)
         throws UnknownCharacterException,
                MalformedInputException,
                ConversionBufferFullException
     {
-    	char	outputChar;
-	int 	byteIndex;
+        char    outputChar;
+        int     byteIndex;
 
         charOff = outOff;
         byteOff = inOff;
@@ -88,43 +87,43 @@ public abstract class ByteToCharSingleByte extends ByteToCharConverter {
         // Loop until we hit the end of the input
         while(byteOff < inEnd) {
 
-	    byteIndex = input[byteOff];
+            byteIndex = input[byteOff];
 
-	    /* old source 
-	     *outputChar = byteToCharTable[input[byteOff] + 128];
-	     */
-	    // Lookup the output character
-	    outputChar = getUnicode(byteIndex);
+            /* old source
+             *outputChar = byteToCharTable[input[byteOff] + 128];
+             */
+            // Lookup the output character
+            outputChar = getUnicode(byteIndex);
 
-	    // Is the output unmappable?
-	    if (outputChar == '\uFFFD')	{
-		if (subMode) {
-		    outputChar = subChars[0];
-		} else {
-		    badInputLength = 1;
-		    throw new UnknownCharacterException();
-		}
+            // Is the output unmappable?
+            if (outputChar == '\uFFFD') {
+                if (subMode) {
+                    outputChar = subChars[0];
+                } else {
+                    badInputLength = 1;
+                    throw new UnknownCharacterException();
+                }
             }
 
-	    // If we don't have room for the output, throw an exception
-	    if (charOff >= outEnd)
-		throw new ConversionBufferFullException();
+            // If we don't have room for the output, throw an exception
+            if (charOff >= outEnd)
+                throw new ConversionBufferFullException();
 
-	    // Put the character in the output buffer
-	    output[charOff]= outputChar;
-	    charOff++;
-	    byteOff++;
+            // Put the character in the output buffer
+            output[charOff]= outputChar;
+            charOff++;
+            byteOff++;
         }
-	
-    	// Return the length written to the output buffer
-	return charOff-outOff;
+
+        // Return the length written to the output buffer
+        return charOff-outOff;
     }
 
     protected char getUnicode(int byteIndex) {
-	int n = byteIndex + 128;
-	if (n >= byteToCharTable.length() || n < 0) 
-	    return '\uFFFD';
-	return byteToCharTable.charAt(n);
+        int n = byteIndex + 128;
+        if (n >= byteToCharTable.length() || n < 0)
+            return '\uFFFD';
+        return byteToCharTable.charAt(n);
     }
 
     /**
@@ -132,7 +131,7 @@ public abstract class ByteToCharSingleByte extends ByteToCharConverter {
      *  Call this method to reset the converter to its initial state
      */
     public void reset() {
-	byteOff = charOff = 0;
+        byteOff = charOff = 0;
     }
 
 }

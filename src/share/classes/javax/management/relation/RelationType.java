@@ -70,6 +70,6 @@ public interface RelationType extends Serializable {
      * relation type.
      */
     public RoleInfo getRoleInfo(String roleInfoName)
-	throws IllegalArgumentException,
-	       RoleInfoNotFoundException;
+        throws IllegalArgumentException,
+               RoleInfoNotFoundException;
 }

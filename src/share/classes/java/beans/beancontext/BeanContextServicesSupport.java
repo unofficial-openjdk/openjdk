@@ -55,7 +55,6 @@ import java.util.Locale;
  * </p>
  *
  * @author Laurence P. G. Cable
- * @version %I%, %G%
  * @since 1.2
  */
 
@@ -67,48 +66,48 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      * Construct a BeanContextServicesSupport instance
      * </p>
      *
-     * @param peer	The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
-     * @param lcle	The current Locale for this BeanContext.
-     * @param dTime	The initial state, true if in design mode, false if runtime.
-     * @param visible	The initial visibility.
-     * 
+     * @param peer      The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
+     * @param lcle      The current Locale for this BeanContext.
+     * @param dTime     The initial state, true if in design mode, false if runtime.
+     * @param visible   The initial visibility.
+     *
      */
 
     public BeanContextServicesSupport(BeanContextServices peer, Locale lcle, boolean dTime, boolean visible) {
-	super(peer, lcle, dTime, visible);
+        super(peer, lcle, dTime, visible);
     }
 
     /**
      * Create an instance using the specified Locale and design mode.
      *
-     * @param peer	The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
-     * @param lcle	The current Locale for this BeanContext.
-     * @param dtime	The initial state, true if in design mode, false if runtime.
+     * @param peer      The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
+     * @param lcle      The current Locale for this BeanContext.
+     * @param dtime     The initial state, true if in design mode, false if runtime.
      */
 
     public BeanContextServicesSupport(BeanContextServices peer, Locale lcle, boolean dtime) {
-	this (peer, lcle, dtime, true);
+        this (peer, lcle, dtime, true);
     }
 
     /**
      * Create an instance using the specified locale
      *
-     * @param peer	The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
-     * @param lcle	The current Locale for this BeanContext.
+     * @param peer      The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
+     * @param lcle      The current Locale for this BeanContext.
      */
 
     public BeanContextServicesSupport(BeanContextServices peer, Locale lcle) {
-	this (peer, lcle, false, true);
+        this (peer, lcle, false, true);
     }
 
     /**
      * Create an instance with a peer
      *
-     * @param peer	The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
+     * @param peer      The peer BeanContext we are supplying an implementation for, if null the this object is its own peer
      */
 
     public BeanContextServicesSupport(BeanContextServices peer) {
-	this (peer, null, false, true);
+        this (peer, null, false, true);
     }
 
     /**
@@ -116,11 +115,11 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public BeanContextServicesSupport() {
-	this (null, null, false, true);
+        this (null, null, false, true);
     }
 
     /**
-     * called by BeanContextSupport superclass during construction and 
+     * called by BeanContextSupport superclass during construction and
      * deserialization to initialize subclass transient state.
      *
      * subclasses may envelope this method, but should not override it or
@@ -128,21 +127,21 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public void initialize() {
-	super.initialize();
+        super.initialize();
 
-	services     = new HashMap(serializable + 1);
-	bcsListeners = new ArrayList(1);
+        services     = new HashMap(serializable + 1);
+        bcsListeners = new ArrayList(1);
     }
 
     /**
      * Gets the <tt>BeanContextServices</tt> associated with this
      * <tt>BeanContextServicesSupport</tt>.
      *
-     * @return the instance of <tt>BeanContext</tt> 
+     * @return the instance of <tt>BeanContext</tt>
      * this object is providing the implementation for.
      */
-    public BeanContextServices getBeanContextServicesPeer() { 
-	return (BeanContextServices)getBeanContextChildPeer();
+    public BeanContextServices getBeanContextServicesPeer() {
+        return (BeanContextServices)getBeanContextChildPeer();
     }
 
     /************************************************************************/
@@ -160,416 +159,416 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
         private static final long serialVersionUID = -3263851306889194873L;
 
-	/*
-	 * private nested class to map serviceClass to Provider and requestors
-	 * listeners.
-	 */
+        /*
+         * private nested class to map serviceClass to Provider and requestors
+         * listeners.
+         */
 
-	class BCSSCServiceClassRef {
+        class BCSSCServiceClassRef {
 
-	    // create an instance of a service ref
+            // create an instance of a service ref
 
-	    BCSSCServiceClassRef(Class sc, BeanContextServiceProvider bcsp, boolean delegated) {
-		super();
-	
-		serviceClass     = sc;
+            BCSSCServiceClassRef(Class sc, BeanContextServiceProvider bcsp, boolean delegated) {
+                super();
 
-		if (delegated)
-		    delegateProvider = bcsp;
-		else 
-		    serviceProvider  = bcsp;
-	    }
+                serviceClass     = sc;
 
-	    // add a requestor and assoc listener
+                if (delegated)
+                    delegateProvider = bcsp;
+                else
+                    serviceProvider  = bcsp;
+            }
 
-	    void addRequestor(Object requestor, BeanContextServiceRevokedListener bcsrl) throws TooManyListenersException {
-		BeanContextServiceRevokedListener cbcsrl = (BeanContextServiceRevokedListener)requestors.get(requestor);
+            // add a requestor and assoc listener
 
-		if (cbcsrl != null && !cbcsrl.equals(bcsrl))
-		    throw new TooManyListenersException();
+            void addRequestor(Object requestor, BeanContextServiceRevokedListener bcsrl) throws TooManyListenersException {
+                BeanContextServiceRevokedListener cbcsrl = (BeanContextServiceRevokedListener)requestors.get(requestor);
 
-		requestors.put(requestor, bcsrl);
-	    }
+                if (cbcsrl != null && !cbcsrl.equals(bcsrl))
+                    throw new TooManyListenersException();
 
-	    // remove a requestor
+                requestors.put(requestor, bcsrl);
+            }
 
-	    void removeRequestor(Object requestor) {
-		requestors.remove(requestor);
-	    }
+            // remove a requestor
 
-	    // check a requestors listener
+            void removeRequestor(Object requestor) {
+                requestors.remove(requestor);
+            }
 
-	    void verifyRequestor(Object requestor, BeanContextServiceRevokedListener bcsrl) throws TooManyListenersException {
-		BeanContextServiceRevokedListener cbcsrl = (BeanContextServiceRevokedListener)requestors.get(requestor);
+            // check a requestors listener
 
-		if (cbcsrl != null && !cbcsrl.equals(bcsrl))
-		    throw new TooManyListenersException();
-	    }
+            void verifyRequestor(Object requestor, BeanContextServiceRevokedListener bcsrl) throws TooManyListenersException {
+                BeanContextServiceRevokedListener cbcsrl = (BeanContextServiceRevokedListener)requestors.get(requestor);
 
-	    void verifyAndMaybeSetProvider(BeanContextServiceProvider bcsp, boolean isDelegated) {
-		BeanContextServiceProvider current;
+                if (cbcsrl != null && !cbcsrl.equals(bcsrl))
+                    throw new TooManyListenersException();
+            }
 
-		if (isDelegated) { // the provider is delegated
-		    current = delegateProvider;
+            void verifyAndMaybeSetProvider(BeanContextServiceProvider bcsp, boolean isDelegated) {
+                BeanContextServiceProvider current;
 
-		    if (current == null || bcsp == null) {
-			delegateProvider = bcsp;
-			return;
-		    }
-		} else { // the provider is registered with this BCS
-		    current = serviceProvider;
+                if (isDelegated) { // the provider is delegated
+                    current = delegateProvider;
 
-		    if (current == null || bcsp == null) {
-			serviceProvider = bcsp;
-			return;
-		    }
-		}
+                    if (current == null || bcsp == null) {
+                        delegateProvider = bcsp;
+                        return;
+                    }
+                } else { // the provider is registered with this BCS
+                    current = serviceProvider;
 
-		if (!current.equals(bcsp))
-		    throw new UnsupportedOperationException("existing service reference obtained from different BeanContextServiceProvider not supported");
+                    if (current == null || bcsp == null) {
+                        serviceProvider = bcsp;
+                        return;
+                    }
+                }
 
-	    }
+                if (!current.equals(bcsp))
+                    throw new UnsupportedOperationException("existing service reference obtained from different BeanContextServiceProvider not supported");
 
-	    Iterator cloneOfEntries() {
-		return ((HashMap)requestors.clone()).entrySet().iterator();
-	    }
+            }
 
-	    Iterator entries() { return requestors.entrySet().iterator(); }
+            Iterator cloneOfEntries() {
+                return ((HashMap)requestors.clone()).entrySet().iterator();
+            }
 
-	    boolean isEmpty() { return requestors.isEmpty(); }
+            Iterator entries() { return requestors.entrySet().iterator(); }
 
-	    Class getServiceClass() { return serviceClass; }
+            boolean isEmpty() { return requestors.isEmpty(); }
 
-	    BeanContextServiceProvider getServiceProvider() {
-		return serviceProvider;
-	    }
+            Class getServiceClass() { return serviceClass; }
 
-	    BeanContextServiceProvider getDelegateProvider() {
-		return delegateProvider;
-	    }
+            BeanContextServiceProvider getServiceProvider() {
+                return serviceProvider;
+            }
 
-	    boolean isDelegated() { return delegateProvider != null; }
+            BeanContextServiceProvider getDelegateProvider() {
+                return delegateProvider;
+            }
 
- 	    void addRef(boolean delegated) { 
-		if (delegated) {
-		    delegateRefs++;
-		} else {
-		    serviceRefs++;
-		}
-	    }
+            boolean isDelegated() { return delegateProvider != null; }
+
+            void addRef(boolean delegated) {
+                if (delegated) {
+                    delegateRefs++;
+                } else {
+                    serviceRefs++;
+                }
+            }
 
 
-	    void releaseRef(boolean delegated) { 
+            void releaseRef(boolean delegated) {
                 if (delegated) {
                     if (--delegateRefs == 0) {
-			delegateProvider = null;
-		    }
+                        delegateProvider = null;
+                    }
                 } else {
                     if (--serviceRefs  <= 0) {
-			serviceProvider = null;
-		    }
-		}
-            }    
+                        serviceProvider = null;
+                    }
+                }
+            }
 
-	    int getRefs() { return serviceRefs + delegateRefs; }
+            int getRefs() { return serviceRefs + delegateRefs; }
 
-	    int getDelegateRefs() { return delegateRefs; }
+            int getDelegateRefs() { return delegateRefs; }
 
-	    int getServiceRefs() { return serviceRefs; }
+            int getServiceRefs() { return serviceRefs; }
 
-	    /*
-	     * fields
-	     */
+            /*
+             * fields
+             */
 
-	    Class				serviceClass;
+            Class                               serviceClass;
 
-	    BeanContextServiceProvider		serviceProvider;
-	    int 				serviceRefs;
+            BeanContextServiceProvider          serviceProvider;
+            int                                 serviceRefs;
 
-	    BeanContextServiceProvider		delegateProvider; // proxy
-	    int					delegateRefs;
+            BeanContextServiceProvider          delegateProvider; // proxy
+            int                                 delegateRefs;
 
-	    HashMap				requestors = new HashMap(1);
-	}
+            HashMap                             requestors = new HashMap(1);
+        }
 
-     	/*
-	 * per service reference info ...
-	 */
+        /*
+         * per service reference info ...
+         */
 
-	class BCSSCServiceRef {
-	    BCSSCServiceRef(BCSSCServiceClassRef scref, boolean isDelegated) {
-		serviceClassRef = scref;
-		delegated       = isDelegated;
-	    }
+        class BCSSCServiceRef {
+            BCSSCServiceRef(BCSSCServiceClassRef scref, boolean isDelegated) {
+                serviceClassRef = scref;
+                delegated       = isDelegated;
+            }
 
-	    void addRef()  { refCnt++;        }
-	    int  release() { return --refCnt; }
+            void addRef()  { refCnt++;        }
+            int  release() { return --refCnt; }
 
-	    BCSSCServiceClassRef getServiceClassRef() { return serviceClassRef; }
+            BCSSCServiceClassRef getServiceClassRef() { return serviceClassRef; }
 
-	    boolean isDelegated() { return delegated; }
+            boolean isDelegated() { return delegated; }
 
-	    /*
-    	     * fields
-	     */
+            /*
+             * fields
+             */
 
-	    BCSSCServiceClassRef serviceClassRef;
-	    int			 refCnt	   = 1;
-	    boolean		 delegated = false;
-	}
+            BCSSCServiceClassRef serviceClassRef;
+            int                  refCnt    = 1;
+            boolean              delegated = false;
+        }
 
-	BCSSChild(Object bcc, Object peer) { super(bcc, peer); }
+        BCSSChild(Object bcc, Object peer) { super(bcc, peer); }
 
         // note usage of service per requestor, per service
 
-	synchronized void usingService(Object requestor, Object service, Class serviceClass, BeanContextServiceProvider bcsp, boolean isDelegated, BeanContextServiceRevokedListener bcsrl)  throws TooManyListenersException, UnsupportedOperationException {
-	
-	    // first, process mapping from serviceClass to requestor(s)
+        synchronized void usingService(Object requestor, Object service, Class serviceClass, BeanContextServiceProvider bcsp, boolean isDelegated, BeanContextServiceRevokedListener bcsrl)  throws TooManyListenersException, UnsupportedOperationException {
 
-	    BCSSCServiceClassRef serviceClassRef = null;
+            // first, process mapping from serviceClass to requestor(s)
 
-	    if (serviceClasses == null) 
-		serviceClasses = new HashMap(1);
-	    else
-	        serviceClassRef = (BCSSCServiceClassRef)serviceClasses.get(serviceClass);
+            BCSSCServiceClassRef serviceClassRef = null;
 
-	    if (serviceClassRef == null) { // new service being used ...
-	    	serviceClassRef = new BCSSCServiceClassRef(serviceClass, bcsp, isDelegated);
-		serviceClasses.put(serviceClass, serviceClassRef);
+            if (serviceClasses == null)
+                serviceClasses = new HashMap(1);
+            else
+                serviceClassRef = (BCSSCServiceClassRef)serviceClasses.get(serviceClass);
 
-	    } else { // existing service ...
-		serviceClassRef.verifyAndMaybeSetProvider(bcsp, isDelegated); // throws
-		serviceClassRef.verifyRequestor(requestor, bcsrl); // throws
-	    }
+            if (serviceClassRef == null) { // new service being used ...
+                serviceClassRef = new BCSSCServiceClassRef(serviceClass, bcsp, isDelegated);
+                serviceClasses.put(serviceClass, serviceClassRef);
 
-	    serviceClassRef.addRequestor(requestor, bcsrl);
-	    serviceClassRef.addRef(isDelegated);
+            } else { // existing service ...
+                serviceClassRef.verifyAndMaybeSetProvider(bcsp, isDelegated); // throws
+                serviceClassRef.verifyRequestor(requestor, bcsrl); // throws
+            }
 
-	    // now handle mapping from requestor to service(s)
+            serviceClassRef.addRequestor(requestor, bcsrl);
+            serviceClassRef.addRef(isDelegated);
 
-	    BCSSCServiceRef serviceRef = null;
-	    Map		    services   = null;
+            // now handle mapping from requestor to service(s)
 
-	    if (serviceRequestors == null) {
-		serviceRequestors = new HashMap(1);
-	    } else {
-		services = (Map)serviceRequestors.get(requestor);
-	    }
+            BCSSCServiceRef serviceRef = null;
+            Map             services   = null;
 
-	    if (services == null) {
-		services = new HashMap(1);
+            if (serviceRequestors == null) {
+                serviceRequestors = new HashMap(1);
+            } else {
+                services = (Map)serviceRequestors.get(requestor);
+            }
 
-		serviceRequestors.put(requestor, services);
-	    } else 
-		serviceRef = (BCSSCServiceRef)services.get(service);
+            if (services == null) {
+                services = new HashMap(1);
 
-	    if (serviceRef == null) {
-		serviceRef = new BCSSCServiceRef(serviceClassRef, isDelegated);
+                serviceRequestors.put(requestor, services);
+            } else
+                serviceRef = (BCSSCServiceRef)services.get(service);
 
-		services.put(service, serviceRef);
-	    } else {
-		serviceRef.addRef();
-	    }
-	}
+            if (serviceRef == null) {
+                serviceRef = new BCSSCServiceRef(serviceClassRef, isDelegated);
 
-	// release a service reference
-
-	synchronized void releaseService(Object requestor, Object service) {
-	    if (serviceRequestors == null) return;
-
-	    Map services = (Map)serviceRequestors.get(requestor);
-	
-	    if (services == null) return; // oops its not there anymore!
-
-	    BCSSCServiceRef serviceRef = (BCSSCServiceRef)services.get(service);
-
-	    if (serviceRef == null) return; // oops its not there anymore!
-	    
-	    BCSSCServiceClassRef serviceClassRef = serviceRef.getServiceClassRef();
-	    boolean		       isDelegated = serviceRef.isDelegated();
-	    BeanContextServiceProvider bcsp        = isDelegated ? serviceClassRef.getDelegateProvider() : serviceClassRef.getServiceProvider();
-
-	    bcsp.releaseService(BeanContextServicesSupport.this.getBeanContextServicesPeer(), requestor, service);
-
-	    serviceClassRef.releaseRef(isDelegated);
-	    serviceClassRef.removeRequestor(requestor);
-
-	    if (serviceRef.release() == 0) {
-
-		services.remove(service);
-
-		if (services.isEmpty()) {
-		    serviceRequestors.remove(requestor);
-		    serviceClassRef.removeRequestor(requestor);
-		}
-
-		if (serviceRequestors.isEmpty()) {
-		    serviceRequestors = null;
-		}
-
-		if (serviceClassRef.isEmpty()) {
-		    serviceClasses.remove(serviceClassRef.getServiceClass());
-		}
-
-		if (serviceClasses.isEmpty())
-		    serviceClasses = null;
-	    }
-	}
-
-	// revoke a service
-
-	synchronized void revokeService(Class serviceClass, boolean isDelegated, boolean revokeNow) {
-	    if (serviceClasses == null) return;
-
-	    BCSSCServiceClassRef serviceClassRef = (BCSSCServiceClassRef)serviceClasses.get(serviceClass);
-
-	    if (serviceClassRef == null) return;
-
-	    Iterator i = serviceClassRef.cloneOfEntries();
-
-	    BeanContextServiceRevokedEvent bcsre       = new BeanContextServiceRevokedEvent(BeanContextServicesSupport.this.getBeanContextServicesPeer(), serviceClass, revokeNow);
-	    boolean			   noMoreRefs  = false;
-
-	    while (i.hasNext() && serviceRequestors != null) {
-		Map.Entry	    		  entry    = (Map.Entry)i.next();
-		BeanContextServiceRevokedListener listener = (BeanContextServiceRevokedListener)entry.getValue();
-
-		if (revokeNow) {
-		    Object  requestor = entry.getKey();
-		    Map     services  = (Map)serviceRequestors.get(requestor);
-
-		    if (services != null) {
-			Iterator i1 = services.entrySet().iterator();
-
-			while (i1.hasNext()) {
-			    Map.Entry       tmp        = (Map.Entry)i1.next();
-
-			    BCSSCServiceRef serviceRef = (BCSSCServiceRef)tmp.getValue();
-			    if (serviceRef.getServiceClassRef().equals(serviceClassRef) && isDelegated == serviceRef.isDelegated()) {	
-				i1.remove();
-			    }
-			}
-
-			if (noMoreRefs = services.isEmpty()) {
-			    serviceRequestors.remove(requestor);
-			}
-		    }
-
-		    if (noMoreRefs) serviceClassRef.removeRequestor(requestor);
-		}
-
-		listener.serviceRevoked(bcsre);
-	    }
-
-	    if (revokeNow && serviceClasses != null) {
-		if (serviceClassRef.isEmpty())
-		    serviceClasses.remove(serviceClass);
-
-	        if (serviceClasses.isEmpty())
-		    serviceClasses = null;
-	    }
-
-	    if (serviceRequestors != null && serviceRequestors.isEmpty())
-		serviceRequestors = null;
-	}
-
-	// release all references for this child since it has been unnested.
-
-	void cleanupReferences() {
-
-	    if (serviceRequestors == null) return;
-
-	    Iterator requestors = serviceRequestors.entrySet().iterator();
-
-	    while(requestors.hasNext()) {
-		Map.Entry 	     tmp       = (Map.Entry)requestors.next();
-		Object 	             requestor = tmp.getKey();
-		Iterator 	     services  = ((Map)tmp.getValue()).entrySet().iterator();
-
-		requestors.remove();
-
-		while (services.hasNext()) {
-		    Map.Entry       entry   = (Map.Entry)services.next();
-		    Object 	    service = entry.getKey();
-		    BCSSCServiceRef sref    = (BCSSCServiceRef)entry.getValue();
-
-		    BCSSCServiceClassRef       scref = sref.getServiceClassRef();
-		
-		    BeanContextServiceProvider bcsp  = sref.isDelegated() ? scref.getDelegateProvider() : scref.getServiceProvider();
-
-		    scref.removeRequestor(requestor);
-		    services.remove();
-
-		    while (sref.release() >= 0) {
-			bcsp.releaseService(BeanContextServicesSupport.this.getBeanContextServicesPeer(), requestor, service);
-		    }
-		}
-	    }
-
-	    serviceRequestors = null;
-	    serviceClasses    = null;
-	}
-
-        void revokeAllDelegatedServicesNow() {
-	    if (serviceClasses == null) return;
-
-	    Iterator serviceClassRefs  = 
-		new HashSet(serviceClasses.values()).iterator();
-
-	    while (serviceClassRefs.hasNext()) {
-	        BCSSCServiceClassRef serviceClassRef = (BCSSCServiceClassRef)serviceClassRefs.next();
-
-	    	if (!serviceClassRef.isDelegated()) continue;
-
-	        Iterator i = serviceClassRef.cloneOfEntries();
-	    	BeanContextServiceRevokedEvent bcsre       = new BeanContextServiceRevokedEvent(BeanContextServicesSupport.this.getBeanContextServicesPeer(), serviceClassRef.getServiceClass(), true);
-	    	boolean			       noMoreRefs  = false;
-
-	    	while (i.hasNext()) {
-		    Map.Entry	    		      entry     = (Map.Entry)i.next();
-		    BeanContextServiceRevokedListener listener  = (BeanContextServiceRevokedListener)entry.getValue();
-
-		    Object  			      requestor = entry.getKey();
-		    Map     			      services  = (Map)serviceRequestors.get(requestor);
-
-		    if (services != null) {
-			Iterator i1 = services.entrySet().iterator();
-
-			while (i1.hasNext()) {
-			    Map.Entry       tmp        = (Map.Entry)i1.next();
-
-			    BCSSCServiceRef serviceRef = (BCSSCServiceRef)tmp.getValue();
-			    if (serviceRef.getServiceClassRef().equals(serviceClassRef) && serviceRef.isDelegated()) {	
-				i1.remove();
-			    }
-			}
-
-			if (noMoreRefs = services.isEmpty()) {
-			    serviceRequestors.remove(requestor);
-			}
-		    }
-
-		    if (noMoreRefs) serviceClassRef.removeRequestor(requestor);
-
-		    listener.serviceRevoked(bcsre);
-
-		    if (serviceClassRef.isEmpty())
-		        serviceClasses.remove(serviceClassRef.getServiceClass());
-	    	}
-	    }
-
-	    if (serviceClasses.isEmpty()) serviceClasses = null;
-
-	    if (serviceRequestors != null && serviceRequestors.isEmpty())
-		serviceRequestors = null;
+                services.put(service, serviceRef);
+            } else {
+                serviceRef.addRef();
+            }
         }
 
-	/*
- 	 * fields 
-	 */
+        // release a service reference
 
-	private transient HashMap	serviceClasses;	   
-	private transient HashMap	serviceRequestors;
+        synchronized void releaseService(Object requestor, Object service) {
+            if (serviceRequestors == null) return;
+
+            Map services = (Map)serviceRequestors.get(requestor);
+
+            if (services == null) return; // oops its not there anymore!
+
+            BCSSCServiceRef serviceRef = (BCSSCServiceRef)services.get(service);
+
+            if (serviceRef == null) return; // oops its not there anymore!
+
+            BCSSCServiceClassRef serviceClassRef = serviceRef.getServiceClassRef();
+            boolean                    isDelegated = serviceRef.isDelegated();
+            BeanContextServiceProvider bcsp        = isDelegated ? serviceClassRef.getDelegateProvider() : serviceClassRef.getServiceProvider();
+
+            bcsp.releaseService(BeanContextServicesSupport.this.getBeanContextServicesPeer(), requestor, service);
+
+            serviceClassRef.releaseRef(isDelegated);
+            serviceClassRef.removeRequestor(requestor);
+
+            if (serviceRef.release() == 0) {
+
+                services.remove(service);
+
+                if (services.isEmpty()) {
+                    serviceRequestors.remove(requestor);
+                    serviceClassRef.removeRequestor(requestor);
+                }
+
+                if (serviceRequestors.isEmpty()) {
+                    serviceRequestors = null;
+                }
+
+                if (serviceClassRef.isEmpty()) {
+                    serviceClasses.remove(serviceClassRef.getServiceClass());
+                }
+
+                if (serviceClasses.isEmpty())
+                    serviceClasses = null;
+            }
+        }
+
+        // revoke a service
+
+        synchronized void revokeService(Class serviceClass, boolean isDelegated, boolean revokeNow) {
+            if (serviceClasses == null) return;
+
+            BCSSCServiceClassRef serviceClassRef = (BCSSCServiceClassRef)serviceClasses.get(serviceClass);
+
+            if (serviceClassRef == null) return;
+
+            Iterator i = serviceClassRef.cloneOfEntries();
+
+            BeanContextServiceRevokedEvent bcsre       = new BeanContextServiceRevokedEvent(BeanContextServicesSupport.this.getBeanContextServicesPeer(), serviceClass, revokeNow);
+            boolean                        noMoreRefs  = false;
+
+            while (i.hasNext() && serviceRequestors != null) {
+                Map.Entry                         entry    = (Map.Entry)i.next();
+                BeanContextServiceRevokedListener listener = (BeanContextServiceRevokedListener)entry.getValue();
+
+                if (revokeNow) {
+                    Object  requestor = entry.getKey();
+                    Map     services  = (Map)serviceRequestors.get(requestor);
+
+                    if (services != null) {
+                        Iterator i1 = services.entrySet().iterator();
+
+                        while (i1.hasNext()) {
+                            Map.Entry       tmp        = (Map.Entry)i1.next();
+
+                            BCSSCServiceRef serviceRef = (BCSSCServiceRef)tmp.getValue();
+                            if (serviceRef.getServiceClassRef().equals(serviceClassRef) && isDelegated == serviceRef.isDelegated()) {
+                                i1.remove();
+                            }
+                        }
+
+                        if (noMoreRefs = services.isEmpty()) {
+                            serviceRequestors.remove(requestor);
+                        }
+                    }
+
+                    if (noMoreRefs) serviceClassRef.removeRequestor(requestor);
+                }
+
+                listener.serviceRevoked(bcsre);
+            }
+
+            if (revokeNow && serviceClasses != null) {
+                if (serviceClassRef.isEmpty())
+                    serviceClasses.remove(serviceClass);
+
+                if (serviceClasses.isEmpty())
+                    serviceClasses = null;
+            }
+
+            if (serviceRequestors != null && serviceRequestors.isEmpty())
+                serviceRequestors = null;
+        }
+
+        // release all references for this child since it has been unnested.
+
+        void cleanupReferences() {
+
+            if (serviceRequestors == null) return;
+
+            Iterator requestors = serviceRequestors.entrySet().iterator();
+
+            while(requestors.hasNext()) {
+                Map.Entry            tmp       = (Map.Entry)requestors.next();
+                Object               requestor = tmp.getKey();
+                Iterator             services  = ((Map)tmp.getValue()).entrySet().iterator();
+
+                requestors.remove();
+
+                while (services.hasNext()) {
+                    Map.Entry       entry   = (Map.Entry)services.next();
+                    Object          service = entry.getKey();
+                    BCSSCServiceRef sref    = (BCSSCServiceRef)entry.getValue();
+
+                    BCSSCServiceClassRef       scref = sref.getServiceClassRef();
+
+                    BeanContextServiceProvider bcsp  = sref.isDelegated() ? scref.getDelegateProvider() : scref.getServiceProvider();
+
+                    scref.removeRequestor(requestor);
+                    services.remove();
+
+                    while (sref.release() >= 0) {
+                        bcsp.releaseService(BeanContextServicesSupport.this.getBeanContextServicesPeer(), requestor, service);
+                    }
+                }
+            }
+
+            serviceRequestors = null;
+            serviceClasses    = null;
+        }
+
+        void revokeAllDelegatedServicesNow() {
+            if (serviceClasses == null) return;
+
+            Iterator serviceClassRefs  =
+                new HashSet(serviceClasses.values()).iterator();
+
+            while (serviceClassRefs.hasNext()) {
+                BCSSCServiceClassRef serviceClassRef = (BCSSCServiceClassRef)serviceClassRefs.next();
+
+                if (!serviceClassRef.isDelegated()) continue;
+
+                Iterator i = serviceClassRef.cloneOfEntries();
+                BeanContextServiceRevokedEvent bcsre       = new BeanContextServiceRevokedEvent(BeanContextServicesSupport.this.getBeanContextServicesPeer(), serviceClassRef.getServiceClass(), true);
+                boolean                        noMoreRefs  = false;
+
+                while (i.hasNext()) {
+                    Map.Entry                         entry     = (Map.Entry)i.next();
+                    BeanContextServiceRevokedListener listener  = (BeanContextServiceRevokedListener)entry.getValue();
+
+                    Object                            requestor = entry.getKey();
+                    Map                               services  = (Map)serviceRequestors.get(requestor);
+
+                    if (services != null) {
+                        Iterator i1 = services.entrySet().iterator();
+
+                        while (i1.hasNext()) {
+                            Map.Entry       tmp        = (Map.Entry)i1.next();
+
+                            BCSSCServiceRef serviceRef = (BCSSCServiceRef)tmp.getValue();
+                            if (serviceRef.getServiceClassRef().equals(serviceClassRef) && serviceRef.isDelegated()) {
+                                i1.remove();
+                            }
+                        }
+
+                        if (noMoreRefs = services.isEmpty()) {
+                            serviceRequestors.remove(requestor);
+                        }
+                    }
+
+                    if (noMoreRefs) serviceClassRef.removeRequestor(requestor);
+
+                    listener.serviceRevoked(bcsre);
+
+                    if (serviceClassRef.isEmpty())
+                        serviceClasses.remove(serviceClassRef.getServiceClass());
+                }
+            }
+
+            if (serviceClasses.isEmpty()) serviceClasses = null;
+
+            if (serviceRequestors != null && serviceRequestors.isEmpty())
+                serviceRequestors = null;
+        }
+
+        /*
+         * fields
+         */
+
+        private transient HashMap       serviceClasses;
+        private transient HashMap       serviceRequestors;
     }
 
     /**
@@ -584,44 +583,44 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     protected BCSChild createBCSChild(Object targetChild, Object peer) {
-	return new BCSSChild(targetChild, peer);
+        return new BCSSChild(targetChild, peer);
     }
 
     /************************************************************************/
 
-	/**
-	 * subclasses may subclass this nested class to add behaviors for
-	 * each BeanContextServicesProvider.
-	 */
+        /**
+         * subclasses may subclass this nested class to add behaviors for
+         * each BeanContextServicesProvider.
+         */
 
-	protected static class BCSSServiceProvider implements Serializable {
+        protected static class BCSSServiceProvider implements Serializable {
 
-	    BCSSServiceProvider(Class sc, BeanContextServiceProvider bcsp) {
-		super();
-	
-		serviceProvider = bcsp;
-	    }
+            BCSSServiceProvider(Class sc, BeanContextServiceProvider bcsp) {
+                super();
 
-	    protected BeanContextServiceProvider getServiceProvider() {
-		return serviceProvider;
-	    }
+                serviceProvider = bcsp;
+            }
 
-	    /*
-   	     * fields
-	     */
+            protected BeanContextServiceProvider getServiceProvider() {
+                return serviceProvider;
+            }
 
-	    protected BeanContextServiceProvider serviceProvider;
-	}
+            /*
+             * fields
+             */
 
-    	/**
-	 * subclasses can override this method to create new subclasses of
-	 * BCSSServiceProvider without having to overrride addService() in
-	 * order to instantiate.
-	 */
+            protected BeanContextServiceProvider serviceProvider;
+        }
 
-	protected BCSSServiceProvider createBCSSServiceProvider(Class sc, BeanContextServiceProvider bcsp) {
-	    return new BCSSServiceProvider(sc, bcsp);
-	}
+        /**
+         * subclasses can override this method to create new subclasses of
+         * BCSSServiceProvider without having to overrride addService() in
+         * order to instantiate.
+         */
+
+        protected BCSSServiceProvider createBCSSServiceProvider(Class sc, BeanContextServiceProvider bcsp) {
+            return new BCSSServiceProvider(sc, bcsp);
+        }
 
     /************************************************************************/
 
@@ -632,14 +631,14 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public void addBeanContextServicesListener(BeanContextServicesListener bcsl) {
-	if (bcsl == null) throw new NullPointerException("bcsl");
+        if (bcsl == null) throw new NullPointerException("bcsl");
 
-	synchronized(bcsListeners) {
-	    if (bcsListeners.contains(bcsl))
-		return;
-	    else
-	        bcsListeners.add(bcsl);
-	}
+        synchronized(bcsListeners) {
+            if (bcsListeners.contains(bcsl))
+                return;
+            else
+                bcsListeners.add(bcsl);
+        }
     }
 
     /**
@@ -647,14 +646,14 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public void removeBeanContextServicesListener(BeanContextServicesListener bcsl) {
-	if (bcsl == null) throw new NullPointerException("bcsl");
+        if (bcsl == null) throw new NullPointerException("bcsl");
 
-	synchronized(bcsListeners) {
-	    if (!bcsListeners.contains(bcsl))
-		return;
-	    else
-	        bcsListeners.remove(bcsl);
-	}
+        synchronized(bcsListeners) {
+            if (!bcsListeners.contains(bcsl))
+                return;
+            else
+                bcsListeners.remove(bcsl);
+        }
     }
 
     /**
@@ -662,7 +661,7 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public boolean addService(Class serviceClass, BeanContextServiceProvider bcsp) {
-	return addService(serviceClass, bcsp, true);
+        return addService(serviceClass, bcsp, true);
     }
 
     /**
@@ -671,39 +670,39 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
     protected boolean addService(Class serviceClass, BeanContextServiceProvider bcsp, boolean fireEvent) {
 
-	if (serviceClass == null) throw new NullPointerException("serviceClass");
-	if (bcsp         == null) throw new NullPointerException("bcsp");
+        if (serviceClass == null) throw new NullPointerException("serviceClass");
+        if (bcsp         == null) throw new NullPointerException("bcsp");
 
-	synchronized(BeanContext.globalHierarchyLock) {
+        synchronized(BeanContext.globalHierarchyLock) {
             if (services.containsKey(serviceClass))
-    	        return false;
-    	    else {
-    	        services.put(serviceClass,  createBCSSServiceProvider(serviceClass, bcsp));
-    
-    	        if (bcsp instanceof Serializable) serializable++;
-    
-    	        if (!fireEvent) return true;
-    
-    
-    	        BeanContextServiceAvailableEvent bcssae = new BeanContextServiceAvailableEvent(getBeanContextServicesPeer(), serviceClass);
-    
-    	        fireServiceAdded(bcssae);
-    
-    	        synchronized(children) {
-    	            Iterator i = children.keySet().iterator();
-    
-    	            while (i.hasNext()) {
-    	                Object c = i.next();
-    
-    	                if (c instanceof BeanContextServices) {
-    		            ((BeanContextServicesListener)c).serviceAvailable(bcssae);
-    	                }
-    	            }
-    	        }
-    
-    	        return true;
-    	    }
-	}
+                return false;
+            else {
+                services.put(serviceClass,  createBCSSServiceProvider(serviceClass, bcsp));
+
+                if (bcsp instanceof Serializable) serializable++;
+
+                if (!fireEvent) return true;
+
+
+                BeanContextServiceAvailableEvent bcssae = new BeanContextServiceAvailableEvent(getBeanContextServicesPeer(), serviceClass);
+
+                fireServiceAdded(bcssae);
+
+                synchronized(children) {
+                    Iterator i = children.keySet().iterator();
+
+                    while (i.hasNext()) {
+                        Object c = i.next();
+
+                        if (c instanceof BeanContextServices) {
+                            ((BeanContextServicesListener)c).serviceAvailable(bcssae);
+                        }
+                    }
+                }
+
+                return true;
+            }
+        }
     }
 
     /**
@@ -712,29 +711,29 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
     public void revokeService(Class serviceClass, BeanContextServiceProvider bcsp, boolean revokeCurrentServicesNow) {
 
-	if (serviceClass == null) throw new NullPointerException("serviceClass");
-	if (bcsp         == null) throw new NullPointerException("bcsp");
+        if (serviceClass == null) throw new NullPointerException("serviceClass");
+        if (bcsp         == null) throw new NullPointerException("bcsp");
 
-	synchronized(BeanContext.globalHierarchyLock) {
-	    if (!services.containsKey(serviceClass)) return;
+        synchronized(BeanContext.globalHierarchyLock) {
+            if (!services.containsKey(serviceClass)) return;
 
-	    BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
-	
-	    if (!bcsssp.getServiceProvider().equals(bcsp)) 
-	        throw new IllegalArgumentException("service provider mismatch");
+            BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
 
-	    services.remove(serviceClass);
+            if (!bcsssp.getServiceProvider().equals(bcsp))
+                throw new IllegalArgumentException("service provider mismatch");
+
+            services.remove(serviceClass);
 
             if (bcsp instanceof Serializable) serializable--;
 
-	    Iterator i = bcsChildren(); // get the BCSChild values.
+            Iterator i = bcsChildren(); // get the BCSChild values.
 
-	    while (i.hasNext()) {
-	        ((BCSSChild)i.next()).revokeService(serviceClass, false, revokeCurrentServicesNow);
-	    }
+            while (i.hasNext()) {
+                ((BCSSChild)i.next()).revokeService(serviceClass, false, revokeCurrentServicesNow);
+            }
 
-	    fireServiceRevoked(serviceClass, revokeCurrentServicesNow);
-	}
+            fireServiceRevoked(serviceClass, revokeCurrentServicesNow);
+        }
     }
 
     /**
@@ -742,21 +741,21 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public synchronized boolean hasService(Class serviceClass) {
-	if (serviceClass == null) throw new NullPointerException("serviceClass");
+        if (serviceClass == null) throw new NullPointerException("serviceClass");
 
-	synchronized(BeanContext.globalHierarchyLock) {
-	    if (services.containsKey(serviceClass)) return true;
+        synchronized(BeanContext.globalHierarchyLock) {
+            if (services.containsKey(serviceClass)) return true;
 
-	    BeanContextServices bcs = null;
+            BeanContextServices bcs = null;
 
-	    try {
-	        bcs = (BeanContextServices)getBeanContext();
-	    } catch (ClassCastException cce) {
-	        return false;
-	    }
+            try {
+                bcs = (BeanContextServices)getBeanContext();
+            } catch (ClassCastException cce) {
+                return false;
+            }
 
-	    return bcs == null ? false : bcs.hasService(serviceClass);
-	}
+            return bcs == null ? false : bcs.hasService(serviceClass);
+        }
     }
 
     /************************************************************************/
@@ -767,46 +766,46 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     protected class BCSSProxyServiceProvider implements BeanContextServiceProvider, BeanContextServiceRevokedListener {
-	
+
         BCSSProxyServiceProvider(BeanContextServices bcs) {
-	    super();
-		
-	    nestingCtxt = bcs;
-	}
+            super();
 
-	public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
-	    Object service = null;
+            nestingCtxt = bcs;
+        }
 
-	    try {
-	 	service = nestingCtxt.getService(bcs, requestor, serviceClass, serviceSelector, this);
-	    } catch (TooManyListenersException tmle) {
-		return null;
-	    }
-	
-	    return service;
-	}
+        public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
+            Object service = null;
 
-	public void releaseService(BeanContextServices bcs, Object requestor, Object service) {
-	    nestingCtxt.releaseService(bcs, requestor, service);
-	}
+            try {
+                service = nestingCtxt.getService(bcs, requestor, serviceClass, serviceSelector, this);
+            } catch (TooManyListenersException tmle) {
+                return null;
+            }
 
-	public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
-	    return nestingCtxt.getCurrentServiceSelectors(serviceClass);
-	}
+            return service;
+        }
 
-	public void serviceRevoked(BeanContextServiceRevokedEvent bcsre) {
-	    Iterator i = bcsChildren(); // get the BCSChild values.
+        public void releaseService(BeanContextServices bcs, Object requestor, Object service) {
+            nestingCtxt.releaseService(bcs, requestor, service);
+        }
 
-	    while (i.hasNext()) {
-	        ((BCSSChild)i.next()).revokeService(bcsre.getServiceClass(), true, bcsre.isCurrentServiceInvalidNow());
-	    }
-	}
+        public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
+            return nestingCtxt.getCurrentServiceSelectors(serviceClass);
+        }
 
-	/*
-	 * fields
-	 */
+        public void serviceRevoked(BeanContextServiceRevokedEvent bcsre) {
+            Iterator i = bcsChildren(); // get the BCSChild values.
 
-	private BeanContextServices nestingCtxt;
+            while (i.hasNext()) {
+                ((BCSSChild)i.next()).revokeService(bcsre.getServiceClass(), true, bcsre.isCurrentServiceInvalidNow());
+            }
+        }
+
+        /*
+         * fields
+         */
+
+        private BeanContextServices nestingCtxt;
     }
 
     /************************************************************************/
@@ -816,64 +815,64 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
      public Object getService(BeanContextChild child, Object requestor, Class serviceClass, Object serviceSelector, BeanContextServiceRevokedListener bcsrl) throws TooManyListenersException {
-	if (child        == null) throw new NullPointerException("child");
-	if (serviceClass == null) throw new NullPointerException("serviceClass");
-	if (requestor    == null) throw new NullPointerException("requestor");
-	if (bcsrl        == null) throw new NullPointerException("bcsrl");
+        if (child        == null) throw new NullPointerException("child");
+        if (serviceClass == null) throw new NullPointerException("serviceClass");
+        if (requestor    == null) throw new NullPointerException("requestor");
+        if (bcsrl        == null) throw new NullPointerException("bcsrl");
 
-	Object              service = null;
-	BCSSChild           bcsc;
-	BeanContextServices bcssp   = getBeanContextServicesPeer();
+        Object              service = null;
+        BCSSChild           bcsc;
+        BeanContextServices bcssp   = getBeanContextServicesPeer();
 
-	synchronized(BeanContext.globalHierarchyLock) {
-	    synchronized(children) { bcsc = (BCSSChild)children.get(child); }
+        synchronized(BeanContext.globalHierarchyLock) {
+            synchronized(children) { bcsc = (BCSSChild)children.get(child); }
 
-	    if (bcsc == null) throw new IllegalArgumentException("not a child of this context"); // not a child ...
+            if (bcsc == null) throw new IllegalArgumentException("not a child of this context"); // not a child ...
 
-	    BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
+            BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
 
-	    if (bcsssp != null) {
-	        BeanContextServiceProvider bcsp = bcsssp.getServiceProvider();
-	        service = bcsp.getService(bcssp, requestor, serviceClass, serviceSelector);
-	        if (service != null) { // do bookkeeping ...
-		    try {
-	                bcsc.usingService(requestor, service, serviceClass, bcsp, false, bcsrl);
-		    } catch (TooManyListenersException tmle) {
-		        bcsp.releaseService(bcssp, requestor, service);
-		        throw tmle;
-		    } catch (UnsupportedOperationException uope) {
-		        bcsp.releaseService(bcssp, requestor, service);
-		        throw uope; // unchecked rt exception
-		    }
+            if (bcsssp != null) {
+                BeanContextServiceProvider bcsp = bcsssp.getServiceProvider();
+                service = bcsp.getService(bcssp, requestor, serviceClass, serviceSelector);
+                if (service != null) { // do bookkeeping ...
+                    try {
+                        bcsc.usingService(requestor, service, serviceClass, bcsp, false, bcsrl);
+                    } catch (TooManyListenersException tmle) {
+                        bcsp.releaseService(bcssp, requestor, service);
+                        throw tmle;
+                    } catch (UnsupportedOperationException uope) {
+                        bcsp.releaseService(bcssp, requestor, service);
+                        throw uope; // unchecked rt exception
+                    }
 
-		    return service;
-	        }
-	    }
+                    return service;
+                }
+            }
 
 
-	    if (proxy != null) {
+            if (proxy != null) {
 
-	        // try to delegate ...
+                // try to delegate ...
 
-	        service = proxy.getService(bcssp, requestor, serviceClass, serviceSelector);
-	
-	        if (service != null) { // do bookkeeping ...
-		    try {
-		        bcsc.usingService(requestor, service, serviceClass, proxy, true, bcsrl);
-		    } catch (TooManyListenersException tmle) {
-		        proxy.releaseService(bcssp, requestor, service);
-		        throw tmle;
-		    } catch (UnsupportedOperationException uope) {
-		        proxy.releaseService(bcssp, requestor, service);
-		        throw uope; // unchecked rt exception
-		    }
+                service = proxy.getService(bcssp, requestor, serviceClass, serviceSelector);
 
-		    return service;
-	        }
-	    }
-	}
+                if (service != null) { // do bookkeeping ...
+                    try {
+                        bcsc.usingService(requestor, service, serviceClass, proxy, true, bcsrl);
+                    } catch (TooManyListenersException tmle) {
+                        proxy.releaseService(bcssp, requestor, service);
+                        throw tmle;
+                    } catch (UnsupportedOperationException uope) {
+                        proxy.releaseService(bcssp, requestor, service);
+                        throw uope; // unchecked rt exception
+                    }
 
-       	return null;
+                    return service;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -881,19 +880,19 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public void releaseService(BeanContextChild child, Object requestor, Object service) {
-	if (child     == null) throw new NullPointerException("child");
-	if (requestor == null) throw new NullPointerException("requestor");
-	if (service   == null) throw new NullPointerException("service");
+        if (child     == null) throw new NullPointerException("child");
+        if (requestor == null) throw new NullPointerException("requestor");
+        if (service   == null) throw new NullPointerException("service");
 
-	BCSSChild bcsc;
+        BCSSChild bcsc;
 
-	synchronized(BeanContext.globalHierarchyLock) {
-	        synchronized(children) { bcsc = (BCSSChild)children.get(child); }
+        synchronized(BeanContext.globalHierarchyLock) {
+                synchronized(children) { bcsc = (BCSSChild)children.get(child); }
 
-	        if (bcsc != null)
-		    bcsc.releaseService(requestor, service);
-		else
-		   throw new IllegalArgumentException("child actual is not a child of this BeanContext");
+                if (bcsc != null)
+                    bcsc.releaseService(requestor, service);
+                else
+                   throw new IllegalArgumentException("child actual is not a child of this BeanContext");
         }
     }
 
@@ -902,7 +901,7 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public Iterator getCurrentServiceClasses() {
-	return new BCSIterator(services.keySet().iterator());
+        return new BCSIterator(services.keySet().iterator());
     }
 
     /**
@@ -911,14 +910,14 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public Iterator getCurrentServiceSelectors(Class serviceClass) {
-	
-	BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
-	
-	return bcsssp != null ? new BCSIterator(bcsssp.getServiceProvider().getCurrentServiceSelectors(getBeanContextServicesPeer(), serviceClass)) : null;
+
+        BCSSServiceProvider bcsssp = (BCSSServiceProvider)services.get(serviceClass);
+
+        return bcsssp != null ? new BCSIterator(bcsssp.getServiceProvider().getCurrentServiceSelectors(getBeanContextServicesPeer(), serviceClass)) : null;
     }
 
     /**
-     * BeanContextServicesListener callback, propagates event to all 
+     * BeanContextServicesListener callback, propagates event to all
      * currently registered listeners and BeanContextServices children,
      * if this BeanContextService does not already implement this service
      * itself.
@@ -928,29 +927,29 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
      public void serviceAvailable(BeanContextServiceAvailableEvent bcssae) {
-	synchronized(BeanContext.globalHierarchyLock) {
-	    if (services.containsKey(bcssae.getServiceClass())) return;
+        synchronized(BeanContext.globalHierarchyLock) {
+            if (services.containsKey(bcssae.getServiceClass())) return;
 
-	    fireServiceAdded(bcssae);
+            fireServiceAdded(bcssae);
 
-	    Iterator i;
+            Iterator i;
 
-	    synchronized(children) {
-	        i = children.keySet().iterator();
-	    }
+            synchronized(children) {
+                i = children.keySet().iterator();
+            }
 
-	    while (i.hasNext()) {
-	        Object c = i.next();
+            while (i.hasNext()) {
+                Object c = i.next();
 
-	        if (c instanceof BeanContextServices) {
-	            ((BeanContextServicesListener)c).serviceAvailable(bcssae);
-	        }
-	    }
-	}
+                if (c instanceof BeanContextServices) {
+                    ((BeanContextServicesListener)c).serviceAvailable(bcssae);
+                }
+            }
+        }
      }
 
     /**
-     * BeanContextServicesListener callback, propagates event to all 
+     * BeanContextServicesListener callback, propagates event to all
      * currently registered listeners and BeanContextServices children,
      * if this BeanContextService does not already implement this service
      * itself.
@@ -960,25 +959,25 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     public void serviceRevoked(BeanContextServiceRevokedEvent bcssre) {
-	synchronized(BeanContext.globalHierarchyLock) {
-	    if (services.containsKey(bcssre.getServiceClass())) return;
+        synchronized(BeanContext.globalHierarchyLock) {
+            if (services.containsKey(bcssre.getServiceClass())) return;
 
-	    fireServiceRevoked(bcssre);
+            fireServiceRevoked(bcssre);
 
-	    Iterator i;
+            Iterator i;
 
-	    synchronized(children) {
-	        i = children.keySet().iterator();
-	    }
+            synchronized(children) {
+                i = children.keySet().iterator();
+            }
 
-	    while (i.hasNext()) {
-	        Object c = i.next();
+            while (i.hasNext()) {
+                Object c = i.next();
 
-	        if (c instanceof BeanContextServices) {
-	            ((BeanContextServicesListener)c).serviceRevoked(bcssre);
-	        }
-	    }
-	}
+                if (c instanceof BeanContextServices) {
+                    ((BeanContextServicesListener)c).serviceRevoked(bcssre);
+                }
+            }
+        }
     }
 
     /**
@@ -989,11 +988,11 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      * @return the BeanContextServicesListener (if any) of the specified child
      */
     protected static final BeanContextServicesListener getChildBeanContextServicesListener(Object child) {
-	try {
-	    return (BeanContextServicesListener)child;
-	} catch (ClassCastException cce) {
-	    return null;
-	}
+        try {
+            return (BeanContextServicesListener)child;
+        } catch (ClassCastException cce) {
+            return null;
+        }
     }
 
     /**
@@ -1008,69 +1007,69 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      */
 
     protected void childJustRemovedHook(Object child, BCSChild bcsc) {
-	BCSSChild bcssc = (BCSSChild)bcsc;
+        BCSSChild bcssc = (BCSSChild)bcsc;
 
-	bcssc.cleanupReferences();
+        bcssc.cleanupReferences();
     }
 
     /**
      * called from setBeanContext to notify a BeanContextChild
      * to release resources obtained from the nesting BeanContext.
-     * 
+     *
      * This method revokes any services obtained from its parent.
-     * 
+     *
      * subclasses may envelope this method to implement their own semantics.
      */
 
     protected synchronized void releaseBeanContextResources() {
-	Object[] bcssc;
+        Object[] bcssc;
 
-	super.releaseBeanContextResources();
+        super.releaseBeanContextResources();
 
-	synchronized(children) {
-	    if (children.isEmpty()) return;
+        synchronized(children) {
+            if (children.isEmpty()) return;
 
-	    bcssc = children.values().toArray();
-	}
+            bcssc = children.values().toArray();
+        }
 
 
-	for (int i = 0; i < bcssc.length; i++) {
-	    ((BCSSChild)bcssc[i]).revokeAllDelegatedServicesNow();
-	}
+        for (int i = 0; i < bcssc.length; i++) {
+            ((BCSSChild)bcssc[i]).revokeAllDelegatedServicesNow();
+        }
 
-	proxy = null;
+        proxy = null;
     }
 
     /**
      * called from setBeanContext to notify a BeanContextChild
      * to allocate resources obtained from the nesting BeanContext.
-     * 
+     *
      * subclasses may envelope this method to implement their own semantics.
      */
 
     protected synchronized void initializeBeanContextResources() {
-	super.initializeBeanContextResources();
+        super.initializeBeanContextResources();
 
-	BeanContext nbc = getBeanContext();
+        BeanContext nbc = getBeanContext();
 
-	if (nbc == null) return;
+        if (nbc == null) return;
 
-	try {
-	    BeanContextServices bcs = (BeanContextServices)nbc;
+        try {
+            BeanContextServices bcs = (BeanContextServices)nbc;
 
-	    proxy = new BCSSProxyServiceProvider(bcs);
-	} catch (ClassCastException cce) {
-	    // do nothing ...
-	}
+            proxy = new BCSSProxyServiceProvider(bcs);
+        } catch (ClassCastException cce) {
+            // do nothing ...
+        }
     }
 
     /**
      * Fires a <tt>BeanContextServiceEvent</tt> notifying of a new service.
      */
     protected final void fireServiceAdded(Class serviceClass) {
-	BeanContextServiceAvailableEvent bcssae = new BeanContextServiceAvailableEvent(getBeanContextServicesPeer(), serviceClass); 
+        BeanContextServiceAvailableEvent bcssae = new BeanContextServiceAvailableEvent(getBeanContextServicesPeer(), serviceClass);
 
-	fireServiceAdded(bcssae);
+        fireServiceAdded(bcssae);
     }
 
     /**
@@ -1080,13 +1079,13 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      * @param bcssae the <tt>BeanContextServiceAvailableEvent</tt>
      */
     protected final void fireServiceAdded(BeanContextServiceAvailableEvent bcssae) {
-	Object[]		         copy;
+        Object[]                         copy;
 
-	synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
+        synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
 
-	for (int i = 0; i < copy.length; i++) {
-	    ((BeanContextServicesListener)copy[i]).serviceAvailable(bcssae);
-	}
+        for (int i = 0; i < copy.length; i++) {
+            ((BeanContextServicesListener)copy[i]).serviceAvailable(bcssae);
+        }
     }
 
     /**
@@ -1095,29 +1094,29 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      * @param bcsre the <tt>BeanContextServiceRevokedEvent</tt>
      */
     protected final void fireServiceRevoked(BeanContextServiceRevokedEvent bcsre) {
-	Object[]		         copy;
+        Object[]                         copy;
 
-	synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
+        synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
 
-	for (int i = 0; i < copy.length; i++) {
-	    ((BeanContextServiceRevokedListener)copy[i]).serviceRevoked(bcsre);
-	}
+        for (int i = 0; i < copy.length; i++) {
+            ((BeanContextServiceRevokedListener)copy[i]).serviceRevoked(bcsre);
+        }
     }
 
     /**
-     * Fires a <tt>BeanContextServiceRevokedEvent</tt> 
-     * indicating that a particular service is 
+     * Fires a <tt>BeanContextServiceRevokedEvent</tt>
+     * indicating that a particular service is
      * no longer available.
      */
     protected final void fireServiceRevoked(Class serviceClass, boolean revokeNow) {
-	Object[]		       copy;
-	BeanContextServiceRevokedEvent bcsre = new BeanContextServiceRevokedEvent(getBeanContextServicesPeer(), serviceClass, revokeNow); 
+        Object[]                       copy;
+        BeanContextServiceRevokedEvent bcsre = new BeanContextServiceRevokedEvent(getBeanContextServicesPeer(), serviceClass, revokeNow);
 
-	synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
+        synchronized (bcsListeners) { copy = bcsListeners.toArray(); }
 
-	for (int i = 0; i < copy.length; i++) {
-	    ((BeanContextServicesListener)copy[i]).serviceRevoked(bcsre);
-	}
+        for (int i = 0; i < copy.length; i++) {
+            ((BeanContextServicesListener)copy[i]).serviceRevoked(bcsre);
+        }
    }
 
     /**
@@ -1133,33 +1132,33 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
     protected synchronized void bcsPreSerializationHook(ObjectOutputStream oos) throws IOException {
 
-	oos.writeInt(serializable);
+        oos.writeInt(serializable);
 
-	if (serializable <= 0) return;
+        if (serializable <= 0) return;
 
-	int count = 0;
+        int count = 0;
 
-	Iterator i = services.entrySet().iterator();
+        Iterator i = services.entrySet().iterator();
 
-	while (i.hasNext() && count < serializable) {
-	    Map.Entry 		entry = (Map.Entry)i.next();
-	    BCSSServiceProvider bcsp  = null;
+        while (i.hasNext() && count < serializable) {
+            Map.Entry           entry = (Map.Entry)i.next();
+            BCSSServiceProvider bcsp  = null;
 
-	     try {
-		bcsp = (BCSSServiceProvider)entry.getValue();
-	     } catch (ClassCastException cce) {
-		continue;
-	     }
+             try {
+                bcsp = (BCSSServiceProvider)entry.getValue();
+             } catch (ClassCastException cce) {
+                continue;
+             }
 
-	     if (bcsp.getServiceProvider() instanceof Serializable) {
-		oos.writeObject(entry.getKey());
-		oos.writeObject(bcsp);
-		count++;
-	     }
-	}
+             if (bcsp.getServiceProvider() instanceof Serializable) {
+                oos.writeObject(entry.getKey());
+                oos.writeObject(bcsp);
+                count++;
+             }
+        }
 
-	if (count != serializable) 
-	    throw new IOException("wrote different number of service providers than expected");
+        if (count != serializable)
+            throw new IOException("wrote different number of service providers than expected");
     }
 
     /**
@@ -1176,24 +1175,24 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
     protected synchronized void bcsPreDeserializationHook(ObjectInputStream ois) throws IOException, ClassNotFoundException {
 
-	serializable = ois.readInt();
+        serializable = ois.readInt();
 
-	int count = serializable;
+        int count = serializable;
 
-	while (count > 0) {
-	    services.put(ois.readObject(), ois.readObject());
-	    count--;
-	} 
+        while (count > 0) {
+            services.put(ois.readObject(), ois.readObject());
+            count--;
+        }
     }
- 
+
     /**
      * serialize the instance
      */
 
     private synchronized void writeObject(ObjectOutputStream oos) throws IOException {
-	oos.defaultWriteObject();
+        oos.defaultWriteObject();
 
-	serialize(oos, (Collection)bcsListeners);
+        serialize(oos, (Collection)bcsListeners);
     }
 
     /**
@@ -1202,12 +1201,12 @@ public class      BeanContextServicesSupport extends BeanContextSupport
 
     private synchronized void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
 
-	ois.defaultReadObject();
+        ois.defaultReadObject();
 
-	deserialize(ois, (Collection)bcsListeners);
+        deserialize(ois, (Collection)bcsListeners);
     }
 
-    
+
     /*
      * fields
      */
@@ -1216,12 +1215,12 @@ public class      BeanContextServicesSupport extends BeanContextSupport
      * all accesses to the <code> protected transient HashMap services </code>
      * field should be synchronized on that object
      */
-    protected transient HashMap  		 services;
+    protected transient HashMap                  services;
 
     /**
      * The number of instances of a serializable <tt>BeanContextServceProvider</tt>.
      */
-    protected transient int 	 		 serializable = 0;
+    protected transient int                      serializable = 0;
 
 
     /**
@@ -1233,5 +1232,5 @@ public class      BeanContextServicesSupport extends BeanContextSupport
     /**
      * List of <tt>BeanContextServicesListener</tt> objects.
      */
-    protected transient ArrayList		 bcsListeners;
+    protected transient ArrayList                bcsListeners;
 }

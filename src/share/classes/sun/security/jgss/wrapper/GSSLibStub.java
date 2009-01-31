@@ -37,7 +37,6 @@ import sun.security.jgss.GSSUtil;
  * This class is essentially a JNI calling stub for all wrapper classes.
  *
  * @author Valerie Peng
- * @version %I%, %G%
  * @since 1.6
  */
 
@@ -69,7 +68,7 @@ class GSSLibStub {
 
     // Credential related routines
     native long acquireCred(long pName, int lifetime, int usage)
-					throws GSSException;
+                                        throws GSSException;
     native long releaseCred(long pCred);
     native long getCredName(long pCred);
     native int getCredTime(long pCred);
@@ -78,9 +77,9 @@ class GSSLibStub {
     // Context related routines
     native NativeGSSContext importContext(byte[] interProcToken);
     native byte[] initContext(long pCred, long targetName, ChannelBinding cb,
-			      byte[] inToken, NativeGSSContext context);
+                              byte[] inToken, NativeGSSContext context);
     native byte[] acceptContext(long pCred, ChannelBinding cb,
-				byte[] inToken, NativeGSSContext context);
+                                byte[] inToken, NativeGSSContext context);
     native long[] inquireContext(long pContext);
     native Oid getContextMech(long pContext);
     native long getContextName(long pContext, boolean isSrc);
@@ -90,37 +89,37 @@ class GSSLibStub {
     native byte[] exportContext(long pContext);
     native byte[] getMic(long pContext, int qop, byte[] msg);
     native void verifyMic(long pContext, byte[] token, byte[] msg,
-			  MessageProp prop) ;
+                          MessageProp prop) ;
     native byte[] wrap(long pContext, byte[] msg, MessageProp prop);
     native byte[] unwrap(long pContext, byte[] msgToken, MessageProp prop);
 
     private static Hashtable<Oid, GSSLibStub>
-	table = new Hashtable<Oid, GSSLibStub>(5);
+        table = new Hashtable<Oid, GSSLibStub>(5);
 
     static GSSLibStub getInstance(Oid mech) throws GSSException {
-	GSSLibStub s = table.get(mech);
-	if (s == null) {
-	    s = new GSSLibStub(mech);
-	    table.put(mech, s);
-	}
-	return s;
+        GSSLibStub s = table.get(mech);
+        if (s == null) {
+            s = new GSSLibStub(mech);
+            table.put(mech, s);
+        }
+        return s;
     }
     private GSSLibStub(Oid mech) throws GSSException {
-	SunNativeProvider.debug("Created GSSLibStub for mech " + mech);
-	this.mech = mech;
-	this.pMech = getMechPtr(mech.getDER());
+        SunNativeProvider.debug("Created GSSLibStub for mech " + mech);
+        this.mech = mech;
+        this.pMech = getMechPtr(mech.getDER());
     }
     public boolean equals(Object obj) {
-	if (obj == this) return true;
-	if (!(obj instanceof GSSLibStub)) {
-	    return false;
-	}
-	return (mech.equals(((GSSLibStub) obj).getMech()));
+        if (obj == this) return true;
+        if (!(obj instanceof GSSLibStub)) {
+            return false;
+        }
+        return (mech.equals(((GSSLibStub) obj).getMech()));
     }
     public int hashCode() {
-	return mech.hashCode();
+        return mech.hashCode();
     }
     Oid getMech() {
-	return mech;
+        return mech;
     }
 }

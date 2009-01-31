@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2001-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,53 +44,53 @@ import java.rmi.server.RMIClassLoaderSpi;
 public class TestProvider2 extends TestProvider {
 
     public static final Class loadClassReturn =
-	(new Object() { }).getClass();
+        (new Object() { }).getClass();
     public static final Class loadProxyClassReturn =
-	(new Object() { }).getClass();
+        (new Object() { }).getClass();
     public static final ClassLoader getClassLoaderReturn =
-	URLClassLoader.newInstance(new URL[0]);
+        URLClassLoader.newInstance(new URL[0]);
     public static final String getClassAnnotationReturn = new String();
 
     public static List invocations =
-	Collections.synchronizedList(new ArrayList(1));
+        Collections.synchronizedList(new ArrayList(1));
 
     public TestProvider2() {
-	System.err.println("TestProvider2()");
+        System.err.println("TestProvider2()");
     }
 
     public Class loadClass(String codebase, String name,
-			   ClassLoader defaultLoader)
-	throws MalformedURLException, ClassNotFoundException
+                           ClassLoader defaultLoader)
+        throws MalformedURLException, ClassNotFoundException
     {
-	invocations.add(new Invocation(loadClassMethod,
-	    new Object[] { codebase, name, defaultLoader }));
+        invocations.add(new Invocation(loadClassMethod,
+            new Object[] { codebase, name, defaultLoader }));
 
-	return loadClassReturn;
+        return loadClassReturn;
     }
 
     public Class loadProxyClass(String codebase, String[] interfaces,
-				ClassLoader defaultLoader)
-	throws MalformedURLException, ClassNotFoundException
+                                ClassLoader defaultLoader)
+        throws MalformedURLException, ClassNotFoundException
     {
-	invocations.add(new Invocation(loadProxyClassMethod,
-	    new Object[] { codebase, interfaces, defaultLoader }));
+        invocations.add(new Invocation(loadProxyClassMethod,
+            new Object[] { codebase, interfaces, defaultLoader }));
 
-	return loadProxyClassReturn;
+        return loadProxyClassReturn;
     }
 
     public ClassLoader getClassLoader(String codebase)
-	throws MalformedURLException
+        throws MalformedURLException
     {
-	invocations.add(new Invocation(
-	    getClassLoaderMethod, new Object[] { codebase }));
+        invocations.add(new Invocation(
+            getClassLoaderMethod, new Object[] { codebase }));
 
-	return getClassLoaderReturn;
+        return getClassLoaderReturn;
     }
 
     public String getClassAnnotation(Class<?> cl) {
-	invocations.add(new Invocation(
-	    getClassAnnotationMethod, new Object[] { cl }));
+        invocations.add(new Invocation(
+            getClassAnnotationMethod, new Object[] { cl }));
 
-	return getClassAnnotationReturn;
+        return getClassAnnotationReturn;
     }
 }

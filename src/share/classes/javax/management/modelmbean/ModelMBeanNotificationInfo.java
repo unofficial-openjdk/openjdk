@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * @(#)author    IBM Corp.
- * 
+ * @author    IBM Corp.
+ *
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
 
@@ -118,20 +118,20 @@ public class ModelMBeanNotificationInfo
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-	try {
-	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-	    String form = AccessController.doPrivileged(act);
-	    compat = (form != null && form.equals("1.0"));
-	} catch (Exception e) {
-	    // OK: No compat with 1.0
-	}
-	if (compat) {
-	    serialPersistentFields = oldSerialPersistentFields;
-	    serialVersionUID = oldSerialVersionUID;
-	} else {
-	    serialPersistentFields = newSerialPersistentFields;
-	    serialVersionUID = newSerialVersionUID;
-	}
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK: No compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
     }
     //
     // END Serialization compatibility stuff
@@ -155,9 +155,9 @@ public class ModelMBeanNotificationInfo
      *     Notification. Optional.
      **/
     public ModelMBeanNotificationInfo(String[] notifTypes,
-				      String name,
-				      String description) {
-	this(notifTypes,name,description,null);
+                                      String name,
+                                      String description) {
+        this(notifTypes,name,description,null);
     }
 
     /**
@@ -182,17 +182,17 @@ public class ModelMBeanNotificationInfo
      *
      **/
     public ModelMBeanNotificationInfo(String[] notifTypes,
-				      String name,
-				      String description,
-				      Descriptor descriptor) {
-	super(notifTypes, name, description);
+                                      String name,
+                                      String description,
+                                      Descriptor descriptor) {
+        super(notifTypes, name, description);
         final String mth = "ModelMBeanNotificationInfo";
         if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
             MODELMBEAN_LOGGER.logp(Level.FINER,
                     ModelMBeanNotificationInfo.class.getName(),
                     mth, "Entry");
         }
-	applyDescriptor(descriptor, mth);
+        applyDescriptor(descriptor, mth);
     }
 
     /**
@@ -203,9 +203,9 @@ public class ModelMBeanNotificationInfo
      *
      **/
     public ModelMBeanNotificationInfo(ModelMBeanNotificationInfo inInfo) {
-	this(inInfo.getNotifTypes(),
-	     inInfo.getName(),
-	     inInfo.getDescription(),inInfo.getDescriptor());
+        this(inInfo.getNotifTypes(),
+             inInfo.getName(),
+             inInfo.getDescription(),inInfo.getDescriptor());
     }
 
     /**
@@ -218,7 +218,7 @@ public class ModelMBeanNotificationInfo
                     ModelMBeanNotificationInfo.class.getName(),
                     "clone()", "Entry");
         }
-	return(new ModelMBeanNotificationInfo(this));
+        return(new ModelMBeanNotificationInfo(this));
     }
 
     /**
@@ -236,19 +236,19 @@ public class ModelMBeanNotificationInfo
                     ModelMBeanNotificationInfo.class.getName(),
                     "getDescriptor()", "Entry");
         }
-		
-	if (notificationDescriptor == null) {
-	    // Dead code. Should never happen.
+
+        if (notificationDescriptor == null) {
+            // Dead code. Should never happen.
             if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
                 MODELMBEAN_LOGGER.logp(Level.FINER,
                         ModelMBeanNotificationInfo.class.getName(),
                         "getDescriptor()", "Descriptor value is null, " +
                         "setting descriptor to default values");
             }
-	    notificationDescriptor = createDefaultDescriptor();
-	}
+            notificationDescriptor = createDefaultDescriptor();
+        }
 
-	return((Descriptor)notificationDescriptor.clone());
+        return((Descriptor)notificationDescriptor.clone());
     }
 
     /**
@@ -274,7 +274,7 @@ public class ModelMBeanNotificationInfo
                     ModelMBeanNotificationInfo.class.getName(),
                     "setDescriptor(Descriptor)", "Entry");
         }
-	applyDescriptor(inDescriptor,"setDescriptor(Descriptor)");
+        applyDescriptor(inDescriptor,"setDescriptor(Descriptor)");
     }
 
     /**
@@ -288,26 +288,26 @@ public class ModelMBeanNotificationInfo
             MODELMBEAN_LOGGER.logp(Level.FINER,
                     ModelMBeanNotificationInfo.class.getName(),
                     "toString()", "Entry");
-        }	
+        }
 
-	final StringBuilder retStr = new StringBuilder();
+        final StringBuilder retStr = new StringBuilder();
 
-	retStr.append("ModelMBeanNotificationInfo: ")
-	    .append(this.getName());
+        retStr.append("ModelMBeanNotificationInfo: ")
+            .append(this.getName());
 
-	retStr.append(" ; Description: ")
-	    .append(this.getDescription());
+        retStr.append(" ; Description: ")
+            .append(this.getDescription());
 
-	retStr.append(" ; Descriptor: ")
-	    .append(this.getDescriptor());
+        retStr.append(" ; Descriptor: ")
+            .append(this.getDescriptor());
 
-	retStr.append(" ; Types: ");
-	String[] nTypes = this.getNotifTypes();
-	for (int i=0; i < nTypes.length; i++) {
-	    if (i > 0) retStr.append(", ");
-	    retStr.append(nTypes[i]);
-	}
-	return retStr.toString();
+        retStr.append(" ; Types: ");
+        String[] nTypes = this.getNotifTypes();
+        for (int i=0; i < nTypes.length; i++) {
+            if (i > 0) retStr.append(", ");
+            retStr.append(nTypes[i]);
+        }
+        return retStr.toString();
     }
 
     /**
@@ -322,12 +322,12 @@ public class ModelMBeanNotificationInfo
                     ModelMBeanNotificationInfo.class.getName(),
                     "createDefaultDescriptor()", "Entry");
         }
-		
-	return new DescriptorSupport(new 
-	    String[] {"descriptorType=notification",
-		      ("name=" + this.getName()),
-		      ("displayName=" + this.getName()),
-		      "severity=6"});
+
+        return new DescriptorSupport(new
+            String[] {"descriptorType=notification",
+                      ("name=" + this.getName()),
+                      ("displayName=" + this.getName()),
+                      "severity=6"});
     }
 
     /**
@@ -338,30 +338,30 @@ public class ModelMBeanNotificationInfo
      * the descriptorType field must be "notification",
      **/
     private boolean isValid(Descriptor inDesc) {
-	boolean results = true;
-	String badField = "none";
+        boolean results = true;
+        String badField = "none";
 
-	if (inDesc == null) {
-	    badField="nullDescriptor";
-	    return false;
-	}
+        if (inDesc == null) {
+            badField="nullDescriptor";
+            return false;
+        }
 
-	if (!inDesc.isValid()) {
-	    // checks for empty descriptors, null,
-	    // checks for empty name and descriptorType adn valid
-	    // values for fields.
-	    badField="invalidDescriptor";
-	    results = false;
-	} else if (!((String)inDesc.getFieldValue("name")).
-		   equalsIgnoreCase(this.getName())) {
-	    badField="name";
-	    results = false;
-	} else if (! ((String)inDesc.getFieldValue("descriptorType")).
-		   equalsIgnoreCase("notification")) {
-	    badField="descriptorType";
-	    results = false;
-	}
-	
+        if (!inDesc.isValid()) {
+            // checks for empty descriptors, null,
+            // checks for empty name and descriptorType adn valid
+            // values for fields.
+            badField="invalidDescriptor";
+            results = false;
+        } else if (!((String)inDesc.getFieldValue("name")).
+                   equalsIgnoreCase(this.getName())) {
+            badField="name";
+            results = false;
+        } else if (! ((String)inDesc.getFieldValue("descriptorType")).
+                   equalsIgnoreCase("notification")) {
+            badField="descriptorType";
+            results = false;
+        }
+
         if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
             MODELMBEAN_LOGGER.logp(Level.FINER,
                     ModelMBeanNotificationInfo.class.getName(),
@@ -369,7 +369,7 @@ public class ModelMBeanNotificationInfo
                     "Returning " + results  +
                     " : Invalid field is " + badField);
         }
-	return results;
+        return results;
     }
 
     /**
@@ -379,13 +379,13 @@ public class ModelMBeanNotificationInfo
      * @return the given descriptor, possibly modified.
      **/
     private final Descriptor setDefaults(Descriptor descriptor) {
-	if ((descriptor.getFieldValue("displayName")) == null) {
-	    descriptor.setField("displayName",this.getName());
-	}
-	if ((descriptor.getFieldValue("severity")) == null) {
-	    descriptor.setField("severity","6");
-	}
-	return descriptor;
+        if ((descriptor.getFieldValue("displayName")) == null) {
+            descriptor.setField("displayName",this.getName());
+        }
+        if ((descriptor.getFieldValue("severity")) == null) {
+            descriptor.setField("severity","6");
+        }
+        return descriptor;
     }
 
     /**
@@ -401,24 +401,24 @@ public class ModelMBeanNotificationInfo
      * @see #setDescriptor
      **/
     private final void applyDescriptor(Descriptor descriptor,
-				       String ftag) {
-	if (descriptor == null) {
+                                       String ftag) {
+        if (descriptor == null) {
             if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
                 MODELMBEAN_LOGGER.logp(Level.FINER,
                         ModelMBeanNotificationInfo.class.getName(), ftag,
                         "Received null for new descriptor value, " +
                         "setting descriptor to default values");
             }
-	    notificationDescriptor = createDefaultDescriptor();
-	} else if (isValid(descriptor)) {
-	    notificationDescriptor =
-		setDefaults((Descriptor)descriptor.clone());
-	} else {
-	    throw new RuntimeOperationsException(new
-		IllegalArgumentException(
-	        "Invalid descriptor passed in parameter"),
-	        "Exception occurred in ModelMBeanNotificationInfo " + ftag);
-	}
+            notificationDescriptor = createDefaultDescriptor();
+        } else if (isValid(descriptor)) {
+            notificationDescriptor =
+                setDefaults((Descriptor)descriptor.clone());
+        } else {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException(
+                "Invalid descriptor passed in parameter"),
+                "Exception occurred in ModelMBeanNotificationInfo " + ftag);
+        }
     }
 
 
@@ -427,9 +427,9 @@ public class ModelMBeanNotificationInfo
      * {@link ObjectInputStream}.
      **/
     private void readObject(ObjectInputStream in)
-	throws IOException, ClassNotFoundException {
-	// New serial form ignores extra field "currClass"
-	in.defaultReadObject();
+        throws IOException, ClassNotFoundException {
+        // New serial form ignores extra field "currClass"
+        in.defaultReadObject();
     }
 
 
@@ -438,19 +438,19 @@ public class ModelMBeanNotificationInfo
      * {@link ObjectOutputStream}.
      **/
     private void writeObject(ObjectOutputStream out)
-	throws IOException {
-	if (compat) {
-	    // Serializes this instance in the old serial form
-	    //
-	    ObjectOutputStream.PutField fields = out.putFields();
-	    fields.put("notificationDescriptor", notificationDescriptor);
-	    fields.put("currClass", currClass);
-	    out.writeFields();
-	} else {
-	    // Serializes this instance in the new serial form
-	    //
-	    out.defaultWriteObject();
-	}
+        throws IOException {
+        if (compat) {
+            // Serializes this instance in the old serial form
+            //
+            ObjectOutputStream.PutField fields = out.putFields();
+            fields.put("notificationDescriptor", notificationDescriptor);
+            fields.put("currClass", currClass);
+            out.writeFields();
+        } else {
+            // Serializes this instance in the new serial form
+            //
+            out.defaultWriteObject();
+        }
     }
 
 }

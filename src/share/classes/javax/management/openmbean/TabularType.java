@@ -79,70 +79,70 @@ public class TabularType extends OpenType<TabularData> {
      * @param  typeName  The name given to the tabular type this instance represents; cannot be a null or empty string.
      * <br>&nbsp;
      * @param  description  The human readable description of the tabular type this instance represents;
-     *			    cannot be a null or empty string.
+     *                      cannot be a null or empty string.
      * <br>&nbsp;
      * @param  rowType  The type of the row elements of tabular data values described by this tabular type instance;
-     *			cannot be null.
+     *                  cannot be null.
      * <br>&nbsp;
      * @param  indexNames  The names of the items the values of which are used to uniquely index each row element in the
-     *			   tabular data values described by this tabular type instance;
-     *			   cannot be null or empty. Each element should be an item name defined in <var>rowType</var>
-     *			   (no null or empty string allowed).
-     *			   It is important to note that the <b>order</b> of the item names in <var>indexNames</var>
+     *                     tabular data values described by this tabular type instance;
+     *                     cannot be null or empty. Each element should be an item name defined in <var>rowType</var>
+     *                     (no null or empty string allowed).
+     *                     It is important to note that the <b>order</b> of the item names in <var>indexNames</var>
      *                     is used by the methods {@link TabularData#get(java.lang.Object[]) <code>get</code>} and
-     *			   {@link TabularData#remove(java.lang.Object[]) <code>remove</code>} of class
-     *			   <code>TabularData</code> to match their array of values parameter to items.
+     *                     {@link TabularData#remove(java.lang.Object[]) <code>remove</code>} of class
+     *                     <code>TabularData</code> to match their array of values parameter to items.
      * <br>&nbsp;
      * @throws IllegalArgumentException  if <var>rowType</var> is null,
-     *					 or <var>indexNames</var> is a null or empty array,
-     *					 or an element in <var>indexNames</var> is a null or empty string,
-     *					 or <var>typeName</var> or <var>description</var> is a null or empty string.
+     *                                   or <var>indexNames</var> is a null or empty array,
+     *                                   or an element in <var>indexNames</var> is a null or empty string,
+     *                                   or <var>typeName</var> or <var>description</var> is a null or empty string.
      * <br>&nbsp;
      * @throws OpenDataException  if an element's value of <var>indexNames</var>
-     *				  is not an item name defined in <var>rowType</var>.
+     *                            is not an item name defined in <var>rowType</var>.
      */
     public TabularType(String         typeName,
-		       String         description,
-		       CompositeType  rowType,
-		       String[]       indexNames) throws OpenDataException {
+                       String         description,
+                       CompositeType  rowType,
+                       String[]       indexNames) throws OpenDataException {
 
-	// Check and initialize state defined by parent.
-	//
-	super(TabularData.class.getName(), typeName, description, false);
+        // Check and initialize state defined by parent.
+        //
+        super(TabularData.class.getName(), typeName, description, false);
 
-	// Check rowType is not null
-	//
-	if (rowType == null) {
-	    throw new IllegalArgumentException("Argument rowType cannot be null.");
-	}
+        // Check rowType is not null
+        //
+        if (rowType == null) {
+            throw new IllegalArgumentException("Argument rowType cannot be null.");
+        }
 
-	// Check indexNames is neither null nor empty and does not contain any null element or empty string
-	//
-	checkForNullElement(indexNames, "indexNames");
-	checkForEmptyString(indexNames, "indexNames");
+        // Check indexNames is neither null nor empty and does not contain any null element or empty string
+        //
+        checkForNullElement(indexNames, "indexNames");
+        checkForEmptyString(indexNames, "indexNames");
 
-	// Check all indexNames values are valid item names for rowType
-	//
-	for (int i=0; i<indexNames.length; i++) {
-	    if ( ! rowType.containsKey(indexNames[i]) ) {
-		throw new OpenDataException("Argument's element value indexNames["+ i +"]=\""+ indexNames[i] +
-					    "\" is not a valid item name for rowType.");
-	    }
-	}
+        // Check all indexNames values are valid item names for rowType
+        //
+        for (int i=0; i<indexNames.length; i++) {
+            if ( ! rowType.containsKey(indexNames[i]) ) {
+                throw new OpenDataException("Argument's element value indexNames["+ i +"]=\""+ indexNames[i] +
+                                            "\" is not a valid item name for rowType.");
+            }
+        }
 
-	// initialize rowType
-	//
-	this.rowType    = rowType;
+        // initialize rowType
+        //
+        this.rowType    = rowType;
 
-	// initialize indexNames (copy content so that subsequent
-	// modifs to the array referenced by the indexNames parameter
-	// have no impact)
-	//
-	List<String> tmpList = new ArrayList<String>(indexNames.length + 1);
-	for (int i=0; i<indexNames.length; i++) {
-	    tmpList.add(indexNames[i]);
-	}
-	this.indexNames = Collections.unmodifiableList(tmpList);
+        // initialize indexNames (copy content so that subsequent
+        // modifs to the array referenced by the indexNames parameter
+        // have no impact)
+        //
+        List<String> tmpList = new ArrayList<String>(indexNames.length + 1);
+        for (int i=0; i<indexNames.length; i++) {
+            tmpList.add(indexNames[i]);
+        }
+        this.indexNames = Collections.unmodifiableList(tmpList);
     }
 
     /**
@@ -150,25 +150,25 @@ public class TabularType extends OpenType<TabularData> {
      * and that it does not contain any null element.
      */
     private static void checkForNullElement(Object[] arg, String argName) {
-	if ( (arg == null) || (arg.length == 0) ) {
-	    throw new IllegalArgumentException("Argument "+ argName +"[] cannot be null or empty.");
-	}
-	for (int i=0; i<arg.length; i++) {
-	    if (arg[i] == null) {
-		throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be null.");
-	    }
-	}
+        if ( (arg == null) || (arg.length == 0) ) {
+            throw new IllegalArgumentException("Argument "+ argName +"[] cannot be null or empty.");
+        }
+        for (int i=0; i<arg.length; i++) {
+            if (arg[i] == null) {
+                throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be null.");
+            }
+        }
     }
 
     /**
      * Checks that String[] does not contain any empty (or blank characters only) string.
      */
     private static void checkForEmptyString(String[] arg, String argName) {
-	for (int i=0; i<arg.length; i++) {
-	    if (arg[i].trim().equals("")) {
-		throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be an empty string.");
-	    }
-	}
+        for (int i=0; i<arg.length; i++) {
+            if (arg[i].trim().equals("")) {
+                throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be an empty string.");
+            }
+        }
     }
 
 
@@ -182,7 +182,7 @@ public class TabularType extends OpenType<TabularData> {
      */
     public CompositeType getRowType() {
 
-	return rowType;
+        return rowType;
     }
 
     /**
@@ -198,7 +198,7 @@ public class TabularType extends OpenType<TabularData> {
      */
     public List<String> getIndexNames() {
 
-	return indexNames;
+        return indexNames;
     }
 
     /**
@@ -224,14 +224,14 @@ public class TabularType extends OpenType<TabularData> {
      */
     public boolean isValue(Object obj) {
 
-	// if obj is null or not a TabularData, return false
-	//
-	if (!(obj instanceof TabularData))
-	    return false;
+        // if obj is null or not a TabularData, return false
+        //
+        if (!(obj instanceof TabularData))
+            return false;
 
-	// if obj is not a TabularData, return false
-	//
-	TabularData value = (TabularData) obj;
+        // if obj is not a TabularData, return false
+        //
+        TabularData value = (TabularData) obj;
         TabularType valueType = value.getTabularType();
         return isAssignableFrom(valueType);
     }
@@ -261,48 +261,48 @@ public class TabularType extends OpenType<TabularData> {
      * </ul>
      * <br>&nbsp;
      * @param  obj  the object to be compared for equality with this <code>TabularType</code> instance;
-     *		    if <var>obj</var> is <code>null</code>, <code>equals</code> returns <code>false</code>.
+     *              if <var>obj</var> is <code>null</code>, <code>equals</code> returns <code>false</code>.
      *
      * @return  <code>true</code> if the specified object is equal to this <code>TabularType</code> instance.
      */
     public boolean equals(Object obj) {
 
-	// if obj is null, return false
-	//
-	if (obj == null) {
-	    return false;
-	}
+        // if obj is null, return false
+        //
+        if (obj == null) {
+            return false;
+        }
 
-	// if obj is not a TabularType, return false
-	//
-	TabularType other;
-	try {
-	    other = (TabularType) obj;
-	} catch (ClassCastException e) {
-	    return false;
-	}
+        // if obj is not a TabularType, return false
+        //
+        TabularType other;
+        try {
+            other = (TabularType) obj;
+        } catch (ClassCastException e) {
+            return false;
+        }
 
-	// Now, really test for equality between this TabularType instance and the other:
-	//
+        // Now, really test for equality between this TabularType instance and the other:
+        //
 
-	// their names should be equal
-	if ( ! this.getTypeName().equals(other.getTypeName()) ) {
-	    return false;
-	}
+        // their names should be equal
+        if ( ! this.getTypeName().equals(other.getTypeName()) ) {
+            return false;
+        }
 
-	// their row types should be equal
-	if ( ! this.rowType.equals(other.rowType) ) {
-	    return false;
-	}
+        // their row types should be equal
+        if ( ! this.rowType.equals(other.rowType) ) {
+            return false;
+        }
 
-	// their index names should be equal and in the same order (ensured by List.equals())
-	if ( ! this.indexNames.equals(other.indexNames) ) {
-	    return false;
-	}
+        // their index names should be equal and in the same order (ensured by List.equals())
+        if ( ! this.indexNames.equals(other.indexNames) ) {
+            return false;
+        }
 
-	// All tests for equality were successfull
-	//
-	return true;
+        // All tests for equality were successfull
+        //
+        return true;
     }
 
     /**
@@ -323,21 +323,21 @@ public class TabularType extends OpenType<TabularData> {
      */
     public int hashCode() {
 
-	// Calculate the hash code value if it has not yet been done (ie 1st call to hashCode())
-	//
-	if (myHashCode == null) {
-	    int value = 0;
-	    value += this.getTypeName().hashCode();
-	    value += this.rowType.hashCode();
-	    for (Iterator k = indexNames.iterator(); k.hasNext();  ) {
-		value += k.next().hashCode();
-	    }
-	    myHashCode = new Integer(value);
-	}
+        // Calculate the hash code value if it has not yet been done (ie 1st call to hashCode())
+        //
+        if (myHashCode == null) {
+            int value = 0;
+            value += this.getTypeName().hashCode();
+            value += this.rowType.hashCode();
+            for (Iterator k = indexNames.iterator(); k.hasNext();  ) {
+                value += k.next().hashCode();
+            }
+            myHashCode = new Integer(value);
+        }
 
-	// return always the same hash code for this instance (immutable)
-	//
-	return myHashCode.intValue();
+        // return always the same hash code for this instance (immutable)
+        //
+        return myHashCode.intValue();
     }
 
     /**
@@ -354,30 +354,30 @@ public class TabularType extends OpenType<TabularData> {
      */
     public String toString() {
 
-	// Calculate the string representation if it has not yet been done (ie 1st call to toString())
-	//
-	if (myToString == null) {
-	    final StringBuilder result = new StringBuilder()
-		.append(this.getClass().getName())
-		.append("(name=")
-		.append(getTypeName())
-		.append(",rowType=")
-		.append(rowType.toString())
-		.append(",indexNames=(");
-	    int i=0;
-	    Iterator k = indexNames.iterator();
-	    while( k.hasNext() ) {
-		if (i > 0) result.append(",");
-		result.append(k.next().toString());
-		i++;
-	    }
-	    result.append("))");
-	    myToString = result.toString();
-	}
+        // Calculate the string representation if it has not yet been done (ie 1st call to toString())
+        //
+        if (myToString == null) {
+            final StringBuilder result = new StringBuilder()
+                .append(this.getClass().getName())
+                .append("(name=")
+                .append(getTypeName())
+                .append(",rowType=")
+                .append(rowType.toString())
+                .append(",indexNames=(");
+            int i=0;
+            Iterator k = indexNames.iterator();
+            while( k.hasNext() ) {
+                if (i > 0) result.append(",");
+                result.append(k.next().toString());
+                i++;
+            }
+            result.append("))");
+            myToString = result.toString();
+        }
 
-	// return always the same string representation for this instance (immutable)
-	//
-	return myToString;
+        // return always the same string representation for this instance (immutable)
+        //
+        return myToString;
     }
 
 }

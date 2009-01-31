@@ -22,10 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-  
-#ifdef __SUNPRO_C
-#pragma ident   "@(#)mlib_c_ImageBlendTable.h	1.4    99/07/29 SMI"
-#endif /* __SUNPRO_C */
 
 /*
  *    These tables are used by C versions of the
@@ -43,4 +39,3 @@ extern const mlib_f32 mlib_c_blend_Q8[];
 extern const mlib_f32 mlib_c_blend_u8_sat[];
 
 #endif /* MLIB_C_IMAGEF_BLEND_TABLE_H */
-

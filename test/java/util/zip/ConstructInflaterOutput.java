@@ -31,7 +31,7 @@ import java.io.*;
 import java.util.zip.*;
 
 public class ConstructInflaterOutput {
-    
+
     static class MyInflater extends Inflater {
         private boolean ended = false;
         boolean getEnded() { return ended; }

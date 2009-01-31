@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -52,23 +52,23 @@ public class DecimalFormatSymbolsProviderImpl extends DecimalFormatSymbolsProvid
     static HashMap<Locale, FooDecimalFormatSymbols> symbols = new HashMap<Locale, FooDecimalFormatSymbols>(4);
 
     public Locale[] getAvailableLocales() {
-	return avail;
+        return avail;
     }
 
     public DecimalFormatSymbols getInstance(Locale locale) {
         if (!Utils.supportsLocale(availList, locale)) {
-            throw new IllegalArgumentException("locale is not supported: "+locale);    
+            throw new IllegalArgumentException("locale is not supported: "+locale);
         }
 
         FooDecimalFormatSymbols fdfs = symbols.get(locale);
         if (fdfs == null) {
-	    for (int index = 0; index < avail.length; index ++) {
-	        if (Utils.supportsLocale(avail[index], locale)) {
-	            fdfs = new FooDecimalFormatSymbols(index);
+            for (int index = 0; index < avail.length; index ++) {
+                if (Utils.supportsLocale(avail[index], locale)) {
+                    fdfs = new FooDecimalFormatSymbols(index);
                     symbols.put(locale, fdfs);
-		    break;
-		}
-	    }
+                    break;
+                }
+            }
         }
         return fdfs;
     }
@@ -79,10 +79,10 @@ public class DecimalFormatSymbolsProviderImpl extends DecimalFormatSymbolsProvid
         String infinity = null;
         String nan = null;
 
-	public FooDecimalFormatSymbols(int index) {
-	    super(DecimalFormatSymbolsProviderImpl.this.avail[index]);
+        public FooDecimalFormatSymbols(int index) {
+            super(DecimalFormatSymbolsProviderImpl.this.avail[index]);
             dialect = DecimalFormatSymbolsProviderImpl.this.dialect[index];
-	}
+        }
 
         // overrides methods only returns Strings
         public String getInfinity() {

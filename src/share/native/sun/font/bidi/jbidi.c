@@ -48,15 +48,15 @@ static jmethodID g_bidi_reset = 0;
 
 static void resetBidi(JNIEnv *env, jclass cls, jobject bidi, jint dir, jint level, jint len, jintArray runs, jintArray cws) {
     if (!g_bidi_class) {
-	  g_bidi_class = (*env)->NewGlobalRef(env, cls);
-	  g_bidi_reset = (*env)->GetMethodID(env, g_bidi_class, "reset", "(III[I[I)V");
+          g_bidi_class = (*env)->NewGlobalRef(env, cls);
+          g_bidi_reset = (*env)->GetMethodID(env, g_bidi_class, "reset", "(III[I[I)V");
     }
 
-	(*env)->CallVoidMethod(env, bidi, g_bidi_reset, dir, level, len, runs, cws);
+        (*env)->CallVoidMethod(env, bidi, g_bidi_reset, dir, level, len, runs, cws);
 }
 
 JNIEXPORT jint JNICALL Java_java_text_Bidi_nativeGetDirectionCode
-  (JNIEnv *env, jclass cls, jint cp) 
+  (JNIEnv *env, jclass cls, jint cp)
 {
     return (jint)u_getDirection((uint32_t)cp);
 }
@@ -71,17 +71,17 @@ JNIEXPORT void JNICALL Java_java_text_Bidi_nativeBidiChars
         if (cText) {
             UBiDiLevel baseLevel = (UBiDiLevel)dir;
             jbyte *cEmbs = 0;
-	    uint8_t *cEmbsAdj = 0;
+            uint8_t *cEmbsAdj = 0;
             if (embs != NULL) {
                 cEmbs = (jbyte*)(*env)->GetPrimitiveArrayCritical(env, embs, NULL);
-		if (cEmbs) {
-		    cEmbsAdj = (uint8_t*)(cEmbs + eStart);
-		}
+                if (cEmbs) {
+                    cEmbsAdj = (uint8_t*)(cEmbs + eStart);
+                }
             }
             ubidi_setPara(bidi, cText + tStart, length, baseLevel, cEmbsAdj, &err);
-	    if (cEmbs) {
-		(*env)->ReleasePrimitiveArrayCritical(env, embs, cEmbs, JNI_ABORT);
-	    }
+            if (cEmbs) {
+                (*env)->ReleasePrimitiveArrayCritical(env, embs, cEmbs, JNI_ABORT);
+            }
 
             (*env)->ReleasePrimitiveArrayCritical(env, text, cText, JNI_ABORT);
 
@@ -150,9 +150,9 @@ JNIEXPORT void JNICALL Java_java_text_Bidi_nativeBidiChars
                                     }
 
                                     resRuns = (*env)->NewIntArray(env, resRunCount * 2);
-				    if (resRuns) {
-					(*env)->SetIntArrayRegion(env, resRuns, 0, resRunCount * 2, cResRuns);
-				    }
+                                    if (resRuns) {
+                                        (*env)->SetIntArrayRegion(env, resRuns, 0, resRunCount * 2, cResRuns);
+                                    }
                                     free(cResRuns);
                                 }
                             }
@@ -165,5 +165,3 @@ JNIEXPORT void JNICALL Java_java_text_Bidi_nativeBidiChars
         ubidi_close(bidi);
     }
 }
-
-

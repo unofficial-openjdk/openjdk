@@ -1,5 +1,5 @@
 
- /* %W% %E%           */
+
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -94,95 +94,95 @@ pio2_3  =  2.02226624871116645580e-21, /* 0x3BA3198A, 0x2E000000 */
 pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 
 #ifdef __STDC__
-	int __ieee754_rem_pio2(double x, double *y)
+        int __ieee754_rem_pio2(double x, double *y)
 #else
-	int __ieee754_rem_pio2(x,y)
-	double x,y[];
+        int __ieee754_rem_pio2(x,y)
+        double x,y[];
 #endif
 {
-	double z,w,t,r,fn;
-	double tx[3];
-	int e0,i,j,nx,n,ix,hx;
+        double z,w,t,r,fn;
+        double tx[3];
+        int e0,i,j,nx,n,ix,hx;
 
-	hx = __HI(x);		/* high word of x */
-	ix = hx&0x7fffffff;
-	if(ix<=0x3fe921fb)   /* |x| ~<= pi/4 , no need for reduction */
-	    {y[0] = x; y[1] = 0; return 0;}
-	if(ix<0x4002d97c) {  /* |x| < 3pi/4, special case with n=+-1 */
-	    if(hx>0) { 
-		z = x - pio2_1;
-		if(ix!=0x3ff921fb) { 	/* 33+53 bit pi is good enough */
-		    y[0] = z - pio2_1t;
-		    y[1] = (z-y[0])-pio2_1t;
-		} else {		/* near pi/2, use 33+33+53 bit pi */
-		    z -= pio2_2;
-		    y[0] = z - pio2_2t;
-		    y[1] = (z-y[0])-pio2_2t;
-		}
-		return 1;
-	    } else {	/* negative x */
-		z = x + pio2_1;
-		if(ix!=0x3ff921fb) { 	/* 33+53 bit pi is good enough */
-		    y[0] = z + pio2_1t;
-		    y[1] = (z-y[0])+pio2_1t;
-		} else {		/* near pi/2, use 33+33+53 bit pi */
-		    z += pio2_2;
-		    y[0] = z + pio2_2t;
-		    y[1] = (z-y[0])+pio2_2t;
-		}
-		return -1;
-	    }
-	}
-	if(ix<=0x413921fb) { /* |x| ~<= 2^19*(pi/2), medium size */
-	    t  = fabs(x);
-	    n  = (int) (t*invpio2+half);
-	    fn = (double)n;
-	    r  = t-fn*pio2_1;
-	    w  = fn*pio2_1t;	/* 1st round good to 85 bit */
-	    if(n<32&&ix!=npio2_hw[n-1]) {
-		y[0] = r-w;	/* quick check no cancellation */
-	    } else {
-	        j  = ix>>20;
-	        y[0] = r-w;
-	        i = j-(((__HI(y[0]))>>20)&0x7ff);
-	        if(i>16) {  /* 2nd iteration needed, good to 118 */
-		    t  = r;
-		    w  = fn*pio2_2;
-		    r  = t-w;
-		    w  = fn*pio2_2t-((t-r)-w);
-		    y[0] = r-w;
-		    i = j-(((__HI(y[0]))>>20)&0x7ff);
-		    if(i>49)  {	/* 3rd iteration need, 151 bits acc */
-		    	t  = r;	/* will cover all possible cases */
-		    	w  = fn*pio2_3;
-		    	r  = t-w;
-		    	w  = fn*pio2_3t-((t-r)-w);
-		    	y[0] = r-w;
-		    }
-		}
-	    }
-	    y[1] = (r-y[0])-w;
-	    if(hx<0) 	{y[0] = -y[0]; y[1] = -y[1]; return -n;}
-	    else	 return n;
-	}
+        hx = __HI(x);           /* high word of x */
+        ix = hx&0x7fffffff;
+        if(ix<=0x3fe921fb)   /* |x| ~<= pi/4 , no need for reduction */
+            {y[0] = x; y[1] = 0; return 0;}
+        if(ix<0x4002d97c) {  /* |x| < 3pi/4, special case with n=+-1 */
+            if(hx>0) {
+                z = x - pio2_1;
+                if(ix!=0x3ff921fb) {    /* 33+53 bit pi is good enough */
+                    y[0] = z - pio2_1t;
+                    y[1] = (z-y[0])-pio2_1t;
+                } else {                /* near pi/2, use 33+33+53 bit pi */
+                    z -= pio2_2;
+                    y[0] = z - pio2_2t;
+                    y[1] = (z-y[0])-pio2_2t;
+                }
+                return 1;
+            } else {    /* negative x */
+                z = x + pio2_1;
+                if(ix!=0x3ff921fb) {    /* 33+53 bit pi is good enough */
+                    y[0] = z + pio2_1t;
+                    y[1] = (z-y[0])+pio2_1t;
+                } else {                /* near pi/2, use 33+33+53 bit pi */
+                    z += pio2_2;
+                    y[0] = z + pio2_2t;
+                    y[1] = (z-y[0])+pio2_2t;
+                }
+                return -1;
+            }
+        }
+        if(ix<=0x413921fb) { /* |x| ~<= 2^19*(pi/2), medium size */
+            t  = fabs(x);
+            n  = (int) (t*invpio2+half);
+            fn = (double)n;
+            r  = t-fn*pio2_1;
+            w  = fn*pio2_1t;    /* 1st round good to 85 bit */
+            if(n<32&&ix!=npio2_hw[n-1]) {
+                y[0] = r-w;     /* quick check no cancellation */
+            } else {
+                j  = ix>>20;
+                y[0] = r-w;
+                i = j-(((__HI(y[0]))>>20)&0x7ff);
+                if(i>16) {  /* 2nd iteration needed, good to 118 */
+                    t  = r;
+                    w  = fn*pio2_2;
+                    r  = t-w;
+                    w  = fn*pio2_2t-((t-r)-w);
+                    y[0] = r-w;
+                    i = j-(((__HI(y[0]))>>20)&0x7ff);
+                    if(i>49)  { /* 3rd iteration need, 151 bits acc */
+                        t  = r; /* will cover all possible cases */
+                        w  = fn*pio2_3;
+                        r  = t-w;
+                        w  = fn*pio2_3t-((t-r)-w);
+                        y[0] = r-w;
+                    }
+                }
+            }
+            y[1] = (r-y[0])-w;
+            if(hx<0)    {y[0] = -y[0]; y[1] = -y[1]; return -n;}
+            else         return n;
+        }
     /*
      * all other (large) arguments
      */
-	if(ix>=0x7ff00000) {		/* x is inf or NaN */
-	    y[0]=y[1]=x-x; return 0;
-	}
+        if(ix>=0x7ff00000) {            /* x is inf or NaN */
+            y[0]=y[1]=x-x; return 0;
+        }
     /* set z = scalbn(|x|,ilogb(x)-23) */
-	__LO(z) = __LO(x);
-	e0 	= (ix>>20)-1046;	/* e0 = ilogb(z)-23; */
-	__HI(z) = ix - (e0<<20);
-	for(i=0;i<2;i++) {
-		tx[i] = (double)((int)(z));
-		z     = (z-tx[i])*two24;
-	}
-	tx[2] = z;
-	nx = 3;
-	while(tx[nx-1]==zero) nx--;	/* skip zero term */
-	n  =  __kernel_rem_pio2(tx,y,e0,nx,2,two_over_pi);
-	if(hx<0) {y[0] = -y[0]; y[1] = -y[1]; return -n;}
-	return n;
+        __LO(z) = __LO(x);
+        e0      = (ix>>20)-1046;        /* e0 = ilogb(z)-23; */
+        __HI(z) = ix - (e0<<20);
+        for(i=0;i<2;i++) {
+                tx[i] = (double)((int)(z));
+                z     = (z-tx[i])*two24;
+        }
+        tx[2] = z;
+        nx = 3;
+        while(tx[nx-1]==zero) nx--;     /* skip zero term */
+        n  =  __kernel_rem_pio2(tx,y,e0,nx,2,two_over_pi);
+        if(hx<0) {y[0] = -y[0]; y[1] = -y[1]; return -n;}
+        return n;
 }

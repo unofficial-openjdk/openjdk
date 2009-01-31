@@ -33,7 +33,6 @@ package com.sun.tools.example.debug.tty;
  * <li> com.sun.tools.example.debug.tty
  * </ol>
  *
- * @version %W% %E%
  */
 public class TTYResources_zh_CN extends java.util.ListResourceBundle {
 
@@ -285,12 +284,12 @@ public class TTYResources_zh_CN extends java.util.ListResourceBundle {
         {"Threadgroup name not specified.", "\u672a\u6307\u5b9a\u7ebf\u7a0b\u7ec4\u540d\u79f0\u3002"},
         {"Threads must be suspended", "\u5fc5\u987b\u6682\u505c\u7ebf\u7a0b"},
         {"trace method exit in effect for", "\u5bf9 {0} \u6709\u6548\u8ddf\u8e2a\u65b9\u6cd5\u9000\u51fa"},
-        {"trace method exits in effect", "\u6709\u6548\u8ddf\u8e2a\u65b9\u6cd5\u9000\u51fa"}, 
-        {"trace methods in effect", "\u6709\u6548\u8ddf\u8e2a\u65b9\u6cd5"}, 
+        {"trace method exits in effect", "\u6709\u6548\u8ddf\u8e2a\u65b9\u6cd5\u9000\u51fa"},
+        {"trace methods in effect", "\u6709\u6548\u8ddf\u8e2a\u65b9\u6cd5"},
         {"trace go method exit in effect for", "\u5bf9 {0} \u6709\u6548\u8ddf\u8e2a go \u65b9\u6cd5\u9000\u51fa"},
-        {"trace go method exits in effect", "\u6709\u6548\u8ddf\u8e2a go \u65b9\u6cd5\u9000\u51fa"}, 
-        {"trace go methods in effect", "\u6709\u6548\u8ddf\u8e2a go \u65b9\u6cd5"}, 
-        {"trace not in effect", "\u65e0\u6548\u8ddf\u8e2a"}, 
+        {"trace go method exits in effect", "\u6709\u6548\u8ddf\u8e2a go \u65b9\u6cd5\u9000\u51fa"},
+        {"trace go methods in effect", "\u6709\u6548\u8ddf\u8e2a go \u65b9\u6cd5"},
+        {"trace not in effect", "\u65e0\u6548\u8ddf\u8e2a"},
         {"Unable to attach to target VM.", "\u65e0\u6cd5\u8fde\u63a5\u5230\u76ee\u6807 VM\u3002"},
         {"Unable to display process output:", "\u65e0\u6cd5\u663e\u793a\u8fdb\u7a0b\u8f93\u51fa\uff1a {0}"},
         {"Unable to launch target VM.", "\u65e0\u6cd5\u542f\u52a8\u76ee\u6807 VM\u3002"},
@@ -364,7 +363,7 @@ public class TTYResources_zh_CN extends java.util.ListResourceBundle {
 "unwatch [access|all] <\u7c7b ID>.<\u5b57\u6bb5\u540d>\n" +
 "                          -- \u505c\u6b62\u76d1\u89c6\u5bf9\u5b57\u6bb5\u7684\u8bbf\u95ee/\u4fee\u6539\n" +
 "trace [go] methods [thread]\n" +
-"                          -- \u8ddf\u8e2a\u65b9\u6cd5\u7684\u8fdb\u5165\u548c\u9000\u51fa\u3002\n" +       
+"                          -- \u8ddf\u8e2a\u65b9\u6cd5\u7684\u8fdb\u5165\u548c\u9000\u51fa\u3002\n" +
 "                          -- \u9664\u975e\u6307\u5b9a 'go'\uff0c\u5426\u5219\u6240\u6709\u7ebf\u7a0b\u90fd\u5c06\u6682\u505c\n" +
 "trace [go] method exit | exits [thread]\n" +
 "                          -- \u8ddf\u8e2a\u5f53\u524d\u65b9\u6cd5\u7684\u9000\u51fa\u6216\u6240\u6709\u65b9\u6cd5\u7684\u9000\u51fa\n" +

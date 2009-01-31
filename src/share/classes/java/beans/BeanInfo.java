@@ -53,18 +53,18 @@ public interface BeanInfo {
 
     /**
      * Gets the beans <code>BeanDescriptor</code>.
-     * 
+     *
      * @return  A BeanDescriptor providing overall information about
      * the bean, such as its displayName, its customizer, etc.  May
      * return null if the information should be obtained by automatic
      * analysis.
      */
     BeanDescriptor getBeanDescriptor();
-    
+
     /**
      * Gets the beans <code>EventSetDescriptor</code>s.
-     * 
-     * @return  An array of EventSetDescriptors describing the kinds of 
+     *
+     * @return  An array of EventSetDescriptors describing the kinds of
      * events fired by this bean.  May return null if the information
      * should be obtained by automatic analysis.
      */
@@ -72,16 +72,16 @@ public interface BeanInfo {
 
     /**
      * A bean may have a "default" event that is the event that will
-     * mostly commonly be used by humans when using the bean. 
+     * mostly commonly be used by humans when using the bean.
      * @return Index of default event in the EventSetDescriptor array
-     *		returned by getEventSetDescriptors.
-     * <P>	Returns -1 if there is no default event.
+     *          returned by getEventSetDescriptors.
+     * <P>      Returns -1 if there is no default event.
      */
     int getDefaultEventIndex();
 
     /**
      * Gets the beans <code>PropertyDescriptor</code>s.
-     * 
+     *
      * @return An array of PropertyDescriptors describing the editable
      * properties supported by this bean.  May return null if the
      * information should be obtained by automatic analysis.
@@ -95,17 +95,17 @@ public interface BeanInfo {
 
     /**
      * A bean may have a "default" property that is the property that will
-     * mostly commonly be initially chosen for update by human's who are 
+     * mostly commonly be initially chosen for update by human's who are
      * customizing the bean.
      * @return  Index of default property in the PropertyDescriptor array
-     * 		returned by getPropertyDescriptors.
-     * <P>	Returns -1 if there is no default property.
+     *          returned by getPropertyDescriptors.
+     * <P>      Returns -1 if there is no default property.
      */
     int getDefaultPropertyIndex();
 
     /**
      * Gets the beans <code>MethodDescriptor</code>s.
-     * 
+     *
      * @return An array of MethodDescriptors describing the externally
      * visible methods supported by this bean.  May return null if
      * the information should be obtained by automatic analysis.
@@ -142,13 +142,13 @@ public interface BeanInfo {
      * so they can be rendered onto an existing background.
      *
      * @param  iconKind  The kind of icon requested.  This should be
-     *    one of the constant values ICON_COLOR_16x16, ICON_COLOR_32x32, 
+     *    one of the constant values ICON_COLOR_16x16, ICON_COLOR_32x32,
      *    ICON_MONO_16x16, or ICON_MONO_32x32.
      * @return  An image object representing the requested icon.  May
      *    return null if no suitable icon is available.
      */
     java.awt.Image getIcon(int iconKind);
-     
+
     /**
      * Constant to indicate a 16 x 16 color icon.
      */

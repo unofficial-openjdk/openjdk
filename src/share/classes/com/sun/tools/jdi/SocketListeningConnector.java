@@ -41,7 +41,7 @@ public class SocketListeningConnector extends GenericListeningConnector {
     public SocketListeningConnector() {
         super(new SocketTransportService());
 
-	addIntegerArgument(
+        addIntegerArgument(
             ARG_PORT,
             getString("socket_listening.port.label"),
             getString("socket_listening.port"),
@@ -49,40 +49,40 @@ public class SocketListeningConnector extends GenericListeningConnector {
             false,
             0, Integer.MAX_VALUE);
 
-	addStringArgument(
+        addStringArgument(
             ARG_LOCALADDR,
             getString("socket_listening.localaddr.label"),
             getString("socket_listening.localaddr"),
-	    "",						// default is wildcard
+            "",                                         // default is wildcard
             false);
 
         transport = new Transport() {
-            public String name() {	
-                return "dt_socket";	// for compatability reasons
+            public String name() {
+                return "dt_socket";     // for compatability reasons
             }
         };
     }
 
 
     public String
-	startListening(Map<String,? extends Connector.Argument> args)
-	throws IOException, IllegalConnectorArgumentsException
+        startListening(Map<String,? extends Connector.Argument> args)
+        throws IOException, IllegalConnectorArgumentsException
     {
-	String port = argument(ARG_PORT, args).value();
-	String localaddr = argument(ARG_LOCALADDR, args).value();
+        String port = argument(ARG_PORT, args).value();
+        String localaddr = argument(ARG_LOCALADDR, args).value();
 
-	// default to system chosen port
-	if (port.length() == 0) {
-	    port = "0";
-	}
+        // default to system chosen port
+        if (port.length() == 0) {
+            port = "0";
+        }
 
-	if (localaddr.length() > 0) {
-	   localaddr = localaddr + ":" + port;    
-	} else {
-	   localaddr = port;
-	}
+        if (localaddr.length() > 0) {
+           localaddr = localaddr + ":" + port;
+        } else {
+           localaddr = port;
+        }
 
-	return super.startListening(localaddr, args);
+        return super.startListening(localaddr, args);
     }
 
     public String name() {
@@ -93,4 +93,3 @@ public class SocketListeningConnector extends GenericListeningConnector {
         return getString("socket_listening.description");
     }
 }
-

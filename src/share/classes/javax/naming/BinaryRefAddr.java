@@ -26,13 +26,13 @@
 package javax.naming;
 
 /**
-  * This class represents the binary form of the address of 
+  * This class represents the binary form of the address of
   * a communications end-point.
   *<p>
   * A BinaryRefAddr consists of a type that describes the communication mechanism
   * and an opaque buffer containing the address description
   * specific to that communication mechanism. The format and interpretation of
-  * the address type and the contents of the opaque buffer are based on 
+  * the address type and the contents of the opaque buffer are based on
   * the agreement of three parties: the client that uses the address,
   * the object/server that can be reached using the address,
   * and the administrator or program that creates the address.
@@ -49,7 +49,6 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see RefAddr
   * @see StringRefAddr
@@ -66,7 +65,7 @@ public class BinaryRefAddr extends RefAddr {
      * Contains the bytes of the address.
      * This field is initialized by the constructor and returned
      * using getAddressBytes() and getAddressContents().
-     * @serial 
+     * @serial
      */
     private byte[] buf = null;
 
@@ -75,11 +74,11 @@ public class BinaryRefAddr extends RefAddr {
       * array for contents.
       *
       * @param addrType A non-null string describing the type of the address.
-      * @param src	The non-null contents of the address as a byte array.
-      *			The contents of src is copied into the new BinaryRefAddr.
+      * @param src      The non-null contents of the address as a byte array.
+      *                 The contents of src is copied into the new BinaryRefAddr.
       */
     public BinaryRefAddr(String addrType, byte[] src) {
-	this(addrType, src, 0, src.length);
+        this(addrType, src, 0, src.length);
     }
 
     /**
@@ -87,17 +86,17 @@ public class BinaryRefAddr extends RefAddr {
       * a region of a byte array for contents.
       *
       * @param addrType A non-null string describing the type of the address.
-      * @param src	The non-null contents of the address as a byte array.
-      *			The contents of src is copied into the new BinaryRefAddr.
-      * @param offset	The starting index in src to get the bytes.
-      *			0 <= offset <= src.length.
-      * @param count	The number of bytes to extract from src.
+      * @param src      The non-null contents of the address as a byte array.
+      *                 The contents of src is copied into the new BinaryRefAddr.
+      * @param offset   The starting index in src to get the bytes.
+      *                 0 <= offset <= src.length.
+      * @param count    The number of bytes to extract from src.
       *                 0 <= count <= src.length-offset.
       */
     public BinaryRefAddr(String addrType, byte[] src, int offset, int count) {
-	super(addrType);
-	buf = new byte[count];
-	System.arraycopy(src, offset, buf, 0, count);
+        super(addrType);
+        buf = new byte[count];
+        System.arraycopy(src, offset, buf, 0, count);
     }
 
     /**
@@ -110,35 +109,35 @@ public class BinaryRefAddr extends RefAddr {
       * @return The non-null buffer containing this address's contents.
       */
     public Object getContent() {
-	return buf;
+        return buf;
     }
 
-    
+
     /**
       * Determines whether obj is equal to this address.  It is equal if
       * it contains the same address type and their contents are byte-wise
       * equivalent.
-      * @param obj	The possibly null object to check.
+      * @param obj      The possibly null object to check.
       * @return true if the object is equal; false otherwise.
       */
     public boolean equals(Object obj) {
-	if ((obj != null) && (obj instanceof BinaryRefAddr)) {
-	    BinaryRefAddr target = (BinaryRefAddr)obj;
-	    if (addrType.compareTo(target.addrType) == 0) {
-		if (buf == null && target.buf == null)
-		    return true;
-		if (buf == null || target.buf == null ||
-		    buf.length != target.buf.length)
-		    return false;
-		for (int i = 0; i < buf.length; i++)
-		    if (buf[i] != target.buf[i])
-			return false;
-		return true;
-	    }
-	}
-	return false;
+        if ((obj != null) && (obj instanceof BinaryRefAddr)) {
+            BinaryRefAddr target = (BinaryRefAddr)obj;
+            if (addrType.compareTo(target.addrType) == 0) {
+                if (buf == null && target.buf == null)
+                    return true;
+                if (buf == null || target.buf == null ||
+                    buf.length != target.buf.length)
+                    return false;
+                for (int i = 0; i < buf.length; i++)
+                    if (buf[i] != target.buf[i])
+                        return false;
+                return true;
+            }
+        }
+        return false;
     }
-    
+
     /**
       * Computes the hash code of this address using its address type and contents.
       * Two BinaryRefAddrs have the same hash code if they have
@@ -149,11 +148,11 @@ public class BinaryRefAddr extends RefAddr {
       * @return The hash code of this address as an int.
       */
     public int hashCode() {
-	int hash = addrType.hashCode();
-	for (int i = 0; i < buf.length; i++) {
-	    hash += buf[i];	// %%% improve later
-	}
-	return hash;
+        int hash = addrType.hashCode();
+        for (int i = 0; i < buf.length; i++) {
+            hash += buf[i];     // %%% improve later
+        }
+        return hash;
     }
 
     /**
@@ -166,15 +165,15 @@ public class BinaryRefAddr extends RefAddr {
       * @return The non-null string representation of this address.
       */
     public String toString(){
-	StringBuffer str = new StringBuffer("Address Type: " + addrType + "\n");
+        StringBuffer str = new StringBuffer("Address Type: " + addrType + "\n");
 
-	str.append("AddressContents: ");
-	for (int i = 0; i<buf.length && i < 32; i++) {
-	    str.append(Integer.toHexString(buf[i]) +" ");
-	}
-	if (buf.length >= 32)
-	    str.append(" ...\n");
-	return (str.toString());
+        str.append("AddressContents: ");
+        for (int i = 0; i<buf.length && i < 32; i++) {
+            str.append(Integer.toHexString(buf[i]) +" ");
+        }
+        if (buf.length >= 32)
+            str.append(" ...\n");
+        return (str.toString());
     }
 
     /**

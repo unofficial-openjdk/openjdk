@@ -49,7 +49,7 @@ import com.sun.org.apache.xml.internal.security.utils.IdResolver;
 public class DOMUtils {
 
     // class cannot be instantiated
-    private DOMUtils() {} 
+    private DOMUtils() {}
 
     /**
      * Returns the owner document of the specified node.
@@ -76,46 +76,46 @@ public class DOMUtils {
      * @return the newly created element
      */
     public static Element createElement(Document doc, String tag, String nsURI,
-	String prefix) {
+        String prefix) {
         String qName = prefix == null ? tag : prefix + ":" + tag;
         return doc.createElementNS(nsURI, qName);
     }
 
     /**
-     * Sets an element's attribute (using DOM level 2) with the 
+     * Sets an element's attribute (using DOM level 2) with the
      * specified value and namespace prefix.
      *
      * @param elem the element to set the attribute on
      * @param name the name of the attribute
-     * @param value the attribute value. If null, no attribute is set. 
+     * @param value the attribute value. If null, no attribute is set.
      */
     public static void setAttribute(Element elem, String name, String value) {
-	if (value == null) return;
-	elem.setAttributeNS(null, name, value);
+        if (value == null) return;
+        elem.setAttributeNS(null, name, value);
     }
 
     /**
-     * Sets an element's attribute (using DOM level 2) with the 
+     * Sets an element's attribute (using DOM level 2) with the
      * specified value and namespace prefix AND registers the ID value with
      * the specified element. This is for resolving same-document
      * ID references.
      *
      * @param elem the element to set the attribute on
      * @param name the name of the attribute
-     * @param value the attribute value. If null, no attribute is set. 
+     * @param value the attribute value. If null, no attribute is set.
      */
     public static void setAttributeID(Element elem, String name, String value) {
-	if (value == null) return;
-	elem.setAttributeNS(null, name, value);
-	IdResolver.registerElementById(elem, value);
+        if (value == null) return;
+        elem.setAttributeNS(null, name, value);
+        IdResolver.registerElementById(elem, value);
     }
 
     /**
-     * Returns the first child element of the specified node, or null if there 
+     * Returns the first child element of the specified node, or null if there
      * is no such element.
      *
      * @param node the node
-     * @return the first child element of the specified node, or null if there 
+     * @return the first child element of the specified node, or null if there
      *    is no such element
      * @throws NullPointerException if <code>node == null</code>
      */
@@ -128,11 +128,11 @@ public class DOMUtils {
     }
 
     /**
-     * Returns the last child element of the specified node, or null if there 
+     * Returns the last child element of the specified node, or null if there
      * is no such element.
      *
      * @param node the node
-     * @return the last child element of the specified node, or null if there 
+     * @return the last child element of the specified node, or null if there
      *    is no such element
      * @throws NullPointerException if <code>node == null</code>
      */
@@ -145,11 +145,11 @@ public class DOMUtils {
     }
 
     /**
-     * Returns the next sibling element of the specified node, or null if there 
+     * Returns the next sibling element of the specified node, or null if there
      * is no such element.
      *
      * @param node the node
-     * @return the next sibling element of the specified node, or null if there 
+     * @return the next sibling element of the specified node, or null if there
      *    is no such element
      * @throws NullPointerException if <code>node == null</code>
      */
@@ -163,7 +163,7 @@ public class DOMUtils {
 
     /**
      * Returns the attribute value for the attribute with the specified name.
-     * Returns null if there is no such attribute, or 
+     * Returns null if there is no such attribute, or
      * the empty string if the attribute value is empty.
      *
      * <p>This works around a limitation of the DOM
@@ -181,14 +181,14 @@ public class DOMUtils {
     }
 
     /**
-     * Returns a Set of <code>Node</code>s, backed by the specified 
+     * Returns a Set of <code>Node</code>s, backed by the specified
      * <code>NodeList</code>.
      *
      * @param nl the NodeList
      * @return a Set of Nodes
      */
     public static Set nodeSet(NodeList nl) {
-	return new NodeSet(nl);
+        return new NodeSet(nl);
     }
 
     static class NodeSet extends AbstractSet {
@@ -217,7 +217,7 @@ public class DOMUtils {
             };
         }
     }
-    
+
     /**
      * Returns the prefix associated with the specified namespace URI
      *
@@ -229,10 +229,10 @@ public class DOMUtils {
     public static String getNSPrefix(XMLCryptoContext context, String nsURI) {
         if (context != null) {
             return context.getNamespacePrefix
-		(nsURI, context.getDefaultNamespacePrefix());
+                (nsURI, context.getDefaultNamespacePrefix());
         } else {
             return null;
-	}
+        }
     }
 
     /**
@@ -243,9 +243,9 @@ public class DOMUtils {
      *    null if not set
      */
     public static String getSignaturePrefix(XMLCryptoContext context) {
-	return getNSPrefix(context, XMLSignature.XMLNS);
+        return getNSPrefix(context, XMLSignature.XMLNS);
     }
-    
+
     /**
      * Removes all children nodes from the specified node.
      *
@@ -262,56 +262,56 @@ public class DOMUtils {
      * Compares 2 nodes for equality. Implementation is not complete.
      */
     public static boolean nodesEqual(Node thisNode, Node otherNode) {
-	if (thisNode == otherNode) {
-	    return true;
-	}
-	if (thisNode.getNodeType() != otherNode.getNodeType()) {
-	    return false;
-	}
-	// FIXME - test content, etc
-	return true;
+        if (thisNode == otherNode) {
+            return true;
+        }
+        if (thisNode.getNodeType() != otherNode.getNodeType()) {
+            return false;
+        }
+        // FIXME - test content, etc
+        return true;
     }
 
     /**
-     * Checks if child element has same owner document before 
+     * Checks if child element has same owner document before
      * appending to the parent, and imports it to the parent's document
      * if necessary.
      */
     public static void appendChild(Node parent, Node child) {
-	Document ownerDoc = getOwnerDocument(parent);
-	if (child.getOwnerDocument() != ownerDoc) {
-	    parent.appendChild(ownerDoc.importNode(child, true));
-	} else {
-	    parent.appendChild(child);
-	}
+        Document ownerDoc = getOwnerDocument(parent);
+        if (child.getOwnerDocument() != ownerDoc) {
+            parent.appendChild(ownerDoc.importNode(child, true));
+        } else {
+            parent.appendChild(child);
+        }
     }
 
     public static boolean paramsEqual(AlgorithmParameterSpec spec1,
-	AlgorithmParameterSpec spec2) {
-	if (spec1 == spec2) {
-	    return true;
-	}
-	if (spec1 instanceof XPathFilter2ParameterSpec &&
-	    spec2 instanceof XPathFilter2ParameterSpec) {
-	    return paramsEqual((XPathFilter2ParameterSpec) spec1,
-		(XPathFilter2ParameterSpec) spec2);
-	}
-	if (spec1 instanceof ExcC14NParameterSpec &&
-	    spec2 instanceof ExcC14NParameterSpec) {
-	    return paramsEqual((ExcC14NParameterSpec) spec1,
-		(ExcC14NParameterSpec) spec2);
-	}
-	if (spec1 instanceof XPathFilterParameterSpec &&
-	    spec2 instanceof XPathFilterParameterSpec) {
-	    return paramsEqual((XPathFilterParameterSpec) spec1,
-		(XPathFilterParameterSpec) spec2);
-	}
-	if (spec1 instanceof XSLTTransformParameterSpec &&
-	    spec2 instanceof XSLTTransformParameterSpec) {
-	    return paramsEqual((XSLTTransformParameterSpec) spec1,
-		(XSLTTransformParameterSpec) spec2);
-	}
-	return false;
+        AlgorithmParameterSpec spec2) {
+        if (spec1 == spec2) {
+            return true;
+        }
+        if (spec1 instanceof XPathFilter2ParameterSpec &&
+            spec2 instanceof XPathFilter2ParameterSpec) {
+            return paramsEqual((XPathFilter2ParameterSpec) spec1,
+                (XPathFilter2ParameterSpec) spec2);
+        }
+        if (spec1 instanceof ExcC14NParameterSpec &&
+            spec2 instanceof ExcC14NParameterSpec) {
+            return paramsEqual((ExcC14NParameterSpec) spec1,
+                (ExcC14NParameterSpec) spec2);
+        }
+        if (spec1 instanceof XPathFilterParameterSpec &&
+            spec2 instanceof XPathFilterParameterSpec) {
+            return paramsEqual((XPathFilterParameterSpec) spec1,
+                (XPathFilterParameterSpec) spec2);
+        }
+        if (spec1 instanceof XSLTTransformParameterSpec &&
+            spec2 instanceof XSLTTransformParameterSpec) {
+            return paramsEqual((XSLTTransformParameterSpec) spec1,
+                (XSLTTransformParameterSpec) spec2);
+        }
+        return false;
     }
 
     private static boolean paramsEqual(XPathFilter2ParameterSpec spec1,
@@ -319,7 +319,7 @@ public class DOMUtils {
 
         List types = spec1.getXPathList();
         List otypes = spec2.getXPathList();
-	int size = types.size();
+        int size = types.size();
         if (size != otypes.size()) {
             return false;
         }
@@ -335,18 +335,18 @@ public class DOMUtils {
     }
 
     private static boolean paramsEqual(ExcC14NParameterSpec spec1,
-	ExcC14NParameterSpec spec2) {
+        ExcC14NParameterSpec spec2) {
         return spec1.getPrefixList().equals(spec2.getPrefixList());
     }
 
     private static boolean paramsEqual(XPathFilterParameterSpec spec1,
-	XPathFilterParameterSpec spec2) {
+        XPathFilterParameterSpec spec2) {
 
         return spec1.getXPath().equals(spec2.getXPath());
     }
 
     private static boolean paramsEqual(XSLTTransformParameterSpec spec1,
-	XSLTTransformParameterSpec spec2) {
+        XSLTTransformParameterSpec spec2) {
 
         XMLStructure ostylesheet = spec2.getStylesheet();
         if (!(ostylesheet instanceof javax.xml.crypto.dom.DOMStructure)) {
@@ -354,8 +354,8 @@ public class DOMUtils {
         }
         Node ostylesheetElem =
             ((javax.xml.crypto.dom.DOMStructure) ostylesheet).getNode();
-        XMLStructure stylesheet = spec1.getStylesheet();        
-	Node stylesheetElem =
+        XMLStructure stylesheet = spec1.getStylesheet();
+        Node stylesheetElem =
             ((javax.xml.crypto.dom.DOMStructure) stylesheet).getNode();
         return nodesEqual(stylesheetElem, ostylesheetElem);
     }

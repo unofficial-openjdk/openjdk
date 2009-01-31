@@ -46,7 +46,6 @@ import java.io.IOException;
  * with different styles of error handling there is no guarantee that
  * errors will be propagated to the invoker.
  *
- * @version 	%I%, %G%
  * @since 1.5
  */
 public interface Appendable {

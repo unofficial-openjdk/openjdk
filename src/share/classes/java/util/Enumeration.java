@@ -56,7 +56,6 @@ package java.util;
  * @see     java.util.Vector#elements()
  *
  * @author  Lee Boynton
- * @version %I%, %G%
  * @since   JDK1.0
  */
 public interface Enumeration<E> {

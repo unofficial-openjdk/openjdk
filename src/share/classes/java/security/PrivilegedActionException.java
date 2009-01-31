@@ -63,7 +63,7 @@ public class PrivilegedActionException extends Exception {
      * @param exception The exception thrown
      */
     public PrivilegedActionException(Exception exception) {
-	super((Throwable)null);  // Disallow initCause
+        super((Throwable)null);  // Disallow initCause
         this.exception = exception;
     }
 
@@ -83,7 +83,7 @@ public class PrivilegedActionException extends Exception {
      *                                            AccessControlContext)
      */
     public Exception getException() {
-	return exception;
+        return exception;
     }
 
     /**

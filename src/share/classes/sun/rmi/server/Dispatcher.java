@@ -42,8 +42,8 @@ public interface Dispatcher {
      * @param call the "remote call" from which operation and
      * method arguments can be obtained.
      * @exception RemoteException unable to marshal
-     * return result 
+     * return result
      */
     void dispatch(Remote obj, RemoteCall call)
-	throws java.io.IOException;
+        throws java.io.IOException;
 }

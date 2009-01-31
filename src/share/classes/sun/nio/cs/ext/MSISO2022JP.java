@@ -30,17 +30,17 @@ import java.nio.charset.Charset;
 public class MSISO2022JP extends ISO2022_JP
 {
     public MSISO2022JP() {
-	super("x-windows-iso2022jp", 
-	      ExtendedCharsets.aliasesFor("x-windows-iso2022jp"));
+        super("x-windows-iso2022jp",
+              ExtendedCharsets.aliasesFor("x-windows-iso2022jp"));
     }
 
     public String historicalName() {
-	return "windows-iso2022jp";
+        return "windows-iso2022jp";
     }
 
     public boolean contains(Charset cs) {
-      return super.contains(cs) || 
-	     (cs instanceof MSISO2022JP);
+      return super.contains(cs) ||
+             (cs instanceof MSISO2022JP);
     }
 
     protected short[] getDecIndex1() {

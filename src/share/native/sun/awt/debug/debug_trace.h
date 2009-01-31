@@ -34,7 +34,7 @@ extern "C" {
 
 #include "debug_util.h"
 
-typedef int	dtrace_id;
+typedef int     dtrace_id;
 enum {
     UNDEFINED_TRACE_ID = -1 /* indicates trace point has not been registered yet */
 };
@@ -61,10 +61,10 @@ extern void DTrace_VPrint(const char * file, int line, int argc, const char * fm
 extern void DTrace_VPrintln(const char * file, int line, int argc, const char * fmt, va_list arglist);
 
 /* each file includes this flag indicating module trace status */
-static dtrace_id	_Dt_FileTraceId = UNDEFINED_TRACE_ID;
+static dtrace_id        _Dt_FileTraceId = UNDEFINED_TRACE_ID;
 
 /* not meant to be called from client code--
- * it's just a template for the other macros 
+ * it's just a template for the other macros
  */
 #define _DTrace_Template(_func, _ac, _f, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8) \
 { \
@@ -74,48 +74,48 @@ static dtrace_id	_Dt_FileTraceId = UNDEFINED_TRACE_ID;
 
 /* printf style trace macros */
 #define DTRACE_PRINT(_fmt) \
-	_DTrace_Template(DTrace_VPrint, 0, (_fmt), 0, 0, 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 0, (_fmt), 0, 0, 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINT1(_fmt, _arg1) \
-	_DTrace_Template(DTrace_VPrint, 1, (_fmt), (_arg1), 0, 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 1, (_fmt), (_arg1), 0, 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINT2(_fmt, _arg1, _arg2) \
-	_DTrace_Template(DTrace_VPrint, 2, (_fmt), (_arg1), (_arg2), 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 2, (_fmt), (_arg1), (_arg2), 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINT3(_fmt, _arg1, _arg2, _arg3) \
-	_DTrace_Template(DTrace_VPrint, 3, (_fmt), (_arg1), (_arg2), (_arg3), 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 3, (_fmt), (_arg1), (_arg2), (_arg3), 0, 0, 0, 0, 0)
 #define DTRACE_PRINT4(_fmt, _arg1, _arg2, _arg3, _arg4) \
-	_DTrace_Template(DTrace_VPrint, 4, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 4, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), 0, 0, 0, 0)
 #define DTRACE_PRINT5(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5) \
-	_DTrace_Template(DTrace_VPrint, 5, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), 0, 0, 0)
+        _DTrace_Template(DTrace_VPrint, 5, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), 0, 0, 0)
 #define DTRACE_PRINT6(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6) \
-	_DTrace_Template(DTrace_VPrint, 6, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), 0, 0)
+        _DTrace_Template(DTrace_VPrint, 6, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), 0, 0)
 #define DTRACE_PRINT7(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7) \
-	_DTrace_Template(DTrace_VPrint, 7, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), 0)
+        _DTrace_Template(DTrace_VPrint, 7, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), 0)
 #define DTRACE_PRINT8(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8) \
-	_DTrace_Template(DTrace_VPrint, 8, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), (_arg8))
+        _DTrace_Template(DTrace_VPrint, 8, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), (_arg8))
 
 /* printf style trace macros that automatically output a newline */
 #define DTRACE_PRINTLN(_fmt) \
-	_DTrace_Template(DTrace_VPrintln, 0, (_fmt), 0, 0, 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 0, (_fmt), 0, 0, 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINTLN1(_fmt, _arg1) \
-	_DTrace_Template(DTrace_VPrintln, 1, (_fmt), (_arg1), 0, 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 1, (_fmt), (_arg1), 0, 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINTLN2(_fmt, _arg1, _arg2) \
-	_DTrace_Template(DTrace_VPrintln, 2, (_fmt), (_arg1), (_arg2), 0, 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 2, (_fmt), (_arg1), (_arg2), 0, 0, 0, 0, 0, 0)
 #define DTRACE_PRINTLN3(_fmt, _arg1, _arg2, _arg3) \
-	_DTrace_Template(DTrace_VPrintln, 3, (_fmt), (_arg1), (_arg2), (_arg3), 0, 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 3, (_fmt), (_arg1), (_arg2), (_arg3), 0, 0, 0, 0, 0)
 #define DTRACE_PRINTLN4(_fmt, _arg1, _arg2, _arg3, _arg4) \
-	_DTrace_Template(DTrace_VPrintln, 4, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), 0, 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 4, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), 0, 0, 0, 0)
 #define DTRACE_PRINTLN5(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5) \
-	_DTrace_Template(DTrace_VPrintln, 5, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), 0, 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 5, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), 0, 0, 0)
 #define DTRACE_PRINTLN6(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6) \
-	_DTrace_Template(DTrace_VPrintln, 6, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), 0, 0)
+        _DTrace_Template(DTrace_VPrintln, 6, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), 0, 0)
 #define DTRACE_PRINTLN7(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7) \
-	_DTrace_Template(DTrace_VPrintln, 7, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), 0)
+        _DTrace_Template(DTrace_VPrintln, 7, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), 0)
 #define DTRACE_PRINTLN8(_fmt, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8) \
-	_DTrace_Template(DTrace_VPrintln, 8, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), (_arg8))
+        _DTrace_Template(DTrace_VPrintln, 8, (_fmt), (_arg1), (_arg2), (_arg3), (_arg4), (_arg5), (_arg6), (_arg7), (_arg8))
 
 #else /* else DEBUG not defined */
 
 /* printf style trace macros */
-#define DTRACE_PRINT(_fmt) 
+#define DTRACE_PRINT(_fmt)
 #define DTRACE_PRINT1(_fmt, _arg1)
 #define DTRACE_PRINT2(_fmt, _arg1, _arg2)
 #define DTRACE_PRINT3(_fmt, _arg1, _arg2, _arg3)
@@ -143,4 +143,3 @@ static dtrace_id	_Dt_FileTraceId = UNDEFINED_TRACE_ID;
 #endif
 
 #endif /* _DEBUG_TRACE_H */
-

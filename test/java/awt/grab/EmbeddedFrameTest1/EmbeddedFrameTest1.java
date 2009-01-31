@@ -389,5 +389,3 @@ class TestDialog extends Dialog
     }
 
 }// TestDialog  class
-
-

@@ -37,7 +37,7 @@
  *   would have been necessary for heap=dump, and these other items
  *   could have been moved to the ObjectInfo. An optimization left
  *   to the reader. Lookups are not normally done on ObjectIndex's
- *   anyway because we typically know when to create them. 
+ *   anyway because we typically know when to create them.
  *   Objects that have been tagged, are tagged with an ObjectIndex,
  *   Objects that are not tagged need a ObjectIndex, a lookup when
  *     heap=sites, and a new one when heap=dump.
@@ -64,7 +64,7 @@
  *   of the ObjectInfo as a linked list. (see hprof_references.c).
  *   Once all the refernces are attached, they are processed into the
  *   appropriate hprof dump information.
- * 
+ *
  * The references field is set and cleared as many times as the heap
  *   is dumped, as is the reference table.
  *
@@ -73,9 +73,9 @@
 #include "hprof.h"
 
 typedef struct ObjectKey {
-    SiteIndex    site_index;	/* Site of allocation */
+    SiteIndex    site_index;    /* Site of allocation */
     jint         size;          /* Size of object as reported by VM */
-    ObjectKind   kind;	        /* Kind of object, most are OBJECT_NORMAL */
+    ObjectKind   kind;          /* Kind of object, most are OBJECT_NORMAL */
     SerialNumber serial_num;    /* For heap=dump, a unique number. */
 } ObjectKey;
 
@@ -112,25 +112,25 @@ list_item(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     ObjectKey  *pkey;
     ObjectInfo *info;
-    
+
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(key_len!=0);
     HPROF_ASSERT(info_ptr!=NULL);
 
     info = (ObjectInfo*)info_ptr;
-   
+
     pkey = (ObjectKey*)key_ptr;
     debug_message( "Object 0x%08x: site=0x%08x, SN=%u, "
-			  " size=%d, kind=%d, refs=0x%x, threadSN=%u\n",
-	 i, pkey->site_index, pkey->serial_num, pkey->size, pkey->kind,
-	 info->references, info->thread_serial_num);
+                          " size=%d, kind=%d, refs=0x%x, threadSN=%u\n",
+         i, pkey->site_index, pkey->serial_num, pkey->size, pkey->kind,
+         info->references, info->thread_serial_num);
 }
 
 static void
 clear_references(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     ObjectInfo *info;
-    
+
     HPROF_ASSERT(info_ptr!=NULL);
     info = (ObjectInfo *)info_ptr;
     info->references = 0;
@@ -140,7 +140,7 @@ static void
 dump_class_references(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     ObjectInfo *info;
-    
+
     HPROF_ASSERT(info_ptr!=NULL);
     info = (ObjectInfo *)info_ptr;
     reference_dump_class((JNIEnv*)arg, i, info->references);
@@ -150,7 +150,7 @@ static void
 dump_instance_references(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     ObjectInfo *info;
-    
+
     HPROF_ASSERT(info_ptr!=NULL);
     info = (ObjectInfo *)info_ptr;
     reference_dump_instance((JNIEnv*)arg, i, info->references);
@@ -164,25 +164,25 @@ object_new(SiteIndex site_index, jint size, ObjectKind kind, SerialNumber thread
     ObjectIndex index;
     ObjectKey   key;
     static ObjectKey empty_key;
-    
+
     key            = empty_key;
     key.site_index = site_index;
     key.size       = size;
     key.kind       = kind;
     if ( gdata->heap_dump ) {
-	static ObjectInfo empty_info;
-	ObjectInfo i;
+        static ObjectInfo empty_info;
+        ObjectInfo i;
 
-	i = empty_info;
-	i.thread_serial_num = thread_serial_num;
+        i = empty_info;
+        i.thread_serial_num = thread_serial_num;
         key.serial_num = gdata->object_serial_number_counter++;
-	index = table_create_entry(gdata->object_table, 
-			    &key, (int)sizeof(ObjectKey), &i);
+        index = table_create_entry(gdata->object_table,
+                            &key, (int)sizeof(ObjectKey), &i);
     } else {
-        key.serial_num = 
-	     class_get_serial_number(site_get_class_index(site_index));
-	index = table_find_or_create_entry(gdata->object_table, 
-			    &key, (int)sizeof(ObjectKey), NULL, NULL);
+        key.serial_num =
+             class_get_serial_number(site_get_class_index(site_index));
+        index = table_find_or_create_entry(gdata->object_table,
+                            &key, (int)sizeof(ObjectKey), NULL, NULL);
     }
     site_update_stats(site_index, size, 1);
     return index;
@@ -192,21 +192,21 @@ void
 object_init(void)
 {
     jint bucket_count;
-    
+
     bucket_count = 511;
     if ( gdata->heap_dump ) {
-	bucket_count = 0;
+        bucket_count = 0;
     }
     HPROF_ASSERT(gdata->object_table==NULL);
-    gdata->object_table = table_initialize("Object", 4096, 
-			4096, bucket_count, (int)sizeof(ObjectInfo));
+    gdata->object_table = table_initialize("Object", 4096,
+                        4096, bucket_count, (int)sizeof(ObjectInfo));
 }
 
 SiteIndex
 object_get_site(ObjectIndex index)
 {
     ObjectKey *pkey;
-    
+
     pkey = get_pkey(index);
     return pkey->site_index;
 }
@@ -215,7 +215,7 @@ jint
 object_get_size(ObjectIndex index)
 {
     ObjectKey *pkey;
-    
+
     pkey = get_pkey(index);
     return pkey->size;
 }
@@ -224,7 +224,7 @@ ObjectKind
 object_get_kind(ObjectIndex index)
 {
     ObjectKey *pkey;
-    
+
     pkey = get_pkey(index);
     return pkey->kind;
 }
@@ -234,15 +234,15 @@ object_free(ObjectIndex index)
 {
     ObjectKey *pkey;
     ObjectKind kind;
-    
+
     pkey = get_pkey(index);
     kind = pkey->kind;
-	     
+
     /* Decrement allocations at this site. */
     site_update_stats(pkey->site_index, -(pkey->size), -1);
 
     if ( gdata->heap_dump ) {
-	table_free_entry(gdata->object_table, index);
+        table_free_entry(gdata->object_table, index);
     }
     return kind;
 }
@@ -250,7 +250,7 @@ object_free(ObjectIndex index)
 void
 object_list(void)
 {
-    debug_message( 
+    debug_message(
         "--------------------- Object Table ------------------------\n");
     table_walk_items(gdata->object_table, &list_item, NULL);
     debug_message(
@@ -265,11 +265,11 @@ object_cleanup(void)
 }
 
 void
-object_set_thread_serial_number(ObjectIndex index, 
-				SerialNumber thread_serial_num)
+object_set_thread_serial_number(ObjectIndex index,
+                                SerialNumber thread_serial_num)
 {
     ObjectInfo *info;
-    
+
     info = get_info(index);
     info->thread_serial_num = thread_serial_num;
 }
@@ -278,7 +278,7 @@ SerialNumber
 object_get_thread_serial_number(ObjectIndex index)
 {
     ObjectInfo *info;
-    
+
     info = get_info(index);
     return info->thread_serial_num;
 }
@@ -287,7 +287,7 @@ RefIndex
 object_get_references(ObjectIndex index)
 {
     ObjectInfo *info;
-    
+
     info = get_info(index);
     return info->references;
 }
@@ -296,7 +296,7 @@ void
 object_set_references(ObjectIndex index, RefIndex ref_index)
 {
     ObjectInfo *info;
-    
+
     info = get_info(index);
     info->references = ref_index;
 }

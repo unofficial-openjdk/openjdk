@@ -51,14 +51,13 @@ import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
- * @version %I% %G%
  * @author Scott Violet
  */
 public class WindowsTreeUI extends BasicTreeUI {
 
     public static ComponentUI createUI( JComponent c )
       {
-	return new WindowsTreeUI();
+        return new WindowsTreeUI();
       }
 
 
@@ -67,36 +66,36 @@ public class WindowsTreeUI extends BasicTreeUI {
       * visible.
       */
     protected void ensureRowsAreVisible(int beginRow, int endRow) {
-	if(tree != null && beginRow >= 0 && endRow < getRowCount(tree)) {
+        if(tree != null && beginRow >= 0 && endRow < getRowCount(tree)) {
             Rectangle visRect = tree.getVisibleRect();
-	    if(beginRow == endRow) {
-		Rectangle     scrollBounds = getPathBounds(tree, getPathForRow
-							   (tree, beginRow));
+            if(beginRow == endRow) {
+                Rectangle     scrollBounds = getPathBounds(tree, getPathForRow
+                                                           (tree, beginRow));
 
-		if(scrollBounds != null) {
+                if(scrollBounds != null) {
                     scrollBounds.x = visRect.x;
                     scrollBounds.width = visRect.width;
-		    tree.scrollRectToVisible(scrollBounds);
-		}
-	    }
-	    else {
-		Rectangle   beginRect = getPathBounds(tree, getPathForRow
-						      (tree, beginRow));
-		Rectangle   testRect = beginRect;
-		int         beginY = beginRect.y;
-		int         maxY = beginY + visRect.height;
+                    tree.scrollRectToVisible(scrollBounds);
+                }
+            }
+            else {
+                Rectangle   beginRect = getPathBounds(tree, getPathForRow
+                                                      (tree, beginRow));
+                Rectangle   testRect = beginRect;
+                int         beginY = beginRect.y;
+                int         maxY = beginY + visRect.height;
 
-		for(int counter = beginRow + 1; counter <= endRow; counter++) {
-		    testRect = getPathBounds(tree,
-					     getPathForRow(tree, counter));
-		    if((testRect.y + testRect.height) > maxY)
-			counter = endRow;
-		}
-		tree.scrollRectToVisible(new Rectangle(visRect.x, beginY, 1,
-						  testRect.y + testRect.height-
-						  beginY));
-	    }
-	}
+                for(int counter = beginRow + 1; counter <= endRow; counter++) {
+                    testRect = getPathBounds(tree,
+                                             getPathForRow(tree, counter));
+                    if((testRect.y + testRect.height) > maxY)
+                        counter = endRow;
+                }
+                tree.scrollRectToVisible(new Rectangle(visRect.x, beginY, 1,
+                                                  testRect.y + testRect.height-
+                                                  beginY));
+            }
+        }
     }
 
     static protected final int HALF_SIZE = 4;
@@ -107,7 +106,7 @@ public class WindowsTreeUI extends BasicTreeUI {
      * stamping of each node.
      */
     protected TreeCellRenderer createDefaultCellRenderer() {
-	return new WindowsTreeCellRenderer();
+        return new WindowsTreeCellRenderer();
     }
 
     /**
@@ -123,43 +122,43 @@ public class WindowsTreeUI extends BasicTreeUI {
     public static class ExpandedIcon implements Icon, Serializable {
 
         static public Icon createExpandedIcon() {
-	    return new ExpandedIcon();
-	}
+            return new ExpandedIcon();
+        }
 
-	Skin getSkin(Component c) {
-	    XPStyle xp = XPStyle.getXP();
-	    return (xp != null) ? xp.getSkin(c, Part.TVP_GLYPH) : null;
-	}
+        Skin getSkin(Component c) {
+            XPStyle xp = XPStyle.getXP();
+            return (xp != null) ? xp.getSkin(c, Part.TVP_GLYPH) : null;
+        }
 
-	public void paintIcon(Component c, Graphics g, int x, int y) {
-	    Skin skin = getSkin(c);
-	    if (skin != null) {
-		skin.paintSkin(g, x, y, State.OPENED);
-		return;
-	    }
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Skin skin = getSkin(c);
+            if (skin != null) {
+                skin.paintSkin(g, x, y, State.OPENED);
+                return;
+            }
 
-	    Color     backgroundColor = c.getBackground();
+            Color     backgroundColor = c.getBackground();
 
-	    if(backgroundColor != null)
-		g.setColor(backgroundColor);
-	    else
-		g.setColor(Color.white);
-	    g.fillRect(x, y, SIZE-1, SIZE-1);
-	    g.setColor(Color.gray);
-	    g.drawRect(x, y, SIZE-1, SIZE-1);
-	    g.setColor(Color.black);
-	    g.drawLine(x + 2, y + HALF_SIZE, x + (SIZE - 3), y + HALF_SIZE);
-	}
+            if(backgroundColor != null)
+                g.setColor(backgroundColor);
+            else
+                g.setColor(Color.white);
+            g.fillRect(x, y, SIZE-1, SIZE-1);
+            g.setColor(Color.gray);
+            g.drawRect(x, y, SIZE-1, SIZE-1);
+            g.setColor(Color.black);
+            g.drawLine(x + 2, y + HALF_SIZE, x + (SIZE - 3), y + HALF_SIZE);
+        }
 
-	public int getIconWidth() {
-	    Skin skin = getSkin(null);
-	    return (skin != null) ? skin.getWidth() : SIZE;
-	}
+        public int getIconWidth() {
+            Skin skin = getSkin(null);
+            return (skin != null) ? skin.getWidth() : SIZE;
+        }
 
-	public int getIconHeight() {
-	    Skin skin = getSkin(null);
-	    return (skin != null) ? skin.getHeight() : SIZE;
-	}
+        public int getIconHeight() {
+            Skin skin = getSkin(null);
+            return (skin != null) ? skin.getHeight() : SIZE;
+        }
     }
 
     /**
@@ -174,62 +173,62 @@ public class WindowsTreeUI extends BasicTreeUI {
      */
     public static class CollapsedIcon extends ExpandedIcon {
         static public Icon createCollapsedIcon() {
-	    return new CollapsedIcon();
-	}
+            return new CollapsedIcon();
+        }
 
-	public void paintIcon(Component c, Graphics g, int x, int y) {
-	    Skin skin = getSkin(c);
-	    if (skin != null) {
-		skin.paintSkin(g, x, y, State.CLOSED);
-	    } else {
-	    super.paintIcon(c, g, x, y);
-	    g.drawLine(x + HALF_SIZE, y + 2, x + HALF_SIZE, y + (SIZE - 3));
-	    }
-	}
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Skin skin = getSkin(c);
+            if (skin != null) {
+                skin.paintSkin(g, x, y, State.CLOSED);
+            } else {
+            super.paintIcon(c, g, x, y);
+            g.drawLine(x + HALF_SIZE, y + 2, x + HALF_SIZE, y + (SIZE - 3));
+            }
+        }
     }
 
     public class WindowsTreeCellRenderer extends DefaultTreeCellRenderer {
 
-	/**
-	 * Configures the renderer based on the passed in components.
-	 * The value is set from messaging the tree with
-	 * <code>convertValueToText</code>, which ultimately invokes
-	 * <code>toString</code> on <code>value</code>.
-	 * The foreground color is set based on the selection and the icon
-	 * is set based on on leaf and expanded.
-	 */
-	public Component getTreeCellRendererComponent(JTree tree, Object value,
-						      boolean sel,
-						      boolean expanded,
-						      boolean leaf, int row,
-						      boolean hasFocus) {
-	    super.getTreeCellRendererComponent(tree, value, sel,
-					       expanded, leaf, row,
-					       hasFocus);
-	    // Windows displays the open icon when the tree item selected.
-	    if (!tree.isEnabled()) {
-		setEnabled(false);
-		if (leaf) {
-		    setDisabledIcon(getLeafIcon());
-		} else if (sel) {
-		    setDisabledIcon(getOpenIcon());
-		} else {
-		    setDisabledIcon(getClosedIcon());
-		}
-	    }
-	    else {
-		setEnabled(true);
-		if (leaf) {
-		    setIcon(getLeafIcon());
-		} else if (sel) {
-		    setIcon(getOpenIcon());
-		} else {
-		    setIcon(getClosedIcon());
-		}
-	    }
-	    return this;
-	}
-	
+        /**
+         * Configures the renderer based on the passed in components.
+         * The value is set from messaging the tree with
+         * <code>convertValueToText</code>, which ultimately invokes
+         * <code>toString</code> on <code>value</code>.
+         * The foreground color is set based on the selection and the icon
+         * is set based on on leaf and expanded.
+         */
+        public Component getTreeCellRendererComponent(JTree tree, Object value,
+                                                      boolean sel,
+                                                      boolean expanded,
+                                                      boolean leaf, int row,
+                                                      boolean hasFocus) {
+            super.getTreeCellRendererComponent(tree, value, sel,
+                                               expanded, leaf, row,
+                                               hasFocus);
+            // Windows displays the open icon when the tree item selected.
+            if (!tree.isEnabled()) {
+                setEnabled(false);
+                if (leaf) {
+                    setDisabledIcon(getLeafIcon());
+                } else if (sel) {
+                    setDisabledIcon(getOpenIcon());
+                } else {
+                    setDisabledIcon(getClosedIcon());
+                }
+            }
+            else {
+                setEnabled(true);
+                if (leaf) {
+                    setIcon(getLeafIcon());
+                } else if (sel) {
+                    setIcon(getOpenIcon());
+                } else {
+                    setIcon(getClosedIcon());
+                }
+            }
+            return this;
+        }
+
     }
 
 }

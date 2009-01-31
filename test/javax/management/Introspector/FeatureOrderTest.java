@@ -49,29 +49,29 @@ import javax.management.StandardMBean;
 
 public class FeatureOrderTest {
     private static boolean failed;
-    
+
     public static interface OrderMXBean {
         public int getMercury();
-        
+
         public String getVenus();
         public void setVenus(String x);
-        
+
         public BigInteger getEarth();
         public void setEarth(BigInteger x);
-        
+
         public boolean isMars();
-        
+
         public double getJupiter();
-        
+
         public byte getSaturn();
-        
+
         public short getUranus();
         public void setUranus(short x);
-        
+
         public long getNeptune();
-        
+
         // No more Pluto!  Yay!
-        
+
         public void neptune();
         public void uranus(int x);
         public int saturn(int x, int y);
@@ -82,9 +82,9 @@ public class FeatureOrderTest {
         public String venus();
         public int mercury();
     }
-    
+
     public static interface OrderMBean extends OrderMXBean {}
-    
+
     public static class OrderImpl implements OrderMXBean {
         public int getMercury() {
             return 0;
@@ -147,7 +147,7 @@ public class FeatureOrderTest {
         public BigInteger earth() {
             return null;
         }
-        
+
         public double earth(double x) {
             return 0;
         }
@@ -160,11 +160,11 @@ public class FeatureOrderTest {
             return 0;
         }
     }
-    
+
     public static class Order extends OrderImpl implements OrderMBean {}
-    
+
     private static final boolean[] booleans = {false, true};
-    
+
     public static void main(String[] args) throws Exception {
         // Build the lists of attributes and operations that we would expect
         // if they are derived by reflection and preserve the reflection order
@@ -191,7 +191,7 @@ public class FeatureOrderTest {
             } else
                 expectedOperationNames.add(name);
         }
-        
+
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         for (boolean mxbean : booleans) {
             for (boolean withStandardMBean : booleans) {
@@ -216,7 +216,7 @@ public class FeatureOrderTest {
                         ":mxbean=" + mxbean + "," + "withStandardMBean=" +
                         withStandardMBean);
                 mbs.registerMBean(mbean, name);
-                
+
                 /* Make sure we are testing what we think. */
                 MBeanInfo mbi = mbs.getMBeanInfo(name);
                 boolean isWithStandardMBean =
@@ -225,12 +225,12 @@ public class FeatureOrderTest {
                 String mxbeanField =
                         (String) mbi.getDescriptor().getFieldValue("mxbean");
                 boolean isMXBean = "true".equalsIgnoreCase(mxbeanField);
-                
+
                 if (mxbean != isMXBean)
                     throw new Exception("Test error: MXBean mismatch");
                 if (withStandardMBean != isWithStandardMBean)
                     throw new Exception("Test error: StandardMBean mismatch");
-            
+
                 // Check that order of attributes and operations matches
                 MBeanAttributeInfo[] mbais = mbi.getAttributes();
                 checkEqual(expectedAttributeNames.size(), mbais.length,
@@ -240,7 +240,7 @@ public class FeatureOrderTest {
                     attributeNames.add(mbai.getName());
                 checkEqual(expectedAttributeNames, attributeNames,
                         "order of attributes");
-                
+
                 MBeanOperationInfo[] mbois = mbi.getOperations();
                 checkEqual(expectedOperationNames.size(), mbois.length,
                         "number of operations");
@@ -252,12 +252,12 @@ public class FeatureOrderTest {
                 System.out.println();
             }
         }
-        
+
         if (failed)
             throw new Exception("TEST FAILED");
         System.out.println("TEST PASSED");
     }
-    
+
     private static void checkEqual(Object expected, Object actual, String what) {
         if (expected.equals(actual))
             System.out.println("OK: " + what + " matches");

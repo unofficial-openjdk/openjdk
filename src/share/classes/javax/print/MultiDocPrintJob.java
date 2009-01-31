@@ -47,10 +47,10 @@ public interface MultiDocPrintJob extends DocPrintJob {
      * PrintJobListener.
      *
      * @param multiDoc The documents to be printed. ALL must be a flavor
-     *				supported by the PrintJob & PrintService.
+     *                          supported by the PrintJob & PrintService.
      *
      * @param attributes The job attributes to be applied to this print job.
-     *	      If this parameter is null then the default attributes are used.
+     *        If this parameter is null then the default attributes are used.
      *
      * @throws PrintException The exception additionally may implement
      * an interfaces which more precisely describes the cause of the exception
@@ -63,5 +63,5 @@ public interface MultiDocPrintJob extends DocPrintJob {
      */
     public void print(MultiDoc multiDoc, PrintRequestAttributeSet attributes)
                 throws PrintException;
-    		
+
 }

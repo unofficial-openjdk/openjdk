@@ -77,14 +77,14 @@ public class CK_INFO {
     public CK_VERSION cryptokiVersion;
 
     /**
-     * ID of the Cryptoki library manufacturer. must be blank 
+     * ID of the Cryptoki library manufacturer. must be blank
      * padded - only the first 32 chars will be used<p>
      * <B>PKCS#11:</B>
      * <PRE>
      *   CK_UTF8CHAR manufacturerID[32];
      * </PRE>
      */
-    public char[] manufacturerID;        
+    public char[] manufacturerID;
 
     /**
      * bit flags reserved for future versions. must be zero<p>
@@ -116,13 +116,13 @@ public class CK_INFO {
      */
     public CK_VERSION libraryVersion;
 
-    public CK_INFO(CK_VERSION cryptoVer, char[] vendor, long flags, 
+    public CK_INFO(CK_VERSION cryptoVer, char[] vendor, long flags,
                    char[] libDesc, CK_VERSION libVer) {
-	this.cryptokiVersion = cryptoVer;
-	this.manufacturerID = vendor;
-	this.flags = flags;
-	this.libraryDescription = libDesc;
-	this.libraryVersion = libVer;
+        this.cryptokiVersion = cryptoVer;
+        this.manufacturerID = vendor;
+        this.flags = flags;
+        this.libraryDescription = libDesc;
+        this.libraryVersion = libVer;
     }
 
     /**
@@ -131,34 +131,34 @@ public class CK_INFO {
      * @return the string representation of CK_INFO
      */
     public String toString() {
-	StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer();
 
-	buffer.append(Constants.INDENT);
-	buffer.append("cryptokiVersion: ");
-	buffer.append(cryptokiVersion.toString());
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("cryptokiVersion: ");
+        buffer.append(cryptokiVersion.toString());
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("manufacturerID: ");
-	buffer.append(new String(manufacturerID));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("manufacturerID: ");
+        buffer.append(new String(manufacturerID));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("flags: ");
-	buffer.append(Functions.toBinaryString(flags));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("flags: ");
+        buffer.append(Functions.toBinaryString(flags));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("libraryDescription: ");
-	buffer.append(new String(libraryDescription));
-	buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("libraryDescription: ");
+        buffer.append(new String(libraryDescription));
+        buffer.append(Constants.NEWLINE);
 
-	buffer.append(Constants.INDENT);
-	buffer.append("libraryVersion: ");
-	buffer.append(libraryVersion.toString());
-	//buffer.append(Constants.NEWLINE);
+        buffer.append(Constants.INDENT);
+        buffer.append("libraryVersion: ");
+        buffer.append(libraryVersion.toString());
+        //buffer.append(Constants.NEWLINE);
 
-	return buffer.toString() ;
+        return buffer.toString() ;
     }
 
 }

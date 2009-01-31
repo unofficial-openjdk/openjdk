@@ -46,16 +46,15 @@ import javax.swing.tree.TreePath;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @version %I% %G%
  * @author Rob Davis
  * @author Ray Ryan
  * @author Scott Violet
  */
 public class TreeModelEvent extends EventObject {
     /** Path to the parent of the nodes that have changed. */
-    protected TreePath	path;
+    protected TreePath  path;
     /** Indices identifying the position of where the children were. */
-    protected int[]	childIndices;
+    protected int[]     childIndices;
     /** Children that have been removed. */
     protected Object[]  children;
 
@@ -127,9 +126,9 @@ public class TreeModelEvent extends EventObject {
      * @see TreePath
      */
     public TreeModelEvent(Object source, Object[] path, int[] childIndices,
-			  Object[] children)
+                          Object[] children)
     {
-	this(source, new TreePath(path), childIndices, children);
+        this(source, new TreePath(path), childIndices, children);
     }
 
     /**
@@ -152,12 +151,12 @@ public class TreeModelEvent extends EventObject {
      * @see #TreeModelEvent(Object,Object[],int[],Object[])
      */
     public TreeModelEvent(Object source, TreePath path, int[] childIndices,
-			  Object[] children)
+                          Object[] children)
     {
-	super(source);
-	this.path = path;
-	this.childIndices = childIndices;
-	this.children = children;
+        super(source);
+        this.path = path;
+        this.childIndices = childIndices;
+        this.children = children;
     }
 
     /**
@@ -184,7 +183,7 @@ public class TreeModelEvent extends EventObject {
      */
     public TreeModelEvent(Object source, Object[] path)
     {
-	this(source, new TreePath(path));
+        this(source, new TreePath(path));
     }
 
     /**
@@ -206,9 +205,9 @@ public class TreeModelEvent extends EventObject {
      */
     public TreeModelEvent(Object source, TreePath path)
     {
-	super(source);
-	this.path = path;
-	this.childIndices = new int[0];
+        super(source);
+        this.path = path;
+        this.childIndices = new int[0];
     }
 
     /**
@@ -237,9 +236,9 @@ public class TreeModelEvent extends EventObject {
      *         stored at the node identified by the path
      */
     public Object[] getPath() {
-	if(path != null)
-	    return path.getPath();
-	return null;
+        if(path != null)
+            return path.getPath();
+        return null;
     }
 
     /**
@@ -254,14 +253,14 @@ public class TreeModelEvent extends EventObject {
      * @see #getChildIndices
      */
     public Object[] getChildren() {
-	if(children != null) {
-	    int            cCount = children.length;
-	    Object[]       retChildren = new Object[cCount];
+        if(children != null) {
+            int            cCount = children.length;
+            Object[]       retChildren = new Object[cCount];
 
-	    System.arraycopy(children, 0, retChildren, 0, cCount);
-	    return retChildren;
-	}
-	return null;
+            System.arraycopy(children, 0, retChildren, 0, cCount);
+            return retChildren;
+        }
+        return null;
     }
 
     /**
@@ -275,14 +274,14 @@ public class TreeModelEvent extends EventObject {
      *         the children specified by the event
      */
     public int[] getChildIndices() {
-	if(childIndices != null) {
-	    int            cCount = childIndices.length;
-	    int[]          retArray = new int[cCount];
+        if(childIndices != null) {
+            int            cCount = childIndices.length;
+            int[]          retArray = new int[cCount];
 
-	    System.arraycopy(childIndices, 0, retArray, 0, cCount);
-	    return retArray;
-	}
-	return null;
+            System.arraycopy(childIndices, 0, retArray, 0, cCount);
+            return retArray;
+        }
+        return null;
     }
 
     /**
@@ -292,24 +291,24 @@ public class TreeModelEvent extends EventObject {
      * @return a String representation of this object
      */
     public String toString() {
-	StringBuffer   retBuffer = new StringBuffer();
+        StringBuffer   retBuffer = new StringBuffer();
 
-	retBuffer.append(getClass().getName() + " " +
-			 Integer.toString(hashCode()));
-	if(path != null)
-	    retBuffer.append(" path " + path);
-	if(childIndices != null) {
-	    retBuffer.append(" indices [ ");
-	    for(int counter = 0; counter < childIndices.length; counter++)
-		retBuffer.append(Integer.toString(childIndices[counter])+ " ");
-	    retBuffer.append("]");
-	}
-	if(children != null) {
-	    retBuffer.append(" children [ ");
-	    for(int counter = 0; counter < children.length; counter++)
-		retBuffer.append(children[counter] + " ");
-	    retBuffer.append("]");
-	}
-	return retBuffer.toString();
+        retBuffer.append(getClass().getName() + " " +
+                         Integer.toString(hashCode()));
+        if(path != null)
+            retBuffer.append(" path " + path);
+        if(childIndices != null) {
+            retBuffer.append(" indices [ ");
+            for(int counter = 0; counter < childIndices.length; counter++)
+                retBuffer.append(Integer.toString(childIndices[counter])+ " ");
+            retBuffer.append("]");
+        }
+        if(children != null) {
+            retBuffer.append(" children [ ");
+            for(int counter = 0; counter < children.length; counter++)
+                retBuffer.append(children[counter] + " ");
+            retBuffer.append("]");
+        }
+        return retBuffer.toString();
     }
 }

@@ -30,7 +30,6 @@ package javax.security.auth.callback;
  * <code>NameCallback</code> to the <code>handle</code>
  * method of a <code>CallbackHandler</code> to retrieve name information.
  *
- * @version %I%, %G%
  * @see javax.security.auth.callback.CallbackHandler
  */
 public class NameCallback implements Callback, java.io.Serializable {
@@ -61,12 +60,12 @@ public class NameCallback implements Callback, java.io.Serializable {
      * @param prompt the prompt used to request the name.
      *
      * @exception IllegalArgumentException if <code>prompt</code> is null
-     *			or if <code>prompt</code> has a length of 0.
+     *                  or if <code>prompt</code> has a length of 0.
      */
     public NameCallback(String prompt) {
-	if (prompt == null || prompt.length() == 0)
-	    throw new IllegalArgumentException();
-	this.prompt = prompt;
+        if (prompt == null || prompt.length() == 0)
+            throw new IllegalArgumentException();
+        this.prompt = prompt;
     }
 
     /**
@@ -77,21 +76,21 @@ public class NameCallback implements Callback, java.io.Serializable {
      *
      * @param prompt the prompt used to request the information. <p>
      *
-     * @param defaultName the name to be used as the default name displayed 
-     *			with the prompt.
+     * @param defaultName the name to be used as the default name displayed
+     *                  with the prompt.
      *
      * @exception IllegalArgumentException if <code>prompt</code> is null,
-     *			if <code>prompt</code> has a length of 0,
-     *			if <code>defaultName</code> is null,
-     *			or if <code>defaultName</code> has a length of 0.
+     *                  if <code>prompt</code> has a length of 0,
+     *                  if <code>defaultName</code> is null,
+     *                  or if <code>defaultName</code> has a length of 0.
      */
     public NameCallback(String prompt, String defaultName) {
-	if (prompt == null || prompt.length() == 0 ||
-	    defaultName == null || defaultName.length() == 0)
-	    throw new IllegalArgumentException();
+        if (prompt == null || prompt.length() == 0 ||
+            defaultName == null || defaultName.length() == 0)
+            throw new IllegalArgumentException();
 
-	this.prompt = prompt;
-	this.defaultName = defaultName;
+        this.prompt = prompt;
+        this.defaultName = defaultName;
     }
 
     /**
@@ -102,7 +101,7 @@ public class NameCallback implements Callback, java.io.Serializable {
      * @return the prompt.
      */
     public String getPrompt() {
-	return prompt;
+        return prompt;
     }
 
     /**
@@ -111,10 +110,10 @@ public class NameCallback implements Callback, java.io.Serializable {
      * <p>
      *
      * @return the default name, or null if this <code>NameCallback</code>
-     *		was not instantiated with a <code>defaultName</code>.
+     *          was not instantiated with a <code>defaultName</code>.
      */
     public String getDefaultName() {
-	return defaultName;
+        return defaultName;
     }
 
     /**
@@ -127,7 +126,7 @@ public class NameCallback implements Callback, java.io.Serializable {
      * @see #getName
      */
     public void setName(String name) {
-	this.inputName = name;
+        this.inputName = name;
     }
 
     /**
@@ -140,6 +139,6 @@ public class NameCallback implements Callback, java.io.Serializable {
      * @see #setName
      */
     public String getName() {
-	return inputName;
+        return inputName;
     }
 }

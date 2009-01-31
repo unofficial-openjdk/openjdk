@@ -34,64 +34,64 @@ public class CharToByteASCII extends CharToByteConverter {
     }
 
     private char highHalfZoneCode;
-    
+
     public int flush(byte[] output, int outStart, int outEnd)
-	throws MalformedInputException
+        throws MalformedInputException
     {
-	if (highHalfZoneCode != 0) {
-	    highHalfZoneCode = 0;
-	    throw new MalformedInputException
-		("String ends with <High Half Zone code> of UTF16");
-	}
-	byteOff = charOff = 0;
-	return 0;
+        if (highHalfZoneCode != 0) {
+            highHalfZoneCode = 0;
+            throw new MalformedInputException
+                ("String ends with <High Half Zone code> of UTF16");
+        }
+        byteOff = charOff = 0;
+        return 0;
     }
 
     /*
     * Character conversion
     */
     public int convert(char[] input, int inOff, int inEnd,
-		       byte[] output, int outOff, int outEnd)
+                       byte[] output, int outOff, int outEnd)
         throws MalformedInputException,
                UnknownCharacterException,
                ConversionBufferFullException
     {
         char    inputChar;          // Input character to be converted
         byte[]  outputByte;         // Output byte written to output
-	byte[]  tmpArray = new byte[1];
+        byte[]  tmpArray = new byte[1];
         int     inputSize;          // Size of input
-	int	outputSize;	    // Size of output	
+        int     outputSize;         // Size of output
 
         // Record beginning offsets
         charOff = inOff;
         byteOff = outOff;
 
-	if (highHalfZoneCode != 0) {
-	    inputChar = highHalfZoneCode;
-	    highHalfZoneCode = 0;
-	    if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
-		// This is legal UTF16 sequence.
-		badInputLength = 1;
-		throw new UnknownCharacterException();
-	    } else {
-		// This is illegal UTF16 sequence.
-		badInputLength = 0;
-		throw new MalformedInputException
-		    ("Previous converted string ends with " +
-		     "<High Half Zone Code> of UTF16 " +
-		     ", but this string is not begin with <Low Half Zone>");
-	    }
-	}
+        if (highHalfZoneCode != 0) {
+            inputChar = highHalfZoneCode;
+            highHalfZoneCode = 0;
+            if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
+                // This is legal UTF16 sequence.
+                badInputLength = 1;
+                throw new UnknownCharacterException();
+            } else {
+                // This is illegal UTF16 sequence.
+                badInputLength = 0;
+                throw new MalformedInputException
+                    ("Previous converted string ends with " +
+                     "<High Half Zone Code> of UTF16 " +
+                     ", but this string is not begin with <Low Half Zone>");
+            }
+        }
 
         // Loop until we hit the end of the input
         while(charOff < inEnd) {
-	    outputByte = tmpArray;
+            outputByte = tmpArray;
 
             // Get the input character
             inputChar = input[charOff];
 
-	    // default outputSize
-	    outputSize = 1;
+            // default outputSize
+            outputSize = 1;
 
             // Assume this is a simple character
             inputSize = 1;
@@ -100,8 +100,8 @@ public class CharToByteASCII extends CharToByteConverter {
             if(inputChar >= '\uD800' && inputChar <= '\uDBFF') {
                 // Is this the last character in the input?
                 if (charOff + 1 == inEnd) {
-		    highHalfZoneCode = inputChar;
-		    break;
+                    highHalfZoneCode = inputChar;
+                    break;
                 }
 
                 // Is there a low surrogate following?
@@ -110,8 +110,8 @@ public class CharToByteASCII extends CharToByteConverter {
                     // We have a valid surrogate pair.  Too bad we don't map
                     //  surrogates.  Is substitution enabled?
                     if (subMode) {
-			outputByte = subBytes;
-			outputSize = subBytes.length;
+                        outputByte = subBytes;
+                        outputSize = subBytes.length;
                         inputSize = 2;
                     } else {
                         badInputLength = 2;
@@ -137,23 +137,23 @@ public class CharToByteASCII extends CharToByteConverter {
                     // Is substitution enabled?
                     if (subMode) {
                         outputByte = subBytes;
-			outputSize = subBytes.length;
-		    } else {
+                        outputSize = subBytes.length;
+                    } else {
                         badInputLength = 1;
                         throw new UnknownCharacterException();
                     }
                 }
             }
 
-	    // If we don't have room for the output, throw an exception
-	    if (byteOff + outputSize > outEnd)
-		throw new ConversionBufferFullException();
+            // If we don't have room for the output, throw an exception
+            if (byteOff + outputSize > outEnd)
+                throw new ConversionBufferFullException();
 
-	    // Put the byte in the output buffer
-	    for (int i = 0; i < outputSize; i++) {
-		output[byteOff++] = outputByte[i];
-	    }
-	    charOff += inputSize;
+            // Put the byte in the output buffer
+            for (int i = 0; i < outputSize; i++) {
+                output[byteOff++] = outputByte[i];
+            }
+            charOff += inputSize;
         }
 
         // Return the length written to the output buffer
@@ -169,8 +169,8 @@ public class CharToByteASCII extends CharToByteConverter {
     // Reset the converter
     public void reset()
     {
-	byteOff = charOff = 0;
-	highHalfZoneCode = 0;
+        byteOff = charOff = 0;
+        highHalfZoneCode = 0;
     }
 
     /**

@@ -54,13 +54,13 @@ class InjectBytecodes implements RuntimeConstants {
 
     private int pos;
     private int newPos;
-    
+
     private class Span {
         final int delta;
         final int target;
         final int newDelta;
         final int newTarget;
-        
+
         Span(int delta) {
             this.delta = delta;
             this.target = pos + delta;
@@ -71,16 +71,16 @@ class InjectBytecodes implements RuntimeConstants {
 
     /**
      * Constructor
-     */  
+     */
     InjectBytecodes(ClassReaderWriter c, int length,
                     String className, String methodName) {
         this.c = c;
-	this.output = System.out;
-	this.length = length;
+        this.output = System.out;
+        this.length = length;
         this.map = new int[length + 1];
         this.widening = new byte[length + 1];
-	this.className = className;
-	this.methodName = methodName;
+        this.className = className;
+        this.methodName = methodName;
         c.markLocalPositionStart();
         for (int i = 0; i <= length; ++i) {
             map[i] = i;
@@ -147,7 +147,7 @@ class InjectBytecodes implements RuntimeConstants {
     /**
      * Print an integer so that it takes 'length' characters in
      * the output.  Temporary until formatting code is stable.
-     */  
+     */
     private void traceFixedWidthInt(int x, int length) {
         if (Inject.verbose) {
             CharArrayWriter baStream = new CharArrayWriter();
@@ -159,14 +159,14 @@ class InjectBytecodes implements RuntimeConstants {
             trace(str);
         }
     }
-    
+
     void adjustOffsets() throws IOException {
         if (Inject.verbose) {
             traceln();
             traceln("Method " + methodName);
             traceln();
         }
-        c.rewind();   
+        c.rewind();
         while (c.localPosition() < length) {
             insertAtInstruction();
         }
@@ -183,7 +183,7 @@ class InjectBytecodes implements RuntimeConstants {
         traceln();
         traceln();
         trace("Writing new code...");
-        c.rewind(); 
+        c.rewind();
         while (c.localPosition() < length) {
             writeInstruction();
         }
@@ -191,7 +191,7 @@ class InjectBytecodes implements RuntimeConstants {
             throw new Error("not all snippets written");
         }
     }
-    
+
     /**
      * Walk one instruction inserting instrumentation at specified instructions
      */
@@ -227,7 +227,7 @@ class InjectBytecodes implements RuntimeConstants {
 
             switch (opcode) {
             case opc_tableswitch:{
-                int header = (pos+1+3) & (~3);	      // 4byte boundry
+                int header = (pos+1+3) & (~3);        // 4byte boundry
                 c.skip(header - (pos+1));             // skip old padding
 
                 c.readU4();
@@ -238,7 +238,7 @@ class InjectBytecodes implements RuntimeConstants {
             }
 
             case opc_lookupswitch:{
-                int header = (pos+1+3) & (~3);	      // 4byte boundry
+                int header = (pos+1+3) & (~3);        // 4byte boundry
                 c.skip(header - (pos+1));             // skip padding
 
                 c.readU4();
@@ -269,8 +269,8 @@ class InjectBytecodes implements RuntimeConstants {
         int opcode = c.readU1();
         if (Inject.verbose) {
             traceln();
-            traceFixedWidthInt(pos, 4); 
-            traceFixedWidthInt(newPos, 4); 
+            traceFixedWidthInt(pos, 4);
+            traceFixedWidthInt(newPos, 4);
             trace(" ");
         }
         if (opcode == opc_wide) {
@@ -306,7 +306,7 @@ class InjectBytecodes implements RuntimeConstants {
 
             case opc_tableswitch:{
                 int widened = widening[pos];
-                int header = (pos+1+3) & (~3);	      // 4byte boundry
+                int header = (pos+1+3) & (~3);        // 4byte boundry
                 int newHeader = (newPos+1+3) & (~3);  // 4byte boundry
 
                 c.skip(header - (pos+1));             // skip old padding
@@ -327,7 +327,7 @@ class InjectBytecodes implements RuntimeConstants {
                     }
                 } else {
                     c.skip((high+1-low) * 4);
-                }                    
+                }
                 int newPadding = newHeader - newPos;
                 int oldPadding = header - pos;
                 int deltaPadding = newPadding - oldPadding;
@@ -340,7 +340,7 @@ class InjectBytecodes implements RuntimeConstants {
 
             case opc_lookupswitch:{
                 int widened = widening[pos];
-                int header = (pos+1+3) & (~3);	      // 4byte boundry
+                int header = (pos+1+3) & (~3);        // 4byte boundry
                 int newHeader = (newPos+1+3) & (~3);  // 4byte boundry
 
                 c.skip(header - (pos+1));             // skip old padding
@@ -396,7 +396,7 @@ class InjectBytecodes implements RuntimeConstants {
                     }
                 }
                 if (Inject.verbose) {
-                    trace(" [was] " + jump.target + " ==> " + 
+                    trace(" [was] " + jump.target + " ==> " +
                           " [now] " + jump.newTarget);
                 }
                 break;
@@ -406,12 +406,12 @@ class InjectBytecodes implements RuntimeConstants {
             case opc_goto_w: {
                 Span jump = new Span(c.readU4());
                 if (Inject.verbose) {
-                    trace(" [was] " + jump.target + 
+                    trace(" [was] " + jump.target +
                           " [now] " + jump.newTarget);
                 }
                 break;
             }
-			
+
             default: {
                 int instrLen = opcLengths[opcode];
                 c.skip(instrLen-1);
@@ -421,7 +421,7 @@ class InjectBytecodes implements RuntimeConstants {
         }
         return true;     // successful return
     }
-    
+
 
     /**
      * Walk one instruction writing the transformed instruction.
@@ -432,15 +432,15 @@ class InjectBytecodes implements RuntimeConstants {
         byte[] newCode = snippets.remove(new Integer(pos));
         if (newCode != null) {
             traceln();
-            traceFixedWidthInt(pos, 4); 
+            traceFixedWidthInt(pos, 4);
             trace(" ... -- Inserting new code");
             c.writeBytes(newCode);
         }
         int opcode = c.readU1();
         if (Inject.verbose) {
             traceln();
-            traceFixedWidthInt(pos, 4); 
-            traceFixedWidthInt(newPos, 4); 
+            traceFixedWidthInt(pos, 4);
+            traceFixedWidthInt(newPos, 4);
             trace(" ");
         }
         if (opcode == opc_wide) {
@@ -479,7 +479,7 @@ class InjectBytecodes implements RuntimeConstants {
             switch (opcode) {
 
             case opc_tableswitch:{
-                int header = (pos+1+3) & (~3);	 // 4byte boundry
+                int header = (pos+1+3) & (~3);   // 4byte boundry
                 int newHeader = (newPos+1+3) & (~3); // 4byte boundry
 
                 c.skip(header - (pos+1));             // skip old padding
@@ -515,7 +515,7 @@ class InjectBytecodes implements RuntimeConstants {
             }
 
             case opc_lookupswitch:{
-                int header = (pos+1+3) & (~3);	 // 4byte boundry
+                int header = (pos+1+3) & (~3);   // 4byte boundry
                 int newHeader = (newPos+1+3) & (~3); // 4byte boundry
 
                 c.skip(header - (pos+1));             // skip old padding
@@ -570,63 +570,63 @@ class InjectBytecodes implements RuntimeConstants {
                         newOpcode = opc_jsr_w;
                         break;
                     default:
-                        throw new Error("unexpected opcode: " + 
+                        throw new Error("unexpected opcode: " +
                                    opcode);
                     }
                     c.writeU1(newOpcode);      // write wide instruction
                     c.writeU4(jump.newDelta);  // write new and wide delta
                 } else if (widened == 5) {      // insert goto_w
                     switch (opcode) {
-                    case opc_ifeq: 
+                    case opc_ifeq:
                         newOpcode = opc_ifne;
                         break;
-                    case opc_ifge: 
+                    case opc_ifge:
                         newOpcode = opc_iflt;
                         break;
                     case opc_ifgt:
                         newOpcode = opc_ifle;
                         break;
-                    case opc_ifle: 
+                    case opc_ifle:
                         newOpcode = opc_ifgt;
                         break;
-                    case opc_iflt: 
+                    case opc_iflt:
                         newOpcode = opc_ifge;
                         break;
                     case opc_ifne:
                         newOpcode = opc_ifeq;
                         break;
-                    case opc_if_icmpeq: 
+                    case opc_if_icmpeq:
                         newOpcode = opc_if_icmpne;
                         break;
-                    case opc_if_icmpne: 
+                    case opc_if_icmpne:
                         newOpcode = opc_if_icmpeq;
                         break;
                     case opc_if_icmpge:
                         newOpcode = opc_if_icmplt;
                         break;
-                    case opc_if_icmpgt: 
+                    case opc_if_icmpgt:
                         newOpcode = opc_if_icmple;
                         break;
-                    case opc_if_icmple: 
+                    case opc_if_icmple:
                         newOpcode = opc_if_icmpgt;
                         break;
                     case opc_if_icmplt:
                         newOpcode = opc_if_icmpge;
                         break;
-                    case opc_if_acmpeq: 
+                    case opc_if_acmpeq:
                         newOpcode = opc_if_acmpne;
                         break;
                     case opc_if_acmpne:
                         newOpcode = opc_if_acmpeq;
                         break;
-                    case opc_ifnull: 
+                    case opc_ifnull:
                         newOpcode = opc_ifnonnull;
                         break;
                     case opc_ifnonnull:
                         newOpcode = opc_ifnull;
                         break;
                     default:
-                        throw new Error("unexpected opcode: " + 
+                        throw new Error("unexpected opcode: " +
                                    opcode);
                     }
                     c.writeU1(newOpcode); // write inverse branch
@@ -638,8 +638,8 @@ class InjectBytecodes implements RuntimeConstants {
                 }
 
                 if (Inject.verbose) {
-                    trace(" [was] " + jump.target + " ==> " + 
-                          opcNames[newOpcode] + 
+                    trace(" [was] " + jump.target + " ==> " +
+                          opcNames[newOpcode] +
                           " [now] " + jump.newTarget);
                 }
                 break;
@@ -651,12 +651,12 @@ class InjectBytecodes implements RuntimeConstants {
                 c.writeU1(opcode);        // instruction itself
                 c.writeU4(jump.newDelta);
                 if (Inject.verbose) {
-                    trace(" [was] " + jump.target + 
+                    trace(" [was] " + jump.target +
                           " [now] " + jump.newTarget);
                 }
                 break;
             }
-			
+
             default: {
                 int instrLen = opcLengths[opcode];
                 c.writeU1(opcode);        // instruction itself
@@ -668,24 +668,24 @@ class InjectBytecodes implements RuntimeConstants {
 
     /**
      * Copy the exception table for this method code
-     */  
+     */
     void copyExceptionTable() throws IOException {
         int tableLength = c.copyU2();   // exception table len
-	if (tableLength > 0) {
-	    traceln();
-	    traceln("Exception table:");
-	    traceln(" from:old/new  to:old/new target:old/new type");
-	    for (int tcnt = tableLength; tcnt > 0; --tcnt) {
-		int startPC = c.readU2();
+        if (tableLength > 0) {
+            traceln();
+            traceln("Exception table:");
+            traceln(" from:old/new  to:old/new target:old/new type");
+            for (int tcnt = tableLength; tcnt > 0; --tcnt) {
+                int startPC = c.readU2();
                 int newStartPC = map[startPC];
                 c.writeU2(newStartPC);
-		int endPC = c.readU2();
+                int endPC = c.readU2();
                 int newEndPC = map[endPC];
                 c.writeU2(newEndPC);
-		int handlerPC = c.readU2();
+                int handlerPC = c.readU2();
                 int newHandlerPC = map[handlerPC];
                 c.writeU2(newHandlerPC);
-		int catchType = c.copyU2();
+                int catchType = c.copyU2();
                 if (Inject.verbose) {
                     traceFixedWidthInt(startPC, 6);
                     traceFixedWidthInt(newStartPC, 6);
@@ -694,76 +694,76 @@ class InjectBytecodes implements RuntimeConstants {
                     traceFixedWidthInt(handlerPC, 6);
                     traceFixedWidthInt(newHandlerPC, 6);
                     trace("    ");
-                    if (catchType == 0) 
+                    if (catchType == 0)
                         traceln("any");
                     else {
                         traceln("" + catchType);
                     }
                 }
-	    }
-	}
+            }
+        }
     }
 
     /**
      * Copy the line number table for this method code
-     */  
+     */
     void copyLineNumberAttr() throws IOException {
         // name index already read
         c.copy(4);                      // attr len
         int tableLength = c.copyU2();   // line table len
-	if (tableLength > 0) {
+        if (tableLength > 0) {
             if (Inject.verbose) {
                 traceln();
                 traceln("Line numbers for method " + methodName);
             }
-	    for (int tcnt = tableLength; tcnt > 0; --tcnt) {
-		int startPC = c.readU2();
+            for (int tcnt = tableLength; tcnt > 0; --tcnt) {
+                int startPC = c.readU2();
                 int newStartPC = map[startPC];
                 c.writeU2(newStartPC);
-		int lineNumber = c.copyU2();
+                int lineNumber = c.copyU2();
                 if (Inject.verbose) {
-                    traceln("   line " + lineNumber + 
+                    traceln("   line " + lineNumber +
                             ": [was] " + startPC +
                             " [now] " + newStartPC);
                 }
-	    }
-	}
+            }
+        }
     }
 
     /**
      * Copy the local variable table for this method code
-     */  
+     */
     void copyLocalVarAttr() throws IOException {
         // name index already read
         c.copy(4);                      // attr len
         int tableLength = c.copyU2();   // local var table len
-	if (tableLength > 0) {
+        if (tableLength > 0) {
             if (Inject.verbose) {
                 traceln();
                 traceln("Local variables for method " + methodName);
             }
-	    for (int tcnt = tableLength; tcnt > 0; --tcnt) {
-		int startPC = c.readU2();
+            for (int tcnt = tableLength; tcnt > 0; --tcnt) {
+                int startPC = c.readU2();
                 int newStartPC = map[startPC];
                 c.writeU2(newStartPC);
-		int length = c.readU2();
+                int length = c.readU2();
                 int endPC = startPC + length;
                 int newEndPC = map[endPC];
                 int newLength = newEndPC - newStartPC;
                 c.writeU2(newLength);
-		int nameIndex = c.copyU2();
-		int descriptorIndex = c.copyU2();
-		int index = c.copyU2();
+                int nameIndex = c.copyU2();
+                int descriptorIndex = c.copyU2();
+                int index = c.copyU2();
                 if (Inject.verbose) {
                     trace("   ");
                     trace(descriptorIndex);
                     trace(" ");
                     trace(nameIndex);
-                    traceln("  pc= [was] " + startPC + " [now] " + newStartPC + 
-                            ", length= [was] " + length + " [now] " + newLength + 
+                    traceln("  pc= [was] " + startPC + " [now] " + newStartPC +
+                            ", length= [was] " + length + " [now] " + newLength +
                             ", slot=" + index);
                 }
-	    }
-	}
+            }
+        }
     }
 }

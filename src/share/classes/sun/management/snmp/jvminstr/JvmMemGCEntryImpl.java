@@ -61,8 +61,8 @@ public class JvmMemGCEntryImpl implements JvmMemGCEntryMBean {
      * Constructor for the "JvmMemGCEntry" group.
      */
     public JvmMemGCEntryImpl(GarbageCollectorMXBean gcm, int index) {
-	this.gcm=gcm;
-	this.JvmMemManagerIndex = index;
+        this.gcm=gcm;
+        this.JvmMemManagerIndex = index;
     }
 
     /**

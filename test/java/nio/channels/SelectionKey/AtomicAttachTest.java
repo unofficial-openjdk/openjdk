@@ -36,7 +36,7 @@ public class AtomicAttachTest {
         final SelectionKey key = channel.register(selector, 0);
         key.attach(new AtomicBoolean());
 
-        final AtomicInteger errorCount = new AtomicInteger();        
+        final AtomicInteger errorCount = new AtomicInteger();
 
         Thread t = new Thread() {
             public void run() {

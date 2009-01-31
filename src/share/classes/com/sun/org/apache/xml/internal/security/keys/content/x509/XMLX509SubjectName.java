@@ -39,7 +39,7 @@ public class XMLX509SubjectName extends SignatureElementProxy
         implements XMLX509DataContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(XMLX509SubjectName.class.getName());
 
    /**
@@ -104,9 +104,9 @@ public class XMLX509SubjectName extends SignatureElementProxy
       }
 
        return false;
-      
+
    }
-   
+
    /** @inheritDoc */
    public String getBaseLocalName() {
       return Constants._TAG_X509SUBJECTNAME;

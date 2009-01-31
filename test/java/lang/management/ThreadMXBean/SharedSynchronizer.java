@@ -51,8 +51,8 @@ public class SharedSynchronizer {
 
         long[] result = tmbean.findDeadlockedThreads();
         if (result != null) {
-             throw new RuntimeException("TEST FAILED: result should be null");    
-        } 
+             throw new RuntimeException("TEST FAILED: result should be null");
+        }
     }
 
     static class MyThread extends Thread {
@@ -60,12 +60,12 @@ public class SharedSynchronizer {
             FutureTask f = new FutureTask(
                 new Callable() {
                     public Object call() {
-                        throw new RuntimeException("should never reach here");    
+                        throw new RuntimeException("should never reach here");
                     }
                 }
             );
 
-            // A FutureTask uses the AbstractOwnableSynchronizer in a shared 
+            // A FutureTask uses the AbstractOwnableSynchronizer in a shared
             // mode (not exclusive mode). When the thread calls f.get(),
             // it will put to park on the ownable synchronizer that
             // is not owned by any thread.
@@ -79,4 +79,3 @@ public class SharedSynchronizer {
         }
     }
 }
-

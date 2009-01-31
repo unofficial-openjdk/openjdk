@@ -37,11 +37,11 @@
 // Globals
 //
 DDrawObjectStruct           **ddInstance;
-int		            maxDDDevices = 0;
-int			    currNumDevices = 0;
-CriticalSection	            ddInstanceLock;
+int                         maxDDDevices = 0;
+int                         currNumDevices = 0;
+CriticalSection             ddInstanceLock;
 extern BOOL                 isAppActive;
-extern HINSTANCE	    hLibDDraw; // DDraw Library handle
+extern HINSTANCE            hLibDDraw; // DDraw Library handle
 extern jfieldID             ddSurfacePuntedID;
 
 extern "C" void Win32OSSD_DisableDD(JNIEnv *env, Win32SDOps *wsdo);
@@ -49,8 +49,8 @@ extern "C" void Win32OSSD_DisableDD(JNIEnv *env, Win32SDOps *wsdo);
 //
 // Constants
 //
-#define MAX_BUSY_ATTEMPTS 50	// Arbitrary number of times to attempt
-				// an operation that returns a busy error
+#define MAX_BUSY_ATTEMPTS 50    // Arbitrary number of times to attempt
+                                // an operation that returns a busy error
 
 //
 // Macros
@@ -58,14 +58,14 @@ extern "C" void Win32OSSD_DisableDD(JNIEnv *env, Win32SDOps *wsdo);
 
 /**
  * This macro is just a shortcut for the various places in the
- * code where we want to call a ddraw function and print any error 
+ * code where we want to call a ddraw function and print any error
  * if the result is not equal to DD_OK.  The errorString passed
  * in is for debugging/tracing purposes only.
  */
 #define DD_FUNC(func, errorString) { \
     HRESULT ddResult = func; \
     if (ddResult != DD_OK) { \
-	DebugPrintDirectDrawError(ddResult, errorString); \
+        DebugPrintDirectDrawError(ddResult, errorString); \
     } \
 }
 /**
@@ -75,8 +75,8 @@ extern "C" void Win32OSSD_DisableDD(JNIEnv *env, Win32SDOps *wsdo);
 #define DD_FUNC_RETURN(func, errorString) { \
     HRESULT ddResult = func; \
     if (ddResult != DD_OK) { \
-	DebugPrintDirectDrawError(ddResult, errorString); \
-	return FALSE; \
+        DebugPrintDirectDrawError(ddResult, errorString); \
+        return FALSE; \
     } \
 }
 
@@ -84,17 +84,17 @@ extern "C" void Win32OSSD_DisableDD(JNIEnv *env, Win32SDOps *wsdo);
 // INLINE functions
 //
 
-// Attaches the clipper object of a given surface to 
+// Attaches the clipper object of a given surface to
 // the primary.  Note that this action only happens if the
 // surface is onscreen (clipping only makes sense for onscreen windows)
 INLINE void AttachClipper(Win32SDOps *wsdo) {
     if (wsdo->window && wsdo->ddInstance->hwndFullScreen == NULL) {
         J2dTraceLn(J2D_TRACE_VERBOSE, "AttachClipper");
-	HRESULT ddResult;
-	ddResult = wsdo->ddInstance->clipper->SetHWnd(0, wsdo->window);
-	if (ddResult != DD_OK) {
-	    DebugPrintDirectDrawError(ddResult, "AttachClipper");
-	}
+        HRESULT ddResult;
+        ddResult = wsdo->ddInstance->clipper->SetHWnd(0, wsdo->window);
+        if (ddResult != DD_OK) {
+            DebugPrintDirectDrawError(ddResult, "AttachClipper");
+        }
     }
 }
 
@@ -111,26 +111,26 @@ DDrawObjectStruct *GetDDInstanceForDevice(HMONITOR hMon)
     DDrawObjectStruct *tmpDdInstance = NULL;
     ddInstanceLock.Enter();
     if (currNumDevices == 1) {
-	// Non multimon situation
-	if (ddInstance[0]) 
-	{
-	    tmpDdInstance = ddInstance[0];
-	}
+        // Non multimon situation
+        if (ddInstance[0])
+        {
+            tmpDdInstance = ddInstance[0];
+        }
     } else {
-	for (int i = 0; i < currNumDevices; ++i) {
-	    if (ddInstance[i]
-                && hMon == ddInstance[i]->hMonitor) 
-	    {
-		tmpDdInstance = ddInstance[i];
-		break;
-	    }
-	}
+        for (int i = 0; i < currNumDevices; ++i) {
+            if (ddInstance[i]
+                && hMon == ddInstance[i]->hMonitor)
+            {
+                tmpDdInstance = ddInstance[i];
+                break;
+            }
+        }
     }
     if (tmpDdInstance != NULL && !tmpDdInstance->accelerated) {
-	// Some failure situations (see DDSetupDevice in dxInit.cpp) can cause
-	// a ddInstance object to become invalid.  If this happens, we should
-	// not be using this ddInstance object at all, so return NULL.
-	tmpDdInstance = NULL;
+        // Some failure situations (see DDSetupDevice in dxInit.cpp) can cause
+        // a ddInstance object to become invalid.  If this happens, we should
+        // not be using this ddInstance object at all, so return NULL.
+        tmpDdInstance = NULL;
     }
     ddInstanceLock.Leave();
     return tmpDdInstance;
@@ -177,7 +177,7 @@ BOOL DeviceUseDDraw(HMONITOR hMon) {
 BOOL DeviceUseD3D(HMONITOR hMon) {
     DDrawObjectStruct *tmpDdInstance = GetDDInstanceForDevice(hMon);
     return (useDD && tmpDdInstance && tmpDdInstance->ddObject &&
-	    tmpDdInstance->ddObject->IsD3DEnabled());
+            tmpDdInstance->ddObject->IsD3DEnabled());
 }
 
 /**
@@ -192,7 +192,7 @@ BOOL DDUseDDraw(Win32SDOps *wsdo) {
 
 
 /**
- * Release the resources consumed by ddraw.  This will be called 
+ * Release the resources consumed by ddraw.  This will be called
  * by the DllMain function when it receives a PROCESS_DETACH method,
  * meaning that the application is done with awt.  We need to release
  * these ddraw resources because of potential memory leaks, but
@@ -200,41 +200,41 @@ BOOL DDUseDDraw(Win32SDOps *wsdo) {
  * that has been locked and not unlocked, then we may cause
  * ddraw to be corrupted on this system until reboot.
  * IMPORTANT: because we do not use any locks around this release,
- * we assume that this function is called only during the 
+ * we assume that this function is called only during the
  * PROCESS_DETACH procedure described above.  Any other situation
  * could cause unpredictable results.
- */   
+ */
 void DDRelease()
 {
     J2dTraceLn(J2D_TRACE_INFO, "DDRelease");
- 
+
     // Note that we do not lock the ddInstanceLock CriticalSection.
     // Normally we should do that in this kind of situation (to ensure
     // that the ddInstance used in all release calls is the same on).
     // But in this case we do not want the release of a locked surface
     // to be hampered by some bad CriticalSection deadlock, so we
     // will just release ddInstance anyway.
-    // Anyway, if users of this function call it properly (as 
+    // Anyway, if users of this function call it properly (as
     // documented above), then there should be no problem.
     try {
-	if (hLibDDraw) {
-	    ::FreeLibrary(hLibDDraw);
-	    hLibDDraw = NULL;
-	}
-	hLibDDraw = NULL;
-	if (ddInstance) {
-	    for (int i = 0; i < currNumDevices; ++i) {
-		ReleaseDDInstance(ddInstance[i]);
-	    }
-	    free(ddInstance);
-	}
+        if (hLibDDraw) {
+            ::FreeLibrary(hLibDDraw);
+            hLibDDraw = NULL;
+        }
+        hLibDDraw = NULL;
+        if (ddInstance) {
+            for (int i = 0; i < currNumDevices; ++i) {
+                ReleaseDDInstance(ddInstance[i]);
+            }
+            free(ddInstance);
+        }
     } catch (...) {
-	// Handle all exceptions by simply returning.
-	// There are some cases where the OS may have already
-	// released our objects for us (e.g., NT4) and we have
-	// no way of knowing, but the above call into Release will
-	// cause an exception to be thrown by dereferencing
-	// already-released ddraw objects
+        // Handle all exceptions by simply returning.
+        // There are some cases where the OS may have already
+        // released our objects for us (e.g., NT4) and we have
+        // no way of knowing, but the above call into Release will
+        // cause an exception to be thrown by dereferencing
+        // already-released ddraw objects
     }
 }
 
@@ -256,12 +256,12 @@ BOOL DDCreatePrimary(Win32SDOps *wsdo) {
         // the primary unless the number of back buffers has changed.
         if (tmpDdInstance == NULL) {
             return FALSE;
-	}
+        }
         if (tmpDdInstance->hwndFullScreen == NULL ||
-            tmpDdInstance->context != CONTEXT_NORMAL) 
-	{
+            tmpDdInstance->context != CONTEXT_NORMAL)
+        {
             ret = DDSetupDevice(tmpDdInstance,
-	        AwtWin32GraphicsDevice::GetDxCapsForDevice(hMon));
+                AwtWin32GraphicsDevice::GetDxCapsForDevice(hMon));
             tmpDdInstance->context = CONTEXT_NORMAL;
         }
         if (ret) {
@@ -280,7 +280,7 @@ BOOL DDCreatePrimary(Win32SDOps *wsdo) {
  * On Windows Vista, a 1x1 scratch offscreen surface will be created and
  * maintained, because locking the primary surface will cause DWM to be
  * disabled for the run of the application.
- * 
+ *
  * Note: this method must be called while ddInstance lock is held.
  * Note: a "DDINSTANCE_USABLE" non-null argument is assumed.
  */
@@ -318,7 +318,7 @@ static DDrawSurface* DDGetSyncSurface(DDrawObjectStruct *tmpDdInstance)
         ddBltFx.dwSize = sizeof(ddBltFx);
         ddBltFx.dwFillColor = 0xffffffff;
 
-        lpSyncSurface = 
+        lpSyncSurface =
             tmpDdInstance->ddObject->
                 CreateDDOffScreenSurface(1, 1, 24/*ignored*/,
                                          TR_OPAQUE,
@@ -350,28 +350,28 @@ void DDSync()
     int attempts = 0;
     HRESULT ddResult;
     DDrawSurface *lpSyncSurface = NULL;
-    
+
     J2dTraceLn(J2D_TRACE_INFO, "DDSync");
     // REMIND: need to handle errors here
     ddInstanceLock.Enter();
     for (int i = 0; i < currNumDevices; ++i) {
-	DDrawObjectStruct *tmpDdInstance = ddInstance[i];
+        DDrawObjectStruct *tmpDdInstance = ddInstance[i];
 
-	if (!DDINSTANCE_USABLE(tmpDdInstance)) {
-	    continue;
-	}
+        if (!DDINSTANCE_USABLE(tmpDdInstance)) {
+            continue;
+        }
         lpSyncSurface = DDGetSyncSurface(tmpDdInstance);
         if (lpSyncSurface == NULL) {
-            J2dRlsTraceLn1(J2D_TRACE_ERROR, 
+            J2dRlsTraceLn1(J2D_TRACE_ERROR,
                            "DDSync: no sync surface for device %d", i);
             continue;
         }
-	// Spin while busy up to some finite number of times
-	do {
+        // Spin while busy up to some finite number of times
+        do {
             ddResult = lpSyncSurface->Lock(&tinyRect, NULL,
                                            DDLOCK_WAIT, NULL);
-	} while ((ddResult == DDERR_SURFACEBUSY) && 
-		 (++attempts < MAX_BUSY_ATTEMPTS));
+        } while ((ddResult == DDERR_SURFACEBUSY) &&
+                 (++attempts < MAX_BUSY_ATTEMPTS));
         if (ddResult == DD_OK) {
             ddResult = lpSyncSurface->Unlock(&tinyRect);
         }
@@ -392,8 +392,8 @@ void DDSync()
 BOOL DDClipCheck(Win32SDOps *wsdo, RECT *operationRect)
 {
     static struct {
-	RGNDATAHEADER	rdh;
-	RECT		rects[1];
+        RGNDATAHEADER   rdh;
+        RECT            rects[1];
     } rgnData;
     unsigned long rgnSize = sizeof(rgnData);
     HRESULT ddResult;
@@ -401,8 +401,8 @@ BOOL DDClipCheck(Win32SDOps *wsdo, RECT *operationRect)
     J2dTraceLn(J2D_TRACE_VERBOSE, "DDClipCheck");
 
     if (!wsdo->window) {
-	// Offscreen surfaces need no clipping
-	return TRUE;
+        // Offscreen surfaces need no clipping
+        return TRUE;
     }
 
     // If ddResult not OK, could be because of a complex clipping region
@@ -410,53 +410,53 @@ BOOL DDClipCheck(Win32SDOps *wsdo, RECT *operationRect)
     // Thus, we return FALSE and attach the clipper object.
     DDrawObjectStruct *tmpDdInstance = wsdo->ddInstance;
     if (!DDINSTANCE_USABLE(tmpDdInstance)) {
-	return FALSE;
+        return FALSE;
     }
     if (wsdo->window == tmpDdInstance->hwndFullScreen) {
         // Fullscreen surfaces need no clipping
         return TRUE;
     }
     DD_FUNC(tmpDdInstance->clipper->SetHWnd(0, wsdo->window),
-	"DDClipCheck: SetHWnd");
+        "DDClipCheck: SetHWnd");
     ddResult = tmpDdInstance->clipper->GetClipList(NULL, (RGNDATA*)&rgnData,
-	&rgnSize);
+        &rgnSize);
     if (ddResult == DDERR_REGIONTOOSMALL) {
-	// Complex clipping region
-	// REMIND: could be more clever here and actually check operationRect
-	// against all rectangles in clipList, but this works for now.
-	return FALSE;
+        // Complex clipping region
+        // REMIND: could be more clever here and actually check operationRect
+        // against all rectangles in clipList, but this works for now.
+        return FALSE;
     }
     // Check intersection of clip region with operationRect.  If clip region
     // smaller, then we have a simple clip case.
     // If no operationRect, then check against entire window bounds.
     if (operationRect) {
-	if (operationRect->left   < rgnData.rects[0].left ||
-	    operationRect->top    < rgnData.rects[0].top  ||
-	    operationRect->right  > rgnData.rects[0].right ||
-	    operationRect->bottom > rgnData.rects[0].bottom) 
-	{
-	    return FALSE;
-	}
+        if (operationRect->left   < rgnData.rects[0].left ||
+            operationRect->top    < rgnData.rects[0].top  ||
+            operationRect->right  > rgnData.rects[0].right ||
+            operationRect->bottom > rgnData.rects[0].bottom)
+        {
+            return FALSE;
+        }
     } else {
-	RECT winrect;
-	::GetWindowRect(wsdo->window, &winrect);
-	if (winrect.left   < rgnData.rects[0].left ||
-	    winrect.top    < rgnData.rects[0].top  ||
-	    winrect.right  > rgnData.rects[0].right ||
-	    winrect.bottom > rgnData.rects[0].bottom) 
-	{
-	    return FALSE;
-	}
+        RECT winrect;
+        ::GetWindowRect(wsdo->window, &winrect);
+        if (winrect.left   < rgnData.rects[0].left ||
+            winrect.top    < rgnData.rects[0].top  ||
+            winrect.right  > rgnData.rects[0].right ||
+            winrect.bottom > rgnData.rects[0].bottom)
+        {
+            return FALSE;
+        }
     }
     return TRUE;
 }
 
 
 /**
- * Lock the surface.  
+ * Lock the surface.
  */
-BOOL DDLock(JNIEnv *env, Win32SDOps *wsdo, RECT *lockRect, 
-	    SurfaceDataRasInfo *pRasInfo)
+BOOL DDLock(JNIEnv *env, Win32SDOps *wsdo, RECT *lockRect,
+            SurfaceDataRasInfo *pRasInfo)
 {
     J2dTraceLn1(J2D_TRACE_INFO, "DDLock: wsdo->lpSurface=0x%x", wsdo->lpSurface);
 
@@ -470,47 +470,47 @@ BOOL DDLock(JNIEnv *env, Win32SDOps *wsdo, RECT *lockRect,
         wsdo->gdiOpPending = FALSE;
     }
     while (attempts++ < MAX_BUSY_ATTEMPTS) {
-	if (!wsdo->ddInstance->valid) {
-	    // If dd object became invalid, don't bother calling Lock
-	    // Note: This check should not be necessary because we should
-	    // do the right thing in any case - catch the error, try to 
-	    // restore the surface, fai, etc.  But there seem to be problems
-	    // with ddraw that sometimes cause it to hang in the Restore and
-	    // Lock calls. Better to avoid the situation as much as we can and
-	    // bail out early.
-            J2dTraceLn(J2D_TRACE_ERROR, 
+        if (!wsdo->ddInstance->valid) {
+            // If dd object became invalid, don't bother calling Lock
+            // Note: This check should not be necessary because we should
+            // do the right thing in any case - catch the error, try to
+            // restore the surface, fai, etc.  But there seem to be problems
+            // with ddraw that sometimes cause it to hang in the Restore and
+            // Lock calls. Better to avoid the situation as much as we can and
+            // bail out early.
+            J2dTraceLn(J2D_TRACE_ERROR,
                        "DDLock: wsdo->ddInstance invalid");
-	    return FALSE;
-	}
-	HRESULT ddResult = wsdo->lpSurface->Lock(lockRect, pRasInfo,
-	    DDLOCK_WAIT, NULL);
-	// Spin on the busy-type errors, else return having failed or succeeded
-	switch (ddResult) {
-	case DD_OK:
-	    return TRUE;
-	case DDERR_WASSTILLDRAWING:
-	case DDERR_SURFACEBUSY:
+            return FALSE;
+        }
+        HRESULT ddResult = wsdo->lpSurface->Lock(lockRect, pRasInfo,
+            DDLOCK_WAIT, NULL);
+        // Spin on the busy-type errors, else return having failed or succeeded
+        switch (ddResult) {
+        case DD_OK:
+            return TRUE;
+        case DDERR_WASSTILLDRAWING:
+        case DDERR_SURFACEBUSY:
             J2dTraceLn(J2D_TRACE_WARNING, "DDLock: surface busy...");
-	    break;
-	case DDERR_SURFACELOST:
+            break;
+        case DDERR_SURFACELOST:
             J2dTraceLn(J2D_TRACE_WARNING, "DDLock: surface lost");
-	    wsdo->RestoreSurface(env, wsdo);
-	    return FALSE;
+            wsdo->RestoreSurface(env, wsdo);
+            return FALSE;
         case DDERR_GENERIC:
             J2dRlsTraceLn(J2D_TRACE_ERROR, "DDLock: unexpected error");
             if (wsdo->window == NULL) {
                 Win32OSSD_DisableDD(env, wsdo);
             }
             return FALSE;
-	default:
-	    DebugPrintDirectDrawError(ddResult, "DDLock");
-	    return FALSE;
-	}
+        default:
+            DebugPrintDirectDrawError(ddResult, "DDLock");
+            return FALSE;
+        }
     }
     // If we get here, then there was an error in the function and we
     // should return false
     return FALSE;
-} 
+}
 
 
 /**
@@ -524,51 +524,51 @@ void DDUnlock(JNIEnv *env, Win32SDOps *wsdo)
     // Spin on the busy-type errors, else return having failed or succeeded
     switch (ddResult) {
     case DD_OK:
-	return;
+        return;
     case DDERR_NOTLOCKED:
         J2dTraceLn(J2D_TRACE_ERROR, "DDUnlock: Surface not locked");
         return;
     case DDERR_SURFACELOST:
         J2dTraceLn(J2D_TRACE_WARNING, "DDUnlock: Surface lost");
-	wsdo->RestoreSurface(env, wsdo);
-	return;
+        wsdo->RestoreSurface(env, wsdo);
+        return;
     default:
-	DebugPrintDirectDrawError(ddResult, "DDUnlock");
-	return;
+        DebugPrintDirectDrawError(ddResult, "DDUnlock");
+        return;
     }
-} 
+}
 
 /**
  * Fill given surface with given color in given RECT bounds
  */
-BOOL DDColorFill(JNIEnv *env, jobject sData, Win32SDOps *wsdo, 
-		 RECT *fillRect, jint color)
+BOOL DDColorFill(JNIEnv *env, jobject sData, Win32SDOps *wsdo,
+                 RECT *fillRect, jint color)
 {
     DDBLTFX ddBltFx;
     HRESULT ddResult;
     int attempts = 0;
 
     J2dTraceLn(J2D_TRACE_VERBOSE, "DDColorFill");
-    J2dTraceLn5(J2D_TRACE_VERBOSE, 
+    J2dTraceLn5(J2D_TRACE_VERBOSE,
                 "  color=0x%x l=%-4d t=%-4d r=%-4d b=%-4d",
-                color, fillRect->left, fillRect->top, fillRect->right, 
+                color, fillRect->left, fillRect->top, fillRect->right,
                 fillRect->bottom);
     ddBltFx.dwSize = sizeof(ddBltFx);
     ddBltFx.dwFillColor = color;
     AttachClipper(wsdo);
     while (attempts++ < MAX_BUSY_ATTEMPTS) {
-	ddResult = wsdo->lpSurface->Blt(fillRect, NULL, NULL,
-					DDBLT_COLORFILL | DDBLT_WAIT,
-					&ddBltFx);
-	// Spin on the busy-type errors, else return having failed or succeeded
-	switch (ddResult) {
-	case DD_OK:
-	    return TRUE;
-	case DDERR_INVALIDRECT:
-            J2dTraceLn4(J2D_TRACE_ERROR, 
+        ddResult = wsdo->lpSurface->Blt(fillRect, NULL, NULL,
+                                        DDBLT_COLORFILL | DDBLT_WAIT,
+                                        &ddBltFx);
+        // Spin on the busy-type errors, else return having failed or succeeded
+        switch (ddResult) {
+        case DD_OK:
+            return TRUE;
+        case DDERR_INVALIDRECT:
+            J2dTraceLn4(J2D_TRACE_ERROR,
                         "DDColorFill: Invalid rect for colorfill "\
                         "l=%-4d t=%-4d r=%-4d b=%-4d",
-                        fillRect->left, fillRect->top, 
+                        fillRect->left, fillRect->top,
                         fillRect->right, fillRect->bottom);
             return FALSE;
         case DDERR_SURFACEBUSY:
@@ -576,11 +576,11 @@ BOOL DDColorFill(JNIEnv *env, jobject sData, Win32SDOps *wsdo,
             break;
         case DDERR_SURFACELOST:
             J2dTraceLn(J2D_TRACE_WARNING, "DDColorfill: surface lost");
-	    wsdo->RestoreSurface(env, wsdo);
-	    return FALSE;
-	default:
-	    DebugPrintDirectDrawError(ddResult, "DDColorFill");
-	}
+            wsdo->RestoreSurface(env, wsdo);
+            return FALSE;
+        default:
+            DebugPrintDirectDrawError(ddResult, "DDColorFill");
+        }
     }
     J2dTraceLn(J2D_TRACE_VERBOSE, "DDColorFill done");
     return FALSE;
@@ -590,37 +590,37 @@ void ManageOffscreenSurfaceBlt(JNIEnv *env, Win32SDOps *wsdo)
 {
     J2dTraceLn(J2D_TRACE_INFO, "ManageOffscreenSurfaceBlt");
     wsdo->surfacePuntData.pixelsReadSinceBlt = 0;
-    if (wsdo->surfacePuntData.numBltsSinceRead >= 
-	wsdo->surfacePuntData.numBltsThreshold) 
+    if (wsdo->surfacePuntData.numBltsSinceRead >=
+        wsdo->surfacePuntData.numBltsThreshold)
     {
-	if (wsdo->surfacePuntData.usingDDSystem) {
-	    if (wsdo->surfacePuntData.lpSurfaceVram->Blt(NULL, 
-		    wsdo->surfacePuntData.lpSurfaceSystem, 
-		    NULL, DDBLT_WAIT, NULL) == DD_OK) 
-	    {
+        if (wsdo->surfacePuntData.usingDDSystem) {
+            if (wsdo->surfacePuntData.lpSurfaceVram->Blt(NULL,
+                    wsdo->surfacePuntData.lpSurfaceSystem,
+                    NULL, DDBLT_WAIT, NULL) == DD_OK)
+            {
                 J2dTraceLn2(J2D_TRACE_VERBOSE,
                             "  Unpunting sys to VRAM: 0x%x -> 0x%x",
                             wsdo->surfacePuntData.lpSurfaceVram,
                             wsdo->surfacePuntData.lpSurfaceSystem);
-		wsdo->lpSurface = wsdo->surfacePuntData.lpSurfaceVram;
-		wsdo->surfacePuntData.usingDDSystem = FALSE;
-		// Now: double our threshhold to prevent thrashing; we
-		// don't want to keep punting and un-punting our surface
-		wsdo->surfacePuntData.numBltsThreshold *= 2;
-		// Notify the Java level that this surface has
-		// been unpunted so that future copies to this surface
-		// from accelerated src surfaces will do the right thing.
-		jobject sdObject = env->NewLocalRef(wsdo->sdOps.sdObject);
-		if (sdObject) {
-		    // Only bother with this optimization if the
-		    // reference is still valid
-		    env->SetBooleanField(sdObject, ddSurfacePuntedID, JNI_FALSE);
-		    env->DeleteLocalRef(sdObject);
-		}
-	    }
-	}
+                wsdo->lpSurface = wsdo->surfacePuntData.lpSurfaceVram;
+                wsdo->surfacePuntData.usingDDSystem = FALSE;
+                // Now: double our threshhold to prevent thrashing; we
+                // don't want to keep punting and un-punting our surface
+                wsdo->surfacePuntData.numBltsThreshold *= 2;
+                // Notify the Java level that this surface has
+                // been unpunted so that future copies to this surface
+                // from accelerated src surfaces will do the right thing.
+                jobject sdObject = env->NewLocalRef(wsdo->sdOps.sdObject);
+                if (sdObject) {
+                    // Only bother with this optimization if the
+                    // reference is still valid
+                    env->SetBooleanField(sdObject, ddSurfacePuntedID, JNI_FALSE);
+                    env->DeleteLocalRef(sdObject);
+                }
+            }
+        }
     } else {
-	wsdo->surfacePuntData.numBltsSinceRead++;
+        wsdo->surfacePuntData.numBltsSinceRead++;
     }
 }
 
@@ -628,20 +628,20 @@ void ManageOffscreenSurfaceBlt(JNIEnv *env, Win32SDOps *wsdo)
  * Copy data from src to dst using src and dst rectangles
  */
 BOOL DDBlt(JNIEnv *env, Win32SDOps *wsdoSrc, Win32SDOps *wsdoDst,
-	       RECT *rDst, RECT *rSrc, CompositeInfo *compInfo)
+               RECT *rDst, RECT *rSrc, CompositeInfo *compInfo)
 {
     int attempts = 0;
     DWORD bltFlags = DDBLT_WAIT;
 
     J2dTraceLn(J2D_TRACE_INFO, "DDBlt");
-    J2dTraceLn4(J2D_TRACE_INFO, "  src rect: l=%-4d t=%-4d r=%-4d b=%-4d", 
-		    rSrc->left, rSrc->top, rSrc->right, rSrc->bottom);
-    J2dTraceLn4(J2D_TRACE_INFO, "  dst rect: l=%-4d t=%-4d r=%-4d b=%-4d", 
-		    rDst->left, rDst->top, rDst->right, rDst->bottom);
+    J2dTraceLn4(J2D_TRACE_INFO, "  src rect: l=%-4d t=%-4d r=%-4d b=%-4d",
+                    rSrc->left, rSrc->top, rSrc->right, rSrc->bottom);
+    J2dTraceLn4(J2D_TRACE_INFO, "  dst rect: l=%-4d t=%-4d r=%-4d b=%-4d",
+                    rDst->left, rDst->top, rDst->right, rDst->bottom);
 
-    // Note: the primary can only have one clipper attached to it at 
+    // Note: the primary can only have one clipper attached to it at
     // any time.  This seems weird to set it to src then dst, but this
-    // works because either: both are the same window (devCopyArea), 
+    // works because either: both are the same window (devCopyArea),
     // neither are windows (both offscreen), or only one is a window
     // (Blt).  We can't get here from a windowA -> windowB copy operation.
     AttachClipper(wsdoSrc);
@@ -649,31 +649,31 @@ BOOL DDBlt(JNIEnv *env, Win32SDOps *wsdoSrc, Win32SDOps *wsdoDst,
 
     // Administrate system-surface punt mechanism for offscreen images
     if (!wsdoSrc->window && !wsdoSrc->surfacePuntData.disablePunts) {
-	ManageOffscreenSurfaceBlt(env, wsdoSrc);
+        ManageOffscreenSurfaceBlt(env, wsdoSrc);
     }
     if (wsdoSrc->transparency == TR_BITMASK) {
-	bltFlags |= DDBLT_KEYSRC;
+        bltFlags |= DDBLT_KEYSRC;
     }
     while (attempts++ < MAX_BUSY_ATTEMPTS) {
-	HRESULT ddResult = 
-            wsdoDst->lpSurface->Blt(rDst, wsdoSrc->lpSurface, 
+        HRESULT ddResult =
+            wsdoDst->lpSurface->Blt(rDst, wsdoSrc->lpSurface,
                                     rSrc, bltFlags, NULL);
-        
-	// Spin on the busy-type errors or return having failed or succeeded
-	switch (ddResult) {
-	case DD_OK:
-	    return TRUE;
-	case DDERR_SURFACEBUSY:
+
+        // Spin on the busy-type errors or return having failed or succeeded
+        switch (ddResult) {
+        case DD_OK:
+            return TRUE;
+        case DDERR_SURFACEBUSY:
             J2dTraceLn(J2D_TRACE_WARNING, "DDBlt: surface busy");
-	    break;
-	case DDERR_SURFACELOST:
-	    /**
-	     * Only restore the Dst if it is truly lost; "restoring" an
-	     * offscreen surface simply sets a flag and throws an exception,
-	     * thus guaranteeing that the Src restore below will not happen.
-	     * So if the Src stays Lost and we keep trying to restore an un-Lost
-	     * Dst, then we will never actually do the restore on the Src.
-	     */
+            break;
+        case DDERR_SURFACELOST:
+            /**
+             * Only restore the Dst if it is truly lost; "restoring" an
+             * offscreen surface simply sets a flag and throws an exception,
+             * thus guaranteeing that the Src restore below will not happen.
+             * So if the Src stays Lost and we keep trying to restore an un-Lost
+             * Dst, then we will never actually do the restore on the Src.
+             */
             if (wsdoDst->lpSurface->IsLost() != DD_OK) {
                 J2dTraceLn(J2D_TRACE_WARNING, "DDBlt: dst surface lost");
                 wsdoDst->RestoreSurface(env, wsdoDst);
@@ -682,18 +682,18 @@ BOOL DDBlt(JNIEnv *env, Win32SDOps *wsdoSrc, Win32SDOps *wsdoDst,
                 J2dTraceLn(J2D_TRACE_WARNING, "DDBlt: src surface lost");
                 wsdoSrc->RestoreSurface(env, wsdoSrc);
             }
-	    return FALSE;
-	default:
-	    DebugPrintDirectDrawError(ddResult, "DDBlt");
-	    return FALSE;
-	}
+            return FALSE;
+        default:
+            DebugPrintDirectDrawError(ddResult, "DDBlt");
+            return FALSE;
+        }
     }
     return FALSE;
 }
 
 /**
- * Set the color key information for this surface.  During a 
- * blit operation, pixels of the specified color will not be 
+ * Set the color key information for this surface.  During a
+ * blit operation, pixels of the specified color will not be
  * drawn (resulting in transparent areas of the image).  Note
  * that the "transparency" field in the Win32SDOps structure must
  * be set to TR_BITMASK for the color key information to have an effect.
@@ -710,7 +710,7 @@ void DDSetColorKey(JNIEnv *env, Win32SDOps *wsdo, jint color)
     ddResult = wsdo->lpSurface->SetColorKey(DDCKEY_SRCBLT, &ddck);
 
     if (ddResult != DD_OK) {
-	DebugPrintDirectDrawError(ddResult, "DDSetColorKey");
+        DebugPrintDirectDrawError(ddResult, "DDSetColorKey");
     }
 }
 
@@ -724,15 +724,15 @@ BOOL DDFlip(JNIEnv *env, Win32SDOps *src, Win32SDOps *dest)
     J2dTraceLn(J2D_TRACE_INFO, "DDFlip");
     int attempts = 0;
     while (attempts++ < MAX_BUSY_ATTEMPTS) {
-	HRESULT ddResult = src->lpSurface->Flip(dest->lpSurface);
-	// Spin on the busy-type errors or return having failed or succeeded
-	switch (ddResult) {
-	case DD_OK:
-	    return TRUE;
-	case DDERR_SURFACEBUSY:
+        HRESULT ddResult = src->lpSurface->Flip(dest->lpSurface);
+        // Spin on the busy-type errors or return having failed or succeeded
+        switch (ddResult) {
+        case DD_OK:
+            return TRUE;
+        case DDERR_SURFACEBUSY:
             J2dTraceLn(J2D_TRACE_WARNING, "DDFlip: surface busy");
-	    break;
-	case DDERR_SURFACELOST:
+            break;
+        case DDERR_SURFACELOST:
             if (dest->lpSurface->IsLost() != DD_OK) {
                 J2dTraceLn(J2D_TRACE_WARNING, "DDFlip: dst surface lost");
                 dest->RestoreSurface(env, dest);
@@ -741,11 +741,11 @@ BOOL DDFlip(JNIEnv *env, Win32SDOps *src, Win32SDOps *dest)
                 J2dTraceLn(J2D_TRACE_WARNING, "DDFlip: src surface lost");
                 src->RestoreSurface(env, src);
             }
-	    return FALSE;
-	default:
-	    DebugPrintDirectDrawError(ddResult, "DDFlip");
-	    return FALSE;
-	}
+            return FALSE;
+        default:
+            DebugPrintDirectDrawError(ddResult, "DDFlip");
+            return FALSE;
+        }
     }
     return FALSE;
 }
@@ -762,24 +762,24 @@ BOOL DDFlip(JNIEnv *env, Win32SDOps *src, Win32SDOps *dest)
 void DDInvalidateDDInstance(DDrawObjectStruct *ddInst) {
     J2dTraceLn(J2D_TRACE_INFO, "DDInvalidateDDInstance");
     if (useDD) {
-	if (ddInst != NULL) {
-	    // Invalidate given instance of ddInstance
-	    ddInst->valid = FALSE;
-	} else {
-	    // Invalidate global ddInstance.  This occurs at the start
-	    // of a display-change event.
-	    for (int i = 0; i < currNumDevices; ++i) {
-		if (ddInstance[i] && ddInstance[i]->hwndFullScreen == NULL) {
-		    ddInstance[i]->valid = FALSE;
-		}
-	    }
-	}
+        if (ddInst != NULL) {
+            // Invalidate given instance of ddInstance
+            ddInst->valid = FALSE;
+        } else {
+            // Invalidate global ddInstance.  This occurs at the start
+            // of a display-change event.
+            for (int i = 0; i < currNumDevices; ++i) {
+                if (ddInstance[i] && ddInstance[i]->hwndFullScreen == NULL) {
+                    ddInstance[i]->valid = FALSE;
+                }
+            }
+        }
     }
 }
 
 /**
  * Utility routine: release all elements of given ddInst structure
- * and free the memory consumed by ddInst.  Note that this may be 
+ * and free the memory consumed by ddInst.  Note that this may be
  * called during a failed DDCreateDDObject, so any null fields were
  * not yet initialized and should not be released.
  */
@@ -787,19 +787,19 @@ void ReleaseDDInstance(DDrawObjectStruct *ddInst)
 {
     J2dTraceLn(J2D_TRACE_INFO, "ReleaseDDInstance");
     if (ddInst) {
-	if (ddInst->primary) {
-	    delete ddInst->primary;
-	    ddInst->primary = NULL;
-	}
-	if (ddInst->clipper) {
-	    delete ddInst->clipper;
-	    ddInst->clipper = NULL;
-	}
-	if (ddInst->ddObject) {
-	    delete ddInst->ddObject;
-	    ddInst->ddObject = NULL;
-	}
-	free(ddInst);
+        if (ddInst->primary) {
+            delete ddInst->primary;
+            ddInst->primary = NULL;
+        }
+        if (ddInst->clipper) {
+            delete ddInst->clipper;
+            ddInst->clipper = NULL;
+        }
+        if (ddInst->ddObject) {
+            delete ddInst->ddObject;
+            ddInst->ddObject = NULL;
+        }
+        free(ddInst);
     }
 }
 
@@ -827,11 +827,11 @@ BOOL DDEnterFullScreen(HMONITOR hMon, HWND hwnd, HWND topLevelHwnd)
         return FALSE;
     }
     if (tmpDdInstance->primary) {
-	// No clipping necessary in fullscreen mode.  Elsewhere,
-	// we avoid setting the clip list for the fullscreen window,
-	// so we should also null-out the clipper object for the
-	// primary surface in that case.  Bug 4737785.
-	tmpDdInstance->primary->SetClipper(NULL);
+        // No clipping necessary in fullscreen mode.  Elsewhere,
+        // we avoid setting the clip list for the fullscreen window,
+        // so we should also null-out the clipper object for the
+        // primary surface in that case.  Bug 4737785.
+        tmpDdInstance->primary->SetClipper(NULL);
     }
     tmpDdInstance->hwndFullScreen = hwnd;
     tmpDdInstance->context = CONTEXT_ENTER_FULL_SCREEN;
@@ -854,7 +854,7 @@ BOOL DDExitFullScreen(HMONITOR hMon, HWND hwnd)
         ::Sleep(500 - timeDiff);
     }
     prevTime = currTime;
-    
+
     J2dTraceLn(J2D_TRACE_INFO, "DDExitFullScreen");
     DDrawObjectStruct *tmpDdInstance = GetDDInstanceForDevice(hMon);
     tmpDdInstance->context = CONTEXT_EXIT_FULL_SCREEN;
@@ -862,22 +862,22 @@ BOOL DDExitFullScreen(HMONITOR hMon, HWND hwnd)
         !tmpDdInstance->ddObject->RestoreDDDisplayMode()) {
         return FALSE;
     }
-    J2dTraceLn1(J2D_TRACE_VERBOSE, 
-                "DDExitFullScreen: Restoring cooperative level hwnd=0x%x", 
+    J2dTraceLn1(J2D_TRACE_VERBOSE,
+                "DDExitFullScreen: Restoring cooperative level hwnd=0x%x",
                 hwnd);
-    HRESULT ddResult = 
-	tmpDdInstance->ddObject->SetCooperativeLevel(NULL, DDSCL_NORMAL);
+    HRESULT ddResult =
+        tmpDdInstance->ddObject->SetCooperativeLevel(NULL, DDSCL_NORMAL);
     if (ddResult != DD_OK) {
         DebugPrintDirectDrawError(ddResult, "DDExitFullScreen");
         return FALSE;
     }
     if (tmpDdInstance->clipper == NULL) {
-	// May not have created clipper if we were in FS mode during 
-	// primary creation
-	tmpDdInstance->clipper = tmpDdInstance->ddObject->CreateDDClipper();
+        // May not have created clipper if we were in FS mode during
+        // primary creation
+        tmpDdInstance->clipper = tmpDdInstance->ddObject->CreateDDClipper();
     }
     if (tmpDdInstance->clipper != NULL) {
-	tmpDdInstance->primary->SetClipper(tmpDdInstance->clipper);
+        tmpDdInstance->primary->SetClipper(tmpDdInstance->clipper);
     }
     J2dTraceLn(J2D_TRACE_VERBOSE,
                "DDExitFullScreen: Restored cooperative level");
@@ -918,7 +918,7 @@ BOOL DDSetDisplayMode(HMONITOR hMon, DDrawDisplayMode& displayMode)
                 case DD_OK:
                     return TRUE;
                 case DDERR_SURFACEBUSY:
-                    J2dTraceLn(J2D_TRACE_WARNING, 
+                    J2dTraceLn(J2D_TRACE_WARNING,
                                "DDSetDisplayMode: surface busy");
                     break;
                 default:
@@ -955,7 +955,7 @@ BOOL DDEnumDisplayModes(HMONITOR hMon, DDrawDisplayMode* constraint,
  * entirely; we do this by invalidating the surfaceData and recreating
  * it from scratch (at the Java level).
  */
-BOOL DDRestoreSurface(Win32SDOps *wsdo) 
+BOOL DDRestoreSurface(Win32SDOps *wsdo)
 {
     J2dTraceLn1(J2D_TRACE_INFO, "DDRestoreSurface, wsdo->lpSurface=0x%x",
                 wsdo->lpSurface);
@@ -973,36 +973,36 @@ BOOL DDRestoreSurface(Win32SDOps *wsdo)
         J2dTraceLn(J2D_TRACE_VERBOSE, "DDRestoreSurface:  surface memory ok");
     }
     else {
-        J2dTraceLn(J2D_TRACE_WARNING, 
+        J2dTraceLn(J2D_TRACE_WARNING,
                    "DDRestoreSurface: surface memory lost, trying to restore");
-	HRESULT ddResult;
-	ddResult = wsdo->lpSurface->Restore();
-	if (ddResult == DDERR_WRONGMODE) {
-	    // Strange full-screen bug; return false to avoid a hang.
-	    // Note that we should never get this error in full-screen mode.
-	    if (wsdo->window == tmpDdInstance->hwndFullScreen) {
+        HRESULT ddResult;
+        ddResult = wsdo->lpSurface->Restore();
+        if (ddResult == DDERR_WRONGMODE) {
+            // Strange full-screen bug; return false to avoid a hang.
+            // Note that we should never get this error in full-screen mode.
+            if (wsdo->window == tmpDdInstance->hwndFullScreen) {
                 return FALSE;
-	    }
-	    // Wrong mode: display depth has been changed. 
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+            }
+            // Wrong mode: display depth has been changed.
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "DDRestoreSurface failure: DDERR_WRONGMODE");
-	    if (wsdo->window) {
-		/**
-		 * If this is a window surface, invalidate this
-		 * object's ddInstance and return the approriate error.  The
-		 * surfaceData will later be invalidated, disposed, and
-		 * re-created with the new and correct depth information.
-		 * Only invalidate for windows because offscreen surfaces
-		 * have other means of being re-created and do not necessarily
-		 * mean that the ddInstance object is invalid for other surfaces
-		 */
-		DDInvalidateDDInstance(wsdo->ddInstance);
-	    }
-	    return FALSE;
-	} else if (ddResult != DD_OK) {
-	    DebugPrintDirectDrawError(ddResult, "DDRestoreSurface");
-	    return FALSE;
-	}
+            if (wsdo->window) {
+                /**
+                 * If this is a window surface, invalidate this
+                 * object's ddInstance and return the approriate error.  The
+                 * surfaceData will later be invalidated, disposed, and
+                 * re-created with the new and correct depth information.
+                 * Only invalidate for windows because offscreen surfaces
+                 * have other means of being re-created and do not necessarily
+                 * mean that the ddInstance object is invalid for other surfaces
+                 */
+                DDInvalidateDDInstance(wsdo->ddInstance);
+            }
+            return FALSE;
+        } else if (ddResult != DD_OK) {
+            DebugPrintDirectDrawError(ddResult, "DDRestoreSurface");
+            return FALSE;
+        }
     }
     if (!tmpDdInstance->valid) {
         tmpDdInstance->valid = TRUE;
@@ -1013,15 +1013,15 @@ BOOL DDRestoreSurface(Win32SDOps *wsdo)
 jint DDGetAvailableMemory(HMONITOR hMon)
 {
     J2dTraceLn(J2D_TRACE_INFO, "DDGetAvailableMemory");
-    DWORD dwFree; 
+    DWORD dwFree;
     DDrawObjectStruct *tmpDdInstance = GetDDInstanceForDevice(hMon);
     if (!useDD || !tmpDdInstance || !tmpDdInstance->valid) {
-	return 0;
+        return 0;
     }
 
-    HRESULT ddResult = tmpDdInstance->ddObject->GetDDAvailableVidMem(&dwFree); 
+    HRESULT ddResult = tmpDdInstance->ddObject->GetDDAvailableVidMem(&dwFree);
     if (ddResult != DD_OK) {
-	DebugPrintDirectDrawError(ddResult, "GetAvailableMemory");
+        DebugPrintDirectDrawError(ddResult, "GetAvailableMemory");
     }
 
     return (jint)dwFree;
@@ -1047,67 +1047,67 @@ BOOL DDCreateSurface(Win32SDOps *wsdo)
     wsdo->lpSurface = NULL; // default value in case of error
 
     if (wsdo->window) {
-        if (tmpDdInstance && 
+        if (tmpDdInstance &&
             tmpDdInstance->backBufferCount != wsdo->backBufferCount &&
-            tmpDdInstance->hwndFullScreen == wsdo->window) 
-	{
+            tmpDdInstance->hwndFullScreen == wsdo->window)
+        {
             tmpDdInstance->context = CONTEXT_CHANGE_BUFFER_COUNT;
             tmpDdInstance->backBufferCount = wsdo->backBufferCount;
         }
-	if (!tmpDdInstance || !tmpDdInstance->valid ||
+        if (!tmpDdInstance || !tmpDdInstance->valid ||
             tmpDdInstance->context != CONTEXT_NORMAL
             ) {
-	    // Only recreate dd object on primary create.  Given our current
-	    // model of displayChange event propagation, we can only guarantee 
-	    // that the system has been properly prepared for a recreate when
-	    // we recreate a primary surface.  The offscreen surfaces may 
-	    // be recreated at any time.
-	    // Recreating ddraw at offscreen surface creation time has caused
-	    // rendering artifacts as well as unexplainable hangs in ddraw
-	    // calls.
-	    ddInstanceLock.Enter();
-	    BOOL success = DDCreatePrimary(wsdo);
-	    ddInstanceLock.Leave();
-	    if (!success) {
-		return FALSE;
-	    }
-	    tmpDdInstance = GetDDInstanceForDevice(hMon);
-	}
+            // Only recreate dd object on primary create.  Given our current
+            // model of displayChange event propagation, we can only guarantee
+            // that the system has been properly prepared for a recreate when
+            // we recreate a primary surface.  The offscreen surfaces may
+            // be recreated at any time.
+            // Recreating ddraw at offscreen surface creation time has caused
+            // rendering artifacts as well as unexplainable hangs in ddraw
+            // calls.
+            ddInstanceLock.Enter();
+            BOOL success = DDCreatePrimary(wsdo);
+            ddInstanceLock.Leave();
+            if (!success) {
+                return FALSE;
+            }
+            tmpDdInstance = GetDDInstanceForDevice(hMon);
+        }
         // restore the primary if it's lost
         if (tmpDdInstance->primary != NULL &&
             FAILED(tmpDdInstance->primary->IsLost()) &&
-            FAILED(tmpDdInstance->primary->Restore())) 
+            FAILED(tmpDdInstance->primary->Restore()))
         {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "DDCreateSurface: failed to restore primary surface");
             return FALSE;
         }
-	// non-null window means onscreen surface.  Primary already 
-	// exists, just need to cache a pointer to it in this wsdo
-	wsdo->lpSurface = tmpDdInstance->primary;
+        // non-null window means onscreen surface.  Primary already
+        // exists, just need to cache a pointer to it in this wsdo
+        wsdo->lpSurface = tmpDdInstance->primary;
     } else {
-	if (!tmpDdInstance || !tmpDdInstance->valid) {
-	    // Don't recreate the ddraw object here (see note above), but
-	    // do fail this creation.  We will come back here eventually
-	    // after an onscreen surface has been created (and the new 
-	    // ddraw object to go along with it).
-	    return FALSE;
-	}
-	if (!DDCreateOffScreenSurface(wsdo, tmpDdInstance)) {
-            J2dRlsTraceLn(J2D_TRACE_ERROR, 
+        if (!tmpDdInstance || !tmpDdInstance->valid) {
+            // Don't recreate the ddraw object here (see note above), but
+            // do fail this creation.  We will come back here eventually
+            // after an onscreen surface has been created (and the new
+            // ddraw object to go along with it).
+            return FALSE;
+        }
+        if (!DDCreateOffScreenSurface(wsdo, tmpDdInstance)) {
+            J2dRlsTraceLn(J2D_TRACE_ERROR,
                           "DDCreateSurface: Failed creating offscreen surface");
-	    return FALSE;
-	}
+            return FALSE;
+        }
     }
     wsdo->ddInstance = tmpDdInstance;
-    J2dTraceLn2(J2D_TRACE_VERBOSE, 
-                "DDCreateSurface: succeeded ddInst=0x%x wsdo->lpSurface=0x%x", 
+    J2dTraceLn2(J2D_TRACE_VERBOSE,
+                "DDCreateSurface: succeeded ddInst=0x%x wsdo->lpSurface=0x%x",
                 tmpDdInstance, wsdo->lpSurface);
     return TRUE;
 }
 
 /**
- * Utility function to make sure that native and java-level 
+ * Utility function to make sure that native and java-level
  * surface depths are matched.  They can be mismatched when display-depths
  * change, either between the creation of the Java surfaceData structure
  * and the native ddraw surface, or later when a surface is automatically
@@ -1154,43 +1154,43 @@ BOOL DDSurfaceDepthsCompatible(int javaDepth, int nativeDepth)
  * surface.
  */
 BOOL DDCreateOffScreenSurface(Win32SDOps *wsdo,
-			      DDrawObjectStruct *ddInst)
+                              DDrawObjectStruct *ddInst)
 {
     J2dTraceLn(J2D_TRACE_INFO, "DDCreateOffScreenSurface");
 
-    wsdo->lpSurface = 
-	ddInst->ddObject->CreateDDOffScreenSurface(wsdo->w, wsdo->h,
+    wsdo->lpSurface =
+        ddInst->ddObject->CreateDDOffScreenSurface(wsdo->w, wsdo->h,
         wsdo->depth, wsdo->transparency, DDSCAPS_VIDEOMEMORY);
     if (!ddInst->primary || (ddInst->primary->IsLost() != DD_OK)) {
-	if (wsdo->lpSurface) {
-	    delete wsdo->lpSurface;
-	    wsdo->lpSurface = NULL;
-	}
-	if (ddInst->primary) {
-	    // attempt to restore primary
-	    ddInst->primary->Restore();
-	    if (ddInst->primary->IsLost() == DD_OK) {
-		// Primary restored: create the offscreen surface again
-		wsdo->lpSurface = 
-		    ddInst->ddObject->CreateDDOffScreenSurface(wsdo->w, wsdo->h,
-			wsdo->depth, wsdo->transparency, 
-			DDSCAPS_VIDEOMEMORY);
-		if (ddInst->primary->IsLost() != DD_OK) {
-		    // doubtful, but possible that it is lost again
-		    // If so, delete the surface and get out of here
-		    if (wsdo->lpSurface) {
-			delete wsdo->lpSurface;
-			wsdo->lpSurface = NULL;
-		    }
-		}
-	    }
-	}
+        if (wsdo->lpSurface) {
+            delete wsdo->lpSurface;
+            wsdo->lpSurface = NULL;
+        }
+        if (ddInst->primary) {
+            // attempt to restore primary
+            ddInst->primary->Restore();
+            if (ddInst->primary->IsLost() == DD_OK) {
+                // Primary restored: create the offscreen surface again
+                wsdo->lpSurface =
+                    ddInst->ddObject->CreateDDOffScreenSurface(wsdo->w, wsdo->h,
+                        wsdo->depth, wsdo->transparency,
+                        DDSCAPS_VIDEOMEMORY);
+                if (ddInst->primary->IsLost() != DD_OK) {
+                    // doubtful, but possible that it is lost again
+                    // If so, delete the surface and get out of here
+                    if (wsdo->lpSurface) {
+                        delete wsdo->lpSurface;
+                        wsdo->lpSurface = NULL;
+                    }
+                }
+            }
+        }
     }
     if (wsdo->lpSurface != NULL && (wsdo->transparency != TR_TRANSLUCENT)) {
-	/** 
+        /**
          * 4941350: Double-check that the depth of the surface just created
          * is compatible with the depth requested.  Note that we ignore texture
-         * (translucent) surfaces as those depths may differ between Java and 
+         * (translucent) surfaces as those depths may differ between Java and
          * native representations.
          */
         int surfaceDepth = wsdo->lpSurface->GetSurfaceDepth();
@@ -1202,7 +1202,7 @@ BOOL DDCreateOffScreenSurface(Win32SDOps *wsdo,
             DDReleaseSurfaceMemory(wsdo->lpSurface);
             wsdo->lpSurface = NULL;
         }
-    }           
+    }
     return (wsdo->lpSurface != NULL);
 }
 
@@ -1222,13 +1222,13 @@ BOOL DDGetAttachedSurface(JNIEnv *env, Win32SDOps* wsdo_parent,
     wsdo->ddInstance = NULL; // default value in case of error
     wsdo->lpSurface = NULL; // default value in case of error
 
-    if (!tmpDdInstance || !tmpDdInstance->valid || 
+    if (!tmpDdInstance || !tmpDdInstance->valid ||
         wsdo_parent->lpSurface == NULL)
     {
-        J2dTraceLn2(J2D_TRACE_WARNING, 
+        J2dTraceLn2(J2D_TRACE_WARNING,
                     "DDGetAttachedSurface: unable to get attached "\
                     "surface for wsdo=0%x wsdo_parent=0%x", wsdo, wsdo_parent);
-	return FALSE;
+        return FALSE;
     }
     DDrawSurface* pNew = wsdo_parent->lpSurface->GetDDAttachedSurface();
     if (pNew == NULL) {
@@ -1236,7 +1236,7 @@ BOOL DDGetAttachedSurface(JNIEnv *env, Win32SDOps* wsdo_parent,
     }
     wsdo->lpSurface = pNew;
     wsdo->ddInstance = tmpDdInstance;
-    J2dTraceLn1(J2D_TRACE_VERBOSE, 
+    J2dTraceLn1(J2D_TRACE_VERBOSE,
                 "DDGetAttachedSurface: succeeded wsdo->lpSurface=0x%x",
                 wsdo->lpSurface);
     return TRUE;
@@ -1248,17 +1248,17 @@ BOOL DDGetAttachedSurface(JNIEnv *env, Win32SDOps* wsdo_parent,
  */
 void DDDestroySurface(Win32SDOps *wsdo)
 {
-    J2dTraceLn1(J2D_TRACE_INFO, "DDDestroySurface: wsdo->lpSurface=0x%x", 
+    J2dTraceLn1(J2D_TRACE_INFO, "DDDestroySurface: wsdo->lpSurface=0x%x",
                 wsdo->lpSurface);
 
     if (!wsdo->lpSurface) {
-	// null surface means it was never created; simply return
-	return;
+        // null surface means it was never created; simply return
+        return;
     }
     if (!wsdo->window) {
-	// offscreen surface
-	delete wsdo->lpSurface;
-	wsdo->lpSurface = NULL;
+        // offscreen surface
+        delete wsdo->lpSurface;
+        wsdo->lpSurface = NULL;
     }
     J2dTraceLn1(J2D_TRACE_VERBOSE,
                 "DDDestroySurface: ddInstance->refCount=%d",
@@ -1272,12 +1272,12 @@ void DDDestroySurface(Win32SDOps *wsdo)
  */
 void DDReleaseSurfaceMemory(DDrawSurface *lpSurface)
 {
-    J2dTraceLn1(J2D_TRACE_INFO, 
+    J2dTraceLn1(J2D_TRACE_INFO,
                 "DDReleaseSurfaceMemory: lpSurface=0x%x", lpSurface);
 
     if (!lpSurface) {
-	// null surface means it was never created; simply return
-	return;
+        // null surface means it was never created; simply return
+        return;
     }
     HRESULT ddResult = lpSurface->ReleaseSurface();
 }
@@ -1296,7 +1296,7 @@ BOOL DDCanReplaceSurfaces(HWND hwnd)
     for (int i = 0; i < currNumDevices; i++) {
         tmpDdInstance = ddInstance[i];
         if (DDINSTANCE_USABLE(tmpDdInstance)) {
-            J2dTraceLn2(J2D_TRACE_VERBOSE, 
+            J2dTraceLn2(J2D_TRACE_VERBOSE,
                         "  ddInstance[%d]->hwndFullScreen=0x%x",
                         i, tmpDdInstance->hwndFullScreen);
             if (tmpDdInstance->hwndFullScreen != NULL &&
@@ -1315,7 +1315,7 @@ BOOL DDCanReplaceSurfaces(HWND hwnd)
  * This function prints the DirectDraw error associated with
  * the given errNum
  */
-void PrintDirectDrawError(DWORD errNum, char *message) 
+void PrintDirectDrawError(DWORD errNum, char *message)
 {
     char buffer[255];
 
@@ -1328,7 +1328,7 @@ void PrintDirectDrawError(DWORD errNum, char *message)
  * This function prints the DirectDraw error associated with
  * the given errNum
  */
-void DebugPrintDirectDrawError(DWORD errNum, char *message) 
+void DebugPrintDirectDrawError(DWORD errNum, char *message)
 {
     char buffer[255];
 
@@ -1344,461 +1344,461 @@ void GetDDErrorString(DWORD errNum, char *buffer)
 {
     switch (errNum) {
     case DDERR_ALREADYINITIALIZED:
-	sprintf(buffer, "DirectDraw Error: DDERR_ALREADYINITIALIZED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_ALREADYINITIALIZED");
+        break;
     case DDERR_CANNOTATTACHSURFACE:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANNOTATTACHSURFACE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANNOTATTACHSURFACE");
+        break;
     case DDERR_CANNOTDETACHSURFACE:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANNOTDETACHSURFACE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANNOTDETACHSURFACE");
+        break;
     case DDERR_CURRENTLYNOTAVAIL:
-	sprintf(buffer, "DirectDraw Error: DDERR_CURRENTLYNOTAVAIL");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CURRENTLYNOTAVAIL");
+        break;
     case DDERR_EXCEPTION:
-	sprintf(buffer, "DirectDraw Error: DDERR_EXCEPTION");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_EXCEPTION");
+        break;
     case DDERR_GENERIC:
-	sprintf(buffer, "DirectDraw Error: DDERR_GENERIC");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_GENERIC");
+        break;
     case DDERR_HEIGHTALIGN:
-	sprintf(buffer, "DirectDraw Error: DDERR_HEIGHTALIGN");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_HEIGHTALIGN");
+        break;
     case DDERR_INCOMPATIBLEPRIMARY:
-	sprintf(buffer, "DirectDraw Error: DDERR_INCOMPATIBLEPRIMARY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INCOMPATIBLEPRIMARY");
+        break;
     case DDERR_INVALIDCAPS:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDCAPS");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDCAPS");
+        break;
     case DDERR_INVALIDCLIPLIST:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDCLIPLIST");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDCLIPLIST");
+        break;
     case DDERR_INVALIDMODE:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDMODE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDMODE");
+        break;
     case DDERR_INVALIDOBJECT:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDOBJECT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDOBJECT");
+        break;
     case DDERR_INVALIDPARAMS:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPARAMS");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPARAMS");
+        break;
     case DDERR_INVALIDPIXELFORMAT:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPIXELFORMAT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPIXELFORMAT");
+        break;
     case DDERR_INVALIDRECT:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDRECT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDRECT");
+        break;
     case DDERR_LOCKEDSURFACES:
-	sprintf(buffer, "DirectDraw Error: DDERR_LOCKEDSURFACES");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_LOCKEDSURFACES");
+        break;
     case DDERR_NO3D:
-	sprintf(buffer, "DirectDraw Error: DDERR_NO3D");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NO3D");
+        break;
     case DDERR_NOALPHAHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOALPHAHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOALPHAHW");
+        break;
     case DDERR_NOCLIPLIST:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCLIPLIST");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCLIPLIST");
+        break;
     case DDERR_NOCOLORCONVHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORCONVHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORCONVHW");
+        break;
     case DDERR_NOCOOPERATIVELEVELSET:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCOOPERATIVELEVELSET");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCOOPERATIVELEVELSET");
+        break;
     case DDERR_NOCOLORKEY:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORKEY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORKEY");
+        break;
     case DDERR_NOCOLORKEYHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORKEYHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCOLORKEYHW");
+        break;
     case DDERR_NODIRECTDRAWSUPPORT:
-	sprintf(buffer, "DirectDraw Error: DDERR_NODIRECTDRAWSUPPORT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NODIRECTDRAWSUPPORT");
+        break;
     case DDERR_NOEXCLUSIVEMODE:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOEXCLUSIVEMODE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOEXCLUSIVEMODE");
+        break;
     case DDERR_NOFLIPHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOFLIPHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOFLIPHW");
+        break;
     case DDERR_NOGDI:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOGDI");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOGDI");
+        break;
     case DDERR_NOMIRRORHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOMIRRORHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOMIRRORHW");
+        break;
     case DDERR_NOTFOUND:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTFOUND");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTFOUND");
+        break;
     case DDERR_NOOVERLAYHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOOVERLAYHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOOVERLAYHW");
+        break;
     case DDERR_NORASTEROPHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NORASTEROPHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NORASTEROPHW");
+        break;
     case DDERR_NOROTATIONHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOROTATIONHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOROTATIONHW");
+        break;
     case DDERR_NOSTRETCHHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOSTRETCHHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOSTRETCHHW");
+        break;
     case DDERR_NOT4BITCOLOR:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOT4BITCOLOR");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOT4BITCOLOR");
+        break;
     case DDERR_NOT4BITCOLORINDEX:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOT4BITCOLORINDEX");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOT4BITCOLORINDEX");
+        break;
     case DDERR_NOT8BITCOLOR:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOT8BITCOLOR");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOT8BITCOLOR");
+        break;
     case DDERR_NOTEXTUREHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTEXTUREHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTEXTUREHW");
+        break;
     case DDERR_NOVSYNCHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOVSYNCHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOVSYNCHW");
+        break;
     case DDERR_NOZBUFFERHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOZBUFFERHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOZBUFFERHW");
+        break;
     case DDERR_NOZOVERLAYHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOZOVERLAYHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOZOVERLAYHW");
+        break;
     case DDERR_OUTOFCAPS:
-	sprintf(buffer, "DirectDraw Error: DDERR_OUTOFCAPS");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OUTOFCAPS");
+        break;
     case DDERR_OUTOFMEMORY:
-	sprintf(buffer, "DirectDraw Error: DDERR_OUTOFMEMORY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OUTOFMEMORY");
+        break;
     case DDERR_OUTOFVIDEOMEMORY:
-	sprintf(buffer, "DirectDraw Error: DDERR_OUTOFVIDEOMEMORY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OUTOFVIDEOMEMORY");
+        break;
     case DDERR_OVERLAYCANTCLIP:
-	sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYCANTCLIP");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYCANTCLIP");
+        break;
     case DDERR_OVERLAYCOLORKEYONLYONEACTIVE:
-	sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYCOLORKEYONLYONEACTIVE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYCOLORKEYONLYONEACTIVE");
+        break;
     case DDERR_PALETTEBUSY:
-	sprintf(buffer, "DirectDraw Error: DDERR_PALETTEBUSY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_PALETTEBUSY");
+        break;
     case DDERR_COLORKEYNOTSET:
-	sprintf(buffer, "DirectDraw Error: DDERR_COLORKEYNOTSET");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_COLORKEYNOTSET");
+        break;
     case DDERR_SURFACEALREADYATTACHED:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACEALREADYATTACHED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACEALREADYATTACHED");
+        break;
     case DDERR_SURFACEALREADYDEPENDENT:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACEALREADYDEPENDENT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACEALREADYDEPENDENT");
+        break;
     case DDERR_SURFACEBUSY:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACEBUSY");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACEBUSY");
+        break;
     case DDERR_CANTLOCKSURFACE:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANTLOCKSURFACE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANTLOCKSURFACE");
+        break;
     case DDERR_SURFACEISOBSCURED:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACEISOBSCURED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACEISOBSCURED");
+        break;
     case DDERR_SURFACELOST:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACELOST");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACELOST");
+        break;
     case DDERR_SURFACENOTATTACHED:
-	sprintf(buffer, "DirectDraw Error: DDERR_SURFACENOTATTACHED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_SURFACENOTATTACHED");
+        break;
     case DDERR_TOOBIGHEIGHT:
-	sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGHEIGHT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGHEIGHT");
+        break;
     case DDERR_TOOBIGSIZE:
-	sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGSIZE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGSIZE");
+        break;
     case DDERR_TOOBIGWIDTH:
-	sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGWIDTH");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_TOOBIGWIDTH");
+        break;
     case DDERR_UNSUPPORTED:
-	sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTED");
+        break;
     case DDERR_UNSUPPORTEDFORMAT:
-	sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDFORMAT");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDFORMAT");
+        break;
     case DDERR_UNSUPPORTEDMASK:
-	sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDMASK");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDMASK");
+        break;
     case DDERR_VERTICALBLANKINPROGRESS:
-	sprintf(buffer, "DirectDraw Error: DDERR_VERTICALBLANKINPROGRESS");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_VERTICALBLANKINPROGRESS");
+        break;
     case DDERR_WASSTILLDRAWING:
-	sprintf(buffer, "DirectDraw Error: DDERR_WASSTILLDRAWING");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_WASSTILLDRAWING");
+        break;
     case DDERR_XALIGN:
-	sprintf(buffer, "DirectDraw Error: DDERR_XALIGN");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_XALIGN");
+        break;
     case DDERR_INVALIDDIRECTDRAWGUID:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDDIRECTDRAWGUID");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDDIRECTDRAWGUID");
+        break;
     case DDERR_DIRECTDRAWALREADYCREATED:
-	sprintf(buffer, "DirectDraw Error: DDERR_DIRECTDRAWALREADYCREATED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_DIRECTDRAWALREADYCREATED");
+        break;
     case DDERR_NODIRECTDRAWHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NODIRECTDRAWHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NODIRECTDRAWHW");
+        break;
     case DDERR_PRIMARYSURFACEALREADYEXISTS:
-	sprintf(buffer, "DirectDraw Error: DDERR_PRIMARYSURFACEALREADYEXISTS");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_PRIMARYSURFACEALREADYEXISTS");
+        break;
     case DDERR_NOEMULATION:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOEMULATION");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOEMULATION");
+        break;
     case DDERR_REGIONTOOSMALL:
-	sprintf(buffer, "DirectDraw Error: DDERR_REGIONTOOSMALL");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_REGIONTOOSMALL");
+        break;
     case DDERR_CLIPPERISUSINGHWND:
-	sprintf(buffer, "DirectDraw Error: DDERR_CLIPPERISUSINGHWND");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CLIPPERISUSINGHWND");
+        break;
     case DDERR_NOCLIPPERATTACHED:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOCLIPPERATTACHED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOCLIPPERATTACHED");
+        break;
     case DDERR_NOHWND:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOHWND");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOHWND");
+        break;
     case DDERR_HWNDSUBCLASSED:
-	sprintf(buffer, "DirectDraw Error: DDERR_HWNDSUBCLASSED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_HWNDSUBCLASSED");
+        break;
     case DDERR_HWNDALREADYSET:
-	sprintf(buffer, "DirectDraw Error: DDERR_HWNDALREADYSET");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_HWNDALREADYSET");
+        break;
     case DDERR_NOPALETTEATTACHED:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOPALETTEATTACHED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOPALETTEATTACHED");
+        break;
     case DDERR_NOPALETTEHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOPALETTEHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOPALETTEHW");
+        break;
     case DDERR_BLTFASTCANTCLIP:
-	sprintf(buffer, "DirectDraw Error: DDERR_BLTFASTCANTCLIP");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_BLTFASTCANTCLIP");
+        break;
     case DDERR_NOBLTHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOBLTHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOBLTHW");
+        break;
     case DDERR_NODDROPSHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NODDROPSHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NODDROPSHW");
+        break;
     case DDERR_OVERLAYNOTVISIBLE:
-	sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYNOTVISIBLE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_OVERLAYNOTVISIBLE");
+        break;
     case DDERR_NOOVERLAYDEST:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOOVERLAYDEST");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOOVERLAYDEST");
+        break;
     case DDERR_INVALIDPOSITION:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPOSITION");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDPOSITION");
+        break;
     case DDERR_NOTAOVERLAYSURFACE:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTAOVERLAYSURFACE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTAOVERLAYSURFACE");
+        break;
     case DDERR_EXCLUSIVEMODEALREADYSET:
-	sprintf(buffer, "DirectDraw Error: DDERR_EXCLUSIVEMODEALREADYSET");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_EXCLUSIVEMODEALREADYSET");
+        break;
     case DDERR_NOTFLIPPABLE:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTFLIPPABLE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTFLIPPABLE");
+        break;
     case DDERR_CANTDUPLICATE:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANTDUPLICATE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANTDUPLICATE");
+        break;
     case DDERR_NOTLOCKED:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTLOCKED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTLOCKED");
+        break;
     case DDERR_CANTCREATEDC:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANTCREATEDC");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANTCREATEDC");
+        break;
     case DDERR_NODC:
-	sprintf(buffer, "DirectDraw Error: DDERR_NODC");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NODC");
+        break;
     case DDERR_WRONGMODE:
-	sprintf(buffer, "DirectDraw Error: DDERR_WRONGMODE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_WRONGMODE");
+        break;
     case DDERR_IMPLICITLYCREATED:
-	sprintf(buffer, "DirectDraw Error: DDERR_IMPLICITLYCREATED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_IMPLICITLYCREATED");
+        break;
     case DDERR_NOTPALETTIZED:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTPALETTIZED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTPALETTIZED");
+        break;
     case DDERR_UNSUPPORTEDMODE:
-	sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDMODE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_UNSUPPORTEDMODE");
+        break;
     case DDERR_NOMIPMAPHW:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOMIPMAPHW");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOMIPMAPHW");
+        break;
     case DDERR_INVALIDSURFACETYPE:
-	sprintf(buffer, "DirectDraw Error: DDERR_INVALIDSURFACETYPE");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_INVALIDSURFACETYPE");
+        break;
     case DDERR_DCALREADYCREATED:
-	sprintf(buffer, "DirectDraw Error: DDERR_DCALREADYCREATED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_DCALREADYCREATED");
+        break;
     case DDERR_CANTPAGELOCK:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANTPAGELOCK");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANTPAGELOCK");
+        break;
     case DDERR_CANTPAGEUNLOCK:
-	sprintf(buffer, "DirectDraw Error: DDERR_CANTPAGEUNLOCK");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_CANTPAGEUNLOCK");
+        break;
     case DDERR_NOTPAGELOCKED:
-	sprintf(buffer, "DirectDraw Error: DDERR_NOTPAGELOCKED");
-	break;
+        sprintf(buffer, "DirectDraw Error: DDERR_NOTPAGELOCKED");
+        break;
     case D3DERR_INVALID_DEVICE:
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALID_DEVICE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALID_DEVICE");
+        break;
     case D3DERR_INITFAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_INITFAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INITFAILED");
+        break;
     case D3DERR_DEVICEAGGREGATED:
-	sprintf(buffer, "Direct3D Error: D3DERR_DEVICEAGGREGATED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_DEVICEAGGREGATED");
+        break;
     case D3DERR_EXECUTE_CREATE_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_CREATE_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_CREATE_FAILED");
+        break;
     case D3DERR_EXECUTE_DESTROY_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_DESTROY_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_DESTROY_FAILED");
+        break;
     case D3DERR_EXECUTE_LOCK_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_LOCK_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_LOCK_FAILED");
+        break;
     case D3DERR_EXECUTE_UNLOCK_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_UNLOCK_FAILED");
-	break;
-    case D3DERR_EXECUTE_LOCKED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_LOCKED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_UNLOCK_FAILED");
+        break;
+    case D3DERR_EXECUTE_LOCKED:
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_LOCKED");
+        break;
     case D3DERR_EXECUTE_NOT_LOCKED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_NOT_LOCKED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_NOT_LOCKED");
+        break;
     case D3DERR_EXECUTE_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_FAILED");
+        break;
     case D3DERR_EXECUTE_CLIPPED_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_CLIPPED_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_EXECUTE_CLIPPED_FAILED");
+        break;
     case D3DERR_TEXTURE_NO_SUPPORT:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_NO_SUPPORT");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_NO_SUPPORT");
+        break;
     case D3DERR_TEXTURE_CREATE_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_CREATE_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_CREATE_FAILED");
+        break;
     case D3DERR_TEXTURE_DESTROY_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_DESTROY_FAILED");
-	break;
-    case D3DERR_TEXTURE_LOCK_FAILED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOCK_FAILED");
-	break;
-    case D3DERR_TEXTURE_UNLOCK_FAILED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_UNLOCK_FAILED");
-	break;
-    case D3DERR_TEXTURE_LOAD_FAILED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOAD_FAILED");
-	break;
-    case D3DERR_TEXTURE_SWAP_FAILED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_SWAP_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_DESTROY_FAILED");
+        break;
+    case D3DERR_TEXTURE_LOCK_FAILED:
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOCK_FAILED");
+        break;
+    case D3DERR_TEXTURE_UNLOCK_FAILED:
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_UNLOCK_FAILED");
+        break;
+    case D3DERR_TEXTURE_LOAD_FAILED:
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOAD_FAILED");
+        break;
+    case D3DERR_TEXTURE_SWAP_FAILED:
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_SWAP_FAILED");
+        break;
     case D3DERR_TEXTURE_LOCKED:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOCKED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_LOCKED");
+        break;
     case D3DERR_TEXTURE_NOT_LOCKED:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_NOT_LOCKED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_NOT_LOCKED");
+        break;
     case D3DERR_TEXTURE_GETSURF_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_GETSURF_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_GETSURF_FAILED");
+        break;
     case D3DERR_MATRIX_CREATE_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_CREATE_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_CREATE_FAILED");
+        break;
     case D3DERR_MATRIX_DESTROY_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_DESTROY_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_DESTROY_FAILED");
+        break;
     case D3DERR_MATRIX_SETDATA_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_SETDATA_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_SETDATA_FAILED");
+        break;
     case D3DERR_MATRIX_GETDATA_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_GETDATA_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATRIX_GETDATA_FAILED");
+        break;
     case D3DERR_SETVIEWPORTDATA_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_SETVIEWPORTDATA_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_SETVIEWPORTDATA_FAILED");
+        break;
     case D3DERR_INVALIDCURRENTVIEWPORT:
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALIDCURRENTVIEWPORT");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALIDCURRENTVIEWPORT");
+        break;
     case D3DERR_INVALIDPRIMITIVETYPE:
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALIDPRIMITIVETYPE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALIDPRIMITIVETYPE");
+        break;
     case D3DERR_INVALIDVERTEXTYPE:
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALIDVERTEXTYPE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALIDVERTEXTYPE");
+        break;
     case D3DERR_TEXTURE_BADSIZE:
-	sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_BADSIZE");
-	break;
-    case D3DERR_INVALIDRAMPTEXTURE:	
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALIDRAMPTEXTURE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_TEXTURE_BADSIZE");
+        break;
+    case D3DERR_INVALIDRAMPTEXTURE:
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALIDRAMPTEXTURE");
+        break;
     case D3DERR_MATERIAL_CREATE_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_CREATE_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_CREATE_FAILED");
+        break;
     case D3DERR_MATERIAL_DESTROY_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_DESTROY_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_DESTROY_FAILED");
+        break;
     case D3DERR_MATERIAL_SETDATA_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_SETDATA_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_SETDATA_FAILED");
+        break;
     case D3DERR_MATERIAL_GETDATA_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_GETDATA_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_MATERIAL_GETDATA_FAILED");
+        break;
     case D3DERR_INVALIDPALETTE:
-	sprintf(buffer, "Direct3D Error: D3DERR_INVALIDPALETTE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INVALIDPALETTE");
+        break;
     case D3DERR_ZBUFF_NEEDS_SYSTEMMEMORY:
-	sprintf(buffer, "Direct3D Error: D3DERR_ZBUFF_NEEDS_SYSTEMMEMORY");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_ZBUFF_NEEDS_SYSTEMMEMORY");
+        break;
     case D3DERR_ZBUFF_NEEDS_VIDEOMEMORY:
-	sprintf(buffer, "Direct3D Error: D3DERR_ZBUFF_NEEDS_VIDEOMEMORY");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_ZBUFF_NEEDS_VIDEOMEMORY");
+        break;
     case D3DERR_SURFACENOTINVIDMEM:
-	sprintf(buffer, "Direct3D Error: D3DERR_SURFACENOTINVIDMEM");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_SURFACENOTINVIDMEM");
+        break;
     case D3DERR_LIGHT_SET_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_LIGHT_SET_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_LIGHT_SET_FAILED");
+        break;
     case D3DERR_LIGHTHASVIEWPORT:
-	sprintf(buffer, "Direct3D Error: D3DERR_LIGHTHASVIEWPORT");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_LIGHTHASVIEWPORT");
+        break;
     case D3DERR_LIGHTNOTINTHISVIEWPORT:
-	sprintf(buffer, "Direct3D Error: D3DERR_LIGHTNOTINTHISVIEWPORT");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_LIGHTNOTINTHISVIEWPORT");
+        break;
     case D3DERR_SCENE_IN_SCENE:
-	sprintf(buffer, "Direct3D Error: D3DERR_SCENE_IN_SCENE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_SCENE_IN_SCENE");
+        break;
     case D3DERR_SCENE_NOT_IN_SCENE:
-	sprintf(buffer, "Direct3D Error: D3DERR_SCENE_NOT_IN_SCENE");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_SCENE_NOT_IN_SCENE");
+        break;
     case D3DERR_SCENE_BEGIN_FAILED:
-	sprintf(buffer, "Direct3D Error: D3DERR_SCENE_BEGIN_FAILED");
-	break;
-    case D3DERR_SCENE_END_FAILED:	
-	sprintf(buffer, "Direct3D Error: D3DERR_SCENE_END_FAILED");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_SCENE_BEGIN_FAILED");
+        break;
+    case D3DERR_SCENE_END_FAILED:
+        sprintf(buffer, "Direct3D Error: D3DERR_SCENE_END_FAILED");
+        break;
     case D3DERR_INBEGIN:
-	sprintf(buffer, "Direct3D Error: D3DERR_INBEGIN");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_INBEGIN");
+        break;
     case D3DERR_NOTINBEGIN:
-	sprintf(buffer, "Direct3D Error: D3DERR_NOTINBEGIN");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_NOTINBEGIN");
+        break;
     case D3DERR_NOVIEWPORTS:
-	sprintf(buffer, "Direct3D Error: D3DERR_NOVIEWPORTS");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_NOVIEWPORTS");
+        break;
     case D3DERR_VIEWPORTDATANOTSET:
-	sprintf(buffer, "Direct3D Error: D3DERR_VIEWPORTDATANOTSET");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_VIEWPORTDATANOTSET");
+        break;
     case D3DERR_VIEWPORTHASNODEVICE:
-	sprintf(buffer, "Direct3D Error: D3DERR_VIEWPORTHASNODEVICE");
-	break;
-    case D3DERR_NOCURRENTVIEWPORT:	
-	sprintf(buffer, "Direct3D Error: D3DERR_NOCURRENTVIEWPORT");
-	break;
+        sprintf(buffer, "Direct3D Error: D3DERR_VIEWPORTHASNODEVICE");
+        break;
+    case D3DERR_NOCURRENTVIEWPORT:
+        sprintf(buffer, "Direct3D Error: D3DERR_NOCURRENTVIEWPORT");
+        break;
     default:
-	sprintf(buffer, "DirectX Error Unknown 0x%x", errNum);
-	break;
+        sprintf(buffer, "DirectX Error Unknown 0x%x", errNum);
+        break;
     }
 
 }

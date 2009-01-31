@@ -41,13 +41,13 @@ public interface Endpoint {
      * the endpoint.
      */
     void exportObject(Target target)
-	throws RemoteException;
+        throws RemoteException;
 
     /**
      * Returns the transport for incoming connections to this endpoint.
      **/
     Transport getInboundTransport();
-     
+
     /**
      * Returns transport for making connections to remote endpoints.
      **/

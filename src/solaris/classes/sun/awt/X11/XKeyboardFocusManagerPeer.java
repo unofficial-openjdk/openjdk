@@ -70,7 +70,7 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
     static Component getCurrentNativeFocusOwner() {
         synchronized(lock) {
             return currentFocusOwner;
-        }        
+        }
     }
 
     static Window getCurrentNativeFocusedWindow() {
@@ -98,7 +98,7 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
             if (focusOwner != null) {
                 XComponentPeer nativePeer = XComponentPeer.getNativeContainer(focusOwner);
                 if (nativePeer != null) {
-                    FocusEvent fl = new CausedFocusEvent(focusOwner, FocusEvent.FOCUS_LOST, false, null, 
+                    FocusEvent fl = new CausedFocusEvent(focusOwner, FocusEvent.FOCUS_LOST, false, null,
                                                          CausedFocusEvent.Cause.CLEAR_GLOBAL_FOCUS_OWNER);
                     XWindow.sendEvent(fl);
                 }
@@ -107,12 +107,12 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
    }
 
     static boolean simulateMotifRequestFocus(Component lightweightChild, Component target, boolean temporary,
-                                      boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause) 
+                                      boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause)
     {
         if (lightweightChild == null) {
             lightweightChild = (Component)target;
         }
-        Component currentOwner = XKeyboardFocusManagerPeer.getCurrentNativeFocusOwner();        
+        Component currentOwner = XKeyboardFocusManagerPeer.getCurrentNativeFocusOwner();
         if (currentOwner != null && currentOwner.getPeer() == null) {
             currentOwner = null;
         }
@@ -122,7 +122,7 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
         if (currentOwner != null) {
             fl = new CausedFocusEvent(currentOwner, FocusEvent.FOCUS_LOST, false, lightweightChild, cause);
         }
-        
+
         if (fl != null) {
             XWindow.sendEvent(fl);
         }
@@ -137,7 +137,7 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause)
     {
         if (shouldNativelyFocusHeavyweightMethod == null) {
-            Class[] arg_types = 
+            Class[] arg_types =
                 new Class[] { Component.class,
                               Component.class,
                               Boolean.TYPE,

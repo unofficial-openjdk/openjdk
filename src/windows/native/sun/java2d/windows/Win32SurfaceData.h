@@ -59,23 +59,23 @@ class DDrawDisplayMode;
  * and this structure.  We have to keep around the old ddObject even
  * after creating a new one because there may be multiple other surfaces
  * that still reference the old ddObject.  When all of those surfaces
- * have been recreated with the new ddObject, the old one can be 
+ * have been recreated with the new ddObject, the old one can be
  * released.
  */
 typedef struct  {
     DDraw                   *ddObject;
-    int			    refCount;
-    DDrawSurface	    *primary;
+    int                     refCount;
+    DDrawSurface            *primary;
     DDrawSurface            *syncSurface;
-    DDrawClipper	    *clipper;
-    CriticalSection	    *primaryLock;
-    BOOL		    valid;
-    HMONITOR		    hMonitor;
-    BOOL		    capsSet;
-    BOOL		    canBlt;
-    HWND		    hwndFullScreen;
-    int			    backBufferCount;
-    int			    context;
+    DDrawClipper            *clipper;
+    CriticalSection         *primaryLock;
+    BOOL                    valid;
+    HMONITOR                hMonitor;
+    BOOL                    capsSet;
+    BOOL                    canBlt;
+    HWND                    hwndFullScreen;
+    int                     backBufferCount;
+    int                     context;
     BOOL                    accelerated;
 } DDrawObjectStruct;
 
@@ -90,14 +90,14 @@ typedef struct  {
  * which rendering objects should be selected into the HDC returned
  * from GetDC().
  */
-#define PEN		1
-#define NOPEN		2
-#define BRUSH		4
-#define NOBRUSH		8
-#define CLIP		16		/* For tracking purposes only */
-#define PENBRUSH	(PEN | BRUSH)
-#define PENONLY		(PEN | NOBRUSH)
-#define BRUSHONLY	(BRUSH | NOPEN)
+#define PEN             1
+#define NOPEN           2
+#define BRUSH           4
+#define NOBRUSH         8
+#define CLIP            16              /* For tracking purposes only */
+#define PENBRUSH        (PEN | BRUSH)
+#define PENONLY         (PEN | NOBRUSH)
+#define BRUSHONLY       (BRUSH | NOPEN)
 
 /*
  * This function retrieves an HDC for rendering to the destination
@@ -129,17 +129,17 @@ typedef struct  {
  * after a given atomic set of rendering operations is complete.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  */
 typedef HDC GetDCFunc(JNIEnv *env,
-		      Win32SDOps *wsdo,
-		      jint flags,
+                      Win32SDOps *wsdo,
+                      jint flags,
                       jint *patrop,
-		      jobject clip,
-		      jobject comp,
-		      jint color);
+                      jobject clip,
+                      jobject comp,
+                      jint color);
 
 /*
  * This function releases an HDC that was retrieved from the GetDC
@@ -154,92 +154,92 @@ typedef HDC GetDCFunc(JNIEnv *env,
  * returned from the GetDC function.
  *
  * Note to callers:
- *	This function may use JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function may use JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  */
 typedef void ReleaseDCFunc(JNIEnv *env,
-			   Win32SDOps *wsdo,
-			   HDC hdc);
+                           Win32SDOps *wsdo,
+                           HDC hdc);
 
 
 typedef void InvalidateSDFunc(JNIEnv *env,
-			      Win32SDOps *wsdo);
+                              Win32SDOps *wsdo);
 
 typedef void RestoreSurfaceFunc(JNIEnv *env, Win32SDOps *wsdo);
 
 #define READS_PUNT_THRESHOLD 2
 #define BLTS_UNPUNT_THRESHOLD  4
 typedef struct {
-    jboolean		disablePunts;
-    jint		pixelsReadThreshold;
-    jint		numBltsThreshold;
-    jboolean		usingDDSystem;
-    DDrawSurface	*lpSurfaceSystem;
-    DDrawSurface	*lpSurfaceVram;
-    jint		numBltsSinceRead;
-    jint		pixelsReadSinceBlt;
+    jboolean            disablePunts;
+    jint                pixelsReadThreshold;
+    jint                numBltsThreshold;
+    jboolean            usingDDSystem;
+    DDrawSurface        *lpSurfaceSystem;
+    DDrawSurface        *lpSurfaceVram;
+    jint                numBltsSinceRead;
+    jint                pixelsReadSinceBlt;
 } SurfacePuntData;
 /*
  * A structure that holds all state global to the native surfaceData
- * object.  
- * 
- * Note: 
+ * object.
+ *
+ * Note:
  * This structure will be shared between different threads that
- * operate on the same surfaceData, so it should not contain any 
+ * operate on the same surfaceData, so it should not contain any
  * variables that could be changed by one thread thus placing other
  * threads in a state of confusion.  For example, the hDC field was
- * removed because each thread now has its own shared DC.  But the 
+ * removed because each thread now has its own shared DC.  But the
  * window field remains because once it is set for a given wsdo
  * structure it stays the same until that structure is destroyed.
  */
 struct _Win32SDOps {
-    SurfaceDataOps	sdOps;
-    jboolean		invalid;
-    GetDCFunc		*GetDC;
-    ReleaseDCFunc	*ReleaseDC;
-    InvalidateSDFunc	*InvalidateSD;
-    jint		lockType;	// REMIND: store in TLS
-    jint		lockFlags;	// REMIND: store in TLS
-    jobject		peer;
-    HWND		window;
-    RECT		insets;
-    jint		depth;
-    jint		pixelStride;    // Bytes per pixel
-    DWORD		pixelMasks[3];  // RGB Masks for Windows DIB creation
-    HBITMAP		bitmap;		// REMIND: store in TLS
-    HBITMAP		oldmap;		// REMIND: store in TLS
-    HDC			bmdc;		// REMIND: store in TLS
-    int			bmScanStride;	// REMIND: store in TLS
-    int			bmWidth;	// REMIND: store in TLS
-    int			bmHeight;	// REMIND: store in TLS
-    void		*bmBuffer;	// REMIND: store in TLS
-    jboolean		bmCopyToScreen;	// Used to track whether we
-					// actually should copy the bitmap
-					// to the screen
-    AwtBrush		*brush;		// used for offscreen surfaces only
-    jint		brushclr;
-    AwtPen		*pen;		// used for offscreen surfaces only
-    jint		penclr;
+    SurfaceDataOps      sdOps;
+    jboolean            invalid;
+    GetDCFunc           *GetDC;
+    ReleaseDCFunc       *ReleaseDC;
+    InvalidateSDFunc    *InvalidateSD;
+    jint                lockType;       // REMIND: store in TLS
+    jint                lockFlags;      // REMIND: store in TLS
+    jobject             peer;
+    HWND                window;
+    RECT                insets;
+    jint                depth;
+    jint                pixelStride;    // Bytes per pixel
+    DWORD               pixelMasks[3];  // RGB Masks for Windows DIB creation
+    HBITMAP             bitmap;         // REMIND: store in TLS
+    HBITMAP             oldmap;         // REMIND: store in TLS
+    HDC                 bmdc;           // REMIND: store in TLS
+    int                 bmScanStride;   // REMIND: store in TLS
+    int                 bmWidth;        // REMIND: store in TLS
+    int                 bmHeight;       // REMIND: store in TLS
+    void                *bmBuffer;      // REMIND: store in TLS
+    jboolean            bmCopyToScreen; // Used to track whether we
+                                        // actually should copy the bitmap
+                                        // to the screen
+    AwtBrush            *brush;         // used for offscreen surfaces only
+    jint                brushclr;
+    AwtPen              *pen;           // used for offscreen surfaces only
+    jint                penclr;
 
-    int			x, y, w, h;	// REMIND: store in TLS
-    RestoreSurfaceFunc	*RestoreSurface;
+    int                 x, y, w, h;     // REMIND: store in TLS
+    RestoreSurfaceFunc  *RestoreSurface;
     DDrawSurface        *lpSurface;
     int                 backBufferCount;
-    DDrawObjectStruct	*ddInstance;
-    CriticalSection	*surfaceLock;	// REMIND: try to remove
-    jboolean		surfaceLost;
+    DDrawObjectStruct   *ddInstance;
+    CriticalSection     *surfaceLock;   // REMIND: try to remove
+    jboolean            surfaceLost;
     jboolean            gdiOpPending;   // whether a GDI operation is pending for this
                                         // surface (Get/ReleaseDC were called)
-    jint		transparency;
+    jint                transparency;
     AwtWin32GraphicsDevice *device;
-    SurfacePuntData	surfacePuntData;
+    SurfacePuntData     surfacePuntData;
 };
 
-#define WIN32SD_LOCK_UNLOCKED	0	/* surface is not locked */
-#define WIN32SD_LOCK_BY_NULL	1	/* surface locked for NOP */
-#define WIN32SD_LOCK_BY_DDRAW	2	/* surface locked by DirectDraw */
-#define WIN32SD_LOCK_BY_DIB	3	/* surface locked by BitBlt */
+#define WIN32SD_LOCK_UNLOCKED   0       /* surface is not locked */
+#define WIN32SD_LOCK_BY_NULL    1       /* surface locked for NOP */
+#define WIN32SD_LOCK_BY_DDRAW   2       /* surface locked by DirectDraw */
+#define WIN32SD_LOCK_BY_DIB     3       /* surface locked by BitBlt */
 
 extern "C" {
 
@@ -247,18 +247,18 @@ extern "C" {
  * Structure for holding the graphics state of a thread.
  */
 typedef struct {
-    HDC		hDC;
-    Win32SDOps	*wsdo;
-    RECT	bounds;
-    jobject	clip;
+    HDC         hDC;
+    Win32SDOps  *wsdo;
+    RECT        bounds;
+    jobject     clip;
     jobject     comp;
     jint        xorcolor;
     jint        patrop;
-    jint	type;
-    AwtBrush	*brush;
-    jint	brushclr;
-    AwtPen	*pen;
-    jint	penclr;
+    jint        type;
+    AwtBrush    *brush;
+    jint        brushclr;
+    AwtPen      *pen;
+    jint        penclr;
 } ThreadGraphicsInfo;
 
 
@@ -272,13 +272,13 @@ typedef struct {
  * the caller can simply return.
  *
  * Note to callers:
- *	This function uses JNI methods so it is important that the
- *	caller not have any outstanding GetPrimitiveArrayCritical or
- *	GetStringCritical locks which have not been released.
+ *      This function uses JNI methods so it is important that the
+ *      caller not have any outstanding GetPrimitiveArrayCritical or
+ *      GetStringCritical locks which have not been released.
  *
- *	The caller may continue to use JNI methods after this method
- *	is called since this function will not leave any outstanding
- *	JNI Critical locks unreleased.
+ *      The caller may continue to use JNI methods after this method
+ *      is called since this function will not leave any outstanding
+ *      JNI Critical locks unreleased.
  */
 JNIEXPORT Win32SDOps * JNICALL
 Win32SurfaceData_GetOps(JNIEnv *env, jobject sData);
@@ -291,7 +291,7 @@ Win32SurfaceData_GetWindow(JNIEnv *env, Win32SDOps *wsdo);
 
 JNIEXPORT void JNICALL
 Win32SD_InitDC(JNIEnv *env, Win32SDOps *wsdo, ThreadGraphicsInfo *info,
-	       jint type, jint *patrop,
+               jint type, jint *patrop,
                jobject clip, jobject comp, jint color);
 
 JNIEXPORT AwtComponent * JNICALL

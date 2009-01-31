@@ -43,69 +43,69 @@ class ExpressionStatement extends Statement {
      * Constructor
      */
     public ExpressionStatement(long where, Expression expr) {
-	super(EXPRESSION, where);
-	this.expr = expr;
+        super(EXPRESSION, where);
+        this.expr = expr;
     }
 
     /**
      * Check statement
      */
     Vset check(Environment env, Context ctx, Vset vset, Hashtable exp) {
-	checkLabel(env, ctx);
-	return expr.check(env, ctx, reach(env, vset), exp);
+        checkLabel(env, ctx);
+        return expr.check(env, ctx, reach(env, vset), exp);
     }
 
     /**
      * Inline
      */
     public Statement inline(Environment env, Context ctx) {
-	if (expr != null) {
-	    expr = expr.inline(env, ctx);
-	    return (expr == null) ? null : this;
-	}
-	return null;
+        if (expr != null) {
+            expr = expr.inline(env, ctx);
+            return (expr == null) ? null : this;
+        }
+        return null;
     }
 
     /**
      * Create a copy of the statement for method inlining
      */
     public Statement copyInline(Context ctx, boolean valNeeded) {
-	ExpressionStatement s = (ExpressionStatement)clone();
-	s.expr = expr.copyInline(ctx);
-	return s;
+        ExpressionStatement s = (ExpressionStatement)clone();
+        s.expr = expr.copyInline(ctx);
+        return s;
     }
 
     /**
      * The cost of inlining this statement
      */
     public int costInline(int thresh, Environment env, Context ctx) {
-	return expr.costInline(thresh, env, ctx);
+        return expr.costInline(thresh, env, ctx);
     }
 
     /**
      * Code
      */
     public void code(Environment env, Context ctx, Assembler asm) {
-	expr.code(env, ctx, asm);
+        expr.code(env, ctx, asm);
     }
 
     /**
      * Check if the first thing is a constructor invocation
      */
     public Expression firstConstructor() {
-	return expr.firstConstructor();
+        return expr.firstConstructor();
     }
 
     /**
      * Print
      */
     public void print(PrintStream out, int indent) {
-	super.print(out, indent);
-	if (expr != null) {
-	    expr.print(out);
-	} else {
-	    out.print("<empty>");
-	}
-	out.print(";");
+        super.print(out, indent);
+        if (expr != null) {
+            expr.print(out);
+        } else {
+            out.print("<empty>");
+        }
+        out.print(";");
     }
 }

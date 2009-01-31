@@ -37,7 +37,6 @@ import java.security.KeyStore.*;
  * @see X509KeyManager
  *
  * @author  Andreas Sterbenz
- * @version %I%, %G%
  * @since   1.5
  */
 public class KeyStoreBuilderParameters implements ManagerFactoryParameters {
@@ -52,7 +51,7 @@ public class KeyStoreBuilderParameters implements ManagerFactoryParameters {
      * @exception NullPointerException if builder is null
      */
     public KeyStoreBuilderParameters(Builder builder) {
-	parameters = Collections.singletonList(builder);
+        parameters = Collections.singletonList(builder);
     }
 
     /**
@@ -65,11 +64,11 @@ public class KeyStoreBuilderParameters implements ManagerFactoryParameters {
      * @exception IllegalArgumentException if parameters is an empty list
      */
     public KeyStoreBuilderParameters(List<Builder> parameters) {
-	this.parameters = Collections.unmodifiableList(
-	    new ArrayList<Builder>(parameters));
-	if (this.parameters.isEmpty()) {
-	    throw new IllegalArgumentException();
-	}
+        this.parameters = Collections.unmodifiableList(
+            new ArrayList<Builder>(parameters));
+        if (this.parameters.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -82,7 +81,7 @@ public class KeyStoreBuilderParameters implements ManagerFactoryParameters {
      * encapsulated by this object.
      */
     public List<Builder> getParameters() {
-	return parameters;
+        return parameters;
     }
 
 }

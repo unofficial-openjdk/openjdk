@@ -68,8 +68,8 @@ class CryptoPermission extends java.security.Permission {
      * @param alg the algorithm name.
      */
     CryptoPermission(String alg) {
-	super(null);
-	this.alg = alg;
+        super(null);
+        this.alg = alg;
     }
 
     /**
@@ -85,9 +85,9 @@ class CryptoPermission extends java.security.Permission {
      * specified in number of bits.
      */
     CryptoPermission(String alg, int maxKeySize) {
-	super(null);
-	this.alg = alg;
-	this.maxKeySize = maxKeySize;
+        super(null);
+        this.alg = alg;
+        this.maxKeySize = maxKeySize;
     }
 
     /**
@@ -108,13 +108,13 @@ class CryptoPermission extends java.security.Permission {
      * parameters.
      */
     CryptoPermission(String alg,
-		     int maxKeySize,
-		     AlgorithmParameterSpec algParamSpec) {
-	super(null);
-	this.alg = alg;
-	this.maxKeySize = maxKeySize;
-	this.checkParam = true;
-	this.algParamSpec = algParamSpec;
+                     int maxKeySize,
+                     AlgorithmParameterSpec algParamSpec) {
+        super(null);
+        this.alg = alg;
+        this.maxKeySize = maxKeySize;
+        this.checkParam = true;
+        this.algParamSpec = algParamSpec;
     }
 
     /**
@@ -130,10 +130,10 @@ class CryptoPermission extends java.security.Permission {
      * @param exemptionMechanism the name of the exemption mechanism.
      */
     CryptoPermission(String alg,
-		     String exemptionMechanism) {
-	super(null);
-	this.alg = alg;
-	this.exemptionMechanism = exemptionMechanism;
+                     String exemptionMechanism) {
+        super(null);
+        this.alg = alg;
+        this.exemptionMechanism = exemptionMechanism;
     }
 
     /**
@@ -152,12 +152,12 @@ class CryptoPermission extends java.security.Permission {
      * mechanism.
      */
     CryptoPermission(String alg,
-		     int maxKeySize,
-		     String exemptionMechanism) {
-	super(null);
-	this.alg = alg;
-	this.exemptionMechanism = exemptionMechanism;
-	this.maxKeySize = maxKeySize;
+                     int maxKeySize,
+                     String exemptionMechanism) {
+        super(null);
+        this.alg = alg;
+        this.exemptionMechanism = exemptionMechanism;
+        this.maxKeySize = maxKeySize;
     }
 
     /**
@@ -181,15 +181,15 @@ class CryptoPermission extends java.security.Permission {
      * mechanism.
      */
     CryptoPermission(String alg,
-		     int maxKeySize,
-		     AlgorithmParameterSpec algParamSpec,
-		     String exemptionMechanism) {
-	super(null);
-	this.alg = alg;
-	this.exemptionMechanism = exemptionMechanism;
-	this.maxKeySize = maxKeySize;
-	this.checkParam = true;
-	this.algParamSpec = algParamSpec;
+                     int maxKeySize,
+                     AlgorithmParameterSpec algParamSpec,
+                     String exemptionMechanism) {
+        super(null);
+        this.alg = alg;
+        this.exemptionMechanism = exemptionMechanism;
+        this.maxKeySize = maxKeySize;
+        this.checkParam = true;
+        this.algParamSpec = algParamSpec;
     }
 
     /**
@@ -217,31 +217,31 @@ class CryptoPermission extends java.security.Permission {
      * implied by this permission, false otherwise.
      */
     public boolean implies(Permission p) {
-	if (!(p instanceof CryptoPermission))
-	    return false;
+        if (!(p instanceof CryptoPermission))
+            return false;
 
-	CryptoPermission cp = (CryptoPermission)p;
+        CryptoPermission cp = (CryptoPermission)p;
 
-	if ((!alg.equalsIgnoreCase(cp.alg)) &&
-	    (!alg.equalsIgnoreCase(ALG_NAME_WILDCARD))) {
-	    return false;
-	}
+        if ((!alg.equalsIgnoreCase(cp.alg)) &&
+            (!alg.equalsIgnoreCase(ALG_NAME_WILDCARD))) {
+            return false;
+        }
 
-	// alg is the same as cp's alg or
-	// alg is a wildcard.
-	if (cp.maxKeySize <= this.maxKeySize) {
-	    // check algParamSpec.
-	    if (!impliesParameterSpec(cp.checkParam, cp.algParamSpec)) {
-		return false;
-	    }
+        // alg is the same as cp's alg or
+        // alg is a wildcard.
+        if (cp.maxKeySize <= this.maxKeySize) {
+            // check algParamSpec.
+            if (!impliesParameterSpec(cp.checkParam, cp.algParamSpec)) {
+                return false;
+            }
 
-	    // check exemptionMechanism.
-	    if (impliesExemptionMechanism(cp.exemptionMechanism)) {
-		return true;
-	    }
-	}
+            // check exemptionMechanism.
+            if (impliesExemptionMechanism(cp.exemptionMechanism)) {
+                return true;
+            }
+        }
 
-	return false;
+        return false;
     }
 
     /**
@@ -256,25 +256,25 @@ class CryptoPermission extends java.security.Permission {
      * @return true if <code>obj</code> is equal to this object.
      */
     public boolean equals(Object obj) {
-	if (obj == this)
-	    return true;
+        if (obj == this)
+            return true;
 
-	if (!(obj instanceof CryptoPermission))
-	    return false;
+        if (!(obj instanceof CryptoPermission))
+            return false;
 
-	CryptoPermission that = (CryptoPermission) obj;
+        CryptoPermission that = (CryptoPermission) obj;
 
-	if (!(alg.equalsIgnoreCase(that.alg)) ||
-	    (maxKeySize != that.maxKeySize)) {
-	    return false;
-	}
-	if (this.checkParam != that.checkParam) {
-	    return false;
-	}
-	return (equalObjects(this.exemptionMechanism,
-			     that.exemptionMechanism) &&
-		equalObjects(this.algParamSpec,
-			     that.algParamSpec));
+        if (!(alg.equalsIgnoreCase(that.alg)) ||
+            (maxKeySize != that.maxKeySize)) {
+            return false;
+        }
+        if (this.checkParam != that.checkParam) {
+            return false;
+        }
+        return (equalObjects(this.exemptionMechanism,
+                             that.exemptionMechanism) &&
+                equalObjects(this.algParamSpec,
+                             that.algParamSpec));
     }
 
     /**
@@ -284,16 +284,16 @@ class CryptoPermission extends java.security.Permission {
      */
 
     public int hashCode() {
-	int retval = alg.hashCode();
-	retval ^= maxKeySize;
-	if (exemptionMechanism != null) {
-	    retval ^= exemptionMechanism.hashCode();
-	}
-	if (checkParam) retval ^= 100;
-	if (algParamSpec != null) {
-	    retval ^= algParamSpec.hashCode();
-	}
-	return retval;
+        int retval = alg.hashCode();
+        retval ^= maxKeySize;
+        if (exemptionMechanism != null) {
+            retval ^= exemptionMechanism.hashCode();
+        }
+        if (checkParam) retval ^= 100;
+        if (algParamSpec != null) {
+            retval ^= algParamSpec.hashCode();
+        }
+        return retval;
     }
 
     /**
@@ -302,7 +302,7 @@ class CryptoPermission extends java.security.Permission {
      */
     public String getActions()
     {
-	return null;
+        return null;
     }
 
     /**
@@ -314,7 +314,7 @@ class CryptoPermission extends java.security.Permission {
      */
 
     public PermissionCollection newPermissionCollection() {
-	return new CryptoPermissionCollection();
+        return new CryptoPermissionCollection();
     }
 
     /**
@@ -322,7 +322,7 @@ class CryptoPermission extends java.security.Permission {
      * this CryptoPermission object.
      */
     final String getAlgorithm() {
-	return alg;
+        return alg;
     }
 
     /**
@@ -331,7 +331,7 @@ class CryptoPermission extends java.security.Permission {
      * object.
      */
     final String getExemptionMechanism() {
-	return exemptionMechanism;
+        return exemptionMechanism;
     }
 
     /**
@@ -339,7 +339,7 @@ class CryptoPermission extends java.security.Permission {
      * with this CryptoPermission object.
      */
     final int getMaxKeySize() {
-	return maxKeySize;
+        return maxKeySize;
     }
 
     /**
@@ -348,7 +348,7 @@ class CryptoPermission extends java.security.Permission {
      * CryptoPermission object and false if otherwise.
      */
     final boolean getCheckParam() {
-	return checkParam;
+        return checkParam;
     }
 
     /**
@@ -357,7 +357,7 @@ class CryptoPermission extends java.security.Permission {
      * object.
      */
     final AlgorithmParameterSpec getAlgorithmParameterSpec() {
-	return algParamSpec;
+        return algParamSpec;
     }
 
     /**
@@ -369,94 +369,94 @@ class CryptoPermission extends java.security.Permission {
      * @return information about this CryptoPermission.
      */
     public String toString() {
-	StringBuilder buf = new StringBuilder(100);
-	buf.append("(CryptoPermission " + alg + " " + maxKeySize);
-	if (algParamSpec != null) {
-	    if (algParamSpec instanceof RC2ParameterSpec) {
-		buf.append(" , effective " +
-		    ((RC2ParameterSpec)algParamSpec).getEffectiveKeyBits());
-	    } else if (algParamSpec instanceof RC5ParameterSpec) {
-		buf.append(" , rounds " +
-		    ((RC5ParameterSpec)algParamSpec).getRounds());
-	    }
-	}
-	if (exemptionMechanism != null) { // OPTIONAL
-	    buf.append(" " + exemptionMechanism);
-	}
-	buf.append(")");
-	return buf.toString();
+        StringBuilder buf = new StringBuilder(100);
+        buf.append("(CryptoPermission " + alg + " " + maxKeySize);
+        if (algParamSpec != null) {
+            if (algParamSpec instanceof RC2ParameterSpec) {
+                buf.append(" , effective " +
+                    ((RC2ParameterSpec)algParamSpec).getEffectiveKeyBits());
+            } else if (algParamSpec instanceof RC5ParameterSpec) {
+                buf.append(" , rounds " +
+                    ((RC5ParameterSpec)algParamSpec).getRounds());
+            }
+        }
+        if (exemptionMechanism != null) { // OPTIONAL
+            buf.append(" " + exemptionMechanism);
+        }
+        buf.append(")");
+        return buf.toString();
     }
 
     private boolean impliesExemptionMechanism(String exemptionMechanism) {
-	if (this.exemptionMechanism == null) {
-	    return true;
-	}
+        if (this.exemptionMechanism == null) {
+            return true;
+        }
 
-	if (exemptionMechanism == null) {
-	    return false;
-	}
+        if (exemptionMechanism == null) {
+            return false;
+        }
 
-	if (this.exemptionMechanism.equals(exemptionMechanism)) {
-	    return true;
-	}
+        if (this.exemptionMechanism.equals(exemptionMechanism)) {
+            return true;
+        }
 
-	return false;
+        return false;
     }
 
     private boolean impliesParameterSpec(boolean checkParam,
-					 AlgorithmParameterSpec algParamSpec) {
-	if ((this.checkParam) && checkParam) {
-	    if (algParamSpec == null) {
-		return true;
-	    } else if (this.algParamSpec == null) {
-		return false;
-	    }
+                                         AlgorithmParameterSpec algParamSpec) {
+        if ((this.checkParam) && checkParam) {
+            if (algParamSpec == null) {
+                return true;
+            } else if (this.algParamSpec == null) {
+                return false;
+            }
 
-	    if (this.algParamSpec.getClass() != algParamSpec.getClass()) {
-		return false;
-	    }
+            if (this.algParamSpec.getClass() != algParamSpec.getClass()) {
+                return false;
+            }
 
-	    if (algParamSpec instanceof RC2ParameterSpec) {
-		if (((RC2ParameterSpec)algParamSpec).getEffectiveKeyBits() <=
-		    ((RC2ParameterSpec)
-		     (this.algParamSpec)).getEffectiveKeyBits()) {
-		    return true;
-		}
-	    }
+            if (algParamSpec instanceof RC2ParameterSpec) {
+                if (((RC2ParameterSpec)algParamSpec).getEffectiveKeyBits() <=
+                    ((RC2ParameterSpec)
+                     (this.algParamSpec)).getEffectiveKeyBits()) {
+                    return true;
+                }
+            }
 
-	    if (algParamSpec instanceof RC5ParameterSpec) {
-		if (((RC5ParameterSpec)algParamSpec).getRounds() <=
-		    ((RC5ParameterSpec)this.algParamSpec).getRounds()) {
-		    return true;
-		}
-	    }
+            if (algParamSpec instanceof RC5ParameterSpec) {
+                if (((RC5ParameterSpec)algParamSpec).getRounds() <=
+                    ((RC5ParameterSpec)this.algParamSpec).getRounds()) {
+                    return true;
+                }
+            }
 
-	    if (algParamSpec instanceof PBEParameterSpec) {
-		if (((PBEParameterSpec)algParamSpec).getIterationCount() <=
-		    ((PBEParameterSpec)this.algParamSpec).getIterationCount()) {
-		    return true;
-		}
-	    }
+            if (algParamSpec instanceof PBEParameterSpec) {
+                if (((PBEParameterSpec)algParamSpec).getIterationCount() <=
+                    ((PBEParameterSpec)this.algParamSpec).getIterationCount()) {
+                    return true;
+                }
+            }
 
-	    // For classes we don't know, the following
-	    // may be the best try.
-	    if (this.algParamSpec.equals(algParamSpec)) {
-		return true;
-	    }
-	    return false;
-	} else if (this.checkParam) {
-	    return false;
-	} else {
-	    return true;
-	}
+            // For classes we don't know, the following
+            // may be the best try.
+            if (this.algParamSpec.equals(algParamSpec)) {
+                return true;
+            }
+            return false;
+        } else if (this.checkParam) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private boolean equalObjects(Object obj1, Object obj2) {
-	if (obj1 == null) {
-	    return (obj2 == null ? true : false);
-	}
+        if (obj1 == null) {
+            return (obj2 == null ? true : false);
+        }
 
-	return obj1.equals(obj2);
+        return obj1.equals(obj2);
     }
 }
 
@@ -482,7 +482,7 @@ implements Serializable {
      * object.
      */
     CryptoPermissionCollection() {
-	permissions = new Vector(3);
+        permissions = new Vector(3);
     }
 
     /**
@@ -495,14 +495,14 @@ implements Serializable {
      */
     public void add(Permission permission)
     {
-	if (isReadOnly())
-	    throw new SecurityException("attempt to add a Permission " +
-					"to a readonly PermissionCollection");
+        if (isReadOnly())
+            throw new SecurityException("attempt to add a Permission " +
+                                        "to a readonly PermissionCollection");
 
-	if (!(permission instanceof CryptoPermission))
-	    return;
+        if (!(permission instanceof CryptoPermission))
+            return;
 
-	permissions.addElement(permission);
+        permissions.addElement(permission);
     }
 
     /**
@@ -515,20 +515,20 @@ implements Serializable {
      * CryptoPermissionCollection, false if not.
      */
     public boolean implies(Permission permission) {
-	if (!(permission instanceof CryptoPermission))
-	    return false;
+        if (!(permission instanceof CryptoPermission))
+            return false;
 
-	CryptoPermission cp = (CryptoPermission)permission;
+        CryptoPermission cp = (CryptoPermission)permission;
 
-	Enumeration e = permissions.elements();
+        Enumeration e = permissions.elements();
 
-	while (e.hasMoreElements()) {
-	    CryptoPermission x = (CryptoPermission) e.nextElement();
-	    if (x.implies(cp)) {
-		return true;
-	    }
-	}
-	return false;
+        while (e.hasMoreElements()) {
+            CryptoPermission x = (CryptoPermission) e.nextElement();
+            if (x.implies(cp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -540,6 +540,6 @@ implements Serializable {
 
     public Enumeration elements()
     {
-	return permissions.elements();
+        return permissions.elements();
     }
 }

@@ -43,7 +43,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  * string_name   = stringified COS name | empty_string
  *<p>
  * Characters in <string_name> are escaped as follows.
- * US-ASCII alphanumeric characters are not escaped. Any characters outside 
+ * US-ASCII alphanumeric characters are not escaped. Any characters outside
  * of this range are escaped except for the following:
  *        ; / : ? @ & = + $ , - _ . ! ~ * ; ( )
  * Escaped characters is escaped by using a % followed by its 2 hexadecimal
@@ -57,7 +57,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  * A corbaname URL is resolved by:
  *<ol>
  *<li>Construct a corbaloc URL by concatenating "corbaloc:" and <corbaloc_obj>.
- *<li>Resolve the corbaloc URL to a NamingContext by using 
+ *<li>Resolve the corbaloc URL to a NamingContext by using
  *     nctx = ORB.string_to_object(corbalocUrl);
  *<li>Resolve <string_name> in the NamingContext.
  *</ol>
@@ -74,55 +74,55 @@ public final class CorbanameUrl {
      * portion of the URL.
      */
     public String getStringName() {
-	return stringName;
+        return stringName;
     }
 
     public Name getCosName() throws NamingException {
-	return CNCtx.parser.parse(stringName);
+        return CNCtx.parser.parse(stringName);
     }
 
     public String getLocation() {
-	return "corbaloc:" + location;
+        return "corbaloc:" + location;
     }
 
     public CorbanameUrl(String url) throws MalformedURLException {
 
-	if (!url.startsWith("corbaname:")) {
-	    throw new MalformedURLException("Invalid corbaname URL: " + url);
-	}
+        if (!url.startsWith("corbaname:")) {
+            throw new MalformedURLException("Invalid corbaname URL: " + url);
+        }
 
-	int addrStart = 10;  // "corbaname:"
+        int addrStart = 10;  // "corbaname:"
 
-	int addrEnd = url.indexOf('#', addrStart);
-	if (addrEnd < 0) {
-	    addrEnd = url.length();
-	    stringName = "";
-	} else {
-	    stringName = UrlUtil.decode(url.substring(addrEnd+1));
-	}
-	location = url.substring(addrStart, addrEnd);
-	
-	int keyStart = location.indexOf("/");
-	if (keyStart >= 0) {
-	    // Has key string
-	    if (keyStart == (location.length() -1)) {
-		location += "NameService";
-	    }
-	} else {
-	    location += "/NameService";
-	}
+        int addrEnd = url.indexOf('#', addrStart);
+        if (addrEnd < 0) {
+            addrEnd = url.length();
+            stringName = "";
+        } else {
+            stringName = UrlUtil.decode(url.substring(addrEnd+1));
+        }
+        location = url.substring(addrStart, addrEnd);
+
+        int keyStart = location.indexOf("/");
+        if (keyStart >= 0) {
+            // Has key string
+            if (keyStart == (location.length() -1)) {
+                location += "NameService";
+            }
+        } else {
+            location += "/NameService";
+        }
     }
 /*
     // for testing only
     public static void main(String[] args) {
-	try {
-	    CorbanameUrl url = new CorbanameUrl(args[0]);
+        try {
+            CorbanameUrl url = new CorbanameUrl(args[0]);
 
-	    System.out.println("location: " + url.getLocation());
-	    System.out.println("string name: " + url.getStringName());
-	} catch (MalformedURLException e) {
-	    e.printStackTrace();
-	}
+            System.out.println("location: " + url.getLocation());
+            System.out.println("string name: " + url.getStringName());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 */
 }

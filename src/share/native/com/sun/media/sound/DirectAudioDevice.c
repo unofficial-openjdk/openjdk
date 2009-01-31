@@ -64,9 +64,9 @@ INLINE UINT16 MAP_SWAP16_impl(UINT16 a) {
 
 INLINE UINT32 MAP_SWAP32_impl(UINT32 a) {
     return (a>>24)
-	| ((a>>8) & 0xFF00)
-	| ((a<<8) & 0xFF0000)
-	| (a<<24);
+        | ((a>>8) & 0xFF00)
+        | ((a<<8) & 0xFF0000)
+        | (a<<24);
 }
 
 INLINE UINT32 MAP_SWAP16BIT(UINT32 sh) {
@@ -75,10 +75,10 @@ INLINE UINT32 MAP_SWAP16BIT(UINT32 sh) {
 
 INLINE INT32 MAP_ClipAndConvertToShort(MAP_Sample sample) {
     if (sample < -32768) {
-	return -32768;
+        return -32768;
     }
     else if (sample > 32767) {
-	return 32767;
+        return 32767;
     }
     return (INT32) sample;
 }
@@ -86,20 +86,20 @@ INLINE INT32 MAP_ClipAndConvertToShort(MAP_Sample sample) {
 
 INLINE INT32 MAP_ClipAndConvertToShort_Swapped(MAP_Sample sample) {
     if (sample < -32768) {
-	return 0x0080;
+        return 0x0080;
     }
     else if (sample > 32767) {
-	return 0xFF7F;
+        return 0xFF7F;
     }
     return (INT32) (INT16) MAP_SWAP16BIT(sample);
 }
 
 INLINE INT8 MAP_ClipAndConvertToByte(MAP_Sample sample) {
     if (sample < -32768) {
-	return -128;
+        return -128;
     }
     else if (sample > 32767) {
-	return 127;
+        return 127;
     }
     return (INT8) (sample >> 8);
 }
@@ -107,10 +107,10 @@ INLINE INT8 MAP_ClipAndConvertToByte(MAP_Sample sample) {
 
 INLINE UINT8 MAP_ClipAndConvertToUByte(MAP_Sample sample) {
     if (sample < -32768) {
-	return 0;
+        return 0;
     }
     else if (sample > 32767) {
-	return 255;
+        return 255;
     }
     return (UINT8) ((sample >> 8) + 128);
 }
@@ -176,13 +176,13 @@ void handleSignEndianConversion(INT8* data, INT8* output, int byteSize, int conv
     TRACE1("conversion with size %d\n", conversionSize);
     switch (conversionSize) {
     case 1: {
-	while (byteSize > 0) {
-	    *output = *data + (char) 128; // use wrap-around
-	    byteSize--;
-	    data++;
-	    output++;
-	}
-	break;
+        while (byteSize > 0) {
+            *output = *data + (char) 128; // use wrap-around
+            byteSize--;
+            data++;
+            output++;
+        }
+        break;
     }
     case 2: {
         INT8 h;
@@ -199,19 +199,19 @@ void handleSignEndianConversion(INT8* data, INT8* output, int byteSize, int conv
         break;
     }
     case 3: {
-	INT8 h;
-	byteSize = byteSize / 3;
-	while (byteSize > 0) {
-	    h = *data;
-	    *output = data[2];
-	    data++; output++;
-	    *output = *data;
-	    data++; output++;
-	    *output = h;
-	    data++; output++;
-	    byteSize--;
-	}
-	break;
+        INT8 h;
+        byteSize = byteSize / 3;
+        while (byteSize > 0) {
+            h = *data;
+            *output = data[2];
+            data++; output++;
+            *output = *data;
+            data++; output++;
+            *output = h;
+            data++; output++;
+            byteSize--;
+        }
+        break;
     }
     case 4: {
         INT8 h1, h2;
@@ -229,7 +229,7 @@ void handleSignEndianConversion(INT8* data, INT8* output, int byteSize, int conv
         break;
     }
     default:
-	ERROR1("DirectAudioDevice.c: wrong conversionSize %d!\n", conversionSize);
+        ERROR1("DirectAudioDevice.c: wrong conversionSize %d!\n", conversionSize);
     }
 }
 
@@ -312,8 +312,8 @@ void handleSignEndianConversion(INT8* data, INT8* output, int byteSize, int conv
 
 
 void handleGainAndConversion(DAUDIO_Info* info, UINT8* input, UINT8* output,
-	    	             int len, float leftGain, float rightGain,
-	    	             int conversionSize) {
+                             int len, float leftGain, float rightGain,
+                             int conversionSize) {
     INT8* input8 = (INT8*) input;
     INT8* output8 = (INT8*) output;
     INT16* input16 = (INT16*) input;
@@ -323,34 +323,34 @@ void handleGainAndConversion(DAUDIO_Info* info, UINT8* input, UINT8* output,
     int inIsSigned = info->isSigned;
     int inIsBigEndian = info->isBigEndian;
     if (conversionSize == 1) {
-	/* 8-bit conversion: change sign */
-	inIsSigned = !inIsSigned;
+        /* 8-bit conversion: change sign */
+        inIsSigned = !inIsSigned;
     }
     else if (conversionSize > 1) {
-	/* > 8-bit conversion: change endianness */
-	inIsBigEndian = !inIsBigEndian;
+        /* > 8-bit conversion: change endianness */
+        inIsBigEndian = !inIsBigEndian;
     }
     if (info->frameSize <= 0) {
-	ERROR1("DirectAudiODevice: invalid framesize=%d\n", info->frameSize);
-	return;
+        ERROR1("DirectAudiODevice: invalid framesize=%d\n", info->frameSize);
+        return;
     }
     len /= info->frameSize;
     TRACE3("handleGainAndConversion: len=%d frames, leftGain=%f, rightGain=%f, ",
-	   len, leftGain, rightGain);
+           len, leftGain, rightGain);
     TRACE3("channels=%d, sampleSizeInBits=%d, frameSize=%d, ",
-	   (int) info->channels, (int) info->sampleSizeInBits, (int) info->frameSize);
+           (int) info->channels, (int) info->sampleSizeInBits, (int) info->frameSize);
     TRACE4("signed:%d -> %d, endian: %d -> %d",
-	   (int) inIsSigned, (int) info->isSigned,
-	   (int) inIsBigEndian, (int) info->isBigEndian);
+           (int) inIsSigned, (int) info->isSigned,
+           (int) inIsBigEndian, (int) info->isBigEndian);
     TRACE1("convSize=%d\n", conversionSize);
 
     switch (FORMAT2CODE(info->channels,
-    	                info->sampleSizeInBits,
+                        info->sampleSizeInBits,
                         inIsSigned,
                         info->isSigned,
                         inIsBigEndian,
                         info->isBigEndian)) {
-	/* 8-bit mono */
+        /* 8-bit mono */
     case FORMAT2CODE8(1, 0, 0):
         LOOP_M(input8, output8, MAP_UINT82SAMPLE,
                MAP_SAMPLE2UINT8, MAP_SAMPLE2UINT8_CLIP);
@@ -407,7 +407,7 @@ void handleGainAndConversion(DAUDIO_Info* info, UINT8* input, UINT8* output,
                MAP_SAMPLE2BE_SHORT, MAP_SAMPLE2BE_SHORT_CLIP);
 
     default:
-	ERROR3("DirectAudioDevice: Cannot convert from native format: "
+        ERROR3("DirectAudioDevice: Cannot convert from native format: "
                "bits=%d, inSigned=%d  outSigned=%d, ",
                (int) info->sampleSizeInBits,
                (int) inIsSigned, (int) info->isSigned);
@@ -438,23 +438,23 @@ typedef struct tag_AddFormatCreator {
 } AddFormatCreator;
 
 void DAUDIO_AddAudioFormat(void* creatorV, int significantBits, int frameSizeInBytes,
-			   int channels, float sampleRate,
-			   int encoding, int isSigned,
-			   int bigEndian) {
+                           int channels, float sampleRate,
+                           int encoding, int isSigned,
+                           int bigEndian) {
     AddFormatCreator* creator = (AddFormatCreator*) creatorV;
     if (frameSizeInBytes <= 0) {
-    	if (channels > 0) {
-	    frameSizeInBytes = ((significantBits + 7) / 8) * channels;
-	} else {
-	    frameSizeInBytes = -1;
-	}
+        if (channels > 0) {
+            frameSizeInBytes = ((significantBits + 7) / 8) * channels;
+        } else {
+            frameSizeInBytes = -1;
+        }
     }
     TRACE4("AddAudioFormat with sigBits=%d bits, frameSize=%d bytes, channels=%d, sampleRate=%d ",
-	   significantBits, frameSizeInBytes, channels, (int) sampleRate);
+           significantBits, frameSizeInBytes, channels, (int) sampleRate);
     TRACE3("enc=%d, signed=%d, bigEndian=%d\n", encoding, isSigned, bigEndian);
     (*creator->env)->CallStaticVoidMethod(creator->env, creator->directAudioDeviceClass,
-					  creator->addFormat, creator->vector, significantBits, frameSizeInBytes,
-					  channels, sampleRate, encoding, isSigned, bigEndian);
+                                          creator->addFormat, creator->vector, significantBits, frameSizeInBytes,
+                                          channels, sampleRate, encoding, isSigned, bigEndian);
 }
 
 ////////////////////////////////////// JNI /////////////////////////////////////////////////////////////////////
@@ -473,11 +473,11 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nGetFormats
     creator.vector = formats;
     creator.directAudioDeviceClass = clazz;
     creator.addFormat = (*env)->GetStaticMethodID(env, clazz, "addFormat",
-						  "(Ljava/util/Vector;IIIFIZZ)V");
+                                                  "(Ljava/util/Vector;IIIFIZZ)V");
     if (creator.addFormat == NULL) {
-	ERROR0("Could not get method ID for addFormat!\n");
+        ERROR0("Could not get method ID for addFormat!\n");
     } else {
-	DAUDIO_GetFormats((INT32) mixerIndex, (INT32) deviceID, (int) isSource, &creator);
+        DAUDIO_GetFormats((INT32) mixerIndex, (INT32) deviceID, (int) isSource, &creator);
     }
 #endif
 }
@@ -499,26 +499,26 @@ JNIEXPORT jlong JNICALL Java_com_sun_media_sound_DirectAudioDevice_nOpen
 
     info = (DAUDIO_Info*) malloc(sizeof(DAUDIO_Info));
     if (info == NULL) {
-	ERROR0("DirectAudioDevice_nOpen: Out of memory!\n");
+        ERROR0("DirectAudioDevice_nOpen: Out of memory!\n");
     } else {
-	info->handle =DAUDIO_Open((int) mixerIndex, (INT32) deviceID, (int) isSource,
-				  (int) encoding, (float) sampleRate, (int) sampleSizeInBits,
-				  (int) frameSize, (int) channels,
-				  (int) isSigned, (int) isBigendian, (int) bufferSizeInBytes);
-	if (!info->handle) {
-	    free(info);
-	    info = NULL;
-	} else {
-	    info->encoding = encoding;
-	    info->sampleSizeInBits = sampleSizeInBits;
-	    info->frameSize = frameSize;
-	    info->channels = channels;
-	    info->isSigned = isSigned;
-	    info->isBigEndian = isBigendian && (sampleSizeInBits > 8);
-	    /* will be populated on demand */
-	    info->conversionBuffer = NULL;
-	    info->conversionBufferSize = 0;
-	}
+        info->handle =DAUDIO_Open((int) mixerIndex, (INT32) deviceID, (int) isSource,
+                                  (int) encoding, (float) sampleRate, (int) sampleSizeInBits,
+                                  (int) frameSize, (int) channels,
+                                  (int) isSigned, (int) isBigendian, (int) bufferSizeInBytes);
+        if (!info->handle) {
+            free(info);
+            info = NULL;
+        } else {
+            info->encoding = encoding;
+            info->sampleSizeInBits = sampleSizeInBits;
+            info->frameSize = frameSize;
+            info->channels = channels;
+            info->isSigned = isSigned;
+            info->isBigEndian = isBigendian && (sampleSizeInBits > 8);
+            /* will be populated on demand */
+            info->conversionBuffer = NULL;
+            info->conversionBufferSize = 0;
+        }
     }
 #endif
     return (jlong) (UINT_PTR) info;
@@ -534,7 +534,7 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nStart
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_Start(info->handle, (int) isSource);
+        DAUDIO_Start(info->handle, (int) isSource);
     }
 #endif
 }
@@ -550,7 +550,7 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nStop
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_Stop(info->handle, (int) isSource);
+        DAUDIO_Stop(info->handle, (int) isSource);
     }
 #endif
 }
@@ -566,11 +566,11 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nClose
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_Close(info->handle, (int) isSource);
-	if (info->conversionBuffer) {
-	    free(info->conversionBuffer);
-	}
-	free(info);
+        DAUDIO_Close(info->handle, (int) isSource);
+        if (info->conversionBuffer) {
+            free(info->conversionBuffer);
+        }
+        free(info);
     }
 #endif
 }
@@ -593,55 +593,55 @@ JNIEXPORT jint JNICALL Java_com_sun_media_sound_DirectAudioDevice_nWrite
 
     /* a little sanity */
     if (offset < 0 || len < 0) {
-	ERROR2("nWrite: wrong parameters: offset=%d, len=%d\n", offset, len);
-	return ret;
+        ERROR2("nWrite: wrong parameters: offset=%d, len=%d\n", offset, len);
+        return ret;
     }
     if (len == 0) return 0;
     if (info && info->handle) {
-	data = (UINT8*) ((*env)->GetByteArrayElements(env, jData, &didCopy));
-	dataOffset = data;
-	dataOffset += (int) offset;
-	convertedData = dataOffset;
+        data = (UINT8*) ((*env)->GetByteArrayElements(env, jData, &didCopy));
+        dataOffset = data;
+        dataOffset += (int) offset;
+        convertedData = dataOffset;
 
-	if (conversionSize > 0 || leftGain != 1.0f || rightGain != 1.0f) {
-	    /* make sure we have a buffer for the intermediate data */
-	    if (didCopy == JNI_FALSE) {
-		/* let's do our own copy */
-		if (info->conversionBuffer
-		    && info->conversionBufferSize < len) {
-		    free(info->conversionBuffer);
-		    info->conversionBuffer = NULL;
-		    info->conversionBufferSize = 0;
-		}
-		if (!info->conversionBuffer) {
-		    info->conversionBuffer = (UINT8*) malloc(len);
-		    if (!info->conversionBuffer) {
-			// do not commit the native array
-			(*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, JNI_ABORT);
-			return -1;
-		    }
-		    info->conversionBufferSize = len;
-		}
-		convertedData = info->conversionBuffer;
-	    }
-	    if (((ABS_VALUE(leftGain - 1.0f) < 0.01)
-		 && (ABS_VALUE(rightGain - 1.0f) < 0.01))
-		|| info->encoding!=DAUDIO_PCM
-		|| ((info->channels * info->sampleSizeInBits / 8) != info->frameSize)
-		|| (info->sampleSizeInBits != 8 && info->sampleSizeInBits != 16)) {
-		handleSignEndianConversion((INT8*) dataOffset, (INT8*) convertedData, (int) len,
-					   (int) conversionSize);
-	    } else {
-		handleGainAndConversion(info, dataOffset, convertedData,
-					(int) len, (float) leftGain, (float) rightGain,
-					(int) conversionSize);
-	    }
-	}
+        if (conversionSize > 0 || leftGain != 1.0f || rightGain != 1.0f) {
+            /* make sure we have a buffer for the intermediate data */
+            if (didCopy == JNI_FALSE) {
+                /* let's do our own copy */
+                if (info->conversionBuffer
+                    && info->conversionBufferSize < len) {
+                    free(info->conversionBuffer);
+                    info->conversionBuffer = NULL;
+                    info->conversionBufferSize = 0;
+                }
+                if (!info->conversionBuffer) {
+                    info->conversionBuffer = (UINT8*) malloc(len);
+                    if (!info->conversionBuffer) {
+                        // do not commit the native array
+                        (*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, JNI_ABORT);
+                        return -1;
+                    }
+                    info->conversionBufferSize = len;
+                }
+                convertedData = info->conversionBuffer;
+            }
+            if (((ABS_VALUE(leftGain - 1.0f) < 0.01)
+                 && (ABS_VALUE(rightGain - 1.0f) < 0.01))
+                || info->encoding!=DAUDIO_PCM
+                || ((info->channels * info->sampleSizeInBits / 8) != info->frameSize)
+                || (info->sampleSizeInBits != 8 && info->sampleSizeInBits != 16)) {
+                handleSignEndianConversion((INT8*) dataOffset, (INT8*) convertedData, (int) len,
+                                           (int) conversionSize);
+            } else {
+                handleGainAndConversion(info, dataOffset, convertedData,
+                                        (int) len, (float) leftGain, (float) rightGain,
+                                        (int) conversionSize);
+            }
+        }
 
-	ret = DAUDIO_Write(info->handle, (INT8*) convertedData, (int) len);
+        ret = DAUDIO_Write(info->handle, (INT8*) convertedData, (int) len);
 
-	// do not commit the native array
-	(*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, JNI_ABORT);
+        // do not commit the native array
+        (*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, JNI_ABORT);
     }
 #endif
     return (jint) ret;
@@ -662,19 +662,19 @@ JNIEXPORT jint JNICALL Java_com_sun_media_sound_DirectAudioDevice_nRead
 
     /* a little sanity */
     if (offset < 0 || len < 0) {
-	ERROR2("nRead: wrong parameters: offset=%d, len=%d\n", offset, len);
-	return ret;
+        ERROR2("nRead: wrong parameters: offset=%d, len=%d\n", offset, len);
+        return ret;
     }
     if (info && info->handle) {
-	data = (char*) ((*env)->GetByteArrayElements(env, jData, NULL));
-	dataOffset = data;
-	dataOffset += (int) offset;
-	ret = DAUDIO_Read(info->handle, dataOffset, (int) len);
-	if (conversionSize > 0) {
-	    handleSignEndianConversion(dataOffset, dataOffset, (int) len, (int) conversionSize);
-	}
-	// commit the native array
-	(*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, 0);
+        data = (char*) ((*env)->GetByteArrayElements(env, jData, NULL));
+        dataOffset = data;
+        dataOffset += (int) offset;
+        ret = DAUDIO_Read(info->handle, dataOffset, (int) len);
+        if (conversionSize > 0) {
+            handleSignEndianConversion(dataOffset, dataOffset, (int) len, (int) conversionSize);
+        }
+        // commit the native array
+        (*env)->ReleaseByteArrayElements(env, jData, (jbyte*) data, 0);
     }
 #endif
     return (jint) ret;
@@ -691,7 +691,7 @@ JNIEXPORT jint JNICALL Java_com_sun_media_sound_DirectAudioDevice_nGetBufferSize
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	ret = DAUDIO_GetBufferSize(info->handle, (int) isSource);
+        ret = DAUDIO_GetBufferSize(info->handle, (int) isSource);
     }
 #endif
     return (jint) ret;
@@ -709,7 +709,7 @@ JNIEXPORT jboolean JNICALL Java_com_sun_media_sound_DirectAudioDevice_nIsStillDr
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	ret = DAUDIO_StillDraining(info->handle, (int) isSource)?TRUE:FALSE;
+        ret = DAUDIO_StillDraining(info->handle, (int) isSource)?TRUE:FALSE;
     }
 #endif
     return (jboolean) ret;
@@ -726,7 +726,7 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nFlush
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_Flush(info->handle, (int) isSource);
+        DAUDIO_Flush(info->handle, (int) isSource);
     }
 #endif
 }
@@ -743,7 +743,7 @@ JNIEXPORT jint JNICALL Java_com_sun_media_sound_DirectAudioDevice_nAvailable
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	ret = DAUDIO_GetAvailable(info->handle, (int) isSource);
+        ret = DAUDIO_GetAvailable(info->handle, (int) isSource);
     }
 #endif
     return (jint) ret;
@@ -761,7 +761,7 @@ JNIEXPORT jlong JNICALL Java_com_sun_media_sound_DirectAudioDevice_nGetBytePosit
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	ret = DAUDIO_GetBytePosition(info->handle, (int) isSource, (INT64) javaBytePos);
+        ret = DAUDIO_GetBytePosition(info->handle, (int) isSource, (INT64) javaBytePos);
     }
 #endif
     return (jlong) ret;
@@ -777,7 +777,7 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nSetBytePositi
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_SetBytePosition(info->handle, (int) isSource, (INT64) pos);
+        DAUDIO_SetBytePosition(info->handle, (int) isSource, (INT64) pos);
     }
 #endif
 }
@@ -793,7 +793,7 @@ JNIEXPORT jboolean JNICALL Java_com_sun_media_sound_DirectAudioDevice_nRequiresS
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	ret = DAUDIO_RequiresServicing(info->handle, (int) isSource);
+        ret = DAUDIO_RequiresServicing(info->handle, (int) isSource);
     }
 #endif
     return (jboolean) ret;
@@ -808,8 +808,7 @@ JNIEXPORT void JNICALL Java_com_sun_media_sound_DirectAudioDevice_nService
 #if USE_DAUDIO == TRUE
     DAUDIO_Info* info = (DAUDIO_Info*) (UINT_PTR) id;
     if (info && info->handle) {
-	DAUDIO_Service(info->handle, (int) isSource);
+        DAUDIO_Service(info->handle, (int) isSource);
     }
 #endif
 }
-

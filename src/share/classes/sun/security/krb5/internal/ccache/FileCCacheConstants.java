@@ -23,8 +23,6 @@
  */
 
 /*
- * %W% %E%
- *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
  */
@@ -35,14 +33,13 @@ package sun.security.krb5.internal.ccache;
  * Constants used by file-based credential cache classes.
  *
  * @author Yanni Zhang
- * @version 1.00
  *
  */
 public interface FileCCacheConstants {
     /*
      * FCC version 2 contains type information for principals.  FCC
      * version 1 does not.
-     *  
+     *
      * FCC version 3 contains keyblock encryption type information, and is
      * architecture independent.  Previous versions are not. */
     public final int KRB5_FCC_FVNO_1 = 0x501;

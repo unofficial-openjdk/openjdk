@@ -41,8 +41,7 @@ import sun.tools.tree.*;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @author 	John R. Rose
- * @version 	%I%, %G%
+ * @author      John R. Rose
  */
 public interface ParserActions {
     /**
@@ -67,8 +66,8 @@ public interface ParserActions {
      * and endClass, and is not examined otherwise.
      */
     ClassDefinition beginClass(long off, String doc,
-			       int mod, IdentifierToken nm,
-			       IdentifierToken sup, IdentifierToken impl[]);
+                               int mod, IdentifierToken nm,
+                               IdentifierToken sup, IdentifierToken impl[]);
 
 
     /**
@@ -82,7 +81,7 @@ public interface ParserActions {
      * @param c a cookie returned by the corresponding beginClass call
      */
     void defineField(long where, ClassDefinition c,
-		     String doc, int mod, Type t,
-		     IdentifierToken nm, IdentifierToken args[], 
-		     IdentifierToken exp[], Node val);
+                     String doc, int mod, Type t,
+                     IdentifierToken nm, IdentifierToken args[],
+                     IdentifierToken exp[], Node val);
 }

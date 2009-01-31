@@ -31,7 +31,6 @@ import sun.nio.cs.ext.MacUkraine;
  * Tables and data to convert Unicode to MacUkraine
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteMacUkraine extends CharToByteSingleByte {

@@ -30,7 +30,6 @@ package sun.jvmstat.monitor;
  * information from an MonitoredVm object.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class MonitoredVmUtil {
@@ -166,8 +165,8 @@ public class MonitoredVmUtil {
     private static int IS_KERNEL_VM  = 1;
 
     /**
-     * Returns true if the VM supports attach-on-demand. 
-     * 
+     * Returns true if the VM supports attach-on-demand.
+     *
      * @param vm the target MonitoredVm
      */
     public static boolean isAttachable(MonitoredVm vm) throws MonitorException {
@@ -181,8 +180,8 @@ public class MonitoredVmUtil {
     }
 
     /**
-     * Returns true if the target VM is a kernel VM 
-     * 
+     * Returns true if the target VM is a kernel VM
+     *
      * @param vm the target MonitoredVm
      */
     public static boolean isKernelVM(MonitoredVm vm) throws MonitorException {

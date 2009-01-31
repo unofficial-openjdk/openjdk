@@ -35,15 +35,15 @@ import java.util.Hashtable;
   * The JNDI framework allows for object implementations to
   * be loaded in dynamically via <tt>object factories</tt>.
   * <p>
-  * A <tt>DirStateFactory</tt> extends <tt>StateFactory</tt> 
+  * A <tt>DirStateFactory</tt> extends <tt>StateFactory</tt>
   * by allowing an <tt>Attributes</tt> instance
   * to be supplied to and be returned by the <tt>getStateToBind()</tt> method.
-  * <tt>DirStateFactory</tt> implementations are intended to be used by 
+  * <tt>DirStateFactory</tt> implementations are intended to be used by
   * <tt>DirContext</tt> service providers.
   * When a caller binds an object using <tt>DirContext.bind()</tt>,
   * he might also specify a set of attributes to be bound with the object.
-  * The object and attributes to be bound are passed to 
-  * the <tt>getStateToBind()</tt> method of a factory. 
+  * The object and attributes to be bound are passed to
+  * the <tt>getStateToBind()</tt> method of a factory.
   * If the factory processes the object and attributes, it returns
   * a corresponding pair of object and attributes to be bound.
   * If the factory does not process the object, it must return null.
@@ -75,7 +75,6 @@ import java.util.Hashtable;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  * @version %I% %E%
   *
   * @see DirectoryManager#getStateToBind
   * @see DirObjectFactory
@@ -92,15 +91,15 @@ public interface DirStateFactory extends StateFactory {
  * otherwise, it invokes <tt>StateFactory.getStateToBind()</tt>.
  * It does this until a factory produces a non-null answer.
  *<p>
- * When an exception is thrown by a factory, 
+ * When an exception is thrown by a factory,
  * the exception is passed on to the caller
  * of <tt>DirectoryManager.getStateToBind()</tt>. The search for other factories
- * that may produce a non-null answer is halted. 
+ * that may produce a non-null answer is halted.
  * A factory should only throw an exception if it is sure that
  * it is the only intended factory and that no other factories
  * should be tried.
  * If this factory cannot create an object using the arguments supplied,
- * it should return null. 
+ * it should return null.
  * <p>
  * The <code>name</code> and <code>nameCtx</code> parameters may
  * optionally be used to specify the name of the object being created.
@@ -123,14 +122,14 @@ public interface DirStateFactory extends StateFactory {
  *
  * @param obj A possibly null object whose state is to be retrieved.
  * @param name The name of this object relative to <code>nameCtx</code>,
- *		or null if no name is specified.
+ *              or null if no name is specified.
  * @param nameCtx The context relative to which the <code>name</code>
- *		parameter is specified, or null if <code>name</code> is
- *		relative to the default initial context.
- * @param environment The possibly null environment to 
- *		be used in the creation of the object's state.
+ *              parameter is specified, or null if <code>name</code> is
+ *              relative to the default initial context.
+ * @param environment The possibly null environment to
+ *              be used in the creation of the object's state.
  * @param inAttrs The possibly null attributes to be bound with the object.
- * 	The factory must not modify <tt>inAttrs</tt>.
+ *      The factory must not modify <tt>inAttrs</tt>.
  * @return A <tt>Result</tt> containing the object's state for binding
  * and the corresponding
  * attributes to be bound; null if the object don't use this factory.
@@ -141,49 +140,49 @@ public interface DirStateFactory extends StateFactory {
  * @see DirectoryManager#getStateToBind
  */
     public Result getStateToBind(Object obj, Name name, Context nameCtx,
-				 Hashtable<?,?> environment,
-				 Attributes inAttrs)
-	throws NamingException;
+                                 Hashtable<?,?> environment,
+                                 Attributes inAttrs)
+        throws NamingException;
 
 
-	/**
-         * An object/attributes pair for returning the result of 
+        /**
+         * An object/attributes pair for returning the result of
          * DirStateFactory.getStateToBind().
          */
     public static class Result {
-	/**
+        /**
          * The possibly null object to be bound.
          */
-	private Object obj;
+        private Object obj;
 
 
-	/**
+        /**
          * The possibly null attributes to be bound.
          */
-	private Attributes attrs;
+        private Attributes attrs;
 
-	/**
+        /**
           * Constructs an instance of Result.
           *
           * @param obj The possibly null object to be bound.
           * @param outAttrs The possibly null attributes to be bound.
           */
-	public Result(Object obj, Attributes outAttrs) {
-	    this.obj = obj;
-	    this.attrs = outAttrs;
-	}
+        public Result(Object obj, Attributes outAttrs) {
+            this.obj = obj;
+            this.attrs = outAttrs;
+        }
 
-	/**
+        /**
          * Retrieves the object to be bound.
          * @return The possibly null object to be bound.
          */
-	public Object getObject() { return obj; };
+        public Object getObject() { return obj; };
 
-	/**
+        /**
          * Retrieves the attributes to be bound.
          * @return The possibly null attributes to be bound.
          */
-	public Attributes getAttributes() { return attrs; };
+        public Attributes getAttributes() { return attrs; };
 
     }
 }

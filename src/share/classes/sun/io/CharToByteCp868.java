@@ -31,7 +31,6 @@ import sun.nio.cs.ext.IBM868;
  * Tables and data to convert Unicode to Cp868
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteCp868 extends CharToByteSingleByte {

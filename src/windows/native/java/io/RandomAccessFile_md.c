@@ -32,7 +32,7 @@
 
 #include "java_io_RandomAccessFile.h"
 
-extern jfieldID raf_fd;	/* id for jobject 'fd' in java.io.RandomAccessFile */
+extern jfieldID raf_fd; /* id for jobject 'fd' in java.io.RandomAccessFile */
 
 /*********************************************************************
  * Platform specific implementation of input stream native methods
@@ -42,4 +42,3 @@ JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_close0(JNIEnv *env, jobject this) {
     handleClose(env, this, raf_fd);
 }
-

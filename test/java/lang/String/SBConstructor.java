@@ -25,7 +25,7 @@
  * @test
  * @bug 4915187
  * @summary Test java.lang.String constructor that takes StringBuilder
- * 
+ *
  */
 import java.util.*;
 

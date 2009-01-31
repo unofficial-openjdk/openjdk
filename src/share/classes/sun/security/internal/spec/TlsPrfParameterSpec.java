@@ -42,7 +42,7 @@ import javax.crypto.SecretKey;
  */
 @Deprecated
 public class TlsPrfParameterSpec implements AlgorithmParameterSpec {
-    
+
     private final SecretKey secret;
     private final String label;
     private final byte[] seed;
@@ -60,16 +60,16 @@ public class TlsPrfParameterSpec implements AlgorithmParameterSpec {
      * @throws IllegalArgumentException if outputLength is negative
      */
     public TlsPrfParameterSpec(SecretKey secret, String label, byte[] seed, int outputLength) {
-	if ((label == null) || (seed == null)) {
-	    throw new NullPointerException("label and seed must not be null");
-	}
-	if (outputLength <= 0) {
-	    throw new IllegalArgumentException("outputLength must be positive");
-	}
-	this.secret = secret;
-	this.label = label;
-	this.seed = seed.clone();
-	this.outputLength = outputLength;
+        if ((label == null) || (seed == null)) {
+            throw new NullPointerException("label and seed must not be null");
+        }
+        if (outputLength <= 0) {
+            throw new IllegalArgumentException("outputLength must be positive");
+        }
+        this.secret = secret;
+        this.label = label;
+        this.seed = seed.clone();
+        this.outputLength = outputLength;
     }
 
     /**
@@ -80,34 +80,34 @@ public class TlsPrfParameterSpec implements AlgorithmParameterSpec {
      * secret.
      */
     public SecretKey getSecret() {
-	return secret;
+        return secret;
     }
-    
+
     /**
      * Returns the label to use in the PRF calcuation.
      *
      * @return the label to use in the PRF calcuation.
      */
     public String getLabel() {
-	return label;
+        return label;
     }
-    
+
     /**
      * Returns a copy of the seed to use in the PRF calcuation.
      *
      * @return a copy of the seed to use in the PRF calcuation.
      */
     public byte[] getSeed() {
-	return seed.clone();
+        return seed.clone();
     }
 
     /**
      * Returns the length in bytes of the output key to be produced.
-     * 
+     *
      * @return the length in bytes of the output key to be produced.
      */
     public int getOutputLength() {
-	return outputLength;
+        return outputLength;
     }
 
 }

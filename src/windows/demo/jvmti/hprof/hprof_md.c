@@ -41,19 +41,19 @@
 #include "jni.h"
 #include "hprof.h"
 
-int 
+int
 md_getpid(void)
 {
     static int pid = -1;
 
     if ( pid >= 0 ) {
-	return pid;
+        return pid;
     }
     pid = getpid();
     return pid;
 }
 
-void 
+void
 md_sleep(unsigned seconds)
 {
     Sleep((DWORD)seconds*1000);
@@ -105,30 +105,30 @@ md_shutdown(int filedes, int option)
     return shutdown(filedes, option);
 }
 
-int 
+int
 md_open(const char *filename)
 {
     return open(filename, O_RDONLY);
 }
 
-int 
+int
 md_open_binary(const char *filename)
 {
     return open(filename, O_RDONLY|O_BINARY);
 }
 
-int 
+int
 md_creat(const char *filename)
 {
-    return open(filename, O_CREAT | O_WRONLY | O_TRUNC, 
-			     _S_IREAD | _S_IWRITE);
+    return open(filename, O_CREAT | O_WRONLY | O_TRUNC,
+                             _S_IREAD | _S_IWRITE);
 }
 
-int 
+int
 md_creat_binary(const char *filename)
 {
-    return open(filename, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY,  
-			    _S_IREAD | _S_IWRITE);
+    return open(filename, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY,
+                            _S_IREAD | _S_IWRITE);
 }
 
 jlong
@@ -137,9 +137,9 @@ md_seek(int filedes, jlong pos)
     jlong new_pos;
 
     if ( pos == (jlong)-1 ) {
-	new_pos = _lseeki64(filedes, 0L, SEEK_END);
+        new_pos = _lseeki64(filedes, 0L, SEEK_END);
     } else {
-	new_pos = _lseeki64(filedes, pos, SEEK_SET);
+        new_pos = _lseeki64(filedes, pos, SEEK_SET);
     }
     return new_pos;
 }
@@ -150,34 +150,34 @@ md_close(int filedes)
     (void)close(filedes);
 }
 
-int 
+int
 md_send(int s, const char *msg, int len, int flags)
 {
     return send(s, msg, len, flags);
 }
 
-int 
+int
 md_read(int filedes, void *buf, int nbyte)
 {
     return read(filedes, buf, nbyte);
 }
 
-int 
+int
 md_write(int filedes, const void *buf, int nbyte)
 {
     return write(filedes, buf, nbyte);
 }
 
-jlong 
+jlong
 md_get_microsecs(void)
 {
     return (jlong)(timeGetTime())*(jlong)1000;
 }
 
 #define FT2JLONG(ft) \
-	((jlong)(ft).dwHighDateTime << 32 | (jlong)(ft).dwLowDateTime)
+        ((jlong)(ft).dwHighDateTime << 32 | (jlong)(ft).dwLowDateTime)
 
-jlong 
+jlong
 md_get_timemillis(void)
 {
     static jlong fileTime_1_1_70 = 0;
@@ -186,16 +186,16 @@ md_get_timemillis(void)
 
     if (fileTime_1_1_70 == 0) {
         /* Initialize fileTime_1_1_70 -- the Win32 file time of midnight
-	 * 1/1/70.
-         */ 
+         * 1/1/70.
+         */
 
         memset(&st0, 0, sizeof(st0));
         st0.wYear  = 1970;
         st0.wMonth = 1;
         st0.wDay   = 1;
         SystemTimeToFileTime(&st0, &ft0);
-	fileTime_1_1_70 = FT2JLONG(ft0);
-    } 
+        fileTime_1_1_70 = FT2JLONG(ft0);
+    }
 
     GetSystemTime(&st0);
     SystemTimeToFileTime(&st0, &ft0);
@@ -203,7 +203,7 @@ md_get_timemillis(void)
     return (FT2JLONG(ft0) - fileTime_1_1_70) / 10000;
 }
 
-jlong 
+jlong
 md_get_thread_cpu_timemillis(void)
 {
     return md_get_timemillis();
@@ -230,7 +230,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-void 
+void
 md_get_prelude_path(char *path, int path_len, char *filename)
 {
     char libdir[FILENAME_MAX+1];
@@ -241,22 +241,22 @@ md_get_prelude_path(char *path, int path_len, char *filename)
     /* This is actually in the bin directory, so move above bin for lib */
     lastSlash = strrchr(libdir, '\\');
     if ( lastSlash != NULL ) {
-	*lastSlash = '\0';
+        *lastSlash = '\0';
     }
     lastSlash = strrchr(libdir, '\\');
     if ( lastSlash != NULL ) {
-	*lastSlash = '\0';
+        *lastSlash = '\0';
     }
     (void)md_snprintf(path, path_len, "%s\\lib\\%s", libdir, filename);
 }
 
-int     
+int
 md_vsnprintf(char *s, int n, const char *format, va_list ap)
 {
     return _vsnprintf(s, n, format, ap);
 }
 
-int     
+int
 md_snprintf(char *s, int n, const char *format, ...)
 {
     int ret;
@@ -272,7 +272,7 @@ void
 md_system_error(char *buf, int len)
 {
     long errval;
-    
+
     errval = GetLastError();
     buf[0] = '\0';
     if (errval != 0) {
@@ -303,13 +303,13 @@ md_htonl(unsigned l)
     return htonl(l);
 }
 
-unsigned        
+unsigned
 md_ntohs(unsigned short s)
 {
     return ntohs(s);
 }
 
-unsigned 
+unsigned
 md_ntohl(unsigned l)
 {
     return ntohl(l);
@@ -322,35 +322,35 @@ get_last_error_string(char *buf, int len)
 
     errval = GetLastError();
     if (errval != 0) {
-	/* DOS error */
-	int n;
-	
-	n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
-			      NULL, errval,
-			      0, buf, len, NULL);
-	if (n > 3) {
-	    /* Drop final '.', CR, LF */
-	    if (buf[n - 1] == '\n') n--;
-	    if (buf[n - 1] == '\r') n--;
-	    if (buf[n - 1] == '.') n--;
-	    buf[n] = '\0';
-	}
-	return n;
+        /* DOS error */
+        int n;
+
+        n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+                              NULL, errval,
+                              0, buf, len, NULL);
+        if (n > 3) {
+            /* Drop final '.', CR, LF */
+            if (buf[n - 1] == '\n') n--;
+            if (buf[n - 1] == '\r') n--;
+            if (buf[n - 1] == '.') n--;
+            buf[n] = '\0';
+        }
+        return n;
     }
 
     if (errno != 0) {
-	/* C runtime error that has no corresponding DOS error code */
-	const char *s;
-	int         n;
-	
-	s = strerror(errno);
-	n = (int)strlen(s);
-	if (n >= len) {
-	    n = len - 1;
-	}
-	(void)strncpy(buf, s, n);
-	buf[n] = '\0';
-	return n;
+        /* C runtime error that has no corresponding DOS error code */
+        const char *s;
+        int         n;
+
+        s = strerror(errno);
+        n = (int)strlen(s);
+        if (n >= len) {
+            n = len - 1;
+        }
+        (void)strncpy(buf, s, n);
+        buf[n] = '\0';
+        return n;
     }
 
     return 0;
@@ -385,30 +385,30 @@ void *
 md_load_library(const char * name, char *err_buf, int err_buflen)
 {
     void *result;
-    
+
     result = LoadLibrary(name);
     if (result == NULL) {
-	/* Error message is pretty lame, try to make a better guess. */
-	long errcode;
-	
-	errcode = GetLastError();
-	if (errcode == ERROR_MOD_NOT_FOUND) {
-	    strncpy(err_buf, "Can't find dependent libraries", err_buflen-2);
-	    err_buf[err_buflen-1] = '\0';
-	} else {
-	    get_last_error_string(err_buf, err_buflen);
-	}
+        /* Error message is pretty lame, try to make a better guess. */
+        long errcode;
+
+        errcode = GetLastError();
+        if (errcode == ERROR_MOD_NOT_FOUND) {
+            strncpy(err_buf, "Can't find dependent libraries", err_buflen-2);
+            err_buf[err_buflen-1] = '\0';
+        } else {
+            get_last_error_string(err_buf, err_buflen);
+        }
     }
     return result;
 }
 
-void 
+void
 md_unload_library(void *handle)
 {
     FreeLibrary(handle);
 }
 
-void * 
+void *
 md_find_library_entry(void *handle, const char *name)
 {
     return GetProcAddress(handle, name);

@@ -28,9 +28,9 @@ package javax.management;
 import java.util.Arrays;
 
 /**
- * <p>The <CODE>MBeanNotificationInfo</CODE> class is used to describe the 
- * characteristics of the different notification instances 
- * emitted by an MBean, for a given Java class of notification. 
+ * <p>The <CODE>MBeanNotificationInfo</CODE> class is used to describe the
+ * characteristics of the different notification instances
+ * emitted by an MBean, for a given Java class of notification.
  * If an MBean emits notifications that can be instances of different Java classes,
  * then the metadata for that MBean should provide an <CODE>MBeanNotificationInfo</CODE>
  * object for each of these notification Java classes.</p>
@@ -38,7 +38,7 @@ import java.util.Arrays;
  * <p>Instances of this class are immutable.  Subclasses may be
  * mutable but this is not recommended.</p>
  *
- * <p>This class extends <CODE>javax.management.MBeanFeatureInfo</CODE> 
+ * <p>This class extends <CODE>javax.management.MBeanFeatureInfo</CODE>
  * and thus provides <CODE>name</CODE> and <CODE>description</CODE> fields.
  * The <CODE>name</CODE> field should be the fully qualified Java class name of
  * the notification objects described by this class.</p>
@@ -54,21 +54,21 @@ import java.util.Arrays;
  *
  * @since 1.5
  */
-public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable { 
-  
+public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable {
+
     /* Serial version */
     static final long serialVersionUID = -3888371564530107064L;
 
     private static final String[] NO_TYPES = new String[0];
 
     static final MBeanNotificationInfo[] NO_NOTIFICATIONS =
-	new MBeanNotificationInfo[0];
+        new MBeanNotificationInfo[0];
 
     /**
-     * @serial The different types of the notification.  
+     * @serial The different types of the notification.
      */
     private final String[] types;
-    
+
     /** @see MBeanInfo#arrayGettersSafe */
     private final transient boolean arrayGettersSafe;
 
@@ -83,8 +83,8 @@ public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable
      * @param description A human readable description of the data.
      */
     public MBeanNotificationInfo(String[] notifTypes,
-				 String name,
-				 String description) {
+                                 String name,
+                                 String description) {
         this(notifTypes, name, description, null);
     }
 
@@ -103,43 +103,43 @@ public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable
      * @since 1.6
      */
     public MBeanNotificationInfo(String[] notifTypes,
-				 String name,
-				 String description,
-                                 Descriptor descriptor) {  
-	super(name, description, descriptor);
+                                 String name,
+                                 String description,
+                                 Descriptor descriptor) {
+        super(name, description, descriptor);
 
-	/* We do not validate the notifTypes, since the spec just says
-	   they are dot-separated, not that they must look like Java
-	   classes.  E.g. the spec doesn't forbid "sun.prob.25" as a
-	   notifType, though it doesn't explicitly allow it
-	   either.  */
+        /* We do not validate the notifTypes, since the spec just says
+           they are dot-separated, not that they must look like Java
+           classes.  E.g. the spec doesn't forbid "sun.prob.25" as a
+           notifType, though it doesn't explicitly allow it
+           either.  */
 
-	if (notifTypes == null)
-	    notifTypes = NO_TYPES;
-	this.types = notifTypes;
-	this.arrayGettersSafe =
-	    MBeanInfo.arrayGettersSafe(this.getClass(),
-				       MBeanNotificationInfo.class);
+        if (notifTypes == null)
+            notifTypes = NO_TYPES;
+        this.types = notifTypes;
+        this.arrayGettersSafe =
+            MBeanInfo.arrayGettersSafe(this.getClass(),
+                                       MBeanNotificationInfo.class);
     }
 
 
     /**
-     * Returns a shallow clone of this instance. 
-     * The clone is obtained by simply calling <tt>super.clone()</tt>, 
-     * thus calling the default native shallow cloning mechanism 
+     * Returns a shallow clone of this instance.
+     * The clone is obtained by simply calling <tt>super.clone()</tt>,
+     * thus calling the default native shallow cloning mechanism
      * implemented by <tt>Object.clone()</tt>.
      * No deeper cloning of any internal field is made.
      */
      public Object clone () {
-	 try {
-	     return super.clone() ;
-	 } catch (CloneNotSupportedException e) {
-	     // should not happen as this class is cloneable
-	     return null;
-	 }
+         try {
+             return super.clone() ;
+         } catch (CloneNotSupportedException e) {
+             // should not happen as this class is cloneable
+             return null;
+         }
      }
 
-    
+
     /**
      * Returns the array of strings (in dot notation) containing the
      * notification types that the MBean may emit.
@@ -148,17 +148,17 @@ public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable
      * effect on this MBeanNotificationInfo.
      */
     public String[] getNotifTypes() {
-	if (types.length == 0)
+        if (types.length == 0)
             return NO_TYPES;
         else
             return types.clone();
     }
 
     private String[] fastGetNotifTypes() {
-	if (arrayGettersSafe)
-	    return types;
-	else
-	    return getNotifTypes();
+        if (arrayGettersSafe)
+            return types;
+        else
+            return getNotifTypes();
     }
 
     public String toString() {
@@ -170,7 +170,7 @@ public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable
             "descriptor=" + getDescriptor() +
             "]";
     }
-    
+
     /**
      * Compare this MBeanNotificationInfo to another.
      *
@@ -186,21 +186,21 @@ public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable
      * elements but in a different order.
      */
     public boolean equals(Object o) {
-	if (o == this)
-	    return true;
-	if (!(o instanceof MBeanNotificationInfo))
-	    return false;
-	MBeanNotificationInfo p = (MBeanNotificationInfo) o;
-	return (p.getName().equals(getName()) &&
-		p.getDescription().equals(getDescription()) &&
+        if (o == this)
+            return true;
+        if (!(o instanceof MBeanNotificationInfo))
+            return false;
+        MBeanNotificationInfo p = (MBeanNotificationInfo) o;
+        return (p.getName().equals(getName()) &&
+                p.getDescription().equals(getDescription()) &&
                 p.getDescriptor().equals(getDescriptor()) &&
-		Arrays.equals(p.fastGetNotifTypes(), fastGetNotifTypes()));
+                Arrays.equals(p.fastGetNotifTypes(), fastGetNotifTypes()));
     }
 
     public int hashCode() {
-	int hash = getName().hashCode();
-	for (int i = 0; i < types.length; i++)
-	    hash ^= types[i].hashCode();
-	return hash;
+        int hash = getName().hashCode();
+        for (int i = 0; i < types.length; i++)
+            hash ^= types[i].hashCode();
+        return hash;
     }
 }

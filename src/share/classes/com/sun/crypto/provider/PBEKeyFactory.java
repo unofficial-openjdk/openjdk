@@ -50,56 +50,56 @@ abstract class PBEKeyFactory extends SecretKeyFactorySpi {
 
     /**
      * Verify the SunJCE provider in the constructor.
-     * 
+     *
      * @exception SecurityException if fails to verify
      * its own integrity
      */
     private PBEKeyFactory(String keytype) {
         if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-	    throw new SecurityException("The SunJCE provider may have " +
-					"been tampered.");
-	}
-	type = keytype;
+            throw new SecurityException("The SunJCE provider may have " +
+                                        "been tampered.");
+        }
+        type = keytype;
     }
 
     static {
-	validTypes = new HashSet<String>(4);
-	validTypes.add("PBEWithMD5AndDES".toUpperCase());
-	validTypes.add("PBEWithSHA1AndDESede".toUpperCase());
-	validTypes.add("PBEWithSHA1AndRC2_40".toUpperCase());
-	// Proprietary algorithm.
-	validTypes.add("PBEWithMD5AndTripleDES".toUpperCase());
+        validTypes = new HashSet<String>(4);
+        validTypes.add("PBEWithMD5AndDES".toUpperCase());
+        validTypes.add("PBEWithSHA1AndDESede".toUpperCase());
+        validTypes.add("PBEWithSHA1AndRC2_40".toUpperCase());
+        // Proprietary algorithm.
+        validTypes.add("PBEWithMD5AndTripleDES".toUpperCase());
     }
 
     public static final class PBEWithMD5AndDES
-	    extends PBEKeyFactory {
-	public PBEWithMD5AndDES()  {
-	    super("PBEWithMD5AndDES");
-	}
+            extends PBEKeyFactory {
+        public PBEWithMD5AndDES()  {
+            super("PBEWithMD5AndDES");
+        }
     }
 
     public static final class PBEWithSHA1AndDESede
-	    extends PBEKeyFactory {
-	public PBEWithSHA1AndDESede()  {
-	    super("PBEWithSHA1AndDESede");
-	}
+            extends PBEKeyFactory {
+        public PBEWithSHA1AndDESede()  {
+            super("PBEWithSHA1AndDESede");
+        }
     }
 
     public static final class PBEWithSHA1AndRC2_40
-	    extends PBEKeyFactory {
-	public PBEWithSHA1AndRC2_40()  {
-	    super("PBEWithSHA1AndRC2_40");
-	}
+            extends PBEKeyFactory {
+        public PBEWithSHA1AndRC2_40()  {
+            super("PBEWithSHA1AndRC2_40");
+        }
     }
 
     /*
      * Private proprietary algorithm for supporting JCEKS.
      */
     public static final class PBEWithMD5AndTripleDES
-	    extends PBEKeyFactory {
-	public PBEWithMD5AndTripleDES()  {
-	    super("PBEWithMD5AndTripleDES");
-	}
+            extends PBEKeyFactory {
+        public PBEWithMD5AndTripleDES()  {
+            super("PBEWithMD5AndTripleDES");
+        }
     }
 
 
@@ -115,19 +115,19 @@ abstract class PBEKeyFactory extends SecretKeyFactorySpi {
      * is inappropriate for this key factory to produce a public key.
      */
     protected SecretKey engineGenerateSecret(KeySpec keySpec)
-	throws InvalidKeySpecException
+        throws InvalidKeySpecException
     {
-	if (!(keySpec instanceof PBEKeySpec)) {
-	    throw new InvalidKeySpecException("Invalid key spec");
-	}
-	return new PBEKey((PBEKeySpec)keySpec, type);
+        if (!(keySpec instanceof PBEKeySpec)) {
+            throw new InvalidKeySpecException("Invalid key spec");
+        }
+        return new PBEKey((PBEKeySpec)keySpec, type);
     }
 
     /**
      * Returns a specification (key material) of the given key
      * in the requested format.
      *
-     * @param key the key 
+     * @param key the key
      *
      * @param keySpec the requested format in which the key material shall be
      * returned
@@ -140,31 +140,31 @@ abstract class PBEKeyFactory extends SecretKeyFactorySpi {
      * (e.g., the given key has an unrecognized algorithm or format).
      */
     protected KeySpec engineGetKeySpec(SecretKey key, Class keySpecCl)
-	throws InvalidKeySpecException {    
-	if ((key instanceof SecretKey)
-	    && (validTypes.contains(key.getAlgorithm().toUpperCase()))
-	    && (key.getFormat().equalsIgnoreCase("RAW"))) {
-	    
-	    // Check if requested key spec is amongst the valid ones
-	    if ((keySpecCl != null)
-		&& PBEKeySpec.class.isAssignableFrom(keySpecCl)) {
-		byte[] passwdBytes = key.getEncoded();
-		char[] passwdChars = new char[passwdBytes.length];
-		for (int i=0; i<passwdChars.length; i++)
-		    passwdChars[i] = (char) (passwdBytes[i] & 0x7f);
-		PBEKeySpec ret = new PBEKeySpec(passwdChars);
-		// password char[] was cloned in PBEKeySpec constructor,
-		// so we can zero it out here
-		java.util.Arrays.fill(passwdChars, ' ');
-		java.util.Arrays.fill(passwdBytes, (byte)0x00);
-		return ret;
-	    } else {
-		throw new InvalidKeySpecException("Invalid key spec");
-	    }
-	} else {
-	    throw new InvalidKeySpecException("Invalid key "
-					      + "format/algorithm");
-	}
+        throws InvalidKeySpecException {
+        if ((key instanceof SecretKey)
+            && (validTypes.contains(key.getAlgorithm().toUpperCase()))
+            && (key.getFormat().equalsIgnoreCase("RAW"))) {
+
+            // Check if requested key spec is amongst the valid ones
+            if ((keySpecCl != null)
+                && PBEKeySpec.class.isAssignableFrom(keySpecCl)) {
+                byte[] passwdBytes = key.getEncoded();
+                char[] passwdChars = new char[passwdBytes.length];
+                for (int i=0; i<passwdChars.length; i++)
+                    passwdChars[i] = (char) (passwdBytes[i] & 0x7f);
+                PBEKeySpec ret = new PBEKeySpec(passwdChars);
+                // password char[] was cloned in PBEKeySpec constructor,
+                // so we can zero it out here
+                java.util.Arrays.fill(passwdChars, ' ');
+                java.util.Arrays.fill(passwdBytes, (byte)0x00);
+                return ret;
+            } else {
+                throw new InvalidKeySpecException("Invalid key spec");
+            }
+        } else {
+            throw new InvalidKeySpecException("Invalid key "
+                                              + "format/algorithm");
+        }
     }
 
     /**
@@ -180,33 +180,31 @@ abstract class PBEKeyFactory extends SecretKeyFactorySpi {
      * this key factory.
      */
     protected SecretKey engineTranslateKey(SecretKey key)
-	throws InvalidKeyException
+        throws InvalidKeyException
     {
-	try {
-	    if ((key != null) && 
-		(validTypes.contains(key.getAlgorithm().toUpperCase())) &&
-		(key.getFormat().equalsIgnoreCase("RAW"))) {
-		    
-		// Check if key originates from this factory
-		if (key instanceof com.sun.crypto.provider.PBEKey) {
-		    return key;
-		}
+        try {
+            if ((key != null) &&
+                (validTypes.contains(key.getAlgorithm().toUpperCase())) &&
+                (key.getFormat().equalsIgnoreCase("RAW"))) {
 
-		// Convert key to spec
-		PBEKeySpec pbeKeySpec = (PBEKeySpec)engineGetKeySpec
-		    (key, PBEKeySpec.class);
+                // Check if key originates from this factory
+                if (key instanceof com.sun.crypto.provider.PBEKey) {
+                    return key;
+                }
 
-		// Create key from spec, and return it
-		return engineGenerateSecret(pbeKeySpec);
-	    } else {
-		throw new InvalidKeyException("Invalid key format/algorithm");
-	    }
+                // Convert key to spec
+                PBEKeySpec pbeKeySpec = (PBEKeySpec)engineGetKeySpec
+                    (key, PBEKeySpec.class);
 
-	} catch (InvalidKeySpecException ikse) {
-	    throw new InvalidKeyException("Cannot translate key: "
-					  + ikse.getMessage());
-	}
+                // Create key from spec, and return it
+                return engineGenerateSecret(pbeKeySpec);
+            } else {
+                throw new InvalidKeyException("Invalid key format/algorithm");
+            }
+
+        } catch (InvalidKeySpecException ikse) {
+            throw new InvalidKeyException("Cannot translate key: "
+                                          + ikse.getMessage());
+        }
     }
 }
-
-

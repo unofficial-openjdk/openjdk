@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,5 +30,5 @@ import java.rmi.MarshalledObject;
 
 public interface FnnUnmarshal {
     Object unmarshal(MarshalledObject mobj)
-	throws IOException, ClassNotFoundException;
+        throws IOException, ClassNotFoundException;
 }

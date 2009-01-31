@@ -42,7 +42,7 @@ public class IsHostReachableBug {
 
                 InetAddress addr = InetAddress.getByName(hostName);
                 System.out.println("InetAddress is : " + addr);
-                System.out.println("Is InetAddress instance of Inet6Address ? " 
+                System.out.println("Is InetAddress instance of Inet6Address ? "
 + (addr instanceof Inet6Address));
                 if (!addr.isReachable(10000)){
                         System.out.println(hostName + " is not reachable");

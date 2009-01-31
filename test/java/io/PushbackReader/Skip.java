@@ -39,8 +39,8 @@ public class Skip {
         char[] buf = new char[20];
         for (int i=0; i<20; i++)
             buf[i] = (char)i;
-	CharArrayReader car = new CharArrayReader(buf);
-	PushbackReader pr = new PushbackReader(car, 10);
+        CharArrayReader car = new CharArrayReader(buf);
+        PushbackReader pr = new PushbackReader(car, 10);
         check(pr.read(), 0);
         // Check skip without unread chars present
         pr.skip(1);

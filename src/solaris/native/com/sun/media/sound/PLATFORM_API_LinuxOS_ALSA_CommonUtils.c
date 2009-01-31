@@ -34,7 +34,7 @@ static void alsaDebugOutput(const char *file, int line, const char *function, in
     va_start(args, fmt);
     printf("%s:%d function %s: error %d: %s\n", file, line, function, err, snd_strerror(err));
     if (strlen(fmt) > 0) {
-	vprintf(fmt, args);
+        vprintf(fmt, args);
     }
     va_end(args);
 #endif
@@ -47,19 +47,19 @@ static int alsa_enumerate_midi_subdevices = FALSE; // default: no
 void initAlsaSupport() {
     char* enumerate;
     if (!alsa_inited) {
-	alsa_inited = TRUE;
-	snd_lib_error_set_handler(&alsaDebugOutput);
+        alsa_inited = TRUE;
+        snd_lib_error_set_handler(&alsaDebugOutput);
 
-	enumerate = getenv(ENV_ENUMERATE_PCM_SUBDEVICES);
-	if (enumerate != NULL && strlen(enumerate) > 0
-	    && (enumerate[0] != 'f')   // false
-	    && (enumerate[0] != 'F')   // False
-	    && (enumerate[0] != 'n')   // no
-	    && (enumerate[0] != 'N')) { // NO
-	    alsa_enumerate_pcm_subdevices = TRUE;
-	}
+        enumerate = getenv(ENV_ENUMERATE_PCM_SUBDEVICES);
+        if (enumerate != NULL && strlen(enumerate) > 0
+            && (enumerate[0] != 'f')   // false
+            && (enumerate[0] != 'F')   // False
+            && (enumerate[0] != 'n')   // no
+            && (enumerate[0] != 'N')) { // NO
+            alsa_enumerate_pcm_subdevices = TRUE;
+        }
 #ifdef ALSA_MIDI_ENUMERATE_SUBDEVICES
-	alsa_enumerate_midi_subdevices = TRUE;
+        alsa_enumerate_midi_subdevices = TRUE;
 #endif
     }
 }
@@ -86,20 +86,20 @@ UINT32 encodeDeviceID(int card, int device, int subdevice) {
 
 
 void decodeDeviceID(UINT32 deviceID, int* card, int* device, int* subdevice,
-		    int isMidi) {
+                    int isMidi) {
     deviceID--;
     *card = (deviceID >> 20) & 0x3FF;
     *device = (deviceID >> 10) & 0x3FF;
     if (needEnumerateSubdevices(isMidi)) {
-	*subdevice = deviceID  & 0x3FF;
+        *subdevice = deviceID  & 0x3FF;
     } else {
-	*subdevice = -1; // ALSA will choose any subdevices
+        *subdevice = -1; // ALSA will choose any subdevices
     }
 }
 
 
 void getDeviceString(char* buffer, int card, int device, int subdevice,
-		     int usePlugHw, int isMidi) {
+                     int usePlugHw, int isMidi) {
     if (needEnumerateSubdevices(isMidi)) {
         sprintf(buffer, "%s:%d,%d,%d",
                         usePlugHw ? ALSA_PLUGHARDWARE : ALSA_HARDWARE,
@@ -113,7 +113,7 @@ void getDeviceString(char* buffer, int card, int device, int subdevice,
 
 
 void getDeviceStringFromDeviceID(char* buffer, UINT32 deviceID,
-				 int usePlugHw, int isMidi) {
+                                 int usePlugHw, int isMidi) {
     int card, device, subdevice;
 
     if (deviceID == ALSA_DEFAULT_DEVICE_ID) {
@@ -131,47 +131,47 @@ static char ALSAVersionString[ALSAVersionString_LENGTH];
 
 void getALSAVersion(char* buffer, int len) {
     if (!hasGottenALSAVersion) {
-	// get alsa version from proc interface
-	FILE* file;
-	int curr, len, totalLen, inVersionString;
-	file = fopen(ALSA_VERSION_PROC_FILE, "r");
-	ALSAVersionString[0] = 0;
-	if (file) {
-	    fgets(ALSAVersionString, ALSAVersionString_LENGTH, file);
-	    // parse for version number
-	    totalLen = strlen(ALSAVersionString);
-	    inVersionString = FALSE;
-	    len = 0;
-	    curr = 0;
-	    while (curr < totalLen) {
-		if (!inVersionString) {
-		    // is this char the beginning of a version string ?
-		    if (ALSAVersionString[curr] >= '0'
-			&& ALSAVersionString[curr] <= '9') {
-			inVersionString = TRUE;
-		    }
-		}
-		if (inVersionString) {
-		    // the version string ends with white space
-		    if (ALSAVersionString[curr] <= 32) {
-			break;
-		    }
-		    if (curr != len) {
-			// copy this char to the beginning of the string
-			ALSAVersionString[len] = ALSAVersionString[curr];
-		    }
-		    len++;
-		}
-		curr++;
-	    }
-	    // remove trailing dots
-	    while ((len > 0) && (ALSAVersionString[len - 1] == '.')) {
-		len--;
-	    }
-	    // null terminate
-	    ALSAVersionString[len] = 0;
-	}
-	hasGottenALSAVersion = TRUE;
+        // get alsa version from proc interface
+        FILE* file;
+        int curr, len, totalLen, inVersionString;
+        file = fopen(ALSA_VERSION_PROC_FILE, "r");
+        ALSAVersionString[0] = 0;
+        if (file) {
+            fgets(ALSAVersionString, ALSAVersionString_LENGTH, file);
+            // parse for version number
+            totalLen = strlen(ALSAVersionString);
+            inVersionString = FALSE;
+            len = 0;
+            curr = 0;
+            while (curr < totalLen) {
+                if (!inVersionString) {
+                    // is this char the beginning of a version string ?
+                    if (ALSAVersionString[curr] >= '0'
+                        && ALSAVersionString[curr] <= '9') {
+                        inVersionString = TRUE;
+                    }
+                }
+                if (inVersionString) {
+                    // the version string ends with white space
+                    if (ALSAVersionString[curr] <= 32) {
+                        break;
+                    }
+                    if (curr != len) {
+                        // copy this char to the beginning of the string
+                        ALSAVersionString[len] = ALSAVersionString[curr];
+                    }
+                    len++;
+                }
+                curr++;
+            }
+            // remove trailing dots
+            while ((len > 0) && (ALSAVersionString[len - 1] == '.')) {
+                len--;
+            }
+            // null terminate
+            ALSAVersionString[len] = 0;
+        }
+        hasGottenALSAVersion = TRUE;
     }
     strncpy(buffer, ALSAVersionString, len);
 }

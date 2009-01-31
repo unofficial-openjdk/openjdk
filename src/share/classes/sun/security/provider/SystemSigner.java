@@ -33,7 +33,6 @@ import java.security.*;
  * can be set by SunSecurity classes, and a set of accessors for other
  * classes in sun.security.*.
  *
- * @version %I%, %G%
  * @author Benjamin Renaud
  */
 
@@ -49,7 +48,7 @@ public class SystemSigner extends Signer {
      * Construct a signer with a given name.
      */
     public SystemSigner(String name) {
-	super(name);
+        super(name);
     }
 
     /**
@@ -62,55 +61,55 @@ public class SystemSigner extends Signer {
     public SystemSigner(String name, IdentityScope scope)
      throws KeyManagementException {
 
-	super(name, scope);
+        super(name, scope);
     }
 
     /* Set the trust status of this signer */
     void setTrusted(boolean trusted) {
-	this.trusted = trusted;
+        this.trusted = trusted;
     }
 
     /**
      * Returns true if this signer is trusted.
      */
     public boolean isTrusted() {
-	return trusted;
+        return trusted;
     }
 
     /* friendly callback for set keys */
     void setSignerKeyPair(KeyPair pair)
     throws InvalidParameterException, KeyException {
-	setKeyPair(pair);
+        setKeyPair(pair);
     }
 
     /* friendly callback for getting private keys */
     PrivateKey getSignerPrivateKey() {
-	return getPrivateKey();
+        return getPrivateKey();
     }
 
     void setSignerInfo(String s) {
-	setInfo(s);
+        setInfo(s);
     }
 
     /**
      * Call back method into a protected method for package friends.
      */
     void addSignerCertificate(Certificate cert) throws KeyManagementException {
-	addCertificate(cert);
+        addCertificate(cert);
     }
 
     void clearCertificates() throws KeyManagementException {
-	Certificate[] certs = certificates();
-	for (int i = 0; i < certs.length; i++) {
-	    removeCertificate(certs[i]);
-	}
+        Certificate[] certs = certificates();
+        for (int i = 0; i < certs.length; i++) {
+            removeCertificate(certs[i]);
+        }
     }
 
     public String toString() {
-	String trustedString = "not trusted";
-	if (trusted) {
-	    trustedString = "trusted";
-	}
-	return super.toString() + "[" + trustedString + "]";
+        String trustedString = "not trusted";
+        if (trusted) {
+            trustedString = "trusted";
+        }
+        return super.toString() + "[" + trustedString + "]";
     }
 }

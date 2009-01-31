@@ -33,7 +33,6 @@ import static sun.awt.OSInfo.OSType.*;
 
 /**
  * @author Pavel Porvatov
- * @version %I% %G%
  */
 public class OSInfo {
     public static enum OSType {
@@ -101,7 +100,7 @@ public class OSInfo {
                 return SOLARIS;
             }
 
-            // determine another OS here 
+            // determine another OS here
         }
 
         return UNKNOWN;
@@ -122,7 +121,7 @@ public class OSInfo {
             WindowsVersion result = windowsVersionMap.get(osVersion);
 
             if (result == null) {
-                // Try parse version and put object into windowsVersionMap 
+                // Try parse version and put object into windowsVersionMap
                 String[] arr = osVersion.split("\\.");
 
                 if (arr.length == 2) {

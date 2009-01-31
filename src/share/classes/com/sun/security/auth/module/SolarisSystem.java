@@ -31,8 +31,7 @@ import javax.security.auth.login.*;
 /**
  * <p> This class implementation retrieves and makes available Solaris
  * UID/GID/groups information for the current user.
- * 
- * @version 1.8, 01/11/00
+ *
  */
 public class SolarisSystem {
 
@@ -48,8 +47,8 @@ public class SolarisSystem {
      * the native library to access the underlying system information.
      */
     public SolarisSystem() {
-	System.loadLibrary("jaas_unix");
-	getSolarisInfo();
+        System.loadLibrary("jaas_unix");
+        getSolarisInfo();
     }
 
     /**
@@ -60,7 +59,7 @@ public class SolarisSystem {
      * @return the username for the current Solaris user.
      */
     public String getUsername() {
-	return username;
+        return username;
     }
 
     /**
@@ -71,7 +70,7 @@ public class SolarisSystem {
      * @return the UID for the current Solaris user.
      */
     public long getUid() {
-	return uid;
+        return uid;
     }
 
     /**
@@ -82,7 +81,7 @@ public class SolarisSystem {
      * @return the GID for the current Solaris user.
      */
     public long getGid() {
-	return gid;
+        return gid;
     }
 
     /**
@@ -93,6 +92,6 @@ public class SolarisSystem {
      * @return the supplementary groups for the current Solaris user.
      */
     public long[] getGroups() {
-	return groups;
+        return groups;
     }
 }

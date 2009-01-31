@@ -171,7 +171,7 @@ class ModificationWatchpointsTarg {
     }
 
     public static void main(String[] args){
-	ModificationWatchpointsTarg targ = new ModificationWatchpointsTarg();
+        ModificationWatchpointsTarg targ = new ModificationWatchpointsTarg();
         for (int i = RepeatCount; i > 0; i--) {
             sUpdate();
             targ.iUpdate();
@@ -184,11 +184,11 @@ public class ModificationWatchpoints extends TestScaffold {
     List allMWP = new ArrayList();
 
     ModificationWatchpoints (String args[]) {
-	super(args);
+        super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
-	new ModificationWatchpoints(args).startTests();
+    public static void main(String[] args)      throws Exception {
+        new ModificationWatchpoints(args).startTests();
     }
 
     /********** event handlers **********/
@@ -198,7 +198,7 @@ public class ModificationWatchpoints extends TestScaffold {
         mwp.fieldModified(event);
     }
 
-    
+
     /********** test core **********/
 
     void set(String fieldName, String valString) {
@@ -209,9 +209,9 @@ public class ModificationWatchpoints extends TestScaffold {
     }
 
     protected void runTests() throws Exception {
-	/*
-	 * Get to the top of main():
-	 */
+        /*
+         * Get to the top of main():
+         */
         BreakpointEvent bpe = startToMain("ModificationWatchpointsTarg");
         targ = bpe.location().declaringType();
 
@@ -246,23 +246,23 @@ public class ModificationWatchpoints extends TestScaffold {
                 mwp.checkEventCounts(ModificationWatchpointsTarg.RepeatCount);
             }
         }
-                    
-	if (!testFailed) {
+
+        if (!testFailed) {
             println("ModificationWatchpoints: passed");
         } else {
             throw new Exception("ModificationWatchpoints: failed");
         }
     }
-    
+
     /********** request wrapper **********/
-    
+
     class MWP {
         private final String className;
         private final String fieldName;
         private final Value expectedValue;
         public int eventCount = 0;
         public boolean failed = false;
-        
+
         public MWP(String className, String fieldName, Value value) {
             this.className = className;
             this.fieldName = fieldName;
@@ -273,33 +273,33 @@ public class ModificationWatchpoints extends TestScaffold {
          * Sets watchpoint with specified properties.
          */
         public void set() {
-            List classes = vm().classesByName(className);         
+            List classes = vm().classesByName(className);
             if (classes.size() != 1) {
                 failure("Expected one class named " + className + " got " + classes.size());
             }
-            
+
             set ((ReferenceType)classes.get(0));
         }
-        
+
         /**
          * Sets watchpoint for given class.
          */
         public void set(ReferenceType clazz) {
-            Field f = clazz.fieldByName(fieldName);            
-            ModificationWatchpointRequest mwr = 
+            Field f = clazz.fieldByName(fieldName);
+            ModificationWatchpointRequest mwr =
                        eventRequestManager().createModificationWatchpointRequest(f);
             mwr.putProperty("executor", this);
             mwr.enable();
             println("set watchpoint: " + className +"." + f);
         }
-        
+
         public void fieldModified(ModificationWatchpointEvent event) {
             Value val = event.valueToBe();
            println("Watchpoint reached: " + className + "." + fieldName +
                    ", new value: " + val);
             if (!val.equals(expectedValue)) {
-                failure("FAILURE: value should be: " + 
-                        expectedValue.getClass() + ":" + expectedValue + 
+                failure("FAILURE: value should be: " +
+                        expectedValue.getClass() + ":" + expectedValue +
                         " has - " + val.getClass() + ":" + val);
             }
             if (!event.location().method().name().equals(fieldName + "Set")) {
@@ -310,11 +310,10 @@ public class ModificationWatchpoints extends TestScaffold {
 
         public void checkEventCounts(int expectedCount) {
             if (eventCount != expectedCount) {
-                failure(className + "." + fieldName + 
+                failure(className + "." + fieldName +
                         " - only got " + eventCount + " events");
             }
         }
-           
+
     } // MWP inner class .................
 }
-

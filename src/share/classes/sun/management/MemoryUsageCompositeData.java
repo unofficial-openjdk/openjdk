@@ -33,18 +33,18 @@ import javax.management.openmbean.OpenDataException;
 
 /**
  * A CompositeData for MemoryUsage for the local management support.
- * This class avoids the performance penalty paid to the 
+ * This class avoids the performance penalty paid to the
  * construction of a CompositeData use in the local case.
  */
 public class MemoryUsageCompositeData extends LazyCompositeData {
     private final MemoryUsage usage;
 
     private MemoryUsageCompositeData(MemoryUsage u) {
-	this.usage = u;
+        this.usage = u;
     }
 
     public MemoryUsage getMemoryUsage() {
-	return usage;
+        return usage;
     }
 
     public static CompositeData toCompositeData(MemoryUsage u) {
@@ -53,34 +53,34 @@ public class MemoryUsageCompositeData extends LazyCompositeData {
     }
 
     protected CompositeData getCompositeData() {
-	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-	// memoryUsageItemNames!
-	final Object[] memoryUsageItemValues = {
-	    new Long(usage.getInit()),
-	    new Long(usage.getUsed()),
-	    new Long(usage.getCommitted()),
-	    new Long(usage.getMax()),
-	};
+        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+        // memoryUsageItemNames!
+        final Object[] memoryUsageItemValues = {
+            new Long(usage.getInit()),
+            new Long(usage.getUsed()),
+            new Long(usage.getCommitted()),
+            new Long(usage.getMax()),
+        };
 
-	try {
-	    return new CompositeDataSupport(memoryUsageCompositeType,
-	  			    	    memoryUsageItemNames,
-					    memoryUsageItemValues);
-	} catch (OpenDataException e) {
+        try {
+            return new CompositeDataSupport(memoryUsageCompositeType,
+                                            memoryUsageItemNames,
+                                            memoryUsageItemValues);
+        } catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-	}
+        }
     }
 
     private static final CompositeType memoryUsageCompositeType;
     static {
-	try {
-	    memoryUsageCompositeType = (CompositeType)
-		MappedMXBeanType.toOpenType(MemoryUsage.class);
-	} catch (OpenDataException e) {
+        try {
+            memoryUsageCompositeType = (CompositeType)
+                MappedMXBeanType.toOpenType(MemoryUsage.class);
+        } catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-	}
+        }
     }
 
     static CompositeType getMemoryUsageCompositeType() {
@@ -93,10 +93,10 @@ public class MemoryUsageCompositeData extends LazyCompositeData {
     private static final String MAX       = "max";
 
     private static final String[] memoryUsageItemNames = {
-	INIT,
-	USED,
-	COMMITTED,
-	MAX,
+        INIT,
+        USED,
+        COMMITTED,
+        MAX,
     };
 
     public static long getInit(CompositeData cd) {
@@ -115,7 +115,7 @@ public class MemoryUsageCompositeData extends LazyCompositeData {
     /** Validate if the input CompositeData has the expected
      * CompositeType (i.e. contain all attributes with expected
      * names and types).
-     */ 
+     */
     public static void validateCompositeData(CompositeData cd) {
         if (cd == null) {
             throw new NullPointerException("Null CompositeData");

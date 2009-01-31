@@ -46,7 +46,6 @@ import java.net.SocketException;
  * @since 1.4
  * @see SocketFactory
  *
- * @version %I%
  * @author David Brownell
  */
 public abstract class ServerSocketFactory
@@ -55,7 +54,7 @@ public abstract class ServerSocketFactory
     // NOTE:  JDK 1.1 bug in class GC, this can get collected
     // even though it's always accessible via getDefault().
     //
-    private static ServerSocketFactory		theFactory;
+    private static ServerSocketFactory          theFactory;
 
 
     /**
@@ -70,19 +69,19 @@ public abstract class ServerSocketFactory
      */
     public static ServerSocketFactory getDefault()
     {
-	synchronized (ServerSocketFactory.class) {
-	    if (theFactory == null) {
-		//
-		// Different implementations of this method could
-		// work rather differently.  For example, driving
-		// this from a system property, or using a different
-		// implementation than JavaSoft's.
-		//
-		theFactory = new DefaultServerSocketFactory();
-	    }
-	}
+        synchronized (ServerSocketFactory.class) {
+            if (theFactory == null) {
+                //
+                // Different implementations of this method could
+                // work rather differently.  For example, driving
+                // this from a system property, or using a different
+                // implementation than JavaSoft's.
+                //
+                theFactory = new DefaultServerSocketFactory();
+            }
+        }
 
-	return theFactory;
+        return theFactory;
     }
 
 
@@ -97,7 +96,7 @@ public abstract class ServerSocketFactory
      * @see java.net.ServerSocket#ServerSocket()
      */
     public ServerSocket createServerSocket() throws IOException {
-	throw new SocketException("Unbound server sockets not implemented");
+        throw new SocketException("Unbound server sockets not implemented");
     }
 
     /**
@@ -111,7 +110,7 @@ public abstract class ServerSocketFactory
      * @see java.net.ServerSocket#ServerSocket(int)
      */
     public abstract ServerSocket createServerSocket(int port)
-	throws IOException;
+        throws IOException;
 
 
     /**
@@ -162,31 +161,31 @@ class DefaultServerSocketFactory extends ServerSocketFactory {
 
     DefaultServerSocketFactory()
     {
-	/* NOTHING */
+        /* NOTHING */
     }
 
     public ServerSocket createServerSocket()
     throws IOException
     {
-	return new ServerSocket();
+        return new ServerSocket();
     }
 
     public ServerSocket createServerSocket(int port)
     throws IOException
     {
-	return new ServerSocket(port);
+        return new ServerSocket(port);
     }
 
     public ServerSocket createServerSocket(int port, int backlog)
     throws IOException
     {
-	return new ServerSocket(port, backlog);
+        return new ServerSocket(port, backlog);
     }
 
     public ServerSocket
     createServerSocket(int port, int backlog, InetAddress ifAddress)
     throws IOException
     {
-	return new ServerSocket(port, backlog, ifAddress);
+        return new ServerSocket(port, backlog, ifAddress);
     }
 }

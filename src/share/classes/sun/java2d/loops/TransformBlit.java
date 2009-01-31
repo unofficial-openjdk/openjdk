@@ -49,7 +49,7 @@ public class TransformBlit extends GraphicsPrimitive
     public static final String methodSignature =
         "TransformBlit(...)".toString();
 
-    public static final int primTypeID = makePrimTypeID(); 
+    public static final int primTypeID = makePrimTypeID();
 
     private static RenderCache blitcache = new RenderCache(10);
 
@@ -57,38 +57,38 @@ public class TransformBlit extends GraphicsPrimitive
                                        CompositeType comptype,
                                        SurfaceType dsttype)
     {
-	return (TransformBlit)
-	    GraphicsPrimitiveMgr.locate(primTypeID,
-					srctype, comptype, dsttype);
+        return (TransformBlit)
+            GraphicsPrimitiveMgr.locate(primTypeID,
+                                        srctype, comptype, dsttype);
     }
 
     public static TransformBlit getFromCache(SurfaceType src,
-					     CompositeType comp,
-					     SurfaceType dst)
+                                             CompositeType comp,
+                                             SurfaceType dst)
     {
-	Object o = blitcache.get(src, comp, dst);
-	if (o != null) {
-	    return (TransformBlit) o;
-	}
-	TransformBlit blit = locate(src, comp, dst);
-	if (blit == null) {
-	    /*
-	    System.out.println("blit loop not found for:");
-	    System.out.println("src:  "+src);
-	    System.out.println("comp: "+comp);
-	    System.out.println("dst:  "+dst);
-	    */
-	} else {
-	    blitcache.put(src, comp, dst, blit);
-	}
-	return blit;
+        Object o = blitcache.get(src, comp, dst);
+        if (o != null) {
+            return (TransformBlit) o;
+        }
+        TransformBlit blit = locate(src, comp, dst);
+        if (blit == null) {
+            /*
+            System.out.println("blit loop not found for:");
+            System.out.println("src:  "+src);
+            System.out.println("comp: "+comp);
+            System.out.println("dst:  "+dst);
+            */
+        } else {
+            blitcache.put(src, comp, dst, blit);
+        }
+        return blit;
     }
 
     protected TransformBlit(SurfaceType srctype,
                             CompositeType comptype,
                             SurfaceType dsttype)
     {
-	super(methodSignature, primTypeID, srctype, comptype, dsttype);
+        super(methodSignature, primTypeID, srctype, comptype, dsttype);
     }
 
     public TransformBlit(long pNativePrim,
@@ -96,7 +96,7 @@ public class TransformBlit extends GraphicsPrimitive
                          CompositeType comptype,
                          SurfaceType dsttype)
     {
-	super(pNativePrim, methodSignature, primTypeID,
+        super(pNativePrim, methodSignature, primTypeID,
               srctype, comptype, dsttype);
     }
 
@@ -108,50 +108,50 @@ public class TransformBlit extends GraphicsPrimitive
 
     // REMIND: do we have a general loop?
     static {
-	GraphicsPrimitiveMgr.registerGeneral(new TransformBlit(null, null, 
+        GraphicsPrimitiveMgr.registerGeneral(new TransformBlit(null, null,
                                                                null));
     }
 
     public GraphicsPrimitive makePrimitive(SurfaceType srctype,
-					   CompositeType comptype,
-					   SurfaceType dsttype)
+                                           CompositeType comptype,
+                                           SurfaceType dsttype)
     {
         /*
-	System.out.println("Constructing general blit for:");
-	System.out.println("src:  "+srctype);
-	System.out.println("comp: "+comptype);
-	System.out.println("dst:  "+dsttype);
+        System.out.println("Constructing general blit for:");
+        System.out.println("src:  "+srctype);
+        System.out.println("comp: "+comptype);
+        System.out.println("dst:  "+dsttype);
         */
-	return null;
+        return null;
     }
 
     public GraphicsPrimitive traceWrap() {
-	return new TraceTransformBlit(this);
+        return new TraceTransformBlit(this);
     }
 
     private static class TraceTransformBlit extends TransformBlit {
-	TransformBlit target;
+        TransformBlit target;
 
-	public TraceTransformBlit(TransformBlit target) {
-	    super(target.getSourceType(),
-		  target.getCompositeType(),
-		  target.getDestType());
-	    this.target = target;
-	}
+        public TraceTransformBlit(TransformBlit target) {
+            super(target.getSourceType(),
+                  target.getCompositeType(),
+                  target.getDestType());
+            this.target = target;
+        }
 
-	public GraphicsPrimitive traceWrap() {
-	    return this;
-	}
+        public GraphicsPrimitive traceWrap() {
+            return this;
+        }
 
         public void Transform(SurfaceData src, SurfaceData dst,
                               Composite comp, Region clip,
                               AffineTransform at, int hint,
                               int srcx, int srcy, int dstx, int dsty,
                               int width, int height)
-	{
-	    tracePrimitive(target);
-	    target.Transform(src, dst, comp, clip, at, hint,
+        {
+            tracePrimitive(target);
+            target.Transform(src, dst, comp, clip, at, hint,
                              srcx, srcy, dstx, dsty, width, height);
-	}
+        }
     }
 }

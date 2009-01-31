@@ -36,7 +36,7 @@ import java.util.ListResourceBundle;
 
 /**
  * The locale elements for English in India.
- *                                                                 
+ *
  */
 public class FormatData_en_IN extends ListResourceBundle {
     /**
@@ -44,13 +44,13 @@ public class FormatData_en_IN extends ListResourceBundle {
      */
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "NumberElements", 
+            { "NumberElements",
                 new String[] {
                     ".", // decimal separator
                     ",", // group (thousands) separator
                     ";", // list separator
                     "%", // percent sign
-		    "\u0030", // native 0 digit
+                    "\u0030", // native 0 digit
                     "#", // pattern digit
                     "-", // minus sign
                     "E", // exponential

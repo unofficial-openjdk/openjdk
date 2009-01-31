@@ -29,7 +29,7 @@ import java.awt.peer.*;
 
 import java.lang.reflect.Field;
 import java.util.Vector;
-import java.util.logging.*;            
+import java.util.logging.*;
 import sun.awt.SunToolkit;
 
 public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
@@ -65,14 +65,14 @@ public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
         super(target);
     }
 
-    /** 
+    /**
      * This function is called when menu is bound
      * to its container window. Creates submenu window
      * that fills its items vector while construction
      */
     void setContainer(XBaseMenuWindow container) {
         super.setContainer(container);
-        menuWindow = new XMenuWindow(this);        
+        menuWindow = new XMenuWindow(this);
     }
 
 
@@ -117,8 +117,8 @@ public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
      * From MenuPeer
      */
     /**
-     * addSeparator routines are not used 
-     * in peers. Shared code invokes addItem("-") 
+     * addSeparator routines are not used
+     * in peers. Shared code invokes addItem("-")
      * for adding separators
      */
     public void addSeparator() {
@@ -169,8 +169,8 @@ public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
     boolean isSeparator() {
         return false;
     }
-    
-    //Fix for 6180416: Shortcut keys are displayed against Menus on XToolkit  
+
+    //Fix for 6180416: Shortcut keys are displayed against Menus on XToolkit
     //Menu should always return null as shortcutText
     String getShortcutText() {
         return null;
@@ -190,5 +190,5 @@ public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
     XMenuWindow getMenuWindow() {
         return menuWindow;
     }
-       
+
 }

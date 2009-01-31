@@ -30,12 +30,12 @@ import java.io.*;
 import java.security.*;
 
 public class Ext_AllPolicy {
-	public static void main (String[] args) {
-		FilePermission mine = new FilePermission("/tmp/bar", "read");
-		SecurityManager sm = System.getSecurityManager();
+        public static void main (String[] args) {
+                FilePermission mine = new FilePermission("/tmp/bar", "read");
+                SecurityManager sm = System.getSecurityManager();
 
-		if (sm != null) {
-			sm.checkPermission(mine);
-		}
-	}
+                if (sm != null) {
+                        sm.checkPermission(mine);
+                }
+        }
 }

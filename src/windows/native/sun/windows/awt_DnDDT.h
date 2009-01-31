@@ -43,122 +43,122 @@ extern "C" void awt_dnd_initialize();
 
 class AwtDropTarget : virtual public IDropTarget {
     public:
-	AwtDropTarget(JNIEnv* env, AwtComponent* component);
+        AwtDropTarget(JNIEnv* env, AwtComponent* component);
 
-	virtual ~AwtDropTarget();
+        virtual ~AwtDropTarget();
 
-	// IUnknown
+        // IUnknown
 
-	virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
+        virtual HRESULT __stdcall QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject);
 
-	virtual ULONG   __stdcall AddRef(void);
-	virtual ULONG   __stdcall Release(void);
+        virtual ULONG   __stdcall AddRef(void);
+        virtual ULONG   __stdcall Release(void);
 
-	// IDropTarget
+        // IDropTarget
 
-	virtual HRESULT __stdcall DragEnter(IDataObject __RPC_FAR *pDataObject, DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
-	virtual HRESULT __stdcall DragOver(DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
-	virtual HRESULT __stdcall DragLeave(void);
+        virtual HRESULT __stdcall DragEnter(IDataObject __RPC_FAR *pDataObject, DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
+        virtual HRESULT __stdcall DragOver(DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
+        virtual HRESULT __stdcall DragLeave(void);
 
-	virtual HRESULT __stdcall Drop(IDataObject __RPC_FAR *pDataObject, DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
+        virtual HRESULT __stdcall Drop(IDataObject __RPC_FAR *pDataObject, DWORD grfKeyState, POINTL pt, DWORD __RPC_FAR *pdwEffect);
 
-	// AwtDropTarget
+        // AwtDropTarget
 
-	virtual jobject DoGetData(jlong format);
+        virtual jobject DoGetData(jlong format);
 
-	virtual void DoDropDone(jboolean success, jint action);
+        virtual void DoDropDone(jboolean success, jint action);
 
-	INLINE void Signal() { ::ReleaseMutex(m_mutex); }
+        INLINE void Signal() { ::ReleaseMutex(m_mutex); }
 
-	virtual void RegisterTarget(WORD wParam);
+        virtual void RegisterTarget(WORD wParam);
 
-	INLINE static void SetCurrentDnDDataObject(IDataObject* pDataObject) {
-	    DASSERT(sm_pCurrentDnDDataObject != NULL || pDataObject != NULL);
-	    sm_pCurrentDnDDataObject = pDataObject;
-	}
+        INLINE static void SetCurrentDnDDataObject(IDataObject* pDataObject) {
+            DASSERT(sm_pCurrentDnDDataObject != NULL || pDataObject != NULL);
+            sm_pCurrentDnDDataObject = pDataObject;
+        }
 
-	INLINE static BOOL IsCurrentDnDDataObject(IDataObject* pDataObject) {
-	    return sm_pCurrentDnDDataObject == pDataObject ? TRUE : FALSE;
-	}
+        INLINE static BOOL IsCurrentDnDDataObject(IDataObject* pDataObject) {
+            return sm_pCurrentDnDDataObject == pDataObject ? TRUE : FALSE;
+        }
 
-	INLINE static BOOL IsLocalDnD() {
-	    return IsLocalDataObject(sm_pCurrentDnDDataObject);
-	}
+        INLINE static BOOL IsLocalDnD() {
+            return IsLocalDataObject(sm_pCurrentDnDDataObject);
+        }
 
-	static BOOL IsLocalDataObject(IDataObject __RPC_FAR *pDataObject);
+        static BOOL IsLocalDataObject(IDataObject __RPC_FAR *pDataObject);
     protected:
 
-	INLINE void WaitUntilSignalled(BOOL retain) {
-	    do {
-		// nothing ...
-	    } while (::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
+        INLINE void WaitUntilSignalled(BOOL retain) {
+            do {
+                // nothing ...
+            } while (::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
 
-	    if (!retain) ::ReleaseMutex(m_mutex);
-	}
+            if (!retain) ::ReleaseMutex(m_mutex);
+        }
 
-	virtual jobject GetData(jlong format);
+        virtual jobject GetData(jlong format);
 
-	virtual void DropDone(jboolean success, jint action);
+        virtual void DropDone(jboolean success, jint action);
 
-	virtual void DragCleanup(void);
+        virtual void DragCleanup(void);
 
-	virtual void LoadCache(IDataObject*);
+        virtual void LoadCache(IDataObject*);
 
-	virtual void UnloadCache();
+        virtual void UnloadCache();
 
     private:
-	typedef struct _RegisterTargetRec {
-	    AwtDropTarget*	dropTarget;
-	    BOOL		show;
-	} RegisterTargetRec, *RegisterTargetPtr;
+        typedef struct _RegisterTargetRec {
+            AwtDropTarget*      dropTarget;
+            BOOL                show;
+        } RegisterTargetRec, *RegisterTargetPtr;
 
-	static void _RegisterTarget(void* param);
+        static void _RegisterTarget(void* param);
 
-	typedef struct _GetDataRec {
-	    AwtDropTarget* dropTarget;
-	    jlong	   format;
-	    jobject*	   ret;
-	} GetDataRec, *GetDataPtr;
+        typedef struct _GetDataRec {
+            AwtDropTarget* dropTarget;
+            jlong          format;
+            jobject*       ret;
+        } GetDataRec, *GetDataPtr;
 
-	static void _GetData(void* param);
+        static void _GetData(void* param);
 
-	typedef struct _DropDoneRec {
-	    AwtDropTarget* dropTarget;
+        typedef struct _DropDoneRec {
+            AwtDropTarget* dropTarget;
             jboolean       success;
-	    jint	   action;
-	} DropDoneRec, *DropDonePtr;
+            jint           action;
+        } DropDoneRec, *DropDonePtr;
 
-	static void _DropDone(void* param);
-	
-       	AwtComponent*	      m_component;
-	HWND		      m_window;
-	jobject		      m_target;
+        static void _DropDone(void* param);
 
-	unsigned int	      m_refs;
+        AwtComponent*         m_component;
+        HWND                  m_window;
+        jobject               m_target;
 
-	jobject		      m_dtcp;
+        unsigned int          m_refs;
 
-	WORD	      	      m_registered; // is drop site registered?
+        jobject               m_dtcp;
 
-	FORMATETC*	      m_formats;
-	unsigned int	      m_nformats;
+        WORD                  m_registered; // is drop site registered?
 
- 	jlongArray	      m_cfFormats;
+        FORMATETC*            m_formats;
+        unsigned int          m_nformats;
+
+        jlongArray            m_cfFormats;
 
         jboolean              m_dropSuccess;
-	jint		      m_dropActions;
+        jint                  m_dropActions;
 
-	HANDLE		      m_mutex;
+        HANDLE                m_mutex;
 
-	// external COM references
+        // external COM references
 
-	IDataObject    __RPC_FAR *m_dataObject;
+        IDataObject    __RPC_FAR *m_dataObject;
 
-	// static members
+        // static members
 
-	static IDataObject __RPC_FAR *sm_pCurrentDnDDataObject;
+        static IDataObject __RPC_FAR *sm_pCurrentDnDDataObject;
 
-	// method references
+        // method references
 
         static jobject call_dTCcreate(JNIEnv* env);
         static jint call_dTCenter(JNIEnv* env, jobject self, jobject component,
@@ -167,20 +167,20 @@ class AwtDropTarget : virtual public IDropTarget {
         static void call_dTCexit(JNIEnv* env, jobject self, jobject component,
                                  jlong nativeCtxt);
         static jint call_dTCmotion(JNIEnv* env, jobject self, jobject component,
-                                   jint x, jint y, jint dropAction, 
-                                   jint actions, jlongArray formats,  
+                                   jint x, jint y, jint dropAction,
+                                   jint actions, jlongArray formats,
                                    jlong nativeCtxt);
         static void call_dTCdrop(JNIEnv* env, jobject self, jobject component,
                                  jint x, jint y, jint dropAction, jint actions,
                                  jlongArray formats, jlong nativeCtxt);
 
-        static jobject call_dTCgetfs(JNIEnv* env, jstring fileName, 
-                                     jlong stgmedium); 
+        static jobject call_dTCgetfs(JNIEnv* env, jstring fileName,
+                                     jlong stgmedium);
         static jobject call_dTCgetis(JNIEnv* env, jlong istream);
 
-	static const unsigned int CACHE_INCR;
+        static const unsigned int CACHE_INCR;
 
-	static int __cdecl _compar(const void *, const void *);
+        static int __cdecl _compar(const void *, const void *);
 };
 
 
@@ -191,60 +191,60 @@ class AwtDropTarget : virtual public IDropTarget {
 
 class WDTCPIStreamWrapper {
     public:
-	WDTCPIStreamWrapper(STGMEDIUM* stgmedium);
+        WDTCPIStreamWrapper(STGMEDIUM* stgmedium);
 
-	virtual ~WDTCPIStreamWrapper();
+        virtual ~WDTCPIStreamWrapper();
 
-	static jint DoAvailable(WDTCPIStreamWrapper* istream);
-	static jint DoRead(WDTCPIStreamWrapper* istream);
-	static jint DoReadBytes(WDTCPIStreamWrapper* istream, jbyteArray buf, jint off, jint len);
-	static void DoClose(WDTCPIStreamWrapper* istream);
+        static jint DoAvailable(WDTCPIStreamWrapper* istream);
+        static jint DoRead(WDTCPIStreamWrapper* istream);
+        static jint DoReadBytes(WDTCPIStreamWrapper* istream, jbyteArray buf, jint off, jint len);
+        static void DoClose(WDTCPIStreamWrapper* istream);
 
 
-	virtual jint Available();
-	virtual jint Read();
-	virtual jint ReadBytes(jbyteArray buf, jint off, jint len);
-	virtual void Close();
+        virtual jint Available();
+        virtual jint Read();
+        virtual jint ReadBytes(jbyteArray buf, jint off, jint len);
+        virtual void Close();
 
-	INLINE void Signal() { ::ReleaseMutex(m_mutex); }
+        INLINE void Signal() { ::ReleaseMutex(m_mutex); }
    protected:
 
-	INLINE void WaitUntilSignalled(BOOL retain) {
-	    do {
-		// nothing ...
-	    } while (::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
+        INLINE void WaitUntilSignalled(BOOL retain) {
+            do {
+                // nothing ...
+            } while (::WaitForSingleObject(m_mutex, INFINITE) == WAIT_FAILED);
 
-	    if (!retain) ::ReleaseMutex(m_mutex);
-	}
+            if (!retain) ::ReleaseMutex(m_mutex);
+        }
 
-	typedef struct _WDTCPIStreamWrapperRec {
-	    WDTCPIStreamWrapper* istream;
-	    jint		 ret;
-	} WDTCPIStreamWrapperRec, *WDTCPIStreamWrapperPtr;
+        typedef struct _WDTCPIStreamWrapperRec {
+            WDTCPIStreamWrapper* istream;
+            jint                 ret;
+        } WDTCPIStreamWrapperRec, *WDTCPIStreamWrapperPtr;
 
-	static void _Available(void* param);
+        static void _Available(void* param);
 
-	static void _Read     (void* Param);
+        static void _Read     (void* Param);
 
-	typedef struct _WDTCPIStreamWrapperReadBytesRec {
-	    WDTCPIStreamWrapper* istream;
-	    jint		 ret;
-	    jbyteArray		 array;
-	    jint		 off;
-	    jint		 len;
-	} WDTCPIStreamWrapperReadBytesRec, *WDTCPIStreamWrapperReadBytesPtr;
+        typedef struct _WDTCPIStreamWrapperReadBytesRec {
+            WDTCPIStreamWrapper* istream;
+            jint                 ret;
+            jbyteArray           array;
+            jint                 off;
+            jint                 len;
+        } WDTCPIStreamWrapperReadBytesRec, *WDTCPIStreamWrapperReadBytesPtr;
 
-	static void _ReadBytes(void* param);
+        static void _ReadBytes(void* param);
 
-	static void _Close    (void* param);
+        static void _Close    (void* param);
 
     private:
-	IStream*	m_istream;
-	STGMEDIUM	m_stgmedium;
-	STATSTG		m_statstg;
-	HANDLE		m_mutex;
+        IStream*        m_istream;
+        STGMEDIUM       m_stgmedium;
+        STATSTG         m_statstg;
+        HANDLE          m_mutex;
 
-	static jclass javaIOExceptionClazz;
+        static jclass javaIOExceptionClazz;
 };
 
 class AwtInterfaceLocker
@@ -254,7 +254,7 @@ protected:
 public:
     AwtInterfaceLocker(IUnknown *pIUnknown)
     : m_pIUnknown( pIUnknown )
-    { 
+    {
         m_pIUnknown->AddRef();
     }
     ~AwtInterfaceLocker()

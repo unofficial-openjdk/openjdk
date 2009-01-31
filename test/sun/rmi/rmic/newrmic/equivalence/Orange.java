@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,5 +24,5 @@
 public interface Orange extends java.rmi.Remote {
 
     public int[] recurse(OrangeEcho echo, int[] message, int level)
-	throws java.rmi.RemoteException;
+        throws java.rmi.RemoteException;
 }

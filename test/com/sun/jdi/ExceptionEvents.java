@@ -106,7 +106,7 @@ public class ExceptionEvents extends TestScaffold {
     static String[] flags;
 
     final String target;
-    final String exceptionName; 
+    final String exceptionName;
     final boolean caught;
     final boolean uncaught;
     final int suspendPolicy;
@@ -115,15 +115,15 @@ public class ExceptionEvents extends TestScaffold {
     ExceptionRequest request;
 
     ExceptionEvents(String target,
-                    String exceptionName, 
+                    String exceptionName,
                     boolean caught, boolean uncaught,
                     int suspendPolicy) {
-	super(flags);
-	this.target = target;
-	this.exceptionName = exceptionName;
-	this.caught = caught;
-	this.uncaught = uncaught;
-	this.suspendPolicy = suspendPolicy;
+        super(flags);
+        this.target = target;
+        this.exceptionName = exceptionName;
+        this.caught = caught;
+        this.uncaught = uncaught;
+        this.suspendPolicy = suspendPolicy;
     }
 
     static void everything() throws Exception {
@@ -204,7 +204,7 @@ public class ExceptionEvents extends TestScaffold {
             testName.append(args[2]);
         } else {
             usage();
-        }       
+        }
         testName.append(")");
 
         summarize(testName.toString());
@@ -226,7 +226,7 @@ public class ExceptionEvents extends TestScaffold {
         }
 
         if (failureCount > 0) {
-            throw new Exception(testName + " FAILED " + 
+            throw new Exception(testName + " FAILED " +
                                 failureCount + " tests!");
         } else {
             System.out.println("\n" + testName + " test PASSED");
@@ -234,49 +234,49 @@ public class ExceptionEvents extends TestScaffold {
     }
 
     /**
-     * Target throws caught exception. 
+     * Target throws caught exception.
      * Events if caught enabled.
      */
-    static void goCaught(String target, 
+    static void goCaught(String target,
                          String exceptionName) throws Exception {
-        goSuspendPolicy(target, true, exceptionName, 
+        goSuspendPolicy(target, true, exceptionName,
                         true, true);
-        goSuspendPolicy(target, true, exceptionName, 
+        goSuspendPolicy(target, true, exceptionName,
                         true, false);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         false, true);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         false, false);
     }
 
     /**
-     * Target throws uncaught exception. 
+     * Target throws uncaught exception.
      * Events if uncaught enabled.
      */
-    static void goUncaught(String target, 
+    static void goUncaught(String target,
                            String exceptionName) throws Exception {
-        goSuspendPolicy(target, true, exceptionName, 
+        goSuspendPolicy(target, true, exceptionName,
                         true, true);
-        goSuspendPolicy(target, true, exceptionName, 
+        goSuspendPolicy(target, true, exceptionName,
                         false, true);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         true, false);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         false, false);
     }
 
     /**
      * Target doesn't throw named exception.  No events.
      */
-    static void goNeither(String target, 
+    static void goNeither(String target,
                            String exceptionName) throws Exception {
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         true, true);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         false, true);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         true, false);
-        goSuspendPolicy(target, false, exceptionName, 
+        goSuspendPolicy(target, false, exceptionName,
                         false, false);
     }
 
@@ -284,30 +284,30 @@ public class ExceptionEvents extends TestScaffold {
      * Suspend policy should make no difference.
      * Iterate over all of them.
      */
-    static void goSuspendPolicy(String target, 
-                   boolean expectedEvent, 
-                   String exceptionName, 
+    static void goSuspendPolicy(String target,
+                   boolean expectedEvent,
+                   String exceptionName,
                    boolean caught, boolean uncaught) throws Exception {
         if (globalSuspendPolicy != -1) {
-            go(target, expectedEvent, exceptionName, 
+            go(target, expectedEvent, exceptionName,
                caught, uncaught, globalSuspendPolicy);
         } else {
-            go(target, expectedEvent, exceptionName, 
+            go(target, expectedEvent, exceptionName,
                caught, uncaught, EventRequest.SUSPEND_ALL);
-            go(target, expectedEvent, exceptionName, 
+            go(target, expectedEvent, exceptionName,
                caught, uncaught, EventRequest.SUSPEND_EVENT_THREAD);
-            go(target, expectedEvent, exceptionName, 
+            go(target, expectedEvent, exceptionName,
                caught, uncaught, EventRequest.SUSPEND_NONE);
         }
     }
-            
-    static void go(String target, 
-                   boolean expectedEvent, 
-                   String exceptionName, 
+
+    static void go(String target,
+                   boolean expectedEvent,
+                   String exceptionName,
                    boolean caught, boolean uncaught,
                    int suspendPolicy) throws Exception {
-	String description = target + " with " + 
-                           exceptionName + 
+        String description = target + " with " +
+                           exceptionName +
                            "/caught=" + caught +
                            "/uncaught=" + uncaught +
                            " suspend=";
@@ -326,16 +326,16 @@ public class ExceptionEvents extends TestScaffold {
                                 suspendPolicy);
         }
         description += "\n";
-            
+
         System.out.print("\nTesting " + description);
 
-	ExceptionEvents aRun = new ExceptionEvents(
+        ExceptionEvents aRun = new ExceptionEvents(
                              target,
                              exceptionName, caught, uncaught,
                              suspendPolicy);
         aRun.startTests();
         aRun.analyse(expectedEvent, description);
-    }        
+    }
 
     void analyse(boolean expectedEvent, String description) {
         if (expectedEvent) {
@@ -375,7 +375,7 @@ public class ExceptionEvents extends TestScaffold {
                 System.out.print(":" + loc.lineNumber());
             } catch (VMDisconnectedException exc) {
                 System.out.print("Oops - " + exc.toString());
-            }    
+            }
             System.out.println();
             eventCount++;
         } else {
@@ -384,8 +384,8 @@ public class ExceptionEvents extends TestScaffold {
                 println(event.toString());
             } catch (VMDisconnectedException exc) {
                 println("Oops - " + exc.toString());
-            }   
-        }                     
+            }
+        }
     }
 
     /**
@@ -397,9 +397,9 @@ public class ExceptionEvents extends TestScaffold {
     /********** test core **********/
 
     protected void runTests() throws Exception {
-	/*
-	 * Get to the top of main()
-	 */
+        /*
+         * Get to the top of main()
+         */
         startToMain(target);
 
         ReferenceType exceptionClass;
@@ -414,7 +414,7 @@ public class ExceptionEvents extends TestScaffold {
             }
         }
 
-        request = eventRequestManager().createExceptionRequest(exceptionClass, 
+        request = eventRequestManager().createExceptionRequest(exceptionClass,
                                                                caught, uncaught);
         request.addClassExclusionFilter("java.*");
         request.addClassExclusionFilter("sun.*");

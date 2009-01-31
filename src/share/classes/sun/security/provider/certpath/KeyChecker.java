@@ -33,17 +33,16 @@ import sun.security.x509.PKIXExtensions;
 
 /**
  * KeyChecker is a <code>PKIXCertPathChecker</code> that checks that the
- * keyCertSign bit is set in the keyUsage extension in an intermediate CA 
- * certificate. It also checks whether the final certificate in a 
- * certification path meets the specified target constraints specified as 
+ * keyCertSign bit is set in the keyUsage extension in an intermediate CA
+ * certificate. It also checks whether the final certificate in a
+ * certification path meets the specified target constraints specified as
  * a CertSelector in the PKIXParameters passed to the CertPathValidator.
  *
- * @version 	%I% %G%
- * @since	1.4
- * @author	Yassir Elley
+ * @since       1.4
+ * @author      Yassir Elley
  */
 class KeyChecker extends PKIXCertPathChecker {
- 
+
     private static final Debug debug = Debug.getInstance("certpath");
     // the index of keyCertSign in the boolean KeyUsage array
     private static final int keyCertSign = 5;
@@ -52,47 +51,47 @@ class KeyChecker extends PKIXCertPathChecker {
     private int remainingCerts;
 
     private static Set<String> supportedExts;
-    
+
     /**
-     * Default Constructor 
+     * Default Constructor
      *
      * @param certPathLen allowable cert path length
      * @param targetCertSel a CertSelector object specifying the constraints
      * on the target certificate
      */
-    KeyChecker(int certPathLen, CertSelector targetCertSel) 
+    KeyChecker(int certPathLen, CertSelector targetCertSel)
         throws CertPathValidatorException
     {
-	this.certPathLen = certPathLen;
-	this.targetConstraints = targetCertSel;
-	init(false);
+        this.certPathLen = certPathLen;
+        this.targetConstraints = targetCertSel;
+        init(false);
     }
-    
+
     /**
      * Initializes the internal state of the checker from parameters
      * specified in the constructor
      */
     public void init(boolean forward) throws CertPathValidatorException {
-	if (!forward) {
-	    remainingCerts = certPathLen;
-	} else {
-	    throw new CertPathValidatorException("forward checking not supported");
-	}
+        if (!forward) {
+            remainingCerts = certPathLen;
+        } else {
+            throw new CertPathValidatorException("forward checking not supported");
+        }
     }
 
     public boolean isForwardCheckingSupported() {
-	return false;
+        return false;
     }
 
     public Set<String> getSupportedExtensions() {
-	if (supportedExts == null) {
-	    supportedExts = new HashSet<String>();
-	    supportedExts.add(PKIXExtensions.KeyUsage_Id.toString());
-	    supportedExts.add(PKIXExtensions.ExtendedKeyUsage_Id.toString());
-	    supportedExts.add(PKIXExtensions.SubjectAlternativeName_Id.toString());
-	    supportedExts = Collections.unmodifiableSet(supportedExts);
-	}
-	return supportedExts;
+        if (supportedExts == null) {
+            supportedExts = new HashSet<String>();
+            supportedExts.add(PKIXExtensions.KeyUsage_Id.toString());
+            supportedExts.add(PKIXExtensions.ExtendedKeyUsage_Id.toString());
+            supportedExts.add(PKIXExtensions.SubjectAlternativeName_Id.toString());
+            supportedExts = Collections.unmodifiableSet(supportedExts);
+        }
+        return supportedExts;
     }
 
     /**
@@ -105,31 +104,31 @@ class KeyChecker extends PKIXCertPathChecker {
      * does not verify
      */
     public void check(Certificate cert, Collection<String> unresCritExts)
-	throws CertPathValidatorException
+        throws CertPathValidatorException
     {
-	X509Certificate currCert = (X509Certificate) cert;
+        X509Certificate currCert = (X509Certificate) cert;
 
-	remainingCerts--;
-		
-	// if final certificate, check that target constraints are satisfied
-	if (remainingCerts == 0) {
+        remainingCerts--;
+
+        // if final certificate, check that target constraints are satisfied
+        if (remainingCerts == 0) {
             if ((targetConstraints != null) &&
                 (targetConstraints.match(currCert) == false)) {
                 throw new CertPathValidatorException("target certificate " +
                     "constraints check failed");
             }
-	} else {
-	    // otherwise, verify that keyCertSign bit is set in CA certificate
-	    verifyCAKeyUsage(currCert);
-	}
-		
-	// remove the extensions that we have checked
-	if (unresCritExts != null && !unresCritExts.isEmpty()) {
-	    unresCritExts.remove(PKIXExtensions.KeyUsage_Id.toString());
-	    unresCritExts.remove(PKIXExtensions.ExtendedKeyUsage_Id.toString());
-	    unresCritExts.remove(
-		PKIXExtensions.SubjectAlternativeName_Id.toString());
-	}
+        } else {
+            // otherwise, verify that keyCertSign bit is set in CA certificate
+            verifyCAKeyUsage(currCert);
+        }
+
+        // remove the extensions that we have checked
+        if (unresCritExts != null && !unresCritExts.isEmpty()) {
+            unresCritExts.remove(PKIXExtensions.KeyUsage_Id.toString());
+            unresCritExts.remove(PKIXExtensions.ExtendedKeyUsage_Id.toString());
+            unresCritExts.remove(
+                PKIXExtensions.SubjectAlternativeName_Id.toString());
+        }
     }
 
     /**
@@ -138,31 +137,31 @@ class KeyChecker extends PKIXCertPathChecker {
      * assert the keyCertSign bit. The extended key usage extension, if
      * present, must include anyExtendedKeyUsage.
      */
-    static void verifyCAKeyUsage(X509Certificate cert) 
-	    throws CertPathValidatorException {
-	String msg = "CA key usage";
-	if (debug != null) {
-	    debug.println("KeyChecker.verifyCAKeyUsage() ---checking " + msg 
-		+ "...");
-	}
+    static void verifyCAKeyUsage(X509Certificate cert)
+            throws CertPathValidatorException {
+        String msg = "CA key usage";
+        if (debug != null) {
+            debug.println("KeyChecker.verifyCAKeyUsage() ---checking " + msg
+                + "...");
+        }
 
-	boolean[] keyUsageBits = cert.getKeyUsage();
-	
-	// getKeyUsage returns null if the KeyUsage extension is not present
-	// in the certificate - in which case there is nothing to check
-	if (keyUsageBits == null) {
-	    return;
-	}
+        boolean[] keyUsageBits = cert.getKeyUsage();
 
-	// throw an exception if the keyCertSign bit is not set 
-	if (!keyUsageBits[keyCertSign]) {
-	    throw new CertPathValidatorException(msg + " check failed: " 
-		+ "keyCertSign bit is not set");
-	}
+        // getKeyUsage returns null if the KeyUsage extension is not present
+        // in the certificate - in which case there is nothing to check
+        if (keyUsageBits == null) {
+            return;
+        }
 
-	if (debug != null) {
-	    debug.println("KeyChecker.verifyCAKeyUsage() " + msg 
-		+ " verified.");	
-	}
+        // throw an exception if the keyCertSign bit is not set
+        if (!keyUsageBits[keyCertSign]) {
+            throw new CertPathValidatorException(msg + " check failed: "
+                + "keyCertSign bit is not set");
+        }
+
+        if (debug != null) {
+            debug.println("KeyChecker.verifyCAKeyUsage() " + msg
+                + " verified.");
+        }
     }
 }

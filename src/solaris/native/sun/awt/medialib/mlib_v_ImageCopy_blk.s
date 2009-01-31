@@ -1,6 +1,3 @@
-!
-! %W% %E%
-!
 ! 
 ! Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
 ! DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,8 +24,6 @@
 !
 
 
-#pragma ident "@(#)mlib_v_ImageCopy_blk.S	1.4  98/07/28 SMI"
- 
 ! FUNCTION
 !      mlib_v_ImageCopy_blk   - Copy an image into another 
 !				(with Block Load/Store)

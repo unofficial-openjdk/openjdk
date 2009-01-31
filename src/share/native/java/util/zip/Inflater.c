@@ -39,7 +39,7 @@
 #include "java_util_zip_Inflater.h"
 
 #define ThrowDataFormatException(env, msg) \
-	JNU_ThrowByName(env, "java/util/zip/DataFormatException", msg)
+        JNU_ThrowByName(env, "java/util/zip/DataFormatException", msg)
 
 static jfieldID strmID;
 static jfieldID needDictID;
@@ -63,29 +63,29 @@ Java_java_util_zip_Inflater_init(JNIEnv *env, jclass cls, jboolean nowrap)
     z_stream *strm = calloc(1, sizeof(z_stream));
 
     if (strm == 0) {
-	JNU_ThrowOutOfMemoryError(env, 0);
-	return jlong_zero;
+        JNU_ThrowOutOfMemoryError(env, 0);
+        return jlong_zero;
     } else {
-	char *msg;
-	switch (inflateInit2(strm, nowrap ? -MAX_WBITS : MAX_WBITS)) {
-	  case Z_OK:
-	    return ptr_to_jlong(strm);
-	  case Z_MEM_ERROR:
-	    free(strm);
-	    JNU_ThrowOutOfMemoryError(env, 0);
-	    return jlong_zero;
-	  default:
-	    msg = strm->msg;
-	    free(strm);
-	    JNU_ThrowInternalError(env, msg);
-	    return jlong_zero;
-	}
+        char *msg;
+        switch (inflateInit2(strm, nowrap ? -MAX_WBITS : MAX_WBITS)) {
+          case Z_OK:
+            return ptr_to_jlong(strm);
+          case Z_MEM_ERROR:
+            free(strm);
+            JNU_ThrowOutOfMemoryError(env, 0);
+            return jlong_zero;
+          default:
+            msg = strm->msg;
+            free(strm);
+            JNU_ThrowInternalError(env, msg);
+            return jlong_zero;
+        }
     }
 }
 
 JNIEXPORT void JNICALL
 Java_java_util_zip_Inflater_setDictionary(JNIEnv *env, jclass cls, jlong strm,
-					  jarray b, jint off, jint len)
+                                          jarray b, jint off, jint len)
 {
     Bytef *buf = (*env)->GetPrimitiveArrayCritical(env, b, 0);
     int res;
@@ -95,86 +95,86 @@ Java_java_util_zip_Inflater_setDictionary(JNIEnv *env, jclass cls, jlong strm,
     (*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
     switch (res) {
     case Z_OK:
-	break;
+        break;
     case Z_STREAM_ERROR:
     case Z_DATA_ERROR:
-	JNU_ThrowIllegalArgumentException(env, ((z_stream *)jlong_to_ptr(strm))->msg);
-	break;
+        JNU_ThrowIllegalArgumentException(env, ((z_stream *)jlong_to_ptr(strm))->msg);
+        break;
     default:
-	JNU_ThrowInternalError(env, ((z_stream *)jlong_to_ptr(strm))->msg);
-	break;
+        JNU_ThrowInternalError(env, ((z_stream *)jlong_to_ptr(strm))->msg);
+        break;
     }
 }
 
 JNIEXPORT jint JNICALL
-Java_java_util_zip_Inflater_inflateBytes(JNIEnv *env, jobject this, 
-					 jarray b, jint off, jint len)
+Java_java_util_zip_Inflater_inflateBytes(JNIEnv *env, jobject this,
+                                         jarray b, jint off, jint len)
 {
     z_stream *strm = jlong_to_ptr((*env)->GetLongField(env, this, strmID));
 
     if (strm == 0) {
-	JNU_ThrowNullPointerException(env, 0);
-	return 0;
+        JNU_ThrowNullPointerException(env, 0);
+        return 0;
     } else {
-	jarray this_buf = (jarray)(*env)->GetObjectField(env, this, bufID);
-	jint this_off = (*env)->GetIntField(env, this, offID);
-	jint this_len = (*env)->GetIntField(env, this, lenID);
-	jbyte *in_buf;
-	jbyte *out_buf;
-	int ret;
+        jarray this_buf = (jarray)(*env)->GetObjectField(env, this, bufID);
+        jint this_off = (*env)->GetIntField(env, this, offID);
+        jint this_len = (*env)->GetIntField(env, this, lenID);
+        jbyte *in_buf;
+        jbyte *out_buf;
+        int ret;
 
-	in_buf = (jbyte *) malloc(this_len);
-	if (in_buf == 0) {
-	    return 0;
-	}
-	(*env)->GetByteArrayRegion(env, this_buf, this_off, this_len, in_buf);
+        in_buf = (jbyte *) malloc(this_len);
+        if (in_buf == 0) {
+            return 0;
+        }
+        (*env)->GetByteArrayRegion(env, this_buf, this_off, this_len, in_buf);
 
-	out_buf = (jbyte *) malloc(len);
-	if (out_buf == 0) {
-	    free(in_buf);
-	    return 0;
-	}
+        out_buf = (jbyte *) malloc(len);
+        if (out_buf == 0) {
+            free(in_buf);
+            return 0;
+        }
 
-	strm->next_in  = (Bytef *) in_buf;
-	strm->next_out = (Bytef *) out_buf;
-	strm->avail_in  = this_len;
-	strm->avail_out = len;
-	ret = inflate(strm, Z_PARTIAL_FLUSH);
+        strm->next_in  = (Bytef *) in_buf;
+        strm->next_out = (Bytef *) out_buf;
+        strm->avail_in  = this_len;
+        strm->avail_out = len;
+        ret = inflate(strm, Z_PARTIAL_FLUSH);
 
         if (ret == Z_STREAM_END || ret == Z_OK) {
             (*env)->SetByteArrayRegion(env, b, off, len - strm->avail_out, out_buf);
         }
-	free(out_buf);
-	free(in_buf);
+        free(out_buf);
+        free(in_buf);
 
-	switch (ret) {
-	case Z_STREAM_END:
-	    (*env)->SetBooleanField(env, this, finishedID, JNI_TRUE);
+        switch (ret) {
+        case Z_STREAM_END:
+            (*env)->SetBooleanField(env, this, finishedID, JNI_TRUE);
             /* fall through */
-	case Z_OK:
-	    this_off += this_len - strm->avail_in;
-	    (*env)->SetIntField(env, this, offID, this_off);
-	    (*env)->SetIntField(env, this, lenID, strm->avail_in);
-	    return len - strm->avail_out;
-	case Z_NEED_DICT:
-	    (*env)->SetBooleanField(env, this, needDictID, JNI_TRUE);
-	    /* Might have consumed some input here! */
-	    this_off += this_len - strm->avail_in;
-	    (*env)->SetIntField(env, this, offID, this_off);
-	    (*env)->SetIntField(env, this, lenID, strm->avail_in);
+        case Z_OK:
+            this_off += this_len - strm->avail_in;
+            (*env)->SetIntField(env, this, offID, this_off);
+            (*env)->SetIntField(env, this, lenID, strm->avail_in);
+            return len - strm->avail_out;
+        case Z_NEED_DICT:
+            (*env)->SetBooleanField(env, this, needDictID, JNI_TRUE);
+            /* Might have consumed some input here! */
+            this_off += this_len - strm->avail_in;
+            (*env)->SetIntField(env, this, offID, this_off);
+            (*env)->SetIntField(env, this, lenID, strm->avail_in);
             return 0;
-	case Z_BUF_ERROR:
-	    return 0;
-	case Z_DATA_ERROR:
-	    ThrowDataFormatException(env, strm->msg);
-	    return 0;
-	case Z_MEM_ERROR:
-	    JNU_ThrowOutOfMemoryError(env, 0);
-	    return 0;
-	default:
-	    JNU_ThrowInternalError(env, strm->msg);
-	    return 0;
-	}
+        case Z_BUF_ERROR:
+            return 0;
+        case Z_DATA_ERROR:
+            ThrowDataFormatException(env, strm->msg);
+            return 0;
+        case Z_MEM_ERROR:
+            JNU_ThrowOutOfMemoryError(env, 0);
+            return 0;
+        default:
+            JNU_ThrowInternalError(env, strm->msg);
+            return 0;
+        }
     }
 }
 
@@ -200,7 +200,7 @@ JNIEXPORT void JNICALL
 Java_java_util_zip_Inflater_reset(JNIEnv *env, jclass cls, jlong strm)
 {
     if (inflateReset(jlong_to_ptr(strm)) != Z_OK) {
-	JNU_ThrowInternalError(env, 0);
+        JNU_ThrowInternalError(env, 0);
     }
 }
 
@@ -208,9 +208,8 @@ JNIEXPORT void JNICALL
 Java_java_util_zip_Inflater_end(JNIEnv *env, jclass cls, jlong strm)
 {
     if (inflateEnd(jlong_to_ptr(strm)) == Z_STREAM_ERROR) {
-	JNU_ThrowInternalError(env, 0);
+        JNU_ThrowInternalError(env, 0);
     } else {
-	free(jlong_to_ptr(strm));
+        free(jlong_to_ptr(strm));
     }
 }
-

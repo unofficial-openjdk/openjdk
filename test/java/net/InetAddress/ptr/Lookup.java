@@ -23,7 +23,7 @@
 
 /*
  *
- * 
+ *
  * Lookup/reverse lookup class for regression test 4773521 - see
  * lookup.sh for details.
  */
@@ -33,24 +33,24 @@ import java.net.UnknownHostException;
 public class Lookup {
     public static void main(String args[]) throws UnknownHostException {
 
-	// reverse lookup
+        // reverse lookup
 
-	if (args[0].equals("-q=PTR")) {
-	    InetAddress ia = InetAddress.getByName(args[1]);
-	    System.out.println(ia.getHostName());
-	    return;
-	}
+        if (args[0].equals("-q=PTR")) {
+            InetAddress ia = InetAddress.getByName(args[1]);
+            System.out.println(ia.getHostName());
+            return;
+        }
 
-	// lookup address
+        // lookup address
 
-	String addr;
-	if (args[0].equals("-q=A")) {
-	    addr = args[1];
-	} else {
-	    addr = args[0];
-	}
-	InetAddress ia = InetAddress.getByName(args[1]);
-	System.out.println(ia.getHostAddress());
+        String addr;
+        if (args[0].equals("-q=A")) {
+            addr = args[1];
+        } else {
+            addr = args[0];
+        }
+        InetAddress ia = InetAddress.getByName(args[1]);
+        System.out.println(ia.getHostAddress());
     }
 
 }

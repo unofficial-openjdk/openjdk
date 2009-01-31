@@ -51,8 +51,7 @@ import sun.tools.java.ClassDefinition;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @version	1.0, 2/23/98
- * @author	Bryan Atsatt
+ * @author      Bryan Atsatt
  */
 public interface Generator {
 
@@ -64,17 +63,17 @@ public interface Generator {
      * @return true if no errors, false otherwise.
      */
     public boolean parseArgs(String argv[], Main main);
-    
+
     /**
      * Generate output. Any source files created which need compilation should
      * be added to the compiler environment using the addGeneratedFile(File)
      * method.
      *
-     * @param env	The compiler environment
-     * @param cdef	The definition for the implementation class or interface from
+     * @param env       The compiler environment
+     * @param cdef      The definition for the implementation class or interface from
      *              which to generate output
-     * @param destDir	The directory for the root of the package hierarchy
-     *			        for generated files. May be null.
+     * @param destDir   The directory for the root of the package hierarchy
+     *                          for generated files. May be null.
      */
     public void generate(BatchEnvironment env, ClassDefinition cdef, File destDir);
 }

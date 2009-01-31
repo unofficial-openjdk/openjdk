@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)LEInsertionList.cpp	1.3 06/12/13
  *
  **********************************************************************
  *   Copyright (C) 1998-2004, International Business Machines
@@ -107,4 +106,3 @@ le_bool LEInsertionList::applyInsertions(LEInsertionCallback *callback)
 
     return FALSE;
 }
-

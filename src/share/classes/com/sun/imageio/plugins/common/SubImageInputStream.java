@@ -30,7 +30,6 @@ import javax.imageio.stream.ImageInputStreamImpl;
 import javax.imageio.stream.ImageInputStream;
 
 /**
- * @version 0.5 
  */
 public final class SubImageInputStream extends ImageInputStreamImpl {
 
@@ -39,7 +38,7 @@ public final class SubImageInputStream extends ImageInputStreamImpl {
     int startingLength;
     int length;
 
-    public SubImageInputStream(ImageInputStream stream, int length) 
+    public SubImageInputStream(ImageInputStream stream, int length)
         throws IOException {
         this.stream = stream;
         this.startingPos = stream.getStreamPosition();

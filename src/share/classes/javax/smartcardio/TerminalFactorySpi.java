@@ -29,7 +29,7 @@ import java.util.*;
 
 /**
  * The TerminalFactorySpi class defines the service provider interface.
- * Applications do not access this class directly, instead see 
+ * Applications do not access this class directly, instead see
  * {@linkplain TerminalFactory}.
  *
  * <P>Service providers that want to write a new implementation should define
@@ -57,7 +57,7 @@ import java.util.*;
  * }
  *
  *<em>file MySpi.java</em>
- * 
+ *
  * package com.somedomain.card;
  *
  * import javax.smartcardio.*;
@@ -75,7 +75,6 @@ import java.util.*;
  * @see TerminalFactory
  * @see java.security.Provider
  *
- * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
@@ -99,9 +98,9 @@ public abstract class TerminalFactorySpi {
      * object specified by the application.
      */
     protected TerminalFactorySpi() {
-	// empty
+        // empty
     }
-    
+
     /**
      * Returns the CardTerminals created by this factory.
      *
@@ -110,4 +109,3 @@ public abstract class TerminalFactorySpi {
     protected abstract CardTerminals engineTerminals();
 
 }
-

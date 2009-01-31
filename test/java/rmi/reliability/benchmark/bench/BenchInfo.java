@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,24 +32,24 @@ package bench;
  * weight associated with it (for calculating the overall score).
  */
 public class BenchInfo {
-    
+
     Benchmark benchmark;
     String name;
     long time;
     float weight;
     String[] args;
-    
+
     /**
      * Construct benchmark info.
      */
     BenchInfo(Benchmark benchmark, String name, float weight, String[] args) {
         this.benchmark = benchmark;
-	this.name = name;
+        this.name = name;
         this.weight = weight;
         this.args = args;
         this.time = -1;
     }
-    
+
     /**
      * Run benchmark with specified args.  Called only by the harness.
      */
@@ -63,12 +63,12 @@ public class BenchInfo {
     public Benchmark getBenchmark() {
         return benchmark;
     }
-    
+
     /**
      * Return the name of this benchmark.
      */
     public String getName() {
-	return name;
+        return name;
     }
 
     /**
@@ -78,7 +78,7 @@ public class BenchInfo {
     public long getTime() {
         return time;
     }
-    
+
     /**
      * Return weight associated with benchmark.
      */
@@ -86,4 +86,3 @@ public class BenchInfo {
         return weight;
     }
 }
-    

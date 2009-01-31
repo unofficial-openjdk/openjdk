@@ -53,7 +53,7 @@ jfieldID AwtFileDialog::fileID;
 jfieldID AwtFileDialog::filterID;
 
 /* Localized filter string */
-#define MAX_FILTER_STRING	128
+#define MAX_FILTER_STRING       128
 static TCHAR s_fileFilterString[MAX_FILTER_STRING];
 /* Non-localized suffix of the filter string */
 static const TCHAR s_additionalString[] = TEXT(" (*.*)\0*.*\0");
@@ -75,13 +75,13 @@ AwtFileDialog::Initialize(JNIEnv *env, jstring filterDescription)
     LPTSTR s = s_fileFilterString;
     while (*s) {
         ++s;
-	DASSERT(s < s_fileFilterString + MAX_FILTER_STRING);
+        DASSERT(s < s_fileFilterString + MAX_FILTER_STRING);
     }
     DASSERT(s + sizeof(s_additionalString) < s_fileFilterString + MAX_FILTER_STRING);
     memcpy(s, s_additionalString, sizeof(s_additionalString));
 }
 
-LRESULT CALLBACK FileDialogWndProc(HWND hWnd, UINT message, 
+LRESULT CALLBACK FileDialogWndProc(HWND hWnd, UINT message,
                                         WPARAM wParam, LPARAM lParam)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -127,7 +127,7 @@ FileDialogHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
             ::SetClassLong(hdlg,GCL_STYLE,style & ~CS_SAVEBITS);
 
             // set appropriate icon for parentless dialogs
-            jobject awtParent = env->GetObjectField(peer, AwtFileDialog::parentID); 
+            jobject awtParent = env->GetObjectField(peer, AwtFileDialog::parentID);
             if (awtParent == NULL) {
                 ::SendMessage(parent, WM_SETICON, (WPARAM)ICON_BIG,
                               (LPARAM)AwtToolkit::GetInstance().GetAwtIcon());
@@ -212,36 +212,36 @@ AwtFileDialog::Show(void *p)
 
     try {
         DASSERT(peer);
-	target = env->GetObjectField(peer, AwtObject::targetID);
- 	parent = env->GetObjectField(peer, AwtFileDialog::parentID); 
- 	if (parent != NULL) {
- 	    awtParent = (AwtComponent *)JNI_GET_PDATA(parent);
- 	}
-//	DASSERT(awtParent);
-	title = (jstring)(env)->GetObjectField(target, AwtDialog::titleID);
+        target = env->GetObjectField(peer, AwtObject::targetID);
+        parent = env->GetObjectField(peer, AwtFileDialog::parentID);
+        if (parent != NULL) {
+            awtParent = (AwtComponent *)JNI_GET_PDATA(parent);
+        }
+//      DASSERT(awtParent);
+        title = (jstring)(env)->GetObjectField(target, AwtDialog::titleID);
         HWND hwndOwner = awtParent ? awtParent->GetHWnd() : NULL;
 
         if (title == NULL || env->GetStringLength(title)==0) {
             title = env->NewString(&unicodeChar, 1);
         }
 
-	JavaStringBuffer titleBuffer(env, title);	
-	directory = 
-	    (jstring)env->GetObjectField(target, AwtFileDialog::dirID);
-	JavaStringBuffer directoryBuffer(env, directory);	
+        JavaStringBuffer titleBuffer(env, title);
+        directory =
+            (jstring)env->GetObjectField(target, AwtFileDialog::dirID);
+        JavaStringBuffer directoryBuffer(env, directory);
 
-	fileBuffer = new TCHAR[MAX_PATH+1];
+        fileBuffer = new TCHAR[MAX_PATH+1];
 
-	file = (jstring)env->GetObjectField(target, AwtFileDialog::fileID);
-	if (file != NULL) {
-	    LPCTSTR tmp = JNU_GetStringPlatformChars(env, file, NULL);
-	    _tcscpy(fileBuffer, tmp);
-	    JNU_ReleaseStringPlatformChars(env, file, tmp);
-	} else {
-	    fileBuffer[0] = _T('\0');
-	}	
+        file = (jstring)env->GetObjectField(target, AwtFileDialog::fileID);
+        if (file != NULL) {
+            LPCTSTR tmp = JNU_GetStringPlatformChars(env, file, NULL);
+            _tcscpy(fileBuffer, tmp);
+            JNU_ReleaseStringPlatformChars(env, file, tmp);
+        } else {
+            fileBuffer[0] = _T('\0');
+        }
 
-	memset(&ofn, 0, sizeof(ofn));
+        memset(&ofn, 0, sizeof(ofn));
 
     // According to the MSDN docs, lStructSize must be set to
     // OPENFILENAME_SIZE_VERSION_400 on NT4.0.
@@ -249,10 +249,10 @@ AwtFileDialog::Show(void *p)
         ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
     }
     else {
-        ofn.lStructSize = sizeof(ofn); 
+        ofn.lStructSize = sizeof(ofn);
     }
-	ofn.lpstrFilter = s_fileFilterString;
-	ofn.nFilterIndex = 1;
+        ofn.lpstrFilter = s_fileFilterString;
+        ofn.nFilterIndex = 1;
         /*
           Fix for 6488834.
           To disable Win32 native parent modality we have to set
@@ -268,38 +268,38 @@ AwtFileDialog::Show(void *p)
         {
             ofn.hwndOwner = NULL;
         }
-    	ofn.lpstrFile = fileBuffer;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrTitle = titleBuffer;
-	ofn.lpstrInitialDir = directoryBuffer;
-	ofn.Flags = OFN_LONGNAMES | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY |
-	            OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLESIZING;
+        ofn.lpstrFile = fileBuffer;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.lpstrTitle = titleBuffer;
+        ofn.lpstrInitialDir = directoryBuffer;
+        ofn.Flags = OFN_LONGNAMES | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY |
+                    OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLESIZING;
         fileFilter = env->GetObjectField(peer,
         AwtFileDialog::fileFilterID);
     if (!JNU_IsNull(env,fileFilter)) {
         ofn.Flags |= OFN_ENABLEINCLUDENOTIFY;
     }
-	ofn.lCustData = (LPARAM)peer;
-	ofn.lpfnHook = (LPOFNHOOKPROC)FileDialogHookProc;
+        ofn.lCustData = (LPARAM)peer;
+        ofn.lpfnHook = (LPOFNHOOKPROC)FileDialogHookProc;
 
-	// Save current directory, so we can reset if it changes.
-	currentDirectory = new TCHAR[MAX_PATH+1];
+        // Save current directory, so we can reset if it changes.
+        currentDirectory = new TCHAR[MAX_PATH+1];
 
-	VERIFY(::GetCurrentDirectory(MAX_PATH, currentDirectory) > 0);
-	
-	mode = env->GetIntField(target, AwtFileDialog::modeID);
-    
+        VERIFY(::GetCurrentDirectory(MAX_PATH, currentDirectory) > 0);
+
+        mode = env->GetIntField(target, AwtFileDialog::modeID);
+
         // Fix for 4364256 : call load_shell_procs()
         load_shell_procs();
 
         AwtDialog::CheckInstallModalHook();
 
-	// show the Win32 file dialog
-	if (mode == java_awt_FileDialog_LOAD) {
-	    result = AwtFileDialog::GetOpenFileName(&ofn);
-	} else {
-	    result = AwtFileDialog::GetSaveFileName(&ofn);
-	}
+        // show the Win32 file dialog
+        if (mode == java_awt_FileDialog_LOAD) {
+            result = AwtFileDialog::GetOpenFileName(&ofn);
+        } else {
+            result = AwtFileDialog::GetSaveFileName(&ofn);
+        }
         // Fix for 4181310: FileDialog does not show up.
         // If the dialog is not shown because of invalid file name
         // replace the file name by empty string.
@@ -321,19 +321,19 @@ AwtFileDialog::Show(void *p)
 
         AwtDialog::ModalActivateNextWindow(NULL, target, peer);
 
-	VERIFY(::SetCurrentDirectory(currentDirectory));
+        VERIFY(::SetCurrentDirectory(currentDirectory));
 
-	// Report result to peer.
-	if (result) {
-	    jstring tmpJString = (_tcslen(ofn.lpstrFile) == 0 ? 
-		env->NewStringUTF("") :
-		JNU_NewStringPlatform(env, ofn.lpstrFile));
-	    env->CallVoidMethod(peer, AwtFileDialog::handleSelectedMID, tmpJString);
+        // Report result to peer.
+        if (result) {
+            jstring tmpJString = (_tcslen(ofn.lpstrFile) == 0 ?
+                env->NewStringUTF("") :
+                JNU_NewStringPlatform(env, ofn.lpstrFile));
+            env->CallVoidMethod(peer, AwtFileDialog::handleSelectedMID, tmpJString);
             env->DeleteLocalRef(tmpJString);
-	} else {
-	    env->CallVoidMethod(peer, AwtFileDialog::handleCancelMID);
-	}
-	DASSERT(!safe_ExceptionOccurred(env));
+        } else {
+            env->CallVoidMethod(peer, AwtFileDialog::handleCancelMID);
+        }
+        DASSERT(!safe_ExceptionOccurred(env));
     } catch (...) {
 
         env->DeleteLocalRef(target);
@@ -345,8 +345,8 @@ AwtFileDialog::Show(void *p)
         env->DeleteGlobalRef(peer);
 
         delete[] currentDirectory;
-	delete[] fileBuffer;
-	throw;
+        delete[] fileBuffer;
+        throw;
     }
 
     env->DeleteLocalRef(target);
@@ -367,7 +367,7 @@ AwtFileDialog::GetOpenFileName(LPAWTOPENFILENAME data) {
     return static_cast<BOOL>(reinterpret_cast<INT_PTR>(
         AwtToolkit::GetInstance().InvokeFunction((void*(*)(void*))
                      AwtCommDialog::GetOpenFileNameWrapper, data)));
-		       
+
 }
 
 BOOL
@@ -376,7 +376,7 @@ AwtFileDialog::GetSaveFileName(LPAWTOPENFILENAME data) {
     return static_cast<BOOL>(reinterpret_cast<INT_PTR>(
         AwtToolkit::GetInstance().InvokeFunction((void *(*)(void *))
                      AwtCommDialog::GetSaveFileNameWrapper, data)));
-		       
+
 }
 
 BOOL AwtFileDialog::InheritsNativeMouseWheelBehavior() {return true;}
@@ -436,29 +436,29 @@ Java_sun_awt_windows_WFileDialogPeer_initIDs(JNIEnv *env, jclass cls)
 {
     TRY;
 
-    AwtFileDialog::parentID = 
-	env->GetFieldID(cls, "parent", "Lsun/awt/windows/WComponentPeer;");
+    AwtFileDialog::parentID =
+        env->GetFieldID(cls, "parent", "Lsun/awt/windows/WComponentPeer;");
     AwtFileDialog::fileFilterID =
         env->GetFieldID(cls, "fileFilter", "Ljava/io/FilenameFilter;");
     AwtFileDialog::setHWndMID =
         env->GetMethodID(cls, "setHWnd", "(J)V");
-    AwtFileDialog::handleSelectedMID = 
-	env->GetMethodID(cls, "handleSelected", "(Ljava/lang/String;)V");
-    AwtFileDialog::handleCancelMID = 
-	env->GetMethodID(cls, "handleCancel", "()V");
-    AwtFileDialog::checkFilenameFilterMID = 
+    AwtFileDialog::handleSelectedMID =
+        env->GetMethodID(cls, "handleSelected", "(Ljava/lang/String;)V");
+    AwtFileDialog::handleCancelMID =
+        env->GetMethodID(cls, "handleCancel", "()V");
+    AwtFileDialog::checkFilenameFilterMID =
         env->GetMethodID(cls, "checkFilenameFilter", "(Ljava/lang/String;)Z");
 
     /* java.awt.FileDialog fields */
     cls = env->FindClass("java/awt/FileDialog");
     if (cls == NULL) {
-	return;
+        return;
     }
     AwtFileDialog::modeID = env->GetFieldID(cls, "mode", "I");
     AwtFileDialog::dirID = env->GetFieldID(cls, "dir", "Ljava/lang/String;");
     AwtFileDialog::fileID = env->GetFieldID(cls, "file", "Ljava/lang/String;");
-    AwtFileDialog::filterID = 
-	env->GetFieldID(cls, "filter", "Ljava/io/FilenameFilter;");
+    AwtFileDialog::filterID =
+        env->GetFieldID(cls, "filter", "Ljava/io/FilenameFilter;");
 
     DASSERT(AwtFileDialog::parentID != NULL);
     DASSERT(AwtFileDialog::setHWndMID != NULL);
@@ -496,7 +496,7 @@ Java_sun_awt_windows_WFileDialogPeer__1show(JNIEnv *env, jobject peer)
     jobject peerGlobal = env->NewGlobalRef(peer);
 
     AwtToolkit::GetInstance().InvokeFunction(AwtFileDialog::Show, peerGlobal);
-  
+
     env->DeleteGlobalRef(peerGlobal);
 
     CATCH_BAD_ALLOC;

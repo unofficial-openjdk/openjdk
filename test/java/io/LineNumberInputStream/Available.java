@@ -32,38 +32,38 @@ import java.io.*;
 public class Available {
 
     static void check(int a, int bound) throws Exception {
-	if (a > bound) {
-	    throw new Exception("Available returned " + a + " > " + bound);
-	}
+        if (a > bound) {
+            throw new Exception("Available returned " + a + " > " + bound);
+        }
     }
 
     public static void main(String args[]) throws Exception {
-	LineNumberInputStream in = new LineNumberInputStream(new MyInStream());
-	check(in.available(), 5);
-	in.read();
-	in.read();
-	check(in.available(), 4);
-	in.read();
-	in.read();
-	in.read();
-	check(in.available(), 2);
+        LineNumberInputStream in = new LineNumberInputStream(new MyInStream());
+        check(in.available(), 5);
+        in.read();
+        in.read();
+        check(in.available(), 4);
+        in.read();
+        in.read();
+        in.read();
+        check(in.available(), 2);
     }
 
 }
 
 
 class MyInStream extends InputStream {
-    
-    char[] buf = {'a', 'b', 'c', 'd', '\n', 
-		  'e', 'f', '\r', '\n', 'g'};
+
+    char[] buf = {'a', 'b', 'c', 'd', '\n',
+                  'e', 'f', '\r', '\n', 'g'};
     int ctr = 0;
 
     public int read() {
-	return ((ctr == 12) ? -1 : (int)buf[ctr++]);
+        return ((ctr == 12) ? -1 : (int)buf[ctr++]);
     }
 
     public int available() {
-	return (10 - ctr);
+        return (10 - ctr);
     }
 
 }

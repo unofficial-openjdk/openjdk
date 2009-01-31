@@ -68,7 +68,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         return new MotifDnDDropTargetProtocol(listener);
     }
 
-    public String getProtocolName() { 
+    public String getProtocolName() {
         return XDragAndDropProtocols.MotifDnD;
     }
 
@@ -95,27 +95,27 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         long data = 0;
         int dataSize = MotifDnDConstants.MOTIF_RECEIVER_INFO_SIZE;
 
-        WindowPropertyGetter wpg = 
-            new WindowPropertyGetter(embedder, 
-                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO, 
+        WindowPropertyGetter wpg =
+            new WindowPropertyGetter(embedder,
+                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO,
                                      0, 0xFFFF, false,
                                      XlibWrapper.AnyPropertyType);
 
         try {
-            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);            
+            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
             /*
              * DragICCI.h:
              *
              * typedef struct _xmDragReceiverInfoStruct{
-             *     BYTE	byte_order;
-             *     BYTE	protocol_version;
-             *     BYTE	drag_protocol_style;
-             *     BYTE	pad1;
-             *     CARD32	proxy_window B32;
-             *     CARD16	num_drop_sites B16;
-             *     CARD16	pad2 B16;
-             *     CARD32	heap_offset B32;
+             *     BYTE byte_order;
+             *     BYTE protocol_version;
+             *     BYTE drag_protocol_style;
+             *     BYTE pad1;
+             *     CARD32       proxy_window B32;
+             *     CARD16       num_drop_sites B16;
+             *     CARD16       pad2 B16;
+             *     CARD32       heap_offset B32;
              * } xmDragReceiverInfoStruct;
              */
             if (status == (int)XlibWrapper.Success && wpg.getData() != 0 &&
@@ -164,13 +164,13 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
             XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), embedder,
-                                        MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
-                                        MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
+                                        MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                        MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
                                         8, XlibWrapper.PropModeReplace,
                                         data, dataSize);
             XToolkit.RESTORE_XERROR_HANDLER();
-            
-            if (XToolkit.saved_error != null && 
+
+            if (XToolkit.saved_error != null &&
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                 throw new XException("Cannot write Motif receiver info property");
             }
@@ -189,7 +189,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
         EmbedderRegistryEntry entry = getEmbedderRegistryEntry(embedder);
-        
+
         if (entry == null) {
             return;
         }
@@ -197,27 +197,27 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         if (entry.isOverriden()) {
             int status = 0;
 
-            WindowPropertyGetter wpg = 
-                new WindowPropertyGetter(embedder, 
-                                         MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO, 
+            WindowPropertyGetter wpg =
+                new WindowPropertyGetter(embedder,
+                                         MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO,
                                          0, 0xFFFF, false,
                                          XlibWrapper.AnyPropertyType);
 
             try {
-                status = wpg.execute(XToolkit.IgnoreBadWindowHandler);            
+                status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
                 /*
                  * DragICCI.h:
                  *
                  * typedef struct _xmDragReceiverInfoStruct{
-                 *     BYTE	byte_order;
-                 *     BYTE	protocol_version;
-                 *     BYTE	drag_protocol_style;
-                 *     BYTE	pad1;
-                 *     CARD32	proxy_window B32;
-                 *     CARD16	num_drop_sites B16;
-                 *     CARD16	pad2 B16;
-                 *     CARD32	heap_offset B32;
+                 *     BYTE     byte_order;
+                 *     BYTE     protocol_version;
+                 *     BYTE     drag_protocol_style;
+                 *     BYTE     pad1;
+                 *     CARD32   proxy_window B32;
+                 *     CARD16   num_drop_sites B16;
+                 *     CARD16   pad2 B16;
+                 *     CARD32   heap_offset B32;
                  * } xmDragReceiverInfoStruct;
                  */
                 if (status == (int)XlibWrapper.Success && wpg.getData() != 0 &&
@@ -238,13 +238,13 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
                     XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
                     XlibWrapper.XChangeProperty(XToolkit.getDisplay(), embedder,
-                                                MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
-                                                MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
+                                                MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                                MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
                                                 8, XlibWrapper.PropModeReplace,
                                                 data, dataSize);
                     XToolkit.RESTORE_XERROR_HANDLER();
 
-                    if (XToolkit.saved_error != null && 
+                    if (XToolkit.saved_error != null &&
                         XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                         throw new XException("Cannot write Motif receiver info property");
                     }
@@ -269,27 +269,27 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         long proxy = 0;
         int status = 0;
 
-        WindowPropertyGetter wpg = 
-            new WindowPropertyGetter(embedded, 
-                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO, 
+        WindowPropertyGetter wpg =
+            new WindowPropertyGetter(embedded,
+                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO,
                                      0, 0xFFFF, false,
                                      XlibWrapper.AnyPropertyType);
 
         try {
-            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);            
+            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
             /*
              * DragICCI.h:
              *
              * typedef struct _xmDragReceiverInfoStruct{
-             *     BYTE	byte_order;
-             *     BYTE	protocol_version;
-             *     BYTE	drag_protocol_style;
-             *     BYTE	pad1;
-             *     CARD32	proxy_window B32;
-             *     CARD16	num_drop_sites B16;
-             *     CARD16	pad2 B16;
-             *     CARD32	heap_offset B32;
+             *     BYTE byte_order;
+             *     BYTE protocol_version;
+             *     BYTE drag_protocol_style;
+             *     BYTE pad1;
+             *     CARD32       proxy_window B32;
+             *     CARD16       num_drop_sites B16;
+             *     CARD16       pad2 B16;
+             *     CARD32       heap_offset B32;
              * } xmDragReceiverInfoStruct;
              */
             if (status == (int)XlibWrapper.Success && wpg.getData() != 0 &&
@@ -318,14 +318,14 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
     }
 
     public boolean isProtocolSupported(long window) {
-        WindowPropertyGetter wpg = 
-            new WindowPropertyGetter(window, 
-                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO, 
+        WindowPropertyGetter wpg =
+            new WindowPropertyGetter(window,
+                                     MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO,
                                      0, 0xFFFF, false,
                                      XlibWrapper.AnyPropertyType);
 
         try {
-            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);            
+            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
             if (status == (int)XlibWrapper.Success && wpg.getData() != 0 &&
                 wpg.getActualType() != 0 && wpg.getActualFormat() == 8 &&
@@ -367,11 +367,11 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
         /* Extract the available data types. */
         {
-            WindowPropertyGetter wpg = 
-                new WindowPropertyGetter(source_win, 
+            WindowPropertyGetter wpg =
+                new WindowPropertyGetter(source_win,
                                          XAtom.get(property_atom),
-                                         0, 0xFFFF, 
-                                         false, 
+                                         0, 0xFFFF,
+                                         false,
                                          MotifDnDConstants.XA_MOTIF_DRAG_INITIATOR_INFO.getAtom());
 
             try {
@@ -381,7 +381,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
                     wpg.getActualType() ==
                     MotifDnDConstants.XA_MOTIF_DRAG_INITIATOR_INFO.getAtom() &&
                     wpg.getActualFormat() == 8 &&
-                    wpg.getNumberOfItems() == 
+                    wpg.getNumberOfItems() ==
                     MotifDnDConstants.MOTIF_INITIATOR_INFO_SIZE) {
 
                     long data = wpg.getData();
@@ -394,10 +394,10 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
                         return false;
                     }
 
-                    int index = 
+                    int index =
                         MotifDnDConstants.Swapper.getShort(data + 2, propertyByteOrder);
 
-                    formats = MotifDnDConstants.getTargetListForIndex(index);                    
+                    formats = MotifDnDConstants.getTargetListForIndex(index);
                 } else {
                     formats = new long[0];
                 }
@@ -406,7 +406,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
             }
         }
 
-        /* 
+        /*
          * Select for StructureNotifyMask to receive DestroyNotify in case of source
          * crash.
          */
@@ -415,28 +415,28 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
             XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                           source_win, wattr.pData);
-                
+
             XToolkit.RESTORE_XERROR_HANDLER();
 
-            if (status == 0 || 
-                (XToolkit.saved_error != null && 
+            if (status == 0 ||
+                (XToolkit.saved_error != null &&
                  XToolkit.saved_error.get_error_code() != XlibWrapper.Success)) {
                 throw new XException("XGetWindowAttributes failed");
             }
-             
+
             source_win_mask = wattr.get_your_event_mask();
         } finally {
             wattr.dispose();
         }
-                
+
         XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
         XlibWrapper.XSelectInput(XToolkit.getDisplay(), source_win,
-                                 source_win_mask | 
+                                 source_win_mask |
                                  XlibWrapper.StructureNotifyMask);
-            
+
         XToolkit.RESTORE_XERROR_HANDLER();
 
-        if (XToolkit.saved_error != null && 
+        if (XToolkit.saved_error != null &&
             XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
             throw new XException("XSelectInput failed");
         }
@@ -444,8 +444,8 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         sourceWindow = source_win;
         sourceWindowMask = source_win_mask;
         sourceProtocolVersion = protocol_version;
-        /* 
-         * TOP_LEVEL_ENTER doesn't communicate the list of supported actions 
+        /*
+         * TOP_LEVEL_ENTER doesn't communicate the list of supported actions
          * They are provided in DRAG_MOTION.
          */
         sourceActions = DnDConstants.ACTION_NONE;
@@ -458,16 +458,16 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
     private boolean processDragMotion(XClientMessageEvent xclient) {
         long data = xclient.get_data();
         byte eventByteOrder = unsafe.getByte(data + 1);
-        byte eventReason = (byte)(unsafe.getByte(data) & 
+        byte eventReason = (byte)(unsafe.getByte(data) &
                                   MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
         int x = 0;
         int y = 0;
 
         short flags = MotifDnDConstants.Swapper.getShort(data + 2, eventByteOrder);
 
-        int motif_action = (flags & MotifDnDConstants.MOTIF_DND_ACTION_MASK) >> 
+        int motif_action = (flags & MotifDnDConstants.MOTIF_DND_ACTION_MASK) >>
             MotifDnDConstants.MOTIF_DND_ACTION_SHIFT;
-        int motif_actions = (flags & MotifDnDConstants.MOTIF_DND_ACTIONS_MASK) >> 
+        int motif_actions = (flags & MotifDnDConstants.MOTIF_DND_ACTIONS_MASK) >>
             MotifDnDConstants.MOTIF_DND_ACTIONS_SHIFT;
 
         int java_action = MotifDnDConstants.getJavaActionsForMotifActions(motif_action);
@@ -496,7 +496,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
                previously stored position and component ref. */
             x = sourceX;
             y = sourceY;
-            
+
             if (xwindow == null) {
                 xwindow = targetXWindow;
             }
@@ -506,7 +506,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
             if (xwindow == null) {
                 long receiver =
-                    XDropTargetRegistry.getRegistry().getEmbeddedDropSite( 
+                    XDropTargetRegistry.getRegistry().getEmbeddedDropSite(
                         xclient.get_window(), x, y);
 
                 if (receiver != 0) {
@@ -527,19 +527,19 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         if (xwindow == null) {
             if (targetXWindow != null) {
                 notifyProtocolListener(targetXWindow, x, y,
-                                       DnDConstants.ACTION_NONE, java_actions, 
+                                       DnDConstants.ACTION_NONE, java_actions,
                                        xclient, MouseEvent.MOUSE_EXITED);
             }
         } else {
             int java_event_id = 0;
-            
+
             if (targetXWindow == null) {
                 java_event_id = MouseEvent.MOUSE_ENTERED;
             } else {
                 java_event_id = MouseEvent.MOUSE_DRAGGED;
             }
 
-            notifyProtocolListener(xwindow, x, y, java_action, java_actions, 
+            notifyProtocolListener(xwindow, x, y, java_action, java_actions,
                                    xclient, java_event_id);
         }
 
@@ -548,7 +548,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         sourceX = x;
         sourceY = y;
         targetXWindow = xwindow;
-                
+
         return true;
     }
 
@@ -569,17 +569,17 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
          * Postpone upcall to java, so that we can abort it in case
          * if drop immediatelly follows (see BugTraq ID 4395290).
          * Send a dummy ClientMessage event to guarantee that a postponed java
-         * upcall will be processed. 
+         * upcall will be processed.
          */
         topLevelLeavePostponed = true;
         {
             long proxy;
-	
+
             /*
              * If this is an embedded drop site, the event should go to the
              * awt_root_window as this is a proxy for all embedded drop sites.
              * Otherwise the event should go to the event->window, as we don't use
-             * proxies for normal drop sites.  
+             * proxies for normal drop sites.
              */
             if (getEmbedderRegistryEntry(xclient.get_window()) != null) {
                 proxy = XDropTargetRegistry.getDnDProxyWindow();
@@ -599,8 +599,8 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
                 dummy.set_data(2, 0);
                 dummy.set_data(3, 0);
                 dummy.set_data(4, 0);
-                XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                       proxy, false, XlibWrapper.NoEventMask,  
+                XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                       proxy, false, XlibWrapper.NoEventMask,
                                        dummy.pData);
             } finally {
                 dummy.dispose();
@@ -613,7 +613,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         long data = xclient.get_data();
         byte eventByteOrder = unsafe.getByte(data + 1);
 
-        long source_win = 
+        long source_win =
             MotifDnDConstants.Swapper.getInt(data + 16, eventByteOrder);
 
         /* Ignore Motif DnD messages from all other windows. */
@@ -621,15 +621,15 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
             return false;
         }
 
-        long property_atom = 
+        long property_atom =
             MotifDnDConstants.Swapper.getInt(data + 12, eventByteOrder);
 
-        short flags = 
+        short flags =
             MotifDnDConstants.Swapper.getShort(data + 2, eventByteOrder);
 
-        int motif_action = (flags & MotifDnDConstants.MOTIF_DND_ACTION_MASK) >> 
+        int motif_action = (flags & MotifDnDConstants.MOTIF_DND_ACTION_MASK) >>
             MotifDnDConstants.MOTIF_DND_ACTION_SHIFT;
-        int motif_actions = (flags & MotifDnDConstants.MOTIF_DND_ACTIONS_MASK) >> 
+        int motif_actions = (flags & MotifDnDConstants.MOTIF_DND_ACTIONS_MASK) >>
             MotifDnDConstants.MOTIF_DND_ACTIONS_SHIFT;
 
         int java_action = MotifDnDConstants.getJavaActionsForMotifActions(motif_action);
@@ -648,7 +648,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
         if (xwindow == null) {
             long receiver =
-                XDropTargetRegistry.getRegistry().getEmbeddedDropSite( 
+                XDropTargetRegistry.getRegistry().getEmbeddedDropSite(
                     xclient.get_window(), x, y);
 
             if (receiver != 0) {
@@ -666,11 +666,11 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         }
 
         if (xwindow != null) {
-            notifyProtocolListener(xwindow, x, y, java_action, java_actions, 
+            notifyProtocolListener(xwindow, x, y, java_action, java_actions,
                                    xclient, MouseEvent.MOUSE_RELEASED);
-        } else if (targetXWindow != null) {            
+        } else if (targetXWindow != null) {
             notifyProtocolListener(targetXWindow, x, y,
-                                   DnDConstants.ACTION_NONE, java_actions, 
+                                   DnDConstants.ACTION_NONE, java_actions,
                                    xclient, MouseEvent.MOUSE_EXITED);
         }
 
@@ -678,14 +678,14 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
     }
 
     public int getMessageType(XClientMessageEvent xclient) {
-        if (xclient.get_message_type() != 
+        if (xclient.get_message_type() !=
             MotifDnDConstants.XA_MOTIF_DRAG_AND_DROP_MESSAGE.getAtom()) {
-            
+
             return UNKNOWN_MESSAGE;
         }
-        
+
         long data = xclient.get_data();
-        byte reason = (byte)(unsafe.getByte(data) & 
+        byte reason = (byte)(unsafe.getByte(data) &
                              MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
 
         switch (reason) {
@@ -704,7 +704,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
     }
 
     protected boolean processClientMessageImpl(XClientMessageEvent xclient) {
-        if (xclient.get_message_type() != 
+        if (xclient.get_message_type() !=
             MotifDnDConstants.XA_MOTIF_DRAG_AND_DROP_MESSAGE.getAtom()) {
             if (topLevelLeavePostponed) {
                 topLevelLeavePostponed = false;
@@ -715,19 +715,19 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         }
 
         long data = xclient.get_data();
-        byte reason = (byte)(unsafe.getByte(data) & 
+        byte reason = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
-        byte origin = (byte)(unsafe.getByte(data) & 
+        byte origin = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_SENDER_MASK);
 
         if (topLevelLeavePostponed) {
             topLevelLeavePostponed = false;
-	    if (reason != MotifDnDConstants.DROP_START) {
-		cleanup();
-	    }
+            if (reason != MotifDnDConstants.DROP_START) {
+                cleanup();
+            }
         }
-         
-	/* Only initiator messages should be handled. */
+
+        /* Only initiator messages should be handled. */
         if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
             return false;
         }
@@ -751,17 +751,17 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
      * Currently we don't synthesize enter/leave messages for Motif DnD
      * protocol. See comments in XDropTargetProtocol.postProcessClientMessage.
      */
-    protected void sendEnterMessageToToplevel(long win, 
-                                              XClientMessageEvent xclient) {
-        throw new Error("UNIMPLEMENTED");
-    }
-    
-    protected void sendLeaveMessageToToplevel(long win, 
+    protected void sendEnterMessageToToplevel(long win,
                                               XClientMessageEvent xclient) {
         throw new Error("UNIMPLEMENTED");
     }
 
-    public boolean forwardEventToEmbedded(long embedded, long ctxt, 
+    protected void sendLeaveMessageToToplevel(long win,
+                                              XClientMessageEvent xclient) {
+        throw new Error("UNIMPLEMENTED");
+    }
+
+    public boolean forwardEventToEmbedded(long embedded, long ctxt,
                                           int eventID) {
         // UNIMPLEMENTED.
         return false;
@@ -779,44 +779,44 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         }
 
         long data = xclient.get_data();
-        byte reason = (byte)(unsafe.getByte(data) & 
+        byte reason = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
-        byte origin = (byte)(unsafe.getByte(data) & 
+        byte origin = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_SENDER_MASK);
         byte eventByteOrder = unsafe.getByte(data + 1);
         byte response_reason = (byte)0;
 
-	/* Only initiator messages should be handled. */
-	if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
-	    return false;
-	}
+        /* Only initiator messages should be handled. */
+        if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
+            return false;
+        }
 
         switch (reason) {
         case MotifDnDConstants.TOP_LEVEL_ENTER:
         case MotifDnDConstants.TOP_LEVEL_LEAVE:
             /* Receiver shouldn't rely to these messages. */
             return false;
-	case MotifDnDConstants.DRAG_MOTION:
-	    switch (eventID) {
-	    case MouseEvent.MOUSE_ENTERED: 
-		response_reason = MotifDnDConstants.DROP_SITE_ENTER;
-		break;
-	    case MouseEvent.MOUSE_DRAGGED: 
-		response_reason = MotifDnDConstants.DRAG_MOTION;
-		break;
-	    case MouseEvent.MOUSE_EXITED: 
-		response_reason = MotifDnDConstants.DROP_SITE_LEAVE;
-		break;
-	    }
+        case MotifDnDConstants.DRAG_MOTION:
+            switch (eventID) {
+            case MouseEvent.MOUSE_ENTERED:
+                response_reason = MotifDnDConstants.DROP_SITE_ENTER;
+                break;
+            case MouseEvent.MOUSE_DRAGGED:
+                response_reason = MotifDnDConstants.DRAG_MOTION;
+                break;
+            case MouseEvent.MOUSE_EXITED:
+                response_reason = MotifDnDConstants.DROP_SITE_LEAVE;
+                break;
+            }
             break;
-	case MotifDnDConstants.OPERATION_CHANGED:
-	case MotifDnDConstants.DROP_START:
+        case MotifDnDConstants.OPERATION_CHANGED:
+        case MotifDnDConstants.DROP_START:
             response_reason = reason;
             break;
         default:
             // Unknown reason. Shouldn't get here.
             assert false;
-	}
+        }
 
         XClientMessageEvent msg = new XClientMessageEvent();
 
@@ -828,7 +828,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
             long responseData = msg.get_data();
 
-            unsafe.putByte(responseData, (byte)(response_reason | 
+            unsafe.putByte(responseData, (byte)(response_reason |
                            MotifDnDConstants.MOTIF_MESSAGE_FROM_RECEIVER));
             unsafe.putByte(responseData + 1, MotifDnDConstants.getByteOrderByte());
 
@@ -837,48 +837,48 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
             if (response_reason != MotifDnDConstants.DROP_SITE_LEAVE) {
                 short flags = MotifDnDConstants.Swapper.getShort(data + 2,
                                                                  eventByteOrder);
-                byte dropSiteStatus = (action == DnDConstants.ACTION_NONE) ? 
+                byte dropSiteStatus = (action == DnDConstants.ACTION_NONE) ?
                     MotifDnDConstants.MOTIF_INVALID_DROP_SITE :
                     MotifDnDConstants.MOTIF_VALID_DROP_SITE;
 
                 /* Clear action and drop site status bits. */
-                response_flags = flags & 
-                    ~MotifDnDConstants.MOTIF_DND_ACTION_MASK & 
+                response_flags = flags &
+                    ~MotifDnDConstants.MOTIF_DND_ACTION_MASK &
                     ~MotifDnDConstants.MOTIF_DND_STATUS_MASK;
                 /* Fill in new action and drop site status. */
-                response_flags |= 
-                    MotifDnDConstants.getMotifActionsForJavaActions(action) << 
+                response_flags |=
+                    MotifDnDConstants.getMotifActionsForJavaActions(action) <<
                     MotifDnDConstants.MOTIF_DND_ACTION_SHIFT;
-                response_flags |= 
+                response_flags |=
                     dropSiteStatus << MotifDnDConstants.MOTIF_DND_STATUS_SHIFT;
             } else {
                 response_flags = 0;
             }
 
             unsafe.putShort(responseData + 2, (short)response_flags);
-            
+
             /* Write time stamp. */
             int time = MotifDnDConstants.Swapper.getInt(data + 4, eventByteOrder);
             unsafe.putInt(responseData + 4, time);
-	
+
             /* Write coordinates. */
             if (response_reason != MotifDnDConstants.DROP_SITE_LEAVE) {
                 short x = MotifDnDConstants.Swapper.getShort(data + 8,
-                                                             eventByteOrder); 
+                                                             eventByteOrder);
                 short y = MotifDnDConstants.Swapper.getShort(data + 10,
-                                                             eventByteOrder); 
+                                                             eventByteOrder);
                 unsafe.putShort(responseData + 8, x); // x
                 unsafe.putShort(responseData + 10, y); // y
             } else {
                 unsafe.putShort(responseData + 8, (short)0); // x
                 unsafe.putShort(responseData + 10, (short)0); // y
             }
-            
+
             XToolkit.awtLock();
             try {
-                XlibWrapper.XSendEvent(XToolkit.getDisplay(), 
-                                       msg.get_window(), 
-                                       false, XlibWrapper.NoEventMask, 
+                XlibWrapper.XSendEvent(XToolkit.getDisplay(),
+                                       msg.get_window(),
+                                       false, XlibWrapper.NoEventMask,
                                        msg.pData);
             } finally {
                 XToolkit.awtUnlock();
@@ -890,7 +890,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         return true;
     }
 
-    public Object getData(long ctxt, long format) 
+    public Object getData(long ctxt, long format)
       throws IllegalArgumentException, IOException {
         XClientMessageEvent xclient = new XClientMessageEvent(ctxt);
 
@@ -900,15 +900,15 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         }
 
         long data = xclient.get_data();
-        byte reason = (byte)(unsafe.getByte(data) & 
+        byte reason = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
-        byte origin = (byte)(unsafe.getByte(data) & 
+        byte origin = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_SENDER_MASK);
         byte eventByteOrder = unsafe.getByte(data + 1);
 
-	if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
+        if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
             throw new IOException("Cannot get data: corrupted context");
-	}
+        }
 
         long selatom = 0;
 
@@ -930,7 +930,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
         long time_stamp = MotifDnDConstants.Swapper.getInt(data + 4, eventByteOrder);
         XAtom selectionAtom = XAtom.get(selatom);
-        
+
         XSelection selection = XSelection.getSelection(selectionAtom);
         if (selection == null) {
             selection = new XSelection(selectionAtom, null);
@@ -948,15 +948,15 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         }
 
         long data = xclient.get_data();
-        byte reason = (byte)(unsafe.getByte(data) & 
+        byte reason = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_REASON_MASK);
-        byte origin = (byte)(unsafe.getByte(data) & 
+        byte origin = (byte)(unsafe.getByte(data) &
             MotifDnDConstants.MOTIF_MESSAGE_SENDER_MASK);
         byte eventByteOrder = unsafe.getByte(data + 1);
 
-	if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
+        if (origin != MotifDnDConstants.MOTIF_MESSAGE_FROM_INITIATOR) {
             return false;
-	}
+        }
 
         if (reason != MotifDnDConstants.DROP_START) {
             return false;
@@ -964,26 +964,26 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
 
         long time_stamp = MotifDnDConstants.Swapper.getInt(data + 4, eventByteOrder);
         long sel_atom = MotifDnDConstants.Swapper.getInt(data + 12, eventByteOrder);
-        
+
         long status_atom = 0;
 
-	if (success) {
-	    status_atom = MotifDnDConstants.XA_XmTRANSFER_SUCCESS.getAtom();
-	} else {
-	    status_atom = MotifDnDConstants.XA_XmTRANSFER_FAILURE.getAtom();
-	}
+        if (success) {
+            status_atom = MotifDnDConstants.XA_XmTRANSFER_SUCCESS.getAtom();
+        } else {
+            status_atom = MotifDnDConstants.XA_XmTRANSFER_FAILURE.getAtom();
+        }
 
         XToolkit.awtLock();
         try {
-            XlibWrapper.XConvertSelection(XToolkit.getDisplay(), 
-                                          sel_atom, 
+            XlibWrapper.XConvertSelection(XToolkit.getDisplay(),
+                                          sel_atom,
                                           status_atom,
                                           MotifDnDConstants.XA_MOTIF_ATOM_0.getAtom(),
                                           XWindow.getXAWTRootWindow().getWindow(),
                                           time_stamp);
 
             /*
-             * Flush the buffer to guarantee that the drop completion event is sent 
+             * Flush the buffer to guarantee that the drop completion event is sent
              * to the source before the method returns.
              */
             XlibWrapper.XFlush(XToolkit.getDisplay());
@@ -1014,7 +1014,7 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         if (targetXWindow != null) {
             notifyProtocolListener(targetXWindow, 0, 0,
                                    DnDConstants.ACTION_NONE, sourceActions,
-                                   null, MouseEvent.MOUSE_EXITED); 
+                                   null, MouseEvent.MOUSE_EXITED);
         }
 
         if (sourceWindow != 0) {
@@ -1046,10 +1046,10 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         return targetXWindow != null;
     }
 
-    private void notifyProtocolListener(XWindow xwindow, int x, int y, 
+    private void notifyProtocolListener(XWindow xwindow, int x, int y,
                                         int dropAction, int actions,
                                         XClientMessageEvent xclient,
-                                        int eventID) { 
+                                        int eventID) {
         long nativeCtxt = 0;
 
         // Make a copy of the passed XClientMessageEvent structure, since
@@ -1057,17 +1057,17 @@ class MotifDnDDropTargetProtocol extends XDropTargetProtocol {
         // SunDropTargetEvent is dispatched.
         if (xclient != null) {
             int size = new XClientMessageEvent(nativeCtxt).getSize();
-                
+
             nativeCtxt = unsafe.allocateMemory(size + 4 * Native.getLongSize());
-                
+
             unsafe.copyMemory(xclient.pData, nativeCtxt, size);
         }
 
         getProtocolListener().handleDropTargetNotification(xwindow, x, y,
-                                                           dropAction, 
-                                                           actions, 
-                                                           sourceFormats, 
-                                                           nativeCtxt, 
+                                                           dropAction,
+                                                           actions,
+                                                           sourceFormats,
+                                                           nativeCtxt,
                                                            eventID);
     }
 }

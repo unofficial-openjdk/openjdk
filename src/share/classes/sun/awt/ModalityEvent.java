@@ -36,12 +36,12 @@ public class ModalityEvent extends AWTEvent implements ActiveEvent {
     public static final int MODALITY_POPPED = 1301;
 
     private ModalityListener listener;
-    
+
     public ModalityEvent(Object source, ModalityListener listener, int id) {
         super(source, id);
         this.listener = listener;
     }
-    
+
     public void dispatch() {
         switch(getID()) {
             case MODALITY_PUSHED:
@@ -56,6 +56,5 @@ public class ModalityEvent extends AWTEvent implements ActiveEvent {
                 throw new Error("Invalid event id.");
         }
     }
-    
-}
 
+}

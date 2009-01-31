@@ -33,9 +33,9 @@
 
 #include "ProcessPath.h"
 
-/* 
+/*
  * This framework performs filling and drawing of paths with sub-pixel
- * precision. Also, it performs clipping by the specified view area.  
+ * precision. Also, it performs clipping by the specified view area.
  *
  * Drawing of the shapes is performed not pixel by pixel but segment by segment
  * except several pixels near endpoints of the drawn line. This approach saves
@@ -45,10 +45,10 @@
  * overhead of the per-pixel drawing could eliminate all benefits of the
  * hardware acceleration.
  *
- * Filling of the path was  taken from  
+ * Filling of the path was  taken from
  *
- * [Graphics Gems, edited by Andrew S Glassner. Academic Press 1990, 
- * ISBN 0-12-286165-5 (Concave polygon scan conversion), 87-91] 
+ * [Graphics Gems, edited by Andrew S Glassner. Academic Press 1990,
+ * ISBN 0-12-286165-5 (Concave polygon scan conversion), 87-91]
  *
  * and modified to work with sub-pixel precision and non-continuous paths.
  * It's also speeded up by using hash table by rows of the filled objects.
@@ -71,32 +71,32 @@
  *                        |           |
  *                    DrawCurve     ProcessLine
  *                         \         /
- *                          \       / 
+ *                          \       /
  *                           \     /
  *                            \   /
  *                        ------+------
  *             (filling) /             \ (drawing)
  *                      /               \
- *               Clipping and        Clipping 
+ *               Clipping and        Clipping
  *                clamping                \
- *                   |                     \              
+ *                   |                     \
  *           StoreFixedLine          ProcessFixedLine
  *                   |                     /    \
  *                   |                    /      \
  *             FillPolygon       PROCESS_LINE   PROCESS_POINT
- *             
- *             
+ *
+ *
  *
  *  CheckPathSegment  - rough checking and skipping path's segments  in case of
- *                      invalid or huge coordinates of the control points to 
- *                      avoid calculation problems with NaNs and values close 
- *                      to the FLT_MAX 
+ *                      invalid or huge coordinates of the control points to
+ *                      avoid calculation problems with NaNs and values close
+ *                      to the FLT_MAX
  *
- * ProcessCurve - (ProcessQuad, ProcessCubic) Splitting the curve into 
- *                monotonic parts having appropriate size (calculated as 
+ * ProcessCurve - (ProcessQuad, ProcessCubic) Splitting the curve into
+ *                monotonic parts having appropriate size (calculated as
  *                boundary box of the control points)
  *
- * DrawMonotonicCurve - (DrawMonotonicQuad, DrawMonotonicCubic) flattening 
+ * DrawMonotonicCurve - (DrawMonotonicQuad, DrawMonotonicCubic) flattening
  *                      monotonic curve using adaptive forward differencing
  *
  * StoreFixedLine - storing segment from the flattened path to the
@@ -105,9 +105,9 @@
  *
  * PROCESS_LINE, PROCESS_POINT - Helpers for calling appropriate primitive from
  *                               DrawHandler structure
- *                               
- * ProcessFixedLine - Drawing line segment with subpixel precision. 
- *                                                       
+ *
+ * ProcessFixedLine - Drawing line segment with subpixel precision.
+ *
  */
 
 #define PROCESS_LINE(hnd, fX0, fY0, fX1, fY1, checkBounds, pixelInfo)       \
@@ -219,7 +219,7 @@
 
 
 /*
- *                  Constants for the forward differencing 
+ *                  Constants for the forward differencing
  *                      of the cubic and quad curves
  */
 
@@ -241,7 +241,7 @@
 #define DF_QUAD_STEPS   2
 
 /* Shift of the current point of the curve for preparing to the midpoint
- * rounding 
+ * rounding
  */
 #define DF_CUB_SHIFT    (FWD_PREC + DF_CUB_STEPS*3 - MDP_PREC)
 #define DF_QUAD_SHIFT    (FWD_PREC + DF_QUAD_STEPS*2 - MDP_PREC)
@@ -249,7 +249,7 @@
 /* Default amount of steps of the forward differencing */
 #define DF_CUB_COUNT    (1<<DF_CUB_STEPS)
 #define DF_QUAD_COUNT    (1<<DF_QUAD_STEPS)
-                                            
+
 /* Default boundary constants used to check the necessity of the restepping */
 #define DF_CUB_DEC_BND     (1<<(DF_CUB_STEPS*3 + FWD_PREC + 2))
 #define DF_CUB_INC_BND     (1<<(DF_CUB_STEPS*3 + FWD_PREC - 1))
@@ -279,8 +279,8 @@
 #define ABS32(X) (((X)^((X)>>31))-((X)>>31))
 #define SIGN32(X) ((X) >> 31) | ((juint)(-(X)) >> 31)
 
-/* Boundaries used for clipping large path segments (those are inside 
- * [UPPER/LOWER]_BND boundaries) 
+/* Boundaries used for clipping large path segments (those are inside
+ * [UPPER/LOWER]_BND boundaries)
  */
 #define UPPER_OUT_BND (1 << (30 - MDP_PREC))
 #define LOWER_OUT_BND (-UPPER_OUT_BND)
@@ -293,7 +293,7 @@
             (X) = (UBND);                                                   \
         }                                                                   \
     } while(0)
-            
+
 /* Following constants are used for providing open boundaries of the intervals
  */
 #define EPSFX 1
@@ -344,8 +344,8 @@ enum {
         }                                                           \
    } while (0)
 
-/* Following macro is used for clipping and clumping filled shapes. 
- * An example of this process is shown on the picture below: 
+/* Following macro is used for clipping and clumping filled shapes.
+ * An example of this process is shown on the picture below:
  *                      ----+          ----+
  *                    |/    |        |/    |
  *                    +     |        +     |
@@ -363,7 +363,7 @@ enum {
  * because all segments passed out the right boundary don't influence on the
  * result of scan conversion algorithm (it correctly handles half open
  * contours).
- * 
+ *
  */
 #define CLIPCLAMP(LINE_MIN, LINE_MAX, a1, b1, a2, b2, a3, b3, TYPE, res)  \
     do {                                                            \
@@ -388,10 +388,10 @@ enum {
 
 /* Following macro is used for solving quadratic equations:
  * A*t^2 + B*t + C = 0
- * in (0,1) range. That means we put to the RES the only roots which 
+ * in (0,1) range. That means we put to the RES the only roots which
  * belongs to the (0,1) range. Note: 0 and 1 are not included.
- * See solveQuadratic method in 
- *  src/share/classes/java/awt/geom/QuadCurve2D.java 
+ * See solveQuadratic method in
+ *  src/share/classes/java/awt/geom/QuadCurve2D.java
  * for more info about calculations
  */
 #define SOLVEQUADINRANGE(A,B,C,RES,RCNT)                            \
@@ -456,19 +456,19 @@ enum {
  *                                           0 - no pixel drawn between
  *                                           moveTo/close of the path
  *                                           1 - there are drawn pixels
- *                         
+ *
  *                          pixelInfo[1,2] - first pixel of the path
  *                                           between moveTo/close of the
  *                                           path
- *                         
+ *
  *                          pixelInfo[3,4] - last drawn pixel between
  *                                           moveTo/close of the path
- *                         
+ *
  * checkBounds        - flag showing necessity of checking the clip
  *
  */
 void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
-                       jint* pixelInfo,jboolean checkBounds, 
+                       jint* pixelInfo,jboolean checkBounds,
                        jboolean endSubPath)
 {
     /* Checking if line is inside a (X,Y),(X+MDP_MULT,Y+MDP_MULT) box */
@@ -484,7 +484,7 @@ void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
         }
         return;
     }
-    
+
     if (x1 == x2 || y1 == y2) {
         rx1 = x1 + MDP_HALF_MULT;
         rx2 = x2 + MDP_HALF_MULT;
@@ -494,7 +494,7 @@ void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
         /* Neither dx nor dy can be zero because of the check above */
         jint dx = x2 - x1;
         jint dy = y2 - y1;
-        
+
         /* Floor of x1, y1, x2, y2 */
         jint fx1 = x1 & MDP_W_MASK;
         jint fy1 = y1 & MDP_W_MASK;
@@ -504,7 +504,7 @@ void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
         /* Processing first endpoint */
         if (fx1 == x1 || fy1 == y1) {
             /* Adding MDP_HALF_MULT to the [xy]1 if f[xy]1 == [xy]1 will not
-             * affect the result 
+             * affect the result
              */
             rx1 = x1 + MDP_HALF_MULT;
             ry1 = y1 + MDP_HALF_MULT;
@@ -529,7 +529,7 @@ void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
         /* Processing second endpoint */
         if (fx2 == x2 || fy2 == y2) {
             /* Adding MDP_HALF_MULT to the [xy]2 if f[xy]2 == [xy]2 will not
-             * affect the result 
+             * affect the result
              */
             rx2 = x2 + MDP_HALF_MULT;
             ry2 = y2 + MDP_HALF_MULT;
@@ -559,14 +559,14 @@ void  ProcessFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
  * less than MAX_QUAD_SIZE by using forward differencing method of calculation.
  * See comments to the DrawMonotonicCubic.
  */
-static void DrawMonotonicQuad(ProcessHandler* hnd, 
+static void DrawMonotonicQuad(ProcessHandler* hnd,
                               jfloat *coords,
                               jboolean checkBounds,
-                              jint* pixelInfo) 
+                              jint* pixelInfo)
 {
     jint x0 = (jint)(coords[0]*MDP_MULT);
     jint y0 = (jint)(coords[1]*MDP_MULT);
-   
+
     jint xe = (jint)(coords[4]*MDP_MULT);
     jint ye = (jint)(coords[5]*MDP_MULT);
 
@@ -587,7 +587,7 @@ static void DrawMonotonicQuad(ProcessHandler* hnd,
 
     jint bx = (jint)((-2*coords[0] + 2*coords[2])*QUAD_B_MDP_MULT);
     jint by = (jint)((-2*coords[1] + 2*coords[3])*QUAD_B_MDP_MULT);
-   
+
     jint ddpx = 2*ax;
     jint ddpy = 2*ay;
 
@@ -610,7 +610,7 @@ static void DrawMonotonicQuad(ProcessHandler* hnd,
      * difference changes too quickly (more than a pixel per step in X or Y
      * direction). We can perform adjusting of the step size before the
      * rendering loop because the curvature of the quad curve remains the same
-     * along all the curve 
+     * along all the curve
      */
     while (maxDD > DF_QUAD_DEC_BND) {
         dpx = (dpx<<1) - ax;
@@ -670,7 +670,7 @@ static void DrawMonotonicQuad(ProcessHandler* hnd,
  * Calling DrawMonotonicQuad for the curves of the appropriate size.
  * Note: coords array could be changed
  */
-static void ProcessMonotonicQuad(ProcessHandler* hnd, 
+static void ProcessMonotonicQuad(ProcessHandler* hnd,
                                  jfloat *coords,
                                  jint* pixelInfo) {
 
@@ -694,27 +694,27 @@ static void ProcessMonotonicQuad(ProcessHandler* hnd,
     if (hnd->clipMode == PH_MODE_DRAW_CLIP) {
 
         /* In case of drawing we could just skip curves which are completely
-         * out of bounds 
+         * out of bounds
          */
-        if (hnd->dhnd->xMaxf < xMin || hnd->dhnd->xMinf > xMax || 
+        if (hnd->dhnd->xMaxf < xMin || hnd->dhnd->xMinf > xMax ||
             hnd->dhnd->yMaxf < yMin || hnd->dhnd->yMinf > yMax) {
             return;
         }
-    } else { 
+    } else {
 
         /* In case of filling we could skip curves which are above,
          * below and behind the right boundary of the visible area
          */
 
          if (hnd->dhnd->yMaxf < yMin || hnd->dhnd->yMinf > yMax ||
-             hnd->dhnd->xMaxf < xMin) 
+             hnd->dhnd->xMaxf < xMin)
          {
              return;
          }
 
-        /* We could clamp x coordinates to the corresponding boundary 
+        /* We could clamp x coordinates to the corresponding boundary
          * if the curve is completely behind the left one
-         */  
+         */
 
         if (hnd->dhnd->xMinf > xMax) {
             coords[0] = coords[2] = coords[4] = hnd->dhnd->xMinf;
@@ -730,7 +730,7 @@ static void ProcessMonotonicQuad(ProcessHandler* hnd,
         coords[3] = (coords[1] + coords[3])/2.0f;
         coords[4] = coords1[0] = (coords[2] + coords1[2])/2.0f;
         coords[5] = coords1[1] = (coords[3] + coords1[3])/2.0f;
-      
+
         ProcessMonotonicQuad(hnd, coords, pixelInfo);
 
         ProcessMonotonicQuad(hnd, coords1, pixelInfo);
@@ -747,16 +747,16 @@ static void ProcessMonotonicQuad(ProcessHandler* hnd,
 }
 
 /*
- * Bite the piece of the quadratic curve from start point till the point 
- * corresponding to the specified parameter then call ProcessQuad for the 
- * bitten part. 
+ * Bite the piece of the quadratic curve from start point till the point
+ * corresponding to the specified parameter then call ProcessQuad for the
+ * bitten part.
  * Note: coords array will be changed
  */
 static void ProcessFirstMonotonicPartOfQuad(ProcessHandler* hnd, jfloat* coords,
-                                            jint* pixelInfo, jfloat t) 
+                                            jint* pixelInfo, jfloat t)
 {
     jfloat coords1[6];
-        
+
     coords1[0] = coords[0];
     coords1[1] = coords[1];
     coords1[2] = coords[0] + t*(coords[2] - coords[0]);
@@ -771,9 +771,9 @@ static void ProcessFirstMonotonicPartOfQuad(ProcessHandler* hnd, jfloat* coords,
 
 /*
  * Split quadratic curve into monotonic in X and Y parts. Calling
- * ProcessMonotonicQuad for each monotonic piece of the curve.  
+ * ProcessMonotonicQuad for each monotonic piece of the curve.
  * Note: coords array could be changed
- */ 
+ */
 static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
 
     /* Temporary array for holding parameters corresponding to the extreme in X
@@ -784,22 +784,22 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
 
     jint cnt = 0;
     double param;
-    
+
     /* Simple check for monotonicity in X before searching for the extreme
-     * points of the X(t) function. We first check if the curve is monotonic 
-     * in X by seeing if all of the X coordinates are strongly ordered. 
+     * points of the X(t) function. We first check if the curve is monotonic
+     * in X by seeing if all of the X coordinates are strongly ordered.
      */
     if ((coords[0] > coords[2] || coords[2] > coords[4]) &&
-        (coords[0] < coords[2] || coords[2] < coords[4])) 
+        (coords[0] < coords[2] || coords[2] < coords[4]))
     {
         /* Searching for extreme points of the X(t) function  by solving
-         * dX(t)  
+         * dX(t)
          * ----  = 0 equation
          *  dt
          */
         double ax = coords[0] - 2*coords[2] + coords[4];
         if (ax != 0) {
-            /* Calculating root of the following equation 
+            /* Calculating root of the following equation
              * ax*t + bx = 0
              */
             double bx = coords[0] - coords[2];
@@ -809,14 +809,14 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
                 params[cnt++] = param;
             }
         }
-    } 
+    }
 
     /* Simple check for monotonicity in Y before searching for the extreme
-     * points of the Y(t) function. We first check if the curve is monotonic 
-     * in Y by seeing if all of the Y coordinates are strongly ordered. 
+     * points of the Y(t) function. We first check if the curve is monotonic
+     * in Y by seeing if all of the Y coordinates are strongly ordered.
      */
     if ((coords[1] > coords[3] || coords[3] > coords[5]) &&
-        (coords[1] < coords[3] || coords[3] < coords[5])) 
+        (coords[1] < coords[3] || coords[3] < coords[5]))
     {
         /* Searching for extreme points of the Y(t) function by solving
          * dY(t)
@@ -826,7 +826,7 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
         double ay = coords[1] - 2*coords[3] + coords[5];
 
         if (ay != 0) {
-            /* Calculating root of the following equation 
+            /* Calculating root of the following equation
              * ay*t + by = 0
              */
             double by = coords[1] - coords[3];
@@ -855,11 +855,11 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
         case 0:
             break;
         case 1:
-            ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo, 
+            ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo,
                                             (jfloat)params[0]);
             break;
         case 2:
-            ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo, 
+            ProcessFirstMonotonicPartOfQuad(hnd, coords, pixelInfo,
                                             (jfloat)params[0]);
             param = params[1] - params[0];
             if (param > 0) {
@@ -875,10 +875,10 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
 
 /*
  * Performing drawing of the monotonic in X and Y cubic curves with sizes less
- * than MAX_CUB_SIZE by using forward differencing method of calculation. 
+ * than MAX_CUB_SIZE by using forward differencing method of calculation.
  *
  * Here is some math used in the code below.
- * 
+ *
  * If we express the parametric equation for the coordinates as
  * simple polynomial:
  *
@@ -927,12 +927,12 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
  * curve.
  *
  * Note, b coefficient calculating in the DrawCubic is actually twice the b
- * coefficient seen above.  It's been done for the better accuracy. 
+ * coefficient seen above.  It's been done for the better accuracy.
  *
  * In our case, initialy K is chosen as 1/(2^DF_CUB_STEPS) this value is taken
  * with FWD_PREC bits precision. This means that we should do 2^DF_CUB_STEPS
  * steps to pass through all the curve.
- * 
+ *
  * On each step we examine how far we are stepping by examining our first(V1)
  * and second (V2) order derivatives and verifying that they are met following
  * conditions:
@@ -947,7 +947,7 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
  * variables as follows:
  *
  * Decreasing step size
- * (See Graphics Gems/by A.Glassner,(Tutorial on forward differencing),601-602) 
+ * (See Graphics Gems/by A.Glassner,(Tutorial on forward differencing),601-602)
  *
  * V3 = oV3/8
  * V2 = oV2/4 - V3
@@ -955,22 +955,22 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
  *
  * Here V1-V3 stands for new values of the forward differencies and oV1 - oV3
  * for the old ones
- * 
- * Using the equations above it's easy to calculating stepping variables for 
+ *
+ * Using the equations above it's easy to calculating stepping variables for
  * the increasing step size:
  *
  * V1 = 2*oV1 + oV2
  * V2 = 4*oV2 + 4*oV3
- * V3 = 8*oV3 
+ * V3 = 8*oV3
  *
  * And then for not to running out of 32 bit precision we are performing 3 bit
  * shift of the forward differencing precision (keeping in shift variable) in
- * left or right direction depending on what is  happening (decreasing or 
- * increasing). So, all oV1 - oV3 variables should be thought as appropriately 
- * shifted in regard to the V1 - V3. 
+ * left or right direction depending on what is  happening (decreasing or
+ * increasing). So, all oV1 - oV3 variables should be thought as appropriately
+ * shifted in regard to the V1 - V3.
  *
- * Taking all of the above into account we will have following: 
- * 
+ * Taking all of the above into account we will have following:
+ *
  * Decreasing step size:
  *
  * shift = shift + 3
@@ -987,17 +987,17 @@ static void ProcessQuad(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) {
  *
  */
 
-static void DrawMonotonicCubic(ProcessHandler* hnd, 
+static void DrawMonotonicCubic(ProcessHandler* hnd,
                                jfloat *coords,
                                jboolean checkBounds,
-                               jint* pixelInfo) 
+                               jint* pixelInfo)
 {
     jint x0 = (jint)(coords[0]*MDP_MULT);
     jint y0 = (jint)(coords[1]*MDP_MULT);
 
     jint xe = (jint)(coords[6]*MDP_MULT);
     jint ye = (jint)(coords[7]*MDP_MULT);
-  
+
     /* Extracting fractional part of coordinates of first control point */
     jint px = (x0 & (~MDP_W_MASK)) << DF_CUB_SHIFT;
     jint py = (y0 & (~MDP_W_MASK)) << DF_CUB_SHIFT;
@@ -1032,10 +1032,10 @@ static void DrawMonotonicCubic(ProcessHandler* hnd,
 
     jint dddpx = 6*ax;
     jint dddpy = 6*ay;
-   
+
     jint ddpx = dddpx + bx;
     jint ddpy = dddpy + by;
-  
+
     jint dpx = ax + (bx>>1) + cx;
     jint dpy = ay + (by>>1) + cy;
 
@@ -1043,7 +1043,7 @@ static void DrawMonotonicCubic(ProcessHandler* hnd,
 
     jint x2 = x0;
     jint y2 = y0;
-    
+
     /* Calculating whole part of the first point of the curve */
     jint x0w = x0 & MDP_W_MASK;
     jint y0w = y0 & MDP_W_MASK;
@@ -1059,7 +1059,7 @@ static void DrawMonotonicCubic(ProcessHandler* hnd,
                 *   abs(ddpy) > decStepBnd1
                 */
                (juint)(ddpx + decStepBnd1) > (juint)decStepBnd2 ||
-               (juint)(ddpy + decStepBnd1) > (juint)decStepBnd2) 
+               (juint)(ddpy + decStepBnd1) > (juint)decStepBnd2)
         {
             ddpx = (ddpx<<1) - dddpx;
             ddpy = (ddpy<<1) - dddpy;
@@ -1085,7 +1085,7 @@ static void DrawMonotonicCubic(ProcessHandler* hnd,
                 *   abs(dpy) <= incStepBnd1
                 */
                (juint)(dpx + incStepBnd1) <= (juint)incStepBnd2 &&
-               (juint)(dpy + incStepBnd1) <= (juint)incStepBnd2) 
+               (juint)(dpy + incStepBnd1) <= (juint)incStepBnd2)
         {
             dpx = (dpx>>2) + (ddpx>>3);
             dpy = (dpy>>2) + (ddpy>>3);
@@ -1128,7 +1128,7 @@ static void DrawMonotonicCubic(ProcessHandler* hnd,
              * because the curve passed to the DrawMonotonicCubic already
              * splitted into the monotonic in X and Y pieces
              */
-            
+
             /* Bounding x2 by xe */
             if (((xe-x2)^dx) < 0) {
                 x2 = xe;
@@ -1181,30 +1181,30 @@ static void ProcessMonotonicCubic(ProcessHandler* hnd,
     if (hnd->clipMode == PH_MODE_DRAW_CLIP) {
 
        /* In case of drawing we could just skip curves which are completely
-        * out of bounds 
+        * out of bounds
         */
-        if (hnd->dhnd->xMaxf < xMin || hnd->dhnd->xMinf > xMax || 
+        if (hnd->dhnd->xMaxf < xMin || hnd->dhnd->xMinf > xMax ||
             hnd->dhnd->yMaxf < yMin || hnd->dhnd->yMinf > yMax) {
             return;
         }
-    } else { 
+    } else {
 
        /* In case of filling we could skip curves which are above,
         * below and behind the right boundary of the visible area
         */
 
         if (hnd->dhnd->yMaxf < yMin || hnd->dhnd->yMinf > yMax ||
-            hnd->dhnd->xMaxf < xMin) 
+            hnd->dhnd->xMaxf < xMin)
         {
             return;
         }
 
-       /* We could clamp x coordinates to the corresponding boundary 
+       /* We could clamp x coordinates to the corresponding boundary
         * if the curve is completely behind the left one
-        */  
+        */
 
         if (hnd->dhnd->xMinf > xMax) {
-            coords[0] = coords[2] = coords[4] = coords[6] = 
+            coords[0] = coords[2] = coords[4] = coords[6] =
                 hnd->dhnd->xMinf;
         }
     }
@@ -1224,7 +1224,7 @@ static void ProcessMonotonicCubic(ProcessHandler* hnd,
         coords[5] = (coords[3] + ty)/2.0f;
         coords[6]=coords1[0]=(coords[4] + coords1[2])/2.0f;
         coords[7]=coords1[1]=(coords[5] + coords1[3])/2.0f;
-       
+
         ProcessMonotonicCubic(hnd, coords, pixelInfo);
 
         ProcessMonotonicCubic(hnd, coords1, pixelInfo);
@@ -1244,16 +1244,16 @@ static void ProcessMonotonicCubic(ProcessHandler* hnd,
 /*
  * Bite the piece of the cubic curve from start point till the point
  * corresponding to the specified parameter then call ProcessMonotonicCubic for
- * the bitten part. 
+ * the bitten part.
  * Note: coords array will be changed
  */
-static void ProcessFirstMonotonicPartOfCubic(ProcessHandler* hnd, 
+static void ProcessFirstMonotonicPartOfCubic(ProcessHandler* hnd,
                                              jfloat* coords, jint* pixelInfo,
-                                             jfloat t) 
+                                             jfloat t)
 {
     jfloat coords1[8];
     jfloat tx, ty;
-    
+
     coords1[0] = coords[0];
     coords1[1] = coords[1];
     tx = coords[2] + t*(coords[4] - coords[2]);
@@ -1278,7 +1278,7 @@ static void ProcessFirstMonotonicPartOfCubic(ProcessHandler* hnd,
  *
  * Note: coords array could be changed
  */
-static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo) 
+static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
 {
     /* Temporary array for holding parameters corresponding to the extreme in X
      * and Y points. The values are inside the (0,1) range (0 and 1 excluded)
@@ -1286,18 +1286,18 @@ static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
      */
     double params[4];
     jint cnt = 0, i;
-    
+
     /* Simple check for monotonicity in X before searching for the extreme
      * points of the X(t) function. We first check if the curve is monotonic in
-     * X by seeing if all of the X coordinates are strongly ordered. 
+     * X by seeing if all of the X coordinates are strongly ordered.
      */
     if ((coords[0] > coords[2] || coords[2] > coords[4] ||
          coords[4] > coords[6]) &&
         (coords[0] < coords[2] || coords[2] < coords[4] ||
-         coords[4] < coords[6])) 
+         coords[4] < coords[6]))
     {
         /* Searching for extreme points of the X(t) function  by solving
-         * dX(t)  
+         * dX(t)
          * ----  = 0 equation
          *  dt
          */
@@ -1307,15 +1307,15 @@ static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
 
         SOLVEQUADINRANGE(ax,bx,cx,params,cnt);
     }
-    
+
     /* Simple check for monotonicity in Y before searching for the extreme
      * points of the Y(t) function. We first check if the curve is monotonic in
-     * Y by seeing if all of the Y coordinates are strongly ordered. 
+     * Y by seeing if all of the Y coordinates are strongly ordered.
      */
     if ((coords[1] > coords[3] || coords[3] > coords[5] ||
          coords[5] > coords[7]) &&
         (coords[1] < coords[3] || coords[3] < coords[5] ||
-         coords[5] < coords[7])) 
+         coords[5] < coords[7]))
     {
         /* Searching for extreme points of the Y(t) function by solving
          * dY(t)
@@ -1328,14 +1328,14 @@ static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
 
         SOLVEQUADINRANGE(ay,by,cy,params,cnt);
     }
-    
+
     if (cnt > 0) {
         /* Sorting parameter values corresponding to the extremum points of
          * the curve. We are using insertion sort because of tiny size of the
          * array.
          */
         jint j;
- 
+
         for(i = 1; i < cnt; i++) {
             double value = params[i];
             for (j = i - 1; j >= 0 && params[j] > value; j--) {
@@ -1343,9 +1343,9 @@ static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
             }
             params[j + 1] = value;
         }
-    
+
         /* Processing obtained monotonic parts */
-        ProcessFirstMonotonicPartOfCubic(hnd, coords, pixelInfo, 
+        ProcessFirstMonotonicPartOfCubic(hnd, coords, pixelInfo,
                                          (jfloat)params[0]);
         for (i = 1; i < cnt; i++) {
             double param = params[i] - params[i-1];
@@ -1360,7 +1360,7 @@ static void ProcessCubic(ProcessHandler* hnd, jfloat* coords, jint* pixelInfo)
     ProcessMonotonicCubic(hnd,coords,pixelInfo);
 }
 
-static void ProcessLine(ProcessHandler* hnd,  
+static void ProcessLine(ProcessHandler* hnd,
                         jfloat *coord1, jfloat *coord2, jint* pixelInfo) {
 
     jfloat xMin, yMin, xMax, yMax;
@@ -1386,7 +1386,7 @@ static void ProcessLine(ProcessHandler* hnd,
     if (res == CRES_INVISIBLE) return;
     lastClipped = IS_CLIPPED(res);
     clipped = clipped || lastClipped;
-    
+
     if (hnd->clipMode == PH_MODE_DRAW_CLIP) {
         TESTANDCLIP(xMin, xMax,
                     x1, y1, x2, y2, jfloat, res);
@@ -1402,15 +1402,15 @@ static void ProcessLine(ProcessHandler* hnd,
         X2 = (jint)(x2*MDP_MULT);
         Y2 = (jint)(y2*MDP_MULT);
 
-        hnd->pProcessFixedLine(hnd, X1, Y1, X2, Y2, pixelInfo, 
+        hnd->pProcessFixedLine(hnd, X1, Y1, X2, Y2, pixelInfo,
                                clipped, /* enable boundary checking in case
-                                           of clipping to avoid entering 
-                                           out of bounds which could 
+                                           of clipping to avoid entering
+                                           out of bounds which could
                                            happens during rounding
                                          */
                                lastClipped /* Notify pProcessFixedLine that
-                                              this is the end of the 
-                                              subpath (because of exiting 
+                                              this is the end of the
+                                              subpath (because of exiting
                                               out of boundaries)
                                             */
                                );
@@ -1425,7 +1425,7 @@ static void ProcessLine(ProcessHandler* hnd,
         if (res == CRES_MIN_CLIPPED) {
             X3 = (jint)(x3*MDP_MULT);
             Y3 = (jint)(y3*MDP_MULT);
-            hnd->pProcessFixedLine(hnd, X3, Y3, X1, Y1, pixelInfo, 
+            hnd->pProcessFixedLine(hnd, X3, Y3, X1, Y1, pixelInfo,
                                    JNI_FALSE, lastClipped);
 
         } else if (res == CRES_INVISIBLE) {
@@ -1437,26 +1437,26 @@ static void ProcessLine(ProcessHandler* hnd,
         CLIPCLAMP(xMin, xMax, x2, y2, x1, y1, x3, y3, jfloat, res);
 
         /* Checking if there was a clip by right boundary */
-        lastClipped = lastClipped || (res == CRES_MAX_CLIPPED); 
+        lastClipped = lastClipped || (res == CRES_MAX_CLIPPED);
 
         X2 = (jint)(x2*MDP_MULT);
         Y2 = (jint)(y2*MDP_MULT);
-        hnd->pProcessFixedLine(hnd, X1, Y1, X2, Y2, pixelInfo, 
+        hnd->pProcessFixedLine(hnd, X1, Y1, X2, Y2, pixelInfo,
                                JNI_FALSE, lastClipped);
 
         /* Clamping only by left boundary */
         if (res == CRES_MIN_CLIPPED) {
             X3 = (jint)(x3*MDP_MULT);
             Y3 = (jint)(y3*MDP_MULT);
-            hnd->pProcessFixedLine(hnd, X2, Y2, X3, Y3, pixelInfo, 
+            hnd->pProcessFixedLine(hnd, X2, Y2, X3, Y3, pixelInfo,
                                    JNI_FALSE, lastClipped);
-        } 
+        }
     }
 }
 
-jboolean ProcessPath(ProcessHandler* hnd, 
-                     jfloat transXf, jfloat transYf, 
-                     jfloat* coords, jint maxCoords, 
+jboolean ProcessPath(ProcessHandler* hnd,
+                     jfloat transXf, jfloat transYf,
+                     jfloat* coords, jint maxCoords,
                      jbyte* types, jint numTypes)
 {
     jfloat tCoords[8];
@@ -1470,15 +1470,15 @@ jboolean ProcessPath(ProcessHandler* hnd,
     pixelInfo[0] = 0;
 
     /* Adding support of the KEY_STROKE_CONTROL rendering hint.
-     * Now we are supporting two modes: "pixels at centers" and 
+     * Now we are supporting two modes: "pixels at centers" and
      * "pixels at corners".
      * First one is disabled by default but could be enabled by setting
      * VALUE_STROKE_PURE to the rendering hint. It means that pixel at the
      * screen (x,y) has (x + 0.5, y + 0.5) float coordinates.
-     * 
+     *
      * Second one is enabled by default and means straightforward mapping
      * (x,y) --> (x,y)
-     *  
+     *
      */
     if (hnd->stroke == PH_STROKE_PURE) {
         closeCoord[0] = -0.5f;
@@ -1496,15 +1496,15 @@ jboolean ProcessPath(ProcessHandler* hnd,
     ADJUST(hnd->dhnd->xMax, LOWER_OUT_BND, UPPER_OUT_BND);
     ADJUST(hnd->dhnd->yMax, LOWER_OUT_BND, UPPER_OUT_BND);
 
-    
+
     /*                Setting up fractional clipping box
-     *                  
-     * We are using following float -> int mapping: 
      *
-     *      xi = floor(xf + 0.5) 
+     * We are using following float -> int mapping:
      *
-     * So, fractional values that hit the [xmin, xmax) integer interval will be 
-     * situated inside the [xmin-0.5, xmax - 0.5) fractional interval. We are 
+     *      xi = floor(xf + 0.5)
+     *
+     * So, fractional values that hit the [xmin, xmax) integer interval will be
+     * situated inside the [xmin-0.5, xmax - 0.5) fractional interval. We are
      * using EPSF constant to provide that upper boundary is not included.
      */
     hnd->dhnd->xMinf = hnd->dhnd->xMin - 0.5f;
@@ -1520,7 +1520,7 @@ jboolean ProcessPath(ProcessHandler* hnd,
                     /* Performing closing of the unclosed segments */
                     if (subpathStarted & !skip) {
                         if (hnd->clipMode == PH_MODE_FILL_CLIP) {
-                            if (tCoords[0] != closeCoord[0] || 
+                            if (tCoords[0] != closeCoord[0] ||
                                 tCoords[1] != closeCoord[1])
                             {
                                 ProcessLine(hnd, tCoords, closeCoord,
@@ -1532,7 +1532,7 @@ jboolean ProcessPath(ProcessHandler* hnd,
 
                     tCoords[0] = coords[index++] + transXf;
                     tCoords[1] = coords[index++] + transYf;
-                   
+
                     /* Checking SEG_MOVETO coordinates if they are out of the
                      * [LOWER_BND, UPPER_BND] range.  This check also handles
                      * NaN and Infinity values. Skipping next path segment in
@@ -1648,7 +1648,7 @@ jboolean ProcessPath(ProcessHandler* hnd,
                      * the SEG_LINETO if endpoint coordinates are valid but
                      * there are invalid data among other coordinates
                      */
-                   
+
                     if (lastX < UPPER_BND &&
                         lastX > LOWER_BND &&
                         lastY < UPPER_BND &&
@@ -1671,7 +1671,7 @@ jboolean ProcessPath(ProcessHandler* hnd,
                             {
                                 ProcessCubic(hnd, tCoords, pixelInfo);
                             } else {
-                                ProcessLine(hnd, tCoords, tCoords + 6, 
+                                ProcessLine(hnd, tCoords, tCoords + 6,
                                             pixelInfo);
                             }
                             tCoords[0] = lastX;
@@ -1685,13 +1685,13 @@ jboolean ProcessPath(ProcessHandler* hnd,
             case java_awt_geom_PathIterator_SEG_CLOSE:
                 if (subpathStarted && !skip) {
                     skip = JNI_FALSE;
-                    if (tCoords[0] != closeCoord[0] || 
+                    if (tCoords[0] != closeCoord[0] ||
                         tCoords[1] != closeCoord[1])
                     {
                         ProcessLine(hnd, tCoords, closeCoord, pixelInfo);
-                        /* Storing last path's point for using in 
+                        /* Storing last path's point for using in
                          * following segments without initial moveTo
-                         */ 
+                         */
                         tCoords[0] = closeCoord[0];
                         tCoords[1] = closeCoord[1];
                     }
@@ -1706,10 +1706,10 @@ jboolean ProcessPath(ProcessHandler* hnd,
     /* Performing closing of the unclosed segments */
     if (subpathStarted & !skip) {
         if (hnd->clipMode == PH_MODE_FILL_CLIP) {
-            if (tCoords[0] != closeCoord[0] || 
+            if (tCoords[0] != closeCoord[0] ||
                 tCoords[1] != closeCoord[1])
             {
-                ProcessLine(hnd, tCoords, closeCoord, 
+                ProcessLine(hnd, tCoords, closeCoord,
                             pixelInfo);
             }
         }
@@ -1719,8 +1719,8 @@ jboolean ProcessPath(ProcessHandler* hnd,
     return JNI_TRUE;
 }
 
-/* TODO Add checking of the result of the malloc/realloc functions to handle 
- * out of memory error and don't leak earlier allocated data 
+/* TODO Add checking of the result of the malloc/realloc functions to handle
+ * out of memory error and don't leak earlier allocated data
  */
 
 
@@ -1738,7 +1738,7 @@ typedef struct _Point {
     jboolean lastPoint;
     struct _Point* prev;
     struct _Point* next;
-    struct _Point* nextByY; 
+    struct _Point* nextByY;
     jboolean endSL;
     struct _Edge* edge;
 } Point;
@@ -1760,7 +1760,7 @@ typedef struct _Edge {
 
 /* Following structure accumulates points of the non-continuous flattened
  * path during iteration through the origin path's segments . The end
- * of the each subpath is marked as lastPoint flag set at the last point 
+ * of the each subpath is marked as lastPoint flag set at the last point
  */
 
 typedef struct {
@@ -1825,7 +1825,7 @@ typedef struct {
     do {                                                                    \
         (PTR)->plgPnts[(PTR)->plgSize - 1].lastPoint = JNI_TRUE;            \
     } while(0)
-        
+
 #define PFD(HND) ((FillData*)(HND)->pData)
 
 /* Bubble sorting in the ascending order of the linked list. This
@@ -1841,7 +1841,7 @@ typedef struct {
     do {                                                                    \
         ETYPE *p, *q, *r, *s = NULL, *temp ;                                \
         jint wasSwap = 1;                                                   \
-        /* r precedes p and s points to the node up to which comparisons    \ 
+        /* r precedes p and s points to the node up to which comparisons    \
          * are to be made */                                                \
         while ( s != NEXT(*LIST) && wasSwap) {                              \
             r = p = *LIST;                                                  \
@@ -1878,7 +1878,7 @@ typedef struct {
 #define GET_ACTIVE_NEXT(a) ((a)->next)
 
 /* TODO: Implement stack/heap allocation technique for active edges
- */ 
+ */
 #define DELETE_ACTIVE(head,pnt)                                     \
 do {                                                                \
     Edge *prevp = pnt->prev;                                        \
@@ -1956,20 +1956,20 @@ void FillPolygon(ProcessHandler* hnd,
     jint yMax = pfd->plgYMax;
     jint hashSize = ((yMax - yMin)>>MDP_PREC) + 4;
 
-    /* Because of support of the KEY_STROKE_CONTROL hint we are performing 
+    /* Because of support of the KEY_STROKE_CONTROL hint we are performing
      * shift of the coordinates at the higher level
      */
     jint hashOffset = ((yMin - 1) & MDP_W_MASK);
 
-// TODO creating lists using fake first element to avoid special casing of 
-// the first element in the list (which otherwise should be performed in each 
+// TODO creating lists using fake first element to avoid special casing of
+// the first element in the list (which otherwise should be performed in each
 // list operation)
 
     /* Winding counter */
-    jint counter; 
+    jint counter;
 
     /* Calculating mask to be applied to the winding counter */
-    jint counterMask = 
+    jint counterMask =
         (fillRule == java_awt_geom_PathIterator_WIND_NON_ZERO)? -1:1;
     pt = pfd->plgPnts;
     n = pfd->plgSize;
@@ -1987,7 +1987,7 @@ void FillPolygon(ProcessHandler* hnd,
      * hash table with points which fall between scanlines. nextByY link is
      * used for the points which are between same scanlines. Scanlines are
      * passed through the centers of the pixels.
-     */ 
+     */
     curpt = pt;
     curpt->prev = NULL;
     ept = pt + n - 1;
@@ -2004,17 +2004,17 @@ void FillPolygon(ProcessHandler* hnd,
     curHash =  yHash + ((ept->y - hashOffset - 1) >> MDP_PREC);
     ept->nextByY = *curHash;
     *curHash = ept;
-    ept->next = NULL; 
+    ept->next = NULL;
     ept->edge = NULL;
     nact = 0;
 
     activeList = NULL;
-    for (y=hashOffset + MDP_MULT,k = 0; 
-         y<=yMax && k < hashSize; y += MDP_MULT, k++) 
+    for (y=hashOffset + MDP_MULT,k = 0;
+         y<=yMax && k < hashSize; y += MDP_MULT, k++)
     {
         for(pt = yHash[k];pt; pt=pt->nextByY) {
-            /* pt->y should be inside hashed interval 
-             * assert(y-MDP_MULT <= pt->y && pt->y < y); 
+            /* pt->y should be inside hashed interval
+             * assert(y-MDP_MULT <= pt->y && pt->y < y);
              */
             if (pt->prev && !pt->prev->lastPoint) {
                 if (pt->prev->edge && pt->prev->y <= y) {
@@ -2029,7 +2029,7 @@ void FillPolygon(ProcessHandler* hnd,
                 if (pt->edge && pt->next->y <= y) {
                     DELETE_ACTIVE(activeList, pt->edge);
                     pt->edge = NULL;
-                } else if (pt->next->y > y) { 
+                } else if (pt->next->y > y) {
                     INSERT_ACTIVE(activeList, pt, y);
                 }
             }
@@ -2054,7 +2054,7 @@ void FillPolygon(ProcessHandler* hnd,
         }
 
         xl = xr = hnd->dhnd->xMin;
-        curEdge = activeList; 
+        curEdge = activeList;
         counter = 0;
         drawing = 0;
         for(;curEdge; curEdge = curEdge->next) {
@@ -2075,9 +2075,9 @@ void FillPolygon(ProcessHandler* hnd,
             curEdge->x += curEdge->dx;
         }
 
-        /* Performing drawing till the right boundary (for correct rendering 
+        /* Performing drawing till the right boundary (for correct rendering
          * shapes clipped at the right side)
-         */  
+         */
         if (drawing && xl <= rightBnd) {
             hnd->dhnd->pDrawScanline(hnd->dhnd, xl, rightBnd, y >> MDP_PREC);
         }
@@ -2089,17 +2089,17 @@ void FillPolygon(ProcessHandler* hnd,
 
 
 void  StoreFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
-                     jint* pixelInfo,jboolean checkBounds, 
-                     jboolean endSubPath)  {         
+                     jint* pixelInfo,jboolean checkBounds,
+                     jboolean endSubPath)  {
     FillData* pfd;
     jint outXMin, outXMax, outYMin, outYMax;
     jint x3, y3, res;
 
-    /* There is no need to round line coordinates to the forward differencing 
+    /* There is no need to round line coordinates to the forward differencing
      * precision anymore. Such a rounding was used for preventing the curve go
      * out the endpoint (this sometimes does not help). The problem was fixed
      * in the forward differencing loops.
-     */ 
+     */
 
     if (checkBounds) {
         jboolean lastClipped = JNI_FALSE;
@@ -2123,32 +2123,32 @@ void  StoreFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
 
         /* Clamping only by left boundary */
         if (res == CRES_MIN_CLIPPED) {
-            StoreFixedLine(hnd, x3, y3, x1, y1, pixelInfo, 
+            StoreFixedLine(hnd, x3, y3, x1, y1, pixelInfo,
                            JNI_FALSE, lastClipped);
 
         } else if (res == CRES_INVISIBLE) {
             return;
         }
-        
+
         /* Clamping starting from last vertex of the the processed segment */
         CLIPCLAMP(outXMin, outXMax, x2, y2, x1, y1, x3, y3, jint, res);
 
         /* Checking if there was a clip by right boundary */
         lastClipped = lastClipped || (res == CRES_MAX_CLIPPED);
-        
-        StoreFixedLine(hnd, x1, y1, x2, y2, pixelInfo, 
+
+        StoreFixedLine(hnd, x1, y1, x2, y2, pixelInfo,
                          JNI_FALSE, lastClipped);
 
         /* Clamping only by left boundary */
         if (res == CRES_MIN_CLIPPED) {
-            StoreFixedLine(hnd, x2, y2, x3, y3, pixelInfo, 
+            StoreFixedLine(hnd, x2, y2, x3, y3, pixelInfo,
                            JNI_FALSE, lastClipped);
-        } 
-        
+        }
+
         return;
-    } 
+    }
     pfd = (FillData*)(hnd->pData);
- 
+
     /* Adding first point of the line only in case of empty or just finished
      * path
      */
@@ -2162,7 +2162,7 @@ void  StoreFixedLine(ProcessHandler* hnd,jint x1,jint y1,jint x2,jint y2,
         FD_SET_ENDED(pfd);
     }
 }
- 
+
 
 static void endSubPath(ProcessHandler* hnd) {
     FillData* pfd = (FillData*)(hnd->pData);
@@ -2174,17 +2174,17 @@ static void endSubPath(ProcessHandler* hnd) {
 static void stubEndSubPath(ProcessHandler* hnd) {
 }
 
-jboolean doFillPath(DrawHandler* dhnd, 
-                    jint transX, jint transY, 
-                    jfloat* coords, jint maxCoords, 
+jboolean doFillPath(DrawHandler* dhnd,
+                    jint transX, jint transY,
+                    jfloat* coords, jint maxCoords,
                     jbyte* types, jint numTypes,
                     PHStroke stroke, jint fillRule)
 {
-    jint res; 
+    jint res;
 
     FillData fillData;
 
-    ProcessHandler hnd = 
+    ProcessHandler hnd =
     {
         &StoreFixedLine,
         &endSubPath,
@@ -2196,7 +2196,7 @@ jboolean doFillPath(DrawHandler* dhnd,
 
     /* Initialization of the following fields in the declaration of the hnd
      * above causes warnings on sun studio compiler with  -xc99=%none option
-     * applied (this option means compliance with C90 standard instead of C99) 
+     * applied (this option means compliance with C90 standard instead of C99)
      */
     hnd.dhnd = dhnd;
     hnd.pData = &fillData;
@@ -2214,13 +2214,13 @@ jboolean doFillPath(DrawHandler* dhnd,
     return JNI_TRUE;
 }
 
-jboolean doDrawPath(DrawHandler* dhnd, 
+jboolean doDrawPath(DrawHandler* dhnd,
                     void (*pProcessEndSubPath)(ProcessHandler*),
-                    jint transX, jint transY, 
-                    jfloat* coords, jint maxCoords, 
+                    jint transX, jint transY,
+                    jfloat* coords, jint maxCoords,
                     jbyte* types, jint numTypes, PHStroke stroke)
 {
-    ProcessHandler hnd = 
+    ProcessHandler hnd =
     {
         &ProcessFixedLine,
         NULL,
@@ -2232,11 +2232,11 @@ jboolean doDrawPath(DrawHandler* dhnd,
 
     /* Initialization of the following fields in the declaration of the hnd
      * above causes warnings on sun studio compiler with  -xc99=%none option
-     * applied (this option means compliance with C90 standard instead of C99) 
+     * applied (this option means compliance with C90 standard instead of C99)
      */
     hnd.dhnd = dhnd;
     hnd.stroke = stroke;
-    
+
     hnd.pProcessEndSubPath = (pProcessEndSubPath == NULL)?
         stubEndSubPath : pProcessEndSubPath;
     return ProcessPath(&hnd, (jfloat)transX, (jfloat)transY, coords, maxCoords,

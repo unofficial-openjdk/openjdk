@@ -38,7 +38,7 @@ public interface Constants extends sun.tools.java.Constants {
      * Identifiers potentially useful for all Generators
      */
     public static final Identifier idRemote =
-	Identifier.lookup("java.rmi.Remote");
+        Identifier.lookup("java.rmi.Remote");
     public static final Identifier idRemoteException =
-	Identifier.lookup("java.rmi.RemoteException");
+        Identifier.lookup("java.rmi.RemoteException");
 }

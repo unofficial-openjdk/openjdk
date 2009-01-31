@@ -60,10 +60,10 @@ typedef struct _DrawHandler {
     void (*pDrawScanline)(struct _DrawHandler* hnd, jint x0, jint x1, jint y0);
     // TODO Change following names to smth like outXMin
     jint xMin, yMin, xMax, yMax;
-    
-    /* Boundary values with stroke control rendering hint applied */ 
+
+    /* Boundary values with stroke control rendering hint applied */
     jfloat xMinf, yMinf, xMaxf, yMaxf;
-    
+
     void* pData;
 } DrawHandler;
 
@@ -79,7 +79,7 @@ typedef enum {
 } PHStroke;
 
 typedef struct _ProcessHandler {
-    void (*pProcessFixedLine)(struct _ProcessHandler* hnd, 
+    void (*pProcessFixedLine)(struct _ProcessHandler* hnd,
                               jint x1,jint y1,
                               jint x2,jint y2, jint* pixelInfo,
                               jboolean checkBounds,
@@ -89,23 +89,21 @@ typedef struct _ProcessHandler {
     PHStroke stroke;
     PHClip clipMode;
     void* pData;
-} ProcessHandler; 
+} ProcessHandler;
 
 
-jboolean doDrawPath(DrawHandler* hnd, 
+jboolean doDrawPath(DrawHandler* hnd,
                     void (*pProcessEndSubPath)(ProcessHandler* hnd),
-                    jint transX, jint transY, 
+                    jint transX, jint transY,
                     jfloat* coords, jint maxCoords,
                     jbyte* types, jint numTypes,
                     PHStroke stroke);
 
-jboolean doFillPath(DrawHandler* hnd, 
-                    jint transX, jint transY, 
+jboolean doFillPath(DrawHandler* hnd,
+                    jint transX, jint transY,
                     jfloat* coords, jint maxCoords,
                     jbyte* types, jint numTypes,
                     PHStroke stroke,
                     jint fillRule);
 
 #endif
-
-

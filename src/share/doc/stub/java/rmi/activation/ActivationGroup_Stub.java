@@ -30,8 +30,7 @@ package java.rmi.activation;
  * for the subclasses of <code>java.rmi.activation.ActivationGroup</code>
  * that are exported as a <code>java.rmi.server.UnicastRemoteObject</code>.
  *
- * @version	%I%, %G%
- * @since	1.2
+ * @since       1.2
  */
 public final class ActivationGroup_Stub
     extends java.rmi.server.RemoteStub
@@ -42,11 +41,11 @@ public final class ActivationGroup_Stub
      * invokes the superclass <code>RemoteStub(RemoteRef)</code>
      * constructor with its argument, <code>ref</code>.
      *
-     * @param	ref a remote ref
+     * @param   ref a remote ref
      */
     public ActivationGroup_Stub(java.rmi.server.RemoteRef ref) {
     }
-    
+
     /**
      * Stub method for <code>ActivationGroup.newInstance</code>.  Invokes
      * the <code>invoke</code> method on this instance's
@@ -55,27 +54,27 @@ public final class ActivationGroup_Stub
      * argument (with <code>id</code> as the first element and
      * <code>desc</code> as the second element), and -5274445189091581345L
      * as the third argument, and returns the result.  If that invocation
-     * throws a <code>RuntimeException</code>, <code>RemoteException</code>, 
+     * throws a <code>RuntimeException</code>, <code>RemoteException</code>,
      * or an <code>ActivationException</code>, then that exception is
      * thrown to the caller.  If that invocation throws any other
      * <code>java.lang.Exception</code>, then a
      * <code>java.rmi.UnexpectedException</code> is thrown to the caller
      * with the original exception as the cause.
      *
-     * @param	id an activation identifier
-     * @param	desc an activation descriptor
+     * @param   id an activation identifier
+     * @param   desc an activation descriptor
      * @return  the result of the invocation
-     * @throws	java.rmi.RemoteException if invocation results in
-     *		a <code>RemoteException</code>
-     * @throws	java.rmi.activation.ActivationException if invocation
-     * 		results in an <code>ActivationException</code>
+     * @throws  java.rmi.RemoteException if invocation results in
+     *          a <code>RemoteException</code>
+     * @throws  java.rmi.activation.ActivationException if invocation
+     *          results in an <code>ActivationException</code>
      */
     public java.rmi.MarshalledObject newInstance(
- 				java.rmi.activation.ActivationID id,
-				java.rmi.activation.ActivationDesc desc)
-	throws java.rmi.RemoteException,
-	    java.rmi.activation.ActivationException
+                                java.rmi.activation.ActivationID id,
+                                java.rmi.activation.ActivationDesc desc)
+        throws java.rmi.RemoteException,
+            java.rmi.activation.ActivationException
     {
-	return null;
+        return null;
     }
 }

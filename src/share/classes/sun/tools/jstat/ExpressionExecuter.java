@@ -33,7 +33,6 @@ import sun.jvmstat.monitor.*;
  * in the context of the available monitoring data.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class ExpressionExecuter implements ExpressionEvaluator {

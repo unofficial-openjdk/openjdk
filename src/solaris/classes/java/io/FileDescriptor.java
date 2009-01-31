@@ -38,9 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Applications should not create their own file descriptors.
  *
  * @author  Pavani Diwanji
- * @version %I%, %G%
- * @see	    java.io.FileInputStream
- * @see	    java.io.FileOutputStream
+ * @see     java.io.FileInputStream
+ * @see     java.io.FileOutputStream
  * @since   JDK1.0
  */
 public final class FileDescriptor {
@@ -59,13 +58,13 @@ public final class FileDescriptor {
      * object.
      */
     public /**/ FileDescriptor() {
-	fd = -1;
-	useCount = new AtomicInteger();
+        fd = -1;
+        useCount = new AtomicInteger();
     }
- 
+
     private /* */ FileDescriptor(int fd) {
-	this.fd = fd;
-	useCount = new AtomicInteger();
+        this.fd = fd;
+        useCount = new AtomicInteger();
     }
 
     /**
@@ -102,7 +101,7 @@ public final class FileDescriptor {
      *          <code>false</code> otherwise.
      */
     public boolean valid() {
-	return fd != -1;
+        return fd != -1;
     }
 
     /**
@@ -128,9 +127,9 @@ public final class FileDescriptor {
      * OutputStream.flush) before that data will be affected by sync.
      *
      * @exception SyncFailedException
-     *	      Thrown when the buffers cannot be flushed,
-     *	      or because the system cannot guarantee that all the
-     *	      buffers have been synchronized with physical media.
+     *        Thrown when the buffers cannot be flushed,
+     *        or because the system cannot guarantee that all the
+     *        buffers have been synchronized with physical media.
      * @since     JDK1.1
      */
     public native void sync() throws SyncFailedException;
@@ -139,31 +138,31 @@ public final class FileDescriptor {
     private static native void initIDs();
 
     static {
-	initIDs();
+        initIDs();
     }
 
     // Set up JavaIOFileDescriptorAccess in SharedSecrets
     static {
-	sun.misc.SharedSecrets.setJavaIOFileDescriptorAccess(
-	    new sun.misc.JavaIOFileDescriptorAccess() {
-		public void set(FileDescriptor obj, int fd) {
-		    obj.fd = fd;
-		}
+        sun.misc.SharedSecrets.setJavaIOFileDescriptorAccess(
+            new sun.misc.JavaIOFileDescriptorAccess() {
+                public void set(FileDescriptor obj, int fd) {
+                    obj.fd = fd;
+                }
 
-		public int get(FileDescriptor obj) {
-		    return obj.fd;
-		}
-	    }
-	);
+                public int get(FileDescriptor obj) {
+                    return obj.fd;
+                }
+            }
+        );
     }
 
     // pacakge private methods used by FIS,FOS and RAF
 
     int incrementAndGetUseCount() {
-	return useCount.incrementAndGet();
+        return useCount.incrementAndGet();
     }
- 
+
     int decrementAndGetUseCount() {
-	return useCount.decrementAndGet();
+        return useCount.decrementAndGet();
     }
 }

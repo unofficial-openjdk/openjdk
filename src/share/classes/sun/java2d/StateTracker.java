@@ -56,7 +56,7 @@ package sun.java2d;
  * Optimizations to the sample code for either or both of those terminal
  * States may be of benefit for some use cases, but is left out of the
  * example to reduce its complexity.
- * 
+ *
  * @see StateTrackable.State
  * @since 1.7
  */
@@ -70,9 +70,9 @@ public interface StateTracker {
      * @since 1.7
      */
     public StateTracker ALWAYS_CURRENT = new StateTracker() {
-	public boolean isCurrent() {
-	    return true;
-	}
+        public boolean isCurrent() {
+            return true;
+        }
     };
 
     /**
@@ -87,9 +87,9 @@ public interface StateTracker {
      * @since 1.7
      */
     public StateTracker NEVER_CURRENT = new StateTracker() {
-	public boolean isCurrent() {
-	    return false;
-	}
+        public boolean isCurrent() {
+            return false;
+        }
     };
 
     /**

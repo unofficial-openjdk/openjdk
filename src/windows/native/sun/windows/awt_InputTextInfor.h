@@ -29,7 +29,7 @@
 /***************************************************************
  * AwtInputTextInfor
  *
- * A class encapsulating the composition string and result string 
+ * A class encapsulating the composition string and result string
  * used in windows input method implementation.
  *
  */
@@ -47,7 +47,7 @@ class AwtInputTextInfor {
     int GetContextData(HIMC hIMC, const LPARAM flags);
 
     int GetCursorPosition() const;
- 
+
     int GetCommittedTextLength() const;
 
     jstring GetText() const { return m_jtext; }
@@ -65,12 +65,12 @@ class AwtInputTextInfor {
     int m_cursorPosW;          /* the current cursor position of composition string */
     jstring m_jtext;           /* Composing string/result string or merged one */
     AwtInputTextInfor* m_pResultTextInfor; /* pointer to result string */
-  
+
     int m_cStrW;            /* size of the current composition/result string */
     int m_cReadStrW;        /* size of the reading string */
     int m_cClauseW;         /* size of the clause */
     int m_cReadClauseW;     /* size of the read clause */
-    int m_cAttrW;           /* size of the attribute (composition only) */ 
+    int m_cAttrW;           /* size of the attribute (composition only) */
 
     LPWSTR  m_lpStrW;       /* pointer to the current composition/result string */
     LPWSTR  m_lpReadStrW;   /* pointer to the reading string */
@@ -79,7 +79,7 @@ class AwtInputTextInfor {
     LPBYTE  m_lpAttrW;      /* pointer to the attribute information (composition only) */
 
     /* GCS_XXX index for result string */
-    static const DWORD GCS_INDEX[9]; 
+    static const DWORD GCS_INDEX[9];
 };
-  
+
 #endif // AWT_INPUTTEXTINFOR_H

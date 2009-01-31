@@ -28,7 +28,7 @@
  License version 2 only, as published by the Free Software Foundation.
  However, the following notice accompanied the original version of this
  file:
- 
+
 Copyright (c) 1991, 1997 Digital Equipment Corporation, Maynard, Massachusetts.
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -62,10 +62,10 @@ Equipment Corporation.
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-#include "Xext.h"			/* in ../include */
-#include "extutil.h"			/* in ../include */
+#include "Xext.h"                       /* in ../include */
+#include "extutil.h"                    /* in ../include */
 #include "panoramiXext.h"
-#include "panoramiXproto.h"		/* in ../include */
+#include "panoramiXproto.h"             /* in ../include */
 #include "Xinerama.h"
 
 
@@ -80,23 +80,23 @@ static /* const */ char *panoramiX_extension_name = PANORAMIX_PROTOCOL_NAME;
 
 static int close_display();
 static /* const */ XExtensionHooks panoramiX_extension_hooks = {
-    NULL,				/* create_gc */
-    NULL,				/* copy_gc */
-    NULL,				/* flush_gc */
-    NULL,				/* free_gc */
-    NULL,				/* create_font */
-    NULL,				/* free_font */
-    close_display,			/* close_display */
-    NULL,				/* wire_to_event */
-    NULL,				/* event_to_wire */
-    NULL,				/* error */
-    NULL,				/* error_string */
+    NULL,                               /* create_gc */
+    NULL,                               /* copy_gc */
+    NULL,                               /* flush_gc */
+    NULL,                               /* free_gc */
+    NULL,                               /* create_font */
+    NULL,                               /* free_font */
+    close_display,                      /* close_display */
+    NULL,                               /* wire_to_event */
+    NULL,                               /* event_to_wire */
+    NULL,                               /* error */
+    NULL,                               /* error_string */
 };
 
 static XEXT_GENERATE_FIND_DISPLAY (find_display, panoramiX_ext_info,
-				   panoramiX_extension_name, 
-				   &panoramiX_extension_hooks,
-				   0, NULL)
+                                   panoramiX_extension_name,
+                                   &panoramiX_extension_hooks,
+                                   0, NULL)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, panoramiX_ext_info)
 
@@ -104,7 +104,7 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, panoramiX_ext_info)
 
 /****************************************************************************
  *                                                                          *
- *			    PanoramiX public interfaces                         *
+ *                          PanoramiX public interfaces                         *
  *                                                                          *
  ****************************************************************************/
 
@@ -117,23 +117,23 @@ Bool XPanoramiXQueryExtension (
     XExtDisplayInfo *info = find_display (dpy);
 
     if (XextHasExtension(info)) {
-	*event_basep = info->codes->first_event;
-	*error_basep = info->codes->first_error;
-	return True;
+        *event_basep = info->codes->first_event;
+        *error_basep = info->codes->first_error;
+        return True;
     } else {
-	return False;
+        return False;
     }
 }
 
 
 Status XPanoramiXQueryVersion(
     Display *dpy,
-    int	    *major_versionp, 
+    int     *major_versionp,
     int *minor_versionp
 )
 {
     XExtDisplayInfo *info = find_display (dpy);
-    xPanoramiXQueryVersionReply	    rep;
+    xPanoramiXQueryVersionReply     rep;
     register xPanoramiXQueryVersionReq  *req;
 
     PanoramiXCheckExtension (dpy, info, 0);
@@ -145,9 +145,9 @@ Status XPanoramiXQueryVersion(
     req->clientMajor = PANORAMIX_MAJOR_VERSION;
     req->clientMinor = PANORAMIX_MINOR_VERSION;
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return 0;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return 0;
     }
     *major_versionp = rep.majorVersion;
     *minor_versionp = rep.minorVersion;
@@ -158,18 +158,18 @@ Status XPanoramiXQueryVersion(
 
 XPanoramiXInfo *XPanoramiXAllocInfo(void)
 {
-	return (XPanoramiXInfo *) Xmalloc (sizeof (XPanoramiXInfo));
+        return (XPanoramiXInfo *) Xmalloc (sizeof (XPanoramiXInfo));
 }
 
 Status XPanoramiXGetState (
-    Display		*dpy,
-    Drawable		drawable,
-    XPanoramiXInfo	*panoramiX_info
+    Display             *dpy,
+    Drawable            drawable,
+    XPanoramiXInfo      *panoramiX_info
 )
 {
-    XExtDisplayInfo			*info = find_display (dpy);
-    xPanoramiXGetStateReply	rep;
-    register xPanoramiXGetStateReq	*req;
+    XExtDisplayInfo                     *info = find_display (dpy);
+    xPanoramiXGetStateReply     rep;
+    register xPanoramiXGetStateReq      *req;
 
     PanoramiXCheckExtension (dpy, info, 0);
 
@@ -179,9 +179,9 @@ Status XPanoramiXGetState (
     req->panoramiXReqType = X_PanoramiXGetState;
     req->window = drawable;
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return 0;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return 0;
     }
     UnlockDisplay (dpy);
     SyncHandle ();
@@ -191,14 +191,14 @@ Status XPanoramiXGetState (
 }
 
 Status XPanoramiXGetScreenCount (
-    Display		*dpy,
-    Drawable		drawable,
-    XPanoramiXInfo	*panoramiX_info
+    Display             *dpy,
+    Drawable            drawable,
+    XPanoramiXInfo      *panoramiX_info
 )
 {
-    XExtDisplayInfo			*info = find_display (dpy);
-    xPanoramiXGetScreenCountReply	rep;
-    register xPanoramiXGetScreenCountReq	*req;
+    XExtDisplayInfo                     *info = find_display (dpy);
+    xPanoramiXGetScreenCountReply       rep;
+    register xPanoramiXGetScreenCountReq        *req;
 
     PanoramiXCheckExtension (dpy, info, 0);
 
@@ -208,9 +208,9 @@ Status XPanoramiXGetScreenCount (
     req->panoramiXReqType = X_PanoramiXGetScreenCount;
     req->window = drawable;
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return 0;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return 0;
     }
     UnlockDisplay (dpy);
     SyncHandle ();
@@ -220,15 +220,15 @@ Status XPanoramiXGetScreenCount (
 }
 
 Status XPanoramiXGetScreenSize (
-    Display		*dpy,
-    Drawable		drawable,
-    int			screen_num,
-    XPanoramiXInfo	*panoramiX_info
+    Display             *dpy,
+    Drawable            drawable,
+    int                 screen_num,
+    XPanoramiXInfo      *panoramiX_info
 )
 {
-    XExtDisplayInfo			*info = find_display (dpy);
-    xPanoramiXGetScreenSizeReply	rep;
-    register xPanoramiXGetScreenSizeReq	*req;
+    XExtDisplayInfo                     *info = find_display (dpy);
+    xPanoramiXGetScreenSizeReply        rep;
+    register xPanoramiXGetScreenSizeReq *req;
 
     PanoramiXCheckExtension (dpy, info, 0);
 
@@ -237,11 +237,11 @@ Status XPanoramiXGetScreenSize (
     req->reqType = info->codes->major_opcode;
     req->panoramiXReqType = X_PanoramiXGetScreenSize;
     req->window = drawable;
-    req->screen = screen_num;			/* need to define */ 
+    req->screen = screen_num;                   /* need to define */
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return 0;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return 0;
     }
     UnlockDisplay (dpy);
     SyncHandle ();
@@ -278,21 +278,21 @@ Status XineramaQueryVersion(
 
 Bool XineramaIsActive(Display *dpy)
 {
-    xXineramaIsActiveReply	rep;
-    xXineramaIsActiveReq  	*req;
-    XExtDisplayInfo 		*info = find_display (dpy);
+    xXineramaIsActiveReply      rep;
+    xXineramaIsActiveReq        *req;
+    XExtDisplayInfo             *info = find_display (dpy);
 
     if(!XextHasExtension(info))
-	return False;  /* server doesn't even have the extension */
+        return False;  /* server doesn't even have the extension */
 
     LockDisplay (dpy);
     GetReq (XineramaIsActive, req);
     req->reqType = info->codes->major_opcode;
     req->panoramiXReqType = X_XineramaIsActive;
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return False;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return False;
     }
     UnlockDisplay (dpy);
     SyncHandle ();
@@ -301,16 +301,16 @@ Bool XineramaIsActive(Display *dpy)
 
 #include <stdio.h>
 
-XineramaScreenInfo * 
+XineramaScreenInfo *
 XineramaQueryScreens(
    Display *dpy,
    int     *number
 )
 {
-    XExtDisplayInfo		*info = find_display (dpy);
-    xXineramaQueryScreensReply	rep;
-    xXineramaQueryScreensReq	*req;
-    XineramaScreenInfo		*scrnInfo = NULL;
+    XExtDisplayInfo             *info = find_display (dpy);
+    xXineramaQueryScreensReply  rep;
+    xXineramaQueryScreensReq    *req;
+    XineramaScreenInfo          *scrnInfo = NULL;
 
     PanoramiXCheckExtension (dpy, info, 0);
 
@@ -319,28 +319,28 @@ XineramaQueryScreens(
     req->reqType = info->codes->major_opcode;
     req->panoramiXReqType = X_XineramaQueryScreens;
     if (!_XReply (dpy, (xReply *) &rep, 0, xFalse)) {
-	UnlockDisplay (dpy);
-	SyncHandle ();
-	return NULL;
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return NULL;
     }
 
     if(rep.number) {
-	if((scrnInfo = Xmalloc(sizeof(XineramaScreenInfo) * rep.number))) {
-	    xXineramaScreenInfo scratch;
-	    CARD32 i;
+        if((scrnInfo = Xmalloc(sizeof(XineramaScreenInfo) * rep.number))) {
+            xXineramaScreenInfo scratch;
+            CARD32 i;
 
-	    for(i = 0; i < rep.number; i++) {
-		_XRead(dpy, (char*)(&scratch), sz_XineramaScreenInfo);
-		scrnInfo[i].screen_number = i;
-		scrnInfo[i].x_org 	  = scratch.x_org;
-		scrnInfo[i].y_org 	  = scratch.y_org;
-		scrnInfo[i].width 	  = scratch.width;
-		scrnInfo[i].height 	  = scratch.height;
-	    }
+            for(i = 0; i < rep.number; i++) {
+                _XRead(dpy, (char*)(&scratch), sz_XineramaScreenInfo);
+                scrnInfo[i].screen_number = i;
+                scrnInfo[i].x_org         = scratch.x_org;
+                scrnInfo[i].y_org         = scratch.y_org;
+                scrnInfo[i].width         = scratch.width;
+                scrnInfo[i].height        = scratch.height;
+            }
 
-	    *number = rep.number;
-	} else
-	    _XEatData(dpy, rep.length << 2);
+            *number = rep.number;
+        } else
+            _XEatData(dpy, rep.length << 2);
     }
 
     UnlockDisplay (dpy);

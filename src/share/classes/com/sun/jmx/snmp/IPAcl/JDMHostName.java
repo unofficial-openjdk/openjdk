@@ -50,13 +50,13 @@ class JDMHostName extends Host {
   public static Node jjtCreate(Parser p, int id) {
       return new JDMHostName(p, id);
   }
-  
+
   protected String getHname() {
-	return name.toString();
+        return name.toString();
   }
-  
-  protected PrincipalImpl createAssociatedPrincipal() 
-    throws UnknownHostException { 
+
+  protected PrincipalImpl createAssociatedPrincipal()
+    throws UnknownHostException {
       return new PrincipalImpl(name.toString());
   }
 }

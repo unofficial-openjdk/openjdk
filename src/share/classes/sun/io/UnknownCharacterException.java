@@ -46,7 +46,7 @@ public class UnknownCharacterException
      * A detail message is a String that describes this particular exception.
      */
     public UnknownCharacterException() {
-	super();
+        super();
     }
 
     /**
@@ -55,6 +55,6 @@ public class UnknownCharacterException
      * @param s the String containing a detail message
      */
     public UnknownCharacterException(String s) {
-	super(s);
+        super(s);
     }
 }

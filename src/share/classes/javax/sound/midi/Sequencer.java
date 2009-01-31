@@ -64,7 +64,6 @@ import java.io.IOException;
  * @see Transmitter
  * @see MidiDevice
  *
- * @version %I%, %E%
  * @author Kara Kytle
  * @author Florian Bomers
  */
@@ -773,97 +772,97 @@ public interface Sequencer extends MidiDevice {
      */
     public static class SyncMode {
 
-	/**
-	 * Synchronization mode name.
-	 */
-	private String name;
+        /**
+         * Synchronization mode name.
+         */
+        private String name;
 
-	/**
-	 * Constructs a synchronization mode.
-	 * @param name name of the synchronization mode
-	 */
-	protected SyncMode(String name) {
+        /**
+         * Constructs a synchronization mode.
+         * @param name name of the synchronization mode
+         */
+        protected SyncMode(String name) {
 
-	    this.name = name;
-	}
-
-
-	/**
-	 * Determines whether two objects are equal.
-	 * Returns <code>true</code> if the objects are identical
-	 * @param obj the reference object with which to compare
-	 * @return <code>true</code> if this object is the same as the
-	 * <code>obj</code> argument, <code>false</code> otherwise
-	 */
-	public final boolean equals(Object obj) {
-
-	    return super.equals(obj);
-	}
+            this.name = name;
+        }
 
 
-	/**
-	 * Finalizes the hashcode method.
-	 */
-	public final int hashCode() {
+        /**
+         * Determines whether two objects are equal.
+         * Returns <code>true</code> if the objects are identical
+         * @param obj the reference object with which to compare
+         * @return <code>true</code> if this object is the same as the
+         * <code>obj</code> argument, <code>false</code> otherwise
+         */
+        public final boolean equals(Object obj) {
 
-	    return super.hashCode();
-	}
-
-
-	/**
-	 * Provides this synchronization mode's name as the string
-	 * representation of the mode.
-	 * @return the name of this synchronization mode
-	 */
-	public final String toString() {
-
-	    return name;
-	}
+            return super.equals(obj);
+        }
 
 
-	/**
-	 * A master synchronization mode that makes the sequencer get
-	 * its timing information from its internal clock.  This is not
-	 * a legal slave sync mode.
-	 */
-	public static final SyncMode INTERNAL_CLOCK		= new SyncMode("Internal Clock");
+        /**
+         * Finalizes the hashcode method.
+         */
+        public final int hashCode() {
+
+            return super.hashCode();
+        }
 
 
-	/**
-	 * A master or slave synchronization mode that specifies the
-	 * use of MIDI clock
-	 * messages.  If this mode is used as the master sync mode,
-	 * the sequencer gets its timing information from system real-time
-	 * MIDI clock messages.  This mode only applies as the master sync
-	 * mode for sequencers that are also MIDI receivers.  If this is the
-	 * slave sync mode, the sequencer sends system real-time MIDI clock
-	 * messages to its receiver.  MIDI clock messages are sent at a rate
-	 * of 24 per quarter note.
-	 */
-	public static final SyncMode MIDI_SYNC			= new SyncMode("MIDI Sync");
+        /**
+         * Provides this synchronization mode's name as the string
+         * representation of the mode.
+         * @return the name of this synchronization mode
+         */
+        public final String toString() {
+
+            return name;
+        }
 
 
-	/**
-	 * A master or slave synchronization mode that specifies the
-	 * use of MIDI Time Code.
-	 * If this mode is used as the master sync mode,
-	 * the sequencer gets its timing information from MIDI Time Code
-	 * messages.  This mode only applies as the master sync
-	 * mode to sequencers that are also MIDI receivers.  If this
-	 * mode is used as the
-	 * slave sync mode, the sequencer sends MIDI Time Code
-	 * messages to its receiver.  (See the MIDI 1.0 Detailed
-	 * Specification for a description of MIDI Time Code.)
-	 */
-	public static final SyncMode MIDI_TIME_CODE		= new SyncMode("MIDI Time Code");
+        /**
+         * A master synchronization mode that makes the sequencer get
+         * its timing information from its internal clock.  This is not
+         * a legal slave sync mode.
+         */
+        public static final SyncMode INTERNAL_CLOCK             = new SyncMode("Internal Clock");
 
 
-	/**
-	 * A slave synchronization mode indicating that no timing information
-	 * should be sent to the receiver.  This is not a legal master sync
-	 * mode.
-	 */
-	public static final SyncMode NO_SYNC				= new SyncMode("No Timing");
+        /**
+         * A master or slave synchronization mode that specifies the
+         * use of MIDI clock
+         * messages.  If this mode is used as the master sync mode,
+         * the sequencer gets its timing information from system real-time
+         * MIDI clock messages.  This mode only applies as the master sync
+         * mode for sequencers that are also MIDI receivers.  If this is the
+         * slave sync mode, the sequencer sends system real-time MIDI clock
+         * messages to its receiver.  MIDI clock messages are sent at a rate
+         * of 24 per quarter note.
+         */
+        public static final SyncMode MIDI_SYNC                  = new SyncMode("MIDI Sync");
+
+
+        /**
+         * A master or slave synchronization mode that specifies the
+         * use of MIDI Time Code.
+         * If this mode is used as the master sync mode,
+         * the sequencer gets its timing information from MIDI Time Code
+         * messages.  This mode only applies as the master sync
+         * mode to sequencers that are also MIDI receivers.  If this
+         * mode is used as the
+         * slave sync mode, the sequencer sends MIDI Time Code
+         * messages to its receiver.  (See the MIDI 1.0 Detailed
+         * Specification for a description of MIDI Time Code.)
+         */
+        public static final SyncMode MIDI_TIME_CODE             = new SyncMode("MIDI Time Code");
+
+
+        /**
+         * A slave synchronization mode indicating that no timing information
+         * should be sent to the receiver.  This is not a legal master sync
+         * mode.
+         */
+        public static final SyncMode NO_SYNC                            = new SyncMode("No Timing");
 
     } // class SyncMode
 }

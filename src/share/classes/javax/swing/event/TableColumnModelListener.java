@@ -33,7 +33,6 @@ import java.util.EventListener;
  * TableColumnModelListener defines the interface for an object that listens
  * to changes in a TableColumnModel.
  *
- * @version %I% %G%
  * @author Alan Chung
  * @see TableColumnModelEvent
  */
@@ -58,4 +57,3 @@ public interface TableColumnModelListener extends java.util.EventListener
      */
     public void columnSelectionChanged(ListSelectionEvent e);
 }
-

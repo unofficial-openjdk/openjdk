@@ -92,7 +92,7 @@ Java_sun_awt_motif_MTextFieldPeer_initIDs
       (*env)->GetFieldID(env, cls, "firstChangeSkipped", "Z");
 }
 
-static void 
+static void
 echoChar(Widget text_w, XtPointer unused, XmTextVerifyCallbackStruct * cbs)
 {
     size_t len;
@@ -117,8 +117,8 @@ echoChar(Widget text_w, XtPointer unused, XmTextVerifyCallbackStruct * cbs)
       (*env)->GetLongField(env,globalRef,mComponentPeerIDs.pData);
 
     ret = XFindContext(XtDisplay(text_w), (XID)text_w, tdata->echoContextID,
-		       (XPointer *)&dp);
-    if ((ret != 0) || (dp == NULL)) { 
+                       (XPointer *)&dp);
+    if ((ret != 0) || (dp == NULL)) {
         /* no context found or DPos is NULL - shouldn't happen */
         return;
     }
@@ -161,7 +161,7 @@ echoChar(Widget text_w, XtPointer unused, XmTextVerifyCallbackStruct * cbs)
         cbs->text->ptr[i] = (char) c;
         len += numbytes;
     }
-    cbs->text->length = i; 
+    cbs->text->length = i;
 }
 
 /*
@@ -171,7 +171,7 @@ echoChar(Widget text_w, XtPointer unused, XmTextVerifyCallbackStruct * cbs)
  *
  * client_data is MTextFieldPeer instance
  */
-void 
+void
 Text_handlePaste(Widget w, XtPointer client_data, XEvent * event, Boolean * cont)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -201,8 +201,8 @@ Text_handlePaste(Widget w, XtPointer client_data, XEvent * event, Boolean * cont
         case osfXK_Paste:
             /* If we own the selection, then paste the data directly */
             if (awtJNI_isSelectionOwner(env, "CLIPBOARD")) {
-                JNU_CallMethodByName(env, NULL, (jobject) client_data, 
-				     "pasteFromClipboard", "()V");
+                JNU_CallMethodByName(env, NULL, (jobject) client_data,
+                                     "pasteFromClipboard", "()V");
                 if ((*env)->ExceptionOccurred(env)) {
                     (*env)->ExceptionDescribe(env);
                     (*env)->ExceptionClear(env);
@@ -235,15 +235,15 @@ TextField_valueChanged(Widget w, XtPointer client_data, XtPointer call_data)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jboolean skipped;
 
-    skipped = (*env)->GetBooleanField(env, (jobject) client_data, 
+    skipped = (*env)->GetBooleanField(env, (jobject) client_data,
                                       mTextFieldPeerIDs.firstChangeSkipped);
     if (!(*env)->ExceptionOccurred(env)) {
         if (skipped == JNI_FALSE) {
-            (*env)->SetBooleanField(env, (jobject) client_data, 
-                                    mTextFieldPeerIDs.firstChangeSkipped, 
+            (*env)->SetBooleanField(env, (jobject) client_data,
+                                    mTextFieldPeerIDs.firstChangeSkipped,
                                     JNI_TRUE);
         } else {
-            JNU_CallMethodByName(env, NULL, (jobject) client_data, 
+            JNU_CallMethodByName(env, NULL, (jobject) client_data,
                                  "valueChanged", "()V");
         }
     }
@@ -279,7 +279,7 @@ TextField_action(Widget w, XtPointer client_data, XmAnyCallbackStruct * s)
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pCreate
-  (JNIEnv *env, jobject this, jobject parent) 
+  (JNIEnv *env, jobject this, jobject parent)
 {
     struct ComponentData *wdata;
     struct TextFieldData *tdata;
@@ -290,14 +290,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pCreate
     AWT_LOCK();
 
     adata = copyGraphicsConfigToPeer(env, this);
-    
+
     if (JNU_IsNull(env, parent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return;
     }
     wdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
     if (wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -312,17 +312,17 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pCreate
     JNU_SetLongFieldFromPtr(env,this,mComponentPeerIDs.pData,tdata);
 
     tdata->comp.widget = XtVaCreateManagedWidget("textfield",
-						 xmTextFieldWidgetClass,
-						 wdata->widget,
-						 XmNrecomputeSize, False,
-						 XmNhighlightThickness, 1,
-						 XmNshadowThickness, 2,
-						 XmNuserData, (XtPointer) globalRef,
+                                                 xmTextFieldWidgetClass,
+                                                 wdata->widget,
+                                                 XmNrecomputeSize, False,
+                                                 XmNhighlightThickness, 1,
+                                                 XmNshadowThickness, 2,
+                                                 XmNuserData, (XtPointer) globalRef,
                                                  XmNscreen,
                                                  ScreenOfDisplay(awt_display,
                                                    adata->awt_visInfo.screen),
-						 XmNfontList, getMotifFontList(),
-						 NULL);
+                                                 XmNfontList, getMotifFontList(),
+                                                 NULL);
     tdata->echoContextIDInit = FALSE;
 
     XtSetMappedWhenManaged(tdata->comp.widget, False);
@@ -354,13 +354,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pCreate
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pSetEditable
-  (JNIEnv *env, jobject this, jboolean editable) 
+  (JNIEnv *env, jobject this, jboolean editable)
 {
     struct TextFieldData *tdata;
 
     AWT_LOCK();
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -380,14 +380,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_pSetEditable
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_select
-  (JNIEnv *env, jobject this, jint start, jint end) 
+  (JNIEnv *env, jobject this, jint start, jint end)
 {
     struct TextFieldData *tdata;
 
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -404,7 +404,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_select
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionStart
-  (JNIEnv *env, jobject this) 
+  (JNIEnv *env, jobject this)
 {
     struct TextFieldData *tdata;
     XmTextPosition start, end, pos;
@@ -412,7 +412,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionStart
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -436,7 +436,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionStart
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionEnd
-  (JNIEnv *env, jobject this) 
+  (JNIEnv *env, jobject this)
 {
     struct TextFieldData *tdata;
     XmTextPosition start, end, pos;
@@ -444,15 +444,15 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionEnd
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return 0;
     }
-    if (XmTextGetSelectionPosition(tdata->comp.widget, &start, &end) && 
-                                               	 (start != end)) {
+    if (XmTextGetSelectionPosition(tdata->comp.widget, &start, &end) &&
+                                                 (start != end)) {
         pos = end;
     } else {
         pos = XmTextGetInsertionPosition(tdata->comp.widget);
@@ -468,7 +468,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getSelectionEnd
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setText
-  (JNIEnv *env, jobject this, jstring l) 
+  (JNIEnv *env, jobject this, jstring l)
 {
     struct TextFieldData *tdata;
     char *cl;
@@ -477,7 +477,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setText
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -500,8 +500,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setText
         XtVaSetValues(tdata->comp.widget,
                       XmNvalue, "", NULL);
         XmTextFieldInsert(tdata->comp.widget,0,cl);
-	XmTextSetInsertionPosition(tdata->comp.widget,
-				   (XmTextPosition) strlen(cl));
+        XmTextSetInsertionPosition(tdata->comp.widget,
+                                   (XmTextPosition) strlen(cl));
     }
     else {
         XtVaSetValues(tdata->comp.widget,
@@ -528,7 +528,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setText
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_insertReplaceText
-  (JNIEnv *env, jobject this, jstring l) 
+  (JNIEnv *env, jobject this, jstring l)
 {
     struct TextFieldData *tdata;
     char *cl;
@@ -537,10 +537,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_insertReplaceText
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-	AWT_UNLOCK();
+        AWT_UNLOCK();
         return;
     }
 
@@ -571,7 +571,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_insertReplaceText
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_preDispose
-  (JNIEnv *env, jobject this) 
+  (JNIEnv *env, jobject this)
 {
     struct TextFieldData *tdata;
     struct DPos *dp;
@@ -581,7 +581,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_preDispose
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -595,16 +595,16 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_preDispose
                            tdata->echoContextID, (XPointer *)&dp);
         if ((ret == 0) && dp != NULL) {
 
-	    /* Remove the X context associated with this textfield's
-	     * echo character. BugId #4225734
-	     */
-	    XDeleteContext(XtDisplay(tdata->comp.widget),
-			   (XID)(tdata->comp.widget),
-			   tdata->echoContextID);
+            /* Remove the X context associated with this textfield's
+             * echo character. BugId #4225734
+             */
+            XDeleteContext(XtDisplay(tdata->comp.widget),
+                           (XID)(tdata->comp.widget),
+                           tdata->echoContextID);
 
-	    tdata->echoContextIDInit = FALSE;
+            tdata->echoContextIDInit = FALSE;
 
-	    /* Free up the space allocated for the echo character data. */
+            /* Free up the space allocated for the echo character data. */
             if (dp->data) {
                 free(dp->data);
             }
@@ -621,7 +621,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_preDispose
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_sun_awt_motif_MTextFieldPeer_getText
-  (JNIEnv *env, jobject this) 
+  (JNIEnv *env, jobject this)
 {
     struct TextFieldData *tdata;
     char *val;
@@ -632,7 +632,7 @@ JNIEXPORT jstring JNICALL Java_sun_awt_motif_MTextFieldPeer_getText
 
     AWT_LOCK();
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -668,19 +668,19 @@ JNIEXPORT jstring JNICALL Java_sun_awt_motif_MTextFieldPeer_getText
  * Signature: (C)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setEchoChar
-  (JNIEnv *env, jobject this, jchar c) 
+  (JNIEnv *env, jobject this, jchar c)
 {
     char *val;
     char *cval;
     struct TextFieldData *tdata;
     struct DPos *dp;
-    int32_t i;	
+    int32_t i;
     size_t len;
     int32_t ret;
 
     AWT_LOCK();
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -711,7 +711,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setEchoChar
         if (ret == 0 && dp != NULL) {
 
             /* Remove the X context associated with echo character. */
-            XDeleteContext(XtDisplay(tdata->comp.widget), 
+            XDeleteContext(XtDisplay(tdata->comp.widget),
                            (XID)(tdata->comp.widget),
                            tdata->echoContextID);
 
@@ -790,7 +790,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setEchoChar
  * Signature: (Ljava/awt/Font;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setFont
-  (JNIEnv *env, jobject this, jobject f) 
+  (JNIEnv *env, jobject this, jobject f)
 {
     struct TextFieldData *tdata;
     struct FontData *fdata;
@@ -811,7 +811,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setFont
         return;
     }
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -826,13 +826,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setFont
                                               XmFONT_IS_FONTSET,
                                               (XtPointer) (fdata->xfs));
             fontlist = XmFontListAppendEntry(NULL, fontentry);
-	    /*
-	     * Some versions of motif have a bug in 
-	     * XmFontListEntryFree() which causes it to free more than it
-	     * should.  Use XtFree() instead.  See O'Reilly's
-	     * Motif Reference Manual for more information.
-	     */
-	    XmFontListEntryFree(&fontentry);
+            /*
+             * Some versions of motif have a bug in
+             * XmFontListEntryFree() which causes it to free more than it
+             * should.  Use XtFree() instead.  See O'Reilly's
+             * Motif Reference Manual for more information.
+             */
+            XmFontListEntryFree(&fontentry);
         } else {
             fontlist = XmFontListCreate(fdata->xfont, "labelFont");
         }
@@ -855,14 +855,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setFont
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextFieldPeer_setCaretPosition
-  (JNIEnv *env, jobject this, jint pos) 
+  (JNIEnv *env, jobject this, jint pos)
 {
     struct TextFieldData *tdata;
 
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -888,7 +888,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextFieldPeer_getCaretPosition
     AWT_LOCK();
 
     tdata = (struct TextFieldData *)
-	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -918,7 +918,7 @@ Java_sun_awt_motif_MTextFieldPeer_getIndexAtPoint(JNIEnv *env, jobject self,
     AWT_LOCK();
 
     tdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env,self,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,self,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -955,7 +955,7 @@ Java_sun_awt_motif_MTextFieldPeer_getCharacterBounds(JNIEnv *env, jobject self, 
     AWT_LOCK();
 
     tdata = (struct ComponentData *)
-	JNU_GetLongFieldAsPtr(env,self,mComponentPeerIDs.pData);
+        JNU_GetLongFieldAsPtr(env,self,mComponentPeerIDs.pData);
 
     if (tdata == NULL || tdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -987,4 +987,3 @@ Java_sun_awt_motif_MTextFieldPeer_getCharacterBounds(JNIEnv *env, jobject self, 
     return rect;
 }
 */
-

@@ -40,74 +40,74 @@ package javax.security.auth;
  * <p> The possible target names for an Authentication Permission are:
  *
  * <pre>
- *	doAs -			allow the caller to invoke the
- *				<code>Subject.doAs</code> methods.
+ *      doAs -                  allow the caller to invoke the
+ *                              <code>Subject.doAs</code> methods.
  *
- *	doAsPrivileged -	allow the caller to invoke the
- *				<code>Subject.doAsPrivileged</code> methods.
+ *      doAsPrivileged -        allow the caller to invoke the
+ *                              <code>Subject.doAsPrivileged</code> methods.
  *
- *	getSubject -		allow for the retrieval of the
- *				Subject(s) associated with the
- *				current Thread.
+ *      getSubject -            allow for the retrieval of the
+ *                              Subject(s) associated with the
+ *                              current Thread.
  *
- *	getSubjectFromDomainCombiner -	allow for the retrieval of the
- *				Subject associated with the
- *				a <code>SubjectDomainCombiner</code>.
+ *      getSubjectFromDomainCombiner -  allow for the retrieval of the
+ *                              Subject associated with the
+ *                              a <code>SubjectDomainCombiner</code>.
  *
- *	setReadOnly -		allow the caller to set a Subject
- *				to be read-only.
+ *      setReadOnly -           allow the caller to set a Subject
+ *                              to be read-only.
  *
- *	modifyPrincipals -	allow the caller to modify the <code>Set</code>
- *				of Principals associated with a
- *				<code>Subject</code>
+ *      modifyPrincipals -      allow the caller to modify the <code>Set</code>
+ *                              of Principals associated with a
+ *                              <code>Subject</code>
  *
- *	modifyPublicCredentials - allow the caller to modify the
- *				<code>Set</code> of public credentials
- *				associated with a <code>Subject</code>
+ *      modifyPublicCredentials - allow the caller to modify the
+ *                              <code>Set</code> of public credentials
+ *                              associated with a <code>Subject</code>
  *
- *	modifyPrivateCredentials - allow the caller to modify the
- *				<code>Set</code> of private credentials
- *				associated with a <code>Subject</code>
+ *      modifyPrivateCredentials - allow the caller to modify the
+ *                              <code>Set</code> of private credentials
+ *                              associated with a <code>Subject</code>
  *
- *	refreshCredential -	allow code to invoke the <code>refresh</code>
- *				method on a credential which implements
- *				the <code>Refreshable</code> interface.
+ *      refreshCredential -     allow code to invoke the <code>refresh</code>
+ *                              method on a credential which implements
+ *                              the <code>Refreshable</code> interface.
  *
- *	destroyCredential -	allow code to invoke the <code>destroy</code>
- *				method on a credential <code>object</code>
- *				which implements the <code>Destroyable</code>
- *				interface.
+ *      destroyCredential -     allow code to invoke the <code>destroy</code>
+ *                              method on a credential <code>object</code>
+ *                              which implements the <code>Destroyable</code>
+ *                              interface.
  *
- *	createLoginContext.{name} -  allow code to instantiate a
- *				<code>LoginContext</code> with the
- *				specified <i>name</i>.  <i>name</i>
- *				is used as the index into the installed login
- *				<code>Configuration</code>
- *				(that returned by
- *				<code>Configuration.getConfiguration()</code>).
- *				<i>name</i> can be wildcarded (set to '*')
- *				to allow for any name.
+ *      createLoginContext.{name} -  allow code to instantiate a
+ *                              <code>LoginContext</code> with the
+ *                              specified <i>name</i>.  <i>name</i>
+ *                              is used as the index into the installed login
+ *                              <code>Configuration</code>
+ *                              (that returned by
+ *                              <code>Configuration.getConfiguration()</code>).
+ *                              <i>name</i> can be wildcarded (set to '*')
+ *                              to allow for any name.
  *
- *	getLoginConfiguration - allow for the retrieval of the system-wide
- *				login Configuration.
+ *      getLoginConfiguration - allow for the retrieval of the system-wide
+ *                              login Configuration.
  *
- *	createLoginConfiguration.{type} - allow code to obtain a Configuration
- *				object via
- *				<code>Configuration.getInstance</code>.
+ *      createLoginConfiguration.{type} - allow code to obtain a Configuration
+ *                              object via
+ *                              <code>Configuration.getInstance</code>.
  *
- *	setLoginConfiguration - allow for the setting of the system-wide
- *				login Configuration.
+ *      setLoginConfiguration - allow for the setting of the system-wide
+ *                              login Configuration.
  *
- *	refreshLoginConfiguration - allow for the refreshing of the system-wide
- *				login Configuration.
+ *      refreshLoginConfiguration - allow for the refreshing of the system-wide
+ *                              login Configuration.
  * </pre>
  *
  * <p> The following target name has been deprecated in favor of
  * <code>createLoginContext.{name}</code>.
  *
  * <pre>
- *	createLoginContext -	allow code to instantiate a
- *				<code>LoginContext</code>.
+ *      createLoginContext -    allow code to instantiate a
+ *                              <code>LoginContext</code>.
  * </pre>
  *
  * <p> <code>javax.security.auth.Policy</code> has been
@@ -115,17 +115,16 @@ package javax.security.auth;
  * Therefore, the following target names have also been deprecated:
  *
  * <pre>
- *	getPolicy -		allow the caller to retrieve the system-wide
- *				Subject-based access control policy.
+ *      getPolicy -             allow the caller to retrieve the system-wide
+ *                              Subject-based access control policy.
  *
- *	setPolicy -		allow the caller to set the system-wide
- *				Subject-based access control policy.
+ *      setPolicy -             allow the caller to set the system-wide
+ *                              Subject-based access control policy.
  *
- *	refreshPolicy -		allow the caller to refresh the system-wide
- *				Subject-based access control policy.
+ *      refreshPolicy -         allow the caller to refresh the system-wide
+ *                              Subject-based access control policy.
  * </pre>
  *
- * @version %I%, %G%
  */
 public final class AuthPermission extends
 java.security.BasicPermission {
@@ -144,10 +143,10 @@ java.security.BasicPermission {
      * @throws IllegalArgumentException if <code>name</code> is empty.
      */
     public AuthPermission(String name) {
-	// for backwards compatibility --
-	// createLoginContext is deprecated in favor of createLoginContext.*
-	super("createLoginContext".equals(name) ?
-		"createLoginContext.*" : name);
+        // for backwards compatibility --
+        // createLoginContext is deprecated in favor of createLoginContext.*
+        super("createLoginContext".equals(name) ?
+                "createLoginContext.*" : name);
     }
 
     /**
@@ -165,9 +164,9 @@ java.security.BasicPermission {
      * @throws IllegalArgumentException if <code>name</code> is empty.
      */
     public AuthPermission(String name, String actions) {
-	// for backwards compatibility --
-	// createLoginContext is deprecated in favor of createLoginContext.*
-	super("createLoginContext".equals(name) ?
-		"createLoginContext.*" : name, actions);
+        // for backwards compatibility --
+        // createLoginContext is deprecated in favor of createLoginContext.*
+        super("createLoginContext".equals(name) ?
+                "createLoginContext.*" : name, actions);
     }
 }

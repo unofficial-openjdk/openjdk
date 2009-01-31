@@ -33,7 +33,6 @@ package com.sun.tools.example.debug.tty;
  * <li> com.sun.tools.example.debug.tty
  * </ol>
  *
- * @version %W% %E%
  */
 public class TTYResources extends java.util.ListResourceBundle {
 
@@ -285,12 +284,12 @@ public class TTYResources extends java.util.ListResourceBundle {
         {"Threadgroup name not specified.", "Threadgroup name not specified."},
         {"Threads must be suspended", "Threads must be suspended"},
         {"trace method exit in effect for", "trace method exit in effect for {0}"},
-        {"trace method exits in effect", "trace method exits in effect"}, 
-        {"trace methods in effect", "trace methods in effect"}, 
+        {"trace method exits in effect", "trace method exits in effect"},
+        {"trace methods in effect", "trace methods in effect"},
         {"trace go method exit in effect for", "trace go method exit in effect for {0}"},
-        {"trace go method exits in effect", "trace go method exits in effect"}, 
-        {"trace go methods in effect", "trace go methods in effect"}, 
-        {"trace not in effect", "trace not in effect"}, 
+        {"trace go method exits in effect", "trace go method exits in effect"},
+        {"trace go methods in effect", "trace go methods in effect"},
+        {"trace not in effect", "trace not in effect"},
         {"Unable to attach to target VM.", "Unable to attach to target VM."},
         {"Unable to display process output:", "Unable to display process output: {0}"},
         {"Unable to launch target VM.", "Unable to launch target VM."},
@@ -364,7 +363,7 @@ public class TTYResources extends java.util.ListResourceBundle {
              "unwatch [access|all] <class id>.<field name>\n" +
              "                          -- discontinue watching access/modifications to a field\n" +
              "trace [go] methods [thread]\n" +
-             "                          -- trace method entries and exits.\n" +       
+             "                          -- trace method entries and exits.\n" +
              "                          -- All threads are suspended unless 'go' is specified\n" +
              "trace [go] method exit | exits [thread]\n" +
              "                          -- trace the current method's exit, or all methods' exits\n" +

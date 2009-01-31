@@ -45,7 +45,6 @@ typedef BOOL (WINAPI *CryptReleaseContextType)(HCRYPTPROV, DWORD);
  * Some early versions of Windows 95 do not support the required functions.
  * Use runtime linking to avoid problems.
  *
- * @version %I%, %G%
  */
 JNIEXPORT jboolean JNICALL Java_sun_security_provider_NativeSeedGenerator_nativeGenerateSeed
   (JNIEnv *env, jclass clazz, jbyteArray randArray)
@@ -62,7 +61,7 @@ JNIEXPORT jboolean JNICALL Java_sun_security_provider_NativeSeedGenerator_native
 
     lib = LoadLibrary("ADVAPI32.DLL");
     if (lib == NULL) {
-	return result;
+        return result;
     }
 
     acquireContext = (CryptAcquireContextType)GetProcAddress(lib, "CryptAcquireContextA");
@@ -70,23 +69,23 @@ JNIEXPORT jboolean JNICALL Java_sun_security_provider_NativeSeedGenerator_native
     releaseContext = (CryptReleaseContextType)GetProcAddress(lib, "CryptReleaseContext");
 
     if (acquireContext == NULL || genRandom == NULL || releaseContext == NULL) {
-	FreeLibrary(lib);
-	return result;
+        FreeLibrary(lib);
+        return result;
     }
 
     if (acquireContext(&hCryptProv, "J2SE", NULL, PROV_RSA_FULL, 0) == FALSE) {
-	/* If CSP context hasn't been created, create one. */
-	if (acquireContext(&hCryptProv, "J2SE", NULL, PROV_RSA_FULL,
-		CRYPT_NEWKEYSET) == FALSE) {
-	    FreeLibrary(lib);
-	    return result;
-	}
+        /* If CSP context hasn't been created, create one. */
+        if (acquireContext(&hCryptProv, "J2SE", NULL, PROV_RSA_FULL,
+                CRYPT_NEWKEYSET) == FALSE) {
+            FreeLibrary(lib);
+            return result;
+        }
     }
 
     numBytes = (*env)->GetArrayLength(env, randArray);
     randBytes = (*env)->GetByteArrayElements(env, randArray, NULL);
     if (genRandom(hCryptProv, numBytes, randBytes)) {
-	result = JNI_TRUE;
+        result = JNI_TRUE;
     }
     (*env)->ReleaseByteArrayElements(env, randArray, randBytes, 0);
 

@@ -38,7 +38,6 @@ package javax.net.ssl;
  *
  * @see TrustManagerFactory
  * @since 1.4
- * @version %I%
  */
 public interface TrustManager {
 }

@@ -77,11 +77,11 @@ public class ExemptionMechanism {
      * @param mechanism the exemption mechanism
      */
     protected ExemptionMechanism(ExemptionMechanismSpi exmechSpi,
-				 Provider provider,
-				 String mechanism) {
-	this.exmechSpi = exmechSpi;
-	this.provider = provider;
-	this.mechanism = mechanism;
+                                 Provider provider,
+                                 String mechanism) {
+        this.exmechSpi = exmechSpi;
+        this.provider = provider;
+        this.mechanism = mechanism;
     }
 
     /**
@@ -96,7 +96,7 @@ public class ExemptionMechanism {
      * <code>ExemptionMechanism</code> object.
      */
     public final String getName() {
-	return this.mechanism;
+        return this.mechanism;
     }
 
     /**
@@ -123,20 +123,20 @@ public class ExemptionMechanism {
      * @return the new <code>ExemptionMechanism</code> object.
      *
      * @exception NullPointerException if <code>algorithm</code>
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if no Provider supports an
-     *		ExemptionMechanismSpi implementation for the
-     *		specified algorithm.
+     *          ExemptionMechanismSpi implementation for the
+     *          specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final ExemptionMechanism getInstance(String algorithm)
-	    throws NoSuchAlgorithmException {
-	Instance instance = JceSecurity.getInstance("ExemptionMechanism",
-		ExemptionMechanismSpi.class, algorithm);
-	return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
-		instance.provider, algorithm);
+            throws NoSuchAlgorithmException {
+        Instance instance = JceSecurity.getInstance("ExemptionMechanism",
+                ExemptionMechanismSpi.class, algorithm);
+        return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
+                instance.provider, algorithm);
     }
 
 
@@ -164,27 +164,27 @@ public class ExemptionMechanism {
      * @return the new <code>ExemptionMechanism</code> object.
      *
      * @exception NullPointerException if <code>algorithm</code>
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if an ExemptionMechanismSpi
-     *		implementation for the specified algorithm is not
-     *		available from the specified provider.
+     *          implementation for the specified algorithm is not
+     *          available from the specified provider.
      *
      * @exception NoSuchProviderException if the specified provider is not
-     *		registered in the security provider list.
+     *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null or empty.
+     *          is null or empty.
      *
      * @see java.security.Provider
      */
     public static final ExemptionMechanism getInstance(String algorithm,
-	    String provider) throws NoSuchAlgorithmException,
-	    NoSuchProviderException {
-	Instance instance = JceSecurity.getInstance("ExemptionMechanism",
-		ExemptionMechanismSpi.class, algorithm, provider);
-	return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
-		instance.provider, algorithm);
+            String provider) throws NoSuchAlgorithmException,
+            NoSuchProviderException {
+        Instance instance = JceSecurity.getInstance("ExemptionMechanism",
+                ExemptionMechanismSpi.class, algorithm, provider);
+        return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -208,23 +208,23 @@ public class ExemptionMechanism {
      * @return the new <code>ExemptionMechanism</code> object.
      *
      * @exception NullPointerException if <code>algorithm</code>
-     *		is null.
+     *          is null.
      *
      * @exception NoSuchAlgorithmException if an ExemptionMechanismSpi
-     *		implementation for the specified algorithm is not available
-     *		from the specified Provider object.
+     *          implementation for the specified algorithm is not available
+     *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *		is null.
+     *          is null.
      *
      * @see java.security.Provider
      */
     public static final ExemptionMechanism getInstance(String algorithm,
-	    Provider provider) throws NoSuchAlgorithmException {
-	Instance instance = JceSecurity.getInstance("ExemptionMechanism",
-		ExemptionMechanismSpi.class, algorithm, provider);
-	return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
-		instance.provider, algorithm);
+            Provider provider) throws NoSuchAlgorithmException {
+        Instance instance = JceSecurity.getInstance("ExemptionMechanism",
+                ExemptionMechanismSpi.class, algorithm, provider);
+        return new ExemptionMechanism((ExemptionMechanismSpi)instance.impl,
+                instance.provider, algorithm);
     }
 
     /**
@@ -233,7 +233,7 @@ public class ExemptionMechanism {
      * @return the provider of this <code>ExemptionMechanism</code> object.
      */
     public final Provider getProvider() {
-	return this.provider;
+        return this.provider;
     }
 
     /**
@@ -255,14 +255,14 @@ public class ExemptionMechanism {
      * by this exemption mechanism object.
      */
     public final boolean isCryptoAllowed(Key key)
-	    throws ExemptionMechanismException {
-	boolean ret = false;
-	if (done && (key != null)) {
-	    // Check if the key passed in is the same as the one
-	    // this exemption mechanism used.
-	    ret = keyStored.equals(key);
-	}
-	return ret;
+            throws ExemptionMechanismException {
+        boolean ret = false;
+        if (done && (key != null)) {
+            // Check if the key passed in is the same as the one
+            // this exemption mechanism used.
+            ret = keyStored.equals(key);
+        }
+        return ret;
      }
 
     /**
@@ -283,15 +283,15 @@ public class ExemptionMechanism {
      * wrong state (e.g., has not yet been initialized)
      */
     public final int getOutputSize(int inputLen) throws IllegalStateException {
-	if (!initialized) {
-	    throw new IllegalStateException(
-		"ExemptionMechanism not initialized");
-	}
-	if (inputLen < 0) {
-	    throw new IllegalArgumentException(
-		"Input size must be equal to " + "or greater than zero");
-	}
-	return exmechSpi.engineGetOutputSize(inputLen);
+        if (!initialized) {
+            throw new IllegalStateException(
+                "ExemptionMechanism not initialized");
+        }
+        if (inputLen < 0) {
+            throw new IllegalArgumentException(
+                "Input size must be equal to " + "or greater than zero");
+        }
+        return exmechSpi.engineGetOutputSize(inputLen);
     }
 
     /**
@@ -312,13 +312,13 @@ public class ExemptionMechanism {
      * process of initializing.
      */
     public final void init(Key key)
-	    throws InvalidKeyException, ExemptionMechanismException {
-	done = false;
-	initialized = false;
+            throws InvalidKeyException, ExemptionMechanismException {
+        done = false;
+        initialized = false;
 
-	keyStored = key;
-	exmechSpi.engineInit(key);
-	initialized = true;
+        keyStored = key;
+        exmechSpi.engineInit(key);
+        initialized = true;
     }
 
     /**
@@ -343,14 +343,14 @@ public class ExemptionMechanism {
      * process of initializing.
      */
     public final void init(Key key, AlgorithmParameterSpec params)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException,
-	    ExemptionMechanismException {
-	done = false;
-	initialized = false;
+            throws InvalidKeyException, InvalidAlgorithmParameterException,
+            ExemptionMechanismException {
+        done = false;
+        initialized = false;
 
-	keyStored = key;
-	exmechSpi.engineInit(key, params);
-	initialized = true;
+        keyStored = key;
+        exmechSpi.engineInit(key, params);
+        initialized = true;
     }
 
     /**
@@ -375,14 +375,14 @@ public class ExemptionMechanism {
      * process of initializing.
      */
     public final void init(Key key, AlgorithmParameters params)
-	    throws InvalidKeyException, InvalidAlgorithmParameterException,
-	    ExemptionMechanismException {
-	done = false;
-	initialized = false;
+            throws InvalidKeyException, InvalidAlgorithmParameterException,
+            ExemptionMechanismException {
+        done = false;
+        initialized = false;
 
-	keyStored = key;
-	exmechSpi.engineInit(key, params);
-	initialized = true;
+        keyStored = key;
+        exmechSpi.engineInit(key, params);
+        initialized = true;
     }
 
     /**
@@ -396,14 +396,14 @@ public class ExemptionMechanism {
      * process of generating.
      */
     public final byte[] genExemptionBlob() throws IllegalStateException,
-	    ExemptionMechanismException {
-	if (!initialized) {
-	    throw new IllegalStateException(
-		"ExemptionMechanism not initialized");
-	}
-	byte[] blob = exmechSpi.engineGenExemptionBlob();
-	done = true;
-	return blob;
+            ExemptionMechanismException {
+        if (!initialized) {
+            throw new IllegalStateException(
+                "ExemptionMechanism not initialized");
+        }
+        byte[] blob = exmechSpi.engineGenExemptionBlob();
+        done = true;
+        return blob;
     }
 
     /**
@@ -428,15 +428,15 @@ public class ExemptionMechanism {
      * process of generating.
      */
     public final int genExemptionBlob(byte[] output)
-	    throws IllegalStateException, ShortBufferException,
-	    ExemptionMechanismException {
-	if (!initialized) {
-	    throw new IllegalStateException
-	    ("ExemptionMechanism not initialized");
-	}
-	int n = exmechSpi.engineGenExemptionBlob(output, 0);
-	done = true;
-	return n;
+            throws IllegalStateException, ShortBufferException,
+            ExemptionMechanismException {
+        if (!initialized) {
+            throw new IllegalStateException
+            ("ExemptionMechanism not initialized");
+        }
+        int n = exmechSpi.engineGenExemptionBlob(output, 0);
+        done = true;
+        return n;
     }
 
     /**
@@ -464,15 +464,15 @@ public class ExemptionMechanism {
      * process of generating.
      */
     public final int genExemptionBlob(byte[] output, int outputOffset)
-	    throws IllegalStateException, ShortBufferException,
-	    ExemptionMechanismException {
-	if (!initialized) {
-	    throw new IllegalStateException
-	    ("ExemptionMechanism not initialized");
-	}
-	int n = exmechSpi.engineGenExemptionBlob(output, outputOffset);
-	done = true;
-	return n;
+            throws IllegalStateException, ShortBufferException,
+            ExemptionMechanismException {
+        if (!initialized) {
+            throw new IllegalStateException
+            ("ExemptionMechanism not initialized");
+        }
+        int n = exmechSpi.engineGenExemptionBlob(output, outputOffset);
+        done = true;
+        return n;
     }
 
     /**
@@ -480,7 +480,7 @@ public class ExemptionMechanism {
      * object will be wiped out when there are no more references to it.
      */
     protected void finalize() {
-	keyStored = null;
-	// Are there anything else we could do?
+        keyStored = null;
+        // Are there anything else we could do?
     }
 }

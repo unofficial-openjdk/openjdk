@@ -61,16 +61,16 @@ public class KeyManagerFactory {
      * if no such property exists.
      */
     public final static String getDefaultAlgorithm() {
-	String type;
-	type = AccessController.doPrivileged(new PrivilegedAction<String>() {
-	    public String run() {
-		return Security.getProperty("sun.ssl.keymanager.type");
-	    }
-	});
-	if (type == null) {
-	    type = "SunX509";
-	}
-	return type;
+        String type;
+        type = AccessController.doPrivileged(new PrivilegedAction<String>() {
+            public String run() {
+                return Security.getProperty("sun.ssl.keymanager.type");
+            }
+        });
+        if (type == null) {
+            type = "SunX509";
+        }
+        return type;
 
     }
 
@@ -82,10 +82,10 @@ public class KeyManagerFactory {
      * @param algorithm the algorithm
      */
     protected KeyManagerFactory(KeyManagerFactorySpi factorySpi,
-				Provider provider, String algorithm) {
-	this.factorySpi = factorySpi;
-	this.provider = provider;
-	this.algorithm = algorithm;
+                                Provider provider, String algorithm) {
+        this.factorySpi = factorySpi;
+        this.provider = provider;
+        this.algorithm = algorithm;
     }
 
     /**
@@ -98,7 +98,7 @@ public class KeyManagerFactory {
      * @return the algorithm name of this <code>KeyManagerFactory</code> object.
      */
     public final String getAlgorithm() {
-	return this.algorithm;
+        return this.algorithm;
     }
 
     /**
@@ -120,17 +120,17 @@ public class KeyManagerFactory {
      * packages that were searched.
      */
     public static final KeyManagerFactory getInstance(String algorithm)
-	throws NoSuchAlgorithmException
+        throws NoSuchAlgorithmException
     {
-	try {
-	    Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
-						(String) null);
-	    return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
-				    (Provider)objs[1],
-				    algorithm);
-	} catch (NoSuchProviderException e) {
-	    throw new NoSuchAlgorithmException(algorithm + " not found");
-	}
+        try {
+            Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
+                                                (String) null);
+            return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
+                                    (Provider)objs[1],
+                                    algorithm);
+        } catch (NoSuchProviderException e) {
+            throw new NoSuchAlgorithmException(algorithm + " not found");
+        }
     }
 
     /**
@@ -149,15 +149,15 @@ public class KeyManagerFactory {
      * been configured.
      */
     public static final KeyManagerFactory getInstance(String algorithm,
-						 String provider)
-	throws NoSuchAlgorithmException, NoSuchProviderException
+                                                 String provider)
+        throws NoSuchAlgorithmException, NoSuchProviderException
     {
-	if (provider == null || provider.length() == 0)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
-					    provider);
-	return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
-					(Provider)objs[1], algorithm);
+        if (provider == null || provider.length() == 0)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
+                                            provider);
+        return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
+                                        (Provider)objs[1], algorithm);
     }
 
     /**
@@ -174,15 +174,15 @@ public class KeyManagerFactory {
      * available from the specified provider.
      */
     public static final KeyManagerFactory getInstance(String algorithm,
-						 Provider provider)
-	throws NoSuchAlgorithmException
+                                                 Provider provider)
+        throws NoSuchAlgorithmException
     {
-	if (provider == null)
-	    throw new IllegalArgumentException("missing provider");
-	Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
-					    provider);
-	return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
-					(Provider)objs[1], algorithm);
+        if (provider == null)
+            throw new IllegalArgumentException("missing provider");
+        Object[] objs = SSLSecurity.getImpl(algorithm, "KeyManagerFactory",
+                                            provider);
+        return new KeyManagerFactory((KeyManagerFactorySpi)objs[0],
+                                        (Provider)objs[1], algorithm);
     }
 
     /**
@@ -191,7 +191,7 @@ public class KeyManagerFactory {
      * @return the provider of this <code>KeyManagerFactory</code> object
      */
     public final Provider getProvider() {
-	return this.provider;
+        return this.provider;
     }
 
 
@@ -204,9 +204,9 @@ public class KeyManagerFactory {
      * @param password the password for recovering keys
      */
     public void init(KeyStore ks, char[] password)
-	throws KeyStoreException, NoSuchAlgorithmException,
-	    UnrecoverableKeyException {
-	factorySpi.engineInit(ks, password);
+        throws KeyStoreException, NoSuchAlgorithmException,
+            UnrecoverableKeyException {
+        factorySpi.engineInit(ks, password);
     }
 
     /**
@@ -214,6 +214,6 @@ public class KeyManagerFactory {
      * @return the key managers
      */
     public KeyManager[] getKeyManagers() {
-	return factorySpi.engineGetKeyManagers();
+        return factorySpi.engineGetKeyManagers();
     }
 }

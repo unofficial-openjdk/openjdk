@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -49,7 +49,7 @@ public class CurrencyTest {
         testFractionDigits();
         testSerialization();
     }
-    
+
     static void testCurrencyCodeValidation() {
         // test creation of some valid currencies
         testValidCurrency("USD");
@@ -58,13 +58,13 @@ public class CurrencyTest {
         testValidCurrency("JPY");
         testValidCurrency("CNY");
         testValidCurrency("CHF");
-        
+
         // test creation of some fictitious currencies
         testInvalidCurrency("AQD");
         testInvalidCurrency("US$");
         testInvalidCurrency("\u20AC");
     }
-    
+
     static void testValidCurrency(String currencyCode) {
         Currency currency1 = Currency.getInstance(currencyCode);
         Currency currency2 = Currency.getInstance(currencyCode);
@@ -75,7 +75,7 @@ public class CurrencyTest {
             throw new RuntimeException("Currency code changed");
         }
     }
-    
+
     static void testInvalidCurrency(String currencyCode) {
         boolean gotException = false;
         try {
@@ -87,7 +87,7 @@ public class CurrencyTest {
             throw new RuntimeException("didn't get specified exception");
         }
     }
-    
+
     static void testLocaleMapping() {
         // very basic test: most countries have their own currency, and then
         // their currency code is an extension of their country code.
@@ -119,7 +119,7 @@ public class CurrencyTest {
         if (ownCurrencies < (goodCountries / 2 + 1)) {
             throw new RuntimeException("suspicious: not enough countries have their own currency.");
         }
-        
+
         // check a few countries that don't change their currencies too often
         String[] country1 = {"US", "CA", "JP", "CN", "SG", "CH"};
         String[] currency1 = {"USD", "CAD", "JPY", "CNY", "SGD", "CHF"};
@@ -128,16 +128,16 @@ public class CurrencyTest {
         }
 
         // check currency changes
-	String[] switchOverCtry = {"DE", "FR", "ES", "IT", "NL", "BE", "TR", "RO", "AZ", "MZ", "GH", "VE"};
-	String[] switchOverOld = {"DEM", "FRF", "ESP", "ITL", "NLG", "BEF", "TRL", "ROL", "AZM", "MZM", "GHC", "VEB"};
-	String[] switchOverNew = {"EUR", "EUR", "EUR", "EUR", "EUR", "EUR", "TRY", "RON", "AZN", "MZN", "GHS", "VEF"}; 
-	String[] switchOverTZ = {"Europe/Paris", "Europe/Paris", "Europe/Paris", "Europe/Paris",
-	                         "Europe/Paris", "Europe/Paris", "Asia/Istanbul", "Europe/Bucharest",
+        String[] switchOverCtry = {"DE", "FR", "ES", "IT", "NL", "BE", "TR", "RO", "AZ", "MZ", "GH", "VE"};
+        String[] switchOverOld = {"DEM", "FRF", "ESP", "ITL", "NLG", "BEF", "TRL", "ROL", "AZM", "MZM", "GHC", "VEB"};
+        String[] switchOverNew = {"EUR", "EUR", "EUR", "EUR", "EUR", "EUR", "TRY", "RON", "AZN", "MZN", "GHS", "VEF"};
+        String[] switchOverTZ = {"Europe/Paris", "Europe/Paris", "Europe/Paris", "Europe/Paris",
+                                 "Europe/Paris", "Europe/Paris", "Asia/Istanbul", "Europe/Bucharest",
                                  "Asia/Baku", "Africa/Maputo", "Africa/Accra", "America/Caracas"};
         int[] switchOverYear = {2002, 2002, 2002, 2002, 2002, 2002, 2005, 2005, 2006, 2006, 2007, 2008};
         int[] switchOverMonth = {Calendar.JANUARY, Calendar.JANUARY, Calendar.JANUARY, Calendar.JANUARY,
-	                         Calendar.JANUARY, Calendar.JANUARY, Calendar.JANUARY, Calendar.JULY,
-				 Calendar.JANUARY, Calendar.JULY, Calendar.JULY, Calendar.JANUARY};
+                                 Calendar.JANUARY, Calendar.JANUARY, Calendar.JANUARY, Calendar.JULY,
+                                 Calendar.JANUARY, Calendar.JULY, Calendar.JULY, Calendar.JANUARY};
         int[] switchOverDay = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         for (int i = 0; i < switchOverCtry.length; i++) {
             TimeZone.setDefault(TimeZone.getTimeZone(switchOverTZ[i]));
@@ -145,11 +145,11 @@ public class CurrencyTest {
             long switchOver = date.getTime().getTime();
             boolean switchedOver = System.currentTimeMillis() >= switchOver;
             checkCountryCurrency(switchOverCtry[i], switchedOver ? switchOverNew[i] : switchOverOld[i]);
-	}
-        
+        }
+
         // check a country code which doesn't have a currency
         checkCountryCurrency("AQ", null);
-        
+
         // check an invalid country code
         boolean gotException = false;
         try {
@@ -161,7 +161,7 @@ public class CurrencyTest {
             throw new RuntimeException("didn't get specified exception.");
         }
     }
-    
+
     static void checkCountryCurrency(String countryCode, String expected) {
         Locale locale = new Locale("", countryCode);
         Currency currency = Currency.getInstance(locale);
@@ -172,13 +172,13 @@ public class CurrencyTest {
                     ": expected " + expected + ", got " + code);
         }
     }
-    
+
     static void testSymbols() {
         testSymbol("USD", Locale.US, "$");
         testSymbol("EUR", Locale.GERMANY, "\u20AC");
         testSymbol("USD", Locale.PRC, "USD");
     }
-    
+
     static void testSymbol(String currencyCode, Locale locale, String expectedSymbol) {
         String symbol = Currency.getInstance(currencyCode).getSymbol(locale);
         if (!symbol.equals(expectedSymbol)) {
@@ -187,7 +187,7 @@ public class CurrencyTest {
                     ", got " + symbol);
         }
     }
-    
+
     static void testFractionDigits() {
         testFractionDigits("USD", 2);
         testFractionDigits("EUR", 2);
@@ -206,7 +206,7 @@ public class CurrencyTest {
         testFractionDigits("TRL", 0);
         testFractionDigits("TRY", 2);
     }
-    
+
     static void testFractionDigits(String currencyCode, int expectedFractionDigits) {
         int digits = Currency.getInstance(currencyCode).getDefaultFractionDigits();
         if (digits != expectedFractionDigits) {
@@ -215,7 +215,7 @@ public class CurrencyTest {
                     ", got " + digits);
         }
     }
-    
+
     static void testSerialization() throws Exception {
         Currency currency1 = Currency.getInstance("DEM");
 
@@ -224,14 +224,14 @@ public class CurrencyTest {
         oStream.writeObject(currency1);
         oStream.flush();
         byte[] bytes = baos.toByteArray();
-        
+
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         ObjectInputStream iStream = new ObjectInputStream(bais);
         Currency currency2 = (Currency) iStream.readObject();
-        
+
         if (currency1 != currency2) {
             throw new RuntimeException("serialization breaks class invariant");
         }
-    }       
+    }
 
 }

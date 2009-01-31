@@ -159,7 +159,7 @@ public class CopyMethods {
      *  </pre>
      *  are derived by ordinary Java coercions, except that boolean
      *  samples the LSB of the int value, and String is the hex numeral.
-     *  
+     *
      *  (Also, the 0th String is null, and the 0th Object mod 16 is null,
      *  regardless of the original int test value.)
      */

@@ -25,7 +25,7 @@
  *
  * @bug 6501991
  * @author Igor Kushnirskiy
- * @summary tests if ArrayIndexOutOfBoundsException is thrown on painting 
+ * @summary tests if ArrayIndexOutOfBoundsException is thrown on painting
  *          JLabel with i18n text in case JLabel has smaller width than needed.
  */
 
@@ -37,7 +37,7 @@ public class bug6501991 {
         try {
             JLabel l = new JLabel("\u0634\u0634\u0634\u0634\u0634\u0634\u0634");
             l.setSize(5, 22);
-        
+
             BufferedImage image =
                 new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
             l.paint(image.createGraphics());

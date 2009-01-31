@@ -30,7 +30,7 @@ import sun.management.ThreadInfoCompositeData;
 import static java.lang.Thread.State.*;
 
 /**
- * Thread information. <tt>ThreadInfo</tt> contains the information 
+ * Thread information. <tt>ThreadInfo</tt> contains the information
  * about a thread including:
  * <h4>General thread information</h4>
  * <ul>
@@ -60,14 +60,14 @@ import static java.lang.Thread.State.*;
  *
  * <h4><a name="SyncStats">Synchronization Statistics</a></h4>
  * <ul>
- *   <li>The number of times that the thread has blocked for 
+ *   <li>The number of times that the thread has blocked for
  *       synchronization or waited for notification.</li>
  *   <li>The accumulated elapsed time that the thread has blocked
  *       for synchronization or waited for notification
- *       since {@link ThreadMXBean#setThreadContentionMonitoringEnabled 
+ *       since {@link ThreadMXBean#setThreadContentionMonitoringEnabled
  *       thread contention monitoring}
- *       was enabled. Some Java virtual machine implementation 
- *       may not support this.  The 
+ *       was enabled. Some Java virtual machine implementation
+ *       may not support this.  The
  *       {@link ThreadMXBean#isThreadContentionMonitoringSupported()}
  *       method can be used to determine if a Java virtual machine
  *       supports this.</li>
@@ -78,14 +78,13 @@ import static java.lang.Thread.State.*;
  *
  * <h4>MXBean Mapping</h4>
  * <tt>ThreadInfo</tt> is mapped to a {@link CompositeData CompositeData}
- * with attributes as specified in 
+ * with attributes as specified in
  * the {@link #from from} method.
  *
  * @see ThreadMXBean#getThreadInfo
  * @see ThreadMXBean#dumpAllThreads
  *
  * @author  Mandy Chung
- * @version %I%, %G% 
  * @since   1.5
  */
 
@@ -113,23 +112,23 @@ public class ThreadInfo {
     /**
      * Constructor of ThreadInfo created by the JVM
      *
-     * @param t             Thread 
-     * @param state         Thread state 
-     * @param lockObj       Object on which the thread is blocked 
-     * @param lockOwner     the thread holding the lock 
+     * @param t             Thread
+     * @param state         Thread state
+     * @param lockObj       Object on which the thread is blocked
+     * @param lockOwner     the thread holding the lock
      * @param blockedCount  Number of times blocked to enter a lock
      * @param blockedTime   Approx time blocked to enter a lock
      * @param waitedCount   Number of times waited on a lock
      * @param waitedTime    Approx time waited on a lock
      * @param stackTrace    Thread stack trace
      */
-    private ThreadInfo(Thread t, int state, Object lockObj, Thread lockOwner, 
+    private ThreadInfo(Thread t, int state, Object lockObj, Thread lockOwner,
                        long blockedCount, long blockedTime,
                        long waitedCount, long waitedTime,
                        StackTraceElement[] stackTrace) {
-        initialize(t, state, lockObj, lockOwner, 
+        initialize(t, state, lockObj, lockOwner,
                    blockedCount, blockedTime,
-                   waitedCount, waitedTime, stackTrace, 
+                   waitedCount, waitedTime, stackTrace,
                    EMPTY_MONITORS, EMPTY_SYNCS);
     }
 
@@ -138,26 +137,26 @@ public class ThreadInfo {
      * for {@link ThreadMXBean#getThreadInfo(long[],boolean,boolean)}
      * and {@link ThreadMXBean#dumpAllThreads}
      *
-     * @param t             Thread 
-     * @param state         Thread state 
-     * @param lockObj       Object on which the thread is blocked 
-     * @param lockOwner     the thread holding the lock 
+     * @param t             Thread
+     * @param state         Thread state
+     * @param lockObj       Object on which the thread is blocked
+     * @param lockOwner     the thread holding the lock
      * @param blockedCount  Number of times blocked to enter a lock
      * @param blockedTime   Approx time blocked to enter a lock
      * @param waitedCount   Number of times waited on a lock
      * @param waitedTime    Approx time waited on a lock
      * @param stackTrace    Thread stack trace
      * @param lockedMonitors List of locked monitors
-     * @param lockedSynchronizers List of locked synchronizers 
+     * @param lockedSynchronizers List of locked synchronizers
      */
-    private ThreadInfo(Thread t, int state, Object lockObj, Thread lockOwner, 
+    private ThreadInfo(Thread t, int state, Object lockObj, Thread lockOwner,
                        long blockedCount, long blockedTime,
                        long waitedCount, long waitedTime,
                        StackTraceElement[] stackTrace,
                        Object[] monitors,
                        int[] stackDepths,
                        Object[] synchronizers) {
-        int numMonitors = (monitors == null ? 0 : monitors.length); 
+        int numMonitors = (monitors == null ? 0 : monitors.length);
         MonitorInfo[] lockedMonitors;
         if (numMonitors == 0) {
             lockedMonitors = EMPTY_MONITORS;
@@ -175,9 +174,9 @@ public class ThreadInfo {
                                                     depth,
                                                     ste);
             }
-        } 
+        }
 
-        int numSyncs = (synchronizers == null ? 0 : synchronizers.length); 
+        int numSyncs = (synchronizers == null ? 0 : synchronizers.length);
         LockInfo[] lockedSynchronizers;
         if (numSyncs == 0) {
             lockedSynchronizers = EMPTY_SYNCS;
@@ -194,26 +193,26 @@ public class ThreadInfo {
 
         initialize(t, state, lockObj, lockOwner,
                    blockedCount, blockedTime,
-                   waitedCount, waitedTime, stackTrace, 
+                   waitedCount, waitedTime, stackTrace,
                    lockedMonitors, lockedSynchronizers);
     }
 
     /**
      * Initialize ThreadInfo object
      *
-     * @param t             Thread 
-     * @param state         Thread state 
-     * @param lockObj       Object on which the thread is blocked 
-     * @param lockOwner     the thread holding the lock 
+     * @param t             Thread
+     * @param state         Thread state
+     * @param lockObj       Object on which the thread is blocked
+     * @param lockOwner     the thread holding the lock
      * @param blockedCount  Number of times blocked to enter a lock
      * @param blockedTime   Approx time blocked to enter a lock
      * @param waitedCount   Number of times waited on a lock
      * @param waitedTime    Approx time waited on a lock
      * @param stackTrace    Thread stack trace
      * @param lockedMonitors List of locked monitors
-     * @param lockedSynchronizers List of locked synchronizers 
+     * @param lockedSynchronizers List of locked synchronizers
      */
-    private void initialize(Thread t, int state, Object lockObj, Thread lockOwner, 
+    private void initialize(Thread t, int state, Object lockObj, Thread lockOwner,
                             long blockedCount, long blockedTime,
                             long waitedCount, long waitedTime,
                             StackTraceElement[] stackTrace,
@@ -221,7 +220,7 @@ public class ThreadInfo {
                             LockInfo[] lockedSynchronizers) {
         this.threadId = t.getId();
         this.threadName = t.getName();
-        this.threadState = 
+        this.threadState =
             sun.management.ManagementFactory.toThreadState(state);
         this.suspended =
             sun.management.ManagementFactory.isThreadSuspended(state);
@@ -237,12 +236,12 @@ public class ThreadInfo {
             this.lockName = null;
         } else {
             this.lock = new LockInfo(lockObj);
-            this.lockName = 
+            this.lockName =
                 lock.getClassName() + '@' +
                     Integer.toHexString(lock.getIdentityHashCode());
         }
         if (lockOwner == null) {
-            this.lockOwnerId = -1; 
+            this.lockOwnerId = -1;
             this.lockOwnerName = null;
         } else {
             this.lockOwnerId = lockOwner.getId();
@@ -259,13 +258,13 @@ public class ThreadInfo {
 
     /*
      * Constructs a <tt>ThreadInfo</tt> object from a
-     * {@link CompositeData CompositeData}.  
+     * {@link CompositeData CompositeData}.
      */
     private ThreadInfo(CompositeData cd) {
         ThreadInfoCompositeData ticd = ThreadInfoCompositeData.getInstance(cd);
 
-        threadId = ticd.threadId(); 
-        threadName = ticd.threadName(); 
+        threadId = ticd.threadId();
+        threadName = ticd.threadName();
         blockedTime = ticd.blockedTime();
         blockedCount = ticd.blockedCount();
         waitedTime = ticd.waitedTime();
@@ -287,10 +286,10 @@ public class ThreadInfo {
             // lockInfo is a new attribute added in 1.6 ThreadInfo
             // If cd is a 5.0 version, construct the LockInfo object
             //  from the lockName value.
-            if (lockName != null) { 
+            if (lockName != null) {
                 String result[] = lockName.split("@");
                 if (result.length == 2) {
-                    int identityHashCode = Integer.parseInt(result[1], 16); 
+                    int identityHashCode = Integer.parseInt(result[1], 16);
                     lock = new LockInfo(result[0], identityHashCode);
                 } else {
                     assert result.length == 2;
@@ -305,7 +304,7 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the ID of the thread associated with this <tt>ThreadInfo</tt>.  
+     * Returns the ID of the thread associated with this <tt>ThreadInfo</tt>.
      *
      * @return the ID of the associated thread.
      */
@@ -330,10 +329,10 @@ public class ThreadInfo {
     public Thread.State getThreadState() {
          return threadState;
     }
-    
+
     /**
      * Returns the approximate accumulated elapsed time (in milliseconds)
-     * that the thread associated with this <tt>ThreadInfo</tt> 
+     * that the thread associated with this <tt>ThreadInfo</tt>
      * has blocked to enter or reenter a monitor
      * since thread contention monitoring is enabled.
      * I.e. the total accumulated time the thread has been in the
@@ -350,7 +349,7 @@ public class ThreadInfo {
      * that a thread entered the <tt>BLOCKED</tt> state;
      * <tt>-1</tt> if thread contention monitoring is disabled.
      *
-     * @throws java.lang.UnsupportedOperationException if the Java 
+     * @throws java.lang.UnsupportedOperationException if the Java
      * virtual machine does not support this operation.
      *
      * @see ThreadMXBean#isThreadContentionMonitoringSupported
@@ -361,13 +360,13 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the total number of times that 
-     * the thread associated with this <tt>ThreadInfo</tt> 
-     * blocked to enter or reenter a monitor. 
+     * Returns the total number of times that
+     * the thread associated with this <tt>ThreadInfo</tt>
+     * blocked to enter or reenter a monitor.
      * I.e. the number of times a thread has been in the
-     * {@link java.lang.Thread.State#BLOCKED BLOCKED} state. 
+     * {@link java.lang.Thread.State#BLOCKED BLOCKED} state.
      *
-     * @return the total number of times that the thread 
+     * @return the total number of times that the thread
      * entered the <tt>BLOCKED</tt> state.
      */
     public long getBlockedCount() {
@@ -376,7 +375,7 @@ public class ThreadInfo {
 
     /**
      * Returns the approximate accumulated elapsed time (in milliseconds)
-     * that the thread associated with this <tt>ThreadInfo</tt> 
+     * that the thread associated with this <tt>ThreadInfo</tt>
      * has waited for notification
      * since thread contention monitoring is enabled.
      * I.e. the total accumulated time the thread has been in the
@@ -389,13 +388,13 @@ public class ThreadInfo {
      * <p>The Java virtual machine may measure the time with a high
      * resolution timer.  This statistic is reset when
      * the thread contention monitoring is reenabled.
-     * 
-     * @return the approximate accumulated elapsed time in milliseconds 
+     *
+     * @return the approximate accumulated elapsed time in milliseconds
      * that a thread has been in the <tt>WAITING</tt> or
      * <tt>TIMED_WAITING</tt> state;
      * <tt>-1</tt> if thread contention monitoring is disabled.
      *
-     * @throws java.lang.UnsupportedOperationException if the Java 
+     * @throws java.lang.UnsupportedOperationException if the Java
      * virtual machine does not support this operation.
      *
      * @see ThreadMXBean#isThreadContentionMonitoringSupported
@@ -406,14 +405,14 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the total number of times that 
-     * the thread associated with this <tt>ThreadInfo</tt> 
+     * Returns the total number of times that
+     * the thread associated with this <tt>ThreadInfo</tt>
      * waited for notification.
      * I.e. the number of times that a thread has been
      * in the {@link java.lang.Thread.State#WAITING WAITING}
      * or {@link java.lang.Thread.State#TIMED_WAITING TIMED_WAITING} state.
      *
-     * @return the total number of times that the thread 
+     * @return the total number of times that the thread
      * was in the <tt>WAITING</tt> or <tt>TIMED_WAITING</tt> state.
      */
     public long getWaitedCount() {
@@ -421,9 +420,9 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the <tt>LockInfo</tt> of an object for which 
-     * the thread associated with this <tt>ThreadInfo</tt> 
-     * is blocked waiting. 
+     * Returns the <tt>LockInfo</tt> of an object for which
+     * the thread associated with this <tt>ThreadInfo</tt>
+     * is blocked waiting.
      * A thread can be blocked waiting for one of the following:
      * <ul>
      * <li>an object monitor to be acquired for entering or reentering
@@ -431,7 +430,7 @@ public class ThreadInfo {
      *     <br>The thread is in the {@link java.lang.Thread.State#BLOCKED BLOCKED}
      *     state waiting to enter the <tt>synchronized</tt> statement
      *     or method.
-     *     <p></li> 
+     *     <p></li>
      * <li>an object monitor to be notified by another thread.
      *     <br>The thread is in the {@link java.lang.Thread.State#WAITING WAITING}
      *     or {@link java.lang.Thread.State#TIMED_WAITING TIMED_WAITING} state
@@ -443,9 +442,9 @@ public class ThreadInfo {
      *     due to a call to the
      *     {@link java.util.concurrent.locks.LockSupport#park(Object)
      *     LockSupport.park} method.  The synchronization object
-     *     is the object returned from 
+     *     is the object returned from
      *     {@link java.util.concurrent.locks.LockSupport#getBlocker
-     *     LockSupport.getBlocker} method. Typically it is an 
+     *     LockSupport.getBlocker} method. Typically it is an
      *     <a href="LockInfo.html#OwnableSynchronizer"> ownable synchronizer</a>
      *     or a {@link java.util.concurrent.locks.Condition Condition}.</li>
      * </ul>
@@ -463,14 +462,14 @@ public class ThreadInfo {
 
     /**
      * Returns the {@link LockInfo#toString string representation}
-     * of an object for which the thread associated with this 
-     * <tt>ThreadInfo</tt> is blocked waiting.  
+     * of an object for which the thread associated with this
+     * <tt>ThreadInfo</tt> is blocked waiting.
      * This method is equivalent to calling:
      * <blockquote>
      * <pre>
      * getLockInfo().toString()
      * </pre></blockquote>
-     * 
+     *
      * <p>This method will return <tt>null</tt> if this thread is not blocked
      * waiting for any object or if the object is not owned by any thread.
      *
@@ -485,13 +484,13 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the ID of the thread which owns the object  
+     * Returns the ID of the thread which owns the object
      * for which the thread associated with this <tt>ThreadInfo</tt>
      * is blocked waiting.
      * This method will return <tt>-1</tt> if this thread is not blocked
      * waiting for any object or if the object is not owned by any thread.
      *
-     * @return the thread ID of the owner thread of the object 
+     * @return the thread ID of the owner thread of the object
      * this thread is blocked on;
      * <tt>-1</tt> if this thread is not blocked
      * or if the object lis not owned by any thread.
@@ -509,7 +508,7 @@ public class ThreadInfo {
      * This method will return <tt>null</tt> if this thread is not blocked
      * waiting for any object or if the object is not owned by any thread.
      *
-     * @return the name of the thread that owns the object 
+     * @return the name of the thread that owns the object
      * this thread is blocked on;
      * <tt>null</tt> if this thread is not blocked
      * or if the object is not owned by any thread.
@@ -521,7 +520,7 @@ public class ThreadInfo {
     }
 
     /**
-     * Returns the stack trace of the thread 
+     * Returns the stack trace of the thread
      * associated with this <tt>ThreadInfo</tt>.
      * If no stack trace was requested for this thread info, this method
      * will return a zero-length array.
@@ -534,7 +533,7 @@ public class ThreadInfo {
      * <p>Some Java virtual machines may, under some circumstances, omit one
      * or more stack frames from the stack trace.  In the extreme case,
      * a virtual machine that has no stack trace information concerning
-     * the thread associated with this <tt>ThreadInfo</tt> 
+     * the thread associated with this <tt>ThreadInfo</tt>
      * is permitted to return a zero-length array from this method.
      *
      * @return an array of <tt>StackTraceElement</tt> objects of the thread.
@@ -572,10 +571,10 @@ public class ThreadInfo {
     /**
      * Returns a string representation of this thread info.
      * The format of this string depends on the implementation.
-     * The returned string will typically include  
-     * the {@linkplain #getThreadName thread name}, 
+     * The returned string will typically include
+     * the {@linkplain #getThreadName thread name},
      * the {@linkplain #getThreadId thread ID},
-     * its {@linkplain #getThreadState state}, 
+     * its {@linkplain #getThreadState state},
      * and a {@linkplain #getStackTrace stack trace} if any.
      *
      * @return a string representation of this thread info.
@@ -606,7 +605,7 @@ public class ThreadInfo {
             if (i == 0 && getLockInfo() != null) {
                 Thread.State ts = getThreadState();
                 switch (ts) {
-                    case BLOCKED: 
+                    case BLOCKED:
                         sb.append("\t-  blocked on " + getLockInfo());
                         sb.append('\n');
                         break;
@@ -633,7 +632,7 @@ public class ThreadInfo {
            sb.append("\t...");
            sb.append('\n');
        }
- 
+
        LockInfo[] locks = getLockedSynchronizers();
        if (locks.length > 0) {
            sb.append("\n\tNumber of locked synchronizers = " + locks.length);
@@ -698,13 +697,13 @@ public class ThreadInfo {
      * <tr>
      *   <td>lockInfo</td>
      *   <td><tt>javax.management.openmbean.CompositeData</tt>
-     *       - the mapped type for {@link LockInfo} as specified in the 
+     *       - the mapped type for {@link LockInfo} as specified in the
      *       <a href="../../../javax/management/MXBean.html#mapping-rules">
-     *       type mapping rules</a> of 
+     *       type mapping rules</a> of
      *       {@linkplain javax.management.MXBean MXBeans}.
      *       <p>
-     *       If <tt>cd</tt> does not contain this attribute, 
-     *       the <tt>LockInfo</tt> object will be constructed from 
+     *       If <tt>cd</tt> does not contain this attribute,
+     *       the <tt>LockInfo</tt> object will be constructed from
      *       the value of the <tt>lockName</tt> attribute. </td>
      * </tr>
      * <tr>
@@ -758,23 +757,23 @@ public class ThreadInfo {
      * <tr>
      *   <td>lockedMonitors</td>
      *   <td><tt>javax.management.openmbean.CompositeData[]</tt>
-     *       whose element type is the mapped type for 
-     *       {@link MonitorInfo} as specified in the 
+     *       whose element type is the mapped type for
+     *       {@link MonitorInfo} as specified in the
      *       {@link MonitorInfo#from Monitor.from} method.
      *       <p>
-     *       If <tt>cd</tt> does not contain this attribute, 
+     *       If <tt>cd</tt> does not contain this attribute,
      *       this attribute will be set to an empty array. </td>
      * </tr>
      * <tr>
      *   <td>lockedSynchronizers</td>
      *   <td><tt>javax.management.openmbean.CompositeData[]</tt>
      *       whose element type is the mapped type for
-     *       {@link LockInfo} as specified in the 
+     *       {@link LockInfo} as specified in the
      *       <a href="../../../javax/management/MXBean.html#mapping-rules">
-     *       type mapping rules</a> of 
+     *       type mapping rules</a> of
      *       {@linkplain javax.management.MXBean MXBeans}.
      *       <p>
-     *       If <tt>cd</tt> does not contain this attribute, 
+     *       If <tt>cd</tt> does not contain this attribute,
      *       this attribute will be set to an empty array. </td>
      * </tr>
      * </table>

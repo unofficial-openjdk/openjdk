@@ -40,59 +40,59 @@ public class StopBeforeStart {
     }
 
     private class Catcher implements Thread.UncaughtExceptionHandler {
-	private boolean nullaryStop;
+        private boolean nullaryStop;
         private Throwable theThrowable;
         private Throwable expectedThrowable;
         private boolean exceptionThrown;
 
-	Catcher(boolean nullaryStop) {
-	    this.nullaryStop = nullaryStop;
-	    if (!nullaryStop) {
-		expectedThrowable = new MyThrowable();
-	    }
-	}
-
-        public void uncaughtException(Thread t, Throwable th) {
-	    exceptionThrown = true;
-	    theThrowable = th;
+        Catcher(boolean nullaryStop) {
+            this.nullaryStop = nullaryStop;
+            if (!nullaryStop) {
+                expectedThrowable = new MyThrowable();
+            }
         }
 
-	void check(String label) throws Throwable {
-	    if (!exceptionThrown) {
-	        throw new RuntimeException(label + 
-			" test:" + " missing uncaught exception");
-	    }
+        public void uncaughtException(Thread t, Throwable th) {
+            exceptionThrown = true;
+            theThrowable = th;
+        }
 
-	    if (nullaryStop) {
-		if (! (theThrowable instanceof ThreadDeath)) {
-	            throw new RuntimeException(label + 
-			" test:" + " expected ThreadDeath in uncaught handler");
-		}
-	    } else if (theThrowable != expectedThrowable) {
-	        throw new RuntimeException(label + 
-			" test:" + " wrong Throwable in uncaught handler");
-	    }
-	}
+        void check(String label) throws Throwable {
+            if (!exceptionThrown) {
+                throw new RuntimeException(label +
+                        " test:" + " missing uncaught exception");
+            }
+
+            if (nullaryStop) {
+                if (! (theThrowable instanceof ThreadDeath)) {
+                    throw new RuntimeException(label +
+                        " test:" + " expected ThreadDeath in uncaught handler");
+                }
+            } else if (theThrowable != expectedThrowable) {
+                throw new RuntimeException(label +
+                        " test:" + " wrong Throwable in uncaught handler");
+            }
+        }
     }
 
     private class MyRunnable implements Runnable {
         public void run() {
-	    while(true)
-		;
+            while(true)
+                ;
         }
     }
 
     private class MyThread extends Thread {
         public void run() {
-	    while(true)
-		;
+            while(true)
+                ;
         }
     }
 
 
     public static void main(String args[]) throws Throwable {
         (new StopBeforeStart()).doit();
-	System.out.println("Test passed");
+        System.out.println("Test passed");
     }
 
     private void doit() throws Throwable {
@@ -103,30 +103,30 @@ public class StopBeforeStart {
         runit(true, new MyThread(),"Runnable");
     }
 
-    private void runit(boolean nullaryStop, Thread thread, 
-			String type) throws Throwable {
+    private void runit(boolean nullaryStop, Thread thread,
+                        String type) throws Throwable {
 
-	Catcher c = new Catcher(nullaryStop);
-	thread.setUncaughtExceptionHandler(c);
+        Catcher c = new Catcher(nullaryStop);
+        thread.setUncaughtExceptionHandler(c);
 
-	if (nullaryStop) {
-	    thread.stop();
-	} else {
-	    thread.stop(c.expectedThrowable);
-	}
+        if (nullaryStop) {
+            thread.stop();
+        } else {
+            thread.stop(c.expectedThrowable);
+        }
 
-	thread.start();
-	thread.join(JOIN_TIMEOUT);
+        thread.start();
+        thread.join(JOIN_TIMEOUT);
 
-	if (thread.getState() != Thread.State.TERMINATED) {
+        if (thread.getState() != Thread.State.TERMINATED) {
 
-	    thread.stop();
+            thread.stop();
 
-	    // Under high load this could be a false positive
-	    throw new RuntimeException(type + 
-			" test:" + " app thread did not terminate");
-	}
+            // Under high load this could be a false positive
+            throw new RuntimeException(type +
+                        " test:" + " app thread did not terminate");
+        }
 
-	c.check(type);
+        c.check(type);
     }
 }

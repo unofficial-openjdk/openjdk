@@ -26,8 +26,6 @@
 -->
 
 
-<!-- SCCS Id: %Z%%M% %I% %E% -->
-
 <!-- README - HOW TO USE THIS BUILD FILE
      . You need Ant 1.5 or higher available in your path
      . You need a build of Java SE 6 available in your path, or JAVA_HOME set to such a build

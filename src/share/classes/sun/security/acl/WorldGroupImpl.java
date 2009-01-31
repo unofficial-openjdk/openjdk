@@ -34,7 +34,7 @@ import java.security.*;
 public class WorldGroupImpl extends GroupImpl {
 
     public WorldGroupImpl(String s) {
-	super(s);
+        super(s);
     }
 
     /**
@@ -43,6 +43,6 @@ public class WorldGroupImpl extends GroupImpl {
      * @return true always since this is the "world" group.
      */
     public boolean isMember(Principal member) {
-	return true;
+        return true;
     }
 }

@@ -36,7 +36,7 @@ abstract class NativeDispatcher
 {
 
     abstract int read(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     int pread(FileDescriptor fd, long address, int len,
                              long position, Object lock) throws IOException
@@ -45,10 +45,10 @@ abstract class NativeDispatcher
     }
 
     abstract long readv(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     abstract int write(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     int pwrite(FileDescriptor fd, long address, int len,
                              long position, Object lock) throws IOException
@@ -57,7 +57,7 @@ abstract class NativeDispatcher
     }
 
     abstract long writev(FileDescriptor fd, long address, int len)
-	throws IOException;
+        throws IOException;
 
     abstract void close(FileDescriptor fd) throws IOException;
 
@@ -66,7 +66,7 @@ abstract class NativeDispatcher
     // (Solaris and Linux) to prevent fd recycling.
     //
     void preClose(FileDescriptor fd) throws IOException {
-	// Do nothing by default; this is only needed on Unix
+        // Do nothing by default; this is only needed on Unix
     }
 
 }

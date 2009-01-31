@@ -36,7 +36,7 @@ import org.w3c.dom.Attr;
 public abstract class ResourceResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log = 
+    static java.util.logging.Logger log =
         java.util.logging.Logger.getLogger(
                     ResourceResolverSpi.class.getName());
 
@@ -102,7 +102,7 @@ public abstract class ResourceResolverSpi {
    }
 
    /**
-    * 
+    *
     * @param properties
     */
    public void engineAddProperies(Map properties) {
@@ -175,7 +175,7 @@ public abstract class ResourceResolverSpi {
 
          if (isDosFilename) {
             if (true)
-            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found DOS filename: " + str);
+                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Found DOS filename: " + str);
          }
       }
 

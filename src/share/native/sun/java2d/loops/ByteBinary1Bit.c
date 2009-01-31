@@ -79,7 +79,7 @@ NativePrimitive ByteBinary1BitPrimitives[] = {
 jboolean RegisterByteBinary1Bit(JNIEnv *env)
 {
     return RegisterPrimitives(env, ByteBinary1BitPrimitives,
-			      ArraySize(ByteBinary1BitPrimitives));
+                              ArraySize(ByteBinary1BitPrimitives));
 }
 
 jint PixelForByteBinary(SurfaceDataRasInfo *pRasInfo, jint rgb)

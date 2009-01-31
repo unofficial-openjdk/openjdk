@@ -38,6 +38,6 @@ public class CheckBoundaries {
             exception = true;
         }
         if (!exception)
-	    throw new RuntimeException("IllegalArgumentException not thrown!");
+            throw new RuntimeException("IllegalArgumentException not thrown!");
     }
 }

@@ -46,7 +46,7 @@ class JDMAclBlock extends SimpleNode {
   public static Node jjtCreate(Parser p, int id) {
       return new JDMAclBlock(p, id);
   }
-  
+
   /**
    * Do no need to go through this part of the tree for
    * building TrapEntry.

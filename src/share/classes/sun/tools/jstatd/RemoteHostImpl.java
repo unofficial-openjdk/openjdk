@@ -44,7 +44,6 @@ import sun.jvmstat.monitor.remote.*;
  * interface.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class RemoteHostImpl implements RemoteHost, HostListener {

@@ -58,7 +58,7 @@ JNIEXPORT jstring JNICALL Java_sun_font_FontManager_getFontPath(JNIEnv *env, jcl
     } else {
         strcat(windir, "\\Fonts");
     }
-    
+
     strcpy(fontpath,sysdir);
     if (stricmp(sysdir,windir)) {
         strcat(fontpath,";");
@@ -111,17 +111,17 @@ static int UNICODE_OS = UC_UNKNOWN;
 static int GetOSVersion () {
     OSVERSIONINFO vinfo;
     vinfo.dwOSVersionInfoSize = sizeof(vinfo);
-    GetVersionEx(&vinfo);	
+    GetVersionEx(&vinfo);
     if ((int)vinfo.dwMajorVersion > 4) {
-	UNICODE_OS = UC_YES;
+        UNICODE_OS = UC_YES;
     } else if ((int)vinfo.dwMajorVersion < 4) {
-	UNICODE_OS = UC_NO;
+        UNICODE_OS = UC_NO;
     } else {
-	if ((int)vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-	    UNICODE_OS = UC_NO;
-	} else {
-	    UNICODE_OS = UC_YES;
-	}
+        if ((int)vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+            UNICODE_OS = UC_NO;
+        } else {
+            UNICODE_OS = UC_YES;
+        }
     }
     return UNICODE_OS;
 }
@@ -146,25 +146,25 @@ static const char FONTKEY_WIN[] =
 static int CALLBACK EnumFontFacesInFamilyProcA(
   ENUMLOGFONTEXA *lpelfe,
   NEWTEXTMETRICEX *lpntme,
-  int FontType,	
+  int FontType,
   LPARAM lParam )
 {
     GdiFontMapInfo *fmi = (GdiFontMapInfo*)lParam;
-    JNIEnv *env = fmi->env;    
+    JNIEnv *env = fmi->env;
     jstring fullname, fullnameLC;
 
     if (FontType != TRUETYPE_FONTTYPE) {
-	return 1;
+        return 1;
     }
 
     /* printf("FULL=%s\n",lpelfe->elfFullName);fflush(stdout);  */
 
     fullname = JNU_NewStringPlatform(env, lpelfe->elfFullName);
     fullnameLC = (*env)->CallObjectMethod(env, fullname,
-					  fmi->toLowerCaseMID, fmi->locale);
+                                          fmi->toLowerCaseMID, fmi->locale);
     (*env)->CallObjectMethod(env, fmi->list, fmi->addMID, fullname);
     (*env)->CallObjectMethod(env, fmi->fontToFamilyMap,
-			     fmi->putMID, fullnameLC, fmi->family);
+                             fmi->putMID, fullnameLC, fmi->family);
     return 1;
 }
 
@@ -182,7 +182,7 @@ static int CALLBACK CheckFontFamilyProcW(
 {
     CheckFamilyInfo *info = (CheckFamilyInfo*)lParam;
     info->isDifferent = wcscmp(lpelfe->elfLogFont.lfFaceName, info->family);
-  
+
 /*     if (!info->isDifferent) { */
 /*         wprintf(LFor font %s expected family=%s instead got %s\n", */
 /*                 lpelfe->elfFullName, */
@@ -220,15 +220,15 @@ static int DifferentFamily(wchar_t *family, wchar_t* fullName) {
 static int CALLBACK EnumFontFacesInFamilyProcW(
   ENUMLOGFONTEXW *lpelfe,
   NEWTEXTMETRICEX *lpntme,
-  int FontType,	
+  int FontType,
   LPARAM lParam)
 {
     GdiFontMapInfo *fmi = (GdiFontMapInfo*)lParam;
-    JNIEnv *env = fmi->env;    
+    JNIEnv *env = fmi->env;
     jstring fullname, fullnameLC;
 
     if (FontType != TRUETYPE_FONTTYPE) {
-	return 1;
+        return 1;
     }
 
     /* Windows has font aliases and so may enumerate fonts from
@@ -242,12 +242,12 @@ static int CALLBACK EnumFontFacesInFamilyProcW(
     }
 
     fullname = (*env)->NewString(env, lpelfe->elfFullName,
-				 wcslen((LPWSTR)lpelfe->elfFullName));
+                                 wcslen((LPWSTR)lpelfe->elfFullName));
     fullnameLC = (*env)->CallObjectMethod(env, fullname,
-					  fmi->toLowerCaseMID, fmi->locale);
+                                          fmi->toLowerCaseMID, fmi->locale);
     (*env)->CallObjectMethod(env, fmi->list, fmi->addMID, fullname);
     (*env)->CallObjectMethod(env, fmi->fontToFamilyMap,
-			     fmi->putMID, fullnameLC, fmi->family);
+                             fmi->putMID, fullnameLC, fmi->family);
     return 1;
 }
 
@@ -266,8 +266,8 @@ static int CALLBACK EnumFontFacesInFamilyProcW(
 static int CALLBACK EnumFamilyNamesA(
   ENUMLOGFONTEXA *lpelfe,    /* pointer to logical-font data */
   NEWTEXTMETRICEX *lpntme,   /* pointer to physical-font data */
-  int FontType,		     /* type of font */
-  LPARAM lParam) 	     /* application-defined data */
+  int FontType,              /* type of font */
+  LPARAM lParam)             /* application-defined data */
 {
     GdiFontMapInfo *fmi = (GdiFontMapInfo*)lParam;
     JNIEnv *env = fmi->env;
@@ -275,8 +275,8 @@ static int CALLBACK EnumFamilyNamesA(
     LOGFONTA lfa;
 
     if (FontType != TRUETYPE_FONTTYPE) {
-	return 1;
-    } 
+        return 1;
+    }
 
     /* Windows lists fonts which have a vmtx (vertical metrics) table twice.
      * Once using their normal name, and again preceded by '@'. These appear
@@ -284,21 +284,21 @@ static int CALLBACK EnumFamilyNamesA(
      * these so we skip any font where the first character is '@'
      */
     if (lpelfe->elfLogFont.lfFaceName[0] == '@') {
-	return 1;
+        return 1;
     }
     fmi->family = JNU_NewStringPlatform(env,lpelfe->elfLogFont.lfFaceName);
     familyLC = (*env)->CallObjectMethod(env, fmi->family,
-					fmi->toLowerCaseMID, fmi->locale);
+                                        fmi->toLowerCaseMID, fmi->locale);
     /* check if already seen this family with a different charset */
     if ((*env)->CallBooleanMethod(env,fmi->familyToFontListMap,
-				  fmi->containsKeyMID, familyLC)) {
-	return 1;
+                                  fmi->containsKeyMID, familyLC)) {
+        return 1;
     }
     fmi->list = (*env)->NewObject(env,
-				  fmi->arrayListClass, fmi->arrayListCtr, 4);
+                                  fmi->arrayListClass, fmi->arrayListCtr, 4);
 
     (*env)->CallObjectMethod(env, fmi->familyToFontListMap,
-			     fmi->putMID, familyLC, fmi->list);
+                             fmi->putMID, familyLC, fmi->list);
 
 /*  printf("FAMILY=%s\n", lpelfe->elfLogFont.lfFaceName);fflush(stdout); */
 
@@ -306,16 +306,16 @@ static int CALLBACK EnumFamilyNamesA(
     strcpy(lfa.lfFaceName, lpelfe->elfLogFont.lfFaceName);
     lfa.lfCharSet = lpelfe->elfLogFont.lfCharSet;
     EnumFontFamiliesExA(GetDC(NULL), &lfa,
-			(FONTENUMPROCA)EnumFontFacesInFamilyProcA,
-			lParam, 0L);
+                        (FONTENUMPROCA)EnumFontFacesInFamilyProcA,
+                        lParam, 0L);
     return 1;
 }
 
 static int CALLBACK EnumFamilyNamesW(
   ENUMLOGFONTEXW *lpelfe,    /* pointer to logical-font data */
   NEWTEXTMETRICEX *lpntme,  /* pointer to physical-font data */
-  int FontType,		    /* type of font */
-  LPARAM lParam )	    /* application-defined data */
+  int FontType,             /* type of font */
+  LPARAM lParam )           /* application-defined data */
 {
     GdiFontMapInfo *fmi = (GdiFontMapInfo*)lParam;
     JNIEnv *env = fmi->env;
@@ -324,12 +324,12 @@ static int CALLBACK EnumFamilyNamesW(
     LOGFONTW lfw;
 
     if (FontType != TRUETYPE_FONTTYPE) {
-	return 1;
-    } 
+        return 1;
+    }
 /*     wprintf(L"FAMILY=%s charset=%d FULL=%s\n", */
-/* 	    lpelfe->elfLogFont.lfFaceName, */
-/* 	    lpelfe->elfLogFont.lfCharSet, */
-/* 	    lpelfe->elfFullName); */
+/*          lpelfe->elfLogFont.lfFaceName, */
+/*          lpelfe->elfLogFont.lfCharSet, */
+/*          lpelfe->elfFullName); */
 /*     fflush(stdout); */
 
     /* Windows lists fonts which have a vmtx (vertical metrics) table twice.
@@ -338,34 +338,34 @@ static int CALLBACK EnumFamilyNamesW(
      * these so we skip any font where the first character is '@'
      */
     if (lpelfe->elfLogFont.lfFaceName[0] == L'@') {
-	    return 1;
+            return 1;
     }
     slen = wcslen(lpelfe->elfLogFont.lfFaceName);
     fmi->family = (*env)->NewString(env,lpelfe->elfLogFont.lfFaceName, slen);
     familyLC = (*env)->CallObjectMethod(env, fmi->family,
-					fmi->toLowerCaseMID, fmi->locale);
+                                        fmi->toLowerCaseMID, fmi->locale);
     /* check if already seen this family with a different charset */
     if ((*env)->CallBooleanMethod(env,fmi->familyToFontListMap,
-				  fmi->containsKeyMID, familyLC)) {
-	return 1;
+                                  fmi->containsKeyMID, familyLC)) {
+        return 1;
     }
     fmi->list = (*env)->NewObject(env,
-				  fmi->arrayListClass, fmi->arrayListCtr, 4);
+                                  fmi->arrayListClass, fmi->arrayListCtr, 4);
 
     (*env)->CallObjectMethod(env, fmi->familyToFontListMap,
-			     fmi->putMID, familyLC, fmi->list);
+                             fmi->putMID, familyLC, fmi->list);
 
     memset(&lfw, 0, sizeof(lfw));
     wcscpy(lfw.lfFaceName, lpelfe->elfLogFont.lfFaceName);
     lfw.lfCharSet = lpelfe->elfLogFont.lfCharSet;
     EnumFontFamiliesExW(GetDC(NULL), &lfw,
-			(FONTENUMPROCW)EnumFontFacesInFamilyProcW,
-			lParam, 0L);
+                        (FONTENUMPROCW)EnumFontFacesInFamilyProcW,
+                        lParam, 0L);
     return 1;
 }
 
 
-/* It looks like TrueType fonts have " (TrueType)" tacked on the end of their 
+/* It looks like TrueType fonts have " (TrueType)" tacked on the end of their
  * name, so we can try to use that to distinguish TT from other fonts.
  * However if a program "installed" a font in the registry the key may
  * not include that. We could also try to "pass" fonts which have no "(..)"
@@ -382,7 +382,7 @@ static int CALLBACK EnumFamilyNamesW(
  * Font 1 & Font 2 & Font 3 (TrueType)
  * Also if a Font has a name for this locale that name also
  * exists in the registry using the appropriate platform encoding.
- * What do we do then? 
+ * What do we do then?
  */
 
 /* static const wchar_t W_TTSUFFIX[] = L" (TrueType)"; */
@@ -395,20 +395,20 @@ static BOOL RegistryToBaseTTNameA(LPCSTR name) {
 
     int len = strlen(name);
     if (len == 0) {
-	return FALSE;
+        return FALSE;
     }
     if (name[len-1] != ')') {
         return FALSE;
     }
     if (len <= TTSLEN) {
-	return FALSE;
+        return FALSE;
     }
     match = strstr(name, TTSUFFIX);
     if ((match != NULL) && (match == name+(len-TTSLEN))) {
-	match[0] = '\0'; /* truncate name */
-	return TRUE;
+        match[0] = '\0'; /* truncate name */
+        return TRUE;
     } else {
-	return FALSE;
+        return FALSE;
     }
 }
 
@@ -419,25 +419,25 @@ static BOOL RegistryToBaseTTNameW(LPWSTR name) {
 
     int len = wcslen(name);
     if (len == 0) {
-	return FALSE;
+        return FALSE;
     }
     if (name[len-1] != L')') {
         return FALSE;
     }
     if (len <= TTSLEN) {
-	return FALSE;
+        return FALSE;
     }
     match = wcsstr(name, TTSUFFIX);
     if ((match != NULL) && (match == name+(len-TTSLEN))) {
-	match[0] = L'\0'; /* truncate name */
-	return TRUE;
+        match[0] = L'\0'; /* truncate name */
+        return TRUE;
     } else {
-	return FALSE;
+        return FALSE;
     }
 }
 
 static void registerFontA(GdiFontMapInfo *fmi, jobject fontToFileMap,
-			  LPCSTR name, LPCSTR data) {
+                          LPCSTR name, LPCSTR data) {
     LPSTR ptr1, ptr2;
     jstring fontStr;
     JNIEnv *env = fmi->env;
@@ -456,36 +456,36 @@ static void registerFontA(GdiFontMapInfo *fmi, jobject fontToFileMap,
      * worthwhile.
      */
     if ((data[dslen-1] == 'C' || data[dslen-1] == 'c') &&
-	(ptr1 = strstr(name, " & ")) != NULL) {
-	ptr1+=3;
-	while (ptr1 >= name) { /* marginally safer than while (true) */
-	    while ((ptr2 = strstr(ptr1, " & ")) != NULL) {
+        (ptr1 = strstr(name, " & ")) != NULL) {
+        ptr1+=3;
+        while (ptr1 >= name) { /* marginally safer than while (true) */
+            while ((ptr2 = strstr(ptr1, " & ")) != NULL) {
                     ptr1 = ptr2+3;
-	    }
-	    fontStr = JNU_NewStringPlatform(env, ptr1);
-	    fontStr = (*env)->CallObjectMethod(env, fontStr,
-					       fmi->toLowerCaseMID,
-					       fmi->locale);
-	    (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
-				     fontStr, fileStr);
-	    if (ptr1 == name) {
-		break;
-	    } else {
-		*(ptr1-3) ='\0';
-		ptr1 = (LPSTR)name;
-	    }
-	}
+            }
+            fontStr = JNU_NewStringPlatform(env, ptr1);
+            fontStr = (*env)->CallObjectMethod(env, fontStr,
+                                               fmi->toLowerCaseMID,
+                                               fmi->locale);
+            (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
+                                     fontStr, fileStr);
+            if (ptr1 == name) {
+                break;
+            } else {
+                *(ptr1-3) ='\0';
+                ptr1 = (LPSTR)name;
+            }
+        }
     } else {
-	fontStr = JNU_NewStringPlatform(env, name);
-	fontStr = (*env)->CallObjectMethod(env, fontStr,
-					   fmi->toLowerCaseMID, fmi->locale);
-	(*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
-				 fontStr, fileStr);
+        fontStr = JNU_NewStringPlatform(env, name);
+        fontStr = (*env)->CallObjectMethod(env, fontStr,
+                                           fmi->toLowerCaseMID, fmi->locale);
+        (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
+                                 fontStr, fileStr);
     }
 }
 
 static void registerFontW(GdiFontMapInfo *fmi, jobject fontToFileMap,
-			  LPWSTR name, LPWSTR data) {
+                          LPWSTR name, LPWSTR data) {
 
     wchar_t *ptr1, *ptr2;
     jstring fontStr;
@@ -506,32 +506,32 @@ static void registerFontW(GdiFontMapInfo *fmi, jobject fontToFileMap,
      */
 
     if ((data[dslen-1] == L'C' || data[dslen-1] == L'c') &&
-	(ptr1 = wcsstr(name, L" & ")) != NULL) {
-	ptr1+=3;
-	while (ptr1 >= name) { /* marginally safer than while (true) */
-	    while ((ptr2 = wcsstr(ptr1, L" & ")) != NULL) {
-		ptr1 = ptr2+3;
-	    }
-	    fontStr = (*env)->NewString(env, ptr1, wcslen(ptr1));
-	    fontStr = (*env)->CallObjectMethod(env, fontStr,
-					       fmi->toLowerCaseMID,
-					       fmi->locale);
-	    (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
-				     fontStr, fileStr);
-	    if (ptr1 == name) {
-		break;
-	    } else {
-		*(ptr1-3) = L'\0';
-		ptr1 = name;
-	    }
-	}
+        (ptr1 = wcsstr(name, L" & ")) != NULL) {
+        ptr1+=3;
+        while (ptr1 >= name) { /* marginally safer than while (true) */
+            while ((ptr2 = wcsstr(ptr1, L" & ")) != NULL) {
+                ptr1 = ptr2+3;
+            }
+            fontStr = (*env)->NewString(env, ptr1, wcslen(ptr1));
+            fontStr = (*env)->CallObjectMethod(env, fontStr,
+                                               fmi->toLowerCaseMID,
+                                               fmi->locale);
+            (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
+                                     fontStr, fileStr);
+            if (ptr1 == name) {
+                break;
+            } else {
+                *(ptr1-3) = L'\0';
+                ptr1 = name;
+            }
+        }
     } else {
-	fontStr = (*env)->NewString(env, name, wcslen(name));
-	fontStr = (*env)->CallObjectMethod(env, fontStr,
-					   fmi->toLowerCaseMID, fmi->locale);
-	(*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
-				 fontStr, fileStr);
-    }   
+        fontStr = (*env)->NewString(env, name, wcslen(name));
+        fontStr = (*env)->CallObjectMethod(env, fontStr,
+                                           fmi->toLowerCaseMID, fmi->locale);
+        (*env)->CallObjectMethod(env, fontToFileMap, fmi->putMID,
+                                 fontStr, fileStr);
+    }
 }
 
 /* Obtain all the fontname -> filename mappings.
@@ -565,18 +565,18 @@ Java_sun_font_FontManager_populateFontFileNameMap
      * methods for JNI up-calls
      */
     if (fontToFileMap == NULL ||
-	fontToFamilyMap == NULL ||
-	familyToFontListMap == NULL) {
-	return;
+        fontToFamilyMap == NULL ||
+        familyToFontListMap == NULL) {
+        return;
     }
     classID = (*env)->FindClass(env, "java/util/HashMap");
     if (classID == NULL) {
-	return;
+        return;
     }
     putMID = (*env)->GetMethodID(env, classID, "put",
-		 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
     if (putMID == NULL) {
-	return;
+        return;
     }
 
     fmi.env = env;
@@ -585,96 +585,96 @@ Java_sun_font_FontManager_populateFontFileNameMap
     fmi.putMID = putMID;
     fmi.locale = locale;
     fmi.containsKeyMID = (*env)->GetMethodID(env, classID, "containsKey",
-					     "(Ljava/lang/Object;)Z");
+                                             "(Ljava/lang/Object;)Z");
     if (fmi.containsKeyMID == NULL) {
-	return;
+        return;
     }
 
     fmi.arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
     if (fmi.arrayListClass == NULL) {
-	return;
+        return;
     }
     fmi.arrayListCtr = (*env)->GetMethodID(env, fmi.arrayListClass,
-					      "<init>", "(I)V");
+                                              "<init>", "(I)V");
     if (fmi.arrayListCtr == NULL) {
-	return;
+        return;
     }
     fmi.addMID = (*env)->GetMethodID(env, fmi.arrayListClass,
-				     "add", "(Ljava/lang/Object;)Z");
+                                     "add", "(Ljava/lang/Object;)Z");
     if (fmi.addMID == NULL) {
-	return;
+        return;
     }
     classID = (*env)->FindClass(env, "java/lang/String");
     if (classID == NULL) {
-	return;
+        return;
     }
     fmi.toLowerCaseMID =
-	(*env)->GetMethodID(env, classID, "toLowerCase",
-			    "(Ljava/util/Locale;)Ljava/lang/String;");
+        (*env)->GetMethodID(env, classID, "toLowerCase",
+                            "(Ljava/util/Locale;)Ljava/lang/String;");
     if (fmi.toLowerCaseMID == NULL) {
-	return;
+        return;
     }
 
     /* Enumerate fonts via GDI to build maps of fonts and families */
     if (IS_NT) {
-	LOGFONTW lfw;
-	memset(&lfw, 0, sizeof(lfw));
-	lfw.lfCharSet = DEFAULT_CHARSET;  /* all charsets */
-	wcscpy(lfw.lfFaceName, L"");      /* one face per family (CHECK) */
-	EnumFontFamiliesExW(GetDC(NULL), &lfw,
-			    (FONTENUMPROCW)EnumFamilyNamesW,
-			    (LPARAM)(&fmi), 0L);
+        LOGFONTW lfw;
+        memset(&lfw, 0, sizeof(lfw));
+        lfw.lfCharSet = DEFAULT_CHARSET;  /* all charsets */
+        wcscpy(lfw.lfFaceName, L"");      /* one face per family (CHECK) */
+        EnumFontFamiliesExW(GetDC(NULL), &lfw,
+                            (FONTENUMPROCW)EnumFamilyNamesW,
+                            (LPARAM)(&fmi), 0L);
     } else {
-	LOGFONT lfa;
-	memset(&lfa, 0, sizeof(lfa));
-	lfa.lfCharSet = DEFAULT_CHARSET; /* all charsets */
-	strcpy(lfa.lfFaceName, "");      /* one face per family */
-	ret = EnumFontFamiliesExA(GetDC(NULL), &lfa,
-			    (FONTENUMPROCA)EnumFamilyNamesA,
-			    (LPARAM)(&fmi), 0L);
+        LOGFONT lfa;
+        memset(&lfa, 0, sizeof(lfa));
+        lfa.lfCharSet = DEFAULT_CHARSET; /* all charsets */
+        strcpy(lfa.lfFaceName, "");      /* one face per family */
+        ret = EnumFontFamiliesExA(GetDC(NULL), &lfa,
+                            (FONTENUMPROCA)EnumFamilyNamesA,
+                            (LPARAM)(&fmi), 0L);
     }
 
     /* Use the windows registry to map font names to files */
     fontKeyName = (IS_NT) ? FONTKEY_NT : FONTKEY_WIN;
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-		       fontKeyName, 0L, KEY_READ, &hkeyFonts);
+                       fontKeyName, 0L, KEY_READ, &hkeyFonts);
     if (ret != ERROR_SUCCESS) {
-	return;
+        return;
     }
 
     if (IS_NT) {
-	ret = RegQueryInfoKeyW(hkeyFonts, NULL, NULL, NULL, NULL, NULL, NULL,
-			       &dwNumValues, &dwMaxValueNameLen,
-			       &dwMaxValueDataLen, NULL, NULL);
+        ret = RegQueryInfoKeyW(hkeyFonts, NULL, NULL, NULL, NULL, NULL, NULL,
+                               &dwNumValues, &dwMaxValueNameLen,
+                               &dwMaxValueDataLen, NULL, NULL);
     } else {
-	ret = RegQueryInfoKeyA(hkeyFonts, NULL, NULL, NULL, NULL, NULL, NULL,
-			       &dwNumValues, &dwMaxValueNameLen,
-			       &dwMaxValueDataLen, NULL, NULL);	
+        ret = RegQueryInfoKeyA(hkeyFonts, NULL, NULL, NULL, NULL, NULL, NULL,
+                               &dwNumValues, &dwMaxValueNameLen,
+                               &dwMaxValueDataLen, NULL, NULL);
     }
     if (ret != ERROR_SUCCESS ||
-	dwMaxValueNameLen >= MAX_BUFFER ||
-	dwMaxValueDataLen >= MAX_BUFFER) {
-	RegCloseKey(hkeyFonts);
-	return;
+        dwMaxValueNameLen >= MAX_BUFFER ||
+        dwMaxValueDataLen >= MAX_BUFFER) {
+        RegCloseKey(hkeyFonts);
+        return;
     }
     for (nval = 0; nval < dwNumValues; nval++ ) {
-	dwNameSize = MAX_BUFFER;
-	dwDataValueSize = MAX_BUFFER;
-	if (IS_NT) {
-	    ret = RegEnumValueW(hkeyFonts, nval, (LPWSTR)wname, &dwNameSize,
-				NULL, &type, (LPBYTE)data, &dwDataValueSize);
-	} else {
-	    ret = RegEnumValueA(hkeyFonts, nval, (LPSTR)cname, &dwNameSize,
-				NULL, &type, (LPBYTE)data, &dwDataValueSize);
-	}
-	if (ret != ERROR_SUCCESS) {
-	    break;
-	}
-	if (type != REG_SZ) { /* REG_SZ means a null-terminated string */
-	    continue;
-	}
-	if (IS_NT) {
-	    if (!RegistryToBaseTTNameW((LPWSTR)wname) ) {
+        dwNameSize = MAX_BUFFER;
+        dwDataValueSize = MAX_BUFFER;
+        if (IS_NT) {
+            ret = RegEnumValueW(hkeyFonts, nval, (LPWSTR)wname, &dwNameSize,
+                                NULL, &type, (LPBYTE)data, &dwDataValueSize);
+        } else {
+            ret = RegEnumValueA(hkeyFonts, nval, (LPSTR)cname, &dwNameSize,
+                                NULL, &type, (LPBYTE)data, &dwDataValueSize);
+        }
+        if (ret != ERROR_SUCCESS) {
+            break;
+        }
+        if (type != REG_SZ) { /* REG_SZ means a null-terminated string */
+            continue;
+        }
+        if (IS_NT) {
+            if (!RegistryToBaseTTNameW((LPWSTR)wname) ) {
                 /* If the filename ends with ".ttf" also accept it.
                  * Not expecting to need to do this for .ttc files.
                  * Also note this code is not mirrored in the "A" (win9x) path.
@@ -685,12 +685,12 @@ Java_sun_font_FontManager_populateFontFileNameMap
                 }
             }
             registerFontW(&fmi, fontToFileMap, (LPWSTR)wname, (LPWSTR)data);
-	} else {
-	    if (!RegistryToBaseTTNameA(cname) ) {
-		continue; /* not a TT font... */
-	    }
-	    registerFontA(&fmi, fontToFileMap, cname, (LPCSTR)data);
-	}
+        } else {
+            if (!RegistryToBaseTTNameA(cname) ) {
+                continue; /* not a TT font... */
+            }
+            registerFontA(&fmi, fontToFileMap, cname, (LPCSTR)data);
+        }
     }
     RegCloseKey(hkeyFonts);
 }

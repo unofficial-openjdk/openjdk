@@ -38,21 +38,20 @@ import java.net.*;
  * <tt>LogManager</tt> configuration properties.  If properties are not defined
  * (or have invalid values) then the specified default values are used.
  * <ul>
- * <li>   java.util.logging.ConsoleHandler.level 
- *	  specifies the default level for the <tt>Handler</tt>
- *	  (defaults to <tt>Level.INFO</tt>).
+ * <li>   java.util.logging.ConsoleHandler.level
+ *        specifies the default level for the <tt>Handler</tt>
+ *        (defaults to <tt>Level.INFO</tt>).
  * <li>   java.util.logging.ConsoleHandler.filter
- *	  specifies the name of a <tt>Filter</tt> class to use
- *	  (defaults to no <tt>Filter</tt>).
+ *        specifies the name of a <tt>Filter</tt> class to use
+ *        (defaults to no <tt>Filter</tt>).
  * <li>   java.util.logging.ConsoleHandler.formatter
- * 	  specifies the name of a <tt>Formatter</tt> class to use
- *  	  (defaults to <tt>java.util.logging.SimpleFormatter</tt>).
- * <li>   java.util.logging.ConsoleHandler.encoding 
- *	  the name of the character set encoding to use (defaults to
- *	  the default platform encoding).
+ *        specifies the name of a <tt>Formatter</tt> class to use
+ *        (defaults to <tt>java.util.logging.SimpleFormatter</tt>).
+ * <li>   java.util.logging.ConsoleHandler.encoding
+ *        the name of the character set encoding to use (defaults to
+ *        the default platform encoding).
  * </ul>
  * <p>
- * @version %I%, %G%
  * @since 1.4
  */
 
@@ -62,21 +61,21 @@ public class ConsoleHandler extends StreamHandler {
     // javadoc.
     private void configure() {
         LogManager manager = LogManager.getLogManager();
-	String cname = getClass().getName();
+        String cname = getClass().getName();
 
-	setLevel(manager.getLevelProperty(cname +".level", Level.INFO));
-	setFilter(manager.getFilterProperty(cname +".filter", null));
-	setFormatter(manager.getFormatterProperty(cname +".formatter", new SimpleFormatter()));
-	try {
-	    setEncoding(manager.getStringProperty(cname +".encoding", null));
-	} catch (Exception ex) {
-	    try {
-	        setEncoding(null);
-	    } catch (Exception ex2) {
-		// doing a setEncoding with null should always work.
-		// assert false;
-	    }
-	}
+        setLevel(manager.getLevelProperty(cname +".level", Level.INFO));
+        setFilter(manager.getFilterProperty(cname +".filter", null));
+        setFormatter(manager.getFormatterProperty(cname +".formatter", new SimpleFormatter()));
+        try {
+            setEncoding(manager.getStringProperty(cname +".encoding", null));
+        } catch (Exception ex) {
+            try {
+                setEncoding(null);
+            } catch (Exception ex2) {
+                // doing a setEncoding with null should always work.
+                // assert false;
+            }
+        }
     }
 
     /**
@@ -84,13 +83,13 @@ public class ConsoleHandler extends StreamHandler {
      * <p>
      * The <tt>ConsoleHandler</tt> is configured based on
      * <tt>LogManager</tt> properties (or their default values).
-     * 
+     *
      */
     public ConsoleHandler() {
-	sealed = false;
-	configure();
-	setOutputStream(System.err);
-	sealed = true;
+        sealed = false;
+        configure();
+        setOutputStream(System.err);
+        sealed = true;
     }
 
     /**
@@ -103,8 +102,8 @@ public class ConsoleHandler extends StreamHandler {
      *                 silently ignored and is not published
      */
     public void publish(LogRecord record) {
-	super.publish(record);	
-	flush();
+        super.publish(record);
+        flush();
     }
 
     /**
@@ -113,7 +112,6 @@ public class ConsoleHandler extends StreamHandler {
      * close <tt>System.err</tt>.
      */
     public void close() {
-	flush();
+        flush();
     }
 }
-

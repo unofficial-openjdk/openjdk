@@ -30,7 +30,6 @@ import javax.swing.plaf.synth.Region;
  * A typesafe enumeration of the distinct rendering portions specific
  * to GTK.
  *
- * @version %I%, %G%
  * @author Scott Violet
  */
 class GTKRegion extends Region {

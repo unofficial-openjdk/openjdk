@@ -33,7 +33,6 @@ import sun.jvmstat.monitor.MonitorException;
  * the columns of data.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class HeaderClosure implements Closure {

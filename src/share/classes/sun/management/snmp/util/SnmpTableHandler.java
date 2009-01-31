@@ -41,20 +41,19 @@ public interface SnmpTableHandler {
     public Object  getData(SnmpOid index);
 
     /**
-     * Returns the index that immediately follows the given 
+     * Returns the index that immediately follows the given
      * <var>index</var>. The returned index is strictly greater
      * than the given <var>index</var>, and is contained in the table.
      * <br>If the given <var>index</var> is null, returns the first
-     * index in the table. 
+     * index in the table.
      * <br>If there are no index after the given <var>index</var>,
      * returns null.
      **/
     public SnmpOid getNext(SnmpOid index);
-    
+
     /**
      * Returns true if the given <var>index</var> is present.
      **/
     public boolean contains(SnmpOid index);
 
 }
-

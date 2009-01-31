@@ -25,7 +25,7 @@ import java.net.*;
 import java.util.*;
 import java.io.IOException;
 
-/** 
+/**
  * This class provides a partial implementation of the HttpCallback
  * interface. Use this class if you want to use the requestURI as a means
  * of tracking multiple invocations of a request (on the server).
@@ -39,33 +39,33 @@ public abstract class AbstractCallback implements HttpCallback {
     Map requests;
 
     static class Request {
-	URI uri;
-	int count;
+        URI uri;
+        int count;
 
-	Request (URI u) {
-	    uri = u;
-	    count = 0;
-	}
+        Request (URI u) {
+            uri = u;
+            count = 0;
+        }
     }
 
     AbstractCallback () {
-	requests = Collections.synchronizedMap (new HashMap());
+        requests = Collections.synchronizedMap (new HashMap());
     }
 
     /**
      * handle the given request and generate an appropriate response.
-     * @param msg the transaction containing the request from the 
+     * @param msg the transaction containing the request from the
      *        client and used to send the response
      */
     public void request (HttpTransaction msg) {
-	URI uri = msg.getRequestURI();
-	Request req = (Request) requests.get (uri);
-	if (req == null) {
-	    req = new Request (uri);
-	    requests.put (uri, req);
-	}
-	request (msg, req.count++);
-    }	
+        URI uri = msg.getRequestURI();
+        Request req = (Request) requests.get (uri);
+        if (req == null) {
+            req = new Request (uri);
+            requests.put (uri, req);
+        }
+        request (msg, req.count++);
+    }
 
     /**
      * Same as HttpCallback interface except that the integer n
@@ -73,7 +73,7 @@ public abstract class AbstractCallback implements HttpCallback {
      * the same request URI. n starts at zero and is incremented
      * for each successive call.
      *
-     * @param msg the transaction containing the request from the 
+     * @param msg the transaction containing the request from the
      *        client and used to send the response
      * @param n value is 0 at first call, and is incremented by 1 for
      *        each subsequent call using the same request URI.

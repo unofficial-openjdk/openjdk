@@ -33,7 +33,7 @@ import sun.misc.*;
 
 
 /**
- * An implementation of Selector for Linux 2.6+ kernels that uses 
+ * An implementation of Selector for Linux 2.6+ kernels that uses
  * the epoll event notification facility.
  */
 class EPollSelectorImpl
@@ -62,7 +62,7 @@ class EPollSelectorImpl
      * the abstract superclass Selector.
      */
     EPollSelectorImpl(SelectorProvider sp) {
-	super(sp);
+        super(sp);
         int[] fdes = new int[2];
         IOUtil.initPipe(fdes, false);
         fd0 = fdes[0];
@@ -115,7 +115,7 @@ class EPollSelectorImpl
                 if (selectedKeys.contains(ski)) {
                     if (ski.channel.translateAndSetReadyOps(rOps, ski)) {
                         numKeysUpdated++;
-                    }    
+                    }
                 } else {
                     ski.channel.translateAndSetReadyOps(rOps, ski);
                     if ((ski.nioReadyOps() & ski.nioInterestOps()) != 0) {
@@ -132,10 +132,10 @@ class EPollSelectorImpl
         if (!closed) {
             closed = true;
 
-	    // prevent further wakeup
-	    synchronized (interruptLock) {
-		interruptTriggered = true;
-	    }
+            // prevent further wakeup
+            synchronized (interruptLock) {
+                interruptTriggered = true;
+            }
 
             FileDispatcher.closeIntFD(fd0);
             FileDispatcher.closeIntFD(fd1);
@@ -147,15 +147,15 @@ class EPollSelectorImpl
                 selectedKeys = null;
 
                 // Deregister channels
-		Iterator i = keys.iterator();
-		while (i.hasNext()) {
-		    SelectionKeyImpl ski = (SelectionKeyImpl)i.next();
-		    deregister(ski);
-		    SelectableChannel selch = ski.channel();
-		    if (!selch.isOpen() && !selch.isRegistered())
-			((SelChImpl)selch).kill();
-		    i.remove();
-		}
+                Iterator i = keys.iterator();
+                while (i.hasNext()) {
+                    SelectionKeyImpl ski = (SelectionKeyImpl)i.next();
+                    deregister(ski);
+                    SelectableChannel selch = ski.channel();
+                    if (!selch.isOpen() && !selch.isRegistered())
+                        ((SelChImpl)selch).kill();
+                    i.remove();
+                }
             }
             fd0 = -1;
             fd1 = -1;
@@ -177,10 +177,10 @@ class EPollSelectorImpl
         ski.setIndex(-1);
         keys.remove(ski);
         selectedKeys.remove(ski);
-	deregister((AbstractSelectionKey)ski);
-	SelectableChannel selch = ski.channel();
-	if (!selch.isOpen() && !selch.isRegistered())
-	    ((SelChImpl)selch).kill();
+        deregister((AbstractSelectionKey)ski);
+        SelectableChannel selch = ski.channel();
+        if (!selch.isOpen() && !selch.isRegistered())
+            ((SelChImpl)selch).kill();
     }
 
     void putEventOps(SelectionKeyImpl sk, int ops) {
@@ -195,7 +195,7 @@ class EPollSelectorImpl
                 interruptTriggered = true;
             }
         }
-	return this;
+        return this;
     }
 
     static {

@@ -29,7 +29,6 @@ package sun.jvmstat.perfdata.monitor.v2_0;
  * A typesafe enumeration for describing standard Java type codes.
  *
  * @author Brian Doherty
- * @version %I%, %G%
  * @since 1.5
  */
 public class TypeCode {

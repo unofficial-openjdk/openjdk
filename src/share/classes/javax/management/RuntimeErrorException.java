@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management; 
+package javax.management;
 
 
 
@@ -33,8 +33,8 @@ package javax.management;
  *
  * @since 1.5
  */
-public class RuntimeErrorException extends JMRuntimeException   { 
-    
+public class RuntimeErrorException extends JMRuntimeException   {
+
     /* Serial version */
     private static final long serialVersionUID = 704338937753949796L;
 
@@ -52,7 +52,7 @@ public class RuntimeErrorException extends JMRuntimeException   {
       super();
       error = e ;
     }
-    
+
     /**
      * Constructor that allows a specific error message to be specified.
      *
@@ -63,14 +63,14 @@ public class RuntimeErrorException extends JMRuntimeException   {
        super(message);
        error = e ;
     }
-    
+
     /**
      * Returns the actual {@link Error} thrown.
      *
      * @return the wrapped {@link Error}.
      */
     public java.lang.Error getTargetError()  {
-	return error ;
+        return error ;
     }
 
     /**
@@ -79,6 +79,6 @@ public class RuntimeErrorException extends JMRuntimeException   {
      * @return the wrapped {@link Error}.
      */
     public Throwable getCause() {
-	return error;
+        return error;
     }
 }

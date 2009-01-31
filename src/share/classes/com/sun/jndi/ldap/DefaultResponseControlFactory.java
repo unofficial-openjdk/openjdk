@@ -70,31 +70,31 @@ public class DefaultResponseControlFactory extends ControlFactory {
      *            error condition while attempting to create the LDAP control,
      *            and no other control factories are to be tried.
      */
-    public Control getControlInstance(Control ctl) 
-	throws NamingException {
+    public Control getControlInstance(Control ctl)
+        throws NamingException {
 
-	String id = ctl.getID();
+        String id = ctl.getID();
 //System.out.println(id);
 
-	try {
-	    if (id.equals(SortResponseControl.OID)) {
-		return new SortResponseControl(id, ctl.isCritical(),
-		    ctl.getEncodedValue());
+        try {
+            if (id.equals(SortResponseControl.OID)) {
+                return new SortResponseControl(id, ctl.isCritical(),
+                    ctl.getEncodedValue());
 
-	    } else if (id.equals(PagedResultsResponseControl.OID)) {
-		return new PagedResultsResponseControl(id, ctl.isCritical(),
-		    ctl.getEncodedValue());
+            } else if (id.equals(PagedResultsResponseControl.OID)) {
+                return new PagedResultsResponseControl(id, ctl.isCritical(),
+                    ctl.getEncodedValue());
 
-	    } else if (id.equals(EntryChangeResponseControl.OID)) {
-		return new EntryChangeResponseControl(id, ctl.isCritical(),
-		    ctl.getEncodedValue());
+            } else if (id.equals(EntryChangeResponseControl.OID)) {
+                return new EntryChangeResponseControl(id, ctl.isCritical(),
+                    ctl.getEncodedValue());
 
-	    } 
-	} catch (IOException e) {
-	    NamingException ne = new NamingException();
-	    ne.setRootCause(e);
-	    throw ne;
-	}
-	return null;
+            }
+        } catch (IOException e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
+        return null;
     }
 }

@@ -42,7 +42,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
      ************************************************/
 
     private static Logger log = Logger.getLogger("sun.awt.X11.XMenuBarPeer");
-    
+
     /*
      * Primary members
      */
@@ -75,7 +75,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
         f_helpMenu = SunToolkit.getField(MenuBar.class, "helpMenu");
         f_menus = SunToolkit.getField(MenuBar.class, "menus");
     }
-    
+
     /************************************************
      *
      * Mapping data
@@ -136,21 +136,21 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
      */
 
     /*
-     * Functions addMenu, delMenu, addHelpMenu 
+     * Functions addMenu, delMenu, addHelpMenu
      * need to have somewhat strange behaivour
      * deduced from java.awt.MenuBar.
      * We can not get index of particular item in
      * MenuBar.menus array, because MenuBar firstly
      * performs array operations and then calls peer.
-     * So we need to synchronize indicies in 'items' 
-     * array with MenuBar.menus. We have to follow 
+     * So we need to synchronize indicies in 'items'
+     * array with MenuBar.menus. We have to follow
      * these rules:
      * 1. Menus are always added to the end of array,
      * even when helpMenu is present
      * 2. Removal of any menu item acts as casual
      * remove from array
      * 3. MenuBar.setHelpMenu _firstly_ removes
-     * previous helpMenu by calling delMenu() if 
+     * previous helpMenu by calling delMenu() if
      * necessary, then it performs addMenu(),
      * and then - addHelpMenu().
      *
@@ -180,7 +180,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
         }
         postPaintEvent();
     }
- 
+
     /************************************************
      *
      * Initialization
@@ -333,7 +333,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
 
     /**
      * This function is called when it's likely that
-     * size of items has changed. 
+     * size of items has changed.
      * Invokes framePeer's updateChildrenSizes()
      */
     protected void updateSize() {
@@ -349,7 +349,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
      *
      ************************************************/
 
-    /** 
+    /**
      * Returns desired height of menu bar
      */
     int getDesiredHeight() {
@@ -359,7 +359,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
 
     /**
      * Returns true if framePeer is not null and is enabled
-     * Used to fix 6185057: Disabling a frame does not disable 
+     * Used to fix 6185057: Disabling a frame does not disable
      * the menus on the frame, on solaris/linux
      */
     boolean isFramePeerEnabled() {
@@ -380,7 +380,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
      */
     protected void doDispose() {
         super.doDispose();
-        XToolkit.targetDisposedPeer(menuBarTarget, this);        
+        XToolkit.targetDisposedPeer(menuBarTarget, this);
     }
 
     /************************************************
@@ -459,7 +459,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
     void print(Graphics g) {
         //TODO:Implement
     }
-    
+
     /************************************************
      *
      * Overriden XBaseMenuWindow event handling
@@ -483,7 +483,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
         case MouseEvent.MOUSE_ENTERED:
         case MouseEvent.MOUSE_EXITED:
         case MouseEvent.MOUSE_DRAGGED:
-            //Fix for 6185057: Disabling a frame does not disable 
+            //Fix for 6185057: Disabling a frame does not disable
             //the menus on the frame, on solaris/linux
             if (isFramePeerEnabled()) {
                 doHandleJavaMouseEvent((MouseEvent)event);
@@ -491,7 +491,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
             break;
         case KeyEvent.KEY_PRESSED:
         case KeyEvent.KEY_RELEASED:
-            //Fix for 6185057: Disabling a frame does not disable 
+            //Fix for 6185057: Disabling a frame does not disable
             //the menus on the frame, on solaris/linux
             if (isFramePeerEnabled()) {
                 doHandleJavaKeyEvent((KeyEvent)event);
@@ -500,7 +500,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
         default:
             super.handleEvent(event);
             break;
-        }        
+        }
     }
 
 
@@ -510,7 +510,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
      * Overriden XWindow keyboard processing
      *
      ************************************************/
-    
+
     /*
      * This function is called from XWindow
      * @see XWindow.handleF10onEDT()
@@ -521,7 +521,7 @@ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
             ((keyState & InputEvent.SHIFT_MASK) != 0) ||
             ((keyState & InputEvent.CTRL_MASK) != 0)) {
             return;
-        }  
+        }
         grabInput();
         selectItem(getFirstSelectableItem(), true);
     }

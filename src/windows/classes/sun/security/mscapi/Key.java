@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
- 
+
 package sun.security.mscapi;
 
 /**
@@ -33,7 +33,7 @@ package sun.security.mscapi;
  * @see RSAPublicKey
  *
  * @since 1.6
- * @author  Stanley Man-Kit Ho 
+ * @author  Stanley Man-Kit Ho
  */
 abstract class Key implements java.security.Key
 {
@@ -41,7 +41,7 @@ abstract class Key implements java.security.Key
     // Native handle
     protected long hCryptProv = 0;
     protected long hCryptKey = 0;
-    
+
     // Key length
     protected int keyLength = 0;
 
@@ -50,9 +50,9 @@ abstract class Key implements java.security.Key
      */
     protected Key(long hCryptProv, long hCryptKey, int keyLength)
     {
-	this.hCryptProv = hCryptProv;
-	this.hCryptKey = hCryptKey;
-	this.keyLength = keyLength;
+        this.hCryptProv = hCryptProv;
+        this.hCryptKey = hCryptKey;
+        this.keyLength = keyLength;
     }
 
     /**
@@ -60,17 +60,17 @@ abstract class Key implements java.security.Key
      */
     protected void finalize() throws Throwable
     {
-	try {
-	    synchronized(this)
-	    {
-		cleanUp(hCryptProv, hCryptKey);
-		hCryptProv = 0;
-		hCryptKey = 0;
-	    }
+        try {
+            synchronized(this)
+            {
+                cleanUp(hCryptProv, hCryptKey);
+                hCryptProv = 0;
+                hCryptKey = 0;
+            }
 
-	} finally {
-	    super.finalize();
-	}
+        } finally {
+            super.finalize();
+        }
     }
 
     /**
@@ -78,31 +78,31 @@ abstract class Key implements java.security.Key
      */
     private native static void cleanUp(long hCryptProv, long hCryptKey);
 
-    /** 
+    /**
      * Return bit length of the key.
      */
     public int bitLength()
     {
-	return keyLength;
+        return keyLength;
     }
 
-    
+
     /**
      * Return native HCRYPTKEY handle.
      */
     public long getHCryptKey()
     {
-	return hCryptKey;
-    }    
+        return hCryptKey;
+    }
 
     /**
      * Return native HCRYPTPROV handle.
      */
     public long getHCryptProvider()
     {
-	return hCryptProv;
-    }       
-    
+        return hCryptProv;
+    }
+
     /**
      * Returns the standard algorithm name for this key. For
      * example, "DSA" would indicate that this key is a DSA key.
@@ -134,7 +134,7 @@ abstract class Key implements java.security.Key
      */
     public String getFormat()
     {
-	return null;
+        return null;
     }
 
     /**
@@ -146,10 +146,10 @@ abstract class Key implements java.security.Key
      */
     public byte[] getEncoded()
     {
-	return null;
-    } 
+        return null;
+    }
 
     protected native static String getContainerName(long hCryptProv);
-    
+
     protected native static String getKeyType(long hCryptKey);
 }

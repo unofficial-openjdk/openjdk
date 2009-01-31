@@ -36,4 +36,3 @@ JNIEXPORT jlong JNICALL Java_sun_management_GarbageCollectorImpl_getCollectionTi
   (JNIEnv *env, jobject mgr) {
     return jmm_interface->GetLongAttribute(env, mgr, JMM_GC_TIME_MS);
 }
-

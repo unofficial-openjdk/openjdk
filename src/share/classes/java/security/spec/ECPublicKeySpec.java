@@ -25,7 +25,7 @@
 package java.security.spec;
 
 /**
- * This immutable class specifies an elliptic curve public key with 
+ * This immutable class specifies an elliptic curve public key with
  * its associated parameters.
  *
  * @see KeySpec
@@ -33,7 +33,6 @@ package java.security.spec;
  * @see ECParameterSpec
  *
  * @author Valerie Peng
- * @version %I%, %G%
  *
  * @since 1.5
  */
@@ -43,10 +42,10 @@ public class ECPublicKeySpec implements KeySpec {
     private ECParameterSpec params;
 
     /**
-     * Creates a new ECPublicKeySpec with the specified 
+     * Creates a new ECPublicKeySpec with the specified
      * parameter values.
      * @param w the public point.
-     * @param params the associated elliptic curve domain 
+     * @param params the associated elliptic curve domain
      * parameters.
      * @exception NullPointerException if <code>w</code>
      * or <code>params</code> is null.
@@ -54,15 +53,15 @@ public class ECPublicKeySpec implements KeySpec {
      * is point at infinity, i.e. ECPoint.POINT_INFINITY
      */
     public ECPublicKeySpec(ECPoint w, ECParameterSpec params) {
-	if (w == null) {
+        if (w == null) {
             throw new NullPointerException("w is null");
         }
         if (params == null) {
             throw new NullPointerException("params is null");
         }
-	if (w == ECPoint.POINT_INFINITY) {
-	    throw new IllegalArgumentException("w is ECPoint.POINT_INFINITY");
-	}
+        if (w == ECPoint.POINT_INFINITY) {
+            throw new IllegalArgumentException("w is ECPoint.POINT_INFINITY");
+        }
         this.w = w;
         this.params = params;
     }
@@ -72,15 +71,15 @@ public class ECPublicKeySpec implements KeySpec {
      * @return the public point W.
      */
     public ECPoint getW() {
-	return w;
+        return w;
     }
 
     /**
-     * Returns the associated elliptic curve domain 
+     * Returns the associated elliptic curve domain
      * parameters.
      * @return the EC domain parameters.
      */
     public ECParameterSpec getParams() {
-	return params;
+        return params;
     }
 }

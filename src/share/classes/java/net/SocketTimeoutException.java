@@ -34,12 +34,12 @@ package java.net;
 public class SocketTimeoutException extends java.io.InterruptedIOException {
 
     /**
-     * Constructs a new SocketTimeoutException with a detail 
+     * Constructs a new SocketTimeoutException with a detail
      * message.
      * @param msg the detail message
      */
     public SocketTimeoutException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**

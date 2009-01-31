@@ -31,7 +31,6 @@ import sun.nio.cs.ext.MacCentralEurope;
  * Tables and data to convert Unicode to MacCentralEurope
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class CharToByteMacCentralEurope extends CharToByteSingleByte {

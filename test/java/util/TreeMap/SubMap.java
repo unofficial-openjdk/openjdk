@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4252490
- * @summary The firstKey and lastKey 
+ * @summary The firstKey and lastKey
  */
 
 import java.util.*;

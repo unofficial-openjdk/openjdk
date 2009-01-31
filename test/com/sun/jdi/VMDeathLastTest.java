@@ -47,11 +47,11 @@ public class VMDeathLastTest extends TestScaffold {
     boolean disconnected = false;
 
     VMDeathLastTest (String args[]) {
-	super(args);
+        super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
-	new VMDeathLastTest(args).startTests();
+    public static void main(String[] args)      throws Exception {
+        new VMDeathLastTest(args).startTests();
     }
 
     /********** event handlers **********/
@@ -99,10 +99,10 @@ public class VMDeathLastTest extends TestScaffold {
     /********** test core **********/
 
     protected void runTests() throws Exception {
-	/*
-	 * Get to the top of main() 
+        /*
+         * Get to the top of main()
          * to determine targetClass and mainThread
-	 */
+         */
         startToMain("HelloWorld");
         if (!vm().canBeModified()) {
             failure("VM says it is read-only");
@@ -133,11 +133,10 @@ public class VMDeathLastTest extends TestScaffold {
         /*
          * deal with results of test
          */
-	if (!testFailed) {
+        if (!testFailed) {
             println("VMDeathLastTest: passed");
         } else {
             throw new Exception("VMDeathLastTest: failed");
         }
     }
 }
-

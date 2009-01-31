@@ -26,7 +26,7 @@
  *
  * @summary Testing keytool
  * @author weijun.wang
- * 
+ *
  * Run through autotest.sh and manualtest.sh
  *
  * Testing non-PKCS11 keystores:
@@ -39,7 +39,7 @@
  *
  * Testing Solaris Cryptography Framework PKCS11 keystores:
  *       # make sure you've already run pktool and set test12 as pin
- *       echo | java -Dsolaris KeyToolTest 
+ *       echo | java -Dsolaris KeyToolTest
  *
  * ATTENTION:
  * Exception in thread "main" java.security.ProviderException: sun.security.pkcs11.wrapper.PKCS11Exception: CKR_KEY_SIZE_RANGE
@@ -63,31 +63,31 @@ import sun.security.x509.*;
 import java.io.*;
 
 public class KeyToolTest {
-    
+
     // The stdout and stderr outputs after a keytool run
     String out;
     String err;
-    
+
     // the output of println() in KeyTool.run
     String ex;
-    
+
     String lastInput = "", lastCommand = "";
-    private static final boolean debug = 
+    private static final boolean debug =
         System.getProperty("debug") != null;
-    
-    static final String NSS_P11_ARG = 
+
+    static final String NSS_P11_ARG =
             "-keystore NONE -storetype PKCS11 -providerName SunPKCS11-nss -providerClass sun.security.pkcs11.SunPKCS11 -providerArg p11-nss.txt ";
-    static final String NSS_SRC_P11_ARG = 
+    static final String NSS_SRC_P11_ARG =
             "-srckeystore NONE -srcstoretype PKCS11 -srcproviderName SunPKCS11-nss -providerClass sun.security.pkcs11.SunPKCS11 -providerArg p11-nss.txt ";
-    static final String NZZ_P11_ARG = 
+    static final String NZZ_P11_ARG =
             "-keystore NONE -storetype PKCS11 -providerName SunPKCS11-nzz -providerClass sun.security.pkcs11.SunPKCS11 -providerArg p11-nzz.txt ";
-    static final String NZZ_SRC_P11_ARG = 
+    static final String NZZ_SRC_P11_ARG =
             "-srckeystore NONE -srcstoretype PKCS11 -srcproviderName SunPKCS11-nzz -providerClass sun.security.pkcs11.SunPKCS11 -providerArg p11-nzz.txt ";
     static final String SUN_P11_ARG = "-keystore NONE -storetype PKCS11 ";
     static final String SUN_SRC_P11_ARG = "-srckeystore NONE -srcstoretype PKCS11 ";
-    
+
     String p11Arg, srcP11Arg;
-    
+
     /** Creates a new instance of KeyToolTest */
     KeyToolTest() {
         // so that there is "Warning" and not translated into other language
@@ -106,18 +106,18 @@ public class KeyToolTest {
             throw new RuntimeException("Error deleting " + filename);
         }
     }
-    
+
     /**
      * Run a set of keytool command with given terminal input.
      * @param input the terminal inputs, the characters typed by human
      *        if <code>cmd</code> is running on a terminal
-     * @param cmd the argument of a keytool command line 
+     * @param cmd the argument of a keytool command line
      * @throws if keytool goes wrong in some place
      */
     void test(String input, String cmd) throws Exception {
         lastInput = input;
         lastCommand = cmd;
-        
+
         // "X" is appened so that we can precisely test how input is consumed
         HumanInputStream in = new HumanInputStream(input+"X");
         test(in, cmd);
@@ -125,9 +125,9 @@ public class KeyToolTest {
         if(in.read() != 'X' || in.read() != -1)
             throw new Exception("Input not consumed exactly");
     }
-    
+
     void test(InputStream in, String cmd) throws Exception {
-        
+
         // save the original 3 streams
         if (debug) {
             System.err.println(cmd);
@@ -140,7 +140,7 @@ public class KeyToolTest {
 
         ByteArrayOutputStream b1 = new ByteArrayOutputStream();
         ByteArrayOutputStream b2 = new ByteArrayOutputStream();
-        
+
         try {
             System.setIn(in);
             System.setOut(new PrintStream(b1));
@@ -148,13 +148,13 @@ public class KeyToolTest {
 
             // since System.in is overrided, the KeyTool.main() method will
             // never block at user input
-            
+
             // use -debug so that KeyTool.main() will throw an Exception
             // instead of calling System.exit()
             KeyTool.main(("-debug "+cmd).split("\\s+"));
         } finally {
             out = b1.toString();
-            err = b2.toString(); 
+            err = b2.toString();
             ex = out;   // now it goes to System.out
             System.setIn(i1);
             System.setOut(p1);
@@ -173,7 +173,7 @@ public class KeyToolTest {
             throw e;
         }
     }
-    
+
     /**
      * Call this method if you expect test(input, cmd) should fail and throw
      * an exception
@@ -195,7 +195,7 @@ public class KeyToolTest {
             throw new RuntimeException();
         }
     }
-    
+
     /**
      * Call this method if you expect test(input, cmd) should go OK
      */
@@ -207,7 +207,7 @@ public class KeyToolTest {
             throw e;
         }
     }
-    
+
     /**
      * Call this method if you expect test(input, cmd) should fail and throw
      * an exception
@@ -225,7 +225,7 @@ public class KeyToolTest {
             throw new RuntimeException();
         }
     }
-    
+
     /**
      * Call this method if you just want to run the command and does
      * not care if it succeeds or fails.
@@ -237,7 +237,7 @@ public class KeyToolTest {
             ;
         }
     }
-    
+
     /**
      * Helper method, print some output after a test does not do as expected
      */
@@ -245,12 +245,12 @@ public class KeyToolTest {
         System.err.println("\nTest fails for the command ---\n" +
                 "keytool " + cmd + "\nOr its debug version ---\n" +
                 "keytool -debug " + cmd);
-        
+
         System.err.println("The command result should be " + should +
                 ", but it's not. Try run the command manually and type" +
                 " these input into it: ");
         char[] inputChars = input.toCharArray();
-        
+
         for (int i=0; i<inputChars.length; i++) {
             char ch = inputChars[i];
             if (ch == '\n') System.err.print("ENTER ");
@@ -258,20 +258,20 @@ public class KeyToolTest {
             else System.err.print(ch + " ");
         }
         System.err.println("");
-        
+
         System.err.println("ERR is:\n"+err);
         System.err.println("OUT is:\n"+out);
     }
-    
+
     void assertTrue(boolean bool, String msg) {
         if(!bool) {
             afterFail(lastInput, lastCommand, "TRUE");
             throw new RuntimeException(msg);
         }
     }
-    
+
     /**
-     * Helper method, load a keystore 
+     * Helper method, load a keystore
      * @param file file for keystore, null or "NONE" for PKCS11
      * @pass password for the keystore
      * @type keystore type
@@ -288,21 +288,21 @@ public class KeyToolTest {
         is.close();
         return ks;
     }
-    
+
     /**
      * The test suite.
      * Maybe it's better to put this outside the KeyToolTest class
      */
     void testAll() throws Exception {
         KeyStore ks;
-        
+
         remove("x.jks");
         remove("x.jceks");
         remove("x.p12");
         remove("x2.jceks");
         remove("x2.jks");
         remove("x.jks.p1.cert");
-        
+
         // name changes: genkeypair, importcert, exportcert
         remove("x.jks");
         remove("x.jks.p1.cert");
@@ -317,12 +317,12 @@ public class KeyToolTest {
         testOK("", "-keystore x.jks -storepass changeit -importcert -alias c2 -file x.jks.p1.cert -noprompt"); // importcert, -noprompt
         ks = loadStore("x.jks", "changeit", "JKS");
         assertTrue(ks.getCertificate("c1") != null, "import c1 err");
-        
+
         // v3
-	byte[] encoded = ks.getCertificate("c1").getEncoded();
-	X509CertImpl certImpl = new X509CertImpl(encoded);
+        byte[] encoded = ks.getCertificate("c1").getEncoded();
+        X509CertImpl certImpl = new X509CertImpl(encoded);
         assertTrue(certImpl.getVersion() == 3, "Version is not 3");
-        
+
         // changealias and keyclone
         testOK("", "-keystore x.jks -storepass changeit -keypass changeit -genkeypair -alias p1 -dname CN=olala");
         testOK("changeit\n", "-keystore x.jks -changealias -alias p1 -destalias p11");
@@ -358,10 +358,10 @@ public class KeyToolTest {
         assertTrue(ks.getKey("s5", "keypass".toCharArray()).getAlgorithm().equalsIgnoreCase("DES"), "s5 is DES");
         assertTrue(ks.getKey("s6", "keypass".toCharArray()).getAlgorithm().equalsIgnoreCase("DES"), "s6 is DES");
         assertTrue(!ks.containsAlias("s7"), "s7 not created");
-        
+
         // maybe we needn't test this, one day JKS will support SecretKey
         //testFail("changeit\nchangeit\n", "-keystore x.jks -genseckey -keyalg AES -alias s3 -keysize 128");
-        
+
         // importKeyStore
         remove("x.jks");
         remove("x.jceks");
@@ -389,7 +389,7 @@ public class KeyToolTest {
         testOK("changeit\nchangeit\n\ns1\n\ns2\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS");
         ks = loadStore("x.jks", "changeit", "JKS");
         assertTrue(ks.size() == 4, "4 entries in JKS");
-        
+
         // importkeystore single
         remove("x.jks");
         testOK("changeit\nchangeit\nchangeit\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS -srcalias p1"); // normal
@@ -407,7 +407,7 @@ public class KeyToolTest {
         testOK("changeit\nchangeit\n\nnewalias\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS -srcalias p1"); // another rename
         ks = loadStore("x.jks", "changeit", "JKS");
         assertTrue(ks.size() == 3, "3 entries in JKS");
-        
+
         // importkeystore single, different keypass
         remove("x.jks");
         testOK("changeit\nkeypass\nkeypass\n", "-keystore x.jceks -storetype JCEKS -genkeypair -alias p2 -dname CN=Olala"); // generate entry with different keypass
@@ -419,7 +419,7 @@ public class KeyToolTest {
         assertTrue(ks.size() == 2, "2 entries in JKS");
         assertTrue(ks.getKey("p2", "keypass".toCharArray()) != null, "p2 has old password");
         assertTrue(ks.getKey("p3", "keypass2".toCharArray()) != null, "p3 has new password");
-        
+
         // importkeystore single, cert
         remove("x.jks");
         testOK("changeit\nchangeit\nchangeit\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS -srcalias c1"); // normal
@@ -429,7 +429,7 @@ public class KeyToolTest {
         testOK("changeit\n\n\nc3\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS -srcalias c1 -destalias c2");   // ... or rename
         ks = loadStore("x.jks", "changeit", "JKS");
         assertTrue(ks.size() == 3, "3 entries in JKS"); // c1, c2, c3
-        
+
         // importkeystore, secretkey
         remove("x.jks");
         testOK("changeit\n\n", "-keystore x.jceks -storetype JCEKS -genseckey -alias s1"); // create SecretKeyEntry
@@ -440,7 +440,7 @@ public class KeyToolTest {
         testOK("changeit\nchangeit\nchangeit\n", "-importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS -srcalias s1"); // normal
         assertTrue(err.indexOf("not imported") != -1, "Not imported");
         assertTrue(err.indexOf("Cannot store non-PrivateKeys") != -1, "Not imported");
-        
+
         remove("x.jks");
         testOK("\n\n", "-srcstorepass changeit -deststorepass changeit -importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS"); // normal
         assertTrue(err.indexOf("s1 not") != -1, "s1 not");
@@ -449,7 +449,7 @@ public class KeyToolTest {
         assertTrue(err.indexOf("p1 success") != -1, "p1 success");
         testOK("yes\n", "-srcstorepass changeit -deststorepass changeit -importkeystore -srckeystore x.jceks -srcstoretype JCEKS -destkeystore x.jks -deststoretype JKS"); // normal
         // maybe c1 or p1 has been imported before s1 or s2 is touched, anyway we know yesNo is only asked once.
-        
+
         // pkcs12
         remove("x.jks");
         testFail("changeit\nchangeit\n", "-keystore x.jks -genkeypair -alias p1 -dname CN=olala"); // JKS prompt for keypass
@@ -474,7 +474,7 @@ public class KeyToolTest {
         assertTrue(err.indexOf("Warning") == -1, "PKCS12 silent when keypass == storepass");
         testOK("", "-storepass changeit -keystore x.p12 -keypass another -storetype PKCS12 -genkeypair -alias p2 -dname CN=olala"); // otherwise, print a warning
         assertTrue(err.indexOf("Warning") != -1, "PKCS12 warning when keypass != storepass");
-        
+
         remove("x.jks");
         remove("x.jceks");
         remove("x.p12");
@@ -482,28 +482,28 @@ public class KeyToolTest {
         remove("x2.jks");
         remove("x.jks.p1.cert");
     }
-    
+
     void testPKCS11() throws Exception {
         KeyStore ks;
         // pkcs11, the password maybe different and maybe PKCS11 is not supported
-        
+
         // in case last test is not executed successfully
         testAnyway("", p11Arg + "-storepass test12 -delete -alias p1");
         testAnyway("", p11Arg + "-storepass test12 -delete -alias p2");
         testAnyway("", p11Arg + "-storepass test12 -delete -alias p3");
         testAnyway("", p11Arg + "-storepass test12 -delete -alias nss");
-        
+
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 0 entries") != -1, "*** MAKE SURE YOU HAVE NO ENTRIES IN YOUR PKCS11 KEYSTORE BEFORE THIS TEST ***");
-        
+
         testOK("", p11Arg + "-storepass test12 -genkeypair -alias p1 -dname CN=olala");
-        testOK("test12\n", p11Arg + "-genkeypair -alias p2 -dname CN=olala2");        
+        testOK("test12\n", p11Arg + "-genkeypair -alias p2 -dname CN=olala2");
         testFail("test12\n", p11Arg + "-keypass test12 -genkeypair -alias p3 -dname CN=olala3"); // cannot provide keypass for PKCS11
         testFail("test12\n", p11Arg + "-keypass nonsense -genkeypair -alias p3 -dname CN=olala3"); // cannot provide keypass for PKCS11
-        
+
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 2 entries") != -1, "2 entries in p11");
-        
+
         testOK("test12\n", p11Arg + "-alias p1 -changealias -destalias p3");
         testOK("", p11Arg + "-storepass test12 -list -alias p3");
         testFail("", p11Arg + "-storepass test12 -list -alias p1");
@@ -511,27 +511,27 @@ public class KeyToolTest {
         testOK("test12\n", p11Arg + "-alias p3 -keyclone -destalias p1");
         testFail("", p11Arg + "-storepass test12 -list -alias p3");   // in PKCS11, keyclone will delete old
         testOK("", p11Arg + "-storepass test12 -list -alias p1");
-        
+
         testFail("test12\n", p11Arg + "-alias p1 -keypasswd -new another"); // cannot change password for PKCS11
-        
+
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 2 entries") != -1, "2 entries in p11");
-        
+
         testOK("", p11Arg + "-storepass test12 -delete -alias p1");
         testOK("", p11Arg + "-storepass test12 -delete -alias p2");
-        
+
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 0 entries") != -1, "*** MAKE SURE YOU HAVE NO ENTRIES IN YOUR PKCS11 KEYSTORE BEFORE THIS TEST ***");
     }
-    
+
     void testPKCS11ImportKeyStore() throws Exception {
-        
+
         KeyStore ks;
         testOK("", p11Arg + "-storepass test12 -genkeypair -alias p1 -dname CN=olala");
-        testOK("test12\n", p11Arg + "-genkeypair -alias p2 -dname CN=olala2");        
+        testOK("test12\n", p11Arg + "-genkeypair -alias p2 -dname CN=olala2");
         // test importkeystore for pkcs11
-        
-        remove("x.jks");        
+
+        remove("x.jks");
         // pkcs11 -> jks
         testOK("changeit\nchangeit\ntest12\n", srcP11Arg + "-importkeystore -destkeystore x.jks -deststoretype JKS -srcalias p1");
         assertTrue(err.indexOf("not imported") != -1, "cannot import key without destkeypass");
@@ -556,20 +556,20 @@ public class KeyToolTest {
         testOK("", p11Arg + "-storepass test12 -delete -alias p2");
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 0 entries") != -1, "empty p11");
-        
+
         remove("x.jks");
     }
-    
+
     // The sqeTest reflects the test suggested by judy.gao and bill.situ at
     // /net/sqesvr-nfs/global/nfs/sec/ws_6.0_int/security/src/SecurityTools/Keytool
-    // 
+    //
     void sqeTest() throws Exception {
         FileOutputStream fos = new FileOutputStream("badkeystore");
         for (int i=0; i<100; i++) {
             fos.write(i);
         }
         fos.close();
-        
+
         sqeCsrTest();
         sqePrintcertTest();
         sqeDeleteTest();
@@ -581,10 +581,10 @@ public class KeyToolTest {
         sqeListTest();
         sqeSelfCertTest();
         sqeStorepassTest();
-        
+
         remove("badkeystore");
     }
-    
+
     // Import: cacert, prompt, trusted, non-trusted, bad chain, not match
     void sqeImportTest() throws Exception {
         KeyStore ks;
@@ -692,7 +692,7 @@ public class KeyToolTest {
         testOK("", "-keystore x.jks -storepass changeit -keypass keypass -genkeypair -dname CN=olala");
         testFail("", "-keystore x.jks -storepass changeit -selfcert");
         testOK("keypass\n", "-keystore x.jks -storepass changeit -selfcert");
-        
+
         testOK("", "-keystore x.jks -storepass changeit -exportcert -file x.jks.p1.cert");
         testOK("", "-keystore x.jks -storepass changeit -delete -alias mykey");
         testOK("", "-keystore x.jks -storepass changeit -importcert -file x.jks.p1.cert -noprompt");
@@ -721,9 +721,9 @@ public class KeyToolTest {
         testFail("", "-storepasswd -keystore aa\\bb//cc//dd -storepass changeit -new newstore"); // bad file
         remove("x.jks");
     }
-    
+
     void sqeGenkeyTest() throws Exception {
-        
+
         remove("x.jks");
         testOK("", "-keystore x.jks -storepass changeit -keypass changeit -genkeypair -dname CN=olala");
         testFail("", "-keystore x.jks -storepass changeit -keypass changeit -genkeypair -dname CN=olala");
@@ -746,7 +746,7 @@ public class KeyToolTest {
         testFail("", "-keystore x.jks -storepass changeit -keypass changeit -genkeypair -dname CNN=olala -alias n17");
         remove("x.jks");
     }
-    
+
     void sqeExportTest() throws Exception {
         remove("x.jks");
         testFail("", "-keystore x.jks -storepass changeit -export -file mykey.cert -alias mykey"); // nonexist
@@ -763,7 +763,7 @@ public class KeyToolTest {
         remove("mykey.cert2");
         remove("x.jks");
     }
-    
+
     void sqeDeleteTest() throws Exception {
         remove("x.jks");
         testFail("", "-keystore x.jks -storepass changeit -delete -alias mykey"); // nonexist
@@ -776,7 +776,7 @@ public class KeyToolTest {
         testFail("", "-keystore x.jks -storepass xxxxxxxx -delete -alias mykey"); // wrong pass
         remove("x.jks");
     }
-    
+
     void sqeCsrTest() throws Exception {
         remove("x.jks");
         remove("x.jks.p1.cert");
@@ -811,7 +811,7 @@ public class KeyToolTest {
         remove("x.jks.p1.cert");
         remove("csr1");
     }
-    
+
     void sqePrintcertTest() throws Exception {
         remove("x.jks");
         remove("mykey.cert");
@@ -826,7 +826,7 @@ public class KeyToolTest {
         remove("x.jks");
         remove("mykey.cert");
     }
-    
+
     void i18nTest() throws Exception {
         //   1.  keytool -help
         remove("x.jks");
@@ -868,11 +868,11 @@ public class KeyToolTest {
         //  14. keytool -printcert -file cert
         testOK("", "-printcert -file cert -keystore x.jks");
         remove("cert");
-        //  15. keytool -list -storepass password -provider sun.security.provider.Sun 
+        //  15. keytool -list -storepass password -provider sun.security.provider.Sun
         testOK("", "-list -storepass password -provider sun.security.provider.Sun -keystore x.jks");
-        
+
         //Error tests
-        
+
         //   1. keytool -storepasswd -storepass password -new abc Check error (password too short)
         testFail("", "-storepasswd -storepass password -new abc");
         assertTrue(ex.indexOf("New password must be at least 6 characters") != -1, "");
@@ -892,15 +892,15 @@ public class KeyToolTest {
         //   6. keytool -keypasswd -protected -keypass password Check error (password can not be specified with -protected)
         testFail("", "-keypasswd -protected -keypass password -keystore x.jks");
         assertTrue(ex.indexOf("if -protected is specified, then") != -1, "");
-        //   7. keytool -keypasswd -protected -new password Check error (password can not be specified with -protected) 
+        //   7. keytool -keypasswd -protected -new password Check error (password can not be specified with -protected)
         testFail("", "-keypasswd -protected -new password -keystore x.jks");
         assertTrue(ex.indexOf("if -protected is specified, then") != -1, "");
         remove("x.jks");
     }
-    
+
     void i18nPKCS11Test() throws Exception {
         //PKCS#11 tests
-        
+
         //   1. sccs edit cert8.db key3.db
         //Runtime.getRuntime().exec("/usr/ccs/bin/sccs edit cert8.db key3.db");
         testOK("", p11Arg + "-storepass test12 -genkey -alias genkey -dname cn=genkey -keysize 512 -keyalg rsa");
@@ -920,20 +920,20 @@ public class KeyToolTest {
         //Runtime.getRuntime().exec("/usr/ccs/bin/sccs unedit cert8.db key3.db");
         remove("genkey.cert");
         remove("genkey.certreq");
-        //  12. sccs unedit cert8.db key3.db     
+        //  12. sccs unedit cert8.db key3.db
     }
-    
+
     // tesing new option -srcProviderName
     void sszzTest() throws Exception {
         testAnyway("", NSS_P11_ARG+"-delete -alias nss -storepass test12");
         testAnyway("", NZZ_P11_ARG+"-delete -alias nss -storepass test12");
         testOK("", NSS_P11_ARG+"-genkeypair -dname CN=NSS -alias nss -storepass test12");
-        testOK("", NSS_SRC_P11_ARG + NZZ_P11_ARG + 
+        testOK("", NSS_SRC_P11_ARG + NZZ_P11_ARG +
                 "-importkeystore -srcstorepass test12 -deststorepass test12");
         testAnyway("", NSS_P11_ARG+"-delete -alias nss -storepass test12");
         testAnyway("", NZZ_P11_ARG+"-delete -alias nss -storepass test12");
     }
-    
+
     public static void main(String[] args) throws Exception {
         // first test if HumanInputStream really acts like a human being
         HumanInputStream.test();
@@ -943,25 +943,25 @@ public class KeyToolTest {
             t.sqeTest();
             t.testAll();
             t.i18nTest();
-        } 
+        }
 
         if (System.getProperty("nss") != null) {
             t.srcP11Arg = NSS_SRC_P11_ARG;
             t.p11Arg = NSS_P11_ARG;
 
             t.testPKCS11();
-            
+
             // FAIL:
             // 1. we still don't have srcprovidername yet
             // 2. cannot store privatekey into NSS keystore
             //    java.security.KeyStoreException: sun.security.pkcs11.wrapper.PKCS11Exception: CKR_TEMPLATE_INCOMPLETE.
             //t.testPKCS11ImportKeyStore();
-            
+
             t.i18nPKCS11Test();
             //FAIL: currently PKCS11-NSS does not support 2 NSS KeyStores to be loaded at the same time
             //t.sszzTest();
         }
-        
+
         if (System.getProperty("solaris") != null) {
             // For Solaris Cryptography Framework
             t.srcP11Arg = SUN_SRC_P11_ARG;
@@ -970,7 +970,7 @@ public class KeyToolTest {
             t.testPKCS11ImportKeyStore();
             t.i18nPKCS11Test();
         }
-        
+
         System.out.println("Test pass!!!");
     }
 }
@@ -982,12 +982,12 @@ class TestException extends Exception {
 }
 
 /**
- * HumanInputStream tries to act like a human sitting in front of a computer 
- * terminal typing on the keyboard while the keytool program is running. 
+ * HumanInputStream tries to act like a human sitting in front of a computer
+ * terminal typing on the keyboard while the keytool program is running.
  *
- * keytool has called InputStream.read() and BufferedReader.readLine() in 
- * various places. a call to B.readLine() will try to buffer as much input as 
- * possible. Thus, a trivial InputStream will find it impossible to feed 
+ * keytool has called InputStream.read() and BufferedReader.readLine() in
+ * various places. a call to B.readLine() will try to buffer as much input as
+ * possible. Thus, a trivial InputStream will find it impossible to feed
  * anything to I.read() after a B.readLine() call.
  *
  * This is why i create HumanInputStream, which will only send a single line
@@ -1010,10 +1010,10 @@ class HumanInputStream extends InputStream {
         stopIt = 0;
         inLine = false;
     }
-    
+
     // the trick: when called through read(byte[], int, int),
     // return -1 twice after "\n"
-    
+
     @Override public int read() throws IOException {
         int re;
         if(pos < length) {
@@ -1043,8 +1043,8 @@ class HumanInputStream extends InputStream {
         try {
             int re = super.read(buffer, offset, len);
             return re;
-        } catch(Exception e) { 
-            throw new RuntimeException("HumanInputStream error"); 
+        } catch(Exception e) {
+            throw new RuntimeException("HumanInputStream error");
         } finally {
             inLine = false;
         }
@@ -1053,7 +1053,7 @@ class HumanInputStream extends InputStream {
         if(pos < length) return 1;
         return 0;
     }
-    
+
     // test part
     static void assertTrue(boolean bool) {
         if(!bool)
@@ -1061,7 +1061,7 @@ class HumanInputStream extends InputStream {
     }
 
     public static void test() throws Exception {
-        
+
         class Tester {
             HumanInputStream is;
             BufferedReader reader;
@@ -1069,7 +1069,7 @@ class HumanInputStream extends InputStream {
                 is = new HumanInputStream(s);
                 reader = new BufferedReader(new InputStreamReader(is));
             }
-            
+
             // three kinds of test method
             // 1. read byte by byte from InputStream
             void testStreamReadOnce(int expection) throws Exception {
@@ -1124,25 +1124,25 @@ class HumanInputStream extends InputStream {
         test = new Tester("1\n2");
         test.testStreamReadMany("1\n2");
         test.testStreamReadOnce(-1);
-        
+
         test = new Tester("12\n234");
         test.testStreamReadOnce('1');
         test.testReaderReadline("2");
         test.testStreamReadOnce('2');
         test.testReaderReadline2("34");
         test.testReaderReadline2(null);
-        
+
         test = new Tester("changeit\n");
         test.testStreamReadMany("changeit\n");
         test.testReaderReadline(null);
-        
+
         test = new Tester("changeit\nName\nCountry\nYes\n");
         test.testStreamReadMany("changeit\n");
         test.testReaderReadline("Name");
         test.testReaderReadline("Country");
         test.testReaderReadline("Yes");
         test.testReaderReadline(null);
-        
+
         test = new Tester("Me\nHere\n");
         test.testReaderReadline2("Me");
         test.testReaderReadline2("Here");

@@ -32,7 +32,6 @@ import java.rmi.*;
  * <code>RemoteStub</code> uses a remote reference to carry out a
  * remote method invocation to a remote object.
  *
- * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  * @see     java.rmi.server.RemoteStub
@@ -61,7 +60,7 @@ public interface RemoteRef extends java.io.Externalizable {
      * throws a RemoteException if the call failed or an
      * application-level exception if the remote invocation throws
      * an exception.
-     *    
+     *
      * @param obj the object that contains the RemoteRef (e.g., the
      *            RemoteStub for the object.
      * @param method the method to be invoked
@@ -73,11 +72,11 @@ public interface RemoteRef extends java.io.Externalizable {
      * @since 1.2
      */
     Object invoke(Remote obj,
-		  java.lang.reflect.Method method,
-		  Object[] params,
-		  long opnum)
-	throws Exception;
-    
+                  java.lang.reflect.Method method,
+                  Object[] params,
+                  long opnum)
+        throws Exception;
+
     /**
      * Creates an appropriate call object for a new remote method
      * invocation on this object.  Passing operation array and index,
@@ -103,12 +102,12 @@ public interface RemoteRef extends java.io.Externalizable {
      * @see #invoke(Remote,java.lang.reflect.Method,Object[],long)
      */
     @Deprecated
-    RemoteCall newCall(RemoteObject obj, Operation[] op, int opnum, long hash) 
-	throws RemoteException;
-    
+    RemoteCall newCall(RemoteObject obj, Operation[] op, int opnum, long hash)
+        throws RemoteException;
+
     /**
      * Executes the remote call.
-     * 
+     *
      * Invoke will raise any "user" exceptions which
      * should pass through and not be caught by the stub.  If any
      * exception is raised during the remote invocation, invoke should
@@ -130,7 +129,7 @@ public interface RemoteRef extends java.io.Externalizable {
      */
     @Deprecated
     void invoke(RemoteCall call) throws Exception;
-    
+
     /**
      * Allows the remote reference to clean up (or reuse) the connection.
      * Done should only be called if the invoke returns successfully
@@ -151,7 +150,7 @@ public interface RemoteRef extends java.io.Externalizable {
      */
     @Deprecated
     void done(RemoteCall call) throws RemoteException;
-    
+
     /**
      * Returns the class name of the ref type to be serialized onto
      * the stream 'out'.
@@ -161,14 +160,14 @@ public interface RemoteRef extends java.io.Externalizable {
      * @since JDK1.1
      */
     String getRefClass(java.io.ObjectOutput out);
-    
+
     /**
      * Returns a hashcode for a remote object.  Two remote object stubs
      * that refer to the same remote object will have the same hash code
      * (in order to support remote objects as keys in hash tables).
      *
      * @return remote object hashcode
-     * @see		java.util.Hashtable
+     * @see             java.util.Hashtable
      * @since JDK1.1
      */
     int remoteHashCode();
@@ -178,9 +177,9 @@ public interface RemoteRef extends java.io.Externalizable {
      * Returns a boolean that indicates whether this remote object is
      * equivalent to the specified Object. This method is used when a
      * remote object is stored in a hashtable.
-     * @param	obj	the Object to compare with
-     * @return	true if these Objects are equal; false otherwise.
-     * @see		java.util.Hashtable
+     * @param   obj     the Object to compare with
+     * @return  true if these Objects are equal; false otherwise.
+     * @see             java.util.Hashtable
      * @since JDK1.1
      */
     boolean remoteEquals(RemoteRef obj);
@@ -192,5 +191,5 @@ public interface RemoteRef extends java.io.Externalizable {
      * @since JDK1.1
      */
     String remoteToString();
-	
+
 }

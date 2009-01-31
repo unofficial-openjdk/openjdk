@@ -40,21 +40,21 @@ import java.net.*;
  * a way which does not require special configuration of the code which
  * asks for the sockets:  <UL>
  *
- *	<LI> Due to polymorphism of both factories and sockets, different
- *	kinds of sockets can be used by the same application code just
- *	by passing it different kinds of factories.
+ *      <LI> Due to polymorphism of both factories and sockets, different
+ *      kinds of sockets can be used by the same application code just
+ *      by passing it different kinds of factories.
  *
- *	<LI> Factories can themselves be customized with parameters used
- *	in socket construction.  So for example, factories could be
- *	customized to return sockets with different networking timeouts
+ *      <LI> Factories can themselves be customized with parameters used
+ *      in socket construction.  So for example, factories could be
+ *      customized to return sockets with different networking timeouts
  *      or security parameters already configured.
  *
- *	<LI> The sockets returned to the application can be subclasses
- *	of java.net.Socket, so that they can directly expose new APIs
- *	for features such as compression, security, record marking,
- *	statistics collection, or firewall tunneling.
+ *      <LI> The sockets returned to the application can be subclasses
+ *      of java.net.Socket, so that they can directly expose new APIs
+ *      for features such as compression, security, record marking,
+ *      statistics collection, or firewall tunneling.
  *
- *	</UL>
+ *      </UL>
  *
  * <P> Factory classes are specified by environment-specific configuration
  * mechanisms.  For example, the <em>getDefault</em> method could return
@@ -64,7 +64,6 @@ import java.net.*;
  * @since 1.4
  * @see ServerSocketFactory
  *
- * @version %I%
  * @author David Brownell
  */
 public abstract class SocketFactory
@@ -73,7 +72,7 @@ public abstract class SocketFactory
     // NOTE:  JDK 1.1 bug in class GC, this can get collected
     // even though it's always accessible via getDefault().
     //
-    private static SocketFactory		theFactory;
+    private static SocketFactory                theFactory;
 
     /**
      * Creates a <code>SocketFactory</code>.
@@ -88,19 +87,19 @@ public abstract class SocketFactory
      */
     public static SocketFactory getDefault()
     {
-	synchronized (SocketFactory.class) {
-	    if (theFactory == null) {
-		//
-		// Different implementations of this method SHOULD
-		// work rather differently.  For example, driving
-		// this from a system property, or using a different
-		// implementation than JavaSoft's.
-		//
-		theFactory = new DefaultSocketFactory();
-	    }
-	}
+        synchronized (SocketFactory.class) {
+            if (theFactory == null) {
+                //
+                // Different implementations of this method SHOULD
+                // work rather differently.  For example, driving
+                // this from a system property, or using a different
+                // implementation than JavaSoft's.
+                //
+                theFactory = new DefaultSocketFactory();
+            }
+        }
 
-	return theFactory;
+        return theFactory;
     }
 
 
@@ -114,7 +113,7 @@ public abstract class SocketFactory
      * @see java.net.Socket#Socket()
      */
     public Socket createSocket() throws IOException {
-	throw new SocketException("Unconnected sockets not implemented");
+        throw new SocketException("Unconnected sockets not implemented");
     }
 
 
@@ -187,7 +186,7 @@ public abstract class SocketFactory
      */
     public abstract Socket
     createSocket(InetAddress address, int port,
-	InetAddress localAddress, int localPort)
+        InetAddress localAddress, int localPort)
     throws IOException;
 }
 
@@ -207,32 +206,32 @@ public abstract class SocketFactory
 class DefaultSocketFactory extends SocketFactory {
 
     public Socket createSocket() {
-	return new Socket();
+        return new Socket();
     }
 
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException
     {
-	return new Socket(host, port);
+        return new Socket(host, port);
     }
 
     public Socket createSocket(InetAddress address, int port)
     throws IOException
     {
-	return new Socket(address, port);
+        return new Socket(address, port);
     }
 
     public Socket createSocket(String host, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException, UnknownHostException
     {
-	return new Socket(host, port, clientAddress, clientPort);
+        return new Socket(host, port, clientAddress, clientPort);
     }
 
     public Socket createSocket(InetAddress address, int port,
-	InetAddress clientAddress, int clientPort)
+        InetAddress clientAddress, int clientPort)
     throws IOException
     {
-	return new Socket(address, port, clientAddress, clientPort);
+        return new Socket(address, port, clientAddress, clientPort);
     }
 }

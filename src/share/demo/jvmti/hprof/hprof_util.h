@@ -75,15 +75,15 @@ jobject           newLocalReference(JNIEnv *env, jobject object);
 void           deleteLocalReference(JNIEnv *env, jobject object);
 void       deleteWeakGlobalReference(JNIEnv *env, jobject object);
 jclass     getObjectClass(JNIEnv *env, jobject object);
-jmethodID  getMethodID(JNIEnv *env, jclass clazz, const char* name, 
+jmethodID  getMethodID(JNIEnv *env, jclass clazz, const char* name,
                         const char *sig);
 jclass     getSuperclass(JNIEnv *env, jclass klass);
-jmethodID  getStaticMethodID(JNIEnv *env, jclass clazz, const char* name, 
+jmethodID  getStaticMethodID(JNIEnv *env, jclass clazz, const char* name,
                         const char *sig);
-jfieldID   getStaticFieldID(JNIEnv *env, jclass clazz, const char* name, 
+jfieldID   getStaticFieldID(JNIEnv *env, jclass clazz, const char* name,
                         const char *sig);
 jclass     findClass(JNIEnv *env, const char *name);
-void       setStaticIntField(JNIEnv *env, jclass clazz, jfieldID field, 
+void       setStaticIntField(JNIEnv *env, jclass clazz, jfieldID field,
                         jint value);
 jboolean   isSameObject(JNIEnv *env, jobject o1, jobject o2);
 void       pushLocalFrame(JNIEnv *env, jint capacity);
@@ -91,7 +91,7 @@ void       popLocalFrame(JNIEnv *env, jobject ret);
 jobject    exceptionOccurred(JNIEnv *env);
 void       exceptionDescribe(JNIEnv *env);
 void       exceptionClear(JNIEnv *env);
-void       registerNatives(JNIEnv *env, jclass clazz, 
+void       registerNatives(JNIEnv *env, jclass clazz,
                         JNINativeMethod *methods, jint count);
 
 /* More JVMTI support functions */
@@ -105,10 +105,10 @@ jint      getClassStatus(jclass klass);
 jlong     getTag(jobject object);
 void      setTag(jobject object, jlong tag);
 void      getObjectMonitorUsage(jobject object, jvmtiMonitorUsage *uinfo);
-void      getOwnedMonitorInfo(jthread thread, jobject **ppobjects, 
+void      getOwnedMonitorInfo(jthread thread, jobject **ppobjects,
                         jint *pcount);
 void      getSystemProperty(const char *name, char **value);
-void      getClassSignature(jclass klass, char**psignature, 
+void      getClassSignature(jclass klass, char**psignature,
                         char **pgeneric_signature);
 void      getSourceFileName(jclass klass, char** src_name_ptr);
 
@@ -116,16 +116,16 @@ jvmtiPrimitiveType sigToPrimType(char *sig);
 int       sigToPrimSize(char *sig);
 char      primTypeToSigChar(jvmtiPrimitiveType primType);
 
-void      getAllClassFieldInfo(JNIEnv *env, jclass klass, 
+void      getAllClassFieldInfo(JNIEnv *env, jclass klass,
                         jint* field_count_ptr, FieldInfo** fields_ptr);
-void      getMethodName(jmethodID method, char** name_ptr, 
+void      getMethodName(jmethodID method, char** name_ptr,
                         char** signature_ptr);
 void      getMethodClass(jmethodID method, jclass *pclazz);
 jboolean  isMethodNative(jmethodID method);
 void      getPotentialCapabilities(jvmtiCapabilities *capabilities);
 void      addCapabilities(jvmtiCapabilities *capabilities);
 void      setEventCallbacks(jvmtiEventCallbacks *pcallbacks);
-void      setEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event, 
+void      setEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event,
                         jthread thread);
 void *    getThreadLocalStorage(jthread thread);
 void      setThreadLocalStorage(jthread thread, void *ptr);
@@ -135,12 +135,12 @@ void      getThreadGroupInfo(jthreadGroup thread_group, jvmtiThreadGroupInfo *in
 void      getLoadedClasses(jclass **ppclasses, jint *pcount);
 jint      getLineNumber(jmethodID method, jlocation location);
 jlong     getMaxMemory(JNIEnv *env);
-void      createAgentThread(JNIEnv *env, const char *name, 
+void      createAgentThread(JNIEnv *env, const char *name,
                         jvmtiStartFunction func);
 jlong     getThreadCpuTime(jthread thread);
-void      getStackTrace(jthread thread, jvmtiFrameInfo *pframes, jint depth, 
+void      getStackTrace(jthread thread, jvmtiFrameInfo *pframes, jint depth,
                         jint *pcount);
-void      getThreadListStackTraces(jint count, jthread *threads, 
+void      getThreadListStackTraces(jint count, jthread *threads,
                         jint depth, jvmtiStackInfo **stack_info);
 void      getFrameCount(jthread thread, jint *pcount);
 void      followReferences(jvmtiHeapCallbacks *pHeapCallbacks, void *user_data);

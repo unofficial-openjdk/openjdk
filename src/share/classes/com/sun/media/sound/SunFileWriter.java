@@ -46,7 +46,6 @@ import javax.sound.sampled.spi.AudioFileWriter;
 /**
  * Abstract File Writer class.
  *
- * @version %I% %E%
  * @author Jan Borgersen
  */
 abstract class SunFileWriter extends AudioFileWriter {
@@ -66,7 +65,7 @@ abstract class SunFileWriter extends AudioFileWriter {
      * Constructs a new SunParser object.
      */
     SunFileWriter(AudioFileFormat.Type types[]) {
-	this.types = types;
+        this.types = types;
     }
 
 
@@ -76,10 +75,10 @@ abstract class SunFileWriter extends AudioFileWriter {
     // new, 10.27.99
 
     public AudioFileFormat.Type[] getAudioFileTypes(){
-		
-	AudioFileFormat.Type[] localArray = new AudioFileFormat.Type[types.length];
-	System.arraycopy(types, 0, localArray, 0, types.length);
-	return localArray;
+
+        AudioFileFormat.Type[] localArray = new AudioFileFormat.Type[types.length];
+        System.arraycopy(types, 0, localArray, 0, types.length);
+        return localArray;
     }
 
 
@@ -106,14 +105,14 @@ abstract class SunFileWriter extends AudioFileWriter {
         int b1, b2, b3, b4 ;
         int i = 0;
 
-       	i = dis.readInt();
+        i = dis.readInt();
 
-       	b1 = ( i & 0xFF ) << 24 ;
-       	b2 = ( i & 0xFF00 ) << 8;
-       	b3 = ( i & 0xFF0000 ) >> 8;
-       	b4 = ( i & 0xFF000000 ) >>> 24;
+        b1 = ( i & 0xFF ) << 24 ;
+        b2 = ( i & 0xFF00 ) << 8;
+        b3 = ( i & 0xFF0000 ) >> 8;
+        b4 = ( i & 0xFF000000 ) >>> 24;
 
-       	i = ( b1 | b2 | b3 | b4 );
+        i = ( b1 | b2 | b3 | b4 );
 
         return i;
     }
@@ -128,12 +127,12 @@ abstract class SunFileWriter extends AudioFileWriter {
 
         int b1, b2, b3, b4 ;
 
-       	b1 = ( i & 0xFF ) << 24 ;
-       	b2 = ( i & 0xFF00 ) << 8;
-       	b3 = ( i & 0xFF0000 ) >> 8;
-       	b4 = ( i & 0xFF000000 ) >>> 24;
+        b1 = ( i & 0xFF ) << 24 ;
+        b2 = ( i & 0xFF00 ) << 8;
+        b3 = ( i & 0xFF0000 ) >> 8;
+        b4 = ( i & 0xFF000000 ) >>> 24;
 
-       	i = ( b1 | b2 | b3 | b4 );
+        i = ( b1 | b2 | b3 | b4 );
 
         return i;
     }
@@ -147,17 +146,17 @@ abstract class SunFileWriter extends AudioFileWriter {
      */
     protected short rlshort(DataInputStream dis)  throws IOException {
 
-	short s=0;
-	short high, low;
+        short s=0;
+        short high, low;
 
-	s = dis.readShort();
+        s = dis.readShort();
 
-	high = (short)(( s & 0xFF ) << 8) ;
-	low = (short)(( s & 0xFF00 ) >>> 8);
+        high = (short)(( s & 0xFF ) << 8) ;
+        low = (short)(( s & 0xFF00 ) >>> 8);
 
-	s = (short)( high | low );
+        s = (short)( high | low );
 
-	return s;
+        return s;
     }
 
     /**
@@ -168,14 +167,14 @@ abstract class SunFileWriter extends AudioFileWriter {
      */
     protected short big2littleShort(short i) {
 
-	short high, low;
+        short high, low;
 
-	high = (short)(( i & 0xFF ) << 8) ;
-	low = (short)(( i & 0xFF00 ) >>> 8);
+        high = (short)(( i & 0xFF ) << 8) ;
+        low = (short)(( i & 0xFF00 ) >>> 8);
 
-	i = (short)( high | low );
+        i = (short)( high | low );
 
-	return i;
+        return i;
     }
 
 }

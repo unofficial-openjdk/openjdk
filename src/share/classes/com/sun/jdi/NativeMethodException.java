@@ -35,10 +35,10 @@ package com.sun.jdi;
 public class NativeMethodException extends RuntimeException {
 
     public NativeMethodException() {
-	super();
+        super();
     }
-    
+
     public NativeMethodException(String message) {
-	super(message);
+        super(message);
     }
 }

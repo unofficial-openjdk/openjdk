@@ -34,62 +34,62 @@ import java.io.InputStream;
 public class InheritTimeout {
 
     class Reaper extends Thread {
-	Socket s;
-	int timeout;
+        Socket s;
+        int timeout;
 
-	Reaper(Socket s, int timeout) {
-	    this.s = s;
-	    this.timeout = timeout; 
-	}
+        Reaper(Socket s, int timeout) {
+            this.s = s;
+            this.timeout = timeout;
+        }
 
-	public void run() { 
-	    try {
-		Thread.currentThread().sleep(timeout);
-		s.close();
-	    } catch (Exception e) {
-	    }
-	}
+        public void run() {
+            try {
+                Thread.currentThread().sleep(timeout);
+                s.close();
+            } catch (Exception e) {
+            }
+        }
     }
 
    InheritTimeout() throws Exception {
-	ServerSocket ss = new ServerSocket(0);
-	ss.setSoTimeout(1000);
+        ServerSocket ss = new ServerSocket(0);
+        ss.setSoTimeout(1000);
 
-	InetAddress ia = InetAddress.getLocalHost();
-	InetSocketAddress isa = 
-	    new InetSocketAddress(ia, ss.getLocalPort());
+        InetAddress ia = InetAddress.getLocalHost();
+        InetSocketAddress isa =
+            new InetSocketAddress(ia, ss.getLocalPort());
 
-	// client establishes the connection
-	Socket s1 = new Socket();
-	s1.connect(isa);
+        // client establishes the connection
+        Socket s1 = new Socket();
+        s1.connect(isa);
 
-	// receive the connection 
-	Socket s2 = ss.accept();
+        // receive the connection
+        Socket s2 = ss.accept();
 
-	// schedule reaper to close the socket in 5 seconds	
-	Reaper r = new Reaper(s2, 5000);
-	r.start();
+        // schedule reaper to close the socket in 5 seconds
+        Reaper r = new Reaper(s2, 5000);
+        r.start();
 
-	boolean readTimedOut = false;
-	try {
-	    s2.getInputStream().read();
-	} catch (SocketTimeoutException te) {
-	    readTimedOut = true;
-	} catch (SocketException e) {
-	    if (!s2.isClosed()) {
-		throw e;
-	    }
-	}
+        boolean readTimedOut = false;
+        try {
+            s2.getInputStream().read();
+        } catch (SocketTimeoutException te) {
+            readTimedOut = true;
+        } catch (SocketException e) {
+            if (!s2.isClosed()) {
+                throw e;
+            }
+        }
 
-	s1.close();
-	ss.close();
+        s1.close();
+        ss.close();
 
-	if (readTimedOut) {
-	    throw new Exception("Unexpected SocketTimeoutException throw!");
-	}
-   } 
+        if (readTimedOut) {
+            throw new Exception("Unexpected SocketTimeoutException throw!");
+        }
+   }
 
    public static void main(String args[]) throws Exception {
-	new InheritTimeout();
+        new InheritTimeout();
    }
 }

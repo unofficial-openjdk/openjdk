@@ -40,7 +40,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 
-/** 
+/**
  * A JPanel subclass containing a scrollable text area displaying the
  * jconsole's script console.
  */
@@ -58,7 +58,7 @@ class ScriptShellPanel extends JPanel {
     private CommandProcessor commandProcessor;
     // editor component for command editing
     private JTextComponent editor;
-    
+
     private final ExecutorService commandExecutor =
             Executors.newSingleThreadExecutor();
 
@@ -85,14 +85,14 @@ class ScriptShellPanel extends JPanel {
                 if (insertContains(e, '\n')) {
                     String cmd = getMarkedText();
                     // Handle multi-line input
-                    if ((cmd.length() == 0) || 
+                    if ((cmd.length() == 0) ||
                         (cmd.charAt(cmd.length() - 1) != '\\')) {
                         // Trim "\\n" combinations
                         final String cmd1 = trimContinuations(cmd);
                         commandExecutor.execute(new Runnable() {
                             public void run() {
                                 final String result = executeCommand(cmd1);
-                                
+
                                 SwingUtilities.invokeLater(new Runnable() {
                                     public void run() {
                                         if (result != null) {
@@ -147,7 +147,7 @@ class ScriptShellPanel extends JPanel {
     public void dispose() {
         commandExecutor.shutdown();
     }
-    
+
     public void requestFocus() {
         editor.requestFocus();
     }

@@ -31,7 +31,6 @@ import sun.nio.cs.ext.HKSCS_2001;
  * Tables and data to convert HKSCS (2001 revision) to Unicode
  *
  * @author  ConverterGenerator tool
- * @version >= JDK1.1.6
  */
 
 public class ByteToCharHKSCS_2001 extends ByteToCharDoubleByte {

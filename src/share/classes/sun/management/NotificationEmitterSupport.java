@@ -50,136 +50,136 @@ abstract class NotificationEmitterSupport implements NotificationEmitter {
     // Implementation of NotificationEmitter interface
     // Cloned from JMX NotificationBroadcasterSupport class.
     public void addNotificationListener(NotificationListener listener,
-					NotificationFilter filter,
-					Object handback) {
+                                        NotificationFilter filter,
+                                        Object handback) {
 
         if (listener == null) {
             throw new IllegalArgumentException ("Listener can't be null") ;
         }
 
-	/* Adding a new listener takes O(n) time where n is the number
-	   of existing listeners.  If you have a very large number of
-	   listeners performance could degrade.  That's a fairly
-	   surprising configuration, and it is hard to avoid this
-	   behaviour while still retaining the property that the
-	   listenerList is not synchronized while notifications are
-	   being sent through it.  If this becomes a problem, a
-	   possible solution would be a multiple-readers single-writer
-	   setup, so any number of sendNotification() calls could run
-	   concurrently but they would exclude an
-	   add/removeNotificationListener.  A simpler but less
-	   efficient solution would be to clone the listener list
-	   every time a notification is sent.  */
-	synchronized (listenerLock) {
-	    List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList.size() + 1);
-	    newList.addAll(listenerList);
-	    newList.add(new ListenerInfo(listener, filter, handback));
-	    listenerList = newList;
-	}
+        /* Adding a new listener takes O(n) time where n is the number
+           of existing listeners.  If you have a very large number of
+           listeners performance could degrade.  That's a fairly
+           surprising configuration, and it is hard to avoid this
+           behaviour while still retaining the property that the
+           listenerList is not synchronized while notifications are
+           being sent through it.  If this becomes a problem, a
+           possible solution would be a multiple-readers single-writer
+           setup, so any number of sendNotification() calls could run
+           concurrently but they would exclude an
+           add/removeNotificationListener.  A simpler but less
+           efficient solution would be to clone the listener list
+           every time a notification is sent.  */
+        synchronized (listenerLock) {
+            List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList.size() + 1);
+            newList.addAll(listenerList);
+            newList.add(new ListenerInfo(listener, filter, handback));
+            listenerList = newList;
+        }
     }
 
     public void removeNotificationListener(NotificationListener listener)
         throws ListenerNotFoundException {
 
-	synchronized (listenerLock) {
-	    List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList);
-	    /* We scan the list of listeners in reverse order because
-	       in forward order we would have to repeat the loop with
-	       the same index after a remove.  */
-	    for (int i=newList.size()-1; i>=0; i--) {
-		ListenerInfo li = (ListenerInfo)newList.get(i);
+        synchronized (listenerLock) {
+            List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList);
+            /* We scan the list of listeners in reverse order because
+               in forward order we would have to repeat the loop with
+               the same index after a remove.  */
+            for (int i=newList.size()-1; i>=0; i--) {
+                ListenerInfo li = (ListenerInfo)newList.get(i);
 
-		if (li.listener == listener)
-		    newList.remove(i);
-	    }
-	    if (newList.size() == listenerList.size())
-		throw new ListenerNotFoundException("Listener not registered");
-	    listenerList = newList;
-	}
+                if (li.listener == listener)
+                    newList.remove(i);
+            }
+            if (newList.size() == listenerList.size())
+                throw new ListenerNotFoundException("Listener not registered");
+            listenerList = newList;
+        }
     }
 
     public void removeNotificationListener(NotificationListener listener,
-					   NotificationFilter filter,
-					   Object handback)
-	    throws ListenerNotFoundException {
+                                           NotificationFilter filter,
+                                           Object handback)
+            throws ListenerNotFoundException {
 
-	boolean found = false;
+        boolean found = false;
 
-	synchronized (listenerLock) {
-	    List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList);
-	    final int size = newList.size();
-	    for (int i = 0; i < size; i++) {
-		ListenerInfo li = (ListenerInfo) newList.get(i);
+        synchronized (listenerLock) {
+            List<ListenerInfo> newList = new ArrayList<ListenerInfo>(listenerList);
+            final int size = newList.size();
+            for (int i = 0; i < size; i++) {
+                ListenerInfo li = (ListenerInfo) newList.get(i);
 
-		if (li.listener == listener) {
-		    found = true;
-		    if (li.filter == filter
-			&& li.handback == handback) {
-			newList.remove(i);
-			listenerList = newList;
-			return;
-		    }
-		}
-	    }
-	}
+                if (li.listener == listener) {
+                    found = true;
+                    if (li.filter == filter
+                        && li.handback == handback) {
+                        newList.remove(i);
+                        listenerList = newList;
+                        return;
+                    }
+                }
+            }
+        }
 
-	if (found) {
-	    /* We found this listener, but not with the given filter
-	     * and handback.  A more informative exception message may
-	     * make debugging easier.  */
-	    throw new ListenerNotFoundException("Listener not registered " +
-						"with this filter and " +
-						"handback");
-	} else {
-	    throw new ListenerNotFoundException("Listener not registered");
-	}
+        if (found) {
+            /* We found this listener, but not with the given filter
+             * and handback.  A more informative exception message may
+             * make debugging easier.  */
+            throw new ListenerNotFoundException("Listener not registered " +
+                                                "with this filter and " +
+                                                "handback");
+        } else {
+            throw new ListenerNotFoundException("Listener not registered");
+        }
     }
 
     void sendNotification(Notification notification) {
 
-	if (notification == null) {
-	    return;
-	}
-        
-	List<ListenerInfo> currentList;
-	synchronized (listenerLock) {
-	    currentList = listenerList;
-	}
+        if (notification == null) {
+            return;
+        }
 
-	final int size = currentList.size();
-	for (int i = 0; i < size; i++) {
-	    ListenerInfo li = (ListenerInfo) currentList.get(i);
+        List<ListenerInfo> currentList;
+        synchronized (listenerLock) {
+            currentList = listenerList;
+        }
 
-	    if (li.filter == null
-		|| li.filter.isNotificationEnabled(notification)) {
-		try {
+        final int size = currentList.size();
+        for (int i = 0; i < size; i++) {
+            ListenerInfo li = (ListenerInfo) currentList.get(i);
+
+            if (li.filter == null
+                || li.filter.isNotificationEnabled(notification)) {
+                try {
                     li.listener.handleNotification(notification, li.handback);
-		} catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     throw new InternalError("Error in invoking listener");
-		}
-	    }
-	}
+                }
+            }
+        }
     }
 
     boolean hasListeners() {
-	synchronized (listenerLock) {
+        synchronized (listenerLock) {
             return !listenerList.isEmpty();
         }
     }
 
     private class ListenerInfo {
-	public NotificationListener listener;
-	NotificationFilter filter;
-	Object handback;
+        public NotificationListener listener;
+        NotificationFilter filter;
+        Object handback;
 
-	public ListenerInfo(NotificationListener listener,
-			    NotificationFilter filter,
-			    Object handback) {
-	    this.listener = listener;
-	    this.filter = filter;
-	    this.handback = handback;
-	}
+        public ListenerInfo(NotificationListener listener,
+                            NotificationFilter filter,
+                            Object handback) {
+            this.listener = listener;
+            this.filter = filter;
+            this.handback = handback;
+        }
     }
 
     /**

@@ -48,21 +48,21 @@ import java.util.List;
 import java.util.Set;
 
 public final class VerifyNameConstraints {
- 
+
     private static PKIXParameters params;
     private static CertPath path;
 
     public static void main(String[] args) throws Exception {
 
-	String[] certs = { "sun.cer", "sun2labs2.cer", "labs2isrg2.cer" };
-	try {
+        String[] certs = { "sun.cer", "sun2labs2.cer", "labs2isrg2.cer" };
+        try {
             createPath(certs);
             validate(path, params);
-	    throw new Exception
-		("CertPath should not have been validated succesfully");
-	} catch (CertPathValidatorException cve) { 
-	    System.out.println("Test failed as expected: " + cve); 
-	}
+            throw new Exception
+                ("CertPath should not have been validated succesfully");
+        } catch (CertPathValidatorException cve) {
+            System.out.println("Test failed as expected: " + cve);
+        }
     }
 
     public static void createPath(String[] certs) throws Exception {
@@ -78,19 +78,19 @@ public final class VerifyNameConstraints {
         params = new PKIXParameters(anchors);
         params.setRevocationEnabled(false);
     }
-    
+
     /*
      * Reads the entire input stream into a byte array.
      */
     private static byte[] getTotalBytes(InputStream is) throws IOException {
-	byte[] buffer = new byte[8192];
-	ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
-	int n;
-	baos.reset();
-	while ((n = is.read(buffer, 0, buffer.length)) != -1) {
-	    baos.write(buffer, 0, n);
-	}
-	return baos.toByteArray();
+        byte[] buffer = new byte[8192];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
+        int n;
+        baos.reset();
+        while ((n = is.read(buffer, 0, buffer.length)) != -1) {
+            baos.write(buffer, 0, n);
+        }
+        return baos.toByteArray();
     }
 
     /**
@@ -105,7 +105,7 @@ public final class VerifyNameConstraints {
             X509Certificate cert = null;
             try {
                 File certFile = new File(System.getProperty("test.src", "."),
-		    certFilePath);
+                    certFilePath);
                 FileInputStream certFileInputStream =
                     new FileInputStream(certFile);
                 CertificateFactory cf = CertificateFactory.getInstance("X509");

@@ -35,8 +35,8 @@ import java.util.Date;
  * <A HREF="http://www.w3.org/pub/WWW/Protocols/"> the spec </A> for
  * details.
  * <p>
- * 
- * Each HttpURLConnection instance is used to make a single request  
+ *
+ * Each HttpURLConnection instance is used to make a single request
  * but the underlying network connection to the HTTP server may be
  * transparently shared by other instances. Calling the close() methods
  * on the InputStream or OutputStream of an HttpURLConnection
@@ -52,11 +52,11 @@ abstract public class HttpURLConnection extends URLConnection {
     /* instance variables */
 
     /**
-     * The HTTP method (GET,POST,PUT,etc.). 
+     * The HTTP method (GET,POST,PUT,etc.).
      */
     protected String method = "GET";
 
-    /** 
+    /**
      * The chunk-length when using chunked encoding streaming mode for output.
      * A value of <code>-1</code> means chunked encoding is disabled for output.
      * @since 1.5
@@ -73,9 +73,9 @@ abstract public class HttpURLConnection extends URLConnection {
 
     /**
      * Returns the key for the <code>n</code><sup>th</sup> header field.
-     * Some implementations may treat the <code>0</code><sup>th</sup> 
+     * Some implementations may treat the <code>0</code><sup>th</sup>
      * header field as special, i.e. as the status line returned by the HTTP
-     * server. In this case, {@link #getHeaderField(int) getHeaderField(0)} returns the status 
+     * server. In this case, {@link #getHeaderField(int) getHeaderField(0)} returns the status
      * line, but <code>getHeaderFieldKey(0)</code> returns null.
      *
      * @param   n   an index, where n >=0.
@@ -83,13 +83,13 @@ abstract public class HttpURLConnection extends URLConnection {
      *          or <code>null</code> if the key does not exist.
      */
     public String getHeaderFieldKey (int n) {
-	return null;
+        return null;
     }
 
     /**
      * This method is used to enable streaming of a HTTP request body
      * without internal buffering, when the content length is known in
-     * advance. 
+     * advance.
      * <p>
      * An exception will be thrown if the application
      * attempts to write more data than the indicated
@@ -105,28 +105,28 @@ abstract public class HttpURLConnection extends URLConnection {
      * This method must be called before the URLConnection is connected.
      *
      * @param   contentLength The number of bytes which will be written
-     *		to the OutputStream.
+     *          to the OutputStream.
      *
-     * @throws  IllegalStateException if URLConnection is already connected 
-     *		or if a different streaming mode is already enabled.
+     * @throws  IllegalStateException if URLConnection is already connected
+     *          or if a different streaming mode is already enabled.
      *
-     * @throws  IllegalArgumentException if a content length less than 
-     *		zero is specified.
+     * @throws  IllegalArgumentException if a content length less than
+     *          zero is specified.
      *
      * @see     #setChunkedStreamingMode(int)
      * @since 1.5
-     */ 
+     */
     public void setFixedLengthStreamingMode (int contentLength) {
-	if (connected) {
-	    throw new IllegalStateException ("Already connected");
-	}
-	if (chunkLength != -1) {
-	    throw new IllegalStateException ("Chunked encoding streaming mode set");
-	}
-	if (contentLength < 0) {
-	    throw new IllegalArgumentException ("invalid content length");
-	}
-	fixedContentLength = contentLength;
+        if (connected) {
+            throw new IllegalStateException ("Already connected");
+        }
+        if (chunkLength != -1) {
+            throw new IllegalStateException ("Chunked encoding streaming mode set");
+        }
+        if (contentLength < 0) {
+            throw new IllegalArgumentException ("invalid content length");
+        }
+        fixedContentLength = contentLength;
     }
 
     /* Default chunk size (including chunk header) if not specified;
@@ -138,7 +138,7 @@ abstract public class HttpURLConnection extends URLConnection {
     /**
      * This method is used to enable streaming of a HTTP request body
      * without internal buffering, when the content length is <b>not</b>
-     * known in advance. In this mode, chunked transfer encoding 
+     * known in advance. In this mode, chunked transfer encoding
      * is used to send the request body. Note, not all HTTP servers
      * support this mode.
      * <p>
@@ -151,42 +151,42 @@ abstract public class HttpURLConnection extends URLConnection {
      * This method must be called before the URLConnection is connected.
      *
      * @param   chunklen The number of bytes to write in each chunk.
-     *		If chunklen is less than or equal to zero, a default 
-     *		value will be used.
+     *          If chunklen is less than or equal to zero, a default
+     *          value will be used.
      *
-     * @throws  IllegalStateException if URLConnection is already connected 
-     *		or if a different streaming mode is already enabled.
+     * @throws  IllegalStateException if URLConnection is already connected
+     *          or if a different streaming mode is already enabled.
      *
      * @see     #setFixedLengthStreamingMode(int)
      * @since 1.5
-     */ 
+     */
     public void setChunkedStreamingMode (int chunklen) {
-	if (connected) {
-	    throw new IllegalStateException ("Can't set streaming mode: already connected");
-	}
-	if (fixedContentLength != -1) {
-	    throw new IllegalStateException ("Fixed length streaming mode set");
-	}
-	chunkLength = chunklen <=0? DEFAULT_CHUNK_SIZE : chunklen;
+        if (connected) {
+            throw new IllegalStateException ("Can't set streaming mode: already connected");
+        }
+        if (fixedContentLength != -1) {
+            throw new IllegalStateException ("Fixed length streaming mode set");
+        }
+        chunkLength = chunklen <=0? DEFAULT_CHUNK_SIZE : chunklen;
     }
 
     /**
-     * Returns the value for the <code>n</code><sup>th</sup> header field. 
-     * Some implementations may treat the <code>0</code><sup>th</sup> 
+     * Returns the value for the <code>n</code><sup>th</sup> header field.
+     * Some implementations may treat the <code>0</code><sup>th</sup>
      * header field as special, i.e. as the status line returned by the HTTP
-     * server. 
+     * server.
      * <p>
-     * This method can be used in conjunction with the 
-     * {@link #getHeaderFieldKey getHeaderFieldKey} method to iterate through all 
-     * the headers in the message. 
+     * This method can be used in conjunction with the
+     * {@link #getHeaderFieldKey getHeaderFieldKey} method to iterate through all
+     * the headers in the message.
      *
      * @param   n   an index, where n>=0.
      * @return  the value of the <code>n</code><sup>th</sup> header field,
-     *		or <code>null</code> if the value does not exist.
+     *          or <code>null</code> if the value does not exist.
      * @see     java.net.HttpURLConnection#getHeaderFieldKey(int)
      */
     public String getHeaderField(int n) {
-	return null;
+        return null;
     }
 
     /**
@@ -213,14 +213,14 @@ abstract public class HttpURLConnection extends URLConnection {
 
     /**
      * If <code>true</code>, the protocol will automatically follow redirects.
-     * If <code>false</code>, the protocol will not automatically follow 
+     * If <code>false</code>, the protocol will not automatically follow
      * redirects.
      * <p>
-     * This field is set by the <code>setInstanceFollowRedirects</code> 
-     * method. Its value is returned by the <code>getInstanceFollowRedirects</code> 
+     * This field is set by the <code>setInstanceFollowRedirects</code>
+     * method. Its value is returned by the <code>getInstanceFollowRedirects</code>
      * method.
      * <p>
-     * Its default value is based on the value of the static followRedirects 
+     * Its default value is based on the value of the static followRedirects
      * at HttpURLConnection construction time.
      *
      * @see     java.net.HttpURLConnection#setInstanceFollowRedirects(boolean)
@@ -231,7 +231,7 @@ abstract public class HttpURLConnection extends URLConnection {
 
     /* valid HTTP methods */
     private static final String[] methods = {
-	"GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE"
+        "GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE"
     };
 
     /**
@@ -239,34 +239,34 @@ abstract public class HttpURLConnection extends URLConnection {
      * @param u the URL
      */
     protected HttpURLConnection (URL u) {
-	super(u);
+        super(u);
     }
-    
+
     /**
-     * Sets whether HTTP redirects  (requests with response code 3xx) should 
+     * Sets whether HTTP redirects  (requests with response code 3xx) should
      * be automatically followed by this class.  True by default.  Applets
      * cannot change this variable.
      * <p>
      * If there is a security manager, this method first calls
-     * the security manager's <code>checkSetFactory</code> method 
-     * to ensure the operation is allowed. 
+     * the security manager's <code>checkSetFactory</code> method
+     * to ensure the operation is allowed.
      * This could result in a SecurityException.
-     * 
+     *
      * @param set a <code>boolean</code> indicating whether or not
      * to follow HTTP redirects.
-     * @exception  SecurityException  if a security manager exists and its  
-     *             <code>checkSetFactory</code> method doesn't 
+     * @exception  SecurityException  if a security manager exists and its
+     *             <code>checkSetFactory</code> method doesn't
      *             allow the operation.
      * @see        SecurityManager#checkSetFactory
      * @see #getFollowRedirects()
      */
     public static void setFollowRedirects(boolean set) {
-	SecurityManager sec = System.getSecurityManager();
-	if (sec != null) {
-	    // seems to be the best check here...
-	    sec.checkSetFactory();
-	}
-	followRedirects = set;
+        SecurityManager sec = System.getSecurityManager();
+        if (sec != null) {
+            // seems to be the best check here...
+            sec.checkSetFactory();
+        }
+        followRedirects = set;
     }
 
     /**
@@ -279,18 +279,18 @@ abstract public class HttpURLConnection extends URLConnection {
      * @see #setFollowRedirects(boolean)
      */
     public static boolean getFollowRedirects() {
-	return followRedirects;
+        return followRedirects;
     }
 
     /**
      * Sets whether HTTP redirects (requests with response code 3xx) should
-     * be automatically followed by this <code>HttpURLConnection</code> 
+     * be automatically followed by this <code>HttpURLConnection</code>
      * instance.
      * <p>
      * The default value comes from followRedirects, which defaults to
      * true.
      *
-     * @param followRedirects a <code>boolean</code> indicating 
+     * @param followRedirects a <code>boolean</code> indicating
      * whether or not to follow HTTP redirects.
      *
      * @see    java.net.HttpURLConnection#instanceFollowRedirects
@@ -298,7 +298,7 @@ abstract public class HttpURLConnection extends URLConnection {
      * @since 1.3
      */
      public void setInstanceFollowRedirects(boolean followRedirects) {
- 	instanceFollowRedirects = followRedirects;
+        instanceFollowRedirects = followRedirects;
      }
 
      /**
@@ -327,28 +327,28 @@ abstract public class HttpURLConnection extends URLConnection {
      *  <LI>TRACE
      * </UL> are legal, subject to protocol restrictions.  The default
      * method is GET.
-     * 
+     *
      * @param method the HTTP method
      * @exception ProtocolException if the method cannot be reset or if
      *              the requested method isn't valid for HTTP.
      * @see #getRequestMethod()
      */
     public void setRequestMethod(String method) throws ProtocolException {
-	if (connected) {
-	    throw new ProtocolException("Can't reset method: already connected");
-	}
-	// This restriction will prevent people from using this class to 
-	// experiment w/ new HTTP methods using java.  But it should 
-	// be placed for security - the request String could be
-	// arbitrarily long.
+        if (connected) {
+            throw new ProtocolException("Can't reset method: already connected");
+        }
+        // This restriction will prevent people from using this class to
+        // experiment w/ new HTTP methods using java.  But it should
+        // be placed for security - the request String could be
+        // arbitrarily long.
 
-	for (int i = 0; i < methods.length; i++) {
-	    if (methods[i].equals(method)) {
-		this.method = method;
-		return;
-	    }
-	}
-	throw new ProtocolException("Invalid HTTP method: " + method);
+        for (int i = 0; i < methods.length; i++) {
+            if (methods[i].equals(method)) {
+                this.method = method;
+                return;
+            }
+        }
+        throw new ProtocolException("Invalid HTTP method: " + method);
     }
 
     /**
@@ -357,9 +357,9 @@ abstract public class HttpURLConnection extends URLConnection {
      * @see #setRequestMethod(java.lang.String)
      */
     public String getRequestMethod() {
-	return method;
+        return method;
     }
-    
+
     /**
      * Gets the status code from an HTTP response message.
      * For example, in the case of the following status lines:
@@ -374,70 +374,70 @@ abstract public class HttpURLConnection extends URLConnection {
      * @return the HTTP Status-Code, or -1
      */
     public int getResponseCode() throws IOException {
-	/*
-	 * We're got the response code already
-	 */
-	if (responseCode != -1) {
-	    return responseCode;
-	}
+        /*
+         * We're got the response code already
+         */
+        if (responseCode != -1) {
+            return responseCode;
+        }
 
-	/*
-	 * Ensure that we have connected to the server. Record
-	 * exception as we need to re-throw it if there isn't
-	 * a status line.
-	 */
-	Exception exc = null;
-	try {
+        /*
+         * Ensure that we have connected to the server. Record
+         * exception as we need to re-throw it if there isn't
+         * a status line.
+         */
+        Exception exc = null;
+        try {
             getInputStream();
-	} catch (Exception e) {
-	    exc = e;
-	}
+        } catch (Exception e) {
+            exc = e;
+        }
 
-	/*
- 	 * If we can't a status-line then re-throw any exception
-	 * that getInputStream threw.
-	 */
-	String statusLine = getHeaderField(0);
-	if (statusLine == null) {
-	    if (exc != null) {
-		if (exc instanceof RuntimeException)
+        /*
+         * If we can't a status-line then re-throw any exception
+         * that getInputStream threw.
+         */
+        String statusLine = getHeaderField(0);
+        if (statusLine == null) {
+            if (exc != null) {
+                if (exc instanceof RuntimeException)
                     throw (RuntimeException)exc;
                 else
                     throw (IOException)exc;
-	    }
-	    return -1;
-	}
+            }
+            return -1;
+        }
 
-	/*
-	 * Examine the status-line - should be formatted as per
- 	 * section 6.1 of RFC 2616 :-
-	 *
-	 * Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase
- 	 *
-	 * If status line can't be parsed return -1.
-	 */
-	if (statusLine.startsWith("HTTP/1.")) {
-	    int codePos = statusLine.indexOf(' ');
-	    if (codePos > 0) {
+        /*
+         * Examine the status-line - should be formatted as per
+         * section 6.1 of RFC 2616 :-
+         *
+         * Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase
+         *
+         * If status line can't be parsed return -1.
+         */
+        if (statusLine.startsWith("HTTP/1.")) {
+            int codePos = statusLine.indexOf(' ');
+            if (codePos > 0) {
 
-		int phrasePos = statusLine.indexOf(' ', codePos+1);
-		if (phrasePos > 0 && phrasePos < statusLine.length()) {
-		    responseMessage = statusLine.substring(phrasePos+1);
-		}
+                int phrasePos = statusLine.indexOf(' ', codePos+1);
+                if (phrasePos > 0 && phrasePos < statusLine.length()) {
+                    responseMessage = statusLine.substring(phrasePos+1);
+                }
 
-		// deviation from RFC 2616 - don't reject status line
-		// if SP Reason-Phrase is not included.
-		if (phrasePos < 0) 
-		    phrasePos = statusLine.length();
+                // deviation from RFC 2616 - don't reject status line
+                // if SP Reason-Phrase is not included.
+                if (phrasePos < 0)
+                    phrasePos = statusLine.length();
 
-		try {
-		    responseCode = Integer.parseInt
-                            (statusLine.substring(codePos+1, phrasePos));	
-		    return responseCode;
-		} catch (NumberFormatException e) { }
-	    }
-	}
-	return -1;
+                try {
+                    responseCode = Integer.parseInt
+                            (statusLine.substring(codePos+1, phrasePos));
+                    return responseCode;
+                } catch (NumberFormatException e) { }
+            }
+        }
+        return -1;
     }
 
     /**
@@ -448,33 +448,33 @@ abstract public class HttpURLConnection extends URLConnection {
      * HTTP/1.0 404 Not Found
      * </PRE>
      * Extracts the Strings "OK" and "Not Found" respectively.
-     * Returns null if none could be discerned from the responses 
+     * Returns null if none could be discerned from the responses
      * (the result was not valid HTTP).
      * @throws IOException if an error occurred connecting to the server.
      * @return the HTTP response message, or <code>null</code>
      */
     public String getResponseMessage() throws IOException {
-	getResponseCode();
-	return responseMessage;
+        getResponseCode();
+        return responseMessage;
     }
 
     public long getHeaderFieldDate(String name, long Default) {
-	String dateString = getHeaderField(name);
-	try {
-	    if (dateString.indexOf("GMT") == -1) {
-	        dateString = dateString+" GMT";
-	    }
-	    return Date.parse(dateString);
-	} catch (Exception e) {
-	}
-	return Default;
+        String dateString = getHeaderField(name);
+        try {
+            if (dateString.indexOf("GMT") == -1) {
+                dateString = dateString+" GMT";
+            }
+            return Date.parse(dateString);
+        } catch (Exception e) {
+        }
+        return Default;
     }
 
 
     /**
      * Indicates that other requests to the server
-     * are unlikely in the near future. Calling disconnect() 
-     * should not imply that this HttpURLConnection 
+     * are unlikely in the near future. Calling disconnect()
+     * should not imply that this HttpURLConnection
      * instance can be reused for other requests.
      */
     public abstract void disconnect();
@@ -487,18 +487,18 @@ abstract public class HttpURLConnection extends URLConnection {
     public abstract boolean usingProxy();
 
     public Permission getPermission() throws IOException {
-	int port = url.getPort();
-	port = port < 0 ? 80 : port;
-	String host = url.getHost() + ":" + port;
-	Permission permission = new SocketPermission(host, "connect");
-	return permission;
+        int port = url.getPort();
+        port = port < 0 ? 80 : port;
+        String host = url.getHost() + ":" + port;
+        Permission permission = new SocketPermission(host, "connect");
+        return permission;
     }
 
    /**
     * Returns the error stream if the connection failed
     * but the server sent useful data nonetheless. The
     * typical example is when an HTTP server responds
-    * with a 404, which will cause a FileNotFoundException 
+    * with a 404, which will cause a FileNotFoundException
     * to be thrown in connect, but the server sent an HTML
     * help page with suggestions as to what to do.
     *
@@ -513,7 +513,7 @@ abstract public class HttpURLConnection extends URLConnection {
     * useful data.
     */
     public InputStream getErrorStream() {
-	return null;
+        return null;
     }
 
     /**
@@ -542,8 +542,8 @@ abstract public class HttpURLConnection extends URLConnection {
 
     /**
      * HTTP Status-Code 203: Non-Authoritative Information.
-     */    
-    public static final int HTTP_NOT_AUTHORITATIVE = 203; 
+     */
+    public static final int HTTP_NOT_AUTHORITATIVE = 203;
 
     /**
      * HTTP Status-Code 204: No Content.
@@ -576,7 +576,7 @@ abstract public class HttpURLConnection extends URLConnection {
      * HTTP Status-Code 302: Temporary Redirect.
      */
     public static final int HTTP_MOVED_TEMP = 302;
- 
+
     /**
      * HTTP Status-Code 303: See Other.
      */
@@ -673,22 +673,22 @@ abstract public class HttpURLConnection extends URLConnection {
      * HTTP Status-Code 415: Unsupported Media Type.
      */
     public static final int HTTP_UNSUPPORTED_TYPE = 415;
-    
+
     /* 5XX: server error */
 
     /**
-     * HTTP Status-Code 500: Internal Server Error. 
+     * HTTP Status-Code 500: Internal Server Error.
      * @deprecated   it is misplaced and shouldn't have existed.
      */
     @Deprecated
     public static final int HTTP_SERVER_ERROR = 500;
 
-    /** 
-     * HTTP Status-Code 500: Internal Server Error. 
+    /**
+     * HTTP Status-Code 500: Internal Server Error.
      */
     public static final int HTTP_INTERNAL_ERROR = 500;
 
-    /** 
+    /**
      * HTTP Status-Code 501: Not Implemented.
      */
     public static final int HTTP_NOT_IMPLEMENTED = 501;

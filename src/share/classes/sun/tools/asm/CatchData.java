@@ -42,21 +42,21 @@ class CatchData {
       * Constructor
       */
      CatchData(Object type) {
-	 this.type = type;
-	 this.label = new Label();
+         this.type = type;
+         this.label = new Label();
      }
 
      /**
       * Get the label
       */
      public Label getLabel() {
-	 return label;
+         return label;
      }
 
      /**
       * Get the clazz
       */
      public Object getType() {
-	 return type;
+         return type;
      }
 }

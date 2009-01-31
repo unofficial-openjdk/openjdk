@@ -52,39 +52,39 @@
  */
 #ifndef DitherDeclared
 #define DitherDeclared
-#define DeclareDitherVars	DeclareAllGrayDitherVars
-#define InitDither		InitGrayDither
-#define StartDitherLine		StartGrayDitherLine
-#define DitherPixel		GrayDitherPixel
-#define DitherBufComplete	GrayDitherBufComplete
+#define DeclareDitherVars       DeclareAllGrayDitherVars
+#define InitDither              InitGrayDither
+#define StartDitherLine         StartGrayDitherLine
+#define DitherPixel             GrayDitherPixel
+#define DitherBufComplete       GrayDitherBufComplete
 #endif
 
-#define DeclareAllGrayDitherVars				\
-    DeclareGrayDitherVars					\
+#define DeclareAllGrayDitherVars                                \
+    DeclareGrayDitherVars                                       \
     int relx, rely;
 
-#define DeclareGrayDitherVars					\
-    extern unsigned char img_grays[256];			\
-    extern unsigned char img_bwgamma[256];			\
+#define DeclareGrayDitherVars                                   \
+    extern unsigned char img_grays[256];                        \
+    extern unsigned char img_bwgamma[256];                      \
     extern sgn_ordered_dither_array img_oda_gray;
 
-#define InitGrayDither(cvdata, clrdata, dstTW)				\
+#define InitGrayDither(cvdata, clrdata, dstTW)                          \
     do {} while (0)
 
-#define StartGrayDitherLine(cvdata, dstX1, dstY)			\
-    do {								\
-	relx = dstX1 & 7;						\
-	rely = dstY & 7;						\
+#define StartGrayDitherLine(cvdata, dstX1, dstY)                        \
+    do {                                                                \
+        relx = dstX1 & 7;                                               \
+        rely = dstY & 7;                                                \
     } while (0)
 
-#define GrayDitherPixel(dstX, dstY, pixel, red, green, blue)		\
-    do {								\
-	green = RGBTOGRAY(red, green, blue);				\
-	green += img_oda_gray[relx][rely];				\
-	green = ComponentBound(green);					\
-	pixel = img_grays[img_bwgamma[green]];				\
-	relx = (relx + 1) & 7;						\
+#define GrayDitherPixel(dstX, dstY, pixel, red, green, blue)            \
+    do {                                                                \
+        green = RGBTOGRAY(red, green, blue);                            \
+        green += img_oda_gray[relx][rely];                              \
+        green = ComponentBound(green);                                  \
+        pixel = img_grays[img_bwgamma[green]];                          \
+        relx = (relx + 1) & 7;                                          \
     } while (0)
 
-#define GrayDitherBufComplete(cvdata, dstX1)				\
+#define GrayDitherBufComplete(cvdata, dstX1)                            \
     do {} while (0)

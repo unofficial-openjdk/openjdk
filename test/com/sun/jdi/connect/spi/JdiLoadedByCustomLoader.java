@@ -37,22 +37,22 @@ import java.lang.reflect.Method;
 public class JdiLoadedByCustomLoader {
 
     public static void main(String args[]) throws Exception {
-	// create files from given arguments and tools.jar
+        // create files from given arguments and tools.jar
         File f1 = new File(args[0]);
-	String home = System.getProperty("java.home");
-	String tools = ".." + File.separatorChar + "lib" +
-	    File.separatorChar + "tools.jar";
-	File f2 = (new File(home, tools)).getCanonicalFile();
+        String home = System.getProperty("java.home");
+        String tools = ".." + File.separatorChar + "lib" +
+            File.separatorChar + "tools.jar";
+        File f2 = (new File(home, tools)).getCanonicalFile();
 
-	// create class loader
-	URL[] urls = { f1.toURL(), f2.toURL() };
-	URLClassLoader cl = new URLClassLoader(urls);
+        // create class loader
+        URL[] urls = { f1.toURL(), f2.toURL() };
+        URLClassLoader cl = new URLClassLoader(urls);
 
-	// load ListConnectors using the class loader
-	// and then invoke the list method.
-	Class c = Class.forName("ListConnectors", true, cl);
-	Method m = c.getDeclaredMethod("list");
-	Object o = c.newInstance();
-	m.invoke(o);
+        // load ListConnectors using the class loader
+        // and then invoke the list method.
+        Class c = Class.forName("ListConnectors", true, cl);
+        Method m = c.getDeclaredMethod("list");
+        Object o = c.newInstance();
+        m.invoke(o);
     }
 }

@@ -42,7 +42,7 @@
 #include "awt_XmDnD.h"
 #include "awt_DataTransferer.h"
 
-static jclass string;   
+static jclass string;
 
 XContext awt_convertDataContext = 0;
 
@@ -50,11 +50,11 @@ Atom XA_TARGETS;
 
 extern struct X11GraphicsConfigIDs x11GraphicsConfigIDs;
 
-typedef enum { 
-    SelectionPending, 
-    SelectionSuccess, 
-    SelectionFailure, 
-    SelectionOwnerTimedOut 
+typedef enum {
+    SelectionPending,
+    SelectionSuccess,
+    SelectionFailure,
+    SelectionOwnerTimedOut
 } SelectionStatus;
 
 /* Should only be accessed by the current owner of AWT_LOCK. */
@@ -68,29 +68,29 @@ static void set_selection_status(SelectionStatus status) {
     globalSelectionStatus = status;
 }
 
-static void 
+static void
 selection_request_filter(Widget widget, XtPointer closure, XEvent *event,
-			 Boolean *cont) {
+                         Boolean *cont) {
     if (event->type == SelectionRequest) {
-	Window awt_root_window = XtWindow(awt_root_shell);
-	Atom selection = event->xselectionrequest.selection;
-	Window owner = XGetSelectionOwner(event->xany.display, selection);
+        Window awt_root_window = XtWindow(awt_root_shell);
+        Atom selection = event->xselectionrequest.selection;
+        Window owner = XGetSelectionOwner(event->xany.display, selection);
 
-	if (owner != awt_root_window) {
-	    XSelectionEvent notify;
+        if (owner != awt_root_window) {
+            XSelectionEvent notify;
 
-	    notify.type = SelectionNotify;
-	    notify.display = event->xselectionrequest.display;
-	    notify.requestor = event->xselectionrequest.requestor;
-	    notify.selection = event->xselectionrequest.selection;
-	    notify.time = event->xselectionrequest.time;
-	    notify.target = event->xselectionrequest.target;
-	    notify.property = None;
+            notify.type = SelectionNotify;
+            notify.display = event->xselectionrequest.display;
+            notify.requestor = event->xselectionrequest.requestor;
+            notify.selection = event->xselectionrequest.selection;
+            notify.time = event->xselectionrequest.time;
+            notify.target = event->xselectionrequest.target;
+            notify.property = None;
 
-	    XSendEvent(notify.display, notify.requestor, False,
-		       (unsigned long)0, (XEvent*)&notify);
-	    *cont = False;
-	}
+            XSendEvent(notify.display, notify.requestor, False,
+                       (unsigned long)0, (XEvent*)&notify);
+            *cont = False;
+        }
     }
 }
 
@@ -136,17 +136,17 @@ void awt_initialize_DataTransferer() {
                                        "getDatatransferTimeout", "()I").i);
 
     /*
-     * Xt selection machinery doesn't respond to SelectionRequests if the 
-     * event arrives on a widget that is not the current selection owner. 
+     * Xt selection machinery doesn't respond to SelectionRequests if the
+     * event arrives on a widget that is not the current selection owner.
      * This can happen if XtDisownSelection was called when SelectionRequest was
-     * already on the native queue. 
-     * If the requestor is another JVM, it hangs for the selection timeout 
+     * already on the native queue.
+     * If the requestor is another JVM, it hangs for the selection timeout
      * as SelectionNotify is never sent.
      * We install an event handler that filters out SelectionRequests if the
      * awt_root_shell is not the current selection owner.
      */
     XtAddEventHandler(awt_root_shell, (EventMask)0, True,
-		      selection_request_filter, NULL);
+                      selection_request_filter, NULL);
 
     XA_TARGETS = XInternAtom(awt_display, "TARGETS", False);
 }
@@ -154,8 +154,8 @@ void awt_initialize_DataTransferer() {
 /*
  * Single routine to convert to target FILE_NAME or _DT_FILENAME
  */
-Boolean 
-convertFileType(jbyteArray data, Atom * type, XtPointer * value, 
+Boolean
+convertFileType(jbyteArray data, Atom * type, XtPointer * value,
                 unsigned long *length, int32_t *format)
 {
     /*
@@ -210,7 +210,7 @@ convertFileType(jbyteArray data, Atom * type, XtPointer * value,
         return False;
     }
 
-    /* 
+    /*
      * determine the number of lists. The byteArray is null separated list of
      * strings.
      */
@@ -235,7 +235,7 @@ convertFileType(jbyteArray data, Atom * type, XtPointer * value,
             start = (char*)&bytes[slen];
         }
 
-        /* 
+        /*
          * if start is a NULL we're at the end of the list
          * We'll just a have null entry on the end of the list
          */
@@ -309,9 +309,9 @@ convertFileType(jbyteArray data, Atom * type, XtPointer * value,
  */
 
 JNIEXPORT jlong JNICALL
-Java_sun_awt_motif_MDataTransferer_getAtomForTarget(JNIEnv *env, 
+Java_sun_awt_motif_MDataTransferer_getAtomForTarget(JNIEnv *env,
                                                     jclass cls,
-                                                    jstring targetString) 
+                                                    jstring targetString)
 {
     Atom target;
     char *target_str;
@@ -339,8 +339,8 @@ Java_sun_awt_motif_MDataTransferer_getAtomForTarget(JNIEnv *env,
  * Signature: (J)Ljava/lang/String;
  */
 
-JNIEXPORT jstring JNICALL 
-Java_sun_awt_motif_MDataTransferer_getTargetNameForAtom(JNIEnv *env, 
+JNIEXPORT jstring JNICALL
+Java_sun_awt_motif_MDataTransferer_getTargetNameForAtom(JNIEnv *env,
                                                         jclass cls,
                                                         jlong atom)
 {
@@ -350,7 +350,7 @@ Java_sun_awt_motif_MDataTransferer_getTargetNameForAtom(JNIEnv *env,
     AWT_LOCK();
 
     name = XGetAtomName(awt_display, (Atom) atom);
-    
+
     if (name == NULL) {
         JNU_ThrowNullPointerException(env, "Failed to retrieve atom name.");
         AWT_UNLOCK();
@@ -385,17 +385,17 @@ Java_sun_awt_motif_MDataTransferer_getTargetNameForAtom(JNIEnv *env,
  * Method:    dragQueryFile
  * Signature: ([B)[Ljava/lang/String;
  *
- * This method converts a byte array that came from File most likely from a 
+ * This method converts a byte array that came from File most likely from a
  * drag operation into a String array.
  */
 
-JNIEXPORT jobjectArray JNICALL 
+JNIEXPORT jobjectArray JNICALL
 Java_sun_awt_motif_MDataTransferer_dragQueryFile
     (JNIEnv *env, jobject this, jbyteArray bytes)
 {
     XTextProperty tp;
     jbyte         *value;
-    
+
     char**        strings  = (char **)NULL;
     int32_t       nstrings = 0;
     jobject       filenames;
@@ -434,7 +434,7 @@ Java_sun_awt_motif_MDataTransferer_dragQueryFile
             AWT_UNLOCK();
             return NULL;
         }
-    
+
     (*env)->ReleaseByteArrayElements(env, bytes, value, JNI_ABORT);
 
     filenames = (*env)->NewObjectArray(env, nstrings, string, NULL);
@@ -448,12 +448,12 @@ Java_sun_awt_motif_MDataTransferer_dragQueryFile
     if (JNU_IsNull(env, filenames)) {
         goto wayout;
     }
-    
+
     /*
      * Actuall conversion code per X11 String
      */
     for (i = 0; i < nstrings; i++) {
-        jstring string = (*env)->NewStringUTF(env, 
+        jstring string = (*env)->NewStringUTF(env,
                                               (const char *)strings[i]);
         if ((*env)->ExceptionCheck(env) == JNI_TRUE) {
             (*env)->ExceptionDescribe(env);
@@ -464,9 +464,9 @@ Java_sun_awt_motif_MDataTransferer_dragQueryFile
         if (JNU_IsNull(env, string)) {
             goto wayout;
         }
-        
+
         (*env)->SetObjectArrayElement(env, filenames, i, string);
-        
+
         if ((*env)->ExceptionCheck(env) == JNI_TRUE) {
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
@@ -492,12 +492,12 @@ DECLARE_JAVA_CLASS(dataTransfererClazz, "sun/awt/datatransfer/DataTransferer")
  * Returns a local reference to the singleton DataTransferer instance.
  * The caller should delete the reference when done.
  */
-static jobject 
+static jobject
 get_data_transferer(JNIEnv* env) {
     jobject transferer = NULL;
 
-    DECLARE_STATIC_OBJECT_JAVA_METHOD(getInstanceMethodID, dataTransfererClazz, 
-                                     "getInstance", 
+    DECLARE_STATIC_OBJECT_JAVA_METHOD(getInstanceMethodID, dataTransfererClazz,
+                                     "getInstance",
                                      "()Lsun/awt/datatransfer/DataTransferer;");
 
     transferer = (*env)->CallStaticObjectMethod(env, clazz, getInstanceMethodID);
@@ -510,15 +510,15 @@ get_data_transferer(JNIEnv* env) {
     DASSERT(!JNU_IsNull(env, transferer));
 
     return transferer;
-}    
+}
 
 static jobject
 call_convertData(JNIEnv* env, jobject source, jobject contents, jlong format,
                  jobject formatMap) {
     jobject transferer = get_data_transferer(env);
     jobject ret = NULL;
-    DECLARE_OBJECT_JAVA_METHOD(convertDataMethodID, dataTransfererClazz, 
-                               "convertData", 
+    DECLARE_OBJECT_JAVA_METHOD(convertDataMethodID, dataTransfererClazz,
+                               "convertData",
                                "(Ljava/lang/Object;Ljava/awt/datatransfer/Transferable;JLjava/util/Map;Z)[B");
 
     ret = (*env)->CallObjectMethod(env, transferer, convertDataMethodID,
@@ -540,9 +540,9 @@ process_convert_data_requests() {
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_4);
     jobject transferer = get_data_transferer(env);
 
-    DECLARE_VOID_JAVA_METHOD(processDataConversionRequestsMethodID, 
-                             dataTransfererClazz, 
-                             "processDataConversionRequests", 
+    DECLARE_VOID_JAVA_METHOD(processDataConversionRequestsMethodID,
+                             dataTransfererClazz,
+                             "processDataConversionRequests",
                              "()V");
 
     (*env)->CallVoidMethod(env, transferer,
@@ -556,14 +556,14 @@ process_convert_data_requests() {
     (*env)->DeleteLocalRef(env, transferer);
 }
 
-Boolean 
+Boolean
 awt_convertData(Widget w, Atom * selection, Atom * target, Atom * type,
                 XtPointer * value, unsigned long *length, int32_t *format) {
     JNIEnv*  env  = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     Display* dpy = XtDisplay(w);
     awt_convertDataCallbackStruct* structPtr = NULL;
 
-    if (XFindContext(dpy, *selection, awt_convertDataContext, 
+    if (XFindContext(dpy, *selection, awt_convertDataContext,
                      (XPointer*)&structPtr) == XCNOMEM || structPtr == NULL) {
         return False;
     }
@@ -665,11 +665,11 @@ awt_convertData(Widget w, Atom * selection, Atom * target, Atom * type,
          * the XTextProperty.
          */
         jbyteArray    data;
-        
+
         /*
          * Fix for 4513976.
-         * Type None should be used instead of XT_CONVERT_FAIL 
-         * to report conversion failure. 
+         * Type None should be used instead of XT_CONVERT_FAIL
+         * to report conversion failure.
          */
         /*  assume forthcoming error */
         *type   = None;
@@ -679,7 +679,7 @@ awt_convertData(Widget w, Atom * selection, Atom * target, Atom * type,
 
         data = call_convertData(env, structPtr->source, structPtr->transferable,
                                 (jlong)*target, structPtr->formatMap);
-                                                
+
         /* error test */
         if ((*env)->ExceptionCheck(env) == JNI_TRUE) {
             (*env)->ExceptionDescribe(env);
@@ -702,8 +702,8 @@ awt_convertData(Widget w, Atom * selection, Atom * target, Atom * type,
 
         /*
          * Fix for 4513976.
-         * Type None should be used instead of XT_CONVERT_FAIL 
-         * to report conversion failure. 
+         * Type None should be used instead of XT_CONVERT_FAIL
+         * to report conversion failure.
          */
         *type   = None; /* assume forthcoming error */
         *value  = (XtPointer)NULL;
@@ -793,7 +793,7 @@ getSelectionTargetsHelper(JNIEnv* env, XtPointer value, unsigned long length)
         if ((*env)->EnsureLocalCapacity(env, 1) >= 0) {
 
             targetArray = (*env)->NewLongArray(env, count);
-                    
+
             if (!JNU_IsNull(env, targetArray)) {
                 (*env)->SetLongArrayRegion(env, targetArray, 0, count,
                                            checkedTargets);
@@ -809,13 +809,13 @@ getSelectionTargetsHelper(JNIEnv* env, XtPointer value, unsigned long length)
         }
         free(checkedTargets);
     }
-    
+
     return targetArray;
 }
 
-static void 
+static void
 get_selection_targets_callback(Widget w, XtPointer client_data, Atom* selection,
-                               Atom* type, XtPointer value, 
+                               Atom* type, XtPointer value,
                                unsigned long* length, int32_t* format) {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject* pReturnArray = (jobject*)client_data;
@@ -823,8 +823,8 @@ get_selection_targets_callback(Widget w, XtPointer client_data, Atom* selection,
 
     /*
      * It is highly unlikely that TARGETS will ever be passed even though that
-     * was what was requested. However, XA_ATOM ("ATOM") is likely. 
-     * Actually they are the same so treat them as such. See XToolKit 
+     * was what was requested. However, XA_ATOM ("ATOM") is likely.
+     * Actually they are the same so treat them as such. See XToolKit
      * Intrinsic Manual on XtSelectionCallbackProc for more details on type.
      */
     if (*type == XA_TARGETS || *type == XA_ATOM) {
@@ -851,7 +851,7 @@ get_selection_targets_callback(Widget w, XtPointer client_data, Atom* selection,
          */
         jlongArray targetArray = (*env)->NewLongArray(env, 0);
         *pReturnArray = (*env)->NewGlobalRef(env, targetArray);
-        /* 
+        /*
          * Fix for 4655996.
          * Report success if there is no owner for this selection or the owner
          * fails to provide target types.
@@ -868,7 +868,7 @@ get_selection_targets_callback(Widget w, XtPointer client_data, Atom* selection,
     set_selection_status(status);
 }
 
-static void 
+static void
 get_selection_data_callback(Widget w, XtPointer client_data, Atom * selection,
                             Atom * type, XtPointer value, unsigned long *length,
                             int32_t *format) {
@@ -906,7 +906,7 @@ get_selection_data_callback(Widget w, XtPointer client_data, Atom * selection,
     set_selection_status(status);
 }
 
-static int32_t 
+static int32_t
 wait_for_selection_event(void *data) {
     process_convert_data_requests();
     return get_selection_status() != SelectionPending;
@@ -975,7 +975,7 @@ get_selection_data(JNIEnv *env, Atom selection, Atom target, Time time_stamp) {
     XtGetSelectionValue(awt_root_shell, selection, target,
                         get_selection_data_callback,
                         (XtPointer)&data, time_stamp);
-    
+
     awt_MToolkit_modalWait(wait_for_selection_event, NULL);
     status = get_selection_status();
 
@@ -1007,7 +1007,7 @@ void
 awt_cleanupConvertDataContext(JNIEnv *env, Atom selectionAtom) {
     awt_convertDataCallbackStruct* structPtr = NULL;
 
-    if (XFindContext(awt_display, selectionAtom, awt_convertDataContext, 
+    if (XFindContext(awt_display, selectionAtom, awt_convertDataContext,
                      (XPointer*)&structPtr) == 0 && structPtr != NULL) {
 
         (*env)->DeleteGlobalRef(env, structPtr->source);
@@ -1016,12 +1016,12 @@ awt_cleanupConvertDataContext(JNIEnv *env, Atom selectionAtom) {
         (*env)->DeleteGlobalRef(env, structPtr->formats);
         free(structPtr);
     }
-    /* 
+    /*
      * Xlib Programming Manual says that it is better to erase
      * the current entry with XDeleteContext() before XSaveContext().
      */
     XDeleteContext(awt_display, selectionAtom, awt_convertDataContext);
-    if (XSaveContext(awt_display, selectionAtom, awt_convertDataContext, 
+    if (XSaveContext(awt_display, selectionAtom, awt_convertDataContext,
                      (XPointer)NULL) == XCNOMEM) {
         JNU_ThrowInternalError(env, "XError");
         (*env)->ExceptionDescribe(env);
@@ -1033,7 +1033,7 @@ static Bool exitSecondaryLoop = True;
 
 /*
  * This predicate procedure allows the Toolkit thread to process specific events
- * while it is blocked waiting for the event dispatch thread to process 
+ * while it is blocked waiting for the event dispatch thread to process
  * a SunDropTargetEvent. We need this to prevent deadlock when the client code
  * processing SunDropTargetEvent sets or gets the contents of the system
  * clipboard/selection. In this case the event dispatch thread waits for the
@@ -1041,13 +1041,13 @@ static Bool exitSecondaryLoop = True;
  */
 static Bool
 secondary_loop_event(Display* dpy, XEvent* event, char* arg) {
-    return (event->type == SelectionNotify || 
+    return (event->type == SelectionNotify ||
             event->type == SelectionClear  ||
             event->type == PropertyNotify) ? True : False;
 }
 
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MToolkitThreadBlockedHandler_enter(JNIEnv *env, jobject this) {
     DASSERT(exitSecondaryLoop && awt_currentThreadIsPrivileged(env));
     exitSecondaryLoop = False;
@@ -1060,7 +1060,7 @@ Java_sun_awt_motif_MToolkitThreadBlockedHandler_enter(JNIEnv *env, jobject this)
     }
 }
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Java_sun_awt_motif_MToolkitThreadBlockedHandler_exit(JNIEnv *env, jobject this) {
     DASSERT(!exitSecondaryLoop && !awt_currentThreadIsPrivileged(env));
     exitSecondaryLoop = True;

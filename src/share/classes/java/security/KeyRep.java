@@ -51,12 +51,11 @@ import javax.crypto.spec.SecretKeySpec;
  * @see java.security.spec.X509EncodedKeySpec
  * @see java.security.spec.PKCS8EncodedKeySpec
  *
- * @version %I%, %E%
  * @since 1.5
  */
 
 public class KeyRep implements Serializable {
- 
+
     private static final long serialVersionUID = -4757683898830641853L;
 
     /**
@@ -65,16 +64,16 @@ public class KeyRep implements Serializable {
      * @since 1.5
      */
     public static enum Type {
-    
-	/** Type for secret keys. */
-	SECRET, 
-	
-	/** Type for public keys. */
-	PUBLIC, 
-	
-	/** Type for private keys. */
-	PRIVATE,
-    
+
+        /** Type for secret keys. */
+        SECRET,
+
+        /** Type for public keys. */
+        PUBLIC,
+
+        /** Type for private keys. */
+        PRIVATE,
+
     }
 
     private static final String PKCS8 = "PKCS#8";
@@ -87,28 +86,28 @@ public class KeyRep implements Serializable {
      * @serial
      */
     private Type type;
- 
+
     /**
      * The Key algorithm
      *
      * @serial
      */
     private String algorithm;
- 
+
     /**
      * The Key encoding format
      *
      * @serial
      */
     private String format;
- 
+
     /**
      * The encoded Key bytes
      *
      * @serial
      */
     private byte[] encoded;
- 
+
     /**
      * Construct the alternate Key class.
      *
@@ -116,32 +115,32 @@ public class KeyRep implements Serializable {
      *
      * @param type either one of Type.SECRET, Type.PUBLIC, or Type.PRIVATE
      * @param algorithm the algorithm returned from
-     *		<code>Key.getAlgorithm()</code>
+     *          <code>Key.getAlgorithm()</code>
      * @param format the encoding format returned from
-     *		<code>Key.getFormat()</code>
+     *          <code>Key.getFormat()</code>
      * @param encoded the encoded bytes returned from
-     *		<code>Key.getEncoded()</code>
+     *          <code>Key.getEncoded()</code>
      *
      * @exception NullPointerException
-     *		if type is <code>null</code>,
-     *		if algorithm is <code>null</code>,
-     *		if format is <code>null</code>,
-     *		or if encoded is <code>null</code>
+     *          if type is <code>null</code>,
+     *          if algorithm is <code>null</code>,
+     *          if format is <code>null</code>,
+     *          or if encoded is <code>null</code>
      */
     public KeyRep(Type type, String algorithm,
-		String format, byte[] encoded) {
+                String format, byte[] encoded) {
 
-	if (type == null || algorithm == null ||
-	    format == null || encoded == null) {
-	    throw new NullPointerException("invalid null input(s)");
-	}
+        if (type == null || algorithm == null ||
+            format == null || encoded == null) {
+            throw new NullPointerException("invalid null input(s)");
+        }
 
-	this.type = type;
-	this.algorithm = algorithm;
-	this.format = format.toUpperCase();
-	this.encoded = encoded.clone();
+        this.type = type;
+        this.algorithm = algorithm;
+        this.format = format.toUpperCase();
+        this.encoded = encoded.clone();
     }
- 
+
     /**
      * Resolve the Key object.
      *
@@ -162,35 +161,35 @@ public class KeyRep implements Serializable {
      * @return the resolved Key object
      *
      * @exception ObjectStreamException if the Type/format
-     *	combination is unrecognized, if the algorithm, key format, or
-     *	encoded key bytes are unrecognized/invalid, of if the
-     *	resolution of the key fails for any reason
+     *  combination is unrecognized, if the algorithm, key format, or
+     *  encoded key bytes are unrecognized/invalid, of if the
+     *  resolution of the key fails for any reason
      */
     protected Object readResolve() throws ObjectStreamException {
-	try {
-	    if (type == Type.SECRET && RAW.equals(format)) {
-		return new SecretKeySpec(encoded, algorithm);
-	    } else if (type == Type.PUBLIC && X509.equals(format)) {
-		KeyFactory f = KeyFactory.getInstance(algorithm);
-		return f.generatePublic(new X509EncodedKeySpec(encoded));
-	    } else if (type == Type.PRIVATE && PKCS8.equals(format)) {
-		KeyFactory f = KeyFactory.getInstance(algorithm);
-		return f.generatePrivate(new PKCS8EncodedKeySpec(encoded));
-	    } else {
-		throw new NotSerializableException
-			("unrecognized type/format combination: " +
-			type + "/" + format);
-	    }
-	} catch (NotSerializableException nse) {
-	    throw nse;
-	} catch (Exception e) {
-	    NotSerializableException nse = new NotSerializableException
-					("java.security.Key: " +
-					"[" + type + "] " +
-					"[" + algorithm + "] " +
-					"[" + format + "]");
-	    nse.initCause(e);
-	    throw nse;
-	}
+        try {
+            if (type == Type.SECRET && RAW.equals(format)) {
+                return new SecretKeySpec(encoded, algorithm);
+            } else if (type == Type.PUBLIC && X509.equals(format)) {
+                KeyFactory f = KeyFactory.getInstance(algorithm);
+                return f.generatePublic(new X509EncodedKeySpec(encoded));
+            } else if (type == Type.PRIVATE && PKCS8.equals(format)) {
+                KeyFactory f = KeyFactory.getInstance(algorithm);
+                return f.generatePrivate(new PKCS8EncodedKeySpec(encoded));
+            } else {
+                throw new NotSerializableException
+                        ("unrecognized type/format combination: " +
+                        type + "/" + format);
+            }
+        } catch (NotSerializableException nse) {
+            throw nse;
+        } catch (Exception e) {
+            NotSerializableException nse = new NotSerializableException
+                                        ("java.security.Key: " +
+                                        "[" + type + "] " +
+                                        "[" + algorithm + "] " +
+                                        "[" + format + "]");
+            nse.initCause(e);
+            throw nse;
+        }
     }
 }

@@ -56,7 +56,7 @@ import java.util.logging.*;
 import java.util.logging.*;
 
 
-public abstract class WComponentPeer extends WObjectPeer 
+public abstract class WComponentPeer extends WObjectPeer
     implements ComponentPeer, DropTargetPeer, DisplayChangedListener
 {
     /**
@@ -83,8 +83,8 @@ public abstract class WComponentPeer extends WObjectPeer
 
     boolean isLayouting = false;
     boolean paintPending = false;
-    int	    oldWidth = -1;
-    int	    oldHeight = -1;
+    int     oldWidth = -1;
+    int     oldHeight = -1;
     private int numBackBuffers = 0;
     private VolatileImage backBuffer = null;
 
@@ -116,27 +116,27 @@ public abstract class WComponentPeer extends WObjectPeer
 
     /* New 1.1 API */
     public void setVisible(boolean b) {
-	if (b) {
-    	    show();
-    	} else {
-    	    hide();
-    	}
+        if (b) {
+            show();
+        } else {
+            hide();
+        }
     }
 
     public void show() {
-	Dimension s = ((Component)target).getSize();
-	oldHeight = s.height;
-	oldWidth = s.width;
-	pShow();
-    }    
+        Dimension s = ((Component)target).getSize();
+        oldHeight = s.height;
+        oldWidth = s.width;
+        pShow();
+    }
 
     /* New 1.1 API */
     public void setEnabled(boolean b) {
-    	if (b) {
-	    enable();
-	} else {
-	    disable();
-	}
+        if (b) {
+            enable();
+        } else {
+            disable();
+        }
     }
 
     public int serialNum = 0;
@@ -215,14 +215,14 @@ public abstract class WComponentPeer extends WObjectPeer
      * before the call returns (similar to the Win32 API UpdateWindow)
      */
     void paintDamagedAreaImmediately() {
-	// force Windows to send any pending WM_PAINT events so
-	// the damage area is updated on the Java side
-	updateWindow();
-	// make sure paint events are transferred to main event queue
-	// for coalescing
-	WToolkit.getWToolkit().flushPendingEvents();
-	// paint the damaged area
-	paintArea.paint(target, shouldClearRectBeforePaint());
+        // force Windows to send any pending WM_PAINT events so
+        // the damage area is updated on the Java side
+        updateWindow();
+        // make sure paint events are transferred to main event queue
+        // for coalescing
+        WToolkit.getWToolkit().flushPendingEvents();
+        // paint the damaged area
+        paintArea.paint(target, shouldClearRectBeforePaint());
     }
 
     native synchronized void updateWindow();
@@ -236,7 +236,7 @@ public abstract class WComponentPeer extends WObjectPeer
 
     private static final double BANDING_DIVISOR = 4.0;
     private native int[] createPrintedPixels(int srcX, int srcY,
-					     int srcW, int srcH);
+                                             int srcW, int srcH);
     public void print(Graphics g) {
 
         Component comp = (Component)target;
@@ -279,7 +279,7 @@ public abstract class WComponentPeer extends WObjectPeer
 
         if (log.isLoggable(Level.FINEST)) {
             switch(e.getID()) {
-            case PaintEvent.UPDATE:       
+            case PaintEvent.UPDATE:
                 log.log(Level.FINEST, "coalescePaintEvent: UPDATE: add: x = " +
                     r.x + ", y = " + r.y + ", width = " + r.width + ", height = " + r.height);
                 return;
@@ -294,7 +294,7 @@ public abstract class WComponentPeer extends WObjectPeer
     public synchronized native void reshape(int x, int y, int width, int height);
 
     // returns true if the event has been handled and shouldn't be propagated
-    // though handleEvent method chain - e.g. WTextFieldPeer returns true 
+    // though handleEvent method chain - e.g. WTextFieldPeer returns true
     // on handling '\n' to prevent it from being passed to native code
     public boolean handleJavaKeyEvent(KeyEvent e) { return false; }
 
@@ -330,22 +330,22 @@ public abstract class WComponentPeer extends WObjectPeer
     }
 
     public Dimension getMinimumSize() {
-	return ((Component)target).getSize();
+        return ((Component)target).getSize();
     }
 
     public Dimension getPreferredSize() {
-	return getMinimumSize();
+        return getMinimumSize();
     }
 
     // Do nothing for heavyweight implementation
     public void layout() {}
 
     public Rectangle getBounds() {
-    	return ((Component)target).getBounds();
+        return ((Component)target).getBounds();
     }
 
     public boolean isFocusable() {
-	return false;
+        return false;
     }
 
     /*
@@ -364,7 +364,7 @@ public abstract class WComponentPeer extends WObjectPeer
     }
 
     public SurfaceData getSurfaceData() {
-	return surfaceData;
+        return surfaceData;
     }
 
     /**
@@ -377,7 +377,7 @@ public abstract class WComponentPeer extends WObjectPeer
      * just call that version with our current numBackBuffers.
      */
     public void replaceSurfaceData() {
-	replaceSurfaceData(this.numBackBuffers);
+        replaceSurfaceData(this.numBackBuffers);
     }
 
     /**
@@ -392,7 +392,7 @@ public abstract class WComponentPeer extends WObjectPeer
                 if (pData == 0) {
                     return;
                 }
-		numBackBuffers = newNumBackBuffers;
+                numBackBuffers = newNumBackBuffers;
                 SurfaceData oldData = surfaceData;
                 Win32GraphicsConfig gc =
                     (Win32GraphicsConfig)getGraphicsConfiguration();
@@ -402,14 +402,14 @@ public abstract class WComponentPeer extends WObjectPeer
                     // null out the old data to make it collected faster
                     oldData = null;
                 }
-                
+
                 if (backBuffer != null) {
                     // this will remove the back buffer from the
                     // display change notification list
                     backBuffer.flush();
                     backBuffer = null;
                 }
-            
+
                 if (numBackBuffers > 0) {
                     backBuffer = gc.createBackBuffer(this);
                 }
@@ -421,9 +421,9 @@ public abstract class WComponentPeer extends WObjectPeer
         Runnable r = new Runnable() {
             public void run() {
                 // Shouldn't do anything if object is disposed in meanwhile
-                // No need for sync as disposeAction in Window is performed 
+                // No need for sync as disposeAction in Window is performed
                 // on EDT
-                if (!isDisposed()) { 
+                if (!isDisposed()) {
                     try {
                         replaceSurfaceData();
                     } catch (InvalidPipeException e) {
@@ -453,7 +453,7 @@ public abstract class WComponentPeer extends WObjectPeer
             // REMIND : what do we do if our surface creation failed?
         }
     }
-    
+
     /**
      * Part of the DisplayChangedListener interface: components
      * do not need to react to this event
@@ -474,8 +474,8 @@ public abstract class WComponentPeer extends WObjectPeer
 
     //This will return null for Components not yet added to a Container
     public ColorModel getDeviceColorModel() {
-        Win32GraphicsConfig gc = 
-	    (Win32GraphicsConfig)getGraphicsConfiguration();
+        Win32GraphicsConfig gc =
+            (Win32GraphicsConfig)getGraphicsConfiguration();
         if (gc != null) {
             return gc.getDeviceColorModel();
         }
@@ -486,7 +486,7 @@ public abstract class WComponentPeer extends WObjectPeer
 
     //Returns null for Components not yet added to a Container
     public ColorModel getColorModel(int transparency) {
-//	return WToolkit.config.getColorModel(transparency);
+//      return WToolkit.config.getColorModel(transparency);
         GraphicsConfiguration gc = getGraphicsConfiguration();
         if (gc != null) {
             return gc.getColorModel(transparency);
@@ -496,7 +496,7 @@ public abstract class WComponentPeer extends WObjectPeer
         }
     }
     public java.awt.Toolkit getToolkit() {
-	return Toolkit.getDefaultToolkit();
+        return Toolkit.getDefaultToolkit();
     }
 
     // fallback default font object
@@ -504,7 +504,7 @@ public abstract class WComponentPeer extends WObjectPeer
 
     public Graphics getGraphics() {
         SurfaceData surfaceData = this.surfaceData;
-	if (!isDisposed() && surfaceData != null) {
+        if (!isDisposed() && surfaceData != null) {
             /* Fix for bug 4746122. Color and Font shouldn't be null */
             Color bgColor = background;
             if (bgColor == null) {
@@ -514,16 +514,16 @@ public abstract class WComponentPeer extends WObjectPeer
             if (fgColor == null) {
                 fgColor = SystemColor.windowText;
             }
-            Font font = this.font; 
+            Font font = this.font;
             if (font == null) {
                 font = defaultFont;
             }
             return new SunGraphics2D(surfaceData, fgColor, bgColor, font);
-	}
-	return null;
+        }
+        return null;
     }
     public FontMetrics getFontMetrics(Font font) {
-	return WFontMetrics.getFontMetrics(font);
+        return WFontMetrics.getFontMetrics(font);
     }
 
     private synchronized native void _dispose();
@@ -532,8 +532,8 @@ public abstract class WComponentPeer extends WObjectPeer
         surfaceData = null;
         oldData.invalidate();
         // remove from updater before calling targetDisposedPeer
-	WToolkit.targetDisposedPeer(target, this);
-	_dispose();
+        WToolkit.targetDisposedPeer(target, this);
+        _dispose();
     }
 
     public synchronized void setForeground(Color c) {
@@ -555,16 +555,16 @@ public abstract class WComponentPeer extends WObjectPeer
     }
     public synchronized native void _setFont(Font f);
     public final void updateCursorImmediately() {
-	WGlobalCursorManager.getCursorManager().updateCursorImmediately();
+        WGlobalCursorManager.getCursorManager().updateCursorImmediately();
     }
-    
+
     native static boolean processSynchronousLightweightTransfer(Component heavyweight, Component descendant,
                                                                 boolean temporary, boolean focusedWindowChangeAllowed,
                                                                 long time);
     public boolean requestFocus
         (Component lightweightChild, boolean temporary,
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause) {
-        if (processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary, 
+        if (processSynchronousLightweightTransfer((Component)target, lightweightChild, temporary,
                                                                       focusedWindowChangeAllowed, time)) {
             return true;
         } else {
@@ -576,7 +576,7 @@ public abstract class WComponentPeer extends WObjectPeer
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause);
 
     public Image createImage(ImageProducer producer) {
-	return new ToolkitImage(producer);
+        return new ToolkitImage(producer);
     }
 
     public Image createImage(int width, int height) {
@@ -586,21 +586,21 @@ public abstract class WComponentPeer extends WObjectPeer
     }
 
     public VolatileImage createVolatileImage(int width, int height) {
-	return new SunVolatileImage((Component)target, width, height);
+        return new SunVolatileImage((Component)target, width, height);
     }
 
     public boolean prepareImage(Image img, int w, int h, ImageObserver o) {
-	return getToolkit().prepareImage(img, w, h, o);
+        return getToolkit().prepareImage(img, w, h, o);
     }
 
     public int checkImage(Image img, int w, int h, ImageObserver o) {
-	return getToolkit().checkImage(img, w, h, o);
+        return getToolkit().checkImage(img, w, h, o);
     }
 
     // Object overrides
 
     public String toString() {
-	return getClass().getName() + "[" + target + "]";
+        return getClass().getName() + "[" + target + "]";
     }
 
     // Toolkit & peer internals
@@ -608,19 +608,19 @@ public abstract class WComponentPeer extends WObjectPeer
     private int updateX1, updateY1, updateX2, updateY2;
 
     WComponentPeer(Component target) {
-	this.target = target;
+        this.target = target;
         this.paintArea = new RepaintArea();
-	Container parent = WToolkit.getNativeContainer(target);
-	WComponentPeer parentPeer = (WComponentPeer) WToolkit.targetToPeer(parent);
-	create(parentPeer);
+        Container parent = WToolkit.getNativeContainer(target);
+        WComponentPeer parentPeer = (WComponentPeer) WToolkit.targetToPeer(parent);
+        create(parentPeer);
         // fix for 5088782: check if window object is created successfully
         checkCreation();
         this.winGraphicsConfig =
             (Win32GraphicsConfig)getGraphicsConfiguration();
-	this.surfaceData =
+        this.surfaceData =
             winGraphicsConfig.createSurfaceData(this, numBackBuffers);
-	initialize();
-	start();  // Initialize enable/disable state, turn on callbacks
+        initialize();
+        start();  // Initialize enable/disable state, turn on callbacks
     }
     abstract void create(WComponentPeer parent);
 
@@ -642,23 +642,23 @@ public abstract class WComponentPeer extends WObjectPeer
     synchronized native void start();
 
     void initialize() {
-	if (((Component)target).isVisible()) {
-	    show();  // the wnd starts hidden
-	}
-	Color fg = ((Component)target).getForeground();
-	if (fg != null) {
-	    setForeground(fg);
-	}
+        if (((Component)target).isVisible()) {
+            show();  // the wnd starts hidden
+        }
+        Color fg = ((Component)target).getForeground();
+        if (fg != null) {
+            setForeground(fg);
+        }
         // Set background color in C++, to avoid inheriting a parent's color.
-	Font  f = ((Component)target).getFont();
-	if (f != null) {
-	    setFont(f);
-	}
-	if (! ((Component)target).isEnabled()) {
-	    disable();
-	}
-	Rectangle r = ((Component)target).getBounds();
-	setBounds(r.x, r.y, r.width, r.height, SET_BOUNDS);
+        Font  f = ((Component)target).getFont();
+        if (f != null) {
+            setFont(f);
+        }
+        if (! ((Component)target).isEnabled()) {
+            disable();
+        }
+        Rectangle r = ((Component)target).getBounds();
+        setBounds(r.x, r.y, r.width, r.height, SET_BOUNDS);
     }
 
     // Callbacks for window-system events to the frame
@@ -680,7 +680,7 @@ public abstract class WComponentPeer extends WObjectPeer
 
     /* Invoke a paint() method call on the target, without clearing the
      * damaged area.  This is normally called by a native control after
-     * it has painted itself. 
+     * it has painted itself.
      *
      * NOTE: This is called on the privileged toolkit thread. Do not
      *       call directly into user code using this thread!
@@ -696,7 +696,7 @@ public abstract class WComponentPeer extends WObjectPeer
             if (event != null) {
                 postEvent(event);
             }
-	}
+        }
     }
 
     /*
@@ -708,20 +708,20 @@ public abstract class WComponentPeer extends WObjectPeer
 
     // Routines to support deferred window positioning.
     public void beginLayout() {
-	// Skip all painting till endLayout
-	isLayouting = true;
+        // Skip all painting till endLayout
+        isLayouting = true;
     }
 
     public void endLayout() {
         if(!paintArea.isEmpty() && !paintPending &&
             !((Component)target).getIgnoreRepaint()) {
-	    // if not waiting for native painting repaint damaged area
-	    postEvent(new PaintEvent((Component)target, PaintEvent.PAINT, 
-			  new Rectangle()));
-	}
-	isLayouting = false;
-    }		     
-		     	
+            // if not waiting for native painting repaint damaged area
+            postEvent(new PaintEvent((Component)target, PaintEvent.PAINT,
+                          new Rectangle()));
+        }
+        isLayouting = false;
+    }
+
     public native void beginValidate();
     public native void endValidate();
 
@@ -729,14 +729,14 @@ public abstract class WComponentPeer extends WObjectPeer
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	return getMinimumSize();
+        return getMinimumSize();
     }
 
     /**
      * DEPRECATED
      */
     public Dimension preferredSize() {
-	return getPreferredSize();
+        return getPreferredSize();
     }
 
     /**
@@ -744,10 +744,10 @@ public abstract class WComponentPeer extends WObjectPeer
      */
 
     public synchronized void addDropTarget(DropTarget dt) {
-	if (nDropTargets == 0) {
-	    nativeDropTargetContext = addNativeDropTarget();
-	}
-	nDropTargets++;
+        if (nDropTargets == 0) {
+            nativeDropTargetContext = addNativeDropTarget();
+        }
+        nDropTargets++;
     }
 
     /**
@@ -756,10 +756,10 @@ public abstract class WComponentPeer extends WObjectPeer
 
     public synchronized void removeDropTarget(DropTarget dt) {
         nDropTargets--;
-	if (nDropTargets == 0) {
-	    removeNativeDropTarget();
-	    nativeDropTargetContext = 0;
-	}
+        if (nDropTargets == 0) {
+            removeNativeDropTarget();
+            nativeDropTargetContext = 0;
+        }
     }
 
     /**
@@ -779,12 +779,12 @@ public abstract class WComponentPeer extends WObjectPeer
     public boolean handlesWheelScrolling() {
         // should this be cached?
         return nativeHandlesWheelScrolling();
-    }  
+    }
 
     // Returns true if we are inside begin/endLayout and
-    // are waiting for native painting    
+    // are waiting for native painting
     public boolean isPaintPending() {
-	return paintPending && isLayouting;
+        return paintPending && isLayouting;
     }
 
     /**
@@ -792,7 +792,7 @@ public abstract class WComponentPeer extends WObjectPeer
      * associated GraphicsConfig (Win or WGL) to handle the appropriate
      * native windowing system specific actions.
      */
-    
+
     public void createBuffers(int numBuffers, BufferCapabilities caps)
         throws AWTException
     {
@@ -847,7 +847,7 @@ public abstract class WComponentPeer extends WObjectPeer
     /**
      * @see java.awt.peer.ComponentPeer#reparent
      */
-    public void reparent(ContainerPeer newNativeParent) {        
+    public void reparent(ContainerPeer newNativeParent) {
         pSetParent(newNativeParent);
     }
 
@@ -865,7 +865,7 @@ public abstract class WComponentPeer extends WObjectPeer
     native void setRectangularShape(int lox, int loy, int hix, int hiy,
                      sun.java2d.pipe.Region region);
 
-    
+
     /**
      * Applies the shape to the native component window.
      * @since 1.7
@@ -878,9 +878,8 @@ public abstract class WComponentPeer extends WObjectPeer
                     + "; SHAPE: " + shape);
         }
 
-        setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(), 
+        setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(),
                 (shape.isRectangular() ? null : shape));
     }
-            
-}
 
+}

@@ -50,7 +50,6 @@ import java.lang.reflect.*;
  * @author  Josh Bloch
  * @author  Neal Gafter
  * @author  John Rose
- * @version %I%, %G%
  * @since   1.2
  */
 
@@ -72,7 +71,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(long[] a) {
-	sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -97,7 +96,7 @@ public class Arrays {
      */
     public static void sort(long[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex-fromIndex);
     }
 
     /**
@@ -111,7 +110,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(int[] a) {
-	sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -132,11 +131,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(int[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex-fromIndex);
     }
 
     /**
@@ -150,7 +149,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(short[] a) {
-	sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -171,11 +170,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(short[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex-fromIndex);
     }
 
     /**
@@ -189,7 +188,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(char[] a) {
-	sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -210,11 +209,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(char[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex-fromIndex);
     }
 
     /**
@@ -228,7 +227,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(byte[] a) {
-	sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -249,11 +248,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(byte[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex-fromIndex);
     }
 
     /**
@@ -282,7 +281,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(double[] a) {
-	sort2(a, 0, a.length);
+        sort2(a, 0, a.length);
     }
 
     /**
@@ -317,11 +316,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(double[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort2(a, fromIndex, toIndex);
+        sort2(a, fromIndex, toIndex);
     }
 
     /**
@@ -350,7 +349,7 @@ public class Arrays {
      * @param a the array to be sorted
      */
     public static void sort(float[] a) {
-	sort2(a, 0, a.length);
+        sort2(a, 0, a.length);
     }
 
     /**
@@ -385,11 +384,11 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void sort(float[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	sort2(a, fromIndex, toIndex);
+        sort2(a, fromIndex, toIndex);
     }
 
     private static void sort2(double a[], int fromIndex, int toIndex) {
@@ -407,7 +406,7 @@ public class Arrays {
         int i = fromIndex, n = toIndex;
         while(i < n) {
             if (a[i] != a[i]) {
-		swap(a, i, --n);
+                swap(a, i, --n);
             } else {
                 if (a[i]==0 && Double.doubleToLongBits(a[i])==NEG_ZERO_BITS) {
                     a[i] = 0.0d;
@@ -418,7 +417,7 @@ public class Arrays {
         }
 
         // Main sort phase: quicksort everything but the NaN's
-	sort1(a, fromIndex, n-fromIndex);
+        sort1(a, fromIndex, n-fromIndex);
 
         // Postprocessing phase: change 0.0's to -0.0's as required
         if (numNegZeros != 0) {
@@ -449,7 +448,7 @@ public class Arrays {
         int i = fromIndex, n = toIndex;
         while(i < n) {
             if (a[i] != a[i]) {
-		swap(a, i, --n);
+                swap(a, i, --n);
             } else {
                 if (a[i]==0 && Float.floatToIntBits(a[i])==NEG_ZERO_BITS) {
                     a[i] = 0.0f;
@@ -460,7 +459,7 @@ public class Arrays {
         }
 
         // Main sort phase: quicksort everything but the NaN's
-	sort1(a, fromIndex, n-fromIndex);
+        sort1(a, fromIndex, n-fromIndex);
 
         // Postprocessing phase: change 0.0's to -0.0's as required
         if (numNegZeros != 0) {
@@ -485,249 +484,249 @@ public class Arrays {
      * Sorts the specified sub-array of longs into ascending order.
      */
     private static void sort1(long x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	long v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        long v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(long x[], int a, int b) {
-	long t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        long t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(long x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed longs.
      */
     private static int med3(long x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
     /**
      * Sorts the specified sub-array of integers into ascending order.
      */
     private static void sort1(int x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	int v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        int v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(int x[], int a, int b) {
-	int t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        int t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(int x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed integers.
      */
     private static int med3(int x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
     /**
      * Sorts the specified sub-array of shorts into ascending order.
      */
     private static void sort1(short x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	short v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        short v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(short x[], int a, int b) {
-	short t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        short t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(short x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed shorts.
      */
     private static int med3(short x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
 
@@ -735,83 +734,83 @@ public class Arrays {
      * Sorts the specified sub-array of chars into ascending order.
      */
     private static void sort1(char x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	char v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        char v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(char x[], int a, int b) {
-	char t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        char t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(char x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed chars.
      */
     private static int med3(char x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
 
@@ -819,83 +818,83 @@ public class Arrays {
      * Sorts the specified sub-array of bytes into ascending order.
      */
     private static void sort1(byte x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	byte v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        byte v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(byte x[], int a, int b) {
-	byte t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        byte t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(byte x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed bytes.
      */
     private static int med3(byte x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
 
@@ -903,83 +902,83 @@ public class Arrays {
      * Sorts the specified sub-array of doubles into ascending order.
      */
     private static void sort1(double x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	double v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        double v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(double x[], int a, int b) {
-	double t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        double t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(double x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed doubles.
      */
     private static int med3(double x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
 
@@ -987,83 +986,83 @@ public class Arrays {
      * Sorts the specified sub-array of floats into ascending order.
      */
     private static void sort1(float x[], int off, int len) {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && x[j-1]>x[j]; j--)
-		    swap(x, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i=off; i<len+off; i++)
+                for (int j=i; j>off && x[j-1]>x[j]; j--)
+                    swap(x, j, j-1);
+            return;
+        }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(x, l,     l+s, l+2*s);
-		m = med3(x, m-s,   m,   m+s);
-		n = med3(x, n-2*s, n-s, n);
-	    }
-	    m = med3(x, l, m, n); // Mid-size, med of 3
-	}
-	float v = x[m];
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len/8;
+                l = med3(x, l,     l+s, l+2*s);
+                m = med3(x, m-s,   m,   m+s);
+                n = med3(x, n-2*s, n-s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
+        }
+        float v = x[m];
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && x[b] <= v) {
-		if (x[b] == v)
-		    swap(x, a++, b);
-		b++;
-	    }
-	    while (c >= b && x[c] >= v) {
-		if (x[c] == v)
-		    swap(x, c, d--);
-		c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(x, b++, c--);
-	}
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while(true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v)
+                    swap(x, a++, b);
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v)
+                    swap(x, c, d--);
+                c--;
+            }
+            if (b > c)
+                break;
+            swap(x, b++, c--);
+        }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-	s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
+        s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1(x, off, s);
-	if ((s = d-c) > 1)
-	    sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b-a) > 1)
+            sort1(x, off, s);
+        if ((s = d-c) > 1)
+            sort1(x, n-s, s);
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(float x[], int a, int b) {
-	float t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        float t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(float x[], int a, int b, int n) {
-	for (int i=0; i<n; i++, a++, b++)
-	    swap(x, a, b);
+        for (int i=0; i<n; i++, a++, b++)
+            swap(x, a, b);
     }
 
     /**
      * Returns the index of the median of the three indexed floats.
      */
     private static int med3(float x[], int a, int b, int c) {
-	return (x[a] < x[b] ?
-		(x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b] ?
+                (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
+                (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
 
@@ -1086,7 +1085,7 @@ public class Arrays {
      *
      * @param a the array to be sorted
      * @throws  ClassCastException if the array contains elements that are not
-     *		<i>mutually comparable</i> (for example, strings and integers).
+     *          <i>mutually comparable</i> (for example, strings and integers).
      */
     public static void sort(Object[] a) {
         Object[] aux = (Object[])a.clone();
@@ -1120,14 +1119,14 @@ public class Arrays {
      * @param toIndex the index of the last element (exclusive) to be sorted
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      * @throws    ClassCastException if the array contains elements that are
-     *		  not <i>mutually comparable</i> (for example, strings and
-     *		  integers).
+     *            not <i>mutually comparable</i> (for example, strings and
+     *            integers).
      */
     public static void sort(Object[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-	Object[] aux = copyOfRange(a, fromIndex, toIndex);
+        Object[] aux = copyOfRange(a, fromIndex, toIndex);
         mergeSort(aux, a, fromIndex, toIndex, -fromIndex);
     }
 
@@ -1145,17 +1144,17 @@ public class Arrays {
      * off is the offset to generate corresponding low, high in src
      */
     private static void mergeSort(Object[] src,
-				  Object[] dest,
-				  int low,
-				  int high,
-				  int off) {
-	int length = high - low;
+                                  Object[] dest,
+                                  int low,
+                                  int high,
+                                  int off) {
+        int length = high - low;
 
-	// Insertion sort on smallest arrays
+        // Insertion sort on smallest arrays
         if (length < INSERTIONSORT_THRESHOLD) {
             for (int i=low; i<high; i++)
                 for (int j=i; j>low &&
-			 ((Comparable) dest[j-1]).compareTo(dest[j])>0; j--)
+                         ((Comparable) dest[j-1]).compareTo(dest[j])>0; j--)
                     swap(dest, j, j-1);
             return;
         }
@@ -1189,9 +1188,9 @@ public class Arrays {
      * Swaps x[a] with x[b].
      */
     private static void swap(Object[] x, int a, int b) {
-	Object t = x[a];
-	x[a] = x[b];
-	x[b] = t;
+        Object t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
@@ -1214,10 +1213,10 @@ public class Arrays {
      *        <tt>null</tt> value indicates that the elements'
      *        {@linkplain Comparable natural ordering} should be used.
      * @throws  ClassCastException if the array contains elements that are
-     *		not <i>mutually comparable</i> using the specified comparator.
+     *          not <i>mutually comparable</i> using the specified comparator.
      */
     public static <T> void sort(T[] a, Comparator<? super T> c) {
-	T[] aux = (T[])a.clone();
+        T[] aux = (T[])a.clone();
         if (c==null)
             mergeSort(aux, a, 0, a.length, 0);
         else
@@ -1250,15 +1249,15 @@ public class Arrays {
      *        <tt>null</tt> value indicates that the elements'
      *        {@linkplain Comparable natural ordering} should be used.
      * @throws ClassCastException if the array contains elements that are not
-     *	       <i>mutually comparable</i> using the specified comparator.
+     *         <i>mutually comparable</i> using the specified comparator.
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static <T> void sort(T[] a, int fromIndex, int toIndex,
-				Comparator<? super T> c) {
+                                Comparator<? super T> c) {
         rangeCheck(a.length, fromIndex, toIndex);
-	T[] aux = (T[])copyOfRange(a, fromIndex, toIndex);
+        T[] aux = (T[])copyOfRange(a, fromIndex, toIndex);
         if (c==null)
             mergeSort(aux, a, fromIndex, toIndex, -fromIndex);
         else
@@ -1273,18 +1272,18 @@ public class Arrays {
      * off is the offset into src corresponding to low in dest
      */
     private static void mergeSort(Object[] src,
-				  Object[] dest,
-				  int low, int high, int off,
-				  Comparator c) {
-	int length = high - low;
+                                  Object[] dest,
+                                  int low, int high, int off,
+                                  Comparator c) {
+        int length = high - low;
 
-	// Insertion sort on smallest arrays
-	if (length < INSERTIONSORT_THRESHOLD) {
-	    for (int i=low; i<high; i++)
-		for (int j=i; j>low && c.compare(dest[j-1], dest[j])>0; j--)
-		    swap(dest, j, j-1);
-	    return;
-	}
+        // Insertion sort on smallest arrays
+        if (length < INSERTIONSORT_THRESHOLD) {
+            for (int i=low; i<high; i++)
+                for (int j=i; j>low && c.compare(dest[j-1], dest[j])>0; j--)
+                    swap(dest, j, j-1);
+            return;
+        }
 
         // Recursively sort halves of dest into src
         int destLow  = low;
@@ -1338,16 +1337,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(long[] a, long key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1363,49 +1362,49 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(long[] a, int fromIndex, int toIndex,
-				   long key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   long key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(long[] a, int fromIndex, int toIndex,
-				     long key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     long key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    long midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midVal = a[mid];
 
-	    if (midVal < key)
-		low = mid + 1;
-	    else if (midVal > key)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1419,16 +1418,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(int[] a, int key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1444,49 +1443,49 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(int[] a, int fromIndex, int toIndex,
-				   int key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   int key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(int[] a, int fromIndex, int toIndex,
-				     int key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     int key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    int midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            int midVal = a[mid];
 
-	    if (midVal < key)
-		low = mid + 1;
-	    else if (midVal > key)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1500,16 +1499,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(short[] a, short key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1525,49 +1524,49 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(short[] a, int fromIndex, int toIndex,
-				   short key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   short key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(short[] a, int fromIndex, int toIndex,
-				     short key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     short key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    short midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            short midVal = a[mid];
 
-	    if (midVal < key)
-		low = mid + 1;
-	    else if (midVal > key)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1581,16 +1580,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(char[] a, char key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1606,49 +1605,49 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(char[] a, int fromIndex, int toIndex,
-				   char key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   char key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(char[] a, int fromIndex, int toIndex,
-				     char key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     char key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    char midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            char midVal = a[mid];
 
-	    if (midVal < key)
-		low = mid + 1;
-	    else if (midVal > key)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1662,16 +1661,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(byte[] a, byte key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1687,49 +1686,49 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(byte[] a, int fromIndex, int toIndex,
-				   byte key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   byte key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(byte[] a, int fromIndex, int toIndex,
-				     byte key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     byte key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    byte midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            byte midVal = a[mid];
 
-	    if (midVal < key)
-		low = mid + 1;
-	    else if (midVal > key)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1744,16 +1743,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(double[] a, double key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1770,57 +1769,57 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(double[] a, int fromIndex, int toIndex,
-				   double key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   double key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(double[] a, int fromIndex, int toIndex,
-				     double key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     double key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    double midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            double midVal = a[mid];
 
             if (midVal < key)
-                low = mid + 1;	// Neither val is NaN, thisVal is smaller
-	    else if (midVal > key)
-                high = mid - 1;	// Neither val is NaN, thisVal is larger
-	    else {
+                low = mid + 1;  // Neither val is NaN, thisVal is smaller
+            else if (midVal > key)
+                high = mid - 1; // Neither val is NaN, thisVal is larger
+            else {
                 long midBits = Double.doubleToLongBits(midVal);
                 long keyBits = Double.doubleToLongBits(key);
-		if (midBits == keyBits)	    // Values are equal
-		    return mid;	            // Key found
-		else if (midBits < keyBits) // (-0.0, 0.0) or (!NaN, NaN)
-		    low = mid + 1;
-		else		            // (0.0, -0.0) or (NaN, !NaN)
-		    high = mid - 1;
+                if (midBits == keyBits)     // Values are equal
+                    return mid;             // Key found
+                else if (midBits < keyBits) // (-0.0, 0.0) or (!NaN, NaN)
+                    low = mid + 1;
+                else                        // (0.0, -0.0) or (NaN, !NaN)
+                    high = mid - 1;
             }
-	}
-	return -(low + 1);  // key not found.
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1835,16 +1834,16 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      */
     public static int binarySearch(float[] a, float key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1861,57 +1860,57 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(float[] a, int fromIndex, int toIndex,
-				   float key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   float key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(float[] a, int fromIndex, int toIndex,
-				     float key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     float key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    float midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            float midVal = a[mid];
 
             if (midVal < key)
-                low = mid + 1;	// Neither val is NaN, thisVal is smaller
-	    else if (midVal > key)
-                high = mid - 1;	// Neither val is NaN, thisVal is larger
-	    else {
+                low = mid + 1;  // Neither val is NaN, thisVal is smaller
+            else if (midVal > key)
+                high = mid - 1; // Neither val is NaN, thisVal is larger
+            else {
                 int midBits = Float.floatToIntBits(midVal);
                 int keyBits = Float.floatToIntBits(key);
-		if (midBits == keyBits)	    // Values are equal
-		    return mid;	            // Key found
-		else if (midBits < keyBits) // (-0.0, 0.0) or (!NaN, NaN)
-		    low = mid + 1;
-		else		            // (0.0, -0.0) or (NaN, !NaN)
-		    high = mid - 1;
+                if (midBits == keyBits)     // Values are equal
+                    return mid;             // Key found
+                else if (midBits < keyBits) // (-0.0, 0.0) or (!NaN, NaN)
+                    low = mid + 1;
+                else                        // (0.0, -0.0) or (NaN, !NaN)
+                    high = mid - 1;
             }
-	}
-	return -(low + 1);  // key not found.
+        }
+        return -(low + 1);  // key not found.
     }
 
 
@@ -1933,18 +1932,18 @@ public class Arrays {
      * @param a the array to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws ClassCastException if the search key is not comparable to the
      *         elements of the array.
      */
     public static int binarySearch(Object[] a, Object key) {
-	return binarySearch0(a, 0, a.length, key);
+        return binarySearch0(a, 0, a.length, key);
     }
 
     /**
@@ -1966,52 +1965,52 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws ClassCastException if the search key is not comparable to the
      *         elements of the array within the specified range.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static int binarySearch(Object[] a, int fromIndex, int toIndex,
-				   Object key) {
-	rangeCheck(a.length, fromIndex, toIndex);
-	return binarySearch0(a, fromIndex, toIndex, key);
+                                   Object key) {
+        rangeCheck(a.length, fromIndex, toIndex);
+        return binarySearch0(a, fromIndex, toIndex, key);
     }
 
     // Like public version, but without range checks.
     private static int binarySearch0(Object[] a, int fromIndex, int toIndex,
-				     Object key) {
-	int low = fromIndex;
-	int high = toIndex - 1;
+                                     Object key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    Comparable midVal = (Comparable)a[mid];
-	    int cmp = midVal.compareTo(key);
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            Comparable midVal = (Comparable)a[mid];
+            int cmp = midVal.compareTo(key);
 
-	    if (cmp < 0)
-		low = mid + 1;
-	    else if (cmp > 0)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -2029,19 +2028,19 @@ public class Arrays {
      * @param key the value to be searched for
      * @param c the comparator by which the array is ordered.  A
      *        <tt>null</tt> value indicates that the elements'
-     *	      {@linkplain Comparable natural ordering} should be used.
+     *        {@linkplain Comparable natural ordering} should be used.
      * @return index of the search key, if it is contained in the array;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element greater than the key, or <tt>a.length</tt> if all
-     *	       elements in the array are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element greater than the key, or <tt>a.length</tt> if all
+     *         elements in the array are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws ClassCastException if the array contains elements that are not
-     *	       <i>mutually comparable</i> using the specified comparator,
-     *	       or the search key is not comparable to the
-     *	       elements of the array using this comparator.
+     *         <i>mutually comparable</i> using the specified comparator,
+     *         or the search key is not comparable to the
+     *         elements of the array using this comparator.
      */
     public static <T> int binarySearch(T[] a, T key, Comparator<? super T> c) {
         return binarySearch0(a, 0, a.length, key, c);
@@ -2062,60 +2061,60 @@ public class Arrays {
      *
      * @param a the array to be searched
      * @param fromIndex the index of the first element (inclusive) to be
-     *		searched
+     *          searched
      * @param toIndex the index of the last element (exclusive) to be searched
      * @param key the value to be searched for
      * @param c the comparator by which the array is ordered.  A
      *        <tt>null</tt> value indicates that the elements'
      *        {@linkplain Comparable natural ordering} should be used.
      * @return index of the search key, if it is contained in the array
-     *	       within the specified range;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
-     *	       <i>insertion point</i> is defined as the point at which the
-     *	       key would be inserted into the array: the index of the first
-     *	       element in the range greater than the key,
-     *	       or <tt>toIndex</tt> if all
-     *	       elements in the range are less than the specified key.  Note
-     *	       that this guarantees that the return value will be &gt;= 0 if
-     *	       and only if the key is found.
+     *         within the specified range;
+     *         otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.  The
+     *         <i>insertion point</i> is defined as the point at which the
+     *         key would be inserted into the array: the index of the first
+     *         element in the range greater than the key,
+     *         or <tt>toIndex</tt> if all
+     *         elements in the range are less than the specified key.  Note
+     *         that this guarantees that the return value will be &gt;= 0 if
+     *         and only if the key is found.
      * @throws ClassCastException if the range contains elements that are not
-     *	       <i>mutually comparable</i> using the specified comparator,
-     *	       or the search key is not comparable to the
-     *	       elements in the range using this comparator.
+     *         <i>mutually comparable</i> using the specified comparator,
+     *         or the search key is not comparable to the
+     *         elements in the range using this comparator.
      * @throws IllegalArgumentException
-     *	       if {@code fromIndex > toIndex}
+     *         if {@code fromIndex > toIndex}
      * @throws ArrayIndexOutOfBoundsException
-     *	       if {@code fromIndex < 0 or toIndex > a.length}
+     *         if {@code fromIndex < 0 or toIndex > a.length}
      * @since 1.6
      */
     public static <T> int binarySearch(T[] a, int fromIndex, int toIndex,
-				       T key, Comparator<? super T> c) {
-	rangeCheck(a.length, fromIndex, toIndex);
+                                       T key, Comparator<? super T> c) {
+        rangeCheck(a.length, fromIndex, toIndex);
         return binarySearch0(a, fromIndex, toIndex, key, c);
     }
 
     // Like public version, but without range checks.
     private static <T> int binarySearch0(T[] a, int fromIndex, int toIndex,
-					 T key, Comparator<? super T> c) {
+                                         T key, Comparator<? super T> c) {
         if (c == null) {
             return binarySearch0(a, fromIndex, toIndex, key);
-	}
-	int low = fromIndex;
-	int high = toIndex - 1;
+        }
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-	while (low <= high) {
-	    int mid = (low + high) >>> 1;
-	    T midVal = a[mid];
-	    int cmp = c.compare(midVal, key);
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            T midVal = a[mid];
+            int cmp = c.compare(midVal, key);
 
-	    if (cmp < 0)
-		low = mid + 1;
-	    else if (cmp > 0)
-		high = mid - 1;
-	    else
-		return mid; // key found
-	}
-	return -(low + 1);  // key not found.
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
     }
 
 
@@ -2324,7 +2323,7 @@ public class Arrays {
             return false;
 
         for (int i=0; i<length; i++)
-	    if (Double.doubleToLongBits(a[i])!=Double.doubleToLongBits(a2[i]))
+            if (Double.doubleToLongBits(a[i])!=Double.doubleToLongBits(a2[i]))
                 return false;
 
         return true;
@@ -2359,7 +2358,7 @@ public class Arrays {
             return false;
 
         for (int i=0; i<length; i++)
-	    if (Float.floatToIntBits(a[i])!=Float.floatToIntBits(a2[i]))
+            if (Float.floatToIntBits(a[i])!=Float.floatToIntBits(a2[i]))
                 return false;
 
         return true;
@@ -2411,7 +2410,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(long[] a, long val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2430,7 +2429,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(long[] a, int fromIndex, int toIndex, long val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2446,7 +2445,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(int[] a, int val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2465,7 +2464,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(int[] a, int fromIndex, int toIndex, int val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2481,7 +2480,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(short[] a, short val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2500,7 +2499,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(short[] a, int fromIndex, int toIndex, short val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2516,7 +2515,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(char[] a, char val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2535,7 +2534,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(char[] a, int fromIndex, int toIndex, char val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2551,7 +2550,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(byte[] a, byte val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2570,7 +2569,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(byte[] a, int fromIndex, int toIndex, byte val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2586,7 +2585,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(boolean[] a, boolean val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2605,7 +2604,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(boolean[] a, int fromIndex, int toIndex,
                             boolean val) {
@@ -2622,7 +2621,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(double[] a, double val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2641,7 +2640,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(double[] a, int fromIndex, int toIndex,double val){
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2657,7 +2656,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      */
     public static void fill(float[] a, float val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2676,7 +2675,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(float[] a, int fromIndex, int toIndex, float val) {
         rangeCheck(a.length, fromIndex, toIndex);
@@ -2694,7 +2693,7 @@ public class Arrays {
      *         runtime type that can be stored in the specified array
      */
     public static void fill(Object[] a, Object val) {
-	for (int i = 0, len = a.length; i < len; i++)
+        for (int i = 0, len = a.length; i < len; i++)
             a[i] = val;
     }
 
@@ -2713,7 +2712,7 @@ public class Arrays {
      * @param val the value to be stored in all elements of the array
      * @throws IllegalArgumentException if <tt>fromIndex &gt; toIndex</tt>
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
-     *	       <tt>toIndex &gt; a.length</tt>
+     *         <tt>toIndex &gt; a.length</tt>
      * @throws ArrayStoreException if the specified value is not of a
      *         runtime type that can be stored in the specified array
      */
@@ -3353,52 +3352,52 @@ public class Arrays {
      * @return a list view of the specified array
      */
     public static <T> List<T> asList(T... a) {
-	return new ArrayList<T>(a);
+        return new ArrayList<T>(a);
     }
 
     /**
      * @serial include
      */
     private static class ArrayList<E> extends AbstractList<E>
-	implements RandomAccess, java.io.Serializable
+        implements RandomAccess, java.io.Serializable
     {
         private static final long serialVersionUID = -2764017481108945198L;
-	private final E[] a;
+        private final E[] a;
 
-	ArrayList(E[] array) {
+        ArrayList(E[] array) {
             if (array==null)
                 throw new NullPointerException();
-	    a = array;
-	}
+            a = array;
+        }
 
-	public int size() {
-	    return a.length;
-	}
+        public int size() {
+            return a.length;
+        }
 
-	public Object[] toArray() {
-	    return a.clone();
-	}
+        public Object[] toArray() {
+            return a.clone();
+        }
 
-	public <T> T[] toArray(T[] a) {
-	    int size = size();
-	    if (a.length < size)
-		return Arrays.copyOf(this.a, size,
-				     (Class<? extends T[]>) a.getClass());
-	    System.arraycopy(this.a, 0, a, 0, size);
-	    if (a.length > size)
-		a[size] = null;
-	    return a;
-	}
+        public <T> T[] toArray(T[] a) {
+            int size = size();
+            if (a.length < size)
+                return Arrays.copyOf(this.a, size,
+                                     (Class<? extends T[]>) a.getClass());
+            System.arraycopy(this.a, 0, a, 0, size);
+            if (a.length > size)
+                a[size] = null;
+            return a;
+        }
 
-	public E get(int index) {
-	    return a[index];
-	}
+        public E get(int index) {
+            return a[index];
+        }
 
-	public E set(int index, E element) {
-	    E oldValue = a[index];
-	    a[index] = element;
-	    return oldValue;
-	}
+        public E set(int index, E element) {
+            E oldValue = a[index];
+            a[index] = element;
+            return oldValue;
+        }
 
         public int indexOf(Object o) {
             if (o==null) {
@@ -3831,16 +3830,16 @@ public class Arrays {
     public static String toString(long[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -3861,16 +3860,16 @@ public class Arrays {
     public static String toString(int[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -3891,16 +3890,16 @@ public class Arrays {
     public static String toString(short[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -3921,16 +3920,16 @@ public class Arrays {
     public static String toString(char[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -3951,16 +3950,16 @@ public class Arrays {
     public static String toString(byte[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -3981,16 +3980,16 @@ public class Arrays {
     public static String toString(boolean[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -4011,16 +4010,16 @@ public class Arrays {
     public static String toString(float[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -4041,16 +4040,16 @@ public class Arrays {
     public static String toString(double[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
-	if (iMax == -1)
+        int iMax = a.length - 1;
+        if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);
-	    if (i == iMax)
-		return b.append(']').toString();
+            if (i == iMax)
+                return b.append(']').toString();
             b.append(", ");
         }
     }
@@ -4074,17 +4073,17 @@ public class Arrays {
     public static String toString(Object[] a) {
         if (a == null)
             return "null";
-	int iMax = a.length - 1;
+        int iMax = a.length - 1;
         if (iMax == -1)
             return "[]";
 
         StringBuilder b = new StringBuilder();
-	b.append('[');
+        b.append('[');
         for (int i = 0; ; i++) {
             b.append(String.valueOf(a[i]));
             if (i == iMax)
-		return b.append(']').toString();
-	    b.append(", ");
+                return b.append(']').toString();
+            b.append(", ");
         }
     }
 
@@ -4139,11 +4138,11 @@ public class Arrays {
             buf.append("null");
             return;
         }
-	int iMax = a.length - 1;
+        int iMax = a.length - 1;
         if (iMax == -1) {
-	    buf.append("[]");
+            buf.append("[]");
             return;
-	}
+        }
 
         dejaVu.add(a);
         buf.append('[');
@@ -4182,11 +4181,11 @@ public class Arrays {
                     buf.append(element.toString());
                 }
             }
-	    if (i == iMax)
-		break;
-	    buf.append(", ");
-	}
-	buf.append(']');
-	dejaVu.remove(a);
+            if (i == iMax)
+                break;
+            buf.append(", ");
+        }
+        buf.append(']');
+        dejaVu.remove(a);
     }
 }

@@ -24,7 +24,6 @@
  */
 
 /*
- * @(#)IndicReordering.h	1.12 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -157,7 +156,7 @@ private:
     // do not instantiate
     IndicReordering();
 
-    static le_int32 findSyllable(const IndicClassTable *classTable, const LEUnicode *chars, 
+    static le_int32 findSyllable(const IndicClassTable *classTable, const LEUnicode *chars,
         le_int32 prev, le_int32 charCount);
 
 };

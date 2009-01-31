@@ -73,14 +73,14 @@ public class ResetPeakMemoryUsage {
 
         if (usage1.getUsed() <= usage0.getUsed()) {
             throw new RuntimeException(
-                formatSize("Before allocation: used", usage0.getUsed()) + 
+                formatSize("Before allocation: used", usage0.getUsed()) +
                 " expected to be > " +
                 formatSize("After allocation: used", usage1.getUsed()));
         }
 
         if (peak1.getUsed() <= peak0.getUsed()) {
             throw new RuntimeException(
-                formatSize("Before allocation: peak", peak0.getUsed()) + 
+                formatSize("Before allocation: peak", peak0.getUsed()) +
                 " expected to be > " +
                 formatSize("After allocation: peak", peak1.getUsed()));
         }
@@ -144,7 +144,7 @@ public class ResetPeakMemoryUsage {
         MemoryUtil.printMemoryUsage(current);
         System.out.println("Peak Usage: ");
         MemoryUtil.printMemoryUsage(peak);
- 
+
     }
     private static String formatSize(String name, long value) {
         StringBuffer buf = new StringBuffer(name + " = " + value);

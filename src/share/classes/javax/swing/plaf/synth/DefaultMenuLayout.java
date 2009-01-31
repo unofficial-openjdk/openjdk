@@ -39,13 +39,12 @@ import java.awt.Dimension;
  *
  * Derived from javax.swing.plaf.basic.DefaultMenuLayout
  *
- * @version %I% %G%
  * @author Georges Saab
  */
 
 class DefaultMenuLayout extends BoxLayout implements UIResource {
     public DefaultMenuLayout(Container target, int axis) {
-	super(target, axis);
+        super(target, axis);
     }
 
     public void invalidateLayout(Container target) {

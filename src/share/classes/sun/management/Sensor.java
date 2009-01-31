@@ -38,13 +38,12 @@ import java.util.HashMap;
  * <ul>
  *   <li><tt>on</tt> is a boolean flag indicating if a sensor is
  *       triggered. This flag will be set or cleared by the
- *       component that owns the sensor.</li>    
+ *       component that owns the sensor.</li>
  *   <li><tt>count</tt> is the total number of times that a sensor
- *       has been triggered.</li> 
+ *       has been triggered.</li>
  * </ul>
  *
  * @author  Mandy Chung
- * @version %I%, %G% 
  * @since   1.5
  */
 
@@ -65,7 +64,7 @@ public abstract class Sensor {
         this.on = false;
         this.lock = new Object();
     }
-        
+
     /**
      * Returns the name of this sensor.
      *
@@ -162,8 +161,8 @@ public abstract class Sensor {
     }
 
     public String toString() {
-        return "Sensor - " + getName() + 
-            (isOn() ? " on " : " off ") + 
+        return "Sensor - " + getName() +
+            (isOn() ? " on " : " off ") +
             " count = " + getCount();
     }
 

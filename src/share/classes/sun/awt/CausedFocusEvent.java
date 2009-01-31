@@ -82,7 +82,7 @@ public class CausedFocusEvent extends FocusEvent {
     public static FocusEvent retarget(FocusEvent e, Component newSource) {
         if (e == null) return null;
 
-        return new CausedFocusEvent(newSource, e.getID(), e.isTemporary(), e.getOppositeComponent(), 
+        return new CausedFocusEvent(newSource, e.getID(), e.isTemporary(), e.getOppositeComponent(),
                                     (e instanceof CausedFocusEvent) ? ((CausedFocusEvent)e).getCause() : Cause.RETARGETED);
     }
 }

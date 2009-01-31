@@ -34,7 +34,6 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
- * @version %I%
  */
 public class CertificatePolicyId {
     private ObjectIdentifier id;
@@ -93,10 +92,10 @@ public class CertificatePolicyId {
      * @return true iff the ids are identical.
      */
     public boolean equals(Object other) {
-	if (other instanceof CertificatePolicyId)
-	    return id.equals(((CertificatePolicyId) other).getIdentifier());
-	else
-	    return false;
+        if (other instanceof CertificatePolicyId)
+            return id.equals(((CertificatePolicyId) other).getIdentifier());
+        else
+            return false;
     }
 
     /**

@@ -73,7 +73,7 @@ enum {
     JVM_CONSTANT_Unicode                = 2, /* unused */
     JVM_CONSTANT_Integer                = 3,
     JVM_CONSTANT_Float                  = 4,
-    JVM_CONSTANT_Long                   = 5,      
+    JVM_CONSTANT_Long                   = 5,
     JVM_CONSTANT_Double                 = 6,
     JVM_CONSTANT_Class                  = 7,
     JVM_CONSTANT_String                 = 8,

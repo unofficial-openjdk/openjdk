@@ -24,8 +24,8 @@
 /**
  *  @test
  *  @bug 4326648 4768329
- *  @summary Test to verify that table entries are generated for all final 
- *           locals when a class is built for debug, even if they could be 
+ *  @summary Test to verify that table entries are generated for all final
+ *           locals when a class is built for debug, even if they could be
  *           inlined otherwise.
  *
  *  @author Tim Bell
@@ -44,21 +44,21 @@ import java.util.*;
 
 class FinalLocalsTarg {
     public void test1 (final int t, int k){
-	String s1 = "first";
-	final int z = 0;
-	if (true) {
-	    final float r = 10.00f;
-	    boolean b = true;
-	    System.out.println(r);
-	}
+        String s1 = "first";
+        final int z = 0;
+        if (true) {
+            final float r = 10.00f;
+            boolean b = true;
+            System.out.println(r);
+        }
     }
     public void hi(){
-	return;
+        return;
     }
     public static void main(String[] args) {
-	System.out.print("in FinalLocalsTarg:");
-	new FinalLocalsTarg().hi();
-	return;
+        System.out.print("in FinalLocalsTarg:");
+        new FinalLocalsTarg().hi();
+        return;
     }
 }
 
@@ -72,7 +72,7 @@ public class FinalLocalsTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)	throws Exception {
+    public static void main(String[] args)      throws Exception {
         new FinalLocalsTest(args).startTests();
     }
 
@@ -99,11 +99,11 @@ public class FinalLocalsTest extends TestScaffold {
 
     private void test(Method method, int which, String name, String expected) {
         String got = testCase(method, which);
-	System.out.println(" test() comparing expected = " + expected +
+        System.out.println(" test() comparing expected = " + expected +
                            " to got = " + got);
         TreeSet expectedSet = buildSet(expected);
         TreeSet gotSet = buildSet(got);
-        
+
         while (! expectedSet.isEmpty()) {
             String ee = (String)expectedSet.first();
             expectedSet.remove(ee);
@@ -113,7 +113,7 @@ public class FinalLocalsTest extends TestScaffold {
                 failure (name + " Expected entry \"" + ee + "\" not found");
             }
         }
-        
+
         //assert expectedSet.isEmpty() : name + " expected set should have been emptied";
 
         if (! gotSet.isEmpty()) {
@@ -163,17 +163,17 @@ public class FinalLocalsTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main() 
+         * Get to the top of main()
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("FinalLocalsTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
-        
+
         /*
          * Get to a point where the classes are loaded.
-	 */
+         */
         BreakpointEvent bp = resumeTo("FinalLocalsTarg", "hi", "()V");
 
         ReferenceType rt = findReferenceType("FinalLocalsTarg");
@@ -185,23 +185,23 @@ public class FinalLocalsTest extends TestScaffold {
          * Inspect the LocalVariableTable attributes for method "test1"
          * NOTE: .class files compiled with some versions of javac will
          * give results listed in different order.  That's OK.
-	 */
+         */
         Method method = findMethod(rt, "test1", "(II)V");
         if (method == null) {
             throw new Exception("Method not found");
         }
-        test(method, VARIABLES, "VARIABLES", 
+        test(method, VARIABLES, "VARIABLES",
              "t,k,s1,z,r,b");
-        test(method, BYNAME, "BYNAME", 
+        test(method, BYNAME, "BYNAME",
              "s1");
-        test(method, ARGUMENTS, "ARGUMENTS", 
+        test(method, ARGUMENTS, "ARGUMENTS",
              "t,k");
 
         /*
          * All Done.  Resume the target listening for events
          */
         listenUntilVMDisconnect();
-        
+
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -213,4 +213,3 @@ public class FinalLocalsTest extends TestScaffold {
         }
     }
 }
-

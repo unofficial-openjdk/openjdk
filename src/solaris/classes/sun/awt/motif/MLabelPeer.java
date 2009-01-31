@@ -31,29 +31,29 @@ class MLabelPeer extends MComponentPeer implements LabelPeer {
     native void create(MComponentPeer parent);
 
     public void initialize() {
-	Label	l = (Label)target;
-	String  txt;
-	int	align;
+        Label   l = (Label)target;
+        String  txt;
+        int     align;
 
-	if ((txt = l.getText()) != null) {
-	    setText(l.getText());
-	}
-	if ((align = l.getAlignment()) != Label.LEFT) {
-	    setAlignment(align);
-	}
-	super.initialize();
+        if ((txt = l.getText()) != null) {
+            setText(l.getText());
+        }
+        if ((align = l.getAlignment()) != Label.LEFT) {
+            setAlignment(align);
+        }
+        super.initialize();
     }
 
     MLabelPeer(Label target) {
-	super(target);
+        super(target);
     }
 
     public Dimension getMinimumSize() {
-	FontMetrics fm = getFontMetrics(target.getFont());
-	String label = ((Label)target).getText();
-	if (label == null) label = "";
-	return new Dimension(fm.stringWidth(label) + 14, 
-			     fm.getHeight() + 8);
+        FontMetrics fm = getFontMetrics(target.getFont());
+        String label = ((Label)target).getText();
+        if (label == null) label = "";
+        return new Dimension(fm.stringWidth(label) + 14,
+                             fm.getHeight() + 8);
     }
 
     public native void setText(String label);
@@ -64,41 +64,41 @@ class MLabelPeer extends MComponentPeer implements LabelPeer {
      */
     public void print(Graphics g) {
         Label l = (Label)target;
-	Dimension d = l.size();
-	Color bg = l.getBackground();
-	Color fg = l.getForeground();
+        Dimension d = l.size();
+        Color bg = l.getBackground();
+        Color fg = l.getForeground();
 
-	g.setColor(bg);
-	g.fillRect(1, 1, d.width - 2, d.height - 2);
+        g.setColor(bg);
+        g.fillRect(1, 1, d.width - 2, d.height - 2);
 
-	g.setColor(fg);
-	g.setFont(l.getFont());
-	FontMetrics fm = g.getFontMetrics();
-	String lbl = l.getText();
+        g.setColor(fg);
+        g.setFont(l.getFont());
+        FontMetrics fm = g.getFontMetrics();
+        String lbl = l.getText();
 
-	switch (l.getAlignment()) {
-	  case Label.LEFT:
-	    g.drawString(lbl, 2,
-			 (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
-	    break;
-	  case Label.RIGHT:
-	    g.drawString(lbl, d.width - (fm.stringWidth(lbl) + 2), 
-			 (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
-	    break;
-	  case Label.CENTER:
-	    g.drawString(lbl, (d.width - fm.stringWidth(lbl)) / 2, 
-			 (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
-	    break;
-	}
+        switch (l.getAlignment()) {
+          case Label.LEFT:
+            g.drawString(lbl, 2,
+                         (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
+            break;
+          case Label.RIGHT:
+            g.drawString(lbl, d.width - (fm.stringWidth(lbl) + 2),
+                         (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
+            break;
+          case Label.CENTER:
+            g.drawString(lbl, (d.width - fm.stringWidth(lbl)) / 2,
+                         (d.height + fm.getMaxAscent() - fm.getMaxDescent()) / 2);
+            break;
+        }
 
-	target.print(g);
+        target.print(g);
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-	    return getMinimumSize();
+            return getMinimumSize();
     }
 
 }

@@ -32,10 +32,10 @@ import java.io.*;
 
 public class Available {
     public static void main(String args[]) throws Exception {
-        File file = new File(System.getProperty("test.src", "."), 
+        File file = new File(System.getProperty("test.src", "."),
                              "Available.java");
         FileInputStream fis = new FileInputStream(file);
-        fis.close();    
+        fis.close();
         try {
             fis.available();
             throw new Exception

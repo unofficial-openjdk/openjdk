@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *  
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *  
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *  
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *  
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -373,7 +373,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
     GifFile->Image.Interlace = (Buf[0] & 0x40);
     if (Buf[0] & 0x80) {    /* Does this image have local color map? */
 
-        /*** FIXME: Why do we check both of these in order to do this? 
+        /*** FIXME: Why do we check both of these in order to do this?
          * Why do we have both Image and SavedImages? */
         if (GifFile->Image.ColorMap && GifFile->SavedImages == NULL)
             FreeMapObject(GifFile->Image.ColorMap);
@@ -490,7 +490,7 @@ DGifGetLine(GifFileType * GifFile,
 int
 DGifGetPixel(GifFileType * GifFile,
              GifPixelType Pixel) {
-    
+
     GifByteType *Dummy;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
@@ -562,7 +562,7 @@ DGifGetExtension(GifFileType * GifFile,
 int
 DGifGetExtensionNext(GifFileType * GifFile,
                      GifByteType ** Extension) {
-    
+
     GifByteType Buf;
     GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
 
@@ -588,7 +588,7 @@ DGifGetExtensionNext(GifFileType * GifFile,
  *****************************************************************************/
 int
 DGifCloseFile(GifFileType * GifFile) {
-    
+
     GifFilePrivateType *Private;
     FILE *File;
 
@@ -897,7 +897,7 @@ DGifGetPrefixChar(unsigned int *Prefix,
 int
 DGifGetLZCodes(GifFileType * GifFile,
                int *Code) {
-    
+
     GifByteType *CodeBlock;
     GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
 
@@ -937,7 +937,7 @@ DGifGetLZCodes(GifFileType * GifFile,
 static int
 DGifDecompressInput(GifFileType * GifFile,
                     int *Code) {
-    
+
     GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
 
     GifByteType NextByte;
@@ -1049,7 +1049,7 @@ DGifSlurp(GifFileType * GifFile) {
                   temp_save.ExtensionBlockCount = 0;
 
                   /* FIXME: The following is wrong.  It is left in only for
-                   * backwards compatibility.  Someday it should go away. Use 
+                   * backwards compatibility.  Someday it should go away. Use
                    * the sp->ExtensionBlocks->Function variable instead. */
                   sp->Function = sp->ExtensionBlocks[0].Function;
               }

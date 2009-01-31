@@ -91,7 +91,7 @@ Java_sun_java2d_pipe_BufferedRenderPipe_fillSpans
     ibuf[1] = 0; // placeholder for the span count
 
     // skip the opcode and span count
-    ipos = INTS_PER_HEADER; 
+    ipos = INTS_PER_HEADER;
     bpos += BYTES_PER_HEADER; // skip the opcode and span count
 
     remainingBytes = limit - bpos;

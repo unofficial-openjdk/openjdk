@@ -27,16 +27,15 @@ package java.security.cert;
 
 /**
  * A specification of certification path algorithm parameters.
- * The purpose of this interface is to group (and provide type safety for) 
- * all <code>CertPath</code> parameter specifications. All 
- * <code>CertPath</code> parameter specifications must implement this 
- * interface.  
+ * The purpose of this interface is to group (and provide type safety for)
+ * all <code>CertPath</code> parameter specifications. All
+ * <code>CertPath</code> parameter specifications must implement this
+ * interface.
  *
- * @version 	%I% %G%
- * @author	Yassir Elley
- * @see 	CertPathValidator#validate(CertPath, CertPathParameters)
- * @see 	CertPathBuilder#build(CertPathParameters)
- * @since	1.4
+ * @author      Yassir Elley
+ * @see         CertPathValidator#validate(CertPath, CertPathParameters)
+ * @see         CertPathBuilder#build(CertPathParameters)
+ * @since       1.4
  */
 public interface CertPathParameters extends Cloneable {
 

@@ -45,7 +45,7 @@ import org.w3c.dom.NamedNodeMap;
  */
 class DQTMarkerSegment extends MarkerSegment {
     List tables = new ArrayList();  // Could be 1 to 4
-        
+
     DQTMarkerSegment(float quality, boolean needTwo) {
         super(JPEG.DQT);
         tables.add(new Qtable(true, quality));
@@ -114,7 +114,7 @@ class DQTMarkerSegment extends MarkerSegment {
 
     void print() {
         printTag("DQT");
-        System.out.println("Num tables: " 
+        System.out.println("Num tables: "
                            + Integer.toString(tables.size()));
         for (int i= 0; i<tables.size(); i++) {
             Qtable table = (Qtable) tables.get(i);
@@ -157,11 +157,11 @@ class DQTMarkerSegment extends MarkerSegment {
             // the resulting table will still be reasonable, as it will reflect
             // a comparable scaling of chrominance frequency response of the
             // eye.
-            float scaleFactor = ((float)(luma.data[largestPos])) 
+            float scaleFactor = ((float)(luma.data[largestPos]))
                 / ((float)(JPEGQTable.K1Div2Luminance.getTable()[largestPos]));
             //    generate a new table
-            JPEGQTable jpegTable = 
-                JPEGQTable.K2Div2Chrominance.getScaledInstance(scaleFactor, 
+            JPEGQTable jpegTable =
+                JPEGQTable.K2Div2Chrominance.getScaledInstance(scaleFactor,
                                                                true);
             newGuy = new Qtable(jpegTable, 1);
         }
@@ -281,7 +281,7 @@ class DQTMarkerSegment extends MarkerSegment {
 
         IIOMetadataNode getNativeNode() {
             IIOMetadataNode node = new IIOMetadataNode("dqtable");
-            node.setAttribute("elementPrecision", 
+            node.setAttribute("elementPrecision",
                               Integer.toString(elementPrecision));
             node.setAttribute("qtableId",
                               Integer.toString(tableID));
@@ -293,7 +293,7 @@ class DQTMarkerSegment extends MarkerSegment {
             System.out.println("Table id: " + Integer.toString(tableID));
             System.out.println("Element precision: "
                                + Integer.toString(elementPrecision));
-        
+
             (new JPEGQTable(data)).toString();
             /*
               for (int i = 0; i < 64; i++) {
@@ -307,4 +307,3 @@ class DQTMarkerSegment extends MarkerSegment {
         }
     }
 }
-

@@ -57,71 +57,71 @@ import java.lang.reflect.InvocationTargetException;
   * <p>
   * There is a one-to-one correspondence between an LdapClient and
   * a Connection. Access to Connection and its methods is only via
-  * LdapClient with two exceptions: SASL authentication and StartTLS. 
+  * LdapClient with two exceptions: SASL authentication and StartTLS.
   * SASL needs to access Connection's socket IO streams (in order to do encryption
   * of the security layer). StartTLS needs to do replace IO streams
-  * and close the IO  streams on nonfatal close. The code for SASL 
-  * authentication can be treated as being the same as from LdapClient 
-  * because the SASL code is only ever called from LdapClient, from 
+  * and close the IO  streams on nonfatal close. The code for SASL
+  * authentication can be treated as being the same as from LdapClient
+  * because the SASL code is only ever called from LdapClient, from
   * inside LdapClient's synchronized authenticate() method. StartTLS is called
   * directly by the application but should only occur when the underlying
   * connection is quiet.
   * <p>
   * In terms of synchronization, worry about data structures
   * used by the Connection thread because that usage might contend
-  * with calls by the main threads (i.e., those that call LdapClient). 
+  * with calls by the main threads (i.e., those that call LdapClient).
   * Main threads need to worry about contention with each other.
   * Fields that Connection thread uses:
   *     inStream - synced access and update; initialized in constructor;
   *           referenced outside class unsync'ed (by LdapSasl) only
-  * 	      when connection is quiet
+  *           when connection is quiet
   *     traceFile, traceTagIn, traceTagOut - no sync; debugging only
   *     parent - no sync; initialized in constructor; no updates
   *     pendingRequests - sync
-  *     pauseLock - per-instance lock; 
+  *     pauseLock - per-instance lock;
   *     paused - sync via pauseLock (pauseReader())
   * Members used by main threads (LdapClient):
   *     host, port - unsync; read-only access for StartTLS and debug messages
   *     setBound(), setV3() - no sync; called only by LdapClient.authenticate(),
-  * 		which is a sync method called only when connection is "quiet"
+  *             which is a sync method called only when connection is "quiet"
   *     getMsgId() - sync
-  *     writeRequest(), removeRequest(),findRequest(), abandonOutstandingReqs() - 
-  * 		access to shared pendingRequests is sync
-  * 	writeRequest(),  abandonRequest(), ldapUnbind() - access to outStream sync
+  *     writeRequest(), removeRequest(),findRequest(), abandonOutstandingReqs() -
+  *             access to shared pendingRequests is sync
+  *     writeRequest(),  abandonRequest(), ldapUnbind() - access to outStream sync
   *     cleanup() - sync
   *     readReply() - access to sock sync
   *     unpauseReader() - (indirectly via writeRequest) sync on pauseLock
   * Members used by SASL auth (main thread):
   *     inStream, outStream - no sync; used to construct new stream; accessed
-  * 		only when conn is "quiet" and not shared
+  *             only when conn is "quiet" and not shared
   *     replaceStreams() - sync method
   * Members used by StartTLS:
   *     inStream, outStream - no sync; used to record the existing streams;
-  * 		accessed only when conn is "quiet" and not shared
+  *             accessed only when conn is "quiet" and not shared
   *     replaceStreams() - sync method
   * <p>
   * Handles anonymous, simple, and SASL bind for v3; anonymous and simple
   * for v2.
   * %%% made public for access by LdapSasl %%%
-  * 
+  *
   * @author Vincent Ryan
   * @author Rosanna Lee
   * @author Jagane Sundar
-  */ 
+  */
 public final class Connection implements Runnable {
 
     private static final boolean debug = false;
     private static final int dump = 0; // > 0 r, > 1 rw
 
 
-    final private Thread worker;    // Initialized in constructor 
+    final private Thread worker;    // Initialized in constructor
 
     private boolean v3 = true;       // Set in setV3()
 
     final public String host;  // used by LdapClient for generating exception messages
-			 // used by StartTlsResponse when creating an SSL socket
+                         // used by StartTlsResponse when creating an SSL socket
     final public int port;     // used by LdapClient for generating exception messages
-			 // used by StartTlsResponse when creating an SSL socket
+                         // used by StartTlsResponse when creating an SSL socket
 
     private boolean bound = false;   // Set in setBound()
 
@@ -130,21 +130,21 @@ public final class Connection implements Runnable {
     private String traceTagIn = null;
     private String traceTagOut = null;
 
-    // Initialized in constructor; read and used externally (LdapSasl); 
+    // Initialized in constructor; read and used externally (LdapSasl);
     // Updated in replaceStreams() during "quiet", unshared, period
     public InputStream inStream;   // must be public; used by LdapSasl
 
-    // Initialized in constructor; read and used externally (LdapSasl); 
+    // Initialized in constructor; read and used externally (LdapSasl);
     // Updated in replaceOutputStream() during "quiet", unshared, period
     public OutputStream outStream; // must be public; used by LdapSasl
 
     // Initialized in constructor; read and used externally (TLS) to
     // get new IO streams; closed during cleanup
-    public Socket sock;		   // for TLS
+    public Socket sock;            // for TLS
 
     // For processing "disconnect" unsolicited notification
     // Initialized in constructor
-    final private LdapClient parent; 
+    final private LdapClient parent;
 
     // Incremented and returned in sync getMsgId()
     private int outMsgId = 0;
@@ -157,14 +157,14 @@ public final class Connection implements Runnable {
 
     volatile IOException closureReason = null;
     volatile boolean useable = true;  // is Connection still useable
-    
+
     private int readTimeout;
 
     // true means v3; false means v2
     // Called in LdapClient.authenticate() (which is synchronized)
     // when connection is "quiet" and not shared; no need to synchronize
     void setV3(boolean v) {
-	v3 = v;
+        v3 = v;
     }
 
     // A BIND request has been successfully made on this connection
@@ -172,7 +172,7 @@ public final class Connection implements Runnable {
     // Called in LdapClient.authenticate() (which is synchronized)
     // when connection is "quiet" and not shared; no need to synchronize
     void setBound() {
-	bound = true;
+        bound = true;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -181,87 +181,87 @@ public final class Connection implements Runnable {
     //
     ////////////////////////////////////////////////////////////////////////////
 
-    Connection(LdapClient parent, String host, int port, String socketFactory, 
-	int connectTimeout, int readTimeout, OutputStream trace) throws NamingException {
+    Connection(LdapClient parent, String host, int port, String socketFactory,
+        int connectTimeout, int readTimeout, OutputStream trace) throws NamingException {
 
-	this.host = host;
-	this.port = port;
-	this.parent = parent;
+        this.host = host;
+        this.port = port;
+        this.parent = parent;
         this.readTimeout = readTimeout;
 
-	if (trace != null) {
-	    traceFile = trace;
-	    traceTagIn = "<- " + host + ":" + port + "\n\n";
-	    traceTagOut = "-> " + host + ":" + port + "\n\n";
-	}
+        if (trace != null) {
+            traceFile = trace;
+            traceTagIn = "<- " + host + ":" + port + "\n\n";
+            traceTagOut = "-> " + host + ":" + port + "\n\n";
+        }
 
-	//
-	// Connect to server
-	//
-	try {
-	    sock = createSocket(host, port, socketFactory, connectTimeout);
+        //
+        // Connect to server
+        //
+        try {
+            sock = createSocket(host, port, socketFactory, connectTimeout);
 
-	    if (debug) {
-		System.err.println("Connection: opening socket: " + host + "," + port);
-	    }
+            if (debug) {
+                System.err.println("Connection: opening socket: " + host + "," + port);
+            }
 
-	    inStream = new BufferedInputStream(sock.getInputStream());
-	    outStream = new BufferedOutputStream(sock.getOutputStream());
+            inStream = new BufferedInputStream(sock.getInputStream());
+            outStream = new BufferedOutputStream(sock.getOutputStream());
 
-	} catch (InvocationTargetException e) {
-	    Throwable realException = e.getTargetException();
-	    // realException.printStackTrace();
+        } catch (InvocationTargetException e) {
+            Throwable realException = e.getTargetException();
+            // realException.printStackTrace();
 
-            CommunicationException ce = 
-		new CommunicationException(host + ":" + port);
+            CommunicationException ce =
+                new CommunicationException(host + ":" + port);
             ce.setRootCause(realException);
-	    throw ce;
-	} catch (Exception e) {
-	    // Class.forName() seems to do more error checking
-	    // and will throw IllegalArgumentException and such.
-	    // That's why we need to have a catch all here and
-	    // ignore generic exceptions.
-	    // Also catches all IO errors generated by socket creation.
-            CommunicationException ce = 
-		new CommunicationException(host + ":" + port);
+            throw ce;
+        } catch (Exception e) {
+            // Class.forName() seems to do more error checking
+            // and will throw IllegalArgumentException and such.
+            // That's why we need to have a catch all here and
+            // ignore generic exceptions.
+            // Also catches all IO errors generated by socket creation.
+            CommunicationException ce =
+                new CommunicationException(host + ":" + port);
             ce.setRootCause(e);
-	    throw ce;
-	}
+            throw ce;
+        }
 
-	worker = Obj.helper.createThread(this);
-	worker.setDaemon(true);
-	worker.start();
+        worker = Obj.helper.createThread(this);
+        worker.setDaemon(true);
+        worker.start();
     }
 
     /*
      * Create an InetSocketAddress using the specified hostname and port number.
      */
-    private Object createInetSocketAddress(String host, int port) 
-	    throws NoSuchMethodException {
+    private Object createInetSocketAddress(String host, int port)
+            throws NoSuchMethodException {
 
-	try {
-	    Class inetSocketAddressClass =
-		Class.forName("java.net.InetSocketAddress");
+        try {
+            Class inetSocketAddressClass =
+                Class.forName("java.net.InetSocketAddress");
 
-	    Constructor inetSocketAddressCons =
-		inetSocketAddressClass.getConstructor(new Class[]{
-		String.class, int.class});
+            Constructor inetSocketAddressCons =
+                inetSocketAddressClass.getConstructor(new Class[]{
+                String.class, int.class});
 
-	    return inetSocketAddressCons.newInstance(new Object[]{
-		host, new Integer(port)});
+            return inetSocketAddressCons.newInstance(new Object[]{
+                host, new Integer(port)});
 
-	} catch (ClassNotFoundException e) {
-	    throw new NoSuchMethodException();
+        } catch (ClassNotFoundException e) {
+            throw new NoSuchMethodException();
 
-	} catch (InstantiationException e) {
-	    throw new NoSuchMethodException();
+        } catch (InstantiationException e) {
+            throw new NoSuchMethodException();
 
-	} catch (InvocationTargetException e) {
-	    throw new NoSuchMethodException();
+        } catch (InvocationTargetException e) {
+            throw new NoSuchMethodException();
 
-	} catch (IllegalAccessException e) {
-	    throw new NoSuchMethodException();
-	}
+        } catch (IllegalAccessException e) {
+            throw new NoSuchMethodException();
+        }
     }
 
     /*
@@ -274,101 +274,101 @@ public final class Connection implements Runnable {
      * is created.
      */
     private Socket createSocket(String host, int port, String socketFactory,
-	    int connectTimeout) throws Exception {
+            int connectTimeout) throws Exception {
 
-	Socket socket = null;
+        Socket socket = null;
 
-	if (socketFactory != null) {
+        if (socketFactory != null) {
 
-	    // create the factory
+            // create the factory
 
-	    Class socketFactoryClass = Obj.helper.loadClass(socketFactory);
-	    Method getDefault =
-		socketFactoryClass.getMethod("getDefault", new Class[]{});
-	    Object factory = getDefault.invoke(null, new Object[]{});
+            Class socketFactoryClass = Obj.helper.loadClass(socketFactory);
+            Method getDefault =
+                socketFactoryClass.getMethod("getDefault", new Class[]{});
+            Object factory = getDefault.invoke(null, new Object[]{});
 
-	    // create the socket
+            // create the socket
 
-	    Method createSocket = null;
+            Method createSocket = null;
 
-	    if (connectTimeout > 0) {
+            if (connectTimeout > 0) {
 
-		try {
-		    createSocket = socketFactoryClass.getMethod("createSocket",
-			new Class[]{});
+                try {
+                    createSocket = socketFactoryClass.getMethod("createSocket",
+                        new Class[]{});
 
-		    Method connect = Socket.class.getMethod("connect",
-			new Class[]{Class.forName("java.net.SocketAddress"),
-			int.class});
-		    Object endpoint = createInetSocketAddress(host, port);
+                    Method connect = Socket.class.getMethod("connect",
+                        new Class[]{Class.forName("java.net.SocketAddress"),
+                        int.class});
+                    Object endpoint = createInetSocketAddress(host, port);
 
-		    // unconnected socket
-		    socket =
-			(Socket)createSocket.invoke(factory, new Object[]{});
+                    // unconnected socket
+                    socket =
+                        (Socket)createSocket.invoke(factory, new Object[]{});
 
-		    if (debug) {
-			System.err.println("Connection: creating socket with " +
-			    "a timeout using supplied socket factory");
-		    }
+                    if (debug) {
+                        System.err.println("Connection: creating socket with " +
+                            "a timeout using supplied socket factory");
+                    }
 
-		    // connected socket
-		    connect.invoke(socket, new Object[]{
-			endpoint, new Integer(connectTimeout)});
+                    // connected socket
+                    connect.invoke(socket, new Object[]{
+                        endpoint, new Integer(connectTimeout)});
 
-		} catch (NoSuchMethodException e) {
-		    // continue (but ignore connectTimeout)
-		}
-	    }
+                } catch (NoSuchMethodException e) {
+                    // continue (but ignore connectTimeout)
+                }
+            }
 
-	    if (socket == null) {
-		createSocket = socketFactoryClass.getMethod("createSocket",
-		    new Class[]{String.class, int.class});
+            if (socket == null) {
+                createSocket = socketFactoryClass.getMethod("createSocket",
+                    new Class[]{String.class, int.class});
 
-		if (debug) {
-		    System.err.println("Connection: creating socket using " +
-			"supplied socket factory");
-		}
-		// connected socket
-		socket = (Socket) createSocket.invoke(factory,
-		    new Object[]{host, new Integer(port)});
-	    }
-	} else {
+                if (debug) {
+                    System.err.println("Connection: creating socket using " +
+                        "supplied socket factory");
+                }
+                // connected socket
+                socket = (Socket) createSocket.invoke(factory,
+                    new Object[]{host, new Integer(port)});
+            }
+        } else {
 
-	    if (connectTimeout > 0) {
+            if (connectTimeout > 0) {
 
-		try {
-		    Constructor socketCons =
-			Socket.class.getConstructor(new Class[]{});
+                try {
+                    Constructor socketCons =
+                        Socket.class.getConstructor(new Class[]{});
 
-		    Method connect = Socket.class.getMethod("connect",
-			new Class[]{Class.forName("java.net.SocketAddress"),
-			int.class});
-		    Object endpoint = createInetSocketAddress(host, port);
+                    Method connect = Socket.class.getMethod("connect",
+                        new Class[]{Class.forName("java.net.SocketAddress"),
+                        int.class});
+                    Object endpoint = createInetSocketAddress(host, port);
 
-		    socket = (Socket) socketCons.newInstance(new Object[]{});
+                    socket = (Socket) socketCons.newInstance(new Object[]{});
 
-		    if (debug) {
-			System.err.println("Connection: creating socket with " +
-			    "a timeout");
-		    }
-		    connect.invoke(socket, new Object[]{
-			endpoint, new Integer(connectTimeout)});
+                    if (debug) {
+                        System.err.println("Connection: creating socket with " +
+                            "a timeout");
+                    }
+                    connect.invoke(socket, new Object[]{
+                        endpoint, new Integer(connectTimeout)});
 
-		} catch (NoSuchMethodException e) {
-		    // continue (but ignore connectTimeout)
-		}
-	    }
+                } catch (NoSuchMethodException e) {
+                    // continue (but ignore connectTimeout)
+                }
+            }
 
-	    if (socket == null) {
-		if (debug) {
-		    System.err.println("Connection: creating socket");
-		}
-		// connected socket
-		socket = new Socket(host, port);
-	    }
-	}
+            if (socket == null) {
+                if (debug) {
+                    System.err.println("Connection: creating socket");
+                }
+                // connected socket
+                socket = new Socket(host, port);
+            }
+        }
 
-	return socket;
+        return socket;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -378,44 +378,44 @@ public final class Connection implements Runnable {
     ////////////////////////////////////////////////////////////////////////////
 
     synchronized int getMsgId() {
-	return ++outMsgId;
+        return ++outMsgId;
     }
 
     LdapRequest writeRequest(BerEncoder ber, int msgId) throws IOException {
-	return writeRequest(ber, msgId, false /* pauseAfterReceipt */);
+        return writeRequest(ber, msgId, false /* pauseAfterReceipt */);
     }
 
-    LdapRequest writeRequest(BerEncoder ber, int msgId, boolean pauseAfterReceipt) 
-	throws IOException {
+    LdapRequest writeRequest(BerEncoder ber, int msgId, boolean pauseAfterReceipt)
+        throws IOException {
 
-	LdapRequest req = new LdapRequest(msgId, pauseAfterReceipt);
-	addRequest(req);
+        LdapRequest req = new LdapRequest(msgId, pauseAfterReceipt);
+        addRequest(req);
 
-	if (traceFile != null) {
-	    Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(), 0, ber.getDataLen());
-	}
+        if (traceFile != null) {
+            Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(), 0, ber.getDataLen());
+        }
 
 
-	// unpause reader so that it can get response
-	// NOTE: Must do this before writing request, otherwise might
-	// create a race condition where the writer unblocks its own response
-	unpauseReader(); 
+        // unpause reader so that it can get response
+        // NOTE: Must do this before writing request, otherwise might
+        // create a race condition where the writer unblocks its own response
+        unpauseReader();
 
-	if (debug) {
-	    System.err.println("Writing request to: " + outStream);
-	}
+        if (debug) {
+            System.err.println("Writing request to: " + outStream);
+        }
 
-	try {
-	    synchronized (this) {
-		outStream.write(ber.getBuf(), 0, ber.getDataLen());
-		outStream.flush();
-	    }
-	} catch (IOException e) {
-	    cleanup(null, true);
-	    throw (closureReason = e); // rethrow
-	}
+        try {
+            synchronized (this) {
+                outStream.write(ber.getBuf(), 0, ber.getDataLen());
+                outStream.flush();
+            }
+        } catch (IOException e) {
+            cleanup(null, true);
+            throw (closureReason = e); // rethrow
+        }
 
-	return req;
+        return req;
     }
 
     /**
@@ -423,50 +423,50 @@ public final class Connection implements Runnable {
      */
     BerDecoder readReply(LdapRequest ldr)
             throws IOException, NamingException {
-	BerDecoder rber;
+        BerDecoder rber;
         boolean waited = false;
-        
-	while (((rber = ldr.getReplyBer()) == null) && !waited) {
-	    try {
-		// If socket closed, don't even try
-		synchronized (this) {
-		    if (sock == null) {
-			throw new ServiceUnavailableException(host + ":" + port +
-			    "; socket closed");
-		    }
-		}
-		synchronized (ldr) {
-		    // check if condition has changed since our last check
-		    rber = ldr.getReplyBer();
-		    if (rber == null) {
+
+        while (((rber = ldr.getReplyBer()) == null) && !waited) {
+            try {
+                // If socket closed, don't even try
+                synchronized (this) {
+                    if (sock == null) {
+                        throw new ServiceUnavailableException(host + ":" + port +
+                            "; socket closed");
+                    }
+                }
+                synchronized (ldr) {
+                    // check if condition has changed since our last check
+                    rber = ldr.getReplyBer();
+                    if (rber == null) {
                         if (readTimeout > 0) {  // Socket read timeout is specified
 
-			    // will be woken up before readTimeout only if reply is
-			    // available
+                            // will be woken up before readTimeout only if reply is
+                            // available
                             ldr.wait(readTimeout);
                             waited = true;
-                        } else {                      
+                        } else {
                             ldr.wait(15 * 1000); // 15 second timeout
-                        }   
+                        }
                     } else {
-			break;
-		    }
-		}
-	    } catch (InterruptedException ex) {
-		throw new InterruptedNamingException(
-		    "Interrupted during LDAP operation");
-	    }
-	}
-        
+                        break;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                throw new InterruptedNamingException(
+                    "Interrupted during LDAP operation");
+            }
+        }
+
         if ((rber == null) && waited) {
             removeRequest(ldr);
             throw new NamingException("LDAP response read timed out, timeout used:"
                             + readTimeout + "ms." );
-            
+
         }
-	return rber;
+        return rber;
     }
-    
+
 
     ////////////////////////////////////////////////////////////////////////////
     //
@@ -476,93 +476,93 @@ public final class Connection implements Runnable {
 
     private synchronized void addRequest(LdapRequest ldapRequest) {
 
-	LdapRequest ldr = pendingRequests;
-	if (ldr == null) {
-	    pendingRequests = ldapRequest;
-	    ldapRequest.next = null;
-	} else {
-	    ldapRequest.next = pendingRequests;
-	    pendingRequests = ldapRequest;
-	}
+        LdapRequest ldr = pendingRequests;
+        if (ldr == null) {
+            pendingRequests = ldapRequest;
+            ldapRequest.next = null;
+        } else {
+            ldapRequest.next = pendingRequests;
+            pendingRequests = ldapRequest;
+        }
     }
 
     synchronized LdapRequest findRequest(int msgId) {
 
-	LdapRequest ldr = pendingRequests;
-	while (ldr != null) {
-	    if (ldr.msgId == msgId) {
-		return ldr;
-	    }
-	    ldr = ldr.next;
-	}
-	return null;
+        LdapRequest ldr = pendingRequests;
+        while (ldr != null) {
+            if (ldr.msgId == msgId) {
+                return ldr;
+            }
+            ldr = ldr.next;
+        }
+        return null;
 
     }
 
     synchronized void removeRequest(LdapRequest req) {
-	LdapRequest ldr = pendingRequests;
-	LdapRequest ldrprev = null;
+        LdapRequest ldr = pendingRequests;
+        LdapRequest ldrprev = null;
 
-	while (ldr != null) {
-	    if (ldr == req) {
-		ldr.cancel();
+        while (ldr != null) {
+            if (ldr == req) {
+                ldr.cancel();
 
-		if (ldrprev != null) {
-		    ldrprev.next = ldr.next;
-		} else {
-		    pendingRequests = ldr.next;
-		}
-		ldr.next = null;
-	    }
-	    ldrprev = ldr;
-	    ldr = ldr.next;
-	}
+                if (ldrprev != null) {
+                    ldrprev.next = ldr.next;
+                } else {
+                    pendingRequests = ldr.next;
+                }
+                ldr.next = null;
+            }
+            ldrprev = ldr;
+            ldr = ldr.next;
+        }
     }
 
     void abandonRequest(LdapRequest ldr, Control[] reqCtls) {
-	// Remove from queue
-	removeRequest(ldr);
+        // Remove from queue
+        removeRequest(ldr);
 
-	BerEncoder ber = new BerEncoder(256);
-	int abandonMsgId = getMsgId();
+        BerEncoder ber = new BerEncoder(256);
+        int abandonMsgId = getMsgId();
 
-	//
-	// build the abandon request.
-	//
-	try {
-	    ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-	        ber.encodeInt(abandonMsgId);
-		ber.encodeInt(ldr.msgId, LdapClient.LDAP_REQ_ABANDON);
+        //
+        // build the abandon request.
+        //
+        try {
+            ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+                ber.encodeInt(abandonMsgId);
+                ber.encodeInt(ldr.msgId, LdapClient.LDAP_REQ_ABANDON);
 
-		if (v3) {
-		    LdapClient.encodeControls(ber, reqCtls);
-		}
-	    ber.endSeq();
+                if (v3) {
+                    LdapClient.encodeControls(ber, reqCtls);
+                }
+            ber.endSeq();
 
-	    if (traceFile != null) {
-		Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(), 0, 
-		    ber.getDataLen());
-	    }
+            if (traceFile != null) {
+                Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(), 0,
+                    ber.getDataLen());
+            }
 
-	    synchronized (this) {
-		outStream.write(ber.getBuf(), 0, ber.getDataLen());
-		outStream.flush();
-	    }
+            synchronized (this) {
+                outStream.write(ber.getBuf(), 0, ber.getDataLen());
+                outStream.flush();
+            }
 
-	} catch (IOException ex) {
-	    //System.err.println("ldap.abandon: " + ex);
-	}
+        } catch (IOException ex) {
+            //System.err.println("ldap.abandon: " + ex);
+        }
 
-	// Dont expect any response for the abandon request.
+        // Dont expect any response for the abandon request.
     }
 
     synchronized void abandonOutstandingReqs(Control[] reqCtls) {
         LdapRequest ldr = pendingRequests;
 
-	while (ldr != null) {
-	    abandonRequest(ldr, reqCtls);
-	    pendingRequests = ldr = ldr.next;
-	}
+        while (ldr != null) {
+            abandonRequest(ldr, reqCtls);
+            pendingRequests = ldr = ldr.next;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -574,41 +574,41 @@ public final class Connection implements Runnable {
 
     private void ldapUnbind(Control[] reqCtls) {
 
-	BerEncoder ber = new BerEncoder(256);
-	int unbindMsgId = getMsgId();
+        BerEncoder ber = new BerEncoder(256);
+        int unbindMsgId = getMsgId();
 
-	//
-	// build the unbind request.
-	//
+        //
+        // build the unbind request.
+        //
 
-	try {
+        try {
 
-	    ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-	        ber.encodeInt(unbindMsgId);
-		// IMPLICIT TAGS
-	        ber.encodeByte(LdapClient.LDAP_REQ_UNBIND);
-	        ber.encodeByte(0);
+            ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+                ber.encodeInt(unbindMsgId);
+                // IMPLICIT TAGS
+                ber.encodeByte(LdapClient.LDAP_REQ_UNBIND);
+                ber.encodeByte(0);
 
-		if (v3) {
-		    LdapClient.encodeControls(ber, reqCtls);
-		}
-	    ber.endSeq();
+                if (v3) {
+                    LdapClient.encodeControls(ber, reqCtls);
+                }
+            ber.endSeq();
 
-	    if (traceFile != null) {
-		Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(),
-		    0, ber.getDataLen());
-	    }
+            if (traceFile != null) {
+                Ber.dumpBER(traceFile, traceTagOut, ber.getBuf(),
+                    0, ber.getDataLen());
+            }
 
-	    synchronized (this) {
-		outStream.write(ber.getBuf(), 0, ber.getDataLen());
-		outStream.flush();
-	    }
+            synchronized (this) {
+                outStream.write(ber.getBuf(), 0, ber.getDataLen());
+                outStream.flush();
+            }
 
-	} catch (IOException ex) {
-	    //System.err.println("ldap.unbind: " + ex);
-	}
+        } catch (IOException ex) {
+            //System.err.println("ldap.unbind: " + ex);
+        }
 
-	// Dont expect any response for the unbind request.
+        // Dont expect any response for the unbind request.
     }
 
     /**
@@ -622,31 +622,31 @@ public final class Connection implements Runnable {
      *    set to true because LdapClient needs to know about the closure.
      */
     void cleanup(Control[] reqCtls, boolean notifyParent) {
-	boolean nparent = false;
+        boolean nparent = false;
 
-	synchronized (this) {
-	    useable = false;
+        synchronized (this) {
+            useable = false;
 
-	    if (sock != null) {
-		if (debug) {
-		    System.err.println("Connection: closing socket: " + host + "," + port);
-		}
-		try {
+            if (sock != null) {
+                if (debug) {
+                    System.err.println("Connection: closing socket: " + host + "," + port);
+                }
+                try {
                     if (!notifyParent) {
                         abandonOutstandingReqs(reqCtls);
                     }
-		    if (bound) {
-			ldapUnbind(reqCtls);
-		    }
-		} finally {
-		    try {
-			outStream.flush();
-			sock.close();
-			unpauseReader();
-		    } catch (IOException ie) {
-			if (debug)
-			    System.err.println("Connection: problem closing socket: " + ie);
-		    }
+                    if (bound) {
+                        ldapUnbind(reqCtls);
+                    }
+                } finally {
+                    try {
+                        outStream.flush();
+                        sock.close();
+                        unpauseReader();
+                    } catch (IOException ie) {
+                        if (debug)
+                            System.err.println("Connection: problem closing socket: " + ie);
+                    }
                     if (!notifyParent) {
                         LdapRequest ldr = pendingRequests;
                         while (ldr != null) {
@@ -654,14 +654,14 @@ public final class Connection implements Runnable {
                             ldr = ldr.next;
                         }
                     }
-		    sock = null;
-		} 
-		nparent = notifyParent;
-	    }
-	}
-	if (nparent) {
-	    parent.processConnectionClosure();
-	}
+                    sock = null;
+                }
+                nparent = notifyParent;
+            }
+        }
+        if (nparent) {
+            parent.processConnectionClosure();
+        }
     }
 
 
@@ -670,23 +670,23 @@ public final class Connection implements Runnable {
     // Use streamLock instead for synchronizing update to stream
 
     synchronized public void replaceStreams(InputStream newIn, OutputStream newOut) {
-	if (debug) {
-	    System.err.println("Replacing " + inStream + " with: " + newIn);
-	    System.err.println("Replacing " + outStream + " with: " + newOut);
-	}
+        if (debug) {
+            System.err.println("Replacing " + inStream + " with: " + newIn);
+            System.err.println("Replacing " + outStream + " with: " + newOut);
+        }
 
-	inStream = newIn;
+        inStream = newIn;
 
-	// Cleanup old stream
-	try {
-	    outStream.flush();
-	} catch (IOException ie) {
-	    if (debug)
-		System.err.println("Connection: cannot flush outstream: " + ie);
-	}
-	
-	// Replace stream
-	outStream = newOut;
+        // Cleanup old stream
+        try {
+            outStream.flush();
+        } catch (IOException ie) {
+            if (debug)
+                System.err.println("Connection: cannot flush outstream: " + ie);
+        }
+
+        // Replace stream
+        outStream = newOut;
     }
 
     /**
@@ -695,7 +695,7 @@ public final class Connection implements Runnable {
      * and the Connection thread when the main thread updates inStream.
      */
     synchronized private InputStream getInputStream() {
-	return inStream;
+        return inStream;
     }
 
 
@@ -707,25 +707,25 @@ public final class Connection implements Runnable {
 
     /*
      * The main idea is to mark requests that need the reader thread to
-     * pause after getting the response. When the reader thread gets the response, 
-     * it waits on a lock instead of returning to the read(). The next time a 
-     * request is sent, the reader is automatically unblocked if necessary. 
+     * pause after getting the response. When the reader thread gets the response,
+     * it waits on a lock instead of returning to the read(). The next time a
+     * request is sent, the reader is automatically unblocked if necessary.
      * Note that the reader must be unblocked BEFORE the request is sent.
      * Otherwise, there is a race condition where the request is sent and
      * the reader thread might read the response and be unblocked
      * by writeRequest().
      *
-     * This pause gives the main thread (StartTLS or SASL) an opportunity to 
-     * update the reader's state (e.g., its streams) if necessary. 
-     * The assumption is that the connection will remain quiet during this pause 
-     * (i.e., no intervening requests being sent). 
+     * This pause gives the main thread (StartTLS or SASL) an opportunity to
+     * update the reader's state (e.g., its streams) if necessary.
+     * The assumption is that the connection will remain quiet during this pause
+     * (i.e., no intervening requests being sent).
      *<p>
-     * For dealing with StartTLS close, 
+     * For dealing with StartTLS close,
      * when the read() exits either due to EOF or an exception,
      * the reader thread checks whether there is a new stream to read from.
      * If so, then it reattempts the read. Otherwise, the EOF or exception
-     * is processed and the reader thread terminates. 
-     * In a StartTLS close, the client first replaces the SSL IO streams with 
+     * is processed and the reader thread terminates.
+     * In a StartTLS close, the client first replaces the SSL IO streams with
      * plain ones and then closes the SSL socket.
      * If the reader thread attempts to read, or was reading, from
      * the SSL socket (that is, it got to the read BEFORE replaceStreams()),
@@ -750,19 +750,19 @@ public final class Connection implements Runnable {
     private boolean paused = false;           // paused state of reader
 
     /*
-     * Unpauses reader thread if it was paused 
+     * Unpauses reader thread if it was paused
      */
     private void unpauseReader() throws IOException {
-	synchronized (pauseLock) {
-	    if (paused) {
-		if (debug) {
-		    System.err.println("Unpausing reader; read from: " +
-					inStream);
-		}
-		paused = false;
-		pauseLock.notify();
-	    }
-	}
+        synchronized (pauseLock) {
+            if (paused) {
+                if (debug) {
+                    System.err.println("Unpausing reader; read from: " +
+                                        inStream);
+                }
+                paused = false;
+                pauseLock.notify();
+            }
+        }
     }
 
      /*
@@ -773,7 +773,7 @@ public final class Connection implements Runnable {
     private void pauseReader() throws IOException {
         if (debug) {
             System.err.println("Pausing reader;  was reading from: " +
-				inStream);
+                                inStream);
         }
         paused = true;
         try {
@@ -796,94 +796,94 @@ public final class Connection implements Runnable {
 
 
     public void run() {
-	byte inbuf[];	// Buffer for reading incoming bytes
-	int inMsgId;	// Message id of incoming response
-	int bytesread;	// Number of bytes in inbuf
-	int bytesleft;	// Number of bytes that need to read for completing resp
-	int br;		// Temp; number of bytes read from stream
-	int offset;     // Offset of where to store bytes in inbuf
-	int seqlen;     // Length of ASN sequence
-	int seqlenlen;  // Number of sequence length bytes
-	boolean eos;    // End of stream
-	BerDecoder retBer;    // Decoder for ASN.1 BER data from inbuf
-	InputStream in = null;
+        byte inbuf[];   // Buffer for reading incoming bytes
+        int inMsgId;    // Message id of incoming response
+        int bytesread;  // Number of bytes in inbuf
+        int bytesleft;  // Number of bytes that need to read for completing resp
+        int br;         // Temp; number of bytes read from stream
+        int offset;     // Offset of where to store bytes in inbuf
+        int seqlen;     // Length of ASN sequence
+        int seqlenlen;  // Number of sequence length bytes
+        boolean eos;    // End of stream
+        BerDecoder retBer;    // Decoder for ASN.1 BER data from inbuf
+        InputStream in = null;
 
-	try {
-	    while (true) {
-		try {
-		    inbuf = new byte[2048];
+        try {
+            while (true) {
+                try {
+                    inbuf = new byte[2048];
 
-		    offset = 0;
-		    seqlen = 0;
-		    seqlenlen = 0;
+                    offset = 0;
+                    seqlen = 0;
+                    seqlenlen = 0;
 
-		    in = getInputStream();
+                    in = getInputStream();
 
-		    // check that it is the beginning of a sequence
-		    bytesread = in.read(inbuf, offset, 1);
-		    if (bytesread < 0) {
-			if (in != getInputStream()) {
-			    continue;   // a new stream to try
-			} else {
-			    break; // EOF
-			}
-		    }
+                    // check that it is the beginning of a sequence
+                    bytesread = in.read(inbuf, offset, 1);
+                    if (bytesread < 0) {
+                        if (in != getInputStream()) {
+                            continue;   // a new stream to try
+                        } else {
+                            break; // EOF
+                        }
+                    }
 
-		    if (inbuf[offset++] != (Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR))
-			continue;
+                    if (inbuf[offset++] != (Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR))
+                        continue;
 
-		    // get length of sequence
-		    bytesread = in.read(inbuf, offset, 1);
-		    if (bytesread < 0)
-			break; // EOF
-		    seqlen = inbuf[offset++];
+                    // get length of sequence
+                    bytesread = in.read(inbuf, offset, 1);
+                    if (bytesread < 0)
+                        break; // EOF
+                    seqlen = inbuf[offset++];
 
-		    // if high bit is on, length is encoded in the 
-		    // subsequent length bytes and the number of length bytes 
-		    // is equal to & 0x80 (i.e. length byte with high bit off).
-		    if ((seqlen & 0x80) == 0x80) {
-			seqlenlen = seqlen & 0x7f;  // number of length bytes
+                    // if high bit is on, length is encoded in the
+                    // subsequent length bytes and the number of length bytes
+                    // is equal to & 0x80 (i.e. length byte with high bit off).
+                    if ((seqlen & 0x80) == 0x80) {
+                        seqlenlen = seqlen & 0x7f;  // number of length bytes
 
-			bytesread = 0;
-			eos = false;
+                        bytesread = 0;
+                        eos = false;
 
-			// Read all length bytes
-			while (bytesread < seqlenlen) {
-			    br = in.read(inbuf, offset+bytesread,      
-				seqlenlen-bytesread);
-			    if (br < 0) {
-				eos = true;
-				break; // EOF
-			    }
-			    bytesread += br;
-			}
+                        // Read all length bytes
+                        while (bytesread < seqlenlen) {
+                            br = in.read(inbuf, offset+bytesread,
+                                seqlenlen-bytesread);
+                            if (br < 0) {
+                                eos = true;
+                                break; // EOF
+                            }
+                            bytesread += br;
+                        }
 
-			// end-of-stream reached before length bytes are read
-			if (eos) 
-			    break;  // EOF
+                        // end-of-stream reached before length bytes are read
+                        if (eos)
+                            break;  // EOF
 
-			// Add contents of length bytes to determine length
-			seqlen = 0;
-			for( int i = 0; i < seqlenlen; i++) {
-			    seqlen = (seqlen << 8) + (inbuf[offset+i] & 0xff);
-			}
-			offset += bytesread;
-		    }
+                        // Add contents of length bytes to determine length
+                        seqlen = 0;
+                        for( int i = 0; i < seqlenlen; i++) {
+                            seqlen = (seqlen << 8) + (inbuf[offset+i] & 0xff);
+                        }
+                        offset += bytesread;
+                    }
 
-		    // read in seqlen bytes
-		    bytesleft = seqlen;
-		    if ((offset + bytesleft) > inbuf.length) {
-			byte nbuf[] = new byte[offset + bytesleft];
-			System.arraycopy(inbuf, 0, nbuf, 0, offset);
-			inbuf = nbuf;
-		    }
-		    while (bytesleft > 0) {
-			bytesread = in.read(inbuf, offset, bytesleft);
-			if (bytesread < 0)
-			    break; // EOF
-			offset += bytesread;
-			bytesleft -= bytesread;
-		    }
+                    // read in seqlen bytes
+                    bytesleft = seqlen;
+                    if ((offset + bytesleft) > inbuf.length) {
+                        byte nbuf[] = new byte[offset + bytesleft];
+                        System.arraycopy(inbuf, 0, nbuf, 0, offset);
+                        inbuf = nbuf;
+                    }
+                    while (bytesleft > 0) {
+                        bytesread = in.read(inbuf, offset, bytesleft);
+                        if (bytesread < 0)
+                            break; // EOF
+                        offset += bytesread;
+                        bytesleft -= bytesread;
+                    }
 /*
 if (dump > 0) {
 System.err.println("seqlen: " + seqlen);
@@ -894,117 +894,117 @@ System.err.println("bytesread: " + bytesread);
 */
 
 
-		    try {
-			retBer = new BerDecoder(inbuf, 0, offset);
+                    try {
+                        retBer = new BerDecoder(inbuf, 0, offset);
 
-			if (traceFile != null) {
-			    Ber.dumpBER(traceFile, traceTagIn, inbuf, 0, offset);
-			}
+                        if (traceFile != null) {
+                            Ber.dumpBER(traceFile, traceTagIn, inbuf, 0, offset);
+                        }
 
-			retBer.parseSeq(null);
-			inMsgId = retBer.parseInt();
-			retBer.reset();	// reset offset
+                        retBer.parseSeq(null);
+                        inMsgId = retBer.parseInt();
+                        retBer.reset(); // reset offset
 
-			boolean needPause = false;
+                        boolean needPause = false;
 
-			if (inMsgId == 0) {
-			    // Unsolicited Notification
-			    parent.processUnsolicited(retBer);
-			} else {
-			    LdapRequest ldr = findRequest(inMsgId);
+                        if (inMsgId == 0) {
+                            // Unsolicited Notification
+                            parent.processUnsolicited(retBer);
+                        } else {
+                            LdapRequest ldr = findRequest(inMsgId);
 
                             if (ldr != null) {
 
-				/**
+                                /**
                                  * Grab pauseLock before making reply available
                                  * to ensure that reader goes into paused state
                                  * before writer can attempt to unpause reader
-			 	 */
+                                 */
                                 synchronized (pauseLock) {
                                     needPause = ldr.addReplyBer(retBer);
                                     if (needPause) {
-					/*
+                                        /*
                                          * Go into paused state; release
-					 * pauseLock
-					 */
+                                         * pauseLock
+                                         */
                                         pauseReader();
                                     }
 
                                     // else release pauseLock
                                 }
                             } else {
-	    			// System.err.println("Cannot find" +
-			  	//		"LdapRequest for " + inMsgId);
-			    }
-			}
-		    } catch (Ber.DecodeException e) {
-			//System.err.println("Cannot parse Ber");
-		    }
-		} catch (IOException ie) {
-		    if (debug) {
-			System.err.println("Connection: Inside Caught " + ie);
-			ie.printStackTrace();
-		    }
+                                // System.err.println("Cannot find" +
+                                //              "LdapRequest for " + inMsgId);
+                            }
+                        }
+                    } catch (Ber.DecodeException e) {
+                        //System.err.println("Cannot parse Ber");
+                    }
+                } catch (IOException ie) {
+                    if (debug) {
+                        System.err.println("Connection: Inside Caught " + ie);
+                        ie.printStackTrace();
+                    }
 
-		    if (in != getInputStream()) {
-			// A new stream to try
-			// Go to top of loop and continue
-		    } else {
-			if (debug) {
-			    System.err.println("Connection: rethrowing " + ie);
-			}
-			throw ie;  // rethrow exception
-		    }
-		}
-	    }
+                    if (in != getInputStream()) {
+                        // A new stream to try
+                        // Go to top of loop and continue
+                    } else {
+                        if (debug) {
+                            System.err.println("Connection: rethrowing " + ie);
+                        }
+                        throw ie;  // rethrow exception
+                    }
+                }
+            }
 
-	    if (debug) {
-		System.err.println("Connection: end-of-stream detected: "
-		    + in);
-	    }
-	} catch (IOException ex) {
-	    if (debug) {
-		System.err.println("Connection: Caught " + ex);
-	    }
-	    closureReason = ex;
-	} finally {
-	    cleanup(null, true); // cleanup
-	}
-	if (debug) {
-	    System.err.println("Connection: Thread Exiting");
-	}
+            if (debug) {
+                System.err.println("Connection: end-of-stream detected: "
+                    + in);
+            }
+        } catch (IOException ex) {
+            if (debug) {
+                System.err.println("Connection: Caught " + ex);
+            }
+            closureReason = ex;
+        } finally {
+            cleanup(null, true); // cleanup
+        }
+        if (debug) {
+            System.err.println("Connection: Thread Exiting");
+        }
     }
 
 
     // This code must be uncommented to run the LdapAbandonTest.
     /*public void sendSearchReqs(String dn, int numReqs) {
         int i;
-	String attrs[] = null;
+        String attrs[] = null;
         for(i = 1; i <= numReqs; i++) {
-	    BerEncoder ber = new BerEncoder(2048);
+            BerEncoder ber = new BerEncoder(2048);
 
-	    try {
-	    ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-		ber.encodeInt(i);
-		ber.beginSeq(LdapClient.LDAP_REQ_SEARCH);
-		    ber.encodeString(dn == null ? "" : dn);
-		    ber.encodeInt(0, LdapClient.LBER_ENUMERATED);
-		    ber.encodeInt(3, LdapClient.LBER_ENUMERATED);
-		    ber.encodeInt(0);
-		    ber.encodeInt(0);
-		    ber.encodeBoolean(true);
-		    LdapClient.encodeFilter(ber, "");
-		    ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-			ber.encodeStringArray(attrs);
-		    ber.endSeq();
-		ber.endSeq();
-	    ber.endSeq();
-	    writeRequest(ber, i);
-	    //System.err.println("wrote request " + i);
-	    } catch (Exception ex) {
-	    //System.err.println("ldap.search: Caught " + ex + " building req");
-	    }
+            try {
+            ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+                ber.encodeInt(i);
+                ber.beginSeq(LdapClient.LDAP_REQ_SEARCH);
+                    ber.encodeString(dn == null ? "" : dn);
+                    ber.encodeInt(0, LdapClient.LBER_ENUMERATED);
+                    ber.encodeInt(3, LdapClient.LBER_ENUMERATED);
+                    ber.encodeInt(0);
+                    ber.encodeInt(0);
+                    ber.encodeBoolean(true);
+                    LdapClient.encodeFilter(ber, "");
+                    ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+                        ber.encodeStringArray(attrs);
+                    ber.endSeq();
+                ber.endSeq();
+            ber.endSeq();
+            writeRequest(ber, i);
+            //System.err.println("wrote request " + i);
+            } catch (Exception ex) {
+            //System.err.println("ldap.search: Caught " + ex + " building req");
+            }
 
-	}
+        }
     } */
 }

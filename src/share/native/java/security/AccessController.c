@@ -80,8 +80,8 @@ JNIEXPORT jobject JNICALL Java_java_security_AccessController_doPrivileged__Ljav
 
 JNIEXPORT jobject JNICALL
 Java_java_security_AccessController_getStackAccessControlContext(
-							      JNIEnv *env,
-							      jobject this)
+                                                              JNIEnv *env,
+                                                              jobject this)
 {
     return JVM_GetStackAccessControlContext(env, this);
 }
@@ -89,8 +89,8 @@ Java_java_security_AccessController_getStackAccessControlContext(
 
 JNIEXPORT jobject JNICALL
 Java_java_security_AccessController_getInheritedAccessControlContext(
-							      JNIEnv *env,
-							      jobject this)
+                                                              JNIEnv *env,
+                                                              jobject this)
 {
     return JVM_GetInheritedAccessControlContext(env, this);
 }

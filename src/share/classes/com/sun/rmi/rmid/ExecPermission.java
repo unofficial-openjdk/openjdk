@@ -43,13 +43,12 @@ import java.util.*;
  * the special token "&lt;&lt;ALL FILES&gt;&gt;" matches <bold>any</bold> file.
  * <P>
  * Note: A pathname consisting of a single "*" indicates all the files
- * in the current directory, while a pathname consisting of a single "-" 
+ * in the current directory, while a pathname consisting of a single "-"
  * indicates all the files in the current directory and
- * (recursively) all files and subdirectories contained in the current 
+ * (recursively) all files and subdirectories contained in the current
  * directory.
  * <P>
  *
- * @version %I%, %G%
  *
  * @author Ann Wollrath
  *
@@ -61,55 +60,55 @@ public final class ExecPermission extends Permission
      * UID for serialization
      */
     private static final long serialVersionUID = -6208470287358147919L;
-    
+
     private transient FilePermission fp;
-    
+
     /**
      * Creates a new ExecPermission object with the specified path.
      * <i>path</i> is the pathname of a file or directory.
-     * 
+     *
      * <p>A pathname that ends in "/*" (where "/" is
      * the file separator character, <code>File.separatorChar</code>) indicates
      * a directory and all the files contained in that directory. A pathname
      * that ends with "/-" indicates a directory and (recursively) all files
      * and subdirectories contained in that directory. The special pathname
      * "&lt;&lt;ALL FILES&gt;&gt;" matches all files.
-     * 
+     *
      * <p>A pathname consisting of a single "*" indicates all the files
-     * in the current directory, while a pathname consisting of a single "-" 
+     * in the current directory, while a pathname consisting of a single "-"
      * indicates all the files in the current directory and
-     * (recursively) all files and subdirectories contained in the current 
+     * (recursively) all files and subdirectories contained in the current
      * directory.
-     * 
+     *
      * @param path the pathname of the file/directory.
      */
     public ExecPermission(String path) {
-	super(path);
-	init(path);
+        super(path);
+        init(path);
     }
 
     /**
      * Creates a new ExecPermission object with the specified path.
      * <i>path</i> is the pathname of a file or directory.
-     * 
+     *
      * <p>A pathname that ends in "/*" (where "/" is
      * the file separator character, <code>File.separatorChar</code>) indicates
      * a directory and all the files contained in that directory. A pathname
      * that ends with "/-" indicates a directory and (recursively) all files
      * and subdirectories contained in that directory. The special pathname
      * "&lt;&lt;ALL FILES&gt;&gt;" matches all files.
-     * 
+     *
      * <p>A pathname consisting of a single "*" indicates all the files
-     * in the current directory, while a pathname consisting of a single "-" 
+     * in the current directory, while a pathname consisting of a single "-"
      * indicates all the files in the current directory and
-     * (recursively) all files and subdirectories contained in the current 
+     * (recursively) all files and subdirectories contained in the current
      * directory.
-     * 
+     *
      * @param path the pathname of the file/directory.
      * @param actions the action string (unused)
      */
     public ExecPermission(String path, String actions) {
-	this(path);
+        this(path);
     }
 
     /**
@@ -126,15 +125,15 @@ public final class ExecPermission extends Permission
      * @param p the permission to check against.
      *
      * @return true if the specified permission is implied by this object,
-     * false if not.  
+     * false if not.
      */
     public boolean implies(Permission p) {
-	if (!(p instanceof ExecPermission))
-	    return false;
+        if (!(p instanceof ExecPermission))
+            return false;
 
-	ExecPermission that = (ExecPermission) p;
+        ExecPermission that = (ExecPermission) p;
 
-	return fp.implies(that.fp);
+        return fp.implies(that.fp);
     }
 
     /**
@@ -147,15 +146,15 @@ public final class ExecPermission extends Permission
      * pathname as this ExecPermission object, false otherwise.
      */
     public boolean equals(Object obj) {
-	if (obj == this)
-	    return true;
+        if (obj == this)
+            return true;
 
-	if (! (obj instanceof ExecPermission))
-	    return false;
+        if (! (obj instanceof ExecPermission))
+            return false;
 
-	ExecPermission that = (ExecPermission) obj;
+        ExecPermission that = (ExecPermission) obj;
 
-	return fp.equals(that.fp);
+        return fp.equals(that.fp);
     }
 
     /**
@@ -164,7 +163,7 @@ public final class ExecPermission extends Permission
      * @return a hash code value for this object.
      */
     public int hashCode() {
-	return this.fp.hashCode();
+        return this.fp.hashCode();
     }
 
     /**
@@ -173,7 +172,7 @@ public final class ExecPermission extends Permission
      * @return the canonical string representation of the actions.
      */
     public String getActions() {
-	return "";
+        return "";
     }
 
     /**
@@ -192,27 +191,27 @@ public final class ExecPermission extends Permission
      * storing ExecPermissions.
      */
     public PermissionCollection newPermissionCollection() {
-	return new ExecPermissionCollection();
+        return new ExecPermissionCollection();
     }
 
     /**
      * readObject is called to restore the state of the ExecPermission
-     * from a stream. 
+     * from a stream.
      */
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-	s.defaultReadObject();
-	// init is called to initialize the rest of the values.
-	init(getName());
+        s.defaultReadObject();
+        // init is called to initialize the rest of the values.
+        init(getName());
     }
-    
+
     /**
      * Initialize a ExecPermission object. Common to all constructors.
      * Also called during de-serialization.
      */
     private void init(String path) {
-	this.fp = new FilePermission(path, "execute");
+        this.fp = new FilePermission(path, "execute");
     }
 
     /**
@@ -226,75 +225,75 @@ public final class ExecPermission extends Permission
      */
     private static class ExecPermissionCollection
         extends PermissionCollection
-	implements java.io.Serializable
+        implements java.io.Serializable
     {
-	private Vector permissions;
-	
-	private static final long serialVersionUID = -3352558508888368273L;
-	
-	/**
-	 * Create an empty ExecPermissionCollection.
-	 */
-	public ExecPermissionCollection() {
-	    permissions = new Vector();
-	}
+        private Vector permissions;
 
-	/**
-	 * Adds a permission to the collection.
-	 *
-	 * @param permission the Permission object to add.
-	 *
-	 * @exception IllegalArgumentException - if the permission is not a
-	 *                                       ExecPermission
-	 *
-	 * @exception SecurityException - if this ExecPermissionCollection 
-	 *                                object has been marked readonly
-	 */
-	public void add(Permission permission)
-	{
-	    if (! (permission instanceof ExecPermission))
-		throw new IllegalArgumentException("invalid permission: "+
-						   permission);
-	    if (isReadOnly())
-		throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
+        private static final long serialVersionUID = -3352558508888368273L;
 
-	    permissions.addElement(permission);
-	}
+        /**
+         * Create an empty ExecPermissionCollection.
+         */
+        public ExecPermissionCollection() {
+            permissions = new Vector();
+        }
 
-	/**
-	 * Check and see if this set of permissions implies the permissions
-	 * expressed in "permission".
-	 *
-	 * @param p the Permission object to compare
-	 *
-	 * @return true if "permission" is a proper subset of a permission in
-	 * the set, false if not.
-	 */
-	public boolean implies(Permission permission)
-	{
-	    if (! (permission instanceof ExecPermission))
-   		return false;
+        /**
+         * Adds a permission to the collection.
+         *
+         * @param permission the Permission object to add.
+         *
+         * @exception IllegalArgumentException - if the permission is not a
+         *                                       ExecPermission
+         *
+         * @exception SecurityException - if this ExecPermissionCollection
+         *                                object has been marked readonly
+         */
+        public void add(Permission permission)
+        {
+            if (! (permission instanceof ExecPermission))
+                throw new IllegalArgumentException("invalid permission: "+
+                                                   permission);
+            if (isReadOnly())
+                throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
 
-	    Enumeration e = permissions.elements();
-	
-	    while (e.hasMoreElements()) {
-		ExecPermission x = (ExecPermission) e.nextElement();
-		if (x.implies(permission)) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
+            permissions.addElement(permission);
+        }
 
-	/**
-	 * Returns an enumeration of all the ExecPermission objects in the
-	 * container.
-	 *
-	 * @return an enumeration of all the ExecPermission objects.
-	 */
-	public Enumeration elements()
-	{
-	    return permissions.elements();
-	}
+        /**
+         * Check and see if this set of permissions implies the permissions
+         * expressed in "permission".
+         *
+         * @param p the Permission object to compare
+         *
+         * @return true if "permission" is a proper subset of a permission in
+         * the set, false if not.
+         */
+        public boolean implies(Permission permission)
+        {
+            if (! (permission instanceof ExecPermission))
+                return false;
+
+            Enumeration e = permissions.elements();
+
+            while (e.hasMoreElements()) {
+                ExecPermission x = (ExecPermission) e.nextElement();
+                if (x.implies(permission)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Returns an enumeration of all the ExecPermission objects in the
+         * container.
+         *
+         * @return an enumeration of all the ExecPermission objects.
+         */
+        public Enumeration elements()
+        {
+            return permissions.elements();
+        }
     }
 }

@@ -59,7 +59,7 @@ NativePrimitive AnyShortPrimitives[] = {
 jboolean RegisterAnyShort(JNIEnv *env)
 {
     return RegisterPrimitives(env, AnyShortPrimitives,
-			      ArraySize(AnyShortPrimitives));
+                              ArraySize(AnyShortPrimitives));
 }
 
 DEFINE_ISOCOPY_BLIT(AnyShort)

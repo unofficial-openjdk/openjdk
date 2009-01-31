@@ -105,7 +105,7 @@ void LCMS_freeTransform(JNIEnv *env, jlong ID)
  * Signature: ([JI)J
  */
 JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_createNativeTransform
-  (JNIEnv *env, jclass cls, jlongArray profileIDs, jint renderType, 
+  (JNIEnv *env, jclass cls, jlongArray profileIDs, jint renderType,
    jobject disposerRef)
 {
     LPLCMSICCPROFILE _iccArray[DF_ICC_BUF_SIZE];
@@ -114,13 +114,13 @@ JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_createNativeTransform
     storeID_t sTrans;
     int i, j, size;
     jlong* ids;
-    
+
     size = (*env)->GetArrayLength (env, profileIDs);
     ids = (*env)->GetPrimitiveArrayCritical(env, profileIDs, 0);
 
     if (DF_ICC_BUF_SIZE < size*2) {
         iccArray = (LPLCMSICCPROFILE*) malloc(
-            size*2*sizeof(LPLCMSICCPROFILE)); 
+            size*2*sizeof(LPLCMSICCPROFILE));
         if (iccArray == NULL) {
             J2dRlsTraceLn(J2D_TRACE_ERROR, "getXForm: iccArray == NULL");
             return NULL;
@@ -134,33 +134,33 @@ JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_createNativeTransform
         icc = sTrans.pf;
         iccArray[j++] = icc;
 
-        /* Middle non-abstract profiles should be doubled before passing to 
-         * the cmsCreateMultiprofileTransform function 
+        /* Middle non-abstract profiles should be doubled before passing to
+         * the cmsCreateMultiprofileTransform function
          */
-        if (size > 2 && i != 0 && i != size - 1 && 
+        if (size > 2 && i != 0 && i != size - 1 &&
             icc->ColorSpace != icSigXYZData &&
-            icc->ColorSpace != icSigLabData) 
+            icc->ColorSpace != icSigLabData)
         {
             iccArray[j++] = icc;
         }
     }
 
-    sTrans.xf = cmsCreateMultiprofileTransform(iccArray, j, 
+    sTrans.xf = cmsCreateMultiprofileTransform(iccArray, j,
         0, 0, renderType, 0);
 
     (*env)->ReleasePrimitiveArrayCritical(env, profileIDs, ids, 0);
-    
+
     if (sTrans.xf == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR, "LCMS_createNativeTransform: "
                                        "sTrans.xf == NULL");
-        JNU_ThrowByName(env, "java/awt/color/CMMException", 
+        JNU_ThrowByName(env, "java/awt/color/CMMException",
                         "Cannot get color transform");
     }
 
     if (iccArray != &_iccArray[0]) {
         free(iccArray);
     }
-    Disposer_AddRecord(env, disposerRef, LCMS_freeTransform, sTrans.j); 
+    Disposer_AddRecord(env, disposerRef, LCMS_freeTransform, sTrans.j);
     return sTrans.j;
 }
 
@@ -176,10 +176,10 @@ JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_loadProfile
     jbyte* dataArray;
     jint dataSize;
     storeID_t sProf;
-    
+
     dataArray = (*env)->GetByteArrayElements (env, data, 0);
     dataSize = (*env)->GetArrayLength (env, data);
-    
+
     sProf.pf = cmsOpenProfileFromMem((LPVOID)dataArray, (DWORD) dataSize);
 
     if (sProf.pf == NULL) {
@@ -198,12 +198,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_freeProfile
   (JNIEnv *env, jobject obj, jlong id)
 {
     storeID_t sProf;
- 
+
     sProf.j = id;
     if (cmsCloseProfile(sProf.pf) == 0) {
         J2dRlsTraceLn1(J2D_TRACE_ERROR, "LCMS_freeProfile: cmsCloseProfile(%d)"
                        "== 0", id);
-        JNU_ThrowByName(env, "java/awt/color/CMMException", 
+        JNU_ThrowByName(env, "java/awt/color/CMMException",
                         "Cannot close profile");
     }
 
@@ -215,7 +215,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_freeProfile
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileSize
-  (JNIEnv *env, jobject obj, jlong id) 
+  (JNIEnv *env, jobject obj, jlong id)
 {
     LPLCMSICCPROFILE Icc;
     storeID_t sProf;
@@ -226,7 +226,7 @@ JNIEXPORT jint JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileSize
     Icc -> Seek(Icc, 0);
     Icc -> Read(pfSize, 4, 1, Icc);
 
-    /* TODO: It's a correct but non-optimal for BE machines code, so should 
+    /* TODO: It's a correct but non-optimal for BE machines code, so should
      * be special cased for them
      */
     return (pfSize[0]<<24) | (pfSize[1]<<16) | (pfSize[2]<<8) |
@@ -239,7 +239,7 @@ JNIEXPORT jint JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileSize
  * Signature: (J[B)V
  */
 JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileData
-  (JNIEnv *env, jobject obj, jlong id, jbyteArray data) 
+  (JNIEnv *env, jobject obj, jlong id, jbyteArray data)
 {
     LPLCMSICCPROFILE Icc;
     storeID_t sProf;
@@ -255,12 +255,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileData
     dataArray = (*env)->GetByteArrayElements (env, data, 0);
     Icc->Seek(Icc, 0);
 
-    /* TODO: It's a correct but non-optimal for BE machines code, so should 
+    /* TODO: It's a correct but non-optimal for BE machines code, so should
      * be special cased for them
      */
-    Icc->Read(dataArray, 1, 
+    Icc->Read(dataArray, 1,
               (pfSize[0]<<24) | (pfSize[1]<<16) | (pfSize[2]<<8) | pfSize[3],
-              Icc); 
+              Icc);
     (*env)->ReleaseByteArrayElements (env, data, dataArray, 0);
 }
 
@@ -270,7 +270,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileData
  * Signature: (JI)I
  */
 JNIEXPORT jint JNICALL Java_sun_java2d_cmm_lcms_LCMS_getTagSize
-  (JNIEnv *env, jobject obj, jlong id, jint tagSig) 
+  (JNIEnv *env, jobject obj, jlong id, jint tagSig)
 {
     LPLCMSICCPROFILE Icc;
     storeID_t sProf;
@@ -287,7 +287,7 @@ JNIEXPORT jint JNICALL Java_sun_java2d_cmm_lcms_LCMS_getTagSize
         if (i >= 0) {
             result = Icc->TagSizes[i];
         } else {
-            JNU_ThrowByName(env, "java/awt/color/CMMException", 
+            JNU_ThrowByName(env, "java/awt/color/CMMException",
                             "ICC profile tag not found");
             result = -1;
         }
@@ -318,7 +318,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getTagData
         Icc -> Seek(Icc, 0);
         Icc -> Read(dataArray, sizeof(icHeader), 1, Icc);
         (*env)->ReleaseByteArrayElements (env, data, dataArray, 0);
-        return; 
+        return;
     }
 
 
@@ -327,12 +327,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getTagData
         tagSize = Icc->TagSizes[i];
         dataArray = (*env)->GetByteArrayElements (env, data, 0);
         Icc->Seek(Icc, Icc->TagOffsets[i]);
-        Icc->Read(dataArray, 1, tagSize, Icc); 
+        Icc->Read(dataArray, 1, tagSize, Icc);
         (*env)->ReleaseByteArrayElements (env, data, dataArray, 0);
         return;
     }
 
-    JNU_ThrowByName(env, "java/awt/color/CMMException", 
+    JNU_ThrowByName(env, "java/awt/color/CMMException",
                     "ICC profile tag not found");
     return;
 }
@@ -348,7 +348,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_setTagData
     fprintf(stderr, "setTagData operation is not implemented");
 }
 
-void* getILData (JNIEnv *env, jobject img, jint* pDataType, 
+void* getILData (JNIEnv *env, jobject img, jint* pDataType,
                  jobject* pDataObject) {
     void* result = NULL;
     *pDataType = (*env)->GetIntField (env, img, IL_dataType_fID);
@@ -371,7 +371,7 @@ void* getILData (JNIEnv *env, jobject img, jint* pDataType,
     return result;
 }
 
-void releaseILData (JNIEnv *env, void* pData, jint dataType, 
+void releaseILData (JNIEnv *env, void* pData, jint dataType,
                     jobject dataObject) {
     switch (dataType) {
         case DT_BYTE:
@@ -416,22 +416,22 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_colorConvert
     dstNextRowOffset = (*env)->GetIntField (env, dst, IL_nextRowOffset_fID);
     width = (*env)->GetIntField (env, src, IL_width_fID);
     height = (*env)->GetIntField (env, src, IL_height_fID);
-#ifdef _LITTLE_ENDIAN    
+#ifdef _LITTLE_ENDIAN
     /* Reversing data packed into int for LE archs */
     if ((*env)->GetBooleanField (env, src, IL_isIntPacked_fID) == JNI_TRUE) {
-        inFmt ^= DOSWAP_SH(1); 
+        inFmt ^= DOSWAP_SH(1);
     }
     if ((*env)->GetBooleanField (env, dst, IL_isIntPacked_fID) == JNI_TRUE) {
         outFmt ^= DOSWAP_SH(1);
     }
-#endif    
+#endif
     sTrans.j = (*env)->GetLongField (env, trans, Trans_ID_fID);
     cmsChangeBuffersFormat(sTrans.xf, inFmt, outFmt);
 
 
     if (sTrans.xf == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR, "LCMS_colorConvert: transform == NULL");
-        JNU_ThrowByName(env, "java/awt/color/CMMException", 
+        JNU_ThrowByName(env, "java/awt/color/CMMException",
                         "Cannot get color transform");
         return;
     }
@@ -441,7 +441,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_colorConvert
 
     if (inputBuffer == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR, "");
-        JNU_ThrowByName(env, "java/awt/color/CMMException", 
+        JNU_ThrowByName(env, "java/awt/color/CMMException",
                         "Cannot get input data");
         return;
     }
@@ -450,14 +450,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_colorConvert
 
     if (outputBuffer == NULL) {
         releaseILData(env, inputBuffer, srcDType, srcData);
-        JNU_ThrowByName(env, "java/awt/color/CMMException", 
+        JNU_ThrowByName(env, "java/awt/color/CMMException",
                         "Cannot get output data");
         return;
     }
 
     inputRow = (char*)inputBuffer + srcOffset;
     outputRow = (char*)outputBuffer + dstOffset;
- 
+
     for (i = 0; i < height; i++) {
         cmsDoTransform(sTrans.xf, inputRow, outputRow, width);
         inputRow += srcNextRowOffset;
@@ -474,7 +474,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_colorConvert
  * Signature: (Ljava/awt/color/ICC_Profile;)J
  */
 JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_getProfileID
-  (JNIEnv *env, jclass cls, jobject pf) 
+  (JNIEnv *env, jclass cls, jobject pf)
 {
     return (*env)->GetLongField (env, pf, PF_ID_fID);
 }
@@ -488,7 +488,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_initLCMS
   (JNIEnv *env, jclass cls, jclass Trans, jclass IL, jclass Pf)
 {
     /* TODO: move initialization of the IDs to the static blocks of
-     * corresponding classes to avoid problems with invalidating ids by class 
+     * corresponding classes to avoid problems with invalidating ids by class
      * unloading
      */
     Trans_profileIDs_fID = (*env)->GetFieldID (env, Trans, "profileIDs", "[J");
@@ -498,8 +498,8 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_initLCMS
     IL_isIntPacked_fID = (*env)->GetFieldID (env, IL, "isIntPacked", "Z");
     IL_dataType_fID = (*env)->GetFieldID (env, IL, "dataType", "I");
     IL_pixelType_fID = (*env)->GetFieldID (env, IL, "pixelType", "I");
-    IL_dataArray_fID = (*env)->GetFieldID(env, IL, "dataArray", 
-                                          "Ljava/lang/Object;"); 
+    IL_dataArray_fID = (*env)->GetFieldID(env, IL, "dataArray",
+                                          "Ljava/lang/Object;");
     IL_width_fID = (*env)->GetFieldID (env, IL, "width", "I");
     IL_height_fID = (*env)->GetFieldID (env, IL, "height", "I");
     IL_offset_fID = (*env)->GetFieldID (env, IL, "offset", "I");
@@ -507,5 +507,3 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_initLCMS
 
     PF_ID_fID = (*env)->GetFieldID (env, Pf, "ID", "J");
 }
-
-

@@ -1,5 +1,4 @@
 //
-// %W% %E%
 //
 // This file is used for automated generation of java classes to wrap native structures.
 // The detail on format of this file see WrapperGenerator.java

@@ -36,62 +36,62 @@ public class Close {
     private static class ExpectedException extends RuntimeException {}
 
     private static class C implements Appendable, Closeable {
-	public Appendable append(CharSequence csq) { return null; }
-	public Appendable append(char c) { return null; }
-	public Appendable append(CharSequence csq, int s, int e) {
-	    return null;
-	}
+        public Appendable append(CharSequence csq) { return null; }
+        public Appendable append(char c) { return null; }
+        public Appendable append(CharSequence csq, int s, int e) {
+            return null;
+        }
 
-	public void close() {
-	    throw new ExpectedException();
-	}
+        public void close() {
+            throw new ExpectedException();
+        }
     }
 
     private static class NC implements Appendable {
-	public Appendable append(CharSequence csq) { return null; }
-	public Appendable append(char c) { return null; }
-	public Appendable append(CharSequence csq, int s, int e) {
-	    return null;
-	}
+        public Appendable append(CharSequence csq) { return null; }
+        public Appendable append(char c) { return null; }
+        public Appendable append(CharSequence csq, int s, int e) {
+            return null;
+        }
 
-	// method coincidentally called close()
-	public void close() {
-	    throw new RuntimeException("NC.close should not be called");
-	}
+        // method coincidentally called close()
+        public void close() {
+            throw new RuntimeException("NC.close should not be called");
+        }
     }
 
     private static void test(Formatter f) {
-	if (f.out() instanceof C) {
-	    // C.close() called since C implements Closeable
-	    try {
-		f.close();
-		throw new RuntimeException("C.close not called");
-	    } catch (ExpectedException x) {
-		System.out.println("  C.close called");
-	    }
-	} else {
-	    // NC.close() not called since NC does not implement Closeable
-	    f.close();
-	}
+        if (f.out() instanceof C) {
+            // C.close() called since C implements Closeable
+            try {
+                f.close();
+                throw new RuntimeException("C.close not called");
+            } catch (ExpectedException x) {
+                System.out.println("  C.close called");
+            }
+        } else {
+            // NC.close() not called since NC does not implement Closeable
+            f.close();
+        }
 
-	// Formatter is a Closeable
-	if (!(f instanceof Closeable))
-	    throw new RuntimeException("Formatter is not a Closeable");
+        // Formatter is a Closeable
+        if (!(f instanceof Closeable))
+            throw new RuntimeException("Formatter is not a Closeable");
 
-	// multiple close() does not throw a FormatterClosedException
-	f.close();
-	try {
-	    f.close();
-	    System.out.println("  FormatterClosedException not thrown");
-	} catch (FormatterClosedException x) {
-	    throw new RuntimeException("FormatterClosedException thrown");
-	}
+        // multiple close() does not throw a FormatterClosedException
+        f.close();
+        try {
+            f.close();
+            System.out.println("  FormatterClosedException not thrown");
+        } catch (FormatterClosedException x) {
+            throw new RuntimeException("FormatterClosedException thrown");
+        }
     }
 
     public static void main(String [] args) {
-	System.out.println("testing Closeable");
- 	test(new Formatter(new C()));
-	System.out.println("testing non-Closeable");
-	test(new Formatter(new NC()));
+        System.out.println("testing Closeable");
+        test(new Formatter(new C()));
+        System.out.println("testing non-Closeable");
+        test(new Formatter(new NC()));
     }
 }

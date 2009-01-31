@@ -50,4 +50,3 @@ public interface GenericArrayType extends Type {
      */
     Type getGenericComponentType();
 }
-

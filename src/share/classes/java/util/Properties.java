@@ -52,9 +52,9 @@ import java.io.BufferedWriter;
  * <code>Strings</code>.  The <code>setProperty</code> method should be used
  * instead.  If the <code>store</code> or <code>save</code> method is called
  * on a "compromised" <code>Properties</code> object that contains a
- * non-<code>String</code> key or value, the call will fail. Similarly, 
- * the call to the <code>propertyNames</code> or <code>list</code> method 
- * will fail if it is called on a "compromised" <code>Properties</code> 
+ * non-<code>String</code> key or value, the call will fail. Similarly,
+ * the call to the <code>propertyNames</code> or <code>list</code> method
+ * will fail if it is called on a "compromised" <code>Properties</code>
  * object that contains a non-<code>String</code> key.
  *
  * <p>
@@ -72,7 +72,7 @@ import java.io.BufferedWriter;
  * ; only a single 'u' character is allowed in an escape
  * sequence. The native2ascii tool can be used to convert property files to and
  * from other character encodings.
- * 
+ *
  * <p> The {@link #loadFromXML(InputStream)} and {@link
  * #storeToXML(OutputStream, String, String)} methods load and store properties
  * in a simple XML format.  By default the UTF-8 character encoding is used,
@@ -100,7 +100,7 @@ import java.io.BufferedWriter;
  *
  *    &lt;!ATTLIST entry key CDATA #REQUIRED&gt;
  * </pre>
- * 
+ *
  * @see <a href="../../../technotes/tools/solaris/native2ascii.html">native2ascii tool for Solaris</a>
  * @see <a href="../../../technotes/tools/windows/native2ascii.html">native2ascii tool for Windows</a>
  *
@@ -110,7 +110,6 @@ import java.io.BufferedWriter;
  * @author  Arthur van Hoff
  * @author  Michael McCloskey
  * @author  Xueming Shen
- * @version %I%, %G%
  * @since   JDK1.0
  */
 public
@@ -132,7 +131,7 @@ class Properties extends Hashtable<Object,Object> {
      * Creates an empty property list with no default values.
      */
     public Properties() {
-	this(null);
+        this(null);
     }
 
     /**
@@ -141,7 +140,7 @@ class Properties extends Hashtable<Object,Object> {
      * @param   defaults   the defaults.
      */
     public Properties(Properties defaults) {
-	this.defaults = defaults;
+        this.defaults = defaults;
     }
 
     /**
@@ -242,8 +241,8 @@ class Properties extends Hashtable<Object,Object> {
      * <p>
      * <pre>
      * Truth = Beauty
-     *	Truth:Beauty
-     * Truth			:Beauty
+     *  Truth:Beauty
+     * Truth                    :Beauty
      * </pre>
      * As another example, the following three lines specify a single
      * property:
@@ -335,8 +334,8 @@ class Properties extends Hashtable<Object,Object> {
      * @param      inStream   the input stream.
      * @exception  IOException  if an error occurred when reading from the
      *             input stream.
-     * @throws	   IllegalArgumentException if the input stream contains a
-     * 		   malformed Unicode escape sequence.
+     * @throws     IllegalArgumentException if the input stream contains a
+     *             malformed Unicode escape sequence.
      * @since 1.2
      */
     public synchronized void load(InputStream inStream) throws IOException {
@@ -358,7 +357,7 @@ class Properties extends Hashtable<Object,Object> {
             valueStart = limit;
             hasSep = false;
 
-	    //System.out.println("line=<" + new String(lineBuf, 0, limit) + ">");
+            //System.out.println("line=<" + new String(lineBuf, 0, limit) + ">");
             precedingBackslash = false;
             while (keyLen < limit) {
                 c = lr.lineBuf[keyLen];
@@ -370,7 +369,7 @@ class Properties extends Hashtable<Object,Object> {
                 } else if ((c == ' ' || c == '\t' ||  c == '\f') && !precedingBackslash) {
                     valueStart = keyLen + 1;
                     break;
-                } 
+                }
                 if (c == '\\') {
                     precedingBackslash = !precedingBackslash;
                 } else {
@@ -391,26 +390,26 @@ class Properties extends Hashtable<Object,Object> {
             }
             String key = loadConvert(lr.lineBuf, 0, keyLen, convtBuf);
             String value = loadConvert(lr.lineBuf, valueStart, limit - valueStart, convtBuf);
-	    put(key, value);
-	}
+            put(key, value);
+        }
     }
 
     /* Read in a "logical line" from an InputStream/Reader, skip all comment
-     * and blank lines and filter out those leading whitespace characters 
-     * (\u0020, \u0009 and \u000c) from the beginning of a "natural line". 
-     * Method returns the char length of the "logical line" and stores 
-     * the line in "lineBuf". 
+     * and blank lines and filter out those leading whitespace characters
+     * (\u0020, \u0009 and \u000c) from the beginning of a "natural line".
+     * Method returns the char length of the "logical line" and stores
+     * the line in "lineBuf".
      */
     class LineReader {
         public LineReader(InputStream inStream) {
             this.inStream = inStream;
-            inByteBuf = new byte[8192]; 
-	}
+            inByteBuf = new byte[8192];
+        }
 
         public LineReader(Reader reader) {
             this.reader = reader;
-            inCharBuf = new char[8192]; 
-	}
+            inCharBuf = new char[8192];
+        }
 
         byte[] inByteBuf;
         char[] inCharBuf;
@@ -429,104 +428,104 @@ class Properties extends Hashtable<Object,Object> {
             boolean isNewLine = true;
             boolean appendedLineBegin = false;
             boolean precedingBackslash = false;
-	    boolean skipLF = false;
+            boolean skipLF = false;
 
             while (true) {
                 if (inOff >= inLimit) {
                     inLimit = (inStream==null)?reader.read(inCharBuf)
-		                              :inStream.read(inByteBuf);
-		    inOff = 0;
-		    if (inLimit <= 0) {
-			if (len == 0 || isCommentLine) { 
-			    return -1; 
-			}
-			return len;
-		    }
-		}     
+                                              :inStream.read(inByteBuf);
+                    inOff = 0;
+                    if (inLimit <= 0) {
+                        if (len == 0 || isCommentLine) {
+                            return -1;
+                        }
+                        return len;
+                    }
+                }
                 if (inStream != null) {
-                    //The line below is equivalent to calling a 
+                    //The line below is equivalent to calling a
                     //ISO8859-1 decoder.
-	            c = (char) (0xff & inByteBuf[inOff++]);
+                    c = (char) (0xff & inByteBuf[inOff++]);
                 } else {
                     c = inCharBuf[inOff++];
                 }
                 if (skipLF) {
                     skipLF = false;
-		    if (c == '\n') {
-		        continue;
-		    }
-		}
-		if (skipWhiteSpace) {
-		    if (c == ' ' || c == '\t' || c == '\f') {
-			continue;
-		    }
-		    if (!appendedLineBegin && (c == '\r' || c == '\n')) {
-			continue;
-		    }
-		    skipWhiteSpace = false;
-		    appendedLineBegin = false;
-		}
-		if (isNewLine) {
-		    isNewLine = false;
-		    if (c == '#' || c == '!') {
-			isCommentLine = true;
-			continue;
-		    }
-		}
-		
-		if (c != '\n' && c != '\r') {
-		    lineBuf[len++] = c;
-		    if (len == lineBuf.length) {
-		        int newLength = lineBuf.length * 2;
-		        if (newLength < 0) {
-		            newLength = Integer.MAX_VALUE;
-		        }
-			char[] buf = new char[newLength];
-			System.arraycopy(lineBuf, 0, buf, 0, lineBuf.length);
-			lineBuf = buf;
-		    }
-		    //flip the preceding backslash flag
-		    if (c == '\\') {
-			precedingBackslash = !precedingBackslash;
-		    } else {
-			precedingBackslash = false;
-		    }
-		}
-		else {
-		    // reached EOL
-		    if (isCommentLine || len == 0) {
-			isCommentLine = false;
-			isNewLine = true;
-			skipWhiteSpace = true;
-			len = 0;
-			continue;
-		    }
-		    if (inOff >= inLimit) {
+                    if (c == '\n') {
+                        continue;
+                    }
+                }
+                if (skipWhiteSpace) {
+                    if (c == ' ' || c == '\t' || c == '\f') {
+                        continue;
+                    }
+                    if (!appendedLineBegin && (c == '\r' || c == '\n')) {
+                        continue;
+                    }
+                    skipWhiteSpace = false;
+                    appendedLineBegin = false;
+                }
+                if (isNewLine) {
+                    isNewLine = false;
+                    if (c == '#' || c == '!') {
+                        isCommentLine = true;
+                        continue;
+                    }
+                }
+
+                if (c != '\n' && c != '\r') {
+                    lineBuf[len++] = c;
+                    if (len == lineBuf.length) {
+                        int newLength = lineBuf.length * 2;
+                        if (newLength < 0) {
+                            newLength = Integer.MAX_VALUE;
+                        }
+                        char[] buf = new char[newLength];
+                        System.arraycopy(lineBuf, 0, buf, 0, lineBuf.length);
+                        lineBuf = buf;
+                    }
+                    //flip the preceding backslash flag
+                    if (c == '\\') {
+                        precedingBackslash = !precedingBackslash;
+                    } else {
+                        precedingBackslash = false;
+                    }
+                }
+                else {
+                    // reached EOL
+                    if (isCommentLine || len == 0) {
+                        isCommentLine = false;
+                        isNewLine = true;
+                        skipWhiteSpace = true;
+                        len = 0;
+                        continue;
+                    }
+                    if (inOff >= inLimit) {
                         inLimit = (inStream==null)
                                   ?reader.read(inCharBuf)
-			          :inStream.read(inByteBuf);
-			inOff = 0;
-			if (inLimit <= 0) {
-			    return len;
-			}
-		    }
-		    if (precedingBackslash) {
-			len -= 1;
-			//skip the leading whitespace characters in following line
-			skipWhiteSpace = true;
-			appendedLineBegin = true;
-			precedingBackslash = false;
-			if (c == '\r') {
+                                  :inStream.read(inByteBuf);
+                        inOff = 0;
+                        if (inLimit <= 0) {
+                            return len;
+                        }
+                    }
+                    if (precedingBackslash) {
+                        len -= 1;
+                        //skip the leading whitespace characters in following line
+                        skipWhiteSpace = true;
+                        appendedLineBegin = true;
+                        precedingBackslash = false;
+                        if (c == '\r') {
                             skipLF = true;
-			}
-		    } else {
-			return len;
-		    }
-		}
-	    }
-	}
+                        }
+                    } else {
+                        return len;
+                    }
+                }
+            }
+        }
     }
-    
+
     /*
      * Converts encoded &#92;uxxxx to unicode chars
      * and changes special saved chars to their original forms
@@ -535,52 +534,52 @@ class Properties extends Hashtable<Object,Object> {
         if (convtBuf.length < len) {
             int newLen = len * 2;
             if (newLen < 0) {
-	        newLen = Integer.MAX_VALUE;
-	    } 
-	    convtBuf = new char[newLen];
+                newLen = Integer.MAX_VALUE;
+            }
+            convtBuf = new char[newLen];
         }
         char aChar;
-        char[] out = convtBuf; 
+        char[] out = convtBuf;
         int outLen = 0;
         int end = off + len;
 
         while (off < end) {
             aChar = in[off++];
             if (aChar == '\\') {
-                aChar = in[off++];   
+                aChar = in[off++];
                 if(aChar == 'u') {
                     // Read the xxxx
                     int value=0;
-		    for (int i=0; i<4; i++) {
-		        aChar = in[off++];  
-		        switch (aChar) {
-		          case '0': case '1': case '2': case '3': case '4':
-		          case '5': case '6': case '7': case '8': case '9':
-		             value = (value << 4) + aChar - '0';
-			     break;
-			  case 'a': case 'b': case 'c':
+                    for (int i=0; i<4; i++) {
+                        aChar = in[off++];
+                        switch (aChar) {
+                          case '0': case '1': case '2': case '3': case '4':
+                          case '5': case '6': case '7': case '8': case '9':
+                             value = (value << 4) + aChar - '0';
+                             break;
+                          case 'a': case 'b': case 'c':
                           case 'd': case 'e': case 'f':
-			     value = (value << 4) + 10 + aChar - 'a';
-			     break;
-			  case 'A': case 'B': case 'C':
+                             value = (value << 4) + 10 + aChar - 'a';
+                             break;
+                          case 'A': case 'B': case 'C':
                           case 'D': case 'E': case 'F':
-			     value = (value << 4) + 10 + aChar - 'A';
-			     break;
-			  default:
+                             value = (value << 4) + 10 + aChar - 'A';
+                             break;
+                          default:
                               throw new IllegalArgumentException(
                                            "Malformed \\uxxxx encoding.");
                         }
                      }
                     out[outLen++] = (char)value;
                 } else {
-                    if (aChar == 't') aChar = '\t'; 
+                    if (aChar == 't') aChar = '\t';
                     else if (aChar == 'r') aChar = '\r';
                     else if (aChar == 'n') aChar = '\n';
-                    else if (aChar == 'f') aChar = '\f'; 
+                    else if (aChar == 'f') aChar = '\f';
                     out[outLen++] = aChar;
                 }
             } else {
-	        out[outLen++] = aChar;
+                out[outLen++] = aChar;
             }
         }
         return new String (out, 0, outLen);
@@ -591,8 +590,8 @@ class Properties extends Hashtable<Object,Object> {
      * special characters with a preceding slash
      */
     private String saveConvert(String theString,
-			       boolean escapeSpace,
-			       boolean escapeUnicode) {
+                               boolean escapeSpace,
+                               boolean escapeUnicode) {
         int len = theString.length();
         int bufLen = len * 2;
         if (bufLen < 0) {
@@ -613,11 +612,11 @@ class Properties extends Hashtable<Object,Object> {
                 continue;
             }
             switch(aChar) {
-		case ' ':
-		    if (x == 0 || escapeSpace) 
-			outBuffer.append('\\');
-		    outBuffer.append(' ');
-		    break;
+                case ' ':
+                    if (x == 0 || escapeSpace)
+                        outBuffer.append('\\');
+                    outBuffer.append(' ');
+                    break;
                 case '\t':outBuffer.append('\\'); outBuffer.append('t');
                           break;
                 case '\n':outBuffer.append('\\'); outBuffer.append('n');
@@ -648,10 +647,10 @@ class Properties extends Hashtable<Object,Object> {
         return outBuffer.toString();
     }
 
-    private static void writeComments(BufferedWriter bw, String comments) 
+    private static void writeComments(BufferedWriter bw, String comments)
         throws IOException {
         bw.write("#");
-        int len = comments.length();  
+        int len = comments.length();
         int current = 0;
         int last = 0;
         char[] uu = new char[6];
@@ -659,8 +658,8 @@ class Properties extends Hashtable<Object,Object> {
         uu[1] = 'u';
         while (current < len) {
             char c = comments.charAt(current);
-	    if (c > '\u00ff' || c == '\n' || c == '\r') {
-	        if (last != current) 
+            if (c > '\u00ff' || c == '\n' || c == '\r') {
+                if (last != current)
                     bw.write(comments.substring(last, current));
                 if (c > '\u00ff') {
                     uu[2] = toHex((c >> 12) & 0xf);
@@ -670,21 +669,21 @@ class Properties extends Hashtable<Object,Object> {
                     bw.write(new String(uu));
                 } else {
                     bw.newLine();
-                    if (c == '\r' && 
-			current != len - 1 && 
-			comments.charAt(current + 1) == '\n') {
+                    if (c == '\r' &&
+                        current != len - 1 &&
+                        comments.charAt(current + 1) == '\n') {
                         current++;
                     }
                     if (current == len - 1 ||
                         (comments.charAt(current + 1) != '#' &&
-			comments.charAt(current + 1) != '!'))
+                        comments.charAt(current + 1) != '!'))
                         bw.write("#");
                 }
                 last = current + 1;
-	    } 
+            }
             current++;
-	}
-        if (last != current) 
+        }
+        if (last != current)
             bw.write(comments.substring(last, current));
         bw.newLine();
     }
@@ -695,14 +694,14 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @deprecated This method does not throw an IOException if an I/O error
      * occurs while saving the property list.  The preferred way to save a
-     * properties list is via the <code>store(OutputStream out, 
-     * String comments)</code> method or the 
+     * properties list is via the <code>store(OutputStream out,
+     * String comments)</code> method or the
      * <code>storeToXML(OutputStream os, String comment)</code> method.
      *
      * @param   out      an output stream.
      * @param   comments   a description of the property list.
      * @exception  ClassCastException  if this <code>Properties</code> object
-     *             contains any keys or values that are not 
+     *             contains any keys or values that are not
      *             <code>Strings</code>.
      */
     @Deprecated
@@ -715,7 +714,7 @@ class Properties extends Hashtable<Object,Object> {
 
     /**
      * Writes this property list (key and element pairs) in this
-     * <code>Properties</code> table to the output character stream in a 
+     * <code>Properties</code> table to the output character stream in a
      * format suitable for using the {@link #load(java.io.Reader) load(Reader)}
      * method.
      * <p>
@@ -728,8 +727,8 @@ class Properties extends Hashtable<Object,Object> {
      * identifying comment. Any one of a line feed ('\n'), a carriage
      * return ('\r'), or a carriage return followed immediately by a line feed
      * in comments is replaced by a line separator generated by the <code>Writer</code>
-     * and if the next character in comments is not character <code>#</code> or 
-     * character <code>!</code> then an ASCII <code>#</code> is written out 
+     * and if the next character in comments is not character <code>#</code> or
+     * character <code>!</code> then an ASCII <code>#</code> is written out
      * after that line separator.
      * <p>
      * Next, a comment line is always written, consisting of an ASCII
@@ -748,7 +747,7 @@ class Properties extends Hashtable<Object,Object> {
      * <code>!</code>, <code>=</code>, and <code>:</code> are written
      * with a preceding backslash to ensure that they are properly loaded.
      * <p>
-     * After the entries have been written, the output stream is flushed.  
+     * After the entries have been written, the output stream is flushed.
      * The output stream remains open after this method returns.
      * <p>
      *
@@ -765,9 +764,9 @@ class Properties extends Hashtable<Object,Object> {
         throws IOException
     {
         store0((writer instanceof BufferedWriter)?(BufferedWriter)writer
-	                                         : new BufferedWriter(writer),
-	       comments,
-	       false);
+                                                 : new BufferedWriter(writer),
+               comments,
+               false);
     }
 
     /**
@@ -779,24 +778,24 @@ class Properties extends Hashtable<Object,Object> {
      * Properties from the defaults table of this <code>Properties</code>
      * table (if any) are <i>not</i> written out by this method.
      * <p>
-     * This method outputs the comments, properties keys and values in 
+     * This method outputs the comments, properties keys and values in
      * the same format as specified in
      * {@link #store(java.io.Writer, java.lang.String) store(Writer)},
      * with the following differences:
      * <ul>
      * <li>The stream is written using the ISO 8859-1 character encoding.
      *
-     * <li>Characters not in Latin-1 in the comments are written as 
-     * <code>&#92;u</code><i>xxxx</i> for their appropriate unicode 
-     * hexadecimal value <i>xxxx</i>. 
-     * 
+     * <li>Characters not in Latin-1 in the comments are written as
+     * <code>&#92;u</code><i>xxxx</i> for their appropriate unicode
+     * hexadecimal value <i>xxxx</i>.
+     *
      * <li>Characters less than <code>&#92;u0020</code> and characters greater
      * than <code>&#92;u007E</code> in property keys or values are written
      * as <code>&#92;u</code><i>xxxx</i> for the appropriate hexadecimal
-     * value <i>xxxx</i>. 
+     * value <i>xxxx</i>.
      * </ul>
      * <p>
-     * After the entries have been written, the output stream is flushed.  
+     * After the entries have been written, the output stream is flushed.
      * The output stream remains open after this method returns.
      * <p>
      * @param   out      an output stream.
@@ -812,8 +811,8 @@ class Properties extends Hashtable<Object,Object> {
         throws IOException
     {
         store0(new BufferedWriter(new OutputStreamWriter(out, "8859_1")),
-	       comments,
-	       true);
+               comments,
+               true);
     }
 
     private void store0(BufferedWriter bw, String comments, boolean escUnicode)
@@ -824,19 +823,19 @@ class Properties extends Hashtable<Object,Object> {
         }
         bw.write("#" + new Date().toString());
         bw.newLine();
-	synchronized (this) {
+        synchronized (this) {
             for (Enumeration e = keys(); e.hasMoreElements();) {
                 String key = (String)e.nextElement();
-		String val = (String)get(key);
-		key = saveConvert(key, true, escUnicode);
-		/* No need to escape embedded and trailing spaces for value, hence
-		 * pass false to flag.
-		 */
-		val = saveConvert(val, false, escUnicode);
-		bw.write(key + "=" + val);
+                String val = (String)get(key);
+                key = saveConvert(key, true, escUnicode);
+                /* No need to escape embedded and trailing spaces for value, hence
+                 * pass false to flag.
+                 */
+                val = saveConvert(val, false, escUnicode);
+                bw.write(key + "=" + val);
                 bw.newLine();
-	    }
-	}
+            }
+        }
         bw.flush();
     }
 
@@ -863,7 +862,7 @@ class Properties extends Hashtable<Object,Object> {
      * @since 1.5
      */
     public synchronized void loadFromXML(InputStream in)
-        throws IOException, InvalidPropertiesFormatException 
+        throws IOException, InvalidPropertiesFormatException
     {
         if (in == null)
             throw new NullPointerException();
@@ -886,7 +885,7 @@ class Properties extends Hashtable<Object,Object> {
      *         results in an <tt>IOException</tt>.
      * @throws NullPointerException if <code>os</code> is null.
      * @throws ClassCastException  if this <code>Properties</code> object
-     *         contains any keys or values that are not 
+     *         contains any keys or values that are not
      *         <code>Strings</code>.
      * @see    #loadFromXML(InputStream)
      * @since 1.5
@@ -921,12 +920,12 @@ class Properties extends Hashtable<Object,Object> {
      * @throws NullPointerException if <code>os</code> is <code>null</code>,
      *         or if <code>encoding</code> is <code>null</code>.
      * @throws ClassCastException  if this <code>Properties</code> object
-     *         contains any keys or values that are not 
+     *         contains any keys or values that are not
      *         <code>Strings</code>.
      * @see    #loadFromXML(InputStream)
      * @since 1.5
      */
-    public synchronized void storeToXML(OutputStream os, String comment, 
+    public synchronized void storeToXML(OutputStream os, String comment,
                                        String encoding)
         throws IOException
     {
@@ -947,9 +946,9 @@ class Properties extends Hashtable<Object,Object> {
      * @see     #defaults
      */
     public String getProperty(String key) {
-	Object oval = super.get(key);
-	String sval = (oval instanceof String) ? (String)oval : null;
-	return ((sval == null) && (defaults != null)) ? defaults.getProperty(key) : sval;
+        Object oval = super.get(key);
+        String sval = (oval instanceof String) ? (String)oval : null;
+        return ((sval == null) && (defaults != null)) ? defaults.getProperty(key) : sval;
     }
 
     /**
@@ -966,8 +965,8 @@ class Properties extends Hashtable<Object,Object> {
      * @see     #defaults
      */
     public String getProperty(String key, String defaultValue) {
-	String val = getProperty(key);
-	return (val == null) ? defaultValue : val;
+        String val = getProperty(key);
+        return (val == null) ? defaultValue : val;
     }
 
     /**
@@ -979,15 +978,15 @@ class Properties extends Hashtable<Object,Object> {
      * @return  an enumeration of all the keys in this property list, including
      *          the keys in the default property list.
      * @throws  ClassCastException if any key in this property list
-     *          is not a string. 
+     *          is not a string.
      * @see     java.util.Enumeration
      * @see     java.util.Properties#defaults
      * @see     #stringPropertyNames
      */
     public Enumeration<?> propertyNames() {
-	Hashtable h = new Hashtable();
-	enumerate(h);
-	return h.keys();
+        Hashtable h = new Hashtable();
+        enumerate(h);
+        return h.keys();
     }
 
     /**
@@ -995,7 +994,7 @@ class Properties extends Hashtable<Object,Object> {
      * the key and its corresponding value are strings,
      * including distinct keys in the default property list if a key
      * of the same name has not already been found from the main
-     * properties list.  Properties whose key or value is not 
+     * properties list.  Properties whose key or value is not
      * of type <tt>String</tt> are omitted.
      * <p>
      * The returned set is not backed by the <tt>Properties</tt> object.
@@ -1009,9 +1008,9 @@ class Properties extends Hashtable<Object,Object> {
      * @since   1.6
      */
     public Set<String> stringPropertyNames() {
-	Hashtable<String, String> h = new Hashtable<String, String>();
-	enumerateStringProperties(h);
-	return h.keySet();
+        Hashtable<String, String> h = new Hashtable<String, String>();
+        enumerateStringProperties(h);
+        return h.keySet();
     }
 
     /**
@@ -1020,20 +1019,20 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @param   out   an output stream.
      * @throws  ClassCastException if any key in this property list
-     *          is not a string. 
+     *          is not a string.
      */
     public void list(PrintStream out) {
-	out.println("-- listing properties --");
-	Hashtable h = new Hashtable();
-	enumerate(h);
-	for (Enumeration e = h.keys() ; e.hasMoreElements() ;) {
-	    String key = (String)e.nextElement();
-	    String val = (String)h.get(key);
-	    if (val.length() > 40) {
+        out.println("-- listing properties --");
+        Hashtable h = new Hashtable();
+        enumerate(h);
+        for (Enumeration e = h.keys() ; e.hasMoreElements() ;) {
+            String key = (String)e.nextElement();
+            String val = (String)h.get(key);
+            if (val.length() > 40) {
                 val = val.substring(0, 37) + "...";
-	    }
-	    out.println(key + "=" + val);
-	}
+            }
+            out.println(key + "=" + val);
+        }
     }
 
     /**
@@ -1042,7 +1041,7 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @param   out   an output stream.
      * @throws  ClassCastException if any key in this property list
-     *          is not a string. 
+     *          is not a string.
      * @since   JDK1.1
      */
     /*
@@ -1051,17 +1050,17 @@ class Properties extends Hashtable<Object,Object> {
      * compile this file.
      */
     public void list(PrintWriter out) {
-	out.println("-- listing properties --");
-	Hashtable h = new Hashtable();
-	enumerate(h);
-	for (Enumeration e = h.keys() ; e.hasMoreElements() ;) {
-	    String key = (String)e.nextElement();
-	    String val = (String)h.get(key);
-	    if (val.length() > 40) {
-		val = val.substring(0, 37) + "...";
-	    }
-	    out.println(key + "=" + val);
-	}
+        out.println("-- listing properties --");
+        Hashtable h = new Hashtable();
+        enumerate(h);
+        for (Enumeration e = h.keys() ; e.hasMoreElements() ;) {
+            String key = (String)e.nextElement();
+            String val = (String)h.get(key);
+            if (val.length() > 40) {
+                val = val.substring(0, 37) + "...";
+            }
+            out.println(key + "=" + val);
+        }
     }
 
     /**
@@ -1071,13 +1070,13 @@ class Properties extends Hashtable<Object,Object> {
      *         is not of String type.
      */
     private synchronized void enumerate(Hashtable h) {
-	if (defaults != null) {
-	    defaults.enumerate(h);
-	}
-	for (Enumeration e = keys() ; e.hasMoreElements() ;) {
-	    String key = (String)e.nextElement();
-	    h.put(key, get(key));
-	}
+        if (defaults != null) {
+            defaults.enumerate(h);
+        }
+        for (Enumeration e = keys() ; e.hasMoreElements() ;) {
+            String key = (String)e.nextElement();
+            h.put(key, get(key));
+        }
     }
 
     /**
@@ -1086,28 +1085,28 @@ class Properties extends Hashtable<Object,Object> {
      * @param h the hashtable
      */
     private synchronized void enumerateStringProperties(Hashtable<String, String> h) {
-	if (defaults != null) {
-	    defaults.enumerateStringProperties(h);
-	}
-	for (Enumeration e = keys() ; e.hasMoreElements() ;) {
-	    Object k = e.nextElement();
+        if (defaults != null) {
+            defaults.enumerateStringProperties(h);
+        }
+        for (Enumeration e = keys() ; e.hasMoreElements() ;) {
+            Object k = e.nextElement();
             Object v = get(k);
             if (k instanceof String && v instanceof String) {
-	        h.put((String) k, (String) v);
+                h.put((String) k, (String) v);
             }
-	}
+        }
     }
 
     /**
      * Convert a nibble to a hex character
-     * @param	nibble	the nibble to convert.
+     * @param   nibble  the nibble to convert.
      */
     private static char toHex(int nibble) {
-	return hexDigit[(nibble & 0xF)];
+        return hexDigit[(nibble & 0xF)];
     }
 
     /** A table of hex digits */
     private static final char[] hexDigit = {
-	'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
+        '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
     };
 }

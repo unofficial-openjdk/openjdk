@@ -47,12 +47,12 @@ static int
 real_size(int alignment, int nbytes)
 {
     if ( alignment > 1 ) {
-	int wasted;
+        int wasted;
 
-	wasted = alignment - ( nbytes % alignment );
-	if ( wasted != alignment ) {
-	    nbytes += wasted;
-	}
+        wasted = alignment - ( nbytes % alignment );
+        if ( wasted != alignment ) {
+            nbytes += wasted;
+        }
     }
     return nbytes;
 }
@@ -71,13 +71,13 @@ add_block(Blocks *blocks, int nbytes)
     header_size          = real_size(blocks->alignment, sizeof(BlockHeader));
     block_size           = blocks->elem_size*blocks->population;
     if ( nbytes > block_size ) {
-	block_size = real_size(blocks->alignment, nbytes);
+        block_size = real_size(blocks->alignment, nbytes);
     }
     block_header         = (BlockHeader*)HPROF_MALLOC(block_size+header_size);
     block_header->next   = NULL;
     block_header->bytes_left = block_size;
     block_header->next_pos   = header_size;
-   
+
     /* Link in new block */
     if ( blocks->current_block != NULL ) {
         blocks->current_block->next = block_header;
@@ -118,9 +118,9 @@ blocks_alloc(Blocks *blocks, int nbytes)
     HPROF_ASSERT(blocks!=NULL);
     HPROF_ASSERT(nbytes>=0);
     if ( nbytes == 0 ) {
-	return NULL;
+        return NULL;
     }
-    
+
     block = blocks->current_block;
     nbytes = real_size(blocks->alignment, nbytes);
     if ( block == NULL || block->bytes_left < nbytes ) {
@@ -141,15 +141,14 @@ blocks_term(Blocks *blocks)
     BlockHeader *block;
 
     HPROF_ASSERT(blocks!=NULL);
-    
+
     block = blocks->first_block;
     while ( block != NULL ) {
-	BlockHeader *next_block;
+        BlockHeader *next_block;
 
-	next_block = block->next;
-	HPROF_FREE(block);
-	block = next_block;
+        next_block = block->next;
+        HPROF_FREE(block);
+        block = next_block;
     }
     HPROF_FREE(blocks);
 }
-

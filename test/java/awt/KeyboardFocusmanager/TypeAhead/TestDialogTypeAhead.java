@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* 
+/*
 test
 @bug 4799136
 @summary Tests that type-ahead for dialog works and doesn't block program
@@ -36,7 +36,7 @@ test
 //  were valid as well as the html file.)
 // Also, note the area= after Your Name in the author tag.  Here, you
 //  should put which functional area the test falls in.  See the
-//  AWT-core home page -> test areas and/or -> AWT team  for a list of 
+//  AWT-core home page -> test areas and/or -> AWT team  for a list of
 //  areas.
 // Note also the 'TestDialogTypeAhead.html' in the run tag.  This should
 //  be changed to the name of the test.
@@ -71,7 +71,7 @@ import test.java.awt.regtesthelpers.Util;
 // tests...
 
 
-public class TestDialogTypeAhead extends Applet 
+public class TestDialogTypeAhead extends Applet
 {
     //Declare things used in the test, like buttons and labels here
     static Frame f;
@@ -82,9 +82,9 @@ public class TestDialogTypeAhead extends Applet
     static Semaphore robotSema = new Semaphore();
     static volatile boolean gotFocus = false;
     static Robot robot;
-    public void init() 
+    public void init()
     {
-        //Create instructions for the user here, as well as set up 
+        //Create instructions for the user here, as well as set up
         // the environment -- set the layout manager, add buttons,
         // etc.
 
@@ -93,7 +93,7 @@ public class TestDialogTypeAhead extends Applet
                     System.err.println(e.toString());
                 }
             }, AWTEvent.KEY_EVENT_MASK);
-      
+
         this.setLayout (new BorderLayout ());
 
         f = new Frame("frame");
@@ -102,7 +102,7 @@ public class TestDialogTypeAhead extends Applet
         ok = new Button("ok");
         d.add(ok);
         d.pack();
-       
+
         ok.addKeyListener(new KeyAdapter() {
                 public void keyPressed(KeyEvent e) {
                     System.err.println("OK pressed");
@@ -111,7 +111,7 @@ public class TestDialogTypeAhead extends Applet
                     // Typed-ahead key events should only be accepted if
                     // they arrive after FOCUS_GAINED
                     if (gotFocus) {
-                        pressSema.raise();                    
+                        pressSema.raise();
                     }
                 }
             });
@@ -133,9 +133,9 @@ public class TestDialogTypeAhead extends Applet
                                 TestDialogTypeAhead.this.d.toFront();
                                 TestDialogTypeAhead.this.moveMouseOver(d);
                             }
-                        });                     
+                        });
 
-                    d.setVisible(true); 
+                    d.setVisible(true);
                 }
             });
 
@@ -162,15 +162,15 @@ public class TestDialogTypeAhead extends Applet
         makeFocused(b);
         waitForIdle();
         System.err.println("b is focused");
-        
+
         robot.keyPress(KeyEvent.VK_SPACE);
         robot.keyRelease(KeyEvent.VK_SPACE);
         try {
             robotSema.doWait(1000);
         } catch (InterruptedException ie) {
             throw new RuntimeException("Interrupted!");
-        } 
-        robot.keyPress(KeyEvent.VK_SPACE);        
+        }
+        robot.keyPress(KeyEvent.VK_SPACE);
         robot.keyRelease(KeyEvent.VK_SPACE);
         waitForIdle();
         try {
@@ -181,30 +181,30 @@ public class TestDialogTypeAhead extends Applet
         if (!pressSema.getState()) {
             throw new RuntimeException("Type-ahead doesn't work");
         }
-        
+
     }// start()
 
     private void moveMouseOver(Container c) {
         Point p = c.getLocationOnScreen();
-        Dimension d = c.getSize();        
+        Dimension d = c.getSize();
         robot.mouseMove(p.x + (int)(d.getWidth()/2), p.y + (int)(d.getHeight()/2));
     }
     private void waitForIdle() {
-	try {
+        try {
             Toolkit.getDefaultToolkit().sync();
             sun.awt.SunToolkit.flushPendingEvents();
-	    EventQueue.invokeAndWait( new Runnable() { 
-					    public void run() {
-						// dummy implementation
-					    }
-					} );
-	} catch(InterruptedException ite) {
-	    System.err.println("Robot.waitForIdle, non-fatal exception caught:");
-	    ite.printStackTrace();
-	} catch(InvocationTargetException ine) {
-	    System.err.println("Robot.waitForIdle, non-fatal exception caught:");
-	    ine.printStackTrace();
-	}
+            EventQueue.invokeAndWait( new Runnable() {
+                                            public void run() {
+                                                // dummy implementation
+                                            }
+                                        } );
+        } catch(InterruptedException ite) {
+            System.err.println("Robot.waitForIdle, non-fatal exception caught:");
+            ite.printStackTrace();
+        } catch(InvocationTargetException ine) {
+            System.err.println("Robot.waitForIdle, non-fatal exception caught:");
+            ine.printStackTrace();
+        }
     }
 
     private void waitTillShown(Component c) {
@@ -256,7 +256,7 @@ public class TestDialogTypeAhead extends Applet
                 return;
             }
             waiting++;
-            wait();    
+            wait();
             waiting--;
         }
         public synchronized void doWait(int timeout) throws InterruptedException {
@@ -264,7 +264,7 @@ public class TestDialogTypeAhead extends Applet
                 return;
             }
             waiting++;
-            wait(timeout);    
+            wait(timeout);
             waiting--;
         }
         public synchronized void raise() {
@@ -275,7 +275,7 @@ public class TestDialogTypeAhead extends Applet
         }
         public synchronized boolean getState() {
             return state;
-        }         
+        }
     }
 
     // Fix for 6446952.
@@ -315,7 +315,7 @@ public class TestDialogTypeAhead extends Applet
             InvocationHandler handler = new InvocationHandler() {
                     public Object invoke(Object proxy, Method method, Object[] args) {
                         if (method.getName() == "show") {
-                            trigger.raise(); 
+                            trigger.raise();
                         }
 
                         Object ret = null;
@@ -345,8 +345,8 @@ public class TestDialogTypeAhead extends Applet
 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard 
-  chunk of code whose purpose is to make user 
+ DO NOT modify anything below -- it's a standard
+  chunk of code whose purpose is to make user
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -359,12 +359,12 @@ public class TestDialogTypeAhead extends Applet
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well 
+ This mimics System.out.println but works within the test harness as well
   as standalone.
  */
 
-class Sysout 
-{ 
+class Sysout
+{
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -374,7 +374,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
+
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -383,8 +383,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-   
-      
+
+
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -412,20 +412,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-   
+
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name ) 
+    public TestDialog( Frame frame, String name )
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-      
+
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-      
+
         pack();
-      
+
         show();
     }// TestDialog()
 
@@ -439,7 +439,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        { 
+        {
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -450,25 +450,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-               
+
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-               
+
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else 
-                { 
+                else
+                {
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-            
+
                 instructionsText.append( printStr + "\n" );
-            
+
             }// while
-         
+
         }// for
-      
+
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -476,7 +476,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }  
-   
-}// TestDialog  class    
-  
+    }
+
+}// TestDialog  class

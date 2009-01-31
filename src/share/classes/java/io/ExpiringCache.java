@@ -23,9 +23,7 @@
  * have any questions.
  */
 
-/*
- * %W% %E%
- */
+
 
 package java.io;
 
@@ -45,7 +43,7 @@ class ExpiringCache {
     static class Entry {
         private long   timestamp;
         private String val;
-        
+
         Entry(long timestamp, String val) {
             this.timestamp = timestamp;
             this.val = val;

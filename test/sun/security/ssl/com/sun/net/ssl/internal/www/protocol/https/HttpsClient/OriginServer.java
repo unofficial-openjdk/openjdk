@@ -47,10 +47,10 @@ public abstract class OriginServer implements Runnable {
      */
     protected OriginServer(ServerSocket ss) throws Exception
     {
-	server = ss;
-	newListener();
-	if (serverException != null)
-	    throw serverException;
+        server = ss;
+        newListener();
+        if (serverException != null)
+            throw serverException;
     }
 
     /**
@@ -67,58 +67,58 @@ public abstract class OriginServer implements Runnable {
      */
     public void run()
     {
-	Socket socket;
+        Socket socket;
 
-	// accept a connection
-	try {
-	    socket = server.accept();
-	} catch (IOException e) {
-	    System.out.println("Class Server died: " + e.getMessage());
-	    serverException = e;
-	    return;
-	}
-	try {
-	    DataOutputStream out =
-		new DataOutputStream(socket.getOutputStream());
-	    try {
-		BufferedReader in =
-		    new BufferedReader(new InputStreamReader(
-				socket.getInputStream()));
-		// read the request
-		readRequest(in);
-		// retrieve bytecodes
-		byte[] bytecodes = getBytes();
-		// send bytecodes in response (assumes HTTP/1.0 or later)
-		try {
-		    out.writeBytes("HTTP/1.0 200 OK\r\n");
-		    out.writeBytes("Content-Length: " + bytecodes.length +
-				   "\r\n");
-		    out.writeBytes("Content-Type: text/html\r\n\r\n");
-		    out.write(bytecodes);
-		    out.flush();
-		} catch (IOException ie) {
-		    serverException = ie;
-		    return;
-		}
+        // accept a connection
+        try {
+            socket = server.accept();
+        } catch (IOException e) {
+            System.out.println("Class Server died: " + e.getMessage());
+            serverException = e;
+            return;
+        }
+        try {
+            DataOutputStream out =
+                new DataOutputStream(socket.getOutputStream());
+            try {
+                BufferedReader in =
+                    new BufferedReader(new InputStreamReader(
+                                socket.getInputStream()));
+                // read the request
+                readRequest(in);
+                // retrieve bytecodes
+                byte[] bytecodes = getBytes();
+                // send bytecodes in response (assumes HTTP/1.0 or later)
+                try {
+                    out.writeBytes("HTTP/1.0 200 OK\r\n");
+                    out.writeBytes("Content-Length: " + bytecodes.length +
+                                   "\r\n");
+                    out.writeBytes("Content-Type: text/html\r\n\r\n");
+                    out.write(bytecodes);
+                    out.flush();
+                } catch (IOException ie) {
+                    serverException = ie;
+                    return;
+                }
 
-	    } catch (Exception e) {
-		// write out error response
-		out.writeBytes("HTTP/1.0 400 " + e.getMessage() + "\r\n");
-		out.writeBytes("Content-Type: text/html\r\n\r\n");
-		out.flush();
-	    }
+            } catch (Exception e) {
+                // write out error response
+                out.writeBytes("HTTP/1.0 400 " + e.getMessage() + "\r\n");
+                out.writeBytes("Content-Type: text/html\r\n\r\n");
+                out.flush();
+            }
 
-	} catch (IOException ex) {
-	    System.out.println("error writing response: " + ex.getMessage());
-	    serverException = ex;
+        } catch (IOException ex) {
+            System.out.println("error writing response: " + ex.getMessage());
+            serverException = ex;
 
-	} finally {
-	    try {
-		socket.close();
-	    } catch (IOException e) {
-		serverException = e;
-	    }
-	}
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                serverException = e;
+            }
+        }
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class OriginServer implements Runnable {
      */
     private void newListener()
     {
-	(new Thread(this)).start();
+        (new Thread(this)).start();
     }
 
     /**
@@ -134,15 +134,15 @@ public abstract class OriginServer implements Runnable {
      * for this testing
      */
     private static void readRequest(BufferedReader in)
-	throws IOException
+        throws IOException
     {
-	String line = null;
-	System.out.println("Server received: ");
+        String line = null;
+        System.out.println("Server received: ");
         do {
             if (line != null)
-		System.out.println(line);
-	    line = in.readLine();
-	} while ((line.length() != 0) &&
-		(line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
+                System.out.println(line);
+            line = in.readLine();
+        } while ((line.length() != 0) &&
+                (line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
     }
 }

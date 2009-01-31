@@ -41,14 +41,14 @@
  * with X11R6.4.2 (and later) but not with X11R6.4.1.
  * So, it ought to ship with Solaris 9, but not Solaris 8.
  * Same deal for Linux - newer versions of XFree have it.
- * 
- * Note: this is mainly done for the hp keysyms; it does NOT 
- * give us the osf keysyms that are also defined in HPkeysym.h.  
- * This is because we are already getting /Xm/VirtKeys.h 
- * from awt_p.h <- /Xm/Xm.h <- /Xm/VirtKeys.h, and VirtKeys.h 
- * #defines _OSF_Keysyms before we get here.  We are 
- * missing a couple of osf keysyms because of this, 
- * so I have #defined them below.  
+ *
+ * Note: this is mainly done for the hp keysyms; it does NOT
+ * give us the osf keysyms that are also defined in HPkeysym.h.
+ * This is because we are already getting /Xm/VirtKeys.h
+ * from awt_p.h <- /Xm/Xm.h <- /Xm/VirtKeys.h, and VirtKeys.h
+ * #defines _OSF_Keysyms before we get here.  We are
+ * missing a couple of osf keysyms because of this,
+ * so I have #defined them below.
  */
 #include "HPkeysym.h"   /* HP vendor-specific */
 
@@ -82,28 +82,28 @@
 #include <jvm.h>
 #include <jawt.h>
 
-#ifdef NDEBUG	/* NDEBUG overrides DEBUG */
+#ifdef NDEBUG   /* NDEBUG overrides DEBUG */
 #undef DEBUG
 #endif
 
 /*
- * Two osf keys are not defined in standard keysym.h,  
- * /Xm/VirtKeys.h, or HPkeysym.h, so I added them below.  
- * I found them in /usr/openwin/lib/X11/XKeysymDB 
+ * Two osf keys are not defined in standard keysym.h,
+ * /Xm/VirtKeys.h, or HPkeysym.h, so I added them below.
+ * I found them in /usr/openwin/lib/X11/XKeysymDB
  */
-#ifndef osfXK_Prior 
+#ifndef osfXK_Prior
 #define osfXK_Prior 0x1004FF55
 #endif
-#ifndef osfXK_Next 
+#ifndef osfXK_Next
 #define osfXK_Next 0x1004FF56
 #endif
 /*
  * osfXK_Escape is defined in HPkeysym.h, but not in
  * /Xm/VirtKeys.h, so I added it below.  It is also in
  * /usr/openwin/lib/X11/XKeysymDB
- * Note: it is in /Xm/VirtKeys.h in the AWT motif workspace, 
- * but not in /usr/local/Motif/include/Xm/VirtKeys.h 
- * on the Solaris 7, 8, or 9 machines I tried.   
+ * Note: it is in /Xm/VirtKeys.h in the AWT motif workspace,
+ * but not in /usr/local/Motif/include/Xm/VirtKeys.h
+ * on the Solaris 7, 8, or 9 machines I tried.
  */
 #ifndef osfXK_Escape
 #define osfXK_Escape 0x1004FF1B
@@ -141,7 +141,7 @@ Boolean awt_UseXKB = False;
 
 void awt_post_java_key_event(XtPointer client_data, jint id,
                              XEvent *xevent, Time when, jint keycode,
-                             jchar keychar, jint modifiers, 
+                             jchar keychar, jint modifiers,
                              jint keyLocation, XEvent *anEvent);
 void awt_post_java_focus_event(XtPointer client_data, jint id, jobject cause,
                                XEvent *event);
@@ -159,15 +159,15 @@ typedef struct KEYMAP_ENTRY {
     jint keyLocation;
 } KeymapEntry;
 
-/* NB: XK_R? keysyms are for Type 4 keyboards.  
+/* NB: XK_R? keysyms are for Type 4 keyboards.
  * The corresponding XK_F? keysyms are for Type 5
  *
- * Note: this table must be kept in sorted order, since it is traversed 
- * according to both Java keycode and X keysym.  There are a number of 
- * keycodes that map to more than one corresponding keysym, and we need 
- * to choose the right one.  Unfortunately, there are some keysyms that 
- * can map to more than one keycode, depending on what kind of keyboard 
- * is in use (e.g. F11 and F12).  
+ * Note: this table must be kept in sorted order, since it is traversed
+ * according to both Java keycode and X keysym.  There are a number of
+ * keycodes that map to more than one corresponding keysym, and we need
+ * to choose the right one.  Unfortunately, there are some keysyms that
+ * can map to more than one keycode, depending on what kind of keyboard
+ * is in use (e.g. F11 and F12).
  */
 
 KeymapEntry keymapTable[] =
@@ -389,17 +389,17 @@ KeymapEntry keymapTable[] =
     {java_awt_event_KeyEvent_VK_F11, SunXK_F36, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     {java_awt_event_KeyEvent_VK_F12, SunXK_F37, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
 
-    /* X11 keysym names for input method related keys don't always 
-     * match keytop engravings or Java virtual key names, so here we 
+    /* X11 keysym names for input method related keys don't always
+     * match keytop engravings or Java virtual key names, so here we
      * only map constants that we've found on real keyboards.
      */
     /* Type 5c Japanese keyboard: kakutei */
-    {java_awt_event_KeyEvent_VK_ACCEPT, XK_Execute, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD}, 
+    {java_awt_event_KeyEvent_VK_ACCEPT, XK_Execute, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     /* Type 5c Japanese keyboard: henkan */
-    {java_awt_event_KeyEvent_VK_CONVERT, XK_Kanji, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD}, 
+    {java_awt_event_KeyEvent_VK_CONVERT, XK_Kanji, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     /* Type 5c Japanese keyboard: nihongo */
-    {java_awt_event_KeyEvent_VK_INPUT_METHOD_ON_OFF, XK_Henkan_Mode, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD}, 
-    /* VK_KANA_LOCK is handled separately because it generates the 
+    {java_awt_event_KeyEvent_VK_INPUT_METHOD_ON_OFF, XK_Henkan_Mode, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
+    /* VK_KANA_LOCK is handled separately because it generates the
      * same keysym as ALT_GRAPH in spite of its different behavior.
      */
 
@@ -440,7 +440,7 @@ KeymapEntry keymapTable[] =
     {java_awt_event_KeyEvent_VK_PASTE, osfXK_Paste, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     {java_awt_event_KeyEvent_VK_UNDO, osfXK_Undo, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
 
-    /* Dead key mappings (for European keyboards) */ 
+    /* Dead key mappings (for European keyboards) */
     {java_awt_event_KeyEvent_VK_DEAD_GRAVE, XK_dead_grave, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     {java_awt_event_KeyEvent_VK_DEAD_ACUTE, XK_dead_acute, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
     {java_awt_event_KeyEvent_VK_DEAD_CIRCUMFLEX, XK_dead_circumflex, FALSE, java_awt_event_KeyEvent_KEY_LOCATION_STANDARD},
@@ -495,13 +495,13 @@ keyboardHasKanaLockKey()
     KeySym *keySyms, *keySymsStart, keySym;
     int32_t i;
     int32_t kanaCount = 0;
-    
+
     // Solaris doesn't let you swap keyboards without rebooting,
     // so there's no need to check for the kana lock key more than once.
     if (haveResult) {
        return result;
     }
-    
+
     // There's no direct way to determine whether the keyboard has
     // a kana lock key. From available keyboard mapping tables, it looks
     // like only keyboards with the kana lock key can produce keysyms
@@ -519,13 +519,13 @@ keyboardHasKanaLockKey()
     XFree(keySymsStart);
 
     // use a (somewhat arbitrary) minimum so we don't get confused by a stray function key
-    result = kanaCount > 10; 
+    result = kanaCount > 10;
     haveResult = TRUE;
     return result;
 }
 
-void 
-keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar, 
+void
+keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar,
   jint *keyLocation)
 {
     int32_t i;
@@ -535,13 +535,13 @@ keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar,
     // KeyEvent.
     if (x11Key == XK_Mode_switch && keyboardHasKanaLockKey()) {
         *keycode = java_awt_event_KeyEvent_VK_KANA_LOCK;
-        *mapsToUnicodeChar = FALSE; 
-        *keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN; 
+        *mapsToUnicodeChar = FALSE;
+        *keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
         return;
     }
 
-    for (i = 0; 
-         keymapTable[i].awtKey != java_awt_event_KeyEvent_VK_UNDEFINED; 
+    for (i = 0;
+         keymapTable[i].awtKey != java_awt_event_KeyEvent_VK_UNDEFINED;
          i++) {
         if (keymapTable[i].x11Key == x11Key) {
             *keycode = keymapTable[i].awtKey;
@@ -558,7 +558,7 @@ keysymToAWTKeyCode(KeySym x11Key, jint *keycode, Boolean *mapsToUnicodeChar,
     DTRACE_PRINTLN1("keysymToAWTKeyCode: no key mapping found: keysym = %x", x11Key);
 }
 
-KeySym 
+KeySym
 awt_getX11KeySym(jint awtKey)
 {
     int32_t i;
@@ -595,8 +595,8 @@ expandDamageRect(DamageRect * drect, XEvent * xev, Boolean debug, char *str)
       if (debug) {
       printf("   %s: collapsing (%d,%d %dx%d) into (%d,%d %dx%d) ->>",
       str, x1, y1, xev->xexpose.width, xev->xexpose.height,
-      drect->x1, drect->y1, drect->x2 - drect->x1, drect->y2 - drect->y1); 
-      } 
+      drect->x1, drect->y1, drect->x2 - drect->x1, drect->y2 - drect->y1);
+      }
     */
 
     drect->x1 = MIN(x1, drect->x1);
@@ -620,15 +620,15 @@ checkForExpose(Display * dpy, XEvent * evt, XPointer client_data)
 
     if ((evt->type == Expose && evt->xexpose.window == cinfo->win &&
          INTERSECTS(cinfo->r->x1, cinfo->r->x2, cinfo->r->y1, cinfo->r->y2,
-                    evt->xexpose.x, 
+                    evt->xexpose.x,
                     evt->xexpose.x + evt->xexpose.width,
-		    evt->xexpose.y,
+                    evt->xexpose.y,
                     evt->xexpose.y + evt->xexpose.height)) ||
         (evt->type == GraphicsExpose && evt->xgraphicsexpose.drawable == cinfo->win &&
          INTERSECTS(cinfo->r->x1, cinfo->r->x2, cinfo->r->y1, cinfo->r->y2,
-                    evt->xgraphicsexpose.x, 
+                    evt->xgraphicsexpose.x,
                     evt->xgraphicsexpose.x + evt->xgraphicsexpose.width,
-		    evt->xgraphicsexpose.y,
+                    evt->xgraphicsexpose.y,
                     evt->xgraphicsexpose.y + evt->xgraphicsexpose.height))) {
 
         return True;
@@ -639,7 +639,7 @@ checkForExpose(Display * dpy, XEvent * evt, XPointer client_data)
 /*
  * javaObject is an MComponentPeer instance
  */
-static void 
+static void
 HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
 {
     jobject target;
@@ -661,7 +661,7 @@ HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
             (*env)->SetIntField(env, javaObject, mComponentPeerIDs.drawState,
                 drawState | JAWT_LOCK_CLIP_CHANGED);
             cdata = (struct ComponentData *)
-	      JNU_GetLongFieldAsPtr(env, javaObject, mComponentPeerIDs.pData);
+              JNU_GetLongFieldAsPtr(env, javaObject, mComponentPeerIDs.pData);
             if (JNU_IsNull(env, javaObject) || (cdata == NULL)) {
                 return;
             }
@@ -669,17 +669,17 @@ HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
                 if (cdata->repaintPending & RepaintPending_REPAINT) {
                     cdata->repaintPending &= ~RepaintPending_REPAINT;
 
-                    JNU_CallMethodByName(env, 
-					 NULL,
-					 javaObject, 
-					 "handleRepaint",
-					 "(IIII)V",
-					 (jint) cdata->repaintRect.x1,
-					 (jint) cdata->repaintRect.y1,
-					 (jint) cdata->repaintRect.x2
-					 - cdata->repaintRect.x1,
-					 (jint) cdata->repaintRect.y2
-					 - cdata->repaintRect.y1);
+                    JNU_CallMethodByName(env,
+                                         NULL,
+                                         javaObject,
+                                         "handleRepaint",
+                                         "(IIII)V",
+                                         (jint) cdata->repaintRect.x1,
+                                         (jint) cdata->repaintRect.y1,
+                                         (jint) cdata->repaintRect.x2
+                                         - cdata->repaintRect.x1,
+                                         (jint) cdata->repaintRect.y2
+                                         - cdata->repaintRect.y1);
                     if ((*env)->ExceptionOccurred(env)) {
                         (*env)->ExceptionDescribe(env);
                         (*env)->ExceptionClear(env);
@@ -727,10 +727,10 @@ HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
 
                 cdata->repaintPending &= ~RepaintPending_EXPOSE;
 
-		/* Fix for bugtraq id 4262108. Paint events should not be
-		 * delivered to components that have one of their 
-		 * dimensions equal to zero.
-		 */
+                /* Fix for bugtraq id 4262108. Paint events should not be
+                 * delivered to components that have one of their
+                 * dimensions equal to zero.
+                 */
 
                 if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
                     return;
@@ -743,17 +743,17 @@ HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
                 (*env)->DeleteLocalRef(env, target);
 
                 if ( wdth != 0 && hght != 0) {
-	 	    JNU_CallMethodByName(env,
-			 		NULL,
-			 		javaObject,
-					"handleExpose", 
-					"(IIII)V",
-					(jint) cdata->exposeRect.x1, 
-					(jint) cdata->exposeRect.y1,
-					(jint) cdata->exposeRect.x2 
-					- cdata->exposeRect.x1,
-					(jint) cdata->exposeRect.y2
-					- cdata->exposeRect.y1);
+                    JNU_CallMethodByName(env,
+                                        NULL,
+                                        javaObject,
+                                        "handleExpose",
+                                        "(IIII)V",
+                                        (jint) cdata->exposeRect.x1,
+                                        (jint) cdata->exposeRect.y1,
+                                        (jint) cdata->exposeRect.x2
+                                        - cdata->exposeRect.x1,
+                                        (jint) cdata->exposeRect.y2
+                                        - cdata->exposeRect.y1);
                     if ((*env)->ExceptionOccurred(env)) {
                         (*env)->ExceptionDescribe(env);
                         (*env)->ExceptionClear(env);
@@ -772,7 +772,7 @@ HandleExposeEvent(Widget w, jobject javaObject, XEvent * event)
 static jweak focusOwnerPeer = NULL;
 static jweak focusedWindowPeer = NULL;
 
-/* 
+/*
  * This function should only be called under the
  * protection of AWT_LOCK(). Otherwise, multithreaded access
  * can corrupt the value of focusOwnerPeer variable.
@@ -790,7 +790,7 @@ awt_canvas_getFocusOwnerPeer() {
     return res;
 }
 
-/* 
+/*
  * This function should only be called under the
  * protection of AWT_LOCK(). Otherwise, multithreaded access
  * can corrupt the value of focusedWindowPeer variable.
@@ -808,7 +808,7 @@ awt_canvas_getFocusedWindowPeer() {
     return res;
 }
 
-/* 
+/*
  * Only call this function under AWT_LOCK(). Otherwise, multithreaded
  * access can corrupt the value of focusOwnerPeer variable.
  */
@@ -824,7 +824,7 @@ awt_canvas_setFocusOwnerPeer(jobject peer) {
     AWT_UNLOCK();
 }
 
-/* 
+/*
  * Only call this function under AWT_LOCK(). Otherwise, multithreaded
  * access can corrupt the value of focusedWindowPeer variable.
  */
@@ -849,7 +849,7 @@ void callFocusCallback(jobject focusPeer, int focus_type, jobject cause) {
 }
 
 
-void 
+void
 handleFocusEvent(Widget w,
                  XFocusChangeEvent * fevent,
                  XtPointer client_data,
@@ -861,15 +861,15 @@ handleFocusEvent(Widget w,
         if (fevent->mode == NotifyNormal &&
             fevent->detail != NotifyPointer && fevent->detail != NotifyVirtual)
         {
-#ifdef DEBUG_FOCUS	  
+#ifdef DEBUG_FOCUS
             printf("window = %d, mode = %d, detail = %d\n", fevent->window, fevent->mode, fevent->detail);
             printf("----posting java FOCUS GAINED on window %d, pass = %d\n", XtWindow(w), passEvent);
 #endif
             awt_post_java_focus_event(client_data,
-                                      java_awt_event_FocusEvent_FOCUS_GAINED, 
+                                      java_awt_event_FocusEvent_FOCUS_GAINED,
                                       cause,
                                       NULL);
-	    awt_canvas_setFocusOwnerPeer(client_data);
+            awt_canvas_setFocusOwnerPeer(client_data);
         }
     } else {
         /* FocusOut */
@@ -877,14 +877,14 @@ handleFocusEvent(Widget w,
             fevent->detail != NotifyPointer && fevent->detail != NotifyVirtual)
         {
 #ifdef DEBUG_FOCUS
-	  printf("window = %d, mode = %d, detail = %d\n", fevent->window, fevent->mode, fevent->detail);
-	  printf("----posting java FOCUS LOST on window %d, pass = %d, temp = %d\n", XtWindow(w), passEvent, temp);
+          printf("window = %d, mode = %d, detail = %d\n", fevent->window, fevent->mode, fevent->detail);
+          printf("----posting java FOCUS LOST on window %d, pass = %d, temp = %d\n", XtWindow(w), passEvent, temp);
 #endif
             awt_post_java_focus_event(client_data,
                                       java_awt_event_FocusEvent_FOCUS_LOST,
                                       cause,
                                       NULL);
-	    awt_canvas_setFocusOwnerPeer(NULL);
+            awt_canvas_setFocusOwnerPeer(NULL);
         }
     }
     *cont = TRUE;
@@ -895,7 +895,7 @@ void callFocusHandler(Widget w, int eventType, jobject cause) {
     XFocusChangeEvent event;
     Boolean cont;
     JNIEnv *env = (JNIEnv *) JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    
+
     if (w == NULL) {
         return;
     }
@@ -905,7 +905,7 @@ void callFocusHandler(Widget w, int eventType, jobject cause) {
         w = findTopLevelByShell(w);
         if (w != NULL) {
             peer = findPeer(&w);
-        }        
+        }
     }
     if (peer == NULL) {
         return;
@@ -919,7 +919,7 @@ void callFocusHandler(Widget w, int eventType, jobject cause) {
     handleFocusEvent(w, &event, (XtPointer)peer, &cont, TRUE, cause);
 }
 
-/** 
+/**
  * Copy XEvent to jbyteArray and save it in AWTEvent
  */
 void
@@ -927,20 +927,20 @@ awt_copyXEventToAWTEvent(JNIEnv *env, XEvent * xev, jobject jevent)
 {
     jbyteArray bdata;
     if (xev != NULL) {
-	if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
-	    return;
-	}
-	bdata = (*env)->NewByteArray(env, sizeof(XEvent));
-	if (bdata != NULL) {
-	    (*env)->SetByteArrayRegion(env, bdata, 0, sizeof(XEvent),
-				       (jbyte *)xev);
-	    (*env)->SetObjectField(env, jevent, awtEventIDs.bdata, bdata);
-	    (*env)->DeleteLocalRef(env, bdata);
-	}
+        if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
+            return;
+        }
+        bdata = (*env)->NewByteArray(env, sizeof(XEvent));
+        if (bdata != NULL) {
+            (*env)->SetByteArrayRegion(env, bdata, 0, sizeof(XEvent),
+                                       (jbyte *)xev);
+            (*env)->SetObjectField(env, jevent, awtEventIDs.bdata, bdata);
+            (*env)->DeleteLocalRef(env, bdata);
+        }
     }
 }
 
-/* Returns new modifiers set like ???_DOWN_MASK for keyboard and mouse after the event. 
+/* Returns new modifiers set like ???_DOWN_MASK for keyboard and mouse after the event.
  * The modifiers on a Java key event reflect the state of the modifier keys
  * immediately AFTER the key press or release.  This usually doesn't require
  * us to change the modifiers: the exception is when the key pressed or
@@ -953,23 +953,23 @@ getModifiers(uint32_t state, jint button, jint keyCode)
 {
     jint modifiers = 0;
 
-    if (((state & ShiftMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_SHIFT)) 
+    if (((state & ShiftMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_SHIFT))
     {
         modifiers |= java_awt_event_InputEvent_SHIFT_DOWN_MASK;
     }
-    if (((state & ControlMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_CONTROL)) 
+    if (((state & ControlMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_CONTROL))
     {
         modifiers |= java_awt_event_InputEvent_CTRL_DOWN_MASK;
     }
-    if (((state & awt_MetaMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_META)) 
+    if (((state & awt_MetaMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_META))
     {
         modifiers |= java_awt_event_InputEvent_META_DOWN_MASK;
     }
-    if (((state & awt_AltMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_ALT)) 
+    if (((state & awt_AltMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_ALT))
     {
         modifiers |= java_awt_event_InputEvent_ALT_DOWN_MASK;
     }
-    if (((state & awt_ModeSwitchMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_ALT_GRAPH)) 
+    if (((state & awt_ModeSwitchMask) != 0) ^ (keyCode == java_awt_event_KeyEvent_VK_ALT_GRAPH))
     {
         modifiers |= java_awt_event_InputEvent_ALT_GRAPH_DOWN_MASK;
     }
@@ -987,7 +987,7 @@ getModifiers(uint32_t state, jint button, jint keyCode)
 
 /* Returns which mouse button has changed state
  */
-jint 
+jint
 getButton(uint32_t button)
 {
     switch (button) {
@@ -1026,14 +1026,14 @@ awt_modify_KeyEvent(JNIEnv *env, XEvent *xevent, jobject jevent)
         case java_awt_event_KeyEvent_VK_MULTIPLY:
         case java_awt_event_KeyEvent_VK_SUBTRACT:
         case java_awt_event_KeyEvent_VK_DIVIDE:
-            /* Bugid 4103229:  Change the X event so these three Numpad 
-             * keys work with the NumLock off.  For some reason, Motif 
-             * widgets ignore the events produced by these three keys 
-             * unless the NumLock is on.  It also ignores them if some  
-             * other modifiers are set.  Turn off ALL modifiers, then 
-             * turn NumLock mask on in the X event.  
+            /* Bugid 4103229:  Change the X event so these three Numpad
+             * keys work with the NumLock off.  For some reason, Motif
+             * widgets ignore the events produced by these three keys
+             * unless the NumLock is on.  It also ignores them if some
+             * other modifiers are set.  Turn off ALL modifiers, then
+             * turn NumLock mask on in the X event.
              */
-            xevent->xkey.state = awt_NumLockMask;   
+            xevent->xkey.state = awt_NumLockMask;
             return;
         case java_awt_event_KeyEvent_VK_ENTER:
         case java_awt_event_KeyEvent_VK_BACK_SPACE:
@@ -1054,7 +1054,7 @@ awt_modify_KeyEvent(JNIEnv *env, XEvent *xevent, jobject jevent)
             keysym = awt_getX11KeySym(keyCode);
             break;
         case java_awt_event_KeyEvent_VK_DELETE:
-            /* For some reason XKeysymToKeycode returns incorrect value for 
+            /* For some reason XKeysymToKeycode returns incorrect value for
              * Delete, so we don't want to modify the original event
              */
             break;
@@ -1124,22 +1124,22 @@ awt_modify_KeyEvent(JNIEnv *env, XEvent *xevent, jobject jevent)
 }
 
 
-/* Called from handleKeyEvent.  The purpose of this function is 
- * to check for a list of vendor-specific keysyms, most of which 
- * have values greater than 0xFFFF.  Most of these keys don't map 
- * to unicode characters, but some do.  
+/* Called from handleKeyEvent.  The purpose of this function is
+ * to check for a list of vendor-specific keysyms, most of which
+ * have values greater than 0xFFFF.  Most of these keys don't map
+ * to unicode characters, but some do.
  *
  * For keys that don't map to unicode characters, the keysym
  * is irrelevant at this point.  We set the keysym to zero
  * to ensure that the switch statement immediately below
- * this function call (in adjustKeySym) won't incorrectly act 
+ * this function call (in adjustKeySym) won't incorrectly act
  * on them after the high bits are stripped off.
- * 
+ *
  * For keys that do map to unicode characters, we change the keysym
  * to the equivalent that is < 0xFFFF
  */
-static void 
-handleVendorKeySyms(XEvent *event, KeySym *keysym) 
+static void
+handleVendorKeySyms(XEvent *event, KeySym *keysym)
 {
     KeySym originalKeysym = *keysym;
 
@@ -1194,13 +1194,13 @@ handleVendorKeySyms(XEvent *event, KeySym *keysym)
         case osfXK_Help:
             *keysym = 0;
             break;
-        /* 
-         * The rest DO map to unicode characters, so translate them 
+        /*
+         * The rest DO map to unicode characters, so translate them
          */
         case osfXK_BackSpace:
             *keysym = XK_BackSpace;
             break;
-        case osfXK_Escape: 
+        case osfXK_Escape:
             *keysym = XK_Escape;
             break;
         case osfXK_Cancel:
@@ -1219,13 +1219,13 @@ handleVendorKeySyms(XEvent *event, KeySym *keysym)
     }
 }
 
-/* Called from handleKeyEvent.  
- * The purpose of this function is to adjust the keysym and XEvent 
- * keycode for a key event.  This is basically a conglomeration of 
- * bugfixes that require these adjustments.  
+/* Called from handleKeyEvent.
+ * The purpose of this function is to adjust the keysym and XEvent
+ * keycode for a key event.  This is basically a conglomeration of
+ * bugfixes that require these adjustments.
  */
-static void 
-adjustKeySym(XEvent *event, KeySym *keysym) 
+static void
+adjustKeySym(XEvent *event, KeySym *keysym)
 {
     KeySym originalKeysym = *keysym;
 
@@ -1243,11 +1243,11 @@ adjustKeySym(XEvent *event, KeySym *keysym)
         case XK_Linefeed:
         case XK_Escape:
         case XK_Delete:
-            /* strip off highorder bits defined in keysymdef.h 
-             * I think doing this converts them to values that 
-             * we can cast to jchars and use as java keychars. 
-             * If so, it's really a hack.  
-             */ 
+            /* strip off highorder bits defined in keysymdef.h
+             * I think doing this converts them to values that
+             * we can cast to jchars and use as java keychars.
+             * If so, it's really a hack.
+             */
             *keysym &= 0x007F;
             break;
         case XK_Cancel:
@@ -1368,7 +1368,7 @@ adjustKeySym(XEvent *event, KeySym *keysym)
  * What a sniffer sez?
  * Xsun and Xorg if NumLock is on do two thing different:
  * keep Keypad key in different places of keysyms array and
- * ignore/obey "ModLock is ShiftLock", so we should choose. 
+ * ignore/obey "ModLock is ShiftLock", so we should choose.
  * People say, it's right to use behavior and not Vendor tags to decide.
  * Maybe. But why these tags were invented, then?
  * TODO: use behavior, not tags. Maybe.
@@ -1380,8 +1380,8 @@ isXsunServer(XEvent *event) {
         awt_ServerDetected = True;
         awt_IsXsun = False;
         return False;
-    }    
-    // Now, it's Sun. It still may be Xorg though, eg on Solaris 10, x86.    
+    }
+    // Now, it's Sun. It still may be Xorg though, eg on Solaris 10, x86.
     // Today (2005), VendorRelease of Xorg is a Big Number unlike Xsun.
     if( VendorRelease( event->xkey.display ) > 10000 ) {
         awt_ServerDetected = True;
@@ -1397,25 +1397,25 @@ isKPevent(XEvent *event)
 {
     /*
        Xlib manual, ch 12.7 says, as a first rule for choice of keysym:
-       The numlock modifier is on and the second KeySym is a keypad KeySym. In this case, 
-       if the Shift modifier is on, or if the Lock modifier is on and is interpreted as ShiftLock, 
+       The numlock modifier is on and the second KeySym is a keypad KeySym. In this case,
+       if the Shift modifier is on, or if the Lock modifier is on and is interpreted as ShiftLock,
        then the first KeySym is used, otherwise the second KeySym is used.
-      
+
        However, Xsun server does ignore ShiftLock and always takes 3-rd element from an array.
 
        So, is it a keypad keysym?
      */
     jint mods = getModifiers(event->xkey.state, 0, event->xkey.keycode);
     Boolean bsun = isXsunServer( event );
-    
+
     return IsKeypadKey( XKeycodeToKeysym(event->xkey.display, event->xkey.keycode,(bsun && !awt_UseXKB ? 2 : 1) ) );
 }
 /*
  * In a next redesign, get rid of this code altogether.
- * 
+ *
  */
-static void 
-handleKeyEventWithNumLockMask_New(XEvent *event, KeySym *keysym) 
+static void
+handleKeyEventWithNumLockMask_New(XEvent *event, KeySym *keysym)
 {
     KeySym originalKeysym = *keysym;
     if( !isKPevent( event ) ) {
@@ -1442,36 +1442,36 @@ handleKeyEventWithNumLockMask_New(XEvent *event, KeySym *keysym)
     }
 }
 
-/* Called from handleKeyEvent.  
- * The purpose of this function is to make some adjustments to keysyms 
- * that have been found to be necessary when the NumLock mask is set.  
- * They come from various bug fixes and rearchitectures. 
- * This function is meant to be called when 
- * (event->xkey.state & awt_NumLockMask) is TRUE.  
+/* Called from handleKeyEvent.
+ * The purpose of this function is to make some adjustments to keysyms
+ * that have been found to be necessary when the NumLock mask is set.
+ * They come from various bug fixes and rearchitectures.
+ * This function is meant to be called when
+ * (event->xkey.state & awt_NumLockMask) is TRUE.
  */
-static void 
-handleKeyEventWithNumLockMask(XEvent *event, KeySym *keysym) 
+static void
+handleKeyEventWithNumLockMask(XEvent *event, KeySym *keysym)
 {
     KeySym originalKeysym = *keysym;
 
-#ifndef __linux__ 
+#ifndef __linux__
     /* The following code on Linux will cause the keypad keys
      * not to echo on JTextField when the NumLock is on. The
      * keysyms will be 0, because the last parameter 2 is not defined.
      * See Xlib Programming Manual, O'Reilly & Associates, Section
      * 9.1.5 "Other Keyboard-handling Routines", "The meaning of
      * the keysym list beyond the first two (unmodified, Shift or
-     * Shift Lock) is not defined." 
+     * Shift Lock) is not defined."
      */
 
     /* Translate again with NumLock as modifier. */
-    /* ECH - I wonder why we think that NumLock corresponds to 2?  
-     * On Linux, we've seen xmodmap -pm yield mod2 as NumLock, 
-     * but I don't know that it will be for every configuration.  
-     * Perhaps using the index (modn in awt_MToolkit.c:setup_modifier_map) 
-     * would be more correct.  
-     */ 
-    *keysym = XKeycodeToKeysym(event->xkey.display, 
+    /* ECH - I wonder why we think that NumLock corresponds to 2?
+     * On Linux, we've seen xmodmap -pm yield mod2 as NumLock,
+     * but I don't know that it will be for every configuration.
+     * Perhaps using the index (modn in awt_MToolkit.c:setup_modifier_map)
+     * would be more correct.
+     */
+    *keysym = XKeycodeToKeysym(event->xkey.display,
                                event->xkey.keycode, 2);
     if (originalKeysym != *keysym) {
         DTRACE_PRINTLN3("%s=%x, keysym=%x",
@@ -1524,13 +1524,13 @@ handleKeyEventWithNumLockMask(XEvent *event, KeySym *keysym)
         case XK_R6:
             *keysym = XK_KP_Multiply;
             break;
-        /* 
+        /*
          * Need the following keysym changes for Linux key releases.
          * Sometimes the modifier state gets messed up, so we get a
          * KP_Left when we should get a KP_4, for example.
          * XK_KP_Insert and XK_KP_Delete were already handled above.
          */
-        case XK_KP_Left:  
+        case XK_KP_Left:
             *keysym = XK_KP_4;
             break;
         case XK_KP_Up:
@@ -1567,50 +1567,50 @@ handleKeyEventWithNumLockMask(XEvent *event, KeySym *keysym)
     }
 }
 
-static void 
+static void
 handleKeyEvent(jint keyEventId,
                XEvent *event,
                XtPointer *client_data,
                Boolean *cont,
                Boolean passEvent)
 {
-    KeySym keysym = NoSymbol; 
+    KeySym keysym = NoSymbol;
     jint keycode = java_awt_event_KeyEvent_VK_UNDEFINED;
     Modifiers mods = 0;
     Boolean mapsToUnicodeChar = FALSE;
     jint keyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
     jint modifiers = 0;
 
-    DTRACE_PRINTLN4("\nEntered handleKeyEvent: type=%d, xkeycode=%x, xstate=%x, keysym=%x", 
-      event->type, event->xkey.keycode, event->xkey.state, keysym); 
+    DTRACE_PRINTLN4("\nEntered handleKeyEvent: type=%d, xkeycode=%x, xstate=%x, keysym=%x",
+      event->type, event->xkey.keycode, event->xkey.state, keysym);
 
     if (currentX11InputMethodInstance != NULL
-	&& keyEventId == java_awt_event_KeyEvent_KEY_PRESSED
-        && event->xkey.window == currentFocusWindow) 
+        && keyEventId == java_awt_event_KeyEvent_KEY_PRESSED
+        && event->xkey.window == currentFocusWindow)
     {
-	/* invokes XmbLookupString to get a committed string or keysym if any.  */
-	if (awt_x11inputmethod_lookupString((XKeyPressedEvent*)event, &keysym)) {
-	    *cont = FALSE;
-	    return;
-	}
-    } 
+        /* invokes XmbLookupString to get a committed string or keysym if any.  */
+        if (awt_x11inputmethod_lookupString((XKeyPressedEvent*)event, &keysym)) {
+            *cont = FALSE;
+            return;
+        }
+    }
 
-    /* Ignore the keysym found immediately above in 
-     * awt_x11inputmethod_lookupString; the methodology in that function 
-     * sometimes returns incorrect results.  
+    /* Ignore the keysym found immediately above in
+     * awt_x11inputmethod_lookupString; the methodology in that function
+     * sometimes returns incorrect results.
      *
-     * Get keysym without taking modifiers into account first.  
-     * This keysym is not necessarily for the character that was typed: 
-     * it is for the primary layer.  So, if $ were typed by pressing 
+     * Get keysym without taking modifiers into account first.
+     * This keysym is not necessarily for the character that was typed:
+     * it is for the primary layer.  So, if $ were typed by pressing
      * shift-4, this call should give us 4, not $
      *
-     * We only want this keysym so we can use it to index into the 
-     * keymapTable to get the Java keycode associated with the 
-     * primary layer key that was pressed.  
+     * We only want this keysym so we can use it to index into the
+     * keymapTable to get the Java keycode associated with the
+     * primary layer key that was pressed.
      */
     keysym = XKeycodeToKeysym(event->xkey.display, event->xkey.keycode, 0);
 
-    /* Linux: Sometimes the keysym returned is uppercase when CapsLock is 
+    /* Linux: Sometimes the keysym returned is uppercase when CapsLock is
      * on and LockMask is not set in event->xkey.state.
      */
     if (keysym >= (KeySym) 'A' && keysym <= (KeySym) 'Z') {
@@ -1618,27 +1618,27 @@ handleKeyEvent(jint keyEventId,
         keysym = (KeySym) tolower((int32_t) keysym);
     }
 
-    DTRACE_PRINTLN4("In handleKeyEvent: type=%d, xkeycode=%x, xstate=%x, keysym=%x", 
-      event->type, event->xkey.keycode, event->xkey.state, keysym); 
+    DTRACE_PRINTLN4("In handleKeyEvent: type=%d, xkeycode=%x, xstate=%x, keysym=%x",
+      event->type, event->xkey.keycode, event->xkey.state, keysym);
 
     if (keysym == NoSymbol) {
-	*cont = TRUE;
-	return;
+        *cont = TRUE;
+        return;
     }
 
     if (keysym < (KeySym) 256) {
         keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);
-       
+
         /* Now get real keysym which looks at modifiers
          * XtGetActionKeySym() returns wrong value with Kana Lock,
          * so use XtTranslateKeycode().
          */
         XtTranslateKeycode(event->xkey.display, (KeyCode) event->xkey.keycode,
                            event->xkey.state, &mods, &keysym);
-        DTRACE_PRINTLN6("%s: type=%d, xkeycode=%x, xstate=%x, keysym=%x, xmods=%d", 
-          "In handleKeyEvent keysym<256 ", event->type, event->xkey.keycode, 
-          event->xkey.state, keysym, mods); 
-     
+        DTRACE_PRINTLN6("%s: type=%d, xkeycode=%x, xstate=%x, keysym=%x, xmods=%d",
+          "In handleKeyEvent keysym<256 ", event->type, event->xkey.keycode,
+          event->xkey.state, keysym, mods);
+
         /* Linux: With caps lock on, chars echo lowercase. */
         if ((event->xkey.state & LockMask) &&
              (keysym >= (KeySym) 'a' && keysym <= (KeySym) 'z'))
@@ -1663,7 +1663,7 @@ handleKeyEvent(jint keyEventId,
         }
 
         if (keysym >= (KeySym) XK_kana_fullstop &&
-	    keysym <= (KeySym) XK_semivoicedsound) {
+            keysym <= (KeySym) XK_semivoicedsound) {
             /*
              * 0xff61 is Unicode value of first XK_kana_fullstop.
              * We need X Keysym to Unicode map in post1.1 release
@@ -1673,16 +1673,16 @@ handleKeyEvent(jint keyEventId,
         }
 
         modifiers = getModifiers(event->xkey.state, 0, keycode);
-        DTRACE_PRINTLN6("%s: type=%d, xkeycode=%x, xstate=%x, keysym=%x, AWTmodifiers=%d", 
-          "In handleKeyEvent keysym<256 ", event->type, event->xkey.keycode, 
-          event->xkey.state, keysym, modifiers); 
+        DTRACE_PRINTLN6("%s: type=%d, xkeycode=%x, xstate=%x, keysym=%x, AWTmodifiers=%d",
+          "In handleKeyEvent keysym<256 ", event->type, event->xkey.keycode,
+          event->xkey.state, keysym, modifiers);
 
-        awt_post_java_key_event(client_data, 
+        awt_post_java_key_event(client_data,
                                 keyEventId,
                                 (passEvent == TRUE) ?  event : NULL,
                                 event->xkey.time,
                                 keycode,
-                                (jchar) keysym, 
+                                (jchar) keysym,
                                 modifiers,
                                 keyLocation,
                                 event);
@@ -1692,32 +1692,32 @@ handleKeyEvent(jint keyEventId,
               java_awt_event_KeyEvent_KEY_TYPED,
               NULL,
               event->xkey.time,
-              java_awt_event_KeyEvent_VK_UNDEFINED, 
-              (jchar) keysym, 
-              modifiers, 
-              java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, 
+              java_awt_event_KeyEvent_VK_UNDEFINED,
+              (jchar) keysym,
+              modifiers,
+              java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN,
               event);
 
         }
     } else {
-        if (event->xkey.state & awt_NumLockMask) { 
+        if (event->xkey.state & awt_NumLockMask) {
             if( awt_UseType4Patch ) {
-                handleKeyEventWithNumLockMask(event, &keysym); 
+                handleKeyEventWithNumLockMask(event, &keysym);
             }else{
-                handleKeyEventWithNumLockMask_New(event, &keysym); 
+                handleKeyEventWithNumLockMask_New(event, &keysym);
             }
-        } 
+        }
 
-	if (keysym == XK_ISO_Left_Tab) {
-	    keysym = XK_Tab;
-	}
+        if (keysym == XK_ISO_Left_Tab) {
+            keysym = XK_Tab;
+        }
 
-        /* The keysym here does not consider modifiers, so these results 
-         * are relevant to the KEY_PRESSED event only, not the KEY_TYPED 
+        /* The keysym here does not consider modifiers, so these results
+         * are relevant to the KEY_PRESSED event only, not the KEY_TYPED
          */
         keysymToAWTKeyCode(keysym, &keycode, &mapsToUnicodeChar, &keyLocation);
-        DTRACE_PRINTLN3("In handleKeyEvent: keysym=%x, AWTkeycode=%x, mapsToUnicodeChar=%d", 
-          keysym, keycode, mapsToUnicodeChar); 
+        DTRACE_PRINTLN3("In handleKeyEvent: keysym=%x, AWTkeycode=%x, mapsToUnicodeChar=%d",
+          keysym, keycode, mapsToUnicodeChar);
 
         if (keycode == java_awt_event_KeyEvent_VK_UNDEFINED) {
             *cont = TRUE;
@@ -1725,21 +1725,21 @@ handleKeyEvent(jint keyEventId,
         }
 
         /* Need to take care of keysyms > 0xFFFF here
-         * Most of these keys don't map to unicode characters, but some do.  
+         * Most of these keys don't map to unicode characters, but some do.
          *
          * For keys that don't map to unicode characters, the keysym
          * is irrelevant at this point.  We set the keysym to zero
          * to ensure that the switch statement immediately below
-         * this function call (in adjustKeySym) won't incorrectly act 
+         * this function call (in adjustKeySym) won't incorrectly act
          * on them after the high bits are stripped off.
-         * 
+         *
          * For keys that do map to unicode characters, we change the keysym
          * to the equivalent that is < 0xFFFF
          */
-        handleVendorKeySyms(event, &keysym); 
+        handleVendorKeySyms(event, &keysym);
 
-        /* This function is a conglomeration of bug fixes that adjust 
-         * the keysym and XEvent keycode for this key event.  
+        /* This function is a conglomeration of bug fixes that adjust
+         * the keysym and XEvent keycode for this key event.
          */
         adjustKeySym(event, &keysym);
 
@@ -1748,32 +1748,32 @@ handleKeyEvent(jint keyEventId,
         DTRACE_PRINTLN6("%s: type=%d, xkeycode=%x, xstate=%x, keysym=%x, xmods=%d",
           "In handleKeyEvent keysym>=256 ", event->type, event->xkey.keycode,
           event->xkey.state, keysym, mods);
-        DTRACE_PRINTLN2("                              AWTkeycode=%x, AWTmodifiers=%d", 
+        DTRACE_PRINTLN2("                              AWTkeycode=%x, AWTmodifiers=%d",
           keycode, modifiers);
 
-        awt_post_java_key_event(client_data, 
+        awt_post_java_key_event(client_data,
           keyEventId,
           (passEvent == TRUE) ? event : NULL,
           event->xkey.time,
-          keycode, 
+          keycode,
           (jchar) (mapsToUnicodeChar ? keysym :
             java_awt_event_KeyEvent_CHAR_UNDEFINED),
           modifiers,
-          keyLocation, 
+          keyLocation,
           event);
 
-        /* If this was a keyPressed event, we may need to post a 
-         * keyTyped event, too.  Otherwise, return.  
+        /* If this was a keyPressed event, we may need to post a
+         * keyTyped event, too.  Otherwise, return.
          */
         if (keyEventId == java_awt_event_KeyEvent_KEY_RELEASED) {
             return;
         }
         DTRACE_PRINTLN("This is a keyPressed event");
 
-        /* XtTranslateKeycode seems to return slightly bogus values for the 
-         * Escape key (keysym==1004ff69==osfXK_Cancel, xmods=2) on Solaris, 
+        /* XtTranslateKeycode seems to return slightly bogus values for the
+         * Escape key (keysym==1004ff69==osfXK_Cancel, xmods=2) on Solaris,
          * so we just create the KEY_TYPED as a special case for Escape here.
-         * (Linux works fine, and this was also okay running under VNC.)  
+         * (Linux works fine, and this was also okay running under VNC.)
          */
         if (keycode == java_awt_event_KeyEvent_VK_ESCAPE) {
             awt_post_java_key_event(client_data,
@@ -1790,7 +1790,7 @@ handleKeyEvent(jint keyEventId,
             return;
         }
 
-        /* Now get real keysym which looks at modifiers for keyTyped event. 
+        /* Now get real keysym which looks at modifiers for keyTyped event.
          * XtGetActionKeySym() returns wrong value with Kana Lock,
          * so use XtTranslateKeycode().
          */
@@ -1806,9 +1806,9 @@ handleKeyEvent(jint keyEventId,
 
         if (event->xkey.state & awt_NumLockMask) {
             if( awt_UseType4Patch ) {
-                handleKeyEventWithNumLockMask(event, &keysym); 
+                handleKeyEventWithNumLockMask(event, &keysym);
             }else{
-                handleKeyEventWithNumLockMask_New(event, &keysym); 
+                handleKeyEventWithNumLockMask_New(event, &keysym);
             }
         }
 
@@ -1825,7 +1825,7 @@ handleKeyEvent(jint keyEventId,
         if (!mapsToUnicodeChar) {
             return;
         }
-        
+
         handleVendorKeySyms(event, &keysym);
         adjustKeySym(event, &keysym);
         DTRACE_PRINT4("In handleKeyEvent: type=%d, xkeycode=%x, xstate=%x, keysym=%x",
@@ -1836,10 +1836,10 @@ handleKeyEvent(jint keyEventId,
           java_awt_event_KeyEvent_KEY_TYPED,
           NULL,
           event->xkey.time,
-          java_awt_event_KeyEvent_VK_UNDEFINED, 
-          (jchar) keysym, 
-          modifiers, 
-          java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, 
+          java_awt_event_KeyEvent_VK_UNDEFINED,
+          (jchar) keysym,
+          modifiers,
+          java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN,
           event);
     }
 }
@@ -1882,7 +1882,7 @@ getRootWidget(Widget w) {
  * must be stored within the Java event structure so it can be
  * dispatched to Xt later on.
  */
-void 
+void
 awt_canvas_handleEvent(Widget w, XtPointer client_data,
                        XEvent * event, struct WidgetInfo *winfo,
                        Boolean * cont, Boolean passEvent)
@@ -1935,7 +1935,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
             x = (jint) event->xbutton.x;
             y = (jint) event->xbutton.y;
 
-            if (lastPeer == client_data && 
+            if (lastPeer == client_data &&
                 lastButton == event->xbutton.button &&
                 (event->xbutton.time - lastTime) <= (Time) awt_multiclick_time) {
                     clickCount++;
@@ -1948,13 +1948,13 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
             }
             lastTime = event->xbutton.time;
 
-	    /* On MouseEvent.MOUSE_PRESSED, RELEASED and CLICKED  only new modifiers and 
-	     * modifier for changed mouse button are set. 
-	     */
+            /* On MouseEvent.MOUSE_PRESSED, RELEASED and CLICKED  only new modifiers and
+             * modifier for changed mouse button are set.
+             */
             button = getButton(event->xbutton.button);
             modifiers = getModifiers(event->xbutton.state, button, 0);
 
-	    
+
             /* If the widget is a subwidget on a component we need to
              * translate the x,y into the coordinate space of the component.
              */
@@ -1983,20 +1983,20 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                           clickCount,
                                           False,
                                           lastButton == 4 ? -1 : 1,
-					  java_awt_event_MouseEvent_NOBUTTON);
+                                          java_awt_event_MouseEvent_NOBUTTON);
                 /* we're done with this event */
                 break;
             }
-	    
-	    /* (4168006) Find out out how many buttons we have
-	     * If this is a two button system Right == 2
-	     * If this is a three button system Right == 3
-	     */
+
+            /* (4168006) Find out out how many buttons we have
+             * If this is a two button system Right == 2
+             * If this is a three button system Right == 3
+             */
             if ( rbutton == 0 ) {
                 unsigned char map[5];
                 rbutton = XGetPointerMapping ( awt_display, map, 3 );
             }
-	    
+
             if (event->xbutton.button == rbutton || event->xbutton.button > 2) {
                 popupTrigger = True;
             } else {
@@ -2013,7 +2013,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                       (jint) (event->xbutton.y_root),
                                       clickCount,
                                       popupTrigger, 0,
-				      button);
+                                      button);
 
             drag_source = w;
 
@@ -2024,7 +2024,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                 *cont = TRUE;
             }
 
-            /* 
+            /*
              * For button 4 & 5 (mouse wheel) we can simply ignore this event.
              * We dispatch the wheel on the ButtonPress.
              */
@@ -2036,25 +2036,25 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
             prevWidget = NULL;
             x = (jint) event->xbutton.x;
             y = (jint) event->xbutton.y;
-	    /* On MouseEvent.MOUSE_PRESSED, RELEASED and CLICKED  only new modifiers and 
-	     * modifier for changed mouse button are set. 
-	     */
-	    button = getButton(event->xbutton.button);
+            /* On MouseEvent.MOUSE_PRESSED, RELEASED and CLICKED  only new modifiers and
+             * modifier for changed mouse button are set.
+             */
+            button = getButton(event->xbutton.button);
             modifiers = getModifiers(event->xbutton.state, button, 0);
-	    
-	    fullRelease =
-	      ((event->xbutton.state & Button1Mask) &&
-	       !(event->xbutton.state & Button2Mask) &&
-	       !(event->xbutton.state & Button3Mask) &&
-	       (event->xbutton.button == Button1)) ||
-	      (!(event->xbutton.state & Button1Mask) &&
-	       (event->xbutton.state & Button2Mask) &&
-	       !(event->xbutton.state & Button3Mask) &&
-	       (event->xbutton.button == Button2)) ||
-	      (!(event->xbutton.state & Button1Mask) &&
-	       !(event->xbutton.state & Button2Mask) &&
-	       (event->xbutton.state & Button3Mask) &&
-	       (event->xbutton.button == Button3));
+
+            fullRelease =
+              ((event->xbutton.state & Button1Mask) &&
+               !(event->xbutton.state & Button2Mask) &&
+               !(event->xbutton.state & Button3Mask) &&
+               (event->xbutton.button == Button1)) ||
+              (!(event->xbutton.state & Button1Mask) &&
+               (event->xbutton.state & Button2Mask) &&
+               !(event->xbutton.state & Button3Mask) &&
+               (event->xbutton.button == Button2)) ||
+              (!(event->xbutton.state & Button1Mask) &&
+               !(event->xbutton.state & Button2Mask) &&
+               (event->xbutton.state & Button3Mask) &&
+               (event->xbutton.button == Button3));
 
             /* If the widget is a subwidget on a component we need to
              * translate the x,y into the coordinate space of the component.
@@ -2073,9 +2073,9 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                       (jint) (event->xbutton.y_root),
                                       clickCount,
                                       FALSE, 0,
-				      button);
-	      
-	    if (lastPeer == client_data) {
+                                      button);
+
+            if (lastPeer == client_data) {
                 awt_post_java_mouse_event(client_data,
                                           java_awt_event_MouseEvent_MOUSE_CLICKED,
                                           NULL,
@@ -2086,12 +2086,12 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                           (jint) (event->xbutton.y_root),
                                           clickCount,
                                           FALSE, 0,
-					  button);
+                                          button);
             }
 
-	    if (fullRelease) {
-	        updateCursor(client_data, UPDATE_ONLY);
-	    }
+            if (fullRelease) {
+                updateCursor(client_data, UPDATE_ONLY);
+            }
 
         break;
         case MotionNotify:
@@ -2117,9 +2117,9 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                 lastx = (jint) 0;
                 lasty = (jint) 0;
             }
-	    /* On other MouseEvent only new modifiers and 
-	     * old mouse modifiers are set. 
-	     */
+            /* On other MouseEvent only new modifiers and
+             * old mouse modifiers are set.
+             */
             modifiers = getModifiers(event->xmotion.state, 0, 0);
 
             /* If the widget is a subwidget on a component we need to
@@ -2138,7 +2138,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                 MouseEnter and MouseExit and send them to the right widgets.
             */
 
-	        extern Widget awt_WidgetAtXY(Widget root, Position x, Position y);
+                extern Widget awt_WidgetAtXY(Widget root, Position x, Position y);
                 extern Widget awt_GetWidgetAtPointer();
                 Widget currentWidget=NULL, topLevelW;
                 Position wx=0, wy=0;
@@ -2148,48 +2148,48 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                 currentWidget = awt_GetWidgetAtPointer();
                 /* Get the exact widget at the current XY from the top level */
                 currentWidget = awt_WidgetAtXY(currentWidget, wx, wy);
-                if ((prevWidget != NULL) && (prevWidget != w) && 
+                if ((prevWidget != NULL) && (prevWidget != w) &&
                     (currentWidget != prevWidget) && awt_isAwtWidget(prevWidget) &&
                     !prevWidget->core.being_destroyed) {
                     XtPointer userData=NULL;
                     XtVaGetValues(prevWidget, XmNuserData, &userData, NULL);
                     if (userData) {
-			awt_post_java_mouse_event(userData,
-			    java_awt_event_MouseEvent_MOUSE_EXITED,
-			    (passEvent==TRUE) ? event : NULL,
-			    event->xmotion.time,
+                        awt_post_java_mouse_event(userData,
+                            java_awt_event_MouseEvent_MOUSE_EXITED,
+                            (passEvent==TRUE) ? event : NULL,
+                            event->xmotion.time,
                             modifiers,
                             x, y,
                             (jint) (event->xmotion.x_root),
                             (jint) (event->xmotion.y_root),
-			    clickCount,
-			    FALSE, 0,
-			    java_awt_event_MouseEvent_NOBUTTON);
+                            clickCount,
+                            FALSE, 0,
+                            java_awt_event_MouseEvent_NOBUTTON);
                     }
                 }
- 
-                if ((currentWidget != NULL) && (currentWidget != w) && 
+
+                if ((currentWidget != NULL) && (currentWidget != w) &&
                     (currentWidget != prevWidget) && awt_isAwtWidget(currentWidget)) {
                     XtPointer userData=NULL;
                     XtVaGetValues(currentWidget, XmNuserData, &userData, NULL);
-                    if (userData) {			
-			awt_post_java_mouse_event(userData,
-			    java_awt_event_MouseEvent_MOUSE_ENTERED,
-			    (passEvent==TRUE) ? event : NULL,
-			    event->xmotion.time,
-			    modifiers,
-			    x, y,
+                    if (userData) {
+                        awt_post_java_mouse_event(userData,
+                            java_awt_event_MouseEvent_MOUSE_ENTERED,
+                            (passEvent==TRUE) ? event : NULL,
+                            event->xmotion.time,
+                            modifiers,
+                            x, y,
                             (jint) (event->xmotion.x_root),
                             (jint) (event->xmotion.y_root),
                             clickCount,
-			    FALSE, 0,
-			    java_awt_event_MouseEvent_NOBUTTON);
+                            FALSE, 0,
+                            java_awt_event_MouseEvent_NOBUTTON);
                     }
-					
-	            updateCursor(userData, CACHE_ONLY);
-		    awt_util_setCursor(currentWidget, None);
+
+                    updateCursor(userData, CACHE_ONLY);
+                    awt_util_setCursor(currentWidget, None);
                 }
- 
+
                 prevWidget = currentWidget;
                 /* end 4017222 */
 
@@ -2204,7 +2204,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                           (jint) (event->xmotion.y_root),
                                           clickCount,
                                           FALSE, 0,
-					  java_awt_event_MouseEvent_NOBUTTON);
+                                          java_awt_event_MouseEvent_NOBUTTON);
 
             }
             } else {
@@ -2219,7 +2219,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                           (jint) (event->xmotion.y_root),
                                           clickCount,
                                           FALSE, 0,
-					  java_awt_event_MouseEvent_NOBUTTON);
+                                          java_awt_event_MouseEvent_NOBUTTON);
             }
             break;
         case KeyPress:
@@ -2236,10 +2236,10 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
   printf("----->%s on %s(%x):mode=%d detail = %d\n",
   event->type == EnterNotify?"EnterNotify":"LeaveNotify",
   XtName(w), w,
-  ((XCrossingEvent*)event)->mode, ((XCrossingEvent*)event)->detail);      
+  ((XCrossingEvent*)event)->mode, ((XCrossingEvent*)event)->detail);
 */
         if (event->xcrossing.mode != NotifyNormal ||
-                ((event->xcrossing.detail == NotifyVirtual || 
+                ((event->xcrossing.detail == NotifyVirtual ||
                   event->xcrossing.detail == NotifyNonlinearVirtual) &&
                  !XtIsSubclass(w, xmScrolledWindowWidgetClass))) {
                 *cont = TRUE;
@@ -2256,7 +2256,7 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                 wclass = XtClass(winfo->widget);
                 if (event->xcrossing.subwindow == NULL
                     && event->xcrossing.detail == NotifyInferior
-                    && (wclass == xmTextWidgetClass 
+                    && (wclass == xmTextWidgetClass
                         || wclass == xmListWidgetClass)) {
                     *cont = TRUE;
                     return;
@@ -2267,9 +2267,9 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
             lastTime = (Time) 0;
             lastPeer = NULL;
 
-	    /* On other MouseEvent only new modifiers and 
-	     * old mouse modifiers are set. 
-	     */
+            /* On other MouseEvent only new modifiers and
+             * old mouse modifiers are set.
+             */
             modifiers = getModifiers(event->xcrossing.state, 0, 0);
 
             switch (event->type) {
@@ -2280,16 +2280,16 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                               event->xcrossing.time,
                                               modifiers,
                                               (jint) (event->xcrossing.x),
-					      (jint) (event->xcrossing.y),
+                                              (jint) (event->xcrossing.y),
                                               (jint) (event->xcrossing.x_root),
                                               (jint) (event->xcrossing.y_root),
                                               clickCount,
                                               FALSE, 0,
-					      java_awt_event_MouseEvent_NOBUTTON);
-            	    if (!(event->xcrossing.state 
-			& (Button1Mask | Button2Mask | Button3Mask))) {
-		        updateCursor(client_data, CACHE_UPDATE);
-		    }
+                                              java_awt_event_MouseEvent_NOBUTTON);
+                    if (!(event->xcrossing.state
+                        & (Button1Mask | Button2Mask | Button3Mask))) {
+                        updateCursor(client_data, CACHE_UPDATE);
+                    }
 
                     break;
                 case LeaveNotify:
@@ -2299,12 +2299,12 @@ awt_canvas_handleEvent(Widget w, XtPointer client_data,
                                               event->xcrossing.time,
                                               modifiers,
                                               (jint) (event->xcrossing.x),
-					      (jint) (event->xcrossing.y),
+                                              (jint) (event->xcrossing.y),
                                               (jint) (event->xcrossing.x_root),
                                               (jint) (event->xcrossing.y_root),
                                               clickCount,
                                               FALSE, 0,
-					      java_awt_event_MouseEvent_NOBUTTON);
+                                              java_awt_event_MouseEvent_NOBUTTON);
                     break;
             }
             break;
@@ -2354,10 +2354,10 @@ Wrap_event_handler(Widget widget,
 Widget
 awt_canvas_create(XtPointer this,
                   Widget parent,
-		  char *base,
+                  char *base,
                   int32_t width,
                   int32_t height,
-		  Boolean parentIsFrame,
+                  Boolean parentIsFrame,
                   struct FrameData *wdata,
                   AwtGraphicsConfigDataPtr awtData)
 {
@@ -2385,13 +2385,13 @@ awt_canvas_create(XtPointer this,
 
     if (wdata != NULL) {
         argc = 0;
-	if  (!parentIsFrame)
-	{
-	    XtSetArg(args[argc], XmNwidth, width);
-	    argc++;
-	    XtSetArg(args[argc], XmNheight, height);
-	    argc++;
-	}
+        if  (!parentIsFrame)
+        {
+            XtSetArg(args[argc], XmNwidth, width);
+            argc++;
+            XtSetArg(args[argc], XmNheight, height);
+            argc++;
+        }
         XtSetArg(args[argc], XmNmarginWidth, 0);
         argc++;
         XtSetArg(args[argc], XmNmarginHeight, 0);
@@ -2400,19 +2400,19 @@ awt_canvas_create(XtPointer this,
         argc++;
         XtSetArg(args[argc], XmNresizePolicy, XmRESIZE_NONE);
         argc++;
-	/* check for overflowing name? */
+        /* check for overflowing name? */
         strcpy(name, base);
         strcat(name, "wrap");
-        
+
         DASSERT(!(argc > MAX_ARGC));
         wrap = XmCreateDrawingArea(parent, name, args, argc);
-	if  (!parentIsFrame)
-	{
-	    /* Fixing bugs in frame module (awt_Frame.c).  It will now
-	       provide the resize handling for this inner/parent canvas.*/
-	    XtAddCallback(wrap, XmNresizeCallback,
-			  (XtCallbackProc) Wrap_event_handler, wdata);
-	}
+        if  (!parentIsFrame)
+        {
+            /* Fixing bugs in frame module (awt_Frame.c).  It will now
+               provide the resize handling for this inner/parent canvas.*/
+            XtAddCallback(wrap, XmNresizeCallback,
+                          (XtCallbackProc) Wrap_event_handler, wdata);
+        }
         XtManageChild(wrap);
     } else {
         wrap = parent;
@@ -2427,10 +2427,10 @@ awt_canvas_create(XtPointer this,
     argc++;
     if  (!parentIsFrame)
     {
-	XtSetArg(args[argc], XmNwidth, width);
-	argc++;
-	XtSetArg(args[argc], XmNheight, height);
-	argc++;
+        XtSetArg(args[argc], XmNwidth, width);
+        argc++;
+        XtSetArg(args[argc], XmNheight, height);
+        argc++;
     }
     XtSetArg(args[argc], XmNmarginHeight, 0);
     argc++;
@@ -2442,7 +2442,7 @@ awt_canvas_create(XtPointer this,
     argc++;
     /* Fixed 4059430, 3/11/98, robi.khan@eng
      * install insert proc callback so components are ordered correctly
-     * when added directly to frame/dialogs/windows 
+     * when added directly to frame/dialogs/windows
      */
     XtSetArg(args[argc], XmNinsertPosition, (XtPointer) awt_util_insertCallback);
     argc++;
@@ -2459,13 +2459,13 @@ awt_canvas_create(XtPointer this,
         }
 
         XtSetArg (args[argc], XmNcolormap, awtData->awt_cmap); argc++;
-    
+
         DASSERT(!(argc > MAX_ARGC));
-        newCanvas = XtCreateWidget(name, vDrawingAreaClass, wrap, 
+        newCanvas = XtCreateWidget(name, vDrawingAreaClass, wrap,
                                    args, argc);
 
     } else {
-	newCanvas = XtCreateWidget(name, xDrawingAreaClass,
+        newCanvas = XtCreateWidget(name, xDrawingAreaClass,
             wrap, args, argc);
     }
 
@@ -2480,11 +2480,11 @@ awt_canvas_create(XtPointer this,
     /* Fixed 4250354 7/28/99 ssi@sparc.spb.su
      * XtParseTranslationTable leaks in old ver of Xtoolkit
      * and result should be deletetd in any case
-     * 
+     *
      * XtOverrideTranslations(newCanvas,
      *                      XtParseTranslationTable("<KeyDown>:DrawingAreaInput()"));
      */
-    if (NULL==translationKeyDown) 
+    if (NULL==translationKeyDown)
         translationKeyDown=XtParseTranslationTable("<KeyDown>:DrawingAreaInput()");
     XtOverrideTranslations(newCanvas,translationKeyDown);
 
@@ -2493,7 +2493,7 @@ awt_canvas_create(XtPointer this,
     return newCanvas;
 }
 
-static void 
+static void
 messWithGravity(Widget w, int32_t gravity)
 {
     extern void awt_changeAttributes(Display * dpy, Widget w,
@@ -2505,7 +2505,7 @@ messWithGravity(Widget w, int32_t gravity)
     xattr.win_gravity = gravity;
 
     awt_changeAttributes(XtDisplay(w), w, (CWBitGravity | CWWinGravity), &xattr);
-                         
+
 }
 
 struct MoveRecord {
@@ -2528,7 +2528,7 @@ moveWidget(Widget w, void *data)
 /* Scroll entire contents of window by dx and dy.  Currently only
    dy is supported.  A negative dy means scroll backwards, i.e.,
    contents in window move down. */
-void 
+void
 awt_canvas_scroll(XtPointer this,
                   struct CanvasData *wdata,
                   long dx,
@@ -2796,21 +2796,21 @@ awt_post_java_key_event(XtPointer client_data, jint id, XEvent *event,
         if (sysClass != NULL) {
             /* Make this class 'sticky', we don't want it GC'd */
             classKeyEvent = (*env)->NewGlobalRef(env, sysClass);
-            mid = (*env)->GetMethodID(env, classKeyEvent, "<init>", 
+            mid = (*env)->GetMethodID(env, classKeyEvent, "<init>",
               "(Ljava/awt/Component;IJIICIZ)V");
         }
         if (JNU_IsNull(env, classKeyEvent) || mid == NULL) {
             JNU_ThrowClassNotFoundException(env, clsName);
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return;
         }
     }
 
     jWhen = awt_util_nowMillisUTC_offset(when); /* convert Time to UTC */
 
-    hEvent = (*env)->NewObject(env, classKeyEvent, mid, 
-                               target, id, jWhen, modifiers, 
-                               keycode, keychar, keyLocation, 
+    hEvent = (*env)->NewObject(env, classKeyEvent, mid,
+                               target, id, jWhen, modifiers,
+                               keycode, keychar, keyLocation,
                                isProxyActive?JNI_TRUE:JNI_FALSE);
 
     if ((*env)->ExceptionOccurred(env)) {
@@ -2819,7 +2819,7 @@ awt_post_java_key_event(XtPointer client_data, jint id, XEvent *event,
     }
     if (JNU_IsNull(env, hEvent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException: constructor failed.");
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->PopLocalFrame(env, 0);
         return;
     }
     awt_copyXEventToAWTEvent(env, event, hEvent);
@@ -2828,8 +2828,8 @@ awt_post_java_key_event(XtPointer client_data, jint id, XEvent *event,
         jio_fprintf(stderr, "native posting event id:%d  keychar:%c\n", (int)id, (char)keychar);
     }
     #endif
-    JNU_CallMethodByName(env, NULL, peer, 
-			 "postEvent", "(Ljava/awt/AWTEvent;)V", hEvent);
+    JNU_CallMethodByName(env, NULL, peer,
+                         "postEvent", "(Ljava/awt/AWTEvent;)V", hEvent);
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
@@ -2838,7 +2838,7 @@ awt_post_java_key_event(XtPointer client_data, jint id, XEvent *event,
 } /* awt_post_java_key_event() */
 
 /*
- * Note: this routine returns a global reference which should be deleted 
+ * Note: this routine returns a global reference which should be deleted
  * after use.
  */
 jobject
@@ -2858,15 +2858,15 @@ awt_canvas_wrapInSequenced(jobject awtevent) {
         if (sysClass != NULL) {
             /* Make this class 'sticky', we don't want it GC'd */
             classSequencedEvent = (*env)->NewGlobalRef(env, sysClass);
-	    if (mid == NULL) {
-	      mid = (*env)->GetMethodID(env, classSequencedEvent
-					,"<init>"
-					,"(Ljava/awt/AWTEvent;)V");
-	    }
+            if (mid == NULL) {
+              mid = (*env)->GetMethodID(env, classSequencedEvent
+                                        ,"<init>"
+                                        ,"(Ljava/awt/AWTEvent;)V");
+            }
         }
         if (JNU_IsNull(env, classSequencedEvent) || mid == NULL) {
             JNU_ThrowClassNotFoundException(env, "java/awt/SequencedEvent");
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return NULL;
         }
     }
@@ -2878,19 +2878,19 @@ awt_canvas_wrapInSequenced(jobject awtevent) {
     }
     if (JNU_IsNull(env, wrapperEventLocal)) {
         JNU_ThrowNullPointerException(env, "constructor failed.");
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->PopLocalFrame(env, 0);
         return NULL;
     }
     wrapperEvent = (*env)->NewGlobalRef(env, wrapperEventLocal);
     if (!JNU_IsNull(env, ((*env)->ExceptionOccurred(env)))) {
-	(*env)->ExceptionDescribe(env);
-	(*env)->ExceptionClear(env);
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->PopLocalFrame(env, 0);
         return NULL;
     }
     if (JNU_IsNull(env, wrapperEvent)) {
         JNU_ThrowNullPointerException(env, "NewGlobalRef failed.");
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->PopLocalFrame(env, 0);
         return NULL;
     }
 
@@ -2909,17 +2909,17 @@ findTopLevelOpposite(JNIEnv *env, jint eventType)
 
     /* 4462056: Get a usable handle for a weakly referenced object */
     target = (*env)->NewLocalRef(env,
-	         (eventType == java_awt_event_WindowEvent_WINDOW_GAINED_FOCUS)
-				 ? forGained
-				 : focusList->requestor);
+                 (eventType == java_awt_event_WindowEvent_WINDOW_GAINED_FOCUS)
+                                 ? forGained
+                                 : focusList->requestor);
     if (target == NULL) {
-	return NULL;
+        return NULL;
     }
 
     peer = (*env)->GetObjectField(env, target, componentIDs.peer);
     (*env)->DeleteLocalRef(env, target);
     if (peer == NULL) {
-	return NULL;
+        return NULL;
     }
 
     opposite = findTopLevel(peer, env);
@@ -2939,7 +2939,7 @@ cleanFocusList(JNIEnv *env){
   }
   focusListEnd = NULL;
 }
-  
+
 static jweak
 computeOpposite(jint id, jobject target)
 {
@@ -2948,7 +2948,7 @@ computeOpposite(jint id, jobject target)
     jboolean isSameObject;
 
     if (focusList == NULL) {
-	return NULL;
+        return NULL;
     }
 
     /* 4462056: Get a usable handle for a weakly referenced object */
@@ -2964,26 +2964,26 @@ computeOpposite(jint id, jobject target)
 
     if (isSameObject) {
         if (id == java_awt_event_FocusEvent_FOCUS_GAINED) {
-	    return forGained;
+            return forGained;
         } else { /* focus lost */
-	    FocusListElt *tmp = focusList->next;
-	    (*env)->DeleteWeakGlobalRef(env, forGained);
-	    forGained = focusList->requestor;
-	    free(focusList);
-	    focusList = tmp;
+            FocusListElt *tmp = focusList->next;
+            (*env)->DeleteWeakGlobalRef(env, forGained);
+            forGained = focusList->requestor;
+            free(focusList);
+            focusList = tmp;
 
-	    if (focusList == NULL) {
-		focusListEnd = NULL;
-		return NULL;
-	    }
-	    return focusList->requestor;
+            if (focusList == NULL) {
+                focusListEnd = NULL;
+                return NULL;
+            }
+            return focusList->requestor;
         }
     } else { /* target does not match top of list */
         /* be gentle with focus lost for now... */
         if (id == java_awt_event_FocusEvent_FOCUS_LOST) {
-	    (*env)->DeleteWeakGlobalRef(env, forGained);
-	    forGained = (*env)->NewWeakGlobalRef(env, target);
-	    return NULL;
+            (*env)->DeleteWeakGlobalRef(env, forGained);
+            forGained = (*env)->NewWeakGlobalRef(env, target);
+            return NULL;
         }
 
         cleanFocusList(env);
@@ -2995,10 +2995,10 @@ computeOpposite(jint id, jobject target)
 /*
  * client_data is MComponentPeer instance
  */
-void 
+void
 awt_post_java_focus_event(XtPointer client_data,
-			  jint id, jobject cause, 
-			  XEvent* event)
+                          jint id, jobject cause,
+                          XEvent* event)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject peer = (jobject) client_data;
@@ -3029,11 +3029,11 @@ awt_post_java_focus_event(XtPointer client_data,
         }
         if (JNU_IsNull(env, classFocusEvent) || mid == 0) {
             JNU_ThrowClassNotFoundException(env, clsName);
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return;
         }
     }
-    hEvent = (*env)->NewObject(env, classFocusEvent, mid, 
+    hEvent = (*env)->NewObject(env, classFocusEvent, mid,
                                target, id, JNI_FALSE, opposite, cause);
     (*env)->DeleteLocalRef(env, opposite);
 
@@ -3043,16 +3043,16 @@ awt_post_java_focus_event(XtPointer client_data,
     }
     if (JNU_IsNull(env, hEvent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException: constructor failed.");
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->PopLocalFrame(env, 0);
         return;
     }
     awt_copyXEventToAWTEvent(env, event, hEvent);
     {
-	jobject awtEvent = awt_canvas_wrapInSequenced(hEvent);
-	JNU_CallMethodByName(env, NULL, peer, 
-			     "postEvent", "(Ljava/awt/AWTEvent;)V",
-			     awtEvent);
-	(*env)->DeleteGlobalRef(env, awtEvent);
+        jobject awtEvent = awt_canvas_wrapInSequenced(hEvent);
+        JNU_CallMethodByName(env, NULL, peer,
+                             "postEvent", "(Ljava/awt/AWTEvent;)V",
+                             awtEvent);
+        (*env)->DeleteGlobalRef(env, awtEvent);
     }
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
@@ -3080,7 +3080,7 @@ awt_canvas_addToFocusListWithDuplicates(jobject target, jboolean acceptDuplicate
             isSameObject = JNI_FALSE;
         } else {
             isSameObject = (*env)->IsSameObject(env, target, localRef);
-            (*env)->DeleteLocalRef(env, localRef);                     
+            (*env)->DeleteLocalRef(env, localRef);
         }
 
         if (isSameObject && !acceptDuplicates) {
@@ -3158,7 +3158,7 @@ awt_post_java_mouse_event(XtPointer client_data, jint id, XEvent* event,
         }
         if (JNU_IsNull(env, classMouseEvent) || mid == 0) {
             JNU_ThrowClassNotFoundException(env, clsName);
-	    (*env)->PopLocalFrame(env, 0);
+            (*env)->PopLocalFrame(env, 0);
             return;
         }
     }
@@ -3213,12 +3213,12 @@ awt_post_java_mouse_event(XtPointer client_data, jint id, XEvent* event,
     }
     if (JNU_IsNull(env, hEvent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException: constructor failed.");
-	(*env)->PopLocalFrame(env, 0);
+        (*env)->PopLocalFrame(env, 0);
         return;
     }
     awt_copyXEventToAWTEvent(env, event, hEvent);
-    JNU_CallMethodByName(env, NULL, peer, 
-			 "postEvent", "(Ljava/awt/AWTEvent;)V", hEvent);
+    JNU_CallMethodByName(env, NULL, peer,
+                         "postEvent", "(Ljava/awt/AWTEvent;)V", hEvent);
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);

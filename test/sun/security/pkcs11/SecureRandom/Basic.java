@@ -37,28 +37,27 @@ import java.security.*;
 import javax.crypto.*;
 
 public class Basic extends PKCS11Test {
-    
-    public void main(Provider p) throws Exception {
-	SecureRandom random;
-	try {
-	    random = SecureRandom.getInstance("PKCS11");
-	} catch (NoSuchAlgorithmException e) {
-	    System.out.println("Provider " + p + " does not support SecureRandom, skipping");
-	    e.printStackTrace();
-	    return;
-	}
-	byte[] b = new byte[32];
-	random.nextBytes(b);
-	System.out.println(toString(b));
-	random.setSeed(b);
-	random.nextBytes(b);
-	System.out.println(toString(b));
-	System.out.println("OK");
-    }
-    
-    public static void main(String[] args) throws Exception {
-	main(new Basic());
-    }
-    
-}
 
+    public void main(Provider p) throws Exception {
+        SecureRandom random;
+        try {
+            random = SecureRandom.getInstance("PKCS11");
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Provider " + p + " does not support SecureRandom, skipping");
+            e.printStackTrace();
+            return;
+        }
+        byte[] b = new byte[32];
+        random.nextBytes(b);
+        System.out.println(toString(b));
+        random.setSeed(b);
+        random.nextBytes(b);
+        System.out.println(toString(b));
+        System.out.println("OK");
+    }
+
+    public static void main(String[] args) throws Exception {
+        main(new Basic());
+    }
+
+}

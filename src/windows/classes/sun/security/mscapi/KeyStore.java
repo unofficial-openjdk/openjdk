@@ -59,121 +59,121 @@ import sun.security.action.GetPropertyAction;
 abstract class KeyStore extends KeyStoreSpi {
 
     public static final class MY extends KeyStore {
-	public MY() {
-	    super("MY");
-	}
+        public MY() {
+            super("MY");
+        }
     }
 
     public static final class ROOT extends KeyStore {
-	public ROOT() {
-	    super("ROOT");
-	}
+        public ROOT() {
+            super("ROOT");
+        }
     }
 
-    class KeyEntry 
+    class KeyEntry
     {
-	private Key privateKey;
-	private X509Certificate certChain[];
-	private String alias;
+        private Key privateKey;
+        private X509Certificate certChain[];
+        private String alias;
 
-	KeyEntry(Key key, X509Certificate[] chain) {
-	    this(null, key, chain);
-	}
+        KeyEntry(Key key, X509Certificate[] chain) {
+            this(null, key, chain);
+        }
 
-	KeyEntry(String alias, Key key, X509Certificate[] chain) {
-	    this.privateKey = key;
-	    this.certChain = chain;
-	    /*
-	     * The default alias for both entry types is derived from a
-	     * hash value intrinsic to the first certificate in the chain.
-	     */
-	     if (alias == null) {
-		 this.alias = Integer.toString(chain[0].hashCode());
-	     } else {
-		 this.alias = alias;
-	     }
-	}
+        KeyEntry(String alias, Key key, X509Certificate[] chain) {
+            this.privateKey = key;
+            this.certChain = chain;
+            /*
+             * The default alias for both entry types is derived from a
+             * hash value intrinsic to the first certificate in the chain.
+             */
+             if (alias == null) {
+                 this.alias = Integer.toString(chain[0].hashCode());
+             } else {
+                 this.alias = alias;
+             }
+        }
 
-	/**
-	 * Gets the alias for the keystore entry.
-	 */
-	String getAlias()
-	{
-	    return alias;
-	}
+        /**
+         * Gets the alias for the keystore entry.
+         */
+        String getAlias()
+        {
+            return alias;
+        }
 
-	/**
-	 * Sets the alias for the keystore entry.
-	 */
-	void setAlias(String alias)
-	{
-	    // TODO - set friendly name prop in cert store
-	    this.alias = alias;
-	}
+        /**
+         * Sets the alias for the keystore entry.
+         */
+        void setAlias(String alias)
+        {
+            // TODO - set friendly name prop in cert store
+            this.alias = alias;
+        }
 
-	/**
-	 * Gets the private key for the keystore entry.
-	 */
-	Key getPrivateKey()
-	{
-	    return privateKey;
-	}
+        /**
+         * Gets the private key for the keystore entry.
+         */
+        Key getPrivateKey()
+        {
+            return privateKey;
+        }
 
-	/**
-	 * Sets the private key for the keystore entry.
-	 */
-	void setPrivateKey(RSAPrivateCrtKey key)
-	{
-	    byte[] modulusBytes = key.getModulus().toByteArray();
+        /**
+         * Sets the private key for the keystore entry.
+         */
+        void setPrivateKey(RSAPrivateCrtKey key)
+        {
+            byte[] modulusBytes = key.getModulus().toByteArray();
 
-	    // Adjust key length due to sign bit
-	    int keyBitLength = (modulusBytes[0] == 0)
-		? (modulusBytes.length - 1) * 8
-		: modulusBytes.length * 8;
+            // Adjust key length due to sign bit
+            int keyBitLength = (modulusBytes[0] == 0)
+                ? (modulusBytes.length - 1) * 8
+                : modulusBytes.length * 8;
 
-	    byte[] keyBlob = generatePrivateKeyBlob(
-		keyBitLength,
-		modulusBytes,
-		key.getPublicExponent().toByteArray(),
-		key.getPrivateExponent().toByteArray(),
-		key.getPrimeP().toByteArray(),
-		key.getPrimeQ().toByteArray(),
-		key.getPrimeExponentP().toByteArray(),
-		key.getPrimeExponentQ().toByteArray(),
-		key.getCrtCoefficient().toByteArray());
+            byte[] keyBlob = generatePrivateKeyBlob(
+                keyBitLength,
+                modulusBytes,
+                key.getPublicExponent().toByteArray(),
+                key.getPrivateExponent().toByteArray(),
+                key.getPrimeP().toByteArray(),
+                key.getPrimeQ().toByteArray(),
+                key.getPrimeExponentP().toByteArray(),
+                key.getPrimeExponentQ().toByteArray(),
+                key.getCrtCoefficient().toByteArray());
 
-	    privateKey = storePrivateKey(keyBlob,
-		"{" + UUID.randomUUID().toString() + "}", keyBitLength);
-	}
+            privateKey = storePrivateKey(keyBlob,
+                "{" + UUID.randomUUID().toString() + "}", keyBitLength);
+        }
 
-	/**
-	 * Gets the certificate chain for the keystore entry.
-	 */
-	X509Certificate[] getCertificateChain()
-	{
-	    return certChain;  
-	}
- 
-	/**
-	 * Sets the certificate chain for the keystore entry.
-	 */
-	void setCertificateChain(X509Certificate[] chain)
-	    throws CertificateException
-	{
-	    for (int i = 0; i < chain.length; i++) {
-		byte[] encoding = chain[i].getEncoded();
-		if (i == 0 && privateKey != null) {
-		    storeCertificate(getName(), alias, encoding, 
-			encoding.length, privateKey.getHCryptProvider(),
-			privateKey.getHCryptKey());
+        /**
+         * Gets the certificate chain for the keystore entry.
+         */
+        X509Certificate[] getCertificateChain()
+        {
+            return certChain;
+        }
 
-		} else {
-		    storeCertificate(getName(), alias, encoding, 
-			encoding.length, 0L, 0L); // no private key to attach
-		}
-	    }
-	    certChain = chain;
-	}
+        /**
+         * Sets the certificate chain for the keystore entry.
+         */
+        void setCertificateChain(X509Certificate[] chain)
+            throws CertificateException
+        {
+            for (int i = 0; i < chain.length; i++) {
+                byte[] encoding = chain[i].getEncoded();
+                if (i == 0 && privateKey != null) {
+                    storeCertificate(getName(), alias, encoding,
+                        encoding.length, privateKey.getHCryptProvider(),
+                        privateKey.getHCryptKey());
+
+                } else {
+                    storeCertificate(getName(), alias, encoding,
+                        encoding.length, 0L, 0L); // no private key to attach
+                }
+            }
+            certChain = chain;
+        }
     };
 
     /*
@@ -188,14 +188,14 @@ abstract class KeyStore extends KeyStoreSpi {
      * or password parameter when passed to the load or store methods.
      * The mode is enabled by default.
      */
-    private static final String KEYSTORE_COMPATIBILITY_MODE_PROP = 
-	"sun.security.mscapi.keyStoreCompatibilityMode";
+    private static final String KEYSTORE_COMPATIBILITY_MODE_PROP =
+        "sun.security.mscapi.keyStoreCompatibilityMode";
     private final boolean keyStoreCompatibilityMode;
 
     /*
      * The keystore entries.
      */
-    private Collection<KeyEntry> entries = new ArrayList<KeyEntry>(); 
+    private Collection<KeyEntry> entries = new ArrayList<KeyEntry>();
 
     /*
      * The keystore name.
@@ -204,25 +204,25 @@ abstract class KeyStore extends KeyStoreSpi {
     private final String storeName;
 
     KeyStore(String storeName) {
-	// Get the compatibility mode
-	String prop = 
-	    AccessController.doPrivileged(
-		new GetPropertyAction(KEYSTORE_COMPATIBILITY_MODE_PROP));
+        // Get the compatibility mode
+        String prop =
+            AccessController.doPrivileged(
+                new GetPropertyAction(KEYSTORE_COMPATIBILITY_MODE_PROP));
 
-	if ("false".equalsIgnoreCase(prop)) {
-	    keyStoreCompatibilityMode = false;
-	} else {
-	    keyStoreCompatibilityMode = true;
-	}
+        if ("false".equalsIgnoreCase(prop)) {
+            keyStoreCompatibilityMode = false;
+        } else {
+            keyStoreCompatibilityMode = true;
+        }
 
-	this.storeName = storeName;
+        this.storeName = storeName;
     }
 
     /**
      * Returns the key associated with the given alias.
      * <p>
      * A compatibility mode is supported for applications that assume
-     * a password must be supplied. It permits (but ignores) a non-null 
+     * a password must be supplied. It permits (but ignores) a non-null
      * <code>password</code>.  The mode is enabled by default.
      * Set the
      * <code>sun.security.mscapi.keyStoreCompatibilityMode</code>
@@ -236,32 +236,32 @@ abstract class KeyStore extends KeyStoreSpi {
      * or does not identify a <i>key entry</i>.
      *
      * @exception NoSuchAlgorithmException if the algorithm for recovering the
-     * key cannot be found, 
-     * or if compatibility mode is disabled and <code>password</code> is 
+     * key cannot be found,
+     * or if compatibility mode is disabled and <code>password</code> is
      * non-null.
      * @exception UnrecoverableKeyException if the key cannot be recovered.
      */
     public java.security.Key engineGetKey(String alias, char[] password)
-	throws NoSuchAlgorithmException, UnrecoverableKeyException
+        throws NoSuchAlgorithmException, UnrecoverableKeyException
     {
-	if (alias == null) {
-	    return null;
-	}
+        if (alias == null) {
+            return null;
+        }
 
-	if (password != null && !keyStoreCompatibilityMode) {
-	    throw new UnrecoverableKeyException("Password must be null");
-	}
+        if (password != null && !keyStoreCompatibilityMode) {
+            throw new UnrecoverableKeyException("Password must be null");
+        }
 
-	if (engineIsKeyEntry(alias) == false)
-	    return null;
+        if (engineIsKeyEntry(alias) == false)
+            return null;
 
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias())) {
-		return entry.getPrivateKey();
-	    }
-	}
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias())) {
+                return entry.getPrivateKey();
+            }
+        }
 
-	return null;
+        return null;
     }
 
     /**
@@ -271,25 +271,25 @@ abstract class KeyStore extends KeyStoreSpi {
      *
      * @return the certificate chain (ordered with the user's certificate first
      * and the root certificate authority last), or null if the given alias
-     * does not exist or does not contain a certificate chain (i.e., the given 
+     * does not exist or does not contain a certificate chain (i.e., the given
      * alias identifies either a <i>trusted certificate entry</i> or a
      * <i>key entry</i> without a certificate chain).
      */
-    public Certificate[] engineGetCertificateChain(String alias) 
+    public Certificate[] engineGetCertificateChain(String alias)
     {
-	if (alias == null) {
-	    return null;
-	}
+        if (alias == null) {
+            return null;
+        }
 
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias())) {
-		X509Certificate[] certChain = entry.getCertificateChain();
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias())) {
+                X509Certificate[] certChain = entry.getCertificateChain();
 
-		return certChain.clone();
-	    }
-	}
+                return certChain.clone();
+            }
+        }
 
-	return null;
+        return null;
     }
 
     /**
@@ -307,22 +307,22 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return the certificate, or null if the given alias does not exist or
      * does not contain a certificate.
      */
-    public Certificate engineGetCertificate(String alias) 
+    public Certificate engineGetCertificate(String alias)
     {
-	if (alias == null) {
-	    return null;
-	}
+        if (alias == null) {
+            return null;
+        }
 
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias()))
-	    {
-		X509Certificate[] certChain = entry.getCertificateChain();
-		return certChain[0];
-	    }
-	}
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias()))
+            {
+                X509Certificate[] certChain = entry.getCertificateChain();
+                return certChain[0];
+            }
+        }
 
-	return null;
-    }	
+        return null;
+    }
 
     /**
      * Returns the creation date of the entry identified by the given alias.
@@ -333,15 +333,15 @@ abstract class KeyStore extends KeyStoreSpi {
      * not exist
      */
     public Date engineGetCreationDate(String alias) {
-	if (alias == null) {
-	    return null;
-	}
-	return new Date();
+        if (alias == null) {
+            return null;
+        }
+        return new Date();
     }
 
     /**
-     * Stores the given private key and associated certificate chain in the 
-     * keystore. 
+     * Stores the given private key and associated certificate chain in the
+     * keystore.
      *
      * <p>The given java.security.PrivateKey <code>key</code> must
      * be accompanied by a certificate chain certifying the
@@ -353,76 +353,76 @@ abstract class KeyStore extends KeyStoreSpi {
      *
      * <p>
      * A compatibility mode is supported for applications that assume
-     * a password must be supplied. It permits (but ignores) a non-null 
+     * a password must be supplied. It permits (but ignores) a non-null
      * <code>password</code>.  The mode is enabled by default.
      * Set the
      * <code>sun.security.mscapi.keyStoreCompatibilityMode</code>
      * system property to <code>false</code> to disable compatibility mode
      * and reject a non-null <code>password</code>.
      *
-     * @param alias the alias name 
+     * @param alias the alias name
      * @param key the private key to be associated with the alias
      * @param password the password, which should be <code>null</code>
      * @param chain the certificate chain for the corresponding public
      *        key (only required if the given key is of type
      *        <code>java.security.PrivateKey</code>).
      *
-     * @exception KeyStoreException if the given key is not a private key, 
-     * cannot be protected, or if compatibility mode is disabled and 
-     * <code>password</code> is non-null, or if this operation fails for 
+     * @exception KeyStoreException if the given key is not a private key,
+     * cannot be protected, or if compatibility mode is disabled and
+     * <code>password</code> is non-null, or if this operation fails for
      * some other reason.
      */
-    public void engineSetKeyEntry(String alias, java.security.Key key, 
-	char[] password, Certificate[] chain) throws KeyStoreException
+    public void engineSetKeyEntry(String alias, java.security.Key key,
+        char[] password, Certificate[] chain) throws KeyStoreException
     {
-	if (alias == null) {
-	    throw new KeyStoreException("alias must not be null");
-	}
+        if (alias == null) {
+            throw new KeyStoreException("alias must not be null");
+        }
 
-	if (password != null && !keyStoreCompatibilityMode) {
-	    throw new KeyStoreException("Password must be null");
-	}
+        if (password != null && !keyStoreCompatibilityMode) {
+            throw new KeyStoreException("Password must be null");
+        }
 
-	if (key instanceof RSAPrivateCrtKey) {
+        if (key instanceof RSAPrivateCrtKey) {
 
-	    KeyEntry entry = null;
-	    boolean found = false;
+            KeyEntry entry = null;
+            boolean found = false;
 
-	    for (KeyEntry e : entries) {
-		if (alias.equals(e.getAlias())) {
-		    found = true;
-		    entry = e;
-		    break;
-		}
-	    }
+            for (KeyEntry e : entries) {
+                if (alias.equals(e.getAlias())) {
+                    found = true;
+                    entry = e;
+                    break;
+                }
+            }
 
-	    if (! found) {
-		entry = 
-		    //TODO new KeyEntry(alias, key, (X509Certificate[]) chain);
-		    new KeyEntry(alias, null, (X509Certificate[]) chain);
-		entries.add(entry);
-	    } 
+            if (! found) {
+                entry =
+                    //TODO new KeyEntry(alias, key, (X509Certificate[]) chain);
+                    new KeyEntry(alias, null, (X509Certificate[]) chain);
+                entries.add(entry);
+            }
 
-	    entry.setAlias(alias);
-	    entry.setPrivateKey((RSAPrivateCrtKey) key);
+            entry.setAlias(alias);
+            entry.setPrivateKey((RSAPrivateCrtKey) key);
 
-	    try {
-		entry.setCertificateChain((X509Certificate[]) chain);
+            try {
+                entry.setCertificateChain((X509Certificate[]) chain);
 
-	    } catch (CertificateException ce) {
-		throw new KeyStoreException(ce);
-	    }
+            } catch (CertificateException ce) {
+                throw new KeyStoreException(ce);
+            }
 
-	} else {
-	    throw new UnsupportedOperationException(
-		"Cannot assign the key to the given alias.");
-	}
+        } else {
+            throw new UnsupportedOperationException(
+                "Cannot assign the key to the given alias.");
+        }
     }
 
     /**
      * Assigns the given key (that has already been protected) to the given
      * alias.
-     * 
+     *
      * <p>If the protected key is of type
      * <code>java.security.PrivateKey</code>, it must be accompanied by a
      * certificate chain certifying the corresponding public key. If the
@@ -443,11 +443,11 @@ abstract class KeyStore extends KeyStoreSpi {
      * @exception KeyStoreException if this operation fails.
      */
     public void engineSetKeyEntry(String alias, byte[] key,
-				  Certificate[] chain)
-	throws KeyStoreException
+                                  Certificate[] chain)
+        throws KeyStoreException
     {
-	throw new UnsupportedOperationException(
-	    "Cannot assign the encoded key to the given alias.");
+        throw new UnsupportedOperationException(
+            "Cannot assign the encoded key to the given alias.");
     }
 
     /**
@@ -465,49 +465,49 @@ abstract class KeyStore extends KeyStoreSpi {
      * fails for some other reason.
      */
     public void engineSetCertificateEntry(String alias, Certificate cert)
-	throws KeyStoreException
+        throws KeyStoreException
     {
-	if (alias == null) {
-	    throw new KeyStoreException("alias must not be null");
-	}
+        if (alias == null) {
+            throw new KeyStoreException("alias must not be null");
+        }
 
-	if (cert instanceof X509Certificate) {
+        if (cert instanceof X509Certificate) {
 
-	    // TODO - build CryptoAPI chain?
-	    X509Certificate[] chain = 
-		new X509Certificate[]{ (X509Certificate) cert };
-	    KeyEntry entry = null;
-	    boolean found = false;
+            // TODO - build CryptoAPI chain?
+            X509Certificate[] chain =
+                new X509Certificate[]{ (X509Certificate) cert };
+            KeyEntry entry = null;
+            boolean found = false;
 
-	    for (KeyEntry e : entries) {
-		if (alias.equals(e.getAlias())) {
-		    found = true;
-		    entry = e;
-		    break;
-		}
-	    }
+            for (KeyEntry e : entries) {
+                if (alias.equals(e.getAlias())) {
+                    found = true;
+                    entry = e;
+                    break;
+                }
+            }
 
-	    if (! found) {
-		entry = 
-		    new KeyEntry(alias, null, chain);
-		entries.add(entry);
+            if (! found) {
+                entry =
+                    new KeyEntry(alias, null, chain);
+                entries.add(entry);
 
-	    } 
-	    if (entry.getPrivateKey() == null) { // trusted-cert entry
-		entry.setAlias(alias);
+            }
+            if (entry.getPrivateKey() == null) { // trusted-cert entry
+                entry.setAlias(alias);
 
-		try {
-		    entry.setCertificateChain(chain);
+                try {
+                    entry.setCertificateChain(chain);
 
-		} catch (CertificateException ce) {
-		    throw new KeyStoreException(ce);
-		}
-	    }
+                } catch (CertificateException ce) {
+                    throw new KeyStoreException(ce);
+                }
+            }
 
-	} else {
-	    throw new UnsupportedOperationException(
-		"Cannot assign the certificate to the given alias.");
-	}
+        } else {
+            throw new UnsupportedOperationException(
+                "Cannot assign the certificate to the given alias.");
+        }
     }
 
     /**
@@ -518,40 +518,40 @@ abstract class KeyStore extends KeyStoreSpi {
      * @exception KeyStoreException if the entry cannot be removed.
      */
     public void engineDeleteEntry(String alias)
-	throws KeyStoreException
+        throws KeyStoreException
     {
-	if (alias == null) {
-	    throw new KeyStoreException("alias must not be null");
-	}
+        if (alias == null) {
+            throw new KeyStoreException("alias must not be null");
+        }
 
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias())) {
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias())) {
 
-		// Get end-entity certificate and remove from system cert store
-		X509Certificate[] certChain = entry.getCertificateChain();
-		if (certChain != null) {
+                // Get end-entity certificate and remove from system cert store
+                X509Certificate[] certChain = entry.getCertificateChain();
+                if (certChain != null) {
 
-		    try {
+                    try {
 
-			byte[] encoding = certChain[0].getEncoded();
-			removeCertificate(getName(), alias, encoding, 
-			    encoding.length);
+                        byte[] encoding = certChain[0].getEncoded();
+                        removeCertificate(getName(), alias, encoding,
+                            encoding.length);
 
-		    } catch (CertificateEncodingException e) {
-			throw new KeyStoreException("Cannot remove entry: " +
-			    e);
-		    }
-		}
-		Key privateKey = entry.getPrivateKey();
-		if (privateKey != null) {
-		    destroyKeyContainer(
-			Key.getContainerName(privateKey.getHCryptProvider())); 
-		}
+                    } catch (CertificateEncodingException e) {
+                        throw new KeyStoreException("Cannot remove entry: " +
+                            e);
+                    }
+                }
+                Key privateKey = entry.getPrivateKey();
+                if (privateKey != null) {
+                    destroyKeyContainer(
+                        Key.getContainerName(privateKey.getHCryptProvider()));
+                }
 
-		entries.remove(entry);
-		break;
-	    }
-	}
+                entries.remove(entry);
+                break;
+            }
+        }
     }
 
     /**
@@ -561,21 +561,21 @@ abstract class KeyStore extends KeyStoreSpi {
      */
     public Enumeration engineAliases() {
 
-	final Iterator iter = entries.iterator();
+        final Iterator iter = entries.iterator();
 
-	return new Enumeration() 
-	{
-	    public boolean hasMoreElements()
-	    {
-		return iter.hasNext();
-	    }
+        return new Enumeration()
+        {
+            public boolean hasMoreElements()
+            {
+                return iter.hasNext();
+            }
 
-	    public Object nextElement()
-	    {
-		KeyEntry entry = (KeyEntry) iter.next();
-		return entry.getAlias();
-	    }    
-	};
+            public Object nextElement()
+            {
+                KeyEntry entry = (KeyEntry) iter.next();
+                return entry.getAlias();
+            }
+        };
     }
 
     /**
@@ -586,15 +586,15 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return true if the alias exists, false otherwise
      */
     public boolean engineContainsAlias(String alias) {
-	for (Enumeration enumerator = engineAliases(); 
-	    enumerator.hasMoreElements();)
-	{
-	    String a = (String) enumerator.nextElement();
+        for (Enumeration enumerator = engineAliases();
+            enumerator.hasMoreElements();)
+        {
+            String a = (String) enumerator.nextElement();
 
-	    if (a.equals(alias))
-		return true;
-	}
-	return false;
+            if (a.equals(alias))
+                return true;
+        }
+        return false;
     }
 
     /**
@@ -603,7 +603,7 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return the number of entries in this keystore
      */
     public int engineSize() {
-	return entries.size();
+        return entries.size();
     }
 
     /**
@@ -615,17 +615,17 @@ abstract class KeyStore extends KeyStoreSpi {
      */
     public boolean engineIsKeyEntry(String alias) {
 
-	if (alias == null) {
-	    return false;
-	}
+        if (alias == null) {
+            return false;
+        }
 
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias())) {
-		return entry.getPrivateKey() != null;
-	    }
-	}
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias())) {
+                return entry.getPrivateKey() != null;
+            }
+        }
 
-	return false;
+        return false;
     }
 
     /**
@@ -635,15 +635,15 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return true if the entry identified by the given alias is a
      * <i>trusted certificate entry</i>, false otherwise.
      */
-    public boolean engineIsCertificateEntry(String alias) 
+    public boolean engineIsCertificateEntry(String alias)
     {
-	for (KeyEntry entry : entries) {
-	    if (alias.equals(entry.getAlias())) {
-		return entry.getPrivateKey() == null;
-	    }
-	}
+        for (KeyEntry entry : entries) {
+            if (alias.equals(entry.getAlias())) {
+                return entry.getPrivateKey() == null;
+            }
+        }
 
-	return false;
+        return false;
     }
 
     /**
@@ -662,15 +662,15 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return the (alias) name of the first entry with matching certificate,
      * or null if no such entry exists in this keystore.
      */
-    public String engineGetCertificateAlias(Certificate cert) 
+    public String engineGetCertificateAlias(Certificate cert)
     {
-	for (KeyEntry entry : entries) {
-	    if (entry.certChain != null && entry.certChain[0].equals(cert)) {
-		return entry.getAlias();
-	    }
-	}
-	
-	return null;
+        for (KeyEntry entry : entries) {
+            if (entry.certChain != null && entry.certChain[0].equals(cert)) {
+                return entry.getAlias();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -678,8 +678,8 @@ abstract class KeyStore extends KeyStoreSpi {
      * Entries are stored during engineSetEntry.
      *
      * A compatibility mode is supported for applications that assume
-     * keystores are stream-based. It permits (but ignores) a non-null 
-     * <code>stream</code> or <code>password</code>. 
+     * keystores are stream-based. It permits (but ignores) a non-null
+     * <code>stream</code> or <code>password</code>.
      * The mode is enabled by default.
      * Set the
      * <code>sun.security.mscapi.keyStoreCompatibilityMode</code>
@@ -693,23 +693,23 @@ abstract class KeyStore extends KeyStoreSpi {
      * parameter is non-null.
      */
     public void engineStore(OutputStream stream, char[] password)
-	throws IOException, NoSuchAlgorithmException, CertificateException
+        throws IOException, NoSuchAlgorithmException, CertificateException
     {
-	if (stream != null && !keyStoreCompatibilityMode) {
-	    throw new IOException("Keystore output stream must be null");
-	}
+        if (stream != null && !keyStoreCompatibilityMode) {
+            throw new IOException("Keystore output stream must be null");
+        }
 
-	if (password != null && !keyStoreCompatibilityMode) {
-	    throw new IOException("Keystore password must be null");
-	}
+        if (password != null && !keyStoreCompatibilityMode) {
+            throw new IOException("Keystore password must be null");
+        }
     }
 
     /**
      * Loads the keystore.
      *
      * A compatibility mode is supported for applications that assume
-     * keystores are stream-based. It permits (but ignores) a non-null 
-     * <code>stream</code> or <code>password</code>. 
+     * keystores are stream-based. It permits (but ignores) a non-null
+     * <code>stream</code> or <code>password</code>.
      * The mode is enabled by default.
      * Set the
      * <code>sun.security.mscapi.keyStoreCompatibilityMode</code>
@@ -727,97 +727,97 @@ abstract class KeyStore extends KeyStoreSpi {
      * @exception CertificateException if any of the certificates in the
      * keystore could not be loaded
      * @exception SecurityException if the security check for
-     *  <code>SecurityPermission("authProvider.<i>name</i>")</code> does not 
+     *  <code>SecurityPermission("authProvider.<i>name</i>")</code> does not
      *  pass, where <i>name</i> is the value returned by
      *  this provider's <code>getName</code> method.
      */
     public void engineLoad(InputStream stream, char[] password)
-	throws IOException, NoSuchAlgorithmException, CertificateException
+        throws IOException, NoSuchAlgorithmException, CertificateException
     {
-	if (stream != null && !keyStoreCompatibilityMode) {
-	    throw new IOException("Keystore input stream must be null");
-	}
+        if (stream != null && !keyStoreCompatibilityMode) {
+            throw new IOException("Keystore input stream must be null");
+        }
 
-	if (password != null && !keyStoreCompatibilityMode) {
-	    throw new IOException("Keystore password must be null");
-	}
+        if (password != null && !keyStoreCompatibilityMode) {
+            throw new IOException("Keystore password must be null");
+        }
 
-	/*
-	 * Use the same security check as AuthProvider.login
-	 */
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkPermission(new SecurityPermission(
-		"authProvider.SunMSCAPI"));
-	}
+        /*
+         * Use the same security check as AuthProvider.login
+         */
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SecurityPermission(
+                "authProvider.SunMSCAPI"));
+        }
 
-	// Clear all key entries
-	entries.clear();
+        // Clear all key entries
+        entries.clear();
 
-	// Load keys and/or certificate chains 
-	loadKeysOrCertificateChains(getName(), entries);
+        // Load keys and/or certificate chains
+        loadKeysOrCertificateChains(getName(), entries);
     }
 
     /**
-     * Generates a certificate chain from the collection of 
+     * Generates a certificate chain from the collection of
      * certificates and stores the result into a key entry.
      */
-    private void generateCertificateChain(String alias, 
-	Collection certCollection, Collection<KeyEntry> entries)
+    private void generateCertificateChain(String alias,
+        Collection certCollection, Collection<KeyEntry> entries)
     {
-	try
-	{
-	    X509Certificate[] certChain = 
-		new X509Certificate[certCollection.size()];
+        try
+        {
+            X509Certificate[] certChain =
+                new X509Certificate[certCollection.size()];
 
-	    int i = 0;
-	    for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
-	    {
-		certChain[i] = (X509Certificate) iter.next();
-	    }
+            int i = 0;
+            for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
+            {
+                certChain[i] = (X509Certificate) iter.next();
+            }
 
-	    KeyEntry entry = new KeyEntry(alias, null, certChain);
+            KeyEntry entry = new KeyEntry(alias, null, certChain);
 
-	    // Add cert chain
-	    entries.add(entry);
-	}
-	catch (Throwable e)
-	{
-	    // Ignore the exception and skip this entry
-	    // TODO - throw CertificateException?
-	}
+            // Add cert chain
+            entries.add(entry);
+        }
+        catch (Throwable e)
+        {
+            // Ignore the exception and skip this entry
+            // TODO - throw CertificateException?
+        }
     }
 
     /**
-     * Generates RSA key and certificate chain from the private key handle, 
+     * Generates RSA key and certificate chain from the private key handle,
      * collection of certificates and stores the result into key entries.
      */
-    private void generateRSAKeyAndCertificateChain(String alias, 
-	long hCryptProv, long hCryptKey, int keyLength, 
-	Collection certCollection, Collection<KeyEntry> entries)
+    private void generateRSAKeyAndCertificateChain(String alias,
+        long hCryptProv, long hCryptKey, int keyLength,
+        Collection certCollection, Collection<KeyEntry> entries)
     {
-	try
-	{
-	    X509Certificate[] certChain = 
-		new X509Certificate[certCollection.size()];
+        try
+        {
+            X509Certificate[] certChain =
+                new X509Certificate[certCollection.size()];
 
-	    int i = 0;
-	    for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
-	    {
-		certChain[i] = (X509Certificate) iter.next();
-	    }
+            int i = 0;
+            for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
+            {
+                certChain[i] = (X509Certificate) iter.next();
+            }
 
-	    KeyEntry entry = new KeyEntry(alias, new RSAPrivateKey(hCryptProv, 
-		hCryptKey, keyLength), certChain);
+            KeyEntry entry = new KeyEntry(alias, new RSAPrivateKey(hCryptProv,
+                hCryptKey, keyLength), certChain);
 
-	    // Add cert chain
-	    entries.add(entry);
-	}
-	catch (Throwable e)
-	{
-	    // Ignore the exception and skip this entry
-	    // TODO - throw CertificateException?
-	}
+            // Add cert chain
+            entries.add(entry);
+        }
+        catch (Throwable e)
+        {
+            // Ignore the exception and skip this entry
+            // TODO - throw CertificateException?
+        }
     }
 
     /**
@@ -826,31 +826,31 @@ abstract class KeyStore extends KeyStoreSpi {
      * @param data Byte data.
      * @param certCollection Collection of certificates.
      */
-    private void generateCertificate(byte[] data, Collection certCollection) 
+    private void generateCertificate(byte[] data, Collection certCollection)
     {
-	try
-	{
-	    ByteArrayInputStream bis = new ByteArrayInputStream(data);
+        try
+        {
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
 
-	    // Obtain certificate factory
-	    if (certificateFactory == null) {
-		certificateFactory = CertificateFactory.getInstance("X.509");
-	    }
+            // Obtain certificate factory
+            if (certificateFactory == null) {
+                certificateFactory = CertificateFactory.getInstance("X.509");
+            }
 
-	    // Generate certificate
-	    Collection c = certificateFactory.generateCertificates(bis);
-	    certCollection.addAll(c);
-	}
-	catch (CertificateException e)
-	{
-	    // Ignore the exception and skip this certificate
-	    // TODO - throw CertificateException?
-	}
-	catch (Throwable te)
-	{
-	    // Ignore the exception and skip this certificate
-	    // TODO - throw CertificateException?
-	}
+            // Generate certificate
+            Collection c = certificateFactory.generateCertificates(bis);
+            certCollection.addAll(c);
+        }
+        catch (CertificateException e)
+        {
+            // Ignore the exception and skip this certificate
+            // TODO - throw CertificateException?
+        }
+        catch (Throwable te)
+        {
+            // Ignore the exception and skip this certificate
+            // TODO - throw CertificateException?
+        }
     }
 
     /**
@@ -858,7 +858,7 @@ abstract class KeyStore extends KeyStoreSpi {
      */
     private String getName()
     {
-	return storeName;
+        return storeName;
     }
 
     /**
@@ -867,8 +867,8 @@ abstract class KeyStore extends KeyStoreSpi {
      * @param name Name of keystore.
      * @param entries Collection of key/certificate.
      */
-    private native void loadKeysOrCertificateChains(String name, 
-	Collection<KeyEntry> entries);
+    private native void loadKeysOrCertificateChains(String name,
+        Collection<KeyEntry> entries);
 
     /**
      * Stores a DER-encoded certificate into the certificate store
@@ -877,9 +877,9 @@ abstract class KeyStore extends KeyStoreSpi {
      * @param alias Name of the certificate.
      * @param encoding DER-encoded certificate.
      */
-    private native void storeCertificate(String name, String alias, 
-	byte[] encoding, int encodingLength, long hCryptProvider,
-	long hCryptKey);
+    private native void storeCertificate(String name, String alias,
+        byte[] encoding, int encodingLength, long hCryptProvider,
+        long hCryptKey);
 
     /**
      * Removes the certificate from the certificate store
@@ -888,8 +888,8 @@ abstract class KeyStore extends KeyStoreSpi {
      * @param alias Name of the certificate.
      * @param encoding DER-encoded certificate.
      */
-    private native void removeCertificate(String name, String alias, 
-	byte[] encoding, int encodingLength);
+    private native void removeCertificate(String name, String alias,
+        byte[] encoding, int encodingLength);
 
     /**
      * Destroys the key container.
@@ -902,16 +902,16 @@ abstract class KeyStore extends KeyStoreSpi {
      * Generates a private-key BLOB from a key's components.
      */
     private native byte[] generatePrivateKeyBlob(
-	int keyBitLength,
-	byte[] modulus,
-	byte[] publicExponent,
-	byte[] privateExponent,
-	byte[] primeP, 
-	byte[] primeQ,
-	byte[] exponentP,
-	byte[] exponentQ, 
-	byte[] crtCoefficient);
+        int keyBitLength,
+        byte[] modulus,
+        byte[] publicExponent,
+        byte[] privateExponent,
+        byte[] primeP,
+        byte[] primeQ,
+        byte[] exponentP,
+        byte[] exponentQ,
+        byte[] crtCoefficient);
 
-    private native RSAPrivateKey storePrivateKey(byte[] keyBlob, 
-	String keyContainerName, int keySize);
+    private native RSAPrivateKey storePrivateKey(byte[] keyBlob,
+        String keyContainerName, int keySize);
 }

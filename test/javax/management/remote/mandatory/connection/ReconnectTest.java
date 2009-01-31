@@ -45,9 +45,9 @@ public class ReconnectTest {
     private static HashMap env = new HashMap(2);
 
     static {
-	String timeout = "1000";
-	env.put("jmx.remote.x.server.connection.timeout", timeout);
-	env.put("jmx.remote.x.client.connection.check.period", timeout);
+        String timeout = "1000";
+        env.put("jmx.remote.x.server.connection.timeout", timeout);
+        env.put("jmx.remote.x.client.connection.check.period", timeout);
     }
 
     public static void main(String[] args) throws Exception {
@@ -94,32 +94,32 @@ public class ReconnectTest {
         }
 
         server.start();
-	u = server.getAddress();
+        u = server.getAddress();
 
-	JMXConnector conn = JMXConnectorFactory.newJMXConnector(u, env);
-	conn.connect();
-	System.out.print("The default domain is ");
-	System.out.println(conn.getMBeanServerConnection().getDefaultDomain());
+        JMXConnector conn = JMXConnectorFactory.newJMXConnector(u, env);
+        conn.connect();
+        System.out.print("The default domain is ");
+        System.out.println(conn.getMBeanServerConnection().getDefaultDomain());
 
-	for (int i=0; i<3; i++) {
-	    System.out.println("************** Sleeping ...... "+i);
-	    Thread.sleep(2000);
-	    System.out.println("Sleep done.");
+        for (int i=0; i<3; i++) {
+            System.out.println("************** Sleeping ...... "+i);
+            Thread.sleep(2000);
+            System.out.println("Sleep done.");
 
-	    System.out.println("The default domain is "
-		  +conn.getMBeanServerConnection().getDefaultDomain());
-	}
+            System.out.println("The default domain is "
+                  +conn.getMBeanServerConnection().getDefaultDomain());
+        }
 
-	System.out.println("Close the client ...");
+        System.out.println("Close the client ...");
 
-	conn.close();
+        conn.close();
 
-	System.out.println("Close the server ...");
+        System.out.println("Close the server ...");
 
-	server.stop();
+        server.stop();
 
-	System.out.println("Bye bye.");
+        System.out.println("Bye bye.");
 
-	return true;
-    }			
+        return true;
+    }
 }

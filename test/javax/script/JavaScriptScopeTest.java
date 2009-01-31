@@ -26,7 +26,7 @@
  * @bug 6346733
  * @summary Verify that independent Bindings instances don't
  * get affected by default scope assignments. Also, verify
- * that script globals can be created and accessed from Java 
+ * that script globals can be created and accessed from Java
  * as well as JavaScript.
  */
 
@@ -34,9 +34,9 @@ import javax.script.*;
 
 public class JavaScriptScopeTest {
 
-	public static void main(String[] args) throws Exception {
-	    ScriptEngineManager manager = new ScriptEngineManager();
-	    ScriptEngine jsengine = manager.getEngineByName("js");
+        public static void main(String[] args) throws Exception {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            ScriptEngine jsengine = manager.getEngineByName("js");
             if (jsengine == null) {
                 throw new RuntimeException("no js engine found");
             }
@@ -63,5 +63,5 @@ public class JavaScriptScopeTest {
             if (! jsengine.get("fromJava").equals("hello world")) {
                 throw new RuntimeException("unexpected value of 'fromJava'");
             }
-	}
+        }
 }
